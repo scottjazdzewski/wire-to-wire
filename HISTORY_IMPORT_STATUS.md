@@ -33,6 +33,14 @@ Snapshot year coverage: **1864–1998** for stakes editions and horse seasons. I
 - Display-name edits update the private D1 overlay and are logged; **they do not change original source values, canonical IDs, race results, or frozen game-engine records**. The editor can restore the source name. The Corrections page separately lists recent name edits.
 - Non-name changes remain proposals in `change_requests`. Approval is not automated source promotion.
 
+## November 8 season selector repair
+
+The owner reported that other seasons were not visible even though all staged history had imported. The app previously used an all-or-nothing `/api/bootstrap` request. The backend launched twelve concurrent D1 reads (Cloudflare permits at most six concurrent D1 connections per Worker invocation), and a failed request silently put the site into a curated 1953–1955 demo mode. This was a concrete startup design defect.
+
+Fix on `main`: serialize bootstrap D1 reads; populate the season selector from the backend's `years` list instead of inferring years only from already loaded races; add a regression test that verifies 1864, 1953, and 1998 and enforces at most one active database query. Tests pass.
+
+**Still requires user-side live confirmation after Cloudflare deploy:** authenticated session must show `D1 CONNECTED`. If it still shows `CURATED DEMO`, inspect the app's displayed API error and check that Cloudflare Pages Production includes `TEAM_DOMAIN`, `POLICY_AUD`, `ADMIN_EMAIL` and binding `DB`. GitHub cannot view the user's signed-in Pages session or Cloudflare Pages Production environment secrets.
+
 ## Website delivery status
 
 - Cloudflare Pages site: https://wire-to-wire.pages.dev/
