@@ -8,7 +8,7 @@ const fields = {
   connection: {party_id:'Connected owner / trainer / person ID',year:'Season',role:'Connection role',basis:'Evidence basis'},
   result: {horse_id:'Placed horse ID',position:'Finishing position'}
 };
-const state = {page:'overview',year:1953,search:'',data:null,mode:'LOADING',changes:[],nameEdits:[],edit:null,rename:null};
+const state = {page:'overview',year:1953,search:'',data:null,mode:'LOADING',changes:[],nameEdits:[],edit:null,rename:null,apiIssue:''};
 const SAMPLE_KEY = 'wtw_canon_desk_local_proposals_v1';
 let toastTimeout;
 function storedChanges(){try{return JSON.parse(localStorage.getItem(SAMPLE_KEY)||'[]')}catch{return []}}
@@ -151,7 +151,7 @@ function render(){
  $('data-mode').textContent=state.mode==='D1_CONNECTED'?'D1 CONNECTED':'CURATED DEMO · NOT SYNCED';
  $('data-mode').classList.toggle('live',state.mode==='D1_CONNECTED');
  const map={overview:renderOverview,seasons:renderSeasons,horses:renderHorses,people:renderPeople,tracks:renderTracks,races:renderRaces,search:renderSearch,changes:renderChanges,sources:renderSources};
- $('app').innerHTML=(map[state.page]||renderOverview)();
+ $('app').innerHTML=(state.mode==='DEMO'&&state.apiIssue?`<div class="callout"><strong>Private historical database not connected to this session.</strong> The records shown here are only the small demonstration set, not the imported history. API: ${h(state.apiIssue)}. Confirm the three Production Access variables and redeploy before making saved edits.</div>`:'')+(map[state.page]||renderOverview)();
 }
 function setPage(page){state.page=page;document.body.classList.remove('menu-open');$('sidebar').classList.remove('mobile-open');render();window.scrollTo({top:0,behavior:'smooth'})}
 function setYear(year){state.year=Number(year);$('year-select').value=String(year);render()}
@@ -248,10 +248,10 @@ async function saveName(e){
 function targetOf(type,id){if(type==='entity')return entity(id);if(type==='race')return race(id);if(type==='connection')return state.data.connections.find(v=>v.id===id);if(type==='result'){const [edition,pos]=id.split('::');return state.data.results.find(v=>v.edition_id===edition&&String(v.position)===pos)}return null}
 function showEdit(type,id){const target=targetOf(type,id);if(!target){toast('Source record not found.');return;}state.edit={type,id,target};const sel=$('edit-field');sel.innerHTML=Object.entries(fields[type]).map(([value,label])=>`<option value="${h(value)}">${h(label)}</option>`).join('');$('edit-target-type').value=type;$('edit-target-id').value=id;$('edit-target').textContent=`${type.toUpperCase()} · ${target.name||nameFor(target.horse_id)||id} · ${id}`;$('edit-reason').value='';$('edit-proposed').value='';fillOld();$('edit-dialog').showModal()}
 function fillOld(){if(!state.edit)return;const field=$('edit-field').value;$('edit-original').value=String(state.edit.target[field]??'');$('edit-proposed').placeholder='Enter the corrected '+(fields[state.edit.type][field]||field).toLowerCase();}
-async function fetchBootstrap(){const r=await fetch('/api/bootstrap',{credentials:'same-origin',cache:'no-store'});if(!r.ok)throw new Error('Backend not available');return r.json()}
+async function fetchBootstrap(){const r=await fetch('/api/bootstrap',{credentials:'same-origin',cache:'no-store'});if(!r.ok){const info=await r.json().catch(()=>({}));throw new Error(`HTTP ${r.status}: ${info.error||'Private D1 API unavailable'}`)}return r.json()}
 async function initialize(){
  try {const live=await fetchBootstrap();state.mode=live.mode;state.data={meta:{title:'WIRE TO WIRE — isolated D1 import',scope:live.partial?'Partial page of data: search the backend for more':'Currently imported records',authority:'Source snapshot, separate from original WTW master',note:'Approved-for-promotion proposals do not alter source records.'},entities:live.entities,connections:live.connections,races:live.races,results:live.results};state.changes=live.changes;state.nameEdits=live.nameEdits||[];}
- catch {try {const r=await fetch('/sample-history.json',{cache:'no-store'});if(!r.ok)throw Error('Sample data unavailable');state.data=await r.json();state.mode='DEMO';state.changes=storedChanges();}catch{state.data={meta:{title:'WTW empty sample',scope:'No data loaded'},entities:[],connections:[],races:[],results:[]};state.mode='DEMO';state.changes=storedChanges()}}
+ catch (error) {state.apiIssue=error.message;try {const r=await fetch('/sample-history.json',{cache:'no-store'});if(!r.ok)throw Error('Sample data unavailable');state.data=await r.json();state.mode='DEMO';state.changes=storedChanges();}catch{state.data={meta:{title:'WTW empty sample',scope:'No data loaded'},entities:[],connections:[],races:[],results:[]};state.mode='DEMO';state.changes=storedChanges()}}
  rebuildResultIndex();
  const yrs=years();if(yrs.length&&!yrs.includes(state.year))state.year=yrs[0];$('year-select').innerHTML=yrs.map(y=>`<option value="${y}">${y}</option>`).join('');$('year-select').value=String(state.year);render();
 }
