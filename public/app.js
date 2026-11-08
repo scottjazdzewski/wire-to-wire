@@ -160,10 +160,20 @@ function renderTracks(){
  return `${intro('RACING VENUES','Track Registry','Every imported track has a name editor. Renaming a tracked venue also updates linked race editions, while its permanent ID stays fixed.',`<div class="record-count">${list.length} tracks</div>`)}${section('Tracks and venues','Original names remain preserved in the historical source',`<div class="table-scroll"><table class="data-table"><thead><tr><th>Track / location</th><th>Source status</th><th>Review</th></tr></thead><tbody>${rows||'<tr><td colspan="3">No track identities loaded yet.</td></tr>'}</tbody></table></div>`)}`;
 }
 function renderRaces(){
- const list=(state.data?.races||[]).filter(r=>(+r.year===+state.year||state.search)&&recordMatches(r)).sort((a,b)=>Number(a.year)-Number(b.year)||String(a.date||'9999-99-99').localeCompare(String(b.date||'9999-99-99'))||a.name.localeCompare(b.name));
- return `${intro('RACE RECORDS','Race History','Edit race and venue names using the pencil. Horse names update everywhere through permanent horse IDs.')}
- ${yearTabs()}
- ${section(`${state.search?'Matching':'Selected'} race editions`,`${list.length} entries`,list.map(r=>`<div class="race-card"><div><h4>${openButton('race',r.id,r.name)}</h4><p>${h(r.year)} · ${venueName(r)} · ${h(dateLabel(r))}</p><div class="winners">${winnerOf(r)?`Winner: ${openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id))}`:'Finish order not imported'}</div></div>${editButton('race',r.id,'Propose edit')}</div>`).join('')||noRecords('No matching race editions.'))}`;
+ const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+ const validDate=(value)=>{const m=String(value||'').match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);return m&&Number(m[2])>=1&&Number(m[2])<=12&&Number(m[3])>=1&&Number(m[3])<=31?m:null};
+ const dateKey=(r)=>validDate(r.date)?String(r.date):'9999-99-99';
+ const list=(state.data?.races||[]).filter(r=>(+r.year===+state.year||state.search)&&recordMatches(r)).sort((a,b)=>Number(a.year)-Number(b.year)||dateKey(a).localeCompare(dateKey(b))||a.name.localeCompare(b.name));
+ const multiYear=new Set(list.map(r=>String(r.year))).size>1;
+ const groups=new Map();
+ for(const r of list){
+  const match=validDate(r.date),month=match?monthNames[Number(match[2])-1]:'Day not recorded',label=(multiYear?String(r.year)+' · ':'')+month;
+  if(!groups.has(label))groups.set(label,[]);
+  groups.get(label).push(r);
+ }
+ const cards=(items)=>items.map(r=>{const evidence=dateEvidence(r);return `<div class="race-card"><div><h4>${openButton('race',r.id,r.name)}</h4><p>${h(r.year)} · ${venueName(r)} · ${h(dateLabel(r))}<span class="date-evidence-tag ${h(evidence.kind)}">${h(evidence.label)}</span></p><div class="winners">${winnerOf(r)?`Winner: ${openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id))}`:'Finish order not imported'}</div></div>${editButton('race',r.id,'Propose edit')}</div>`}).join('');
+ const grouped=[...groups].map(([label,items])=>`<div class="calendar-month-group"><div class="calendar-month-heading"><h4>${h(label)}</h4><span>${items.length} editions</span></div>${cards(items)}</div>`).join('');
+ return `${intro('HISTORICAL SCHEDULES','Stakes Calendar','Chronological by year and month. Each edition shows its date-evidence status.')}${yearTabs()}${section(`${state.search?'Matching':'Selected'} race editions`,`${list.length} entries · chronological order`,grouped||noRecords('No matching race editions.'))}`;
 }
 function nameHistory(){
  const edits=[...state.nameEdits].slice(0,100);
