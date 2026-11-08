@@ -8,7 +8,7 @@ const fields = {
   connection: {party_id:'Connected owner / trainer / person ID',year:'Season',role:'Connection role',basis:'Evidence basis'},
   result: {horse_id:'Placed horse ID',position:'Finishing position'}
 };
-const state = {page:'overview',year:1953,search:'',data:null,mode:'LOADING',changes:[],nameEdits:[],edit:null,rename:null,apiIssue:''};
+const state = {page:'overview',year:1953,search:'',data:null,mode:'LOADING',changes:[],nameEdits:[],availableYears:[],edit:null,rename:null,apiIssue:''};
 const SAMPLE_KEY = 'wtw_canon_desk_local_proposals_v1';
 let toastTimeout;
 function storedChanges(){try{return JSON.parse(localStorage.getItem(SAMPLE_KEY)||'[]')}catch{return []}}
@@ -33,7 +33,7 @@ function rebuildResultIndex(){
 }
 function resultOf(id){return resultIndex.get(id)||[]}
 function nameFor(id){return entity(id)?.name || id || 'Unrecorded'}
-function years(){return [...new Set((state.data?.races||[]).map(v=>Number(v.year)).filter(Boolean))].sort((a,b)=>a-b)}
+function years(){return [...new Set((state.availableYears.length?state.availableYears:(state.data?.races||[]).map(v=>v.year)).map(Number).filter(Number.isInteger))].sort((a,b)=>a-b)}
 function formatStatus(s){if(s==='NAME_APPROVED')return pill('Approved');if(s==='NAME_REVIEW')return pill('Name review','pending');if(s==='PENDING')return pill('Pending','pending');if(s==='APPROVED_FOR_PROMOTION')return pill('Approved for promotion');if(s==='REJECTED')return pill('Rejected','red');return pill(s||'Source snapshot','gray')}
 function count(kind){return state.data?.entities.filter(e=>e.kind===kind).length||0}
 function renameButton(type,id,name){return `<button type="button" class="inline-rename" data-rename-type="${h(type)}" data-id="${h(id)}" data-current-name="${h(name)}" title="Edit this name" aria-label="Edit name ${h(name)}">✎</button>`}
@@ -250,7 +250,7 @@ function showEdit(type,id){const target=targetOf(type,id);if(!target){toast('Sou
 function fillOld(){if(!state.edit)return;const field=$('edit-field').value;$('edit-original').value=String(state.edit.target[field]??'');$('edit-proposed').placeholder='Enter the corrected '+(fields[state.edit.type][field]||field).toLowerCase();}
 async function fetchBootstrap(){const r=await fetch('/api/bootstrap',{credentials:'same-origin',cache:'no-store'});if(!r.ok){const info=await r.json().catch(()=>({}));throw new Error(`HTTP ${r.status}: ${info.error||'Private D1 API unavailable'}`)}return r.json()}
 async function initialize(){
- try {const live=await fetchBootstrap();state.mode=live.mode;state.data={meta:{title:'WIRE TO WIRE — isolated D1 import',scope:live.partial?'Partial page of data: search the backend for more':'Currently imported records',authority:'Source snapshot, separate from original WTW master',note:'Approved-for-promotion proposals do not alter source records.'},entities:live.entities,connections:live.connections,races:live.races,results:live.results};state.changes=live.changes;state.nameEdits=live.nameEdits||[];}
+ try {const live=await fetchBootstrap();state.mode=live.mode;state.data={meta:{title:'WIRE TO WIRE — isolated D1 import',scope:live.partial?'Partial page of data: search the backend for more':'Currently imported records',authority:'Source snapshot, separate from original WTW master',note:'Approved-for-promotion proposals do not alter source records.'},entities:live.entities,connections:live.connections,races:live.races,results:live.results};state.changes=live.changes;state.nameEdits=live.nameEdits||[];state.availableYears=live.years||[];}
  catch (error) {state.apiIssue=error.message;try {const r=await fetch('/sample-history.json',{cache:'no-store'});if(!r.ok)throw Error('Sample data unavailable');state.data=await r.json();state.mode='DEMO';state.changes=storedChanges();}catch{state.data={meta:{title:'WTW empty sample',scope:'No data loaded'},entities:[],connections:[],races:[],results:[]};state.mode='DEMO';state.changes=storedChanges()}}
  rebuildResultIndex();
  const yrs=years();if(yrs.length&&!yrs.includes(state.year))state.year=yrs[0];$('year-select').innerHTML=yrs.map(y=>`<option value="${y}">${y}</option>`).join('');$('year-select').value=String(state.year);render();
