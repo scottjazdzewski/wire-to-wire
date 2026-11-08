@@ -8,7 +8,7 @@ const fields = {
   connection: {party_id:'Connected owner / trainer / person ID',year:'Season',role:'Connection role',basis:'Evidence basis'},
   result: {horse_id:'Placed horse ID',position:'Finishing position'}
 };
-const state = {page:'overview',year:1953,search:'',data:null,mode:'LOADING',changes:[],edit:null,rename:null};
+const state = {page:'overview',year:1953,search:'',data:null,mode:'LOADING',changes:[],nameEdits:[],edit:null,rename:null};
 const SAMPLE_KEY = 'wtw_canon_desk_local_proposals_v1';
 let toastTimeout;
 function storedChanges(){try{return JSON.parse(localStorage.getItem(SAMPLE_KEY)||'[]')}catch{return []}}
@@ -120,11 +120,21 @@ function renderRaces(){
  ${yearTabs()}
  ${section(`${state.search?'Matching':'Selected'} race editions`,`${list.length} entries`,list.map(r=>`<div class="race-card"><div><h4>${openButton('race',r.id,r.name)}</h4><p>${h(r.year)} · ${venueName(r)} · ${h(dateLabel(r))}</p><div class="winners">${winnerOf(r)?`Winner: ${openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id))}`:'Finish order not imported'}</div></div>${editButton('race',r.id,'Propose edit')}</div>`).join('')||noRecords('No matching race editions.'))}`;
 }
+function nameHistory(){
+ const edits=[...state.nameEdits].slice(0,100);
+ if(state.mode!=='D1_CONNECTED')return '';
+ const rows=edits.map(a=>`<div class="review-row"><div class="review-meta"><span>${h(a.edited_at)}</span><span>${h(a.target_type)} · ${h(a.target_id)}</span></div>
+  <h4>${h(a.old_display_name)} → ${h(a.new_display_name)}</h4>
+  <p>Original source: ${h(a.source_name||'Unknown')} · changed by ${h(a.editor_email||'Authorized administrator')}</p>
+ </div>`).join('');
+ return section('Recorded name edits',`${state.nameEdits.length} recent edits · retained in the private WTW database`,rows||noRecords('No names have been changed yet.'));
+}
 function renderChanges(){
  const ordered=[...state.changes].sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
  return `${intro('SOURCE-SAFE GOVERNANCE','Corrections & Approvals','Submit proposed edits to horse names, people, stables, seasonal connections, and race records. Approval records intent; it never silently rewrites historical results.')}
  <div class="callout"><strong>Protected canon:</strong> corrections in this desk remain proposals or approved-for-promotion decisions. A separate, verified promotion step is required before changes reach WTW's authoritative historical database.</div>
- ${section('Review queue',`${ordered.length} proposals ${state.mode==='DEMO'?'· saved in this browser only':'· stored in the separate WTW D1 database'}`,ordered.length?ordered.map(r=>`<div class="review-row"><div class="review-meta">${formatStatus(r.status)} <span>${h(r.target_type)} · ${h(r.target_id)}</span><span>${h(r.created_at||'')}</span></div><h4>${h(r.field)}: ${h(r.old_value??'blank')} → ${h(r.proposed_value)}</h4><p>${h(r.reason)}</p><div class="review-actions">${r.status==='PENDING'?`<button class="button button-primary" data-review-id="${h(r.id)}" data-review-action="APPROVED_FOR_PROMOTION">Approve for promotion</button><button class="button button-danger" data-review-id="${h(r.id)}" data-review-action="REJECTED">Reject</button>`:''}</div></div>`).join(''):noRecords('No correction proposals yet. Open a horse, race, person, or connection to propose one.'))}`;
+ ${section('Review queue',`${ordered.length} proposals ${state.mode==='DEMO'?'· saved in this browser only':'· stored in the separate WTW D1 database'}`,ordered.length?ordered.map(r=>`<div class="review-row"><div class="review-meta">${formatStatus(r.status)} <span>${h(r.target_type)} · ${h(r.target_id)}</span><span>${h(r.created_at||'')}</span></div><h4>${h(r.field)}: ${h(r.old_value??'blank')} → ${h(r.proposed_value)}</h4><p>${h(r.reason)}</p><div class="review-actions">${r.status==='PENDING'?`<button class="button button-primary" data-review-id="${h(r.id)}" data-review-action="APPROVED_FOR_PROMOTION">Approve for promotion</button><button class="button button-danger" data-review-id="${h(r.id)}" data-review-action="REJECTED">Reject</button>`:''}</div></div>`).join(''):noRecords('No correction proposals yet. Open a horse, race, person, or connection to propose one.'))}
+ ${nameHistory()}`;
 }
 function renderSources(){const d=state.data;return `${intro('PROVENANCE & RELEASE SAFETY','Sources & Status','See what has actually been loaded and what is still missing before this desk becomes a complete universe explorer.')}
  <div class="callout callout-green"><strong>Independent project.</strong> This desk does not connect to the Rail & Rye or Hockey Lab repositories, databases, hosting resources, or credentials. It also does not write to the frozen January 1999 gameplay engine.</div>
@@ -213,6 +223,7 @@ async function saveName(e){
  try {
    const resp=await fetch('/api/names',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_type:item.type,target_id:item.id,expected_name:item.current,name:next})});
    const body=await resp.json().catch(()=>({}));if(!resp.ok)throw Error(body.error||'Name update failed');
+   state.nameEdits.unshift({target_type:item.type,target_id:item.id,old_display_name:item.current,new_display_name:next,source_name:body.source_name||item.source||'',editor_email:'authorized administrator',edited_at:new Date().toISOString()});
    if(item.type==='entity'){
      const record=entity(item.id);
      if(record){
@@ -239,7 +250,7 @@ function showEdit(type,id){const target=targetOf(type,id);if(!target){toast('Sou
 function fillOld(){if(!state.edit)return;const field=$('edit-field').value;$('edit-original').value=String(state.edit.target[field]??'');$('edit-proposed').placeholder='Enter the corrected '+(fields[state.edit.type][field]||field).toLowerCase();}
 async function fetchBootstrap(){const r=await fetch('/api/bootstrap',{credentials:'same-origin',cache:'no-store'});if(!r.ok)throw new Error('Backend not available');return r.json()}
 async function initialize(){
- try {const live=await fetchBootstrap();state.mode=live.mode;state.data={meta:{title:'WIRE TO WIRE — isolated D1 import',scope:live.partial?'Partial page of data: search the backend for more':'Currently imported records',authority:'Source snapshot, separate from original WTW master',note:'Approved-for-promotion proposals do not alter source records.'},entities:live.entities,connections:live.connections,races:live.races,results:live.results};state.changes=live.changes;}
+ try {const live=await fetchBootstrap();state.mode=live.mode;state.data={meta:{title:'WIRE TO WIRE — isolated D1 import',scope:live.partial?'Partial page of data: search the backend for more':'Currently imported records',authority:'Source snapshot, separate from original WTW master',note:'Approved-for-promotion proposals do not alter source records.'},entities:live.entities,connections:live.connections,races:live.races,results:live.results};state.changes=live.changes;state.nameEdits=live.nameEdits||[];}
  catch {try {const r=await fetch('/sample-history.json',{cache:'no-store'});if(!r.ok)throw Error('Sample data unavailable');state.data=await r.json();state.mode='DEMO';state.changes=storedChanges();}catch{state.data={meta:{title:'WTW empty sample',scope:'No data loaded'},entities:[],connections:[],races:[],results:[]};state.mode='DEMO';state.changes=storedChanges()}}
  rebuildResultIndex();
  const yrs=years();if(yrs.length&&!yrs.includes(state.year))state.year=yrs[0];$('year-select').innerHTML=yrs.map(y=>`<option value="${y}">${y}</option>`).join('');$('year-select').value=String(state.year);render();
