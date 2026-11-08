@@ -73,6 +73,18 @@
       <div class="dialog-actions"><button id="cancel-dialog" type="button" class="button button-quiet">Cancel</button><button type="submit" class="button button-primary">Save correction proposal</button></div>
     </form>
   </dialog>
+  <dialog id="name-dialog" class="edit-dialog" aria-labelledby="name-dialog-title">
+    <form id="name-form">
+      <header class="dialog-header"><div><p class="eyebrow">NAME EDITOR</p><h2 id="name-dialog-title">Edit displayed name</h2></div><button id="close-name-dialog" type="button" class="icon-button" aria-label="Close">✕</button></header>
+      <p class="dialog-sub" id="name-target"></p>
+      <label class="field-label" for="name-current">Current name</label>
+      <input id="name-current" disabled />
+      <label class="field-label" for="name-new">New name</label>
+      <input id="name-new" type="text" autocomplete="off" maxlength="220" required />
+      <div class="safe-note" id="name-note"><strong>Saved to WTW:</strong> this updates the name displayed across the private site. Permanent source names, IDs, pedigrees and race results are preserved, and the edit is logged.</div>
+      <div class="dialog-actions"><button id="cancel-name-dialog" type="button" class="button button-quiet">Cancel</button><button id="save-name" type="submit" class="button button-primary">Save name</button></div>
+    </form>
+  </dialog>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 </body>
 </html>
