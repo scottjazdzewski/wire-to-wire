@@ -43,23 +43,24 @@ function validProposed(field, value) {
   return true;
 }
 async function bootstrap(db) {
-  const [entityCount,raceCount,connCount,changeCount,entities,connections,races,results,changes,years] = await Promise.all([
+  const [entityCount,raceCount,connCount,resultCount,changeCount,entities,connections,races,results,changes,years] = await Promise.all([
     db.prepare('SELECT count(*) AS n FROM entities').first(),
     db.prepare('SELECT count(*) AS n FROM races').first(),
     db.prepare('SELECT count(*) AS n FROM connections').first(),
+    db.prepare('SELECT count(*) AS n FROM results').first(),
     db.prepare('SELECT count(*) AS n FROM change_requests').first(),
-    db.prepare('SELECT * FROM entities ORDER BY kind, name LIMIT 500').all(),
-    db.prepare('SELECT * FROM connections ORDER BY year DESC LIMIT 2000').all(),
-    db.prepare('SELECT * FROM races ORDER BY year DESC, name LIMIT 1000').all(),
-    db.prepare('SELECT edition_id, horse_id, position FROM results ORDER BY edition_id, position LIMIT 3000').all(),
+    db.prepare('SELECT * FROM entities ORDER BY kind, name LIMIT 15000').all(),
+    db.prepare('SELECT * FROM connections ORDER BY year DESC LIMIT 40000').all(),
+    db.prepare('SELECT r.*, d.race_date_basis AS date_basis FROM races r LEFT JOIN edition_details d ON d.edition_id=r.id ORDER BY r.year DESC, r.name LIMIT 10000').all(),
+    db.prepare('SELECT edition_id, horse_id, position FROM results ORDER BY edition_id, position LIMIT 25000').all(),
     db.prepare('SELECT * FROM change_requests ORDER BY created_at DESC LIMIT 500').all(),
     db.prepare('SELECT DISTINCT year FROM races ORDER BY year').all()
   ]);
   return {
     mode:'D1_CONNECTED',
     scope:'DATASET_SAMPLE_OR_IMPORT',
-    counts:{entities:entityCount?.n||0,races:raceCount?.n||0,connections:connCount?.n||0,changes:changeCount?.n||0},
-    partial: Number(entityCount?.n||0)>500 || Number(raceCount?.n||0)>1000,
+    counts:{entities:entityCount?.n||0,races:raceCount?.n||0,connections:connCount?.n||0,results:resultCount?.n||0,changes:changeCount?.n||0},
+    partial: Number(entityCount?.n||0)>15000 || Number(raceCount?.n||0)>10000 || Number(connCount?.n||0)>40000 || Number(resultCount?.n||0)>25000,
     years: years.results.map(x=>x.year),
     entities:entities.results,connections:connections.results,races:races.results,results:results.results,
     changes:changes.results
@@ -70,6 +71,18 @@ async function api(request,env,email) {
   const url = new URL(request.url);
   if(request.method==='GET' && url.pathname==='/api/health') return response({status:'ok',mode:'D1',actor:email});
   if(request.method==='GET' && url.pathname==='/api/bootstrap') return response(await bootstrap(env.DB));
+  const horseMatch=url.pathname.match(/^\/api\/horses\/(H-[A-Za-z0-9-]+)$/);
+  if(request.method==='GET'&&horseMatch){
+    const horseId=horseMatch[1];
+    const [details,seasons,parents,offspring,bloodline]=await Promise.all([
+      env.DB.prepare('SELECT * FROM horse_details WHERE horse_id=?').bind(horseId).first(),
+      env.DB.prepare('SELECT * FROM horse_seasons WHERE horse_id=? ORDER BY year').bind(horseId).all(),
+      env.DB.prepare('SELECT parent_id,parent_name,relation,biology_check FROM pedigree_edges WHERE child_id=? ORDER BY relation').bind(horseId).all(),
+      env.DB.prepare('SELECT child_id,child_name,relation,biology_check FROM pedigree_edges WHERE parent_id=? ORDER BY child_id LIMIT 100').bind(horseId).all(),
+      env.DB.prepare('SELECT * FROM bloodline_profiles WHERE horse_id=?').bind(horseId).first()
+    ]);
+    return response({horse_id:horseId,details,seasons:seasons.results,parents:parents.results,offspring:offspring.results,bloodline});
+  }
   if(request.method==='GET' && url.pathname==='/api/entities') {
     const term=String(url.searchParams.get('q')||'').slice(0,90),kind=String(url.searchParams.get('kind')||'').slice(0,30);
     const limit=Math.min(Math.max(Number(url.searchParams.get('limit'))||100,1),250);

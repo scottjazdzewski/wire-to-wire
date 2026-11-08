@@ -16,7 +16,9 @@ function storeChanges(){try{localStorage.setItem(SAMPLE_KEY,JSON.stringify(state
 function pill(text,style=''){return `<span class="ribbon ${style}">${h(text)}</span>`}
 function entity(id){return state.data?.entities.find(v=>v.id===id)}
 function race(id){return state.data?.races.find(v=>v.id===id)}
-function resultOf(id){return state.data?.results.filter(v=>v.edition_id===id)||[]}
+let resultIndex=new Map();
+function rebuildResultIndex(){resultIndex=new Map();for(const r of state.data?.results||[]){if(!resultIndex.has(r.edition_id))resultIndex.set(r.edition_id,[]);resultIndex.get(r.edition_id).push(r)}}
+function resultOf(id){return resultIndex.get(id)||[]}
 function nameFor(id){return entity(id)?.name || id || 'Unrecorded'}
 function years(){return [...new Set((state.data?.races||[]).map(v=>Number(v.year)).filter(Boolean))].sort((a,b)=>a-b)}
 function formatStatus(s){if(s==='NAME_APPROVED')return pill('Approved');if(s==='NAME_REVIEW')return pill('Name review','pending');if(s==='PENDING')return pill('Pending','pending');if(s==='APPROVED_FOR_PROMOTION')return pill('Approved for promotion');if(s==='REJECTED')return pill('Rejected','red');return pill(s||'Source snapshot','gray')}
@@ -32,6 +34,7 @@ function recordMatches(value){return !state.search || [value.name,value.id,value
 function filteredEntities(kind){return (state.data?.entities||[]).filter(v=>v.kind===kind&&recordMatches(v)).sort((a,b)=>a.name.localeCompare(b.name))}
 function sessionRaces(year=state.year){return (state.data?.races||[]).filter(x=>Number(x.year)===Number(year)).sort((a,b)=>a.name.localeCompare(b.name))}
 function sessionHorseIds(year=state.year){const ids=new Set(sessionRaces(year).flatMap(e=>resultOf(e.id).map(r=>r.horse_id)));(state.data?.connections||[]).filter(x=>Number(x.year)===Number(year)).forEach(x=>ids.add(x.horse_id));return [...ids]}
+function dateLabel(r){if(!r.date)return 'Exact day unrecorded';if(String(r.date_basis||'').includes('UNVERIFIED'))return r.date+' · historical schedule date unverified';return r.date}
 function seasonHeadline(y){const r=sessionRaces(y);return r.length?`${r.length} documented races · ${sessionHorseIds(y).length} referenced horses`:'No source races loaded for this season'}
 function winnerOf(r){return resultOf(r.id).find(x=>Number(x.position)===1)}
 function renderOverview(){
@@ -49,7 +52,7 @@ function renderSeasons(){
   const y=state.year;const tabs=years().map(n=>`<button class="year-tab ${n===y?'active':''}" data-year="${n}">${n}</button>`).join('');
   const races=sessionRaces(y).filter(recordMatches);const seasonPeople=(state.data?.connections||[]).filter(c=>+c.year===+y);
   const ranked=[...new Set(seasonPeople.map(c=>c.horse_id))];
-  const raceRows=races.map(r=>`<div class="race-card"><div><h4>${openButton('race',r.id,r.name)}</h4><p>${h(r.track_name||'Track not verified')} · ${r.date?h(r.date):'Exact day not recorded'}</p><div class="winners">${winnerOf(r)?`Winner: ${openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id))}`:'Winner not in sample'}</div></div>${editButton('race',r.id,'Suggest edit')}</div>`).join('');
+  const raceRows=races.map(r=>`<div class="race-card"><div><h4>${openButton('race',r.id,r.name)}</h4><p>${h(r.track_name||'Track not verified')} · ${h(dateLabel(r))}</p><div class="winners">${winnerOf(r)?`Winner: ${openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id))}`:'Winner not in sample'}</div></div>${editButton('race',r.id,'Suggest edit')}</div>`).join('');
   const known=ranked.slice(0,10).map(id=>`<div class="detail-list-item">${openButton('entity',id,nameFor(id))}<small>${seasonPeople.filter(c=>c.horse_id===id).length} season connections</small></div>`).join('');
   return `${intro('THE HISTORICAL YEARBOOK',`${y} Racing Season`,'Select any imported season. Race results, participants and source uncertainty stay attached to their permanent IDs.')}
    <div class="year-tabs">${tabs}</div><div class="metrics">${metric(sessionRaces(y).length,'Recorded races','Imported source editions')}${metric(sessionHorseIds(y).length,'Featured horses','In results or season links')}${metric(seasonPeople.length,'Season connections','Owner / trainer / jockey / breeder')}${metric(races.filter(r=>r.date).length,'Exact dated races','Missing dates remain unknown')}</div>
@@ -57,12 +60,12 @@ function renderSeasons(){
 }
 function renderHorses(){
  const list=filteredEntities('horse');
- const rows=list.map(r=>{const wins=(state.data?.results||[]).filter(t=>t.horse_id===r.id&&+t.position===1).length;return `<tr><td>${openButton('entity',r.id,r.name)}<div class="subline">${h(r.id)}</div></td><td>${h(r.foal_year||'—')}</td><td>${h(r.sex||'—')}</td><td>${wins}</td><td>${formatStatus(r.status)}</td><td>${editButton('entity',r.id,'Propose edit')}</td></tr>`}).join('');
- return `${intro('SOURCE-RECORDED POPULATION','Horse Registry','Search horses by name or immutable ID. Open a profile for year-by-year connections, results and change requests.',`<div class="record-count">${list.length} horses displayed</div>`)}${section('Horses','The sample contains a curated subset; not the entire 87,500-horse universe.',`<div class="table-scroll"><table class="data-table"><thead><tr><th>Horse</th><th>Foaled</th><th>Sex</th><th>Recorded wins</th><th>Name status</th><th>Review</th></tr></thead><tbody>${rows||'<tr><td colspan="6">No matching horses</td></tr>'}</tbody></table></div>`)}`;
+ const rows=list.slice(0,250).map(r=>{const wins=(state.data?.results||[]).filter(t=>t.horse_id===r.id&&+t.position===1).length;return `<tr><td>${openButton('entity',r.id,r.name)}<div class="subline">${h(r.id)}</div></td><td>${h(r.foal_year||'—')}</td><td>${h(r.sex||'—')}</td><td>${wins}</td><td>${formatStatus(r.status)}</td><td>${editButton('entity',r.id,'Propose edit')}</td></tr>`}).join('');
+ return `${intro('SOURCE-RECORDED POPULATION','Horse Registry','Search horses by name or immutable ID. Open a profile for year-by-year connections, results and change requests.',`<div class="record-count">${list.length} horses displayed</div>`)}${section('Horses','Showing up to 250 matching records at once. Full database search is supported when the WTW D1 import is connected.',`<div class="table-scroll"><table class="data-table"><thead><tr><th>Horse</th><th>Foaled</th><th>Sex</th><th>Recorded wins</th><th>Name status</th><th>Review</th></tr></thead><tbody>${rows||'<tr><td colspan="6">No matching horses</td></tr>'}</tbody></table></div>`)}`;
 }
 function renderPeople(){
   const list=[...filteredEntities('person'),...filteredEntities('organization')].sort((a,b)=>a.name.localeCompare(b.name));
-  const rows=list.map(e=>{const roles=new Set((state.data?.connections||[]).filter(c=>c.party_id===e.id).map(c=>c.role));const count=(state.data?.connections||[]).filter(c=>c.party_id===e.id).length;return `<tr><td>${openButton('entity',e.id,e.name)}<div class="subline">${h(e.id)}</div></td><td>${h(e.kind==='person'?'Person':'Farm / stable')}</td><td>${h(e.role||[...roles].join(', ')||'—')}</td><td>${count}</td><td>${editButton('entity',e.id,'Propose edit')}</td></tr>`}).join('');
+  const rows=list.slice(0,250).map(e=>{const roles=new Set((state.data?.connections||[]).filter(c=>c.party_id===e.id).map(c=>c.role));const count=(state.data?.connections||[]).filter(c=>c.party_id===e.id).length;return `<tr><td>${openButton('entity',e.id,e.name)}<div class="subline">${h(e.id)}</div></td><td>${h(e.kind==='person'?'Person':'Farm / stable')}</td><td>${h(e.role||[...roles].join(', ')||'—')}</td><td>${count}</td><td>${editButton('entity',e.id,'Propose edit')}</td></tr>`}).join('');
   return `${intro('HUMAN & STABLE RECORDS','People & Stables','Follow ownership, training, jockey and breeding associations across seasons. Relationships are shown with their evidence basis.')}
    ${section('People, owners, farms & studs',`${list.length} matches in the current import`, `<div class="table-scroll"><table class="data-table"><thead><tr><th>Name</th><th>Type</th><th>Known role</th><th>Horse-year links</th><th>Review</th></tr></thead><tbody>${rows||'<tr><td colspan="5">No matches</td></tr>'}</tbody></table></div>`)}`;
 }
@@ -70,7 +73,7 @@ function renderRaces(){
  const list=(state.data?.races||[]).filter(r=>(+r.year===+state.year||state.search)&&recordMatches(r));
  return `${intro('RACE RECORDS','Race History','Search and inspect historical races. Winner names are derived from Horse IDs, so approved renames appear consistently everywhere.')}
  <div class="year-tabs">${years().map(y=>`<button class="year-tab ${state.year===y?'active':''}" data-year="${y}">${y}</button>`).join('')}</div>
- ${section(`${state.search?'Matching':'Selected'} race editions`,`${list.length} entries`,list.map(r=>`<div class="race-card"><div><h4>${openButton('race',r.id,r.name)}</h4><p>${h(r.year)} · ${h(r.track_name||'Track unrecorded')} · ${r.date?h(r.date):'Exact date unverified'}</p><div class="winners">${winnerOf(r)?`Winner: ${openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id))}`:'Finish order not imported'}</div></div>${editButton('race',r.id,'Propose edit')}</div>`).join('')||noRecords('No matching race editions.'))}`;
+ ${section(`${state.search?'Matching':'Selected'} race editions`,`${list.length} entries`,list.map(r=>`<div class="race-card"><div><h4>${openButton('race',r.id,r.name)}</h4><p>${h(r.year)} · ${h(r.track_name||'Track unrecorded')} · ${h(dateLabel(r))}</p><div class="winners">${winnerOf(r)?`Winner: ${openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id))}`:'Finish order not imported'}</div></div>${editButton('race',r.id,'Propose edit')}</div>`).join('')||noRecords('No matching race editions.'))}`;
 }
 function renderChanges(){
  const ordered=[...state.changes].sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
@@ -98,7 +101,7 @@ function render(){
 function setPage(page){state.page=page;document.body.classList.remove('menu-open');$('sidebar').classList.remove('mobile-open');render();window.scrollTo({top:0,behavior:'smooth'})}
 function setYear(year){state.year=Number(year);$('year-select').value=String(year);render()}
 function toast(message){let node=$('toast');node.textContent=message;node.hidden=false;clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>node.hidden=true,4500)}
-function openDetail(type,id){
+async function openDetail(type,id){
  const e=type==='entity'?entity(id):type==='race'?race(id):null;
  if(!e){toast('The requested record has not been imported.');return;}
  let markup='';
@@ -110,15 +113,26 @@ function openDetail(type,id){
    <div class="detail-edit">${editButton('entity',e.id,'Propose a name or profile correction','button button-primary')}</div>
    <h3>Season connections</h3><div class="detail-list">${cn.map(c=>`<div class="detail-list-item"><div><strong>${h(c.year)} · ${h(c.role)}</strong><small>${c.horse_id===id?openButton('entity',c.party_id,nameFor(c.party_id)):openButton('entity',c.horse_id,nameFor(c.horse_id))} · ${h(c.basis||'Basis unrecorded')}</small></div>${editButton('connection',c.id,'Edit','button button-quiet')}</div>`).join('')||'<p class="muted">No connections imported yet.</p>'}</div>
    ${e.kind==='horse'?`<h3>Recorded race appearances</h3><div class="detail-list">${placings.map(p=>`<div class="detail-list-item"><div>${openButton('race',p.race.id,p.race.name)}<small>${h(p.race.year)} · ${h(p.race.track_name||'Track unknown')} · position ${h(p.position)}</small></div>${editButton('result',`${p.edition_id}::${p.position}`,'Review','button button-quiet')}</div>`).join('')||'<p class="muted">No race appearances in this import.</p>'}</div>`:''}
-   <h3>Pedigree and barn history</h3><p class="muted">Only source-verified relationships are shown. Detailed parent trees and individual stall assignments will appear after their separate historical tables are imported. No barn is inferred from the owner's circuit.</p>`;
+   <h3>Pedigree and barn history</h3><div id="horse-pedigree-panel"><p class="muted">Source pedigree details load from the private archive when connected. Barn locations are not inferred from a stable's region.</p></div>`;
  } else {
    const results=resultOf(e.id);
    markup=`<div class="eyebrow">HISTORICAL RACE EDITION</div><h2>${h(e.name)}</h2><div class="detail-id">${h(e.id)}</div>
-   <p class="detail-desc">${h(e.track_name||'Track unknown')} · ${h(e.year)} · ${e.date?h(e.date):'Exact racing date unrecorded'}<br>Source: ${h(e.source||'Not specified')}</p>
+   <p class="detail-desc">${h(e.track_name||'Track unknown')} · ${h(e.year)} · ${h(dateLabel(e))}<br>Source: ${h(e.source||'Not specified')}</p>
    <div class="detail-edit">${editButton('race',e.id,'Propose a race-record correction','button button-primary')}</div><h3>Recorded finishers</h3><div class="detail-list">${results.sort((a,b)=>a.position-b.position).map(p=>`<div class="detail-list-item"><div><strong>Position ${h(p.position)}</strong><small>${openButton('entity',p.horse_id,nameFor(p.horse_id))}</small></div>${editButton('result',`${p.edition_id}::${p.position}`,'Review','button button-quiet')}</div>`).join('')||'<p class="muted">No finishers imported yet.</p>'}</div>`;
  }
  $('detail-content').innerHTML=`<button class="icon-button drawer-close" data-close-drawer="true" aria-label="Close profile">✕</button>${markup}`;
  $('drawer-backdrop').hidden=false;$('detail-drawer').classList.add('open');$('detail-drawer').setAttribute('aria-hidden','false');
+ if(type==='entity'&&e.kind==='horse'&&state.mode==='D1_CONNECTED'){
+   try {
+     const resp=await fetch(`/api/horses/${encodeURIComponent(id)}`,{credentials:'same-origin'});
+     if(!resp.ok)throw Error('Detailed source unavailable');
+     const info=await resp.json(),panel=$('horse-pedigree-panel');
+     if(!panel||!$('detail-drawer').classList.contains('open'))return;
+     const parents=(info.parents||[]).map(p=>`<div class="detail-list-item"><div><strong>${h(p.relation)}</strong><small>${p.parent_id&&entity(p.parent_id)?openButton('entity',p.parent_id,nameFor(p.parent_id)):h(p.parent_name||p.parent_id||'Not recorded')} · ${h(p.biology_check||'Unverified')}</small></div></div>`).join('');
+     const seasonSummary=(info.seasons||[]).map(s=>`<div class="detail-list-item"><div><strong>${h(s.year)} season</strong><small>${h(s.stakes_wins??'—')} stakes wins · ${h(s.top3_starts??'—')} top-three stakes starts · region ${h(s.region||'Not recorded')}</small></div></div>`).join('');
+     panel.innerHTML=`<h3>Recorded ancestry</h3><div class="detail-list">${parents||'<p class="muted">No parent edges available in this source.</p>'}</div><h3>Season-by-season record</h3><div class="detail-list">${seasonSummary||'<p class="muted">No season summaries available.</p>'}</div><p class="muted">Relationships are historical source references and may still require certification.</p>`;
+   }catch {const panel=$('horse-pedigree-panel');if(panel)panel.textContent='Detailed source could not be loaded.'}
+ }
 }
 function closeDrawer(){ $('detail-drawer').classList.remove('open');$('detail-drawer').setAttribute('aria-hidden','true');$('drawer-backdrop').hidden=true;}
 function targetOf(type,id){if(type==='entity')return entity(id);if(type==='race')return race(id);if(type==='connection')return state.data.connections.find(v=>v.id===id);if(type==='result'){const [edition,pos]=id.split('::');return state.data.results.find(v=>v.edition_id===edition&&String(v.position)===pos)}return null}
@@ -128,6 +142,7 @@ async function fetchBootstrap(){const r=await fetch('/api/bootstrap',{credential
 async function initialize(){
  try {const live=await fetchBootstrap();state.mode=live.mode;state.data={meta:{title:'WIRE TO WIRE — isolated D1 import',scope:live.partial?'Partial page of data: search the backend for more':'Currently imported records',authority:'Source snapshot, separate from original WTW master',note:'Approved-for-promotion proposals do not alter source records.'},entities:live.entities,connections:live.connections,races:live.races,results:live.results};state.changes=live.changes;}
  catch {try {const r=await fetch('/sample-history.json',{cache:'no-store'});if(!r.ok)throw Error('Sample data unavailable');state.data=await r.json();state.mode='DEMO';state.changes=storedChanges();}catch{state.data={meta:{title:'WTW empty sample',scope:'No data loaded'},entities:[],connections:[],races:[],results:[]};state.mode='DEMO';state.changes=storedChanges()}}
+ rebuildResultIndex();
  const yrs=years();if(yrs.length&&!yrs.includes(state.year))state.year=yrs[0];$('year-select').innerHTML=yrs.map(y=>`<option value="${y}">${y}</option>`).join('');$('year-select').value=String(state.year);render();
 }
 async function saveProposal(e){e.preventDefault();if(!state.edit)return;
