@@ -59,15 +59,11 @@ async function bootstrap(db) {
   // D1 allows at most six simultaneous connections per Worker request. Run the
   // read model queries sequentially to prevent startup failures and demo fallback.
   const jobs = [
-    () => db.prepare('SELECT count(*) AS n FROM entities').first(),
+    () => db.prepare('SELECT count(*) AS n,(SELECT count(*) FROM horse_details) AS horseDetails,(SELECT count(*) FROM horse_seasons) AS horseSeasons,(SELECT count(*) FROM pedigree_edges) AS pedigreeEdges,(SELECT count(*) FROM bloodline_profiles) AS bloodlineProfiles FROM entities').first(),
     () => db.prepare('SELECT count(*) AS n FROM races').first(),
     () => db.prepare('SELECT count(*) AS n FROM connections').first(),
     () => db.prepare('SELECT count(*) AS n FROM results').first(),
     () => db.prepare('SELECT count(*) AS n FROM change_requests').first(),
-    () => db.prepare('SELECT count(*) AS n FROM horse_details').first(),
-    () => db.prepare('SELECT count(*) AS n FROM horse_seasons').first(),
-    () => db.prepare('SELECT count(*) AS n FROM pedigree_edges').first(),
-    () => db.prepare('SELECT count(*) AS n FROM bloodline_profiles').first(),
     () => db.prepare(entitySelect+' ORDER BY e.kind, name LIMIT 15000').all(),
     () => db.prepare('SELECT * FROM connections ORDER BY year DESC LIMIT 40000').all(),
     () => db.prepare(raceSelect+' ORDER BY r.year DESC, name LIMIT 10000').all(),
@@ -78,11 +74,11 @@ async function bootstrap(db) {
   ];
   const values = [];
   for (const job of jobs) values.push(await job());
-  const [entityCount,raceCount,connCount,resultCount,changeCount,horseDetailCount,horseSeasonCount,pedigreeCount,bloodlineCount,entities,connections,races,results,changes,years,nameEdits] = values;
+  const [entityCount,raceCount,connCount,resultCount,changeCount,entities,connections,races,results,changes,years,nameEdits] = values;
   return {
     mode:'D1_CONNECTED',
     scope:'DATASET_SAMPLE_OR_IMPORT',
-    counts:{entities:entityCount?.n||0,races:raceCount?.n||0,connections:connCount?.n||0,results:resultCount?.n||0,changes:changeCount?.n||0,horseDetails:horseDetailCount?.n||0,horseSeasons:horseSeasonCount?.n||0,pedigreeEdges:pedigreeCount?.n||0,bloodlineProfiles:bloodlineCount?.n||0},
+    counts:{entities:entityCount?.n||0,races:raceCount?.n||0,connections:connCount?.n||0,results:resultCount?.n||0,changes:changeCount?.n||0,horseDetails:entityCount?.horseDetails||0,horseSeasons:entityCount?.horseSeasons||0,pedigreeEdges:entityCount?.pedigreeEdges||0,bloodlineProfiles:entityCount?.bloodlineProfiles||0},
     partial: Number(entityCount?.n||0)>15000 || Number(raceCount?.n||0)>10000 || Number(connCount?.n||0)>40000 || Number(resultCount?.n||0)>25000,
     years: years.results.map(x=>x.year),
     entities:entities.results,connections:connections.results,races:races.results,results:results.results,
