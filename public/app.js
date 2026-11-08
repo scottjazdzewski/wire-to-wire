@@ -160,7 +160,7 @@ function renderTracks(){
  return `${intro('RACING VENUES','Track Registry','Every imported track has a name editor. Renaming a tracked venue also updates linked race editions, while its permanent ID stays fixed.',`<div class="record-count">${list.length} tracks</div>`)}${section('Tracks and venues','Original names remain preserved in the historical source',`<div class="table-scroll"><table class="data-table"><thead><tr><th>Track / location</th><th>Source status</th><th>Review</th></tr></thead><tbody>${rows||'<tr><td colspan="3">No track identities loaded yet.</td></tr>'}</tbody></table></div>`)}`;
 }
 function renderRaces(){
- const list=(state.data?.races||[]).filter(r=>(+r.year===+state.year||state.search)&&recordMatches(r));
+ const list=(state.data?.races||[]).filter(r=>(+r.year===+state.year||state.search)&&recordMatches(r)).sort((a,b)=>Number(a.year)-Number(b.year)||String(a.date||'9999-99-99').localeCompare(String(b.date||'9999-99-99'))||a.name.localeCompare(b.name));
  return `${intro('RACE RECORDS','Race History','Edit race and venue names using the pencil. Horse names update everywhere through permanent horse IDs.')}
  ${yearTabs()}
  ${section(`${state.search?'Matching':'Selected'} race editions`,`${list.length} entries`,list.map(r=>`<div class="race-card"><div><h4>${openButton('race',r.id,r.name)}</h4><p>${h(r.year)} · ${venueName(r)} · ${h(dateLabel(r))}</p><div class="winners">${winnerOf(r)?`Winner: ${openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id))}`:'Finish order not imported'}</div></div>${editButton('race',r.id,'Propose edit')}</div>`).join('')||noRecords('No matching race editions.'))}`;
