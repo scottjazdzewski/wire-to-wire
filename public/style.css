@@ -326,3 +326,11 @@ body{background:#f2f5f1;color:var(--manager-ink)}
  .profile-quick-achievements{grid-template-columns:1fr;gap:5px}
  .horse-profile .profile-pedigree-grid,.horse-profile .profile-columns{grid-template-columns:1fr}
 }
+.calendar-month-group+.calendar-month-group{margin-top:12px;padding-top:10px;border-top:1px solid #edf1ed}
+.calendar-month-heading{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 4px}
+.calendar-month-heading h4{margin:0;color:#294f37;font-size:11px}
+.calendar-month-heading span{font-size:8px;color:#89968d}
+.date-evidence-tag{display:inline-block;margin-left:6px;padding:2px 6px;border:1px solid #e2ebe1;border-radius:99px;background:#f2f6f1;color:#55715f;font-size:7px;font-weight:750;white-space:nowrap}
+.date-evidence-tag.exact{background:#e7f3e8;color:#27613c}
+.date-evidence-tag.internal,.date-evidence-tag.unverified,.date-evidence-tag.unknown{background:#f5f1e8;border-color:#eee5d4;color:#806a3d}
+.date-evidence-tag.review,.date-evidence-tag.not-run,.date-evidence-tag.missing{background:#f4eeee;border-color:#eddede;color:#805353}
