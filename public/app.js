@@ -27,7 +27,7 @@ function renameButton(type,id,name){return `<button type="button" class="inline-
 function openButton(type,id,label){return `<span class="name-edit-pair"><button type="button" class="name-cell" data-open-type="${h(type)}" data-id="${h(id)}">${h(label)}</button>${renameButton(type,id,label)}</span>`}
 function venueName(record){if(!record?.track_name)return 'Track unrecorded';return `<span class="name-edit-pair"><span>${h(record.track_name)}</span>${renameButton('venue',record.id,record.track_name)}</span>`}
 function editButton(type,id,label='Propose correction',className='button button-quiet'){return `<button class="${className}" data-edit-type="${h(type)}" data-id="${h(id)}">${h(label)}</button>`}
-function pageTitle(){return ({overview:'The Universe',seasons:'Historical Seasons',horses:'Horse Registry',people:'People & Stables',races:'Race History',changes:'Corrections & Approvals',sources:'Sources & Verification'})[state.page]||'The Universe'}
+function pageTitle(){return ({overview:'The Universe',seasons:'Historical Seasons',horses:'Horse Registry',people:'People & Stables',tracks:'Track Registry',races:'Race History',changes:'Corrections & Approvals',sources:'Sources & Verification'})[state.page]||'The Universe'}
 function intro(label,title,desc,more=''){return `<div class="page-intro"><div><div class="smallcaps">${h(label)}</div><h2>${h(title)}</h2><p>${h(desc)}</p></div>${more}</div>`}
 function metric(value,label,foot){return `<div class="metric"><div class="metric-label">${h(label)}</div><div class="metric-value">${h(value)}</div><div class="metric-foot">${h(foot)}</div></div>`}
 function section(title,subtitle='',content='',action=''){return `<section class="panel"><div class="panel-head"><div><h3>${h(title)}</h3><p>${h(subtitle)}</p></div>${action}</div>${content}</section>`}
@@ -71,6 +71,11 @@ function renderPeople(){
   return `${intro('HUMAN & STABLE RECORDS','People & Stables','Edit trainer, jockey, owner, breeder, farm and stable names with the pencil beside each record. Historical associations retain their IDs.')}
    ${section('People, owners, farms & studs',`${list.length} matches in the current import`, `<div class="table-scroll"><table class="data-table"><thead><tr><th>Name</th><th>Type</th><th>Known role</th><th>Horse-year links</th><th>Review</th></tr></thead><tbody>${rows||'<tr><td colspan="5">No matches</td></tr>'}</tbody></table></div>`)}`;
 }
+function renderTracks(){
+ const list=filteredEntities('track');
+ const rows=list.map(t=>`<tr><td>${openButton('entity',t.id,t.name)}<div class="subline">${h(t.id)}</div></td><td>${formatStatus(t.status)}</td><td>${editButton('entity',t.id,'Propose correction')}</td></tr>`).join('');
+ return `${intro('RACING VENUES','Track Registry','Every imported track has a name editor. Renaming a tracked venue also updates linked race editions, while its permanent ID stays fixed.',`<div class="record-count">${list.length} tracks</div>`)}${section('Tracks and venues','Original names remain preserved in the historical source',`<div class="table-scroll"><table class="data-table"><thead><tr><th>Track / location</th><th>Source status</th><th>Review</th></tr></thead><tbody>${rows||'<tr><td colspan="3">No track identities loaded yet.</td></tr>'}</tbody></table></div>`)}`;
+}
 function renderRaces(){
  const list=(state.data?.races||[]).filter(r=>(+r.year===+state.year||state.search)&&recordMatches(r));
  return `${intro('RACE RECORDS','Race History','Edit race and venue names using the pencil. Horse names update everywhere through permanent horse IDs.')}
@@ -97,7 +102,7 @@ function render(){
  $('change-count').textContent=state.changes.filter(c=>c.status==='PENDING').length;
  $('data-mode').textContent=state.mode==='D1_CONNECTED'?'D1 CONNECTED':'CURATED DEMO · NOT SYNCED';
  $('data-mode').classList.toggle('live',state.mode==='D1_CONNECTED');
- const map={overview:renderOverview,seasons:renderSeasons,horses:renderHorses,people:renderPeople,races:renderRaces,changes:renderChanges,sources:renderSources};
+ const map={overview:renderOverview,seasons:renderSeasons,horses:renderHorses,people:renderPeople,tracks:renderTracks,races:renderRaces,changes:renderChanges,sources:renderSources};
  $('app').innerHTML=(map[state.page]||renderOverview)();
 }
 function setPage(page){state.page=page;document.body.classList.remove('menu-open');$('sidebar').classList.remove('mobile-open');render();window.scrollTo({top:0,behavior:'smooth'})}
