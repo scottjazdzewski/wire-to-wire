@@ -1,28 +1,39 @@
-# WTW Canon Desk — GitHub → Cloudflare deployment checklist
+# WIRE TO WIRE — GitHub to Cloudflare
 
-## GitHub repository
+## Current status (2026-11-08)
 
-Repository: `scottjazdzewski/wire-to-wire` (private).
+**GitHub: DONE.** The independent private repository `scottjazdzewski/wire-to-wire` now contains the WTW Canon Desk application, actual brand logo, browser, curated 1953–1955 source sample, D1 schema, safe-edit review API, and automated source/security tests. Rail & Rye and Hockey Lab were not changed.
 
-The GitHub integration currently has selected-repository access. To enable pushes, open the GitHub app installation settings at:
+**Cloudflare: NOT YET CONNECTED.** There is no confirmed live WTW URL, Worker, or D1 database yet. Cloudflare setup requires the account owner's authorization in the Cloudflare dashboard.
 
-https://github.com/settings/installations/176694888
+## First live website: UI preview using Cloudflare Pages
 
-Choose **Configure** (if shown), under **Repository access** add `wire-to-wire` to the selected repositories, and save. Do not add the Rail & Rye or Hockey Lab code to the WTW repository.
+This is the shortest route to a normal website address so the owner can review functionality. It runs **sample mode**: correction proposals are stored only in that browser, not in D1 or the historical master. A private GitHub repository does **not** make the deployed Pages URL private.
 
-After the repo appears in the connected GitHub repository list, upload these files into the **repository root** (not a nested `wtw-canon-desk` subfolder). Keep the app private.
+1. Open https://dash.cloudflare.com/ and select **Workers & Pages → Create application → Pages → Connect to Git** (or **Import an existing Git repository**).
+2. Authorize the Cloudflare GitHub app to use **only the WTW repository** if it is not already listed. Select `scottjazdzewski/wire-to-wire`.
+3. Set project name `wtw-canon-desk`, production branch `main`, framework preset `None`, build command `exit 0`, output directory `public` and root directory the repository root.
+4. Deploy. Cloudflare will give the site its own `*.pages.dev` URL. Do not guess the actual URL before the deployment appears.
+5. **Protect the production `<project>.pages.dev` hostname behind Cloudflare Access before treating it as private.** Cloudflare Pages' Settings → Enable access policy initially protects preview deployment URLs only, **not** automatically the production `*.pages.dev` URL. To protect production, use Cloudflare's documented production Pages/Access procedure and verify in a signed-out or incognito browser that an unauthenticated visitor cannot see the site.
+6. Once the initial website looks right, do not promote the demo browser's proposals as authoritative historical edits.
 
-## Cloudflare: distinct WTW resources
+Cloudflare references: https://developers.cloudflare.com/pages/framework-guides/deploy-anything/ and https://developers.cloudflare.com/pages/platform/known-issues/#enable-access-on-your-pagesdev-domain.
 
-Provision a new Cloudflare Worker named `wtw-canon-desk` and a separate D1 database `wtw-canon-desk-db`. The existing projects' resources are untouched.
+## Full persistent/private editing: Cloudflare Worker + D1
 
-1. In `wrangler.jsonc`, replace the placeholder `database_id` with the ID returned by `wrangler d1 create wtw-canon-desk-db`.
-2. Apply the schema and seed reviewed data using the `README.md` instructions. Do not import the whole WTW universe until authoritative sources and update rules have been approved.
-3. Configure Cloudflare Access to protect **all traffic**, allow only approved identities, and set the `ADMIN_EMAIL` Worker variable to the expected email address(es).
-4. Verify the Worker fails closed with an unauthenticated request. Never deploy with an unverified Access configuration, live secrets in the repo, or the local bypass enabled in production.
-5. Use the Workers Builds Git integration for `scottjazdzewski/wire-to-wire` (root directory), or deploy via `npm run deploy` with an authorized Wrangler session.
-6. Confirm the deployed URL and the D1 read/write counts in Cloudflare, then perform the permission and edit-proposal smoke test.
+Once the layout and review workflow are approved, run the Worker in this same **separate WTW project**, with its own D1. This turns the change queue into a durable authenticated database review system (still **not** an automatic rewrite of the frozen historical canon).
 
-## Data integrity
+1. Create D1 `wtw-canon-desk-db` in the same Cloudflare account, distinct from other projects' databases. Copy its real UUID into `wrangler.jsonc` replacing `REPLACE_WITH_WTW_ONLY_D1_UUID`.
+2. Apply `migrations/0001_initial.sql` via `npx wrangler d1 migrations apply wtw-canon-desk-db --remote`.
+3. Optionally seed the reviewed sample with `node scripts/build-seed.mjs` then `npx wrangler d1 execute wtw-canon-desk-db --remote --file=./data/seed.sql`. **Do not import the entire WTW history yet.**
+4. Configure **Cloudflare Access → Protect this Worker → all traffic**, with an allow policy for the owner, and set `ADMIN_EMAIL` to that approved identity. The Worker refuses production requests without Access identity. Do not set `DEV_BYPASS_ACCESS` in Cloudflare production environment.
+5. Connect Workers Builds to the new WTW repository or deploy with an authorized Wrangler session. Verify an unauthenticated request is denied **before sharing the URL**.
+6. Test search, season browsing, correction submission, persistence and approval audit. No existing race winner, owner/trainer relationship or permanent ID may be overwritten by a proposed edit; source promotion remains a separate later process.
 
-The v0.1 site uses a **1953–1955 curated sample**, not the 87,500-horse full WTW universe. Name corrections are proposals only. Approving a proposal does **not** automatically rewrite game canon or race results. Keep immutable IDs and protected historical achievements intact.
+Cloudflare reference: https://developers.cloudflare.com/workers/configuration/cloudflare-access/.
+
+## Data authority
+
+Current 1953–1955 demo is **not** the complete historical universe; it is an accurate scoped UI sample, not a second master. Preserve permanent horse/person/race IDs. Treat trainer, jockey and owner links as **season-level** unless documentary evidence establishes a specific race-day assignment or barn. All approved/rejected changes require attribution, source lineage and controlled promotion.
+
+This repo has a GitHub Actions test workflow at `.github/workflows/ci.yml`, which runs `npm test` on pushes and pull requests.
