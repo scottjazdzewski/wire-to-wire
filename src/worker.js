@@ -56,20 +56,25 @@ export function validDisplayName(value) {
   return typeof value==='string' && value.trim().length>=1 && value.trim().length<=220 && !/[\u0000-\u001f\u007f]/.test(value);
 }
 async function bootstrap(db) {
-  const [entityCount,raceCount,connCount,resultCount,changeCount,entities,connections,races,results,changes,years,nameEdits] = await Promise.all([
-    db.prepare('SELECT count(*) AS n FROM entities').first(),
-    db.prepare('SELECT count(*) AS n FROM races').first(),
-    db.prepare('SELECT count(*) AS n FROM connections').first(),
-    db.prepare('SELECT count(*) AS n FROM results').first(),
-    db.prepare('SELECT count(*) AS n FROM change_requests').first(),
-    db.prepare(entitySelect+' ORDER BY e.kind, name LIMIT 15000').all(),
-    db.prepare('SELECT * FROM connections ORDER BY year DESC LIMIT 40000').all(),
-    db.prepare(raceSelect+' ORDER BY r.year DESC, name LIMIT 10000').all(),
-    db.prepare('SELECT edition_id, horse_id, position FROM results ORDER BY edition_id, position LIMIT 25000').all(),
-    db.prepare('SELECT * FROM change_requests ORDER BY created_at DESC LIMIT 500').all(),
-    db.prepare('SELECT DISTINCT year FROM races ORDER BY year').all(),
-    db.prepare('SELECT target_type,target_id,old_display_name,new_display_name,source_name,editor_email,edited_at FROM name_edit_audit ORDER BY id DESC LIMIT 200').all()
-  ]);
+  // D1 allows at most six simultaneous connections per Worker request. Run the
+  // read model queries sequentially to prevent startup failures and demo fallback.
+  const jobs = [
+    () => db.prepare('SELECT count(*) AS n FROM entities').first(),
+    () => db.prepare('SELECT count(*) AS n FROM races').first(),
+    () => db.prepare('SELECT count(*) AS n FROM connections').first(),
+    () => db.prepare('SELECT count(*) AS n FROM results').first(),
+    () => db.prepare('SELECT count(*) AS n FROM change_requests').first(),
+    () => db.prepare(entitySelect+' ORDER BY e.kind, name LIMIT 15000').all(),
+    () => db.prepare('SELECT * FROM connections ORDER BY year DESC LIMIT 40000').all(),
+    () => db.prepare(raceSelect+' ORDER BY r.year DESC, name LIMIT 10000').all(),
+    () => db.prepare('SELECT edition_id, horse_id, position FROM results ORDER BY edition_id, position LIMIT 25000').all(),
+    () => db.prepare('SELECT * FROM change_requests ORDER BY created_at DESC LIMIT 500').all(),
+    () => db.prepare('SELECT DISTINCT year FROM races ORDER BY year').all(),
+    () => db.prepare('SELECT target_type,target_id,old_display_name,new_display_name,source_name,editor_email,edited_at FROM name_edit_audit ORDER BY id DESC LIMIT 200').all()
+  ];
+  const values = [];
+  for (const job of jobs) values.push(await job());
+  const [entityCount,raceCount,connCount,resultCount,changeCount,entities,connections,races,results,changes,years,nameEdits] = values;
   return {
     mode:'D1_CONNECTED',
     scope:'DATASET_SAMPLE_OR_IMPORT',
