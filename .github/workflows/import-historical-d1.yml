@@ -1,0 +1,95 @@
+name: WTW D1 historical import (manual, isolated)
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Validate locally or load ONLY the WTW D1'
+        required: true
+        type: choice
+        options:
+          - validate_only
+          - import_to_WTW_D1
+        default: validate_only
+      confirm_database:
+        description: 'For remote import, type exactly: wtw-canon-desk-db'
+        required: false
+        type: string
+        default: ''
+permissions:
+  contents: read
+concurrency:
+  group: wtw-history-import
+  cancel-in-progress: false
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test the WTW site, source and security code
+        run: npm test
+      - name: Compile historical records into private SQL files
+        run: npm run db:build:full
+      - name: Verify all SQL, foreign keys and user-approved historical names
+        run: python3 scripts/verify-history-sql.py
+      - name: Confirm target before any remote changes
+        if: ${{ inputs.mode == 'import_to_WTW_D1' }}
+        env:
+          WTW_DB_CONFIRM: ${{ inputs.confirm_database }}
+        run: |
+          if [ "$WTW_DB_CONFIRM" != "wtw-canon-desk-db" ]; then
+            echo "::error::You must type wtw-canon-desk-db to authorize an import to this database."
+            exit 1
+          fi
+      - name: Install Wrangler for isolated D1 import only
+        if: ${{ inputs.mode == 'import_to_WTW_D1' }}
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Discover the exact WTW database
+        if: ${{ inputs.mode == 'import_to_WTW_D1' }}
+        env:
+          CLOUDFLARE_ACCOUNT_ID: add006716b3a24e730ad0b716bdc3899
+          CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
+        run: node scripts/prepare-d1-target.mjs
+      - name: Apply schema migrations to WTW only
+        if: ${{ inputs.mode == 'import_to_WTW_D1' }}
+        env:
+          CLOUDFLARE_ACCOUNT_ID: add006716b3a24e730ad0b716bdc3899
+          CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
+        run: npx wrangler d1 migrations apply wtw-canon-desk-db --remote --config .wtw-d1-import.jsonc
+      - name: Abort if this WTW database is already populated
+        if: ${{ inputs.mode == 'import_to_WTW_D1' }}
+        env:
+          CLOUDFLARE_ACCOUNT_ID: add006716b3a24e730ad0b716bdc3899
+          CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
+        run: node scripts/remote-d1-audit.mjs preflight
+      - name: Import staged history into the verified empty WTW D1
+        if: ${{ inputs.mode == 'import_to_WTW_D1' }}
+        env:
+          CLOUDFLARE_ACCOUNT_ID: add006716b3a24e730ad0b716bdc3899
+          CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(generated/private-d1/*.sql)
+          if [ "${#files[@]}" -lt 15 ]; then
+            echo "::error::No complete historical import generated."
+            exit 1
+          fi
+          for sql in "${files[@]}"; do
+            echo "Importing stage $(basename "$sql")"
+            npx wrangler d1 execute wtw-canon-desk-db --remote --config .wtw-d1-import.jsonc --file "$sql" --yes
+          done
+      - name: Audit remote row counts, names and provenance
+        if: ${{ inputs.mode == 'import_to_WTW_D1' }}
+        env:
+          CLOUDFLARE_ACCOUNT_ID: add006716b3a24e730ad0b716bdc3899
+          CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
+        run: node scripts/remote-d1-audit.mjs verify
+      - name: Completion
+        run: |
+          echo "WTW source verification completed."
+          echo "Mode: ${{ inputs.mode }}"
+          echo "No original Google Drive historical files or non-WTW projects were modified."
