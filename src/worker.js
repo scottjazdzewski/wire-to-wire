@@ -49,7 +49,7 @@ async function readNameTarget(db,type,id) {
   if(type==='entity') return db.prepare("SELECT e.name AS source_name,COALESCE(n.name,e.name) AS display_name FROM entities e LEFT JOIN display_name_overrides n ON n.target_type='entity' AND n.target_id=e.id WHERE e.id=?").bind(id).first();
   if(type==='race') return db.prepare("SELECT r.name AS source_name,COALESCE(n.name,r.name) AS display_name FROM races r LEFT JOIN display_name_overrides n ON n.target_type='race' AND n.target_id=r.id WHERE r.id=?").bind(id).first();
   if(type==='venue') return db.prepare("SELECT r.track_name AS source_name,COALESCE(v.name,t.name,r.track_name) AS display_name,t.name AS track_override FROM races r LEFT JOIN edition_details d ON d.edition_id=r.id LEFT JOIN display_name_overrides v ON v.target_type='venue' AND v.target_id=r.id LEFT JOIN display_name_overrides t ON t.target_type='entity' AND t.target_id=d.track_id WHERE r.id=? AND r.track_name IS NOT NULL").bind(id).first();
-  if(type==='pedigree') return db.prepare("SELECT p.parent_name AS source_name,COALESCE(n.name,p.parent_name) AS display_name FROM pedigree_edges p LEFT JOIN display_name_overrides n ON n.target_type='pedigree' AND n.target_id=p.parent_id WHERE p.parent_id=? ORDER BY p.edge_key LIMIT 1").bind(id).first();
+  if(type==='pedigree') return db.prepare("SELECT q.source_name,COALESCE(n.name,q.source_name) AS display_name FROM (SELECT parent_id AS ref_id,parent_name AS source_name,0 AS priority FROM pedigree_edges WHERE parent_id=? UNION ALL SELECT child_id AS ref_id,child_name AS source_name,1 AS priority FROM pedigree_edges WHERE child_id=?) q LEFT JOIN display_name_overrides n ON n.target_type='pedigree' AND n.target_id=q.ref_id WHERE q.source_name IS NOT NULL ORDER BY q.priority LIMIT 1").bind(id,id).first();
   return null;
 }
 export function validDisplayName(value) {
@@ -119,7 +119,7 @@ async function api(request,env,email) {
       env.DB.prepare('SELECT * FROM horse_details WHERE horse_id=?').bind(horseId).first(),
       env.DB.prepare('SELECT * FROM horse_seasons WHERE horse_id=? ORDER BY year').bind(horseId).all(),
       env.DB.prepare("SELECT p.parent_id,COALESCE(n.name,p.parent_name) AS parent_name,p.relation,p.biology_check FROM pedigree_edges p LEFT JOIN display_name_overrides n ON n.target_type='pedigree' AND n.target_id=p.parent_id WHERE p.child_id=? ORDER BY p.relation").bind(horseId).all(),
-      env.DB.prepare("SELECT p.child_id,COALESCE(n.name,p.child_name) AS child_name,p.relation,p.biology_check FROM pedigree_edges p LEFT JOIN display_name_overrides n ON n.target_type='entity' AND n.target_id=p.child_id WHERE p.parent_id=? ORDER BY p.child_id LIMIT 100").bind(horseId).all(),
+      env.DB.prepare("SELECT p.child_id,COALESCE(n.name,m.name,p.child_name) AS child_name,p.relation,p.biology_check FROM pedigree_edges p LEFT JOIN display_name_overrides n ON n.target_type='entity' AND n.target_id=p.child_id LEFT JOIN display_name_overrides m ON m.target_type='pedigree' AND m.target_id=p.child_id WHERE p.parent_id=? ORDER BY p.child_id LIMIT 100").bind(horseId).all(),
       env.DB.prepare('SELECT * FROM bloodline_profiles WHERE horse_id=?').bind(horseId).first()
     ]);
     return response({horse_id:horseId,details,seasons:seasons.results,parents:parents.results,offspring:offspring.results,bloodline});
