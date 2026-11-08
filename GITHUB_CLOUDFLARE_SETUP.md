@@ -1,39 +1,48 @@
-# WIRE TO WIRE — GitHub to Cloudflare
+# WIRE TO WIRE — Live Cloudflare Pages + Private Historical Database
 
-## Current status (2026-11-08)
+Last updated: 2026-11-08.
 
-**GitHub: DONE.** The independent private repository `scottjazdzewski/wire-to-wire` now contains the WTW Canon Desk application, actual brand logo, browser, curated 1953–1955 source sample, D1 schema, safe-edit review API, and automated source/security tests. Rail & Rye and Hockey Lab were not changed.
+## Verified project status
 
-**Cloudflare: NOT YET CONNECTED.** There is no confirmed live WTW URL, Worker, or D1 database yet. Cloudflare setup requires the account owner's authorization in the Cloudflare dashboard.
+- GitHub repository: `scottjazdzewski/wire-to-wire` (private). Brand and sample browser deployed via the owner's existing Cloudflare Pages Git connection.
+- Site: `wire-to-wire.pages.dev` as created by the user; deployment reported working by the owner.
+- D1 database: `wtw-canon-desk-db`, created by owner but not yet verified as **bound** to Pages.
+- Pages API: `functions/api/[[path]].js` now serves routes via `src/worker.js` and `src/access-jwt.js`. This verifies **signed Cloudflare Access JWT** and administrator email before any D1 call.
+- Private historical JSON source snapshots are in `data/history-source/2026-11-07/`; they are **NOT** in the deployed public assets.
+- Import compiler: `scripts/build-full-history.mjs`. D1 extensions: `migrations/0002_full_history.sql`; verification and test scripts checked by GitHub Actions.
+- **Important:** The new D1 is initially empty, and the live Pages site continues to display the public 1953–1955 sample until schema migrations, full import and Access configuration are completed. No full history is publicly live yet.
 
-## First live website: UI preview using Cloudflare Pages
+## Next step — Bind D1 to the existing Pages website
 
-This is the shortest route to a normal website address so the owner can review functionality. It runs **sample mode**: correction proposals are stored only in that browser, not in D1 or the historical master. A private GitHub repository does **not** make the deployed Pages URL private.
+1. In Cloudflare dashboard, go to **Workers & Pages** → **wire-to-wire** (Pages).
+2. Open **Settings** → **Bindings** → **Add** → **D1 database**.
+3. Set **Variable name** exactly `DB`.
+4. Choose existing D1 database `wtw-canon-desk-db`.
+5. Save, then deploy the new GitHub main commit or trigger **Redeploy** to apply binding.
+6. Check the project deploy logs. The API remains inaccessible until Cloudflare Access is enabled: this is intentional.
 
-1. Open https://dash.cloudflare.com/ and select **Workers & Pages → Create application → Pages → Connect to Git** (or **Import an existing Git repository**).
-2. Authorize the Cloudflare GitHub app to use **only the WTW repository** if it is not already listed. Select `scottjazdzewski/wire-to-wire`.
-3. Set project name `wtw-canon-desk`, production branch `main`, framework preset `None`, build command `exit 0`, output directory `public` and root directory the repository root.
-4. Deploy. Cloudflare will give the site its own `*.pages.dev` URL. Do not guess the actual URL before the deployment appears.
-5. **Protect the production `<project>.pages.dev` hostname behind Cloudflare Access before treating it as private.** Cloudflare Pages' Settings → Enable access policy initially protects preview deployment URLs only, **not** automatically the production `*.pages.dev` URL. To protect production, use Cloudflare's documented production Pages/Access procedure and verify in a signed-out or incognito browser that an unauthenticated visitor cannot see the site.
-6. Once the initial website looks right, do not promote the demo browser's proposals as authoritative historical edits.
+Cloudflare source: https://developers.cloudflare.com/pages/functions/bindings/#d1-databases
 
-Cloudflare references: https://developers.cloudflare.com/pages/framework-guides/deploy-anything/ and https://developers.cloudflare.com/pages/platform/known-issues/#enable-access-on-your-pagesdev-domain.
+## Next — Protect the whole live website
 
-## Full persistent/private editing: Cloudflare Worker + D1
+Configure Cloudflare Access on the production `wire-to-wire.pages.dev` hostname or a WTW-only custom hostname; verify both HTML and `/api/bootstrap` reject incognito visitors. Add these exact Pages **Variables and Secrets**, without committing their values in Git:
 
-Once the layout and review workflow are approved, run the Worker in this same **separate WTW project**, with its own D1. This turns the change queue into a durable authenticated database review system (still **not** an automatic rewrite of the frozen historical canon).
+- `TEAM_DOMAIN` = the actual Cloudflare Zero Trust team URL (e.g., `https://example.cloudflareaccess.com`)
+- `POLICY_AUD` = application Audience tag from Cloudflare Access
+- `ADMIN_EMAIL` = exact authorized administrator email (one or comma-separated)
 
-1. Create D1 `wtw-canon-desk-db` in the same Cloudflare account, distinct from other projects' databases. Copy its real UUID into `wrangler.jsonc` replacing `REPLACE_WITH_WTW_ONLY_D1_UUID`.
-2. Apply `migrations/0001_initial.sql` via `npx wrangler d1 migrations apply wtw-canon-desk-db --remote`.
-3. Optionally seed the reviewed sample with `node scripts/build-seed.mjs` then `npx wrangler d1 execute wtw-canon-desk-db --remote --file=./data/seed.sql`. **Do not import the entire WTW history yet.**
-4. Configure **Cloudflare Access → Protect this Worker → all traffic**, with an allow policy for the owner, and set `ADMIN_EMAIL` to that approved identity. The Worker refuses production requests without Access identity. Do not set `DEV_BYPASS_ACCESS` in Cloudflare production environment.
-5. Connect Workers Builds to the new WTW repository or deploy with an authorized Wrangler session. Verify an unauthenticated request is denied **before sharing the URL**.
-6. Test search, season browsing, correction submission, persistence and approval audit. No existing race winner, owner/trainer relationship or permanent ID may be overwritten by a proposed edit; source promotion remains a separate later process.
+Redeploy after setting them. API checks signed JWT algorithm, signature, issuer, audience, expiry, and allowed email, with fail-closed behavior and tests. Do not use any access bypass in production.
 
-Cloudflare reference: https://developers.cloudflare.com/workers/configuration/cloudflare-access/.
+Cloudflare source: https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/
 
-## Data authority
+## Finally — Build and import the historical D1
 
-Current 1953–1955 demo is **not** the complete historical universe; it is an accurate scoped UI sample, not a second master. Preserve permanent horse/person/race IDs. Treat trainer, jockey and owner links as **season-level** unless documentary evidence establishes a specific race-day assignment or barn. All approved/rejected changes require attribution, source lineage and controlled promotion.
+Do **not** paste large private data into a public Pages folder. Run the full-history compiler in GitHub Actions or a trusted authorized environment and apply the migrations to only `wtw-canon-desk-db` using Wrangler with an appropriately scoped Cloudflare API token.
 
-This repo has a GitHub Actions test workflow at `.github/workflows/ci.yml`, which runs `npm test` on pushes and pull requests.
+The compiler creates private SQLite / D1 import SQL files for horses, horse-year records, race editions and placings, pedigree edges, bloodlines, and party/owner/trainer/jockey links. Source snapshots are read-only, and data anomalies stay visible in the QA manifest. Verify race result integrity, permanent IDs, approved user names, owner/trainer year-level links and import counts. **Do not update original Google Drive master files.**
+
+We should not treat any historical claim as GOLD verified solely because it was imported. Source books include some QA-pending rows. Only surface verified evidence status.
+
+## Separation rule
+
+WTW has its own Pages site, D1 database, source import and GitHub repository. Rail & Rye and Hockey Lab are not part of any WTW migration or deployment.
