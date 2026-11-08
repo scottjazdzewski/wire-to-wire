@@ -68,3 +68,17 @@ button:disabled{cursor:not-allowed;opacity:.5}
 .name-edit-pair .name-cell{vertical-align:baseline}
 #name-dialog .dialog-actions button:disabled{opacity:.5;cursor:not-allowed}
 @media (hover:none){.inline-rename{opacity:1;min-width:30px;min-height:30px}}
+
+/* Compact decade navigation replaces 130+ year buttons, preserving all years in the season selector. */
+.year-strip{align-items:center}
+.year-step{border:1px solid #d8e6db;border-radius:8px;background:#f2f7f3;color:#276249;font-weight:800;padding:9px 12px;white-space:nowrap}
+.year-step:hover{background:#e3efe6}
+.year-strip .year-tab{padding:9px 12px}
+.year-hint{font-size:10px;color:#789184;margin-left:auto}
+.search-result{padding:15px 20px;border-bottom:1px solid #edf1ed}
+.search-result:last-child{border-bottom:0}
+.search-result h4{font-size:14px;margin:4px 0 3px}
+.search-result small{color:#85948b;font-size:11px;overflow-wrap:anywhere}
+.search-result .smallcaps{color:#708b7b;font-size:10px}
+.search-note{margin:14px 4px;color:#778a80;font-size:12px}
+@media(max-width:740px){.year-hint{flex-basis:100%;margin-left:0}.year-strip{gap:6px}.year-strip .year-tab{padding:8px 10px}}
