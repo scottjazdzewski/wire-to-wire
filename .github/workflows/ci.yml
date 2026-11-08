@@ -16,6 +16,10 @@ jobs:
           node-version: '22'
       - name: Run source and access tests
         run: npm test
+      - name: Check site and API JavaScript syntax
+        run: |
+          node --check public/app.js
+          node --check src/worker.js
       - name: Build private historical import
         run: npm run db:build:full
       - name: Verify historical SQL against temporary SQLite database
