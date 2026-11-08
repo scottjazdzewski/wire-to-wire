@@ -1,12 +1,5 @@
 name: WTW D1 historical import (manual, isolated)
 on:
-  # Single-purpose trigger for the owner's explicitly authorized WTW history import.
-  # Ordinary code pushes never match this exact confirmation file.
-  push:
-    branches: [main]
-    paths:
-      - 'ops/confirmed-wtw-d1-import-2026-11-08.txt'
-      - 'ops/confirmed-wtw-d1-import-2026-11-08-retry.txt'
   workflow_dispatch:
     inputs:
       mode:
@@ -47,37 +40,37 @@ jobs:
       - name: Verify all SQL, foreign keys and user-approved historical names
         run: python3 scripts/verify-history-sql.py
       - name: Confirm target before any remote changes
-        if: ${{ inputs.mode == 'import_to_WTW_D1' || github.event_name == 'push' }}
+        if: ${{ inputs.mode == 'import_to_WTW_D1' }}
         env:
-          WTW_DB_CONFIRM: ${{ github.event_name == 'push' && 'wtw-canon-desk-db' || inputs.confirm_database }}
+          WTW_DB_CONFIRM: ${{ inputs.confirm_database }}
         run: |
           if [ "$WTW_DB_CONFIRM" != "wtw-canon-desk-db" ]; then
             echo "::error::You must type wtw-canon-desk-db to authorize an import to this database."
             exit 1
           fi
       - name: Install Wrangler for isolated D1 import only
-        if: ${{ inputs.mode == 'import_to_WTW_D1' || github.event_name == 'push' }}
+        if: ${{ inputs.mode == 'import_to_WTW_D1' }}
         run: npm install --ignore-scripts --no-audit --no-fund
       - name: Discover the exact WTW database
-        if: ${{ inputs.mode == 'import_to_WTW_D1' || github.event_name == 'push' }}
+        if: ${{ inputs.mode == 'import_to_WTW_D1' }}
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID || 'add006716b3a24e730ad0b716bdc3899' }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
         run: node scripts/prepare-d1-target.mjs
       - name: Apply schema migrations to WTW only
-        if: ${{ inputs.mode == 'import_to_WTW_D1' || github.event_name == 'push' }}
+        if: ${{ inputs.mode == 'import_to_WTW_D1' }}
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID || 'add006716b3a24e730ad0b716bdc3899' }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
         run: npx wrangler d1 migrations apply wtw-canon-desk-db --remote --config .wtw-d1-import.jsonc
       - name: Abort if this WTW database is already populated
-        if: ${{ inputs.mode == 'import_to_WTW_D1' || github.event_name == 'push' }}
+        if: ${{ inputs.mode == 'import_to_WTW_D1' }}
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID || 'add006716b3a24e730ad0b716bdc3899' }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
         run: node scripts/remote-d1-audit.mjs preflight
       - name: Import staged history into the verified empty WTW D1
-        if: ${{ inputs.mode == 'import_to_WTW_D1' || github.event_name == 'push' }}
+        if: ${{ inputs.mode == 'import_to_WTW_D1' }}
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID || 'add006716b3a24e730ad0b716bdc3899' }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
@@ -94,7 +87,7 @@ jobs:
             npx wrangler d1 execute wtw-canon-desk-db --remote --config .wtw-d1-import.jsonc --file "$sql" --yes
           done
       - name: Audit remote row counts, names and provenance
-        if: ${{ inputs.mode == 'import_to_WTW_D1' || github.event_name == 'push' }}
+        if: ${{ inputs.mode == 'import_to_WTW_D1' }}
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID || 'add006716b3a24e730ad0b716bdc3899' }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
@@ -102,5 +95,5 @@ jobs:
       - name: Completion
         run: |
           echo "WTW source verification completed."
-          echo "Mode: ${{ github.event_name == 'push' && 'import_to_WTW_D1' || inputs.mode }}"
+          echo "Mode: ${{ inputs.mode }}"
           echo "No original Google Drive historical files or non-WTW projects were modified."
