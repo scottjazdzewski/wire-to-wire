@@ -297,3 +297,32 @@ body{background:#f2f5f1;color:var(--manager-ink)}
 .source-delta-grid>div,.source-master-grid>div{display:grid;gap:4px;padding:9px;border-radius:8px;background:#f5f7f2}
 .source-delta-grid small,.source-master-grid small{font-size:7px;font-weight:900;letter-spacing:.06em;color:#889287}.source-delta-grid strong,.source-master-grid strong{font-size:16px;color:#33543d}.source-master-grid{margin-bottom:8px}
 @media(max-width:760px){.calendar-audit-banner{align-items:flex-start;flex-direction:column;gap:7px}.source-reconciliation-head{align-items:flex-start;flex-direction:column}.source-delta-grid,.source-master-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Compact horse career overview: keep core facts, pedigree, and wins in the first view. */
+.entity-profile.horse-profile{gap:9px}
+.horse-profile .profile-header{grid-template-columns:112px minmax(0,1fr) auto;gap:12px;padding-bottom:9px}
+.horse-profile .profile-portrait{height:106px}
+.horse-profile .profile-heading h2{font-size:22px}
+.horse-profile .profile-summary{margin:4px 0}
+.horse-profile .profile-tags span{padding:4px 7px}
+.horse-profile .profile-stats{gap:5px}
+.horse-profile .profile-stats>div{min-height:55px;padding:6px 7px}
+.horse-profile .profile-pedigree-section,.horse-profile .profile-section{padding:8px 10px}
+.horse-profile .profile-pedigree-section .profile-section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+.horse-profile .profile-pedigree-section h3{font-size:12px}
+.horse-profile .profile-pedigree-grid{gap:6px}
+.horse-profile .pedigree-card{padding:6px 8px}
+.profile-quick-achievements{display:grid;grid-template-columns:180px minmax(0,1fr);gap:10px;align-items:center;padding:8px 10px;border:1px solid #e7ece7;border-radius:10px;background:#f8faf7}
+.profile-quick-achievements h3{font-size:12px;margin:2px 0 0;color:#244b35}
+.profile-quick-achievement-list{display:flex;gap:6px;flex-wrap:wrap;min-width:0}
+.profile-quick-achievement-list>span{display:grid;gap:1px;max-width:220px;padding:5px 8px;border:1px solid #e4ebe3;border-radius:7px;background:#fff}
+.profile-quick-achievement-list button{padding:0;border:0;background:none;color:#204932;font-size:9px;font-weight:850;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.profile-quick-achievement-list small,.achievement-empty{font-size:8px;color:#89968c}
+@media(max-width:680px){
+ .horse-profile .profile-header{grid-template-columns:74px minmax(0,1fr);gap:10px;align-items:start}
+ .horse-profile .profile-portrait{height:84px}
+ .horse-profile .profile-header-actions{grid-column:2;padding-top:0}
+ .horse-profile .profile-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .profile-quick-achievements{grid-template-columns:1fr;gap:5px}
+ .horse-profile .profile-pedigree-grid,.horse-profile .profile-columns{grid-template-columns:1fr}
+}
