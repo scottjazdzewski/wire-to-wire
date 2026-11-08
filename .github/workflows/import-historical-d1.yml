@@ -31,6 +31,10 @@ jobs:
           node-version: '22'
       - name: Test the WTW site, source and security code
         run: npm test
+      - name: Check name editor and API syntax
+        run: |
+          node --check public/app.js
+          node --check src/worker.js
       - name: Compile historical records into private SQL files
         run: npm run db:build:full
       - name: Verify all SQL, foreign keys and user-approved historical names
