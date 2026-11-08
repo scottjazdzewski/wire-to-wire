@@ -56,7 +56,7 @@ export function validDisplayName(value) {
   return typeof value==='string' && value.trim().length>=1 && value.trim().length<=220 && !/[\u0000-\u001f\u007f]/.test(value);
 }
 async function bootstrap(db) {
-  const [entityCount,raceCount,connCount,resultCount,changeCount,entities,connections,races,results,changes,years] = await Promise.all([
+  const [entityCount,raceCount,connCount,resultCount,changeCount,entities,connections,races,results,changes,years,nameEdits] = await Promise.all([
     db.prepare('SELECT count(*) AS n FROM entities').first(),
     db.prepare('SELECT count(*) AS n FROM races').first(),
     db.prepare('SELECT count(*) AS n FROM connections').first(),
@@ -67,7 +67,8 @@ async function bootstrap(db) {
     db.prepare(raceSelect+' ORDER BY r.year DESC, name LIMIT 10000').all(),
     db.prepare('SELECT edition_id, horse_id, position FROM results ORDER BY edition_id, position LIMIT 25000').all(),
     db.prepare('SELECT * FROM change_requests ORDER BY created_at DESC LIMIT 500').all(),
-    db.prepare('SELECT DISTINCT year FROM races ORDER BY year').all()
+    db.prepare('SELECT DISTINCT year FROM races ORDER BY year').all(),
+    db.prepare('SELECT target_type,target_id,old_display_name,new_display_name,source_name,editor_email,edited_at FROM name_edit_audit ORDER BY id DESC LIMIT 200').all()
   ]);
   return {
     mode:'D1_CONNECTED',
@@ -76,7 +77,8 @@ async function bootstrap(db) {
     partial: Number(entityCount?.n||0)>15000 || Number(raceCount?.n||0)>10000 || Number(connCount?.n||0)>40000 || Number(resultCount?.n||0)>25000,
     years: years.results.map(x=>x.year),
     entities:entities.results,connections:connections.results,races:races.results,results:results.results,
-    changes:changes.results
+    changes:changes.results,
+    nameEdits:nameEdits.results
   };
 }
 async function api(request,env,email) {
