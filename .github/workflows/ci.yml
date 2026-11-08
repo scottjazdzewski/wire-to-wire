@@ -14,5 +14,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Run source and security tests
+      - name: Run source and access tests
         run: npm test
+      - name: Build private historical import
+        run: npm run db:build:full
+      - name: Verify historical SQL against temporary SQLite database
+        run: python3 scripts/verify-history-sql.py
