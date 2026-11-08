@@ -154,3 +154,5 @@ export default {
     } catch(e){return response({error:'Internal application error'},500)}
   }
 };
+// Shared by the Pages Functions API adapter; authentication happens in the caller.
+export { api };
