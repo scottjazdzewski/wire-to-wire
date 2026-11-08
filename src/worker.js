@@ -44,11 +44,11 @@ function validProposed(field, value) {
 }
 // Display-name edits are an overlay. Never overwrite original imported names or IDs.
 const entitySelect = `SELECT e.id,e.kind,COALESCE(n.name,e.name) AS name,e.name AS source_name,e.foal_year,e.sex,e.role,e.summary,e.status,e.source,e.imported_at FROM entities e LEFT JOIN display_name_overrides n ON n.target_type='entity' AND n.target_id=e.id`;
-const raceSelect = `SELECT r.id,COALESCE(n.name,r.name) AS name,r.name AS source_name,r.year,r.date,COALESCE(v.name,t.name,r.track_name) AS track_name,r.track_name AS source_track_name,r.status,r.source,r.imported_at,d.race_date_basis AS date_basis FROM races r LEFT JOIN edition_details d ON d.edition_id=r.id LEFT JOIN display_name_overrides n ON n.target_type='race' AND n.target_id=r.id LEFT JOIN display_name_overrides v ON v.target_type='venue' AND v.target_id=r.id LEFT JOIN display_name_overrides t ON t.target_type='entity' AND t.target_id=d.track_id`;
+const raceSelect = `SELECT r.id,COALESCE(n.name,r.name) AS name,r.name AS source_name,r.year,r.date,COALESCE(v.name,t.name,r.track_name) AS track_name,r.track_name AS source_track_name,d.track_id AS track_id,v.name AS venue_override_name,r.status,r.source,r.imported_at,d.race_date_basis AS date_basis FROM races r LEFT JOIN edition_details d ON d.edition_id=r.id LEFT JOIN display_name_overrides n ON n.target_type='race' AND n.target_id=r.id LEFT JOIN display_name_overrides v ON v.target_type='venue' AND v.target_id=r.id LEFT JOIN display_name_overrides t ON t.target_type='entity' AND t.target_id=d.track_id`;
 async function readNameTarget(db,type,id) {
   if(type==='entity') return db.prepare("SELECT e.name AS source_name,COALESCE(n.name,e.name) AS display_name FROM entities e LEFT JOIN display_name_overrides n ON n.target_type='entity' AND n.target_id=e.id WHERE e.id=?").bind(id).first();
   if(type==='race') return db.prepare("SELECT r.name AS source_name,COALESCE(n.name,r.name) AS display_name FROM races r LEFT JOIN display_name_overrides n ON n.target_type='race' AND n.target_id=r.id WHERE r.id=?").bind(id).first();
-  if(type==='venue') return db.prepare("SELECT r.track_name AS source_name,COALESCE(v.name,t.name,r.track_name) AS display_name FROM races r LEFT JOIN edition_details d ON d.edition_id=r.id LEFT JOIN display_name_overrides v ON v.target_type='venue' AND v.target_id=r.id LEFT JOIN display_name_overrides t ON t.target_type='entity' AND t.target_id=d.track_id WHERE r.id=? AND r.track_name IS NOT NULL").bind(id).first();
+  if(type==='venue') return db.prepare("SELECT r.track_name AS source_name,COALESCE(v.name,t.name,r.track_name) AS display_name,t.name AS track_override FROM races r LEFT JOIN edition_details d ON d.edition_id=r.id LEFT JOIN display_name_overrides v ON v.target_type='venue' AND v.target_id=r.id LEFT JOIN display_name_overrides t ON t.target_type='entity' AND t.target_id=d.track_id WHERE r.id=? AND r.track_name IS NOT NULL").bind(id).first();
   if(type==='pedigree') return db.prepare("SELECT p.parent_name AS source_name,COALESCE(n.name,p.parent_name) AS display_name FROM pedigree_edges p LEFT JOIN display_name_overrides n ON n.target_type='pedigree' AND n.target_id=p.parent_id WHERE p.parent_id=? ORDER BY p.edge_key LIMIT 1").bind(id).first();
   return null;
 }
@@ -95,7 +95,7 @@ async function api(request,env,email) {
     if(target.display_name!==b.expected_name) return response({error:'Name changed since you opened it. Reload and try again.'},409);
     const requested=b.name.trim();
     if(requested===target.display_name) return response({error:'Name is unchanged'},400);
-    if(requested===target.source_name){
+    if(requested===target.source_name && !(b.target_type==='venue' && target.track_override)){
       await env.DB.batch([
         env.DB.prepare('DELETE FROM display_name_overrides WHERE target_type=? AND target_id=?').bind(b.target_type,b.target_id),
         env.DB.prepare('INSERT INTO name_edit_audit (target_type,target_id,old_display_name,new_display_name,source_name,editor_email) VALUES (?,?,?,?,?,?)').bind(b.target_type,b.target_id,target.display_name,requested,target.source_name,email)
