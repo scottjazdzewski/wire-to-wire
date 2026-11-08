@@ -20,7 +20,7 @@ The command center lets the player choose an Owner, Trainer, Farm Manager, Breed
 
 This first version is **NOT** the entire WTW history. The data sample contains 1953–1955 source-linked records only; it is marked clearly. The full historical ledgers, complete barn/location history, pedigrees, championships, awards and 87,500-horse opening population are **not yet imported**. Some race dates are deliberately unknown. Season trainer/jockey assignments **do not prove** individual race-day mounts; they are labeled year-level evidence. Exact horse barn is not inferred from ownership circuit.
 
-No Cloudflare account has been accessed, no D1 database or Worker has been created in the account, and this site is **not deployed**. The downloadable folder is the tested starting application and needs its own repository and Cloudflare deployment.
+The existing `wire-to-wire.pages.dev` Cloudflare Pages site deploys from this repository's `main` branch, and its Cloudflare Access sign-in gate is active. The D1 binding and full historical import still need to be verified before treating the archive as complete. The 1953–1955 view is a limited source snapshot, not a full-career record.
 
 ## Run the UI immediately (no Cloudflare account required)
 
@@ -30,19 +30,9 @@ python3 -m http.server 8000 --directory public
 ```
 Open <http://localhost:8000>. The interface uses `public/sample-history.json` and stores draft correction proposals in **this browser's localStorage**. Those drafts are **not synced** to D1 or the WTW source data. Use this mode to decide the layout and workflow.
 
-## Set up a separate private Cloudflare project
+## Existing Cloudflare Pages deployment
 
-1. GitHub repository: **`scottjazdzewski/wire-to-wire`** (separate from Rail & Rye and Hockey Lab). Allow the connected ChatGPT GitHub app to access that repository in the app installation settings before asking ChatGPT to push changes.
-2. In Cloudflare, create an **independent Worker** named `wtw-canon-desk` and **new D1 database** named `wtw-canon-desk-db`.
-3. Use `npm install` and `npx wrangler d1 create wtw-canon-desk-db` to obtain the D1 UUID. Replace `REPLACE_WITH_WTW_ONLY_D1_UUID` in `wrangler.jsonc`.
-4. Apply schema to local D1: `npx wrangler d1 migrations apply wtw-canon-desk-db --local`.
-5. Build and seed **local test data**: `node scripts/build-seed.mjs && npx wrangler d1 execute wtw-canon-desk-db --local --file=./data/seed.sql`.
-6. For local full-stack testing, copy `.dev.vars.example` to `.dev.vars`, edit its placeholders, then run `npx wrangler dev`. `DEV_BYPASS_ACCESS=true` works **only on localhost**. Do not use it in production.
-7. In Cloudflare Workers & Pages → this Worker → **Access**, select **Protect this Worker → All traffic** with an allow policy for your account or approved email. Configure the Worker secret/variable `ADMIN_EMAIL` to a comma-separated allowlist of authorized editor email addresses. The Worker explicitly refuses access if `ctx.access` is absent or if the email is not authorized.
-8. Before deploying with `npx wrangler deploy`, create the separate remote D1 tables using `npx wrangler d1 migrations apply wtw-canon-desk-db --remote`. Import sample records only when you're comfortable: `npx wrangler d1 execute wtw-canon-desk-db --remote --file=./data/seed.sql`.
-9. Make sure Access is enabled and test the protected route in an incognito session. **Do not deploy** while it is unprotected or with placeholders.
-
-Cloudflare documentation: [Static assets](https://developers.cloudflare.com/workers/static-assets/binding/), [Access for Workers](https://developers.cloudflare.com/workers/configuration/cloudflare-access/), [D1 migrations](https://developers.cloudflare.com/d1/reference/migrations/).
+The production site already uses the GitHub Pages connection for `wire-to-wire.pages.dev`. Commits to `main` trigger Cloudflare Pages deployments. Do not create a second Worker, Pages project, or D1 database for this app. Follow [GITHUB_CLOUDFLARE_SETUP.md](GITHUB_CLOUDFLARE_SETUP.md) to verify the existing D1 binding, Access variables, and historical import status. Local development still uses Wrangler and the local-only bypass described above.
 
 ## Data contract and next phases
 
