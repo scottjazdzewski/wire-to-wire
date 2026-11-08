@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#092c22" />
+  <meta name="description" content="Private historical and canon management desk for the Wire to Wire racing universe." />
+  <title>WIRE TO WIRE · Historical & Canon Desk</title>
+  <link rel="icon" type="image/png" href="/assets/wtw-logo.png" />
+  <link rel="stylesheet" href="/style.css" />
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="/assets/wtw-logo.png" alt="Wire to Wire logo" class="brand-logo" />
+        <div><div class="brand-title">WIRE TO WIRE</div><div class="brand-sub">HISTORICAL & CANON DESK</div></div>
+      </div>
+      <div class="side-divider"></div>
+      <div class="side-label">EXPLORE THE UNIVERSE</div>
+      <nav class="side-nav" aria-label="Main navigation">
+        <button data-page="overview" class="nav-link active"><span class="nav-icon">▦</span> Overview</button>
+        <button data-page="seasons" class="nav-link"><span class="nav-icon">◷</span> Seasons</button>
+        <button data-page="horses" class="nav-link"><span class="nav-icon">♞</span> Horses</button>
+        <button data-page="people" class="nav-link"><span class="nav-icon">♙</span> People & Stables</button>
+        <button data-page="races" class="nav-link"><span class="nav-icon">⚑</span> Race History</button>
+      </nav>
+      <div class="side-label side-label-second">GOVERNANCE</div>
+      <nav class="side-nav" aria-label="Governance navigation">
+        <button data-page="changes" class="nav-link"><span class="nav-icon">✎</span> Corrections <span class="nav-count" id="change-count">0</span></button>
+        <button data-page="sources" class="nav-link"><span class="nav-icon">≡</span> Sources & Status</button>
+      </nav>
+      <div class="sidebar-bottom"><span class="status-dot"></span><span>Independent WTW project</span><small>Source records protected</small></div>
+    </aside>
+    <div class="workarea">
+      <header class="topbar">
+        <div class="header-left">
+          <button id="mobile-menu" class="icon-button mobile-only" aria-label="Toggle menu">☰</button>
+          <span class="eyebrow">THE RACING WORLD, RECORDED</span>
+          <h1 id="page-title">The Universe</h1>
+        </div>
+        <div class="header-right">
+          <span class="env-pill" id="data-mode">Checking source…</span>
+          <button class="header-help" data-page="sources">About this data</button>
+        </div>
+      </header>
+      <div class="workspace-tools">
+        <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="global-search" type="search" placeholder="Search horses, people, stables, races…" autocomplete="off" aria-label="Search the universe" /></label>
+        <label class="year-wrap">SEASON <select id="year-select" aria-label="Select racing season"><option value="1953">1953</option></select></label>
+      </div>
+      <main class="main" id="app" tabindex="-1"><div class="loading">Opening the historical ledger…</div></main>
+      <footer class="footer"><span>WIRE TO WIRE · CANON DESK / v0.1</span><span>Separate from Rail & Rye and Hockey Lab</span></footer>
+    </div>
+  </div>
+  <div id="drawer-backdrop" class="backdrop" hidden></div>
+  <aside id="detail-drawer" class="drawer" aria-label="Record details" aria-hidden="true"><div class="drawer-inner" id="detail-content"></div></aside>
+  <dialog id="edit-dialog" class="edit-dialog" aria-labelledby="edit-title">
+    <form id="edit-form" method="dialog">
+      <header class="dialog-header"><div><p class="eyebrow">CONTROLLED CORRECTION</p><h2 id="edit-title">Propose a change</h2></div><button id="close-dialog" type="button" class="icon-button" aria-label="Close">✕</button></header>
+      <p class="dialog-sub" id="edit-target"></p>
+      <input type="hidden" name="targetType" id="edit-target-type" />
+      <input type="hidden" name="targetId" id="edit-target-id" />
+      <label class="field-label" for="edit-field">Field</label>
+      <select id="edit-field" name="field" required></select>
+      <label class="field-label" for="edit-original">Current source value</label>
+      <input id="edit-original" disabled />
+      <label class="field-label" for="edit-proposed">Your proposed replacement</label>
+      <input id="edit-proposed" name="proposed" maxlength="220" autocomplete="off" required />
+      <label class="field-label" for="edit-reason">Reason / evidence</label>
+      <textarea id="edit-reason" name="reason" minlength="10" maxlength="1000" placeholder="What should change, and why?" required rows="4"></textarea>
+      <div class="safe-note"><strong>Source-safe:</strong> saving creates a review request. It does not alter horse IDs, winners, pedigrees, seasons, or the WTW game.</div>
+      <div class="dialog-actions"><button id="cancel-dialog" type="button" class="button button-quiet">Cancel</button><button type="submit" class="button button-primary">Save correction proposal</button></div>
+    </form>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
