@@ -147,8 +147,13 @@ for(const [prefix,table,cols] of stages){
   const records=rows[table],size=250;
   for(let i=0;i<records.length;i+=size){
     const statements=records.slice(i,i+size).map(r=>sqlStatement(table,cols,r));
+    // Cloudflare D1 limits an individual SQL statement to 100 KB.
+    // Enforce a margin before offering the import for remote execution.
+    for(const statement of statements){
+      if(Buffer.byteLength(statement,'utf8')>95000)throw Error(`D1 statement exceeds safe size in ${table}`);
+    }
     const filename=`${prefix}_${String(Math.floor(i/size)+1).padStart(3,'0')}.sql`;
-    fs.writeFileSync(path.join(outRoot,filename),['-- WTW source-preserving private D1 import; safe, retryable upserts','BEGIN TRANSACTION;',...statements,'COMMIT;',''].join('\n'));
+    fs.writeFileSync(path.join(outRoot,filename),['-- WTW private D1 import; no explicit BEGIN/COMMIT (Wrangler manages transactions)',...statements,''].join('\n'));
     fileCount++;
   }
 }
