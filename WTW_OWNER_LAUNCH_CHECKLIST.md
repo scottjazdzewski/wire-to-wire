@@ -81,6 +81,7 @@ Log in to https://wire-to-wire.pages.dev/ after the import. Expected:
 - The year selector should show the documented historical years (not just 1953–55).
 - Horses, people, farms, year-level ownership/trainer/jockey links, stakes editions and top-three placings populate the historical desk.
 - Horse profiles show available pedigree and season summaries. Missing details stay marked as unresolved, not fabricated.
-- Corrections save only as **review proposals**. Accepting a proposal **does not** rewrite the Google Drive source canon.
+- **Name edits:** use the small pencil beside any horse, person, owner, trainer, breeder, jockey, farm, stable, track, race, or identified pedigree name. These save directly to the private WTW D1 `display_name_overrides` table, with immutable `name_edit_audit` history; canonical source names and stable IDs do not change.
+- **Other corrections:** still save as **review proposals**; accepting a proposal **does not** rewrite the Google Drive source canon.
 
 **Data coverage warning:** This staged history is based on the H/S/E/P/B spreadsheets, not a comprehensive ledger of every ordinary race. The source has QA-pending records; import validation is not GOLD certification.
