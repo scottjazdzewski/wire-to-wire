@@ -9,7 +9,9 @@ The application remains **separate** from Rail & Rye and Hockey Lab. The origina
 - Cloudflare D1: `wtw-canon-desk-db` (user-created and user-reported bound to the Pages project as `DB`)
 - Full private history sources: `data/history-source/2026-11-07/`; not public files
 - GitHub CI: source tests, source-to-SQL compiler and SQLite integrity checks
-- **No confirmed remote D1 historical import or Cloudflare Access configuration yet.**
+- **INITIAL IMPORT COMPLETE AND REMOTELY VERIFIED on 2026-11-08.** [Successful GitHub import and audit](https://github.com/scottjazdzewski/wire-to-wire/actions/runs/42452571016): 5,101 entities; 5,370 races; 20,884 connections; 15,561 finishers; 3,856 horse details; 5,221 horse seasons; 8,408 pedigree edges; 3,856 bloodline profiles. Canonical source names and checksum verified.
+- Cloudflare Access: owner confirmed the production URL asks for sign-in in a private/incognito window. **Actual signed-in Pages API operation still requires a browser confirmation** (D1 CONNECTED badge); `TEAM_DOMAIN`, `POLICY_AUD`, and `ADMIN_EMAIL` must all be present in the Production Pages settings.
+- **Do not repeat the initial import.** The workflow's empty-target protection intentionally blocks reruns once records exist.
 
 ## 1. Secure the *production* site first
 
@@ -59,11 +61,11 @@ Select **New repository secret**. First create `WTW_CLOUDFLARE_ACCOUNT_ID` with 
 
 Save the exact Cloudflare account ID as a second GitHub Actions repository secret: `WTW_CLOUDFLARE_ACCOUNT_ID`. In Cloudflare → Workers & Pages → Account Details, click **Copy** beside Account ID, or use Cloudflare search (`Ctrl+K`) → **Copy account ID**. The import workflow now uses that secret instead of a hardcoded ID.
 
-## 5. Run the isolated import action (one-time initial import)
+## 5. Historical import completed — instructions retained for recovery only
 
 Open https://github.com/scottjazdzewski/wire-to-wire/actions
 
-Select **WTW D1 historical import (manual, isolated)** in the left sidebar → **Run workflow**.
+**Already completed successfully — do not run this again for the populated D1.** Original manual procedure (reference only): select **WTW D1 historical import (manual, isolated)** in the left sidebar → **Run workflow**.
 
 - **Branch:** `main`
 - **Mode:** `import_to_WTW_D1`
