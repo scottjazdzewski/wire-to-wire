@@ -8,7 +8,7 @@ const fields = {
   connection: {party_id:'Connected owner / trainer / person ID',year:'Season',role:'Connection role',basis:'Evidence basis'},
   result: {horse_id:'Placed horse ID',position:'Finishing position'}
 };
-const state = {page:'overview',year:1953,search:'',data:null,mode:'LOADING',changes:[],edit:null};
+const state = {page:'overview',year:1953,search:'',data:null,mode:'LOADING',changes:[],edit:null,rename:null};
 const SAMPLE_KEY = 'wtw_canon_desk_local_proposals_v1';
 let toastTimeout;
 function storedChanges(){try{return JSON.parse(localStorage.getItem(SAMPLE_KEY)||'[]')}catch{return []}}
@@ -23,7 +23,9 @@ function nameFor(id){return entity(id)?.name || id || 'Unrecorded'}
 function years(){return [...new Set((state.data?.races||[]).map(v=>Number(v.year)).filter(Boolean))].sort((a,b)=>a-b)}
 function formatStatus(s){if(s==='NAME_APPROVED')return pill('Approved');if(s==='NAME_REVIEW')return pill('Name review','pending');if(s==='PENDING')return pill('Pending','pending');if(s==='APPROVED_FOR_PROMOTION')return pill('Approved for promotion');if(s==='REJECTED')return pill('Rejected','red');return pill(s||'Source snapshot','gray')}
 function count(kind){return state.data?.entities.filter(e=>e.kind===kind).length||0}
-function openButton(type,id,label){return `<button type="button" class="name-cell" data-open-type="${h(type)}" data-id="${h(id)}">${h(label)}</button>`}
+function renameButton(type,id,name){return `<button type="button" class="inline-rename" data-rename-type="${h(type)}" data-id="${h(id)}" data-current-name="${h(name)}" title="Edit this name" aria-label="Edit name ${h(name)}">✎</button>`}
+function openButton(type,id,label){return `<span class="name-edit-pair"><button type="button" class="name-cell" data-open-type="${h(type)}" data-id="${h(id)}">${h(label)}</button>${renameButton(type,id,label)}</span>`}
+function venueName(record){if(!record?.track_name)return 'Track unrecorded';return `<span class="name-edit-pair"><span>${h(record.track_name)}</span>${renameButton('venue',record.id,record.track_name)}</span>`}
 function editButton(type,id,label='Propose correction',className='button button-quiet'){return `<button class="${className}" data-edit-type="${h(type)}" data-id="${h(id)}">${h(label)}</button>`}
 function pageTitle(){return ({overview:'The Universe',seasons:'Historical Seasons',horses:'Horse Registry',people:'People & Stables',races:'Race History',changes:'Corrections & Approvals',sources:'Sources & Verification'})[state.page]||'The Universe'}
 function intro(label,title,desc,more=''){return `<div class="page-intro"><div><div class="smallcaps">${h(label)}</div><h2>${h(title)}</h2><p>${h(desc)}</p></div>${more}</div>`}
@@ -39,7 +41,7 @@ function seasonHeadline(y){const r=sessionRaces(y);return r.length?`${r.length} 
 function winnerOf(r){return resultOf(r.id).find(x=>Number(x.position)===1)}
 function renderOverview(){
   const year=state.year, list=sessionRaces(year);
-  const highlight=list.slice(0,6).map(r=>`<tr><td>${openButton('race',r.id,r.name)}<div class="subline">${h(r.track_name||'Venue not recorded')}</div></td><td>${winnerOf(r)?openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id)):'—'}</td><td>${formatStatus(r.status)}</td></tr>`).join('');
+  const highlight=list.slice(0,6).map(r=>`<tr><td>${openButton('race',r.id,r.name)}<div class="subline">${venueName(r)}</div></td><td>${winnerOf(r)?openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id)):'—'}</td><td>${formatStatus(r.status)}</td></tr>`).join('');
   return `
     <div class="hero"><div class="hero-copy"><div class="hero-kicker">WELCOME TO THE ARCHIVE</div><h2>Every season. Every connection.<br>The complete WTW story.</h2><p>Browse source-recorded racing history, follow owners and trainers through the decades, and review corrections without rewriting protected results.</p></div><div class="hero-badge"><strong>${year}</strong><small>SELECTED SEASON</small></div></div>
     <div class="metrics">${metric(count('horse'),'Horses in this import','Import grows by approved batches')}${metric(count('person'),'People','Trainers and riders')}${metric(count('organization'),'Farms & stables','Owners and breeding operations')}${metric(state.data.races.length,'Recorded races','Dates not invented')}</div>
@@ -52,7 +54,7 @@ function renderSeasons(){
   const y=state.year;const tabs=years().map(n=>`<button class="year-tab ${n===y?'active':''}" data-year="${n}">${n}</button>`).join('');
   const races=sessionRaces(y).filter(recordMatches);const seasonPeople=(state.data?.connections||[]).filter(c=>+c.year===+y);
   const ranked=[...new Set(seasonPeople.map(c=>c.horse_id))];
-  const raceRows=races.map(r=>`<div class="race-card"><div><h4>${openButton('race',r.id,r.name)}</h4><p>${h(r.track_name||'Track not verified')} · ${h(dateLabel(r))}</p><div class="winners">${winnerOf(r)?`Winner: ${openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id))}`:'Winner not in sample'}</div></div>${editButton('race',r.id,'Suggest edit')}</div>`).join('');
+  const raceRows=races.map(r=>`<div class="race-card"><div><h4>${openButton('race',r.id,r.name)}</h4><p>${venueName(r)} · ${h(dateLabel(r))}</p><div class="winners">${winnerOf(r)?`Winner: ${openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id))}`:'Winner not in sample'}</div></div>${editButton('race',r.id,'Suggest edit')}</div>`).join('');
   const known=ranked.slice(0,10).map(id=>`<div class="detail-list-item">${openButton('entity',id,nameFor(id))}<small>${seasonPeople.filter(c=>c.horse_id===id).length} season connections</small></div>`).join('');
   return `${intro('THE HISTORICAL YEARBOOK',`${y} Racing Season`,'Select any imported season. Race results, participants and source uncertainty stay attached to their permanent IDs.')}
    <div class="year-tabs">${tabs}</div><div class="metrics">${metric(sessionRaces(y).length,'Recorded races','Imported source editions')}${metric(sessionHorseIds(y).length,'Featured horses','In results or season links')}${metric(seasonPeople.length,'Season connections','Owner / trainer / jockey / breeder')}${metric(races.filter(r=>r.date).length,'Exact dated races','Missing dates remain unknown')}</div>
@@ -61,19 +63,19 @@ function renderSeasons(){
 function renderHorses(){
  const list=filteredEntities('horse');
  const rows=list.slice(0,250).map(r=>{const wins=(state.data?.results||[]).filter(t=>t.horse_id===r.id&&+t.position===1).length;return `<tr><td>${openButton('entity',r.id,r.name)}<div class="subline">${h(r.id)}</div></td><td>${h(r.foal_year||'—')}</td><td>${h(r.sex||'—')}</td><td>${wins}</td><td>${formatStatus(r.status)}</td><td>${editButton('entity',r.id,'Propose edit')}</td></tr>`}).join('');
- return `${intro('SOURCE-RECORDED POPULATION','Horse Registry','Search horses by name or immutable ID. Open a profile for year-by-year connections, results and change requests.',`<div class="record-count">${list.length} horses displayed</div>`)}${section('Horses','Showing up to 250 matching records at once. Full database search is supported when the WTW D1 import is connected.',`<div class="table-scroll"><table class="data-table"><thead><tr><th>Horse</th><th>Foaled</th><th>Sex</th><th>Recorded wins</th><th>Name status</th><th>Review</th></tr></thead><tbody>${rows||'<tr><td colspan="6">No matching horses</td></tr>'}</tbody></table></div>`)}`;
+ return `${intro('SOURCE-RECORDED POPULATION','Horse Registry','Every horse name has a pencil to edit its display name without changing its permanent identity. Open any profile for results and connections.',`<div class="record-count">${list.length} horses displayed</div>`)}${section('Horses','Showing up to 250 matching records at once. Full database search is supported when the WTW D1 import is connected.',`<div class="table-scroll"><table class="data-table"><thead><tr><th>Horse</th><th>Foaled</th><th>Sex</th><th>Recorded wins</th><th>Name status</th><th>Review</th></tr></thead><tbody>${rows||'<tr><td colspan="6">No matching horses</td></tr>'}</tbody></table></div>`)}`;
 }
 function renderPeople(){
   const list=[...filteredEntities('person'),...filteredEntities('organization')].sort((a,b)=>a.name.localeCompare(b.name));
   const rows=list.slice(0,250).map(e=>{const roles=new Set((state.data?.connections||[]).filter(c=>c.party_id===e.id).map(c=>c.role));const count=(state.data?.connections||[]).filter(c=>c.party_id===e.id).length;return `<tr><td>${openButton('entity',e.id,e.name)}<div class="subline">${h(e.id)}</div></td><td>${h(e.kind==='person'?'Person':'Farm / stable')}</td><td>${h(e.role||[...roles].join(', ')||'—')}</td><td>${count}</td><td>${editButton('entity',e.id,'Propose edit')}</td></tr>`}).join('');
-  return `${intro('HUMAN & STABLE RECORDS','People & Stables','Follow ownership, training, jockey and breeding associations across seasons. Relationships are shown with their evidence basis.')}
+  return `${intro('HUMAN & STABLE RECORDS','People & Stables','Edit trainer, jockey, owner, breeder, farm and stable names with the pencil beside each record. Historical associations retain their IDs.')}
    ${section('People, owners, farms & studs',`${list.length} matches in the current import`, `<div class="table-scroll"><table class="data-table"><thead><tr><th>Name</th><th>Type</th><th>Known role</th><th>Horse-year links</th><th>Review</th></tr></thead><tbody>${rows||'<tr><td colspan="5">No matches</td></tr>'}</tbody></table></div>`)}`;
 }
 function renderRaces(){
  const list=(state.data?.races||[]).filter(r=>(+r.year===+state.year||state.search)&&recordMatches(r));
- return `${intro('RACE RECORDS','Race History','Search and inspect historical races. Winner names are derived from Horse IDs, so approved renames appear consistently everywhere.')}
+ return `${intro('RACE RECORDS','Race History','Edit race and venue names using the pencil. Horse names update everywhere through permanent horse IDs.')}
  <div class="year-tabs">${years().map(y=>`<button class="year-tab ${state.year===y?'active':''}" data-year="${y}">${y}</button>`).join('')}</div>
- ${section(`${state.search?'Matching':'Selected'} race editions`,`${list.length} entries`,list.map(r=>`<div class="race-card"><div><h4>${openButton('race',r.id,r.name)}</h4><p>${h(r.year)} · ${h(r.track_name||'Track unrecorded')} · ${h(dateLabel(r))}</p><div class="winners">${winnerOf(r)?`Winner: ${openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id))}`:'Finish order not imported'}</div></div>${editButton('race',r.id,'Propose edit')}</div>`).join('')||noRecords('No matching race editions.'))}`;
+ ${section(`${state.search?'Matching':'Selected'} race editions`,`${list.length} entries`,list.map(r=>`<div class="race-card"><div><h4>${openButton('race',r.id,r.name)}</h4><p>${h(r.year)} · ${venueName(r)} · ${h(dateLabel(r))}</p><div class="winners">${winnerOf(r)?`Winner: ${openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id))}`:'Finish order not imported'}</div></div>${editButton('race',r.id,'Propose edit')}</div>`).join('')||noRecords('No matching race editions.'))}`;
 }
 function renderChanges(){
  const ordered=[...state.changes].sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
@@ -112,12 +114,12 @@ async function openDetail(type,id){
    <div class="detail-facts"><div class="detail-fact"><small>Type</small><strong>${h(e.kind)}</strong></div><div class="detail-fact"><small>Foaling year / role</small><strong>${h(e.foal_year||e.role||'Not recorded')}</strong></div><div class="detail-fact"><small>Sex</small><strong>${h(e.sex||'Not applicable / unknown')}</strong></div><div class="detail-fact"><small>Source status</small><strong>${h(e.status||'SOURCE_SNAPSHOT')}</strong></div></div>
    <div class="detail-edit">${editButton('entity',e.id,'Propose a name or profile correction','button button-primary')}</div>
    <h3>Season connections</h3><div class="detail-list">${cn.map(c=>`<div class="detail-list-item"><div><strong>${h(c.year)} · ${h(c.role)}</strong><small>${c.horse_id===id?openButton('entity',c.party_id,nameFor(c.party_id)):openButton('entity',c.horse_id,nameFor(c.horse_id))} · ${h(c.basis||'Basis unrecorded')}</small></div>${editButton('connection',c.id,'Edit','button button-quiet')}</div>`).join('')||'<p class="muted">No connections imported yet.</p>'}</div>
-   ${e.kind==='horse'?`<h3>Recorded race appearances</h3><div class="detail-list">${placings.map(p=>`<div class="detail-list-item"><div>${openButton('race',p.race.id,p.race.name)}<small>${h(p.race.year)} · ${h(p.race.track_name||'Track unknown')} · position ${h(p.position)}</small></div>${editButton('result',`${p.edition_id}::${p.position}`,'Review','button button-quiet')}</div>`).join('')||'<p class="muted">No race appearances in this import.</p>'}</div>`:''}
+   ${e.kind==='horse'?`<h3>Recorded race appearances</h3><div class="detail-list">${placings.map(p=>`<div class="detail-list-item"><div>${openButton('race',p.race.id,p.race.name)}<small>${h(p.race.year)} · ${venueName(p.race)} · position ${h(p.position)}</small></div>${editButton('result',`${p.edition_id}::${p.position}`,'Review','button button-quiet')}</div>`).join('')||'<p class="muted">No race appearances in this import.</p>'}</div>`:''}
    <h3>Pedigree and barn history</h3><div id="horse-pedigree-panel"><p class="muted">Source pedigree details load from the private archive when connected. Barn locations are not inferred from a stable's region.</p></div>`;
  } else {
    const results=resultOf(e.id);
    markup=`<div class="eyebrow">HISTORICAL RACE EDITION</div><h2>${h(e.name)}</h2><div class="detail-id">${h(e.id)}</div>
-   <p class="detail-desc">${h(e.track_name||'Track unknown')} · ${h(e.year)} · ${h(dateLabel(e))}<br>Source: ${h(e.source||'Not specified')}</p>
+   <p class="detail-desc">${venueName(e)} · ${h(e.year)} · ${h(dateLabel(e))}<br>Source: ${h(e.source||'Not specified')}</p>
    <div class="detail-edit">${editButton('race',e.id,'Propose a race-record correction','button button-primary')}</div><h3>Recorded finishers</h3><div class="detail-list">${results.sort((a,b)=>a.position-b.position).map(p=>`<div class="detail-list-item"><div><strong>Position ${h(p.position)}</strong><small>${openButton('entity',p.horse_id,nameFor(p.horse_id))}</small></div>${editButton('result',`${p.edition_id}::${p.position}`,'Review','button button-quiet')}</div>`).join('')||'<p class="muted">No finishers imported yet.</p>'}</div>`;
  }
  $('detail-content').innerHTML=`<button class="icon-button drawer-close" data-close-drawer="true" aria-label="Close profile">✕</button>${markup}`;
@@ -128,13 +130,41 @@ async function openDetail(type,id){
      if(!resp.ok)throw Error('Detailed source unavailable');
      const info=await resp.json(),panel=$('horse-pedigree-panel');
      if(!panel||!$('detail-drawer').classList.contains('open'))return;
-     const parents=(info.parents||[]).map(p=>`<div class="detail-list-item"><div><strong>${h(p.relation)}</strong><small>${p.parent_id&&entity(p.parent_id)?openButton('entity',p.parent_id,nameFor(p.parent_id)):h(p.parent_name||p.parent_id||'Not recorded')} · ${h(p.biology_check||'Unverified')}</small></div></div>`).join('');
+     const parents=(info.parents||[]).map(p=>`<div class="detail-list-item"><div><strong>${h(p.relation)}</strong><small>${p.parent_id&&entity(p.parent_id)?openButton('entity',p.parent_id,nameFor(p.parent_id)):p.parent_id?`<span class="name-edit-pair"><span>${h(p.parent_name||p.parent_id)}</span>${renameButton('pedigree',p.parent_id,p.parent_name||p.parent_id)}</span>`:h(p.parent_name||'Not recorded')} · ${h(p.biology_check||'Unverified')}</small></div></div>`).join('');
      const seasonSummary=(info.seasons||[]).map(s=>`<div class="detail-list-item"><div><strong>${h(s.year)} season</strong><small>${h(s.stakes_wins??'—')} stakes wins · ${h(s.top3_starts??'—')} top-three stakes starts · region ${h(s.region||'Not recorded')}</small></div></div>`).join('');
      panel.innerHTML=`<h3>Recorded ancestry</h3><div class="detail-list">${parents||'<p class="muted">No parent edges available in this source.</p>'}</div><h3>Season-by-season record</h3><div class="detail-list">${seasonSummary||'<p class="muted">No season summaries available.</p>'}</div><p class="muted">Relationships are historical source references and may still require certification.</p>`;
    }catch {const panel=$('horse-pedigree-panel');if(panel)panel.textContent='Detailed source could not be loaded.'}
  }
 }
 function closeDrawer(){ $('detail-drawer').classList.remove('open');$('detail-drawer').setAttribute('aria-hidden','true');$('drawer-backdrop').hidden=true;}
+function showRename(type,id,current){
+ if(!['entity','race','venue','pedigree'].includes(type)||!id||!current)return;
+ state.rename={type,id,current};
+ $('name-target').textContent=`${type.toUpperCase()} · ${id}`;
+ $('name-current').value=current;
+ $('name-new').value=current;
+ $('save-name').disabled=state.mode!=='D1_CONNECTED';
+ $('name-note').innerHTML=state.mode==='D1_CONNECTED'
+  ?'<strong>Saved to WTW:</strong> the displayed name changes throughout this private site. Original records, IDs and race results are preserved, with every edit logged.'
+  :'<strong>Source preview only:</strong> the private historical database is not connected yet. Save will become available when the import succeeds.';
+ $('name-dialog').showModal();$('name-new').focus();$('name-new').select();
+}
+async function saveName(e){
+ e.preventDefault();const item=state.rename;if(!item)return;
+ if(state.mode!=='D1_CONNECTED'){toast('Name changes require the private WTW database.');return}
+ const next=$('name-new').value.trim();
+ if(!next||next===item.current){toast('Enter a different name.');return}
+ $('save-name').disabled=true;
+ try {
+   const resp=await fetch('/api/names',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_type:item.type,target_id:item.id,expected_name:item.current,name:next})});
+   const body=await resp.json().catch(()=>({}));if(!resp.ok)throw Error(body.error||'Name update failed');
+   const latest=await fetchBootstrap();
+   state.data.entities=latest.entities;state.data.races=latest.races;state.data.connections=latest.connections;state.data.results=latest.results;state.changes=latest.changes;
+   rebuildResultIndex();$('name-dialog').close();closeDrawer();render();
+   toast('Saved to WTW. Name updated; historical source remains unchanged.');
+ }catch(err){toast('Unable to save name: '+err.message)}
+ finally{$('save-name').disabled=false}
+}
 function targetOf(type,id){if(type==='entity')return entity(id);if(type==='race')return race(id);if(type==='connection')return state.data.connections.find(v=>v.id===id);if(type==='result'){const [edition,pos]=id.split('::');return state.data.results.find(v=>v.edition_id===edition&&String(v.position)===pos)}return null}
 function showEdit(type,id){const target=targetOf(type,id);if(!target){toast('Source record not found.');return;}state.edit={type,id,target};const sel=$('edit-field');sel.innerHTML=Object.entries(fields[type]).map(([value,label])=>`<option value="${h(value)}">${h(label)}</option>`).join('');$('edit-target-type').value=type;$('edit-target-id').value=id;$('edit-target').textContent=`${type.toUpperCase()} · ${target.name||nameFor(target.horse_id)||id} · ${id}`;$('edit-reason').value='';$('edit-proposed').value='';fillOld();$('edit-dialog').showModal()}
 function fillOld(){if(!state.edit)return;const field=$('edit-field').value;$('edit-original').value=String(state.edit.target[field]??'');$('edit-proposed').placeholder='Enter the corrected '+(fields[state.edit.type][field]||field).toLowerCase();}
@@ -160,13 +190,16 @@ async function decideChange(id,decision){const item=state.changes.find(v=>v.id==
  } else {item.status=decision;item.decided_at=new Date().toISOString();storeChanges()}
  toast(decision==='REJECTED'?'Proposal rejected.':'Approved for future promotion; source record remains untouched.');render();
 }
-document.addEventListener('click',e=>{const t=e.target.closest('[data-page],[data-year],[data-open-type],[data-edit-type],[data-close-drawer],[data-review-action]');if(!t)return;
- if(t.dataset.page){setPage(t.dataset.page);return}if(t.dataset.year){setYear(t.dataset.year);return}if(t.dataset.closeDrawer){closeDrawer();return}if(t.dataset.openType){openDetail(t.dataset.openType,t.dataset.id);return}if(t.dataset.editType){showEdit(t.dataset.editType,t.dataset.id);return}if(t.dataset.reviewAction){decideChange(t.dataset.reviewId,t.dataset.reviewAction)}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-page],[data-year],[data-open-type],[data-edit-type],[data-rename-type],[data-close-drawer],[data-review-action]');if(!t)return;
+ if(t.dataset.page){setPage(t.dataset.page);return}if(t.dataset.year){setYear(t.dataset.year);return}if(t.dataset.closeDrawer){closeDrawer();return}if(t.dataset.renameType){showRename(t.dataset.renameType,t.dataset.id,t.dataset.currentName);return}if(t.dataset.openType){openDetail(t.dataset.openType,t.dataset.id);return}if(t.dataset.editType){showEdit(t.dataset.editType,t.dataset.id);return}if(t.dataset.reviewAction){decideChange(t.dataset.reviewId,t.dataset.reviewAction)}
 });
 $('year-select').addEventListener('change',e=>setYear(e.target.value));
 $('global-search').addEventListener('input',e=>{state.search=e.target.value.trim();if(state.search&&['overview','seasons','sources','changes'].includes(state.page))state.page='horses';render()});
 $('edit-field').addEventListener('change',fillOld);
 $('edit-form').addEventListener('submit',saveProposal);
+$('name-form').addEventListener('submit',saveName);
+$('close-name-dialog').addEventListener('click',()=>$('name-dialog').close());
+$('cancel-name-dialog').addEventListener('click',()=>$('name-dialog').close());
 $('close-dialog').addEventListener('click',()=>$('edit-dialog').close());
 $('cancel-dialog').addEventListener('click',()=>$('edit-dialog').close());
 $('drawer-backdrop').addEventListener('click',closeDrawer);
