@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - 'ops/confirmed-wtw-d1-import-2026-11-08.txt'
+      - 'ops/confirmed-wtw-d1-import-2026-11-08-retry.txt'
   workflow_dispatch:
     inputs:
       mode:
@@ -60,25 +61,25 @@ jobs:
       - name: Discover the exact WTW database
         if: ${{ inputs.mode == 'import_to_WTW_D1' || github.event_name == 'push' }}
         env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID || 'add006716b3a24e730ad0b716bdc3899' }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
         run: node scripts/prepare-d1-target.mjs
       - name: Apply schema migrations to WTW only
         if: ${{ inputs.mode == 'import_to_WTW_D1' || github.event_name == 'push' }}
         env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID || 'add006716b3a24e730ad0b716bdc3899' }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
         run: npx wrangler d1 migrations apply wtw-canon-desk-db --remote --config .wtw-d1-import.jsonc
       - name: Abort if this WTW database is already populated
         if: ${{ inputs.mode == 'import_to_WTW_D1' || github.event_name == 'push' }}
         env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID || 'add006716b3a24e730ad0b716bdc3899' }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
         run: node scripts/remote-d1-audit.mjs preflight
       - name: Import staged history into the verified empty WTW D1
         if: ${{ inputs.mode == 'import_to_WTW_D1' || github.event_name == 'push' }}
         env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID || 'add006716b3a24e730ad0b716bdc3899' }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
         run: |
           set -euo pipefail
@@ -95,7 +96,7 @@ jobs:
       - name: Audit remote row counts, names and provenance
         if: ${{ inputs.mode == 'import_to_WTW_D1' || github.event_name == 'push' }}
         env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID || 'add006716b3a24e730ad0b716bdc3899' }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
         run: node scripts/remote-d1-audit.mjs verify
       - name: Completion
