@@ -46,3 +46,9 @@ Review the archive dashboard, calendar, horse file, people/farm cards and source
 ## Started this turn
 
 The calendar-source comparison and horse source-class audit are complete. The site now displays the v3.37 → v3.67 reconciliation issue, date-evidence labels, and horse source classes. The full field-level delta is saved at `data/history-audit/2026-11-08/v337-to-v367-diff.json`; next is issue-by-issue resolution before any D1 refresh.
+
+## Progress update — 2026-11-08
+
+- The main Race History list and each selected year’s race list now sort by year, then date, then race name. Entries without a recorded date sort after dated races. The change is on the main branch in commit e4e0728c89af4d767f98773b2bda4415df257e35; the repository check completed successfully.
+- The delta audit now reports the correct 3,819 unchanged shared editions and separates the 917 internal-date changes from result changes needing review.
+- A first fictional-name candidate batch is being screened only against the 3,856 names in the current archive. Fictional candidates stay out of historical records and D1 until separately accepted; the current batch is provisional and has not been checked against external horse registries.
