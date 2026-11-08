@@ -52,3 +52,6 @@ Next: import historical **all-year** source sets in paginated batches, support m
 - Don't send Cloudflare API credentials or passwords into GitHub files.
 - No write route changes source entities, races, or connections. The `APPROVED_FOR_PROMOTION` state records a decision, not a database mutation.
 - D1 data import uses `INSERT OR IGNORE` so test imports do not override previously imported IDs.
+## Historical import and Cloudflare launch
+
+The full historical data is staged in this **private** repository but is not yet confirmed loaded into the Cloudflare database. To finish the separate WTW Pages + D1 launch, follow [WTW_OWNER_LAUNCH_CHECKLIST.md](WTW_OWNER_LAUNCH_CHECKLIST.md). A manual GitHub Action, **WTW D1 historical import (manual, isolated)**, can validate locally or import into *only* the verified empty `wtw-canon-desk-db`. All sensitive Cloudflare authorization values belong in GitHub Secrets or Cloudflare environment variables, never in repository files.
