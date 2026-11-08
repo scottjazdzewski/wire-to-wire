@@ -45,4 +45,4 @@ Review the archive dashboard, calendar, horse file, people/farm cards and source
 
 ## Started this turn
 
-The calendar-source comparison and horse source-class audit are complete. The site now displays the v3.37 → v3.67 reconciliation issue, date-evidence labels, and horse source classes. Next is the full auditable delta file and issue-by-issue resolution before any D1 refresh.
+The calendar-source comparison and horse source-class audit are complete. The site now displays the v3.37 → v3.67 reconciliation issue, date-evidence labels, and horse source classes. The full field-level delta is saved at `data/history-audit/2026-11-08/v337-to-v367-diff.json`; next is issue-by-issue resolution before any D1 refresh.
