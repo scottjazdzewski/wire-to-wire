@@ -6,3 +6,4 @@ node_modules/
 .DS_Store
 *.log
 generated/
+.wtw-d1-import.jsonc
