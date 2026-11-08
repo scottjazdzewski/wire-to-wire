@@ -14,10 +14,23 @@ let toastTimeout;
 function storedChanges(){try{return JSON.parse(localStorage.getItem(SAMPLE_KEY)||'[]')}catch{return []}}
 function storeChanges(){try{localStorage.setItem(SAMPLE_KEY,JSON.stringify(state.changes))}catch{}}
 function pill(text,style=''){return `<span class="ribbon ${style}">${h(text)}</span>`}
-function entity(id){return state.data?.entities.find(v=>v.id===id)}
-function race(id){return state.data?.races.find(v=>v.id===id)}
-let resultIndex=new Map();
-function rebuildResultIndex(){resultIndex=new Map();for(const r of state.data?.results||[]){if(!resultIndex.has(r.edition_id))resultIndex.set(r.edition_id,[]);resultIndex.get(r.edition_id).push(r)}}
+let entityIndex=new Map(),raceIndex=new Map(),resultIndex=new Map(),winIndex=new Map(),partyIndex=new Map();
+function entity(id){return entityIndex.get(id)}
+function race(id){return raceIndex.get(id)}
+function rebuildResultIndex(){
+ entityIndex=new Map((state.data?.entities||[]).map(v=>[v.id,v]));
+ raceIndex=new Map((state.data?.races||[]).map(v=>[v.id,v]));
+ resultIndex=new Map();winIndex=new Map();partyIndex=new Map();
+ for(const r of state.data?.results||[]){
+   if(!resultIndex.has(r.edition_id))resultIndex.set(r.edition_id,[]);
+   resultIndex.get(r.edition_id).push(r);
+   if(Number(r.position)===1)winIndex.set(r.horse_id,(winIndex.get(r.horse_id)||0)+1);
+ }
+ for(const c of state.data?.connections||[]){
+   if(!partyIndex.has(c.party_id))partyIndex.set(c.party_id,{count:0,roles:new Set()});
+   const p=partyIndex.get(c.party_id);p.count++;p.roles.add(c.role);
+ }
+}
 function resultOf(id){return resultIndex.get(id)||[]}
 function nameFor(id){return entity(id)?.name || id || 'Unrecorded'}
 function years(){return [...new Set((state.data?.races||[]).map(v=>Number(v.year)).filter(Boolean))].sort((a,b)=>a-b)}
@@ -73,12 +86,12 @@ function renderSeasons(){
 }
 function renderHorses(){
  const list=filteredEntities('horse');
- const rows=list.slice(0,250).map(r=>{const wins=(state.data?.results||[]).filter(t=>t.horse_id===r.id&&+t.position===1).length;return `<tr><td>${openButton('entity',r.id,r.name)}<div class="subline">${h(r.id)}</div></td><td>${h(r.foal_year||'—')}</td><td>${h(r.sex||'—')}</td><td>${wins}</td><td>${formatStatus(r.status)}</td><td>${editButton('entity',r.id,'Propose edit')}</td></tr>`}).join('');
+ const rows=list.slice(0,250).map(r=>{const wins=winIndex.get(r.id)||0;return `<tr><td>${openButton('entity',r.id,r.name)}<div class="subline">${h(r.id)}</div></td><td>${h(r.foal_year||'—')}</td><td>${h(r.sex||'—')}</td><td>${wins}</td><td>${formatStatus(r.status)}</td><td>${editButton('entity',r.id,'Propose edit')}</td></tr>`}).join('');
  return `${intro('SOURCE-RECORDED POPULATION','Horse Registry','Every horse name has a pencil to edit its display name without changing its permanent identity. Open any profile for results and connections.',`<div class="record-count">${list.length} horses displayed</div>`)}${section('Horses','Showing up to 250 matching records at once. Full database search is supported when the WTW D1 import is connected.',`<div class="table-scroll"><table class="data-table"><thead><tr><th>Horse</th><th>Foaled</th><th>Sex</th><th>Recorded wins</th><th>Name status</th><th>Review</th></tr></thead><tbody>${rows||'<tr><td colspan="6">No matching horses</td></tr>'}</tbody></table></div>`)}`;
 }
 function renderPeople(){
   const list=[...filteredEntities('person'),...filteredEntities('organization')].sort((a,b)=>a.name.localeCompare(b.name));
-  const rows=list.slice(0,250).map(e=>{const roles=new Set((state.data?.connections||[]).filter(c=>c.party_id===e.id).map(c=>c.role));const count=(state.data?.connections||[]).filter(c=>c.party_id===e.id).length;return `<tr><td>${openButton('entity',e.id,e.name)}<div class="subline">${h(e.id)}</div></td><td>${h(e.kind==='person'?'Person':'Farm / stable')}</td><td>${h(e.role||[...roles].join(', ')||'—')}</td><td>${count}</td><td>${editButton('entity',e.id,'Propose edit')}</td></tr>`}).join('');
+  const rows=list.slice(0,250).map(e=>{const stored=partyIndex.get(e.id);const roles=stored?.roles||new Set();const count=stored?.count||0;return `<tr><td>${openButton('entity',e.id,e.name)}<div class="subline">${h(e.id)}</div></td><td>${h(e.kind==='person'?'Person':'Farm / stable')}</td><td>${h(e.role||[...roles].join(', ')||'—')}</td><td>${count}</td><td>${editButton('entity',e.id,'Propose edit')}</td></tr>`}).join('');
   return `${intro('HUMAN & STABLE RECORDS','People & Stables','Edit trainer, jockey, owner, breeder, farm and stable names with the pencil beside each record. Historical associations retain their IDs.')}
    ${section('People, owners, farms & studs',`${list.length} matches in the current import`, `<div class="table-scroll"><table class="data-table"><thead><tr><th>Name</th><th>Type</th><th>Known role</th><th>Horse-year links</th><th>Review</th></tr></thead><tbody>${rows||'<tr><td colspan="5">No matches</td></tr>'}</tbody></table></div>`)}`;
 }
