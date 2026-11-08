@@ -49,8 +49,10 @@ The calendar-source comparison and horse source-class audit are complete. The si
 
 ## Progress update — 2026-11-08
 
-- The main Race History list and each selected year’s race list now sort by year, then date, then race name. Entries without a recorded date sort after dated races. The change is on the main branch in commit e4e0728c89af4d767f98773b2bda4415df257e35; the repository check completed successfully.
+- The Stakes Calendar is grouped by month and sorts by year, date, then race name. Undated or partial-date entries follow dated races, and each edition displays its date-evidence label. The changes are on the main branch; the repository checks are being monitored.
 - The delta audit now reports the correct 3,819 unchanged shared editions and separates the 917 internal-date changes from result changes needing review.
 - A first fictional-name candidate batch is being screened only against the 3,856 names in the current archive. Fictional candidates stay out of historical records and D1 until separately accepted; the current batch is provisional and has not been checked against external horse registries.
 
 - Focused queues are now saved: 54 changed dates with no matching Evidence_Queue row, and 616 editions whose placing IDs or names changed. These remain review queues, not approved corrections.
+
+- Horse cards now put sire/dam, recorded top-three placings, first/second/third counts, notable stakes wins, and unavailable lifetime starts/earnings in a more compact first-view layout. The live site could not be visually reviewed in this session because Cloudflare Access stopped at its email-code login page.
