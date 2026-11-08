@@ -161,7 +161,7 @@ function renderTracks(){
 }
 function renderRaces(){
  const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
- const validDate=(value)=>{const m=String(value||'').match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);return m&&Number(m[2])>=1&&Number(m[2])<=12&&Number(m[3])>=1&&Number(m[3])<=31?m:null};
+ const validDate=(value)=>{const m=String(value||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return m&&Number(m[2])>=1&&Number(m[2])<=12&&Number(m[3])>=1&&Number(m[3])<=31?m:null};
  const dateKey=(r)=>validDate(r.date)?String(r.date):'9999-99-99';
  const list=(state.data?.races||[]).filter(r=>(+r.year===+state.year||state.search)&&recordMatches(r)).sort((a,b)=>Number(a.year)-Number(b.year)||dateKey(a).localeCompare(dateKey(b))||a.name.localeCompare(b.name));
  const multiYear=new Set(list.map(r=>String(r.year))).size>1;
