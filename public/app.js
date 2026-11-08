@@ -213,9 +213,19 @@ async function saveName(e){
  try {
    const resp=await fetch('/api/names',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_type:item.type,target_id:item.id,expected_name:item.current,name:next})});
    const body=await resp.json().catch(()=>({}));if(!resp.ok)throw Error(body.error||'Name update failed');
-   if(item.type==='entity'){const record=entity(item.id);if(record)record.name=next}
+   if(item.type==='entity'){
+     const record=entity(item.id);
+     if(record){
+       record.name=next;
+       if(record.kind==='track'){
+         for(const edition of state.data.races){
+           if(edition.track_id===record.id&&!edition.venue_override_name)edition.track_name=next;
+         }
+       }
+     }
+   }
    if(item.type==='race'){const record=race(item.id);if(record)record.name=next}
-   if(item.type==='venue'){const record=race(item.id);if(record)record.track_name=next}
+   if(item.type==='venue'){const record=race(item.id);if(record){record.track_name=next;record.venue_override_name=next}}
    $('name-dialog').close();render();
    if(state.openDetail && $('detail-drawer').classList.contains('open')){
       await openDetail(state.openDetail.type,state.openDetail.id);
