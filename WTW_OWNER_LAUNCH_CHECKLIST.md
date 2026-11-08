@@ -51,13 +51,13 @@ Docs: https://developers.cloudflare.com/fundamentals/api/get-started/create-toke
 
 Open https://github.com/scottjazdzewski/wire-to-wire/settings/secrets/actions
 
-Select **New repository secret**. Fill in:
+Select **New repository secret**. First create `WTW_CLOUDFLARE_ACCOUNT_ID` with the exact copied account ID. Then click **New repository secret** again and fill in:
 
 - Name: `WTW_D1_IMPORT_TOKEN`
 - Secret: paste the Cloudflare token from Step 3
 - Click **Add secret**.
 
-The Cloudflare account ID used in the import workflow comes from the WTW Cloudflare account URL previously provided by the account owner. No other Cloudflare projects are referenced.
+Save the exact Cloudflare account ID as a second GitHub Actions repository secret: `WTW_CLOUDFLARE_ACCOUNT_ID`. In Cloudflare → Workers & Pages → Account Details, click **Copy** beside Account ID, or use Cloudflare search (`Ctrl+K`) → **Copy account ID**. The import workflow now uses that secret instead of a hardcoded ID.
 
 ## 5. Run the isolated import action (one-time initial import)
 
