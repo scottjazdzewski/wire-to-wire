@@ -8,7 +8,7 @@ const fields = {
   connection: {party_id:'Connected owner / trainer / person ID',year:'Season',role:'Connection role',basis:'Evidence basis'},
   result: {horse_id:'Placed horse ID',position:'Finishing position'}
 };
-const state = {page:'overview',year:1953,role:'trainer',involvement:'balanced',search:'',data:null,mode:'LOADING',changes:[],nameEdits:[],availableYears:[],edit:null,rename:null,apiIssue:''};
+const state = {page:'overview',year:1953,calendarMonth:null,role:'trainer',involvement:'balanced',search:'',data:null,mode:'LOADING',changes:[],nameEdits:[],availableYears:[],edit:null,rename:null,apiIssue:''};
 const GAME_PREF_KEY = 'wtw_game_manager_preferences_v1';
 try { const saved=JSON.parse(localStorage.getItem(GAME_PREF_KEY)||'{}'); if(['owner','trainer','farm','breeder','jockey'].includes(saved.role))state.role=saved.role; if(['hands-on','balanced','executive'].includes(saved.involvement))state.involvement=saved.involvement; } catch {}
 const SAMPLE_KEY = 'wtw_canon_desk_local_proposals_v1';
@@ -101,7 +101,7 @@ function renderOverview(){
  const optionRole=roleLabels[role]||'Trainer', scope=state.mode==='D1_CONNECTED'?'PRIVATE ARCHIVE CONNECTED':'HISTORICAL PREVIEW';
  return '<div class="command-center">'+
  '<section class="command-hero"><div class="command-hero-copy"><div class="command-kicker">'+scope+' · '+h(year)+' SEASON</div><h2>Your racing operation,<br>at a glance.</h2><p>Choose the seat you want to manage from and set how closely you want to run it. This command center is built around the historical archive.</p><div class="command-tags"><span>Source-backed history</span><span>Role-based management</span></div></div><div class="command-art asset-placeholder" data-asset-slot="stable-yard"><span class="horse-glyph">♞</span><small>STABLE ART PLACEHOLDER</small></div></section>'+
- '<section class="management-bar"><div class="management-heading"><span class="smallcaps">YOUR MANAGEMENT STYLE</span><strong>'+optionRole+' · '+levelLabels[level]+'</strong></div><label><span>YOUR ROLE</span><select class="game-select" data-game-pref="role">'+roleOptions+'</select></label><label><span>INVOLVEMENT</span><select class="game-select" data-game-pref="involvement">'+levelOptions+'</select></label><div class="management-focus">'+focus[role]+' <span>'+levelCopy[level]+'</span></div></section>'+
+ '<section class="management-bar"><div class="management-heading"><span class="smallcaps">FUTURE GAME PREFERENCES</span><strong>'+optionRole+' · '+levelLabels[level]+'</strong></div><label><span>YOUR ROLE</span><select class="game-select" data-game-pref="role">'+roleOptions+'</select></label><label><span>INVOLVEMENT</span><select class="game-select" data-game-pref="involvement">'+levelOptions+'</select></label><div class="management-focus">'+focus[role]+' <span>'+levelCopy[level]+' The management simulation is paused while the archive and site are finished.</span></div></section>'+
  '<div class="command-stats"><div class="command-stat"><small>HORSES IN LOADED ARCHIVE</small><strong>'+allHorses.length.toLocaleString()+'</strong><span>Source identities</span></div><div class="command-stat"><small>RACES · '+h(year)+'</small><strong>'+raceList.length.toLocaleString()+'</strong><span>Recorded editions</span></div><div class="command-stat"><small>1ST PLACE · '+h(year)+'</small><strong>'+firsts.toLocaleString()+'</strong><span>Recorded results</span></div><div class="command-stat"><small>TOP THREE · '+h(year)+'</small><strong>'+top3.toLocaleString()+'</strong><span>Recorded placings</span></div></div>'+
  '<div class="command-grid"><section class="game-panel"><header class="game-panel-heading"><div><span class="smallcaps">RACE FILE</span><h3>'+h(year)+' race calendar</h3></div><button class="text-button" data-page="seasons">Open calendar →</button></header><div class="mini-race-list">'+raceRows+'</div></section>'+
  '<section class="game-panel stable-panel"><header class="game-panel-heading"><div><span class="smallcaps">THE BARN</span><h3>Stable board</h3></div><button class="text-button" data-page="horses">View stable →</button></header><div class="roster-list">'+horseRows+'</div><div class="stable-footer"><span class="asset-placeholder asset-mini farm-mark" data-asset-slot="farm-logo"><span>FARM</span></span><span>Farm, trainer and jockey portraits will use dedicated art slots.</span></div></section>'+
@@ -109,21 +109,59 @@ function renderOverview(){
  '<p class="manager-note">Role and involvement are saved on this device as interface preferences. They will guide the management experience as game systems are connected.</p></div>';
 }
 function renderSeasons(){
-  const y=state.year;const tabs=yearTabs();
-  const yearRaces=sessionRaces(y),races=yearRaces.filter(recordMatches);const seasonPeople=(state.data?.connections||[]).filter(c=>+c.year===+y);
-  const ranked=[...new Set(seasonPeople.map(c=>c.horse_id))];
-  const countKind=kind=>yearRaces.filter(r=>dateEvidence(r).kind===kind).length;
-  const nonExact=countKind('internal')+countKind('unverified')+countKind('fixed');
-  const reviewCount=countKind('review')+countKind('missing')+countKind('unknown');
-  const raceRows=races.map(r=>'<div class="race-card"><div><h4>'+openButton('race',r.id,r.name)+'</h4><p>'+venueName(r)+' · '+h(dateLabel(r))+' '+evidencePill(r)+'</p><div class="winners">'+(winnerOf(r)?'Winner: '+openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id)):'Winner not in sample')+'</div></div>'+editButton('race',r.id,'Suggest edit')+'</div>').join('');
-  const known=ranked.slice(0,10).map(id=>'<div class="detail-list-item">'+openButton('entity',id,nameFor(id))+'<small>'+seasonPeople.filter(c=>c.horse_id===id).length+' season connections</small></div>').join('');
-  const notRun=countKind('not-run');
-  return intro('THE HISTORICAL YEARBOOK',y+' Racing Season','Calendar rows show the imported date basis. Exact dates, internal schedule dates, held dates and non-runs are labeled separately.')+
-   tabs+'<div class="calendar-audit-banner"><strong>Source reconciliation is open.</strong><span>The site import predates the current v3.67 master. Review History Coverage before treating this year as current.</span><button class="text-button" data-page="sources">View audit →</button></div>'+
-   '<div class="metrics">'+metric(yearRaces.length,'Stakes editions','Imported source rows')+metric(countKind('exact'),'Exact-date evidence','Source basis classified exact')+metric(nonExact,'Schedule / internal dates','Not independently exact')+metric(reviewCount,'Review or missing-day rows','Held dates remain visible')+'</div>'+
-   (notRun?'<p class="calendar-note">'+notRun+' record(s) are marked not run in the imported source.</p>':'')+
-   '<div class="calendar-evidence-legend"><span>DATE EVIDENCE</span>'+['exact','internal','unverified','fixed','review','not-run','missing'].map(k=>{const x={exact:'Exact date · sourced',internal:'Internal schedule date',unverified:'Schedule date · unverified',fixed:'WTW fixed schedule',review:'Needs review','not-run':'Not run',missing:'Day not recorded'}[k];return '<span class="date-evidence evidence-'+k+'">'+x+'</span>'}).join('')+'</div>'+
-   '<div class="layout-two">'+section(y+' stakes calendar',seasonHeadline(y),raceRows||noRecords('Try another imported year.'))+section('Horses and horsemen','Year-level links, not necessarily race-day mounts','<div class="panel-body">'+(known||noRecords('No people links imported.'))+'</div>')+'</div>';
+ const y=Number(state.year),yearRaces=sessionRaces(y),seasonPeople=(state.data?.connections||[]).filter(c=>Number(c.year)===y);
+ const ranked=[...new Set(seasonPeople.map(c=>c.horse_id))];
+ const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+ const validDate=value=>{
+  const m=String(value||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(!m)return null;
+  const date=new Date(Date.UTC(Number(m[1]),Number(m[2])-1,Number(m[3])));
+  return date.getUTCFullYear()===Number(m[1])&&date.getUTCMonth()===Number(m[2])-1&&date.getUTCDate()===Number(m[3])?m:null;
+ };
+ const datedMonths=yearRaces.map(r=>validDate(r.date)).filter(Boolean).map(m=>Number(m[2])-1);
+ const month=state.calendarMonth===null?(datedMonths[0]??0):Math.max(0,Math.min(11,Number(state.calendarMonth)));
+ state.calendarMonth=month;
+ const scheduledKinds=['exact','internal','unverified','fixed'];
+ const calendarRaces=yearRaces.filter(r=>{const d=validDate(r.date);return d&&Number(d[2])===month+1&&scheduledKinds.includes(dateEvidence(r).kind)});
+ const dateIssues=yearRaces.filter(r=>!validDate(r.date)&&dateEvidence(r).kind!=='not-run');
+ const reviewRaces=yearRaces.filter(r=>validDate(r.date)&&['review','unknown'].includes(dateEvidence(r).kind));
+ const notRunRaces=yearRaces.filter(r=>dateEvidence(r).kind==='not-run');
+ const countKind=k=>yearRaces.filter(r=>dateEvidence(r).kind===k).length;
+ const exactCount=countKind('exact'),scheduleCount=countKind('internal')+countKind('unverified')+countKind('fixed');
+ const reviewCount=countKind('review')+countKind('unknown')+countKind('missing');
+ const notRunCount=countKind('not-run');
+ const exactMonth=calendarRaces.filter(r=>dateEvidence(r).kind==='exact').length;
+ const daysInMonth=new Date(Date.UTC(y,month+1,0)).getUTCDate(),firstWeekday=new Date(Date.UTC(y,month,1)).getUTCDay();
+ const dayMap=new Map();
+ for(const r of calendarRaces){const d=validDate(r.date),day=Number(d[3]);if(!dayMap.has(day))dayMap.set(day,[]);dayMap.get(day).push(r)}
+ const slots=Math.ceil((firstWeekday+daysInMonth)/7)*7;
+ const dayCells=Array.from({length:slots},(_,slot)=>{
+  const day=slot-firstWeekday+1;
+  if(day<1||day>daysInMonth)return '<div class="calendar-day calendar-day-empty" aria-hidden="true"></div>';
+  const events=dayMap.get(day)||[];
+  const chips=events.slice(0,2).map(r=>{const e=dateEvidence(r);const label=r.name+' · '+venueName(r)+' · '+e.label;return '<button type="button" class="calendar-day-event evidence-'+h(e.kind)+'" data-open-type="race" data-id="'+h(r.id)+'" title="'+h(label)+'" aria-label="'+h(label)+'"><span>'+h(r.name)+'</span></button>'}).join('');
+  const more=events.length>2?'<span class="calendar-more">+'+(events.length-2)+' more</span>':'';
+  return '<div class="calendar-day" role="gridcell" aria-label="'+h(monthNames[month]+' '+day+', '+y+' · '+events.length+' race editions')+'"><span class="calendar-day-number">'+day+'</span><div class="calendar-day-items">'+chips+more+'</div></div>';
+ }).join('');
+ const weekdays=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>'<div class="calendar-weekday" role="columnheader">'+d+'</div>').join('');
+ const options=monthNames.map((name,index)=>'<option value="'+index+'"'+(index===month?' selected':'')+'>'+name+'</option>').join('');
+ const agenda=calendarRaces.map(r=>{
+  const d=validDate(r.date),e=dateEvidence(r);
+  return '<article class="calendar-agenda-item"><div class="calendar-agenda-date"><strong>'+Number(d[3])+'</strong><small>'+monthNames[month].slice(0,3).toUpperCase()+'</small></div><div class="calendar-agenda-copy"><button type="button" data-open-type="race" data-id="'+h(r.id)+'">'+h(r.name)+'</button><small>'+venueName(r)+(winnerOf(r)?' · winner '+nameFor(winnerOf(r).horse_id):'')+'</small><span class="date-evidence evidence-'+h(e.kind)+'">'+h(e.label)+'</span></div></article>';
+ }).join('');
+ const known=ranked.slice(0,8).map(id=>'<div class="season-horse-row">'+openButton('entity',id,nameFor(id))+'<small>'+seasonPeople.filter(c=>c.horse_id===id).length+' season links</small></div>').join('');
+ const compactRows=items=>items.map(r=>{const e=dateEvidence(r);return '<div class="calendar-review-item"><div><strong>'+openButton('race',r.id,r.name)+'</strong><small>'+venueName(r)+' · '+h(dateLabel(r))+'</small></div>'+evidencePill(r)+'</div>'}).join('');
+ const legend=['exact','internal','unverified','fixed','review','not-run','missing'].map(k=>{const labels={exact:'Exact · sourced',internal:'Internal schedule',unverified:'Schedule · unverified',fixed:'WTW fixed',review:'Needs review','not-run':'Not run',missing:'Day not recorded'};return '<span class="date-evidence evidence-'+k+'">'+labels[k]+'</span>'}).join('');
+ const sourceNotice='<div class="calendar-source-banner"><span class="source-alert-pill">HISTORY RECONCILIATION OPEN</span><p>Calendar dates retain their source confidence. Review the master comparison before treating this import as the newest archive.</p><button class="text-button" data-page="sources">Open history coverage →</button></div>';
+ const issuePanels=(dateIssues.length?section('Day not recorded',dateIssues.length+' editions are kept outside the day grid',compactRows(dateIssues)):'')+
+  (reviewRaces.length?section('Held or unresolved dates',reviewRaces.length+' editions are not placed on the calendar grid',compactRows(reviewRaces)):'')+
+  (notRunRaces.length?section('Not run',notRunRaces.length+' source-marked non-runs',compactRows(notRunRaces)):'');
+ return intro('THE HISTORICAL YEARBOOK',y+' Season Calendar','A true month view for the imported stakes schedule. Exact dates, internal schedule dates, review holds and non-runs remain distinct.', '<div class="record-count">'+yearRaces.length.toLocaleString()+' editions · '+ranked.length.toLocaleString()+' referenced horses</div>')+
+  sourceNotice+
+  '<div class="metrics">'+metric(yearRaces.length,'Stakes editions','Imported rows for this season')+metric(exactCount,'Exact dates','Source-backed day values')+metric(scheduleCount,'Schedule dates','Internal, unverified or governed')+metric(reviewCount+notRunCount,'Held / missing / not run','Kept outside the day grid')+'</div>'+
+  '<div class="calendar-evidence-legend"><span>DATE EVIDENCE</span>'+legend+'</div>'+
+  '<div class="calendar-page-layout"><section class="calendar-month-panel"><div class="calendar-toolbar"><button type="button" class="calendar-nav-button" data-calendar-step="-1"'+(month===0?' disabled':'')+' aria-label="Previous month">‹</button><div class="calendar-month-heading-main"><span class="smallcaps">RACE MONTH</span><strong>'+monthNames[month]+' '+y+'</strong><small>'+calendarRaces.length+' scheduled editions · '+exactMonth+' exact-date sources</small></div><label class="calendar-month-select"><span>MONTH</span><select id="calendar-month-select">'+options+'</select></label><button type="button" class="calendar-nav-button" data-calendar-step="1"'+(month===11?' disabled':'')+' aria-label="Next month">›</button></div><div class="calendar-weekdays" role="row">'+weekdays+'</div><div class="calendar-grid" role="grid" aria-label="'+h(monthNames[month]+' '+y+' stakes calendar')+'">'+dayCells+'</div></section><aside class="calendar-right-rail">'+section(monthNames[month]+' race card',calendarRaces.length+' editions in date order',agenda||'<div class="calendar-empty">No dated races are listed this month.</div>')+section('Season connections','Historical year-level links',known||'<div class="calendar-empty">No horse links are recorded for this season.</div>')+'</aside></div>'+
+  (issuePanels?'<div class="calendar-support-panels">'+issuePanels+'</div>':'');
 }
 function renderHorses(){
  const list=filteredEntities('horse');
@@ -135,16 +173,25 @@ function renderHorses(){
  return intro('YOUR ROSTER','My Stable','Horse identity records show whether they came from existing canon, historical backfill or generated pedigree support. Open a horse for its compact profile.', '<div class="record-count">'+list.length.toLocaleString()+' horses in this view</div>')+'<div class="stable-grid">'+(cards||'<p class="empty-note">No horse records match this search.</p>')+'</div>'+(list.length>120?'<p class="manager-note">Showing 120 matching horses at once. Search by name or permanent ID to narrow the roster.</p>':'');
 }
 function renderPeople(){
- const people=filteredEntities('person'), farms=filteredEntities('organization');
- const makeCard=(e,type)=>{const stored=partyIndex.get(e.id),roles=stored?.roles||new Set(),links=stored?.count||0;const label=type==='person'?'PERSON':'FARM / OWNER';return '<article class="people-card"><div class="asset-placeholder people-art" data-asset-slot="'+(type==='person'?'person-headshot':'farm-logo')+'"><span>'+label+'</span></div><div class="people-card-body"><div class="smallcaps">'+(type==='person'?'PEOPLE':'FARMS & OWNERS')+'</div><h3>'+openButton('entity',e.id,e.name)+'</h3><p>'+h(e.role||[...roles].join(', ')||'Role not recorded')+'</p><div class="people-card-footer"><span>'+links+' horse-year links</span>'+editButton('entity',e.id,'Review','button button-quiet')+'</div></div></article>'};
- const cards=[...people.slice(0,100).map(e=>makeCard(e,'person')),...farms.slice(0,100).map(e=>makeCard(e,'organization'))].join('');
- return intro('YOUR RACING NETWORK','People & Farms','Trainer, jockey, owner, breeder, farm and stable files stay compact, with portrait and logo slots ready for future artwork.', '<div class="record-count">'+people.length.toLocaleString()+' people · '+farms.length.toLocaleString()+' organizations</div>')+'<div class="people-grid">'+(cards||'<p class="empty-note">No people or farm records match this search.</p>')+'</div>';
+ const people=filteredEntities('person'),farms=filteredEntities('organization');
+ const makeCard=(e,type)=>{
+  const stored=partyIndex.get(e.id),roles=stored?.roles||new Set(),links=stored?.count||0;
+  const label=type==='person'?'PERSON':'FARM / OWNER';
+  const tag=type==='person'?'PEOPLE':'FARMS & OWNERS';
+  return '<article class="people-card"><div class="asset-placeholder people-art" data-asset-slot="'+(type==='person'?'person-headshot':'farm-logo')+'"><span>'+label+'</span><small>ARTWORK PLACEHOLDER</small></div><div class="people-card-body"><div class="smallcaps">'+tag+'</div><h3>'+openButton('entity',e.id,e.name)+'</h3><p>'+h(e.role||[...roles].join(', ')||'Role not recorded')+'</p><div class="people-card-footer"><span>'+links+' horse-year links</span>'+editButton('entity',e.id,'Review','button button-quiet')+'</div></div></article>';
+ };
+ const peopleCards=people.slice(0,100).map(e=>makeCard(e,'person')).join('');
+ const farmCards=farms.slice(0,100).map(e=>makeCard(e,'organization')).join('');
+ const limitNotice=(n,label)=>n>100?'<p class="manager-note">Showing the first 100 '+label+'. Search by name or permanent ID to narrow the list.</p>':'';
+ return intro('YOUR RACING NETWORK','People & Farms','Separate, compact files for the trainers, jockeys, owners, breeders and farms linked to the archive.', '<div class="record-count">'+people.length.toLocaleString()+' people · '+farms.length.toLocaleString()+' organizations</div>')+
+  section('People','Trainers, jockeys, owners, breeders and other horsemen', '<div class="people-grid">'+(peopleCards||'<div class="calendar-empty">No people match this search.</div>')+'</div>', '<span class="record-count">'+people.length.toLocaleString()+' people</span>')+limitNotice(people.length,'people')+
+  section('Farms & organizations','Breeding farms, owner partnerships and racing organizations', '<div class="people-grid">'+(farmCards||'<div class="calendar-empty">No farms or organizations match this search.</div>')+'</div>', '<span class="record-count">'+farms.length.toLocaleString()+' organizations</span>')+limitNotice(farms.length,'organizations');
 }
 function renderSearch(){
  const query=state.search.toLowerCase().trim();
  if(!query)return intro('FIND THE ARCHIVE','Search Wire to Wire','Enter a horse, owner, jockey, trainer, farm, track, race, or permanent record ID.');
  const allEntities=(state.data?.entities||[]).filter(v=>recordMatches(v)).sort((a,b)=>a.name.localeCompare(b.name));
- const allRaces=(state.data?.races||[]).filter(v=>recordMatches(v)).sort((a,b)=>b.year-a.year || a.name.localeCompare(b.name));
+ const allRaces=(state.data?.races||[]).filter(v=>recordMatches(v)).sort((a,b)=>Number(a.year)-Number(b.year)||String(a.date||'9999-99-99').localeCompare(String(b.date||'9999-99-99'))||a.name.localeCompare(b.name));
  const entities=allEntities.slice(0,120).map(e=>`<div class="search-result"><div><span class="smallcaps">${h(e.kind)}</span><h4>${openButton('entity',e.id,e.name)}</h4><small>${h(e.id)}${e.foal_year?' · foaled '+h(e.foal_year):''}</small></div></div>`).join('');
  const races=allRaces.slice(0,120).map(r=>`<div class="search-result"><div><span class="smallcaps">Stakes edition · ${h(r.year)}</span><h4>${openButton('race',r.id,r.name)}</h4><small>${venueName(r)} · ${h(r.id)}</small></div></div>`).join('');
  return `${intro('FULL ARCHIVE SEARCH','Search Results',`${allEntities.length} matching identities and ${allRaces.length} race editions for “${state.search}”. Every displayed name can be edited using its pencil.`)}
@@ -357,11 +404,11 @@ async function decideChange(id,decision){const item=state.changes.find(v=>v.id==
  } else {item.status=decision;item.decided_at=new Date().toISOString();storeChanges()}
  toast(decision==='REJECTED'?'Proposal rejected.':'Approved for future promotion; source record remains untouched.');render();
 }
-document.addEventListener('click',e=>{const t=e.target.closest('[data-page],[data-year],[data-open-type],[data-edit-type],[data-rename-type],[data-close-drawer],[data-review-action]');if(!t)return;
- if(t.dataset.page){setPage(t.dataset.page);return}if(t.dataset.year){setYear(t.dataset.year);return}if(t.dataset.closeDrawer){closeDrawer();return}if(t.dataset.renameType){showRename(t.dataset.renameType,t.dataset.id,t.dataset.currentName);return}if(t.dataset.openType){openDetail(t.dataset.openType,t.dataset.id);return}if(t.dataset.editType){showEdit(t.dataset.editType,t.dataset.id);return}if(t.dataset.reviewAction){decideChange(t.dataset.reviewId,t.dataset.reviewAction)}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-page],[data-year],[data-calendar-step],[data-open-type],[data-edit-type],[data-rename-type],[data-close-drawer],[data-review-action]');if(!t)return;
+ if(t.dataset.page){setPage(t.dataset.page);return}if(t.dataset.year){setYear(t.dataset.year);return}if(t.dataset.calendarStep){const next=Number(state.calendarMonth)+Number(t.dataset.calendarStep);if(next>=0&&next<=11){state.calendarMonth=next;render()}return}if(t.dataset.closeDrawer){closeDrawer();return}if(t.dataset.renameType){showRename(t.dataset.renameType,t.dataset.id,t.dataset.currentName);return}if(t.dataset.openType){openDetail(t.dataset.openType,t.dataset.id);return}if(t.dataset.editType){showEdit(t.dataset.editType,t.dataset.id);return}if(t.dataset.reviewAction){decideChange(t.dataset.reviewId,t.dataset.reviewAction)}
 });
 $('year-select').addEventListener('change',e=>setYear(e.target.value));
-document.addEventListener('change',e=>{const control=e.target.closest('[data-game-pref]');if(!control)return;const key=control.dataset.gamePref;if(!['role','involvement'].includes(key))return;state[key]=control.value;try{localStorage.setItem(GAME_PREF_KEY,JSON.stringify({role:state.role,involvement:state.involvement}));}catch{}render();});
+document.addEventListener('change',e=>{const monthControl=e.target.closest('#calendar-month-select');if(monthControl){state.calendarMonth=Number(monthControl.value);render();return}const control=e.target.closest('[data-game-pref]');if(!control)return;const key=control.dataset.gamePref;if(!['role','involvement'].includes(key))return;state[key]=control.value;try{localStorage.setItem(GAME_PREF_KEY,JSON.stringify({role:state.role,involvement:state.involvement}));}catch{}render();});
 $('global-search').addEventListener('input',e=>{state.search=e.target.value.trim();if(state.search)state.page='search';else if(state.page==='search')state.page='overview';render()});
 $('edit-field').addEventListener('change',fillOld);
 $('edit-form').addEventListener('submit',saveProposal);
