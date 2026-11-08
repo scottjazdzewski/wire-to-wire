@@ -8,7 +8,9 @@ const fields = {
   connection: {party_id:'Connected owner / trainer / person ID',year:'Season',role:'Connection role',basis:'Evidence basis'},
   result: {horse_id:'Placed horse ID',position:'Finishing position'}
 };
-const state = {page:'overview',year:1953,search:'',data:null,mode:'LOADING',changes:[],nameEdits:[],availableYears:[],edit:null,rename:null,apiIssue:''};
+const state = {page:'overview',year:1953,role:'trainer',involvement:'balanced',search:'',data:null,mode:'LOADING',changes:[],nameEdits:[],availableYears:[],edit:null,rename:null,apiIssue:''};
+const GAME_PREF_KEY = 'wtw_game_manager_preferences_v1';
+try { const saved=JSON.parse(localStorage.getItem(GAME_PREF_KEY)||'{}'); if(['owner','trainer','farm','breeder','jockey'].includes(saved.role))state.role=saved.role; if(['hands-on','balanced','executive'].includes(saved.involvement))state.involvement=saved.involvement; } catch {}
 const SAMPLE_KEY = 'wtw_canon_desk_local_proposals_v1';
 let toastTimeout;
 function storedChanges(){try{return JSON.parse(localStorage.getItem(SAMPLE_KEY)||'[]')}catch{return []}}
@@ -64,15 +66,29 @@ function dateLabel(r){if(!r.date)return 'Exact day unrecorded';if(String(r.date_
 function seasonHeadline(y){const r=sessionRaces(y);return r.length?`${r.length} documented races · ${sessionHorseIds(y).length} referenced horses`:'No source races loaded for this season'}
 function winnerOf(r){return resultOf(r.id).find(x=>Number(x.position)===1)}
 function renderOverview(){
-  const year=state.year, list=sessionRaces(year);
-  const highlight=list.slice(0,6).map(r=>`<tr><td>${openButton('race',r.id,r.name)}<div class="subline">${venueName(r)}</div></td><td>${winnerOf(r)?openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id)):'—'}</td><td>${formatStatus(r.status)}</td></tr>`).join('');
-  return `
-    <div class="hero"><div class="hero-copy"><div class="hero-kicker">WELCOME TO THE ARCHIVE</div><h2>Every season. Every connection.<br>The complete WTW story.</h2><p>Browse source-recorded racing history, follow owners and trainers through the decades, and review corrections without rewriting protected results.</p></div><div class="hero-badge"><strong>${year}</strong><small>SELECTED SEASON</small></div></div>
-    <div class="metrics">${metric(count('horse'),'Horses in this import','Import grows by approved batches')}${metric(count('person'),'People','Trainers and riders')}${metric(count('organization'),'Farms & stables','Owners and breeding operations')}${metric(state.data.races.length,'Recorded races','Dates not invented')}</div>
-    <div class="layout-two">
-      ${section(`${year} historical race file`,'Source-backed race entries from the loaded dataset',highlight?`<div class="table-scroll"><table class="data-table"><thead><tr><th>Race</th><th>Winner</th><th>Source status</th></tr></thead><tbody>${highlight}</tbody></table></div>`:noRecords('This year has not yet been imported.'),`<button data-page="seasons" class="text-button">View season →</button>`)}
-      ${section('Quick navigation','Start with the record you want to inspect',`<div class="panel-body quick-links"><button class="quick-card" data-page="seasons"><span><strong>Year-by-year history</strong><small>Winners, participants, stories</small></span><span class="quick-arrow">→</span></button><button class="quick-card" data-page="horses"><span><strong>Horse career profiles</strong><small>Seasons, people, victories</small></span><span class="quick-arrow">→</span></button><button class="quick-card" data-page="people"><span><strong>People & stables</strong><small>Owner, trainer, jockey, breeder links</small></span><span class="quick-arrow">→</span></button><button class="quick-card" data-page="changes"><span><strong>Correction review</strong><small>Source-safe proposed changes</small></span><span class="quick-arrow">→</span></button></div>`)}
-    </div>`;
+ const year=state.year, raceList=sessionRaces(year), allHorses=(state.data.entities||[]).filter(e=>e.kind==='horse');
+ const recorded=(state.data.results||[]).filter(r=>{const edition=race(r.edition_id);return edition&&Number(edition.year)===Number(year)});
+ const firsts=recorded.filter(r=>Number(r.position)===1).length, top3=recorded.filter(r=>Number(r.position)<=3).length;
+ const role=state.role||'trainer', level=state.involvement||'balanced';
+ const roles=[['owner','Owner'],['trainer','Trainer'],['farm','Farm manager'],['breeder','Breeder'],['jockey','Jockey']];
+ const roleLabels={owner:'Owner',trainer:'Trainer',farm:'Farm manager',breeder:'Breeder',jockey:'Jockey'};
+ const focus={owner:'Ownership decisions, budgets and which horses carry your colors.',trainer:'Training plans, race placement and the people who prepare each horse.',farm:'Farm operations, breeding stock, facilities and long-range planning.',breeder:'Bloodlines, matings, foal development and sale decisions.',jockey:'Race tactics, mounts, preparation and relationships with stables.'};
+ const levelLabels={'hands-on':'Hands-on','balanced':'Balanced','executive':'Executive'};
+ const levelCopy={'hands-on':'Frequent daily choices and close control.','balanced':'Key decisions with room to delegate.','executive':'Set priorities and review the operation.'};
+ const roleOptions=roles.map(([value,label])=>'<option value="'+value+'"'+(role===value?' selected':'')+'>'+label+'</option>').join('');
+ const levelOptions=[['hands-on','Hands-on'],['balanced','Balanced'],['executive','Executive']].map(([value,label])=>'<option value="'+value+'"'+(level===value?' selected':'')+'>'+label+'</option>').join('');
+ const topHorses=allHorses.slice().sort((a,b)=>(winIndex.get(b.id)||0)-(winIndex.get(a.id)||0)||a.name.localeCompare(b.name)).slice(0,3);
+ const horseRows=topHorses.map(e=>'<div class="roster-row"><div class="asset-placeholder asset-mini" data-asset-slot="horse-card"><span>HORSE</span></div><div class="roster-main">'+openButton('entity',e.id,e.name)+'<small>'+h(e.foal_year||'Foaling year not recorded')+' · '+h(e.sex||'sex not recorded')+'</small></div><span class="roster-stat">'+(winIndex.get(e.id)||0)+'<small>recorded wins</small></span></div>').join('')||'<p class="empty-note">No horse records are loaded for this view.</p>';
+ const raceRows=raceList.slice(0,4).map(r=>'<article class="mini-race-row"><div class="mini-race-main"><span class="smallcaps">'+h(dateLabel(r))+'</span><strong>'+openButton('race',r.id,r.name)+'</strong><small>'+venueName(r)+'</small></div><div class="mini-race-winner">'+(winnerOf(r)?'<span>WINNER</span>'+openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id)):'<span class="muted">No winner recorded</span>')+'</div></article>').join('')||'<p class="empty-note">No race editions are loaded for this season.</p>';
+ const optionRole=roleLabels[role]||'Trainer', scope=state.mode==='D1_CONNECTED'?'PRIVATE ARCHIVE CONNECTED':'HISTORICAL PREVIEW';
+ return '<div class="command-center">'+
+ '<section class="command-hero"><div class="command-hero-copy"><div class="command-kicker">'+scope+' · '+h(year)+' SEASON</div><h2>Your racing operation,<br>at a glance.</h2><p>Choose the seat you want to manage from and set how closely you want to run it. This command center is built around the historical archive.</p><div class="command-tags"><span>Source-backed history</span><span>Role-based management</span></div></div><div class="command-art asset-placeholder" data-asset-slot="stable-yard"><span class="horse-glyph">♞</span><small>STABLE ART PLACEHOLDER</small></div></section>'+
+ '<section class="management-bar"><div class="management-heading"><span class="smallcaps">YOUR MANAGEMENT STYLE</span><strong>'+optionRole+' · '+levelLabels[level]+'</strong></div><label><span>YOUR ROLE</span><select class="game-select" data-game-pref="role">'+roleOptions+'</select></label><label><span>INVOLVEMENT</span><select class="game-select" data-game-pref="involvement">'+levelOptions+'</select></label><div class="management-focus">'+focus[role]+' <span>'+levelCopy[level]+'</span></div></section>'+
+ '<div class="command-stats"><div class="command-stat"><small>HORSES IN LOADED ARCHIVE</small><strong>'+allHorses.length.toLocaleString()+'</strong><span>Source identities</span></div><div class="command-stat"><small>RACES · '+h(year)+'</small><strong>'+raceList.length.toLocaleString()+'</strong><span>Recorded editions</span></div><div class="command-stat"><small>1ST PLACE · '+h(year)+'</small><strong>'+firsts.toLocaleString()+'</strong><span>Recorded results</span></div><div class="command-stat"><small>TOP THREE · '+h(year)+'</small><strong>'+top3.toLocaleString()+'</strong><span>Recorded placings</span></div></div>'+
+ '<div class="command-grid"><section class="game-panel"><header class="game-panel-heading"><div><span class="smallcaps">RACE FILE</span><h3>'+h(year)+' race calendar</h3></div><button class="text-button" data-page="seasons">Open calendar →</button></header><div class="mini-race-list">'+raceRows+'</div></section>'+
+ '<section class="game-panel stable-panel"><header class="game-panel-heading"><div><span class="smallcaps">THE BARN</span><h3>Stable board</h3></div><button class="text-button" data-page="horses">View stable →</button></header><div class="roster-list">'+horseRows+'</div><div class="stable-footer"><span class="asset-placeholder asset-mini farm-mark" data-asset-slot="farm-logo"><span>FARM</span></span><span>Farm, trainer and jockey portraits will use dedicated art slots.</span></div></section>'+
+ '<section class="archive-strip"><span class="archive-mark">i</span><div><strong>History is shown as recorded.</strong><p>Totals on this screen reflect the loaded source snapshot. Missing starts, earnings, dates and connections stay marked as unavailable instead of being guessed.</p></div><button class="text-button" data-page="sources">Review coverage →</button></section></div>'+
+ '<p class="manager-note">Role and involvement are saved on this device as interface preferences. They will guide the management experience as game systems are connected.</p></div>';
 }
 function renderSeasons(){
   const y=state.year;const tabs=yearTabs();
@@ -86,14 +102,18 @@ function renderSeasons(){
 }
 function renderHorses(){
  const list=filteredEntities('horse');
- const rows=list.slice(0,250).map(r=>{const wins=winIndex.get(r.id)||0;return `<tr><td>${openButton('entity',r.id,r.name)}<div class="subline">${h(r.id)}</div></td><td>${h(r.foal_year||'—')}</td><td>${h(r.sex||'—')}</td><td>${wins}</td><td>${formatStatus(r.status)}</td><td>${editButton('entity',r.id,'Propose edit')}</td></tr>`}).join('');
- return `${intro('SOURCE-RECORDED POPULATION','Horse Registry','Every horse name has a pencil to edit its display name without changing its permanent identity. Open any profile for results and connections.',`<div class="record-count">${list.length} horses displayed</div>`)}${section('Horses','Showing up to 250 matching records at once. Full database search is supported when the WTW D1 import is connected.',`<div class="table-scroll"><table class="data-table"><thead><tr><th>Horse</th><th>Foaled</th><th>Sex</th><th>Recorded wins</th><th>Name status</th><th>Review</th></tr></thead><tbody>${rows||'<tr><td colspan="6">No matching horses</td></tr>'}</tbody></table></div>`)}`;
+ const cards=list.slice(0,120).map(r=>{
+  const wins=winIndex.get(r.id)||0;
+  const placements=(state.data.results||[]).filter(x=>x.horse_id===r.id);
+  return '<article class="stable-card"><div class="asset-placeholder stable-card-art" data-asset-slot="horse-portrait"><span>HORSE PORTRAIT</span></div><div class="stable-card-body"><div class="smallcaps">'+h(r.sex||'HORSE')+' · '+h(r.foal_year||'YEAR UNKNOWN')+'</div><h3>'+openButton('entity',r.id,r.name)+'</h3><div class="stable-card-stats"><span><strong>'+wins+'</strong> recorded wins</span><span><strong>'+placements.length+'</strong> imported finishes</span></div><div class="stable-card-actions">'+editButton('entity',r.id,'Review record','button button-quiet')+'<span>'+formatStatus(r.status)+'</span></div></div></article>';
+ }).join('');
+ return intro('YOUR ROSTER','My Stable','Horse portraits are reserved as placeholders. Open a horse to see its compact pedigree, recorded finishes and season connections.', '<div class="record-count">'+list.length.toLocaleString()+' horses in this view</div>')+'<div class="stable-grid">'+(cards||'<p class="empty-note">No horse records match this search.</p>')+'</div>'+(list.length>120?'<p class="manager-note">Showing 120 matching horses at once. Search by name or permanent ID to narrow the roster.</p>':'');
 }
 function renderPeople(){
-  const list=[...filteredEntities('person'),...filteredEntities('organization')].sort((a,b)=>a.name.localeCompare(b.name));
-  const rows=list.slice(0,250).map(e=>{const stored=partyIndex.get(e.id);const roles=stored?.roles||new Set();const count=stored?.count||0;return `<tr><td>${openButton('entity',e.id,e.name)}<div class="subline">${h(e.id)}</div></td><td>${h(e.kind==='person'?'Person':'Farm / stable')}</td><td>${h(e.role||[...roles].join(', ')||'—')}</td><td>${count}</td><td>${editButton('entity',e.id,'Propose edit')}</td></tr>`}).join('');
-  return `${intro('HUMAN & STABLE RECORDS','People & Stables','Edit trainer, jockey, owner, breeder, farm and stable names with the pencil beside each record. Historical associations retain their IDs.')}
-   ${section('People, owners, farms & studs',`${list.length} matches in the current import`, `<div class="table-scroll"><table class="data-table"><thead><tr><th>Name</th><th>Type</th><th>Known role</th><th>Horse-year links</th><th>Review</th></tr></thead><tbody>${rows||'<tr><td colspan="5">No matches</td></tr>'}</tbody></table></div>`)}`;
+ const people=filteredEntities('person'), farms=filteredEntities('organization');
+ const makeCard=(e,type)=>{const stored=partyIndex.get(e.id),roles=stored?.roles||new Set(),links=stored?.count||0;const label=type==='person'?'PERSON':'FARM / OWNER';return '<article class="people-card"><div class="asset-placeholder people-art" data-asset-slot="'+(type==='person'?'person-headshot':'farm-logo')+'"><span>'+label+'</span></div><div class="people-card-body"><div class="smallcaps">'+(type==='person'?'PEOPLE':'FARMS & OWNERS')+'</div><h3>'+openButton('entity',e.id,e.name)+'</h3><p>'+h(e.role||[...roles].join(', ')||'Role not recorded')+'</p><div class="people-card-footer"><span>'+links+' horse-year links</span>'+editButton('entity',e.id,'Review','button button-quiet')+'</div></div></article>'};
+ const cards=[...people.slice(0,100).map(e=>makeCard(e,'person')),...farms.slice(0,100).map(e=>makeCard(e,'organization'))].join('');
+ return intro('YOUR RACING NETWORK','People & Farms','Trainer, jockey, owner, breeder, farm and stable files stay compact, with portrait and logo slots ready for future artwork.', '<div class="record-count">'+people.length.toLocaleString()+' people · '+farms.length.toLocaleString()+' organizations</div>')+'<div class="people-grid">'+(cards||'<p class="empty-note">No people or farm records match this search.</p>')+'</div>';
 }
 function renderSearch(){
  const query=state.search.toLowerCase().trim();
@@ -148,7 +168,7 @@ function render(){
  $('page-title').textContent=pageTitle();
  document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.classList.contains('nav-link')&&b.dataset.page===state.page));
  $('change-count').textContent=state.changes.filter(c=>c.status==='PENDING').length;
- $('data-mode').textContent=state.mode==='D1_CONNECTED'?'D1 CONNECTED':'CURATED DEMO · NOT SYNCED';
+ $('data-mode').textContent=state.mode==='D1_CONNECTED'?'ARCHIVE CONNECTED':'ARCHIVE PREVIEW';
  $('data-mode').classList.toggle('live',state.mode==='D1_CONNECTED');
  const map={overview:renderOverview,seasons:renderSeasons,horses:renderHorses,people:renderPeople,tracks:renderTracks,races:renderRaces,search:renderSearch,changes:renderChanges,sources:renderSources};
  $('app').innerHTML=(state.mode==='DEMO'&&state.apiIssue?`<div class="callout"><strong>Private historical database not connected to this session.</strong> The records shown here are only the small demonstration set, not the imported history. API: ${h(state.apiIssue)}. Confirm the three Production Access variables and redeploy before making saved edits.</div>`:'')+(map[state.page]||renderOverview)();
@@ -162,39 +182,51 @@ async function openDetail(type,id){
  if(!e){toast('The requested record has not been imported.');return;}
  let markup='';
  if(type==='entity'){
-   const cn=(state.data?.connections||[]).filter(c=>c.horse_id===id||c.party_id===id).sort((a,b)=>b.year-a.year);
-   const placings=(state.data?.results||[]).filter(r=>r.horse_id===id).map(r=>({...r,race:race(r.edition_id)})).filter(r=>r.race).sort((a,b)=>b.race.year-a.race.year);
-   markup=`<div class="eyebrow">${h(e.kind)} PROFILE</div><h2>${h(e.name)} ${renameButton(type,e.id,e.name)}</h2><div class="detail-id">${h(e.id)}</div><p class="detail-desc">${h(e.summary||'Historical source identity. Detailed biography not yet imported.')}</p>
-   <div class="detail-facts"><div class="detail-fact"><small>Type</small><strong>${h(e.kind)}</strong></div><div class="detail-fact"><small>Foaling year / role</small><strong>${h(e.foal_year||e.role||'Not recorded')}</strong></div><div class="detail-fact"><small>Sex</small><strong>${h(e.sex||'Not applicable / unknown')}</strong></div><div class="detail-fact"><small>Source status</small><strong>${h(e.status||'SOURCE_SNAPSHOT')}</strong></div></div>
-   <div class="detail-edit">${editButton('entity',e.id,'Propose a name or profile correction','button button-primary')}</div>
-   <h3>Season connections</h3><div class="detail-list">${cn.map(c=>`<div class="detail-list-item"><div><strong>${h(c.year)} · ${h(c.role)}</strong><small>${c.horse_id===id?openButton('entity',c.party_id,nameFor(c.party_id)):openButton('entity',c.horse_id,nameFor(c.horse_id))} · ${h(c.basis||'Basis unrecorded')}</small></div>${editButton('connection',c.id,'Edit','button button-quiet')}</div>`).join('')||'<p class="muted">No connections imported yet.</p>'}</div>
-   ${e.kind==='horse'?`<h3>Recorded race appearances</h3><div class="detail-list">${placings.map(p=>`<div class="detail-list-item"><div>${openButton('race',p.race.id,p.race.name)}<small>${h(p.race.year)} · ${venueName(p.race)} · position ${h(p.position)}</small></div>${editButton('result',`${p.edition_id}::${p.position}`,'Review','button button-quiet')}</div>`).join('')||'<p class="muted">No race appearances in this import.</p>'}</div>`:''}
-   <h3>Pedigree and barn history</h3><div id="horse-pedigree-panel"><p class="muted">Source pedigree details load from the private archive when connected. Barn locations are not inferred from a stable's region.</p></div>`;
+  const cn=(state.data?.connections||[]).filter(c=>c.horse_id===id||c.party_id===id).sort((a,b)=>b.year-a.year);
+  const placings=(state.data?.results||[]).filter(r=>r.horse_id===id).map(r=>({...r,race:race(r.edition_id)})).filter(r=>r.race).sort((a,b)=>b.race.year-a.race.year||Number(a.position)-Number(b.position));
+  const isHorse=e.kind==='horse';
+  const firsts=placings.filter(p=>Number(p.position)===1), seconds=placings.filter(p=>Number(p.position)===2), thirds=placings.filter(p=>Number(p.position)===3);
+  const heading=isHorse?'HORSE CAREER FILE':(e.kind==='person'?'PEOPLE FILE':'FARM & ORGANIZATION FILE');
+  const roleText=isHorse?(e.foal_year?'Foaled '+h(e.foal_year):'Foaling year not recorded'):(e.role||'Role not recorded');
+  const assetSlot=isHorse?'horse-portrait':e.kind==='person'?'person-headshot':'farm-logo';
+  const assetLabel=isHorse?'HORSE PORTRAIT':e.kind==='person'?'PERSON HEADSHOT':'FARM LOGO';
+  const raceLine=placings.slice(0,4).map(p=>'<div class="profile-race-row"><div>'+openButton('race',p.race.id,p.race.name)+'<small>'+h(p.race.year)+' · '+venueName(p.race)+'</small></div><strong class="finish-badge finish-'+h(p.position)+'">'+h(p.position)+'</strong>'+editButton('result',p.edition_id+'::'+p.position,'Review','button button-quiet')+'</div>').join('');
+  const connectionLine=cn.slice(0,5).map(c=>'<div class="profile-connection-row"><strong>'+h(c.year)+' · '+h(c.role)+'</strong><span>'+openButton('entity',c.party_id,nameFor(c.party_id))+'</span><small>'+h(c.basis||'Season-level source link')+'</small></div>').join('');
+  const achievementLine=firsts.length?firsts.slice(0,3).map(p=>'<li>'+openButton('race',p.race.id,p.race.name)+' · '+h(p.race.year)+' winner</li>').join(''):'<li>No first-place result appears in the loaded source records.</li>';
+  const expanded=placings.length>4?'<details class="profile-more"><summary>View all '+placings.length+' recorded appearances</summary><div class="profile-more-list">'+placings.slice(4).map(p=>'<div>'+openButton('race',p.race.id,p.race.name)+' <span>'+h(p.race.year)+' · position '+h(p.position)+'</span></div>').join('')+'</div></details>':'';
+  const status=h(e.status||'SOURCE SNAPSHOT');
+  markup='<div class="entity-profile '+(isHorse?'horse-profile':'')+'"><div class="profile-header"><div class="asset-placeholder profile-portrait" data-asset-slot="'+assetSlot+'"><span>'+assetLabel+'</span></div><div class="profile-heading"><div class="eyebrow">'+heading+'</div><h2>'+h(e.name)+' '+renameButton(type,e.id,e.name)+'</h2><div class="detail-id">'+h(e.id)+'</div><p class="profile-summary">'+h(e.summary||'No biographical narrative is present in the loaded source file.')+'</p><div class="profile-tags"><span>'+h(e.sex||e.kind)+'</span><span>'+roleText+'</span><span>'+status+'</span></div></div><div class="profile-header-actions">'+editButton('entity',e.id,'Propose correction','button button-quiet')+'</div></div>'+
+  (isHorse?'<div class="profile-stats"><div><small>CAREER STARTS</small><strong>Not available</strong><span>Full total not in this file</span></div><div><small>RECORDED FINISHES</small><strong>'+placings.length+'</strong><span>Imported results only</span></div><div><small>1ST PLACE</small><strong>'+firsts.length+'</strong><span>Recorded</span></div><div><small>2ND PLACE</small><strong>'+seconds.length+'</strong><span>Recorded</span></div><div><small>3RD PLACE</small><strong>'+thirds.length+'</strong><span>Recorded</span></div><div><small>EARNINGS</small><strong>Not imported</strong><span>Not treated as zero</span></div></div>'+
+  '<div class="profile-pedigree-section"><div class="profile-section-title"><div><span class="smallcaps">BLOODLINE</span><h3>Pedigree at a glance</h3></div><span class="source-chip">SOURCE LINKS</span></div><div id="horse-pedigree-panel" class="profile-pedigree-grid"><div class="pedigree-card"><small>SIRE</small><strong>'+(state.mode==='D1_CONNECTED'?'Loading source record…':'Not in loaded sample')+'</strong></div><div class="pedigree-card"><small>DAM</small><strong>'+(state.mode==='D1_CONNECTED'?'Loading source record…':'Not in loaded sample')+'</strong></div></div></div>'+
+  '<div class="profile-columns"><section class="profile-section"><div class="profile-section-title"><div><span class="smallcaps">RACE HISTORY</span><h3>Recorded finishes</h3></div><span class="source-chip">'+placings.length+' APPEARANCES</span></div><div class="profile-race-list">'+(raceLine||'<p class="empty-note">No finish records in this source snapshot.</p>')+'</div>'+expanded+'<p class="source-caveat">This is the loaded archive record, not a verified lifetime start total.</p></section><section class="profile-section"><div class="profile-section-title"><div><span class="smallcaps">HIGHLIGHTS & CONNECTIONS</span><h3>Notable achievements</h3></div></div><ul class="achievement-list">'+achievementLine+'</ul><div class="profile-section-title profile-secondary-title"><div><span class="smallcaps">SEASON LINKS</span><h3>People around this horse</h3></div></div><div class="profile-connection-list">'+(connectionLine||'<p class="empty-note">No season connections imported.</p>')+'</div></section></div></div>':
+  '<div class="entity-profile"><div class="profile-header"><div class="asset-placeholder profile-portrait" data-asset-slot="'+assetSlot+'"><span>'+assetLabel+'</span></div><div class="profile-heading"><div class="eyebrow">'+heading+'</div><h2>'+h(e.name)+' '+renameButton(type,e.id,e.name)+'</h2><div class="detail-id">'+h(e.id)+'</div><p class="profile-summary">'+h(e.summary||'No biographical narrative is present in the loaded source file.')+'</p><div class="profile-tags"><span>'+h(e.kind)+'</span><span>'+roleText+'</span><span>'+status+'</span></div></div><div class="profile-header-actions">'+editButton('entity',e.id,'Propose correction','button button-quiet')+'</div></div><div class="profile-columns"><section class="profile-section"><div class="profile-section-title"><div><span class="smallcaps">ASSOCIATIONS</span><h3>Season connections</h3></div><span class="source-chip">'+cn.length+' LINKS</span></div><div class="profile-connection-list">'+(connectionLine||'<p class="empty-note">No connections imported.</p>')+'</div></section><section class="profile-section"><div class="profile-section-title"><div><span class="smallcaps">SOURCE RECORD</span><h3>Historical identity</h3></div></div><div class="profile-stats compact-profile-stats"><div><small>TYPE</small><strong>'+h(e.kind)+'</strong></div><div><small>ROLE</small><strong>'+roleText+'</strong></div><div><small>HORSE-YEAR LINKS</small><strong>'+(partyIndex.get(e.id)?.count||0)+'</strong></div></div><p class="source-caveat">Connections are recorded at season level. They do not prove a specific race-day assignment.</p></section></div></div>');
  } else {
-   const results=resultOf(e.id);
-   markup=`<div class="eyebrow">HISTORICAL RACE EDITION</div><h2>${h(e.name)} ${renameButton(type,e.id,e.name)}</h2><div class="detail-id">${h(e.id)}</div>
-   <p class="detail-desc">${venueName(e)} · ${h(e.year)} · ${h(dateLabel(e))}<br>Source: ${h(e.source||'Not specified')}</p>
-   <div class="detail-edit">${editButton('race',e.id,'Propose a race-record correction','button button-primary')}</div><h3>Recorded finishers</h3><div class="detail-list">${results.sort((a,b)=>a.position-b.position).map(p=>`<div class="detail-list-item"><div><strong>Position ${h(p.position)}</strong><small>${openButton('entity',p.horse_id,nameFor(p.horse_id))}</small></div>${editButton('result',`${p.edition_id}::${p.position}`,'Review','button button-quiet')}</div>`).join('')||'<p class="muted">No finishers imported yet.</p>'}</div>`;
+  const results=resultOf(e.id).sort((a,b)=>a.position-b.position);
+  markup='<div class="entity-profile race-profile"><div class="profile-heading"><div class="eyebrow">HISTORICAL RACE EDITION</div><h2>'+h(e.name)+' '+renameButton(type,e.id,e.name)+'</h2><div class="detail-id">'+h(e.id)+'</div><p class="profile-summary">'+venueName(e)+' · '+h(e.year)+' · '+h(dateLabel(e))+'</p></div><div class="profile-section-title"><div><span class="smallcaps">SOURCE FINISH ORDER</span><h3>Recorded finishers</h3></div><span class="source-chip">'+results.length+' RESULTS</span></div><div class="profile-race-list">'+(results.map(p=>'<div class="profile-race-row"><div><strong>'+openButton('entity',p.horse_id,nameFor(p.horse_id))+'</strong></div><strong class="finish-badge finish-'+h(p.position)+'">'+h(p.position)+'</strong>'+editButton('result',p.edition_id+'::'+p.position,'Review','button button-quiet')+'</div>').join('')||'<p class="empty-note">No finishers imported.</p>')+'</div><p class="source-caveat">Source: '+h(e.source||'Not specified')+' · '+h(e.status||'SOURCE SNAPSHOT')+'</p></div>';
  }
- $('detail-content').innerHTML=`<button class="icon-button drawer-close" data-close-drawer="true" aria-label="Close profile">✕</button>${markup}`;
+ $('detail-content').innerHTML='<button class="icon-button drawer-close" data-close-drawer="true" aria-label="Close profile">✕</button>'+markup;
  $('drawer-backdrop').hidden=false;$('detail-drawer').classList.add('open');$('detail-drawer').setAttribute('aria-hidden','false');
  if(type==='entity'&&e.kind==='horse'&&state.mode==='D1_CONNECTED'){
-   try {
-     const resp=await fetch(`/api/horses/${encodeURIComponent(id)}`,{credentials:'same-origin'});
-     if(!resp.ok)throw Error('Detailed source unavailable');
-     const info=await resp.json(),panel=$('horse-pedigree-panel');
-     if(!panel||!$('detail-drawer').classList.contains('open'))return;
-     const parents=(info.parents||[]).map(p=>`<div class="detail-list-item"><div><strong>${h(p.relation)}</strong><small>${p.parent_id&&entity(p.parent_id)?openButton('entity',p.parent_id,nameFor(p.parent_id)):p.parent_id?`<span class="name-edit-pair"><span>${h(p.parent_name||p.parent_id)}</span>${renameButton('pedigree',p.parent_id,p.parent_name||p.parent_id)}</span>`:h(p.parent_name||'Not recorded')} · ${h(p.biology_check||'Unverified')}</small></div></div>`).join('');
-     const linkParty=(label,partyId)=>partyId?`<span class="season-party"><strong>${h(label)}</strong> ${entity(partyId)?openButton('entity',partyId,nameFor(partyId)):h(partyId)+' <span class="muted">(identity not imported)</span>'}</span>`:'';
-     const seasonSummary=(info.seasons||[]).map(s=>`<div class="season-record"><div><strong>${h(s.year)} season</strong><small>${h(s.stakes_wins??'—')} stakes wins · ${h(s.top3_starts??'—')} top-three stakes starts · region ${h(s.region||'Not recorded')}</small></div><div class="season-people">
-       ${linkParty('Owner',s.owner_id)}${linkParty('Trainer',s.trainer_id)}${linkParty('Jockey',s.jockey_id)}${linkParty('Breeder',s.breeder_id)}
-     </div></div>`).join('');
-     const offspring=(info.offspring||[]).map(o=>`<div class="detail-list-item"><div>${entity(o.child_id)?openButton('entity',o.child_id,nameFor(o.child_id)):`<span class="name-edit-pair"><span>${h(o.child_name||o.child_id||'Unrecorded')}</span>${o.child_id?renameButton('pedigree',o.child_id,o.child_name||o.child_id):''}</span>`}<small>${h(o.relation||'Parentage')} · ${h(o.biology_check||'Not verified')}</small></div></div>`).join('');
-     panel.innerHTML=`<h3>Recorded ancestry</h3><div class="detail-list">${parents||'<p class="muted">No parent edges available in this source.</p>'}</div>
-       <h3>Season-by-season ownership and training</h3><div class="season-list">${seasonSummary||'<p class="muted">No season summaries available.</p>'}</div>
-       <h3>Recorded offspring</h3><div class="detail-list">${offspring||'<p class="muted">No offspring recorded in this source.</p>'}</div>
-       <p class="muted">Ownership and training are year-level source assignments, not claims about individual race-day connections. Pedigree links may still require verification.</p>`;
-   }catch {const panel=$('horse-pedigree-panel');if(panel)panel.textContent='Detailed source could not be loaded.'}
+  try{
+   const resp=await fetch('/api/horses/'+encodeURIComponent(id),{credentials:'same-origin',cache:'no-store'});
+   if(!resp.ok)throw Error('Detailed source unavailable');
+   const info=await resp.json(),panel=$('horse-pedigree-panel');if(!panel||!$('detail-drawer').classList.contains('open'))return;
+   const parentBy=(word)=> (info.parents||[]).find(p=>String(p.relation||'').toLowerCase()===word);
+   const parentCard=(label,p,idValue)=>{
+    const pid=idValue||p?.parent_id,name=p?.parent_name||(pid&&entity(pid)?nameFor(pid):pid);
+    const value=pid&&entity(pid)?openButton('entity',pid,nameFor(pid)):h(name||'Not recorded in this source');
+    return '<div class="pedigree-card"><small>'+label+'</small><strong>'+value+'</strong><span>'+h(p?.biology_check||'Source link; verification status unavailable')+'</span></div>';
+   };
+   const sire=parentBy('sire'),dam=parentBy('dam');
+   const details=info.details||{};
+   const seasons=(info.seasons||[]).map(s=>'<div class="profile-season-row"><strong>'+h(s.year)+'</strong><span>'+h(s.stakes_wins??'—')+' stakes wins · '+h(s.top3_starts??'—')+' top-three stakes starts</span><small>'+h(s.region||'Region not recorded')+' · owner '+h(s.owner_id||'not recorded')+' · trainer '+h(s.trainer_id||'not recorded')+' · jockey '+h(s.jockey_id||'not recorded')+'</small></div>').join('');
+   const wins=(info.seasons||[]).filter(s=>Number(s.stakes_wins)>0).map(s=>'<li>'+h(s.year)+': '+h(s.stakes_wins)+' source-recorded stakes wins</li>').join('');
+   panel.innerHTML=parentCard('SIRE',sire,details.sire_id)+parentCard('DAM',dam,details.dam_id);
+   const extra='<div class="profile-season-history"><div class="profile-section-title"><div><span class="smallcaps">ARCHIVE BY SEASON</span><h3>Season record</h3></div></div>'+(seasons||'<p class="empty-note">No horse seasons in the loaded source.</p>')+'</div>';
+   panel.insertAdjacentHTML('afterend',extra);
+   const achievements=$('detail-content').querySelector('.achievement-list');
+   if(achievements&&wins)achievements.innerHTML=wins;
+  }catch{const panel=$('horse-pedigree-panel');if(panel)panel.innerHTML='<div class="pedigree-card"><small>PEDIGREE</small><strong>Details unavailable</strong></div>'}
  }
 }
 function closeDrawer(){ state.openDetail=null; $('detail-drawer').classList.remove('open');$('detail-drawer').setAttribute('aria-hidden','true');$('drawer-backdrop').hidden=true;}
@@ -274,6 +306,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-page],[dat
  if(t.dataset.page){setPage(t.dataset.page);return}if(t.dataset.year){setYear(t.dataset.year);return}if(t.dataset.closeDrawer){closeDrawer();return}if(t.dataset.renameType){showRename(t.dataset.renameType,t.dataset.id,t.dataset.currentName);return}if(t.dataset.openType){openDetail(t.dataset.openType,t.dataset.id);return}if(t.dataset.editType){showEdit(t.dataset.editType,t.dataset.id);return}if(t.dataset.reviewAction){decideChange(t.dataset.reviewId,t.dataset.reviewAction)}
 });
 $('year-select').addEventListener('change',e=>setYear(e.target.value));
+document.addEventListener('change',e=>{const control=e.target.closest('[data-game-pref]');if(!control)return;const key=control.dataset.gamePref;if(!['role','involvement'].includes(key))return;state[key]=control.value;try{localStorage.setItem(GAME_PREF_KEY,JSON.stringify({role:state.role,involvement:state.involvement}));}catch{}render();});
 $('global-search').addEventListener('input',e=>{state.search=e.target.value.trim();if(state.search)state.page='search';else if(state.page==='search')state.page='overview';render()});
 $('edit-field').addEventListener('change',fillOld);
 $('edit-form').addEventListener('submit',saveProposal);

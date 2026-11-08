@@ -5,8 +5,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#092c22" />
-  <meta name="description" content="Private historical and canon management desk for the Wire to Wire racing universe." />
-  <title>WIRE TO WIRE · Historical & Canon Desk</title>
+  <meta name="description" content="A source-backed Thoroughbred racing manager with a compact historical archive." />
+  <title>WIRE TO WIRE · Racing Manager</title>
   <link rel="icon" type="image/png" href="/assets/wtw-logo.png" />
   <link rel="stylesheet" href="/style.css" />
   <script type="module" src="/app.js"></script>
@@ -16,22 +16,22 @@
     <aside class="sidebar" id="sidebar">
       <div class="brand">
         <img src="/assets/wtw-logo.png" alt="Wire to Wire logo" class="brand-logo" />
-        <div><div class="brand-title">WIRE TO WIRE</div><div class="brand-sub">HISTORICAL & CANON DESK</div></div>
+        <div><div class="brand-title">WIRE TO WIRE</div><div class="brand-sub">THOROUGHBRED MANAGEMENT</div></div>
       </div>
       <div class="side-divider"></div>
-      <div class="side-label">EXPLORE THE UNIVERSE</div>
+      <div class="side-label">RACING OPERATIONS</div>
       <nav class="side-nav" aria-label="Main navigation">
-        <button data-page="overview" class="nav-link active"><span class="nav-icon">▦</span> Overview</button>
-        <button data-page="seasons" class="nav-link"><span class="nav-icon">◷</span> Seasons</button>
-        <button data-page="horses" class="nav-link"><span class="nav-icon">♞</span> Horses</button>
-        <button data-page="people" class="nav-link"><span class="nav-icon">♙</span> People & Stables</button>
-        <button data-page="tracks" class="nav-link"><span class="nav-icon">⌖</span> Tracks</button>
-        <button data-page="races" class="nav-link"><span class="nav-icon">⚑</span> Race History</button>
+        <button data-page="overview" class="nav-link active"><span class="nav-icon">▦</span> Command Center</button>
+        <button data-page="seasons" class="nav-link"><span class="nav-icon">◷</span> Race Calendar</button>
+        <button data-page="horses" class="nav-link"><span class="nav-icon">♞</span> My Stable</button>
+        <button data-page="people" class="nav-link"><span class="nav-icon">♙</span> People & Farms</button>
+        <button data-page="tracks" class="nav-link"><span class="nav-icon">⌖</span> Racecourses</button>
+        <button data-page="races" class="nav-link"><span class="nav-icon">⚑</span> History Vault</button>
       </nav>
-      <div class="side-label side-label-second">GOVERNANCE</div>
+      <div class="side-label side-label-second">ARCHIVE TOOLS</div>
       <nav class="side-nav" aria-label="Governance navigation">
-        <button data-page="changes" class="nav-link"><span class="nav-icon">✎</span> Corrections <span class="nav-count" id="change-count">0</span></button>
-        <button data-page="sources" class="nav-link"><span class="nav-icon">≡</span> Sources & Status</button>
+        <button data-page="changes" class="nav-link"><span class="nav-icon">✎</span> Record Review <span class="nav-count" id="change-count">0</span></button>
+        <button data-page="sources" class="nav-link"><span class="nav-icon">≡</span> History Coverage</button>
       </nav>
       <div class="sidebar-bottom"><span class="status-dot"></span><span>Independent WTW project</span><small>Source records protected</small></div>
     </aside>
@@ -39,8 +39,8 @@
       <header class="topbar">
         <div class="header-left">
           <button id="mobile-menu" class="icon-button mobile-only" aria-label="Toggle menu">☰</button>
-          <span class="eyebrow">THE RACING WORLD, RECORDED</span>
-          <h1 id="page-title">The Universe</h1>
+          <span class="eyebrow">YOUR THOROUGHBRED OPERATION</span>
+          <h1 id="page-title">Command Center</h1>
         </div>
         <div class="header-right">
           <span class="env-pill" id="data-mode">Checking source…</span>
@@ -52,7 +52,7 @@
         <label class="year-wrap">SEASON <select id="year-select" aria-label="Select racing season"><option value="1953">1953</option></select></label>
       </div>
       <main class="main" id="app" tabindex="-1"><div class="loading">Opening the historical ledger…</div></main>
-      <footer class="footer"><span>WIRE TO WIRE · CANON DESK / v0.1</span><span>Separate from Rail & Rye and Hockey Lab</span></footer>
+      <footer class="footer"><span>WIRE TO WIRE · RACING MANAGER / ARCHIVE BUILD</span><span>Separate from Rail & Rye and Hockey Lab</span></footer>
     </div>
   </div>
   <div id="drawer-backdrop" class="backdrop" hidden></div>

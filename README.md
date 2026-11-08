@@ -1,6 +1,10 @@
-# WIRE TO WIRE — Historical & Canon Desk (v0.1)
+# WIRE TO WIRE — Racing Manager UI & Historical Archive
 
-A **new, independent** Cloudflare Workers + D1 project for browsing and curating the Wire to Wire racing universe. It does **not** share code, databases, Cloudflare deployment or credentials with Rail & Rye or Hockey Lab. The existing WTW Office build is also **untouched**.
+A **new, independent** Cloudflare Pages + D1 project for a Thoroughbred racing management game and source-backed history archive. The site now opens on a game-style command center with role and involvement preferences, then keeps the source archive and correction desk available. These preferences are a UI foundation; they do not yet drive a simulation engine. It does **not** share code, databases, Cloudflare deployment or credentials with Rail & Rye or Hockey Lab.
+
+## Current game UI foundation
+
+The command center lets the player choose an Owner, Trainer, Farm Manager, Breeder, or Jockey lens and set Hands-on, Balanced, or Executive involvement. Preferences are saved locally in the browser. Horse, people, and farm screens use replaceable visual-asset placeholders. Compact horse profiles keep sire, dam, source-recorded placings, season connections, and archive limitations together; unknown lifetime starts and earnings remain marked unavailable.
 
 ## What already works
 
