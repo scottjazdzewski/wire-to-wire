@@ -104,13 +104,14 @@ function setPage(page){state.page=page;document.body.classList.remove('menu-open
 function setYear(year){state.year=Number(year);$('year-select').value=String(year);render()}
 function toast(message){let node=$('toast');node.textContent=message;node.hidden=false;clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>node.hidden=true,4500)}
 async function openDetail(type,id){
+ state.openDetail={type,id};
  const e=type==='entity'?entity(id):type==='race'?race(id):null;
  if(!e){toast('The requested record has not been imported.');return;}
  let markup='';
  if(type==='entity'){
    const cn=(state.data?.connections||[]).filter(c=>c.horse_id===id||c.party_id===id).sort((a,b)=>b.year-a.year);
    const placings=(state.data?.results||[]).filter(r=>r.horse_id===id).map(r=>({...r,race:race(r.edition_id)})).filter(r=>r.race).sort((a,b)=>b.race.year-a.race.year);
-   markup=`<div class="eyebrow">${h(e.kind)} PROFILE</div><h2>${h(e.name)}</h2><div class="detail-id">${h(e.id)}</div><p class="detail-desc">${h(e.summary||'Historical source identity. Detailed biography not yet imported.')}</p>
+   markup=`<div class="eyebrow">${h(e.kind)} PROFILE</div><h2>${h(e.name)} ${renameButton(type,e.id,e.name)}</h2><div class="detail-id">${h(e.id)}</div><p class="detail-desc">${h(e.summary||'Historical source identity. Detailed biography not yet imported.')}</p>
    <div class="detail-facts"><div class="detail-fact"><small>Type</small><strong>${h(e.kind)}</strong></div><div class="detail-fact"><small>Foaling year / role</small><strong>${h(e.foal_year||e.role||'Not recorded')}</strong></div><div class="detail-fact"><small>Sex</small><strong>${h(e.sex||'Not applicable / unknown')}</strong></div><div class="detail-fact"><small>Source status</small><strong>${h(e.status||'SOURCE_SNAPSHOT')}</strong></div></div>
    <div class="detail-edit">${editButton('entity',e.id,'Propose a name or profile correction','button button-primary')}</div>
    <h3>Season connections</h3><div class="detail-list">${cn.map(c=>`<div class="detail-list-item"><div><strong>${h(c.year)} · ${h(c.role)}</strong><small>${c.horse_id===id?openButton('entity',c.party_id,nameFor(c.party_id)):openButton('entity',c.horse_id,nameFor(c.horse_id))} · ${h(c.basis||'Basis unrecorded')}</small></div>${editButton('connection',c.id,'Edit','button button-quiet')}</div>`).join('')||'<p class="muted">No connections imported yet.</p>'}</div>
@@ -118,7 +119,7 @@ async function openDetail(type,id){
    <h3>Pedigree and barn history</h3><div id="horse-pedigree-panel"><p class="muted">Source pedigree details load from the private archive when connected. Barn locations are not inferred from a stable's region.</p></div>`;
  } else {
    const results=resultOf(e.id);
-   markup=`<div class="eyebrow">HISTORICAL RACE EDITION</div><h2>${h(e.name)}</h2><div class="detail-id">${h(e.id)}</div>
+   markup=`<div class="eyebrow">HISTORICAL RACE EDITION</div><h2>${h(e.name)} ${renameButton(type,e.id,e.name)}</h2><div class="detail-id">${h(e.id)}</div>
    <p class="detail-desc">${venueName(e)} · ${h(e.year)} · ${h(dateLabel(e))}<br>Source: ${h(e.source||'Not specified')}</p>
    <div class="detail-edit">${editButton('race',e.id,'Propose a race-record correction','button button-primary')}</div><h3>Recorded finishers</h3><div class="detail-list">${results.sort((a,b)=>a.position-b.position).map(p=>`<div class="detail-list-item"><div><strong>Position ${h(p.position)}</strong><small>${openButton('entity',p.horse_id,nameFor(p.horse_id))}</small></div>${editButton('result',`${p.edition_id}::${p.position}`,'Review','button button-quiet')}</div>`).join('')||'<p class="muted">No finishers imported yet.</p>'}</div>`;
  }
@@ -136,7 +137,7 @@ async function openDetail(type,id){
    }catch {const panel=$('horse-pedigree-panel');if(panel)panel.textContent='Detailed source could not be loaded.'}
  }
 }
-function closeDrawer(){ $('detail-drawer').classList.remove('open');$('detail-drawer').setAttribute('aria-hidden','true');$('drawer-backdrop').hidden=true;}
+function closeDrawer(){ state.openDetail=null; $('detail-drawer').classList.remove('open');$('detail-drawer').setAttribute('aria-hidden','true');$('drawer-backdrop').hidden=true;}
 function showRename(type,id,current){
  if(!['entity','race','venue','pedigree'].includes(type)||!id||!current)return;
  state.rename={type,id,current};
@@ -158,9 +159,13 @@ async function saveName(e){
  try {
    const resp=await fetch('/api/names',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({target_type:item.type,target_id:item.id,expected_name:item.current,name:next})});
    const body=await resp.json().catch(()=>({}));if(!resp.ok)throw Error(body.error||'Name update failed');
-   const latest=await fetchBootstrap();
-   state.data.entities=latest.entities;state.data.races=latest.races;state.data.connections=latest.connections;state.data.results=latest.results;state.changes=latest.changes;
-   rebuildResultIndex();$('name-dialog').close();closeDrawer();render();
+   if(item.type==='entity'){const record=entity(item.id);if(record)record.name=next}
+   if(item.type==='race'){const record=race(item.id);if(record)record.name=next}
+   if(item.type==='venue'){const record=race(item.id);if(record)record.track_name=next}
+   $('name-dialog').close();render();
+   if(state.openDetail && $('detail-drawer').classList.contains('open')){
+      await openDetail(state.openDetail.type,state.openDetail.id);
+   }
    toast('Saved to WTW. Name updated; historical source remains unchanged.');
  }catch(err){toast('Unable to save name: '+err.message)}
  finally{$('save-name').disabled=false}
