@@ -189,7 +189,7 @@ async function openDetail(type,id){
      const seasonSummary=(info.seasons||[]).map(s=>`<div class="season-record"><div><strong>${h(s.year)} season</strong><small>${h(s.stakes_wins??'—')} stakes wins · ${h(s.top3_starts??'—')} top-three stakes starts · region ${h(s.region||'Not recorded')}</small></div><div class="season-people">
        ${linkParty('Owner',s.owner_id)}${linkParty('Trainer',s.trainer_id)}${linkParty('Jockey',s.jockey_id)}${linkParty('Breeder',s.breeder_id)}
      </div></div>`).join('');
-     const offspring=(info.offspring||[]).map(o=>`<div class="detail-list-item"><div>${entity(o.child_id)?openButton('entity',o.child_id,nameFor(o.child_id)):h(o.child_name||o.child_id||'Unrecorded')}<small>${h(o.relation||'Parentage')} · ${h(o.biology_check||'Not verified')}</small></div></div>`).join('');
+     const offspring=(info.offspring||[]).map(o=>`<div class="detail-list-item"><div>${entity(o.child_id)?openButton('entity',o.child_id,nameFor(o.child_id)):`<span class="name-edit-pair"><span>${h(o.child_name||o.child_id||'Unrecorded')}</span>${o.child_id?renameButton('pedigree',o.child_id,o.child_name||o.child_id):''}</span>`}<small>${h(o.relation||'Parentage')} · ${h(o.biology_check||'Not verified')}</small></div></div>`).join('');
      panel.innerHTML=`<h3>Recorded ancestry</h3><div class="detail-list">${parents||'<p class="muted">No parent edges available in this source.</p>'}</div>
        <h3>Season-by-season ownership and training</h3><div class="season-list">${seasonSummary||'<p class="muted">No season summaries available.</p>'}</div>
        <h3>Recorded offspring</h3><div class="detail-list">${offspring||'<p class="muted">No offspring recorded in this source.</p>'}</div>
