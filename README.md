@@ -20,7 +20,7 @@ The command center lets the player choose an Owner, Trainer, Farm Manager, Breed
 
 This first version is **NOT** the entire WTW history. The data sample contains 1953–1955 source-linked records only; it is marked clearly. The full historical ledgers, complete barn/location history, pedigrees, championships, awards and 87,500-horse opening population are **not yet imported**. Some race dates are deliberately unknown. Season trainer/jockey assignments **do not prove** individual race-day mounts; they are labeled year-level evidence. Exact horse barn is not inferred from ownership circuit.
 
-The existing `wire-to-wire.pages.dev` Cloudflare Pages site deploys from this repository's `main` branch, and its Cloudflare Access sign-in gate is active. The D1 binding and full historical import still need to be verified before treating the archive as complete. The 1953–1955 view is a limited source snapshot, not a full-career record.
+The existing `wire-to-wire.pages.dev` Cloudflare Pages site deploys from this repository's `main` branch, and its Cloudflare Access sign-in gate is active. The owner-reported D1 binding and full staged H/S/E/P/B import both have a remote audit pass. The remaining check is confirming that a signed-in site session reads D1. The imported snapshot covers stakes history through 1998, not every ordinary race or complete lifetime starts and earnings.
 
 ## Run the UI immediately (no Cloudflare account required)
 
@@ -32,7 +32,7 @@ Open <http://localhost:8000>. The interface uses `public/sample-history.json` an
 
 ## Existing Cloudflare Pages deployment
 
-The production site already uses the GitHub Pages connection for `wire-to-wire.pages.dev`. Commits to `main` trigger Cloudflare Pages deployments. Do not create a second Worker, Pages project, or D1 database for this app. Follow [GITHUB_CLOUDFLARE_SETUP.md](GITHUB_CLOUDFLARE_SETUP.md) to verify the existing D1 binding, Access variables, and historical import status. Local development still uses Wrangler and the local-only bypass described above.
+The production site already uses the GitHub Pages connection for `wire-to-wire.pages.dev`. Commits to `main` trigger Cloudflare Pages deployments. Do not create a second Worker, Pages project, or D1 database for this app. Follow [GITHUB_CLOUDFLARE_SETUP.md](GITHUB_CLOUDFLARE_SETUP.md) to verify the existing D1 binding and Access runtime settings. Local development still uses Wrangler and the local-only bypass described above.
 
 ## Data contract and next phases
 
