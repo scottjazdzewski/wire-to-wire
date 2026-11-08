@@ -1,0 +1,245 @@
+{
+  "batch_id": "WTW-FICTIONAL-NAMES-001",
+  "status": "PROVISIONAL_OWNER_REVIEW",
+  "scope": "fictional-game-names-only",
+  "archive_screen": {
+    "snapshot": "WTW-HISTORY-2026-11-07",
+    "archive_names_checked": 3856,
+    "exact_normalized_collisions_excluded": [
+      "Keep the Receipt",
+      "Small Mercies"
+    ],
+    "remaining_candidates_at_or_above_normalized_levenshtein_similarity_0_84": 0,
+    "external_registry_checked": false
+  },
+  "candidates": [
+    {
+      "candidate_id": "FN-001-001",
+      "name": "Borrowed Weather",
+      "style": "lyrical phrase",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-002",
+      "name": "West of Wabash",
+      "style": "regional reference",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-003",
+      "name": "Tin Ceiling",
+      "style": "plainspoken image",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-004",
+      "name": "Once in a While",
+      "style": "conversational phrase",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-005",
+      "name": "Copper County",
+      "style": "regional/commercial",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-006",
+      "name": "November Guest",
+      "style": "seasonal/character",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-007",
+      "name": "Plain Clothes",
+      "style": "understated phrase",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-008",
+      "name": "Pocket Change",
+      "style": "commercial/wordplay",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-009",
+      "name": "Days Between",
+      "style": "lyrical phrase",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-010",
+      "name": "Moon Over Macon",
+      "style": "regional/lyrical",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-011",
+      "name": "Rural Delivery",
+      "style": "plainspoken/commercial",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-012",
+      "name": "Hard to Place",
+      "style": "wry phrase",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-013",
+      "name": "False Start",
+      "style": "racing language",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-014",
+      "name": "A Quiet Argument",
+      "style": "unusual phrase",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-015",
+      "name": "Thicket Road",
+      "style": "regional/place-like",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-016",
+      "name": "Old Money Road",
+      "style": "commercial/character",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-017",
+      "name": "Got a Minute",
+      "style": "conversational",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-018",
+      "name": "The Local",
+      "style": "short/plainspoken",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-019",
+      "name": "Rain on Tin",
+      "style": "lyrical image",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-020",
+      "name": "Stolen Harvest",
+      "style": "historical/lyrical",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-021",
+      "name": "Easy to Remember",
+      "style": "wry phrase",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-022",
+      "name": "Turnaround Time",
+      "style": "commercial phrase",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-023",
+      "name": "Eight Bells",
+      "style": "racing/historical echo",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-024",
+      "name": "Lonesome Treaty",
+      "style": "historical/lyrical",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-025",
+      "name": "Cinderblock Moon",
+      "style": "eccentric image",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-026",
+      "name": "Belle’s Arithmetic",
+      "style": "playful/old-fashioned",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-027",
+      "name": "Noonday Bell",
+      "style": "lyrical image",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-028",
+      "name": "Under New Management",
+      "style": "wry phrase",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-029",
+      "name": "Somewhere in Clover",
+      "style": "lyrical phrase",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-030",
+      "name": "Another Opinion",
+      "style": "plainspoken/wry",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-031",
+      "name": "Last Call June",
+      "style": "conversational/seasonal",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-032",
+      "name": "Field Note",
+      "style": "short/plainspoken",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-033",
+      "name": "A Fine Detour",
+      "style": "wry phrase",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-034",
+      "name": "Fifth Street",
+      "style": "place-like",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-035",
+      "name": "Good on Paper",
+      "style": "commercial/wry",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-036",
+      "name": "Lighthouse Keeper",
+      "style": "character/image",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-037",
+      "name": "Evening Receipt",
+      "style": "commercial/lyrical",
+      "status": "PENDING_REVIEW"
+    },
+    {
+      "candidate_id": "FN-001-038",
+      "name": "Lucky Static",
+      "style": "eccentric phrase",
+      "status": "PENDING_REVIEW"
+    }
+  ]
+}
