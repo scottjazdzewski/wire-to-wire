@@ -82,3 +82,13 @@ button:disabled{cursor:not-allowed;opacity:.5}
 .search-result .smallcaps{color:#708b7b;font-size:10px}
 .search-note{margin:14px 4px;color:#778a80;font-size:12px}
 @media(max-width:740px){.year-hint{flex-basis:100%;margin-left:0}.year-strip{gap:6px}.year-strip .year-tab{padding:8px 10px}}
+
+/* Historical horse careers: year-level source assignments, no inferred race-day claims. */
+.season-list{border-top:1px solid #edf2ed}
+.season-record{padding:13px 0;border-bottom:1px solid #edf2ed;font-size:12px}
+.season-record>div:first-child>strong{color:#214d37}
+.season-record small{display:block;color:#829188;margin-top:4px}
+.season-people{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 12px;margin-top:11px}
+.season-party{color:#63816c;font-size:11px;overflow-wrap:anywhere}
+.season-party>strong{display:inline-block;margin-right:5px;color:#486c58}
+@media(max-width:520px){.season-people{grid-template-columns:1fr}}
