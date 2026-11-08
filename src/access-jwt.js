@@ -6,19 +6,30 @@
  */
 const FAIL = 'Private history API requires configured Cloudflare Access.';
 const decoder = new TextDecoder();
+
+function normalizeTeamDomain(value) {
+  let team = String(value || '').trim().replace(/\/+$/, '');
+  // Cloudflare's dashboard shows the team hostname without a scheme. Accept that
+  // and the bare team slug so Pages text variables work with the copied value.
+  if (/^[a-zA-Z0-9-]+$/.test(team)) team = `https://${team}.cloudflareaccess.com`;
+  else if (/^[a-zA-Z0-9-]+\.cloudflareaccess\.com$/i.test(team)) team = `https://${team}`;
+  if (!/^https:\/\/[a-zA-Z0-9-]+\.cloudflareaccess\.com$/i.test(team)) return '';
+  return team.toLowerCase();
+}
+
 function decodeSegment(x) {
   if (!x || !/^[A-Za-z0-9_-]+$/.test(x)) throw new Error('Invalid JWT encoding');
   const b64 = x.replace(/-/g, '+').replace(/_/g, '/');
   const raw = atob(b64.padEnd(Math.ceil(b64.length / 4) * 4, '='));
   return Uint8Array.from(raw, c => c.charCodeAt(0));
 }
+
 export async function verifyAccessRequest(request, env, fetcher = fetch) {
-  const team = String(env.TEAM_DOMAIN || '').replace(/\/$/, '');
-  const audience = String(env.POLICY_AUD || '');
+  const team = normalizeTeamDomain(env.TEAM_DOMAIN);
+  const audience = String(env.POLICY_AUD || '').trim();
   const emails = String(env.ADMIN_EMAIL || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
   // No auth config? Fail closed. A signed JWT is always required for private data.
-  if (!/^https:\/\/[a-zA-Z0-9-]+\.cloudflareaccess\.com$/.test(team) ||
-      !/^[a-zA-Z0-9_-]{16,}$/.test(audience) || !emails.length) return null;
+  if (!team || !/^[a-zA-Z0-9_-]{16,}$/.test(audience) || !emails.length) return null;
   const cookie = (request.headers.get('Cookie') || '').split(';').map(s => s.trim()).find(s => s.startsWith('CF_Authorization='));
   const token = request.headers.get('Cf-Access-Jwt-Assertion') || (cookie && cookie.slice('CF_Authorization='.length));
   if (!token || token.length > 16000) return null;
@@ -45,6 +56,7 @@ export async function verifyAccessRequest(request, env, fetcher = fetch) {
     return await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, binary, input) ? payload.email : null;
   } catch { return null; }
 }
+
 export function denied() {
   return new Response(JSON.stringify({error:FAIL}), {
     status:403,headers:{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}
