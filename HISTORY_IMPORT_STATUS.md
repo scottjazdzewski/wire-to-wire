@@ -55,3 +55,14 @@ Fix on `main`: serialize bootstrap D1 reads; populate the season selector from t
 **Do not run the initial historical import again against the populated D1.** Its preflight rejects a non-empty target to avoid overwriting edits. Any later source refresh must use an explicit change-managed, auditable incremental import plan, and preserve name overrides and human decisions.
 
 Project owner workflow/setup reference: [WTW_OWNER_LAUNCH_CHECKLIST.md](WTW_OWNER_LAUNCH_CHECKLIST.md).
+
+
+## November 8 current-master reconciliation audit
+
+The private D1 import remains a verified import of its Nov 7 v3.37 stakes-edition export, not a current v3.67 refresh. A direct edition-ID comparison against the Drive Master Stakes Calendar v3.67 (QA Verified — Promotion Pending) found 5,369 shared editions, one older imported edition absent from the current master, and 1,550 shared rows changed in one or more compared core fields. Field differences include 917 race-date values, 96 winner IDs, 208 second-place IDs, and 178 third-place IDs; counts overlap by race.
+
+The v3.67 dashboard reports 5,223 active editions, including 1,304 exact-date, 3,883 internal-date, and 36 governed WTW-fixed rows; eight active rows lack a race day and are included in the internal-date category. Across 135 years, 43 are route-clean, 92 remain calendar-open, and zero are fully exact-certified. “QA verified” describes the source workflow state; promotion remains pending and these figures do not certify all historical claims.
+
+The horse master contains 617 EXISTING_CANON, 3,115 HISTORICAL_STAKES_BACKFILL, and 124 GENERATED_SUPPORT_PARENT records. The backfill and support records are reconstructed/generated source classes and must be excluded from any corpus treated as verified real-horse names. One normalized duplicate name (“Coffee Tin”) appears on two distinct horse IDs; review it without automatic deletion because name reuse can be legitimate.
+
+The site now surfaces this source-version mismatch and classifies date evidence and horse source classes in the UI. Any refresh must be a controlled incremental delta that preserves display-name overrides and human review decisions. **Do not rerun the initial import.**

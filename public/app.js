@@ -60,9 +60,27 @@ function yearTabs(){
  ${later?`<button class="year-step" data-year="${later}" aria-label="Next decade">${Math.floor(later/10)*10}s →</button>`:''}
  <span class="year-hint">All years available in the SEASON menu above.</span></div>`;
 }
-function sessionRaces(year=state.year){return (state.data?.races||[]).filter(x=>Number(x.year)===Number(year)).sort((a,b)=>a.name.localeCompare(b.name))}
+function sessionRaces(year=state.year){return (state.data?.races||[]).filter(x=>Number(x.year)===Number(year)).sort((a,b)=>String(a.date||'9999-99-99').localeCompare(String(b.date||'9999-99-99'))||a.name.localeCompare(b.name))}
 function sessionHorseIds(year=state.year){const ids=new Set(sessionRaces(year).flatMap(e=>resultOf(e.id).map(r=>r.horse_id)));(state.data?.connections||[]).filter(x=>Number(x.year)===Number(year)).forEach(x=>ids.add(x.horse_id));return [...ids]}
-function dateLabel(r){if(!r.date)return 'Exact day unrecorded';if(String(r.date_basis||'').includes('UNVERIFIED'))return r.date+' · historical schedule date unverified';return r.date}
+function dateLabel(r){return r?.date?String(r.date):'Date not recorded'}
+function dateEvidence(r){
+ const basis=String(r?.date_basis||'').toUpperCase(),status=String(r?.status||'').toUpperCase(),qa=String(r?.chronology_qa||'').toUpperCase(),all=basis+' '+status+' '+qa;
+ if(/NOT[_\s-]?RUN|NON[_\s-]?RUN/.test(all))return {kind:'not-run',label:'Not run'};
+ if(/HOLD|REVIEW|PENDING|UNRESOLVED|QUARANTINED/.test(all))return {kind:'review',label:'Needs review'};
+ if(!r?.date)return {kind:'missing',label:'Day not recorded'};
+ if(/UNVERIFIED/.test(basis))return {kind:'unverified',label:'Schedule date · unverified'};
+ if(/GOVERNED_WTW/.test(basis))return {kind:'fixed',label:'WTW fixed schedule'};
+ if(/INTERNAL|PROVISIONAL|CANON_SCHEDULE/.test(basis))return {kind:'internal',label:'Internal schedule date'};
+ if(/HISTORICAL_EXACT_DATE/.test(basis))return {kind:'exact',label:'Exact date · sourced'};
+ return {kind:'unknown',label:'Date evidence unavailable'};
+}
+function evidencePill(r){const e=dateEvidence(r),basis=[r?.date_basis,r?.chronology_qa].filter(Boolean).join(' · ')||'Source evidence not available';return '<span class="date-evidence evidence-'+e.kind+'" title="'+h(basis)+'">'+h(e.label)+'</span>'}
+function horseSourceBadge(e){
+ if(e?.kind!=='horse'||!e.archive_source)return '';
+ const key=String(e.archive_source).toUpperCase(),labels={EXISTING_CANON:['Existing canon','canon'],HISTORICAL_STAKES_BACKFILL:['Reconstructed history · review identity','reconstructed'],GENERATED_SUPPORT_PARENT:['Generated pedigree support · not a result','generated']};
+ const item=labels[key]||['Source class: '+key,'other'];
+ return '<span class="horse-source-tag horse-source-'+item[1]+'">'+h(item[0])+'</span>';
+}
 function seasonHeadline(y){const r=sessionRaces(y);return r.length?`${r.length} documented races · ${sessionHorseIds(y).length} referenced horses`:'No source races loaded for this season'}
 function winnerOf(r){return resultOf(r.id).find(x=>Number(x.position)===1)}
 function renderOverview(){
@@ -79,7 +97,7 @@ function renderOverview(){
  const levelOptions=[['hands-on','Hands-on'],['balanced','Balanced'],['executive','Executive']].map(([value,label])=>'<option value="'+value+'"'+(level===value?' selected':'')+'>'+label+'</option>').join('');
  const topHorses=allHorses.slice().sort((a,b)=>(winIndex.get(b.id)||0)-(winIndex.get(a.id)||0)||a.name.localeCompare(b.name)).slice(0,3);
  const horseRows=topHorses.map(e=>'<div class="roster-row"><div class="asset-placeholder asset-mini" data-asset-slot="horse-card"><span>HORSE</span></div><div class="roster-main">'+openButton('entity',e.id,e.name)+'<small>'+h(e.foal_year||'Foaling year not recorded')+' · '+h(e.sex||'sex not recorded')+'</small></div><span class="roster-stat">'+(winIndex.get(e.id)||0)+'<small>recorded wins</small></span></div>').join('')||'<p class="empty-note">No horse records are loaded for this view.</p>';
- const raceRows=raceList.slice(0,4).map(r=>'<article class="mini-race-row"><div class="mini-race-main"><span class="smallcaps">'+h(dateLabel(r))+'</span><strong>'+openButton('race',r.id,r.name)+'</strong><small>'+venueName(r)+'</small></div><div class="mini-race-winner">'+(winnerOf(r)?'<span>WINNER</span>'+openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id)):'<span class="muted">No winner recorded</span>')+'</div></article>').join('')||'<p class="empty-note">No race editions are loaded for this season.</p>';
+ const raceRows=raceList.slice(0,4).map(r=>'<article class="mini-race-row"><div class="mini-race-main"><span class="smallcaps">'+h(dateLabel(r))+' '+evidencePill(r)+'</span><strong>'+openButton('race',r.id,r.name)+'</strong><small>'+venueName(r)+'</small></div><div class="mini-race-winner">'+(winnerOf(r)?'<span>WINNER</span>'+openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id)):'<span class="muted">No winner recorded</span>')+'</div></article>').join('')||'<p class="empty-note">No race editions are loaded for this season.</p>';
  const optionRole=roleLabels[role]||'Trainer', scope=state.mode==='D1_CONNECTED'?'PRIVATE ARCHIVE CONNECTED':'HISTORICAL PREVIEW';
  return '<div class="command-center">'+
  '<section class="command-hero"><div class="command-hero-copy"><div class="command-kicker">'+scope+' · '+h(year)+' SEASON</div><h2>Your racing operation,<br>at a glance.</h2><p>Choose the seat you want to manage from and set how closely you want to run it. This command center is built around the historical archive.</p><div class="command-tags"><span>Source-backed history</span><span>Role-based management</span></div></div><div class="command-art asset-placeholder" data-asset-slot="stable-yard"><span class="horse-glyph">♞</span><small>STABLE ART PLACEHOLDER</small></div></section>'+
@@ -92,22 +110,29 @@ function renderOverview(){
 }
 function renderSeasons(){
   const y=state.year;const tabs=yearTabs();
-  const races=sessionRaces(y).filter(recordMatches);const seasonPeople=(state.data?.connections||[]).filter(c=>+c.year===+y);
+  const yearRaces=sessionRaces(y),races=yearRaces.filter(recordMatches);const seasonPeople=(state.data?.connections||[]).filter(c=>+c.year===+y);
   const ranked=[...new Set(seasonPeople.map(c=>c.horse_id))];
-  const raceRows=races.map(r=>`<div class="race-card"><div><h4>${openButton('race',r.id,r.name)}</h4><p>${venueName(r)} · ${h(dateLabel(r))}</p><div class="winners">${winnerOf(r)?`Winner: ${openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id))}`:'Winner not in sample'}</div></div>${editButton('race',r.id,'Suggest edit')}</div>`).join('');
-  const known=ranked.slice(0,10).map(id=>`<div class="detail-list-item">${openButton('entity',id,nameFor(id))}<small>${seasonPeople.filter(c=>c.horse_id===id).length} season connections</small></div>`).join('');
-  return `${intro('THE HISTORICAL YEARBOOK',`${y} Racing Season`,'Select any imported season. Race results, participants and source uncertainty stay attached to their permanent IDs.')}
-   ${tabs}<div class="metrics">${metric(sessionRaces(y).length,'Recorded races','Imported source editions')}${metric(sessionHorseIds(y).length,'Featured horses','In results or season links')}${metric(seasonPeople.length,'Season connections','Owner / trainer / jockey / breeder')}${metric(races.filter(r=>r.date).length,'Exact dated races','Missing dates remain unknown')}</div>
-   <div class="layout-two">${section(`${y} stakes calendar`,seasonHeadline(y),raceRows||noRecords('Try another imported year.'))}${section('Horses and horsemen','Year-level links, not necessarily race-day mounts',`<div class="panel-body">${known||noRecords('No people links imported.')}</div>`)}</div>`;
+  const countKind=kind=>yearRaces.filter(r=>dateEvidence(r).kind===kind).length;
+  const nonExact=countKind('internal')+countKind('unverified')+countKind('fixed');
+  const reviewCount=countKind('review')+countKind('missing')+countKind('unknown');
+  const raceRows=races.map(r=>'<div class="race-card"><div><h4>'+openButton('race',r.id,r.name)+'</h4><p>'+venueName(r)+' · '+h(dateLabel(r))+' '+evidencePill(r)+'</p><div class="winners">'+(winnerOf(r)?'Winner: '+openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id)):'Winner not in sample')+'</div></div>'+editButton('race',r.id,'Suggest edit')+'</div>').join('');
+  const known=ranked.slice(0,10).map(id=>'<div class="detail-list-item">'+openButton('entity',id,nameFor(id))+'<small>'+seasonPeople.filter(c=>c.horse_id===id).length+' season connections</small></div>').join('');
+  const notRun=countKind('not-run');
+  return intro('THE HISTORICAL YEARBOOK',y+' Racing Season','Calendar rows show the imported date basis. Exact dates, internal schedule dates, held dates and non-runs are labeled separately.')+
+   tabs+'<div class="calendar-audit-banner"><strong>Source reconciliation is open.</strong><span>The site import predates the current v3.67 master. Review History Coverage before treating this year as current.</span><button class="text-button" data-page="sources">View audit →</button></div>'+
+   '<div class="metrics">'+metric(yearRaces.length,'Stakes editions','Imported source rows')+metric(countKind('exact'),'Exact-date evidence','Source basis classified exact')+metric(nonExact,'Schedule / internal dates','Not independently exact')+metric(reviewCount,'Review or missing-day rows','Held dates remain visible')+'</div>'+
+   (notRun?'<p class="calendar-note">'+notRun+' record(s) are marked not run in the imported source.</p>':'')+
+   '<div class="calendar-evidence-legend"><span>DATE EVIDENCE</span>'+['exact','internal','unverified','fixed','review','not-run','missing'].map(k=>{const x={exact:'Exact date · sourced',internal:'Internal schedule date',unverified:'Schedule date · unverified',fixed:'WTW fixed schedule',review:'Needs review','not-run':'Not run',missing:'Day not recorded'}[k];return '<span class="date-evidence evidence-'+k+'">'+x+'</span>'}).join('')+'</div>'+
+   '<div class="layout-two">'+section(y+' stakes calendar',seasonHeadline(y),raceRows||noRecords('Try another imported year.'))+section('Horses and horsemen','Year-level links, not necessarily race-day mounts','<div class="panel-body">'+(known||noRecords('No people links imported.'))+'</div>')+'</div>';
 }
 function renderHorses(){
  const list=filteredEntities('horse');
  const cards=list.slice(0,120).map(r=>{
   const wins=winIndex.get(r.id)||0;
   const placements=(state.data.results||[]).filter(x=>x.horse_id===r.id);
-  return '<article class="stable-card"><div class="asset-placeholder stable-card-art" data-asset-slot="horse-portrait"><span>HORSE PORTRAIT</span></div><div class="stable-card-body"><div class="smallcaps">'+h(r.sex||'HORSE')+' · '+h(r.foal_year||'YEAR UNKNOWN')+'</div><h3>'+openButton('entity',r.id,r.name)+'</h3><div class="stable-card-stats"><span><strong>'+wins+'</strong> recorded wins</span><span><strong>'+placements.length+'</strong> imported finishes</span></div><div class="stable-card-actions">'+editButton('entity',r.id,'Review record','button button-quiet')+'<span>'+formatStatus(r.status)+'</span></div></div></article>';
+  return '<article class="stable-card"><div class="asset-placeholder stable-card-art" data-asset-slot="horse-portrait"><span>HORSE PORTRAIT</span></div><div class="stable-card-body"><div class="smallcaps">'+h(r.sex||'HORSE')+' · '+h(r.foal_year||'YEAR UNKNOWN')+'</div>'+horseSourceBadge(r)+'<h3>'+openButton('entity',r.id,r.name)+'</h3><div class="stable-card-stats"><span><strong>'+wins+'</strong> recorded stakes wins</span><span><strong>'+placements.length+'</strong> imported top-three placings</span></div><div class="stable-card-actions">'+editButton('entity',r.id,'Review record','button button-quiet')+'<span>'+formatStatus(r.status)+'</span></div></div></article>';
  }).join('');
- return intro('YOUR ROSTER','My Stable','Horse portraits are reserved as placeholders. Open a horse to see its compact pedigree, recorded finishes and season connections.', '<div class="record-count">'+list.length.toLocaleString()+' horses in this view</div>')+'<div class="stable-grid">'+(cards||'<p class="empty-note">No horse records match this search.</p>')+'</div>'+(list.length>120?'<p class="manager-note">Showing 120 matching horses at once. Search by name or permanent ID to narrow the roster.</p>':'');
+ return intro('YOUR ROSTER','My Stable','Horse identity records show whether they came from existing canon, historical backfill or generated pedigree support. Open a horse for its compact profile.', '<div class="record-count">'+list.length.toLocaleString()+' horses in this view</div>')+'<div class="stable-grid">'+(cards||'<p class="empty-note">No horse records match this search.</p>')+'</div>'+(list.length>120?'<p class="manager-note">Showing 120 matching horses at once. Search by name or permanent ID to narrow the roster.</p>':'');
 }
 function renderPeople(){
  const people=filteredEntities('person'), farms=filteredEntities('organization');
@@ -166,16 +191,19 @@ function renderSources(){
   ['SEASON LINKS',total('connections',d.connections.length).toLocaleString(),'Owner, trainer, jockey and breeder'],
   ['TOP-THREE RESULTS',total('results',d.results.length).toLocaleString(),'Placed horses in imported races']
  ];
- const extras=[
-  ['Horse details',counts.horseDetails],['Horse seasons',counts.horseSeasons],['Pedigree edges',counts.pedigreeEdges],['Bloodline profiles',counts.bloodlineProfiles]
- ].map(([label,value])=>'<div class="coverage-extra"><span>'+label+'</span><strong>'+(value===undefined?'Not reported':Number(value).toLocaleString())+'</strong></div>').join('');
+ const extras=[['Horse details',counts.horseDetails],['Horse seasons',counts.horseSeasons],['Pedigree edges',counts.pedigreeEdges],['Bloodline profiles',counts.bloodlineProfiles]].map(([label,value])=>'<div class="coverage-extra"><span>'+label+'</span><strong>'+(value===undefined?'Not reported':Number(value).toLocaleString())+'</strong></div>').join('');
  const status=state.mode==='D1_CONNECTED'?'ARCHIVE CONNECTED':'ARCHIVE PREVIEW · LIVE D1 NOT CONFIRMED';
+ const reconciliation='<section class="source-reconciliation"><div class="source-reconciliation-head"><div><span class="smallcaps">CALENDAR SOURCE AUDIT · NOV 8, 2026</span><h3>The site calendar is behind the current master</h3></div><span class="source-alert-pill">RECONCILIATION OPEN</span></div>'+
+ '<p>The imported database uses the Nov 7 E export (v3.37, 5,370 editions). The current Drive master is v3.67, marked QA Verified — Promotion Pending, with 5,369 editions. Comparing shared edition IDs found 1,550 records changed in at least one audited field and one imported ID absent from the current master. This is a source delta, not a completed historical certification.</p>'+
+ '<div class="source-delta-grid"><div><small>RACE DATE VALUES CHANGED</small><strong>917</strong></div><div><small>WINNER IDS CHANGED</small><strong>96</strong></div><div><small>SECOND-PLACE IDS CHANGED</small><strong>208</strong></div><div><small>THIRD-PLACE IDS CHANGED</small><strong>178</strong></div></div>'+
+ '<div class="source-master-grid"><div><small>ACTIVE EDITIONS</small><strong>5,223</strong></div><div><small>EXACT-DATE ACTIVE</small><strong>1,304</strong></div><div><small>INTERNAL-DATE ACTIVE</small><strong>3,883</strong></div><div><small>WTW FIXED SCHEDULE</small><strong>36</strong></div><div><small>ACTIVE WITHOUT A DAY</small><strong>8</strong></div><div><small>CALENDAR-OPEN YEARS</small><strong>92 / 135</strong></div><div><small>ROUTE-CLEAN YEARS</small><strong>43 / 135</strong></div><div><small>FULLY EXACT-CERTIFIED YEARS</small><strong>0</strong></div></div>'+
+ '<p class="coverage-note">The eight active races without a recorded day are within the internal-date group. Exact-date and internal-date counts come from the v3.67 control dashboard; the imported D1 rows still need an audited incremental refresh that preserves name overrides and review decisions. Do not rerun the initial import.</p></section>';
  return intro('HISTORY FIRST','History Coverage','A clear view of what is imported, what has passed technical audit, and what still needs historical certification.')+
  '<section class="coverage-hero"><div><span class="coverage-kicker">CURRENT ARCHIVE SCOPE</span><h2>Stakes history · '+h(period)+'</h2><p>The staged H/S/E/P/B import passed its remote row-count, source-hash and integrity audit. That confirms the import matches its staged files; it does not certify every historical claim as complete or correct.</p></div><span class="coverage-status">'+status+'</span></section>'+
- '<div class="coverage-metrics">'+metrics.map(x=>'<article><small>'+x[0]+'</small><strong>'+x[1]+'</strong><span>'+x[2]+'</span></article>').join('')+'</div>'+
+ '<div class="coverage-metrics">'+metrics.map(x=>'<article><small>'+x[0]+'</small><strong>'+x[1]+'</strong><span>'+x[2]+'</span></article>').join('')+'</div>'+reconciliation+
  '<div class="coverage-layout"><section class="coverage-panel"><div class="coverage-panel-head"><div><span class="smallcaps">IMPORTED DETAIL TABLES</span><h3>What the archive contains</h3></div></div><div class="coverage-extra-list">'+extras+'</div><p class="coverage-note">Coverage reflects the imported source snapshot and current database response. It is not a runner-level Gold certification count.</p></section>'+
- '<section class="coverage-panel"><div class="coverage-panel-head"><div><span class="smallcaps">CERTIFICATION GATES</span><h3>What still needs validation</h3></div></div><ul class="coverage-gates"><li><span class="gate-pass">PASS</span><div><strong>Import integrity</strong><small>Source row counts, SHA-256 manifest and SQLite integrity checks passed.</small></div></li><li><span class="gate-pending">NEXT</span><div><strong>Live D1 connection</strong><small>Sign in and confirm the site reports ARCHIVE CONNECTED and exposes the imported years.</small></div></li><li><span class="gate-pending">OPEN</span><div><strong>Historical Gold certification</strong><small>Reconcile identities, pedigrees, season links and placings to authoritative evidence.</small></div></li></ul></section>'+
- '<section class="coverage-limits"><div><span class="smallcaps">KNOWN SCOPE LIMITS</span><h3>Keep the record honest</h3></div><ul><li>Stakes-focused archive; not every ordinary race is represented.</li><li>Result data contains imported top-three placings, not every finisher.</li><li>Lifetime starts and earnings are not complete fields in this snapshot.</li><li>Owner, trainer and jockey links are season-level unless a race-day record proves otherwise.</li></ul></section>'+
+ '<section class="coverage-panel"><div class="coverage-panel-head"><div><span class="smallcaps">CERTIFICATION GATES</span><h3>What still needs validation</h3></div></div><ul class="coverage-gates"><li><span class="gate-pass">PASS</span><div><strong>Import integrity</strong><small>Source row counts, SHA-256 manifest and SQLite integrity checks passed for the Nov 7 snapshot.</small></div></li><li><span class="gate-pending">NEXT</span><div><strong>Source delta reconciliation</strong><small>Review the v3.37 → v3.67 differences and stage a controlled incremental update.</small></div></li><li><span class="gate-pending">OPEN</span><div><strong>Historical Gold certification</strong><small>Reconcile identities, pedigrees, season links and placings to authoritative evidence.</small></div></li></ul></section>'+
+ '<section class="coverage-limits"><div><span class="smallcaps">KNOWN SCOPE LIMITS</span><h3>Keep the record honest</h3></div><ul><li>Stakes-focused archive; not every ordinary race is represented.</li><li>Result data contains imported top-three placings, not every finisher.</li><li>Lifetime starts and earnings are not complete fields in this snapshot.</li><li>Owner, trainer and jockey links are season-level unless a race-day record proves otherwise.</li><li>3,115 horse identities are tagged as historical stakes backfill and 124 as generated pedigree support; these are not verified name examples.</li></ul></section>'+
  '<section class="coverage-panel"><div class="coverage-panel-head"><div><span class="smallcaps">SOURCE SAFEGUARDS</span><h3>Historical source stays protected</h3></div></div><p class="coverage-note">Display-name edits are logged in a separate overlay. Correction approvals do not overwrite original source records or frozen game-engine data.</p><button class="text-button" data-page="changes">Open record review →</button></section></div>';
 }
 function render(){
