@@ -53,7 +53,7 @@ async function readNameTarget(db,type,id) {
   return null;
 }
 export function validDisplayName(value) {
-  return typeof value==='string' && value.trim().length>=1 && value.trim().length<=220 && !/[\\u0000-\\u001f\\u007f]/.test(value);
+  return typeof value==='string' && value.trim().length>=1 && value.trim().length<=220 && !/[\u0000-\u001f\u007f]/.test(value);
 }
 async function bootstrap(db) {
   const [entityCount,raceCount,connCount,resultCount,changeCount,entities,connections,races,results,changes,years] = await Promise.all([
