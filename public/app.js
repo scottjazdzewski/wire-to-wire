@@ -190,7 +190,11 @@ async function openDetail(type,id){
 function closeDrawer(){ state.openDetail=null; $('detail-drawer').classList.remove('open');$('detail-drawer').setAttribute('aria-hidden','true');$('drawer-backdrop').hidden=true;}
 function showRename(type,id,current){
  if(!['entity','race','venue','pedigree'].includes(type)||!id||!current)return;
- state.rename={type,id,current};
+ const record=type==='entity'?entity(id):type==='race'||type==='venue'?race(id):null;
+ const source=type==='venue'?record?.source_track_name:record?.source_name;
+ state.rename={type,id,current,source:source||null};
+ $('name-source-wrap').hidden=!source;
+ $('name-source').value=source||'';
  $('name-target').textContent=`${type.toUpperCase()} · ${id}`;
  $('name-current').value=current;
  $('name-new').value=current;
@@ -253,6 +257,7 @@ $('global-search').addEventListener('input',e=>{state.search=e.target.value.trim
 $('edit-field').addEventListener('change',fillOld);
 $('edit-form').addEventListener('submit',saveProposal);
 $('name-form').addEventListener('submit',saveName);
+$('restore-name').addEventListener('click',()=>{if(!state.rename?.source)return;$('name-new').value=state.rename.source;$('name-new').focus()});
 $('close-name-dialog').addEventListener('click',()=>$('name-dialog').close());
 $('cancel-name-dialog').addEventListener('click',()=>$('name-dialog').close());
 $('close-dialog').addEventListener('click',()=>$('edit-dialog').close());
