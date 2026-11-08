@@ -13,6 +13,7 @@ assert files, 'No generated SQL to verify'
 conn = sqlite3.connect(':memory:')
 conn.executescript((ROOT / 'migrations/0001_initial.sql').read_text())
 conn.executescript((ROOT / 'migrations/0002_full_history.sql').read_text())
+conn.executescript((ROOT / 'migrations/0003_editable_names.sql').read_text())
 for file in files:
     try:
         conn.executescript(file.read_text())
@@ -31,6 +32,11 @@ for ident, name in [
 ]:
     record=conn.execute('SELECT name FROM entities WHERE id=?', (ident,)).fetchone()
     assert record and record[0]==name, f'User-approved horse name drifted: {ident}'
+# Renaming a displayed horse is independent of the historical source name and ID.
+conn.execute("INSERT INTO display_name_overrides (target_type,target_id,name,original_name,updated_by) VALUES (?,?,?,?,?)",('entity','H-1950-008016','Double Duty (WTW)','Double Duty','qa@example.invalid'))
+check=conn.execute("SELECT COALESCE(n.name,e.name),e.name FROM entities e LEFT JOIN display_name_overrides n ON n.target_type='entity' AND n.target_id=e.id WHERE e.id='H-1950-008016'").fetchone()
+assert check==('Double Duty (WTW)','Double Duty'), f'Source name mutated by display rename: {check}'
+conn.execute("DELETE FROM display_name_overrides WHERE target_type='entity' AND target_id='H-1950-008016'")
 for yr in (1864, 1953, 1954, 1955, 1998):
     n=conn.execute('SELECT count(*) FROM races WHERE year=?',(yr,)).fetchone()[0]
     assert n>0, f'No edition history for {yr}'
