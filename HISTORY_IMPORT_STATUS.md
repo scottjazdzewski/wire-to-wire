@@ -1,42 +1,49 @@
-# WIRE TO WIRE — Historical Universe Full Import
+# WIRE TO WIRE — Historical Universe Import Status
 
-**Status:** All five foundation sources staged in the PRIVATE GitHub repository; no full-data public release, D1 import, or live edit permissions yet.
+**Last verified:** 2026-11-08. **Status: full staged H/S/E/P/B snapshot imported and remote D1 audit PASSED.**
 
-## What was actually staged
+**Completed GitHub run:** https://github.com/scottjazdzewski/wire-to-wire/actions/runs/42452571016
 
-| Data source | Source records | Authority |
-|---|---:|---|
-| Horse Master (H) | 3,856 | Historical horse identities, registered names, sex, foaling year, ancestors |
-| Horse-Season Summary (S) | 5,221 | Year-level races and owner, trainer, jockey, breeder associations |
-| Stakes Edition (E) | 5,370 | Race year/date, track, winner, second, third, context and QA flags |
-| Pedigree Edges (P) | 8,408 | Source parent/child relationships (including references outside H) |
-| Bloodline + Breeding (B) | 3,856 | Historical breeding/pedigree metrics and statuses |
+**Target:** private Cloudflare D1 `wtw-canon-desk-db`, scoped to WTW. The imported data is not in the website's public `public/` folder. WTW's original connected Google Sheets remain untouched. No Rail & Rye or Hockey Lab content was modified.
 
-These were read from the live WTW connected Google Sheets, not invented or regenerated. The `data/history-source/2026-11-07/*.json` snapshots keep exact source headers and row values. The source sheets are **not modified**. Some source workbooks are still marked **QA PENDING**; this import is not a historical GOLD certification. After each future source release, refresh snapshots with explicit source provenance and rerun the importer.
+## Verified imported records
 
-## Functionality already engineered
+| Table | Remote rows |
+|---|---:|
+| Entities (horses, people, farms, tracks) | 5,101 |
+| Stakes race editions | 5,370 |
+| Horse/owner/trainer/jockey/breeder season connections | 20,884 |
+| Top-three placing results | 15,561 |
+| Horse detail records | 3,856 |
+| Horse seasons | 5,221 |
+| Stakes edition details | 5,370 |
+| Pedigree edges | 8,408 |
+| Bloodline profiles | 3,856 |
 
-- Private source export snapshots in GitHub, **outside `public/`** so Cloudflare Pages does not publish them.
-- `scripts/build-full-history.mjs` builds a normalized D1 read model, retaining all raw source fields as JSON in details tables, without losing permanent IDs.
-- `migrations/0002_full_history.sql` adds horse-season, race detail, pedigree, horse detail, and bloodline lookup tables to the original database schema.
-- Season affiliations are labeled `HORSE_SEASON_SOURCE`; not asserted as per-race trainer, jockey or barn assignments.
-- Missing horse references become explicitly labeled source-only placeholders rather than invented histories.
-- Results are `INSERT OR IGNORE`; changing a winner/placing requires separate user approval and controlled canon promotion.
-- An import manifest records counts, source SHA-256 hashes, year span and unresolved differences.
-- Tests exercise the compiler and the full source snapshot in GitHub Actions.
+Snapshot year coverage: **1864–1998** for stakes editions and horse seasons. Input source file rows: H 3,856; S 5,221; E 5,370; P 8,408; B 3,856. The import's final audit passed exact row-count comparisons, the source SHA-256 manifest digest, and the owner-approved names (Double Duty, Northbound Train, Miss Meridian, Bramble). The workflow also ran SQLite foreign-key checks.
 
-## What must happen before the 1864–1998 history appears live
+## Coverage and certification warning
 
-**Do not copy the private snapshots into `public/` while the website remains publicly accessible.**
+**Import passing is NOT historical GOLD certification.** This is the H/S/E/P/B working source snapshot. It is not a full ledger of every ordinary race, its dates and trainer assignments are not all independently authenticated, and QA-pending historical claims remain unresolved. Connections originating in S are **year-level**, not guaranteed race-day trainer, owner, jockey or stable claims. No historical dates or identities were invented to fill gaps.
 
-1. Protect WTW production with Cloudflare Access so only the owner (and anyone the owner explicitly authorizes) can view private history. Test in a signed-out/incognito browser to ensure unauthenticated access is denied.
-2. Create **a new, WTW-only D1 database** named `wtw-canon-desk-db`. Do not reuse databases from Rail & Rye or Hockey Lab. Cloudflare D1's **500 MB per-database Free limit** is distinct from account-total storage.
-3. Apply migrations `0001_initial.sql` and `0002_full_history.sql` to the new database.
-4. Run `npm run db:build:full` in a checked-out copy of this repository. The SQL is written only to `generated/private-d1/` (Git-ignored). Review `manifest.json` and the QA issues before executing SQL.
-5. Execute generated SQL files **in lexicographic order** with Wrangler against the WTW-only D1 database. The source manifest final file `10_source_import.sql` documents the import checksum.
-6. Connect the D1-backed private app and finish **server-side pagination / year navigation**, because the original preview uses a small sampled bootstrap. Verify every year, horse, owner, trainer, and runner placement through 1998 before declaring the universe browsable.
-7. Enable persistent correction proposals, audit logs and an explicit approval-to-source-promotion pipeline. **Approvals alone never silently mutate the historical master.**
+## Editable names and records
 
-**Website currently:** Cloudflare Pages `wire-to-wire.pages.dev` is an initial public UI sample; it does not yet query the full private historical source. GitHub app permissions and Pages deployment are already connected.
+- `migrations/0003_editable_names.sql`: `display_name_overrides` and append-only `name_edit_audit`. The migration was applied successfully during the verified import.
+- The website uses secure `POST /api/names` to edit displayed names by permanent IDs. Every registered horse, owner, trainer, jockey, breeder, farm, stable, track, race and identified pedigree relation has an inline name-edit control in the relevant view.
+- Display-name edits update the private D1 overlay and are logged; **they do not change original source values, canonical IDs, race results, or frozen game-engine records**. The editor can restore the source name. The Corrections page separately lists recent name edits.
+- Non-name changes remain proposals in `change_requests`. Approval is not automated source promotion.
 
-For Cloudflare Access guidance: https://developers.cloudflare.com/workers/configuration/cloudflare-access/ . Pages Access production behavior differs from preview deployments. Confirm production hostname coverage before exposing data.
+## Website delivery status
+
+- Cloudflare Pages site: https://wire-to-wire.pages.dev/
+- Repository: https://github.com/scottjazdzewski/wire-to-wire
+- The owner verified a Cloudflare Access login is required on the production URL.
+- Recent site changes: cross-category historical search, compact decade navigation, horse profiles with source-year owner/trainer/jockey/breeder connections and offspring, track registry, and name editing with source-name restoration and audit.
+- **One item still needs live browser verification:** after logging into the website, the badge must say **D1 CONNECTED**, the year selector should include historical years through 1998, and saving a test name on a WTW-only display alias should persist after refresh. This cannot be established from GitHub Actions import success alone.
+- If the website says **CURATED DEMO** with an API warning instead, check the Production Pages variables `TEAM_DOMAIN`, `POLICY_AUD`, and `ADMIN_EMAIL`, and redeploy. The API fails closed if its signed Access JWT cannot be verified.
+
+## Operational safety
+
+**Do not run the initial historical import again against the populated D1.** Its preflight rejects a non-empty target to avoid overwriting edits. Any later source refresh must use an explicit change-managed, auditable incremental import plan, and preserve name overrides and human decisions.
+
+Project owner workflow/setup reference: [WTW_OWNER_LAUNCH_CHECKLIST.md](WTW_OWNER_LAUNCH_CHECKLIST.md).
