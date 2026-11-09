@@ -169,11 +169,11 @@
   },
   "other_layers": {
     "organization_geography": {
-      "records": 22,
+      "records": 70,
       "region_or_better_coverage": 22,
       "city_county_or_local_area_precision": 5,
-      "state": "REGION_COVERAGE_COMPLETE_LOCALITY_PARTIAL",
-      "note": "22/22 organizations now have at least source-backed or locked-canon geography. Municipality remains pending for region-only legacy farms/studs; no organization is completely unlocated.",
+      "state": "CURRENT_OWNER_REGION_COMPLETE_LEGACY_LOCALITY_PARTIAL",
+      "note": "70 geography records: 22 legacy/farm records plus 48 current owner/stable Home_Base records. All have at least source-backed or locked-canon region/state/city geography; municipality/street precision remains pending for region-only or compound bases.",
       "locked_v3_3_reconciliations": [
         {
           "organization_id": "O-000041",
@@ -235,7 +235,9 @@
           "name": "Little Fork Farm",
           "region": "Kentucky / Ohio Valley"
         }
-      ]
+      ],
+      "current_owner_base_records": 48,
+      "current_owner_base_coverage": "48/48"
     },
     "trainer_participant_geography": {
       "records": 105,
@@ -286,7 +288,11 @@
       "note": "Exact city/home track and birthplace remain pending unless separately sourced."
     },
     "owner_bases": {
-      "state": "OPEN_PARTIAL_VIA_ORGANIZATIONS"
+      "current_owner_entities": 48,
+      "home_base_covered": 48,
+      "state": "CURRENT_OWNER_HOME_BASE_COMPLETE",
+      "source": "Ownership_Current_State",
+      "note": "Compound and seasonal bases are preserved as canon strings rather than forced to a single city. Exact street/city precision remains pending where source does not provide it."
     }
   },
   "calendar_policy": {
