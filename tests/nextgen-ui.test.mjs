@@ -29,3 +29,16 @@ test('Next UI is a standalone review page with one fresh visual layer',()=>{
   assert.equal(check.status,0,check.stderr);
  }
 });
+
+test('Shared profile template replaces duplicate page banners',()=>{
+  const js=get('public/next/next.js');
+  const css=get('public/next/next.css');
+  assert.ok(js.includes('ng-profile-badgeframe'));
+  assert.ok(js.includes('ng-route-profile'));
+  assert.ok(js.includes('isProfile?\'\':'));
+  assert.ok(css.includes('.ng-profile-identity'));
+  assert.ok(js.includes('function calendarTimeline(races,nonraces)'));
+  assert.ok(js.includes('ng-cal-event'));
+  assert.ok(css.includes('.ng-timeline-grid'));
+  assert.ok(js.includes('APP.activeCase'));
+});
