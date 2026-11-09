@@ -49,10 +49,12 @@ The calendar-source comparison and horse source-class audit are complete. The si
 
 ## Progress update — 2026-11-08
 
-- The Stakes Calendar is grouped by month and sorts by year, date, then race name. Undated or partial-date entries follow dated races, and each edition displays its date-evidence label. The changes are on the main branch; the repository checks are being monitored.
+- The Race Calendar is now a real Sunday-first month grid with month navigation and a full monthly agenda. Full dated schedule entries appear on the grid with confidence markers; held, undated/partial-day, and not-run records stay outside it. The page-by-page design pass is documented in UI_PAGE_AUDIT_2026-11-08.md.
 - The delta audit now reports the correct 3,819 unchanged shared editions and separates the 917 internal-date changes from result changes needing review.
 - A first fictional-name candidate batch is being screened only against the 3,856 names in the current archive. Fictional candidates stay out of historical records and D1 until separately accepted; the current batch is provisional and has not been checked against external horse registries.
 
 - Focused queues are now saved: 54 changed dates with no matching Evidence_Queue row, and 616 editions whose placing IDs or names changed. These remain review queues, not approved corrections.
 
 - Horse cards now put sire/dam, recorded top-three placings, first/second/third counts, notable stakes wins, and unavailable lifetime starts/earnings in a more compact first-view layout. The live site could not be visually reviewed in this session because Cloudflare Access stopped at its email-code login page.
+
+- The supplied v0.18 single-file game screen is a separate future gameplay reference (Office, Inbox, World, Race, Calendar, News, Results, Diagnostics and Profiles). Keep its management loop paused until the historical archive and archive UI are accepted.
