@@ -587,3 +587,309 @@ body{background:radial-gradient(ellipse at 85% 0%,#f9faf6 0,#f0f3ed 52%,#e9eee8 
 /* Accessible affordance for overflow races in the month grid. */
 .calendar-more{display:block;padding:2px 3px;border:0;border-radius:3px;background:transparent;color:#355d43;font-size:8px;font-weight:800;text-align:left;text-decoration:underline;cursor:pointer}
 .calendar-more:hover,.calendar-more:focus-visible{background:#edf3ed;color:#173e2b}
+
+
+/* WTW DESIGN PASS 01 — profile-first racing office */
+:root{
+  --wtw-paper:#f3efe5;
+  --wtw-paper-2:#fbf8f1;
+  --wtw-forest:#0a2c22;
+  --wtw-forest-2:#123f30;
+  --wtw-brass:#b7944f;
+  --wtw-brass-soft:#d9c48e;
+  --wtw-ink:#16241e;
+  --wtw-red:#c9433c;
+}
+body{
+  background:
+    radial-gradient(circle at 82% 6%,rgba(183,148,79,.10),transparent 27rem),
+    linear-gradient(180deg,#f6f3eb 0%,#eef2ed 100%);
+}
+.sidebar{
+  flex-basis:252px;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.018),transparent 22%),
+    linear-gradient(168deg,#0d392b 0%,#071d17 100%);
+  box-shadow:10px 0 34px rgba(7,29,23,.08);
+}
+.brand{padding-top:2px}
+.brand-logo{width:64px;height:64px}
+.brand-title{font-family:Georgia,"Times New Roman",serif;font-size:17px;letter-spacing:.075em}
+.brand-sub{color:#b9cfbf}
+.nav-link{border:1px solid transparent}
+.nav-link.active{
+  background:linear-gradient(90deg,#1c5a41,#164634);
+  border-color:rgba(217,196,142,.18);
+  box-shadow:inset 3px 0 0 var(--wtw-red),0 8px 20px rgba(0,0,0,.08);
+}
+.topbar{
+  background:rgba(251,248,241,.95);
+  backdrop-filter:blur(14px);
+  border-bottom-color:#ddd7ca;
+}
+.header-left h1{
+  font-family:Georgia,"Times New Roman",serif;
+  font-weight:700;
+  letter-spacing:-.025em;
+  color:#18382b;
+}
+.workspace-tools{background:#fffdf8;border-bottom-color:#e3ded2}
+.search-wrap{background:#f6f2e9;border-color:#ded8ca}
+.main{max-width:1640px;padding-top:24px}
+.page-intro h2,.panel-head h3,.game-panel-heading h3,.profile-section-title h3{
+  font-family:Georgia,"Times New Roman",serif;
+  font-weight:700;
+}
+.command-hero{
+  background:
+    radial-gradient(circle at 86% 34%,rgba(217,196,142,.17),transparent 25%),
+    linear-gradient(115deg,#082a20 0%,#104330 58%,#1a5a3e 100%);
+  border:1px solid rgba(217,196,142,.22);
+}
+.command-hero:after{background:var(--wtw-red)}
+.game-panel,.panel,.management-bar,.command-stat{
+  border-color:#ddd9cf;
+  box-shadow:0 9px 24px rgba(18,49,36,.055);
+}
+.stable-card,.people-card{
+  border-color:#ddd8cd;
+  border-radius:16px;
+  box-shadow:0 10px 26px rgba(18,49,36,.07);
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;
+}
+.stable-card:hover,.people-card:hover{
+  transform:translateY(-2px);
+  border-color:#b7ab8a;
+  box-shadow:0 15px 32px rgba(18,49,36,.11);
+}
+.stable-card-art{height:142px;background:linear-gradient(135deg,#d9e5d8,#acc2ae 58%,#789a81)}
+.people-art{height:104px;background:linear-gradient(135deg,#e7e2d5,#c8d2c3 58%,#93ad99)}
+.people-card-body h3,.stable-card-body h3{font-family:Georgia,"Times New Roman",serif;font-size:15px}
+.people-card-footer,.stable-card-actions{border-top-color:#ece6da}
+
+/* Profile drawer becomes a full racing dossier rather than a narrow database panel. */
+.backdrop{background:rgba(4,18,13,.62);backdrop-filter:blur(2px)}
+.drawer{
+  width:min(1180px,96vw);
+  background:
+    radial-gradient(circle at 94% 3%,rgba(183,148,79,.10),transparent 28rem),
+    var(--wtw-paper);
+  border-left:1px solid rgba(183,148,79,.35);
+}
+.drawer-inner{padding:24px 28px 34px}
+.entity-profile{gap:15px;padding-top:7px}
+.profile-header{
+  grid-template-columns:188px minmax(0,1fr) auto;
+  gap:20px;
+  align-items:stretch;
+  padding:18px;
+  border:1px solid #234b3b;
+  border-radius:16px;
+  background:
+    radial-gradient(circle at 90% 15%,rgba(217,196,142,.15),transparent 23rem),
+    linear-gradient(118deg,#0b2f24 0%,#154a36 68%,#0c3327 100%);
+  box-shadow:0 16px 32px rgba(7,31,23,.13);
+}
+.profile-portrait{
+  height:176px;
+  border:1px solid rgba(217,196,142,.48);
+  background:linear-gradient(145deg,#d8e3d7,#a8bda9 52%,#799681);
+  box-shadow:inset 0 0 0 5px rgba(255,255,255,.22);
+}
+.profile-portrait[data-asset-slot="person-headshot"]:after{
+  content:"●";
+  width:66px;height:66px;border-radius:50%;
+  display:grid;place-items:center;
+  background:#345e48;color:transparent;
+  box-shadow:0 60px 0 22px #345e48;
+  opacity:.55;
+}
+.profile-portrait[data-asset-slot="farm-logo"]:after{
+  content:"⌂";
+  font-size:68px;color:#315a45;opacity:.65;
+}
+.profile-heading{align-self:center}
+.profile-heading .eyebrow{color:#b9d6c5}
+.profile-heading h2{
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:31px;
+  color:#fff;
+  letter-spacing:-.03em;
+}
+.profile-header .detail-id{color:#9fb9aa}
+.profile-header .profile-summary{color:#d1ded5;max-width:720px}
+.profile-header .profile-tags span{
+  color:#f1ead7;
+  background:#ffffff10;
+  border:1px solid rgba(217,196,142,.28);
+}
+.profile-header-actions .button{
+  background:#fffdf8;
+  color:#244a36;
+  border-color:#e2d5b9;
+}
+.profile-stats{gap:9px}
+.profile-stats>div{
+  min-height:76px;
+  background:var(--wtw-paper-2);
+  border-color:#ded7c8;
+  border-radius:11px;
+  box-shadow:0 5px 14px rgba(18,49,36,.035);
+}
+.profile-stats small{color:#8a806b}
+.profile-stats strong{font-family:Georgia,"Times New Roman",serif;font-size:17px}
+.profile-pedigree-section,.profile-section{
+  background:var(--wtw-paper-2);
+  border-color:#ddd5c5;
+  border-radius:13px;
+  box-shadow:0 7px 18px rgba(18,49,36,.035);
+}
+.profile-section-title{border-bottom:1px solid #ebe4d6;padding-bottom:8px}
+.profile-section-title h3{font-size:16px}
+.source-chip{
+  background:#f2ead7;
+  border:1px solid #dfcfaa;
+  color:#705b2d;
+}
+.pedigree-card{
+  background:#f6f1e7;
+  border-color:#e3d9c7;
+  border-left:3px solid var(--wtw-brass);
+}
+.profile-race-row,.profile-connection-row{border-top-color:#ebe5da}
+.finish-badge{border:1px solid #ded8cb}
+.profile-columns{gap:14px}
+
+/* Person / farm profile layout derived from the approved paper sketches. */
+.identity-facts{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px 18px;
+  margin-top:12px;
+  max-width:720px;
+}
+.identity-fact{
+  display:grid;
+  grid-template-columns:92px minmax(0,1fr);
+  gap:8px;
+  align-items:baseline;
+  padding:7px 0;
+  border-top:1px solid rgba(255,255,255,.12);
+}
+.identity-fact small{color:#9db8a8;font-size:8px;font-weight:850;letter-spacing:.09em;text-transform:uppercase}
+.identity-fact strong{color:#f5f1e7;font-size:11px;font-weight:750}
+.identity-fact .not-recorded{color:#b7c7bd;font-weight:600;font-style:italic}
+.profile-dashboard{
+  display:grid;
+  grid-template-columns:minmax(0,1.08fr) minmax(230px,.72fr) minmax(0,1fr);
+  gap:14px;
+  align-items:stretch;
+}
+.profile-card{
+  min-width:0;
+  background:var(--wtw-paper-2);
+  border:1px solid #ddd5c5;
+  border-radius:13px;
+  overflow:hidden;
+  box-shadow:0 7px 18px rgba(18,49,36,.035);
+}
+.profile-card-header{
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px 13px;
+  background:linear-gradient(100deg,#113d2e,#174f39);
+  color:#fff;
+  border-bottom:2px solid var(--wtw-brass);
+}
+.profile-card-header h3{margin:0;font:700 16px/1.1 Georgia,"Times New Roman",serif}
+.profile-card-header small{color:#c4d8cc;font-size:8px;letter-spacing:.08em;text-transform:uppercase}
+.profile-card-body{padding:11px 13px}
+.linked-horse-list{display:grid}
+.linked-horse-row{
+  display:grid;
+  grid-template-columns:32px minmax(0,1fr) auto;
+  align-items:center;
+  gap:9px;
+  padding:8px 0;
+  border-bottom:1px solid #e9e2d5;
+}
+.linked-horse-row:last-child{border-bottom:0}
+.linked-horse-icon{
+  width:32px;height:32px;border-radius:9px;
+  display:grid;place-items:center;
+  background:#e4eadf;color:#244d37;font-size:18px;
+  border:1px solid #d4ddcf;
+}
+.linked-horse-row button{padding:0;border:0;background:none;color:#214a34;font-weight:850;text-align:left}
+.linked-horse-row span{font-size:8px;color:#8a958d}
+.career-figure{
+  display:grid;
+  place-items:center;
+  min-height:148px;
+  text-align:center;
+  background:radial-gradient(circle at 50% 44%,rgba(183,148,79,.10),transparent 58%);
+}
+.career-figure strong{
+  font:700 52px/1 Georgia,"Times New Roman",serif;
+  color:#234a35;
+}
+.career-figure span{font-size:10px;color:#7e886f;font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-top:6px}
+.career-figure small{max-width:180px;color:#92988f;font-size:8px;line-height:1.45;margin-top:5px}
+.reputation-panel{margin-top:14px}
+.reputation-grade{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:11px;
+  align-items:center;
+}
+.reputation-grade strong{font:700 34px/1 Georgia,"Times New Roman",serif;color:#31533e}
+.reputation-grade div{font-size:10px;color:#69796f}
+.reputation-bar{height:8px;border-radius:99px;background:#e7e1d5;margin-top:10px;overflow:hidden}
+.reputation-bar span{display:block;width:0;height:100%;background:linear-gradient(90deg,#b7944f,#d7c27f)}
+.achievement-stack{display:grid}
+.achievement-item{
+  display:grid;
+  grid-template-columns:28px minmax(0,1fr);
+  gap:9px;
+  padding:9px 0;
+  border-bottom:1px solid #e9e2d5;
+}
+.achievement-item:last-child{border-bottom:0}
+.achievement-medal{
+  width:28px;height:28px;border-radius:50%;
+  display:grid;place-items:center;
+  background:#efe4c8;color:#7a612d;
+  border:1px solid #dfc994;
+}
+.achievement-item strong{display:block;color:#284b38;font-size:10px}
+.achievement-item small{display:block;color:#8c958e;font-size:8px;margin-top:2px}
+.profile-source-note{
+  margin-top:13px;
+  padding:9px 11px;
+  border-radius:9px;
+  background:#f2ede2;
+  border:1px solid #e1d6c0;
+  color:#786d57;
+  font-size:8px;
+  line-height:1.5;
+}
+.person-profile .profile-portrait:after,.farm-profile .profile-portrait:after{font-family:Georgia,"Times New Roman",serif}
+
+@media(max-width:980px){
+  .profile-dashboard{grid-template-columns:1fr 1fr}
+  .profile-dashboard>.profile-card:first-child{grid-row:span 2}
+}
+@media(max-width:760px){
+  .drawer{width:100vw}
+  .drawer-inner{padding:17px 13px 28px}
+  .profile-header{grid-template-columns:96px minmax(0,1fr);padding:13px}
+  .profile-portrait{height:112px}
+  .profile-heading h2{font-size:23px}
+  .profile-header-actions{grid-column:1/-1;padding-top:0}
+  .identity-facts{grid-template-columns:1fr}
+  .profile-dashboard{grid-template-columns:1fr}
+  .profile-dashboard>.profile-card:first-child{grid-row:auto}
+}
