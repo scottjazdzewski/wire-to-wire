@@ -170,8 +170,72 @@
   "other_layers": {
     "organization_geography": {
       "records": 22,
-      "state": "PARTIAL_SOURCE_BACKED",
-      "note": "20 organizations have at least region/state/county/city source geography; legacy farms still need municipality-level recovery."
+      "region_or_better_coverage": 22,
+      "city_county_or_local_area_precision": 5,
+      "state": "REGION_COVERAGE_COMPLETE_LOCALITY_PARTIAL",
+      "note": "22/22 organizations now have at least source-backed or locked-canon geography. Municipality remains pending for region-only legacy farms/studs; no organization is completely unlocated.",
+      "locked_v3_3_reconciliations": [
+        {
+          "organization_id": "O-000041",
+          "name": "Clover Pike Farm",
+          "region": "Kentucky / Ohio Valley"
+        },
+        {
+          "organization_id": "O-000053",
+          "name": "Cannonade Farm",
+          "region": "Kentucky / South-Midwest links"
+        },
+        {
+          "organization_id": "O-000061",
+          "name": "Kingsmere Farm",
+          "region": "Kentucky / Ohio Valley"
+        },
+        {
+          "organization_id": "O-000062",
+          "name": "Crescent Mile Farm",
+          "region": "Kentucky / Ohio Valley"
+        },
+        {
+          "organization_id": "O-000063",
+          "name": "Ironweed Farm",
+          "region": "Western Kentucky"
+        },
+        {
+          "organization_id": "O-000064",
+          "name": "Huntcross Farm",
+          "region": "Mid-Atlantic"
+        },
+        {
+          "organization_id": "O-000065",
+          "name": "Santa Ventura Stud",
+          "region": "Southern California"
+        },
+        {
+          "organization_id": "O-000066",
+          "name": "Aurelian Stud",
+          "region": "Kentucky / Ohio Valley"
+        },
+        {
+          "organization_id": "O-000067",
+          "name": "Marrowfield Farm",
+          "region": "Kentucky / Ohio Valley"
+        },
+        {
+          "organization_id": "O-000068",
+          "name": "Bellwether Stud",
+          "region": "Kentucky / Ohio Valley"
+        },
+        {
+          "organization_id": "O-000069",
+          "name": "Blue Lantern Farm",
+          "region": "Kentucky / Ohio Valley"
+        },
+        {
+          "organization_id": "O-000070",
+          "name": "Little Fork Farm",
+          "region": "Kentucky / Ohio Valley"
+        }
+      ]
     },
     "trainer_participant_geography": {
       "records": 31,
@@ -216,7 +280,7 @@
   "next_actions": [
     "Apply route-band QA to historical campaign sequences.",
     "Recover source-backed participant birthplaces and permanent operating bases.",
-    "Recover exact municipalities for legacy farms/studs without inventing addresses.",
+    "Recover municipality for region-only legacy farms/studs only where canon/source supports it; 22/22 now have at least region-level geography.",
     "Recover foaling state/city/farm only where source-backed.",
     "Keep five boundary cases dual-named unless parcel precision materially changes travel logic."
   ]
