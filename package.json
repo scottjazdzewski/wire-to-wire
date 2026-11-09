@@ -11,7 +11,8 @@
     "db:seed:local": "node scripts/build-seed.mjs && wrangler d1 execute wtw-canon-desk-db --local --file=./data/seed.sql",
     "test": "node --test tests/*.test.mjs",
     "deploy": "wrangler deploy",
-    "db:build:full": "node scripts/build-full-history.mjs"
+    "db:build:full": "node scripts/build-full-history.mjs",
+    "db:build:geo": "node scripts/build-geography-import.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"
