@@ -40,8 +40,9 @@ test('all deployed Office assets and every approved badge exist byte-for-byte as
    const p='public/assets/profile-badges/v2/wtw_badge_'+kind+'.png';
    assert.ok(fs.existsSync(path.join(root,p)),p);
  }
+ const profileJs=get('public/office-v30-4.js');
  for(const kind of ['horse','people','farm_stable','track']){
-   assert.ok(css.includes('/assets/profile-badges/v2/wtw_badge_'+kind+'.png'));
+   assert.ok(profileJs.includes('/assets/profile-badges/v2/wtw_badge_'+kind+'.png'), 'Approved badge missing from the active profile renderer: '+kind);
  }
  for(const old of ['horse','people','farm','track']){
    const oldPath='public/assets/profile-badges/wtw_badge_'+old+'_profile.png';
@@ -56,8 +57,8 @@ test('all deployed Office assets and every approved badge exist byte-for-byte as
    if(ext==='js')assert.equal(spawnSync(process.execPath,['--check',path.join(root,'public',name)],{encoding:'utf8'}).status,0);
  }
  assert.ok(!get('public/office-v30-4.js').includes('data:image/'));
- assert.ok(css.includes('.horseProfilePage .profilePhoto'));
- assert.ok(css.includes('.trackProfilePage .profilePhoto'));
+ assert.ok(css.includes('.profilePhoto'), 'One visual layer must style the shared profile-photo component');
+ assert.ok(css.includes('.routeShell'), 'One visual layer must style the full-page route shell');
 });
 test('archive review homepage and protected API remain separate',()=>{
  assert.ok(get('public/archive/index.html').includes('/app.js'));
