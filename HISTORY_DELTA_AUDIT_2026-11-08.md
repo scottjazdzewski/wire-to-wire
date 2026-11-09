@@ -20,7 +20,7 @@ The current master adds Macro_Circuit, Date_Confidence, Active, and Sort_Date fi
 
 The workbook's release labels conflict. The spreadsheet title and Control_Dashboard title identify v3.67 as “QA Closed — Canon,” but the Master_Stakes_Calendar header says “QA Verified — Promotion Pending.” Do not treat either label alone as approval to promote v3.67 into D1; preserve the current imported source and resolve the status conflict first.
 
-The updated Control_Dashboard reports 1,305 exact-date active races, 3,882 internal-date active races, 7 active races without a day, 2 verified-date blockers, 118 calendar/field holds, 20 high reviews, 393 mixed-date reviews, and 1 era/context pass. These current master totals are separate from the still-stale v3.37 D1 import.
+The updated Control_Dashboard reports 1,327 exact-date active races, 3,860 internal-date active races, 7 active races without a day, 2 verified-date blockers, 118 calendar/field holds, 20 high reviews, 373 mixed-date reviews, and 1 era/context pass. These current master totals are separate from the still-stale v3.37 D1 import.
 
 ## Nov 9 recheck of the prior queues (pre-correction baseline)
 
@@ -48,6 +48,37 @@ The Race_Date cell notes now hold sources for four remaining undated editions:
 - HSE-1950-0008, San Felipe: [a January 1950 race column](https://www.newyorker.com/magazine/1950/01/28/under-way-at-hialeah) identifies January; exact day open.
 
 These are partial leads: no day was entered and no additional race was closed. Historical result references and game identities require separate provenance and identity matching.
+
+## Kentucky Jockey Club date batch
+
+The Churchill Downs [stakes history](https://www.kentuckyderby.com/wp-content/uploads/sites/2/2023/10/Kentucky-Jockey-Club.pdf) supplied exact dates for 22 editions, 1920–1938 and 1946–1948. These include 21 records from the earlier 54-row date gap snapshot; 1923 was also sourced and already had the same date. Every updated date cell retains its previous WTW value and source in a note.
+
+| Year | Previous WTW date | Sourced date |
+| --- | --- | --- |
+| 1920 | 1920-11-20 | 1920-11-06 |
+| 1921 | 1921-11-19 | 1921-10-15 |
+| 1922 | 1922-11-18 | 1922-09-09 |
+| 1923 | 1923-11-17 | 1923-11-17 |
+| 1924 | 1924-11-15 | 1924-11-01 |
+| 1925 | 1925-11-21 | 1925-10-31 |
+| 1926 | 1926-11-20 | 1926-10-02 |
+| 1927 | 1927-11-19 | 1927-10-08 |
+| 1928 | 1928-11-17 | 1928-12-01 |
+| 1929 | 1929-11-16 | 1929-10-05 |
+| 1930 | 1930-11-15 | 1930-10-16 |
+| 1931 | 1931-11-21 | 1931-10-17 |
+| 1932 | 1932-11-19 | 1932-10-29 |
+| 1933 | 1933-11-18 | 1933-10-28 |
+| 1934 | 1934-11-17 | 1934-10-27 |
+| 1935 | 1935-11-16 | 1935-10-19 |
+| 1936 | 1936-11-21 | 1936-11-07 |
+| 1937 | 1937-11-20 | 1937-10-30 |
+| 1938 | 1938-11-19 | 1938-11-05 |
+| 1946 | 1946-11-16 | 1946-11-02 |
+| 1947 | 1947-11-15 | 1947-11-01 |
+| 1948 | 1948-11-20 | 1948-10-30 |
+
+The source states the race was run at Latonia in 1931–1933, while those master rows identify Churchill Downs. It lists one mile for these historical editions; the current master rows list 8.5 furlongs. All 22 retain an explicit review flag for distance and campaign chronology, with the Latonia mismatch also flagged for 1931–1933. The dates alone do not verify the linked horse identities. The live site database remains on v3.37 and does not yet include this batch.
 
 ## Delta triage
 
