@@ -4027,10 +4027,10 @@ html, body, .app{
 
 /* Approved original PNGs — Google Drive 03_REFERENCE/WTW_PROFILE_BADGES */
 .profilePage .profilePhoto { background-color:#071711 !important; background-size:contain !important; background-position:center !important; background-repeat:no-repeat !important; }
-.horseProfilePage .profilePhoto{ background-image:url('/assets/profile-badges/wtw_badge_horse_profile.png') !important; }
-.personProfilePage .profilePhoto{ background-image:url('/assets/profile-badges/wtw_badge_people_profile.png') !important; }
-.farmProfilePage .profilePhoto{ background-image:url('/assets/profile-badges/wtw_badge_farm_profile.png') !important; }
-.trackProfilePage .profilePhoto{ background-image:url('/assets/profile-badges/wtw_badge_track_profile.png') !important; }
+.horseProfilePage .profilePhoto{ background-image:url('/assets/profile-badges/v2/wtw_badge_horse.png') !important; }
+.personProfilePage .profilePhoto{ background-image:url('/assets/profile-badges/v2/wtw_badge_people.png') !important; }
+.farmProfilePage .profilePhoto{ background-image:url('/assets/profile-badges/v2/wtw_badge_farm_stable.png') !important; }
+.trackProfilePage .profilePhoto{ background-image:url('/assets/profile-badges/v2/wtw_badge_track.png') !important; }
 .profilePage .profilePhoto .profileMonogram{ visibility:hidden !important; }
 html,body{overflow:hidden !important;}
 .wtw-site-archive-link{position:fixed;bottom:5px;right:8px;z-index:18;background:#0b291e;opacity:.9;color:#badbc7;font-weight:850;text-decoration:none;padding:3px 7px;border:1px solid #3d5c49;border-radius:4px;font-size:10px;white-space:nowrap;}

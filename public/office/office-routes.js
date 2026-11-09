@@ -568,7 +568,7 @@
     openRoute('Horse Profile', name, `
       <section class="profilePage horseProfilePage">
         <div class="profileHero">
-          <div class="profilePhoto" data-label="Horse profile badge"><img class="wtw-approved-profile-badge" src="/assets/profile-badges/wtw_badge_horse_profile.png" alt="Approved Horse Profile badge"></div>
+          <div class="profilePhoto" data-label="Horse profile badge"><img class="wtw-approved-profile-badge" src="/assets/profile-badges/v2/wtw_badge_horse.png" alt="Approved Horse Profile badge"></div>
           <div class="profileIdentity">
             <div class="profileEyebrow">Horse</div><h2 class="profileName">${name}</h2>
             <div class="profileSubline">State-aware racing file</div>
@@ -620,7 +620,7 @@
     openRoute('People Profile',name,`
       <section class="profilePage personProfilePage">
         <div class="profileHero">
-          <div class="profilePhoto" data-label="People profile badge"><img class="wtw-approved-profile-badge" src="/assets/profile-badges/wtw_badge_people_profile.png" alt="Approved People Profile badge"></div>
+          <div class="profilePhoto" data-label="People profile badge"><img class="wtw-approved-profile-badge" src="/assets/profile-badges/v2/wtw_badge_people.png" alt="Approved People Profile badge"></div>
           <div class="profileIdentity">
             <div class="profileEyebrow">People</div><h2 class="profileName">${name}</h2><div class="profileSubline">Job: ${data.job || '—'}</div>
             <div class="profileFields">
@@ -653,7 +653,7 @@
     openRoute('Farm Profile',name,`
       <section class="profilePage farmProfilePage">
         <div class="profileHero">
-          <div class="profilePhoto" data-label="Farm profile badge"><img class="wtw-approved-profile-badge" src="/assets/profile-badges/wtw_badge_farm_profile.png" alt="Approved Farm Profile badge"></div>
+          <div class="profilePhoto" data-label="Farm profile badge"><img class="wtw-approved-profile-badge" src="/assets/profile-badges/v2/wtw_badge_farm_stable.png" alt="Approved Farm Profile badge"></div>
           <div class="profileIdentity">
             <div class="profileEyebrow">Farm</div><h2 class="profileName">${name}</h2><div class="profileSubline">Racing / breeding operation profile</div>
             <div class="profileFields">
@@ -695,7 +695,7 @@
     openRoute('Track Profile',name,`
       <section class="profilePage trackProfilePage">
         <div class="profileHero">
-          <div class="profilePhoto trackPhoto" data-label="Track profile badge"><img class="wtw-approved-profile-badge" src="/assets/profile-badges/wtw_badge_track_profile.png" alt="Approved Track Profile badge"></div>
+          <div class="profilePhoto trackPhoto" data-label="Track profile badge"><img class="wtw-approved-profile-badge" src="/assets/profile-badges/v2/wtw_badge_track.png" alt="Approved Track Profile badge"></div>
           <div class="profileIdentity">
             <div class="profileEyebrow">Track</div><h2 class="profileName">${name}</h2><div class="profileSubline">${data.id} · ${data.circuit}</div>
             <div class="profileFields">

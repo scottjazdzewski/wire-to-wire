@@ -35,10 +35,25 @@ test('all deployed Office assets and every approved badge exist byte-for-byte as
    const syntax=spawnSync(process.execPath,['--check',p],{encoding:'utf8'});
    assert.equal(syntax.status,0,syntax.stderr);
  }
- for(const kind of ['horse','people','farm','track']){
-   const p='public/assets/profile-badges/wtw_badge_'+kind+'_profile.png';
+ const approved=['horse','people','farm_stable','track','pedigree','career_record','achievements','reputation','meet_schedule','major_races','connections','history'];
+ for(const kind of approved){
+   const p='public/assets/profile-badges/v2/wtw_badge_'+kind+'.png';
    assert.ok(fs.existsSync(path.join(root,p)),p);
-   assert.ok(css.includes('wtw_badge_'+kind+'_profile.png'));
+ }
+ for(const kind of ['horse','people','farm_stable','track']){
+   assert.ok(css.includes('/assets/profile-badges/v2/wtw_badge_'+kind+'.png'));
+ }
+ for(const old of ['horse','people','farm','track']){
+   const oldPath='public/assets/profile-badges/wtw_badge_'+old+'_profile.png';
+   assert.ok(!fs.existsSync(path.join(root,oldPath)), 'Deprecated badge still present: '+oldPath);
+ }
+ assert.ok(!css.includes('_profile.png'), 'Legacy profile badge reference remains');
+ assert.ok(!get('public/office/office-routes.js').includes('_profile.png'), 'Legacy routes still reference deprecated art');
+ for(const ext of ['css','js']){
+   const name='office-fm-v37.'+ext;
+   assert.ok(html.includes('/'+name+'"'), 'Missing v37 asset '+name);
+   assert.ok(fs.existsSync(path.join(root,'public',name)));
+   if(ext==='js')assert.equal(spawnSync(process.execPath,['--check',path.join(root,'public',name)],{encoding:'utf8'}).status,0);
  }
  assert.ok(!get('public/office-v30-4.js').includes('data:image/'));
  assert.ok(css.includes('.horseProfilePage .profilePhoto'));

@@ -1,0 +1,113 @@
+/* WTW v37 — four permanent Office areas, using canonical data and approved v2 art.
+   Desktop Office only. No scroll, no truncated essential names or entry state.
+   Opportunities remain fully accessible on a dedicated route, not a fifth tall panel. */
+@media (min-width:1024px) and (min-height:691px) {
+ body.wtw-fm-v37 main.main {
+   grid-template-columns:minmax(275px,298px) minmax(0,1fr) minmax(308px,345px)!important;
+   column-gap:10px!important;
+   padding:10px!important;
+ }
+ body.wtw-fm-v37 .right {
+   display:grid!important;
+   grid-template-columns:minmax(0,1fr)!important;
+   grid-template-rows:minmax(0,1.16fr) minmax(0,.84fr) 39px!important;
+   gap:9px!important;min-height:0!important;overflow:hidden!important;
+ }
+ body.wtw-fm-v37 .right>.board {grid-row:1!important;grid-column:1!important;order:1!important;}
+ body.wtw-fm-v37 .right>.fixtures {grid-row:2!important;grid-column:1!important;order:2!important;}
+ body.wtw-fm-v37 .right>.wtwV37Leads {grid-row:3!important;grid-column:1!important;order:3!important;}
+ body.wtw-fm-v37 .right>.opportunities,
+ body.wtw-fm-v37 .right>.wtwV36QuickPanel,
+ body.wtw-fm-v37 .right>.wtwV36RightTabs {display:none!important;}
+ body.wtw-fm-v37 .right .panelHead{height:42px!important;min-height:42px!important;max-height:42px!important;padding:6px 10px!important;}
+ body.wtw-fm-v37 .right .panelHead .panelTitle {font-size:12.7px!important;line-height:1.2!important;letter-spacing:.017em!important;}
+ body.wtw-fm-v37 .wtwV37Badge {width:25px!important;height:25px!important;flex:0 0 25px!important;object-fit:contain!important;margin-right:3px;}
+ body.wtw-fm-v37 .wtwV37PanelCount{margin-left:4px;color:#e2cd7f;font-size:10.5px;white-space:nowrap;}
+ body.wtw-fm-v37 .right .board{display:grid!important;grid-template-rows:42px minmax(0,1fr)!important;min-height:0!important;}
+ body.wtw-fm-v37 .right .board .boardRows{
+   box-sizing:border-box!important;display:grid!important;grid-template-rows:repeat(6,minmax(0,1fr))!important;
+   gap:0!important;padding:3px 9px 5px!important;min-width:0!important;min-height:0!important;
+   height:100%!important;max-height:none!important;overflow:hidden!important;
+ }
+ body.wtw-fm-v37 .right .board .rankRow,
+ body.wtw-fm-v37 .right .board .boardRows .rankRow.wtwV36Hidden {
+   box-sizing:border-box!important;display:grid!important;grid-template-columns:18px minmax(0,1fr) auto!important;
+   gap:6px!important;align-items:center!important;min-height:0!important;height:100%!important;
+   max-height:none!important;overflow:visible!important;cursor:pointer!important;
+   border-bottom:1px solid #315240!important;padding:2px 0!important;
+ }
+ body.wtw-fm-v37 .right .board .rankRow>.form {display:none!important;}
+ body.wtw-fm-v37 .right .board .rankRow>.n{font-size:10.5px!important;color:#b4c9ba!important;}
+ body.wtw-fm-v37 .right .board .wtwV37HorseIdentity{display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:0;min-height:0;}
+ body.wtw-fm-v37 .right .board .wtwV37HorseIdentity strong{
+   display:block!important;color:#f9fff6!important;font-size:12.15px!important;line-height:1.15!important;
+   font-weight:750!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;
+ }
+ body.wtw-fm-v37 .right .board .wtwV37HorseActivity{
+   display:block;min-width:0;font-size:10.3px!important;line-height:1.16!important;color:#b9cec0!important;
+   white-space:normal!important;overflow:visible!important;overflow-wrap:normal!important;
+ }
+ body.wtw-fm-v37 .right .board .rankRow>span:last-child{
+   font-size:10.5px!important;line-height:1.18!important;font-weight:650!important;
+   background:#1c3b2a!important;border:1px solid #3a6247!important;border-radius:3px!important;
+   max-width:70px!important;min-width:31px!important;white-space:normal!important;text-align:center!important;
+   padding:3px 5px!important;color:#ebf7eb!important;
+ }
+ body.wtw-fm-v37 .right .board .panelArrows{display:none!important;}
+ body.wtw-fm-v37 .right .board .panelHead .link {font-size:10.8px!important;white-space:nowrap!important;}
+ body.wtw-fm-v37 .right .fixtures {display:grid!important;grid-template-rows:42px minmax(0,1fr)!important;min-height:0!important;}
+ body.wtw-fm-v37 .right .fixtures .fixtureList {
+   box-sizing:border-box!important;display:grid!important;
+   grid-template-rows:repeat(3,minmax(0,1fr))!important;
+   gap:5px!important;min-height:0!important;overflow:hidden!important;
+   padding:6px 8px!important;height:100%!important;
+ }
+ body.wtw-fm-v37 .right .fixtures .fixtureList > .fixture:not([data-track]){display:none!important;}
+ body.wtw-fm-v37 .right .fixtures .fixture,
+ body.wtw-fm-v37 .right .fixtures .fixtureList .fixture.wtwV36Hidden{
+   display:grid!important;grid-template-columns:54px minmax(0,1fr) 36px!important;
+   gap:7px!important;min-height:0!important;max-height:none!important;height:100%!important;
+   padding:4px 5px!important;align-items:center!important;
+ }
+ body.wtw-fm-v37 .right .fixtures .fixtureList>.fixture:not([data-track]),
+ body.wtw-fm-v37 .right .fixtures .fixtureList>.fixture:not([data-track]).wtwV36Hidden{display:none!important;}
+ body.wtw-fm-v37 .right .fixtures .fixture .d{font-size:10px!important;line-height:1.15!important;color:#c5d8ca!important;}
+ body.wtw-fm-v37 .right .fixtures .fixture h4{font-size:12px!important;line-height:1.14!important;white-space:normal!important;overflow:visible!important;}
+ body.wtw-fm-v37 .right .fixtures .fixture[data-track] p::before{content:"🇺🇸";margin-right:3px;font-size:10px;}
+ body.wtw-fm-v37 .right .fixtures .fixture p{font-size:10.5px!important;line-height:1.16!important;white-space:normal!important;overflow:visible!important;color:#adc7b5!important;}
+ body.wtw-fm-v37 .right .fixtures .raceTag{width:35px!important;height:23px!important;min-height:23px!important;}
+ body.wtw-fm-v37 .right .fixtures .panelArrows{display:none!important;}
+ body.wtw-fm-v37 .wtwV37EntryFlag{
+   display:inline-block;margin-left:4px;color:#dfc56d;font-size:10.3px;font-weight:750;
+ }
+ body.wtw-fm-v37 .wtwV37EntryFlag.entered{color:#5edf9b;}
+ body.wtw-fm-v37 .right .wtwV37Leads{
+   box-sizing:border-box!important;display:block!important;padding:0!important;min-height:0!important;overflow:hidden!important;
+ }
+ body.wtw-fm-v37 .right .wtwV37Leads>button{
+   display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;
+   width:100%!important;height:100%!important;min-height:37px!important;
+   padding:0 11px!important;margin:0!important;border:none!important;
+   border-radius:6px!important;background:#1a3b2b!important;
+   color:#f1f7ed!important;font:750 12px/1.2 Inter,'Segoe UI',sans-serif!important;
+   cursor:pointer!important;
+ }
+ body.wtw-fm-v37 .right .wtwV37Leads button:hover{background:#24503a!important;}
+ body.wtw-fm-v37 .wtwV37LeadsIcon{font-size:17px;color:#e5ca78;}
+ body.wtw-fm-v37 .wtwV37LeadsCount{margin-left:auto;color:#dfc77e;font-size:11px;}
+ body.wtw-fm-v37 .wtwV37LeadsArrow{font-size:20px;color:#cce9d0;}
+ /* Center remains a decision-first two-part workspace; fill reclaimed space without altering game state. */
+ body.wtw-fm-v37 .mid.decisionDeskShell{gap:9px!important;grid-template-rows:88px minmax(0,.98fr) minmax(0,1.12fr)!important;}
+ body.wtw-fm-v37 .mid .wtwV35FeatureRow,body.wtw-fm-v37 .mid .wtwV35SupportRow{gap:9px!important;}
+ body.wtw-fm-v37 .mid .wtwOfficeIdentity{padding:8px 12px!important;}
+ body.wtw-fm-v37 .left .msg{min-height:0!important;}
+ body.wtw-fm-v37 .wtwV37Badge:focus-visible,body.wtw-fm-v37 .right .rankRow:focus-visible,
+ body.wtw-fm-v37 .right .fixture:focus-visible{outline:2px solid #e5ca78!important;outline-offset:1px!important;}
+}
+@media (min-width:1024px) and (max-height:785px){
+ body.wtw-fm-v37 .right{grid-template-rows:minmax(0,1.14fr) minmax(0,.86fr) 35px!important;gap:7px!important;}
+ body.wtw-fm-v37 .right .board .panelHead,body.wtw-fm-v37 .right .fixtures .panelHead{height:39px!important;min-height:39px!important;max-height:39px!important;}
+ body.wtw-fm-v37 .right .board {grid-template-rows:39px minmax(0,1fr)!important;}
+ body.wtw-fm-v37 .right .fixtures{grid-template-rows:39px minmax(0,1fr)!important;}
+ body.wtw-fm-v37 .right .wtwV37Leads>button{min-height:33px!important;}
+}
