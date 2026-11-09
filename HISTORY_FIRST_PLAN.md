@@ -5,6 +5,16 @@
 
 The management loop stays out of development until the historical archive is reconciled and the site layout is approved.
 
+## Calendar standard and campaign review — Nov 9, 2026
+
+- Before 1973, establish the year each stakes was run. Preserve previously sourced exact dates. Use a plausible seasonal window and a clearly labeled provisional calendar date to order game history; do not present that placeholder as a verified historical day.
+- From 1973 onward, seek sourced actual dates for all recorded stakes editions. Scheduled, internal and WTW-fixed dates do not meet the exact-date target. Keep existing provisional values until reliable evidence supports a change.
+- Check each horse's recorded campaign for timing, recovery, track and geographic plausibility. A same-day cross-track pairing, an unusually short interval between circuits, or a dense campaign spanning multiple circuits is a review lead, not automatic proof of error. Consider era and exceptional real campaigns; do not silently change results or invent a universal recovery rule. The current review uses only the archived top-three placings, not complete starts.
+- A Nov 9 master snapshot has 2,219 active editions from 1973 onward: 734 with the workbook's EXACT classification, 1,467 INTERNAL and 18 WTW_FIXED. These are master counts, not the older D1 import, and EXACT is a source-status count rather than an independent re-verification.
+- Initial route review of 2,908 horses with dated active top-three links found 47 same-day different-track pairs, 629 adjacent pairs within seven days across different workbook circuits, and one horse with at least six recorded races across three circuits in 49 days. These counts are overlapping leads and are not confirmed errors or a complete-start audit. Run `python scripts/campaign_review.py Master_Stakes_Calendar.csv --output campaign_findings.json` against an up-to-date export to reproduce and investigate. No race or horse data is changed by the script.
+- Neither the review tool nor this policy implements or enforces game travel/recovery logic yet. Build it only after the user approves the history and site.
+
+
 ## Current audit findings
 
 - The private Cloudflare D1 database contains the Nov 7 H/S/E/P/B import. Its row-count, manifest-hash and integrity checks passed, but those checks verify the import against its staged files; they do not establish historical truth.
