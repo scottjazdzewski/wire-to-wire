@@ -1241,3 +1241,194 @@ body{
   .stable-grid-v2{grid-template-columns:1fr}
   .stable-summary-stats{grid-template-columns:1fr 1fr}
 }
+
+/* WTW DESIGN PASS 02B — season book + track atlas */
+.calendar-season-hero{
+  display:grid;
+  grid-template-columns:150px minmax(0,1fr) minmax(270px,.7fr);
+  gap:18px;
+  align-items:center;
+  margin-bottom:13px;
+  padding:17px 18px;
+  border-radius:14px;
+  color:white;
+  background:
+    radial-gradient(circle at 86% 30%,rgba(217,196,142,.16),transparent 20rem),
+    linear-gradient(112deg,#0d3427,#174d38);
+  border:1px solid rgba(183,148,79,.28);
+}
+.calendar-season-year{
+  display:grid;
+  place-items:center;
+  min-height:105px;
+  border-right:1px solid rgba(255,255,255,.12);
+}
+.calendar-season-year>span,.calendar-season-year>small{font-size:7px;letter-spacing:.15em;color:#a8c4b3;font-weight:850}
+.calendar-season-year>strong{font:700 39px/1 Georgia,"Times New Roman",serif;color:#fff;margin:5px 0}
+.calendar-season-copy h3{margin:4px 0 6px;font:700 20px Georgia,"Times New Roman",serif}
+.calendar-season-copy p{margin:0;color:#cbdad1;font-size:9px;line-height:1.5}
+.calendar-season-copy .smallcaps{color:#a9c9b7}
+.calendar-season-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.calendar-season-facts span{
+  padding:9px;
+  border-radius:8px;
+  background:#ffffff0b;
+  border:1px solid rgba(255,255,255,.10);
+  color:#b9cabe;
+  font-size:7px;
+}
+.calendar-season-facts b{display:block;color:#fff;font:700 17px Georgia,"Times New Roman",serif}
+.calendar-month-panel{
+  border-color:#d9d2c3;
+  box-shadow:0 11px 26px rgba(18,49,36,.06);
+}
+.calendar-toolbar{
+  background:linear-gradient(180deg,#fffdf8,#f5f0e6);
+  border-bottom-color:#e3dccf;
+}
+.calendar-month-heading-main strong{font-family:Georgia,"Times New Roman",serif;color:#244b37}
+.calendar-weekdays{background:#0f3b2c;color:#e8f1eb}
+.calendar-weekday{color:#d1dfd6!important;border-color:#224e3b!important}
+.calendar-day{
+  border-color:#e4ddd0;
+  background:linear-gradient(145deg,#fffdf9,#faf6ee);
+}
+.calendar-day:nth-child(7n+1),.calendar-day:nth-child(7n){background:linear-gradient(145deg,#f8f4ea,#f1ede4)}
+.calendar-day-number{color:#6f765f}
+.calendar-agenda-date{border-color:#dfd5c4;background:#f4eee2}
+.calendar-agenda-date strong{font-family:Georgia,"Times New Roman",serif}
+.calendar-right-rail .panel{border-color:#ddd5c7}
+.calendar-source-banner{border-color:#dccca6;background:linear-gradient(100deg,#f5efe2,#fffaf1)}
+
+/* Racecourse atlas */
+.racecourse-atlas-hero{
+  display:grid;
+  grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);
+  gap:22px;
+  align-items:center;
+  margin-bottom:15px;
+  padding:23px 25px;
+  border-radius:15px;
+  color:#fff;
+  background:
+    radial-gradient(circle at 86% 22%,rgba(217,196,142,.18),transparent 24rem),
+    linear-gradient(116deg,#0a3024,#154b36);
+  border:1px solid rgba(183,148,79,.30);
+}
+.racecourse-atlas-hero .smallcaps{color:#a8cbb8}
+.racecourse-atlas-hero h2{
+  margin:5px 0 8px;
+  font:700 29px Georgia,"Times New Roman",serif;
+}
+.racecourse-atlas-hero p{margin:0;max-width:690px;color:#ccdcd2;font-size:10px;line-height:1.55}
+.racecourse-circuit-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:13px}
+.racecourse-circuit-chips span{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:5px 8px;
+  border-radius:99px;
+  border:1px solid rgba(255,255,255,.12);
+  background:#ffffff09;
+  color:#c6d6cc;
+  font-size:7px;
+}
+.racecourse-circuit-chips b{color:#e1cc96}
+.racecourse-atlas-totals{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.racecourse-atlas-totals span{
+  padding:10px;
+  border-radius:9px;
+  border:1px solid rgba(255,255,255,.11);
+  background:#ffffff0b;
+  color:#b7cbbf;
+  font-size:8px;
+}
+.racecourse-atlas-totals b{display:block;color:#fff;font:700 21px Georgia,"Times New Roman",serif}
+.racecourse-atlas-section{
+  margin-bottom:15px;
+  border:1px solid #ddd5c7;
+  border-radius:14px;
+  background:#fffdf8;
+  overflow:hidden;
+  box-shadow:0 8px 20px rgba(18,49,36,.045);
+}
+.racecourse-atlas-section>header{
+  display:flex;
+  justify-content:space-between;
+  align-items:end;
+  gap:15px;
+  padding:13px 15px;
+  border-bottom:1px solid #e8e1d5;
+}
+.racecourse-atlas-section>header h3{
+  margin:3px 0 0;
+  font:700 17px Georgia,"Times New Roman",serif;
+  color:#244936;
+}
+.racecourse-atlas-section>header small{font-size:8px;color:#908879}
+.racecourse-atlas-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:0;
+}
+.racecourse-atlas-card{
+  position:relative;
+  min-height:180px;
+  padding:14px 15px 12px;
+  border-right:1px solid #ece5d9;
+  border-bottom:1px solid #ece5d9;
+  background:
+    radial-gradient(circle at 86% 10%,rgba(183,148,79,.08),transparent 8rem),
+    linear-gradient(180deg,#fffdf9,#f7f2e8);
+}
+.racecourse-atlas-card:nth-child(3n){border-right:0}
+.racecourse-atlas-top{display:flex;justify-content:space-between;align-items:center}
+.racecourse-atlas-top span{
+  padding:3px 6px;
+  border-radius:4px;
+  background:#e8efe9;
+  color:#376248;
+  font-size:6px;
+  font-weight:900;
+  letter-spacing:.12em;
+}
+.racecourse-atlas-top small{color:#a0998d;font-size:7px}
+.racecourse-atlas-mark{
+  margin:10px 0 4px;
+  font-size:23px;
+  color:#b39452;
+}
+.racecourse-atlas-card h3{
+  margin:0 0 3px;
+  font:700 15px Georgia,"Times New Roman",serif;
+  color:#214835;
+}
+.racecourse-atlas-card p{margin:0;color:#78857c;font-size:9px}
+.racecourse-atlas-meta{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.racecourse-atlas-meta span{
+  padding:4px 6px;
+  border-radius:5px;
+  background:#f0ebe1;
+  color:#796d56;
+  font-size:6.5px;
+}
+.racecourse-atlas-action{
+  position:absolute;
+  left:15px;right:15px;bottom:10px;
+  display:flex;justify-content:flex-end;
+}
+.atlas-card-note{color:#9a9c95;font-size:7px;font-style:italic}
+
+@media(max-width:1080px){
+  .calendar-season-hero{grid-template-columns:125px 1fr}
+  .calendar-season-facts{grid-column:1/-1}
+  .racecourse-atlas-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .racecourse-atlas-card:nth-child(3n){border-right:1px solid #ece5d9}
+  .racecourse-atlas-card:nth-child(2n){border-right:0}
+}
+@media(max-width:760px){
+  .calendar-season-hero{grid-template-columns:1fr}
+  .calendar-season-year{border-right:0;border-bottom:1px solid rgba(255,255,255,.12);padding-bottom:12px}
+  .calendar-season-facts{grid-template-columns:1fr 1fr 1fr}
+  .racecourse-atlas-hero{grid-template-columns:1fr}
+  .racecourse-atlas-grid{grid-template-columns:1fr}
+  .racecourse-atlas-card{border-right:0!important}
+}
