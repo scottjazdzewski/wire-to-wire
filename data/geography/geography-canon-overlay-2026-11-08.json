@@ -1,0 +1,223 @@
+{
+  "description": "Drive-canon geography synchronization overlay for Wire to Wire. This file records the current geography/travel state from the authoritative WTW working registry and supersedes conflicting values in older geography staging files until those files are regenerated.",
+  "as_of": "2026-11-08",
+  "authority": {
+    "source": "WTW CANON REGISTRIES — 1999 START v3.3 WORKING RECONCILIATION",
+    "spreadsheet_url": "https://docs.google.com/spreadsheets/d/1Lhpe6DG1foQ2-zayQBg4bKpTtu4MP_itpM1zo2GRSEA/edit",
+    "precedence": "DRIVE_CANON_OVER_OLDER_GITHUB_STAGING"
+  },
+  "track_geography": {
+    "total_tracks": 134,
+    "sourced_city_or_locality": 121,
+    "boundary_provisional_real_tracks": 5,
+    "fictional_wtw_proposals": 8,
+    "state": "USABLE_FOR_TRAVEL_NODE_LOGIC",
+    "boundary_cases": [
+      {
+        "track_id": "T-0009",
+        "name": "Delaware Park",
+        "locality": "Wilmington / Stanton",
+        "region": "Delaware",
+        "travel_node": "Wilmington, DE, USA",
+        "status": "BOUNDARY_PROVISIONAL",
+        "note": "Official address is Wilmington; access/location commonly described at Stanton. Use Wilmington node until parcel boundary is finalized."
+      },
+      {
+        "track_id": "T-0031",
+        "name": "Golden Gate Fields",
+        "locality": "Albany / Berkeley",
+        "region": "California",
+        "travel_node": "Albany, CA, USA",
+        "status": "BOUNDARY_PROVISIONAL",
+        "note": "Property spans Albany and Berkeley; majority is in Albany. Use Albany as travel node pending parcel-level rule."
+      },
+      {
+        "track_id": "T-0040",
+        "name": "Suffolk Downs",
+        "locality": "East Boston / Revere",
+        "region": "Massachusetts",
+        "travel_node": "East Boston, MA, USA",
+        "status": "BOUNDARY_PROVISIONAL",
+        "note": "Historic property spans East Boston and Revere. Clubhouse/track access anchor is East Boston; preserve both municipalities."
+      },
+      {
+        "track_id": "T-0054",
+        "name": "Great Lakes Downs",
+        "locality": "Muskegon / Fruitport Township",
+        "region": "Michigan",
+        "travel_node": "Muskegon, MI, USA",
+        "status": "BOUNDARY_PROVISIONAL",
+        "note": "Racing authority used a Muskegon postal address; parcel evidence places site in Fruitport Township. Use Muskegon travel node pending normalization."
+      },
+      {
+        "track_id": "T-0112",
+        "name": "Bainbridge Park",
+        "locality": "Aurora / Bainbridge Township",
+        "region": "Ohio",
+        "travel_node": "Aurora, OH, USA",
+        "status": "BOUNDARY_PROVISIONAL",
+        "note": "Sources place track along Route 43 in Aurora and identify Bainbridge Township. Use Aurora travel node."
+      }
+    ]
+  },
+  "shipping_geography": {
+    "shipping_events": 30,
+    "route_pairs": 6,
+    "track_join_passes": 30,
+    "route_time_passes": 30,
+    "failures": 0,
+    "state": "PASS_ROUTE_TIME_PLAUSIBILITY",
+    "method": "Coarse planning bands derived from canonical city/locality travel nodes. Bands are intentionally conservative and are not surveyed road mileages. Current event windows are tested for horse-van feasibility, chronology, and absence of teleportation.",
+    "route_pairs_detail": [
+      {
+        "from_track_id": "T-0017",
+        "to_track_id": "T-0019",
+        "from": "Hallandale Beach, FL",
+        "to": "Miami Gardens, FL",
+        "planning_band": "LOCAL_SHORT_HAUL_<25_MI",
+        "transit_window_hours": 32,
+        "event_ids": [
+          "SHIP-000001",
+          "SHIP-000002",
+          "SHIP-000003",
+          "SHIP-000004",
+          "SHIP-000005"
+        ],
+        "result": "PASS"
+      },
+      {
+        "from_track_id": "T-0015",
+        "to_track_id": "T-0013",
+        "from": "Florence, KY",
+        "to": "Louisville, KY",
+        "planning_band": "REGIONAL_SHORT_HAUL_75_125_MI",
+        "transit_window_hours": 55,
+        "event_ids": [
+          "SHIP-000006",
+          "SHIP-000007",
+          "SHIP-000008",
+          "SHIP-000009",
+          "SHIP-000010"
+        ],
+        "result": "PASS"
+      },
+      {
+        "from_track_id": "T-0022",
+        "to_track_id": "T-0023",
+        "from": "New Orleans, LA",
+        "to": "Bossier City, LA",
+        "planning_band": "REGIONAL_LONG_HAUL_250_350_MI",
+        "transit_window_hours": 31,
+        "event_ids": [
+          "SHIP-000011",
+          "SHIP-000012",
+          "SHIP-000013",
+          "SHIP-000014",
+          "SHIP-000015"
+        ],
+        "result": "PASS"
+      },
+      {
+        "from_track_id": "T-0035",
+        "to_track_id": "T-0034",
+        "from": "Cicero, IL",
+        "to": "Arlington Heights, IL",
+        "planning_band": "LOCAL_SHORT_HAUL_<50_MI",
+        "transit_window_hours": 79,
+        "event_ids": [
+          "SHIP-000016",
+          "SHIP-000017",
+          "SHIP-000018",
+          "SHIP-000019",
+          "SHIP-000020"
+        ],
+        "result": "PASS"
+      },
+      {
+        "from_track_id": "T-0001",
+        "to_track_id": "T-0002",
+        "from": "South Ozone Park, NY",
+        "to": "Elmont, NY",
+        "planning_band": "LOCAL_SHORT_HAUL_<25_MI",
+        "transit_window_hours": 30,
+        "event_ids": [
+          "SHIP-000021",
+          "SHIP-000022",
+          "SHIP-000023",
+          "SHIP-000024",
+          "SHIP-000025"
+        ],
+        "result": "PASS"
+      },
+      {
+        "from_track_id": "T-0028",
+        "to_track_id": "T-0029",
+        "from": "Arcadia, CA",
+        "to": "Inglewood, CA",
+        "planning_band": "LOCAL_SHORT_HAUL_<50_MI",
+        "transit_window_hours": 30,
+        "event_ids": [
+          "SHIP-000026",
+          "SHIP-000027",
+          "SHIP-000028",
+          "SHIP-000029",
+          "SHIP-000030"
+        ],
+        "result": "PASS"
+      }
+    ]
+  },
+  "other_layers": {
+    "organization_geography": {
+      "records": 22,
+      "state": "PARTIAL_SOURCE_BACKED",
+      "note": "20 organizations have at least region/state/county/city source geography; legacy farms still need municipality-level recovery."
+    },
+    "trainer_participant_geography": {
+      "records": 31,
+      "unique_trainers": 25,
+      "state": "OPENING_STRING_GEOGRAPHY_BUILT",
+      "note": "27 exact opening string locations joined to track geography; permanent home bases and birthplaces remain incomplete."
+    },
+    "horse_current_geography": {
+      "state_records": 434,
+      "unique_horses": 400,
+      "physical_track_state_records": 184,
+      "b01_circuit_only": 250,
+      "state": "PARTIAL_BY_DESIGN_NOT_ERROR"
+    },
+    "horse_foaling_geography_b01": {
+      "horses": 250,
+      "country_level_complete": 250,
+      "state": "COUNTRY_LEVEL_COMPLETE",
+      "pending": "State/city/farm locality."
+    },
+    "historical_breeding_centers": {
+      "nodes": 13,
+      "state": "FOUNDATION_BUILT"
+    },
+    "people_birthplaces": {
+      "loaded": 0,
+      "state": "OPEN"
+    },
+    "jockey_bases": {
+      "loaded": 0,
+      "state": "OPEN"
+    },
+    "owner_bases": {
+      "state": "OPEN_PARTIAL_VIA_ORGANIZATIONS"
+    }
+  },
+  "calendar_policy": {
+    "pre_1973": "Year-level historical timing may remain broad where exact dates are not authenticated.",
+    "from_1973_forward": "Target exact race date wherever available.",
+    "travel_rule": "Use exact post-1973 dates plus canonical geography nodes to reject impossible campaign sequences."
+  },
+  "next_actions": [
+    "Apply route-band QA to historical campaign sequences.",
+    "Recover source-backed participant birthplaces and permanent operating bases.",
+    "Recover exact municipalities for legacy farms/studs without inventing addresses.",
+    "Recover foaling state/city/farm only where source-backed.",
+    "Keep five boundary cases dual-named unless parcel precision materially changes travel logic."
+  ]
+}
