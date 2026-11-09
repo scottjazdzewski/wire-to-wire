@@ -115,6 +115,30 @@ async function api(request,env,email) {
     }
     return response({ok:true,target_type:b.target_type,target_id:b.target_id,name:requested,source_name:target.source_name,source_unchanged:true});
   }
+  // Private, source-preserving geography read model. Existing archive tables are
+  // never rewritten; these immutable WTW IDs can exist beyond the older D1 import.
+  // The Pages Function verifies Cloudflare Access before this handler is called.
+  if(request.method==='GET' && url.pathname==='/api/geography/overview'){
+    const [items,manifest]=await Promise.all([
+      env.DB.prepare('SELECT source_sheet,COUNT(*) AS n,COUNT(DISTINCT entity_id) AS unique_entities FROM wtw_geo_read_records GROUP BY source_sheet ORDER BY source_sheet').all(),
+      env.DB.prepare('SELECT batch_id,source_sheet_url,source_digest_sha256,total_records,horse_current,horse_foaling,participant_geography,organization_geography,track_geography,imported_at,source_policy FROM wtw_geo_import_manifest ORDER BY imported_at DESC LIMIT 1').first()
+    ]);
+    return response({mode:'PROTECTED_GEOGRAPHY_READ_MODEL',authority:'Drive v3.3',import:manifest||null,source_layers:items.results});
+  }
+  const geoMatch=url.pathname.match(/^\/api\/geography\/([A-Z][A-Z0-9_-]{2,119})$/);
+  if(request.method==='GET' && geoMatch){
+    const id=geoMatch[1];
+    const rows=await env.DB.prepare(
+      'SELECT source_record_id,entity_id,entity_kind,relation_kind,effective_at,city_locality,state_region,country,place_name,travel_node,location_type,geography_status,canon_status,source_sheet,source_basis,evidence_note,metadata_json FROM wtw_geo_read_records WHERE entity_id=? ORDER BY CASE relation_kind WHEN \'CURRENT_RESIDENCE\' THEN 0 WHEN \'FOALING_LOCATION\' THEN 1 WHEN \'TRACK_LOCATION\' THEN 2 WHEN \'ORGANIZATION_BASE\' THEN 3 ELSE 4 END, effective_at DESC,source_record_id LIMIT 250'
+    ).bind(id).all();
+    return response({
+      entity_id:id,
+      authority:'WTW CANON REGISTRIES — 1999 START v3.3',
+      scope:'GEOGRAPHY_READ_MODEL_ONLY',
+      records:rows.results,
+      source_provenance_note:'Boarding/foaling records include both evidence-backed and explicitly fictional canon. Historical pedigree-only identity does not imply living 1999 stock.'
+    });
+  }
   if(request.method==='GET' && url.pathname==='/api/health') return response({status:'ok',mode:'D1',actor:email});
   if(request.method==='GET' && url.pathname==='/api/bootstrap') return response(await bootstrap(env.DB));
   const horseMatch=url.pathname.match(/^\/api\/horses\/(H-[A-Za-z0-9-]+)$/);
