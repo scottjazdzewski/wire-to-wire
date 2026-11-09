@@ -157,11 +157,12 @@ function renderSeasons(){
  const compactRows=items=>items.map(r=>{const e=dateEvidence(r);return '<div class="calendar-review-item"><div><strong>'+openButton('race',r.id,r.name)+'</strong><small>'+venueName(r)+' · '+h(dateLabel(r))+'</small></div>'+evidencePill(r)+'</div>'}).join('');
  const legend=['exact','internal','unverified','fixed','review','not-run','missing'].map(k=>{const labels={exact:'Exact · sourced',internal:'Internal schedule',unverified:'Schedule · unverified',fixed:'WTW fixed',review:'Needs review','not-run':'Not run',missing:'Day not recorded'};return '<span class="date-evidence evidence-'+k+'">'+labels[k]+'</span>'}).join('');
  const sourceNotice='<div class="calendar-source-banner"><span class="source-alert-pill">HISTORY RECONCILIATION OPEN</span><p>'+(y<1973?'Before 1973, the year is the historical requirement. Calendar dates without a source are provisional scheduling placeholders; travel and recovery still require review.':'From 1973 onward, exact historical dates are the goal. Unverified and fixed schedule dates remain provisional.')+' The site still uses an older archive snapshot.</p><button class="text-button" data-page="sources">Open history coverage →</button></div>';
+ const seasonHero='<section class="calendar-season-hero"><div class="calendar-season-year"><span>RACING YEAR</span><strong>'+h(y)+'</strong><small>WTW HISTORICAL BOOK</small></div><div class="calendar-season-copy"><span class="smallcaps">SEASON OFFICE</span><h3>'+h(y)+' stakes calendar</h3><p>Move month by month through the racing year. Source-backed dates, working schedule dates, held records and non-runs stay visually distinct so geography and recovery logic remain believable.</p></div><div class="calendar-season-facts"><span><b>'+exactCount+'</b> exact dates</span><span><b>'+scheduleCount+'</b> schedule dates</span><span><b>'+ranked.length+'</b> referenced horses</span></div></section>';
  const issuePanels=(dateIssues.length?section('Day not recorded',dateIssues.length+' editions are kept outside the day grid',compactRows(dateIssues)):'')+
   (reviewRaces.length?section('Held or unresolved dates',reviewRaces.length+' editions are not placed on the calendar grid',compactRows(reviewRaces)):'')+
   (notRunRaces.length?section('Not run',notRunRaces.length+' source-marked non-runs',compactRows(notRunRaces)):'');
  return intro('THE HISTORICAL YEARBOOK',y+' Season Calendar','A true month view for the imported stakes schedule. Exact dates, internal schedule dates, review holds and non-runs remain distinct.', '<div class="record-count">'+yearRaces.length.toLocaleString()+' editions · '+ranked.length.toLocaleString()+' referenced horses</div>')+
-  sourceNotice+
+  seasonHero+sourceNotice+
   '<div class="metrics">'+metric(yearRaces.length,'Stakes editions','Imported rows for this season')+metric(exactCount,'Exact dates','Source-backed day values')+metric(scheduleCount,'Schedule dates','Internal, unverified or governed')+metric(reviewCount+notRunCount,'Held / missing / not run','Kept outside the day grid')+'</div>'+
   '<div class="calendar-evidence-legend"><span>DATE EVIDENCE</span>'+legend+'</div>'+
   '<div class="calendar-page-layout"><section class="calendar-month-panel"><div class="calendar-toolbar"><button type="button" class="calendar-nav-button" data-calendar-step="-1"'+(month===0?' disabled':'')+' aria-label="Previous month">‹</button><div class="calendar-month-heading-main"><span class="smallcaps">RACE MONTH</span><strong>'+monthNames[month]+' '+y+'</strong><small>'+calendarRaces.length+' scheduled editions · '+exactMonth+' exact-date sources</small></div><label class="calendar-month-select"><span>MONTH</span><select id="calendar-month-select">'+options+'</select></label><button type="button" class="calendar-nav-button" data-calendar-step="1"'+(month===11?' disabled':'')+' aria-label="Next month">›</button></div><div class="calendar-weekdays" role="row">'+weekdays+'</div><div class="calendar-grid" role="grid" aria-label="'+h(monthNames[month]+' '+y+' stakes calendar')+'">'+dayCells+'</div></section><aside class="calendar-right-rail">'+section(monthNames[month]+' race card',calendarRaces.length+' editions in date order','<div id="calendar-agenda" tabindex="-1">'+(agenda||'<div class="calendar-empty">No dated races are listed this month.</div>')+'</div>')+section('Season connections','Historical year-level links',known||'<div class="calendar-empty">No horse links are recorded for this season.</div>')+'</aside></div>'+
@@ -221,6 +222,22 @@ function renderTracks(){
  const directory=state.trackDirectory?.tracks||[];
  const imported=new Map((state.data?.entities||[]).filter(e=>e.kind==='track').map(e=>[e.id,e]));
  const list=directory.length ? directory.filter(t=>!state.search||[t.name,t.id,t.city_locality,t.state_province_region,t.country,t.macro_circuit].some(v=>String(v||'').toLowerCase().includes(state.search.toLowerCase()))) : filteredEntities('track').map(e=>({id:e.id,name:e.name,geography_status:e.status}));
+ const counts=state.trackDirectory?.counts||{};
+ const circuits=new Map();
+ for(const t of directory){const key=t.macro_circuit||t.registry||'Other';circuits.set(key,(circuits.get(key)||0)+1)}
+ const circuitChips=[...circuits.entries()].sort((a,b)=>b[1]-a[1]).slice(0,7).map(([name,n])=>'<span><b>'+n+'</b> '+h(name)+'</span>').join('');
+ const featured=(list.length===directory.length?directory:list).slice().sort((a,b)=>{
+   const pa=a.foundation_status==='CORE_CALENDAR'?0:a.opening_state==='ACTIVE'?1:2;
+   const pb=b.foundation_status==='CORE_CALENDAR'?0:b.opening_state==='ACTIVE'?1:2;
+   return pa-pb||String(a.name).localeCompare(String(b.name));
+ }).slice(0,18);
+ const trackCards=featured.map(t=>{
+   const e=imported.get(t.id);
+   const city=[t.city_locality,t.state_province_region].filter(Boolean).join(', ')||'Location pending';
+   const status=t.geography_status==='WTW_PROPOSED_PLACEMENT'?'WTW proposed':t.geography_status==='BOUNDARY_PROVISIONAL'?'Boundary provisional':t.geography_status==='RESOLVED_CITY'?'Location resolved':(t.geography_status||'Archive record');
+   const action=e?'<button class="text-button" data-open-type="entity" data-id="'+h(e.id)+'">Open record →</button>':'<span class="atlas-card-note">Archive profile pending</span>';
+   return '<article class="racecourse-atlas-card"><div class="racecourse-atlas-top"><span>'+h(t.registry==='INTERNATIONAL'?'INTL':'WTW')+'</span><small>'+h(t.id)+'</small></div><div class="racecourse-atlas-mark">⌖</div><h3>'+h(t.name)+'</h3><p>'+h(city)+'</p><div class="racecourse-atlas-meta"><span>'+h(t.macro_circuit||t.country||'Racing network')+'</span><span>'+h(status)+'</span></div><div class="racecourse-atlas-action">'+action+'</div></article>';
+ }).join('');
  const rows=list.map(t=>{
    const e=imported.get(t.id);
    const name=e?openButton('entity',e.id,e.name):'<strong>'+h(t.name)+'</strong>';
@@ -231,10 +248,13 @@ function renderTracks(){
    const archive=e?editButton('entity',t.id,'Propose correction'):'<span class="muted">Archive detail pending import</span>';
    return '<tr><td>'+name+'<div class="subline">'+h(t.id)+'</div></td><td>'+h(city)+node+note+'</td><td>'+h(basis)+'</td><td>'+archive+'</td></tr>';
  }).join('');
- const summary=directory.length?'118 North American + 16 international = 134 canonical locations; historical, closed and WTW-fictional venues retained.':'Only the currently imported archive is displayed until the geography directory loads.';
+ const summary=directory.length?'The complete WTW venue network: active, historical, closed and fictional tracks with explicit geography status.':'Only the currently imported archive is displayed until the geography directory loads.';
  const counter='<div class="record-count">'+list.length+' tracks</div>';
  const table='<div class="table-scroll"><table class="data-table"><thead><tr><th>Track</th><th>City / locality / travel node</th><th>Location evidence</th><th>Record review</th></tr></thead><tbody>'+(rows||'<tr><td colspan="4">No track locations available.</td></tr>')+'</tbody></table></div>';
- return intro('RACING VENUES','Track Registry',summary,counter)+section('All WTW racecourses','Geography comes from the locked v3.3 track registry. Provisional and fictional localities are labeled; location alone does not prove a race date or historical operating period.',table);
+ return intro('RACING MAP','Racecourses',summary,counter)+
+  '<section class="racecourse-atlas-hero"><div><span class="smallcaps">WTW TRACK NETWORK</span><h2>'+((counts.total||directory.length)||list.length).toLocaleString()+' racecourses</h2><p>Every venue belongs to a physical racing world. City, circuit and travel-node geography support campaign planning without silently inventing historical race dates.</p><div class="racecourse-circuit-chips">'+circuitChips+'</div></div><div class="racecourse-atlas-totals"><span><b>'+h(counts.north_america??'118')+'</b> North America</span><span><b>'+h(counts.international??'16')+'</b> International</span><span><b>'+h(counts.sourced_localities??'—')+'</b> sourced localities</span><span><b>'+h(counts.boundary_provisional??'—')+'</b> boundary review</span></div></section>'+
+  '<section class="racecourse-atlas-section"><header><div><span class="smallcaps">TRACK ATLAS</span><h3>'+(state.search?'Matching venues':'Core racing venues')+'</h3></div><small>Showing '+featured.length+' visual cards · full directory below</small></header><div class="racecourse-atlas-grid">'+(trackCards||'<p class="empty-note">No tracks match this search.</p>')+'</div></section>'+
+  section('Complete track directory','All canonical WTW geography remains available in a precise registry view. Provisional and fictional localities stay labeled.',table);
 }
 function renderRaces(){
  const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
