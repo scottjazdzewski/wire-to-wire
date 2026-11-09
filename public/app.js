@@ -276,6 +276,57 @@ function render(){
 function setPage(page){state.page=page;document.body.classList.remove('menu-open');$('sidebar').classList.remove('mobile-open');render();window.scrollTo({top:0,behavior:'smooth'})}
 function setYear(year){state.year=Number(year);$('year-select').value=String(year);render()}
 function toast(message){let node=$('toast');node.textContent=message;node.hidden=false;clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>node.hidden=true,4500)}
+function renderNetworkEntityProfile(e,cn){
+ const isPerson=e.kind==='person';
+ const profileClass=isPerson?'person-profile':'farm-profile';
+ const heading=isPerson?'PEOPLE FILE':'FARM & ORGANIZATION FILE';
+ const assetSlot=isPerson?'person-headshot':'farm-logo';
+ const assetLabel=isPerson?'PERSON HEADSHOT':'FARM / OPERATION';
+ const roleText=e.role||[...(partyIndex.get(e.id)?.roles||[])].join(', ')||(isPerson?'Role not recorded':'Organization type not recorded');
+ const links=cn.filter(c=>c.party_id===e.id);
+ const uniqueHorseLinks=[];
+ const seenHorses=new Set();
+ for(const c of links){if(!c.horse_id||seenHorses.has(c.horse_id))continue;seenHorses.add(c.horse_id);uniqueHorseLinks.push(c)}
+ uniqueHorseLinks.sort((a,b)=>Number(b.year)-Number(a.year)||nameFor(a.horse_id).localeCompare(nameFor(b.horse_id)));
+ const sourceYears=[...new Set(links.map(c=>Number(c.year)).filter(Number.isFinite))].sort((a,b)=>b-a);
+ const latestYear=sourceYears[0]||null;
+ const linkedWins=[];
+ const seenWins=new Set();
+ for(const c of links){
+  for(const result of (state.data?.results||[])){
+   if(result.horse_id!==c.horse_id||Number(result.position)!==1)continue;
+   const rr=race(result.edition_id);
+   if(!rr||Number(rr.year)!==Number(c.year))continue;
+   const key=result.edition_id+'::'+result.horse_id;
+   if(seenWins.has(key))continue;
+   seenWins.add(key);linkedWins.push({race:rr,horse_id:c.horse_id,year:c.year,role:c.role});
+  }
+ }
+ linkedWins.sort((a,b)=>Number(b.year)-Number(a.year)||a.race.name.localeCompare(b.race.name));
+ const factPairs=isPerson?[
+  ['Job',roleText,false],
+  ['Latest source season',latestYear||'Not recorded',!latestYear],
+  ['Birthplace','Not loaded in current profile',true],
+  ['Base location','Not loaded in current profile',true]
+ ]:[
+  ['Type',roleText,false],
+  ['Latest source season',latestYear||'Not recorded',!latestYear],
+  ['Location','Not loaded in current profile',true],
+  ['Owner','Not established in current source',true]
+ ];
+ const factRows=factPairs.map(f=>'<div class="identity-fact"><small>'+h(f[0])+'</small><strong class="'+(f[2]?'not-recorded':'')+'">'+h(f[1])+'</strong></div>').join('');
+ const horseRows=uniqueHorseLinks.slice(0,7).map(c=>'<div class="linked-horse-row"><div class="linked-horse-icon">♞</div><div>'+openButton('entity',c.horse_id,nameFor(c.horse_id))+'<span>'+h(c.year)+' · '+h(c.role||'season link')+'</span></div><span>›</span></div>').join('')||'<p class="empty-note">No horse-season connections are loaded for this record.</p>';
+ const achievementRows=linkedWins.slice(0,5).map(w=>'<div class="achievement-item"><div class="achievement-medal">★</div><div><strong>'+openButton('race',w.race.id,w.race.name)+'</strong><small>'+h(w.year)+' · '+openButton('entity',w.horse_id,nameFor(w.horse_id))+' · '+h(w.role||'season link')+'</small></div></div>').join('')||'<div class="achievement-item"><div class="achievement-medal">—</div><div><strong>No supported stakes win is linked in this source.</strong><small>This is not treated as a zero-career total.</small></div></div>';
+ const status=h(e.status||'SOURCE SNAPSHOT');
+ const stableTitle=isPerson?'Stable / linked horses':'Connected horses';
+ const careerValue=linkedWins.length?linkedWins.length:'—';
+ const careerLabel=linkedWins.length?'Season-linked stakes wins':'Career wins unavailable';
+ return '<div class="entity-profile '+profileClass+'"><div class="profile-header"><div class="asset-placeholder profile-portrait" data-asset-slot="'+assetSlot+'"><span>'+assetLabel+'</span></div><div class="profile-heading"><div class="eyebrow">'+heading+'</div><h2>'+h(e.name)+' '+renameButton('entity',e.id,e.name)+'</h2><div class="detail-id">'+h(e.id)+'</div><p class="profile-summary">'+h(e.summary||'No biographical narrative is present in the loaded source file.')+'</p><div class="profile-tags"><span>'+h(e.kind)+'</span><span>'+h(roleText)+'</span><span>'+status+'</span></div><div class="identity-facts">'+factRows+'</div></div><div class="profile-header-actions">'+editButton('entity',e.id,'Propose correction','button button-quiet')+'</div></div>'+
+ '<div class="profile-dashboard"><section class="profile-card"><div class="profile-card-header"><h3>'+stableTitle+'</h3><small>'+uniqueHorseLinks.length+' horses</small></div><div class="profile-card-body linked-horse-list">'+horseRows+'</div></section>'+
+ '<div><section class="profile-card"><div class="profile-card-header"><h3>Career wins</h3><small>source-safe</small></div><div class="profile-card-body career-figure"><strong>'+careerValue+'</strong><span>'+careerLabel+'</span><small>Counts only stakes wins by horses connected to this record in the same source season.</small></div></section><section class="profile-card reputation-panel"><div class="profile-card-header"><h3>Reputation</h3><small>simulation</small></div><div class="profile-card-body"><div class="reputation-grade"><strong>—</strong><div><b>Not yet modeled</b><br>Game reputation will live here once the simulation layer is active.</div></div><div class="reputation-bar"><span></span></div></div></section></div>'+
+ '<section class="profile-card"><div class="profile-card-header"><h3>Achievements</h3><small>season-linked evidence</small></div><div class="profile-card-body achievement-stack">'+achievementRows+'</div></section></div>'+
+ '<div class="profile-source-note">Connections shown here are season-level archive relationships. They do not prove a specific race-day assignment. Missing birthplace, base, farm ownership, reputation or complete career totals remain explicitly unavailable until those read models are connected.</div></div>';
+}
 async function openDetail(type,id){
  state.openDetail={type,id};
  const e=type==='entity'?entity(id):type==='race'?race(id):null;
@@ -302,6 +353,7 @@ async function openDetail(type,id){
   '<div class="profile-quick-achievements"><div><span class="smallcaps">NOTABLE ACHIEVEMENTS</span><h3>Recorded stakes wins</h3></div><div class="profile-quick-achievement-list">'+quickAchievementLine+'</div></div>'+
   '<div class="profile-columns"><section class="profile-section"><div class="profile-section-title"><div><span class="smallcaps">RACE HISTORY</span><h3>Recorded finishes</h3></div><span class="source-chip">'+placings.length+' APPEARANCES</span></div><div class="profile-race-list">'+(raceLine||'<p class="empty-note">No finish records in this source snapshot.</p>')+'</div>'+expanded+'<p class="source-caveat">This is the loaded archive record, not a verified lifetime start total.</p></section><section class="profile-section"><div class="profile-section-title"><div><span class="smallcaps">HIGHLIGHTS & CONNECTIONS</span><h3>Notable achievements</h3></div></div><ul class="achievement-list">'+achievementLine+'</ul><div class="profile-section-title profile-secondary-title"><div><span class="smallcaps">SEASON LINKS</span><h3>People around this horse</h3></div></div><div class="profile-connection-list">'+(connectionLine||'<p class="empty-note">No season connections imported.</p>')+'</div></section></div></div>':
   '<div class="entity-profile"><div class="profile-header"><div class="asset-placeholder profile-portrait" data-asset-slot="'+assetSlot+'"><span>'+assetLabel+'</span></div><div class="profile-heading"><div class="eyebrow">'+heading+'</div><h2>'+h(e.name)+' '+renameButton(type,e.id,e.name)+'</h2><div class="detail-id">'+h(e.id)+'</div><p class="profile-summary">'+h(e.summary||'No biographical narrative is present in the loaded source file.')+'</p><div class="profile-tags"><span>'+h(e.kind)+'</span><span>'+roleText+'</span><span>'+status+'</span></div></div><div class="profile-header-actions">'+editButton('entity',e.id,'Propose correction','button button-quiet')+'</div></div><div class="profile-columns"><section class="profile-section"><div class="profile-section-title"><div><span class="smallcaps">ASSOCIATIONS</span><h3>Season connections</h3></div><span class="source-chip">'+cn.length+' LINKS</span></div><div class="profile-connection-list">'+(connectionLine||'<p class="empty-note">No connections imported.</p>')+'</div></section><section class="profile-section"><div class="profile-section-title"><div><span class="smallcaps">SOURCE RECORD</span><h3>Historical identity</h3></div></div><div class="profile-stats compact-profile-stats"><div><small>TYPE</small><strong>'+h(e.kind)+'</strong></div><div><small>ROLE</small><strong>'+roleText+'</strong></div><div><small>HORSE-YEAR LINKS</small><strong>'+(partyIndex.get(e.id)?.count||0)+'</strong></div></div><p class="source-caveat">Connections are recorded at season level. They do not prove a specific race-day assignment.</p></section></div></div>');
+  if(!isHorse) markup=renderNetworkEntityProfile(e,cn);
  } else {
   const results=resultOf(e.id).sort((a,b)=>a.position-b.position);
   markup='<div class="entity-profile race-profile"><div class="profile-heading"><div class="eyebrow">HISTORICAL RACE EDITION</div><h2>'+h(e.name)+' '+renameButton(type,e.id,e.name)+'</h2><div class="detail-id">'+h(e.id)+'</div><p class="profile-summary">'+venueName(e)+' · '+h(e.year)+' · '+h(dateLabel(e))+'</p></div><div class="profile-section-title"><div><span class="smallcaps">SOURCE FINISH ORDER</span><h3>Recorded finishers</h3></div><span class="source-chip">'+results.length+' RESULTS</span></div><div class="profile-race-list">'+(results.map(p=>'<div class="profile-race-row"><div><strong>'+openButton('entity',p.horse_id,nameFor(p.horse_id))+'</strong></div><strong class="finish-badge finish-'+h(p.position)+'">'+h(p.position)+'</strong>'+editButton('result',p.edition_id+'::'+p.position,'Review','button button-quiet')+'</div>').join('')||'<p class="empty-note">No finishers imported.</p>')+'</div><p class="source-caveat">Source: '+h(e.source||'Not specified')+' · '+h(e.status||'SOURCE SNAPSHOT')+'</p></div>';
