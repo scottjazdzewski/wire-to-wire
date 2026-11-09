@@ -60,7 +60,7 @@ for(const name of names){
  const bytes=fs.readFileSync(path.join(inputDir,name));
  const data=JSON.parse(bytes.toString('utf8'));
  const tab=sourceTypes.get(data.schema);
- if(!tab||data.source!==tab||data.source_spreadsheet_id!=='1Lhpe6DG1foQ2-zayQBg4bKpTtu4MP_itpM1zo2GRSEA')
+ if(!tab||data.source!==(tab==='Horse_Geography'?'Horse_Geography JOIN Horse_Current_State ON State_ID':tab)||data.source_spreadsheet_id!=='1Lhpe6DG1foQ2-zayQBg4bKpTtu4MP_itpM1zo2GRSEA')
    throw Error('Unexpected source schema/authority in '+name);
  if(!Array.isArray(data.headers)||!Array.isArray(data.rows))throw Error('Malformed partition '+name);
  if(!data.rows.length)throw Error('Empty partition '+name);
