@@ -1,5 +1,5 @@
 {
-  "description": "Track location research staging from the Nov 9 v3.67 master; not a D1 import or a claim that every race edition was assigned the correct track.",
+  "description": "Track location research staging for the 40 distinct track IDs used in the v3.67 stakes master. The game registry also contains other domestic and international tracks. Not a D1 import or proof that race editions are assigned to the correct tracks.",
   "as_of": "2026-11-09",
   "tracks": [
     {
@@ -245,14 +245,14 @@
     {
       "track_id": "T-0036",
       "name": "Sportsman's Park",
-      "city": null,
-      "subdivision": null,
-      "country": null,
+      "city": "Cicero",
+      "subdivision": "IL",
+      "country": "US",
       "locality": null,
-      "precision": null,
-      "status": "UNKNOWN",
-      "source_url": null,
-      "note": "Historical track location not yet sourced."
+      "precision": "CITY",
+      "status": "SOURCED",
+      "source_url": "https://dnrhistoric.illinois.gov/content/dam/soi/en/web/dnrhistoric/preserve/recordation/il-habs-ck-2023-3.pdf",
+      "note": "City-level location; historical facility or race-edition assignment still requires separate review."
     },
     {
       "track_id": "T-0038",
@@ -305,14 +305,14 @@
     {
       "track_id": "T-0102",
       "name": "Oriental Park",
-      "city": null,
-      "subdivision": null,
-      "country": null,
-      "locality": null,
-      "precision": null,
-      "status": "UNKNOWN",
-      "source_url": null,
-      "note": "Historical track location not yet sourced."
+      "city": "Havana",
+      "subdivision": "Havana",
+      "country": "CU",
+      "locality": "Marianao",
+      "precision": "CITY",
+      "status": "SOURCED",
+      "source_url": "https://www.justice.gov/fcsc/cuba/documents/1-1500/0315.pdf",
+      "note": "City-level location; historical facility or race-edition assignment still requires separate review."
     },
     {
       "track_id": "T-0103",
@@ -341,14 +341,14 @@
     {
       "track_id": "T-0105",
       "name": "Gravesend Racetrack",
-      "city": null,
-      "subdivision": null,
-      "country": null,
-      "locality": null,
-      "precision": null,
-      "status": "UNKNOWN",
-      "source_url": null,
-      "note": "Historical track location not yet sourced."
+      "city": "New York",
+      "subdivision": "NY",
+      "country": "US",
+      "locality": "Gravesend / Brooklyn",
+      "precision": "CITY",
+      "status": "SOURCED",
+      "source_url": "https://keenelandlibrary.omeka.net/collections/show/8",
+      "note": "City-level location; historical facility or race-edition assignment still requires separate review."
     },
     {
       "track_id": "T-0106",
@@ -389,50 +389,50 @@
     {
       "track_id": "T-0109",
       "name": "Kentucky Association Track",
-      "city": null,
-      "subdivision": null,
-      "country": null,
+      "city": "Lexington",
+      "subdivision": "KY",
+      "country": "US",
       "locality": null,
-      "precision": null,
-      "status": "UNKNOWN",
-      "source_url": null,
-      "note": "Historical track location not yet sourced."
+      "precision": "CITY",
+      "status": "SOURCED",
+      "source_url": "https://filsonhistorical.org/research-doc/kentucky-association-lexington-ky-records-1907-1932/",
+      "note": "City-level location; historical facility or race-edition assignment still requires separate review."
     },
     {
       "track_id": "T-0110",
       "name": "Chester Park",
-      "city": null,
-      "subdivision": null,
-      "country": null,
+      "city": "Cincinnati",
+      "subdivision": "OH",
+      "country": "US",
       "locality": null,
-      "precision": null,
-      "status": "UNKNOWN",
-      "source_url": null,
-      "note": "Historical track location not yet sourced."
+      "precision": "CITY",
+      "status": "SOURCED",
+      "source_url": "https://digital.cincinnatilibrary.org/digital/api/collection/p16998coll39/id/306/download",
+      "note": "City-level location; historical facility or race-edition assignment still requires separate review."
     },
     {
       "track_id": "T-0111",
       "name": "Maple Heights Park",
-      "city": null,
-      "subdivision": null,
-      "country": null,
-      "locality": null,
-      "precision": null,
-      "status": "UNKNOWN",
-      "source_url": null,
-      "note": "Historical track location not yet sourced."
+      "city": "Maple Heights",
+      "subdivision": "OH",
+      "country": "US",
+      "locality": "Maple Heights / Bedford vicinity",
+      "precision": "CITY",
+      "status": "SOURCED",
+      "source_url": "https://usgenwebsites.org/OHCuyahoga/Cities/BEDFORD%20TOWNSHIP%20HISTORIES%20Transcript.pdf",
+      "note": "City-level location; historical facility or race-edition assignment still requires separate review."
     },
     {
       "track_id": "T-0112",
       "name": "Bainbridge Park",
       "city": null,
-      "subdivision": null,
-      "country": null,
-      "locality": null,
-      "precision": null,
-      "status": "UNKNOWN",
-      "source_url": null,
-      "note": "Historical track location not yet sourced."
+      "subdivision": "OH",
+      "country": "US",
+      "locality": "Aurora / Bainbridge Township area",
+      "precision": "REGION",
+      "status": "PROVISIONAL",
+      "source_url": "https://www.flickr.com/photos/glpolites/7495536820",
+      "note": "Sources disagree on exact municipality (Aurora, Bainbridge Township, or Solon); area only until stronger evidence resolves the venue boundary."
     },
     {
       "track_id": "T-0114",
@@ -449,38 +449,38 @@
     {
       "track_id": "T-0115",
       "name": "Aurora Downs",
-      "city": null,
-      "subdivision": null,
-      "country": null,
+      "city": "North Aurora",
+      "subdivision": "IL",
+      "country": "US",
       "locality": null,
-      "precision": null,
-      "status": "UNKNOWN",
-      "source_url": null,
-      "note": "Historical track location not yet sourced."
+      "precision": "CITY",
+      "status": "SOURCED",
+      "source_url": "https://irb.illinois.gov/content/dam/soi/en/web/irb/documents/annual-reports/1959%20Annual%20Report.pdf",
+      "note": "City-level location; historical facility or race-edition assignment still requires separate review."
     },
     {
       "track_id": "T-0116",
       "name": "Cranwood Park",
-      "city": null,
-      "subdivision": null,
-      "country": null,
+      "city": "Warrensville Heights",
+      "subdivision": "OH",
+      "country": "US",
       "locality": null,
-      "precision": null,
-      "status": "UNKNOWN",
-      "source_url": null,
-      "note": "Historical track location not yet sourced."
+      "precision": "CITY",
+      "status": "SOURCED",
+      "source_url": "https://drf.uky.edu/catalog/1940s/drf1948051901/0108_1.pdf",
+      "note": "City-level location; historical facility or race-edition assignment still requires separate review."
     },
     {
       "track_id": "T-0117",
       "name": "Randall Park",
-      "city": null,
-      "subdivision": null,
-      "country": null,
-      "locality": null,
-      "precision": null,
-      "status": "UNKNOWN",
-      "source_url": null,
-      "note": "Historical track location not yet sourced."
+      "city": "North Randall",
+      "subdivision": "OH",
+      "country": "US",
+      "locality": "North Randall / Warrensville Heights",
+      "precision": "CITY",
+      "status": "SOURCED",
+      "source_url": "https://case.edu/ech/articles/r/randall-park-mall",
+      "note": "City-level location; historical facility or race-edition assignment still requires separate review."
     }
   ]
 }
