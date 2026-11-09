@@ -24,7 +24,7 @@ test('active site uses approved Office FM v30 structure rather than archive home
  assert.ok(!/<script(?:\s[^>]*)?>(?!\s*<\/script>)/i.test(html), 'Inline JS forbidden by production CSP');
 });
 test('all deployed Office assets and every approved badge exist byte-for-byte as separate files',()=>{
- const html=get('public/index.html'),css=get('public/office-v30.css');
+ const html=get('public/index.html'),css=get('public/office-visual-system-v38.css');
  for(const asset of ['wtw-office-approved-logo.png','wtw-office-original-photo.jpg']){
    assert.ok(fs.existsSync(path.join(root,'public/assets',asset)));
  }
@@ -50,7 +50,7 @@ test('all deployed Office assets and every approved badge exist byte-for-byte as
  assert.ok(!css.includes('_profile.png'), 'Legacy profile badge reference remains');
  assert.ok(!get('public/office/office-routes.js').includes('_profile.png'), 'Legacy routes still reference deprecated art');
  for(const ext of ['css','js']){
-   const name='office-fm-v37.'+ext;
+   const name=ext==='css'?'office-visual-system-v38.css':'office-fm-v37.js';
    assert.ok(html.includes('/'+name+'"'), 'Missing v37 asset '+name);
    assert.ok(fs.existsSync(path.join(root,'public',name)));
    if(ext==='js')assert.equal(spawnSync(process.execPath,['--check',path.join(root,'public',name)],{encoding:'utf8'}).status,0);
