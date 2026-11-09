@@ -238,10 +238,24 @@
       ]
     },
     "trainer_participant_geography": {
-      "records": 31,
-      "unique_trainers": 25,
-      "state": "OPENING_STRING_GEOGRAPHY_BUILT",
-      "note": "27 exact opening string locations joined to track geography; permanent home bases and birthplaces remain incomplete."
+      "records": 105,
+      "current_participants": 77,
+      "home_region_records": 77,
+      "trainers": {
+        "current": 40,
+        "home_region_covered": 40
+      },
+      "jockeys": {
+        "current": 34,
+        "home_region_covered": 34
+      },
+      "jockey_agents": {
+        "current": 3,
+        "home_region_covered": 3
+      },
+      "exact_opening_trainer_string_track_locations": 27,
+      "state": "CURRENT_PARTICIPANT_HOME_REGION_COMPLETE",
+      "note": "All 77 current participants have canonical region-level operating bases. Exact city/home track remains pending for region-only records; birthplaces are separate and still open."
     },
     "horse_current_geography": {
       "state_records": 434,
@@ -262,11 +276,14 @@
     },
     "people_birthplaces": {
       "loaded": 0,
-      "state": "OPEN"
+      "state": "OPEN",
+      "note": "Birthplace must not be inferred from home circuit or operating base."
     },
     "jockey_bases": {
-      "loaded": 0,
-      "state": "OPEN"
+      "current_jockeys": 34,
+      "home_region_covered": 34,
+      "state": "HOME_REGION_COMPLETE_CITY_PENDING",
+      "note": "Exact city/home track and birthplace remain pending unless separately sourced."
     },
     "owner_bases": {
       "state": "OPEN_PARTIAL_VIA_ORGANIZATIONS"
