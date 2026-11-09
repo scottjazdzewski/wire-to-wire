@@ -5,6 +5,14 @@
 
 The management loop stays out of development until the historical archive is reconciled and the site layout is approved.
 
+## Geographic foundation — Nov 9, 2026
+
+- Required coverage: city and state/province/country for every track, farm and race barn; birthplace and dated working bases for every jockey, trainer and owner; foaling location for every horse. Owners may be people or organizations, so do not invent a human birthplace for an organization.
+- Keep birthplace, working base, current physical barn, and horse foaling location as separate relationships. Bases may change over time; record their effective years when known. A breeder is not automatically the foaling farm, and a trainer's base is not proof of a horse's exact barn. Preserve fictional identities and mark fictional world-building explicitly; do not invent historical source claims.
+- Track staging currently lists all 40 distinct track IDs in the v3.67 calendar: 30 have city-level source citations and 10 remain unknown. City labels describe present-day geography, with facilities and original race-edition assignments requiring separate historical checks. Older Greenwood and newer Woodbine remain separate track IDs despite both being in Toronto.
+- Prepared `migrations/0004_geography.sql` and `data/geography/track-locations-staging.json`; neither is loaded into D1. They do not populate farm, barn, people, or foaling locations. Unknowns remain unassigned rather than being generated silently.
+- Future travel review should use actual facility-to-facility distance where available, transport mode and historical era, consecutive-race intervals, recovery, seasonal bases and confidence of both dates and locations. Flag suspect routes without automatically rewriting results; do not assume all horses traveled from a base before every race. The campaign script currently uses broad circuits only, and gameplay travel enforcement is not implemented.
+
 ## Calendar standard and campaign review — Nov 9, 2026
 
 - Before 1973, establish the year each stakes was run. Preserve previously sourced exact dates. Use a plausible seasonal window and a clearly labeled provisional calendar date to order game history; do not present that placeholder as a verified historical day.
