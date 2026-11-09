@@ -24,7 +24,7 @@ Snapshot year coverage: **1864–1998** for stakes editions and horse seasons. I
 
 ## Coverage and certification warning
 
-**Import passing is NOT historical GOLD certification.** This is the H/S/E/P/B working source snapshot. It is not a full ledger of every ordinary race, its dates and trainer assignments are not all independently authenticated, and QA-pending historical claims remain unresolved. Connections originating in S are **year-level**, not guaranteed race-day trainer, owner, jockey or stable claims. No historical dates or identities were invented to fill gaps.
+**Import passing confirms package integrity, not historical accuracy.** This is the H/S/E/P/B working source snapshot. It is not a full ledger of every ordinary race, its dates and trainer assignments are not all independently authenticated, and QA-pending historical claims remain unresolved. Connections originating in S are **year-level**, not guaranteed race-day trainer, owner, jockey or stable claims. No historical dates or identities were invented to fill gaps.
 
 ## Editable names and records
 

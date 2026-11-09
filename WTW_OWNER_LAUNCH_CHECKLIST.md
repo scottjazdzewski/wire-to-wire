@@ -86,4 +86,4 @@ Log in to https://wire-to-wire.pages.dev/ after the import. Expected:
 - **Name edits:** use the small pencil beside any horse, person, owner, trainer, breeder, jockey, farm, stable, track, race, or identified pedigree name. These save directly to the private WTW D1 `display_name_overrides` table, with immutable `name_edit_audit` history; canonical source names and stable IDs do not change.
 - **Other corrections:** still save as **review proposals**; accepting a proposal **does not** rewrite the Google Drive source canon.
 
-**Data coverage warning:** This staged history is based on the H/S/E/P/B spreadsheets, not a comprehensive ledger of every ordinary race. The source has QA-pending records; import validation is not GOLD certification.
+**Data coverage warning:** This staged history is based on the H/S/E/P/B spreadsheets, not a comprehensive ledger of every ordinary race. The source has QA-pending records; import validation confirms package integrity, not historical accuracy.
