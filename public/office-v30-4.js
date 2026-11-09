@@ -381,6 +381,7 @@
     if(!shell) return;
     const isProfile = kicker==='Horse Profile' || kicker==='People Profile' || kicker==='Farm Profile' || kicker==='Track Profile';
     shell.classList.toggle('profileRouteShell', isProfile);
+    shell.classList.toggle('stableRouteShell', kicker==='Stable');
     routeKicker.textContent = kicker || 'Destination';
     routeTitle.textContent = title || 'Page';
     routeBody.innerHTML = body;
@@ -430,7 +431,43 @@
     openRoute('Race Calendar','Race Calendar',`
       <section class="routeCard raceCalendarCard"><div class="raceCalendarMeta"><span>Current Office schedule</span><span>Game date ${currentGameDate()}</span></div><div class="calendarRouteRows">${rows}</div><div class="routeActions"><button data-act="Office Overview">Office</button><button class="alt" data-act="Open move history">Decision Log</button></div></section>`);
   }
+
+  function openStableRoute(){
+    const safe = value => String(value == null ? '' : value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    const boardRows = Array.from(document.querySelectorAll('.rankRow')).filter(row=>row.querySelector('strong'));
+    const rows = boardRows.map((boardRow, order)=>{
+      const name = boardRow.querySelector('strong').textContent.trim();
+      const horse = gameState.horseState?.[name] || {};
+      const scouting = gameState.scoutingState?.[name] || {};
+      const boardStatus = baselineBoardStatus(name);
+      const isOdds = /^\d+\/\d+$/.test(boardStatus);
+      const status = horse.status || scouting.status || (!isOdds ? boardStatus : '') || 'No active Office change';
+      const target = gameState.calendarState?.[name]?.race_target || scheduleContextFor(name) || '';
+      const vet = horse.vet_flag || (name==='The Last Match' && boardStatus==='Vet' ? 'Vet watch' : '');
+      const recent = latestProfileDecision(name);
+      const follow = latestProfileFollowUp(name);
+      const cases = profileCases(name);
+      const openCase = cases.find(id=>!gameState.resolvedCases?.[id]) || cases[0] || '';
+      const detail = [target && 'Race / entry: '+target,vet && 'Health: '+vet,follow && 'Follow-up: '+follow.status].filter(Boolean).map(safe).join(' · ');
+      const decisionText = recent ? 'Latest: '+safe(recent.choiceTitle) : (openCase ? 'Active Decision Desk file' : 'No linked decision');
+      const actions = `<button data-act="Open horse profile" data-profile="${safe(name)}">Open Horse</button>`+
+        (openCase ? `<button class="alt" data-act="Open profile decision" data-case="${safe(openCase)}">Decision Desk</button>` : '')+
+        (follow && follow.status!=='complete' ? `<button class="alt" data-act="Open follow-up" data-followup-id="${safe(follow.id)}">Follow-up</button>` : '');
+      return `<article class="stableRosterRow" role="listitem">
+        <div class="stableRosterRank">${order+1}</div>
+        <div class="stableRosterIdentity"><button class="stableHorseName" data-act="Open horse profile" data-profile="${safe(name)}">${safe(name)}</button><span>${safe(status)}${isOdds?' · Board '+safe(boardStatus):''}</span></div>
+        <div class="stableRosterContext"><strong>${detail || 'No further current Office context'}</strong><span>${decisionText}</span></div>
+        <div class="stableRosterActions">${actions}</div>
+      </article>`;
+    }).join('');
+    openRoute('Stable','Stable', `<section class="stableRoute">
+      <div class="stableRosterHead"><div><b>Stable overview</b><span>Live Office-linked roster · ${boardRows.length} horses</span></div><div class="stableRosterTag">Current game date: ${safe(currentGameDate())}</div></div>
+      <div class="stableRoster" role="list">${rows || '<p>No horses currently on the Office Stable Board.</p>'}</div>
+      <div class="stableRosterFoot"><span>Statuses and linked decisions update from the current Office state.</span><button data-act="Office Overview">Back to Office</button></div>
+    </section>`);
+  }
   function openPage(page){
+    if(page==='Stable'){ openStableRoute(); return; }
     if(page==='Race Calendar'){ openRaceCalendar(); return; }
     if(page==='World'){ openWorldDirectory(); return; }
     const c = pageCopy[page] || [page,page,'This page shell is wired. The full page can be built next.'];
@@ -568,7 +605,7 @@
     openRoute('Horse Profile', name, `
       <section class="profilePage horseProfilePage">
         <div class="profileHero">
-          <div class="profilePhoto" data-label="Horse photo"><div class="profileMonogram horse">♞</div></div>
+          <div class="profilePhoto" data-label="Horse identity"><img class="wtwBadgeIdentity" src="/assets/profile-badges/v2/wtw_badge_horse.png" alt="" aria-hidden="true"></div>
           <div class="profileIdentity">
             <div class="profileEyebrow">Horse</div><h2 class="profileName">${name}</h2>
             <div class="profileSubline">State-aware racing file</div>
@@ -581,7 +618,7 @@
             <div class="profileMoney"><span>Career earnings</span><strong>${facts.earnings || '—'}</strong></div>
             <div class="profileStateBar">${statePills}</div>
           </div>
-          <div class="profileConnections"><h3>Connections</h3><div class="profileList">
+          <div class="profileConnections"><h3 class="wtwBadgeHeading"><img class="wtwBadgeSmall" src="/assets/profile-badges/v2/wtw_badge_connections.png" alt="" aria-hidden="true"><span>Connections</span></h3><div class="profileList">
             <div class="profileLine"><b>Owner</b>${profileButton('Owner','person',c.owner)}</div>
             <div class="profileLine"><b>Trainer</b>${profileButton('Trainer','person',c.trainer)}</div>
             <div class="profileLine"><b>Jockey</b>${profileButton('Jockey','person',c.jockey)}</div>
@@ -590,7 +627,7 @@
           </div></div>
         </div>
         <div class="profileLower">
-          <div class="profilePanel"><h3>Pedigree</h3><div class="profilePanelBody"><div class="pedigreeTree">
+          <div class="profilePanel"><h3 class="wtwBadgeHeading"><img class="wtwBadgeSmall" src="/assets/profile-badges/v2/wtw_badge_pedigree.png" alt="" aria-hidden="true"><span>Pedigree</span></h3><div class="profilePanelBody"><div class="pedigreeTree">
             <div class="pedigreeNode primary"><span>Sire</span><strong>${p.sire || '—'}</strong></div>
             <div class="pedigreeNode"><span>Grandsire</span><strong>${p.grandsire || '—'}</strong></div>
             <div class="pedigreeNode"><span>Granddam</span><strong>${p.granddam || '—'}</strong></div>
@@ -598,7 +635,7 @@
             <div class="pedigreeNode"><span>Damsire</span><strong>${p.damsire || '—'}</strong></div>
             <div class="pedigreeNode"><span>2nd Dam</span><strong>${p.secondDam || '—'}</strong></div>
           </div></div></div>
-          <div class="profilePanel"><h3>Career Record</h3><div class="profilePanelBody">
+          <div class="profilePanel"><h3 class="wtwBadgeHeading"><img class="wtwBadgeSmall" src="/assets/profile-badges/v2/wtw_badge_career_record.png" alt="" aria-hidden="true"><span>Career Record</span></h3><div class="profilePanelBody">
             <div class="recordGrid">
               <div class="recordStat"><b>${r.starts ?? '—'}</b><span>Starts</span></div>
               <div class="recordStat"><b>${r.wins ?? '—'}</b><span>Wins</span></div>
@@ -607,7 +644,7 @@
             </div>
             <div class="achievementList">${contextItems.map(x=>`<div class="achievementItem muted">${x}</div>`).join('')}</div>
           </div><div class="routeActions"><button data-act="Office Overview">Office</button><button class="alt" data-act="Stable">Stable</button>${raceTarget?'<button class="alt" data-act="Race Calendar">Race Calendar</button>':''}${decisionCase?`<button class="alt" data-act="Open profile decision" data-case="${decisionCase}">Decision Desk</button>`:''}${followButton}</div></div>
-          <div class="profilePanel"><h3>Achievements</h3><div class="profilePanelBody"><div class="achievementList">${profileAchievements(facts.achievements)}</div></div></div>
+          <div class="profilePanel"><h3 class="wtwBadgeHeading"><img class="wtwBadgeSmall" src="/assets/profile-badges/v2/wtw_badge_achievements.png" alt="" aria-hidden="true"><span>Achievements</span></h3><div class="profilePanelBody"><div class="achievementList">${profileAchievements(facts.achievements)}</div></div></div>
         </div>
       </section>`);
   }
@@ -620,7 +657,7 @@
     openRoute('People Profile',name,`
       <section class="profilePage personProfilePage">
         <div class="profileHero">
-          <div class="profilePhoto" data-label="Person photo"><div class="profileMonogram">${initials(name)}</div></div>
+          <div class="profilePhoto" data-label="Approved identity badge"><img class="wtwBadgeIdentity" src="/assets/profile-badges/v2/wtw_badge_people.png" alt="" aria-hidden="true"></div>
           <div class="profileIdentity">
             <div class="profileEyebrow">People</div><h2 class="profileName">${name}</h2><div class="profileSubline">Job: ${data.job || '—'}</div>
             <div class="profileFields">
@@ -631,16 +668,16 @@
             </div>
             <div class="profileStateBar"><span class="profileStatePill">${rep.label} reputation</span>${staff.trust?`<span class="profileStatePill">Trust ${staff.trust>0?'+':''}${staff.trust}</span>`:''}</div>
           </div>
-          <div class="profileConnections"><h3>Current Office connection</h3><div class="profileList">
+          <div class="profileConnections"><h3 class="wtwBadgeHeading"><img class="wtwBadgeSmall" src="/assets/profile-badges/v2/wtw_badge_connections.png" alt="" aria-hidden="true"><span>Current Office connection</span></h3><div class="profileList">
             <div class="profileLine"><b>Job</b><span>${data.job || '—'}</span></div>
             <div class="profileLine"><b>Location</b><span>${data.location || '—'}</span></div>
             <div class="profileLine"><b>Reputation</b><span>${rep.label}</span></div>
           </div></div>
         </div>
         <div class="profileLower">
-          <div class="profilePanel"><h3>Stable</h3><div class="profilePanelBody"><div class="achievementList">${stable}</div></div></div>
-          <div class="profilePanel"><h3>Career Wins</h3><div class="profilePanelBody"><div class="bigMetric"><strong>${data.careerWins || '—'}</strong><span>Career wins</span></div><div class="achievementItem muted">Career totals will populate from the canonical historical/person database.</div></div></div>
-          <div class="profilePanel"><h3>Reputation & Achievements</h3><div class="profilePanelBody"><div class="bigMetric"><strong>${rep.label}</strong><span>Reputation</span></div><div class="reputationBar"><i style="width:${rep.pct}%"></i></div><div class="achievementList" style="margin-top:8px">${profileAchievements(data.achievements)}</div></div><div class="routeActions"><button data-act="World">All People</button><button class="alt" data-act="Office Overview">Office</button></div></div>
+          <div class="profilePanel"><h3 class="wtwBadgeHeading"><img class="wtwBadgeSmall" src="/assets/profile-badges/v2/wtw_badge_farm_stable.png" alt="" aria-hidden="true"><span>Stable</span></h3><div class="profilePanelBody"><div class="achievementList">${stable}</div></div></div>
+          <div class="profilePanel"><h3 class="wtwBadgeHeading"><img class="wtwBadgeSmall" src="/assets/profile-badges/v2/wtw_badge_career_record.png" alt="" aria-hidden="true"><span>Career Wins</span></h3><div class="profilePanelBody"><div class="bigMetric"><strong>${data.careerWins || '—'}</strong><span>Career wins</span></div><div class="achievementItem muted">Career totals will populate from the canonical historical/person database.</div></div></div>
+          <div class="profilePanel"><h3 class="wtwBadgeHeading"><img class="wtwBadgeSmall" src="/assets/profile-badges/v2/wtw_badge_reputation.png" alt="" aria-hidden="true"><span>Reputation & Achievements</span></h3><div class="profilePanelBody"><div class="bigMetric"><strong>${rep.label}</strong><span>Reputation</span></div><div class="reputationBar"><i style="width:${rep.pct}%"></i></div><div class="achievementList" style="margin-top:8px">${profileAchievements(data.achievements)}</div></div><div class="routeActions"><button data-act="World">All People</button><button class="alt" data-act="Office Overview">Office</button></div></div>
         </div>
       </section>`);
   }
@@ -653,7 +690,7 @@
     openRoute('Farm Profile',name,`
       <section class="profilePage farmProfilePage">
         <div class="profileHero">
-          <div class="profilePhoto" data-label="Farm image"><div class="profileMonogram">${initials(name)}</div></div>
+          <div class="profilePhoto" data-label="Approved identity badge"><img class="wtwBadgeIdentity" src="/assets/profile-badges/v2/wtw_badge_farm_stable.png" alt="" aria-hidden="true"></div>
           <div class="profileIdentity">
             <div class="profileEyebrow">Farm</div><h2 class="profileName">${name}</h2><div class="profileSubline">Racing / breeding operation profile</div>
             <div class="profileFields">
@@ -664,15 +701,15 @@
             </div>
             <div class="profileStateBar"><span class="profileStatePill">${rep.label} reputation</span></div>
           </div>
-          <div class="profileConnections"><h3>Farm file</h3><div class="profileList">
+          <div class="profileConnections"><h3 class="wtwBadgeHeading"><img class="wtwBadgeSmall" src="/assets/profile-badges/v2/wtw_badge_farm_stable.png" alt="" aria-hidden="true"><span>Farm file</span></h3><div class="profileList">
             <div class="profileLine"><b>Location</b><span>${data.location || '—'}</span></div>
             <div class="profileLine"><b>Owner</b><span>${data.owner || '—'}</span></div>
             <div class="profileLine"><b>Reputation</b><span>${rep.label}</span></div>
           </div></div>
         </div>
         <div class="profileLower">
-          <div class="profilePanel"><h3>Connected Horses</h3><div class="profilePanelBody"><div class="achievementList">${connected}</div></div><div class="routeActions"><button data-act="Stable">Stable</button><button class="alt" data-act="Open profile decision" data-case="cedar">Decision Desk</button></div></div>
-          <div class="profilePanel"><h3>Achievements</h3><div class="profilePanelBody"><div class="achievementList">${profileAchievements(data.achievements)}<div class="achievementItem muted">Current Office context · ${farmState}</div></div></div><div class="routeActions"><button data-act="World">All Farms</button><button class="alt" data-act="Office Overview">Office</button></div></div>
+          <div class="profilePanel"><h3 class="wtwBadgeHeading"><img class="wtwBadgeSmall" src="/assets/profile-badges/v2/wtw_badge_horse.png" alt="" aria-hidden="true"><span>Connected Horses</span></h3><div class="profilePanelBody"><div class="achievementList">${connected}</div></div><div class="routeActions"><button data-act="Stable">Stable</button><button class="alt" data-act="Open profile decision" data-case="cedar">Decision Desk</button></div></div>
+          <div class="profilePanel"><h3 class="wtwBadgeHeading"><img class="wtwBadgeSmall" src="/assets/profile-badges/v2/wtw_badge_achievements.png" alt="" aria-hidden="true"><span>Achievements</span></h3><div class="profilePanelBody"><div class="achievementList">${profileAchievements(data.achievements)}<div class="achievementItem muted">Current Office context · ${farmState}</div></div></div><div class="routeActions"><button data-act="World">All Farms</button><button class="alt" data-act="Office Overview">Office</button></div></div>
         </div>
       </section>`);
   }
@@ -695,7 +732,7 @@
     openRoute('Track Profile',name,`
       <section class="profilePage trackProfilePage">
         <div class="profileHero">
-          <div class="profilePhoto trackPhoto" data-label="Track image"><div class="profileMonogram">${initials(name)}</div></div>
+          <div class="profilePhoto trackPhoto" data-label="Approved identity badge"><img class="wtwBadgeIdentity" src="/assets/profile-badges/v2/wtw_badge_track.png" alt="" aria-hidden="true"></div>
           <div class="profileIdentity">
             <div class="profileEyebrow">Track</div><h2 class="profileName">${name}</h2><div class="profileSubline">${data.id} · ${data.circuit}</div>
             <div class="profileFields">
@@ -706,7 +743,7 @@
             </div>
             <div class="profileStateBar"><span class="profileStatePill">${data.competition} competition posture</span><span class="profileStatePill">${data.raceDays} race days</span></div>
           </div>
-          <div class="profileConnections"><h3>Track file</h3><div class="profileList">
+          <div class="profileConnections"><h3 class="wtwBadgeHeading"><img class="wtwBadgeSmall" src="/assets/profile-badges/v2/wtw_badge_track.png" alt="" aria-hidden="true"><span>Track file</span></h3><div class="profileList">
             <div class="profileLine"><b>Circuit</b><span>${data.circuit}</span></div>
             <div class="profileLine"><b>1999 Meet</b><span>${data.meetWindow}</span></div>
             <div class="profileLine"><b>Race days</b><span>${data.raceDays}</span></div>
@@ -714,14 +751,14 @@
           </div></div>
         </div>
         <div class="profileLower">
-          <div class="profilePanel"><h3>Stakes Races · 1999 Canon</h3><div class="profilePanelBody"><div class="stakesTable"><div class="stakesHeader"><span>Race</span><span>Date</span><span>Grade</span><span>Purse</span></div>${stakes}</div></div></div>
-          <div class="profilePanel"><h3>Meet Schedule</h3><div class="profilePanelBody">
+          <div class="profilePanel"><h3 class="wtwBadgeHeading"><img class="wtwBadgeSmall" src="/assets/profile-badges/v2/wtw_badge_major_races.png" alt="" aria-hidden="true"><span>Stakes Races · 1999 Canon</span></h3><div class="profilePanelBody"><div class="stakesTable"><div class="stakesHeader"><span>Race</span><span>Date</span><span>Grade</span><span>Purse</span></div>${stakes}</div></div></div>
+          <div class="profilePanel"><h3 class="wtwBadgeHeading"><img class="wtwBadgeSmall" src="/assets/profile-badges/v2/wtw_badge_meet_schedule.png" alt="" aria-hidden="true"><span>Meet Schedule</span></h3><div class="profilePanelBody">
             <div class="meetBlock"><span>1999 Meet Window</span><strong>${data.meetWindow}</strong></div>
             <div class="meetBlock"><span>Race Days</span><strong>${data.raceDays}</strong></div>
             <div class="meetBlock"><span>Preferred Days</span><strong>${data.preferredDays}</strong></div>
             <div class="achievementItem muted">Runtime meet-year wiring can replace this canonical 1999 window when the live season calendar is connected.</div>
           </div><div class="routeActions"><button data-act="Race Calendar">Race Calendar</button><button class="alt" data-act="World">All Tracks</button></div></div>
-          <div class="profilePanel"><h3>Meet & Competition Notes</h3><div class="profilePanelBody">
+          <div class="profilePanel"><h3 class="wtwBadgeHeading"><img class="wtwBadgeSmall" src="/assets/profile-badges/v2/wtw_badge_history.png" alt="" aria-hidden="true"><span>Meet & Competition Notes</span></h3><div class="profilePanelBody">
             <div class="trackNote"><b>Weather / surface logic</b><br>${data.weather}</div>
             <div class="trackNote"><b>Schedule risk</b><br>${data.scheduleRisk}</div>
             <div class="trackNote"><b>Current Office context</b><br>${officeContext}</div>
