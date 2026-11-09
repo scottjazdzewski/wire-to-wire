@@ -20,7 +20,7 @@ The current master adds Macro_Circuit, Date_Confidence, Active, and Sort_Date fi
 
 The workbook's release labels conflict. The spreadsheet title and Control_Dashboard title identify v3.67 as “QA Closed — Canon,” but the Master_Stakes_Calendar header says “QA Verified — Promotion Pending.” Do not treat either label alone as approval to promote v3.67 into D1; preserve the current imported source and resolve the status conflict first.
 
-The updated Control_Dashboard reports 1,327 exact-date active races, 3,860 internal-date active races, 7 active races without a day, 2 verified-date blockers, 118 calendar/field holds, 20 high reviews, 373 mixed-date reviews, and 1 era/context pass. These current master totals are separate from the still-stale v3.37 D1 import.
+The updated Control_Dashboard reports 1,327 exact-date active races, 3,829 internal-date active races, 7 active races without a day, 2 verified-date blockers, 118 calendar/field holds, 20 high reviews, 367 mixed-date reviews, and 1 era/context pass. These current master totals are separate from the still-stale v3.37 D1 import.
 
 ## Nov 9 recheck of the prior queues (pre-correction baseline)
 
@@ -79,6 +79,46 @@ The Churchill Downs [stakes history](https://www.kentuckyderby.com/wp-content/up
 | 1948 | 1948-11-20 | 1948-10-30 |
 
 The source states the race was run at Latonia in 1931–1933, while those master rows identify Churchill Downs. It lists one mile for these historical editions; the current master rows list 8.5 furlongs. All 22 retain an explicit review flag for distance and campaign chronology, with the Latonia mismatch also flagged for 1931–1933. The dates alone do not verify the linked horse identities. The live site database remains on v3.37 and does not yet include this batch.
+
+## Historically non-running editions: 31 records
+
+The [Churchill Downs Modesty stakes history](https://www.kentuckyderby.com/wp-content/uploads/sites/2/2023/10/Modesty.pdf) says the race was not run in 1969–1979. Santa Anita’s [2021 media guide](https://www.santaanita.com/assets/71tzd15sgbj0/7GkOgKoV59VYcJzUc4AMqy/07bd97713d52eadadf446bd1aaa7d2b6/LATC21_Media-Guide.pdf) lists the Buena Vista as the 34th running; contemporary records identify 1988 as its inaugural year. The 11 Modesty rows for 1969–1979 and 20 Santa Anita Buena Vista rows for 1968–1987 are now marked historically not run and quarantined in the master.
+
+The 31 original dates, horse IDs and placings remain in their master rows. Original status, source basis, chronology flag and canon status are also recorded in each status cell note. The Active formula now returns NO, so their linked entries no longer appear in the calculated active Horse_Appearances. Those game history links require reconciliation before any site data promotion. Eleven of these rows appeared in the older 54-row date-gap snapshot. The live site D1 archive remains v3.37.
+
+| Edition ID | Previous status | Previous canon status |
+| --- | --- | --- |
+| HSE-1968-0058 | N/A_PRE_1973 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1969-0058 | N/A_PRE_1973 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1970-0058 | N/A_PRE_1973 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1971-0058 | N/A_PRE_1973 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1972-0058 | N/A_PRE_1973 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1973-0058 | G2 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1974-0058 | G2 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1975-0058 | G2 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1976-0058 | G2 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1977-0058 | G2 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1978-0058 | G2 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1979-0058 | G2 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1980-0058 | G2 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1981-0058 | G2 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1982-0058 | G2 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1983-0058 | G2 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1984-0058 | G2 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1985-0058 | G2 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1986-0058 | G2 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1987-0058 | G2 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1969-0057 | N/A_PRE_1973 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1970-0057 | N/A_PRE_1973 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1971-0057 | N/A_PRE_1973 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1972-0057 | N/A_PRE_1973 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1973-0057 | G3 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1974-0057 | G3 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1975-0057 | G3 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1976-0057 | G3 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1977-0057 | G3 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1978-0057 | G3 | CANON_RECONCILED_HISTORY_V3_4 |
+| HSE-1979-0057 | G3 | CANON_RECONCILED_HISTORY_V3_4 |
 
 ## Delta triage
 
