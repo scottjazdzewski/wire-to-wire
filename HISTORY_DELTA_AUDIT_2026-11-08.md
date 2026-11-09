@@ -20,7 +20,13 @@ The current master adds Macro_Circuit, Date_Confidence, Active, and Sort_Date fi
 
 The workbook's release labels conflict. The spreadsheet title and Control_Dashboard title identify v3.67 as “QA Closed — Canon,” but the Master_Stakes_Calendar header says “QA Verified — Promotion Pending.” Do not treat either label alone as approval to promote v3.67 into D1; preserve the current imported source and resolve the status conflict first.
 
-The current Control_Dashboard reports 2 verified-date blockers, 118 calendar/field holds, 20 high reviews, 393 mixed-date reviews, and 1 era/context pass. These are current master control totals, separate from the still-stale v3.37 D1 import. The older 54-date gap and 616-result review queues were built during the initial v3.37 → v3.67 comparison; recheck those rows against the current Verified_Blocking_Queue and Annual_Hold_Queue before using them as actionable queues.
+The current Control_Dashboard reports 2 verified-date blockers, 118 calendar/field holds, 20 high reviews, 393 mixed-date reviews, and 1 era/context pass. These are current master control totals, separate from the still-stale v3.37 D1 import.
+
+## Nov 9 read-only recheck of the prior queues
+
+- **Date queue:** all 54 edition IDs are present in the current master and their Race_Date values still match the saved v3.67 comparison snapshot. Fifty-three remain INTERNAL with PASS_RESOLVER_INTERNAL_SCHEDULE_ONLY status; one record, HSE-1936-0009 (1936 Santa Anita Derby), remains undated with BLOCK_EXACT_DATE_PENDING_SANTA_ANITA and appears in Undated_Race_Queue. None of these 54 dates is reclassified as exact.
+- **Placing queue:** all 616 edition IDs are present, and every changed placing value still matches the saved v3.67 comparison snapshot. This confirms that the values are current against that snapshot; it does not establish the source evidence needed to close result review.
+- No D1 refresh or master-row change was made. The 54-date and 616-result files remain comparison artifacts; use their verified current values as review targets while preserving the source and certification caveats.
 
 ## Delta triage
 
