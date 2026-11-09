@@ -1,0 +1,99 @@
+name: WTW D1 geography read-model import (manual, isolated)
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Validate offline or load only the preexisting WTW D1 geography read model'
+        required: true
+        type: choice
+        options:
+          - validate_only
+          - import_to_WTW_D1
+        default: validate_only
+      confirm_database:
+        description: 'For remote import type exactly: wtw-canon-desk-db'
+        required: false
+        type: string
+        default: ''
+permissions:
+  contents: read
+concurrency:
+  group: wtw-history-import
+  cancel-in-progress: false
+jobs:
+  geography:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate existing site, Access gate and source integration
+        run: npm test
+      - name: Check site/worker/compiler syntax
+        run: |
+          node --check src/worker.js
+          node --check public/app.js
+          node --check scripts/build-geography-import.mjs
+          node --check scripts/remote-geography-d1-audit.mjs
+      - name: Compile immutable-ID v3.3 geography snapshot into PRIVATE SQL
+        run: npm run db:build:geo
+      - name: Confirm the exact WTW target before any remote action
+        if: ${{ inputs.mode == 'import_to_WTW_D1' }}
+        env:
+          WTW_DB_CONFIRM: ${{ inputs.confirm_database }}
+        run: |
+          if [ "$WTW_DB_CONFIRM" != "wtw-canon-desk-db" ]; then
+            echo "::error::Import cancelled: exact existing WTW D1 name required."
+            exit 1
+          fi
+      - name: Install Wrangler only for authorized WTW remote import
+        if: ${{ inputs.mode == 'import_to_WTW_D1' }}
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Discover only the existing WTW D1 database
+        if: ${{ inputs.mode == 'import_to_WTW_D1' }}
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID || 'add006716b3a24e730ad0b716bdc3899' }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
+        run: node scripts/prepare-d1-target.mjs
+      - name: Apply additive schema migrations to WTW D1 only
+        if: ${{ inputs.mode == 'import_to_WTW_D1' }}
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID || 'add006716b3a24e730ad0b716bdc3899' }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
+        run: npx wrangler d1 migrations apply wtw-canon-desk-db --remote --config .wtw-d1-import.jsonc
+      - name: Refuse existing geography data; capture historical count baseline
+        if: ${{ inputs.mode == 'import_to_WTW_D1' }}
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID || 'add006716b3a24e730ad0b716bdc3899' }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
+        run: node scripts/remote-geography-d1-audit.mjs preflight
+      - name: Import ONLY new WTW geography read-model tables
+        if: ${{ inputs.mode == 'import_to_WTW_D1' }}
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID || 'add006716b3a24e730ad0b716bdc3899' }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          file_count=$(find generated/private-d1/geography -name 'geo_*.sql' -type f | wc -l)
+          if [ "$file_count" -lt 20 ]; then
+            echo "::error::Aborting partial geography source SQL import."
+            exit 1
+          fi
+          for file in generated/private-d1/geography/geo_*.sql; do
+            echo "Applying isolated geography snapshot part $(basename "$file")"
+            npx wrangler d1 execute wtw-canon-desk-db --remote --config .wtw-d1-import.jsonc --file "$file" --yes
+          done
+      - name: Certify remote read model against source SHA and historical baseline
+        if: ${{ inputs.mode == 'import_to_WTW_D1' }}
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID || 'add006716b3a24e730ad0b716bdc3899' }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
+        run: node scripts/remote-geography-d1-audit.mjs verify
+      - name: Completion
+        run: |
+          echo "WTW geography source compiler / checks completed."
+          echo "Mode: ${{ inputs.mode }}"
+          echo "No original Drive canon, history results, or Office UI layout was modified."
