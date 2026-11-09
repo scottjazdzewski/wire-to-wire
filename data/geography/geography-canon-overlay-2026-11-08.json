@@ -296,13 +296,20 @@
     }
   },
   "calendar_policy": {
-    "pre_1973": "Year-level historical timing may remain broad where exact dates are not authenticated.",
-    "from_1973_forward": "Target exact race date wherever available.",
-    "travel_rule": "Use exact post-1973 dates plus canonical geography nodes to reject impossible campaign sequences.",
-    "flagged_post_1973_route_qa": "4/4 high-risk dense-travel routes exact-date reconciled; 0 unverified dates remain in this flagged subset."
+    "pre_1973": "Year-level historical race timing is sufficient unless exact-day evidence is needed to resolve a specific chronology/travel contradiction.",
+    "from_1973_forward": "Historically sourced exact race date is required wherever available; 1999-pattern reconstructed dates are not certification evidence.",
+    "post_1973_scope": {
+      "active_editions_1973_1998": 2242,
+      "reconstructed_from_1999_calendar_pattern": 2216,
+      "blank_basis_pending_national_jockey_club_rows": 26,
+      "flagged_dense_travel_routes_reconciled": "4/4",
+      "state": "POST_1973_EXACT_DATE_BACKFILL_SCOPED_2242"
+    },
+    "travel_rule": "Use sourced post-1973 exact dates plus canonical geography nodes to reject impossible campaign sequences."
   },
   "next_actions": [
-    "Propagate the 1973 Acorn and 1982 National Jockey Club Handicap corrections into the upstream native historical-stakes authority when it becomes connector-accessible.",
+    "Backfill sourced exact dates for the 2,242 active 1973-1998 editions, working by stakes/year; 2,216 currently use reconstructed 1999-pattern dates.",
+    "Resolve the 26 National Jockey Club Handicap 1973-1998 date-basis rows; 1982 is already corrected in route QA to 1982-05-01.",
     "Recover source-backed participant birthplaces and permanent operating bases.",
     "Recover municipality for region-only legacy farms/studs only where canon/source supports it; 22/22 now have at least region-level geography.",
     "Recover foaling state/city/farm only where source-backed.",
