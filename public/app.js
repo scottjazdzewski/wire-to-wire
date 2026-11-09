@@ -191,18 +191,26 @@ function renderHorses(){
 }
 function renderPeople(){
  const people=filteredEntities('person'),farms=filteredEntities('organization');
+ const allLinks=(state.data?.connections||[]);
+ const seasons=[...new Set(allLinks.map(c=>Number(c.year)).filter(Number.isFinite))];
+ const roleCount=needle=>people.filter(e=>{const stored=partyIndex.get(e.id);const roles=[e.role,...(stored?.roles||[])].join(' ').toLowerCase();return roles.includes(needle)}).length;
  const makeCard=(e,type)=>{
   const stored=partyIndex.get(e.id),roles=stored?.roles||new Set(),links=stored?.count||0;
-  const label=type==='person'?'PERSON':'FARM / OWNER';
-  const tag=type==='person'?'PEOPLE':'FARMS & OWNERS';
-  return '<article class="people-card"><div class="asset-placeholder people-art" data-asset-slot="'+(type==='person'?'person-headshot':'farm-logo')+'"><span>'+label+'</span><small>ARTWORK PLACEHOLDER</small></div><div class="people-card-body"><div class="smallcaps">'+tag+'</div><h3>'+openButton('entity',e.id,e.name)+'</h3><p>'+h(e.role||[...roles].join(', ')||'Role not recorded')+'</p><div class="people-card-footer"><span>'+links+' horse-year links</span>'+editButton('entity',e.id,'Review','button button-quiet')+'</div></div></article>';
+  const roleText=e.role||[...roles].join(', ')||(type==='person'?'Role not recorded':'Organization type not recorded');
+  const seasonsFor=[...new Set(allLinks.filter(c=>c.party_id===e.id).map(c=>Number(c.year)).filter(Number.isFinite))].sort((a,b)=>b-a);
+  const latest=seasonsFor[0];
+  return '<article class="people-card network-card-v2"><div class="asset-placeholder people-art" data-asset-slot="'+(type==='person'?'person-headshot':'farm-logo')+'"><span>'+(type==='person'?'PERSON':'OPERATION')+'</span><div class="network-art-stamp">WTW</div></div><div class="people-card-body"><div class="network-card-top"><span class="smallcaps">'+(type==='person'?'RACING PERSONNEL':'FARM / ORGANIZATION')+'</span><span class="network-role-badge">'+h(roleText)+'</span></div><h3>'+openButton('entity',e.id,e.name)+'</h3><p>'+h(e.summary||'Historical identity in the WTW racing universe.')+'</p><div class="network-card-facts"><span><b>'+links+'</b> horse-year links</span><span><b>'+(latest||'—')+'</b> latest season</span></div><div class="people-card-footer"><button class="button button-primary" data-open-type="entity" data-id="'+h(e.id)+'">Open dossier</button>'+editButton('entity',e.id,'Review','button button-quiet')+'</div></div></article>';
  };
  const peopleCards=people.slice(0,100).map(e=>makeCard(e,'person')).join('');
  const farmCards=farms.slice(0,100).map(e=>makeCard(e,'organization')).join('');
  const limitNotice=(n,label)=>n>100?'<p class="manager-note">Showing the first 100 '+label+'. Search by name or permanent ID to narrow the list.</p>':'';
- return intro('YOUR RACING NETWORK','People & Farms','Separate, compact files for the trainers, jockeys, owners, breeders and farms linked to the archive.', '<div class="record-count">'+people.length.toLocaleString()+' people · '+farms.length.toLocaleString()+' organizations</div>')+
-  section('People','Trainers, jockeys, owners, breeders and other horsemen', '<div class="people-grid">'+(peopleCards||'<div class="calendar-empty">No people match this search.</div>')+'</div>', '<span class="record-count">'+people.length.toLocaleString()+' people</span>')+limitNotice(people.length,'people')+
-  section('Farms & organizations','Breeding farms, owner partnerships and racing organizations', '<div class="people-grid">'+(farmCards||'<div class="calendar-empty">No farms or organizations match this search.</div>')+'</div>', '<span class="record-count">'+farms.length.toLocaleString()+' organizations</span>')+limitNotice(farms.length,'organizations');
+ return '<div class="network-page">'+
+  intro('RACING NETWORK','People & Farms','The human and organizational side of WTW: trainers, jockeys, owners, breeders, farms and racing operations connected to the archive.', '<div class="record-count">'+people.length.toLocaleString()+' people · '+farms.length.toLocaleString()+' organizations</div>')+
+  '<section class="network-hero"><div><span class="smallcaps">THE PADDOCK & BACKSTRETCH</span><h2>People power the racing world.</h2><p>Every horse belongs to a network of decisions, relationships and places. These files connect the historical archive without inventing race-day assignments that are not supported.</p></div><div class="network-hero-stats"><span><b>'+people.length.toLocaleString()+'</b> people</span><span><b>'+farms.length.toLocaleString()+'</b> organizations</span><span><b>'+allLinks.length.toLocaleString()+'</b> season links</span><span><b>'+seasons.length.toLocaleString()+'</b> linked seasons</span></div></section>'+
+  '<div class="network-role-strip"><span><b>'+roleCount('trainer')+'</b> trainers</span><span><b>'+roleCount('jockey')+'</b> jockeys</span><span><b>'+roleCount('owner')+'</b> owners</span><span><b>'+roleCount('breeder')+'</b> breeders</span></div>'+
+  section('People','Trainers, jockeys, owners, breeders and other horsemen', '<div class="people-grid network-grid-v2">'+(peopleCards||'<div class="calendar-empty">No people match this search.</div>')+'</div>', '<span class="record-count">'+people.length.toLocaleString()+' people</span>')+limitNotice(people.length,'people')+
+  section('Farms & organizations','Breeding farms, ownership groups and racing operations', '<div class="people-grid network-grid-v2">'+(farmCards||'<div class="calendar-empty">No farms or organizations match this search.</div>')+'</div>', '<span class="record-count">'+farms.length.toLocaleString()+' organizations</span>')+limitNotice(farms.length,'organizations')+
+  '</div>';
 }
 function renderSearch(){
  const query=state.search.toLowerCase().trim();
@@ -262,15 +270,23 @@ function renderRaces(){
  const dateKey=(r)=>validDate(r.date)?String(r.date):'9999-99-99';
  const list=(state.data?.races||[]).filter(r=>(+r.year===+state.year||state.search)&&recordMatches(r)).sort((a,b)=>Number(a.year)-Number(b.year)||dateKey(a).localeCompare(dateKey(b))||a.name.localeCompare(b.name));
  const multiYear=new Set(list.map(r=>String(r.year))).size>1;
+ const winnersLoaded=list.filter(r=>winnerOf(r)).length;
+ const exactDates=list.filter(r=>dateEvidence(r).kind==='exact').length;
+ const venues=new Set(list.map(r=>r.track_name).filter(Boolean)).size;
  const groups=new Map();
  for(const r of list){
   const match=validDate(r.date),month=match?monthNames[Number(match[2])-1]:'Day not recorded',label=(multiYear?String(r.year)+' · ':'')+month;
   if(!groups.has(label))groups.set(label,[]);
   groups.get(label).push(r);
  }
- const cards=(items)=>items.map(r=>{const evidence=dateEvidence(r);return `<div class="race-card"><div><h4>${openButton('race',r.id,r.name)}</h4><p>${h(r.year)} · ${venueName(r)} · ${h(dateLabel(r))}<span class="date-evidence-tag ${h(evidence.kind)}">${h(evidence.label)}</span></p><div class="winners">${winnerOf(r)?`Winner: ${openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id))}`:'Finish order not imported'}</div></div>${editButton('race',r.id,'Propose edit')}</div>`}).join('');
- const grouped=[...groups].map(([label,items])=>`<div class="calendar-month-group"><div class="calendar-month-heading"><h4>${h(label)}</h4><span>${items.length} editions</span></div>${cards(items)}</div>`).join('');
- return `${intro('HISTORICAL SCHEDULES','Stakes Calendar','Chronological by year and month. Each edition shows its date-evidence status.')}${yearTabs()}${section(`${state.search?'Matching':'Selected'} race editions`,`${list.length} entries · chronological order`,grouped||noRecords('No matching race editions.'))}`;
+ const cards=(items)=>items.map(r=>{const evidence=dateEvidence(r);return '<article class="vault-race-card"><div class="vault-race-date"><small>'+h(r.year)+'</small><strong>'+(validDate(r.date)?Number(validDate(r.date)[3]):'—')+'</strong><span>'+(validDate(r.date)?monthNames[Number(validDate(r.date)[2])-1].slice(0,3).toUpperCase():'DATE')+'</span></div><div class="vault-race-main"><div class="vault-race-kicker">'+venueName(r)+' <span class="date-evidence-tag '+h(evidence.kind)+'">'+h(evidence.label)+'</span></div><h4>'+openButton('race',r.id,r.name)+'</h4><div class="vault-race-winner">'+(winnerOf(r)?'<span>WINNER</span>'+openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id)):'<span>FINISH ORDER</span><strong>Not imported</strong>')+'</div></div><div class="vault-race-actions">'+editButton('race',r.id,'Review','button button-quiet')+'</div></article>'}).join('');
+ const grouped=[...groups].map(([label,items])=>'<section class="vault-month-group"><header><div><span class="smallcaps">RACE BOOK</span><h3>'+h(label)+'</h3></div><span>'+items.length+' editions</span></header><div class="vault-race-list">'+cards(items)+'</div></section>').join('');
+ return '<div class="vault-page">'+
+  intro('HISTORY VAULT','Stakes Archive','Chronological source records from the WTW racing universe. Each edition preserves its date-evidence status and links back to horses and venues.', '<div class="record-count">'+list.length.toLocaleString()+' race editions</div>')+
+  '<section class="vault-hero"><div><span class="smallcaps">ARCHIVE LEDGER</span><h2>'+h(state.search?'Search results':state.year+' racing year')+'</h2><p>Open any race as a permanent historical file. Exact dates, unresolved chronology and missing finish orders remain explicit instead of being smoothed over.</p></div><div class="vault-hero-stats"><span><b>'+list.length.toLocaleString()+'</b> editions</span><span><b>'+winnersLoaded.toLocaleString()+'</b> winners loaded</span><span><b>'+exactDates.toLocaleString()+'</b> exact dates</span><span><b>'+venues.toLocaleString()+'</b> venues</span></div></section>'+
+  yearTabs()+
+  (grouped||noRecords('No matching race editions.'))+
+  '</div>';
 }
 function nameHistory(){
  const edits=[...state.nameEdits].slice(0,100);
