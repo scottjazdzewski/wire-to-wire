@@ -1,3 +1,45 @@
+# WIRE TO WIRE — PLAYABLE RACING WORLD PRIORITY (USER DIRECTIVE, NOV 9 2026)
+
+**Current product direction: GAME FIRST / CANON BEHIND THE SCENES.** The underlying geography, horse, race, farm, and participant registries remain essential source infrastructure, but ordinary site screens must feel like a **1999 thoroughbred racing-management simulation**, not registry tables or a historical encyclopedia. The older history-first development order below is retained for evidence and research provenance; it is **superseded for user-facing navigation, screen design, and next playable milestone** by this section.
+
+## Ownership and non-conflict rules
+
+- **Canonical live Office layout:** Google Drive `WIRE_TO_WIRE_UI_CURRENT/01_CURRENT_BUILD/index.html`, Office FM Profile Foundation **v29** as of the current handoff. A separate user-assigned UI window owns the Office layout, Profile Foundation and next **State-Aware Stable Foundation** task. Do **not** overwrite or redesign that Drive HTML from the geography/import window.
+- **Canonical racing world/data:** Existing locked WTW v3.3 Google Sheet and approved historical authorities. GitHub Cloudflare D1 is a protected **read model**, never an independent alternate canon.
+- **Goal:** one genuinely playable week before another catalog of pages, new registries, or cosmetic database views. Source controls and archival detail should live behind the player-facing action surface.
+
+## First playable vertical slice — the 1999 racing week
+
+A player starts in their **Racing Office**, sees a dated in-universe briefing with today's mail, racing obligations and notifications, and performs the following complete loop:
+
+1. **Stable Board:** open one of the already approved opening horses and see its name, age, sex, pedigree, current physical barn, trainer, owner, form, fitness and condition, training plan, race readiness, and scheduled work. No fake precision for missing evidence.
+2. **Act:** choose the horse's daily training, rest, or race-entry plan; select a race from the actual regional calendar; validate age/sex/surface/distance/class, entry deadlines, realistic transport time and travel costs.
+3. **Run time:** advance the date; receive visible consequences to training/fitness, costs, staff requests, entry confirmations, travel, and the upcoming racing program. Choices must persist in the game state. A static `Advance Day` button with no consequences is not completion.
+4. **Race day:** move through a believable race-day experience with entries, scratches, results and aftercare; update horse record and financial/stable state. Preserve historical source records; simulation creates a distinct `game_run_id` timeline.
+5. **Next decision:** the Office briefing updates, a trainer/agent/farm sends a useful message, and the player can make the next choice. Prove the loop across at least **seven consecutive in-game days**, including a rest/travel or entry event.
+
+**Definition of done:** a user can play one coherent seven-day week without visiting a database management page. Every decision changes persistent simulation state; six existing Stable Board horses, staff, tracks and regions are sourced from WTW-approved IDs. No invented immutable IDs and no assumption that staged foaling locality equals a current barn. Tests prove game decisions do not mutate historical canon.
+
+## Navigation and screen contract
+
+- **Primary game surfaces:** Racing Office / Inbox, My Stable, Racing Calendar, Race Day, People & Relationships, Farm/Breeding, World/Track Map, Finances. Roll these out only as required by the first playable loop.
+- **Game presentation:** calendar date and location; relationships and consequences; evocative horse photographs/art only with reliable provenance and approved assets; track and farm geography as movement and meaningful decisions, not an endless list of rows.
+- **Secondary records:** an Archive / Record Review option is available to the administrator for research, source evidence, names and corrections; it must not be the default landing page or primary navigation focus.
+- **Profile-first editing:** lists and maps do not show a pencil on every row. Clicking a horse, person, owner, farm, or track opens a dedicated profile with a single **Edit Profile** action (authorized administrator only), organized by sections. Owners can revise world-building details, while historical-source changes remain auditable/versioned. **No unsafe silent overwrites of race results, permanent IDs or accepted pedigrees.** Editing a profile is distinct from gameplay actions (train, enter, ship, breed, hire).
+- **Track example:** `T-0094 Sweetwater Park` is experienced as an Atlanta venue with races, distances, local circuit and travel opportunities. Its geographic city/track ID and fictionality are metadata in the profile, not the entire page's purpose. Same rule for all eight WTW fictional expansion tracks.
+
+## Immediate build order (bounded, not a million parallel tasks)
+
+1. Finish **v29 State-Aware Stable** in the assigned UI window, linked to real approved game state and six opening horses.
+2. Connect Stable / Office / Calendar / Travel to a single persistent `game_run_id` + date/decision/consequence loop (seven-day proof).
+3. Add the single profile-level Edit Profile experience for horse, person, farm, track and race; admin-only, revisioned, with preview/revert and no list pencils.
+4. Complete one race-day and next-morning result/update flow for the vertical slice.
+5. Only after that proof: gradually surface finances, expanded racing population, breeding, scheduling, scouting, sales, more tracks, and long-term seasons.
+
+**Status at directive:** product requirement/implementation plan committed; the 7-day playable loop is **not yet implemented**, and the remote Cloudflare D1 geography read-model import is **not verified live**. The existing private source/compiler CI was green as of Nov 9. Do not conflate source readiness with game readiness.
+
+---
+
 # WIRE TO WIRE — History-First Delivery Plan
 
 **As of:** 2026-11-08  
