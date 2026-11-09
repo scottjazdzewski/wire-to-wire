@@ -1,5 +1,8 @@
 # WIRE TO WIRE — AUTHORITATIVE PATH FROM OFFICE BUILD TO RACING SIMULATION
 
+> **Engineering status — November 9, 2026:** Framework V1 is now IMPLEMENTED and passed GitHub CI. Modules `src/game/contracts.js`, `state.js`, `kernel.js`, `rng.js`, `persistence.js`, `selectors.js`, and `index.js` provide a source-bound `WTW_WORLD_SNAPSHOT_V1` → `WTW_GAME_RUN_V1` state, unique command receipt/replay protection, validated decisions, one-day clock and due-event delivery, deterministic seed, save/reload and Office/Stable read selectors. Tests: `tests/simulation-framework.test.mjs`; documented contract: `docs/SIMULATION_FRAMEWORK_V1.md`. **No training/race/AI outcome rules installed, no 1999 roster silently imported, no canonical Office UI modification, no remote game-run persistence or new D1 gameplay database.** Next framework work: approved world-snapshot adapter and durable game-run save adapter; only then domain mechanics and UI wiring.
+
+
 **Date:** 2026-11-09  
 **Scope:** Engineering delivery sequence; no parallel registry, redesign, or false completed-status claim.  
 **Product objective:** A believable 1999 Thoroughbred racing-management world in which the player acts, time advances, horses and people change, complete races are run, and competing operations act independently.
