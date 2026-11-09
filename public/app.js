@@ -8,7 +8,7 @@ const fields = {
   connection: {party_id:'Connected owner / trainer / person ID',year:'Season',role:'Connection role',basis:'Evidence basis'},
   result: {horse_id:'Placed horse ID',position:'Finishing position'}
 };
-const state = {page:'overview',year:1953,calendarMonth:null,role:'trainer',involvement:'balanced',search:'',data:null,mode:'LOADING',changes:[],nameEdits:[],availableYears:[],edit:null,rename:null,apiIssue:''};
+const state = {page:'overview',year:1953,calendarMonth:null,role:'trainer',involvement:'balanced',search:'',trackDirectory:null,data:null,mode:'LOADING',changes:[],nameEdits:[],availableYears:[],edit:null,rename:null,apiIssue:''};
 const GAME_PREF_KEY = 'wtw_game_manager_preferences_v1';
 try { const saved=JSON.parse(localStorage.getItem(GAME_PREF_KEY)||'{}'); if(['owner','trainer','farm','breeder','jockey'].includes(saved.role))state.role=saved.role; if(['hands-on','balanced','executive'].includes(saved.involvement))state.involvement=saved.involvement; } catch {}
 const SAMPLE_KEY = 'wtw_canon_desk_local_proposals_v1';
@@ -202,9 +202,23 @@ function renderSearch(){
  ${allEntities.length>120||allRaces.length>120?'<p class="search-note">Showing the first 120 matches per category. Enter a more specific name or record ID to narrow results.</p>':''}`;
 }
 function renderTracks(){
- const list=filteredEntities('track');
- const rows=list.map(t=>`<tr><td>${openButton('entity',t.id,t.name)}<div class="subline">${h(t.id)}</div></td><td>${formatStatus(t.status)}</td><td>${editButton('entity',t.id,'Propose correction')}</td></tr>`).join('');
- return `${intro('RACING VENUES','Track Registry','Every imported track has a name editor. Renaming a tracked venue also updates linked race editions, while its permanent ID stays fixed.',`<div class="record-count">${list.length} tracks</div>`)}${section('Tracks and venues','Original names remain preserved in the historical source',`<div class="table-scroll"><table class="data-table"><thead><tr><th>Track / location</th><th>Source status</th><th>Review</th></tr></thead><tbody>${rows||'<tr><td colspan="3">No track identities loaded yet.</td></tr>'}</tbody></table></div>`)}`;
+ const directory=state.trackDirectory?.tracks||[];
+ const imported=new Map((state.data?.entities||[]).filter(e=>e.kind==='track').map(e=>[e.id,e]));
+ const list=directory.length ? directory.filter(t=>!state.search||[t.name,t.id,t.city_locality,t.state_province_region,t.country,t.macro_circuit].some(v=>String(v||'').toLowerCase().includes(state.search.toLowerCase()))) : filteredEntities('track').map(e=>({id:e.id,name:e.name,geography_status:e.status}));
+ const rows=list.map(t=>{
+   const e=imported.get(t.id);
+   const name=e?openButton('entity',e.id,e.name):'<strong>'+h(t.name)+'</strong>';
+   const city=[t.city_locality,t.state_province_region,t.country].filter(Boolean).join(', ')||'Location not yet in this archive';
+   const basis=t.geography_status==='WTW_PROPOSED_PLACEMENT'?'WTW proposed location':t.geography_status==='BOUNDARY_PROVISIONAL'?'Boundary provisional':t.geography_status==='RESOLVED_CITY'?'City/locality resolved':(t.geography_status||'Archive record');
+   const node=t.travel_node?'<div class="subline">Travel node: '+h(t.travel_node)+'</div>':'';
+   const note=t.boundary_note?'<div class="subline">'+h(t.boundary_note)+'</div>':'';
+   const archive=e?editButton('entity',t.id,'Propose correction'):'<span class="muted">Archive detail pending import</span>';
+   return '<tr><td>'+name+'<div class="subline">'+h(t.id)+'</div></td><td>'+h(city)+node+note+'</td><td>'+h(basis)+'</td><td>'+archive+'</td></tr>';
+ }).join('');
+ const summary=directory.length?'118 North American + 16 international = 134 canonical locations; historical, closed and WTW-fictional venues retained.':'Only the currently imported archive is displayed until the geography directory loads.';
+ const counter='<div class="record-count">'+list.length+' tracks</div>';
+ const table='<div class="table-scroll"><table class="data-table"><thead><tr><th>Track</th><th>City / locality / travel node</th><th>Location evidence</th><th>Record review</th></tr></thead><tbody>'+(rows||'<tr><td colspan="4">No track locations available.</td></tr>')+'</tbody></table></div>';
+ return intro('RACING VENUES','Track Registry',summary,counter)+section('All WTW racecourses','Geography comes from the locked v3.3 track registry. Provisional and fictional localities are labeled; location alone does not prove a race date or historical operating period.',table);
 }
 function renderRaces(){
  const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -386,6 +400,7 @@ async function fetchBootstrap(){const r=await fetch('/api/bootstrap',{credential
 async function initialize(){
  try {const live=await fetchBootstrap();state.mode=live.mode;state.data={meta:{title:'WIRE TO WIRE — isolated D1 import',scope:live.partial?'Partial page of data: search the backend for more':'Currently imported records',authority:'Source snapshot, separate from original WTW master',note:'Approved-for-promotion proposals do not alter source records.',counts:live.counts,partial:live.partial},entities:live.entities,connections:live.connections,races:live.races,results:live.results};state.changes=live.changes;state.nameEdits=live.nameEdits||[];state.availableYears=live.years||[];}
  catch (error) {state.apiIssue=error.message;try {const r=await fetch('/sample-history.json',{cache:'no-store'});if(!r.ok)throw Error('Sample data unavailable');state.data=await r.json();state.mode='DEMO';state.changes=storedChanges();}catch{state.data={meta:{title:'WTW empty sample',scope:'No data loaded'},entities:[],connections:[],races:[],results:[]};state.mode='DEMO';state.changes=storedChanges()}}
+ try { const r=await fetch('/data/track-geography-v33.json',{cache:'no-store'}); if(r.ok){const d=await r.json();if(d?.counts?.total===134&&Array.isArray(d.tracks)&&d.tracks.length===134&&new Set(d.tracks.map(t=>t.id)).size===134)state.trackDirectory=d; } } catch {}
  rebuildResultIndex();
  const yrs=years();if(yrs.length&&!yrs.includes(state.year))state.year=yrs[0];$('year-select').innerHTML=yrs.map(y=>`<option value="${y}">${y}</option>`).join('');$('year-select').value=String(state.year);render();
 }
