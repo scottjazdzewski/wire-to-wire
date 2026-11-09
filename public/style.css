@@ -583,3 +583,7 @@ body{background:radial-gradient(ellipse at 85% 0%,#f9faf6 0,#f0f3ed 52%,#e9eee8 
  .calendar-agenda-copy small{white-space:normal}
  .calendar-month-heading-main small{display:none}
 }
+
+/* Accessible affordance for overflow races in the month grid. */
+.calendar-more{display:block;padding:2px 3px;border:0;border-radius:3px;background:transparent;color:#355d43;font-size:8px;font-weight:800;text-align:left;text-decoration:underline;cursor:pointer}
+.calendar-more:hover,.calendar-more:focus-visible{background:#edf3ed;color:#173e2b}

@@ -8,7 +8,7 @@ The management loop stays out of development until the historical archive is rec
 ## Current audit findings
 
 - The private Cloudflare D1 database contains the Nov 7 H/S/E/P/B import. Its row-count, manifest-hash and integrity checks passed, but those checks verify the import against its staged files; they do not establish historical truth.
-- The imported stakes export is labeled v3.37 and has 5,370 editions. The current Drive master is v3.67, marked “QA Verified — Promotion Pending,” with 5,369 editions.
+- The imported stakes export is labeled v3.37 and has 5,370 editions. The current Drive master is v3.67 with 5,369 editions. Its Control_Dashboard title says “QA Closed — Canon,” while the Master_Stakes_Calendar header says “QA Verified — Promotion Pending”; treat the release status as unresolved until the workbook labels are reconciled.
 - Comparing the 5,369 shared edition IDs found 1,550 records changed in one or more audited core fields and one old imported ID absent from the current master. Field-change counts overlap: 917 date values; 96 winner IDs; 208 second-place IDs; 178 third-place IDs.
 - The v3.67 dashboard lists 5,223 active editions: 1,304 exact-date, 3,883 internal-date, and 36 governed WTW-fixed. Eight active records have no day recorded and are included in the internal-date category. Of 135 years, 43 are route-clean, 92 calendar-open, and zero fully exact-certified.
 - The horse master has 3,856 records: 617 existing canon, 3,115 historical stakes backfill, and 124 generated pedigree-support records. Backfill/support names are not a verified real-horse name corpus. One normalized duplicate name is flagged for review, not deletion.
@@ -58,3 +58,13 @@ The calendar-source comparison and horse source-class audit are complete. The si
 - Horse cards now put sire/dam, recorded top-three placings, first/second/third counts, notable stakes wins, and unavailable lifetime starts/earnings in a more compact first-view layout. The live site could not be visually reviewed in this session because Cloudflare Access stopped at its email-code login page.
 
 - The supplied v0.18 single-file game screen is a separate future gameplay reference (Office, Inbox, World, Race, Calendar, News, Results, Diagnostics and Profiles). Keep its management loop paused until the historical archive and archive UI are accepted.
+
+
+## Progress update — 2026-11-09
+
+- The current v3.67 dashboard reports 2 verified-date blockers, 118 calendar/field holds, 20 high reviews, 393 mixed-date reviews, 1 era/context pass, 8 active races with no day, 43 route-clean years and 92 calendar-open years. Zero years are fully exact-certified.
+- The current workbook has conflicting release labels: Control_Dashboard says “QA Closed — Canon,” while the master tab says “QA Verified — Promotion Pending.” The site now shows the conflict and keeps the D1 import marked stale; no promotion or D1 refresh was made.
+- Continued the page audit: the calendar’s “+ more” now jumps to the full monthly race card; the horse-profile asynchronous detail path is guarded against cross-profile results; active navigation now exposes its current-page state.
+- The first 54-date and 616-result queues remain preserved as historical comparison artifacts and must be checked against the current blocker/hold tabs before action.
+- Browser visual review remains unavailable because Cloudflare Access presents an email-code screen; the source audit is documented without claiming live-page verification.
+- The v0.18 game screen remains a future reference only. Simulation remains paused until the history and archive layout are accepted.

@@ -1,6 +1,6 @@
-# Stakes Calendar Source Delta Audit — 2026-11-08
+# Stakes Calendar Source Delta Audit — 2026-11-09
 
-Compared the imported Nov 7 stakes export (v3.37) with the current Drive Master Stakes Calendar (v3.67, “QA Verified — Promotion Pending”) by race-edition ID.
+Compared the imported Nov 7 stakes export (v3.37) with the current Drive Master Stakes Calendar (v3.67) by race-edition ID.
 
 | Measure | Result |
 |---|---:|
@@ -14,14 +14,19 @@ Compared the imported Nov 7 stakes export (v3.37) with the current Drive Master 
 
 Changed field counts overlap by race: Second_Horse_ID 208; Second_Name 316; Third_Horse_ID 178; Third_Name 284; Winner_Horse_ID 96; Winner_Name 201; Canon_Status 87; Chronology_QA 1,180; Race_Date 917; Race_Date_Basis 1,078; Distance_F 206; Track_ID 59; Track_Name 65; Race_Name 38; Status 132; Division_Key 38; Field_Size 37; Surface 6.
 
-The current master adds Macro_Circuit, Date_Confidence, Active, and Sort_Date fields that were not present in the imported export. Date confidence distribution in v3.67: INTERNAL 4,028; EXACT 1,305; WTW_FIXED 36. Active state: YES 5,223; NO 146.
+The current master adds Macro_Circuit, Date_Confidence, Active, and Sort_Date fields that were not present in the imported export. The live Control_Dashboard reports 5,223 active editions: 1,304 exact-date, 3,883 internal-date, and 36 governed WTW-fixed. Eight active races have no day recorded. Across 135 years, 43 are route-clean, 92 calendar-open, and zero fully exact-certified.
 
-## Review triage
+## Current source status — verified Nov 9, 2026
 
-- All 917 changed race dates are labeled INTERNAL in v3.67; 916 are marked PASS and one PENDING. None of these date changes qualifies as an exact date.
-- 863 of the 917 date-changing editions have a matching Evidence_Queue row with a source URL; 54 have no matching queue row. A URL alone does not change the INTERNAL classification.
-- 616 changed editions include at least one winner, second-place, or third-place horse ID/name difference and need result evidence review.
-- 27 changed editions are explicitly held, under review, pending, or unresolved: 14 EXACT/HOLD, 4 EXACT/REVIEW, 8 INTERNAL/PENDING, and 1 INTERNAL/UNRESOLVED.
-- One v3.37-only edition remains unresolved: HSE-1995-0012-D2, Risen Star Stakes, 1995-02-28, winner “Elly’s String.” Preserve it for review; do not delete it automatically.
+The workbook's release labels conflict. The spreadsheet title and Control_Dashboard title identify v3.67 as “QA Closed — Canon,” but the Master_Stakes_Calendar header says “QA Verified — Promotion Pending.” Do not treat either label alone as approval to promote v3.67 into D1; preserve the current imported source and resolve the status conflict first.
 
-The row-level imported/current values are in [the JSON delta](data/history-audit/2026-11-08/v337-to-v367-diff.json). The 54 date changes without an Evidence_Queue row are isolated in [the date evidence gap queue](data/history-audit/2026-11-08/date-evidence-gaps-54.json). The 616 editions with changed placing IDs or names are isolated in [the result review queue](data/history-audit/2026-11-08/result-change-review-616.json). The latest master remains promotion-pending. Review evidence for every material change before any D1 refresh. Preserve name overrides and review decisions, and do not rerun the initial import.
+The current Control_Dashboard reports 2 verified-date blockers, 118 calendar/field holds, 20 high reviews, 393 mixed-date reviews, and 1 era/context pass. These are current master control totals, separate from the still-stale v3.37 D1 import. The older 54-date gap and 616-result review queues were built during the initial v3.37 → v3.67 comparison; recheck those rows against the current Verified_Blocking_Queue and Annual_Hold_Queue before using them as actionable queues.
+
+## Delta triage
+
+- 917 changed date values were found in the initial v3.37-to-v3.67 comparison. Their earlier pass/hold classification is not a current certification statement.
+- 863 date-changing editions matched a source URL in the prior Evidence_Queue snapshot; 54 did not. The present workbook no longer has that tab, so those queue counts are historical triage only.
+- 616 changed editions include at least one winner, second-place, or third-place horse ID/name difference. The saved result queue is a comparison artifact, not evidence that each result remains unresolved today.
+- One v3.37-only edition remains for review: HSE-1995-0012-D2, Risen Star Stakes, 1995-02-28, winner “Elly’s String.” Keep the source row available until its status is reconciled; do not delete automatically.
+
+The row-level comparison remains in [the JSON delta](data/history-audit/2026-11-08/v337-to-v367-diff.json). The prior 54-date queue is in [the date evidence gap snapshot](data/history-audit/2026-11-08/date-evidence-gaps-54.json), and the prior 616-edition queue is in [the result-change snapshot](data/history-audit/2026-11-08/result-change-review-616.json). These files should be preserved as historical audit artifacts and refreshed from the current workbook before source promotion.
