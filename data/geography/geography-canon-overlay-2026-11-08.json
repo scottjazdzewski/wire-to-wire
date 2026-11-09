@@ -1,6 +1,6 @@
 {
-  "description": "Drive-canon geography synchronization overlay for Wire to Wire. This file records the current geography/travel state from the authoritative WTW working registry and supersedes conflicting values in older geography staging files until those files are regenerated.",
-  "as_of": "2026-11-08",
+  "description": "Drive-canon geography synchronization overlay for Wire to Wire. Derivative site/app integration metadata only; the existing Google Drive v3.3 master remains authoritative for every Horse_ID, Person_ID, Organization_ID and Track_ID. Supersedes older staging counts without changing historical source facts.",
+  "as_of": "2026-11-09",
   "authority": {
     "source": "WTW CANON REGISTRIES — 1999 START v3.3 WORKING RECONCILIATION",
     "spreadsheet_url": "https://docs.google.com/spreadsheets/d/1Lhpe6DG1foQ2-zayQBg4bKpTtu4MP_itpM1zo2GRSEA/edit",
@@ -11,7 +11,7 @@
     "sourced_city_or_locality": 121,
     "boundary_provisional_real_tracks": 5,
     "fictional_wtw_proposals": 8,
-    "state": "USABLE_FOR_TRAVEL_NODE_LOGIC",
+    "state": "PASS_134_OF_134_TRACK_LOCATION_JOINS",
     "boundary_cases": [
       {
         "track_id": "T-0009",
@@ -58,7 +58,16 @@
         "status": "BOUNDARY_PROVISIONAL",
         "note": "Sources place track along Route 43 in Aurora and identify Bainbridge Township. Use Aurora travel node."
       }
-    ]
+    ],
+    "north_american_tracks": 118,
+    "international_tracks": 16,
+    "site_directory": "public/data/track-geography-v33.json",
+    "calendar_join_audit": {
+      "active_editions": 5192,
+      "active_blank_track_ids": 0,
+      "inactive_or_quarantined_blank_track_ids": 139,
+      "policy": "Do not invent track entities or promote quarantine editions simply to fill missing track IDs."
+    }
   },
   "shipping_geography": {
     "shipping_events": 30,
@@ -169,117 +178,53 @@
   },
   "other_layers": {
     "organization_geography": {
-      "records": 70,
-      "region_or_better_coverage": 22,
-      "city_county_or_local_area_precision": 5,
-      "state": "CURRENT_OWNER_REGION_COMPLETE_LEGACY_LOCALITY_PARTIAL",
-      "note": "70 geography records: 22 legacy/farm records plus 48 current owner/stable Home_Base records. All have at least source-backed or locked-canon region/state/city geography; municipality/street precision remains pending for region-only or compound bases.",
-      "locked_v3_3_reconciliations": [
-        {
-          "organization_id": "O-000041",
-          "name": "Clover Pike Farm",
-          "region": "Kentucky / Ohio Valley"
-        },
-        {
-          "organization_id": "O-000053",
-          "name": "Cannonade Farm",
-          "region": "Kentucky / South-Midwest links"
-        },
-        {
-          "organization_id": "O-000061",
-          "name": "Kingsmere Farm",
-          "region": "Kentucky / Ohio Valley"
-        },
-        {
-          "organization_id": "O-000062",
-          "name": "Crescent Mile Farm",
-          "region": "Kentucky / Ohio Valley"
-        },
-        {
-          "organization_id": "O-000063",
-          "name": "Ironweed Farm",
-          "region": "Western Kentucky"
-        },
-        {
-          "organization_id": "O-000064",
-          "name": "Huntcross Farm",
-          "region": "Mid-Atlantic"
-        },
-        {
-          "organization_id": "O-000065",
-          "name": "Santa Ventura Stud",
-          "region": "Southern California"
-        },
-        {
-          "organization_id": "O-000066",
-          "name": "Aurelian Stud",
-          "region": "Kentucky / Ohio Valley"
-        },
-        {
-          "organization_id": "O-000067",
-          "name": "Marrowfield Farm",
-          "region": "Kentucky / Ohio Valley"
-        },
-        {
-          "organization_id": "O-000068",
-          "name": "Bellwether Stud",
-          "region": "Kentucky / Ohio Valley"
-        },
-        {
-          "organization_id": "O-000069",
-          "name": "Blue Lantern Farm",
-          "region": "Kentucky / Ohio Valley"
-        },
-        {
-          "organization_id": "O-000070",
-          "name": "Little Fork Farm",
-          "region": "Kentucky / Ohio Valley"
-        }
-      ],
-      "current_owner_base_records": 48,
-      "current_owner_base_coverage": "48/48"
+      "records": 130,
+      "unique_canonical_organizations": 108,
+      "exact_operating_base_coverage": "108/108",
+      "named_farm_stud_bloodstock_exact_localities": "30/30",
+      "state": "CANONICAL_ORGANIZATION_BASE_COMPLETE",
+      "source": "Organization_Geography + Organization_Registry",
+      "note": "Existing historical lower-precision rows retained for provenance. Locked exact opening travel nodes are distinct from legal street addresses."
     },
     "trainer_participant_geography": {
-      "records": 105,
+      "records": 2688,
       "current_participants": 77,
-      "home_region_records": 77,
-      "trainers": {
-        "current": 40,
-        "home_region_covered": 40
-      },
-      "jockeys": {
-        "current": 34,
-        "home_region_covered": 34
-      },
-      "jockey_agents": {
-        "current": 3,
-        "home_region_covered": 3
-      },
-      "exact_opening_trainer_string_track_locations": 27,
-      "state": "CURRENT_PARTICIPANT_HOME_REGION_COMPLETE",
-      "note": "All 77 current participants have canonical region-level operating bases. Exact city/home track remains pending for region-only records; birthplaces are separate and still open."
+      "current_exact_1999_homebase_and_birthplace": "77/77",
+      "historical_alias_jockey_trainer_birthplace_and_primary_base": "1198/1198",
+      "state": "CURRENT_AND_HISTORICAL_JT_CORE_GEOGRAPHY_COMPLETE",
+      "note": "Dated historical seasonal base changes remain unresolved; do not infer race-day jockey/trainer from season records."
     },
     "horse_current_geography": {
-      "state_records": 434,
-      "unique_horses": 400,
-      "physical_track_state_records": 184,
-      "b01_circuit_only": 250,
-      "state": "PARTIAL_BY_DESIGN_NOT_ERROR"
+      "state_records": 2522,
+      "unique_horses": 2488,
+      "registry_horses": 2991,
+      "unlocated_registered": 503,
+      "b01_opening_runners_with_track_barns": 250,
+      "canonical_active_or_first_season_stallions_with_stud_nodes": 31,
+      "foundation_named_broodmares_with_farm_nodes": 21,
+      "b01_direct_dams_newly_boarded": 250,
+      "p2500_production_dams_newly_boarded": 1786,
+      "additional_boarded_dams_total": 2036,
+      "older_existing_track_states_retained": 184,
+      "state": "PHYSICAL_LOCATION_ID_JOIN_VERIFIED_NEW_DAM_ASSUMPTIONS_EXPLICIT",
+      "note": "Jan. 1 1999 survival/boarding of the 2036 production dams is deliberate WTW canon, not independently recovered historical fact; no current pregnancy, breeding health, ownership or future record is imputed. What Next H-1993-000007 added as 31st stud-resident stallion at existing Little Fork Farm, canon assumption."
     },
     "horse_foaling_geography_b01": {
       "horses": 250,
       "country_level_complete": 250,
-      "state": "COUNTRY_LEVEL_COMPLETE",
-      "pending": "State/city/farm locality."
+      "city_locality_complete": 250,
+      "state": "CITY_LOCALITY_CANON_LOCKED_B01",
+      "note": "Approved WTW localities; no inference that foaling locality equals current barn."
     },
     "historical_breeding_centers": {
-      "nodes": 13,
-      "state": "FOUNDATION_BUILT"
+      "nodes": 27,
+      "state": "FOUNDATION_EXPANDED_GLOBAL_FOR_HORSE_ORIGINS"
     },
     "people_birthplaces": {
-      "loaded": 0,
-      "state": "OPEN",
-      "note": "Birthplace must not be inferred from home circuit or operating base."
+      "canonical_people_covered": 154,
+      "canonical_people_total": 154,
+      "historical_alias_jockey_trainers_covered": 1198,
+      "state": "CANONICAL_PEOPLE_BIRTHPLACE_COMPLETE"
     },
     "jockey_bases": {
       "current_jockeys": 34,
@@ -288,11 +233,22 @@
       "note": "Exact city/home track and birthplace remain pending unless separately sourced."
     },
     "owner_bases": {
-      "current_owner_entities": 48,
-      "home_base_covered": 48,
-      "state": "CURRENT_OWNER_HOME_BASE_COMPLETE",
-      "source": "Ownership_Current_State",
-      "note": "Compound and seasonal bases are preserved as canon strings rather than forced to a single city. Exact street/city precision remains pending where source does not provide it."
+      "canonical_orgs_covered": 108,
+      "canonical_orgs_total": 108,
+      "state": "CANONICAL_ORGANIZATION_HOME_BASE_COMPLETE"
+    },
+    "horse_foaling_geography_all": {
+      "horse_registry_count": 2991,
+      "horse_geography_foaling_records": 2991,
+      "unique_horse_ids": 2991,
+      "city_locality_covered": 2991,
+      "state": "HORSE_REGISTRY_FOALING_GEOGRAPHY_COMPLETE",
+      "note": "Foaling geography is distinct from Jan 1 1999 physical residence; inferred localities are labeled deliberate fictional WTW canon, never historical source claims."
+    },
+    "people_operating_bases": {
+      "canonical_people_covered": 154,
+      "canonical_people_total": 154,
+      "state": "CURRENT_CANONICAL_PEOPLE_BASE_COMPLETE"
     }
   },
   "calendar_policy": {
@@ -308,12 +264,11 @@
     "travel_rule": "Use sourced post-1973 exact dates plus canonical geography nodes to reject impossible campaign sequences."
   },
   "next_actions": [
-    "Backfill sourced exact dates for the 2,242 active 1973-1998 editions, working by stakes/year; 2,216 currently use reconstructed 1999-pattern dates.",
-    "Resolve the 26 National Jockey Club Handicap 1973-1998 date-basis rows; 1982 is already corrected in route QA to 1982-05-01.",
-    "Recover source-backed participant birthplaces and permanent operating bases.",
-    "Recover municipality for region-only legacy farms/studs only where canon/source supports it; 22/22 now have at least region-level geography.",
-    "Recover foaling state/city/farm only where source-backed.",
-    "Keep five boundary cases dual-named unless parcel precision materially changes travel logic."
+    "Verify signed-in Cloudflare Pages deployment shows 134 entries under Racecourses; commit is on main and GitHub file/JS readback verified.",
+    "Add approved 1999 physical-location joins to the site's protected D1/API read model for horse/farm/person profiles; preserve Drive authority and source/canon distinction.",
+    "Classify 146 P2500 new sires and 242 Tier-B older mares for Jan 1 1999 survival before adding active physical residence.",
+    "Resolve nine orphan stallion-market source labels by canonical Horse_ID evidence or explicitly retire stale source entries.",
+    "Backfill sourced exact dates for active 1973-1998 stakes editions, preserving reconstructed-date evidence classes and historical quarantine."
   ],
   "historical_route_date_qa": {
     "policy": {
@@ -394,5 +349,17 @@
       }
     ],
     "remaining_scope": "Broader 1973-1998 edition-date backlog may remain outside these four high-risk route cases."
+  },
+  "site_sync": {
+    "source_authority": "https://docs.google.com/spreadsheets/d/1Lhpe6DG1foQ2-zayQBg4bKpTtu4MP_itpM1zo2GRSEA/edit",
+    "site": "https://wire-to-wire.pages.dev/",
+    "branch": "main",
+    "track_directory_path": "public/data/track-geography-v33.json",
+    "track_directory_records": 134,
+    "track_page_path": "public/app.js#renderTracks",
+    "track_ui_commit": "251c4aa5954ac242f9e37a6b94e312e9760b5eb2",
+    "scope": "Full 134-track directory is site-readable and shown by Racecourses page when asset loads. Existing Office FM v29 in Google Drive is not modified.",
+    "limitation": "Browser-level live deployment behind Cloudflare Access not verified. The 2,522 Horse_Geography state records remain in authoritative Drive and are not yet represented in the site's D1 snapshot; do not claim player profiles already read them.",
+    "privacy": "Do not expose private source horse/people files as unauthenticated static assets; implement secure D1 or Access-protected server import for full profiles."
   }
 }
