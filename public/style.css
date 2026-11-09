@@ -893,3 +893,50 @@ body{
   .profile-dashboard{grid-template-columns:1fr}
   .profile-dashboard>.profile-card:first-child{grid-row:auto}
 }
+
+
+.horse-connection-strip{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:7px;
+  margin-top:13px;
+}
+.horse-connection-card{
+  min-width:0;
+  padding:8px 9px;
+  border-radius:9px;
+  background:#ffffff0c;
+  border:1px solid rgba(217,196,142,.18);
+}
+.horse-connection-card small{
+  display:block;
+  color:#9db9a8;
+  font-size:7px;
+  font-weight:850;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+}
+.horse-connection-card strong{
+  display:block;
+  margin-top:3px;
+  color:#f8f3e8;
+  font-size:9px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.horse-connection-card strong button{
+  padding:0;border:0;background:none;color:#f8f3e8;font-weight:850;
+}
+.horse-connection-card span{
+  display:block;
+  margin-top:2px;
+  color:#a9bdb0;
+  font-size:7px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+@media(max-width:760px){
+  .horse-connection-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
