@@ -298,13 +298,94 @@
   "calendar_policy": {
     "pre_1973": "Year-level historical timing may remain broad where exact dates are not authenticated.",
     "from_1973_forward": "Target exact race date wherever available.",
-    "travel_rule": "Use exact post-1973 dates plus canonical geography nodes to reject impossible campaign sequences."
+    "travel_rule": "Use exact post-1973 dates plus canonical geography nodes to reject impossible campaign sequences.",
+    "flagged_post_1973_route_qa": "4/4 high-risk dense-travel routes exact-date reconciled; 0 unverified dates remain in this flagged subset."
   },
   "next_actions": [
-    "Apply route-band QA to historical campaign sequences.",
+    "Propagate the 1973 Acorn and 1982 National Jockey Club Handicap corrections into the upstream native historical-stakes authority when it becomes connector-accessible.",
     "Recover source-backed participant birthplaces and permanent operating bases.",
     "Recover municipality for region-only legacy farms/studs only where canon/source supports it; 22/22 now have at least region-level geography.",
     "Recover foaling state/city/farm only where source-backed.",
     "Keep five boundary cases dual-named unless parcel precision materially changes travel logic."
-  ]
+  ],
+  "historical_route_date_qa": {
+    "policy": {
+      "pre_1973": "Year-level timing may remain broad where exact race dates are not authenticated.",
+      "from_1973_forward": "Use exact race dates wherever available; route chronology must be travel-feasible."
+    },
+    "flagged_post_1973_dense_travel_routes": 4,
+    "exact_date_reconciled": 4,
+    "unverified_dates_remaining_in_flagged_post_1973_routes": 0,
+    "state": "POST_1973_FLAGGED_ROUTE_DATE_QA_COMPLETE",
+    "corrections": [
+      {
+        "audit_id": "ROUTE-13",
+        "horse_id": "H-1970-008013",
+        "horse_name": "Pay Quietly",
+        "year": 1973,
+        "correction": "Acorn Stakes corrected from 1973-06-02 to 1973-05-12; route reordered chronologically.",
+        "corrected_path": [
+          "1973-05-12 Acorn Stakes — New York / Northeast",
+          "1973-05-18 Black-Eyed Susan Stakes — Mid-Atlantic",
+          "1973-05-26 Mother Goose Stakes — New York / Northeast",
+          "1973-06-16 Ohio Derby — Ohio / Great Lakes"
+        ],
+        "inter_start_days": [
+          6,
+          8,
+          21
+        ],
+        "travel_result": "COHERENT",
+        "evidence": [
+          "SportsBetting3 1973 graded-stakes calendar: https://www.sportsbetting3.com/horse-races/1973-grade-all-races",
+          "Pimlico stakes-history PDF confirms Black-Eyed Susan 5/18/1973",
+          "Cleveland East Side News historical Ohio Derby account confirms 6/16/1973"
+        ],
+        "upstream_status": "QA_CORRECTED; PROPAGATE_TO_NATIVE_HISTORICAL_STAKES_AUTHORITY_WHEN_ACCESSIBLE"
+      },
+      {
+        "audit_id": "ROUTE-14",
+        "horse_id": "H-1979-008014",
+        "horse_name": "Wait Inside",
+        "year": 1982,
+        "correction": "National Jockey Club Handicap corrected from 1982-04-24 to 1982-05-01.",
+        "corrected_path": [
+          "1982-03-20 Rebel Handicap — Arkansas / South",
+          "1982-03-28 Louisiana Derby — Louisiana / Gulf",
+          "1982-04-10 Arkansas Derby — Arkansas / South",
+          "1982-05-01 National Jockey Club Handicap — Chicago / Great Lakes"
+        ],
+        "inter_start_days": [
+          8,
+          13,
+          21
+        ],
+        "travel_result": "COHERENT",
+        "evidence": [
+          "Kentucky Derby Rebel history PDF confirms Rebel 3/20/1982",
+          "Louisiana Derby timeline confirms Louisiana Derby 3/28/1982",
+          "Oaklawn history confirms Arkansas Derby day 4/10/1982",
+          "UPI Horse Racing Roundup dated 5/1/1982 reports Frost King winning the National Jockey Club Handicap that Saturday"
+        ],
+        "upstream_status": "QA_CORRECTED; PROPAGATE_TO_NATIVE_HISTORICAL_STAKES_AUTHORITY_WHEN_ACCESSIBLE"
+      }
+    ],
+    "other_flagged_routes": [
+      {
+        "audit_id": "ROUTE-15",
+        "horse_name": "Come Lola",
+        "year": 1986,
+        "unverified_dates": 0,
+        "status": "EXACT_DATE_ROUTE_QA_PASS"
+      },
+      {
+        "audit_id": "ROUTE-16",
+        "horse_name": "Nora's Curtain",
+        "year": 1987,
+        "unverified_dates": 0,
+        "status": "EXACT_DATE_ROUTE_QA_PASS"
+      }
+    ],
+    "remaining_scope": "Broader 1973-1998 edition-date backlog may remain outside these four high-risk route cases."
+  }
 }
