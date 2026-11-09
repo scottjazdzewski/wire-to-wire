@@ -359,6 +359,16 @@ async function openDetail(type,id){
   markup='<div class="entity-profile race-profile"><div class="profile-heading"><div class="eyebrow">HISTORICAL RACE EDITION</div><h2>'+h(e.name)+' '+renameButton(type,e.id,e.name)+'</h2><div class="detail-id">'+h(e.id)+'</div><p class="profile-summary">'+venueName(e)+' · '+h(e.year)+' · '+h(dateLabel(e))+'</p></div><div class="profile-section-title"><div><span class="smallcaps">SOURCE FINISH ORDER</span><h3>Recorded finishers</h3></div><span class="source-chip">'+results.length+' RESULTS</span></div><div class="profile-race-list">'+(results.map(p=>'<div class="profile-race-row"><div><strong>'+openButton('entity',p.horse_id,nameFor(p.horse_id))+'</strong></div><strong class="finish-badge finish-'+h(p.position)+'">'+h(p.position)+'</strong>'+editButton('result',p.edition_id+'::'+p.position,'Review','button button-quiet')+'</div>').join('')||'<p class="empty-note">No finishers imported.</p>')+'</div><p class="source-caveat">Source: '+h(e.source||'Not specified')+' · '+h(e.status||'SOURCE SNAPSHOT')+'</p></div>';
  }
  $('detail-content').innerHTML='<button class="icon-button drawer-close" data-close-drawer="true" aria-label="Close profile">✕</button>'+markup;
+ if(type==='entity'&&e.kind==='horse'){
+  const horseConnections=(state.data?.connections||[]).filter(c=>c.horse_id===id).sort((a,b)=>Number(b.year)-Number(a.year));
+  const roleDefs=[['Owner','owner'],['Trainer','trainer'],['Jockey','jockey'],['Breeder','breeder']];
+  const cards=roleDefs.map(([label,key])=>{
+   const c=horseConnections.find(x=>String(x.role||'').toLowerCase().includes(key));
+   return '<div class="horse-connection-card"><small>'+label+'</small><strong>'+(c?openButton('entity',c.party_id,nameFor(c.party_id)):'Not recorded')+'</strong><span>'+(c?h(c.year)+' season connection':'No supported source link')+'</span></div>';
+  }).join('');
+  const heading=$('detail-content').querySelector('.profile-heading');
+  if(heading)heading.insertAdjacentHTML('beforeend','<div class="horse-connection-strip">'+cards+'</div>');
+ }
  $('drawer-backdrop').hidden=false;$('detail-drawer').classList.add('open');$('detail-drawer').setAttribute('aria-hidden','false');
  if(type==='entity'&&e.kind==='horse'&&state.mode==='D1_CONNECTED'){
   try{
