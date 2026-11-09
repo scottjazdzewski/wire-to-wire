@@ -38,6 +38,17 @@ Dashboard totals changed from 1,304 to 1,305 exact-date active races, 3,883 to 3
 
 **Separate result/identity hold:** The same master row still names Larkin String, Rosalie’s Button and Bellamy String as the top three, while the archived result record identifies He Did, Valiant Fox and Gold Seeker. The result names and linked horse IDs need their own correction; the date update did not close that issue.
 
+## Four source leads saved in the master
+
+The Race_Date cell notes now hold sources for four remaining undated editions:
+
+- HSE-1935-0009, Santa Anita Derby: [contemporary schedule](https://www.usmodernist.org/AA/CAA-1935-02.pdf) lists February 16, 1935 as the planned day. A dated race result is still needed to establish the actual day.
+- HSE-1945-0004, Fountain of Youth: [Gulfstream Park](https://www.gulfstreampark.com/news/a-look-back-at-g2-fountain-of-youth/) identifies December 1945; exact day open.
+- HSE-1947-0004, Fountain of Youth: the same Gulfstream source identifies March 1947 for the three-year-old running; exact day open.
+- HSE-1950-0008, San Felipe: [a January 1950 race column](https://www.newyorker.com/magazine/1950/01/28/under-way-at-hialeah) identifies January; exact day open.
+
+These are partial leads: no day was entered and no additional race was closed. Historical result references and game identities require separate provenance and identity matching.
+
 ## Delta triage
 
 - 917 changed date values were found in the initial v3.37-to-v3.67 comparison. Their earlier pass/hold classification is not a current certification statement.
