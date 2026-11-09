@@ -264,11 +264,10 @@
     "travel_rule": "Use sourced post-1973 exact dates plus canonical geography nodes to reject impossible campaign sequences."
   },
   "next_actions": [
-    "Verify signed-in Cloudflare Pages deployment shows 134 entries under Racecourses; commit is on main and GitHub file/JS readback verified.",
-    "Add approved 1999 physical-location joins to the site's protected D1/API read model for horse/farm/person profiles; preserve Drive authority and source/canon distinction.",
-    "Classify 146 P2500 new sires and 242 Tier-B older mares for Jan 1 1999 survival before adding active physical residence.",
-    "Resolve nine orphan stallion-market source labels by canonical Horse_ID evidence or explicitly retire stale source entries.",
-    "Backfill sourced exact dates for active 1973-1998 stakes editions, preserving reconstructed-date evidence classes and historical quarantine."
+    "Run the new manual WTW D1 geography workflow in import_to_WTW_D1 mode with exact database confirmation, after confirming current Cloudflare token. Do not rerun the historical initial import.",
+    "Verify an authenticated site session GET /api/geography/overview reports all 8465 records and GET /api/geography/H-1993-000007 resolves the Little Fork Jan 1999 farm with its WTW-canon provenance.",
+    "Have the separately managed Office UI/profile window read the protected geography API without overwriting v29 layout; do not show unverified 1999 survival as factual.",
+    "Continue 146 P2500 sire alive/standing-status triage, 242 Tier-B historical mare evidence, and 9 source-only stallion name holds in the existing Drive v3.3 master."
   ],
   "historical_route_date_qa": {
     "policy": {
@@ -359,7 +358,33 @@
     "track_page_path": "public/app.js#renderTracks",
     "track_ui_commit": "251c4aa5954ac242f9e37a6b94e312e9760b5eb2",
     "scope": "Full 134-track directory is site-readable and shown by Racecourses page when asset loads. Existing Office FM v29 in Google Drive is not modified.",
-    "limitation": "Browser-level live deployment behind Cloudflare Access not verified. The 2,522 Horse_Geography state records remain in authoritative Drive and are not yet represented in the site's D1 snapshot; do not claim player profiles already read them.",
-    "privacy": "Do not expose private source horse/people files as unauthenticated static assets; implement secure D1 or Access-protected server import for full profiles."
+    "limitation": "The source snapshots, migration, importer and API are on GitHub and green in CI. These data records are NOT yet confirmed installed in the remote Cloudflare D1. The Office UI v29 in Drive remains managed by the other layout window.",
+    "privacy": "Do not expose private source horse/people files as unauthenticated static assets; implement secure D1 or Access-protected server import for full profiles.",
+    "status": "PROTECTED_GEOGRAPHY_READ_MODEL_CODE_AND_SOURCE_READY_CI_PASS; REMOTE_D1_IMPORT_NOT_CONFIRMED",
+    "import_source_partitions": 23,
+    "geo_source_records_total": 8465,
+    "geo_source_counts": {
+      "horse_residence": 2522,
+      "horse_foaling": 2991,
+      "participant": 2688,
+      "organization": 130,
+      "track": 134
+    },
+    "private_partition_path": "data/geography/import/",
+    "schema_migration": "migrations/0005_canon_geography_read_model.sql",
+    "compiler": "scripts/build-geography-import.mjs",
+    "remote_audit": "scripts/remote-geography-d1-audit.mjs",
+    "manual_import_workflow": ".github/workflows/import-geography-d1.yml",
+    "protected_lookup_endpoint": "GET /api/geography/{immutable_entity_id}",
+    "protected_overview_endpoint": "GET /api/geography/overview",
+    "ci_status": "PASS",
+    "ci_url": "https://github.com/scottjazdzewski/wire-to-wire/actions/runs/42629129792",
+    "ci_verified": [
+      "Source row count, exact immutable IDs, unique 1999 horse joins",
+      "Temporary SQLite import of 8465 rows, source/canon status preservation",
+      "Existing site, Access and historical SQL tests"
+    ],
+    "remote_import_status": "NOT_RUN_IN_THIS_CHAT; no claim of existing D1 records",
+    "role_boundary": "No Office FM v29 layout change. Profile frontend may use protected API only after remote import and signed-in smoke test."
   }
 }
