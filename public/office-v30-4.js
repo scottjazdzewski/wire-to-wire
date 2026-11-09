@@ -365,7 +365,42 @@
     clearTimeout(window.__wtwToast);
     window.__wtwToast = setTimeout(()=>toast.classList.remove('show'), 1100);
   }
-  function closeRoute(){ if(shell) shell.hidden = true; }
+  // Dedicated browser page routing, not a pop-out. All views use the SAME gameState.
+  // The active prototype has names but no certified horse IDs; URLs retain their names
+  // until the canonical IDs are connected (we never invent them here).
+  let restoringBrowserRoute = false;
+  function routePageType(kicker){
+    const match = {'Horse Profile':'horse','People Profile':'person','Farm Profile':'farm','Track Profile':'track',
+      'Race Profile':'race','Race Calendar':'calendar','Stable':'stable','Sales':'sales',
+      'World':'world','News':'news','Opportunity Board':'opportunities','Opportunity':'opportunities',
+      'Claim Watch':'claim','Deadline':'deadline','History':'history','Source':'source'};
+    return match[kicker] || 'file';
+  }
+  function routeUrl(kicker,title){
+    const q = new URLSearchParams(location.search);
+    q.delete('page'); q.delete('name'); q.delete('track');
+    const type=routePageType(kicker);
+    q.set('page',type);
+    if(['horse','person','farm','track','race','file','claim','deadline'].includes(type) && title) q.set('name',title);
+    if(type==='race' && window.__wtwRaceContext) q.set('track',window.__wtwRaceContext);
+    return location.pathname+'?'+q.toString();
+  }
+  function officeUrl(){
+    const q=new URLSearchParams(location.search);
+    q.delete('page');q.delete('name');q.delete('track');
+    const s=q.toString();return location.pathname+(s?'?'+s:'');
+  }
+  function markCurrentNav(name){
+    const top=['Stable','Race Calendar','Sales','World','News'].includes(name)?name:({'Horse Profile':'Stable','People Profile':'World','Farm Profile':'World','Track Profile':'World','Race Profile':'Race Calendar','Opportunity Board':'Office'}[name]||'Office');
+    document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.act===top));
+  }
+  function closeRoute(){
+    const wasOpen=!!shell&&!shell.hidden;
+    if(shell)shell.hidden=true;
+    document.body.classList.remove('wtw-page-open');
+    markCurrentNav('Office');
+    if(wasOpen&&!restoringBrowserRoute) window.history.pushState({wtwPage:'office'},'',officeUrl());
+  }
   function pushHistory(label){
     history = history.slice(0, historyIndex+1);
     history.push(label); historyIndex = history.length - 1;
@@ -385,9 +420,27 @@
     routeKicker.textContent = kicker || 'Destination';
     routeTitle.textContent = title || 'Page';
     routeBody.innerHTML = body;
+    const head=shell.querySelector('.routeHead');
+    if(head){
+      let badge=head.querySelector('.wtwRouteBadge');
+      if(!badge){badge=document.createElement('img');badge.className='wtwRouteBadge';badge.alt='';badge.setAttribute('aria-hidden','true');head.insertBefore(badge,head.firstChild);}
+      const kind=routePageType(kicker);
+      const badgeNames={horse:'horse',person:'people',farm:'farm_stable',track:'track',stable:'farm_stable',calendar:'meet_schedule',race:'major_races',sales:'connections',world:'track',news:'history',opportunities:'reputation',claim:'connections',deadline:'meet_schedule',history:'history',file:'history',source:'people'};
+      badge.src='/assets/profile-badges/v2/wtw_badge_'+(badgeNames[kind]||'history')+'.png';
+      const lead=head.querySelector(':scope > div');
+      if(lead)lead.classList.add('wtwPageLead');
+      const close=head.querySelector('.routeClose');
+      if(close){close.textContent='← Office';close.title='Return to Racing Office';close.setAttribute('aria-label','Return to Racing Office');}
+    }
     shell.hidden = false;
-    if(track) pushHistory(title);
-    showToast(title);
+    document.body.classList.add('wtw-page-open');
+    markCurrentNav(kicker);
+    if(track){
+      pushHistory(title);
+      if(!restoringBrowserRoute) window.history.pushState({wtwPage:routePageType(kicker),title},'',routeUrl(kicker,title));
+    }
+    // No dismissible shaded modal: this route occupies the app's entire content page.
+
   }
   function scheduleItemsFromOffice(){
     return Array.from(document.querySelectorAll('.fixtureList .fixture')).map(row=>{
@@ -466,11 +519,52 @@
       <div class="stableRosterFoot"><span>Statuses and linked decisions update from the current Office state.</span><button data-act="Office Overview">Back to Office</button></div>
     </section>`);
   }
+  function pageEscape(value){return String(value==null?'':value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+  function officePageRow(badge,title,info,action,label,attrs=''){
+    return '<div class="wtwPageListRow"><img class="wtwPageMiniBadge" alt="" src="/assets/profile-badges/v2/wtw_badge_'+badge+'.png"/><div><h4>'+pageEscape(title)+'</h4><p>'+pageEscape(info)+'</p></div><button data-act="'+pageEscape(action)+'" '+attrs+'>'+pageEscape(label)+'</button></div>';
+  }
+  function openSalesDesk(){
+    const data=[
+      ['connections','Saratoga catalog','Bloodstock scouting file · existing Office decision','Open profile decision','Open file','data-case="saratoga"'],
+      ['horse','Powerline inquiry','Private offer · existing Opportunity Board','Open private offer','Review offer','']
+    ];
+    const rows=data.map(d=>officePageRow(...d)).join('');
+    openRoute('Sales','Sales & Bloodstock',`<div class="wtwSectionGrid"><section class="routeCard"><h3>Active Market Files</h3><div class="wtwPageList">${rows}</div></section><section class="routeCard"><h3>Scouting Desk</h3><p>These are the market and bloodstock files actually present in the current Office. No auction results, bids or ownership terms are inferred.</p><div class="routeActions"><button data-act="Open profile decision" data-case="saratoga">Review catalog</button><button class="alt" data-act="Stable">Stable Roster</button></div></section></div>`);
+  }
+  function openNewsDesk(){
+    const news=document.querySelector('.msg[data-case="newsbuzz"]');
+    const title=news?.querySelector('.title')?.textContent.trim()||'Argosy colt buzz building';
+    const meta=news?.querySelector('.meta')?.textContent.trim()||'Current Office news file';
+    const rows=officePageRow('history',title,meta,'Open profile decision','Open story','data-case="newsbuzz"')+
+      officePageRow('people','Pieta gallop-out report','Current Office training report','Open profile decision','Review','data-case="pieta"');
+    openRoute('News','Racing News Desk',`<div class="wtwSectionGrid"><section class="routeCard"><h3>Current Office Reports</h3><div class="wtwPageList">${rows}</div></section><section class="routeCard"><h3>News Context</h3><p>Selected stories connect to the current game's Decision Desk. This prototype does not yet have a live external racing-news feed.</p><div class="routeActions"><button data-act="World">World Directory</button><button class="alt" data-act="Office Overview">Office</button></div></section></div>`);
+  }
+  function openOpportunityDesk(){
+    const items=[...document.querySelectorAll('.oppItem')];
+    const rows=items.map(item=>{
+      const title=item.querySelector('h4')?.textContent.trim()||'Opportunity';
+      const meta=item.querySelector('p')?.textContent.trim()||'Office opportunity';
+      const action=item.getAttribute('data-act')||'Office Overview';
+      return officePageRow('reputation',title,meta,action,'Review');
+    }).join('');
+    openRoute('Opportunity Board','Opportunity Board',`<div class="wtwSectionGrid"><section class="routeCard"><h3>Open Opportunities</h3><div class="wtwPageList">${rows}</div></section><section class="routeCard"><h3>Manager's View</h3><p>Each listed opportunity is linked to the existing Office action; no extra claim candidates, private offers or sales data have been invented.</p><div class="routeActions"><button data-act="Sales">Sales Desk</button><button class="alt" data-act="Stable">Stable Roster</button></div></section></div>`);
+  }
+  function openRaceProfile(name,track){
+    const data=trackProfiles[track];
+    const r=(data?.stakes||[]).find(x=>x[0]===name);
+    if(!data||!r){showToast('Race record not available in this Office');return;}
+    window.__wtwRaceContext=track;
+    const fields=[['Race',r[0]],['Track',track],['Listed date (1999)',r[1]],['Category',r[2]],['Listed purse',r[3]]].map(([k,v])=>'<div class="routeRow"><b>'+pageEscape(k)+'</b><span>'+pageEscape(v)+'</span></div>').join('');
+    openRoute('Race Profile',name,`<div class="wtwSectionGrid"><section class="routeCard"><h3>Race File</h3><div class="routeRows">${fields}</div><div class="routeActions"><button data-act="Open track profile" data-track-profile="${pageEscape(track)}">Track Profile</button><button class="alt" data-act="Race Calendar">Race Calendar</button></div></section><section class="routeCard"><h3>Entries & Results</h3><p>No entries, scratches or final result are connected to this race file in the current Office prototype.</p><p>The schedule fields shown on the left are the existing track-profile listing, not a new independent race database.</p></section></div>`);
+  }
   function openPage(page){
     if(page==='Stable'){ openStableRoute(); return; }
     if(page==='Race Calendar'){ openRaceCalendar(); return; }
     if(page==='World'){ openWorldDirectory(); return; }
-    const c = pageCopy[page] || [page,page,'This page shell is wired. The full page can be built next.'];
+    if(page==='Sales'){ openSalesDesk(); return; }
+    if(page==='News'){ openNewsDesk(); return; }
+    if(page==='Opportunity'){ openOpportunityDesk(); return; }
+    const c = pageCopy[page] || [page,page,'This view has no additional current Office information.'];
     openRoute(c[0], c[1], `
       <section class="routeCard"><h3>${c[1]}</h3><p>${c[2]}</p><div>
         <span class="interactionBadge">wired</span><span class="interactionBadge">placeholder shell</span><span class="interactionBadge">next build target</span>
@@ -727,7 +821,7 @@
   function openTrackProfile(name){
     const data=trackProfiles[name];
     if(!data){ showToast('Track profile not yet available'); return; }
-    const stakes=(data.stakes||[]).map(r=>`<div class="stakesRow"><strong>${r[0]}</strong><span>${r[1]}</span><span>${r[2]}</span><span>${r[3]}</span></div>`).join('') || '<div class="achievementItem muted">No canonical stakes rows loaded.</div>';
+    const stakes=(data.stakes||[]).map(r=>`<button type="button" class="stakesRow wtwRaceNavRow" data-act="Open race profile" data-race-name="${pageEscape(r[0])}" data-track-profile="${pageEscape(name)}"><strong>${pageEscape(r[0])}</strong><span>${pageEscape(r[1])}</span><span>${pageEscape(r[2])}</span><span>${pageEscape(r[3])}</span></button>`).join('') || '<div class="achievementItem muted">No canonical stakes rows loaded.</div>';
     const officeContext=trackOfficeContext(name);
     openRoute('Track Profile',name,`
       <section class="profilePage trackProfilePage">
@@ -886,8 +980,8 @@
       gameState = blankGameState(); closeRoute(); setDateChipText('2014-07-15'); currentCase='powerline'; loadCase('powerline'); processDueFollowUps(); syncResolvedMessages(); propagateOfficeState();
       showToast('Reset Office state'); return true;
     }
-    if(act==='Back'){ if(historyIndex>0){ historyIndex--; openRoute('History', history[historyIndex], '<section class="routeCard"><h3>'+history[historyIndex]+'</h3><p>History destination restored.</p></section>', false);} return true; }
-    if(act==='Forward'){ if(historyIndex<history.length-1){ historyIndex++; openRoute('History', history[historyIndex], '<section class="routeCard"><h3>'+history[historyIndex]+'</h3><p>History destination restored.</p></section>', false);} return true; }
+    if(act==='Back'){ window.history.back(); return true; }
+    if(act==='Forward'){ window.history.forward(); return true; }
     if(act.startsWith('Filter ')){ filterMessages(act); return true; }
     if(act==='Open file' || act==='Open selected file'){ openFile(); return true; }
     if(act==='Open calendar horse'){ openHorseProfile(el.dataset.profile); return true; }
@@ -895,6 +989,7 @@
     if(act==='Open person profile'){ openPersonProfile(el.dataset.personProfile); return true; }
     if(act==='Open farm profile'){ openFarmProfile(el.dataset.farmProfile); return true; }
     if(act==='Open track profile'){ openTrackProfile(el.dataset.trackProfile); return true; }
+    if(act==='Open race profile'){ openRaceProfile(el.dataset.raceName,el.dataset.trackProfile); return true; }
     if(act==='Open calendar decision'){ const key=el.dataset.case; if(key) loadCase(key); else showToast('No linked decision'); return true; }
     if(act==='Horse Profile'){ const target=caseHorseTarget[currentCase]; if(target) openHorseProfile(target); else openUnlinkedHorseContext(currentCase); return true; }
     if(act==='Open profile decision'){ const key=el.dataset.case; if(key) loadCase(key); else showToast('No linked decision'); return true; }
@@ -984,6 +1079,32 @@
     syncResolvedMessages();
     propagateOfficeState();
   }
-  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && shell && !shell.hidden){ closeRoute(); showToast('Closed'); }});
+  function restoreLocationPage(){
+    const params=new URLSearchParams(location.search);
+    const page=params.get('page'),name=params.get('name'),track=params.get('track');
+    restoringBrowserRoute=true;
+    try{
+      if(!page||page==='office') {closeRoute(); return;}
+      if(page==='stable'){openStableRoute();return;}
+      if(page==='calendar'){openRaceCalendar();return;}
+      if(page==='sales'){openSalesDesk();return;}
+      if(page==='news'){openNewsDesk();return;}
+      if(page==='world'){openWorldDirectory();return;}
+      if(page==='opportunities'){openOpportunityDesk();return;}
+      if(page==='horse'&&name){openHorseProfile(name);return;}
+      if(page==='person'&&name){openPersonProfile(name);return;}
+      if(page==='farm'&&name){openFarmProfile(name);return;}
+      if(page==='track'&&name){openTrackProfile(name);return;}
+      if(page==='race'&&name&&track){openRaceProfile(name,track);return;}
+      closeRoute();
+    }finally{restoringBrowserRoute=false;}
+  }
+  window.addEventListener('popstate',restoreLocationPage);
+  // Office has its own daily decision desk; Escape is not a substitute for normal
+  // back navigation but serves as a keyboard return shortcut.
+  document.addEventListener('keydown', function(e){if(e.key==='Escape'&&shell&&!shell.hidden){closeRoute();}});
   updateBackForward();
+  document.body.classList.add('wtw-fm-v33');
+  // Read direct URLs on initial load after original state restoration and handlers exist.
+  if(new URLSearchParams(location.search).has('page'))setTimeout(restoreLocationPage,0);
 })();
