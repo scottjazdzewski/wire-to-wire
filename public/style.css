@@ -1432,3 +1432,177 @@ body{
   .racecourse-atlas-grid{grid-template-columns:1fr}
   .racecourse-atlas-card{border-right:0!important}
 }
+
+/* WTW DESIGN PASS 02C — network + history vault */
+.network-page,.vault-page{display:grid;gap:16px}
+.network-hero,.vault-hero{
+  display:grid;
+  grid-template-columns:minmax(0,1.2fr) minmax(340px,.8fr);
+  gap:22px;
+  align-items:center;
+  padding:22px 24px;
+  border-radius:15px;
+  color:#fff;
+  background:
+    radial-gradient(circle at 86% 18%,rgba(217,196,142,.16),transparent 22rem),
+    linear-gradient(115deg,#0a2f24,#174d38);
+  border:1px solid rgba(183,148,79,.30);
+}
+.network-hero .smallcaps,.vault-hero .smallcaps{color:#a8cbb8}
+.network-hero h2,.vault-hero h2{
+  margin:5px 0 7px;
+  font:700 27px/1.05 Georgia,"Times New Roman",serif;
+}
+.network-hero p,.vault-hero p{margin:0;max-width:690px;color:#ccddd3;font-size:10px;line-height:1.55}
+.network-hero-stats,.vault-hero-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.network-hero-stats span,.vault-hero-stats span{
+  padding:10px;
+  border-radius:9px;
+  border:1px solid rgba(255,255,255,.11);
+  background:#ffffff0b;
+  color:#b9cbbf;
+  font-size:8px;
+}
+.network-hero-stats b,.vault-hero-stats b{display:block;color:#fff;font:700 20px Georgia,"Times New Roman",serif}
+.network-role-strip{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+}
+.network-role-strip span{
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid #ddd5c7;
+  background:linear-gradient(180deg,#fffdf8,#f7f2e8);
+  color:#7e887f;
+  font-size:8px;
+}
+.network-role-strip b{font:700 18px Georgia,"Times New Roman",serif;color:#2c553d;margin-right:4px}
+.network-grid-v2{grid-template-columns:repeat(3,minmax(0,1fr))}
+.network-card-v2{display:flex;flex-direction:column}
+.network-card-v2 .people-art{height:118px}
+.network-art-stamp{
+  position:absolute;
+  right:10px;top:8px;
+  color:#ffffff8f;
+  font:700 12px Georgia,"Times New Roman",serif;
+  letter-spacing:.08em;
+}
+.network-card-v2 .people-card-body{display:flex;flex-direction:column;flex:1}
+.network-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.network-role-badge{
+  max-width:52%;
+  padding:3px 6px;
+  border-radius:99px;
+  background:#eee8db;
+  color:#776b56;
+  font-size:6px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.network-card-v2 .people-card-body p{
+  min-height:31px;
+  color:#7f8a83;
+  font-size:8px;
+  line-height:1.45;
+  overflow:hidden;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+}
+.network-card-facts{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+  margin:5px 0 8px;
+}
+.network-card-facts span{
+  padding:7px 8px;
+  border-radius:7px;
+  background:#f5f1e8;
+  border:1px solid #e7dfd2;
+  color:#8a938d;
+  font-size:7px;
+}
+.network-card-facts b{display:block;color:#28513a;font:700 13px Georgia,"Times New Roman",serif}
+.network-card-v2 .people-card-footer{margin-top:auto}
+.network-card-v2 .people-card-footer .button{font-size:8px;padding:6px 8px}
+
+/* History vault */
+.vault-page .year-tabs{margin-bottom:0}
+.vault-month-group{
+  border:1px solid #ddd5c7;
+  border-radius:14px;
+  background:#fffdf8;
+  overflow:hidden;
+  box-shadow:0 8px 20px rgba(18,49,36,.04);
+}
+.vault-month-group>header{
+  display:flex;
+  justify-content:space-between;
+  align-items:end;
+  gap:12px;
+  padding:12px 15px;
+  background:linear-gradient(180deg,#f8f3e9,#f2ece0);
+  border-bottom:1px solid #e2d9ca;
+}
+.vault-month-group>header h3{margin:3px 0 0;font:700 17px Georgia,"Times New Roman",serif;color:#244936}
+.vault-month-group>header>span{font-size:8px;color:#8c8679}
+.vault-race-list{display:grid}
+.vault-race-card{
+  display:grid;
+  grid-template-columns:56px minmax(0,1fr) auto;
+  gap:13px;
+  align-items:center;
+  padding:11px 14px;
+  border-bottom:1px solid #ece5d9;
+}
+.vault-race-card:last-child{border-bottom:0}
+.vault-race-card:hover{background:#fbf7ef}
+.vault-race-date{
+  display:grid;
+  place-items:center;
+  min-height:56px;
+  border-radius:9px;
+  background:#f1ece1;
+  border:1px solid #dfd5c4;
+}
+.vault-race-date small{font-size:6px;color:#8b826f;font-weight:850}
+.vault-race-date strong{font:700 20px/1 Georgia,"Times New Roman",serif;color:#28513a}
+.vault-race-date span{font-size:6px;color:#9c7c41;font-weight:850;letter-spacing:.08em}
+.vault-race-main{min-width:0}
+.vault-race-kicker{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  color:#839087;
+  font-size:8px;
+  min-width:0;
+}
+.vault-race-kicker .name-edit-pair{max-width:58%}
+.vault-race-main h4{
+  margin:4px 0 5px;
+  font:700 15px Georgia,"Times New Roman",serif;
+}
+.vault-race-main h4 button{padding:0;border:0;background:none;color:#214836;font:inherit;text-align:left}
+.vault-race-winner{display:flex;align-items:center;gap:7px;font-size:8px;color:#87928b}
+.vault-race-winner>span{
+  font-size:6px;
+  letter-spacing:.11em;
+  font-weight:900;
+  color:#9a7f49;
+}
+.vault-race-winner button{padding:0;border:0;background:none;color:#2c6042;font-size:9px;font-weight:850}
+.vault-race-actions .button{font-size:8px;padding:6px 8px}
+
+@media(max-width:980px){
+  .network-grid-v2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .network-hero,.vault-hero{grid-template-columns:1fr}
+}
+@media(max-width:650px){
+  .network-role-strip{grid-template-columns:1fr 1fr}
+  .network-grid-v2{grid-template-columns:1fr}
+  .vault-race-card{grid-template-columns:46px minmax(0,1fr)}
+  .vault-race-actions{grid-column:2}
+}
