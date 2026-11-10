@@ -334,7 +334,7 @@ function profileDetail(route){
  };
 
  const personWork=()=>{
-  const roleName=text('.profileSubline').replace(/^Job:\\s*/i,'').trim().toLowerCase();
+  const roleName=text('.profileSubline').replace(/^Job:\s*/i,'').trim().toLowerCase();
   const namedRoles={
    'stable staff':'stable_staff','bloodstock':'bloodstock_professional',
    'bloodstock agent':'bloodstock_agent','trainer':'trainer','jockey':'jockey',
