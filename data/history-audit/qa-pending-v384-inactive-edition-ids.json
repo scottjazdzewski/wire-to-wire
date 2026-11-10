@@ -1,0 +1,908 @@
+{
+ "kind": "WTW_DERIVED_PRIVATE_INACTIVE_SITE_FILTER_NOT_A_MASTER",
+ "authority": {
+  "spreadsheet_id": "1jRweDBVk1nWglt8K-lRI0NNOgrmdX8w_60JtzP0_3aY",
+  "sheet_name": "Master_Stakes_Calendar",
+  "source_status": "V3.84_QA_PENDING",
+  "url": "https://docs.google.com/spreadsheets/d/1jRweDBVk1nWglt8K-lRI0NNOgrmdX8w_60JtzP0_3aY/edit"
+ },
+ "counts": {
+  "total_edition_ids": 5370,
+  "active": 5147,
+  "excluded": 223
+ },
+ "excluded": [
+  {
+   "edition_id": "HSE-1958-0006",
+   "canon_status": "QUARANTINED_HISTORICAL_CONDITION_MISMATCH_V3_11"
+  },
+  {
+   "edition_id": "HSE-1973-0015",
+   "canon_status": "QUARANTINED_NON_STAKES_CALUMET_PURSE_V3_89"
+  },
+  {
+   "edition_id": "HSE-1974-0015",
+   "canon_status": "QUARANTINED_NON_STAKES_CALUMET_PURSE_V3_89"
+  },
+  {
+   "edition_id": "HSE-1975-0015",
+   "canon_status": "QUARANTINED_NON_STAKES_CALUMET_PURSE_V3_89"
+  },
+  {
+   "edition_id": "HSE-1976-0015",
+   "canon_status": "QUARANTINED_NON_STAKES_CALUMET_PURSE_V3_89"
+  },
+  {
+   "edition_id": "HSE-1977-0015",
+   "canon_status": "QUARANTINED_NON_STAKES_CALUMET_PURSE_V3_89"
+  },
+  {
+   "edition_id": "HSE-1978-0015",
+   "canon_status": "QUARANTINED_NON_STAKES_CALUMET_PURSE_V3_89"
+  },
+  {
+   "edition_id": "HSE-1979-0015",
+   "canon_status": "QUARANTINED_NON_STAKES_CALUMET_PURSE_V3_89"
+  },
+  {
+   "edition_id": "HSE-1980-0015",
+   "canon_status": "QUARANTINED_NON_STAKES_CALUMET_PURSE_V3_89"
+  },
+  {
+   "edition_id": "HSE-1981-0015",
+   "canon_status": "QUARANTINED_NON_STAKES_CALUMET_PURSE_V3_89"
+  },
+  {
+   "edition_id": "HSE-1982-0015",
+   "canon_status": "QUARANTINED_NON_STAKES_CALUMET_PURSE_V3_89"
+  },
+  {
+   "edition_id": "HSE-1983-0015",
+   "canon_status": "QUARANTINED_NON_STAKES_CALUMET_PURSE_V3_89"
+  },
+  {
+   "edition_id": "HSE-1959-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1960-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1961-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1962-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1963-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1964-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1965-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1966-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1967-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1968-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1969-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1970-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1971-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1972-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1973-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1974-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1975-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1976-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1977-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1978-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1979-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1980-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1981-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1982-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1983-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1984-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1985-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1986-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1987-0073",
+   "canon_status": "QUARANTINED_OFFICIAL_NONRUN_PIMLICO_SPECIAL_1959_1987_20261022"
+  },
+  {
+   "edition_id": "HSE-1884-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1885-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1886-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1887-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1888-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1889-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1890-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1891-0002",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1891-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1892-0002",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1892-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1893-0002",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1893-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1894-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1895-0024",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1895-0037",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1895-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1896-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1897-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1898-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1899-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1900-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1901-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1902-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1903-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1904-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1905-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1906-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1907-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1908-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1909-0061",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1909-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1910-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1911-0003",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1911-0018",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1911-0022",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1911-0024",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1911-0032",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1911-0036",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1911-0037",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1911-0041",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1911-0061",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1911-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1911-0090",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "RE-1911-US-3001",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1912-0003",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1912-0018",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1912-0022",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1912-0024",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1912-0030",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1912-0032",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1912-0036",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1912-0041",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1912-0061",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1912-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1912-0090",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "RE-1912-US-3001",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1913-0061",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1913-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1914-0041",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1914-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1915-0014",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1915-0061",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1915-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1916-0014",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1916-0061",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1916-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1917-0014",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1917-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1918-0014",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1918-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1919-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1920-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1921-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1922-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1923-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1927-0014",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1927-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1928-0014",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1929-0014",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1930-0014",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1931-0014",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1932-0014",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1933-0014",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1933-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1934-0014",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1934-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1935-0014",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1936-0014",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1936-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1937-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1938-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1939-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1939-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1940-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1940-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1941-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1941-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1942-0008",
+   "canon_status": "QUARANTINED_NOT_RUN_SAN_FELIPE_V3_14"
+  },
+  {
+   "edition_id": "HSE-1942-0009",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_V3_15"
+  },
+  {
+   "edition_id": "HSE-1942-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1942-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1943-0008",
+   "canon_status": "QUARANTINED_NOT_RUN_SAN_FELIPE_V3_14"
+  },
+  {
+   "edition_id": "HSE-1943-0009",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_V3_15"
+  },
+  {
+   "edition_id": "HSE-1943-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1943-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1944-0008",
+   "canon_status": "QUARANTINED_NOT_RUN_SAN_FELIPE_V3_14"
+  },
+  {
+   "edition_id": "HSE-1944-0009",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_V3_15"
+  },
+  {
+   "edition_id": "HSE-1944-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1944-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1945-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1945-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1946-0004",
+   "canon_status": "QUARANTINED_NOT_RUN_FOUNTAIN_V3_11"
+  },
+  {
+   "edition_id": "HSE-1946-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1946-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1947-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1947-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1948-0004",
+   "canon_status": "QUARANTINED_NOT_RUN_FOUNTAIN_V3_11"
+  },
+  {
+   "edition_id": "HSE-1948-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1948-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1949-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1949-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1950-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1950-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1951-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1951-0083",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1952-0004",
+   "canon_status": "QUARANTINED_NOT_RUN_FOUNTAIN_V3_11"
+  },
+  {
+   "edition_id": "HSE-1952-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1953-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1954-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1955-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1956-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1957-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1958-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1959-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1960-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1961-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1962-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1968-0058",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_BUENA_VISTA_V3_100"
+  },
+  {
+   "edition_id": "HSE-1969-0057",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_MODESTY_V3_88"
+  },
+  {
+   "edition_id": "HSE-1969-0058",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_BUENA_VISTA_V3_100"
+  },
+  {
+   "edition_id": "HSE-1970-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1970-0057",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_MODESTY_V3_88"
+  },
+  {
+   "edition_id": "HSE-1970-0058",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_BUENA_VISTA_V3_100"
+  },
+  {
+   "edition_id": "HSE-1971-0017",
+   "canon_status": "QUARANTINED_RESOLVER_V3_6"
+  },
+  {
+   "edition_id": "HSE-1971-0057",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_MODESTY_V3_88"
+  },
+  {
+   "edition_id": "HSE-1971-0058",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_BUENA_VISTA_V3_100"
+  },
+  {
+   "edition_id": "HSE-1972-0057",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_MODESTY_V3_88"
+  },
+  {
+   "edition_id": "HSE-1972-0058",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_BUENA_VISTA_V3_100"
+  },
+  {
+   "edition_id": "HSE-1973-0057",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_MODESTY_V3_88"
+  },
+  {
+   "edition_id": "HSE-1973-0058",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_BUENA_VISTA_V3_100"
+  },
+  {
+   "edition_id": "HSE-1974-0057",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_MODESTY_V3_88"
+  },
+  {
+   "edition_id": "HSE-1974-0058",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_BUENA_VISTA_V3_100"
+  },
+  {
+   "edition_id": "HSE-1975-0057",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_MODESTY_V3_88"
+  },
+  {
+   "edition_id": "HSE-1975-0058",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_BUENA_VISTA_V3_100"
+  },
+  {
+   "edition_id": "HSE-1976-0057",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_MODESTY_V3_88"
+  },
+  {
+   "edition_id": "HSE-1976-0058",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_BUENA_VISTA_V3_100"
+  },
+  {
+   "edition_id": "HSE-1977-0057",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_MODESTY_V3_88"
+  },
+  {
+   "edition_id": "HSE-1977-0058",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_BUENA_VISTA_V3_100"
+  },
+  {
+   "edition_id": "HSE-1978-0057",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_MODESTY_V3_88"
+  },
+  {
+   "edition_id": "HSE-1978-0058",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_BUENA_VISTA_V3_100"
+  },
+  {
+   "edition_id": "HSE-1979-0057",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_MODESTY_V3_88"
+  },
+  {
+   "edition_id": "HSE-1979-0058",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_BUENA_VISTA_V3_100"
+  },
+  {
+   "edition_id": "HSE-1980-0058",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_BUENA_VISTA_V3_100"
+  },
+  {
+   "edition_id": "HSE-1981-0058",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_BUENA_VISTA_V3_100"
+  },
+  {
+   "edition_id": "HSE-1982-0058",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_BUENA_VISTA_V3_100"
+  },
+  {
+   "edition_id": "HSE-1983-0058",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_BUENA_VISTA_V3_100"
+  },
+  {
+   "edition_id": "HSE-1984-0058",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_BUENA_VISTA_V3_100"
+  },
+  {
+   "edition_id": "HSE-1985-0058",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_BUENA_VISTA_V3_100"
+  },
+  {
+   "edition_id": "HSE-1986-0058",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_BUENA_VISTA_V3_100"
+  },
+  {
+   "edition_id": "HSE-1987-0058",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_BUENA_VISTA_V3_100"
+  },
+  {
+   "edition_id": "HSE-1988-0057",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_MODESTY_V3_88"
+  },
+  {
+   "edition_id": "HSE-1990-0047",
+   "canon_status": "QUARANTINED_RESOLVER_V3_40"
+  },
+  {
+   "edition_id": "HSE-1991-0047",
+   "canon_status": "QUARANTINED_RESOLVER_V3_40"
+  },
+  {
+   "edition_id": "HSE-1992-0047",
+   "canon_status": "QUARANTINED_RESOLVER_V3_40"
+  },
+  {
+   "edition_id": "HSE-1993-0047",
+   "canon_status": "QUARANTINED_RESOLVER_V3_40"
+  },
+  {
+   "edition_id": "RE-1994-US-0001",
+   "canon_status": "QUARANTINED_RESOLVER_V3_40"
+  },
+  {
+   "edition_id": "HSE-1995-0057",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_MODESTY_V3_88"
+  },
+  {
+   "edition_id": "HSE-1996-0033",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_CORNHUSKER_V3_86"
+  },
+  {
+   "edition_id": "HSE-1997-0072",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_MEADOWLANDS_V3_93"
+  },
+  {
+   "edition_id": "HSE-1998-0029",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_ARLINGTON_V3_98"
+  },
+  {
+   "edition_id": "HSE-1998-0057",
+   "canon_status": "QUARANTINED_HISTORICAL_NOT_RUN_MODESTY_V3_88"
+  }
+ ]
+}
