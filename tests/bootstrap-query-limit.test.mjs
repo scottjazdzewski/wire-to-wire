@@ -32,5 +32,5 @@ test('full historical bootstrap serializes D1 requests and exposes every availab
   assert.equal(data.mode,'D1_CONNECTED');
   assert.deepEqual(data.years,[1864,1953,1998]);
   assert.equal(data.counts.races,1,'visible count comes from returned rows, not stale D1 count');
-  assert.equal(data.historySource.result_delta_status,'NOT_RECONCILED_NOT_PROMOTED');
+  assert.equal(data.historySource.result_delta_status,'D1_PARITY_VERIFIED_2026_11_10__SOURCE_QA_PENDING');
 });

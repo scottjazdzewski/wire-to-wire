@@ -36,7 +36,7 @@ test('authoritative 223-ID historical hold list is deterministic and source-labe
   assert.equal(qaPendingInactiveAuthority,'V3.84_QA_PENDING');
   assert.deepEqual([...qaPendingInactiveEditionIds].sort(),inactive.excluded.map(r=>r.edition_id).sort());
   assert.equal(historicalSourceStatus.exclusion_list_size,223);
-  assert.equal(historicalSourceStatus.result_delta_status,'NOT_RECONCILED_NOT_PROMOTED');
+  assert.equal(historicalSourceStatus.result_delta_status,'D1_PARITY_VERIFIED_2026_11_10__SOURCE_QA_PENDING');
 });
 test('visibility excludes Drive-quarantined ID even when old D1 status says ACTIVE',()=>{
   assert.equal(isHistoricalEditionVisible(race(held,1958)),false);
@@ -54,7 +54,7 @@ test('historical bootstrap excludes stale D1 race/result and corrects displayed 
   assert.equal(data.counts.races,1);
   assert.equal(data.counts.results,1);
   assert.equal(data.historySource.canonical_race_authority,'Drive E/W/M v3.84 QA_PENDING');
-  assert.equal(data.historySource.result_delta_status,'NOT_RECONCILED_NOT_PROMOTED');
+  assert.equal(data.historySource.result_delta_status,'D1_PARITY_VERIFIED_2026_11_10__SOURCE_QA_PENDING');
   assert.ok(statements.every(s=>!/^\s*(INSERT|UPDATE|DELETE|DROP|ALTER)\b/i.test(s)));
 });
 test('year API cannot reintroduce stale quarantine from imported v3.37 D1',async()=>{
@@ -72,5 +72,5 @@ test('read-only history source health reports stale result projection',async()=>
   const resp=await api(new Request('http://localhost/api/health'),{DB:db},'tester@example.com');
   const data=await resp.json();
   assert.equal(data.status,'ok');
-  assert.match(data.historySource.warning,/Older site results remain provisional/);
+  assert.match(data.historySource.warning,/Technical D1 parity verified/);
 });
