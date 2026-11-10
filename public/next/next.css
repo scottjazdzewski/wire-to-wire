@@ -359,3 +359,119 @@ body.wtw-next-active{overflow:hidden}body.wtw-next-active>.app,body.wtw-next-act
  .ng-case h2{font-size:22px;}
  .ng-intelgrid{min-height:260px;}
 }
+
+/* WTW Next v6 — single-workspace Office refinement; one external visual layer.
+   Reinforce game-like continuity instead of independently outlined widgets.
+   Applies only to the Racing Office; full-page profiles retain their own templates. */
+
+/* The center three modules form one continuous command workspace. */
+.ng-board{gap:9px;background:#0f181b}
+.ng-main{gap:0!important;min-height:0;overflow:hidden;border:1px solid #405150;border-radius:6px;background:#182328;box-shadow:0 2px 18px #0003}
+.ng-main>.ng-card,.ng-main .ng-centerbottom>.ng-card{border:0!important;border-radius:0!important;box-shadow:none!important;margin:0;background:#182328}
+.ng-main>.ng-feature{border-bottom:1px solid #4a5b57!important}
+.ng-centerbottom{gap:0!important;background:#182328}
+.ng-centerbottom>.ng-intel{border-right:1px solid #465856!important}
+.ng-centerbottom .ng-cardhead{border-bottom-color:#3c4e4c;background:#243134}
+.ng-main .ng-cardhead{height:41px}
+.ng-main .ng-sectionicon{border-radius:3px}
+
+/* Stable roster, race commitments, and opportunities are one operations rail. */
+.ng-right{gap:0!important;border:1px solid #405150;border-radius:6px;overflow:hidden;background:#19282c;box-shadow:0 2px 18px #0003;grid-template-rows:minmax(0,1.32fr) minmax(0,1fr) 37px}
+.ng-right>.ng-card{border:0!important;border-radius:0!important;box-shadow:none!important;background:#19282c}
+.ng-right>.ng-roster{border-bottom:1px solid #40514f!important}
+.ng-right .ng-cardhead{height:41px;background:#233137;border-bottom:1px solid #344947}
+.ng-right .ng-rostercolumns,.ng-right .ng-entrycolumns{height:24px!important;background:#1d2b30;color:#c1d2ce;border-bottom:1px solid #40514e}
+.ng-rosterrows,.ng-entrylist{background:#17252a}
+.ng-rosterrow,.ng-entryrow{background:transparent!important;border-bottom:1px solid #324342!important;transition:background .14s ease}
+.ng-rosterrow:nth-child(2n),.ng-entryrow:nth-child(2n){background:#ffffff05!important}
+.ng-rosterrow:hover,.ng-entryrow:hover{background:#34544b!important}
+.ng-leads{height:auto!important;min-height:0!important;box-shadow:none!important;border:0!important;border-top:1px solid #40514e!important;border-radius:0!important;margin:0!important;background:#18372e!important}
+.ng-leads:hover{background:#285543!important}
+
+/* Race header must never wrap its status column into the first race row. */
+.ng-entrycolumns{grid-template-columns:59px minmax(0,1fr) 69px!important;padding-inline:10px!important;gap:7px!important;white-space:nowrap}
+.ng-entrycolumns span:last-child{font-size:9.5px!important;white-space:nowrap;line-height:1;text-align:right}
+.ng-entryrow{grid-template-columns:59px minmax(0,1fr) 69px!important;gap:7px!important;padding-inline:10px!important}
+.ng-entrycopy{min-width:0}
+.ng-entrycopy>span{display:flex;gap:5px;align-items:center;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.ng-entrytag{min-width:0;white-space:nowrap}
+.ng-flag-us{display:inline-block;position:relative;flex:0 0 15px;width:15px;height:10px;border:1px solid #ffffff40;border-radius:1px;box-shadow:0 1px 1px #0006;vertical-align:-1px;background:repeating-linear-gradient(to bottom,#b5394f 0 1px,#f6efe5 1px 2px)}
+.ng-flag-us:before{content:'';position:absolute;left:0;top:0;width:7px;height:5.5px;background:#274976}
+
+/* The briefing photo is part of the decision, not a separate card. Keep text on top. */
+.ng-featurebody{position:relative;isolation:isolate;background:#0a1817!important}
+.ng-featurephoto{position:absolute!important;inset:0!important;z-index:0!important;pointer-events:none;opacity:1}
+.ng-featurephoto img{width:100%;height:100%;object-fit:cover;object-position:68% 48%;filter:contrast(1.04) saturate(.91) brightness(.72)}
+.ng-featurephoto::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,#0b1d1af5 0%,#10231dea 25%,#10231dd0 49%,#0b171e45 80%,#0b171e29 100%),linear-gradient(0deg,#07130f7e,transparent 58%)}
+.ng-featurebody>.ng-case{position:relative;z-index:2}
+.ng-photo-label{z-index:2}
+.ng-photo-ribbon{z-index:2}
+
+/* One aligned editorial hierarchy across the central task and source intelligence. */
+.ng-feature .ng-case-summary{max-width:46ch;color:#d7e2df;line-height:1.45}
+.ng-intelgrid{padding:0!important;gap:0!important}
+.ng-intelitem{border-left:3px solid var(--wt-green)!important;border-right:0!important;border-top:0!important;background:transparent!important;box-shadow:none!important;border-bottom:1px solid #344642!important}
+.ng-intelitem:last-child{border-bottom:0!important}
+.ng-intelitem:hover{background:#29423b!important}
+.ng-intelitem .ng-intel-kicker{color:#c6d6d1}
+.ng-intelitem b{font-weight:740}
+.ng-intelitem p{color:#c1d2cb}
+.ng-moves{gap:0!important;padding:0!important}
+.ng-move{border-left:0!important;border-right:0!important;border-top:0!important;border-radius:0!important;box-shadow:none!important;background:#1c2b30!important}
+.ng-move:nth-child(2){background:#202e33!important}
+.ng-move:nth-child(3){background:#27312e!important}
+.ng-move:hover,.ng-move:focus-visible{background:#315044!important;box-shadow:inset 3px 0 #e3c777!important}
+.ng-move:last-child{border-bottom:0!important}
+.ng-move-number{width:26px;height:26px;min-width:26px;border-radius:100%;display:grid;place-items:center;font-weight:750}
+.ng-choices .ng-choice-count{letter-spacing:.03em}
+
+/* Inbox is the correspondence rail rather than another standalone widget. */
+.ng-inbox{border-radius:6px!important;box-shadow:0 2px 18px #0003!important}
+.ng-inbox .ng-cardhead{height:41px;background:#233137}
+.ng-filters{background:#19262b}
+.ng-inboxdate{background:#182b2e}
+.ng-msgs .ng-msg{border-color:#394946}
+.ng-msg.on{box-shadow:inset 3px 0 #e3c777}
+.ng-msg:hover:not(.on){background:#29413b}
+
+/* Focus and hover remain informative but not flashy. */
+.ng-cardlink,.ng-inboxfoot button,.ng-case-arrows button{transition:background .12s ease,color .12s ease}
+.ng-cardlink:hover,.ng-inboxfoot button:hover:not(:disabled),.ng-case-arrows button:hover{background:#315047;color:#fff}
+
+@media(max-width:1250px){
+  .ng-board{gap:6px}
+  .ng-entrycolumns,.ng-entryrow{grid-template-columns:53px minmax(0,1fr) 57px!important;gap:4px!important;padding-inline:6px!important}
+  .ng-entrycolumns span:last-child{font-size:8.5px!important}
+  .ng-flag-us{width:13px;height:9px;flex-basis:13px}
+}
+@media(max-height:660px) and (min-width:850px){
+  .ng-main .ng-cardhead,.ng-right .ng-cardhead,.ng-inbox .ng-cardhead{height:36px}
+  .ng-right{grid-template-rows:minmax(0,1.32fr) minmax(0,1fr) 30px}
+  .ng-right .ng-rostercolumns,.ng-right .ng-entrycolumns{height:19px!important}
+  .ng-featurephoto img{object-position:66% 45%}
+}
+@media(prefers-reduced-motion:reduce){
+  .ng-rosterrow,.ng-entryrow,.ng-cardlink,.ng-inboxfoot button,.ng-case-arrows button{transition:none}
+}
+/* Keep the horse's head in the photographic half of the briefing composition. */
+.ng-featurephoto img{transform:scaleX(-1);object-position:60% 48%}
+/* Keep the four distinct intelligence source colors the manager approved. */
+.ng-intelitem:nth-child(1){border-left-color:#31ce9c!important}
+.ng-intelitem:nth-child(2){border-left-color:#df6c73!important}
+.ng-intelitem:nth-child(3){border-left-color:#dfbf6b!important}
+.ng-intelitem:nth-child(4){border-left-color:#78aacc!important}
+.ng-intelitem:nth-child(1) .ng-intel-marker{background:#31ce9c!important}
+.ng-intelitem:nth-child(2) .ng-intel-marker{background:#df6c73!important}
+.ng-intelitem:nth-child(3) .ng-intel-marker{background:#dfbf6b!important}
+.ng-intelitem:nth-child(4) .ng-intel-marker{background:#78aacc!important}
+/* Resolved decisions remain a full-height reading surface, never a 1/3-height choice row. */
+.ng-moves:has(>.ng-resolved){display:flex!important;flex-direction:column;min-height:0;overflow:hidden}
+.ng-moves>.ng-resolved{display:flex;flex-direction:column;flex:1 1 auto;width:100%;height:100%;min-height:0;padding:10px 12px!important;gap:8px}
+.ng-moves .ng-resolved .ng-resolution-title,.ng-moves .ng-resolvedtabs,.ng-moves .ng-outcome-actions{flex:none}
+.ng-moves .ng-resolved .ng-outtext{flex:1 1 auto;min-height:0;max-height:none;overflow-x:hidden;overflow-y:auto;margin:0;padding:11px 12px;font-size:12px;line-height:1.47}
+.ng-moves .ng-resolved .ng-outcome-actions{margin-top:auto;gap:8px;align-items:stretch}
+@media(max-height:660px) and (min-width:850px){
+ .ng-moves>.ng-resolved{padding:3px 5px!important;gap:4px}
+ .ng-moves .ng-resolved .ng-outtext{font-size:10px;line-height:1.32;padding:5px 7px}
+ .ng-moves .ng-resolved .ng-outcome-actions{gap:4px}
+}
