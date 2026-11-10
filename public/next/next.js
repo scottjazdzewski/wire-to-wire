@@ -388,8 +388,34 @@ else if(APP.custom==='Opportunities'){body=`<section class="ng-customcard"><h3>O
 else if(APP.custom==='Search'){body=`<section class="ng-customcard"><h3>Find a horse or racetrack</h3><p>Search across the horses and racecourses currently connected to this Office.</p>${horseRows().map(h=>`<button data-ng="horse" data-val="${safe(h.name)}">${safe(h.name)}</button>`).join('')}${racingRows().map(r=>`<button data-ng="track" data-val="${safe(r.track)}">${safe(r.track)}</button>`).join('')}</section>`}
 else {const category=APP.custom||APP.section;const features=(tabmap[APP.section]||[]).filter(x=>x!=='Overview');body=`<div class="ng-custompage">${features.map(x=>`<section class="ng-customcard"><h3>${safe(x)}</h3><p>The ${safe(category)} view is reserved for source-connected records. We won't invent figures, horse IDs, or outcomes.</p><button data-ng="tab" data-val="${safe(x)}">OPEN ${safe(x).toUpperCase()} ↗</button></section>`).join('')}</div>`}
 const isProfile=Boolean(profile);
-return `<main class="ng-route ${isProfile?'ng-route-profile':''}">${isProfile?'':`<header class="ng-routeheading"><span class="ng-route-badge-slot" aria-hidden="true">${APP.custom==='Organization Overview'?organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',true,true):`<img class="ng-routebadge" src="${safe(bdg)}" alt=""/>`}</span><div class="ng-routetext"><small>${safe(kicker)}</small><h1>${safe(title)}</h1></div><button class="ng-back" data-ng="office">← RACING OFFICE</button></header>`}<div class="ng-routegrid"><div class="ng-routeinner">${body}</div></div></main>`;}
-function paint(){if(!APP.ready)return;APP.activeCase=$('.left .msg.selected')?.dataset.case||APP.activeCase;const route=currentRoute();root.innerHTML=header()+((route||APP.custom)?renderRoute():`<main class="ng-board">${inbox()}${center()}${right()}</main>`);}
+return `<main class="ng-route ${isProfile?'ng-route-profile':''}">${isProfile?'':`<header class="ng-routeheading"><span class="ng-route-badge-slot" aria-hidden="true">${APP.custom==='Organization Overview'?organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',true,true):`<img class="ng-routebadge" src="${safe(bdg)}" alt=""/>`}</span><div class="ng-routetext"><small>${safe(kicker)}</small><h1>${safe(title)}</h1></div><button class="ng-back" data-ng="office">← RACING OFFICE</button></header>`}<div class="ng-routegrid" data-route-key="${safe((route?.kicker||APP.custom||APP.section)+'|'+(route?.title||APP.custom||APP.page))}"><div class="ng-routeinner">${body}</div></div></main>`;}
+function paint(){
+ if(!APP.ready)return;
+ const oldRoute=$('.ng-routegrid',root),oldTab=$('.ng-profiletabs .on',root)?.dataset.val||'';
+ const previousRouteKey=oldRoute?.dataset.routeKey||'';
+ const previousRouteScroll=oldRoute?.scrollTop||0;
+ const previousDetailScroll=$('.ng-profile-view .ng-detail-cols',root)?.scrollTop||0;
+ const oldCards=$$('.ng-profile-view .ng-detailcard',root).map((card,index)=>({
+  key:index+'|'+($('header',card)?.textContent.trim()||''),
+  scroll:card.scrollTop
+ }));
+ APP.activeCase=$('.left .msg.selected')?.dataset.case||APP.activeCase;
+ const route=currentRoute();
+ root.innerHTML=header()+((route||APP.custom)?renderRoute():`<main class="ng-board">${inbox()}${center()}${right()}</main>`);
+ const nextRoute=$('.ng-routegrid',root),nextTab=$('.ng-profiletabs .on',root)?.dataset.val||'';
+ if(nextRoute&&previousRouteKey&&nextRoute.dataset.routeKey===previousRouteKey){
+  nextRoute.scrollTop=previousRouteScroll;
+  if(oldTab===nextTab){
+   const detail=$('.ng-profile-view .ng-detail-cols',root);
+   if(detail)detail.scrollTop=previousDetailScroll;
+   $$('.ng-profile-view .ng-detailcard',root).forEach((card,index)=>{
+    const key=index+'|'+($('header',card)?.textContent.trim()||'');
+    const prior=oldCards.find(item=>item.key===key);
+    if(prior)card.scrollTop=prior.scroll;
+   });
+  }
+ }
+}
 function schedulePaint(ms=0){if(APP.paintQueued)return;APP.paintQueued=true;setTimeout(()=>{APP.paintQueued=false;paint()},ms)}
 // Capture new UI clicks before the old Office's document-level delegated handler.
 window.addEventListener('click',e=>{
