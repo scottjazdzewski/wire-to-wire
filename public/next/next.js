@@ -557,7 +557,7 @@ function functionalRoute(route){
  }
  return null;
 }
-function renderRoute(){const route=currentRoute();const title=route?.title||APP.custom||'Page';const kicker=route?.kicker||APP.section;const bdg=route?badge(({'Horse Profile':'horse','People Profile':'people','Farm Profile':'farm_stable','Track Profile':'track','Race Calendar':'meet_schedule','Stable':'farm_stable','Sales':'connections','News':'history','World':'track','Opportunity Board':'reputation'}[route.kicker])||'history'):pageBadge();
+function renderRoute(){const route=APP.custom==='Organization Overview'?null:currentRoute();const title=route?.title||APP.custom||'Page';const kicker=route?.kicker||APP.section;const bdg=route?badge(({'Horse Profile':'horse','People Profile':'people','Farm Profile':'farm_stable','Track Profile':'track','Race Calendar':'meet_schedule','Stable':'farm_stable','Sales':'connections','News':'history','World':'track','Opportunity Board':'reputation'}[route.kicker])||'history'):pageBadge();
 let body='';const profile=route&&/Profile$/.test(route.kicker)?profileDetail(route):null;const functional=route?functionalRoute(route):null;if(profile)body=profile;else if(functional)body=functional;else if(route)body=route.body;else if(APP.custom==='Organization Overview'){body=organizationOverview()}
 else if(APP.custom==='Due Actions'){body=dueActionOverview()}
 else if(APP.custom==='Messages'){body=`<section class="ng-customcard"><h3>Messages and correspondence</h3><p>Select any item to return to the Decision Desk and review its options.</p>${currentMessages().map(m=>`<button data-ng="case" data-val="${safe(m.case)}">${safe(m.from)} — ${safe(m.title)}</button>`).join('')}</section>`}
