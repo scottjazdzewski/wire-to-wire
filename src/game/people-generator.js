@@ -25,7 +25,11 @@ function draw(rng){
 }
 export function normalizePersonRoles(person,catalog){
  const raw=Array.isArray(person.roles)?person.roles:typeof person.role==='string'?[person.role]:[];
- return [...new Set(raw.filter(role=>typeof role==='string'&&Boolean(catalog.person_roles[role])))];
+ const aliases={'bloodstock':'bloodstock_professional','stable staff':'stable_staff','vet':'veterinarian','rider':'jockey','bloodstock specialist':'bloodstock_professional'};
+ return [...new Set(raw.filter(role=>typeof role==='string').map(role=>{
+  const normal=role.trim().toLowerCase();
+  return aliases[normal]||normal.replace(/\\s+/g,'_');
+ }).filter(role=>Boolean(catalog.person_roles[role])))];
 }
 /**
  * Default generator inputs are the accepted world digest and person ID:
