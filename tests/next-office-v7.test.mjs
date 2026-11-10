@@ -100,3 +100,19 @@ test('Racing Office right-hand operations panels stay readable and source-linked
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);
 });
+
+
+test('Office mast uses spare space and Intel/Your Call share one header geometry',()=>{
+ const css=get('public/next/next.css'),js=get('public/next/next.js');
+ assert.ok(js.includes('const focusCard=showFile?'),'Office header must show a current source-backed decision file');
+ assert.ok(js.includes('data-ng="case" data-val="${safe(APP.activeCase)}"'),'Current file should link to selected existing decision');
+ assert.ok(js.includes('${focusCard}<div class="ng-mast-centre">'),'Current file must use whitespace between brand and KPI group');
+ assert.ok(css.includes('.ng-mast-office .ng-brand{'),'Office brand must not absorb all header space');
+ assert.ok(css.includes('.ng-mast-office .ng-mast-focus{'),'Current file should be a responsive, compact mast element');
+ assert.ok(css.includes('.ng-main .ng-intel>.ng-cardhead,\n.ng-main .ng-choices>.ng-cardhead{'),'Intel and Your Call need the exact same base header geometry');
+ assert.ok(css.includes('flex:0 0 46px!important;'),'Both lower title rows must have the same fixed header height');
+ assert.ok(css.includes('.ng-main .ng-intel>.ng-cardhead .ng-headinggroup h3,\n.ng-main .ng-choices>.ng-cardhead .ng-headinggroup h3{'),'Both headings must share typography');
+ assert.ok(css.includes('@media(min-width:781px) and (max-height:660px){'),'Short-laptop title rows require a shared compact size');
+ const check=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(check.status,0,check.stderr);
+});
