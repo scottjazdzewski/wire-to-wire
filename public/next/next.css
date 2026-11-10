@@ -3969,3 +3969,14 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
   line-height:1.35!important;
  }
 }
+
+.ng-search-empty{
+ padding:12px 14px;
+ flex:0 0 auto;
+ border:1px dashed #66886c;
+ border-radius:3px;
+ background:#20382a;
+ color:#cedbcf;
+ font-size:11.5px;
+}
+.ng-search-empty[hidden]{display:none!important}
