@@ -380,18 +380,30 @@ function profileDetail(route){
  const horseFoalingCountry=isHorse?(source.dataset.foalingCountry||'').trim():'';
  const horseFoalingCode=isHorse?(source.dataset.foalingCountryCode||'').trim().toUpperCase():'';
  const horseCountryLabel=horseFoalingCountry==='United States'?'USA':horseFoalingCountry;
- const horseFlag=/^[A-Z]{2}$/.test(horseFoalingCode)?
-   String.fromCodePoint(...[...horseFoalingCode].map(c=>127397+c.charCodeAt(0))):'';
+ // One source-backed country icon per approved foaling origin. Real vector
+ // flags render on Windows; the label remains legible if a flag is unavailable.
+ const horseCountryFlagAliases={
+  'united states':'us','usa':'us','canada':'ca','england':'gb-eng',
+  'great britain':'gb','united kingdom':'gb','uk':'gb','ireland':'ie',
+  'france':'fr','argentina':'ar','japan':'jp','new zealand':'nz',
+  'chile':'cl','germany':'de','puerto rico':'pr','australia':'au'
+ };
+ const horseFlagCodes=new Set(['us','ca','gb','gb-eng','ie','fr','ar','jp','nz','cl','de','pr','au']);
+ const horseFoalingAlias=horseCountryFlagAliases[horseFoalingCountry.toLowerCase()];
+ const horseCountryCode=horseFoalingCode.toLowerCase();
+ // England has its own flag; GB flags must not silently replace it.
+ const horseFlagCode=horseFoalingAlias||((horseFlagCodes.has(horseCountryCode))?horseCountryCode:'');
+ const horseFlagPath=horseFlagCodes.has(horseFlagCode)?'/assets/flags/v1/'+horseFlagCode+'.svg':'';
  const horseFoalingDisplay=[horseFoalingState,horseCountryLabel].filter(v=>v&&v!=='—').join(', ')||'—';
  const horseIdentityRow=isHorse?`<div class="ng-horse-biography" aria-label="Horse foaling and identity facts">
-  <span class="ng-horse-bio-foaling"><small>FOALED</small><strong>${horseFlag?`<span class="ng-horse-bio-flag" aria-hidden="true">${horseFlag}</span>`:''}${safe(horseFoalingDisplay)}</strong></span>
+  <span class="ng-horse-bio-foaling"><small>FOALED</small><strong>${horseFlagPath?`<img class="ng-horse-bio-flag" src="${safe(horseFlagPath)}" alt="" width="22" height="16" decoding="async"/>`:''}${safe(horseFoalingDisplay)}</strong></span>
   <span><small>DATE OF BIRTH</small><strong>${safe(horseField('Date of birth'))}</strong></span>
   <span><small>SEX</small><strong>${safe(horseField('Sex'))}</strong></span>
   <span><small>AGE</small><strong>${safe(horseField('Age'))}</strong></span>
  </div>`:'';
  const identity=`<div class="ng-profile-intro">
   ${profileMark}
-  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${safe(route.title)}</h2>${horseIdentityRow}<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}</div>${horseImage?`<div class="ng-profile-source-photo" role="img" aria-label="Approved image of ${safe(route.title)}"><img src="${safe(horseImage)}" alt="" loading="lazy" decoding="async"/></div>`:''}
+  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${safe(route.title)}</h2>${horseIdentityRow}${isHorse?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${horseImage?`<div class="ng-profile-source-photo" role="img" aria-label="Approved image of ${safe(route.title)}"><img src="${safe(horseImage)}" alt="" loading="lazy" decoding="async"/></div>`:''}
   <div class="ng-profile-tools"><button data-ng="office" aria-label="Return to Racing Office">← OFFICE</button><button data-ng="menu" data-val="${route.kicker==='Track Profile'?'Racing':'Stable'}">${route.kicker==='Track Profile'?'RACE CALENDAR':'STABLE DIRECTORY'} ↗</button></div>
  </div>`;
  let left='',right='',footer='';
