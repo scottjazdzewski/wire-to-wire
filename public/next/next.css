@@ -3372,3 +3372,70 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
  .ng-tier1-org .ng-org-overview-panel>header{flex-basis:30px!important;min-height:30px!important}
  .ng-tier1-org .ng-org-overview-list>button{min-height:29px!important;padding:4px 7px!important}
 }
+
+/* Tier 1 People sign-off pass: useful evidence and direct drill-downs, no filler. */
+.ng-profile-person .ng-person-career-strip{
+ display:grid;
+ grid-template-columns:minmax(0,1.35fr) minmax(0,.65fr);
+ gap:5px;
+ padding:6px;
+}
+.ng-profile-person .ng-person-career-strip>div{
+ display:flex;
+ flex-direction:column;
+ justify-content:center;
+ gap:4px;
+ min-width:0;
+ min-height:48px;
+ padding:7px 9px;
+ background:#244435;
+ border:1px solid #496952;
+}
+.ng-profile-person .ng-person-career-strip small{
+ display:block;
+ color:#b8cfbe;
+ font-size:9px;
+ letter-spacing:.03em;
+}
+.ng-profile-person .ng-person-career-strip strong{
+ color:#ecd6a2;
+ font-size:17px;
+ font-weight:800;
+ font-variant-numeric:tabular-nums;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+}
+.ng-profile-person .ng-person-minihead button{
+ display:inline-flex;
+ align-items:center;
+ gap:3px;
+ border:0;
+ background:transparent;
+ color:#ead397;
+ padding:3px 0 3px 5px;
+ font-size:8.5px;
+ font-weight:780;
+ white-space:nowrap;
+ cursor:pointer;
+}
+.ng-profile-person .ng-person-minihead button:hover{text-decoration:underline}
+.ng-profile-person .ng-person-influence{
+ padding:7px 9px;
+ gap:3px;
+}
+.ng-profile-person .ng-person-influence small{
+ line-height:1.25;
+}
+@media(min-width:1081px){
+ .ng-profile-person .ng-tier1-biography{
+  flex-wrap:nowrap!important;
+  margin:4px 0 2px!important;
+ }
+ .ng-profile-person .ng-person-workspace .ng-person-work-card>header{min-height:33px;flex-basis:33px;padding:5px 9px}
+ .ng-profile-person .ng-person-workspace .ng-person-attribute{min-height:24px;padding:3px 6px}
+ .ng-profile-person .ng-person-workspace .ng-person-minihead{min-height:24px;padding:4px 5px}
+ .ng-profile-person .ng-person-workspace .ng-person-rep-axes>div{min-height:25px;padding:3px 7px}
+ .ng-profile-person .ng-person-workspace .ng-person-overall{padding:8px}
+ .ng-profile-person .ng-person-workspace .ng-person-unrated{padding:6px 8px}
+}
