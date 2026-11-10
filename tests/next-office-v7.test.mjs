@@ -163,7 +163,30 @@ test('Organization logo slot, operations overview, cash and due-alert read only 
  assert.ok(css.includes('.ng-main .ng-feature>.ng-cardhead .ng-org-chip{'),'Organization button should live beside the Decision Desk heading');
  assert.ok(css.includes('.ng-org-overview-grid{'),'Full linked operations overview must exist');
  assert.ok(css.includes('.ng-global .ng-global-due{'),'Show due indicator in the compact global header');
- assert.ok(css.includes('.ng-global .ng-global-cash{'),'Show available cash indicator in the compact global header');
+ assert.ok(js.includes('ng-org-chip-cash'),'Available cash must sit beside the operation logo in the Decision Desk');
+ assert.ok(!js.includes('class="ng-global-cash"'),'No cash readout should compete for space in the top navigation');
+ assert.ok(css.includes('.ng-main .ng-feature>.ng-cardhead .ng-org-chip-cash{'),'Cash must share the Decision Desk organization control');
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);
+});
+
+
+test('Desktop sign-off: real WTW brand icon, inline Cash, and no scrolling department bar',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css');
+ const index=JSON.parse(get('public/assets/office/organization-logo-index.json'));
+ assert.deepEqual(index.organizations,{},'Missing organization crest must not be fabricated');
+ assert.ok(js.includes("const brandLogo=brandFallback&&!entityLogo?'/assets/wtw-office-approved-logo.png':''"),'The player operation button must use actual approved WTW brand artwork while awaiting its own crest');
+ assert.ok(js.includes("brandLogo?'Wire to Wire game logo"),'The game logo must not be falsely described as an organization-specific emblem');
+ assert.ok(js.includes("organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',false,true)"),'Decision Desk must render a real image instead of ST initials');
+ assert.ok(js.includes('ng-org-chip-cash'),'Cash must sit alongside the real logo');
+ assert.ok(!js.includes('class="ng-global-cash"'),'Cash must be removed from the crowded top header');
+ assert.ok(js.includes('data-ng="more"'),'Less-frequent departments need an accessible compact menu at desktop widths');
+ assert.ok(js.includes('APP.moreOpen=!APP.moreOpen'),'More menu must open and close via actual interaction');
+ assert.ok(js.includes("['Breeding','Personnel','Facilities','Finances','World']"),'All hidden departments must remain reachable');
+ assert.ok(css.includes('Desktop lock: image-only organization identity and inline cash; no top-bar scrolling'),'Approved desktop chrome must remain fixed');
+ assert.ok(css.includes('overflow-x:hidden!important'),'Primary desktop navigation may not horizontally scroll');
+ assert.ok(css.includes('data-val="Breeding"'),'Hidden departments must have responsive menu treatment');
+ assert.ok(css.includes('.ng-global .ng-global-moremenu{'),'The menu must be rendered when additional departments are hidden');
+ const check=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(check.status,0,check.stderr);
 });
