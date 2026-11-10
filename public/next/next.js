@@ -269,7 +269,7 @@ function openSearchItem(item){
  }
  if(item.kind==='page'){
   if(item.section==='History')return window.location.assign('/archive/?page=races');
-  if(item.name==='Racing Office')return goOffice();
+  if(item.name==='Racing Office'||item.name==='Office')return goOffice();
   if(item.name==='Organization Overview')return openOrganization();
   return openMenu(item.section||item.name);
  }
@@ -850,7 +850,12 @@ window.addEventListener('click',e=>{
  if(key==='detailtab'){APP.detailTab=val;return paint()}
  if(key==='sourcebutton'){const n=$$('#routeBody [data-act]')[Number(val)];return bridgeNode(n)}
  if(key==='action'){const x=originalAct(val); if(x)return bridgeNode(x);if(val==='Open file')return bridgeNode(originalAct('Open file'));return}
- if(key==='custom'){if(val==='Opportunities')return bridgeNode(originalAct('Open opportunity board'));return openCustomView(val)}
+ if(key==='custom'){
+  if(val==='Opportunities')return bridgeNode(originalAct('Open opportunity board'));
+  openCustomView(val);
+  if(val==='Search')$('#ngGlobalSearch',root)?.focus();
+  return;
+ }
  if(key==='back')return window.history.back()
  if(key==='forward')return window.history.forward()
 },true);
@@ -896,11 +901,23 @@ root.addEventListener('input',event=>{
  const counter=$('.ng-stable-visible',root);
  if(counter)counter.textContent=visible+' OF '+horseRows().length+' HORSES';
 },true);
+function restoreNextUIRoute(){
+ const p=new URLSearchParams(location.search),view=p.has('page')?'':p.get('ui')||'';
+ APP.custom=view;APP.moreOpen=false;
+ if(view){
+  const [section,detail]=view.split(' — ');
+  APP.section=tabmap[section]?section:'Office';
+  APP.page=detail||'Overview';
+ }else if(!p.has('page')){
+  APP.section='Office';APP.page='Office';
+ }else{
+  const mapped={horse:'Stable',person:'World',farm:'Facilities',track:'World',race:'Racing',
+   stable:'Stable',world:'World',sales:'Sales',calendar:'Racing',news:'Office'};
+  APP.section=mapped[p.get('page')]||'Office';APP.page='Overview';
+ }
+}
 window.addEventListener('popstate',()=>{
- const p=new URLSearchParams(location.search),view=p.get('ui');
- APP.custom=p.has('page')?'':view||'';
- if(view){APP.section='Office';APP.page='Overview';}
- else if(!p.has('page')){APP.section='Office';APP.page='Office';}
+ restoreNextUIRoute();
  schedulePaint(40);
 });
 // Avoid recursive mutation observations: only observe the original (hidden) app.
@@ -934,6 +951,7 @@ root.addEventListener('error',event=>{
  console.warn('WTW approved badge failed to load:',img.getAttribute('src'));
 },true);
 document.body.append(root);document.body.classList.add('wtw-next-active');APP.ready=true;
+restoreNextUIRoute();
 // Restore direct route link: existing Office script owns history and route hydration.
 paint();setTimeout(paint,110);
 fetch('/assets/office/organization-logo-index.json',{credentials:'same-origin',cache:'no-store'})
