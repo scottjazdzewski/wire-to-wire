@@ -708,3 +708,13 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
 @media(max-width:1080px){.ng-profile-badgeframe img{height:80px;width:80px}}
 .ng-badge-slot.wtw-badge-missing::after,.ng-route-badge-slot.wtw-badge-missing::after,.ng-profile-badgeframe.wtw-badge-missing::after{content:'!';position:absolute;inset:0;display:grid;place-items:center;color:#f2c66a;font-size:17px;font-weight:900;background:#59412638;border:1px solid #9c733777;border-radius:4px}
 .wtw-badge-missing>img{visibility:hidden}
+
+/* Individually extracted shield assets: no backing tile, no secondary frame.
+   New RGBA art has an isolated shield normalized within 512 transparent pixels. */
+.ng-profile-badgeframe{background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;overflow:visible!important}
+.ng-profile-badgeframe img{width:100px!important;height:100px!important;max-width:none!important;object-fit:contain!important;filter:drop-shadow(0 3px 4px #0005)!important}
+.ng-route-badge-slot{width:48px!important;height:58px!important;background:transparent!important;border:0!important;overflow:visible!important}
+.ng-route-badge-slot>.ng-routebadge{width:62px!important;height:62px!important;max-width:none!important;object-fit:contain!important}
+.ng-badge-slot{width:36px!important;height:42px!important;overflow:visible!important;background:transparent!important;border:0!important}
+.ng-badge-slot>.ng-headicon{width:46px!important;min-width:46px!important;height:46px!important;object-fit:contain!important}
+@media(max-width:1080px){.ng-profile-badgeframe img{width:80px!important;height:80px!important}}

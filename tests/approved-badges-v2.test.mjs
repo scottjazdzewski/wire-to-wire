@@ -8,21 +8,21 @@ import {spawnSync} from 'node:child_process';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const get=p=>fs.readFileSync(path.join(root,p),'utf8');
 const approved={
-  "achievements": "05f54934b5e56820626088a1ce0d1907a36f6721",
-  "career_record": "2277bbb842f72d0f69f5dabd48515e389d2a5a60",
-  "connections": "572474fa16762128ca32cd4bc1836dbb86c10ebb",
-  "farm_stable": "1ab3def4b83f3123c4f5f3e9b862ac0cea0ff287",
-  "history": "cccca69cc5364da823237e3a49e7d22b7dce9fa8",
-  "horse": "49475c936634e65fe03e67dfdcef730b10fb57bc",
-  "major_races": "099eef114bcba23f99961eb25ca40db4c2892645",
-  "meet_schedule": "9ffce0ef8f0a4900811efd2c7256578a7112ac53",
-  "pedigree": "934c7a5132f60b0f006675d5af217aed163ab0dd",
-  "people": "1149fa57a6a4e3530cee729b76c37802fb2fcf9c",
-  "reputation": "50c16e0fc8ef5d04e91623c2bde258cb8c257c9d",
-  "track": "27ee216a057647a4894edeb4517491985874c2d4"
+  "achievements": "6b3f52a45cee26f28dc55b69495e4714add085f2",
+  "career_record": "1b9aab87f290d0c44b55af32d172eca72fd0d174",
+  "connections": "92a0d4d0b2b9216ed1b70d49a3f2948c86cca926",
+  "farm_stable": "f6f081da922ce00927740049e698410d76561518",
+  "history": "b02aaeee7460fc3d55f39feb6e6722cee3ba9ced",
+  "horse": "e56c15eca3a72ec412de6845bab0def9c351f933",
+  "major_races": "9333d7100167c6c47e41882f439edd9914c9639c",
+  "meet_schedule": "da36c1f3099575a0460adb3d1ba8028550ec0c52",
+  "pedigree": "2dbc9c036b8e0c20b9ab5e0e4f9a62911a63280b",
+  "people": "a534d62ee042f4a17cb2250cab0657a1f556e379",
+  "reputation": "bf281b0a2a32d0e09893e1dbf164778523259e80",
+  "track": "7bfafd3e47e52638e9d9fcc7dd2e99ba8a16624a"
 };
 
-test('all twelve APPROVED CURRENT v2 badge files match immutable original bytes and PNG header',()=>{
+test('all twelve repaired individually isolated v2 shields retain correct transparent PNG format and verified byte hashes',()=>{
  const base=path.join(root,'public/assets/profile-badges/v2');
  const files=fs.readdirSync(base).filter(x=>x.toLowerCase().endsWith('.png')).sort();
  const names=Object.keys(approved).map(kind=>'wtw_badge_'+kind+'.png').sort();
@@ -35,7 +35,7 @@ test('all twelve APPROVED CURRENT v2 badge files match immutable original bytes 
    assert.equal(b.readUInt32BE(20),512,kind+' approved height');
    assert.equal(b.readUInt8(25),6,kind+' approved PNG has an RGBA channel');
    const gitBlob=crypto.createHash('sha1').update(Buffer.from('blob '+b.length+'\0')).update(b).digest('hex');
-   assert.equal(gitBlob,sha,kind+' approved source pixels have changed');
+   assert.equal(gitBlob,sha,kind+' repaired shield bytes have changed');
  }
 });
 
@@ -64,3 +64,5 @@ test('every Office badge uses readable shield viewport, correct source path, and
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);
 });
+
+test('repaired shield paths are cache-busted and rectangular frames are removed',()=>{const css=get('public/next/next.css'),js=get('public/next/next.js');assert.ok(js.includes('png?shield=20261110'));assert.ok(css.includes('Individually extracted shield assets'));assert.ok(css.includes('.ng-profile-badgeframe{background:transparent!important'));assert.ok(css.includes('.ng-route-badge-slot{width:48px!important'));});
