@@ -331,3 +331,25 @@ test('People profiles surface skills and sourced industry reputation without con
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);
 });
+
+
+test('The Last Match user-approved birth identity stays locked and its racing age follows the game date',()=>{
+ const source=get('public/office-v30-4.js');
+ const ui=get('public/next/next.js');
+ const record=source.match(/'The Last Match':\{([^}]+)\}/)?.[1]||'';
+ assert.ok(record.includes("born:'2012-03-09'"),'Full date of birth must be March 9, 2012');
+ assert.ok(record.includes("date_of_birth:'2012-03-09'"),'Canonical birth field must match');
+ assert.ok(record.includes("sex:'Colt'"),'Horse is a colt in the 2014 game');
+ assert.ok(record.includes("foaling_state:'Kentucky'"),'Kentucky must stay locked');
+ assert.ok(record.includes("foaling_country:'United States'"),'Horse foaled in the United States');
+ assert.ok(record.includes("foaling_country_code:'US'"),'Flag must identify the USA');
+ assert.ok(record.includes("foaling_provenance:'USER_DIRECTED_2026-11-10'"),'Provenance must not be omitted');
+ assert.ok(source.includes("const racingYear=Number(currentGameDate().slice(0,4))"),'Age must use in-game date, not today');
+ assert.ok(source.includes("String(racingYear-birthYear)"),'North American racing age advances at each January 1');
+ assert.equal(2014-2012,2);
+ assert.ok(source.includes("month:'long',day:'numeric',year:'numeric',timeZone:'UTC'"),'DOB must be human readable');
+ assert.ok(ui.includes('ng-horse-biography'),'Date, flag, sex and age should remain beside the name');
+ assert.ok(ui.includes('ng-horse-bio-flag'),'Approved foaling country must display as a flag');
+ const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/office-v30-4.js')],{encoding:'utf8'});
+ assert.equal(syntax.status,0,syntax.stderr);
+});
