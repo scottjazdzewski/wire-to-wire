@@ -15,6 +15,6 @@ test('Main website serves the approved Next v5 Racing Office with no second visu
  assert.ok(index.includes('src="/office-fm-v37.js"'));
  assert.ok(index.includes('href="/archive/"'),'Archive must remain reachable');
  assert.ok(!index.includes('noindex,nofollow'));
- assert.ok(css.includes('WTW NEXT v5')&&css.includes('.ng-intelgrid')&&css.includes('.ng-featurephoto'));
+ assert.ok(css.includes('UNIFIED DESKTOP MANAGEMENT DESIGN SYSTEM')&&css.includes('.ng-intelgrid')&&css.includes('.ng-featurephoto'));
  for(const action of ['caseprev','casenext','move','horse','track','nextopen'])assert.ok(js.includes(action),'Missing reviewed interaction '+action);
 });
