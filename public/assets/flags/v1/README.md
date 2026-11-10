@@ -7,3 +7,5 @@ Current historical foaling geography in the repository includes: United States (
 These are UI icons, **not** another country, horse or birthplace database. Display each icon only alongside approved foaling geography; do not infer a country from a horse's home track or barn. Puerto Rico has a distinct territorial flag; England is a constituent country of the UK and uses St George's Cross, while Great Britain uses the UK flag.
 
 Use `/assets/flags/v1/<code>.svg` inside `<img>` tags. Text foaling geography must always remain alongside the icon for accessibility and clarity.
+
+People-geography expansion: Cuba (cu), Panama (pa), Venezuela (ve), Spain (es), Peru (pe), Colombia (co), Austria (at), Mexico (mx), Uruguay (uy), drawn from the existing canonical person birthplace records. A birth-country flag identifies **geographic origin** unless citizenship/nationality is separately source-verified.
