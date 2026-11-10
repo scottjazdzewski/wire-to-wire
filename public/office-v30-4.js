@@ -378,7 +378,7 @@
   }
   function routeUrl(kicker,title){
     const q = new URLSearchParams(location.search);
-    q.delete('page'); q.delete('name'); q.delete('track');
+    q.delete('page'); q.delete('name'); q.delete('track'); q.delete('ui');
     const type=routePageType(kicker);
     q.set('page',type);
     if(['horse','person','farm','track','race','file','claim','deadline'].includes(type) && title) q.set('name',title);
@@ -387,7 +387,7 @@
   }
   function officeUrl(){
     const q=new URLSearchParams(location.search);
-    q.delete('page');q.delete('name');q.delete('track');
+    q.delete('page');q.delete('name');q.delete('track');q.delete('ui');
     const s=q.toString();return location.pathname+(s?'?'+s:'');
   }
   function markCurrentNav(name){
