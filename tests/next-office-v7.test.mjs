@@ -492,6 +492,8 @@ test('Global UI navigation, role capitalization, full-site search and centered d
  assert.ok(js.includes("if(key==='back')return window.history.back()"),'Back must visit prior browser game page');
  assert.ok(js.includes("if(key==='forward')return window.history.forward()"),'Forward must revisit next browser game page');
  assert.ok(js.includes("window.history.pushState({wtwUI:view||'office'}"),'Custom screens must record navigable URL history');
+ assert.ok(js.includes('restoreNextUIRoute();'),'Direct search-screen URLs must restore after reload');
+ assert.ok(source.includes("q.delete('ui')"),'Native Office routes must clear stale search/department query state');
  assert.ok(js.includes("window.addEventListener('popstate',()=>{"),'Back and Forward must restore route UI state');
  assert.ok(js.includes("const route=APP.custom?null:currentRoute()"),'Custom Search cannot be hidden by an active profile');
  assert.ok(js.includes("function titleCaseUIRole("),'Professional titles must have a reusable title-case display rule');
