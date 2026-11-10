@@ -1036,3 +1036,181 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
  border-bottom:1px solid #344a48;
  background:#1b2a30;
 }
+
+
+/* Office mast and paired decision/briefing titlebars — unified visual language.
+   The former flex:1 brand stretched the blank space between title and KPIs. */
+.ng-mast-office .ng-brand{
+ flex:0 0 clamp(270px,22vw,326px)!important;
+ min-width:0!important;
+}
+.ng-mast-office .ng-mast-focus{
+ flex:1 1 195px;
+ min-width:0;
+ max-width:540px;
+ height:58px;
+ padding:8px 13px;
+ display:flex;
+ flex-direction:column;
+ align-items:flex-start;
+ justify-content:center;
+ gap:3px;
+ text-align:left;
+ color:#e5f1ec;
+ background:linear-gradient(90deg,#19372f,#18312d);
+ border:1px solid #3d6255;
+ border-left:3px solid #d4b672;
+ border-radius:4px;
+ overflow:hidden;
+ cursor:pointer;
+ transition:background-color .15s,border-color .15s;
+}
+.ng-mast-office .ng-mast-focus:hover{
+ background:linear-gradient(90deg,#244a3d,#204036);
+ border-color:#78947c;
+}
+.ng-mast-office .ng-mast-focus:focus-visible{outline:2px solid #f1d28c;outline-offset:2px}
+.ng-mast-focus-kicker{
+ width:100%;
+ display:flex;
+ align-items:center;
+ gap:7px;
+ font-size:9px;
+ font-weight:800;
+ letter-spacing:.11em;
+ color:#e2c984;
+ white-space:nowrap;
+}
+.ng-mast-focus-kicker .ng-live-dot{width:6px;height:6px}
+.ng-mast-focus-status{
+ margin-left:auto;
+ font-size:8px;
+ letter-spacing:.065em;
+ color:#b6cdc0;
+}
+.ng-mast-focus>strong{
+ max-width:100%;
+ color:#fff8e7;
+ font-size:12.6px;
+ font-weight:760;
+ line-height:1.2;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+}
+.ng-mast-focus>small{
+ display:flex;
+ align-items:center;
+ gap:5px;
+ max-width:100%;
+ font-size:9.5px;
+ line-height:1.2;
+ color:#b2c9c0;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+}
+.ng-mast-focus>small .ng-svg{flex:0 0 auto}
+@media(max-width:1279px){
+ .ng-mast-office .ng-mast-focus{display:none!important}
+ .ng-mast-office .ng-brand{flex:1 1 auto!important}
+}
+@media(min-width:1280px) and (max-height:720px){
+ .ng-mast-office .ng-mast-focus{height:49px;padding:5px 10px;gap:2px}
+ .ng-mast-office .ng-mast-focus>strong{font-size:11.6px}
+}
+/* Both lower panels now have one exact header component.
+   Color only distinguishes the glyph; geometry and hierarchy are identical. */
+.ng-main .ng-intel>.ng-cardhead,
+.ng-main .ng-choices>.ng-cardhead{
+ box-sizing:border-box!important;
+ height:46px!important;
+ min-height:46px!important;
+ max-height:46px!important;
+ flex:0 0 46px!important;
+ display:flex!important;
+ align-items:center!important;
+ gap:10px!important;
+ padding:0 12px!important;
+ background:linear-gradient(90deg,#213734,#1c2e30)!important;
+ border-bottom:1px solid #48605a!important;
+ box-shadow:inset 0 1px 0 #ffffff0b!important;
+}
+.ng-main .ng-intel>.ng-cardhead .ng-headinggroup,
+.ng-main .ng-choices>.ng-cardhead .ng-headinggroup{
+ display:flex!important;
+ flex-direction:column!important;
+ justify-content:center!important;
+ gap:3px!important;
+ min-width:0!important;
+}
+.ng-main .ng-intel>.ng-cardhead .ng-headinggroup h3,
+.ng-main .ng-choices>.ng-cardhead .ng-headinggroup h3{
+ margin:0!important;
+ font-size:14px!important;
+ font-weight:790!important;
+ letter-spacing:.025em!important;
+ line-height:1.08!important;
+ text-transform:uppercase!important;
+}
+.ng-main .ng-intel>.ng-cardhead .ng-headinggroup>span,
+.ng-main .ng-choices>.ng-cardhead .ng-headinggroup>span{
+ font-size:9px!important;
+ font-weight:690!important;
+ letter-spacing:.075em!important;
+ line-height:1.15!important;
+ color:#a7c6bc!important;
+}
+.ng-main .ng-intel>.ng-cardhead .ng-sectionicon,
+.ng-main .ng-choices>.ng-cardhead .ng-sectionicon{
+ box-sizing:border-box!important;
+ width:30px!important;
+ height:30px!important;
+ flex:0 0 30px!important;
+ border-radius:4px!important;
+ border:1px solid #527765!important;
+ background:#26473b!important;
+ display:grid!important;
+ place-items:center!important;
+ color:#e1d096!important;
+}
+.ng-main .ng-intel>.ng-cardhead .ng-cardlink,
+.ng-main .ng-choices>.ng-cardhead .ng-choice-count{
+ display:inline-flex!important;
+ align-items:center!important;
+ justify-content:flex-end!important;
+ margin-left:auto!important;
+ min-height:26px!important;
+ padding:0 4px!important;
+ font-size:10px!important;
+ line-height:1.1!important;
+ font-weight:760!important;
+ letter-spacing:.018em!important;
+ color:#e7ce85!important;
+ white-space:nowrap!important;
+}
+@media(min-width:781px) and (max-height:660px){
+ .ng-main .ng-intel>.ng-cardhead,
+ .ng-main .ng-choices>.ng-cardhead{
+  height:37px!important;
+  min-height:37px!important;
+  max-height:37px!important;
+  flex-basis:37px!important;
+  padding:0 8px!important;
+  gap:7px!important;
+ }
+ .ng-main .ng-intel>.ng-cardhead .ng-sectionicon,
+ .ng-main .ng-choices>.ng-cardhead .ng-sectionicon{width:25px!important;height:25px!important;flex-basis:25px!important}
+ .ng-main .ng-intel>.ng-cardhead .ng-headinggroup h3,
+ .ng-main .ng-choices>.ng-cardhead .ng-headinggroup h3{font-size:11.5px!important}
+ .ng-main .ng-intel>.ng-cardhead .ng-headinggroup>span,
+ .ng-main .ng-choices>.ng-cardhead .ng-headinggroup>span{font-size:7.5px!important}
+ .ng-main .ng-intel>.ng-cardhead .ng-cardlink,
+ .ng-main .ng-choices>.ng-cardhead .ng-choice-count{font-size:8px!important}
+}
+@media(max-width:780px){
+ .ng-main .ng-intel>.ng-cardhead,
+ .ng-main .ng-choices>.ng-cardhead{height:46px!important;min-height:46px!important;max-height:46px!important;flex-basis:46px!important}
+ .ng-main .ng-intel>.ng-cardhead .ng-headinggroup h3,
+ .ng-main .ng-choices>.ng-cardhead .ng-headinggroup h3{font-size:13px!important}
+}
