@@ -107,7 +107,9 @@ async function bootstrap(db) {
   // Source-level inactive IDs must be removed from the SITE view even when
   // their outdated D1 rows still say ACTIVE. Never delete D1 audit/source rows.
   const visible=visibleHistoricalResults(races.results,results.results);
-  const activeYears=[...new Set(visible.races.map(r=>r.year))].sort((a,b)=>a-b);
+  // Keep D1's full year index: the race query may be partial during paging and
+  // a year can have other valid editions even if the sample rows are held.
+  const activeYears=years.results.map(x=>x.year);
   return {
     mode:'D1_CONNECTED',
     scope:'OLDER_D1_SNAPSHOT_WITH_V384_QA_PENDING_EXCLUSION',
