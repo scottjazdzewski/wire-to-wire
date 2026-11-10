@@ -544,3 +544,56 @@ test('Search Directory fits OOTP-style tabular roster with real owners, sorting 
  const check=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(check.status,0,check.stderr);
 });
+
+
+test('Search magnifier opens a working roster at desktop heights without throwing',()=>{
+ const js=get('public/next/next.js');
+ const begin=js.indexOf('const searchPageSize=()=>');
+ const end=js.indexOf('function openSearchItem(item){',begin);
+ assert.ok(begin>0&&end>begin,'Search roster render functions must be available');
+ const source=js.slice(begin,end);
+ assert.ok(!source.includes('searchPageSize()()'),'Never call the page-size result as a function');
+ const execute=new Function('APP','window','searchWords','horseOwnership','horseOwnerBadge','globalSearchItems','safe','glyph',
+  source+'\nreturn searchView();');
+ const samples=[
+  {kind:'horse',name:'Powerline',detail:'Horse Profile'},
+  {kind:'person',name:'Gabe Larkin',detail:'Stable Staff'},
+  {kind:'track',name:'Keeneland',detail:'Lexington'}
+ ];
+ const fakeAPP={searchIndex:[],searchQuery:'',searchType:'all',searchSort:'name',searchPage:0};
+ const stubWords=value=>String(value||'').toLowerCase().trim().split(/\s+/).filter(Boolean);
+ const run=height=>execute(fakeAPP,{innerHeight:height},stubWords,()=>null,
+  ()=>'<span class="owner">?</span>',()=>samples,value=>String(value),()=>'<svg></svg>');
+ for(const height of [700,768,900,1080]){
+  const html=run(height);
+  assert.ok(html.includes('ngGlobalSearch'),'Search input must actually render at '+height+'px');
+  assert.ok(html.includes('ng-search-row'),'Search result rows must render at '+height+'px');
+  assert.equal(fakeAPP.searchIndex.length,3,'Source record index must be populated');
+ }
+ fakeAPP.searchQuery='gabe';
+ const filtered=run(768);
+ assert.ok(filtered.includes('Gabe Larkin'),'Known person can be found by typing');
+ assert.ok(!filtered.includes('data-ng="search-go" data-val="0"'),'Nonmatching horse is filtered from the roster');
+ fakeAPP.searchQuery='';fakeAPP.searchType='horse';
+ const horses=run(768);
+ assert.ok(horses.includes('Powerline')&&!horses.includes('Gabe Larkin'),'Type filters operate on source rows');
+});
+
+test('People Overview places attributes, reputation, horses, career and relationships together',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css');
+ const p=js.slice(js.indexOf('function profileDetail('),js.indexOf('function calendarTimeline('));
+ assert.ok(p.includes('ng-person-workspace-overview'),'Overview must use dense two-band layout');
+ for(const area of ['ng-person-ov-attributes','ng-person-ov-reputation','ng-person-ov-horses','ng-person-ov-career','ng-person-ov-network'])
+  assert.ok(p.includes(area),'Overview must show '+area+' without switching tabs');
+ assert.ok(p.includes('person.horseAssignments()'),'Connected horses, owner badges and status are visible immediately');
+ assert.ok(p.includes('person.careerOverview'),'Career summary is visible immediately');
+ assert.ok(p.includes('person.networkOverview'),'Observed relationships are visible immediately');
+ assert.ok(p.includes('owner?.name||\'Owner not recorded\''),'Unknown ownership must not be invented');
+ assert.ok(p.includes('horseOwnerBadge(label)'),'Owner badge must be visible by each connected horse');
+ assert.ok(p.includes('knownRelations.slice(0,4)'),'Preview observed relationships without leaking hidden relationship state');
+ assert.ok(p.includes('sourceLinks.slice(0,5)'),'Horse assignments originate from existing Office links');
+ assert.ok(css.includes('grid-template-columns:repeat(12,minmax(0,1fr))!important'),'Dense desktop overview uses a 12-column grid');
+ assert.ok(css.includes('ng-person-ov-horses'),'Horse assignments have dedicated visible panel');
+ const parsed=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(parsed.status,0,parsed.stderr);
+});
