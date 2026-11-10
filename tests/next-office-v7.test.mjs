@@ -120,3 +120,22 @@ test('Compact racing-management chrome eliminates duplicate mast and keeps globa
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);
 });
+
+
+test('Racing Office source-linked interactions are correct and visually unambiguous',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css');
+ const center=js.slice(js.indexOf('function center(){'),js.indexOf('function right(){'));
+ assert.ok(center.includes('${relatedAction}</div></div><div class="ng-featurephoto">'),'Only horse-linked cases can offer a Horse Profile button');
+ assert.ok(center.includes('<div class="ng-outcome-actions">${resolvedRelatedAction}'),'Resolved outcomes must use the case-appropriate related record');
+ assert.ok(center.includes('ng-static-title'),'A decision title is a heading, not a redundant second Open File action');
+ assert.ok(!center.includes('<button class="ng-casetitle"'),'The title cannot duplicate the explicit Review Full File button');
+ assert.ok(js.includes("new Set(['powerline','lastmatch','pieta','entries','newsbuzz'])"),'Non-horse Cedar and sales/financial decisions should not show a Horse Profile');
+ assert.ok(js.includes("const row=$$('.right .rankRow').find("),'Roster click must search the full source-backed list');
+ assert.ok(js.includes("const n=$$('.right .fixtureList .fixture[data-track]')[Number(val)]"),'Fixture click must index the full list');
+ assert.ok(js.includes('aria-pressed="${APP.filter===v?'),'Inbox filters need accessible selected state');
+ assert.ok(js.includes('aria-current="${m.case===APP.activeCase?'),'Current Inbox item must be marked');
+ assert.ok(css.includes('.ng-main .ng-static-title{'),'Static title must retain approved typography without interactive hover');
+ assert.ok(css.includes('.ng-left .ng-inbox .ng-msg[aria-current="true"]'),'Selected Inbox case must be visually distinct');
+ const check=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(check.status,0,check.stderr);
+});
