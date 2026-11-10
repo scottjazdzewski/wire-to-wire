@@ -3980,3 +3980,284 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
  font-size:11.5px;
 }
 .ng-search-empty[hidden]{display:none!important}
+
+/* OOTP / Football Manager roster standard: compact one-line records, not tiles.
+   Owner crests are always visible; an unrecorded owner has an explicit neutral mark. */
+.ng-horse-owner-badge{
+ box-sizing:border-box;
+ display:inline-flex;
+ align-items:center;
+ flex:0 0 auto;
+ gap:5px;
+ vertical-align:middle;
+ min-width:0;
+ max-width:100%;
+ color:#dfd5a3;
+ line-height:1;
+ white-space:nowrap;
+}
+.ng-horse-owner-badge .ng-org-mark,
+.ng-horse-owner-badge .ng-owner-unknown-mark{
+ box-sizing:border-box;
+ display:inline-flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+ width:24px!important;
+ height:24px!important;
+ min-width:24px!important;
+ min-height:24px!important;
+ flex:0 0 24px!important;
+ border:1px solid #637f62!important;
+ border-radius:5px!important;
+ padding:0!important;
+ margin:0!important;
+ background:#244736!important;
+ color:#e6d8a9!important;
+ box-shadow:none!important;
+ font-size:13px!important;
+ font-weight:800!important;
+ overflow:hidden;
+}
+.ng-horse-owner-badge .ng-owner-unknown-mark{
+ border-style:dashed!important;
+ color:#adbfb0!important;
+ background:#20352e!important;
+}
+.ng-horse-owner-badge .ng-org-image{
+ display:block!important;
+ width:100%!important;
+ height:100%!important;
+ object-fit:contain!important;
+}
+.ng-horse-owner-badge .ng-org-initials{font-size:10px!important;color:#f6e4b8!important}
+.ng-horse-owner-name{
+ min-width:0;
+ overflow:hidden;
+ text-overflow:ellipsis;
+ font-size:10.5px;
+ font-weight:650;
+}
+.ng-horse-with-owner,
+.ng-rostername,
+.ng-entrycopy>b{
+ display:inline-flex!important;
+ align-items:center!important;
+ gap:7px!important;
+ min-width:0;
+}
+.ng-profile-horse .ng-profile-identity h2{
+ display:flex!important;
+ align-items:center!important;
+ gap:8px!important;
+}
+.ng-profile-horse .ng-profile-identity h2 .ng-horse-owner-badge{
+ transform:translateY(1px);
+}
+.ng-entity-links .ng-horse-with-owner{max-width:100%}
+.ng-entity-links .ng-horse-with-owner>.ng-horse-owner-badge{margin-right:2px}
+.ng-search-roster-page{
+ gap:5px!important;
+ padding:7px 9px!important;
+ background:#13251f!important;
+}
+.ng-search-compact-head{
+ box-sizing:border-box;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:12px;
+ flex:0 0 29px;
+ min-height:29px;
+ border-bottom:1px solid #43614f;
+ padding:0 5px 5px;
+}
+.ng-search-compact-head>div{display:flex;align-items:baseline;gap:14px;min-width:0}
+.ng-search-compact-head strong{font-size:13px;color:#f2dfa5;font-weight:820;letter-spacing:.06em}
+.ng-search-compact-head span{font-size:10px;color:#afc7b6;font-weight:680}
+.ng-search-compact-head>button{
+ border:1px solid #547c5c;
+ border-radius:3px;
+ background:#244a36;
+ color:#f2db9f;
+ padding:4px 9px;
+ font-size:9px;
+ font-weight:790;
+ display:inline-flex;
+ align-items:center;
+ gap:5px;
+ cursor:pointer;
+}
+.ng-search-roster-page>.ng-search-entry{
+ flex:0 0 35px!important;
+ min-height:35px!important;
+ padding:0 9px!important;
+ border-radius:3px!important;
+}
+.ng-search-roster-page>.ng-search-entry input{
+ font-size:12.5px!important;
+}
+.ng-search-filters{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ flex:0 0 30px;
+ gap:10px;
+ min-width:0;
+}
+.ng-search-typebar,.ng-search-sortbar{
+ display:flex;
+ align-items:center;
+ min-width:0;
+ gap:3px;
+}
+.ng-search-typebar button,.ng-search-sortbar button{
+ border:1px solid #456453;
+ border-radius:3px;
+ padding:5px 8px;
+ min-height:25px;
+ background:#1e372b;
+ color:#ceddc8;
+ font-size:9px;
+ font-weight:780;
+ white-space:nowrap;
+ cursor:pointer;
+}
+.ng-search-typebar button.on,.ng-search-sortbar button.on{
+ background:#345a43;
+ border-color:#c5ab6e;
+ color:#ffe6a7;
+}
+.ng-search-sortbar>span{
+ font-size:9px;
+ font-weight:760;
+ color:#a8c5b1;
+ padding-right:4px;
+}
+.ng-search-roster-page .ng-search-table{
+ display:flex;
+ flex-direction:column;
+ flex:1 1 0;
+ min-height:0;
+ border:1px solid #415f4d;
+ background:#162820;
+ overflow:hidden;
+}
+.ng-search-table-head,.ng-search-row{
+ box-sizing:border-box;
+ display:grid;
+ grid-template-columns:76px minmax(185px,1.2fr) minmax(180px,1.1fr) minmax(125px,.75fr) 42px;
+ align-items:center;
+ column-gap:8px;
+}
+.ng-search-table-head{
+ flex:0 0 28px;
+ min-height:28px;
+ padding:0 9px;
+ background:#264638;
+ color:#eddaa7;
+ border-bottom:1px solid #516f57;
+ font-size:9px;
+ font-weight:840;
+ letter-spacing:.045em;
+}
+.ng-search-table-head>span:last-child{text-align:center}
+.ng-search-roster-page .ng-search-table-body{
+ display:flex;
+ flex-direction:column;
+ flex:1 1 0;
+ min-height:0;
+ overflow:hidden!important;
+}
+.ng-search-roster-page .ng-search-row{
+ flex:0 0 31px;
+ min-height:31px;
+ width:100%;
+ padding:2px 9px;
+ text-align:left;
+ color:#e1ece1;
+ background:#1b3228;
+ border:0;
+ border-bottom:1px solid #385445;
+ cursor:pointer;
+}
+.ng-search-roster-page .ng-search-row:nth-child(even){background:#213a2e}
+.ng-search-roster-page .ng-search-row:hover,
+.ng-search-roster-page .ng-search-row:focus-visible{
+ background:#385b45;
+ outline:1px solid #adbe86;
+ outline-offset:-1px;
+}
+.ng-search-row>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ng-search-row-kind{
+ color:#d8c898;
+ font-size:9px;
+ font-weight:760;
+}
+.ng-search-row-name{
+ display:inline-flex;
+ align-items:center;
+ gap:7px;
+ color:#f0f0e1;
+ font-size:11.5px;
+ font-weight:720;
+}
+.ng-search-row-name>strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ng-search-row-name .ng-horse-owner-badge .ng-org-mark,
+.ng-search-row-name .ng-horse-owner-badge .ng-owner-unknown-mark{
+ width:22px!important;
+ height:22px!important;
+ min-width:22px!important;
+ min-height:22px!important;
+ flex-basis:22px!important;
+}
+.ng-search-row-detail{color:#b6cbbc;font-size:10.7px}
+.ng-search-row-owner{color:#e5cf98;font-size:10.5px}
+.ng-search-row-open{text-align:center;color:#c5d5c1}
+.ng-search-roster-page .ng-search-empty{
+ margin:8px;
+ font-size:10.5px;
+}
+.ng-search-table-footer{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:12px;
+ flex:0 0 32px;
+ padding:2px 7px;
+ background:#244338;
+ border:1px solid #496b56;
+ color:#dfd3a4;
+ font-size:9px;
+ font-weight:800;
+}
+.ng-search-page-control{
+ display:inline-flex;
+ align-items:center;
+ gap:13px;
+ font-variant-numeric:tabular-nums;
+}
+.ng-search-pager{display:flex;align-items:center;gap:10px}
+.ng-search-pager button{
+ width:24px;height:24px;
+ display:inline-flex;align-items:center;justify-content:center;
+ background:#294d39;border:1px solid #688363;border-radius:3px;color:#f1dba1;
+ cursor:pointer;
+}
+.ng-search-pager button:disabled{opacity:.33;cursor:default}
+.ng-search-table-footer>button{
+ display:inline-flex;align-items:center;gap:5px;
+ border:0;background:transparent;color:#ead39d;
+ font-size:9px;font-weight:800;cursor:pointer;
+}
+@media(min-width:1081px){
+ .ng-route-search .ng-routeheading{display:none!important}
+ .ng-route-search .ng-routegrid{padding-top:0!important}
+ .ng-route-search .ng-routeinner{padding:0!important}
+}
+@media(max-width:1120px){
+ .ng-search-table-head,.ng-search-row{
+  grid-template-columns:65px minmax(155px,1.2fr) minmax(135px,1fr) minmax(90px,.7fr) 30px;
+  gap:5px;
+ }
+ .ng-search-typebar button,.ng-search-sortbar button{padding:4px 5px;font-size:8px}
+}
