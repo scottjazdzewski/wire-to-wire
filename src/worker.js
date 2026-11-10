@@ -55,21 +55,24 @@ async function readNameTarget(db,type,id) {
 export function validDisplayName(value) {
   return typeof value==='string' && value.trim().length>=1 && value.trim().length<=220 && !/[\u0000-\u001f\u007f]/.test(value);
 }
+// Historical source quarantine is not a racing result. Keep those rows in D1 for
+// privileged source review, but exclude them from the active History tab read model.
+// The current Drive Master has 223 inactive edition IDs, all with QUARANTINED canon status.
 async function bootstrap(db) {
   // D1 allows at most six simultaneous connections per Worker request. Run the
   // read model queries sequentially to prevent startup failures and demo fallback.
   const jobs = [
     () => db.prepare('SELECT count(*) AS n,(SELECT count(*) FROM horse_details) AS horseDetails,(SELECT count(*) FROM horse_seasons) AS horseSeasons,(SELECT count(*) FROM pedigree_edges) AS pedigreeEdges,(SELECT count(*) FROM bloodline_profiles) AS bloodlineProfiles FROM entities').first(),
-    () => db.prepare('SELECT count(*) AS n FROM races').first(),
+    () => db.prepare("SELECT count(*) AS n FROM races WHERE status NOT LIKE 'QUARANTINED%'").first(),
     () => db.prepare('SELECT count(*) AS n FROM connections').first(),
-    () => db.prepare('SELECT count(*) AS n FROM results').first(),
+    () => db.prepare("SELECT count(*) AS n FROM results p JOIN races r ON r.id=p.edition_id WHERE r.status NOT LIKE 'QUARANTINED%'").first(),
     () => db.prepare('SELECT count(*) AS n FROM change_requests').first(),
     () => db.prepare(entitySelect+' ORDER BY e.kind, name LIMIT 15000').all(),
     () => db.prepare('SELECT * FROM connections ORDER BY year DESC LIMIT 40000').all(),
-    () => db.prepare(raceSelect+' ORDER BY r.year DESC, name LIMIT 10000').all(),
-    () => db.prepare('SELECT edition_id, horse_id, position FROM results ORDER BY edition_id, position LIMIT 25000').all(),
+    () => db.prepare(raceSelect+" WHERE r.status NOT LIKE 'QUARANTINED%' ORDER BY r.year DESC, name LIMIT 10000").all(),
+    () => db.prepare("SELECT p.edition_id,p.horse_id,p.position FROM results p JOIN races r ON r.id=p.edition_id WHERE r.status NOT LIKE 'QUARANTINED%' ORDER BY p.edition_id,p.position LIMIT 25000").all(),
     () => db.prepare('SELECT * FROM change_requests ORDER BY created_at DESC LIMIT 500').all(),
-    () => db.prepare('SELECT DISTINCT year FROM races ORDER BY year').all(),
+    () => db.prepare("SELECT DISTINCT year FROM races WHERE status NOT LIKE 'QUARANTINED%' ORDER BY year").all(),
     () => db.prepare('SELECT target_type,target_id,old_display_name,new_display_name,source_name,editor_email,edited_at FROM name_edit_audit ORDER BY id DESC LIMIT 200').all()
   ];
   const values = [];
@@ -164,8 +167,8 @@ async function api(request,env,email) {
     const year=Number(url.searchParams.get('year'));
     if(!Number.isInteger(year)||year<1800||year>2100) return response({error:'Valid year required'},400);
     const [races,results,connections]=await Promise.all([
-      env.DB.prepare(raceSelect+' WHERE r.year=? ORDER BY r.date,name LIMIT 500').bind(year).all(),
-      env.DB.prepare('SELECT r.* FROM results r JOIN races e ON e.id=r.edition_id WHERE e.year=? LIMIT 2000').bind(year).all(),
+      env.DB.prepare(raceSelect+" WHERE r.year=? AND r.status NOT LIKE 'QUARANTINED%' ORDER BY r.date,name LIMIT 500").bind(year).all(),
+      env.DB.prepare("SELECT r.* FROM results r JOIN races e ON e.id=r.edition_id WHERE e.year=? AND e.status NOT LIKE 'QUARANTINED%' LIMIT 2000").bind(year).all(),
       env.DB.prepare('SELECT * FROM connections WHERE year=? LIMIT 3000').bind(year).all()
     ]);
     return response({year,races:races.results,results:results.results,connections:connections.results});
