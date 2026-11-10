@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false};
+const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableSearch:''};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 const genericDeskPhoto='/assets/office/approved-office-photo.jpg';
 let organizationLogoIndex=null; // UI-only logo asset refs; organization authority stays in the game database.
@@ -370,8 +370,38 @@ function calendarTimeline(races,nonraces){
 }
 function functionalRoute(route){
  if(route.kicker==='Stable'){
-  const horses=horseRows(), races=racingRows();const st=state();
-  return `<section class="ng-functional"><div class="ng-functionalstats"><div><b>${horses.length}</b><span>Horses in current office</span></div><div><b>${races.length}</b><span>Race targets under review</span></div><div><b>${Object.keys(st.resolvedCases||{}).length}</b><span>Office decisions recorded</span></div></div><div class="ng-functionalcontent"><section class="ng-card ng-managementtable"><header class="ng-cardhead"><span class="ng-badge-slot" aria-hidden="true"><img class="ng-headicon" src="${badge('horse')}" alt=""/></span><h3>ALL HORSES · CURRENT STABLE</h3><small>${horses.length} ACTIVE FILES</small></header><div class="ng-tableheaders"><span>HORSE</span><span>OFFICE ACTIVITY</span><span>RACE TARGET</span><span>STATUS</span></div>${horses.map(h=>{const race=races.find(r=>r.name===h.name);return `<button class="ng-managementrow" data-ng="horse" data-val="${safe(h.name)}"><strong>${safe(h.name)}</strong><span>${safe(h.activity)}</span><span>${safe(race?race.track+' · '+race.date:'No scheduled target')}</span><i>${safe(h.tag)} ›</i></button>`}).join('')}</section><section class="ng-card ng-sideinfo"><header class="ng-cardhead"><span class="ng-badge-slot" aria-hidden="true"><img class="ng-headicon" src="${badge('connections')}" alt=""/></span><h3>STABLE COMMAND</h3></header><div class="ng-commandnotes"><strong>Manager's daily overview</strong><p>Horse names open their individual racing profiles. All status information comes from the same Office state and updates after decisions.</p><button data-ng="menu" data-val="Racing">VIEW RACE CALENDAR ↗</button><button data-ng="custom" data-val="Opportunities">REVIEW OPPORTUNITIES ↗</button></div></section></div></section>`;
+  const horses=horseRows(),races=racingRows(),st=state(),q=APP.stableSearch.trim().toLowerCase();
+  const entries=horses.map(h=>({horse:h,race:races.find(r=>r.name===h.name)}));
+  const filtered=entries.filter(row=>APP.stableFilter==='entered'?/entered/i.test(row.race?.status||''):
+   APP.stableFilter==='targets'?Boolean(row.race):
+   APP.stableFilter==='unassigned'?!row.race:true);
+  const keys={name:row=>row.horse.name,activity:row=>row.horse.activity,
+   race:row=>row.race?row.race.track+' '+row.race.date:'',
+   status:row=>row.race?.status||row.horse.tag};
+  const sorter=keys[APP.stableSort]||keys.name;
+  filtered.sort((a,b)=>sorter(a).localeCompare(sorter(b),undefined,{numeric:true,sensitivity:'base'})*(APP.stableSortDesc?-1:1));
+  const matching=filtered.filter(row=>(row.horse.name+' '+row.horse.activity+' '+(row.race?.track||'')+' '+(row.race?.status||'')+' '+row.horse.tag).toLowerCase().includes(q));
+  const sort=(key,label)=>`<button data-ng="stable-sort" data-val="${key}" aria-label="Sort horses by ${label}" aria-pressed="${APP.stableSort===key?'true':'false'}">${label}${APP.stableSort===key?(APP.stableSortDesc?' ▼':' ▲'):''}</button>`;
+  const options=[['all','ALL'],['targets','WITH TARGET'],['entered','ENTERED'],['unassigned','NO TARGET']];
+  const filters=options.map(([key,label])=>`<button data-ng="stable-filter" data-val="${key}" class="${APP.stableFilter===key?'on':''}" aria-pressed="${APP.stableFilter===key?'true':'false'}">${label}</button>`).join('');
+  const rowHTML=(row)=>{
+   const h=row.horse,r=row.race,description=h.name+' '+h.activity+' '+(r?.track||'')+' '+(r?.status||'')+' '+h.tag;
+   return `<button class="ng-managementrow ng-stable-row" data-ng="horse" data-val="${safe(h.name)}" data-search="${safe(description)}" aria-label="Open horse profile: ${safe(h.name)}"><strong>${safe(h.name)}</strong><span>${safe(h.activity)}</span><span>${safe(r?r.track+' · '+r.date:'No current race target')}</span><i class="${r&&/entered/i.test(r.status)?'ng-stable-entered':''}">${safe(r?r.status:h.tag)} ${glyph('right',12)}</i></button>`;
+  };
+  const raceRowsHTML=races.map((r,i)=>`<button class="ng-stable-fixture" data-ng="fixture" data-val="${i}" aria-label="Open ${safe(r.name)} racing target"><strong>${safe(r.name)}</strong><span>${safe(r.track)} · ${safe(r.date)}</span><small class="${/entered/i.test(r.status)?'entered':''}">${safe(r.status)}</small></button>`).join('')||'<div class="ng-empty-record">No known racing commitments.</div>';
+  const horseCaseFiles=currentMessages().filter(m=>horses.some(h=>m.title.toLowerCase().includes(h.name.toLowerCase())));
+  const caseHTML=horseCaseFiles.slice(0,5).map(m=>`<button class="ng-stable-fixture" data-ng="case" data-val="${safe(m.case)}"><strong>${safe(m.title)}</strong><span>${safe(m.from)}</span><small>${m.resolved?'REVIEWED':'OPEN'}</small></button>`).join('')||'<div class="ng-empty-record">No currently displayed files name a stable horse.</div>';
+  return `<section class="ng-functional ng-stable-directory">
+   <div class="ng-stable-summary">
+    <div><strong>${horses.length}</strong><span>HORSES</span></div>
+    <div><strong>${races.filter(r=>/entered/i.test(r.status)).length}</strong><span>ENTERED</span></div>
+    <div><strong>${races.filter(r=>!/entered/i.test(r.status)).length}</strong><span>RACE TARGETS</span></div>
+    <div><strong>${Object.keys(st.resolvedCases||{}).length}</strong><span>RECORDED DECISIONS</span></div>
+   </div>
+   <div class="ng-stable-toolbar"><label for="ngStableSearch">FIND HORSE</label><input id="ngStableSearch" data-ng-input="stable-search" type="search" value="${safe(APP.stableSearch)}" placeholder="Horse, activity, racecourse…" autocomplete="off"/><div class="ng-stable-filters">${filters}</div><span class="ng-stable-visible">${matching.length} OF ${horses.length} HORSES</span></div>
+   <div class="ng-stable-workspace"><section class="ng-card ng-managementtable"><header class="ng-cardhead"><span class="ng-badge-slot" aria-hidden="true"><img class="ng-headicon" src="${badge('horse')}" alt=""/></span><h3>STABLE HORSE DIRECTORY</h3><small>SELECT A HORSE TO OPEN ITS PROFILE</small></header><div class="ng-tableheaders ng-stable-tablehead">${sort('name','HORSE')}${sort('activity','CURRENT ACTIVITY')}${sort('race','NEXT RACE TARGET')}${sort('status','STATUS')}</div><div class="ng-stable-tablebody">${filtered.map(rowHTML).join('')||'<div class="ng-empty-record">No horses match this status filter.</div>'}</div></section>
+   <div class="ng-stable-context"><section class="ng-card"><header class="ng-cardhead"><h3>RACE COMMITMENTS</h3><small>CONFIRMED VS TARGETED</small></header><div class="ng-stable-contextlist">${raceRowsHTML}</div><button class="ng-stable-context-footer" data-ng="menu" data-val="Racing">OPEN RACE CALENDAR ${glyph('arrow',12)}</button></section>
+   <section class="ng-card"><header class="ng-cardhead"><h3>HORSE-NAMED OFFICE FILES</h3><small>LINKED CASES</small></header><div class="ng-stable-contextlist">${caseHTML}</div></section></div></div></section>`;
  }
  if(route.kicker==='Race Calendar'){
   const races=racingRows();const entered=races.filter(r=>/Entered/i.test(r.status)).length;
@@ -441,6 +471,8 @@ window.addEventListener('click',e=>{
  if(key==='caseprev')return selectAdjacentCase(-1);
  if(key==='casenext')return selectAdjacentCase(1);
  if(key==='nextopen')return selectAdjacentCase(1,true);
+ if(key==='stable-sort'){if(APP.stableSort===val)APP.stableSortDesc=!APP.stableSortDesc;else{APP.stableSort=val;APP.stableSortDesc=false}return paint()}
+ if(key==='stable-filter'){APP.stableFilter=val;return paint()}
  if(key==='filter'){APP.filter=val;APP.msgPage=0;return paint()}
  if(key==='prev-msg'){APP.msgPage=Math.max(0,APP.msgPage-1);return paint()}
  if(key==='next-msg'){APP.msgPage++;return paint()}
@@ -457,6 +489,20 @@ window.addEventListener('click',e=>{
  if(key==='custom'){if(val==='Opportunities')return bridgeNode(originalAct('Open opportunity board'));APP.custom=val;return paint()}
  if(key==='back'){return bridgeNode(originalAct('Back'))}
  if(key==='forward'){return bridgeNode(originalAct('Forward'))}
+},true);
+root.addEventListener('input',event=>{
+ const input=event.target;
+ if(!input.matches('input[data-ng-input="stable-search"]'))return;
+ APP.stableSearch=input.value;
+ const query=APP.stableSearch.trim().toLowerCase();
+ let visible=0;
+ $$('.ng-stable-row',root).forEach(row=>{
+  const match=(row.getAttribute('data-search')||'').toLowerCase().includes(query);
+  row.hidden=!match;
+  if(match)visible++;
+ });
+ const counter=$('.ng-stable-visible',root);
+ if(counter)counter.textContent=visible+' OF '+horseRows().length+' HORSES';
 },true);
 window.addEventListener('popstate',()=>schedulePaint(40));
 // Avoid recursive mutation observations: only observe the original (hidden) app.
