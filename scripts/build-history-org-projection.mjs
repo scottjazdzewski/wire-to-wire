@@ -98,14 +98,34 @@ const sql=[
   '-- DERIVED PRIVATE WTW D1 READ MODEL, NOT ORIGINAL CANON.',
   '-- Requires migrations/0006_history_org_projection.sql; no production execution here.',
   '-- Source: WTW Canon Registry v3.3, History_Org_Economic_Backstory gid 122436628',
-  '-- The source data includes QA held origin outlines. Frontend must respect publication_tier.',
+  '-- Historical origin/reputation/finance claims are REDACTED for 98 unapproved entities; tier preserved.',
   '-- No writes to entities, races, results, name overrides or source Google Sheets.'
 ];
 const counts={};
+const sourceApproved=new Set(['USER_APPROVED_DIRECTION_ONLY','EXISTING_APPROVED_SOURCE']);
+// The other 98 orgs have canonical identities, NOT approved origin narratives.
+// Identity/geometry and carefully labeled year-level evidence may cross into
+// D1; unapproved founders, fortunes, prestige, reputation and financial claims
+// must not be silently published as historical fact.
+const identityOnly=new Set([
+  'organization_id','canonical_name','organization_type','canonical_geography',
+  'source_status','source_authority','approval_gate','historical_year_links'
+]);
+let redactedOriginRows=0,publishedOriginRows=0;
 for(const row of records){
   const publicationTier=tier(row.Approval_Gate);
   counts[publicationTier]=(counts[publicationTier]||0)+1;
-  const values=[...fields.map(([,src])=>row[src]??''),publicationTier,expectedSource,String(expectedSheet),hash];
+  const full=sourceApproved.has(publicationTier);
+  if(full)publishedOriginRows++;
+  else redactedOriginRows++;
+  const released=fields.map(([name,src])=>{
+    const sourceValue=row[src]??'';
+    if(full||identityOnly.has(name))return sourceValue;
+    if(name==='transfer_status')return 'IDENTITY_ONLY__ORIGIN_REQUIRES_APPROVAL';
+    if(name==='next_source_task')return 'Historical origin and economic claims require user approval before publication.';
+    return '';
+  });
+  const values=[...released,publicationTier,expectedSource,String(expectedSheet),hash];
   const update=cols.slice(1).map(c=>c+'=excluded.'+c).join(',');
   sql.push('INSERT INTO wtw_history_org_profiles ('+cols.join(',')+') VALUES ('+
     values.map(q).join(',')+') ON CONFLICT(organization_id) DO UPDATE SET '+update+
@@ -114,6 +134,8 @@ for(const row of records){
 const approved=counts.USER_APPROVED_DIRECTION_ONLY||0;
 const source=counts.EXISTING_APPROVED_SOURCE||0;
 const research=(counts.SOURCE_ONLY_OUTLINE_PENDING_APPROVAL||0)+(counts.UNAPPROVED_ORIGIN_DETAILS||0);
+if(publishedOriginRows!==10||redactedOriginRows!==98)
+  throw Error('Publication approval mix changed; review every changed source approval gate');
 sql.push('INSERT INTO wtw_history_org_import_manifest (source_sha256,source_spreadsheet_id,source_sheet_id,source_status,record_count,approved_direction_count,source_legacy_count,research_only_count,note) VALUES ('+
   [hash,expectedSource,String(expectedSheet),snapshot.authority.source_status,records.length,approved,source,research,
    'Drive export, not a second master. All unapproved rows remain source-tiered; never change races or user name overlays.'].map((x,i)=>i>=4&&i<=7?String(x):q(x)).join(',')+
@@ -126,6 +148,8 @@ const manifest={
   source:{spreadsheet_id:expectedSource,sheet_id:expectedSheet,sha256:hash,
     authority_status:snapshot.authority.source_status},
   counts:{organizations:records.length,with_origin:records.filter(x=>x.Origin_Through_1998).length,
+    approved_origin_publications:publishedOriginRows,
+    identity_only_origin_redactions:redactedOriginRows,
     with_stakes_year_links:records.filter(x=>
       x.Pre1999_Stakes_Season_Human_And_Breeder_Evidence.startsWith('YEAR_LEVEL_')).length,
     by_publication_tier:counts},
