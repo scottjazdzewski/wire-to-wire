@@ -151,3 +151,29 @@ test('fictive role-generated people differ in professionalism without conflating
  assert.notDeepEqual(records['P-JOCKEY-A'].latent,records['P-JOCKEY-B'].latent);
  assert.ok(records['P-JOCKEY-A'].reputation.source.refs[0].includes('WTW-GAME-MODEL'));
 });
+
+
+test('opportunity selection automatically uses role-specific generated ability and relationships without leaking attributes',()=>{
+ const w=world();
+ const s=createGameRun({world:w,runId:'WTW-RUN-TEST-ATTR-RANK',seed:88,
+  player:{role:'owner',involvement:'balanced',operation_id:'O-TEST'},personGenerationCatalog:catalog});
+ const ability=s.runtime.people['P-JOCKEY-A'].latent.pace_judgment;
+ assert.equal(typeof ability,'number');
+ const results=getProfessionalOpportunityRanking(s,w,catalog,{type:'mount',client_id:'O-TEST'},[
+  {person_id:'P-JOCKEY-A',available:true,eligible:true,logistics_fit:1},
+  {person_id:'P-JOCKEY-B',available:true,eligible:true,logistics_fit:1}
+ ]);
+ assert.equal(results.length,2);
+ assert.notEqual(results[0].fit_score,results[1].fit_score);
+ assert.equal('ability_fit' in results[0],false,'Hidden talent cannot leak into player lists');
+ assert.equal('latent' in results[0],false);
+ for(const type of ['mount','training_assignment','mating','sale_consignment','purchase','hiring']){
+  assert.ok(catalog.reputation.effects[type].skill_keys.length>0);
+  const ranking=getProfessionalOpportunityRanking(s,w,catalog,{type},[
+   {person_id:'P-TRAINER-A',available:true,eligible:true},
+   {person_id:'P-BREEDER-A',available:true,eligible:true}
+  ]);
+  assert.equal(ranking.length,2);
+  assert.ok(ranking.every(x=>Number.isFinite(x.fit_score)));
+ }
+});
