@@ -1,15 +1,15 @@
 # WTW — Canonical Desktop Visual Design (FM / OOTP Inspired)
 **Locked UI authority:** November 10, 2026
-**Implementation:** `public/next/next.css` ONLY, used by `public/index.html` and `public/next/index.html`.
+**Implementation:** The playable Office uses exactly one canonical `public/next/next.css` (both `/` and `/next/`). The independent History Vault uses exactly one canonical `public/style.css` (`/archive/`). Both have been rebuilt in place to the same palette and design principles; neither loads an override sheet.
 **Scope:** Whole game — Racing Office, all department landing pages, Global Search, Horse and People Profiles, Farms, Tracks, Organizations, race/season history, deeper connected tabs and management workflows.
 
 ## Governing principle
 A desktop racing **management simulation**, not a card-based website. Apply Football Manager and Out of the Park Baseball's useful patterns: sharply aligned dense tables, easily scanned roster information, fast back/forward, compact filters, identity crests/portraits, meaningful category accents, minimal page chrome and screens that explain themselves without excess drilling. Do not reproduce their copyrighted artwork or skins. WTW keeps its approved logos, photographic editorial assets, racing terminology, forest-green highlights and warm racing gold.
 
 ## One system, no patches
-- Only the canonical `/next/next.css` is active. Do **not** create `override.css`, a second `<style>` block, inline style overrides, or append dated "fix" sections to the bottom.
+- Each application has **one authoritative stylesheet**: the game `/next/next.css`, and the independent History Vault `/style.css`. Neither should import a second layer or append dated "fix" sections. Do **not** create `override.css`, a second `<style>` block, or inline CSS overrides.
 - When changing a component, **edit its existing consolidated selector in the authoritative file**, remove obsolete declarations, and update the relevant responsive condition in the same file. Shared widgets belong to shared classes and tokens, not page-specific clones.
-- The rebuilt sheet consolidates the earlier repeated selectors by selector/media context. `tests/ui-canonical-style.test.mjs` guards against duplicate rule blocks and tests real shared screen surfaces.
+- Both rebuilt stylesheets consolidate repeated selectors by selector/media context. `tests/ui-canonical-style.test.mjs` guards against duplicate rule blocks, checks the two dark palettes, and protects the existing screen structures.
 - The prior CSS is recoverable from Git history; there is no parallel styling authority.
 - Don't change gameplay engines, horse generation, canonical people/horse histories, official records or save namespaces to achieve a visual appearance.
 
@@ -45,6 +45,11 @@ Most of the screen must read as charcoal/slate. Green indicates racing identity,
 - Professions use consistent title case (Stable Staff, Bloodstock Agent, Farm Manager).
 - Flag/geography data follows canonical location sources, not presumed nationality.
 - Every first-tier panel includes its primary facts, actions and context immediately; deep tabs supplement rather than conceal the overview.
+
+## Archive-specific continuity
+- History Vault keeps its standalone historical data/navigation system, but its prior light/cream canvas, oversized cards and serif-heavy decorative spacing have been rebuilt to the same charcoal/green/gold management standard.
+- Its Return-to-Racing-Office link now uses a canonical class; no inline styling remains in `public/archive/index.html`.
+- Keep the two applications' technical CSS separated by runtime but visually consistent. No gameplay/data changes or new data authorities.
 
 ## Approval process
 1. Modify the canonical selector(s), not append a patch.
