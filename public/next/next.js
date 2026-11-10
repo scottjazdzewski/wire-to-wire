@@ -253,6 +253,7 @@ function searchView(){
   <label class="ng-search-entry" for="ngGlobalSearch">${glyph('search',18)}<input id="ngGlobalSearch" type="search" value="${safe(APP.searchQuery)}" data-ng-input="global-search" placeholder="Type any available horse, person, racetrack, race or page…" autocomplete="off" aria-label="Search Wire to Wire pages and records"/></label>
   <div class="ng-search-count"><span id="ngSearchCount">${entries.filter(matches).length} MATCHING PAGES & RECORDS</span><span>ENTER OPENS FIRST RESULT</span></div>
   <div class="ng-search-results" aria-label="Search results">${entries.map(result).join('')}</div>
+  <div class="ng-search-empty" id="ngSearchEmpty" ${entries.some(matches)?'hidden':''}>No connected page matches that search. Try another name, or open the Historical Archive below.</div>
   <div class="ng-search-bottom"><button data-ng="search-history">EXPLORE HISTORICAL ARCHIVE ${glyph('arrow',12)}</button><small>Results link only to known records. Historical discovery continues in the Archive.</small></div>
  </section>`;
 }
@@ -495,7 +496,7 @@ function profileDetail(route){
     const id=String(x.counterpart_id||match?.id||'');
     return {
       id, name:String(x.counterpart_name||match?.name||id||'Unknown contact'),
-      role:String(x.counterpart_role||match?.role||'Not recorded'),
+      role:titleCaseUIRole(x.counterpart_role||match?.role||'Not recorded'),
       score:x.score==null?null:x.score,
       sentiment:['positive','neutral','negative'].includes(x.sentiment)?x.sentiment:null,
       last_observed:String(x.observed_at||'—'),
@@ -887,6 +888,8 @@ root.addEventListener('input',event=>{
   });
   const counter=$('#ngSearchCount',root);
   if(counter)counter.textContent=total+' MATCHING PAGES & RECORDS';
+  const empty=$('#ngSearchEmpty',root);
+  if(empty)empty.hidden=total!==0;
   return;
  }
  if(!input.matches('input[data-ng-input="stable-search"]'))return;
