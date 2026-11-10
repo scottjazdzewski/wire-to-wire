@@ -1,4 +1,4 @@
-import inactiveEditionReview from '../data/history-audit/qa-pending-v384-inactive-edition-ids.json' with {type:'json'};
+import {qaPendingInactiveAuthority,qaPendingInactiveEditionIds} from './history-inactive-read-model.js';
 // Cloudflare Worker / D1 API. Deliberately separate from all other WTW and non-WTW projects.
 // Privacy: every request requires authenticated Cloudflare Access in deployed environments.
 const jsonHeaders = {
@@ -60,12 +60,11 @@ export function validDisplayName(value) {
 // privileged source review, but exclude them from the active History tab read model.
 // This is a visibility guard for the OLD v3.37 D1 snapshot, not a v3.84
 // result import. D1's stored status predates later Drive quarantines.
-if(inactiveEditionReview.authority?.source_status!=='V3.84_QA_PENDING' ||
-   inactiveEditionReview.counts?.excluded!==223 ||
-   inactiveEditionReview.excluded?.length!==223 ||
-   new Set(inactiveEditionReview.excluded.map(r=>r.edition_id)).size!==223)
+if(qaPendingInactiveAuthority!=='V3.84_QA_PENDING' ||
+   qaPendingInactiveEditionIds.length!==223 ||
+   new Set(qaPendingInactiveEditionIds).size!==223)
   throw Error('Historical exclusion authority changed: review before deploying');
-const qaPendingExcludedEditionIds=new Set(inactiveEditionReview.excluded.map(r=>r.edition_id));
+const qaPendingExcludedEditionIds=new Set(qaPendingInactiveEditionIds);
 export const historicalSourceStatus=Object.freeze({
   d1_snapshot:'2026-11-07 v3.37 working H/S/E/P/B',
   canonical_race_authority:'Drive E/W/M v3.84 QA_PENDING',
