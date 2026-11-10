@@ -221,7 +221,7 @@ test('FM/OOTP connected profiles: people, farms, tracks, sourced graphics, click
  const i=js.indexOf('function profileDetail('),j=js.indexOf('function calendarTimeline(',i);
  const profile=js.slice(i,j);
  for(const type of ['Horse','People','Farm','Track']) assert.ok(profile.includes("route.kicker==='"+type+" Profile'"),type+' template must use the existing profile adapter');
- assert.ok(profile.includes("['Overview','Attributes','Reputation','Stable Horses','Career','Connections','History']"),'People profile needs skill, reputation, stable and career drill-downs');
+ assert.ok(profile.includes("['Overview','Attributes','Reputation','Network','Stable Horses','Career','Connections','History']"),'People profile needs skill, reputation, stable and career drill-downs');
  assert.ok(profile.includes("['Overview','Connected Horses','Operations','Connections','History']"),'Farm needs connected horse and operation drill-downs');
  assert.ok(profile.includes("['Overview','Meet Schedule','Major Races','Connections','History']"),'Track profile preserves its meet and stakes navigation');
  assert.ok(profile.includes('function')===false||profile.includes('sourcePanels'),'Profile data should remain in existing source panels');
@@ -387,7 +387,7 @@ test('Tier 1 entity screens use the same compact identity bar and no-scroll Over
  const p=js.slice(js.indexOf('function profileDetail('),js.indexOf('function calendarTimeline('));
  for(const key of ['isHorse','isPerson','isFarm','isTrack']) assert.ok(p.includes(key),'All Tier 1 entity kinds must stay in the same profile renderer');
  assert.ok(p.includes('ng-tier1-biography'),'People, Farm and Track identity details must sit beside the name, like Horse');
- for(const field of ['BIRTHPLACE','CURRENT BASE','LOCATION','SURFACES','CIRCUIT','OWNER','STATUS'])assert.ok(p.includes("'"+field+"'"),'Known identity field '+field+' must be accessible in the header');
+ for(const field of ['HOMETOWN','CURRENT BASE','LOCATION','SURFACES','CIRCUIT','OWNER','STATUS'])assert.ok(p.includes("'"+field+"'"),'Known identity field '+field+' must be accessible in the header');
  assert.ok(p.includes('ng-tier1-workspace'),'Farm and Track Overview use matching three-column workspaces');
  assert.ok(p.includes('ng-person-workspace'),'People Overview retains its attribute/reputation/career columns');
  assert.ok(p.includes("special.slice(0,5)"),'First-tier People Overview shows the decisive skills rather than the entire secondary record');
@@ -425,8 +425,8 @@ test('Tier 1 Organization Overview has six purposeful panels and no duplicate he
 test('Tier 1 People Profile keeps only known identity facts and actions above the fold',()=>{
  const source=get('public/office-v30-4.js'),js=get('public/next/next.js'),css=get('public/next/next.css');
  const p=js.slice(js.indexOf('function profileDetail('),js.indexOf('function calendarTimeline('));
- assert.ok(p.includes('const personIdentityKnown='),'Person header should select known identity facts');
- assert.ok(p.includes(".filter(([label,value])=>label==='ROLE'"),'Unknown age, birthplace or current base should not waste header width');
+ assert.ok(p.includes('const personIdentityFields=isPerson?'),'Person header should show origin, age, hometown and base facts');
+ assert.ok(p.includes('personOriginLabel')&&p.includes('personHometown')&&p.includes('baseLabel'),'Missing values must be accurately labeled, never invented');
  assert.ok(p.includes("isPerson?'PEOPLE DIRECTORY'"),'Person header must lead to people rather than horse roster');
  assert.ok(p.includes('class="ng-person-career-strip"'),'Career and assignments need compact summary, not redundant role stats');
  assert.ok(p.includes('CURRENT HORSE ASSIGNMENTS'),"Person's actual linked horses must be visible immediately");
@@ -436,7 +436,53 @@ test('Tier 1 People Profile keeps only known identity facts and actions above th
  assert.ok(p.includes('Array.isArray(source.source?.refs)&&source.source.refs.length>0'),'No fabricated reputation on the overview');
  assert.ok(css.includes('Tier 1 People sign-off pass:'),'Desktop-specific People UI fit rules must exist');
  assert.ok(css.includes('.ng-profile-person .ng-person-career-strip'),'Person career evidence must use a dense two-cell strip');
- assert.ok(source.includes("'Gabe Larkin':{job:'Stable staff'"),'Original personnel roster must not be rewritten to fill blank facts');
+ assert.ok(source.includes("'Gabe Larkin':{person_id:'P-000023',job:'Stable staff'"),'Original personnel roster must not be rewritten to fill blank facts');
+ const check=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(check.status,0,check.stderr);
+});
+
+
+test('People header uses canonical birthplaces and recorded bases without guessing citizenship or age',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css'),source=get('public/office-v30-4.js');
+ const geo=JSON.parse(get('public/data/person-geography-ui-v33.json'));
+ assert.equal(geo.schema,'WTW_UI_PERSON_GEOGRAPHY_PROJECTION_V1');
+ assert.equal(geo.person_count,1308);
+ assert.equal(geo.birthplace_count,1308);
+ assert.equal(geo.recorded_base_count,1275);
+ assert.ok(geo.scope.includes('READ_ONLY_SITE_PROJECTION'),'UI geography cannot become a people master');
+ const l=geo.people.find(x=>x.id==='P-000023');
+ assert.equal(l.name,'Gabe Larkin');
+ assert.deepEqual([l.birthplace.city,l.birthplace.region,l.birthplace.country,l.birthplace.flag_code],['Jacksonville','Florida','USA','us']);
+ assert.deepEqual([l.opening_base.city,l.opening_base.region,l.opening_base.as_of],['Charles Town','West Virginia','1999']);
+ assert.ok(l.birthplace.source_record_id&&l.opening_base.source_record_id);
+ assert.ok(source.includes("'Gabe Larkin':{person_id:'P-000023'"),'Legacy Office person must link by canonical ID');
+ assert.ok(source.includes('data-person-id='),'Person identity must flow into UI');
+ assert.ok(js.includes('loadPersonGeography()'),'Person header loads approved geography');
+ assert.ok(js.includes('personGeographyRecord(source,route.title)'),'Do not guess identity from a nearby track');
+ assert.ok(js.includes("const personOriginLabel=knownField(personNationality)?'NATIONALITY':'BIRTH COUNTRY'"),'Birth-country flag is not nationality proof');
+ assert.ok(js.includes("const baseLabel=knownField(currentBase)?'CURRENT BASE'"),'1999 base cannot pretend to be a 2014 current location');
+ assert.ok(js.includes("const personAge=ageAtGameDate||factByName('Age')"),'Age requires source or date of birth');
+ assert.ok(css.includes('.ng-profile-person .ng-person-national-flag{'),'Windows-compatible real flag SVG');
+ assert.ok(css.includes('.ng-profile-person .ng-tier1-biography{'),'Compact mobile-friendly identity header');
+ const actual=[...new Set(geo.people.map(p=>p.birthplace.country))].sort();
+ const flags={USA:'us',Canada:'ca',Cuba:'cu',Panama:'pa',Venezuela:'ve',Spain:'es',Argentina:'ar',Ireland:'ie',Peru:'pe',England:'gb-eng',Chile:'cl',Colombia:'co',Austria:'at',Mexico:'mx',France:'fr',Uruguay:'uy'};
+ assert.deepEqual(actual,Object.keys(flags).sort());
+ for(const [country,code] of Object.entries(flags))
+   assert.ok(get('public/assets/flags/v1/'+code+'.svg').startsWith('<svg'),country+' needs its SVG flag');
+});
+
+test('People Network gives ranked source-only relationships with role filters, paging and evidence',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css');
+ const p=js.slice(js.indexOf('function profileDetail('),js.indexOf('function calendarTimeline('));
+ assert.ok(p.includes("['Overview','Attributes','Reputation','Network','Stable Horses'"),'People need a Network tab');
+ assert.ok(p.includes("Array.isArray(work.relationship_reports)"),'Read known observations from current game state');
+ assert.ok(p.includes("Array.isArray(x.source_refs)&&x.source_refs.length>0"),'Unknown affinity is never shown as fact');
+ assert.ok(p.includes("APP.networkSort==='worst'?a.score-b.score:b.score-a.score"),'Allow good-to-bad or bad-to-good sorting');
+ assert.ok(p.includes("APP.networkRole==='all'||r.role===APP.networkRole"),'Filter by role');
+ assert.ok(p.includes("knownRelations.length"),'Overview previews known relationship count');
+ assert.ok(p.includes('data-ng="network-select"'),'Select a row to inspect its sources');
+ for(const key of ["network-sort","network-role","network-page","network-select"])assert.ok(js.includes("if(key==='"+key+"')"),key+' control must work');
+ assert.ok(css.includes('.ng-network-table-row{')&&css.includes('.ng-person-network-preview'),'Consistent Network design');
  const check=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(check.status,0,check.stderr);
 });
