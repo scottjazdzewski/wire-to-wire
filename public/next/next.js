@@ -9,6 +9,9 @@ const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigr
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
 const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false};
+let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
+const genericDeskPhoto='/assets/office/approved-office-photo.jpg';
+
 const tabmap={Office:['Overview','Messages','Decisions','Calendar','News','Reports','Career'],History:['Race Results','Horses','People & Farms','Facilities & Tracks','Historical Calendar','Coverage'],Stable:['Overview','Horses','Training','Health','Race Plans','Barns'],Racing:['Overview','Calendar','Entries','Results','Stakes','Race Planning'],Breeding:['Overview','Stallions','Broodmares','Foals','Pedigrees','Stud Farms'],Sales:['Overview','Auctions','Catalogs','Watchlist','Private Offers'],Personnel:['Overview','Trainers','Jockeys','Owners','Staff'],Facilities:['Overview','Barns','Training Centers','Farms'],Finances:['Overview','Cash Flow','Operating Costs','Budgets'],World:['Overview','Tracks','Meets','Major Races','News']};
 const actions={Office:'Office Overview',Stable:'Stable',Racing:'Race Calendar',Sales:'Sales',World:'World'};
 const officeMenu={Overview:'Office Overview',Messages:'Filter All',Decisions:'Open move history',Calendar:'Open Race Calendar',News:'News',Reports:'Open move history',Career:'Open move history'};
@@ -90,22 +93,44 @@ function inbox(){const arr=filteredMessages();const size=6;const pages=Math.max(
  return `<aside class="ng-left"><section class="ng-card ng-inbox"><header class="ng-cardhead"><span class="ng-sectionicon">${glyph('inbox',17)}</span><div class="ng-headinggroup"><h3>Inbox</h3><span>STAFF & RACING CORRESPONDENCE</span></div><span class="ng-counter">${arr.length}</span></header><div class="ng-filters">${['All','Open','Urgent','Reviewed'].map(v=>`<button class="${APP.filter===v?'on':''}" data-ng="filter" data-val="${v}">${v==='Urgent'?`${glyph('alert',12)} Urgent ${urgent}`:v==='Open'?`Open ${currentMessages().filter(m=>!m.resolved).length}`:v==='Reviewed'?`Reviewed ${currentMessages().filter(m=>m.resolved).length}`:v}</button>`).join('')}</div><div class="ng-inboxdate"><span class="ng-live-dot"></span>TODAY'S OFFICE FILES <span>${safe($('.dateChip')?.textContent||'')}</span></div><div class="ng-msgs">${slice.map(m=>`<button class="ng-msg ${m.case===APP.activeCase?'on':''} ${m.urgent?'urgent':''}" data-ng="case" data-val="${safe(m.case)}"><div class="ng-avatar">${safe(m.initials)}</div><div class="ng-msgcopy"><div class="ng-msgfrom">${safe(m.from)}</div><div class="ng-msgtitle">${safe(m.title)}</div><div class="ng-msgmeta">${safe(m.meta)}</div></div><div class="ng-msgtrail"><span class="ng-msgtag ${m.urgent?'urgent':/sale|cash/i.test(m.title)?'sale':''}">${m.urgent?'ACTION':/vet|filling|soundness/i.test(m.title)?'VET':/catalog|sale/i.test(m.title)?'SALE':'INFO'}</span><div class="ng-msgtime">${safe(m.time)}</div></div></button>`).join('')}</div><footer class="ng-inboxfoot"><span>${arr.length?APP.msgPage*size+1:0}–${Math.min(arr.length,(APP.msgPage+1)*size)} OF ${arr.length} MESSAGES</span><div class="ng-pagination"><button aria-label="Previous inbox page" data-ng="prev-msg" ${APP.msgPage===0?'disabled':''}>${glyph('left',13)}</button><b>${APP.msgPage+1} / ${pages}</b><button aria-label="Next inbox page" data-ng="next-msg" ${APP.msgPage>=pages-1?'disabled':''}>${glyph('right',13)}</button></div></footer></section></aside>`;
 }
 
-// Decision-desk photo: use already-approved editorial imagery until per-case licensed
-// photography is curated. Captions describe the scene category, never a named horse.
+// Decisions display the relevant entity's real photo if one exists, then a case/scene
+// photo, then the approved generic photograph. Media lookup is never a new data ledger.
+// The current Office prototype has name-linked cases; future source records can supply
+// their immutable IDs to this asset index without changing the decision UI.
+const casePhotoSubjects={
+ powerline:{type:'horse',name:'Powerline',category:'racing'},
+ lastmatch:{type:'horse',name:'The Last Match',category:'training'},
+ saratoga:{type:'person',name:'Alistair Dunleavy',category:'sales'},
+ pieta:{type:'horse',name:'Pieta',category:'training'},
+ cash:{category:'finance'},
+ newsbuzz:{type:'horse',name:'Argosy colt',category:'news'},
+ entries:{type:'horse',name:'Powerline',category:'racing'},
+ cedar:{type:'farm',name:'Cedar Spoke',category:'training'}
+};
+function officeAssetPath(value){
+ if(typeof value!=='string'||value.includes('..')||!/^\/assets\/[a-zA-Z0-9_./-]+\.(jpg|jpeg|png|webp|avif)$/.test(value))return '';
+ return value;
+}
 function decisionScene(d){
+ const subject=casePhotoSubjects[APP.activeCase]||{};
  const context=(APP.activeCase+' '+d.type+' '+d.title).toLowerCase();
- const sale=/saratoga|catalog|auction|sales|bloodstock|buying/.test(context);
- const finance=/cash|budget|financial|expense|projection/.test(context);
- const health=/pieta|gallop|turnout|vet|health|training|rest|filling/.test(context);
- const news=/news|buzz|pulse|argosy/.test(context);
- const label=sale?'SALES & BLOODSTOCK':finance?'STABLE FINANCES':health?'TRAINING & CARE':news?'RACING NEWS':'RACE PLANNING';
- return `<figure class="ng-decision-scene ng-decision-photo" role="img" aria-label="Editorial image of a horse at a racing stable; illustrative, not a photo of a named case horse"><img src="/assets/office/approved-office-photo.jpg" alt="" loading="eager" decoding="async"/><figcaption class="ng-decision-scene-caption"><span>${safe(label)}</span><small>EDITORIAL REFERENCE PHOTO</small></figcaption></figure>`;
+ const category=subject.category||(/auction|sales|catalog/.test(context)?'sales':/cash|finance/.test(context)?'finance':/health|vet|gallop/.test(context)?'training':'racing');
+ const captions={sales:'SALES & BLOODSTOCK',finance:'STABLE FINANCES',training:'TRAINING & CARE',news:'RACING NEWS',racing:'RACE PLANNING'};
+ const index=officePhotoIndex||{},caseMap=index.cases||{},entityMap=index.entities||{},categoryMap=index.categories||{};
+ const matchedEntity=subject.type&&subject.name?officeAssetPath(entityMap[subject.type+':'+subject.name]):'';
+ const matchedCase=officeAssetPath(caseMap[APP.activeCase]);
+ const matchedCategory=officeAssetPath(categoryMap[category]);
+ const photo=matchedCase||matchedEntity||matchedCategory||officeAssetPath(index.default)||genericDeskPhoto;
+ const isEntity=Boolean(matchedEntity&&!matchedCase),isCase=Boolean(matchedCase);
+ const reference=isEntity?subject.name:isCase?d.title:'EDITORIAL REFERENCE PHOTO';
+ const accessible=isEntity?'Photograph of '+subject.name:isCase?'Decision scene photograph for '+d.title:'Generic editorial photograph of a horse at a stable';
+ return `<figure class="ng-decision-scene ng-decision-photo" role="img" aria-label="${safe(accessible)}"><img class="ng-decision-photograph" src="${safe(photo)}" alt="" loading="eager" decoding="async"/><figcaption class="ng-decision-scene-caption"><span>${safe(captions[category]||'RACING OFFICE')}</span><small>${safe(reference)}</small></figcaption></figure>`;
 }
 
 function center(){const d=currDesk();const messages=currentMessages();const resolved=state().resolvedCases?.[APP.activeCase];const source=d.source&&d.source!=='—'?d.source:'Stable Office';const msg=messages.find(m=>m.case===APP.activeCase);const index=messages.findIndex(m=>m.case===APP.activeCase)+1;
 const hasRelatedHorse=new Set(['powerline','lastmatch','pieta','entries','newsbuzz','cedar']).has(APP.activeCase);
-const relatedAction=hasRelatedHorse?`${relatedAction}`:'';
-const resolvedRelatedAction=hasRelatedHorse?`${resolvedRelatedAction}`:`<button class="ng-openhorse" data-ng="action" data-val="Open file">REVIEW SOURCE FILE ${glyph('arrow',13)}</button>`;
+const relatedAction=hasRelatedHorse?`<button class="alt" data-ng="profile-from-case">HORSE PROFILE ${glyph('arrow',14)}</button>`:'';
+const resolvedRelatedAction=hasRelatedHorse?`<button class="ng-openhorse" data-ng="profile-from-case">RELATED HORSE FILE ${glyph('arrow',13)}</button>`:`<button class="ng-openhorse" data-ng="action" data-val="Open file">REVIEW SOURCE FILE ${glyph('arrow',13)}</button>`;
 const moves=resolved?`<div class="ng-resolved"><div class="ng-resolution-title">${glyph('check',16)} ${safe(resolved.choiceTitle)}</div><div class="ng-resolvedtabs">${['Effect','Barn Reaction','Follow-up'].map((t,i)=>`<button class="${APP.outTab===i?'on':''}" data-ng="outtab" data-val="${i}">${t}</button>`).join('')}</div><div class="ng-outtext">${safe([resolved.immediate,resolved.reaction,resolved.followUp][APP.outTab])}</div><div class="ng-outcome-actions"><button class="ng-openhorse" data-ng="profile-from-case">RELATED HORSE FILE ${glyph('arrow',13)}</button><button class="ng-nextopen" data-ng="nextopen">NEXT OPEN CASE ${glyph('right',13)}</button></div></div>`:d.moves.map((m,i)=>`<button class="ng-move ng-move-${i%3}" data-ng="move" data-val="${i}"><span class="ng-move-number">0${i+1}</span><span class="ng-move-body"><span class="ng-movetag">${safe(m.tag)}</span><strong>${safe(m.title)}</strong>${typeof deskCases!=='undefined'&&deskCases[APP.activeCase]?.moves?.[i]?.[1]?`<span class="ng-move-note">${safe(deskCases[APP.activeCase].moves[i][1])}</span>`:''}</span><span class="ng-movearrow">${glyph('right',17)}</span></button>`).join('');
 return `<section class="ng-main"><section class="ng-card ng-feature"><header class="ng-cardhead"><span class="ng-sectionicon gold">${glyph('folder',17)}</span><div class="ng-headinggroup"><h3>Decision Desk</h3><span>THE MANAGER'S PRIORITY FILE</span></div><div class="ng-case-navigation"><div class="ng-case-pips" aria-label="Select today's case">${messages.map((m,i)=>`<button type="button" data-ng="case" data-val="${safe(m.case)}" class="ng-case-pip ${m.case===APP.activeCase?'on':''} ${m.resolved?'reviewed':m.urgent?'priority':''}" title="${safe(m.title)}${m.resolved?' — Reviewed':''}" aria-label="Case ${i+1}: ${safe(m.title)}" aria-current="${m.case===APP.activeCase?'true':'false'}"></button>`).join('')}</div><span class="ng-case-position"><span class="ng-live-dot"></span>${String(index).padStart(2,'0')} / ${String(messages.length).padStart(2,'0')}</span><div class="ng-case-arrows"><button type="button" data-ng="caseprev" aria-label="Previous decision" title="Previous case">${glyph('left',13)}</button><button type="button" data-ng="casenext" aria-label="Next decision" title="Next case">${glyph('right',13)}</button></div></div></header><div class="ng-featurebody"><div class="ng-case"><div class="ng-case-eyebrow"><span></span>${safe(d.type)} <i>·</i> ${safe(msg?.from||source)}</div><button class="ng-casetitle" data-ng="action" data-val="Open file" aria-label="Open decision file: ${safe(d.title)}"><h2>${safe(d.title)} ${glyph('arrow',13)}</h2></button><p class="ng-case-summary">${safe(d.summary)}</p><div class="ng-facts">${[['Pressure',d.pressure],['Primary risk',d.risk],['Manager read',d.read]].map((f,i)=>`<div class="ng-fact ng-fact-${i}"><small>${safe(f[0])}</small><b>${safe(f[1])}</b></div>`).join('')}</div><div class="ng-caseactions"><button data-ng="action" data-val="Open file">REVIEW FULL FILE ${glyph('arrow',14)}</button><button class="alt" data-ng="profile-from-case">HORSE PROFILE ${glyph('arrow',14)}</button></div></div><div class="ng-featurephoto">${decisionScene(d)}</div></div></section><div class="ng-centerbottom"><section class="ng-card ng-intel"><header class="ng-cardhead"><span class="ng-sectionicon">${glyph('sparkle',16)}</span><div class="ng-headinggroup"><h3>Intelligence</h3><span>${d.intel.length} SOURCE READS</span></div><button class="ng-cardlink" data-ng="action" data-val="Open current source">${safe(source)} ${glyph('arrow',12)}</button></header><div class="ng-intelgrid">${d.intel.map((item,i)=>`<button class="ng-intelitem ng-intel-${i%4}" data-ng="intel" data-val="${i}"><span class="ng-intel-kicker" aria-label="Source ${i+1}"><span class="ng-intel-marker"></span>0${i+1}</span><b>${safe(item.title)}</b><p>${safe(item.body)}</p></button>`).join('')}</div></section><section class="ng-card ng-choices"><header class="ng-cardhead"><span class="ng-sectionicon gold">${glyph('flag',16)}</span><div class="ng-headinggroup"><h3>Your Call</h3><span>MANAGEMENT DECISION</span></div><span class="ng-choice-count">${resolved?'RECORDED':`${d.moves.length} OPTIONS`}</span></header><div class="ng-moves">${moves}</div></section></div></section>`;
 }
@@ -237,9 +262,28 @@ window.addEventListener('popstate',()=>schedulePaint(40));
 // Avoid recursive mutation observations: only observe the original (hidden) app.
 const adapter=$('.app');if(adapter){const mo=new MutationObserver(()=>schedulePaint(30));mo.observe(adapter,{subtree:true,characterData:true,childList:true,attributes:true,attributeFilter:['class','title']})}
 const route=$('#routeShell');if(route){const mo=new MutationObserver(()=>schedulePaint(30));mo.observe(route,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['hidden']})}
-root.addEventListener('error',event=>{const img=event.target;if(img?.tagName!=='IMG'||!String(img.getAttribute('src')||'').includes('wtw_badge_'))return;img.closest('.ng-badge-slot,.ng-route-badge-slot,.ng-profile-badgeframe')?.classList.add('wtw-badge-missing');console.warn('WTW approved badge failed to load:',img.getAttribute('src'));},true);
+root.addEventListener('error',event=>{
+ const img=event.target;if(img?.tagName!=='IMG')return;
+ if(img.classList.contains('ng-decision-photograph')){
+   if(img.getAttribute('src')!==genericDeskPhoto){
+     img.src=genericDeskPhoto;
+     const frame=img.closest('.ng-decision-photo');
+     frame?.querySelector('.ng-decision-scene-caption small')?.replaceChildren(document.createTextNode('EDITORIAL REFERENCE PHOTO'));
+     frame?.setAttribute('aria-label','Generic editorial photograph of a horse at a stable');
+   }else img.closest('.ng-decision-photo')?.classList.add('ng-photo-unavailable');
+   return;
+ }
+ if(!String(img.getAttribute('src')||'').includes('wtw_badge_'))return;
+ img.closest('.ng-badge-slot,.ng-route-badge-slot,.ng-profile-badgeframe')?.classList.add('wtw-badge-missing');
+ console.warn('WTW approved badge failed to load:',img.getAttribute('src'));
+},true);
 document.body.append(root);document.body.classList.add('wtw-next-active');APP.ready=true;
 // Restore direct route link: existing Office script owns history and route hydration.
 paint();setTimeout(paint,110);
+fetch('/assets/office/decision-photo-index.json',{credentials:'same-origin',cache:'no-store'})
+ .then(response=>{if(!response.ok)throw Error('Photo index unavailable');return response.json()})
+ .then(index=>{if(index&&typeof index==='object'&&!Array.isArray(index)){officePhotoIndex=index;schedulePaint(20)}})
+ .catch(()=>{/* The approved reference photograph is the intentional fallback. */});
+
 window.__WTW_NEXT__={paint,app:APP,horseRows,racingRows,currentMessages,state};
 })();
