@@ -1111,6 +1111,29 @@
     syncResolvedMessages();
     propagateOfficeState();
   }
+  // Read-only discovery bridge for the Next UI global search. These are the
+  // actual Office routes; no shadow people, horse or race database is created.
+  window.__wtwOfficeSearchRecords = function(){
+    const horses=Object.keys(horseProfileFacts).map(name=>({kind:'horse',name,detail:'Horse Profile'}));
+    const people=Object.entries(personProfiles).map(([name,p])=>({kind:'person',name,detail:p.job||'People Profile'}));
+    const farms=Object.entries(farmProfiles).map(([name,p])=>({kind:'farm',name,detail:p.type||'Farm Profile'}));
+    const tracks=Object.entries(trackProfiles).map(([name,p])=>({kind:'track',name,detail:p.location||'Track Profile'}));
+    const races=Object.entries(trackProfiles).flatMap(([track,p])=>(p.stakes||[]).map(item=>({
+      kind:'race',name:item[0],track,detail:track+' · '+item[2]
+    })));
+    return [...horses,...people,...farms,...tracks,...races];
+  };
+  // Opens an already-known Office record through its original authoritative
+  // route function; rejects arbitrary names rather than fabricating a page.
+  window.__wtwOfficeOpenSearchRecord = function(kind,name,track){
+    if(typeof name!=='string')return false;
+    if(kind==='horse'&&Object.prototype.hasOwnProperty.call(horseProfileFacts,name)){openHorseProfile(name);return true;}
+    if(kind==='person'&&Object.prototype.hasOwnProperty.call(personProfiles,name)){openPersonProfile(name);return true;}
+    if(kind==='farm'&&Object.prototype.hasOwnProperty.call(farmProfiles,name)){openFarmProfile(name);return true;}
+    if(kind==='track'&&Object.prototype.hasOwnProperty.call(trackProfiles,name)){openTrackProfile(name);return true;}
+    if(kind==='race'&&trackProfiles[track]?.stakes?.some(row=>row[0]===name)){openRaceProfile(name,track);return true;}
+    return false;
+  };
   function restoreLocationPage(){
     const params=new URLSearchParams(location.search);
     const page=params.get('page'),name=params.get('name'),track=params.get('track');
