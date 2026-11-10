@@ -19,7 +19,7 @@ test('Next UI is a standalone review page with one fresh visual layer',()=>{
  assert.ok(!html.includes('<style'),'No embedded second visual layer');
  assert.ok(!html.includes('<script>'),'Production CSP prohibits inline scripts');
  const css=get('public/next/next.css');
- assert.ok(css.startsWith('/* WIRE TO WIRE NEXT'));
+ assert.ok(css.startsWith('/* WIRE TO WIRE | UNIFIED DESKTOP MANAGEMENT DESIGN SYSTEM'));
  assert.ok(!css.includes('@import'),'No CSS layers imported');
  const js=get('public/next/next.js');
  assert.ok(js.includes('wtwOfficeStateV30'),'One canonical save namespace');
@@ -68,7 +68,7 @@ test('Next Racing Office v5 retains one visual system and the complete game conn
  const js=get('public/next/next.js');
  const html=get('public/next/index.html');
  assert.equal((html.match(/rel="stylesheet"/g)||[]).length,1);
- assert.ok(css.includes('WTW NEXT v5'), 'v5 Office design is published in the same stylesheet');
+ assert.ok(css.includes('UNIFIED DESKTOP MANAGEMENT DESIGN SYSTEM'),'Current dark Office design is published in the same stylesheet');
  assert.ok(css.includes('.ng-intelgrid'), 'Intel layout must remain readable');
  assert.ok(css.includes('.ng-featurephoto'), 'Editorial decision photo component missing');
  assert.ok(css.includes('.ng-resolved'), 'Completed decisions must remain usable');
