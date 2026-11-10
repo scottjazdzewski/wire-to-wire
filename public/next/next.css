@@ -1568,3 +1568,8 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
  .ng-main .ng-feature>.ng-cardhead .ng-org-chip .ng-org-mark,
  .ng-main .ng-feature>.ng-cardhead .ng-org-chip .ng-org-image{width:24px!important;height:24px!important;flex-basis:24px!important}
 }
+
+/* Mobile does not acquire the desktop overflow menu until mobile design is addressed. */
+@media(max-width:780px){
+ .ng-global .ng-global-morewrap{display:none!important}
+}
