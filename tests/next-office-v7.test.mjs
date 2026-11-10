@@ -228,7 +228,7 @@ test('FM/OOTP connected profiles: people, farms, tracks, sourced graphics, click
  assert.ok(profile.includes("$$('.profilePanel',source).find("),'Source panels need collection search, not a single Element.find()');
  assert.ok(profile.includes("$$('.achievementItem',horseAchievementPanel).map("),'Horse achievements must be a true collection');
  assert.ok(!profile.includes("$$$('#routeBody"),'No accidental triple-dollar source selector');
- assert.ok(!profile.includes("$('#routeBody [data-act]').indexOf("),'Source action indexes must be computed from NodeLists');
+ assert.ok(profile.includes("const index=btn?$$('#routeBody [data-act]').indexOf(btn)"),'Linked entity action indexes must use the full NodeList');
  assert.ok(profile.includes("connectedHorseRows()"),'Linked person/farm horses must remain actionable');
  assert.ok(profile.includes("data-ng=\"sourcebutton\""),'Linked records and races must trigger original source handlers');
  assert.ok(profile.includes('stakesTable(6)'),'Track overview must include a source-backed compact stakes table');
