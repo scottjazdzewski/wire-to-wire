@@ -1,0 +1,42 @@
+name: WTW History D1 source parity (read-only)
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/remote-history-d1-readback.mjs'
+      - '.github/workflows/history-d1-parity-readonly.yml'
+permissions:
+  contents: read
+concurrency:
+  group: wtw-history-readonly-d1-parity
+  cancel-in-progress: false
+jobs:
+  readback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify readback script syntax and source hold invariant
+        run: |
+          node --check scripts/remote-history-d1-readback.mjs
+          node --test tests/history-d1-readback-contract.test.mjs
+      - name: Discover exact existing WTW D1 by name (GET only)
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID || 'add006716b3a24e730ad0b716bdc3899' }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
+        run: node scripts/prepare-d1-target.mjs
+      - name: SELECT-only stored race / placing ID parity readback
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID || 'add006716b3a24e730ad0b716bdc3899' }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
+        run: node scripts/remote-history-d1-readback.mjs
+      - name: Save comparison summary, never a source master
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-history-d1-parity-readonly
+          path: generated/private-d1-readbacks/history-d1-parity.json
+          retention-days: 7
