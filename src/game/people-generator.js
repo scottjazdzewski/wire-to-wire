@@ -49,7 +49,7 @@ export function generatePeopleRuntime({world,catalog,worldSeed=null}={}){
     // Correlated ability profiles: some people are broadly capable; each has
     // distinct technical strengths, flaws and professional specialisms.
     const professional=roles.length&&catalog.person_roles[roles[0]]?.some(d=>d.key===def.key);
-    const mean=.27+heritage*.28+careerPotential*.15+(professional?.05:0);
+    const mean=.27+heritage*.28+careerPotential*.15+(professional ? 0.05 : 0);
     latent[def.key]=clamp01(mean+(draw(rng)-.5)*.38);
   }
   // Reputation measures public standing, not hidden true ability.
