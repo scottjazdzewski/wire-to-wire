@@ -8,7 +8,7 @@ const fields = {
   connection: {party_id:'Connected owner / trainer / person ID',year:'Season',role:'Connection role',basis:'Evidence basis'},
   result: {horse_id:'Placed horse ID',position:'Finishing position'}
 };
-const state = {page:'overview',year:1953,calendarMonth:null,role:'trainer',involvement:'balanced',search:'',trackDirectory:null,data:null,mode:'LOADING',changes:[],nameEdits:[],availableYears:[],edit:null,rename:null,apiIssue:''};
+const state = {page:'overview',year:1953,calendarMonth:null,role:'trainer',involvement:'balanced',search:'',trackDirectory:null,data:null,mode:'LOADING',changes:[],nameEdits:[],availableYears:[],edit:null,rename:null,apiIssue:'',orgHistory:[],orgHistoryStatus:'NOT_LOADED'};
 const GAME_PREF_KEY = 'wtw_game_manager_preferences_v1';
 try { const saved=JSON.parse(localStorage.getItem(GAME_PREF_KEY)||'{}'); if(['owner','trainer','farm','breeder','jockey'].includes(saved.role))state.role=saved.role; if(['hands-on','balanced','executive'].includes(saved.involvement))state.involvement=saved.involvement; } catch {}
 // Deep links from the main Racing Office open the existing protected historical archive.
@@ -211,12 +211,25 @@ function renderPeople(){
  const peopleCards=people.slice(0,100).map(e=>makeCard(e,'person')).join('');
  const farmCards=farms.slice(0,100).map(e=>makeCard(e,'organization')).join('');
  const limitNotice=(n,label)=>n>100?'<p class="manager-note">Showing the first 100 '+label+'. Search by name or permanent ID to narrow the list.</p>':'';
+ const currentOrgs=state.orgHistory||[];
+ const approvedOrgs=currentOrgs.filter(x=>x.origin_publication_status==='APPROVED_SOURCE_HISTORY');
+ const pendingOrgs=currentOrgs.filter(x=>x.origin_publication_status!=='APPROVED_SOURCE_HISTORY');
+ const orgCard=o=>'<article class="people-card network-card-v2"><div class="people-card-body"><div class="network-card-top"><span class="smallcaps">'+(o.origin_publication_status==='APPROVED_SOURCE_HISTORY'?'APPROVED HISTORICAL BACKGROUND':'1999 ENTITY · ORIGIN UNDER REVIEW')+'</span><span class="network-role-badge">'+h(o.organization_type||'Organization')+'</span></div><h3>'+h(o.canonical_name)+'</h3><p>'+h(o.origin_publication_status==='APPROVED_SOURCE_HISTORY'?(o.origin_through_1998||'Approved history details are available in the dossier.'):'Historical background not yet approved. Identity and geography are established.')+'</p><div class="network-card-facts"><span>'+h(o.canonical_geography||'Location under review')+'</span><span>'+h(o.organization_id)+'</span></div><div class="people-card-footer"><button type="button" class="button button-primary" data-history-org="'+h(o.organization_id)+'">Open 1999 history</button></div></div></article>';
+ const orgBlock=currentOrgs.length?section('Organizations entering 1999',
+ 'Existing WTW organization IDs; ten approved histories and ninety-eight identity-only records, with no invented fortunes or reputation scores.',
+ '<div class="people-grid network-grid-v2">'+approvedOrgs.map(orgCard).join('')+'</div>'+
+ '<details class="profile-more"><summary>View '+pendingOrgs.length+' additional organizations awaiting background approval</summary><div class="people-grid network-grid-v2">'+pendingOrgs.map(orgCard).join('')+'</div></details>',
+ '<span class="record-count">'+currentOrgs.length+' current organizations</span>'):
+ section('1999 organization-history source','The approved historical organization read-model is not yet available to this session.',
+ '<p class="empty-note">No unapproved origin story is being substituted for the Drive-controlled historical record.</p>');
+
  return '<div class="network-page">'+
   intro('RACING NETWORK','People & Farms','The human and organizational side of WTW: trainers, jockeys, owners, breeders, farms and racing operations connected to the archive.', '<div class="record-count">'+people.length.toLocaleString()+' people · '+farms.length.toLocaleString()+' organizations</div>')+
   '<section class="network-hero"><div><span class="smallcaps">THE PADDOCK & BACKSTRETCH</span><h2>People power the racing world.</h2><p>Every horse belongs to a network of decisions, relationships and places. These files connect the historical archive without inventing race-day assignments that are not supported.</p></div><div class="network-hero-stats"><span><b>'+people.length.toLocaleString()+'</b> people</span><span><b>'+farms.length.toLocaleString()+'</b> organizations</span><span><b>'+allLinks.length.toLocaleString()+'</b> season links</span><span><b>'+seasons.length.toLocaleString()+'</b> linked seasons</span></div></section>'+
   '<div class="network-role-strip"><span><b>'+roleCount('trainer')+'</b> trainers</span><span><b>'+roleCount('jockey')+'</b> jockeys</span><span><b>'+roleCount('owner')+'</b> owners</span><span><b>'+roleCount('breeder')+'</b> breeders</span></div>'+
   section('People','Trainers, jockeys, owners, breeders and other horsemen', '<div class="people-grid network-grid-v2">'+(peopleCards||'<div class="calendar-empty">No people match this search.</div>')+'</div>', '<span class="record-count">'+people.length.toLocaleString()+' people</span>')+limitNotice(people.length,'people')+
   section('Farms & organizations','Breeding farms, ownership groups and racing operations', '<div class="people-grid network-grid-v2">'+(farmCards||'<div class="calendar-empty">No farms or organizations match this search.</div>')+'</div>', '<span class="record-count">'+farms.length.toLocaleString()+' organizations</span>')+limitNotice(farms.length,'organizations')+
+  orgBlock+
   '</div>';
 }
 function renderSearch(){
@@ -411,6 +424,29 @@ function renderNetworkEntityProfile(e,cn){
 }
 async function openDetail(type,id){
  state.openDetail={type,id};
+ if(type==='history-org'){
+  const o=(state.orgHistory||[]).find(x=>x.organization_id===id);
+  if(!o){toast('The 1999 organization history is not yet loaded or approved.');return;}
+  const approved=o.origin_publication_status==='APPROVED_SOURCE_HISTORY';
+  const facts=[
+   ['Organization ID',o.organization_id],['Business',o.organization_type],
+   ['1999 home',o.canonical_geography],['Historical publication',approved?'Approved source':'Origin awaiting owner approval']
+  ];
+  if(approved){
+   for(const [label,key] of [['Historical prestige','historical_prestige'],['1990s momentum','momentum_1990s'],
+    ['Commercial appeal','commercial_appeal'],['Industry reputation','peer_reputation'],['Financial vulnerability','financial_vulnerability']])
+    if(o[key])facts.push([label,o[key]]);
+  }
+  const values=facts.map(([label,value])=>'<div class="identity-fact"><small>'+h(label)+'</small><strong>'+h(value||'Not certified')+'</strong></div>').join('');
+  const body=approved?h(o.origin_through_1998||'Historical dossier approved but narrative is not recorded.'):
+   'The approved 1999 identity and location are available. Its founding story, standing, commercial appeal and financial history have not been approved for website publication.';
+  const links=o.historical_year_links?'<section class="profile-section"><div class="profile-section-title"><div><span class="smallcaps">SOURCE EVIDENCE · YEAR LEVEL ONLY</span><h3>Historical racing connections</h3></div></div><p>'+h(o.historical_year_links)+'</p><p class="source-caveat">These are horse-season associations, not verified individual race-day credits, profits or official lifetime totals.</p></section>':'';
+  $('detail-content').innerHTML='<div class="entity-profile farm-profile"><div class="profile-header"><div class="asset-placeholder profile-portrait" data-asset-slot="farm-logo"><span>OPERATION</span></div><div class="profile-heading"><div class="eyebrow">JANUARY 1999 ORGANIZATION HISTORY</div><h2>'+h(o.canonical_name)+'</h2><div class="detail-id">'+h(o.organization_id)+'</div><p class="profile-summary">'+body+'</p><div class="profile-tags"><span>'+h(o.origin_publication_status)+'</span></div></div></div><div class="identity-facts">'+values+'</div>'+links+'<p class="source-caveat">WTW Canon Registry is the editable authority. Website records are a sourced, approval-tiered display only. Later game economic outcomes are not predetermined.</p></div>';
+  $('drawer-backdrop').hidden=false;
+  $('detail-drawer').classList.add('open');
+  $('detail-drawer').setAttribute('aria-hidden','false');
+  return;
+ }
  const e=type==='entity'?entity(id):type==='race'?race(id):null;
  if(!e){toast('The requested record has not been imported.');return;}
  let markup='';
@@ -530,6 +566,18 @@ async function fetchBootstrap(){const r=await fetch('/api/bootstrap',{credential
 async function initialize(){
  try {const live=await fetchBootstrap();state.mode=live.mode;state.data={meta:{title:'WIRE TO WIRE — isolated D1 import',scope:live.partial?'Partial page of data: search the backend for more':'Currently imported records',authority:'Source snapshot, separate from original WTW master',note:'Approved-for-promotion proposals do not alter source records.',counts:live.counts,partial:live.partial,historySource:live.historySource},entities:live.entities,connections:live.connections,races:live.races,results:live.results};state.changes=live.changes;state.nameEdits=live.nameEdits||[];state.availableYears=live.years||[];}
  catch (error) {state.apiIssue=error.message;try {const r=await fetch('/sample-history.json',{cache:'no-store'});if(!r.ok)throw Error('Sample data unavailable');state.data=await r.json();state.mode='DEMO';state.changes=storedChanges();}catch{state.data={meta:{title:'WTW empty sample',scope:'No data loaded'},entities:[],connections:[],races:[],results:[]};state.mode='DEMO';state.changes=storedChanges()}}
+ if(state.mode==='D1_CONNECTED'){
+  try{
+   const r=await fetch('/api/history/organizations',{credentials:'same-origin',cache:'no-store'});
+   if(!r.ok)throw Error('1999 organization history is not imported into this session');
+   const data=await r.json();
+   if(data.mode!=='PROTECTED_HISTORY_ORG_READ_MODEL'||data.organizations?.length!==108||data.approved_origin_count!==10)
+    throw Error('Organization source publication gate did not pass');
+   state.orgHistory=data.organizations;state.orgHistoryStatus='APPROVED_READMODEL';
+  }catch{
+   state.orgHistory=[];state.orgHistoryStatus='NOT_IMPORTED_OR_NOT_VERIFIED';
+  }
+ }
  try { const r=await fetch('/data/track-geography-v33.json',{cache:'no-store'}); if(r.ok){const d=await r.json();if(d?.counts?.total===134&&Array.isArray(d.tracks)&&d.tracks.length===134&&new Set(d.tracks.map(t=>t.id)).size===134)state.trackDirectory=d; } } catch {}
  rebuildResultIndex();
  const yrs=years();if(yrs.length&&!yrs.includes(state.year))state.year=yrs[0];$('year-select').innerHTML=yrs.map(y=>`<option value="${y}">${y}</option>`).join('');$('year-select').value=String(state.year);render();
@@ -549,8 +597,8 @@ async function decideChange(id,decision){const item=state.changes.find(v=>v.id==
  } else {item.status=decision;item.decided_at=new Date().toISOString();storeChanges()}
  toast(decision==='REJECTED'?'Proposal rejected.':'Approved for future promotion; source record remains untouched.');render();
 }
-document.addEventListener('click',e=>{const t=e.target.closest('[data-page],[data-year],[data-calendar-step],[data-calendar-agenda],[data-open-type],[data-edit-type],[data-rename-type],[data-close-drawer],[data-review-action]');if(!t)return;
- if(t.dataset.page){setPage(t.dataset.page);return}if(t.dataset.year){setYear(t.dataset.year);return}if(t.dataset.calendarStep){const next=Number(state.calendarMonth)+Number(t.dataset.calendarStep);if(next>=0&&next<=11){state.calendarMonth=next;render()}return}if(t.dataset.calendarAgenda){const agenda=document.getElementById('calendar-agenda');agenda?.scrollIntoView({behavior:'smooth',block:'center'});agenda?.focus({preventScroll:true});return}if(t.dataset.closeDrawer){closeDrawer();return}if(t.dataset.renameType){showRename(t.dataset.renameType,t.dataset.id,t.dataset.currentName);return}if(t.dataset.openType){openDetail(t.dataset.openType,t.dataset.id);return}if(t.dataset.editType){showEdit(t.dataset.editType,t.dataset.id);return}if(t.dataset.reviewAction){decideChange(t.dataset.reviewId,t.dataset.reviewAction)}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-page],[data-year],[data-calendar-step],[data-calendar-agenda],[data-open-type],[data-edit-type],[data-rename-type],[data-close-drawer],[data-review-action],[data-history-org]');if(!t)return;
+ if(t.dataset.page){setPage(t.dataset.page);return}if(t.dataset.year){setYear(t.dataset.year);return}if(t.dataset.calendarStep){const next=Number(state.calendarMonth)+Number(t.dataset.calendarStep);if(next>=0&&next<=11){state.calendarMonth=next;render()}return}if(t.dataset.calendarAgenda){const agenda=document.getElementById('calendar-agenda');agenda?.scrollIntoView({behavior:'smooth',block:'center'});agenda?.focus({preventScroll:true});return}if(t.dataset.closeDrawer){closeDrawer();return}if(t.dataset.historyOrg){openDetail('history-org',t.dataset.historyOrg);return}if(t.dataset.renameType){showRename(t.dataset.renameType,t.dataset.id,t.dataset.currentName);return}if(t.dataset.openType){openDetail(t.dataset.openType,t.dataset.id);return}if(t.dataset.editType){showEdit(t.dataset.editType,t.dataset.id);return}if(t.dataset.reviewAction){decideChange(t.dataset.reviewId,t.dataset.reviewAction)}
 });
 $('year-select').addEventListener('change',e=>setYear(e.target.value));
 document.addEventListener('change',e=>{const monthControl=e.target.closest('#calendar-month-select');if(monthControl){state.calendarMonth=Number(monthControl.value);render();return}const control=e.target.closest('[data-game-pref]');if(!control)return;const key=control.dataset.gamePref;if(!['role','involvement'].includes(key))return;state[key]=control.value;try{localStorage.setItem(GAME_PREF_KEY,JSON.stringify({role:state.role,involvement:state.involvement}));}catch{}render();});

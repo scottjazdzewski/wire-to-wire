@@ -1,0 +1,68 @@
+name: WTW approved History organizations — protected D1 import
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/history-org-d1-approved-import.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: wtw-history-approved-org-import
+  cancel-in-progress: false
+jobs:
+  import-reviewed-organization-projection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Run all historical safety regressions before any write
+        run: |
+          npm test
+          node --check scripts/import-history-org-d1.mjs
+          node scripts/build-history-org-projection.mjs
+      - name: Discover exactly WTW's existing private D1 (GET only)
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID || 'add006716b3a24e730ad0b716bdc3899' }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
+        run: node scripts/prepare-d1-target.mjs
+      - name: Capture existing historical D1 fingerprints and organization rollback (SELECT only)
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID || 'add006716b3a24e730ad0b716bdc3899' }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
+        run: node scripts/import-history-org-d1.mjs before
+      - name: Save private rollback and protected preimage before modification
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-history-org-preimage-rollback
+          path: |
+            generated/private-d1-org-history/wtw-protected-baseline.json
+            generated/private-d1-org-history/wtw-org-projection-rollback.sql
+            generated/private-d1-org-history/history-org-manifest.json
+          retention-days: 7
+      - name: Create only the new WTW historical organization read-model tables
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
+        run: npx wrangler d1 execute wtw-canon-desk-db --remote --config .wtw-d1-import.jsonc --file=migrations/0006_history_org_projection.sql
+      - name: Import only 108 Drive-sourced organization IDs and ten approved narratives
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
+        run: npx wrangler d1 execute wtw-canon-desk-db --remote --config .wtw-d1-import.jsonc --file=generated/private-d1-org-history/30_history_org_profiles.sql
+      - name: Verify 108/10/98 source tiers and no changes to races, names or edits
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.WTW_CLOUDFLARE_ACCOUNT_ID || 'add006716b3a24e730ad0b716bdc3899' }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.WTW_D1_IMPORT_TOKEN }}
+        run: node scripts/import-history-org-d1.mjs after
+      - name: Save verified D1 historical organization import receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-history-org-import-verification
+          path: generated/private-d1-org-history/wtw-org-projection-verified.json
+          if-no-files-found: ignore
+          retention-days: 7

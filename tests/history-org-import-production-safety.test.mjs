@@ -1,0 +1,31 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {spawnSync} from 'node:child_process';
+const source=JSON.parse(fs.readFileSync('data/history-source/canon-registry-2026-11-10/organization-economic-history.json','utf8'));
+test('all 73 newly drafted histories are marked evidence-only and require approval',()=>{
+ const h=source.headers;
+ const approval=h.indexOf('Approval_Gate'),origin=h.indexOf('Origin_Through_1998');
+ const need=source.rows.filter(x=>x[approval]==='NEW_HISTORY_DETAILS_REQUIRE_USER_APPROVAL');
+ assert.equal(need.length,73);
+ assert.ok(need.every(x=>x[origin].startsWith('EVIDENCE-ONLY PRE-1999 CONTINUITY')));
+ assert.equal(source.rows.length,108);
+});
+test('automatic production import is opt-in to reviewed workflow and preserves critical data',()=>{
+ const workflow=fs.readFileSync('.github/workflows/history-org-d1-approved-import.yml','utf8');
+ const script=fs.readFileSync('scripts/import-history-org-d1.mjs','utf8');
+ assert.match(workflow,/concurrency:/);
+ assert.match(workflow,/npm test/);
+ assert.match(workflow,/wtw-history-org-preimage-rollback/);
+ assert.match(workflow,/import-history-org-d1\.mjs before/);
+ assert.match(workflow,/import-history-org-d1\.mjs after/);
+ assert.match(workflow,/migrations\/0006_history_org_projection\.sql/);
+ assert.match(workflow,/30_history_org_profiles\.sql/);
+ assert.doesNotMatch(workflow,/(?:migrations\/000[1-5]|0002_full_history|build-full-history)/);
+ assert.match(script,/Only read-only SELECT allowed/);
+ assert.match(script,/wtw-protected-baseline\.json/);
+ assert.match(script,/wtw-org-projection-rollback\.sql/);
+ assert.match(script,/Protected original D1 table changed/);
+ assert.match(script,/Unapproved economic\/backstory leaked/);
+ assert.doesNotMatch(script,/fetch\(.+method:\s*['"]POST['"].*INSERT/);
+});

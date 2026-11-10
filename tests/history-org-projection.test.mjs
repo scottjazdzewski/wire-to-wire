@@ -25,7 +25,7 @@ test('one existing Drive authority exports 108 distinct org IDs to staging SQL',
   const sql=fs.readFileSync(path.join(dir,'30_history_org_profiles.sql'),'utf8');
   assert.equal(manifest.source.spreadsheet_id,'1Lhpe6DG1foQ2-zayQBg4bKpTtu4MP_itpM1zo2GRSEA');
   assert.equal(manifest.counts.organizations,108);
-  assert.equal(manifest.counts.with_origin,35);
+  assert.equal(manifest.counts.with_origin,108);
   assert.equal(manifest.counts.with_stakes_year_links,99);
   assert.equal((sql.match(/^INSERT INTO wtw_history_org_profiles /gm)||[]).length,108);
   assert.match(sql,/Kingsmere Farm/);
@@ -86,4 +86,19 @@ test('only ten source-approved organization histories publish their actual origi
     'Research-only origin prose may not leave source staging as published content');
   assert.ok(!sql.includes(pending.Economic_Continuity_Constraint),
     'Unapproved origin-based financial speculation must be redacted');
+});
+
+test('seventy-three new evidence-only backgrounds remain unseen until individually approved',()=>{
+  const {dir,result}=run();
+  assert.equal(result.status,0,result.stderr||result.stdout);
+  const sql=fs.readFileSync(path.join(dir,'30_history_org_profiles.sql'),'utf8');
+  const h=sourceSnapshot.headers;
+  const iID=h.indexOf('Organization_ID'), iOrigin=h.indexOf('Origin_Through_1998'), iApproval=h.indexOf('Approval_Gate');
+  const pending=sourceSnapshot.rows.filter(r=>r[iApproval]==='NEW_HISTORY_DETAILS_REQUIRE_USER_APPROVAL');
+  assert.equal(pending.length,73);
+  for(const row of pending){
+    assert.match(row[iOrigin],/^EVIDENCE-ONLY PRE-1999 CONTINUITY/);
+    assert.ok(!sql.includes(row[iOrigin]),'Unapproved origin leaked into published SQL '+row[iID]);
+  }
+  assert.match(sql,/IDENTITY_ONLY__ORIGIN_REQUIRES_APPROVAL/);
 });
