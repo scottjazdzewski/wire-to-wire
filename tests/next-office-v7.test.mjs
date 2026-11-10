@@ -190,3 +190,27 @@ test('Desktop sign-off: real WTW brand icon, inline Cash, and no scrolling depar
  const check=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(check.status,0,check.stderr);
 });
+
+
+test('First FM/OOTP desktop subpage pilot: Horse Profile data density, connected entities and no fictional data',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css');
+ const start=js.indexOf('function profileDetail('),end=js.indexOf('function calendarTimeline(',start);
+ const profile=js.slice(start,end);
+ assert.ok(profile.includes("const isHorse=route.kicker==='Horse Profile'"),'Horse template must be explicitly shared without affecting others');
+ assert.ok(profile.includes("['Overview','Career Record','Pedigree','Achievements','Connections','History']"),'Horse has an independently navigable Achievements tab');
+ assert.ok(profile.includes('aria-current="${APP.detailTab===t?'),'Active profile section must be accessible');
+ assert.ok(profile.includes('ng-horse-careercard'),'Career summary must be visible on Horse Overview rather than buried behind another tab');
+ assert.ok(profile.includes('ng-horse-connections'),'Connected trainer/owner/jockey/farm records should be visible in first overview');
+ assert.ok(profile.includes('connectionRows()'),'Connections use existing source-linked route actions');
+ assert.ok(profile.includes("data-ng=\"sourcebutton\""),'Connections and decision links must reuse the original source route actions');
+ assert.ok(profile.includes('horseAchievements'),'Achievements must come from the existing approved source panel');
+ assert.ok(profile.includes("No achievements documented in the current source record."),'Missing achievements must not be invented');
+ assert.ok(profile.includes("officePhotoIndex?.entities?.['horse:'+route.title]"),'Real named-horse portraits may be shown only when actually linked in existing asset index');
+ assert.ok(profile.includes('sourceDecision')&&profile.includes('sourceFollowUp'),'Source-linked related decisions and follow-ups must remain navigable');
+ assert.ok(css.includes('WTW FM/OOTP page-family pilot'),'One profile design system must stay in the existing stylesheet');
+ assert.ok(css.includes('grid-template-columns:minmax(0,.92fr) minmax(0,1.03fr) minmax(0,1.1fr)'),'Desktop horse overview uses three purposeful, dense columns');
+ assert.ok(css.includes('.ng-route-profile .ng-profile-horse .ng-profile-intro{'),'Horse profile has a compact identity band');
+ assert.ok(css.includes('.ng-route-profile .ng-profile-horse .ng-horse-activity .ng-notes'),'Supporting Office context uses its own dense panel');
+ const result=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(result.status,0,result.stderr);
+});
