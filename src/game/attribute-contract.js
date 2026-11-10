@@ -64,8 +64,10 @@ export function auditGeneratedAttributeCoverage({catalog,entityGroup,roles=[],la
   if(!latent||typeof latent!=='object'||Array.isArray(latent)) throw new TypeError('latent must be a map');
   const expected=definitions.filter(d=>d.scope==='latent').map(d=>d.key);
   const missing=expected.filter(key=>!Object.hasOwn(latent,key)||latent[key]===null||latent[key]===undefined);
+  const invalid=expected.filter(key=>Object.hasOwn(latent,key)&&latent[key]!==null&&latent[key]!==undefined&&
+    (typeof latent[key]!=='number'||!Number.isFinite(latent[key])));
   const unexpected=Object.keys(latent).filter(key=>!expected.includes(key));
-  return {ok:missing.length===0&&unexpected.length===0,expected:expected.length,missing,unexpected};
+  return {ok:missing.length===0&&unexpected.length===0&&invalid.length===0,expected:expected.length,missing,invalid,unexpected};
 }
 
 /**
