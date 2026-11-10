@@ -82,3 +82,21 @@ test('Decision photography resolves approved scene and entity assets without mod
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);
 });
+
+
+test('Racing Office right-hand operations panels stay readable and source-linked',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css');
+ assert.ok(css.includes('.ng-right .ng-roster .ng-rosterrows,'),'Stable roster must use fixed height scrollable rows');
+ assert.ok(css.includes('.ng-right .ng-races .ng-entrylist{'),'Race schedule must use fixed height scrollable rows');
+ assert.ok(css.includes('overflow-y:auto!important'),'Operations lists must scroll rather than clip growth');
+ assert.ok(js.includes('data-ng="fixture" data-val="${i}"'),'Upcoming race rows must open an actual fixture');
+ assert.ok(js.includes("if(key==='fixture')"),'Fixture click must be handled');
+ assert.ok(js.includes("bridgeNode(n)"),'Fixture must call the original source action');
+ assert.ok(!js.includes('aria-label="Open racecourse: '),'A fixture action must not be falsely labeled a track profile');
+ assert.ok(js.includes("const leads=$$('.app .oppList .oppItem').length"),'Opportunity count must come from source data');
+ assert.ok(!js.includes('<span>3 CURRENT LEADS</span>'),'Opportunities must not show a permanently hard-coded count');
+ assert.ok(js.includes('No horses are listed for this stable yet.'),'Show a meaningful empty roster');
+ assert.ok(js.includes('No upcoming race targets are currently recorded.'),'Show a meaningful empty fixture list');
+ const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(syntax.status,0,syntax.stderr);
+});
