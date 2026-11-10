@@ -150,7 +150,7 @@ test('Organization logo slot, operations overview, cash and due-alert read only 
  assert.ok(js.includes('const isOrganizationProfile=/'),'Farm and future organization profile templates must reuse this mark');
  assert.ok(js.includes("kind==='stable'?'player':''"),'Player-stable logo can be attached without a new organization record');
  assert.ok(js.includes('ng-org-chip" data-ng="organization"'),'Decision Desk must link its stable mark to the operations overview');
- assert.ok(js.includes("APP.custom='Organization Overview'"),'Logo must open the actual operation overview');
+ assert.ok(js.includes("function openOrganization(){return openCustomView('Organization Overview')}"),'Logo must open the actual operation overview with recorded browser history');
  assert.ok(js.includes("else if(APP.custom==='Organization Overview'){body=organizationOverview()}"),'Organization view is wired into existing route rendering');
  assert.ok(js.includes('organizationLogoMarkup(playerOrganization().id,playerOrganization().name'), 'Overview and Office mark use the same identity');
  assert.ok(js.includes('function openFollowUps()'),'Follow-ups must be read from saved state');
@@ -485,4 +485,31 @@ test('People Network gives ranked source-only relationships with role filters, p
  assert.ok(css.includes('.ng-network-table-row{')&&css.includes('.ng-person-network-preview'),'Consistent Network design');
  const check=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(check.status,0,check.stderr);
+});
+
+test('Global UI navigation, role capitalization, full-site search and centered density remain operational',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css'),source=get('public/office-v30-4.js');
+ assert.ok(js.includes("if(key==='back')return window.history.back()"),'Back must visit prior browser game page');
+ assert.ok(js.includes("if(key==='forward')return window.history.forward()"),'Forward must revisit next browser game page');
+ assert.ok(js.includes("window.history.pushState({wtwUI:view||'office'}"),'Custom screens must record navigable URL history');
+ assert.ok(js.includes("window.addEventListener('popstate',()=>{"),'Back and Forward must restore route UI state');
+ assert.ok(js.includes("const route=APP.custom?null:currentRoute()"),'Custom Search cannot be hidden by an active profile');
+ assert.ok(js.includes("function titleCaseUIRole("),'Professional titles must have a reusable title-case display rule');
+ assert.ok(js.includes("['ROLE',titleCaseUIRole(factByName('Role'))"),'Stable Staff must be title case in People identity bars');
+ assert.ok(js.includes("function globalSearchItems("),'Search must index actual game records and screen routes');
+ assert.ok(js.includes("typeof window.__wtwOfficeSearchRecords==='function'"),'Search must read existing Office entities without a shadow database');
+ assert.ok(source.includes('window.__wtwOfficeSearchRecords = function()'),'Office exposes real available people, horses, tracks and races for search');
+ assert.ok(source.includes('window.__wtwOfficeOpenSearchRecord = function(kind,name,track)'),'Search result opens original page handler');
+ for(const k of ["horse","person","farm","track","race"])assert.ok(source.includes("kind==='"+k+"'"),'Source page must be openable: '+k);
+ assert.ok(js.includes('data-ng-input="global-search"'),'Search should accept user typing');
+ assert.ok(js.includes("if(event.key==='Enter'&&event.target.matches('#ngGlobalSearch'))"),'Search must allow keyboard navigation');
+ assert.ok(js.includes("if(key==='search-go')return openSearchItem("),'Search results need real navigation');
+ assert.ok(js.includes('ng-search-results'),'Search provides results rather than the old static name list');
+ assert.ok(css.includes('.ng-search-hit[hidden]{display:none!important}'),'Search should immediately hide nonmatches');
+ assert.ok(css.includes('Layout acceptance rule: justify controls and KPIs on a shared centerline'),'Shared centered justification must remain across main and subpage work');
+ assert.ok(css.includes('Fill the Racing Office panels with legible information'),'Main view should better use available text area');
+ const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(syntax.status,0,syntax.stderr);
+ const officeCheck=spawnSync(process.execPath,['--check',path.join(root,'public/office-v30-4.js')],{encoding:'utf8'});
+ assert.equal(officeCheck.status,0,officeCheck.stderr);
 });
