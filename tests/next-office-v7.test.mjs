@@ -429,7 +429,7 @@ test('Tier 1 People Profile keeps only known identity facts and actions above th
  assert.ok(p.includes(".filter(([label,value])=>label==='ROLE'"),'Unknown age, birthplace or current base should not waste header width');
  assert.ok(p.includes("isPerson?'PEOPLE DIRECTORY'"),'Person header must lead to people rather than horse roster');
  assert.ok(p.includes('class="ng-person-career-strip"'),'Career and assignments need compact summary, not redundant role stats');
- assert.ok(p.includes('CURRENT HORSE ASSIGNMENTS'),'Person's actual linked horses must be visible immediately');
+ assert.ok(p.includes('CURRENT HORSE ASSIGNMENTS'),"Person's actual linked horses must be visible immediately");
  assert.ok(p.includes('data-val="Stable Horses"'),'All person-to-horse connections must remain navigable');
  assert.ok(p.includes('PROFESSIONAL ATTRIBUTES')&&p.includes('REPUTATION & NETWORK')&&p.includes('CAREER & OPPORTUNITIES'),'OOTP-style professional information remains in three visible cards');
  assert.ok(p.includes('source?.schema')||p.includes("source?.schema==='WTW_PERSON_REPUTATION_V1'"),'Reputation data must remain validated and attributed');
