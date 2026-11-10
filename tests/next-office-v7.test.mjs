@@ -506,12 +506,41 @@ test('Global UI navigation, role capitalization, full-site search and centered d
  assert.ok(js.includes('data-ng-input="global-search"'),'Search should accept user typing');
  assert.ok(js.includes("if(event.key==='Enter'&&event.target.matches('#ngGlobalSearch'))"),'Search must allow keyboard navigation');
  assert.ok(js.includes("if(key==='search-go')return openSearchItem("),'Search results need real navigation');
- assert.ok(js.includes('ng-search-results'),'Search provides results rather than the old static name list');
- assert.ok(css.includes('.ng-search-hit[hidden]{display:none!important}'),'Search should immediately hide nonmatches');
+ assert.ok(js.includes('ng-search-table-body')&&js.includes('ng-search-row'),'Search provides compact OOTP-style roster rows, not static cards');
+ assert.ok(css.includes('.ng-search-roster-page .ng-search-row{'),'Search should display legible compact rows with live filtering and paging');
  assert.ok(css.includes('Layout acceptance rule: justify controls and KPIs on a shared centerline'),'Shared centered justification must remain across main and subpage work');
  assert.ok(css.includes('Fill the Racing Office panels with legible information'),'Main view should better use available text area');
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);
  const officeCheck=spawnSync(process.execPath,['--check',path.join(root,'public/office-v30-4.js')],{encoding:'utf8'});
  assert.equal(officeCheck.status,0,officeCheck.stderr);
+});
+
+
+test('Search Directory fits OOTP-style tabular roster with real owners, sorting and paginated record navigation',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css'),office=get('public/office-v30-4.js');
+ assert.ok(js.includes("const searchPageSize=()=>"),'Page length must adapt to desktop viewport height');
+ assert.ok(js.includes('ng-search-table-head'),'Search must have distinct type, name, detail, owner and action columns');
+ assert.ok(js.includes('ng-search-row-name'),'Search must use condensed full-width table rows, not two-column cards');
+ for(const key of ['search-type','search-sort','search-page','search-go'])assert.ok(js.includes("data-ng=\""+key+"\""),'Directory '+key+' is functional');
+ assert.ok(js.includes('function updateSearchRoster()'),'Filtering and sorting must update roster without losing typing focus');
+ assert.ok(js.includes('APP.searchQuery=input.value;APP.searchPage=0'),'Typing must reset page to the first matching row');
+ assert.ok(js.includes('horseOwnerBadge(entry.name)'),'Each horse result needs its owner emblem');
+ assert.ok(js.includes("APP.searchSort==='owner'"),'Owner can be used as sort field');
+ assert.ok(css.includes('grid-template-columns:76px minmax(185px,1.2fr)'),'Desktop records have distinct aligned data columns');
+ assert.ok(css.includes('.ng-route-search .ng-routeheading{display:none!important}'),'Search avoids duplicate 100px hero and dead space');
+ assert.ok(css.includes('.ng-search-roster-page .ng-search-table-body{'),'Search uses viewport bounded table rather than long cards');
+ assert.ok(css.includes('.ng-search-pager button:disabled'),'Pagination must not lead to phantom pages');
+ assert.ok(office.includes('window.__wtwOfficeHorseOwner = function(name)'),'Owner identity sourced from original approved Office game state');
+ assert.ok(office.includes("runtime.owner_name||runtime.owner||facts.owner"),'UI must not infer owner from stable or barn membership');
+ assert.ok(js.includes("owner&&owner!=='—'&&owner!=='Unknown'"),'Unknown owner must remain explicitly unrecorded');
+ assert.ok(js.includes("owner_name"),'Horse owner badge helper has a readable owner label');
+ for(const context of ['ng-rostername','ng-entrycopy','ng-managementrow','ng-profile-identity','ng-entity-links'])
+  assert.ok(js.includes(context),'Original horse context retained: '+context);
+ assert.ok(js.includes('horseOwnerBadge(h.name)'),'Stable list and schedule must reuse the owner emblem');
+ assert.ok(js.includes('horseOwnerBadge(route.title)'),'Horse profile name must include owner emblem');
+ assert.ok(js.includes('horseOwnerBadge(label)'),'People-to-horse links must include owner emblem');
+ assert.ok(css.includes('.ng-horse-owner-badge .ng-owner-unknown-mark'),'Unknown ownership gets visible neutral question mark');
+ const check=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(check.status,0,check.stderr);
 });
