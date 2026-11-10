@@ -34,7 +34,7 @@
     'Cedar Spoke group':['cedar']
   };
   const personProfiles = {
-    'Gabe Larkin':{job:'Stable staff',age:'—',birthplace:'—',location:'—',stable:['Powerline'],careerWins:'—',achievements:[]},
+    'Gabe Larkin':{person_id:'P-000023',job:'Stable staff',age:'—',birthplace:'—',location:'—',stable:['Powerline'],careerWins:'—',achievements:[]},
     'Anika Rowe':{job:'Stable staff',age:'—',birthplace:'—',location:'—',stable:['Pieta'],careerWins:'—',achievements:[]},
     'Alistair Dunleavy':{job:'Bloodstock',age:'—',birthplace:'—',location:'—',stable:[],careerWins:'—',achievements:[]}
   };
@@ -781,7 +781,7 @@
     const stable=(data.stable||[]).map(h=>`<div class="achievementItem">${profileButton('Horse','horse',h)}</div>`).join('') || '<div class="achievementItem muted">No active horse connection in the current Office state.</div>';
     const staff=gameState.staffState?.[name] || {};
     openRoute('People Profile',name,`
-      <section class="profilePage personProfilePage">
+      <section class="profilePage personProfilePage" data-person-id="${data.person_id||''}">
         <div class="profileHero">
           <div class="profilePhoto" data-label="Approved identity badge"><img class="wtwBadgeIdentity" src="/assets/profile-badges/v2/wtw_badge_people.png" alt="" aria-hidden="true"></div>
           <div class="profileIdentity">
