@@ -11,6 +11,7 @@ const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute(
 const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 const genericDeskPhoto='/assets/office/approved-office-photo.jpg';
+let organizationLogoIndex=null; // UI-only logo asset refs; organization authority stays in the game database.
 
 const tabmap={Office:['Overview','Messages','Decisions','Calendar','News','Reports','Career'],History:['Race Results','Horses','People & Farms','Facilities & Tracks','Historical Calendar','Coverage'],Stable:['Overview','Horses','Training','Health','Race Plans','Barns'],Racing:['Overview','Calendar','Entries','Results','Stakes','Race Planning'],Breeding:['Overview','Stallions','Broodmares','Foals','Pedigrees','Stud Farms'],Sales:['Overview','Auctions','Catalogs','Watchlist','Private Offers'],Personnel:['Overview','Trainers','Jockeys','Owners','Staff'],Facilities:['Overview','Barns','Training Centers','Farms'],Finances:['Overview','Cash Flow','Operating Costs','Budgets'],World:['Overview','Tracks','Meets','Major Races','News']};
 const actions={Office:'Office Overview',Stable:'Stable',Racing:'Race Calendar',Sales:'Sales',World:'World'};
@@ -82,6 +83,42 @@ const glyph=(name,size=16)=>{const paths={
   folder:'<path d="M3 7V5h7l2 3h9v12H3V7z"/>',
   sparkle:'<path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3z"/>',
  };return `<svg class="ng-svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]||paths.grid}</svg>`};
+
+/* Shared logo slot for player stable, farms and all future organization profiles. */
+function playerOrganization(){
+ const st=state(),o=st.organization&&typeof st.organization==='object'?st.organization:
+                 st.stable&&typeof st.stable==='object'?st.stable:{};
+ return {id:o.id==null?'':String(o.id),name:typeof o.name==='string'&&o.name.trim()?o.name.trim():'YOUR STABLE'};
+}
+function organizationLogoMarkup(id,name,kind='organization',large=false){
+ const refs=organizationLogoIndex?.organizations||{};
+ const keys=[id?kind+':'+id:'',kind+':'+name,kind==='stable'?'player':''].filter(Boolean);
+ const src=keys.map(key=>officeAssetPath(refs[key])).find(Boolean);
+ const initials=name==='YOUR STABLE'?'ST':name.split(/\s+/).slice(0,2).map(t=>t[0]||'').join('').toUpperCase().slice(0,2)||'ORG';
+ const content=src?'<img class="ng-org-image" src="'+safe(src)+'" alt="" loading="lazy" decoding="async"/>':
+  '<span class="ng-org-initials" aria-hidden="true">'+safe(initials)+'</span>';
+ return '<span class="ng-org-mark'+(large?' ng-org-mark-large':'')+'" aria-label="'+safe(src?'Approved logo for '+name:'Temporary logo placeholder for '+name)+'">'+content+'</span>';
+}
+function availableCash(){
+ const st=state(),f=st.finances||{},stable=f.stable||{};
+ const values=[stable.available_cash,stable.availableCash,stable.cash_balance,stable.cashBalance,f.available_cash,f.availableCash];
+ const value=values.find(x=>typeof x==='number'&&Number.isFinite(x));
+ return value===undefined?null:value;
+}
+function cashDisplay(){
+ const cash=availableCash();
+ return cash===null?'—':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(cash);
+}
+function openFollowUps(){
+ const follow=state().followUps;
+ return (Array.isArray(follow)?follow:[]).filter(f=>f&&f.status!=='complete').sort((a,b)=>String(a.dueDate||'9999').localeCompare(String(b.dueDate||'9999')));
+}
+function dueActions(){
+ const date=String($('.dateChip')?.textContent.trim()||state().date||'').slice(0,10);
+ return openFollowUps().filter(f=>f.status==='due'||(f.status==='open'&&/^\d{4}-\d{2}-\d{2}$/.test(String(f.dueDate||''))&&f.dueDate<=date));
+}
+function openOrganization(){APP.custom='Organization Overview';APP.section='Office';APP.page='Overview';paint()}
+
 function header(){
  const date=$('.dateChip')?.textContent.trim()||'2014-07-15';
  return `<header class="ng-global" aria-label="Wire to Wire application navigation">
