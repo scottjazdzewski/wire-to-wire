@@ -44,3 +44,14 @@ The accompanying `data/history-source/canon-registry-2026-11-10/organization-eco
 **Drive approved history → source-versioned, reviewed export → same private D1 read model → website History tab.**
 
 No independent master, no overwrite of UI ownership, no new WTW person/farm/horse identity, no forged financing or historic race results, no 1999+ scripted outcomes. The v3.84 race-data gate and remote incremental sync remain **OPEN**, even when the organization snapshot compiler is ready.
+
+
+## November 10 follow-up — stale D1 active-status guard
+
+**Problem:** The 2026-11-08 D1 import is older than the v3.84 Drive edition quarantine decisions. SQL clauses such as `WHERE r.status NOT LIKE 'QUARANTINED%'` protect only rows already flagged in D1. They are **insufficient by themselves** until a controlled D1 migration reconciles all edition statuses. In particular, a v3.84-quarantined race can still have an old `ACTIVE` status in D1.
+
+**Read-only interim control:** `src/worker.js` uses `src/history-inactive-read-model.js`, a generated deployment-only projection of the existing 223-edition source-linked QA-pending exclusion list in `data/history-audit/qa-pending-v384-inactive-edition-ids.json`. Tests enforce exact source-list parity; it is not an editable master. On `GET /api/bootstrap` and `GET /api/seasons`, it suppresses those edition IDs *and their displayed result rows* from the active site read model, independently of stale D1 status. It computes displayed race/result counts from visible rows while retaining the D1 full year index, so an otherwise valid season cannot disappear when a sample race is held. The original D1 source rows, edit overlays, name audit, record-review queue, pedigree, and source workbooks are not deleted or rewritten.
+
+The API exposes `historySource` identifying the D1 snapshot as the **2026-11-07 v3.37 working export** and the exclusion authority as **v3.84 QA_PENDING**. This is not approval of v3.84 winners, placings, dates, names, or full career totals. Do not report new overall results as synchronized just because the exclusion overlay is active. If the Drive exclusion list changes, regenerate it from the approved history-source gate and review before publishing.
+
+**Next promotion gate remains unchanged:** exact E/W/M delta reconciliation, rollback manifest, approved source updates to the *existing* D1, preservation of name overlays and audit decisions, and authenticated site checks. No additional master, no Office UI redesign, and no automatic result replacement.

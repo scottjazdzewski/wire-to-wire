@@ -1,3 +1,4 @@
+import {qaPendingInactiveAuthority,qaPendingInactiveEditionIds} from './history-inactive-read-model.js';
 // Cloudflare Worker / D1 API. Deliberately separate from all other WTW and non-WTW projects.
 // Privacy: every request requires authenticated Cloudflare Access in deployed environments.
 const jsonHeaders = {
@@ -57,7 +58,31 @@ export function validDisplayName(value) {
 }
 // Historical source quarantine is not a racing result. Keep those rows in D1 for
 // privileged source review, but exclude them from the active History tab read model.
-// The current Drive Master has 223 inactive edition IDs, all with QUARANTINED canon status.
+// This is a visibility guard for the OLD v3.37 D1 snapshot, not a v3.84
+// result import. D1's stored status predates later Drive quarantines.
+if(qaPendingInactiveAuthority!=='V3.84_QA_PENDING' ||
+   qaPendingInactiveEditionIds.length!==223 ||
+   new Set(qaPendingInactiveEditionIds).size!==223)
+  throw Error('Historical exclusion authority changed: review before deploying');
+const qaPendingExcludedEditionIds=new Set(qaPendingInactiveEditionIds);
+export const historicalSourceStatus=Object.freeze({
+  d1_snapshot:'2026-11-07 v3.37 working H/S/E/P/B',
+  canonical_race_authority:'Drive E/W/M v3.84 QA_PENDING',
+  exclusion_list_size:qaPendingExcludedEditionIds.size,
+  result_delta_status:'NOT_RECONCILED_NOT_PROMOTED',
+  warning:'Older site results remain provisional; v3.84 result/date corrections have not been promoted.'
+});
+export function isHistoricalEditionVisible(edition) {
+  if(!edition)return false;
+  const id=edition.id??edition.edition_id;
+  return typeof id==='string' && !qaPendingExcludedEditionIds.has(id) &&
+    !String(edition.status??'').startsWith('QUARANTINED');
+}
+function visibleHistoricalResults(races,results){
+  const liveRaces=races.filter(isHistoricalEditionVisible);
+  const liveIds=new Set(liveRaces.map(r=>r.id));
+  return {races:liveRaces,results:results.filter(r=>liveIds.has(r.edition_id))};
+}
 async function bootstrap(db) {
   // D1 allows at most six simultaneous connections per Worker request. Run the
   // read model queries sequentially to prevent startup failures and demo fallback.
@@ -78,13 +103,20 @@ async function bootstrap(db) {
   const values = [];
   for (const job of jobs) values.push(await job());
   const [entityCount,raceCount,connCount,resultCount,changeCount,entities,connections,races,results,changes,years,nameEdits] = values;
+  // Source-level inactive IDs must be removed from the SITE view even when
+  // their outdated D1 rows still say ACTIVE. Never delete D1 audit/source rows.
+  const visible=visibleHistoricalResults(races.results,results.results);
+  // Keep D1's full year index: the race query may be partial during paging and
+  // a year can have other valid editions even if the sample rows are held.
+  const activeYears=years.results.map(x=>x.year);
   return {
     mode:'D1_CONNECTED',
-    scope:'DATASET_SAMPLE_OR_IMPORT',
-    counts:{entities:entityCount?.n||0,races:raceCount?.n||0,connections:connCount?.n||0,results:resultCount?.n||0,changes:changeCount?.n||0,horseDetails:entityCount?.horseDetails||0,horseSeasons:entityCount?.horseSeasons||0,pedigreeEdges:entityCount?.pedigreeEdges||0,bloodlineProfiles:entityCount?.bloodlineProfiles||0},
-    partial: Number(entityCount?.n||0)>15000 || Number(raceCount?.n||0)>10000 || Number(connCount?.n||0)>40000 || Number(resultCount?.n||0)>25000,
-    years: years.results.map(x=>x.year),
-    entities:entities.results,connections:connections.results,races:races.results,results:results.results,
+    scope:'OLDER_D1_SNAPSHOT_WITH_V384_QA_PENDING_EXCLUSION',
+    historySource:historicalSourceStatus,
+    counts:{entities:entityCount?.n||0,races:visible.races.length,connections:connCount?.n||0,results:visible.results.length,changes:changeCount?.n||0,horseDetails:entityCount?.horseDetails||0,horseSeasons:entityCount?.horseSeasons||0,pedigreeEdges:entityCount?.pedigreeEdges||0,bloodlineProfiles:entityCount?.bloodlineProfiles||0},
+    partial: Number(entityCount?.n||0)>15000 || Number(raceCount?.n||0)>10000 || Number(connCount?.n||0)>40000 || Number(resultCount?.n||0)>25000 || Number(raceCount?.n||0)>races.results.length || Number(resultCount?.n||0)>results.results.length,
+    years:activeYears,
+    entities:entities.results,connections:connections.results,races:visible.races,results:visible.results,
     changes:changes.results,
     nameEdits:nameEdits.results
   };
@@ -142,7 +174,7 @@ async function api(request,env,email) {
       source_provenance_note:'Boarding/foaling records include both evidence-backed and explicitly fictional canon. Historical pedigree-only identity does not imply living 1999 stock.'
     });
   }
-  if(request.method==='GET' && url.pathname==='/api/health') return response({status:'ok',mode:'D1',actor:email});
+  if(request.method==='GET' && url.pathname==='/api/health') return response({status:'ok',mode:'D1',actor:email,historySource:historicalSourceStatus});
   if(request.method==='GET' && url.pathname==='/api/bootstrap') return response(await bootstrap(env.DB));
   const horseMatch=url.pathname.match(/^\/api\/horses\/(H-[A-Za-z0-9-]+)$/);
   if(request.method==='GET'&&horseMatch){
@@ -171,7 +203,8 @@ async function api(request,env,email) {
       env.DB.prepare("SELECT r.* FROM results r JOIN races e ON e.id=r.edition_id WHERE e.year=? AND e.status NOT LIKE 'QUARANTINED%' LIMIT 2000").bind(year).all(),
       env.DB.prepare('SELECT * FROM connections WHERE year=? LIMIT 3000').bind(year).all()
     ]);
-    return response({year,races:races.results,results:results.results,connections:connections.results});
+    const visible=visibleHistoricalResults(races.results,results.results);
+    return response({year,races:visible.races,results:visible.results,connections:connections.results,historySource:historicalSourceStatus});
   }
   if(request.method==='POST' && url.pathname==='/api/changes') {
     if(request.headers.get('content-type')?.split(';')[0]!=='application/json') return response({error:'JSON required'},415);
