@@ -266,7 +266,7 @@ const searchWords=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,'
 // Roster-style directory: a single dense, sortable list instead of tiles.
 // No source records are copied into a new database; each row routes to its
 // original Office source, with 13 rows per page to avoid desktop scrolling.
-const searchPageSize=13;
+const searchPageSize=()=>Math.max(10,Math.min(21,Math.floor(((window.innerHeight||768)-290)/31)));
 const searchTypes=[
  ['all','ALL'],['horse','HORSES'],['person','PEOPLE'],['farm','FARMS'],
  ['track','TRACKS'],['race','RACES'],['pages','SCREENS']
@@ -284,9 +284,9 @@ function searchRosterData(){
    (entry.kind==='horse'?(horseOwnership(entry.name)?.name||'zzzzzzzz'):'zzzzzzzz'):entry.name;
  scoped.sort((a,b)=>key(a).localeCompare(key(b),undefined,{numeric:true,sensitivity:'base'})||
   a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:'base'}));
- const totalPages=Math.max(1,Math.ceil(scoped.length/searchPageSize));
+ const totalPages=Math.max(1,Math.ceil(scoped.length/searchPageSize()));
  APP.searchPage=Math.min(Math.max(APP.searchPage,0),totalPages-1);
- return {all:scoped,page:scoped.slice(APP.searchPage*searchPageSize,(APP.searchPage+1)*searchPageSize),
+ return {all:scoped,page:scoped.slice(APP.searchPage*searchPageSize(),(APP.searchPage+1)*searchPageSize()()),
   totalPages,count:scoped.length};
 }
 function searchRosterMarkup(){
@@ -304,7 +304,7 @@ function searchRosterMarkup(){
     <span class="ng-search-row-open">${glyph('right',13)}</span>
    </button>`;
  }).join('');
- const start=result.count?APP.searchPage*searchPageSize+1:0,end=Math.min(result.count,(APP.searchPage+1)*searchPageSize);
+ const start=result.count?APP.searchPage*searchPageSize()+1:0,end=Math.min(result.count,(APP.searchPage+1)*searchPageSize());
  const pager=`<span class="ng-search-page-range">${start}–${end} OF ${result.count} RESULTS</span>
   <div class="ng-search-pager"><button data-ng="search-page" data-val="-1" ${APP.searchPage===0?'disabled':''} aria-label="Previous search page">${glyph('left',13)}</button>
   <strong>${APP.searchPage+1} / ${result.totalPages}</strong>
