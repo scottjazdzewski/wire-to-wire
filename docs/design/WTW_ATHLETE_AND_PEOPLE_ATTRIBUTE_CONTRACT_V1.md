@@ -81,6 +81,15 @@ Useful graphics: horizontal evaluation bands with estimate confidence, a short c
 
 There is no approved public 1–20 or 0–100 player rating scale yet. Final UI representation and calibration require game-engine testing. This catalog defines the **meaning and eligibility** of each attribute first.
 
+## Athlete Profile implementation (first desktop pass)
+The current Horse Profile Overview now reads the **same** catalog through `/assets/game/attribute-catalog.v1.json` and uses `display.horse_overview` to select six headline traits per each of the four approved groups. These are presentation priorities only, not a second definition set.
+
+At present, the deployed 2014 Office prototype has no trustworthy rating assessments for those traits. The profile therefore shows **0/6 assessed** and an unassessed dash for each, while retaining current Office condition, actual race target, available career record, real connected people and original related decision/follow-up actions. No fake rank bars or average-quality colors.
+
+Future scouting engine adapters may publish `state.scoutingState[horseName].attribute_observations` for the current prototype (or canonical Horse_ID keyed observations in the eventual game-run adapter). Each displayable observation requires a valid trait key, `status: 'estimated'|'measured'`, non-null estimate, and evidence references. Reported data are **the player's assessment, not true hidden ability**. Names are a temporary legacy route bridge; approved Horse_ID must replace them in the 1999 simulation.
+
+The desktop summary is intentionally compact. Full attributes, quantified scouting confidence, biometric graphs and historical form visualizations remain for source-backed follow-on work, not fabricated now.
+
 ## Status and limits
 The catalog and pure validation helpers are implemented now. **No fictional horse/person values have been generated, no historical people scored, and no generated values attached to the currently deployed 2014 Office horse records.** All 1999/game-world integration occurs only after the authorized generator exports conforming values and observation state. Historic real people must not receive purportedly factual subjective ratings without an explicit game-fiction boundary.
 
