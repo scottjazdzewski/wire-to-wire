@@ -33,7 +33,7 @@ function ruleList(s,scope='',result=[]){
    const selector=s.slice(begin,i).trim();
    const end=closingBrace(s,i);
    const body=s.slice(i+1,end);
-   if(selector.startsWith('@media'))ruleList(body,scope+'|'+selector.replace(/\\s+/g,''),result);
+   if(selector.startsWith('@media'))ruleList(body,scope+'|'+selector.replace(/\s+/g,''),result);
    else result.push({selector,scope,body});
    i=end;begin=i+1;
   }
@@ -55,7 +55,7 @@ test('One rebuilt canonical design system contains no duplicate selector blocks 
  }
  assert.ok(css.startsWith('/* WIRE TO WIRE | UNIFIED DESKTOP MANAGEMENT DESIGN SYSTEM'));
  assert.ok(!css.includes('@import'),'No CSS patch imports');
- const rules=ruleList(css.replace(/\\/\\*[\\s\\S]*?\\*\\//g,''));
+ const rules=ruleList(css.replace(/\/\*[\s\S]*?\*\//g,''));
  const keys=rules.map(r=>r.scope+'|'+r.selector);
  assert.equal(new Set(keys).size,keys.length,'Each selector may appear once per media condition, not as trailing override patches');
  assert.ok(rules.length>900,'All existing connected screens must retain the original functional styling');
@@ -65,7 +65,7 @@ test('One rebuilt canonical design system contains no duplicate selector blocks 
 });
 
 test('Dark FM/OOTP styling applies coherently to the Racing Office and every Tier 1 page family',()=>{
- const rules=ruleList(css.replace(/\\/\\*[\\s\\S]*?\\*\\//g,'')).filter(x=>x.scope==='');
+ const rules=ruleList(css.replace(/\/\*[\s\S]*?\*\//g,'')).filter(x=>x.scope==='');
  const get=sel=>rules.find(r=>r.selector===sel);
  const expected=[
   ['#wtwNextgen','background','#0b1014'],
