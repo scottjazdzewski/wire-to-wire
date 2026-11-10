@@ -8,18 +8,18 @@ import {spawnSync} from 'node:child_process';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const get=p=>fs.readFileSync(path.join(root,p),'utf8');
 const approved={
-  "achievements": "6b3f52a45cee26f28dc55b69495e4714add085f2",
-  "career_record": "1b9aab87f290d0c44b55af32d172eca72fd0d174",
-  "connections": "92a0d4d0b2b9216ed1b70d49a3f2948c86cca926",
-  "farm_stable": "f6f081da922ce00927740049e698410d76561518",
-  "history": "b02aaeee7460fc3d55f39feb6e6722cee3ba9ced",
-  "horse": "e56c15eca3a72ec412de6845bab0def9c351f933",
-  "major_races": "9333d7100167c6c47e41882f439edd9914c9639c",
-  "meet_schedule": "da36c1f3099575a0460adb3d1ba8028550ec0c52",
-  "pedigree": "2dbc9c036b8e0c20b9ab5e0e4f9a62911a63280b",
-  "people": "a534d62ee042f4a17cb2250cab0657a1f556e379",
-  "reputation": "bf281b0a2a32d0e09893e1dbf164778523259e80",
-  "track": "7bfafd3e47e52638e9d9fcc7dd2e99ba8a16624a"
+  "achievements": "51d18b8af5009744b8960ddf545a5e34812261b3",
+  "career_record": "c2209e29644bb6b148fc4d941464d68c9cddc34a",
+  "connections": "7d4dd44ee3ab13f369c8c8c05ac7bdfd3f121afc",
+  "farm_stable": "0e545f320ea980daea3e628bda7f66cfaea0ff39",
+  "history": "a61b7dfa8fe51ad98b8dbba9ebdb907d104b70fb",
+  "horse": "a10c90dd0fced7f16875717c082aff2dfdd3bc40",
+  "major_races": "c8f096dfa0435d756d21a2a36e0f4b3d7a1bf5b5",
+  "meet_schedule": "1ccb251fc2d46528eb51e6817e1e905dd099f590",
+  "pedigree": "8155287c8b8ae5afbde1ec7cf1fabe9de2a7aead",
+  "people": "3fcc16ee0fcbe351009eb70858d9ab612431e00d",
+  "reputation": "b372f7a27dcdd6dc75844497d294fa655d6aa6b0",
+  "track": "0ba8e434b091974fb8834cc66ef52ce310a5e2fa"
 };
 
 test('all twelve repaired individually isolated v2 shields retain correct transparent PNG format and verified byte hashes',()=>{
@@ -65,4 +65,10 @@ test('every Office badge uses readable shield viewport, correct source path, and
  assert.equal(syntax.status,0,syntax.stderr);
 });
 
-test('repaired shield paths are cache-busted and rectangular frames are removed',()=>{const css=get('public/next/next.css'),js=get('public/next/next.js');assert.ok(js.includes('png?shield=20261110'));assert.ok(css.includes('Individually extracted shield assets'));assert.ok(css.includes('.ng-profile-badgeframe{background:transparent!important'));assert.ok(css.includes('.ng-route-badge-slot{width:48px!important'));});
+test('repaired shield paths are cache-busted and rectangular frames are removed',()=>{const css=get('public/next/next.css'),js=get('public/next/next.js');assert.ok(js.includes('png?shield=20261110b'));assert.ok(css.includes('Individually extracted shield assets'));assert.ok(css.includes('.ng-profile-badgeframe{background:transparent!important'));assert.ok(css.includes('.ng-route-badge-slot{width:48px!important'));});
+
+test('shield files were rechecked for detached sheet fragments',()=>{
+ const manifest=JSON.parse(get('public/assets/profile-badges/v2/REPAIR_MANIFEST.json'));
+ assert.equal(manifest.final_validation,'One connected alpha silhouette and no detached pixels in each shield; all four image corners transparent');
+ assert.deepEqual(manifest.cleaned_git_blob_shas,approved);
+});
