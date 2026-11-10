@@ -383,9 +383,13 @@ function profileDetail(route){
    left=athleteOverview();
    right='';footer='';
   }else if(isPerson){
-   left=`<section class="ng-detailcard ng-entity-facts"><header>PERSON & ROLE</header>${factsBlock}</section>`;
-   right=`<section class="ng-detailcard ng-entity-linked"><header>CURRENT STABLE HORSES</header>${connectedHorseRows()}</section>`;
-   footer=`<section class="ng-detailcard ng-entity-performance"><header>CAREER & REPUTATION</header><div class="ng-entity-metrics"><div><small>RECORDED WINS</small><strong>${safe(personWins||'—')}</strong></div><div><small>REPUTATION</small><strong>${safe(reputationLabel||'Not recorded')}</strong></div></div>${reputationGauge}<button class="ng-entity-open" data-ng="detailtab" data-val="Career">CAREER DETAILS ${glyph('arrow',12)}</button></section><section class="ng-detailcard ng-detailwide ng-entity-activity"><header>OFFICE ACTIVITY & CONNECTIONS</header>${connectionRows()}</section>`;
+   const person=personWork();
+   left=`<div class="ng-person-workspace">
+    <section class="ng-person-work-card"><header>PROFESSIONAL ATTRIBUTES <button data-ng="detailtab" data-val="Attributes">ALL SKILLS ${glyph('arrow',11)}</button></header>${person.attributes()}</section>
+    <section class="ng-person-work-card"><header>REPUTATION & NETWORK <button data-ng="detailtab" data-val="Reputation">FULL RECORD ${glyph('arrow',11)}</button></header>${person.reputation()}</section>
+    <section class="ng-person-work-card"><header>CAREER & OPPORTUNITIES <button data-ng="detailtab" data-val="Career">CAREER ${glyph('arrow',11)}</button></header>${person.careerContent}</section>
+   </div>`;
+   right='';footer='';
   }else if(isFarm){
    left=`<section class="ng-detailcard ng-entity-facts"><header>FARM & LOCATION</header>${factsBlock}</section>`;
    right=`<section class="ng-detailcard ng-entity-linked"><header>CONNECTED HORSES</header>${connectedHorseRows()}</section>`;
@@ -409,6 +413,13 @@ function profileDetail(route){
   footer=`<section class="ng-detailcard ng-detailwide"><header>BLOODLINE AUTHORITY</header><div class="ng-notes">No pedigree is invented when the approved source has not yet connected a horse.</div></section>`;
  }else if((APP.detailTab==='Stable Horses'&&isPerson)||(APP.detailTab==='Connected Horses'&&isFarm)){
   left=`<section class="ng-detailcard ng-detailwide"><header>CONNECTED HORSE RECORDS</header>${connectedHorseRows()}</section>`;
+ }else if(APP.detailTab==='Attributes'&&isPerson){
+  const person=personWork();
+  left=`<section class="ng-detailcard ng-detailwide ng-person-detail-sheet"><header>PROFESSIONAL ATTRIBUTE EVALUATIONS</header>${person.attributes(true)}<div class="ng-person-footnote">Estimates require observer evidence. Hidden professional ability is not shown to the player until observed.</div></section>`;
+ }else if(APP.detailTab==='Reputation'&&isPerson){
+  const person=personWork();
+  left=`<section class="ng-detailcard ng-person-detail-sheet"><header>PROFESSIONAL REPUTATION</header>${person.reputation(true)}</section>`;
+  right=`<section class="ng-detailcard ng-person-detail-sheet"><header>REPUTATION HISTORY & EVIDENCE</header><div class="ng-person-rep-history">${person.eventRows}</div></section>`;
  }else if(APP.detailTab==='Career'&&isPerson){
   left=`<section class="ng-detailcard"><header>PERSON & CAREER FACTS</header>${factsBlock}</section>`;
   right=`<section class="ng-detailcard"><header>RECORDED CAREER PERFORMANCE</header><div class="ng-entity-metrics"><div><small>CAREER WINS</small><strong>${safe(personWins||'—')}</strong></div><div><small>REPUTATION</small><strong>${safe(reputationLabel||'Not recorded')}</strong></div></div>${reputationGauge}</section>`;
@@ -432,7 +443,7 @@ function profileDetail(route){
   left=`<section class="ng-detailcard ng-detailwide"><header>HISTORY & RECORDS</header><div class="ng-notes">${(notes.length?notes:details.map(x=>x.lines)).slice(0,8).map(n=>`<div>${safe(n)}</div>`).join('')||'No official history connected yet.'}</div></section>`;
  }
  const actions=`<div class="ng-detailactions"><button data-ng="menu" data-val="Stable">OPEN STABLE ↗</button><button data-ng="menu" data-val="Racing">RACE CALENDAR ↗</button><button data-ng="office">BACK TO OFFICE</button></div>`;
- return `<div class="ng-profile-view ${isHorse?'ng-profile-horse':isPerson?'ng-profile-person':isFarm?'ng-profile-farm':isTrack?'ng-profile-track':'ng-profile-entity'}">${identity}${tabbar}<div class="ng-detail-cols ${isHorse&&APP.detailTab==='Overview'?'ng-detail-cols-horse-overview':(isPerson||isFarm||isTrack)&&APP.detailTab==='Overview'?'ng-detail-cols-entity':''}">${left}${right}${footer}</div>${isHorse||isPerson||isFarm||isTrack?'':actions}</div>`;
+ return `<div class="ng-profile-view ${isHorse?'ng-profile-horse':isPerson?'ng-profile-person':isFarm?'ng-profile-farm':isTrack?'ng-profile-track':'ng-profile-entity'}">${identity}${tabbar}<div class="ng-detail-cols ${isHorse&&APP.detailTab==='Overview'?'ng-detail-cols-horse-overview':isPerson&&APP.detailTab==='Overview'?'ng-detail-cols-person':(isFarm||isTrack)&&APP.detailTab==='Overview'?'ng-detail-cols-entity':''}">${left}${right}${footer}</div>${isHorse||isPerson||isFarm||isTrack?'':actions}</div>`;
 }
 function calendarTimeline(races,nonraces){
  const iso=$('.dateChip')?.textContent.trim()||'2014-07-15';
