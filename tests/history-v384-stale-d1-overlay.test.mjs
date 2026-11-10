@@ -14,12 +14,12 @@ function makeDB(){
   const db={prepare(sql){
     statements.push(sql);
     return {
-      bind(){return this;},
+      bind(...args){this.args=args;return this;},
       async first(){return {n:2,horseDetails:0,horseSeasons:0,pedigreeEdges:0,bloodlineProfiles:0};},
       async all(){
-        if(sql.includes('FROM races r LEFT JOIN'))return {results:storedRaces};
+        if(sql.includes('FROM races r LEFT JOIN'))return {results:this.args?.length?storedRaces.filter(r=>r.year===this.args[0]):storedRaces};
         if(sql.startsWith('SELECT p.edition_id,p.horse_id,p.position FROM results'))return {results:storedResults};
-        if(sql.startsWith('SELECT r.* FROM results r JOIN races e'))return {results:storedResults};
+        if(sql.startsWith('SELECT r.* FROM results r JOIN races e'))return {results:this.args?.length?storedResults.filter(r=>storedRaces.find(x=>x.id===r.edition_id)?.year===this.args[0]):storedResults};
         if(sql.startsWith('SELECT DISTINCT year FROM races'))return {results:[{year:1922},{year:1958}]};
         return {results:[]};
       }
@@ -52,17 +52,17 @@ test('historical bootstrap excludes stale D1 race/result and corrects displayed 
   assert.equal(data.counts.results,1);
   assert.equal(data.historySource.canonical_race_authority,'Drive E/W/M v3.84 QA_PENDING');
   assert.equal(data.historySource.result_delta_status,'NOT_RECONCILED_NOT_PROMOTED');
-  assert.ok(statements.every(s=>!/^\\s*(INSERT|UPDATE|DELETE|DROP|ALTER)\\b/i.test(s)));
+  assert.ok(statements.every(s=>!/^\s*(INSERT|UPDATE|DELETE|DROP|ALTER)\b/i.test(s)));
 });
 test('year API cannot reintroduce stale quarantine from imported v3.37 D1',async()=>{
   const {db,statements}=makeDB();
   const resp=await api(new Request('http://localhost/api/seasons?year=1958'),{DB:db},'tester@example.com');
   assert.equal(resp.status,200);
   const data=await resp.json();
-  assert.deepEqual(data.races.map(x=>x.id),[live]); // Fixture intentionally exposes both; ID gate wins.
-  assert.deepEqual(data.results.map(x=>x.edition_id),[live]);
+  assert.deepEqual(data.races.map(x=>x.id),[]); // Year 1958 contains only an excluded edition.
+  assert.deepEqual(data.results.map(x=>x.edition_id),[]);
   assert.equal(data.historySource.exclusion_list_size,223);
-  assert.ok(statements.every(s=>!/^\\s*(INSERT|UPDATE|DELETE|DROP|ALTER)\\b/i.test(s)));
+  assert.ok(statements.every(s=>!/^\s*(INSERT|UPDATE|DELETE|DROP|ALTER)\b/i.test(s)));
 });
 test('read-only history source health reports stale result projection',async()=>{
   const {db}=makeDB();
