@@ -286,7 +286,7 @@ function searchRosterData(){
   a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:'base'}));
  const totalPages=Math.max(1,Math.ceil(scoped.length/searchPageSize()));
  APP.searchPage=Math.min(Math.max(APP.searchPage,0),totalPages-1);
- return {all:scoped,page:scoped.slice(APP.searchPage*searchPageSize(),(APP.searchPage+1)*searchPageSize()()),
+ return {all:scoped,page:scoped.slice(APP.searchPage*searchPageSize(),(APP.searchPage+1)*searchPageSize()),
   totalPages,count:scoped.length};
 }
 function searchRosterMarkup(){
