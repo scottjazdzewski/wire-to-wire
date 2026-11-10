@@ -225,6 +225,63 @@ function header(){
  <div class="ng-subbar"><nav class="ng-subnav" aria-label="Section navigation">${(tabmap[APP.section]||['Overview']).map(x=>`<button data-ng="tab" data-val="${safe(x)}" class="${APP.page===x||(APP.page==='Office'&&x==='Overview')?'on':''}">${safe(x)}</button>`).join('')}</nav></div>`;
 }
 
+// Real global discovery: known Office entities, connected record pages,
+// management screens and a link to the separately maintained History Vault.
+function globalSearchItems(){
+ const rows=typeof window.__wtwOfficeSearchRecords==='function'?window.__wtwOfficeSearchRecords():[];
+ const pages=[
+  {kind:'page',name:'Racing Office',detail:'Decision Desk and Inbox',section:'Office'},
+  {kind:'page',name:'Organization Overview',detail:'Stable finances, horses and commitments'},
+  {kind:'page',name:'Historical Archive',detail:'Complete historical results and entities',section:'History'},
+  ...Object.keys(tabmap).filter(n=>n!=='History').map(name=>({kind:'page',name,detail:'Game department',section:name})),
+  ...Object.entries(tabmap).flatMap(([section,tabs])=>tabs.filter(name=>name!=='Overview').map(name=>({
+   kind:'tab',name,detail:section+' · Screen',section
+  }))),
+  ...currentMessages().map(m=>({kind:'decision',name:m.title,detail:'Office · '+m.from,caseId:m.case}))
+ ];
+ return [...rows.filter(r=>r&&typeof r.name==='string').map(r=>({
+  kind:r.kind,name:r.name,track:r.track||'',detail:r.kind==='person'?titleCaseUIRole(r.detail):r.detail||''
+ })),...pages];
+}
+const searchWords=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().split(/\s+/).filter(Boolean);
+function searchView(){
+ const entries=globalSearchItems(),words=searchWords(APP.searchQuery);APP.searchIndex=entries;
+ const matches=entry=>words.every(word=>[entry.name,entry.kind,entry.detail,entry.section,entry.track].filter(Boolean).join(' ').toLowerCase().includes(word));
+ const result=(entry,i)=>`<button type="button" class="ng-search-hit" data-ng="search-go" data-val="${i}" data-search="${safe([entry.name,entry.kind,entry.detail,entry.section,entry.track].filter(Boolean).join(' ').toLowerCase())}" ${matches(entry)?'':'hidden'}><span class="ng-search-kind">${safe(entry.kind.toUpperCase())}</span><span class="ng-search-description"><strong>${safe(entry.name)}</strong><small>${safe(entry.detail||'Existing record')}</small></span>${glyph('right',14)}</button>`;
+ return `<section class="ng-search-page">
+  <div class="ng-search-intro"><h2>Find a Page or Record</h2><p>Search horses, jockeys, trainers, farms, tracks, races, decisions and game departments.</p></div>
+  <label class="ng-search-entry" for="ngGlobalSearch">${glyph('search',18)}<input id="ngGlobalSearch" type="search" value="${safe(APP.searchQuery)}" data-ng-input="global-search" placeholder="Type any available horse, person, racetrack, race or page…" autocomplete="off" aria-label="Search Wire to Wire pages and records"/></label>
+  <div class="ng-search-count"><span id="ngSearchCount">${entries.filter(matches).length} MATCHING PAGES & RECORDS</span><span>ENTER OPENS FIRST RESULT</span></div>
+  <div class="ng-search-results" aria-label="Search results">${entries.map(result).join('')}</div>
+  <div class="ng-search-bottom"><button data-ng="search-history">EXPLORE HISTORICAL ARCHIVE ${glyph('arrow',12)}</button><small>Results link only to known records. Historical discovery continues in the Archive.</small></div>
+ </section>`;
+}
+function openSearchItem(item){
+ if(!item)return;
+ if(['horse','person','farm','track','race'].includes(item.kind)){
+  APP.custom='';APP.moreOpen=false;
+  if(window.__wtwOfficeOpenSearchRecord?.(item.kind,item.name,item.track))return schedulePaint(20);
+  return;
+ }
+ if(item.kind==='decision'){
+  APP.custom='';APP.section='Office';APP.page='Overview';
+  return selectMessage(item.caseId);
+ }
+ if(item.kind==='page'){
+  if(item.section==='History')return window.location.assign('/archive/?page=races');
+  if(item.name==='Racing Office')return goOffice();
+  if(item.name==='Organization Overview')return openOrganization();
+  return openMenu(item.section||item.name);
+ }
+ if(item.kind==='tab'){
+  if(item.section==='History'){
+   const target={'Race Results':'races','Horses':'horses','People & Farms':'people','Facilities & Tracks':'tracks','Historical Calendar':'seasons','Coverage':'sources'};
+   return window.location.assign('/archive/?page='+encodeURIComponent(target[item.name]||'races'));
+  }
+  openMenu(item.section);
+  return pageTab(item.name);
+ }
+}
 function filteredMessages(){const rows=currentMessages();return rows.filter(m=>APP.filter==='All'||(APP.filter==='Urgent'&&m.urgent&&!m.resolved)||(APP.filter==='Open'&&!m.resolved)||(APP.filter==='Reviewed'&&m.resolved))}
 function inbox(){const arr=filteredMessages();const size=6;const pages=Math.max(1,Math.ceil(arr.length/size));APP.msgPage=Math.min(APP.msgPage,pages-1);const slice=arr.slice(APP.msgPage*size,(APP.msgPage+1)*size);const urgent=currentMessages().filter(x=>x.urgent&&!x.resolved).length;
  return `<aside class="ng-left"><section class="ng-card ng-inbox"><header class="ng-cardhead"><span class="ng-sectionicon">${glyph('inbox',17)}</span><div class="ng-headinggroup"><h3>Inbox</h3><span>STAFF & RACING CORRESPONDENCE</span></div><span class="ng-counter">${arr.length}</span></header><div class="ng-filters">${['All','Open','Urgent','Reviewed'].map(v=>`<button class="${APP.filter===v?'on':''}" data-ng="filter" data-val="${v}" aria-pressed="${APP.filter===v?'true':'false'}">${v==='Urgent'?`${glyph('alert',12)} Urgent ${urgent}`:v==='Open'?`Open ${currentMessages().filter(m=>!m.resolved).length}`:v==='Reviewed'?`Reviewed ${currentMessages().filter(m=>m.resolved).length}`:v}</button>`).join('')}</div><div class="ng-inboxdate"><span class="ng-live-dot"></span>TODAY'S OFFICE FILES <span>${safe($('.dateChip')?.textContent||'')}</span></div><div class="ng-msgs">${slice.map(m=>`<button class="ng-msg ${m.case===APP.activeCase?'on':''} ${m.urgent?'urgent':''}" data-ng="case" data-val="${safe(m.case)}" aria-current="${m.case===APP.activeCase?'true':'false'}"><div class="ng-avatar">${safe(m.initials)}</div><div class="ng-msgcopy"><div class="ng-msgfrom">${safe(m.from)}</div><div class="ng-msgtitle">${safe(m.title)}</div><div class="ng-msgmeta">${safe(m.meta)}</div></div><div class="ng-msgtrail"><span class="ng-msgtag ${m.urgent?'urgent':/sale|cash/i.test(m.title)?'sale':''}">${m.urgent?'ACTION':/vet|filling|soundness/i.test(m.title)?'VET':/catalog|sale/i.test(m.title)?'SALE':'INFO'}</span><div class="ng-msgtime">${safe(m.time)}</div></div></button>`).join('')}</div><footer class="ng-inboxfoot"><span>${arr.length?APP.msgPage*size+1:0}–${Math.min(arr.length,(APP.msgPage+1)*size)} OF ${arr.length} MESSAGES</span><div class="ng-pagination"><button aria-label="Previous inbox page" data-ng="prev-msg" ${APP.msgPage===0?'disabled':''}>${glyph('left',13)}</button><b>${APP.msgPage+1} / ${pages}</b><button aria-label="Next inbox page" data-ng="next-msg" ${APP.msgPage>=pages-1?'disabled':''}>${glyph('right',13)}</button></div></footer></section></aside>`;
@@ -717,10 +774,10 @@ else if(APP.custom==='Due Actions'){body=dueActionOverview()}
 else if(APP.custom==='Messages'){body=`<section class="ng-customcard"><h3>Messages and correspondence</h3><p>Select any item to return to the Decision Desk and review its options.</p>${currentMessages().map(m=>`<button data-ng="case" data-val="${safe(m.case)}">${safe(m.from)} — ${safe(m.title)}</button>`).join('')}</section>`}
 else if(APP.custom==='Decisions'){body=`<section class="ng-customcard"><h3>Today's Decisions</h3>${currentMessages().map(m=>`<button data-ng="case" data-val="${safe(m.case)}">${safe(m.title)} ↗</button>`).join('')}</section>`}
 else if(APP.custom==='Opportunities'){body=`<section class="ng-customcard"><h3>Opportunity Board</h3><p>Uncommitted racing and commercial leads from the Office's original data.</p><button data-ng="action" data-val="Open opportunity board">OPEN EXISTING OPPORTUNITY BOARD ↗</button></section>`}
-else if(APP.custom==='Search'){body=`<section class="ng-customcard"><h3>Find a horse or racetrack</h3><p>Search across the horses and racecourses currently connected to this Office.</p>${horseRows().map(h=>`<button data-ng="horse" data-val="${safe(h.name)}">${safe(h.name)}</button>`).join('')}${racingRows().map(r=>`<button data-ng="track" data-val="${safe(r.track)}">${safe(r.track)}</button>`).join('')}</section>`}
+else if(APP.custom==='Search'){body=searchView()}
 else {const category=APP.custom||APP.section;const features=(tabmap[APP.section]||[]).filter(x=>x!=='Overview');body=`<div class="ng-custompage">${features.map(x=>`<section class="ng-customcard"><h3>${safe(x)}</h3><p>The ${safe(category)} view is reserved for source-connected records. We won't invent figures, horse IDs, or outcomes.</p><button data-ng="tab" data-val="${safe(x)}">OPEN ${safe(x).toUpperCase()} ↗</button></section>`).join('')}</div>`}
-const isProfile=Boolean(profile),isOrganization=APP.custom==='Organization Overview';
-return `<main class="ng-route ${isProfile?'ng-route-profile':isOrganization?'ng-route-organization':''}">${isProfile||isOrganization?'':`<header class="ng-routeheading"><span class="ng-route-badge-slot" aria-hidden="true">${APP.custom==='Organization Overview'?organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',true,true):`<img class="ng-routebadge" src="${safe(bdg)}" alt=""/>`}</span><div class="ng-routetext"><small>${safe(kicker)}</small><h1>${safe(title)}</h1></div><button class="ng-back" data-ng="office">← RACING OFFICE</button></header>`}<div class="ng-routegrid" data-route-key="${safe((route?.kicker||APP.custom||APP.section)+'|'+(route?.title||APP.custom||APP.page))}"><div class="ng-routeinner">${body}</div></div></main>`;}
+const isProfile=Boolean(profile),isOrganization=APP.custom==='Organization Overview',isSearch=APP.custom==='Search';
+return `<main class="ng-route ${isProfile?'ng-route-profile':isOrganization?'ng-route-organization':isSearch?'ng-route-search':''}">${isProfile||isOrganization?'':`<header class="ng-routeheading"><span class="ng-route-badge-slot" aria-hidden="true">${APP.custom==='Organization Overview'?organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',true,true):`<img class="ng-routebadge" src="${safe(bdg)}" alt=""/>`}</span><div class="ng-routetext"><small>${safe(kicker)}</small><h1>${safe(title)}</h1></div><button class="ng-back" data-ng="office">← RACING OFFICE</button></header>`}<div class="ng-routegrid" data-route-key="${safe((route?.kicker||APP.custom||APP.section)+'|'+(route?.title||APP.custom||APP.page))}"><div class="ng-routeinner">${body}</div></div></main>`;}
 function paint(){
  if(!APP.ready)return;
  const oldRoute=$('.ng-routegrid',root),oldTab=$('.ng-profiletabs .on',root)?.dataset.val||'';
@@ -797,8 +854,36 @@ window.addEventListener('click',e=>{
  if(key==='back')return window.history.back()
  if(key==='forward')return window.history.forward()
 },true);
+root.addEventListener('keydown',event=>{
+ if(event.key==='Enter'&&event.target.matches('#ngGlobalSearch')){
+  const first=$('.ng-search-hit:not([hidden])',root);
+  if(first){event.preventDefault();first.click();}
+ }
+});
+window.addEventListener('keydown',event=>{
+ if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='k'){
+  event.preventDefault();openCustomView('Search');
+  requestAnimationFrame(()=>$('#ngGlobalSearch',root)?.focus());
+ }else if(event.key==='/'&&!/^(INPUT|TEXTAREA|SELECT)$/.test(event.target?.tagName||'')&&!event.ctrlKey&&!event.altKey&&!event.metaKey){
+  event.preventDefault();openCustomView('Search');
+  requestAnimationFrame(()=>$('#ngGlobalSearch',root)?.focus());
+ }
+});
 root.addEventListener('input',event=>{
  const input=event.target;
+ if(input.matches('input[data-ng-input="global-search"]')){
+  APP.searchQuery=input.value;
+  const words=searchWords(input.value);
+  let total=0;
+  $('.ng-search-hit',root).forEach(hit=>{
+   const match=words.every(word=>(hit.dataset.search||'').includes(word));
+   hit.hidden=!match;
+   if(match)total++;
+  });
+  const counter=$('#ngSearchCount',root);
+  if(counter)counter.textContent=total+' MATCHING PAGES & RECORDS';
+  return;
+ }
  if(!input.matches('input[data-ng-input="stable-search"]'))return;
  APP.stableSearch=input.value;
  const query=APP.stableSearch.trim().toLowerCase();
