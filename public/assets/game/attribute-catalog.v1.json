@@ -849,6 +849,32 @@
         "scope": "latent",
         "meaning": "Supporting trainers and other staff on the daily stable schedule"
       }
+    ],
+    "bloodstock_professional": [
+      {
+        "key": "pedigree_interpretation",
+        "label": "Pedigree Interpretation",
+        "scope": "latent",
+        "meaning": "Understanding ancestral evidence and its uncertainty"
+      },
+      {
+        "key": "bloodstock_market_knowledge",
+        "label": "Bloodstock Markets",
+        "scope": "latent",
+        "meaning": "Knowledge of buying, selling and horse valuation"
+      },
+      {
+        "key": "prospect_inspection",
+        "label": "Prospect Inspection",
+        "scope": "latent",
+        "meaning": "Recognizing potential and physical warning signs in young horses"
+      },
+      {
+        "key": "industry_network",
+        "label": "Industry Network",
+        "scope": "latent",
+        "meaning": "Ability to maintain useful professional bloodstock contacts"
+      }
     ]
   },
   "example_observation_contract": {
