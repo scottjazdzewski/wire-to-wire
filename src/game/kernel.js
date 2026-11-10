@@ -7,8 +7,9 @@ import {
   ensure, isObject, requireString, jsonClone, strictJSON, validDate, nextDate
 } from './contracts.js';
 import { validateGameRun } from './state.js';
+import {makeReputationBaseline,applyReputationSignal} from './reputation.js';
 
-const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION']);
+const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL']);
 const MAX_PENDING = 5000;
 function appendLog(state, commandId, kind, details) {
   const event = { seq: state.event_log.length + 1, command_id: commandId,
@@ -25,7 +26,7 @@ function validateCommand(command) {
   ensure(isObject(command.payload), 'INVALID_COMMAND', 'Command payload must be an object');
   return strictJSON(command);
 }
-export function dispatchGameCommand({ state, world, command } = {}) {
+export function dispatchGameCommand({ state, world, command, catalog } = {}) {
   validateGameRun(state, world);
   const c = validateCommand(command);
   const fingerprint = JSON.stringify(c);
@@ -71,6 +72,28 @@ export function dispatchGameCommand({ state, world, command } = {}) {
     next.decisions.resolved[p.decision_id] = { ...pending, option_id: p.option_id, resolved_date: next.clock.date };
     delete next.decisions.pending[p.decision_id];
     emit('DECISION_ANSWERED', { decision_id: p.decision_id, option_id: p.option_id });
+  } else if (c.type === 'SET_PERSON_REPUTATION') {
+    ensure(c.actor === 'system', 'UNAUTHORIZED_COMMAND', 'Only the audited game generator can establish a person's reputation');
+    const p=c.payload;
+    requireString(p.person_id,'payload.person_id',128);
+    ensure(world.entities.people.some(person=>person.id===p.person_id),'UNKNOWN_PERSON','Reputation must reference an approved person ID');
+    ensure(!next.runtime.people[p.person_id]?.reputation,'REPUTATION_EXISTS','Cannot replace an established reputation baseline');
+    const profile=makeReputationBaseline({catalog,scores:p.scores,date:next.clock.date,
+      source_kind:p.source_kind,source_refs:p.source_refs,circuit_id:p.circuit_id??null});
+    next.runtime.people[p.person_id]={...(next.runtime.people[p.person_id]||{}),reputation:profile};
+    emit('PERSON_REPUTATION_ESTABLISHED',{person_id:p.person_id,source_kind:p.source_kind,baseline:profile.scores,source_refs:p.source_refs});
+  } else if (c.type === 'RECORD_REPUTATION_SIGNAL') {
+    ensure(c.actor === 'system', 'UNAUTHORIZED_COMMAND', 'Only verified gameplay outcomes can affect professional reputation');
+    const p=c.payload;
+    requireString(p.person_id,'payload.person_id',128);
+    ensure(world.entities.people.some(person=>person.id===p.person_id),'UNKNOWN_PERSON','Unknown person for reputation signal');
+    const current=next.runtime.people[p.person_id]?.reputation;
+    ensure(Boolean(current),'REPUTATION_BASELINE','Person needs an approved starting reputation');
+    const updated=applyReputationSignal({catalog,profile:current,signal:p.signal,
+      date:next.clock.date,source_refs:p.source_refs,event_id:c.id});
+    next.runtime.people[p.person_id].reputation=updated;
+    emit('PERSON_REPUTATION_CHANGED',{person_id:p.person_id,signal:p.signal,
+      before:current.scores,after:updated.scores,source_refs:p.source_refs});
   } else if (c.type === 'ADVANCE_DAY') {
     ensure(Object.keys(c.payload).length === 0, 'INVALID_COMMAND', 'ADVANCE_DAY takes no payload; no silent skips');
     next.clock.date = nextDate(next.clock.date);
