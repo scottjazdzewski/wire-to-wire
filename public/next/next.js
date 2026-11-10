@@ -246,6 +246,11 @@ function profileDetail(route){
  const horseAchievements=horseAchievementPanel?$('.achievementItem',horseAchievementPanel).map(el=>el.textContent.trim()).filter(Boolean):[];
  const connectionRows=()=>`<div class="ng-data-rows">${connection.map(f=>`<div class="ng-data-row"><span>${safe(f.label)}</span>${f.button?`<button data-ng="sourcebutton" data-val="${$('#routeBody [data-act]').indexOf(f.button)}" aria-label="Open ${safe(f.label)} profile: ${safe(f.value)}">${safe(f.value)} ↗</button>`:`<strong>${safe(f.value)}</strong>`}</div>`).join('')||'<div class="ng-empty-record">No connected profiles recorded.</div>'}</div>`;
  const horseImage=isHorse?officeAssetPath(officePhotoIndex?.entities?.['horse:'+route.title]):'';
+ const sourceDecision=isHorse?$('#routeBody [data-act="Open profile decision"]'):null;
+ const sourceFollowUp=isHorse?$('#routeBody [data-act="Open follow-up"]'):null;
+ const quickLinks=[sourceDecision?'<button data-ng="sourcebutton" data-val="'+$('#routeBody [data-act]').indexOf(sourceDecision)+'">OPEN RELATED DECISION '+glyph('arrow',12)+'</button>':'',
+ sourceFollowUp?'<button data-ng="sourcebutton" data-val="'+$('#routeBody [data-act]').indexOf(sourceFollowUp)+'">OPEN FOLLOW-UP '+glyph('arrow',12)+'</button>':''].filter(Boolean).join('');
+
  const isOrganizationProfile=/^(?:Farm|Stable|Organization|Sales Organization|Ownership Group|Breeding Farm) Profile$/.test(route.kicker);
  const profileMark=isOrganizationProfile?organizationLogoMarkup('',route.title,route.kicker==='Farm Profile'?'farm':'organization',true):`<div class="ng-profile-badgeframe"><img src="${badge(route.kicker==='Horse Profile'?'horse':route.kicker==='Track Profile'?'track':route.kicker==='People Profile'?'people':'farm_stable')}" alt="Approved ${safe(route.kicker)} badge"/></div>`;
  const identity=`<div class="ng-profile-intro">
@@ -258,7 +263,7 @@ function profileDetail(route){
   if(isHorse){
    left=`<section class="ng-detailcard ng-horse-identitycard"><header>IDENTITY & STATUS</header>${factsBlock}</section>`;
    right=`<section class="ng-detailcard ng-horse-careercard"><header>CAREER SNAPSHOT</header><div class="ng-kpis">${record.map(r=>`<div><strong>${safe(r.value)}</strong><small>${safe(r.label)}</small></div>`).join('')||'<div class="ng-empty-record">No career results linked.</div>'}</div><div class="ng-horse-context">${states.slice(0,4).map(x=>`<div>${safe(x)}</div>`).join('')||'<div>No current racing status reported.</div>'}</div><button class="ng-horse-open-record" data-ng="detailtab" data-val="Career Record">FULL CAREER RECORD ${glyph('arrow',12)}</button></section>`;
-   footer=`<section class="ng-detailcard ng-horse-connections"><header>PEOPLE & STABLE CONNECTIONS</header>${connectionRows()}</section><section class="ng-detailcard ng-detailwide ng-horse-activity"><header>LATEST OFFICE ACTIVITY</header><div class="ng-notes">${(notes.length?notes:['No decision history connected to this horse.']).slice(0,5).map(n=>`<div>${safe(n)}</div>`).join('')}</div></section>`;
+   footer=`<section class="ng-detailcard ng-horse-connections"><header>PEOPLE & STABLE CONNECTIONS</header>${connectionRows()}</section><section class="ng-detailcard ng-detailwide ng-horse-activity"><header>LATEST OFFICE ACTIVITY</header><div class="ng-horse-context-actions">${quickLinks}</div><div class="ng-notes">${(notes.length?notes:['No decision history connected to this horse.']).slice(0,5).map(n=>`<div>${safe(n)}</div>`).join('')}</div></section>`;
   }else{
    left=`<section class="ng-detailcard"><header>IDENTITY & STATUS</header>${factsBlock}</section>`;
    right=`<section class="ng-detailcard"><header>${route.kicker==='Track Profile'?'RACING & LOCATION':'CONNECTIONS'}</header>${rows(connection.slice(0,6))}</section>`;
@@ -283,7 +288,7 @@ function profileDetail(route){
   left=`<section class="ng-detailcard ng-detailwide"><header>HISTORY & RECORDS</header><div class="ng-notes">${(notes.length?notes:details.map(x=>x.lines)).slice(0,8).map(n=>`<div>${safe(n)}</div>`).join('')||'No official history connected yet.'}</div></section>`;
  }
  const actions=`<div class="ng-detailactions"><button data-ng="menu" data-val="Stable">OPEN STABLE ↗</button><button data-ng="menu" data-val="Racing">RACE CALENDAR ↗</button><button data-ng="office">BACK TO OFFICE</button></div>`;
- return `<div class="ng-profile-view ${isHorse?'ng-profile-horse':''}">${identity}${tabbar}<div class="ng-detail-cols ${isHorse&&APP.detailTab==='Overview'?'ng-detail-cols-horse':''}">${left}${right}${footer}</div>${actions}</div>`;
+ return `<div class="ng-profile-view ${isHorse?'ng-profile-horse':''}">${identity}${tabbar}<div class="ng-detail-cols ${isHorse&&APP.detailTab==='Overview'?'ng-detail-cols-horse':''}">${left}${right}${footer}</div>${isHorse?'':actions}</div>`;
 }
 function calendarTimeline(races,nonraces){
  const iso=$('.dateChip')?.textContent.trim()||'2014-07-15';
