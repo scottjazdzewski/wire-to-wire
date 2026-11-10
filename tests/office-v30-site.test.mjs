@@ -20,11 +20,14 @@ test('active site uses approved Office FM v30 structure rather than archive home
  assert.match(html,/class="routeShell"/);
  assert.match(html,/href="\/archive\/"/);
  assert.ok(!html.includes('data:image/'), 'Embedded base64 images must stay external');
+ assert.ok(html.includes('src="/next/next.js"'),'Next-gen UI is now the main homepage');
+ assert.ok(html.includes('class="wtw-next-active"'),'Main homepage must activate the polished UI');
+ assert.ok(!html.includes('noindex,nofollow'),'Main homepage may not inherit review-only indexing controls');
  assert.ok(!html.includes('<style'), 'Inline CSS forbidden by production CSP');
  assert.ok(!/<script(?:\s[^>]*)?>(?!\s*<\/script>)/i.test(html), 'Inline JS forbidden by production CSP');
 });
 test('all deployed Office assets and every approved badge exist byte-for-byte as separate files',()=>{
- const html=get('public/index.html'),css=get('public/office-visual-system-v38.css');
+ const html=get('public/index.html'),css=get('public/next/next.css');
  for(const asset of ['wtw-office-approved-logo.png','wtw-office-original-photo.jpg']){
    assert.ok(fs.existsSync(path.join(root,'public/assets',asset)));
  }
@@ -51,14 +54,14 @@ test('all deployed Office assets and every approved badge exist byte-for-byte as
  assert.ok(!css.includes('_profile.png'), 'Legacy profile badge reference remains');
  assert.ok(!get('public/office/office-routes.js').includes('_profile.png'), 'Legacy routes still reference deprecated art');
  for(const ext of ['css','js']){
-   const name=ext==='css'?'office-visual-system-v38.css':'office-fm-v37.js';
+   const name=ext==='css'?'next/next.css':'office-fm-v37.js';
    assert.ok(html.includes('/'+name+'"'), 'Missing v37 asset '+name);
    assert.ok(fs.existsSync(path.join(root,'public',name)));
    if(ext==='js')assert.equal(spawnSync(process.execPath,['--check',path.join(root,'public',name)],{encoding:'utf8'}).status,0);
  }
  assert.ok(!get('public/office-v30-4.js').includes('data:image/'));
- assert.ok(css.includes('.profilePhoto'), 'One visual layer must style the shared profile-photo component');
- assert.ok(css.includes('.routeShell'), 'One visual layer must style the full-page route shell');
+ assert.ok(css.includes('.ng-profile-identity'), 'One visual layer must style the shared profile-header component');
+ assert.ok(css.includes('.ng-route'), 'One visual layer must style the active full-page route');
 });
 test('archive review homepage and protected API remain separate',()=>{
  assert.ok(get('public/archive/index.html').includes('/app.js'));

@@ -1,0 +1,20 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const get=p=>fs.readFileSync(path.join(root,p),'utf8');
+test('Main website serves the approved Next v5 Racing Office with no second visual layer',()=>{
+ const index=get('public/index.html'),review=get('public/next/index.html'),css=get('public/next/next.css'),js=get('public/next/next.js');
+ assert.equal(index,review.replace('<title>WIRE TO WIRE — Interactive Next UI Review</title>','<title>WIRE TO WIRE — Racing Office</title>').replace('<meta name="robots" content="noindex,nofollow" />\n',''), 'Root HTML must contain the reviewed identical UI and core bindings');
+ assert.equal((index.match(/rel="stylesheet"/g)||[]).length,1,'Homepage has one visual stylesheet');
+ assert.ok(index.includes('href="/next/next.css"'));
+ assert.ok(index.includes('src="/next/next.js"'));
+ assert.ok(index.includes('src="/office-v30-4.js"'));
+ assert.ok(index.includes('src="/office-fm-v37.js"'));
+ assert.ok(index.includes('href="/archive/"'),'Archive must remain reachable');
+ assert.ok(!index.includes('noindex,nofollow'));
+ assert.ok(css.includes('WTW NEXT v5')&&css.includes('.ng-intelgrid')&&css.includes('.ng-featurephoto'));
+ for(const action of ['caseprev','casenext','move','horse','track','nextopen'])assert.ok(js.includes(action),'Missing reviewed interaction '+action);
+});
