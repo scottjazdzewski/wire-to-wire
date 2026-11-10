@@ -188,6 +188,39 @@ async function api(request,env,email) {
       source_provenance_note:'Boarding/foaling records include both evidence-backed and explicitly fictional canon. Historical pedigree-only identity does not imply living 1999 stock.'
     });
   }
+  // Source-approved, ID-keyed 1999 organization histories are an existing-D1
+  // projection. Private API only, no organization/name/canon write endpoint.
+  if(request.method==='GET' && (url.pathname==='/api/history/organizations' ||
+       /^\/api\/history\/organizations\/O-\d{6}$/.test(url.pathname))) {
+    const exists=await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='wtw_history_org_profiles'").first();
+    if(!exists)return response({mode:'NOT_IMPORTED',authority:'WTW Canon Registry v3.3',organizations:[],error:'Organization read-model has not been approved for import'},503);
+    const cols='organization_id,canonical_name,organization_type,canonical_geography,origin_through_1998,stakes_bloodline_anchor,approved_connections,historical_prestige,momentum_1990s,commercial_appeal,peer_reputation,financial_vulnerability,historical_year_links,publication_tier,source_spreadsheet_id,source_sheet_id,source_sha256';
+    const detail=url.pathname.match(/^\/api\/history\/organizations\/(O-\d{6})$/);
+    const orgs=detail
+      ? await env.DB.prepare('SELECT '+cols+' FROM wtw_history_org_profiles WHERE organization_id=? LIMIT 1').bind(detail[1]).all()
+      : await env.DB.prepare('SELECT '+cols+' FROM wtw_history_org_profiles ORDER BY canonical_name LIMIT 150').all();
+    const safe=(orgs.results||[]).map(org=>{
+      const approved=['EXISTING_APPROVED_SOURCE','USER_APPROVED_DIRECTION_ONLY'].includes(org.publication_tier);
+      return {
+        ...org,
+        origin_through_1998:approved?org.origin_through_1998:null,
+        stakes_bloodline_anchor:approved?org.stakes_bloodline_anchor:null,
+        approved_connections:approved?org.approved_connections:null,
+        historical_prestige:approved?org.historical_prestige:null,
+        momentum_1990s:approved?org.momentum_1990s:null,
+        commercial_appeal:approved?org.commercial_appeal:null,
+        peer_reputation:approved?org.peer_reputation:null,
+        financial_vulnerability:approved?org.financial_vulnerability:null,
+        origin_publication_status:approved?'APPROVED_SOURCE_HISTORY':'ORIGIN_AWAITING_OWNER_APPROVAL',
+        recorded_associations_only:'Horse-year links are NOT race-day owner/breeder credits or verified earnings'
+      };
+    });
+    if(detail)return safe.length?response({mode:'PROTECTED_HISTORY_ORG_READ_MODEL',organization:safe[0]}):response({error:'Organization not in approved 1999 registry'},404);
+    const approvals=safe.filter(x=>x.origin_publication_status==='APPROVED_SOURCE_HISTORY').length;
+    if(safe.length!==108||approvals!==10)return response({error:'Organization source publication mix changed; review before use'},503);
+    return response({mode:'PROTECTED_HISTORY_ORG_READ_MODEL',authority:'WTW Canon Registry v3.3 History_Org_Economic_Backstory',
+      approved_origin_count:approvals,identity_only_count:safe.length-approvals,organizations:safe});
+  }
   if(request.method==='GET' && url.pathname==='/api/health') return response({status:'ok',mode:'D1',actor:email,historySource:historicalSourceStatus});
   if(request.method==='GET' && url.pathname==='/api/bootstrap') return response(await bootstrap(env.DB));
   const horseMatch=url.pathname.match(/^\/api\/horses\/(H-[A-Za-z0-9-]+)$/);
