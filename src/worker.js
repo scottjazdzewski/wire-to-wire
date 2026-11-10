@@ -115,7 +115,7 @@ async function bootstrap(db) {
     scope:'OLDER_D1_SNAPSHOT_WITH_V384_QA_PENDING_EXCLUSION',
     historySource:historicalSourceStatus,
     counts:{entities:entityCount?.n||0,races:visible.races.length,connections:connCount?.n||0,results:visible.results.length,changes:changeCount?.n||0,horseDetails:entityCount?.horseDetails||0,horseSeasons:entityCount?.horseSeasons||0,pedigreeEdges:entityCount?.pedigreeEdges||0,bloodlineProfiles:entityCount?.bloodlineProfiles||0},
-    partial: Number(entityCount?.n||0)>15000 || Number(raceCount?.n||0)>10000 || Number(connCount?.n||0)>40000 || Number(resultCount?.n||0)>25000,
+    partial: Number(entityCount?.n||0)>15000 || Number(raceCount?.n||0)>10000 || Number(connCount?.n||0)>40000 || Number(resultCount?.n||0)>25000 || Number(raceCount?.n||0)>races.results.length || Number(resultCount?.n||0)>results.results.length,
     years:activeYears,
     entities:entities.results,connections:connections.results,races:visible.races,results:visible.results,
     changes:changes.results,
