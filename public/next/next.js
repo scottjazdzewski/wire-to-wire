@@ -242,14 +242,14 @@ function profileDetail(route){
  const tabbar='<nav class="ng-profiletabs" aria-label="${safe(route.kicker)} sections">'+tabs.map(t=>`<button data-ng="detailtab" data-val="${safe(t)}" class="${APP.detailTab===t?'on':''}" aria-current="${APP.detailTab===t?'page':'false'}">${safe(t)}</button>`).join('')+'</nav>';
  const factsBlock=`<div class="ng-profile-facts">${fields.map(f=>`<div><small>${safe(f.label)}</small><strong>${safe(f.value)}</strong></div>`).join('')}</div>`;
 
- const horseAchievementPanel=isHorse?$('.profilePanel',source).find(panel=>text('h3',panel).includes('Achievements')):null;
- const horseAchievements=horseAchievementPanel?$('.achievementItem',horseAchievementPanel).map(el=>el.textContent.trim()).filter(Boolean):[];
- const connectionRows=()=>`<div class="ng-data-rows">${connection.map(f=>`<div class="ng-data-row"><span>${safe(f.label)}</span>${f.button?`<button data-ng="sourcebutton" data-val="${$('#routeBody [data-act]').indexOf(f.button)}" aria-label="Open ${safe(f.label)} profile: ${safe(f.value)}">${safe(f.value)} ↗</button>`:`<strong>${safe(f.value)}</strong>`}</div>`).join('')||'<div class="ng-empty-record">No connected profiles recorded.</div>'}</div>`;
+ const horseAchievementPanel=isHorse?$$('.profilePanel',source).find(panel=>text('h3',panel).includes('Achievements')):null;
+ const horseAchievements=horseAchievementPanel?$$('.achievementItem',horseAchievementPanel).map(el=>el.textContent.trim()).filter(Boolean):[];
+ const connectionRows=()=>`<div class="ng-data-rows">${connection.map(f=>`<div class="ng-data-row"><span>${safe(f.label)}</span>${f.button?`<button data-ng="sourcebutton" data-val="${$$('#routeBody [data-act]').indexOf(f.button)}" aria-label="Open ${safe(f.label)} profile: ${safe(f.value)}">${safe(f.value)} ↗</button>`:`<strong>${safe(f.value)}</strong>`}</div>`).join('')||'<div class="ng-empty-record">No connected profiles recorded.</div>'}</div>`;
  const horseImage=isHorse?officeAssetPath(officePhotoIndex?.entities?.['horse:'+route.title]):'';
  const sourceDecision=isHorse?$('#routeBody [data-act="Open profile decision"]'):null;
  const sourceFollowUp=isHorse?$('#routeBody [data-act="Open follow-up"]'):null;
- const quickLinks=[sourceDecision?'<button data-ng="sourcebutton" data-val="'+$('#routeBody [data-act]').indexOf(sourceDecision)+'">OPEN RELATED DECISION '+glyph('arrow',12)+'</button>':'',
- sourceFollowUp?'<button data-ng="sourcebutton" data-val="'+$('#routeBody [data-act]').indexOf(sourceFollowUp)+'">OPEN FOLLOW-UP '+glyph('arrow',12)+'</button>':''].filter(Boolean).join('');
+ const quickLinks=[sourceDecision?'<button data-ng="sourcebutton" data-val="'+$$('#routeBody [data-act]').indexOf(sourceDecision)+'">OPEN RELATED DECISION '+glyph('arrow',12)+'</button>':'',
+ sourceFollowUp?'<button data-ng="sourcebutton" data-val="'+$$('#routeBody [data-act]').indexOf(sourceFollowUp)+'">OPEN FOLLOW-UP '+glyph('arrow',12)+'</button>':''].filter(Boolean).join('');
 
  const isOrganizationProfile=/^(?:Farm|Stable|Organization|Sales Organization|Ownership Group|Breeding Farm) Profile$/.test(route.kicker);
  const profileMark=isOrganizationProfile?organizationLogoMarkup('',route.title,route.kicker==='Farm Profile'?'farm':'organization',true):`<div class="ng-profile-badgeframe"><img src="${badge(route.kicker==='Horse Profile'?'horse':route.kicker==='Track Profile'?'track':route.kicker==='People Profile'?'people':'farm_stable')}" alt="Approved ${safe(route.kicker)} badge"/></div>`;
@@ -283,7 +283,7 @@ function profileDetail(route){
  }else if(APP.detailTab==='Achievements'&&isHorse){
   left=`<section class="ng-detailcard ng-detailwide"><header>RECORDED ACHIEVEMENTS</header><div class="ng-notes">${horseAchievements.map(n=>`<div>${safe(n)}</div>`).join('')||'<div>No achievements documented in the current source record.</div>'}</div></section>`;
  }else if(APP.detailTab==='Meet Schedule'||APP.detailTab==='Major Races'){
-  left=`<section class="ng-detailcard ng-detailwide"><header>TRACK EVENTS & SIGNATURE STAKES</header><div class="ng-compact-list">${(trackRaces.length?trackRaces:[]).slice(0,12).map(r=>`<button data-ng="sourcebutton" data-val="${$$('#routeBody [data-act]').indexOf(r.node)}"><b>${safe(r.name)}</b><span>${safe(r.date.slice(r.name.length))}</span><i>›</i></button>`).join('')||'<p>No approved race calendar data linked yet.</p>'}</div></section>`;
+  left=`<section class="ng-detailcard ng-detailwide"><header>TRACK EVENTS & SIGNATURE STAKES</header><div class="ng-compact-list">${(trackRaces.length?trackRaces:[]).slice(0,12).map(r=>`<button data-ng="sourcebutton" data-val="${$$$('#routeBody [data-act]').indexOf(r.node)}"><b>${safe(r.name)}</b><span>${safe(r.date.slice(r.name.length))}</span><i>›</i></button>`).join('')||'<p>No approved race calendar data linked yet.</p>'}</div></section>`;
  }else{
   left=`<section class="ng-detailcard ng-detailwide"><header>HISTORY & RECORDS</header><div class="ng-notes">${(notes.length?notes:details.map(x=>x.lines)).slice(0,8).map(n=>`<div>${safe(n)}</div>`).join('')||'No official history connected yet.'}</div></section>`;
  }
@@ -379,11 +379,6 @@ const adapter=$('.app');if(adapter){const mo=new MutationObserver(()=>schedulePa
 const route=$('#routeShell');if(route){const mo=new MutationObserver(()=>schedulePaint(30));mo.observe(route,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['hidden']})}
 root.addEventListener('error',event=>{
  const img=event.target;if(img?.tagName!=='IMG')return;
- if(img.classList.contains('ng-org-image')){
-   const mark=img.closest('.ng-org-mark');
-   if(mark){img.remove();const label=document.createElement('span');label.className='ng-org-initials';label.textContent='ORG';mark.append(label)}
-   return;
- }
  if(img.classList.contains('ng-org-image')){
   const mark=img.closest('.ng-org-mark');
   if(mark){
