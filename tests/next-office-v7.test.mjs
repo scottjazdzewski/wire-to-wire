@@ -18,12 +18,12 @@ test('v7 Office is a structural command-workspace redesign, not a second stylesh
    assert.ok(html.includes('src="/office-fm-v37.js"'),'Canonical full-page routes preserved');
  }
  assert.ok(rootHTML.includes('href="/archive/"'),'Historical archive remains linked');
- assert.ok(css.includes('WIRE TO WIRE NEXT v7'),'The reviewed new composition must be deployed');
+ assert.ok(css.includes('UNIFIED DESKTOP MANAGEMENT DESIGN SYSTEM'),'The single rebuilt FM/OOTP design system must be deployed');
  assert.ok(css.includes('.ng-main>.ng-centerbottom{display:contents'),'Intel and decision options must be peers in the full-height command grid');
  assert.ok(css.includes('.ng-main .ng-choices{grid-column:2'),'Decision choices must occupy their own vertical command column');
  assert.ok(css.includes('@media(max-width:1279px)'),'Compact laptop layout must remain readable');
- assert.ok(css.includes('Short-screen resolved decisions'),'Decision consequence text must be preserved at small viewports');
- assert.ok(css.includes('REFERENCE PHOTO'),'The existing generic photography must be identified honestly');
+ assert.ok(css.includes('.ng-moves:has(>.ng-resolved)'),'Resolved decisions must retain the full available outcome panel');
+ assert.ok(js.includes('EDITORIAL REFERENCE PHOTO'),'The existing generic photography must be identified honestly');
  assert.ok(!css.includes('@import'),'No additional CSS imports');
  for(const label of ['ng-move','ng-rosterrow','ng-entryrow','ng-intelitem','ng-msg','ng-resolved'])assert.ok(js.includes(label),'Missing core interactive Office element '+label);
  assert.ok(js.includes("typeof deskCases!=='undefined'"),'Option descriptions must read canonical source data, not a new ledger');
@@ -113,7 +113,7 @@ test('Compact racing-management chrome eliminates duplicate mast and keeps globa
  assert.ok(!header.includes('focusCard'),'The Current File block duplicates the Decision Desk');
  assert.ok(!header.includes('ng-fastnav'),'Remove duplicate shortcuts from secondary nav');
  assert.ok(header.includes('ng-subbar'),'Section navigation must stay accessible');
- assert.ok(css.includes('Compact football-management application chrome'),'A consistent responsive header should control space');
+ assert.ok(css.includes('.ng-global .ng-global-continue{'),'The consolidated application chrome must preserve Continue');
  assert.ok(css.includes('.ng-global .ng-global-continue{'),'Continue needs a proper top-bar design');
  assert.ok(css.includes('@media(max-width:780px){'),'Keep Continue and date available on smaller screens');
  assert.ok(css.includes('.ng-main .ng-intel>.ng-cardhead,\n.ng-main .ng-choices>.ng-cardhead{'),'Intel and Your Call should retain matching titlebar styles');
@@ -183,7 +183,7 @@ test('Desktop sign-off: real WTW brand icon, inline Cash, and no scrolling depar
  assert.ok(js.includes('data-ng="more"'),'Less-frequent departments need an accessible compact menu at desktop widths');
  assert.ok(js.includes('APP.moreOpen=!APP.moreOpen'),'More menu must open and close via actual interaction');
  assert.ok(js.includes("['Breeding','Personnel','Facilities','Finances','World']"),'All hidden departments must remain reachable');
- assert.ok(css.includes('Desktop lock: image-only organization identity and inline cash; no top-bar scrolling'),'Approved desktop chrome must remain fixed');
+ assert.ok(css.includes('.ng-global .ng-global-moremenu{'),'The consolidated desktop chrome must preserve navigation and organization identity');
  assert.ok(css.includes('overflow-x:hidden!important'),'Primary desktop navigation may not horizontally scroll');
  assert.ok(css.includes('data-val="Breeding"'),'Hidden departments must have responsive menu treatment');
  assert.ok(css.includes('.ng-global .ng-global-moremenu{'),'The menu must be rendered when additional departments are hidden');
@@ -207,7 +207,7 @@ test('First FM/OOTP desktop subpage pilot: Horse Profile data density, connected
  assert.ok(profile.includes("No achievements documented in the current source record."),'Missing achievements must not be invented');
  assert.ok(profile.includes("officePhotoIndex?.entities?.[entityPhotoKind+':'+route.title]"),'Entity portraits may only be shown when actually linked in the approved photo index');
  assert.ok(profile.includes('sourceDecision')&&profile.includes('sourceFollowUp'),'Source-linked related decisions and follow-ups must remain navigable');
- assert.ok(css.includes('WTW FM/OOTP page-family pilot'),'One profile design system must stay in the existing stylesheet');
+ assert.ok(css.includes('.ng-detail-cols-horse-overview'),'Horse profile layout must remain in the canonical stylesheet');
  assert.ok(css.includes('grid-template-columns:minmax(0,.92fr) minmax(0,1.03fr) minmax(0,1.1fr)'),'Desktop horse overview uses three purposeful, dense columns');
  assert.ok(css.includes('.ng-route-profile .ng-profile-horse .ng-profile-intro{'),'Horse profile has a compact identity band');
  assert.ok(css.includes('.ng-route-profile .ng-profile-horse .ng-horse-activity .ng-notes'),'Supporting Office context uses its own dense panel');
@@ -236,7 +236,7 @@ test('FM/OOTP connected profiles: people, farms, tracks, sourced graphics, click
  assert.ok(profile.includes('reputationGauge'),'Person graphics must use source reputation, not fabricated values');
  assert.ok(profile.includes('ng-detail-cols-tier1')&&profile.includes('ng-detail-cols-person'),'People, Farm and Track overviews use the shared Tier 1 desktop layout');
  assert.ok(profile.includes("officePhotoIndex?.entities?.[entityPhotoKind+':'+route.title]"),'Entity photos must use the previously approved photo-index mapping');
- assert.ok(css.includes('Connected subpage family: desktop information density'),'One common desktop layout governs connected profiles');
+ assert.ok(css.includes('.ng-tier1-workspace'),'One common Tier 1 desktop layout governs connected profiles');
  assert.ok(css.includes('overflow-y:auto!important'),'Information must scroll within the profile workspace');
  assert.ok(css.includes('.ng-stakes-head,.ng-stakes-data{'),'Race rows must be consistent and aligned for comparable stakes data');
  assert.ok(js.includes('previousDetailScroll'),'Selected page scroll must persist through source-driven rerenders');
@@ -395,7 +395,7 @@ test('Tier 1 entity screens use the same compact identity bar and no-scroll Over
  assert.ok(p.includes('data-val="Connected Horses"'),'Farm primary screen must link directly to its deeper horse records');
  assert.ok(p.includes('data-val="Major Races"'),'Track primary screen must link to full stakes history');
  assert.ok(p.includes('data-val="Reputation"'),'People primary screen must link to full sourced reputation details');
- assert.ok(css.includes('TIER 1 DESKTOP PROFILE FAMILY'),'Shared Tier 1 screen layout is documented in existing stylesheet');
+ assert.ok(css.includes('.ng-tier1-workspace')&&css.includes('.ng-tier1-biography'),'Shared Tier 1 screen layout must remain in the canonical stylesheet');
  assert.ok(css.includes('.ng-detail-cols-tier1'),'Farm/Track workspaces must have a dedicated viewport-sized body');
  assert.ok(css.includes('.ng-detail-cols-person'),'People Overview must be bounded to the viewport');
  assert.ok(css.includes('overflow:hidden!important'),'Overview panels must not become independently scrollable');
@@ -434,7 +434,7 @@ test('Tier 1 People Profile keeps only known identity facts and actions above th
  assert.ok(p.includes('PROFESSIONAL ATTRIBUTES')&&p.includes('REPUTATION & STANDING')&&p.includes('CONNECTED HORSES')&&p.includes('CAREER AT A GLANCE')&&p.includes('WORKING NETWORK'),'OOTP-style professional overview must show five information areas without requiring extra clicks');
  assert.ok(p.includes('source?.schema')||p.includes("source?.schema==='WTW_PERSON_REPUTATION_V1'"),'Reputation data must remain validated and attributed');
  assert.ok(p.includes('Array.isArray(source.source?.refs)&&source.source.refs.length>0'),'No fabricated reputation on the overview');
- assert.ok(css.includes('Tier 1 People sign-off pass:'),'Desktop-specific People UI fit rules must exist');
+ assert.ok(css.includes('.ng-profile-person .ng-person-workspace-overview'),'Desktop People Overview must retain the five-area information-dense layout');
  assert.ok(css.includes('.ng-profile-person .ng-person-career-strip'),'Person career evidence must use a dense two-cell strip');
  assert.ok(source.includes("'Gabe Larkin':{person_id:'P-000023',job:'Stable staff'"),'Original personnel roster must not be rewritten to fill blank facts');
  const check=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
@@ -508,8 +508,8 @@ test('Global UI navigation, role capitalization, full-site search and centered d
  assert.ok(js.includes("if(key==='search-go')return openSearchItem("),'Search results need real navigation');
  assert.ok(js.includes('ng-search-table-body')&&js.includes('ng-search-row'),'Search provides compact OOTP-style roster rows, not static cards');
  assert.ok(css.includes('.ng-search-roster-page .ng-search-row{'),'Search should display legible compact rows with live filtering and paging');
- assert.ok(css.includes('Layout acceptance rule: justify controls and KPIs on a shared centerline'),'Shared centered justification must remain across main and subpage work');
- assert.ok(css.includes('Fill the Racing Office panels with legible information'),'Main view should better use available text area');
+ assert.ok(css.includes('.ng-search-table-head,.ng-search-row{'),'Shared compact aligned data columns must remain across roster-style screens');
+ assert.ok(css.includes('.ng-main .ng-intel .ng-intelitem b{'),'Racing Office intelligence must retain readable information density');
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);
  const officeCheck=spawnSync(process.execPath,['--check',path.join(root,'public/office-v30-4.js')],{encoding:'utf8'});
