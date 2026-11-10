@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableSearch:''};
+const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableSearch:'',networkSort:'best',networkRole:'all',networkPage:0,networkFocus:''};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -256,7 +256,7 @@ const pageBadge=()=>{const map={Stable:'farm_stable',Racing:'major_races',Sales:
 function profileDetail(route){
  const source=$('#routeBody .profilePage');if(!source)return null;
  const id=route.kicker+'|'+route.title;
- if(APP.routeId!==id){APP.routeId=id;APP.detailTab='Overview'}
+ if(APP.routeId!==id){APP.routeId=id;APP.detailTab='Overview';APP.networkPage=0;APP.networkRole='all';APP.networkFocus=''}
  const text=(query,scope=source)=>$(query,scope)?.textContent.trim()||'';
  const fields=$$('.profileField',source).map(n=>({label:text('span',n),value:text('strong',n)||'—'}));
  const connection=$$('.profileLine',source).map(n=>({label:text('b',n),value:n.querySelector('button')?.textContent.trim()||n.querySelector('span')?.textContent.trim()||n.textContent.trim().replace(text('b',n),'').trim()||'—',button:n.querySelector('button')}));
@@ -268,7 +268,7 @@ function profileDetail(route){
  const trackRaces=$$('.stakesRow',source).map((n,i)=>({name:text('strong',n),date:n.textContent.trim(),node:n,index:i}));
  const isHorse=route.kicker==='Horse Profile',isPerson=route.kicker==='People Profile',isFarm=route.kicker==='Farm Profile',isTrack=route.kicker==='Track Profile';
  const tabs=(isHorse?['Overview','Career Record','Pedigree','Achievements','Connections','History']:
-  isPerson?['Overview','Attributes','Reputation','Stable Horses','Career','Connections','History']:
+  isPerson?['Overview','Attributes','Reputation','Network','Stable Horses','Career','Connections','History']:
   isFarm?['Overview','Connected Horses','Operations','Connections','History']:
   isTrack?['Overview','Meet Schedule','Major Races','Connections','History']:
   ['Overview','Connections','History']);
@@ -401,12 +401,62 @@ function profileDetail(route){
    const value=rep?.scores?.[axis.key],valid=typeof value==='number'&&Number.isFinite(value);
    return `<div><span>${safe(axis.label)}</span>${valid?`<span class="ng-person-scorebar" aria-hidden="true"><i style="width:${safe(String(value))}%"></i></span>`:'<span class="ng-person-scorebar empty" aria-hidden="true"></span>'}<strong class="${valid?'known':'unknown'}">${valid?safe(String(value)):'—'}</strong></div>`;
   }).join('')}</div>${relationshipNotice}${!rep?'<p class="ng-person-unrated">Professional reputation is not yet established by the simulation or accepted career evidence. Relationship trust is separate.</p>':`<div class="ng-person-rep-provenance">AS OF ${safe(rep.as_of||'—')} · ${rep.history?.length||0} RECORDED EVENTS</div>`}</div>`;
+
+  // Relationship Network is a player-visible observation layer. Underlying
+  // hidden pairwise affinity from the simulation is not exposed here.
+  const rawRelationships=Array.isArray(work.relationship_reports)?work.relationship_reports:[];
+  const knownRelations=rawRelationships.filter(x=>x&&typeof x==='object'&&
+    Array.isArray(x.source_refs)&&x.source_refs.length>0&&
+    (x.counterpart_id||x.counterpart_name)&&
+    (x.score==null||(typeof x.score==='number'&&Number.isFinite(x.score)&&x.score>=0&&x.score<=100)))
+   .map(x=>{
+    const match=x.counterpart_id?personGeographyProjection?.people.find(p=>p.id===x.counterpart_id):null;
+    const id=String(x.counterpart_id||match?.id||'');
+    return {
+      id, name:String(x.counterpart_name||match?.name||id||'Unknown contact'),
+      role:String(x.counterpart_role||match?.role||'Not recorded'),
+      score:x.score==null?null:x.score,
+      sentiment:['positive','neutral','negative'].includes(x.sentiment)?x.sentiment:null,
+      last_observed:String(x.observed_at||'—'),
+      note:String(x.summary||'No observation summary recorded.'),
+      evidence:x.source_refs.map(String)
+    };
+   });
+  const networkPreview=`<div class="ng-person-network-preview"><span>KNOWN WORKING RELATIONSHIPS <strong>${knownRelations.length}</strong></span><button data-ng="detailtab" data-val="Network">NETWORK ${glyph('arrow',11)}</button></div>`;
+  const network=()=>{
+    const allRoles=['all',...new Set(knownRelations.map(r=>r.role))];
+    if(!allRoles.includes(APP.networkRole))APP.networkRole='all';
+    const scoped=knownRelations.filter(r=>APP.networkRole==='all'||r.role===APP.networkRole);
+    const sorted=[...scoped].sort((a,b)=>{
+      if(APP.networkSort==='name')return a.name.localeCompare(b.name);
+      if(a.score===null)return 1;
+      if(b.score===null)return -1;
+      return (APP.networkSort==='worst'?a.score-b.score:b.score-a.score)||a.name.localeCompare(b.name);
+    });
+    const pageSize=8,totalPages=Math.max(1,Math.ceil(sorted.length/pageSize));
+    const page=Math.max(0,Math.min(APP.networkPage,totalPages-1));
+    const visible=sorted.slice(page*pageSize,(page+1)*pageSize);
+    const selectVal=r=>r.id||r.name;
+    const selected=knownRelations.find(r=>selectVal(r)===APP.networkFocus);
+    const options=[['best','GOOD → BAD'],['worst','BAD → GOOD'],['name','NAME A–Z']];
+    return `<div class="ng-person-network-screen">
+      <div class="ng-person-network-toolbar"><div class="ng-network-sort">${options.map(([value,label])=>`<button data-ng="network-sort" data-val="${safe(value)}" class="${APP.networkSort===value?'on':''}" aria-pressed="${APP.networkSort===value}">${safe(label)}</button>`).join('')}</div>
+       <div class="ng-network-role"><span>FILTER</span>${allRoles.map(value=>`<button data-ng="network-role" data-val="${safe(value)}" class="${APP.networkRole===value?'on':''}" aria-pressed="${APP.networkRole===value}">${safe(value==='all'?'ALL ROLES':value)}</button>`).join('')}</div></div>
+      <div class="ng-network-explanation"><strong>${knownRelations.length} KNOWN RELATIONSHIPS</strong><span>Specific working relationships are separate from public reputation. Unknown relationships are not assumed neutral.</span></div>
+      <div class="ng-network-table"><div class="ng-network-table-head"><span>PERSON / ORGANIZATION</span><span>ROLE</span><span>RELATIONSHIP</span><span>LAST EVIDENCE</span></div>
+      ${visible.map(r=>`<button class="ng-network-table-row ${APP.networkFocus===selectVal(r)?'on':''}" data-ng="network-select" data-val="${safe(selectVal(r))}" aria-label="Inspect relationship with ${safe(r.name)}">
+       <strong>${safe(r.name)}</strong><span>${safe(r.role)}</span><span class="ng-network-grade"><i>${r.score===null?'—':safe(r.score)+'/100'}</i>${r.sentiment?`<small class="${safe(r.sentiment)}">${safe(r.sentiment)}</small>`:''}</span><span>${safe(r.last_observed)}</span></button>`).join('')||'<div class="ng-network-empty">No source-backed relationship assessments for this person yet. As working relationships are observed, the table will sort them from strongest to weakest.</div>'}</div>
+      <div class="ng-network-footer"><span>${sorted.length?'SHOWING '+(page*pageSize+1)+'–'+Math.min(sorted.length,(page+1)*pageSize)+' OF '+sorted.length:'NO REPORTED RELATIONSHIPS'}</span>
+       <div><button data-ng="network-page" data-val="-1" ${page<=0?'disabled':''}>PREVIOUS</button><span>PAGE ${page+1} / ${totalPages}</span><button data-ng="network-page" data-val="1" ${page>=totalPages-1?'disabled':''}>NEXT</button></div></div>
+      ${selected?`<section class="ng-network-evidence"><header>RELATIONSHIP FILE: ${safe(selected.name)}</header><p>${safe(selected.note)}</p><small>LAST OBSERVED ${safe(selected.last_observed)} · SOURCE RECORDS: ${safe(selected.evidence.join(', '))}</small></section>`:''}
+     </div>`;
+  };
   const opportunities=role==='jockey'?'MOUNTS':role==='trainer'?'HORSE ASSIGNMENTS':role==='breeder'?'BREEDING PARTNERS':role==='owner'?'HORSE OWNERSHIP':role==='bloodstock_professional'||role==='bloodstock_agent'?'BLOODSTOCK TRANSACTIONS':'PROFESSIONAL APPOINTMENTS';
   const assignedCount=sourceLinks.filter(item=>Boolean($('button[data-act]',item))).length;
   const careerContent=`<div class="ng-person-career-strip"><div><small>RECORDED CAREER WINS</small><strong>${safe(personWins&&personWins!=='—'?personWins:'Not recorded')}</strong></div><div><small>LINKED HORSES</small><strong>${assignedCount}</strong></div></div><div class="ng-person-minihead">CURRENT HORSE ASSIGNMENTS <button data-ng="detailtab" data-val="Stable Horses">ALL CONNECTIONS ${glyph('arrow',11)}</button></div>${connectedHorseRows(4)}<div class="ng-person-influence"><b>PROFESSIONAL OPPORTUNITIES</b><span>${safe(opportunities)}</span><small>Reputation is one factor; suitability and availability remain decisive.</small></div>`;
   const events=rep?.history||[];
   const eventRows=events.length?events.slice().reverse().map(x=>`<div class="ng-person-rep-event"><b>${safe(x.date)}</b><span>${safe(x.signal.replaceAll('_',' '))}</span><small>${safe(x.source_refs?.join(', ')||'No evidence')}</small></div>`).join(''):'<p class="ng-person-unrated">No reputation events have been recorded.</p>';
-  return {attributes,reputation,careerContent,eventRows,roleName,rep};
+  return {attributes,reputation,networkPreview,network,careerContent,eventRows,roleName,rep};
  };
  const isOrganizationProfile=/^(?:Farm|Stable|Organization|Sales Organization|Ownership Group|Breeding Farm) Profile$/.test(route.kicker);
  const profileMark=isOrganizationProfile?organizationLogoMarkup('',route.title,route.kicker==='Farm Profile'?'farm':'organization',true):`<div class="ng-profile-badgeframe"><img src="${badge(route.kicker==='Horse Profile'?'horse':route.kicker==='Track Profile'?'track':route.kicker==='People Profile'?'people':'farm_stable')}" alt="Approved ${safe(route.kicker)} badge"/></div>`;
@@ -505,7 +555,7 @@ function profileDetail(route){
    const person=personWork();
    left=`<div class="ng-person-workspace">
     <section class="ng-person-work-card"><header>PROFESSIONAL ATTRIBUTES <button data-ng="detailtab" data-val="Attributes">ALL SKILLS ${glyph('arrow',11)}</button></header>${person.attributes()}</section>
-    <section class="ng-person-work-card"><header>REPUTATION & NETWORK <button data-ng="detailtab" data-val="Reputation">FULL RECORD ${glyph('arrow',11)}</button></header>${person.reputation()}</section>
+    <section class="ng-person-work-card"><header>REPUTATION & NETWORK <button data-ng="detailtab" data-val="Reputation">FULL RECORD ${glyph('arrow',11)}</button></header>${person.reputation()}${person.networkPreview}</section>
     <section class="ng-person-work-card"><header>CAREER & OPPORTUNITIES <button data-ng="detailtab" data-val="Career">CAREER ${glyph('arrow',11)}</button></header>${person.careerContent}</section>
    </div>`;
    right='';footer='';
@@ -543,6 +593,9 @@ function profileDetail(route){
   const person=personWork();
   left=`<section class="ng-detailcard ng-person-detail-sheet"><header>PROFESSIONAL REPUTATION</header>${person.reputation(true)}</section>`;
   right=`<section class="ng-detailcard ng-person-detail-sheet"><header>REPUTATION HISTORY & EVIDENCE</header><div class="ng-person-rep-history">${person.eventRows}</div></section>`;
+ }else if(APP.detailTab==='Network'&&isPerson){
+  const person=personWork();
+  left=`<section class="ng-detailcard ng-detailwide ng-person-network-card"><header>RELATIONSHIP NETWORK · ${safe(route.title)}</header>${person.network()}</section>`;
  }else if(APP.detailTab==='Career'&&isPerson){
   left=`<section class="ng-detailcard"><header>PERSON & CAREER FACTS</header>${factsBlock}</section>`;
   right=`<section class="ng-detailcard"><header>RECORDED CAREER PERFORMANCE</header><div class="ng-entity-metrics"><div><small>CAREER WINS</small><strong>${safe(personWins||'—')}</strong></div><div><small>REPUTATION</small><strong>${safe(reputationLabel||'Not recorded')}</strong></div></div>${reputationGauge}</section>`;
@@ -702,6 +755,10 @@ window.addEventListener('click',e=>{
  if(key==='profile-from-case'){return bridgeNode(originalAct('Horse Profile'))}
  if(key==='intel'){return bridgeNode($$('#intelGrid .intelCard')[Number(val)])}
  if(key==='outtab'){APP.outTab=Number(val);return paint()}
+ if(key==='network-sort'){APP.networkSort=val;APP.networkPage=0;APP.networkFocus='';return paint()}
+ if(key==='network-role'){APP.networkRole=val;APP.networkPage=0;APP.networkFocus='';return paint()}
+ if(key==='network-page'){APP.networkPage=Math.max(0,APP.networkPage+Number(val));return paint()}
+ if(key==='network-select'){APP.networkFocus=val;return paint()}
  if(key==='detailtab'){APP.detailTab=val;return paint()}
  if(key==='sourcebutton'){const n=$$('#routeBody [data-act]')[Number(val)];return bridgeNode(n)}
  if(key==='action'){const x=originalAct(val); if(x)return bridgeNode(x);if(val==='Open file')return bridgeNode(originalAct('Open file'));return}
