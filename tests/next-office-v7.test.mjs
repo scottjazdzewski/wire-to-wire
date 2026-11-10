@@ -102,17 +102,21 @@ test('Racing Office right-hand operations panels stay readable and source-linked
 });
 
 
-test('Office mast uses spare space and Intel/Your Call share one header geometry',()=>{
+test('Compact racing-management chrome eliminates duplicate mast and keeps global Continue/date accessible',()=>{
  const css=get('public/next/next.css'),js=get('public/next/next.js');
- assert.ok(js.includes('const focusCard=showFile?'),'Office header must show a current source-backed decision file');
- assert.ok(js.includes('data-ng="case" data-val="${safe(APP.activeCase)}"'),'Current file should link to selected existing decision');
- assert.ok(js.includes('${focusCard}<div class="ng-mast-centre">'),'Current file must use whitespace between brand and KPI group');
- assert.ok(css.includes('.ng-mast-office .ng-brand{'),'Office brand must not absorb all header space');
- assert.ok(css.includes('.ng-mast-office .ng-mast-focus{'),'Current file should be a responsive, compact mast element');
- assert.ok(css.includes('.ng-main .ng-intel>.ng-cardhead,\n.ng-main .ng-choices>.ng-cardhead{'),'Intel and Your Call need the exact same base header geometry');
- assert.ok(css.includes('flex:0 0 46px!important;'),'Both lower title rows must have the same fixed header height');
- assert.ok(css.includes('.ng-main .ng-intel>.ng-cardhead .ng-headinggroup h3,\n.ng-main .ng-choices>.ng-cardhead .ng-headinggroup h3{'),'Both headings must share typography');
- assert.ok(css.includes('@media(min-width:781px) and (max-height:660px){'),'Short-laptop title rows require a shared compact size');
- const check=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
- assert.equal(check.status,0,check.stderr);
+ const header=js.slice(js.indexOf('function header(){'),js.indexOf('function filteredMessages(){'));
+ assert.ok(header.includes('class="ng-global"'),'One top application bar must remain');
+ assert.ok(header.includes('ng-global-continue" data-ng="action" data-val="Continue"'),'Continue must be in top navigation and retain its canonical action');
+ assert.ok(header.includes('ng-global-date" data-ng="menu" data-val="Racing"'),'Game date must remain visible and open existing calendar');
+ assert.ok(!header.includes('class="ng-mast'),'The redundant 80px office mast must be removed');
+ assert.ok(!header.includes('ng-mast-centre'),'Open case, horses and race counts already live in their respective panels');
+ assert.ok(!header.includes('focusCard'),'The Current File block duplicates the Decision Desk');
+ assert.ok(!header.includes('ng-fastnav'),'Remove duplicate shortcuts from secondary nav');
+ assert.ok(header.includes('ng-subbar'),'Section navigation must stay accessible');
+ assert.ok(css.includes('Compact football-management application chrome'),'A consistent responsive header should control space');
+ assert.ok(css.includes('.ng-global .ng-global-continue{'),'Continue needs a proper top-bar design');
+ assert.ok(css.includes('@media(max-width:780px){'),'Keep Continue and date available on smaller screens');
+ assert.ok(css.includes('.ng-main .ng-intel>.ng-cardhead,\n.ng-main .ng-choices>.ng-cardhead{'),'Intel and Your Call should retain matching titlebar styles');
+ const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(syntax.status,0,syntax.stderr);
 });
