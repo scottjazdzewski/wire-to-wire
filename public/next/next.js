@@ -10,6 +10,7 @@ const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
 const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableSearch:''};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
+let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 const genericDeskPhoto='/assets/office/approved-office-photo.jpg';
 let organizationLogoIndex=null; // UI-only logo asset refs; organization authority stays in the game database.
 
@@ -542,6 +543,10 @@ fetch('/assets/office/organization-logo-index.json',{credentials:'same-origin',c
  .then(r=>{if(!r.ok)throw Error('Logo index unavailable');return r.json()})
  .then(index=>{if(index&&typeof index==='object'&&!Array.isArray(index)){organizationLogoIndex=index;schedulePaint(20)}})
  .catch(()=>{/* The neutral organization mark is intentional until a real logo is registered. */});
+fetch('/assets/game/attribute-catalog.v1.json',{credentials:'same-origin',cache:'no-store'})
+ .then(r=>{if(!r.ok)throw Error('Attribute definitions unavailable');return r.json()})
+ .then(data=>{if(data?.schema==='WTW_ATTRIBUTE_CATALOG_V1'&&data.horse_categories&&data.display?.horse_overview){athleteAttributeCatalog=data;schedulePaint(20)}})
+ .catch(()=>{/* No guessed ratings or parallel definitions when catalog is unavailable. */});
 fetch('/assets/office/decision-photo-index.json',{credentials:'same-origin',cache:'no-store'})
  .then(response=>{if(!response.ok)throw Error('Photo index unavailable');return response.json()})
  .then(index=>{if(index&&typeof index==='object'&&!Array.isArray(index)){officePhotoIndex=index;schedulePaint(20)}})
