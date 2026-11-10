@@ -3439,3 +3439,79 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
  .ng-profile-person .ng-person-workspace .ng-person-overall{padding:8px}
  .ng-profile-person .ng-person-workspace .ng-person-unrated{padding:6px 8px}
 }
+
+/* People identity: birthplace flag, true age when sourced, hometown and dated base.
+   Desktop stays on one bar; handheld screens wrap inside the existing profile. */
+.ng-profile-person .ng-tier1-biography{
+ display:flex;
+ flex-wrap:wrap;
+ align-items:center;
+ gap:5px 10px;
+ min-width:0;
+}
+.ng-profile-person .ng-tier1-biography>span{
+ display:inline-flex;
+ align-items:center;
+ min-width:0;
+ gap:5px;
+ padding-right:11px;
+ flex:0 1 auto;
+}
+.ng-profile-person .ng-tier1-biography small{
+ font-size:8.8px!important;
+ letter-spacing:.035em;
+ white-space:nowrap;
+}
+.ng-profile-person .ng-tier1-biography strong{
+ display:inline-flex;
+ align-items:center;
+ gap:5px;
+ min-width:0;
+ max-width:240px;
+ font-size:11px!important;
+ text-overflow:ellipsis;
+ overflow:hidden;
+ white-space:nowrap;
+}
+.ng-profile-person .ng-person-national-flag{
+ box-sizing:border-box;
+ width:22px;
+ height:16px;
+ flex:0 0 22px;
+ max-width:22px;
+ max-height:16px;
+ border:1px solid #c9cbba91;
+ border-radius:2px;
+ object-fit:cover;
+ box-shadow:0 1px 2px #0006;
+}
+@media(min-width:1081px){
+ .ng-route-profile .ng-profile-person .ng-tier1-biography{
+  flex-wrap:wrap!important;
+  row-gap:4px!important;
+  column-gap:11px!important;
+  margin:3px 0 2px!important;
+ }
+ .ng-route-profile .ng-profile-person .ng-profile-intro{
+  min-height:86px!important;
+ }
+}
+@media(max-width:1080px){
+ .ng-profile-person .ng-tier1-biography{
+  flex-wrap:wrap!important;
+  gap:5px 8px!important;
+ }
+ .ng-profile-person .ng-tier1-biography>span{
+  border-right:0!important;
+  border-bottom:1px solid #536e5c;
+  padding:3px 6px 4px 0!important;
+  max-width:100%;
+ }
+ .ng-profile-person .ng-tier1-biography small{
+  font-size:8.5px!important;
+ }
+ .ng-profile-person .ng-tier1-biography strong{
+  font-size:10.5px!important;
+  max-width:200px;
+ }
+}
