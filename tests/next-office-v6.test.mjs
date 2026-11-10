@@ -17,7 +17,7 @@ test('v6 Racing Office is one cohesive viewport and still one visual system',()=
   assert.ok(html.includes('src="/office-fm-v37.js"'));
  }
  assert.ok(main.includes('href="/archive/"'),'Archive preserved');
- assert.ok(css.includes('WTW Next v6'),'Shared v6 Office system');
+ assert.ok(css.includes('UNIFIED DESKTOP MANAGEMENT DESIGN SYSTEM'),'One unified darker Office visual system');
  assert.ok(css.includes('.ng-main>.ng-feature'),'Decision, Intel, and choices share one surface');
  assert.ok(css.includes('.ng-right>.ng-roster'),'Stable and races share one operations rail');
  assert.ok(css.includes('.ng-featurephoto img'),'Horse photo is visible behind readable text');
