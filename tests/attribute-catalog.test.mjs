@@ -41,7 +41,11 @@ test('generator coverage audit catches missing ability values but does not creat
  const missing=auditGeneratedAttributeCoverage({catalog,entityGroup:'horses',latent:{}});
  assert.equal(missing.ok,false);
  assert.deepEqual(missing.missing,required);
- const syntheticFixture=Object.fromEntries(required.map(key=>[key,'TEST_ONLY']));
+ const incompleteFixture=Object.fromEntries(required.map(key=>[key,'TEST_ONLY']));
+ const invalid=auditGeneratedAttributeCoverage({catalog,entityGroup:'horses',latent:incompleteFixture});
+ assert.equal(invalid.ok,false);
+ assert.deepEqual(invalid.invalid,required,'Trait coverage alone is insufficient; hidden ability values must be finite numbers');
+ const syntheticFixture=Object.fromEntries(required.map(key=>[key,0.5]));
  const complete=auditGeneratedAttributeCoverage({catalog,entityGroup:'horses',latent:syntheticFixture});
  assert.equal(complete.ok,true);
  assert.equal(complete.expected,required.length);
