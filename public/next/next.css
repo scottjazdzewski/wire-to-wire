@@ -2789,3 +2789,16 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
  .ng-person-work-card>header{font-size:10px!important;padding:6px!important}
  .ng-person-attribute{padding:3px 5px}
 }
+
+.ng-person-relationship{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ gap:8px;
+ min-height:29px;
+ padding:5px 9px;
+ border-top:1px solid #547363;
+ background:#1e362d;
+}
+.ng-person-relationship span{font-size:9px;font-weight:750;color:#b9d0bb;letter-spacing:.025em}
+.ng-person-relationship strong{font-size:11px;color:#ecd799;font-variant-numeric:tabular-nums}
