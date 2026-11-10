@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableSearch:'',networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',searchQuery:'',searchIndex:[]};
+const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableSearch:'',networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -263,17 +263,81 @@ function globalSearchItems(){
  })),...pages];
 }
 const searchWords=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().split(/\s+/).filter(Boolean);
+// Roster-style directory: a single dense, sortable list instead of tiles.
+// No source records are copied into a new database; each row routes to its
+// original Office source, with 13 rows per page to avoid desktop scrolling.
+const searchPageSize=13;
+const searchTypes=[
+ ['all','ALL'],['horse','HORSES'],['person','PEOPLE'],['farm','FARMS'],
+ ['track','TRACKS'],['race','RACES'],['pages','SCREENS']
+];
+const searchMatches=(entry,words)=>words.every(word=>
+ [entry.name,entry.kind,entry.detail,entry.section,entry.track,
+  entry.kind==='horse'?(horseOwnership(entry.name)?.name||''):''].filter(Boolean).join(' ').toLowerCase().includes(word)
+);
+function searchRosterData(){
+ const entries=APP.searchIndex||[],words=searchWords(APP.searchQuery);
+ const scoped=entries.map((entry,i)=>({...entry,sourceIndex:i}))
+  .filter(entry=>(APP.searchType==='all'||(APP.searchType==='pages'
+   ?['page','tab','decision'].includes(entry.kind):entry.kind===APP.searchType))&&searchMatches(entry,words));
+ const key=entry=>APP.searchSort==='type'?entry.kind:APP.searchSort==='owner'?
+   (entry.kind==='horse'?(horseOwnership(entry.name)?.name||'zzzzzzzz'):'zzzzzzzz'):entry.name;
+ scoped.sort((a,b)=>key(a).localeCompare(key(b),undefined,{numeric:true,sensitivity:'base'})||
+  a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:'base'}));
+ const totalPages=Math.max(1,Math.ceil(scoped.length/searchPageSize));
+ APP.searchPage=Math.min(Math.max(APP.searchPage,0),totalPages-1);
+ return {all:scoped,page:scoped.slice(APP.searchPage*searchPageSize,(APP.searchPage+1)*searchPageSize),
+  totalPages,count:scoped.length};
+}
+function searchRosterMarkup(){
+ const result=searchRosterData();
+ const rows=result.page.map(entry=>{
+  const isHorse=entry.kind==='horse';
+  const owner=isHorse?horseOwnership(entry.name):null;
+  const ownerText=isHorse?(owner?.name||'Not recorded'):'—';
+  const nameCell=(isHorse?horseOwnerBadge(entry.name):'')+'<strong>'+safe(entry.name)+'</strong>';
+  return `<button type="button" class="ng-search-row" data-ng="search-go" data-val="${entry.sourceIndex}" aria-label="Open ${safe(entry.kind)} page: ${safe(entry.name)}">
+    <span class="ng-search-row-kind">${safe(entry.kind==='tab'?'SCREEN':entry.kind==='page'?'SECTION':entry.kind.toUpperCase())}</span>
+    <span class="ng-search-row-name">${nameCell}</span>
+    <span class="ng-search-row-detail" title="${safe(entry.detail||'Connected record')}">${safe(entry.detail||'Connected record')}</span>
+    <span class="ng-search-row-owner" title="${safe(ownerText)}">${safe(ownerText)}</span>
+    <span class="ng-search-row-open">${glyph('right',13)}</span>
+   </button>`;
+ }).join('');
+ const start=result.count?APP.searchPage*searchPageSize+1:0,end=Math.min(result.count,(APP.searchPage+1)*searchPageSize);
+ const pager=`<span class="ng-search-page-range">${start}–${end} OF ${result.count} RESULTS</span>
+  <div class="ng-search-pager"><button data-ng="search-page" data-val="-1" ${APP.searchPage===0?'disabled':''} aria-label="Previous search page">${glyph('left',13)}</button>
+  <strong>${APP.searchPage+1} / ${result.totalPages}</strong>
+  <button data-ng="search-page" data-val="1" ${APP.searchPage>=result.totalPages-1?'disabled':''} aria-label="Next search page">${glyph('right',13)}</button></div>`;
+ return {rows,count:result.count,pager};
+}
+function updateSearchRoster(){
+ const markup=searchRosterMarkup(),body=$('#ngSearchResults',root),counter=$('#ngSearchCount',root),pager=$('#ngSearchPager',root),empty=$('#ngSearchEmpty',root);
+ if(body)body.innerHTML=markup.rows;
+ if(counter)counter.textContent=markup.count+' MATCHING RECORDS';
+ if(pager)pager.innerHTML=markup.pager;
+ if(empty)empty.hidden=markup.count!==0;
+ $$('.ng-search-type',root).forEach(btn=>{
+  const active=btn.dataset.val===APP.searchType;btn.classList.toggle('on',active);btn.setAttribute('aria-pressed',String(active));
+ });
+ $$('.ng-search-sort',root).forEach(btn=>btn.classList.toggle('on',btn.dataset.val===APP.searchSort));
+}
 function searchView(){
- const entries=globalSearchItems(),words=searchWords(APP.searchQuery);APP.searchIndex=entries;
- const matches=entry=>words.every(word=>[entry.name,entry.kind,entry.detail,entry.section,entry.track].filter(Boolean).join(' ').toLowerCase().includes(word));
- const result=(entry,i)=>`<button type="button" class="ng-search-hit" data-ng="search-go" data-val="${i}" data-search="${safe([entry.name,entry.kind,entry.detail,entry.section,entry.track].filter(Boolean).join(' ').toLowerCase())}" ${matches(entry)?'':'hidden'}><span class="ng-search-kind">${safe(entry.kind.toUpperCase())}</span><span class="ng-search-description"><strong>${safe(entry.name)}</strong><small>${safe(entry.detail||'Existing record')}</small></span>${glyph('right',14)}</button>`;
- return `<section class="ng-search-page">
-  <div class="ng-search-intro"><h2>Find a Page or Record</h2><p>Search horses, jockeys, trainers, farms, tracks, races, decisions and game departments.</p></div>
-  <label class="ng-search-entry" for="ngGlobalSearch">${glyph('search',18)}<input id="ngGlobalSearch" type="search" value="${safe(APP.searchQuery)}" data-ng-input="global-search" placeholder="Type any available horse, person, racetrack, race or page…" autocomplete="off" aria-label="Search Wire to Wire pages and records"/></label>
-  <div class="ng-search-count"><span id="ngSearchCount">${entries.filter(matches).length} MATCHING PAGES & RECORDS</span><span>ENTER OPENS FIRST RESULT</span></div>
-  <div class="ng-search-results" aria-label="Search results">${entries.map(result).join('')}</div>
-  <div class="ng-search-empty" id="ngSearchEmpty" ${entries.some(matches)?'hidden':''}>No connected page matches that search. Try another name, or open the Historical Archive below.</div>
-  <div class="ng-search-bottom"><button data-ng="search-history">EXPLORE HISTORICAL ARCHIVE ${glyph('arrow',12)}</button><small>Results link only to known records. Historical discovery continues in the Archive.</small></div>
+ APP.searchIndex=globalSearchItems();
+ const markup=searchRosterMarkup();
+ return `<section class="ng-search-page ng-search-roster-page">
+  <header class="ng-search-compact-head"><div><strong>DIRECTORY</strong><span>FIND A PERSON, HORSE, RACE OR SCREEN</span></div><button data-ng="office">RACING OFFICE ${glyph('arrow',12)}</button></header>
+  <label class="ng-search-entry" for="ngGlobalSearch">${glyph('search',17)}<input id="ngGlobalSearch" type="search" value="${safe(APP.searchQuery)}" data-ng-input="global-search" placeholder="Search any available record or screen…" autocomplete="off" aria-label="Search Wire to Wire pages and records"/></label>
+  <div class="ng-search-filters">
+    <div class="ng-search-typebar" role="group" aria-label="Filter search by record type">${searchTypes.map(([value,label])=>`<button class="ng-search-type ${APP.searchType===value?'on':''}" data-ng="search-type" data-val="${value}" aria-pressed="${APP.searchType===value}">${label}</button>`).join('')}</div>
+    <div class="ng-search-sortbar"><span>SORT</span>${[['name','NAME'],['type','TYPE'],['owner','OWNER']].map(([value,label])=>`<button class="ng-search-sort ${APP.searchSort===value?'on':''}" data-ng="search-sort" data-val="${value}">${label}</button>`).join('')}</div>
+  </div>
+  <div class="ng-search-table">
+    <div class="ng-search-table-head"><span>TYPE</span><span>NAME</span><span>ROLE / RECORD</span><span>OWNER</span><span>OPEN</span></div>
+    <div id="ngSearchResults" class="ng-search-table-body">${markup.rows}</div>
+    <div id="ngSearchEmpty" class="ng-search-empty" ${markup.count?'hidden':''}>No matching connected records. Try another name or open History.</div>
+  </div>
+  <footer class="ng-search-table-footer"><span id="ngSearchCount">${markup.count} MATCHING RECORDS</span><div id="ngSearchPager" class="ng-search-page-control">${markup.pager}</div><button data-ng="search-history">HISTORICAL ARCHIVE ${glyph('arrow',12)}</button></footer>
  </section>`;
 }
 function openSearchItem(item){
@@ -834,6 +898,9 @@ window.addEventListener('click',e=>{
  if(!key && btn.dataset.act){syntheticAction(btn);return}
  if(key==='organization')return openOrganization();
  if(key==='search-go')return openSearchItem(APP.searchIndex[Number(val)]);
+ if(key==='search-type'){APP.searchType=val;APP.searchPage=0;return updateSearchRoster()}
+ if(key==='search-sort'){APP.searchSort=val;APP.searchPage=0;return updateSearchRoster()}
+ if(key==='search-page'){APP.searchPage=Math.max(0,APP.searchPage+Number(val));return updateSearchRoster()}
  if(key==='search-history')return window.location.assign('/archive/?page=races');
  if(key==='due')return openCustomView('Due Actions')
  if(key==='followup'){
@@ -881,7 +948,7 @@ window.addEventListener('click',e=>{
 },true);
 root.addEventListener('keydown',event=>{
  if(event.key==='Enter'&&event.target.matches('#ngGlobalSearch')){
-  const first=$('.ng-search-hit:not([hidden])',root);
+  const first=$('.ng-search-row',root);
   if(first){event.preventDefault();first.click();}
  }
 });
@@ -897,18 +964,8 @@ window.addEventListener('keydown',event=>{
 root.addEventListener('input',event=>{
  const input=event.target;
  if(input.matches('input[data-ng-input="global-search"]')){
-  APP.searchQuery=input.value;
-  const words=searchWords(input.value);
-  let total=0;
-  $('.ng-search-hit',root).forEach(hit=>{
-   const match=words.every(word=>(hit.dataset.search||'').includes(word));
-   hit.hidden=!match;
-   if(match)total++;
-  });
-  const counter=$('#ngSearchCount',root);
-  if(counter)counter.textContent=total+' MATCHING PAGES & RECORDS';
-  const empty=$('#ngSearchEmpty',root);
-  if(empty)empty.hidden=total!==0;
+  APP.searchQuery=input.value;APP.searchPage=0;
+  updateSearchRoster();
   return;
  }
  if(!input.matches('input[data-ng-input="stable-search"]'))return;
