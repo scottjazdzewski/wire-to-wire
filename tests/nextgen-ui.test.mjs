@@ -60,3 +60,17 @@ test('Office case queue, filters and full-height result sheet are source-driven'
  assert.ok(css.includes('.ng-case-pip'),'Case navigation must be visible');
  assert.ok(!html.includes('<style'),'The Next UI keeps one external visual layer');
 });
+
+test('Next Racing Office v5 retains one visual system and the complete game connections',()=>{
+ const css=get('public/next/next.css');
+ const js=get('public/next/next.js');
+ const html=get('public/next/index.html');
+ assert.equal((html.match(/rel="stylesheet"/g)||[]).length,1);
+ assert.ok(css.includes('WTW NEXT v5'), 'v5 Office design is published in the same stylesheet');
+ assert.ok(css.includes('.ng-intelgrid'), 'Intel layout must remain readable');
+ assert.ok(css.includes('.ng-featurephoto'), 'Editorial decision photo component missing');
+ assert.ok(css.includes('.ng-resolved'), 'Completed decisions must remain usable');
+ assert.ok(js.includes('selectAdjacentCase'), 'Case navigation must be preserved');
+ for(const zone of ['function inbox()','function center()','function right()']) assert.ok(js.includes(zone),'Missing permanent Office zone: '+zone);
+ for(const badge of ['horse','meet_schedule'])assert.ok(js.includes(badge),'Approved badges missing');
+});

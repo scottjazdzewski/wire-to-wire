@@ -191,3 +191,171 @@ body.wtw-next-active{overflow:hidden}body.wtw-next-active>.app,body.wtw-next-act
 .ng-resolved .ng-outcome-actions{flex:none;margin-top:0}
 @media(max-width:1250px){.ng-resolved .ng-outtext{font-size:11px;padding:8px}.ng-resolved .ng-resolvedtabs button{padding:4px 6px;font-size:10px!important}}
 @media(max-height:660px) and (min-width:850px){.ng-moves>.ng-resolved{gap:3px;padding:1px 2px}.ng-resolved .ng-resolution-title{font-size:10.5px}.ng-resolved .ng-resolvedtabs button{min-height:21px;padding:2px 5px!important;font-size:9px!important}.ng-resolved .ng-outtext{font-size:9.7px;line-height:1.3;padding:5px}.ng-resolved .ng-outcome-actions button{min-height:22px;font-size:8.5px!important}}
+
+/* WTW NEXT v5 — unified racing-office visual composition.
+   Rebalances the live Office UI without changing case, roster or race data.
+   Integrated into /next/next.css; no extra link or visual layer. */
+:root {--wt-bg:#0d1215;--wt-shell:#0c1214;--wt-head:#1c292b;--wt-card:#182126;--wt-card2:#1b252a;--wt-row:#1b2529;--wt-row2:#202b2e;--wt-line:#334449;--wt-line2:#425356;--wt-text:#f1f4f1;--wt-muted:#b5c5bf;--wt-dim:#93a8a2;}
+#wtwNextgen {background:#0c1215;color:var(--wt-text);font-family:"Inter Display",Inter,"Segoe UI",system-ui,sans-serif;font-kerning:normal;font-optical-sizing:auto;}
+.ng-global{height:37px;background:#0c1216;border-bottom:1px solid #29383d;padding-right:10px;}
+.ng-logo-mini{height:25px;width:25px;}
+.ng-primary button{font-size:11.5px!important;font-weight:670!important;letter-spacing:.005em;color:#c9d6d2;}
+.ng-primary button.on{color:#fbf8e9;background:linear-gradient(180deg,#25392f,#1b2c29);box-shadow:inset 0 -2px #cfb16c;}
+.ng-primary button:hover:not(.on){background:#1f2d30;color:#fff;}
+.ng-global-tools .ng-iconbtn,.ng-hist button{width:27px;height:27px;background:#182228;border:1px solid #33454b;box-shadow:none;}
+.ng-mast{height:74px;background:linear-gradient(95deg,#10362a 0%,#132d28 30%,#1d272a 73%,#151f23 100%);border-bottom:1px solid #385449;padding:8px 17px;gap:12px;}
+.ng-brand-logo{height:50px;width:50px;background:#07100c;border-color:#64746c;box-shadow:0 0 0 2px #11261d,0 6px 14px #0005;}
+.ng-eyebrow{letter-spacing:.115em;font-size:9px;color:#ddc67d;}
+.ng-brand-name{font-size:24px!important;font-weight:800!important;line-height:1.04;letter-spacing:-.034em;}
+.ng-brand-sub{color:#b2c4bc;font-size:11px;}
+.ng-mast-fig{min-width:79px;padding:2px 12px;}
+.ng-mast-fig b{font-size:22px;letter-spacing:-.035em;line-height:1.05;}
+.ng-mast-fig span{font-size:8.5px;letter-spacing:.06em;color:#b7c8be;}
+.ng-clockblock{min-width:115px;padding-right:12px;}
+.ng-clockblock strong{font-size:12px;}
+.ng-continue{min-width:139px;height:39px;border-radius:3px;background:linear-gradient(180deg,#d94b56,#b82c3c);border-color:#e66a73;box-shadow:0 3px 11px #0005;font-size:12.5px!important;letter-spacing:.02em;}
+.ng-subbar{height:34px;background:#141e22;border-bottom:2px solid #786947;padding-left:13px;}
+.ng-subnav button{font-size:11.4px!important;font-weight:630!important;color:#b4c2bf;}
+.ng-subnav button.on{background:#263b37;color:#fff;box-shadow:inset 0 -2px #d0b46c;}
+.ng-fastnav button{background:#172227;border:1px solid #344b49;color:#c8d6d1;border-radius:2px;}
+.ng-board{grid-template-columns:minmax(270px,300px) minmax(0,1fr) minmax(296px,322px);gap:8px;padding:9px;background:radial-gradient(ellipse at 50% -35%,#213029 0%,#11191c 52%,#0b1115 100%);}
+.ng-card{background:#192227;border:1px solid #35464a;border-radius:3px;box-shadow:0 1px 0 #ffffff08,0 6px 17px #0003;}
+.ng-cardhead{height:41px;background:linear-gradient(180deg,#243137,#202a2f);border-bottom:1px solid #38484c;padding:0 11px;gap:8px;}
+.ng-headinggroup h3{font-size:12.6px!important;font-weight:790!important;letter-spacing:.03em;line-height:1.08;}
+.ng-headinggroup>span{font-size:8.4px!important;font-weight:630;letter-spacing:.07em;color:#a1b5af;}
+.ng-sectionicon{width:23px;height:23px;background:#1d3c32;border:1px solid #456555;border-radius:3px;}
+.ng-sectionicon.gold{background:#3f3828;border-color:#62583d;color:#eed187;}
+.ng-headicon{width:25px;height:25px;}
+.ng-cardlink{font-size:9.2px!important;color:#d6bf76;letter-spacing:.035em;}
+/* A continuous editorial inbox, not six separate green tiles. */
+.ng-inbox{background:#172025;}
+.ng-filters{height:39px;background:#182327;border-color:#344448;}
+.ng-filters button{font-size:10px!important;border-radius:3px;background:#141e22;color:#c4d2cb;border-color:#40524f;}
+.ng-filters button.on{background:#275744;color:#fff;border-color:#4b8d70;}
+.ng-inboxdate{background:#1a2a2b;color:#bdcfc6;letter-spacing:.045em;}
+.ng-msg,.ng-msg:nth-child(even){background:#192328;border-bottom:1px solid #304043;border-left-width:2px;padding:7px 10px;grid-template-columns:28px minmax(0,1fr) 43px;gap:9px;}
+.ng-msg:nth-child(even){background:#1c272b;}
+.ng-msg.on{background:linear-gradient(90deg,#254d3b 0%,#1e3630 85%);border-left-color:#e4c478;}
+.ng-msg:hover:not(.on){background:#253532;}
+.ng-msg.urgent:not(.on){border-left-color:#be4d59;}
+.ng-avatar{height:28px;width:28px;border-radius:50%;font-size:9px;background:#244838;border-color:#4e7762;}
+.ng-msgfrom{font-size:9.8px!important;color:#aabbb7;}
+.ng-msgtitle{font-size:12.7px!important;font-weight:690!important;letter-spacing:-.012em;line-height:1.18;}
+.ng-msgmeta{font-size:10.2px!important;color:#a7bab3;line-height:1.2;}
+.ng-msgtrail{gap:5px;}
+.ng-msgtag{font-size:8px;border-radius:2px;}
+.ng-msgtime{font-size:9.5px;color:#a4b7b0;}
+.ng-inboxfoot{background:#182125;border-top:1px solid #304046;}
+/* One strong task-focused hero, not separate feature facts and photo cards. */
+.ng-main{grid-template-rows:minmax(0,.96fr) minmax(0,1.04fr);gap:8px;}
+.ng-feature{background:#0d1c1b;}
+.ng-feature .ng-cardhead{background:linear-gradient(90deg,#28332f,#20282d);border-bottom-color:#556144;}
+.ng-featurebody{display:block;position:relative;isolation:isolate;background:#0c1b18;}
+.ng-featurephoto{position:absolute;inset:0;z-index:-1;pointer-events:none;}
+.ng-featurephoto img{width:100%;height:100%;object-fit:cover;object-position:85% 45%;filter:saturate(.79) contrast(1.12) brightness(.76);}
+.ng-featurephoto::after{background:linear-gradient(90deg,#0c1d1bdc 0%,#0c201ce8 34%,#0b1b1886 61%,#07100f1e 100%),linear-gradient(0deg,#07100fe8 0%,transparent 42%);}
+.ng-photo-label{right:9px;bottom:8px;font-size:8px;letter-spacing:.05em;opacity:.85;background:#111b18a8;border-color:#496454;}
+.ng-photo-ribbon{display:none;}
+.ng-case{z-index:1;position:relative;width:100%;height:100%;max-width:100%;justify-content:center;align-items:flex-start;padding:13px 17px 14px;}
+.ng-case-eyebrow{font-size:9.5px;letter-spacing:.085em;color:#efce79;}
+.ng-case h2{font-size:clamp(22px,2.06vw,28px);line-height:1.11;max-width:min(93%,500px);letter-spacing:-.033em;margin:6px 0 8px;text-wrap:balance;text-shadow:0 2px 4px #0008;}
+.ng-case-summary{max-width:min(90%,390px);font-size:11.5px;color:#d3e0d9;line-height:1.32;text-shadow:0 1px 3px #0009;}
+.ng-facts{display:flex;flex-wrap:nowrap;gap:0;margin-top:12px;max-width:90%;padding:4px 0;}
+.ng-fact{flex:1 1 0;min-width:0;background:#0b1a17b8;border:0;border-right:1px solid #58706670;border-radius:0;padding:5px 10px 5px 0;}
+.ng-fact:not(:first-child){padding-left:10px;}
+.ng-fact:last-child{border-right:0;}
+.ng-fact small{font-size:8px;color:#b5c8bc;letter-spacing:.06em;}
+.ng-fact b{font-size:10px;line-height:1.2;margin-top:4px;}
+.ng-caseactions{gap:6px;margin-top:12px;}
+.ng-caseactions button{border-radius:2px;border-color:#60947e;background:#26624a;min-height:29px;padding:6px 10px;font-size:10px!important;box-shadow:0 2px 6px #0004;}
+.ng-caseactions button.alt{background:#101f1ccc;border-color:#62776c;}
+.ng-case-navigation{gap:8px;}
+.ng-case-pip{border-radius:2px;}
+/* Four intelligence reads shown as a compact analyst feed, with one meaningful color cue each. */
+.ng-centerbottom{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;}
+.ng-intel,.ng-choices{background:#192328;}
+.ng-intelgrid{display:grid;grid-template-columns:1fr;grid-template-rows:repeat(4,minmax(0,1fr));gap:0;padding:0 8px 7px;}
+.ng-intelitem{display:grid;grid-template-columns:72px minmax(0,1fr);grid-template-rows:min-content min-content;justify-content:initial;align-content:center;align-items:center;column-gap:9px;row-gap:2px;border:0;border-left:3px solid #32c29a;border-bottom:1px solid #354347;background:transparent;border-radius:0;padding:6px 7px 6px 8px;}
+.ng-intelitem:nth-child(2n){background:#ffffff04;}
+.ng-intelitem:last-child{border-bottom:0;}
+.ng-intelitem:hover{background:#294039;}
+.ng-intel-kicker{grid-column:1;grid-row:1/span 2;font-size:8px!important;letter-spacing:.055em;color:#b6d4c7;align-self:center;}
+.ng-intel-marker{width:5px;height:5px;}
+.ng-intelitem b{grid-column:2;grid-row:1;font-size:12.1px!important;margin:0;line-height:1.15;font-weight:750;}
+.ng-intelitem p{grid-column:2;grid-row:2;font-size:10.3px!important;line-height:1.24;color:#c3d0cc;margin:0;}
+/* Decision rows share the same levelled, table-like presentation as the sidebar. */
+.ng-moves{gap:0;padding:0 8px 8px;}
+.ng-move,.ng-move-1,.ng-move-2{border:0;border-bottom:1px solid #3a4b4d;border-radius:0;background:#1d302b;grid-template-columns:28px minmax(0,1fr) 16px;gap:10px;padding:8px 10px;}
+.ng-move-1{background:#212d31;}
+.ng-move-2{background:#292d2b;border-bottom:0;}
+.ng-move:hover,.ng-move-1:hover,.ng-move-2:hover{background:#375447;outline:1px solid #789e7c;outline-offset:-1px;}
+.ng-move-number,.ng-move-1 .ng-move-number,.ng-move-2 .ng-move-number{width:25px;height:25px;border-radius:50%;border-color:#607c6d;background:#284f3f;font-size:10px;}
+.ng-movetag{font-size:9px!important;font-weight:650!important;letter-spacing:.065em;color:#b2c9bf;}
+.ng-move-body strong{font-size:12.8px!important;letter-spacing:-.005em;font-weight:720!important;line-height:1.22;}
+.ng-movearrow{color:#ccddcf;}
+/* Real table-style stable and upcoming race summaries instead of individual box widgets. */
+.ng-right{gap:8px;grid-template-rows:minmax(0,1.31fr) minmax(0,1fr) 36px;}
+.ng-rostercolumns,.ng-entrycolumns{background:#233337;border-bottom:1px solid #445759;color:#c5d6d1;}
+.ng-rosterrow,.ng-rosterrow:nth-child(even){background:#1b262a;border-bottom:1px solid #324145;}
+.ng-rosterrow:nth-child(even){background:#1f292d;}
+.ng-rosterrow:hover{background:#30453b;}
+.ng-rostername{font-size:12px;font-weight:720!important;letter-spacing:-.01em;}
+.ng-horseact{font-size:10.2px;line-height:1.26;color:#b7c6c1;}
+.ng-rostertag{background:#284938;border:1px solid #486d59;border-radius:2px;font-size:9.4px;}
+.ng-entryrow,.ng-entryrow:nth-child(even){background:#1b2629;border-bottom:1px solid #354448;}
+.ng-entryrow:nth-child(even){background:#202b2d;}
+.ng-entryrow:hover{background:#2d4138;}
+.ng-entrycopy b{font-size:11.8px;font-weight:730;}
+.ng-entrycopy>span{font-size:10.4px;color:#b6c5be;}
+.ng-entrydate{font-size:10.1px;color:#c5d2c7;}
+.ng-entrytag b{font-size:10.2px;}
+.ng-leads{border-radius:2px;border-color:#3f624e;background:linear-gradient(90deg,#1e3a2c,#193025);height:36px;}
+/* No cutoffs at laptop width or enlarged browser display. */
+@media (max-width:1250px){
+ .ng-board{grid-template-columns:minmax(247px,268px) minmax(0,1fr) minmax(252px,283px);gap:7px;padding:7px;}
+ .ng-mast{height:66px;padding:7px 10px;gap:7px;}
+ .ng-brand-logo{width:46px;height:46px;}
+ .ng-brand-name{font-size:21px!important;}
+ .ng-primary button{font-size:10.6px!important;}
+ .ng-case{padding:9px 11px;}
+ .ng-case h2{font-size:clamp(19px,2vw,23px);}
+ .ng-facts{max-width:98%;margin-top:8px;}
+ .ng-fact{padding-right:5px;}
+ .ng-fact:not(:first-child){padding-left:5px;}
+ .ng-fact b{font-size:9.2px;}
+ .ng-intelitem{grid-template-columns:55px minmax(0,1fr);column-gap:5px;padding:4px 4px;}
+ .ng-intel-kicker{font-size:7px!important;}
+ .ng-intelitem b{font-size:11px!important;}
+ .ng-intelitem p{font-size:9.5px!important;}
+ .ng-move-body strong{font-size:11.5px!important;}
+ .ng-rostername{font-size:11.5px;}
+ .ng-horseact{font-size:9.6px;}
+ .ng-entrycopy b{font-size:11px;}
+ .ng-entrycopy>span{font-size:9.7px;}
+}
+@media (max-height:720px) and (min-width:850px){
+ .ng-global{height:35px;}.ng-mast{height:60px;}.ng-subbar{height:30px;}
+ .ng-board{padding:6px;gap:6px;}
+ .ng-cardhead{height:37px;}
+ .ng-case h2{font-size:18px;line-height:1.1;margin:5px 0;}
+ .ng-case-summary{font-size:10px;}
+ .ng-facts{margin-top:5px;}
+ .ng-fact small{font-size:7px;}.ng-fact b{font-size:8px;margin-top:2px;}
+ .ng-caseactions{margin-top:6px;}
+ .ng-caseactions button{min-height:24px;font-size:8.8px!important;padding:4px 5px;}
+ .ng-intelitem{padding:3px 4px;}
+ .ng-intel-kicker{font-size:6.8px!important;}
+ .ng-intelitem b{font-size:10.2px!important;}
+ .ng-intelitem p{font-size:9px!important;}
+ .ng-move{padding:4px 6px;}.ng-move-body strong{font-size:10px!important;}
+ .ng-msgtitle{font-size:10.8px!important;}.ng-msgmeta{font-size:8.9px!important;}
+ .ng-rostername{font-size:10.5px;}.ng-horseact{font-size:9px;}
+ .ng-entrycopy b{font-size:10px;}.ng-entrycopy>span{font-size:9px;}
+}
+@media (max-width:780px){
+ .ng-board{display:flex;flex-direction:column;overflow:visible;}
+ .ng-main{min-height:720px;}
+ .ng-featurebody{min-height:230px;}
+ .ng-case h2{font-size:22px;}
+ .ng-intelgrid{min-height:260px;}
+}
