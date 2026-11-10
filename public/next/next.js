@@ -252,8 +252,8 @@ window.addEventListener('click',e=>{
  if(key==='filter'){APP.filter=val;APP.msgPage=0;return paint()}
  if(key==='prev-msg'){APP.msgPage=Math.max(0,APP.msgPage-1);return paint()}
  if(key==='next-msg'){APP.msgPage++;return paint()}
- if(key==='horse'){const row=$('.right .rankRow').find(x=>$('strong',x)?.textContent.trim()===val);return bridgeNode(row)}
- if(key==='fixture'){const n=$('.right .fixtureList .fixture[data-track]')[Number(val)];return bridgeNode(n)}
+ if(key==='horse'){const row=$$('.right .rankRow').find(x=>$('strong',x)?.textContent.trim()===val);return bridgeNode(row)}
+ if(key==='fixture'){const n=$$('.right .fixtureList .fixture[data-track]')[Number(val)];return bridgeNode(n)}
  if(key==='track'){const row=$$('.right .fixture').find(x=>x.dataset.track===val);if(row){const p=$('p',row);return bridgeNode(p)}return bridgeNode(originalAct('World'))}
  if(key==='move'){const n=$$('#moveGrid .moveCard')[Number(val)];bridgeNode(n);return}
  if(key==='profile-from-case'){return bridgeNode(originalAct('Horse Profile'))}
