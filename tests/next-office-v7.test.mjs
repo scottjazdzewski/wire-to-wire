@@ -63,3 +63,22 @@ test('Office inbox and analyst-panel visual QA: fixed rows, equal widths, and vi
  assert.ok(js.includes('EDITORIAL REFERENCE PHOTO'),'The generic photograph must be identified honestly');
  assert.ok(css.includes('.ng-main>.ng-feature .ng-featurephoto{display:block!important}'),'Decision photography must stay visible at short viewport heights');
 });
+
+
+test('Decision photography resolves approved scene and entity assets without modifying history or gameplay',()=>{
+ const js=get('public/next/next.js'),index=JSON.parse(get('public/assets/office/decision-photo-index.json'));
+ assert.equal(index.default,'/assets/office/approved-office-photo.jpg');
+ assert.deepEqual(index.cases,{});
+ assert.deepEqual(index.entities,{});
+ assert.ok(js.includes("fetch('/assets/office/decision-photo-index.json'"),'Office must load a UI-only photo index');
+ assert.ok(js.includes('matchedCase||matchedEntity||matchedCategory'),'Override and specific entity pictures must precede category fallbacks');
+ assert.ok(js.includes('casePhotoSubjects'),'Every existing decision must have a stable visual subject or scene');
+ for(const id of ['powerline','lastmatch','saratoga','pieta','cash','newsbuzz','entries','cedar']) assert.ok(js.includes(id+':{'),'Missing subject for decision '+id);
+ assert.ok(js.includes('img.src=genericDeskPhoto'),'Failed image paths must recover without losing the decision UI');
+ assert.ok(js.includes('const relatedAction=hasRelatedHorse?\x60<button'),'Horse file button must render, not self-reference an uninitialized variable');
+ assert.ok(!js.includes('hasRelatedHorse?\x60\x24{relatedAction}'),'Self-referential decision button causes runtime ReferenceError');
+ assert.ok(!js.includes('hasRelatedHorse?\x60\x24{resolvedRelatedAction}'),'Resolved action cannot self-reference');
+ assert.ok(js.includes('EDITORIAL REFERENCE PHOTO'),'Generic image must not be misrepresented as actual named horse');
+ const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(syntax.status,0,syntax.stderr);
+});
