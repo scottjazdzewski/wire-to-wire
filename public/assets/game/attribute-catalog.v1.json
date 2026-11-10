@@ -823,6 +823,32 @@
         "scope": "latent",
         "meaning": "Applying and communicating race conditions fairly"
       }
+    ],
+    "stable_staff": [
+      {
+        "key": "horse_handling",
+        "label": "Horse Handling",
+        "scope": "latent",
+        "meaning": "Working safely and effectively with assigned horses"
+      },
+      {
+        "key": "daily_observation",
+        "label": "Daily Observation",
+        "scope": "latent",
+        "meaning": "Noticing emerging health, performance or behavioral changes"
+      },
+      {
+        "key": "barn_routines",
+        "label": "Barn Routines",
+        "scope": "latent",
+        "meaning": "Maintaining consistent stable routines and care"
+      },
+      {
+        "key": "team_support",
+        "label": "Team Support",
+        "scope": "latent",
+        "meaning": "Supporting trainers and other staff on the daily stable schedule"
+      }
     ]
   },
   "example_observation_contract": {
@@ -876,6 +902,173 @@
       "fatigue",
       "race_readiness",
       "health_status"
-    ]
+    ],
+    "person_overview": {
+      "common": [
+        "judgment",
+        "communication",
+        "adaptability",
+        "planning",
+        "pressure_handling",
+        "professional_reliability"
+      ],
+      "role_limit": 6,
+      "reputation_axes": [
+        "overall",
+        "circuit",
+        "national",
+        "owner_trust",
+        "professional_trust",
+        "market"
+      ]
+    }
+  },
+  "reputation": {
+    "schema": "WTW_PERSON_REPUTATION_V1",
+    "scale": {
+      "min": 0,
+      "max": 100,
+      "unrated": null
+    },
+    "axes": [
+      {
+        "key": "overall",
+        "label": "Overall Standing",
+        "meaning": "Aggregate professional recognition; not the person's underlying skill or intrinsic worth"
+      },
+      {
+        "key": "circuit",
+        "label": "Local Circuit",
+        "meaning": "Professional recognition among people on the relevant racing circuit"
+      },
+      {
+        "key": "national",
+        "label": "National Standing",
+        "meaning": "Recognition beyond the local racing circuit"
+      },
+      {
+        "key": "owner_trust",
+        "label": "Owner Trust",
+        "meaning": "Confidence among owners who decide horse assignments and professional partnerships"
+      },
+      {
+        "key": "professional_trust",
+        "label": "Professional Trust",
+        "meaning": "Working relationships among trainers, riders and stable staff"
+      },
+      {
+        "key": "market",
+        "label": "Bloodstock Market",
+        "meaning": "Commercial credibility with breeders, consignors, agents and buyers"
+      }
+    ],
+    "evidence_required": true,
+    "effects": {
+      "mount": {
+        "audiences": [
+          "overall",
+          "circuit",
+          "owner_trust",
+          "professional_trust"
+        ],
+        "reputation_weight": 0.2,
+        "nonreputation_weight": 0.8
+      },
+      "training_assignment": {
+        "audiences": [
+          "overall",
+          "circuit",
+          "owner_trust",
+          "professional_trust"
+        ],
+        "reputation_weight": 0.2,
+        "nonreputation_weight": 0.8
+      },
+      "mating": {
+        "audiences": [
+          "overall",
+          "national",
+          "professional_trust",
+          "market"
+        ],
+        "reputation_weight": 0.2,
+        "nonreputation_weight": 0.8
+      },
+      "sale_consignment": {
+        "audiences": [
+          "overall",
+          "national",
+          "owner_trust",
+          "market"
+        ],
+        "reputation_weight": 0.2,
+        "nonreputation_weight": 0.8
+      },
+      "purchase": {
+        "audiences": [
+          "overall",
+          "market",
+          "professional_trust"
+        ],
+        "reputation_weight": 0.2,
+        "nonreputation_weight": 0.8
+      },
+      "hiring": {
+        "audiences": [
+          "overall",
+          "circuit",
+          "professional_trust"
+        ],
+        "reputation_weight": 0.2,
+        "nonreputation_weight": 0.8
+      }
+    },
+    "signals": {
+      "stakes_win": {
+        "overall": 3,
+        "circuit": 3,
+        "national": 2
+      },
+      "graded_stakes_win": {
+        "overall": 5,
+        "circuit": 4,
+        "national": 5
+      },
+      "consistent_overperformance": {
+        "overall": 2,
+        "circuit": 2,
+        "professional_trust": 1
+      },
+      "successful_horse_development": {
+        "overall": 2,
+        "owner_trust": 3,
+        "professional_trust": 2
+      },
+      "productive_partnership": {
+        "overall": 1,
+        "owner_trust": 2,
+        "professional_trust": 2
+      },
+      "bloodstock_success": {
+        "overall": 2,
+        "national": 1,
+        "market": 4
+      },
+      "buyer_satisfaction": {
+        "owner_trust": 1,
+        "market": 2
+      },
+      "missed_commitment": {
+        "overall": -1,
+        "owner_trust": -2,
+        "professional_trust": -2
+      },
+      "verified_conduct_issue": {
+        "overall": -3,
+        "professional_trust": -3,
+        "market": -2
+      }
+    },
+    "provenance": "Every starting score and reputation event requires an accepted game-generation or evidence-based source reference. No numeric score is inferred from a prototype's trust label or profile popularity."
   }
 }
