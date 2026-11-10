@@ -64,3 +64,26 @@ test('source-level approved direction is separate from historical claims needing
   assert.ok(tier.UNAPPROVED_ORIGIN_DETAILS>=70);
   assert.equal(Object.values(tier).reduce((a,b)=>a+b,0),108);
 });
+
+test('only ten source-approved organization histories publish their actual origin prose',()=>{
+  const {dir,result}=run();
+  assert.equal(result.status,0,result.stderr||result.stdout);
+  const manifest=JSON.parse(fs.readFileSync(path.join(dir,'history-org-manifest.json'),'utf8'));
+  const sql=fs.readFileSync(path.join(dir,'30_history_org_profiles.sql'),'utf8');
+  assert.equal(manifest.counts.organizations,108);
+  assert.equal(manifest.counts.approved_origin_publications,10);
+  assert.equal(manifest.counts.identity_only_origin_redactions,98);
+  assert.match(sql,/ELITE_HISTORIC_GOLD_STANDARD/);
+  assert.match(sql,/Kingsmere Farm/);
+  assert.match(sql,/IDENTITY_ONLY__ORIGIN_REQUIRES_APPROVAL/);
+  const h=sourceSnapshot.headers;
+  function sourceRow(id){const row=sourceSnapshot.rows.find(x=>x[h.indexOf('Organization_ID')]===id);
+    assert.ok(row);return Object.fromEntries(h.map((key,i)=>[key,row[i]??'']));}
+  const pending=sourceRow('O-000010');
+  assert.match(pending.Approval_Gate,/SOURCE_HISTORY_OUTLINE/);
+  assert.ok(pending.Origin_Through_1998.length>100);
+  assert.ok(!sql.includes(pending.Origin_Through_1998),
+    'Research-only origin prose may not leave source staging as published content');
+  assert.ok(!sql.includes(pending.Economic_Continuity_Constraint),
+    'Unapproved origin-based financial speculation must be redacted');
+});
