@@ -2713,7 +2713,7 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
 .ng-person-rep-axes{display:flex;flex-direction:column}
 .ng-person-rep-axes>div{
  display:grid;
- grid-template-columns:minmax(0,1fr) 35px;
+ grid-template-columns:minmax(0,1fr) 57px 32px;
  gap:8px;
  align-items:center;
  min-height:27px;
@@ -2802,3 +2802,24 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
 }
 .ng-person-relationship span{font-size:9px;font-weight:750;color:#b9d0bb;letter-spacing:.025em}
 .ng-person-relationship strong{font-size:11px;color:#ecd799;font-variant-numeric:tabular-nums}
+
+.ng-person-scorebar{
+ box-sizing:border-box;
+ display:block;
+ width:57px;
+ height:7px;
+ background:#10291e;
+ border:1px solid #44684e;
+ border-radius:3px;
+ overflow:hidden;
+}
+.ng-person-scorebar i{
+ display:block;
+ height:100%;
+ background:linear-gradient(90deg,#4f9266,#c6c77b);
+}
+.ng-person-scorebar.empty{
+ border-color:#334b3b;
+ background:#1c3428;
+ opacity:.42;
+}
