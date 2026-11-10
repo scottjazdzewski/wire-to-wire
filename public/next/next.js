@@ -296,10 +296,22 @@ function profileDetail(route){
    left=`<section class="ng-detailcard ng-horse-identitycard"><header>IDENTITY & STATUS</header>${factsBlock}</section>`;
    right=`<section class="ng-detailcard ng-horse-careercard"><header>CAREER SNAPSHOT</header><div class="ng-kpis">${record.map(r=>`<div><strong>${safe(r.value)}</strong><small>${safe(r.label)}</small></div>`).join('')||'<div class="ng-empty-record">No career results linked.</div>'}</div><div class="ng-horse-context">${states.slice(0,4).map(x=>`<div>${safe(x)}</div>`).join('')||'<div>No current racing status reported.</div>'}</div><button class="ng-horse-open-record" data-ng="detailtab" data-val="Career Record">FULL CAREER RECORD ${glyph('arrow',12)}</button></section>`;
    footer=`<section class="ng-detailcard ng-horse-connections"><header>PEOPLE & STABLE CONNECTIONS</header>${connectionRows()}</section><section class="ng-detailcard ng-detailwide ng-horse-activity"><header>LATEST OFFICE ACTIVITY</header><div class="ng-horse-context-actions">${quickLinks}</div><div class="ng-notes">${(notes.length?notes:['No decision history connected to this horse.']).slice(0,5).map(n=>`<div>${safe(n)}</div>`).join('')}</div></section>`;
+  }else if(isPerson){
+   left=`<section class="ng-detailcard ng-entity-facts"><header>PERSON & ROLE</header>${factsBlock}</section>`;
+   right=`<section class="ng-detailcard ng-entity-linked"><header>CURRENT STABLE HORSES</header>${connectedHorseRows()}</section>`;
+   footer=`<section class="ng-detailcard ng-entity-performance"><header>CAREER & REPUTATION</header><div class="ng-entity-metrics"><div><small>RECORDED WINS</small><strong>${safe(personWins||'—')}</strong></div><div><small>REPUTATION</small><strong>${safe(reputationLabel||'Not recorded')}</strong></div></div>${reputationGauge}<button class="ng-entity-open" data-ng="detailtab" data-val="Career">CAREER DETAILS ${glyph('arrow',12)}</button></section><section class="ng-detailcard ng-detailwide ng-entity-activity"><header>OFFICE ACTIVITY & CONNECTIONS</header>${connectionRows()}</section>`;
+  }else if(isFarm){
+   left=`<section class="ng-detailcard ng-entity-facts"><header>FARM & LOCATION</header>${factsBlock}</section>`;
+   right=`<section class="ng-detailcard ng-entity-linked"><header>CONNECTED HORSES</header>${connectedHorseRows()}</section>`;
+   footer=`<section class="ng-detailcard ng-entity-performance"><header>OPERATION & REPUTATION</header>${connectionRows()}<button class="ng-entity-open" data-ng="detailtab" data-val="Operations">OPERATIONS DETAILS ${glyph('arrow',12)}</button></section><section class="ng-detailcard ng-detailwide ng-entity-activity"><header>RECORDED FARM ACTIVITY</header><div class="ng-notes">${(farmAchievements.length?farmAchievements:['No additional verified farm activity recorded.']).slice(0,6).map(n=>`<div>${safe(n)}</div>`).join('')}</div></section>`;
+  }else if(isTrack){
+   left=`<section class="ng-detailcard ng-entity-facts"><header>RACECOURSE & LOCATION</header>${factsBlock}</section>`;
+   right=`<section class="ng-detailcard ng-entity-linked"><header>MEET AT A GLANCE</header>${rows(meetValues)}</section>`;
+   footer=`<section class="ng-detailcard ng-track-stakes"><header>FEATURED STAKES <button data-ng="detailtab" data-val="Major Races">ALL RACES ${glyph('arrow',12)}</button></header>${stakesTable(6)}</section><section class="ng-detailcard ng-detailwide ng-entity-activity"><header>RACING CONDITIONS & OFFICE CONTEXT</header><div class="ng-entity-note-grid">${trackNotes.map(n=>`<div><b>${safe(n.label)}</b><span>${safe(n.value)}</span></div>`).join('')||'<div>No sourced notes are available.</div>'}</div></section>`;
   }else{
    left=`<section class="ng-detailcard"><header>IDENTITY & STATUS</header>${factsBlock}</section>`;
-   right=`<section class="ng-detailcard"><header>${route.kicker==='Track Profile'?'RACING & LOCATION':'CONNECTIONS'}</header>${rows(connection.slice(0,6))}</section>`;
-   footer=`<section class="ng-detailcard ng-detailwide"><header>LATEST OFFICE CONTEXT</header><div class="ng-notes">${(notes.length?notes:['No separate performance history is connected to this Office record yet.']).slice(0,4).map(n=>`<div>${safe(n)}</div>`).join('')}</div></section>`;
+   right=`<section class="ng-detailcard"><header>CONNECTIONS</header>${connectionRows()}</section>`;
+   footer=`<section class="ng-detailcard ng-detailwide"><header>OFFICE CONTEXT</header><div class="ng-notes">${(notes.length?notes:['No current Office history connected.']).slice(0,4).map(n=>`<div>${safe(n)}</div>`).join('')}</div></section>`;
   }
  }else if(APP.detailTab==='Career Record'){
   left=`<section class="ng-detailcard"><header>CAREER RESULTS</header><div class="ng-kpis">${record.map(r=>`<div><strong>${safe(r.value)}</strong><small>${safe(r.label)}</small></div>`).join('')}</div></section>`;
