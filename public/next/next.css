@@ -1254,3 +1254,50 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
  .ng-global{height:43px!important;min-height:43px!important;flex-basis:43px!important}
  .ng-subbar{height:29px!important;min-height:29px!important;flex-basis:29px!important}
 }
+
+
+/* Racing Office UX polish: one clear action per decision and consistent control affordances. */
+.ng-main .ng-static-title{
+ display:block!important;
+ width:100%!important;
+ background:transparent!important;
+ border:0!important;
+ padding:0!important;
+ margin:0!important;
+ cursor:default!important;
+ pointer-events:none!important;
+}
+.ng-main .ng-static-title:hover h2{color:#fff!important}
+.ng-main .ng-caseactions>button{flex:0 1 auto;max-width:100%;min-width:0}
+.ng-left .ng-inbox .ng-filters button[aria-pressed="true"]{
+ background:#245b43!important;
+ border-color:#63a587!important;
+ color:#fff!important;
+ box-shadow:inset 0 -2px #98c99b45!important;
+}
+.ng-left .ng-inbox .ng-msg[aria-current="true"]{
+ background:#294b42!important;
+ border-left-color:#e2be76!important;
+ box-shadow:inset 0 1px #f1d68b16,inset 0 -1px #f1d68b10!important;
+}
+.ng-left .ng-inbox .ng-msg[aria-current="true"] .ng-msgtitle{color:#fff9dc!important}
+.ng-main .ng-intel .ng-intelitem:focus-visible,
+.ng-main .ng-choices .ng-move:focus-visible,
+.ng-left .ng-inbox .ng-msg:focus-visible{
+ outline:2px solid #e3c777!important;
+ outline-offset:-3px!important;
+}
+@media(min-width:781px) and (min-height:691px){
+ .ng-main>.ng-feature .ng-case{
+  row-gap:7px!important;
+ }
+ .ng-main>.ng-feature .ng-facts{
+  gap:5px!important;
+ }
+ .ng-main>.ng-feature .ng-fact{
+  padding:5px 7px!important;
+ }
+ .ng-main>.ng-feature .ng-caseactions{
+  margin-top:4px!important;
+ }
+}
