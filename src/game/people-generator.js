@@ -28,7 +28,7 @@ export function normalizePersonRoles(person,catalog){
  const aliases={'bloodstock':'bloodstock_professional','stable staff':'stable_staff','vet':'veterinarian','rider':'jockey','bloodstock specialist':'bloodstock_professional'};
  return [...new Set(raw.filter(role=>typeof role==='string').map(role=>{
   const normal=role.trim().toLowerCase();
-  return aliases[normal]||normal.replace(/\\s+/g,'_');
+  return aliases[normal]||normal.replace(/\s+/g,'_');
  }).filter(role=>Boolean(catalog.person_roles[role])))];
 }
 /**
