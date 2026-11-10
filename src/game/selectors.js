@@ -3,6 +3,7 @@ import { validateGameRun } from './state.js';
 import { worldIdentity, ensure } from './contracts.js';
 import {attributeDefinitions,normalizeObservation} from './attribute-contract.js';
 import {personReputationView,rankProfessionalCandidates} from './reputation.js';
+import {normalizePersonRoles} from './people-generator.js';
 
 export function getStableView(state, world) {
   validateGameRun(state, world);
@@ -43,9 +44,7 @@ export function getPersonView(state,world,personId,catalog){
   validateGameRun(state,world);
   const person=worldIdentity(world,'people',personId);
   ensure(Boolean(person),'UNKNOWN_PERSON','Unknown person '+personId);
-  const sourceRoles=Array.isArray(person.roles)?person.roles:
-    typeof person.role==='string'?[person.role]:[];
-  const roles=sourceRoles.filter(role=>Boolean(catalog.person_roles[role]));
+  const roles=normalizePersonRoles(person,catalog);
   const definitions=attributeDefinitions(catalog,'people',roles);
   const runtime=state.runtime.people[personId]||{};
   const evaluations=Array.isArray(runtime.observations)?runtime.observations:[];
