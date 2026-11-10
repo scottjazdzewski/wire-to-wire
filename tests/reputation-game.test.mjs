@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {
  WORLD_SCHEMA,createGameRun,dispatchGameCommand,exportGameSave,importGameSave,
- getPersonView,getPeopleDirectory,getProfessionalOpportunityRanking,auditPeopleReputationCoverage
+ getPersonView,getPeopleDirectory,getProfessionalOpportunityRanking,auditPeopleReputationCoverage,
+ generatePeopleRuntime
 } from '../src/game/index.js';
 
 const catalog=JSON.parse(readFileSync(new URL('../public/assets/game/attribute-catalog.v1.json',import.meta.url),'utf8'));
@@ -110,4 +111,43 @@ test('person screens show common and role skills without leaking hidden abilitie
  assert.equal('pace_judgment' in view,false);
  assert.ok(view.roles.includes('jockey'));
  assert.ok(view.attributes.some(a=>a.label==='Pace Judgment'));
+});
+
+
+test('authorized game creation populates every world person with unique, reproducible skills and reputation',()=>{
+ const w=world(),before=JSON.stringify(w);
+ const first=createGameRun({world:w,runId:'WTW-RUN-TEST-POP1',seed:2026,
+  player:{role:'owner',involvement:'balanced',operation_id:'O-TEST'},
+  personGenerationCatalog:catalog});
+ const second=createGameRun({world:w,runId:'WTW-RUN-TEST-POP2',seed:117,
+  player:{role:'owner',involvement:'balanced',operation_id:'O-TEST'},
+  personGenerationCatalog:catalog});
+ assert.equal(JSON.stringify(w),before,'Never mutate the immutable canonical world');
+ assert.deepEqual(first.runtime.people,second.runtime.people,'World identity determines modeled character, not chosen run seed');
+ assert.equal(Object.keys(first.runtime.people).length,w.entities.people.length);
+ assert.equal(auditPeopleReputationCoverage(first,w,catalog).ok,true);
+ const traits=first.runtime.people['P-JOCKEY-A'].latent;
+ assert.equal(typeof traits.pace_judgment,'number');
+ assert.ok(traits.pace_judgment>0&&traits.pace_judgment<1);
+ assert.equal(first.runtime.people['P-JOCKEY-A'].reputation.source.kind,'GENERATED_GAME');
+ assert.equal(first.runtime.people['P-JOCKEY-A'].observations.length,0,'Latent skills remain hidden until observed');
+ const people=getPeopleDirectory(first,w,catalog);
+ assert.ok(people.every(x=>typeof x.reputation.score==='number'));
+ assert.ok(people.every(x=>x.attributes.every(a=>a.estimate===null)),'Players see no fabricated scouting reports');
+ assert.equal('latent' in people[0],false);
+ const saved=importGameSave(exportGameSave(first,w),w);
+ assert.deepEqual(saved.runtime.people,first.runtime.people);
+});
+
+test('fictive role-generated people differ in professionalism without conflating initial reputation and skill',()=>{
+ const records=generatePeopleRuntime({world:world(),catalog});
+ const rider=records['P-JOCKEY-A'],trainer=records['P-TRAINER-A'];
+ assert.ok(Object.hasOwn(rider.latent,'traffic_navigation'));
+ assert.ok(!Object.hasOwn(trainer.latent,'traffic_navigation'));
+ assert.ok(Object.hasOwn(trainer.latent,'conditioning'));
+ assert.ok(!Object.hasOwn(rider.latent,'conditioning'));
+ assert.equal(rider.reputation.schema,'WTW_PERSON_REPUTATION_V1');
+ assert.equal(records['P-BREEDER-A'].roles.includes('owner'),true);
+ assert.notDeepEqual(records['P-JOCKEY-A'].latent,records['P-JOCKEY-B'].latent);
+ assert.ok(records['P-JOCKEY-A'].reputation.source.refs[0].includes('WTW-GAME-MODEL'));
 });
