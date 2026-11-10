@@ -3515,3 +3515,252 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
   max-width:200px;
  }
 }
+
+/* People Network — sortable working relationships, separate from public reputation.
+   One-screen paginated rows on desktop; no invented pairwise affinity. */
+.ng-profile-person .ng-person-network-preview{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:6px;
+ margin-top:auto;
+ min-height:31px;
+ padding:5px 9px;
+ box-sizing:border-box;
+ background:#234133;
+ border-top:1px solid #547059;
+}
+.ng-profile-person .ng-person-network-preview>span{
+ font-size:9px;
+ color:#b9d4bc;
+ letter-spacing:.02em;
+ font-weight:700;
+}
+.ng-profile-person .ng-person-network-preview strong{
+ font-variant-numeric:tabular-nums;
+ color:#e7d6a0;
+ font-size:11px;
+ margin-left:4px;
+}
+.ng-profile-person .ng-person-network-preview button{
+ border:1px solid #709172;
+ border-radius:3px;
+ color:#f0d99d;
+ background:#2a573d;
+ padding:5px 7px;
+ font-size:9px;
+ font-weight:800;
+ cursor:pointer;
+ white-space:nowrap;
+}
+.ng-profile-person .ng-person-network-preview button:hover{background:#376a4b}
+.ng-person-network-screen{
+ display:flex;
+ flex-direction:column;
+ min-height:0;
+ width:100%;
+ color:#d9e5d8;
+}
+.ng-person-network-toolbar{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:7px;
+ flex-wrap:wrap;
+ padding:8px;
+ background:#203c2e;
+}
+.ng-network-sort,.ng-network-role{
+ display:flex;
+ gap:4px;
+ align-items:center;
+ flex-wrap:wrap;
+}
+.ng-network-role>span{
+ color:#b4cdb9;
+ font-size:9px;
+ font-weight:800;
+ letter-spacing:.04em;
+}
+.ng-person-network-toolbar button{
+ min-height:27px;
+ padding:5px 8px;
+ border:1px solid #507258;
+ border-radius:3px;
+ background:#1a3328;
+ color:#d2dfd1;
+ font-size:9.5px;
+ font-weight:790;
+ cursor:pointer;
+}
+.ng-person-network-toolbar button:hover{background:#305741}
+.ng-person-network-toolbar button.on{
+ background:#37674a;
+ color:#ffebae;
+ border-color:#afbb8c;
+}
+.ng-network-explanation{
+ display:flex;
+ flex-wrap:wrap;
+ align-items:center;
+ justify-content:space-between;
+ gap:5px;
+ padding:6px 10px;
+ color:#a6bcae;
+ font-size:9.5px;
+ border-bottom:1px solid #4e6c52;
+}
+.ng-network-explanation strong{
+ color:#e5d49e;
+ font-size:10px;
+ font-variant-numeric:tabular-nums;
+}
+.ng-network-table{
+ display:flex;
+ flex-direction:column;
+ gap:0;
+ min-width:0;
+ background:#172b23;
+}
+.ng-network-table-head,.ng-network-table-row{
+ display:grid;
+ grid-template-columns:minmax(0,1.4fr) minmax(0,.78fr) minmax(0,.87fr) minmax(0,.8fr);
+ gap:8px;
+ align-items:center;
+ min-width:0;
+ box-sizing:border-box;
+ text-align:left;
+}
+.ng-network-table-head{
+ min-height:28px;
+ padding:6px 10px;
+ color:#b5d1ba;
+ background:#243e30;
+ font-weight:800;
+ font-size:9.5px;
+ letter-spacing:.03em;
+}
+.ng-network-table-row{
+ border:0;
+ border-bottom:1px solid #3f5949;
+ width:100%;
+ min-height:35px;
+ padding:6px 10px;
+ color:#dfecdf;
+ background:#20382c;
+ cursor:pointer;
+}
+.ng-network-table-row:nth-child(odd){background:#1b3027}
+.ng-network-table-row:hover,
+.ng-network-table-row.on{background:#366448}
+.ng-network-table-row strong{
+ font-size:11px;
+ font-weight:770;
+ white-space:nowrap;
+ text-overflow:ellipsis;
+ overflow:hidden;
+}
+.ng-network-table-row>span{
+ color:#c3d4c5;
+ font-size:10.5px;
+ text-overflow:ellipsis;
+ white-space:nowrap;
+ overflow:hidden;
+}
+.ng-network-grade{
+ display:flex;
+ align-items:center;
+ gap:7px;
+}
+.ng-network-grade i{
+ font-style:normal;
+ color:#e4d49d;
+ font-variant-numeric:tabular-nums;
+}
+.ng-network-grade small{
+ border-radius:3px;
+ padding:2px 4px;
+ font-size:8.5px;
+ text-transform:uppercase;
+}
+.ng-network-grade small.positive{color:#a6ebae;background:#264732}
+.ng-network-grade small.neutral{color:#e4d0a4;background:#4b4329}
+.ng-network-grade small.negative{color:#e9a8a0;background:#533333}
+.ng-network-empty{
+ padding:18px 14px;
+ background:#1a3127;
+ font-size:11px;
+ line-height:1.45;
+ color:#bcd0c0;
+}
+.ng-network-footer{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ gap:9px;
+ min-height:34px;
+ padding:5px 10px;
+ background:#1c352a;
+ border-top:1px solid #49684f;
+ font-size:9px;
+ font-weight:750;
+ color:#bcd1bd;
+}
+.ng-network-footer>div{display:flex;align-items:center;gap:8px}
+.ng-network-footer button{
+ padding:4px 7px;
+ min-height:24px;
+ border:1px solid #587e5c;
+ border-radius:3px;
+ background:#2b533c;
+ color:#f1da9a;
+ cursor:pointer;
+ font-size:9px;
+ font-weight:800;
+}
+.ng-network-footer button:disabled{opacity:.35;cursor:default}
+.ng-network-evidence{
+ padding:8px 10px;
+ border-top:1px solid #597660;
+ background:#233e31;
+}
+.ng-network-evidence>header{
+ color:#f3e3a9;
+ font-size:10px;
+ font-weight:800;
+ padding:0 0 4px;
+ background:transparent;
+}
+.ng-network-evidence p{
+ font-size:11px;
+ line-height:1.35;
+ margin:4px 0;
+}
+.ng-network-evidence small{
+ font-size:9px;
+ color:#b9cbbd;
+}
+@media(min-width:1081px){
+ .ng-route-profile .ng-profile-person .ng-person-network-card{
+  max-height:none;
+  overflow:hidden!important;
+  padding:0!important;
+ }
+ .ng-route-profile .ng-profile-person .ng-person-network-card>header{
+  min-height:30px!important;
+  padding:6px 10px!important;
+ }
+ .ng-route-profile .ng-profile-person .ng-person-network-screen{
+  overflow:hidden!important;
+ }
+}
+@media(max-width:1080px){
+ .ng-person-network-toolbar{align-items:flex-start;flex-direction:column}
+ .ng-network-table-head,.ng-network-table-row{
+  grid-template-columns:minmax(0,1.5fr) minmax(0,.85fr) minmax(0,.8fr);
+ }
+ .ng-network-table-head>span:last-child,
+ .ng-network-table-row>span:last-child{display:none}
+ .ng-network-explanation span{max-width:100%}
+ .ng-network-footer{flex-wrap:wrap}
+}
