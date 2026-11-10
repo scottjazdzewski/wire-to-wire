@@ -37,6 +37,14 @@
 - **Office whitespace:** At normal desktop viewport sizes, first increase legibility and size of source-backed text in Decision Desk/Intelligence/Your Call rather than inventing new facts or empty cards. No-scroll Tier 1 Overviews remain the highest priority.
 - **Verification:** Regressions are checked in `tests/next-office-v7.test.mjs`; browser screenshot acceptance is distinct from code/test/deployment success.
 
+## Permanent horse owner-badge and OOTP directory rules (2026-11-10)
+- Every horse name displayed in a navigable profile, Stable Roster, Race Schedule, People/Farm horse-assignment link, Organization Overview or global search roster must use the **same `horseOwnerBadge` component** beside its name.
+- An owner badge represents actual owner/owner-organization identity, **not** the horse's trainer, barn, racing stable, foaling farm or currently associated person. Unknown ownership is explicitly shown with the same neutral '?' mark and accessible "Owner not recorded" label. Never apply the player's stable crest merely because a horse is on a managed roster.
+- Owner IDs/names are projected read-only from the existing Office horse records and `horseState` (original source bridge). Where available, approved crests are read from `organization-logo-index.json` using owner keys. A known owner without approved imagery uses initials in the same shield; future official crest assets replace that fallback automatically.
+- Global Search uses one compact **OOTP-style roster table**, not large two-column tiles. Type / Name / Role or Detail / Owner / Open are aligned fields with category filters, sortable Name/Type/Owner columns and viewport-sized pagination. Live typing updates only results, preserving focus. A page's navigation target is an existing source route; do not index imaginary game entities.
+- An Overview does not need extra cards merely to occupy every pixel; allow meaningful visual hierarchy, but do not squander desktop space on redundant page headings or 50px-high list rows.
+- Person Profile next visual checkpoint: make the unassessed-state panels adaptive in height; present real horse assignments and actionable activity prominently, with reputation/network intact and no fabricated talent or career figures.
+
 ## Tier 1 signoff before moving into detail views
 - Inspect Horse, People, Farm, Track and Organization Overview directly in an authenticated desktop browser.
 - Verify compact role/location header and 3-column content at common desktop viewport sizes.
