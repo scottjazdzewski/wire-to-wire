@@ -11,6 +11,31 @@ const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute(
 const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableSearch:''};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
+
+let personGeographyProjection=null; // Source-linked read-only UI projection of approved Participant_Geography.
+let personGeographyLoading=false;
+function loadPersonGeography(){
+ if(personGeographyProjection||personGeographyLoading)return;
+ personGeographyLoading=true;
+ fetch('/data/person-geography-ui-v33.json',{credentials:'same-origin',cache:'force-cache'})
+ .then(r=>{if(!r.ok)throw Error('People geography unavailable');return r.json()})
+ .then(data=>{
+  if(data?.schema==='WTW_UI_PERSON_GEOGRAPHY_PROJECTION_V1'&&Array.isArray(data.people)&&data.person_count===data.people.length){
+    personGeographyProjection=data;schedulePaint(20);
+  }
+ })
+ .catch(()=>{/* Preserve unknown geography; never invent nationality, hometown or base. */})
+ .finally(()=>{personGeographyLoading=false});
+}
+function personGeographyRecord(source,name){
+ if(!personGeographyProjection)return null;
+ const id=source?.dataset.personId?.trim();
+ if(id)return personGeographyProjection.people.find(x=>x.id===id&&x.name===name)||null;
+ // Temporary legacy Office bridge; ambiguous names are never joined.
+ const matches=personGeographyProjection.people.filter(x=>x.name===name);
+ return matches.length===1?matches[0]:null;
+}
+
 const genericDeskPhoto='/assets/office/approved-office-photo.jpg';
 let organizationLogoIndex=null; // UI-only logo asset refs; organization authority stays in the game database.
 
@@ -414,13 +439,58 @@ function profileDetail(route){
  </div>`:'';
 
  const factByName=label=>fields.find(f=>f.label.toLowerCase()===label.toLowerCase())?.value||'—';
- const personIdentityKnown=[['ROLE',factByName('Role')],['AGE',factByName('Age')],['BIRTHPLACE',factByName('Birthplace')],['CURRENT BASE',factByName('Location')]]
-  .filter(([label,value])=>label==='ROLE'||(value&&value!=='—'&&value!=='Unknown'&&value!=='Not recorded'));
- const entityHeaderFields=isPerson?personIdentityKnown:
+ if(isPerson)loadPersonGeography();
+ const approvedPerson=isPerson?personGeographyRecord(source,route.title):null;
+ const gamePerson=state().staffState?.[route.title]||{};
+ const gameIdentity=gamePerson.identity||{};
+ const provenanceOK=record=>record&&Array.isArray(record.source_refs)&&record.source_refs.length>0;
+ const normalizeLocation=x=>{
+  if(!x)return '—';
+  if(typeof x==='string')return x.trim()||'—';
+  const regions={Florida:'FL','West Virginia':'WV','California':'CA','New York':'NY','Kentucky':'KY','Louisiana':'LA','Maryland':'MD','Virginia':'VA','New Jersey':'NJ','Pennsylvania':'PA'};
+  const places=[x.city,x.region?(regions[x.region]||x.region):null].filter(Boolean);
+  if(!places.length&&x.country)return x.country;
+  return places.join(', ')||'—';
+ };
+ const knownField=x=>Boolean(x&&x!=='—'&&x!=='Unknown'&&x!=='Not recorded');
+ const personBorn=approvedPerson?.birthplace||null;
+ const personCountry=personBorn?.country||null;
+ const personNationality=provenanceOK(gameIdentity)?gameIdentity.nationality||'':factByName('Nationality');
+ const personOriginLabel=knownField(personNationality)?'NATIONALITY':'BIRTH COUNTRY';
+ const personOriginValue=knownField(personNationality)?personNationality:(personCountry||'—');
+ const personFlagCode=(personBorn?.flag_code||'').toLowerCase();
+ const flagAllowed=new Set(['us','ca','gb','gb-eng','ie','fr','ar','jp','nz','cl','de','pr','au','cu','pa','ve','es','pe','co','at','mx','uy']);
+ const personFlagImg=personBorn&&flagAllowed.has(personFlagCode)?`<img class="ng-person-national-flag" src="/assets/flags/v1/${safe(personFlagCode)}.svg" alt="" width="22" height="16" decoding="async"/>`:'';
+ const personHometown=knownField(factByName('Birthplace'))?factByName('Birthplace'):normalizeLocation(personBorn);
+ const currentBase=provenanceOK(gameIdentity)&&gameIdentity.current_base?normalizeLocation(gameIdentity.current_base):factByName('Location');
+ const historicalBase=approvedPerson?.opening_base||approvedPerson?.career_base;
+ const historicalBaseLabel=approvedPerson?.opening_base?'1999 BASE':'CAREER BASE';
+ const baseLabel=knownField(currentBase)?'CURRENT BASE':historicalBase?historicalBaseLabel:'CURRENT BASE';
+ const personBaseValue=knownField(currentBase)?currentBase:normalizeLocation(historicalBase);
+ const isoBorn=provenanceOK(gameIdentity)?gameIdentity.date_of_birth||'':'';
+ const currentYear=String(state()?.date||'2014-07-15').slice(0,10);
+ const personDOB=/^\d{4}-\d{2}-\d{2}$/.test(isoBorn)?isoBorn:'';
+ const ageAtGameDate=personDOB&&/^\d{4}-\d{2}-\d{2}$/.test(currentYear)?
+  (()=>{const dob=new Date(personDOB+'T00:00:00Z'),now=new Date(currentYear+'T00:00:00Z');
+   if(Number.isNaN(dob.getTime())||Number.isNaN(now.getTime())||now<dob)return null;
+   let years=now.getUTCFullYear()-dob.getUTCFullYear();
+   if(now.getUTCMonth()<dob.getUTCMonth()||now.getUTCMonth()===dob.getUTCMonth()&&now.getUTCDate()<dob.getUTCDate())years--;
+   return String(years);
+  })():null;
+ const personAge=ageAtGameDate||factByName('Age');
+ const personIdentityFields=isPerson?[
+  ['ROLE',factByName('Role'),''],
+  [personOriginLabel,personOriginValue,personFlagImg],
+  ['AGE',personAge,''],
+  ['HOMETOWN',personHometown,''],
+  [baseLabel,personBaseValue,'']
+ ]:[];
+
+ const entityHeaderFields=isPerson?personIdentityFields:
   isFarm?[['LOCATION',factByName('Location')],['TYPE',factByName('Type')],['OWNER',factByName('Owner')],['STATUS',factByName('Current status')]]:
   isTrack?[['LOCATION',factByName('Location')],['SURFACES',factByName('Surfaces')],['OPERATING',factByName('Operating state')],['CIRCUIT',text('.profileSubline').split('·').slice(1).join('·').trim()||'—']]:[];
  const entityIdentityRow=entityHeaderFields.length?
-  `<div class="ng-tier1-biography" aria-label="${safe(route.kicker)} identity summary">${entityHeaderFields.map(([label,value])=>`<span><small>${safe(label)}</small><strong title="${safe(value)}">${safe(value)}</strong></span>`).join('')}</div>`:'';
+  `<div class="ng-tier1-biography" aria-label="${safe(route.kicker)} identity summary">${entityHeaderFields.map(([label,value,flag])=>`<span><small>${safe(label)}</small><strong title="${safe(value)}">${flag||''}${safe(value)}</strong></span>`).join('')}</div>`:'';
  const identity=`<div class="ng-profile-intro">
   ${profileMark}
   <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${safe(route.title)}</h2>${horseIdentityRow}${entityIdentityRow}${isHorse||isPerson||isFarm||isTrack?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${horseImage?`<div class="ng-profile-source-photo" role="img" aria-label="Approved image of ${safe(route.title)}"><img src="${safe(horseImage)}" alt="" loading="lazy" decoding="async"/></div>`:''}
