@@ -310,11 +310,11 @@ function profileDetail(route){
    return `<section class="ng-athlete-category"><header><h3>${safe(category.toUpperCase())}</h3><small>${assessed}/${keys.length} ASSESSED</small></header><div class="ng-athlete-attributes">${lines}</div></section>`;
   }).join('');
   const categoryBody=categories||'<div class="ng-athlete-no-catalog">Attribute definitions are not loaded. No ratings will be assumed.</div>';
-  const healthNotes=notes.filter(n=>/Health\s*\/\s*Vet|follow-up|Latest decision/i.test(n)).slice(0,3);
+  const healthNote=notes.find(n=>/Health\s*\/\s*Vet/i.test(n));
   const conditions=[
    ['TRAINING STATUS',states[0]||'No observed update'],
    ['RACE PLAN',states.find(v=>/^Target:/.test(v))||'No race selected'],
-   ...healthNotes.map(n=>['OFFICE NOTE',n])
+   ...(healthNote?[['HEALTH / VET',healthNote.replace(/^Health\s*\/\s*Vet\s*[:·-]?\s*/i,'')]]:[])
   ];
   const careerKnown=record.filter(r=>r.value&&r.value!=='—'&&r.value!=='N/A');
   const career=careerKnown.length?`<div class="ng-athlete-career-numbers">${record.map(r=>`<div><strong>${safe(r.value)}</strong><small>${safe(r.label)}</small></div>`).join('')}</div>`:
@@ -374,9 +374,24 @@ function profileDetail(route){
  };
  const isOrganizationProfile=/^(?:Farm|Stable|Organization|Sales Organization|Ownership Group|Breeding Farm) Profile$/.test(route.kicker);
  const profileMark=isOrganizationProfile?organizationLogoMarkup('',route.title,route.kicker==='Farm Profile'?'farm':'organization',true):`<div class="ng-profile-badgeframe"><img src="${badge(route.kicker==='Horse Profile'?'horse':route.kicker==='Track Profile'?'track':route.kicker==='People Profile'?'people':'farm_stable')}" alt="Approved ${safe(route.kicker)} badge"/></div>`;
+
+ const horseField=(label)=>fields.find(f=>f.label.toLowerCase()===label.toLowerCase())?.value||'—';
+ const horseFoalingState=isHorse?(source.dataset.foalingState||'').trim():'';
+ const horseFoalingCountry=isHorse?(source.dataset.foalingCountry||'').trim():'';
+ const horseFoalingCode=isHorse?(source.dataset.foalingCountryCode||'').trim().toUpperCase():'';
+ const horseCountryLabel=horseFoalingCountry==='United States'?'USA':horseFoalingCountry;
+ const horseFlag=/^[A-Z]{2}$/.test(horseFoalingCode)?
+   String.fromCodePoint(...[...horseFoalingCode].map(c=>127397+c.charCodeAt(0))):'';
+ const horseFoalingDisplay=[horseFoalingState,horseCountryLabel].filter(v=>v&&v!=='—').join(', ')||'—';
+ const horseIdentityRow=isHorse?`<div class="ng-horse-biography" aria-label="Horse foaling and identity facts">
+  <span class="ng-horse-bio-foaling"><small>FOALED</small><strong>${horseFlag?`<span class="ng-horse-bio-flag" aria-hidden="true">${horseFlag}</span>`:''}${safe(horseFoalingDisplay)}</strong></span>
+  <span><small>DATE OF BIRTH</small><strong>${safe(horseField('Date of birth'))}</strong></span>
+  <span><small>SEX</small><strong>${safe(horseField('Sex'))}</strong></span>
+  <span><small>AGE</small><strong>${safe(horseField('Age'))}</strong></span>
+ </div>`:'';
  const identity=`<div class="ng-profile-intro">
   ${profileMark}
-  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${safe(route.title)}</h2><p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}</div>${horseImage?`<div class="ng-profile-source-photo" role="img" aria-label="Approved image of ${safe(route.title)}"><img src="${safe(horseImage)}" alt="" loading="lazy" decoding="async"/></div>`:''}
+  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${safe(route.title)}</h2>${horseIdentityRow}<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}</div>${horseImage?`<div class="ng-profile-source-photo" role="img" aria-label="Approved image of ${safe(route.title)}"><img src="${safe(horseImage)}" alt="" loading="lazy" decoding="async"/></div>`:''}
   <div class="ng-profile-tools"><button data-ng="office" aria-label="Return to Racing Office">← OFFICE</button><button data-ng="menu" data-val="${route.kicker==='Track Profile'?'Racing':'Stable'}">${route.kicker==='Track Profile'?'RACE CALENDAR':'STABLE DIRECTORY'} ↗</button></div>
  </div>`;
  let left='',right='',footer='';
