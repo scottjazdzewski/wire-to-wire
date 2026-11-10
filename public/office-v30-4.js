@@ -686,7 +686,7 @@
     const foalingCountryCode=identityField('foaling_country_code','');
     const foalingPlace=[foalingState,foalingCountry==='United States'?'USA':foalingCountry].filter(x=>x&&x!=='—').join(', ')||'—';
     const birthISO=identityField('date_of_birth',identityField('born'));
-    const validBirth=/^\\d{4}-\\d{2}-\\d{2}$/.test(birthISO)&&!Number.isNaN(Date.parse(birthISO+'T00:00:00Z'));
+    const validBirth=/^\d{4}-\d{2}-\d{2}$/.test(birthISO)&&!Number.isNaN(Date.parse(birthISO+'T00:00:00Z'));
     const dateOfBirth=validBirth?new Intl.DateTimeFormat('en-US',{month:'long',day:'numeric',year:'numeric',timeZone:'UTC'}).format(new Date(birthISO+'T00:00:00Z')):birthISO;
     // North American Thoroughbred racing age increments each January 1.
     // Preserve exact birth date separately; age follows the in-world calendar.
