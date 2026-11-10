@@ -5,3 +5,4 @@ export { nextRandom, validateSeed } from './rng.js';
 export { exportGameSave, importGameSave } from './persistence.js';
 export { getOfficeView, getStableView, getCanonicalProfile, getPersonView, getPeopleDirectory, getProfessionalOpportunityRanking } from './selectors.js';
 export { REPUTATION_SCHEMA,validateReputationCatalog,makeReputationBaseline,applyReputationSignal,personReputationView,rankProfessionalCandidates,auditPeopleReputationCoverage } from './reputation.js';
+export {generatePeopleRuntime,normalizePersonRoles} from './people-generator.js';
