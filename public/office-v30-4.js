@@ -57,7 +57,7 @@
   };
   const horseProfileFacts = {
     'Powerline':{age:'—',born:'—',sex:'—',earnings:'—',record:{starts:'—',wins:'—',seconds:'—',thirds:'—'},pedigree:{sire:'—',grandsire:'—',granddam:'—',dam:'—',damsire:'—',secondDam:'—'},connections:{owner:'—',trainer:'—',jockey:'—',breeder:'—',contact:'Gabe Larkin'},achievements:[]},
-    'The Last Match':{age:'—',born:'—',sex:'—',earnings:'—',record:{starts:'—',wins:'—',seconds:'—',thirds:'—'},pedigree:{sire:'—',grandsire:'—',granddam:'—',dam:'—',damsire:'—',secondDam:'—'},connections:{owner:'—',trainer:'—',jockey:'—',breeder:'—',contact:'Harrow & Pike Vet'},achievements:[]},
+    'The Last Match':{age:'—',born:'—',sex:'—',foaling_state:'Kentucky',foaling_country:'United States',foaling_country_code:'US',foaling_provenance:'USER_DIRECTED_2026-11-10',earnings:'—',record:{starts:'—',wins:'—',seconds:'—',thirds:'—'},pedigree:{sire:'—',grandsire:'—',granddam:'—',dam:'—',damsire:'—',secondDam:'—'},connections:{owner:'—',trainer:'—',jockey:'—',breeder:'—',contact:'Harrow & Pike Vet'},achievements:[]},
     'Iron Harbor':{age:'—',born:'—',sex:'—',earnings:'—',record:{starts:'—',wins:'—',seconds:'—',thirds:'—'},pedigree:{sire:'—',grandsire:'—',granddam:'—',dam:'—',damsire:'—',secondDam:'—'},connections:{owner:'—',trainer:'—',jockey:'—',breeder:'—',contact:'—'},achievements:[]},
     'Pieta':{age:'2',born:'—',sex:'—',earnings:'—',record:{starts:'—',wins:'—',seconds:'—',thirds:'—'},pedigree:{sire:'—',grandsire:'—',granddam:'—',dam:'—',damsire:'—',secondDam:'—'},connections:{owner:'—',trainer:'—',jockey:'—',breeder:'—',contact:'Anika Rowe'},achievements:[]},
     'Bellarmine':{age:'—',born:'—',sex:'—',earnings:'—',record:{starts:'—',wins:'—',seconds:'—',thirds:'—'},pedigree:{sire:'—',grandsire:'—',granddam:'—',dam:'—',damsire:'—',secondDam:'—'},connections:{owner:'—',trainer:'—',jockey:'—',breeder:'—',contact:'—'},achievements:[]},
@@ -682,7 +682,9 @@
       return value!==undefined&&value!==null&&String(value).trim()?String(value):fallback;
     };
     const foalingCountry=identityField('foaling_country');
+    const foalingState=identityField('foaling_state','');
     const foalingCountryCode=identityField('foaling_country_code','');
+    const foalingPlace=[foalingState,foalingCountry==='United States'?'USA':foalingCountry].filter(x=>x&&x!=='—').join(', ')||'—';
     const dateOfBirth=identityField('date_of_birth',identityField('born'));
     const profileEscape=value=>String(value??'—').replace(/[&<>"']/g,
       char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -718,14 +720,14 @@
       `Health / Vet · ${vetFlag}`
     ];
     openRoute('Horse Profile', name, `
-      <section class="profilePage horseProfilePage" data-foaling-country-code="${profileEscape(foalingCountryCode)}" data-foaling-country="${profileEscape(foalingCountry)}">
+      <section class="profilePage horseProfilePage" data-foaling-country-code="${profileEscape(foalingCountryCode)}" data-foaling-country="${profileEscape(foalingCountry)}" data-foaling-state="${profileEscape(foalingState)}">
         <div class="profileHero">
           <div class="profilePhoto" data-label="Horse identity"><img class="wtwBadgeIdentity" src="/assets/profile-badges/v2/wtw_badge_horse.png" alt="" aria-hidden="true"></div>
           <div class="profileIdentity">
             <div class="profileEyebrow">Horse</div><h2 class="profileName">${name}</h2>
             <div class="profileSubline">State-aware racing file</div>
             <div class="profileFields">
-              <div class="profileField"><span>Foaled in</span><strong>${profileEscape(foalingCountry)}</strong></div>
+              <div class="profileField"><span>Foaled in</span><strong>${profileEscape(foalingPlace)}</strong></div>
               <div class="profileField"><span>Date of birth</span><strong>${profileEscape(dateOfBirth)}</strong></div>
               <div class="profileField"><span>Sex</span><strong>${profileEscape(identityField('sex'))}</strong></div>
               <div class="profileField"><span>Age</span><strong>${profileEscape(identityField('age'))}</strong></div>
