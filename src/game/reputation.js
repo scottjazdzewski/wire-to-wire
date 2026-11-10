@@ -22,6 +22,9 @@ export function validateReputationCatalog(catalog) {
   ensure(effect.reputation_weight>=0&&effect.reputation_weight<=0.3&&effect.nonreputation_weight===1-effect.reputation_weight,
     'REPUTATION_EFFECT','Reputation cannot outweigh primary practical fit for '+kind);
   ensure(effect.audiences.every(x=>axes.includes(x)),'REPUTATION_AXES','Opportunity audiences must be defined');
+  ensure(Array.isArray(effect.skill_keys)&&effect.skill_keys.length>0,'REPUTATION_SKILLS','Opportunity requires job-specific skills');
+  const allowedSkills=new Set([...catalog.person_common,...Object.values(catalog.person_roles).flat()].map(d=>d.key));
+  ensure(effect.skill_keys.every(key=>allowedSkills.has(key)),'REPUTATION_SKILLS','Opportunity references an unknown professional attribute');
  }
  for(const [signal,deltas] of Object.entries(r.signals||{}))
   for(const [key,delta] of Object.entries(deltas))
@@ -90,8 +93,17 @@ export function rankProfessionalCandidates({catalog,world,state,opportunity,cand
   for(const key of ['ability_fit','relationship_fit','logistics_fit'])ensure(fitOK(c[key]),'CANDIDATE_FIT','Fit must be 0..1');
   return c.available!==false&&c.eligible!==false;
  }).map(c=>{
-  const practical=(0.45*score(c.ability_fit)+0.3*score(c.relationship_fit)+0.25*score(c.logistics_fit));
-  const rep=state.runtime.people[c.person_id]?.reputation;
+  const character=state.runtime.people[c.person_id]||{};
+  const relevant=config.skill_keys.map(key=>character.latent?.[key])
+   .filter(value=>typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=1);
+  const inferredSkill=relevant.length?relevant.reduce((a,b)=>a+b,0)/relevant.length:null;
+  // The game engine can use true latent skills to make AI decisions while the
+  // player-facing selector never returns those secret values.
+  const abilityFit=c.ability_fit??inferredSkill;
+  const clientRelation=opportunity.client_id?character.relationships?.[opportunity.client_id]:null;
+  const relationshipFit=c.relationship_fit??(typeof clientRelation==='number'&&clientRelation>=0&&clientRelation<=1?clientRelation:null);
+  const practical=(0.45*score(abilityFit)+0.3*score(relationshipFit)+0.25*score(c.logistics_fit));
+  const rep=character.reputation;
   const available=config.audiences.map(a=>rep?.scores?.[a]).filter(inRange);
   const standing=available.length?available.reduce((x,y)=>x+y,0)/available.length/100:null;
   const ranking=(config.nonreputation_weight*practical)+(config.reputation_weight*(standing??practical));
