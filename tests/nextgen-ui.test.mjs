@@ -35,7 +35,8 @@ test('Shared profile template replaces duplicate page banners',()=>{
   const css=get('public/next/next.css');
   assert.ok(js.includes('ng-profile-badgeframe'));
   assert.ok(js.includes('ng-route-profile'));
-  assert.ok(js.includes('isProfile?\'\':'));
+  assert.ok(js.includes("isProfile||isOrganization?'':"),'Entity profiles and organization overview must not show duplicate route banners');
+  assert.ok(js.includes("APP.custom==='Organization Overview'?null:currentRoute()"),'Open organization overview must take priority over a stale entity profile route');
   assert.ok(css.includes('.ng-profile-identity'));
   assert.ok(js.includes('function calendarTimeline(races,nonraces)'));
   assert.ok(js.includes('ng-cal-event'));
