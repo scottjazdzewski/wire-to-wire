@@ -53,8 +53,9 @@ test('Office case queue, filters and full-height result sheet are source-driven'
  }
  assert.ok(js.includes('selectAdjacentCase'));
  assert.ok(js.includes('currentMessages().filter(m=>m.resolved)'));
- assert.ok(js.includes('ng-mast-fig" data-ng="menu" data-val="Stable"'));
- assert.ok(js.includes('ng-mast-fig" data-ng="menu" data-val="Racing"'));
+ assert.ok(js.includes('data-ng="menu" data-val="Stable"'),'Stable remains reachable in the top navigation and roster');
+ assert.ok(js.includes('data-ng="menu" data-val="Racing"'),'Racing remains reachable in top navigation and schedule');
+ assert.ok(!js.includes('class="ng-mast'),'Duplicate mast is intentionally absent from compact Office');
  assert.ok(css.includes('.ng-moves:has(>.ng-resolved)'),'A completed decision must use the whole results panel');
  assert.ok(css.includes('.ng-outtext'),'Decision outcomes must remain legible');
  assert.ok(css.includes('.ng-case-pip'),'Case navigation must be visible');
