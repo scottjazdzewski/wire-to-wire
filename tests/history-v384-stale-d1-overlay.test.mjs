@@ -47,7 +47,7 @@ test('historical bootstrap excludes stale D1 race/result and corrects displayed 
   const data=await resp.json();
   assert.deepEqual(data.races.map(x=>x.id),[live]);
   assert.deepEqual(data.results.map(x=>x.edition_id),[live]);
-  assert.deepEqual(data.years,[1922]);
+  assert.deepEqual(data.years,[1922,1958]); // Year navigation stays complete even if one fixture race is held.
   assert.equal(data.counts.races,1);
   assert.equal(data.counts.results,1);
   assert.equal(data.historySource.canonical_race_authority,'Drive E/W/M v3.84 QA_PENDING');
