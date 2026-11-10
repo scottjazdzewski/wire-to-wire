@@ -3,8 +3,9 @@ import {
   requireString, isObject, strictJSON, validateWorld, validateWorldRef, worldIdentity
 } from './contracts.js';
 import { validateSeed } from './rng.js';
+import {generatePeopleRuntime} from './people-generator.js';
 
-export function createGameRun({ world, runId, seed, player, stableHorseIds = [], startDate } = {}) {
+export function createGameRun({ world, runId, seed, player, stableHorseIds = [], startDate, personGenerationCatalog = null } = {}) {
   validateWorld(world);
   requireString(runId, 'runId', 128);
   ensure(/^WTW-RUN-[A-Za-z0-9_-]+$/.test(runId), 'INVALID_RUN_ID', 'Use an explicit namespaced WTW-RUN-* ID');
@@ -27,7 +28,7 @@ export function createGameRun({ world, runId, seed, player, stableHorseIds = [],
     rng: { seed: seed >>> 0 },
     player: { role: player.role, involvement: player.involvement, operation_id: operationId },
     stable_horse_ids: [...stableHorseIds],
-    runtime: { horse: {}, races: {}, entries: {}, people: {}, finances: { balance_minor: null, ledger: [] } },
+    runtime: { horse: {}, races: {}, entries: {}, people: personGenerationCatalog?generatePeopleRuntime({world,catalog:personGenerationCatalog}):{}, finances: { balance_minor: null, ledger: [] } },
     decisions: { pending: {}, resolved: {} },
     scheduler: { pending: [], delivered_ids: [] },
     command_receipts: {},
