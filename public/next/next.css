@@ -1038,87 +1038,6 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
 }
 
 
-/* Office mast and paired decision/briefing titlebars — unified visual language.
-   The former flex:1 brand stretched the blank space between title and KPIs. */
-.ng-mast-office .ng-brand{
- flex:0 0 clamp(270px,22vw,326px)!important;
- min-width:0!important;
-}
-.ng-mast-office .ng-mast-focus{
- flex:1 1 195px;
- min-width:0;
- max-width:540px;
- height:58px;
- padding:8px 13px;
- display:flex;
- flex-direction:column;
- align-items:flex-start;
- justify-content:center;
- gap:3px;
- text-align:left;
- color:#e5f1ec;
- background:linear-gradient(90deg,#19372f,#18312d);
- border:1px solid #3d6255;
- border-left:3px solid #d4b672;
- border-radius:4px;
- overflow:hidden;
- cursor:pointer;
- transition:background-color .15s,border-color .15s;
-}
-.ng-mast-office .ng-mast-focus:hover{
- background:linear-gradient(90deg,#244a3d,#204036);
- border-color:#78947c;
-}
-.ng-mast-office .ng-mast-focus:focus-visible{outline:2px solid #f1d28c;outline-offset:2px}
-.ng-mast-focus-kicker{
- width:100%;
- display:flex;
- align-items:center;
- gap:7px;
- font-size:9px;
- font-weight:800;
- letter-spacing:.11em;
- color:#e2c984;
- white-space:nowrap;
-}
-.ng-mast-focus-kicker .ng-live-dot{width:6px;height:6px}
-.ng-mast-focus-status{
- margin-left:auto;
- font-size:8px;
- letter-spacing:.065em;
- color:#b6cdc0;
-}
-.ng-mast-focus>strong{
- max-width:100%;
- color:#fff8e7;
- font-size:12.6px;
- font-weight:760;
- line-height:1.2;
- white-space:nowrap;
- overflow:hidden;
- text-overflow:ellipsis;
-}
-.ng-mast-focus>small{
- display:flex;
- align-items:center;
- gap:5px;
- max-width:100%;
- font-size:9.5px;
- line-height:1.2;
- color:#b2c9c0;
- white-space:nowrap;
- overflow:hidden;
- text-overflow:ellipsis;
-}
-.ng-mast-focus>small .ng-svg{flex:0 0 auto}
-@media(max-width:1279px){
- .ng-mast-office .ng-mast-focus{display:none!important}
- .ng-mast-office .ng-brand{flex:1 1 auto!important}
-}
-@media(min-width:1280px) and (max-height:720px){
- .ng-mast-office .ng-mast-focus{height:49px;padding:5px 10px;gap:2px}
- .ng-mast-office .ng-mast-focus>strong{font-size:11.6px}
-}
 /* Both lower panels now have one exact header component.
    Color only distinguishes the glyph; geometry and hierarchy are identical. */
 .ng-main .ng-intel>.ng-cardhead,
@@ -1213,4 +1132,125 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
  .ng-main .ng-choices>.ng-cardhead{height:46px!important;min-height:46px!important;max-height:46px!important;flex-basis:46px!important}
  .ng-main .ng-intel>.ng-cardhead .ng-headinggroup h3,
  .ng-main .ng-choices>.ng-cardhead .ng-headinggroup h3{font-size:13px!important}
+}
+
+
+/* Compact football-management application chrome — no redundant Office mast.
+   Core metrics remain in their owning Inbox / Stable / Racing panels. */
+.ng-global{
+ height:48px!important;
+ min-height:48px!important;
+ flex:0 0 48px!important;
+ padding:0 10px!important;
+ gap:5px!important;
+ background:#0b1819!important;
+ border-bottom:1px solid #3a574f!important;
+}
+.ng-global .ng-mini-home{display:flex;align-items:center;justify-content:center;flex:none;padding:0 3px!important}
+.ng-global .ng-logo-mini{width:30px!important;height:30px!important;margin:0 7px!important}
+.ng-global .ng-hist{flex:none}
+.ng-global .ng-global-tools{flex:none;gap:4px!important}
+.ng-global .ng-primary{flex:1 1 0!important;min-width:0!important;overflow-x:auto!important;scrollbar-width:thin!important;scrollbar-color:#546e63 #0b1819}
+.ng-global .ng-primary>button{flex:0 0 auto!important;white-space:nowrap!important;padding:0 10px!important}
+.ng-global .ng-global-date{
+ flex:0 0 auto;
+ display:flex;
+ flex-direction:column;
+ align-items:flex-start;
+ justify-content:center;
+ min-width:92px;
+ min-height:35px;
+ gap:0;
+ padding:2px 8px;
+ margin-left:5px;
+ color:#e2ece7;
+ background:transparent;
+ border:0;
+ border-left:1px solid #3b5552;
+ text-align:left;
+}
+.ng-global .ng-global-date span{font-size:8px;font-weight:750;letter-spacing:.07em;color:#a8bdaf}
+.ng-global .ng-global-date strong{font-size:12px;font-weight:780;font-variant-numeric:tabular-nums;line-height:1.24;color:#f6f4e8}
+.ng-global .ng-global-date:hover{background:#1a342e}
+.ng-global .ng-global-continue{
+ flex:0 0 auto;
+ height:35px;
+ min-width:116px;
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ gap:7px;
+ padding:0 9px;
+ margin-left:3px;
+ background:linear-gradient(180deg,#d64c54,#ac2935);
+ color:#fff;
+ border:1px solid #df7073;
+ border-radius:4px;
+ font-size:11.8px!important;
+ font-weight:800!important;
+ letter-spacing:.04em;
+ box-shadow:0 2px 6px #0006;
+ white-space:nowrap;
+}
+.ng-global .ng-global-continue:hover{filter:brightness(1.12)}
+.ng-global .ng-global-continue .ng-svg:last-child{margin-left:3px}
+.ng-subbar{
+ height:32px!important;
+ min-height:32px!important;
+ flex:0 0 32px!important;
+ padding:0 8px!important;
+ background:#13252a!important;
+ border-bottom:1px solid #39534e!important;
+}
+.ng-subbar .ng-subnav{width:100%;min-width:0;overflow-x:auto;scrollbar-width:none}
+.ng-subbar .ng-subnav::-webkit-scrollbar{display:none}
+.ng-subbar .ng-subnav button{flex:0 0 auto;padding:0 12px;font-size:11px!important}
+@media(max-width:1380px) and (min-width:781px){
+ .ng-global .ng-primary>button{padding:0 7px!important;font-size:10.4px!important}
+ .ng-global .ng-global-date{min-width:86px;padding-left:6px;padding-right:5px}
+ .ng-global .ng-global-continue{min-width:105px;padding:0 7px;gap:5px;font-size:10.7px!important}
+}
+@media(max-width:780px){
+ .ng-global{
+  height:auto!important;
+  min-height:85px!important;
+  flex:0 0 auto!important;
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-content:center!important;
+  align-items:center!important;
+  overflow:visible!important;
+  padding:4px 7px 0!important;
+  gap:3px!important;
+ }
+ .ng-global .ng-mini-home{order:1}
+ .ng-global .ng-hist{order:2}
+ .ng-global .ng-global-tools{order:3;margin-left:auto}
+ .ng-global .ng-global-date{order:4;min-width:78px;margin:0;border-left:0;padding:0 4px}
+ .ng-global .ng-global-continue{order:5;min-width:104px;height:32px;margin-left:0}
+ .ng-global .ng-primary{
+  order:6;
+  flex:0 0 100%!important;
+  width:100%!important;
+  height:35px!important;
+  min-width:0!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  border-top:1px solid #304640;
+ }
+ .ng-global .ng-primary>button{font-size:11px!important;height:35px!important;padding:0 12px!important}
+ .ng-subbar{overflow:hidden!important}
+ .ng-subbar .ng-subnav{min-width:0!important}
+}
+@media(max-width:500px){
+ .ng-global .ng-hist{display:none!important}
+ .ng-global .ng-global-tools .ng-iconbtn:nth-child(2){display:none!important}
+ .ng-global .ng-global-date span{display:none}
+ .ng-global .ng-global-date{min-width:70px}
+ .ng-global .ng-global-date strong{font-size:10.5px}
+ .ng-global .ng-global-continue{min-width:99px;padding:0 6px}
+}
+@media(max-height:660px) and (min-width:781px){
+ .ng-global{height:43px!important;min-height:43px!important;flex-basis:43px!important}
+ .ng-subbar{height:29px!important;min-height:29px!important;flex-basis:29px!important}
 }
