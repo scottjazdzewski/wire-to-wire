@@ -1,4 +1,4 @@
-/* WIRE TO WIRE / NEXT v3 — OFFICE MASTER DESIGN SYSTEM
+/* WIRE TO WIRE NEXT v3 — OFFICE MASTER DESIGN SYSTEM
  * One active stylesheet. Office components built deliberately as a sports-management
  * desktop application, connected to the original Office state and decision engine. */
 :root{color-scheme:dark;--wt-bg:#11161b;--wt-shell:#0e1318;--wt-head:#202930;--wt-card:#1d252b;--wt-card2:#202a31;--wt-row:#20292f;--wt-row2:#263037;--wt-line:#3b484e;--wt-line2:#4a5b60;--wt-text:#f3f6f6;--wt-muted:#bac6c5;--wt-dim:#91a2a4;--wt-gold:#e3c777;--wt-forest:#1d5240;--wt-green:#31d3a0;--wt-red:#d64a55;--wt-blue:#80b8d4;--wt-radius:5px}
