@@ -221,7 +221,7 @@ test('FM/OOTP connected profiles: people, farms, tracks, sourced graphics, click
  const i=js.indexOf('function profileDetail('),j=js.indexOf('function calendarTimeline(',i);
  const profile=js.slice(i,j);
  for(const type of ['Horse','People','Farm','Track']) assert.ok(profile.includes("route.kicker==='"+type+" Profile'"),type+' template must use the existing profile adapter');
- assert.ok(profile.includes("['Overview','Stable Horses','Career','Connections','History']"),'Person profile needs stable and career drill-downs');
+ assert.ok(profile.includes("['Overview','Attributes','Reputation','Stable Horses','Career','Connections','History']"),'People profile needs skill, reputation, stable and career drill-downs');
  assert.ok(profile.includes("['Overview','Connected Horses','Operations','Connections','History']"),'Farm needs connected horse and operation drill-downs');
  assert.ok(profile.includes("['Overview','Meet Schedule','Major Races','Connections','History']"),'Track profile preserves its meet and stakes navigation');
  assert.ok(profile.includes('function')===false||profile.includes('sourcePanels'),'Profile data should remain in existing source panels');
@@ -298,6 +298,36 @@ test('Horse athletic overview uses four sourced FM-style trait groups with expli
  assert.ok(css.includes('.ng-athlete-groups{'),'Four groups must be laid out together rather than as long vertical cards');
  assert.ok(css.includes('grid-template-columns:repeat(4,minmax(0,1fr))'),'Overview groups must fit across the desktop viewport');
  assert.ok(css.includes('.ng-athlete-attribute strong.unknown'),'Unassessed traits must not receive a quality meter or fabricated color grade');
+ const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(syntax.status,0,syntax.stderr);
+});
+
+
+test('People profiles surface skills and sourced industry reputation without conflating trust',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css');
+ const source=get('public/office-v30-4.js');
+ const cat=JSON.parse(get('public/assets/game/attribute-catalog.v1.json'));
+ const profile=js.slice(js.indexOf('function profileDetail('),js.indexOf('function calendarTimeline('));
+ assert.ok(cat.reputation.schema==='WTW_PERSON_REPUTATION_V1');
+ assert.ok(cat.reputation.scale.min===0&&cat.reputation.scale.max===100);
+ assert.ok(cat.person_roles.stable_staff&&cat.person_roles.bloodstock_professional);
+ assert.ok(cat.display.person_overview.common.includes('judgment'));
+ for(const item of ['mount','training_assignment','mating','sale_consignment','purchase','hiring']){
+  assert.ok(cat.reputation.effects[item],item+' must have an opportunity impact');
+  assert.ok(cat.reputation.effects[item].reputation_weight<=0.30,'Reputation is meaningful but not a substitute for true competence');
+ }
+ assert.ok(profile.includes('const personWork=()=>'),'People should use a reusable human character model');
+ assert.ok(profile.includes('ng-person-workspace'),'Overview should show useful professional skills, reputation and appointments immediately');
+ assert.ok(profile.includes('data-val="Attributes"'),'Skills must have a working full Attributes tab');
+ assert.ok(profile.includes('data-val="Reputation"'),'Professional standing must have an evidence/history tab');
+ assert.ok(profile.includes("work.reputation_profile"),'Office prototype may display only an explicitly supplied, sourced reputation');
+ assert.ok(profile.includes("source?.schema==='WTW_PERSON_REPUTATION_V1'"),'Only game reputation schema ratings should be shown');
+ assert.ok(profile.includes('Array.isArray(source.source?.refs)&&source.source.refs.length>0'),'Reputation cannot be invented without baseline provenance');
+ assert.ok(profile.includes("work.attribute_observations"),'Person traits must come from saved observed evidence, not hidden ability');
+ assert.ok(profile.includes("obs.evidence_refs.length>0"),'Traits require observation evidence');
+ assert.ok(css.includes('.ng-person-workspace'),'Three useful information columns replace dead overview space');
+ assert.ok(source.includes("Trust is an interpersonal relationship, not earned industry reputation."),'Legacy trust cannot be passed off as an industry rating');
+ assert.ok(!source.includes("return {label:'Unrated',pct:50}"),'Unrated people must not have a fake 50% reputation bar');
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);
 });
