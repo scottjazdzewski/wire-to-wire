@@ -231,10 +231,10 @@ test('FM/OOTP connected profiles: people, farms, tracks, sourced graphics, click
  assert.ok(profile.includes("const index=btn?$$('#routeBody [data-act]').indexOf(btn)"),'Linked entity action indexes must use the full NodeList');
  assert.ok(profile.includes("connectedHorseRows()"),'Linked person/farm horses must remain actionable');
  assert.ok(profile.includes("data-ng=\"sourcebutton\""),'Linked records and races must trigger original source handlers');
- assert.ok(profile.includes('stakesTable(6)'),'Track overview must include a source-backed compact stakes table');
+ assert.ok(profile.includes('stakesTable(5)'),'Track Overview must show a compact sourced stakes preview');
  assert.ok(profile.includes("stakesTable()"),'Track Major Races should list all available source rows');
  assert.ok(profile.includes('reputationGauge'),'Person graphics must use source reputation, not fabricated values');
- assert.ok(profile.includes('ng-detail-cols-entity'),'People/Farm/Track use one shared desktop layout');
+ assert.ok(profile.includes('ng-detail-cols-tier1')&&profile.includes('ng-detail-cols-person'),'People, Farm and Track overviews use the shared Tier 1 desktop layout');
  assert.ok(profile.includes("officePhotoIndex?.entities?.[entityPhotoKind+':'+route.title]"),'Entity photos must use the previously approved photo-index mapping');
  assert.ok(css.includes('Connected subpage family: desktop information density'),'One common desktop layout governs connected profiles');
  assert.ok(css.includes('overflow-y:auto!important'),'Information must scroll within the profile workspace');
@@ -374,9 +374,50 @@ test('Horse Profile uses real licensed country flag artwork and keeps the identi
  assert.ok(profile.includes('class="ng-horse-bio-flag" src='),'Foaling flag is a real image, not a text glyph that renders US');
  assert.ok(!profile.includes('String.fromCodePoint(...[...horseFoalingCode]'),'Emoji codepoints are unreliable for Windows flags');
  assert.ok(profile.includes('horseIdentityRow'),'Birth location and identity remain beside horse name');
- assert.ok(profile.includes("${isHorse?'':`<p>"),'Horse Overview omits duplicate status and race-target chips while other profiles retain context');
+ assert.ok(profile.includes("isHorse||isPerson||isFarm||isTrack?'':"),'Tier 1 profile headers omit duplicate state chips while lower-tier profiles preserve context');
  assert.ok(css.includes('.ng-profile-horse .ng-horse-bio-flag{'),'Flag should be consistently small and aligned with identity line');
  assert.ok(css.includes('.ng-detail-cols-horse-overview'),'Horse Overview remains desktop-first without a long scrolling page');
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);
+});
+
+
+test('Tier 1 entity screens use the same compact identity bar and no-scroll Overview design',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css');
+ const p=js.slice(js.indexOf('function profileDetail('),js.indexOf('function calendarTimeline('));
+ for(const key of ['isHorse','isPerson','isFarm','isTrack']) assert.ok(p.includes(key),'All Tier 1 entity kinds must stay in the same profile renderer');
+ assert.ok(p.includes('ng-tier1-biography'),'People, Farm and Track identity details must sit beside the name, like Horse');
+ for(const field of ['BIRTHPLACE','CURRENT BASE','LOCATION','SURFACES','CIRCUIT','OWNER','STATUS'])assert.ok(p.includes("'"+field+"'"),'Known identity field '+field+' must be accessible in the header');
+ assert.ok(p.includes('ng-tier1-workspace'),'Farm and Track Overview use matching three-column workspaces');
+ assert.ok(p.includes('ng-person-workspace'),'People Overview retains its attribute/reputation/career columns');
+ assert.ok(p.includes("special.slice(0,5)"),'First-tier People Overview shows the decisive skills rather than the entire secondary record');
+ assert.ok(p.includes('stakesTable(5)'),'Track shows real linked stakes without overfilling the overview');
+ assert.ok(p.includes('data-val="Connected Horses"'),'Farm primary screen must link directly to its deeper horse records');
+ assert.ok(p.includes('data-val="Major Races"'),'Track primary screen must link to full stakes history');
+ assert.ok(p.includes('data-val="Reputation"'),'People primary screen must link to full sourced reputation details');
+ assert.ok(css.includes('TIER 1 DESKTOP PROFILE FAMILY'),'Shared Tier 1 screen layout is documented in existing stylesheet');
+ assert.ok(css.includes('.ng-detail-cols-tier1'),'Farm/Track workspaces must have a dedicated viewport-sized body');
+ assert.ok(css.includes('.ng-detail-cols-person'),'People Overview must be bounded to the viewport');
+ assert.ok(css.includes('overflow:hidden!important'),'Overview panels must not become independently scrollable');
+ assert.ok(css.includes('.ng-tier1-biography strong'),'Identity line must truncate instead of creating horizontal scroll');
+ const check=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(check.status,0,check.stderr);
+});
+
+test('Tier 1 Organization Overview has six purposeful panels and no duplicate header',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css');
+ const org=js.slice(js.indexOf('function organizationOverview('),js.indexOf('function dueActionOverview('));
+ for(const heading of ['STABLE ROSTER','RACING COMMITMENTS','OPEN DECISIONS','FOLLOW-UPS','FINANCES & OPERATIONS','MANAGEMENT DEPARTMENTS']){
+  assert.ok(org.includes(heading),'Organization screen must include functional area '+heading);
+ }
+ assert.ok(org.includes("horses.slice(0,4)")&&org.includes("races.slice(0,4)")&&org.includes("follow.slice(0,4)"),'At-a-glance lists should be concise, with clickable drill-downs');
+ assert.ok(org.includes("panel('STABLE ROSTER','ALL HORSES'"),'Full roster remains accessible');
+ assert.ok(org.includes("panel('RACING COMMITMENTS','CALENDAR'"),'All commitments remain accessible');
+ assert.ok(org.includes("panel('OPEN DECISIONS','ALL FILES'"),'All open cases remain accessible');
+ assert.ok(org.includes("cashDisplay()"),'No invented cash appears in management dashboard');
+ assert.ok(js.includes("isProfile||isOrganization?'':"),'Organization Overview must not show two competing title banners');
+ assert.ok(js.includes('ng-route-organization'),'Organization Overview has its own compact desktop route');
+ assert.ok(css.includes('grid-template-columns:repeat(3,minmax(0,1fr))!important'),'Six organization panels should occupy a three-column dashboard');
+ assert.ok(css.includes('.ng-tier1-org .ng-org-overview-list{'),'First-tier management lists are bounded to the viewport');
+ assert.ok(css.includes('overflow:hidden!important'),'Top-level screens should not need independent panel scrolling');
 });
