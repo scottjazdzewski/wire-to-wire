@@ -119,6 +119,36 @@ function dueActions(){
 }
 function openOrganization(){APP.custom='Organization Overview';APP.section='Office';APP.page='Overview';paint()}
 
+
+/* Full operation overview using only the live Office state; no additional ledger. */
+function organizationOverview(){
+ const org=playerOrganization(),st=state(),horses=horseRows(),races=racingRows(),messages=currentMessages(),follow=openFollowUps(),due=dueActions();
+ const leads=$('.app .oppList .oppItem').length;
+ const entered=races.filter(r=>/Entered/i.test(r.status)).length;
+ const stat=(label,value)=>'<div><strong>'+safe(value)+'</strong><small>'+safe(label)+'</small></div>';
+ const link=(key,val,title,desc)=>'<button data-ng="'+safe(key)+'" data-val="'+safe(val)+'"><strong>'+safe(title)+'</strong><span>'+safe(desc)+'</span>'+glyph('right',14)+'</button>';
+ const panel=(title,linkLabel,key,val,body)=>'<section class="ng-org-overview-panel"><header><h3>'+safe(title)+'</h3><button data-ng="'+safe(key)+'" data-val="'+safe(val)+'">'+safe(linkLabel)+' '+glyph('arrow',12)+'</button></header><div class="ng-org-overview-list">'+(body||'<p>No matching records in the current Office.</p>')+'</div></section>';
+ const horseRowsHTML=horses.map(h=>link('horse',h.name,h.name,h.activity||'Stable file')).join('');
+ const raceRowsHTML=races.map((r,i)=>link('fixture',i,r.name,r.date+' · '+r.track+' · '+r.status)).join('');
+ const dueRowsHTML=follow.map(f=>link('followup',f.id,f.caseTitle||f.caseId||'Follow-up',(f.dueDate||'No date')+' · '+(due.includes(f)?'DUE':'OPEN'))).join('');
+ const decisionRowsHTML=messages.filter(m=>!m.resolved).map(m=>link('case',m.case,m.title,m.from)).join('');
+ const financialStatus=typeof st.finances?.stable?.status==='string'?st.finances.stable.status:'Financial baseline not established';
+ const cash=availableCash();
+ const finance='<div class="ng-org-finance"><small>AVAILABLE CASH</small><strong>'+safe(cashDisplay())+'</strong><p>'+safe(financialStatus)+(cash===null?' · No verified dollar amount':'')+'</p></div>';
+ const navigation='<div class="ng-org-shortcuts"><button data-ng="menu" data-val="Finances">FINANCES</button><button data-ng="custom" data-val="Opportunities">OPPORTUNITIES ('+leads+')</button><button data-ng="menu" data-val="Sales">SALES</button><button data-ng="menu" data-val="Personnel">PEOPLE</button><button data-ng="menu" data-val="Facilities">FACILITIES</button></div>';
+ return '<div class="ng-org-overview"><div class="ng-org-overview-top">'+organizationLogoMarkup(org.id,org.name,'stable',true)+
+  '<div class="ng-org-overview-name"><small>YOUR RACING OPERATION</small><h2>'+safe(org.name)+'</h2><p>All current management commitments, sourced from this Office save.</p></div></div>'+
+  '<div class="ng-org-overview-stats">'+stat('HORSES',horses.length)+stat('RACE TARGETS',races.length)+stat('CONFIRMED ENTRIES',entered)+stat('OPEN CASES',messages.filter(m=>!m.resolved).length)+stat('DUE',due.length)+stat('OPPORTUNITIES',leads)+'</div>'+
+  '<div class="ng-org-overview-grid">'+panel('STABLE ROSTER','ALL HORSES','menu','Stable',horseRowsHTML)+panel('RACING COMMITMENTS','CALENDAR','menu','Racing',raceRowsHTML)+
+  panel('FOLLOW-UPS','DECISION DESK','office','',dueRowsHTML)+panel('OPEN DECISIONS','ALL DECISIONS','tab','Decisions',decisionRowsHTML)+
+  '<section class="ng-org-overview-panel"><header><h3>FINANCES & OPERATIONS</h3></header>'+finance+navigation+'</section></div></div>';
+}
+function dueActionOverview(){
+ const due=dueActions();
+ const rows=due.map(f=>'<button data-ng="followup" data-val="'+safe(f.id)+'"><strong>'+safe(f.caseTitle||f.caseId||'Follow-up')+'</strong><span>'+safe((f.dueDate||'Due')+' · '+(f.text||'Follow-up is due'))+'</span>'+glyph('right',14)+'</button>').join('');
+ return '<div class="ng-due-overview"><h2>DUE MANAGEMENT ACTIONS</h2><p>Follow-ups requiring attention before you advance the calendar.</p><div class="ng-org-overview-list">'+(rows||'<p>No follow-ups are due right now.</p>')+'</div><button data-ng="office">BACK TO RACING OFFICE</button></div>';
+}
+
 function header(){
  const date=$('.dateChip')?.textContent.trim()||'2014-07-15';
  const due=dueActions();
@@ -266,7 +296,9 @@ function functionalRoute(route){
  return null;
 }
 function renderRoute(){const route=currentRoute();const title=route?.title||APP.custom||'Page';const kicker=route?.kicker||APP.section;const bdg=route?badge(({'Horse Profile':'horse','People Profile':'people','Farm Profile':'farm_stable','Track Profile':'track','Race Calendar':'meet_schedule','Stable':'farm_stable','Sales':'connections','News':'history','World':'track','Opportunity Board':'reputation'}[route.kicker])||'history'):pageBadge();
-let body='';const profile=route&&/Profile$/.test(route.kicker)?profileDetail(route):null;const functional=route?functionalRoute(route):null;if(profile)body=profile;else if(functional)body=functional;else if(route)body=route.body;else if(APP.custom==='Messages'){body=`<section class="ng-customcard"><h3>Messages and correspondence</h3><p>Select any item to return to the Decision Desk and review its options.</p>${currentMessages().map(m=>`<button data-ng="case" data-val="${safe(m.case)}">${safe(m.from)} — ${safe(m.title)}</button>`).join('')}</section>`}
+let body='';const profile=route&&/Profile$/.test(route.kicker)?profileDetail(route):null;const functional=route?functionalRoute(route):null;if(profile)body=profile;else if(functional)body=functional;else if(route)body=route.body;else if(APP.custom==='Organization Overview'){body=organizationOverview()}
+else if(APP.custom==='Due Actions'){body=dueActionOverview()}
+else if(APP.custom==='Messages'){body=`<section class="ng-customcard"><h3>Messages and correspondence</h3><p>Select any item to return to the Decision Desk and review its options.</p>${currentMessages().map(m=>`<button data-ng="case" data-val="${safe(m.case)}">${safe(m.from)} — ${safe(m.title)}</button>`).join('')}</section>`}
 else if(APP.custom==='Decisions'){body=`<section class="ng-customcard"><h3>Today's Decisions</h3>${currentMessages().map(m=>`<button data-ng="case" data-val="${safe(m.case)}">${safe(m.title)} ↗</button>`).join('')}</section>`}
 else if(APP.custom==='Opportunities'){body=`<section class="ng-customcard"><h3>Opportunity Board</h3><p>Uncommitted racing and commercial leads from the Office's original data.</p><button data-ng="action" data-val="Open opportunity board">OPEN EXISTING OPPORTUNITY BOARD ↗</button></section>`}
 else if(APP.custom==='Search'){body=`<section class="ng-customcard"><h3>Find a horse or racetrack</h3><p>Search across the horses and racecourses currently connected to this Office.</p>${horseRows().map(h=>`<button data-ng="horse" data-val="${safe(h.name)}">${safe(h.name)}</button>`).join('')}${racingRows().map(r=>`<button data-ng="track" data-val="${safe(r.track)}">${safe(r.track)}</button>`).join('')}</section>`}
@@ -281,6 +313,14 @@ window.addEventListener('click',e=>{
  e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();
  const key=btn.dataset.ng, val=btn.dataset.val||'';
  if(!key && btn.dataset.act){syntheticAction(btn);return}
+ if(key==='organization')return openOrganization();
+ if(key==='due'){APP.section='Office';APP.page='Overview';APP.custom='Due Actions';return paint()}
+ if(key==='followup'){
+  const item=openFollowUps().find(f=>String(f.id)===val);
+  if(!item||!item.caseId)return;
+  APP.custom='';APP.section='Office';APP.page='Overview';
+  return selectMessage(item.caseId);
+ }
  if(key==='menu')return openMenu(val);
  if(key==='tab')return pageTab(val);
  if(key==='office')return goOffice();
