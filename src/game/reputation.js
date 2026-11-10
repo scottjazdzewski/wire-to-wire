@@ -62,11 +62,11 @@ export function applyReputationSignal({catalog,profile,signal,date,source_refs,e
 }
 export function personReputationView(profile,catalog){
  const r=validateReputationCatalog(catalog);
- if(!profile)return {score:null,label:'Unrated',axes:r.axes.map(a=>({key:a.key,label:a.label,score:null})),as_of:null,events:0};
+ if(!profile)return {score:null,label:'Unrated',origin:null,axes:r.axes.map(a=>({key:a.key,label:a.label,score:null})),as_of:null,events:0};
  ensure(coreProfile(profile),'REPUTATION_SCHEMA','Invalid reputation profile');
  const score=profile.scores.overall??null;
  const label=score===null?'Unrated':score<25?'Emerging':score<50?'Developing':score<75?'Established':score<90?'Highly regarded':'Elite';
- return {score,label,axes:r.axes.map(a=>({key:a.key,label:a.label,score:profile.scores[a.key]??null})),
+ return {score,label,origin:profile.source?.kind||null,axes:r.axes.map(a=>({key:a.key,label:a.label,score:profile.scores[a.key]??null})),
   as_of:profile.as_of,events:profile.history.length};
 }
 /**
