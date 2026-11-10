@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {api,historicalSourceStatus,isHistoricalEditionVisible} from '../src/worker.js';
 import inactive from '../data/history-audit/qa-pending-v384-inactive-edition-ids.json' with {type:'json'};
+import {qaPendingInactiveEditionIds,qaPendingInactiveAuthority} from '../src/history-inactive-read-model.js';
 
 const held='HSE-1958-0006'; // Quarantined in Drive v3.84, ACTIVE in stale D1 fixtures.
 const live='RE-1922-US-2602';
@@ -32,6 +33,8 @@ test('authoritative 223-ID historical hold list is deterministic and source-labe
   assert.equal(inactive.counts.excluded,223);
   assert.equal(inactive.excluded.length,223);
   assert.equal(new Set(inactive.excluded.map(r=>r.edition_id)).size,223);
+  assert.equal(qaPendingInactiveAuthority,'V3.84_QA_PENDING');
+  assert.deepEqual([...qaPendingInactiveEditionIds].sort(),inactive.excluded.map(r=>r.edition_id).sort());
   assert.equal(historicalSourceStatus.exclusion_list_size,223);
   assert.equal(historicalSourceStatus.result_delta_status,'NOT_RECONCILED_NOT_PROMOTED');
 });
