@@ -11,8 +11,8 @@ test('Office uses exactly one authoritative visual stylesheet',()=>{
   const sheets=html.split('\n').filter(line=>line.includes('rel="stylesheet"')).map(line=>line.match(/href="([^"]+)"/)?.[1]);
   assert.deepEqual(sheets,['/next/next.css']);
   const css=get('public/next/next.css');
-  assert.match(css,/OFFICE MASTER DESIGN SYSTEM/);
-  assert.match(css,/WTW NEXT v5/);
+  assert.match(css,/UNIFIED DESKTOP MANAGEMENT DESIGN SYSTEM/);
+  assert.ok(css.includes('.ng-featurebody')&&css.includes('.ng-intelgrid')&&css.includes('.ng-search-roster-page'),'Main Office, analyst grid and Search share one rebuilt stylesheet');
   assert.ok(!css.includes('@import'),'Runtime stylesheet may not import a second style layer');
   assert.ok(!css.includes('wtw_badge_horse_profile.png'),'Deprecated badge path leaked');
   for(const badge of ['horse','people','farm_stable','track','pedigree','career_record','achievements','reputation','meet_schedule','major_races','connections','history']){
