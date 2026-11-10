@@ -790,3 +790,32 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
 .ng-primary>button{flex:0 0 auto!important}
 @media(max-width:1450px){.ng-primary>button{font-size:10.8px!important;padding:0 8px!important}}
 @media(max-width:1100px){.ng-primary>button{font-size:10px!important;padding:0 7px!important}}
+
+/* Racing Office interaction/readability audit: make controls navigable and avoid cutting off case copy. */
+#wtwNextgen .ng-board button:focus-visible,
+#wtwNextgen .ng-global button:focus-visible,
+#wtwNextgen .ng-subbar button:focus-visible{
+ outline:2px solid #f1d28c!important;
+ outline-offset:-3px!important;
+ position:relative;
+ z-index:2;
+}
+#wtwNextgen .ng-msg.on .ng-msgtitle{color:#fff8df!important}
+#wtwNextgen .ng-msgtrail,#wtwNextgen .ng-entrytag{font-variant-numeric:tabular-nums}
+#wtwNextgen .ng-rosterrow:focus-visible,
+#wtwNextgen .ng-entryrow:focus-visible,
+#wtwNextgen .ng-intelitem:focus-visible,
+#wtwNextgen .ng-move:focus-visible{background:#315349!important}
+@media(min-width:781px){
+ .ng-main .ng-choices>.ng-moves{overflow-x:hidden!important;overflow-y:auto!important;scrollbar-width:thin;scrollbar-color:#58776e #192a2b}
+ .ng-main .ng-intel .ng-intelgrid{overflow-x:hidden!important;overflow-y:auto!important;scrollbar-width:thin;scrollbar-color:#58776e #192a2b}
+ .ng-main .ng-choices .ng-moves>.ng-resolved{overflow-y:auto!important}
+}
+@media(max-width:780px){
+ .ng-main .ng-choices>.ng-moves{overflow-y:visible!important}
+ .ng-main .ng-intel .ng-intelgrid{overflow-y:visible!important}
+ .ng-main .ng-featurebody{min-height:290px!important}
+ .ng-main .ng-casetitle h2{font-size:18px!important;line-height:1.19!important;overflow-wrap:anywhere}
+ .ng-main .ng-caseactions{flex-wrap:wrap!important}
+ .ng-main .ng-decision-scene-caption{font-size:7.5px!important;white-space:normal!important;max-width:calc(100% - 12px);right:6px!important;bottom:6px!important}
+}
