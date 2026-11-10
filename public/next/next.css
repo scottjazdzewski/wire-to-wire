@@ -2823,3 +2823,158 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
  background:#1c3428;
  opacity:.42;
 }
+
+/* Horse Profile desktop lock: inline identity facts and a complete no-scroll Overview.
+   Deep history/career tabs retain their own record navigation. */
+.ng-profile-horse .ng-horse-biography{
+ display:flex;
+ align-items:center;
+ flex-wrap:wrap;
+ gap:4px 16px;
+ margin:4px 0 5px;
+ min-width:0;
+}
+.ng-profile-horse .ng-horse-biography>span{
+ display:inline-flex;
+ align-items:center;
+ gap:6px;
+ min-width:0;
+ padding-right:14px;
+ border-right:1px solid #56745e;
+}
+.ng-profile-horse .ng-horse-biography>span:last-child{border-right:0}
+.ng-profile-horse .ng-horse-biography small{
+ color:#b9d0bc!important;
+ font-size:9px!important;
+ line-height:1.25!important;
+ font-weight:780;
+ white-space:nowrap;
+ letter-spacing:.04em;
+}
+.ng-profile-horse .ng-horse-biography strong{
+ display:inline-flex;
+ align-items:center;
+ gap:5px;
+ color:#f6e2b0!important;
+ font-size:11.5px!important;
+ line-height:1.25;
+ font-weight:760;
+ white-space:nowrap;
+}
+.ng-profile-horse .ng-horse-bio-flag{
+ font-size:18px;
+ line-height:1;
+ display:inline-block;
+}
+@media(min-width:1081px){
+ .ng-route-profile .ng-profile-horse .ng-profile-intro{
+  min-height:0!important;
+  padding:7px 13px!important;
+  gap:11px!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-profile-identity{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-start!important;
+  justify-content:center!important;
+  gap:0!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-profile-intro h2{
+  margin:3px 0 1px!important;
+  font-size:clamp(21px,1.7vw,24px)!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-profile-intro p{
+  font-size:10px!important;
+  line-height:1.2!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-status-pills{
+  margin-top:4px!important;
+  gap:4px!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-status-pills span{
+  padding:2px 6px!important;
+  font-size:9px!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-detail-cols-horse-overview{
+  overflow:hidden!important;
+  min-height:0!important;
+  padding-bottom:0!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-athlete-screen{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:5px!important;
+  height:auto!important;
+  min-height:0!important;
+  overflow:hidden!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-athlete-groups{
+  gap:5px!important;
+  flex:0 0 auto!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-athlete-group-heading{
+  min-height:22px!important;
+  padding:3px 8px!important;
+  flex:0 0 auto!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-athlete-category>header{
+  min-height:29px!important;
+  padding:5px 7px!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-athlete-attributes{
+  padding:2px 5px 3px!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-athlete-attribute{
+  min-height:23px!important;
+  padding:3px 5px!important;
+  line-height:1.1!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-athlete-secondary{
+  gap:5px!important;
+  flex:0 0 auto!important;
+  min-height:0!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-athlete-info{
+  min-height:0!important;
+  height:auto!important;
+  overflow:hidden!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-athlete-info>header{
+  min-height:29px!important;
+  flex-basis:29px!important;
+  padding:0 9px!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-athlete-detailrows{
+  padding:3px 7px!important;
+  overflow:visible!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-athlete-detailrows>div{
+  min-height:23px!important;
+  padding:3px 5px!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-athlete-unavailable{
+  padding:8px 10px!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-athlete-info .ng-horse-context-actions{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:4px!important;
+  padding:4px 5px!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-athlete-info .ng-horse-context-actions button{
+  padding:4px 6px!important;
+  font-size:9px!important;
+ }
+}
+@media(min-width:1081px) and (max-height:740px){
+ .ng-route-profile .ng-profile-horse .ng-profile-badgeframe{
+  width:54px!important;
+  height:54px!important;
+  flex-basis:54px!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-profile-badgeframe img{width:53px!important;height:53px!important}
+ .ng-route-profile .ng-profile-horse .ng-profile-intro{padding:5px 10px!important}
+ .ng-route-profile .ng-profile-horse .ng-horse-biography{margin:2px 0!important}
+ .ng-route-profile .ng-profile-horse .ng-athlete-category>header{min-height:26px!important;padding:4px 6px!important}
+ .ng-route-profile .ng-profile-horse .ng-athlete-attribute{min-height:21px!important;padding:2px 5px!important}
+}
