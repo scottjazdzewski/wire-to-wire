@@ -28,6 +28,15 @@
 6. Main Office is frozen. New visual work must not rewrite source game state, seed entities, change save keys or invent historical records.
 7. Test the layout at 1280×800, 1366×768, 1440×900; automated tests and Cloudflare deployment passing do not count as authenticated pixel-level signoff.
 
+## Permanent navigation, typography and justification rules (2026-11-10)
+- **Back/Forward:** The compact global arrows use the actual visited browser page history. Original Office entity routes and UI-only destinations must push navigable entries. Popstate and direct URL loads restore the corresponding view; route changes must never be simulated with inactive buttons.
+- **Global Search:** The search icon and Ctrl+K lead to a typeahead directory of all *currently openable* horse, people, farm, track and race records, management pages and available decisions. Use original handlers and the historical Archive rather than creating a shadow data registry. Unknown names produce an explicit no-match state; do not invent a page.
+- **Presentation capitalization:** All human profession/role labels are consistently **Title Case** (e.g., **Stable Staff**, **Bloodstock Agent**, **Farm Manager**) in headers, relationships, menus and search results. Preserve actual canonical person data unchanged; use a centralized display formatter.
+- **Centered UI geometry:** Center controls and their iconography vertically/horizontally, center comparable KPI and status values, and place all text/icon/button content on matching baselines. Use consistent heading heights, row padding, column widths, and balanced spacing across same-tier screens.
+- **Readability exception:** Do not center paragraphs, long horse/person names, narrative intelligence, legal/source notes or dense table descriptions. Leave those left-aligned for scanning. *Center justification is a layout consistency rule, not a blanket text-align:center instruction.*
+- **Office whitespace:** At normal desktop viewport sizes, first increase legibility and size of source-backed text in Decision Desk/Intelligence/Your Call rather than inventing new facts or empty cards. No-scroll Tier 1 Overviews remain the highest priority.
+- **Verification:** Regressions are checked in `tests/next-office-v7.test.mjs`; browser screenshot acceptance is distinct from code/test/deployment success.
+
 ## Tier 1 signoff before moving into detail views
 - Inspect Horse, People, Farm, Track and Organization Overview directly in an authenticated desktop browser.
 - Verify compact role/location header and 3-column content at common desktop viewport sizes.
