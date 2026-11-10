@@ -139,3 +139,31 @@ test('Racing Office source-linked interactions are correct and visually unambigu
  const check=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(check.status,0,check.stderr);
 });
+
+
+test('Organization logo slot, operations overview, cash and due-alert read only canonical save state',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css');
+ const logos=JSON.parse(get('public/assets/office/organization-logo-index.json'));
+ assert.deepEqual(logos.organizations,{},'Do not invent organization branding or a parallel identity registry');
+ assert.ok(js.includes("localStorage.getItem('wtwOfficeStateV30')"),'Keep the canonical Office save key');
+ assert.ok(js.includes('function organizationLogoMarkup('),'All organizations need a reusable image/placeholder slot');
+ assert.ok(js.includes('const isOrganizationProfile=/'),'Farm and future organization profile templates must reuse this mark');
+ assert.ok(js.includes("kind==='stable'?'player':''"),'Player-stable logo can be attached without a new organization record');
+ assert.ok(js.includes('ng-org-chip" data-ng="organization"'),'Decision Desk must link its stable mark to the operations overview');
+ assert.ok(js.includes("APP.custom='Organization Overview'"),'Logo must open the actual operation overview');
+ assert.ok(js.includes("else if(APP.custom==='Organization Overview'){body=organizationOverview()}"),'Organization view is wired into existing route rendering');
+ assert.ok(js.includes('organizationLogoMarkup(playerOrganization().id,playerOrganization().name'), 'Overview and Office mark use the same identity');
+ assert.ok(js.includes('function openFollowUps()'),'Follow-ups must be read from saved state');
+ assert.ok(js.includes('function dueActions()'),'Due marker must be calculated from saved follow-up deadlines');
+ assert.ok(js.includes('data-ng="due"'),'Due action must have a working navigation handler');
+ assert.ok(js.includes("else if(APP.custom==='Due Actions'){body=dueActionOverview()}"),'Due marker must open a full actionable list');
+ assert.ok(js.includes("const values=[stable.available_cash,stable.availableCash"),'Cash must be derived only from explicit money fields');
+ assert.ok(js.includes("return value===undefined?null:value"),'Unknown cash must not show an invented dollar amount or zero');
+ assert.ok(!js.includes('cash_flexibility,stable'),'Qualitative finance effects cannot be interpreted as money');
+ assert.ok(css.includes('.ng-main .ng-feature>.ng-cardhead .ng-org-chip{'),'Organization button should live beside the Decision Desk heading');
+ assert.ok(css.includes('.ng-org-overview-grid{'),'Full linked operations overview must exist');
+ assert.ok(css.includes('.ng-global .ng-global-due{'),'Show due indicator in the compact global header');
+ assert.ok(css.includes('.ng-global .ng-global-cash{'),'Show available cash indicator in the compact global header');
+ const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(syntax.status,0,syntax.stderr);
+});
