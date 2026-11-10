@@ -277,7 +277,8 @@ function profileDetail(route){
    const index=$$('#routeBody [data-act]').indexOf(row.node);
    return index<0?'':'<button class="ng-stakes-data" data-ng="sourcebutton" data-val="'+index+'">'+cols.map(v=>'<span>'+safe(v)+'</span>').join('')+'</button>';
   }).join('')||'<div class="ng-empty-record">No verified stakes rows connected.</div>')+'</div>';
- const horseImage=isHorse?officeAssetPath(officePhotoIndex?.entities?.['horse:'+route.title]):'';
+ const entityPhotoKind=isHorse?'horse':isPerson?'person':isFarm?'farm':isTrack?'track':'';
+ const horseImage=entityPhotoKind?officeAssetPath(officePhotoIndex?.entities?.[entityPhotoKind+':'+route.title]):'';
  const sourceDecision=isHorse?$('#routeBody [data-act="Open profile decision"]'):null;
  const sourceFollowUp=isHorse?$('#routeBody [data-act="Open follow-up"]'):null;
  const quickLinks=[sourceDecision?'<button data-ng="sourcebutton" data-val="'+$$('#routeBody [data-act]').indexOf(sourceDecision)+'">OPEN RELATED DECISION '+glyph('arrow',12)+'</button>':'',
@@ -287,7 +288,7 @@ function profileDetail(route){
  const profileMark=isOrganizationProfile?organizationLogoMarkup('',route.title,route.kicker==='Farm Profile'?'farm':'organization',true):`<div class="ng-profile-badgeframe"><img src="${badge(route.kicker==='Horse Profile'?'horse':route.kicker==='Track Profile'?'track':route.kicker==='People Profile'?'people':'farm_stable')}" alt="Approved ${safe(route.kicker)} badge"/></div>`;
  const identity=`<div class="ng-profile-intro">
   ${profileMark}
-  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${safe(route.title)}</h2><p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}</div>${horseImage?`<div class="ng-profile-source-photo" role="img" aria-label="Approved image of ${safe(route.title)}"><img src="${safe(horseImage)}" alt=""/></div>`:''}
+  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${safe(route.title)}</h2><p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}</div>${horseImage?`<div class="ng-profile-source-photo" role="img" aria-label="Approved image of ${safe(route.title)}"><img src="${safe(horseImage)}" alt="" loading="lazy" decoding="async"/></div>`:''}
   <div class="ng-profile-tools"><button data-ng="office" aria-label="Return to Racing Office">← OFFICE</button><button data-ng="menu" data-val="${route.kicker==='Track Profile'?'Racing':'Stable'}">${route.kicker==='Track Profile'?'RACE CALENDAR':'STABLE DIRECTORY'} ↗</button></div>
  </div>`;
  let left='',right='',footer='';
