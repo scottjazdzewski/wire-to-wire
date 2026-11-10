@@ -133,21 +133,26 @@ function organizationOverview(){
  const entered=races.filter(r=>/Entered/i.test(r.status)).length;
  const stat=(label,value)=>'<div><strong>'+safe(value)+'</strong><small>'+safe(label)+'</small></div>';
  const link=(key,val,title,desc)=>'<button data-ng="'+safe(key)+'" data-val="'+safe(val)+'"><strong>'+safe(title)+'</strong><span>'+safe(desc)+'</span>'+glyph('right',14)+'</button>';
- const panel=(title,linkLabel,key,val,body)=>'<section class="ng-org-overview-panel"><header><h3>'+safe(title)+'</h3><button data-ng="'+safe(key)+'" data-val="'+safe(val)+'">'+safe(linkLabel)+' '+glyph('arrow',12)+'</button></header><div class="ng-org-overview-list">'+(body||'<p>No matching records in the current Office.</p>')+'</div></section>';
- const horseRowsHTML=horses.map(h=>link('horse',h.name,h.name,h.activity||'Stable file')).join('');
- const raceRowsHTML=races.map((r,i)=>link('fixture',i,r.name,r.date+' · '+r.track+' · '+r.status)).join('');
- const dueRowsHTML=follow.map(f=>link('followup',f.id,f.caseTitle||f.caseId||'Follow-up',(f.dueDate||'No date')+' · '+(due.includes(f)?'DUE':'OPEN'))).join('');
- const decisionRowsHTML=messages.filter(m=>!m.resolved).map(m=>link('case',m.case,m.title,m.from)).join('');
+ const panel=(title,linkLabel,key,val,body,count)=>'<section class="ng-org-overview-panel"><header><h3>'+safe(title)+'</h3><span class="ng-tier1-count">'+safe(String(count))+'</span><button data-ng="'+safe(key)+'" data-val="'+safe(val)+'">'+safe(linkLabel)+' '+glyph('arrow',12)+'</button></header><div class="ng-org-overview-list">'+(body||'<p>No matching records in the current Office.</p>')+'</div></section>';
+ const openCases=messages.filter(m=>!m.resolved);
+ const horseRowsHTML=horses.slice(0,4).map(h=>link('horse',h.name,h.name,h.activity||'Stable file')).join('');
+ const raceRowsHTML=races.slice(0,4).map((r,i)=>link('fixture',i,r.name,r.date+' · '+r.track+' · '+r.status)).join('');
+ const dueRowsHTML=follow.slice(0,4).map(f=>link('followup',f.id,f.caseTitle||f.caseId||'Follow-up',(f.dueDate||'No date')+' · '+(due.includes(f)?'DUE':'OPEN'))).join('');
+ const decisionRowsHTML=openCases.slice(0,4).map(m=>link('case',m.case,m.title,m.from)).join('');
  const financialStatus=typeof st.finances?.stable?.status==='string'?st.finances.stable.status:'Financial baseline not established';
  const cash=availableCash();
  const finance='<div class="ng-org-finance"><small>AVAILABLE CASH</small><strong>'+safe(cashDisplay())+'</strong><p>'+safe(financialStatus)+(cash===null?' · No verified dollar amount':'')+'</p></div>';
- const navigation='<div class="ng-org-shortcuts"><button data-ng="menu" data-val="Finances">FINANCES</button><button data-ng="custom" data-val="Opportunities">OPPORTUNITIES ('+leads+')</button><button data-ng="menu" data-val="Sales">SALES</button><button data-ng="menu" data-val="Personnel">PEOPLE</button><button data-ng="menu" data-val="Facilities">FACILITIES</button></div>';
- return '<div class="ng-org-overview"><div class="ng-org-overview-top">'+organizationLogoMarkup(org.id,org.name,'stable',true,true)+
-  '<div class="ng-org-overview-name"><small>YOUR RACING OPERATION</small><h2>'+safe(org.name)+'</h2><p>All current management commitments, sourced from this Office save.</p></div></div>'+
-  '<div class="ng-org-overview-stats">'+stat('HORSES',horses.length)+stat('RACE TARGETS',races.length)+stat('CONFIRMED ENTRIES',entered)+stat('OPEN CASES',messages.filter(m=>!m.resolved).length)+stat('DUE',due.length)+stat('OPPORTUNITIES',leads)+'</div>'+
-  '<div class="ng-org-overview-grid">'+panel('STABLE ROSTER','ALL HORSES','menu','Stable',horseRowsHTML)+panel('RACING COMMITMENTS','CALENDAR','menu','Racing',raceRowsHTML)+
-  panel('FOLLOW-UPS','DECISION DESK','office','',dueRowsHTML)+panel('OPEN DECISIONS','ALL DECISIONS','tab','Decisions',decisionRowsHTML)+
-  '<section class="ng-org-overview-panel"><header><h3>FINANCES & OPERATIONS</h3></header>'+finance+navigation+'</section></div></div>';
+ const opLinks='<div class="ng-tier1-shortcuts">'+[
+  ['Personnel','PERSONNEL'],['Facilities','FACILITIES'],['Sales','SALES'],['Finances','FINANCES']
+ ].map(([name,label])=>'<button data-ng="menu" data-val="'+safe(name)+'">'+safe(label)+' '+glyph('arrow',12)+'</button>').join('')+
+ '<button data-ng="custom" data-val="Opportunities">OPPORTUNITIES ('+leads+') '+glyph('arrow',12)+'</button></div>';
+ return '<div class="ng-org-overview ng-tier1-org"><div class="ng-org-overview-top">'+organizationLogoMarkup(org.id,org.name,'stable',true,true)+
+  '<div class="ng-org-overview-name"><small>YOUR RACING OPERATION</small><h2>'+safe(org.name)+'</h2><p>Current commitments and decisions · '+safe($('.dateChip')?.textContent.trim()||'Game date pending')+'</p></div></div>'+
+  '<div class="ng-org-overview-stats">'+stat('HORSES',horses.length)+stat('RACE TARGETS',races.length-entered)+stat('CONFIRMED ENTRIES',entered)+stat('OPEN CASES',openCases.length)+stat('DUE',due.length)+stat('OPPORTUNITIES',leads)+'</div>'+
+  '<div class="ng-org-overview-grid">'+panel('STABLE ROSTER','ALL HORSES','menu','Stable',horseRowsHTML,horses.length)+panel('RACING COMMITMENTS','CALENDAR','menu','Racing',raceRowsHTML,races.length)+
+  panel('OPEN DECISIONS','ALL FILES','tab','Decisions',decisionRowsHTML,openCases.length)+panel('FOLLOW-UPS','DECISION DESK','office','',dueRowsHTML,follow.length)+
+  '<section class="ng-org-overview-panel"><header><h3>FINANCES & OPERATIONS</h3><button data-ng="menu" data-val="Finances">FINANCES '+glyph('arrow',12)+'</button></header>'+finance+'</section>'+
+  '<section class="ng-org-overview-panel"><header><h3>MANAGEMENT DEPARTMENTS</h3><span class="ng-tier1-count">5</span></header>'+opLinks+'</section></div></div>';
 }
 function dueActionOverview(){
  const due=dueActions();
@@ -560,8 +565,8 @@ else if(APP.custom==='Decisions'){body=`<section class="ng-customcard"><h3>Today
 else if(APP.custom==='Opportunities'){body=`<section class="ng-customcard"><h3>Opportunity Board</h3><p>Uncommitted racing and commercial leads from the Office's original data.</p><button data-ng="action" data-val="Open opportunity board">OPEN EXISTING OPPORTUNITY BOARD ↗</button></section>`}
 else if(APP.custom==='Search'){body=`<section class="ng-customcard"><h3>Find a horse or racetrack</h3><p>Search across the horses and racecourses currently connected to this Office.</p>${horseRows().map(h=>`<button data-ng="horse" data-val="${safe(h.name)}">${safe(h.name)}</button>`).join('')}${racingRows().map(r=>`<button data-ng="track" data-val="${safe(r.track)}">${safe(r.track)}</button>`).join('')}</section>`}
 else {const category=APP.custom||APP.section;const features=(tabmap[APP.section]||[]).filter(x=>x!=='Overview');body=`<div class="ng-custompage">${features.map(x=>`<section class="ng-customcard"><h3>${safe(x)}</h3><p>The ${safe(category)} view is reserved for source-connected records. We won't invent figures, horse IDs, or outcomes.</p><button data-ng="tab" data-val="${safe(x)}">OPEN ${safe(x).toUpperCase()} ↗</button></section>`).join('')}</div>`}
-const isProfile=Boolean(profile);
-return `<main class="ng-route ${isProfile?'ng-route-profile':''}">${isProfile?'':`<header class="ng-routeheading"><span class="ng-route-badge-slot" aria-hidden="true">${APP.custom==='Organization Overview'?organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',true,true):`<img class="ng-routebadge" src="${safe(bdg)}" alt=""/>`}</span><div class="ng-routetext"><small>${safe(kicker)}</small><h1>${safe(title)}</h1></div><button class="ng-back" data-ng="office">← RACING OFFICE</button></header>`}<div class="ng-routegrid" data-route-key="${safe((route?.kicker||APP.custom||APP.section)+'|'+(route?.title||APP.custom||APP.page))}"><div class="ng-routeinner">${body}</div></div></main>`;}
+const isProfile=Boolean(profile),isOrganization=APP.custom==='Organization Overview';
+return `<main class="ng-route ${isProfile?'ng-route-profile':isOrganization?'ng-route-organization':''}">${isProfile||isOrganization?'':`<header class="ng-routeheading"><span class="ng-route-badge-slot" aria-hidden="true">${APP.custom==='Organization Overview'?organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',true,true):`<img class="ng-routebadge" src="${safe(bdg)}" alt=""/>`}</span><div class="ng-routetext"><small>${safe(kicker)}</small><h1>${safe(title)}</h1></div><button class="ng-back" data-ng="office">← RACING OFFICE</button></header>`}<div class="ng-routegrid" data-route-key="${safe((route?.kicker||APP.custom||APP.section)+'|'+(route?.title||APP.custom||APP.page))}"><div class="ng-routeinner">${body}</div></div></main>`;}
 function paint(){
  if(!APP.ready)return;
  const oldRoute=$('.ng-routegrid',root),oldTab=$('.ng-profiletabs .on',root)?.dataset.val||'';
