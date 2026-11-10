@@ -958,3 +958,9 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
  .ng-main .ng-intel .ng-intelitem b{grid-column:2!important;grid-row:1!important}
  .ng-main .ng-intel .ng-intelitem p{grid-column:2!important;grid-row:2!important}
 }
+
+/* Keep the photo dossier visible even under the legacy low-height fallback. */
+.ng-main>.ng-feature .ng-featurephoto{display:block!important}
+@media(min-width:781px) and (max-height:660px){
+ .ng-main>.ng-feature .ng-featurephoto{display:block!important}
+}
