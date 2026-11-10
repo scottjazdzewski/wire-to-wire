@@ -65,12 +65,26 @@ if(qaPendingInactiveAuthority!=='V3.84_QA_PENDING' ||
    new Set(qaPendingInactiveEditionIds).size!==223)
   throw Error('Historical exclusion authority changed: review before deploying');
 const qaPendingExcludedEditionIds=new Set(qaPendingInactiveEditionIds);
+// Immutable report of the 2026-11-10 protected D1 readback, NOT a permanent
+// auto-certification of future D1 writes and NOT historical source approval.
 export const historicalSourceStatus=Object.freeze({
-  d1_snapshot:'2026-11-07 v3.37 working H/S/E/P/B',
+  d1_snapshot:'2026-11-07 staged H/S/E/P/B export; D1 readback checked 2026-11-10',
   canonical_race_authority:'Drive E/W/M v3.84 QA_PENDING',
   exclusion_list_size:qaPendingExcludedEditionIds.size,
-  result_delta_status:'NOT_RECONCILED_NOT_PROMOTED',
-  warning:'Older site results remain provisional; v3.84 result/date corrections have not been promoted.'
+  result_delta_status:'D1_PARITY_VERIFIED_2026_11_10__SOURCE_QA_PENDING',
+  verification:Object.freeze({
+    as_of:'2026-11-10',
+    kind:'PERMANENT_ID_AND_STORED_RACE_FIELDS_READBACK',
+    stored_edition_count:5370,
+    active_edition_count:5147,
+    inactive_edition_count:223,
+    stored_top_three_count:15561,
+    active_top_three_count:15441,
+    stored_race_field_differences:0,
+    stored_result_id_differences:0,
+    run_url:'https://github.com/scottjazdzewski/wire-to-wire/actions/runs/42891491897'
+  }),
+  warning:'Technical D1 parity verified as of 2026-11-10. Historical E/W/M authority remains QA PENDING; dates marked INTERNAL/WTW_FIXED and year-level people connections are not individually source-certified.'
 });
 export function isHistoricalEditionVisible(edition) {
   if(!edition)return false;
