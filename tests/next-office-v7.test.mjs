@@ -421,3 +421,22 @@ test('Tier 1 Organization Overview has six purposeful panels and no duplicate he
  assert.ok(css.includes('.ng-tier1-org .ng-org-overview-list{'),'First-tier management lists are bounded to the viewport');
  assert.ok(css.includes('overflow:hidden!important'),'Top-level screens should not need independent panel scrolling');
 });
+
+test('Tier 1 People Profile keeps only known identity facts and actions above the fold',()=>{
+ const source=get('public/office-v30-4.js'),js=get('public/next/next.js'),css=get('public/next/next.css');
+ const p=js.slice(js.indexOf('function profileDetail('),js.indexOf('function calendarTimeline('));
+ assert.ok(p.includes('const personIdentityKnown='),'Person header should select known identity facts');
+ assert.ok(p.includes(".filter(([label,value])=>label==='ROLE'"),'Unknown age, birthplace or current base should not waste header width');
+ assert.ok(p.includes("isPerson?'PEOPLE DIRECTORY'"),'Person header must lead to people rather than horse roster');
+ assert.ok(p.includes('class="ng-person-career-strip"'),'Career and assignments need compact summary, not redundant role stats');
+ assert.ok(p.includes('CURRENT HORSE ASSIGNMENTS'),'Person's actual linked horses must be visible immediately');
+ assert.ok(p.includes('data-val="Stable Horses"'),'All person-to-horse connections must remain navigable');
+ assert.ok(p.includes('PROFESSIONAL ATTRIBUTES')&&p.includes('REPUTATION & NETWORK')&&p.includes('CAREER & OPPORTUNITIES'),'OOTP-style professional information remains in three visible cards');
+ assert.ok(p.includes('source?.schema')||p.includes("source?.schema==='WTW_PERSON_REPUTATION_V1'"),'Reputation data must remain validated and attributed');
+ assert.ok(p.includes('Array.isArray(source.source?.refs)&&source.source.refs.length>0'),'No fabricated reputation on the overview');
+ assert.ok(css.includes('Tier 1 People sign-off pass:'),'Desktop-specific People UI fit rules must exist');
+ assert.ok(css.includes('.ng-profile-person .ng-person-career-strip'),'Person career evidence must use a dense two-cell strip');
+ assert.ok(source.includes("'Gabe Larkin':{job:'Stable staff'"),'Original personnel roster must not be rewritten to fill blank facts');
+ const check=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(check.status,0,check.stderr);
+});
