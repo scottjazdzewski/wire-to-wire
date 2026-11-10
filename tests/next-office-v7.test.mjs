@@ -33,3 +33,20 @@ test('v7 Office is a structural command-workspace redesign, not a second stylesh
  const check=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(check.status,0,check.stderr);
 });
+
+
+test('Office sign-off geometry, historical nav, and case-aware actions stay wired to the original data',()=>{
+ const css=get('public/next/next.css'),js=get('public/next/next.js'),archive=get('public/app.js');
+ assert.ok(css.includes('grid-column:1 / -1!important'),'Decision Desk must span the upper center width');
+ assert.ok(css.includes('.ng-main .ng-choices{grid-column:2!important;grid-row:2!important'),'Your Call must start level with Intelligence');
+ assert.ok(css.includes('.ng-main .ng-intel{grid-column:1!important;grid-row:2!important'));
+ assert.ok(js.includes('decisionScene(d)'),'Decision-specific art must be shown in the expanded desk');
+ assert.ok(js.includes('hasRelatedHorse'),'Non-horse decisions must not offer an unrelated Horse Profile');
+ assert.ok(js.includes('resolvedRelatedAction'),'Resolved decision actions must be case-aware too');
+ assert.ok(js.includes("if(section==='History'){window.location.assign('/archive/?page=races');return}"));
+ assert.ok(js.includes("History:['Race Results','Horses','People & Farms','Facilities & Tracks','Historical Calendar','Coverage']"));
+ assert.ok(archive.includes('archivePage'),'Existing history browser must accept deep links');
+ assert.ok(css.includes('button:focus-visible'),'Keyboard users need visible focus');
+ const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(syntax.status,0,syntax.stderr);
+});
