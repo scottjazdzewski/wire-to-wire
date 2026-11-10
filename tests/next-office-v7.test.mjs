@@ -353,3 +353,30 @@ test('The Last Match user-approved birth identity stays locked and its racing ag
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/office-v30-4.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);
 });
+
+
+test('Horse Profile uses real licensed country flag artwork and keeps the identity header uncluttered',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css');
+ const profile=js.slice(js.indexOf('function profileDetail('),js.indexOf('function calendarTimeline('));
+ const codes=['us','ca','gb','gb-eng','ie','fr','ar','jp','nz','cl','de','pr','au'];
+ const license=get('public/assets/flags/v1/LICENSE.flag-icons.txt');
+ assert.ok(license.includes('The MIT License')&&license.includes('Copyright (c) 2013 Panayiotis Lipiridis'),'Retain source SVG flag artwork licensing');
+ for(const code of codes){
+  const svg=get('public/assets/flags/v1/'+code+'.svg');
+  assert.ok(svg.startsWith('<svg')&&svg.includes('</svg>'),'Real SVG flag required for '+code);
+  assert.ok(profile.includes("'"+code+"'"),'Profile must know valid flag '+code);
+ }
+ for(const country of ['united states','canada','england','great britain','ireland','france','argentina','japan','new zealand','chile','germany','puerto rico','australia']){
+  assert.ok(profile.includes("'"+country+"'"),'Grounded flag name alias must exist: '+country);
+ }
+ assert.ok(profile.includes("'england':'gb-eng'"),'England and GB must use different approved flags');
+ assert.ok(profile.includes("'/assets/flags/v1/'+horseFlagCode+'.svg'"),'Flag URL is drawn only from existing local vector assets');
+ assert.ok(profile.includes('class="ng-horse-bio-flag" src='),'Foaling flag is a real image, not a text glyph that renders US');
+ assert.ok(!profile.includes('String.fromCodePoint(...[...horseFoalingCode]'),'Emoji codepoints are unreliable for Windows flags');
+ assert.ok(profile.includes('horseIdentityRow'),'Birth location and identity remain beside horse name');
+ assert.ok(profile.includes("${isHorse?'':`<p>"),'Horse Overview omits duplicate status and race-target chips while other profiles retain context');
+ assert.ok(css.includes('.ng-profile-horse .ng-horse-bio-flag{'),'Flag should be consistently small and aligned with identity line');
+ assert.ok(css.includes('.ng-detail-cols-horse-overview'),'Horse Overview remains desktop-first without a long scrolling page');
+ const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(syntax.status,0,syntax.stderr);
+});
