@@ -1,6 +1,6 @@
 # WTW — DESKTOP SCREEN-TIER AUTHORITY & BUILD ORDER
 **Date:** 2026-11-10
-**UI authority:** Current `main` at `public/next/next.js` and `public/next/next.css`. The approved Racing Office shell, identity shields, real asset media references, and forest-green/gold style remain locked.
+**UI authority:** Current `main` at `public/next/next.js` and the one rebuilt `public/next/next.css`. The canonical visual standard is [`WTW_FM_OOTP_CANONICAL_DESKTOP_STYLE_2026-11-10.md`](WTW_FM_OOTP_CANONICAL_DESKTOP_STYLE_2026-11-10.md): charcoal/slate surfaces, restrained forest-green and racing-gold accents, approved identity shields, source-linked photography, and no CSS override patches.
 **Scope:** Presentation, navigation and layout only. **Gameplay, horse and people attribute generation, AI decisions, simulation state, and canonical world/historical data belong to the separate Playability and Data windows.**
 
 ## Hierarchy and acceptance workflow
