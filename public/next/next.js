@@ -231,6 +231,11 @@ function dueActionOverview(){
 function header(){
  const date=$('.dateChip')?.textContent.trim()||'2014-07-15';
  const due=dueActions();
+ // Each entity Overview has its own fully visible profile navigation.
+ // Do not waste desktop height on unrelated department subtabs.
+ const profileRoute=APP.custom?null:currentRoute();
+ const hasOwnNavigation=Boolean(profileRoute&&/Profile$/.test(profileRoute.kicker))||
+  APP.custom==='Search'||APP.custom==='Organization Overview';
  return `<header class="ng-global" aria-label="Wire to Wire application navigation">
   <div class="ng-hist"><button data-ng="back" aria-label="Previous page" title="Previous page">${glyph('left',15)}</button><button data-ng="forward" aria-label="Next page" title="Next page">${glyph('right',15)}</button></div>
   <button class="ng-mini-home" data-ng="office" title="Racing Office" aria-label="Go to Racing Office"><img class="ng-logo-mini" src="/assets/wtw-office-approved-logo.png" alt="Wire to Wire"/></button>
@@ -241,7 +246,7 @@ function header(){
   ${due.length?'<button class="ng-global-due" data-ng="due" title="Review due management follow-ups">'+glyph('alert',13)+' DUE '+due.length+'</button>':''}
   <button class="ng-global-continue" data-ng="action" data-val="Continue" title="Advance in-world game" aria-label="Continue game">${glyph('play',14)}<span>CONTINUE</span>${glyph('right',15)}</button>
  </header>
- <div class="ng-subbar"><nav class="ng-subnav" aria-label="Section navigation">${(tabmap[APP.section]||['Overview']).map(x=>`<button data-ng="tab" data-val="${safe(x)}" class="${APP.page===x||(APP.page==='Office'&&x==='Overview')?'on':''}">${safe(x)}</button>`).join('')}</nav></div>`;
+ ${hasOwnNavigation?'':`<div class="ng-subbar"><nav class="ng-subnav" aria-label="Section navigation">${(tabmap[APP.section]||['Overview']).map(x=>`<button data-ng="tab" data-val="${safe(x)}" class="${APP.page===x||(APP.page==='Office'&&x==='Overview')?'on':''}">${safe(x)}</button>`).join('')}</nav></div>`}`;
 }
 
 // Real global discovery: known Office entities, connected record pages,
