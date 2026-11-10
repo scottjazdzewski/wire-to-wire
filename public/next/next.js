@@ -508,9 +508,14 @@ function profileDetail(route){
  const personNationality=provenanceOK(gameIdentity)?gameIdentity.nationality||'':factByName('Nationality');
  const personOriginLabel=knownField(personNationality)?'NATIONALITY':'BIRTH COUNTRY';
  const personOriginValue=knownField(personNationality)?personNationality:(personCountry||'—');
- const personFlagCode=(personBorn?.flag_code||'').toLowerCase();
+ // A flag beside NATIONALITY must use separately sourced citizenship, never
+ // assume the birth-country flag is also a person's current citizenship.
+ const personNationalityKnown=knownField(personNationality);
+ const personFlagCode=personNationalityKnown?
+  (provenanceOK(gameIdentity)?String(gameIdentity.nationality_code||'').toLowerCase():''):
+  String(personBorn?.flag_code||'').toLowerCase();
  const flagAllowed=new Set(['us','ca','gb','gb-eng','ie','fr','ar','jp','nz','cl','de','pr','au','cu','pa','ve','es','pe','co','at','mx','uy']);
- const personFlagImg=personBorn&&flagAllowed.has(personFlagCode)?`<img class="ng-person-national-flag" src="/assets/flags/v1/${safe(personFlagCode)}.svg" alt="" width="22" height="16" decoding="async"/>`:'';
+ const personFlagImg=flagAllowed.has(personFlagCode)?`<img class="ng-person-national-flag" src="/assets/flags/v1/${safe(personFlagCode)}.svg" alt="" width="22" height="16" decoding="async"/>`:'';
  const personHometown=knownField(factByName('Birthplace'))?factByName('Birthplace'):normalizeLocation(personBorn);
  const currentBase=provenanceOK(gameIdentity)&&gameIdentity.current_base?normalizeLocation(gameIdentity.current_base):factByName('Location');
  const historicalBase=approvedPerson?.opening_base||approvedPerson?.career_base;
