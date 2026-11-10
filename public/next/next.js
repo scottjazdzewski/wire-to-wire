@@ -260,7 +260,7 @@ function profileDetail(route){
  const sourcePanel=word=>sourcePanels.find(panel=>text('h3',panel).toLowerCase().includes(word.toLowerCase()));
  const connectedPanel=isPerson?sourcePanel('Stable'):isFarm?sourcePanel('Connected Horses'):null;
  const sourceLinks=connectedPanel?$$('.achievementItem',connectedPanel):[];
- const connectedHorseRows=()=>'<div class="ng-entity-links">'+(sourceLinks.map(item=>{
+ const connectedHorseRows=(limit=null)=>'<div class="ng-entity-links">'+((limit===null?sourceLinks:sourceLinks.slice(0,limit)).map(item=>{
   const btn=$('button[data-act]',item);
   const index=btn?$$('#routeBody [data-act]').indexOf(btn):-1;
   const label=(btn?.textContent.trim()||item.textContent.trim()).replace(/\s+/g,' ').trim();
@@ -377,7 +377,7 @@ function profileDetail(route){
    return `<div><span>${safe(axis.label)}</span>${valid?`<span class="ng-person-scorebar" aria-hidden="true"><i style="width:${safe(String(value))}%"></i></span>`:'<span class="ng-person-scorebar empty" aria-hidden="true"></span>'}<strong class="${valid?'known':'unknown'}">${valid?safe(String(value)):'—'}</strong></div>`;
   }).join('')}</div>${relationshipNotice}${!rep?'<p class="ng-person-unrated">Professional reputation is not yet established by the simulation or accepted career evidence. Relationship trust is separate.</p>':`<div class="ng-person-rep-provenance">AS OF ${safe(rep.as_of||'—')} · ${rep.history?.length||0} RECORDED EVENTS</div>`}</div>`;
   const opportunities=role==='jockey'?'MOUNTS':role==='trainer'?'HORSE ASSIGNMENTS':role==='breeder'?'BREEDING PARTNERS':role==='owner'?'HORSE OWNERSHIP':role==='bloodstock_professional'||role==='bloodstock_agent'?'BLOODSTOCK TRANSACTIONS':'PROFESSIONAL APPOINTMENTS';
-  const careerContent=`<div class="ng-person-career-top"><div><small>RECORDED CAREER WINS</small><strong>${safe(personWins||'—')}</strong></div><div><small>ROLE</small><strong>${safe(roleName||'Not specified')}</strong></div></div><div class="ng-person-minihead">CURRENT HORSE CONNECTIONS</div>${connectedHorseRows()}<div class="ng-person-influence"><b>REPUTATION INFLUENCES</b><span>${safe(opportunities)} · INDUSTRY CONTACTS · ACCESS TO OPPORTUNITIES</span><small>Skills, suitability, relationships and availability remain decisive.</small></div>`;
+  const careerContent=`<div class="ng-person-career-top"><div><small>RECORDED CAREER WINS</small><strong>${safe(personWins||'—')}</strong></div><div><small>ROLE</small><strong>${safe(roleName||'Not specified')}</strong></div></div><div class="ng-person-minihead">CURRENT HORSE CONNECTIONS</div>${connectedHorseRows(4)}<div class="ng-person-influence"><b>REPUTATION INFLUENCES</b><span>${safe(opportunities)} · INDUSTRY CONTACTS · ACCESS TO OPPORTUNITIES</span><small>Skills, suitability, relationships and availability remain decisive.</small></div>`;
   const events=rep?.history||[];
   const eventRows=events.length?events.slice().reverse().map(x=>`<div class="ng-person-rep-event"><b>${safe(x.date)}</b><span>${safe(x.signal.replaceAll('_',' '))}</span><small>${safe(x.source_refs?.join(', ')||'No evidence')}</small></div>`).join(''):'<p class="ng-person-unrated">No reputation events have been recorded.</p>';
   return {attributes,reputation,careerContent,eventRows,roleName,rep};
@@ -440,7 +440,7 @@ function profileDetail(route){
   }else if(isFarm){
    left=`<div class="ng-tier1-workspace">
     <section class="ng-tier1-card"><header>FARM AT A GLANCE <button data-ng="detailtab" data-val="Operations">OPERATIONS ${glyph('arrow',11)}</button></header>${rows(fields.filter(f=>!['location','type','owner'].includes(f.label.toLowerCase())))}<div class="ng-tier1-summaryline">Location, ownership and farm type appear beside the name.</div></section>
-    <section class="ng-tier1-card"><header>CONNECTED HORSES <button data-ng="detailtab" data-val="Connected Horses">ALL HORSES ${glyph('arrow',11)}</button></header>${connectedHorseRows()}</section>
+    <section class="ng-tier1-card"><header>CONNECTED HORSES <button data-ng="detailtab" data-val="Connected Horses">ALL HORSES ${glyph('arrow',11)}</button></header>${connectedHorseRows(4)}</section>
     <section class="ng-tier1-card"><header>PEOPLE & CURRENT ACTIVITY <button data-ng="detailtab" data-val="History">HISTORY ${glyph('arrow',11)}</button></header>${connectionRows()}<div class="ng-tier1-subhead">RECORDED ACTIVITY</div><div class="ng-tier1-activity">${farmAchievements.slice(0,2).map(x=>`<div>${safe(x)}</div>`).join('')||'<div>No sourced achievements yet.</div>'}</div></section>
    </div>`;right='';footer='';
   }else if(isTrack){
