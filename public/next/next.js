@@ -235,23 +235,35 @@ function profileDetail(route){
  const notes=$$('.achievementItem',source).map(n=>n.textContent.trim()).filter(Boolean);
  const details=$$('.profilePanel',source).map(n=>({title:text('h3',n),lines:n.textContent.trim().slice(0,700)}));
  const trackRaces=$$('.stakesRow',source).map((n,i)=>({name:text('strong',n),date:n.textContent.trim(),node:n,index:i}));
- const tabs=(route.kicker==='Horse Profile'?['Overview','Career Record','Pedigree','Connections','History']:route.kicker==='Track Profile'?['Overview','Meet Schedule','Major Races','Connections','History']:['Overview','Connections','History']);
+ const isHorse=route.kicker==='Horse Profile';
+ const tabs=(isHorse?['Overview','Career Record','Pedigree','Achievements','Connections','History']:route.kicker==='Track Profile'?['Overview','Meet Schedule','Major Races','Connections','History']:['Overview','Connections','History']);
  const rows=(items)=>'<div class="ng-data-rows">'+items.map(i=>`<div class="ng-data-row"><span>${safe(i.label)}</span><strong>${safe(i.value)}</strong></div>`).join('')+'</div>';
  const pills='<div class="ng-status-pills">'+states.slice(0,4).map(x=>`<span>${safe(x)}</span>`).join('')+'</div>';
- const tabbar='<nav class="ng-profiletabs">'+tabs.map(t=>`<button data-ng="detailtab" data-val="${safe(t)}" class="${APP.detailTab===t?'on':''}">${safe(t)}</button>`).join('')+'</nav>';
+ const tabbar='<nav class="ng-profiletabs" aria-label="${safe(route.kicker)} sections">'+tabs.map(t=>`<button data-ng="detailtab" data-val="${safe(t)}" class="${APP.detailTab===t?'on':''}" aria-current="${APP.detailTab===t?'page':'false'}">${safe(t)}</button>`).join('')+'</nav>';
  const factsBlock=`<div class="ng-profile-facts">${fields.map(f=>`<div><small>${safe(f.label)}</small><strong>${safe(f.value)}</strong></div>`).join('')}</div>`;
+
+ const horseAchievementPanel=isHorse?$('.profilePanel',source).find(panel=>text('h3',panel).includes('Achievements')):null;
+ const horseAchievements=horseAchievementPanel?$('.achievementItem',horseAchievementPanel).map(el=>el.textContent.trim()).filter(Boolean):[];
+ const connectionRows=()=>`<div class="ng-data-rows">${connection.map(f=>`<div class="ng-data-row"><span>${safe(f.label)}</span>${f.button?`<button data-ng="sourcebutton" data-val="${$('#routeBody [data-act]').indexOf(f.button)}" aria-label="Open ${safe(f.label)} profile: ${safe(f.value)}">${safe(f.value)} ↗</button>`:`<strong>${safe(f.value)}</strong>`}</div>`).join('')||'<div class="ng-empty-record">No connected profiles recorded.</div>'}</div>`;
+ const horseImage=isHorse?officeAssetPath(officePhotoIndex?.entities?.['horse:'+route.title]):'';
  const isOrganizationProfile=/^(?:Farm|Stable|Organization|Sales Organization|Ownership Group|Breeding Farm) Profile$/.test(route.kicker);
  const profileMark=isOrganizationProfile?organizationLogoMarkup('',route.title,route.kicker==='Farm Profile'?'farm':'organization',true):`<div class="ng-profile-badgeframe"><img src="${badge(route.kicker==='Horse Profile'?'horse':route.kicker==='Track Profile'?'track':route.kicker==='People Profile'?'people':'farm_stable')}" alt="Approved ${safe(route.kicker)} badge"/></div>`;
  const identity=`<div class="ng-profile-intro">
   ${profileMark}
-  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${safe(route.title)}</h2><p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}</div>
+  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${safe(route.title)}</h2><p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}</div>${horseImage?`<div class="ng-profile-source-photo" role="img" aria-label="Approved image of ${safe(route.title)}"><img src="${safe(horseImage)}" alt=""/></div>`:''}
   <div class="ng-profile-tools"><button data-ng="office" aria-label="Return to Racing Office">← OFFICE</button><button data-ng="menu" data-val="${route.kicker==='Track Profile'?'Racing':'Stable'}">${route.kicker==='Track Profile'?'RACE CALENDAR':'STABLE DIRECTORY'} ↗</button></div>
  </div>`;
  let left='',right='',footer='';
  if(APP.detailTab==='Overview'){
-  left=`<section class="ng-detailcard"><header>IDENTITY & STATUS</header>${factsBlock}</section>`;
-  right=`<section class="ng-detailcard"><header>${route.kicker==='Track Profile'?'RACING & LOCATION':'CONNECTIONS'}</header>${rows(connection.slice(0,6))}</section>`;
-  footer=`<section class="ng-detailcard ng-detailwide"><header>LATEST OFFICE CONTEXT</header><div class="ng-notes">${(notes.length?notes:['No separate performance history is connected to this Office record yet.']).slice(0,4).map(n=>`<div>${safe(n)}</div>`).join('')}</div></section>`;
+  if(isHorse){
+   left=`<section class="ng-detailcard ng-horse-identitycard"><header>IDENTITY & STATUS</header>${factsBlock}</section>`;
+   right=`<section class="ng-detailcard ng-horse-careercard"><header>CAREER SNAPSHOT</header><div class="ng-kpis">${record.map(r=>`<div><strong>${safe(r.value)}</strong><small>${safe(r.label)}</small></div>`).join('')||'<div class="ng-empty-record">No career results linked.</div>'}</div><div class="ng-horse-context">${states.slice(0,4).map(x=>`<div>${safe(x)}</div>`).join('')||'<div>No current racing status reported.</div>'}</div><button class="ng-horse-open-record" data-ng="detailtab" data-val="Career Record">FULL CAREER RECORD ${glyph('arrow',12)}</button></section>`;
+   footer=`<section class="ng-detailcard ng-horse-connections"><header>PEOPLE & STABLE CONNECTIONS</header>${connectionRows()}</section><section class="ng-detailcard ng-detailwide ng-horse-activity"><header>LATEST OFFICE ACTIVITY</header><div class="ng-notes">${(notes.length?notes:['No decision history connected to this horse.']).slice(0,5).map(n=>`<div>${safe(n)}</div>`).join('')}</div></section>`;
+  }else{
+   left=`<section class="ng-detailcard"><header>IDENTITY & STATUS</header>${factsBlock}</section>`;
+   right=`<section class="ng-detailcard"><header>${route.kicker==='Track Profile'?'RACING & LOCATION':'CONNECTIONS'}</header>${rows(connection.slice(0,6))}</section>`;
+   footer=`<section class="ng-detailcard ng-detailwide"><header>LATEST OFFICE CONTEXT</header><div class="ng-notes">${(notes.length?notes:['No separate performance history is connected to this Office record yet.']).slice(0,4).map(n=>`<div>${safe(n)}</div>`).join('')}</div></section>`;
+  }
  }else if(APP.detailTab==='Career Record'){
   left=`<section class="ng-detailcard"><header>CAREER RESULTS</header><div class="ng-kpis">${record.map(r=>`<div><strong>${safe(r.value)}</strong><small>${safe(r.label)}</small></div>`).join('')}</div></section>`;
   right=`<section class="ng-detailcard"><header>HORSE STATUS</header>${factsBlock}</section>`;
@@ -261,15 +273,17 @@ function profileDetail(route){
   right=`<section class="ng-detailcard"><header>MATERNAL LINE</header>${rows(blood.slice(3))}</section>`;
   footer=`<section class="ng-detailcard ng-detailwide"><header>BLOODLINE AUTHORITY</header><div class="ng-notes">No pedigree is invented when the approved source has not yet connected a horse.</div></section>`;
  }else if(APP.detailTab==='Connections'){
-  left=`<section class="ng-detailcard"><header>PEOPLE & FARM CONNECTIONS</header><div class="ng-data-rows">${connection.map(f=>`<div class="ng-data-row"><span>${safe(f.label)}</span>${f.button?`<button data-ng="sourcebutton" data-val="${$$('#routeBody [data-act]').indexOf(f.button)}">${safe(f.value)} ↗</button>`:`<strong>${safe(f.value)}</strong>`}</div>`).join('')}</div></section>`;
+  left=`<section class="ng-detailcard"><header>PEOPLE & FARM CONNECTIONS</header>${connectionRows()}</section>`;
   right=`<section class="ng-detailcard"><header>OFFICE CONTEXT</header>${factsBlock}</section>`;
+ }else if(APP.detailTab==='Achievements'&&isHorse){
+  left=`<section class="ng-detailcard ng-detailwide"><header>RECORDED ACHIEVEMENTS</header><div class="ng-notes">${horseAchievements.map(n=>`<div>${safe(n)}</div>`).join('')||'<div>No achievements documented in the current source record.</div>'}</div></section>`;
  }else if(APP.detailTab==='Meet Schedule'||APP.detailTab==='Major Races'){
   left=`<section class="ng-detailcard ng-detailwide"><header>TRACK EVENTS & SIGNATURE STAKES</header><div class="ng-compact-list">${(trackRaces.length?trackRaces:[]).slice(0,12).map(r=>`<button data-ng="sourcebutton" data-val="${$$('#routeBody [data-act]').indexOf(r.node)}"><b>${safe(r.name)}</b><span>${safe(r.date.slice(r.name.length))}</span><i>›</i></button>`).join('')||'<p>No approved race calendar data linked yet.</p>'}</div></section>`;
  }else{
   left=`<section class="ng-detailcard ng-detailwide"><header>HISTORY & RECORDS</header><div class="ng-notes">${(notes.length?notes:details.map(x=>x.lines)).slice(0,8).map(n=>`<div>${safe(n)}</div>`).join('')||'No official history connected yet.'}</div></section>`;
  }
  const actions=`<div class="ng-detailactions"><button data-ng="menu" data-val="Stable">OPEN STABLE ↗</button><button data-ng="menu" data-val="Racing">RACE CALENDAR ↗</button><button data-ng="office">BACK TO OFFICE</button></div>`;
- return `<div class="ng-profile-view">${identity}${tabbar}<div class="ng-detail-cols">${left}${right}${footer}</div>${actions}</div>`;
+ return `<div class="ng-profile-view ${isHorse?'ng-profile-horse':''}">${identity}${tabbar}<div class="ng-detail-cols ${isHorse&&APP.detailTab==='Overview'?'ng-detail-cols-horse':''}">${left}${right}${footer}</div>${actions}</div>`;
 }
 function calendarTimeline(races,nonraces){
  const iso=$('.dateChip')?.textContent.trim()||'2014-07-15';
