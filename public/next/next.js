@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableSearch:'',networkSort:'best',networkRole:'all',networkPage:0,networkFocus:''};
+const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableSearch:'',networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',searchQuery:'',searchIndex:[]};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -46,28 +46,52 @@ const state=()=>{try{return JSON.parse(localStorage.getItem('wtwOfficeStateV30')
 const originalAct=(act)=>{const o=$$('.app [data-act]').find(n=>n.dataset.act===act);return o||null;};
 function bridgeNode(node){if(!node)return;node.click(); schedulePaint(15)}
 function syntheticAction(el){const dummy=el.cloneNode(true); dummy.style.display='none'; document.body.appendChild(dummy);dummy.click();dummy.remove();schedulePaint(15)}
-function goOffice(){APP.custom='';APP.section='Office';APP.page='Office';bridgeNode(originalAct('Office Overview'));paint()}
+// One browser-history entry per custom UI destination; original Office
+// profile and department routes already push their own history entries.
+function pushUIHistory(view){
+ const p=new URLSearchParams(location.search);
+ for(const key of ['page','name','track','ui'])p.delete(key);
+ if(view)p.set('ui',view);
+ const url=location.pathname+(p.toString()?'?'+p.toString():'');
+ if(url!==location.pathname+location.search)window.history.pushState({wtwUI:view||'office'},'',url);
+}
+function openCustomView(view,section='Office',page='Overview'){
+ APP.custom=view;APP.section=section;APP.page=page;APP.moreOpen=false;
+ pushUIHistory(view);paint();
+}
+function titleCaseUIRole(value){
+ // Display-only: never changes the canonical role stored in the world.
+ return String(value||'').trim().replace(/\b([a-z])([a-z]*)/gi,
+  (word,first,rest)=>/^[A-Z]{2,}$/.test(word)?word:first.toUpperCase()+rest.toLowerCase());
+}
+function goOffice(){
+ const hadCustom=Boolean(APP.custom);
+ APP.custom='';APP.section='Office';APP.page='Office';
+ bridgeNode(originalAct('Office Overview'));
+ if(hadCustom)pushUIHistory('');
+ paint();
+}
 function openMenu(section){
  APP.moreOpen=false;
  if(section==='History'){window.location.assign('/archive/?page=races');return}
  APP.section=section;APP.page='Overview';APP.custom='';
  if(actions[section])bridgeNode(originalAct(actions[section]));
- else{APP.custom=section; paint()}
+ else{openCustomView(section,section,'Overview')}
 }
 function pageTab(name){if(APP.section==='History'){const pages={'Race Results':'races','Horses':'horses','People & Farms':'people','Facilities & Tracks':'tracks','Historical Calendar':'seasons','Coverage':'sources'};window.location.assign('/archive/?page='+encodeURIComponent(pages[name]||'races'));return}APP.page=name; const s=APP.section;
  if(s==='Office'){
    if(name==='Overview')return goOffice();
-   if(name==='Messages'){APP.custom='Messages';return paint()}
-   if(name==='Decisions'){APP.custom='Decisions';return paint()}
+   if(name==='Messages')return openCustomView('Messages','Office',name)
+   if(name==='Decisions')return openCustomView('Decisions','Office',name)
    if(name==='Calendar')return bridgeNode(originalAct('Race Calendar'));
    if(name==='News')return bridgeNode(originalAct('News'));
-   if(name==='Reports'||name==='Career'){APP.custom=name;return paint()}
+   if(name==='Reports'||name==='Career')return openCustomView(name,'Office',name)
  }
  if(s==='Stable'&&(name==='Overview'||name==='Horses'))return bridgeNode(originalAct('Stable'));
  if(s==='Racing'&&(name==='Overview'||name==='Calendar'||name==='Entries'||name==='Stakes'))return bridgeNode(originalAct('Race Calendar'));
  if(s==='Sales'&&(name==='Overview'||name==='Auctions'))return bridgeNode(originalAct('Sales'));
  if(s==='World'&&(name==='Overview'||name==='Tracks'||name==='Meets'||name==='Major Races'))return bridgeNode(originalAct('World'));
- APP.custom=`${s} — ${name}`;paint();
+ openCustomView(`${s} — ${name}`,s,name);
 }
 const currentMessages=()=>$$('.left .msg[data-case]').map(n=>({case:n.dataset.case,from:$('.from',n)?.textContent.trim()||'Stable Office',title:$('.title',n)?.textContent.trim()||'',meta:$('.meta',n)?.textContent.trim()||'',time:$('.time',n)?.textContent.trim()||'',urgent:n.classList.contains('urgent'),resolved:n.classList.contains('resolved'),initials:$('.avatar',n)?.textContent.trim()||'WT'}));
 const selectMessage=id=>{APP.activeCase=id;const m=$(`.left .msg[data-case="${CSS.escape(id)}"]`);
@@ -148,7 +172,7 @@ function dueActions(){
  const date=String($('.dateChip')?.textContent.trim()||state().date||'').slice(0,10);
  return openFollowUps().filter(f=>f.status==='due'||(f.status==='open'&&/^\d{4}-\d{2}-\d{2}$/.test(String(f.dueDate||''))&&f.dueDate<=date));
 }
-function openOrganization(){APP.custom='Organization Overview';APP.section='Office';APP.page='Overview';paint()}
+function openOrganization(){return openCustomView('Organization Overview')}
 
 
 /* Full operation overview using only the live Office state; no additional ledger. */
@@ -364,7 +388,7 @@ function profileDetail(route){
  };
 
  const personWork=()=>{
-  const roleName=text('.profileSubline').replace(/^Job:\s*/i,'').trim().toLowerCase();
+  const roleName=text('.profileSubline').replace(/^Job:\s*/i,'').trim().toLowerCase(),roleDisplay=titleCaseUIRole(roleName);
   const namedRoles={
    'stable staff':'stable_staff','bloodstock':'bloodstock_professional',
    'bloodstock agent':'bloodstock_agent','trainer':'trainer','jockey':'jockey',
@@ -395,7 +419,7 @@ function profileDetail(route){
    const overviewCommon=commonQuick.slice(0,4),overviewSpecial=special.slice(0,5);
    const selected=full?common:overviewCommon;
    const assessed=selected.filter(x=>{const o=observed.get(x.key);return o&&o.status!=='unassessed'&&o.estimate!=null&&o.evidence_refs?.length}).length;
-   return `<div class="ng-person-attribute-block"><div class="ng-person-minihead">PROFESSIONAL FOUNDATIONS <small>${assessed}/${selected.length} ASSESSED</small></div>${selected.map(attr).join('')}${special.length?`<div class="ng-person-minihead">${safe(roleName.toUpperCase())} SKILLS <small>${full?'ALL SPECIALTIES':'KEY SKILLS'}</small></div>${(full?special:overviewSpecial).map(attr).join('')}`:''}${!common.length?'<p class="ng-person-unrated">Attribute definitions are not loaded.</p>':''}</div>`;
+   return `<div class="ng-person-attribute-block"><div class="ng-person-minihead">PROFESSIONAL FOUNDATIONS <small>${assessed}/${selected.length} ASSESSED</small></div>${selected.map(attr).join('')}${special.length?`<div class="ng-person-minihead">${safe(roleDisplay.toUpperCase())} SKILLS <small>${full?'ALL SPECIALTIES':'KEY SKILLS'}</small></div>${(full?special:overviewSpecial).map(attr).join('')}`:''}${!common.length?'<p class="ng-person-unrated">Attribute definitions are not loaded.</p>':''}</div>`;
   };
   const reputation=(full=false)=>`<div class="ng-person-reputation"><div class="ng-person-overall"><div><small>PROFESSIONAL STANDING</small><strong>${rep?safe(String(rep.scores.overall))+'<em> / 100</em>':'UNRATED'}</strong></div><span>${rep?(rep.source?.kind==='GENERATED_GAME'?'GAME-MODELED STANDING':'EVIDENCE-SOURCED SCORE'):'NOT YET ASSESSED'}</span></div><div class="ng-person-rep-axes">${axes.filter(axis=>full||axis.key!=='professional_trust').map(axis=>{
    const value=rep?.scores?.[axis.key],valid=typeof value==='number'&&Number.isFinite(value);
@@ -534,7 +558,7 @@ function profileDetail(route){
   })():null;
  const personAge=ageAtGameDate||factByName('Age');
  const personIdentityFields=isPerson?[
-  ['ROLE',factByName('Role'),''],
+  ['ROLE',titleCaseUIRole(factByName('Role')),''],
   [personOriginLabel,personOriginValue,personFlagImg],
   ['AGE',personAge,''],
   ['HOMETOWN',personHometown,''],
@@ -687,7 +711,7 @@ function functionalRoute(route){
  }
  return null;
 }
-function renderRoute(){const route=APP.custom==='Organization Overview'?null:currentRoute();const title=route?.title||APP.custom||'Page';const kicker=route?.kicker||APP.section;const bdg=route?badge(({'Horse Profile':'horse','People Profile':'people','Farm Profile':'farm_stable','Track Profile':'track','Race Calendar':'meet_schedule','Stable':'farm_stable','Sales':'connections','News':'history','World':'track','Opportunity Board':'reputation'}[route.kicker])||'history'):pageBadge();
+function renderRoute(){const route=APP.custom?null:currentRoute();const title=route?.title||APP.custom||'Page';const kicker=route?.kicker||APP.section;const bdg=route?badge(({'Horse Profile':'horse','People Profile':'people','Farm Profile':'farm_stable','Track Profile':'track','Race Calendar':'meet_schedule','Stable':'farm_stable','Sales':'connections','News':'history','World':'track','Opportunity Board':'reputation'}[route.kicker])||'history'):pageBadge();
 let body='';const profile=route&&/Profile$/.test(route.kicker)?profileDetail(route):null;const functional=route?functionalRoute(route):null;if(profile)body=profile;else if(functional)body=functional;else if(route)body=route.body;else if(APP.custom==='Organization Overview'){body=organizationOverview()}
 else if(APP.custom==='Due Actions'){body=dueActionOverview()}
 else if(APP.custom==='Messages'){body=`<section class="ng-customcard"><h3>Messages and correspondence</h3><p>Select any item to return to the Decision Desk and review its options.</p>${currentMessages().map(m=>`<button data-ng="case" data-val="${safe(m.case)}">${safe(m.from)} — ${safe(m.title)}</button>`).join('')}</section>`}
@@ -732,7 +756,9 @@ window.addEventListener('click',e=>{
  const key=btn.dataset.ng, val=btn.dataset.val||'';
  if(!key && btn.dataset.act){syntheticAction(btn);return}
  if(key==='organization')return openOrganization();
- if(key==='due'){APP.section='Office';APP.page='Overview';APP.custom='Due Actions';return paint()}
+ if(key==='search-go')return openSearchItem(APP.searchIndex[Number(val)]);
+ if(key==='search-history')return window.location.assign('/archive/?page=races');
+ if(key==='due')return openCustomView('Due Actions')
  if(key==='followup'){
   const item=openFollowUps().find(f=>String(f.id)===val);
   if(!item||!item.caseId)return;
@@ -767,9 +793,9 @@ window.addEventListener('click',e=>{
  if(key==='detailtab'){APP.detailTab=val;return paint()}
  if(key==='sourcebutton'){const n=$$('#routeBody [data-act]')[Number(val)];return bridgeNode(n)}
  if(key==='action'){const x=originalAct(val); if(x)return bridgeNode(x);if(val==='Open file')return bridgeNode(originalAct('Open file'));return}
- if(key==='custom'){if(val==='Opportunities')return bridgeNode(originalAct('Open opportunity board'));APP.custom=val;return paint()}
- if(key==='back'){return bridgeNode(originalAct('Back'))}
- if(key==='forward'){return bridgeNode(originalAct('Forward'))}
+ if(key==='custom'){if(val==='Opportunities')return bridgeNode(originalAct('Open opportunity board'));return openCustomView(val)}
+ if(key==='back')return window.history.back()
+ if(key==='forward')return window.history.forward()
 },true);
 root.addEventListener('input',event=>{
  const input=event.target;
@@ -785,7 +811,13 @@ root.addEventListener('input',event=>{
  const counter=$('.ng-stable-visible',root);
  if(counter)counter.textContent=visible+' OF '+horseRows().length+' HORSES';
 },true);
-window.addEventListener('popstate',()=>schedulePaint(40));
+window.addEventListener('popstate',()=>{
+ const p=new URLSearchParams(location.search),view=p.get('ui');
+ APP.custom=p.has('page')?'':view||'';
+ if(view){APP.section='Office';APP.page='Overview';}
+ else if(!p.has('page')){APP.section='Office';APP.page='Office';}
+ schedulePaint(40);
+});
 // Avoid recursive mutation observations: only observe the original (hidden) app.
 const adapter=$('.app');if(adapter){const mo=new MutationObserver(()=>schedulePaint(30));mo.observe(adapter,{subtree:true,characterData:true,childList:true,attributes:true,attributeFilter:['class','title']})}
 const route=$('#routeShell');if(route){const mo=new MutationObserver(()=>schedulePaint(30));mo.observe(route,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['hidden']})}
