@@ -57,7 +57,7 @@
   };
   const horseProfileFacts = {
     'Powerline':{age:'—',born:'—',sex:'—',earnings:'—',record:{starts:'—',wins:'—',seconds:'—',thirds:'—'},pedigree:{sire:'—',grandsire:'—',granddam:'—',dam:'—',damsire:'—',secondDam:'—'},connections:{owner:'—',trainer:'—',jockey:'—',breeder:'—',contact:'Gabe Larkin'},achievements:[]},
-    'The Last Match':{age:'—',born:'—',sex:'—',foaling_state:'Kentucky',foaling_country:'United States',foaling_country_code:'US',foaling_provenance:'USER_DIRECTED_2026-11-10',earnings:'—',record:{starts:'—',wins:'—',seconds:'—',thirds:'—'},pedigree:{sire:'—',grandsire:'—',granddam:'—',dam:'—',damsire:'—',secondDam:'—'},connections:{owner:'—',trainer:'—',jockey:'—',breeder:'—',contact:'Harrow & Pike Vet'},achievements:[]},
+    'The Last Match':{age:'—',born:'2012-03-09',date_of_birth:'2012-03-09',sex:'Colt',foaling_state:'Kentucky',foaling_country:'United States',foaling_country_code:'US',foaling_provenance:'USER_DIRECTED_2026-11-10',earnings:'—',record:{starts:'—',wins:'—',seconds:'—',thirds:'—'},pedigree:{sire:'—',grandsire:'—',granddam:'—',dam:'—',damsire:'—',secondDam:'—'},connections:{owner:'—',trainer:'—',jockey:'—',breeder:'—',contact:'Harrow & Pike Vet'},achievements:[]},
     'Iron Harbor':{age:'—',born:'—',sex:'—',earnings:'—',record:{starts:'—',wins:'—',seconds:'—',thirds:'—'},pedigree:{sire:'—',grandsire:'—',granddam:'—',dam:'—',damsire:'—',secondDam:'—'},connections:{owner:'—',trainer:'—',jockey:'—',breeder:'—',contact:'—'},achievements:[]},
     'Pieta':{age:'2',born:'—',sex:'—',earnings:'—',record:{starts:'—',wins:'—',seconds:'—',thirds:'—'},pedigree:{sire:'—',grandsire:'—',granddam:'—',dam:'—',damsire:'—',secondDam:'—'},connections:{owner:'—',trainer:'—',jockey:'—',breeder:'—',contact:'Anika Rowe'},achievements:[]},
     'Bellarmine':{age:'—',born:'—',sex:'—',earnings:'—',record:{starts:'—',wins:'—',seconds:'—',thirds:'—'},pedigree:{sire:'—',grandsire:'—',granddam:'—',dam:'—',damsire:'—',secondDam:'—'},connections:{owner:'—',trainer:'—',jockey:'—',breeder:'—',contact:'—'},achievements:[]},
@@ -685,7 +685,15 @@
     const foalingState=identityField('foaling_state','');
     const foalingCountryCode=identityField('foaling_country_code','');
     const foalingPlace=[foalingState,foalingCountry==='United States'?'USA':foalingCountry].filter(x=>x&&x!=='—').join(', ')||'—';
-    const dateOfBirth=identityField('date_of_birth',identityField('born'));
+    const birthISO=identityField('date_of_birth',identityField('born'));
+    const validBirth=/^\\d{4}-\\d{2}-\\d{2}$/.test(birthISO)&&!Number.isNaN(Date.parse(birthISO+'T00:00:00Z'));
+    const dateOfBirth=validBirth?new Intl.DateTimeFormat('en-US',{month:'long',day:'numeric',year:'numeric',timeZone:'UTC'}).format(new Date(birthISO+'T00:00:00Z')):birthISO;
+    // North American Thoroughbred racing age increments each January 1.
+    // Preserve exact birth date separately; age follows the in-world calendar.
+    const racingYear=Number(currentGameDate().slice(0,4));
+    const birthYear=validBirth?Number(birthISO.slice(0,4)):NaN;
+    const racingAge=Number.isInteger(racingYear)&&Number.isInteger(birthYear)&&racingYear>=birthYear
+      ?String(racingYear-birthYear):identityField('age');
     const profileEscape=value=>String(value??'—').replace(/[&<>"']/g,
       char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 
@@ -730,7 +738,7 @@
               <div class="profileField"><span>Foaled in</span><strong>${profileEscape(foalingPlace)}</strong></div>
               <div class="profileField"><span>Date of birth</span><strong>${profileEscape(dateOfBirth)}</strong></div>
               <div class="profileField"><span>Sex</span><strong>${profileEscape(identityField('sex'))}</strong></div>
-              <div class="profileField"><span>Age</span><strong>${profileEscape(identityField('age'))}</strong></div>
+              <div class="profileField"><span>Age</span><strong>${profileEscape(racingAge)}</strong></div>
               <div class="profileField"><span>Current status</span><strong>${currentStatus}</strong></div>
             </div>
             <div class="profileMoney"><span>Career earnings</span><strong>${facts.earnings || '—'}</strong></div>
