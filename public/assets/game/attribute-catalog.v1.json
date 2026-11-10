@@ -998,7 +998,15 @@
           "professional_trust"
         ],
         "reputation_weight": 0.2,
-        "nonreputation_weight": 0.8
+        "nonreputation_weight": 0.8,
+        "skill_keys": [
+          "break_timing",
+          "pace_judgment",
+          "positioning",
+          "energy_management",
+          "traffic_navigation",
+          "finishing_timing"
+        ]
       },
       "training_assignment": {
         "audiences": [
@@ -1008,7 +1016,14 @@
           "professional_trust"
         ],
         "reputation_weight": 0.2,
-        "nonreputation_weight": 0.8
+        "nonreputation_weight": 0.8,
+        "skill_keys": [
+          "conditioning",
+          "race_placement",
+          "distance_assessment",
+          "young_horse_development",
+          "workout_design"
+        ]
       },
       "mating": {
         "audiences": [
@@ -1018,7 +1033,12 @@
           "market"
         ],
         "reputation_weight": 0.2,
-        "nonreputation_weight": 0.8
+        "nonreputation_weight": 0.8,
+        "skill_keys": [
+          "pedigree_evaluation",
+          "physical_matching",
+          "mating_planning"
+        ]
       },
       "sale_consignment": {
         "audiences": [
@@ -1028,7 +1048,12 @@
           "market"
         ],
         "reputation_weight": 0.2,
-        "nonreputation_weight": 0.8
+        "nonreputation_weight": 0.8,
+        "skill_keys": [
+          "valuation",
+          "market_intelligence",
+          "inspection_judgment"
+        ]
       },
       "purchase": {
         "audiences": [
@@ -1037,7 +1062,13 @@
           "professional_trust"
         ],
         "reputation_weight": 0.2,
-        "nonreputation_weight": 0.8
+        "nonreputation_weight": 0.8,
+        "skill_keys": [
+          "commercial_judgment",
+          "market_intelligence",
+          "valuation",
+          "pedigree_evaluation"
+        ]
       },
       "hiring": {
         "audiences": [
@@ -1046,7 +1077,12 @@
           "professional_trust"
         ],
         "reputation_weight": 0.2,
-        "nonreputation_weight": 0.8
+        "nonreputation_weight": 0.8,
+        "skill_keys": [
+          "judgment",
+          "professional_reliability",
+          "communication"
+        ]
       }
     },
     "signals": {
