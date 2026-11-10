@@ -353,6 +353,8 @@ function profileDetail(route){
    Number.isFinite(source.scores.overall)&&source.scores.overall>=0&&source.scores.overall<=100&&
    Array.isArray(source.source?.refs)&&source.source.refs.length>0;
   const rep=validRep?source:null,axes=cat.reputation?.axes||[];
+  const trust=typeof work.trust==='number'&&Number.isFinite(work.trust)?work.trust:null;
+  const relationshipNotice=trust===null?'':'<div class="ng-person-relationship"><span>WORKING RELATIONSHIP TRUST</span><strong>'+(trust>0?'+':'')+safe(String(trust))+'</strong></div>';
   const attr=(def)=>{
    const obs=observed.get(def.key);
    const valid=obs&&(obs.status==='estimated'||obs.status==='measured')&&obs.estimate!==null&&obs.estimate!==undefined&&
@@ -360,10 +362,10 @@ function profileDetail(route){
    return `<div class="ng-person-attribute" title="${safe(def.meaning)}"><span>${safe(def.label)}</span><strong class="${valid?'assessed':'unassessed'}">${valid?safe(String(obs.estimate)):'—'}</strong></div>`;
   };
   const attributes=(full=false)=>`<div class="ng-person-attribute-block"><div class="ng-person-minihead">PROFESSIONAL FOUNDATIONS <small>${commonQuick.filter(x=>{const o=observed.get(x.key);return o&&o.status!=='unassessed'&&o.estimate!=null&&o.evidence_refs?.length}).length}/${commonQuick.length} ASSESSED</small></div>${(full?common:commonQuick).map(attr).join('')}${special.length?`<div class="ng-person-minihead">${safe(roleName.toUpperCase())} SKILLS <small>ROLE-SPECIFIC</small></div>${(full?special:special.slice(0,quick.role_limit||6)).map(attr).join('')}`:''}${!common.length?'<p class="ng-person-unrated">Attribute definitions are not loaded.</p>':''}</div>`;
-  const reputation=(full=false)=>`<div class="ng-person-reputation"><div class="ng-person-overall"><div><small>PROFESSIONAL STANDING</small><strong>${rep?safe(String(rep.scores.overall))+'<em> / 100</em>':'UNRATED'}</strong></div><span>${rep?'SOURCED GAME SCORE':'NOT YET ASSESSED'}</span></div><div class="ng-person-rep-axes">${axes.filter(axis=>full||axis.key!=='professional_trust').map(axis=>{
+  const reputation=(full=false)=>`<div class="ng-person-reputation"><div class="ng-person-overall"><div><small>PROFESSIONAL STANDING</small><strong>${rep?safe(String(rep.scores.overall))+'<em> / 100</em>':'UNRATED'}</strong></div><span>${rep?(rep.source?.kind==='GENERATED_GAME'?'GAME-MODELED STANDING':'EVIDENCE-SOURCED SCORE'):'NOT YET ASSESSED'}</span></div><div class="ng-person-rep-axes">${axes.filter(axis=>full||axis.key!=='professional_trust').map(axis=>{
    const value=rep?.scores?.[axis.key],valid=typeof value==='number'&&Number.isFinite(value);
    return `<div><span>${safe(axis.label)}</span><strong class="${valid?'known':'unknown'}">${valid?safe(String(value)):'—'}</strong></div>`;
-  }).join('')}</div>${!rep?'<p class="ng-person-unrated">Professional reputation is not yet established by the simulation or accepted career evidence. Relationship trust is separate.</p>':`<div class="ng-person-rep-provenance">AS OF ${safe(rep.as_of||'—')} · ${rep.history?.length||0} RECORDED EVENTS</div>`}</div>`;
+  }).join('')}</div>${relationshipNotice}${!rep?'<p class="ng-person-unrated">Professional reputation is not yet established by the simulation or accepted career evidence. Relationship trust is separate.</p>':`<div class="ng-person-rep-provenance">AS OF ${safe(rep.as_of||'—')} · ${rep.history?.length||0} RECORDED EVENTS</div>`}</div>`;
   const opportunities=role==='jockey'?'MOUNTS':role==='trainer'?'HORSE ASSIGNMENTS':role==='breeder'?'BREEDING PARTNERS':role==='owner'?'HORSE OWNERSHIP':role==='bloodstock_professional'||role==='bloodstock_agent'?'BLOODSTOCK TRANSACTIONS':'PROFESSIONAL APPOINTMENTS';
   const careerContent=`<div class="ng-person-career-top"><div><small>RECORDED CAREER WINS</small><strong>${safe(personWins||'—')}</strong></div><div><small>ROLE</small><strong>${safe(roleName||'Not specified')}</strong></div></div><div class="ng-person-minihead">CURRENT HORSE CONNECTIONS</div>${connectedHorseRows()}<div class="ng-person-influence"><b>REPUTATION INFLUENCES</b><span>${safe(opportunities)} · INDUSTRY CONTACTS · ACCESS TO OPPORTUNITIES</span><small>Skills, suitability, relationships and availability remain decisive.</small></div>`;
   const events=rep?.history||[];
