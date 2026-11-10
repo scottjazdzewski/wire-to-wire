@@ -51,6 +51,26 @@ export function validateGameRun(state, world) {
   for (const id of state.stable_horse_ids) ensure(Boolean(worldIdentity(world, 'horses', id)), 'UNKNOWN_HORSE', 'Unknown stable horse '+id);
   ensure(isObject(state.runtime) && isObject(state.runtime.horse) && isObject(state.runtime.races) && isObject(state.runtime.entries) && isObject(state.runtime.people)
     && isObject(state.runtime.finances) && Array.isArray(state.runtime.finances.ledger), 'RUN_RUNTIME', 'Invalid runtime shell');
+  // Runtime person development is keyed only by canonical person IDs. The
+  // accepted starting reputation is never inferred from trust or an unrelated role label.
+  for (const [id,person] of Object.entries(state.runtime.people)) {
+    ensure(Boolean(worldIdentity(world,'people',id)),'UNKNOWN_PERSON','Unknown saved person '+id);
+    ensure(isObject(person),'RUN_PERSON','Invalid person runtime record');
+    if(person.reputation){
+      const rep=person.reputation;
+      ensure(isObject(rep)&&rep.schema==='WTW_PERSON_REPUTATION_V1'&&isObject(rep.scores)&&
+        typeof rep.scores.overall==='number'&&Number.isFinite(rep.scores.overall)&&rep.scores.overall>=0&&rep.scores.overall<=100 &&
+        Array.isArray(rep.history)&&validDate(rep.as_of)&&rep.as_of<=state.clock.date &&
+        isObject(rep.source)&&Array.isArray(rep.source.refs)&&rep.source.refs.length>0,
+        'RUN_REPUTATION','Invalid reputation baseline or dated history for '+id);
+      for(const v of Object.values(rep.scores))
+        ensure(typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<=100,'RUN_REPUTATION','Invalid reputation score');
+      for(const ev of rep.history)
+        ensure(isObject(ev)&&typeof ev.id==='string'&&validDate(ev.date)&&ev.date<=state.clock.date&&
+          typeof ev.signal==='string'&&Array.isArray(ev.source_refs)&&ev.source_refs.length>0,
+          'RUN_REPUTATION','Invalid sourced reputation event');
+    }
+  }
   ensure(isObject(state.decisions) && isObject(state.decisions.pending) && isObject(state.decisions.resolved), 'RUN_DECISIONS', 'Invalid decisions');
   ensure(isObject(state.scheduler) && Array.isArray(state.scheduler.pending) && Array.isArray(state.scheduler.delivered_ids), 'RUN_SCHEDULER', 'Invalid scheduler');
   ensure(isObject(state.command_receipts) && Array.isArray(state.event_log), 'RUN_JOURNAL', 'Invalid journal');
