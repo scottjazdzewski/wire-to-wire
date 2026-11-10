@@ -121,12 +121,15 @@ function openOrganization(){APP.custom='Organization Overview';APP.section='Offi
 
 function header(){
  const date=$('.dateChip')?.textContent.trim()||'2014-07-15';
+ const due=dueActions();
  return `<header class="ng-global" aria-label="Wire to Wire application navigation">
   <div class="ng-hist"><button data-ng="back" aria-label="Previous page" title="Previous page">${glyph('left',15)}</button><button data-ng="forward" aria-label="Next page" title="Next page">${glyph('right',15)}</button></div>
   <button class="ng-mini-home" data-ng="office" title="Racing Office" aria-label="Go to Racing Office"><img class="ng-logo-mini" src="/assets/wtw-office-approved-logo.png" alt="Wire to Wire"/></button>
   <nav class="ng-primary" aria-label="Primary game navigation">${Object.keys(tabmap).map(x=>`<button data-ng="menu" data-val="${x}" class="${APP.section===x?'on':''}">${x.toUpperCase()}${glyph('chevron',11)}</button>`).join('')}</nav>
   <div class="ng-global-tools"><button class="ng-iconbtn" data-ng="custom" data-val="Search" aria-label="Search">${glyph('search',17)}</button><button class="ng-iconbtn" data-ng="custom" data-val="Messages" aria-label="Inbox">${glyph('mail',17)}<i></i></button><button class="ng-iconbtn" data-ng="action" data-val="Save" aria-label="Save game">${glyph('save',17)}</button></div>
   <button class="ng-global-date" data-ng="menu" data-val="Racing" title="Open calendar for in-world date ${safe(date)}" aria-label="In-world date ${safe(date)}. Open racing calendar"><span>GAME DATE</span><strong>${safe(date)}</strong></button>
+  <button class="ng-global-cash" data-ng="organization" title="Available cash from the saved game; dash means no baseline recorded" aria-label="Available cash: ${safe(cashDisplay())}. Open stable overview"><small>CASH</small><strong>${safe(cashDisplay())}</strong></button>
+  ${due.length?'<button class="ng-global-due" data-ng="due" title="Review due management follow-ups">'+glyph('alert',13)+' DUE '+due.length+'</button>':''}
   <button class="ng-global-continue" data-ng="action" data-val="Continue" title="Advance in-world game" aria-label="Continue game">${glyph('play',14)}<span>CONTINUE</span>${glyph('right',15)}</button>
  </header>
  <div class="ng-subbar"><nav class="ng-subnav" aria-label="Section navigation">${(tabmap[APP.section]||['Overview']).map(x=>`<button data-ng="tab" data-val="${safe(x)}" class="${APP.page===x||(APP.page==='Office'&&x==='Overview')?'on':''}">${safe(x)}</button>`).join('')}</nav></div>`;
