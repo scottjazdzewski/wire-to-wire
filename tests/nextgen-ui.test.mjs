@@ -42,3 +42,21 @@ test('Shared profile template replaces duplicate page banners',()=>{
   assert.ok(css.includes('.ng-timeline-grid'));
   assert.ok(js.includes('APP.activeCase'));
 });
+
+test('Office case queue, filters and full-height result sheet are source-driven',()=>{
+ const html=get('public/next/index.html');
+ const js=get('public/next/next.js');
+ const css=get('public/next/next.css');
+ assert.ok(html.includes('src="/next/next.js"'));
+ for(const key of ['caseprev','casenext','casecenter','nextopen','Open','Reviewed']){
+   assert.ok(js.includes(key),'Missing real Office interaction '+key);
+ }
+ assert.ok(js.includes('selectAdjacentCase'));
+ assert.ok(js.includes('currentMessages().filter(m=>m.resolved)'));
+ assert.ok(js.includes('ng-mast-fig" data-ng="menu" data-val="Stable"'));
+ assert.ok(js.includes('ng-mast-fig" data-ng="menu" data-val="Racing"'));
+ assert.ok(css.includes('.ng-moves:has(>.ng-resolved)'),'A completed decision must use the whole results panel');
+ assert.ok(css.includes('.ng-outtext'),'Decision outcomes must remain legible');
+ assert.ok(css.includes('.ng-case-pip'),'Case navigation must be visible');
+ assert.ok(!html.includes('<style'),'The Next UI keeps one external visual layer');
+});

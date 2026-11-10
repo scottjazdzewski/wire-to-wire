@@ -122,3 +122,72 @@ body.wtw-next-active{overflow:hidden}body.wtw-next-active>.app,body.wtw-next-act
 .ng-timeline-legend i.entered{background:#30d69c}.ng-timeline-legend i.commitment{background:#779cc9}
 @media(max-width:1050px){.ng-cal-day{padding:5px 4px}.ng-cal-event{font-size:9.5px!important}.ng-timeline-legend{gap:8px}}
 @media(max-width:780px){.ng-timeline-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.ng-cal-day{min-height:70px}}
+/* Office v4: case queue uses the existing 43px header instead of another dashboard panel. */
+.ng-case-navigation{display:flex;align-items:center;gap:9px;margin-left:auto;min-width:0;flex:none}
+.ng-case-pips{display:flex;gap:4px;align-items:center}
+.ng-case-pip{width:12px;height:12px;min-width:12px;padding:0;display:block;background:#586873;border:1px solid #7d9096;border-radius:3px;opacity:.73;transition:background-color .12s,transform .12s,border-color .12s}
+.ng-case-pip.priority{background:#a34c5b;border-color:#d58b96}
+.ng-case-pip.reviewed{background:#287d63;border-color:#64b39a}
+.ng-case-pip.on{background:#efcf81;border-color:#fff1be;box-shadow:0 0 0 2px #e4c67742;opacity:1;transform:scale(1.06)}
+.ng-case-pip:hover{opacity:1;transform:translateY(-1px) scale(1.12)}
+.ng-case-pip:focus-visible,.ng-case-arrows button:focus-visible,.ng-nextopen:focus-visible{outline:2px solid #f5dd90;outline-offset:2px}
+.ng-case-arrows{display:flex;align-items:center;gap:3px}
+.ng-case-arrows button{width:22px;height:23px;display:grid;place-items:center;border:1px solid #576d72;background:#2c3c43;color:#ecf0ed;border-radius:3px;padding:0}
+.ng-case-arrows button:hover{background:#3a5a50;border-color:#83a895}
+.ng-case-navigation .ng-case-position{font-size:10px;letter-spacing:.025em;color:#e5d393}
+.ng-outcome-actions{display:flex;gap:6px;align-items:stretch;flex-wrap:wrap;margin-top:auto}
+.ng-outcome-actions button{width:auto!important;max-width:100%;display:flex;justify-content:center;align-items:center;gap:4px;min-height:29px;padding:5px 8px!important;font-weight:800!important;font-size:10px!important}
+.ng-nextopen{background:#2b664e;color:#eef7ef;border:1px solid #6da48d;border-radius:4px;cursor:pointer}
+.ng-nextopen:hover{background:#3c8a69}
+/* The focus ring must remain visible on the whole screen, including compact desktop controls. */
+#wtwNextgen button:focus-visible{outline:2px solid #f5d87c;outline-offset:-2px}
+@media(max-width:1250px){.ng-case-navigation{gap:6px}.ng-case-pips{gap:3px}.ng-case-pip{width:10px;height:10px;min-width:10px}.ng-case-arrows button{width:18px;height:22px}.ng-case-navigation .ng-case-position{font-size:9px}}
+@media(max-width:1130px){.ng-case-pips{gap:2px}.ng-case-pip{width:9px;height:9px;min-width:9px}.ng-case-navigation{gap:4px}.ng-case-arrows{gap:2px}}
+@media(max-height:660px) and (min-width:850px){.ng-case-pips{display:none}.ng-outcome-actions button{font-size:9px!important;min-height:24px;padding:3px 5px!important}}
+@media(prefers-reduced-motion:reduce){.ng-case-pip{transition:none}}
+
+/* Office v4 finish: legibility and meaningful quick navigation. Shared components stay within this one stylesheet. */
+.ng-mini-home{display:grid;place-items:center;flex:none;padding:0;margin:0 9px 0 14px;border:1px solid transparent;border-radius:5px;background:transparent;color:inherit}
+.ng-mini-home .ng-logo-mini{margin:0;width:29px;height:29px}
+.ng-mini-home:hover{background:#244137;border-color:#47645a}
+.ng-mast-fig{display:flex;flex-direction:column;align-items:center;justify-content:center;background:transparent;border-top:0;border-bottom:0;border-right:0;color:var(--wt-text);cursor:pointer;min-height:41px;border-radius:0}
+.ng-mast-fig:hover{background:#ffffff0b;color:#fff}
+.ng-clockblock{background:transparent;color:var(--wt-text);border-top:0;border-left:0;border-bottom:0;border-radius:0;cursor:pointer}
+.ng-clockblock:hover{background:#ffffff0b}
+.ng-casetitle{display:block;width:100%;border:0;background:transparent;color:inherit;text-align:left;margin:0;padding:0;cursor:pointer}
+.ng-casetitle h2{display:block}
+.ng-casetitle .ng-svg{display:inline-block;color:#b9d0c2;opacity:.52;transition:opacity .12s,transform .12s}
+.ng-casetitle:hover h2{color:#fff4ce}.ng-casetitle:hover .ng-svg{opacity:1;transform:translate(2px,-2px)}
+/* Body readability: text grows inside existing grid rows rather than increasing dashboard height. */
+.ng-msgfrom{font-size:11px;line-height:1.24}
+.ng-msgtitle{font-size:12.8px;line-height:1.2;font-weight:760;letter-spacing:-.01em}
+.ng-msgmeta{font-size:10.7px;line-height:1.27;color:#b6c5c4}
+.ng-msgtime{font-size:10.5px}
+.ng-msgtrail{gap:5px}
+.ng-headinggroup h3{font-size:13.5px;line-height:1.07;letter-spacing:.002em}
+.ng-headinggroup>span{font-size:9.2px;letter-spacing:.05em}
+.ng-intelitem b{font-size:13.6px;line-height:1.15;letter-spacing:-.01em}
+.ng-intelitem p{font-size:11.6px;line-height:1.38}
+.ng-movetag{font-size:10.2px}
+.ng-move-body strong{font-size:13px;line-height:1.2}
+.ng-rostername{font-size:12.5px;line-height:1.17}
+.ng-horseact{font-size:10.3px;line-height:1.25;color:#c1cdcb}
+.ng-entrydate{font-size:10.5px}
+.ng-entrycopy b{font-size:12.2px}
+.ng-entrycopy>span{font-size:10.7px}
+.ng-sectionicon{border-color:#657971}
+.ng-casetitle:focus-visible,.ng-mini-home:focus-visible,.ng-mast-fig:focus-visible,.ng-clockblock:focus-visible{outline:2px solid #f0d28c;outline-offset:-2px}
+@media(max-width:1250px){.ng-msgtitle{font-size:12px}.ng-msgmeta{font-size:10px}.ng-intelitem b{font-size:12.1px}.ng-intelitem p{font-size:10.6px}.ng-move-body strong{font-size:11.8px}.ng-headinggroup h3{font-size:12px}.ng-rostername{font-size:11.7px}.ng-horseact{font-size:9.9px}.ng-entrycopy b{font-size:11.4px}.ng-entrycopy>span{font-size:10px}}
+@media(max-height:660px) and (min-width:850px){.ng-msgfrom{font-size:9.5px}.ng-msgtitle{font-size:10.8px}.ng-intelitem b{font-size:10.5px}.ng-intelitem p{font-size:9.2px}.ng-move-body strong{font-size:10px}.ng-rostername{font-size:10.8px}.ng-horseact{font-size:9.1px}.ng-entrycopy b{font-size:10.4px}.ng-entrycopy>span{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.ng-casetitle .ng-svg{transition:none}}
+
+/* Resolved choices replace the three-row option grid with one full-height result sheet. */
+.ng-moves:has(>.ng-resolved){display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.ng-moves>.ng-resolved{flex:1;width:100%;height:100%;min-height:0;padding:6px 5px;gap:8px}
+.ng-resolved .ng-resolution-title{flex:none;font-size:13px;line-height:1.3}
+.ng-resolved .ng-resolvedtabs{flex:none;gap:5px}
+.ng-resolved .ng-resolvedtabs button{min-height:28px;padding:5px 10px;font-size:10.9px!important}
+.ng-resolved .ng-outtext{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:12px;font-size:12px;line-height:1.5;white-space:normal;scrollbar-width:thin}
+.ng-resolved .ng-outcome-actions{flex:none;margin-top:0}
+@media(max-width:1250px){.ng-resolved .ng-outtext{font-size:11px;padding:8px}.ng-resolved .ng-resolvedtabs button{padding:4px 6px;font-size:10px!important}}
+@media(max-height:660px) and (min-width:850px){.ng-moves>.ng-resolved{gap:3px;padding:1px 2px}.ng-resolved .ng-resolution-title{font-size:10.5px}.ng-resolved .ng-resolvedtabs button{min-height:21px;padding:2px 5px!important;font-size:9px!important}.ng-resolved .ng-outtext{font-size:9.7px;line-height:1.3;padding:5px}.ng-resolved .ng-outcome-actions button{min-height:22px;font-size:8.5px!important}}
