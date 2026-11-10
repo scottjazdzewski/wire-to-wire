@@ -1573,3 +1573,198 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
 @media(max-width:780px){
  .ng-global .ng-global-morewrap{display:none!important}
 }
+
+/* WTW FM/OOTP page-family pilot — desktop Horse Profile.
+   Content is supplied by the existing Horse Profile source route and canonical state. */
+@media(min-width:1081px){
+ .ng-route-profile .ng-profile-horse{
+  gap:7px!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-profile-intro{
+  min-height:86px!important;
+  padding:8px 15px!important;
+  gap:11px!important;
+  border-top-width:2px!important;
+  box-shadow:0 2px 8px #0005!important;
+  background:linear-gradient(90deg,#183b30,#1a2a2b 75%,#142124)!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-profile-badgeframe{
+  width:69px!important;
+  height:69px!important;
+  flex:0 0 69px!important;
+  border:none!important;
+  background:transparent!important;
+  box-shadow:none!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-profile-badgeframe img{
+  width:67px!important;
+  height:67px!important;
+  max-width:none!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-profile-intro h2{
+  font-size:clamp(20px,1.75vw,25px)!important;
+  margin:3px 0 3px!important;
+  letter-spacing:-.02em!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-profile-breadcrumb{font-size:9px!important}
+ .ng-route-profile .ng-profile-horse .ng-profile-intro p{font-size:11px!important}
+ .ng-route-profile .ng-profile-horse .ng-status-pills{margin-top:5px!important;gap:5px!important}
+ .ng-route-profile .ng-profile-horse .ng-status-pills span{padding:3px 6px!important;font-size:10px!important}
+ .ng-route-profile .ng-profile-horse .ng-profile-tools{gap:5px!important}
+ .ng-route-profile .ng-profile-horse .ng-profile-tools button{padding:7px 9px!important;font-size:10px!important}
+ .ng-route-profile .ng-profile-horse .ng-profiletabs{
+  height:35px!important;
+  min-height:35px!important;
+  border-bottom:2px solid #d5bc7c!important;
+  background:#1b302f!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-profiletabs button{
+  min-width:0!important;
+  padding:0 clamp(11px,1.3vw,19px)!important;
+  font-size:11.5px!important;
+  letter-spacing:.005em!important;
+  border-right:1px solid #415e51!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-profiletabs button.on{
+  background:#305344!important;
+  box-shadow:inset 0 -3px #dec079!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-detail-cols-horse{
+  display:grid!important;
+  grid-template-columns:minmax(0,.92fr) minmax(0,1.03fr) minmax(0,1.1fr)!important;
+  gap:8px!important;
+  align-content:start!important;
+  min-width:0!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-detail-cols-horse>.ng-detailcard{
+  min-width:0!important;
+  border:1px solid #3e5b51!important;
+  background:#162623!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-detail-cols-horse>.ng-detailcard>header{
+  min-height:34px!important;
+  box-sizing:border-box!important;
+  display:flex!important;
+  align-items:center!important;
+  padding:6px 11px!important;
+  font-size:11px!important;
+  letter-spacing:.035em!important;
+  color:#f0efdf!important;
+  background:#233a33!important;
+  border-bottom:1px solid #4b6255!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-detail-cols-horse>.ng-detailwide{
+  grid-column:1 / -1!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-detail-cols-horse .ng-profile-facts{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  padding:5px!important;
+  gap:4px!important;
+  background:#172622!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-profile-facts>div{
+  min-height:57px!important;
+  padding:9px 10px!important;
+  background:#20392f!important;
+  border-left:2px solid #799f74!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-profile-facts small{font-size:10.3px!important;line-height:1.2!important}
+ .ng-route-profile .ng-profile-horse .ng-profile-facts strong{font-size:12.5px!important;line-height:1.3!important;overflow-wrap:anywhere}
+ .ng-route-profile .ng-profile-horse .ng-horse-careercard .ng-kpis{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:4px!important;
+  padding:6px!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-horse-careercard .ng-kpis>div{
+  min-width:0!important;
+  padding:12px 4px!important;
+  background:#244333!important;
+  border:1px solid #476952!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-horse-careercard .ng-kpis strong{font-size:19px!important;font-variant-numeric:tabular-nums}
+ .ng-route-profile .ng-profile-horse .ng-horse-careercard .ng-kpis small{font-size:9px!important}
+ .ng-route-profile .ng-profile-horse .ng-horse-context{
+  display:flex;flex-direction:column;gap:0;
+  padding:3px 8px 7px;
+  background:#192d27;
+ }
+ .ng-route-profile .ng-profile-horse .ng-horse-context>div{
+  border-bottom:1px solid #354a40;
+  padding:6px 2px;
+  font-size:11px;
+  line-height:1.3;
+  color:#cedbcf;
+ }
+ .ng-route-profile .ng-profile-horse .ng-horse-open-record{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  border:0;
+  border-top:1px solid #3b624d;
+  background:#254d38;
+  color:#ebdbaa;
+  font-size:10px!important;
+  font-weight:800!important;
+  padding:7px 11px;
+  width:100%;
+  text-align:left;
+ }
+ .ng-route-profile .ng-profile-horse .ng-horse-open-record:hover{background:#346448}
+ .ng-route-profile .ng-profile-horse .ng-horse-connections .ng-data-rows{
+  padding:5px!important;
+  background:#172522!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-horse-connections .ng-data-row{
+  min-height:34px!important;
+  padding:5px 8px!important;
+  gap:5px!important;
+  font-size:11.5px!important;
+  background:#21362f!important;
+  border-bottom-color:#3e554b!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-horse-connections .ng-data-row:nth-child(even){background:#1d302a!important}
+ .ng-route-profile .ng-profile-horse .ng-horse-connections .ng-data-row span{min-width:65px!important}
+ .ng-route-profile .ng-profile-horse .ng-horse-connections .ng-data-row button{font-size:11.5px!important;white-space:normal;text-align:right}
+ .ng-route-profile .ng-profile-horse .ng-horse-activity .ng-notes{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  padding:6px!important;
+  gap:5px!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-horse-activity .ng-notes>div{
+  font-size:11px!important;
+  line-height:1.35!important;
+  padding:9px 10px!important;
+  background:#243a32!important;
+ }
+ .ng-route-profile .ng-profile-horse .ng-horse-context-actions{
+  display:flex;
+  gap:5px;
+  flex-wrap:wrap;
+  padding:6px 7px 0;
+ }
+ .ng-route-profile .ng-profile-horse .ng-horse-context-actions button{
+  background:#254e3b;
+  border:1px solid #55846c;
+  border-radius:3px;
+  color:#eadca9;
+  padding:6px 9px;
+  font-size:10px!important;
+  font-weight:800!important;
+  cursor:pointer;
+ }
+ .ng-route-profile .ng-profile-horse .ng-horse-context-actions button:hover{background:#37654b}
+ .ng-route-profile .ng-profile-source-photo{
+  height:76px;width:112px;flex:0 0 112px;
+  overflow:hidden;border:1px solid #63766a;border-radius:3px;
+  background:#182b24;
+ }
+ .ng-route-profile .ng-profile-source-photo img{height:100%;width:100%;object-fit:cover}
+}
+@media(min-width:1081px) and (max-width:1240px){
+ .ng-route-profile .ng-profile-horse .ng-detail-cols-horse{grid-template-columns:minmax(0,.96fr) minmax(0,1.04fr)!important}
+ .ng-route-profile .ng-profile-horse .ng-horse-connections{grid-column:1/-1}
+ .ng-route-profile .ng-profile-horse .ng-horse-connections .ng-data-rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+}
