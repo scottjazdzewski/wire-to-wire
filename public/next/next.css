@@ -1023,3 +1023,16 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
    max-height:54px!important;
  }
 }
+
+/* Empty-state copy for source-backed right-rail sections. */
+.ng-right .ng-rail-empty{
+ flex:0 0 auto;
+ display:flex;
+ align-items:flex-start;
+ padding:16px 12px;
+ color:#b7c9c4;
+ font-size:11px;
+ line-height:1.45;
+ border-bottom:1px solid #344a48;
+ background:#1b2a30;
+}
