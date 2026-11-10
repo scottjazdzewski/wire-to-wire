@@ -238,7 +238,7 @@ function profileDetail(route){
  const trackRaces=$$('.stakesRow',source).map((n,i)=>({name:text('strong',n),date:n.textContent.trim(),node:n,index:i}));
  const isHorse=route.kicker==='Horse Profile',isPerson=route.kicker==='People Profile',isFarm=route.kicker==='Farm Profile',isTrack=route.kicker==='Track Profile';
  const tabs=(isHorse?['Overview','Career Record','Pedigree','Achievements','Connections','History']:
-  isPerson?['Overview','Stable Horses','Career','Connections','History']:
+  isPerson?['Overview','Attributes','Reputation','Stable Horses','Career','Connections','History']:
   isFarm?['Overview','Connected Horses','Operations','Connections','History']:
   isTrack?['Overview','Meet Schedule','Major Races','Connections','History']:
   ['Overview','Connections','History']);
@@ -331,6 +331,44 @@ function profileDetail(route){
     <section class="ng-athlete-info ng-horse-connections"><header>CONNECTIONS & OFFICE ACTIONS</header><div class="ng-athlete-detailrows">${people}</div><div class="ng-horse-context-actions">${quickLinks}</div></section>
    </div>
   </div>`;
+ };
+
+ const personWork=()=>{
+  const roleName=text('.profileSubline').replace(/^Job:\\s*/i,'').trim().toLowerCase();
+  const namedRoles={
+   'stable staff':'stable_staff','bloodstock':'bloodstock_professional',
+   'bloodstock agent':'bloodstock_agent','trainer':'trainer','jockey':'jockey',
+   'owner':'owner','breeder':'breeder','farm manager':'farm_manager',
+   'veterinarian':'veterinarian','groom':'groom','farrier':'farrier',
+   'exercise rider':'exercise_rider','racing secretary':'racing_secretary'
+  };
+  const role=namedRoles[roleName]||null,cat=athleteAttributeCatalog||{};
+  const work=state().staffState?.[route.title]||{};
+  const observations=Array.isArray(work.attribute_observations)?work.attribute_observations:[];
+  const observed=new Map(observations.filter(x=>x&&typeof x.attribute_key==='string').map(x=>[x.attribute_key,x]));
+  const common=cat.person_common||[],special=role?(cat.person_roles?.[role]||[]):[];
+  const quick=cat.display?.person_overview||{},commonQuick=(quick.common||[]).map(key=>common.find(t=>t.key===key)).filter(Boolean);
+  const source=work.reputation_profile;
+  const validRep=source?.schema==='WTW_PERSON_REPUTATION_V1'&&typeof source.scores?.overall==='number'&&
+   Number.isFinite(source.scores.overall)&&source.scores.overall>=0&&source.scores.overall<=100&&
+   Array.isArray(source.source?.refs)&&source.source.refs.length>0;
+  const rep=validRep?source:null,axes=cat.reputation?.axes||[];
+  const attr=(def)=>{
+   const obs=observed.get(def.key);
+   const valid=obs&&(obs.status==='estimated'||obs.status==='measured')&&obs.estimate!==null&&obs.estimate!==undefined&&
+    Array.isArray(obs.evidence_refs)&&obs.evidence_refs.length>0;
+   return `<div class="ng-person-attribute" title="${safe(def.meaning)}"><span>${safe(def.label)}</span><strong class="${valid?'assessed':'unassessed'}">${valid?safe(String(obs.estimate)):'—'}</strong></div>`;
+  };
+  const attributes=(full=false)=>`<div class="ng-person-attribute-block"><div class="ng-person-minihead">PROFESSIONAL FOUNDATIONS <small>${commonQuick.filter(x=>{const o=observed.get(x.key);return o&&o.status!=='unassessed'&&o.estimate!=null&&o.evidence_refs?.length}).length}/${commonQuick.length} ASSESSED</small></div>${(full?common:commonQuick).map(attr).join('')}${special.length?`<div class="ng-person-minihead">${safe(roleName.toUpperCase())} SKILLS <small>ROLE-SPECIFIC</small></div>${(full?special:special.slice(0,quick.role_limit||6)).map(attr).join('')}`:''}${!common.length?'<p class="ng-person-unrated">Attribute definitions are not loaded.</p>':''}</div>`;
+  const reputation=(full=false)=>`<div class="ng-person-reputation"><div class="ng-person-overall"><div><small>PROFESSIONAL STANDING</small><strong>${rep?safe(String(rep.scores.overall))+'<em> / 100</em>':'UNRATED'}</strong></div><span>${rep?'SOURCED GAME SCORE':'NOT YET ASSESSED'}</span></div><div class="ng-person-rep-axes">${axes.filter(axis=>full||axis.key!=='professional_trust').map(axis=>{
+   const value=rep?.scores?.[axis.key],valid=typeof value==='number'&&Number.isFinite(value);
+   return `<div><span>${safe(axis.label)}</span><strong class="${valid?'known':'unknown'}">${valid?safe(String(value)):'—'}</strong></div>`;
+  }).join('')}</div>${!rep?'<p class="ng-person-unrated">Professional reputation is not yet established by the simulation or accepted career evidence. Relationship trust is separate.</p>':`<div class="ng-person-rep-provenance">AS OF ${safe(rep.as_of||'—')} · ${rep.history?.length||0} RECORDED EVENTS</div>`}</div>`;
+  const opportunities=role==='jockey'?'MOUNTS':role==='trainer'?'HORSE ASSIGNMENTS':role==='breeder'?'BREEDING PARTNERS':role==='owner'?'HORSE OWNERSHIP':role==='bloodstock_professional'||role==='bloodstock_agent'?'BLOODSTOCK TRANSACTIONS':'PROFESSIONAL APPOINTMENTS';
+  const careerContent=`<div class="ng-person-career-top"><div><small>RECORDED CAREER WINS</small><strong>${safe(personWins||'—')}</strong></div><div><small>ROLE</small><strong>${safe(roleName||'Not specified')}</strong></div></div><div class="ng-person-minihead">CURRENT HORSE CONNECTIONS</div>${connectedHorseRows()}<div class="ng-person-influence"><b>REPUTATION INFLUENCES</b><span>${safe(opportunities)} · INDUSTRY CONTACTS · ACCESS TO OPPORTUNITIES</span><small>Skills, suitability, relationships and availability remain decisive.</small></div>`;
+  const events=rep?.history||[];
+  const eventRows=events.length?events.slice().reverse().map(x=>`<div class="ng-person-rep-event"><b>${safe(x.date)}</b><span>${safe(x.signal.replaceAll('_',' '))}</span><small>${safe(x.source_refs?.join(', ')||'No evidence')}</small></div>`).join(''):'<p class="ng-person-unrated">No reputation events have been recorded.</p>';
+  return {attributes,reputation,careerContent,eventRows,roleName,rep};
  };
  const isOrganizationProfile=/^(?:Farm|Stable|Organization|Sales Organization|Ownership Group|Breeding Farm) Profile$/.test(route.kicker);
  const profileMark=isOrganizationProfile?organizationLogoMarkup('',route.title,route.kicker==='Farm Profile'?'farm':'organization',true):`<div class="ng-profile-badgeframe"><img src="${badge(route.kicker==='Horse Profile'?'horse':route.kicker==='Track Profile'?'track':route.kicker==='People Profile'?'people':'farm_stable')}" alt="Approved ${safe(route.kicker)} badge"/></div>`;
