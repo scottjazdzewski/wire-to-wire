@@ -93,7 +93,7 @@ test('Racing Office right-hand operations panels stay readable and source-linked
  assert.ok(js.includes("if(key==='fixture')"),'Fixture click must be handled');
  assert.ok(js.includes("bridgeNode(n)"),'Fixture must call the original source action');
  assert.ok(!js.includes('aria-label="Open racecourse: '),'A fixture action must not be falsely labeled a track profile');
- assert.ok(js.includes("const leads=$$('.app .oppList .oppItem').length"),'Opportunity count must come from source data');
+ assert.ok(js.includes("const leads=document.querySelectorAll('.app .oppList .oppItem').length"),'Opportunity count must come from source data');
  assert.ok(!js.includes('<span>3 CURRENT LEADS</span>'),'Opportunities must not show a permanently hard-coded count');
  assert.ok(js.includes('No horses are listed for this stable yet.'),'Show a meaningful empty roster');
  assert.ok(js.includes('No upcoming race targets are currently recorded.'),'Show a meaningful empty fixture list');
