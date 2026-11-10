@@ -1114,7 +1114,15 @@
   // Read-only discovery bridge for the Next UI global search. These are the
   // actual Office routes; no shadow people, horse or race database is created.
   window.__wtwOfficeSearchRecords = function(){
-    const horses=Object.keys(horseProfileFacts).map(name=>({kind:'horse',name,detail:'Horse Profile'}));
+    const horses=Object.keys(horseProfileFacts).map(name=>{
+      const base=horseProfileFacts[name]?.connections||{};
+      const runtime=gameState.horseState?.[name]||{};
+      const ownerId=typeof runtime.owner_id==='string'?runtime.owner_id.trim():'';
+      const rawOwner=runtime.owner_name||runtime.owner||base.owner;
+      const ownerName=typeof rawOwner==='string'&&rawOwner.trim()&&rawOwner!=='—'&&rawOwner!=='Unknown'
+       ?rawOwner.trim():'';
+      return {kind:'horse',name,detail:'Horse Profile',owner_id:ownerId,owner_name:ownerName};
+    });
     const people=Object.entries(personProfiles).map(([name,p])=>({kind:'person',name,detail:p.job||'People Profile'}));
     const farms=Object.entries(farmProfiles).map(([name,p])=>({kind:'farm',name,detail:p.type||'Farm Profile'}));
     const tracks=Object.entries(trackProfiles).map(([name,p])=>({kind:'track',name,detail:p.location||'Track Profile'}));
@@ -1122,6 +1130,17 @@
       kind:'race',name:item[0],track,detail:track+' · '+item[2]
     })));
     return [...horses,...people,...farms,...tracks,...races];
+  };
+  // UI-only owner lookup from the SAME approved horse facts and live saved
+  // horseState. No stable membership or trainer is inferred as an owner.
+  window.__wtwOfficeHorseOwner = function(name){
+    if(!Object.prototype.hasOwnProperty.call(horseProfileFacts,name))return null;
+    const facts=horseProfileFacts[name]?.connections||{};
+    const runtime=gameState.horseState?.[name]||{};
+    const id=typeof runtime.owner_id==='string'?runtime.owner_id.trim():'';
+    const raw=runtime.owner_name||runtime.owner||facts.owner;
+    const owner=typeof raw==='string'?raw.trim():'';
+    return owner&&owner!=='—'&&owner!=='Unknown'?{id,name:owner}:null;
   };
   // Opens an already-known Office record through its original authoritative
   // route function; rejects arbitrary names rather than fabricating a page.
