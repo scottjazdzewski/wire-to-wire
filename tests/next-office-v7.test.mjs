@@ -272,3 +272,32 @@ test('Stable directory uses the canonical horses and commitments with working se
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);
 });
+
+
+test('Horse athletic overview uses four sourced FM-style trait groups with explicit unassessed states',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css');
+ const catalog=JSON.parse(get('public/assets/game/attribute-catalog.v1.json'));
+ const profile=js.slice(js.indexOf('function profileDetail('),js.indexOf('function calendarTimeline('));
+ assert.deepEqual(Object.keys(catalog.display.horse_overview),[
+  'Speed & Pace','Surface & Environment','Physical & Biometric','Mental & Class'
+ ]);
+ for(const [category,keys] of Object.entries(catalog.display.horse_overview)){
+   const defined=new Set(catalog.horse_categories[category].map(d=>d.key));
+   assert.equal(keys.length,6,category+' must have six compact headline attributes');
+   for(const key of keys)assert.ok(defined.has(key),'Overview trait must be defined by the single catalog: '+key);
+ }
+ assert.ok(js.includes("fetch('/assets/game/attribute-catalog.v1.json'"),'Horse UI must use one shared catalog, not a copied list');
+ assert.ok(profile.includes('const athleteOverview=()=>'),'Horse Overview must use one dedicated athlete component');
+ assert.ok(profile.includes('athleteAttributeCatalog'),'Horse attributes must come from the versioned definitions');
+ assert.ok(profile.includes("state().scoutingState?.[route.title]"),'Scout observations must be read from the existing Office state');
+ assert.ok(profile.includes('Array.isArray(report.evidence_refs)&&report.evidence_refs.length>0'),'Display only evidenced scouting/measurement values');
+ assert.ok(profile.includes("'Unassessed'"),'Unknown ratings must remain unassessed');
+ assert.ok(profile.includes('UNASSESSED IS NOT ZERO'),'The UI must distinguish unknown from poor');
+ assert.ok(profile.includes('ng-athlete-secondary'),'Current condition, career and connections belong under athletics');
+ assert.ok(profile.includes('No verified career figures attached'),'Empty careers must not create oversized fake KPI cards');
+ assert.ok(css.includes('.ng-athlete-groups{'),'Four groups must be laid out together rather than as long vertical cards');
+ assert.ok(css.includes('grid-template-columns:repeat(4,minmax(0,1fr))'),'Overview groups must fit across the desktop viewport');
+ assert.ok(css.includes('.ng-athlete-attribute strong.unknown'),'Unassessed traits must not receive a quality meter or fabricated color grade');
+ const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(syntax.status,0,syntax.stderr);
+});
