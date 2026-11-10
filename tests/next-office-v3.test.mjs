@@ -12,7 +12,7 @@ test('Next Office v3 remains one working visual system backed by the existing en
  assert.equal((html.match(/<link\s+rel="stylesheet"/g)||[]).length,1);
  assert.match(html,/href="\/next\/next\.css"/);
  assert.ok(!css.includes('@import'));
- assert.match(css,/OFFICE MASTER DESIGN SYSTEM/);
+ assert.match(css,/UNIFIED DESKTOP MANAGEMENT DESIGN SYSTEM/,'One rebuilt canonical FM/OOTP application stylesheet');
  assert.ok(js.includes('wtwOfficeStateV30'), 'Continue using original save namespace');
  for(const name of ['header','inbox','center','right']){
    assert.ok(js.includes('function '+name+'()'),name+' should render a working office region');
