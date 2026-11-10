@@ -565,7 +565,7 @@ function profileDetail(route){
   const reputation=(full=false)=>`<div class="ng-person-reputation"><div class="ng-person-overall"><div><small>PROFESSIONAL STANDING</small><strong>${rep?safe(String(rep.scores.overall))+'<em> / 100</em>':'UNRATED'}</strong></div><span>${rep?(rep.source?.kind==='GENERATED_GAME'?'GAME-MODELED STANDING':'EVIDENCE-SOURCED SCORE'):'NOT YET ASSESSED'}</span></div><div class="ng-person-rep-axes">${axes.filter(axis=>full||axis.key!=='professional_trust').map(axis=>{
    const value=rep?.scores?.[axis.key],valid=typeof value==='number'&&Number.isFinite(value);
    return `<div><span>${safe(axis.label)}</span>${valid?`<span class="ng-person-scorebar" aria-hidden="true"><i style="width:${safe(String(value))}%"></i></span>`:'<span class="ng-person-scorebar empty" aria-hidden="true"></span>'}<strong class="${valid?'known':'unknown'}">${valid?safe(String(value)):'—'}</strong></div>`;
-  }).join('')}</div>${relationshipNotice}${!rep?'<p class="ng-person-unrated">Professional reputation is not yet established by the simulation or accepted career evidence. Relationship trust is separate.</p>':`<div class="ng-person-rep-provenance">AS OF ${safe(rep.as_of||'—')} · ${rep.history?.length||0} RECORDED EVENTS</div>`}</div>`;
+  }).join('')}</div>${relationshipNotice}${!rep?(full?'<p class="ng-person-unrated">Professional reputation is not yet established by the simulation or accepted career evidence. Relationship trust is separate.</p>':'<p class="ng-person-unrated">Not assessed yet. Working trust is separate.</p>'):`<div class="ng-person-rep-provenance">AS OF ${safe(rep.as_of||'—')} · ${rep.history?.length||0} RECORDED EVENTS</div>`}</div>`;
 
   // Relationship Network is a player-visible observation layer. Underlying
   // hidden pairwise affinity from the simulation is not exposed here.
@@ -619,9 +619,28 @@ function profileDetail(route){
   const opportunities=role==='jockey'?'MOUNTS':role==='trainer'?'HORSE ASSIGNMENTS':role==='breeder'?'BREEDING PARTNERS':role==='owner'?'HORSE OWNERSHIP':role==='bloodstock_professional'||role==='bloodstock_agent'?'BLOODSTOCK TRANSACTIONS':'PROFESSIONAL APPOINTMENTS';
   const assignedCount=sourceLinks.filter(item=>Boolean($('button[data-act]',item))).length;
   const careerContent=`<div class="ng-person-career-strip"><div><small>RECORDED CAREER WINS</small><strong>${safe(personWins&&personWins!=='—'?personWins:'Not recorded')}</strong></div><div><small>LINKED HORSES</small><strong>${assignedCount}</strong></div></div><div class="ng-person-minihead">CURRENT HORSE ASSIGNMENTS <button data-ng="detailtab" data-val="Stable Horses">ALL CONNECTIONS ${glyph('arrow',11)}</button></div>${connectedHorseRows(4)}<div class="ng-person-influence"><b>PROFESSIONAL OPPORTUNITIES</b><span>${safe(opportunities)}</span><small>Reputation is one factor; suitability and availability remain decisive.</small></div>`;
+
+  // Full first-screen decision picture: a roster, compact career context and
+  // observed contacts. These are presentations of the current source records,
+  // never new ownership, inferred skills, or fabricated relationships.
+  const horseAssignments=()=>{
+    const sourceEntries=sourceLinks.slice(0,5).map(item=>{
+      const btn=$('button[data-act]',item),index=btn?$('#routeBody [data-act]').indexOf(btn):-1;
+      const label=(btn?.textContent.trim()||item.textContent.trim()).replace(/\s+/g,' ').trim();
+      const owner=horseOwnership(label);
+      const horse=state().horseState?.[label]||{};
+      const status=typeof horse.status==='string'&&horse.status.trim()?horse.status.trim():'Not recorded';
+      const content=`<span class="ng-person-horse-name">${horseOwnerBadge(label)}<strong>${safe(label)}</strong></span><span class="ng-person-horse-owner" title="${safe(owner?.name||'Owner not recorded')}">${safe(owner?.name||'Owner not recorded')}</span><span class="ng-person-horse-status" title="${safe(status)}">${safe(status)}</span>${glyph('right',12)}`;
+      return index>=0?`<button class="ng-person-horse-row" data-ng="sourcebutton" data-val="${index}" aria-label="Open linked horse ${safe(label)}">${content}</button>`:
+        `<div class="ng-person-horse-row ng-person-horse-static">${content}</div>`;
+    });
+    return `<div class="ng-person-horse-table"><div class="ng-person-horse-head"><span>HORSE</span><span>OWNER</span><span>STATUS</span><span></span></div>${sourceEntries.join('')||'<div class="ng-person-compact-empty">No linked horses recorded.</div>'}</div>`;
+  };
+  const careerOverview=`<div class="ng-person-overview-stats"><div><small>RECORDED WINS</small><strong>${safe(personWins&&personWins!=='—'?personWins:'Not recorded')}</strong></div><div><small>LINKED HORSES</small><strong>${assignedCount}</strong></div></div><div class="ng-person-overview-opportunity"><small>PROFESSIONAL OPPORTUNITIES</small><strong>${safe(opportunities)}</strong></div>`;
+  const networkOverview=`<div class="ng-person-overview-network"><div class="ng-person-overview-network-total"><strong>${knownRelations.length}</strong><span>SOURCED WORKING RELATIONSHIPS</span></div>${knownRelations.length?knownRelations.slice(0,4).map(r=>`<div class="ng-person-overview-relation"><strong title="${safe(r.name)}">${safe(r.name)}</strong><span>${r.score==null?'Unrated':safe(String(r.score))+'/100'}</span></div>`).join(''):'<div class="ng-person-compact-empty">No reported contacts yet.</div>'}</div>`;
   const events=rep?.history||[];
   const eventRows=events.length?events.slice().reverse().map(x=>`<div class="ng-person-rep-event"><b>${safe(x.date)}</b><span>${safe(x.signal.replaceAll('_',' '))}</span><small>${safe(x.source_refs?.join(', ')||'No evidence')}</small></div>`).join(''):'<p class="ng-person-unrated">No reputation events have been recorded.</p>';
-  return {attributes,reputation,networkPreview,network,careerContent,eventRows,roleName,rep};
+  return {attributes,reputation,networkPreview,network,careerContent,careerOverview,horseAssignments,networkOverview,eventRows,roleName,rep};
  };
  const isOrganizationProfile=/^(?:Farm|Stable|Organization|Sales Organization|Ownership Group|Breeding Farm) Profile$/.test(route.kicker);
  const profileMark=isOrganizationProfile?organizationLogoMarkup('',route.title,route.kicker==='Farm Profile'?'farm':'organization',true):`<div class="ng-profile-badgeframe"><img src="${badge(route.kicker==='Horse Profile'?'horse':route.kicker==='Track Profile'?'track':route.kicker==='People Profile'?'people':'farm_stable')}" alt="Approved ${safe(route.kicker)} badge"/></div>`;
@@ -723,10 +742,12 @@ function profileDetail(route){
    right='';footer='';
   }else if(isPerson){
    const person=personWork();
-   left=`<div class="ng-person-workspace">
-    <section class="ng-person-work-card"><header>PROFESSIONAL ATTRIBUTES <button data-ng="detailtab" data-val="Attributes">ALL SKILLS ${glyph('arrow',11)}</button></header>${person.attributes()}</section>
-    <section class="ng-person-work-card"><header>REPUTATION & NETWORK <button data-ng="detailtab" data-val="Reputation">FULL RECORD ${glyph('arrow',11)}</button></header>${person.reputation()}${person.networkPreview}</section>
-    <section class="ng-person-work-card"><header>CAREER & OPPORTUNITIES <button data-ng="detailtab" data-val="Career">CAREER ${glyph('arrow',11)}</button></header>${person.careerContent}</section>
+   left=`<div class="ng-person-workspace ng-person-workspace-overview">
+    <section class="ng-person-work-card ng-person-ov-attributes"><header>PROFESSIONAL ATTRIBUTES <button data-ng="detailtab" data-val="Attributes">ALL SKILLS ${glyph('arrow',11)}</button></header>${person.attributes()}</section>
+    <section class="ng-person-work-card ng-person-ov-reputation"><header>REPUTATION & STANDING <button data-ng="detailtab" data-val="Reputation">FULL RECORD ${glyph('arrow',11)}</button></header>${person.reputation()}</section>
+    <section class="ng-person-work-card ng-person-ov-horses"><header>CONNECTED HORSES <button data-ng="detailtab" data-val="Stable Horses">ALL HORSES ${glyph('arrow',11)}</button></header>${person.horseAssignments()}</section>
+    <section class="ng-person-work-card ng-person-ov-career"><header>CAREER AT A GLANCE <button data-ng="detailtab" data-val="Career">CAREER ${glyph('arrow',11)}</button></header>${person.careerOverview}</section>
+    <section class="ng-person-work-card ng-person-ov-network"><header>WORKING NETWORK <button data-ng="detailtab" data-val="Network">FULL NETWORK ${glyph('arrow',11)}</button></header>${person.networkOverview}</section>
    </div>`;
    right='';footer='';
   }else if(isFarm){
