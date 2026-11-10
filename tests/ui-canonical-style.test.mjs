@@ -93,3 +93,28 @@ test('Dark FM/OOTP styling applies coherently to the Racing Office and every Tie
  assert.ok(js.includes('function searchView()'),'Keep genuine Search records');
  assert.ok(js.includes('horseOwnerBadge'),'Keep owner identity next to horses');
 });
+
+test('History Vault uses its own rebuilt dark canonical stylesheet without inline visual patches',()=>{
+ const archive=read('public/archive/index.html');
+ const style=read('public/style.css');
+ assert.equal((archive.match(/rel="stylesheet"/g)||[]).length,1,'Archive must use one CSS sheet');
+ assert.ok(archive.includes('href="/style.css"'),'Canonical History Vault stylesheet retained');
+ assert.ok(!archive.includes('style="'),'No inline CSS overrides in the archive shell');
+ assert.ok(style.startsWith('/* WTW HISTORY VAULT | UNIFIED DARK MANAGEMENT STYLESHEET'));
+ assert.ok(!style.includes('@import'),'No additional archive stylesheet layer');
+ assert.ok(style.includes('--cream:#0e1519'),'Archive canvas must be charcoal, not cream');
+ assert.ok(style.includes('--white:#192126'),'Archive card surface must be dark');
+ assert.ok(style.includes('--gold:#dac487'),'Archive shares the antique-gold accent');
+ const rules=ruleList(style.replace(/\/\*[\s\S]*?\*\//g,''));
+ const keys=rules.map(r=>r.scope+'|'+r.selector);
+ assert.equal(new Set(keys).size,keys.length,'Archive stylesheet must not accumulate selector overrides');
+ const ordinary=rules.filter(r=>r.scope==='');
+ const byName=name=>ordinary.find(r=>r.selector===name);
+ for(const cls of ['.sidebar','.topbar','.workspace-tools','.main','.hero','.metric','.panel','.data-table','.vault-month-group','.vault-race-card','.wtw-return-office']){
+  assert.ok(byName(cls),'Dark management component missing: '+cls);
+ }
+ assert.equal(property(byName('.topbar'),'background'),'#192226');
+ assert.equal(property(byName('.metric'),'background'),'#1c2529');
+ assert.equal(property(byName('.vault-month-group'),'background'),'#1a2225');
+ assert.equal(property(byName('.wtw-return-office'),'background'),'#254d3b');
+});
