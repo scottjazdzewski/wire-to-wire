@@ -783,3 +783,10 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
  .ng-main>.ng-centerbottom{display:flex!important;flex-direction:column!important;min-height:580px!important;gap:0!important}
  .ng-main .ng-intel,.ng-main .ng-choices{flex:1 0 auto!important;min-height:300px!important}
 }
+
+/* The expanding department bar must retain access to History on smaller screens. */
+.ng-primary{overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:none!important}
+.ng-primary::-webkit-scrollbar{display:none}
+.ng-primary>button{flex:0 0 auto!important}
+@media(max-width:1450px){.ng-primary>button{font-size:10.8px!important;padding:0 8px!important}}
+@media(max-width:1100px){.ng-primary>button{font-size:10px!important;padding:0 7px!important}}
