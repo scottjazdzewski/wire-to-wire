@@ -2596,3 +2596,196 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
  .ng-athlete-info>header{min-height:28px;flex-basis:28px}
  .ng-athlete-secondary .ng-athlete-info{min-height:105px}
 }
+
+/* WTW human character profiles: FM/OOTP-style skill and reputation sheet. */
+@media(min-width:1081px){
+ .ng-route-profile .ng-profile-person .ng-detail-cols-person{
+  display:block!important;
+  min-height:0!important;
+  overflow:auto!important;
+  padding:0 2px 6px 0!important;
+ }
+ .ng-route-profile .ng-profile-person .ng-person-workspace{
+  display:grid;
+  grid-template-columns:minmax(0,1.18fr) minmax(0,.94fr) minmax(0,1.04fr);
+  gap:8px;
+  align-items:stretch;
+  width:100%;
+  min-width:0;
+ }
+}
+.ng-route-profile .ng-profile-person .ng-person-work-card,
+.ng-route-profile .ng-profile-person .ng-person-detail-sheet{
+ display:flex;
+ flex-direction:column;
+ min-width:0;
+ min-height:190px;
+ border:1px solid #456755;
+ background:#172a23;
+ border-radius:4px;
+ overflow:hidden;
+}
+.ng-route-profile .ng-profile-person .ng-person-work-card>header{
+ box-sizing:border-box;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:8px;
+ flex:0 0 35px;
+ min-height:35px;
+ padding:7px 9px;
+ color:#f0e8d2;
+ background:#294a39;
+ border-bottom:1px solid #58795f;
+ font-size:11px;
+ font-weight:820;
+ letter-spacing:.025em;
+}
+.ng-route-profile .ng-profile-person .ng-person-work-card>header button{
+ display:flex;
+ align-items:center;
+ gap:4px;
+ border:0;
+ background:transparent;
+ color:#e6cc8e;
+ font-size:9px;
+ font-weight:770;
+ padding:3px 4px;
+ white-space:nowrap;
+ cursor:pointer;
+}
+.ng-route-profile .ng-profile-person .ng-person-work-card>header button:hover{text-decoration:underline}
+.ng-person-attribute-block,.ng-person-reputation{
+ min-height:0;
+ overflow-y:auto;
+ scrollbar-width:thin;
+ scrollbar-color:#62856e #182b23;
+ padding:4px 7px 7px;
+}
+.ng-person-minihead{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:6px;
+ min-height:27px;
+ padding:5px 5px 4px;
+ color:#e7d79b;
+ font-size:9px;
+ font-weight:820;
+ letter-spacing:.045em;
+ border-bottom:1px solid #607157;
+}
+.ng-person-minihead small{
+ color:#a8cbb4;
+ font-size:8px;
+ font-weight:760;
+ white-space:nowrap;
+}
+.ng-person-attribute{
+ display:grid;
+ grid-template-columns:minmax(0,1fr) minmax(30px,max-content);
+ align-items:center;
+ gap:8px;
+ min-height:26px;
+ box-sizing:border-box;
+ padding:4px 7px;
+ border-bottom:1px solid #354e42;
+}
+.ng-person-attribute:nth-child(even){background:#20362c}
+.ng-person-attribute span{color:#c7d9ca;font-size:10.7px;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ng-person-attribute strong{font-size:11px;text-align:right;font-variant-numeric:tabular-nums}
+.ng-person-attribute strong.assessed{color:#f0d98d}
+.ng-person-attribute strong.unassessed{color:#849f90}
+.ng-person-overall{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:8px;
+ padding:10px 9px;
+ background:#224435;
+ border-bottom:1px solid #52735b;
+}
+.ng-person-overall>div{display:flex;flex-direction:column;gap:3px}
+.ng-person-overall small{color:#bed3c3;font-size:8.5px;font-weight:770;letter-spacing:.04em}
+.ng-person-overall strong{color:#f4dda4;font-size:23px;font-weight:840;line-height:1.1;font-variant-numeric:tabular-nums}
+.ng-person-overall strong em{color:#a9bdae;font-size:11px;font-style:normal;font-weight:600}
+.ng-person-overall>span{color:#b3cdb9;font-size:8px;line-height:1.2;text-align:right}
+.ng-person-rep-axes{display:flex;flex-direction:column}
+.ng-person-rep-axes>div{
+ display:grid;
+ grid-template-columns:minmax(0,1fr) 35px;
+ gap:8px;
+ align-items:center;
+ min-height:27px;
+ padding:4px 8px;
+ border-bottom:1px solid #365146;
+}
+.ng-person-rep-axes>div:nth-child(even){background:#213a30}
+.ng-person-rep-axes span{font-size:10.5px;color:#bdd1c0}
+.ng-person-rep-axes strong{font-size:11px;color:#a6bbae;text-align:right;font-variant-numeric:tabular-nums}
+.ng-person-rep-axes strong.known{color:#e8d59e}
+.ng-person-unrated{
+ padding:8px 9px;
+ margin:0;
+ color:#b5c9bb;
+ font-size:10.2px;
+ line-height:1.35;
+}
+.ng-person-rep-provenance{
+ padding:8px 9px;
+ color:#e0cc97;
+ font-size:9px;
+ letter-spacing:.035em;
+}
+.ng-person-career-top{
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:5px;
+ padding:7px;
+}
+.ng-person-career-top>div{padding:10px 9px;background:#254738;border:1px solid #4c6d56;min-width:0}
+.ng-person-career-top small{display:block;color:#b5cbbb;font-size:9px;letter-spacing:.025em}
+.ng-person-career-top strong{display:block;margin-top:3px;color:#f1dfad;font-size:16px;overflow-wrap:anywhere}
+.ng-person-work-card .ng-entity-links{max-height:174px;overflow-y:auto;scrollbar-width:thin}
+.ng-person-influence{
+ display:flex;
+ flex-direction:column;
+ gap:4px;
+ padding:10px;
+ margin-top:auto;
+ background:#213c31;
+ border-top:1px solid #47614d;
+}
+.ng-person-influence b{font-size:9px;color:#e4d299;letter-spacing:.06em}
+.ng-person-influence span{font-size:10px;line-height:1.35;color:#e2e9dc}
+.ng-person-influence small{font-size:9px;color:#b3c6b6}
+.ng-person-rep-history{
+ display:flex;
+ flex-direction:column;
+ gap:4px;
+ padding:7px;
+ max-height:440px;
+ overflow-y:auto;
+}
+.ng-person-rep-event{
+ display:grid;
+ grid-template-columns:80px minmax(0,1fr);
+ gap:5px 9px;
+ padding:8px;
+ background:#254236;
+ border-bottom:1px solid #4d6853;
+}
+.ng-person-rep-event b{font-size:10.5px;color:#ecd89a}
+.ng-person-rep-event span{font-size:11px;color:#e4ede2;text-transform:capitalize}
+.ng-person-rep-event small{grid-column:2;color:#bbccbd;font-size:9px}
+.ng-person-footnote{
+ padding:8px 10px;
+ font-size:10px;
+ color:#b5c6b7;
+ border-top:1px solid #466352;
+}
+@media(min-width:1081px) and (max-width:1250px){
+ .ng-route-profile .ng-profile-person .ng-person-workspace{gap:5px;grid-template-columns:minmax(0,1.04fr) minmax(0,1fr) minmax(0,1.04fr)}
+ .ng-person-work-card>header{font-size:10px!important;padding:6px!important}
+ .ng-person-attribute{padding:3px 5px}
+}
