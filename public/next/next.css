@@ -964,3 +964,62 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
 @media(min-width:781px) and (max-height:660px){
  .ng-main>.ng-feature .ng-featurephoto{display:block!important}
 }
+
+
+/* Racing Office final right-rail audit: cards should not expand or clip when
+   horse and entry lists have fewer/more records than the 2014 sample. */
+.ng-right .ng-roster .ng-rosterrows,
+.ng-right .ng-races .ng-entrylist{
+ display:flex!important;
+ flex:1 1 0!important;
+ flex-direction:column!important;
+ align-items:stretch!important;
+ justify-content:flex-start!important;
+ min-height:0!important;
+ overflow-x:hidden!important;
+ overflow-y:auto!important;
+ overscroll-behavior:contain;
+ scrollbar-width:thin;
+ scrollbar-color:#59766b #192c30;
+}
+.ng-right .ng-roster .ng-rosterrow,
+.ng-right .ng-races .ng-entryrow{
+ flex:0 0 53px!important;
+ height:53px!important;
+ min-height:53px!important;
+ max-height:53px!important;
+ box-sizing:border-box!important;
+}
+.ng-right .ng-roster .ng-rosterrow{
+ grid-template-columns:minmax(0,1fr) minmax(45px,max-content)!important;
+}
+.ng-right .ng-races .ng-entryrow{
+ grid-template-columns:50px minmax(0,1fr) 52px!important;
+}
+.ng-right .ng-races .ng-entrycolumns{
+ grid-template-columns:50px minmax(0,1fr) 52px!important;
+}
+.ng-right .ng-roster .ng-rosterrow:focus-visible,
+.ng-right .ng-races .ng-entryrow:focus-visible{
+ outline-offset:-3px!important;
+}
+@media(min-width:781px) and (max-height:690px){
+ .ng-right .ng-roster .ng-rosterrow,
+ .ng-right .ng-races .ng-entryrow{
+   flex-basis:47px!important;
+   height:47px!important;
+   min-height:47px!important;
+   max-height:47px!important;
+   padding-top:2px!important;
+   padding-bottom:2px!important;
+ }
+}
+@media(max-width:780px){
+ .ng-right .ng-roster .ng-rosterrow,
+ .ng-right .ng-races .ng-entryrow{
+   flex-basis:54px!important;
+   height:54px!important;
+   min-height:54px!important;
+   max-height:54px!important;
+ }
+}
