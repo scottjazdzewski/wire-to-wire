@@ -235,8 +235,12 @@ function profileDetail(route){
  const notes=$$('.achievementItem',source).map(n=>n.textContent.trim()).filter(Boolean);
  const details=$$('.profilePanel',source).map(n=>({title:text('h3',n),lines:n.textContent.trim().slice(0,700)}));
  const trackRaces=$$('.stakesRow',source).map((n,i)=>({name:text('strong',n),date:n.textContent.trim(),node:n,index:i}));
- const isHorse=route.kicker==='Horse Profile';
- const tabs=(isHorse?['Overview','Career Record','Pedigree','Achievements','Connections','History']:route.kicker==='Track Profile'?['Overview','Meet Schedule','Major Races','Connections','History']:['Overview','Connections','History']);
+ const isHorse=route.kicker==='Horse Profile',isPerson=route.kicker==='People Profile',isFarm=route.kicker==='Farm Profile',isTrack=route.kicker==='Track Profile';
+ const tabs=(isHorse?['Overview','Career Record','Pedigree','Achievements','Connections','History']:
+  isPerson?['Overview','Stable Horses','Career','Connections','History']:
+  isFarm?['Overview','Connected Horses','Operations','Connections','History']:
+  isTrack?['Overview','Meet Schedule','Major Races','Connections','History']:
+  ['Overview','Connections','History']);
  const rows=(items)=>'<div class="ng-data-rows">'+items.map(i=>`<div class="ng-data-row"><span>${safe(i.label)}</span><strong>${safe(i.value)}</strong></div>`).join('')+'</div>';
  const pills='<div class="ng-status-pills">'+states.slice(0,4).map(x=>`<span>${safe(x)}</span>`).join('')+'</div>';
  const tabbar='<nav class="ng-profiletabs" aria-label="${safe(route.kicker)} sections">'+tabs.map(t=>`<button data-ng="detailtab" data-val="${safe(t)}" class="${APP.detailTab===t?'on':''}" aria-current="${APP.detailTab===t?'page':'false'}">${safe(t)}</button>`).join('')+'</nav>';
@@ -283,7 +287,7 @@ function profileDetail(route){
  }else if(APP.detailTab==='Achievements'&&isHorse){
   left=`<section class="ng-detailcard ng-detailwide"><header>RECORDED ACHIEVEMENTS</header><div class="ng-notes">${horseAchievements.map(n=>`<div>${safe(n)}</div>`).join('')||'<div>No achievements documented in the current source record.</div>'}</div></section>`;
  }else if(APP.detailTab==='Meet Schedule'||APP.detailTab==='Major Races'){
-  left=`<section class="ng-detailcard ng-detailwide"><header>TRACK EVENTS & SIGNATURE STAKES</header><div class="ng-compact-list">${(trackRaces.length?trackRaces:[]).slice(0,12).map(r=>`<button data-ng="sourcebutton" data-val="${$$$('#routeBody [data-act]').indexOf(r.node)}"><b>${safe(r.name)}</b><span>${safe(r.date.slice(r.name.length))}</span><i>›</i></button>`).join('')||'<p>No approved race calendar data linked yet.</p>'}</div></section>`;
+  left=`<section class="ng-detailcard ng-detailwide"><header>TRACK EVENTS & SIGNATURE STAKES</header><div class="ng-compact-list">${(trackRaces.length?trackRaces:[]).slice(0,12).map(r=>`<button data-ng="sourcebutton" data-val="${$$('#routeBody [data-act]').indexOf(r.node)}"><b>${safe(r.name)}</b><span>${safe(r.date.slice(r.name.length))}</span><i>›</i></button>`).join('')||'<p>No approved race calendar data linked yet.</p>'}</div></section>`;
  }else{
   left=`<section class="ng-detailcard ng-detailwide"><header>HISTORY & RECORDS</header><div class="ng-notes">${(notes.length?notes:details.map(x=>x.lines)).slice(0,8).map(n=>`<div>${safe(n)}</div>`).join('')||'No official history connected yet.'}</div></section>`;
  }
