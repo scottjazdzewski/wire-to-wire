@@ -249,6 +249,34 @@ function profileDetail(route){
  const horseAchievementPanel=isHorse?$$('.profilePanel',source).find(panel=>text('h3',panel).includes('Achievements')):null;
  const horseAchievements=horseAchievementPanel?$$('.achievementItem',horseAchievementPanel).map(el=>el.textContent.trim()).filter(Boolean):[];
  const connectionRows=()=>`<div class="ng-data-rows">${connection.map(f=>`<div class="ng-data-row"><span>${safe(f.label)}</span>${f.button?`<button data-ng="sourcebutton" data-val="${$$('#routeBody [data-act]').indexOf(f.button)}" aria-label="Open ${safe(f.label)} profile: ${safe(f.value)}">${safe(f.value)} ↗</button>`:`<strong>${safe(f.value)}</strong>`}</div>`).join('')||'<div class="ng-empty-record">No connected profiles recorded.</div>'}</div>`;
+
+ const sourcePanels=$$('.profilePanel',source);
+ const sourcePanel=word=>sourcePanels.find(panel=>text('h3',panel).toLowerCase().includes(word.toLowerCase()));
+ const connectedPanel=isPerson?sourcePanel('Stable'):isFarm?sourcePanel('Connected Horses'):null;
+ const sourceLinks=connectedPanel?$$('.achievementItem',connectedPanel):[];
+ const connectedHorseRows=()=>'<div class="ng-entity-links">'+(sourceLinks.map(item=>{
+  const btn=$('button[data-act]',item);
+  const index=btn?$$('#routeBody [data-act]').indexOf(btn):-1;
+  const label=(btn?.textContent.trim()||item.textContent.trim()).replace(/\s+/g,' ').trim();
+  return index>=0?'<button data-ng="sourcebutton" data-val="'+index+'" aria-label="Open horse '+safe(label)+'"><span>'+safe(label)+'</span>'+glyph('right',14)+'</button>':'<div class="ng-entity-link-static">'+safe(label)+'</div>';
+ }).join('')||'<div class="ng-empty-record">No linked horses recorded.</div>')+'</div>';
+ const personCareer=isPerson?sourcePanel('Career Wins'):null;
+ const personReputation=isPerson?sourcePanel('Reputation'):null;
+ const personWins=personCareer?text('.bigMetric strong',personCareer):'';
+ const reputationLabel=personReputation?text('.bigMetric strong',personReputation):'';
+ const meterValue=personReputation?$('.reputationBar i',personReputation)?.style.width||'':'';
+ const reputationGauge=/^(?:100|[0-9]?\d)%$/.test(meterValue)?'<div class="ng-source-meter" aria-label="Source-backed reputation indicator"><span style="width:'+safe(meterValue)+'"></span></div>':'';
+ const farmAchievementPanel=isFarm?sourcePanel('Achievements'):null;
+ const farmAchievements=farmAchievementPanel?$$('.achievementItem',farmAchievementPanel).map(item=>item.textContent.trim()).filter(Boolean):[];
+ const meetValues=isTrack?$$('.meetBlock',source).map(n=>({label:text('span',n),value:text('strong',n)})):[];
+ const trackNotes=isTrack?$$('.trackNote',source).map(n=>({label:text('b',n),value:n.textContent.replace(text('b',n),'').trim()})):[];
+ const stakesTable=(limit=100)=>'<div class="ng-stakes-table"><div class="ng-stakes-head"><span>RACE</span><span>DATE</span><span>GRADE</span><span>PURSE</span></div>'+
+  (trackRaces.slice(0,limit).map(row=>{
+   const cols=[...row.node.children].map(item=>item.textContent.trim()).slice(0,4);
+   while(cols.length<4)cols.push('—');
+   const index=$$('#routeBody [data-act]').indexOf(row.node);
+   return index<0?'':'<button class="ng-stakes-data" data-ng="sourcebutton" data-val="'+index+'">'+cols.map(v=>'<span>'+safe(v)+'</span>').join('')+'</button>';
+  }).join('')||'<div class="ng-empty-record">No verified stakes rows connected.</div>')+'</div>';
  const horseImage=isHorse?officeAssetPath(officePhotoIndex?.entities?.['horse:'+route.title]):'';
  const sourceDecision=isHorse?$('#routeBody [data-act="Open profile decision"]'):null;
  const sourceFollowUp=isHorse?$('#routeBody [data-act="Open follow-up"]'):null;
