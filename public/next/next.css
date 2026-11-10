@@ -819,3 +819,142 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
  .ng-main .ng-caseactions{flex-wrap:wrap!important}
  .ng-main .ng-decision-scene-caption{font-size:7.5px!important;white-space:normal!important;max-width:calc(100% - 12px);right:6px!important;bottom:6px!important}
 }
+
+
+/* 2026-11-10 visual QA: inbox row heights, balanced lower command panels,
+   tighter analyst briefs, and an unmistakably visible editorial decision photo. */
+.ng-left .ng-inbox .ng-msgs{
+ display:flex!important;
+ flex:1 1 0!important;
+ flex-direction:column!important;
+ align-items:stretch!important;
+ justify-content:flex-start!important;
+ min-height:0!important;
+ overflow-x:hidden!important;
+ overflow-y:auto!important;
+ scrollbar-width:thin;
+ scrollbar-color:#4b675e #152428;
+}
+.ng-left .ng-inbox .ng-msg{
+ flex:0 0 78px!important;
+ min-height:78px!important;
+ max-height:78px!important;
+ box-sizing:border-box!important;
+ align-content:center!important;
+}
+.ng-left .ng-inbox .ng-inboxfoot{flex:none!important}
+.ng-left .ng-inbox .ng-msgmeta{margin-top:4px!important}
+.ng-left .ng-inbox .ng-msgtime{margin-top:5px!important}
+@media(min-width:781px){
+ .ng-board{grid-template-columns:minmax(248px,282px) minmax(0,1fr) minmax(252px,294px)!important}
+ .ng-main{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .ng-main>.ng-feature .ng-featurebody{
+   grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr)!important
+ }
+ .ng-main .ng-choices{border-left:1px solid #45605a!important}
+ .ng-main .ng-choices .ng-move{padding:7px 11px!important}
+ .ng-main .ng-intel .ng-intelitem{
+   grid-template-columns:39px minmax(0,1fr)!important;
+   grid-template-rows:minmax(0,max-content) minmax(0,max-content)!important;
+   column-gap:9px!important;
+   row-gap:2px!important;
+   align-content:center!important;
+   justify-content:start!important;
+   padding:6px 13px!important;
+ }
+ .ng-main .ng-intel .ng-intel-kicker{
+   display:flex!important;
+   grid-column:1!important;
+   grid-row:1 / span 2!important;
+   align-self:center!important;
+   justify-content:flex-start!important;
+   white-space:nowrap!important;
+   font-size:10px!important;
+   color:#bfd6cf!important;
+   letter-spacing:0!important;
+   opacity:.9!important;
+ }
+ .ng-main .ng-intel .ng-intelitem b{
+   grid-column:2!important;grid-row:1!important;
+   align-self:end!important;
+   margin:0!important;
+   font-size:13px!important;
+   line-height:1.23!important;
+ }
+ .ng-main .ng-intel .ng-intelitem p{
+   grid-column:2!important;grid-row:2!important;
+   align-self:start!important;
+   margin:0!important;
+   font-size:11.5px!important;
+   line-height:1.25!important;
+   max-width:100%!important;
+ }
+}
+.ng-main .ng-featurephoto{background:#1b322a!important}
+.ng-main .ng-featurephoto .ng-decision-photo{
+ position:absolute!important;
+ inset:0!important;
+ width:100%!important;
+ height:100%!important;
+ margin:0!important;
+ overflow:hidden!important;
+ background:#20352d!important;
+}
+.ng-main .ng-featurephoto .ng-decision-photo>img{
+ display:block!important;
+ position:absolute!important;
+ inset:0!important;
+ width:100%!important;
+ height:100%!important;
+ object-fit:cover!important;
+ object-position:39% center!important;
+ opacity:1!important;
+ visibility:visible!important;
+ filter:brightness(.9) contrast(1.06) saturate(.88)!important;
+}
+.ng-main .ng-featurephoto::after{
+ background:linear-gradient(90deg,rgba(12,28,25,.45),transparent 35%),
+            linear-gradient(0deg,rgba(8,20,18,.68),transparent 52%)!important
+}
+.ng-main .ng-featurephoto .ng-decision-scene-caption{
+ display:flex!important;
+ flex-direction:column!important;
+ gap:3px!important;
+ bottom:11px!important;right:11px!important;left:11px!important;
+ width:max-content!important;max-width:calc(100% - 22px)!important;
+ padding:7px 9px!important;
+ color:#f1d99f!important;
+ line-height:1.25!important;
+ background:rgba(12,28,25,.89)!important;
+ border:1px solid #6f846d!important;
+ white-space:normal!important;
+}
+.ng-main .ng-featurephoto .ng-decision-scene-caption span{font-size:10px!important;font-weight:800!important;letter-spacing:.08em!important}
+.ng-main .ng-featurephoto .ng-decision-scene-caption small{font-size:8px!important;color:#d1ddd3!important;letter-spacing:.07em!important}
+@media(min-width:781px) and (max-width:1279px){
+ .ng-board{grid-template-columns:minmax(230px,250px) minmax(0,1fr) minmax(248px,270px)!important}
+ .ng-main{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .ng-main>.ng-feature .ng-featurebody{grid-template-columns:minmax(0,1.23fr) minmax(0,.77fr)!important}
+ .ng-main .ng-intel .ng-intelitem{grid-template-columns:27px minmax(0,1fr)!important;column-gap:5px!important;padding:3px 7px!important}
+ .ng-main .ng-intel .ng-intel-kicker{font-size:8.5px!important}
+ .ng-main .ng-intel .ng-intelitem b{font-size:11px!important}
+ .ng-main .ng-intel .ng-intelitem p{font-size:10px!important}
+ .ng-main .ng-choices .ng-move-note{font-size:9.2px!important}
+}
+@media(max-height:690px) and (min-width:781px){
+ .ng-left .ng-inbox .ng-msg{flex-basis:67px!important;min-height:67px!important;max-height:67px!important}
+ .ng-main .ng-intel .ng-intelitem{padding-top:2px!important;padding-bottom:2px!important}
+ .ng-main .ng-intel .ng-intelitem b{font-size:10.7px!important}
+ .ng-main .ng-intel .ng-intelitem p{font-size:9.7px!important}
+ .ng-main .ng-featurephoto .ng-decision-scene-caption{bottom:5px!important;left:5px!important;right:5px!important;padding:4px 6px!important}
+ .ng-main .ng-featurephoto .ng-decision-scene-caption span{font-size:8.3px!important}
+ .ng-main .ng-featurephoto .ng-decision-scene-caption small{font-size:7px!important}
+}
+@media(max-width:780px){
+ .ng-left .ng-inbox .ng-msg{flex-basis:76px!important;min-height:76px!important;max-height:76px!important}
+ .ng-main .ng-featurephoto .ng-decision-scene-caption{bottom:6px!important;left:6px!important;right:6px!important}
+ .ng-main .ng-intel .ng-intelitem{grid-template-columns:35px minmax(0,1fr)!important;padding:8px 10px!important}
+ .ng-main .ng-intel .ng-intel-kicker{display:flex!important;grid-column:1!important;grid-row:1 / span 2!important;font-size:9px!important}
+ .ng-main .ng-intel .ng-intelitem b{grid-column:2!important;grid-row:1!important}
+ .ng-main .ng-intel .ng-intelitem p{grid-column:2!important;grid-row:2!important}
+}
