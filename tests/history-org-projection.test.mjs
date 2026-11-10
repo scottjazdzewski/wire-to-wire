@@ -100,5 +100,5 @@ test('seventy-three new evidence-only backgrounds remain unseen until individual
     assert.match(row[iOrigin],/^EVIDENCE-ONLY PRE-1999 CONTINUITY/);
     assert.ok(!sql.includes(row[iOrigin]),'Unapproved origin leaked into published SQL '+row[iID]);
   }
-  assert.match(sql,/identity-only/i);
+  assert.match(sql,/IDENTITY_ONLY__ORIGIN_REQUIRES_APPROVAL/);
 });
