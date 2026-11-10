@@ -73,7 +73,7 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     delete next.decisions.pending[p.decision_id];
     emit('DECISION_ANSWERED', { decision_id: p.decision_id, option_id: p.option_id });
   } else if (c.type === 'SET_PERSON_REPUTATION') {
-    ensure(c.actor === 'system', 'UNAUTHORIZED_COMMAND', 'Only the audited game generator can establish a person's reputation');
+    ensure(c.actor === 'system', 'UNAUTHORIZED_COMMAND', 'Only the audited game generator can establish professional reputation');
     const p=c.payload;
     requireString(p.person_id,'payload.person_id',128);
     ensure(world.entities.people.some(person=>person.id===p.person_id),'UNKNOWN_PERSON','Reputation must reference an approved person ID');
