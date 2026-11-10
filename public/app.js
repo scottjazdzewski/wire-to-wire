@@ -11,6 +11,9 @@ const fields = {
 const state = {page:'overview',year:1953,calendarMonth:null,role:'trainer',involvement:'balanced',search:'',trackDirectory:null,data:null,mode:'LOADING',changes:[],nameEdits:[],availableYears:[],edit:null,rename:null,apiIssue:''};
 const GAME_PREF_KEY = 'wtw_game_manager_preferences_v1';
 try { const saved=JSON.parse(localStorage.getItem(GAME_PREF_KEY)||'{}'); if(['owner','trainer','farm','breeder','jockey'].includes(saved.role))state.role=saved.role; if(['hands-on','balanced','executive'].includes(saved.involvement))state.involvement=saved.involvement; } catch {}
+// Deep links from the main Racing Office open the existing protected historical archive.
+const archivePage = new URLSearchParams(window.location.search).get('page');
+if (['overview','seasons','horses','people','tracks','races','search','changes','sources'].includes(archivePage)) state.page=archivePage;
 const SAMPLE_KEY = 'wtw_canon_desk_local_proposals_v1';
 let toastTimeout;
 function storedChanges(){try{return JSON.parse(localStorage.getItem(SAMPLE_KEY)||'[]')}catch{return []}}
