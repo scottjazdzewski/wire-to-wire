@@ -97,7 +97,7 @@ function organizationLogoMarkup(id,name,kind='organization',large=false){
  const initials=name==='YOUR STABLE'?'ST':name.split(/\s+/).slice(0,2).map(t=>t[0]||'').join('').toUpperCase().slice(0,2)||'ORG';
  const content=src?'<img class="ng-org-image" src="'+safe(src)+'" alt="" loading="lazy" decoding="async"/>':
   '<span class="ng-org-initials" aria-hidden="true">'+safe(initials)+'</span>';
- return '<span class="ng-org-mark'+(large?' ng-org-mark-large':'')+'" aria-label="'+safe(src?'Approved logo for '+name:'Temporary logo placeholder for '+name)+'">'+content+'</span>';
+ return '<span class="ng-org-mark'+(large?' ng-org-mark-large':'')+'" data-placeholder="'+safe(initials)+'" aria-label="'+safe(src?'Approved logo for '+name:'Temporary logo placeholder for '+name)+'">'+content+'</span>';
 }
 function availableCash(){
  const st=state(),f=st.finances||{},stable=f.stable||{};
@@ -306,7 +306,7 @@ else if(APP.custom==='Opportunities'){body=`<section class="ng-customcard"><h3>O
 else if(APP.custom==='Search'){body=`<section class="ng-customcard"><h3>Find a horse or racetrack</h3><p>Search across the horses and racecourses currently connected to this Office.</p>${horseRows().map(h=>`<button data-ng="horse" data-val="${safe(h.name)}">${safe(h.name)}</button>`).join('')}${racingRows().map(r=>`<button data-ng="track" data-val="${safe(r.track)}">${safe(r.track)}</button>`).join('')}</section>`}
 else {const category=APP.custom||APP.section;const features=(tabmap[APP.section]||[]).filter(x=>x!=='Overview');body=`<div class="ng-custompage">${features.map(x=>`<section class="ng-customcard"><h3>${safe(x)}</h3><p>The ${safe(category)} view is reserved for source-connected records. We won't invent figures, horse IDs, or outcomes.</p><button data-ng="tab" data-val="${safe(x)}">OPEN ${safe(x).toUpperCase()} ↗</button></section>`).join('')}</div>`}
 const isProfile=Boolean(profile);
-return `<main class="ng-route ${isProfile?'ng-route-profile':''}">${isProfile?'':`<header class="ng-routeheading"><span class="ng-route-badge-slot" aria-hidden="true"><img class="ng-routebadge" src="${safe(bdg)}" alt=""/></span><div class="ng-routetext"><small>${safe(kicker)}</small><h1>${safe(title)}</h1></div><button class="ng-back" data-ng="office">← RACING OFFICE</button></header>`}<div class="ng-routegrid"><div class="ng-routeinner">${body}</div></div></main>`;}
+return `<main class="ng-route ${isProfile?'ng-route-profile':''}">${isProfile?'':`<header class="ng-routeheading"><span class="ng-route-badge-slot" aria-hidden="true">${APP.custom==='Organization Overview'?organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',true):`<img class="ng-routebadge" src="${safe(bdg)}" alt=""/>`}</span><div class="ng-routetext"><small>${safe(kicker)}</small><h1>${safe(title)}</h1></div><button class="ng-back" data-ng="office">← RACING OFFICE</button></header>`}<div class="ng-routegrid"><div class="ng-routeinner">${body}</div></div></main>`;}
 function paint(){if(!APP.ready)return;APP.activeCase=$('.left .msg.selected')?.dataset.case||APP.activeCase;const route=currentRoute();root.innerHTML=header()+((route||APP.custom)?renderRoute():`<main class="ng-board">${inbox()}${center()}${right()}</main>`);}
 function schedulePaint(ms=0){if(APP.paintQueued)return;APP.paintQueued=true;setTimeout(()=>{APP.paintQueued=false;paint()},ms)}
 // Capture new UI clicks before the old Office's document-level delegated handler.
@@ -358,6 +358,18 @@ root.addEventListener('error',event=>{
    const mark=img.closest('.ng-org-mark');
    if(mark){img.remove();const label=document.createElement('span');label.className='ng-org-initials';label.textContent='ORG';mark.append(label)}
    return;
+ }
+ if(img.classList.contains('ng-org-image')){
+  const mark=img.closest('.ng-org-mark');
+  if(mark){
+   img.remove();
+   const label=document.createElement('span');
+   label.className='ng-org-initials';
+   label.setAttribute('aria-hidden','true');
+   label.textContent=mark.getAttribute('data-placeholder')||'ORG';
+   mark.append(label);
+  }
+  return;
  }
  if(img.classList.contains('ng-decision-photograph')){
    if(img.getAttribute('src')!==genericDeskPhoto){
