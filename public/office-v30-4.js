@@ -671,6 +671,22 @@
     const horse = gameState.horseState?.[name] || {};
     const scout = gameState.scoutingState?.[name] || {};
     const facts = horseProfileFacts[name] || {age:'—',born:'—',sex:'—',earnings:'—',record:{starts:'—',wins:'—',seconds:'—',thirds:'—'},pedigree:{},connections:{},achievements:[]};
+    // Identity metadata is sourced only from the approved horse profile or
+    // an explicitly source-linked canonical identity bridge in this game state.
+    // A missing country, date or sex remains unknown; do NOT infer 'USA'.
+    const sourceIdentity=horse.identity&&Array.isArray(horse.identity.source_refs)&&horse.identity.source_refs.length
+      ?horse.identity:{};
+    const identityField=(key,fallback='—')=>{
+      const direct=facts[key],linked=sourceIdentity[key];
+      const value=(direct!==undefined&&direct!==null&&String(direct).trim()&&direct!=='—')?direct:linked;
+      return value!==undefined&&value!==null&&String(value).trim()?String(value):fallback;
+    };
+    const foalingCountry=identityField('foaling_country');
+    const foalingCountryCode=identityField('foaling_country_code','');
+    const dateOfBirth=identityField('date_of_birth',identityField('born'));
+    const profileEscape=value=>String(value??'—').replace(/[&<>"']/g,
+      char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+
     const cases = profileCases(name);
     const latest = latestProfileDecision(name);
     const follow = latestProfileFollowUp(name);
@@ -702,16 +718,17 @@
       `Health / Vet · ${vetFlag}`
     ];
     openRoute('Horse Profile', name, `
-      <section class="profilePage horseProfilePage">
+      <section class="profilePage horseProfilePage" data-foaling-country-code="${profileEscape(foalingCountryCode)}" data-foaling-country="${profileEscape(foalingCountry)}">
         <div class="profileHero">
           <div class="profilePhoto" data-label="Horse identity"><img class="wtwBadgeIdentity" src="/assets/profile-badges/v2/wtw_badge_horse.png" alt="" aria-hidden="true"></div>
           <div class="profileIdentity">
             <div class="profileEyebrow">Horse</div><h2 class="profileName">${name}</h2>
             <div class="profileSubline">State-aware racing file</div>
             <div class="profileFields">
-              <div class="profileField"><span>Age</span><strong>${facts.age || '—'}</strong></div>
-              <div class="profileField"><span>Born</span><strong>${facts.born || '—'}</strong></div>
-              <div class="profileField"><span>Sex</span><strong>${facts.sex || '—'}</strong></div>
+              <div class="profileField"><span>Foaled in</span><strong>${profileEscape(foalingCountry)}</strong></div>
+              <div class="profileField"><span>Date of birth</span><strong>${profileEscape(dateOfBirth)}</strong></div>
+              <div class="profileField"><span>Sex</span><strong>${profileEscape(identityField('sex'))}</strong></div>
+              <div class="profileField"><span>Age</span><strong>${profileEscape(identityField('age'))}</strong></div>
               <div class="profileField"><span>Current status</span><strong>${currentStatus}</strong></div>
             </div>
             <div class="profileMoney"><span>Career earnings</span><strong>${facts.earnings || '—'}</strong></div>
