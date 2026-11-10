@@ -1301,3 +1301,148 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
   margin-top:4px!important;
  }
 }
+
+/* Organization identity system — one neutral mark until approved logos are imported.
+   Desktop-first: real organization assets replace the initials without layout changes. */
+.ng-org-mark{
+ position:relative;
+ box-sizing:border-box;
+ display:inline-flex;
+ flex:0 0 30px;
+ align-items:center;
+ justify-content:center;
+ width:30px;
+ height:30px;
+ border:1px solid #b39b64;
+ border-radius:5px;
+ background:linear-gradient(155deg,#234c40,#102d2a);
+ color:#f0dba4;
+ box-shadow:inset 0 1px 0 #f7e9bc2e,0 1px 3px #0005;
+ overflow:hidden;
+}
+.ng-org-mark-large{width:68px;height:68px;flex:0 0 68px;border-radius:8px}
+.ng-org-initials{
+ display:block;
+ font-size:10px;
+ line-height:1;
+ letter-spacing:.04em;
+ font-weight:820;
+ text-transform:uppercase;
+}
+.ng-org-mark-large .ng-org-initials{font-size:22px}
+.ng-org-image{width:100%;height:100%;object-fit:contain;display:block}
+.ng-main .ng-feature>.ng-cardhead .ng-org-chip{
+ display:flex;
+ align-items:center;
+ justify-content:flex-start;
+ gap:7px;
+ flex:0 1 auto;
+ min-width:30px;
+ max-width:190px;
+ height:36px;
+ border:1px solid #47665b;
+ border-radius:5px;
+ padding:2px 7px 2px 3px;
+ margin-left:clamp(6px,1.2vw,18px);
+ background:linear-gradient(90deg,#21483a,#172e2a);
+ color:#f3efe0;
+ text-align:left;
+ transition:background-color .15s,border-color .15s;
+}
+.ng-main .ng-feature>.ng-cardhead .ng-org-chip:hover{background:#315544;border-color:#d6b773}
+.ng-main .ng-feature>.ng-cardhead .ng-org-chip:focus-visible{outline:2px solid #e7cb87;outline-offset:1px}
+.ng-org-chip-copy{display:flex;flex-direction:column;gap:1px;min-width:0;white-space:nowrap;overflow:hidden}
+.ng-org-chip-copy strong{font-size:10.6px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ng-org-chip-copy small{display:flex;align-items:center;gap:2px;font-size:8px;line-height:1.1;letter-spacing:.045em;color:#c3cbbc}
+.ng-main .ng-feature>.ng-cardhead .ng-case-navigation{margin-left:auto!important}
+.ng-main .ng-feature>.ng-cardhead .ng-headinggroup{margin-right:0!important;flex:0 1 auto!important}
+.ng-global .ng-global-cash{
+ display:flex;
+ flex:0 0 auto;
+ flex-direction:column;
+ justify-content:center;
+ align-items:flex-start;
+ height:36px;
+ min-width:68px;
+ padding:0 9px;
+ margin-left:4px;
+ background:#162823;
+ border:1px solid #36554c;
+ border-radius:4px;
+ text-align:left;
+ color:#e5efe7;
+}
+.ng-global .ng-global-cash small{font-size:8px;letter-spacing:.08em;color:#adc0b2;font-weight:760;line-height:1.2}
+.ng-global .ng-global-cash strong{font-size:12px;font-weight:780;font-variant-numeric:tabular-nums;line-height:1.2;color:#f4e8c7}
+.ng-global .ng-global-cash:hover{background:#234036;border-color:#668d73}
+.ng-global .ng-global-due{
+ display:flex;
+ flex:0 0 auto;
+ align-items:center;
+ justify-content:center;
+ gap:5px;
+ height:35px;
+ min-width:66px;
+ padding:0 8px;
+ color:#f8e6b4;
+ background:#423627;
+ border:1px solid #b49353;
+ border-radius:4px;
+ font-size:10.5px!important;
+ font-weight:820!important;
+ letter-spacing:.03em;
+}
+.ng-global .ng-global-due:hover{background:#65492b}
+.ng-global .ng-global-due .ng-svg{flex:none}
+@media(min-width:781px) and (max-width:1450px){
+ .ng-main .ng-feature>.ng-cardhead .ng-org-chip{padding:2px!important;min-width:30px;width:34px;flex:0 0 34px;margin-left:5px}
+ .ng-main .ng-feature>.ng-cardhead .ng-org-chip .ng-org-chip-copy{display:none}
+ .ng-global .ng-global-cash{min-width:61px;padding:0 6px}
+ .ng-global .ng-global-date{margin-left:3px}
+}
+@media(min-width:781px) and (max-height:660px){
+ .ng-main .ng-feature>.ng-cardhead .ng-org-chip{height:29px!important}
+ .ng-org-mark{width:25px;height:25px;flex-basis:25px}
+ .ng-global .ng-global-cash,.ng-global .ng-global-due{height:30px}
+}
+/* Operations overview: live save-state aggregation, not a second database. */
+.ng-routeinner:has(.ng-org-overview),.ng-routeinner:has(.ng-due-overview){overflow-y:auto!important;overflow-x:hidden!important}
+.ng-org-overview,.ng-due-overview{padding:7px;max-width:1500px;color:#e8efec}
+.ng-org-overview-top{
+ display:flex;align-items:center;gap:16px;
+ padding:14px 18px;
+ border:1px solid #46665b;
+ border-radius:5px;
+ background:linear-gradient(110deg,#193e31,#1e3031);
+}
+.ng-org-overview-name{min-width:0}
+.ng-org-overview-name small{font-size:9px;letter-spacing:.12em;color:#e5ca88;font-weight:780}
+.ng-org-overview-name h2{margin:3px 0;font-size:23px;line-height:1.15}
+.ng-org-overview-name p{margin:0;color:#bed0c6;font-size:11px}
+.ng-org-overview-stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:9px 0}
+.ng-org-overview-stats>div{padding:11px 10px;display:flex;flex-direction:column;gap:3px;border:1px solid #39544d;background:#1e3030;border-radius:4px;min-width:0}
+.ng-org-overview-stats strong{font-size:21px;line-height:1.1;font-variant-numeric:tabular-nums;color:#f6efdc}
+.ng-org-overview-stats small{color:#aec5b7;font-size:9px;font-weight:770;letter-spacing:.035em}
+.ng-org-overview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.ng-org-overview-panel{min-width:0;min-height:155px;border:1px solid #405954;background:#1b292b;border-radius:4px;overflow:hidden}
+.ng-org-overview-panel>header{display:flex;align-items:center;gap:8px;min-height:38px;padding:4px 11px;background:#243a35;border-bottom:1px solid #466158}
+.ng-org-overview-panel>header h3{font-size:12px;letter-spacing:.035em;flex:1;margin:0;min-width:0}
+.ng-org-overview-panel>header button,.ng-org-shortcuts button{border:1px solid #496e5c;border-radius:3px;background:#214335;color:#dfd8ae;cursor:pointer;font-size:9px;font-weight:730;padding:5px 7px}
+.ng-org-overview-panel>header button:hover,.ng-org-shortcuts button:hover{background:#38654b}
+.ng-org-overview-list{display:flex;flex-direction:column;min-height:60px;max-height:218px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#55756b #1d2d2c}
+.ng-org-overview-list>button{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr) 16px;align-items:center;gap:7px;min-height:39px;padding:7px 10px;border:0;border-bottom:1px solid #354c47;background:transparent;color:#e8f1e8;text-align:left;cursor:pointer}
+.ng-org-overview-list>button:hover{background:#2c4840}
+.ng-org-overview-list>button strong{font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ng-org-overview-list>button span{color:#b4c8c0;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ng-org-overview-list>p{padding:14px 11px;color:#bbccc3;font-size:11px;margin:0}
+.ng-org-finance{padding:13px 12px 9px}
+.ng-org-finance small{font-size:9px;font-weight:740;letter-spacing:.05em;color:#b6c9c1}
+.ng-org-finance strong{display:block;margin:4px 0;font-size:23px;font-variant-numeric:tabular-nums}
+.ng-org-finance p{margin:0;color:#bccbc2;font-size:10.5px}
+.ng-org-shortcuts{display:flex;flex-wrap:wrap;gap:5px;padding:8px 12px 14px}
+.ng-due-overview h2{font-size:19px;margin:8px 0}
+.ng-due-overview>p{color:#bfcfc9;font-size:12px}
+.ng-due-overview>.ng-org-overview-list{background:#1d2e2e;border:1px solid #466055;max-height:450px}
+.ng-due-overview>button{background:#24543d;color:#edf5ec;border:1px solid #587e64;padding:8px 12px;margin-top:12px;cursor:pointer;border-radius:4px}
+.ng-profile-intro>.ng-org-mark-large{width:100px;height:100px;flex:0 0 100px}
+.ng-profile-intro>.ng-org-mark-large .ng-org-initials{font-size:28px}
