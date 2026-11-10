@@ -65,7 +65,7 @@ test('every Office badge uses readable shield viewport, correct source path, and
  assert.equal(syntax.status,0,syntax.stderr);
 });
 
-test('repaired shield paths are cache-busted and rectangular frames are removed',()=>{const css=get('public/next/next.css'),js=get('public/next/next.js');assert.ok(js.includes('png?shield=20261110b'));assert.ok(css.includes('.ng-profile-badgeframe{'),'Real approved shields retain their dedicated profile framing in the consolidated design');assert.ok(css.includes('.ng-profile-badgeframe{background:transparent!important'));assert.ok(css.includes('.ng-route-badge-slot{width:48px!important'));});
+test('repaired shield paths are cache-busted and rectangular frames are removed',()=>{const css=get('public/next/next.css'),js=get('public/next/next.js');assert.ok(js.includes('png?shield=20261110b'));assert.ok(css.includes('.ng-profile-badgeframe{'),'Real approved shields retain their dedicated profile framing in the consolidated design');assert.match(css,/\.ng-profile-badgeframe\{[^}]*background:transparent!important/,'Standalone profile shields must have a transparent background without a framing rectangle');assert.ok(css.includes('.ng-route-badge-slot{width:48px!important'));});
 
 test('shield files were rechecked for detached sheet fragments',()=>{
  const manifest=JSON.parse(get('public/assets/profile-badges/v2/REPAIR_MANIFEST.json'));
