@@ -834,5 +834,48 @@
     "observed_at": null,
     "evidence_refs": [],
     "status": "unassessed"
+  },
+  "display": {
+    "horse_overview": {
+      "Speed & Pace": [
+        "raw_speed",
+        "early_speed",
+        "cruising_speed",
+        "late_speed",
+        "acceleration",
+        "running_style"
+      ],
+      "Surface & Environment": [
+        "dirt_aptitude",
+        "turf_aptitude",
+        "synthetic_aptitude",
+        "sloppy_track_aptitude",
+        "distance_profile",
+        "kickback_tolerance"
+      ],
+      "Physical & Biometric": [
+        "stamina",
+        "stride_length",
+        "stride_frequency",
+        "recovery_capacity",
+        "durability",
+        "balance_agility"
+      ],
+      "Mental & Class": [
+        "racing_intelligence",
+        "competitive_desire",
+        "trainability",
+        "traffic_composure",
+        "gate_composure",
+        "consistency"
+      ]
+    },
+    "horse_condition": [
+      "fitness",
+      "form",
+      "fatigue",
+      "race_readiness",
+      "health_status"
+    ]
   }
 }
