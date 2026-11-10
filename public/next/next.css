@@ -695,3 +695,16 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
 /* An existing generic stable image must never be mistaken for the named case horse. */
 .ng-main .ng-featurephoto .ng-photo-label{display:block!important;position:absolute!important;top:8px!important;right:8px!important;z-index:3!important;background:#091b19bc!important;border:1px solid #647b6e!important;padding:4px 6px!important;color:transparent!important;font-size:0!important;line-height:1!important;border-radius:2px!important}
 .ng-main .ng-featurephoto .ng-photo-label::after{content:"REFERENCE PHOTO";font-size:8px!important;letter-spacing:.05em!important;color:#e5ecde!important;font-weight:700!important}
+
+/* Approved v2 badge display geometry: the original 512px artwork has broad transparent sides.
+   Enlarge only the visible badge INSIDE a clipped viewport; never crop, upscale or rewrite asset files. */
+.ng-badge-slot{width:32px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;isolation:isolate}
+.ng-badge-slot>.ng-headicon{display:block;max-width:none!important;min-width:46px!important;width:46px!important;height:46px!important;flex:none;object-fit:contain!important;transform:none!important;filter:drop-shadow(0 1px 1px #0008)}
+.ng-right .ng-badge-slot,.ng-functional .ng-badge-slot{margin-left:-1px}
+.ng-route-badge-slot{width:44px;height:54px;flex:none;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative}
+.ng-route-badge-slot>.ng-routebadge{display:block;width:64px;height:64px;max-width:none;flex:none;object-fit:contain}
+.ng-profile-badgeframe{overflow:hidden;position:relative}
+.ng-profile-badgeframe img{width:96px;height:96px;max-width:none;object-fit:contain}
+@media(max-width:1080px){.ng-profile-badgeframe img{height:80px;width:80px}}
+.ng-badge-slot.wtw-badge-missing::after,.ng-route-badge-slot.wtw-badge-missing::after,.ng-profile-badgeframe.wtw-badge-missing::after{content:'!';position:absolute;inset:0;display:grid;place-items:center;color:#f2c66a;font-size:17px;font-weight:900;background:#59412638;border:1px solid #9c733777;border-radius:4px}
+.wtw-badge-missing>img{visibility:hidden}
