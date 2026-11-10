@@ -1356,25 +1356,6 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
 .ng-org-chip-copy small{display:flex;align-items:center;gap:2px;font-size:8px;line-height:1.1;letter-spacing:.045em;color:#c3cbbc}
 .ng-main .ng-feature>.ng-cardhead .ng-case-navigation{margin-left:auto!important}
 .ng-main .ng-feature>.ng-cardhead .ng-headinggroup{margin-right:0!important;flex:0 1 auto!important}
-.ng-global .ng-global-cash{
- display:flex;
- flex:0 0 auto;
- flex-direction:column;
- justify-content:center;
- align-items:flex-start;
- height:36px;
- min-width:68px;
- padding:0 9px;
- margin-left:4px;
- background:#162823;
- border:1px solid #36554c;
- border-radius:4px;
- text-align:left;
- color:#e5efe7;
-}
-.ng-global .ng-global-cash small{font-size:8px;letter-spacing:.08em;color:#adc0b2;font-weight:760;line-height:1.2}
-.ng-global .ng-global-cash strong{font-size:12px;font-weight:780;font-variant-numeric:tabular-nums;line-height:1.2;color:#f4e8c7}
-.ng-global .ng-global-cash:hover{background:#234036;border-color:#668d73}
 .ng-global .ng-global-due{
  display:flex;
  flex:0 0 auto;
@@ -1395,15 +1376,12 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
 .ng-global .ng-global-due:hover{background:#65492b}
 .ng-global .ng-global-due .ng-svg{flex:none}
 @media(min-width:781px) and (max-width:1450px){
- .ng-main .ng-feature>.ng-cardhead .ng-org-chip{padding:2px!important;min-width:30px;width:34px;flex:0 0 34px;margin-left:5px}
- .ng-main .ng-feature>.ng-cardhead .ng-org-chip .ng-org-chip-copy{display:none}
- .ng-global .ng-global-cash{min-width:61px;padding:0 6px}
  .ng-global .ng-global-date{margin-left:3px}
 }
 @media(min-width:781px) and (max-height:660px){
  .ng-main .ng-feature>.ng-cardhead .ng-org-chip{height:29px!important}
  .ng-org-mark{width:25px;height:25px;flex-basis:25px}
- .ng-global .ng-global-cash,.ng-global .ng-global-due{height:30px}
+ .ng-global .ng-global-due{height:30px}
 }
 /* Operations overview: live save-state aggregation, not a second database. */
 .ng-routeinner:has(.ng-org-overview),.ng-routeinner:has(.ng-due-overview){overflow-y:auto!important;overflow-x:hidden!important}
@@ -1446,3 +1424,147 @@ body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
 .ng-due-overview>button{background:#24543d;color:#edf5ec;border:1px solid #587e64;padding:8px 12px;margin-top:12px;cursor:pointer;border-radius:4px}
 .ng-profile-intro>.ng-org-mark-large{width:100px;height:100px;flex:0 0 100px}
 .ng-profile-intro>.ng-org-mark-large .ng-org-initials{font-size:28px}
+
+/* Desktop lock: image-only organization identity and inline cash; no top-bar scrolling. */
+@media(min-width:781px){
+ .ng-global{
+  overflow:visible!important;
+  flex-wrap:nowrap!important;
+ }
+ .ng-global .ng-primary{
+  flex:1 1 0!important;
+  min-width:0!important;
+  overflow-x:hidden!important;
+  overflow-y:hidden!important;
+  scrollbar-width:none!important;
+  white-space:nowrap!important;
+ }
+ .ng-global .ng-global-morewrap{display:none}
+ .ng-main .ng-feature>.ng-cardhead .ng-org-chip{
+  flex:0 0 auto!important;
+  width:auto!important;
+  max-width:140px!important;
+  min-width:85px!important;
+  height:35px!important;
+  padding:2px 7px 2px 3px!important;
+  margin-left:clamp(6px,.9vw,13px)!important;
+  gap:7px!important;
+  background:#1b362e!important;
+  border:1px solid #4c6c58!important;
+ }
+ .ng-main .ng-feature>.ng-cardhead .ng-org-chip .ng-org-mark{
+  width:29px!important;
+  height:29px!important;
+  flex:0 0 29px!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+ }
+ .ng-main .ng-feature>.ng-cardhead .ng-org-chip .ng-org-image{
+  display:block!important;
+  width:29px!important;
+  height:29px!important;
+  border-radius:4px!important;
+  object-fit:contain!important;
+ }
+ .ng-main .ng-feature>.ng-cardhead .ng-org-chip-cash{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-start!important;
+  justify-content:center!important;
+  gap:1px!important;
+  min-width:34px!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+ }
+ .ng-main .ng-feature>.ng-cardhead .ng-org-chip-cash small{
+  color:#b4c7b8!important;
+  font-size:8px!important;
+  letter-spacing:.065em!important;
+  line-height:1.1!important;
+  font-weight:760!important;
+ }
+ .ng-main .ng-feature>.ng-cardhead .ng-org-chip-cash strong{
+  color:#f0dcab!important;
+  font-size:12px!important;
+  line-height:1.15!important;
+  font-variant-numeric:tabular-nums!important;
+  font-weight:820!important;
+ }
+}
+@media(min-width:781px) and (max-width:1370px){
+ /* Keep frequent departments visible; the others remain reachable through MORE. */
+ .ng-global .ng-primary>button[data-val="Breeding"],
+ .ng-global .ng-primary>button[data-val="Personnel"],
+ .ng-global .ng-primary>button[data-val="Facilities"],
+ .ng-global .ng-primary>button[data-val="Finances"],
+ .ng-global .ng-primary>button[data-val="World"]{display:none!important}
+ .ng-global .ng-global-morewrap{
+  position:relative;
+  display:flex!important;
+  height:100%;
+  flex:0 0 auto;
+  align-items:center;
+  z-index:8;
+ }
+ .ng-global .ng-global-more{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  height:32px;
+  padding:0 8px;
+  border:1px solid #39564d;
+  border-radius:4px;
+  background:#1a312b;
+  color:#e5eee6;
+  font-weight:750!important;
+  font-size:10.5px!important;
+  letter-spacing:.02em;
+ }
+ .ng-global .ng-global-more:hover,.ng-global .ng-global-more[aria-expanded="true"]{
+  background:#2c5141;
+  border-color:#a7a16f;
+ }
+ .ng-global .ng-global-moremenu{
+  position:absolute;
+  top:calc(100% - 2px);
+  right:0;
+  width:164px;
+  display:flex;
+  flex-direction:column;
+  padding:4px;
+  gap:2px;
+  border:1px solid #627666;
+  border-radius:0 0 5px 5px;
+  background:#172c29;
+  box-shadow:0 8px 22px #0009;
+  z-index:40;
+ }
+ .ng-global .ng-global-moremenu>button{
+  width:100%;
+  padding:9px 10px;
+  text-align:left;
+  border:0;
+  background:transparent;
+  color:#e6eee8;
+  font-size:11px!important;
+  font-weight:700!important;
+  border-radius:3px;
+ }
+ .ng-global .ng-global-moremenu>button:hover{background:#2c5444}
+}
+@media(min-width:781px) and (max-width:1090px){
+ .ng-global .ng-primary>button{font-size:9.6px!important;padding:0 6px!important}
+ .ng-global .ng-primary>button .ng-svg{display:none!important}
+ .ng-global .ng-hist{gap:0!important}
+ .ng-global .ng-hist button{width:24px!important}
+ .ng-global .ng-global-date{min-width:72px!important}
+ .ng-global .ng-global-continue{min-width:102px!important}
+}
+@media(min-width:781px) and (max-height:660px){
+ .ng-main .ng-feature>.ng-cardhead .ng-org-chip{height:28px!important;padding:1px 5px!important}
+ .ng-main .ng-feature>.ng-cardhead .ng-org-chip .ng-org-mark,
+ .ng-main .ng-feature>.ng-cardhead .ng-org-chip .ng-org-image{width:24px!important;height:24px!important;flex-basis:24px!important}
+}
