@@ -431,7 +431,7 @@ test('Tier 1 People Profile keeps only known identity facts and actions above th
  assert.ok(p.includes('class="ng-person-career-strip"'),'Career and assignments need compact summary, not redundant role stats');
  assert.ok(p.includes('CURRENT HORSE ASSIGNMENTS'),"Person's actual linked horses must be visible immediately");
  assert.ok(p.includes('data-val="Stable Horses"'),'All person-to-horse connections must remain navigable');
- assert.ok(p.includes('PROFESSIONAL ATTRIBUTES')&&p.includes('REPUTATION & NETWORK')&&p.includes('CAREER & OPPORTUNITIES'),'OOTP-style professional information remains in three visible cards');
+ assert.ok(p.includes('PROFESSIONAL ATTRIBUTES')&&p.includes('REPUTATION & STANDING')&&p.includes('CONNECTED HORSES')&&p.includes('CAREER AT A GLANCE')&&p.includes('WORKING NETWORK'),'OOTP-style professional overview must show five information areas without requiring extra clicks');
  assert.ok(p.includes('source?.schema')||p.includes("source?.schema==='WTW_PERSON_REPUTATION_V1'"),'Reputation data must remain validated and attributed');
  assert.ok(p.includes('Array.isArray(source.source?.refs)&&source.source.refs.length>0'),'No fabricated reputation on the overview');
  assert.ok(css.includes('Tier 1 People sign-off pass:'),'Desktop-specific People UI fit rules must exist');
@@ -583,6 +583,9 @@ test('People Overview places attributes, reputation, horses, career and relation
  const js=get('public/next/next.js'),css=get('public/next/next.css');
  const p=js.slice(js.indexOf('function profileDetail('),js.indexOf('function calendarTimeline('));
  assert.ok(p.includes('ng-person-workspace-overview'),'Overview must use dense two-band layout');
+ assert.ok(js.includes("APP.custom==='Search'||APP.custom==='Organization Overview'"),'Search and organization hide irrelevant departmental navigation');
+ assert.ok(js.includes("/Profile$/.test(profileRoute.kicker)"),'Profile routes have their own relevant detail tabs without duplicate top-level subbar');
+
  for(const area of ['ng-person-ov-attributes','ng-person-ov-reputation','ng-person-ov-horses','ng-person-ov-career','ng-person-ov-network'])
   assert.ok(p.includes(area),'Overview must show '+area+' without switching tabs');
  assert.ok(p.includes('person.horseAssignments()'),'Connected horses, owner badges and status are visible immediately');
