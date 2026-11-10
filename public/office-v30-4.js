@@ -654,11 +654,16 @@
     return (items && items.length) ? items.map(x=>`<div class="achievementItem">${x}</div>`).join('') : '<div class="achievementItem muted">No recorded achievement in the current game state.</div>';
   }
   function staffReputation(name){
-    const trust = Number(gameState.staffState?.[name]?.trust || 0);
-    if(trust>1) return {label:'Strong',pct:82};
-    if(trust===1) return {label:'Positive',pct:66};
-    if(trust<0) return {label:'Strained',pct:34};
-    return {label:'Unrated',pct:50};
+    // Trust is an interpersonal relationship, not earned industry reputation.
+    const person=gameState.staffState?.[name]||{},rep=person.reputation_profile;
+    const score=rep?.scores?.overall;
+    const evidence=rep?.source?.refs;
+    if(rep?.schema==='WTW_PERSON_REPUTATION_V1'&&typeof score==='number'&&
+       Number.isFinite(score)&&score>=0&&score<=100&&
+       Array.isArray(evidence)&&evidence.length>0){
+      return {label:score+' / 100',pct:score};
+    }
+    return {label:'Unrated',pct:null};
   }
   function openHorseProfile(name){
     name = name || caseHorseTarget[currentCase] || '';
@@ -771,7 +776,7 @@
         <div class="profileLower">
           <div class="profilePanel"><h3 class="wtwBadgeHeading"><img class="wtwBadgeSmall" src="/assets/profile-badges/v2/wtw_badge_farm_stable.png" alt="" aria-hidden="true"><span>Stable</span></h3><div class="profilePanelBody"><div class="achievementList">${stable}</div></div></div>
           <div class="profilePanel"><h3 class="wtwBadgeHeading"><img class="wtwBadgeSmall" src="/assets/profile-badges/v2/wtw_badge_career_record.png" alt="" aria-hidden="true"><span>Career Wins</span></h3><div class="profilePanelBody"><div class="bigMetric"><strong>${data.careerWins || '—'}</strong><span>Career wins</span></div><div class="achievementItem muted">Career totals will populate from the canonical historical/person database.</div></div></div>
-          <div class="profilePanel"><h3 class="wtwBadgeHeading"><img class="wtwBadgeSmall" src="/assets/profile-badges/v2/wtw_badge_reputation.png" alt="" aria-hidden="true"><span>Reputation & Achievements</span></h3><div class="profilePanelBody"><div class="bigMetric"><strong>${rep.label}</strong><span>Reputation</span></div><div class="reputationBar"><i style="width:${rep.pct}%"></i></div><div class="achievementList" style="margin-top:8px">${profileAchievements(data.achievements)}</div></div><div class="routeActions"><button data-act="World">All People</button><button class="alt" data-act="Office Overview">Office</button></div></div>
+          <div class="profilePanel"><h3 class="wtwBadgeHeading"><img class="wtwBadgeSmall" src="/assets/profile-badges/v2/wtw_badge_reputation.png" alt="" aria-hidden="true"><span>Reputation & Achievements</span></h3><div class="profilePanelBody"><div class="bigMetric"><strong>${rep.label}</strong><span>Reputation</span></div>${rep.pct!==null?`<div class="reputationBar"><i style="width:${rep.pct}%"></i></div>`:'<div class="achievementItem muted">No sourced professional reputation score yet.</div>'}<div class="achievementList" style="margin-top:8px">${profileAchievements(data.achievements)}</div></div><div class="routeActions"><button data-act="World">All People</button><button class="alt" data-act="Office Overview">Office</button></div></div>
         </div>
       </section>`);
   }
