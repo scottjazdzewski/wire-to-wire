@@ -475,3 +475,223 @@ body.wtw-next-active{overflow:hidden}body.wtw-next-active>.app,body.wtw-next-act
  .ng-moves .ng-resolved .ng-outtext{font-size:10px;line-height:1.32;padding:5px 7px}
  .ng-moves .ng-resolved .ng-outcome-actions{gap:4px}
 }
+
+/* WIRE TO WIRE NEXT v7 — Office command-layout redesign.
+   This is a replacement composition, NOT an additional linked stylesheet. */
+:root{--wt-bg:#0d1216;--wt-shell:#0a1014;--wt-head:#18252b;--wt-card:#19252a;--wt-card2:#203039;--wt-row:#18262b;--wt-row2:#1c2d33;--wt-line:#334a4b;--wt-line2:#456064;--wt-gold:#eed08a;--wt-text:#f1f5f3;--wt-muted:#bdc9c7;--wt-dim:#9db0b0;--wt-green:#41c99c;--wt-forest:#14392d}
+body.wtw-next-active{background:#0d1115!important;color:#eef5f2}
+#wtwNextgen{background:linear-gradient(122deg,#0b1418 0%,#0e171c 45%,#11171c 100%)}
+/* Game shell: quiet chrome, legible type, precise action contrast */
+.ng-global{background:#0a1116!important;border-bottom:1px solid #253b3e!important;min-height:44px!important;box-shadow:0 1px 0 #10191a}
+.ng-primary>button{font-family:"Segoe UI Variable Display","Segoe UI",Arial,sans-serif;font-size:12.4px!important;font-weight:680!important;letter-spacing:.025em!important;padding:0 13px!important}
+.ng-primary>button.on{background:#143c31!important;box-shadow:inset 0 -3px 0 #ddc27f!important}
+.ng-global-tools .ng-iconbtn{border:1px solid #2d4449!important;background:#19252a!important;border-radius:5px!important}
+.ng-mast{background:linear-gradient(90deg,#0a1b19,#102a25 35%,#142723 69%,#0e1b1b)!important;min-height:80px!important;box-shadow:inset 0 -1px 0 #304e46!important}
+.ng-brand-name{font-family:"Segoe UI Variable Display","Segoe UI",Arial,sans-serif;font-size:25px!important;font-weight:790!important;letter-spacing:-.05em!important}
+.ng-brand-sub{color:#adc2bd!important;font-size:11px!important}
+.ng-mast-fig{border-left:1px solid #35524d!important;min-width:87px!important;padding:0 12px!important}
+.ng-mast-fig>b{font-size:24px!important;line-height:1!important;font-weight:800!important}
+.ng-mast-fig>span{font-size:9px!important;letter-spacing:.06em!important}
+.ng-continue{border:1px solid #e37476!important;background:linear-gradient(180deg,#d64c54,#aa2635)!important;box-shadow:0 3px 12px #0005,inset 0 1px #f6a5a43d!important;font-weight:800!important;letter-spacing:.035em!important}
+.ng-subbar{background:#132028!important;border-bottom:1px solid #304c4b!important;min-height:34px!important}
+.ng-subnav button{font-size:11.6px!important;font-weight:650!important}
+.ng-subnav button.on{color:#fdf9ec!important;box-shadow:inset 0 -3px 0 #ddc17d!important}
+.ng-fastnav button{font-size:10.8px!important;border-color:#405653!important}
+/* Three permanent zones read as one app canvas rather than isolated widget cards */
+.ng-board{grid-template-columns:minmax(270px, 300px) minmax(0,1fr) minmax(288px,322px)!important;gap:7px!important;padding:7px 9px!important;background:linear-gradient(90deg,#111a20,#151e22)!important}
+.ng-left,.ng-right,.ng-main{border-radius:4px!important;overflow:hidden!important;min-height:0!important}
+.ng-left{background:#162127!important;border:1px solid #334b4c!important;box-shadow:0 5px 14px #0003}
+.ng-inbox{border:0!important;border-radius:0!important;box-shadow:none!important;background:#162127!important}
+.ng-inbox .ng-cardhead,.ng-roster>.ng-cardhead,.ng-races>.ng-cardhead{background:#1e2d32!important;border-bottom:1px solid #324e4d!important}
+.ng-cardhead{min-height:43px!important}
+.ng-headinggroup h3{font-family:"Segoe UI Variable Display","Segoe UI",Arial,sans-serif;font-size:14px!important;font-weight:790!important;letter-spacing:.018em!important;text-transform:uppercase}
+.ng-headinggroup>span{font-size:9px!important;letter-spacing:.08em!important;font-weight:690!important}
+.ng-inboxdate{background:#112322!important;color:#c7dfd5!important;font-size:9.5px!important;min-height:25px!important}
+.ng-msg{border-bottom:1px solid #304147!important;background:#1a282f!important;padding:7px 10px!important;transition:background .13s ease!important}
+.ng-msg:nth-child(even){background:#19262c!important}
+.ng-msg.on{background:linear-gradient(90deg,#1e4a3d,#24433d)!important;box-shadow:inset 3px 0 #e7d28a!important}
+.ng-msg:hover:not(.on){background:#263841!important}
+.ng-msgfrom{font-size:11px!important;color:#b8cfcb!important}
+.ng-msgtitle{font-size:12.6px!important;font-weight:720!important;line-height:1.19!important;letter-spacing:-.011em!important}
+.ng-msgmeta{font-size:10.4px!important;color:#a6bdb9!important}
+.ng-avatar{background:#194f40!important;border:1px solid #447369!important;font-size:11px!important}
+.ng-msgtrail .ng-msgtag{font-size:9px!important}
+/* V7 hallmark: Decisions fill a full-height right command column. Briefing and analyst file occupy the left. */
+.ng-main{display:grid!important;grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr)!important;grid-template-rows:minmax(0,49%) minmax(0,51%)!important;gap:0!important;min-height:0!important;background:#101c21!important;border:1px solid #3a5252!important;box-shadow:0 5px 22px #0003!important}
+.ng-main>.ng-feature{grid-column:1!important;grid-row:1!important;border:0!important;border-bottom:1px solid #425651!important;background:#0b1c1c!important;min-height:0!important;min-width:0!important;box-shadow:none!important;overflow:hidden!important}
+.ng-main>.ng-centerbottom{display:contents!important}
+.ng-main .ng-intel{grid-column:1!important;grid-row:2!important;border:0!important;border-right:1px solid #395450!important;background:#1a292c!important;min-width:0!important;min-height:0!important;box-shadow:none!important}
+.ng-main .ng-choices{grid-column:2!important;grid-row:1 / span 2!important;border:0!important;background:linear-gradient(160deg,#15232a,#19292c 75%,#192d2c)!important;min-width:0!important;min-height:0!important;display:flex!important;flex-direction:column!important;box-shadow:none!important}
+.ng-main .ng-choices>.ng-cardhead{flex:0 0 54px!important;border-bottom:1px solid #3b5052!important;background:linear-gradient(90deg,#263734,#1b2b2d)!important;padding:0 13px!important}
+.ng-main .ng-choices .ng-headinggroup h3{font-size:15px!important}
+.ng-main .ng-choices .ng-choice-count{font-size:10.5px!important;color:#f1cf7e!important}
+.ng-main .ng-choices>.ng-moves{display:flex!important;flex:1 1 0!important;min-height:0!important;flex-direction:column!important;padding:0!important;gap:0!important;overflow:hidden!important}
+.ng-main .ng-choices .ng-move{flex:1 1 0!important;min-height:0!important;display:flex!important;align-items:center!important;gap:12px!important;padding:20px 16px!important;margin:0!important;background:transparent!important;border:0!important;border-bottom:1px solid #365050!important;transition:background .13s,border-color .13s!important;box-shadow:none!important}
+.ng-main .ng-choices .ng-move:nth-child(1){background:linear-gradient(115deg,#16372d 0%,#192b2d 70%)!important;border-left:3px solid #42bb92!important}
+.ng-main .ng-choices .ng-move:nth-child(2){background:linear-gradient(115deg,#1a2e34 0%,#1a2b30 70%)!important;border-left:3px solid #77a9bd!important}
+.ng-main .ng-choices .ng-move:nth-child(3){background:linear-gradient(115deg,#282b29 0%,#1e2b2e 70%)!important;border-left:3px solid #d7b86c!important;border-bottom:0!important}
+.ng-main .ng-choices .ng-move:hover{background:linear-gradient(110deg,#33544a 0%,#28433e 80%)!important}
+.ng-main .ng-choices .ng-move-number{flex:0 0 38px!important;width:38px!important;height:38px!important;border-radius:50%!important;background:#27463e!important;border:1px solid #6d9784!important;color:#e7f6ec!important;font-size:13px!important;font-weight:800!important;display:grid!important;place-items:center!important}
+.ng-main .ng-choices .ng-move-body{min-width:0!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:7px!important}
+.ng-main .ng-choices .ng-movetag{font-size:10.5px!important;letter-spacing:.065em!important;color:#bbd0c9!important;text-transform:uppercase!important;font-weight:750!important}
+.ng-main .ng-choices .ng-move-body strong{font-size:19px!important;line-height:1.19!important;letter-spacing:-.022em!important;font-weight:760!important;color:#f5faf7!important}
+.ng-main .ng-choices .ng-movearrow{margin-left:auto!important;opacity:.86!important;color:#d6ebdf!important}
+.ng-choices .ng-moves>.ng-resolved{flex:1!important;padding:19px 16px!important;min-height:0!important;gap:16px!important}
+.ng-choices .ng-resolved .ng-resolution-title{font-size:16px!important;line-height:1.25!important}
+.ng-choices .ng-resolved .ng-resolvedtabs button{font-size:11.5px!important;min-height:31px!important}
+.ng-choices .ng-resolved .ng-outtext{flex:1!important;min-height:0!important;padding:14px!important;font-size:14px!important;line-height:1.48!important}
+.ng-choices .ng-resolved .ng-outcome-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:6px!important}
+.ng-choices .ng-resolved .ng-outcome-actions button{white-space:normal!important;min-height:34px!important}
+/* Feature becomes a photographic dossier; no separate boxed image panel */
+.ng-main .ng-feature .ng-cardhead{background:linear-gradient(90deg,#1e3130,#18272c)!important;border-bottom:1px solid #46615b!important;padding:0 9px!important;min-height:42px!important}
+.ng-main .ng-feature .ng-headinggroup h3{font-size:13.5px!important}
+.ng-main .ng-feature .ng-headinggroup>span{font-size:8.4px!important}
+.ng-main .ng-feature .ng-case-navigation{gap:4px!important;flex-wrap:nowrap!important}
+.ng-main .ng-feature .ng-case-pip{width:10px!important;height:10px!important;min-width:10px!important}
+.ng-main .ng-feature .ng-case-pips{gap:3px!important}
+.ng-main .ng-feature .ng-case-position{font-size:9.5px!important}
+.ng-main .ng-featurebody{display:block!important;position:relative!important;isolation:isolate!important;min-height:0!important;overflow:hidden!important;background:#0e1b1a!important}
+.ng-main .ng-featurephoto{position:absolute!important;inset:0!important;z-index:0!important;pointer-events:none!important;opacity:1!important;visibility:visible!important;border:0!important;border-radius:0!important}
+.ng-main .ng-featurephoto img{width:100%!important;height:100%!important;object-fit:cover!important;object-position:61% center!important;filter:saturate(.73) contrast(1.06) brightness(.72)!important}
+.ng-main .ng-featurephoto::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,19,19,.98) 0%,rgba(8,23,22,.91) 37%,rgba(10,24,22,.6) 70%,rgba(9,21,20,.33) 100%),linear-gradient(0deg,rgba(10,24,22,.65),transparent 60%)!important}
+.ng-main .ng-featurephoto .ng-photo-label,.ng-main .ng-featurephoto .ng-photo-ribbon{display:none!important}
+.ng-main .ng-case{position:relative!important;z-index:2!important;display:flex!important;flex-direction:column!important;gap:10px!important;justify-content:center!important;height:100%!important;min-height:0!important;padding:12px 16px 12px!important;max-width:100%!important}
+.ng-main .ng-case-eyebrow{font-size:9.5px!important;letter-spacing:.1em!important;color:#efd18a!important}
+.ng-main .ng-casetitle h2{font-family:"Segoe UI Variable Display","Segoe UI",Arial,sans-serif;font-weight:820!important;font-size:clamp(20px,1.75vw,27px)!important;line-height:1.11!important;letter-spacing:-.055em!important;max-width:97%!important;text-wrap:balance!important;text-shadow:0 2px 6px #0008!important}
+.ng-main .ng-case-summary{font-size:12px!important;line-height:1.35!important;max-width:95%!important;color:#e2ece5!important}
+.ng-main .ng-facts{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;margin-top:0!important}
+.ng-main .ng-fact{background:#0b1e1dbd!important;border:1px solid #4a5c52a8!important;border-radius:3px!important;padding:6px 5px!important;min-width:0!important;min-height:41px!important}
+.ng-main .ng-fact small{font-size:8.3px!important;letter-spacing:.06em!important;line-height:1.14!important}
+.ng-main .ng-fact b{font-size:10.5px!important;line-height:1.18!important}
+.ng-main .ng-caseactions{gap:6px!important;margin-top:1px!important;flex-wrap:nowrap!important}
+.ng-main .ng-caseactions button{min-height:32px!important;padding:7px 10px!important;font-size:10.7px!important;font-weight:760!important}
+/* Analyst brief: calm technical transcript with source indexing */
+.ng-main .ng-intel>.ng-cardhead{background:#233434!important;border-bottom:1px solid #425955!important}
+.ng-main .ng-intel .ng-intelgrid{display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:repeat(4,minmax(0,1fr))!important;gap:0!important;padding:0!important;overflow:hidden!important}
+.ng-main .ng-intel .ng-intelitem{display:grid!important;grid-template-columns:57px 76px minmax(0,1fr)!important;align-items:center!important;gap:7px!important;min-height:0!important;padding:6px 11px!important;margin:0!important;border:0!important;border-left:3px solid #4aa58b!important;border-bottom:1px solid #304b4c!important;background:#1a292c!important;box-shadow:none!important;border-radius:0!important;text-align:left!important}
+.ng-main .ng-intel .ng-intelitem:nth-child(even){background:#1c2c31!important}
+.ng-main .ng-intel .ng-intelitem.ng-intel-1{border-left-color:#d0676c!important}
+.ng-main .ng-intel .ng-intelitem.ng-intel-2{border-left-color:#e0c078!important}
+.ng-main .ng-intel .ng-intelitem.ng-intel-3{border-left-color:#79abc6!important}
+.ng-main .ng-intel .ng-intelitem:hover{background:#2b4246!important}
+.ng-main .ng-intel .ng-intel-kicker{font-size:8.7px!important;white-space:nowrap!important;line-height:1.2!important;letter-spacing:.06em!important}
+.ng-main .ng-intel .ng-intelitem b{font-size:13px!important;line-height:1.2!important;font-weight:750!important;white-space:normal!important}
+.ng-main .ng-intel .ng-intelitem p{font-size:11.5px!important;line-height:1.27!important;margin:0!important;white-space:normal!important}
+/* Right rail: one operations console, calmer sections and readable stable rows */
+.ng-right{gap:0!important;grid-template-rows:minmax(0,1.25fr) minmax(0,.98fr) 36px!important;background:#162329!important;border:1px solid #375150!important;box-shadow:0 5px 16px #0003!important}
+.ng-right>.ng-roster,.ng-right>.ng-races{border:0!important;border-radius:0!important;box-shadow:none!important;min-height:0!important;background:#18262b!important}
+.ng-right>.ng-roster{border-bottom:1px solid #44615c!important}
+.ng-rostercolumns,.ng-entrycolumns{background:#22363b!important;border-bottom:1px solid #476461!important;min-height:25px!important}
+.ng-rosterrow{background:#1b2a30!important;padding:5px 10px!important;border-bottom:1px solid #33494c!important}
+.ng-rosterrow:nth-child(2n){background:#1c2c32!important}
+.ng-rosterrow:hover{background:#2b4547!important}
+.ng-rostername{font-size:12.3px!important;font-weight:770!important}
+.ng-horseact{font-size:10.2px!important;color:#b9cac7!important}
+.ng-entryrow{background:#1b2a30!important;padding:5px 9px!important;border-bottom:1px solid #344c50!important}
+.ng-entryrow:nth-child(2n){background:#1d2d33!important}
+.ng-entryrow:hover{background:#304a4c!important}
+.ng-entrycopy b{font-size:12.1px!important;font-weight:750!important}
+.ng-entrydate{font-size:10.3px!important}
+.ng-entrytag small{font-size:10.2px!important}
+.ng-right>.ng-leads{background:linear-gradient(90deg,#194332,#1a3b2f)!important;border:0!important;border-top:1px solid #59826a!important;border-radius:0!important;height:36px!important;min-height:36px!important;box-shadow:none!important}
+/* Constrained laptops: no hidden or cut-off text; use same underlying responsive source. */
+@media(max-width:1250px){
+ .ng-board{grid-template-columns:minmax(252px,268px) minmax(0,1fr) minmax(268px,282px)!important;gap:5px!important;padding:6px!important}
+ .ng-main .ng-case{padding:8px 9px!important;gap:7px!important}
+ .ng-main .ng-casetitle h2{font-size:20px!important}
+ .ng-main .ng-fact small{font-size:7.8px!important}
+ .ng-main .ng-fact b{font-size:9.8px!important}
+ .ng-main .ng-case-summary{font-size:11px!important}
+ .ng-main .ng-intel .ng-intelitem{grid-template-columns:47px 55px minmax(0,1fr)!important;gap:5px!important;padding:5px 6px!important}
+ .ng-main .ng-intel .ng-intelitem b{font-size:11.2px!important}
+ .ng-main .ng-intel .ng-intelitem p{font-size:10.5px!important}
+ .ng-main .ng-choices .ng-move-body strong{font-size:15.7px!important}
+ .ng-main .ng-choices .ng-move{padding:9px 8px!important;gap:7px!important}
+ .ng-main .ng-choices .ng-move-number{width:29px!important;height:29px!important;flex-basis:29px!important;font-size:11px!important}
+ .ng-main .ng-choices .ng-cardhead{padding:0 7px!important}
+ .ng-main .ng-choices .ng-headinggroup h3{font-size:12.5px!important}
+ .ng-main .ng-choices .ng-headinggroup>span{font-size:8px!important}
+}
+@media(max-height:660px) and (min-width:850px){
+ .ng-main{grid-template-rows:minmax(0,48%) minmax(0,52%)!important}
+ .ng-main .ng-case{padding:6px 8px!important;gap:5px!important}
+ .ng-main .ng-casetitle h2{font-size:17px!important;line-height:1.06!important}
+ .ng-main .ng-case-summary{font-size:10px!important;line-height:1.2!important}
+ .ng-main .ng-fact{min-height:27px!important;padding:3px!important}
+ .ng-main .ng-fact small{font-size:7px!important}
+ .ng-main .ng-fact b{font-size:8.5px!important}
+ .ng-main .ng-caseactions button{min-height:22px!important;padding:4px!important;font-size:8.5px!important}
+ .ng-main .ng-intel .ng-intelitem{grid-template-columns:37px 45px minmax(0,1fr)!important;padding:3px 5px!important;gap:4px!important}
+ .ng-main .ng-intel .ng-intel-kicker{font-size:7px!important}
+ .ng-main .ng-intel .ng-intelitem b{font-size:9.4px!important}
+ .ng-main .ng-intel .ng-intelitem p{font-size:8.5px!important}
+ .ng-main .ng-choices .ng-cardhead{flex-basis:35px!important}
+ .ng-main .ng-choices .ng-move{padding:6px!important}
+ .ng-main .ng-choices .ng-move-body strong{font-size:12.8px!important}
+ .ng-main .ng-choices .ng-movetag{font-size:8px!important}
+ .ng-main .ng-choices .ng-move-number{flex-basis:25px!important;width:25px!important;height:25px!important}
+ .ng-choices .ng-resolved .ng-outtext{font-size:11px!important;line-height:1.3!important}
+}
+/* Quality-gate corrections: no colliding case navigation, full-width Intel copy */
+.ng-main .ng-feature>.ng-cardhead .ng-sectionicon{display:none!important}
+.ng-main .ng-feature>.ng-cardhead .ng-headinggroup{flex:0 1 auto!important;min-width:0!important;margin-right:auto!important}
+.ng-main .ng-feature>.ng-cardhead .ng-headinggroup h3{font-size:12.2px!important;white-space:nowrap!important}
+.ng-main .ng-feature>.ng-cardhead .ng-headinggroup>span{display:none!important}
+.ng-main .ng-feature>.ng-cardhead .ng-case-navigation{flex:0 0 auto!important;min-width:0!important;margin:0 0 0 5px!important;gap:6px!important}
+.ng-main .ng-feature>.ng-cardhead .ng-case-position{display:none!important}
+.ng-main .ng-feature>.ng-cardhead .ng-case-arrows{gap:3px!important}
+.ng-main .ng-feature>.ng-cardhead .ng-case-arrows button{min-width:23px!important;width:23px!important;height:23px!important;min-height:23px!important}
+.ng-main .ng-intel .ng-intelitem{grid-template-columns:72px minmax(0,1fr)!important;grid-template-rows:auto auto!important;column-gap:8px!important;row-gap:2px!important;align-content:center!important}
+.ng-main .ng-intel .ng-intel-kicker{grid-column:1!important;grid-row:1 / span 2!important;align-self:center!important}
+.ng-main .ng-intel .ng-intelitem b{grid-column:2!important;grid-row:1!important;align-self:end!important}
+.ng-main .ng-intel .ng-intelitem p{grid-column:2!important;grid-row:2!important;align-self:start!important}
+/* At compact desktop widths, preserve full readability by using the spacious stacked composition. */
+@media(max-width:1279px){
+ .ng-main{display:flex!important;flex-direction:column!important;gap:0!important}
+ .ng-main>.ng-feature{display:flex!important;flex-direction:column!important;flex:0 0 48%!important;min-height:0!important}
+ .ng-main>.ng-feature .ng-featurebody{flex:1 1 0!important;min-height:0!important}
+ .ng-main>.ng-centerbottom{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;flex:1 1 0!important;min-height:0!important;gap:0!important}
+ .ng-main .ng-intel,.ng-main .ng-choices{grid-column:auto!important;grid-row:auto!important;min-width:0!important;min-height:0!important}
+ .ng-main .ng-choices>.ng-cardhead{flex-basis:39px!important}
+ .ng-main .ng-choices .ng-move{padding:5px 8px!important;gap:8px!important}
+ .ng-main .ng-choices .ng-move-body strong{font-size:12.8px!important}
+ .ng-main .ng-choices .ng-movetag{font-size:9px!important}
+ .ng-main .ng-choices .ng-move-number{width:27px!important;height:27px!important;flex-basis:27px!important;font-size:10px!important}
+ .ng-main .ng-case{padding:8px 10px!important;gap:5px!important}
+ .ng-main .ng-case-summary{font-size:11px!important;line-height:1.24!important}
+ .ng-main .ng-intel .ng-intelitem{grid-template-columns:55px minmax(0,1fr)!important;row-gap:1px!important;padding:4px 9px!important}
+ .ng-main .ng-intel .ng-intelitem b{font-size:11.3px!important}
+ .ng-main .ng-intel .ng-intelitem p{font-size:10.6px!important}
+}
+@media(max-height:660px) and (min-width:850px){
+ .ng-main .ng-intel .ng-intelitem{grid-template-columns:43px minmax(0,1fr)!important;padding:2px 6px!important}
+ .ng-main .ng-intel .ng-intelitem b{font-size:9.8px!important}
+ .ng-main .ng-intel .ng-intelitem p{font-size:9px!important}
+ .ng-main .ng-intel .ng-intel-kicker{font-size:7px!important}
+}
+/* Move descriptions use canonical decision-case source; no invented advice. */
+.ng-main .ng-choices .ng-move-note{display:block!important;font-size:12px!important;font-weight:470!important;line-height:1.45!important;color:#b8cac4!important;max-width:95%!important;white-space:normal!important;letter-spacing:0!important;margin-top:4px!important}
+@media(max-width:1279px){.ng-main .ng-choices .ng-move-note{font-size:10px!important;line-height:1.2!important;margin-top:1px!important}}
+@media(max-height:660px) and (min-width:850px){.ng-main .ng-choices .ng-move-note{font-size:8.6px!important;line-height:1.13!important;margin-top:0!important}}
+/* Short laptop: stable and race sections have enough vertical room for their complete data. */
+@media(max-height:660px) and (min-width:850px){
+ .ng-right{grid-template-rows:minmax(0,1.45fr) minmax(0,.95fr) 30px!important}
+ .ng-right>.ng-races .ng-entryrow{padding-top:2px!important;padding-bottom:2px!important}
+ .ng-right>.ng-races .ng-entrycopy>b{font-size:10.4px!important;line-height:1.05!important}
+ .ng-right>.ng-races .ng-entrycopy>span{font-size:9px!important;line-height:1.1!important}
+ .ng-rosterrow{padding-top:3px!important;padding-bottom:3px!important}
+ .ng-msg{padding-top:4px!important;padding-bottom:4px!important}
+}
+/* Short-screen resolved decisions: use the available panel, don't clip full consequence text. */
+@media(max-height:660px) and (min-width:850px){
+ .ng-main .ng-choices .ng-moves>.ng-resolved{padding:5px 6px!important;gap:4px!important}
+ .ng-main .ng-choices .ng-resolved .ng-resolution-title{font-size:11px!important;line-height:1.14!important}
+ .ng-main .ng-choices .ng-resolved .ng-resolvedtabs button{min-height:22px!important;padding:3px 5px!important;font-size:9px!important}
+ .ng-main .ng-choices .ng-resolved .ng-outtext{padding:5px!important;font-size:10px!important;line-height:1.23!important}
+ .ng-main .ng-choices .ng-resolved .ng-outcome-actions{gap:3px!important}
+ .ng-main .ng-choices .ng-resolved .ng-outcome-actions button{min-height:23px!important;padding:3px 4px!important;font-size:9px!important}
+}
+
+/* An existing generic stable image must never be mistaken for the named case horse. */
+.ng-main .ng-featurephoto .ng-photo-label{display:block!important;position:absolute!important;top:8px!important;right:8px!important;z-index:3!important;background:#091b19bc!important;border:1px solid #647b6e!important;padding:4px 6px!important;color:transparent!important;font-size:0!important;line-height:1!important;border-radius:2px!important}
+.ng-main .ng-featurephoto .ng-photo-label::after{content:"REFERENCE PHOTO";font-size:8px!important;letter-spacing:.05em!important;color:#e5ecde!important;font-weight:700!important}
