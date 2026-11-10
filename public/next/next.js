@@ -377,7 +377,8 @@ function profileDetail(route){
    return `<div><span>${safe(axis.label)}</span>${valid?`<span class="ng-person-scorebar" aria-hidden="true"><i style="width:${safe(String(value))}%"></i></span>`:'<span class="ng-person-scorebar empty" aria-hidden="true"></span>'}<strong class="${valid?'known':'unknown'}">${valid?safe(String(value)):'—'}</strong></div>`;
   }).join('')}</div>${relationshipNotice}${!rep?'<p class="ng-person-unrated">Professional reputation is not yet established by the simulation or accepted career evidence. Relationship trust is separate.</p>':`<div class="ng-person-rep-provenance">AS OF ${safe(rep.as_of||'—')} · ${rep.history?.length||0} RECORDED EVENTS</div>`}</div>`;
   const opportunities=role==='jockey'?'MOUNTS':role==='trainer'?'HORSE ASSIGNMENTS':role==='breeder'?'BREEDING PARTNERS':role==='owner'?'HORSE OWNERSHIP':role==='bloodstock_professional'||role==='bloodstock_agent'?'BLOODSTOCK TRANSACTIONS':'PROFESSIONAL APPOINTMENTS';
-  const careerContent=`<div class="ng-person-career-top"><div><small>RECORDED CAREER WINS</small><strong>${safe(personWins||'—')}</strong></div><div><small>ROLE</small><strong>${safe(roleName||'Not specified')}</strong></div></div><div class="ng-person-minihead">CURRENT HORSE CONNECTIONS</div>${connectedHorseRows(4)}<div class="ng-person-influence"><b>REPUTATION INFLUENCES</b><span>${safe(opportunities)} · INDUSTRY CONTACTS · ACCESS TO OPPORTUNITIES</span><small>Skills, suitability, relationships and availability remain decisive.</small></div>`;
+  const assignedCount=sourceLinks.filter(item=>Boolean($('button[data-act]',item))).length;
+  const careerContent=`<div class="ng-person-career-strip"><div><small>RECORDED CAREER WINS</small><strong>${safe(personWins&&personWins!=='—'?personWins:'Not recorded')}</strong></div><div><small>LINKED HORSES</small><strong>${assignedCount}</strong></div></div><div class="ng-person-minihead">CURRENT HORSE ASSIGNMENTS <button data-ng="detailtab" data-val="Stable Horses">ALL CONNECTIONS ${glyph('arrow',11)}</button></div>${connectedHorseRows(4)}<div class="ng-person-influence"><b>PROFESSIONAL OPPORTUNITIES</b><span>${safe(opportunities)}</span><small>Reputation is one factor; suitability and availability remain decisive.</small></div>`;
   const events=rep?.history||[];
   const eventRows=events.length?events.slice().reverse().map(x=>`<div class="ng-person-rep-event"><b>${safe(x.date)}</b><span>${safe(x.signal.replaceAll('_',' '))}</span><small>${safe(x.source_refs?.join(', ')||'No evidence')}</small></div>`).join(''):'<p class="ng-person-unrated">No reputation events have been recorded.</p>';
   return {attributes,reputation,careerContent,eventRows,roleName,rep};
@@ -413,8 +414,9 @@ function profileDetail(route){
  </div>`:'';
 
  const factByName=label=>fields.find(f=>f.label.toLowerCase()===label.toLowerCase())?.value||'—';
- const entityHeaderFields=isPerson?
-  [['ROLE',factByName('Role')],['AGE',factByName('Age')],['BIRTHPLACE',factByName('Birthplace')],['CURRENT BASE',factByName('Location')]]:
+ const personIdentityKnown=[['ROLE',factByName('Role')],['AGE',factByName('Age')],['BIRTHPLACE',factByName('Birthplace')],['CURRENT BASE',factByName('Location')]]
+  .filter(([label,value])=>label==='ROLE'||(value&&value!=='—'&&value!=='Unknown'&&value!=='Not recorded'));
+ const entityHeaderFields=isPerson?personIdentityKnown:
   isFarm?[['LOCATION',factByName('Location')],['TYPE',factByName('Type')],['OWNER',factByName('Owner')],['STATUS',factByName('Current status')]]:
   isTrack?[['LOCATION',factByName('Location')],['SURFACES',factByName('Surfaces')],['OPERATING',factByName('Operating state')],['CIRCUIT',text('.profileSubline').split('·').slice(1).join('·').trim()||'—']]:[];
  const entityIdentityRow=entityHeaderFields.length?
@@ -422,7 +424,7 @@ function profileDetail(route){
  const identity=`<div class="ng-profile-intro">
   ${profileMark}
   <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${safe(route.title)}</h2>${horseIdentityRow}${entityIdentityRow}${isHorse||isPerson||isFarm||isTrack?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${horseImage?`<div class="ng-profile-source-photo" role="img" aria-label="Approved image of ${safe(route.title)}"><img src="${safe(horseImage)}" alt="" loading="lazy" decoding="async"/></div>`:''}
-  <div class="ng-profile-tools"><button data-ng="office" aria-label="Return to Racing Office">← OFFICE</button><button data-ng="menu" data-val="${route.kicker==='Track Profile'?'Racing':'Stable'}">${route.kicker==='Track Profile'?'RACE CALENDAR':'STABLE DIRECTORY'} ↗</button></div>
+  <div class="ng-profile-tools"><button data-ng="office" aria-label="Return to Racing Office">← OFFICE</button><button data-ng="menu" data-val="${isTrack?'Racing':isPerson||isFarm?'World':'Stable'}">${isTrack?'RACE CALENDAR':isPerson?'PEOPLE DIRECTORY':isFarm?'FARM DIRECTORY':'STABLE DIRECTORY'} ↗</button></div>
  </div>`;
  let left='',right='',footer='';
  if(APP.detailTab==='Overview'){
