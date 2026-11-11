@@ -468,6 +468,84 @@ return `<aside class="ng-right"><section class="ng-card ng-roster"><header class
 const currentRoute=()=>{const el=$('#routeShell');if(!el||el.hidden)return null;return {kicker:$('#routeKicker')?.textContent.trim()||'Page',title:$('#routeTitle')?.textContent.trim()||'Page',body:$('#routeBody')?.innerHTML||'',badge:$('.wtwRouteBadge',el)?.getAttribute('src')||badge('history')}};
 const pageBadge=()=>{const map={Stable:'farm_stable',Racing:'major_races',Sales:'connections',Breeding:'pedigree',Personnel:'people',Facilities:'farm_stable',Finances:'reputation',World:'track',Search:'history',Messages:'people',Decisions:'career_record',Reports:'history',Career:'achievements',Opportunities:'reputation'};return badge(map[APP.custom.split(' ')[0]]||map[APP.section]||'history')};
 
+// Canonical Office pedigree: no second page, save namespace or invented lineage.
+// An entity name is resolved exactly to its immutable H-ID before retrieval.
+const horsePedigreeCache=new Map();
+const horsePedigreeLoading=new Set();
+function loadOfficeHorsePedigree(name){
+ if(horsePedigreeCache.has(name)||horsePedigreeLoading.has(name))return;
+ horsePedigreeLoading.add(name);
+ fetch('/api/entities?q='+encodeURIComponent(name)+'&kind=horse&limit=250',{credentials:'same-origin',cache:'no-store'})
+ .then(r=>r.ok?r.json():Promise.reject(Error('Horse source unavailable')))
+ .then(index=>{
+  const ids=[...new Set((index.entities||[]).filter(e=>
+   e.kind==='horse'&&(e.name===name||e.source_name===name)).map(e=>e.id))];
+  if(ids.length!==1){
+   horsePedigreeCache.set(name,{status:ids.length?'ambiguous':'unlinked'});
+   return;
+  }
+  return fetch('/api/horses/'+encodeURIComponent(ids[0])+'/pedigree',{
+   credentials:'same-origin',cache:'no-store'
+  }).then(r=>r.ok?r.json():Promise.reject(Error('Pedigree source unavailable')))
+   .then(data=>{
+    if(data.horse_id!==ids[0]||!Array.isArray(data.nodes))throw Error('Invalid horse pedigree response');
+    horsePedigreeCache.set(name,{status:'ready',horse_id:ids[0],data});
+   });
+ })
+ .catch(()=>horsePedigreeCache.set(name,{status:'unavailable'}))
+ .finally(()=>{horsePedigreeLoading.delete(name);schedulePaint(20)});
+}
+function officeFiveGenerationPedigree(name){
+ const entry=horsePedigreeCache.get(name);
+ const data=entry?.status==='ready'?entry.data:null;
+ const all=new Map((data?.nodes||[]).filter(n=>/^[SD]{0,5}$/.test(n.path||'')).map(n=>[n.path,n]));
+ const repeats=new Map();
+ for(const n of all.values())if(n.horse_id)repeats.set(n.horse_id,(repeats.get(n.horse_id)||0)+1);
+ if(!all.has(''))all.set('',{path:'',name,horse_id:null});
+ const labels=['HORSE','PARENTS','GRANDPARENTS','GREAT-GRANDPARENTS','FOURTH GENERATION','FIFTH GENERATION'];
+ let positions=[''];
+ const columns=labels.map((label,depth)=>{
+  const cells=positions.map(path=>{
+   const n=all.get(path),known=Boolean(n?.horse_id),repeat=known&&(repeats.get(n.horse_id)||0)>1;
+   const maternal=path.startsWith('D'),nameText=n?.name||'Unknown';
+   const content=known&&path?
+    '<button type="button" data-ng="pedigree-ancestor" data-val="'+safe(n.horse_id)+
+    '" title="Open '+safe(nameText)+' horse profile">'+safe(nameText)+'</button>':
+    '<span>'+safe(nameText)+'</span>';
+   return '<div class="ng-ped5-node '+(known?'known':'unknown')+
+    (repeat?' repeated':'')+(maternal?' maternal':' paternal')+'" title="'+
+    safe(known?n.horse_id:'No documented ancestor')+'">'+content+'</div>';
+  }).join('');
+  positions=positions.flatMap(path=>[path+'S',path+'D']);
+  return '<section class="ng-ped5-generation" aria-label="'+label+'"><header>'+label+'</header>'+
+   '<div class="ng-ped5-stack">'+cells+'</div></section>';
+ }).join('');
+ const status=entry?.status==='ready'?
+  Number(data.known_positions||all.size)+' / 63 POSITIONS SOURCE-LINKED':
+  entry?.status==='ambiguous'?'AMBIGUOUS NAME — MATCH AN H-ID':
+  entry?.status==='unlinked'?'HORSE ID NOT CONNECTED TO THIS OFFICE RECORD':
+  entry?.status==='unavailable'?'SOURCE CONNECTION UNAVAILABLE':
+  'CHECKING HISTORICAL HORSE RECORD';
+ const note=entry?.status==='ready'?
+  'Click any named ancestor to open its source-backed profile. Repeated ancestors are highlighted. Names follow saved display-name edits; identity follows Horse ID.':
+  entry?.status==='unlinked'?
+  'This Office horse has no exact match in the imported historical pedigree database. Ancestors are shown as unknown rather than invented.':
+  entry?.status==='ambiguous'?
+  'More than one historical horse uses this name. The profile needs its permanent Horse ID before a pedigree can be displayed.':
+  entry?.status==='unavailable'?
+  'The historical source is temporarily unavailable. No parent relationships are assumed.':
+  'Checking the approved historical pedigree for an exact horse-identity match.';
+ return '<section class="ng-detailcard ng-detailwide ng-ped5-card" aria-label="Five-generation pedigree">'+
+  '<header><span>FIVE-GENERATION PEDIGREE</span><small>'+safe(status)+'</small></header>'+
+  '<div class="ng-ped5-instructions">'+safe(note)+'</div>'+
+  '<div class="ng-ped5-scroller" role="region" tabindex="0" aria-label="Five-generation pedigree scroll area">'+
+  '<div class="ng-ped5-columns">'+columns+'</div></div>'+
+  '<div class="ng-ped5-legend"><span><i class="ng-ped5-sire"></i>SIRE BRANCH</span>'+
+  '<span><i class="ng-ped5-dam"></i>DAM BRANCH</span>'+
+  '<span><i class="ng-ped5-repeat"></i>REPEATED ANCESTOR</span>'+
+  '<small>63 TOTAL POSITIONS · UNKNOWN IS NOT ZERO</small></div></section>';
+}
+
 function profileDetail(route){
  const source=$('#routeBody .profilePage');if(!source)return null;
  const id=route.kicker+'|'+route.title;
@@ -929,7 +1007,7 @@ function profileDetail(route){
  const identity=`<div class="ng-profile-intro">
   ${profileMark}
   <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${isHorse?horseOwnerBadge(route.title):''}${safe(route.title)}</h2>${horseIdentityRow}${horseStarRow}${entityIdentityRow}${horseConnectionHeader}${isHorse||isPerson||isFarm||isTrack?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${horseImage?`<div class="ng-profile-source-photo" role="img" aria-label="Approved image of ${safe(route.title)}"><img src="${safe(horseImage)}" alt="" loading="lazy" decoding="async"/></div>`:''}
-  <div class="ng-profile-tools">${isHorse?`<button data-ng="horse-history-file" data-val="${safe(route.title)}" title="Open the five-generation historical horse file">FIVE-GENERATION PEDIGREE ↗</button>`:""}<button data-ng="office" aria-label="Return to Racing Office">← OFFICE</button><button data-ng="menu" data-val="${isTrack?'Racing':isPerson||isFarm?'World':'Stable'}">${isTrack?'RACE CALENDAR':isPerson?'PEOPLE DIRECTORY':isFarm?'FARM DIRECTORY':'STABLE DIRECTORY'} ↗</button></div>
+  <div class="ng-profile-tools"><button data-ng="office" aria-label="Return to Racing Office">← OFFICE</button><button data-ng="menu" data-val="${isTrack?'Racing':isPerson||isFarm?'World':'Stable'}">${isTrack?'RACE CALENDAR':isPerson?'PEOPLE DIRECTORY':isFarm?'FARM DIRECTORY':'STABLE DIRECTORY'} ↗</button></div>
  </div>`;
  let left='',right='',footer='';
  if(APP.detailTab==='Overview'){
@@ -973,10 +1051,10 @@ function profileDetail(route){
   left=`<section class="ng-detailcard"><header>CAREER RESULTS</header><div class="ng-kpis">${record.map(r=>`<div><strong>${safe(r.value)}</strong><small>${safe(r.label)}</small></div>`).join('')}</div></section>`;
   right=`<section class="ng-detailcard"><header>HORSE STATUS</header>${factsBlock}</section>`;
   footer=`<section class="ng-detailcard ng-detailwide"><header>CAREER NOTES & DECISIONS</header><div class="ng-notes">${notes.map(n=>`<div>${safe(n)}</div>`).join('')||'No certified historical starts available.'}</div></section>`;
- }else if(APP.detailTab==='Pedigree'){
-  left=`<section class="ng-detailcard"><header>PATERNAL LINE</header>${rows(blood.slice(0,3))}</section>`;
-  right=`<section class="ng-detailcard"><header>MATERNAL LINE</header>${rows(blood.slice(3))}</section>`;
-  footer=`<section class="ng-detailcard ng-detailwide"><header>BLOODLINE AUTHORITY</header><div class="ng-notes">No pedigree is invented when the approved source has not yet connected a horse.</div></section>`;
+ }else if(APP.detailTab==='Pedigree'&&isHorse){
+  loadOfficeHorsePedigree(route.title);
+  left=officeFiveGenerationPedigree(route.title);
+  right='';footer='';
  }else if((APP.detailTab==='Stable Horses'&&isPerson)||(APP.detailTab==='Connected Horses'&&isFarm)){
   left=`<section class="ng-detailcard ng-detailwide"><header>CONNECTED HORSE RECORDS</header>${connectedHorseRows()}</section>`;
  }else if(APP.detailTab==='Attributes'&&isPerson){
@@ -2190,19 +2268,10 @@ window.addEventListener('click',e=>{
  if(key==='filter'){APP.filter=val;APP.msgPage=0;return paint()}
  if(key==='prev-msg'){APP.msgPage=Math.max(0,APP.msgPage-1);return paint()}
  if(key==='next-msg'){APP.msgPage++;return paint()}
- if(key==='horse-history-file'){
-  // Source archive resolves the exact current display or source name to a
-  // permanent Horse_ID. Ambiguous names must never select a random horse.
-  const name=val;
-  fetch('/api/entities?q='+encodeURIComponent(name)+'&kind=horse&limit=250',{credentials:'same-origin',cache:'no-store'})
-   .then(r=>r.ok?r.json():Promise.reject(Error('Horse directory not available')))
-   .then(data=>{
-    const exact=(data.entities||[]).filter(x=>x.kind==='horse'&&(x.name===name||x.source_name===name));
-    const ids=[...new Set(exact.map(x=>x.id))];
-    if(ids.length===1)window.location.assign('/archive/?page=horses&horse='+encodeURIComponent(ids[0]));
-    else window.location.assign('/archive/?page=horses&q='+encodeURIComponent(name));
-   })
-   .catch(()=>window.location.assign('/archive/?page=horses&q='+encodeURIComponent(name)));
+ if(key==='pedigree-ancestor'){
+  // Navigate by source H-ID; never trust ancestor name uniqueness.
+  if(/^H-[A-Za-z0-9-]+$/.test(val))
+   window.location.assign('/archive/?page=horses&horse='+encodeURIComponent(val));
   return;
  }
  if(key==='horse')return openEntityRecord(val,'horse');
