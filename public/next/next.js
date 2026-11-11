@@ -956,6 +956,7 @@ function managerDashboard(){
  const all=globalSearchItems();APP.searchIndex=all;
  const kindFilter=({kind,detail,name})=>{
   if(!config.kinds.includes(kind))return false;
+  if(section==='Office'&&['Messages','Decisions'].includes(page))return kind==='decision';
   if(section==='Personnel'&&/^(Trainers|Jockeys|Owners|Staff)$/.test(page)&&kind==='person'){
    const role=(detail||'').toLowerCase(),target={Trainers:'trainer',Jockeys:'jockey',Owners:'owner',Staff:'staff'}[page];
    return role.includes(target)||(page==='Staff'&&role.includes('groom'));
@@ -1000,7 +1001,9 @@ function managerDashboard(){
   '<header class="ng-manager-head"><div class="ng-manager-identity">'+
    '<span>'+safe(section.toUpperCase())+' / '+safe(page.toUpperCase())+'</span>'+
    '<h2>'+safe(config.label)+'</h2></div>'+
-   '<div class="ng-manager-controls"><label>RECORD VIEW <select data-ng-select="manager-screen" aria-label="Open department screen">'+
+   '<div class="ng-manager-controls">'+
+    (APP.custom==='Opportunities'?'<button data-ng="action" data-val="Open opportunity board">OPEN LIVE OPPORTUNITY BOARD</button>':'')+
+    '<label>RECORD VIEW <select data-ng-select="manager-screen" aria-label="Open department screen">'+
     '<option value="Overview" '+(page==='Overview'?'selected':'')+'>Overview</option>'+
     sections.map(x=>'<option value="'+safe(x)+'" '+(page===x?'selected':'')+'>'+safe(x)+'</option>').join('')+
     '</select></label><button data-ng="custom" data-val="Search">'+glyph('search',13)+' SEARCH ALL</button></div></header>'+
@@ -1019,9 +1022,7 @@ function managerDashboard(){
 function renderRoute(){const route=APP.custom?null:currentRoute();const title=route?.title||APP.custom||'Page';const kicker=route?.kicker||APP.section;const bdg=route?badge(({'Horse Profile':'horse','People Profile':'people','Farm Profile':'farm_stable','Track Profile':'track','Race Calendar':'meet_schedule','Stable':'farm_stable','Sales':'connections','News':'history','World':'track','Opportunity Board':'reputation'}[route.kicker])||'history'):pageBadge();
 let body='';const profile=route&&/Profile$/.test(route.kicker)?profileDetail(route):null;const functional=route?functionalRoute(route):null;if(profile)body=profile;else if(functional)body=functional;else if(route)body=route.body;else if(APP.custom==='Organization Overview'){body=organizationOverview()}
 else if(APP.custom==='Due Actions'){body=dueActionOverview()}
-else if(APP.custom==='Messages'){body=`<section class="ng-customcard"><h3>Messages and correspondence</h3><p>Select any item to return to the Decision Desk and review its options.</p>${currentMessages().map(m=>`<button data-ng="case" data-val="${safe(m.case)}">${safe(m.from)} — ${safe(m.title)}</button>`).join('')}</section>`}
-else if(APP.custom==='Decisions'){body=`<section class="ng-customcard"><h3>Today's Decisions</h3>${currentMessages().map(m=>`<button data-ng="case" data-val="${safe(m.case)}">${safe(m.title)} ↗</button>`).join('')}</section>`}
-else if(APP.custom==='Opportunities'){body=`<section class="ng-customcard"><h3>Opportunity Board</h3><p>Uncommitted racing and commercial leads from the Office's original data.</p><button data-ng="action" data-val="Open opportunity board">OPEN EXISTING OPPORTUNITY BOARD ↗</button></section>`}
+else if(['Messages','Decisions','Opportunities'].includes(APP.custom)){body=managerDashboard()}
 else if(APP.custom==='Search'){body=searchView()}
 else {body=managerDashboard()}
 const isProfile=Boolean(profile),isOrganization=APP.custom==='Organization Overview',isSearch=APP.custom==='Search',isManager=body.startsWith('<section class="ng-manager-screen">');
