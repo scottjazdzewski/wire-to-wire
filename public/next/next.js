@@ -1566,11 +1566,18 @@ function departmentRoster(section,page='Overview'){
  const body=shown.map((r,i)=>{
   return '<tr>'+specs.map(([key])=>{
    let v=depCell(r[key],key);
-   if((key==='horse'||key==='name'||(key==='race'&&r._kind==='race'))&&r._kind!=='finance'){
+   const kind=entityKindForField(key,r);
+   const primary=(key==='horse'||key==='name'||(key==='race'&&['race','demo-race'].includes(r._kind)))&&r._kind!=='finance';
+   if(primary){
     const first=r._kind==='horse'?
      (demo?'<span class="ng-rs-demo-owner" title="Fictional ownership marker">'+safe((r.owner||r._name||'?').charAt(0))+'</span>':horseOwnerBadge(r._name)):'';
-    v=r._kind==='demo-facility'?'<span class="ng-dpt-demo-entity" title="Fictional preview entity">'+safe(r._name)+'</span>':
-     '<button class="ng-rs-horse" data-ng="dept-open" data-val="'+i+'" aria-label="Open '+safe(r._name)+'" title="'+safe(section==='Racing'&&r._kind==='track'?'Show races at this meet':'Open source-linked record')+'">'+first+'<span>'+safe(r._name)+'</span></button>';
+    v='<button type="button" class="ng-rs-horse" data-ng="dept-open" data-val="'+i+
+     '" aria-label="Open '+safe(r._name)+'" title="Open '+safe(r._name)+' profile">'+first+
+     '<span>'+safe(r._name)+'</span></button>';
+   }else if(kind&&!entityNotRecorded(r[key])&&r._kind!=='finance'){
+    v='<button type="button" class="ng-entity-reference" data-ng="dept-related" data-val="'+i+
+     '" data-field="'+safe(key)+'" title="Open '+safe(String(r[key]))+' record">'+
+     safe(String(r[key]))+' ↗</button>';
    }
    return '<td title="'+safe(String(r[key]??''))+'">'+v+'</td>';
   }).join('')+'</tr>';
@@ -1702,6 +1709,7 @@ let body='';const profile=route&&/Profile$/.test(route.kicker)?profileDetail(rou
 else if(APP.custom==='Due Actions'){body=dueActionOverview()}
 else if(['Messages','Decisions','Opportunities'].includes(APP.custom)){body=managerDashboard()}
 else if(APP.custom==='Search'){body=searchView()}
+else if(APP.custom.startsWith('Preview:')){body=previewRecordView()}
 else {body=managerDashboard()}
 const isProfile=Boolean(profile),isOrganization=APP.custom==='Organization Overview',isSearch=APP.custom==='Search',isManager=body.startsWith('<section class="ng-manager-screen">');
 return `<main class="ng-route ${isProfile?'ng-route-profile':isOrganization?'ng-route-organization':isSearch?'ng-route-search':isManager?'ng-route-manager':''}">${isProfile||isOrganization||isManager?'':`<header class="ng-routeheading"><span class="ng-route-badge-slot" aria-hidden="true">${APP.custom==='Organization Overview'?organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',true,true):`<img class="ng-routebadge" src="${safe(bdg)}" alt=""/>`}</span><div class="ng-routetext"><small>${safe(kicker)}</small><h1>${safe(title)}</h1></div><button class="ng-back" data-ng="office">← RACING OFFICE</button></header>`}<div class="ng-routegrid" data-route-key="${safe((route?.kicker||APP.custom||APP.section)+'|'+(route?.title||APP.custom||APP.page))}"><div class="ng-routeinner">${body}</div></div></main>`;}
@@ -1808,16 +1816,15 @@ window.addEventListener('click',e=>{
  if(key==='dept-demo'){APP.departmentDemo=!APP.departmentDemo;APP.departmentPageIndex=0;return paint()}
  if(key==='dept-open'){
   const r=APP.departmentVisible[Number(val)];if(!r)return;
-  if(APP.section==='Racing'&&APP.page==='Overview'&&APP.racingMode!=='mine'&&r._kind==='track'){
-   APP.racingTrack=r._name;APP.racingMode='track';APP.departmentPageIndex=0;APP.departmentSortKey='';return paint();
-  }
-  APP.custom='';APP.moreOpen=false;
-  if(['horse','person','farm','track','race'].includes(r._kind)){
-   if(window.__wtwOfficeOpenSearchRecord?.(r._kind,r._name,r._track))return schedulePaint(20);
-   if(r._kind==='horse')return bridgeNode($$('.right .boardRows .rankRow').find(n=>$('strong',n)?.textContent.trim()===r._name));
-  }
-  return;
+  // Names open the entity's profile; the active-meet dropdown selects races.
+  return openEntityRecord(r._name,r._kind,r);
  }
+ if(key==='dept-related'){
+  const r=APP.departmentVisible[Number(val)],field=btn.dataset.field;
+  if(!r||!Object.prototype.hasOwnProperty.call(DEPT_ENTITY_COLUMNS,field))return;
+  return openEntityRecord(r[field],entityKindForField(field,r),r);
+ }
+ if(key==='named-entity')return openEntityRecord(btn.dataset.name||'',btn.dataset.kind||'');
  if(key==='stable-sort'){if(APP.stableSort===val)APP.stableSortDesc=!APP.stableSortDesc;else{APP.stableSort=val;APP.stableSortDesc=false}return paint()}
  if(key==='stable-filter'){APP.stableFilter=val;return paint()}
   if(key==='stable-mode'){APP.stableMode=val;return paint()}
@@ -1910,6 +1917,10 @@ function restoreNextUIRoute(){
  const p=new URLSearchParams(location.search),view=p.has('page')?'':p.get('ui')||'';
  APP.custom=view;APP.moreOpen=false;
  if(view){
+  if(view.startsWith('Preview:')){
+   const parts=view.split(':');
+   APP.previewEntity={kind:decodeURIComponent(parts[1]||'record'),name:decodeURIComponent(parts.slice(2).join(':')),row:null};
+  }else APP.previewEntity=null;
   const [section,detail]=view.split(' — ');
   APP.section=tabmap[section]?section:'Office';
   APP.page=detail||'Overview';
