@@ -1701,7 +1701,8 @@ function depFacilityType(raw){
 function depFacilityRows(page,demo){
  const all=globalSearchItems();APP.searchIndex=all;
  const farms=all.map((r,i)=>({...r,_index:i})).filter(r=>r.kind==='farm');
- const owned=all.map((r,i)=>({...r,_index:i})).filter(r=>r.kind==='person'&&/owner|bloodstock/i.test(r.detail||''));
+ // Ownership Groups are real organizations, not duplicate person rows.
+ // People remain in Personnel / People and show as an organization's principal.
  let result=farms.map(r=>{
   const saved=state().facilityState?.[r.name]||{},kind=depFacilityType(r.detail);
   const n=depHash(r.name),cap=demo?24+n%75:saved.capacity;
@@ -1713,10 +1714,6 @@ function depFacilityRows(page,demo){
    cost:demo?depMoney(12000+n%24000):saved.monthly_cost||'',owner:r._world?.publicPrincipal||saved.owner||'',
    status:demo?'Active':saved.status||''};
  });
- // Only source owners are linked as people; they are not fabricated businesses.
- result.push(...owned.map(r=>({_kind:'person',_name:r.name,name:r.name,type:'Ownership Office',
-  location:'',capacity:'',occupied:'',free:'',condition:'',quality:'',staff:'',cost:'',
-  owner:r.name,status:'',_sourcePerson:true})));
  if(demo)result.push(...DEP_FACILITY_PREVIEW.map(([name,type,location],i)=>{
   const physical=type!=='Ownership Group';
   return {_kind:'demo-facility',_name:name,name,type,location,
@@ -1730,7 +1727,7 @@ function depFacilityRows(page,demo){
  const typeForPage={'Stud Farms':'Stud Farm','Training Centers':'Training Center',
   'Breaking Facilities':'Breaking Facility','Racing Stables':'Racing Stable',
   'Ownership Groups':'Ownership Group','Barns':'Barn'};
- if(typeForPage[page])result=result.filter(r=>r.type===typeForPage[page]||(page==='Ownership Groups'&&r.type==='Ownership Office'));
+ if(typeForPage[page])result=result.filter(r=>r.type===typeForPage[page]);
  if(page==='Farms')result=result.filter(r=>['Farm','Stud Farm'].includes(r.type));
  return result;
 }
