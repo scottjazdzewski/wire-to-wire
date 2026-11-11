@@ -1303,6 +1303,11 @@ function depRows(section,page,demo,auction){
  const row=(kind,name,values)=>({...values,_kind:kind,_name:name});
  const fixture=name=>races.find(r=>r.name===name);
  const demoYards={'Bellarmine':['Lexington, KY','775'],'Hardtack':['Saratoga, NY','750'],'Iron Harbor':['Ocala, FL','1120'],'Pieta':['Belmont, NY','65'],'Powerline':['Paris, KY','100'],'The Last Match':['Louisville, KY','80']};
+ if(section==='Tracks')return depTrackRows(page);
+ if(section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'){
+  if(APP.racingTrack)return depTrackRaceRows(APP.racingTrack,demo);
+  return depCurrentMeetRows();
+ }
  if(section==='Racing'){
   const list=demo?stable:stable.filter(h=>fixture(h.name));
   let out=list.map((h,i)=>{
@@ -1343,7 +1348,7 @@ function depRows(section,page,demo,auction){
   if(page==='Stallions')out=out.filter(r=>/stallion/i.test(r._role));
   if(page==='Broodmares')out=out.filter(r=>/broodmare/i.test(r._role));
   if(page==='Foals')out=demo?out.map(r=>({...r,age:'1',sex:'F',status:'Yearling',studFee:'',bookings:''})):[];
-  if(page==='Stud Farms')return depRows('Facilities','Farms',demo,null);
+  if(page==='Stud Farms')return depFacilityRows('Stud Farms',demo);
   if(page==='Stud Farms')out=out.filter(r=>r.farm);
   return out;
  }
@@ -1387,19 +1392,8 @@ function depRows(section,page,demo,auction){
   if(match)out=out.filter(r=>match.test(r.role));
   return out;
  }
- if(section==='Facilities'){
-  let out=[...source('farm'),...source('track')];
-  if(page==='Barns'||page==='Farms')out=out.filter(r=>r.kind==='farm');
-  return out.map(r=>{
-   const n=depHash(r.name),cap=demo?24+n%95:null,used=demo?Math.floor(cap*(.45+(n%35)/100)):null;
-   return row(r.kind,r.name,{name:r.name,type:r.kind==='track'?'Racecourse':'Farm / Barn',
-    location:demo?['Versailles, KY','Saratoga Springs, NY','Ocala, FL','Lexington, KY','Paris, KY'][n%5]:r.detail||'',
-    capacity:cap??'',occupied:used??'',free:demo?cap-used:'',
-    condition:demo?['Excellent','Good','Needs work'][n%3]:'',quality:demo?String(60+n%37)+'/100':'',
-    staff:demo?String(3+n%25):'',cost:demo?depMoney(11000+n%32000):'',
-    owner:demo?['Your Operation','Private','Partnership'][n%3]:'',status:demo?['Active','Operational','Upgrade due'][n%3]:(game.facilityState?.[r.name]?.status||''),_sourceIndex:r._index});
-  });
- }
+ if(section==='Facilities')return depFacilityRows(page,demo);
+
  const entries=demo?[
   ['2014-07-15','Purse','Race earnings','Racing',28500,0,2840000],
   ['2014-07-14','Payroll','Stable employee payroll','Personnel',0,21400,2811500],
@@ -1453,7 +1447,7 @@ function departmentRoster(section,page='Overview'){
  let rows=depRows(section,page,demo,auction);
  const search=APP.departmentSearch.trim().toLowerCase();
  if(search)rows=rows.filter(r=>specs.some(([key])=>String(r[key]??'').toLowerCase().includes(search)));
- const defaultSort=section==='Racing'?'date':section==='Sales'?'hip':section==='Finances'?'date':specs[0][0];
+ const defaultSort=section==='Racing'&&(page!=='Overview'||APP.racingMode==='mine'||APP.racingTrack)?'date':section==='Sales'?'hip':section==='Finances'?'date':specs[0][0];
  const selectedSort=specs.some(x=>x[0]===APP.departmentSortKey)?APP.departmentSortKey:defaultSort;
  const sign=APP.departmentSortKey?(APP.departmentSortDesc?-1:1):(section==='Finances'?-1:1);
  rows.sort((a,b)=>{
