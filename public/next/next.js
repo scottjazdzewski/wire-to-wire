@@ -1459,7 +1459,7 @@ function entitySourceMatch(name,preferred='',track=''){
 }
 function entityKindForField(key,row){
  if(key==='name'||key==='horse')return row?._kind||'';
- if(key==='race')return row?._kind==='race'||row?._kind==='demo-race'?'race':'';
+ if(key==='race')return 'race';
  return DEPT_ENTITY_COLUMNS[key]||'';
 }
 function entityReferenceButton(name,kind,attrs='',label=''){
@@ -1528,7 +1528,7 @@ function previewRecordView(){
   '<h2>'+safe(name)+'</h2></div><button data-ng="back" aria-label="Return to previous screen">← BACK</button></header>'+
   '<p class="ng-entity-preview-notice">'+safe(description)+'</p>'+
   '<div class="ng-entity-preview-grid">'+relevant.map(([label,value])=>
-   '<div><small>'+safe(label)+'</small><strong>'+safe(String(value))+'</strong></div>').join('')+'</div>'+
+   '<div><small>'+safe(label)+'</small>'+namedProfileValue(label,String(value))+'</div>').join('')+'</div>'+
   '<p class="ng-entity-preview-footer">Use the BACK button to return to the management roster. Registered entities open their full Horse, People, Farm or Track profiles.</p></section>';
 }
 function depCell(value,key){
@@ -1835,7 +1835,10 @@ window.addEventListener('click',e=>{
  if(key==='dept-related'){
   const r=APP.departmentVisible[Number(val)],field=btn.dataset.field;
   if(!r||!Object.prototype.hasOwnProperty.call(DEPT_ENTITY_COLUMNS,field))return;
-  return openEntityRecord(r[field],entityKindForField(field,r));
+  return openEntityRecord(r[field],entityKindForField(field,r),field==='race'?{
+   _track:r._track||r.track||'',_kind:APP.departmentDemo?'demo-race':'race',
+   type:'Race',location:r.track||'',date:r.date||'',status:r.status||''
+  }:null);
  }
  if(key==='named-entity')return openEntityRecord(btn.dataset.name||'',btn.dataset.kind||'',btn.dataset.track?{_track:btn.dataset.track}:null);
  if(key==='stable-sort'){if(APP.stableSort===val)APP.stableSortDesc=!APP.stableSortDesc;else{APP.stableSort=val;APP.stableSortDesc=false}return paint()}
