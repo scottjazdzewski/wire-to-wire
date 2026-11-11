@@ -24,10 +24,11 @@ test('Horse Profile real overview renders all FM dossier sections with zero fabr
    ['Latest decision · 2014-07-15 · Light jog only','Health / Vet · Monitor filling'],
    ['Light jog only','Target: Keeneland R6'],esc,()=>[],'<button data-ng="sourcebutton">RELATED DECISION</button>'];
  const unknown=render(...args(makeState([])));
+ const visibleText=unknown.replaceAll('&amp;','&');
  for(const name of ['SPEED & PACE','SURFACE & ENVIRONMENT','PHYSICAL & BIOMETRIC','MENTAL & CLASS',
   'CAREER RECORD','CURRENT CONDITION','RACE PLAN','RECENT WORK / OFFICE REPORTS','KEY CONNECTIONS',
   'RECENT RACES & FORM','PEDIGREE & BACKGROUND','RACING OFFICE SUMMARY'])
-  assert.ok(unknown.includes(name),'First screen must present section: '+name);
+  assert.ok(visibleText.includes(name),'First screen must present section: '+name);
  assert.ok(unknown.includes('0 OF 53 ATTRIBUTES ASSESSED'),'Unassessed values are explicitly disclosed');
  assert.ok(unknown.includes('UNASSESSED ≠ ZERO'),'No implicit zero for unassessed skill');
  assert.ok(unknown.includes('Keeneland R6'),'Saved race plan must display');
