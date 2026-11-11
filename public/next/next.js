@@ -1159,6 +1159,12 @@ function depHash(v){let x=13;for(const c of String(v))x=(x*31+c.charCodeAt(0))%9
 function depMoney(n){if(n==null||n==='')return '';return typeof n==='number'?'$'+Math.round(n).toLocaleString('en-US'):String(n)}
 
 
+function depRaceIso(value){
+ const s=String(value||''),direct=liveStableDate(s);if(direct)return direct;
+ const m=s.match(/(\d{1,2})\/(\d{1,2})/);if(!m)return '';
+ const current=$('.dateChip')?.textContent.trim()||'2014-07-15';
+ return current.slice(0,4)+'-'+String(Number(m[1])).padStart(2,'0')+'-'+String(Number(m[2])).padStart(2,'0');
+}
 function depRows(section,page,demo,auction){
  const game=state(),stable=horseRows(),races=racingRows(),all=globalSearchItems();
  APP.searchIndex=all;
@@ -1175,10 +1181,10 @@ function depRows(section,page,demo,auction){
     race:f?.tag||(demo?'R'+(i+3):''),class:demo?['MSW','ALW','G3','CLM','G2','OC'][i]:'',
     surface:demo?(i%3?'D':'T'):'',distance:demo?['6f','1m','9f','7f','8.5f','10f'][i]:'',
     purse:demo?depMoney([50000,75000,150000,42000,200000,90000][i]):'',
-    horse:h.name,base:saved.current_barn_location||saved.barn_location||saved.current_base||(demo?demoYards[h.name]?.[0]||'':''),
+    horse:h.name,base:demo?demoYards[h.name]?.[0]||'':(saved.current_barn_location||saved.barn_location||saved.current_base||''),
     ship:demo?demoYards[h.name]?.[1]||'':'',jockey:demo?['J. Butler','M. Green','R. Dawson','I. Walker','F. Wright','J. Brennan'][i]:'',
     trainer:demo?d.trainer||'':'',ready:demo?d.ready?.[1]||'':saved.readiness_status||'',
-    status:f?.status||(demo?'Target':''),_iso:liveStableDate(date)||''});
+    status:f?.status||(demo?'Target':''),_iso:depRaceIso(date)});
   });
   if(page==='Results')out=demo?out.map((r,i)=>({...r,date:stableShortDate((WTW_STABLE_DEMO[r.horse]||{}).last),status:['1st','4th','2nd','3rd','5th','1st'][i],_iso:(WTW_STABLE_DEMO[r.horse]||{}).last||''})):[];
   if(page==='Stakes')out=out.filter(r=>/G[1-3]|stakes/i.test(r.class)||/stakes/i.test(r.race));
@@ -1273,7 +1279,7 @@ function depRows(section,page,demo,auction){
   ['2014-07-08','Transport','Horse shipping','Racing',0,2900,2832600]
  ]:(Array.isArray(game.finances?.ledger)?game.finances.ledger.map(t=>[t.date,t.category,t.description,t.department,t.income,t.expense,t.balance]):[]);
  let out=entries.map((t,i)=>row('finance',String(i),{date:stableShortDate(t[0]),category:t[1]||'',description:t[2]||'',department:t[3]||'',
-  income:Number(t[4])>0?depMoney(t[4]):'',expense:Number(t[5])>0?depMoney(t[5]):'',balance:depMoney(t[6])}));
+  income:Number(t[4])>0?depMoney(t[4]):'',expense:Number(t[5])>0?depMoney(t[5]):'',balance:depMoney(t[6]),_iso:liveStableDate(t[0])}));
  if(page==='Operating Costs')out=out.filter(r=>r.expense);
  if(page==='Budgets')out=demo?out.slice(0,4).map(r=>({...r,date:'JUL 2014',category:'Budget / actual'})):[];
  return out;
@@ -1310,7 +1316,7 @@ function departmentRoster(section,page='Overview'){
  const demo=APP.departmentDemo;
  const current=$('.dateChip')?.textContent.trim()||'2014-07-15';
  const auctions=section==='Sales'?depAuctionList(demo):[];
- const auction=auctions.find(a=>a.id===APP.departmentAuction)||auctions.find(a=>a.date>=current)||auctions.at(-1)||null;
+ const auction=auctions.find(a=>a.id===APP.departmentAuction)||auctions.find(a=>a.date>=current)||null;
  const specs=section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:DEP_COLUMNS[section];
  let rows=depRows(section,page,demo,auction);
  const search=APP.departmentSearch.trim().toLowerCase();
@@ -1358,7 +1364,7 @@ function departmentRoster(section,page='Overview'){
  ].map(([name,value])=>'<span><small>'+safe(name)+'</small><b>'+safe(value)+'</b></span>').join('')+'</div>':'';
  const purpose=section==='Racing'?'CURRENT BASE & SHIPPING':
   section==='Breeding'?'STUD FEES, COVERINGS & PRODUCTION':
-  section==='Sales'?(auction?auction.name.toUpperCase()+' · '+stableShortDate(auction.date):'NO UPCOMING AUCTIONS'):
+  section==='Sales'?(auction?auction.name.toUpperCase()+' · '+stableShortDate(auction.date)+' · '+(auction.city||''):'NO UPCOMING AUCTIONS'):
   section==='Personnel'?'TRAINERS · JOCKEYS · OWNERS · STAFF':
   section==='Facilities'?'CAPACITY · QUALITY · MAINTENANCE':'INCOME · EXPENSES · CASH FLOW';
  return '<section class="ng-functional ng-stable-roster-v2 ng-dept-roster" data-department="'+safe(section)+'" data-page="'+safe(page)+'">'+
