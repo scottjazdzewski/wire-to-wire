@@ -1165,7 +1165,7 @@ function depRows(section,page,demo,auction){
  const source=kind=>all.map((r,i)=>({...r,_index:i})).filter(r=>r.kind===kind);
  const row=(kind,name,values)=>({...values,_kind:kind,_name:name});
  const fixture=name=>races.find(r=>r.name===name);
- const base=['Lexington, KY','Saratoga, NY','Ocala, FL','Belmont, NY','Paris, KY','Louisville, KY'];
+ const demoYards={'Bellarmine':['Lexington, KY','775'],'Hardtack':['Saratoga, NY','750'],'Iron Harbor':['Ocala, FL','1120'],'Pieta':['Belmont, NY','65'],'Powerline':['Paris, KY','100'],'The Last Match':['Louisville, KY','80']};
  if(section==='Racing'){
   const list=demo?stable:stable.filter(h=>fixture(h.name));
   let out=list.map((h,i)=>{
@@ -1175,8 +1175,8 @@ function depRows(section,page,demo,auction){
     race:f?.tag||(demo?'R'+(i+3):''),class:demo?['MSW','ALW','G3','CLM','G2','OC'][i]:'',
     surface:demo?(i%3?'D':'T'):'',distance:demo?['6f','1m','9f','7f','8.5f','10f'][i]:'',
     purse:demo?depMoney([50000,75000,150000,42000,200000,90000][i]):'',
-    horse:h.name,base:saved.current_barn_location||saved.barn_location||saved.current_base||(demo?base[i]:''),
-    ship:demo?String([83,0,12,950,460,75][i]):'',jockey:demo?['J. Butler','M. Green','R. Dawson','I. Walker','F. Wright','J. Brennan'][i]:'',
+    horse:h.name,base:saved.current_barn_location||saved.barn_location||saved.current_base||(demo?demoYards[h.name]?.[0]||'':''),
+    ship:demo?demoYards[h.name]?.[1]||'':'',jockey:demo?['J. Butler','M. Green','R. Dawson','I. Walker','F. Wright','J. Brennan'][i]:'',
     trainer:demo?d.trainer||'':'',ready:demo?d.ready?.[1]||'':saved.readiness_status||'',
     status:f?.status||(demo?'Target':''),_iso:liveStableDate(date)||''});
   });
