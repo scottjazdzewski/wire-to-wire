@@ -477,7 +477,7 @@ function operationsDashboard(view){
   const context=office.find(c=>c.title?.toLowerCase().includes(x.name.toLowerCase()));
   const fixture=fixtureNodes.find(n=>n.dataset.profile===x.name);
   const target=readState().calendarState?.[x.name]?.race_target||
-   $('.fixture p',fixture)?.textContent.trim()||$('p',fixture)?.textContent.trim()||'—';
+   (fixture?$('p',fixture)?.textContent.trim():'')||'—';
   return '<tr>'+tableCell(linkRecord(x,x.name,viewIsStable),'strong')+
    (viewIsStable?
     tableCell(h(condition||context?.type||'No current report'),'dim')+
