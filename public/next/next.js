@@ -626,8 +626,10 @@ function profileDetail(route){
   const verifiedHistory=Array.isArray(history)?history.filter(x=>x&&
    Array.isArray(x.source_refs)&&x.source_refs.length>0&&known(x.date)&&known(x.race)):[];
   const recent=verifiedHistory.length?'<div class="ng-horse-form-table"><div class="ng-horse-form-head"><span>DATE</span><span>RACE / TRACK</span><span>FINISH</span><span>SOURCE</span></div>'+
-   verifiedHistory.slice(-5).reverse().map(x=>'<div class="ng-horse-form-row"><span>'+safe(x.date)+'</span><span>'+safe(x.race)+
-   (known(x.track)?' · '+safe(x.track):'')+'</span><span>'+safe(x.finish||'—')+'</span><span>Verified</span></div>').join('')+'</div>':
+   verifiedHistory.slice(-5).reverse().map(x=>'<div class="ng-horse-form-row"><span>'+safe(x.date)+'</span><span>'+
+   entityReferenceButton(x.race,'race',known(x.track)?'data-track="'+safe(x.track)+'"':'')+
+   (known(x.track)?' · '+entityReferenceButton(x.track,'track'):'')+
+   '</span><span>'+safe(x.finish||'—')+'</span><span>Verified</span></div>').join('')+'</div>':
    '<p class="ng-horse-small-note">No certified race-by-race form attached to this Office horse. Historical results remain in History.</p>';
   const panel=(name,body,cls='')=>'<section class="ng-horse-mgr-panel '+cls+'"><header><strong>'+name+'</strong></header>'+body+'</section>';
   return '<div class="ng-horse-dossier">'+
@@ -755,7 +757,7 @@ function profileDetail(route){
       const owner=horseOwnership(label);
       const horse=state().horseState?.[label]||{};
       const status=typeof horse.status==='string'&&horse.status.trim()?horse.status.trim():'Not recorded';
-      const horseLink=index>=0?'<button type="button" data-ng="sourcebutton" data-val="'+index+
+      const horseLink=index>=0?'<button type="button" class="ng-entity-reference" data-ng="sourcebutton" data-val="'+index+
        '" aria-label="Open horse '+safe(label)+'">'+safe(label)+' ↗</button>':
        entityReferenceButton(label,'horse');
       const ownerLink=owner?.name?entityReferenceButton(owner.name,'connection'):
@@ -1114,7 +1116,9 @@ function liveStableRosterView(){
    cell(liveStableSignal(...x.health)),cell(liveStableSignal(...x.ready)),
    cell(x.ability.display,'ng-rs-stars-cell'),cell(x.potential.display,'ng-rs-stars-cell'),
    cell(liveStableSignal(...x.form)),txt(stableShortDate(x.last),'ng-rs-numeric'),txt(stableShortDate(x.upcoming),'ng-rs-race'),
-   txt(x.target,'ng-rs-target'),txt(x.money,'ng-rs-numeric'),txt(x.owner),txt(x.trainer),txt(x.breeder),
+   txt(x.target,'ng-rs-target'),txt(x.money,'ng-rs-numeric'),
+   cell(namedProfileValue('Owner',x.owner),'',x.owner),cell(namedProfileValue('Trainer',x.trainer),'',x.trainer),
+   cell(namedProfileValue('Breeder',x.breeder),'',x.breeder),
    txt(x.record,'ng-rs-numeric'),txt(x.activity,'ng-rs-activity')];
   return '<tr class="ng-wtw-roster-row" data-search="'+safe([x.name,x.activity,x.target,x.owner,x.trainer,x.breeder,x.health[1],x.ready[1]].join(' ').toLowerCase())+'">'+datum.join('')+'</tr>';
  }).join('');
@@ -1832,7 +1836,7 @@ window.addEventListener('click',e=>{
   if(!r||!Object.prototype.hasOwnProperty.call(DEPT_ENTITY_COLUMNS,field))return;
   return openEntityRecord(r[field],entityKindForField(field,r),r);
  }
- if(key==='named-entity')return openEntityRecord(btn.dataset.name||'',btn.dataset.kind||'');
+ if(key==='named-entity')return openEntityRecord(btn.dataset.name||'',btn.dataset.kind||'',btn.dataset.track?{_track:btn.dataset.track}:null);
  if(key==='stable-sort'){if(APP.stableSort===val)APP.stableSortDesc=!APP.stableSortDesc;else{APP.stableSort=val;APP.stableSortDesc=false}return paint()}
  if(key==='stable-filter'){APP.stableFilter=val;return paint()}
   if(key==='stable-mode'){APP.stableMode=val;return paint()}
@@ -1840,7 +1844,7 @@ window.addEventListener('click',e=>{
  if(key==='filter'){APP.filter=val;APP.msgPage=0;return paint()}
  if(key==='prev-msg'){APP.msgPage=Math.max(0,APP.msgPage-1);return paint()}
  if(key==='next-msg'){APP.msgPage++;return paint()}
- if(key==='horse'){const row=$$('.right .rankRow').find(x=>$('strong',x)?.textContent.trim()===val);return bridgeNode(row)}
+ if(key==='horse')return openEntityRecord(val,'horse');
  if(key==='fixture'){const n=$$('.right .fixtureList .fixture[data-track]')[Number(val)];return bridgeNode(n)}
  if(key==='track'){const row=$$('.right .fixture').find(x=>x.dataset.track===val);if(row){const p=$('p',row);return bridgeNode(p)}return bridgeNode(originalAct('World'))}
  if(key==='move'){const n=$$('#moveGrid .moveCard')[Number(val)];bridgeNode(n);return}
