@@ -87,9 +87,12 @@ body>.app,body>#routeShell,body>#toast,body>.wtw-site-archive-link{display:none!
 .mg-tag.unrated{border-color:#394943;background:#1c2725;color:#93aba0}
 .mg-mark-small{width:18px;height:18px;object-fit:contain;vertical-align:middle}
 .mg-owner-mark{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border:1px solid #496655;border-radius:3px;color:#d2bc7e;font-size:10px;vertical-align:middle;background:#294637}
+.mg-owner-mark img{display:block;width:100%;height:100%;object-fit:contain}
 .mg-profile-identity{display:flex;align-items:center;gap:14px;min-height:104px;padding:8px 12px;background:linear-gradient(100deg,#1d292b,#151e24);border-bottom:1px solid #3b534a;flex:0 0 auto}
 .mg-portrait{width:86px;height:88px;border-radius:3px;overflow:hidden;flex:0 0 86px;background:linear-gradient(130deg,#395443,#172521);display:grid;place-items:center}
 .mg-portrait img{width:100%;height:100%;object-fit:cover}
+.mg-portrait.fallback img{object-fit:contain;padding:3px;box-sizing:border-box}
+.mg-portrait.photo img{object-fit:cover}
 .mg-portrait.fallback img{width:70%;height:70%;object-fit:contain}
 .mg-nameblock{display:flex;flex-direction:column;min-width:0;flex:1}
 .mg-nameblock h2{font-family:"Arial Narrow","Segoe UI Condensed","Segoe UI",sans-serif;font-size:28px;line-height:1.06;letter-spacing:-.02em;margin:3px 0 4px;font-weight:900;color:#f5f5ec;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
