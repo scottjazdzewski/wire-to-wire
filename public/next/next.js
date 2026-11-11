@@ -1040,7 +1040,7 @@ const WTW_STABLE_DEMO=Object.freeze({
 function liveStableDemoApply(x){
  const d=WTW_STABLE_DEMO[x.name];if(!d)return x;
  const stars=n=>({value:n,display:'<span class="ng-rs-stars" title="Fictional preview: '+n+'/5"><b>'+('★'.repeat(n))+'</b>'+('☆'.repeat(5-n))+'</span>'});
- return {...x,...d,ability:stars(d.ability),potential:stars(d.potential),entered:false,hasTarget:!!d.target};
+ return {...x,...d,ability:stars(d.ability),potential:stars(d.potential),hasTarget:!!d.target};
 }
 function stableShortDate(value){
  const iso=liveStableDate(value);
@@ -1065,7 +1065,7 @@ function liveStableRosterView(){
  const rank={treat:4,watch:3,unknown:2,sound:1,ready:5,entered:4,building:3,restricted:1,up:5,work:4,level:3,down:1};
  const numericMoney=v=>{const text=String(v||'').replace(/[$,]/g,'').trim();return /^\d+(?:\.\d+)?$/.test(text)?Number(text):null};
  const keys={name:x=>x.name,age:x=>x.age?Number(x.age):null,sex:x=>x.sex,
-  health:x=>x.health[0]==='unknown'?null:rank[x.health[0]],readiness:x=>x.ready[0]==='unknown'?null:rank[x.ready[0]],
+  health:x=>x.health[0]==='unknown'?null:rank[x.health[0]],readiness:x=>x.ready[0]==='unknown'?null:(/^\d+%$/.test(x.ready[1])?Number(x.ready[1].slice(0,-1)):rank[x.ready[0]]),
   ability:x=>ratingScore(x.ability),potential:x=>ratingScore(x.potential),
   form:x=>x.form[0]==='unknown'?null:rank[x.form[0]],last:x=>x.last||null,
   next:x=>x.upcoming||null,target:x=>x.target||null,earnings:x=>numericMoney(x.money),
@@ -1086,7 +1086,8 @@ function liveStableRosterView(){
  const cell=(value,klass='',title='')=>'<td class="'+klass+'" title="'+safe(title||String(value||''))+'">'+(value||'<span class="ng-rs-missing">—</span>')+'</td>';
  const txt=(value,klass='')=>cell(value?safe(value):'',klass,value);
  const rowHTML=filtered.map(x=>{
-  const name='<button type="button" class="ng-rs-horse" data-ng="horse" data-val="'+safe(x.name)+'">'+horseOwnerBadge(x.name)+
+  const ownerMark=APP.stableDemo?'<span class="ng-rs-demo-owner" title="Fictional demo owner: '+safe(x.owner)+'">'+safe((x.owner||'?').charAt(0))+'</span>':horseOwnerBadge(x.name);
+  const name='<button type="button" class="ng-rs-horse" data-ng="horse" data-val="'+safe(x.name)+'">'+ownerMark+
    '<span>'+safe(x.name)+'</span></button>';
   const datum=[cell(name,'ng-rs-first'),txt(x.age,'ng-rs-numeric'),txt(x.sex,'ng-rs-numeric'),
    cell(liveStableSignal(...x.health)),cell(liveStableSignal(...x.ready)),
