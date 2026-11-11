@@ -1325,7 +1325,7 @@ root.addEventListener('input',event=>{
  APP.stableSearch=input.value;
  const query=APP.stableSearch.trim().toLowerCase();
  let visible=0;
- $('.ng-wtw-roster-row',root).forEach(row=>{
+ $$('.ng-wtw-roster-row',root).forEach(row=>{
   const match=(row.getAttribute('data-search')||'').toLowerCase().includes(query);
   row.hidden=!match;
   if(match)visible++;
