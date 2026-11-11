@@ -1149,6 +1149,126 @@ const DEP_AUCTIONS=[
 function depHash(v){let x=13;for(const c of String(v))x=(x*31+c.charCodeAt(0))%9973;return x}
 function depMoney(n){if(n==null||n==='')return '';return typeof n==='number'?'$'+Math.round(n).toLocaleString('en-US'):String(n)}
 
+
+function depRows(section,page,demo,auction){
+ const game=state(),stable=horseRows(),races=racingRows(),all=globalSearchItems();
+ APP.searchIndex=all;
+ const source=kind=>all.map((r,i)=>({...r,_index:i})).filter(r=>r.kind===kind);
+ const row=(kind,name,values)=>({...values,_kind:kind,_name:name});
+ const fixture=name=>races.find(r=>r.name===name);
+ const base=['Lexington, KY','Saratoga, NY','Ocala, FL','Belmont, NY','Paris, KY','Louisville, KY'];
+ if(section==='Racing'){
+  const list=demo?stable:stable.filter(h=>fixture(h.name));
+  let out=list.map((h,i)=>{
+   const f=fixture(h.name),d=WTW_STABLE_DEMO[h.name]||{},saved=game.horseState?.[h.name]||{};
+   const date=demo?(d.upcoming||'2014-08-02'):(f?.date||'');
+   return row('horse',h.name,{date:demo?stableShortDate(date):date,track:f?.track||(demo?['Saratoga','Keeneland','Churchill','Monmouth','Belmont','Del Mar'][i]:''),
+    race:f?.tag||(demo?'R'+(i+3):''),class:demo?['MSW','ALW','G3','CLM','G2','OC'][i]:'',
+    surface:demo?(i%3?'D':'T'):'',distance:demo?['6f','1m','9f','7f','8.5f','10f'][i]:'',
+    purse:demo?depMoney([50000,75000,150000,42000,200000,90000][i]):'',
+    horse:h.name,base:saved.current_barn_location||saved.barn_location||saved.current_base||(demo?base[i]:''),
+    ship:demo?String([83,0,12,950,460,75][i]):'',jockey:demo?['J. Butler','M. Green','R. Dawson','I. Walker','F. Wright','J. Brennan'][i]:'',
+    trainer:demo?d.trainer||'':'',ready:demo?d.ready?.[1]||'':saved.readiness_status||'',
+    status:f?.status||(demo?'Target':''),_iso:liveStableDate(date)||''});
+  });
+  if(page==='Results')out=demo?out.map((r,i)=>({...r,date:stableShortDate((WTW_STABLE_DEMO[r.horse]||{}).last),status:['1st','4th','2nd','3rd','5th','1st'][i],_iso:(WTW_STABLE_DEMO[r.horse]||{}).last||''})):[];
+  if(page==='Stakes')out=out.filter(r=>/G[1-3]|stakes/i.test(r.class)||/stakes/i.test(r.race));
+  if(page==='Entries'&&!demo)out=out.filter(r=>/entered/i.test(r.status));
+  if(page==='Race Planning'&&!demo)out=out.filter(r=>!/entered/i.test(r.status));
+  return out.sort((a,b)=>a._iso.localeCompare(b._iso));
+ }
+ if(section==='Breeding'){
+  let out=stable.map((h,i)=>{
+   const d=WTW_STABLE_DEMO[h.name]||{},saved=game.horseState?.[h.name]||{};
+   const role=demo?['Stallion','Stallion','Broodmare','Broodmare','Stallion','Broodmare'][i]:
+    String(saved.breeding_role||saved.breeding_status||'');
+   return row('horse',h.name,{horse:h.name,age:demo?String([5,7,6,9,4,8][i]):'',sex:demo?(/broodmare/i.test(role)?'M':'H'):'',
+    sire:demo?['Monarch Road','Fleet River','Crown Maker','City Light','Grand Reserve','Violet Sands'][i]:'',
+    dam:demo?['Morning Glory','Wild Azure','Last Dance','Silver Arch','Far Away','Marble Hill'][i]:'',
+    farm:demo?['Kingsmere','Aurelian','Blue Lantern','Crescent Mile','Ironweed','Santa Ventura'][i]:'',
+    status:demo?['Active','Booked','In foal','Open','Active','In foal'][i]:role,health:demo?['Sound','Sound','Sound','Vet watch','Sound','Sound'][i]:saved.health_status||'',
+    pedigree:demo?String([83,78,91,87,72,86][i]):'',value:demo?depMoney([320000,210000,470000,395000,180000,410000][i]):'',
+    owner:demo?d.owner||'':horseOwnership(h.name)?.name||'',
+    studFee:demo&&!/broodmare/i.test(role)?depMoney([12000,8500,0,0,6500,0][i]):'',
+    bookings:demo&&!/broodmare/i.test(role)?String([44,28,0,0,19,0][i]):'',
+    foals:demo?String([18,27,4,6,7,3][i]):'',winners:demo?String([7,11,2,3,2,1][i]):'',_role:role});
+  });
+  if(!demo)out=out.filter(r=>/stallion|broodmare|breeding/i.test(r._role));
+  if(page==='Stallions')out=out.filter(r=>/stallion/i.test(r._role));
+  if(page==='Broodmares')out=out.filter(r=>/broodmare/i.test(r._role));
+  if(page==='Foals')out=demo?out.map(r=>({...r,age:'1',sex:'F',status:'Yearling',studFee:'',bookings:''})):[];
+  if(page==='Stud Farms')out=out.filter(r=>r.farm);
+  return out;
+ }
+ if(section==='Sales'){
+  if(!auction)return [];
+  const lots=demo?stable.map(h=>({horse:h.name})):Array.isArray(auction.lots)?auction.lots:[];
+  let out=lots.map((lot,i)=>{
+   const name=lot.horse||lot.horse_name;
+   return row('horse',name,{hip:demo?String(101+i*7):lot.hip||'',horse:name,age:demo?String([2,3,1,4,2,1][i]):lot.age||'',
+    sex:demo?['C','G','F','M','C','F'][i]:lot.sex||'',sire:demo?['Monarch Road','City Light','Fleet River','Northern Crown','Blue Harbor','Grand Reserve'][i]:lot.sire||'',
+    dam:demo?['Silver Arch','Morning Glory','Fast Night','Wild Azure','Marble Hill','Last Dance'][i]:lot.dam||'',
+    consignor:demo?['Blue Lantern','Kingsmere','Ironweed','Aurelian','Crescent Mile','Marrowfield'][i]:lot.consignor||'',
+    reserve:demo?depMoney([90000,70000,110000,140000,55000,80000][i]):depMoney(lot.reserve),
+    bid:demo?depMoney([82000,64000,119000,0,57000,74000][i]):depMoney(lot.bid),
+    value:demo?depMoney([108000,85000,130000,145000,62000,96000][i]):depMoney(lot.estimated_value),
+    ca:demo?String([4,3,2,4,3,2][i]):'',pa:demo?String([5,3,5,4,5,4][i]):'',
+    condition:demo?['Fit','Watch','Sound','Fit','Sound','Vet check'][i]:lot.condition||'',
+    status:demo?['Open','Bidding','Watch','Cataloged','Offer','Inspect'][i]:lot.status||''});
+  });
+  if(page==='Watchlist')out=out.filter((r,i)=>demo?i%2===0:/watch/i.test(r.status));
+  if(page==='Private Offers')out=out.filter((r,i)=>demo?i%3===1:/offer/i.test(r.status));
+  return out;
+ }
+ if(section==='Personnel'){
+  let out=source('person').map(r=>{
+   const n=depHash(r.name),role=r.detail||'Unrecorded',owner=/owner|patron/i.test(role),saved=game.staffState?.[r.name]||{};
+   return row('person',r.name,{name:r.name,age:demo?String(27+n%39):saved.age||'',role:role,
+    ca:demo?String(2+n%4):'',pa:demo?String(3+n%3):'',
+    reputation:demo?['Regional','National','Local','International'][n%4]:saved.reputation||'',
+    specialty:demo?(/jockey/i.test(role)?'Turf riding':/trainer/i.test(role)?'2YO development':owner?'Bloodstock':'Stable care'):saved.specialization||'',
+    morale:demo?(owner?'':['High','Good','Neutral'][n%3]):saved.morale||'',
+    workload:demo&&!owner?String(20+n%78)+'%':saved.workload||'',
+    salary:demo&&!owner?depMoney(36000+(n%14)*8500):'',
+    contract:demo&&!owner?String(2015+n%4)+'-12':'',
+    assignment:demo?(owner?'Portfolio':/jockey/i.test(role)?'Race riding':'Main stable'):saved.assignment||'',
+    base:demo?['Lexington, KY','Saratoga, NY','Ocala, FL','Louisville, KY'][n%4]:saved.base||'',
+    wins:demo?String(n%410):'',_sourceIndex:r._index});
+  });
+  const match={Trainers:/trainer/i,Jockeys:/jockey/i,Owners:/owner|patron/i,Staff:/staff|groom|exercise|vet|farrier/i}[page];
+  if(match)out=out.filter(r=>match.test(r.role));
+  return out;
+ }
+ if(section==='Facilities'){
+  let out=[...source('farm'),...source('track')];
+  if(page==='Barns'||page==='Farms')out=out.filter(r=>r.kind==='farm');
+  return out.map(r=>{
+   const n=depHash(r.name),cap=demo?24+n%95:null,used=demo?Math.floor(cap*(.45+(n%35)/100)):null;
+   return row(r.kind,r.name,{name:r.name,type:r.kind==='track'?'Racecourse':'Farm / Barn',
+    location:demo?['Versailles, KY','Saratoga Springs, NY','Ocala, FL','Lexington, KY','Paris, KY'][n%5]:r.detail||'',
+    capacity:cap??'',occupied:used??'',free:demo?cap-used:'',
+    condition:demo?['Excellent','Good','Needs work'][n%3]:'',quality:demo?String(60+n%37)+'/100':'',
+    staff:demo?String(3+n%25):'',cost:demo?depMoney(11000+n%32000):'',
+    owner:demo?['Your Operation','Private','Partnership'][n%3]:'',_sourceIndex:r._index});
+  });
+ }
+ const entries=demo?[
+  ['2014-07-15','Purse','Race earnings','Racing',28500,0,2840000],
+  ['2014-07-14','Payroll','Stable employee payroll','Personnel',0,21400,2811500],
+  ['2014-07-13','Facilities','Barn and training upkeep','Facilities',0,8200,2832900],
+  ['2014-07-12','Breeding','Stud service receipt','Breeding',12500,0,2841100],
+  ['2014-07-11','Sales','Yearling sale deposit','Sales',0,18000,2828600],
+  ['2014-07-10','Veterinary','Horse treatment','Stable',0,3400,2846600],
+  ['2014-07-09','Boarding','Monthly board receipts','Facilities',17400,0,2850000],
+  ['2014-07-08','Transport','Horse shipping','Racing',0,2900,2832600]
+ ]:(Array.isArray(game.finances?.ledger)?game.finances.ledger.map(t=>[t.date,t.category,t.description,t.department,t.income,t.expense,t.balance]):[]);
+ let out=entries.map((t,i)=>row('finance',String(i),{date:stableShortDate(t[0]),category:t[1]||'',description:t[2]||'',department:t[3]||'',
+  income:Number(t[4])>0?depMoney(t[4]):'',expense:Number(t[5])>0?depMoney(t[5]):'',balance:depMoney(t[6])}));
+ if(page==='Operating Costs')out=out.filter(r=>r.expense);
+ if(page==='Budgets')out=demo?out.slice(0,4).map(r=>({...r,date:'JUL 2014',category:'Budget / actual'})):[];
+ return out;
+}
+
 function managerDashboard(){
  const section=APP.section||'Office',page=APP.page||'Overview';
  const configs={
