@@ -660,15 +660,15 @@ function officeFiveGenerationPedigree(name){
  let positions=[''];
  const columns=labels.map((label,depth)=>{
   const cells=positions.map(path=>{
-   const n=all.get(path),known=Boolean(n?.horse_id),repeat=known&&(repeats.get(n.horse_id)||0)>1;
+   const n=all.get(path),subject=path==='',known=Boolean(n?.horse_id)||subject,repeat=Boolean(n?.horse_id)&&(repeats.get(n.horse_id)||0)>1;
    const maternal=path.startsWith('D'),nameText=n?.name||'Unknown';
    const content=known&&path?
     '<button type="button" data-ng="pedigree-ancestor" data-val="'+safe(n.horse_id)+
     '" title="Open '+safe(nameText)+' horse profile">'+safe(nameText)+'</button>':
-    '<span>'+safe(nameText)+'</span>';
+    subject?'<strong>'+safe(nameText)+'</strong>':'<span>'+safe(nameText)+'</span>';
    return '<div class="ng-ped5-node '+(known?'known':'unknown')+
-    (repeat?' repeated':'')+(maternal?' maternal':' paternal')+'" title="'+
-    safe(known?n.horse_id:'No documented ancestor')+'">'+content+'</div>';
+    (repeat?' repeated':'')+(subject?' subject':'')+(maternal?' maternal':' paternal')+'" title="'+
+    safe(n?.horse_id||(subject?'Current Office horse':'No documented ancestor'))+'">'+content+'</div>';
   }).join('');
   positions=positions.flatMap(path=>[path+'S',path+'D']);
   return '<section class="ng-ped5-generation" aria-label="'+label+'"><header>'+label+'</header>'+
@@ -681,9 +681,9 @@ function officeFiveGenerationPedigree(name){
   entry?.status==='unavailable'?'SOURCE CONNECTION UNAVAILABLE':
   'CHECKING HISTORICAL HORSE RECORD';
  const note=entry?.status==='ready'?
-  'Click any named ancestor to open its source-backed profile. Repeated ancestors are highlighted. Names follow saved display-name edits; identity follows Horse ID.':
+  'The horse, parents and four grandparents are shown first. Scroll right for earlier generations. Click named ancestors to open their profiles; repeated ancestors are highlighted.':
   entry?.status==='unlinked'?
-  'This Office horse has no exact match in the imported historical pedigree database. Ancestors are shown as unknown rather than invented.':
+  'This Office horse is not yet connected to historical parent IDs. Its name remains visible; undocumented ancestors remain unknown.':
   entry?.status==='ambiguous'?
   'More than one historical horse uses this name. The profile needs its permanent Horse ID before a pedigree can be displayed.':
   entry?.status==='unavailable'?
@@ -691,7 +691,7 @@ function officeFiveGenerationPedigree(name){
   'Checking the approved historical pedigree for an exact horse-identity match.';
  return '<section class="ng-detailcard ng-detailwide ng-ped5-card" aria-label="Five-generation pedigree">'+
   '<header><span>FIVE-GENERATION PEDIGREE</span><small>'+safe(status)+'</small></header>'+
-  '<div class="ng-ped5-instructions">'+safe(note)+'</div>'+
+  '<div class="ng-ped5-instructions">'+safe(note)+' <strong>SCROLL RIGHT → EARLIER GENERATIONS</strong></div>'+
   '<div class="ng-ped5-scroller" role="region" tabindex="0" aria-label="Five-generation pedigree scroll area">'+
   '<div class="ng-ped5-columns">'+columns+'</div></div>'+
   '<div class="ng-ped5-legend"><span><i class="ng-ped5-sire"></i>SIRE BRANCH</span>'+
