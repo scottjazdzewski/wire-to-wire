@@ -459,3 +459,23 @@ body>.app,body>#routeShell,body>#toast,body>.wtw-site-archive-link{display:none!
 .mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-choices{flex:0 0 auto}
 .mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-intelligence{flex:1 1 auto;min-height:0;overflow:hidden}
 .mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-next{flex:0 0 auto}
+
+
+/* Fill each dashboard view with its panels; the section wrapper is .mg-section. */
+.mg-office-page-left>.mg-section,
+.mg-office-page-main>.mg-section,
+.mg-office-page-third>.mg-section{flex:1 1 0;min-height:0}
+.mg-office-page-side>.mg-section{min-height:0}
+.mg-office-view-front .mg-office-page-left>.mg-section,
+.mg-office-view-front .mg-office-page-main>.mg-section{display:flex;flex-direction:column}
+.mg-office-view-front .mg-office-page-left>.mg-section>.mg-feed-row{
+ flex:1 1 0;height:auto!important;min-height:0
+}
+.mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-top{
+ flex:1 1 0;min-height:190px;max-height:48%
+}
+.mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-choices{flex:0 0 auto}
+.mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-intelligence{
+ flex:1 1 auto;min-height:0;overflow:hidden
+}
+.mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-next{flex:0 0 auto}
