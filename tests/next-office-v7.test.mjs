@@ -321,7 +321,7 @@ test('Six department rosters share FM density but preserve their own management 
   'Department preview must never mutate the canonical game save');
  assert.ok(css.includes('#wtwNextgen .ng-rs-scroll{display:block;flex:1 1 auto;min-height:0;overflow:hidden')&&js.includes('ng-stable-roster-v2 ng-dept-roster'),
   'Departments inherit exactly the same no-scroll roster viewport from Stable');
- assert.ok(css.includes('--wtw-ui-list-text:9.5px')&&css.includes('--wtw-roster-text:var(--wtw-ui-list-text)')&&css.includes('font-size:var(--wtw-roster-text)!important')&&css.includes('.ng-dpt-pager'),
+ assert.ok(css.includes('--wtw-ui-list-text:9.5px')&&css.includes('--wtw-roster-text:var(--wtw-ui-list-text)')&&css.includes('font-size:var(--wtw-roster-text);color:#dce6d7')&&css.includes('.ng-dpt-pager'),
   'Use the same shared font tokens and navigation density across Stable and all departments');
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);
@@ -439,13 +439,9 @@ test('A single type scale controls every main roster, profile and directory at a
  }
  const checks=[
   ['#wtwNextgen .ng-rs-table td','var(--wtw-roster-text)'],
-  ['#wtwNextgen .ng-dept-roster .ng-rs-table td','var(--wtw-roster-text)!important'],
   ['#wtwNextgen .ng-rs-table th button','var(--wtw-roster-head)!important'],
-  ['#wtwNextgen .ng-dept-roster .ng-rs-table th button','var(--wtw-roster-head)!important'],
   ['#wtwNextgen .ng-rs-horse','var(--wtw-roster-name)!important'],
-  ['#wtwNextgen .ng-dept-roster .ng-rs-table .ng-rs-horse','var(--wtw-roster-name)!important'],
   ['#wtwNextgen .ng-rs-signal','var(--wtw-roster-status)'],
-  ['#wtwNextgen .ng-dept-roster .ng-rs-table .ng-rs-signal','var(--wtw-roster-status)'],
   ['#wtwNextgen .ng-rs-tools button','var(--wtw-roster-control)!important'],
   ['#wtwNextgen .ng-dpt-pager button','var(--wtw-roster-control)!important'],
   ['#wtwNextgen .ng-rs-title strong','var(--wtw-roster-title)'],
@@ -458,6 +454,8 @@ test('A single type scale controls every main roster, profile and directory at a
   ['.ng-search-table-head','var(--wtw-ui-list-meta)']
  ];
  for(const [selector,size] of checks)hasSize(selector,size);
+ assert.ok(js.includes('ng-stable-roster-v2 ng-dept-roster'),
+  'Departments inherit table fonts, entity names and indicators from the shared Stable wrapper');
  // Horse, person and track profiles retain hierarchy but not conflicting values.
  for(const selector of [
   '.ng-route-profile .ng-profile-horse .ng-profile-intro h2',
