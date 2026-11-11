@@ -1312,7 +1312,7 @@ function depNumeric(v){
  if(!/^-?\d+(?:\.\d+)?[kKmM]?$/.test(s))return null;
  return Number(s.replace(/[kKmM]$/,''))*(/[mM]$/.test(s)?1000000:/[kK]$/.test(s)?1000:1);
 }
-function depPageLimit(){return Math.max(8,Math.min(22,Math.floor(((window.innerHeight||850)-250)/29)))}
+function depPageLimit(section){const financeHeader=section==='Finances'?42:0;return Math.max(8,Math.min(22,Math.floor(((window.innerHeight||850)-250-financeHeader)/29)))}
 function departmentRoster(section,page='Overview'){
  const demo=APP.departmentDemo;
  const current=$('.dateChip')?.textContent.trim()||'2014-07-15';
@@ -1333,7 +1333,7 @@ function departmentRoster(section,page='Overview'){
   const comp=an!==null&&bn!==null?an-bn:String(av).localeCompare(String(bv),undefined,{numeric:true,sensitivity:'base'});
   return comp*sign||String(a._name).localeCompare(String(b._name));
  });
- const limit=depPageLimit(),pages=Math.max(1,Math.ceil(rows.length/limit));
+ const limit=depPageLimit(section),pages=Math.max(1,Math.ceil(rows.length/limit));
  APP.departmentPageIndex=Math.min(Math.max(0,APP.departmentPageIndex),pages-1);
  const shown=rows.slice(APP.departmentPageIndex*limit,(APP.departmentPageIndex+1)*limit);
  APP.departmentVisible=shown;
