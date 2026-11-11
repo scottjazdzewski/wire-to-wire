@@ -29,16 +29,21 @@ test('Clean-sheet Manager V2 parses, keeps one stylesheet and retains the canoni
  assert.ok(js.includes('function withSilentOfficeRoute(task)'),'Manager navigation must protect browser history when syncing gameplay files');
 });
 
-test('Stable overview shows actionable condition and race targets without cross-horse inference',()=>{
+test('Stable is a full-height source-backed horse-management dossier rather than four stretched cards',()=>{
  const js=get('public/manager/manager.js'),css=get('public/manager/manager.css');
- assert.ok(js.includes("{text:'CURRENT FILE'}")&&js.includes("{text:'NEXT TARGET'}"),
-  'Every horse row must show the live management file and next target');
- assert.ok(js.includes("fixture?$('p',fixture)?.textContent.trim():''"),
-  'Do not infer a horse race target from an unrelated global fixture');
+ assert.ok(js.includes('mg-stable-horse-card')&&js.includes('mg-stable-horse-list'),
+  'Each horse has a compact full-height stable dossier');
+ assert.ok(js.includes('NEXT TARGET')&&js.includes('OWNER')&&js.includes('VIEW PROFILE'),
+  'Every dossier must expose identity, owner, actual target and direct profile');
+ assert.ok(js.includes("exact?$('p',exact)?.textContent.trim():''"),
+  'Do not borrow a different horse\'s race target from an unrelated fixture');
  assert.ok(js.includes('FULL PERSONNEL DIRECTORY ›'),
-  'Sparse staff panel must lead to the linked personnel directory');
- assert.ok(css.includes('.mg-operations-grid.stable>.mg-section:nth-child(3)'),
-  'Sparse staff panel must be content-sized rather than a dead-space rectangle');
+  'Personnel panel retains source-backed deeper navigation');
+ assert.ok(css.includes('.mg-operations-grid.mg-stable-command{')&&
+  css.includes('.mg-stable-horse-card{')&&css.includes('.mg-stable-horse-list{'),
+  'Stable uses a full-height grid and real integrated horse rows, not blank panels');
+ assert.ok(!css.includes('max-height:220px}'),
+  'Do not restore the old three-row personnel stretch workaround');
 });
 
 test('Approved images resolve by immutable entity ID or exact name, never fabricate portraits or logos',()=>{
@@ -92,4 +97,18 @@ test('Manager profiles and Search use authoritative read-only geography projecti
  assert.ok(cssHasTrackSelected(),'Selected current course visibly stands out in the register');
  assert.ok(js.includes('1999 BASE'),'Do not present an opening historical base as the current physical operating base');
  assert.ok(!js.includes('localStorage.setItem'),'Read-only snapshots must not write the source of truth');
+});
+
+test('One shared FM/OOTP management style governs every route and all roster tables sort in place',()=>{
+ const js=get('public/manager/manager.js'),css=get('public/manager/manager.css');
+ assert.ok(css.includes('--bg:#0b1118;--stage:#101722'),'All screens use the same neutral slate base');
+ assert.ok(css.includes('.mg-section>header{')&&css.includes('background:#202b32'),
+  'All management panels share restrained dark headers, not large solid-green bars');
+ assert.ok(css.includes('.mg-table th[data-mg-sort-col]{'),
+  'Shared sortable table headings have accessible hover and keyboard affordances');
+ assert.ok(js.includes('function sortRosterColumn(header)'),'All roster tables use one sorter');
+ assert.ok(js.includes("root.addEventListener('keydown',event=>"),'Keyboard users can activate table sorting');
+ assert.ok(js.includes("tbody.append(...rows.map(x=>x.row))"),'Sorting only rearranges the visible DOM, not canonical records');
+ assert.ok(js.includes("aria-sort"),'Table headers report sort direction');
+ assert.ok(!js.includes('localStorage.setItem'),'Presentation-only sorting cannot change saved model data');
 });
