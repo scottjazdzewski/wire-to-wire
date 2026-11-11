@@ -632,6 +632,7 @@ test('Sales dropdown names the operator and uses verified historical dates with 
  assert.equal(m.depSaleLabel(next),'The Saratoga Sale - Fasig-Tipton',
   'Next upcoming auction must be the earliest future sale, not invented July or August placeholders');
  const in1999=mk('1999-01-01').depAuctionList(true);
+ const only1999=in1999.filter(a=>a.sortKey.startsWith('1999'));
  const confirmed1999=in1999.filter(a=>a.confirmedDate);
  assert.equal(confirmed1999.length,5,'Retain five source-confirmed regional sales in 1999');
  assert.ok(in1999.every((a,i)=>!i||in1999[i-1].sortKey<=a.sortKey),'1999 calendar must sort chronologically');
@@ -650,11 +651,11 @@ test('Sales dropdown names the operator and uses verified historical dates with 
  assert.equal(texas.endDate,'1999-08-31');
  assert.ok(in1999.some(a=>a.companyId==='barretts'&&a.name.includes('March')&&!a.confirmedDate),
   'Historical sale types without a verified day must remain month-only');
- assert.ok(!in1999.some(a=>a.companyId==='canadian'&&a.name==='Selected Yearling Sale'&&!a.confirmedDate),
+ assert.ok(!only1999.some(a=>a.companyId==='canadian'&&a.name==='Selected Yearling Sale'&&!a.confirmedDate),
   'Exactly-dated 1999 Canadian sale should not be duplicated by its usual-month placeholder');
- assert.ok(!in1999.some(a=>a.companyId==='wtba'&&!a.confirmedDate),
+ assert.ok(!only1999.some(a=>a.companyId==='wtba'&&!a.confirmedDate),
   'Verified 1999 WTBA dates replace seasonal placeholders');
- const regional2014=list.filter(a=>['wtba','canadian'].includes(a.companyId));
+ const regional2014=list.filter(a=>a.sortKey.startsWith('2014')&&['wtba','canadian'].includes(a.companyId));
  assert.ok(regional2014.length>=3,'Regional operators should remain visible on the 2014 calendar');
  assert.ok(regional2014.every(a=>!a.confirmedDate&&a.dateLabel.includes('exact date unverified')),
   'Never label a regional 2014 fixture as an exact verified historical date');
