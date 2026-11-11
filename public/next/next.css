@@ -2274,11 +2274,11 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 .ng-stakes-trophy.g1{background-position:-3px -1px}
 .ng-stakes-trophy.g2{background-position:-23px -2px}
 .ng-stakes-trophy.g3{background-position:-44px -2px}
-.ng-track-info-stack{display:flex;flex-direction:column;gap:7px;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#546959 #151c1e}
+.ng-track-info-stack{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(155px,194px);gap:7px;min-height:0;height:100%;overflow:hidden}
 .ng-track-info-stack>.ng-tier1-card{min-height:0}
-.ng-track-info-stack>.ng-track-meet-card{flex:1 0 auto;min-height:100%}
-.ng-track-info-stack>.ng-tier1-card:not(.ng-track-meet-card){flex:0 0 auto;max-height:35%;overflow:auto}
-.ng-track-conditions-body{display:flex;flex-direction:column;gap:8px;flex:1 1 auto;min-height:0;overflow:visible;padding:8px}
+.ng-track-info-stack>.ng-track-meet-card{min-height:0;overflow:hidden}
+.ng-track-info-stack>.ng-track-history-card{min-height:0;max-height:none;overflow:hidden}
+.ng-track-conditions-body{display:flex;flex-direction:column;gap:8px;flex:1 1 auto;min-height:0;overflow:auto;padding:8px}
 .ng-track-meet-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
 .ng-track-meet-fact{display:flex;flex-direction:column;gap:4px;min-width:0;padding:8px 9px;background:#1e262a;border-bottom:1px solid #3c4b47}
 .ng-track-meet-fact small{color:#aebfad;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
@@ -2297,7 +2297,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 .ng-horse-star-set i.filled{color:#e8c36f}
 .ng-horse-star-key{font-size:8.5px;color:#9eafa4;letter-spacing:.02em}
 .ng-profile-horse .ng-profile-identity h2{display:flex;align-items:center;gap:8px}
-@media(max-width:900px){.ng-track-workspace{grid-template-columns:minmax(0,1fr)!important;overflow:auto}.ng-track-info-stack{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:1fr}}
+@media(max-width:900px){.ng-track-workspace{grid-template-columns:minmax(0,1fr)!important;overflow:auto}.ng-track-info-stack{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(220px,auto) minmax(165px,auto);height:auto;overflow:visible}}
 
 /* Approved Racing Office: ownership marks stay close to the foaling-flag scale. */
 #wtwNextgen .ng-horse-owner-badge,
@@ -2488,4 +2488,33 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 }
 #wtwNextgen .ng-entity-preview-grid .ng-entity-reference{
  font-size:11px!important;font-weight:750!important
+}
+
+
+/* Track history: permanent lower-right stadium-style information panel.
+   No changes to trophy assets or stakes badges in this phase. */
+.ng-track-history-card{display:flex;flex-direction:column;min-height:0}
+.ng-track-history-card>header{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.ng-track-history-card>header button,.ng-track-history-full>header button{
+ padding:2px 6px!important;border:1px solid #5f6d58!important;border-radius:2px!important;
+ color:#ecd39d!important;background:#24342c!important;font-size:8.5px!important;
+ font-weight:800!important;white-space:nowrap!important;cursor:pointer
+}
+.ng-track-history-content{display:flex;flex-direction:column;gap:7px;min-height:0;padding:8px 9px;overflow:hidden}
+.ng-track-history-facts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:5px;flex:0 0 auto}
+.ng-track-history-facts>div{display:flex;flex-direction:column;gap:2px;min-width:0;background:#1e282a;padding:5px 7px;border-bottom:1px solid #40524a}
+.ng-track-history-facts small{font-size:8px;line-height:1.1;color:#afc3ae;font-weight:800;letter-spacing:.035em;text-transform:uppercase}
+.ng-track-history-facts strong{font-size:11px;line-height:1.25;color:#f0d393;font-weight:850;white-space:normal;overflow-wrap:anywhere}
+.ng-track-history-facts em{font-size:7.5px;font-style:normal;color:#acbbac;line-height:1.15}
+.ng-track-history-blurb{font-size:9px;line-height:1.42;color:#d9e2d9;margin:0;overflow-wrap:anywhere}
+.ng-track-history-full{display:flex;flex-direction:column;gap:10px;min-height:0;padding-bottom:12px}
+.ng-track-history-full>header{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ng-track-history-full .ng-track-history-facts{max-width:540px}
+.ng-track-history-full .ng-track-history-blurb{font-size:11px;line-height:1.55;max-width:850px}
+.ng-track-history-source{font-size:9px;color:#a9baad;margin:0}
+.ng-track-history-source a{color:#e5cb8c;text-decoration:underline;text-underline-offset:2px}
+@media(max-height:760px) and (min-width:901px){
+ .ng-track-info-stack{grid-template-rows:minmax(0,1fr) minmax(145px,165px)}
+ .ng-track-history-content{gap:4px;padding:6px}
+ .ng-track-history-blurb{font-size:8.7px;line-height:1.28}
 }
