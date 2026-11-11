@@ -35,6 +35,78 @@ capture facilities '?ui=Facilities' 'ng-manager-screen'
 capture finances '?ui=Finances' 'ng-manager-screen'
 capture breeding '?ui=Breeding' 'ng-manager-screen'
 capture history-vault 'archive/' 'History Vault'
+# Browser geometry probe: screenshot files alone cannot detect a collapsed
+# CSS media scope. Measure the *rendered* game viewport at desktop resolution.
+cat > public/__wtw_visual_probe.html <<'HTML'
+<!doctype html>
+<html><head><meta charset="utf-8"><title>WTW desktop geometry</title></head>
+<body style="margin:0"><iframe id="game" style="display:block;border:0;width:100vw;height:100vh"></iframe>
+<pre id="measure">pending</pre>
+<script>
+const frame=document.getElementById('game');
+const route=new URLSearchParams(location.search).get('route')||'';
+frame.onload=()=>setTimeout(()=>{
+ try{
+  const d=frame.contentDocument,win=frame.contentWindow;
+  const rect=selector=>{
+   const element=d.querySelector(selector);
+   if(!element)return null;
+   const b=element.getBoundingClientRect();
+   return {width:Math.round(b.width),height:Math.round(b.height),
+    left:Math.round(b.left),top:Math.round(b.top),
+    display:win.getComputedStyle(element).display};
+  };
+  const result={
+   route,rail:rect('.ng-manager-sidebar'),
+   stage:rect('.ng-manager-stage'),
+   brand:rect('.ng-manager-rail-brand img'),
+   shell:rect('.ng-manager-shell'),
+   header:rect('.ng-global'),
+   page:rect('.ng-board')||rect('.ng-routegrid'),
+   horse:rect('.ng-horse-dossier'),
+   search:rect('.ng-search-roster-page'),
+   people:rect('.ng-person-workspace-overview')
+  };
+  const node=document.getElementById('measure');
+  node.dataset.check='ready';
+  node.textContent=JSON.stringify(result);
+ }catch(e){const node=document.getElementById('measure');node.dataset.check='error';node.textContent=String(e)}
+},700);
+frame.src='/'+route;
+</script></body></html>
+HTML
+probe(){
+  local key="$1" route="$2"
+  "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+    --force-device-scale-factor=1 --window-size=1536,864 --virtual-time-budget=5000 \
+    --dump-dom "http://127.0.0.1:8765/__wtw_visual_probe.html?route=$route" \
+    >"visual-audit/dom/probe-$key.html" 2>"/tmp/wtw-probe-$key.log"
+}
+probe office ''
+probe search '%3Fui%3DSearch'
+probe horse '%3Fpage%3Dhorse%26name%3DThe%2BLast%2BMatch'
+probe person '%3Fpage%3Dperson%26name%3DGabe%2BLarkin'
+python3 - <<'PY'
+import json,html,re
+from pathlib import Path
+for name in ('office','search','horse','person'):
+ source=Path(f'visual-audit/dom/probe-{name}.html').read_text()
+ assert 'data-check="ready"' in source, (name,'Geometry probe did not complete')
+ match=re.search(r'<pre id="measure"[^>]*>(.*?)</pre>',source,re.S)
+ assert match,(name,'Geometry result missing')
+ data=json.loads(html.unescape(match.group(1)))
+ rail,stage,brand=data['rail'],data['stage'],data['brand']
+ assert rail and 145<=rail['width']<=205 and rail['height']>=600,(name,'Sidebar not in desktop scope',rail)
+ assert stage and stage['width']>=1130 and stage['height']>=600,(name,'Content stage collapsed',stage)
+ assert brand and 16<=brand['width']<=50 and 16<=brand['height']<=55,(name,'Sidebar crest escaped fixed dimensions',brand)
+ assert data['page'] and data['page']['width']>=1000,(name,'Route workspace not using the game stage')
+ if name=='horse':assert data['horse'] and data['horse']['width']>=990,(name,'Horse dossier not visible')
+ if name=='search':assert data['search'] and data['search']['width']>=990,(name,'Search roster not visible')
+ if name=='person':assert data['people'] and data['people']['width']>=990,(name,'People dossier not visible')
+ print('VISUAL GEOMETRY',name,'rail',rail['width'],'stage',stage['width'],'crest',brand['width'])
+PY
+rm -f public/__wtw_visual_probe.html
+
 python3 - <<'PY'
 import os,struct
 folder='visual-audit/screenshots'
