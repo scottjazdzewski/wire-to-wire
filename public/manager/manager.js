@@ -40,17 +40,21 @@ function nav(view){
  render();
 }
 function openRecord(kind,name,track){
+ const sourcePersonId=kind==='person'&&String(track||'').startsWith('@')?String(track).slice(1):'';
+ const geoPerson=sourcePersonId?ui.personGeo?.people?.find(p=>p.id===sourcePersonId&&p.name===name):geographicPerson(name);
  const active=window.__wtwOfficeOpenSearchRecord?.(kind,name,track);
  if(!active){
-  if(kind==='track'&&geographicTrack(name)){
-   history.pushState({mg:'profile'},'',siteRoot()+'?page=track&name='+encodeURIComponent(name));
+  if((kind==='track'&&geographicTrack(name))||(kind==='person'&&geoPerson)){
+   const route=new URLSearchParams({page:kind,name});
+   if(kind==='person'&&geoPerson?.id)route.set('id',geoPerson.id);
+   history.pushState({mg:'profile'},'',siteRoot()+'?'+route.toString());
    ui.view='profile';render();return;
   }
   return;
  }
  ui.view='profile';
  const route=new URLSearchParams({page:kind,name});
- if(track)route.set('track',track);
+ if(track&&!String(track).startsWith('@'))route.set('track',track);
  history.replaceState({mg:'profile'},'',siteRoot()+'?'+route.toString());
  setTimeout(render,80);
 }
@@ -319,8 +323,8 @@ function horseProfile(name){
 }
 function personProfile(name){
  const s=sourceProfile()||{career:[],states:[],notes:[],connections:[],fields:[],sub:''},catalog=ui.catalog||{};
- const role=s.sub.replace(/^Job:\s*/i,'').toLowerCase();
- const key={'stable staff':'stable_staff','trainer':'trainer','jockey':'jockey','owner':'owner','breeder':'breeder','bloodstock':'bloodstock_professional','farm manager':'farm_manager','veterinarian':'veterinarian','groom':'groom','farrier':'farrier','exercise rider':'exercise_rider'}[role]||'stable_staff';
+ const role=(s.sub.replace(/^Job:\s*/i,'')||geographicPerson(name)?.role||'').toLowerCase();
+ const key={'stable staff':'stable_staff','trainer':'trainer','jockey':'jockey','owner':'owner','breeder':'breeder','bloodstock':'bloodstock_professional','farm manager':'farm_manager','veterinarian':'veterinarian','groom':'groom','farrier':'farrier','exercise rider':'exercise_rider'}[role]||(/trainer/.test(role)?'trainer':/jockey/.test(role)?'jockey':/owner|patron/.test(role)?'owner':'stable_staff');
  const base=catalog.person_common||[],special=catalog.person_roles?.[key]||[],defs=base.concat(special);
  const obs=new Map((observations('person',name)||[]).map(x=>[x.attribute_key,x]));
  const group=(title,arr)=>'<section class="mg-person-skill-group"><header><strong>'+h(title)+'</strong><small>'+arr.length+' RATINGS</small></header>'+
