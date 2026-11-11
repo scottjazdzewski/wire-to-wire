@@ -283,6 +283,21 @@ body>.app,body>#routeShell,body>#toast,body>.wtw-site-archive-link{display:none!
 .mg-track-side .mg-table td{height:27px;font-size:10.5px}
 .mg-track-layout>.mg-section .mg-table td{height:29px;font-size:11px}
 @media(max-width:1120px){.mg-track-layout{grid-template-columns:minmax(0,1fr)}.mg-track-side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.mg-track-side>.mg-section:last-child{grid-column:1/-1}}
+.mg-directory-layout{display:grid;grid-template-columns:minmax(0,1.36fr) minmax(0,1fr);gap:8px;min-height:0;min-width:0;flex:1}
+.mg-directory-layout>.mg-section{min-width:0;min-height:0;overflow:hidden}
+.mg-directory-layout>.mg-section .mg-table-wrap{min-height:0;overflow:auto}
+.mg-directory-layout>.mg-section .mg-table td{height:30px;font-size:11px}
+.mg-directory-layout>.mg-section .mg-table th{height:29px}
+.mg-directory-side{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:0}
+.mg-directory-side>.mg-section{min-height:0;min-width:0;overflow:hidden}
+.mg-directory-side>.mg-section:first-child{flex:0 1 auto;max-height:40%}
+.mg-directory-side>.mg-section:nth-child(2){flex:1 1 0}
+.mg-directory-side>.mg-section:last-child{flex:0 1 auto;max-height:35%}
+.mg-directory-side .mg-table td{height:29px;font-size:10.5px}
+.mg-directory-side .mg-table th{height:27px}
+.mg-directory-side .mg-table-wrap{overflow:auto}
+.mg-directory-side .mg-op-case{min-height:37px}
+@media(max-width:1090px){.mg-directory-layout{grid-template-columns:minmax(0,1fr)}.mg-directory-side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.mg-directory-side>.mg-section:last-child{grid-column:1/-1}}
 .mg-department-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:8px;flex:1;min-height:0}
 .mg-dossier-tools{display:flex;gap:5px;align-items:center;justify-content:flex-end;min-width:0}
 .mg-pilltabs{display:flex;align-items:center;gap:3px}
