@@ -511,6 +511,25 @@ function departmentStudio(view){
  const important=words=>office.filter(x=>words.test([x.type,x.title,x.source,x.summary].join(' ')));
  const bloodstock=people.filter(x=>/bloodstock|breeder|farm|owner|agent|sales/i.test(x.detail||''));
  const racingPeople=people.filter(x=>/jockey|trainer|stable|rider/i.test(x.detail||''));
+ const circuitGroups=new Map();
+ for(const x of ui.trackGeo?.tracks||[]){
+  const k=x.macro_circuit||'Circuit not yet classified';
+  if(!circuitGroups.has(k))circuitGroups.set(k,[]);
+  circuitGroups.get(k).push(x);
+ }
+ const circuitTable=compactTable([
+  {text:'RACING CIRCUIT',style:'width:49%'},{text:'TRACKS',style:'width:65px'},
+  {text:'SAMPLE VENUE'},{text:'OPEN',style:'width:55px'}
+ ],[...circuitGroups.entries()].sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0]))
+  .map(([area,venues])=>{
+   const first=venues[0];
+   return '<tr>'+tableCell(h(area),'strong')+tableCell(h(String(venues.length)),'numeric')+
+    tableCell(h(first.name),'dim')+
+    tableCell(button('OPEN ›','open','track|'+first.name+'|','mg-rowlink'),'numeric')+'</tr>';
+  }));
+ const worldIntel='<div class="mg-world-current">'+caseList(important(/race|track|news|world|colt|entries|calendar/i))+'</div>'+
+  '<div class="mg-world-circuit-label"><strong>RACING CIRCUIT INDEX</strong><span>'+circuitGroups.size+
+   ' NETWORKS · '+(ui.trackGeo?.tracks?.length||0)+' SOURCE-BACKED TRACKS</span></div>'+circuitTable;
  const folder={
   racing:{
    title:'Racing & Stakes',sub:'RACE PLACEMENT · STAKES CALENDAR',
@@ -567,8 +586,8 @@ function departmentStudio(view){
     ['Racecourse Directory',placeList(tracks,'track'),tracks.length+' VENUES'],
     ['Current Racing Schedule',calendar(),fixtures.length+' OFFICE ENTRIES'],
     ['Stakes & Major Races',raceList(),races.length+' RACE RECORDS'],
-    ['Racing World Intelligence',caseList(important(/race|track|news|world|colt|entries|calendar/i)),
-      'LIVE WORLD / RACING FILES']
+    ['Racing World Intelligence & Circuit Network',worldIntel,
+      'LIVE WORLD FILES · REGIONAL DIRECTORY']
    ]
   }
  };
