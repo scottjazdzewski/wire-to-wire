@@ -464,7 +464,7 @@ function departmentStudio(view){
    tableCell(h(readState().calendarState?.[x.name]?.race_target||'—'),'gold')+
    tableCell(button('OPEN ›','open','horse|'+x.name+'|','mg-rowlink'),'numeric')+'</tr>'));
  const peopleList=(list=people)=>compactTable([{text:'PERSON',style:'width:34%'},{text:'ROLE / PROFESSIONAL FILE'},
-   {text:'BASE / NOTE'},{text:'OPEN',style:'width:64px'}],list.map(x=>'<tr>'+
+   {text:'1999 BASE / LOCATION'},{text:'OPEN',style:'width:64px'}],list.map(x=>'<tr>'+
    tableCell(linkRecord(x,x.name),'strong')+tableCell(h(x.detail||'Personnel record'))+
    tableCell(h(x.track||'—'),'dim')+tableCell(button('OPEN ›','open','person|'+x.name+'|'+(x.person_id?'@'+x.person_id:''),'mg-rowlink'),'numeric')+'</tr>'));
  const placeList=(list,kind)=>compactTable([{text:'LOCATION',style:'width:33%'},{text:'RECORD / BASE'},
@@ -504,7 +504,7 @@ function departmentStudio(view){
    title:'Breeding Operations',sub:'FARMS · BLOODSTOCK · HORSE RECORDS',
    sections:[
     ['Farms & Stud Operations',farms.length?placeList(farms,'farm'):empty('No registered farms in the active Office file.'),farms.length+' FACILITY RECORDS'],
-    ['Bloodstock & Breeding Contacts',bloodstock.length?peopleList(bloodstock):empty('No bloodstock specialists in the current Office roster.'),bloodstock.length+' CONTACTS'],
+    ['Owner & Agency Directory',bloodstock.length?peopleList(bloodstock):empty('No source-linked ownership or agency records.'),bloodstock.length+' WORLD DIRECTORY ENTRIES'],
     ['Horse & Ownership Register',horseList(),horses.length+' HORSES'],
     ['Bloodstock Intelligence',caseList(important(/sales|hip|foal|breeding|colt|bloodstock|auction/i)),'MARKET / BREEDING FILES']
    ]
@@ -514,7 +514,7 @@ function departmentStudio(view){
    sections:[
     ['Sales & Bloodstock Intelligence',caseList(important(/sales|auction|catalog|hip|buy|price|bloodstock/i)),
       'CURRENT MANAGEMENT LEADS'],
-    ['Bloodstock Contacts',bloodstock.length?peopleList(bloodstock):empty('No registered bloodstock contacts in this Office.'),bloodstock.length+' PERSONNEL RECORDS'],
+    ['Owners & Market Agents',bloodstock.length?peopleList(bloodstock):empty('No source-linked owner or agent records.'),bloodstock.length+' WORLD DIRECTORY ENTRIES'],
     ['Horse & Ownership Register',horseList(),horses.length+' HORSES'],
     ['Current Office Calendar',calendar(),fixtures.length+' SCHEDULED ITEMS']
    ]
@@ -522,7 +522,7 @@ function departmentStudio(view){
   person:{
    title:'Personnel Directory',sub:'TRAINERS · JOCKEYS · STABLE STAFF',
    sections:[
-    ['Staff & Racing Professionals',peopleList(),people.length+' PERSONNEL RECORDS'],
+    ['Racing Personnel Directory',peopleList(),people.length+' CURRENT / HISTORICAL PEOPLE'],
     ['Stable Athletes',horseList(),horses.length+' HORSE RECORDS'],
     ['Staff & Office Intelligence',caseList(important(/staff|jockey|trainer|stable|gallop|work|vet|bloodstock/i)),
        'SOURCE-LINKED REPORTS'],
@@ -533,7 +533,7 @@ function departmentStudio(view){
    title:'Farms & Facilities',sub:'FARM OPERATIONS · FACILITY NETWORK',
    sections:[
     ['Farm & Barn Directory',farms.length?placeList(farms,'farm'):empty('No registered farms in the current Office source.'),farms.length+' FACILITIES'],
-    ['Facility & Stable Staff',racingPeople.length?peopleList(racingPeople):peopleList(),people.length+' AVAILABLE PEOPLE'],
+    ['World Training Professionals',racingPeople.length?peopleList(racingPeople):peopleList(),racingPeople.length+' WORLD DIRECTORY ENTRIES'],
     ['Horses & Current Operations',horseList(),horses.length+' HORSES'],
     ['Facility Management Files',caseList(important(/stable|barn|turnout|farm|health|vet|work|training/i)),
       'CURRENT OFFICE REPORTS']
@@ -551,10 +551,18 @@ function departmentStudio(view){
   }
  };
  const config=folder[view];if(!config)return null;
- return pageBar(config.title,config.sub,button('GLOBAL DIRECTORY','nav','search')+
-  button('HISTORY ARCHIVE','nav','history'))+
-  '<div class="mg-content mg-op-content"><div class="mg-operations-grid mg-department-suite '+view+'">'+
-   config.sections.map(x=>summary(x)).join('')+'</div></div>';
+ const heading=pageBar(config.title,config.sub,button('GLOBAL DIRECTORY','nav','search')+
+  button('HISTORY ARCHIVE','nav','history'));
+ const directoryViews={breeding:1,sales:1,person:0,farm:1};
+ if(Object.prototype.hasOwnProperty.call(directoryViews,view)){
+  const main=directoryViews[view];
+  return heading+'<div class="mg-content mg-op-content"><div class="mg-directory-layout '+view+'">'+
+   summary(config.sections[main])+
+   '<div class="mg-directory-side">'+config.sections.filter((x,i)=>i!==main).map(x=>summary(x)).join('')+
+   '</div></div></div>';
+ }
+ return heading+'<div class="mg-content mg-op-content"><div class="mg-operations-grid mg-department-suite '+view+'">'+
+  config.sections.map(x=>summary(x)).join('')+'</div></div>';
 }
 function financeStudio(){
  const all=cases(),cash=all.find(c=>c.id==='cash'),sales=all.find(c=>c.id==='saratoga'),
