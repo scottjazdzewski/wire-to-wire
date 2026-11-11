@@ -319,8 +319,8 @@ test('Six department rosters share FM density but preserve their own management 
   'Demo numbers and auction examples must be clearly labeled and toggleable');
  assert.ok(!code.includes('localStorage.setItem')&&!code.includes('gameState.horseState='),
   'Department preview must never mutate the canonical game save');
- assert.ok(css.includes('.ng-dept-roster .ng-rs-scroll{overflow:hidden!important'),
-  'Use one no-scroll roster viewport with page-based navigation');
+ assert.ok(css.includes('#wtwNextgen .ng-rs-scroll{display:block;flex:1 1 auto;min-height:0;overflow:hidden')&&js.includes('ng-stable-roster-v2 ng-dept-roster'),
+  'Departments inherit exactly the same no-scroll roster viewport from Stable');
  assert.ok(css.includes('--wtw-ui-list-text:9.5px')&&css.includes('--wtw-roster-text:var(--wtw-ui-list-text)')&&css.includes('font-size:var(--wtw-roster-text)!important')&&css.includes('.ng-dpt-pager'),
   'Use the same shared font tokens and navigation density across Stable and all departments');
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
@@ -371,6 +371,41 @@ test('Racing opens on active meets and has a true cross-track My Horses mode',()
  assert.ok(code.includes("_track:trackName")&&js.includes("window.__wtwOfficeOpenSearchRecord?.(exact.kind,name,exact.track||row?._track)"),
   'Stake rows need to open their correct race profile at the named track');
  assert.ok(office.includes('meetWindow:p.meetWindow'),'In-meet windows must remain read-only canonical facts');
+});
+
+test('Stable and every department inherit one compact title, toolbar, and roster header frame',()=>{
+ const css=get('public/next/next.css'),js=get('public/next/next.js');
+ assert.ok(js.includes('ng-stable-roster-v2 ng-dept-roster'),
+  'All department pages must use the identical base roster frame as Stable');
+ const shared=[
+  ['#wtwNextgen .ng-rs-title{','height:26px;flex:0 0 26px','gap:9px;padding:0 8px'],
+  ['#wtwNextgen .ng-rs-tools{','gap:5px;flex:0 0 29px','min-height:29px;padding:2px 5px'],
+  ['#wtwNextgen .ng-rs-roster>header{','height:23px;flex:0 0 23px','padding:0 7px'],
+  ['#wtwNextgen .ng-rs-scroll{','overflow:hidden','overscroll-behavior:none'],
+  ['#wtwNextgen .ng-rs-table td{','height:29px;max-height:29px','font-size:var(--wtw-roster-text)']
+ ];
+ for(const [selector,...parts] of shared){
+  const pos=css.indexOf(selector);assert.ok(pos>0,'Missing shared frame '+selector);
+  const block=css.slice(pos,css.indexOf('}',pos)+1);
+  for(const part of parts)assert.ok(block.includes(part),selector+' drifted from '+part);
+ }
+ // A department may provide unique controls and column widths. It may not
+ // change the global title height, toolbar padding, table-header height or fonts.
+ assert.ok(css.includes('#wtwNextgen .ng-dept-roster .ng-rs-tools{flex-wrap:nowrap!important}'));
+ for(const old of [
+  '#wtwNextgen .ng-dept-roster .ng-rs-roster>header{height:25px',
+  '#wtwNextgen .ng-dept-roster .ng-rs-title{padding:0 8px}',
+  '#wtwNextgen .ng-dept-roster .ng-rs-tools{flex-wrap:nowrap!important;min-height:29px',
+  '#wtwNextgen .ng-dept-roster .ng-rs-scroll{overflow:hidden!important',
+  '#wtwNextgen .ng-dept-roster .ng-rs-table td{font-size:var(--wtw-roster-text)',
+  '#wtwNextgen .ng-dept-roster .ng-rs-table th button{font-size:var(--wtw-roster-head)'
+ ])assert.ok(!css.includes(old),'Redundant department override returned: '+old);
+ assert.ok(js.includes('QUICK VIEW')&&js.includes('ALL COLUMNS'),
+  'Retain user-approved horse columns and compact quick-view controls');
+ assert.ok(css.includes('#wtwNextgen .ng-rs-table{border-collapse:collapse;table-layout:fixed;min-width:0;width:100%'),
+  'Stable table is fitted to width rather than requiring horizontal scrolling');
+ assert.ok(css.includes('#wtwNextgen .ng-dept-roster[data-department="Racing"] .ng-rs-table th:nth-child(1)'),
+  'Department-specific column widths remain intact');
 });
 
 test('A single type scale controls every main roster, profile and directory at all desktop breakpoints',()=>{
