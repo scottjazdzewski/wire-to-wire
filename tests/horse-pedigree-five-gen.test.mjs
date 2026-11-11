@@ -38,15 +38,28 @@ test('Missing pedigree never invents an ancestor name or link',()=>{
 });
 test('Five-generation endpoint uses source-only read operations and retains authenticated access',async()=>{
  const queries=[];
- const db={prepare(sql){queries.push(sql);
-  return {bind(...args){return {async first(){
-    if(sql.includes("FROM entities e LEFT JOIN display_name_overrides"))return {id:'H-1997-030001',kind:'horse',name:'Luna by Morning'};
-    return null;
-   },async all(){return {results:[
-    {depth:0,path:'',horse_id:'H-1997-030001',name:'Luna by Morning'},
-    {depth:1,path:'S',horse_id:'H-1987-000001',name:'Saint Nobody'},
-    {depth:1,path:'D',horse_id:'H-1989-020001',name:'Sundry'}
-   ]};}};}}};
+ const db={
+  prepare(sql){
+   queries.push(sql);
+   return {
+    bind(...args){
+     return {
+      async first(){
+       if(sql.includes("FROM entities e LEFT JOIN display_name_overrides"))return {id:'H-1997-030001',kind:'horse',name:'Luna by Morning'};
+       return null;
+      },
+      async all(){
+       return {results:[
+        {depth:0,path:'',horse_id:'H-1997-030001',name:'Luna by Morning'},
+        {depth:1,path:'S',horse_id:'H-1987-000001',name:'Saint Nobody'},
+        {depth:1,path:'D',horse_id:'H-1989-020001',name:'Sundry'}
+       ]};
+      }
+     };
+    }
+   };
+  }
+ };
  const req=new Request('https://wtw.example.com/api/horses/H-1997-030001/pedigree');
  const env={DB:db,ADMIN_EMAIL:'owner@example.com',ASSETS:{fetch:async()=>new Response('static')}};
  const ctx={access:{getIdentity:async()=>({email:'owner@example.com'})}};
