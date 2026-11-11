@@ -7,8 +7,16 @@ const $=(q,scope=document)=>scope.querySelector(q), $$=(q,scope=document)=>[...s
 const h=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const known=v=>v!=null&&String(v).trim()!==''&&!['—','Unknown','Not recorded','N/A'].includes(String(v).trim());
 const root=document.createElement('div');root.id='mgApp';root.setAttribute('aria-label','Wire to Wire Management Studio');document.body.appendChild(root);
-const ui={view:'office',q:'',type:'all',sort:'name',caseId:'powerline',catalog:null,photos:null,searchRecords:[],filterFocus:false,stage:'',renderCount:0};
+const ui={view:'office',q:'',type:'all',sort:'name',caseId:'powerline',catalog:null,photos:null,searchRecords:[],filterFocus:false,stage:'',renderCount:0,demoRatings:new URLSearchParams(location.search).get('ratings')!=='real'};
 const readState=()=>{try{return JSON.parse(localStorage.getItem('wtwOfficeStateV30')||'{}')}catch{return {}}};
+const demoScore=(name,key)=>{
+ let seed=2166136261;
+ for(const c of name+'|'+key)seed=Math.imul(seed^c.charCodeAt(0),16777619)>>>0;
+ const bias=/speed|acceleration|stamina|competitive|intelligence|horse_handling|fitness/.test(key)?14:0;
+ return Math.max(19,Math.min(97,29+(seed%57)+bias));
+};
+const scoreTier=x=>x>=85?'elite':x>=65?'good':x>=42?'average':'poor';
+const demoLabel=()=>ui.demoRatings?'<span class="mg-demo-label" title="Illustrative ratings for visual review only, not saved scouting data">DEMO RATINGS · FICTIONAL · NOT SAVED</span>':'';
 const records=()=>typeof window.__wtwOfficeSearchRecords==='function'?window.__wtwOfficeSearchRecords():[];
 const activeRoute=()=>{const p=new URLSearchParams(location.search);const page=p.get('page');return page&&page!=='office'?{type:page,name:p.get('name'),track:p.get('track')}:null;};
 const nowDate=()=>$('.app .dateChip')?.textContent.trim()||readState().date||'2014-07-15';
@@ -170,21 +178,25 @@ function observations(kind,name){
  const save=readState();
  return kind==='horse'?(save.scoutingState?.[name]?.attribute_observations||[]):(save.staffState?.[name]?.attribute_observations||[]);
 }
-function rating(def,obs){
- const valid=obs&&['estimated','measured'].includes(obs.status)&&obs.estimate!=null&&Array.isArray(obs.evidence_refs)&&obs.evidence_refs.length>0;
- const min=Number(obs?.scale_min),max=Number(obs?.scale_max),value=Number(obs?.estimate);
- const canBar=valid&&Number.isFinite(value)&&Number.isFinite(min)&&Number.isFinite(max)&&max>min;
+function rating(def,obs,personName){
+ const verified=obs&&['estimated','measured'].includes(obs.status)&&obs.estimate!=null&&Array.isArray(obs.evidence_refs)&&obs.evidence_refs.length>0;
+ const demo=ui.demoRatings&&!verified;
+ const value=demo?demoScore(personName||'Office preview',def.key):Number(obs?.estimate);
+ const min=demo?0:Number(obs?.scale_min),max=demo?100:Number(obs?.scale_max);
+ const canBar=(verified||demo)&&Number.isFinite(value)&&Number.isFinite(min)&&Number.isFinite(max)&&max>min;
  const percent=canBar?Math.max(0,Math.min(100,100*(value-min)/(max-min))):0;
- return '<div class="mg-attribute" title="'+h(def.meaning||'')+'"><span>'+h(def.label)+'</span>'+
- '<span class="mg-meter'+(canBar?'':' empty')+'">'+(canBar?'<i style="width:'+percent.toFixed(1)+'%"></i>':'')+'</span>'+
- '<strong class="'+(valid?'':'unknown')+'">'+(valid?h(obs.estimate+(obs.unit?' '+obs.unit:'')):'—')+'</strong></div>';
+ const tier=canBar?scoreTier(percent):'unknown';
+ const label=demo?'Fictional demo rating, not in source record':verified?'Source-backed observation':'Unassessed';
+ return '<div class="mg-attribute" title="'+h(def.meaning||'')+' · '+h(label)+'"><span>'+h(def.label)+'</span>'+
+ '<span class="mg-meter'+(canBar?' '+tier:' empty')+'">'+(canBar?'<i style="width:'+percent.toFixed(1)+'%"></i>':'')+'</span>'+
+ '<strong class="'+tier+'">'+(canBar?h(String(value)+(verified&&obs.unit?' '+obs.unit:'')):'—')+'</strong></div>';
 }
 function horseProfile(name){
  const source=sourceProfile(),cat=ui.catalog?.horse_categories||{},reports=new Map((observations('horse',name)||[]).map(x=>[x.attribute_key,x]));
  const groups=['Speed & Pace','Surface & Environment','Physical & Biometric','Mental & Class'];
  const columns=groups.map(group=>{const defs=cat[group]||[];const count=defs.filter(x=>{const r=reports.get(x.key);return r&&r.estimate!=null&&r.evidence_refs?.length}).length;
- return panel(group,defs.length?'<div class="mg-attr-list">'+defs.map(x=>rating(x,reports.get(x.key))).join('')+'</div>':empty('Attribute definitions not loaded'),count+'/'+defs.length+' ASSESSED','mg-attributes')}).join('');
- const condition=(cat['Current Condition']||[]).map(x=>{const r=reports.get(x.key);const ok=r&&r.estimate!=null&&r.evidence_refs?.length;return '<div><span>'+h(x.label)+'</span><strong class="'+(ok?'':'unknown')+'">'+(ok?h(r.estimate):'—')+'</strong></div>'}).join('');
+ return panel(group,defs.length?'<div class="mg-attr-list">'+defs.map(x=>rating(x,reports.get(x.key),name)).join('')+'</div>':empty('Attribute definitions not loaded'),count+'/'+defs.length+' ASSESSED','mg-attributes')}).join('');
+ const condition=(cat['Current Condition']||[]).map(x=>{const r=reports.get(x.key);const ok=r&&r.estimate!=null&&r.evidence_refs?.length;const demo=ui.demoRatings&&!ok;const score=demo?demoScore(name,x.key):Number(r?.estimate);const tier=ok||demo?scoreTier(score):'unknown';return '<div><span>'+h(x.label)+'</span><strong class="'+tier+'">'+(ok||demo?h(score):'—')+'</strong></div>'}).join('');
  const s=source||{career:[],connections:[],pedigree:[],states:[],notes:[]};
  const status=s.states.find(x=>!x.startsWith('Target:'))||'No current training status';
  const target=s.states.find(x=>x.startsWith('Target:'))?.replace(/^Target:\s*/,'')||'Not recorded';
@@ -198,13 +210,13 @@ function horseProfile(name){
  const races=panel('Recent Races & Form',approved.length?compactTable([{text:'DATE'},{text:'RACE'},{text:'TRACK'},{text:'FINISH'},{text:'SOURCE'}],approved.slice(-8).reverse().map(x=>'<tr>'+tableCell(h(x.date))+tableCell(h(x.race),'strong')+tableCell(h(x.track||'—'))+tableCell(h(x.finish||'—'),'gold')+tableCell('Verified')+'</tr>')):empty('No certified race-by-race starts linked to this Office horse. Full historical results are in History.'));
  const pedigree=panel('Pedigree & Background',s.pedigree.length?pairs(s.pedigree):empty('No source-backed pedigree attached.'));
  const knownN=Object.values(cat).flat().filter(x=>reports.get(x.key)?.evidence_refs?.length).length;
- return pageBar(name,'EVIDENCE-BASED ATHLETE DOSSIER',button('HISTORY','nav','history')+button('STABLE ROSTER','nav','stable'))+
+ return pageBar(name,ui.demoRatings?'VISUAL DEMO · FICTIONAL RATINGS':'EVIDENCE-BASED ATHLETE DOSSIER',button('HISTORY','nav','history')+button('STABLE ROSTER','nav','stable'))+
  '<div class="mg-content"><div class="mg-profile-scroll">'+identity('horse',name)+
  '<div class="mg-profile-grid4">'+columns+'</div>'+
  '<div class="mg-profile-strip">'+condition+'</div>'+
  '<div class="mg-profile-grid5">'+career+current+plan+notes+people+'</div>'+
  '<div class="mg-profile-grid2">'+races+pedigree+'</div>'+
- '<div class="mg-overview-foot"><strong>SCOUTING COVERAGE</strong><span>'+knownN+' / '+Object.values(cat).flat().length+' evidenced attributes · Unassessed is not zero</span></div></div></div>';
+ '<div class="mg-overview-foot"><strong>SCOUTING COVERAGE</strong>'+demoLabel()+'<span>'+knownN+' / '+Object.values(cat).flat().length+' evidenced attributes · Unassessed is not zero</span></div></div></div>';
 }
 function personProfile(name){
  const s=sourceProfile()||{career:[],states:[],notes:[],connections:[],fields:[]};const catalog=ui.catalog||{};
@@ -213,7 +225,7 @@ function personProfile(name){
  const defs=(catalog.person_common||[]).concat(catalog.person_roles?.[key]||[]);
  const obs=new Map((observations('person',name)||[]).map(x=>[x.attribute_key,x]));
  const chunks=[defs.slice(0,Math.ceil(defs.length/3)),defs.slice(Math.ceil(defs.length/3),Math.ceil(defs.length*2/3)),defs.slice(Math.ceil(defs.length*2/3))];
- const columns='<div class="mg-person-columns">'+chunks.map((a,i)=>panel(['Professional','Judgment & Work','Specialties'][i],'<div class="mg-attr-list">'+a.map(x=>rating(x,obs.get(x.key))).join('')+'</div>','','mg-person-column')).join('')+'</div>';
+ const columns='<div class="mg-person-columns">'+chunks.map((a,i)=>panel(['Professional','Judgment & Work','Specialties'][i],'<div class="mg-attr-list">'+a.map(x=>rating(x,obs.get(x.key),name)).join('')+'</div>','','mg-person-column')).join('')+'</div>';
  const work=readState().staffState?.[name]||{},rep=work.reputation_profile;
  const verified=rep?.schema==='WTW_PERSON_REPUTATION_V1'&&Array.isArray(rep.source?.refs)&&rep.source.refs.length&&Number.isFinite(rep.scores?.overall);
  const axes=(catalog.reputation?.axes||[]).map(x=>[x.label,verified&&rep.scores?.[x.key]!=null?rep.scores[x.key]:'—']);
@@ -224,7 +236,7 @@ function personProfile(name){
  return pageBar(name,'PERSONNEL DOSSIER · '+(role||'STAFF'),button('PEOPLE DIRECTORY','nav','person'))+
  '<div class="mg-content"><div class="mg-profile-scroll">'+identity('person',name)+'<div class="mg-person-grid">'+panel('Professional Attributes',columns,defs.length+' DEFINED RATINGS')+reputation+'</div>'+
  '<div class="mg-person-bottom">'+panel('Current Horse Assignments',horses)+panel('Career & Background',pairs(s.fields.concat(s.career).slice(0,8)))+panel('Working Network',network.length?pairs(network.slice(0,6).map(x=>[x.counterpart_name||x.counterpart_id,String(x.score??'Unrated')])):empty('No evidenced working relationships yet.'))+'</div>'+
- '<div class="mg-overview-foot"><strong>PERSONNEL FILE</strong><span>All currently known career, professional and roster information is presented on the first screen</span></div></div></div>';
+ '<div class="mg-overview-foot"><strong>PERSONNEL FILE</strong>'+demoLabel()+'<span>All currently known career, professional and roster information is presented on the first screen</span></div></div></div>';
 }
 function otherProfile(kind,name){
  const s=sourceProfile()||{fields:[],connections:[],career:[],notes:[],pedigree:[]};
