@@ -624,7 +624,7 @@ root.addEventListener('click',event=>{
  const action=el.dataset.mg,value=el.dataset.value||'';
  if(action==='nav'){nav(value);return}
  if(action==='open'){goFromSearch(value);return}
- if(action==='open-case'){ui.caseId=value;nav('office');return}
+ if(action==='open-case'){ui.caseId=value;const source=$('.app .msg[data-case="'+CSS.escape(value)+'"]');if(source)source.click();nav('office');return}
  if(action==='case'){ui.caseId=value;const source=$('.app .msg[data-case="'+CSS.escape(value)+'"]');if(source)source.click();render();return}
  if(action==='choose'){const src=$$('.app [data-act]').find(x=>x.dataset.act==='Choose: '+value);if(src)src.click();setTimeout(render,60);return}
  if(action==='filter'){ui.type=value;render();return}
