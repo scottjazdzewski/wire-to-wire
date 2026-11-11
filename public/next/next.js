@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:true,stableSearch:'',networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
+const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:true,stableSearch:'',departmentDemo:true,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentAuction:'',departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -73,6 +73,7 @@ function goOffice(){
 }
 function openMenu(section){
  APP.moreOpen=false;
+ APP.departmentPageIndex=0;APP.departmentSearch='';APP.departmentSortKey='';
  if(section==='History'){window.location.assign('/archive/?page=races');return}
  APP.section=section;APP.page='Overview';APP.custom='';
  if(actions[section])bridgeNode(originalAct(actions[section]));
@@ -86,6 +87,12 @@ function pageTab(name){if(APP.section==='History'){const pages={'Race Results':'
    if(name==='Calendar')return bridgeNode(originalAct('Race Calendar'));
    if(name==='News')return bridgeNode(originalAct('News'));
    if(name==='Reports'||name==='Career')return openCustomView(name,'Office',name)
+ }
+ if(DEP_NAMES.has(s)){
+  APP.departmentPageIndex=0;APP.departmentSearch='';APP.departmentSortKey='';
+  if(s==='Racing'&&name==='Overview')return bridgeNode(originalAct('Race Calendar'));
+  if(s==='Sales'&&name==='Overview')return bridgeNode(originalAct('Sales'));
+  return openCustomView(s+' — '+name,s,name);
  }
  if(s==='Stable'&&(name==='Overview'||name==='Horses'))return bridgeNode(originalAct('Stable'));
  if(s==='Racing'&&(name==='Overview'||name==='Calendar'||name==='Entries'||name==='Stakes'))return bridgeNode(originalAct('Race Calendar'));
@@ -1120,6 +1127,8 @@ function liveStableRosterView(){
 
 function functionalRoute(route){
  if(route.kicker==='Stable')return liveStableRosterView();
+ if(route.kicker==='Sales'&&APP.section==='Sales')return departmentRoster('Sales',APP.page);
+ if(route.kicker==='Race Calendar'&&APP.section==='Racing')return departmentRoster('Racing',APP.page);
  if(route.kicker==='Race Calendar'){
   const races=racingRows();const entered=races.filter(r=>/Entered/i.test(r.status)).length;
   const nonraces=$$('.right .fixtureList .fixture:not([data-track])').map(n=>({date:$('.d',n)?.textContent.trim()||'',name:$('h4',n)?.textContent.trim()||'',detail:$('p',n)?.textContent.trim()||''}));
@@ -1366,6 +1375,7 @@ function departmentRoster(section,page='Overview'){
 
 function managerDashboard(){
  const section=APP.section||'Office',page=APP.page||'Overview';
+ if(DEP_NAMES.has(section))return departmentRoster(section,page);
  const configs={
   Office:{kinds:['decision','horse','person'],label:'RACING OPERATIONS'},
   Stable:{kinds:['horse','person','farm'],label:'HORSES & STABLE OPERATIONS'},
@@ -1510,6 +1520,21 @@ window.addEventListener('click',e=>{
  if(key==='caseprev')return selectAdjacentCase(-1);
  if(key==='casenext')return selectAdjacentCase(1);
  if(key==='nextopen')return selectAdjacentCase(1,true);
+ if(key==='dept-sort'){
+  if(APP.departmentSortKey===val)APP.departmentSortDesc=!APP.departmentSortDesc;
+  else{APP.departmentSortKey=val;APP.departmentSortDesc=false}
+  APP.departmentPageIndex=0;return paint();
+ }
+ if(key==='dept-page'){APP.departmentPageIndex=Math.max(0,APP.departmentPageIndex+Number(val));return paint()}
+ if(key==='dept-demo'){APP.departmentDemo=!APP.departmentDemo;APP.departmentPageIndex=0;return paint()}
+ if(key==='dept-open'){
+  const r=APP.departmentVisible[Number(val)];if(!r)return;
+  if(['horse','person','farm','track','race'].includes(r._kind)){
+   if(window.__wtwOfficeOpenSearchRecord?.(r._kind,r._name))return schedulePaint(20);
+   if(r._kind==='horse')return bridgeNode($$('.right .boardRows .rankRow').find(n=>$('strong',n)?.textContent.trim()===r._name));
+  }
+  return;
+ }
  if(key==='stable-sort'){if(APP.stableSort===val)APP.stableSortDesc=!APP.stableSortDesc;else{APP.stableSort=val;APP.stableSortDesc=false}return paint()}
  if(key==='stable-filter'){APP.stableFilter=val;return paint()}
   if(key==='stable-mode'){APP.stableMode=val;return paint()}
@@ -1542,6 +1567,8 @@ window.addEventListener('click',e=>{
 },true);
 root.addEventListener('change',event=>{
   const field=event.target;
+  if(field.matches('select[data-ng-select="department-auction"]')){APP.departmentAuction=field.value;APP.departmentPageIndex=0;return paint()}
+  if(field.matches('select[data-ng-select="department-tab"]'))return pageTab(field.value);
   if(field.matches('select[data-ng-select="manager-screen"]')&&field.value){
   pageTab(field.value);
   return;
@@ -1571,6 +1598,12 @@ root.addEventListener('input',event=>{
  if(input.matches('input[data-ng-input="global-search"]')){
   APP.searchQuery=input.value;APP.searchPage=0;
   updateSearchRoster();
+  return;
+ }
+ if(input.matches('input[data-ng-input="department-search"]')){
+  APP.departmentSearch=input.value;APP.departmentPageIndex=0;
+  const caret=input.selectionStart;
+  paint();const el=$('#ngDepartmentSearch',root);if(el){el.focus();el.setSelectionRange(caret,caret)}
   return;
  }
  if(!input.matches('input[data-ng-input="stable-search"]'))return;
