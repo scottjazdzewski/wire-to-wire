@@ -60,3 +60,23 @@ test('Office pedigree source lookup and ancestor navigation use immutable IDs',(
  assert.ok(css.includes('.ng-ped5-node.repeated'));
  assert.ok(!get('public/index.html').includes('pedigree-in-existing-tab.css'));
 });
+
+test('Pedigree displays the selected Office horse even when historic parents are unlinked',()=>{
+ const {render,cache}=chart();
+ cache.set('Bellarmine',{status:'unlinked'});
+ const html=render('Bellarmine');
+ assert.match(html,/class="ng-ped5-node known subject paternal"/);
+ assert.match(html,/<strong>Bellarmine<\/strong>/);
+ assert.match(html,/SCROLL RIGHT/);
+ assert.match(html,/GRANDPARENTS/);
+ assert.equal((html.match(/class="ng-ped5-node /g)||[]).length,63);
+});
+test('The first three generations fit the initial viewport, older ancestors scroll horizontally without tall empty boxes',()=>{
+ const css=get('public/next/next.css');
+ assert.match(css,/grid-template-columns:max\(180px,19cqw\) max\(230px,28cqw\) max\(340px,calc\(53cqw - 32px\)\) repeat\(3,240px\)/);
+ assert.match(css,/\.ng-ped5-scroller\{container-type:inline-size;overflow-x:auto;overflow-y:hidden/);
+ assert.match(css,/\.ng-ped5-stack\{[^}]*height:456px;min-height:456px;max-height:456px/);
+ assert.match(css,/\.ng-ped5-node\.subject/);
+ assert.match(css,/\.ng-ped5-generation:nth-child\(3\) \.ng-ped5-node/);
+ assert.ok(!css.includes('min-height:690px'));
+});
