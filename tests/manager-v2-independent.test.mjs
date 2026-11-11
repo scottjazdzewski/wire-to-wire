@@ -46,6 +46,26 @@ test('Stable is a full-height source-backed horse-management dossier rather than
   'Do not restore the old three-row personnel stretch workaround');
 });
 
+test('Tier One Stable has full-width sortable FM roster and does not pretend missing evidence is zero',()=>{
+ const js=get('public/manager/manager.js'),css=get('public/manager/manager.css'),legacy=get('public/office-v30-4.js');
+ assert.ok(js.includes("if(view==='stable')return stableRosterView()"),'Stable must use new roster, not legacy cards');
+ assert.ok(js.includes('function stableHorseSnapshot('),'Single source-aware row selector needed');
+ assert.ok(js.includes('mg-stable-roster-scroller')&&css.includes('.mg-stable-roster{'),'Full-width roster must have isolated horizontal scroll');
+ assert.ok(css.includes('position:sticky;left:0'),'Horse identity must remain visible on wide tables');
+ for(const col of ['HORSE','AGE/SEX','HEALTH','READY','ABILITY','POTENTIAL','FORM','LAST RACED','NEXT RACE','TARGET','EARNINGS','OWNER','TRAINER','BREEDER','S-W-P-S']){
+  assert.ok(js.includes("'"+col+"'"),'Missing roster column '+col);
+ }
+ for(const signal of ['treatment','watch','ready','up','down','unknown']){
+  assert.ok(js.includes(signal+':['),'Missing status icon '+signal);
+ }
+ assert.ok(legacy.includes('window.__wtwOfficeHorseRosterFacts'),'Approved horse facts should be sourced from the original engine');
+ assert.ok(js.includes('horse.certified_results')&&js.includes('x?.source_refs?.length'),'Last raced must use certified results');
+ assert.ok(js.includes("entry?.source_refs")&&js.includes("valid?"),'Star ratings need evidence and unknown handling');
+ assert.ok(js.includes('targets are not confirmed entries')||js.includes('Targets are not confirmed entries'));
+ assert.ok(js.includes("stable-filter")&&js.includes("stable-search")&&js.includes("stable-columns"));
+ assert.ok(!js.includes('localStorage.setItem'),'Roster must not write or invent saved values');
+});
+
 test('Approved images resolve by immutable entity ID or exact name, never fabricate portraits or logos',()=>{
  const js=get('public/manager/manager.js'),css=get('public/manager/manager.css');
  const photos=JSON.parse(get('public/assets/office/decision-photo-index.json'));
