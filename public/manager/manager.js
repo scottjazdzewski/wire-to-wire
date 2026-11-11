@@ -106,7 +106,7 @@ function caseDecision(){
  const notes=(item.intel||[]).map(x=>'<div class="mg-intel-row"><b>'+h(x[0])+'</b><span>'+h(x[1])+'</span></div>').join('');
  return panel('Decision Desk','<div class="mg-case-top"><div class="mg-case-copy"><div class="mg-kicker mg-gold">'+h(item.type)+' · '+h(item.source)+'</div>'+
  '<h2>'+h(item.title)+'</h2><p>'+h(item.summary)+'</p><div class="mg-facts">'+[['PRESSURE',item.pressure],['PRIMARY RISK',item.risk],['MANAGER READ',item.read]].map(x=>'<span>'+h(x[0])+'<b>'+h(x[1])+'</b></span>').join('')+'</div></div>'+
- '<div class="mg-case-photo"><img src="'+h(ui.photos?.cases?.[item.id]||ui.photos?.categories?.[item.type]||item.image||ui.photos?.default||'/assets/office/approved-office-photo.jpg')+'" alt="Approved racing office editorial photograph"></div></div>'+
+ '<div class="mg-case-photo"><img src="'+h(ui.photos?.cases?.[item.id]||ui.photos?.categories?.[item.type]||ui.photos?.default||item.image||'/assets/office/approved-office-photo.jpg')+'" alt="Approved racing office editorial photograph"></div></div>'+
  '<div class="mg-case-choices">'+(item.moves||[]).map((m,i)=>button('<span>0'+(i+1)+' · '+h(m[2])+'</span><b>'+h(m[0])+'</b><small>'+h(m[1])+'</small>','choose',m[0],'mg-choice')).join('')+'</div>'+
  '<div style="display:grid;grid-template-columns:1fr 1fr">'+notes+'</div>','ACTIVE MANAGEMENT FILE');
 }
