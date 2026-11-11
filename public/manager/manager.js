@@ -378,11 +378,26 @@ function trackProfile(name){
   ['Travel node',geo.travel_node],['1999 opening state',geo.opening_state],
   ['Calendar classification',geo.foundation_status],['Geography evidence',geo.geography_status]
  ].filter(x=>known(x[1])):sourceProfile()?.fields||[];
+ const registry=world.slice().sort((a,b)=>{
+  const tier=p=>p.name===name?-1:(geo&&p.macro_circuit===geo.macro_circuit?0:1);
+  return tier(a)-tier(b)||String(a.macro_circuit||'').localeCompare(String(b.macro_circuit||''))||
+   String(a.name).localeCompare(String(b.name));
+ });
+ const registryBody=registry.length?compactTable([
+  {text:'COURSE',style:'width:30%'},{text:'CIRCUIT / REGION',style:'width:28%'},
+  {text:'LOCATION'},{text:'1999',style:'width:65px'},{text:'OPEN',style:'width:60px'}
+ ],registry.map(x=>'<tr'+(x.name===name?' class="mg-track-selected"':'')+'>'+
+  tableCell(button(h(x.name),'open','track|'+x.name+'|','mg-rowlink'),'strong')+
+  tableCell(h(x.macro_circuit||x.registry||'—'),'dim')+
+  tableCell(h(x.travel_node||locationName(x)),'dim')+
+  tableCell(h(x.opening_state||'—'),'gold')+
+  tableCell(button('OPEN ›','open','track|'+x.name+'|','mg-rowlink'),'numeric')+'</tr>')):
+  empty('The official racecourse directory is not available.');
  const raceBody=matches.length?compactTable([{text:'STAKES / RACE',style:'width:48%'},{text:'RACE CLASS'},
    {text:'OPEN',style:'width:60px'}],matches.map(x=>'<tr>'+tableCell(linkRecord(x,x.name),'strong')+
    tableCell(h(x.detail||'—'),'dim')+
    tableCell(button('OPEN ›','open','race|'+x.name+'|'+(x.track||''),'mg-rowlink'),'numeric')+'</tr>')):
-   empty('No Stakes Calendar race in the active Office file at this venue. The geographical directory record remains available.');
+   registryBody;
  const circuitBody=sameCircuit.length?compactTable([{text:'COURSE',style:'width:38%'},{text:'LOCATION / TRAVEL'},
    {text:'OPEN',style:'width:60px'}],sameCircuit.map(x=>'<tr>'+
    tableCell(button(h(x.name),'open','track|'+x.name+'|','mg-rowlink'),'strong')+
@@ -400,7 +415,7 @@ function trackProfile(name){
    button('RACECOURSES','nav','track')+button('HISTORY ARCHIVE','nav','history'))+
   '<div class="mg-content"><div class="mg-profile-scroll">'+identity('track',name)+
    '<div class="mg-track-layout">'+
-     panel('Major Races & Stakes',raceBody,matches.length+' ACTIVE RACE RECORDS')+
+     panel(matches.length?'Major Races & Stakes':'Racing World · Racecourse Register',raceBody,matches.length?matches.length+' ACTIVE RACE RECORDS':registry.length+' SOURCE-BACKED VENUES · CURRENT CIRCUIT FIRST')+
      '<div class="mg-track-side">'+
       panel('Geography & Operating Context',details.length?pairs(details):empty('No approved locality attached.'),
        geo?'READ-ONLY CANON GEOGRAPHY':'OFFICE RECORD')+
