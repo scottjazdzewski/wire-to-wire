@@ -1708,8 +1708,21 @@ function openEntityRecord(name,preferred='',row=null){
   schedulePaint(20);
   return true;
  }
- // Some source rows have a kind but are not yet registered for deep profiles.
- // Show a clearly identified record placeholder, never a wrong destination.
+ // If this horse is not in the current Office roster, resolve its actual
+ // historical Horse_ID before opening a profile. Duplicate names must remain
+ // a search, never be assigned to an arbitrary horse.
+ if(kind==='horse'){
+  fetch('/api/entities?q='+encodeURIComponent(name)+'&kind=horse&limit=250',{credentials:'same-origin',cache:'no-store'})
+   .then(r=>r.ok?r.json():Promise.reject(Error('No historical source response')))
+   .then(data=>{
+    const ids=[...new Set((data.entities||[]).filter(e=>e.kind==='horse'&&(e.name===name||e.source_name===name)).map(e=>e.id))];
+    if(ids.length===1)window.location.assign('/archive/?page=horses&horse='+encodeURIComponent(ids[0]));
+    else previewRecordRoute(kind,name,row);
+   })
+   .catch(()=>previewRecordRoute(kind,name,row));
+  return true;
+ }
+ // No source-linked identity: show a clearly labeled preview, not a false file.
  previewRecordRoute(kind,name,row);
  return true;
 }
