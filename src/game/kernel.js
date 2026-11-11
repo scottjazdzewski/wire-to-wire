@@ -9,7 +9,7 @@ import {
 import { validateGameRun } from './state.js';
 import {makeReputationBaseline,applyReputationSignal} from './reputation.js';
 
-const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL']);
+const COMMANDS = new Set(['ACTIVATE_OPENING_HORSE', 'SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL']);
 const MAX_PENDING = 5000;
 function appendLog(state, commandId, kind, details) {
   const event = { seq: state.event_log.length + 1, command_id: commandId,
@@ -38,7 +38,44 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
   const next = jsonClone(state);
   const output = [];
   const emit = (kind, details) => output.push(appendLog(next, c.id, kind, details));
-  if (c.type === 'SCHEDULE_EVENT') {
+  if (c.type === 'ACTIVATE_OPENING_HORSE') {
+    // Source-bound Jan 1 initialization, not a race entry, observed condition,
+    // inferred owner, or protected performance/health vector.
+    ensure(c.actor === 'system', 'UNAUTHORIZED_COMMAND', 'Only the game initialization system can activate opening horses');
+    const p = c.payload;
+    requireString(p.horse_id, 'payload.horse_id', 128);
+    ensure(Object.keys(p).length === 1, 'INVALID_COMMAND', 'Opening activation takes only the source Horse_ID');
+    ensure(next.clock.date === world.start_date && world.start_date === '1999-01-01',
+      'OPENING_DATE', '1999 opening activation is only valid on the canonical first game day');
+    const horse = world.entities.horses.find(x => x.id === p.horse_id);
+    ensure(Boolean(horse), 'UNKNOWN_HORSE', 'Horse must exist in the approved world snapshot');
+    const opening = horse.opening_1999;
+    ensure(isObject(opening), 'OPENING_SOURCE_REQUIRED', 'Horse must have a source-bound January 1999 game-start record');
+    ensure(opening.effective_date === world.start_date, 'OPENING_DATE', 'Opening owner/trainer/base must be effective on the first game date');
+    ensure(['WTW_IN_WORLD_JAN1_SEED', 'SOURCE_VERIFIED_JAN1'].includes(opening.provenance),
+      'OPENING_PROVENANCE', 'Opening geography/actor assignments require explicit source provenance');
+    ensure(world.entities.organizations.some(x => x.id === opening.owner_id),
+      'UNKNOWN_OPERATION', 'Opening owner must be a canonical organization');
+    ensure(world.entities.people.some(x => x.id === opening.trainer_id),
+      'UNKNOWN_PERSON', 'Opening trainer must be a canonical person');
+    ensure(world.entities.tracks.some(x => x.id === opening.track_id),
+      'UNKNOWN_TRACK', 'Opening physical base must be a canonical track');
+    ensure(!next.runtime.horse[horse.id], 'OPENING_ALREADY_ACTIVE', 'Horse has already been activated in this game run');
+    next.runtime.horse[horse.id] = {
+      horse_id: horse.id, effective_date: opening.effective_date,
+      owner_id: opening.owner_id, trainer_id: opening.trainer_id,
+      home_base_track_id: opening.track_id, current_track_id: opening.track_id,
+      location_type: 'ON_TRACK_WINTER_STABLE',
+      condition_status: 'UNOBSERVED', training_status: 'ASSESSMENT_QUEUED',
+      assessment_trigger_id: 'TRG-0025', assessment_status: 'PENDING',
+      initialization_provenance: opening.provenance
+    };
+    emit('OPENING_HORSE_ACTIVATED', {
+      horse_id: horse.id, owner_id: opening.owner_id, trainer_id: opening.trainer_id,
+      track_id: opening.track_id, provenance: opening.provenance,
+      health_observation: false, race_entry_created: false
+    });
+  } else if (c.type === 'SCHEDULE_EVENT') {
     ensure(c.actor === 'system', 'UNAUTHORIZED_COMMAND', 'Only a registered game system can schedule an event');
     const p = c.payload;
     requireString(p.event_id, 'payload.event_id', 128);
