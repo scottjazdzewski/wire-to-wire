@@ -1341,7 +1341,81 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-person-scorebar{box-sizing:border-box;display:block;width:57px;height:7px;background:#171e22;border:1px solid #3c4b47;border-radius:3px;overflow:hidden}
 .ng-person-scorebar i{display:block;height:100%;background:linear-gradient(90deg,#2d373a,#c6c77b)}
 .ng-person-scorebar.empty{border-color:#3c4b47;background:#171e22;opacity:.42}
-.ng-profile-horse .ng-horse-biography{display:flex;align-items:center;flex-wrap:wrap;gap:4px 16px;margin:4px 0 5px;min-width:0}
+.ng-profile-horse /* WTW Horse Dossier — source-backed FM/OOTP sports-management sheet.
+   One dense desktop workspace. No invented figures or duplicate component CSS. */
+.ng-horse-dossier{display:grid;grid-template-rows:auto auto auto auto auto;align-content:start;gap:5px;min-width:0;width:100%;color:#e6ede7;font-variant-numeric:tabular-nums}
+.ng-horse-dossier-caption{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:22px;padding:2px 8px;color:#d8c798;background:#202d2b;font-size:9px;letter-spacing:.045em}
+.ng-horse-dossier-caption strong{font-size:10px}
+.ng-horse-dossier-caption span{color:#a8c1b2;font-size:9px}
+.ng-horse-mgr-four{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;align-items:start;min-width:0}
+.ng-horse-mgr-five{display:grid;grid-template-columns:1fr 1fr 1fr 1.25fr 1.1fr;gap:5px;align-items:start;min-width:0}
+.ng-horse-mgr-bottom{display:grid;grid-template-columns:minmax(0,2.7fr) minmax(0,1fr);gap:5px;align-items:start;min-width:0}
+.ng-horse-mgr-panel{min-width:0;min-height:0;overflow:hidden;background:#181f22;border:1px solid #34413e;border-radius:2px}
+.ng-horse-mgr-panel>header{box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:24px;padding:3px 8px;background:#203b30;color:#f2e9d6;border-bottom:1px solid #40554a;font-size:10px;font-weight:800;letter-spacing:.025em}
+.ng-horse-mgr-panel>header strong{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ng-horse-mgr-panel>header span{font-size:9px;color:#d7ca9f;white-space:nowrap}
+.ng-horse-rating-rows{display:flex;flex-direction:column;padding:2px 5px 3px;gap:0}
+.ng-horse-rating-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(24px,.58fr) minmax(18px,max-content);align-items:center;gap:6px;box-sizing:border-box;min-height:24px;padding:3px 5px;border-bottom:1px solid #2d3937;font-size:10.5px}
+.ng-horse-rating-row:nth-child(even){background:#222a2b}
+.ng-horse-rating-row:last-child{border-bottom:0}
+.ng-horse-rating-row>span:first-child{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#dfe8df}
+.ng-horse-rating-row>strong{color:#ead49d;text-align:right;font-size:10px;font-weight:780;white-space:nowrap}
+.ng-horse-rating-row>strong.unknown{color:#8eaa9e}
+.ng-horse-rating-track,.ng-horse-rating-unassessed{height:5px;border-radius:2px;display:block;background:#2a3935;overflow:hidden}
+.ng-horse-rating-track i{display:block;height:100%;background:#66b77c}
+.ng-horse-rating-unassessed{height:3px;background:#34413b}
+.ng-horse-mgr-rows{padding:3px 6px}
+.ng-horse-mgr-row{display:grid;grid-template-columns:minmax(0,.78fr) minmax(0,1fr);align-items:center;min-height:22px;gap:6px;padding:3px 5px;border-bottom:1px solid #303b39;font-size:10px}
+.ng-horse-mgr-row:nth-child(even){background:#222b2a}
+.ng-horse-mgr-row:last-child{border-bottom:0}
+.ng-horse-mgr-row>span{color:#b8c9bb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ng-horse-mgr-row>strong,.ng-horse-mgr-row>button{min-width:0;color:#e7d79c;text-align:right;font-size:10px;font-weight:740;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ng-horse-mgr-row>button{border:0;background:transparent;cursor:pointer;padding:2px}
+.ng-horse-mgr-row>button:hover{color:#f9e7b9;text-decoration:underline}
+.ng-horse-mgr-notes{display:flex;flex-direction:column;padding:3px 6px}
+.ng-horse-mgr-notes>div{min-height:23px;box-sizing:border-box;padding:4px 5px;border-bottom:1px solid #303c38;font-size:10px;color:#cad9cc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ng-horse-mgr-notes>div:nth-child(even){background:#222b2a}
+.ng-horse-small-note{margin:0;padding:8px 9px;color:#9fb2a8;font-size:10px;line-height:1.28}
+.ng-horse-form-table{display:flex;flex-direction:column;padding:3px 6px;min-width:0}
+.ng-horse-form-head,.ng-horse-form-row{display:grid;grid-template-columns:minmax(75px,.75fr) minmax(140px,2fr) minmax(50px,.5fr) minmax(65px,.6fr);align-items:center;gap:6px;min-height:23px;padding:3px 6px;box-sizing:border-box;font-size:10px}
+.ng-horse-form-head{background:#293a33;color:#e3cf9d;font-size:9px;font-weight:780}
+.ng-horse-form-row{border-bottom:1px solid #2d3937}
+.ng-horse-form-row:nth-child(odd){background:#222b2b}
+.ng-horse-form-row>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ng-horse-mgr-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:30px;padding:4px 9px;background:#1c2729;border-top:1px solid #526c55;color:#d9e3d7;box-sizing:border-box}
+.ng-horse-mgr-summary>div:first-child{display:flex;align-items:center;min-width:0;gap:12px;font-size:10px}
+.ng-horse-mgr-summary strong{font-size:10px;color:#e8d49c;white-space:nowrap}
+.ng-horse-mgr-summary span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}
+.ng-horse-mgr-actions{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.ng-horse-mgr-actions button{padding:4px 8px;border:1px solid #4c775d;border-radius:2px;background:#234f3a;color:#f2e5c0;font-size:9px;font-weight:780;cursor:pointer}
+.ng-horse-header-connections{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:2px 0}
+.ng-horse-header-connections>div{display:flex;align-items:baseline;gap:5px;padding-right:10px;border-right:1px solid #394943;min-width:0}
+.ng-horse-header-connections>div:last-child{border-right:0}
+.ng-horse-header-connections small{font-size:9px;color:#a4c7b1;font-weight:750;text-transform:uppercase}
+.ng-horse-header-connections strong{font-size:10px;color:#ead6a4;white-space:nowrap}
+@media(min-width:1081px){.ng-route-profile .ng-profile-horse .ng-detail-cols-horse-overview{display:block!important;flex:1 1 0!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;overflow-x:hidden!important;padding:0 1px 4px!important;margin:0!important;scrollbar-width:thin;scrollbar-color:#4e6655 #151c1e}
+.ng-route-profile .ng-profile-horse .ng-profile-intro{padding:5px 9px!important;gap:9px!important;min-height:0!important;box-shadow:none!important;border:1px solid #384940!important;border-top:2px solid #bda974!important;border-radius:2px!important;background:#1a2225!important}
+.ng-profile-horse .ng-management-dossierbar{height:28px;min-height:28px}
+.ng-route-profile .ng-profile-horse .ng-profile-view{gap:5px}
+.ng-route-profile .ng-profile-horse .ng-profile-badgeframe{width:56px!important;height:56px!important;flex:0 0 56px!important}
+.ng-route-profile .ng-profile-horse .ng-profile-badgeframe img{width:56px!important;height:56px!important}
+.ng-route-profile .ng-profile-horse .ng-profile-source-photo{height:58px!important;width:85px!important;flex:0 0 85px!important}
+}
+@media(min-width:1081px) and (max-height:780px){.ng-horse-dossier{gap:4px}
+.ng-horse-mgr-four,.ng-horse-mgr-five,.ng-horse-mgr-bottom{gap:4px}
+.ng-horse-rating-row{min-height:21px;padding:2px 4px;font-size:10px}
+.ng-horse-mgr-row{min-height:20px;padding:2px 4px}
+.ng-horse-mgr-panel>header{min-height:21px;padding:2px 6px}
+.ng-horse-dossier-caption{min-height:19px}
+.ng-horse-mgr-summary{min-height:26px}
+}
+@media(max-width:1120px){.ng-horse-mgr-five{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ng-horse-mgr-five>:nth-child(4){grid-column:1 / span 2}
+.ng-horse-mgr-bottom{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+.ng-horse-rating-row{grid-template-columns:minmax(0,1fr) 22px minmax(16px,max-content)}
+}
+
+.ng-horse-biography{display:flex;align-items:center;flex-wrap:wrap;gap:4px 16px;margin:4px 0 5px;min-width:0}
 .ng-profile-horse .ng-horse-biography>span{display:inline-flex;align-items:center;gap:6px;min-width:0;padding-right:14px;border-right:1px solid #3c4b47}
 .ng-profile-horse .ng-horse-biography>span:last-child{border-right:0}
 .ng-profile-horse .ng-horse-biography small{color:#b4cdbb!important;font-size:9px!important;line-height:1.25!important;font-weight:780;white-space:nowrap;letter-spacing:.04em}
