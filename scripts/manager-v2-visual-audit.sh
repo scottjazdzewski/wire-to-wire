@@ -85,6 +85,17 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   check('Forward control exists',!!forward);
   forward.click();await delay(250);
   check('Forward restores Office screen',!!doc.querySelector('.mg-home-top'));
+  const global=doc.querySelector('#mgTopSearch');
+  check('Global search available on every screen',!!global);
+  global.value='Aqueduct';
+  global.dispatchEvent(new win.Event('input',{bubbles:true}));
+  await delay(250);
+  const aqueduct=locate('open','track|Aqueduct|');
+  check('Archived track is searchable',!!aqueduct);
+  aqueduct.click();await delay(250);
+  check('Archived track opens in native Management Studio',!!doc.querySelector('.mg-track-layout')&&
+    doc.querySelector('.mg-main')?.textContent.includes('South Ozone Park'));
+
   result.dataset.state='passed';
   result.textContent=JSON.stringify({state:'passed',steps});
  }catch(e){
