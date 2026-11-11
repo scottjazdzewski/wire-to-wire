@@ -14,6 +14,8 @@ try { const saved=JSON.parse(localStorage.getItem(GAME_PREF_KEY)||'{}'); if(['ow
 // Deep links from the main Racing Office open the existing protected historical archive.
 const archivePage = new URLSearchParams(window.location.search).get('page');
 if (['overview','seasons','horses','people','tracks','races','search','changes','sources'].includes(archivePage)) state.page=archivePage;
+const archiveQuery = new URLSearchParams(window.location.search).get('q');
+if(archiveQuery)state.search=archiveQuery.slice(0,100);
 const SAMPLE_KEY = 'wtw_canon_desk_local_proposals_v1';
 let toastTimeout;
 function storedChanges(){try{return JSON.parse(localStorage.getItem(SAMPLE_KEY)||'[]')}catch{return []}}
@@ -422,6 +424,30 @@ function renderNetworkEntityProfile(e,cn){
  '<section class="profile-card"><div class="profile-card-header"><h3>Achievements</h3><small>season-linked evidence</small></div><div class="profile-card-body achievement-stack">'+achievementRows+'</div></section></div>'+
  '<div class="profile-source-note">Connections shown here are season-level archive relationships. They do not prove a specific race-day assignment. Missing birthplace, base, farm ownership, reputation or complete career totals remain explicitly unavailable until those read models are connected.</div></div>';
 }
+// Render the source-linked five-generation chart: 1 horse + 62 ancestor
+// positions. Both parents occupy distinct branches; unknown remains unknown.
+function renderFiveGenerationPedigree(data){
+ const nodes=new Map((data?.nodes||[]).filter(x=>typeof x.path==='string'&&/^[SD]{0,5}$/.test(x.path)).map(x=>[x.path,x]));
+ const repeats=new Map();
+ for(const n of nodes.values())if(n.horse_id)repeats.set(n.horse_id,(repeats.get(n.horse_id)||0)+1);
+ let paths=[''];
+ const columns=[];
+ for(let depth=0;depth<=5;depth++){
+  const current=paths;
+  const label=depth===0?'HORSE':depth===1?'PARENTS':depth===2?'GRANDPARENTS':depth===3?'GREAT-GRANDPARENTS':depth===4?'FOURTH GENERATION':'FIFTH GENERATION';
+  const cells=current.map(path=>{
+   const n=nodes.get(path),unknown=!n?.horse_id;
+   const link=n?.horse_id&&n.path!==''?'<button type="button" data-open-type="entity" data-id="'+h(n.horse_id)+'" aria-label="Open ancestor '+h(n.name||n.horse_id)+' profile">'+h(n.name||n.horse_id)+'</button>':'<strong>'+h(n?.name||'Unknown ancestor')+'</strong>';
+   return '<div class="wtw-pedigree-node '+(unknown?'unknown ':'')+(n?.horse_id&&repeats.get(n.horse_id)>1?'repeated ':'')+(path.includes('D')?'maternal':'paternal')+'" title="'+h(n?.horse_id||'Unknown source parent')+'">'+
+     '<small>'+h(n?.horse_id||'NO RECORDED H-ID')+'</small>'+link+'</div>';
+  }).join('');
+  columns.push('<section class="wtw-pedigree-generation" aria-label="'+label+'"><h4>'+label+'</h4><div class="wtw-pedigree-generation-nodes">'+cells+'</div></section>');
+  paths=current.flatMap(x=>[x+'S',x+'D']);
+ }
+ return '<div class="wtw-fivegen-note">Five generations · '+Number(data?.known_positions||nodes.size)+' of 63 documented positions · each named ancestor opens its own horse file. Highlighted repeats are the same Horse ID, not separate horses. Missing ancestry stays unknown.</div>'+
+  '<div class="wtw-pedigree-scroll" role="region" aria-label="Scrollable five-generation pedigree" tabindex="0"><div class="wtw-pedigree-columns">'+columns.join('')+'</div></div>';
+}
+
 async function openDetail(type,id){
  state.openDetail={type,id};
  if(type==='history-org'){
@@ -447,7 +473,17 @@ async function openDetail(type,id){
   $('detail-drawer').setAttribute('aria-hidden','false');
   return;
  }
- const e=type==='entity'?entity(id):type==='race'?race(id):null;
+ let e=type==='entity'?entity(id):type==='race'?race(id):null;
+ if(!e&&type==='entity'&&/^H-[A-Za-z0-9-]+$/.test(id)&&state.mode==='D1_CONNECTED'){
+  // A historical pedigree ancestor may have an edge record before it
+  // appears in the paginated bootstrap entity list.
+  try{
+   const resp=await fetch('/api/horses/'+encodeURIComponent(id)+'/pedigree',{credentials:'same-origin',cache:'no-store'});
+   if(resp.ok){const pedigree=await resp.json(),root=(pedigree.nodes||[]).find(n=>n.path==='');
+    if(root)e={id,kind:'horse',name:root.name||id,foal_year:root.foal_year,sex:root.sex,status:root.status||'Pedigree-only source identity',summary:'Source-linked historical pedigree identity; a complete racing career may not be imported.'};
+   }
+  }catch{/* Keep unavailable records honest. */}
+ }
  if(!e){toast('The requested record has not been imported.');return;}
  let markup='';
  if(type==='entity'){
@@ -467,7 +503,7 @@ async function openDetail(type,id){
   const status=h(e.status||'SOURCE SNAPSHOT');
   markup='<div class="entity-profile '+(isHorse?'horse-profile':'')+'"><div class="profile-header"><div class="asset-placeholder profile-portrait" data-asset-slot="'+assetSlot+'"><span>'+assetLabel+'</span></div><div class="profile-heading"><div class="eyebrow">'+heading+'</div><h2>'+h(e.name)+' '+renameButton(type,e.id,e.name)+'</h2><div class="detail-id">'+h(e.id)+'</div><p class="profile-summary">'+h(e.summary||'No biographical narrative is present in the loaded source file.')+'</p><div class="profile-tags"><span>'+h(e.sex||e.kind)+'</span><span>'+roleText+'</span><span>'+status+'</span></div></div><div class="profile-header-actions">'+editButton('entity',e.id,'Propose correction','button button-quiet')+'</div></div>'+
   (isHorse?'<div class="profile-stats"><div><small>CAREER STARTS</small><strong>Not available</strong><span>Full total not in this file</span></div><div><small>RECORDED TOP-3</small><strong>'+placings.length+'</strong><span>Archive placings only</span></div><div><small>1ST PLACE</small><strong>'+firsts.length+'</strong><span>Recorded</span></div><div><small>2ND PLACE</small><strong>'+seconds.length+'</strong><span>Recorded</span></div><div><small>3RD PLACE</small><strong>'+thirds.length+'</strong><span>Recorded</span></div><div><small>EARNINGS</small><strong>Not imported</strong><span>Not treated as zero</span></div></div>'+
-  '<div class="profile-pedigree-section"><div class="profile-section-title"><div><span class="smallcaps">BLOODLINE</span><h3>Pedigree at a glance</h3></div><span class="source-chip">SOURCE LINKS</span></div><div id="horse-pedigree-panel" class="profile-pedigree-grid"><div class="pedigree-card"><small>SIRE</small><strong>'+(state.mode==='D1_CONNECTED'?'Loading source record…':'Not in loaded sample')+'</strong></div><div class="pedigree-card"><small>DAM</small><strong>'+(state.mode==='D1_CONNECTED'?'Loading source record…':'Not in loaded sample')+'</strong></div></div></div>'+
+  '<div class="profile-pedigree-section"><div class="profile-section-title"><div><span class="smallcaps">BLOODLINE</span><h3>Five-generation pedigree</h3></div><span class="source-chip">SOURCE LINKS</span></div><div id="horse-pedigree-panel" class="profile-pedigree-grid"><div class="pedigree-card"><small>SIRE</small><strong>'+(state.mode==='D1_CONNECTED'?'Loading source record…':'Not in loaded sample')+'</strong></div><div class="pedigree-card"><small>DAM</small><strong>'+(state.mode==='D1_CONNECTED'?'Loading source record…':'Not in loaded sample')+'</strong></div></div></div>'+
   '<div class="profile-quick-achievements"><div><span class="smallcaps">NOTABLE ACHIEVEMENTS</span><h3>Recorded stakes wins</h3></div><div class="profile-quick-achievement-list">'+quickAchievementLine+'</div></div>'+
   '<div class="profile-columns"><section class="profile-section"><div class="profile-section-title"><div><span class="smallcaps">RACE HISTORY</span><h3>Recorded finishes</h3></div><span class="source-chip">'+placings.length+' APPEARANCES</span></div><div class="profile-race-list">'+(raceLine||'<p class="empty-note">No finish records in this source snapshot.</p>')+'</div>'+expanded+'<p class="source-caveat">This is the loaded archive record, not a verified lifetime start total.</p></section><section class="profile-section"><div class="profile-section-title"><div><span class="smallcaps">HIGHLIGHTS & CONNECTIONS</span><h3>Notable achievements</h3></div></div><ul class="achievement-list">'+achievementLine+'</ul><div class="profile-section-title profile-secondary-title"><div><span class="smallcaps">SEASON LINKS</span><h3>People around this horse</h3></div></div><div class="profile-connection-list">'+(connectionLine||'<p class="empty-note">No season connections imported.</p>')+'</div></section></div></div>':
   '<div class="entity-profile"><div class="profile-header"><div class="asset-placeholder profile-portrait" data-asset-slot="'+assetSlot+'"><span>'+assetLabel+'</span></div><div class="profile-heading"><div class="eyebrow">'+heading+'</div><h2>'+h(e.name)+' '+renameButton(type,e.id,e.name)+'</h2><div class="detail-id">'+h(e.id)+'</div><p class="profile-summary">'+h(e.summary||'No biographical narrative is present in the loaded source file.')+'</p><div class="profile-tags"><span>'+h(e.kind)+'</span><span>'+roleText+'</span><span>'+status+'</span></div></div><div class="profile-header-actions">'+editButton('entity',e.id,'Propose correction','button button-quiet')+'</div></div><div class="profile-columns"><section class="profile-section"><div class="profile-section-title"><div><span class="smallcaps">ASSOCIATIONS</span><h3>Season connections</h3></div><span class="source-chip">'+cn.length+' LINKS</span></div><div class="profile-connection-list">'+(connectionLine||'<p class="empty-note">No connections imported.</p>')+'</div></section><section class="profile-section"><div class="profile-section-title"><div><span class="smallcaps">SOURCE RECORD</span><h3>Historical identity</h3></div></div><div class="profile-stats compact-profile-stats"><div><small>TYPE</small><strong>'+h(e.kind)+'</strong></div><div><small>ROLE</small><strong>'+roleText+'</strong></div><div><small>HORSE-YEAR LINKS</small><strong>'+(partyIndex.get(e.id)?.count||0)+'</strong></div></div><p class="source-caveat">Connections are recorded at season level. They do not prove a specific race-day assignment.</p></section></div></div>');
@@ -488,6 +524,13 @@ async function openDetail(type,id){
   if(heading)heading.insertAdjacentHTML('beforeend','<div class="horse-connection-strip">'+cards+'</div>');
  }
  $('drawer-backdrop').hidden=false;$('detail-drawer').classList.add('open');$('detail-drawer').setAttribute('aria-hidden','false');
+ if(type==='entity'&&e.kind==='horse'){
+  const uri=new URL(window.location.href);
+  if(uri.searchParams.get('horse')!==id){
+   uri.searchParams.set('horse',id);
+   window.history.pushState({wtwHorseId:id},'',uri.pathname+uri.search);
+  }
+ }
  if(type==='entity'&&e.kind==='horse'&&state.mode==='D1_CONNECTED'){
   try{
    const resp=await fetch('/api/horses/'+encodeURIComponent(id),{credentials:'same-origin',cache:'no-store'});
@@ -503,7 +546,17 @@ async function openDetail(type,id){
    const details=info.details||{};
    const seasons=(info.seasons||[]).map(s=>'<div class="profile-season-row"><strong>'+h(s.year)+'</strong><span>'+h(s.stakes_wins??'—')+' stakes wins · '+h(s.top3_starts??'—')+' top-three stakes starts</span><small>'+h(s.region||'Region not recorded')+' · owner '+h(s.owner_id||'not recorded')+' · trainer '+h(s.trainer_id||'not recorded')+' · jockey '+h(s.jockey_id||'not recorded')+'</small></div>').join('');
    const wins=(info.seasons||[]).filter(s=>Number(s.stakes_wins)>0).map(s=>'<li>'+h(s.year)+': '+h(s.stakes_wins)+' source-recorded stakes wins</li>').join('');
-   panel.innerHTML=parentCard('SIRE',sire,details.sire_id)+parentCard('DAM',dam,details.dam_id);
+   try{
+    const p=await fetch('/api/horses/'+encodeURIComponent(id)+'/pedigree',{credentials:'same-origin',cache:'no-store'});
+    if(!p.ok)throw Error('Five-generation source not available');
+    const pedigree=await p.json();
+    if(state.openDetail?.type!=='entity'||state.openDetail?.id!==id)return;
+    panel.classList.add('wtw-fivegen');
+    panel.innerHTML=renderFiveGenerationPedigree(pedigree);
+   }catch{
+    panel.innerHTML=parentCard('SIRE',sire,details.sire_id)+parentCard('DAM',dam,details.dam_id)+
+     '<p class="source-caveat">Five-generation source temporarily unavailable; only confirmed parents are shown.</p>';
+   }
    const extra='<div class="profile-season-history"><div class="profile-section-title"><div><span class="smallcaps">ARCHIVE BY SEASON</span><h3>Season record</h3></div></div>'+(seasons||'<p class="empty-note">No horse seasons in the loaded source.</p>')+'</div>';
    panel.insertAdjacentHTML('afterend',extra);
    const achievements=$('detail-content').querySelector('.achievement-list');
@@ -511,7 +564,15 @@ async function openDetail(type,id){
   }catch{const panel=$('horse-pedigree-panel');if(panel)panel.innerHTML='<div class="pedigree-card"><small>PEDIGREE</small><strong>Details unavailable</strong></div>'}
  }
 }
-function closeDrawer(){ state.openDetail=null; $('detail-drawer').classList.remove('open');$('detail-drawer').setAttribute('aria-hidden','true');$('drawer-backdrop').hidden=true;}
+function closeDrawer(){ state.openDetail=null; $('detail-drawer').classList.remove('open');$('detail-drawer').setAttribute('aria-hidden','true');$('drawer-backdrop').hidden=true;
+ const url=new URL(window.location.href);
+ if(url.searchParams.has('horse')){url.searchParams.delete('horse');window.history.replaceState({},'',url.pathname+url.search);}
+}
+window.addEventListener('popstate',()=>{
+ const id=new URLSearchParams(window.location.search).get('horse');
+ if(id&&/^H-[A-Za-z0-9-]+$/.test(id)){if(state.openDetail?.id!==id)openDetail('entity',id);}
+ else if(state.openDetail){closeDrawer();}
+});
 function showRename(type,id,current){
  if(!['entity','race','venue','pedigree'].includes(type)||!id||!current)return;
  const record=type==='entity'?entity(id):type==='race'||type==='venue'?race(id):null;
@@ -580,7 +641,15 @@ async function initialize(){
  }
  try { const r=await fetch('/data/track-geography-v33.json',{cache:'no-store'}); if(r.ok){const d=await r.json();if(d?.counts?.total===134&&Array.isArray(d.tracks)&&d.tracks.length===134&&new Set(d.tracks.map(t=>t.id)).size===134)state.trackDirectory=d; } } catch {}
  rebuildResultIndex();
- const yrs=years();if(yrs.length&&!yrs.includes(state.year))state.year=yrs[0];$('year-select').innerHTML=yrs.map(y=>`<option value="${y}">${y}</option>`).join('');$('year-select').value=String(state.year);render();
+ // Open the requested immutable horse ID directly from any WTW game screen.
+ // This is a dossier deep-link, not a new identity or database.
+ const requestedHorse=new URLSearchParams(window.location.search).get('horse');
+ if(requestedHorse&&/^H-[A-Za-z0-9-]+$/.test(requestedHorse)&&state.mode==='D1_CONNECTED'){
+  const record=(state.data?.entities||[]).find(x=>x.id===requestedHorse&&x.kind==='horse');
+  if(record?.foal_year)state.year=Number(record.foal_year)+3;
+ }
+ const yrs=years();if(yrs.length&&!yrs.includes(state.year))state.year=yrs[0];$('year-select').innerHTML=yrs.map(y=>`<option value="${y}">${y}</option>`).join('');$('year-select').value=String(state.year);if($('global-search'))$('global-search').value=state.search;render();
+ if(requestedHorse&&/^H-[A-Za-z0-9-]+$/.test(requestedHorse))openDetail('entity',requestedHorse);
 }
 async function saveProposal(e){e.preventDefault();if(!state.edit)return;
  const type=state.edit.type,id=state.edit.id,field=$('edit-field').value,proposed=$('edit-proposed').value.trim(),reason=$('edit-reason').value.trim(),old=state.edit.target[field];

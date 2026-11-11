@@ -1804,3 +1804,26 @@ body{margin:0;background:var(--cream);color:var(--ink);font-size:12px;line-heigh
 .vault-race-actions{grid-column:2}
 
 }
+
+/* WTW five-generation horse dossier — scoped to archive and source-backed profiles. */
+.horse-profile .profile-pedigree-grid.wtw-fivegen{display:block;min-width:0}
+.wtw-fivegen-note{font-size:11px;line-height:1.5;color:#9eaeac;margin:0 0 12px;max-width:100%}
+.wtw-pedigree-scroll{max-width:100%;overflow-x:auto;overflow-y:hidden;padding:0 0 14px;scrollbar-width:thin;scrollbar-color:#8f7b57 #1a2629}
+.wtw-pedigree-columns{display:grid;grid-template-columns:repeat(6,minmax(154px,1fr));gap:7px;min-width:1020px}
+.wtw-pedigree-generation{min-width:0;display:flex;flex-direction:column}
+.wtw-pedigree-generation h4{font-size:9px;letter-spacing:.08em;color:#cdbd91;margin:0 0 6px;padding:5px 4px;border-bottom:1px solid #68705f;min-height:29px;text-transform:uppercase}
+.wtw-pedigree-generation-nodes{display:flex;flex-direction:column;gap:4px;flex:1;min-height:1020px}
+.wtw-pedigree-node{min-height:0;flex:1;display:flex;flex-direction:column;justify-content:center;gap:2px;overflow:hidden;background:#253136;border:1px solid #42524b;border-left:3px solid #9aaab2;border-radius:5px;padding:3px 5px}
+.wtw-pedigree-node.maternal{border-left-color:#bb9479}
+.wtw-pedigree-node.repeated{background:#383322;border-color:#bfa05a}
+.wtw-pedigree-node.unknown{background:#192329;border-style:dashed;opacity:.7}
+.wtw-pedigree-node small{font-size:8px;color:#abbab6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wtw-pedigree-node button,.wtw-pedigree-node strong{display:block;width:100%;text-align:left;padding:0;color:#e7e0ce;font-size:10px;font-weight:650;line-height:1.2;background:none;border:0;overflow-wrap:anywhere}
+.wtw-pedigree-node button{cursor:pointer;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:2px}
+.wtw-pedigree-node button:hover,.wtw-pedigree-node button:focus-visible{color:#ffdfa2;text-decoration-color:currentColor;outline:2px solid #d5b370;outline-offset:1px}
+.wtw-pedigree-node.unknown strong{color:#8d9b99;font-weight:400}
+@media(max-width:680px){
+ .wtw-pedigree-columns{grid-template-columns:repeat(6,minmax(136px,1fr));min-width:890px}
+ .wtw-pedigree-generation-nodes{min-height:900px}
+ .wtw-pedigree-node button,.wtw-pedigree-node strong{font-size:9px}
+}
