@@ -321,10 +321,56 @@ test('Six department rosters share FM density but preserve their own management 
   'Department preview must never mutate the canonical game save');
  assert.ok(css.includes('.ng-dept-roster .ng-rs-scroll{overflow:hidden!important'),
   'Use one no-scroll roster viewport with page-based navigation');
- assert.ok(css.includes('font-size:9px!important')&&css.includes('.ng-dpt-pager'),
-  'Use the same tiny type and navigation density as Stable and Personnel');
+ assert.ok(css.includes('--wtw-roster-text:9.5px')&&css.includes('font-size:var(--wtw-roster-text)!important')&&css.includes('.ng-dpt-pager'),
+  'Use the same shared font tokens and navigation density across Stable and all departments');
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);
+});
+
+test('Tracks and Facilities are separate full-width directory rosters; all pages share roster fonts',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css'),office=get('public/office-v30-4.js');
+ const start=js.indexOf('const DEP_NAMES=new Set('),end=js.indexOf('function managerDashboard(){',start);
+ const code=js.slice(start,end);
+ assert.ok(js.includes("Tracks:['Overview','Active Meets','All Tracks','Stakes']"));
+ assert.ok(js.includes("['Tracks','menu','Tracks','calendar']"),'Tracks must be a visible standalone navigation item');
+ assert.ok(js.includes("if(s==='World'&&(name==='Tracks'||name==='Meets'))return openMenu('Tracks')"));
+ assert.ok(code.includes("Tracks:[['name','TRACK'")&&code.includes("Meets:[['name','TRACK'"),
+  'Both track directory and active meet roster need their own explicit schemas');
+ assert.ok(code.includes("if(section==='Tracks')return depTrackRows(page)"),'Tracks must not fall back to the generic World screen');
+ assert.ok(code.includes("if(section==='Facilities')return depFacilityRows(page,demo)"),
+  'Facilities must use organizations and operations, not racecourse rows');
+ assert.ok(!code.includes("[...source('farm'),...source('track')]"),'No racecourses on the Facilities roster');
+ for(const label of ['Stud Farms','Training Centers','Breaking Facilities','Racing Stables','Ownership Groups']){
+  assert.ok(js.includes(label),'Missing Facilities subview: '+label);
+ }
+ assert.ok(code.includes("'Ownership Office'"),'Individual owners should not be misrepresented as syndicates');
+ assert.ok(code.includes("_kind:'demo-facility'"),'Fictional facility entities must remain visibly non-authoritative');
+ assert.ok(code.includes("r._kind==='demo-facility'"),'Do not create a fake source-profile link for a demo facility');
+ assert.ok(office.includes('window.__wtwOfficeTrackDirectory = function()'),
+  'Track names and meet dates must come from the authoritative Office record');
+ assert.ok(css.includes('--wtw-roster-text:9.5px')&&css.includes('--wtw-roster-head:8.3px'));
+ assert.ok(css.includes('font-size:var(--wtw-roster-name)!important')&&css.includes('font-size:var(--wtw-roster-head)!important'));
+ assert.ok(css.includes('data-department="Tracks"')&&css.includes('data-roster-kind="meet"'));
+});
+test('Racing opens on active meets and has a true cross-track My Horses mode',()=>{
+ const js=get('public/next/next.js'),office=get('public/office-v30-4.js');
+ const start=js.indexOf('const DEP_NAMES=new Set('),end=js.indexOf('function managerDashboard(){',start);
+ const code=js.slice(start,end);
+ assert.ok(code.includes("function depMeetWindows(")&&code.includes("function depCurrentMeetRows()"));
+ assert.ok(code.includes("const active=wins.find(w=>w.start<=date&&date<=w.end)"),
+  'Active meets must be date-driven, not a static list');
+ assert.ok(code.includes("if(section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine')"));
+ assert.ok(code.includes("if(APP.racingTrack)return depTrackRaceRows(APP.racingTrack,demo)"),
+  'Dropdown must switch to individual races at selected track');
+ assert.ok(code.includes("data-ng-select=\"department-track\""),'Track selector must be an interactive control');
+ assert.ok(code.includes("data-ng=\"dept-myhorses\""),'My Horses must have its own toggle');
+ assert.ok(js.includes("if(key==='dept-myhorses')")&&js.includes("if(key==='dept-meets')"),'Both mode buttons need real handlers');
+ assert.ok(js.includes("field.matches('select[data-ng-select=\"department-track\"]')"));
+ assert.ok(code.includes("if(page!=='Results')out=out.filter(r=>r._iso&&r._iso>=depGameDay())"),
+  'My Horses must exclude races already in the past');
+ assert.ok(code.includes("_track:trackName")&&js.includes("window.__wtwOfficeOpenSearchRecord?.(r._kind,r._name,r._track)"),
+  'Stake rows need to open their correct race profile at the named track');
+ assert.ok(office.includes('meetWindow:p.meetWindow'),'In-meet windows must remain read-only canonical facts');
 });
 
 test('Horse athletic overview uses four sourced FM-style trait groups with explicit unassessed states',()=>{

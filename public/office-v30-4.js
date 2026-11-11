@@ -1134,6 +1134,17 @@
     })));
     return [...horses,...people,...farms,...tracks,...races];
   };
+  // Read-only current-track directory and meet calendar for the Next UI.
+  // Uses the single canonical trackProfiles source; no shadow meet authority.
+  window.__wtwOfficeTrackDirectory = function(){
+    return Object.entries(trackProfiles).map(([name,p])=>({
+      name,id:p.id||'',location:p.location||'',surfaces:p.surfaces||'',
+      circuit:p.circuit||'',operating:p.operating||'',
+      meetWindow:p.meetWindow||'',raceDays:p.raceDays||'',
+      preferredDays:p.preferredDays||'',stakes:Array.isArray(p.stakes)
+        ?p.stakes.map(row=>({name:row[0],date:row[1],class:row[2],purse:row[3]})):[]
+    }));
+  };
   // UI-only owner lookup from the SAME approved horse facts and live saved
   // horseState. No stable membership or trainer is inferred as an owner.
   window.__wtwOfficeHorseOwner = function(name){

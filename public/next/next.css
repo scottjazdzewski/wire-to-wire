@@ -1336,7 +1336,7 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 #wtwNextgen .ng-route:has(.ng-stable-roster-v2){padding:4px 8px 6px!important}
 #wtwNextgen .ng-route:has(.ng-stable-roster-v2) .ng-routegrid{display:block!important;flex:1 1 0!important;min-height:0!important;overflow:hidden!important;padding:0!important}
 #wtwNextgen .ng-routeinner:has(.ng-stable-roster-v2){display:block!important;height:100%!important;min-height:0!important;overflow:hidden!important}
-#wtwNextgen .ng-stable-roster-v2{box-sizing:border-box;display:flex;flex-direction:column;gap:3px;height:100%;min-height:0;overflow:hidden;color:#e1e7e3}
+#wtwNextgen .ng-stable-roster-v2{--wtw-roster-text:9.5px;--wtw-roster-head:8.3px;--wtw-roster-name:9.5px;--wtw-roster-status:8.8px;box-sizing:border-box;display:flex;flex-direction:column;gap:3px;height:100%;min-height:0;overflow:hidden;color:#e1e7e3}
 #wtwNextgen .ng-rs-title{height:26px;flex:0 0 26px;display:flex;align-items:center;gap:9px;padding:0 8px;background:#202b30;border-bottom:1px solid #526156}
 #wtwNextgen .ng-rs-title strong{font-size:11.5px;letter-spacing:.04em;font-weight:820;color:#f0dc9d}
 #wtwNextgen .ng-rs-title span{font-size:9.5px;color:#b5c9b9;font-weight:700;white-space:nowrap}
@@ -1357,10 +1357,10 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 #wtwNextgen .ng-rs-table{border-collapse:collapse;table-layout:fixed;min-width:0;width:100%;font-variant-numeric:tabular-nums}
 #wtwNextgen .ng-rs-table thead{background:#2a3534}
 #wtwNextgen .ng-rs-table th{box-sizing:border-box;height:23px;padding:0 2px;border:0;border-right:1px solid #34453e;border-bottom:1px solid #53685a;text-align:left;overflow:hidden;white-space:nowrap;color:#c0cbbd;font-size:8.5px;font-weight:800;letter-spacing:0}
-#wtwNextgen .ng-rs-table th button{display:flex!important;align-items:center;justify-content:space-between;gap:1px;width:100%;height:22px!important;border:0!important;border-radius:0!important;padding:1px 1px!important;background:transparent!important;color:inherit!important;font-size:8.3px!important;font-weight:820!important;white-space:nowrap!important;cursor:pointer}
+#wtwNextgen .ng-rs-table th button{display:flex!important;align-items:center;justify-content:space-between;gap:1px;width:100%;height:22px!important;border:0!important;border-radius:0!important;padding:1px 1px!important;background:transparent!important;color:inherit!important;font-size:var(--wtw-roster-head)!important;font-weight:820!important;white-space:nowrap!important;cursor:pointer}
 #wtwNextgen .ng-rs-table th button:hover,#wtwNextgen .ng-rs-table th[aria-sort="ascending"] button,#wtwNextgen .ng-rs-table th[aria-sort="descending"] button{color:#eecf8e!important}
 #wtwNextgen .ng-rs-sort{font-size:7.5px;color:#90a698;font-weight:650}
-#wtwNextgen .ng-rs-table td{box-sizing:border-box;height:29px;max-height:29px;padding:2px 3px;border:0;border-right:1px solid #2e3b37;border-bottom:1px solid #354640;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;font-size:9.5px;color:#dce6d7}
+#wtwNextgen .ng-rs-table td{box-sizing:border-box;height:29px;max-height:29px;padding:2px 3px;border:0;border-right:1px solid #2e3b37;border-bottom:1px solid #354640;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;font-size:var(--wtw-roster-text);color:#dce6d7}
 #wtwNextgen .ng-rs-table tbody tr:nth-child(odd){background:#1d2627}
 #wtwNextgen .ng-rs-table tbody tr:nth-child(even){background:#232b2d}
 #wtwNextgen .ng-rs-table tbody tr:hover{background:#31503d}
@@ -1387,7 +1387,7 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 #wtwNextgen .ng-rs-table th:nth-child(15){width:7.1%}
 #wtwNextgen .ng-rs-table th:nth-child(16){width:5.4%}
 #wtwNextgen .ng-rs-table th:nth-child(17){width:7.9%}
-#wtwNextgen .ng-rs-horse{box-sizing:border-box;display:flex!important;align-items:center;gap:3px;min-width:0;width:100%;height:22px!important;padding:0!important;border:0!important;background:transparent!important;color:#f1e5c1!important;font-size:9.5px!important;font-weight:850!important;white-space:nowrap!important;text-align:left!important}
+#wtwNextgen .ng-rs-horse{box-sizing:border-box;display:flex!important;align-items:center;gap:3px;min-width:0;width:100%;height:22px!important;padding:0!important;border:0!important;background:transparent!important;color:#f1e5c1!important;font-size:var(--wtw-roster-name)!important;font-weight:850!important;white-space:nowrap!important;text-align:left!important}
 #wtwNextgen .ng-rs-horse:hover{text-decoration:underline;color:#fff!important}
 #wtwNextgen .ng-rs-horse>span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis}
 #wtwNextgen .ng-rs-horse .ng-horse-owner-badge{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;width:13px!important;height:11px!important;min-width:13px!important;min-height:11px!important;flex:0 0 13px!important;margin:0!important;overflow:hidden!important}
@@ -1399,7 +1399,7 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 #wtwNextgen .ng-rs-race{color:#9dceb0}
 #wtwNextgen .ng-rs-target{color:#e0c78a}
 #wtwNextgen .ng-rs-activity{color:#abc2b5;font-size:8.8px}
-#wtwNextgen .ng-rs-signal{display:inline-flex;align-items:center;gap:2px;max-width:100%;overflow:hidden;white-space:nowrap;font-size:8.8px;font-weight:750}
+#wtwNextgen .ng-rs-signal{display:inline-flex;align-items:center;gap:2px;max-width:100%;overflow:hidden;white-space:nowrap;font-size:var(--wtw-roster-status);font-weight:750}
 #wtwNextgen .ng-rs-signal i{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;flex:0 0 12px;width:12px;height:12px;border:1px solid currentColor;border-radius:1px;background:color-mix(in srgb,currentColor 10%,transparent);font-style:normal;font-size:9px;font-weight:850}
 #wtwNextgen .ng-rs-signal.ok{color:#8ed0a2}
 #wtwNextgen .ng-rs-signal.warn{color:#e9bc76}
@@ -1419,9 +1419,10 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 #wtwNextgen .ng-rs-table.compact th:nth-child(11),#wtwNextgen .ng-rs-table.compact td:nth-child(11),
 #wtwNextgen .ng-rs-table.compact th:nth-child(17),#wtwNextgen .ng-rs-table.compact td:nth-child(17){display:none}
 @media(max-width:1300px){
- #wtwNextgen .ng-rs-table td{font-size:8.5px;padding-left:2px;padding-right:2px}
- #wtwNextgen .ng-rs-table th button{font-size:7.5px!important}
- #wtwNextgen .ng-rs-horse{font-size:9px!important}
+ #wtwNextgen .ng-stable-roster-v2{--wtw-roster-text:8.5px;--wtw-roster-head:7.5px;--wtw-roster-name:9px;--wtw-roster-status:8px}
+ #wtwNextgen .ng-rs-table td{padding-left:2px;padding-right:2px}
+ #wtwNextgen .ng-rs-table th button{font-size:var(--wtw-roster-head)!important}
+ #wtwNextgen .ng-rs-horse{font-size:var(--wtw-roster-name)!important}
  #wtwNextgen .ng-rs-tools button{font-size:7.8px!important;padding:1px 3px!important}
  #wtwNextgen .ng-rs-tools input{max-width:140px}
 }
@@ -1443,16 +1444,16 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 #wtwNextgen .ng-dept-roster{height:100%;min-height:0;gap:3px!important}
 #wtwNextgen .ng-dept-roster .ng-rs-table{table-layout:fixed!important;width:100%!important;min-width:0!important}
 #wtwNextgen .ng-dept-roster .ng-rs-table th{width:auto}
-#wtwNextgen .ng-dept-roster .ng-rs-table td{font-size:9px!important;letter-spacing:-.008em}
-#wtwNextgen .ng-dept-roster .ng-rs-table th button{font-size:8px!important;letter-spacing:-.02em}
-#wtwNextgen .ng-dept-roster .ng-rs-table .ng-rs-horse{font-size:9.1px!important;height:22px!important;gap:2px!important}
+#wtwNextgen .ng-dept-roster .ng-rs-table td{font-size:var(--wtw-roster-text)!important;letter-spacing:-.008em}
+#wtwNextgen .ng-dept-roster .ng-rs-table th button{font-size:var(--wtw-roster-head)!important;letter-spacing:-.02em}
+#wtwNextgen .ng-dept-roster .ng-rs-table .ng-rs-horse{font-size:var(--wtw-roster-name)!important;height:22px!important;gap:3px!important}
 #wtwNextgen .ng-dept-roster .ng-rs-scroll{overflow:hidden!important;min-height:0!important;flex:1 1 auto!important}
 #wtwNextgen .ng-dept-roster .ng-rs-roster{flex:1 1 auto!important;min-height:0!important}
 #wtwNextgen .ng-dept-roster .ng-rs-roster>header{height:25px;flex:0 0 25px}
 #wtwNextgen .ng-dept-roster .ng-rs-roster>header strong{white-space:nowrap}
 #wtwNextgen .ng-dept-roster .ng-rs-title{padding:0 8px}
 #wtwNextgen .ng-dept-roster .ng-rs-title span{min-width:0;overflow:hidden;text-overflow:ellipsis}
-#wtwNextgen .ng-dept-roster .ng-rs-tools{flex-wrap:nowrap!important;min-height:30px;flex:0 0 30px;padding:2px 6px}
+#wtwNextgen .ng-dept-roster .ng-rs-tools{flex-wrap:nowrap!important;min-height:29px;flex:0 0 29px;padding:2px 6px}
 #wtwNextgen .ng-dept-roster .ng-rs-tools label{display:flex;align-items:center;gap:4px;max-width:49%;font-size:9px;white-space:nowrap}
 #wtwNextgen .ng-dept-roster .ng-rs-tools select{box-sizing:border-box;display:block;min-width:0;max-width:230px;height:23px;padding:2px 6px;background:#152126;color:#e1eadc;border:1px solid #45564b;border-radius:2px;font-size:9px}
 #wtwNextgen .ng-dept-roster .ng-rs-tools select:focus{outline:1px solid #d1bc80}
@@ -1471,16 +1472,16 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 #wtwNextgen .ng-dpt-finance>span{display:flex;align-items:center;justify-content:center;gap:8px;min-width:0;padding:2px 7px;border:1px solid #47594c;background:#202b2b;font-variant-numeric:tabular-nums}
 #wtwNextgen .ng-dpt-finance small{font-size:8px;color:#a8bdb0;font-weight:760;white-space:nowrap}
 #wtwNextgen .ng-dpt-finance b{font-size:12px;font-weight:850;color:#e4cb88;white-space:nowrap}
-#wtwNextgen .ng-dept-roster .ng-rs-table .ng-rs-signal{font-size:8.2px;gap:1px}
-#wtwNextgen .ng-dept-roster .ng-rs-table .ng-rs-signal i{flex-basis:10px;width:10px;height:11px;font-size:8px}
-#wtwNextgen .ng-dept-roster .ng-rs-stars{font-size:9.5px;letter-spacing:-1px}
+#wtwNextgen .ng-dept-roster .ng-rs-table .ng-rs-signal{font-size:var(--wtw-roster-status);gap:1px}
+#wtwNextgen .ng-dept-roster .ng-rs-table .ng-rs-signal i{flex-basis:12px;width:12px;height:12px;font-size:9px}
+#wtwNextgen .ng-dept-roster .ng-rs-stars{font-size:10px;letter-spacing:-1.2px}
 #wtwNextgen .ng-dept-roster .ng-horse-owner-badge{width:13px!important;height:11px!important;flex:0 0 13px!important}
 #wtwNextgen .ng-dept-roster .ng-horse-owner-badge .ng-org-mark,
 #wtwNextgen .ng-dept-roster .ng-horse-owner-badge .ng-owner-unknown-mark{width:13px!important;height:11px!important;min-width:13px!important;min-height:11px!important;flex:0 0 13px!important;border-radius:1px!important;font-size:8px!important}
 #wtwNextgen .ng-dept-roster .ng-rs-table td[title]{text-overflow:ellipsis}
 @media(max-width:1300px){
- #wtwNextgen .ng-dept-roster .ng-rs-table td{font-size:8px!important;padding:2px 1px!important}
- #wtwNextgen .ng-dept-roster .ng-rs-table th button{font-size:7.3px!important;padding:0!important}
+ #wtwNextgen .ng-dept-roster .ng-rs-table td{font-size:var(--wtw-roster-text)!important;padding:2px!important}
+ #wtwNextgen .ng-dept-roster .ng-rs-table th button{font-size:var(--wtw-roster-head)!important;padding:0!important}
  #wtwNextgen .ng-dept-roster .ng-rs-tools input{max-width:125px}
  #wtwNextgen .ng-dept-roster .ng-dpt-mode{display:none}
  #wtwNextgen .ng-dpt-auction-picker{min-width:170px}
@@ -1575,6 +1576,36 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 #wtwNextgen .ng-dept-roster[data-department="Breeding"][data-page="Stud Farms"] .ng-rs-table th:nth-child(10){width:10%}
 #wtwNextgen .ng-dept-roster[data-department="Breeding"][data-page="Stud Farms"] .ng-rs-table th:nth-child(11){width:12%}
 #wtwNextgen .ng-dept-roster[data-department="Breeding"][data-page="Stud Farms"] .ng-rs-table th:nth-child(12){width:8%}
+
+/* Active meet and track directory are independent rosters, with identical
+   typography tokens, row heights and ownership-mark scale as Stable. */
+#wtwNextgen .ng-dpt-track-picker{flex:0 1 260px!important;max-width:260px!important;min-width:145px!important}
+#wtwNextgen .ng-dpt-track-picker select{width:100%;max-width:235px!important}
+#wtwNextgen .ng-dept-roster[data-department="Racing"] .ng-rs-tools{gap:4px}
+#wtwNextgen .ng-dept-roster[data-department="Racing"] .ng-rs-tools button[data-ng="dept-myhorses"].on{color:#f8e6af!important;border-color:#d2b673!important;background:#416747!important}
+#wtwNextgen .ng-dept-roster[data-department="Racing"] .ng-dpt-mode{display:none}
+#wtwNextgen .ng-dept-roster .ng-dpt-demo-entity{color:#c7ccba;font-size:var(--wtw-roster-name)}
+@media(max-width:1300px){
+ #wtwNextgen .ng-dpt-track-picker{max-width:180px!important;min-width:105px!important}
+ #wtwNextgen .ng-dept-roster[data-department="Racing"] .ng-rs-tools select{max-width:150px}
+ #wtwNextgen .ng-dept-roster[data-department="Racing"] .ng-rs-tools input{max-width:105px}
+}
+#wtwNextgen .ng-dept-roster[data-department="Tracks"] .ng-rs-table th:nth-child(1){width:18%}
+#wtwNextgen .ng-dept-roster[data-department="Tracks"] .ng-rs-table th:nth-child(2){width:18%}
+#wtwNextgen .ng-dept-roster[data-department="Tracks"] .ng-rs-table th:nth-child(3){width:12%}
+#wtwNextgen .ng-dept-roster[data-department="Tracks"] .ng-rs-table th:nth-child(4){width:16%}
+#wtwNextgen .ng-dept-roster[data-department="Tracks"] .ng-rs-table th:nth-child(5){width:19%}
+#wtwNextgen .ng-dept-roster[data-department="Tracks"] .ng-rs-table th:nth-child(6){width:9%}
+#wtwNextgen .ng-dept-roster[data-department="Tracks"] .ng-rs-table th:nth-child(7){width:4%}
+#wtwNextgen .ng-dept-roster[data-department="Tracks"] .ng-rs-table th:nth-child(8){width:4%}
+#wtwNextgen .ng-dept-roster[data-department="Racing"][data-roster-kind="meet"] .ng-rs-table th:nth-child(1){width:18%}
+#wtwNextgen .ng-dept-roster[data-department="Racing"][data-roster-kind="meet"] .ng-rs-table th:nth-child(2){width:18%}
+#wtwNextgen .ng-dept-roster[data-department="Racing"][data-roster-kind="meet"] .ng-rs-table th:nth-child(3){width:13%}
+#wtwNextgen .ng-dept-roster[data-department="Racing"][data-roster-kind="meet"] .ng-rs-table th:nth-child(4){width:19%}
+#wtwNextgen .ng-dept-roster[data-department="Racing"][data-roster-kind="meet"] .ng-rs-table th:nth-child(5){width:10%}
+#wtwNextgen .ng-dept-roster[data-department="Racing"][data-roster-kind="meet"] .ng-rs-table th:nth-child(6){width:5%}
+#wtwNextgen .ng-dept-roster[data-department="Racing"][data-roster-kind="meet"] .ng-rs-table th:nth-child(7){width:11%}
+#wtwNextgen .ng-dept-roster[data-department="Racing"][data-roster-kind="meet"] .ng-rs-table th:nth-child(8){width:6%}
 .ng-stable-directory{box-sizing:border-box;height:100%!important;min-height:0!important;display:flex!important;flex-direction:column!important;gap:7px!important;overflow:hidden!important}
 }
 .ng-stable-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));flex:0 0 auto;gap:5px}
