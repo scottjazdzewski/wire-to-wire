@@ -630,7 +630,7 @@ function profileDetail(route){
   // never new ownership, inferred skills, or fabricated relationships.
   const horseAssignments=()=>{
     const sourceEntries=sourceLinks.slice(0,5).map(item=>{
-      const btn=$('button[data-act]',item),index=btn?$('#routeBody [data-act]').indexOf(btn):-1;
+      const btn=$('button[data-act]',item),index=btn?$$('#routeBody [data-act]').indexOf(btn):-1;
       const label=(btn?.textContent.trim()||item.textContent.trim()).replace(/\s+/g,' ').trim();
       const owner=horseOwnership(label);
       const horse=state().horseState?.[label]||{};
