@@ -1145,6 +1145,26 @@
     const owner=typeof raw==='string'?raw.trim():'';
     return owner&&owner!=='—'&&owner!=='Unknown'?{id,name:owner}:null;
   };
+  // Read-only bridge for the Tier One stable roster. This returns the approved
+  // original horse facts and an evidence-linked identity; no shadow database.
+  window.__wtwOfficeHorseRosterFacts = function(name){
+    if(!Object.prototype.hasOwnProperty.call(horseProfileFacts,name))return null;
+    const source=horseProfileFacts[name],saved=gameState.horseState?.[name]||{};
+    const identity=saved.identity&&Array.isArray(saved.identity.source_refs)&&saved.identity.source_refs.length
+      ?saved.identity:{};
+    const fact=key=>{
+      const original=source[key],linked=identity[key];
+      return original!==undefined&&original!==null&&String(original).trim()&&original!=='—'
+        ?original:(linked??null);
+    };
+    return {
+      age:fact('age'),sex:fact('sex'),born:fact('born'),
+      date_of_birth:fact('date_of_birth'),
+      earnings:source.earnings,
+      record:{...(source.record||{})},
+      connections:{...(source.connections||{})}
+    };
+  };
   // Opens an already-known Office record through its original authoritative
   // route function; rejects arbitrary names rather than fabricating a page.
   window.__wtwOfficeOpenSearchRecord = function(kind,name,track){
