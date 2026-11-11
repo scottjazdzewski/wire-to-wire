@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableSearch:'',networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
+const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableSearch:'',networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -961,41 +961,148 @@ function calendarTimeline(races,nonraces){
  }
  return `<section class="ng-card ng-timeline" aria-label="Upcoming 14-day racing and stable calendar"><header class="ng-cardhead"><span class="ng-badge-slot" aria-hidden="true"><img class="ng-headicon" src="${badge('meet_schedule')}" alt=""/></span><h3>14-DAY OPERATIONS CALENDAR</h3><small>${month.format(base).toUpperCase()} ${base.getFullYear()} · ENTRY STATUS IS SOURCE-DRIVEN</small></header><div class="ng-timeline-grid">${cells}</div><footer class="ng-timeline-legend"><span><i class="target"></i>Race target</span><span><i class="entered"></i>Confirmed entry</span><span><i class="commitment"></i>Other obligation</span></footer></section>`;
 }
+
+/* WTW live Stable screen: FM/OOTP roster, source-only evaluations. */
+const liveStableIcon={
+ sound:['✓','ok'],watch:['!','warn'],treat:['✚','risk'],ready:['✓','ok'],
+ entered:['⚑','ok'],building:['↗','info'],restricted:['Ⅱ','warn'],
+ up:['↗','ok'],down:['↘','risk'],level:['→','muted'],work:['↗','info'],unknown:['·','muted']
+};
+function liveStableSignal(code,label,detail){
+ const mark=liveStableIcon[code]||liveStableIcon.unknown;
+ return '<span class="ng-rs-signal '+mark[1]+'" title="'+safe(detail||label)+'" aria-label="'+safe(label)+'"><i aria-hidden="true">'+mark[0]+'</i>'+safe(label)+'</span>';
+}
+function liveStableKnown(v){return v!=null&&String(v).trim()&&!['—','Unknown','Not recorded','N/A','null'].includes(String(v).trim())?String(v).trim():''}
+function liveStableDate(v){
+ const raw=String(v||'');
+ return /^\d{4}-\d{2}-\d{2}$/.test(raw)&&!Number.isNaN(Date.parse(raw+'T00:00:00Z'))?raw:'';
+}
+function liveStableRating(name,key,game){
+ const r=game.scoutingState?.[name]?.star_ratings?.[key]||game.horseState?.[name]?.star_ratings?.[key];
+ const n=Number(r?.rating??r?.stars);
+ const valid=Number.isInteger(n)&&n>=1&&n<=5&&Array.isArray(r?.source_refs)&&r.source_refs.length>0;
+ return {value:valid?n:null,
+  display:valid?'<span class="ng-rs-stars" title="Evidence-backed '+safe(key.replace(/_/g,' '))+': '+n+'/5"><b>'+('★'.repeat(n))+'</b>'+('☆'.repeat(5-n))+'</span>':
+   '<span class="ng-rs-missing" title="No sourced current rating">—</span>'};
+}
+function liveStableHorseData(h,r,game,caseFiles){
+ const name=h.name,source=typeof window.__wtwOfficeHorseRosterFacts==='function'?window.__wtwOfficeHorseRosterFacts(name)||{}:{};
+ const saved=game.horseState?.[name]||{},scout=game.scoutingState?.[name]||{},cal=game.calendarState?.[name]||{};
+ const related=caseFiles.filter(x=>x.title.toLowerCase().includes(name.toLowerCase()));
+ const vetFile=related.find(x=>/vet|filling|soundness|medical/i.test(x.title||''));
+ const treatment=[saved.treatment_status,saved.vet_flag,saved.health_status].filter(Boolean).join(' ');
+ const isTreating=/under treatment|receiving treatment|treatment ongoing|in rehabilitation|on medication|under veterinary care/i.test(treatment);
+ const isWatch=/vet|filling|scan|diagnos|monitor|injur|unsound|sore|caution|medical/i.test(treatment)||Boolean(vetFile);
+ const cleared=/^(sound|cleared|fit|healthy|no active concerns)$/i.test(liveStableKnown(saved.health_status));
+ const health=isTreating?['treat','Treatment',treatment]:isWatch?['watch','Vet watch',treatment||vetFile?.title]:cleared?['sound','Sound','Explicitly recorded sound']:['unknown','Unassessed','No confirmed health assessment'];
+ const rawReady=liveStableKnown(saved.readiness_status)||liveStableKnown(saved.status)||liveStableKnown(h.activity);
+ let ready=['unknown','Unassessed','No sourced race readiness assessment'];
+ if(/light jog|training paused|resting|scan pending|diagnostic|restricted|laid up|not ready|hold/i.test(rawReady))ready=['restricted','Restricted',rawReady];
+ else if(/ready to race|ready to run|race ready|cleared to race/i.test(rawReady))ready=['ready','Ready',rawReady];
+ else if(/work requested|more work|breeze|gate school|gallop|building|training rhythm|trending up|progressing/i.test(rawReady))ready=['building','Building',rawReady];
+ if(r&&/entered/i.test(r.status||''))ready=['entered','Entered','Entry confirmed; race fitness is not independently assessed'];
+ if(isTreating)ready=['restricted','Restricted','Explicit ongoing treatment'];
+ const trend=String(saved.form_trend||scout.form_trend||'').trim().toLowerCase();
+ let form=['unknown','—','No certified form trend'];
+ if(/^(up|improving|positive)$/.test(trend))form=['up','Up','Recorded racing form improving'];
+ else if(/^(down|declining|negative)$/.test(trend))form=['down','Down','Recorded racing form declining'];
+ else if(/^(flat|level|steady)$/.test(trend))form=['level','Flat','Recorded racing form steady'];
+ else if(/trending up|improv(ed|ing)/i.test(h.activity||''))form=['work','Work ↑','Positive work/training trend (not race form)'];
+ const birth=liveStableDate(source.date_of_birth||source.born),worldYear=Number(($('.dateChip')?.textContent.trim()||'2014-07-15').slice(0,4));
+ const by=birth?Number(birth.slice(0,4)):NaN;
+ const age=Number.isInteger(worldYear)&&Number.isInteger(by)&&worldYear>=by?String(worldYear-by):liveStableKnown(source.age);
+ const sex=liveStableKnown(source.sex),sexCode=({colt:'C',filly:'F',gelding:'G',mare:'M',horse:'H',stallion:'H'})[sex.toLowerCase()]||sex;
+ const results=Array.isArray(saved.certified_results)?saved.certified_results.filter(x=>x&&x.source_refs?.length&&liveStableDate(x.date)):[];
+ const last=results.map(x=>x.date).sort().at(-1)||(saved.last_race_source_refs?.length?liveStableDate(saved.last_race_date):'');
+ const raceLabel=r?liveStableKnown(r.track)+' · '+liveStableKnown(r.date):'';
+ const target=liveStableKnown(cal.race_target)||(r?raceLabel:'');
+ const entered=Boolean(r&&/entered/i.test(r.status||''));
+ const upcoming=entered?raceLabel:liveStableKnown(cal.scheduled_race);
+ const money=liveStableKnown(source.earnings)||(saved.earnings_source_refs?.length?liveStableKnown(saved.career_earnings):'');
+ const links=source.connections||{},owner=horseOwnership(name)?.name||'',trainer=liveStableKnown(links.trainer)||(saved.trainer_source_refs?.length?liveStableKnown(saved.trainer_name):'');
+ const breeder=liveStableKnown(links.breeder)||(saved.breeder_source_refs?.length?liveStableKnown(saved.breeder_name):'');
+ const tally=source.record||{},validRecord=['starts','wins','seconds','thirds'].every(k=>/^\d+$/.test(String(tally[k])));
+ const record=validRecord?[tally.starts,tally.wins,tally.seconds,tally.thirds].join('-'):'';
+ return {name,age,sex:sexCode,sexFull:sex,health,ready,form,last,upcoming,target,money,owner,trainer,breeder,record,
+  activity:h.activity,ability:liveStableRating(name,'current_ability',game),potential:liveStableRating(name,'future_potential',game),
+  entered,hasTarget:Boolean(r||target),cases:related};
+}
+function liveStableRosterView(){
+ const horses=horseRows(),races=racingRows(),game=state(),files=currentMessages(),search=APP.stableSearch.trim().toLowerCase();
+ const all=horses.map(h=>liveStableHorseData(h,races.find(r=>r.name===h.name),game,files));
+ const filtered=all.filter(x=>{
+  if(APP.stableFilter==='entered'&&!x.entered)return false;
+  if(APP.stableFilter==='targets'&&!x.hasTarget)return false;
+  if(APP.stableFilter==='unassigned'&&x.hasTarget)return false;
+  if(APP.stableFilter==='vet'&&!['watch','treat'].includes(x.health[0]))return false;
+  if(APP.stableFilter==='ready'&&!['ready','entered'].includes(x.ready[0]))return false;
+  return !search||[x.name,x.activity,x.target,x.owner,x.trainer,x.breeder,x.health[1],x.ready[1]]
+   .some(v=>String(v||'').toLowerCase().includes(search));
+ });
+ const ratingScore=x=>x?.value??null;
+ const rank={treat:4,watch:3,unknown:2,sound:1,ready:5,entered:4,building:3,restricted:1,up:5,work:4,level:3,down:1};
+ const numericMoney=v=>{const text=String(v||'').replace(/[$,]/g,'').trim();return /^\d+(?:\.\d+)?$/.test(text)?Number(text):null};
+ const keys={name:x=>x.name,age:x=>x.age?Number(x.age):null,sex:x=>x.sex,
+  health:x=>x.health[0]==='unknown'?null:rank[x.health[0]],readiness:x=>x.ready[0]==='unknown'?null:rank[x.ready[0]],
+  ability:x=>ratingScore(x.ability),potential:x=>ratingScore(x.potential),
+  form:x=>x.form[0]==='unknown'?null:rank[x.form[0]],last:x=>x.last||null,
+  next:x=>x.upcoming||null,target:x=>x.target||null,earnings:x=>numericMoney(x.money),
+  owner:x=>x.owner||null,trainer:x=>x.trainer||null,breeder:x=>x.breeder||null,
+  record:x=>x.record?Number(x.record.split('-')[0]):null,activity:x=>x.activity};
+ const field=keys[APP.stableSort]||keys.name;
+ filtered.sort((a,b)=>{
+  const av=field(a),bv=field(b),am=av==null||av==='',bm=bv==null||bv==='';
+  if(am!==bm)return am?1:-1;
+  const cmp=typeof av==='number'&&typeof bv==='number'?av-bv:String(av).localeCompare(String(bv),undefined,{numeric:true,sensitivity:'base'});
+  return (APP.stableSortDesc?-cmp:cmp)||a.name.localeCompare(b.name);
+ });
+ const columns=[['name','HORSE'],['age','AGE'],['sex','SEX'],['health','HEALTH'],['readiness','READY'],['ability','CA'],['potential','PA'],
+  ['form','FORM'],['last','LAST RACED'],['next','NEXT RACE'],['target','TARGET'],['earnings','EARNINGS'],['owner','OWNER'],
+  ['trainer','TRAINER'],['breeder','BREEDER'],['record','S-W-P-S'],['activity','CURRENT ACTIVITY']];
+ const th=columns.map(([key,label])=>'<th scope="col" aria-sort="'+(APP.stableSort===key?(APP.stableSortDesc?'descending':'ascending'):'none')+'"><button type="button" data-ng="stable-sort" data-val="'+key+'" title="Sort by '+label+'" aria-label="Sort stable by '+label+'">'+label+
+  '<span class="ng-rs-sort" aria-hidden="true">'+(APP.stableSort===key?(APP.stableSortDesc?'▼':'▲'):'↕')+'</span></button></th>').join('');
+ const cell=(value,klass='',title='')=>'<td class="'+klass+'" title="'+safe(title||String(value||''))+'">'+(value||'<span class="ng-rs-missing">—</span>')+'</td>';
+ const txt=(value,klass='')=>cell(value?safe(value):'',klass,value);
+ const rowHTML=filtered.map(x=>{
+  const name='<button type="button" class="ng-rs-horse" data-ng="horse" data-val="'+safe(x.name)+'">'+horseOwnerBadge(x.name)+
+   '<span>'+safe(x.name)+'</span></button>';
+  const datum=[cell(name,'ng-rs-first'),txt(x.age,'ng-rs-numeric'),txt(x.sex,'ng-rs-numeric'),
+   cell(liveStableSignal(...x.health)),cell(liveStableSignal(...x.ready)),
+   cell(x.ability.display,'ng-rs-stars-cell'),cell(x.potential.display,'ng-rs-stars-cell'),
+   cell(liveStableSignal(...x.form)),txt(x.last,'ng-rs-numeric'),txt(x.upcoming,'ng-rs-race'),
+   txt(x.target,'ng-rs-target'),txt(x.money,'ng-rs-numeric'),txt(x.owner),txt(x.trainer),txt(x.breeder),
+   txt(x.record,'ng-rs-numeric'),txt(x.activity,'ng-rs-activity')];
+  return '<tr class="ng-wtw-roster-row" data-search="'+safe([x.name,x.activity,x.target,x.owner,x.trainer,x.breeder,x.health[1],x.ready[1]].join(' ').toLowerCase())+'">'+datum.join('')+'</tr>';
+ }).join('');
+ const filters=[['all','ALL'],['vet','VET WATCH'],['ready','READY'],['targets','WITH TARGET'],['entered','ENTERED'],['unassigned','NO TARGET']]
+ .map(([value,label])=>'<button data-ng="stable-filter" data-val="'+value+'" class="'+(APP.stableFilter===value?'on':'')+'" aria-pressed="'+(APP.stableFilter===value?'true':'false')+'">'+label+'</button>').join('');
+ const cases=files.filter(f=>all.some(x=>x.cases.includes(f)));
+ const raceHTML=races.slice(0,5).map(x=>'<button data-ng="horse" data-val="'+safe(x.name)+'"><strong>'+safe(x.name)+'</strong><span>'+safe(x.track+' · '+x.date)+'</span><em class="'+(/entered/i.test(x.status)?'is-entered':'')+'">'+safe(x.status)+'</em></button>').join('');
+ const caseHTML=cases.slice(0,5).map(x=>'<button data-ng="case" data-val="'+safe(x.case)+'"><strong>'+safe(x.title)+'</strong><span>'+safe(x.from)+'</span><em>'+ (x.resolved?'REVIEWED':'OPEN')+'</em></button>').join('');
+ const support='<div class="ng-rs-bottom"><section><header>UPCOMING RACING <small>CONFIRMED VS TARGETS</small></header><div class="ng-rs-mini">'+
+  (raceHTML||'<p>No sourced race targets yet.</p>')+'</div></section><section><header>VETERINARY & MANAGEMENT FILES <small>LINKED DECISIONS</small></header>'+
+  '<div class="ng-rs-mini">'+(caseHTML||'<p>No active horse files.</p>')+'</div></section></div>';
+ const legend='<div class="ng-rs-legend">'+liveStableSignal('watch','Vet watch','Caution without assumed treatment')+
+  liveStableSignal('treat','Treatment','Only documented active treatment')+liveStableSignal('building','Building','Training toward a race')+
+  liveStableSignal('up','Form ↑','Recorded form improving')+liveStableSignal('down','Form ↓','Recorded form declining')+
+  '<span>— = not recorded · Stars only when sourced · Targets ≠ entries</span></div>';
+ return '<section class="ng-functional ng-stable-roster-v2">'+
+  '<div class="ng-rs-title"><strong>STABLE & HORSES</strong><span>'+all.length+' HORSES · '+all.filter(x=>x.entered).length+
+   ' ENTERED · '+all.filter(x=>x.hasTarget&&!x.entered).length+' TARGETED · '+all.filter(x=>['watch','treat'].includes(x.health[0])).length+
+   ' VET WATCH</span><button data-ng="menu" data-val="Racing">RACE CALENDAR ↗</button></div>'+
+  '<div class="ng-rs-tools"><label for="ngStableSearch">SEARCH</label><input id="ngStableSearch" data-ng-input="stable-search" type="search" value="'+safe(APP.stableSearch)+
+   '" placeholder="Horse, owner, trainer, status…" autocomplete="off"/><div class="ng-rs-filters">'+filters+'</div>'+
+   '<div class="ng-rs-mode"><button data-ng="stable-mode" data-val="all" class="'+(APP.stableMode!=='compact'?'on':'')+'">ALL COLUMNS</button>'+
+   '<button data-ng="stable-mode" data-val="compact" class="'+(APP.stableMode==='compact'?'on':'')+'">QUICK VIEW</button></div></div>'+
+  '<section class="ng-rs-roster"><header><strong>HORSE MANAGEMENT ROSTER</strong><span class="ng-stable-visible">'+filtered.length+' OF '+all.length+
+   ' HORSES · CLICK HEADERS TO SORT · SCROLL HORIZONTALLY FOR MORE</span></header>'+
+   '<div class="ng-rs-scroll" tabindex="0" aria-label="Sortable horse roster; horizontally scroll for every column"><table class="ng-rs-table '+(APP.stableMode==='compact'?'compact':'all')+
+   '"><thead><tr>'+th+'</tr></thead><tbody>'+ (rowHTML||'<tr><td colspan="17" class="ng-rs-no-results">No horses match these filters.</td></tr>')+
+   '</tbody></table></div>'+legend+'</section>'+support+'</section>';
+}
+
 function functionalRoute(route){
- if(route.kicker==='Stable'){
-  const horses=horseRows(),races=racingRows(),st=state(),q=APP.stableSearch.trim().toLowerCase();
-  const entries=horses.map(h=>({horse:h,race:races.find(r=>r.name===h.name)}));
-  const filtered=entries.filter(row=>APP.stableFilter==='entered'?/entered/i.test(row.race?.status||''):
-   APP.stableFilter==='targets'?Boolean(row.race):
-   APP.stableFilter==='unassigned'?!row.race:true);
-  const keys={name:row=>row.horse.name,activity:row=>row.horse.activity,
-   race:row=>row.race?row.race.track+' '+row.race.date:'',
-   status:row=>row.race?.status||row.horse.tag};
-  const sorter=keys[APP.stableSort]||keys.name;
-  filtered.sort((a,b)=>sorter(a).localeCompare(sorter(b),undefined,{numeric:true,sensitivity:'base'})*(APP.stableSortDesc?-1:1));
-  const matching=filtered.filter(row=>(row.horse.name+' '+row.horse.activity+' '+(row.race?.track||'')+' '+(row.race?.status||'')+' '+row.horse.tag).toLowerCase().includes(q));
-  const sort=(key,label)=>`<button data-ng="stable-sort" data-val="${key}" aria-label="Sort horses by ${label}" aria-pressed="${APP.stableSort===key?'true':'false'}">${label}${APP.stableSort===key?(APP.stableSortDesc?' ▼':' ▲'):''}</button>`;
-  const options=[['all','ALL'],['targets','WITH TARGET'],['entered','ENTERED'],['unassigned','NO TARGET']];
-  const filters=options.map(([key,label])=>`<button data-ng="stable-filter" data-val="${key}" class="${APP.stableFilter===key?'on':''}" aria-pressed="${APP.stableFilter===key?'true':'false'}">${label}</button>`).join('');
-  const rowHTML=(row)=>{
-   const h=row.horse,r=row.race,description=h.name+' '+h.activity+' '+(r?.track||'')+' '+(r?.status||'')+' '+h.tag;
-   return `<button class="ng-managementrow ng-stable-row" data-ng="horse" data-val="${safe(h.name)}" data-search="${safe(description)}" ${q&&!description.toLowerCase().includes(q)?'hidden':''} aria-label="Open horse profile: ${safe(h.name)}"><strong class="ng-horse-with-owner">${horseOwnerBadge(h.name)}${safe(h.name)}</strong><span>${safe(h.activity)}</span><span>${safe(r?r.track+' · '+r.date:'No current race target')}</span><i class="${r&&/entered/i.test(r.status)?'ng-stable-entered':''}">${safe(r?r.status:h.tag)} ${glyph('right',12)}</i></button>`;
-  };
-  const raceRowsHTML=races.map((r,i)=>`<button class="ng-stable-fixture" data-ng="fixture" data-val="${i}" aria-label="Open ${safe(r.name)} racing target"><strong>${safe(r.name)}</strong><span>${safe(r.track)} · ${safe(r.date)}</span><small class="${/entered/i.test(r.status)?'entered':''}">${safe(r.status)}</small></button>`).join('')||'<div class="ng-empty-record">No known racing commitments.</div>';
-  const horseCaseFiles=currentMessages().filter(m=>horses.some(h=>m.title.toLowerCase().includes(h.name.toLowerCase())));
-  const caseHTML=horseCaseFiles.slice(0,5).map(m=>`<button class="ng-stable-fixture" data-ng="case" data-val="${safe(m.case)}"><strong>${safe(m.title)}</strong><span>${safe(m.from)}</span><small>${m.resolved?'REVIEWED':'OPEN'}</small></button>`).join('')||'<div class="ng-empty-record">No currently displayed files name a stable horse.</div>';
-  return `<section class="ng-functional ng-stable-directory">
-   <div class="ng-stable-summary">
-    <div><strong>${horses.length}</strong><span>HORSES</span></div>
-    <div><strong>${races.filter(r=>/entered/i.test(r.status)).length}</strong><span>ENTERED</span></div>
-    <div><strong>${races.filter(r=>!/entered/i.test(r.status)).length}</strong><span>RACE TARGETS</span></div>
-    <div><strong>${Object.keys(st.resolvedCases||{}).length}</strong><span>RECORDED DECISIONS</span></div>
-   </div>
-   <div class="ng-stable-toolbar"><label for="ngStableSearch">FIND HORSE</label><input id="ngStableSearch" data-ng-input="stable-search" type="search" value="${safe(APP.stableSearch)}" placeholder="Horse, activity, racecourse…" autocomplete="off"/><div class="ng-stable-filters">${filters}</div><span class="ng-stable-visible">${matching.length} OF ${horses.length} HORSES</span></div>
-   <div class="ng-stable-workspace"><section class="ng-card ng-managementtable"><header class="ng-cardhead"><span class="ng-badge-slot" aria-hidden="true"><img class="ng-headicon" src="${badge('horse')}" alt=""/></span><h3>STABLE HORSE DIRECTORY</h3><small>SELECT A HORSE TO OPEN ITS PROFILE</small></header><div class="ng-tableheaders ng-stable-tablehead">${sort('name','HORSE')}${sort('activity','CURRENT ACTIVITY')}${sort('race','NEXT RACE TARGET')}${sort('status','STATUS')}</div><div class="ng-stable-tablebody">${filtered.map(rowHTML).join('')||'<div class="ng-empty-record">No horses match this status filter.</div>'}</div></section>
-   <div class="ng-stable-context"><section class="ng-card"><header class="ng-cardhead"><h3>RACE COMMITMENTS</h3><small>CONFIRMED VS TARGETED</small></header><div class="ng-stable-contextlist">${raceRowsHTML}</div><button class="ng-stable-context-footer" data-ng="menu" data-val="Racing">OPEN RACE CALENDAR ${glyph('arrow',12)}</button></section>
-   <section class="ng-card"><header class="ng-cardhead"><h3>HORSE-NAMED OFFICE FILES</h3><small>LINKED CASES</small></header><div class="ng-stable-contextlist">${caseHTML}</div></section></div></div></section>`;
- }
+ if(route.kicker==='Stable')return liveStableRosterView();
  if(route.kicker==='Race Calendar'){
   const races=racingRows();const entered=races.filter(r=>/Entered/i.test(r.status)).length;
   const nonraces=$$('.right .fixtureList .fixture:not([data-track])').map(n=>({date:$('.d',n)?.textContent.trim()||'',name:$('h4',n)?.textContent.trim()||'',detail:$('p',n)?.textContent.trim()||''}));
@@ -1154,6 +1261,7 @@ window.addEventListener('click',e=>{
  if(key==='nextopen')return selectAdjacentCase(1,true);
  if(key==='stable-sort'){if(APP.stableSort===val)APP.stableSortDesc=!APP.stableSortDesc;else{APP.stableSort=val;APP.stableSortDesc=false}return paint()}
  if(key==='stable-filter'){APP.stableFilter=val;return paint()}
+  if(key==='stable-mode'){APP.stableMode=val;return paint()}
  if(key==='filter'){APP.filter=val;APP.msgPage=0;return paint()}
  if(key==='prev-msg'){APP.msgPage=Math.max(0,APP.msgPage-1);return paint()}
  if(key==='next-msg'){APP.msgPage++;return paint()}
@@ -1217,7 +1325,7 @@ root.addEventListener('input',event=>{
  APP.stableSearch=input.value;
  const query=APP.stableSearch.trim().toLowerCase();
  let visible=0;
- $$('.ng-stable-row',root).forEach(row=>{
+ $('.ng-wtw-roster-row',root).forEach(row=>{
   const match=(row.getAttribute('data-search')||'').toLowerCase().includes(query);
   row.hidden=!match;
   if(match)visible++;
