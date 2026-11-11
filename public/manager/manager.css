@@ -141,6 +141,27 @@ body>.app,body>#routeShell,body>#toast,body>.wtw-site-archive-link{display:none!
 .mg-overview-foot strong{font-size:10px;color:#e0c98e;white-space:nowrap}
 .mg-overview-foot span{font-size:10px;color:#d5e2d5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mg-small-control{height:24px;border:1px solid #455c50;background:#1d322a;color:#e1d8bb;padding:0 8px;border-radius:2px;font-size:10px}
+.mg-person-dossier{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.9fr);gap:8px;min-height:0;align-items:start}
+.mg-person-primary{min-width:0}
+.mg-person-primary>header{min-height:30px}
+.mg-person-rating-stack{display:flex;flex-direction:column;min-width:0}
+.mg-person-skill-group{display:flex;flex-direction:column;min-width:0}
+.mg-person-skill-group>header{display:flex;align-items:center;justify-content:space-between;min-height:23px;padding:3px 10px;background:#24332d;border-top:1px solid #3b5444}
+.mg-person-skill-group>header strong{font-size:10px;font-weight:800;color:#e8d3a2}
+.mg-person-skill-group>header small{font-size:9px;color:#98b6a5;font-weight:750}
+.mg-person-skill-group .mg-attr-list{padding:1px 7px 2px}
+.mg-person-skill-group .mg-attribute{height:32px;grid-template-columns:minmax(0,1fr) minmax(84px,.9fr) 48px;gap:12px;padding:0 10px;font-size:11.5px}
+.mg-person-skill-group .mg-attribute strong{font-size:11px}
+.mg-person-skill-group .mg-meter{height:7px}
+.mg-person-side{display:flex;flex-direction:column;gap:8px;min-width:0}
+.mg-person-standing{display:flex;flex-direction:column;gap:3px;min-height:76px;padding:10px 11px;background:#1b2928}
+.mg-person-standing small{font-size:9px;color:#acc3af;font-weight:780;letter-spacing:.04em}
+.mg-person-standing strong{font-size:25px;font-family:"Arial Narrow","Segoe UI",sans-serif;color:#f0d69c;line-height:1.1}
+.mg-person-standing span{color:#a8baae;font-size:10px}
+.mg-person-side .mg-minirow{min-height:28px;font-size:11px;padding:3px 9px}
+.mg-person-side .mg-section>header{min-height:28px}
+.mg-person-side .mg-empty{font-size:11px;line-height:1.4}
+@media(max-width:1090px){.mg-person-dossier{grid-template-columns:minmax(0,1fr)}.mg-person-side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}}
 .mg-person-grid{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(0,1fr);gap:8px;align-items:start}
 .mg-person-columns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
 .mg-person-column .mg-attribute{grid-template-columns:minmax(0,1fr) 30px}
