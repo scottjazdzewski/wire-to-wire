@@ -271,7 +271,7 @@ const searchWords=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,'
 // Roster-style directory: a single dense, sortable list instead of tiles.
 // No source records are copied into a new database; each row routes to its
 // original Office source, with 13 rows per page to avoid desktop scrolling.
-const searchPageSize=()=>Math.max(10,Math.min(21,Math.floor(((window.innerHeight||768)-290)/31)));
+const searchPageSize=()=>Math.max(10,Math.min(28,Math.floor(((window.innerHeight||768)-200)/25)));
 const searchTypes=[
  ['all','ALL'],['horse','HORSES'],['person','PEOPLE'],['farm','FARMS'],
  ['track','TRACKS'],['race','RACES'],['pages','SCREENS']
