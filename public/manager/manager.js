@@ -233,14 +233,14 @@ function entityPhoto(kind,name){
  const keys=[id?kind+':'+id:null,kind+':'+name];
  for(const key of keys.filter(Boolean)){
   const entry=assets[key],src=typeof entry==='string'?entry:entry?.src;
-  if(typeof src==='string'&&/^\\/assets\\/[a-zA-Z0-9_./-]+$/.test(src)&&!src.includes('..'))return src;
+  if(typeof src==='string'&&/^\/assets\/[a-zA-Z0-9_./-]+$/.test(src)&&!src.includes('..'))return src;
  }
  return '';
 }
 function portrait(kind,name){
  const source=sourceProfile(),sourceImg=$('.profileHero .profilePhoto img',source?.doc);
  const candidate=sourceImg?.getAttribute('src')||'';
- const sourcePhoto=/^\\/assets\\/[a-zA-Z0-9_./-]+$/.test(candidate)&&
+ const sourcePhoto=/^\/assets\/[a-zA-Z0-9_./-]+$/.test(candidate)&&
   !candidate.includes('/profile-badges/')&&!candidate.includes('..')?candidate:'';
  const photo=entityPhoto(kind,name)||sourcePhoto;
  const fallback='/assets/profile-badges/v2/wtw_badge_'+
