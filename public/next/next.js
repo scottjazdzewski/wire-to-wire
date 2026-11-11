@@ -660,15 +660,15 @@ function officeFiveGenerationPedigree(name){
  let positions=[''];
  const columns=labels.map((label,depth)=>{
   const cells=positions.map(path=>{
-   const n=all.get(path),subject=path==='',known=Boolean(n?.horse_id)||subject,repeat=Boolean(n?.horse_id)&&(repeats.get(n.horse_id)||0)>1;
+   const n=all.get(path),known=Boolean(n?.horse_id),repeat=known&&(repeats.get(n.horse_id)||0)>1;
    const maternal=path.startsWith('D'),nameText=n?.name||'Unknown';
    const content=known&&path?
     '<button type="button" data-ng="pedigree-ancestor" data-val="'+safe(n.horse_id)+
     '" title="Open '+safe(nameText)+' horse profile">'+safe(nameText)+'</button>':
-    subject?'<strong>'+safe(nameText)+'</strong>':'<span>'+safe(nameText)+'</span>';
+    '<span>'+safe(nameText)+'</span>';
    return '<div class="ng-ped5-node '+(known?'known':'unknown')+
-    (repeat?' repeated':'')+(subject?' subject':'')+(maternal?' maternal':' paternal')+'" title="'+
-    safe(n?.horse_id||(subject?'Current Office horse':'No documented ancestor'))+'">'+content+'</div>';
+    (repeat?' repeated':'')+(maternal?' maternal':' paternal')+'" title="'+
+    safe(known?n.horse_id:'No documented ancestor')+'">'+content+'</div>';
   }).join('');
   positions=positions.flatMap(path=>[path+'S',path+'D']);
   return '<section class="ng-ped5-generation" aria-label="'+label+'"><header>'+label+'</header>'+
@@ -681,9 +681,9 @@ function officeFiveGenerationPedigree(name){
   entry?.status==='unavailable'?'SOURCE CONNECTION UNAVAILABLE':
   'CHECKING HISTORICAL HORSE RECORD';
  const note=entry?.status==='ready'?
-  'The horse, parents and four grandparents are shown first. Scroll right for earlier generations. Click named ancestors to open their profiles; repeated ancestors are highlighted.':
+  'Click any named ancestor to open its source-backed profile. Repeated ancestors are highlighted. Names follow saved display-name edits; identity follows Horse ID.':
   entry?.status==='unlinked'?
-  'This Office horse is not yet connected to historical parent IDs. Its name remains visible; undocumented ancestors remain unknown.':
+  'This Office horse has no exact match in the imported historical pedigree database. Ancestors are shown as unknown rather than invented.':
   entry?.status==='ambiguous'?
   'More than one historical horse uses this name. The profile needs its permanent Horse ID before a pedigree can be displayed.':
   entry?.status==='unavailable'?
@@ -691,7 +691,7 @@ function officeFiveGenerationPedigree(name){
   'Checking the approved historical pedigree for an exact horse-identity match.';
  return '<section class="ng-detailcard ng-detailwide ng-ped5-card" aria-label="Five-generation pedigree">'+
   '<header><span>FIVE-GENERATION PEDIGREE</span><small>'+safe(status)+'</small></header>'+
-  '<div class="ng-ped5-instructions">'+safe(note)+' <strong>SCROLL RIGHT → EARLIER GENERATIONS</strong></div>'+
+  '<div class="ng-ped5-instructions">'+safe(note)+'</div>'+
   '<div class="ng-ped5-scroller" role="region" tabindex="0" aria-label="Five-generation pedigree scroll area">'+
   '<div class="ng-ped5-columns">'+columns+'</div></div>'+
   '<div class="ng-ped5-legend"><span><i class="ng-ped5-sire"></i>SIRE BRANCH</span>'+
@@ -699,6 +699,24 @@ function officeFiveGenerationPedigree(name){
   '<span><i class="ng-ped5-repeat"></i>REPEATED ANCESTOR</span>'+
   '<small>63 TOTAL POSITIONS · UNKNOWN IS NOT ZERO</small></div></section>';
 }
+
+/* Read-only racecourse presentation facts. UI labels only: no alteration of race,
+ * purse, venue geography, game state, or canonical historical registries.
+ * Physical configurations are reference snapshots, not 1999-specific certification. */
+const trackCourseFacts={
+ 'Belmont Park':{source:'https://cms.nyrainc.com/about/facility-details',rows:[
+  ['MAIN DIRT','1½ miles'],['WIDENER TURF','1 5/16 miles'],
+  ['INNER TURF','1 3/16 miles'],['SITE','445 acres']]},
+ 'Churchill Downs':{source:'https://www.twinspires.com/race-tracks/churchill-downs/',rows:[
+  ['MAIN DIRT','1 mile'],['TURF OVAL','7/8 mile'],
+  ['HOME STRETCH','1,234½ feet'],['MAIN WIDTH','80 feet']]},
+ 'Keeneland':{source:'https://www.playfecta.com/tracks/keeneland/',rows:[
+  ['MAIN DIRT','1 1/16 miles'],['TURF OVAL','7½ furlongs'],
+  ['HOME STRETCH','1,236 feet'],['TRAINING OVAL','5 furlongs']]},
+ 'Saratoga':{source:'https://www.twinspires.com/saratoga-race-meet-event-page/',rows:[
+  ['MAIN DIRT','1 1/8 miles'],['MELLON TURF','1 mile + 98 ft'],
+  ['INNER TURF','7 furlongs + 304 ft'],['HOME STRETCH','1,144 feet']]}
+};
 
 function profileDetail(route){
  const source=$('#routeBody .profilePage');if(!source)return null;
@@ -790,6 +808,15 @@ function profileDetail(route){
   '</section>';
  const trackHistoryItems=isTrack?notes.filter(x=>!/\b(runtime|wiring|canonical|live season calendar|deployment|database|schema|stylesheet)\b/i.test(x)):[];
  const trackMeetFacts=[...meetValues,...(trackRaceDays?[trackRaceDays]:[])];
+ const trackConfig=isTrack?trackCourseFacts[route.title]:null;
+ const trackConfigMarkup=trackConfig?
+  '<div class="ng-track-course-panel" aria-label="Racecourse configuration">'+
+   '<div class="ng-track-course-heading"><strong>TRACK CONFIGURATION</strong>'+
+    '<a href="'+safe(trackConfig.source)+'" target="_blank" rel="noopener noreferrer" title="Course reference, not specifically certified for 1999">SOURCE ↗</a></div>'+
+   '<div class="ng-track-course-grid">'+trackConfig.rows.map(([label,value])=>
+    '<div class="ng-track-course-fact"><small>'+safe(label)+'</small><b>'+safe(value)+'</b></div>').join('')+
+   '</div></div>':'';
+
  const stakeDateRank=value=>{
   const match=String(value||'').match(/\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(\d{1,2})\b/i);
   if(!match)return Number.MAX_SAFE_INTEGER;
@@ -818,7 +845,7 @@ function profileDetail(route){
     while(cols.length<4)cols.push('—');
     const index=$$('#routeBody [data-act]').indexOf(row.node);
     const grade=(cols[2].match(/\bG([123])\b/i)||[])[1];
-    const gradeCell=grade?'<span class="ng-stakes-grade" aria-label="Grade '+grade+'" title="Grade '+grade+'"><i class="ng-stakes-trophy g'+grade+'" aria-hidden="true"></i><small class="ng-stakes-grade-text" aria-hidden="true">G'+grade+'</small></span>':'<span>'+safe(cols[2])+'</span>';
+    const gradeCell=grade?'<span class="ng-stakes-grade" aria-label="Grade '+grade+'" title="Grade '+grade+'"><img class="ng-stakes-trophy" src="/assets/trophies/grade-'+grade+'.svg" alt="" width="16" height="16" decoding="async"/><small class="ng-stakes-grade-text" aria-hidden="true">G'+grade+'</small></span>':'<span>'+safe(cols[2])+'</span>';
     return index<0?'':'<button class="ng-stakes-data" data-ng="sourcebutton" data-val="'+index+'">'+
      '<span>'+safe(cols[0])+'</span><span>'+safe(cols[1])+'</span>'+gradeCell+'<span>'+safe(cols[3])+'</span></button>';
    }).join('')||'<div class="ng-empty-record">No verified stakes rows connected.</div>')+'</div>';
@@ -1189,6 +1216,7 @@ function profileDetail(route){
     <section class="ng-tier1-card ng-tier1-stakes ng-track-stakes"><header>MAJOR RACES & STAKES <span>${trackRaces.length} RACE RECORDS</span></header>${stakesTable(100)}</section>
     <div class="ng-track-info-stack">
      <section class="ng-tier1-card ng-track-meet-card"><header>MEET & CONDITIONS</header><div class="ng-track-conditions-body">
+      ${trackConfigMarkup}
       <div class="ng-track-meet-facts">${trackMeetFacts.map(f=>`<div class="ng-track-meet-fact"><small>${safe(f.label)}</small><strong>${safe(f.value)}</strong></div>`).join('')}</div>
       ${trackOperatingNotes.length?`<div class="ng-track-operating-notes">${trackOperatingNotes.slice(0,3).map(x=>`<article><b>${safe(x.label)}</b><span>${safe(x.value)}</span></article>`).join('')}</div>`:''}
       ${trackOfficeContext?`<div class="ng-track-office-context"><b>CURRENT OFFICE CONTEXT</b><span>${safe(trackOfficeContext.value)}</span></div>`:''}
