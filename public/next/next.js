@@ -252,7 +252,7 @@ function managerSidebar(){
   ' title="'+safe(label)+'"'+(on(label,key,value)?' aria-current="page"':'')+'>'+
   '<span class="ng-manager-rail-icon" aria-hidden="true">'+glyph(icon,15)+'</span>'+
   '<span>'+safe(label)+'</span></button>';
- return '<aside class="ng-manager-sidebar" aria-label="Game departments">'+
+ return '<aside class="ng-game-rail" aria-label="Game departments">'+
   '<div class="ng-manager-rail-brand"><img src="/assets/wtw-office-approved-logo.png" alt="" />'+
   '<span><strong>WIRE TO WIRE</strong><small>RACING MANAGEMENT</small></span></div>'+
   groups.map(([title,links])=>'<section class="ng-manager-rail-group"><h2>'+title+'</h2>'+
