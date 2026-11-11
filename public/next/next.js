@@ -1195,7 +1195,9 @@ const DEP_COLUMNS={
    https://ctba.com/barretts-adds-fall-paddock-sale/
    These are scheduling facts, NOT catalog lots or game market prices.
    Other years use a month-only seasonal approximation unless real dated
-   game-state auction records exist. Never fabricate an exact calendar day. */
+   game-state auction records exist. Never fabricate an exact calendar day.
+   The earliest years on seasonal patterns describe fixture coverage, NOT
+   the founding date or proven start date of an individual auction. */
 const DEP_SALE_HOUSES=Object.freeze({
  keeneland:{name:'Keeneland',city:'Lexington, KY',website:'https://www.keeneland.com/sales/'},
  fasigtipton:{name:'Fasig-Tipton',city:'Lexington, KY',website:'https://www.fasigtipton.com/'},
@@ -1727,12 +1729,15 @@ function departmentRoster(section,page='Overview'){
   return '<tr>'+specs.map(([key])=>{
    let v=depCell(r[key],key);
    const kind=entityKindForField(key,r);
+   if(section==='Sales'&&r._kind==='sale-event'&&key==='company'){
+    v='<button type="button" class="ng-entity-reference" data-ng="dept-related" data-val="'+i+'" data-field="company" title="View sales operated by '+safe(String(r.company))+'">'+safe(String(r.company))+' ↗</button>';
+   }
    const primary=(key==='horse'||key==='name'||(key==='race'&&['race','demo-race'].includes(r._kind)))&&r._kind!=='finance';
    if(primary){
     const first=r._kind==='horse'?
      (demo?'<span class="ng-rs-demo-owner" title="Fictional ownership marker">'+safe((r.owner||r._name||'?').charAt(0))+'</span>':horseOwnerBadge(r._name)):'';
     v='<button type="button" class="ng-rs-horse" data-ng="dept-open" data-val="'+i+
-     '" aria-label="Open '+safe(r._name)+'" title="Open '+safe(r._name)+' profile">'+first+
+     '" aria-label="Open '+safe(r._name)+'" title="'+safe(r._kind==='sale-event'?'Open this auction':r._kind==='sale-company'?'View this company\'s sales':'Open '+r._name+' profile')+'">'+first+
      '<span>'+safe(r._name)+'</span></button>';
    }else if(kind&&!entityNotRecorded(r[key])&&r._kind!=='finance'){
     v='<button type="button" class="ng-entity-reference" data-ng="dept-related" data-val="'+i+
@@ -1760,6 +1765,8 @@ function departmentRoster(section,page='Overview'){
  const salePicker=section==='Sales'&&page!=='Sale Calendar'&&page!=='Sale Companies'?'<label class="ng-dpt-auction-picker">AUCTION <select data-ng-select="department-auction" aria-label="Choose auction chronologically">'+
   (auctions.length?auctions.map(a=>'<option value="'+safe(a.id)+'" '+(auction?.id===a.id?'selected':'')+'>'+safe(depSaleLabel(a))+'</option>').join(''):'<option>No upcoming auction data</option>')+
   '</select></label>':'';
+ const saleHouseLink=section==='Sales'&&auction?.companyId&&page!=='Sale Calendar'&&page!=='Sale Companies'?
+  '<button data-ng="dept-company" data-val="'+safe(auction.companyId)+'" title="See all sales run by '+safe(auction.company)+'">HOUSE: '+safe(auction.company)+' ↗</button>':'';
  const saleCompanyPicker=section==='Sales'&&page==='Sale Calendar'?
   '<label class="ng-dpt-sales-company-picker">COMPANY <select data-ng-select="department-sales-company" aria-label="Show sale calendar by operator">'+
   '<option value="" '+(!APP.departmentCompany?'selected':'')+'>ALL SALE COMPANIES</option>'+
@@ -1776,8 +1783,8 @@ function departmentRoster(section,page='Overview'){
   section==='Personnel'?'TRAINERS · JOCKEYS · OWNERS · STAFF':
   section==='Facilities'?'CAPACITY · QUALITY · MAINTENANCE':'INCOME · EXPENSES · CASH FLOW';
  return '<section class="ng-functional ng-stable-roster-v2 ng-dept-roster" data-department="'+safe(section)+'" data-page="'+safe(page)+'" data-roster-kind="'+(specs===DEP_COLUMNS.Meets?'meet':'regular')+'">'+
-  '<div class="ng-rs-title"><strong>'+safe(section.toUpperCase())+' · '+safe(page.toUpperCase())+'</strong><span>'+safe(purpose)+(demo?' · FICTIONAL PREVIEW':'')+'</span></div>'+
-  finance+'<div class="ng-rs-tools">'+racingPicker+salePicker+saleCompanyPicker+'<label>VIEW <select data-ng-select="department-tab" aria-label="Choose '+safe(section)+' view">'+viewOptions+'</select></label>'+
+  '<div class="ng-rs-title"><strong>'+safe(section.toUpperCase())+' · '+safe(page.toUpperCase())+'</strong><span title="'+safe(purpose)+'">'+safe(purpose)+(demo?' · FICTIONAL PREVIEW':'')+'</span></div>'+
+  finance+'<div class="ng-rs-tools">'+racingPicker+salePicker+saleHouseLink+saleCompanyPicker+'<label>VIEW <select data-ng-select="department-tab" aria-label="Choose '+safe(section)+' view">'+viewOptions+'</select></label>'+
   '<input id="ngDepartmentSearch" data-ng-input="department-search" type="search" aria-label="Search '+safe(section)+' roster" value="'+safe(APP.departmentSearch)+'" placeholder="Find records…" autocomplete="off"/>'+
   '<button data-ng="dept-demo" class="'+(demo?'on':'')+'" title="Preview-only invented values; no game data changes">'+(demo?'DEMO ON':'DEMO OFF')+'</button>'+
   '<span class="ng-dpt-mode">FULL-WIDTH ROSTER</span></div>'+
@@ -1979,6 +1986,7 @@ window.addEventListener('click',e=>{
  }
  if(key==='dept-page'){APP.departmentPageIndex=Math.max(0,APP.departmentPageIndex+Number(val));return paint()}
  if(key==='dept-demo'){APP.departmentDemo=!APP.departmentDemo;APP.departmentPageIndex=0;return paint()}
+ if(key==='dept-company'){APP.departmentCompany=val;return pageTab('Sale Calendar')}
  if(key==='dept-open'){
   const r=APP.departmentVisible[Number(val)];if(!r)return;
   if(APP.section==='Sales'&&r._kind==='sale-event'){
@@ -1992,7 +2000,9 @@ window.addEventListener('click',e=>{
  }
  if(key==='dept-related'){
   const r=APP.departmentVisible[Number(val)],field=btn.dataset.field;
-  if(!r||!Object.prototype.hasOwnProperty.call(DEPT_ENTITY_COLUMNS,field))return;
+  if(!r)return;
+  if(APP.section==='Sales'&&field==='company'&&r._companyId){APP.departmentCompany=r._companyId;return pageTab('Sale Calendar')}
+  if(!Object.prototype.hasOwnProperty.call(DEPT_ENTITY_COLUMNS,field))return;
   return openEntityRecord(r[field],entityKindForField(field,r),field==='race'?{
    _track:r._track||r.track||'',_kind:APP.departmentDemo?'demo-race':'race',
    type:'Race',location:r.track||'',date:r.date||'',status:r.status||''
