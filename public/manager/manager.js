@@ -101,7 +101,38 @@ function ownerChip(name){
   known(v)?h(v.slice(0,1).toUpperCase()):'?')+'</span>';
 }
 function compactTable(head,rows,config=''){
- return '<div class="mg-table-wrap"><table class="mg-table '+config+'"><thead><tr>'+head.map(x=>'<th'+(x.numeric?' class="numeric"':'')+(x.style?' style="'+h(x.style)+'"':'')+'>'+h(x.text||x)+'</th>').join('')+'</tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';
+ return '<div class="mg-table-wrap"><table class="mg-table '+config+'"><thead><tr>'+head.map((x,i)=>{
+  const name=x.text||x,canSort=!/^(OPEN|PROFILE|VIEW|SELECT|ACTION)$/i.test(String(name));
+  return '<th'+(x.numeric?' class="numeric"':'')+(x.style?' style="'+h(x.style)+'"':'')+
+   (canSort?' data-mg-sort-col="'+i+'" tabindex="0" aria-sort="none" title="Sort by '+h(name)+'"':'')+
+   '>'+h(name)+(canSort?'<span class="mg-table-sortmark" aria-hidden="true">↕</span>':'')+'</th>';
+ }).join('')+'</tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';
+}
+function sortRosterColumn(header){
+ const table=header.closest('table.mg-table'),tbody=table?.tBodies?.[0];
+ if(!table||!tbody)return;
+ const index=Number(header.dataset.mgSortCol);
+ if(!Number.isInteger(index)||index<0)return;
+ const descending=header.getAttribute('aria-sort')==='ascending';
+ const rows=Array.from(tbody.rows).map((row,ordinal)=>({row,ordinal,
+  text:row.cells[index]?.textContent?.replace(/\\s+/g,' ').trim()||''}));
+ const numeric=text=>{
+  const normalized=text.replace(/[$,%+]/g,'').replace(/,/g,'').trim();
+  return /^[-+]?\\d+(?:\\.\\d+)?$/.test(normalized)?Number(normalized):null;
+ };
+ const cmp=new Intl.Collator(undefined,{numeric:true,sensitivity:'base'});
+ rows.sort((a,b)=>{
+  const av=numeric(a.text),bv=numeric(b.text);
+  const result=av!=null&&bv!=null?av-bv:cmp.compare(a.text,b.text);
+  return (descending?-result:result)||a.ordinal-b.ordinal;
+ });
+ tbody.append(...rows.map(x=>x.row));
+ table.querySelectorAll('thead th[data-mg-sort-col]').forEach(el=>{
+  const active=el===header;
+  el.setAttribute('aria-sort',active?(descending?'descending':'ascending'):'none');
+  const marker=el.querySelector('.mg-table-sortmark');
+  if(marker)marker.textContent=active?(descending?'▾':'▴'):'↕';
+ });
 }
 function tableCell(text,cls=''){return '<td'+(cls?' class="'+cls+'"':'')+'>'+text+'</td>'}
 function linkRecord(record,label,ownerBadge=false){
@@ -730,6 +761,8 @@ function goFromSearch(value){
  openRecord(kind,name,track);
 }
 root.addEventListener('click',event=>{
+ const sortCol=event.target.closest('th[data-mg-sort-col]');
+ if(sortCol&&root.contains(sortCol)){event.preventDefault();sortRosterColumn(sortCol);return}
  const el=event.target.closest('[data-mg]');if(!el)return;
  event.preventDefault();event.stopPropagation();
  const action=el.dataset.mg,value=el.dataset.value||'';
@@ -752,6 +785,10 @@ root.addEventListener('input',event=>{
  render();
 });
 root.addEventListener('keydown',event=>{
+ const sortable=event.target.closest('th[data-mg-sort-col]');
+ if(sortable&&(event.key==='Enter'||event.key===' ')){
+  event.preventDefault();sortRosterColumn(sortable);return;
+ }
  if(event.key==='Enter'&&event.target.matches('#mgSearch,#mgTopSearch')){
   const r=searchResults()[0];if(r){event.preventDefault();if(r.kind==='screen')nav(r.view);else openRecord(r.kind,r.name,r.track)}
  }
