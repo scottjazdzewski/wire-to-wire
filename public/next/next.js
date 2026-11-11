@@ -586,7 +586,7 @@ function profileDetail(route){
     while(cols.length<4)cols.push('—');
     const index=$$('#routeBody [data-act]').indexOf(row.node);
     const grade=(cols[2].match(/\bG([123])\b/i)||[])[1];
-    const gradeCell=grade?'<span class="ng-stakes-grade" aria-label="Grade G'+grade+'" title="Grade G'+grade+'"><i class="ng-stakes-trophy g'+grade+'" aria-hidden="true"></i></span>':'<span>'+safe(cols[2])+'</span>';
+    const gradeCell=grade?'<span class="ng-stakes-grade" aria-label="Grade '+grade+'" title="Grade '+grade+'"><i class="ng-stakes-trophy g'+grade+'" aria-hidden="true"></i><small class="ng-stakes-grade-text" aria-hidden="true">G'+grade+'</small></span>':'<span>'+safe(cols[2])+'</span>';
     return index<0?'':'<button class="ng-stakes-data" data-ng="sourcebutton" data-val="'+index+'">'+
      '<span>'+safe(cols[0])+'</span><span>'+safe(cols[1])+'</span>'+gradeCell+'<span>'+safe(cols[3])+'</span></button>';
    }).join('')||'<div class="ng-empty-record">No verified stakes rows connected.</div>')+'</div>';
