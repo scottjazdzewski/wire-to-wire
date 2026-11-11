@@ -1509,6 +1509,7 @@ function previewRecordView(){
  const kind=fromState?.kind||decodeURIComponent(pieces[1]||'record');
  const name=fromState?.name||decodeURIComponent(pieces.slice(2).join(':')||'Record');
  const demo=(fromState?.row?._kind||'').startsWith('demo')||
+  (Boolean(fromState?.row)&&Boolean(APP.departmentDemo))||
   DEP_FACILITY_PREVIEW.some(item=>item[0]===name);
  const fields=fromState?.row||{};
  const fixture=DEP_FACILITY_PREVIEW.find(item=>item[0]===name);
@@ -1716,7 +1717,7 @@ function managerDashboard(){
      '<div class="ng-manager-secondary-list">'+(schedule||'<p class="ng-manager-empty">No recorded race targets.</p>')+'</div></section>'+
    '</aside></div></section>';
 }
-function renderRoute(){const route=APP.custom?null:currentRoute();const title=route?.title||APP.custom||'Page';const kicker=route?.kicker||APP.section;const bdg=route?badge(({'Horse Profile':'horse','People Profile':'people','Farm Profile':'farm_stable','Track Profile':'track','Race Calendar':'meet_schedule','Stable':'farm_stable','Sales':'connections','News':'history','World':'track','Opportunity Board':'reputation'}[route.kicker])||'history'):pageBadge();
+function renderRoute(){const route=APP.custom?null:currentRoute();const previewMode=APP.custom.startsWith('Preview:');const title=previewMode?(APP.previewEntity?.name||decodeURIComponent(APP.custom.split(':').slice(2).join(':'))):route?.title||APP.custom||'Page';const kicker=previewMode?'RECORD PREVIEW':route?.kicker||APP.section;const bdg=route?badge(({'Horse Profile':'horse','People Profile':'people','Farm Profile':'farm_stable','Track Profile':'track','Race Calendar':'meet_schedule','Stable':'farm_stable','Sales':'connections','News':'history','World':'track','Opportunity Board':'reputation'}[route.kicker])||'history'):pageBadge();
 let body='';const profile=route&&/Profile$/.test(route.kicker)?profileDetail(route):null;const functional=route?functionalRoute(route):null;if(profile)body=profile;else if(functional)body=functional;else if(route)body=route.body;else if(APP.custom==='Organization Overview'){body=organizationOverview()}
 else if(APP.custom==='Due Actions'){body=dueActionOverview()}
 else if(['Messages','Decisions','Opportunities'].includes(APP.custom)){body=managerDashboard()}
@@ -1834,7 +1835,7 @@ window.addEventListener('click',e=>{
  if(key==='dept-related'){
   const r=APP.departmentVisible[Number(val)],field=btn.dataset.field;
   if(!r||!Object.prototype.hasOwnProperty.call(DEPT_ENTITY_COLUMNS,field))return;
-  return openEntityRecord(r[field],entityKindForField(field,r),r);
+  return openEntityRecord(r[field],entityKindForField(field,r));
  }
  if(key==='named-entity')return openEntityRecord(btn.dataset.name||'',btn.dataset.kind||'',btn.dataset.track?{_track:btn.dataset.track}:null);
  if(key==='stable-sort'){if(APP.stableSort===val)APP.stableSortDesc=!APP.stableSortDesc;else{APP.stableSort=val;APP.stableSortDesc=false}return paint()}
