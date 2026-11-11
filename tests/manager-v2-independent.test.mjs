@@ -45,6 +45,7 @@ test('Four-tier fictional preview ratings are explicitly isolated from save and 
 
 test('Manager profiles and Search use authoritative read-only geography projections',()=>{
  const js=get('public/manager/manager.js');
+ const cssHasTrackSelected=()=>get('public/manager/manager.css').includes('.mg-track-layout .mg-track-selected td{');
  const people=JSON.parse(get('public/data/person-geography-ui-v33.json'));
  const courses=JSON.parse(get('public/data/track-geography-v33.json'));
  assert.equal(people.schema,'WTW_UI_PERSON_GEOGRAPHY_PROJECTION_V1');
@@ -59,6 +60,9 @@ test('Manager profiles and Search use authoritative read-only geography projecti
  assert.ok(js.includes('function geographicPerson(name)'));
  assert.ok(js.includes('function geographicTrack(name)'));
  assert.ok(js.includes("kind==='track'&&geographicTrack(name)"),'Unlinked historical tracks must still open read-only profiles');
+ assert.ok(js.includes('const registry=world.slice().sort('),'Racecourse profile without Office stakes must show useful full world register');
+ assert.ok(js.includes('registryBody;'),'No giant empty stakes panel on geography-only track dossiers');
+ assert.ok(cssHasTrackSelected(),'Selected current course visibly stands out in the register');
  assert.ok(js.includes('1999 BASE'),'Do not present an opening historical base as the current physical operating base');
  assert.ok(!js.includes('localStorage.setItem'),'Read-only snapshots must not write the source of truth');
 });
