@@ -30,6 +30,10 @@ test('Horse Profile real overview renders all FM dossier sections with zero fabr
   'RECENT RACES & FORM','PEDIGREE & BACKGROUND','RACING OFFICE SUMMARY'])
   assert.ok(visibleText.includes(name),'First screen must present section: '+name);
  assert.ok(unknown.includes('0 OF 53 ATTRIBUTES ASSESSED'),'Unassessed values are explicitly disclosed');
+ assert.equal((unknown.match(/class="ng-horse-rating-row"/g)||[]).length,46,'All 46 athlete ratings in four categories are visible without opening a detail tab');
+ assert.equal((unknown.match(/class="ng-horse-condition-cell"/g)||[]).length,7,'All seven current condition attributes are visible on the Overview');
+ assert.ok(unknown.includes('Heat Tolerance')&&unknown.includes('Gate Break')&&unknown.includes('Conformation'),'Last attribute in every formerly truncated group is rendered');
+
  assert.ok(unknown.includes('UNASSESSED ≠ ZERO'),'No implicit zero for unassessed skill');
  assert.ok(unknown.includes('Keeneland R6'),'Saved race plan must display');
  assert.ok(unknown.includes('Monitor filling'),'Saved veterinary context must display');
