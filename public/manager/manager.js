@@ -124,15 +124,49 @@ function stableRows(){
   tableCell(button('PROFILE ›','open','horse|'+r.name+'|','mg-rowlink'),'numeric')+'</tr>');
 }
 function home(){
- const roster=panel('Stable Roster',compactTable([{text:'HORSE'},{text:'OWNER'},{text:'STATUS'},{text:'RACE TARGET'},{text:'PROFILE'}],stableRows()),'OPEN ATHLETES');
- const decisions=caseDecision(),msgs=inboxView();
- const dates=$$('.fixtureList .fixture').slice(0,6).map(n=>'<tr>'+tableCell(h($('.d',n)?.textContent.trim()||'—'))+
-  tableCell(h($('h4',n)?.textContent.trim()||'—'),'strong')+
-  tableCell(h($('p',n)?.textContent.trim()||'—'),'dim')+'</tr>');
- const calendar=panel('Upcoming Racing',compactTable([{text:'DATE',style:'width:100px'},{text:'HORSE / EVENT'},{text:'TRACK & CONDITIONS'}],dates),button('FULL ↗','nav','racing'));
- const q=cases().length;
- return pageBar('Racing Office','DAILY MANAGEMENT · '+nowDate(),button('GLOBAL DIRECTORY','nav','search')+button('MY STABLE','nav','stable'))+
- '<div class="mg-content"><div class="mg-home-grid"><div class="mg-home-left">'+msgs+'</div><div class="mg-home-center">'+decisions+'</div><div class="mg-home-right">'+calendar+roster+'</div></div></div>';
+ const all=cases(),horseRecords=records().filter(r=>r.kind==='horse');
+ const staff=records().filter(r=>r.kind==='person');
+ const game=readState();
+ const selected=currentCase();
+ const source=$$('.fixtureList .fixture').slice(0,8);
+ const calendarRows=source.map(n=>'<tr>'+tableCell(h($('.d',n)?.textContent.trim()||'—'))+
+   tableCell(h($('h4',n)?.textContent.trim()||'—'),'strong')+
+   tableCell(h($('p',n)?.textContent.trim()||'—'),'dim')+'</tr>');
+ const calendar=panel('Racing Schedule',compactTable([{text:'DATE',style:'width:74px'},{text:'HORSE / EVENT'},{text:'TRACK & CONDITIONS'}],calendarRows),
+   source.length+' SCHEDULED ENTRIES');
+ const staffRows=staff.slice(0,8).map(r=>'<tr>'+tableCell(linkRecord(r,r.name),'strong')+
+   tableCell(h(r.detail||'—'),'dim')+tableCell(button('›','open','person|'+r.name+'|','mg-rowlink'),'numeric')+'</tr>');
+ const staffPanel=panel('Personnel & Assignments',compactTable([{text:'PERSON'},{text:'ROLE'},{text:'PROFILE',style:'width:45px'}],staffRows),staff.length+' STAFF RECORDS');
+ const rosterRows=horseRecords.map(r=>{
+  const status=game.horseState?.[r.name]?.status||all.find(c=>c.title?.toLowerCase().includes(r.name.toLowerCase()))?.type||'No new report';
+  const target=game.calendarState?.[r.name]?.race_target||'—';
+  return '<tr>'+tableCell(linkRecord(r,r.name,true),'strong')+
+    tableCell(h(owner(r.name)),'dim')+tableCell(h(status),'gold')+
+    tableCell(h(target),'dim')+tableCell(button('›','open','horse|'+r.name+'|','mg-rowlink'),'numeric')+'</tr>';
+ });
+ const roster=panel('Active Stable Roster',compactTable([
+  {text:'HORSE',style:'width:29%'},{text:'OWNER',style:'width:26%'},
+  {text:'CURRENT FILE'},{text:'TARGET'},{text:'OPEN',style:'width:45px'}],rosterRows),horseRecords.length+' HORSES');
+ const priority=panel('Decision & Opportunity Ledger',compactTable([
+  {text:'CASE / SUBJECT',style:'width:48%'},{text:'PRESSURE'},
+  {text:'PRIMARY RISK'},{text:'OPEN',style:'width:47px'}],
+  all.map(c=>'<tr>'+tableCell(button(h(c.title),'case',c.id,'mg-rowlink'),'strong')+
+   tableCell(h(c.pressure||'—'),'gold')+tableCell(h(c.risk||'—'),'dim')+
+   tableCell(button('›','case',c.id,'mg-rowlink'),'numeric')+'</tr>')),all.length+' CURRENT CASES');
+ const watch=panel('Stable Intelligence',compactTable([
+  {text:'HORSE / SOURCE'},{text:'CURRENT SIGNAL'},{text:'OPEN',style:'width:47px'}],
+  all.filter(c=>/horse|vet|training|placement|entry|bloodstock|sales/i.test((c.type||'')+' '+(c.title||''))).slice(0,8)
+   .map(c=>'<tr>'+tableCell(button(h(c.source),'case',c.id,'mg-rowlink'),'strong')+
+      tableCell(h(c.read||'Office review'),'dim')+tableCell(button('›','case',c.id,'mg-rowlink'),'numeric')+'</tr>')),
+   'LIVE OFFICE READS');
+ return pageBar('Racing Office','DAILY MANAGEMENT · '+nowDate(),
+   button('GLOBAL DIRECTORY','nav','search')+button('MY STABLE','nav','stable'))+
+ '<div class="mg-content mg-office-content">'+
+ '<div class="mg-home-top"><div class="mg-home-stack mg-home-inbox">'+inboxView()+'</div>'+
+ '<div class="mg-home-stack mg-home-case">'+caseDecision()+'</div>'+
+ '<div class="mg-home-stack mg-home-side">'+calendar+staffPanel+'</div></div>'+
+ '<div class="mg-home-bottom">'+roster+priority+watch+'</div>'+
+ '</div>';
 }
 function sourceProfile(){
  const doc=$('#routeBody .profilePage');if(!doc)return null;
