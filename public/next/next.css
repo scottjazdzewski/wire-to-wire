@@ -414,7 +414,10 @@ body.wtw-next-active{overflow:auto}
 .ng-case-pip{transition:none}
 }
 .ng-mini-home{display:grid;place-items:center;flex:none;padding:0;margin:0 9px 0 14px;border:1px solid transparent;border-radius:5px;background:transparent;color:inherit}
-.ng-mini-home .ng-logo-mini{margin:0;width:29px;height:29px}
+.ng-mini-home .ng-wordmark{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;white-space:nowrap;min-width:0;line-height:1.05}
+.ng-wordmark strong{font-size:12px;letter-spacing:.028em;font-weight:900;color:#f1efe3}
+.ng-wordmark small{font-size:8px;letter-spacing:.12em;color:#a1bca9;font-weight:750}
+.ng-logo-mini{margin:0;width:29px;height:29px}
 .ng-mini-home:hover{background:#234738;border-color:#5a816a}
 .ng-mast-fig:hover{background:#ffffff0b;color:#fff}
 .ng-clockblock:hover{background:#ffffff0b}
