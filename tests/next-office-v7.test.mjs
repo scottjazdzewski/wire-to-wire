@@ -198,9 +198,9 @@ test('First FM/OOTP desktop subpage pilot: Horse Profile data density, connected
  const profile=js.slice(start,end);
  assert.ok(profile.includes("isHorse=route.kicker==='Horse Profile'"),'Horse template must be explicitly shared without affecting others');
  assert.ok(profile.includes("['Overview','Career Record','Pedigree','Achievements','Connections','History']"),'Horse has an independently navigable Achievements tab');
- assert.ok(profile.includes('aria-current="${APP.detailTab===t?'),'Active profile section must be accessible');
- assert.ok(profile.includes('ng-horse-careercard'),'Career summary must be visible on Horse Overview rather than buried behind another tab');
- assert.ok(profile.includes('ng-horse-connections'),'Connected trainer/owner/jockey/farm records should be visible in first overview');
+ assert.ok(profile.includes('aria-label="Open deeper profile records"'),'Horse profile detail sections remain accessible through a compact selector');
+ assert.ok(profile.includes("panel('CAREER RECORD',careerBody)"),'Career summary must be visible on the main horse dossier');
+ assert.ok(profile.includes("panel('KEY CONNECTIONS',connections)"),'Source-backed connections must be visible in the main horse dossier');
  assert.ok(profile.includes('connectionRows()'),'Connections use existing source-linked route actions');
  assert.ok(profile.includes("data-ng=\"sourcebutton\""),'Connections and decision links must reuse the original source route actions');
  assert.ok(profile.includes('horseAchievements'),'Achievements must come from the existing approved source panel');
@@ -208,9 +208,9 @@ test('First FM/OOTP desktop subpage pilot: Horse Profile data density, connected
  assert.ok(profile.includes("officePhotoIndex?.entities?.[entityPhotoKind+':'+route.title]"),'Entity portraits may only be shown when actually linked in the approved photo index');
  assert.ok(profile.includes('sourceDecision')&&profile.includes('sourceFollowUp'),'Source-linked related decisions and follow-ups must remain navigable');
  assert.ok(css.includes('.ng-detail-cols-horse-overview'),'Horse profile layout must remain in the canonical stylesheet');
- assert.ok(css.includes('grid-template-columns:minmax(0,.92fr) minmax(0,1.03fr) minmax(0,1.1fr)'),'Desktop horse overview uses three purposeful, dense columns');
+ assert.ok(css.includes('.ng-horse-mgr-four{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))')&&css.includes('.ng-horse-mgr-five{display:grid;grid-template-columns:1fr 1fr 1fr 1.25fr 1.1fr'),'Desktop horse dossier has four rating and five operations panels');
  assert.ok(css.includes('.ng-route-profile .ng-profile-horse .ng-profile-intro{'),'Horse profile has a compact identity band');
- assert.ok(css.includes('.ng-route-profile .ng-profile-horse .ng-horse-activity .ng-notes'),'Supporting Office context uses its own dense panel');
+ assert.ok(css.includes('.ng-horse-mgr-notes{')&&css.includes('.ng-horse-form-table{'),'Office notes and certified recent race form have compact tables');
  const result=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(result.status,0,result.stderr);
 });
@@ -290,14 +290,14 @@ test('Horse athletic overview uses four sourced FM-style trait groups with expli
  assert.ok(profile.includes('const athleteOverview=()=>'),'Horse Overview must use one dedicated athlete component');
  assert.ok(profile.includes('athleteAttributeCatalog'),'Horse attributes must come from the versioned definitions');
  assert.ok(profile.includes("state().scoutingState?.[route.title]"),'Scout observations must be read from the existing Office state');
- assert.ok(profile.includes('Array.isArray(report.evidence_refs)&&report.evidence_refs.length>0'),'Display only evidenced scouting/measurement values');
- assert.ok(profile.includes("'Unassessed'"),'Unknown ratings must remain unassessed');
- assert.ok(profile.includes('UNASSESSED IS NOT ZERO'),'The UI must distinguish unknown from poor');
- assert.ok(profile.includes('ng-athlete-secondary'),'Current condition, career and connections belong under athletics');
- assert.ok(profile.includes('No verified career figures attached'),'Empty careers must not create oversized fake KPI cards');
- assert.ok(css.includes('.ng-athlete-groups{'),'Four groups must be laid out together rather than as long vertical cards');
+ assert.ok(profile.includes('Array.isArray(r.evidence_refs)&&r.evidence_refs.length>0'),'Display only evidenced scouting/measurement values');
+ assert.ok(profile.includes("'Not yet assessed'"),'Unknown ratings must remain explicitly unassessed');
+ assert.ok(profile.includes('UNASSESSED ≠ ZERO'),'The UI must distinguish unknown from poor');
+ assert.ok(profile.includes('ng-horse-mgr-five'),'Current condition, career and connections are all shown directly under ratings');
+ assert.ok(profile.includes('No verified career figures in this Office record.'),'Empty careers must not create fake KPI cards');
+ assert.ok(css.includes('.ng-horse-mgr-four{'),'Four groups must be laid out together rather than as long vertical cards');
  assert.ok(css.includes('grid-template-columns:repeat(4,minmax(0,1fr))'),'Overview groups must fit across the desktop viewport');
- assert.ok(css.includes('.ng-athlete-attribute strong.unknown'),'Unassessed traits must not receive a quality meter or fabricated color grade');
+ assert.ok(css.includes('.ng-horse-rating-row>strong.unknown')&&css.includes('.ng-horse-rating-unassessed'),'Unassessed traits must not receive a fabricated quality meter');
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);
 });
@@ -318,7 +318,7 @@ test('People profiles surface skills and sourced industry reputation without con
  }
  assert.ok(profile.includes('const personWork=()=>'),'People should use a reusable human character model');
  assert.ok(profile.includes('ng-person-workspace'),'Overview should show useful professional skills, reputation and appointments immediately');
- assert.ok(profile.includes('<option value="')&&profile.includes('data-ng-select="person-record"'),'All detailed Skills records remain reachable from one compact dropdown');
+ assert.ok(profile.includes('<option value="')&&profile.includes('data-ng-select="profile-record"'),'All detailed Skills records remain reachable from one compact dropdown');
  assert.ok(profile.includes("APP.detailTab==='Reputation'"),'Professional reputation full evidence remains reachable from the records menu');
  assert.ok(profile.includes("work.reputation_profile"),'Office prototype may display only an explicitly supplied, sourced reputation');
  assert.ok(profile.includes("source?.schema==='WTW_PERSON_REPUTATION_V1'"),'Only game reputation schema ratings should be shown');
@@ -394,7 +394,7 @@ test('Tier 1 entity screens use the same compact identity bar and no-scroll Over
  assert.ok(p.includes('stakesTable(5)'),'Track shows real linked stakes without overfilling the overview');
  assert.ok(p.includes('data-val="Connected Horses"'),'Farm primary screen must link directly to its deeper horse records');
  assert.ok(p.includes('data-val="Major Races"'),'Track primary screen must link to full stakes history');
- assert.ok(p.includes('data-ng-select="person-record"')&&p.includes("APP.detailTab==='Reputation'"),'Full sourced reputation details remain accessible through one compact record selector');
+ assert.ok(p.includes('data-ng-select="profile-record"')&&p.includes("APP.detailTab==='Reputation'"),'Full sourced reputation details remain accessible through one compact record selector');
  assert.ok(css.includes('.ng-tier1-workspace')&&css.includes('.ng-tier1-biography'),'Shared Tier 1 screen layout must remain in the canonical stylesheet');
  assert.ok(css.includes('.ng-detail-cols-tier1'),'Farm/Track workspaces must have a dedicated viewport-sized body');
  assert.ok(css.includes('.ng-detail-cols-person'),'People Overview must be bounded to the viewport');
@@ -605,13 +605,13 @@ test('People Overview places attributes, reputation, horses, career and relation
 test('People FM dossier is full-information-first, limits navigation and uses natural panel heights',()=>{
  const js=get('public/next/next.js'),css=get('public/next/next.css');
  const p=js.slice(js.indexOf('function profileDetail('),js.indexOf('function calendarTimeline('));
- const personNav=p.slice(p.indexOf('const tabbar=isPerson?'),p.indexOf('const factsBlock='));
+ const personNav=p.slice(p.indexOf('const tabbar=(isPerson||isHorse)?'),p.indexOf('const factsBlock='));
  assert.ok(personNav.includes('ng-person-dossierbar'),'Personnel uses one slim dossier bar, not eight visible tabs');
  assert.ok(personNav.includes('ONE-SCREEN OVERVIEW'),'No-click Overview is the default file');
  assert.ok(personNav.includes('data-val="History"'),'History remains a one-click action');
- assert.ok(personNav.includes('data-ng-select="person-record"'),'Supplemental details are grouped under one select');
+ assert.ok(personNav.includes('data-ng-select="profile-record"'),'Supplemental details are grouped under one select');
  assert.ok(personNav.includes("tabs.filter(t=>!['Overview','History'].includes(t))"),'Six secondary tabs stay behind one record selector');
- assert.ok(js.includes("field.matches('select[data-ng-select=\"person-record\"]')"),'Record dropdown changes actual rendered page');
+ assert.ok(js.includes("field.matches('select[data-ng-select=\"profile-record\"]')"),'Record dropdown changes actual rendered page');
  assert.ok(p.includes('common.length+special.length'),'Coverage counts all canonical person traits');
  assert.ok(p.includes('ng-person-skill-columns')&&p.includes('column(first,')&&p.includes('column(second,')&&p.includes('column(special,'),'Skills presented in compact multi-column FM ratings matrix');
  assert.ok(p.includes('UNKNOWN DOES NOT MEAN ZERO'),'Unknown ratings are not fabricated');
