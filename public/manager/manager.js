@@ -41,6 +41,9 @@ function openRecord(kind,name,track){
   return;
  }
  ui.view='profile';
+ const route=new URLSearchParams({page:kind,name});
+ if(track)route.set('track',track);
+ history.replaceState({mg:'profile'},'',siteRoot()+'?'+route.toString());
  setTimeout(render,80);
 }
 const panel=(title,body,caption='',cl='')=>'<section class="mg-section '+cl+'"><header><strong>'+h(title)+'</strong>'+(caption?'<small>'+h(caption)+'</small>':'')+'</header>'+body+'</section>';
