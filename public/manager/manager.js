@@ -196,9 +196,10 @@ function caseDecision(){
  '<div class="mg-case-intelligence">'+notes+'</div>'+nextAction,'ACTIVE MANAGEMENT FILE');
 }
 function inboxView(){
- const all=cases();
- const rows=all.map((m,i)=>button('<i>'+h(m.source.split(/\s+/).map(x=>x[0]).join('').slice(0,2))+'</i><div><strong>'+h(m.title)+'</strong><span>'+h(m.source)+' · '+h(m.type)+'</span></div><time>'+('0'+(i+1)).slice(-2)+'</time>','case',m.id,'mg-feed-row'+(ui.caseId===m.id?' active':''))).join('');
- return panel('Inbox',rows,all.length+' OFFICE FILES');
+ const all=cases(),offset=(Number(ui.homePage)||0)*5,visible=all.slice(offset,offset+5);
+ const rows=visible.map((m,i)=>button('<i>'+h(m.source.split(/\s+/).map(x=>x[0]).join('').slice(0,2))+'</i><div><strong>'+h(m.title)+'</strong><span>'+h(m.source)+' · '+h(m.type)+'</span></div><time>'+('0'+(offset+i+1)).slice(-2)+'</time>','case',m.id,'mg-feed-row'+(ui.caseId===m.id?' active':''))).join('');
+ const range=visible.length?' · '+(offset+1)+'–'+Math.min(offset+visible.length,all.length):'';
+ return panel('Inbox',rows,all.length+' OFFICE FILES'+range);
 }
 function stableRows(){
  const all=records().filter(x=>x.kind==='horse');
@@ -210,18 +211,23 @@ function stableRows(){
 }
 function home(){
  const all=cases(),horseRecords=records().filter(r=>r.kind==='horse');
+ const size=5;
  const staff=records().filter(r=>r.kind==='person');
  const game=readState();
- const source=$$('.fixtureList .fixture').slice(0,8);
+ const selected=currentCase();
+ const allSource=$$('.fixtureList .fixture');
+ const pageCount=Math.max(1,Math.ceil(all.length/size),Math.ceil(horseRecords.length/size),Math.ceil(allSource.length/size));
+ const page=Math.min(pageCount-1,Math.max(0,Number(ui.homePage)||0));
+ const source=allSource.slice(page*size,page*size+size);
  const calendarRows=source.map(n=>'<tr>'+tableCell(h($('.d',n)?.textContent.trim()||'—'))+
    tableCell(h($('h4',n)?.textContent.trim()||'—'),'strong')+
    tableCell(h($('p',n)?.textContent.trim()||'—'),'dim')+'</tr>');
  const calendar=panel('Racing Schedule',compactTable([{text:'DATE',style:'width:74px'},{text:'HORSE / EVENT'},{text:'TRACK & CONDITIONS'}],calendarRows),
-   source.length+' SCHEDULED ENTRIES','mg-office-panel');
+   source.length+' SCHEDULED ENTRIES');
  const staffRows=staff.slice(0,8).map(r=>'<tr>'+tableCell(linkRecord(r,r.name),'strong')+
    tableCell(h(r.detail||'—'),'dim')+tableCell(button('›','open','person|'+r.name+'|','mg-rowlink'),'numeric')+'</tr>');
- const staffPanel=panel('Personnel & Assignments',compactTable([{text:'PERSON'},{text:'ROLE'},{text:'PROFILE',style:'width:45px'}],staffRows),staff.length+' STAFF RECORDS','mg-office-panel');
- const rosterRows=horseRecords.map(r=>{
+ const staffPanel=panel('Personnel & Assignments',compactTable([{text:'PERSON'},{text:'ROLE'},{text:'PROFILE',style:'width:45px'}],staffRows),staff.length+' STAFF RECORDS');
+ const rosterRows=horseRecords.slice(page*size,page*size+size).map(r=>{
   const status=game.horseState?.[r.name]?.status||all.find(c=>c.title?.toLowerCase().includes(r.name.toLowerCase()))?.type||'No new report';
   const target=game.calendarState?.[r.name]?.race_target||'—';
   return '<tr>'+tableCell(linkRecord(r,r.name,true),'strong')+
@@ -230,13 +236,13 @@ function home(){
  });
  const roster=panel('Active Stable Roster',compactTable([
   {text:'HORSE',style:'width:29%'},{text:'OWNER',style:'width:26%'},
-  {text:'CURRENT FILE'},{text:'TARGET'},{text:'OPEN',style:'width:45px'}],rosterRows),horseRecords.length+' HORSES','mg-office-panel');
+  {text:'CURRENT FILE'},{text:'TARGET'},{text:'OPEN',style:'width:45px'}],rosterRows),horseRecords.length+' HORSES');
  const priority=panel('Decision & Opportunity Ledger',compactTable([
   {text:'CASE / SUBJECT',style:'width:48%'},{text:'PRESSURE'},
   {text:'PRIMARY RISK'},{text:'OPEN',style:'width:47px'}],
-  all.map(c=>'<tr>'+tableCell(button(h(c.title),'case',c.id,'mg-rowlink'),'strong')+
+  all.slice(page*size,page*size+size).map(c=>'<tr>'+tableCell(button(h(c.title),'case',c.id,'mg-rowlink'),'strong')+
    tableCell(h(c.pressure||'—'),'gold')+tableCell(h(c.risk||'—'),'dim')+
-   tableCell(button('›','case',c.id,'mg-rowlink'),'numeric')+'</tr>')),all.length+' CURRENT CASES','mg-office-panel');
+   tableCell(button('›','case',c.id,'mg-rowlink'),'numeric')+'</tr>')),all.length+' CURRENT CASES');
  const pressureLevels=[
   ['HIGH',all.filter(x=>/high|urgent/i.test(x.pressure||'')).length],
   ['MEDIUM',all.filter(x=>/medium|moderate/i.test(x.pressure||'')).length],
@@ -245,26 +251,24 @@ function home(){
  const pressurePanel=panel('Decision Pressure','<div class="mg-office-pressure">'+
   pressureLevels.map(([label,count])=>'<div class="mg-office-pressure-item"><small>'+label+
    '</small><strong>'+count+'</strong></div>').join('')+'</div>',
-  all.length+' SOURCE CASES','mg-office-panel');
+  all.length+' SOURCE CASES');
  const watch=panel('Stable Intelligence',compactTable([
   {text:'HORSE / SOURCE'},{text:'CURRENT SIGNAL'},{text:'OPEN',style:'width:47px'}],
-  all.slice(0,8)
+  all.slice(page*size,page*size+size)
    .map(c=>'<tr>'+tableCell(button(h(c.source),'case',c.id,'mg-rowlink'),'strong')+
       tableCell(h(c.read||'Office review'),'dim')+tableCell(button('›','case',c.id,'mg-rowlink'),'numeric')+'</tr>')),
-   'LIVE OFFICE READS','mg-office-panel');
- const active=((Number(ui.homePage)||0)%3+3)%3;
- const viewNames=['FRONT OFFICE','RACING & PERSONNEL','STABLE & DECISIONS'];
- const previous='<button type="button" class="mg-button" data-act="MG UI" data-mg="home-page" data-value="-1" aria-label="Previous Racing Office view">‹ BACK</button>';
- const next='<button type="button" class="mg-button" data-act="MG UI" data-mg="home-page" data-value="1" aria-label="Next Racing Office view">NEXT ›</button>';
- const pager='<div class="mg-office-pager"><span aria-live="polite">VIEW '+(active+1)+' / 3 · '+viewNames[active]+'</span>'+previous+next+'</div>';
- const actionBar=pager+button('GLOBAL DIRECTORY','nav','search')+button('MY STABLE','nav','stable');
- const pages=[
-  '<div class="mg-office-view mg-office-view-front"><div class="mg-office-page-left">'+inboxView()+'</div><div class="mg-office-page-main">'+caseDecision()+'</div></div>',
-  '<div class="mg-office-view mg-office-view-racing"><div class="mg-office-page-main">'+calendar+'</div><div class="mg-office-page-side">'+staffPanel+pressurePanel+'</div></div>',
-  '<div class="mg-office-view mg-office-view-stable"><div class="mg-office-page-third">'+roster+'</div><div class="mg-office-page-third">'+priority+'</div><div class="mg-office-page-third">'+watch+'</div></div>'
- ];
- return pageBar('Racing Office','DAILY MANAGEMENT · '+nowDate(),actionBar)+
-  '<div class="mg-content mg-office-content"><div class="mg-office-pages">'+pages[active]+'</div></div>';
+   'LIVE OFFICE READS');
+ const pager='<div class="mg-office-pager"><span>PAGE '+(page+1)+' / '+pageCount+'</span>'+
+  '<button type="button" class="mg-button" data-act="MG UI" data-mg="home-page" data-value="-1" aria-label="Previous dashboard page">‹ BACK</button>'+
+  '<button type="button" class="mg-button" data-act="MG UI" data-mg="home-page" data-value="1" aria-label="Next dashboard page">NEXT ›</button></div>';
+ return pageBar('Racing Office','DAILY MANAGEMENT · '+nowDate(),
+   pager+button('GLOBAL DIRECTORY','nav','search')+button('MY STABLE','nav','stable'))+
+ '<div class="mg-content mg-office-content">'+
+ '<div class="mg-home-top"><div class="mg-home-stack mg-home-inbox">'+inboxView()+'</div>'+
+ '<div class="mg-home-stack mg-home-case">'+caseDecision()+'</div>'+
+ '<div class="mg-home-stack mg-home-side">'+calendar+staffPanel+pressurePanel+'</div></div>'+
+ '<div class="mg-home-bottom">'+roster+priority+watch+'</div>'+
+ '</div>';
 }
 function sourceProfile(){
  const doc=$('#routeBody .profilePage');if(!doc)return null;
@@ -982,7 +986,7 @@ root.addEventListener('click',event=>{
  const el=event.target.closest('[data-mg]');if(!el)return;
  event.preventDefault();event.stopPropagation();
  const action=el.dataset.mg,value=el.dataset.value||'';
- if(action==='home-page'){ui.homePage=(ui.homePage+(Number(value)||0)+3)%3;render();return}
+ if(action==='home-page'){const total=Math.max(1,Math.ceil(cases().length/5),Math.ceil(records().filter(r=>r.kind==='horse').length/5),Math.ceil($$('.fixtureList .fixture').length/5));ui.homePage=(ui.homePage+(Number(value)||0)+total)%total;render();return}
  if(action==='nav'){nav(value);return}
  if(action==='open'){goFromSearch(value);return}
  if(action==='open-case'){ui.caseId=value;ui.homePage=0;const source=$('.app .msg[data-case="'+CSS.escape(value)+'"]');if(source)withSilentOfficeRoute(()=>source.click());nav('office');return}

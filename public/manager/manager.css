@@ -267,87 +267,6 @@ body>.app,body>#routeShell,body>#toast,body>.wtw-site-archive-link{display:none!
 .mg-operations-grid.mg-stable-command>.mg-section:nth-child(2){grid-column:2;grid-row:1}
 .mg-operations-grid.mg-stable-command>.mg-section:nth-child(3){grid-column:2;grid-row:2;min-height:0;max-height:none}
 .mg-operations-grid.mg-stable-command>.mg-section:nth-child(4){grid-column:2;grid-row:3}
-/* Tier One stable roster — FM/OOTP density, shared slate + racing accents. */
-.mg-stable-roster-page{gap:7px;padding:8px 10px 9px}
-.mg-stable-toolbar{display:flex;align-items:center;gap:9px;min-height:33px;flex:0 0 auto}
-.mg-stable-query{height:30px;display:flex;align-items:center;gap:6px;flex:1 1 250px;max-width:330px;background:#1b272e;border:1px solid #43564e;border-radius:3px;color:#9db6ad;padding:0 8px}
-.mg-stable-query input{width:100%;min-width:0;color:#e5ece7;background:transparent;border:0;outline:0;font-size:11px}
-.mg-stable-query:focus-within{outline:1px solid #8aad96}
-.mg-stable-filters,.mg-stable-views{display:flex;align-items:center;gap:4px;flex-wrap:nowrap}
-.mg-stable-filters .mg-button,.mg-stable-views .mg-button{height:27px;padding:0 8px;font-size:9.3px;letter-spacing:.015em}
-.mg-stable-views{margin-left:auto}
-.mg-stable-roster-panel{flex:1 1 60%;min-height:0}
-.mg-stable-roster-panel>header{height:29px;flex-basis:29px}
-.mg-stable-roster-scroller{min-width:0;flex:1 1 auto;scrollbar-width:thin;scrollbar-color:#557164 #162128;overscroll-behavior:contain}
-.mg-stable-roster{min-width:1470px;width:100%;table-layout:fixed}
-.mg-stable-roster thead{z-index:5}
-.mg-stable-roster thead th{height:31px;padding:5px 4px;font-size:9px;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:clip}
-.mg-stable-roster .mg-table-sortmark{margin-left:3px;font-size:9px}
-.mg-stable-roster td{height:46px;font-size:10.4px;padding:5px 4px;border-bottom-color:#344249}
-.mg-stable-roster td:first-child,.mg-stable-roster th:first-child{position:sticky;left:0;z-index:3;box-shadow:2px 0 0 #354a43}
-.mg-stable-roster th:first-child{z-index:8;background:#26333b}
-.mg-stable-roster td:first-child{background:#18232b}
-.mg-stable-roster tr:nth-child(even) td:first-child{background:#202c34}
-.mg-stable-roster tbody tr:hover td:first-child{background:#2a403b}
-.mg-stable-roster th:nth-child(1){width:170px}
-.mg-stable-roster th:nth-child(2){width:57px}
-.mg-stable-roster th:nth-child(3){width:94px}
-.mg-stable-roster th:nth-child(4){width:99px}
-.mg-stable-roster th:nth-child(5),.mg-stable-roster th:nth-child(6){width:70px}
-.mg-stable-roster th:nth-child(7){width:78px}
-.mg-stable-roster th:nth-child(8){width:91px}
-.mg-stable-roster th:nth-child(9){width:113px}
-.mg-stable-roster th:nth-child(10){width:113px}
-.mg-stable-roster th:nth-child(11){width:86px}
-.mg-stable-roster th:nth-child(12),.mg-stable-roster th:nth-child(13),.mg-stable-roster th:nth-child(14){width:111px}
-.mg-stable-roster th:nth-child(15){width:73px}
-.mg-stable-roster th:nth-child(16){width:43px}
-.mg-stable-horse-cell{display:flex;align-items:center;gap:6px;min-width:0}
-.mg-stable-horse-cell .mg-owner-mark{width:22px;height:22px;flex:0 0 22px}
-.mg-stable-name{border:0;padding:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:transparent;color:#f5e7c6;font-size:11.5px;text-align:left;font-weight:840}
-.mg-stable-name:hover,.mg-stable-name:focus-visible{color:#fff;text-decoration:underline}
-.mg-stable-horse-id small{display:block;padding:2px 0 0 28px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#8eafa2;font-size:9px}
-.mg-stable-age{color:#c0cfd1;font-variant-numeric:tabular-nums}
-.mg-stable-signal{display:inline-flex;align-items:center;gap:4px;max-width:100%;white-space:nowrap;font-size:10px;font-weight:730}
-.mg-stable-signal>b{display:inline-flex;align-items:center;justify-content:center;flex:0 0 19px;width:19px;height:18px;font-size:12px;font-weight:800;border:1px solid currentColor;border-radius:3px;background:color-mix(in srgb,currentColor 12%,transparent)}
-.mg-stable-signal>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mg-stable-signal.good{color:#87d3a7}
-.mg-stable-signal.info{color:#89bde4}
-.mg-stable-signal.warn{color:#e5ba75}
-.mg-stable-signal.danger{color:#ed7e86}
-.mg-stable-signal.neutral{color:#8da6a3}
-.mg-stable-stars{letter-spacing:.2px;font-size:13px;white-space:nowrap;color:#5c6b66}
-.mg-stable-stars em{font-style:normal;color:#e2bf79}
-.mg-stable-unknown{color:#879b94}
-.mg-stable-star-cell{text-align:center}
-.mg-stable-next,.mg-stable-target{color:#d2ba87}
-.mg-stable-person{color:#b7c8bf}
-.mg-stable-roster-legend{display:flex;align-items:center;flex-wrap:wrap;column-gap:12px;row-gap:4px;flex:0 0 auto;min-height:33px;padding:5px 9px;background:#1b2a2b;border-top:1px solid #3b5146}
-.mg-stable-roster-legend .mg-stable-signal{font-size:9px}
-.mg-stable-roster-legend .mg-stable-signal>b{width:15px;height:15px;flex-basis:15px;font-size:10px}
-.mg-stable-roster-legend>span:last-child{margin-left:auto;color:#93a9a1;font-size:9px}
-.mg-stable-support{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.85fr) minmax(0,1.2fr);gap:7px;min-height:0;flex:0 0 164px}
-.mg-stable-support>.mg-section{height:100%}
-.mg-stable-support .mg-table td{height:30px;font-size:10px}
-.mg-stable-support .mg-table th{height:25px}
-.mg-stable-roster-focus{min-width:1090px}
-.mg-stable-roster-focus tr>:nth-child(10),.mg-stable-roster-focus tr>:nth-child(12),.mg-stable-roster-focus tr>:nth-child(14),.mg-stable-roster-focus tr>:nth-child(15){display:none}
-.mg-stable-empty{padding:22px!important;text-align:center;color:#aac0b4}
-@media(max-width:1280px){
- .mg-stable-toolbar{gap:5px}
- .mg-stable-query{flex-basis:180px;max-width:230px}
- .mg-stable-filters .mg-button,.mg-stable-views .mg-button{font-size:8.5px;padding:0 6px}
- .mg-stable-roster td{height:41px}
- .mg-stable-support{flex-basis:149px}
-}
-@media(max-width:850px){
- .mg-stable-toolbar{flex-wrap:wrap}
- .mg-stable-query{max-width:none;flex-basis:100%}
- .mg-stable-filters,.mg-stable-views{flex-wrap:wrap}
- .mg-stable-views{margin-left:0}
- .mg-stable-support{grid-template-columns:minmax(0,1fr);flex-basis:110px}
- .mg-stable-support>.mg-section:nth-child(n+2){display:none}
-}
 .mg-stable-horse-list{display:flex;flex-direction:column;flex:1;min-width:0;min-height:0;overflow:auto;scrollbar-width:thin;scrollbar-color:#445f59 #182128}
 .mg-stable-horse-card{display:flex;flex:1 0 auto;flex-direction:column;justify-content:center;min-height:77px;padding:6px 11px;border-bottom:1px solid #303c41;background:#18222a;gap:5px}
 .mg-stable-horse-card:nth-child(2n){background:#1e2932}
@@ -486,77 +405,37 @@ body>.app,body>#routeShell,body>#toast,body>.wtw-site-archive-link{display:none!
 .mg-horse-starline em{font-size:8px;font-style:normal;color:#a8b9ac;white-space:nowrap}
 .mg-owner-mark{width:19px;height:19px;flex:0 0 19px;font-size:10px}
 
-/* Racing Office dashboard: three screen-sized views, no panel scrolling */
-.mg-rail{overflow:hidden!important}
-.mg-office-content{box-sizing:border-box!important;display:flex!important;flex:1 1 0!important;min-height:0!important;padding:7px 10px 9px!important;overflow:hidden!important}
-.mg-office-pages{display:block;flex:1 1 0;min-width:0;min-height:0;overflow:hidden}
-.mg-office-view{box-sizing:border-box;display:grid;width:100%;height:100%;min-width:0;min-height:0;gap:8px;overflow:hidden}
-.mg-office-view-front{grid-template-columns:minmax(270px,.78fr) minmax(0,1.52fr)}
-.mg-office-view-racing{grid-template-columns:minmax(0,1.6fr) minmax(290px,.78fr)}
-.mg-office-view-stable{grid-template-columns:repeat(3,minmax(0,1fr))}
-.mg-office-page-left,.mg-office-page-main,.mg-office-page-side,.mg-office-page-third{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:0;overflow:hidden}
-.mg-office-page-left>.mg-office-panel,.mg-office-page-main>.mg-office-panel,.mg-office-page-third>.mg-office-panel{flex:1 1 0;min-height:0}
-.mg-office-page-side>.mg-office-panel{flex:1 1 0;min-height:0}
-.mg-office-view .mg-section{min-height:0;overflow:hidden}
-.mg-office-view .mg-table-wrap,.mg-office-view .mg-home-inbox .mg-section,.mg-office-view .mg-home-case .mg-section{min-height:0;overflow:hidden!important}
-.mg-office-view .mg-table{width:100%;table-layout:fixed}
-.mg-office-view .mg-table th{height:32px;padding:5px 6px;font-size:9px}
-.mg-office-view .mg-table td{height:39px;padding:5px 6px;font-size:10.5px;line-height:1.2}
-.mg-office-view .mg-table td>*{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
-.mg-office-view .mg-feed-row{min-height:0;height:calc((100% - 29px) / 8);padding:5px 8px}
-.mg-office-view .mg-home-inbox .mg-section{display:flex;flex-direction:column}
-.mg-office-view .mg-home-inbox .mg-section>.mg-feed-row{flex:1 1 0}
-.mg-office-view .mg-home-case .mg-section{display:flex;flex-direction:column}
-.mg-office-view .mg-home-case .mg-case-top{flex:1 1 0;min-height:190px;max-height:48%}
-.mg-office-view .mg-home-case .mg-case-copy{padding:12px 14px}
-.mg-office-view .mg-home-case .mg-case-copy h2{font-size:clamp(21px,2vw,31px)}
-.mg-office-view .mg-home-case .mg-case-choices{flex:0 0 auto}
-.mg-office-view .mg-home-case .mg-choice{min-height:76px;padding:8px}
-.mg-office-view .mg-home-case .mg-case-intelligence{flex:1 1 auto;min-height:0;overflow:hidden}
-.mg-office-view .mg-home-case .mg-intel-row{min-height:0;padding:6px 8px}
-.mg-office-view .mg-home-case .mg-case-next{flex:0 0 auto}
-.mg-office-view .mg-office-page-side .mg-table td,.mg-office-view .mg-office-page-third .mg-table td{height:clamp(30px,4.2vh,38px)}
-.mg-office-view-racing .mg-office-page-side{display:grid;grid-template-rows:minmax(0,1fr) minmax(100px,.5fr);gap:8px}
+
+
+/* Racing Office keeps its original management-studio dashboard grid.
+   Back/Next pages records within panels so the page itself stays still. */
+.mg-office-content{min-height:0!important;overflow:hidden!important}
+.mg-home-top,.mg-home-bottom{min-width:0;min-height:0;overflow:hidden}
+.mg-home-inbox .mg-section,
+.mg-home-case .mg-section,
+.mg-home-bottom>.mg-section,
+.mg-home-side>.mg-section{min-height:0;overflow:hidden!important}
+.mg-home-inbox .mg-section{display:flex;flex-direction:column}
+.mg-home-inbox .mg-section>.mg-feed-row{
+ flex:1 1 0;min-height:0;height:auto!important;padding-top:4px;padding-bottom:4px
+}
+.mg-home-case .mg-section{display:flex;flex-direction:column}
+.mg-home-case .mg-case-top{flex:1 1 0;min-height:0;max-height:none}
+.mg-home-case .mg-case-copy{padding:10px 11px}
+.mg-home-case .mg-case-copy h2{font-size:clamp(19px,1.8vw,27px)}
+.mg-home-case .mg-case-choices{flex:0 0 auto}
+.mg-home-case .mg-choice{min-height:68px;padding:7px}
+.mg-home-case .mg-case-intelligence{flex:1 1 auto;min-height:0;overflow:hidden}
+.mg-home-case .mg-intel-row{min-height:0;padding:5px 7px}
+.mg-home-case .mg-case-next{flex:0 0 34px;min-height:34px}
+.mg-home-side .mg-table-wrap,
+.mg-home-bottom .mg-table-wrap{overflow:hidden!important;min-height:0}
+.mg-home-bottom .mg-table{width:100%;table-layout:fixed}
+.mg-home-bottom .mg-table th{height:25px;padding:4px 5px;font-size:9px}
+.mg-home-bottom .mg-table td{height:clamp(25px,3.2vh,29px);padding:4px 5px;font-size:10px}
 .mg-office-pager{display:inline-flex;align-items:center;gap:5px;margin-right:8px}
 .mg-office-pager>span{font-size:9px;font-weight:800;color:#cdbb86;letter-spacing:.04em;white-space:nowrap;margin-right:4px}
 .mg-office-pager .mg-button{height:25px;padding:0 8px}
 @media(max-width:1100px){
  .mg-office-pager>span{display:none}
- .mg-office-view-front{grid-template-columns:minmax(220px,.7fr) minmax(0,1.3fr)}
- .mg-office-view-racing{grid-template-columns:minmax(0,1.2fr) minmax(250px,.8fr)}
 }
-@media(max-width:800px){
- .mg-office-view{overflow:auto;grid-template-columns:minmax(0,1fr)}
- .mg-office-view-front,.mg-office-view-racing,.mg-office-view-stable{grid-template-columns:minmax(0,1fr)}
- .mg-office-view .mg-office-panel{min-height:260px}
- .mg-office-pager{margin-right:0}
- .mg-office-pager .mg-button{padding:0 5px}
-}
-
-.mg-office-view-front .mg-office-page-left>.mg-section,
-.mg-office-view-front .mg-office-page-main>.mg-section{display:flex;flex-direction:column}
-.mg-office-view-front .mg-office-page-left>.mg-section>.mg-feed-row{flex:1 1 0;min-height:0}
-.mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-top{flex:1 1 0;min-height:190px;max-height:48%}
-.mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-choices{flex:0 0 auto}
-.mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-intelligence{flex:1 1 auto;min-height:0;overflow:hidden}
-.mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-next{flex:0 0 auto}
-
-
-/* Fill each dashboard view with its panels; the section wrapper is .mg-section. */
-.mg-office-page-left>.mg-section,
-.mg-office-page-main>.mg-section,
-.mg-office-page-third>.mg-section{flex:1 1 0;min-height:0}
-.mg-office-page-side>.mg-section{min-height:0}
-.mg-office-view-front .mg-office-page-left>.mg-section,
-.mg-office-view-front .mg-office-page-main>.mg-section{display:flex;flex-direction:column}
-.mg-office-view-front .mg-office-page-left>.mg-section>.mg-feed-row{
- flex:1 1 0;height:auto!important;min-height:0
-}
-.mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-top{
- flex:1 1 0;min-height:190px;max-height:48%
-}
-.mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-choices{flex:0 0 auto}
-.mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-intelligence{
- flex:1 1 auto;min-height:0;overflow:hidden
-}
-.mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-next{flex:0 0 auto}
