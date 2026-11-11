@@ -564,11 +564,11 @@ test('Native dropdowns stay mounted through selection and preserve one-click mou
  const host={contains:el=>el===select,addEventListener:(type,fn)=>{handlers[type]=fn}};
  const documentStub={activeElement:select};
  const timers=[];
- const run=new Function('root','document','setTimeout','schedulePaint','APP',
+ const run=new Function('root','document','setTimeout','schedulePaint','APP','loadWorld1999',
   helpers+partialPaint+
   '\nreturn {paint,beginNativeSelectInteraction,endNativeSelectInteraction,'+
   'state:()=>({active:activeNativeSelect,pending:deferredNativeSelectPaint})};');
- const demo=run(host,documentStub,callback=>{timers.push(callback)},()=>{calls.push('paint')},{ready:true});
+ const demo=run(host,documentStub,callback=>{timers.push(callback)},()=>{calls.push('paint')},{ready:true},()=>{});
  assert.ok(handlers.pointerdown&&handlers.focusin&&handlers.focusout,'Pointer/focus guards must be registered');
  handlers.pointerdown({target:{closest:()=>select}});
  demo.paint();
@@ -620,7 +620,9 @@ test('Named management entities open exact profiles or clearly marked unregister
   '__wtwOfficeOpenSearchRecord:(kind,name,track)=>{calls.push({kind,name,track});return true}};',
   'const safe=value=>String(value??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(String.fromCharCode(34),"&quot;");',
   'const schedulePaint=()=>{};',
-  'const openCustomView=view=>{APP.custom=view};'
+  'const openCustomView=view=>{APP.custom=view};',
+  'const world1999Match=()=>null; // Empty new source index in this legacy-router unit test.',
+  'const openWorld1999Entity=()=>false;'
  ].join('\n');
  const make=new Function(setup+'\n'+helper+
   '\nreturn {APP,calls,entitySourceMatch,entityNotRecorded,openEntityRecord,previewRecordView,namedProfileValue};');
