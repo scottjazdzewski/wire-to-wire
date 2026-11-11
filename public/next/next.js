@@ -39,7 +39,7 @@ function personGeographyRecord(source,name){
 const genericDeskPhoto='/assets/office/approved-office-photo.jpg';
 let organizationLogoIndex=null; // UI-only logo asset refs; organization authority stays in the game database.
 
-const tabmap={Office:['Overview','Messages','Decisions','Calendar','News','Reports','Career'],History:['Race Results','Horses','People & Farms','Facilities & Tracks','Historical Calendar','Coverage'],Stable:['Overview','Horses','Training','Health','Race Plans','Barns'],Racing:['Overview','Calendar','Entries','Results','Stakes','Race Planning'],Breeding:['Overview','Stallions','Broodmares','Foals','Pedigrees','Stud Farms'],Sales:['Overview','Auctions','Catalogs','Watchlist','Private Offers'],Personnel:['Overview','Trainers','Jockeys','Owners','Staff'],Facilities:['Overview','Stud Farms','Training Centers','Breaking Facilities','Racing Stables','Ownership Groups','Barns','Farms'],Tracks:['Overview','Active Meets','All Tracks','Stakes'],Finances:['Overview','Cash Flow','Operating Costs','Budgets'],World:['Overview','Tracks','Meets','Major Races','News']};
+const tabmap={Office:['Overview','Messages','Decisions','Calendar','News','Reports','Career'],History:['Race Results','Horses','People & Farms','Facilities & Tracks','Historical Calendar','Coverage'],Stable:['Overview','Horses','Training','Health','Race Plans','Barns'],Racing:['Overview','Calendar','Entries','Results','Stakes','Race Planning'],Breeding:['Overview','Stallions','Broodmares','Foals','Pedigrees','Stud Farms'],Sales:['Overview','Auctions','Sale Calendar','Sale Companies','Catalogs','Watchlist','Private Offers'],Personnel:['Overview','Trainers','Jockeys','Owners','Staff'],Facilities:['Overview','Stud Farms','Training Centers','Breaking Facilities','Racing Stables','Ownership Groups','Barns','Farms'],Tracks:['Overview','Active Meets','All Tracks','Stakes'],Finances:['Overview','Cash Flow','Operating Costs','Budgets'],World:['Overview','Tracks','Meets','Major Races','News']};
 const actions={Office:'Office Overview',Stable:'Stable',Racing:'Race Calendar',Sales:'Sales',World:'World'};
 const officeMenu={Overview:'Office Overview',Messages:'Filter All',Decisions:'Open move history',Calendar:'Open Race Calendar',News:'News',Reports:'Open move history',Career:'Open move history'};
 const state=()=>{try{return JSON.parse(localStorage.getItem('wtwOfficeStateV30')||'{}')}catch{return {}}};
@@ -1183,12 +1183,75 @@ const DEP_COLUMNS={
  Facilities:[['name','FACILITY',14],['type','TYPE',9],['location','CITY / STATE',13],['capacity','CAP',5],['occupied','USED',5],['free','FREE',5],['condition','COND',7],['quality','QUALITY',7],['staff','STAFF',5],['cost','MONTHLY COST',10],['owner','OWNER',12],['status','STATUS',8]],
  Finances:[['date','DATE',11],['category','CATEGORY',16],['description','TRANSACTION / PURPOSE',28],['department','HORSE / DEPARTMENT',19],['income','INCOME',10],['expense','EXPENSE',10],['balance','BALANCE',6]]
 };
-const DEP_AUCTIONS=[
- {id:'july',date:'2014-07-19',name:'July Select Sale',city:'Lexington, KY'},
- {id:'summer',date:'2014-08-06',name:'Summer Yearling Sale',city:'Saratoga Springs, NY'},
- {id:'september',date:'2014-09-09',name:'September Yearling Sale',city:'Lexington, KY'},
- {id:'november',date:'2014-11-04',name:'November Breeding Stock Sale',city:'Lexington, KY'}
+/* Thoroughbred auction-house registry.
+   Company/sale relationships and 2014 dates checked against:
+   https://www.fasigtipton.com/results/2014
+   https://obssales.com/blog/category/obs-thoroughbred-sales/2014-sales/
+   https://www.keeneland.com/sites/default/files/April%20Sale-History%20and%20Stats.pdf
+   https://www.lanereport.com/36376/2014/07/keeneland-catalogs-4181-yearlings-for-september-sale/
+   https://www.lanereport.com/39176/2014/09/keeneland-catalogs-4026-horses-for-november-breeding-stock-sale/
+   https://ctba.com/barretts-adds-fall-paddock-sale/
+   These are scheduling facts, NOT catalog lots or game market prices.
+   Other years use a month-only seasonal approximation unless real dated
+   game-state auction records exist. Never fabricate an exact calendar day. */
+const DEP_SALE_HOUSES=Object.freeze({
+ keeneland:{name:'Keeneland',city:'Lexington, KY',website:'https://www.keeneland.com/sales/'},
+ fasigtipton:{name:'Fasig-Tipton',city:'Lexington, KY',website:'https://www.fasigtipton.com/'},
+ obs:{name:'OBS',fullName:"Ocala Breeders' Sales",city:'Ocala, FL',website:'https://obssales.com/'},
+ barretts:{name:'Barretts',city:'Southern California',website:''}
+});
+/* [company ID, official sale name, verified first date, verified final date, venue, category].
+   All listed 2014 dates are evidence-backed; market lot content remains a demo. */
+const DEP_SALE_EVENTS_2014=[
+ ['keeneland','January Horses of All Ages Sale','2014-01-06','2014-01-09','Lexington, KY','Mixed'],
+ ['obs','Winter Mixed Sale','2014-01-22','2014-01-24','Ocala, FL','Mixed'],
+ ['fasigtipton','Kentucky Winter Mixed Sale','2014-02-09','2014-02-10','Lexington, KY','Mixed'],
+ ['obs','March Selected Two-Year-Olds in Training Sale','2014-03-10','2014-03-11','Ocala, FL','2YO'],
+ ['fasigtipton','The Florida Sale','2014-03-24','2014-03-24','Williston, FL','2YO'],
+ ['keeneland','April Two-Year-Olds in Training Sale','2014-04-07','2014-04-07','Lexington, KY','2YO'],
+ ['obs','Spring Two-Year-Olds in Training Sale','2014-04-21','2014-04-24','Ocala, FL','2YO'],
+ ['fasigtipton','Midlantic Two-Year-Olds in Training Sale','2014-05-19','2014-05-20','Timonium, MD','2YO'],
+ ['obs','June Two-Year-Olds & Horses of Racing Age Sale','2014-06-17','2014-06-20','Ocala, FL','2YO / HRA'],
+ ['fasigtipton','The July Sale','2014-07-14','2014-07-14','Lexington, KY','Yearlings'],
+ ['fasigtipton','Summer Selected Horses of Racing Age Sale','2014-07-14','2014-07-14','Lexington, KY','HRA'],
+ ['fasigtipton','The Saratoga Sale','2014-08-04','2014-08-05','Saratoga Springs, NY','Yearlings'],
+ ['fasigtipton','New York Bred Yearlings Sale','2014-08-09','2014-08-10','Saratoga Springs, NY','Yearlings'],
+ ['obs','August Yearling Sale','2014-08-26','2014-08-28','Ocala, FL','Yearlings'],
+ ['keeneland','September Yearling Sale','2014-09-08','2014-09-21','Lexington, KY','Yearlings'],
+ ['fasigtipton','Midlantic Fall Yearlings Sale','2014-09-29','2014-09-29','Timonium, MD','Yearlings'],
+ ['fasigtipton','Saratoga Fall Sale','2014-10-06','2014-10-07','Saratoga Springs, NY','Mixed'],
+ ['fasigtipton','Texas Yearlings & Fall Mixed Sale','2014-10-13','2014-10-13','Grand Prairie, TX','Mixed'],
+ ['obs','Fall Mixed Sale','2014-10-14','2014-10-15','Ocala, FL','Mixed'],
+ ['fasigtipton','Kentucky October Yearlings Sale','2014-10-20','2014-10-22','Lexington, KY','Yearlings'],
+ ['fasigtipton','The November Sale','2014-11-03','2014-11-03','Lexington, KY','Breeding stock'],
+ ['keeneland','November Breeding Stock Sale','2014-11-04','2014-11-14','Lexington, KY','Breeding stock'],
+ ['barretts','Fall Paddock Sale','2014-11-08','2014-11-08','Del Mar, CA','HRA'],
+ ['fasigtipton','Midlantic December Mixed Sale','2014-12-08','2014-12-08','Timonium, MD','Mixed']
 ];
+/* Historical month patterns only, not a claim that a particular sale is
+   scheduled on the first day of any future or past year. Keeneland April
+   2YO ran through 2014; OBS' 2014 yearling sale was in AUGUST, not October. */
+const DEP_SALE_SEASONAL=[
+ ['keeneland','January Horses of All Ages Sale',1,'Lexington, KY','Mixed',1937,9999],
+ ['obs','Winter Mixed Sale',1,'Ocala, FL','Mixed',1982,9999],
+ ['fasigtipton','Kentucky Winter Mixed Sale',2,'Lexington, KY','Mixed',1990,9999],
+ ['obs','March Two-Year-Olds in Training Sale',3,'Ocala, FL','2YO',1982,9999],
+ ['keeneland','April Two-Year-Olds in Training Sale',4,'Lexington, KY','2YO',1993,2014],
+ ['obs','Spring Two-Year-Olds in Training Sale',4,'Ocala, FL','2YO',1982,9999],
+ ['fasigtipton','Midlantic May Two-Year-Olds in Training Sale',5,'Timonium, MD','2YO',1990,9999],
+ ['obs','June Two-Year-Olds and Horses of Racing Age Sale',6,'Ocala, FL','2YO / HRA',1982,9999],
+ ['fasigtipton','The July Sale',7,'Lexington, KY','Yearlings',1990,9999],
+ ['fasigtipton','The Saratoga Sale',8,'Saratoga Springs, NY','Yearlings',1900,9999],
+ ['fasigtipton','New York Bred Yearlings Sale',8,'Saratoga Springs, NY','Yearlings',1990,9999],
+ ['obs','August Yearling Sale',8,'Ocala, FL','Yearlings',1982,2014],
+ ['keeneland','September Yearling Sale',9,'Lexington, KY','Yearlings',1937,9999],
+ ['obs','October Yearling Sale',10,'Ocala, FL','Yearlings',2015,9999],
+ ['fasigtipton','Kentucky October Yearlings Sale',10,'Lexington, KY','Yearlings',1990,9999],
+ ['fasigtipton','The November Sale',11,'Lexington, KY','Breeding stock',1990,9999],
+ ['keeneland','November Breeding Stock Sale',11,'Lexington, KY','Breeding stock',1937,9999]
+];
+const DEP_SALE_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
 function depHash(v){let x=13;for(const c of String(v))x=(x*31+c.charCodeAt(0))%9973;return x}
 function depMoney(n){if(n==null||n==='')return '';return typeof n==='number'?'$'+Math.round(n).toLocaleString('en-US'):String(n)}
 
@@ -1385,7 +1448,7 @@ function depRows(section,page,demo,auction){
  }
  if(section==='Sales'){
   if(!auction)return [];
-  const saleOffset=Math.max(0,DEP_AUCTIONS.findIndex(a=>a.id===auction.id));
+  const saleOffset=Math.max(0,auction.previewIndex||0);
   const lots=demo?stable.map((h,i)=>({horse:stable[(i+saleOffset)%stable.length].name})):Array.isArray(auction.lots)?auction.lots:[];
   let out=lots.map((lot,i)=>{
    const name=lot.horse||lot.horse_name;
@@ -1443,12 +1506,55 @@ function depRows(section,page,demo,auction){
 }
 
 
+function depSaleLabel(a){
+ const name=String(a?.name||'Unnamed Sale'),company=String(a?.company||'Company not recorded');
+ return name.endsWith(' - '+company)?name:name+' - '+company;
+}
+function depSaleDateLabel(a){
+ if(!a)return '';
+ if(!a.confirmedDate)return a.dateLabel||'Usual month only · exact date not verified';
+ const begin=stableShortDate(a.date);
+ const end=a.endDate&&a.endDate!==a.date?' – '+stableShortDate(a.endDate):'';
+ return begin+end;
+}
+function depSaleCatalogRow(row,index){
+ const [id,name,date,endDate,city,category]=row;
+ const company=DEP_SALE_HOUSES[id];
+ return {id:'2014-'+id+'-'+index,date,endDate,sortKey:date,
+  companyId:id,company:company?.name||'Company not recorded',
+  name,city,category,confirmedDate:true,previewIndex:index,
+  lots:[],dateLabel:depSaleDateLabel({date,endDate,confirmedDate:true})};
+}
+function depSeasonalSales(year){
+ return DEP_SALE_SEASONAL.filter(([, , , , ,first,last])=>year>=first&&year<=last)
+  .map(([companyId,name,month,city,category],i)=>{
+   const sortKey=year+'-'+String(month).padStart(2,'0')+'-01';
+   return {id:year+'-'+companyId+'-'+i,name,companyId,
+    company:DEP_SALE_HOUSES[companyId]?.name||'Company not recorded',
+    city,category,date:'',endDate:'',sortKey,confirmedDate:false,
+    dateLabel:DEP_SALE_MONTHS[month-1]+' '+year+' · usual month, exact date unverified',
+    previewIndex:i,lots:[]};
+  });
+}
 function depAuctionList(preview){
- if(preview)return [...DEP_AUCTIONS].sort((a,b)=>a.date.localeCompare(b.date));
- const raw=state().salesState?.auctions;
- return Array.isArray(raw)?raw.filter(a=>a&&liveStableDate(a.date)&&typeof a.name==='string')
-  .map((a,i)=>({id:String(a.id||i),name:a.name,date:a.date,city:a.location||'',lots:a.lots||[]}))
-  .sort((a,b)=>a.date.localeCompare(b.date)):[];
+ const year=Number(depGameDay().slice(0,4))||2014;
+ const result=preview?
+  [...(year===2014?DEP_SALE_EVENTS_2014.map(depSaleCatalogRow):depSeasonalSales(year)),
+   ...depSeasonalSales(year+1)]:
+  (Array.isArray(state().salesState?.auctions)?state().salesState.auctions
+   .filter(a=>a&&liveStableDate(a.date)&&typeof a.name==='string')
+   .map((a,i)=>{
+    const normalizedName=a.name.trim(),matched=DEP_SALE_SEASONAL.find(r=>r[1]===normalizedName);
+    const company=String(a.company||a.auction_company||a.auction_house||
+     a.operator||DEP_SALE_HOUSES[matched?.[0]]?.name||'Company not recorded');
+    return {id:String(a.id||i),name:normalizedName,date:a.date,
+     endDate:liveStableDate(a.endDate)||a.date,sortKey:a.date,
+     company,companyId:matched?.[0]||'',city:a.location||a.city||'',
+     category:a.category||'',confirmedDate:true,previewIndex:i,
+     dateLabel:depSaleDateLabel({date:a.date,endDate:liveStableDate(a.endDate)||a.date,confirmedDate:true}),
+     lots:Array.isArray(a.lots)?a.lots:[]};
+   }):[]);
+ return result.sort((a,b)=>a.sortKey.localeCompare(b.sortKey)||depSaleLabel(a).localeCompare(depSaleLabel(b)));
 }
 
 /* One connection router for every management roster and Tier One dossier.
@@ -1568,7 +1674,8 @@ function departmentRoster(section,page='Overview'){
  const demo=APP.departmentDemo;
  const current=$('.dateChip')?.textContent.trim()||'2014-07-15';
  const auctions=section==='Sales'?depAuctionList(demo):[];
- const auction=auctions.find(a=>a.id===APP.departmentAuction)||auctions.find(a=>a.date>=current)||null;
+ const gameDay=depGameDay();
+ const auction=auctions.find(a=>a.id===APP.departmentAuction)||auctions.find(a=>(a.endDate||a.sortKey)>=gameDay)||null;
  const specs=section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'?(APP.racingTrack?DEP_COLUMNS.Racing:DEP_COLUMNS.Meets):DEP_COLUMNS[section];
  let rows=depRows(section,page,demo,auction);
  const search=APP.departmentSearch.trim().toLowerCase();
@@ -1625,7 +1732,7 @@ function departmentRoster(section,page='Overview'){
   '<button data-ng="dept-meets" class="'+(APP.racingMode!=='mine'?'on':'')+'" title="Show tracks racing at the current in-game date">ACTIVE MEETS</button>'+
   '<button data-ng="dept-myhorses" class="'+(APP.racingMode==='mine'?'on':'')+'" title="Show every upcoming race entry or target for horses in your stable, across all tracks">MY HORSES</button>':'';
  const salePicker=section==='Sales'?'<label class="ng-dpt-auction-picker">AUCTION <select data-ng-select="department-auction" aria-label="Choose auction chronologically">'+
-  (auctions.length?auctions.map(a=>'<option value="'+safe(a.id)+'" '+(auction?.id===a.id?'selected':'')+'>'+safe(stableShortDate(a.date)+' · '+a.name)+'</option>').join(''):'<option>No upcoming auction data</option>')+
+  (auctions.length?auctions.map(a=>'<option value="'+safe(a.id)+'" '+(auction?.id===a.id?'selected':'')+'>'+safe(depSaleLabel(a))+'</option>').join(''):'<option>No upcoming auction data</option>')+
   '</select></label>':'';
  const cash=availableCash();
  const finance=section==='Finances'?'<div class="ng-dpt-finance">'+[
@@ -1634,7 +1741,7 @@ function departmentRoster(section,page='Overview'){
  ].map(([name,value])=>'<span><small>'+safe(name)+'</small><b>'+safe(value)+'</b></span>').join('')+'</div>':'';
  const purpose=section==='Racing'?(APP.racingMode==='mine'?'MY HORSES · ALL UPCOMING ENTRIES AND TARGETS':APP.racingTrack?'UPCOMING RACES AT '+APP.racingTrack.toUpperCase():'TRACKS CURRENTLY HOLDING MEETS'):
   section==='Breeding'?'STUD FEES, COVERINGS & PRODUCTION':
-  section==='Sales'?(auction?auction.name.toUpperCase()+' · '+stableShortDate(auction.date)+' · '+(auction.city||''):'NO UPCOMING AUCTIONS'):
+  section==='Sales'?(auction?depSaleLabel(auction).toUpperCase()+' · '+depSaleDateLabel(auction)+' · '+(auction.city||''):'NO UPCOMING AUCTIONS'):
   section==='Personnel'?'TRAINERS · JOCKEYS · OWNERS · STAFF':
   section==='Facilities'?'CAPACITY · QUALITY · MAINTENANCE':'INCOME · EXPENSES · CASH FLOW';
  return '<section class="ng-functional ng-stable-roster-v2 ng-dept-roster" data-department="'+safe(section)+'" data-page="'+safe(page)+'" data-roster-kind="'+(specs===DEP_COLUMNS.Meets?'meet':'regular')+'">'+
