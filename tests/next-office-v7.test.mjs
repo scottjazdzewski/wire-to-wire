@@ -318,8 +318,8 @@ test('People profiles surface skills and sourced industry reputation without con
  }
  assert.ok(profile.includes('const personWork=()=>'),'People should use a reusable human character model');
  assert.ok(profile.includes('ng-person-workspace'),'Overview should show useful professional skills, reputation and appointments immediately');
- assert.ok(profile.includes('data-val="Attributes"'),'Skills must have a working full Attributes tab');
- assert.ok(profile.includes('data-val="Reputation"'),'Professional standing must have an evidence/history tab');
+ assert.ok(profile.includes('<option value="')&&profile.includes('data-ng-select="person-record"'),'All detailed Skills records remain reachable from one compact dropdown');
+ assert.ok(profile.includes("APP.detailTab==='Reputation'"),'Professional reputation full evidence remains reachable from the records menu');
  assert.ok(profile.includes("work.reputation_profile"),'Office prototype may display only an explicitly supplied, sourced reputation');
  assert.ok(profile.includes("source?.schema==='WTW_PERSON_REPUTATION_V1'"),'Only game reputation schema ratings should be shown');
  assert.ok(profile.includes('Array.isArray(source.source?.refs)&&source.source.refs.length>0'),'Reputation cannot be invented without baseline provenance');
@@ -390,11 +390,11 @@ test('Tier 1 entity screens use the same compact identity bar and no-scroll Over
  for(const field of ['HOMETOWN','CURRENT BASE','LOCATION','SURFACES','CIRCUIT','OWNER','STATUS'])assert.ok(p.includes("'"+field+"'"),'Known identity field '+field+' must be accessible in the header');
  assert.ok(p.includes('ng-tier1-workspace'),'Farm and Track Overview use matching three-column workspaces');
  assert.ok(p.includes('ng-person-workspace'),'People Overview retains its attribute/reputation/career columns');
- assert.ok(p.includes("special.slice(0,5)"),'First-tier People Overview shows the decisive skills rather than the entire secondary record');
+ assert.ok(p.includes("common.slice(0,Math.ceil(common.length/2))")&&p.includes("column(special,roleDisplay.toUpperCase()+' SKILLS')"),'All professional and role skills must be on-screen without changing tabs');
  assert.ok(p.includes('stakesTable(5)'),'Track shows real linked stakes without overfilling the overview');
  assert.ok(p.includes('data-val="Connected Horses"'),'Farm primary screen must link directly to its deeper horse records');
  assert.ok(p.includes('data-val="Major Races"'),'Track primary screen must link to full stakes history');
- assert.ok(p.includes('data-val="Reputation"'),'People primary screen must link to full sourced reputation details');
+ assert.ok(p.includes('data-ng-select="person-record"')&&p.includes("APP.detailTab==='Reputation'"),'Full sourced reputation details remain accessible through one compact record selector');
  assert.ok(css.includes('.ng-tier1-workspace')&&css.includes('.ng-tier1-biography'),'Shared Tier 1 screen layout must remain in the canonical stylesheet');
  assert.ok(css.includes('.ng-detail-cols-tier1'),'Farm/Track workspaces must have a dedicated viewport-sized body');
  assert.ok(css.includes('.ng-detail-cols-person'),'People Overview must be bounded to the viewport');
@@ -431,7 +431,7 @@ test('Tier 1 People Profile keeps only known identity facts and actions above th
  assert.ok(p.includes('class="ng-person-career-strip"'),'Career and assignments need compact summary, not redundant role stats');
  assert.ok(p.includes('CURRENT HORSE ASSIGNMENTS'),"Person's actual linked horses must be visible immediately");
  assert.ok(p.includes('data-val="Stable Horses"'),'All person-to-horse connections must remain navigable');
- assert.ok(p.includes('PROFESSIONAL ATTRIBUTES')&&p.includes('REPUTATION & STANDING')&&p.includes('CONNECTED HORSES')&&p.includes('CAREER AT A GLANCE')&&p.includes('WORKING NETWORK'),'OOTP-style professional overview must show five information areas without requiring extra clicks');
+ assert.ok(p.includes('PROFESSIONAL RATINGS')&&p.includes('REPUTATION & RELATIONSHIP TRUST')&&p.includes('HORSE ASSIGNMENTS')&&p.includes('CAREER & OPPORTUNITIES')&&p.includes('WORKING RELATIONSHIPS'),'Personnel Overview displays all five core information areas without selecting additional tabs');
  assert.ok(p.includes('source?.schema')||p.includes("source?.schema==='WTW_PERSON_REPUTATION_V1'"),'Reputation data must remain validated and attributed');
  assert.ok(p.includes('Array.isArray(source.source?.refs)&&source.source.refs.length>0'),'No fabricated reputation on the overview');
  assert.ok(css.includes('.ng-profile-person .ng-person-workspace-overview'),'Desktop People Overview must retain the five-area information-dense layout');
@@ -599,4 +599,27 @@ test('People Overview places attributes, reputation, horses, career and relation
  assert.ok(css.includes('ng-person-ov-horses'),'Horse assignments have dedicated visible panel');
  const parsed=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(parsed.status,0,parsed.stderr);
+});
+
+
+test('People FM dossier is full-information-first, limits navigation and uses natural panel heights',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css');
+ const p=js.slice(js.indexOf('function profileDetail('),js.indexOf('function calendarTimeline('));
+ const personNav=p.slice(p.indexOf('const tabbar=isPerson?'),p.indexOf('const factsBlock='));
+ assert.ok(personNav.includes('ng-person-dossierbar'),'Personnel uses one slim dossier bar, not eight visible tabs');
+ assert.ok(personNav.includes('ONE-SCREEN OVERVIEW'),'No-click Overview is the default file');
+ assert.ok(personNav.includes('data-val="History"'),'History remains a one-click action');
+ assert.ok(personNav.includes('data-ng-select="person-record"'),'Supplemental details are grouped under one select');
+ assert.ok(personNav.includes("tabs.filter(t=>!['Overview','History'].includes(t))"),'Six secondary tabs stay behind one record selector');
+ assert.ok(js.includes("field.matches('select[data-ng-select=\"person-record\"]')"),'Record dropdown changes actual rendered page');
+ assert.ok(p.includes('common.length+special.length'),'Coverage counts all canonical person traits');
+ assert.ok(p.includes('ng-person-skill-columns')&&p.includes('column(first,')&&p.includes('column(second,')&&p.includes('column(special,'),'Skills presented in compact multi-column FM ratings matrix');
+ assert.ok(p.includes('UNKNOWN DOES NOT MEAN ZERO'),'Unknown ratings are not fabricated');
+ assert.ok(p.includes('person.horseAssignments()')&&p.includes('person.reputation()')&&p.includes('person.networkOverview')&&p.includes('person.careerOverview'),'All core personnel sections visible in the Overview');
+ assert.ok(css.includes('.ng-person-dossierbar{'),'New shared dossier controls live in canonical stylesheet');
+ assert.ok(css.includes('.ng-person-skill-columns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))'),'Dense ratings occupy three short columns');
+ assert.ok(css.includes('grid-template-rows:max-content max-content!important'),'Content-based panel sizing replaces empty stretch rows');
+ assert.ok(css.includes('height:auto!important;min-height:0!important;overflow:hidden!important;align-self:start!important'),'Cards fit actual rows instead of blank filler');
+ const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(syntax.status,0,syntax.stderr);
 });
