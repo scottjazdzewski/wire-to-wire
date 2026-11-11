@@ -64,6 +64,9 @@ export function readOpeningWorld1999(url) {
  if(person){const p=personById.get(person[1]);return p?respond({...boundary,person:p}):notFound();}
  if(pathname==='/api/1999/stallions')return respond({...boundary,active:world.activeStallions1999,
   pendingNotBookable:world.pendingNotBookableStallions});
+ if(pathname==='/api/1999/broodmares')return respond({...boundary,foundation:world.foundationalBroodmares1999,
+  sourceRecordedBoardingLocations:world.counts.broodmareBoardingLocationsSourceRecords,
+  note:'Foundational mares are actual 1999 boarding/residence records; no current pregnancy or future foal is implied.'});
  if(pathname==='/api/1999/calendar')return respond({...boundary,...page(url,world.stakes1999,['name','trackName','division'],100)});
  if(pathname==='/api/1999/tracks')return respond({...boundary,...page(url,world.tracks,['name','locality','region'],100)});
  if(pathname==='/api/1999/historical-seasons')return respond({...boundary,years:world.historicalYearbook});
