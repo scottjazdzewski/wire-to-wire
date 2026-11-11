@@ -417,7 +417,7 @@ body.wtw-next-active{overflow:auto}
 .ng-mini-home .ng-wordmark{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;white-space:nowrap;min-width:0;line-height:1.05}
 .ng-wordmark strong{font-size:12px;letter-spacing:.028em;font-weight:900;color:#f1efe3}
 .ng-wordmark small{font-size:8px;letter-spacing:.12em;color:#a1bca9;font-weight:750}
-.ng-logo-mini{margin:0;width:29px;height:29px}
+.ng-logo-mini{height:25px;width:25px;object-fit:contain;margin:0 9px 0 14px;border-radius:4px}
 .ng-mini-home:hover{background:#234738;border-color:#5a816a}
 .ng-mast-fig:hover{background:#ffffff0b;color:#fff}
 .ng-clockblock:hover{background:#ffffff0b}
@@ -461,7 +461,7 @@ body.wtw-next-active{overflow:auto}
 .ng-resolved .ng-outtext{font-size:9.7px;line-height:1.3;padding:5px}
 .ng-resolved .ng-outcome-actions button{min-height:22px;font-size:8.5px!important}
 }
-.ng-logo-mini{height:25px;width:25px;object-fit:contain;margin:0 9px 0 14px;border-radius:4px}
+
 .ng-primary button{height:100%;display:flex;align-items:center;gap:5px;padding:0 clamp(6px,.9vw,14px);font-size:11.5px!important;font-weight:670!important;white-space:nowrap;letter-spacing:.005em;color:#b4cdbb;background:transparent;border:0;border-bottom:3px solid transparent;text-transform:uppercase}
 .ng-primary button.on{background:linear-gradient(180deg,#234738,#234738);border-bottom-color:var(--wt-gold);color:#fbf8e9;box-shadow:inset 0 -2px #cfb16c}
 .ng-primary button:hover:not(.on){background:#234738;color:#fff}
