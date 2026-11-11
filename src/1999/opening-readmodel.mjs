@@ -67,6 +67,8 @@ export function readOpeningWorld1999(url) {
  if(pathname==='/api/1999/broodmares')return respond({...boundary,foundation:world.foundationalBroodmares1999,
   sourceRecordedBoardingLocations:world.counts.broodmareBoardingLocationsSourceRecords,
   note:'Foundational mares are actual 1999 boarding/residence records; no current pregnancy or future foal is implied.'});
+ if(pathname==='/api/1999/broodmare-boarding')return respond({...boundary,...page(url,world.productionBroodmareBoarding1999,['name','id'],100),
+  note:'2036 B01 and P2500 dam residence records; pregnancy, mating and 1999 foaling are not presumed.'});
  if(pathname==='/api/1999/calendar')return respond({...boundary,...page(url,world.stakes1999,['name','trackName','division'],100)});
  if(pathname==='/api/1999/events')return respond({...boundary,execution:'NOT_STARTED_FROM_THIS_PROJECTION',...page(url,world.openingEventQueue1999,['id','type','circuit'],100)});
  if(pathname==='/api/1999/tracks')return respond({...boundary,...page(url,world.tracks,['name','locality','region'],100)});
