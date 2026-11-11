@@ -29,6 +29,16 @@ A desktop racing **management simulation**, not a card-based website. Apply Foot
 
 Most of the screen must read as charcoal/slate. Green indicates racing identity, state or action; it must not be a large solid panel background. Gold is selective, not used for every cell. Avoid colored tiles for decorative filler.
 
+## Current implementation — app-shell rebuild and full-data Horse dossier
+- The application now renders **every game screen inside one common desktop manager frame**: a compact game header; persistent left department rail (Office, Search, Stable, Racing, Breeding, Sales, Personnel, Facilities, Finances, History, World); and a shared routed game stage. The original source routes, gameplay actions, history navigation and save namespace remain authoritative.
+- The game rail is `ng-game-rail` (not `ng-manager-sidebar`, which already has a separate meaning inside department dashboards). New selectors must not collide with established components.
+- Desktop at 1536×864 is verified in browser with a rail width of 177px, stage width of 1359px, and 32px rail crest. The screenshot workflow now asserts **actual rendered geometry** rather than merely grepping generated HTML.
+- Global Search is a compact full-height, sortable roster and the same navigation target for people, horses, tracks, races and pages. Long screens use contained, deliberate table navigation.
+- Horse Profile Overview now renders **the entire approved 53-attribute definition set**: 46 attributes grouped into Speed & Pace, Surface & Environment, Physical & Biometric, Mental & Class, plus seven current-condition definitions in a horizontal compact strip. Values remain unassessed unless supported by current observation/evidence. This is UI presentation, not a new scoring system or fabricated historical corpus.
+- Horse summary, race target, known office/veterinary notes, career evidence, pedigree and connections appear in the same dossier without requiring secondary tabs. Missing records are labeled honestly.
+- The remaining specialty department screens still require visual/product sign-off. Shared shell, automated tests and browser geometry do **not** mean the complete application is artistically finished or sale-ready.
+- Screenshot-based acceptance must inspect the actual output artifact from `Desktop Visual Audit`. A prior CSS-scoping bug produced a giant unstyled rail logo despite passing the old route smoke test; the new geometry probe guards against that failure.
+
 ## Density and geometry
 - **Desktop-first; 1366×768 is the primary test viewport** (also inspect 1280×800 and 1440×900).
 - Front page: compact one-line global header, dense inbox, full-width dossier and contextual photograph, balanced Intelligence/Your Call row, fixed Stable Roster/Race Schedule.
