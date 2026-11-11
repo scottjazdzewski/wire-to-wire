@@ -15,7 +15,8 @@ test('All screens use one persistent management frame',()=>{
  assert.ok(js.includes('managerSidebar()'));
  assert.ok(js.includes('function renderRoute(){'));
  assert.ok(js.includes('ng-board'));
- assert.ok(css.includes('.ng-manager-shell{display:grid;grid-template-columns:177px minmax(0,1fr)'));
+ assert.ok(css.includes('.ng-manager-shell{--wtw-ui-list-text:9.5px')&&css.includes('display:grid;grid-template-columns:177px minmax(0,1fr)'),
+  'Shared typography variables must not change the persistent management frame geometry');
  assert.ok(css.includes('.ng-manager-stage{display:flex;flex-direction:column'));
  assert.ok(css.includes('.ng-manager-rail-link.on{'));
  assert.ok(!js.includes('<nav class="ng-primary" aria-label="Primary game navigation">'));
