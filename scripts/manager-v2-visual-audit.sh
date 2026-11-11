@@ -32,11 +32,12 @@ capture sales '?ui=sales' 'mg-department-suite sales'
 capture personnel '?ui=person' 'mg-department-suite person'
 capture farms '?ui=farm' 'mg-department-suite farm'
 capture world '?ui=world' 'mg-department-suite world'
+capture finances '?ui=finances' 'mg-finance-grid'
 
 python3 - <<'PY'
 from pathlib import Path
 import re,html
-for name in ('racing-office','global-search','horse-profile','people-profile','stable-roster','racetracks','racing-calendar','breeding','sales','personnel','farms','world'):
+for name in ('racing-office','global-search','horse-profile','people-profile','stable-roster','racetracks','racing-calendar','breeding','sales','personnel','farms','world','finances'):
  s=Path('visual-audit/manager-v2/dom/'+name+'.html').read_text()
  assert 'id="mgApp"' in s,(name,'manager root absent')
  assert 'class="mg-rail"' in s,(name,'shared rail absent')
@@ -49,4 +50,4 @@ assert len(re.findall(r'class="mg-attribute"',s))>=45,'Full horse attributes mis
 s=Path('visual-audit/manager-v2/dom/global-search.html').read_text()
 assert len(re.findall(r'<tr>',s))>=20,'Dense search results missing'
 PY
-echo "Management Studio V2: twelve real browser screenshots and source-bound DOM checks completed."
+echo "Management Studio V2: thirteen real browser screenshots and source-bound DOM checks completed."
