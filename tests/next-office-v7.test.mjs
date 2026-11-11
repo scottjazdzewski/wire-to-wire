@@ -415,7 +415,7 @@ test('Tier 1 Organization Overview has six purposeful panels and no duplicate he
  assert.ok(org.includes("panel('RACING COMMITMENTS','CALENDAR'"),'All commitments remain accessible');
  assert.ok(org.includes("panel('OPEN DECISIONS','ALL FILES'"),'All open cases remain accessible');
  assert.ok(org.includes("cashDisplay()"),'No invented cash appears in management dashboard');
- assert.ok(js.includes("isProfile||isOrganization?'':"),'Organization Overview must not show two competing title banners');
+ assert.ok(js.includes("isProfile||isOrganization||isManager?'':"),'Organization Overview must not show two competing title banners');
  assert.ok(js.includes('ng-route-organization'),'Organization Overview has its own compact desktop route');
  assert.ok(css.includes('grid-template-columns:repeat(3,minmax(0,1fr))!important'),'Six organization panels should occupy a three-column dashboard');
  assert.ok(css.includes('.ng-tier1-org .ng-org-overview-list{'),'First-tier management lists are bounded to the viewport');
