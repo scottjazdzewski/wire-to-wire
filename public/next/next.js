@@ -1612,8 +1612,41 @@ else if(APP.custom==='Search'){body=searchView()}
 else {body=managerDashboard()}
 const isProfile=Boolean(profile),isOrganization=APP.custom==='Organization Overview',isSearch=APP.custom==='Search',isManager=body.startsWith('<section class="ng-manager-screen">');
 return `<main class="ng-route ${isProfile?'ng-route-profile':isOrganization?'ng-route-organization':isSearch?'ng-route-search':isManager?'ng-route-manager':''}">${isProfile||isOrganization||isManager?'':`<header class="ng-routeheading"><span class="ng-route-badge-slot" aria-hidden="true">${APP.custom==='Organization Overview'?organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',true,true):`<img class="ng-routebadge" src="${safe(bdg)}" alt=""/>`}</span><div class="ng-routetext"><small>${safe(kicker)}</small><h1>${safe(title)}</h1></div><button class="ng-back" data-ng="office">← RACING OFFICE</button></header>`}<div class="ng-routegrid" data-route-key="${safe((route?.kicker||APP.custom||APP.section)+'|'+(route?.title||APP.custom||APP.page))}"><div class="ng-routeinner">${body}</div></div></main>`;}
+// Keep browser-native select menus mounted while the user chooses an option.
+// Hidden Office mutations repaint this interface frequently; a full re-render
+// while the menu is open destroys the select and interrupts the mouse gesture.
+let activeNativeSelect=null;
+let deferredNativeSelectPaint=false;
+function beginNativeSelectInteraction(select){
+ if(!select||select.tagName!=='SELECT'||!root.contains(select))return;
+ activeNativeSelect=select;
+}
+function endNativeSelectInteraction(flush=true){
+ if(!activeNativeSelect)return;
+ activeNativeSelect=null;
+ const pending=deferredNativeSelectPaint;
+ deferredNativeSelectPaint=false;
+ if(flush&&pending)schedulePaint(0);
+}
+root.addEventListener('pointerdown',event=>{
+ const select=event.target?.closest?.('select');
+ if(select)beginNativeSelectInteraction(select);
+},true);
+root.addEventListener('focusin',event=>{
+ beginNativeSelectInteraction(event.target);
+},true);
+root.addEventListener('focusout',event=>{
+ const select=event.target;
+ if(select!==activeNativeSelect)return;
+ setTimeout(()=>{
+  if(activeNativeSelect===select&&document.activeElement!==select)
+   endNativeSelectInteraction(true);
+ },0);
+},true);
 function paint(){
  if(!APP.ready)return;
+ if(activeNativeSelect&&activeNativeSelect.isConnected){deferredNativeSelectPaint=true;return}
+ if(activeNativeSelect&&!activeNativeSelect.isConnected)endNativeSelectInteraction(false);
  const oldRoute=$('.ng-routegrid',root),oldTab=$('.ng-profiletabs .on',root)?.dataset.val||'';
  const previousRouteKey=oldRoute?.dataset.routeKey||'';
  const previousRouteScroll=oldRoute?.scrollTop||0;
@@ -1644,6 +1677,7 @@ function paint(){
 function schedulePaint(ms=0){if(APP.paintQueued)return;APP.paintQueued=true;setTimeout(()=>{APP.paintQueued=false;paint()},ms)}
 // Capture new UI clicks before the old Office's document-level delegated handler.
 window.addEventListener('click',e=>{
+ if(e.target?.closest?.('#wtwNextgen select'))return;
  const btn=e.target.closest('#wtwNextgen [data-ng],#wtwNextgen [data-act]');if(!btn)return;
  e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();
  const key=btn.dataset.ng, val=btn.dataset.val||'';
@@ -1723,6 +1757,7 @@ window.addEventListener('click',e=>{
 },true);
 root.addEventListener('change',event=>{
   const field=event.target;
+  if(field?.tagName==='SELECT')endNativeSelectInteraction(false);
   if(field.matches('select[data-ng-select="department-track"]')){APP.racingTrack=field.value;APP.racingMode=field.value?'track':'meets';APP.departmentPageIndex=0;APP.departmentSortKey='';if(APP.page!=='Overview')return pageTab('Overview');return paint()}
   if(field.matches('select[data-ng-select="department-auction"]')){APP.departmentAuction=field.value;APP.departmentPageIndex=0;return paint()}
   if(field.matches('select[data-ng-select="department-tab"]'))return pageTab(field.value);
@@ -1736,6 +1771,9 @@ root.addEventListener('change',event=>{
   }
 });
 root.addEventListener('keydown',event=>{
+ if(event.key==='Escape'&&event.target===activeNativeSelect){
+  setTimeout(()=>{if(activeNativeSelect===event.target)endNativeSelectInteraction(true)},0);
+ }
  if(event.key==='Enter'&&event.target.matches('#ngGlobalSearch')){
   const first=$('.ng-search-row',root);
   if(first){event.preventDefault();first.click();}

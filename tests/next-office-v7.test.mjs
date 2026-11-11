@@ -453,6 +453,58 @@ test('A single type scale controls every main roster, profile and directory at a
   'Department body text must not override Stable with a fixed 9px');
 });
 
+
+test('Native dropdowns stay mounted through selection and preserve one-click mouse/keyboard behavior',()=>{
+ const js=get('public/next/next.js');
+ const start=js.indexOf('// Keep browser-native select menus mounted');
+ const end=js.indexOf('function paint(){',start);
+ assert.ok(start>0&&end>start,'Native select interaction guard must exist');
+ const helpers=js.slice(start,end);
+ const guardStart=js.indexOf('function paint(){',end);
+ const guardEnd=js.indexOf(" const oldRoute=",guardStart);
+ assert.ok(guardEnd>guardStart,'Root paint guard should come before replacing innerHTML');
+ const partialPaint=js.slice(guardStart,guardEnd)+'\n}\n';
+ const handlers={},calls=[],select={tagName:'SELECT',isConnected:true};
+ const host={contains:el=>el===select,addEventListener:(type,fn)=>{handlers[type]=fn}};
+ const documentStub={activeElement:select};
+ const timers=[];
+ const run=new Function('root','document','setTimeout','schedulePaint','APP',
+  helpers+partialPaint+
+  '\nreturn {paint,beginNativeSelectInteraction,endNativeSelectInteraction,'+
+  'state:()=>({active:activeNativeSelect,pending:deferredNativeSelectPaint})};');
+ const demo=run(host,documentStub,callback=>{timers.push(callback)},()=>{calls.push('paint')},{ready:true});
+ assert.ok(handlers.pointerdown&&handlers.focusin&&handlers.focusout,'Pointer/focus guards must be registered');
+ handlers.pointerdown({target:{closest:()=>select}});
+ demo.paint();
+ assert.equal(demo.state().active,select,'Opening a dropdown must acquire the interaction lock');
+ assert.equal(demo.state().pending,true,'Background redraws must be deferred while dropdown is open');
+ assert.equal(calls.length,0,'Redraw must not destroy native select in mid-click');
+ demo.endNativeSelectInteraction(false);
+ assert.equal(demo.state().active,null,'Selection commit must release the lock');
+ assert.equal(demo.state().pending,false,'Commit will repaint through the normal change handler');
+ handlers.focusin({target:select});
+ demo.paint();
+ documentStub.activeElement={tagName:'BUTTON'};
+ handlers.focusout({target:select});
+ timers.forEach(fn=>fn());
+ assert.equal(demo.state().active,null,'Leaving a dropdown must release the lock');
+ assert.equal(calls.length,1,'Deferred redraw must resume exactly once after blur');
+ const click=js.slice(js.indexOf("window.addEventListener('click',e=>{"),
+  js.indexOf("if(key==='organization')",js.indexOf("window.addEventListener('click',e=>{")));
+ assert.ok(click.indexOf("if(e.target?.closest?.('#wtwNextgen select'))return;")>=0,
+  'Native select clicks must bypass preventDefault');
+ assert.ok(click.indexOf("if(e.target?.closest?.('#wtwNextgen select'))return;")<click.indexOf('e.preventDefault()'),
+  'Select bypass must occur BEFORE the delegated click handler suppresses clicks');
+ const change=js.slice(js.indexOf("root.addEventListener('change',event=>{"),
+  js.indexOf("root.addEventListener('keydown',event=>{"));
+ assert.ok(change.indexOf("endNativeSelectInteraction(false)")<change.indexOf("department-track"),
+  'Dropdown must unlock before its selected value invokes page navigation');
+ for(const choice of ['department-track','department-auction','department-tab','manager-screen','profile-record'])
+  assert.ok(change.includes('data-ng-select="'+choice+'"'),'Missing change handler for '+choice);
+ const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(syntax.status,0,syntax.stderr);
+});
+
 test('Horse athletic overview uses four sourced FM-style trait groups with explicit unassessed states',()=>{
  const js=get('public/next/next.js'),css=get('public/next/next.css');
  const catalog=JSON.parse(get('public/assets/game/attribute-catalog.v1.json'));
