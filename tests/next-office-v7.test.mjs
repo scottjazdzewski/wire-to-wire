@@ -321,7 +321,7 @@ test('Six department rosters share FM density but preserve their own management 
   'Department preview must never mutate the canonical game save');
  assert.ok(css.includes('.ng-dept-roster .ng-rs-scroll{overflow:hidden!important'),
   'Use one no-scroll roster viewport with page-based navigation');
- assert.ok(css.includes('--wtw-roster-text:9.5px')&&css.includes('font-size:var(--wtw-roster-text)!important')&&css.includes('.ng-dpt-pager'),
+ assert.ok(css.includes('--wtw-ui-list-text:9.5px')&&css.includes('--wtw-roster-text:var(--wtw-ui-list-text)')&&css.includes('font-size:var(--wtw-roster-text)!important')&&css.includes('.ng-dpt-pager'),
   'Use the same shared font tokens and navigation density across Stable and all departments');
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);
@@ -348,7 +348,7 @@ test('Tracks and Facilities are separate full-width directory rosters; all pages
  assert.ok(code.includes("r._kind==='demo-facility'"),'Do not create a fake source-profile link for a demo facility');
  assert.ok(office.includes('window.__wtwOfficeTrackDirectory = function()'),
   'Track names and meet dates must come from the authoritative Office record');
- assert.ok(css.includes('--wtw-roster-text:9.5px')&&css.includes('--wtw-roster-head:8.3px'));
+ assert.ok(css.includes('--wtw-ui-list-text:9.5px')&&css.includes('--wtw-roster-text:var(--wtw-ui-list-text)')&&css.includes('--wtw-roster-head:8.3px'));
  assert.ok(css.includes('font-size:var(--wtw-roster-name)!important')&&css.includes('font-size:var(--wtw-roster-head)!important'));
  assert.ok(css.includes('data-department="Tracks"')&&css.includes('data-roster-kind="meet"'));
 });
