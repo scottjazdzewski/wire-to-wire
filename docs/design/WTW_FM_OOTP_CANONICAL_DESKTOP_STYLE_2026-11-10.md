@@ -51,6 +51,21 @@ Most of the screen must read as charcoal/slate. Green indicates racing identity,
 - Its Return-to-Racing-Office link now uses a canonical class; no inline styling remains in `public/archive/index.html`.
 - Keep the two applications' technical CSS separated by runtime but visually consistent. No gameplay/data changes or new data authorities.
 
+## Desktop application reconstruction — common screen system
+The user-provided FM/OOTP and hockey-management screenshots are binding **visual acceptance references**, not permission to copy protected art or invent game records.
+
+- Each department without an original deep-record renderer uses the same source-backed **managerDashboard()** structure in public/next/next.js, instead of previously disconnected three-column placeholder cards. The presentation is a dense roster to the left and real decision/fixture context to the right, with compact metrics and a single screen selector.
+- Office Messages and Decisions use the same component system; Opportunities retains a direct action into the existing opportunity board. Real individual horse, person, track and farm records still open through the original Office route, not a second shadow database.
+- Use the **ng-manager-*** component classes in the existing canonical stylesheet. Never append a one-off page-themed override. If content needs a different interaction, create a shared documented component family and test it.
+- The legacy original Office functional routes and deeper records are **not automatically accepted visually** just because this new shared department family is complete. Inspect and rebuild those screens as individual product-quality tiers.
+- Verified source-linked values are shown as values; unknown ratings, unregistered owners, unavailable historical outcomes and other unassessed facts remain visibly unassessed—not misleading zeros, inherited mockup facts or invented ranking bars.
+
+## Visual acceptance rather than CSS-only tests
+- The GitHub workflow .github/workflows/desktop-visual-audit.yml executes a real headless Chrome screenshot and rendered-DOM check for Racing Office, Global Search, Horse and People Profiles, Personnel, Facilities, Finances, Breeding, and History Vault. Screenshots are uploaded as a short-retention GitHub Actions artifact, not bloated into the Git repository.
+- Code and route smoke tests establish engineering reliability only. Visual approval also requires human examination against the supplied screenshots for layout, legibility, source-backed density, meaningful graphics, border restraint, and click economy.
+- A page is **not signed off** merely because it uses dark colors, displays placeholder cards or passes CI. A coherent sports-management screen must be observed in its rendered state.
+- Keep independent visual signoff for the home office, entity profiles, World/History, and operational directories. Do not claim the entire product visually finished until each has been inspected.
+
 ## Approval process
 1. Modify the canonical selector(s), not append a patch.
 2. Run stylesheet structural and route-specific regressions, plus JavaScript syntax checks.
