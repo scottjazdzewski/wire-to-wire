@@ -1594,6 +1594,26 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 #wtwNextgen .ng-dept-roster[data-department="Racing"][data-roster-kind="meet"] .ng-rs-table th:nth-child(6){width:5%}
 #wtwNextgen .ng-dept-roster[data-department="Racing"][data-roster-kind="meet"] .ng-rs-table th:nth-child(7){width:11%}
 #wtwNextgen .ng-dept-roster[data-department="Racing"][data-roster-kind="meet"] .ng-rs-table th:nth-child(8){width:6%}
+/* Auction houses have their own chronological schedule and company directory.
+   Inherit the locked FM roster text, 29px rows and 23px header. */
+#wtwNextgen .ng-dept-roster[data-department="Sales"] .ng-rs-title span{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+#wtwNextgen .ng-dpt-auction-picker{flex:0 1 485px!important}
+#wtwNextgen .ng-dpt-auction-picker select{max-width:405px!important}
+#wtwNextgen .ng-dpt-sale-house{font-size:var(--wtw-roster-meta);white-space:nowrap;color:#e9d4a1;font-weight:750}
+#wtwNextgen .ng-dpt-sales-company-picker{flex:0 1 220px!important;min-width:155px}
+#wtwNextgen .ng-dpt-sales-company-picker select{max-width:190px!important;width:100%}
+#wtwNextgen .ng-dept-roster[data-department="Sales"][data-page="Sale Calendar"] .ng-rs-table th:nth-child(1){width:12%}
+#wtwNextgen .ng-dept-roster[data-department="Sales"][data-page="Sale Calendar"] .ng-rs-table th:nth-child(2){width:27%}
+#wtwNextgen .ng-dept-roster[data-department="Sales"][data-page="Sale Calendar"] .ng-rs-table th:nth-child(3){width:16%}
+#wtwNextgen .ng-dept-roster[data-department="Sales"][data-page="Sale Calendar"] .ng-rs-table th:nth-child(4){width:16%}
+#wtwNextgen .ng-dept-roster[data-department="Sales"][data-page="Sale Calendar"] .ng-rs-table th:nth-child(5){width:14%}
+#wtwNextgen .ng-dept-roster[data-department="Sales"][data-page="Sale Calendar"] .ng-rs-table th:nth-child(6){width:15%}
+#wtwNextgen .ng-dept-roster[data-department="Sales"][data-page="Sale Companies"] .ng-rs-table th:nth-child(1){width:19%}
+#wtwNextgen .ng-dept-roster[data-department="Sales"][data-page="Sale Companies"] .ng-rs-table th:nth-child(2){width:15%}
+#wtwNextgen .ng-dept-roster[data-department="Sales"][data-page="Sale Companies"] .ng-rs-table th:nth-child(3){width:8%}
+#wtwNextgen .ng-dept-roster[data-department="Sales"][data-page="Sale Companies"] .ng-rs-table th:nth-child(4){width:33%}
+#wtwNextgen .ng-dept-roster[data-department="Sales"][data-page="Sale Companies"] .ng-rs-table th:nth-child(5){width:25%}
+
 .ng-stable-directory{box-sizing:border-box;height:100%!important;min-height:0!important;display:flex!important;flex-direction:column!important;gap:7px!important;overflow:hidden!important}
 }
 .ng-stable-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));flex:0 0 auto;gap:5px}
