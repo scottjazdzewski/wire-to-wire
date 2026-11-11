@@ -487,7 +487,7 @@ function profileDetail(route){
   isFarm?['Overview','Connected Horses','Operations','Connections','History']:
   isTrack?['Overview','Meet Schedule','Major Races','Connections','History']:
   ['Overview','Connections','History']);
- const rows=(items)=>'<div class="ng-data-rows">'+items.map(i=>`<div class="ng-data-row"><span>${safe(i.label)}</span><strong>${safe(i.value)}</strong></div>`).join('')+'</div>';
+ const rows=(items)=>'<div class="ng-data-rows">'+items.map(i=>`<div class="ng-data-row"><span>${safe(i.label)}</span>${namedProfileValue(i.label,i.value)}</div>`).join('')+'</div>';
  const pills='<div class="ng-status-pills">'+states.slice(0,4).map(x=>`<span>${safe(x)}</span>`).join('')+'</div>';
  const tabbar=(isPerson||isHorse)?`<nav class="ng-person-dossierbar ng-management-dossierbar" aria-label="Personnel dossier navigation">
    <span class="ng-person-dossierlabel">${isHorse?'HORSE RACING FILE':'PERSONNEL DOSSIER'} <small>ONE-SCREEN OVERVIEW</small></span>
@@ -501,11 +501,11 @@ function profileDetail(route){
    </div>
   </nav>`:
   '<nav class="ng-profiletabs" aria-label="'+safe(route.kicker)+' sections">'+tabs.map(t=>`<button data-ng="detailtab" data-val="${safe(t)}" class="${APP.detailTab===t?'on':''}" aria-current="${APP.detailTab===t?'page':'false'}">${safe(t)}</button>`).join('')+'</nav>';
- const factsBlock=`<div class="ng-profile-facts">${fields.map(f=>`<div><small>${safe(f.label)}</small><strong>${safe(f.value)}</strong></div>`).join('')}</div>`;
+ const factsBlock=`<div class="ng-profile-facts">${fields.map(f=>`<div><small>${safe(f.label)}</small>${namedProfileValue(f.label,f.value)}</div>`).join('')}</div>`;
 
  const horseAchievementPanel=isHorse?$$('.profilePanel',source).find(panel=>text('h3',panel).includes('Achievements')):null;
  const horseAchievements=horseAchievementPanel?$$('.achievementItem',horseAchievementPanel).map(el=>el.textContent.trim()).filter(Boolean):[];
- const connectionRows=()=>`<div class="ng-data-rows">${connection.map(f=>`<div class="ng-data-row"><span>${safe(f.label)}</span>${f.button?`<button data-ng="sourcebutton" data-val="${$$('#routeBody [data-act]').indexOf(f.button)}" aria-label="Open ${safe(f.label)} profile: ${safe(f.value)}">${safe(f.value)} ↗</button>`:`<strong>${safe(f.value)}</strong>`}</div>`).join('')||'<div class="ng-empty-record">No connected profiles recorded.</div>'}</div>`;
+ const connectionRows=()=>`<div class="ng-data-rows">${connection.map(f=>`<div class="ng-data-row"><span>${safe(f.label)}</span>${f.button?`<button data-ng="sourcebutton" data-val="${$$('#routeBody [data-act]').indexOf(f.button)}" aria-label="Open ${safe(f.label)} profile: ${safe(f.value)}">${safe(f.value)} ↗</button>`:`${namedProfileValue(f.label,f.value)}`}</div>`).join('')||'<div class="ng-empty-record">No connected profiles recorded.</div>'}</div>`;
 
  const sourcePanels=$$('.profilePanel',source);
  const sourcePanel=word=>sourcePanels.find(panel=>text('h3',panel).toLowerCase().includes(word.toLowerCase()));
@@ -515,7 +515,7 @@ function profileDetail(route){
   const btn=$('button[data-act]',item);
   const index=btn?$$('#routeBody [data-act]').indexOf(btn):-1;
   const label=(btn?.textContent.trim()||item.textContent.trim()).replace(/\s+/g,' ').trim();
-  return index>=0?'<button data-ng="sourcebutton" data-val="'+index+'" aria-label="Open horse '+safe(label)+'"><span class="ng-horse-with-owner">'+horseOwnerBadge(label)+safe(label)+'</span>'+glyph('right',14)+'</button>':'<div class="ng-entity-link-static">'+safe(label)+'</div>';
+  return index>=0?'<button data-ng="sourcebutton" data-val="'+index+'" aria-label="Open horse '+safe(label)+'"><span class="ng-horse-with-owner">'+horseOwnerBadge(label)+safe(label)+'</span>'+glyph('right',14)+'</button>':'<div class="ng-entity-link-static">'+namedProfileValue('Horse',label,'horse')+'</div>';
  }).join('')||'<div class="ng-empty-record">No linked horses recorded.</div>')+'</div>';
  const personCareer=isPerson?sourcePanel('Career Wins'):null;
  const personReputation=isPerson?sourcePanel('Reputation'):null;
@@ -596,7 +596,7 @@ function profileDetail(route){
       (verified?safe(String(report.estimate)+(report.unit?' '+report.unit:'')):'—')+'</strong></div>';
    }).join('')+'</div>';
   const asMap=items=>'<div class="ng-horse-mgr-rows">'+items.map(([name,value])=>
-   '<div class="ng-horse-mgr-row"><span>'+safe(name)+'</span><strong>'+safe(value)+'</strong></div>').join('')+'</div>';
+   '<div class="ng-horse-mgr-row"><span>'+safe(name)+'</span>'+namedProfileValue(name,value)+'</div>').join('')+'</div>';
   const career=record.filter(x=>known(x.value)).map(x=>[x.label,x.value]);
   const careerBody=career.length?asMap(career):'<p class="ng-horse-small-note">No verified career figures in this Office record.</p>';
   const status=states.find(x=>x&&!/^Target:|^Entry:/.test(x))||'No current update';
@@ -614,7 +614,7 @@ function profileDetail(route){
    const index=x.button?$$('#routeBody [data-act]').indexOf(x.button):-1;
    const label='<span>'+safe(x.label)+'</span>';
    const value=index>=0?'<button data-ng="sourcebutton" data-val="'+index+'">'+safe(x.value)+' ↗</button>':
-    '<strong>'+safe(x.value)+'</strong>';
+    namedProfileValue(x.label,x.value);
    return '<div class="ng-horse-mgr-row">'+label+value+'</div>';
   }).join('');
   const connections=links?'<div class="ng-horse-mgr-rows">'+links+'</div>':
