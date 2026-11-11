@@ -2295,3 +2295,119 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 #wtwNextgen .ng-horse-owner-badge .ng-org-image{
   width:100%!important;height:100%!important;object-fit:contain!important
 }
+
+/* Keep Decision Desk copy anchored between cases. Variable-length content clips
+   at fixed line counts, so the title, facts and choice copy retain their rows. */
+@media (min-width:781px){
+  .ng-main>.ng-feature .ng-case{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    grid-template-rows:15px 52px 42px 48px 32px!important;
+    align-content:center!important;
+    justify-content:stretch!important;
+    row-gap:5px!important;
+    padding-top:8px!important;
+    padding-bottom:8px!important;
+  }
+  .ng-main>.ng-feature .ng-case-eyebrow{grid-row:1;min-height:0;overflow:hidden}
+  .ng-main>.ng-feature .ng-casetitle{
+    grid-row:2;
+    height:52px;
+    min-height:0;
+    overflow:hidden;
+    align-self:center;
+  }
+  .ng-main>.ng-feature .ng-casetitle h2{
+    display:-webkit-box!important;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+    height:100%;
+    overflow:hidden;
+    margin:0!important;
+    line-height:1.12!important;
+  }
+  .ng-main>.ng-feature .ng-case-summary{
+    grid-row:3;
+    height:42px;
+    max-height:42px;
+    overflow:hidden;
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+  }
+  .ng-main>.ng-feature .ng-facts{
+    grid-row:4;
+    height:48px!important;
+    min-height:48px!important;
+    margin:0!important;
+    padding:0!important;
+  }
+  .ng-main>.ng-feature .ng-fact{
+    display:grid!important;
+    grid-template-rows:10px minmax(0,1fr)!important;
+    align-content:start!important;
+    height:48px!important;
+    min-height:48px!important;
+    max-height:48px!important;
+    box-sizing:border-box!important;
+    overflow:hidden!important;
+    padding:5px!important;
+  }
+  .ng-main>.ng-feature .ng-fact small{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    line-height:10px!important;
+  }
+  .ng-main>.ng-feature .ng-fact b{
+    display:-webkit-box!important;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+    overflow:hidden!important;
+    align-self:start;
+    margin-top:2px!important;
+    line-height:1.15!important;
+  }
+  .ng-main>.ng-feature .ng-caseactions{
+    grid-row:5;
+    height:32px;
+    min-height:32px;
+    margin:0!important;
+    align-items:stretch;
+  }
+  .ng-main>.ng-feature .ng-caseactions button{
+    height:32px!important;
+    min-height:32px!important;
+    max-height:32px!important;
+    box-sizing:border-box!important;
+  }
+  .ng-main .ng-choices .ng-move-body{
+    display:grid!important;
+    grid-template-rows:13px 2.46em minmax(0,2.56em)!important;
+    align-content:center!important;
+    align-items:start!important;
+    gap:2px!important;
+    height:100%;
+    min-height:0;
+    overflow:hidden;
+  }
+  .ng-main .ng-choices .ng-movetag{grid-row:1;line-height:13px!important}
+  .ng-main .ng-choices .ng-move-body strong{
+    grid-row:2;
+    display:-webkit-box!important;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+    overflow:hidden!important;
+    align-self:start;
+    line-height:1.23!important;
+  }
+  .ng-main .ng-choices .ng-move-note{
+    grid-row:3;
+    display:-webkit-box!important;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+    overflow:hidden!important;
+    align-self:start;
+    margin-top:0!important;
+  }
+}
