@@ -2260,9 +2260,9 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 .ng-person-overview-stats>div{min-height:39px;padding:4px 6px}
 }
 
-/* Track photo, date ordered stakes, and compact horse star summaries */
-.ng-route-profile .ng-profile-track .ng-profile-source-photo{width:214px!important;height:108px!important;flex:0 0 214px!important;border-color:#65745c!important;background:#121a1e!important}
-.ng-route-profile .ng-profile-track .ng-profile-source-photo img{object-fit:contain!important;object-position:center center!important;padding:3px;box-sizing:border-box}
+/* Track identity logos on an inset presentation plate; preserve transparent pixels and full artwork. */
+.ng-route-profile .ng-profile-track .ng-profile-source-photo{width:214px!important;height:108px!important;flex:0 0 214px!important;border:1px solid #8b7950!important;border-radius:6px!important;background:radial-gradient(ellipse at 50% 43%,rgba(102,133,107,.38) 0%,rgba(49,73,59,.62) 45%,rgba(21,31,30,.97) 85%),linear-gradient(135deg,#30493e,#131d1b)!important;box-shadow:inset 0 1px 0 rgba(255,229,162,.17),inset 0 -8px 20px rgba(0,0,0,.28),0 2px 10px rgba(0,0,0,.26)!important}
+.ng-route-profile .ng-profile-track .ng-profile-source-photo img{object-fit:contain!important;object-position:center center!important;padding:8px 14px!important;box-sizing:border-box;filter:drop-shadow(0 2px 4px rgba(0,0,0,.56)) drop-shadow(0 0 4px rgba(240,216,158,.16))}
 .ng-track-workspace{display:grid!important;grid-template-columns:minmax(0,1.23fr) minmax(285px,.77fr)!important;gap:8px!important;width:100%;height:100%;min-height:0;overflow:hidden}
 .ng-track-workspace>.ng-tier1-card,.ng-track-info-stack>.ng-tier1-card{min-height:0!important}
 .ng-track-stakes .ng-stakes-table{flex:1 1 auto;min-height:0;overflow:hidden;padding:2px 5px 4px}
