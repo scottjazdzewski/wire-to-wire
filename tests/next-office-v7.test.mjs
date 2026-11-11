@@ -306,7 +306,7 @@ test('Six department rosters share FM density but preserve their own management 
  for(const label of ['CURRENT BASE','SHIP MI','STUD FEE','BREED VAL','CONSIGNOR','SALARY','MONTHLY COST','BALANCE']){
   assert.ok(code.includes(label),'Missing decision-useful roster field '+label);
  }
- assert.ok(code.includes("function depAuctionList(")&&code.includes("a.date>=current"),
+ assert.ok(code.includes("function depAuctionList(")&&code.includes("(a.endDate||a.sortKey)>=gameDay"),
   'Sales must select the next chronological auction by default');
  assert.ok(code.includes('data-ng-select="department-auction"'),
   'Auction chooser must be a real selection control');
@@ -598,6 +598,63 @@ test('Named management entities open exact profiles or clearly marked unregister
   'Fictional facility names must never be plain dead text');
  assert.ok(css.includes('.ng-entity-reference:hover')&&css.includes('.ng-entity-preview>header'));
  assert.ok(!helper.includes('localStorage.setItem'));
+ const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(syntax.status,0,syntax.stderr);
+});
+
+test('Sales dropdown names the operator and uses verified historical dates with month-only fallback',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css');
+ const start=js.indexOf('const DEP_SALE_HOUSES=');
+ const end=js.indexOf('function depHash(',start);
+ const fstart=js.indexOf('function depSaleLabel('),fend=js.indexOf('/* One connection router',fstart);
+ assert.ok(start>0&&end>start&&fstart>0&&fend>fstart);
+ const source=js.slice(start,end)+'\n'+js.slice(fstart,fend);
+ const mk=(today,auctions=[])=>new Function('depGameDay','stableShortDate','state','liveStableDate',
+  source+'\nreturn {DEP_SALE_HOUSES,DEP_SALE_EVENTS_2014,DEP_SALE_SEASONAL,depAuctionList,depSaleLabel,depSaleDateLabel,depSeasonalSales};')(
+  ()=>today,s=>String(s||'').replace(/(\d{4})-(\d{2})-(\d{2})/,(_,y,m,d)=>Number(m)+'/'+Number(d)+'/'+y.slice(2)),
+  ()=>({salesState:{auctions}}),
+  s=>/^\d{4}-\d{2}-\d{2}$/.test(s||'')?s:'');
+ const m=mk('2014-07-15');
+ assert.deepEqual(Object.keys(m.DEP_SALE_HOUSES).sort(),['barretts','fasigtipton','keeneland','obs']);
+ const list=m.depAuctionList(true);
+ assert.ok(list.length>=24,'2014 must contain the historical major-house sale calendar');
+ assert.ok(list.every((a,i)=>i===0||list[i-1].sortKey<=a.sortKey),
+  'Sale dropdown must be sorted by the in-game calendar');
+ const sept=list.find(a=>a.date==='2014-09-08'&&a.company==='Keeneland');
+ assert.equal(m.depSaleLabel(sept),'September Yearling Sale - Keeneland');
+ assert.equal(sept.endDate,'2014-09-21');
+ const obs=list.find(a=>a.date==='2014-08-26'&&a.company==='OBS');
+ assert.equal(m.depSaleLabel(obs),'August Yearling Sale - OBS');
+ assert.ok(list.some(a=>a.company==='Fasig-Tipton'&&a.date==='2014-08-04'&&a.name==='The Saratoga Sale'));
+ assert.ok(list.some(a=>a.company==='Barretts'&&a.date==='2014-11-08'));
+ const next=list.find(a=>(a.endDate||a.sortKey)>='2014-07-15');
+ assert.equal(m.depSaleLabel(next),'The Saratoga Sale - Fasig-Tipton',
+  'Next upcoming auction must be the earliest future sale, not invented July or August placeholders');
+ const future=mk('2015-08-10').depAuctionList(true);
+ const month=future.find(a=>a.name==='September Yearling Sale'&&a.sortKey.startsWith('2015'));
+ assert.ok(month&&!month.confirmedDate&&!month.date);
+ assert.ok(month.dateLabel.includes('exact date unverified'));
+ assert.ok(!future.some(a=>a.name==='April Two-Year-Olds in Training Sale'&&a.company==='Keeneland'),
+  'Discontinued Keeneland April 2YO event should not be projected beyond 2014');
+ assert.ok(!future.some(a=>a.name==='August Yearling Sale'&&a.company==='OBS'),
+  'OBS August yearling fixture must not be copied into the modern October calendar');
+ const saved=mk('2014-07-15',[{id:'real1',name:'September Yearling Sale',date:'2014-09-08',location:'Lexington, KY',lots:[]}]);
+ const real=saved.depAuctionList(false);
+ assert.equal(real.length,1);
+ assert.equal(real[0].company,'Keeneland','Exact known sale names can be matched to the verified company registry');
+ const unknown=mk('2014-07-15',[{id:'real2',name:'Regional Partnership Sale',date:'2014-08-01',lots:[]}]);
+ assert.equal(unknown.depAuctionList(false)[0].company,'Company not recorded','Do not invent company for unknown live sales');
+ assert.ok(js.includes('data-ng-select="department-auction"'));
+ assert.ok(js.includes('safe(depSaleLabel(a))'),'Dropdown must show Sale Name - Company');
+ assert.ok(js.includes("section==='Sales'?(page==='Sale Calendar'"));
+ assert.ok(js.includes("if(APP.section==='Sales'&&r._kind==='sale-event')"));
+ assert.ok(js.includes("if(APP.section==='Sales'&&r._kind==='sale-company')"));
+ assert.ok(js.includes("field.matches('select[data-ng-select=\"department-sales-company\"]')"));
+ assert.ok(js.includes("if(key==='dept-company')"));
+ assert.ok(js.includes('data-page="'));
+ assert.ok(css.includes('data-page="Sale Calendar"')&&css.includes('data-page="Sale Companies"'),
+  'Sale calendar and sale house directories must fit the locked roster widths');
+ assert.ok(!source.includes('localStorage.setItem'),'Schedule lookup cannot persist the preview into game records');
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);
 });
