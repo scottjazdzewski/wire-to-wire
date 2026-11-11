@@ -1,4 +1,5 @@
 import {qaPendingInactiveAuthority,qaPendingInactiveEditionIds} from './history-inactive-read-model.js';
+import {readOpeningWorld1999} from './1999/opening-readmodel.mjs';
 // Cloudflare Worker / D1 API. Deliberately separate from all other WTW and non-WTW projects.
 // Privacy: every request requires authenticated Cloudflare Access in deployed environments.
 const jsonHeaders = {
@@ -136,8 +137,14 @@ async function bootstrap(db) {
   };
 }
 async function api(request,env,email) {
-  if(!env.DB) return response({error:'D1 not bound. Preview is available using sample-history.json.'},503);
   const url = new URL(request.url);
+  // Protected, source-only 1999 handoff. No player decisions or future racing writes here.
+  if(url.pathname.startsWith('/api/1999/')) {
+    if(request.method!=='GET') return response({error:'1999 historical opening authority is read-only; gameplay writes require a separately certified runtime.'},405);
+    const view=readOpeningWorld1999(url);
+    return response(view.data,view.status);
+  }
+  if(!env.DB) return response({error:'D1 not bound. Preview is available using sample-history.json.'},503);
   if(request.method==='POST' && url.pathname==='/api/names') {
     if(request.headers.get('content-type')?.split(';')[0]!=='application/json') return response({error:'JSON required'},415);
     const origin=request.headers.get('Origin');
