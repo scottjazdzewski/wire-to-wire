@@ -1633,15 +1633,17 @@ function depRows(section,page,demo,auction){
    _kind:'horse',_name:h.name,_canonId:h.id||'',_worldKey:world1999Key('horse',h),
    name:h.name,age:h.age||'',sex:h.sex||'',sire:h.sire||'',dam:h.dam||'',
    owner:h.owner||'',trainer:h.trainer||'',track:h.track||'',
+   _ownerId:h.ownerId||'',_trainerId:h.trainerId||'',_trackId:h.trackId||'',
+   _sireId:h.sireId||'',_damId:h.damId||'',
    status:h.racingStatus||h.status||'',_role:h._role
   }));
   if(page==='People')return (world1999Data.people||[]).map(p=>({
    _kind:'person',_name:p.name,_canonId:p.id,_worldKey:world1999Key('person',p),
-   name:p.name,role:p.role||'',base:p.base||'',operation:p.ownershipOperation||''
+   name:p.name,role:p.role||'',base:p.base||'',operation:p.ownershipOperation||'',_operationId:p.ownershipOperationId||''
   }));
   return (world1999Data.organizations||[]).map(o=>({
    _kind:'farm',_name:o.name,_canonId:o.id,_worldKey:world1999Key('farm',o),
-   name:o.name,type:o.type||'',location:o.location||'',principal:o.publicPrincipal||'',status:o.status||''
+   name:o.name,type:o.type||'',location:o.location||'',principal:o.publicPrincipal||'',_principalId:o.publicPrincipalId||'',status:o.status||''
   }));
  }
  if(section==='Tracks')return depTrackRows(page);
@@ -2059,11 +2061,13 @@ function departmentRoster(section,page='Overview'){
   return '<tr>'+specs.map(([key])=>{
    let v=depCell(r[key],key);
    const kind=entityKindForField(key,r);
-   if(section==='World'&&key==='operation'&&r.operation){
-    v=world1999Linked('farm','',r.operation);
-   }
-   if(section==='World'&&key==='principal'&&r.principal){
-    v=world1999Linked('person','',r.principal);
+   if(section==='World'&&key==='operation'&&r.operation)
+    v=world1999Linked('farm',r._operationId,r.operation);
+   if(section==='World'&&key==='principal'&&r.principal)
+    v=world1999Linked('person',r._principalId,r.principal);
+   if(section==='World'&&r._role==='opening'&&['owner','trainer','track'].includes(key)){
+    const k=key==='owner'?'farm':key==='trainer'?'person':'track';
+    v=world1999Linked(k,r['_'+key+'Id'],r[key]);
    }
    if(section==='Sales'&&r._kind==='horse'&&key==='hip'){
     const watching=Boolean(APP.salesWatched?.[r._watchKey]);
@@ -2086,6 +2090,8 @@ function departmentRoster(section,page='Overview'){
     v='<button type="button" class="ng-rs-horse" data-ng="dept-open" data-val="'+i+
      '" aria-label="Open '+safe(r._name)+'" title="'+safe(r._kind==='sale-event'?'Open this auction':r._kind==='sale-company'?'View this company\'s sales':'Open '+r._name+' profile')+'">'+first+
      '<span>'+safe(r._name)+'</span></button>';
+   }else if(section==='World'&&r._role==='opening'&&['owner','trainer','track'].includes(key)){
+    // Canonical IDs take precedence over similarly named unrelated entities.
    }else if(kind&&!entityNotRecorded(r[key])&&r._kind!=='finance'){
     v='<button type="button" class="ng-entity-reference" data-ng="dept-related" data-val="'+i+
      '" data-field="'+safe(key)+'" title="Open '+safe(String(r[key]))+' record">'+
