@@ -247,6 +247,10 @@ body>.app,body>#routeShell,body>#toast,body>.wtw-site-archive-link{display:none!
 .mg-op-content{gap:0}
 .mg-operations-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);grid-template-rows:minmax(0,42fr) minmax(0,58fr);gap:8px;flex:1;min-height:0;min-width:0}
 .mg-operations-grid.tracks{grid-template-rows:minmax(0,31fr) minmax(0,69fr)}
+.mg-operations-grid.stable>.mg-section:nth-child(3){align-self:start;height:auto;max-height:220px}
+.mg-stable-directory-action{display:flex;justify-content:flex-end;padding:8px 10px;background:#20332b;border-top:1px solid #354e3d}
+.mg-stable-directory-action .mg-rowlink{font-size:10px;color:#f0d59e;font-weight:800;letter-spacing:.03em}
+
 .mg-world-current{flex:0 0 auto;max-height:45%;overflow:auto;min-height:0}
 .mg-world-current .mg-op-case{min-height:34px;padding:4px 8px}
 .mg-world-circuit-label{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:25px;padding:5px 9px;background:#263d33;border-top:1px solid #496354;border-bottom:1px solid #496354}
