@@ -1673,7 +1673,8 @@ function salesDesk(page,auction,auctions,visibleTotal){
   '<div class="ng-sales-desk-actions">'+go('sale-prev','‹','Previous scheduled auction',current<=0)+
   go('sale-next','›','Next scheduled auction',current<0||current>=auctions.length-1)+
   go(page==='Catalogs'?'sale-overview':'sale-catalog',page==='Catalogs'?'OVERVIEW':'CATALOG','Show selected auction catalog')+
-  go('sale-calendar','CALENDAR','Browse chronological sale dates')+'</div></div>';
+  go('sale-calendar','CALENDAR','Browse chronological sale dates')+
+  go('sale-watchlist','★ WATCHLIST '+watched,'Review all watched lots in this session')+'</div></div>';
 }
 
 function depAuctionList(preview){
@@ -1890,10 +1891,10 @@ function departmentRoster(section,page='Overview'){
   '</select></label>'+
   '<button data-ng="dept-meets" class="'+(APP.racingMode!=='mine'?'on':'')+'" title="Show tracks racing at the current in-game date">ACTIVE MEETS</button>'+
   '<button data-ng="dept-myhorses" class="'+(APP.racingMode==='mine'?'on':'')+'" title="Show every upcoming race entry or target for horses in your stable, across all tracks">MY HORSES</button>':'';
- const salePicker=section==='Sales'&&page!=='Sale Calendar'&&page!=='Sale Companies'?'<label class="ng-dpt-auction-picker">AUCTION <select data-ng-select="department-auction" aria-label="Choose auction chronologically">'+
+ const salePicker=section==='Sales'&&!['Sale Calendar','Sale Companies','Watchlist'].includes(page)?'<label class="ng-dpt-auction-picker">AUCTION <select data-ng-select="department-auction" aria-label="Choose auction chronologically">'+
   (auctions.length?auctions.map(a=>'<option value="'+safe(a.id)+'" '+(auction?.id===a.id?'selected':'')+'>'+safe(depSaleLabel(a))+'</option>').join(''):'<option>No upcoming auction data</option>')+
   '</select></label>':'';
- const saleHouseLink=section==='Sales'&&auction?.companyId&&page!=='Sale Calendar'&&page!=='Sale Companies'?
+ const saleHouseLink=false&&section==='Sales'&&auction?.companyId&&page!=='Sale Calendar'&&page!=='Sale Companies'?
   '<button data-ng="dept-company" data-val="'+safe(auction.companyId)+'" title="See all sales run by '+safe(auction.company)+'">HOUSE: '+safe(auction.company)+' ↗</button>':'';
  const saleCompanyPicker=section==='Sales'&&page==='Sale Calendar'?
   '<label class="ng-dpt-sales-company-picker">COMPANY <select data-ng-select="department-sales-company" aria-label="Show sale calendar by operator">'+
@@ -1919,7 +1920,7 @@ function departmentRoster(section,page='Overview'){
   '<span class="ng-dpt-mode">FULL-WIDTH ROSTER</span></div>'+salesDeskView+
   '<section class="ng-rs-roster"><header><strong>'+safe(section.toUpperCase())+' · SORTABLE ROSTER</strong><div class="ng-dpt-pager">'+pager+'</div></header>'+
   '<div class="ng-rs-scroll"><table class="ng-rs-table ng-dpt-table"><thead><tr>'+heads+'</tr></thead><tbody>'+
-  (body||'<tr><td colspan="'+specs.length+'" class="ng-rs-no-results">'+(demo?'No matching records.':'No supported records in this view.')+'</td></tr>')+
+  (body||'<tr><td colspan="'+specs.length+'" class="ng-rs-no-results">'+safe(section==='Sales'&&page==='Watchlist'?'No watched lots yet. Select ☆ beside a catalog hip to watch it for this session.':section==='Sales'&&page==='Private Offers'?'No recorded private offers. Bidding and negotiation are not enabled in this UI preview.':section==='Sales'?'No catalog lots recorded for this view.':demo?'No matching records.':'No supported records in this view.')+'</td></tr>')+
   '</tbody></table></div><div class="ng-dpt-disclosure">'+(demo?'FICTIONAL DISPLAY VALUES ONLY — no prices, locations or medical facts saved.':'SOURCE RECORDS ONLY · unknown values shown as —')+
   '</div></section></section>';
 }
@@ -2142,6 +2143,7 @@ window.addEventListener('click',e=>{
   APP.departmentPageIndex=0;APP.departmentSearch='';APP.departmentSortKey='';
   return pageTab('Catalogs');
  }
+ if(key==='sale-watchlist')return pageTab('Watchlist');
  if(key==='sale-catalog')return pageTab('Catalogs');
  if(key==='sale-overview')return pageTab('Overview');
  if(key==='sale-calendar')return pageTab('Sale Calendar');
