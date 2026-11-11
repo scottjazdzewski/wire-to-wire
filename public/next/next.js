@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:true,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:true,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentAuction:'',departmentCompany:'',departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
+const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:true,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:true,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -1215,6 +1215,7 @@ const DEP_COLUMNS={
  Tracks:[['name','TRACK',18],['location','CITY / STATE',18],['surfaces','SURFACES',12],['circuit','CIRCUIT',16],['meetWindow','MEET WINDOWS',19],['status','STATUS',9],['raceDays','DAYS',4],['stakesCount','STAKES',4]],
  Racing:[['date','DATE',7],['track','TRACK',8],['race','RACE',6],['class','CLASS',7],['surface','SURF',4],['distance','DIST',5],['purse','PURSE',7],['horse','HORSE',11],['base','CURRENT BASE',12],['ship','SHIP MI',6],['jockey','JOCKEY',9],['trainer','TRAINER',8],['ready','READY',5],['status','ENTRY',5]],
  Breeding:[['horse','HORSE',12],['age','AGE',3],['sex','SEX',3],['sire','SIRE',9],['dam','DAM',9],['farm','FARM',9],['status','BREED STATUS',7],['health','HEALTH',6],['pedigree','PED',5],['value','BREED VAL',6],['owner','OWNER',10],['studFee','STUD FEE',8],['bookings','BOOK',5],['foals','FOALS',4],['winners','WINS',4]],
+ SalesWatchlist:[['hip','HIP',7],['horse','HORSE',18],['auction','AUCTION',25],['company','HOUSE',14],['sire','SIRE',11],['dam','DAM',11],['consignor','CONSIGNOR',11],['value','EST VALUE',9],['status','STATUS',8]],
  SaleCalendar:[['date','DATES',12],['name','AUCTION',27],['company','SALES COMPANY',16],['city','LOCATION',16],['category','TYPE',14],['status','STATUS',15]],
  SaleCompanies:[['name','SALES COMPANY',19],['city','HEADQUARTERS',15],['saleCount','SALES',8],['nextSale','NEXT UPCOMING AUCTION',33],['months','USUAL SALE MONTHS',25]],
  Sales:[['hip','HIP',4],['horse','HORSE',12],['age','AGE',3],['sex','SEX',3],['sire','SIRE',11],['dam','DAM',11],['consignor','CONSIGNOR',10],['reserve','RESERVE',8],['bid','CURRENT BID',8],['value','EST VALUE',8],['ca','CA',4],['pa','PA',4],['condition','COND',7],['status','SALE STATUS',7]],
@@ -1532,12 +1533,15 @@ function depRows(section,page,demo,auction){
   });
  }
  if(section==='Sales'){
+  if(page==='Watchlist')return Object.values(APP.salesWatched||{});
   if(!auction)return [];
   const saleOffset=Math.max(0,auction.previewIndex||0);
   const lots=demo?stable.map((h,i)=>({horse:stable[(i+saleOffset)%stable.length].name})):Array.isArray(auction.lots)?auction.lots:[];
   let out=lots.map((lot,i)=>{
    const name=lot.horse||lot.horse_name;
-   return row('horse',name,{hip:demo?String(101+saleOffset*100+i*7):lot.hip||'',horse:name,age:demo?String([2,3,1,4,2,1][i]):lot.age||'',
+   const hip=demo?String(101+saleOffset*100+i*7):String(lot.hip||'');
+   return row('horse',name,{hip,horse:name,auction:auction.name,company:auction.company,
+    _auctionId:auction.id,_watchKey:salesWatchKey(auction.id,hip,name),_demo:demo,age:demo?String([2,3,1,4,2,1][i]):lot.age||'',
     sex:demo?['C','G','F','M','C','F'][i]:lot.sex||'',sire:demo?['Monarch Road','City Light','Fleet River','Northern Crown','Blue Harbor','Grand Reserve'][i]:lot.sire||'',
     dam:demo?['Silver Arch','Morning Glory','Fast Night','Wild Azure','Marble Hill','Last Dance'][i]:lot.dam||'',
     consignor:demo?['Blue Lantern','Kingsmere','Ironweed','Aurelian','Crescent Mile','Marrowfield'][i]:lot.consignor||'',
@@ -1548,8 +1552,7 @@ function depRows(section,page,demo,auction){
     condition:demo?['Fit','Watch','Sound','Fit','Sound','Vet check'][i]:lot.condition||'',
     status:demo?['Open','Bidding','Watch','Cataloged','Offer','Inspect'][i]:lot.status||''});
   });
-  if(page==='Watchlist')out=out.filter((r,i)=>demo?i%2===0:/watch/i.test(r.status));
-  if(page==='Private Offers')out=out.filter((r,i)=>demo?i%3===1:/offer/i.test(r.status));
+  if(page==='Private Offers')out=out.filter(r=>!demo&&/offer/i.test(r.status));
   return out;
  }
  if(section==='Personnel'){
@@ -1621,6 +1624,59 @@ function depSeasonalSales(year){
     previewIndex:i,lots:[]};
   });
 }
+// UI-only lot watchlist. Separate from authoritative save and financial records.
+function salesWatchKey(auctionId,hip,horse){
+ return String(auctionId||'')+'|'+String(hip||horse||'');
+}
+function salesUpcomingIndex(auctions,now=depGameDay()){
+ const index=auctions.findIndex(a=>(a.endDate||a.sortKey)>=now);
+ return index<0?(auctions.length?auctions.length-1:-1):index;
+}
+function salesDesk(page,auction,auctions,visibleTotal){
+ const watched=Object.keys(APP.salesWatched||{}).length;
+ const next=auctions[salesUpcomingIndex(auctions)];
+ const go=(action,label,title,disabled=false)=>
+  '<button type="button" data-ng="'+action+'" '+(disabled?'disabled ':'')+'title="'+safe(title||label)+'">'+safe(label)+'</button>';
+ if(page==='Sale Calendar'||page==='Sale Companies'){
+  const isCalendar=page==='Sale Calendar';
+  return '<div class="ng-sales-desk ng-sales-directory" role="group" aria-label="Sales market summary">'+
+   '<div class="ng-sales-desk-caption"><small>'+safe(depGameDay().slice(0,4))+' MARKET / NORTH AMERICA</small><strong>'+
+   safe(isCalendar?'SALE CALENDAR':'SALES COMPANIES')+'</strong></div>'+
+   '<div class="ng-sales-desk-field"><small>OPERATORS</small><b>'+Object.keys(DEP_SALE_HOUSES).length+'</b></div>'+
+   '<div class="ng-sales-desk-field"><small>'+safe(isCalendar?'SALES LISTED':'CURRENT MARKET')+'</small><b>'+
+   safe(isCalendar?String(visibleTotal):'Regional & national')+'</b></div>'+
+   '<div class="ng-sales-desk-field ng-sales-desk-note"><small>DATE STANDARD</small><b>Exact dates where verified · otherwise usual month</b></div>'+
+   '<div class="ng-sales-desk-actions">'+go('sale-next-up','NEXT SALE','Open next scheduled auction',!next)+
+   go(isCalendar?'sale-company-list':'sale-calendar',isCalendar?'HOUSES':'CALENDAR','Switch Sales directory')+'</div>'+
+   '</div>';
+ }
+ if(page==='Watchlist'){
+  return '<div class="ng-sales-desk ng-sales-watch-desk" role="group" aria-label="Auction watchlist">'+
+   '<div class="ng-sales-desk-caption"><small>PERSONAL SALES DESK</small><strong>WATCHLIST</strong></div>'+
+   '<div class="ng-sales-desk-field"><small>WATCHED LOTS</small><b>'+watched+'</b></div>'+
+   '<div class="ng-sales-desk-field ng-sales-desk-note"><small>STORAGE</small><b>Session only · no bids or transactions</b></div>'+
+   '<div class="ng-sales-desk-actions">'+go('sale-catalog','CATALOG','Return to selected auction catalog')+
+   go('sale-calendar','CALENDAR','Open chronological auction calendar')+'</div></div>';
+ }
+ const current=auctions.findIndex(a=>a.id===auction?.id);
+ const month=auction?.confirmedDate?'VERIFIED DATE':'USUAL MONTH';
+ const recordCount=String(visibleTotal);
+ return '<div class="ng-sales-desk ng-sales-current-desk" role="group" aria-label="Selected auction information">'+
+  '<div class="ng-sales-desk-caption"><small>AUCTION DESK / '+safe(auction?.company||'UNASSIGNED')+
+  '</small><strong title="'+safe(auction?.name||'No upcoming auction')+'">'+safe(auction?.name||'NO AUCTION SELECTED')+'</strong></div>'+
+  '<div class="ng-sales-desk-field ng-sales-date"><small>'+month+'</small><b>'+
+  safe(auction?depSaleDateLabel(auction):'—')+'</b></div>'+
+  '<div class="ng-sales-desk-field"><small>VENUE / TYPE</small><b>'+
+  safe([auction?.city,auction?.category].filter(Boolean).join(' · ')||'—')+'</b></div>'+
+  '<div class="ng-sales-desk-field"><small>'+safe(APP.departmentDemo?'PREVIEW LOTS':'CATALOG LOTS')+'</small><b>'+
+  recordCount+(watched?' · ★ '+watched:'')+'</b></div>'+
+  '<div class="ng-sales-desk-actions">'+go('sale-prev','‹','Previous scheduled auction',current<=0)+
+  go('sale-next','›','Next scheduled auction',current<0||current>=auctions.length-1)+
+  go(page==='Catalogs'?'sale-overview':'sale-catalog',page==='Catalogs'?'OVERVIEW':'CATALOG','Show selected auction catalog')+
+  go('sale-calendar','CALENDAR','Browse chronological sale dates')+
+  go('sale-watchlist','★ WATCHLIST '+watched,'Review all watched lots in this session')+'</div></div>';
+}
+
 function depAuctionList(preview){
  const year=Number(depGameDay().slice(0,4))||2014;
  const result=preview?
@@ -1759,18 +1815,18 @@ function depNumeric(v){
  if(!/^-?\d+(?:\.\d+)?[kKmM]?$/.test(s))return null;
  return Number(s.replace(/[kKmM]$/,''))*(/[mM]$/.test(s)?1000000:/[kK]$/.test(s)?1000:1);
 }
-function depPageLimit(section){const financeHeader=section==='Finances'?42:0;return Math.max(8,Math.min(22,Math.floor(((window.innerHeight||850)-250-financeHeader)/29)))}
+function depPageLimit(section){const financeHeader=section==='Finances'?42:0,salesHeader=section==='Sales'?43:0;return Math.max(8,Math.min(22,Math.floor(((window.innerHeight||850)-250-financeHeader-salesHeader)/29)))}
 function departmentRoster(section,page='Overview'){
  const demo=APP.departmentDemo;
  const current=$('.dateChip')?.textContent.trim()||'2014-07-15';
  const auctions=section==='Sales'?depAuctionList(demo):[];
  const gameDay=depGameDay();
  const auction=auctions.find(a=>a.id===APP.departmentAuction)||auctions.find(a=>(a.endDate||a.sortKey)>=gameDay)||null;
- const specs=section==='Sales'&&page==='Sale Calendar'?DEP_COLUMNS.SaleCalendar:section==='Sales'&&page==='Sale Companies'?DEP_COLUMNS.SaleCompanies:section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'?(APP.racingTrack?DEP_COLUMNS.Racing:DEP_COLUMNS.Meets):DEP_COLUMNS[section];
+ const specs=section==='Sales'&&page==='Watchlist'?DEP_COLUMNS.SalesWatchlist:section==='Sales'&&page==='Sale Calendar'?DEP_COLUMNS.SaleCalendar:section==='Sales'&&page==='Sale Companies'?DEP_COLUMNS.SaleCompanies:section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'?(APP.racingTrack?DEP_COLUMNS.Racing:DEP_COLUMNS.Meets):DEP_COLUMNS[section];
  let rows=depRows(section,page,demo,auction);
  const search=APP.departmentSearch.trim().toLowerCase();
  if(search)rows=rows.filter(r=>specs.some(([key])=>String(r[key]??'').toLowerCase().includes(search)));
- const defaultSort=section==='Racing'&&(page!=='Overview'||APP.racingMode==='mine'||APP.racingTrack)?'date':section==='Sales'&&page!=='Sale Calendar'&&page!=='Sale Companies'?'hip':section==='Finances'?'date':specs[0][0];
+ const defaultSort=section==='Sales'&&page==='Watchlist'?'auction':section==='Racing'&&(page!=='Overview'||APP.racingMode==='mine'||APP.racingTrack)?'date':section==='Sales'&&page!=='Sale Calendar'&&page!=='Sale Companies'?'hip':section==='Finances'?'date':specs[0][0];
  const selectedSort=specs.some(x=>x[0]===APP.departmentSortKey)?APP.departmentSortKey:defaultSort;
  const sign=APP.departmentSortKey?(APP.departmentSortDesc?-1:1):(section==='Finances'?-1:1);
  rows.sort((a,b)=>{
@@ -1791,6 +1847,17 @@ function departmentRoster(section,page='Overview'){
   return '<tr>'+specs.map(([key])=>{
    let v=depCell(r[key],key);
    const kind=entityKindForField(key,r);
+   if(section==='Sales'&&r._kind==='horse'&&key==='hip'){
+    const watching=Boolean(APP.salesWatched?.[r._watchKey]);
+    v='<div class="ng-sales-hip"><button type="button" data-ng="sale-watch" data-val="'+i+
+     '" aria-label="'+(watching?'Remove ':'Watch ')+'lot '+safe(r.hip)+'" aria-pressed="'+watching+
+     '" title="'+(watching?'Remove from watchlist':'Add to watchlist (this session)')+
+     '" class="'+(watching?'on':'')+'">'+(watching?'★':'☆')+'</button><span>'+safe(r.hip||'—')+'</span></div>';
+   }
+   if(section==='Sales'&&r._kind==='horse'&&key==='auction'){
+    v='<button type="button" class="ng-entity-reference" data-ng="sale-open-watch" data-val="'+i+
+     '" title="Open '+safe(r.auction)+' catalog">'+safe(r.auction)+' ↗</button>';
+   }
    if(section==='Sales'&&r._kind==='sale-event'&&key==='company'){
     v='<button type="button" class="ng-entity-reference" data-ng="dept-related" data-val="'+i+'" data-field="company" title="View sales operated by '+safe(String(r.company))+'">'+safe(String(r.company))+' ↗</button>';
    }
@@ -1824,16 +1891,16 @@ function departmentRoster(section,page='Overview'){
   '</select></label>'+
   '<button data-ng="dept-meets" class="'+(APP.racingMode!=='mine'?'on':'')+'" title="Show tracks racing at the current in-game date">ACTIVE MEETS</button>'+
   '<button data-ng="dept-myhorses" class="'+(APP.racingMode==='mine'?'on':'')+'" title="Show every upcoming race entry or target for horses in your stable, across all tracks">MY HORSES</button>':'';
- const salePicker=section==='Sales'&&page!=='Sale Calendar'&&page!=='Sale Companies'?'<label class="ng-dpt-auction-picker">AUCTION <select data-ng-select="department-auction" aria-label="Choose auction chronologically">'+
+ const salePicker=section==='Sales'&&!['Sale Calendar','Sale Companies','Watchlist'].includes(page)?'<label class="ng-dpt-auction-picker">AUCTION <select data-ng-select="department-auction" aria-label="Choose auction chronologically">'+
   (auctions.length?auctions.map(a=>'<option value="'+safe(a.id)+'" '+(auction?.id===a.id?'selected':'')+'>'+safe(depSaleLabel(a))+'</option>').join(''):'<option>No upcoming auction data</option>')+
   '</select></label>':'';
- const saleHouseLink=section==='Sales'&&auction?.companyId&&page!=='Sale Calendar'&&page!=='Sale Companies'?
-  '<button data-ng="dept-company" data-val="'+safe(auction.companyId)+'" title="See all sales run by '+safe(auction.company)+'">HOUSE: '+safe(auction.company)+' ↗</button>':'';
+ const saleHouseLink=''; // Sales company accessible from desk and directory.
  const saleCompanyPicker=section==='Sales'&&page==='Sale Calendar'?
   '<label class="ng-dpt-sales-company-picker">COMPANY <select data-ng-select="department-sales-company" aria-label="Show sale calendar by operator">'+
   '<option value="" '+(!APP.departmentCompany?'selected':'')+'>ALL SALE COMPANIES</option>'+
   Object.entries(DEP_SALE_HOUSES).map(([id,house])=>'<option value="'+safe(id)+'" '+(APP.departmentCompany===id?'selected':'')+'>'+safe(house.name)+'</option>').join('')+
   '</select></label>':'';
+ const salesDeskView=section==='Sales'?salesDesk(page,auction,auctions,rows.length):'';
  const cash=availableCash();
  const finance=section==='Finances'?'<div class="ng-dpt-finance">'+[
   ['CASH',demo?'$2.84M':cash!=null?depMoney(cash):'—'],
@@ -1841,7 +1908,7 @@ function departmentRoster(section,page='Overview'){
  ].map(([name,value])=>'<span><small>'+safe(name)+'</small><b>'+safe(value)+'</b></span>').join('')+'</div>':'';
  const purpose=section==='Racing'?(APP.racingMode==='mine'?'MY HORSES · ALL UPCOMING ENTRIES AND TARGETS':APP.racingTrack?'UPCOMING RACES AT '+APP.racingTrack.toUpperCase():'TRACKS CURRENTLY HOLDING MEETS'):
   section==='Breeding'?'STUD FEES, COVERINGS & PRODUCTION':
-  section==='Sales'?(page==='Sale Calendar'?'CHRONOLOGICAL SALES · COMPANY · VENUE · DATE':page==='Sale Companies'?'AUCTION HOUSE DIRECTORY · SALES CALENDAR':auction?depSaleLabel(auction).toUpperCase()+' · '+depSaleDateLabel(auction)+' · '+(auction.city||''):'NO UPCOMING AUCTIONS'):
+  section==='Sales'?(page==='Watchlist'?'WATCHED LOTS · UI SESSION ONLY':page==='Sale Calendar'?'CHRONOLOGICAL SALES · COMPANY · VENUE · DATE':page==='Sale Companies'?'AUCTION HOUSE DIRECTORY · SALES CALENDAR':auction?depSaleLabel(auction).toUpperCase()+' · '+depSaleDateLabel(auction)+' · '+(auction.city||''):'NO UPCOMING AUCTIONS'):
   section==='Personnel'?'TRAINERS · JOCKEYS · OWNERS · STAFF':
   section==='Facilities'?'CAPACITY · QUALITY · MAINTENANCE':'INCOME · EXPENSES · CASH FLOW';
  return '<section class="ng-functional ng-stable-roster-v2 ng-dept-roster" data-department="'+safe(section)+'" data-page="'+safe(page)+'" data-roster-kind="'+(specs===DEP_COLUMNS.Meets?'meet':'regular')+'">'+
@@ -1849,10 +1916,10 @@ function departmentRoster(section,page='Overview'){
   finance+'<div class="ng-rs-tools">'+racingPicker+salePicker+saleHouseLink+saleCompanyPicker+'<label>VIEW <select data-ng-select="department-tab" aria-label="Choose '+safe(section)+' view">'+viewOptions+'</select></label>'+
   '<input id="ngDepartmentSearch" data-ng-input="department-search" type="search" aria-label="Search '+safe(section)+' roster" value="'+safe(APP.departmentSearch)+'" placeholder="Find records…" autocomplete="off"/>'+
   '<button data-ng="dept-demo" class="'+(demo?'on':'')+'" title="Preview-only invented values; no game data changes">'+(demo?'DEMO ON':'DEMO OFF')+'</button>'+
-  '<span class="ng-dpt-mode">FULL-WIDTH ROSTER</span></div>'+
+  '<span class="ng-dpt-mode">FULL-WIDTH ROSTER</span></div>'+salesDeskView+
   '<section class="ng-rs-roster"><header><strong>'+safe(section.toUpperCase())+' · SORTABLE ROSTER</strong><div class="ng-dpt-pager">'+pager+'</div></header>'+
   '<div class="ng-rs-scroll"><table class="ng-rs-table ng-dpt-table"><thead><tr>'+heads+'</tr></thead><tbody>'+
-  (body||'<tr><td colspan="'+specs.length+'" class="ng-rs-no-results">'+(demo?'No matching records.':'No supported records in this view.')+'</td></tr>')+
+  (body||'<tr><td colspan="'+specs.length+'" class="ng-rs-no-results">'+safe(section==='Sales'&&page==='Watchlist'?'No watched lots yet. Select ☆ beside a catalog hip to watch it for this session.':section==='Sales'&&page==='Private Offers'?'No recorded private offers. Bidding and negotiation are not enabled in this UI preview.':section==='Sales'?'No catalog lots recorded for this view.':demo?'No matching records.':'No supported records in this view.')+'</td></tr>')+
   '</tbody></table></div><div class="ng-dpt-disclosure">'+(demo?'FICTIONAL DISPLAY VALUES ONLY — no prices, locations or medical facts saved.':'SOURCE RECORDS ONLY · unknown values shown as —')+
   '</div></section></section>';
 }
@@ -2048,6 +2115,38 @@ window.addEventListener('click',e=>{
  }
  if(key==='dept-page'){APP.departmentPageIndex=Math.max(0,APP.departmentPageIndex+Number(val));return paint()}
  if(key==='dept-demo'){APP.departmentDemo=!APP.departmentDemo;APP.departmentPageIndex=0;return paint()}
+ if(key==='sale-watch'){
+  if(APP.section!=='Sales')return;
+  const r=APP.departmentVisible[Number(val)];
+  if(!r||r._kind!=='horse'||!r._watchKey)return;
+  if(APP.salesWatched[r._watchKey])delete APP.salesWatched[r._watchKey];
+  else APP.salesWatched[r._watchKey]={...r,status:r._demo?'DEMO · '+r.status:r.status};
+  return paint();
+ }
+ if(key==='sale-open-watch'){
+  const r=APP.departmentVisible[Number(val)];
+  if(!r||!r._auctionId)return;
+  APP.departmentAuction=r._auctionId;
+  return pageTab('Catalogs');
+ }
+ if(['sale-prev','sale-next','sale-next-up'].includes(key)){
+  if(APP.section!=='Sales')return;
+  const auctions=depAuctionList(APP.departmentDemo);
+  const selected=auctions.findIndex(a=>a.id===APP.departmentAuction);
+  const current=selected>=0?selected:salesUpcomingIndex(auctions);
+  const target=key==='sale-next-up'?salesUpcomingIndex(auctions):
+   Math.max(0,Math.min(auctions.length-1,current+(key==='sale-prev'?-1:1)));
+  if(!auctions[target]||key==='sale-next'&&current>=auctions.length-1||
+   key==='sale-prev'&&current<=0)return;
+  APP.departmentAuction=auctions[target].id;
+  APP.departmentPageIndex=0;APP.departmentSearch='';APP.departmentSortKey='';
+  return pageTab('Catalogs');
+ }
+ if(key==='sale-watchlist')return pageTab('Watchlist');
+ if(key==='sale-catalog')return pageTab('Catalogs');
+ if(key==='sale-overview')return pageTab('Overview');
+ if(key==='sale-calendar')return pageTab('Sale Calendar');
+ if(key==='sale-company-list')return pageTab('Sale Companies');
  if(key==='dept-company'){APP.departmentCompany=val;return pageTab('Sale Calendar')}
  if(key==='dept-open'){
   const r=APP.departmentVisible[Number(val)];if(!r)return;

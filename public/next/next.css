@@ -2529,3 +2529,91 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  .ng-track-history-content{gap:4px;padding:6px}
  .ng-track-history-blurb{font-size:8.7px;line-height:1.28}
 }
+
+
+/* Sales desk ribbon: dedicated UI-only auction navigation, same FM type system.
+   No effect on Stable, Racing, Facilities, Track profiles, engine or save state. */
+#wtwNextgen .ng-dept-roster[data-department="Sales"] .ng-sales-desk{
+ box-sizing:border-box;display:flex;align-items:stretch;gap:0;flex:0 0 43px;
+ min-width:0;min-height:43px;height:43px;overflow:hidden;
+ background:#202c2c;border:1px solid #536551;color:#dde7db
+}
+#wtwNextgen .ng-sales-desk-caption{
+ display:flex;flex:1.3 1 25%;flex-direction:column;justify-content:center;gap:3px;
+ min-width:140px;overflow:hidden;padding:3px 9px;border-right:1px solid #40584a
+}
+#wtwNextgen .ng-sales-desk-caption small,
+#wtwNextgen .ng-sales-desk-field small{
+ font-size:7.8px;font-weight:820;line-height:1.05;letter-spacing:.045em;
+ color:#adc2b1;white-space:nowrap
+}
+#wtwNextgen .ng-sales-desk-caption strong{
+ display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+ font-size:11px;line-height:1.1;font-weight:820;color:#eed597
+}
+#wtwNextgen .ng-sales-desk-field{
+ box-sizing:border-box;display:flex;flex:1 1 16%;flex-direction:column;
+ justify-content:center;gap:3px;min-width:65px;overflow:hidden;
+ padding:3px 9px;border-right:1px solid #40584a
+}
+#wtwNextgen .ng-sales-desk-field b{
+ display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+ font-size:9.4px;line-height:1.1;font-weight:760;color:#e7e7d8
+}
+#wtwNextgen .ng-sales-date{flex:1.1 1 18%}
+#wtwNextgen .ng-sales-desk-note{flex:1.4 1 22%}
+#wtwNextgen .ng-sales-desk-actions{
+ display:flex;align-items:center;justify-content:flex-end;gap:3px;
+ flex:0 0 auto;min-width:0;overflow:hidden;padding:5px 7px 5px 5px
+}
+#wtwNextgen .ng-sales-desk-actions button{
+ box-sizing:border-box;min-width:24px;height:24px!important;max-height:24px;
+ padding:2px 6px!important;border:1px solid #58705b!important;
+ border-radius:2px!important;background:#293c35!important;color:#efdcad!important;
+ white-space:nowrap!important;font-size:8px!important;font-weight:820!important;
+ line-height:1!important;cursor:pointer
+}
+#wtwNextgen .ng-sales-desk-actions button:hover,
+#wtwNextgen .ng-sales-desk-actions button:focus-visible{
+ background:#3a6045!important;border-color:#c3ad74!important;color:#fff0c3!important
+}
+#wtwNextgen .ng-sales-desk-actions button:disabled{
+ opacity:.35;cursor:not-allowed!important
+}
+#wtwNextgen .ng-sales-hip{
+ display:flex;align-items:center;gap:3px;white-space:nowrap;
+ width:100%;max-width:100%;overflow:hidden;font-variant-numeric:tabular-nums
+}
+#wtwNextgen .ng-sales-hip>button{
+ flex:0 0 11px;width:11px;height:19px!important;padding:0!important;
+ border:0!important;background:transparent!important;color:#91a89a!important;
+ font-size:13px!important;line-height:19px!important;font-weight:700!important;
+ cursor:pointer
+}
+#wtwNextgen .ng-sales-hip>button.on,
+#wtwNextgen .ng-sales-hip>button:hover,
+#wtwNextgen .ng-sales-hip>button:focus-visible{color:#e8c06e!important}
+#wtwNextgen .ng-sales-hip>span{
+ font-size:var(--wtw-roster-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+#wtwNextgen .ng-dept-roster[data-department="Sales"][data-page="Watchlist"] .ng-rs-table th:nth-child(1){width:5%}
+#wtwNextgen .ng-dept-roster[data-department="Sales"][data-page="Watchlist"] .ng-rs-table th:nth-child(2){width:14%}
+#wtwNextgen .ng-dept-roster[data-department="Sales"][data-page="Watchlist"] .ng-rs-table th:nth-child(3){width:21%}
+#wtwNextgen .ng-dept-roster[data-department="Sales"][data-page="Watchlist"] .ng-rs-table th:nth-child(4){width:13%}
+#wtwNextgen .ng-dept-roster[data-department="Sales"][data-page="Watchlist"] .ng-rs-table th:nth-child(5){width:10%}
+#wtwNextgen .ng-dept-roster[data-department="Sales"][data-page="Watchlist"] .ng-rs-table th:nth-child(6){width:10%}
+#wtwNextgen .ng-dept-roster[data-department="Sales"][data-page="Watchlist"] .ng-rs-table th:nth-child(7){width:10%}
+#wtwNextgen .ng-dept-roster[data-department="Sales"][data-page="Watchlist"] .ng-rs-table th:nth-child(8){width:9%}
+#wtwNextgen .ng-dept-roster[data-department="Sales"][data-page="Watchlist"] .ng-rs-table th:nth-child(9){width:8%}
+@media(max-width:1300px){
+ #wtwNextgen .ng-dept-roster[data-department="Sales"] .ng-sales-desk{flex-basis:39px;min-height:39px;height:39px}
+ #wtwNextgen .ng-dept-roster[data-department="Sales"] .ng-sales-desk-caption{flex-basis:25%;min-width:120px;padding-inline:6px}
+ #wtwNextgen .ng-dept-roster[data-department="Sales"] .ng-sales-desk-field{padding-inline:6px}
+ #wtwNextgen .ng-dept-roster[data-department="Sales"] .ng-sales-desk-field:not(.ng-sales-date){flex:0 1 16%}
+ #wtwNextgen .ng-dept-roster[data-department="Sales"] .ng-sales-desk-actions{padding-inline:3px;gap:2px}
+ #wtwNextgen .ng-dept-roster[data-department="Sales"] .ng-sales-desk-actions button{padding-inline:4px!important;font-size:7.5px!important}
+}
+@media(max-width:1080px){
+ #wtwNextgen .ng-dept-roster[data-department="Sales"] .ng-sales-desk-field.ng-sales-desk-note{display:none}
+ #wtwNextgen .ng-dept-roster[data-department="Sales"] .ng-sales-desk-caption{flex-basis:30%}
+}
