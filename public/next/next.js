@@ -1640,7 +1640,7 @@ function salesDesk(page,auction,auctions,visibleTotal){
  if(page==='Sale Calendar'||page==='Sale Companies'){
   const isCalendar=page==='Sale Calendar';
   return '<div class="ng-sales-desk ng-sales-directory" role="group" aria-label="Sales market summary">'+
-   '<div class="ng-sales-desk-caption"><small>1999 MARKET / NORTH AMERICA</small><strong>'+
+   '<div class="ng-sales-desk-caption"><small>'+safe(depGameDay().slice(0,4))+' MARKET / NORTH AMERICA</small><strong>'+
    safe(isCalendar?'SALE CALENDAR':'SALES COMPANIES')+'</strong></div>'+
    '<div class="ng-sales-desk-field"><small>OPERATORS</small><b>'+Object.keys(DEP_SALE_HOUSES).length+'</b></div>'+
    '<div class="ng-sales-desk-field"><small>'+safe(isCalendar?'SALES LISTED':'CURRENT MARKET')+'</small><b>'+
@@ -1894,8 +1894,7 @@ function departmentRoster(section,page='Overview'){
  const salePicker=section==='Sales'&&!['Sale Calendar','Sale Companies','Watchlist'].includes(page)?'<label class="ng-dpt-auction-picker">AUCTION <select data-ng-select="department-auction" aria-label="Choose auction chronologically">'+
   (auctions.length?auctions.map(a=>'<option value="'+safe(a.id)+'" '+(auction?.id===a.id?'selected':'')+'>'+safe(depSaleLabel(a))+'</option>').join(''):'<option>No upcoming auction data</option>')+
   '</select></label>':'';
- const saleHouseLink=false&&section==='Sales'&&auction?.companyId&&page!=='Sale Calendar'&&page!=='Sale Companies'?
-  '<button data-ng="dept-company" data-val="'+safe(auction.companyId)+'" title="See all sales run by '+safe(auction.company)+'">HOUSE: '+safe(auction.company)+' ↗</button>':'';
+ const saleHouseLink=''; // Sales company accessible from desk and directory.
  const saleCompanyPicker=section==='Sales'&&page==='Sale Calendar'?
   '<label class="ng-dpt-sales-company-picker">COMPANY <select data-ng-select="department-sales-company" aria-label="Show sale calendar by operator">'+
   '<option value="" '+(!APP.departmentCompany?'selected':'')+'>ALL SALE COMPANIES</option>'+
@@ -2121,7 +2120,7 @@ window.addEventListener('click',e=>{
   const r=APP.departmentVisible[Number(val)];
   if(!r||r._kind!=='horse'||!r._watchKey)return;
   if(APP.salesWatched[r._watchKey])delete APP.salesWatched[r._watchKey];
-  else APP.salesWatched[r._watchKey]={...r};
+  else APP.salesWatched[r._watchKey]={...r,status:r._demo?'DEMO · '+r.status:r.status};
   return paint();
  }
  if(key==='sale-open-watch'){
