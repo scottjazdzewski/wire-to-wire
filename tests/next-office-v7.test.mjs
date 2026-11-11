@@ -425,7 +425,7 @@ test('Tier 1 Organization Overview has six purposeful panels and no duplicate he
 test('Tier 1 People Profile keeps only known identity facts and actions above the fold',()=>{
  const source=get('public/office-v30-4.js'),js=get('public/next/next.js'),css=get('public/next/next.css');
  const p=js.slice(js.indexOf('function profileDetail('),js.indexOf('function calendarTimeline('));
- assert.ok(p.includes('const personIdentityFields=isPerson?'),'Person header should show origin, age, hometown and base facts');
+ assert.ok(p.includes('const personIdentityFields=isPerson?')&&p.includes("].filter(([,value])=>knownField(value)):[];"),'Person header shows only sourced origin, age, hometown and base values and suppresses blanks');
  assert.ok(p.includes('personOriginLabel')&&p.includes('personHometown')&&p.includes('baseLabel'),'Missing values must be accurately labeled, never invented');
  assert.ok(p.includes("isPerson?'PEOPLE DIRECTORY'"),'Person header must lead to people rather than horse roster');
  assert.ok(p.includes('class="ng-person-career-strip"'),'Career and assignments need compact summary, not redundant role stats');
