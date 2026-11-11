@@ -2262,7 +2262,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 
 /* Track photo, date ordered stakes, and compact horse star summaries */
 .ng-route-profile .ng-profile-track .ng-profile-source-photo{width:214px!important;height:108px!important;flex:0 0 214px!important;border-color:#65745c!important;background:#121a1e!important}
-.ng-route-profile .ng-profile-track .ng-profile-source-photo img{object-fit:cover!important}
+.ng-route-profile .ng-profile-track .ng-profile-source-photo img{object-fit:contain!important;object-position:center center!important;padding:3px;box-sizing:border-box}
 .ng-track-workspace{display:grid!important;grid-template-columns:minmax(0,1.23fr) minmax(285px,.77fr)!important;gap:8px!important;width:100%;height:100%;min-height:0;overflow:hidden}
 .ng-track-workspace>.ng-tier1-card,.ng-track-info-stack>.ng-tier1-card{min-height:0!important}
 .ng-track-stakes .ng-stakes-table{flex:1 1 auto;min-height:0;overflow:hidden;padding:2px 5px 4px}
