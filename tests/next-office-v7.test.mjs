@@ -810,7 +810,9 @@ test('Sales dropdown names the operator and uses verified historical dates with 
  assert.equal(unknown.depAuctionList(false)[0].company,'Company not recorded','Do not invent company for unknown live sales');
  assert.ok(js.includes('data-ng-select="department-auction"'));
  assert.ok(js.includes('safe(depSaleLabel(a))'),'Dropdown must show Sale Name - Company');
- assert.ok(js.includes("section==='Sales'?(page==='Sale Calendar'"));
+ assert.ok(js.includes("section==='Sales'?(page==='Watchlist'")&&
+  js.includes("page==='Sale Calendar'?'CHRONOLOGICAL SALES"),
+  'Sales purpose title must support Watchlist and chronological sale calendar without hiding either view');
  assert.ok(js.includes("if(APP.section==='Sales'&&r._kind==='sale-event')"));
  assert.ok(js.includes("if(APP.section==='Sales'&&r._kind==='sale-company')"));
  assert.ok(js.includes("field.matches('select[data-ng-select=\"department-sales-company\"]')"));
