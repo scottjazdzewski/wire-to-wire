@@ -115,10 +115,10 @@ function sortRosterColumn(header){
  if(!Number.isInteger(index)||index<0)return;
  const descending=header.getAttribute('aria-sort')==='ascending';
  const rows=Array.from(tbody.rows).map((row,ordinal)=>({row,ordinal,
-  text:row.cells[index]?.textContent?.replace(/\\s+/g,' ').trim()||''}));
+  text:row.cells[index]?.textContent?.replace(/\s+/g,' ').trim()||''}));
  const numeric=text=>{
   const normalized=text.replace(/[$,%+]/g,'').replace(/,/g,'').trim();
-  return /^[-+]?\\d+(?:\\.\\d+)?$/.test(normalized)?Number(normalized):null;
+  return /^[-+]?\d+(?:\.\d+)?$/.test(normalized)?Number(normalized):null;
  };
  const cmp=new Intl.Collator(undefined,{numeric:true,sensitivity:'base'});
  rows.sort((a,b)=>{
