@@ -114,11 +114,16 @@ function searchResults(){
 function searchView(){
  const kinds=[['all','All'],['horse','Horses'],['person','People'],['farm','Farms'],['track','Tracks'],['race','Races'],['screen','Screens']];
  const rows=searchResults(),total=rows.length;
- const table=compactTable([{text:'TYPE',style:'width:82px'},{text:'NAME',style:'width:26%'},{text:'ROLE / RACE RECORD'},{text:'OWNER / CONNECTION',style:'width:20%'},{text:'LOCATION / TRACK',style:'width:16%'},{text:'OPEN',style:'width:52px'}],
+ const contextValue=r=>r.kind==='horse'?(r.owner_name||owner(r.name)):
+  r.kind==='person'?(r.person_id||'Office profile'):
+  r.kind==='track'?(r.track_id||geographicTrack(r.name)?.id||'Track record'):
+  r.kind==='race'?'Active stakes record':r.kind==='screen'?'Game department':'Current Office record';
+ const locator=r=>r.kind==='person'&&r.person_id?'@'+r.person_id:(r.track||'');
+ const table=compactTable([{text:'TYPE',style:'width:82px'},{text:'NAME',style:'width:26%'},{text:'ROLE / RACE RECORD'},{text:'OWNER / SOURCE ID',style:'width:18%'},{text:'LOCATION / TRACK',style:'width:18%'},{text:'OPEN',style:'width:52px'}],
  rows.map(r=>'<tr>'+tableCell('<span class="mg-tag '+(r.kind==='horse'?'':'unrated')+'">'+h(r.kind.toUpperCase())+'</span>')+
   tableCell(linkRecord(r,r.name,r.kind==='horse'),'strong')+tableCell(h(r.detail||'—'))+
-  tableCell(h(r.kind==='horse'?(r.owner_name||owner(r.name)):'—'),'dim')+
-  tableCell(h(r.track||'—'),'dim')+tableCell(button('›','open',r.kind+'|'+r.name+'|'+(r.track||''),'mg-rowlink'),'numeric')+'</tr>'),'mg-search-table');
+  tableCell(h(contextValue(r)),'dim')+
+  tableCell(h(r.track||'—'),'dim')+tableCell(button('›','open',r.kind+'|'+r.name+'|'+locator(r),'mg-rowlink'),'numeric')+'</tr>'),'mg-search-table');
  return pageBar('Global Directory','SOURCE RECORDS · SORTABLE ROSTER',button('HISTORICAL ARCHIVE ↗','nav','history'))+
  '<div class="mg-content"><div class="mg-search-layout"><div class="mg-filterbar"><input id="mgSearch" type="search" placeholder="Search any available person, horse, track, farm, race or screen…" data-mg-input="search" value="'+h(ui.q)+'">'+
  kinds.map(x=>button(x[1],'filter',x[0],'mg-button'+(ui.type===x[0]?' on':''))).join('')+
