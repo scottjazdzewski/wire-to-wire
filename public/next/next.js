@@ -1206,6 +1206,7 @@ function depRows(section,page,demo,auction){
   if(page==='Stallions')out=out.filter(r=>/stallion/i.test(r._role));
   if(page==='Broodmares')out=out.filter(r=>/broodmare/i.test(r._role));
   if(page==='Foals')out=demo?out.map(r=>({...r,age:'1',sex:'F',status:'Yearling',studFee:'',bookings:''})):[];
+  if(page==='Stud Farms')return depRows('Facilities','Farms',demo,null);
   if(page==='Stud Farms')out=out.filter(r=>r.farm);
   return out;
  }
@@ -1310,7 +1311,7 @@ function departmentRoster(section,page='Overview'){
  const current=$('.dateChip')?.textContent.trim()||'2014-07-15';
  const auctions=section==='Sales'?depAuctionList(demo):[];
  const auction=auctions.find(a=>a.id===APP.departmentAuction)||auctions.find(a=>a.date>=current)||auctions.at(-1)||null;
- const specs=DEP_COLUMNS[section];
+ const specs=section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:DEP_COLUMNS[section];
  let rows=depRows(section,page,demo,auction);
  const search=APP.departmentSearch.trim().toLowerCase();
  if(search)rows=rows.filter(r=>specs.some(([key])=>String(r[key]??'').toLowerCase().includes(search)));
@@ -1329,7 +1330,7 @@ function departmentRoster(section,page='Overview'){
  APP.departmentPageIndex=Math.min(Math.max(0,APP.departmentPageIndex),pages-1);
  const shown=rows.slice(APP.departmentPageIndex*limit,(APP.departmentPageIndex+1)*limit);
  APP.departmentVisible=shown;
- const colgroup=specs.map(x=>'<col style="width:'+x[2]+'%">').join('');
+
  const heads=specs.map(([key,label])=>'<th scope="col" aria-sort="'+(selectedSort===key?(sign===1?'ascending':'descending'):'none')+'"><button data-ng="dept-sort" data-val="'+key+'" title="Sort by '+safe(label)+'">'+safe(label)+'<span aria-hidden="true">'+(selectedSort===key?(sign===1?'▲':'▼'):'↕')+'</span></button></th>').join('');
  const body=shown.map((r,i)=>{
   return '<tr>'+specs.map(([key])=>{
@@ -1367,7 +1368,7 @@ function departmentRoster(section,page='Overview'){
   '<button data-ng="dept-demo" class="'+(demo?'on':'')+'" title="Preview-only invented values; no game data changes">'+(demo?'DEMO ON':'DEMO OFF')+'</button>'+
   '<span class="ng-dpt-mode">FULL-WIDTH ROSTER</span></div>'+
   '<section class="ng-rs-roster"><header><strong>'+safe(section.toUpperCase())+' · SORTABLE ROSTER</strong><div class="ng-dpt-pager">'+pager+'</div></header>'+
-  '<div class="ng-rs-scroll"><table class="ng-rs-table ng-dpt-table"><colgroup>'+colgroup+'</colgroup><thead><tr>'+heads+'</tr></thead><tbody>'+
+  '<div class="ng-rs-scroll"><table class="ng-rs-table ng-dpt-table"><thead><tr>'+heads+'</tr></thead><tbody>'+
   (body||'<tr><td colspan="'+specs.length+'" class="ng-rs-no-results">'+(demo?'No matching records.':'No supported records in this view.')+'</td></tr>')+
   '</tbody></table></div><div class="ng-dpt-disclosure">'+(demo?'FICTIONAL DISPLAY VALUES ONLY — no prices, locations or medical facts saved.':'SOURCE RECORDS ONLY · unknown values shown as —')+
   '</div></section></section>';
