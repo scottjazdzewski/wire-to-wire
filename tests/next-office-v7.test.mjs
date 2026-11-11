@@ -505,6 +505,14 @@ test('Native dropdowns stay mounted through selection and preserve one-click mou
  assert.equal(syntax.status,0,syntax.stderr);
 });
 
+
+test('Entity names across Stable, Facilities, Racing, Breeding, Sales and profiles always have a specific destination',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css');
+ const from=js.indexOf('/* One connection router for every management roster');
+ const to=js.indexOf('function depCell(',from);
+ assert.ok(from>0&&to>from,'Shared name-to-record route must exist');
+ const helper=js.slice(from,to);
+ const fixtures=
 test('Horse athletic overview uses four sourced FM-style trait groups with explicit unassessed states',()=>{
  const js=get('public/next/next.js'),css=get('public/next/next.css');
  const catalog=JSON.parse(get('public/assets/game/attribute-catalog.v1.json'));
