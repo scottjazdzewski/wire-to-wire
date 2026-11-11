@@ -929,7 +929,7 @@ function profileDetail(route){
  const identity=`<div class="ng-profile-intro">
   ${profileMark}
   <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${isHorse?horseOwnerBadge(route.title):''}${safe(route.title)}</h2>${horseIdentityRow}${horseStarRow}${entityIdentityRow}${horseConnectionHeader}${isHorse||isPerson||isFarm||isTrack?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${horseImage?`<div class="ng-profile-source-photo" role="img" aria-label="Approved image of ${safe(route.title)}"><img src="${safe(horseImage)}" alt="" loading="lazy" decoding="async"/></div>`:''}
-  <div class="ng-profile-tools"><button data-ng="office" aria-label="Return to Racing Office">← OFFICE</button><button data-ng="menu" data-val="${isTrack?'Racing':isPerson||isFarm?'World':'Stable'}">${isTrack?'RACE CALENDAR':isPerson?'PEOPLE DIRECTORY':isFarm?'FARM DIRECTORY':'STABLE DIRECTORY'} ↗</button></div>
+  <div class="ng-profile-tools">${isHorse?`<button data-ng="horse-history-file" data-val="${safe(route.title)}" title="Open the five-generation historical horse file">FIVE-GENERATION PEDIGREE ↗</button>`:""}<button data-ng="office" aria-label="Return to Racing Office">← OFFICE</button><button data-ng="menu" data-val="${isTrack?'Racing':isPerson||isFarm?'World':'Stable'}">${isTrack?'RACE CALENDAR':isPerson?'PEOPLE DIRECTORY':isFarm?'FARM DIRECTORY':'STABLE DIRECTORY'} ↗</button></div>
  </div>`;
  let left='',right='',footer='';
  if(APP.detailTab==='Overview'){
@@ -2078,6 +2078,21 @@ window.addEventListener('click',e=>{
  if(key==='filter'){APP.filter=val;APP.msgPage=0;return paint()}
  if(key==='prev-msg'){APP.msgPage=Math.max(0,APP.msgPage-1);return paint()}
  if(key==='next-msg'){APP.msgPage++;return paint()}
+ if(key==='horse-history-file'){
+  // Source archive resolves the exact current display or source name to a
+  // permanent Horse_ID. Ambiguous names must never select a random horse.
+  const name=val;
+  fetch('/api/entities?q='+encodeURIComponent(name)+'&kind=horse&limit=250',{credentials:'same-origin',cache:'no-store'})
+   .then(r=>r.ok?r.json():Promise.reject(Error('Horse directory not available')))
+   .then(data=>{
+    const exact=(data.entities||[]).filter(x=>x.kind==='horse'&&(x.name===name||x.source_name===name));
+    const ids=[...new Set(exact.map(x=>x.id))];
+    if(ids.length===1)window.location.assign('/archive/?page=horses&horse='+encodeURIComponent(ids[0]));
+    else window.location.assign('/archive/?page=horses&q='+encodeURIComponent(name));
+   })
+   .catch(()=>window.location.assign('/archive/?page=horses&q='+encodeURIComponent(name)));
+  return;
+ }
  if(key==='horse')return openEntityRecord(val,'horse');
  if(key==='fixture'){const n=$$('.right .fixtureList .fixture[data-track]')[Number(val)];return bridgeNode(n)}
  if(key==='track'){const row=$$('.right .fixture').find(x=>x.dataset.track===val);if(row){const p=$('p',row);return bridgeNode(p)}return bridgeNode(originalAct('World'))}
