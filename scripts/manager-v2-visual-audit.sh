@@ -160,6 +160,54 @@ capture_1280 horse-profile '?page=horse&name=The+Last+Match'
 capture_1280 people-profile '?page=person&name=Gabe+Larkin'
 capture_1280 global-search '?ui=search'
 
+# Desktop quality gate: ensure primary athlete/personnel Overviews do not
+# require internal scrolling at the 1280×800 reference viewport.
+cat > public/manager/__wtw_fit_probe.html <<'HTML'
+<!doctype html><html><head><meta charset="utf-8"></head><body>
+<pre id="fit" data-check="pending">Checking profile viewport fit</pre>
+<iframe id="frame" width="1280" height="800" style="border:0"></iframe>
+<script>
+const p=document.getElementById('fit'),frame=document.getElementById('frame');
+const route=new URLSearchParams(location.search).get('route')||'';
+frame.addEventListener('load',()=>setTimeout(()=>{
+ try{
+  const d=frame.contentDocument,box=d.querySelector('.mg-profile-scroll');
+  if(!box)throw Error('Profile scroller not found');
+  const m={scrollHeight:box.scrollHeight,clientHeight:box.clientHeight,
+   documentWidth:d.documentElement.scrollWidth,viewportWidth:frame.contentWindow.innerWidth,
+   documentHeight:d.documentElement.scrollHeight,viewportHeight:frame.contentWindow.innerHeight,
+   horse:!!d.querySelector('.mg-profile-grid4'),person:!!d.querySelector('.mg-person-dossier')};
+  p.dataset.check='ready';p.textContent=JSON.stringify(m);
+ }catch(e){p.dataset.check='error';p.textContent=JSON.stringify({error:String(e)})}
+},1100));
+frame.src='/manager/'+route;
+</script></body></html>
+HTML
+for name in horse person; do
+ if [ "$name" = "horse" ]; then route='%3Fpage%3Dhorse%26name%3DThe%2BLast%2BMatch'; else route='%3Fpage%3Dperson%26name%3DGabe%2BLarkin'; fi
+ "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+  --window-size=1280,800 --force-device-scale-factor=1 --virtual-time-budget=8000 \
+  --dump-dom "http://127.0.0.1:8767/manager/__wtw_fit_probe.html?route=$route" \
+  >"visual-audit/manager-v2/dom/fit-$name.html" 2>"/tmp/wtw-mg-fit-$name.log"
+done
+rm -f public/manager/__wtw_fit_probe.html
+python3 - <<'PY'
+from pathlib import Path
+import re,html,json
+for name in ('horse','person'):
+ source=Path(f'visual-audit/manager-v2/dom/fit-{name}.html').read_text()
+ match=re.search(r'<pre id="fit" data-check="([^"]+)">(.*?)</pre>',source,re.S)
+ assert match,(name,'viewport fit probe missing')
+ data=json.loads(html.unescape(match.group(2)))
+ assert match.group(1)=='ready',(name,data)
+ assert data[name],(name,'wrong profile rendered')
+ assert data['documentWidth']<=data['viewportWidth']+4,(name,'horizontal overflow',data)
+ assert data['documentHeight']<=data['viewportHeight']+4,(name,'document scroll',data)
+ assert data['scrollHeight']<=data['clientHeight']+5,(name,'primary profile still needs vertical scroll',data)
+ print('PASS',name,'1280x800 fits without profile scrolling',data['scrollHeight'],data['clientHeight'])
+PY
+
+
 
 python3 - <<'PY'
 from pathlib import Path
