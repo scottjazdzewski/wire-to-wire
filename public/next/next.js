@@ -885,13 +885,13 @@ function profileDetail(route){
     <section class="ng-tier1-card"><header>PEOPLE & CURRENT ACTIVITY <button data-ng="detailtab" data-val="History">HISTORY ${glyph('arrow',11)}</button></header>${connectionRows()}<div class="ng-tier1-subhead">RECORDED ACTIVITY</div><div class="ng-tier1-activity">${farmAchievements.slice(0,2).map(x=>`<div>${safe(x)}</div>`).join('')||'<div>No sourced achievements yet.</div>'}</div></section>
    </div>`;right='';footer='';
   }else if(isTrack){
-   left=\`<div class="ng-track-workspace">
+   left=`<div class="ng-track-workspace">
     <section class="ng-tier1-card ng-tier1-stakes ng-track-stakes"><header>MAJOR RACES & STAKES <button data-ng="detailtab" data-val="Major Races">ALL RACES ${glyph('arrow',11)}</button></header>${stakesTable(100)}</section>
     <div class="ng-track-info-stack">
-     <section class="ng-tier1-card"><header>RACECOURSE AT A GLANCE <button data-ng="detailtab" data-val="Connections">${glyph('arrow',11)} CONNECTIONS</button></header>${rows(fields.filter(f=>!['location','surfaces','operating state'].includes(f.label.toLowerCase())))}<div class="ng-tier1-subhead">CURRENT OFFICE CONTEXT</div><div class="ng-tier1-activity">${trackNotes.filter(x=>/current office/i.test(x.label)).slice(0,1).map(x=>\`<div>${safe(x.value)}</div>\`).join('')||'<div>No current Office entry recorded.</div>'}</div></section>
-     <section class="ng-tier1-card"><header>MEET & CONDITIONS <button data-ng="detailtab" data-val="Meet Schedule">MEET FILE ${glyph('arrow',11)}</button></header>${rows(meetValues)}<div class="ng-tier1-subhead">OPERATING INTELLIGENCE</div><div class="ng-tier1-activity">${trackNotes.filter(x=>!/current office/i.test(x.label)).slice(0,2).map(x=>\`<div><b>${safe(x.label)}</b><span>${safe(x.value)}</span></div>\`).join('')||'<div>No sourced operating notes.</div>'}</div></section>
+     <section class="ng-tier1-card"><header>RACECOURSE AT A GLANCE <button data-ng="detailtab" data-val="Connections">${glyph('arrow',11)} CONNECTIONS</button></header>${rows(fields.filter(f=>!['location','surfaces','operating state'].includes(f.label.toLowerCase())))}<div class="ng-tier1-subhead">CURRENT OFFICE CONTEXT</div><div class="ng-tier1-activity">${trackNotes.filter(x=>/current office/i.test(x.label)).slice(0,1).map(x=>`<div>${safe(x.value)}</div>`).join('')||'<div>No current Office entry recorded.</div>'}</div></section>
+     <section class="ng-tier1-card"><header>MEET & CONDITIONS <button data-ng="detailtab" data-val="Meet Schedule">MEET FILE ${glyph('arrow',11)}</button></header>${rows(meetValues)}<div class="ng-tier1-subhead">OPERATING INTELLIGENCE</div><div class="ng-tier1-activity">${trackNotes.filter(x=>!/current office/i.test(x.label)).slice(0,2).map(x=>`<div><b>${safe(x.label)}</b><span>${safe(x.value)}</span></div>`).join('')||'<div>No sourced operating notes.</div>'}</div></section>
     </div>
-   </div>\`;right='';footer='';
+   </div>`;right='';footer='';
   }else{
    left=`<section class="ng-detailcard"><header>IDENTITY & STATUS</header>${factsBlock}</section>`;
    right=`<section class="ng-detailcard"><header>CONNECTIONS</header>${connectionRows()}</section>`;
