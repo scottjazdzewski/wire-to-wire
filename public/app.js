@@ -14,6 +14,8 @@ try { const saved=JSON.parse(localStorage.getItem(GAME_PREF_KEY)||'{}'); if(['ow
 // Deep links from the main Racing Office open the existing protected historical archive.
 const archivePage = new URLSearchParams(window.location.search).get('page');
 if (['overview','seasons','horses','people','tracks','races','search','changes','sources'].includes(archivePage)) state.page=archivePage;
+const archiveQuery = new URLSearchParams(window.location.search).get('q');
+if(archiveQuery)state.search=archiveQuery.slice(0,100);
 const SAMPLE_KEY = 'wtw_canon_desk_local_proposals_v1';
 let toastTimeout;
 function storedChanges(){try{return JSON.parse(localStorage.getItem(SAMPLE_KEY)||'[]')}catch{return []}}
@@ -522,6 +524,13 @@ async function openDetail(type,id){
   if(heading)heading.insertAdjacentHTML('beforeend','<div class="horse-connection-strip">'+cards+'</div>');
  }
  $('drawer-backdrop').hidden=false;$('detail-drawer').classList.add('open');$('detail-drawer').setAttribute('aria-hidden','false');
+ if(type==='entity'&&e.kind==='horse'){
+  const uri=new URL(window.location.href);
+  if(uri.searchParams.get('horse')!==id){
+   uri.searchParams.set('horse',id);
+   window.history.pushState({wtwHorseId:id},'',uri.pathname+uri.search);
+  }
+ }
  if(type==='entity'&&e.kind==='horse'&&state.mode==='D1_CONNECTED'){
   try{
    const resp=await fetch('/api/horses/'+encodeURIComponent(id),{credentials:'same-origin',cache:'no-store'});
@@ -555,7 +564,15 @@ async function openDetail(type,id){
   }catch{const panel=$('horse-pedigree-panel');if(panel)panel.innerHTML='<div class="pedigree-card"><small>PEDIGREE</small><strong>Details unavailable</strong></div>'}
  }
 }
-function closeDrawer(){ state.openDetail=null; $('detail-drawer').classList.remove('open');$('detail-drawer').setAttribute('aria-hidden','true');$('drawer-backdrop').hidden=true;}
+function closeDrawer(){ state.openDetail=null; $('detail-drawer').classList.remove('open');$('detail-drawer').setAttribute('aria-hidden','true');$('drawer-backdrop').hidden=true;
+ const url=new URL(window.location.href);
+ if(url.searchParams.has('horse')){url.searchParams.delete('horse');window.history.replaceState({},'',url.pathname+url.search);}
+}
+window.addEventListener('popstate',()=>{
+ const id=new URLSearchParams(window.location.search).get('horse');
+ if(id&&/^H-[A-Za-z0-9-]+$/.test(id)){if(state.openDetail?.id!==id)openDetail('entity',id);}
+ else if(state.openDetail){closeDrawer();}
+});
 function showRename(type,id,current){
  if(!['entity','race','venue','pedigree'].includes(type)||!id||!current)return;
  const record=type==='entity'?entity(id):type==='race'||type==='venue'?race(id):null;
@@ -631,7 +648,7 @@ async function initialize(){
   const record=(state.data?.entities||[]).find(x=>x.id===requestedHorse&&x.kind==='horse');
   if(record?.foal_year)state.year=Number(record.foal_year)+3;
  }
- const yrs=years();if(yrs.length&&!yrs.includes(state.year))state.year=yrs[0];$('year-select').innerHTML=yrs.map(y=>`<option value="${y}">${y}</option>`).join('');$('year-select').value=String(state.year);render();
+ const yrs=years();if(yrs.length&&!yrs.includes(state.year))state.year=yrs[0];$('year-select').innerHTML=yrs.map(y=>`<option value="${y}">${y}</option>`).join('');$('year-select').value=String(state.year);if($('global-search'))$('global-search').value=state.search;render();
  if(requestedHorse&&/^H-[A-Za-z0-9-]+$/.test(requestedHorse))openDetail('entity',requestedHorse);
 }
 async function saveProposal(e){e.preventDefault();if(!state.edit)return;
