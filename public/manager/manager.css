@@ -239,6 +239,28 @@ body>.app,body>#routeShell,body>#toast,body>.wtw-site-archive-link{display:none!
 .mg-op-case-text small{font-size:10px;color:#93b29e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mg-op-case .mg-rowlink{font-size:10px}
 @media(max-width:1100px){.mg-operations-grid{grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(4,minmax(0,1fr))}}
+.mg-finance-grid{grid-template-rows:minmax(0,58fr) minmax(0,42fr)}
+.mg-finance-lead{padding:14px 15px;display:flex;flex-direction:column;gap:8px}
+.mg-finance-lead h2{font-size:21px;font-weight:810;line-height:1.16;letter-spacing:-.025em;color:#f3e9d8;max-width:720px;margin:0}
+.mg-finance-lead p{font-size:12px;line-height:1.45;color:#bed0c5;max-width:670px;margin:0}
+.mg-finance-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:2px}
+.mg-finance-facts span{display:flex;flex-direction:column;gap:5px;background:#202e2b;padding:9px;color:#9bbba9;font-size:9px;font-weight:760;letter-spacing:.03em}
+.mg-finance-facts b{font-size:12px;color:#f1d7a2}
+.mg-finance-decision{display:flex;flex-direction:column;gap:3px;min-width:0;margin-top:3px}
+.mg-finance-decision>strong{font-size:10px;color:#e3c987;padding-bottom:4px}
+.mg-finance-option{display:grid;grid-template-columns:28px minmax(0,1fr);align-items:start;gap:8px;padding:5px 7px;background:#1d2b28;min-height:36px}
+.mg-finance-option:nth-child(2n){background:#26352f}
+.mg-finance-option>strong{font-size:15px;color:#d4b678;font-weight:820}
+.mg-finance-option>span{display:flex;flex-direction:column;gap:2px}
+.mg-finance-option b{font-size:11px;color:#e6ede6}
+.mg-finance-option small{font-size:10px;color:#a0b4a8}
+.mg-finance-decision>.mg-button{align-self:flex-start;margin-top:6px}
+.mg-finance-signal{display:grid;grid-template-columns:116px minmax(0,1fr);gap:12px;align-items:start;padding:11px 13px;border-bottom:1px solid #34423d;background:#172223;min-height:54px}
+.mg-finance-signal:nth-child(2n){background:#202e2a}
+.mg-finance-signal strong{font-size:11px;color:#e5c989}
+.mg-finance-signal span{font-size:11px;color:#cbd8d1;line-height:1.4}
+.mg-finance-footer{padding:10px 13px}
+@media(max-width:1280px){.mg-finance-lead{padding:9px}.mg-finance-lead h2{font-size:17px}.mg-finance-signal{min-height:42px;padding:7px}}
 .mg-department-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:8px;flex:1;min-height:0}
 .mg-dossier-tools{display:flex;gap:5px;align-items:center;justify-content:flex-end;min-width:0}
 .mg-pilltabs{display:flex;align-items:center;gap:3px}
