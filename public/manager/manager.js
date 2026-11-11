@@ -466,7 +466,7 @@ function departmentStudio(view){
  const peopleList=(list=people)=>compactTable([{text:'PERSON',style:'width:34%'},{text:'ROLE / PROFESSIONAL FILE'},
    {text:'BASE / NOTE'},{text:'OPEN',style:'width:64px'}],list.map(x=>'<tr>'+
    tableCell(linkRecord(x,x.name),'strong')+tableCell(h(x.detail||'Personnel record'))+
-   tableCell(h(x.track||'—'),'dim')+tableCell(button('OPEN ›','open','person|'+x.name+'|','mg-rowlink'),'numeric')+'</tr>'));
+   tableCell(h(x.track||'—'),'dim')+tableCell(button('OPEN ›','open','person|'+x.name+'|'+(x.person_id?'@'+x.person_id:''),'mg-rowlink'),'numeric')+'</tr>'));
  const placeList=(list,kind)=>compactTable([{text:'LOCATION',style:'width:33%'},{text:'RECORD / BASE'},
    {text:'OPEN',style:'width:62px'}],list.map(x=>'<tr>'+tableCell(linkRecord(x,x.name),'strong')+
    tableCell(h(x.detail||x.track||'—'),'dim')+
