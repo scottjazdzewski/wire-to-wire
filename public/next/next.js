@@ -539,7 +539,8 @@ function profileDetail(route){
    Array.isArray(r.evidence_refs)&&r.evidence_refs.length>0;
   const allDefs=Object.values(categories).flat();
   const observedCount=allDefs.filter(d=>assessed(observed.get(d.key))).length;
-  const attributeColumns=Object.entries(display).map(([name,keys])=>{
+  const attributeColumns=Object.entries(display).map(([name,previewKeys])=>{
+   const keys=(categories[name]||[]).map(def=>def.key);
    const defs=new Map((categories[name]||[]).map(def=>[def.key,def]));
    const lines=keys.map(key=>{
     const def=defs.get(key);if(!def)return '';
@@ -560,6 +561,14 @@ function profileDetail(route){
     '<span>'+keys.filter(key=>assessed(observed.get(key))).length+'/'+keys.length+' KNOWN</span></header>'+
     '<div class="ng-horse-rating-rows">'+lines+'</div></section>';
   }).join('');
+  const conditionDefs=categories['Current Condition']||[];
+  const conditionStrip='<div class="ng-horse-condition-strip" aria-label="Current condition attributes">'+
+   conditionDefs.map(def=>{
+    const report=observed.get(def.key),verified=assessed(report);
+    return '<div class="ng-horse-condition-cell"><span>'+safe(def.label)+'</span>'+
+     '<strong class="'+(verified?'known':'unknown')+'" title="'+safe(verified?'Source-backed '+report.status:'Not yet assessed')+'">'+
+      (verified?safe(String(report.estimate)+(report.unit?' '+report.unit:'')):'—')+'</strong></div>';
+   }).join('')+'</div>';
   const asMap=items=>'<div class="ng-horse-mgr-rows">'+items.map(([name,value])=>
    '<div class="ng-horse-mgr-row"><span>'+safe(name)+'</span><strong>'+safe(value)+'</strong></div>').join('')+'</div>';
   const career=record.filter(x=>known(x.value)).map(x=>[x.label,x.value]);
@@ -598,7 +607,7 @@ function profileDetail(route){
   return '<div class="ng-horse-dossier">'+
    '<div class="ng-horse-dossier-caption"><strong>ATHLETE & RACING INTELLIGENCE</strong><span>'+observedCount+
    ' OF '+allDefs.length+' ATTRIBUTES ASSESSED · UNASSESSED ≠ ZERO</span></div>'+
-   '<div class="ng-horse-mgr-four">'+(attributeColumns||'<p class="ng-horse-small-note">Horse attribute definitions have not loaded.</p>')+'</div>'+
+   '<div class="ng-horse-mgr-four">'+(attributeColumns||'<p class="ng-horse-small-note">Horse attribute definitions have not loaded.</p>')+'</div>'+conditionStrip+
    '<div class="ng-horse-mgr-five">'+
     panel('CAREER RECORD',careerBody)+panel('CURRENT CONDITION',condition)+
     panel('RACE PLAN',racePlan)+panel('RECENT WORK / OFFICE REPORTS',activity)+
