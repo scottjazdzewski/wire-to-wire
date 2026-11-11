@@ -32,7 +32,14 @@ function nav(view){
  render();
 }
 function openRecord(kind,name,track){
- if(!window.__wtwOfficeOpenSearchRecord?.(kind,name,track))return;
+ const active=window.__wtwOfficeOpenSearchRecord?.(kind,name,track);
+ if(!active){
+  if(kind==='track'&&geographicTrack(name)){
+   history.pushState({mg:'profile'},'',siteRoot()+'?page=track&name='+encodeURIComponent(name));
+   ui.view='profile';render();return;
+  }
+  return;
+ }
  ui.view='profile';
  setTimeout(render,80);
 }
@@ -60,7 +67,11 @@ function pageBar(title,context='',actions=''){
 function allRecords(){
  const base=records().map(r=>Object.assign({},r));
  const pages=[['Office','office'],['Search','search'],['Stable','stable'],['Racing','racing'],['Sales','sales'],['Personnel','person'],['Farms','farm'],['Racecourses','track'],['Breeding','breeding'],['Finances','finances'],['History','history']];
- return base.concat(pages.map(r=>({kind:'screen',name:r[0],detail:'Management department',view:r[1]})));
+ const registered=new Set(base.filter(r=>r.kind==='track').map(r=>r.name.toLowerCase()));
+ const tracks=(ui.trackGeo?.tracks||[]).filter(r=>r.name&&!registered.has(r.name.toLowerCase()))
+  .map(r=>({kind:'track',name:r.name,detail:r.travel_node||locationName(r),track:r.country||'',
+   directory_only:true,track_id:r.id}));
+ return base.concat(tracks,pages.map(r=>({kind:'screen',name:r[0],detail:'Management department',view:r[1]})));
 }
 function owner(name){const r=typeof window.__wtwOfficeHorseOwner==='function'?window.__wtwOfficeHorseOwner(name):null;return r?.name||'Not recorded'}
 function ownerChip(name){const v=owner(name);return '<span class="mg-owner-mark" title="'+h(v)+'">'+(known(v)?h(v.slice(0,1).toUpperCase()):'?')+'</span>'}
