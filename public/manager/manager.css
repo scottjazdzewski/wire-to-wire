@@ -124,6 +124,15 @@ body>.app,body>#routeShell,body>#toast,body>.wtw-site-archive-link{display:none!
 .mg-attribute strong.elite,.mg-profile-strip strong.elite{color:#b9ee8e}
 .mg-demo-label{display:inline-flex;align-items:center;border:1px solid #a97639;background:#443325;padding:3px 7px;border-radius:2px;color:#f0ca87;font-size:9px;font-weight:850;letter-spacing:.045em;white-space:nowrap}
 .mg-meter.empty{height:3px;background:#26352d}
+.mg-person-rep-list{display:flex;flex-direction:column;padding:4px 7px 8px}
+.mg-person-rep-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(45px,.45fr) 32px;align-items:center;gap:8px;min-height:28px;padding:3px 5px;border-bottom:1px solid #2b3934;font-size:10px}
+.mg-person-rep-row:nth-child(even){background:#1e2a28}
+.mg-person-rep-row>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#c7d8cd}
+.mg-person-rep-row strong{text-align:right;color:#dfcb92}
+.mg-person-rep-row strong.poor{color:#ed808e}
+.mg-person-rep-row strong.average{color:#eec078}
+.mg-person-rep-row strong.good{color:#70c8a2}
+.mg-person-rep-row strong.elite{color:#a8e88c}
 .mg-minirows{padding:3px 6px}
 .mg-minirow{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:7px;align-items:center;min-height:23px;border-bottom:1px solid #293631;padding:2px 5px;font-size:10px}
 .mg-minirow:nth-child(even){background:#1c2827}
