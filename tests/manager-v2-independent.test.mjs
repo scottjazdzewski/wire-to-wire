@@ -25,6 +25,8 @@ test('Clean-sheet Manager V2 parses, keeps one stylesheet and retains the canoni
  assert.ok(!js.includes('localStorage.setItem'),'V2 presentation must not write fabricated data to the authoritative state');
  const legacy=get('public/office-v30-4.js');
  assert.ok(legacy.includes("if(e.target.closest('#mgApp'))return;"),'Legacy capture handler cannot intercept Manager V2 navigation clicks');
+ assert.ok(legacy.includes('!window.__WTW_MANAGER_SILENT_NAV__'),'Legacy Office navigation must not add hidden history entries during Manager actions');
+ assert.ok(js.includes('function withSilentOfficeRoute(task)'),'Manager navigation must protect browser history when syncing gameplay files');
 });
 
 test('Four-tier fictional preview ratings are explicitly isolated from save and switchable to real',()=>{
