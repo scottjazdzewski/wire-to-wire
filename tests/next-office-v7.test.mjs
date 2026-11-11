@@ -327,6 +327,37 @@ test('Six department rosters share FM density but preserve their own management 
  assert.equal(syntax.status,0,syntax.stderr);
 });
 
+test('Track history is permanently visible below meet conditions for four registered courses',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css'),office=get('public/office-v30-4.js');
+ const from=office.indexOf('const trackProfiles = {');
+ const end=office.indexOf('\n  };',from);
+ assert.ok(from>=0&&end>from);
+ const profiles=new Function('return '+office.slice(from+'const trackProfiles = '.length,end+4))();
+ const expected={
+  'Belmont Park':['1905','85,000','Attendance capacity','2000 reference'],
+  'Churchill Downs':['1875','48,500','Seating capacity','1999'],
+  'Keeneland':['1936','Unverified','1999 seating capacity','1999 not yet source-certified'],
+  'Saratoga':['1864','50,000','Attendance capacity','2000 reference']
+ };
+ for(const [name,[year,capacity,kind,period]] of Object.entries(expected)){
+  const p=profiles[name];
+  assert.ok(p,'Missing historic track '+name);
+  assert.equal(p.openingYear,year);
+  assert.equal(p.capacity,capacity);
+  assert.equal(p.capacityType,kind);
+  assert.equal(p.capacityAsOf,period);
+  assert.ok(p.historyBlurb.length>85&&p.historySource.startsWith('https://'));
+ }
+ assert.ok(office.includes('openingYear:p.openingYear')&&office.includes('capacityAsOf:p.capacityAsOf'));
+ assert.ok(js.includes('const trackHistoryPanel=()=>')&&js.includes('FULL HISTORY ↗'));
+ assert.ok(js.includes(String.fromCharCode(36)+'{trackHistoryPanel()}'));
+ assert.ok(js.includes("else if(isTrack&&APP.detailTab==='History')")&&js.includes('left=trackHistoryFull()'));
+ assert.ok(js.includes('Historical background has not yet been source-certified'));
+ assert.ok(css.includes('.ng-track-info-stack{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(155px,194px)'));
+ assert.ok(css.includes('.ng-track-info-stack>.ng-track-history-card{'));
+ assert.ok(css.includes('.ng-track-history-content{')&&css.includes('.ng-track-history-facts{'));
+ assert.ok(css.includes("g123-sprite.png"),'Trophy art must remain untouched');
+});
 test('Tracks and Facilities are separate full-width directory rosters; all pages share roster fonts',()=>{
  const js=get('public/next/next.js'),css=get('public/next/next.css'),office=get('public/office-v30-4.js');
  const start=js.indexOf('const DEP_NAMES=new Set('),end=js.indexOf('function managerDashboard(){',start);
