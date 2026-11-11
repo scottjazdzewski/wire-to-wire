@@ -108,7 +108,7 @@ function ownerChip(name){
 }
 function compactTable(head,rows,config=''){
  return '<div class="mg-table-wrap"><table class="mg-table '+config+'"><thead><tr>'+head.map((x,i)=>{
-  const name=x.text||x,canSort=!/^(OPEN|PROFILE|VIEW|SELECT|ACTION)$/i.test(String(name));
+  const name=x.text||x,canSort=!/(?:^|\s)mg-no-sort(?:\s|$)/.test(config)&&!/^(OPEN|PROFILE|VIEW|SELECT|ACTION)$/i.test(String(name));
   return '<th'+(x.numeric?' class="numeric"':'')+(x.style?' style="'+h(x.style)+'"':'')+
    (canSort?' data-mg-sort-col="'+i+'" tabindex="0" aria-sort="none" title="Sort by '+h(name)+'"':'')+
    '>'+h(name)+(canSort?'<span class="mg-table-sortmark" aria-hidden="true">↕</span>':'')+'</th>';
@@ -222,11 +222,11 @@ function home(){
  const calendarRows=source.map(n=>'<tr>'+tableCell(h($('.d',n)?.textContent.trim()||'—'))+
    tableCell(h($('h4',n)?.textContent.trim()||'—'),'strong')+
    tableCell(h($('p',n)?.textContent.trim()||'—'),'dim')+'</tr>');
- const calendar=panel('Racing Schedule',compactTable([{text:'DATE',style:'width:74px'},{text:'HORSE / EVENT'},{text:'TRACK & CONDITIONS'}],calendarRows),
+ const calendar=panel('Racing Schedule',compactTable([{text:'DATE',style:'width:74px'},{text:'HORSE / EVENT'},{text:'TRACK & CONDITIONS'}],calendarRows,'mg-no-sort'),
    source.length+' SCHEDULED ENTRIES');
  const staffRows=staff.slice(0,8).map(r=>'<tr>'+tableCell(linkRecord(r,r.name),'strong')+
    tableCell(h(r.detail||'—'),'dim')+tableCell(button('›','open','person|'+r.name+'|','mg-rowlink'),'numeric')+'</tr>');
- const staffPanel=panel('Personnel & Assignments',compactTable([{text:'PERSON'},{text:'ROLE'},{text:'PROFILE',style:'width:45px'}],staffRows),staff.length+' STAFF RECORDS');
+ const staffPanel=panel('Personnel & Assignments',compactTable([{text:'PERSON'},{text:'ROLE'},{text:'PROFILE',style:'width:45px'}],staffRows,'mg-no-sort'),staff.length+' STAFF RECORDS');
  const rosterRows=horseRecords.slice(page*size,page*size+size).map(r=>{
   const status=game.horseState?.[r.name]?.status||all.find(c=>c.title?.toLowerCase().includes(r.name.toLowerCase()))?.type||'No new report';
   const target=game.calendarState?.[r.name]?.race_target||'—';
@@ -236,13 +236,13 @@ function home(){
  });
  const roster=panel('Active Stable Roster',compactTable([
   {text:'HORSE',style:'width:29%'},{text:'OWNER',style:'width:26%'},
-  {text:'CURRENT FILE'},{text:'TARGET'},{text:'OPEN',style:'width:45px'}],rosterRows),horseRecords.length+' HORSES');
+  {text:'CURRENT FILE'},{text:'TARGET'},{text:'OPEN',style:'width:45px'}],rosterRows,'mg-no-sort'),horseRecords.length+' HORSES');
  const priority=panel('Decision & Opportunity Ledger',compactTable([
   {text:'CASE / SUBJECT',style:'width:48%'},{text:'PRESSURE'},
   {text:'PRIMARY RISK'},{text:'OPEN',style:'width:47px'}],
   all.slice(page*size,page*size+size).map(c=>'<tr>'+tableCell(button(h(c.title),'case',c.id,'mg-rowlink'),'strong')+
    tableCell(h(c.pressure||'—'),'gold')+tableCell(h(c.risk||'—'),'dim')+
-   tableCell(button('›','case',c.id,'mg-rowlink'),'numeric')+'</tr>')),all.length+' CURRENT CASES');
+   tableCell(button('›','case',c.id,'mg-rowlink'),'numeric')+'</tr>')),all.length+' CURRENT CASES','mg-no-sort');
  const pressureLevels=[
   ['HIGH',all.filter(x=>/high|urgent/i.test(x.pressure||'')).length],
   ['MEDIUM',all.filter(x=>/medium|moderate/i.test(x.pressure||'')).length],
@@ -257,12 +257,9 @@ function home(){
   all.slice(page*size,page*size+size)
    .map(c=>'<tr>'+tableCell(button(h(c.source),'case',c.id,'mg-rowlink'),'strong')+
       tableCell(h(c.read||'Office review'),'dim')+tableCell(button('›','case',c.id,'mg-rowlink'),'numeric')+'</tr>')),
-   'LIVE OFFICE READS');
- const pager='<div class="mg-office-pager"><span>PAGE '+(page+1)+' / '+pageCount+'</span>'+
-  '<button type="button" class="mg-button" data-act="MG UI" data-mg="home-page" data-value="-1" aria-label="Previous dashboard page">‹ BACK</button>'+
-  '<button type="button" class="mg-button" data-act="MG UI" data-mg="home-page" data-value="1" aria-label="Next dashboard page">NEXT ›</button></div>';
- return pageBar('Racing Office','DAILY MANAGEMENT · '+nowDate(),
-   pager+button('GLOBAL DIRECTORY','nav','search')+button('MY STABLE','nav','stable'))+
+   'LIVE OFFICE READS','mg-no-sort');
+ return pageBar('Racing Office','DAILY MANAGEMENT · '+nowDate()+' · PAGE '+(page+1)+' / '+pageCount,
+   button('GLOBAL DIRECTORY','nav','search')+button('MY STABLE','nav','stable'))+
  '<div class="mg-content mg-office-content">'+
  '<div class="mg-home-top"><div class="mg-home-stack mg-home-inbox">'+inboxView()+'</div>'+
  '<div class="mg-home-stack mg-home-case">'+caseDecision()+'</div>'+
@@ -986,7 +983,6 @@ root.addEventListener('click',event=>{
  const el=event.target.closest('[data-mg]');if(!el)return;
  event.preventDefault();event.stopPropagation();
  const action=el.dataset.mg,value=el.dataset.value||'';
- if(action==='home-page'){const total=Math.max(1,Math.ceil(cases().length/5),Math.ceil(records().filter(r=>r.kind==='horse').length/5),Math.ceil($$('.fixtureList .fixture').length/5));ui.homePage=(ui.homePage+(Number(value)||0)+total)%total;render();return}
  if(action==='nav'){nav(value);return}
  if(action==='open'){goFromSearch(value);return}
  if(action==='open-case'){ui.caseId=value;ui.homePage=0;const source=$('.app .msg[data-case="'+CSS.escape(value)+'"]');if(source)withSilentOfficeRoute(()=>source.click());nav('office');return}
@@ -998,8 +994,8 @@ root.addEventListener('click',event=>{
  if(action==='sort'){ui.sort=value;render();return}
  if(action==='continue'){sourceAction('Continue');setTimeout(render,100);return}
  if(action==='save'){sourceAction('Save');return}
- if(action==='back'){history.back();setTimeout(render,100);return}
- if(action==='forward'){history.forward();setTimeout(render,100);return}
+ if(action==='back'){if(ui.view==='office'&&!activeRoute()&&(Number(ui.homePage)||0)>0){ui.homePage--;render();return}history.back();setTimeout(render,100);return}
+ if(action==='forward'){if(ui.view==='office'&&!activeRoute()){const total=Math.max(1,Math.ceil(cases().length/5),Math.ceil(records().filter(r=>r.kind==='horse').length/5),Math.ceil($$('.fixtureList .fixture').length/5));if((Number(ui.homePage)||0)<total-1){ui.homePage++;render();return}}history.forward();setTimeout(render,100);return}
 });
 root.addEventListener('input',event=>{
  if(event.target.dataset.mgInput==='stable-search'){ui.stableQuery=event.target.value;ui.stableFocus=true;render();return}
