@@ -106,14 +106,15 @@ capture people-profile '?page=person&name=Gabe+Larkin' 'mg-person-dossier'
 capture stable-roster '?ui=stable' 'mg-operations-grid'
 capture racetracks '?ui=track' 'mg-operations-grid'
 capture racing-calendar '?ui=racing' 'mg-department-suite racing'
-capture breeding '?ui=breeding' 'mg-department-suite breeding'
-capture sales '?ui=sales' 'mg-department-suite sales'
-capture personnel '?ui=person' 'mg-department-suite person'
-capture farms '?ui=farm' 'mg-department-suite farm'
+capture breeding '?ui=breeding' 'mg-directory-layout breeding'
+capture sales '?ui=sales' 'mg-directory-layout sales'
+capture personnel '?ui=person' 'mg-directory-layout person'
+capture farms '?ui=farm' 'mg-directory-layout farm'
 capture world '?ui=world' 'mg-department-suite world'
 capture finances '?ui=finances' 'mg-finance-grid'
 capture keeneland-profile '?page=track&name=Keeneland' 'mg-track-layout'
 capture aqueduct-directory '?page=track&name=Aqueduct' 'mg-track-layout'
+capture historical-person '?page=person&name=Ismael+Rosario&id=HP-T-06-013-3' 'mg-person-dossier'
 
 python3 - <<'PY'
 from pathlib import Path
@@ -130,7 +131,7 @@ PY
 python3 - <<'PY'
 from pathlib import Path
 import re,html
-for name in ('racing-office','global-search','horse-profile','people-profile','stable-roster','racetracks','racing-calendar','breeding','sales','personnel','farms','world','finances','keeneland-profile','aqueduct-directory'):
+for name in ('racing-office','global-search','horse-profile','people-profile','stable-roster','racetracks','racing-calendar','breeding','sales','personnel','farms','world','finances','keeneland-profile','aqueduct-directory','historical-person'):
  s=Path('visual-audit/manager-v2/dom/'+name+'.html').read_text()
  assert 'id="mgApp"' in s,(name,'manager root absent')
  assert 'class="mg-rail"' in s,(name,'shared rail absent')
@@ -148,6 +149,10 @@ tracks=Path('visual-audit/manager-v2/dom/racetracks.html').read_text()
 assert len(re.findall(r'data-value="track\\|',tracks))>=100,'Complete 134-track geography register did not reach Racecourses'
 aqueduct=Path('visual-audit/manager-v2/dom/aqueduct-directory.html').read_text()
 assert 'South Ozone Park' in aqueduct,'Read-only historic track profile lacks approved locality'
+world_people=Path('visual-audit/manager-v2/dom/personnel.html').read_text()
+assert len(re.findall(r'data-value="person\\|',world_people))>=1000,'People directory did not load the approved 1308-person projection'
+historic=Path('visual-audit/manager-v2/dom/historical-person.html').read_text()
+assert 'Camagüey' in historic and 'Havana' in historic,'Historical person-by-ID profile lost source career base/birthplace'
 
 PY
-echo "Management Studio V2: fifteen real browser screenshots and source-bound DOM checks completed."
+echo "Management Studio V2: sixteen real browser screenshots and source-bound DOM checks completed."
