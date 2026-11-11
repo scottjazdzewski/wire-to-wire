@@ -7,7 +7,7 @@ const $=(q,scope=document)=>scope.querySelector(q), $$=(q,scope=document)=>[...s
 const h=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const known=v=>v!=null&&String(v).trim()!==''&&!['—','Unknown','Not recorded','N/A'].includes(String(v).trim());
 const root=document.createElement('div');root.id='mgApp';root.setAttribute('aria-label','Wire to Wire Management Studio');document.body.appendChild(root);
-const ui={view:'office',q:'',type:'all',sort:'name',caseId:'powerline',catalog:null,photos:null,searchRecords:[],filterFocus:false,stage:'',renderCount:0,demoRatings:new URLSearchParams(location.search).get('ratings')!=='real'};
+const ui={view:'office',q:'',type:'all',sort:'name',caseId:'powerline',catalog:null,photos:null,personGeo:null,trackGeo:null,searchRecords:[],filterFocus:false,stage:'',renderCount:0,demoRatings:new URLSearchParams(location.search).get('ratings')!=='real'};
 const readState=()=>{try{return JSON.parse(localStorage.getItem('wtwOfficeStateV30')||'{}')}catch{return {}}};
 const demoScore=(name,key)=>{
  let seed=2166136261;
@@ -189,6 +189,27 @@ function portrait(kind,name){
  const fallback='/assets/profile-badges/v2/wtw_badge_'+(kind==='horse'?'horse':kind==='person'?'people':kind==='farm'?'farm_stable':'track')+'.png';
  return '<div class="mg-portrait '+(kind!=='horse'?'fallback':'')+'"><img src="'+h(href||fallback)+'" alt="'+h(name)+' profile image"></div>';
 }
+function geographicPerson(name){
+ const people=ui.personGeo?.people;if(!Array.isArray(people))return null;
+ const id=sourceProfile()?.doc?.dataset?.personId||'';
+ if(id){const exact=people.find(p=>p.id===id);if(exact)return exact}
+ const matching=people.filter(p=>p.name?.trim().toLowerCase()===String(name).trim().toLowerCase());
+ return matching.length===1?matching[0]:null;
+}
+function geographicTrack(name){
+ const tracks=ui.trackGeo?.tracks;if(!Array.isArray(tracks))return null;
+ const matching=tracks.filter(p=>p.name?.trim().toLowerCase()===String(name).trim().toLowerCase());
+ return matching.length===1?matching[0]:null;
+}
+function locationName(place){
+ if(!place)return '';
+ return [place.city||place.city_locality,place.region||place.state_province_region,place.country].filter(known).join(', ');
+}
+function geoFlag(code){
+ const region=String(code||'').split('-')[0].toUpperCase().replace(/^UK$/,'GB');
+ if(!/^[A-Z]{2}$/.test(region))return '';
+ return [...region].map(c=>String.fromCodePoint(127397+c.charCodeAt(0))).join('');
+}
 function identity(kind,name,record){
  const p=sourceProfile();const f=p?.fields||[];
  let origin=[],extras=[];
@@ -197,6 +218,22 @@ function identity(kind,name,record){
   const born=srcValue(f,'Date of birth')||srcValue(f,'Born'),sex=srcValue(f,'Sex'),age=srcValue(f,'Age');
   origin=[sex?'Sex '+sex:'',age?'Age '+age:'',born?'Born '+born:'',loc?'Foaled '+loc:''].filter(Boolean);
   extras=p?.career?.slice(0,4)||[];
+ }else if(kind==='person'){
+  const record=geographicPerson(name),birth=record?.birthplace,base=record?.opening_base;
+  const role=p?.sub?.replace(/^Job:\s*/i,'')||srcValue(f,'Role')||'';
+  const flag=geoFlag(birth?.flag_code);
+  origin=[role?'ROLE '+role:'',birth?.country?(flag?flag+' ':'')+'BIRTH COUNTRY '+birth.country:'',
+    birth?.city?'BORN '+[birth.city,birth.region].filter(known).join(', '):'',
+    base?'1999 BASE '+locationName(base):'',
+    ...f.filter(([key])=>!/^(role|job|birthplace|born|country|base|location)$/i.test(key)).slice(0,2).map(x=>x[0]+' '+x[1])].filter(Boolean);
+  extras=p?.career?.slice(0,3)||[];
+ }else if(kind==='track'){
+  const record=geographicTrack(name);
+  origin=[record?'LOCATION '+locationName(record):'',
+   record?.macro_circuit?'CIRCUIT '+record.macro_circuit:'',
+   record?.opening_state?'1999 STATUS '+record.opening_state:'',
+   ...f.filter(([key])=>!/location/i.test(key)).slice(0,1).map(x=>x[0]+' '+x[1])].filter(Boolean);
+  extras=p?.career?.slice(0,3)||[];
  }else{
   origin=[p?.sub,...f.slice(0,3).map(x=>x[0]+' '+x[1])].filter(Boolean);
   extras=p?.career?.slice(0,3)||[];
@@ -563,7 +600,9 @@ ui.view=activeRoute()?'profile':params.get('ui')||'office';
 if(!['profile','office','search','stable','racing','breeding','sales','person','farm','track','world','finances','inbox'].includes(ui.view))ui.view='office';
 Promise.allSettled([
  fetch('/assets/game/attribute-catalog.v1.json').then(x=>x.ok?x.json():null).then(x=>{if(x?.horse_categories)ui.catalog=x}),
- fetch('/assets/office/decision-photo-index.json').then(x=>x.ok?x.json():null).then(x=>{ui.photos=x})
+ fetch('/assets/office/decision-photo-index.json').then(x=>x.ok?x.json():null).then(x=>{ui.photos=x}),
+ fetch('/data/person-geography-ui-v33.json').then(x=>x.ok?x.json():null).then(x=>{if(x?.schema==='WTW_UI_PERSON_GEOGRAPHY_PROJECTION_V1')ui.personGeo=x}),
+ fetch('/data/track-geography-v33.json').then(x=>x.ok?x.json():null).then(x=>{if(x?.tracks&&x?.authority)ui.trackGeo=x})
 ]).then(render);
 render();setTimeout(render,150);
 window.__WTW_MANAGER_V2__={render,state:readState,records,ui,openRecord};
