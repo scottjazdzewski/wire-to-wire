@@ -528,11 +528,10 @@ function operationsDashboard(view){
     ' · '+h(x.pressure||'Current file')+'</small></div>'+
   button('REVIEW ›','open-case',x.id,'mg-rowlink')+'</div>').join('');
  const title=viewIsStable?'Stable & Horses':'Racecourses',short=viewIsStable?'HORSE OPERATIONS':'TRACKS / VENUES';
- const first=panel(title,compactTable(viewIsStable?[
-  {text:'HORSE',style:'width:27%'},{text:'CURRENT FILE'},{text:'NEXT TARGET'},
-  {text:'OWNER'},{text:'OPEN',style:'width:65px'}
- ]:[{text:'NAME',style:'width:34%'},{text:'RECORD'},{text:'LOCATION'},
-  {text:'OPEN',style:'width:65px'}],roster),base.length+' RECORDS');
+ const first=panel(title,viewIsStable?
+  '<div class="mg-stable-horse-list">'+stableCards+'</div>':
+  compactTable([{text:'NAME',style:'width:34%'},{text:'RECORD'},{text:'LOCATION'},
+    {text:'OPEN',style:'width:65px'}],roster),base.length+' RECORDS');
  const second=panel('Upcoming Racing',fixtures.length?compactTable([{text:'DATE',style:'width:84px'},{text:'HORSE / RACE'},{text:'TRACK / CONDITIONS'}],fixtures):
   empty('No sourced race targets are attached to the active schedule.'),'CURRENT RACE CALENDAR');
  const personnelBody=secondary.length?compactTable([{text:'NAME',style:'width:34%'},{text:'ROLE / RECORD'},
@@ -544,7 +543,7 @@ function operationsDashboard(view){
   viewIsStable?staff.length+' PEOPLE':'RACING RECORDS');
  const fourth=panel('Management Files',decisionRows||empty('No current Office cases.'),office.length+' LIVE CASES');
  return pageBar(title,short,button('GLOBAL DIRECTORY','nav','search')+button('HISTORY ARCHIVE','nav','history'))+
-  '<div class="mg-content mg-op-content"><div class="mg-operations-grid '+(viewIsStable?'stable':'tracks')+'">'+
+  '<div class="mg-content mg-op-content"><div class="mg-operations-grid '+(viewIsStable?'stable mg-stable-command':'tracks')+'">'+
   first+second+third+fourth+'</div></div>';
 }
 function departmentStudio(view){
