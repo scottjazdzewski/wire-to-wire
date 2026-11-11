@@ -82,6 +82,8 @@ test('no same-day double entry, teleporting, unfunded entry or fake rider',()=>{
   assert.ok(evaluate({finance:{...finance,availableBalance:0}}).reasons.includes(
     'FINANCE_UNAVAILABLE'
   ));
+  assert.ok(evaluate({finance:{status:'AUTHORIZED',availableBalance:5000}}).reasons.includes('FINANCE_UNAVAILABLE'));
+  assert.ok(evaluate({rider:{...rider,conflictingMounts:[{date:race.date,status:'BOOKED'}]}}).reasons.includes('RIDER_NOT_CONFIRMED'));
 });
 test('AI and human player share the same eligibility gate',()=>{
   assert.deepEqual(evaluate({controller:'AI'}).reasons,
@@ -101,5 +103,8 @@ test('reject wrong age, sex, surface fit, and late arrival',()=>{
   assert.ok(evaluate({race:{...race,trackId:'T-NEW'},shipment:{
     originTrackId:h.trackId,destinationTrackId:'T-NEW',
     arrivalDate:'1999-02-28',status:'CONFIRMED'
+  }}).reasons.includes('SHIPPING_ARRIVAL_UNCONFIRMED'));
+  assert.ok(evaluate({race:{...race,trackId:'T-NEW'},shipment:{
+    originTrackId:h.trackId,destinationTrackId:'T-NEW',status:'CONFIRMED'
   }}).reasons.includes('SHIPPING_ARRIVAL_UNCONFIRMED'));
 });
