@@ -170,6 +170,62 @@ body.wtw-next-active{overflow:auto}
 .ng-routeinner .profileSections{display:grid;gap:9px}
 .ng-routeinner .routeCard:only-child{grid-column:span 2}
 .ng-routeinner .calGroup,.ng-routeinner .worldPanel{background:#171e22;border:1px solid #3c4b47;border-radius:5px;padding:12px}
+.ng-route-manager{padding:6px 9px 8px!important}
+.ng-route-manager .ng-routegrid{display:block;flex:1 1 0;min-height:0;overflow:hidden;padding:0}
+.ng-route-manager .ng-routeinner{display:block;height:100%;min-height:0;overflow:hidden;padding:0}
+.ng-manager-screen{display:grid;grid-template-rows:42px 56px minmax(0,1fr);gap:5px;width:100%;height:100%;min-height:0;overflow:hidden;font-variant-numeric:tabular-nums;color:#e5ebe5;background:#0f161a}
+.ng-manager-head{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;border-bottom:1px solid #415249;padding:2px 6px}
+.ng-manager-identity{display:flex;align-items:baseline;gap:14px;min-width:0}
+.ng-manager-identity>span{font-size:9px;font-weight:760;letter-spacing:.065em;color:#bda874;white-space:nowrap}
+.ng-manager-identity h2{margin:0;font-size:15px;line-height:1.2;letter-spacing:.015em;font-weight:800;color:#eff2ec;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ng-manager-controls{display:flex;align-items:center;justify-content:flex-end;gap:7px;min-width:0}
+.ng-manager-controls label{display:flex;align-items:center;gap:6px;font-size:9px;font-weight:750;color:#a1b9ad;white-space:nowrap}
+.ng-manager-controls select{min-width:130px;height:26px;padding:3px 6px;border:1px solid #42534c;border-radius:2px;background:#202a2c;color:#e4e9e3;font-size:10px}
+.ng-routeinner .ng-manager-controls>button{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:26px;padding:3px 9px;border:1px solid #476d54;border-radius:2px;background:#284837;color:#e9ddb6;font-size:9px!important;font-weight:780;white-space:nowrap}
+.ng-manager-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.ng-manager-metric{display:flex;flex-direction:column;justify-content:center;gap:3px;padding:5px 12px;background:#1c2529;min-width:0;border-top:2px solid #365e48}
+.ng-manager-metric small{font-size:9px;font-weight:730;color:#99b1a5}
+.ng-manager-metric strong{font-size:19px;font-weight:850;line-height:1.1;color:#f2e4ba;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ng-manager-workspace{display:grid;grid-template-columns:minmax(0,2.1fr) minmax(265px,.9fr);min-height:0;gap:6px}
+.ng-manager-primary{display:flex;flex-direction:column;min-height:0;min-width:0;background:#192125;overflow:hidden}
+.ng-manager-primary>header,.ng-manager-secondary>header{display:flex;align-items:center;justify-content:space-between;gap:9px;min-height:29px;padding:4px 9px;background:#25322f;border-bottom:1px solid #43574a}
+.ng-manager-primary>header strong,.ng-manager-secondary>header strong{color:#ecdfbc;font-size:10px;letter-spacing:.045em;white-space:nowrap}
+.ng-manager-primary>header span,.ng-manager-secondary>header span{font-size:9px;color:#aac0ad;white-space:nowrap}
+.ng-manager-columns,.ng-manager-row{display:grid;grid-template-columns:65px minmax(120px,1.25fr) minmax(125px,1.1fr) minmax(115px,.9fr) 20px;gap:7px;align-items:center;min-width:0}
+.ng-manager-columns{flex:0 0 26px;padding:4px 8px;background:#2b3535;color:#b6c7b7;font-size:9px;font-weight:810;letter-spacing:.025em}
+.ng-manager-rows{display:flex;flex-direction:column;flex:1 1 0;min-height:0;overflow:auto;scrollbar-width:thin;scrollbar-color:#567562 #151b20}
+.ng-routeinner .ng-manager-row{display:grid;align-items:center;flex:0 0 28px;width:100%;min-height:28px;max-width:none;box-sizing:border-box;padding:3px 8px;gap:7px;border:0;border-bottom:1px solid #303e39;border-radius:0;background:#1c2529;color:#dfe9e2;text-align:left;font-size:10px!important;cursor:pointer}
+.ng-routeinner .ng-manager-row:nth-child(even){background:#222c30}
+.ng-routeinner .ng-manager-row:hover,.ng-routeinner .ng-manager-row:focus-visible{background:#2c4839;outline:1px solid #587a5d;outline-offset:-1px}
+.ng-manager-row>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ng-manager-row-type{font-size:9px;color:#d4c48f;font-weight:770}
+.ng-manager-row-name{display:flex;align-items:center;gap:6px}
+.ng-manager-row-name strong{font-size:10.5px;font-weight:760;color:#f3eee1;text-overflow:ellipsis;overflow:hidden}
+.ng-manager-row-name .ng-horse-owner-badge .ng-owner-unknown-mark,.ng-manager-row-name .ng-horse-owner-badge .ng-org-mark{width:17px!important;height:17px!important;min-width:17px!important;min-height:17px!important;flex-basis:17px!important}
+.ng-manager-row-detail{font-size:10px;color:#b8c8bd}
+.ng-manager-row-context{font-size:10px;color:#e4d49e}
+.ng-manager-row-open{text-align:center;color:#b9caba}
+.ng-manager-sidebar{display:flex;flex-direction:column;align-content:start;min-height:0;gap:6px;overflow:hidden}
+.ng-manager-secondary{display:flex;flex-direction:column;min-height:0;background:#1b2428;overflow:hidden}
+.ng-manager-secondary-list{display:flex;flex-direction:column;min-height:0;overflow:auto;scrollbar-width:thin;scrollbar-color:#567562 #151b20}
+.ng-routeinner .ng-manager-case{display:grid;grid-template-columns:4px minmax(0,1fr) 52px;align-items:center;gap:7px;min-height:40px;padding:5px 7px;border:0;border-bottom:1px solid #37443f;border-radius:0;background:#1e282b}
+.ng-routeinner .ng-manager-case:nth-child(even){background:#252e30}
+.ng-routeinner .ng-manager-case:hover{background:#2a4337}
+.ng-manager-case-indicator{height:24px;background:#4f8465}
+.ng-manager-case-indicator.urgent{background:#c96b71}
+.ng-manager-case-indicator.resolved{background:#5b6660}
+.ng-manager-case>span:nth-child(2){display:flex;flex-direction:column;gap:3px;min-width:0}
+.ng-manager-case strong{font-size:10px;font-weight:700;color:#e6ece2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ng-manager-case small{font-size:9px;color:#a9c0b2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ng-manager-case-state{text-align:right;font-size:8px;color:#dccb96;font-weight:750}
+.ng-routeinner .ng-manager-fixture{display:grid;grid-template-columns:70px minmax(0,1fr) minmax(78px,.75fr) 50px;align-items:center;gap:5px;min-height:27px;padding:3px 7px;border:0;border-bottom:1px solid #36423e;border-radius:0;background:#1f282a}
+.ng-routeinner .ng-manager-fixture:nth-child(even){background:#252f30}
+.ng-routeinner .ng-manager-fixture:hover{background:#2a4337}
+.ng-manager-fixture>span{font-size:9px;color:#b7cabb;white-space:nowrap}
+.ng-manager-fixture strong{min-width:0;font-size:10px;color:#f0e8d3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ng-manager-fixture small{font-size:9px;color:#b8c9bc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ng-manager-fixture em{font-size:9px;font-style:normal;font-weight:770;color:#d7c38d;text-align:right}
+.ng-manager-empty{padding:12px 10px;margin:0;color:#a5b8aa;font-size:10.5px;line-height:1.35}
 .ng-custompage{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-content:start}
 .ng-customcard{padding:15px;background:#171e22;border:1px solid #3c4b47;border-radius:5px}
 .ng-customcard h3{font-size:14px;margin:0 0 8px}
