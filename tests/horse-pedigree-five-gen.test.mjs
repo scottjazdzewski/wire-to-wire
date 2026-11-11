@@ -81,6 +81,7 @@ test('Office and Archive preserve direct immutable-ID horse-file navigation',()=
  const next=source('public/next/next.js'),archive=source('public/app.js');
  assert.ok(next.includes('data-ng="horse-history-file"'));
  assert.ok(next.includes("ids.length===1"));
+ assert.ok(next.includes("if(kind==='horse')"),'Non-roster horse links must try source ID lookup');
  assert.ok(next.includes("horse='+encodeURIComponent(ids[0])"));
  assert.ok(archive.includes("get('horse')"));
  assert.ok(archive.includes("window.addEventListener('popstate'"));
