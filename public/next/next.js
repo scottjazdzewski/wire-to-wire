@@ -1147,7 +1147,7 @@ const DEP_COLUMNS={
  Breeding:[['horse','HORSE',12],['age','AGE',3],['sex','SEX',3],['sire','SIRE',9],['dam','DAM',9],['farm','FARM',9],['status','BREED STATUS',7],['health','HEALTH',6],['pedigree','PED',5],['value','BREED VAL',6],['owner','OWNER',10],['studFee','STUD FEE',8],['bookings','BOOK',5],['foals','FOALS',4],['winners','WINS',4]],
  Sales:[['hip','HIP',4],['horse','HORSE',12],['age','AGE',3],['sex','SEX',3],['sire','SIRE',11],['dam','DAM',11],['consignor','CONSIGNOR',10],['reserve','RESERVE',8],['bid','CURRENT BID',8],['value','EST VALUE',8],['ca','CA',4],['pa','PA',4],['condition','COND',7],['status','SALE STATUS',7]],
  Personnel:[['name','PERSON',13],['age','AGE',3],['role','ROLE',10],['ca','CA',4],['pa','PA',4],['reputation','REP',6],['specialty','SPECIALTY',10],['morale','MORALE',6],['workload','LOAD',6],['salary','SALARY',8],['contract','CONTRACT',8],['assignment','ASSIGNED',9],['base','BASE',9],['wins','WINS',4]],
- Facilities:[['name','FACILITY',15],['type','TYPE',10],['location','CITY / STATE',15],['capacity','CAP',6],['occupied','USED',6],['free','FREE',5],['condition','COND',7],['quality','QUALITY',8],['staff','STAFF',5],['cost','MONTHLY COST',10],['owner','OWNER',13]],
+ Facilities:[['name','FACILITY',14],['type','TYPE',9],['location','CITY / STATE',13],['capacity','CAP',5],['occupied','USED',5],['free','FREE',5],['condition','COND',7],['quality','QUALITY',7],['staff','STAFF',5],['cost','MONTHLY COST',10],['owner','OWNER',12],['status','STATUS',8]],
  Finances:[['date','DATE',11],['category','CATEGORY',16],['description','TRANSACTION / PURPOSE',28],['department','HORSE / DEPARTMENT',19],['income','INCOME',10],['expense','EXPENSE',10],['balance','BALANCE',6]]
 };
 const DEP_AUCTIONS=[
@@ -1266,7 +1266,7 @@ function depRows(section,page,demo,auction){
     capacity:cap??'',occupied:used??'',free:demo?cap-used:'',
     condition:demo?['Excellent','Good','Needs work'][n%3]:'',quality:demo?String(60+n%37)+'/100':'',
     staff:demo?String(3+n%25):'',cost:demo?depMoney(11000+n%32000):'',
-    owner:demo?['Your Operation','Private','Partnership'][n%3]:'',_sourceIndex:r._index});
+    owner:demo?['Your Operation','Private','Partnership'][n%3]:'',status:demo?['Active','Operational','Upgrade due'][n%3]:(game.facilityState?.[r.name]?.status||''),_sourceIndex:r._index});
   });
  }
  const entries=demo?[
