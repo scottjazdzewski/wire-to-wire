@@ -2460,3 +2460,13 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 @media(max-width:850px){
  #wtwNextgen .ng-entity-preview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+
+#wtwNextgen .ng-person-horse-name .ng-entity-reference,
+#wtwNextgen .ng-person-horse-owner .ng-entity-reference{
+ font-size:var(--wtw-ui-list-text)!important;line-height:inherit!important;
+ max-width:100%!important;font-weight:750!important
+}
+#wtwNextgen .ng-entity-preview-grid .ng-entity-reference{
+ font-size:11px!important;font-weight:750!important
+}
