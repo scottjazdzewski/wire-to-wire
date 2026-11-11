@@ -33,6 +33,8 @@ capture personnel '?ui=person' 'mg-department-suite person'
 capture farms '?ui=farm' 'mg-department-suite farm'
 capture world '?ui=world' 'mg-department-suite world'
 capture finances '?ui=finances' 'mg-finance-grid'
+capture keeneland-profile '?page=track&name=Keeneland' 'mg-track-layout'
+capture aqueduct-directory '?page=track&name=Aqueduct' 'mg-track-layout'
 
 cat > public/manager/__wtw_interaction_probe.html <<'HTML'
 <!doctype html><html><head><meta charset="utf-8"></head><body>
@@ -112,7 +114,7 @@ PY
 python3 - <<'PY'
 from pathlib import Path
 import re,html
-for name in ('racing-office','global-search','horse-profile','people-profile','stable-roster','racetracks','racing-calendar','breeding','sales','personnel','farms','world','finances'):
+for name in ('racing-office','global-search','horse-profile','people-profile','stable-roster','racetracks','racing-calendar','breeding','sales','personnel','farms','world','finances','keeneland-profile','aqueduct-directory'):
  s=Path('visual-audit/manager-v2/dom/'+name+'.html').read_text()
  assert 'id="mgApp"' in s,(name,'manager root absent')
  assert 'class="mg-rail"' in s,(name,'shared rail absent')
@@ -124,5 +126,12 @@ s=Path('visual-audit/manager-v2/dom/horse-profile.html').read_text()
 assert len(re.findall(r'class="mg-attribute"',s))>=45,'Full horse attributes missing'
 s=Path('visual-audit/manager-v2/dom/global-search.html').read_text()
 assert len(re.findall(r'<tr>',s))>=20,'Dense search results missing'
+people=Path('visual-audit/manager-v2/dom/people-profile.html').read_text()
+assert 'Jacksonville' in people and 'Charles Town' in people,'Locked birthplace and 1999 base are not displayed for Gabe Larkin'
+tracks=Path('visual-audit/manager-v2/dom/racetracks.html').read_text()
+assert len(re.findall(r'data-value="track\\|',tracks))>=100,'Complete 134-track geography register did not reach Racecourses'
+aqueduct=Path('visual-audit/manager-v2/dom/aqueduct-directory.html').read_text()
+assert 'South Ozone Park' in aqueduct,'Read-only historic track profile lacks approved locality'
+
 PY
-echo "Management Studio V2: thirteen real browser screenshots and source-bound DOM checks completed."
+echo "Management Studio V2: fifteen real browser screenshots and source-bound DOM checks completed."
