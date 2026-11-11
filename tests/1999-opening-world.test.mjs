@@ -60,10 +60,15 @@ test('active stallions are unique; pending stallion is not bookable',()=>{
  assert.equal(ids(w.activeStallions1999).size,31);
  assert.equal(w.pendingNotBookableStallions.length,1);
  assert.equal(w.foundationalBroodmares1999.length,20);
+ assert.equal(w.productionBroodmareBoarding1999.length,2036);
+ assert.equal(ids(w.productionBroodmareBoarding1999).size,2036);
  assert.equal(ids(w.foundationalBroodmares1999).size,20);
  assert.ok(w.activeStallions1999.every(s=>s.standingFarm1999.farmOrganizationId));
  assert.ok(w.foundationalBroodmares1999.every(s=>s.standingFarm1999.farmOrganizationId));
  assert.ok(w.foundationalBroodmares1999.every(m=>m.pregnancyStatus==='UNOBSERVED_DO_NOT_ASSUME'));
+ assert.ok(w.productionBroodmareBoarding1999.every(m=>m.pregnancyStatus==='UNOBSERVED'&&m.boardingFarm1999.farmOrganizationId));
+ assert.ok(w.productionBroodmareBoarding1999.every(m=>w.pedigreeNodes.some(p=>p.id===m.id)));
+ assert.equal(w.counts.pedigreeSourceNodesIncluded,w.pedigreeNodes.length);
  assert.equal(w.activeStallions1999.filter(s=>s.id==='H-1990-000001').length,1);
  assert.equal(w.activeStallions1999.filter(s=>s.id==='H-1990-000002').length,1);
  assert.equal(w.pendingNotBookableStallions[0].status,'NOT_ACTIVE_PENDING_CANON');
@@ -87,4 +92,6 @@ test('source-protected API lists and details answer without mutating state',()=>
  assert.equal(get('/api/1999/horses/H-9999-NOPE').status,404);
  assert.equal(get('/api/1999/stallions').data.active.length,31);
  assert.equal(get('/api/1999/broodmares').data.foundation.length,20);
+ assert.equal(get('/api/1999/broodmare-boarding?limit=3').data.items.length,3);
+ assert.equal(get('/api/1999/broodmare-boarding').data.total,2036);
 });
