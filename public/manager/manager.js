@@ -472,9 +472,20 @@ function operationsDashboard(view){
  const fixtures=fixtureNodes.map(n=>'<tr>'+tableCell(h($('.d',n)?.textContent.trim()||'—'))+
   tableCell(h($('h4',n)?.textContent.trim()||'—'),'strong')+
   tableCell(h($('p',n)?.textContent.trim()||'—'),'dim')+'</tr>');
- const roster=base.map(x=>'<tr>'+tableCell(linkRecord(x,x.name,kind==='horse'),'strong')+
-  tableCell(h(x.detail||'—'))+tableCell(h(kind==='horse'?owner(x.name):(x.track||'—')),'dim')+
-  tableCell(button('OPEN ›','open',x.kind+'|'+x.name+'|'+(x.track||''),'mg-rowlink'),'numeric')+'</tr>');
+ const roster=base.map(x=>{
+  const condition=readState().horseState?.[x.name]?.status;
+  const context=office.find(c=>c.title?.toLowerCase().includes(x.name.toLowerCase()));
+  const fixture=fixtureNodes.find(n=>n.dataset.profile===x.name);
+  const target=readState().calendarState?.[x.name]?.race_target||
+   $('.fixture p',fixture)?.textContent.trim()||$('p',fixture)?.textContent.trim()||'—';
+  return '<tr>'+tableCell(linkRecord(x,x.name,viewIsStable),'strong')+
+   (viewIsStable?
+    tableCell(h(condition||context?.type||'No current report'),'dim')+
+    tableCell(h(target),'gold')+
+    tableCell(h(owner(x.name)),'dim'):
+    tableCell(h(x.detail||'—'))+tableCell(h(x.track||'—'),'dim'))+
+   tableCell(button('OPEN ›','open',x.kind+'|'+x.name+'|'+(x.track||''),'mg-rowlink'),'numeric')+'</tr>';
+ });
  const secondary=viewIsStable?staff.map(x=>'<tr>'+tableCell(linkRecord(x,x.name),'strong')+
   tableCell(h(x.detail||'Personnel record'))+tableCell(h(x.track||'—'),'dim')+
   tableCell(button('OPEN ›','open','person|'+x.name+'|','mg-rowlink'),'numeric')+'</tr>'):
@@ -486,8 +497,11 @@ function operationsDashboard(view){
     ' · '+h(x.pressure||'Current file')+'</small></div>'+
   button('REVIEW ›','open-case',x.id,'mg-rowlink')+'</div>').join('');
  const title=viewIsStable?'Stable & Horses':'Racecourses',short=viewIsStable?'HORSE OPERATIONS':'TRACKS / VENUES';
- const first=panel(title,compactTable([{text:'NAME',style:'width:34%'},{text:'RECORD'},
-  {text:viewIsStable?'OWNER':'LOCATION'},{text:'OPEN',style:'width:65px'}],roster),base.length+' RECORDS');
+ const first=panel(title,compactTable(viewIsStable?[
+  {text:'HORSE',style:'width:27%'},{text:'CURRENT FILE'},{text:'NEXT TARGET'},
+  {text:'OWNER'},{text:'OPEN',style:'width:65px'}
+ ]:[{text:'NAME',style:'width:34%'},{text:'RECORD'},{text:'LOCATION'},
+  {text:'OPEN',style:'width:65px'}],roster),base.length+' RECORDS');
  const second=panel('Upcoming Racing',fixtures.length?compactTable([{text:'DATE',style:'width:84px'},{text:'HORSE / RACE'},{text:'TRACK / CONDITIONS'}],fixtures):
   empty('No sourced race targets are attached to the active schedule.'),'CURRENT RACE CALENDAR');
  const third=panel(viewIsStable?'Personnel & Connections':'Stakes & Competition',
