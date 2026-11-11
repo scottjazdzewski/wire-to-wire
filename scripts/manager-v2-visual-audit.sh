@@ -149,6 +149,8 @@ tracks=Path('visual-audit/manager-v2/dom/racetracks.html').read_text()
 assert len(re.findall(r'data-value="track\\|',tracks))>=100,'Complete 134-track geography register did not reach Racecourses'
 aqueduct=Path('visual-audit/manager-v2/dom/aqueduct-directory.html').read_text()
 assert 'South Ozone Park' in aqueduct,'Read-only historic track profile lacks approved locality'
+assert 'Racing World · Racecourse Register' in aqueduct,'Empty major-races panel was not replaced with actionable track register'
+assert len(re.findall(r'data-value="track\\\\|',aqueduct))>=100,'Aqueduct source-backed course register did not populate with real tracks'
 world_people=Path('visual-audit/manager-v2/dom/personnel.html').read_text()
 assert len(re.findall(r'data-value="person\\|',world_people))>=1000,'People directory did not load the approved 1308-person projection'
 historic=Path('visual-audit/manager-v2/dom/historical-person.html').read_text()
