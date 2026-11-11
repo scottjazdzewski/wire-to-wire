@@ -1219,16 +1219,17 @@ function depRows(section,page,demo,auction){
  }
  if(section==='Sales'){
   if(!auction)return [];
-  const lots=demo?stable.map(h=>({horse:h.name})):Array.isArray(auction.lots)?auction.lots:[];
+  const saleOffset=Math.max(0,DEP_AUCTIONS.findIndex(a=>a.id===auction.id));
+  const lots=demo?stable.map((h,i)=>({horse:stable[(i+saleOffset)%stable.length].name})):Array.isArray(auction.lots)?auction.lots:[];
   let out=lots.map((lot,i)=>{
    const name=lot.horse||lot.horse_name;
-   return row('horse',name,{hip:demo?String(101+i*7):lot.hip||'',horse:name,age:demo?String([2,3,1,4,2,1][i]):lot.age||'',
+   return row('horse',name,{hip:demo?String(101+saleOffset*100+i*7):lot.hip||'',horse:name,age:demo?String([2,3,1,4,2,1][i]):lot.age||'',
     sex:demo?['C','G','F','M','C','F'][i]:lot.sex||'',sire:demo?['Monarch Road','City Light','Fleet River','Northern Crown','Blue Harbor','Grand Reserve'][i]:lot.sire||'',
     dam:demo?['Silver Arch','Morning Glory','Fast Night','Wild Azure','Marble Hill','Last Dance'][i]:lot.dam||'',
     consignor:demo?['Blue Lantern','Kingsmere','Ironweed','Aurelian','Crescent Mile','Marrowfield'][i]:lot.consignor||'',
-    reserve:demo?depMoney([90000,70000,110000,140000,55000,80000][i]):depMoney(lot.reserve),
-    bid:demo?depMoney([82000,64000,119000,0,57000,74000][i]):depMoney(lot.bid),
-    value:demo?depMoney([108000,85000,130000,145000,62000,96000][i]):depMoney(lot.estimated_value),
+    reserve:demo?depMoney([90000,70000,110000,140000,55000,80000][i]+saleOffset*4500):depMoney(lot.reserve),
+    bid:demo?depMoney([82000,64000,119000,0,57000,74000][i]+(i===3?0:saleOffset*3000)):depMoney(lot.bid),
+    value:demo?depMoney([108000,85000,130000,145000,62000,96000][i]+saleOffset*4200):depMoney(lot.estimated_value),
     ca:demo?String([4,3,2,4,3,2][i]):'',pa:demo?String([5,3,5,4,5,4][i]):'',
     condition:demo?['Fit','Watch','Sound','Fit','Sound','Vet check'][i]:lot.condition||'',
     status:demo?['Open','Bidding','Watch','Cataloged','Offer','Inspect'][i]:lot.status||''});
@@ -1360,7 +1361,7 @@ function departmentRoster(section,page='Overview'){
   '</select></label>':'';
  const cash=availableCash();
  const finance=section==='Finances'?'<div class="ng-dpt-finance">'+[
-  ['CASH',cash!=null?depMoney(cash):demo?'$2.84M':'—'],
+  ['CASH',demo?'$2.84M':cash!=null?depMoney(cash):'—'],
   ['MONTHLY INCOME',demo?'$186k':'—'],['MONTHLY COSTS',demo?'$143k':'—'],['NET CASH FLOW',demo?'+$43k':'—']
  ].map(([name,value])=>'<span><small>'+safe(name)+'</small><b>'+safe(value)+'</b></span>').join('')+'</div>':'';
  const purpose=section==='Racing'?'CURRENT BASE & SHIPPING':
