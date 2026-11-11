@@ -92,7 +92,13 @@ function allRecords(){
    track:locationName(r.opening_base||r.career_base||r.birthplace),directory_only:true,person_id:r.id}));
  return base.concat(tracks,people,pages.map(r=>({kind:'screen',name:r[0],detail:'Management department',view:r[1]})));
 }
-function owner(name){const r=typeof window.__wtwOfficeHorseOwner==='function'?window.__wtwOfficeHorseOwner(name):null;return r?.name||'Not recorded'}
+function owner(name){
+ const linked=typeof window.__wtwOfficeHorseOwner==='function'?window.__wtwOfficeHorseOwner(name):null;
+ const saved=readState().horseState?.[name]||{};
+ const connected=sourceProfile()?.connections?.find(([label])=>/^owner$/i.test(label))?.[1];
+ const value=linked?.name||saved.owner_name||saved.owner||connected;
+ return known(value)?String(value).trim():'Not recorded';
+}
 function ownerChip(name){
  const v=owner(name),entry=ui.logos?.organizations?.[v],src=typeof entry==='string'?entry:entry?.src;
  const trusted=typeof src==='string'&&/^\/assets\/[a-zA-Z0-9_./-]+$/.test(src)&&!src.includes('..');
@@ -315,11 +321,39 @@ function geoFlag(code){
 }
 function identity(kind,name,record){
  const p=sourceProfile();const f=p?.fields||[];
- let origin=[],extras=[];
+ let origin=[],extras=[],horseFacts='',horseStars='';
  if(kind==='horse'){
-  const loc=[p?.doc?.dataset.foalingState,p?.doc?.dataset.foalingCountry].filter(known).join(', ');
-  const born=srcValue(f,'Date of birth')||srcValue(f,'Born'),sex=srcValue(f,'Sex'),age=srcValue(f,'Age');
-  origin=[sex?'Sex '+sex:'',age?'Age '+age:'',born?'Born '+born:'',loc?'Foaled '+loc:''].filter(Boolean);
+  const saved=readState().horseState?.[name]||{};
+  const linked=saved.identity&&Array.isArray(saved.identity.source_refs)&&saved.identity.source_refs.length?saved.identity:{};
+  const field=(key,label)=>srcValue(f,label)||linked[key]||'';
+  const ds=p?.doc?.dataset||{};
+  const foalState=ds.foalingState||field('foaling_state','Foaling state');
+  const foalCountry=ds.foalingCountry||field('foaling_country','Foaling country');
+  const countryCode=ds.foalingCountryCode||field('foaling_country_code','Foaling country code')||
+   ({'United States':'US','USA':'US','Canada':'CA','England':'GB-ENG','United Kingdom':'GB','Ireland':'IE','France':'FR','Japan':'JP','Australia':'AU'}[foalCountry]||'');
+  const foalPlace=[foalState,foalCountry==='United States'?'USA':foalCountry].filter(known).join(', ');
+  const rawDob=field('date_of_birth','Date of birth')||field('born','Born');
+  const validDob=/^\d{4}-\d{2}-\d{2}$/.test(rawDob)&&!Number.isNaN(Date.parse(rawDob+'T00:00:00Z'));
+  const dob=validDob?new Intl.DateTimeFormat('en-US',{month:'long',day:'numeric',year:'numeric',timeZone:'UTC'}).format(new Date(rawDob+'T00:00:00Z')):(known(rawDob)?rawDob:'Not recorded');
+  const inWorldYear=Number(String(nowDate()).slice(0,4)),birthYear=validDob?Number(rawDob.slice(0,4)):NaN;
+  const derivedAge=Number.isInteger(inWorldYear)&&Number.isInteger(birthYear)&&inWorldYear>=birthYear?String(inWorldYear-birthYear):'';
+  const age=field('age','Age')||derivedAge||'Not recorded';
+  const sex=field('sex','Sex')||'Not recorded';
+  const flag=geoFlag(countryCode);
+  const facts=[['FOALED',((flag?flag+' ':'')+(known(foalPlace)?foalPlace:'Not recorded'))],
+   ['DATE OF BIRTH',dob],['AGE',age],['SEX',sex]];
+  horseFacts='<div class="mg-horse-idfacts" aria-label="Horse identity details">'+facts.map(([label,value])=>
+   '<span><small>'+h(label)+'</small><strong>'+h(value)+'</strong></span>').join('')+'</div>';
+  const ratings=readState().scoutingState?.[name]?.star_ratings||saved.star_ratings||{};
+  const oneRating=(key,label)=>{
+   const entry=ratings[key],score=Number(entry?.rating??entry?.stars);
+   const rated=Number.isInteger(score)&&score>=1&&score<=5&&Array.isArray(entry?.source_refs)&&entry.source_refs.length>0;
+   const marks=Array.from({length:5},(_,i)=>'<i class="'+(rated&&i<score?'filled':'')+'" aria-hidden="true">★</i>').join('');
+   return '<span class="mg-horse-star"><small>'+label+'</small><span>'+marks+'</span><b>'+(rated?score+'/5':'UNRATED')+'</b></span>';
+  };
+  horseStars='<div class="mg-horse-starline" aria-label="Current ability and future potential">'+
+   oneRating('current_ability','CURRENT ABILITY')+oneRating('future_potential','FUTURE POTENTIAL')+
+   '<em>1 developing · 3 competitive · 5 elite</em></div>';
   extras=p?.career?.slice(0,4)||[];
  }else if(kind==='person'){
   const record=geographicPerson(name),birth=record?.birthplace,base=record?.opening_base,careerBase=record?.career_base;
@@ -343,8 +377,8 @@ function identity(kind,name,record){
  }
  const connections=(p?.connections||[]).slice(0,2);
  return '<section class="mg-profile-identity">'+portrait(kind,name)+'<div class="mg-nameblock">'+
- '<div class="mg-kicker">'+h(kind.toUpperCase())+' PROFILE / CURRENT RACING UNIVERSE</div><h2>'+h(name)+'</h2>'+
- '<div class="mg-identity-meta">'+origin.map(x=>'<span>'+h(x)+'</span>').join('<span>·</span>')+'</div>'+
+ '<div class="mg-kicker">'+h(kind.toUpperCase())+' PROFILE / CURRENT RACING UNIVERSE</div><h2>'+(kind==='horse'?ownerChip(name):'')+h(name)+'</h2>'+
+ (kind==='horse'?horseFacts+horseStars:'<div class="mg-identity-meta">'+origin.map(x=>'<span>'+h(x)+'</span>').join('<span>·</span>')+'</div>')+
  '<div class="mg-id-stats">'+extras.map(x=>'<span>'+h(x[0])+' <b>'+h(x[1])+'</b></span>').join('')+'</div></div>'+
  connections.map(x=>'<div class="mg-id-connection"><small>'+h(x[0])+'</small><strong>'+h(x[1])+'</strong></div>').join('')+'</section>';
 }
