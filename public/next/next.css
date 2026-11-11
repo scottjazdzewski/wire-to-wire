@@ -2266,13 +2266,14 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 .ng-route-profile .ng-profile-track .ng-profile-intro{background:radial-gradient(ellipse at 77% 42%,rgba(148,124,76,.16),transparent 52%),linear-gradient(105deg,#233631 0%,#252d2c 39%,#30272a 68%,#161f23 100%)!important;border:1px solid #675d49!important;border-top:2px solid #ad955f!important;box-shadow:inset 0 1px 0 rgba(255,236,174,.14),inset 0 -10px 24px rgba(0,0,0,.22),0 5px 16px rgba(0,0,0,.36)!important}
 .ng-route-profile .ng-profile-track .ng-profile-source-photo::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background:linear-gradient(122deg,rgba(255,235,177,.14),transparent 29%,transparent 75%,rgba(0,0,0,.16))}
 
-.ng-route-profile .ng-profile-track .ng-profile-source-photo img{position:relative;z-index:1;object-fit:contain!important;object-position:center center!important;padding:2px 4px!important;box-sizing:border-box;filter:drop-shadow(0 3px 4px rgba(0,0,0,.74)) drop-shadow(0 0 6px rgba(244,218,164,.27))}
+.ng-route-profile .ng-profile-track .ng-profile-source-photo img{position:relative;z-index:1;object-fit:contain!important;object-position:center center!important;padding:2px 4px!important;box-sizing:border-box;transform:scale(1.08);transform-origin:center center;filter:drop-shadow(0 3px 4px rgba(0,0,0,.74)) drop-shadow(0 0 6px rgba(244,218,164,.27))}
 .ng-track-workspace{display:grid!important;grid-template-columns:minmax(0,1.23fr) minmax(285px,.77fr)!important;gap:8px!important;width:100%;height:100%;min-height:0;overflow:hidden}
 .ng-track-workspace>.ng-tier1-card,.ng-track-info-stack>.ng-tier1-card{min-height:0!important}
 .ng-track-stakes .ng-stakes-table{flex:1 1 auto;min-height:0;overflow:hidden;padding:2px 5px 4px}
 .ng-track-stakes .ng-stakes-data{min-height:30px!important;padding:3px 7px!important}
 .ng-track-stakes .ng-stakes-head{min-height:26px!important;padding:3px 7px!important}
 .ng-track-stakes .ng-stakes-data span{font-size:10.5px!important}
+.ng-track-stakes>header span{display:block;max-width:58%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px!important;font-weight:800;letter-spacing:.02em;color:#dfcfab}
 /* G1/G2/G3: crisp, individual 16px vectors; no stretched or clipped sprites. */
 .ng-track-stakes .ng-stakes-grade{display:inline-flex;align-items:center;justify-content:flex-end;gap:3px;min-width:0;min-height:18px;overflow:visible}
 .ng-track-stakes .ng-stakes-trophy{display:block!important;box-sizing:content-box;width:16px!important;height:16px!important;min-width:16px!important;min-height:16px!important;max-width:16px!important;max-height:16px!important;flex:0 0 16px!important;object-fit:contain!important;vertical-align:middle;filter:drop-shadow(0 1px 1px rgba(0,0,0,.55))}
