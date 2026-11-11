@@ -7,7 +7,7 @@
    per selector / responsive condition. No appended visual patch layer.
    Gameplay, media, runtime state and route structure are unchanged. */
 .ng-manager-shell{display:grid;grid-template-columns:177px minmax(0,1fr);flex:1 1 0;min-width:0;min-height:0;overflow:hidden;background:#0d1317}
-.ng-manager-sidebar{box-sizing:border-box;display:flex;flex-direction:column;gap:0;min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden;padding:0 7px 9px;background:#11191d;border-right:1px solid #303e3b;scrollbar-width:thin;scrollbar-color:#3b5148 #11191d}
+.ng-game-rail{box-sizing:border-box;display:flex;flex-direction:column;gap:0;min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden;padding:0 7px 9px;background:#11191d;border-right:1px solid #303e3b;scrollbar-width:thin;scrollbar-color:#3b5148 #11191d}
 .ng-manager-stage{display:flex;flex-direction:column;flex:1 1 0;min-width:0;min-height:0;overflow:hidden;background:#0c1215}
 .ng-manager-rail-brand{display:flex;align-items:center;gap:8px;min-height:49px;flex:0 0 49px;padding:5px 4px 7px;border-bottom:1px solid #303e39;box-sizing:border-box}
 .ng-manager-rail-brand img{width:32px;height:32px;flex:0 0 32px;object-fit:contain}
@@ -26,8 +26,8 @@
 .ng-manager-top-context{display:flex;align-items:center;gap:9px;flex:1 1 0;min-width:0;padding:0 9px;border-left:1px solid #33433d;white-space:nowrap}
 .ng-manager-top-context strong{font-size:10px;letter-spacing:.06em;color:#e1c98b;font-weight:820;white-space:nowrap}
 .ng-manager-top-context span{font-size:11px;font-weight:620;color:#dce7df;overflow:hidden;text-overflow:ellipsis;min-width:0}
-@media(min-width:1081px) and (max-width:1300px){.ng-manager-shell{grid-template-columns:159px minmax(0,1fr)}.ng-manager-sidebar{padding-left:5px;padding-right:5px}.ng-manager-rail-link{font-size:10px;padding-right:5px}}
-@media(max-width:1080px){.ng-manager-shell{grid-template-columns:46px minmax(0,1fr)}.ng-manager-sidebar{padding-left:4px;padding-right:4px}.ng-manager-rail-brand{justify-content:center}.ng-manager-rail-brand>span,.ng-manager-rail-group h2,.ng-manager-rail-link>span:last-child,.ng-manager-rail-footer{display:none}.ng-manager-rail-link{justify-content:center;padding:0}.ng-manager-rail-icon{flex-basis:24px}}
+@media(min-width:1081px) and (max-width:1300px){.ng-manager-shell{grid-template-columns:159px minmax(0,1fr)}.ng-game-rail{padding-left:5px;padding-right:5px}.ng-manager-rail-link{font-size:10px;padding-right:5px}}
+@media(max-width:1080px){.ng-manager-shell{grid-template-columns:46px minmax(0,1fr)}.ng-game-rail{padding-left:4px;padding-right:4px}.ng-manager-rail-brand{justify-content:center}.ng-manager-rail-brand>span,.ng-manager-rail-group h2,.ng-manager-rail-link>span:last-child,.ng-manager-rail-footer{display:none}.ng-manager-rail-link{justify-content:center;padding:0}.ng-manager-rail-icon{flex-basis:24px}}
 
 *{box-sizing:border-box}
 html,body{margin:0;min-width:0;height:100%;background:var(--wt-bg);color:var(--wt-text);font-family:Inter,"Segoe UI",Arial,sans-serif;font-size:13px;line-height:1.36;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}
