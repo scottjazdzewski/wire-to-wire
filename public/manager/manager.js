@@ -264,11 +264,19 @@ function personProfile(name){
  const skills=group('PROFESSIONAL FOUNDATIONS',foundations)+group('JUDGMENT & WORK',judgment)+(special.length?group((role||'ROLE').toUpperCase()+' SPECIALTIES',special):'');
  const work=readState().staffState?.[name]||{},rep=work.reputation_profile;
  const verified=rep?.schema==='WTW_PERSON_REPUTATION_V1'&&Array.isArray(rep.source?.refs)&&rep.source.refs.length&&Number.isFinite(rep.scores?.overall);
- const axes=(catalog.reputation?.axes||[]).map(x=>[x.label,verified&&rep.scores?.[x.key]!=null?rep.scores[x.key]:'—']);
+ const repPreview=ui.demoRatings&&!verified;
+ const repOverall=verified?Number(rep.scores.overall):repPreview?demoScore(name,'reputation_overall'):null;
+ const axes=(catalog.reputation?.axes||[]).map(x=>[x.label,verified&&rep.scores?.[x.key]!=null?Number(rep.scores[x.key]):repPreview?demoScore(name,'reputation_'+x.key):null]);
+ const axisRows='<div class="mg-person-rep-list">'+axes.map(([label,score])=>
+  '<div class="mg-person-rep-row"><span>'+h(label)+'</span>'+
+   '<span class="mg-meter '+(score==null?'empty':scoreTier(score))+'">'+
+    (score==null?'':'<i style="width:'+score+'%"></i>')+'</span>'+
+   '<strong class="'+(score==null?'unknown':scoreTier(score))+'">'+(score==null?'—':score)+'</strong></div>').join('')+'</div>';
  const repBody='<div class="mg-person-standing"><small>PROFESSIONAL STANDING</small><strong>'+
-  (verified?h(rep.scores.overall)+' / 100':'UNRATED')+'</strong><span>'+
-  (verified?'Evidenced professional assessment':'Professional reputation not yet assessed')+'</span></div>'+pairs(axes);
- const reputation=panel('Reputation & Standing',repBody,'SOURCED PERSONNEL FILE');
+  (repOverall==null?'UNRATED':h(repOverall)+' / 100')+'</strong><span>'+
+  (verified?'Evidenced professional assessment':repPreview?'FICTIONAL REPUTATION · VISUAL PREVIEW ONLY':'Professional reputation not yet assessed')+
+  '</span></div>'+axisRows;
+ const reputation=panel('Reputation & Standing',repBody,repPreview?'DEMO SCORES':'SOURCED PERSONNEL FILE');
  const links=records().filter(x=>x.kind==='horse'&&s.notes.some(note=>note.includes(x.name)));
  const horses=links.length?compactTable([{text:'HORSE'},{text:'OWNER'},{text:'OPEN'}],links.map(x=>'<tr>'+tableCell(linkRecord(x,x.name,true))+
   tableCell(h(owner(x.name)))+tableCell(button('OPEN','open','horse|'+x.name+'|','mg-rowlink'))+'</tr>')):empty('No horses linked to this personnel file.');
