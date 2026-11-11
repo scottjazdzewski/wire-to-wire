@@ -57,7 +57,7 @@ frame.onload=()=>setTimeout(()=>{
     display:win.getComputedStyle(element).display};
   };
   const result={
-   route,rail:rect('.ng-manager-sidebar'),
+   route,rail:rect('.ng-game-rail'),
    stage:rect('.ng-manager-stage'),
    brand:rect('.ng-manager-rail-brand img'),
    shell:rect('.ng-manager-shell'),
