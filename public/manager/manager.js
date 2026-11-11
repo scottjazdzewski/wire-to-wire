@@ -390,13 +390,13 @@ function trackProfile(name){
  });
  const registryBody=registry.length?compactTable([
   {text:'COURSE',style:'width:30%'},{text:'CIRCUIT / REGION',style:'width:28%'},
-  {text:'LOCATION'},{text:'1999',style:'width:65px'},{text:'OPEN',style:'width:60px'}
+  {text:'LOCATION'},{text:'1999',style:'width:73px'},{text:'PROFILE',style:'width:65px'}
  ],registry.map(x=>'<tr'+(x.name===name?' class="mg-track-selected"':'')+'>'+
   tableCell(button(h(x.name),'open','track|'+x.name+'|','mg-rowlink'),'strong')+
   tableCell(h(x.macro_circuit||x.registry||'—'),'dim')+
   tableCell(h(x.travel_node||locationName(x)),'dim')+
-  tableCell(h(x.opening_state||'—'),'gold')+
-  tableCell(button('OPEN ›','open','track|'+x.name+'|','mg-rowlink'),'numeric')+'</tr>')):
+  tableCell('<span title="'+h(x.opening_state||'—')+'">'+h(x.opening_state==='CLOSED_PRE_1999'?'CLOSED':x.opening_state==='OPEN_1999'?'OPEN':x.opening_state||'—')+'</span>','gold')+
+  tableCell(button('VIEW ›','open','track|'+x.name+'|','mg-rowlink'),'numeric')+'</tr>')):
   empty('The official racecourse directory is not available.');
  const raceBody=matches.length?compactTable([{text:'STAKES / RACE',style:'width:48%'},{text:'RACE CLASS'},
    {text:'OPEN',style:'width:60px'}],matches.map(x=>'<tr>'+tableCell(linkRecord(x,x.name),'strong')+
