@@ -334,10 +334,10 @@ test('Track history is permanently visible below meet conditions for four regist
  assert.ok(from>=0&&end>from);
  const profiles=new Function('return '+office.slice(from+'const trackProfiles = '.length,end+4))();
  const expected={
-  'Belmont Park':['1905','85,000','Attendance','2000 reference'],
-  'Churchill Downs':['1875','48,500','Reserved seats','1999'],
-  'Keeneland':['1936','Unverified','1999 seating','1999 not yet source-certified'],
-  'Saratoga':['1864','50,000','Attendance','2000 reference']
+  'Belmont Park':['1905','85,000','Attendance capacity','2000 reference'],
+  'Churchill Downs':['1875','48,500','Seating capacity','1999'],
+  'Keeneland':['1936','Unverified','1999 seating capacity','1999 not yet source-certified'],
+  'Saratoga':['1864','50,000','Attendance capacity','2000 reference']
  };
  for(const [name,[year,capacity,kind,period]] of Object.entries(expected)){
   const p=profiles[name];
