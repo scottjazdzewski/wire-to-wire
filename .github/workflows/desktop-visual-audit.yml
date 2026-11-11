@@ -5,6 +5,7 @@ on:
     paths:
       - 'public/**'
       - 'scripts/desktop-visual-audit.sh'
+      - 'scripts/manager-v2-visual-audit.sh'
       - '.github/workflows/desktop-visual-audit.yml'
   workflow_dispatch:
 
@@ -22,6 +23,8 @@ jobs:
           command -v google-chrome || command -v chromium || command -v chromium-browser
       - name: Capture and inspect WTW desktop routes
         run: bash scripts/desktop-visual-audit.sh
+      - name: Capture clean-sheet Management Studio V2 screens
+        run: bash scripts/manager-v2-visual-audit.sh
       - name: Upload screenshots and captured DOM
         if: always()
         uses: actions/upload-artifact@v4
