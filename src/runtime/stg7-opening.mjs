@@ -103,11 +103,14 @@ export function evaluate1999Entry({horse,race,observations,currentEntries=[],shi
   if (currentEntries.some(e=>e.horseId===horseId && e.date===raceDate && e.status!=='SCRATCHED'))
     reasons.push('SAME_DAY_ENTRY_CONFLICT');
   if (horse.trackId!==race.trackId && (!shipment || shipment.originTrackId!==horse.trackId ||
-      shipment.destinationTrackId!==race.trackId || shipment.arrivalDate>raceDate ||
+      shipment.destinationTrackId!==race.trackId || !shipment.arrivalDate || dateOnly(shipment.arrivalDate)>raceDate ||
       shipment.status!=='CONFIRMED')) reasons.push('SHIPPING_ARRIVAL_UNCONFIRMED');
-  if (!rider||rider.status!=='AVAILABLE'||rider.date!==raceDate||rider.horseId!==horseId)
+  if (!rider||rider.status!=='AVAILABLE'||rider.date!==raceDate||rider.horseId!==horseId ||
+      (rider.conflictingMounts||[]).some(m=>m.date===raceDate&&m.status!=='CANCELLED'))
     reasons.push('RIDER_NOT_CONFIRMED');
-  if (!finance||finance.status!=='AUTHORIZED'||finance.availableBalance<finance.requiredCommitment)
+  if (!finance||finance.status!=='AUTHORIZED'||!Number.isFinite(finance.availableBalance)||
+      !Number.isFinite(finance.requiredCommitment)||finance.requiredCommitment<0||
+      finance.availableBalance<finance.requiredCommitment)
     reasons.push('FINANCE_UNAVAILABLE');
   return Object.freeze({
     horseId,raceId:requireNonblank(race.raceId,'race.raceId'),
