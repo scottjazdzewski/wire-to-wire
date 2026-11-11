@@ -296,8 +296,79 @@ function header(){
 
 // Real global discovery: known Office entities, connected record pages,
 // management screens and a link to the separately maintained History Vault.
+/* Read-only 1999 world registry sourced from the v3.3 canonical Drive registry.
+   This projects identities to the UI; it NEVER creates history, runs races,
+   changes game saves, or infers missing birthplace/operations/finance data. */
+let world1999Data=null,world1999Loading=false,world1999LoadFailed=false;
+function loadWorld1999(){
+ if(world1999Data||world1999Loading||world1999LoadFailed)return;
+ world1999Loading=true;
+ fetch('/data/wtw-1999-world-directory-v33.json',{credentials:'same-origin',cache:'force-cache'})
+  .then(r=>r.ok?r.json():Promise.reject(Error('1999 directory unavailable')))
+  .then(data=>{
+   if(data?.schema!=='WTW_1999_WORLD_DIRECTORY_V1'||
+     !Array.isArray(data.tracks)||!Array.isArray(data.people)||
+     !Array.isArray(data.organizations)||!Array.isArray(data.horses))
+    throw Error('Unrecognized 1999 directory schema');
+   world1999Data=data;schedulePaint(15);
+  })
+  .catch(()=>{world1999LoadFailed=true;schedulePaint(15)})
+  .finally(()=>{world1999Loading=false});
+}
+function world1999Key(kind,item){
+ return kind+':'+(item.id||item.key||'');
+}
+function world1999Entries(){
+ if(!world1999Data)return [];
+ return [
+  ...world1999Data.tracks.filter(t=>['OPEN','OPEN_1999'].includes(t.operating)).map(t=>({
+   kind:'track',name:t.name,detail:t.region||t.circuit||'',location:t.location||'',
+   canonicalId:t.id,worldKey:world1999Key('track',t),_world:t
+  })),
+  ...world1999Data.people.map(p=>({
+   kind:'person',name:p.name,detail:p.role||'',location:p.base||'',
+   canonicalId:p.id,worldKey:world1999Key('person',p),_world:p
+  })),
+  ...world1999Data.organizations.map(o=>({
+   kind:'farm',name:o.name,detail:o.type||'',location:o.location||'',
+   canonicalId:o.id,worldKey:world1999Key('farm',o),_world:o
+  })),
+  ...world1999Data.horses.map(h=>({
+   kind:'horse',name:h.name,detail:h._role==='opening'?'1999 OPENING HORSE':
+    h._role==='stallion'?'1999 STALLION':'1999 BROODMARE',
+   location:h.location||'',canonicalId:h.id||'',
+   worldKey:world1999Key('horse',h),_world:h
+  }))
+ ];
+}
+function world1999Entry(key){
+ return world1999Entries().find(e=>e.worldKey===key)||null;
+}
+function world1999Match(kind,name){
+ const target=String(name||'').toLocaleLowerCase('en-US').trim();
+ const matches=world1999Entries().filter(e=>(!kind||kind==='connection'||kind===e.kind)&&
+  e.name.toLocaleLowerCase('en-US').trim()===target);
+ return matches.length===1?matches[0]:null;
+}
+function openWorld1999Entity(key){
+ const found=world1999Entry(key);
+ if(!found)return false;
+ return openCustomView('WorldRecord:'+encodeURIComponent(key),'World','Overview');
+}
+function world1999Linked(kind,id,label){
+ if(!id&&!label)return '—';
+ const kindMap={organization:'farm',owner:'farm',trainer:'person'};
+ const targetKind=kindMap[kind]||kind;
+ const entry=id?world1999Entries().find(e=>e.kind===targetKind&&e.canonicalId===id):
+  world1999Match(targetKind,label);
+ if(!entry)return safe(label||id||'—');
+ return '<button type="button" class="ng-entity-reference" data-ng="world-open" data-val="'+
+  safe(entry.worldKey)+'" title="Open '+safe(entry.name)+'">'+safe(label||entry.name)+' ↗</button>';
+}
+
 function globalSearchItems(){
  const rows=typeof window.__wtwOfficeSearchRecords==='function'?window.__wtwOfficeSearchRecords():[];
+ const universe=world1999Entries();
  const pages=[
   {kind:'page',name:'Racing Office',detail:'Decision Desk and Inbox',section:'Office'},
   {kind:'page',name:'Organization Overview',detail:'Stable finances, horses and commitments'},
@@ -308,9 +379,14 @@ function globalSearchItems(){
   }))),
   ...currentMessages().map(m=>({kind:'decision',name:m.title,detail:'Office · '+m.from,caseId:m.case}))
  ];
- return [...rows.filter(r=>r&&typeof r.name==='string').map(r=>({
-  kind:r.kind,name:r.name,track:r.track||'',detail:r.kind==='person'?titleCaseUIRole(r.detail):r.detail||''
- })),...pages];
+ const original=rows.filter(r=>r&&typeof r.name==='string').map(r=>{
+  const extra=universe.find(u=>u.kind===r.kind&&u.name===r.name);
+  return {kind:r.kind,name:r.name,track:r.track||'',detail:r.kind==='person'?titleCaseUIRole(r.detail):r.detail||'',
+   location:extra?.location||'',canonicalId:extra?.canonicalId||'',worldKey:extra?.worldKey||''};
+ });
+ const seen=new Set(original.map(r=>r.kind+'|'+r.name));
+ const rest=universe.filter(r=>!seen.has(r.kind+'|'+r.name));
+ return [...original,...rest,...pages];
 }
 const searchWords=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().split(/\s+/).filter(Boolean);
 // Roster-style directory: a single dense, sortable list instead of tiles.
@@ -393,9 +469,9 @@ function searchView(){
 function openSearchItem(item){
  if(!item)return;
  if(['horse','person','farm','track','race'].includes(item.kind)){
-  APP.custom='';APP.moreOpen=false;
-  if(window.__wtwOfficeOpenSearchRecord?.(item.kind,item.name,item.track))return schedulePaint(20);
-  return;
+  if(window.__wtwOfficeOpenSearchRecord?.(item.kind,item.name,item.track)){APP.custom='';APP.moreOpen=false;return schedulePaint(20)}
+  if(item.worldKey)return openWorld1999Entity(item.worldKey);
+  return openEntityRecord(item.name,item.kind);
  }
  if(item.kind==='decision'){
   APP.custom='';APP.section='Office';APP.page='Overview';
@@ -2060,6 +2136,7 @@ root.addEventListener('focusout',event=>{
 },true);
 function paint(){
  if(!APP.ready)return;
+ loadWorld1999();
  if(activeNativeSelect&&activeNativeSelect.isConnected){deferredNativeSelectPaint=true;return}
  if(activeNativeSelect&&!activeNativeSelect.isConnected)endNativeSelectInteraction(false);
  const oldRoute=$('.ng-routegrid',root),oldTab=$('.ng-profiletabs .on',root)?.dataset.val||'';
