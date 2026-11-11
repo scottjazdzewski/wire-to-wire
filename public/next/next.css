@@ -1330,6 +1330,121 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 @media(min-width:1081px){
 .ng-routegrid:has(.ng-stable-directory){overflow:hidden!important;display:block!important;flex:1 1 auto!important;min-height:0!important}
 .ng-routeinner:has(.ng-stable-directory){height:100%!important;min-height:0!important;overflow:hidden!important;display:block!important}
+
+/* The ACTIVE WTW Next Stable view — integrated FM/OOTP horse roster.
+   Original Office state is read-only; no invented status/rating placeholders. */
+#wtwNextgen .ng-route:has(.ng-stable-roster-v2)>.ng-routeheading{display:none!important}
+#wtwNextgen .ng-route:has(.ng-stable-roster-v2){padding:6px 10px 8px!important}
+#wtwNextgen .ng-route:has(.ng-stable-roster-v2) .ng-routegrid{display:block!important;flex:1 1 0!important;min-height:0!important;overflow:hidden!important;padding:0!important}
+#wtwNextgen .ng-routeinner:has(.ng-stable-roster-v2){display:block!important;height:100%!important;min-height:0!important;overflow:hidden!important}
+#wtwNextgen .ng-stable-roster-v2{box-sizing:border-box;height:100%;min-height:0;display:flex;flex-direction:column;gap:6px;overflow:hidden;color:#e8eeeb}
+#wtwNextgen .ng-rs-title{height:32px;flex:0 0 32px;display:flex;align-items:center;gap:12px;padding:0 11px;border:1px solid #3b4b49;background:#202b30;border-left:3px solid #55876c}
+#wtwNextgen .ng-rs-title strong{font-size:12px;letter-spacing:.07em;font-weight:850;color:#f3e8c8}
+#wtwNextgen .ng-rs-title span{font-size:10px;color:#b5cbc1;font-variant-numeric:tabular-nums;font-weight:730}
+#wtwNextgen .ng-rs-title button{margin-left:auto;border:1px solid #476258!important;border-radius:2px!important;padding:5px 8px!important;font-size:9px!important;color:#e7d09b!important;background:#293a36!important;white-space:nowrap!important}
+#wtwNextgen .ng-rs-tools{display:flex;align-items:center;gap:7px;min-height:33px;flex:0 0 33px;padding:2px 7px;background:#151f24;border:1px solid #394b49}
+#wtwNextgen .ng-rs-tools label{font-size:9px;font-weight:840;color:#afc6b8;letter-spacing:.06em;white-space:nowrap}
+#wtwNextgen .ng-rs-tools input{height:27px;width:clamp(145px,16vw,300px);min-width:125px;border:1px solid #445a52;border-radius:2px;background:#0f191d;padding:4px 9px;outline-offset:2px;color:#f1f4e9;font-size:10.7px}
+#wtwNextgen .ng-rs-tools input:focus{outline:1px solid #d5b96e}
+#wtwNextgen .ng-rs-filters,#wtwNextgen .ng-rs-mode{display:flex;align-items:center;gap:3px;white-space:nowrap}
+#wtwNextgen .ng-rs-tools button{height:26px!important;min-width:0;border:1px solid #455951!important;border-radius:2px!important;background:#1c292c!important;color:#bcd0c6!important;padding:4px 7px!important;font-size:9px!important;font-weight:790!important;white-space:nowrap!important}
+#wtwNextgen .ng-rs-tools button.on,#wtwNextgen .ng-rs-tools button:hover{background:#315d46!important;color:#fff1c7!important;border-color:#698f78!important}
+#wtwNextgen .ng-rs-mode{margin-left:auto;border-left:1px solid #43564b;padding-left:8px}
+#wtwNextgen .ng-rs-roster{display:flex;flex-direction:column;flex:1 1 auto;min-height:215px;border:1px solid #45534f;background:#151e23;overflow:hidden}
+#wtwNextgen .ng-rs-roster>header{height:28px;flex:0 0 28px;display:flex;align-items:center;gap:10px;padding:0 9px;background:#202c32;border-bottom:1px solid #43544c}
+#wtwNextgen .ng-rs-roster>header strong{font-size:10.8px;letter-spacing:.05em;font-weight:850;color:#f1e8d3}
+#wtwNextgen .ng-rs-roster>header span{font-size:9px;color:#adbdba;margin-left:auto;font-weight:740;white-space:nowrap}
+#wtwNextgen .ng-rs-scroll{display:block;min-height:0;flex:1 1 auto;overflow:auto;overscroll-behavior:contain;scrollbar-color:#526f61 #131c20;scrollbar-width:thin}
+#wtwNextgen .ng-rs-table{border-collapse:collapse;width:100%;min-width:1804px;table-layout:fixed;font-variant-numeric:tabular-nums}
+#wtwNextgen .ng-rs-table thead{position:sticky;top:0;z-index:4;background:#28353a}
+#wtwNextgen .ng-rs-table th{height:29px;padding:0 4px;border:0;border-right:1px solid #31413e;border-bottom:1px solid #5b695c;text-align:left;font-size:9px;color:#c6d4c9;letter-spacing:.015em;white-space:nowrap;overflow:hidden}
+#wtwNextgen .ng-rs-table th button{display:flex!important;align-items:center;justify-content:space-between;gap:2px;width:100%;height:27px!important;padding:2px 3px!important;border:0!important;background:transparent!important;color:inherit!important;font-size:9px!important;font-weight:820!important;white-space:nowrap!important;cursor:pointer}
+#wtwNextgen .ng-rs-table th button:hover,#wtwNextgen .ng-rs-table th[aria-sort="ascending"] button,#wtwNextgen .ng-rs-table th[aria-sort="descending"] button{color:#f0d28d!important}
+#wtwNextgen .ng-rs-sort{font-size:9px;color:#8ca99e;font-weight:800}
+#wtwNextgen .ng-rs-table td{height:43px;max-height:43px;padding:4px 5px;border:0;border-bottom:1px solid #3e4b49;border-right:1px solid #2c3a3a;font-size:10px;color:#dce7dc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+#wtwNextgen .ng-rs-table tbody tr:nth-child(odd){background:#1e292c}
+#wtwNextgen .ng-rs-table tbody tr:nth-child(even){background:#172126}
+#wtwNextgen .ng-rs-table tbody tr:hover{background:#315443}
+#wtwNextgen .ng-wtw-roster-row[hidden]{display:none!important}
+#wtwNextgen .ng-rs-table th:first-child,#wtwNextgen .ng-rs-table td:first-child{position:sticky;left:0;z-index:3;box-shadow:2px 0 0 #405748}
+#wtwNextgen .ng-rs-table th:first-child{z-index:8;background:#28353a}
+#wtwNextgen .ng-rs-table tbody tr:nth-child(odd) td:first-child{background:#1e292c}
+#wtwNextgen .ng-rs-table tbody tr:nth-child(even) td:first-child{background:#172126}
+#wtwNextgen .ng-rs-table tbody tr:hover td:first-child{background:#315443}
+#wtwNextgen .ng-rs-table th:nth-child(1){width:165px}
+#wtwNextgen .ng-rs-table th:nth-child(2){width:42px}
+#wtwNextgen .ng-rs-table th:nth-child(3){width:44px}
+#wtwNextgen .ng-rs-table th:nth-child(4){width:91px}
+#wtwNextgen .ng-rs-table th:nth-child(5){width:90px}
+#wtwNextgen .ng-rs-table th:nth-child(6){width:66px}
+#wtwNextgen .ng-rs-table th:nth-child(7){width:66px}
+#wtwNextgen .ng-rs-table th:nth-child(8){width:79px}
+#wtwNextgen .ng-rs-table th:nth-child(9){width:96px}
+#wtwNextgen .ng-rs-table th:nth-child(10){width:112px}
+#wtwNextgen .ng-rs-table th:nth-child(11){width:117px}
+#wtwNextgen .ng-rs-table th:nth-child(12){width:82px}
+#wtwNextgen .ng-rs-table th:nth-child(13){width:112px}
+#wtwNextgen .ng-rs-table th:nth-child(14){width:110px}
+#wtwNextgen .ng-rs-table th:nth-child(15){width:110px}
+#wtwNextgen .ng-rs-table th:nth-child(16){width:77px}
+#wtwNextgen .ng-rs-table th:nth-child(17){width:245px}
+#wtwNextgen .ng-rs-horse{display:flex!important;align-items:center;gap:5px;width:100%;height:30px!important;border:0!important;background:transparent!important;padding:0!important;text-align:left!important;color:#f4e6bb!important;font-size:11px!important;font-weight:850!important;white-space:nowrap!important}
+#wtwNextgen .ng-rs-horse:hover{color:#fff!important;text-decoration:underline}
+#wtwNextgen .ng-rs-horse .ng-horse-owner-badge{flex:0 0 22px;width:22px;height:22px;margin:0}
+#wtwNextgen .ng-rs-horse>span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis}
+#wtwNextgen .ng-rs-numeric{font-variant-numeric:tabular-nums;color:#d7e1da}
+#wtwNextgen .ng-rs-target{color:#e4ca91}
+#wtwNextgen .ng-rs-race{color:#9dcbb0}
+#wtwNextgen .ng-rs-activity{color:#a6c5b8;font-size:9.9px}
+#wtwNextgen .ng-rs-signal{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;max-width:100%;font-size:9.5px;font-weight:760}
+#wtwNextgen .ng-rs-signal i{box-sizing:border-box;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 18px;font-size:12px;font-weight:900;font-style:normal;border:1px solid currentColor;border-radius:2px;background:color-mix(in srgb,currentColor 11%,transparent)}
+#wtwNextgen .ng-rs-signal.ok{color:#81cea3}
+#wtwNextgen .ng-rs-signal.warn{color:#f0be79}
+#wtwNextgen .ng-rs-signal.risk{color:#f0808c}
+#wtwNextgen .ng-rs-signal.info{color:#88bada}
+#wtwNextgen .ng-rs-signal.muted{color:#879f97}
+#wtwNextgen .ng-rs-stars-cell{text-align:center}
+#wtwNextgen .ng-rs-stars{font-size:12.5px;color:#5f746b;letter-spacing:-1px}
+#wtwNextgen .ng-rs-stars b{color:#e5c47f;font-weight:730}
+#wtwNextgen .ng-rs-missing{color:#82998d}
+#wtwNextgen .ng-rs-legend{display:flex;align-items:center;gap:11px;flex-wrap:wrap;flex:0 0 auto;min-height:28px;padding:4px 8px;background:#1a2828;border-top:1px solid #43574d}
+#wtwNextgen .ng-rs-legend .ng-rs-signal{font-size:8.5px}
+#wtwNextgen .ng-rs-legend .ng-rs-signal i{width:14px;height:14px;flex-basis:14px;font-size:10px}
+#wtwNextgen .ng-rs-legend>span:last-child{font-size:9px;color:#a6c0ae;margin-left:auto}
+#wtwNextgen .ng-rs-no-results{padding:20px!important;color:#a9c2b5;text-align:center}
+#wtwNextgen .ng-rs-bottom{display:grid;grid-template-columns:1fr 1fr;gap:7px;flex:0 0 158px;min-height:0}
+#wtwNextgen .ng-rs-bottom>section{display:flex;flex-direction:column;min-width:0;min-height:0;background:#171f23;border:1px solid #41534b;overflow:hidden}
+#wtwNextgen .ng-rs-bottom header{height:26px;display:flex;align-items:center;gap:8px;padding:0 9px;flex:0 0 26px;background:#233136;border-bottom:1px solid #42534d;color:#e7e4ca;font-size:10px;font-weight:840;letter-spacing:.03em}
+#wtwNextgen .ng-rs-bottom header small{margin-left:auto;font-size:9px;color:#a8c0ad;font-weight:720}
+#wtwNextgen .ng-rs-mini{display:flex;flex-direction:column;overflow:auto;min-height:0;flex:1;scrollbar-width:thin}
+#wtwNextgen .ng-rs-mini button{width:100%;display:grid!important;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) 67px;align-items:center;gap:8px;min-height:27px!important;padding:4px 8px!important;background:transparent!important;border:0!important;border-bottom:1px solid #34453f!important;border-radius:0!important;text-align:left!important;color:#e4e8dd!important}
+#wtwNextgen .ng-rs-mini button:nth-child(even){background:#ffffff07!important}
+#wtwNextgen .ng-rs-mini button:hover{background:#315443!important}
+#wtwNextgen .ng-rs-mini strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}
+#wtwNextgen .ng-rs-mini span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9.5px;color:#a9c7b5}
+#wtwNextgen .ng-rs-mini em{font-size:9px;text-align:right;font-style:normal;color:#e9bc80}
+#wtwNextgen .ng-rs-mini em.is-entered{color:#88d3a2}
+#wtwNextgen .ng-rs-mini p{padding:9px;color:#a2b7ac}
+#wtwNextgen .ng-rs-table.compact{min-width:1050px}
+#wtwNextgen .ng-rs-table.compact th:nth-child(11),#wtwNextgen .ng-rs-table.compact td:nth-child(11),
+#wtwNextgen .ng-rs-table.compact th:nth-child(13),#wtwNextgen .ng-rs-table.compact td:nth-child(13),
+#wtwNextgen .ng-rs-table.compact th:nth-child(14),#wtwNextgen .ng-rs-table.compact td:nth-child(14),
+#wtwNextgen .ng-rs-table.compact th:nth-child(15),#wtwNextgen .ng-rs-table.compact td:nth-child(15),
+#wtwNextgen .ng-rs-table.compact th:nth-child(16),#wtwNextgen .ng-rs-table.compact td:nth-child(16),
+#wtwNextgen .ng-rs-table.compact th:nth-child(17),#wtwNextgen .ng-rs-table.compact td:nth-child(17){display:none}
+@media(max-width:1220px){
+ #wtwNextgen .ng-rs-tools{gap:4px}
+ #wtwNextgen .ng-rs-tools input{max-width:165px}
+ #wtwNextgen .ng-rs-tools button{padding:3px 5px!important;font-size:8.4px!important}
+ #wtwNextgen .ng-rs-bottom{flex-basis:132px}
+}
+@media(max-width:980px){
+ #wtwNextgen .ng-rs-tools{flex-wrap:wrap;min-height:54px;flex-basis:54px}
+ #wtwNextgen .ng-rs-roster>header span{font-size:8px}
+ #wtwNextgen .ng-rs-bottom{flex-basis:115px}
+ #wtwNextgen .ng-rs-title span{font-size:9px}
+}
+
 .ng-stable-directory{box-sizing:border-box;height:100%!important;min-height:0!important;display:flex!important;flex-direction:column!important;gap:7px!important;overflow:hidden!important}
 }
 .ng-stable-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));flex:0 0 auto;gap:5px}

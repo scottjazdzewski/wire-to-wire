@@ -247,28 +247,40 @@ test('FM/OOTP connected profiles: people, farms, tracks, sourced graphics, click
 });
 
 
-test('Stable directory uses the canonical horses and commitments with working search, sort and status filters',()=>{
+test('Live Stable is a dense sortable FM/OOTP roster with source-only status icons and no fabricated ratings',()=>{
  const js=get('public/next/next.js'),css=get('public/next/next.css');
- const a=js.indexOf('function functionalRoute('),b=js.indexOf('function renderRoute(',a);
+ const a=js.indexOf('function liveStableRating('),b=js.indexOf('function functionalRoute(',a);
  const page=js.slice(a,b);
- assert.ok(page.includes("const horses=horseRows(),races=racingRows(),st=state()"),'Stable directory must read existing Office horses, fixtures and save state');
- assert.ok(page.includes('const entries=horses.map('),'Directory records must be derived from existing roster');
- assert.ok(page.includes("stableFilter==='entered'"),'Entry filter must only count confirmed race status');
- assert.ok(page.includes("stableFilter==='targets'"),'Race target filter must remain separate from entered');
- assert.ok(page.includes("stableFilter==='unassigned'"),'Unassigned horses must be filterable');
- assert.ok(page.includes("filtered.sort("),'Management columns must sort existing rows');
- assert.ok(page.includes("ng-stable-row"),'Stable directory must render dense clickable rows');
- assert.ok(page.includes('data-ng="horse"'),'Horse rows must open real source-backed profiles');
- assert.ok(page.includes('data-ng="fixture"'),'Sidebar race commitments must open the existing fixture handler');
- assert.ok(page.includes('data-ng="case"'),'Horse-named Office files must open the actual decision');
- assert.ok(page.includes('data-ng-input="stable-search"'),'Stable search must be keyboard accessible');
- assert.ok(js.includes("if(key==='stable-sort')"),'Sort controls must do something');
- assert.ok(js.includes("if(key==='stable-filter')"),'Filter controls must do something');
- assert.ok(js.includes("root.addEventListener('input',event=>"),'Search must filter without losing input focus');
- assert.ok(css.includes('.ng-stable-tablebody{'),'Management table needs its own scroll region');
- assert.ok(css.includes('.ng-stable-contextlist{'),'Commitment lists need independent scrolling');
- assert.ok(css.includes('.ng-stable-row[hidden]{display:none!important}'),'Clearing search must not leave invisible records stuck');
- assert.ok(!page.includes('Manager\'s daily overview'),'Replace generic explanatory sidebar with source-driven content');
+ assert.ok(a>0&&page.includes('const horses=horseRows(),races=racingRows(),game=state()'),
+  'Live roster must derive horses, schedule, and cases from the canonical Office sources');
+ assert.ok(js.includes("if(route.kicker==='Stable')return liveStableRosterView()"),
+  'Active Stable route must display the FM roster instead of the old directory');
+ assert.ok(page.includes('const filtered=all.filter(')&&page.includes('filtered.sort('),
+  'All columns need working filters and sort');
+ for(const key of ["['name','HORSE']","['age','AGE']","['sex','SEX']","['health','HEALTH']",
+  "['readiness','READY']","['ability','CA']","['potential','PA']","['form','FORM']",
+  "['last','LAST RACED']","['next','NEXT RACE']","['target','TARGET']","['earnings','EARNINGS']",
+  "['owner','OWNER']","['trainer','TRAINER']","['breeder','BREEDER']","['record','S-W-P-S']",
+  "['activity','CURRENT ACTIVITY']"]){
+  assert.ok(page.includes(key),'Missing management column '+key);
+ }
+ for(const icon of ["treat:['✚'","watch:['!'","up:['↗'","down:['↘'"]){
+  assert.ok(js.includes(icon),'Icon library missing '+icon);
+ }
+ assert.ok(page.includes('saved.certified_results')&&page.includes('source_refs?.length'),
+  'Last-raced date must come from certified results');
+ assert.ok(page.includes('liveStableRating(')&&js.includes("Array.isArray(r?.source_refs)"),
+  'Current ability and potential cannot be fabricated');
+ assert.ok(page.includes("data-ng=\"horse\"")||page.includes("data-ng="+"'horse'"),
+  'Roster horse clicks must open real profile');
+ assert.ok(page.includes('data-ng="case"'),'Current management files must stay actionable');
+ assert.ok(page.includes('data-ng-input="stable-search"'),'Search input must remain usable');
+ assert.ok(js.includes("if(key==='stable-sort')")&&js.includes("if(key==='stable-filter')")&&js.includes("if(key==='stable-mode')"));
+ assert.ok(js.includes("$$('.ng-wtw-roster-row',root)"),'Quick search should act on actual rows');
+ assert.ok(css.includes('.ng-rs-table{')&&css.includes('.ng-rs-scroll{')&&css.includes('position:sticky;left:0'),
+  'Roster must stay dense with sticky names and horizontal scrolling');
+ assert.ok(css.includes('.ng-rs-signal.risk{')&&css.includes('.ng-rs-signal.warn{'),
+  'Treatment and watch need separate color tokens');
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);
 });
