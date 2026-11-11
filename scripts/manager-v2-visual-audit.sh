@@ -24,8 +24,8 @@ capture racing-office '' 'mg-home-top'
 capture global-search '?ui=search' 'mg-search-layout'
 capture horse-profile '?page=horse&name=The+Last+Match' 'mg-profile-grid4'
 capture people-profile '?page=person&name=Gabe+Larkin' 'mg-person-dossier'
-capture stable-roster '?ui=stable' 'mg-department-grid'
-capture racetracks '?ui=track' 'mg-department-grid'
+capture stable-roster '?ui=stable' 'mg-operations-grid'
+capture racetracks '?ui=track' 'mg-operations-grid'
 python3 - <<'PY'
 from pathlib import Path
 import re,html
