@@ -349,14 +349,21 @@ function personProfile(name){
  const links=records().filter(x=>x.kind==='horse'&&s.notes.some(note=>note.includes(x.name)));
  const horses=links.length?compactTable([{text:'HORSE'},{text:'OWNER'},{text:'OPEN'}],links.map(x=>'<tr>'+tableCell(linkRecord(x,x.name,true))+
   tableCell(h(owner(x.name)))+tableCell(button('OPEN','open','horse|'+x.name+'|','mg-rowlink'))+'</tr>')):empty('No horses linked to this personnel file.');
+ const geo=geographicPerson(name),background=s.fields.concat(s.career);
+ if(geo){
+  if(geo.birthplace)background.push(['Place of birth',locationName(geo.birthplace)]);
+  if(geo.opening_base)background.push(['1999 opening base',locationName(geo.opening_base)]);
+  else if(geo.career_base)background.push(['Recorded career base',locationName(geo.career_base)]);
+  background.push(['Geography ID',geo.id]);
+ }
  const network=Array.isArray(work.relationship_reports)?work.relationship_reports.filter(x=>x.source_refs?.length):[];
  const side='<div class="mg-person-side">'+reputation+
   panel('Current Horse Assignments',horses,links.length+' CONNECTED')+
-  panel('Career & Background',s.fields.concat(s.career).length?pairs(s.fields.concat(s.career).slice(0,10)):empty('No verified career history yet.'))+
+  panel('Career & Background',background.length?pairs(background.slice(0,12)):empty('No verified career history yet.'))+
   panel('Working Network',network.length?pairs(network.slice(0,6).map(x=>[x.counterpart_name||x.counterpart_id,String(x.score??'Unrated')])):empty('No evidenced working relationships yet.'))+'</div>';
  return pageBar(name,'PERSONNEL DOSSIER · '+(role||'STAFF'),button('PEOPLE DIRECTORY','nav','person'))+
  '<div class="mg-content"><div class="mg-profile-scroll mg-person-profile-scroll">'+identity('person',name)+
- '<div class="mg-person-dossier">'+panel('Professional Attributes','<div class="mg-person-rating-stack">'+skills+'</div>',
+ '<div class="mg-person-dossier'+(defs.length>17?' mg-person-dense':'')+'">'+panel('Professional Attributes','<div class="mg-person-rating-stack">'+skills+'</div>',
  defs.length+' DEFINED RATINGS','mg-person-primary')+side+'</div>'+
  '<div class="mg-overview-foot"><strong>PERSONNEL FILE</strong>'+demoLabel()+
  '<span>Ratings, reputation, assignments and available career evidence are all on this Overview</span></div></div></div>';
