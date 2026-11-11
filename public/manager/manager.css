@@ -227,6 +227,14 @@ body>.app,body>#routeShell,body>#toast,body>.wtw-site-archive-link{display:none!
 .mg-op-content{gap:0}
 .mg-operations-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);grid-template-rows:minmax(0,42fr) minmax(0,58fr);gap:8px;flex:1;min-height:0;min-width:0}
 .mg-operations-grid.tracks{grid-template-rows:minmax(0,31fr) minmax(0,69fr)}
+.mg-world-current{flex:0 0 auto;max-height:45%;overflow:auto;min-height:0}
+.mg-world-current .mg-op-case{min-height:34px;padding:4px 8px}
+.mg-world-circuit-label{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:25px;padding:5px 9px;background:#263d33;border-top:1px solid #496354;border-bottom:1px solid #496354}
+.mg-world-circuit-label strong{color:#e3cc91;font-size:10px;letter-spacing:.04em}
+.mg-world-circuit-label span{color:#b2c7b5;font-size:9px;font-weight:700;white-space:nowrap}
+.mg-department-suite.world>.mg-section:last-child>.mg-table-wrap{min-height:0;flex:1;overflow:auto}
+.mg-department-suite.world>.mg-section:last-child>.mg-table-wrap td{height:28px;font-size:10.5px}
+
 .mg-department-suite.breeding,.mg-department-suite.sales,.mg-department-suite.farm,.mg-department-suite.person,.mg-department-suite.world{grid-template-rows:max-content minmax(0,1fr)}
 .mg-department-suite.breeding>.mg-section:nth-child(-n+2),
 .mg-department-suite.sales>.mg-section:nth-child(-n+2),
