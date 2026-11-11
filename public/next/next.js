@@ -489,7 +489,7 @@ function profileDetail(route){
   ['Overview','Connections','History']);
  const rows=(items)=>'<div class="ng-data-rows">'+items.map(i=>`<div class="ng-data-row"><span>${safe(i.label)}</span>${namedProfileValue(i.label,i.value)}</div>`).join('')+'</div>';
  const pills='<div class="ng-status-pills">'+states.slice(0,4).map(x=>`<span>${safe(x)}</span>`).join('')+'</div>';
- const tabbar=(isPerson||isHorse)?`<nav class="ng-person-dossierbar ng-management-dossierbar" aria-label="Personnel dossier navigation">
+ const tabbar=isTrack?'':(isPerson||isHorse)?`<nav class="ng-person-dossierbar ng-management-dossierbar" aria-label="Personnel dossier navigation">
    <span class="ng-person-dossierlabel">${isHorse?'HORSE RACING FILE':'PERSONNEL DOSSIER'} <small>ONE-SCREEN OVERVIEW</small></span>
    <div class="ng-person-dossieractions">
     <button data-ng="detailtab" data-val="Overview" class="${APP.detailTab==='Overview'?'on':''}">OVERVIEW</button>
@@ -527,6 +527,7 @@ function profileDetail(route){
  const farmAchievements=farmAchievementPanel?$$('.achievementItem',farmAchievementPanel).map(item=>item.textContent.trim()).filter(Boolean):[];
  const meetValues=isTrack?$$('.meetBlock',source).map(n=>({label:text('span',n),value:text('strong',n)})):[];
  const trackNotes=isTrack?$$('.trackNote',source).map(n=>({label:text('b',n),value:n.textContent.replace(text('b',n),'').trim()})):[];
+ const trackHistoryItems=isTrack?(notes.length?notes:details.map(x=>x.lines).filter(Boolean)):[];
  const stakeDateRank=value=>{
   const match=String(value||'').match(/\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(\d{1,2})\b/i);
   if(!match)return Number.MAX_SAFE_INTEGER;
@@ -548,14 +549,14 @@ function profileDetail(route){
   const labels=[['name','RACE'],['date','DATE'],['grade','GRADE'],['purse','PURSE']];
   const header=labels.map(([key,label])=>{
    const active=APP.stakeSort===key,mark=active?(APP.stakeSortDesc?'↓':'↑'):'↕';
-   return '<button type="button" data-ng="stake-sort" data-val="'+key+'" aria-sort="'+(active?(APP.stakeSortDesc?'descending':'ascending'):'none')+'">'+label+' <i aria-hidden="true">'+mark+'</i></button>';
+   return '<button type="button" data-ng="stake-sort" data-val="'+key+'" aria-sort="'+(active?(APP.stakeSortDesc?'descending':'ascending'):'none')+'"><span>'+label+'</span><i aria-hidden="true">'+mark+'</i></button>';
   }).join('');
   return '<div class="ng-stakes-table"><div class="ng-stakes-head">'+header+'</div>'+
    (ordered.slice(0,limit).map(({row,cols})=>{
     while(cols.length<4)cols.push('—');
     const index=$$('#routeBody [data-act]').indexOf(row.node);
     const grade=(cols[2].match(/\bG([123])\b/i)||[])[1];
-    const gradeCell=grade?'<span class="ng-stakes-grade"><i class="ng-stakes-trophy g'+grade+'" aria-hidden="true"></i><b>G'+grade+'</b></span>':'<span>'+safe(cols[2])+'</span>';
+    const gradeCell=grade?'<span class="ng-stakes-grade" aria-label="Grade G'+grade+'" title="Grade G'+grade+'"><i class="ng-stakes-trophy g'+grade+'" aria-hidden="true"></i></span>':'<span>'+safe(cols[2])+'</span>';
     return index<0?'':'<button class="ng-stakes-data" data-ng="sourcebutton" data-val="'+index+'">'+
      '<span>'+safe(cols[0])+'</span><span>'+safe(cols[1])+'</span>'+gradeCell+'<span>'+safe(cols[3])+'</span></button>';
    }).join('')||'<div class="ng-empty-record">No verified stakes rows connected.</div>')+'</div>';
@@ -923,10 +924,11 @@ function profileDetail(route){
    </div>`;right='';footer='';
   }else if(isTrack){
    left=`<div class="ng-track-workspace">
-    <section class="ng-tier1-card ng-tier1-stakes ng-track-stakes"><header>MAJOR RACES & STAKES <button data-ng="detailtab" data-val="Major Races">ALL RACES ${glyph('arrow',11)}</button></header>${stakesTable(100)}</section>
+    <section class="ng-tier1-card ng-tier1-stakes ng-track-stakes"><header>MAJOR RACES & STAKES <span>${trackRaces.length} RACE RECORDS</span></header>${stakesTable(100)}</section>
     <div class="ng-track-info-stack">
-     <section class="ng-tier1-card"><header>RACECOURSE AT A GLANCE <button data-ng="detailtab" data-val="Connections">${glyph('arrow',11)} CONNECTIONS</button></header>${rows(fields.filter(f=>!['location','surfaces','operating state'].includes(f.label.toLowerCase())))}<div class="ng-tier1-subhead">CURRENT OFFICE CONTEXT</div><div class="ng-tier1-activity">${trackNotes.filter(x=>/current office/i.test(x.label)).slice(0,1).map(x=>`<div>${safe(x.value)}</div>`).join('')||'<div>No current Office entry recorded.</div>'}</div></section>
-     <section class="ng-tier1-card"><header>MEET & CONDITIONS <button data-ng="detailtab" data-val="Meet Schedule">MEET FILE ${glyph('arrow',11)}</button></header>${rows(meetValues)}<div class="ng-tier1-subhead">OPERATING INTELLIGENCE</div><div class="ng-tier1-activity">${trackNotes.filter(x=>!/current office/i.test(x.label)).slice(0,2).map(x=>`<div><b>${safe(x.label)}</b><span>${safe(x.value)}</span></div>`).join('')||'<div>No sourced operating notes.</div>'}</div></section>
+     <section class="ng-tier1-card"><header>MEET & CONDITIONS</header>${rows(meetValues)}<div class="ng-tier1-subhead">OPERATING INTELLIGENCE</div><div class="ng-tier1-activity">${trackNotes.filter(x=>!/current office/i.test(x.label)).slice(0,2).map(x=>`<div><b>${safe(x.label)}</b><span>${safe(x.value)}</span></div>`).join('')||'<div>No sourced operating notes.</div>'}<div class="ng-track-office-context"><b>CURRENT OFFICE CONTEXT</b><span>${trackNotes.filter(x=>/current office/i.test(x.label)).slice(0,1).map(x=>safe(x.value)).join('')||'No current Office entry recorded.'}</span></div></div></section>
+     <section class="ng-tier1-card"><header>TRACK CONNECTIONS</header>${connectionRows()}</section>
+     <section class="ng-tier1-card"><header>TRACK HISTORY</header><div class="ng-notes">${trackHistoryItems.slice(0,3).map(n=>`<div>${safe(n)}</div>`).join('')||'<div>No official track history connected yet.</div>'}</div></section>
     </div>
    </div>`;right='';footer='';
   }else{

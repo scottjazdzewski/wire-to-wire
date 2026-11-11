@@ -1316,9 +1316,9 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-stakes-table{padding:3px 5px 6px}
 .ng-stakes-head,.ng-stakes-data{display:grid!important;grid-template-columns:minmax(0,2.5fr) minmax(0,.85fr) minmax(0,.67fr) minmax(0,1fr)!important;gap:7px;align-items:center}
 .ng-stakes-head{min-height:29px;padding:5px 7px;color:#b4cdbb;font-size:9px;font-weight:760;letter-spacing:.035em;background:#171e22}
-.ng-stakes-head button{display:flex;align-items:center;justify-content:space-between;gap:3px;min-width:0;width:100%;padding:0;border:0;background:transparent;color:inherit;font:inherit;letter-spacing:inherit;text-align:left;cursor:pointer}
+.ng-stakes-head button{display:flex;align-items:center;justify-content:flex-start;gap:4px;min-width:0;width:100%;padding:0;border:0;background:transparent;color:inherit;font:inherit;letter-spacing:inherit;text-align:left;cursor:pointer}
 .ng-stakes-head button:nth-child(n+2){justify-content:flex-end;text-align:right}
-.ng-stakes-head button i{flex:0 0 auto;margin-left:4px;font-style:normal;color:#80bca0;font-size:10px}
+.ng-stakes-head button i{flex:0 0 auto;font-style:normal;color:#80bca0;font-size:10px}
 .ng-stakes-head button:hover,.ng-stakes-head button:focus-visible{color:#f0cf83;outline:none}
 .ng-stakes-data{width:100%;min-height:36px;text-align:left;padding:6px 7px;color:#e6efe6;background:#1e262a;border:0;border-bottom:1px solid #3c4b47;cursor:pointer}
 .ng-stakes-data:nth-child(odd){background:#1e262a}
@@ -2270,11 +2270,21 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 .ng-track-stakes .ng-stakes-head{min-height:26px!important;padding:3px 7px!important}
 .ng-track-stakes .ng-stakes-data span{font-size:10.5px!important}
 .ng-track-stakes .ng-stakes-grade{display:flex;align-items:center;justify-content:flex-end;gap:4px}
-.ng-stakes-trophy{display:inline-block;width:20px;height:20px;flex:0 0 20px;background-image:url('/assets/trophies/g123-sprite.png');background-repeat:no-repeat;background-size:60px 20px}
-.ng-stakes-trophy.g1{background-position:0 0}
-.ng-stakes-trophy.g2{background-position:-20px 0}
-.ng-stakes-trophy.g3{background-position:-40px 0}
-.ng-track-info-stack{display:grid;grid-template-rows:minmax(0,1fr) minmax(0,1fr);gap:8px;min-height:0;overflow:hidden}
+.ng-stakes-trophy{display:inline-block;width:28px;height:11px;flex:0 0 28px;background-image:url('/assets/trophies/g123-sprite.png');background-repeat:no-repeat;background-size:102px 34px}
+.ng-stakes-trophy.g1{background-position:-4px -2px}
+.ng-stakes-trophy.g2{background-position:-37px -4px}
+.ng-stakes-trophy.g3{background-position:-70px -3px}
+.ng-track-info-stack{display:grid;grid-template-rows:minmax(0,1.2fr) minmax(0,.8fr) minmax(0,1fr);gap:7px;min-height:0;overflow:hidden}
+.ng-track-info-stack .ng-data-rows{padding:4px 6px}
+.ng-track-info-stack .ng-data-row{min-height:26px;padding:4px 7px;font-size:10.5px}
+.ng-track-info-stack .ng-data-row span{min-width:92px}
+.ng-track-info-stack .ng-tier1-subhead{min-height:22px;margin-top:1px;padding:3px 6px}
+.ng-track-info-stack .ng-tier1-activity{gap:4px;padding:3px 6px 5px}
+.ng-track-info-stack .ng-tier1-activity>div{padding:4px 6px;font-size:9.5px;line-height:1.2}
+.ng-track-info-stack .ng-tier1-activity b{font-size:8.5px}
+.ng-track-info-stack .ng-tier1-activity span{font-size:9.4px;line-height:1.2}
+.ng-track-info-stack .ng-notes{padding:5px 7px;gap:4px;font-size:10px}
+.ng-track-info-stack .ng-notes>div{padding:5px 7px}
 .ng-horse-star-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 15px;margin:4px 0 5px}
 .ng-horse-star-rating{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .ng-horse-star-rating small{font-size:9px!important;font-weight:800;color:#b4cdbb!important;letter-spacing:.04em}
