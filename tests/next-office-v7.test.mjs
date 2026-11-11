@@ -130,7 +130,7 @@ test('Racing Office source-linked interactions are correct and visually unambigu
  assert.ok(center.includes('ng-static-title'),'A decision title is a heading, not a redundant second Open File action');
  assert.ok(!center.includes('<button class="ng-casetitle"'),'The title cannot duplicate the explicit Review Full File button');
  assert.ok(js.includes("new Set(['powerline','lastmatch','pieta','entries','newsbuzz'])"),'Non-horse Cedar and sales/financial decisions should not show a Horse Profile');
- assert.ok(js.includes("const row=$$('.right .rankRow').find("),'Roster click must search the full source-backed list');
+ assert.ok(js.includes("if(key==='horse')return openEntityRecord(val,'horse')"),'Stable horse selection must open the exact canonical Horse Profile');
  assert.ok(js.includes("const n=$$('.right .fixtureList .fixture[data-track]')[Number(val)]"),'Fixture click must index the full list');
  assert.ok(js.includes('aria-pressed="${APP.filter===v?'),'Inbox filters need accessible selected state');
  assert.ok(js.includes('aria-current="${m.case===APP.activeCase?'),'Current Inbox item must be marked');
@@ -345,7 +345,7 @@ test('Tracks and Facilities are separate full-width directory rosters; all pages
  }
  assert.ok(code.includes("'Ownership Office'"),'Individual owners should not be misrepresented as syndicates');
  assert.ok(code.includes("_kind:'demo-facility'"),'Fictional facility entities must remain visibly non-authoritative');
- assert.ok(code.includes("r._kind==='demo-facility'"),'Do not create a fake source-profile link for a demo facility');
+ assert.ok(js.includes('previewRecordRoute(kind,name,row)')&&js.includes('FICTIONAL DESIGN PREVIEW'),'Demo facilities must open distinct labeled previews, never forged canonical profiles');
  assert.ok(office.includes('window.__wtwOfficeTrackDirectory = function()'),
   'Track names and meet dates must come from the authoritative Office record');
  assert.ok(css.includes('--wtw-ui-list-text:9.5px')&&css.includes('--wtw-roster-text:var(--wtw-ui-list-text)')&&css.includes('--wtw-roster-head:8.3px'));
@@ -368,7 +368,7 @@ test('Racing opens on active meets and has a true cross-track My Horses mode',()
  assert.ok(js.includes("field.matches('select[data-ng-select=\"department-track\"]')"));
  assert.ok(code.includes("if(page!=='Results')out=out.filter(r=>r._iso&&r._iso>=depGameDay())"),
   'My Horses must exclude races already in the past');
- assert.ok(code.includes("_track:trackName")&&js.includes("window.__wtwOfficeOpenSearchRecord?.(r._kind,r._name,r._track)"),
+ assert.ok(code.includes("_track:trackName")&&js.includes("window.__wtwOfficeOpenSearchRecord?.(exact.kind,name,exact.track||row?._track)"),
   'Stake rows need to open their correct race profile at the named track');
  assert.ok(office.includes('meetWindow:p.meetWindow'),'In-meet windows must remain read-only canonical facts');
 });
