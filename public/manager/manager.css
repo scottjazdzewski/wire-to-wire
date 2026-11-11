@@ -273,6 +273,16 @@ body>.app,body>#routeShell,body>#toast,body>.wtw-site-archive-link{display:none!
 .mg-finance-signal span{font-size:11px;color:#cbd8d1;line-height:1.4}
 .mg-finance-footer{padding:10px 13px}
 @media(max-width:1280px){.mg-finance-lead{padding:9px}.mg-finance-lead h2{font-size:17px}.mg-finance-signal{min-height:42px;padding:7px}}
+.mg-track-layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);flex:1;min-height:0;gap:8px}
+.mg-track-layout>.mg-section{min-height:0;min-width:0}
+.mg-track-side{display:flex;flex-direction:column;gap:8px;min-height:0;min-width:0}
+.mg-track-side>.mg-section:first-child{flex:0 0 auto;max-height:290px}
+.mg-track-side>.mg-section:nth-child(2){flex:0 0 auto;max-height:170px}
+.mg-track-side>.mg-section:last-child{flex:1;min-height:0}
+.mg-track-side .mg-minirow{min-height:28px;font-size:11px}
+.mg-track-side .mg-table td{height:27px;font-size:10.5px}
+.mg-track-layout>.mg-section .mg-table td{height:29px;font-size:11px}
+@media(max-width:1120px){.mg-track-layout{grid-template-columns:minmax(0,1fr)}.mg-track-side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.mg-track-side>.mg-section:last-child{grid-column:1/-1}}
 .mg-department-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:8px;flex:1;min-height:0}
 .mg-dossier-tools{display:flex;gap:5px;align-items:center;justify-content:flex-end;min-width:0}
 .mg-pilltabs{display:flex;align-items:center;gap:3px}
