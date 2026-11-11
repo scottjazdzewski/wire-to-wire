@@ -1,5 +1,6 @@
 import {qaPendingInactiveAuthority,qaPendingInactiveEditionIds} from './history-inactive-read-model.js';
 import {readOpeningWorld1999} from './1999/opening-readmodel.mjs';
+import {evaluate1999Entry} from './1999/entry-gate.mjs';
 // Cloudflare Worker / D1 API. Deliberately separate from all other WTW and non-WTW projects.
 // Privacy: every request requires authenticated Cloudflare Access in deployed environments.
 const jsonHeaders = {
@@ -140,7 +141,20 @@ async function api(request,env,email) {
   const url = new URL(request.url);
   // Protected, source-only 1999 handoff. No player decisions or future racing writes here.
   if(url.pathname.startsWith('/api/1999/')) {
-    if(request.method!=='GET') return response({error:'1999 historical opening authority is read-only; gameplay writes require a separately certified runtime.'},405);
+    if(url.pathname==='/api/1999/entry/evaluate' && request.method==='POST') {
+      if(request.headers.get('content-type')?.split(';')[0]!=='application/json') return response({error:'JSON required'},415);
+      const origin=request.headers.get('Origin');
+      if(origin&&origin!==url.origin)return response({error:'Origin mismatch'},403);
+      const length=Number(request.headers.get('Content-Length')||0);
+      if(length>12000)return response({error:'Entry scenario exceeds screening limit'},413);
+      const input=await request.json().catch(()=>null);
+      if(!input||typeof input.horseId!=='string'||typeof input.raceId!=='string'||
+        input.horseId.length>140||input.raceId.length>140||
+        (input.observations!==undefined && (!input.observations||typeof input.observations!=='object'||Array.isArray(input.observations))))return response({error:'Invalid entry screening input'},400);
+      const verdict=evaluate1999Entry({horseId:input.horseId,raceId:input.raceId,observations:input.observations||{}});
+      return response({...verdict,mode:'ENTRY_SCREENING_ONLY__CLIENT_OBSERVATIONS_UNVERIFIED__NO_CANON_COMMIT'});
+    }
+    if(request.method!=='GET')return response({error:'1999 historical opening authority is read-only; gameplay writes require a separately certified runtime.'},405);
     const view=readOpeningWorld1999(url);
     return response(view.data,view.status);
   }
