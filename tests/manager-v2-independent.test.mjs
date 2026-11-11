@@ -23,6 +23,8 @@ test('Clean-sheet Manager V2 parses, keeps one stylesheet and retains the canoni
  assert.ok(js.includes('sourceAction(\'Continue\')'));
  assert.ok(js.includes('function horseProfile(name)')&&js.includes('function personProfile(name)'));
  assert.ok(!js.includes('localStorage.setItem'),'V2 presentation must not write fabricated data to the authoritative state');
+ const legacy=get('public/office-v30-4.js');
+ assert.ok(legacy.includes("if(e.target.closest('#mgApp'))return;"),'Legacy capture handler cannot intercept Manager V2 navigation clicks');
 });
 
 test('Four-tier fictional preview ratings are explicitly isolated from save and switchable to real',()=>{
