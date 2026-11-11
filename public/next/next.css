@@ -2274,7 +2274,17 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 .ng-stakes-trophy.g1{background-position:-4px -2px}
 .ng-stakes-trophy.g2{background-position:-37px -4px}
 .ng-stakes-trophy.g3{background-position:-70px -3px}
-.ng-track-info-stack{display:grid;grid-template-rows:minmax(0,1fr) minmax(0,1fr);gap:8px;min-height:0;overflow:hidden}
+.ng-track-info-stack{display:grid;grid-template-rows:minmax(0,1.2fr) minmax(0,.8fr) minmax(0,1fr);gap:7px;min-height:0;overflow:hidden}
+.ng-track-info-stack .ng-data-rows{padding:4px 6px}
+.ng-track-info-stack .ng-data-row{min-height:26px;padding:4px 7px;font-size:10.5px}
+.ng-track-info-stack .ng-data-row span{min-width:92px}
+.ng-track-info-stack .ng-tier1-subhead{min-height:22px;margin-top:1px;padding:3px 6px}
+.ng-track-info-stack .ng-tier1-activity{gap:4px;padding:3px 6px 5px}
+.ng-track-info-stack .ng-tier1-activity>div{padding:4px 6px;font-size:9.5px;line-height:1.2}
+.ng-track-info-stack .ng-tier1-activity b{font-size:8.5px}
+.ng-track-info-stack .ng-tier1-activity span{font-size:9.4px;line-height:1.2}
+.ng-track-info-stack .ng-notes{padding:5px 7px;gap:4px;font-size:10px}
+.ng-track-info-stack .ng-notes>div{padding:5px 7px}
 .ng-horse-star-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 15px;margin:4px 0 5px}
 .ng-horse-star-rating{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .ng-horse-star-rating small{font-size:9px!important;font-weight:800;color:#b4cdbb!important;letter-spacing:.04em}
