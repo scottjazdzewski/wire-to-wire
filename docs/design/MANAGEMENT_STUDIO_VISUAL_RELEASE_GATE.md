@@ -35,3 +35,23 @@ Artifact: GitHub Desktop Visual Audit run 42944862098, `manager-v2/screenshots/`
 Current result: **REJECTED** after inspecting real Desktop Visual Audit screenshots.
 Unresolved material visual blockers: People, Stable, Racetracks, and other source-sparse departments require structural layout redesign.
 No final sign-off recorded. Testing/deployment success must not override this status.
+
+
+## Ongoing implementation checkpoint — November 11, 2026
+
+**Release status: IN DEVELOPMENT — NOT FINAL VISUAL APPROVAL.** This checkpoint is for continuity across production windows, not a claim that every page meets the commercial-quality references.
+
+- The clean-sheet `public/manager/` game shell is active. Existing Office game state and approved read-only geography are consumed without creating any parallel master record.
+- All 16 Tier-1 routes render and pass desktop screenshot smoke tests. Functional browser navigation covers Search → Gabe Larkin → Racing → Finance → Office cash case → Back/Forward, source-track navigation, and exact immutable-ID historical person opening.
+- The global Search table is dense and displays source identifiers for people and tracks, rather than a largely empty Owner column. Person-name links and last-column opening actions resolve the same immutable person ID.
+- `public/data/person-geography-ui-v33.json` exposes 1,308 historical people; `public/data/track-geography-v33.json` exposes 134 track sites. Active Office roles remain distinct from historical biography/geography. No source-unknown person is silently assigned a gameplay role.
+- Racecourse profiles with no source-linked active race records show a genuinely usable full 134-course register (current circuit first) rather than an enormous empty Stakes panel. Historical OPEN/CLOSED status is compact but keeps full raw source state in a tooltip.
+- Racing World now has a 26-circuit navigation index sourced from the approved directory, instead of an empty lower-right panel.
+- Stable roster shows horse-specific case/status and race target from the active Office state and fixture DOM. It does not borrow another horse's race target if no exact fixture is found. The compact stable staff panel links to the full Personnel directory.
+- The portrait component now accepts approved photo pointers keyed by immutable entity ID or exact entity name from `public/assets/office/decision-photo-index.json`, while using clearly differentiated identity badges if no approved photo exists. Approved logos can be read from `organization-logo-index.json`; neither file creates entity records.
+- **1280×800** is now an enforced desktop viewport. Actual browser geometry for Horse and People Overviews measured `scrollHeight=clientHeight=698` in both cases, with no document overflow. Four 1280 screenshots are captured alongside the 1536×864 suite.
+- Unit tests and Cloudflare Pages checks pass for this implementation checkpoint. Passing geometry does **not** constitute artistic sign-off.
+
+**Still open before release:** Profile-specific photography and organization logos are not available for all entities; source-backed racing performances, lineage, full facilities and owner assignments remain limited in the small Office window; the legacy History Vault still needs a consistent in-game management presentation and authoritative history-data connection. Do not fabricate records to fill visual gaps.
+
+The next UI effort should attack the remaining sparse or legacy screens using reusable source-backed layouts, then compare real screenshots against the provided Football Manager/OOTP references before requesting user approval.
