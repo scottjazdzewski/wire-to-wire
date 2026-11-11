@@ -1467,10 +1467,11 @@ function departmentRoster(section,page='Overview'){
  const body=shown.map((r,i)=>{
   return '<tr>'+specs.map(([key])=>{
    let v=depCell(r[key],key);
-   if((key==='horse'||key==='name')&&r._kind!=='finance'){
+   if((key==='horse'||key==='name'||(key==='race'&&r._kind==='race'))&&r._kind!=='finance'){
     const first=r._kind==='horse'?
      (demo?'<span class="ng-rs-demo-owner" title="Fictional ownership marker">'+safe((r.owner||r._name||'?').charAt(0))+'</span>':horseOwnerBadge(r._name)):'';
-    v='<button class="ng-rs-horse" data-ng="dept-open" data-val="'+i+'" aria-label="Open '+safe(r._name)+'" title="Open source-linked '+safe(r._name)+'">'+first+'<span>'+safe(r._name)+'</span></button>';
+    v=r._kind==='demo-facility'?'<span class="ng-dpt-demo-entity" title="Fictional preview entity">'+safe(r._name)+'</span>':
+     '<button class="ng-rs-horse" data-ng="dept-open" data-val="'+i+'" aria-label="Open '+safe(r._name)+'" title="'+safe(section==='Racing'&&r._kind==='track'?'Show races at this meet':'Open source-linked record')+'">'+first+'<span>'+safe(r._name)+'</span></button>';
    }
    return '<td title="'+safe(String(r[key]??''))+'">'+v+'</td>';
   }).join('')+'</tr>';
@@ -1480,6 +1481,16 @@ function departmentRoster(section,page='Overview'){
   '<strong>'+(APP.departmentPageIndex+1)+' / '+pages+'</strong>'+
   '<button data-ng="dept-page" data-val="1" '+(APP.departmentPageIndex>=pages-1?'disabled':'')+' aria-label="Next page">NEXT ›</button>';
  const viewOptions=(tabmap[section]||[]).map(t=>'<option value="'+safe(t)+'" '+(t===page?'selected':'')+'>'+safe(t)+'</option>').join('');
+ const racingTracks=section==='Racing'?depCurrentMeetRows():[];
+ if(section==='Racing'&&APP.racingTrack&&!racingTracks.some(x=>x.name===APP.racingTrack)){
+  APP.racingTrack='';if(APP.racingMode==='track')APP.racingMode='meets';
+ }
+ const racingPicker=section==='Racing'?'<label class="ng-dpt-track-picker">ACTIVE MEET <select data-ng-select="department-track" aria-label="Select active racing meet to view its races">'+
+  '<option value="" '+(!APP.racingTrack?'selected':'')+'>ALL ACTIVE MEETS</option>'+
+  racingTracks.map(t=>'<option value="'+safe(t.name)+'" '+(APP.racingTrack===t.name?'selected':'')+'>'+safe(t.name+' · '+t.location)+'</option>').join('')+
+  '</select></label>'+
+  '<button data-ng="dept-meets" class="'+(APP.racingMode!=='mine'?'on':'')+'" title="Show tracks racing at the current in-game date">ACTIVE MEETS</button>'+
+  '<button data-ng="dept-myhorses" class="'+(APP.racingMode==='mine'?'on':'')+'" title="Show every upcoming race entry or target for horses in your stable, across all tracks">MY HORSES</button>':'';
  const salePicker=section==='Sales'?'<label class="ng-dpt-auction-picker">AUCTION <select data-ng-select="department-auction" aria-label="Choose auction chronologically">'+
   (auctions.length?auctions.map(a=>'<option value="'+safe(a.id)+'" '+(auction?.id===a.id?'selected':'')+'>'+safe(stableShortDate(a.date)+' · '+a.name)+'</option>').join(''):'<option>No upcoming auction data</option>')+
   '</select></label>':'';
@@ -1488,14 +1499,14 @@ function departmentRoster(section,page='Overview'){
   ['CASH',demo?'$2.84M':cash!=null?depMoney(cash):'—'],
   ['MONTHLY INCOME',demo?'$186k':'—'],['MONTHLY COSTS',demo?'$143k':'—'],['NET CASH FLOW',demo?'+$43k':'—']
  ].map(([name,value])=>'<span><small>'+safe(name)+'</small><b>'+safe(value)+'</b></span>').join('')+'</div>':'';
- const purpose=section==='Racing'?'CURRENT BASE & SHIPPING':
+ const purpose=section==='Racing'?(APP.racingMode==='mine'?'MY HORSES · ALL UPCOMING ENTRIES AND TARGETS':APP.racingTrack?'UPCOMING RACES AT '+APP.racingTrack.toUpperCase():'TRACKS CURRENTLY HOLDING MEETS'):
   section==='Breeding'?'STUD FEES, COVERINGS & PRODUCTION':
   section==='Sales'?(auction?auction.name.toUpperCase()+' · '+stableShortDate(auction.date)+' · '+(auction.city||''):'NO UPCOMING AUCTIONS'):
   section==='Personnel'?'TRAINERS · JOCKEYS · OWNERS · STAFF':
   section==='Facilities'?'CAPACITY · QUALITY · MAINTENANCE':'INCOME · EXPENSES · CASH FLOW';
  return '<section class="ng-functional ng-stable-roster-v2 ng-dept-roster" data-department="'+safe(section)+'" data-page="'+safe(page)+'">'+
   '<div class="ng-rs-title"><strong>'+safe(section.toUpperCase())+' · '+safe(page.toUpperCase())+'</strong><span>'+safe(purpose)+(demo?' · FICTIONAL PREVIEW':'')+'</span></div>'+
-  finance+'<div class="ng-rs-tools">'+salePicker+'<label>VIEW <select data-ng-select="department-tab" aria-label="Choose '+safe(section)+' view">'+viewOptions+'</select></label>'+
+  finance+'<div class="ng-rs-tools">'+racingPicker+salePicker+'<label>VIEW <select data-ng-select="department-tab" aria-label="Choose '+safe(section)+' view">'+viewOptions+'</select></label>'+
   '<input id="ngDepartmentSearch" data-ng-input="department-search" type="search" aria-label="Search '+safe(section)+' roster" value="'+safe(APP.departmentSearch)+'" placeholder="Find records…" autocomplete="off"/>'+
   '<button data-ng="dept-demo" class="'+(demo?'on':'')+'" title="Preview-only invented values; no game data changes">'+(demo?'DEMO ON':'DEMO OFF')+'</button>'+
   '<span class="ng-dpt-mode">FULL-WIDTH ROSTER</span></div>'+
@@ -1653,6 +1664,8 @@ window.addEventListener('click',e=>{
  if(key==='caseprev')return selectAdjacentCase(-1);
  if(key==='casenext')return selectAdjacentCase(1);
  if(key==='nextopen')return selectAdjacentCase(1,true);
+ if(key==='dept-meets'){APP.racingMode=APP.racingTrack?'track':'meets';APP.departmentPageIndex=0;APP.departmentSortKey='';return paint()}
+ if(key==='dept-myhorses'){APP.racingMode=APP.racingMode==='mine'?(APP.racingTrack?'track':'meets'):'mine';APP.departmentPageIndex=0;APP.departmentSortKey='';return paint()}
  if(key==='dept-sort'){
   if(APP.departmentSortKey===val)APP.departmentSortDesc=!APP.departmentSortDesc;
   else{APP.departmentSortKey=val;APP.departmentSortDesc=false}
@@ -1662,9 +1675,12 @@ window.addEventListener('click',e=>{
  if(key==='dept-demo'){APP.departmentDemo=!APP.departmentDemo;APP.departmentPageIndex=0;return paint()}
  if(key==='dept-open'){
   const r=APP.departmentVisible[Number(val)];if(!r)return;
+  if(APP.section==='Racing'&&APP.page==='Overview'&&APP.racingMode!=='mine'&&r._kind==='track'){
+   APP.racingTrack=r._name;APP.racingMode='track';APP.departmentPageIndex=0;APP.departmentSortKey='';return paint();
+  }
   APP.custom='';APP.moreOpen=false;
   if(['horse','person','farm','track','race'].includes(r._kind)){
-   if(window.__wtwOfficeOpenSearchRecord?.(r._kind,r._name))return schedulePaint(20);
+   if(window.__wtwOfficeOpenSearchRecord?.(r._kind,r._name,r._track))return schedulePaint(20);
    if(r._kind==='horse')return bridgeNode($$('.right .boardRows .rankRow').find(n=>$('strong',n)?.textContent.trim()===r._name));
   }
   return;
@@ -1701,6 +1717,7 @@ window.addEventListener('click',e=>{
 },true);
 root.addEventListener('change',event=>{
   const field=event.target;
+  if(field.matches('select[data-ng-select="department-track"]')){APP.racingTrack=field.value;APP.racingMode=field.value?'track':'meets';APP.departmentPageIndex=0;APP.departmentSortKey='';return paint()}
   if(field.matches('select[data-ng-select="department-auction"]')){APP.departmentAuction=field.value;APP.departmentPageIndex=0;return paint()}
   if(field.matches('select[data-ng-select="department-tab"]'))return pageTab(field.value);
   if(field.matches('select[data-ng-select="manager-screen"]')&&field.value){
