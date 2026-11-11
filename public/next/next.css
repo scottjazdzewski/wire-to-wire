@@ -6,7 +6,7 @@
    The original 1,831 rule blocks were consolidated into one effective rule
    per selector / responsive condition. No appended visual patch layer.
    Gameplay, media, runtime state and route structure are unchanged. */
-.ng-manager-shell{--wtw-ui-list-text:9.5px;--wtw-ui-list-meta:8.5px;--wtw-ui-profile-title:clamp(21px,1.7vw,24px);--wtw-ui-profile-intro:10.5px;--wtw-ui-profile-label:10px;--wtw-ui-profile-value:11px;--wtw-ui-profile-tab:11.5px;--wtw-ui-profile-status:9px;--wtw-ui-section-title:11px;--wtw-ui-profile-title:clamp(21px,1.7vw,24px);--wtw-ui-profile-intro:10.5px;--wtw-ui-profile-label:10px;--wtw-ui-profile-value:11px;--wtw-ui-profile-tab:11.5px;--wtw-ui-profile-status:9px;--wtw-ui-section-title:11px;display:grid;grid-template-columns:177px minmax(0,1fr);flex:1 1 0;min-width:0;min-height:0;overflow:hidden;background:#0d1317}
+.ng-manager-shell{--wtw-ui-list-text:9.5px;--wtw-ui-list-name:9.5px;--wtw-ui-list-meta:8.5px;--wtw-ui-profile-title:clamp(21px,1.7vw,24px);--wtw-ui-profile-intro:10.5px;--wtw-ui-profile-label:10px;--wtw-ui-profile-value:11px;--wtw-ui-profile-tab:11.5px;--wtw-ui-profile-status:9px;--wtw-ui-section-title:11px;--wtw-ui-profile-title:clamp(21px,1.7vw,24px);--wtw-ui-profile-intro:10.5px;--wtw-ui-profile-label:10px;--wtw-ui-profile-value:11px;--wtw-ui-profile-tab:11.5px;--wtw-ui-profile-status:9px;--wtw-ui-section-title:11px;display:grid;grid-template-columns:177px minmax(0,1fr);flex:1 1 0;min-width:0;min-height:0;overflow:hidden;background:#0d1317}
 .ng-game-rail{box-sizing:border-box;display:flex;flex-direction:column;gap:0;min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden;padding:0 7px 9px;background:#11191d;border-right:1px solid #303e3b;scrollbar-width:thin;scrollbar-color:#3b5148 #11191d}
 .ng-manager-stage{display:flex;flex-direction:column;flex:1 1 0;min-width:0;min-height:0;overflow:hidden;background:#0c1215}
 .ng-manager-rail-brand{display:flex;align-items:center;gap:8px;min-height:49px;flex:0 0 49px;padding:5px 4px 7px;border-bottom:1px solid #303e39;box-sizing:border-box}
@@ -26,8 +26,8 @@
 .ng-manager-top-context{display:flex;align-items:center;gap:9px;flex:1 1 0;min-width:0;padding:0 9px;border-left:1px solid #33433d;white-space:nowrap}
 .ng-manager-top-context strong{font-size:10px;letter-spacing:.06em;color:#e1c98b;font-weight:820;white-space:nowrap}
 .ng-manager-top-context span{font-size:11px;font-weight:620;color:#dce7df;overflow:hidden;text-overflow:ellipsis;min-width:0}
-@media(min-width:1081px) and (max-width:1300px){.ng-manager-shell{grid-template-columns:159px minmax(0,1fr)}.ng-game-rail{padding-left:5px;padding-right:5px}.ng-manager-rail-link{font-size:10px;padding-right:5px}}
-@media(max-width:1080px){.ng-manager-shell{grid-template-columns:46px minmax(0,1fr)}.ng-game-rail{padding-left:4px;padding-right:4px}.ng-manager-rail-brand{justify-content:center}.ng-manager-rail-brand>span,.ng-manager-rail-group h2,.ng-manager-rail-link>span:last-child,.ng-manager-rail-footer{display:none}.ng-manager-rail-link{justify-content:center;padding:0}.ng-manager-rail-icon{flex-basis:24px}}
+@media(min-width:1081px) and (max-width:1300px){.ng-manager-shell{--wtw-ui-list-text:8.5px;--wtw-ui-list-name:9px;--wtw-ui-list-meta:8px;grid-template-columns:159px minmax(0,1fr)}.ng-game-rail{padding-left:5px;padding-right:5px}.ng-manager-rail-link{font-size:10px;padding-right:5px}}
+@media(max-width:1080px){.ng-manager-shell{--wtw-ui-list-text:8.5px;--wtw-ui-list-name:9px;--wtw-ui-list-meta:8px;grid-template-columns:46px minmax(0,1fr)}.ng-game-rail{padding-left:4px;padding-right:4px}.ng-manager-rail-brand{justify-content:center}.ng-manager-rail-brand>span,.ng-manager-rail-group h2,.ng-manager-rail-link>span:last-child,.ng-manager-rail-footer{display:none}.ng-manager-rail-link{justify-content:center;padding:0}.ng-manager-rail-icon{flex-basis:24px}}
 
 *{box-sizing:border-box}
 html,body{margin:0;min-width:0;height:100%;background:var(--wt-bg);color:var(--wt-text);font-family:Inter,"Segoe UI",Arial,sans-serif;font-size:13px;line-height:1.36;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}
@@ -223,7 +223,7 @@ body.wtw-next-active{overflow:auto}
 .ng-manager-row>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ng-manager-row-type{font-size:var(--wtw-ui-list-meta);color:#d4c48f;font-weight:770}
 .ng-manager-row-name{display:flex;align-items:center;gap:6px}
-.ng-manager-row-name strong{font-size:var(--wtw-ui-list-text);font-weight:760;color:#f3eee1;text-overflow:ellipsis;overflow:hidden}
+.ng-manager-row-name strong{font-size:var(--wtw-ui-list-name);font-weight:760;color:#f3eee1;text-overflow:ellipsis;overflow:hidden}
 .ng-manager-row-name .ng-horse-owner-badge .ng-owner-unknown-mark,.ng-manager-row-name .ng-horse-owner-badge .ng-org-mark{width:17px!important;height:17px!important;min-width:17px!important;min-height:17px!important;flex-basis:17px!important}
 .ng-manager-row-detail{font-size:var(--wtw-ui-list-text);color:#b8c8bd}
 .ng-manager-row-context{font-size:var(--wtw-ui-list-text);color:#e4d49e}
@@ -1336,7 +1336,7 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 #wtwNextgen .ng-route:has(.ng-stable-roster-v2){padding:4px 8px 6px!important}
 #wtwNextgen .ng-route:has(.ng-stable-roster-v2) .ng-routegrid{display:block!important;flex:1 1 0!important;min-height:0!important;overflow:hidden!important;padding:0!important}
 #wtwNextgen .ng-routeinner:has(.ng-stable-roster-v2){display:block!important;height:100%!important;min-height:0!important;overflow:hidden!important}
-#wtwNextgen .ng-stable-roster-v2{--wtw-roster-text:var(--wtw-ui-list-text);--wtw-roster-head:8.3px;--wtw-roster-name:var(--wtw-ui-list-text);--wtw-roster-status:8.8px;--wtw-roster-title:11.5px;--wtw-roster-subtitle:9.5px;--wtw-roster-label:9px;--wtw-roster-control:8.5px;--wtw-roster-section:10px;--wtw-roster-meta:8.5px;--wtw-roster-input:9.5px;--wtw-roster-legend:8px;box-sizing:border-box;display:flex;flex-direction:column;gap:3px;height:100%;min-height:0;overflow:hidden;color:#e1e7e3}
+#wtwNextgen .ng-stable-roster-v2{--wtw-roster-text:var(--wtw-ui-list-text);--wtw-roster-head:8.3px;--wtw-roster-name:var(--wtw-ui-list-name);--wtw-roster-status:8.8px;--wtw-roster-title:11.5px;--wtw-roster-subtitle:9.5px;--wtw-roster-label:9px;--wtw-roster-control:8.5px;--wtw-roster-section:10px;--wtw-roster-meta:8.5px;--wtw-roster-input:9.5px;--wtw-roster-legend:8px;box-sizing:border-box;display:flex;flex-direction:column;gap:3px;height:100%;min-height:0;overflow:hidden;color:#e1e7e3}
 #wtwNextgen .ng-rs-title{height:26px;flex:0 0 26px;display:flex;align-items:center;gap:9px;padding:0 8px;background:#202b30;border-bottom:1px solid #526156}
 #wtwNextgen .ng-rs-title strong{font-size:var(--wtw-roster-title);letter-spacing:.04em;font-weight:820;color:#f0dc9d}
 #wtwNextgen .ng-rs-title span{font-size:var(--wtw-roster-subtitle);color:#b5c9b9;font-weight:700;white-space:nowrap}
@@ -1427,12 +1427,13 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
  #wtwNextgen .ng-rs-tools input{max-width:140px}
 }
 @media(max-width:1020px){
- #wtwNextgen .ng-rs-title span{font-size:8px}
+ #wtwNextgen .ng-stable-roster-v2{--wtw-roster-subtitle:8px;--wtw-roster-meta:8px}
+ #wtwNextgen .ng-rs-title span{font-size:var(--wtw-roster-subtitle)}
  #wtwNextgen .ng-rs-tools{flex-wrap:wrap;flex-basis:49px;align-content:center}
  #wtwNextgen .ng-rs-tools input{max-width:115px}
  #wtwNextgen .ng-stable-roster-v2{--wtw-roster-control:7.5px}
  #wtwNextgen .ng-rs-tools button{font-size:var(--wtw-roster-control)!important}
- #wtwNextgen .ng-rs-roster>header span{font-size:7px}
+ #wtwNextgen .ng-rs-roster>header span{font-size:var(--wtw-roster-meta)}
 }
 
 
@@ -2147,7 +2148,7 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-search-roster-page .ng-search-row:focus-visible{background:#315e48;outline:1px solid #5a816a;outline-offset:-1px}
 .ng-search-row>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ng-search-row-kind{color:#d8c898;font-size:var(--wtw-ui-list-meta);font-weight:760}
-.ng-search-row-name{display:inline-flex;align-items:center;gap:7px;color:#f0f0e1;font-size:var(--wtw-ui-list-text);font-weight:720}
+.ng-search-row-name{display:inline-flex;align-items:center;gap:7px;color:#f0f0e1;font-size:var(--wtw-ui-list-name);font-weight:720}
 .ng-search-row-name>strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ng-search-row-name .ng-horse-owner-badge .ng-org-mark,
 .ng-search-row-name .ng-horse-owner-badge .ng-owner-unknown-mark{width:17px!important;height:17px!important;min-width:17px!important;min-height:17px!important;flex-basis:17px!important}
