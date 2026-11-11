@@ -7,35 +7,6 @@ python3 -m http.server 8767 --bind 127.0.0.1 --directory public >/tmp/wtw-v2-htt
 SERVER_PID=$!
 trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
 for i in {1..30}; do curl -fsS 'http://127.0.0.1:8767/manager/' >/dev/null 2>&1 && break; sleep .4; done
-capture(){
-  local name="$1" route="$2" marker="$3"
-  "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
-    --window-size=1536,864 --force-device-scale-factor=1 --virtual-time-budget=5000 \
-    --screenshot="visual-audit/manager-v2/screenshots/$name.png" \
-    "http://127.0.0.1:8767/manager/$route" >/tmp/wtw-v2-chrome-"$name".log 2>&1
-  "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
-    --window-size=1536,864 --force-device-scale-factor=1 --virtual-time-budget=5000 \
-    --dump-dom "http://127.0.0.1:8767/manager/$route" \
-    >"visual-audit/manager-v2/dom/$name.html" 2>/tmp/wtw-v2-dom-"$name".log
-  grep -q "$marker" "visual-audit/manager-v2/dom/$name.html" || { echo "V2 render missing $marker on $name" >&2; exit 1; }
-  test -s "visual-audit/manager-v2/screenshots/$name.png"
-}
-capture racing-office '' 'mg-home-top'
-capture global-search '?ui=search' 'mg-search-layout'
-capture horse-profile '?page=horse&name=The+Last+Match' 'mg-profile-grid4'
-capture people-profile '?page=person&name=Gabe+Larkin' 'mg-person-dossier'
-capture stable-roster '?ui=stable' 'mg-operations-grid'
-capture racetracks '?ui=track' 'mg-operations-grid'
-capture racing-calendar '?ui=racing' 'mg-department-suite racing'
-capture breeding '?ui=breeding' 'mg-department-suite breeding'
-capture sales '?ui=sales' 'mg-department-suite sales'
-capture personnel '?ui=person' 'mg-department-suite person'
-capture farms '?ui=farm' 'mg-department-suite farm'
-capture world '?ui=world' 'mg-department-suite world'
-capture finances '?ui=finances' 'mg-finance-grid'
-capture keeneland-profile '?page=track&name=Keeneland' 'mg-track-layout'
-capture aqueduct-directory '?page=track&name=Aqueduct' 'mg-track-layout'
-
 cat > public/manager/__wtw_interaction_probe.html <<'HTML'
 <!doctype html><html><head><meta charset="utf-8"></head><body>
 <pre id="probe" data-state="pending">Checking interactive game navigation</pre>
@@ -100,7 +71,8 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   result.textContent=JSON.stringify({state:'passed',steps});
  }catch(e){
   result.dataset.state='failed';
-  result.textContent=JSON.stringify({state:'failed',steps,error:String(e)});
+  const d=frame.contentDocument,w=frame.contentWindow;
+  result.textContent=JSON.stringify({state:'failed',steps,error:String(e),url:w.location.href,view:w.__WTW_MANAGER_V2__?.ui?.view,sourceTitle:d.querySelector('#routeTitle')?.textContent,sourcePresent:!!d.querySelector('#routeBody .profilePage'),personVisible:!!d.querySelector('.mg-person-dossier'),stageText:d.querySelector('.mg-main')?.textContent.slice(0,200)});
  }
 },950));
 </script></body></html>
@@ -110,6 +82,36 @@ HTML
   --dump-dom 'http://127.0.0.1:8767/manager/__wtw_interaction_probe.html' \
   > visual-audit/manager-v2/dom/interaction-probe.html 2>/tmp/wtw-mg-interaction.log
 rm -f public/manager/__wtw_interaction_probe.html
+
+capture(){
+  local name="$1" route="$2" marker="$3"
+  "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+    --window-size=1536,864 --force-device-scale-factor=1 --virtual-time-budget=5000 \
+    --screenshot="visual-audit/manager-v2/screenshots/$name.png" \
+    "http://127.0.0.1:8767/manager/$route" >/tmp/wtw-v2-chrome-"$name".log 2>&1
+  "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+    --window-size=1536,864 --force-device-scale-factor=1 --virtual-time-budget=5000 \
+    --dump-dom "http://127.0.0.1:8767/manager/$route" \
+    >"visual-audit/manager-v2/dom/$name.html" 2>/tmp/wtw-v2-dom-"$name".log
+  grep -q "$marker" "visual-audit/manager-v2/dom/$name.html" || { echo "V2 render missing $marker on $name" >&2; exit 1; }
+  test -s "visual-audit/manager-v2/screenshots/$name.png"
+}
+capture racing-office '' 'mg-home-top'
+capture global-search '?ui=search' 'mg-search-layout'
+capture horse-profile '?page=horse&name=The+Last+Match' 'mg-profile-grid4'
+capture people-profile '?page=person&name=Gabe+Larkin' 'mg-person-dossier'
+capture stable-roster '?ui=stable' 'mg-operations-grid'
+capture racetracks '?ui=track' 'mg-operations-grid'
+capture racing-calendar '?ui=racing' 'mg-department-suite racing'
+capture breeding '?ui=breeding' 'mg-department-suite breeding'
+capture sales '?ui=sales' 'mg-department-suite sales'
+capture personnel '?ui=person' 'mg-department-suite person'
+capture farms '?ui=farm' 'mg-department-suite farm'
+capture world '?ui=world' 'mg-department-suite world'
+capture finances '?ui=finances' 'mg-finance-grid'
+capture keeneland-profile '?page=track&name=Keeneland' 'mg-track-layout'
+capture aqueduct-directory '?page=track&name=Aqueduct' 'mg-track-layout'
+
 python3 - <<'PY'
 from pathlib import Path
 import html,re,json
