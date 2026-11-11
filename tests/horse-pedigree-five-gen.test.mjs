@@ -79,10 +79,12 @@ test('Five-generation endpoint uses source-only read operations and retains auth
 });
 test('Office and Archive preserve direct immutable-ID horse-file navigation',()=>{
  const next=source('public/next/next.js'),archive=source('public/app.js');
- assert.ok(next.includes('data-ng="horse-history-file"'));
+ assert.ok(!next.includes('data-ng="horse-history-file"'),'The duplicate top header shortcut was intentionally removed');
+ assert.ok(next.includes("APP.detailTab==='Pedigree'&&isHorse"),'The original Pedigree dropdown hosts the chart');
+ assert.ok(next.includes('data-ng="pedigree-ancestor"'),'Ancestor links navigate by ID');
  assert.ok(next.includes("ids.length===1"));
  assert.ok(next.includes("if(kind==='horse')"),'Non-roster horse links must try source ID lookup');
- assert.ok(next.includes("horse='+encodeURIComponent(ids[0])"));
+ assert.ok(next.includes("horse='+encodeURIComponent(val)"),'Ancestor navigation uses its immutable H-ID');
  assert.ok(archive.includes("get('horse')"));
  assert.ok(archive.includes("window.addEventListener('popstate'"));
 });
