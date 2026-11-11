@@ -1821,11 +1821,11 @@ function departmentRoster(section,page='Overview'){
  const auctions=section==='Sales'?depAuctionList(demo):[];
  const gameDay=depGameDay();
  const auction=auctions.find(a=>a.id===APP.departmentAuction)||auctions.find(a=>(a.endDate||a.sortKey)>=gameDay)||null;
- const specs=section==='Sales'&&page==='Sale Calendar'?DEP_COLUMNS.SaleCalendar:section==='Sales'&&page==='Sale Companies'?DEP_COLUMNS.SaleCompanies:section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'?(APP.racingTrack?DEP_COLUMNS.Racing:DEP_COLUMNS.Meets):DEP_COLUMNS[section];
+ const specs=section==='Sales'&&page==='Watchlist'?DEP_COLUMNS.SalesWatchlist:section==='Sales'&&page==='Sale Calendar'?DEP_COLUMNS.SaleCalendar:section==='Sales'&&page==='Sale Companies'?DEP_COLUMNS.SaleCompanies:section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'?(APP.racingTrack?DEP_COLUMNS.Racing:DEP_COLUMNS.Meets):DEP_COLUMNS[section];
  let rows=depRows(section,page,demo,auction);
  const search=APP.departmentSearch.trim().toLowerCase();
  if(search)rows=rows.filter(r=>specs.some(([key])=>String(r[key]??'').toLowerCase().includes(search)));
- const defaultSort=section==='Racing'&&(page!=='Overview'||APP.racingMode==='mine'||APP.racingTrack)?'date':section==='Sales'&&page!=='Sale Calendar'&&page!=='Sale Companies'?'hip':section==='Finances'?'date':specs[0][0];
+ const defaultSort=section==='Sales'&&page==='Watchlist'?'auction':section==='Racing'&&(page!=='Overview'||APP.racingMode==='mine'||APP.racingTrack)?'date':section==='Sales'&&page!=='Sale Calendar'&&page!=='Sale Companies'?'hip':section==='Finances'?'date':specs[0][0];
  const selectedSort=specs.some(x=>x[0]===APP.departmentSortKey)?APP.departmentSortKey:defaultSort;
  const sign=APP.departmentSortKey?(APP.departmentSortDesc?-1:1):(section==='Finances'?-1:1);
  rows.sort((a,b)=>{
@@ -1846,6 +1846,17 @@ function departmentRoster(section,page='Overview'){
   return '<tr>'+specs.map(([key])=>{
    let v=depCell(r[key],key);
    const kind=entityKindForField(key,r);
+   if(section==='Sales'&&r._kind==='horse'&&key==='hip'){
+    const watching=Boolean(APP.salesWatched?.[r._watchKey]);
+    v='<div class="ng-sales-hip"><button type="button" data-ng="sale-watch" data-val="'+i+
+     '" aria-label="'+(watching?'Remove ':'Watch ')+'lot '+safe(r.hip)+'" aria-pressed="'+watching+
+     '" title="'+(watching?'Remove from watchlist':'Add to watchlist (this session)')+
+     '" class="'+(watching?'on':'')+'">'+(watching?'★':'☆')+'</button><span>'+safe(r.hip||'—')+'</span></div>';
+   }
+   if(section==='Sales'&&r._kind==='horse'&&key==='auction'){
+    v='<button type="button" class="ng-entity-reference" data-ng="sale-open-watch" data-val="'+i+
+     '" title="Open '+safe(r.auction)+' catalog">'+safe(r.auction)+' ↗</button>';
+   }
    if(section==='Sales'&&r._kind==='sale-event'&&key==='company'){
     v='<button type="button" class="ng-entity-reference" data-ng="dept-related" data-val="'+i+'" data-field="company" title="View sales operated by '+safe(String(r.company))+'">'+safe(String(r.company))+' ↗</button>';
    }
@@ -1889,6 +1900,7 @@ function departmentRoster(section,page='Overview'){
   '<option value="" '+(!APP.departmentCompany?'selected':'')+'>ALL SALE COMPANIES</option>'+
   Object.entries(DEP_SALE_HOUSES).map(([id,house])=>'<option value="'+safe(id)+'" '+(APP.departmentCompany===id?'selected':'')+'>'+safe(house.name)+'</option>').join('')+
   '</select></label>':'';
+ const salesDeskView=section==='Sales'?salesDesk(page,auction,auctions,rows.length):'';
  const cash=availableCash();
  const finance=section==='Finances'?'<div class="ng-dpt-finance">'+[
   ['CASH',demo?'$2.84M':cash!=null?depMoney(cash):'—'],
@@ -1896,7 +1908,7 @@ function departmentRoster(section,page='Overview'){
  ].map(([name,value])=>'<span><small>'+safe(name)+'</small><b>'+safe(value)+'</b></span>').join('')+'</div>':'';
  const purpose=section==='Racing'?(APP.racingMode==='mine'?'MY HORSES · ALL UPCOMING ENTRIES AND TARGETS':APP.racingTrack?'UPCOMING RACES AT '+APP.racingTrack.toUpperCase():'TRACKS CURRENTLY HOLDING MEETS'):
   section==='Breeding'?'STUD FEES, COVERINGS & PRODUCTION':
-  section==='Sales'?(page==='Sale Calendar'?'CHRONOLOGICAL SALES · COMPANY · VENUE · DATE':page==='Sale Companies'?'AUCTION HOUSE DIRECTORY · SALES CALENDAR':auction?depSaleLabel(auction).toUpperCase()+' · '+depSaleDateLabel(auction)+' · '+(auction.city||''):'NO UPCOMING AUCTIONS'):
+  section==='Sales'?(page==='Watchlist'?'WATCHED LOTS · UI SESSION ONLY':page==='Sale Calendar'?'CHRONOLOGICAL SALES · COMPANY · VENUE · DATE':page==='Sale Companies'?'AUCTION HOUSE DIRECTORY · SALES CALENDAR':auction?depSaleLabel(auction).toUpperCase()+' · '+depSaleDateLabel(auction)+' · '+(auction.city||''):'NO UPCOMING AUCTIONS'):
   section==='Personnel'?'TRAINERS · JOCKEYS · OWNERS · STAFF':
   section==='Facilities'?'CAPACITY · QUALITY · MAINTENANCE':'INCOME · EXPENSES · CASH FLOW';
  return '<section class="ng-functional ng-stable-roster-v2 ng-dept-roster" data-department="'+safe(section)+'" data-page="'+safe(page)+'" data-roster-kind="'+(specs===DEP_COLUMNS.Meets?'meet':'regular')+'">'+
@@ -1904,7 +1916,7 @@ function departmentRoster(section,page='Overview'){
   finance+'<div class="ng-rs-tools">'+racingPicker+salePicker+saleHouseLink+saleCompanyPicker+'<label>VIEW <select data-ng-select="department-tab" aria-label="Choose '+safe(section)+' view">'+viewOptions+'</select></label>'+
   '<input id="ngDepartmentSearch" data-ng-input="department-search" type="search" aria-label="Search '+safe(section)+' roster" value="'+safe(APP.departmentSearch)+'" placeholder="Find records…" autocomplete="off"/>'+
   '<button data-ng="dept-demo" class="'+(demo?'on':'')+'" title="Preview-only invented values; no game data changes">'+(demo?'DEMO ON':'DEMO OFF')+'</button>'+
-  '<span class="ng-dpt-mode">FULL-WIDTH ROSTER</span></div>'+
+  '<span class="ng-dpt-mode">FULL-WIDTH ROSTER</span></div>'+salesDeskView+
   '<section class="ng-rs-roster"><header><strong>'+safe(section.toUpperCase())+' · SORTABLE ROSTER</strong><div class="ng-dpt-pager">'+pager+'</div></header>'+
   '<div class="ng-rs-scroll"><table class="ng-rs-table ng-dpt-table"><thead><tr>'+heads+'</tr></thead><tbody>'+
   (body||'<tr><td colspan="'+specs.length+'" class="ng-rs-no-results">'+(demo?'No matching records.':'No supported records in this view.')+'</td></tr>')+
@@ -2103,6 +2115,37 @@ window.addEventListener('click',e=>{
  }
  if(key==='dept-page'){APP.departmentPageIndex=Math.max(0,APP.departmentPageIndex+Number(val));return paint()}
  if(key==='dept-demo'){APP.departmentDemo=!APP.departmentDemo;APP.departmentPageIndex=0;return paint()}
+ if(key==='sale-watch'){
+  if(APP.section!=='Sales')return;
+  const r=APP.departmentVisible[Number(val)];
+  if(!r||r._kind!=='horse'||!r._watchKey)return;
+  if(APP.salesWatched[r._watchKey])delete APP.salesWatched[r._watchKey];
+  else APP.salesWatched[r._watchKey]={...r};
+  return paint();
+ }
+ if(key==='sale-open-watch'){
+  const r=APP.departmentVisible[Number(val)];
+  if(!r||!r._auctionId)return;
+  APP.departmentAuction=r._auctionId;
+  return pageTab('Catalogs');
+ }
+ if(['sale-prev','sale-next','sale-next-up'].includes(key)){
+  if(APP.section!=='Sales')return;
+  const auctions=depAuctionList(APP.departmentDemo);
+  const selected=auctions.findIndex(a=>a.id===APP.departmentAuction);
+  const current=selected>=0?selected:salesUpcomingIndex(auctions);
+  const target=key==='sale-next-up'?salesUpcomingIndex(auctions):
+   Math.max(0,Math.min(auctions.length-1,current+(key==='sale-prev'?-1:1)));
+  if(!auctions[target]||key==='sale-next'&&current>=auctions.length-1||
+   key==='sale-prev'&&current<=0)return;
+  APP.departmentAuction=auctions[target].id;
+  APP.departmentPageIndex=0;APP.departmentSearch='';APP.departmentSortKey='';
+  return pageTab('Catalogs');
+ }
+ if(key==='sale-catalog')return pageTab('Catalogs');
+ if(key==='sale-overview')return pageTab('Overview');
+ if(key==='sale-calendar')return pageTab('Sale Calendar');
+ if(key==='sale-company-list')return pageTab('Sale Companies');
  if(key==='dept-company'){APP.departmentCompany=val;return pageTab('Sale Calendar')}
  if(key==='dept-open'){
   const r=APP.departmentVisible[Number(val)];if(!r)return;
