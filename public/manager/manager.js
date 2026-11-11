@@ -304,7 +304,45 @@ function otherProfile(kind,name){
  panel('People & Connections',s.connections.length?pairs(s.connections):empty())+
  panel('Current Activity',s.notes.length?'<div class="mg-summary">'+s.notes.slice(0,8).map(x=>'<div>'+h(x)+'</div>').join('')+'</div>':empty())+'</div>'+stable+'</div></div>';
 }
+function operationsDashboard(view){
+ const viewIsStable=view==='stable',kind=viewIsStable?'horse':'track';
+ const base=records().filter(x=>x.kind===kind);
+ const staff=records().filter(x=>x.kind==='person');
+ const racing=records().filter(x=>x.kind==='race');
+ const office=cases();
+ const fixtureNodes=$$('.fixtureList .fixture').slice(0,12);
+ const fixtures=fixtureNodes.map(n=>'<tr>'+tableCell(h($('.d',n)?.textContent.trim()||'—'))+
+  tableCell(h($('h4',n)?.textContent.trim()||'—'),'strong')+
+  tableCell(h($('p',n)?.textContent.trim()||'—'),'dim')+'</tr>');
+ const roster=base.map(x=>'<tr>'+tableCell(linkRecord(x,x.name,kind==='horse'),'strong')+
+  tableCell(h(x.detail||'—'))+tableCell(h(kind==='horse'?owner(x.name):(x.track||'—')),'dim')+
+  tableCell(button('OPEN ›','open',x.kind+'|'+x.name+'|'+(x.track||''),'mg-rowlink'),'numeric')+'</tr>');
+ const secondary=viewIsStable?staff.map(x=>'<tr>'+tableCell(linkRecord(x,x.name),'strong')+
+  tableCell(h(x.detail||'Personnel record'))+tableCell(h(x.track||'—'),'dim')+
+  tableCell(button('OPEN ›','open','person|'+x.name+'|','mg-rowlink'),'numeric')+'</tr>'):
+  racing.map(x=>'<tr>'+tableCell(linkRecord(x,x.name),'strong')+tableCell(h(x.detail||'Stakes record'))+
+  tableCell(h(x.track||'—'),'dim')+tableCell(button('OPEN ›','open','race|'+x.name+'|'+(x.track||''),'mg-rowlink'),'numeric')+'</tr>');
+ const decisionRows=office.map(x=>'<div class="mg-op-case">'+
+  '<div class="mg-op-case-category">'+h(x.type||'OFFICE')+'</div>'+
+  '<div class="mg-op-case-text"><strong>'+h(x.title||x.id)+'</strong><small>'+h(x.source||'Office')+
+    ' · '+h(x.pressure||'Current file')+'</small></div>'+
+  button('REVIEW ›','open-case',x.id,'mg-rowlink')+'</div>').join('');
+ const title=viewIsStable?'Stable & Horses':'Racecourses',short=viewIsStable?'HORSE OPERATIONS':'TRACKS / VENUES';
+ const first=panel(title,compactTable([{text:'NAME',style:'width:34%'},{text:'RECORD'},
+  {text:viewIsStable?'OWNER':'LOCATION'},{text:'OPEN',style:'width:65px'}],roster),base.length+' RECORDS');
+ const second=panel('Upcoming Racing',fixtures.length?compactTable([{text:'DATE',style:'width:84px'},{text:'HORSE / RACE'},{text:'TRACK / CONDITIONS'}],fixtures):
+  empty('No sourced race targets are attached to the active schedule.'),'CURRENT RACE CALENDAR');
+ const third=panel(viewIsStable?'Personnel & Connections':'Stakes & Competition',
+  secondary.length?compactTable([{text:'NAME',style:'width:34%'},{text:'ROLE / RECORD'},
+   {text:'BASE / TRACK'},{text:'OPEN',style:'width:65px'}],secondary):
+  empty('No additional current source records.'),viewIsStable?staff.length+' PEOPLE':'RACING RECORDS');
+ const fourth=panel('Management Files',decisionRows||empty('No current Office cases.'),office.length+' LIVE CASES');
+ return pageBar(title,short,button('GLOBAL DIRECTORY','nav','search')+button('HISTORY ARCHIVE','nav','history'))+
+  '<div class="mg-content mg-op-content"><div class="mg-operations-grid '+(viewIsStable?'stable':'tracks')+'">'+
+  first+second+third+fourth+'</div></div>';
+}
 function department(view){
+ if(view==='stable'||view==='track')return operationsDashboard(view);
  const map={stable:['horse','Stable & Horses','HORSE OPERATIONS'],racing:['race','Racing & Stakes','CALENDAR / ENTRIES'],breeding:['farm','Breeding Operations','FARMS / BLOODSTOCK'],sales:['horse','Sales & Market','HORSES / SALES CONTEXT'],person:['person','Personnel Directory','TRAINERS, JOCKEYS & STAFF'],farm:['farm','Farms & Facilities','FARM / BARN DIRECTORY'],track:['track','Racecourses','TRACKS & VENUES'],world:['track','Racing World','GLOBAL RACING OPERATIONS'],finances:['horse','Financial Operations','OFFICE / FINANCIAL CONTEXT'],inbox:['horse','Office Correspondence','DECISION FILES']};
  const item=map[view]||map.stable,kind=item[0],list=records().filter(r=>r.kind===kind),game=readState();
  const status=list.map(r=>'<tr>'+tableCell(linkRecord(r,r.name,kind==='horse'),'strong')+
@@ -351,6 +389,7 @@ root.addEventListener('click',event=>{
  const action=el.dataset.mg,value=el.dataset.value||'';
  if(action==='nav'){nav(value);return}
  if(action==='open'){goFromSearch(value);return}
+ if(action==='open-case'){ui.caseId=value;nav('office');return}
  if(action==='case'){ui.caseId=value;const source=$('.app .msg[data-case="'+CSS.escape(value)+'"]');if(source)source.click();render();return}
  if(action==='choose'){const src=$$('.app [data-act]').find(x=>x.dataset.act==='Choose: '+value);if(src)src.click();setTimeout(render,60);return}
  if(action==='filter'){ui.type=value;render();return}
