@@ -321,7 +321,7 @@ test('Six department rosters share FM density but preserve their own management 
   'Department preview must never mutate the canonical game save');
  assert.ok(css.includes('.ng-dept-roster .ng-rs-scroll{overflow:hidden!important'),
   'Use one no-scroll roster viewport with page-based navigation');
- assert.ok(css.includes('--wtw-roster-text:9.5px')&&css.includes('font-size:var(--wtw-roster-text)!important')&&css.includes('.ng-dpt-pager'),
+ assert.ok(css.includes('--wtw-ui-list-text:9.5px')&&css.includes('--wtw-roster-text:var(--wtw-ui-list-text)')&&css.includes('font-size:var(--wtw-roster-text)!important')&&css.includes('.ng-dpt-pager'),
   'Use the same shared font tokens and navigation density across Stable and all departments');
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);
@@ -348,7 +348,7 @@ test('Tracks and Facilities are separate full-width directory rosters; all pages
  assert.ok(code.includes("r._kind==='demo-facility'"),'Do not create a fake source-profile link for a demo facility');
  assert.ok(office.includes('window.__wtwOfficeTrackDirectory = function()'),
   'Track names and meet dates must come from the authoritative Office record');
- assert.ok(css.includes('--wtw-roster-text:9.5px')&&css.includes('--wtw-roster-head:8.3px'));
+ assert.ok(css.includes('--wtw-ui-list-text:9.5px')&&css.includes('--wtw-roster-text:var(--wtw-ui-list-text)')&&css.includes('--wtw-roster-head:8.3px'));
  assert.ok(css.includes('font-size:var(--wtw-roster-name)!important')&&css.includes('font-size:var(--wtw-roster-head)!important'));
  assert.ok(css.includes('data-department="Tracks"')&&css.includes('data-roster-kind="meet"'));
 });
@@ -371,6 +371,86 @@ test('Racing opens on active meets and has a true cross-track My Horses mode',()
  assert.ok(code.includes("_track:trackName")&&js.includes("window.__wtwOfficeOpenSearchRecord?.(r._kind,r._name,r._track)"),
   'Stake rows need to open their correct race profile at the named track');
  assert.ok(office.includes('meetWindow:p.meetWindow'),'In-meet windows must remain read-only canonical facts');
+});
+
+test('A single type scale controls every main roster, profile and directory at all desktop breakpoints',()=>{
+ const css=get('public/next/next.css'),js=get('public/next/next.js');
+ const decl=selector=>{
+  const pos=css.indexOf(selector+'{');
+  assert.ok(pos>=0,'Missing typography selector '+selector);
+  return css.slice(pos+selector.length+1,css.indexOf('}',pos));
+ };
+ const hasSize=(selector,size)=>{
+  assert.ok(decl(selector).includes('font-size:'+size),
+   selector+' does not use the canonical size '+size);
+ };
+ // Stable, Racing, Breeding, Sales, Personnel, Facilities, Finances & Tracks
+ // must use one table, header, entity-name, status and control scale.
+ for(const section of ['Stable','Racing','Breeding','Sales','Personnel','Facilities','Finances','Tracks']){
+  assert.ok(section==='Stable'||js.includes('data-department='),section+' must use shared roster geometry');
+ }
+ const root=decl('.ng-manager-shell');
+ for(const field of ['--wtw-ui-list-text:9.5px','--wtw-ui-list-name:9.5px',
+  '--wtw-ui-list-meta:8.5px','--wtw-ui-profile-title:clamp(21px,1.7vw,24px)',
+  '--wtw-ui-profile-label:10px','--wtw-ui-profile-value:11px',
+  '--wtw-ui-profile-tab:11.5px']){
+  assert.ok(root.includes(field),'Root typography token absent: '+field);
+ }
+ const roster=decl('#wtwNextgen .ng-stable-roster-v2');
+ for(const alias of ['--wtw-roster-text:var(--wtw-ui-list-text)',
+  '--wtw-roster-name:var(--wtw-ui-list-name)',
+  '--wtw-roster-control:8.5px','--wtw-roster-head:8.3px']){
+  assert.ok(roster.includes(alias),'Roster typography alias absent: '+alias);
+ }
+ const checks=[
+  ['#wtwNextgen .ng-rs-table td','var(--wtw-roster-text)'],
+  ['#wtwNextgen .ng-dept-roster .ng-rs-table td','var(--wtw-roster-text)!important'],
+  ['#wtwNextgen .ng-rs-table th button','var(--wtw-roster-head)!important'],
+  ['#wtwNextgen .ng-dept-roster .ng-rs-table th button','var(--wtw-roster-head)!important'],
+  ['#wtwNextgen .ng-rs-horse','var(--wtw-roster-name)!important'],
+  ['#wtwNextgen .ng-dept-roster .ng-rs-table .ng-rs-horse','var(--wtw-roster-name)!important'],
+  ['#wtwNextgen .ng-rs-signal','var(--wtw-roster-status)'],
+  ['#wtwNextgen .ng-dept-roster .ng-rs-table .ng-rs-signal','var(--wtw-roster-status)'],
+  ['#wtwNextgen .ng-rs-tools button','var(--wtw-roster-control)!important'],
+  ['#wtwNextgen .ng-dpt-pager button','var(--wtw-roster-control)!important'],
+  ['#wtwNextgen .ng-rs-title strong','var(--wtw-roster-title)'],
+  ['#wtwNextgen .ng-rs-roster>header strong','var(--wtw-roster-section)'],
+  ['.ng-manager-row-name strong','var(--wtw-ui-list-name)'],
+  ['.ng-search-row-name','var(--wtw-ui-list-name)'],
+  ['.ng-manager-row-detail','var(--wtw-ui-list-text)'],
+  ['.ng-search-row-detail','var(--wtw-ui-list-text)'],
+  ['.ng-manager-columns','var(--wtw-ui-list-meta)'],
+  ['.ng-search-table-head','var(--wtw-ui-list-meta)']
+ ];
+ for(const [selector,size] of checks)hasSize(selector,size);
+ // Horse, person and track profiles retain hierarchy but not conflicting values.
+ for(const selector of [
+  '.ng-route-profile .ng-profile-horse .ng-profile-intro h2',
+  '.ng-route-profile .ng-profile-track .ng-profile-intro h2',
+  '.ng-route-profile .ng-profile-view:not(.ng-profile-horse) .ng-profile-intro h2'
+ ])hasSize(selector,'var(--wtw-ui-profile-title)!important');
+ for(const selector of [
+  '.ng-route-profile .ng-profile-horse .ng-profile-facts small',
+  '.ng-tier1-card .ng-data-row>span'
+ ])hasSize(selector,'var(--wtw-ui-profile-label)!important');
+ for(const selector of [
+  '.ng-route-profile .ng-profile-horse .ng-profile-facts strong',
+  '.ng-tier1-card .ng-data-row strong',
+  '.ng-person-attribute strong'
+ ])hasSize(selector,'var(--wtw-ui-profile-value)'+(selector.endsWith('strong')&&selector.startsWith('.ng-person-attribute')?'':'!important'));
+ for(const selector of [
+  '.ng-route-profile .ng-profile-view .ng-profiletabs button',
+  '.ng-route-profile .ng-profile-horse .ng-profiletabs button'
+ ])hasSize(selector,'var(--wtw-ui-profile-tab)!important');
+ // The responsive overrides are shared, not special font sizes per department.
+ assert.ok(css.includes('--wtw-ui-list-text:8.5px;--wtw-ui-list-name:9px;--wtw-ui-list-meta:8px;grid-template-columns:159px'),
+  '1280px management list scale must match the roster');
+ assert.ok(css.includes('--wtw-ui-list-text:8.5px;--wtw-ui-list-name:9px;--wtw-ui-list-meta:8px;grid-template-columns:46px'),
+  '1080px management list scale must match the roster');
+ assert.ok(css.includes('--wtw-roster-text:8.5px;--wtw-roster-head:7.5px;--wtw-roster-name:9px;--wtw-roster-status:8px;--wtw-roster-control:7.8px'));
+ assert.ok(css.includes('--wtw-roster-control:7.5px'), 'Narrow-screen toolbar control text must be shared');
+ assert.ok(!css.includes('#wtwNextgen .ng-dept-roster .ng-rs-table td{font-size:9px!important'),
+  'Department body text must not override Stable with a fixed 9px');
 });
 
 test('Horse athletic overview uses four sourced FM-style trait groups with explicit unassessed states',()=>{
