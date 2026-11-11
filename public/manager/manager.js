@@ -504,10 +504,13 @@ function operationsDashboard(view){
   {text:'OPEN',style:'width:65px'}],roster),base.length+' RECORDS');
  const second=panel('Upcoming Racing',fixtures.length?compactTable([{text:'DATE',style:'width:84px'},{text:'HORSE / RACE'},{text:'TRACK / CONDITIONS'}],fixtures):
   empty('No sourced race targets are attached to the active schedule.'),'CURRENT RACE CALENDAR');
- const third=panel(viewIsStable?'Personnel & Connections':'Stakes & Competition',
-  secondary.length?compactTable([{text:'NAME',style:'width:34%'},{text:'ROLE / RECORD'},
+ const personnelBody=secondary.length?compactTable([{text:'NAME',style:'width:34%'},{text:'ROLE / RECORD'},
    {text:'BASE / TRACK'},{text:'OPEN',style:'width:65px'}],secondary):
-  empty('No additional current source records.'),viewIsStable?staff.length+' PEOPLE':'RACING RECORDS');
+  empty('No additional current source records.');
+ const third=panel(viewIsStable?'Personnel & Connections':'Stakes & Competition',
+  personnelBody+(viewIsStable?'<div class="mg-stable-directory-action">'+
+   button('FULL PERSONNEL DIRECTORY ›','nav','person','mg-rowlink')+'</div>':''),
+  viewIsStable?staff.length+' PEOPLE':'RACING RECORDS');
  const fourth=panel('Management Files',decisionRows||empty('No current Office cases.'),office.length+' LIVE CASES');
  return pageBar(title,short,button('GLOBAL DIRECTORY','nav','search')+button('HISTORY ARCHIVE','nav','history'))+
   '<div class="mg-content mg-op-content"><div class="mg-operations-grid '+(viewIsStable?'stable':'tracks')+'">'+
