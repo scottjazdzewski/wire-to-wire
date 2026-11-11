@@ -69,7 +69,7 @@ function allRecords(){
  const pages=[['Office','office'],['Search','search'],['Stable','stable'],['Racing','racing'],['Sales','sales'],['Personnel','person'],['Farms','farm'],['Racecourses','track'],['Breeding','breeding'],['Finances','finances'],['History','history']];
  const registered=new Set(base.filter(r=>r.kind==='track').map(r=>r.name.toLowerCase()));
  const tracks=(ui.trackGeo?.tracks||[]).filter(r=>r.name&&!registered.has(r.name.toLowerCase()))
-  .map(r=>({kind:'track',name:r.name,detail:r.travel_node||locationName(r),track:r.country||'',
+  .map(r=>({kind:'track',name:r.name,detail:r.macro_circuit||r.registry||'Racing world record',track:r.travel_node||locationName(r),
    directory_only:true,track_id:r.id}));
  return base.concat(tracks,pages.map(r=>({kind:'screen',name:r[0],detail:'Management department',view:r[1]})));
 }
@@ -354,7 +354,7 @@ function otherProfile(kind,name){
 }
 function operationsDashboard(view){
  const viewIsStable=view==='stable',kind=viewIsStable?'horse':'track';
- const base=records().filter(x=>x.kind===kind);
+ const base=viewIsStable?records().filter(x=>x.kind==='horse'):allRecords().filter(x=>x.kind==='track');
  const staff=records().filter(x=>x.kind==='person');
  const racing=records().filter(x=>x.kind==='race');
  const office=cases();
@@ -392,7 +392,7 @@ function operationsDashboard(view){
 function departmentStudio(view){
  const all=records(),horses=all.filter(x=>x.kind==='horse'),
   people=all.filter(x=>x.kind==='person'),farms=all.filter(x=>x.kind==='farm'),
-  tracks=all.filter(x=>x.kind==='track'),races=all.filter(x=>x.kind==='race'),office=cases();
+  tracks=allRecords().filter(x=>x.kind==='track'),races=all.filter(x=>x.kind==='race'),office=cases();
  const fixtures=$$('.fixtureList .fixture').slice(0,18);
  const summary=([a,b,c,d])=>panel(a,b,c,d);
  const horseList=()=>compactTable([{text:'HORSE',style:'width:27%'},{text:'OWNER'},
