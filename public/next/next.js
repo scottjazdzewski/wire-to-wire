@@ -74,6 +74,7 @@ function goOffice(){
 function openMenu(section){
  APP.moreOpen=false;
  APP.departmentPageIndex=0;APP.departmentSearch='';APP.departmentSortKey='';
+ if(section==='Sales')APP.departmentAuction='';
  if(section==='History'){window.location.assign('/archive/?page=races');return}
  APP.section=section;APP.page='Overview';APP.custom='';
  if(actions[section])bridgeNode(originalAct(actions[section]));
@@ -90,8 +91,8 @@ function pageTab(name){if(APP.section==='History'){const pages={'Race Results':'
  }
  if(DEP_NAMES.has(s)){
   APP.departmentPageIndex=0;APP.departmentSearch='';APP.departmentSortKey='';
-  if(s==='Racing'&&name==='Overview')return bridgeNode(originalAct('Race Calendar'));
-  if(s==='Sales'&&name==='Overview')return bridgeNode(originalAct('Sales'));
+  if(s==='Racing'&&name==='Overview'){APP.custom='';return bridgeNode(originalAct('Race Calendar'))}
+  if(s==='Sales'&&name==='Overview'){APP.custom='';return bridgeNode(originalAct('Sales'))}
   return openCustomView(s+' — '+name,s,name);
  }
  if(s==='Stable'&&(name==='Overview'||name==='Horses'))return bridgeNode(originalAct('Stable'));
@@ -1536,6 +1537,7 @@ window.addEventListener('click',e=>{
  if(key==='dept-demo'){APP.departmentDemo=!APP.departmentDemo;APP.departmentPageIndex=0;return paint()}
  if(key==='dept-open'){
   const r=APP.departmentVisible[Number(val)];if(!r)return;
+  APP.custom='';APP.moreOpen=false;
   if(['horse','person','farm','track','race'].includes(r._kind)){
    if(window.__wtwOfficeOpenSearchRecord?.(r._kind,r._name))return schedulePaint(20);
    if(r._kind==='horse')return bridgeNode($$('.right .boardRows .rankRow').find(n=>$('strong',n)?.textContent.trim()===r._name));
