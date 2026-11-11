@@ -1269,6 +1269,101 @@ function depRows(section,page,demo,auction){
  return out;
 }
 
+
+function depAuctionList(preview){
+ if(preview)return [...DEP_AUCTIONS].sort((a,b)=>a.date.localeCompare(b.date));
+ const raw=state().salesState?.auctions;
+ return Array.isArray(raw)?raw.filter(a=>a&&liveStableDate(a.date)&&typeof a.name==='string')
+  .map((a,i)=>({id:String(a.id||i),name:a.name,date:a.date,city:a.location||'',lots:a.lots||[]}))
+  .sort((a,b)=>a.date.localeCompare(b.date)):[];
+}
+function depCell(value,key){
+ if(value==null||value==='')return '<span class="ng-rs-missing">—</span>';
+ const t=String(value);
+ if(['health','condition','status','morale','ready'].includes(key)){
+  const tone=/treat|unfit|injur|poor|overdue|declin/i.test(t)?'treat':
+   /watch|needs|risk|inspect|restricted|pending|not ready/i.test(t)?'watch':
+   /entered|ready|sound|excellent|good|high|active|confirmed|fit|^[89]\d%$|^100%$/i.test(t)?'sound':'unknown';
+  return liveStableSignal(tone,t,t);
+ }
+ if(['ca','pa'].includes(key)&&/^[1-5]$/.test(t))
+  return '<span class="ng-rs-stars" title="'+(APP.departmentDemo?'Fictional demo':'Recorded')+' rating '+t+'/5"><b>'+('★'.repeat(Number(t)))+'</b>'+('☆'.repeat(5-Number(t)))+'</span>';
+ return safe(t);
+}
+function depNumeric(v){
+ const s=String(v??'').trim().replace(/[$,%\s,]/g,'');
+ if(!/^-?\d+(?:\.\d+)?[kKmM]?$/.test(s))return null;
+ return Number(s.replace(/[kKmM]$/,''))*(/[mM]$/.test(s)?1000000:/[kK]$/.test(s)?1000:1);
+}
+function depPageLimit(){return Math.max(8,Math.min(22,Math.floor(((window.innerHeight||850)-250)/29)))}
+function departmentRoster(section,page='Overview'){
+ const demo=APP.departmentDemo;
+ const current=$('.dateChip')?.textContent.trim()||'2014-07-15';
+ const auctions=section==='Sales'?depAuctionList(demo):[];
+ const auction=auctions.find(a=>a.id===APP.departmentAuction)||auctions.find(a=>a.date>=current)||auctions.at(-1)||null;
+ const specs=DEP_COLUMNS[section];
+ let rows=depRows(section,page,demo,auction);
+ const search=APP.departmentSearch.trim().toLowerCase();
+ if(search)rows=rows.filter(r=>specs.some(([key])=>String(r[key]??'').toLowerCase().includes(search)));
+ const defaultSort=section==='Racing'?'date':section==='Sales'?'hip':section==='Finances'?'date':specs[0][0];
+ const selectedSort=specs.some(x=>x[0]===APP.departmentSortKey)?APP.departmentSortKey:defaultSort;
+ const sign=APP.departmentSortKey?(APP.departmentSortDesc?-1:1):(section==='Finances'?-1:1);
+ rows.sort((a,b)=>{
+  let av=selectedSort==='date'&&a._iso?a._iso:a[selectedSort],bv=selectedSort==='date'&&b._iso?b._iso:b[selectedSort];
+  const am=av===null||av===undefined||av==='',bm=bv===null||bv===undefined||bv==='';
+  if(am!==bm)return am?1:-1;
+  const an=depNumeric(av),bn=depNumeric(bv);
+  const comp=an!==null&&bn!==null?an-bn:String(av).localeCompare(String(bv),undefined,{numeric:true,sensitivity:'base'});
+  return comp*sign||String(a._name).localeCompare(String(b._name));
+ });
+ const limit=depPageLimit(),pages=Math.max(1,Math.ceil(rows.length/limit));
+ APP.departmentPageIndex=Math.min(Math.max(0,APP.departmentPageIndex),pages-1);
+ const shown=rows.slice(APP.departmentPageIndex*limit,(APP.departmentPageIndex+1)*limit);
+ APP.departmentVisible=shown;
+ const colgroup=specs.map(x=>'<col style="width:'+x[2]+'%">').join('');
+ const heads=specs.map(([key,label])=>'<th scope="col" aria-sort="'+(selectedSort===key?(sign===1?'ascending':'descending'):'none')+'"><button data-ng="dept-sort" data-val="'+key+'" title="Sort by '+safe(label)+'">'+safe(label)+'<span aria-hidden="true">'+(selectedSort===key?(sign===1?'▲':'▼'):'↕')+'</span></button></th>').join('');
+ const body=shown.map((r,i)=>{
+  return '<tr>'+specs.map(([key])=>{
+   let v=depCell(r[key],key);
+   if((key==='horse'||key==='name')&&r._kind!=='finance'){
+    const first=r._kind==='horse'?
+     (demo?'<span class="ng-rs-demo-owner" title="Fictional ownership marker">'+safe((r.owner||r._name||'?').charAt(0))+'</span>':horseOwnerBadge(r._name)):'';
+    v='<button class="ng-rs-horse" data-ng="dept-open" data-val="'+i+'" aria-label="Open '+safe(r._name)+'" title="Open source-linked '+safe(r._name)+'">'+first+'<span>'+safe(r._name)+'</span></button>';
+   }
+   return '<td title="'+safe(String(r[key]??''))+'">'+v+'</td>';
+  }).join('')+'</tr>';
+ }).join('');
+ const pager='<span class="ng-dpt-records">'+rows.length+' RECORDS · '+shown.length+' SHOWN</span>'+
+  '<button data-ng="dept-page" data-val="-1" '+(APP.departmentPageIndex===0?'disabled':'')+' aria-label="Previous page">‹ PREV</button>'+
+  '<strong>'+(APP.departmentPageIndex+1)+' / '+pages+'</strong>'+
+  '<button data-ng="dept-page" data-val="1" '+(APP.departmentPageIndex>=pages-1?'disabled':'')+' aria-label="Next page">NEXT ›</button>';
+ const viewOptions=(tabmap[section]||[]).map(t=>'<option value="'+safe(t)+'" '+(t===page?'selected':'')+'>'+safe(t)+'</option>').join('');
+ const salePicker=section==='Sales'?'<label class="ng-dpt-auction-picker">AUCTION <select data-ng-select="department-auction" aria-label="Choose auction chronologically">'+
+  (auctions.length?auctions.map(a=>'<option value="'+safe(a.id)+'" '+(auction?.id===a.id?'selected':'')+'>'+safe(stableShortDate(a.date)+' · '+a.name)+'</option>').join(''):'<option>No upcoming auction data</option>')+
+  '</select></label>':'';
+ const cash=availableCash();
+ const finance=section==='Finances'?'<div class="ng-dpt-finance">'+[
+  ['CASH',cash!=null?depMoney(cash):demo?'$2.84M':'—'],
+  ['MONTHLY INCOME',demo?'$186k':'—'],['MONTHLY COSTS',demo?'$143k':'—'],['NET CASH FLOW',demo?'+$43k':'—']
+ ].map(([name,value])=>'<span><small>'+safe(name)+'</small><b>'+safe(value)+'</b></span>').join('')+'</div>':'';
+ const purpose=section==='Racing'?'CURRENT BASE & SHIPPING':
+  section==='Breeding'?'STUD FEES, COVERINGS & PRODUCTION':
+  section==='Sales'?(auction?auction.name.toUpperCase()+' · '+stableShortDate(auction.date):'NO UPCOMING AUCTIONS'):
+  section==='Personnel'?'TRAINERS · JOCKEYS · OWNERS · STAFF':
+  section==='Facilities'?'CAPACITY · QUALITY · MAINTENANCE':'INCOME · EXPENSES · CASH FLOW';
+ return '<section class="ng-functional ng-stable-roster-v2 ng-dept-roster" data-department="'+safe(section)+'">'+
+  '<div class="ng-rs-title"><strong>'+safe(section.toUpperCase())+' · '+safe(page.toUpperCase())+'</strong><span>'+safe(purpose)+(demo?' · FICTIONAL PREVIEW':'')+'</span></div>'+
+  finance+'<div class="ng-rs-tools">'+salePicker+'<label>VIEW <select data-ng-select="department-tab" aria-label="Choose '+safe(section)+' view">'+viewOptions+'</select></label>'+
+  '<input id="ngDepartmentSearch" data-ng-input="department-search" type="search" aria-label="Search '+safe(section)+' roster" value="'+safe(APP.departmentSearch)+'" placeholder="Find records…" autocomplete="off"/>'+
+  '<button data-ng="dept-demo" class="'+(demo?'on':'')+'" title="Preview-only invented values; no game data changes">'+(demo?'DEMO ON':'DEMO OFF')+'</button>'+
+  '<span class="ng-dpt-mode">FULL-WIDTH ROSTER</span></div>'+
+  '<section class="ng-rs-roster"><header><strong>'+safe(section.toUpperCase())+' · SORTABLE ROSTER</strong><div class="ng-dpt-pager">'+pager+'</div></header>'+
+  '<div class="ng-rs-scroll"><table class="ng-rs-table ng-dpt-table"><colgroup>'+colgroup+'</colgroup><thead><tr>'+heads+'</tr></thead><tbody>'+
+  (body||'<tr><td colspan="'+specs.length+'" class="ng-rs-no-results">'+(demo?'No matching records.':'No supported records in this view.')+'</td></tr>')+
+  '</tbody></table></div><div class="ng-dpt-disclosure">'+(demo?'FICTIONAL DISPLAY VALUES ONLY — no prices, locations or medical facts saved.':'SOURCE RECORDS ONLY · unknown values shown as —')+
+  '</div></section></section>';
+}
+
 function managerDashboard(){
  const section=APP.section||'Office',page=APP.page||'Overview';
  const configs={
