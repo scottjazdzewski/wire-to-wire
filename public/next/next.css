@@ -1440,7 +1440,6 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 /* Six department management rosters share the ACTIVE Stable FM/OOTP geometry.
    One stylesheet, no external icons, no page/panel scrolling. */
 #wtwNextgen .ng-dept-roster .ng-rs-table th{width:auto}
-#wtwNextgen .ng-dept-roster .ng-rs-scroll{overflow:hidden!important;min-height:0!important;flex:1 1 auto!important}
 #wtwNextgen .ng-dept-roster .ng-rs-roster>header strong{white-space:nowrap}
 #wtwNextgen .ng-dept-roster .ng-rs-title span{min-width:0;overflow:hidden;text-overflow:ellipsis}
 #wtwNextgen .ng-dept-roster .ng-rs-tools{flex-wrap:nowrap!important}
