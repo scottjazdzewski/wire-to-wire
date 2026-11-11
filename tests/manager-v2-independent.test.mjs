@@ -29,6 +29,21 @@ test('Clean-sheet Manager V2 parses, keeps one stylesheet and retains the canoni
  assert.ok(js.includes('function withSilentOfficeRoute(task)'),'Manager navigation must protect browser history when syncing gameplay files');
 });
 
+test('Approved images resolve by immutable entity ID or exact name, never fabricate portraits or logos',()=>{
+ const js=get('public/manager/manager.js'),css=get('public/manager/manager.css');
+ const photos=JSON.parse(get('public/assets/office/decision-photo-index.json'));
+ const logos=JSON.parse(get('public/assets/office/organization-logo-index.json'));
+ assert.ok(photos.entities&&typeof photos.entities==='object');
+ assert.ok(logos.organizations&&typeof logos.organizations==='object');
+ assert.ok(js.includes('function entityPhoto(kind,name)'),'Shared photo resolution function required');
+ assert.ok(js.includes('id?kind+\':\'+id:null,kind+\':\'+name'),'Canonical ID takes precedence over ambiguous display name');
+ assert.ok(js.includes('ui.photos?.entities'),'Must use existing read-only image index');
+ assert.ok(js.includes('ui.logos?.organizations?.[v]'),'Owner badges must resolve approved organization crests');
+ assert.ok(js.includes('data-visual-source'),'Photograph vs shield provenance must be visible in DOM');
+ assert.ok(css.includes('.mg-portrait.fallback img{')&&css.includes('.mg-portrait.photo img{'));
+ assert.ok(!js.includes('fetch(\'https://'),'No arbitrary image providers or third-party portraits');
+});
+
 test('Four-tier fictional preview ratings are explicitly isolated from save and switchable to real',()=>{
  const js=get('public/manager/manager.js'),css=get('public/manager/manager.css');
  assert.ok(js.includes("get('ratings')!=='real'"),'Source-data view must be available with ratings=real');
