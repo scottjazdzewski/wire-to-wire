@@ -1443,6 +1443,11 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 #wtwNextgen .ng-dept-roster .ng-rs-roster>header strong{white-space:nowrap}
 #wtwNextgen .ng-dept-roster .ng-rs-title span{min-width:0;overflow:hidden;text-overflow:ellipsis}
 #wtwNextgen .ng-dept-roster .ng-rs-tools{flex-wrap:nowrap!important}
+#wtwNextgen .ng-dept-roster[data-department="Facilities"] .ng-dpt-facility-filters{display:flex;align-items:center;gap:4px;min-height:25px;flex:0 0 25px;padding:0 6px;border-bottom:1px solid #3c4b47;background:#171e22;overflow:hidden}
+#wtwNextgen .ng-dept-roster[data-department="Facilities"] .ng-dpt-facility-filters button{height:21px!important;min-height:21px!important;padding:2px 8px!important;border:1px solid #45564b!important;border-radius:2px!important;background:#152126!important;color:#b9c9bf!important;font-size:8.5px!important;font-weight:760!important;letter-spacing:.025em!important;white-space:nowrap}
+#wtwNextgen .ng-dept-roster[data-department="Facilities"] .ng-dpt-facility-filters button.on{background:#244d3d!important;border-color:#6b8f75!important;color:#f3e5b4!important;box-shadow:inset 0 -2px #dcc487!important}
+#wtwNextgen .ng-dept-roster[data-department="Facilities"] .ng-dpt-facility-filters button:focus-visible{outline:2px solid #dcc487;outline-offset:1px}
+
 #wtwNextgen .ng-dept-roster .ng-rs-tools label{display:flex;align-items:center;gap:4px;max-width:49%;white-space:nowrap}
 #wtwNextgen .ng-dept-roster .ng-rs-tools select{box-sizing:border-box;display:block;min-width:0;max-width:230px;height:23px;padding:2px 6px;background:#152126;color:#e1eadc;border:1px solid #45564b;border-radius:2px;font-size:var(--wtw-roster-input)}
 #wtwNextgen .ng-dept-roster .ng-rs-tools select:focus{outline:1px solid #d1bc80}
