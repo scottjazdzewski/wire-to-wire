@@ -1425,6 +1425,99 @@ function depAuctionList(preview){
   .map((a,i)=>({id:String(a.id||i),name:a.name,date:a.date,city:a.location||'',lots:a.lots||[]}))
   .sort((a,b)=>a.date.localeCompare(b.date)):[];
 }
+
+/* One connection router for every management roster and Tier One dossier.
+   Real profiles are opened only via the authoritative Office record dispatcher;
+   unregistered demo names get an honest preview rather than a dead link. */
+const DEPT_ENTITY_COLUMNS={
+ horse:'horse',name:'row',race:'race',track:'track',sire:'horse',dam:'horse',
+ trainer:'person',jockey:'person',owner:'connection',breeder:'connection',
+ consignor:'connection',farm:'farm'
+};
+function entityNotRecorded(name){
+ return !name||/^(?:—|-|unknown|not recorded|none|n\/a|private|your operation|unassigned|tbd|not entered|no target)$/i.test(String(name).trim());
+}
+function entitySourceMatch(name,preferred=''){
+ const rows=typeof window.__wtwOfficeSearchRecords==='function'?window.__wtwOfficeSearchRecords():[];
+ const matches=Array.isArray(rows)?rows.filter(x=>
+  ['horse','person','farm','track','race'].includes(x?.kind)&&x.name===name):[];
+ const exact=preferred&&preferred!=='connection'?matches.filter(x=>x.kind===preferred):matches;
+ // Refuse to send duplicate names to whichever arbitrary person/farm comes first.
+ return exact.length===1?exact[0]:null;
+}
+function entityKindForField(key,row){
+ if(key==='name'||key==='horse')return row?._kind||'';
+ if(key==='race')return row?._kind==='race'||row?._kind==='demo-race'?'race':'';
+ return DEPT_ENTITY_COLUMNS[key]||'';
+}
+function entityReferenceButton(name,kind,attrs='',label=''){
+ if(entityNotRecorded(name))return '<span>'+safe(name||'—')+'</span>';
+ const display=label||name;
+ return '<button type="button" class="ng-entity-reference" data-ng="named-entity" data-kind="'+safe(kind)+
+  '" data-name="'+safe(name)+'" '+attrs+' title="Open '+safe(name)+' record">'+safe(display)+' ↗</button>';
+}
+function profileEntityKind(label){
+ const t=String(label||'').toLowerCase();
+ if(/\b(?:sire|dam|foal|horse|progeny|bloodline)\b/.test(t))return 'horse';
+ if(/\b(?:trainer|jockey|rider|groom|veterinarian|farrier|manager|agent)\b/.test(t))return 'person';
+ if(/\b(?:owner|breeder|consignor|vendor|seller)\b/.test(t))return 'connection';
+ if(/\b(?:stud farm|farm|stable|barn|breeding station)\b/.test(t))return 'farm';
+ if(/\b(?:track|racecourse|venue)\b/.test(t))return 'track';
+ return '';
+}
+function namedProfileValue(label,value,preferred=''){
+ const kind=preferred||profileEntityKind(label);
+ if(!kind||entityNotRecorded(value))return '<strong>'+safe(value||'—')+'</strong>';
+ return entityReferenceButton(value,kind);
+}
+function previewRecordRoute(kind,name,row=null){
+ if(entityNotRecorded(name))return;
+ APP.previewEntity={kind,name,row:row||null};
+ // URL contains the specific preview name: browser back/forward and refresh
+ // keep the identity; it is not a new canonical horse or organization record.
+ openCustomView('Preview:'+encodeURIComponent(kind)+':'+encodeURIComponent(name),APP.section,APP.page);
+}
+function openEntityRecord(name,preferred='',row=null){
+ if(entityNotRecorded(name))return false;
+ const exact=entitySourceMatch(name,preferred);
+ const kind=exact?.kind||preferred||row?._kind||'record';
+ if(exact&&window.__wtwOfficeOpenSearchRecord?.(exact.kind,name,exact.track||row?._track)){
+  APP.custom='';APP.previewEntity=null;APP.moreOpen=false;
+  schedulePaint(20);
+  return true;
+ }
+ // Some source rows have a kind but are not yet registered for deep profiles.
+ // Show a clearly identified record placeholder, never a wrong destination.
+ previewRecordRoute(kind,name,row);
+ return true;
+}
+function previewRecordView(){
+ const fromState=APP.previewEntity;
+ const pieces=(APP.custom||'').split(':');
+ const kind=fromState?.kind||decodeURIComponent(pieces[1]||'record');
+ const name=fromState?.name||decodeURIComponent(pieces.slice(2).join(':')||'Record');
+ const demo=(fromState?.row?._kind||'').startsWith('demo')||
+  DEP_FACILITY_PREVIEW.some(item=>item[0]===name);
+ const fields=fromState?.row||{};
+ const fixture=DEP_FACILITY_PREVIEW.find(item=>item[0]===name);
+ const relevant=[
+  ['ENTITY TYPE',fields.type||fixture?.[1]||kind.toUpperCase()],
+  ['LOCATION',fields.location||fixture?.[2]||'Not recorded'],
+  ['OWNER',fields.owner||'Not recorded'],
+  ['CAPACITY',fields.capacity||'Not recorded'],
+  ['OPERATING STATUS',fields.status||'Not recorded']
+ ].filter(([label,value])=>!entityNotRecorded(value)||label==='ENTITY TYPE');
+ const description=demo?
+  'FICTIONAL DESIGN PREVIEW — this named operation has no registered game profile yet. None of the displayed information is part of the authoritative database.':
+  'SOURCE CONNECTION PENDING — this name is not connected to an individual profile in the current game records. No profile identity has been invented.';
+ return '<section class="ng-entity-preview ng-stable-roster-v2">'+
+  '<header><div><small>'+safe(demo?'DEMO RECORD':'UNLINKED RECORD')+' · '+safe(kind.toUpperCase())+'</small>'+
+  '<h2>'+safe(name)+'</h2></div><button data-ng="back" aria-label="Return to previous screen">← BACK</button></header>'+
+  '<p class="ng-entity-preview-notice">'+safe(description)+'</p>'+
+  '<div class="ng-entity-preview-grid">'+relevant.map(([label,value])=>
+   '<div><small>'+safe(label)+'</small><strong>'+safe(String(value))+'</strong></div>').join('')+'</div>'+
+  '<p class="ng-entity-preview-footer">Use the BACK button to return to the management roster. Registered entities open their full Horse, People, Farm or Track profiles.</p></section>';
+}
 function depCell(value,key){
  if(value==null||value==='')return '<span class="ng-rs-missing">—</span>';
  const t=String(value);
