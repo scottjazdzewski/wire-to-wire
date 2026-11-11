@@ -7,7 +7,7 @@ const $=(q,scope=document)=>scope.querySelector(q), $$=(q,scope=document)=>[...s
 const h=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const known=v=>v!=null&&String(v).trim()!==''&&!['—','Unknown','Not recorded','N/A'].includes(String(v).trim());
 const root=document.createElement('div');root.id='mgApp';root.setAttribute('aria-label','Wire to Wire Management Studio');document.body.appendChild(root);
-const ui={view:'office',q:'',type:'all',sort:'name',caseId:'powerline',catalog:null,photos:null,logos:null,personGeo:null,trackGeo:null,searchRecords:[],filterFocus:false,stage:'',renderCount:0,demoRatings:new URLSearchParams(location.search).get('ratings')!=='real'};
+const ui={view:'office',q:'',type:'all',sort:'name',caseId:'powerline',catalog:null,photos:null,logos:null,personGeo:null,trackGeo:null,searchRecords:[],filterFocus:false,stage:'',renderCount:0,stableQuery:'',stableFilter:'all',stableColumns:'all',stableFocus:false,demoRatings:new URLSearchParams(location.search).get('ratings')!=='real'};
 const readState=()=>{try{return JSON.parse(localStorage.getItem('wtwOfficeStateV30')||'{}')}catch{return {}}};
 const demoScore=(name,key)=>{
  let seed=2166136261;
@@ -121,15 +121,17 @@ function sortRosterColumn(header){
  if(!Number.isInteger(index)||index<0)return;
  const descending=header.getAttribute('aria-sort')==='ascending';
  const rows=Array.from(tbody.rows).map((row,ordinal)=>({row,ordinal,
-  text:row.cells[index]?.textContent?.replace(/\s+/g,' ').trim()||''}));
+  text:row.cells[index]?.dataset.sortValue??row.cells[index]?.textContent?.replace(/\s+/g,' ').trim()??''}));
  const numeric=text=>{
   const normalized=text.replace(/[$,%+]/g,'').replace(/,/g,'').trim();
   return /^[-+]?\d+(?:\.\d+)?$/.test(normalized)?Number(normalized):null;
  };
  const cmp=new Intl.Collator(undefined,{numeric:true,sensitivity:'base'});
  rows.sort((a,b)=>{
-  const av=numeric(a.text),bv=numeric(b.text);
-  const result=av!=null&&bv!=null?av-bv:cmp.compare(a.text,b.text);
+  const aMissing=!String(a.text).trim()||a.text==='—',bMissing=!String(b.text).trim()||b.text==='—';
+  if(aMissing!==bMissing)return aMissing?1:-1;
+  const av=numeric(String(a.text)),bv=numeric(String(b.text));
+  const result=av!=null&&bv!=null?av-bv:cmp.compare(String(a.text),String(b.text));
   return (descending?-result:result)||a.ordinal-b.ordinal;
  });
  tbody.append(...rows.map(x=>x.row));
@@ -140,7 +142,7 @@ function sortRosterColumn(header){
   if(marker)marker.textContent=active?(descending?'▾':'▴'):'↕';
  });
 }
-function tableCell(text,cls=''){return '<td'+(cls?' class="'+cls+'"':'')+'>'+text+'</td>'}
+function tableCell(text,cls='',sortValue){return '<td'+(cls?' class="'+cls+'"':'')+(sortValue!==undefined?' data-sort-value="'+h(String(sortValue??''))+'"':'')+'>'+text+'</td>'}
 function linkRecord(record,label,ownerBadge=false){
  const raw=(ownerBadge?ownerChip(record.name)+' ':'')+'<span>'+h(label||record.name)+'</span>';
  const locator=record.kind==='person'&&record.person_id?'@'+record.person_id:(record.track||'');
@@ -781,7 +783,8 @@ function financeStudio(){
  cashPanel+signalsPanel+salesPanel+ledger+'</div></div>';
 }
 function department(view){
- if(view==='stable'||view==='track')return operationsDashboard(view);
+ if(view==='stable')return stableRosterView();
+ if(view==='track')return operationsDashboard(view);
  if(view==='finances')return financeStudio();
  const studio=departmentStudio(view);if(studio)return studio;
  const map={stable:['horse','Stable & Horses','HORSE OPERATIONS'],racing:['race','Racing & Stakes','CALENDAR / ENTRIES'],breeding:['farm','Breeding Operations','FARMS / BLOODSTOCK'],sales:['horse','Sales & Market','HORSES / SALES CONTEXT'],person:['person','Personnel Directory','TRAINERS, JOCKEYS & STAFF'],farm:['farm','Farms & Facilities','FARM / BARN DIRECTORY'],track:['track','Racecourses','TRACKS & VENUES'],world:['track','Racing World','GLOBAL RACING OPERATIONS'],finances:['horse','Financial Operations','OFFICE / FINANCIAL CONTEXT'],inbox:['horse','Office Correspondence','DECISION FILES']};
@@ -815,9 +818,9 @@ function render(){
  ui.renderCount++;
  const route=activeRoute();
  root.innerHTML=header()+sidebar()+'<main class="mg-main" aria-label="Management workspace">'+view()+'</main>';
- if(ui.filterFocus){
-  const input=$('#mgSearch')||$('#mgTopSearch');if(input){input.focus();input.setSelectionRange(input.value.length,input.value.length)}
-  ui.filterFocus=false;
+ if(ui.filterFocus||ui.stableFocus){
+  const input=ui.stableFocus?$('#mgStableSearch'):($('#mgSearch')||$('#mgTopSearch'));if(input){input.focus();input.setSelectionRange(input.value.length,input.value.length)}
+  ui.filterFocus=false;ui.stableFocus=false;
  }
 }
 function goFromSearch(value){
@@ -836,6 +839,8 @@ root.addEventListener('click',event=>{
  if(action==='open-case'){ui.caseId=value;const source=$('.app .msg[data-case="'+CSS.escape(value)+'"]');if(source)withSilentOfficeRoute(()=>source.click());nav('office');return}
  if(action==='case'){ui.caseId=value;const source=$('.app .msg[data-case="'+CSS.escape(value)+'"]');if(source)withSilentOfficeRoute(()=>source.click());render();return}
  if(action==='choose'){const src=$$('.app [data-act]').find(x=>x.dataset.act==='Choose: '+value);if(src)src.click();setTimeout(render,60);return}
+ if(action==='stable-filter'){ui.stableFilter=value;render();return}
+ if(action==='stable-columns'){ui.stableColumns=value;render();return}
  if(action==='filter'){ui.type=value;render();return}
  if(action==='sort'){ui.sort=value;render();return}
  if(action==='continue'){sourceAction('Continue');setTimeout(render,100);return}
@@ -844,6 +849,7 @@ root.addEventListener('click',event=>{
  if(action==='forward'){history.forward();setTimeout(render,100);return}
 });
 root.addEventListener('input',event=>{
+ if(event.target.dataset.mgInput==='stable-search'){ui.stableQuery=event.target.value;ui.stableFocus=true;render();return}
  if(!['search','topsearch'].includes(event.target.dataset.mgInput))return;
  ui.q=event.target.value;ui.view='search';ui.filterFocus=true;
  history.replaceState({mg:'search'},'',stateUrl('search'));
