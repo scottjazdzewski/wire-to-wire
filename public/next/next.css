@@ -1365,6 +1365,7 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 #wtwNextgen .ng-rs-table tbody tr:nth-child(odd){background:#1e292c}
 #wtwNextgen .ng-rs-table tbody tr:nth-child(even){background:#172126}
 #wtwNextgen .ng-rs-table tbody tr:hover{background:#315443}
+#wtwNextgen .ng-wtw-roster-row[hidden]{display:none!important}
 #wtwNextgen .ng-rs-table th:first-child,#wtwNextgen .ng-rs-table td:first-child{position:sticky;left:0;z-index:3;box-shadow:2px 0 0 #405748}
 #wtwNextgen .ng-rs-table th:first-child{z-index:8;background:#28353a}
 #wtwNextgen .ng-rs-table tbody tr:nth-child(odd) td:first-child{background:#1e292c}
