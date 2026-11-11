@@ -419,15 +419,19 @@ body>.app,body>#routeShell,body>#toast,body>.wtw-site-archive-link{display:none!
 .mg-home-inbox .mg-section>.mg-feed-row{
  flex:1 1 0;min-height:0;height:auto!important;padding-top:4px;padding-bottom:4px
 }
-.mg-home-case .mg-section{display:flex;flex-direction:column}
-.mg-home-case .mg-case-top{flex:1 1 0;min-height:0;max-height:none}
+.mg-home-case .mg-section{
+ display:grid!important;grid-template-columns:minmax(0,1fr);
+ grid-template-rows:29px minmax(125px,2fr) auto minmax(72px,1fr) 34px!important;
+ overflow:hidden!important
+}
+.mg-home-case .mg-case-top{grid-row:2;min-height:0;max-height:none;flex:0 1 auto}
 .mg-home-case .mg-case-copy{padding:10px 11px}
 .mg-home-case .mg-case-copy h2{font-size:clamp(19px,1.8vw,27px)}
-.mg-home-case .mg-case-choices{flex:0 0 auto}
+.mg-home-case .mg-case-choices{grid-row:3;flex:0 0 auto}
 .mg-home-case .mg-choice{min-height:68px;padding:7px}
-.mg-home-case .mg-case-intelligence{flex:1 1 auto;min-height:0;overflow:hidden}
+.mg-home-case .mg-case-intelligence{grid-row:4;flex:0 1 auto;min-height:0;overflow:hidden}
 .mg-home-case .mg-intel-row{min-height:0;padding:5px 7px}
-.mg-home-case .mg-case-next{flex:0 0 34px;min-height:34px}
+.mg-home-case .mg-case-next{grid-row:5;flex:0 0 34px;min-height:34px}
 .mg-home-side .mg-table-wrap,
 .mg-home-bottom .mg-table-wrap{overflow:hidden!important;min-height:0}
 .mg-home-bottom .mg-table{width:100%;table-layout:fixed}
