@@ -235,7 +235,7 @@ function header(){
  // Do not waste desktop height on unrelated department subtabs.
  const profileRoute=APP.custom?null:currentRoute();
  const hasOwnNavigation=Boolean(profileRoute&&/Profile$/.test(profileRoute.kicker))||
-  APP.custom==='Search'||APP.custom==='Organization Overview';
+  APP.custom==='Search'||APP.custom==='Organization Overview'||Boolean(APP.custom&&APP.custom.includes(' — '));
  return `<header class="ng-global" aria-label="Wire to Wire application navigation">
   <div class="ng-hist"><button data-ng="back" aria-label="Previous page" title="Previous page">${glyph('left',15)}</button><button data-ng="forward" aria-label="Next page" title="Next page">${glyph('right',15)}</button></div>
   <button class="ng-mini-home" data-ng="office" title="Racing Office" aria-label="Go to Racing Office"><img class="ng-logo-mini" src="/assets/wtw-office-approved-logo.png" alt="Wire to Wire"/></button>
@@ -936,6 +936,86 @@ function functionalRoute(route){
  }
  return null;
 }
+// Unified source-backed desktop management screen for every department that
+// does not already have a deeper original Office route. The same roster/summary
+// primitives apply across stable, racing, people, farms, world and finance.
+function managerDashboard(){
+ const section=APP.section||'Office',page=APP.page||'Overview';
+ const configs={
+  Office:{kinds:['decision','horse','person'],label:'RACING OPERATIONS'},
+  Stable:{kinds:['horse','person','farm'],label:'HORSES & STABLE OPERATIONS'},
+  Racing:{kinds:['race','track','horse'],label:'RACES & ACTIVE TARGETS'},
+  Breeding:{kinds:['farm','horse','person'],label:'BREEDING WORLD RECORDS'},
+  Sales:{kinds:['horse','farm','decision'],label:'HORSES & MARKET FILES'},
+  Personnel:{kinds:['person','horse'],label:'PEOPLE & ASSIGNMENTS'},
+  Facilities:{kinds:['farm','track'],label:'FARMS & RACING FACILITIES'},
+  Finances:{kinds:['decision','horse'],label:'FINANCIAL CONTEXT'},
+  World:{kinds:['track','race','person','farm'],label:'RACING WORLD DIRECTORY'}
+ };
+ const config=configs[section]||configs.Office;
+ const all=globalSearchItems();APP.searchIndex=all;
+ const kindFilter=({kind,detail,name})=>{
+  if(!config.kinds.includes(kind))return false;
+  if(section==='Personnel'&&/^(Trainers|Jockeys|Owners|Staff)$/.test(page)&&kind==='person'){
+   const role=(detail||'').toLowerCase(),target={Trainers:'trainer',Jockeys:'jockey',Owners:'owner',Staff:'staff'}[page];
+   return role.includes(target)||(page==='Staff'&&role.includes('groom'));
+  }
+  if(section==='Facilities'&&page==='Farms')return kind==='farm';
+  if(section==='Facilities'&&page==='Training Centers')return kind==='farm'||kind==='track';
+  if(section==='Racing'&&page==='Results')return kind==='race';
+  if(section==='World'&&page==='Tracks')return kind==='track';
+  if(section==='World'&&page==='Major Races')return kind==='race';
+  if(section==='Sales'&&page==='Auctions')return kind==='decision'||kind==='horse';
+  return true;
+ };
+ const found=all.map((r,i)=>({...r,sourceIndex:i})).filter(kindFilter);
+ const items=found.filter(r=>r.kind==='horse'||r.kind==='person'||r.kind==='farm'||r.kind==='track'||r.kind==='race'||r.kind==='decision');
+ const messages=currentMessages(),open=messages.filter(m=>!m.resolved);
+ const upcoming=racingRows();
+ const records=items.map(r=>{
+  const owner=r.kind==='horse'?horseOwnership(r.name):null;
+  const secondary=r.kind==='horse'?(owner?.name||'Not recorded'):r.kind==='race'?(r.track||'—'):(r.detail||'—');
+  const detail=r.kind==='horse'?(horseRows().find(h=>h.name===r.name)?.activity||'Horse file'):r.detail||'Connected record';
+  return '<button class="ng-manager-row" type="button" data-ng="search-go" data-val="'+r.sourceIndex+'" aria-label="Open '+safe(r.name)+'">'+
+   '<span class="ng-manager-row-type">'+safe(r.kind.toUpperCase())+'</span>'+
+   '<span class="ng-manager-row-name">'+(r.kind==='horse'?horseOwnerBadge(r.name):'')+'<strong>'+safe(r.name)+'</strong></span>'+
+   '<span class="ng-manager-row-detail">'+safe(detail)+'</span>'+
+   '<span class="ng-manager-row-context" title="'+safe(secondary)+'">'+safe(secondary)+'</span>'+
+   '<span class="ng-manager-row-open">'+glyph('right',12)+'</span></button>';
+ }).join('');
+ const caseList=messages.slice(0,7).map(m=>'<button class="ng-manager-case" data-ng="case" data-val="'+safe(m.case)+'">'+
+  '<span class="ng-manager-case-indicator '+(m.resolved?'resolved':m.urgent?'urgent':'')+'"></span>'+
+  '<span><strong>'+safe(m.title)+'</strong><small>'+safe(m.from)+'</small></span>'+
+  '<span class="ng-manager-case-state">'+(m.resolved?'REVIEWED':m.urgent?'ACTION':'OPEN')+'</span></button>').join('');
+ const schedule=upcoming.slice(0,6).map((r,i)=>'<button class="ng-manager-fixture" data-ng="fixture" data-val="'+i+'">'+
+  '<span>'+safe(r.date)+'</span><strong>'+safe(r.name)+'</strong><small>'+safe(r.track)+'</small><em>'+safe(r.status||'TARGET')+'</em></button>').join('');
+ const metrics=[
+  ['CONNECTED FILES',String(items.length)],
+  ['OPEN DECISIONS',String(open.length)],
+  ['RACE TARGETS',String(upcoming.length)],
+  ['AVAILABLE CASH',cashDisplay()]
+ ].map(([label,value])=>'<div class="ng-manager-metric"><small>'+label+'</small><strong>'+safe(value)+'</strong></div>').join('');
+ const sections=(tabmap[section]||[]).filter(x=>x!=='Overview');
+ return '<section class="ng-manager-screen">'+
+  '<header class="ng-manager-head"><div class="ng-manager-identity">'+
+   '<span>'+safe(section.toUpperCase())+' / '+safe(page.toUpperCase())+'</span>'+
+   '<h2>'+safe(config.label)+'</h2></div>'+
+   '<div class="ng-manager-controls"><label>RECORD VIEW <select data-ng-select="manager-screen" aria-label="Open department screen">'+
+    '<option value="Overview" '+(page==='Overview'?'selected':'')+'>Overview</option>'+
+    sections.map(x=>'<option value="'+safe(x)+'" '+(page===x?'selected':'')+'>'+safe(x)+'</option>').join('')+
+    '</select></label><button data-ng="custom" data-val="Search">'+glyph('search',13)+' SEARCH ALL</button></div></header>'+
+  '<div class="ng-manager-metrics">'+metrics+'</div>'+
+  '<div class="ng-manager-workspace"><section class="ng-manager-primary"><header>'+
+   '<strong>'+safe(page==='Overview'?'CONNECTED WORLD RECORDS':page.toUpperCase()+' · CONNECTED RECORDS')+'</strong>'+
+   '<span>'+items.length+' VERIFIED LINKS TO EXISTING PAGES</span></header>'+
+   '<div class="ng-manager-columns"><span>TYPE</span><span>NAME</span><span>ROLE / ACTIVITY</span><span>OWNER / LOCATION</span><span></span></div>'+
+   '<div class="ng-manager-rows">'+(records||'<p class="ng-manager-empty">No source-linked records for this screen yet. Nothing has been invented to fill the table.</p>')+'</div></section>'+
+   '<aside class="ng-manager-sidebar"><section class="ng-manager-secondary"><header><strong>DECISION INBOX</strong><span>'+open.length+' OPEN</span></header>'+
+     '<div class="ng-manager-secondary-list">'+caseList+'</div></section>'+
+    '<section class="ng-manager-secondary"><header><strong>RACING CALENDAR</strong><span>'+upcoming.length+' TARGETS</span></header>'+
+     '<div class="ng-manager-secondary-list">'+(schedule||'<p class="ng-manager-empty">No recorded race targets.</p>')+'</div></section>'+
+   '</aside></div></section>';
+}
 function renderRoute(){const route=APP.custom?null:currentRoute();const title=route?.title||APP.custom||'Page';const kicker=route?.kicker||APP.section;const bdg=route?badge(({'Horse Profile':'horse','People Profile':'people','Farm Profile':'farm_stable','Track Profile':'track','Race Calendar':'meet_schedule','Stable':'farm_stable','Sales':'connections','News':'history','World':'track','Opportunity Board':'reputation'}[route.kicker])||'history'):pageBadge();
 let body='';const profile=route&&/Profile$/.test(route.kicker)?profileDetail(route):null;const functional=route?functionalRoute(route):null;if(profile)body=profile;else if(functional)body=functional;else if(route)body=route.body;else if(APP.custom==='Organization Overview'){body=organizationOverview()}
 else if(APP.custom==='Due Actions'){body=dueActionOverview()}
@@ -943,9 +1023,9 @@ else if(APP.custom==='Messages'){body=`<section class="ng-customcard"><h3>Messag
 else if(APP.custom==='Decisions'){body=`<section class="ng-customcard"><h3>Today's Decisions</h3>${currentMessages().map(m=>`<button data-ng="case" data-val="${safe(m.case)}">${safe(m.title)} ↗</button>`).join('')}</section>`}
 else if(APP.custom==='Opportunities'){body=`<section class="ng-customcard"><h3>Opportunity Board</h3><p>Uncommitted racing and commercial leads from the Office's original data.</p><button data-ng="action" data-val="Open opportunity board">OPEN EXISTING OPPORTUNITY BOARD ↗</button></section>`}
 else if(APP.custom==='Search'){body=searchView()}
-else {const category=APP.custom||APP.section;const features=(tabmap[APP.section]||[]).filter(x=>x!=='Overview');body=`<div class="ng-custompage">${features.map(x=>`<section class="ng-customcard"><h3>${safe(x)}</h3><p>The ${safe(category)} view is reserved for source-connected records. We won't invent figures, horse IDs, or outcomes.</p><button data-ng="tab" data-val="${safe(x)}">OPEN ${safe(x).toUpperCase()} ↗</button></section>`).join('')}</div>`}
-const isProfile=Boolean(profile),isOrganization=APP.custom==='Organization Overview',isSearch=APP.custom==='Search';
-return `<main class="ng-route ${isProfile?'ng-route-profile':isOrganization?'ng-route-organization':isSearch?'ng-route-search':''}">${isProfile||isOrganization?'':`<header class="ng-routeheading"><span class="ng-route-badge-slot" aria-hidden="true">${APP.custom==='Organization Overview'?organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',true,true):`<img class="ng-routebadge" src="${safe(bdg)}" alt=""/>`}</span><div class="ng-routetext"><small>${safe(kicker)}</small><h1>${safe(title)}</h1></div><button class="ng-back" data-ng="office">← RACING OFFICE</button></header>`}<div class="ng-routegrid" data-route-key="${safe((route?.kicker||APP.custom||APP.section)+'|'+(route?.title||APP.custom||APP.page))}"><div class="ng-routeinner">${body}</div></div></main>`;}
+else {body=managerDashboard()}
+const isProfile=Boolean(profile),isOrganization=APP.custom==='Organization Overview',isSearch=APP.custom==='Search',isManager=body.startsWith('<section class="ng-manager-screen">');
+return `<main class="ng-route ${isProfile?'ng-route-profile':isOrganization?'ng-route-organization':isSearch?'ng-route-search':isManager?'ng-route-manager':''}">${isProfile||isOrganization||isManager?'':`<header class="ng-routeheading"><span class="ng-route-badge-slot" aria-hidden="true">${APP.custom==='Organization Overview'?organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',true,true):`<img class="ng-routebadge" src="${safe(bdg)}" alt=""/>`}</span><div class="ng-routetext"><small>${safe(kicker)}</small><h1>${safe(title)}</h1></div><button class="ng-back" data-ng="office">← RACING OFFICE</button></header>`}<div class="ng-routegrid" data-route-key="${safe((route?.kicker||APP.custom||APP.section)+'|'+(route?.title||APP.custom||APP.page))}"><div class="ng-routeinner">${body}</div></div></main>`;}
 function paint(){
  if(!APP.ready)return;
  const oldRoute=$('.ng-routegrid',root),oldTab=$('.ng-profiletabs .on',root)?.dataset.val||'';
@@ -1032,7 +1112,11 @@ window.addEventListener('click',e=>{
 },true);
 root.addEventListener('change',event=>{
   const field=event.target;
-  if(field.matches('select[data-ng-select="profile-record"]')&&field.value){
+  if(field.matches('select[data-ng-select="manager-screen"]')&&field.value){
+  pageTab(field.value);
+  return;
+ }
+ if(field.matches('select[data-ng-select="profile-record"]')&&field.value){
    APP.detailTab=field.value;
    paint();
   }
