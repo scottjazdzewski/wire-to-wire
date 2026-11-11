@@ -1130,6 +1130,25 @@ function functionalRoute(route){
 // Unified source-backed desktop management screen for every department that
 // does not already have a deeper original Office route. The same roster/summary
 // primitives apply across stable, racing, people, farms, world and finance.
+/* Domain-specific department roster structures; no authoritative game-data edits. */
+const DEP_NAMES=new Set(['Racing','Breeding','Sales','Personnel','Facilities','Finances']);
+const DEP_COLUMNS={
+ Racing:[['date','DATE',7],['track','TRACK',8],['race','RACE',6],['class','CLASS',7],['surface','SURF',4],['distance','DIST',5],['purse','PURSE',7],['horse','HORSE',11],['base','CURRENT BASE',12],['ship','SHIP MI',6],['jockey','JOCKEY',9],['trainer','TRAINER',8],['ready','READY',5],['status','ENTRY',5]],
+ Breeding:[['horse','HORSE',12],['age','AGE',3],['sex','SEX',3],['sire','SIRE',9],['dam','DAM',9],['farm','FARM',9],['status','BREED STATUS',7],['health','HEALTH',6],['pedigree','PED',5],['value','BREED VAL',6],['owner','OWNER',10],['studFee','STUD FEE',8],['bookings','BOOK',5],['foals','FOALS',4],['winners','WINS',4]],
+ Sales:[['hip','HIP',4],['horse','HORSE',12],['age','AGE',3],['sex','SEX',3],['sire','SIRE',11],['dam','DAM',11],['consignor','CONSIGNOR',10],['reserve','RESERVE',8],['bid','CURRENT BID',8],['value','EST VALUE',8],['ca','CA',4],['pa','PA',4],['condition','COND',7],['status','SALE STATUS',7]],
+ Personnel:[['name','PERSON',13],['age','AGE',3],['role','ROLE',10],['ca','CA',4],['pa','PA',4],['reputation','REP',6],['specialty','SPECIALTY',10],['morale','MORALE',6],['workload','LOAD',6],['salary','SALARY',8],['contract','CONTRACT',8],['assignment','ASSIGNED',9],['base','BASE',9],['wins','WINS',4]],
+ Facilities:[['name','FACILITY',15],['type','TYPE',10],['location','CITY / STATE',15],['capacity','CAP',6],['occupied','USED',6],['free','FREE',5],['condition','COND',7],['quality','QUALITY',8],['staff','STAFF',5],['cost','MONTHLY COST',10],['owner','OWNER',13]],
+ Finances:[['date','DATE',11],['category','CATEGORY',16],['description','TRANSACTION / PURPOSE',28],['department','HORSE / DEPARTMENT',19],['income','INCOME',10],['expense','EXPENSE',10],['balance','BALANCE',6]]
+};
+const DEP_AUCTIONS=[
+ {id:'july',date:'2014-07-19',name:'July Select Sale',city:'Lexington, KY'},
+ {id:'summer',date:'2014-08-06',name:'Summer Yearling Sale',city:'Saratoga Springs, NY'},
+ {id:'september',date:'2014-09-09',name:'September Yearling Sale',city:'Lexington, KY'},
+ {id:'november',date:'2014-11-04',name:'November Breeding Stock Sale',city:'Lexington, KY'}
+];
+function depHash(v){let x=13;for(const c of String(v))x=(x*31+c.charCodeAt(0))%9973;return x}
+function depMoney(n){if(n==null||n==='')return '';return typeof n==='number'?'$'+Math.round(n).toLocaleString('en-US'):String(n)}
+
 function managerDashboard(){
  const section=APP.section||'Office',page=APP.page||'Overview';
  const configs={
