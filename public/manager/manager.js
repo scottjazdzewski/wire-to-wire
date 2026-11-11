@@ -251,12 +251,12 @@ function identity(kind,name,record){
   origin=[sex?'Sex '+sex:'',age?'Age '+age:'',born?'Born '+born:'',loc?'Foaled '+loc:''].filter(Boolean);
   extras=p?.career?.slice(0,4)||[];
  }else if(kind==='person'){
-  const record=geographicPerson(name),birth=record?.birthplace,base=record?.opening_base;
+  const record=geographicPerson(name),birth=record?.birthplace,base=record?.opening_base,careerBase=record?.career_base;
   const role=p?.sub?.replace(/^Job:\s*/i,'')||srcValue(f,'Role')||record?.role||'';
   const flag=geoFlag(birth?.flag_code);
   origin=[role?'ROLE '+role:'',birth?.country?(flag?flag+' ':'')+'BIRTH COUNTRY '+birth.country:'',
     birth?.city?'BORN '+[birth.city,birth.region].filter(known).join(', '):'',
-    base?'1999 BASE '+locationName(base):'',
+    base?'1999 BASE '+locationName(base):careerBase?'RECORDED CAREER BASE '+locationName(careerBase):'',
     ...f.filter(([key])=>!/^(role|job|birthplace|born|country|base|location)$/i.test(key)).slice(0,2).map(x=>x[0]+' '+x[1])].filter(Boolean);
   extras=p?.career?.slice(0,3)||[];
  }else if(kind==='track'){
@@ -464,7 +464,7 @@ function departmentStudio(view){
    tableCell(h(readState().calendarState?.[x.name]?.race_target||'—'),'gold')+
    tableCell(button('OPEN ›','open','horse|'+x.name+'|','mg-rowlink'),'numeric')+'</tr>'));
  const peopleList=(list=people)=>compactTable([{text:'PERSON',style:'width:34%'},{text:'ROLE / PROFESSIONAL FILE'},
-   {text:'1999 BASE / LOCATION'},{text:'OPEN',style:'width:64px'}],list.map(x=>'<tr>'+
+   {text:'RECORDED LOCATION'},{text:'OPEN',style:'width:64px'}],list.map(x=>'<tr>'+
    tableCell(linkRecord(x,x.name),'strong')+tableCell(h(x.detail||'Personnel record'))+
    tableCell(h(x.track||'—'),'dim')+tableCell(button('OPEN ›','open','person|'+x.name+'|'+(x.person_id?'@'+x.person_id:''),'mg-rowlink'),'numeric')+'</tr>'));
  const placeList=(list,kind)=>compactTable([{text:'LOCATION',style:'width:33%'},{text:'RECORD / BASE'},
