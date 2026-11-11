@@ -1058,6 +1058,9 @@
     showToast(act); return true;
   }
   document.addEventListener('click', function(e){
+    // The clean-sheet Management Studio owns all input inside its own root.
+    // The original Office capture delegate must not consume or stop its clicks.
+    if(e.target.closest('#mgApp'))return;
     const sourceName = e.target.closest('.msg .from');
     if(sourceName){
       const n=sourceName.textContent.trim();
