@@ -65,7 +65,7 @@ function titleCaseUIRole(value){
   (word,first,rest)=>/^[A-Z]{2,}$/.test(word)?word:first.toUpperCase()+rest.toLowerCase());
 }
 function titleCaseOfficeFact(value){
- return String(value??'').trim().replace(/\\b([a-z])([a-z]*)/gi,
+ return String(value??'').trim().replace(/\b([a-z])([a-z]*)/gi,
   (word,first,rest)=>/^[A-Z]{2,}$/.test(word)?word:first.toUpperCase()+rest.toLowerCase());
 }
 function goOffice(){
