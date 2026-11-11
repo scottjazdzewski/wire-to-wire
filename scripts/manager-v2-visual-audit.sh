@@ -20,7 +20,7 @@ capture(){
   grep -q "$marker" "visual-audit/manager-v2/dom/$name.html" || { echo "V2 render missing $marker on $name" >&2; exit 1; }
   test -s "visual-audit/manager-v2/screenshots/$name.png"
 }
-capture racing-office '' 'mg-home-grid'
+capture racing-office '' 'mg-home-top'
 capture global-search '?ui=search' 'mg-search-layout'
 capture horse-profile '?page=horse&name=The+Last+Match' 'mg-profile-grid4'
 capture people-profile '?page=person&name=Gabe+Larkin' 'mg-person-grid'
