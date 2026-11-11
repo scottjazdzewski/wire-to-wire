@@ -1169,6 +1169,133 @@ function depRaceIso(value){
  const current=$('.dateChip')?.textContent.trim()||'2014-07-15';
  return current.slice(0,4)+'-'+String(Number(m[1])).padStart(2,'0')+'-'+String(Number(m[2])).padStart(2,'0');
 }
+
+/* Canonical track meet windows are read from Office; the game date governs active meets. */
+const DEP_MONTH={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+function depGameDay(){return liveStableDate($('.dateChip')?.textContent.trim())||liveStableDate(state().date)||'2014-07-15'}
+function depTrackCalendar(){
+ const raw=typeof window.__wtwOfficeTrackDirectory==='function'?window.__wtwOfficeTrackDirectory():[];
+ return Array.isArray(raw)?raw.filter(x=>x&&typeof x.name==='string'):[];
+}
+function depCalendarIso(value,year=depGameDay().slice(0,4)){
+ const d=String(value||'').match(/^([A-Za-z]{3})\s+(\d{1,2})$/);
+ if(!d||!DEP_MONTH[d[1]])return '';
+ const iso=year+'-'+String(DEP_MONTH[d[1]]).padStart(2,'0')+'-'+String(Number(d[2])).padStart(2,'0');
+ return liveStableDate(iso)?iso:'';
+}
+function depMeetWindows(track,year=depGameDay().slice(0,4)){
+ return String(track?.meetWindow||'').split(';').map(part=>{
+  const p=part.trim().match(/^([A-Za-z]{3}\s+\d{1,2})\s*[–-]\s*([A-Za-z]{3}\s+\d{1,2})$/);
+  if(!p)return null;
+  const start=depCalendarIso(p[1],year),end=depCalendarIso(p[2],year);
+  return start&&end?{start,end,label:part.trim()}:null;
+ }).filter(Boolean);
+}
+function depMeetState(track,date=depGameDay()){
+ const wins=depMeetWindows(track,date.slice(0,4));
+ const active=wins.find(w=>w.start<=date&&date<=w.end);
+ const next=wins.filter(w=>w.start>date).sort((a,b)=>a.start.localeCompare(b.start))[0];
+ return {active:Boolean(active),next:Boolean(next),window:active||next||null,
+  status:active?'IN MEET':next?'UPCOMING':'OUT OF MEET'};
+}
+function depTrackRows(page='Overview'){
+ const day=depGameDay();
+ const rows=depTrackCalendar().map(t=>{
+  const meet=depMeetState(t,day);
+  return {_kind:'track',_name:t.name,name:t.name,location:t.location||'',surfaces:t.surfaces||'',
+   circuit:t.circuit||'',meetWindow:meet.window?.label||t.meetWindow||'',
+   status:meet.status,raceDays:t.raceDays||'',preferredDays:t.preferredDays||'',
+   stakesCount:String(t.stakes?.length||0),_meetState:meet};
+ });
+ if(page==='Active Meets')return rows.filter(r=>r._meetState.active);
+ if(page==='Stakes')return rows.filter(r=>Number(r.stakesCount)>0);
+ return rows;
+}
+function depCurrentMeetRows(){return depTrackRows('Overview').filter(r=>r._meetState.active)}
+function depTrackRaceRows(trackName,demo){
+ const track=depTrackCalendar().find(t=>t.name===trackName);
+ if(!track)return [];
+ const now=depGameDay();
+ const rows=(track.stakes||[]).map(event=>{
+  const iso=depCalendarIso(event.date,now.slice(0,4));
+  return iso&&iso>=now?{_kind:'race',_name:event.name,_track:trackName,_iso:iso,
+   date:stableShortDate(iso),track:trackName,race:event.name,class:event.class||'',
+   surface:'',distance:'',purse:event.purse||'',horse:'',base:'',ship:'',jockey:'',
+   trainer:'',ready:'',status:'STAKES'}:null;
+ }).filter(Boolean);
+ if(demo){
+  const meet=depMeetState(track,now).window;
+  const when=meet&&meet.end>=now?now:(meet?.start||now);
+  for(let i=0;i<5;i++){
+   const date=new Date(when+'T12:00:00Z');
+   date.setUTCDate(date.getUTCDate()+Math.floor(i/2));
+   const iso=date.toISOString().slice(0,10);
+   if(meet&&iso>meet.end)continue;
+   rows.push({_kind:'demo-race',_name:'Preview Race '+(i+1),_track:trackName,_iso:iso,
+    date:stableShortDate(iso),track:trackName,race:'R'+(i+1),
+    class:['MSW','CLM','ALW','OC','MSW'][i],surface:i%2?'TURF':'DIRT',
+    distance:['6f','1m','7f','8.5f','5.5f'][i],
+    purse:depMoney([42000,25000,62000,48000,35000][i]),horse:'',base:'',ship:'',
+    jockey:'',trainer:'',ready:'',status:'DEMO CARD'});
+  }
+ }
+ return rows.sort((a,b)=>a._iso.localeCompare(b._iso)||a.race.localeCompare(b.race));
+}
+const DEP_FACILITY_PREVIEW=[
+ ['Kingsmere Stud Farm','Stud Farm','Versailles, KY'],
+ ['Summerfield Training Center','Training Center','Ocala, FL'],
+ ['Oak Hollow Breaking Yard','Breaking Facility','Lexington, KY'],
+ ['Crescent Mile Racing Stable','Racing Stable','Saratoga Springs, NY'],
+ ['Ashford Racing Partnership','Ownership Group','Lexington, KY'],
+ ['Ironweed Racing Barn','Barn','Paris, KY']
+];
+function depFacilityType(raw){
+ const t=String(raw||'').toLowerCase();
+ if(/own|syndicate|partnership|bloodstock group/.test(t))return 'Ownership Group';
+ if(/break|pre.train/.test(t))return 'Breaking Facility';
+ if(/train/.test(t))return 'Training Center';
+ if(/racing stable|race barn|racing barn/.test(t))return 'Racing Stable';
+ if(/stud|breeding/.test(t))return 'Stud Farm';
+ if(/barn|shedrow/.test(t))return 'Barn';
+ return 'Farm';
+}
+function depFacilityRows(page,demo){
+ const all=globalSearchItems();APP.searchIndex=all;
+ const farms=all.map((r,i)=>({...r,_index:i})).filter(r=>r.kind==='farm');
+ const owned=all.map((r,i)=>({...r,_index:i})).filter(r=>r.kind==='person'&&/owner|bloodstock/i.test(r.detail||''));
+ let result=farms.map(r=>{
+  const saved=state().facilityState?.[r.name]||{},kind=depFacilityType(r.detail);
+  const n=depHash(r.name),cap=demo?24+n%75:saved.capacity;
+  const used=demo?Math.floor(cap*.6):saved.occupied;
+  return {_kind:'farm',_name:r.name,name:r.name,type:kind,location:r.detail?.includes(',')?r.detail:'',
+   capacity:cap??'',occupied:used??'',free:cap!=null&&used!=null?cap-used:'',
+   condition:demo?'Good':saved.condition||'',quality:demo?'80/100':saved.quality||'',
+   staff:demo?String(5+n%11):saved.staff_count||'',
+   cost:demo?depMoney(12000+n%24000):saved.monthly_cost||'',owner:demo?'Private':saved.owner||'',
+   status:demo?'Active':saved.status||''};
+ });
+ // Only source owners are linked as people; they are not fabricated businesses.
+ result.push(...owned.map(r=>({_kind:'person',_name:r.name,name:r.name,type:'Ownership Group',
+  location:'',capacity:'',occupied:'',free:'',condition:'',quality:'',staff:'',cost:'',
+  owner:r.name,status:'',_sourcePerson:true})));
+ if(demo)result.push(...DEP_FACILITY_PREVIEW.map(([name,type,location],i)=>{
+  const physical=type!=='Ownership Group';
+  return {_kind:'demo-facility',_name:name,name,type,location,
+   capacity:physical?String([75,60,48,42,0,28][i]):'',occupied:physical?String([48,39,26,31,0,20][i]):'',
+   free:physical?String([27,21,22,11,0,8][i]):'',condition:physical?['Excellent','Good','Good','Excellent','', 'Fair'][i]:'',
+   quality:physical?String([94,88,83,90,0,72][i])+'/100':'',staff:physical?String([18,12,9,14,0,6][i]):'',
+   cost:physical?depMoney([37500,28000,19500,31000,0,10500][i]):'',
+   owner:['Kingsmere','Private','Oak Hollow','Crescent Mile','Ashford Partners','Ironweed'][i],
+   status:physical?'Active':'Partnership'};
+ }));
+ const typeForPage={'Stud Farms':'Stud Farm','Training Centers':'Training Center',
+  'Breaking Facilities':'Breaking Facility','Racing Stables':'Racing Stable',
+  'Ownership Groups':'Ownership Group','Barns':'Barn'};
+ if(typeForPage[page])result=result.filter(r=>r.type===typeForPage[page]);
+ if(page==='Farms')result=result.filter(r=>['Farm','Stud Farm'].includes(r.type));
+ return result;
+}
+
 function depRows(section,page,demo,auction){
  const game=state(),stable=horseRows(),races=racingRows(),all=globalSearchItems();
  APP.searchIndex=all;
