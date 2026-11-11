@@ -528,6 +528,25 @@ function operationsDashboard(view){
     ' · '+h(x.pressure||'Current file')+'</small></div>'+
   button('REVIEW ›','open-case',x.id,'mg-rowlink')+'</div>').join('');
  const title=viewIsStable?'Stable & Horses':'Racecourses',short=viewIsStable?'HORSE OPERATIONS':'TRACKS / VENUES';
+ const stableCards=base.map(x=>{
+  const game=readState();
+  const status=game.horseState?.[x.name]?.status;
+  const related=office.find(c=>[c.title,c.summary].some(t=>String(t||'').toLowerCase().includes(x.name.toLowerCase())));
+  const exact=fixtureNodes.find(n=>n.dataset.profile===x.name);
+  const target=game.calendarState?.[x.name]?.race_target||(exact?$('p',exact)?.textContent.trim():'')||'';
+  return '<article class="mg-stable-horse-card">'+
+   '<div class="mg-stable-horse-head">'+ownerChip(x.name)+
+    '<div class="mg-stable-horse-title">'+
+      button(h(x.name),'open','horse|'+x.name+'|','mg-stable-horse-link')+
+      '<small>'+h(status||related?.type||'No current report')+'</small></div>'+
+    button('VIEW PROFILE ›','open','horse|'+x.name+'|','mg-stable-horse-open')+'</div>'+
+   '<div class="mg-stable-horse-detail"><span><b>OWNER</b> '+h(owner(x.name))+'</span>'+
+    '<span><b>NEXT TARGET</b> '+h(target||'Not entered')+'</span></div>'+
+   (related?'<div class="mg-stable-horse-context"><span>'+h(related.title)+'</span>'+
+       button('REVIEW CASE ›','open-case',related.id,'mg-stable-horse-review')+'</div>':
+     '<div class="mg-stable-horse-context"><span>No additional sourced horse decision.</span></div>')+
+   '</article>';
+ }).join('');
  const first=panel(title,viewIsStable?
   '<div class="mg-stable-horse-list">'+stableCards+'</div>':
   compactTable([{text:'NAME',style:'width:34%'},{text:'RECORD'},{text:'LOCATION'},
