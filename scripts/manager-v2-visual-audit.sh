@@ -26,6 +26,17 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    x.dataset.mg===act&&(val==null||x.dataset.value===val||
    x.dataset.value?.startsWith(val)));
   check('Search screen mounted',!!doc.querySelector('.mg-search-layout'));
+  const sortable=doc.querySelector('.mg-search-table th[data-mg-sort-col="1"]');
+  check('Shared FM roster has sortable name column',!!sortable);
+  sortable.click();
+  const ascending=[...doc.querySelectorAll('.mg-search-table tbody tr td:nth-child(2)')].map(x=>x.textContent.trim());
+  check('One click sorts large directory ascending',sortable.getAttribute('aria-sort')==='ascending'&&
+   ascending[0].localeCompare(ascending[ascending.length-1],undefined,{numeric:true,sensitivity:'base'})<=0);
+  sortable.click();
+  const descending=[...doc.querySelectorAll('.mg-search-table tbody tr td:nth-child(2)')].map(x=>x.textContent.trim());
+  check('Second click sorts large directory descending',sortable.getAttribute('aria-sort')==='descending'&&
+   descending[0].localeCompare(descending[descending.length-1],undefined,{numeric:true,sensitivity:'base'})>=0);
+
   const input=doc.querySelector('#mgSearch');
   check('Search field accepts input',!!input);
   input.value='Gabe Larkin';
@@ -38,6 +49,16 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   await delay(350);
   check('Click displays People Profile',!!doc.querySelector('.mg-person-dossier')&&
    doc.querySelector('.mg-main')?.textContent.includes('Gabe Larkin'));
+  const stable=locate('nav','stable');
+  check('Stable management view is reachable from People',!!stable);
+  stable.click();await delay(210);
+  check('Stable full-height horse dossiers render',doc.querySelectorAll('.mg-stable-horse-card').length>=8);
+  const stableList=doc.querySelector('.mg-stable-horse-list');
+  const stableCards=[...doc.querySelectorAll('.mg-stable-horse-card')];
+  const listBottom=stableList.getBoundingClientRect().bottom;
+  check('Stable dossier rows use the management workspace',listBottom-stableCards.at(-1).getBoundingClientRect().bottom<=18);
+  check('Stable dossier owner and next-target fields visible',
+   stableCards[0].textContent.includes('OWNER')&&stableCards[0].textContent.includes('NEXT TARGET'));
   const racing=locate('nav','racing');
   check('Racing is actionable',!!racing);
   racing.click();await delay(200);
