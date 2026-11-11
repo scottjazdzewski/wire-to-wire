@@ -282,6 +282,10 @@ body>.app,body>#routeShell,body>#toast,body>.wtw-site-archive-link{display:none!
 .mg-track-side .mg-minirow{min-height:28px;font-size:11px}
 .mg-track-side .mg-table td{height:27px;font-size:10.5px}
 .mg-track-layout>.mg-section .mg-table td{height:29px;font-size:11px}
+.mg-track-layout .mg-track-selected td{background:#264336;border-bottom-color:#5b7c63}
+.mg-track-layout .mg-track-selected td:first-child{box-shadow:inset 3px 0 #d2b676}
+.mg-track-layout .mg-table tbody tr:not(.mg-track-selected):hover td{background:#25342d}
+.mg-track-layout .mg-table thead th{position:sticky;top:0;z-index:1;background:#23342c}
 @media(max-width:1120px){.mg-track-layout{grid-template-columns:minmax(0,1fr)}.mg-track-side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.mg-track-side>.mg-section:last-child{grid-column:1/-1}}
 .mg-directory-layout{display:grid;grid-template-columns:minmax(0,1.36fr) minmax(0,1fr);gap:8px;min-height:0;min-width:0;flex:1}
 .mg-directory-layout>.mg-section{min-width:0;min-height:0;overflow:hidden}
