@@ -12,6 +12,9 @@ test('source-verified 1999 featured opening joins are unique and complete',()=>{
  assert.equal(w.organizations.length,108);
  assert.equal(w.people.length,154);
  assert.equal(w.stakes1999.length,93);
+ assert.equal(w.openingEventQueue1999.length,38);
+ assert.equal(ids(w.openingEventQueue1999).size,38);
+ assert.ok(w.openingEventQueue1999.every(e=>e.noHiddenTruth&&e.noPlayerFavoritism&&!e.eventExecutedInThisBundle));
  assert.equal(w.historicalYearbook.length,49);
  assert.equal(ids(w.horses).size,267);
  assert.equal(ids(w.organizations).size,108);
@@ -76,6 +79,8 @@ test('source-protected API lists and details answer without mutating state',()=>
  assert.equal(get('/api/1999/horses?limit=10').data.items.length,10);
  assert.equal(get('/api/1999/organizations?limit=5').data.items.length,5);
  assert.equal(get('/api/1999/calendar').data.total,93);
+ assert.equal(get('/api/1999/events').data.total,38);
+ assert.equal(get('/api/1999/events').data.execution,'NOT_STARTED_FROM_THIS_PROJECTION');
  const h=w.horses[0],detail=get('/api/1999/horses/'+h.id);
  assert.equal(detail.status,200);assert.equal(detail.data.horse.id,h.id);
  assert.equal(detail.data.pedigree.id,h.id);
