@@ -477,7 +477,7 @@ const searchTypes=[
 ];
 const searchMatches=(entry,words)=>words.every(word=>
  [entry.name,entry.kind,entry.detail,entry.section,entry.track,
-  entry.kind==='horse'?(horseOwnership(entry.name)?.name||''):''].filter(Boolean).join(' ').toLowerCase().includes(word)
+  entry.kind==='horse'?(entry._world?.owner||horseOwnership(entry.name)?.name||''):''].filter(Boolean).join(' ').toLowerCase().includes(word)
 );
 function searchRosterData(){
  const entries=APP.searchIndex||[],words=searchWords(APP.searchQuery);
@@ -498,7 +498,7 @@ function searchRosterMarkup(){
  const rows=result.page.map(entry=>{
   const isHorse=entry.kind==='horse';
   const owner=isHorse?horseOwnership(entry.name):null;
-  const ownerText=isHorse?(owner?.name||'Not recorded'):'—';
+  const ownerText=isHorse?(entry._world?.owner||owner?.name||'Not recorded'):'—';
   const nameCell=(isHorse?horseOwnerBadge(entry.name):'')+'<strong>'+safe(entry.name)+'</strong>';
   return `<button type="button" class="ng-search-row" data-ng="search-go" data-val="${entry.sourceIndex}" aria-label="Open ${safe(entry.kind)} page: ${safe(entry.name)}">
     <span class="ng-search-row-kind">${safe(entry.kind==='tab'?'SCREEN':entry.kind==='page'?'SECTION':entry.kind.toUpperCase())}</span>
@@ -1595,7 +1595,7 @@ function depFacilityRows(page,demo){
    capacity:cap??'',occupied:used??'',free:cap!=null&&used!=null?cap-used:'',
    condition:demo?'Good':saved.condition||'',quality:demo?'80/100':saved.quality||'',
    staff:demo?String(5+n%11):saved.staff_count||'',
-   cost:demo?depMoney(12000+n%24000):saved.monthly_cost||'',owner:demo?'Private':saved.owner||'',
+   cost:demo?depMoney(12000+n%24000):saved.monthly_cost||'',owner:r._world?.publicPrincipal||saved.owner||'',
    status:demo?'Active':saved.status||''};
  });
  // Only source owners are linked as people; they are not fabricated businesses.
