@@ -1324,6 +1324,7 @@ function depRows(section,page,demo,auction){
     status:f?.status||(demo?'Target':''),_iso:depRaceIso(date)});
   });
   if(page==='Results')out=demo?out.map((r,i)=>({...r,date:stableShortDate((WTW_STABLE_DEMO[r.horse]||{}).last),status:['1st','4th','2nd','3rd','5th','1st'][i],_iso:(WTW_STABLE_DEMO[r.horse]||{}).last||''})):[];
+  if(page!=='Results')out=out.filter(r=>r._iso&&r._iso>=depGameDay());
   if(page==='Stakes')out=out.filter(r=>/G[1-3]|stakes/i.test(r.class)||/stakes/i.test(r.race));
   if(page==='Entries'&&!demo)out=out.filter(r=>/entered/i.test(r.status));
   if(page==='Race Planning'&&!demo)out=out.filter(r=>!/entered/i.test(r.status));
