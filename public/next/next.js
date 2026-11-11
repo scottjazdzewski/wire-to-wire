@@ -39,7 +39,7 @@ function personGeographyRecord(source,name){
 const genericDeskPhoto='/assets/office/approved-office-photo.jpg';
 let organizationLogoIndex=null; // UI-only logo asset refs; organization authority stays in the game database.
 
-const tabmap={Office:['Overview','Messages','Decisions','Calendar','News','Reports','Career'],History:['Race Results','Horses','People & Farms','Facilities & Tracks','Historical Calendar','Coverage'],Stable:['Overview','Horses','Training','Health','Race Plans','Barns'],Racing:['Overview','Calendar','Entries','Results','Stakes','Race Planning'],Breeding:['Overview','Stallions','Broodmares','Foals','Pedigrees','Stud Farms'],Sales:['Overview','Auctions','Sale Calendar','Sale Companies','Catalogs','Watchlist','Private Offers'],Personnel:['Overview','Trainers','Jockeys','Owners','Staff'],Facilities:['Overview','Stud Farms','Training Centers','Breaking Facilities','Racing Stables','Ownership Groups','Barns','Farms'],Tracks:['Overview','Active Meets','All Tracks','Stakes'],Finances:['Overview','Cash Flow','Operating Costs','Budgets'],World:['Overview','Tracks','Meets','Major Races','News']};
+const tabmap={Office:['Overview','Messages','Decisions','Calendar','News','Reports','Career'],History:['Race Results','Horses','People & Farms','Facilities & Tracks','Historical Calendar','Coverage'],Stable:['Overview','Horses','Training','Health','Race Plans','Barns'],Racing:['Overview','Calendar','Entries','Results','Stakes','Race Planning'],Breeding:['Overview','Stallions','Broodmares','Foals','Pedigrees','Stud Farms'],Sales:['Overview','Auctions','Sale Calendar','Sale Companies','Catalogs','Watchlist','Private Offers'],Personnel:['Overview','Trainers','Jockeys','Owners','Staff'],Facilities:['Overview','Stud Farms','Training Centers','Breaking Facilities','Racing Stables','Ownership Groups','Barns','Farms'],Tracks:['Overview','Active Meets','All Tracks','Stakes'],Finances:['Overview','Cash Flow','Operating Costs','Budgets'],World:['Overview','1999 Horses','People','Organizations','Tracks','Meets','Major Races','News']};
 const actions={Office:'Office Overview',Stable:'Stable',Racing:'Race Calendar',Sales:'Sales',World:'World'};
 const officeMenu={Overview:'Office Overview',Messages:'Filter All',Decisions:'Open move history',Calendar:'Open Race Calendar',News:'News',Reports:'Open move history',Career:'Open move history'};
 const state=()=>{try{return JSON.parse(localStorage.getItem('wtwOfficeStateV30')||'{}')}catch{return {}}};
@@ -103,6 +103,10 @@ function pageTab(name){if(APP.section==='History'){const pages={'Race Results':'
  if(s==='Stable'&&(name==='Overview'||name==='Horses'))return bridgeNode(originalAct('Stable'));
  if(s==='Racing'&&(name==='Overview'||name==='Calendar'||name==='Entries'||name==='Stakes'))return bridgeNode(originalAct('Race Calendar'));
  if(s==='Sales'&&(name==='Overview'||name==='Auctions'))return bridgeNode(originalAct('Sales'));
+ if(s==='World'&&['1999 Horses','People','Organizations'].includes(name)){
+  APP.departmentPageIndex=0;APP.departmentSearch='';APP.departmentSortKey='';
+  return openCustomView('World — '+name,'World',name);
+ }
  if(s==='World'&&(name==='Tracks'||name==='Meets'))return openMenu('Tracks');
  if(s==='World'&&(name==='Overview'||name==='Major Races'))return bridgeNode(originalAct('World'));
  openCustomView(`${s} — ${name}`,s,name);
@@ -1286,6 +1290,15 @@ function functionalRoute(route){
 // primitives apply across stable, racing, people, farms, world and finance.
 /* Domain-specific department roster structures; no authoritative game-data edits. */
 const DEP_NAMES=new Set(['Racing','Breeding','Sales','Personnel','Facilities','Finances','Tracks']);
+const WORLD_1999_COLUMNS={
+ Horses:[['name','HORSE',17],['age','AGE',4],['sex','SEX',6],['sire','SIRE',14],
+  ['dam','DAM',14],['owner','OWNER / FARM',15],['trainer','TRAINER',12],
+  ['track','1999 HOME TRACK',12],['status','1999 STATUS',18]],
+ People:[['name','PERSON',22],['role','CANONICAL ROLE',25],['base','1999 OPERATING BASE',30],
+  ['operation','OWNERSHIP OPERATION',23]],
+ Organizations:[['name','ORGANIZATION',25],['type','OPERATION TYPE',27],['location','APPROVED LOCATION',25],
+  ['principal','PRINCIPAL',13],['status','CANON STATUS',10]]
+};
 const DEP_COLUMNS={
  Meets:[['name','TRACK',18],['location','CITY / STATE',18],['surfaces','SURFACES',13],['meetWindow','CURRENT MEET',19],['status','MEET STATUS',10],['raceDays','DAYS',5],['preferredDays','RACE DAYS',11],['stakesCount','STAKES',6]],
  Tracks:[['name','TRACK',18],['location','CITY / STATE',18],['surfaces','SURFACES',12],['circuit','CIRCUIT',16],['meetWindow','MEET WINDOWS',19],['status','STATUS',9],['raceDays','DAYS',4],['stakesCount','STAKES',4]],
@@ -1406,7 +1419,13 @@ const DEP_MONTH={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,No
 function depGameDay(){return liveStableDate($('.dateChip')?.textContent.trim())||liveStableDate(state().date)||'2014-07-15'}
 function depTrackCalendar(){
  const raw=typeof window.__wtwOfficeTrackDirectory==='function'?window.__wtwOfficeTrackDirectory():[];
- return Array.isArray(raw)?raw.filter(x=>x&&typeof x.name==='string'):[];
+ const office=Array.isArray(raw)?raw.filter(x=>x&&typeof x.name==='string'):[];
+ const known=new Set(office.map(x=>x.id||x.name));
+ const others=(world1999Data?.tracks||[])
+  .filter(t=>['OPEN','OPEN_1999'].includes(t.operating)&&!known.has(t.id)&&!known.has(t.name))
+  .map(t=>({id:t.id,name:t.name,location:t.location,region:t.region,circuit:t.circuit,
+   operating:t.operating,meetWindow:'',raceDays:'',preferredDays:'',stakes:[],_source1999:true}));
+ return [...office,...others];
 }
 function depCalendarIso(value,year=depGameDay().slice(0,4)){
  const d=String(value||'').match(/^([A-Za-z]{3})\s+(\d{1,2})$/);
@@ -1433,9 +1452,9 @@ function depTrackRows(page='Overview'){
  const day=depGameDay();
  const rows=depTrackCalendar().map(t=>{
   const meet=depMeetState(t,day);
-  return {_kind:'track',_name:t.name,name:t.name,location:t.location||'',surfaces:t.surfaces||'',
+  return {_kind:'track',_name:t.name,_canonId:t.id||'',name:t.name,location:t.location||'',surfaces:t.surfaces||'',
    circuit:t.circuit||'',meetWindow:meet.window?.label||t.meetWindow||'',
-   status:meet.status,raceDays:t.raceDays||'',preferredDays:t.preferredDays||'',
+   status:t._source1999?'OPEN · MEET NOT RECORDED':meet.status,raceDays:t.raceDays||'',preferredDays:t.preferredDays||'',
    stakesCount:String(t.stakes?.length||0),_meetState:meet};
  });
  if(page==='Active Meets')return rows.filter(r=>r._meetState.active);
@@ -1498,7 +1517,7 @@ function depFacilityRows(page,demo){
   const saved=state().facilityState?.[r.name]||{},kind=depFacilityType(r.detail);
   const n=depHash(r.name),cap=demo?24+n%75:saved.capacity;
   const used=demo?Math.floor(cap*.6):saved.occupied;
-  return {_kind:'farm',_name:r.name,name:r.name,type:kind,location:r.detail?.includes(',')?r.detail:'',
+  return {_kind:'farm',_name:r.name,_canonId:r.canonicalId||'',name:r.name,type:kind,location:r.location||'',
    capacity:cap??'',occupied:used??'',free:cap!=null&&used!=null?cap-used:'',
    condition:demo?'Good':saved.condition||'',quality:demo?'80/100':saved.quality||'',
    staff:demo?String(5+n%11):saved.staff_count||'',
@@ -1534,6 +1553,23 @@ function depRows(section,page,demo,auction){
  const row=(kind,name,values)=>({...values,_kind:kind,_name:name});
  const fixture=name=>races.find(r=>r.name===name);
  const demoYards={'Bellarmine':['Lexington, KY','775'],'Hardtack':['Saratoga, NY','750'],'Iron Harbor':['Ocala, FL','1120'],'Pieta':['Belmont, NY','65'],'Powerline':['Paris, KY','100'],'The Last Match':['Louisville, KY','80']};
+ if(section==='World'&&['1999 Horses','People','Organizations'].includes(page)){
+  if(!world1999Data)return [];
+  if(page==='1999 Horses')return (world1999Data.horses||[]).map(h=>({
+   _kind:'horse',_name:h.name,_canonId:h.id||'',_worldKey:world1999Key('horse',h),
+   name:h.name,age:h.age||'',sex:h.sex||'',sire:h.sire||'',dam:h.dam||'',
+   owner:h.owner||'',trainer:h.trainer||'',track:h.track||'',
+   status:h.racingStatus||h.status||'',_role:h._role
+  }));
+  if(page==='People')return (world1999Data.people||[]).map(p=>({
+   _kind:'person',_name:p.name,_canonId:p.id,_worldKey:world1999Key('person',p),
+   name:p.name,role:p.role||'',base:p.base||'',operation:p.ownershipOperation||''
+  }));
+  return (world1999Data.organizations||[]).map(o=>({
+   _kind:'farm',_name:o.name,_canonId:o.id,_worldKey:world1999Key('farm',o),
+   name:o.name,type:o.type||'',location:o.location||'',principal:o.publicPrincipal||'',status:o.status||''
+  }));
+ }
  if(section==='Tracks')return depTrackRows(page);
  if(section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'){
   if(APP.racingTrack)return depTrackRaceRows(APP.racingTrack,demo);
@@ -1561,6 +1597,15 @@ function depRows(section,page,demo,auction){
   return out.sort((a,b)=>a._iso.localeCompare(b._iso));
  }
  if(section==='Breeding'){
+  if(['Stallions','Broodmares'].includes(page)&&world1999Data){
+   const role=page==='Stallions'?'stallion':'broodmare';
+   return world1999Data.horses.filter(h=>h._role===role).map(h=>row('horse',h.name,{
+    _canonId:h.id||'',_worldKey:world1999Key('horse',h),horse:h.name,
+    age:h.foalYear?String(1999-Number(h.foalYear)):'',sex:h.sex||'',sire:h.sire||'',
+    dam:h.dam||'',farm:h.farm||'',owner:h.owner||'',status:h.status||'',
+    health:'',pedigree:'',value:'',studFee:'',bookings:'',foals:'',winners:''
+   }));
+  }
   let out=stable.map((h,i)=>{
    const d=WTW_STABLE_DEMO[h.name]||{},saved=game.horseState?.[h.name]||{};
    const role=demo?['Stallion','Stallion','Broodmare','Broodmare','Stallion','Broodmare'][i]:
@@ -1634,7 +1679,7 @@ function depRows(section,page,demo,auction){
  if(section==='Personnel'){
   let out=source('person').map(r=>{
    const n=depHash(r.name),role=r.detail||'Unrecorded',owner=/owner|patron/i.test(role),saved=game.staffState?.[r.name]||{};
-   return row('person',r.name,{name:r.name,age:demo?String(27+n%39):saved.age||'',role:role,
+   return row('person',r.name,{_canonId:r.canonicalId||'',name:r.name,age:demo?String(27+n%39):saved.age||'',role:role,
     ca:demo?String(2+n%4):'',pa:demo?String(3+n%3):'',
     reputation:demo?['Regional','National','Local','International'][n%4]:saved.reputation||'',
     specialty:demo?(/jockey/i.test(role)?'Turf riding':/trainer/i.test(role)?'2YO development':owner?'Bloodstock':'Stable care'):saved.specialization||'',
@@ -1643,7 +1688,7 @@ function depRows(section,page,demo,auction){
     salary:demo&&!owner?depMoney(36000+(n%14)*8500):'',
     contract:demo&&!owner?String(2015+n%4)+'-12':'',
     assignment:demo?(owner?'Portfolio':/jockey/i.test(role)?'Race riding':'Main stable'):saved.assignment||'',
-    base:demo?['Lexington, KY','Saratoga, NY','Ocala, FL','Louisville, KY'][n%4]:saved.base||'',
+    base:r.location||saved.base||'',
     wins:demo?String(n%410):'',_sourceIndex:r._index});
   });
   const match={Trainers:/trainer/i,Jockeys:/jockey/i,Owners:/owner|patron/i,Staff:/staff|groom|exercise|vet|farrier/i}[page];
@@ -2016,6 +2061,7 @@ function departmentRoster(section,page='Overview'){
 function managerDashboard(){
  const section=APP.section||'Office',page=APP.page||'Overview';
  if(typeof DEP_NAMES!=='undefined'&&DEP_NAMES.has(section))return departmentRoster(section,page);
+ if(section==='World'&&['1999 Horses','People','Organizations'].includes(page))return departmentRoster('World',page);
  const configs={
   Office:{kinds:['decision','horse','person'],label:'RACING OPERATIONS'},
   Stable:{kinds:['horse','person','farm'],label:'HORSES & STABLE OPERATIONS'},
