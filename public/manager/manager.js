@@ -215,7 +215,7 @@ function home(){
  const staff=records().filter(r=>r.kind==='person');
  const game=readState();
  const selected=currentCase();
- const allSource=$('.fixtureList .fixture');
+ const allSource=$$('.fixtureList .fixture');
  const pageCount=Math.max(1,Math.ceil(all.length/size),Math.ceil(horseRecords.length/size),Math.ceil(allSource.length/size));
  const page=Math.min(pageCount-1,Math.max(0,Number(ui.homePage)||0));
  const source=allSource.slice(page*size,page*size+size);
