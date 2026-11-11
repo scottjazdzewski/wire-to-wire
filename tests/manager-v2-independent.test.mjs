@@ -29,6 +29,18 @@ test('Clean-sheet Manager V2 parses, keeps one stylesheet and retains the canoni
  assert.ok(js.includes('function withSilentOfficeRoute(task)'),'Manager navigation must protect browser history when syncing gameplay files');
 });
 
+test('Stable overview shows actionable condition and race targets without cross-horse inference',()=>{
+ const js=get('public/manager/manager.js'),css=get('public/manager/manager.css');
+ assert.ok(js.includes("{text:'CURRENT FILE'}")&&js.includes("{text:'NEXT TARGET'}"),
+  'Every horse row must show the live management file and next target');
+ assert.ok(js.includes("fixture?$('p',fixture)?.textContent.trim():''"),
+  'Do not infer a horse race target from an unrelated global fixture');
+ assert.ok(js.includes('FULL PERSONNEL DIRECTORY ›'),
+  'Sparse staff panel must lead to the linked personnel directory');
+ assert.ok(css.includes('.mg-operations-grid.stable>.mg-section:nth-child(3)'),
+  'Sparse staff panel must be content-sized rather than a dead-space rectangle');
+});
+
 test('Approved images resolve by immutable entity ID or exact name, never fabricate portraits or logos',()=>{
  const js=get('public/manager/manager.js'),css=get('public/manager/manager.css');
  const photos=JSON.parse(get('public/assets/office/decision-photo-index.json'));
