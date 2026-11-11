@@ -12,7 +12,7 @@ capture(){
   local name="$1" route="$2" marker="$3"
   echo "Rendering $name -> $route"
   "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
-    --hide-scrollbars --force-device-scale-factor=1 --window-size=1536,864 \
+    --force-device-scale-factor=1 --window-size=1536,864 \
     --virtual-time-budget=4000 --screenshot="visual-audit/screenshots/$name.png" \
     "http://127.0.0.1:8765/$route" >/tmp/wtw-chrome-"$name".log 2>&1
   "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
@@ -34,7 +34,7 @@ capture personnel '?ui=Personnel' 'ng-manager-screen'
 capture facilities '?ui=Facilities' 'ng-manager-screen'
 capture finances '?ui=Finances' 'ng-manager-screen'
 capture breeding '?ui=Breeding' 'ng-manager-screen'
-capture history-vault 'archive/' 'vault'
+capture history-vault 'archive/' 'History Vault'
 python3 - <<'PY'
 import os,struct
 folder='visual-audit/screenshots'
