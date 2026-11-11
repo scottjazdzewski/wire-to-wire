@@ -1975,3 +1975,29 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 .ng-person-overview-relation{min-height:21px;padding:3px 7px}
 .ng-person-overview-stats>div{min-height:39px;padding:4px 6px}
 }
+
+/* Track photo, date ordered stakes, and compact horse star summaries */
+.ng-route-profile .ng-profile-track .ng-profile-source-photo{width:214px!important;height:108px!important;flex:0 0 214px!important;border-color:#65745c!important;background:#121a1e!important}
+.ng-route-profile .ng-profile-track .ng-profile-source-photo img{object-fit:cover!important}
+.ng-track-workspace{display:grid!important;grid-template-columns:minmax(0,1.23fr) minmax(285px,.77fr)!important;gap:8px!important;width:100%;height:100%;min-height:0;overflow:hidden}
+.ng-track-workspace>.ng-tier1-card,.ng-track-info-stack>.ng-tier1-card{min-height:0!important}
+.ng-track-stakes .ng-stakes-table{flex:1 1 auto;min-height:0;overflow:hidden;padding:2px 5px 4px}
+.ng-track-stakes .ng-stakes-data{min-height:30px!important;padding:3px 7px!important}
+.ng-track-stakes .ng-stakes-head{min-height:26px!important;padding:3px 7px!important}
+.ng-track-stakes .ng-stakes-data span{font-size:10.5px!important}
+.ng-track-stakes .ng-stakes-grade{display:flex;align-items:center;justify-content:flex-end;gap:4px}
+.ng-stakes-trophy{display:inline-block;width:17px;height:17px;flex:0 0 17px;background-image:url('/assets/trophies/g123-sprite.png');background-repeat:no-repeat;background-size:51px 17px}
+.ng-stakes-trophy.g1{background-position:0 0}
+.ng-stakes-trophy.g2{background-position:-17px 0}
+.ng-stakes-trophy.g3{background-position:-34px 0}
+.ng-track-info-stack{display:grid;grid-template-rows:minmax(0,1fr) minmax(0,1fr);gap:8px;min-height:0;overflow:hidden}
+.ng-horse-star-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 15px;margin:4px 0 5px}
+.ng-horse-star-rating{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.ng-horse-star-rating small{font-size:9px!important;font-weight:800;color:#b4cdbb!important;letter-spacing:.04em}
+.ng-horse-star-rating b{font-size:9px;color:#efd49b}
+.ng-horse-star-set{display:inline-flex;gap:1px}
+.ng-horse-star-set i{font-style:normal;font-size:13px;line-height:1;color:#65706b}
+.ng-horse-star-set i.filled{color:#e8c36f}
+.ng-horse-star-key{font-size:8.5px;color:#9eafa4;letter-spacing:.02em}
+.ng-profile-horse .ng-profile-identity h2{display:flex;align-items:center;gap:8px}
+@media(max-width:900px){.ng-track-workspace{grid-template-columns:minmax(0,1fr)!important;overflow:auto}.ng-track-info-stack{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:1fr}}

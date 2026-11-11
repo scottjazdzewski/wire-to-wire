@@ -3,6 +3,9 @@
   "description": "UI-only pointers for approved photographs; not a parallel historical or gameplay database.",
   "default": "/assets/office/approved-office-photo.jpg",
   "cases": {},
-  "entities": {},
+  "entities": {
+    "track:Belmont Park": "/assets/tracks/T-0002.webp",
+    "track:Sweetwater Park": "/assets/tracks/T-0094.webp"
+  },
   "categories": {}
 }
