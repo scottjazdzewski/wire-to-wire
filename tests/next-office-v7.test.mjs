@@ -327,6 +327,38 @@ test('Six department rosters share FM density but preserve their own management 
  assert.equal(syntax.status,0,syntax.stderr);
 });
 
+test('Track stakes show each complete G1/G2/G3 trophy at a predictable square icon size',()=>{
+ const css=get('public/next/next.css'),js=get('public/next/next.js');
+ const png=fs.readFileSync(path.join(root,'public/assets/trophies/g123-sprite.png'));
+ assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
+ assert.equal(png.readUInt32BE(16),2048,'Original sprite width must be verified before applying third-of-sprite crops');
+ assert.equal(png.readUInt32BE(20),682,'Original sprite height must be verified before applying 22px box');
+ const cssRule=sel=>{
+  const start=css.indexOf(sel+'{');
+  assert.ok(start>0,'Missing '+sel);
+  return css.slice(start+sel.length+1,css.indexOf('}',start));
+ };
+ const trophy=cssRule('.ng-stakes-trophy');
+ for(const key of ['width:22px','height:22px','flex:0 0 22px','background-size:66px 22px',
+  "background-image:url('/assets/trophies/g123-sprite.png')"]){
+  assert.ok(trophy.includes(key),'Trophy must use one full-size sprite cell: '+key);
+ }
+ assert.ok(!trophy.includes('height:7px'),'No vertically clipped trophy slivers');
+ for(const [g,pos] of [[1,'0 0'],[2,'-22px 0'],[3,'-44px 0']])
+  assert.ok(cssRule('.ng-stakes-trophy.g'+g).includes('background-position:'+pos),
+   'Grade '+g+' must show its own full square trophy frame');
+ assert.ok(css.includes('background-size:60px 20px')&&css.includes('background-position:-40px 0'),
+  'Responsive layout scales all three trophy frames proportionally');
+ assert.ok(css.includes('.ng-track-stakes .ng-stakes-grade-text{'),
+  'Trophy artwork needs a legible fallback grade label');
+ assert.ok(js.includes('class="ng-stakes-grade-text"')&&js.includes('>G'+ "'+grade+'"+'</small>'),
+  'Each row must clearly identify its graded class alongside the existing artwork');
+ assert.ok(js.includes("const grade=(cols[2].match(/\\bG([123])\\b/i)||[])[1]"),
+  'Grade icon selection must use real sourced G1/G2/G3 race data');
+ assert.ok(css.includes('.ng-track-stakes .ng-stakes-data{min-height:30px!important'),
+  'Source-backed grade icon must fit the existing compact stakes row');
+});
+
 test('Track history is permanently visible below meet conditions for four registered courses',()=>{
  const js=get('public/next/next.js'),css=get('public/next/next.css'),office=get('public/office-v30-4.js');
  const from=office.indexOf('const trackProfiles = {');
