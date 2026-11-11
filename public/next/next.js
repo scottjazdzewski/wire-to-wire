@@ -1376,7 +1376,7 @@ function departmentRoster(section,page='Overview'){
 
 function managerDashboard(){
  const section=APP.section||'Office',page=APP.page||'Overview';
- if(DEP_NAMES.has(section))return departmentRoster(section,page);
+ if(typeof DEP_NAMES!=='undefined'&&DEP_NAMES.has(section))return departmentRoster(section,page);
  const configs={
   Office:{kinds:['decision','horse','person'],label:'RACING OPERATIONS'},
   Stable:{kinds:['horse','person','farm'],label:'HORSES & STABLE OPERATIONS'},
