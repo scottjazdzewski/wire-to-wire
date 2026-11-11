@@ -253,24 +253,36 @@ function horseProfile(name){
  '<div class="mg-overview-foot"><strong>SCOUTING COVERAGE</strong>'+demoLabel()+'<span>'+knownN+' / '+Object.values(cat).flat().length+' evidenced attributes · Unassessed is not zero</span></div></div></div>';
 }
 function personProfile(name){
- const s=sourceProfile()||{career:[],states:[],notes:[],connections:[],fields:[]};const catalog=ui.catalog||{};
+ const s=sourceProfile()||{career:[],states:[],notes:[],connections:[],fields:[],sub:''},catalog=ui.catalog||{};
  const role=s.sub.replace(/^Job:\s*/i,'').toLowerCase();
  const key={'stable staff':'stable_staff','trainer':'trainer','jockey':'jockey','owner':'owner','breeder':'breeder','bloodstock':'bloodstock_professional','farm manager':'farm_manager','veterinarian':'veterinarian','groom':'groom','farrier':'farrier','exercise rider':'exercise_rider'}[role]||'stable_staff';
- const defs=(catalog.person_common||[]).concat(catalog.person_roles?.[key]||[]);
+ const base=catalog.person_common||[],special=catalog.person_roles?.[key]||[],defs=base.concat(special);
  const obs=new Map((observations('person',name)||[]).map(x=>[x.attribute_key,x]));
- const chunks=[defs.slice(0,Math.ceil(defs.length/3)),defs.slice(Math.ceil(defs.length/3),Math.ceil(defs.length*2/3)),defs.slice(Math.ceil(defs.length*2/3))];
- const columns='<div class="mg-person-columns">'+chunks.map((a,i)=>panel(['Professional','Judgment & Work','Specialties'][i],'<div class="mg-attr-list">'+a.map(x=>rating(x,obs.get(x.key),name)).join('')+'</div>','','mg-person-column')).join('')+'</div>';
+ const group=(title,arr)=>'<section class="mg-person-skill-group"><header><strong>'+h(title)+'</strong><small>'+arr.length+' RATINGS</small></header>'+
+  '<div class="mg-attr-list">'+arr.map(x=>rating(x,obs.get(x.key),name)).join('')+'</div></section>';
+ const foundations=base.slice(0,Math.ceil(base.length/2)),judgment=base.slice(Math.ceil(base.length/2));
+ const skills=group('PROFESSIONAL FOUNDATIONS',foundations)+group('JUDGMENT & WORK',judgment)+(special.length?group((role||'ROLE').toUpperCase()+' SPECIALTIES',special):'');
  const work=readState().staffState?.[name]||{},rep=work.reputation_profile;
  const verified=rep?.schema==='WTW_PERSON_REPUTATION_V1'&&Array.isArray(rep.source?.refs)&&rep.source.refs.length&&Number.isFinite(rep.scores?.overall);
  const axes=(catalog.reputation?.axes||[]).map(x=>[x.label,verified&&rep.scores?.[x.key]!=null?rep.scores[x.key]:'—']);
- const reputation=panel('Reputation & Standing','<div class="mg-summary"><div class="mg-kicker">PROFESSIONAL STANDING</div><strong style="font-size:26px">'+(verified?h(rep.scores.overall)+' / 100':'UNRATED')+'</strong><br><span class="mg-muted">'+(verified?'Sourced professional assessment':'Not yet assessed · Trust is separate')+'</span></div>'+pairs(axes));
+ const repBody='<div class="mg-person-standing"><small>PROFESSIONAL STANDING</small><strong>'+
+  (verified?h(rep.scores.overall)+' / 100':'UNRATED')+'</strong><span>'+
+  (verified?'Evidenced professional assessment':'Professional reputation not yet assessed')+'</span></div>'+pairs(axes);
+ const reputation=panel('Reputation & Standing',repBody,'SOURCED PERSONNEL FILE');
  const links=records().filter(x=>x.kind==='horse'&&s.notes.some(note=>note.includes(x.name)));
- const horses=links.length?compactTable([{text:'HORSE'},{text:'OWNER'},{text:'OPEN'}],links.map(x=>'<tr>'+tableCell(linkRecord(x,x.name,true))+tableCell(h(owner(x.name)))+tableCell(button('OPEN','open','horse|'+x.name+'|','mg-rowlink'))+'</tr>')):empty('No linked horses recorded in the current Office file.');
+ const horses=links.length?compactTable([{text:'HORSE'},{text:'OWNER'},{text:'OPEN'}],links.map(x=>'<tr>'+tableCell(linkRecord(x,x.name,true))+
+  tableCell(h(owner(x.name)))+tableCell(button('OPEN','open','horse|'+x.name+'|','mg-rowlink'))+'</tr>')):empty('No horses linked to this personnel file.');
  const network=Array.isArray(work.relationship_reports)?work.relationship_reports.filter(x=>x.source_refs?.length):[];
+ const side='<div class="mg-person-side">'+reputation+
+  panel('Current Horse Assignments',horses,links.length+' CONNECTED')+
+  panel('Career & Background',s.fields.concat(s.career).length?pairs(s.fields.concat(s.career).slice(0,10)):empty('No verified career history yet.'))+
+  panel('Working Network',network.length?pairs(network.slice(0,6).map(x=>[x.counterpart_name||x.counterpart_id,String(x.score??'Unrated')])):empty('No evidenced working relationships yet.'))+'</div>';
  return pageBar(name,'PERSONNEL DOSSIER · '+(role||'STAFF'),button('PEOPLE DIRECTORY','nav','person'))+
- '<div class="mg-content"><div class="mg-profile-scroll">'+identity('person',name)+'<div class="mg-person-grid">'+panel('Professional Attributes',columns,defs.length+' DEFINED RATINGS')+reputation+'</div>'+
- '<div class="mg-person-bottom">'+panel('Current Horse Assignments',horses)+panel('Career & Background',pairs(s.fields.concat(s.career).slice(0,8)))+panel('Working Network',network.length?pairs(network.slice(0,6).map(x=>[x.counterpart_name||x.counterpart_id,String(x.score??'Unrated')])):empty('No evidenced working relationships yet.'))+'</div>'+
- '<div class="mg-overview-foot"><strong>PERSONNEL FILE</strong>'+demoLabel()+'<span>All currently known career, professional and roster information is presented on the first screen</span></div></div></div>';
+ '<div class="mg-content"><div class="mg-profile-scroll mg-person-profile-scroll">'+identity('person',name)+
+ '<div class="mg-person-dossier">'+panel('Professional Attributes','<div class="mg-person-rating-stack">'+skills+'</div>',
+ defs.length+' DEFINED RATINGS','mg-person-primary')+side+'</div>'+
+ '<div class="mg-overview-foot"><strong>PERSONNEL FILE</strong>'+demoLabel()+
+ '<span>Ratings, reputation, assignments and available career evidence are all on this Overview</span></div></div></div>';
 }
 function otherProfile(kind,name){
  const s=sourceProfile()||{fields:[],connections:[],career:[],notes:[],pedigree:[]};
