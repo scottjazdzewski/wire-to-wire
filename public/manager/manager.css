@@ -486,77 +486,35 @@ body>.app,body>#routeShell,body>#toast,body>.wtw-site-archive-link{display:none!
 .mg-horse-starline em{font-size:8px;font-style:normal;color:#a8b9ac;white-space:nowrap}
 .mg-owner-mark{width:19px;height:19px;flex:0 0 19px;font-size:10px}
 
-/* Racing Office dashboard: three screen-sized views, no panel scrolling */
-.mg-rail{overflow:hidden!important}
-.mg-office-content{box-sizing:border-box!important;display:flex!important;flex:1 1 0!important;min-height:0!important;padding:7px 10px 9px!important;overflow:hidden!important}
-.mg-office-pages{display:block;flex:1 1 0;min-width:0;min-height:0;overflow:hidden}
-.mg-office-view{box-sizing:border-box;display:grid;width:100%;height:100%;min-width:0;min-height:0;gap:8px;overflow:hidden}
-.mg-office-view-front{grid-template-columns:minmax(270px,.78fr) minmax(0,1.52fr)}
-.mg-office-view-racing{grid-template-columns:minmax(0,1.6fr) minmax(290px,.78fr)}
-.mg-office-view-stable{grid-template-columns:repeat(3,minmax(0,1fr))}
-.mg-office-page-left,.mg-office-page-main,.mg-office-page-side,.mg-office-page-third{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:0;overflow:hidden}
-.mg-office-page-left>.mg-office-panel,.mg-office-page-main>.mg-office-panel,.mg-office-page-third>.mg-office-panel{flex:1 1 0;min-height:0}
-.mg-office-page-side>.mg-office-panel{flex:1 1 0;min-height:0}
-.mg-office-view .mg-section{min-height:0;overflow:hidden}
-.mg-office-view .mg-table-wrap,.mg-office-view .mg-home-inbox .mg-section,.mg-office-view .mg-home-case .mg-section{min-height:0;overflow:hidden!important}
-.mg-office-view .mg-table{width:100%;table-layout:fixed}
-.mg-office-view .mg-table th{height:32px;padding:5px 6px;font-size:9px}
-.mg-office-view .mg-table td{height:39px;padding:5px 6px;font-size:10.5px;line-height:1.2}
-.mg-office-view .mg-table td>*{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
-.mg-office-view .mg-feed-row{min-height:0;height:calc((100% - 29px) / 8);padding:5px 8px}
-.mg-office-view .mg-home-inbox .mg-section{display:flex;flex-direction:column}
-.mg-office-view .mg-home-inbox .mg-section>.mg-feed-row{flex:1 1 0}
-.mg-office-view .mg-home-case .mg-section{display:flex;flex-direction:column}
-.mg-office-view .mg-home-case .mg-case-top{flex:1 1 0;min-height:190px;max-height:48%}
-.mg-office-view .mg-home-case .mg-case-copy{padding:12px 14px}
-.mg-office-view .mg-home-case .mg-case-copy h2{font-size:clamp(21px,2vw,31px)}
-.mg-office-view .mg-home-case .mg-case-choices{flex:0 0 auto}
-.mg-office-view .mg-home-case .mg-choice{min-height:76px;padding:8px}
-.mg-office-view .mg-home-case .mg-case-intelligence{flex:1 1 auto;min-height:0;overflow:hidden}
-.mg-office-view .mg-home-case .mg-intel-row{min-height:0;padding:6px 8px}
-.mg-office-view .mg-home-case .mg-case-next{flex:0 0 auto}
-.mg-office-view .mg-office-page-side .mg-table td,.mg-office-view .mg-office-page-third .mg-table td{height:clamp(30px,4.2vh,38px)}
-.mg-office-view-racing .mg-office-page-side{display:grid;grid-template-rows:minmax(0,1fr) minmax(100px,.5fr);gap:8px}
+/* Racing Office keeps its original management-studio dashboard grid.
+   Back/Next pages records within panels so the page itself stays still. */
+.mg-office-content{min-height:0!important;overflow:hidden!important}
+.mg-home-top,.mg-home-bottom{min-width:0;min-height:0;overflow:hidden}
+.mg-home-inbox .mg-section,
+.mg-home-case .mg-section,
+.mg-home-bottom>.mg-section,
+.mg-home-side>.mg-section{min-height:0;overflow:hidden!important}
+.mg-home-inbox .mg-section{display:flex;flex-direction:column}
+.mg-home-inbox .mg-section>.mg-feed-row{
+ flex:1 1 0;min-height:0;height:auto!important;padding-top:4px;padding-bottom:4px
+}
+.mg-home-case .mg-section{display:flex;flex-direction:column}
+.mg-home-case .mg-case-top{flex:1 1 0;min-height:0;max-height:none}
+.mg-home-case .mg-case-copy{padding:10px 11px}
+.mg-home-case .mg-case-copy h2{font-size:clamp(19px,1.8vw,27px)}
+.mg-home-case .mg-case-choices{flex:0 0 auto}
+.mg-home-case .mg-choice{min-height:68px;padding:7px}
+.mg-home-case .mg-case-intelligence{flex:1 1 auto;min-height:0;overflow:hidden}
+.mg-home-case .mg-intel-row{min-height:0;padding:5px 7px}
+.mg-home-case .mg-case-next{flex:0 0 34px;min-height:34px}
+.mg-home-side .mg-table-wrap,
+.mg-home-bottom .mg-table-wrap{overflow:hidden!important;min-height:0}
+.mg-home-bottom .mg-table{width:100%;table-layout:fixed}
+.mg-home-bottom .mg-table th{height:25px;padding:4px 5px;font-size:9px}
+.mg-home-bottom .mg-table td{height:clamp(25px,3.2vh,29px);padding:4px 5px;font-size:10px}
 .mg-office-pager{display:inline-flex;align-items:center;gap:5px;margin-right:8px}
 .mg-office-pager>span{font-size:9px;font-weight:800;color:#cdbb86;letter-spacing:.04em;white-space:nowrap;margin-right:4px}
 .mg-office-pager .mg-button{height:25px;padding:0 8px}
 @media(max-width:1100px){
  .mg-office-pager>span{display:none}
- .mg-office-view-front{grid-template-columns:minmax(220px,.7fr) minmax(0,1.3fr)}
- .mg-office-view-racing{grid-template-columns:minmax(0,1.2fr) minmax(250px,.8fr)}
 }
-@media(max-width:800px){
- .mg-office-view{overflow:auto;grid-template-columns:minmax(0,1fr)}
- .mg-office-view-front,.mg-office-view-racing,.mg-office-view-stable{grid-template-columns:minmax(0,1fr)}
- .mg-office-view .mg-office-panel{min-height:260px}
- .mg-office-pager{margin-right:0}
- .mg-office-pager .mg-button{padding:0 5px}
-}
-
-.mg-office-view-front .mg-office-page-left>.mg-section,
-.mg-office-view-front .mg-office-page-main>.mg-section{display:flex;flex-direction:column}
-.mg-office-view-front .mg-office-page-left>.mg-section>.mg-feed-row{flex:1 1 0;min-height:0}
-.mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-top{flex:1 1 0;min-height:190px;max-height:48%}
-.mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-choices{flex:0 0 auto}
-.mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-intelligence{flex:1 1 auto;min-height:0;overflow:hidden}
-.mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-next{flex:0 0 auto}
-
-
-/* Fill each dashboard view with its panels; the section wrapper is .mg-section. */
-.mg-office-page-left>.mg-section,
-.mg-office-page-main>.mg-section,
-.mg-office-page-third>.mg-section{flex:1 1 0;min-height:0}
-.mg-office-page-side>.mg-section{min-height:0}
-.mg-office-view-front .mg-office-page-left>.mg-section,
-.mg-office-view-front .mg-office-page-main>.mg-section{display:flex;flex-direction:column}
-.mg-office-view-front .mg-office-page-left>.mg-section>.mg-feed-row{
- flex:1 1 0;height:auto!important;min-height:0
-}
-.mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-top{
- flex:1 1 0;min-height:190px;max-height:48%
-}
-.mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-choices{flex:0 0 auto}
-.mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-intelligence{
- flex:1 1 auto;min-height:0;overflow:hidden
-}
-.mg-office-view-front .mg-office-page-main>.mg-section>.mg-case-next{flex:0 0 auto}
