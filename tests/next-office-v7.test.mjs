@@ -293,6 +293,40 @@ test('Live Stable fills its viewport with FM roster density and clearly marked f
 });
 
 
+
+test('Six department rosters share FM density but preserve their own management decisions',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css');
+ const start=js.indexOf('const DEP_NAMES=new Set('),end=js.indexOf('function managerDashboard(){',start);
+ const code=js.slice(start,end);
+ for(const section of ['Racing','Breeding','Sales','Personnel','Facilities','Finances']){
+  assert.ok(code.includes(section+':['),'Missing '+section+' column schema');
+  assert.ok(js.includes("DEP_NAMES.has(section)"),'Generic dashboard must route approved departments to their real rosters');
+  assert.ok(css.includes('data-department="'+section+'"'),'Each department must have fitted column widths');
+ }
+ for(const label of ['CURRENT BASE','SHIP MI','STUD FEE','BREED VAL','CONSIGNOR','SALARY','MONTHLY COST','BALANCE']){
+  assert.ok(code.includes(label),'Missing decision-useful roster field '+label);
+ }
+ assert.ok(code.includes("function depAuctionList(")&&code.includes("a.date>=current"),
+  'Sales must select the next chronological auction by default');
+ assert.ok(code.includes('data-ng-select="department-auction"'),
+  'Auction chooser must be a real selection control');
+ assert.ok(code.includes('APP.departmentVisible=shown'),'Visible roster records must link to the original entities');
+ assert.ok(js.includes("if(key==='dept-open')")&&js.includes('__wtwOfficeOpenSearchRecord'),
+  'Clicking a horse/person/farm must open the real source-linked profile');
+ assert.ok(js.includes("if(key==='dept-page')")&&js.includes("if(key==='dept-sort')"),
+  'Large directories must paginate and sort without a long scrolling page');
+ assert.ok(js.includes("if(key==='dept-demo')")&&code.includes('FICTIONAL PREVIEW'),
+  'Demo numbers and auction examples must be clearly labeled and toggleable');
+ assert.ok(!code.includes('localStorage.setItem')&&!code.includes('gameState.horseState='),
+  'Department preview must never mutate the canonical game save');
+ assert.ok(css.includes('.ng-dept-roster .ng-rs-scroll{overflow:hidden!important'),
+  'Use one no-scroll roster viewport with page-based navigation');
+ assert.ok(css.includes('font-size:9px!important')&&css.includes('.ng-dpt-pager'),
+  'Use the same tiny type and navigation density as Stable and Personnel');
+ const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(syntax.status,0,syntax.stderr);
+});
+
 test('Horse athletic overview uses four sourced FM-style trait groups with explicit unassessed states',()=>{
  const js=get('public/next/next.js'),css=get('public/next/next.css');
  const catalog=JSON.parse(get('public/assets/game/attribute-catalog.v1.json'));

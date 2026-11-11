@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:true,stableSearch:'',networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
+const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:true,stableSearch:'',departmentDemo:true,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentAuction:'',departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -73,6 +73,8 @@ function goOffice(){
 }
 function openMenu(section){
  APP.moreOpen=false;
+ APP.departmentPageIndex=0;APP.departmentSearch='';APP.departmentSortKey='';
+ if(section==='Sales')APP.departmentAuction='';
  if(section==='History'){window.location.assign('/archive/?page=races');return}
  APP.section=section;APP.page='Overview';APP.custom='';
  if(actions[section])bridgeNode(originalAct(actions[section]));
@@ -86,6 +88,12 @@ function pageTab(name){if(APP.section==='History'){const pages={'Race Results':'
    if(name==='Calendar')return bridgeNode(originalAct('Race Calendar'));
    if(name==='News')return bridgeNode(originalAct('News'));
    if(name==='Reports'||name==='Career')return openCustomView(name,'Office',name)
+ }
+ if(DEP_NAMES.has(s)){
+  APP.departmentPageIndex=0;APP.departmentSearch='';APP.departmentSortKey='';
+  if(s==='Racing'&&name==='Overview'){APP.custom='';return bridgeNode(originalAct('Race Calendar'))}
+  if(s==='Sales'&&name==='Overview'){APP.custom='';return bridgeNode(originalAct('Sales'))}
+  return openCustomView(s+' — '+name,s,name);
  }
  if(s==='Stable'&&(name==='Overview'||name==='Horses'))return bridgeNode(originalAct('Stable'));
  if(s==='Racing'&&(name==='Overview'||name==='Calendar'||name==='Entries'||name==='Stakes'))return bridgeNode(originalAct('Race Calendar'));
@@ -1120,6 +1128,8 @@ function liveStableRosterView(){
 
 function functionalRoute(route){
  if(route.kicker==='Stable')return liveStableRosterView();
+ if(route.kicker==='Sales'&&APP.section==='Sales')return departmentRoster('Sales',APP.page);
+ if(route.kicker==='Race Calendar'&&APP.section==='Racing')return departmentRoster('Racing',APP.page);
  if(route.kicker==='Race Calendar'){
   const races=racingRows();const entered=races.filter(r=>/Entered/i.test(r.status)).length;
   const nonraces=$$('.right .fixtureList .fixture:not([data-track])').map(n=>({date:$('.d',n)?.textContent.trim()||'',name:$('h4',n)?.textContent.trim()||'',detail:$('p',n)?.textContent.trim()||''}));
@@ -1130,8 +1140,251 @@ function functionalRoute(route){
 // Unified source-backed desktop management screen for every department that
 // does not already have a deeper original Office route. The same roster/summary
 // primitives apply across stable, racing, people, farms, world and finance.
+/* Domain-specific department roster structures; no authoritative game-data edits. */
+const DEP_NAMES=new Set(['Racing','Breeding','Sales','Personnel','Facilities','Finances']);
+const DEP_COLUMNS={
+ Racing:[['date','DATE',7],['track','TRACK',8],['race','RACE',6],['class','CLASS',7],['surface','SURF',4],['distance','DIST',5],['purse','PURSE',7],['horse','HORSE',11],['base','CURRENT BASE',12],['ship','SHIP MI',6],['jockey','JOCKEY',9],['trainer','TRAINER',8],['ready','READY',5],['status','ENTRY',5]],
+ Breeding:[['horse','HORSE',12],['age','AGE',3],['sex','SEX',3],['sire','SIRE',9],['dam','DAM',9],['farm','FARM',9],['status','BREED STATUS',7],['health','HEALTH',6],['pedigree','PED',5],['value','BREED VAL',6],['owner','OWNER',10],['studFee','STUD FEE',8],['bookings','BOOK',5],['foals','FOALS',4],['winners','WINS',4]],
+ Sales:[['hip','HIP',4],['horse','HORSE',12],['age','AGE',3],['sex','SEX',3],['sire','SIRE',11],['dam','DAM',11],['consignor','CONSIGNOR',10],['reserve','RESERVE',8],['bid','CURRENT BID',8],['value','EST VALUE',8],['ca','CA',4],['pa','PA',4],['condition','COND',7],['status','SALE STATUS',7]],
+ Personnel:[['name','PERSON',13],['age','AGE',3],['role','ROLE',10],['ca','CA',4],['pa','PA',4],['reputation','REP',6],['specialty','SPECIALTY',10],['morale','MORALE',6],['workload','LOAD',6],['salary','SALARY',8],['contract','CONTRACT',8],['assignment','ASSIGNED',9],['base','BASE',9],['wins','WINS',4]],
+ Facilities:[['name','FACILITY',14],['type','TYPE',9],['location','CITY / STATE',13],['capacity','CAP',5],['occupied','USED',5],['free','FREE',5],['condition','COND',7],['quality','QUALITY',7],['staff','STAFF',5],['cost','MONTHLY COST',10],['owner','OWNER',12],['status','STATUS',8]],
+ Finances:[['date','DATE',11],['category','CATEGORY',16],['description','TRANSACTION / PURPOSE',28],['department','HORSE / DEPARTMENT',19],['income','INCOME',10],['expense','EXPENSE',10],['balance','BALANCE',6]]
+};
+const DEP_AUCTIONS=[
+ {id:'july',date:'2014-07-19',name:'July Select Sale',city:'Lexington, KY'},
+ {id:'summer',date:'2014-08-06',name:'Summer Yearling Sale',city:'Saratoga Springs, NY'},
+ {id:'september',date:'2014-09-09',name:'September Yearling Sale',city:'Lexington, KY'},
+ {id:'november',date:'2014-11-04',name:'November Breeding Stock Sale',city:'Lexington, KY'}
+];
+function depHash(v){let x=13;for(const c of String(v))x=(x*31+c.charCodeAt(0))%9973;return x}
+function depMoney(n){if(n==null||n==='')return '';return typeof n==='number'?'$'+Math.round(n).toLocaleString('en-US'):String(n)}
+
+
+function depRaceIso(value){
+ const s=String(value||''),direct=liveStableDate(s);if(direct)return direct;
+ const m=s.match(/(\d{1,2})\/(\d{1,2})/);if(!m)return '';
+ const current=$('.dateChip')?.textContent.trim()||'2014-07-15';
+ return current.slice(0,4)+'-'+String(Number(m[1])).padStart(2,'0')+'-'+String(Number(m[2])).padStart(2,'0');
+}
+function depRows(section,page,demo,auction){
+ const game=state(),stable=horseRows(),races=racingRows(),all=globalSearchItems();
+ APP.searchIndex=all;
+ const source=kind=>all.map((r,i)=>({...r,_index:i})).filter(r=>r.kind===kind);
+ const row=(kind,name,values)=>({...values,_kind:kind,_name:name});
+ const fixture=name=>races.find(r=>r.name===name);
+ const demoYards={'Bellarmine':['Lexington, KY','775'],'Hardtack':['Saratoga, NY','750'],'Iron Harbor':['Ocala, FL','1120'],'Pieta':['Belmont, NY','65'],'Powerline':['Paris, KY','100'],'The Last Match':['Louisville, KY','80']};
+ if(section==='Racing'){
+  const list=demo?stable:stable.filter(h=>fixture(h.name));
+  let out=list.map((h,i)=>{
+   const f=fixture(h.name),d=WTW_STABLE_DEMO[h.name]||{},saved=game.horseState?.[h.name]||{};
+   const date=demo?(d.upcoming||'2014-08-02'):(f?.date||'');
+   return row('horse',h.name,{date:demo?stableShortDate(date):date,track:f?.track||(demo?['Saratoga','Keeneland','Churchill','Monmouth','Belmont','Del Mar'][i]:''),
+    race:f?.tag||(demo?'R'+(i+3):''),class:demo?['MSW','ALW','G3','CLM','G2','OC'][i]:'',
+    surface:demo?(i%3?'D':'T'):'',distance:demo?['6f','1m','9f','7f','8.5f','10f'][i]:'',
+    purse:demo?depMoney([50000,75000,150000,42000,200000,90000][i]):'',
+    horse:h.name,base:demo?demoYards[h.name]?.[0]||'':(saved.current_barn_location||saved.barn_location||saved.current_base||''),
+    ship:demo?demoYards[h.name]?.[1]||'':'',jockey:demo?['J. Butler','M. Green','R. Dawson','I. Walker','F. Wright','J. Brennan'][i]:'',
+    trainer:demo?d.trainer||'':'',ready:demo?d.ready?.[1]||'':saved.readiness_status||'',
+    status:f?.status||(demo?'Target':''),_iso:depRaceIso(date)});
+  });
+  if(page==='Results')out=demo?out.map((r,i)=>({...r,date:stableShortDate((WTW_STABLE_DEMO[r.horse]||{}).last),status:['1st','4th','2nd','3rd','5th','1st'][i],_iso:(WTW_STABLE_DEMO[r.horse]||{}).last||''})):[];
+  if(page==='Stakes')out=out.filter(r=>/G[1-3]|stakes/i.test(r.class)||/stakes/i.test(r.race));
+  if(page==='Entries'&&!demo)out=out.filter(r=>/entered/i.test(r.status));
+  if(page==='Race Planning'&&!demo)out=out.filter(r=>!/entered/i.test(r.status));
+  return out.sort((a,b)=>a._iso.localeCompare(b._iso));
+ }
+ if(section==='Breeding'){
+  let out=stable.map((h,i)=>{
+   const d=WTW_STABLE_DEMO[h.name]||{},saved=game.horseState?.[h.name]||{};
+   const role=demo?['Stallion','Stallion','Broodmare','Broodmare','Stallion','Broodmare'][i]:
+    String(saved.breeding_role||saved.breeding_status||'');
+   return row('horse',h.name,{horse:h.name,age:demo?String([5,7,6,9,4,8][i]):'',sex:demo?(/broodmare/i.test(role)?'M':'H'):'',
+    sire:demo?['Monarch Road','Fleet River','Crown Maker','City Light','Grand Reserve','Violet Sands'][i]:'',
+    dam:demo?['Morning Glory','Wild Azure','Last Dance','Silver Arch','Far Away','Marble Hill'][i]:'',
+    farm:demo?['Kingsmere','Aurelian','Blue Lantern','Crescent Mile','Ironweed','Santa Ventura'][i]:'',
+    status:demo?['Active','Booked','In foal','Open','Active','In foal'][i]:role,health:demo?['Sound','Sound','Sound','Vet watch','Sound','Sound'][i]:saved.health_status||'',
+    pedigree:demo?String([83,78,91,87,72,86][i]):'',value:demo?depMoney([320000,210000,470000,395000,180000,410000][i]):'',
+    owner:demo?d.owner||'':horseOwnership(h.name)?.name||'',
+    studFee:demo&&!/broodmare/i.test(role)?depMoney([12000,8500,0,0,6500,0][i]):'',
+    bookings:demo&&!/broodmare/i.test(role)?String([44,28,0,0,19,0][i]):'',
+    foals:demo?String([18,27,4,6,7,3][i]):'',winners:demo?String([7,11,2,3,2,1][i]):'',_role:role});
+  });
+  if(!demo)out=out.filter(r=>/stallion|broodmare|breeding/i.test(r._role));
+  if(page==='Stallions')out=out.filter(r=>/stallion/i.test(r._role));
+  if(page==='Broodmares')out=out.filter(r=>/broodmare/i.test(r._role));
+  if(page==='Foals')out=demo?out.map(r=>({...r,age:'1',sex:'F',status:'Yearling',studFee:'',bookings:''})):[];
+  if(page==='Stud Farms')return depRows('Facilities','Farms',demo,null);
+  if(page==='Stud Farms')out=out.filter(r=>r.farm);
+  return out;
+ }
+ if(section==='Sales'){
+  if(!auction)return [];
+  const saleOffset=Math.max(0,DEP_AUCTIONS.findIndex(a=>a.id===auction.id));
+  const lots=demo?stable.map((h,i)=>({horse:stable[(i+saleOffset)%stable.length].name})):Array.isArray(auction.lots)?auction.lots:[];
+  let out=lots.map((lot,i)=>{
+   const name=lot.horse||lot.horse_name;
+   return row('horse',name,{hip:demo?String(101+saleOffset*100+i*7):lot.hip||'',horse:name,age:demo?String([2,3,1,4,2,1][i]):lot.age||'',
+    sex:demo?['C','G','F','M','C','F'][i]:lot.sex||'',sire:demo?['Monarch Road','City Light','Fleet River','Northern Crown','Blue Harbor','Grand Reserve'][i]:lot.sire||'',
+    dam:demo?['Silver Arch','Morning Glory','Fast Night','Wild Azure','Marble Hill','Last Dance'][i]:lot.dam||'',
+    consignor:demo?['Blue Lantern','Kingsmere','Ironweed','Aurelian','Crescent Mile','Marrowfield'][i]:lot.consignor||'',
+    reserve:demo?depMoney([90000,70000,110000,140000,55000,80000][i]+saleOffset*4500):depMoney(lot.reserve),
+    bid:demo?depMoney([82000,64000,119000,0,57000,74000][i]+(i===3?0:saleOffset*3000)):depMoney(lot.bid),
+    value:demo?depMoney([108000,85000,130000,145000,62000,96000][i]+saleOffset*4200):depMoney(lot.estimated_value),
+    ca:demo?String([4,3,2,4,3,2][i]):'',pa:demo?String([5,3,5,4,5,4][i]):'',
+    condition:demo?['Fit','Watch','Sound','Fit','Sound','Vet check'][i]:lot.condition||'',
+    status:demo?['Open','Bidding','Watch','Cataloged','Offer','Inspect'][i]:lot.status||''});
+  });
+  if(page==='Watchlist')out=out.filter((r,i)=>demo?i%2===0:/watch/i.test(r.status));
+  if(page==='Private Offers')out=out.filter((r,i)=>demo?i%3===1:/offer/i.test(r.status));
+  return out;
+ }
+ if(section==='Personnel'){
+  let out=source('person').map(r=>{
+   const n=depHash(r.name),role=r.detail||'Unrecorded',owner=/owner|patron/i.test(role),saved=game.staffState?.[r.name]||{};
+   return row('person',r.name,{name:r.name,age:demo?String(27+n%39):saved.age||'',role:role,
+    ca:demo?String(2+n%4):'',pa:demo?String(3+n%3):'',
+    reputation:demo?['Regional','National','Local','International'][n%4]:saved.reputation||'',
+    specialty:demo?(/jockey/i.test(role)?'Turf riding':/trainer/i.test(role)?'2YO development':owner?'Bloodstock':'Stable care'):saved.specialization||'',
+    morale:demo?(owner?'':['High','Good','Neutral'][n%3]):saved.morale||'',
+    workload:demo&&!owner?String(20+n%78)+'%':saved.workload||'',
+    salary:demo&&!owner?depMoney(36000+(n%14)*8500):'',
+    contract:demo&&!owner?String(2015+n%4)+'-12':'',
+    assignment:demo?(owner?'Portfolio':/jockey/i.test(role)?'Race riding':'Main stable'):saved.assignment||'',
+    base:demo?['Lexington, KY','Saratoga, NY','Ocala, FL','Louisville, KY'][n%4]:saved.base||'',
+    wins:demo?String(n%410):'',_sourceIndex:r._index});
+  });
+  const match={Trainers:/trainer/i,Jockeys:/jockey/i,Owners:/owner|patron/i,Staff:/staff|groom|exercise|vet|farrier/i}[page];
+  if(match)out=out.filter(r=>match.test(r.role));
+  return out;
+ }
+ if(section==='Facilities'){
+  let out=[...source('farm'),...source('track')];
+  if(page==='Barns'||page==='Farms')out=out.filter(r=>r.kind==='farm');
+  return out.map(r=>{
+   const n=depHash(r.name),cap=demo?24+n%95:null,used=demo?Math.floor(cap*(.45+(n%35)/100)):null;
+   return row(r.kind,r.name,{name:r.name,type:r.kind==='track'?'Racecourse':'Farm / Barn',
+    location:demo?['Versailles, KY','Saratoga Springs, NY','Ocala, FL','Lexington, KY','Paris, KY'][n%5]:r.detail||'',
+    capacity:cap??'',occupied:used??'',free:demo?cap-used:'',
+    condition:demo?['Excellent','Good','Needs work'][n%3]:'',quality:demo?String(60+n%37)+'/100':'',
+    staff:demo?String(3+n%25):'',cost:demo?depMoney(11000+n%32000):'',
+    owner:demo?['Your Operation','Private','Partnership'][n%3]:'',status:demo?['Active','Operational','Upgrade due'][n%3]:(game.facilityState?.[r.name]?.status||''),_sourceIndex:r._index});
+  });
+ }
+ const entries=demo?[
+  ['2014-07-15','Purse','Race earnings','Racing',28500,0,2840000],
+  ['2014-07-14','Payroll','Stable employee payroll','Personnel',0,21400,2811500],
+  ['2014-07-13','Facilities','Barn and training upkeep','Facilities',0,8200,2832900],
+  ['2014-07-12','Breeding','Stud service receipt','Breeding',12500,0,2841100],
+  ['2014-07-11','Sales','Yearling sale deposit','Sales',0,18000,2828600],
+  ['2014-07-10','Veterinary','Horse treatment','Stable',0,3400,2846600],
+  ['2014-07-09','Boarding','Monthly board receipts','Facilities',17400,0,2850000],
+  ['2014-07-08','Transport','Horse shipping','Racing',0,2900,2832600]
+ ]:(Array.isArray(game.finances?.ledger)?game.finances.ledger.map(t=>[t.date,t.category,t.description,t.department,t.income,t.expense,t.balance]):[]);
+ let out=entries.map((t,i)=>row('finance',String(i),{date:stableShortDate(t[0]),category:t[1]||'',description:t[2]||'',department:t[3]||'',
+  income:Number(t[4])>0?depMoney(t[4]):'',expense:Number(t[5])>0?depMoney(t[5]):'',balance:depMoney(t[6]),_iso:liveStableDate(t[0])}));
+ if(page==='Operating Costs')out=out.filter(r=>r.expense);
+ if(page==='Budgets')out=demo?out.slice(0,4).map(r=>({...r,date:'JUL 2014',category:'Budget / actual'})):[];
+ return out;
+}
+
+
+function depAuctionList(preview){
+ if(preview)return [...DEP_AUCTIONS].sort((a,b)=>a.date.localeCompare(b.date));
+ const raw=state().salesState?.auctions;
+ return Array.isArray(raw)?raw.filter(a=>a&&liveStableDate(a.date)&&typeof a.name==='string')
+  .map((a,i)=>({id:String(a.id||i),name:a.name,date:a.date,city:a.location||'',lots:a.lots||[]}))
+  .sort((a,b)=>a.date.localeCompare(b.date)):[];
+}
+function depCell(value,key){
+ if(value==null||value==='')return '<span class="ng-rs-missing">—</span>';
+ const t=String(value);
+ if(['health','condition','status','morale','ready'].includes(key)){
+  const tone=/treat|unfit|injur|poor|overdue|declin/i.test(t)?'treat':
+   /watch|needs|risk|inspect|restricted|pending|not ready/i.test(t)?'watch':
+   /entered|ready|sound|excellent|good|high|active|confirmed|fit|^[89]\d%$|^100%$/i.test(t)?'sound':'unknown';
+  return liveStableSignal(tone,t,t);
+ }
+ if(['ca','pa'].includes(key)&&/^[1-5]$/.test(t))
+  return '<span class="ng-rs-stars" title="'+(APP.departmentDemo?'Fictional demo':'Recorded')+' rating '+t+'/5"><b>'+('★'.repeat(Number(t)))+'</b>'+('☆'.repeat(5-Number(t)))+'</span>';
+ return safe(t);
+}
+function depNumeric(v){
+ const s=String(v??'').trim().replace(/[$,%\s,]/g,'');
+ if(!/^-?\d+(?:\.\d+)?[kKmM]?$/.test(s))return null;
+ return Number(s.replace(/[kKmM]$/,''))*(/[mM]$/.test(s)?1000000:/[kK]$/.test(s)?1000:1);
+}
+function depPageLimit(section){const financeHeader=section==='Finances'?42:0;return Math.max(8,Math.min(22,Math.floor(((window.innerHeight||850)-250-financeHeader)/29)))}
+function departmentRoster(section,page='Overview'){
+ const demo=APP.departmentDemo;
+ const current=$('.dateChip')?.textContent.trim()||'2014-07-15';
+ const auctions=section==='Sales'?depAuctionList(demo):[];
+ const auction=auctions.find(a=>a.id===APP.departmentAuction)||auctions.find(a=>a.date>=current)||null;
+ const specs=section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:DEP_COLUMNS[section];
+ let rows=depRows(section,page,demo,auction);
+ const search=APP.departmentSearch.trim().toLowerCase();
+ if(search)rows=rows.filter(r=>specs.some(([key])=>String(r[key]??'').toLowerCase().includes(search)));
+ const defaultSort=section==='Racing'?'date':section==='Sales'?'hip':section==='Finances'?'date':specs[0][0];
+ const selectedSort=specs.some(x=>x[0]===APP.departmentSortKey)?APP.departmentSortKey:defaultSort;
+ const sign=APP.departmentSortKey?(APP.departmentSortDesc?-1:1):(section==='Finances'?-1:1);
+ rows.sort((a,b)=>{
+  let av=selectedSort==='date'&&a._iso?a._iso:a[selectedSort],bv=selectedSort==='date'&&b._iso?b._iso:b[selectedSort];
+  const am=av===null||av===undefined||av==='',bm=bv===null||bv===undefined||bv==='';
+  if(am!==bm)return am?1:-1;
+  const an=depNumeric(av),bn=depNumeric(bv);
+  const comp=an!==null&&bn!==null?an-bn:String(av).localeCompare(String(bv),undefined,{numeric:true,sensitivity:'base'});
+  return comp*sign||String(a._name).localeCompare(String(b._name));
+ });
+ const limit=depPageLimit(section),pages=Math.max(1,Math.ceil(rows.length/limit));
+ APP.departmentPageIndex=Math.min(Math.max(0,APP.departmentPageIndex),pages-1);
+ const shown=rows.slice(APP.departmentPageIndex*limit,(APP.departmentPageIndex+1)*limit);
+ APP.departmentVisible=shown;
+
+ const heads=specs.map(([key,label])=>'<th scope="col" aria-sort="'+(selectedSort===key?(sign===1?'ascending':'descending'):'none')+'"><button data-ng="dept-sort" data-val="'+key+'" title="Sort by '+safe(label)+'">'+safe(label)+'<span aria-hidden="true">'+(selectedSort===key?(sign===1?'▲':'▼'):'↕')+'</span></button></th>').join('');
+ const body=shown.map((r,i)=>{
+  return '<tr>'+specs.map(([key])=>{
+   let v=depCell(r[key],key);
+   if((key==='horse'||key==='name')&&r._kind!=='finance'){
+    const first=r._kind==='horse'?
+     (demo?'<span class="ng-rs-demo-owner" title="Fictional ownership marker">'+safe((r.owner||r._name||'?').charAt(0))+'</span>':horseOwnerBadge(r._name)):'';
+    v='<button class="ng-rs-horse" data-ng="dept-open" data-val="'+i+'" aria-label="Open '+safe(r._name)+'" title="Open source-linked '+safe(r._name)+'">'+first+'<span>'+safe(r._name)+'</span></button>';
+   }
+   return '<td title="'+safe(String(r[key]??''))+'">'+v+'</td>';
+  }).join('')+'</tr>';
+ }).join('');
+ const pager='<span class="ng-dpt-records">'+rows.length+' RECORDS · '+shown.length+' SHOWN</span>'+
+  '<button data-ng="dept-page" data-val="-1" '+(APP.departmentPageIndex===0?'disabled':'')+' aria-label="Previous page">‹ PREV</button>'+
+  '<strong>'+(APP.departmentPageIndex+1)+' / '+pages+'</strong>'+
+  '<button data-ng="dept-page" data-val="1" '+(APP.departmentPageIndex>=pages-1?'disabled':'')+' aria-label="Next page">NEXT ›</button>';
+ const viewOptions=(tabmap[section]||[]).map(t=>'<option value="'+safe(t)+'" '+(t===page?'selected':'')+'>'+safe(t)+'</option>').join('');
+ const salePicker=section==='Sales'?'<label class="ng-dpt-auction-picker">AUCTION <select data-ng-select="department-auction" aria-label="Choose auction chronologically">'+
+  (auctions.length?auctions.map(a=>'<option value="'+safe(a.id)+'" '+(auction?.id===a.id?'selected':'')+'>'+safe(stableShortDate(a.date)+' · '+a.name)+'</option>').join(''):'<option>No upcoming auction data</option>')+
+  '</select></label>':'';
+ const cash=availableCash();
+ const finance=section==='Finances'?'<div class="ng-dpt-finance">'+[
+  ['CASH',demo?'$2.84M':cash!=null?depMoney(cash):'—'],
+  ['MONTHLY INCOME',demo?'$186k':'—'],['MONTHLY COSTS',demo?'$143k':'—'],['NET CASH FLOW',demo?'+$43k':'—']
+ ].map(([name,value])=>'<span><small>'+safe(name)+'</small><b>'+safe(value)+'</b></span>').join('')+'</div>':'';
+ const purpose=section==='Racing'?'CURRENT BASE & SHIPPING':
+  section==='Breeding'?'STUD FEES, COVERINGS & PRODUCTION':
+  section==='Sales'?(auction?auction.name.toUpperCase()+' · '+stableShortDate(auction.date)+' · '+(auction.city||''):'NO UPCOMING AUCTIONS'):
+  section==='Personnel'?'TRAINERS · JOCKEYS · OWNERS · STAFF':
+  section==='Facilities'?'CAPACITY · QUALITY · MAINTENANCE':'INCOME · EXPENSES · CASH FLOW';
+ return '<section class="ng-functional ng-stable-roster-v2 ng-dept-roster" data-department="'+safe(section)+'" data-page="'+safe(page)+'">'+
+  '<div class="ng-rs-title"><strong>'+safe(section.toUpperCase())+' · '+safe(page.toUpperCase())+'</strong><span>'+safe(purpose)+(demo?' · FICTIONAL PREVIEW':'')+'</span></div>'+
+  finance+'<div class="ng-rs-tools">'+salePicker+'<label>VIEW <select data-ng-select="department-tab" aria-label="Choose '+safe(section)+' view">'+viewOptions+'</select></label>'+
+  '<input id="ngDepartmentSearch" data-ng-input="department-search" type="search" aria-label="Search '+safe(section)+' roster" value="'+safe(APP.departmentSearch)+'" placeholder="Find records…" autocomplete="off"/>'+
+  '<button data-ng="dept-demo" class="'+(demo?'on':'')+'" title="Preview-only invented values; no game data changes">'+(demo?'DEMO ON':'DEMO OFF')+'</button>'+
+  '<span class="ng-dpt-mode">FULL-WIDTH ROSTER</span></div>'+
+  '<section class="ng-rs-roster"><header><strong>'+safe(section.toUpperCase())+' · SORTABLE ROSTER</strong><div class="ng-dpt-pager">'+pager+'</div></header>'+
+  '<div class="ng-rs-scroll"><table class="ng-rs-table ng-dpt-table"><thead><tr>'+heads+'</tr></thead><tbody>'+
+  (body||'<tr><td colspan="'+specs.length+'" class="ng-rs-no-results">'+(demo?'No matching records.':'No supported records in this view.')+'</td></tr>')+
+  '</tbody></table></div><div class="ng-dpt-disclosure">'+(demo?'FICTIONAL DISPLAY VALUES ONLY — no prices, locations or medical facts saved.':'SOURCE RECORDS ONLY · unknown values shown as —')+
+  '</div></section></section>';
+}
+
 function managerDashboard(){
  const section=APP.section||'Office',page=APP.page||'Overview';
+ if(typeof DEP_NAMES!=='undefined'&&DEP_NAMES.has(section))return departmentRoster(section,page);
  const configs={
   Office:{kinds:['decision','horse','person'],label:'RACING OPERATIONS'},
   Stable:{kinds:['horse','person','farm'],label:'HORSES & STABLE OPERATIONS'},
@@ -1276,6 +1529,22 @@ window.addEventListener('click',e=>{
  if(key==='caseprev')return selectAdjacentCase(-1);
  if(key==='casenext')return selectAdjacentCase(1);
  if(key==='nextopen')return selectAdjacentCase(1,true);
+ if(key==='dept-sort'){
+  if(APP.departmentSortKey===val)APP.departmentSortDesc=!APP.departmentSortDesc;
+  else{APP.departmentSortKey=val;APP.departmentSortDesc=false}
+  APP.departmentPageIndex=0;return paint();
+ }
+ if(key==='dept-page'){APP.departmentPageIndex=Math.max(0,APP.departmentPageIndex+Number(val));return paint()}
+ if(key==='dept-demo'){APP.departmentDemo=!APP.departmentDemo;APP.departmentPageIndex=0;return paint()}
+ if(key==='dept-open'){
+  const r=APP.departmentVisible[Number(val)];if(!r)return;
+  APP.custom='';APP.moreOpen=false;
+  if(['horse','person','farm','track','race'].includes(r._kind)){
+   if(window.__wtwOfficeOpenSearchRecord?.(r._kind,r._name))return schedulePaint(20);
+   if(r._kind==='horse')return bridgeNode($$('.right .boardRows .rankRow').find(n=>$('strong',n)?.textContent.trim()===r._name));
+  }
+  return;
+ }
  if(key==='stable-sort'){if(APP.stableSort===val)APP.stableSortDesc=!APP.stableSortDesc;else{APP.stableSort=val;APP.stableSortDesc=false}return paint()}
  if(key==='stable-filter'){APP.stableFilter=val;return paint()}
   if(key==='stable-mode'){APP.stableMode=val;return paint()}
@@ -1308,6 +1577,8 @@ window.addEventListener('click',e=>{
 },true);
 root.addEventListener('change',event=>{
   const field=event.target;
+  if(field.matches('select[data-ng-select="department-auction"]')){APP.departmentAuction=field.value;APP.departmentPageIndex=0;return paint()}
+  if(field.matches('select[data-ng-select="department-tab"]'))return pageTab(field.value);
   if(field.matches('select[data-ng-select="manager-screen"]')&&field.value){
   pageTab(field.value);
   return;
@@ -1337,6 +1608,12 @@ root.addEventListener('input',event=>{
  if(input.matches('input[data-ng-input="global-search"]')){
   APP.searchQuery=input.value;APP.searchPage=0;
   updateSearchRoster();
+  return;
+ }
+ if(input.matches('input[data-ng-input="department-search"]')){
+  APP.departmentSearch=input.value;APP.departmentPageIndex=0;
+  const caret=input.selectionStart;
+  paint();const el=$('#ngDepartmentSearch',root);if(el){el.focus();el.setSelectionRange(caret,caret)}
   return;
  }
  if(!input.matches('input[data-ng-input="stable-search"]'))return;
