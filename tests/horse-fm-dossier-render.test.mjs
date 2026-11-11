@@ -14,7 +14,7 @@ test('Horse Profile real overview renders all FM dossier sections with zero fabr
  assert.ok(start>0&&end>start,'Production athlete Overview source must exist');
  const overview=js.slice(start,end);
  const render=new Function('route','athleteAttributeCatalog','state','record','blood','connection',
-  'notes','states','safe','$$','quickLinks',overview+'\nreturn athleteOverview();');
+  'notes','states','safe','$$','quickLinks','namedProfileValue',overview+'\nreturn athleteOverview();');
  const esc=value=>String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');
  const makeState=observations=>()=>({scoutingState:{'The Last Match':{attribute_observations:observations}},horseState:{'The Last Match':{certified_results:[]}}});
  const args=(state)=>[{title:'The Last Match'},catalog,state,[
@@ -23,7 +23,8 @@ test('Horse Profile real overview renders all FM dossier sections with zero fabr
    [{label:'Trainer',value:'—'},{label:'Owner',value:'—'}],
    ['Latest decision · 2014-07-15 · Light jog only','Health / Vet · Monitor filling'],
    ['Light jog only','Target: Keeneland R6'],esc,()=>[],'<button data-ng="sourcebutton">RELATED DECISION</button>'];
- const unknown=render(...args(makeState([])));
+ const linkValue=(label,value)=>'<strong>'+esc(value)+'</strong>';
+ const unknown=render(...args(makeState([])),linkValue);
  const visibleText=unknown.replaceAll('&amp;','&');
  for(const name of ['SPEED & PACE','SURFACE & ENVIRONMENT','PHYSICAL & BIOMETRIC','MENTAL & CLASS',
   'CAREER RECORD','CURRENT CONDITION','RACE PLAN','RECENT WORK / OFFICE REPORTS','KEY CONNECTIONS',
@@ -42,12 +43,12 @@ test('Horse Profile real overview renders all FM dossier sections with zero fabr
  assert.ok(!unknown.includes('3–2–1–0'),'Never copy mockup race records into the universe');
  assert.ok(!unknown.includes('Clover Ridge Racing'),'Never copy screenshot owner into the universe');
  const measured=render(...args(makeState([{attribute_key:'raw_speed',status:'measured',
-  estimate:77,scale_min:0,scale_max:100,evidence_refs:['scout:reference']}]))); 
+  estimate:77,scale_min:0,scale_max:100,evidence_refs:['scout:reference']}])),linkValue); 
  assert.ok(measured.includes('1 OF 53 ATTRIBUTES ASSESSED'),'Evidence-backed rating updates count');
  assert.ok(measured.includes('77'),'Evidenced measurement is shown');
  assert.ok(measured.includes('width:77.0%'),'Measured ratings get only observed-scaled bars');
  const noEvidence=render(...args(makeState([{attribute_key:'raw_speed',status:'measured',
-  estimate:99,scale_min:0,scale_max:100,evidence_refs:[]}])));
+  estimate:99,scale_min:0,scale_max:100,evidence_refs:[]}])),linkValue);
  assert.ok(noEvidence.includes('0 OF 53 ATTRIBUTES ASSESSED'),'Unproven numeric estimates must not display as data');
  assert.ok(!noEvidence.includes('width:99.0%'),'Unproven measurements must not create a rating bar');
 });

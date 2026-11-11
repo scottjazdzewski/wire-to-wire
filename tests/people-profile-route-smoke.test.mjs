@@ -16,7 +16,7 @@ test('People Overview safely renders a linked horse and provides a working origi
  // Execute the production template itself, rather than asserting that a marker
  // or stylesheet exists. This failed when a single DOM Element was used with
  // Array#indexOf and made the Gabe Larkin profile fail to open.
- const render=new Function('sourceLinks','$','$$','horseOwnership','horseOwnerBadge','state','safe','glyph',
+ const render=new Function('sourceLinks','$','$$','horseOwnership','horseOwnerBadge','state','safe','glyph','entityReferenceButton',
   fragment+'\nreturn horseAssignments();');
  const horseButton={textContent:'Powerline'};
  const horseItem={textContent:'Powerline',button:horseButton};
@@ -27,15 +27,18 @@ test('People Overview safely renders a linked horse and provides a working origi
  const state=()=>({horseState:{Powerline:{status:'Work'}}});
  const escape=s=>String(s);
  const glyph=()=>'<svg aria-hidden="true"></svg>';
- const html=render([horseItem],single,many,owner,badge,state,escape,glyph);
+ const entityLink=(name,kind)=>'<button data-ng="named-entity" data-kind="'+kind+'">'+name+' ↗</button>';
+ const html=render([horseItem],single,many,owner,badge,state,escape,glyph,entityLink);
  assert.ok(html.includes('data-ng="sourcebutton" data-val="0"'),'Linked horse uses its existing original-action index');
  assert.ok(html.includes('Powerline')&&html.includes('Work'),'Actual linked horse/status are shown immediately');
  assert.ok(html.includes('Owner not recorded'),'Unknown owner stays explicit and unassigned');
  assert.ok(html.includes('ng-horse-owner-badge'),'Approved reusable owner badge occupies the roster position');
- const orphan=render([horseItem],single,()=>[],owner,badge,state,escape,glyph);
- assert.ok(orphan.includes('ng-person-horse-static'),'Missing route action stays readable without throwing or creating a fake destination');
- const empty=render([],single,many,owner,badge,state,escape,glyph);
+ const orphan=render([horseItem],single,()=>[],owner,badge,state,escape,glyph,entityLink);
+ assert.ok(orphan.includes('data-ng="named-entity"'),'Missing source action still opens its own clearly marked unregistered-profile preview');
+ const empty=render([],single,many,owner,badge,state,escape,glyph,entityLink);
  assert.ok(empty.includes('No linked horses recorded.'),'Empty legitimate records get an honest no-data state');
+ const namedOwner=render([horseItem],single,many,()=>({name:'Kingsmere'}),badge,state,escape,glyph,entityLink);
+ assert.ok(namedOwner.includes('data-kind="connection"'),'Owner opens independently of the horse profile');
 });
 
 test('People direct URLs, internal search and entity directories all use the same real profile route',()=>{

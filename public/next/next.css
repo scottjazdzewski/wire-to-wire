@@ -2411,3 +2411,62 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
     margin-top:0!important;
   }
 }
+
+
+/* Shared entity-link behavior for every department table and Tier One profile.
+   Link styling deliberately inherits the exact small roster font size. */
+#wtwNextgen .ng-entity-reference,
+#wtwNextgen .ng-route-profile .ng-entity-reference,
+#wtwNextgen .ng-dept-roster .ng-rs-table .ng-entity-reference{
+ box-sizing:border-box!important;display:inline-block!important;max-width:100%!important;
+ border:0!important;border-radius:1px!important;padding:0!important;margin:0!important;
+ background:transparent!important;color:#d6c18f!important;font:inherit!important;
+ font-size:inherit!important;line-height:inherit!important;font-weight:inherit!important;
+ text-align:left!important;vertical-align:baseline!important;white-space:nowrap!important;
+ overflow:hidden!important;text-overflow:ellipsis!important;cursor:pointer!important;
+ text-transform:none!important;letter-spacing:inherit!important
+}
+#wtwNextgen .ng-entity-reference:hover,
+#wtwNextgen .ng-entity-reference:focus-visible{
+ color:#f4deb1!important;text-decoration:underline!important;
+ text-underline-offset:2px!important
+}
+#wtwNextgen .ng-entity-reference:focus-visible{outline:1px solid #e6c783!important;outline-offset:2px!important}
+#wtwNextgen .ng-entity-preview{
+ box-sizing:border-box;display:flex;flex-direction:column;gap:10px;max-width:100%;
+ height:100%;min-height:0;padding:10px;border:1px solid #44564c;background:#172124;color:#e3e8df
+}
+#wtwNextgen .ng-entity-preview>header{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;
+ padding:8px 12px;border-bottom:1px solid #455b4a;background:#26342f
+}
+#wtwNextgen .ng-entity-preview>header small{font-size:9px;letter-spacing:.06em;color:#bfcbba;font-weight:800}
+#wtwNextgen .ng-entity-preview>header h2{font-size:21px;line-height:1.15;margin:4px 0;color:#e9ddae}
+#wtwNextgen .ng-entity-preview>header button{padding:5px 11px!important;font-size:10px!important;background:#304537!important;color:#eed9a6!important;border:1px solid #748d6f!important}
+#wtwNextgen .ng-entity-preview-notice{
+ font-size:10px;line-height:1.5;color:#f0c98b;padding:8px 10px;margin:0;
+ border-left:3px solid #af9367;background:#2b302b
+}
+#wtwNextgen .ng-entity-preview-grid{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;align-content:start
+}
+#wtwNextgen .ng-entity-preview-grid>div{
+ min-height:49px;display:flex;flex-direction:column;gap:4px;padding:7px 9px;
+ border:1px solid #46584c;background:#202d2c;overflow:hidden
+}
+#wtwNextgen .ng-entity-preview-grid small{font-size:9px;color:#a6bbaa;letter-spacing:.05em;font-weight:750}
+#wtwNextgen .ng-entity-preview-grid strong{font-size:11px;color:#eee1b9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#wtwNextgen .ng-entity-preview-footer{font-size:10px;color:#aec1b0;margin:4px 0}
+@media(max-width:850px){
+ #wtwNextgen .ng-entity-preview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+
+#wtwNextgen .ng-person-horse-name .ng-entity-reference,
+#wtwNextgen .ng-person-horse-owner .ng-entity-reference{
+ font-size:var(--wtw-ui-list-text)!important;line-height:inherit!important;
+ max-width:100%!important;font-weight:750!important
+}
+#wtwNextgen .ng-entity-preview-grid .ng-entity-reference{
+ font-size:11px!important;font-weight:750!important
+}

@@ -130,7 +130,7 @@ test('Racing Office source-linked interactions are correct and visually unambigu
  assert.ok(center.includes('ng-static-title'),'A decision title is a heading, not a redundant second Open File action');
  assert.ok(!center.includes('<button class="ng-casetitle"'),'The title cannot duplicate the explicit Review Full File button');
  assert.ok(js.includes("new Set(['powerline','lastmatch','pieta','entries','newsbuzz'])"),'Non-horse Cedar and sales/financial decisions should not show a Horse Profile');
- assert.ok(js.includes("const row=$$('.right .rankRow').find("),'Roster click must search the full source-backed list');
+ assert.ok(js.includes("if(key==='horse')return openEntityRecord(val,'horse')"),'Stable horse selection must open the exact canonical Horse Profile');
  assert.ok(js.includes("const n=$$('.right .fixtureList .fixture[data-track]')[Number(val)]"),'Fixture click must index the full list');
  assert.ok(js.includes('aria-pressed="${APP.filter===v?'),'Inbox filters need accessible selected state');
  assert.ok(js.includes('aria-current="${m.case===APP.activeCase?'),'Current Inbox item must be marked');
@@ -345,7 +345,7 @@ test('Tracks and Facilities are separate full-width directory rosters; all pages
  }
  assert.ok(code.includes("'Ownership Office'"),'Individual owners should not be misrepresented as syndicates');
  assert.ok(code.includes("_kind:'demo-facility'"),'Fictional facility entities must remain visibly non-authoritative');
- assert.ok(code.includes("r._kind==='demo-facility'"),'Do not create a fake source-profile link for a demo facility');
+ assert.ok(js.includes('previewRecordRoute(kind,name,row)')&&js.includes('FICTIONAL DESIGN PREVIEW'),'Demo facilities must open distinct labeled previews, never forged canonical profiles');
  assert.ok(office.includes('window.__wtwOfficeTrackDirectory = function()'),
   'Track names and meet dates must come from the authoritative Office record');
  assert.ok(css.includes('--wtw-ui-list-text:9.5px')&&css.includes('--wtw-roster-text:var(--wtw-ui-list-text)')&&css.includes('--wtw-roster-head:8.3px'));
@@ -368,7 +368,7 @@ test('Racing opens on active meets and has a true cross-track My Horses mode',()
  assert.ok(js.includes("field.matches('select[data-ng-select=\"department-track\"]')"));
  assert.ok(code.includes("if(page!=='Results')out=out.filter(r=>r._iso&&r._iso>=depGameDay())"),
   'My Horses must exclude races already in the past');
- assert.ok(code.includes("_track:trackName")&&js.includes("window.__wtwOfficeOpenSearchRecord?.(r._kind,r._name,r._track)"),
+ assert.ok(code.includes("_track:trackName")&&js.includes("window.__wtwOfficeOpenSearchRecord?.(exact.kind,name,exact.track||row?._track)"),
   'Stake rows need to open their correct race profile at the named track');
  assert.ok(office.includes('meetWindow:p.meetWindow'),'In-meet windows must remain read-only canonical facts');
 });
@@ -501,6 +501,70 @@ test('Native dropdowns stay mounted through selection and preserve one-click mou
   'Dropdown must unlock before its selected value invokes page navigation');
  for(const choice of ['department-track','department-auction','department-tab','manager-screen','profile-record'])
   assert.ok(change.includes('data-ng-select="'+choice+'"'),'Missing change handler for '+choice);
+ const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(syntax.status,0,syntax.stderr);
+});
+
+
+test('Named management entities open exact profiles or clearly marked unregistered previews',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css');
+ const start=js.indexOf('/* One connection router for every management roster');
+ const end=js.indexOf('function depCell(',start);
+ assert.ok(start>0&&end>start,'Shared entity router should exist');
+ const helper=js.slice(start,end);
+ const setup=[
+  'const APP={custom:"",section:"Facilities",page:"Overview",previewEntity:null,moreOpen:false,departmentDemo:true};',
+  'const DEP_FACILITY_PREVIEW=[["Oak Hollow Breaking Yard","Breaking Facility","Lexington, KY"]];',
+  'const calls=[];',
+  'const window={__wtwOfficeSearchRecords:()=>[',
+  '{kind:"horse",name:"Bellarmine"},{kind:"person",name:"Alistair Dunleavy"},',
+  '{kind:"farm",name:"Kingsmere"},{kind:"track",name:"Saratoga"},',
+  '{kind:"race",name:"Named Stakes",track:"Saratoga"},{kind:"race",name:"Named Stakes",track:"Keeneland"},',
+  '{kind:"person",name:"Ambiguous Racing"},{kind:"farm",name:"Ambiguous Racing"}],',
+  '__wtwOfficeOpenSearchRecord:(kind,name,track)=>{calls.push({kind,name,track});return true}};',
+  'const safe=value=>String(value??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(String.fromCharCode(34),"&quot;");',
+  'const schedulePaint=()=>{};',
+  'const openCustomView=view=>{APP.custom=view};'
+ ].join('\n');
+ const make=new Function(setup+'\n'+helper+
+  '\nreturn {APP,calls,entitySourceMatch,entityNotRecorded,openEntityRecord,previewRecordView,namedProfileValue};');
+ const r=make();
+ assert.equal(r.entitySourceMatch('Kingsmere','farm').kind,'farm');
+ assert.equal(r.entitySourceMatch('Ambiguous Racing','connection'),null);
+ assert.equal(r.entityNotRecorded('Private'),true);
+ assert.ok(r.namedProfileValue('Sire','Bellarmine').includes('data-kind="horse"'));
+ assert.ok(r.namedProfileValue('Owner','Kingsmere').includes('data-kind="connection"'));
+ assert.ok(!r.namedProfileValue('Age','4').includes('data-ng='));
+ for(const [name,kind] of [['Bellarmine','horse'],['Alistair Dunleavy','person'],
+  ['Kingsmere','farm'],['Saratoga','track']]){
+  r.openEntityRecord(name,kind);
+  assert.deepEqual(r.calls.at(-1),{kind,name,track:undefined});
+ }
+ r.openEntityRecord('Named Stakes','race',{_track:'Keeneland'});
+ assert.deepEqual(r.calls.at(-1),{kind:'race',name:'Named Stakes',track:'Keeneland'});
+ const count=r.calls.length;
+ r.openEntityRecord('Oak Hollow Breaking Yard','demo-facility',{
+  _kind:'demo-facility',type:'Breaking Facility',location:'Lexington, KY'
+ });
+ assert.equal(r.calls.length,count,'Demo operations cannot masquerade as canonical facilities');
+ assert.ok(r.APP.custom.includes('Oak%20Hollow%20Breaking%20Yard'));
+ assert.ok(r.previewRecordView().includes('FICTIONAL DESIGN PREVIEW'));
+ assert.ok(r.previewRecordView().includes('Breaking Facility'));
+ r.openEntityRecord('New Trainer','person');
+ assert.ok(r.previewRecordView().includes('SOURCE CONNECTION PENDING'));
+ for(const fragment of [
+  'data-ng="dept-related"','data-ng="dept-open"','data-ng="named-entity"',
+  "if(key==='dept-related')","if(key==='named-entity')",
+  "if(key==='horse')return openEntityRecord(val,'horse')",
+  "else if(APP.custom.startsWith('Preview:')){body=previewRecordView()}",
+  "namedProfileValue('Owner',x.owner)","namedProfileValue('Trainer',x.trainer)",
+  "namedProfileValue('Breeder',x.breeder)","entityReferenceButton(x.race,'race'",
+  "entityReferenceButton(x.track,'track'"
+ ])assert.ok(js.includes(fragment),'Missing entity link '+fragment);
+ assert.ok(!js.includes("r._kind==='demo-facility'?'<span"),
+  'Fictional facility names must never be plain dead text');
+ assert.ok(css.includes('.ng-entity-reference:hover')&&css.includes('.ng-entity-preview>header'));
+ assert.ok(!helper.includes('localStorage.setItem'));
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);
 });
