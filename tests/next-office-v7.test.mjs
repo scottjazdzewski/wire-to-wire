@@ -665,6 +665,76 @@ test('Named management entities open exact profiles or clearly marked unregister
  assert.equal(syntax.status,0,syntax.stderr);
 });
 
+test('Sales workspace provides next/previous auction navigation, exact-date warnings and real session watchlist',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css');
+ const start=js.indexOf('// UI-only lot watchlist.');
+ const end=js.indexOf('function depAuctionList(',start);
+ assert.ok(start>0&&end>start,'Sales UI helpers are present');
+ const helpers=js.slice(start,end);
+ const APP={salesWatched:{},departmentDemo:true},houses={
+  keeneland:{name:'Keeneland'},barretts:{name:'Barretts'},
+  wtba:{name:'WTBA'},obs:{name:'OBS'},fasigtipton:{name:'Fasig-Tipton'},canadian:{name:'Canadian Breeders'}
+ };
+ const make=new Function('APP','DEP_SALE_HOUSES','depGameDay','safe','depSaleDateLabel',helpers+
+  '\nreturn {salesWatchKey,salesUpcomingIndex,salesDesk};');
+ const ui=make(APP,houses,()=> '1999-07-01',v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;'),
+  a=>a.confirmedDate?'10/18/99 – 10/19/99':'October 1999 · usual month, exact date unverified');
+ const auctions=[
+  {id:'jun',name:'June Mixed',company:'Keeneland',city:'Lexington, KY',category:'Mixed',sortKey:'1999-06-01',
+   endDate:'1999-06-02',confirmedDate:true},
+  {id:'bar',name:'Fall Sale of Yearlings and Horses of All Ages',company:'Barretts',city:'Pomona, CA',
+   category:'Mixed',sortKey:'1999-10-18',endDate:'1999-10-19',confirmedDate:true},
+  {id:'unverified',name:'Winter Sale',company:'WTBA',city:'Auburn, WA',
+   category:'Mixed',sortKey:'1999-12-01',endDate:'',confirmedDate:false}
+ ];
+ assert.equal(ui.salesUpcomingIndex(auctions),'1'*1,'After June, Barretts must be the next future auction');
+ assert.equal(ui.salesWatchKey('bar','100','Horse A'),'bar|100');
+ assert.notEqual(ui.salesWatchKey('bar','100','Horse A'),ui.salesWatchKey('unverified','100','Horse A'),
+  'Identical hips from different auction houses need unique watchlist identities');
+ const current=ui.salesDesk('Overview',auctions[1],auctions,3);
+ assert.ok(current.includes('AUCTION DESK / Barretts'));
+ assert.ok(current.includes('Fall Sale of Yearlings and Horses of All Ages'));
+ assert.ok(current.includes('VERIFIED DATE')&&current.includes('10/18/99'));
+ assert.ok(current.includes('Pomona, CA · Mixed'));
+ assert.ok(current.includes('data-ng="sale-prev"')&&current.includes('data-ng="sale-next"'));
+ assert.ok(current.includes('data-ng="sale-watchlist"')&&current.includes('data-ng="sale-catalog"'));
+ const unknown=ui.salesDesk('Catalogs',auctions[2],auctions,0);
+ assert.ok(unknown.includes('USUAL MONTH')&&unknown.includes('exact date unverified'),
+  'A projected sale must never display as a date-confirmed auction');
+ assert.ok(unknown.includes('disabled'), 'Last auction should disable the Next arrow');
+ APP.salesWatched['bar|100']={hip:'100',horse:'Horse A',auction:'Fall Sale',_auctionId:'bar'};
+ APP.salesWatched['unverified|200']={hip:'200',horse:'Horse B',auction:'Winter Sale',_auctionId:'unverified'};
+ const watched=ui.salesDesk('Watchlist',null,auctions,2);
+ assert.ok(watched.includes('WATCHED LOTS')&&watched.includes('>2</b>'));
+ assert.ok(watched.includes('Session only · no bids or transactions'));
+ const company=ui.salesDesk('Sale Companies',null,auctions,6);
+ assert.ok(company.includes('>6</b>')&&company.includes('data-ng="sale-next-up"'));
+ for(const action of ['sale-watch','sale-open-watch','sale-prev','sale-next','sale-next-up',
+   'sale-catalog','sale-overview','sale-calendar','sale-company-list','sale-watchlist']){
+  assert.ok(js.includes("key==='"+action+"'")||js.includes("'"+action+"'"),'Missing handler for '+action);
+ }
+ const selected=js.slice(js.indexOf('function departmentRoster('),js.indexOf('function managerDashboard('));
+ assert.ok(selected.includes("page==='Watchlist'?DEP_COLUMNS.SalesWatchlist"),
+  'Watchlist needs an auction-oriented column layout');
+ assert.ok(selected.includes('aria-pressed=')&&selected.includes('data-ng="sale-watch"'),
+  'A hip must have an accessible watch/unwatch button');
+ assert.ok(selected.includes("data-ng=\"sale-open-watch\""),
+  'Watchlist auction names must return to their own selected catalog');
+ assert.ok(selected.includes('salesDeskView+'),'Sales ribbon should be visible above the table');
+ assert.ok(selected.includes('No watched lots yet.')&&selected.includes('No recorded private offers.'),
+  'Empty state must not invent bids or negotiations');
+ assert.ok(js.includes("if(page==='Watchlist')return Object.values(APP.salesWatched||{})"),
+  'Watched lots must span auctions rather than being a fabricated every-other-row subset');
+ assert.ok(js.includes("if(page==='Private Offers')out=out.filter(r=>!demo&&/offer/i.test(r.status))"),
+  'Fictional offers cannot masquerade as actual negotiations');
+ assert.ok(css.includes('ng-sales-desk-actions button')&&css.includes('ng-sales-hip>button'));
+ assert.ok(css.includes('data-page="Watchlist"')&&css.includes('font-size:var(--wtw-roster-text)'),
+  'Watchlist columns and font must use the approved FM type scale');
+ assert.ok(!helpers.includes('localStorage.setItem'),'UI-only watchlist must not alter canonical saves');
+ const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(syntax.status,0,syntax.stderr);
+});
+
 test('Sales dropdown names the operator and uses verified historical dates with month-only fallback',()=>{
  const js=get('public/next/next.js'),css=get('public/next/next.css');
  const start=js.indexOf('const DEP_SALE_HOUSES=');
