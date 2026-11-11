@@ -665,6 +665,77 @@ test('Named management entities open exact profiles or clearly marked unregister
  assert.equal(syntax.status,0,syntax.stderr);
 });
 
+test('1999 source registries populate the whole game world without invented identities or game-state changes',()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css');
+ const file='public/data/wtw-1999-world-directory-v33.json';
+ const raw=get(file),d=JSON.parse(raw);
+ assert.equal(d.schema,'WTW_1999_WORLD_DIRECTORY_V1');
+ assert.equal(d.counts.operatingTracks,102);
+ assert.equal(d.counts.historicalTracks,16);
+ assert.equal(d.counts.people,154);
+ assert.equal(d.counts.organizations,137);
+ assert.equal(d.counts.openingHorses,267);
+ assert.equal(d.counts.stallions,29);
+ assert.equal(d.counts.broodmares,21);
+ assert.equal(d.counts.publicFigureOwnerLinks,29);
+ assert.equal(d.tracks.length,118);
+ assert.equal(d.people.length,154);
+ assert.equal(d.organizations.length,137);
+ assert.equal(d.horses.length,317);
+ assert.equal(d.tracks.filter(t=>['OPEN','OPEN_1999'].includes(t.operating)).length,102);
+ assert.equal(d.tracks.filter(t=>t.operating==='CLOSED_PRE_1999').length,16);
+ for(const collection of [d.tracks,d.people,d.organizations,d.horses]){
+  const keys=collection.map(e=>e.id||e.key);
+  assert.ok(keys.every(Boolean),'Every identity needs a canonical ID or explicit source-document display key');
+  assert.equal(new Set(keys).size,keys.length,'Canonical identities cannot be duplicated');
+ }
+ assert.ok(d.people.some(p=>p.name==='George Steinbrenner'&&p.ownershipOperation==='Partners Farm'));
+ assert.ok(d.organizations.some(o=>o.id==='O-006036'&&o.publicPrincipal==='George Steinbrenner'));
+ assert.ok(d.tracks.some(t=>t.name==='Aqueduct'&&t.id==='T-0001'&&t.location.includes('New York')));
+ assert.ok(d.organizations.some(o=>o.name==='Wetherby Plain'&&o.location));
+ assert.ok(d.horses.some(h=>h.name==='Luna by Morning'&&h.owner==='Carson Bell Stable'&&h.trainer==='Ike Benton'));
+ assert.ok(d.horses.some(h=>h.name==='May Contain Nuts'&&h.registeredInV33===false&&!h.id),
+  'Breeding document names without registry IDs cannot be passed off as fully registered horses');
+ assert.ok(d.horses.filter(h=>h._role==='opening').every(h=>h.id&&h.ownerId&&h.trainerId));
+ const start=js.indexOf('/* Read-only 1999 world registry');
+ const end=js.indexOf('function globalSearchItems(){',start);
+ assert.ok(start>0&&end>start);
+ const helpers=js.slice(start,end);
+ const reader=new Function('data',helpers+
+  '\nworld1999Data=data;return {world1999Entries,world1999Entry,world1999Key,world1999Match};')(d);
+ const entries=reader.world1999Entries();
+ assert.equal(entries.length,102+154+137+317);
+ assert.ok(entries.every(e=>e.worldKey&&e.name),'Every visible source record needs a name and stable identity route');
+ assert.equal(reader.world1999Match('person','George Steinbrenner').canonicalId,'P-910001');
+ assert.equal(reader.world1999Match('farm','Partners Farm').canonicalId,'O-006036');
+ assert.equal(reader.world1999Match('track','Belmont Park').canonicalId,'T-0002');
+ assert.ok(reader.world1999Match('horse','Luna by Morning').canonicalId.startsWith('H-'));
+ assert.ok(reader.world1999Entry('horse:DOCUMENT-BROODMARE-may-contain-nuts'));
+ assert.ok(!entries.some(e=>e.kind==='track'&&e._world.operating==='CLOSED_PRE_1999'),
+  'Closed historical tracks cannot appear as operating in 1999');
+ for(const text of [
+  "if(section==='World'&&['1999 Horses','People','Organizations'].includes(page))",
+  "if(['Stallions','Broodmares'].includes(page)&&world1999Data)",
+  "section==='World'?(page==='1999 Horses'?WORLD_1999_COLUMNS.Horses",
+  "if(section==='World'&&['1999 Horses','People','Organizations'].includes(page))return departmentRoster('World',page)",
+  "if(r._worldKey)return openWorld1999Entity(r._worldKey)",
+  "if(key==='world-open')return openWorld1999Entity(val)",
+  "else if(APP.custom.startsWith('WorldRecord:')){body=world1999Profile()}",
+  "loadWorld1999();",
+  "status:t._source1999?'OPEN · MEET NOT RECORDED':meet.status",
+  "base:r.location||saved.base||''",
+  "_ownerId:h.ownerId||''","_trainerId:h.trainerId||''","_trackId:h.trackId||''",
+  "v=world1999Linked(k,r['_'+key+'Id'],r[key])",
+  "v=world1999Linked('farm',r._operationId,r.operation)",
+  "v=world1999Linked('person',r._principalId,r.principal)"
+ ])assert.ok(js.includes(text),'Missing 1999 directory route: '+text);
+ assert.ok(css.includes('ng-world-source-profile')&&css.includes('data-page="1999 Horses"'));
+ assert.ok(!helpers.includes('localStorage.setItem'),'The 1999 world projection must never change the canonical save');
+ assert.ok(!raw.includes('futureWinner')&&!raw.includes('post1999Result'),'Do not publish imaginary future racing results');
+ const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(syntax.status,0,syntax.stderr);
+});
+
 test('Sales workspace provides next/previous auction navigation, exact-date warnings and real session watchlist',()=>{
  const js=get('public/next/next.js'),css=get('public/next/next.css');
  const start=js.indexOf('// UI-only lot watchlist.');
