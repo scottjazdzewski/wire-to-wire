@@ -18,6 +18,9 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
  const steps=[];
  try{
   const win=frame.contentWindow,doc=frame.contentDocument;
+  const runtimeErrors=[];
+  win.addEventListener('error',e=>runtimeErrors.push(String(e.message||e.error||'unknown error')));
+  win.addEventListener('unhandledrejection',e=>runtimeErrors.push(String(e.reason||'unhandled rejection')));
   const check=(name,condition)=>{if(!condition)throw Error(name);steps.push(name)};
   const locate=(act,val)=>[...doc.querySelectorAll('#mgApp [data-mg]')].find(x=>
    x.dataset.mg===act&&(val==null||x.dataset.value===val||
@@ -72,7 +75,7 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
  }catch(e){
   result.dataset.state='failed';
   const d=frame.contentDocument,w=frame.contentWindow;
-  result.textContent=JSON.stringify({state:'failed',steps,error:String(e),url:w.location.href,view:w.__WTW_MANAGER_V2__?.ui?.view,sourceTitle:d.querySelector('#routeTitle')?.textContent,sourcePresent:!!d.querySelector('#routeBody .profilePage'),personVisible:!!d.querySelector('.mg-person-dossier'),stageText:d.querySelector('.mg-main')?.textContent.slice(0,200)});
+  result.textContent=JSON.stringify({state:'failed',steps,error:String(e),url:w.location.href,view:w.__WTW_MANAGER_V2__?.ui?.view,sourceTitle:d.querySelector('#routeTitle')?.textContent,sourcePresent:!!d.querySelector('#routeBody .profilePage'),personVisible:!!d.querySelector('.mg-person-dossier'),engineFn:typeof w.__wtwOfficeOpenSearchRecord,apiFn:typeof w.__WTW_MANAGER_V2__?.openRecord,runtimeErrors:typeof runtimeErrors!=='undefined'?runtimeErrors:[],stageText:d.querySelector('.mg-main')?.textContent.slice(0,200)});
  }
 },950));
 </script></body></html>
