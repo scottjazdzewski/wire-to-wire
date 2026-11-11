@@ -41,7 +41,7 @@ test('People Overview safely renders a linked horse and provides a working origi
 test('People direct URLs, internal search and entity directories all use the same real profile route',()=>{
  const office=read('public/office-v30-4.js');
  const next=read('public/next/next.js');
- assert.match(office,/'Gabe Larkin':\\{[^}]*job:'Stable staff'/,'Tested personnel record is in the actual Office universe');
+ assert.match(office,/'Gabe Larkin':[^\n]*job:'Stable staff'/,'Tested personnel record is in the actual Office universe');
  assert.ok(office.includes("if(page==='person'&&name){openPersonProfile(name);return;}"),'Direct person URLs restore actual source profiles');
  assert.ok(office.includes("if(kind==='person'&&Object.prototype.hasOwnProperty.call(personProfiles,name)){openPersonProfile(name);return true;}"),'Search opens the same real People route');
  assert.ok(next.includes("APP.custom='';APP.moreOpen=false;"),'Navigating from Search clears the directory overlay');
