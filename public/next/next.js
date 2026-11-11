@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:true,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:true,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentAuction:'',departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
+const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:true,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:true,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentAuction:'',departmentCompany:'',departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -78,7 +78,7 @@ function goOffice(){
 function openMenu(section){
  APP.moreOpen=false;
  APP.departmentPageIndex=0;APP.departmentSearch='';APP.departmentSortKey='';
- if(section==='Sales')APP.departmentAuction='';
+ if(section==='Sales'){APP.departmentAuction='';APP.departmentCompany=''}
  if(section==='Racing'){APP.racingMode='meets';APP.racingTrack=''}
  if(section==='History'){window.location.assign('/archive/?page=races');return}
  APP.section=section;APP.page='Overview';APP.custom='';
@@ -1178,6 +1178,8 @@ const DEP_COLUMNS={
  Tracks:[['name','TRACK',18],['location','CITY / STATE',18],['surfaces','SURFACES',12],['circuit','CIRCUIT',16],['meetWindow','MEET WINDOWS',19],['status','STATUS',9],['raceDays','DAYS',4],['stakesCount','STAKES',4]],
  Racing:[['date','DATE',7],['track','TRACK',8],['race','RACE',6],['class','CLASS',7],['surface','SURF',4],['distance','DIST',5],['purse','PURSE',7],['horse','HORSE',11],['base','CURRENT BASE',12],['ship','SHIP MI',6],['jockey','JOCKEY',9],['trainer','TRAINER',8],['ready','READY',5],['status','ENTRY',5]],
  Breeding:[['horse','HORSE',12],['age','AGE',3],['sex','SEX',3],['sire','SIRE',9],['dam','DAM',9],['farm','FARM',9],['status','BREED STATUS',7],['health','HEALTH',6],['pedigree','PED',5],['value','BREED VAL',6],['owner','OWNER',10],['studFee','STUD FEE',8],['bookings','BOOK',5],['foals','FOALS',4],['winners','WINS',4]],
+ SaleCalendar:[['date','DATES',12],['name','AUCTION',27],['company','SALES COMPANY',16],['city','LOCATION',16],['category','TYPE',14],['status','STATUS',15]],
+ SaleCompanies:[['name','SALES COMPANY',19],['city','HEADQUARTERS',15],['saleCount','SALES',8],['nextSale','NEXT UPCOMING AUCTION',33],['months','USUAL SALE MONTHS',25]],
  Sales:[['hip','HIP',4],['horse','HORSE',12],['age','AGE',3],['sex','SEX',3],['sire','SIRE',11],['dam','DAM',11],['consignor','CONSIGNOR',10],['reserve','RESERVE',8],['bid','CURRENT BID',8],['value','EST VALUE',8],['ca','CA',4],['pa','PA',4],['condition','COND',7],['status','SALE STATUS',7]],
  Personnel:[['name','PERSON',13],['age','AGE',3],['role','ROLE',10],['ca','CA',4],['pa','PA',4],['reputation','REP',6],['specialty','SPECIALTY',10],['morale','MORALE',6],['workload','LOAD',6],['salary','SALARY',8],['contract','CONTRACT',8],['assignment','ASSIGNED',9],['base','BASE',9],['wins','WINS',4]],
  Facilities:[['name','FACILITY',14],['type','TYPE',9],['location','CITY / STATE',13],['capacity','CAP',5],['occupied','USED',5],['free','FREE',5],['condition','COND',7],['quality','QUALITY',7],['staff','STAFF',5],['cost','MONTHLY COST',10],['owner','OWNER',12],['status','STATUS',8]],
@@ -1446,6 +1448,30 @@ function depRows(section,page,demo,auction){
   if(page==='Stud Farms')out=out.filter(r=>r.farm);
   return out;
  }
+ if(section==='Sales'&&page==='Sale Calendar'){
+  let entries=depAuctionList(demo);
+  if(APP.departmentCompany)entries=entries.filter(a=>a.companyId===APP.departmentCompany);
+  const now=depGameDay();
+  return entries.map(a=>row('sale-event',a.name,{
+   date:a.dateLabel||depSaleDateLabel(a),name:a.name,company:a.company,city:a.city,
+   category:a.category,status:a.confirmedDate?(a.endDate<now?'Completed':a.date<=now?'IN SALE':'Upcoming'):
+    a.sortKey<now?'Month unconfirmed':'Usual month',
+   _iso:a.sortKey,_auctionId:a.id,_companyId:a.companyId
+  }));
+ }
+ if(section==='Sales'&&page==='Sale Companies'){
+  const schedule=depAuctionList(demo),now=depGameDay();
+  return Object.entries(DEP_SALE_HOUSES).map(([id,h])=>{
+   const offers=schedule.filter(a=>a.companyId===id);
+   const next=offers.find(a=>(a.endDate||a.sortKey)>=now);
+   const months=[...new Set(DEP_SALE_SEASONAL.filter(a=>a[0]===id).map(a=>DEP_SALE_MONTHS[a[2]-1]))];
+   return row('sale-company',h.name,{
+    name:h.name,city:h.city,saleCount:String(offers.length),
+    nextSale:next?depSaleLabel(next):'None on current calendar',
+    months:months.join(' · ')||'Historic sales (dates vary)',_companyId:id
+   });
+  });
+ }
  if(section==='Sales'){
   if(!auction)return [];
   const saleOffset=Math.max(0,auction.previewIndex||0);
@@ -1676,11 +1702,11 @@ function departmentRoster(section,page='Overview'){
  const auctions=section==='Sales'?depAuctionList(demo):[];
  const gameDay=depGameDay();
  const auction=auctions.find(a=>a.id===APP.departmentAuction)||auctions.find(a=>(a.endDate||a.sortKey)>=gameDay)||null;
- const specs=section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'?(APP.racingTrack?DEP_COLUMNS.Racing:DEP_COLUMNS.Meets):DEP_COLUMNS[section];
+ const specs=section==='Sales'&&page==='Sale Calendar'?DEP_COLUMNS.SaleCalendar:section==='Sales'&&page==='Sale Companies'?DEP_COLUMNS.SaleCompanies:section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'?(APP.racingTrack?DEP_COLUMNS.Racing:DEP_COLUMNS.Meets):DEP_COLUMNS[section];
  let rows=depRows(section,page,demo,auction);
  const search=APP.departmentSearch.trim().toLowerCase();
  if(search)rows=rows.filter(r=>specs.some(([key])=>String(r[key]??'').toLowerCase().includes(search)));
- const defaultSort=section==='Racing'&&(page!=='Overview'||APP.racingMode==='mine'||APP.racingTrack)?'date':section==='Sales'?'hip':section==='Finances'?'date':specs[0][0];
+ const defaultSort=section==='Racing'&&(page!=='Overview'||APP.racingMode==='mine'||APP.racingTrack)?'date':section==='Sales'&&page!=='Sale Calendar'&&page!=='Sale Companies'?'hip':section==='Finances'?'date':specs[0][0];
  const selectedSort=specs.some(x=>x[0]===APP.departmentSortKey)?APP.departmentSortKey:defaultSort;
  const sign=APP.departmentSortKey?(APP.departmentSortDesc?-1:1):(section==='Finances'?-1:1);
  rows.sort((a,b)=>{
@@ -1731,8 +1757,13 @@ function departmentRoster(section,page='Overview'){
   '</select></label>'+
   '<button data-ng="dept-meets" class="'+(APP.racingMode!=='mine'?'on':'')+'" title="Show tracks racing at the current in-game date">ACTIVE MEETS</button>'+
   '<button data-ng="dept-myhorses" class="'+(APP.racingMode==='mine'?'on':'')+'" title="Show every upcoming race entry or target for horses in your stable, across all tracks">MY HORSES</button>':'';
- const salePicker=section==='Sales'?'<label class="ng-dpt-auction-picker">AUCTION <select data-ng-select="department-auction" aria-label="Choose auction chronologically">'+
+ const salePicker=section==='Sales'&&page!=='Sale Calendar'&&page!=='Sale Companies'?'<label class="ng-dpt-auction-picker">AUCTION <select data-ng-select="department-auction" aria-label="Choose auction chronologically">'+
   (auctions.length?auctions.map(a=>'<option value="'+safe(a.id)+'" '+(auction?.id===a.id?'selected':'')+'>'+safe(depSaleLabel(a))+'</option>').join(''):'<option>No upcoming auction data</option>')+
+  '</select></label>':'';
+ const saleCompanyPicker=section==='Sales'&&page==='Sale Calendar'?
+  '<label class="ng-dpt-sales-company-picker">COMPANY <select data-ng-select="department-sales-company" aria-label="Show sale calendar by operator">'+
+  '<option value="" '+(!APP.departmentCompany?'selected':'')+'>ALL SALE COMPANIES</option>'+
+  Object.entries(DEP_SALE_HOUSES).map(([id,house])=>'<option value="'+safe(id)+'" '+(APP.departmentCompany===id?'selected':'')+'>'+safe(house.name)+'</option>').join('')+
   '</select></label>':'';
  const cash=availableCash();
  const finance=section==='Finances'?'<div class="ng-dpt-finance">'+[
@@ -1741,12 +1772,12 @@ function departmentRoster(section,page='Overview'){
  ].map(([name,value])=>'<span><small>'+safe(name)+'</small><b>'+safe(value)+'</b></span>').join('')+'</div>':'';
  const purpose=section==='Racing'?(APP.racingMode==='mine'?'MY HORSES · ALL UPCOMING ENTRIES AND TARGETS':APP.racingTrack?'UPCOMING RACES AT '+APP.racingTrack.toUpperCase():'TRACKS CURRENTLY HOLDING MEETS'):
   section==='Breeding'?'STUD FEES, COVERINGS & PRODUCTION':
-  section==='Sales'?(auction?depSaleLabel(auction).toUpperCase()+' · '+depSaleDateLabel(auction)+' · '+(auction.city||''):'NO UPCOMING AUCTIONS'):
+  section==='Sales'?(page==='Sale Calendar'?'CHRONOLOGICAL SALES · COMPANY · VENUE · DATE':page==='Sale Companies'?'AUCTION HOUSE DIRECTORY · SALES CALENDAR':auction?depSaleLabel(auction).toUpperCase()+' · '+depSaleDateLabel(auction)+' · '+(auction.city||''):'NO UPCOMING AUCTIONS'):
   section==='Personnel'?'TRAINERS · JOCKEYS · OWNERS · STAFF':
   section==='Facilities'?'CAPACITY · QUALITY · MAINTENANCE':'INCOME · EXPENSES · CASH FLOW';
  return '<section class="ng-functional ng-stable-roster-v2 ng-dept-roster" data-department="'+safe(section)+'" data-page="'+safe(page)+'" data-roster-kind="'+(specs===DEP_COLUMNS.Meets?'meet':'regular')+'">'+
   '<div class="ng-rs-title"><strong>'+safe(section.toUpperCase())+' · '+safe(page.toUpperCase())+'</strong><span>'+safe(purpose)+(demo?' · FICTIONAL PREVIEW':'')+'</span></div>'+
-  finance+'<div class="ng-rs-tools">'+racingPicker+salePicker+'<label>VIEW <select data-ng-select="department-tab" aria-label="Choose '+safe(section)+' view">'+viewOptions+'</select></label>'+
+  finance+'<div class="ng-rs-tools">'+racingPicker+salePicker+saleCompanyPicker+'<label>VIEW <select data-ng-select="department-tab" aria-label="Choose '+safe(section)+' view">'+viewOptions+'</select></label>'+
   '<input id="ngDepartmentSearch" data-ng-input="department-search" type="search" aria-label="Search '+safe(section)+' roster" value="'+safe(APP.departmentSearch)+'" placeholder="Find records…" autocomplete="off"/>'+
   '<button data-ng="dept-demo" class="'+(demo?'on':'')+'" title="Preview-only invented values; no game data changes">'+(demo?'DEMO ON':'DEMO OFF')+'</button>'+
   '<span class="ng-dpt-mode">FULL-WIDTH ROSTER</span></div>'+
@@ -1950,6 +1981,12 @@ window.addEventListener('click',e=>{
  if(key==='dept-demo'){APP.departmentDemo=!APP.departmentDemo;APP.departmentPageIndex=0;return paint()}
  if(key==='dept-open'){
   const r=APP.departmentVisible[Number(val)];if(!r)return;
+  if(APP.section==='Sales'&&r._kind==='sale-event'){
+   APP.departmentAuction=r._auctionId;return pageTab('Overview');
+  }
+  if(APP.section==='Sales'&&r._kind==='sale-company'){
+   APP.departmentCompany=r._companyId;return pageTab('Sale Calendar');
+  }
   // Names open the entity's profile; the active-meet dropdown selects races.
   return openEntityRecord(r._name,r._kind,r);
  }
@@ -1997,6 +2034,7 @@ root.addEventListener('change',event=>{
   const field=event.target;
   if(field?.tagName==='SELECT')endNativeSelectInteraction(false);
   if(field.matches('select[data-ng-select="department-track"]')){APP.racingTrack=field.value;APP.racingMode=field.value?'track':'meets';APP.departmentPageIndex=0;APP.departmentSortKey='';if(APP.page!=='Overview')return pageTab('Overview');return paint()}
+  if(field.matches('select[data-ng-select="department-sales-company"]')){APP.departmentCompany=field.value;APP.departmentPageIndex=0;APP.departmentSortKey='';return paint()}
   if(field.matches('select[data-ng-select="department-auction"]')){APP.departmentAuction=field.value;APP.departmentPageIndex=0;return paint()}
   if(field.matches('select[data-ng-select="department-tab"]'))return pageTab(field.value);
   if(field.matches('select[data-ng-select="manager-screen"]')&&field.value){
