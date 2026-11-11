@@ -341,8 +341,115 @@ function operationsDashboard(view){
   '<div class="mg-content mg-op-content"><div class="mg-operations-grid '+(viewIsStable?'stable':'tracks')+'">'+
   first+second+third+fourth+'</div></div>';
 }
+function departmentStudio(view){
+ const all=records(),horses=all.filter(x=>x.kind==='horse'),
+  people=all.filter(x=>x.kind==='person'),farms=all.filter(x=>x.kind==='farm'),
+  tracks=all.filter(x=>x.kind==='track'),races=all.filter(x=>x.kind==='race'),office=cases();
+ const fixtures=$$('.fixtureList .fixture').slice(0,18);
+ const summary=([a,b,c,d])=>panel(a,b,c,d);
+ const horseList=()=>compactTable([{text:'HORSE',style:'width:27%'},{text:'OWNER'},
+  {text:'CURRENT STATUS'},{text:'NEXT TARGET'},{text:'OPEN',style:'width:58px'}],
+  horses.map(x=>'<tr>'+tableCell(linkRecord(x,x.name,true),'strong')+
+   tableCell(h(owner(x.name)),'dim')+
+   tableCell(h(readState().horseState?.[x.name]?.status||'No current report'),'dim')+
+   tableCell(h(readState().calendarState?.[x.name]?.race_target||'—'),'gold')+
+   tableCell(button('OPEN ›','open','horse|'+x.name+'|','mg-rowlink'),'numeric')+'</tr>'));
+ const peopleList=(list=people)=>compactTable([{text:'PERSON',style:'width:34%'},{text:'ROLE / PROFESSIONAL FILE'},
+   {text:'BASE / NOTE'},{text:'OPEN',style:'width:64px'}],list.map(x=>'<tr>'+
+   tableCell(linkRecord(x,x.name),'strong')+tableCell(h(x.detail||'Personnel record'))+
+   tableCell(h(x.track||'—'),'dim')+tableCell(button('OPEN ›','open','person|'+x.name+'|','mg-rowlink'),'numeric')+'</tr>'));
+ const placeList=(list,kind)=>compactTable([{text:'LOCATION',style:'width:33%'},{text:'RECORD / BASE'},
+   {text:'OPEN',style:'width:62px'}],list.map(x=>'<tr>'+tableCell(linkRecord(x,x.name),'strong')+
+   tableCell(h(x.detail||x.track||'—'),'dim')+
+   tableCell(button('OPEN ›','open',kind+'|'+x.name+'|'+(x.track||''),'mg-rowlink'),'numeric')+'</tr>'));
+ const raceList=()=>compactTable([{text:'RACE',style:'width:35%'},{text:'GRADE / VENUE'},
+   {text:'TRACK'},{text:'OPEN',style:'width:62px'}],races.map(x=>'<tr>'+
+   tableCell(linkRecord(x,x.name),'strong')+tableCell(h(x.detail||'—'))+
+   tableCell(h(x.track||'—'),'dim')+tableCell(button('OPEN ›','open','race|'+x.name+'|'+(x.track||''),'mg-rowlink'),'numeric')+'</tr>'));
+ const calendar=()=>fixtures.length?compactTable([{text:'DATE',style:'width:88px'},{text:'HORSE / EVENT'},
+   {text:'TRACK / CONTEXT'}],fixtures.map(n=>'<tr>'+tableCell(h($('.d',n)?.textContent.trim()||'—'))+
+   tableCell(h($('h4',n)?.textContent.trim()||'—'),'strong')+
+   tableCell(h($('p',n)?.textContent.trim()||'—'),'dim')+'</tr>')):
+   empty('No approved upcoming race or event entries in the current Office file.');
+ const caseList=(filtered=office)=>filtered.length?filtered.map(x=>'<div class="mg-op-case">'+
+  '<div class="mg-op-case-category">'+h(x.type||'OFFICE')+'</div>'+
+  '<div class="mg-op-case-text"><strong>'+h(x.title||x.id)+'</strong><small>'+
+   h(x.source||'Office')+' · '+h(x.risk||x.pressure||'Current management file')+'</small></div>'+
+  button('REVIEW ›','open-case',x.id,'mg-rowlink')+'</div>').join(''):
+  empty('No current Office decisions of this type.');
+ const important=words=>office.filter(x=>words.test([x.type,x.title,x.source,x.summary].join(' ')));
+ const bloodstock=people.filter(x=>/bloodstock|breeder|farm|owner|agent|sales/i.test(x.detail||''));
+ const racingPeople=people.filter(x=>/jockey|trainer|stable|rider/i.test(x.detail||''));
+ const folder={
+  racing:{
+   title:'Racing & Stakes',sub:'RACE PLACEMENT · STAKES CALENDAR',
+   sections:[
+    ['Stakes & Race Directory',raceList(),races.length+' RACE RECORDS'],
+    ['Upcoming Race Calendar',calendar(),fixtures.length+' OFFICE ENTRIES'],
+    ['Eligible Stable Athletes',horseList(),horses.length+' HORSES'],
+    ['Racing Decisions',caseList(important(/entry|race|place|training|work|vet|calendar/i)),
+      'SOURCE-LINKED MANAGEMENT']
+   ]
+  },
+  breeding:{
+   title:'Breeding Operations',sub:'FARMS · BLOODSTOCK · HORSE RECORDS',
+   sections:[
+    ['Farms & Stud Operations',farms.length?placeList(farms,'farm'):empty('No registered farms in the active Office file.'),farms.length+' FACILITY RECORDS'],
+    ['Bloodstock & Breeding Contacts',bloodstock.length?peopleList(bloodstock):empty('No bloodstock specialists in the current Office roster.'),bloodstock.length+' CONTACTS'],
+    ['Horse & Ownership Register',horseList(),horses.length+' HORSES'],
+    ['Bloodstock Intelligence',caseList(important(/sales|hip|foal|breeding|colt|bloodstock|auction/i)),'MARKET / BREEDING FILES']
+   ]
+  },
+  sales:{
+   title:'Sales & Auctions',sub:'BLOODSTOCK MARKET · ACTIVE OPPORTUNITIES',
+   sections:[
+    ['Sales & Bloodstock Intelligence',caseList(important(/sales|auction|catalog|hip|buy|price|bloodstock/i)),
+      'CURRENT MANAGEMENT LEADS'],
+    ['Bloodstock Contacts',bloodstock.length?peopleList(bloodstock):empty('No registered bloodstock contacts in this Office.'),bloodstock.length+' PERSONNEL RECORDS'],
+    ['Horse & Ownership Register',horseList(),horses.length+' HORSES'],
+    ['Current Office Calendar',calendar(),fixtures.length+' SCHEDULED ITEMS']
+   ]
+  },
+  person:{
+   title:'Personnel Directory',sub:'TRAINERS · JOCKEYS · STABLE STAFF',
+   sections:[
+    ['Staff & Racing Professionals',peopleList(),people.length+' PERSONNEL RECORDS'],
+    ['Stable Athletes',horseList(),horses.length+' HORSE RECORDS'],
+    ['Staff & Office Intelligence',caseList(important(/staff|jockey|trainer|stable|gallop|work|vet|bloodstock/i)),
+       'SOURCE-LINKED REPORTS'],
+    ['Upcoming Race Assignments',calendar(),fixtures.length+' SCHEDULED ITEMS']
+   ]
+  },
+  farm:{
+   title:'Farms & Facilities',sub:'FARM OPERATIONS · FACILITY NETWORK',
+   sections:[
+    ['Farm & Barn Directory',farms.length?placeList(farms,'farm'):empty('No registered farms in the current Office source.'),farms.length+' FACILITIES'],
+    ['Facility & Stable Staff',racingPeople.length?peopleList(racingPeople):peopleList(),people.length+' AVAILABLE PEOPLE'],
+    ['Horses & Current Operations',horseList(),horses.length+' HORSES'],
+    ['Facility Management Files',caseList(important(/stable|barn|turnout|farm|health|vet|work|training/i)),
+      'CURRENT OFFICE REPORTS']
+   ]
+  },
+  world:{
+   title:'Racing World',sub:'RACECOURSES · STAKES · CALENDAR',
+   sections:[
+    ['Racecourse Directory',placeList(tracks,'track'),tracks.length+' VENUES'],
+    ['Current Racing Schedule',calendar(),fixtures.length+' OFFICE ENTRIES'],
+    ['Stakes & Major Races',raceList(),races.length+' RACE RECORDS'],
+    ['Racing World Intelligence',caseList(important(/race|track|news|world|colt|entries|calendar/i)),
+      'LIVE WORLD / RACING FILES']
+   ]
+  }
+ };
+ const config=folder[view];if(!config)return null;
+ return pageBar(config.title,config.sub,button('GLOBAL DIRECTORY','nav','search')+
+  button('HISTORY ARCHIVE','nav','history'))+
+  '<div class="mg-content mg-op-content"><div class="mg-operations-grid mg-department-suite '+view+'">'+
+   config.sections.map(x=>summary(x)).join('')+'</div></div>';
+}
 function department(view){
  if(view==='stable'||view==='track')return operationsDashboard(view);
+ const studio=departmentStudio(view);if(studio)return studio;
  const map={stable:['horse','Stable & Horses','HORSE OPERATIONS'],racing:['race','Racing & Stakes','CALENDAR / ENTRIES'],breeding:['farm','Breeding Operations','FARMS / BLOODSTOCK'],sales:['horse','Sales & Market','HORSES / SALES CONTEXT'],person:['person','Personnel Directory','TRAINERS, JOCKEYS & STAFF'],farm:['farm','Farms & Facilities','FARM / BARN DIRECTORY'],track:['track','Racecourses','TRACKS & VENUES'],world:['track','Racing World','GLOBAL RACING OPERATIONS'],finances:['horse','Financial Operations','OFFICE / FINANCIAL CONTEXT'],inbox:['horse','Office Correspondence','DECISION FILES']};
  const item=map[view]||map.stable,kind=item[0],list=records().filter(r=>r.kind===kind),game=readState();
  const status=list.map(r=>'<tr>'+tableCell(linkRecord(r,r.name,kind==='horse'),'strong')+
