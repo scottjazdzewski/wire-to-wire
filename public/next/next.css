@@ -1561,19 +1561,18 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 #wtwNextgen .ng-dept-roster[data-department="Finances"] .ng-rs-table th:nth-child(5){width:10%}
 #wtwNextgen .ng-dept-roster[data-department="Finances"] .ng-rs-table th:nth-child(6){width:10%}
 #wtwNextgen .ng-dept-roster[data-department="Finances"] .ng-rs-table th:nth-child(7){width:6%}
-#wtwNextgen .ng-dept-roster[data-department="Breeding"] .ng-rs-table th:nth-child(n){width:auto}
-#wtwNextgen .ng-dept-roster[data-department="Breeding"]:has(.ng-rs-title strong) .ng-rs-table th:nth-child(1){width:15%}
-#wtwNextgen .ng-dept-roster[data-department="Breeding"]:has(.ng-rs-title strong) .ng-rs-table th:nth-child(2){width:10%}
-#wtwNextgen .ng-dept-roster[data-department="Breeding"]:has(.ng-rs-title strong) .ng-rs-table th:nth-child(3){width:15%}
-#wtwNextgen .ng-dept-roster[data-department="Breeding"]:has(.ng-rs-title strong) .ng-rs-table th:nth-child(4){width:6%}
-#wtwNextgen .ng-dept-roster[data-department="Breeding"]:has(.ng-rs-title strong) .ng-rs-table th:nth-child(5){width:6%}
-#wtwNextgen .ng-dept-roster[data-department="Breeding"]:has(.ng-rs-title strong) .ng-rs-table th:nth-child(6){width:5%}
-#wtwNextgen .ng-dept-roster[data-department="Breeding"]:has(.ng-rs-title strong) .ng-rs-table th:nth-child(7){width:7%}
-#wtwNextgen .ng-dept-roster[data-department="Breeding"]:has(.ng-rs-title strong) .ng-rs-table th:nth-child(8){width:8%}
-#wtwNextgen .ng-dept-roster[data-department="Breeding"]:has(.ng-rs-title strong) .ng-rs-table th:nth-child(9){width:5%}
-#wtwNextgen .ng-dept-roster[data-department="Breeding"]:has(.ng-rs-title strong) .ng-rs-table th:nth-child(10){width:10%}
-#wtwNextgen .ng-dept-roster[data-department="Breeding"]:has(.ng-rs-title strong) .ng-rs-table th:nth-child(11){width:13%}
 
+#wtwNextgen .ng-dept-roster[data-department="Breeding"][data-page="Stud Farms"] .ng-rs-table th:nth-child(1){width:15%}
+#wtwNextgen .ng-dept-roster[data-department="Breeding"][data-page="Stud Farms"] .ng-rs-table th:nth-child(2){width:10%}
+#wtwNextgen .ng-dept-roster[data-department="Breeding"][data-page="Stud Farms"] .ng-rs-table th:nth-child(3){width:15%}
+#wtwNextgen .ng-dept-roster[data-department="Breeding"][data-page="Stud Farms"] .ng-rs-table th:nth-child(4){width:6%}
+#wtwNextgen .ng-dept-roster[data-department="Breeding"][data-page="Stud Farms"] .ng-rs-table th:nth-child(5){width:6%}
+#wtwNextgen .ng-dept-roster[data-department="Breeding"][data-page="Stud Farms"] .ng-rs-table th:nth-child(6){width:5%}
+#wtwNextgen .ng-dept-roster[data-department="Breeding"][data-page="Stud Farms"] .ng-rs-table th:nth-child(7){width:7%}
+#wtwNextgen .ng-dept-roster[data-department="Breeding"][data-page="Stud Farms"] .ng-rs-table th:nth-child(8){width:8%}
+#wtwNextgen .ng-dept-roster[data-department="Breeding"][data-page="Stud Farms"] .ng-rs-table th:nth-child(9){width:5%}
+#wtwNextgen .ng-dept-roster[data-department="Breeding"][data-page="Stud Farms"] .ng-rs-table th:nth-child(10){width:10%}
+#wtwNextgen .ng-dept-roster[data-department="Breeding"][data-page="Stud Farms"] .ng-rs-table th:nth-child(11){width:13%}
 .ng-stable-directory{box-sizing:border-box;height:100%!important;min-height:0!important;display:flex!important;flex-direction:column!important;gap:7px!important;overflow:hidden!important}
 }
 .ng-stable-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));flex:0 0 auto;gap:5px}
