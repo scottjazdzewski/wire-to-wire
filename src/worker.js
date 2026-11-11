@@ -235,6 +235,43 @@ async function api(request,env,email) {
     ]);
     return response({horse_id:horseId,details,seasons:seasons.results,parents:parents.results,offspring:offspring.results,bloodline});
   }
+  // Five-generation source pedigree, keyed exclusively by immutable horse IDs.
+  // The recursive path is S (sire) or D (dam); 2+4+8+16+32 ancestor
+  // positions can be displayed without filling unknown parents with inventions.
+  // Read-only: display-name overrides are applied at the final lookup.
+  const pedigreeMatch=url.pathname.match(/^\/api\/horses\/(H-[A-Za-z0-9-]+)\/pedigree$/);
+  if(request.method==='GET'&&pedigreeMatch){
+    const horseId=pedigreeMatch[1];
+    const horse=await env.DB.prepare("SELECT e.id,e.kind,COALESCE(n.name,e.name) AS name,e.foal_year,e.sex,e.status FROM entities e LEFT JOIN display_name_overrides n ON n.target_type='entity' AND n.target_id=e.id WHERE e.id=? AND e.kind='horse' LIMIT 1").bind(horseId).first();
+    // Some older pedigrees contain ancestor identities before a full entity
+    // dossier is imported. A valid edge ID still has a navigable pedigree.
+    const parent=horse?null:await env.DB.prepare("SELECT parent_id AS id,parent_name AS name FROM pedigree_edges WHERE parent_id=? LIMIT 1").bind(horseId).first();
+    if(!horse&&!parent)return response({error:'Horse not in the historical source'},404);
+    const rows=await env.DB.prepare(
+      "WITH RECURSIVE tree(depth,path,horse_id,source_name,visited) AS ("+
+      " SELECT 0,'' AS path,? AS horse_id,? AS source_name,'|'||?||'|' AS visited "+
+      " UNION ALL "+
+      " SELECT tree.depth+1,tree.path||CASE WHEN UPPER(p.relation)='SIRE' THEN 'S' ELSE 'D' END,"+
+      " p.parent_id,p.parent_name,tree.visited||p.parent_id||'|' "+
+      " FROM tree JOIN pedigree_edges p ON p.child_id=tree.horse_id "+
+      " WHERE tree.depth<5 AND UPPER(p.relation) IN ('SIRE','DAM') "+
+      " AND INSTR(tree.visited,'|'||p.parent_id||'|')=0"+
+      ") SELECT tree.depth,tree.path,tree.horse_id,"+
+      " COALESCE(en.name,pn.name,tree.source_name,tree.horse_id) AS name,"+
+      " e.foal_year,e.sex,e.kind,e.status"+
+      " FROM tree LEFT JOIN entities e ON e.id=tree.horse_id"+
+      " LEFT JOIN display_name_overrides en ON en.target_type='entity' AND en.target_id=tree.horse_id"+
+      " LEFT JOIN display_name_overrides pn ON pn.target_type='pedigree' AND pn.target_id=tree.horse_id"+
+      " ORDER BY tree.depth,tree.path LIMIT 128"
+    ).bind(horseId,horse?.name||parent.name,horseId).all();
+    const nodes=rows.results||[];
+    const byPath=new Set(nodes.map(n=>n.path));
+    return response({horse_id:horseId,generations:5,positions:63,
+      known_positions:nodes.length,complete:nodes.length===63&&byPath.size===63,
+      authority:'WTW historical source pedigree edges and immutable H-IDs',
+      warning:'Missing ancestors remain unknown. An internal WTW source pedigree is not an authenticated external studbook.',
+      nodes});
+  }
   if(request.method==='GET' && url.pathname==='/api/entities') {
     const term=String(url.searchParams.get('q')||'').slice(0,90),kind=String(url.searchParams.get('kind')||'').slice(0,30);
     const limit=Math.min(Math.max(Number(url.searchParams.get('limit'))||100,1),250);
