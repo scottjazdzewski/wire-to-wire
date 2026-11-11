@@ -755,9 +755,16 @@ function profileDetail(route){
       const owner=horseOwnership(label);
       const horse=state().horseState?.[label]||{};
       const status=typeof horse.status==='string'&&horse.status.trim()?horse.status.trim():'Not recorded';
-      const content=`<span class="ng-person-horse-name">${horseOwnerBadge(label)}<strong>${safe(label)}</strong></span><span class="ng-person-horse-owner" title="${safe(owner?.name||'Owner not recorded')}">${safe(owner?.name||'Owner not recorded')}</span><span class="ng-person-horse-status" title="${safe(status)}">${safe(status)}</span>${glyph('right',12)}`;
-      return index>=0?`<button class="ng-person-horse-row" data-ng="sourcebutton" data-val="${index}" aria-label="Open linked horse ${safe(label)}">${content}</button>`:
-        `<div class="ng-person-horse-row ng-person-horse-static">${content}</div>`;
+      const horseLink=index>=0?'<button type="button" data-ng="sourcebutton" data-val="'+index+
+       '" aria-label="Open horse '+safe(label)+'">'+safe(label)+' ↗</button>':
+       entityReferenceButton(label,'horse');
+      const ownerLink=owner?.name?entityReferenceButton(owner.name,'connection'):
+       '<span>Owner not recorded</span>';
+      return '<div class="ng-person-horse-row">'+
+       '<span class="ng-person-horse-name">'+horseOwnerBadge(label)+horseLink+'</span>'+
+       '<span class="ng-person-horse-owner" title="'+safe(owner?.name||'Owner not recorded')+'">'+ownerLink+'</span>'+
+       '<span class="ng-person-horse-status" title="'+safe(status)+'">'+safe(status)+'</span>'+
+       glyph('right',12)+'</div>';
     });
     return `<div class="ng-person-horse-table"><div class="ng-person-horse-head"><span>HORSE</span><span>OWNER</span><span>STATUS</span><span></span></div>${sourceEntries.join('')||'<div class="ng-person-compact-empty">No linked horses recorded.</div>'}</div>`;
   };
@@ -1437,10 +1444,11 @@ const DEPT_ENTITY_COLUMNS={
 function entityNotRecorded(name){
  return !name||/^(?:—|-|unknown|not recorded|none|n\/a|private|your operation|unassigned|tbd|not entered|no target)$/i.test(String(name).trim());
 }
-function entitySourceMatch(name,preferred=''){
+function entitySourceMatch(name,preferred='',track=''){
  const rows=typeof window.__wtwOfficeSearchRecords==='function'?window.__wtwOfficeSearchRecords():[];
  const matches=Array.isArray(rows)?rows.filter(x=>
-  ['horse','person','farm','track','race'].includes(x?.kind)&&x.name===name):[];
+  ['horse','person','farm','track','race'].includes(x?.kind)&&x.name===name&&
+  (!track||x.kind!=='race'||x.track===track)):[];
  const exact=preferred&&preferred!=='connection'?matches.filter(x=>x.kind===preferred):matches;
  // Refuse to send duplicate names to whichever arbitrary person/farm comes first.
  return exact.length===1?exact[0]:null;
@@ -1479,7 +1487,7 @@ function previewRecordRoute(kind,name,row=null){
 }
 function openEntityRecord(name,preferred='',row=null){
  if(entityNotRecorded(name))return false;
- const exact=entitySourceMatch(name,preferred);
+ const exact=entitySourceMatch(name,preferred,row?._track||'');
  const kind=exact?.kind||preferred||row?._kind||'record';
  if(exact&&window.__wtwOfficeOpenSearchRecord?.(exact.kind,name,exact.track||row?._track)){
   APP.custom='';APP.previewEntity=null;APP.moreOpen=false;
