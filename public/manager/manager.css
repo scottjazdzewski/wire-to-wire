@@ -227,6 +227,18 @@ body>.app,body>#routeShell,body>#toast,body>.wtw-site-archive-link{display:none!
 .mg-op-content{gap:0}
 .mg-operations-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);grid-template-rows:minmax(0,42fr) minmax(0,58fr);gap:8px;flex:1;min-height:0;min-width:0}
 .mg-operations-grid.tracks{grid-template-rows:minmax(0,31fr) minmax(0,69fr)}
+.mg-department-suite.breeding,.mg-department-suite.sales,.mg-department-suite.farm,.mg-department-suite.person,.mg-department-suite.world{grid-template-rows:max-content minmax(0,1fr)}
+.mg-department-suite.breeding>.mg-section:nth-child(-n+2),
+.mg-department-suite.sales>.mg-section:nth-child(-n+2),
+.mg-department-suite.farm>.mg-section:nth-child(-n+2),
+.mg-department-suite.person>.mg-section:nth-child(-n+2),
+.mg-department-suite.world>.mg-section:nth-child(-n+2){max-height:260px}
+.mg-department-suite.breeding .mg-table td,
+.mg-department-suite.sales .mg-table td,
+.mg-department-suite.farm .mg-table td,
+.mg-department-suite.person .mg-table td{height:35px}
+.mg-department-suite.racing{grid-template-rows:minmax(0,54fr) minmax(0,46fr)}
+
 .mg-operations-grid>.mg-section{min-height:0;min-width:0;overflow:hidden}
 .mg-operations-grid .mg-table-wrap{overflow:auto;min-height:0}
 .mg-operations-grid .mg-table td{height:29px;font-size:11px;line-height:1.3}
