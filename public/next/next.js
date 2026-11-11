@@ -444,7 +444,18 @@ function profileDetail(route){
   ['Overview','Connections','History']);
  const rows=(items)=>'<div class="ng-data-rows">'+items.map(i=>`<div class="ng-data-row"><span>${safe(i.label)}</span><strong>${safe(i.value)}</strong></div>`).join('')+'</div>';
  const pills='<div class="ng-status-pills">'+states.slice(0,4).map(x=>`<span>${safe(x)}</span>`).join('')+'</div>';
- const tabbar='<nav class="ng-profiletabs" aria-label="${safe(route.kicker)} sections">'+tabs.map(t=>`<button data-ng="detailtab" data-val="${safe(t)}" class="${APP.detailTab===t?'on':''}" aria-current="${APP.detailTab===t?'page':'false'}">${safe(t)}</button>`).join('')+'</nav>';
+ const tabbar=isPerson?`<nav class="ng-person-dossierbar" aria-label="Personnel dossier navigation">
+   <span class="ng-person-dossierlabel">PERSONNEL DOSSIER <small>ONE-SCREEN OVERVIEW</small></span>
+   <div class="ng-person-dossieractions">
+    <button data-ng="detailtab" data-val="Overview" class="${APP.detailTab==='Overview'?'on':''}">OVERVIEW</button>
+    <button data-ng="detailtab" data-val="History" class="${APP.detailTab==='History'?'on':''}">HISTORY</button>
+    <select data-ng-select="person-record" aria-label="Open complete personnel record">
+     <option value="">MORE RECORDS</option>
+     ${tabs.filter(t=>!['Overview','History'].includes(t)).map(t=>`<option value="${safe(t)}" ${APP.detailTab===t?'selected':''}>${safe(t)}</option>`).join('')}
+    </select>
+   </div>
+  </nav>`:
+  '<nav class="ng-profiletabs" aria-label="'+safe(route.kicker)+' sections">'+tabs.map(t=>`<button data-ng="detailtab" data-val="${safe(t)}" class="${APP.detailTab===t?'on':''}" aria-current="${APP.detailTab===t?'page':'false'}">${safe(t)}</button>`).join('')+'</nav>';
  const factsBlock=`<div class="ng-profile-facts">${fields.map(f=>`<div><small>${safe(f.label)}</small><strong>${safe(f.value)}</strong></div>`).join('')}</div>`;
 
  const horseAchievementPanel=isHorse?$$('.profilePanel',source).find(panel=>text('h3',panel).includes('Achievements')):null;
@@ -562,10 +573,17 @@ function profileDetail(route){
    return `<div class="ng-person-attribute" title="${safe(def.meaning)}"><span>${safe(def.label)}</span><strong class="${valid?'assessed':'unassessed'}">${valid?safe(String(obs.estimate)):'—'}</strong></div>`;
   };
   const attributes=(full=false)=>{
-   const overviewCommon=commonQuick.slice(0,4),overviewSpecial=special.slice(0,5);
-   const selected=full?common:overviewCommon;
-   const assessed=selected.filter(x=>{const o=observed.get(x.key);return o&&o.status!=='unassessed'&&o.estimate!=null&&o.evidence_refs?.length}).length;
-   return `<div class="ng-person-attribute-block"><div class="ng-person-minihead">PROFESSIONAL FOUNDATIONS <small>${assessed}/${selected.length} ASSESSED</small></div>${selected.map(attr).join('')}${special.length?`<div class="ng-person-minihead">${safe(roleDisplay.toUpperCase())} SKILLS <small>${full?'ALL SPECIALTIES':'KEY SKILLS'}</small></div>${(full?special:overviewSpecial).map(attr).join('')}`:''}${!common.length?'<p class="ng-person-unrated">Attribute definitions are not loaded.</p>':''}</div>`;
+   const isObserved=def=>{const o=observed.get(def.key);return o&&
+    (o.status==='measured'||o.status==='estimated')&&o.estimate!=null&&Array.isArray(o.evidence_refs)&&o.evidence_refs.length;};
+   const found=common.filter(isObserved).length+special.filter(isObserved).length;
+   if(full)return `<div class="ng-person-attribute-block"><div class="ng-person-minihead">PROFESSIONAL FOUNDATIONS <small>${common.filter(isObserved).length}/${common.length} ASSESSED</small></div>${common.map(attr).join('')}${special.length?`<div class="ng-person-minihead">${safe(roleDisplay.toUpperCase())} SKILLS <small>ROLE SPECIALTIES</small></div>${special.map(attr).join('')}`:''}</div>`;
+   const first=common.slice(0,Math.ceil(common.length/2)),second=common.slice(Math.ceil(common.length/2));
+   const column=(rows,label)=>`<section class="ng-person-skill-column"><div class="ng-person-minihead">${safe(label)}</div>${rows.map(attr).join('')}</section>`;
+   return `<div class="ng-person-attribute-block ng-person-skill-matrix">
+     <div class="ng-person-assessment-summary"><span>SCOUTING COVERAGE</span><strong>${found} / ${common.length+special.length} ASSESSED</strong><small>UNKNOWN DOES NOT MEAN ZERO</small></div>
+     <div class="ng-person-skill-columns">${column(first,'CORE ABILITIES')}${column(second,'PROFESSIONAL HABITS')}${special.length?column(special,roleDisplay.toUpperCase()+' SKILLS'):''}</div>
+     ${!common.length?'<p class="ng-person-unrated">Source-backed attribute catalog is not loaded.</p>':''}
+    </div>`;
   };
   const reputation=(full=false)=>`<div class="ng-person-reputation"><div class="ng-person-overall"><div><small>PROFESSIONAL STANDING</small><strong>${rep?safe(String(rep.scores.overall))+'<em> / 100</em>':'UNRATED'}</strong></div><span>${rep?(rep.source?.kind==='GENERATED_GAME'?'GAME-MODELED STANDING':'EVIDENCE-SOURCED SCORE'):'NOT YET ASSESSED'}</span></div><div class="ng-person-rep-axes">${axes.filter(axis=>full||axis.key!=='professional_trust').map(axis=>{
    const value=rep?.scores?.[axis.key],valid=typeof value==='number'&&Number.isFinite(value);
@@ -748,11 +766,11 @@ function profileDetail(route){
   }else if(isPerson){
    const person=personWork();
    left=`<div class="ng-person-workspace ng-person-workspace-overview">
-    <section class="ng-person-work-card ng-person-ov-attributes"><header>PROFESSIONAL ATTRIBUTES <button data-ng="detailtab" data-val="Attributes">ALL SKILLS ${glyph('arrow',11)}</button></header>${person.attributes()}</section>
-    <section class="ng-person-work-card ng-person-ov-reputation"><header>REPUTATION & STANDING <button data-ng="detailtab" data-val="Reputation">FULL RECORD ${glyph('arrow',11)}</button></header>${person.reputation()}</section>
-    <section class="ng-person-work-card ng-person-ov-horses"><header>CONNECTED HORSES <button data-ng="detailtab" data-val="Stable Horses">ALL HORSES ${glyph('arrow',11)}</button></header>${person.horseAssignments()}</section>
-    <section class="ng-person-work-card ng-person-ov-career"><header>CAREER AT A GLANCE <button data-ng="detailtab" data-val="Career">CAREER ${glyph('arrow',11)}</button></header>${person.careerOverview}</section>
-    <section class="ng-person-work-card ng-person-ov-network"><header>WORKING NETWORK <button data-ng="detailtab" data-val="Network">FULL NETWORK ${glyph('arrow',11)}</button></header>${person.networkOverview}</section>
+    <section class="ng-person-work-card ng-person-ov-attributes"><header>PROFESSIONAL RATINGS <span class="ng-person-panel-context">CURRENT & OBSERVED ABILITY</span></header>${person.attributes()}</section>
+    <section class="ng-person-work-card ng-person-ov-reputation"><header>REPUTATION & RELATIONSHIP TRUST</header>${person.reputation()}</section>
+    <section class="ng-person-work-card ng-person-ov-horses"><header>HORSE ASSIGNMENTS <span class="ng-person-panel-context">LIVE BARN STATUS</span></header>${person.horseAssignments()}</section>
+    <section class="ng-person-work-card ng-person-ov-career"><header>CAREER & OPPORTUNITIES</header>${person.careerOverview}</section>
+    <section class="ng-person-work-card ng-person-ov-network"><header>WORKING RELATIONSHIPS</header>${person.networkOverview}</section>
    </div>`;
    right='';footer='';
   }else if(isFarm){
@@ -972,6 +990,13 @@ window.addEventListener('click',e=>{
  if(key==='back')return window.history.back()
  if(key==='forward')return window.history.forward()
 },true);
+root.addEventListener('change',event=>{
+  const field=event.target;
+  if(field.matches('select[data-ng-select="person-record"]')&&field.value){
+   APP.detailTab=field.value;
+   paint();
+  }
+});
 root.addEventListener('keydown',event=>{
  if(event.key==='Enter'&&event.target.matches('#ngGlobalSearch')){
   const first=$('.ng-search-row',root);
