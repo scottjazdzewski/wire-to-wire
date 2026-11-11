@@ -1361,7 +1361,7 @@ function departmentRoster(section,page='Overview'){
   section==='Sales'?(auction?auction.name.toUpperCase()+' · '+stableShortDate(auction.date):'NO UPCOMING AUCTIONS'):
   section==='Personnel'?'TRAINERS · JOCKEYS · OWNERS · STAFF':
   section==='Facilities'?'CAPACITY · QUALITY · MAINTENANCE':'INCOME · EXPENSES · CASH FLOW';
- return '<section class="ng-functional ng-stable-roster-v2 ng-dept-roster" data-department="'+safe(section)+'">'+
+ return '<section class="ng-functional ng-stable-roster-v2 ng-dept-roster" data-department="'+safe(section)+'" data-page="'+safe(page)+'">'+
   '<div class="ng-rs-title"><strong>'+safe(section.toUpperCase())+' · '+safe(page.toUpperCase())+'</strong><span>'+safe(purpose)+(demo?' · FICTIONAL PREVIEW':'')+'</span></div>'+
   finance+'<div class="ng-rs-tools">'+salePicker+'<label>VIEW <select data-ng-select="department-tab" aria-label="Choose '+safe(section)+' view">'+viewOptions+'</select></label>'+
   '<input id="ngDepartmentSearch" data-ng-input="department-search" type="search" aria-label="Search '+safe(section)+' roster" value="'+safe(APP.departmentSearch)+'" placeholder="Find records…" autocomplete="off"/>'+
