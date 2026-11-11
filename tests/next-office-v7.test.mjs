@@ -249,7 +249,7 @@ test('FM/OOTP connected profiles: people, farms, tracks, sourced graphics, click
 
 test('Live Stable is a dense sortable FM/OOTP roster with source-only status icons and no fabricated ratings',()=>{
  const js=get('public/next/next.js'),css=get('public/next/next.css');
- const a=js.indexOf('function liveStableRosterView('),b=js.indexOf('function functionalRoute(',a);
+ const a=js.indexOf('function liveStableRating('),b=js.indexOf('function functionalRoute(',a);
  const page=js.slice(a,b);
  assert.ok(a>0&&page.includes('const horses=horseRows(),races=racingRows(),game=state()'),
   'Live roster must derive horses, schedule, and cases from the canonical Office sources');
