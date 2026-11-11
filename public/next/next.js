@@ -444,12 +444,12 @@ function profileDetail(route){
   ['Overview','Connections','History']);
  const rows=(items)=>'<div class="ng-data-rows">'+items.map(i=>`<div class="ng-data-row"><span>${safe(i.label)}</span><strong>${safe(i.value)}</strong></div>`).join('')+'</div>';
  const pills='<div class="ng-status-pills">'+states.slice(0,4).map(x=>`<span>${safe(x)}</span>`).join('')+'</div>';
- const tabbar=isPerson?`<nav class="ng-person-dossierbar" aria-label="Personnel dossier navigation">
-   <span class="ng-person-dossierlabel">PERSONNEL DOSSIER <small>ONE-SCREEN OVERVIEW</small></span>
+ const tabbar=(isPerson||isHorse)?`<nav class="ng-person-dossierbar ng-management-dossierbar" aria-label="Personnel dossier navigation">
+   <span class="ng-person-dossierlabel">${isHorse?'HORSE RACING FILE':'PERSONNEL DOSSIER'} <small>ONE-SCREEN OVERVIEW</small></span>
    <div class="ng-person-dossieractions">
     <button data-ng="detailtab" data-val="Overview" class="${APP.detailTab==='Overview'?'on':''}">OVERVIEW</button>
     <button data-ng="detailtab" data-val="History" class="${APP.detailTab==='History'?'on':''}">HISTORY</button>
-    <select data-ng-select="person-record" aria-label="Open complete personnel record">
+    <select data-ng-select="profile-record" aria-label="Open deeper profile records">
      <option value="">MORE RECORDS</option>
      ${tabs.filter(t=>!['Overview','History'].includes(t)).map(t=>`<option value="${safe(t)}" ${APP.detailTab===t?'selected':''}>${safe(t)}</option>`).join('')}
     </select>
@@ -498,50 +498,86 @@ function profileDetail(route){
 
  const athleteOverview=()=>{
   const catalog=athleteAttributeCatalog;
-  const groups=catalog?.display?.horse_overview||{};
-  const reportState=state().scoutingState?.[route.title]||{};
-  const reports=Array.isArray(reportState.attribute_observations)?reportState.attribute_observations:[];
-  const evaluations=new Map(reports.filter(r=>r&&typeof r.attribute_key==='string').map(r=>[r.attribute_key,r]));
-  const categories=Object.entries(groups).map(([category,keys])=>{
-   const defs=new Map((catalog?.horse_categories?.[category]||[]).map(d=>[d.key,d]));
-   const assessed=keys.filter(key=>{
-    const report=evaluations.get(key);
-    return report&&(report.status==='estimated'||report.status==='measured')&&report.estimate!==null&&report.estimate!==undefined&&Array.isArray(report.evidence_refs)&&report.evidence_refs.length>0;
-   }).length;
+  const categories=catalog?.horse_categories||{};
+  const display=catalog?.display?.horse_overview||{};
+  const reports=state().scoutingState?.[route.title]?.attribute_observations||[];
+  const observed=new Map((Array.isArray(reports)?reports:[])
+   .filter(r=>r&&typeof r.attribute_key==='string').map(r=>[r.attribute_key,r]));
+  const known=x=>x!=null&&String(x).trim()&&!['—','Unknown','Not recorded','N/A'].includes(String(x).trim());
+  const assessed=r=>r&&['estimated','measured'].includes(r.status)&&r.estimate!=null&&
+   Array.isArray(r.evidence_refs)&&r.evidence_refs.length>0;
+  const allDefs=Object.values(categories).flat();
+  const observedCount=allDefs.filter(d=>assessed(observed.get(d.key))).length;
+  const attributeColumns=Object.entries(display).map(([name,keys])=>{
+   const defs=new Map((categories[name]||[]).map(def=>[def.key,def]));
    const lines=keys.map(key=>{
-    const def=defs.get(key);
-    if(!def)return '';
-    const report=evaluations.get(key);
-    const sourced=report&&(report.status==='estimated'||report.status==='measured')&&report.estimate!==null&&report.estimate!==undefined&&Array.isArray(report.evidence_refs)&&report.evidence_refs.length>0;
-    const value=sourced?String(report.estimate)+(report.unit?' '+report.unit:''):'—';
-    const confidence=sourced&&['low','medium','high'].includes(report.confidence)?report.confidence:'';
-    const label=sourced?(report.status==='measured'?'Measured':'Scout estimate')+(confidence?' · '+confidence+' confidence':''):'Unassessed';
-    return `<div class="ng-athlete-attribute" title="${safe(def.meaning)} · ${safe(label)}"><span>${safe(def.label)}</span><strong class="${sourced?'assessed':'unknown'}">${safe(value)}</strong></div>`;
+    const def=defs.get(key);if(!def)return '';
+    const report=observed.get(key),verified=assessed(report);
+    const label=verified?(report.status==='measured'?'Measured':'Scout estimate'):'Not yet assessed';
+    const value=verified?String(report.estimate)+(report.unit?' '+report.unit:''):'—';
+    const scaled=verified&&Number.isFinite(Number(report.estimate))&&
+     Number.isFinite(Number(report.scale_min))&&Number.isFinite(Number(report.scale_max))&&
+     Number(report.scale_max)>Number(report.scale_min)?
+      Math.max(0,Math.min(100,100*(Number(report.estimate)-Number(report.scale_min))/
+      (Number(report.scale_max)-Number(report.scale_min)))):null;
+    const meter=scaled==null?'<span class="ng-horse-rating-unassessed" aria-hidden="true"></span>':
+     '<span class="ng-horse-rating-track" aria-hidden="true"><i style="width:'+scaled.toFixed(1)+'%"></i></span>';
+    return '<div class="ng-horse-rating-row" title="'+safe(def.meaning)+' · '+safe(label)+'"><span>'+safe(def.label)+'</span>'+meter+
+     '<strong class="'+(verified?'known':'unknown')+'">'+safe(value)+'</strong></div>';
    }).join('');
-   return `<section class="ng-athlete-category"><header><h3>${safe(category.toUpperCase())}</h3><small>${assessed}/${keys.length} ASSESSED</small></header><div class="ng-athlete-attributes">${lines}</div></section>`;
+   return '<section class="ng-horse-mgr-panel ng-horse-ratings"><header><strong>'+safe(name.toUpperCase())+'</strong>'+
+    '<span>'+keys.filter(key=>assessed(observed.get(key))).length+'/'+keys.length+' KNOWN</span></header>'+
+    '<div class="ng-horse-rating-rows">'+lines+'</div></section>';
   }).join('');
-  const categoryBody=categories||'<div class="ng-athlete-no-catalog">Attribute definitions are not loaded. No ratings will be assumed.</div>';
-  const healthNote=notes.find(n=>/Health\s*\/\s*Vet/i.test(n));
-  const conditions=[
-   ['TRAINING STATUS',states[0]||'No observed update'],
-   ['RACE PLAN',states.find(v=>/^Target:/.test(v))||'No race selected'],
-   ...(healthNote?[['HEALTH / VET',healthNote.replace(/^Health\s*\/\s*Vet\s*[:·-]?\s*/i,'')]]:[])
-  ];
-  const careerKnown=record.filter(r=>r.value&&r.value!=='—'&&r.value!=='N/A');
-  const career=careerKnown.length?`<div class="ng-athlete-career-numbers">${record.map(r=>`<div><strong>${safe(r.value)}</strong><small>${safe(r.label)}</small></div>`).join('')}</div>`:
-   '<p class="ng-athlete-unavailable">No verified career figures attached to this Office horse yet.</p>';
-  const connected=connection.filter(c=>c.value&&c.value!=='—'&&c.value.toLowerCase()!=='unknown').slice(0,6);
-  const people=connected.map(c=>`<div class="ng-athlete-connection"><span>${safe(c.label)}</span>${c.button?`<button data-ng="sourcebutton" data-val="${$$('#routeBody [data-act]').indexOf(c.button)}">${safe(c.value)} ${glyph('arrow',12)}</button>`:`<strong>${safe(c.value)}</strong>`}</div>`).join('')||
-   '<p class="ng-athlete-unavailable">No verified horse connections attached yet.</p>';
-  return `<div class="ng-athlete-screen">
-   <div class="ng-athlete-group-heading"><span>ATHLETIC PROFILE</span><small>SCOUT ESTIMATES ≠ HIDDEN TRUE ABILITY · UNASSESSED IS NOT ZERO</small></div>
-   <div class="ng-athlete-groups">${categoryBody}</div>
-   <div class="ng-athlete-secondary">
-    <section class="ng-athlete-info"><header>CURRENT CONDITION & RACE PLAN</header><div class="ng-athlete-detailrows">${conditions.map(([label,value])=>`<div><small>${safe(label)}</small><strong>${safe(value)}</strong></div>`).join('')}</div></section>
-    <section class="ng-athlete-info ng-horse-careercard"><header>CAREER SNAPSHOT</header>${career}<button class="ng-entity-open" data-ng="detailtab" data-val="Career Record">OPEN FULL RECORD ${glyph('arrow',12)}</button></section>
-    <section class="ng-athlete-info ng-horse-connections"><header>CONNECTIONS & OFFICE ACTIONS</header><div class="ng-athlete-detailrows">${people}</div><div class="ng-horse-context-actions">${quickLinks}</div></section>
-   </div>
-  </div>`;
+  const asMap=items=>'<div class="ng-horse-mgr-rows">'+items.map(([name,value])=>
+   '<div class="ng-horse-mgr-row"><span>'+safe(name)+'</span><strong>'+safe(value)+'</strong></div>').join('')+'</div>';
+  const career=record.filter(x=>known(x.value)).map(x=>[x.label,x.value]);
+  const careerBody=career.length?asMap(career):'<p class="ng-horse-small-note">No verified career figures in this Office record.</p>';
+  const status=states.find(x=>x&&!/^Target:|^Entry:/.test(x))||'No current update';
+  const target=states.find(x=>/^Target:/.test(x))?.replace(/^Target:\s*/,'')||'Not entered';
+  const entry=states.find(x=>/^Entry:/.test(x))?.replace(/^Entry:\s*/,'')||'Not recorded';
+  const health=notes.find(x=>/Health\s*\/\s*Vet/i.test(x));
+  const condition=asMap([['Status',status],...(health?[['Health / Vet',health.replace(/^Health\s*\/\s*Vet\s*[:·-]?\s*/i,'')]]:[])]);
+  const racePlan=asMap([['Target',target],['Entry',entry]]);
+  const liveNotes=notes.filter(x=>!/^No resolved decision|^No open follow-up/i.test(x)).slice(0,4);
+  const activity=liveNotes.length?'<div class="ng-horse-mgr-notes">'+liveNotes.map(x=>
+   '<div title="'+safe(x)+'">'+safe(x)+'</div>').join('')+'</div>':
+    '<p class="ng-horse-small-note">No verified work or recent office report attached.</p>';
+  const knownConnections=connection.filter(x=>known(x.value)).slice(0,6);
+  const links=knownConnections.map(x=>{
+   const index=x.button?$$('#routeBody [data-act]').indexOf(x.button):-1;
+   const label='<span>'+safe(x.label)+'</span>';
+   const value=index>=0?'<button data-ng="sourcebutton" data-val="'+index+'">'+safe(x.value)+' ↗</button>':
+    '<strong>'+safe(x.value)+'</strong>';
+   return '<div class="ng-horse-mgr-row">'+label+value+'</div>';
+  }).join('');
+  const connections=links?'<div class="ng-horse-mgr-rows">'+links+'</div>':
+   '<p class="ng-horse-small-note">Connections not yet verified.</p>';
+  const pedigree=blood.filter(x=>known(x.value));
+  const pedigreeBlock=pedigree.length?asMap(pedigree.map(x=>[x.label,x.value])):
+   '<p class="ng-horse-small-note">Pedigree not yet connected to the approved horse record.</p>';
+  const history=state().horseState?.[route.title]?.certified_results;
+  const verifiedHistory=Array.isArray(history)?history.filter(x=>x&&
+   Array.isArray(x.source_refs)&&x.source_refs.length>0&&known(x.date)&&known(x.race)):[];
+  const recent=verifiedHistory.length?'<div class="ng-horse-form-table"><div class="ng-horse-form-head"><span>DATE</span><span>RACE / TRACK</span><span>FINISH</span><span>SOURCE</span></div>'+
+   verifiedHistory.slice(-5).reverse().map(x=>'<div class="ng-horse-form-row"><span>'+safe(x.date)+'</span><span>'+safe(x.race)+
+   (known(x.track)?' · '+safe(x.track):'')+'</span><span>'+safe(x.finish||'—')+'</span><span>Verified</span></div>').join('')+'</div>':
+   '<p class="ng-horse-small-note">No certified race-by-race form attached to this Office horse. Historical results remain in History.</p>';
+  const panel=(name,body,cls='')=>'<section class="ng-horse-mgr-panel '+cls+'"><header><strong>'+name+'</strong></header>'+body+'</section>';
+  return '<div class="ng-horse-dossier">'+
+   '<div class="ng-horse-dossier-caption"><strong>ATHLETE & RACING INTELLIGENCE</strong><span>'+observedCount+
+   ' OF '+allDefs.length+' ATTRIBUTES ASSESSED · UNASSESSED ≠ ZERO</span></div>'+
+   '<div class="ng-horse-mgr-four">'+(attributeColumns||'<p class="ng-horse-small-note">Horse attribute definitions have not loaded.</p>')+'</div>'+
+   '<div class="ng-horse-mgr-five">'+
+    panel('CAREER RECORD',careerBody)+panel('CURRENT CONDITION',condition)+
+    panel('RACE PLAN',racePlan)+panel('RECENT WORK / OFFICE REPORTS',activity)+
+    panel('KEY CONNECTIONS',connections)+'</div>'+
+   '<div class="ng-horse-mgr-bottom">'+panel('RECENT RACES & FORM',recent,'ng-horse-form-card')+
+    panel('PEDIGREE & BACKGROUND',pedigreeBlock,'ng-horse-pedigree-card')+'</div>'+
+   '<div class="ng-horse-mgr-summary"><div><strong>RACING OFFICE SUMMARY</strong>'+
+    '<span>'+safe(status)+(known(target)?' · Next target: '+safe(target):'')+'</span></div>'+
+    '<div class="ng-horse-mgr-actions">'+quickLinks+'</div></div>'+
+   '</div>';
  };
 
  const personWork=()=>{
@@ -751,11 +787,15 @@ function profileDetail(route){
  const entityHeaderFields=isPerson?personIdentityFields:
   isFarm?[['LOCATION',factByName('Location')],['TYPE',factByName('Type')],['OWNER',factByName('Owner')],['STATUS',factByName('Current status')]]:
   isTrack?[['LOCATION',factByName('Location')],['SURFACES',factByName('Surfaces')],['OPERATING',factByName('Operating state')],['CIRCUIT',text('.profileSubline').split('·').slice(1).join('·').trim()||'—']]:[];
+ const horseIdentityConnections=isHorse?connection.filter(x=>['owner','trainer','jockey','current stable'].includes(x.label.toLowerCase())&&knownField(x.value)).slice(0,3):[];
+ const horseConnectionHeader=horseIdentityConnections.length?
+  '<div class="ng-horse-header-connections">'+horseIdentityConnections.map(x=>
+   '<div><small>'+safe(x.label)+'</small><strong>'+safe(x.value)+'</strong></div>').join('')+'</div>':'';
  const entityIdentityRow=entityHeaderFields.length?
   `<div class="ng-tier1-biography" aria-label="${safe(route.kicker)} identity summary">${entityHeaderFields.map(([label,value,flag])=>`<span><small>${safe(label)}</small><strong title="${safe(value)}">${flag||''}${safe(value)}</strong></span>`).join('')}</div>`:'';
  const identity=`<div class="ng-profile-intro">
   ${profileMark}
-  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${isHorse?horseOwnerBadge(route.title):''}${safe(route.title)}</h2>${horseIdentityRow}${entityIdentityRow}${isHorse||isPerson||isFarm||isTrack?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${horseImage?`<div class="ng-profile-source-photo" role="img" aria-label="Approved image of ${safe(route.title)}"><img src="${safe(horseImage)}" alt="" loading="lazy" decoding="async"/></div>`:''}
+  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${isHorse?horseOwnerBadge(route.title):''}${safe(route.title)}</h2>${horseIdentityRow}${entityIdentityRow}${horseConnectionHeader}${isHorse||isPerson||isFarm||isTrack?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${horseImage?`<div class="ng-profile-source-photo" role="img" aria-label="Approved image of ${safe(route.title)}"><img src="${safe(horseImage)}" alt="" loading="lazy" decoding="async"/></div>`:''}
   <div class="ng-profile-tools"><button data-ng="office" aria-label="Return to Racing Office">← OFFICE</button><button data-ng="menu" data-val="${isTrack?'Racing':isPerson||isFarm?'World':'Stable'}">${isTrack?'RACE CALENDAR':isPerson?'PEOPLE DIRECTORY':isFarm?'FARM DIRECTORY':'STABLE DIRECTORY'} ↗</button></div>
  </div>`;
  let left='',right='',footer='';
@@ -992,7 +1032,7 @@ window.addEventListener('click',e=>{
 },true);
 root.addEventListener('change',event=>{
   const field=event.target;
-  if(field.matches('select[data-ng-select="person-record"]')&&field.value){
+  if(field.matches('select[data-ng-select="profile-record"]')&&field.value){
    APP.detailTab=field.value;
    paint();
   }
