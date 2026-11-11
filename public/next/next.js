@@ -39,7 +39,7 @@ function personGeographyRecord(source,name){
 const genericDeskPhoto='/assets/office/approved-office-photo.jpg';
 let organizationLogoIndex=null; // UI-only logo asset refs; organization authority stays in the game database.
 
-const tabmap={Office:['Overview','Messages','Decisions','Calendar','News','Reports','Career'],History:['Race Results','Horses','People & Farms','Facilities & Tracks','Historical Calendar','Coverage'],Stable:['Overview','Horses','Training','Health','Race Plans','Barns'],Racing:['Overview','Calendar','Entries','Results','Stakes','Race Planning'],Breeding:['Overview','Stallions','Broodmares','Foals','Pedigrees','Stud Farms'],Sales:['Overview','Auctions','Catalogs','Watchlist','Private Offers'],Personnel:['Overview','Trainers','Jockeys','Owners','Staff'],Facilities:['Overview'],Tracks:['Overview','Active Meets','All Tracks','Stakes'],Finances:['Overview','Cash Flow','Operating Costs','Budgets'],World:['Overview','Tracks','Meets','Major Races','News']};
+const tabmap={Office:['Overview','Messages','Decisions','Calendar','News','Reports','Career'],History:['Race Results','Horses','People & Farms','Facilities & Tracks','Historical Calendar','Coverage'],Stable:['Overview','Horses','Training','Health','Race Plans','Barns'],Racing:['Overview','Calendar','Entries','Results','Stakes','Race Planning'],Breeding:['Overview','Stallions','Broodmares','Foals','Pedigrees','Stud Farms'],Sales:['Overview','Auctions','Catalogs','Watchlist','Private Offers'],Personnel:['Overview','Trainers','Jockeys','Owners','Staff'],Facilities:['Overview','Stud Farms','Training Centers','Breaking Facilities','Racing Stables','Ownership Groups','Barns','Farms'],Tracks:['Overview','Active Meets','All Tracks','Stakes'],Finances:['Overview','Cash Flow','Operating Costs','Budgets'],World:['Overview','Tracks','Meets','Major Races','News']};
 const actions={Office:'Office Overview',Stable:'Stable',Racing:'Race Calendar',Sales:'Sales',World:'World'};
 const officeMenu={Overview:'Office Overview',Messages:'Filter All',Decisions:'Open move history',Calendar:'Open Race Calendar',News:'News',Reports:'Open move history',Career:'Open move history'};
 const state=()=>{try{return JSON.parse(localStorage.getItem('wtwOfficeStateV30')||'{}')}catch{return {}}};
@@ -281,7 +281,7 @@ function header(){
  // Do not waste desktop height on unrelated department subtabs.
  const profileRoute=APP.custom?null:currentRoute();
  const hasOwnNavigation=Boolean(profileRoute&&/Profile$/.test(profileRoute.kicker))||
-  APP.custom==='Search'||APP.custom==='Organization Overview'||(APP.section==='Facilities'&&APP.custom==='Facilities')||Boolean(APP.custom&&APP.custom.includes(' — '));
+  APP.custom==='Search'||APP.custom==='Organization Overview'||Boolean(APP.custom&&APP.custom.includes(' — '));
  return `<header class="ng-global" aria-label="Wire to Wire application navigation">
   <div class="ng-hist"><button data-ng="back" aria-label="Previous page" title="Previous page">${glyph('left',15)}</button><button data-ng="forward" aria-label="Next page" title="Next page">${glyph('right',15)}</button></div>
   <button class="ng-mini-home" data-ng="office" title="Racing Office" aria-label="Go to Racing Office"><img class="ng-logo-mini" src="/assets/wtw-office-approved-logo.png" alt=""/><span class="ng-wordmark"><strong>WIRE TO WIRE</strong><small>RACING MANAGER</small></span></button>
@@ -1600,9 +1600,6 @@ function departmentRoster(section,page='Overview'){
   '<strong>'+(APP.departmentPageIndex+1)+' / '+pages+'</strong>'+
   '<button data-ng="dept-page" data-val="1" '+(APP.departmentPageIndex>=pages-1?'disabled':'')+' aria-label="Next page">NEXT ›</button>';
  const viewOptions=(tabmap[section]||[]).map(t=>'<option value="'+safe(t)+'" '+(t===page?'selected':'')+'>'+safe(t)+'</option>').join('');
- const facilityViews=[['Overview','ALL'],['Stud Farms','STUD FARMS'],['Training Centers','TRAINING CENTERS'],['Breaking Facilities','BREAKING FACILITIES'],['Racing Stables','RACING STABLES'],['Ownership Groups','OWNERSHIP GROUPS'],['Barns','BARNS'],['Farms','FARMS']];
- const facilityFilters=section==='Facilities'?'<nav class="ng-dpt-facility-filters" aria-label="Facility category filters">'+facilityViews.map(([value,label])=>'<button type="button" data-ng="facility-view" data-val="'+safe(value)+'" class="'+(page===value?'on':'')+'" aria-pressed="'+(page===value?'true':'false')+'">'+safe(label)+'</button>').join('')+'</nav>':'';
- const viewPicker=section==='Facilities'?'':'<label>VIEW <select data-ng-select="department-tab" aria-label="Choose '+safe(section)+' view">'+viewOptions+'</select></label>';
  const racingTracks=section==='Racing'?depCurrentMeetRows():[];
  if(section==='Racing'&&APP.racingTrack&&!racingTracks.some(x=>x.name===APP.racingTrack)){
   APP.racingTrack='';if(APP.racingMode==='track')APP.racingMode='meets';
@@ -1628,10 +1625,10 @@ function departmentRoster(section,page='Overview'){
   section==='Facilities'?'CAPACITY · QUALITY · MAINTENANCE':'INCOME · EXPENSES · CASH FLOW';
  return '<section class="ng-functional ng-stable-roster-v2 ng-dept-roster" data-department="'+safe(section)+'" data-page="'+safe(page)+'" data-roster-kind="'+(specs===DEP_COLUMNS.Meets?'meet':'regular')+'">'+
   '<div class="ng-rs-title"><strong>'+safe(section.toUpperCase())+' · '+safe(page.toUpperCase())+'</strong><span>'+safe(purpose)+(demo?' · FICTIONAL PREVIEW':'')+'</span></div>'+
-  finance+'<div class="ng-rs-tools">'+racingPicker+salePicker+viewPicker+
+  finance+'<div class="ng-rs-tools">'+racingPicker+salePicker+'<label>VIEW <select data-ng-select="department-tab" aria-label="Choose '+safe(section)+' view">'+viewOptions+'</select></label>'+
   '<input id="ngDepartmentSearch" data-ng-input="department-search" type="search" aria-label="Search '+safe(section)+' roster" value="'+safe(APP.departmentSearch)+'" placeholder="Find records…" autocomplete="off"/>'+
   '<button data-ng="dept-demo" class="'+(demo?'on':'')+'" title="Preview-only invented values; no game data changes">'+(demo?'DEMO ON':'DEMO OFF')+'</button>'+
-  '<span class="ng-dpt-mode">FULL-WIDTH ROSTER</span></div>'+facilityFilters+
+  '<span class="ng-dpt-mode">FULL-WIDTH ROSTER</span></div>'+
   '<section class="ng-rs-roster"><header><strong>'+safe(section.toUpperCase())+' · SORTABLE ROSTER</strong><div class="ng-dpt-pager">'+pager+'</div></header>'+
   '<div class="ng-rs-scroll"><table class="ng-rs-table ng-dpt-table"><thead><tr>'+heads+'</tr></thead><tbody>'+
   (body||'<tr><td colspan="'+specs.length+'" class="ng-rs-no-results">'+(demo?'No matching records.':'No supported records in this view.')+'</td></tr>')+
@@ -1821,7 +1818,6 @@ window.addEventListener('click',e=>{
  if(key==='caseprev')return selectAdjacentCase(-1);
  if(key==='casenext')return selectAdjacentCase(1);
  if(key==='nextopen')return selectAdjacentCase(1,true);
- if(key==='facility-view')return pageTab(val);
  if(key==='dept-meets'){APP.racingMode=APP.racingTrack?'track':'meets';APP.departmentPageIndex=0;APP.departmentSortKey='';return paint()}
  if(key==='dept-myhorses'){APP.racingMode=APP.racingMode==='mine'?(APP.racingTrack?'track':'meets'):'mine';APP.departmentPageIndex=0;APP.departmentSortKey='';return paint()}
  if(key==='dept-sort'){
