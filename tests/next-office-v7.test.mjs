@@ -247,7 +247,7 @@ test('FM/OOTP connected profiles: people, farms, tracks, sourced graphics, click
 });
 
 
-test('Live Stable is a dense sortable FM/OOTP roster with source-only status icons and no fabricated ratings',()=>{
+test('Live Stable fills its viewport with FM roster density and clearly marked fictional visual previews',()=>{
  const js=get('public/next/next.js'),css=get('public/next/next.css');
  const a=js.indexOf('function liveStableRating('),b=js.indexOf('function functionalRoute(',a);
  const page=js.slice(a,b);
@@ -273,12 +273,19 @@ test('Live Stable is a dense sortable FM/OOTP roster with source-only status ico
   'Current ability and potential cannot be fabricated');
  assert.ok(page.includes("data-ng=\"horse\"")||page.includes("data-ng="+"'horse'"),
   'Roster horse clicks must open real profile');
- assert.ok(page.includes('data-ng="case"'),'Current management files must stay actionable');
+ assert.ok(!page.includes('ng-rs-bottom')&&!css.includes('#wtwNextgen .ng-rs-bottom{'),
+  'Do not restore upcoming races or vet files beneath the roster');
  assert.ok(page.includes('data-ng-input="stable-search"'),'Search input must remain usable');
  assert.ok(js.includes("if(key==='stable-sort')")&&js.includes("if(key==='stable-filter')")&&js.includes("if(key==='stable-mode')"));
  assert.ok(js.includes("$$('.ng-wtw-roster-row',root)"),'Quick search should act on actual rows');
- assert.ok(css.includes('.ng-rs-table{')&&css.includes('.ng-rs-scroll{')&&css.includes('position:sticky;left:0'),
-  'Roster must stay dense with sticky names and horizontal scrolling');
+ assert.ok(css.includes('.ng-rs-table{')&&css.includes('table-layout:fixed;min-width:0;width:100%')&&css.includes('.ng-rs-scroll{display:block;flex:1 1 auto;min-height:0;overflow:hidden'),
+  'All roster columns must fit one viewport without horizontal or vertical scrolling');
+ assert.ok(css.includes('height:29px;max-height:29px')&&css.includes('font-size:9.5px'),
+  'Use the dense row and text sizing of the reference Personnel directory');
+ assert.ok(css.includes('.ng-rs-horse .ng-horse-owner-badge')&&css.includes('width:13px!important;height:11px!important'),
+  'Owner crest should be approximately the size of the country flag');
+ assert.ok(js.includes('WTW_STABLE_DEMO')&&js.includes('FICTIONAL DEMO VALUES')&&js.includes('if(key===\'stable-demo\')'),
+  'Visual preview must be clearly fictional and toggleable without writing to the game save');
  assert.ok(css.includes('.ng-rs-signal.risk{')&&css.includes('.ng-rs-signal.warn{'),
   'Treatment and watch need separate color tokens');
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
