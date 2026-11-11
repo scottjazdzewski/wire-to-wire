@@ -548,14 +548,14 @@ function profileDetail(route){
   const labels=[['name','RACE'],['date','DATE'],['grade','GRADE'],['purse','PURSE']];
   const header=labels.map(([key,label])=>{
    const active=APP.stakeSort===key,mark=active?(APP.stakeSortDesc?'↓':'↑'):'↕';
-   return '<button type="button" data-ng="stake-sort" data-val="'+key+'" aria-sort="'+(active?(APP.stakeSortDesc?'descending':'ascending'):'none')+'">'+label+' <i aria-hidden="true">'+mark+'</i></button>';
+   return '<button type="button" data-ng="stake-sort" data-val="'+key+'" aria-sort="'+(active?(APP.stakeSortDesc?'descending':'ascending'):'none')+'"><span>'+label+'</span><i aria-hidden="true">'+mark+'</i></button>';
   }).join('');
   return '<div class="ng-stakes-table"><div class="ng-stakes-head">'+header+'</div>'+
    (ordered.slice(0,limit).map(({row,cols})=>{
     while(cols.length<4)cols.push('—');
     const index=$$('#routeBody [data-act]').indexOf(row.node);
     const grade=(cols[2].match(/\bG([123])\b/i)||[])[1];
-    const gradeCell=grade?'<span class="ng-stakes-grade"><i class="ng-stakes-trophy g'+grade+'" aria-hidden="true"></i><b>G'+grade+'</b></span>':'<span>'+safe(cols[2])+'</span>';
+    const gradeCell=grade?'<span class="ng-stakes-grade" aria-label="Grade G'+grade+'" title="Grade G'+grade+'"><i class="ng-stakes-trophy g'+grade+'" aria-hidden="true"></i></span>':'<span>'+safe(cols[2])+'</span>';
     return index<0?'':'<button class="ng-stakes-data" data-ng="sourcebutton" data-val="'+index+'">'+
      '<span>'+safe(cols[0])+'</span><span>'+safe(cols[1])+'</span>'+gradeCell+'<span>'+safe(cols[3])+'</span></button>';
    }).join('')||'<div class="ng-empty-record">No verified stakes rows connected.</div>')+'</div>';
