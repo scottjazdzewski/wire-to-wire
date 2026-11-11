@@ -1341,7 +1341,7 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-person-scorebar{box-sizing:border-box;display:block;width:57px;height:7px;background:#171e22;border:1px solid #3c4b47;border-radius:3px;overflow:hidden}
 .ng-person-scorebar i{display:block;height:100%;background:linear-gradient(90deg,#2d373a,#c6c77b)}
 .ng-person-scorebar.empty{border-color:#3c4b47;background:#171e22;opacity:.42}
-.ng-profile-horse /* WTW Horse Dossier — source-backed FM/OOTP sports-management sheet.
+/* WTW Horse Dossier — source-backed FM/OOTP sports-management sheet.
    One dense desktop workspace. No invented figures or duplicate component CSS. */
 .ng-horse-dossier{display:grid;grid-template-rows:auto auto auto auto auto;align-content:start;gap:5px;min-width:0;width:100%;color:#e6ede7;font-variant-numeric:tabular-nums}
 .ng-horse-dossier-caption{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:22px;padding:2px 8px;color:#d8c798;background:#202d2b;font-size:9px;letter-spacing:.045em}
@@ -1415,7 +1415,7 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-horse-rating-row{grid-template-columns:minmax(0,1fr) 22px minmax(16px,max-content)}
 }
 
-.ng-horse-biography{display:flex;align-items:center;flex-wrap:wrap;gap:4px 16px;margin:4px 0 5px;min-width:0}
+.ng-profile-horse .ng-horse-biography{display:flex;align-items:center;flex-wrap:wrap;gap:4px 16px;margin:4px 0 5px;min-width:0}
 .ng-profile-horse .ng-horse-biography>span{display:inline-flex;align-items:center;gap:6px;min-width:0;padding-right:14px;border-right:1px solid #3c4b47}
 .ng-profile-horse .ng-horse-biography>span:last-child{border-right:0}
 .ng-profile-horse .ng-horse-biography small{color:#b4cdbb!important;font-size:9px!important;line-height:1.25!important;font-weight:780;white-space:nowrap;letter-spacing:.04em}
