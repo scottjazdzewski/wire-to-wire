@@ -1204,10 +1204,23 @@ const DEP_SALE_HOUSES=Object.freeze({
  keeneland:{name:'Keeneland',city:'Lexington, KY',website:'https://www.keeneland.com/sales/'},
  fasigtipton:{name:'Fasig-Tipton',city:'Lexington, KY',website:'https://www.fasigtipton.com/'},
  obs:{name:'OBS',fullName:"Ocala Breeders' Sales",city:'Ocala, FL',website:'https://obssales.com/'},
- barretts:{name:'Barretts',city:'Pomona, CA',website:''}
+ barretts:{name:'Barretts',city:'Pomona, CA',website:'',activeFrom:1990,activeTo:2018},
+ wtba:{name:'Washington Thoroughbred Breeders Association',shortName:'WTBA',city:'Auburn, WA',website:'https://wtboa.com/Sales/Archives.htm',activeFrom:1940},
+ canadian:{name:"Canadian Breeders' Sales",shortName:'Canadian Breeders',city:'Toronto, ON',website:'',activeFrom:1999}
 });
 /* [company ID, official sale name, verified first date, verified final date, venue, category].
    All listed 2014 dates are evidence-backed; market lot content remains a demo. */
+/* Exact 1999 dates confirmed in contemporary racing reports or sale-company archives:
+   Barretts 18-19 Oct (TDN 21 Oct 1999); WTBA 7 Sep + 5 Dec (WTBA 1999 archives);
+   Canadian Breeders 7 Sep (TDN 3/9 Sep 1999); Fasig-Tipton Texas Aug 30-31 (TDN 2 Sep 1999).
+   Other 1999 auctions retain usual-month labels until dates are separately verified. */
+const DEP_SALE_EVENTS_1999=[
+ ['fasigtipton','Texas Summer Yearling Sale','1999-08-30','1999-08-31','Grand Prairie, TX','Yearlings'],
+ ['wtba','Summer Yearling Sale','1999-09-07','1999-09-07','Auburn, WA','Yearlings'],
+ ['canadian','Selected Yearling Sale','1999-09-07','1999-09-07','Toronto, ON','Yearlings'],
+ ['barretts','Fall Sale of Yearlings and Horses of All Ages','1999-10-18','1999-10-19','Pomona, CA','Mixed'],
+ ['wtba','Winter Mixed Sale','1999-12-05','1999-12-05','Auburn, WA','Mixed']
+];
 const DEP_SALE_EVENTS_2014=[
  ['keeneland','January Horses of All Ages Sale','2014-01-06','2014-01-09','Lexington, KY','Mixed'],
  ['obs','Winter Mixed Sale','2014-01-22','2014-01-24','Ocala, FL','Mixed'],
@@ -1254,7 +1267,14 @@ const DEP_SALE_SEASONAL=[
  ['obs','October Yearling Sale',10,'Ocala, FL','Yearlings',2015,9999],
  ['fasigtipton','Kentucky October Yearlings Sale',10,'Lexington, KY','Yearlings',1999,9999],
  ['fasigtipton','The November Sale',11,'Lexington, KY','Breeding stock',1999,9999],
- ['keeneland','November Breeding Stock Sale',11,'Lexington, KY','Breeding stock',1944,9999]
+ ['keeneland','November Breeding Stock Sale',11,'Lexington, KY','Breeding stock',1944,9999],
+ /* Regional sale organizations were established and active in the 1999 market.
+    These are usual MONTHS only; do not invent a day for a different year. */
+ ['barretts','March Selected Two-Year-Olds in Training Sale',3,'Pomona, CA','2YO',1990,2018],
+ ['barretts','Fall Sale of Yearlings and Horses of All Ages',10,'Pomona, CA','Mixed',1990,2018],
+ ['wtba','Summer Yearling Sale',9,'Auburn, WA','Yearlings',1999,9999],
+ ['wtba','Winter Mixed Sale',12,'Auburn, WA','Mixed',1999,9999],
+ ['canadian','Selected Yearling Sale',9,'Toronto, ON','Yearlings',1999,9999]
 ];
 const DEP_SALE_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -1547,10 +1567,10 @@ function depSaleDateLabel(a){
  const end=a.endDate&&a.endDate!==a.date?' – '+stableShortDate(a.endDate):'';
  return begin+end;
 }
-function depSaleCatalogRow(row,index){
+function depSaleCatalogRow(row,index,year=2014){
  const [id,name,date,endDate,city,category]=row;
  const company=DEP_SALE_HOUSES[id];
- return {id:'2014-'+id+'-'+index,date,endDate,sortKey:date,
+ return {id:year+'-'+id+'-'+index,date,endDate,sortKey:date,
   companyId:id,company:company?.name||'Company not recorded',
   name,city,category,confirmedDate:true,previewIndex:index,
   lots:[],dateLabel:depSaleDateLabel({date,endDate,confirmedDate:true})};
@@ -1569,7 +1589,12 @@ function depSeasonalSales(year){
 function depAuctionList(preview){
  const year=Number(depGameDay().slice(0,4))||2014;
  const result=preview?
-  [...(year===2014?DEP_SALE_EVENTS_2014.map(depSaleCatalogRow):depSeasonalSales(year)),
+  [...(year===2014?DEP_SALE_EVENTS_2014.map((r,i)=>depSaleCatalogRow(r,i,2014)):
+    year===1999?[
+      ...DEP_SALE_EVENTS_1999.map((r,i)=>depSaleCatalogRow(r,i,1999)),
+      ...depSeasonalSales(1999).filter(a=>!DEP_SALE_EVENTS_1999.some(e=>e[0]===a.companyId&&e[1]===a.name))
+     ]:depSeasonalSales(year)),
+   ...(year===2014?depSeasonalSales(year).filter(a=>!DEP_SALE_EVENTS_2014.some(e=>e[0]===a.companyId&&e[1]===a.name)):[]),
    ...depSeasonalSales(year+1)]:
   (Array.isArray(state().salesState?.auctions)?state().salesState.auctions
    .filter(a=>a&&liveStableDate(a.date)&&typeof a.name==='string')

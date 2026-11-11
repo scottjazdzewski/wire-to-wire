@@ -610,12 +610,13 @@ test('Sales dropdown names the operator and uses verified historical dates with 
  assert.ok(start>0&&end>start&&fstart>0&&fend>fstart);
  const source=js.slice(start,end)+'\n'+js.slice(fstart,fend);
  const mk=(today,auctions=[])=>new Function('depGameDay','stableShortDate','state','liveStableDate',
-  source+'\nreturn {DEP_SALE_HOUSES,DEP_SALE_EVENTS_2014,DEP_SALE_SEASONAL,depAuctionList,depSaleLabel,depSaleDateLabel,depSeasonalSales};')(
+  source+'\nreturn {DEP_SALE_HOUSES,DEP_SALE_EVENTS_1999,DEP_SALE_EVENTS_2014,DEP_SALE_SEASONAL,depAuctionList,depSaleLabel,depSaleDateLabel,depSeasonalSales};')(
   ()=>today,s=>String(s||'').replace(/(\d{4})-(\d{2})-(\d{2})/,(_,y,m,d)=>Number(m)+'/'+Number(d)+'/'+y.slice(2)),
   ()=>({salesState:{auctions}}),
   s=>/^\d{4}-\d{2}-\d{2}$/.test(s||'')?s:'');
  const m=mk('2014-07-15');
- assert.deepEqual(Object.keys(m.DEP_SALE_HOUSES).sort(),['barretts','fasigtipton','keeneland','obs']);
+ assert.deepEqual(Object.keys(m.DEP_SALE_HOUSES).sort(),
+  ['barretts','canadian','fasigtipton','keeneland','obs','wtba']);
  const list=m.depAuctionList(true);
  assert.ok(list.length>=24,'2014 must contain the historical major-house sale calendar');
  assert.ok(list.every((a,i)=>i===0||list[i-1].sortKey<=a.sortKey),
@@ -630,6 +631,34 @@ test('Sales dropdown names the operator and uses verified historical dates with 
  const next=list.find(a=>(a.endDate||a.sortKey)>='2014-07-15');
  assert.equal(m.depSaleLabel(next),'The Saratoga Sale - Fasig-Tipton',
   'Next upcoming auction must be the earliest future sale, not invented July or August placeholders');
+ const in1999=mk('1999-01-01').depAuctionList(true);
+ const only1999=in1999.filter(a=>a.sortKey.startsWith('1999'));
+ const confirmed1999=in1999.filter(a=>a.confirmedDate);
+ assert.equal(confirmed1999.length,5,'Retain five source-confirmed regional sales in 1999');
+ assert.ok(in1999.every((a,i)=>!i||in1999[i-1].sortKey<=a.sortKey),'1999 calendar must sort chronologically');
+ const barretts=in1999.find(a=>a.name==='Fall Sale of Yearlings and Horses of All Ages'&&a.company==='Barretts'&&a.confirmedDate);
+ assert.ok(barretts,'Barretts 1999 fall sale must not disappear');
+ assert.equal(barretts.date,'1999-10-18');
+ assert.equal(barretts.endDate,'1999-10-19');
+ assert.equal(barretts.city,'Pomona, CA');
+ assert.equal(m.depSaleLabel(barretts),'Fall Sale of Yearlings and Horses of All Ages - Barretts');
+ const wtba=in1999.filter(a=>a.companyId==='wtba'&&a.confirmedDate);
+ assert.deepEqual(wtba.map(a=>a.date),['1999-09-07','1999-12-05']);
+ const canada=in1999.find(a=>a.companyId==='canadian'&&a.confirmedDate);
+ assert.equal(canada.date,'1999-09-07');
+ const texas=in1999.find(a=>a.companyId==='fasigtipton'&&a.name==='Texas Summer Yearling Sale'&&a.confirmedDate);
+ assert.equal(texas.date,'1999-08-30');
+ assert.equal(texas.endDate,'1999-08-31');
+ assert.ok(in1999.some(a=>a.companyId==='barretts'&&a.name.includes('March')&&!a.confirmedDate),
+  'Historical sale types without a verified day must remain month-only');
+ assert.ok(!only1999.some(a=>a.companyId==='canadian'&&a.name==='Selected Yearling Sale'&&!a.confirmedDate),
+  'Exactly-dated 1999 Canadian sale should not be duplicated by its usual-month placeholder');
+ assert.ok(!only1999.some(a=>a.companyId==='wtba'&&!a.confirmedDate),
+  'Verified 1999 WTBA dates replace seasonal placeholders');
+ const regional2014=list.filter(a=>a.sortKey.startsWith('2014')&&['wtba','canadian'].includes(a.companyId));
+ assert.ok(regional2014.length>=3,'Regional operators should remain visible on the 2014 calendar');
+ assert.ok(regional2014.every(a=>!a.confirmedDate&&a.dateLabel.includes('exact date unverified')),
+  'Never label a regional 2014 fixture as an exact verified historical date');
  const future=mk('2015-08-10').depAuctionList(true);
  const month=future.find(a=>a.name==='September Yearling Sale'&&a.sortKey.startsWith('2015'));
  assert.ok(month&&!month.confirmedDate&&!month.date);
