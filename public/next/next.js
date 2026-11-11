@@ -228,6 +228,38 @@ function dueActionOverview(){
  return '<div class="ng-due-overview"><h2>DUE MANAGEMENT ACTIONS</h2><p>Follow-ups requiring attention before you advance the calendar.</p><div class="ng-org-overview-list">'+(rows||'<p>No follow-ups are due right now.</p>')+'</div><button data-ng="office">BACK TO RACING OFFICE</button></div>';
 }
 
+function managerSidebar(){
+ const groups=[
+  ['FRONT OFFICE',[
+   ['Today','office','', 'grid'],['Inbox','custom','Messages','mail'],['Search','custom','Search','search']
+  ]],
+  ['RACING OPERATIONS',[
+   ['Stable','menu','Stable','grid'],['Racing','menu','Racing','calendar'],
+   ['Breeding','menu','Breeding','grid'],['Sales','menu','Sales','grid']
+  ]],
+  ['ORGANIZATION',[
+   ['Personnel','menu','Personnel','grid'],['Facilities','menu','Facilities','grid'],
+   ['Finances','menu','Finances','grid']
+  ]],
+  ['RACING WORLD',[
+   ['History','menu','History','calendar'],['Tracks & World','menu','World','grid']
+  ]]
+ ];
+ const on=(label,key,value)=>key==='office'&&!APP.custom&&APP.section==='Office'&&!currentRoute()||
+  key==='custom'&&APP.custom===value||key==='menu'&&APP.section===value&&!APP.custom;
+ const btn=([label,key,value,icon])=>'<button type="button" data-ng="'+key+'"'+
+  (value?' data-val="'+safe(value)+'"':'')+' class="ng-manager-rail-link'+(on(label,key,value)?' on':'')+'"'+
+  ' title="'+safe(label)+'"'+(on(label,key,value)?' aria-current="page"':'')+'>'+
+  '<span class="ng-manager-rail-icon" aria-hidden="true">'+glyph(icon,15)+'</span>'+
+  '<span>'+safe(label)+'</span></button>';
+ return '<aside class="ng-manager-sidebar" aria-label="Game departments">'+
+  '<div class="ng-manager-rail-brand"><img src="/assets/wtw-office-approved-logo.png" alt="" />'+
+  '<span><strong>WIRE TO WIRE</strong><small>RACING MANAGEMENT</small></span></div>'+
+  groups.map(([title,links])=>'<section class="ng-manager-rail-group"><h2>'+title+'</h2>'+
+    links.map(btn).join('')+'</section>').join('')+
+  '<div class="ng-manager-rail-footer"><span class="ng-manager-rail-dot"></span>ACTIVE CAREER</div>'+
+ '</aside>';
+}
 function header(){
  const date=$('.dateChip')?.textContent.trim()||'2014-07-15';
  const due=dueActions();
@@ -239,8 +271,7 @@ function header(){
  return `<header class="ng-global" aria-label="Wire to Wire application navigation">
   <div class="ng-hist"><button data-ng="back" aria-label="Previous page" title="Previous page">${glyph('left',15)}</button><button data-ng="forward" aria-label="Next page" title="Next page">${glyph('right',15)}</button></div>
   <button class="ng-mini-home" data-ng="office" title="Racing Office" aria-label="Go to Racing Office"><img class="ng-logo-mini" src="/assets/wtw-office-approved-logo.png" alt=""/><span class="ng-wordmark"><strong>WIRE TO WIRE</strong><small>RACING MANAGER</small></span></button>
-  <nav class="ng-primary" aria-label="Primary game navigation">${Object.keys(tabmap).map(x=>`<button data-ng="menu" data-val="${x}" class="${APP.section===x?'on':''}">${x.toUpperCase()}${glyph('chevron',11)}</button>`).join('')}</nav>
-  <div class="ng-global-morewrap"><button class="ng-global-more" data-ng="more" aria-expanded="${APP.moreOpen?'true':'false'}" aria-label="More game departments">MORE ${glyph('chevron',11)}</button>${APP.moreOpen?`<div class="ng-global-moremenu" role="group" aria-label="Additional game departments">${['Breeding','Personnel','Facilities','Finances','World'].map(section=>`<button data-ng="menu" data-val="${section}">${section.toUpperCase()}</button>`).join('')}</div>`:''}</div>
+  <div class="ng-manager-top-context"><strong>${safe(APP.section.toUpperCase())}</strong><span>${safe((APP.custom||profileRoute?.title||APP.page||'Overview').replace(/^Office$/,'Overview'))}</span></div>
   <div class="ng-global-tools"><button class="ng-iconbtn" data-ng="custom" data-val="Search" aria-label="Search">${glyph('search',17)}</button><button class="ng-iconbtn" data-ng="custom" data-val="Messages" aria-label="Inbox">${glyph('mail',17)}<i></i></button><button class="ng-iconbtn" data-ng="action" data-val="Save" aria-label="Save game">${glyph('save',17)}</button></div>
   <button class="ng-global-date" data-ng="menu" data-val="Racing" title="Open calendar for in-world date ${safe(date)}" aria-label="In-world date ${safe(date)}. Open racing calendar"><span>GAME DATE</span><strong>${safe(date)}</strong></button>
   ${due.length?'<button class="ng-global-due" data-ng="due" title="Review due management follow-ups">'+glyph('alert',13)+' DUE '+due.length+'</button>':''}
@@ -1039,7 +1070,9 @@ function paint(){
  }));
  APP.activeCase=$('.left .msg.selected')?.dataset.case||APP.activeCase;
  const route=currentRoute();
- root.innerHTML=header()+((route||APP.custom)?renderRoute():`<main class="ng-board">${inbox()}${center()}${right()}</main>`);
+ const stage=(route||APP.custom)?renderRoute():`<main class="ng-board">${inbox()}${center()}${right()}</main>`;
+ root.innerHTML=header()+'<div class="ng-manager-shell">'+managerSidebar()+
+   '<div class="ng-manager-stage">'+stage+'</div></div>';
  const nextRoute=$('.ng-routegrid',root),nextTab=$('.ng-profiletabs .on',root)?.dataset.val||'';
  if(nextRoute&&previousRouteKey&&nextRoute.dataset.routeKey===previousRouteKey){
   nextRoute.scrollTop=previousRouteScroll;
