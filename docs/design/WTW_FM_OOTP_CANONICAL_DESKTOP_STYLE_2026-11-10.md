@@ -32,7 +32,7 @@ Most of the screen must read as charcoal/slate. Green indicates racing identity,
 ## Density and geometry
 - **Desktop-first; 1366×768 is the primary test viewport** (also inspect 1280×800 and 1440×900).
 - Front page: compact one-line global header, dense inbox, full-width dossier and contextual photograph, balanced Intelligence/Your Call row, fixed Stable Roster/Race Schedule.
-- First-tier Overview: all consequential information visible without scrolling or extra clicks. Detailed history may scroll **inside explicit secondary tabs**; main Overviews do not.
+- First-tier Overview: all consequential information visible without scrolling or extra clicks. People Profiles use the FM-style one-screen dossier with every defined observed/unknown attribute visible across compact columns, plus reputation, linked horses, career and network. History is a single action; remaining supplementary records live in one small selector. **Do not bring back eight profile tabs or stretch low-data cards to fill a height.** Known identity fields appear beside the name; unknown fields are omitted instead of showing filler dashes. Detailed history may scroll inside an explicit secondary view, not the Overview.
 - Panel headings should share a common compact height and baseline (roughly 32–36px). Table rows should generally be 27–32px high unless descriptive source text truly needs more.
 - Use dark alternating row backgrounds; left-align names/descriptions, right-align numerics, center status badges/icons/controlled columns. Set tabular numerals for financial/date figures.
 - Avoid gigantic titles, rounded cards, thick decorative borders, unnecessary gradients and duplicated breadcrumb/section headers.
