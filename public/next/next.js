@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:true,stableSearch:'',departmentDemo:true,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentAuction:'',departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
+const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:true,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:true,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentAuction:'',departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -39,7 +39,7 @@ function personGeographyRecord(source,name){
 const genericDeskPhoto='/assets/office/approved-office-photo.jpg';
 let organizationLogoIndex=null; // UI-only logo asset refs; organization authority stays in the game database.
 
-const tabmap={Office:['Overview','Messages','Decisions','Calendar','News','Reports','Career'],History:['Race Results','Horses','People & Farms','Facilities & Tracks','Historical Calendar','Coverage'],Stable:['Overview','Horses','Training','Health','Race Plans','Barns'],Racing:['Overview','Calendar','Entries','Results','Stakes','Race Planning'],Breeding:['Overview','Stallions','Broodmares','Foals','Pedigrees','Stud Farms'],Sales:['Overview','Auctions','Catalogs','Watchlist','Private Offers'],Personnel:['Overview','Trainers','Jockeys','Owners','Staff'],Facilities:['Overview','Barns','Training Centers','Farms'],Finances:['Overview','Cash Flow','Operating Costs','Budgets'],World:['Overview','Tracks','Meets','Major Races','News']};
+const tabmap={Office:['Overview','Messages','Decisions','Calendar','News','Reports','Career'],History:['Race Results','Horses','People & Farms','Facilities & Tracks','Historical Calendar','Coverage'],Stable:['Overview','Horses','Training','Health','Race Plans','Barns'],Racing:['Overview','Calendar','Entries','Results','Stakes','Race Planning'],Breeding:['Overview','Stallions','Broodmares','Foals','Pedigrees','Stud Farms'],Sales:['Overview','Auctions','Catalogs','Watchlist','Private Offers'],Personnel:['Overview','Trainers','Jockeys','Owners','Staff'],Facilities:['Overview','Stud Farms','Training Centers','Breaking Facilities','Racing Stables','Ownership Groups','Barns','Farms'],Tracks:['Overview','Active Meets','All Tracks','Stakes'],Finances:['Overview','Cash Flow','Operating Costs','Budgets'],World:['Overview','Tracks','Meets','Major Races','News']};
 const actions={Office:'Office Overview',Stable:'Stable',Racing:'Race Calendar',Sales:'Sales',World:'World'};
 const officeMenu={Overview:'Office Overview',Messages:'Filter All',Decisions:'Open move history',Calendar:'Open Race Calendar',News:'News',Reports:'Open move history',Career:'Open move history'};
 const state=()=>{try{return JSON.parse(localStorage.getItem('wtwOfficeStateV30')||'{}')}catch{return {}}};
@@ -98,7 +98,8 @@ function pageTab(name){if(APP.section==='History'){const pages={'Race Results':'
  if(s==='Stable'&&(name==='Overview'||name==='Horses'))return bridgeNode(originalAct('Stable'));
  if(s==='Racing'&&(name==='Overview'||name==='Calendar'||name==='Entries'||name==='Stakes'))return bridgeNode(originalAct('Race Calendar'));
  if(s==='Sales'&&(name==='Overview'||name==='Auctions'))return bridgeNode(originalAct('Sales'));
- if(s==='World'&&(name==='Overview'||name==='Tracks'||name==='Meets'||name==='Major Races'))return bridgeNode(originalAct('World'));
+ if(s==='World'&&(name==='Tracks'||name==='Meets'))return openMenu('Tracks');
+ if(s==='World'&&(name==='Overview'||name==='Major Races'))return bridgeNode(originalAct('World'));
  openCustomView(`${s} — ${name}`,s,name);
 }
 const currentMessages=()=>$$('.left .msg[data-case]').map(n=>({case:n.dataset.case,from:$('.from',n)?.textContent.trim()||'Stable Office',title:$('.title',n)?.textContent.trim()||'',meta:$('.meta',n)?.textContent.trim()||'',time:$('.time',n)?.textContent.trim()||'',urgent:n.classList.contains('urgent'),resolved:n.classList.contains('resolved'),initials:$('.avatar',n)?.textContent.trim()||'WT'}));
@@ -250,7 +251,7 @@ function managerSidebar(){
    ['Finances','menu','Finances','grid']
   ]],
   ['RACING WORLD',[
-   ['History','menu','History','calendar'],['Tracks & World','menu','World','grid']
+   ['Tracks','menu','Tracks','calendar'],['World','menu','World','grid'],['History','menu','History','calendar']
   ]]
  ];
  const on=(label,key,value)=>key==='office'&&!APP.custom&&APP.section==='Office'&&!currentRoute()||
@@ -1141,8 +1142,10 @@ function functionalRoute(route){
 // does not already have a deeper original Office route. The same roster/summary
 // primitives apply across stable, racing, people, farms, world and finance.
 /* Domain-specific department roster structures; no authoritative game-data edits. */
-const DEP_NAMES=new Set(['Racing','Breeding','Sales','Personnel','Facilities','Finances']);
+const DEP_NAMES=new Set(['Racing','Breeding','Sales','Personnel','Facilities','Finances','Tracks']);
 const DEP_COLUMNS={
+ Meets:[['name','TRACK',18],['location','CITY / STATE',18],['surfaces','SURFACES',13],['meetWindow','CURRENT MEET',19],['status','MEET STATUS',10],['raceDays','DAYS',5],['preferredDays','RACE DAYS',11],['stakesCount','STAKES',6]],
+ Tracks:[['name','TRACK',18],['location','CITY / STATE',18],['surfaces','SURFACES',12],['circuit','CIRCUIT',16],['meetWindow','MEET WINDOWS',19],['status','STATUS',9],['raceDays','DAYS',4],['stakesCount','STAKES',4]],
  Racing:[['date','DATE',7],['track','TRACK',8],['race','RACE',6],['class','CLASS',7],['surface','SURF',4],['distance','DIST',5],['purse','PURSE',7],['horse','HORSE',11],['base','CURRENT BASE',12],['ship','SHIP MI',6],['jockey','JOCKEY',9],['trainer','TRAINER',8],['ready','READY',5],['status','ENTRY',5]],
  Breeding:[['horse','HORSE',12],['age','AGE',3],['sex','SEX',3],['sire','SIRE',9],['dam','DAM',9],['farm','FARM',9],['status','BREED STATUS',7],['health','HEALTH',6],['pedigree','PED',5],['value','BREED VAL',6],['owner','OWNER',10],['studFee','STUD FEE',8],['bookings','BOOK',5],['foals','FOALS',4],['winners','WINS',4]],
  Sales:[['hip','HIP',4],['horse','HORSE',12],['age','AGE',3],['sex','SEX',3],['sire','SIRE',11],['dam','DAM',11],['consignor','CONSIGNOR',10],['reserve','RESERVE',8],['bid','CURRENT BID',8],['value','EST VALUE',8],['ca','CA',4],['pa','PA',4],['condition','COND',7],['status','SALE STATUS',7]],
@@ -1319,7 +1322,7 @@ function departmentRoster(section,page='Overview'){
  const current=$('.dateChip')?.textContent.trim()||'2014-07-15';
  const auctions=section==='Sales'?depAuctionList(demo):[];
  const auction=auctions.find(a=>a.id===APP.departmentAuction)||auctions.find(a=>a.date>=current)||null;
- const specs=section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:DEP_COLUMNS[section];
+ const specs=section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'?(APP.racingTrack?DEP_COLUMNS.Racing:DEP_COLUMNS.Meets):DEP_COLUMNS[section];
  let rows=depRows(section,page,demo,auction);
  const search=APP.departmentSearch.trim().toLowerCase();
  if(search)rows=rows.filter(r=>specs.some(([key])=>String(r[key]??'').toLowerCase().includes(search)));
