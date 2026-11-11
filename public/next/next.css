@@ -2623,20 +2623,35 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 .ng-route-profile .ng-profile-horse .ng-ped5-card{grid-column:1/-1!important;max-height:none!important;overflow:hidden!important;display:flex;flex-direction:column;min-width:0;background:#171e22!important}
 .ng-route-profile .ng-profile-horse .ng-ped5-card>header{position:static!important;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px!important;background:#1e262a!important;border-bottom:1px solid #465451}
 .ng-ped5-card>header small{color:#cfb976;font-size:10px;font-weight:780;letter-spacing:.025em}
-.ng-ped5-instructions{padding:10px 14px 7px;font-size:11px;color:#adc0ba;line-height:1.45}
-.ng-ped5-scroller{overflow-x:auto;overflow-y:auto;max-width:100%;max-height:min(680px,calc(100vh - 342px));min-height:220px;padding:0 12px 8px;scrollbar-color:#6c8074 #1b2428;scrollbar-width:thin}
-.ng-ped5-columns{display:grid;grid-template-columns:repeat(6,minmax(172px,1fr));gap:7px;min-width:1110px}
+.ng-ped5-instructions{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:9px 14px;font-size:11px;color:#adc0ba;line-height:1.4}
+.ng-ped5-instructions strong{color:#dfc88b;white-space:nowrap;font-size:10px;letter-spacing:.025em}
+.ng-ped5-scroller{container-type:inline-size;overflow-x:auto;overflow-y:hidden;max-width:100%;min-height:0;max-height:none;padding:0 12px 8px;scrollbar-color:#6c8074 #1b2428;scrollbar-width:thin}
+.ng-ped5-columns{display:grid;grid-template-columns:max(180px,19cqw) max(230px,28cqw) max(340px,calc(53cqw - 32px)) repeat(3,240px);gap:8px;width:max-content;min-width:100%;align-items:stretch}
 .ng-ped5-generation{display:flex;flex-direction:column;min-width:0}
 .ng-ped5-generation>header{display:flex;align-items:center;justify-content:center!important;background:#202b2d!important;border:1px solid #3c4b47!important;border-bottom:2px solid #8f7950!important;color:#e2d19a!important;font-size:10px!important;font-weight:800!important;letter-spacing:.045em!important;text-align:center;min-height:33px;padding:6px 4px!important}
-.ng-ped5-stack{display:flex;flex:1;min-height:690px;flex-direction:column;gap:3px;padding-top:4px}
+.ng-ped5-stack{display:flex;flex:1;height:456px;min-height:456px;max-height:456px;flex-direction:column;gap:3px;padding-top:4px}
 .ng-ped5-node{display:flex;align-items:center;flex:1;min-height:0;min-width:0;padding:2px 7px;border:1px solid #384b47;border-left:3px solid #728f85;background:#243133;color:#d2e0d8;border-radius:2px;overflow:hidden}
 .ng-ped5-node.maternal{border-left-color:#c3a06c}
 .ng-ped5-node.unknown{background:#1c272b;color:#657b75;border-style:dashed}
 .ng-ped5-node.repeated{background:#413923;border-color:#d7b86d;color:#ffe1a1}
-.ng-ped5-node button,.ng-ped5-node>span{display:block;font-size:10.5px;line-height:1.16;min-width:0;width:100%;max-height:100%;overflow:hidden;overflow-wrap:anywhere}
+.ng-ped5-node button,.ng-ped5-node>span,.ng-ped5-node>strong{display:block;font-size:10.5px;line-height:1.2;min-width:0;width:100%;max-height:100%;overflow:hidden;overflow-wrap:anywhere}
 .ng-ped5-node button{background:none;border:0;color:#e4eadf;padding:0;text-align:left;font-weight:770;cursor:pointer}
 .ng-ped5-node button:hover,.ng-ped5-node button:focus-visible{color:#ffe0a2;text-decoration:underline;outline-offset:2px}
 .ng-ped5-node.unknown span{font-size:9px;font-style:italic}
+
+/* Readability priority: horse → parents → four grandparents. Earlier generations scroll right. */
+.ng-ped5-generation:nth-child(-n+3)>header{background:#2b3736!important;color:#f4dda1!important;font-size:11px!important}
+.ng-ped5-generation:nth-child(3)>header{border-bottom-color:#d2b36f!important}
+.ng-ped5-generation:nth-child(-n+3) .ng-ped5-node{border-color:#55645d;background:#263334;padding:9px 12px}
+.ng-ped5-generation:nth-child(-n+3) .ng-ped5-node.unknown{background:#1f2b2e;border-style:dashed}
+.ng-ped5-generation:nth-child(2) .ng-ped5-node button,.ng-ped5-generation:nth-child(2) .ng-ped5-node span{font-size:14px;font-weight:700}
+.ng-ped5-generation:nth-child(3) .ng-ped5-node button,.ng-ped5-generation:nth-child(3) .ng-ped5-node span{font-size:13px;font-weight:680}
+.ng-ped5-node.subject{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:15px;background:linear-gradient(125deg,#31463d,#1a282a)!important;border:1px solid #6d7b68!important;border-left:5px solid #dbc37d!important;padding:20px!important}
+.ng-ped5-node.subject::before{content:"SELECTED HORSE";font-size:10px;letter-spacing:.12em;color:#dbc37d;font-weight:800}
+.ng-ped5-node.subject strong{font-size:clamp(19px,1.7vw,28px);color:#fff1ca;line-height:1.2;overflow-wrap:anywhere}
+.ng-ped5-generation:nth-child(n+4) .ng-ped5-node{padding:1px 6px}
+.ng-ped5-generation:nth-child(n+5) .ng-ped5-node button,.ng-ped5-generation:nth-child(n+5) .ng-ped5-node span{font-size:9px}
+
 .ng-ped5-legend{display:flex;flex-wrap:wrap;align-items:center;gap:15px;padding:9px 13px;border-top:1px solid #3c4b47;color:#c1d0c8;font-size:10px;background:#1e262a}
 .ng-ped5-legend>span{display:flex;gap:6px;align-items:center}
 .ng-ped5-legend i{display:inline-block;width:12px;height:10px;border-left:3px solid #728f85;background:#263638;border-radius:1px}
@@ -2644,10 +2659,11 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 .ng-ped5-legend .ng-ped5-repeat{border:1px solid #d7b86d;background:#413923}
 .ng-ped5-legend>small{margin-left:auto;color:#9aac9f;font-size:9px}
 @media(max-width:800px){
- .ng-ped5-scroller{padding:0 7px 6px;max-height:65vh}
- .ng-ped5-columns{min-width:950px;grid-template-columns:repeat(6,minmax(148px,1fr))}
+ .ng-ped5-scroller{padding:0 7px 8px}
+ .ng-ped5-columns{grid-template-columns:180px 230px 340px repeat(3,205px);min-width:1395px}
  .ng-ped5-card>header{align-items:flex-start!important;flex-direction:column;gap:5px!important}
- .ng-ped5-stack{min-height:730px}
+ .ng-ped5-stack{height:440px;min-height:440px;max-height:440px}
+ .ng-ped5-instructions{align-items:flex-start;flex-direction:column;gap:4px}
 }
 
 
