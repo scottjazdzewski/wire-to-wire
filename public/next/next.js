@@ -1276,7 +1276,7 @@ function depFacilityRows(page,demo){
    status:demo?'Active':saved.status||''};
  });
  // Only source owners are linked as people; they are not fabricated businesses.
- result.push(...owned.map(r=>({_kind:'person',_name:r.name,name:r.name,type:'Ownership Group',
+ result.push(...owned.map(r=>({_kind:'person',_name:r.name,name:r.name,type:'Ownership Office',
   location:'',capacity:'',occupied:'',free:'',condition:'',quality:'',staff:'',cost:'',
   owner:r.name,status:'',_sourcePerson:true})));
  if(demo)result.push(...DEP_FACILITY_PREVIEW.map(([name,type,location],i)=>{
@@ -1292,7 +1292,7 @@ function depFacilityRows(page,demo){
  const typeForPage={'Stud Farms':'Stud Farm','Training Centers':'Training Center',
   'Breaking Facilities':'Breaking Facility','Racing Stables':'Racing Stable',
   'Ownership Groups':'Ownership Group','Barns':'Barn'};
- if(typeForPage[page])result=result.filter(r=>r.type===typeForPage[page]);
+ if(typeForPage[page])result=result.filter(r=>r.type===typeForPage[page]||(page==='Ownership Groups'&&r.type==='Ownership Office'));
  if(page==='Farms')result=result.filter(r=>['Farm','Stud Farm'].includes(r.type));
  return result;
 }
