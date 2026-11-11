@@ -7,7 +7,7 @@ const $=(q,scope=document)=>scope.querySelector(q), $$=(q,scope=document)=>[...s
 const h=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const known=v=>v!=null&&String(v).trim()!==''&&!['—','Unknown','Not recorded','N/A'].includes(String(v).trim());
 const root=document.createElement('div');root.id='mgApp';root.setAttribute('aria-label','Wire to Wire Management Studio');document.body.appendChild(root);
-const ui={view:'office',q:'',type:'all',sort:'name',caseId:'powerline',catalog:null,photos:null,personGeo:null,trackGeo:null,searchRecords:[],filterFocus:false,stage:'',renderCount:0,demoRatings:new URLSearchParams(location.search).get('ratings')!=='real'};
+const ui={view:'office',q:'',type:'all',sort:'name',caseId:'powerline',catalog:null,photos:null,logos:null,personGeo:null,trackGeo:null,searchRecords:[],filterFocus:false,stage:'',renderCount:0,demoRatings:new URLSearchParams(location.search).get('ratings')!=='real'};
 const readState=()=>{try{return JSON.parse(localStorage.getItem('wtwOfficeStateV30')||'{}')}catch{return {}}};
 const demoScore=(name,key)=>{
  let seed=2166136261;
@@ -93,7 +93,13 @@ function allRecords(){
  return base.concat(tracks,people,pages.map(r=>({kind:'screen',name:r[0],detail:'Management department',view:r[1]})));
 }
 function owner(name){const r=typeof window.__wtwOfficeHorseOwner==='function'?window.__wtwOfficeHorseOwner(name):null;return r?.name||'Not recorded'}
-function ownerChip(name){const v=owner(name);return '<span class="mg-owner-mark" title="'+h(v)+'">'+(known(v)?h(v.slice(0,1).toUpperCase()):'?')+'</span>'}
+function ownerChip(name){
+ const v=owner(name),entry=ui.logos?.organizations?.[v],src=typeof entry==='string'?entry:entry?.src;
+ const trusted=typeof src==='string'&&/^\/assets\/[a-zA-Z0-9_./-]+$/.test(src)&&!src.includes('..');
+ return '<span class="mg-owner-mark" title="'+h(v)+'">'+
+  (trusted?'<img src="'+h(src)+'" alt="'+h(v)+' organization crest" loading="lazy">':
+  known(v)?h(v.slice(0,1).toUpperCase()):'?')+'</span>';
+}
 function compactTable(head,rows,config=''){
  return '<div class="mg-table-wrap"><table class="mg-table '+config+'"><thead><tr>'+head.map(x=>'<th'+(x.numeric?' class="numeric"':'')+(x.style?' style="'+h(x.style)+'"':'')+'>'+h(x.text||x)+'</th>').join('')+'</tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';
 }
@@ -218,13 +224,29 @@ function sourceProfile(){
  return {doc,fields,connections,pedigree,career,states,notes,sub};
 }
 const srcValue=(pairs,key)=>pairs.find(x=>x[0].toLowerCase()===key.toLowerCase())?.[1]||'';
+function entityPhoto(kind,name){
+ // Approved site imagery is a read-only image pointer, not an entity identity database.
+ const assets=ui.photos?.entities||{};
+ const route=activeRoute();
+ const id=kind==='person'?(route?.id||geographicPerson(name)?.id):
+  kind==='track'?geographicTrack(name)?.id:null;
+ const keys=[id?kind+':'+id:null,kind+':'+name];
+ for(const key of keys.filter(Boolean)){
+  const entry=assets[key],src=typeof entry==='string'?entry:entry?.src;
+  if(typeof src==='string'&&/^\\/assets\\/[a-zA-Z0-9_./-]+$/.test(src)&&!src.includes('..'))return src;
+ }
+ return '';
+}
 function portrait(kind,name){
- // Prefer an explicitly approved actual photograph; badges are a fallback only.
- const source=sourceProfile();
- const img=$('.profileHero .profilePhoto img',source?.doc);
- const href=img?.getAttribute('src')||'';
- const fallback='/assets/profile-badges/v2/wtw_badge_'+(kind==='horse'?'horse':kind==='person'?'people':kind==='farm'?'farm_stable':'track')+'.png';
- return '<div class="mg-portrait '+(kind!=='horse'?'fallback':'')+'"><img src="'+h(href||fallback)+'" alt="'+h(name)+' profile image"></div>';
+ const source=sourceProfile(),sourceImg=$('.profileHero .profilePhoto img',source?.doc);
+ const candidate=sourceImg?.getAttribute('src')||'';
+ const sourcePhoto=/^\\/assets\\/[a-zA-Z0-9_./-]+$/.test(candidate)&&
+  !candidate.includes('/profile-badges/')&&!candidate.includes('..')?candidate:'';
+ const photo=entityPhoto(kind,name)||sourcePhoto;
+ const fallback='/assets/profile-badges/v2/wtw_badge_'+
+  (kind==='horse'?'horse':kind==='person'?'people':kind==='farm'?'farm_stable':'track')+'.png';
+ return '<div class="mg-portrait '+(photo?'photo':'fallback')+'" data-visual-source="'+(photo?'approved-photo':'identity-badge')+'">'+
+  '<img src="'+h(photo||fallback)+'" alt="'+h(photo?'Approved photograph of '+name:'Profile badge for '+name)+'"></div>';
 }
 function geographicPerson(name){
  const people=ui.personGeo?.people;if(!Array.isArray(people))return null;
@@ -728,6 +750,7 @@ if(!['profile','office','search','stable','racing','breeding','sales','person','
 Promise.allSettled([
  fetch('/assets/game/attribute-catalog.v1.json').then(x=>x.ok?x.json():null).then(x=>{if(x?.horse_categories)ui.catalog=x}),
  fetch('/assets/office/decision-photo-index.json').then(x=>x.ok?x.json():null).then(x=>{ui.photos=x}),
+ fetch('/assets/office/organization-logo-index.json').then(x=>x.ok?x.json():null).then(x=>{if(x?.organizations)ui.logos=x}),
  fetch('/data/person-geography-ui-v33.json').then(x=>x.ok?x.json():null).then(x=>{if(x?.schema==='WTW_UI_PERSON_GEOGRAPHY_PROJECTION_V1')ui.personGeo=x}),
  fetch('/data/track-geography-v33.json').then(x=>x.ok?x.json():null).then(x=>{if(x?.tracks&&x?.authority)ui.trackGeo=x})
 ]).then(render);
