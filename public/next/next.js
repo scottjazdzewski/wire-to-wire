@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableSearch:'',networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
+const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:true,stableSearch:'',networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -1027,9 +1027,31 @@ function liveStableHorseData(h,r,game,caseFiles){
   activity:h.activity,ability:liveStableRating(name,'current_ability',game),potential:liveStableRating(name,'future_potential',game),
   entered,hasTarget:Boolean(r||target),cases:related};
 }
+
+/* Presentation-only fixture values for visual roster density. NO writes to the Office engine. */
+const WTW_STABLE_DEMO=Object.freeze({
+ 'Bellarmine':{age:'3',sex:'C',health:['sound','Sound','Demo: clear'],ready:['building','82%','Demo race conditioning'],form:['up','↑','Demo form improving'],ability:4,potential:5,last:'2014-06-21',upcoming:'2014-08-02',target:'SAR · ALW',money:'$128k',owner:'Ashford Racing',trainer:'E. Bennett',breeder:'Blue Lantern',record:'9-3-2-1',activity:'Sharp 5f work'},
+ 'Hardtack':{age:'4',sex:'G',health:['watch','Watch','Demo: minor watch'],ready:['building','71%','Demo conditioning'],form:['down','↓','Demo form declining'],ability:3,potential:3,last:'2014-06-29',upcoming:'2014-08-09',target:'MTH · CLM',money:'$76k',owner:'Ironweed St.',trainer:'G. Larkin',breeder:'Ironweed',record:'17-3-4-2',activity:'Breezing evenly'},
+ 'Iron Harbor':{age:'3',sex:'C',health:['sound','Sound','Demo: clear'],ready:['ready','95%','Demo ready to race'],form:['up','↑','Demo form improving'],ability:4,potential:4,last:'2014-07-04',upcoming:'2014-07-23',target:'SAR · R8',money:'$205k',owner:'Kingsmere',trainer:'A. Rowe',breeder:'Kingsmere',record:'11-4-2-1',activity:'Race ready'},
+ 'Pieta':{age:'2',sex:'F',health:['sound','Sound','Demo: clear'],ready:['building','67%','Demo training build'],form:['up','↑','Demo improving in work'],ability:2,potential:5,last:'2014-06-06',upcoming:'2014-08-16',target:'SAR · MSW',money:'$19k',owner:'Aurelian',trainer:'A. Rowe',breeder:'Aurelian',record:'3-0-1-1',activity:'Gallop-out ↑'},
+ 'Powerline':{age:'3',sex:'C',health:['sound','Sound','Demo: clear'],ready:['ready','91%','Demo ready to run'],form:['level','→','Demo steady form'],ability:4,potential:5,last:'2014-06-08',upcoming:'2014-07-19',target:'CD · MSW',money:'$93k',owner:'Blue Lantern',trainer:'G. Larkin',breeder:'Crescent Mile',record:'6-2-1-0',activity:'Final prep work'},
+ 'The Last Match':{age:'2',sex:'C',health:['treat','Treatment','Demo: receiving treatment'],ready:['restricted','34%','Demo restricted training'],form:['down','↓','Demo declining form'],ability:3,potential:5,last:'2014-06-17',upcoming:'2014-07-20',target:'KEE · MSW',money:'$42k',owner:'Crescent Mile',trainer:'J. Harrow',breeder:'Crescent Mile',record:'4-1-1-0',activity:'Light jog only'}
+});
+function liveStableDemoApply(x){
+ const d=WTW_STABLE_DEMO[x.name];if(!d)return x;
+ const stars=n=>({value:n,display:'<span class="ng-rs-stars" title="Fictional preview: '+n+'/5"><b>'+('★'.repeat(n))+'</b>'+('☆'.repeat(5-n))+'</span>'});
+ return {...x,...d,ability:stars(d.ability),potential:stars(d.potential),entered:false,hasTarget:!!d.target};
+}
+function stableShortDate(value){
+ const iso=liveStableDate(value);
+ if(!iso)return value||'';
+ const [y,m,d]=iso.split('-');
+ return Number(m)+'/'+Number(d)+'/'+y.slice(2);
+}
+
 function liveStableRosterView(){
  const horses=horseRows(),races=racingRows(),game=state(),files=currentMessages(),search=APP.stableSearch.trim().toLowerCase();
- const all=horses.map(h=>liveStableHorseData(h,races.find(r=>r.name===h.name),game,files));
+ const all=horses.map(h=>{const source=liveStableHorseData(h,races.find(r=>r.name===h.name),game,files);return APP.stableDemo?liveStableDemoApply(source):source;});
  const filtered=all.filter(x=>{
   if(APP.stableFilter==='entered'&&!x.entered)return false;
   if(APP.stableFilter==='targets'&&!x.hasTarget)return false;
@@ -1069,36 +1091,30 @@ function liveStableRosterView(){
   const datum=[cell(name,'ng-rs-first'),txt(x.age,'ng-rs-numeric'),txt(x.sex,'ng-rs-numeric'),
    cell(liveStableSignal(...x.health)),cell(liveStableSignal(...x.ready)),
    cell(x.ability.display,'ng-rs-stars-cell'),cell(x.potential.display,'ng-rs-stars-cell'),
-   cell(liveStableSignal(...x.form)),txt(x.last,'ng-rs-numeric'),txt(x.upcoming,'ng-rs-race'),
+   cell(liveStableSignal(...x.form)),txt(stableShortDate(x.last),'ng-rs-numeric'),txt(stableShortDate(x.upcoming),'ng-rs-race'),
    txt(x.target,'ng-rs-target'),txt(x.money,'ng-rs-numeric'),txt(x.owner),txt(x.trainer),txt(x.breeder),
    txt(x.record,'ng-rs-numeric'),txt(x.activity,'ng-rs-activity')];
   return '<tr class="ng-wtw-roster-row" data-search="'+safe([x.name,x.activity,x.target,x.owner,x.trainer,x.breeder,x.health[1],x.ready[1]].join(' ').toLowerCase())+'">'+datum.join('')+'</tr>';
  }).join('');
  const filters=[['all','ALL'],['vet','VET WATCH'],['ready','READY'],['targets','WITH TARGET'],['entered','ENTERED'],['unassigned','NO TARGET']]
  .map(([value,label])=>'<button data-ng="stable-filter" data-val="'+value+'" class="'+(APP.stableFilter===value?'on':'')+'" aria-pressed="'+(APP.stableFilter===value?'true':'false')+'">'+label+'</button>').join('');
- const cases=files.filter(f=>all.some(x=>x.cases.includes(f)));
- const raceHTML=races.slice(0,5).map(x=>'<button data-ng="horse" data-val="'+safe(x.name)+'"><strong>'+safe(x.name)+'</strong><span>'+safe(x.track+' · '+x.date)+'</span><em class="'+(/entered/i.test(x.status)?'is-entered':'')+'">'+safe(x.status)+'</em></button>').join('');
- const caseHTML=cases.slice(0,5).map(x=>'<button data-ng="case" data-val="'+safe(x.case)+'"><strong>'+safe(x.title)+'</strong><span>'+safe(x.from)+'</span><em>'+ (x.resolved?'REVIEWED':'OPEN')+'</em></button>').join('');
- const support='<div class="ng-rs-bottom"><section><header>UPCOMING RACING <small>CONFIRMED VS TARGETS</small></header><div class="ng-rs-mini">'+
-  (raceHTML||'<p>No sourced race targets yet.</p>')+'</div></section><section><header>VETERINARY & MANAGEMENT FILES <small>LINKED DECISIONS</small></header>'+
-  '<div class="ng-rs-mini">'+(caseHTML||'<p>No active horse files.</p>')+'</div></section></div>';
- const legend='<div class="ng-rs-legend">'+liveStableSignal('watch','Vet watch','Caution without assumed treatment')+
+  const legend='<div class="ng-rs-legend">'+liveStableSignal('watch','Vet watch','Caution without assumed treatment')+
   liveStableSignal('treat','Treatment','Only documented active treatment')+liveStableSignal('building','Building','Training toward a race')+
   liveStableSignal('up','Form ↑','Recorded form improving')+liveStableSignal('down','Form ↓','Recorded form declining')+
   '<span>— = not recorded · Stars only when sourced · Targets ≠ entries</span></div>';
  return '<section class="ng-functional ng-stable-roster-v2">'+
-  '<div class="ng-rs-title"><strong>STABLE & HORSES</strong><span>'+all.length+' HORSES · '+all.filter(x=>x.entered).length+
+  '<div class="ng-rs-title"><strong>STABLE & HORSES</strong><span>'+(APP.stableDemo?'FICTIONAL DEMO VALUES · NO GAME DATA CHANGED · ':'')+all.length+' HORSES · '+all.filter(x=>x.entered).length+
    ' ENTERED · '+all.filter(x=>x.hasTarget&&!x.entered).length+' TARGETED · '+all.filter(x=>['watch','treat'].includes(x.health[0])).length+
    ' VET WATCH</span><button data-ng="menu" data-val="Racing">RACE CALENDAR ↗</button></div>'+
   '<div class="ng-rs-tools"><label for="ngStableSearch">SEARCH</label><input id="ngStableSearch" data-ng-input="stable-search" type="search" value="'+safe(APP.stableSearch)+
    '" placeholder="Horse, owner, trainer, status…" autocomplete="off"/><div class="ng-rs-filters">'+filters+'</div>'+
-   '<div class="ng-rs-mode"><button data-ng="stable-mode" data-val="all" class="'+(APP.stableMode!=='compact'?'on':'')+'">ALL COLUMNS</button>'+
+   '<div class="ng-rs-mode"><button data-ng="stable-demo" data-val="toggle" class="'+(APP.stableDemo?'on':'')+'" title="Show fictional design-preview values; no game data changed">'+(APP.stableDemo?'DEMO ON':'DEMO OFF')+'</button><button data-ng="stable-mode" data-val="all" class="'+(APP.stableMode!=='compact'?'on':'')+'">ALL COLUMNS</button>'+
    '<button data-ng="stable-mode" data-val="compact" class="'+(APP.stableMode==='compact'?'on':'')+'">QUICK VIEW</button></div></div>'+
   '<section class="ng-rs-roster"><header><strong>HORSE MANAGEMENT ROSTER</strong><span class="ng-stable-visible">'+filtered.length+' OF '+all.length+
-   ' HORSES · CLICK HEADERS TO SORT · SCROLL HORIZONTALLY FOR MORE</span></header>'+
+   ' HORSES · CLICK HEADINGS TO SORT</span></header>'+
    '<div class="ng-rs-scroll" tabindex="0" aria-label="Sortable horse roster; horizontally scroll for every column"><table class="ng-rs-table '+(APP.stableMode==='compact'?'compact':'all')+
    '"><thead><tr>'+th+'</tr></thead><tbody>'+ (rowHTML||'<tr><td colspan="17" class="ng-rs-no-results">No horses match these filters.</td></tr>')+
-   '</tbody></table></div>'+legend+'</section>'+support+'</section>';
+   '</tbody></table></div>'+legend+'</section></section>';
 }
 
 function functionalRoute(route){
@@ -1262,6 +1278,7 @@ window.addEventListener('click',e=>{
  if(key==='stable-sort'){if(APP.stableSort===val)APP.stableSortDesc=!APP.stableSortDesc;else{APP.stableSort=val;APP.stableSortDesc=false}return paint()}
  if(key==='stable-filter'){APP.stableFilter=val;return paint()}
   if(key==='stable-mode'){APP.stableMode=val;return paint()}
+  if(key==='stable-demo'){APP.stableDemo=!APP.stableDemo;return paint()}
  if(key==='filter'){APP.filter=val;APP.msgPage=0;return paint()}
  if(key==='prev-msg'){APP.msgPage=Math.max(0,APP.msgPage-1);return paint()}
  if(key==='next-msg'){APP.msgPage++;return paint()}
