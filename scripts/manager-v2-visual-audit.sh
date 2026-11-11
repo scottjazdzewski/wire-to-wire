@@ -69,6 +69,35 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   aqueduct.click();await delay(250);
   check('Archived track opens in native Management Studio',!!doc.querySelector('.mg-track-layout')&&
     doc.querySelector('.mg-main')?.textContent.includes('South Ozone Park'));
+  check('Read-only Aqueduct track registry is populated',
+    doc.querySelector('.mg-track-layout>.mg-section')?.querySelectorAll('tbody tr').length>=100);
+  const saratoga=locate('open','track|Saratoga|');
+  check('Circuit registry records are clickable',!!saratoga);
+  saratoga.click();await delay(240);
+  check('Registry click opens selected track',!!doc.querySelector('.mg-track-layout')&&
+    doc.querySelector('.mg-profile-identity')?.textContent.includes('Saratoga'));
+  const searchNav=locate('nav','search');
+  check('Global Search remains accessible from track',!!searchNav);
+  searchNav.click();await delay(200);
+  const qScreen=doc.querySelector('#mgSearch');
+  qScreen.value='Racing';qScreen.dispatchEvent(new win.Event('input',{bubbles:true}));
+  await delay(200);
+  const page=locate('open','screen|Racing|');
+  check('Search returns game department screens',!!page);
+  page.click();await delay(200);
+  check('Game department result navigates',!!doc.querySelector('.mg-department-suite.racing'));
+  locate('nav','search').click();await delay(200);
+  const qPerson=doc.querySelector('#mgSearch');
+  qPerson.value='Ismael Rosario';qPerson.dispatchEvent(new win.Event('input',{bubbles:true}));
+  await delay(220);
+  const rightArrow=[...doc.querySelectorAll('.mg-search-table tbody tr td:last-child [data-mg="open"]')]
+   .find(x=>x.dataset.value==='person|Ismael Rosario|@HP-T-06-013-3');
+  check('Historical person right-arrow retains immutable ID',!!rightArrow);
+  rightArrow.click();await delay(260);
+  check('Search right-arrow opens exact ID-matched historical person',
+   win.location.search.includes('id=HP-T-06-013-3')&&
+   !!doc.querySelector('.mg-person-dossier')&&doc.querySelector('.mg-main')?.textContent.includes('Camagüey'));
+
 
   result.dataset.state='passed';
   result.textContent=JSON.stringify({state:'passed',steps});
