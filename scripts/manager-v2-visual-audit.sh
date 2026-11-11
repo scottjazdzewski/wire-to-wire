@@ -145,6 +145,22 @@ capture keeneland-profile '?page=track&name=Keeneland' 'mg-track-layout'
 capture aqueduct-directory '?page=track&name=Aqueduct' 'mg-track-layout'
 capture historical-person '?page=person&name=Ismael+Rosario&id=HP-T-06-013-3' 'mg-person-dossier'
 
+# Secondary desktop viewport: verify the full-width management design still
+# composes at a normal 1280x800 monitor without redesigning for mobile.
+capture_1280(){
+ local name="$1" route="$2"
+ "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+  --window-size=1280,800 --force-device-scale-factor=1 --virtual-time-budget=5000 \
+  --screenshot="visual-audit/manager-v2/screenshots/$name-1280.png" \
+  "http://127.0.0.1:8767/manager/$route" >/tmp/wtw-v2-1280-"$name".log 2>&1
+ test -s "visual-audit/manager-v2/screenshots/$name-1280.png"
+}
+capture_1280 racing-office ''
+capture_1280 horse-profile '?page=horse&name=The+Last+Match'
+capture_1280 people-profile '?page=person&name=Gabe+Larkin'
+capture_1280 global-search '?ui=search'
+
+
 python3 - <<'PY'
 from pathlib import Path
 import html,re,json
