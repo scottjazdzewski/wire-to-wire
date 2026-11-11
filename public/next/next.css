@@ -1419,7 +1419,7 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-horse-mgr-four{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;align-items:start;min-width:0}
 .ng-horse-mgr-five{display:grid;grid-template-columns:1fr 1fr 1fr 1.25fr 1.1fr;gap:5px;align-items:start;min-width:0}
 .ng-horse-mgr-bottom{display:grid;grid-template-columns:minmax(0,2.7fr) minmax(0,1fr);gap:5px;align-items:start;min-width:0}
-.ng-horse-mgr-panel{min-width:0;min-height:0;overflow:hidden;background:#181f22;border:1px solid #34413e;border-radius:2px}
+.ng-horse-mgr-panel{min-width:0;min-height:0;overflow:hidden;background:#181f22;border:0;border-radius:0}
 .ng-horse-mgr-panel>header{box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:24px;padding:3px 8px;background:#203b30;color:#f2e9d6;border-bottom:1px solid #40554a;font-size:10px;font-weight:800;letter-spacing:.025em}
 .ng-horse-mgr-panel>header strong{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ng-horse-mgr-panel>header span{font-size:9px;color:#d7ca9f;white-space:nowrap}
@@ -1760,12 +1760,12 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-entity-links .ng-horse-with-owner{max-width:100%}
 .ng-entity-links .ng-horse-with-owner>.ng-horse-owner-badge{margin-right:2px}
 .ng-search-roster-page{gap:4px!important;padding:6px 8px!important;background:#11181c!important}
-.ng-search-compact-head{box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:12px;flex:0 0 29px;min-height:29px;border-bottom:1px solid #3c4b47;padding:0 5px 5px}
+.ng-search-compact-head{box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:12px;flex:0 0 25px;min-height:25px;border-bottom:1px solid #3c4b47;padding:0 5px 5px}
 .ng-search-compact-head>div{display:flex;align-items:baseline;gap:14px;min-width:0}
 .ng-search-compact-head strong{font-size:13px;color:#f2dfa5;font-weight:820;letter-spacing:.06em}
 .ng-search-compact-head span{font-size:10px;color:#b4cdbb;font-weight:680}
 .ng-search-compact-head>button{border:1px solid #3c4b47;border-radius:3px;background:#1e262a;color:#f2db9f;padding:4px 9px;font-size:9px;font-weight:790;display:inline-flex;align-items:center;gap:5px;cursor:pointer}
-.ng-search-roster-page>.ng-search-entry{flex:0 0 35px!important;min-height:35px!important;padding:0 9px!important;border-radius:3px!important}
+.ng-search-roster-page>.ng-search-entry{flex:0 0 30px!important;min-height:35px!important;padding:0 9px!important;border-radius:3px!important}
 .ng-search-roster-page>.ng-search-entry input{font-size:12.5px!important}
 .ng-search-filters{display:flex;align-items:center;justify-content:space-between;flex:0 0 30px;gap:10px;min-width:0}
 .ng-search-typebar,.ng-search-sortbar{display:flex;align-items:center;min-width:0;gap:3px}
@@ -1774,19 +1774,19 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-search-sortbar>span{font-size:9px;font-weight:760;color:#b4cdbb;padding-right:4px}
 .ng-search-roster-page .ng-search-table{display:flex;flex-direction:column;flex:1 1 0;min-height:0;border:1px solid #3d4b47;background:#171f22;overflow:hidden}
 .ng-search-table-head,.ng-search-row{box-sizing:border-box;display:grid;grid-template-columns:76px minmax(185px,1.2fr) minmax(180px,1.1fr) minmax(125px,.75fr) 42px;align-items:center;column-gap:8px}
-.ng-search-table-head{flex:0 0 28px;min-height:28px;padding:0 9px;background:#2a3532;color:#eddaa7;border-bottom:1px solid #4b6254;font-size:9px;font-weight:840;letter-spacing:.045em}
+.ng-search-table-head{flex:0 0 25px;min-height:25px;padding:0 9px;background:#2a3532;color:#eddaa7;border-bottom:1px solid #4b6254;font-size:9px;font-weight:840;letter-spacing:.045em}
 .ng-search-table-head>span:last-child{text-align:center}
 .ng-search-roster-page .ng-search-table-body{display:flex;flex-direction:column;flex:1 1 0;min-height:0;overflow:hidden!important}
-.ng-search-roster-page .ng-search-row{flex:0 0 31px;min-height:31px;width:100%;padding:2px 9px;text-align:left;color:#e1ece1;background:#1e272a;border:0;border-bottom:1px solid #364340;cursor:pointer}
+.ng-search-roster-page .ng-search-row{flex:0 0 24px;min-height:24px;width:100%;padding:1px 9px;text-align:left;color:#e1ece1;background:#1e272a;border:0;border-bottom:1px solid #364340;cursor:pointer}
 .ng-search-roster-page .ng-search-row:nth-child(even){background:#242e30}
 .ng-search-roster-page .ng-search-row:hover,
 .ng-search-roster-page .ng-search-row:focus-visible{background:#315e48;outline:1px solid #5a816a;outline-offset:-1px}
 .ng-search-row>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ng-search-row-kind{color:#d8c898;font-size:9px;font-weight:760}
-.ng-search-row-name{display:inline-flex;align-items:center;gap:7px;color:#f0f0e1;font-size:11.5px;font-weight:720}
+.ng-search-row-name{display:inline-flex;align-items:center;gap:7px;color:#f0f0e1;font-size:10.5px;font-weight:720}
 .ng-search-row-name>strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ng-search-row-name .ng-horse-owner-badge .ng-org-mark,
-.ng-search-row-name .ng-horse-owner-badge .ng-owner-unknown-mark{width:22px!important;height:22px!important;min-width:22px!important;min-height:22px!important;flex-basis:22px!important}
+.ng-search-row-name .ng-horse-owner-badge .ng-owner-unknown-mark{width:17px!important;height:17px!important;min-width:17px!important;min-height:17px!important;flex-basis:17px!important}
 .ng-search-row-detail{color:#b4cdbb;font-size:10.7px}
 .ng-search-row-owner{color:#e5cf98;font-size:10.5px}
 .ng-search-row-open{text-align:center;color:#b4cdbb}
