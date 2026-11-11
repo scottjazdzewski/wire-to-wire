@@ -1446,14 +1446,14 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 #wtwNextgen .ng-dept-roster .ng-rs-table th{width:auto}
 #wtwNextgen .ng-dept-roster .ng-rs-table td{font-size:var(--wtw-roster-text)!important;letter-spacing:-.008em}
 #wtwNextgen .ng-dept-roster .ng-rs-table th button{font-size:var(--wtw-roster-head)!important;letter-spacing:-.02em}
-#wtwNextgen .ng-dept-roster .ng-rs-table .ng-rs-horse{font-size:var(--wtw-roster-name)!important;height:22px!important;gap:2px!important}
+#wtwNextgen .ng-dept-roster .ng-rs-table .ng-rs-horse{font-size:var(--wtw-roster-name)!important;height:22px!important;gap:3px!important}
 #wtwNextgen .ng-dept-roster .ng-rs-scroll{overflow:hidden!important;min-height:0!important;flex:1 1 auto!important}
 #wtwNextgen .ng-dept-roster .ng-rs-roster{flex:1 1 auto!important;min-height:0!important}
 #wtwNextgen .ng-dept-roster .ng-rs-roster>header{height:25px;flex:0 0 25px}
 #wtwNextgen .ng-dept-roster .ng-rs-roster>header strong{white-space:nowrap}
 #wtwNextgen .ng-dept-roster .ng-rs-title{padding:0 8px}
 #wtwNextgen .ng-dept-roster .ng-rs-title span{min-width:0;overflow:hidden;text-overflow:ellipsis}
-#wtwNextgen .ng-dept-roster .ng-rs-tools{flex-wrap:nowrap!important;min-height:30px;flex:0 0 30px;padding:2px 6px}
+#wtwNextgen .ng-dept-roster .ng-rs-tools{flex-wrap:nowrap!important;min-height:29px;flex:0 0 29px;padding:2px 6px}
 #wtwNextgen .ng-dept-roster .ng-rs-tools label{display:flex;align-items:center;gap:4px;max-width:49%;font-size:9px;white-space:nowrap}
 #wtwNextgen .ng-dept-roster .ng-rs-tools select{box-sizing:border-box;display:block;min-width:0;max-width:230px;height:23px;padding:2px 6px;background:#152126;color:#e1eadc;border:1px solid #45564b;border-radius:2px;font-size:9px}
 #wtwNextgen .ng-dept-roster .ng-rs-tools select:focus{outline:1px solid #d1bc80}
@@ -1473,14 +1473,14 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 #wtwNextgen .ng-dpt-finance small{font-size:8px;color:#a8bdb0;font-weight:760;white-space:nowrap}
 #wtwNextgen .ng-dpt-finance b{font-size:12px;font-weight:850;color:#e4cb88;white-space:nowrap}
 #wtwNextgen .ng-dept-roster .ng-rs-table .ng-rs-signal{font-size:var(--wtw-roster-status);gap:1px}
-#wtwNextgen .ng-dept-roster .ng-rs-table .ng-rs-signal i{flex-basis:10px;width:10px;height:11px;font-size:8px}
-#wtwNextgen .ng-dept-roster .ng-rs-stars{font-size:9.5px;letter-spacing:-1px}
+#wtwNextgen .ng-dept-roster .ng-rs-table .ng-rs-signal i{flex-basis:12px;width:12px;height:12px;font-size:9px}
+#wtwNextgen .ng-dept-roster .ng-rs-stars{font-size:10px;letter-spacing:-1.2px}
 #wtwNextgen .ng-dept-roster .ng-horse-owner-badge{width:13px!important;height:11px!important;flex:0 0 13px!important}
 #wtwNextgen .ng-dept-roster .ng-horse-owner-badge .ng-org-mark,
 #wtwNextgen .ng-dept-roster .ng-horse-owner-badge .ng-owner-unknown-mark{width:13px!important;height:11px!important;min-width:13px!important;min-height:11px!important;flex:0 0 13px!important;border-radius:1px!important;font-size:8px!important}
 #wtwNextgen .ng-dept-roster .ng-rs-table td[title]{text-overflow:ellipsis}
 @media(max-width:1300px){
- #wtwNextgen .ng-dept-roster .ng-rs-table td{font-size:var(--wtw-roster-text)!important;padding:2px 1px!important}
+ #wtwNextgen .ng-dept-roster .ng-rs-table td{font-size:var(--wtw-roster-text)!important;padding:2px!important}
  #wtwNextgen .ng-dept-roster .ng-rs-table th button{font-size:var(--wtw-roster-head)!important;padding:0!important}
  #wtwNextgen .ng-dept-roster .ng-rs-tools input{max-width:125px}
  #wtwNextgen .ng-dept-roster .ng-dpt-mode{display:none}
