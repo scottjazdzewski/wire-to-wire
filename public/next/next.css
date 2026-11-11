@@ -2270,20 +2270,20 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 .ng-track-stakes .ng-stakes-head{min-height:26px!important;padding:3px 7px!important}
 .ng-track-stakes .ng-stakes-data span{font-size:10.5px!important}
 .ng-track-stakes .ng-stakes-grade{display:flex;align-items:center;justify-content:flex-end;gap:4px}
-.ng-stakes-trophy{display:inline-block;width:28px;height:11px;flex:0 0 28px;background-image:url('/assets/trophies/g123-sprite.png');background-repeat:no-repeat;background-size:102px 34px}
-.ng-stakes-trophy.g1{background-position:-4px -2px}
-.ng-stakes-trophy.g2{background-position:-37px -4px}
-.ng-stakes-trophy.g3{background-position:-70px -3px}
-.ng-track-info-stack{display:flex;flex-direction:column;gap:7px;min-height:0;overflow:hidden}
+.ng-stakes-trophy{display:inline-block;width:18px;height:7px;flex:0 0 18px;background-image:url('/assets/trophies/g123-sprite.png');background-repeat:no-repeat;background-size:64px 21.33px}
+.ng-stakes-trophy.g1{background-position:-3px -1px}
+.ng-stakes-trophy.g2{background-position:-23px -2px}
+.ng-stakes-trophy.g3{background-position:-44px -2px}
+.ng-track-info-stack{display:flex;flex-direction:column;gap:7px;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#546959 #151c1e}
 .ng-track-info-stack>.ng-tier1-card{min-height:0}
-.ng-track-info-stack>.ng-track-meet-card{flex:1 1 auto}
-.ng-track-info-stack>.ng-tier1-card:not(.ng-track-meet-card){flex:0 1 auto;max-height:35%;overflow:auto}
-.ng-track-conditions-body{flex:1 1 auto;min-height:0;overflow-y:auto;padding:8px}
+.ng-track-info-stack>.ng-track-meet-card{flex:1 0 auto;min-height:100%}
+.ng-track-info-stack>.ng-tier1-card:not(.ng-track-meet-card){flex:0 0 auto;max-height:35%;overflow:auto}
+.ng-track-conditions-body{display:flex;flex-direction:column;gap:8px;flex:1 1 auto;min-height:0;overflow:visible;padding:8px}
 .ng-track-meet-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
 .ng-track-meet-fact{display:flex;flex-direction:column;gap:4px;min-width:0;padding:8px 9px;background:#1e262a;border-bottom:1px solid #3c4b47}
 .ng-track-meet-fact small{color:#aebfad;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
-.ng-track-meet-fact strong{color:#f0d393;font-size:11px;line-height:1.25;text-align:right}
-.ng-track-operating-notes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:7px}
+.ng-track-meet-fact strong{color:#f0d393;font-size:11px;line-height:1.25;text-align:right;white-space:normal;overflow-wrap:anywhere}
+.ng-track-operating-notes{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;margin-top:7px}
 .ng-track-operating-notes article{display:flex;flex-direction:column;gap:4px;min-width:0;padding:8px;background:#1e262a;line-height:1.3}
 .ng-track-operating-notes b,.ng-track-office-context b{color:#e2c88d;font-size:9px}
 .ng-track-operating-notes span,.ng-track-office-context span{color:#d2dfd4;font-size:10px;overflow-wrap:anywhere}
