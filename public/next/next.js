@@ -531,6 +531,31 @@ function profileDetail(route){
  const trackOperatingNotes=trackNotes.filter(x=>!/race days|current office/i.test(x.label));
  const trackOfficeContext=trackNotes.find(x=>/current office/i.test(x.label)&&!/no current office entry/i.test(x.value));
  const trackConnectionLinks=connection.filter(x=>x.button);
+ // Track history is a read-only supplement to the canonical Office track records.
+ const trackAuthority=isTrack?(typeof window.__wtwOfficeTrackDirectory==='function'?
+  window.__wtwOfficeTrackDirectory().find(x=>x.name===route.title):null):null;
+ const trackHistory={
+  opened:trackAuthority?.openingDate||'Not verified',
+  capacity:trackAuthority?.capacity||'Not verified',
+  capacityType:trackAuthority?.capacityType||'CAPACITY',
+  capacityAsOf:trackAuthority?.capacityAsOf||'',
+  blurb:trackAuthority?.historyBlurb||'Historical background has not yet been source-certified for this course.',
+  source:trackAuthority?.historySource||''
+ };
+ const trackHistoryFacts=()=>'<div class="ng-track-history-facts">'+
+  '<div><small>OPENED</small><strong>'+safe(trackHistory.opened)+'</strong></div>'+
+  '<div><small>'+safe(trackHistory.capacityType)+'</small><strong>'+safe(trackHistory.capacity)+'</strong>'+
+  (trackHistory.capacityAsOf?'<em>'+safe(trackHistory.capacityAsOf)+'</em>':'')+'</div></div>';
+ const trackHistoryBlurb=()=>'<p class="ng-track-history-blurb">'+safe(trackHistory.blurb)+'</p>';
+ const trackHistoryPanel=()=>'<section class="ng-tier1-card ng-track-history-card" aria-label="Track history">'+
+  '<header>TRACK HISTORY <button data-ng="detailtab" data-val="History" aria-label="Open full history of '+safe(route.title)+'">FULL HISTORY ↗</button></header>'+
+  '<div class="ng-track-history-content">'+trackHistoryFacts()+trackHistoryBlurb()+'</div></section>';
+ const trackHistoryFull=()=>'<section class="ng-detailcard ng-detailwide ng-track-history-full">'+
+  '<header>TRACK HISTORY · '+safe(route.title)+' <button data-ng="detailtab" data-val="Overview">← TRACK OVERVIEW</button></header>'+
+  trackHistoryFacts()+trackHistoryBlurb()+
+  (trackHistoryItems.length?'<div class="ng-notes">'+trackHistoryItems.slice(0,5).map(n=>'<div>'+safe(n)+'</div>').join('')+'</div>':'')+
+  (trackHistory.source?'<p class="ng-track-history-source">HISTORICAL REFERENCE: <a href="'+safe(trackHistory.source)+'" target="_blank" rel="noopener noreferrer">OPEN SOURCE ↗</a></p>':'')+
+  '</section>';
  const trackHistoryItems=isTrack?notes.filter(x=>!/\b(runtime|wiring|canonical|live season calendar|deployment|database|schema|stylesheet)\b/i.test(x)):[];
  const trackMeetFacts=[...meetValues,...(trackRaceDays?[trackRaceDays]:[])];
  const stakeDateRank=value=>{
@@ -936,8 +961,7 @@ function profileDetail(route){
       ${trackOperatingNotes.length?`<div class="ng-track-operating-notes">${trackOperatingNotes.slice(0,3).map(x=>`<article><b>${safe(x.label)}</b><span>${safe(x.value)}</span></article>`).join('')}</div>`:''}
       ${trackOfficeContext?`<div class="ng-track-office-context"><b>CURRENT OFFICE CONTEXT</b><span>${safe(trackOfficeContext.value)}</span></div>`:''}
      </div></section>
-     ${trackConnectionLinks.length?`<section class="ng-tier1-card"><header>TRACK CONNECTIONS</header>${connectionRows(trackConnectionLinks)}</section>`:''}
-     ${trackHistoryItems.length?`<section class="ng-tier1-card"><header>TRACK HISTORY</header><div class="ng-notes">${trackHistoryItems.slice(0,3).map(n=>`<div>${safe(n)}</div>`).join('')}</div></section>`:''}
+     ${trackHistoryPanel()}
     </div>
    </div>`;right='';footer='';
   }else{
@@ -984,7 +1008,9 @@ function profileDetail(route){
   }else{
    left=`<section class="ng-detailcard ng-detailwide"><header>MEET SCHEDULE & RACE DAYS</header>${rows(meetValues)}<button class="ng-entity-open" data-ng="detailtab" data-val="Major Races">BROWSE FEATURED STAKES ${glyph('arrow',12)}</button></section>`;
   }
- }else{
+ }else if(isTrack&&APP.detailTab==='History'){
+   left=trackHistoryFull();
+  }else{
   left=`<section class="ng-detailcard ng-detailwide"><header>HISTORY & RECORDS</header><div class="ng-notes">${(notes.length?notes:details.map(x=>x.lines)).slice(0,8).map(n=>`<div>${safe(n)}</div>`).join('')||'No official history connected yet.'}</div></section>`;
  }
  const actions=`<div class="ng-detailactions"><button data-ng="menu" data-val="Stable">OPEN STABLE ↗</button><button data-ng="menu" data-val="Racing">RACE CALENDAR ↗</button><button data-ng="office">BACK TO OFFICE</button></div>`;
