@@ -730,6 +730,8 @@ test('Sales workspace provides next/previous auction navigation, exact-date warn
  assert.ok(css.includes('ng-sales-desk-actions button')&&css.includes('ng-sales-hip>button'));
  assert.ok(css.includes('data-page="Watchlist"')&&css.includes('font-size:var(--wtw-roster-text)'),
   'Watchlist columns and font must use the approved FM type scale');
+ assert.ok(js.includes("salesHeader=section==='Sales'?43:0"),
+  'Sales must reduce its visible row count to reserve the auction desk height, avoiding clipped rows');
  assert.ok(!helpers.includes('localStorage.setItem'),'UI-only watchlist must not alter canonical saves');
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);
