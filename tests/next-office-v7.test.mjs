@@ -506,13 +506,69 @@ test('Native dropdowns stay mounted through selection and preserve one-click mou
 });
 
 
-test('Entity names across Stable, Facilities, Racing, Breeding, Sales and profiles always have a specific destination',()=>{
+test('Named management entities open exact profiles or clearly marked unregistered previews',()=>{
  const js=get('public/next/next.js'),css=get('public/next/next.css');
- const from=js.indexOf('/* One connection router for every management roster');
- const to=js.indexOf('function depCell(',from);
- assert.ok(from>0&&to>from,'Shared name-to-record route must exist');
- const helper=js.slice(from,to);
- const fixtures=
+ const start=js.indexOf('/* One connection router for every management roster');
+ const end=js.indexOf('function depCell(',start);
+ assert.ok(start>0&&end>start,'Shared entity router should exist');
+ const helper=js.slice(start,end);
+ const setup=[
+  'const APP={custom:"",section:"Facilities",page:"Overview",previewEntity:null,moreOpen:false,departmentDemo:true};',
+  'const DEP_FACILITY_PREVIEW=[["Oak Hollow Breaking Yard","Breaking Facility","Lexington, KY"]];',
+  'const calls=[];',
+  'const window={__wtwOfficeSearchRecords:()=>[',
+  '{kind:"horse",name:"Bellarmine"},{kind:"person",name:"Alistair Dunleavy"},',
+  '{kind:"farm",name:"Kingsmere"},{kind:"track",name:"Saratoga"},',
+  '{kind:"race",name:"Named Stakes",track:"Saratoga"},{kind:"race",name:"Named Stakes",track:"Keeneland"},',
+  '{kind:"person",name:"Ambiguous Racing"},{kind:"farm",name:"Ambiguous Racing"}],',
+  '__wtwOfficeOpenSearchRecord:(kind,name,track)=>{calls.push({kind,name,track});return true}};',
+  'const safe=value=>String(value??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(String.fromCharCode(34),"&quot;");',
+  'const schedulePaint=()=>{};',
+  'const openCustomView=view=>{APP.custom=view};'
+ ].join('\n');
+ const make=new Function(setup+'\n'+helper+
+  '\nreturn {APP,calls,entitySourceMatch,entityNotRecorded,openEntityRecord,previewRecordView,namedProfileValue};');
+ const r=make();
+ assert.equal(r.entitySourceMatch('Kingsmere','farm').kind,'farm');
+ assert.equal(r.entitySourceMatch('Ambiguous Racing','connection'),null);
+ assert.equal(r.entityNotRecorded('Private'),true);
+ assert.ok(r.namedProfileValue('Sire','Bellarmine').includes('data-kind="horse"'));
+ assert.ok(r.namedProfileValue('Owner','Kingsmere').includes('data-kind="connection"'));
+ assert.ok(!r.namedProfileValue('Age','4').includes('data-ng='));
+ for(const [name,kind] of [['Bellarmine','horse'],['Alistair Dunleavy','person'],
+  ['Kingsmere','farm'],['Saratoga','track']]){
+  r.openEntityRecord(name,kind);
+  assert.deepEqual(r.calls.at(-1),{kind,name,track:undefined});
+ }
+ r.openEntityRecord('Named Stakes','race',{_track:'Keeneland'});
+ assert.deepEqual(r.calls.at(-1),{kind:'race',name:'Named Stakes',track:'Keeneland'});
+ const count=r.calls.length;
+ r.openEntityRecord('Oak Hollow Breaking Yard','demo-facility',{
+  _kind:'demo-facility',type:'Breaking Facility',location:'Lexington, KY'
+ });
+ assert.equal(r.calls.length,count,'Demo operations cannot masquerade as canonical facilities');
+ assert.ok(r.APP.custom.includes('Oak%20Hollow%20Breaking%20Yard'));
+ assert.ok(r.previewRecordView().includes('FICTIONAL DESIGN PREVIEW'));
+ assert.ok(r.previewRecordView().includes('Breaking Facility'));
+ r.openEntityRecord('New Trainer','person');
+ assert.ok(r.previewRecordView().includes('SOURCE CONNECTION PENDING'));
+ for(const fragment of [
+  'data-ng="dept-related"','data-ng="dept-open"','data-ng="named-entity"',
+  "if(key==='dept-related')","if(key==='named-entity')",
+  "if(key==='horse')return openEntityRecord(val,'horse')",
+  "else if(APP.custom.startsWith('Preview:')){body=previewRecordView()}",
+  "namedProfileValue('Owner',x.owner)","namedProfileValue('Trainer',x.trainer)",
+  "namedProfileValue('Breeder',x.breeder)","entityReferenceButton(x.race,'race'",
+  "entityReferenceButton(x.track,'track'"
+ ])assert.ok(js.includes(fragment),'Missing entity link '+fragment);
+ assert.ok(!js.includes("r._kind==='demo-facility'?'<span"),
+  'Fictional facility names must never be plain dead text');
+ assert.ok(css.includes('.ng-entity-reference:hover')&&css.includes('.ng-entity-preview>header'));
+ assert.ok(!helper.includes('localStorage.setItem'));
+ const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(syntax.status,0,syntax.stderr);
+});
+
 test('Horse athletic overview uses four sourced FM-style trait groups with explicit unassessed states',()=>{
  const js=get('public/next/next.js'),css=get('public/next/next.css');
  const catalog=JSON.parse(get('public/assets/game/attribute-catalog.v1.json'));
