@@ -1417,10 +1417,6 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 #wtwNextgen .ng-rs-no-results{padding:18px!important;text-align:center;color:#a6baa9}
 #wtwNextgen .ng-rs-table.compact{min-width:0;width:100%}
 #wtwNextgen .ng-rs-table.compact th:nth-child(11),#wtwNextgen .ng-rs-table.compact td:nth-child(11),
-#wtwNextgen .ng-rs-table.compact th:nth-child(13),#wtwNextgen .ng-rs-table.compact td:nth-child(13),
-#wtwNextgen .ng-rs-table.compact th:nth-child(14),#wtwNextgen .ng-rs-table.compact td:nth-child(14),
-#wtwNextgen .ng-rs-table.compact th:nth-child(15),#wtwNextgen .ng-rs-table.compact td:nth-child(15),
-#wtwNextgen .ng-rs-table.compact th:nth-child(16),#wtwNextgen .ng-rs-table.compact td:nth-child(16),
 #wtwNextgen .ng-rs-table.compact th:nth-child(17),#wtwNextgen .ng-rs-table.compact td:nth-child(17){display:none}
 @media(max-width:1300px){
  #wtwNextgen .ng-rs-table td{font-size:8.5px;padding-left:2px;padding-right:2px}
