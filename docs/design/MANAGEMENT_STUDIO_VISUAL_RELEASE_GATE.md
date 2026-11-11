@@ -55,3 +55,18 @@ No final sign-off recorded. Testing/deployment success must not override this st
 **Still open before release:** Profile-specific photography and organization logos are not available for all entities; source-backed racing performances, lineage, full facilities and owner assignments remain limited in the small Office window; the legacy History Vault still needs a consistent in-game management presentation and authoritative history-data connection. Do not fabricate records to fill visual gaps.
 
 The next UI effort should attack the remaining sparse or legacy screens using reusable source-backed layouts, then compare real screenshots against the provided Football Manager/OOTP references before requesting user approval.
+
+## Cross-screen visual-system pass — November 11, 2026
+
+**Development checkpoint, not commercial sign-off.** The active presentation remains `public/manager/`, not the old Office stylesheet. This pass was performed across the game shell and screens rather than as isolated Horse Profile CSS edits.
+
+- Rebuilt the **shared** Management Studio palette to neutral charcoal/slate surfaces and restrained racing-green/gold; changed the canonical panel-heading, roster/table, hover, selected/navigation, button, profile-identity and divider rules in place.
+- All `compactTable` rosters now share one visible sortable-header implementation, with ascending/descending toggle, numeric-aware ordering, keyboard Enter/Space, `aria-sort` feedback, and **DOM-only** ordering that never alters the race databases or save state.
+- Stable & Horses now uses a full-height, source-backed horse management dossier for each of the eight active records. Every horse can open its real profile and shows verified owner, current file, exact horse-specific fixture/target, and linked decision when present. No fixture or owner is inferred from another horse.
+- The Stable operations sidebar retains six calendar entries, all **three** linked personnel rows (the initial design clipped the third; the final composition was visually inspected), and eight active case files. The final 1536×864 screenshot shows the full Stable roster and all three staff visible without scrolling their panel.
+- The actual 16-route desktop Chromium audit passed, including **33 browser interaction steps** across Search → People → Stable → Racing → Finance → original Office decision → Back/Forward → native historical person profile. Source-backed readonly geography and data constraints remain unchanged.
+- Screenshot authority: GitHub Actions Desktop Visual Audit run **43023910066**, artifact `wtw-fm-ootp-desktop-screens`, with 20 management screenshots including the 1280×800 checks. The screenshot is the acceptance evidence; test passes alone are not design sign-off.
+- GitHub unit tests pass at the implementation checkpoint. **Cloudflare Pages has reported deploy failures** for these latest changes despite successful GitHub tests and screenshots. Do not claim the new UI is publicly deployed until Cloudflare confirms the actual successful build.
+- **Unresolved:** The current Office window still has source-sparse horse pedigree, results and approved photography/owner identifiers; its rich recent-history presentation depends on the official data/historical authority. Some panels remain intentionally compact or source-empty rather than fabricated. The legacy History Vault still needs seamless native management presentation. Commercial UI sign-off is **NOT YET GRANTED**.
+
+Keep all future styling changes inside the single canonical `public/manager/manager.css` ruleset. Do not restore older CSS layers or invent profile values to fill blank areas.
