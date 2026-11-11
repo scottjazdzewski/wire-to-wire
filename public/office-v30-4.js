@@ -399,7 +399,7 @@
     if(shell)shell.hidden=true;
     document.body.classList.remove('wtw-page-open');
     markCurrentNav('Office');
-    if(wasOpen&&!restoringBrowserRoute) window.history.pushState({wtwPage:'office'},'',officeUrl());
+    if(wasOpen&&!restoringBrowserRoute&&!window.__WTW_MANAGER_SILENT_NAV__) window.history.pushState({wtwPage:'office'},'',officeUrl());
   }
   function pushHistory(label){
     history = history.slice(0, historyIndex+1);
