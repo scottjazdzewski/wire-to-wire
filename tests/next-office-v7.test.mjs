@@ -723,7 +723,11 @@ test('1999 source registries populate the whole game world without invented iden
   "else if(APP.custom.startsWith('WorldRecord:')){body=world1999Profile()}",
   "loadWorld1999();",
   "status:t._source1999?'OPEN · MEET NOT RECORDED':meet.status",
-  "base:r.location||saved.base||''"
+  "base:r.location||saved.base||''",
+  "_ownerId:h.ownerId||''","_trainerId:h.trainerId||''","_trackId:h.trackId||''",
+  "v=world1999Linked(k,r['_'+key+'Id'],r[key])",
+  "v=world1999Linked('farm',r._operationId,r.operation)",
+  "v=world1999Linked('person',r._principalId,r.principal)"
  ])assert.ok(js.includes(text),'Missing 1999 directory route: '+text);
  assert.ok(css.includes('ng-world-source-profile')&&css.includes('data-page="1999 Horses"'));
  assert.ok(!helpers.includes('localStorage.setItem'),'The 1999 world projection must never change the canonical save');
