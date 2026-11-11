@@ -2617,3 +2617,124 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  #wtwNextgen .ng-dept-roster[data-department="Sales"] .ng-sales-desk-field.ng-sales-desk-note{display:none}
  #wtwNextgen .ng-dept-roster[data-department="Sales"] .ng-sales-desk-caption{flex-basis:30%}
 }
+
+
+/* 1999 source-backed World directories. This is a read-only canon projection,
+   NOT a second design system and NOT a player stable population. */
+#wtwNextgen .ng-dept-roster[data-department="World"] .ng-rs-table th,
+#wtwNextgen .ng-dept-roster[data-department="World"] .ng-rs-table td{
+ font-size:var(--wtw-roster-text);height:29px
+}
+#wtwNextgen .ng-dept-roster[data-department="World"] .ng-rs-title span{color:#b6d2ba}
+#wtwNextgen .ng-dept-roster[data-department="World"][data-page="1999 Horses"] .ng-rs-table th:nth-child(1){width:17%}
+#wtwNextgen .ng-dept-roster[data-department="World"][data-page="1999 Horses"] .ng-rs-table th:nth-child(2){width:4%}
+#wtwNextgen .ng-dept-roster[data-department="World"][data-page="1999 Horses"] .ng-rs-table th:nth-child(3){width:6%}
+#wtwNextgen .ng-dept-roster[data-department="World"][data-page="1999 Horses"] .ng-rs-table th:nth-child(4){width:14%}
+#wtwNextgen .ng-dept-roster[data-department="World"][data-page="1999 Horses"] .ng-rs-table th:nth-child(5){width:14%}
+#wtwNextgen .ng-dept-roster[data-department="World"][data-page="1999 Horses"] .ng-rs-table th:nth-child(6){width:15%}
+#wtwNextgen .ng-dept-roster[data-department="World"][data-page="1999 Horses"] .ng-rs-table th:nth-child(7){width:12%}
+#wtwNextgen .ng-dept-roster[data-department="World"][data-page="1999 Horses"] .ng-rs-table th:nth-child(8){width:12%}
+#wtwNextgen .ng-dept-roster[data-department="World"][data-page="1999 Horses"] .ng-rs-table th:nth-child(9){width:6%}
+#wtwNextgen .ng-dept-roster[data-department="World"][data-page="People"] .ng-rs-table th:nth-child(1){width:22%}
+#wtwNextgen .ng-dept-roster[data-department="World"][data-page="People"] .ng-rs-table th:nth-child(2){width:25%}
+#wtwNextgen .ng-dept-roster[data-department="World"][data-page="People"] .ng-rs-table th:nth-child(3){width:30%}
+#wtwNextgen .ng-dept-roster[data-department="World"][data-page="People"] .ng-rs-table th:nth-child(4){width:23%}
+#wtwNextgen .ng-dept-roster[data-department="World"][data-page="Organizations"] .ng-rs-table th:nth-child(1){width:25%}
+#wtwNextgen .ng-dept-roster[data-department="World"][data-page="Organizations"] .ng-rs-table th:nth-child(2){width:27%}
+#wtwNextgen .ng-dept-roster[data-department="World"][data-page="Organizations"] .ng-rs-table th:nth-child(3){width:25%}
+#wtwNextgen .ng-dept-roster[data-department="World"][data-page="Organizations"] .ng-rs-table th:nth-child(4){width:13%}
+#wtwNextgen .ng-dept-roster[data-department="World"][data-page="Organizations"] .ng-rs-table th:nth-child(5){width:10%}
+/* Source-linked identity pages use the established office colors and label scale. */
+@media(min-width:1081px){
+ #wtwNextgen .ng-route:has(.ng-world-source-profile)>.ng-routeheading{display:none!important}
+ #wtwNextgen .ng-route:has(.ng-world-source-profile){padding:4px 8px 6px!important}
+ #wtwNextgen .ng-route:has(.ng-world-source-profile) .ng-routegrid{
+  display:block!important;flex:1 1 0!important;min-height:0!important;overflow:hidden!important;padding:0!important
+ }
+ #wtwNextgen .ng-routeinner:has(.ng-world-source-profile){
+  display:block!important;min-height:0!important;height:100%!important;overflow:hidden!important
+ }
+}
+#wtwNextgen .ng-world-source-profile{
+ box-sizing:border-box;display:flex;flex-direction:column;gap:5px;
+ width:100%;height:100%;min-height:0;overflow:hidden;background:#141d20;
+ border:1px solid #405447;color:#d8e5d8
+}
+#wtwNextgen .ng-world-source-profile>header{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ min-height:54px;flex:0 0 54px;padding:7px 11px;
+ background:#22332e;border-bottom:1px solid #56715a
+}
+#wtwNextgen .ng-world-source-profile>header small{
+ color:#a8c5ae;font-size:8.5px;font-weight:770;letter-spacing:.055em
+}
+#wtwNextgen .ng-world-source-profile>header h2{
+ margin:4px 0 0;font-size:20px;line-height:1.12;color:#ecd9a3;font-weight:820
+}
+#wtwNextgen .ng-world-profile-actions{display:flex;align-items:center;gap:5px;white-space:nowrap}
+#wtwNextgen .ng-world-profile-actions button{
+ height:23px!important;padding:3px 8px!important;font-size:9px!important;
+ color:#e4d4a3!important;background:#344c3d!important;border:1px solid #64846a!important
+}
+#wtwNextgen .ng-world-profile-sub{
+ display:flex;align-items:center;gap:14px;flex:0 0 25px;height:25px;
+ padding:3px 11px;background:#1b2928;border-bottom:1px solid #394d41;
+ font-size:9px;color:#a9bfb1;white-space:nowrap;overflow:hidden
+}
+#wtwNextgen .ng-world-profile-sub strong{color:#d8cead;font-size:9px}
+#wtwNextgen .ng-world-profile-facts{
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;
+ padding:4px 9px;align-content:start
+}
+#wtwNextgen .ng-world-profile-facts>div{
+ display:flex;flex-direction:column;gap:4px;min-width:0;min-height:43px;
+ padding:6px 8px;background:#202d2c;border:1px solid #3d5348;overflow:hidden
+}
+#wtwNextgen .ng-world-profile-facts small{
+ color:#a8bcaa;font-size:8.2px;line-height:1.1;font-weight:760;letter-spacing:.035em
+}
+#wtwNextgen .ng-world-profile-facts strong{
+ color:#e2e9db;font-size:10.5px;line-height:1.2;white-space:nowrap;
+ text-overflow:ellipsis;overflow:hidden
+}
+#wtwNextgen .ng-world-profile-facts button.ng-entity-reference{
+ color:#e6cf99!important;font-size:10.5px!important
+}
+#wtwNextgen .ng-world-related{
+ display:flex;flex-direction:column;gap:2px;min-height:0;overflow:hidden;
+ margin:1px 9px 0;background:#1d2929;border:1px solid #435849
+}
+#wtwNextgen .ng-world-related>header{
+ display:flex;justify-content:space-between;align-items:center;height:23px;flex:0 0 23px;
+ padding:2px 8px;background:#30403a;color:#dddbbb;font-size:9px;font-weight:780
+}
+#wtwNextgen .ng-world-related>header span{font-size:8.3px;color:#b5c7b6}
+#wtwNextgen .ng-world-related{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+#wtwNextgen .ng-world-related>header{grid-column:1/-1}
+#wtwNextgen .ng-world-related>button{
+ display:flex;align-items:center;gap:8px;min-width:0;min-height:22px;
+ padding:2px 7px!important;border:0!important;border-bottom:1px solid #344c40!important;
+ text-align:left!important;background:#1b2827!important;color:#e7cd8d!important;
+ font-size:9px!important;cursor:pointer!important
+}
+#wtwNextgen .ng-world-related>button strong{
+ min-width:0;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis
+}
+#wtwNextgen .ng-world-related>button span{
+ max-width:33%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+ color:#b0c5b1;font-size:8px
+}
+#wtwNextgen .ng-world-related>button:hover{background:#2e4a3a!important}
+#wtwNextgen .ng-world-related>p{grid-column:1/-1;margin:8px;font-size:10px;color:#afc1b1}
+#wtwNextgen .ng-world-profile-footnote{
+ margin:3px 9px 0;padding:6px 8px;border-left:2px solid #a9976a;
+ background:#272e29;color:#c5ccb7;font-size:9px;line-height:1.4
+}
+#wtwNextgen .ng-world-profile-reference{
+ margin-top:auto;flex:0 0 19px;height:19px;padding:3px 9px;
+ border-top:1px solid #3e4f41;background:#1a2824;color:#a6b9a9;font-size:7.8px
+}
+@media(max-width:1050px){
+ #wtwNextgen .ng-world-profile-facts{grid-template-columns:repeat(3,minmax(0,1fr))}
+ #wtwNextgen .ng-world-related{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
