@@ -242,7 +242,7 @@ function home(){
   {text:'PRIMARY RISK'},{text:'OPEN',style:'width:47px'}],
   all.slice(page*size,page*size+size).map(c=>'<tr>'+tableCell(button(h(c.title),'case',c.id,'mg-rowlink'),'strong')+
    tableCell(h(c.pressure||'—'),'gold')+tableCell(h(c.risk||'—'),'dim')+
-   tableCell(button('›','case',c.id,'mg-rowlink'),'numeric')+'</tr>')),all.length+' CURRENT CASES','mg-no-sort');
+   tableCell(button('›','case',c.id,'mg-rowlink'),'numeric')+'</tr>'),'mg-no-sort'),all.length+' CURRENT CASES');
  const pressureLevels=[
   ['HIGH',all.filter(x=>/high|urgent/i.test(x.pressure||'')).length],
   ['MEDIUM',all.filter(x=>/medium|moderate/i.test(x.pressure||'')).length],
@@ -256,8 +256,8 @@ function home(){
   {text:'HORSE / SOURCE'},{text:'CURRENT SIGNAL'},{text:'OPEN',style:'width:47px'}],
   all.slice(page*size,page*size+size)
    .map(c=>'<tr>'+tableCell(button(h(c.source),'case',c.id,'mg-rowlink'),'strong')+
-      tableCell(h(c.read||'Office review'),'dim')+tableCell(button('›','case',c.id,'mg-rowlink'),'numeric')+'</tr>')),
-   'LIVE OFFICE READS','mg-no-sort');
+      tableCell(h(c.read||'Office review'),'dim')+tableCell(button('›','case',c.id,'mg-rowlink'),'numeric')+'</tr>'),'mg-no-sort'),
+   'LIVE OFFICE READS');
  return pageBar('Racing Office','DAILY MANAGEMENT · '+nowDate()+' · PAGE '+(page+1)+' / '+pageCount,
    button('GLOBAL DIRECTORY','nav','search')+button('MY STABLE','nav','stable'))+
  '<div class="mg-content mg-office-content">'+
