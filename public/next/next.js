@@ -823,6 +823,15 @@ function profileDetail(route){
   const month='jan feb mar apr may jun jul aug sep oct nov dec'.split(' ').indexOf(match[1].slice(0,3).toLowerCase());
   return month<0?Number.MAX_SAFE_INTEGER:month*32+Number(match[2]);
  };
+ // Read-only: summarize only the WTW race rows already available on this track.
+ const stakeScheduleSummary=()=>{
+  const raw=trackRaces.map(r=>r.node?.children?.[3]?.textContent?.trim()||'');
+  const parsed=raw.map(v=>/^\$[\d,]+(?:\.\d+)?$/.test(v)?Number(v.replace(/[$,]/g,'')):null);
+  const canTotal=parsed.length>0&&parsed.every(v=>typeof v==='number'&&Number.isFinite(v));
+  const sum=canTotal?parsed.reduce((a,b)=>a+b,0):0;
+  const amount=canTotal?'$'+sum.toLocaleString('en-US'):'';
+  return trackRaces.length+' RACE RECORDS'+(canTotal?' · '+amount+' SCHEDULED PURSES':'');
+ };
  const stakesTable=(limit=100)=>{
   const values={name:0,date:1,grade:2,purse:3};
   const gradeRank=value=>{const g=(String(value||'').match(/\bG([123])\b/i)||[])[1];return g?Number(g):/major/i.test(value)?4:5};
@@ -1213,7 +1222,7 @@ function profileDetail(route){
    </div>`;right='';footer='';
   }else if(isTrack){
    left=`<div class="ng-track-workspace">
-    <section class="ng-tier1-card ng-tier1-stakes ng-track-stakes"><header>MAJOR RACES & STAKES <span>${trackRaces.length} RACE RECORDS</span></header>${stakesTable(100)}</section>
+    <section class="ng-tier1-card ng-tier1-stakes ng-track-stakes"><header>MAJOR RACES & STAKES <span>${stakeScheduleSummary()}</span></header>${stakesTable(100)}</section>
     <div class="ng-track-info-stack">
      <section class="ng-tier1-card ng-track-meet-card"><header>MEET & CONDITIONS</header><div class="ng-track-conditions-body">
       ${trackConfigMarkup}
