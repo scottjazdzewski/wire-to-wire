@@ -1200,7 +1200,7 @@ const DEP_SALE_HOUSES=Object.freeze({
  keeneland:{name:'Keeneland',city:'Lexington, KY',website:'https://www.keeneland.com/sales/'},
  fasigtipton:{name:'Fasig-Tipton',city:'Lexington, KY',website:'https://www.fasigtipton.com/'},
  obs:{name:'OBS',fullName:"Ocala Breeders' Sales",city:'Ocala, FL',website:'https://obssales.com/'},
- barretts:{name:'Barretts',city:'Southern California',website:''}
+ barretts:{name:'Barretts',city:'Pomona, CA',website:''}
 });
 /* [company ID, official sale name, verified first date, verified final date, venue, category].
    All listed 2014 dates are evidence-backed; market lot content remains a demo. */
@@ -1234,23 +1234,23 @@ const DEP_SALE_EVENTS_2014=[
    scheduled on the first day of any future or past year. Keeneland April
    2YO ran through 2014; OBS' 2014 yearling sale was in AUGUST, not October. */
 const DEP_SALE_SEASONAL=[
- ['keeneland','January Horses of All Ages Sale',1,'Lexington, KY','Mixed',1937,9999],
- ['obs','Winter Mixed Sale',1,'Ocala, FL','Mixed',1982,9999],
- ['fasigtipton','Kentucky Winter Mixed Sale',2,'Lexington, KY','Mixed',1990,9999],
- ['obs','March Two-Year-Olds in Training Sale',3,'Ocala, FL','2YO',1982,9999],
+ ['keeneland','January Horses of All Ages Sale',1,'Lexington, KY','Mixed',1956,9999],
+ ['obs','Winter Mixed Sale',1,'Ocala, FL','Mixed',1999,9999],
+ ['fasigtipton','Kentucky Winter Mixed Sale',2,'Lexington, KY','Mixed',1999,9999],
+ ['obs','March Two-Year-Olds in Training Sale',3,'Ocala, FL','2YO',1999,9999],
  ['keeneland','April Two-Year-Olds in Training Sale',4,'Lexington, KY','2YO',1993,2014],
- ['obs','Spring Two-Year-Olds in Training Sale',4,'Ocala, FL','2YO',1982,9999],
- ['fasigtipton','Midlantic May Two-Year-Olds in Training Sale',5,'Timonium, MD','2YO',1990,9999],
- ['obs','June Two-Year-Olds and Horses of Racing Age Sale',6,'Ocala, FL','2YO / HRA',1982,9999],
- ['fasigtipton','The July Sale',7,'Lexington, KY','Yearlings',1990,9999],
+ ['obs','Spring Two-Year-Olds in Training Sale',4,'Ocala, FL','2YO',1999,9999],
+ ['fasigtipton','Midlantic May Two-Year-Olds in Training Sale',5,'Timonium, MD','2YO',1999,9999],
+ ['obs','June Two-Year-Olds and Horses of Racing Age Sale',6,'Ocala, FL','2YO / HRA',1999,9999],
+ ['fasigtipton','The July Sale',7,'Lexington, KY','Yearlings',1999,9999],
  ['fasigtipton','The Saratoga Sale',8,'Saratoga Springs, NY','Yearlings',1900,9999],
- ['fasigtipton','New York Bred Yearlings Sale',8,'Saratoga Springs, NY','Yearlings',1990,9999],
+ ['fasigtipton','New York Bred Yearlings Sale',8,'Saratoga Springs, NY','Yearlings',1999,9999],
  ['obs','August Yearling Sale',8,'Ocala, FL','Yearlings',1982,2014],
- ['keeneland','September Yearling Sale',9,'Lexington, KY','Yearlings',1937,9999],
+ ['keeneland','September Yearling Sale',9,'Lexington, KY','Yearlings',1960,9999],
  ['obs','October Yearling Sale',10,'Ocala, FL','Yearlings',2015,9999],
- ['fasigtipton','Kentucky October Yearlings Sale',10,'Lexington, KY','Yearlings',1990,9999],
- ['fasigtipton','The November Sale',11,'Lexington, KY','Breeding stock',1990,9999],
- ['keeneland','November Breeding Stock Sale',11,'Lexington, KY','Breeding stock',1937,9999]
+ ['fasigtipton','Kentucky October Yearlings Sale',10,'Lexington, KY','Yearlings',1999,9999],
+ ['fasigtipton','The November Sale',11,'Lexington, KY','Breeding stock',1999,9999],
+ ['keeneland','November Breeding Stock Sale',11,'Lexington, KY','Breeding stock',1944,9999]
 ];
 const DEP_SALE_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -1460,13 +1460,13 @@ function depRows(section,page,demo,auction){
   }));
  }
  if(section==='Sales'&&page==='Sale Companies'){
-  const schedule=depAuctionList(demo),now=depGameDay();
+  const schedule=depAuctionList(demo),now=depGameDay(),year=now.slice(0,4);
   return Object.entries(DEP_SALE_HOUSES).map(([id,h])=>{
    const offers=schedule.filter(a=>a.companyId===id);
    const next=offers.find(a=>(a.endDate||a.sortKey)>=now);
-   const months=[...new Set(DEP_SALE_SEASONAL.filter(a=>a[0]===id).map(a=>DEP_SALE_MONTHS[a[2]-1]))];
+   const months=[...new Set(offers.filter(a=>a.sortKey.startsWith(year)).map(a=>DEP_SALE_MONTHS[Number(a.sortKey.slice(5,7))-1]))];
    return row('sale-company',h.name,{
-    name:h.name,city:h.city,saleCount:String(offers.length),
+    name:h.name,city:h.city,saleCount:String(offers.filter(a=>a.sortKey.startsWith(year)).length),
     nextSale:next?depSaleLabel(next):'None on current calendar',
     months:months.join(' · ')||'Historic sales (dates vary)',_companyId:id
    });
