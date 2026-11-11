@@ -18,7 +18,7 @@ const demoScore=(name,key)=>{
 const scoreTier=x=>x>=85?'elite':x>=65?'good':x>=42?'average':'poor';
 const demoLabel=()=>ui.demoRatings?'<span class="mg-demo-label" title="Illustrative ratings for visual review only, not saved scouting data">DEMO RATINGS · FICTIONAL · NOT SAVED</span>':'';
 const records=()=>typeof window.__wtwOfficeSearchRecords==='function'?window.__wtwOfficeSearchRecords():[];
-const activeRoute=()=>{const p=new URLSearchParams(location.search);const page=p.get('page');return page&&page!=='office'?{type:page,name:p.get('name'),track:p.get('track')}:null;};
+const activeRoute=()=>{const p=new URLSearchParams(location.search);const page=p.get('page');return page&&page!=='office'?{type:page,name:p.get('name'),track:p.get('track'),id:p.get('id')}:null;};
 const nowDate=()=>$('.app .dateChip')?.textContent.trim()||readState().date||'2014-07-15';
 const icon={office:'⌂',inbox:'✉',stable:'♞',racing:'⚑',breeding:'♧',sales:'◆',person:'♟',farm:'⌂',track:'◈',finances:'$',world:'◎',search:'⌕',history:'▤'};
 const button=(label,action,value,cl='mg-button')=>'<button type="button" class="'+cl+'" data-act="MG UI" data-mg="'+h(action)+'"'+(value!=null?' data-value="'+h(value)+'"':'')+'>'+label+'</button>';
@@ -82,7 +82,11 @@ function allRecords(){
  const tracks=(ui.trackGeo?.tracks||[]).filter(r=>r.name&&!registered.has(r.name.toLowerCase()))
   .map(r=>({kind:'track',name:r.name,detail:r.macro_circuit||r.registry||'Racing world record',track:r.travel_node||locationName(r),
    directory_only:true,track_id:r.id}));
- return base.concat(tracks,pages.map(r=>({kind:'screen',name:r[0],detail:'Management department',view:r[1]})));
+ const registeredPeople=new Set(base.filter(r=>r.kind==='person').map(r=>r.name.toLowerCase()));
+ const people=(ui.personGeo?.people||[]).filter(r=>r.name&&!registeredPeople.has(r.name.toLowerCase()))
+  .map(r=>({kind:'person',name:r.name,detail:r.role||'Professional directory record',
+   track:locationName(r.opening_base||r.career_base||r.birthplace),directory_only:true,person_id:r.id}));
+ return base.concat(tracks,people,pages.map(r=>({kind:'screen',name:r[0],detail:'Management department',view:r[1]})));
 }
 function owner(name){const r=typeof window.__wtwOfficeHorseOwner==='function'?window.__wtwOfficeHorseOwner(name):null;return r?.name||'Not recorded'}
 function ownerChip(name){const v=owner(name);return '<span class="mg-owner-mark" title="'+h(v)+'">'+(known(v)?h(v.slice(0,1).toUpperCase()):'?')+'</span>'}
@@ -92,7 +96,8 @@ function compactTable(head,rows,config=''){
 function tableCell(text,cls=''){return '<td'+(cls?' class="'+cls+'"':'')+'>'+text+'</td>'}
 function linkRecord(record,label,ownerBadge=false){
  const raw=(ownerBadge?ownerChip(record.name)+' ':'')+'<span>'+h(label||record.name)+'</span>';
- return button(raw,'open',record.kind+'|'+record.name+'|'+(record.track||''),'mg-rowlink');
+ const locator=record.kind==='person'&&record.person_id?'@'+record.person_id:(record.track||'');
+ return button(raw,'open',record.kind+'|'+record.name+'|'+locator,'mg-rowlink');
 }
 function searchResults(){
  const query=ui.q.toLowerCase().trim();
@@ -192,6 +197,7 @@ function home(){
 }
 function sourceProfile(){
  const doc=$('#routeBody .profilePage');if(!doc)return null;
+ const current=activeRoute();if(current?.name&&$('#routeTitle')?.textContent.trim()!==current.name)return null;
  const txt=(q,s=doc)=>$(q,s)?.textContent.trim()||'';
  const fields=$$('.profileField',doc).map(n=>[txt('span',n),txt('strong',n)]).filter(x=>known(x[1]));
  const connections=$$('.profileLine',doc).map(n=>[txt('b',n),$('button',n)?.textContent.trim()||$('span',n)?.textContent.trim()||'']).filter(x=>known(x[1]));
@@ -213,7 +219,7 @@ function portrait(kind,name){
 }
 function geographicPerson(name){
  const people=ui.personGeo?.people;if(!Array.isArray(people))return null;
- const id=sourceProfile()?.doc?.dataset?.personId||'';
+ const id=activeRoute()?.id||sourceProfile()?.doc?.dataset?.personId||'';
  if(id){const exact=people.find(p=>p.id===id);if(exact)return exact}
  const matching=people.filter(p=>p.name?.trim().toLowerCase()===String(name).trim().toLowerCase());
  return matching.length===1?matching[0]:null;
@@ -242,7 +248,7 @@ function identity(kind,name,record){
   extras=p?.career?.slice(0,4)||[];
  }else if(kind==='person'){
   const record=geographicPerson(name),birth=record?.birthplace,base=record?.opening_base;
-  const role=p?.sub?.replace(/^Job:\s*/i,'')||srcValue(f,'Role')||'';
+  const role=p?.sub?.replace(/^Job:\s*/i,'')||srcValue(f,'Role')||record?.role||'';
   const flag=geoFlag(birth?.flag_code);
   origin=[role?'ROLE '+role:'',birth?.country?(flag?flag+' ':'')+'BIRTH COUNTRY '+birth.country:'',
     birth?.city?'BORN '+[birth.city,birth.region].filter(known).join(', '):'',
@@ -442,7 +448,7 @@ function operationsDashboard(view){
 }
 function departmentStudio(view){
  const all=records(),horses=all.filter(x=>x.kind==='horse'),
-  people=all.filter(x=>x.kind==='person'),farms=all.filter(x=>x.kind==='farm'),
+  people=allRecords().filter(x=>x.kind==='person'),farms=all.filter(x=>x.kind==='farm'),
   tracks=allRecords().filter(x=>x.kind==='track'),races=all.filter(x=>x.kind==='race'),office=cases();
  const fixtures=$$('.fixtureList .fixture').slice(0,18);
  const summary=([a,b,c,d])=>panel(a,b,c,d);
