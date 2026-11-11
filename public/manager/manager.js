@@ -243,8 +243,8 @@ function identity(kind,name,record){
   origin=[record?'LOCATION '+locationName(record):'',
    record?.macro_circuit?'CIRCUIT '+record.macro_circuit:'',
    record?.opening_state?'1999 STATUS '+record.opening_state:'',
-   ...f.filter(([key])=>!/location/i.test(key)).slice(0,1).map(x=>x[0]+' '+x[1])].filter(Boolean);
-  extras=p?.career?.slice(0,3)||[];
+   ...(!record?f.filter(([key])=>!/location/i.test(key)).slice(0,1).map(x=>x[0]+' '+x[1]):[])].filter(Boolean);
+  extras=record?[]:p?.career?.slice(0,3)||[];
  }else{
   origin=[p?.sub,...f.slice(0,3).map(x=>x[0]+' '+x[1])].filter(Boolean);
   extras=p?.career?.slice(0,3)||[];
@@ -339,6 +339,46 @@ function personProfile(name){
  defs.length+' DEFINED RATINGS','mg-person-primary')+side+'</div>'+
  '<div class="mg-overview-foot"><strong>PERSONNEL FILE</strong>'+demoLabel()+
  '<span>Ratings, reputation, assignments and available career evidence are all on this Overview</span></div></div></div>';
+}
+function trackProfile(name){
+ const geo=geographicTrack(name),world=ui.trackGeo?.tracks||[],
+  matches=records().filter(x=>x.kind==='race'&&String(x.track||'').toLowerCase()===name.toLowerCase()),
+  sameCircuit=geo?.macro_circuit?world.filter(x=>x.name!==name&&x.macro_circuit===geo.macro_circuit):[];
+ const details=geo?[
+  ['City / locality',geo.city_locality],['State / province',geo.state_province_region],
+  ['Country',geo.country],['Racing circuit',geo.macro_circuit],
+  ['Travel node',geo.travel_node],['1999 opening state',geo.opening_state],
+  ['Calendar classification',geo.foundation_status],['Geography evidence',geo.geography_status]
+ ].filter(x=>known(x[1])):sourceProfile()?.fields||[];
+ const raceBody=matches.length?compactTable([{text:'STAKES / RACE',style:'width:48%'},{text:'RACE CLASS'},
+   {text:'OPEN',style:'width:60px'}],matches.map(x=>'<tr>'+tableCell(linkRecord(x,x.name),'strong')+
+   tableCell(h(x.detail||'—'),'dim')+
+   tableCell(button('OPEN ›','open','race|'+x.name+'|'+(x.track||''),'mg-rowlink'),'numeric')+'</tr>')):
+   empty('No Stakes Calendar race in the active Office file at this venue. The geographical directory record remains available.');
+ const circuitBody=sameCircuit.length?compactTable([{text:'COURSE',style:'width:38%'},{text:'LOCATION / TRAVEL'},
+   {text:'OPEN',style:'width:60px'}],sameCircuit.map(x=>'<tr>'+
+   tableCell(button(h(x.name),'open','track|'+x.name+'|','mg-rowlink'),'strong')+
+   tableCell(h(x.travel_node||locationName(x)),'dim')+
+   tableCell(button('OPEN ›','open','track|'+x.name+'|','mg-rowlink'),'numeric')+'</tr>')):
+   empty('No other registered course in the same racing circuit.');
+ const fixtures=$$('.fixtureList .fixture').filter(n=>n.textContent.toLowerCase().includes(name.toLowerCase()));
+ const upcoming=fixtures.length?compactTable([{text:'DATE',style:'width:96px'},{text:'OFFICE EVENT'},
+  {text:'TRACK / CONTEXT'}],fixtures.map(n=>'<tr>'+
+  tableCell(h($('.d',n)?.textContent.trim()||'—'))+
+  tableCell(h($('h4',n)?.textContent.trim()||'—'),'strong')+
+  tableCell(h($('p',n)?.textContent.trim()||'—'),'dim')+'</tr>')):
+  empty('No current Office racing entry at this venue.');
+ return pageBar(name,'RACECOURSE · '+(geo?.macro_circuit||'APPROVED WORLD DIRECTORY'),
+   button('RACECOURSES','nav','track')+button('HISTORY ARCHIVE','nav','history'))+
+  '<div class="mg-content"><div class="mg-profile-scroll">'+identity('track',name)+
+   '<div class="mg-track-layout">'+
+     panel('Major Races & Stakes',raceBody,matches.length+' ACTIVE RACE RECORDS')+
+     '<div class="mg-track-side">'+
+      panel('Geography & Operating Context',details.length?pairs(details):empty('No approved locality attached.'),
+       geo?'READ-ONLY CANON GEOGRAPHY':'OFFICE RECORD')+
+      panel('Office Racing at Venue',upcoming,fixtures.length+' SCHEDULED')+
+      panel('Other Courses in Circuit',circuitBody,sameCircuit.length+' REGIONAL COURSES')+
+     '</div></div></div></div>';
 }
 function otherProfile(kind,name){
  const s=sourceProfile()||{fields:[],connections:[],career:[],notes:[],pedigree:[]};
@@ -554,7 +594,8 @@ function view(){
  const route=activeRoute();if(route&&route.name){
   if(route.type==='horse')return horseProfile(route.name);
   if(route.type==='person')return personProfile(route.name);
-  if(['farm','track','race'].includes(route.type))return otherProfile(route.type,route.name);
+  if(route.type==='track')return trackProfile(route.name);
+  if(['farm','race'].includes(route.type))return otherProfile(route.type,route.name);
  }
  if(ui.view==='search')return searchView();
  if(ui.view==='office')return home();
