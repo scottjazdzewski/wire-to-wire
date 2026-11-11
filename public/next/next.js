@@ -471,7 +471,7 @@ const pageBadge=()=>{const map={Stable:'farm_stable',Racing:'major_races',Sales:
 function profileDetail(route){
  const source=$('#routeBody .profilePage');if(!source)return null;
  const id=route.kicker+'|'+route.title;
- if(APP.routeId!==id){APP.routeId=id;APP.detailTab='Overview';APP.networkPage=0;APP.networkRole='all';APP.networkFocus=''}
+ if(APP.routeId!==id){APP.routeId=id;APP.detailTab='Overview';APP.networkPage=0;APP.networkRole='all';APP.networkFocus='';APP.stakeSort='date';APP.stakeSortDesc=false}
  const text=(query,scope=source)=>$(query,scope)?.textContent.trim()||'';
  const fields=$$('.profileField',source).map(n=>({label:text('span',n),value:text('strong',n)||'—'}));
  const connection=$$('.profileLine',source).map(n=>({label:text('b',n),value:n.querySelector('button')?.textContent.trim()||n.querySelector('span')?.textContent.trim()||n.textContent.trim().replace(text('b',n),'').trim()||'—',button:n.querySelector('button')}));
@@ -505,7 +505,7 @@ function profileDetail(route){
 
  const horseAchievementPanel=isHorse?$$('.profilePanel',source).find(panel=>text('h3',panel).includes('Achievements')):null;
  const horseAchievements=horseAchievementPanel?$$('.achievementItem',horseAchievementPanel).map(el=>el.textContent.trim()).filter(Boolean):[];
- const connectionRows=()=>`<div class="ng-data-rows">${connection.map(f=>`<div class="ng-data-row"><span>${safe(f.label)}</span>${f.button?`<button data-ng="sourcebutton" data-val="${$$('#routeBody [data-act]').indexOf(f.button)}" aria-label="Open ${safe(f.label)} profile: ${safe(f.value)}">${safe(f.value)} ↗</button>`:`${namedProfileValue(f.label,f.value)}`}</div>`).join('')||'<div class="ng-empty-record">No connected profiles recorded.</div>'}</div>`;
+ const connectionRows=(items=connection)=>`<div class="ng-data-rows">${items.map(f=>`<div class="ng-data-row"><span>${safe(f.label)}</span>${f.button?`<button data-ng="sourcebutton" data-val="${$$('#routeBody [data-act]').indexOf(f.button)}" aria-label="Open ${safe(f.label)} profile: ${safe(f.value)}">${safe(f.value)} ↗</button>`:`${namedProfileValue(f.label,f.value)}`}</div>`).join('')||'<div class="ng-empty-record">No connected profiles recorded.</div>'}</div>`;
 
  const sourcePanels=$$('.profilePanel',source);
  const sourcePanel=word=>sourcePanels.find(panel=>text('h3',panel).toLowerCase().includes(word.toLowerCase()));
@@ -526,8 +526,13 @@ function profileDetail(route){
  const farmAchievementPanel=isFarm?sourcePanel('Achievements'):null;
  const farmAchievements=farmAchievementPanel?$$('.achievementItem',farmAchievementPanel).map(item=>item.textContent.trim()).filter(Boolean):[];
  const meetValues=isTrack?$$('.meetBlock',source).map(n=>({label:text('span',n),value:text('strong',n)})):[];
- const trackNotes=isTrack?$$('.trackNote',source).map(n=>({label:text('b',n),value:n.textContent.replace(text('b',n),'').trim()})):[];
- const trackHistoryItems=isTrack?(notes.length?notes:details.map(x=>x.lines).filter(Boolean)):[];
+ const trackNotes=isTrack?$('.trackNote',source).map(n=>({label:text('b',n),value:n.textContent.replace(text('b',n),'').trim()})):[];
+ const trackRaceDays=trackNotes.find(x=>/race days/i.test(x.label));
+ const trackOperatingNotes=trackNotes.filter(x=>!/race days|current office/i.test(x.label));
+ const trackOfficeContext=trackNotes.find(x=>/current office/i.test(x.label)&&!/no current office entry/i.test(x.value));
+ const trackConnectionLinks=connection.filter(x=>x.button);
+ const trackHistoryItems=isTrack?notes.filter(x=>!/\\b(runtime|wiring|canonical|live season calendar|deployment|database|schema|stylesheet)\\b/i.test(x)):[];
+ const trackMeetFacts=[...meetValues,...(trackRaceDays?[trackRaceDays]:[])];
  const stakeDateRank=value=>{
   const match=String(value||'').match(/\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(\d{1,2})\b/i);
   if(!match)return Number.MAX_SAFE_INTEGER;
@@ -926,9 +931,13 @@ function profileDetail(route){
    left=`<div class="ng-track-workspace">
     <section class="ng-tier1-card ng-tier1-stakes ng-track-stakes"><header>MAJOR RACES & STAKES <span>${trackRaces.length} RACE RECORDS</span></header>${stakesTable(100)}</section>
     <div class="ng-track-info-stack">
-     <section class="ng-tier1-card"><header>MEET & CONDITIONS</header>${rows(meetValues)}<div class="ng-tier1-subhead">OPERATING INTELLIGENCE</div><div class="ng-tier1-activity">${trackNotes.filter(x=>!/current office/i.test(x.label)).slice(0,2).map(x=>`<div><b>${safe(x.label)}</b><span>${safe(x.value)}</span></div>`).join('')||'<div>No sourced operating notes.</div>'}<div class="ng-track-office-context"><b>CURRENT OFFICE CONTEXT</b><span>${trackNotes.filter(x=>/current office/i.test(x.label)).slice(0,1).map(x=>safe(x.value)).join('')||'No current Office entry recorded.'}</span></div></div></section>
-     <section class="ng-tier1-card"><header>TRACK CONNECTIONS</header>${connectionRows()}</section>
-     <section class="ng-tier1-card"><header>TRACK HISTORY</header><div class="ng-notes">${trackHistoryItems.slice(0,3).map(n=>`<div>${safe(n)}</div>`).join('')||'<div>No official track history connected yet.</div>'}</div></section>
+     <section class="ng-tier1-card ng-track-meet-card"><header>MEET & CONDITIONS</header><div class="ng-track-conditions-body">
+      <div class="ng-track-meet-facts">${trackMeetFacts.map(f=>`<div class="ng-track-meet-fact"><small>${safe(f.label)}</small><strong>${safe(f.value)}</strong></div>`).join('')}</div>
+      ${trackOperatingNotes.length?`<div class="ng-track-operating-notes">${trackOperatingNotes.slice(0,3).map(x=>`<article><b>${safe(x.label)}</b><span>${safe(x.value)}</span></article>`).join('')}</div>`:''}
+      ${trackOfficeContext?`<div class="ng-track-office-context"><b>CURRENT OFFICE CONTEXT</b><span>${safe(trackOfficeContext.value)}</span></div>`:''}
+     </div></section>
+     ${trackConnectionLinks.length?`<section class="ng-tier1-card"><header>TRACK CONNECTIONS</header>${connectionRows(trackConnectionLinks)}</section>`:''}
+     ${trackHistoryItems.length?`<section class="ng-tier1-card"><header>TRACK HISTORY</header><div class="ng-notes">${trackHistoryItems.slice(0,3).map(n=>`<div>${safe(n)}</div>`).join('')}</div></section>`:''}
     </div>
    </div>`;right='';footer='';
   }else{
