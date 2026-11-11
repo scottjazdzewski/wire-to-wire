@@ -507,7 +507,7 @@ function officeFiveGenerationPedigree(name){
  const columns=labels.map((label,depth)=>{
   const cells=positions.map(path=>{
    const n=all.get(path),known=Boolean(n?.horse_id),repeat=known&&(repeats.get(n.horse_id)||0)>1;
-   const maternal=path.includes('D'),nameText=n?.name||'Unknown';
+   const maternal=path.startsWith('D'),nameText=n?.name||'Unknown';
    const content=known&&path?
     '<button type="button" data-ng="pedigree-ancestor" data-val="'+safe(n.horse_id)+
     '" title="Open '+safe(nameText)+' horse profile">'+safe(nameText)+'</button>':
