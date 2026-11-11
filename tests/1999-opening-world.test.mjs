@@ -53,9 +53,16 @@ test('pedigree is referenced by immutable identity, not display name',()=>{
  }
 });
 test('active stallions are unique; pending stallion is not bookable',()=>{
- assert.equal(w.activeStallions1999.length,29);
- assert.equal(ids(w.activeStallions1999).size,29);
+ assert.equal(w.activeStallions1999.length,31);
+ assert.equal(ids(w.activeStallions1999).size,31);
  assert.equal(w.pendingNotBookableStallions.length,1);
+ assert.equal(w.foundationalBroodmares1999.length,20);
+ assert.equal(ids(w.foundationalBroodmares1999).size,20);
+ assert.ok(w.activeStallions1999.every(s=>s.standingFarm1999.farmOrganizationId));
+ assert.ok(w.foundationalBroodmares1999.every(s=>s.standingFarm1999.farmOrganizationId));
+ assert.ok(w.foundationalBroodmares1999.every(m=>m.pregnancyStatus==='UNOBSERVED_DO_NOT_ASSUME'));
+ assert.equal(w.activeStallions1999.filter(s=>s.id==='H-1990-000001').length,1);
+ assert.equal(w.activeStallions1999.filter(s=>s.id==='H-1990-000002').length,1);
  assert.equal(w.pendingNotBookableStallions[0].status,'NOT_ACTIVE_PENDING_CANON');
  assert.ok(!ids(w.activeStallions1999).has(w.pendingNotBookableStallions[0].id));
 });
@@ -73,5 +80,6 @@ test('source-protected API lists and details answer without mutating state',()=>
  assert.equal(detail.status,200);assert.equal(detail.data.horse.id,h.id);
  assert.equal(detail.data.pedigree.id,h.id);
  assert.equal(get('/api/1999/horses/H-9999-NOPE').status,404);
- assert.equal(get('/api/1999/stallions').data.active.length,29);
+ assert.equal(get('/api/1999/stallions').data.active.length,31);
+ assert.equal(get('/api/1999/broodmares').data.foundation.length,20);
 });
