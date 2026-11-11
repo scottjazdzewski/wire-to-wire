@@ -252,7 +252,7 @@ function department(view){
   '<div class="mg-department-grid">'+panel(item[1],compactTable([{text:'NAME',style:'width:30%'},{text:'ROLE / DESCRIPTION'},{text:'OWNER / CONNECTION'},{text:'STATUS / CONTEXT'},{text:'OPEN',style:'width:70px'}],status),'OPEN SOURCE RECORDS')+
   panel('Management Context','<div class="mg-summary"><strong>Operational records</strong><p>This screen uses the approved current Office roster and its linked profiles. Historical coverage is available in the History Vault. Unverified fields remain unfilled.</p>'+
   '<p>Choose any row to open its full dossier. The same profile structure and typography are used throughout the game.</p></div>'+
-  (view==='finances'?pairs([['Available cash','See Racing Office cash file'],['Financial source','Current Office decisions']]):empty('No additional sourced summary attached.'))+
+  (view==='finances'?pairs([['Available cash','See Racing Office cash file'],['Financial source','Current Office decisions']]):empty('No additional sourced summary attached.')))+
   '</div></div>';
 }
 function view(){
