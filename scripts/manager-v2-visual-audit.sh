@@ -181,6 +181,56 @@ capture_1280 horse-profile '?page=horse&name=The+Last+Match'
 capture_1280 people-profile '?page=person&name=Gabe+Larkin'
 capture_1280 global-search '?ui=search'
 
+# Office 1280 first-screen acceptance: every current calendar, staff and
+# case-pressure item must be visible without scrolling a small panel.
+cat > public/manager/__wtw_office_fit.html <<'HTML'
+<!doctype html><html><head><meta charset="utf-8"></head><body>
+<pre id="officefit" data-check="pending">Checking Racing Office panel fit</pre>
+<iframe id="office" width="1280" height="800" src="/manager/" style="border:0"></iframe>
+<script>
+const frame=document.getElementById('office'),node=document.getElementById('officefit');
+frame.addEventListener('load',()=>setTimeout(()=>{
+ try{
+  const doc=frame.contentDocument,root=doc.querySelector('.mg-home-side');
+  const panels=[...root?.querySelectorAll(':scope>.mg-section')||[]];
+  if(panels.length!==3)throw Error('Racing Office must have three right-side panels');
+  const lastVisibleRow=panel=>{
+   const rows=[...panel.querySelectorAll('tbody tr')],last=rows.at(-1);
+   return {count:rows.length,visible:!!last&&
+    last.getBoundingClientRect().bottom<=panel.getBoundingClientRect().bottom+1};
+  };
+  const calendar=lastVisibleRow(panels[0]),people=lastVisibleRow(panels[1]);
+  const pressure=panels[2].querySelectorAll('.mg-office-pressure-item').length;
+  node.dataset.check='ready';node.textContent=JSON.stringify({
+   layout:frame.contentWindow.getComputedStyle(root).display,
+   calendar,people,pressure,
+   documentScroll:doc.documentElement.scrollHeight>frame.contentWindow.innerHeight+4
+  });
+ }catch(e){node.dataset.check='error';node.textContent=JSON.stringify({error:String(e)})}
+},1350));
+</script></body></html>
+HTML
+"$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+ --window-size=1280,800 --force-device-scale-factor=1 --virtual-time-budget=6000 \
+ --dump-dom 'http://127.0.0.1:8767/manager/__wtw_office_fit.html' \
+ > visual-audit/manager-v2/dom/fit-office.html 2>/tmp/wtw-v2-office-fit.log
+rm -f public/manager/__wtw_office_fit.html
+python3 - <<'PY'
+from pathlib import Path
+import re,html,json
+source=Path('visual-audit/manager-v2/dom/fit-office.html').read_text()
+m=re.search(r'<pre id="officefit" data-check="([^"]+)">(.*?)</pre>',source,re.S)
+assert m,'Office 1280 fit probe missing'
+d=json.loads(html.unescape(m.group(2)))
+assert m.group(1)=='ready',d
+assert d['layout']=='grid',(d,'Right sidebar must use actual 3-row grid, not a broken selector')
+assert d['calendar']['count']>=6 and d['calendar']['visible'],(d,'Last racing entry is clipped')
+assert d['people']['count']>=3 and d['people']['visible'],(d,'Last staff member is clipped')
+assert d['pressure']==3,(d,'Three source-case pressure groups missing')
+assert not d['documentScroll'],(d,'Racing Office document must not vertically scroll')
+print('PASS Racing Office 1280: complete calendar, staff, source pressure and no document scroll')
+PY
+
 # Desktop quality gate: ensure primary athlete/personnel Overviews do not
 # require internal scrolling at the 1280×800 reference viewport.
 cat > public/manager/__wtw_fit_probe.html <<'HTML'
