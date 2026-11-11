@@ -447,8 +447,44 @@ function departmentStudio(view){
   '<div class="mg-content mg-op-content"><div class="mg-operations-grid mg-department-suite '+view+'">'+
    config.sections.map(x=>summary(x)).join('')+'</div></div>';
 }
+function financeStudio(){
+ const all=cases(),cash=all.find(c=>c.id==='cash'),sales=all.find(c=>c.id==='saratoga'),
+  related=all.filter(c=>/finance|cash|sales|auction|price|owner|buy/i.test([c.type,c.title,c.summary].join(' ')));
+ const signalRows=item=>item?.intel?.length?item.intel.map(x=>
+  '<div class="mg-finance-signal"><strong>'+h(x[0])+'</strong><span>'+h(x[1])+'</span></div>').join(''):
+  empty('No further sourced market signals in this Office file.');
+ const actionRows=item=>item?.moves?.length?item.moves.map((m,i)=>
+  '<div class="mg-finance-option"><strong>'+String(i+1).padStart(2,'0')+'</strong>'+
+  '<span><b>'+h(m[0])+'</b><small>'+h(m[1])+'</small></span></div>').join(''):'';
+ const cashDetail=cash?'<div class="mg-finance-lead"><div class="mg-kicker mg-gold">'+h(cash.type||'FINANCE / OPERATIONS')+
+  ' · '+h(cash.source||'OFFICE')+'</div><h2>'+h(cash.title)+'</h2><p>'+h(cash.summary)+'</p>'+
+  '<div class="mg-finance-facts"><span>PRESSURE <b>'+h(cash.pressure||'Not recorded')+'</b></span>'+
+  '<span>PRIMARY RISK <b>'+h(cash.risk||'Not recorded')+'</b></span>'+
+  '<span>MANAGER READ <b>'+h(cash.read||'Not recorded')+'</b></span></div>'+
+  '<div class="mg-finance-decision"><strong>AVAILABLE MANAGEMENT STANCES</strong>'+
+   actionRows(cash)+button('REVIEW CASH DECISION ›','open-case',cash.id,'mg-button on')+'</div></div>':
+  empty('No live financial management file is attached.');
+ const cashPanel=panel('Current Financial File',cashDetail,'MANAGEMENT DECISION');
+ const signalsPanel=panel('Financial Intelligence',signalRows(cash),'APPROVED OFFICE READS');
+ const salesPanel=panel('Market & Purchase Exposure',
+  sales?'<div class="mg-finance-lead"><div class="mg-kicker">'+h(sales.source||'BLOODSTOCK')+'</div>'+
+   '<h2>'+h(sales.title)+'</h2><p>'+h(sales.summary)+'</p></div>'+signalRows(sales)+
+   '<div class="mg-finance-footer">'+button('REVIEW SALES FILE ›','open-case',sales.id,'mg-button on')+'</div>':
+   empty('No current bloodstock purchase file.'),'SALES / CASH DISCIPLINE');
+ const ledger=panel('Related Office Decisions',related.length?related.map(x=>
+   '<div class="mg-op-case"><div class="mg-op-case-category">'+h(x.type||'FINANCE')+'</div>'+
+   '<div class="mg-op-case-text"><strong>'+h(x.title)+'</strong>'+
+   '<small>'+h(x.source||'Office')+' · '+h(x.risk||x.pressure||'Current case')+'</small></div>'+
+   button('REVIEW ›','open-case',x.id,'mg-rowlink')+'</div>').join(''):
+   empty('No other sourced financial decision files.'),related.length+' CURRENT FILES');
+ return pageBar('Financial Operations','CASH DISCIPLINE · PURCHASE EXPOSURE',
+  button('SALES & AUCTIONS','nav','sales')+button('RACING OFFICE','nav','office'))+
+ '<div class="mg-content mg-op-content"><div class="mg-operations-grid mg-finance-grid">'+
+ cashPanel+signalsPanel+salesPanel+ledger+'</div></div>';
+}
 function department(view){
  if(view==='stable'||view==='track')return operationsDashboard(view);
+ if(view==='finances')return financeStudio();
  const studio=departmentStudio(view);if(studio)return studio;
  const map={stable:['horse','Stable & Horses','HORSE OPERATIONS'],racing:['race','Racing & Stakes','CALENDAR / ENTRIES'],breeding:['farm','Breeding Operations','FARMS / BLOODSTOCK'],sales:['horse','Sales & Market','HORSES / SALES CONTEXT'],person:['person','Personnel Directory','TRAINERS, JOCKEYS & STAFF'],farm:['farm','Farms & Facilities','FARM / BARN DIRECTORY'],track:['track','Racecourses','TRACKS & VENUES'],world:['track','Racing World','GLOBAL RACING OPERATIONS'],finances:['horse','Financial Operations','OFFICE / FINANCIAL CONTEXT'],inbox:['horse','Office Correspondence','DECISION FILES']};
  const item=map[view]||map.stable,kind=item[0],list=records().filter(r=>r.kind===kind),game=readState();
