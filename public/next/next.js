@@ -746,7 +746,7 @@ function profileDetail(route){
   ['AGE',personAge,''],
   ['HOMETOWN',personHometown,''],
   [baseLabel,personBaseValue,'']
- ]:[];
+ ].filter(([,value])=>knownField(value)):[];
 
  const entityHeaderFields=isPerson?personIdentityFields:
   isFarm?[['LOCATION',factByName('Location')],['TYPE',factByName('Type')],['OWNER',factByName('Owner')],['STATUS',factByName('Current status')]]:
