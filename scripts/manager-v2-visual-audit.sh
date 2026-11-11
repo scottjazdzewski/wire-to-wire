@@ -34,6 +34,81 @@ capture farms '?ui=farm' 'mg-department-suite farm'
 capture world '?ui=world' 'mg-department-suite world'
 capture finances '?ui=finances' 'mg-finance-grid'
 
+cat > public/manager/__wtw_interaction_probe.html <<'HTML'
+<!doctype html><html><head><meta charset="utf-8"></head><body>
+<pre id="probe" data-state="pending">Checking interactive game navigation</pre>
+<iframe id="app" src="/manager/?ui=search" width="1536" height="864" style="border:0"></iframe>
+<script>
+const frame=document.getElementById('app'),result=document.getElementById('probe');
+const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+frame.addEventListener('load',()=>setTimeout(async()=>{
+ const steps=[];
+ try{
+  const win=frame.contentWindow,doc=frame.contentDocument;
+  const check=(name,condition)=>{if(!condition)throw Error(name);steps.push(name)};
+  const locate=(act,val)=>[...doc.querySelectorAll('#mgApp [data-mg]')].find(x=>
+   x.dataset.mg===act&&(val==null||x.dataset.value===val||
+   x.dataset.value?.startsWith(val)));
+  check('Search screen mounted',!!doc.querySelector('.mg-search-layout'));
+  const input=doc.querySelector('#mgSearch');
+  check('Search field accepts input',!!input);
+  input.value='Gabe Larkin';
+  input.dispatchEvent(new win.Event('input',{bubbles:true}));
+  await delay(250);
+  check('Search filters correct person',doc.querySelector('.mg-table')?.textContent.includes('Gabe Larkin'));
+  const person=locate('open','person|Gabe Larkin|');
+  check('Search result opens person',!!person);
+  person.click();
+  await delay(350);
+  check('Click displays People Profile',!!doc.querySelector('.mg-person-dossier')&&
+   doc.querySelector('.mg-main')?.textContent.includes('Gabe Larkin'));
+  const racing=locate('nav','racing');
+  check('Racing is actionable',!!racing);
+  racing.click();await delay(200);
+  check('Click opens Racing dashboard',!!doc.querySelector('.mg-department-suite.racing'));
+  const finance=locate('nav','finances');
+  check('Finance is actionable',!!finance);
+  finance.click();await delay(200);
+  check('Click opens financial management screen',!!doc.querySelector('.mg-finance-grid'));
+  const cash=locate('open-case','cash');
+  check('Cash case opens from Finance',!!cash);
+  cash.click();await delay(200);
+  check('Cash review returns to Office decision',!!doc.querySelector('.mg-home-top')&&
+    doc.querySelector('.mg-home-top')?.textContent.includes('Monthly cash projection'));
+  const back=locate('back');
+  check('Back control exists',!!back);
+  back.click();await delay(250);
+  check('Back restores Finance screen',!!doc.querySelector('.mg-finance-grid'));
+  const forward=locate('forward');
+  check('Forward control exists',!!forward);
+  forward.click();await delay(250);
+  check('Forward restores Office screen',!!doc.querySelector('.mg-home-top'));
+  result.dataset.state='passed';
+  result.textContent=JSON.stringify({state:'passed',steps});
+ }catch(e){
+  result.dataset.state='failed';
+  result.textContent=JSON.stringify({state:'failed',steps,error:String(e)});
+ }
+},950));
+</script></body></html>
+HTML
+"$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+  --window-size=1536,864 --force-device-scale-factor=1 --virtual-time-budget=12000 \
+  --dump-dom 'http://127.0.0.1:8767/manager/__wtw_interaction_probe.html' \
+  > visual-audit/manager-v2/dom/interaction-probe.html 2>/tmp/wtw-mg-interaction.log
+rm -f public/manager/__wtw_interaction_probe.html
+python3 - <<'PY'
+from pathlib import Path
+import html,re,json
+source=Path('visual-audit/manager-v2/dom/interaction-probe.html').read_text()
+match=re.search(r'<pre id="probe" data-state="([^"]+)">(.*?)</pre>',source,re.S)
+assert match,( 'Manager UI navigation probe failed to run',source[-500:] )
+data=json.loads(html.unescape(match.group(2)))
+assert match.group(1)=='passed',data
+assert len(data['steps'])>=14,data
+print('PASS manager interactive navigation',len(data['steps']),'steps')
+PY
+
 python3 - <<'PY'
 from pathlib import Path
 import re,html
