@@ -542,6 +542,151 @@ function otherProfile(kind,name){
  panel('People & Connections',s.connections.length?pairs(s.connections):empty())+
  panel('Current Activity',s.notes.length?'<div class="mg-summary">'+s.notes.slice(0,8).map(x=>'<div>'+h(x)+'</div>').join('')+'</div>':empty())+'</div>'+stable+'</div></div>';
 }
+
+/* Tier One Stable: one sourced horse per row; badges are UI-only. */
+const stableIconSet={sound:['✓','good'],watch:['!','warn'],treatment:['✚','danger'],
+ ready:['✓','good'],entered:['⚑','good'],building:['↗','info'],restricted:['⏸','warn'],
+ up:['↗','good'],down:['↘','danger'],level:['→','neutral'],work:['↗','info'],
+ unknown:['?','neutral']};
+function stableIcon(key,label,description){
+ const [symbol,color]=stableIconSet[key]||stableIconSet.unknown;
+ return '<span class="mg-stable-signal '+color+'" title="'+h(description||label)+'" aria-label="'+h(label)+'">'+
+  '<b aria-hidden="true">'+symbol+'</b><span>'+h(label)+'</span></span>';
+}
+function stableKnown(v){return v!=null&&known(v)&&String(v).trim()!=='—'?String(v).trim():''}
+function stableEvidenceStars(name,key){
+ const save=readState();
+ const entry=save.scoutingState?.[name]?.star_ratings?.[key]||save.horseState?.[name]?.star_ratings?.[key];
+ const n=Number(entry?.rating??entry?.stars);
+ const valid=Number.isInteger(n)&&n>=1&&n<=5&&Array.isArray(entry?.source_refs)&&entry.source_refs.length>0;
+ return {sort:valid?n:'',
+  html:valid?'<span class="mg-stable-stars" title="Evidenced '+h(key.replace(/_/g,' '))+' · '+n+'/5" aria-label="'+n+' of 5 stars">'+
+   '<em>'+('★'.repeat(n))+'</em>'+('☆'.repeat(5-n))+'</span>':
+   '<span class="mg-stable-unknown" title="No evidenced star rating">—</span>'};
+}
+function stableDate(v){
+ const s=String(v||'');
+ return /^\d{4}-\d{2}-\d{2}$/.test(s)&&!Number.isNaN(Date.parse(s+'T00:00:00Z'))?s:'';
+}
+function stableHorseSnapshot(record,fixtures,files,save){
+ const name=record.name;
+ const facts=typeof window.__wtwOfficeHorseRosterFacts==='function'?window.__wtwOfficeHorseRosterFacts(name)||{}:{};
+ const horse=save.horseState?.[name]||{},scout=save.scoutingState?.[name]||{},calendar=save.calendarState?.[name]||{};
+ const file=files.find(c=>[c.title,c.summary].some(s=>String(s||'').toLowerCase().includes(name.toLowerCase())));
+ const status=stableKnown(horse.status)||stableKnown(scout.status)||stableKnown(file?.type);
+ const vet=stableKnown(horse.vet_flag),healthRaw=[vet,horse.health_status,horse.treatment_status].filter(Boolean).join(' ');
+ const treating=/(under treatment|receiving treatment|treatment ongoing|in rehabilitation|on medication|under veterinary care)/i.test(healthRaw);
+ const watching=/(vet|filling|scan|diagnos|monitor|injur|unsound|sore|caution|medical)/i.test(healthRaw)||/vet|soundness/i.test(file?.type||'');
+ const sound=/^(sound|cleared|fit|healthy|no active concerns)$/i.test(stableKnown(horse.health_status));
+ const health=treating?['treatment','Treatment']:watching?['watch','Vet watch']:sound?['sound','Sound']:['unknown','Unassessed'];
+ const readyRaw=stableKnown(horse.readiness_status)||status;
+ let ready=['unknown','Unassessed'];
+ if(/light jog|training paused|resting|scan pending|diagnostic scan|restricted|laid up|not ready|hold/i.test(readyRaw))ready=['restricted','Restricted'];
+ else if(/ready to race|ready to run|race ready|cleared to race/i.test(readyRaw))ready=['ready','Ready'];
+ else if(/entered|entry filed|race.prep/i.test(readyRaw))ready=['entered','Entered'];
+ else if(/work requested|more work|breeze|gate school|gallop|building|training rhythm|progressing/i.test(readyRaw))ready=['building','Building'];
+ if(treating)ready=['restricted','Restricted'];
+ const explicitTrend=String(horse.form_trend||scout.form_trend||'').toLowerCase();
+ let form=['unknown','—','No recorded racing form trend'];
+ if(/^(up|improving|positive)$/.test(explicitTrend))form=['up','Up','Source-recorded form improving'];
+ else if(/^(down|declining|negative)$/.test(explicitTrend))form=['down','Down','Source-recorded form declining'];
+ else if(/^(flat|steady|level)$/.test(explicitTrend))form=['level','Level','Source-recorded form steady'];
+ else if(/training read/i.test(file?.type||'')&&/trending (the )?right way/i.test(file?.title||''))form=['work','Work ↑','Positive training report, not verified race form'];
+ const born=stableDate(facts.date_of_birth||facts.born),raceYear=Number(nowDate().slice(0,4));
+ const birthYear=born?Number(born.slice(0,4)):NaN;
+ const age=Number.isInteger(raceYear)&&Number.isInteger(birthYear)&&raceYear>=birthYear?String(raceYear-birthYear):stableKnown(facts.age);
+ const sex=stableKnown(facts.sex),sexShort=({colt:'C',filly:'F',gelding:'G',mare:'M',horse:'H',stallion:'H'})[sex.toLowerCase()]||sex||'—';
+ const starts=Array.isArray(horse.certified_results)?horse.certified_results.filter(x=>x?.source_refs?.length&&stableDate(x.date)):[];
+ const last=starts.map(x=>x.date).sort().at(-1)||(
+  horse.last_race_source_refs?.length?stableDate(horse.last_race_date):'');
+ const matchingFixture=fixtures.find(n=>n.dataset.profile===name);
+ const target=stableKnown(calendar.race_target)||stableKnown(matchingFixture?$('p',matchingFixture)?.textContent.trim():'');
+ const entry=stableKnown(calendar.entry_status||calendar.status);
+ const entered=/entered|confirmed|accepted/i.test(entry)||/entered|confirmed/i.test(status);
+ const raceTarget=/maiden|allowance|stakes|handicap|race|r\d\b/i.test(target)&&!/pending|work|held|alternate|not entered|no target/i.test(target);
+ const next=stableKnown(calendar.next_race||calendar.scheduled_race)||(entered&&raceTarget?target:'');
+ const nextDate=stableDate(calendar.next_race_date||calendar.scheduled_date);
+ const earnings=stableKnown(facts.earnings)||(horse.earnings_source_refs?.length?stableKnown(horse.career_earnings):'');
+ const connections=facts.connections||{};
+ const ownerName=owner(name),trainer=stableKnown(connections.trainer)||(horse.trainer_source_refs?.length?stableKnown(horse.trainer_name):'');
+ const breeder=stableKnown(connections.breeder)||(horse.breeder_source_refs?.length?stableKnown(horse.breeder_name):'');
+ const recordStats=facts.record||{},recordValid=['starts','wins','seconds','thirds'].every(k=>/^\d+$/.test(String(recordStats[k])));
+ const careerRecord=recordValid?['starts','wins','seconds','thirds'].map(k=>recordStats[k]).join('-'):'';
+ return {name,status,vet,file,age,sexShort,health,ready,readyRaw,form,last,next,nextDate,target,earnings,
+  ownerName,trainer,breeder,careerRecord,ability:stableEvidenceStars(name,'current_ability'),
+  potential:stableEvidenceStars(name,'future_potential')};
+}
+function stableRosterView(){
+ const save=readState(),horseRecords=records().filter(x=>x.kind==='horse'),files=cases();
+ const fixtures=$('.fixtureList .fixture');
+ const all=horseRecords.map(x=>stableHorseSnapshot(x,fixtures,files,save));
+ const q=ui.stableQuery.toLowerCase().trim();
+ const rows=all.filter(x=>{
+  if(q&&![x.name,x.status,x.target,x.ownerName,x.trainer,x.breeder].some(v=>String(v||'').toLowerCase().includes(q)))return false;
+  if(ui.stableFilter==='vet')return ['watch','treatment'].includes(x.health[0]);
+  if(ui.stableFilter==='ready')return ['ready','entered'].includes(x.ready[0]);
+  if(ui.stableFilter==='action')return Boolean(x.file);
+  return true;
+ });
+ const td=(v,cls,sort)=>tableCell(h(stableKnown(v)||'—'),cls,sort??stableKnown(v));
+ const badges=Object.freeze({treatment:4,watch:3,unknown:2,sound:1,ready:5,entered:4,building:3,restricted:1,
+  up:5,work:4,level:3,down:1});
+ const body=rows.map(x=>'<tr>'+
+  tableCell('<div class="mg-stable-horse-cell">'+ownerChip(x.name)+button(h(x.name),'open','horse|'+x.name+'|','mg-stable-name')+'</div>'+
+   (x.status?'<small title="'+h(x.status)+'">'+h(x.status)+'</small>':''),'mg-stable-horse-id',x.name)+
+  tableCell(h(x.age||'—')+' / '+h(x.sexShort),'mg-stable-age',x.age||'')+
+  tableCell(stableIcon(x.health[0],x.health[1],x.vet||x.file?.title||x.health[1]),'',badges[x.health[0]])+
+  tableCell(stableIcon(x.ready[0],x.ready[1],x.readyRaw||'Not assessed'),'',badges[x.ready[0]])+
+  tableCell(x.ability.html,'mg-stable-star-cell',x.ability.sort)+
+  tableCell(x.potential.html,'mg-stable-star-cell',x.potential.sort)+
+  tableCell(stableIcon(x.form[0],x.form[1],x.form[2]),'',x.form[0]==='unknown'?'':badges[x.form[0]])+
+  td(x.last,'mg-stable-date',x.last)+
+  td(x.nextDate?x.nextDate+' '+x.next:x.next,'mg-stable-next',x.nextDate||x.next)+
+  td(x.target,'mg-stable-target',x.target)+
+  td(x.earnings,'mg-stable-earnings',x.earnings.replace(/[^0-9.]/g,''))+
+  td(x.ownerName==='Not recorded'?'':x.ownerName,'mg-stable-person',x.ownerName==='Not recorded'?'':x.ownerName)+
+  td(x.trainer,'mg-stable-person',x.trainer)+
+  td(x.breeder,'mg-stable-person',x.breeder)+
+  td(x.careerRecord,'mg-stable-record',x.careerRecord)+
+  tableCell(button('›','open','horse|'+x.name+'|','mg-rowlink'),'numeric')+'</tr>').join('');
+ const headings=['HORSE','AGE/SEX','HEALTH','READY','ABILITY','POTENTIAL','FORM','LAST RACED','NEXT RACE','TARGET','EARNINGS','OWNER','TRAINER','BREEDER','S-W-P-S','OPEN'];
+ const head=headings.map((v,i)=>'<th'+(i===15?' class="numeric"':' data-mg-sort-col="'+i+'" tabindex="0" aria-sort="none" title="Sort by '+h(v)+'"')+'>'+v+(i===15?'':'<span class="mg-table-sortmark" aria-hidden="true">↕</span>')+'</th>').join('');
+ const table='<div class="mg-table-wrap mg-stable-roster-scroller" tabindex="0" aria-label="Horse roster, scroll horizontally for extra columns">'+
+  '<table class="mg-table mg-stable-roster '+(ui.stableColumns==='focus'?'mg-stable-roster-focus':'')+'"><thead><tr>'+head+'</tr></thead><tbody>'+
+  (body||'<tr><td colspan="16" class="mg-stable-empty">No matching horses. Clear the filters to see the stable.</td></tr>')+
+  '</tbody></table></div>';
+ const filterButtons=[['all','ALL'],['vet','VET WATCH'],['ready','READY / ENTERED'],['action','OPEN FILES']].map(([value,label])=>
+  button(label,'stable-filter',value,'mg-button'+(ui.stableFilter===value?' on':''))).join('');
+ const scheduleRows=fixtures.slice(0,4).map(n=>'<tr>'+td($('.d',n)?.textContent.trim())+
+  td($('h4',n)?.textContent.trim(),'strong')+td($('p',n)?.textContent.trim(),'dim')+'</tr>');
+ const personnel=records().filter(x=>x.kind==='person');
+ const peopleRows=personnel.slice(0,3).map(x=>'<tr>'+tableCell(linkRecord(x,x.name),'strong')+td(x.detail,'dim')+'</tr>');
+ const related=files.filter(f=>all.some(x=>x.file?.id===f.id));
+ const caseRows=related.slice(0,4).map(x=>'<tr>'+tableCell(button(h(x.title),'open-case',x.id,'mg-rowlink'),'strong')+
+  td(x.pressure,'dim')+'</tr>');
+ const support='<div class="mg-stable-support">'+
+  panel('Upcoming Racing',compactTable([{text:'DATE'},{text:'HORSE / EVENT'},{text:'CONTEXT'}],scheduleRows),'CURRENT CALENDAR')+
+  panel('Personnel & Connections',compactTable([{text:'PERSON'},{text:'ROLE'}],peopleRows),personnel.length+' PEOPLE')+
+  panel('Management Files',caseRows.length?compactTable([{text:'HORSE FILE'},{text:'PRESSURE'}],caseRows):empty('No active horse files'),related.length+' RELATED')+'</div>';
+ const legend='<div class="mg-stable-roster-legend">'+
+  stableIcon('sound','Sound','Only when explicitly recorded')+
+  stableIcon('watch','Vet watch','Concern or investigation; treatment not assumed')+
+  stableIcon('treatment','Treatment','Explicit treatment only')+
+  stableIcon('ready','Ready','Explicitly confirmed readiness')+
+  stableIcon('up','Up','Improving form')+
+  stableIcon('down','Down','Declining form')+
+  '<span>— = no sourced value · Stars require evidence · Targets are not confirmed entries</span></div>';
+ return pageBar('Stable & Horses','SORTABLE HORSE OPERATIONS · '+all.length+' RECORDS',
+  button('GLOBAL DIRECTORY','nav','search')+button('HISTORY ARCHIVE','nav','history'))+
+  '<div class="mg-content mg-stable-roster-page"><div class="mg-stable-toolbar">'+
+  '<label class="mg-stable-query"><span>⌕</span><input id="mgStableSearch" type="search" data-mg-input="stable-search" placeholder="Find horse, owner, trainer…" value="'+h(ui.stableQuery)+'"></label>'+
+  '<div class="mg-stable-filters">'+filterButtons+'</div>'+
+  '<div class="mg-stable-views">'+button('ALL COLUMNS','stable-columns','all','mg-button'+(ui.stableColumns==='all'?' on':''))+
+  button('QUICK VIEW','stable-columns','focus','mg-button'+(ui.stableColumns==='focus'?' on':''))+'</div></div>'+
+  '<section class="mg-section mg-stable-roster-panel"><header><strong>STABLE ROSTER</strong><small>'+rows.length+' / '+all.length+' · CLICK HEADERS TO SORT</small></header>'+
+  table+legend+'</section>'+support+'</div>';
+}
+
 function operationsDashboard(view){
  const viewIsStable=view==='stable',kind=viewIsStable?'horse':'track';
  const base=viewIsStable?records().filter(x=>x.kind==='horse'):allRecords().filter(x=>x.kind==='track');
