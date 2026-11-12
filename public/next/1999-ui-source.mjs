@@ -479,7 +479,7 @@ function getWorldBrowseWorker(){
  if(worldBrowseWorkerUnavailable||typeof Worker==='undefined')return null;
  if(worldBrowseWorker)return worldBrowseWorker;
  try{
-  const worker=new Worker('/next/1999-world-index.worker.mjs?rev=wtw1999-20261112-r14&'+worldQuery,
+  const worker=new Worker('/next/1999-world-index.worker.mjs?rev=wtw1999-commercial-r2&'+worldQuery,
    {type:'module',name:'wtw1999-world-registry'});
   worker.onmessage=event=>{
    const message=event.data||{};
