@@ -107,8 +107,8 @@ const messageSpecs=[
   'Operating conditions and meet dates remain test data',false,'Tracks'],
  ['opening-people','Personnel Office','4,200 trainers in the test economy',
   'Only known people identities are source-locked',false,'Personnel'],
- ['opening-universe','World Registrar','87,500-horse 1999 universe loaded',
-  '267 source-locked opening runners, remainder test-generated',false,'World']
+ ['opening-universe','World Registrar',(worldCounts.worldHorses||worldCounts.horses).toLocaleString('en-US')+' distinct horses in the 1999 world',
+  'Source-locked horses preserved; other population groups simulated',false,'World']
 ];
 const officeMessages=messageSpecs.map(([caseId,from,title,meta,urgent,section],i)=>({
  case:caseId,from,title,meta,time:'DAY 1',urgent,resolved:false,
@@ -628,14 +628,23 @@ function worldHorsePage(offset=0,limit=20,filter=''){
   const trainers=get('world-trainers','/api/1999/sim/trainers',4200);
   universeLabels={owners:new Map(owners.map(o=>[o.id,o.name])),trainers:new Map(trainers.map(t=>[t.id,t.name]))};
  }
- const start=Math.max(0,Math.min(87499,Number(offset)||0)),count=Math.max(1,Math.min(100,Number(limit)||20));
- const data=q('/api/1999/sim/horses','offset='+start+'&limit='+count);
+ const start=Math.max(0,Math.min((worldCounts.worldHorses||worldCounts.horses)-1,Number(offset)||0));
+ const count=Math.max(1,Math.min(100,Number(limit)||20,
+   (worldCounts.worldHorses||worldCounts.horses)-start));
+ const data=start+count<=worldCounts.horses?
+  q('/api/1999/sim/horses','offset='+start+'&limit='+count):
+  {total:worldCounts.worldHorses,items:Array.from({length:count},(_,n)=>{
+   const i=start+n;
+   return i<worldCounts.horses?
+    q('/api/1999/sim/horses','offset='+i+'&limit=1').items?.[0]:
+    q('/api/1999/sim/world-horse-profile','index='+i).horse;
+  })};
  const sourceIds=new Set(srcHorses.map(h=>h.id));
- const rows=(data.items||[]).map(h=>{
+ const rows=(data.items||[]).map((h,rowOffset)=>{
   const source=sourceIds.has(h.id);
   const sireName=source?srcHorses.find(p=>p.id===h.sireId)?.name:null;
   const damName=source?srcHorses.find(p=>p.id===h.damId)?.name:null;
-  return {_kind:'horse',_name:h.name,_canonId:source?h.id:'',
+  return {_kind:'horse',_name:h.name,_directoryIndex:start+rowOffset,registryGroup:h.registryGroup||'',_canonId:source?h.id:'',
    _worldKey:source?'horse:'+h.id:undefined,_testGenerated:!source,
    _testAttrs:h.attributes||{},_testCareer:h.career||{},_testFinances:h.finances||{},_testReputation:h.reputation||{},
    _testAbility:h.ability||null,ca:String(h.ability?.currentStars??''),pa:String(h.ability?.potentialStars??''),
@@ -644,7 +653,7 @@ function worldHorsePage(offset=0,limit=20,filter=''){
    _openingCondition:h.openingCondition||null,
     foalYear:h.foalYear,dateOfBirth:h.dateOfBirth||'',foalingGeography:h.foalingGeography||h.foalingLocation||h.foalingPlace||null,
    ownerId:h.ownerId||'',trainerId:h.trainerId||'',
-   breederId:h.breederId||'',breeder:h.breeder||h.breederName||'',
+   breederId:h.breederId||'',breeder:h.breeder||h.breederName||universeLabels.owners.get(h.breederId)||'',
    breedingFarmId:h.breedingFarmId||'',breedingFarm:h.breedingFarm||'',homebred:h.homebred===true,
    name:h.name,age:String(h.ageAtDate??h.ageAtOpening??1999-Number(h.foalYear)),sex:h.sex,
    sire:sireName||h.sireId||'',dam:damName||h.damId||'',
@@ -652,7 +661,7 @@ function worldHorsePage(offset=0,limit=20,filter=''){
    trainer:universeLabels.trainers.get(h.trainerId)||peopleNames.get(h.trainerId)||h.trainerId||'',
    track:source?h.openingStable?.name||'':h.stableTrackId,
    status:source?h.racingStatus||'SOURCE OPENING':
-    'GENERATED TEST · NO ENTRY/RESULT',_id:h.id,
+    String(h.racingStatus1999||h.breedingStatus1999||h.status||'GENERATED TEST · NO ENTRY/RESULT').replaceAll('_',' '),_id:h.id,
    location:city(h.location||h.openingStable)||''};
  });
  const needle=String(filter||'').trim().toLowerCase();
