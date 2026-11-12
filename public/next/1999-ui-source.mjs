@@ -354,6 +354,66 @@ function departmentRows(section,page,context={}){
  return rows;
 }
 let universeLabels=null;
+// All breeding mares can be sorted and filtered globally without loading
+// 26,000 complete attribute/ancestry profiles into the page.
+const mareDirectorySummaries=[];
+let mareDirectoryProgress=0,mareDirectoryComplete=false,mareDirectoryStarted=false;
+let mareDirectoryKey='',mareDirectoryCache=[];
+function scanMareDirectory(){
+ const page=q('/api/1999/sim/mare-directory','offset='+mareDirectoryProgress+'&limit=100');
+ if(!page.items?.length){mareDirectoryComplete=true;return window.__WTW_NEXT__?.paint?.()}
+ mareDirectorySummaries.push(...page.items);
+ mareDirectoryProgress=mareDirectorySummaries.length;
+ if(mareDirectoryProgress>=worldCounts.breedingMares){
+  mareDirectoryComplete=true;window.__WTW_NEXT__?.paint?.();return;
+ }
+ if(mareDirectoryProgress%3000===0)window.__WTW_NEXT__?.paint?.();
+ setTimeout(scanMareDirectory,0);
+}
+function breedingMareBrowse({offset=0,limit=160,search='',sort='horse',desc=false,filters={}}={}){
+ if(!mareDirectoryStarted){mareDirectoryStarted=true;setTimeout(scanMareDirectory,0)}
+ const registered=get('mares','/api/1999/broodmare-boarding',2036);
+ if(!mareDirectoryComplete)return {total:registered.length+worldCounts.breedingMares,
+  items:[],indexing:true,progress:mareDirectoryProgress};
+ const all=[...registered.map((h,i)=>({
+  _mareIndex:null,_kind:'horse',_name:h.name,_canonId:h.id,name:h.name,horse:h.name,
+  age:String(1999-Number(h.foalYear)),sex:h.sex||'MARE',
+  farm:h.boardingFarm1999?.farmName||'',status:'REGISTERED BOARDING · SOURCE',
+  sire:h.sireId||'',dam:h.damId||'',bookings:'NOT VERIFIED',foals:'NOT VERIFIED',
+  health:'UNASSESSED',pedigree:'',value:'',owner:'',studFee:'',winners:''
+ })),...mareDirectorySummaries.map(h=>({
+  _mareIndex:h.index,_kind:'horse',_name:h.name,_testGenerated:true,_id:h.id,
+  name:h.name,horse:h.name,age:String(h.age),sex:'MARE',sire:'',dam:'',
+  farm:h.farm,status:h.status.replaceAll('_',' ')+' · TEST',
+  bookings:h.bookings?'1 PROJECTED':'0',foals:h.foals?'1 EXPECTED':'0',
+  health:'TEST · NOT EXAMINED',pedigree:'',value:'',owner:'',studFee:'',winners:'NOT RECORDED'
+ }))];
+ const key=JSON.stringify([search,sort,desc,filters]);
+ if(key!==mareDirectoryKey){
+  const norm=v=>String(v??'').toLowerCase().replaceAll('_',' ');
+  const needle=norm(search),filterQuery=norm(filters.query);
+  mareDirectoryCache=all.filter(h=>{
+   if(needle&&!['horse','farm','status','name','age','sex'].some(k=>norm(h[k]).includes(needle)))return false;
+   if(filters.ageMin!==''&&filters.ageMin!=null&&Number(h.age)<Number(filters.ageMin))return false;
+   if(filters.ageMax!==''&&filters.ageMax!=null&&Number(h.age)>Number(filters.ageMax))return false;
+   if(filters.sex&&norm(h.sex)!==norm(filters.sex))return false;
+   if(filters.status&&!norm(h.status).includes(norm(filters.status)))return false;
+   if(filters.field&&filterQuery&&!norm(h[filters.field]).includes(filterQuery))return false;
+   return true;
+  });
+  const sign=desc?-1:1;
+  mareDirectoryCache.sort((a,b)=>{
+   const av=a[sort]??'',bv=b[sort]??'';
+   const na=Number(av),nb=Number(bv);
+   const cmp=av!==''&&bv!==''&&Number.isFinite(na)&&Number.isFinite(nb)?
+    na-nb:String(av).localeCompare(String(bv),undefined,{numeric:true,sensitivity:'base'});
+   return sign*cmp||String(a._name).localeCompare(String(b._name));
+  });
+  mareDirectoryKey=key;
+ }
+ return {total:mareDirectoryCache.length,indexing:false,progress:mareDirectoryProgress,
+  items:mareDirectoryCache.slice(0,Math.min(mareDirectoryCache.length,Math.max(1,limit)))};
+}
 function breedingMarePage(offset=0,limit=100,filter=''){
  const source=get('mares','/api/1999/broodmare-boarding',2036),sourceCount=source.length;
  const allCount=sourceCount+worldCounts.breedingMares;
@@ -554,7 +614,7 @@ window.__WTW_1999_UI_DATA__={
  ownedHorseCount,
  sourceFacts,ownerFor,stableHorsePreview,setGameDate,departmentRows,auctionList,extraTracks,
  TRAINING_PLANS,horseTraining,assignTraining,trainingCosts,
- officeMessages,officeDesks,openingCash,worldHorsePage,worldHorseBrowse,breedingMarePage,
+ officeMessages,officeDesks,openingCash,worldHorsePage,worldHorseBrowse,breedingMarePage,breedingMareBrowse,
  horseAttributeGroups,stableHorseAttributes,stableHorseCareer,
  stakesForTrack,findStake,findRace,ownedHorses,breederProfile,foalingFarmProfile,trackProgramById:trackProgram1999,
  sourceHorseAbility:id=>{const index=sourceHorseOffset.get(id);
