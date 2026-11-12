@@ -7,7 +7,7 @@ import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const get=file=>fs.readFileSync(path.join(root,file),'utf8');
 
-test('Horse Profile real overview renders all FM dossier sections with zero fabricated skill ratings',()=>{
+test('Horse Profile overview renders all FM dossier sections with clear provenance and classed rating rows',()=>{
  const js=get('public/next/next.js');
  const catalog=JSON.parse(get('public/assets/game/attribute-catalog.v1.json'));
  const start=js.indexOf(' const athleteOverview=()=>{'),end=js.indexOf(' const personWork=()=>',start);
@@ -31,7 +31,7 @@ test('Horse Profile real overview renders all FM dossier sections with zero fabr
   'RECENT RACES & FORM','PEDIGREE & BACKGROUND','RACING OFFICE SUMMARY'])
   assert.ok(visibleText.includes(name),'First screen must present section: '+name);
  assert.ok(unknown.includes('0 OF 53 ATTRIBUTES ASSESSED'),'Unassessed values are explicitly disclosed');
- assert.equal((unknown.match(/class="ng-horse-rating-row"/g)||[]).length,46,'All 46 athlete ratings in four categories are visible without opening a detail tab');
+ assert.equal((unknown.match(/class="ng-horse-rating-row(?:\s[^\"]*)?"/g)||[]).length,46,'All 46 athlete ratings in four categories are visible without opening a detail tab');
  assert.equal((unknown.match(/class="ng-horse-condition-cell"/g)||[]).length,7,'All seven current condition attributes are visible on the Overview');
  assert.ok(unknown.includes('Heat Tolerance')&&unknown.includes('Gate Break')&&unknown.includes('Conformation'),'Last attribute in every formerly truncated group is rendered');
 
