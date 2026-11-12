@@ -384,6 +384,80 @@ function breedingMarePage(offset=0,limit=100,filter=''){
  return {total:allCount,items:needle?items.filter(h=>[h.name,h.farm,h.status,h.sex].some(v=>String(v||'').toLowerCase().includes(needle))):items,
   isPageFilter:Boolean(needle)};
 }
+// Build one lightweight global index in small browser tasks. Never scan all
+// 87,500 full race files or block user interaction with a giant synchronous load.
+const globalHorseSummaries=[];
+let globalHorseComplete=false,globalHorseStarted=false,globalHorseProgress=0;
+let globalHorseCacheKey='',globalHorseCache=[];
+function scanGlobalHorseIndex(){
+ const offset=globalHorseProgress;
+ const page=q('/api/1999/sim/horse-directory','offset='+offset+'&limit=100');
+ if(!page.items?.length){globalHorseComplete=true;return window.__WTW_NEXT__?.paint?.()}
+ globalHorseSummaries.push(...page.items);
+ globalHorseProgress=globalHorseSummaries.length;
+ if(globalHorseProgress>=worldCounts.horses){
+  globalHorseComplete=true;
+  window.__WTW_NEXT__?.paint?.();
+  return;
+ }
+ if(globalHorseProgress%5000===0)window.__WTW_NEXT__?.paint?.();
+ setTimeout(scanGlobalHorseIndex,0);
+}
+function worldHorseBrowse({offset=0,limit=160,search='',sort='name',desc=false,filters={}}={}){
+ if(!globalHorseStarted){
+  globalHorseStarted=true;
+  setTimeout(scanGlobalHorseIndex,0);
+ }
+ if(!globalHorseComplete)return {total:worldCounts.horses,loaded:globalHorseProgress,
+  indexing:true,items:[],progress:globalHorseProgress};
+ if(!universeLabels){
+  const owners=get('world-owners','/api/1999/sim/owners',worldCounts.owners);
+  const trainers=get('world-trainers','/api/1999/sim/trainers',worldCounts.trainers);
+  universeLabels={owners:new Map(owners.map(o=>[o.id,o.name])),
+   trainers:new Map(trainers.map(p=>[p.id,p.name]))};
+ }
+ const trackLabels=new Map(activeRacecourses.map(t=>[t.id,t.name]));
+ const text=v=>String(v??'').replaceAll('_',' ').toLowerCase().trim();
+ const ageMin=filters.ageMin===''||filters.ageMin==null?null:Number(filters.ageMin);
+ const ageMax=filters.ageMax===''||filters.ageMax==null?null:Number(filters.ageMax);
+ const key=JSON.stringify([search,sort,desc,filters]);
+ if(key!==globalHorseCacheKey){
+  const needle=text(search),filterValue=text(filters.query);
+  globalHorseCache=globalHorseSummaries.map(h=>({
+   ...h,owner:universeLabels.owners.get(h.ownerId)||ownerNames.get(h.ownerId)||h.ownerId||'',
+   trainer:universeLabels.trainers.get(h.trainerId)||peopleNames.get(h.trainerId)||h.trainerId||'',
+   track:trackLabels.get(h.trackId)||h.trackId||'',status:h.status||''
+  })).filter(h=>{
+   if(needle&&!['name','id','owner','trainer','track','sire','dam','status']
+    .some(k=>text(h[k]).includes(needle)))return false;
+   if(ageMin!==null&&(h.age==null||h.age<ageMin))return false;
+   if(ageMax!==null&&(h.age==null||h.age>ageMax))return false;
+   if(filters.sex&&text(h.sex)!==text(filters.sex))return false;
+   if(filters.status&&!text(h.status).includes(text(filters.status)))return false;
+   if(filters.field&&filters.query&&!text(h[filters.field]).includes(filterValue))return false;
+   return true;
+  });
+  const sortKey=['name','age','sex','sire','dam','owner','trainer','track','status','ca','pa'].includes(sort)?sort:'name';
+  const sign=desc?-1:1;
+  globalHorseCache.sort((a,b)=>{
+   const av=a[sortKey],bv=b[sortKey];
+   if(av==null)return bv==null?0:1;
+   if(bv==null)return -1;
+   const cmp=typeof av==='number'&&typeof bv==='number'?av-bv:
+     String(av).localeCompare(String(bv),undefined,{numeric:true,sensitivity:'base'});
+   return sign*cmp||a.index-b.index;
+  });
+  globalHorseCacheKey=key;
+ }
+ const total=globalHorseCache.length;
+ const items=globalHorseCache.slice(Math.max(0,offset),Math.max(0,offset)+Math.min(400,Math.max(1,limit)))
+  .map(h=>({_directoryIndex:h.index,_kind:'horse',_name:h.name,_id:h.id,
+   _canonId:h.canonical?h.id:'',_worldKey:h.canonical?'horse:'+h.id:undefined,
+   _testGenerated:!h.canonical,name:h.name,age:String(h.age),sex:h.sex,
+   sire:h.sire,dam:h.dam,owner:h.owner,trainer:h.trainer,track:h.track,
+   status:String(h.status).replaceAll('_',' '),ca:String(h.ca??''),pa:String(h.pa??'')}));
+ return {total,loaded:worldCounts.horses,indexing:false,items,progress:globalHorseProgress};
+}
 function worldHorsePage(offset=0,limit=20,filter=''){
  if(!universeLabels){
   const owners=get('world-owners','/api/1999/sim/owners',3308);
@@ -474,7 +548,7 @@ window.__WTW_1999_UI_DATA__={
  ownedHorseCount,
  sourceFacts,ownerFor,stableHorsePreview,setGameDate,departmentRows,auctionList,extraTracks,
  TRAINING_PLANS,horseTraining,assignTraining,trainingCosts,
- officeMessages,officeDesks,openingCash,worldHorsePage,breedingMarePage,
+ officeMessages,officeDesks,openingCash,worldHorsePage,worldHorseBrowse,breedingMarePage,
  horseAttributeGroups,stableHorseAttributes,stableHorseCareer,
  stakesForTrack,findStake,findRace,ownedHorses,breederProfile,foalingFarmProfile,trackProgramById:trackProgram1999,
  sourceHorseAbility:id=>{const index=sourceHorseOffset.get(id);
