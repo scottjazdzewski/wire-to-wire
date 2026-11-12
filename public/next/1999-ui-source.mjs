@@ -6,6 +6,7 @@
 import {trackProgram1999} from '/next/1999-track-program.mjs';
 import {WTW_ALTERNATE_STAKES_1999} from '/next/1999-alternate-stakes.mjs';
 import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-20261112-r6';
+import attributeCatalog from '/1999/engine/attribute-catalog.mjs';
 let viewDate='1999-01-01';
 const q=(route,extras='')=>readLocal1999World(route+(route.includes('?')?'&':'?')+
  'seed=19990101&mode=CANON_ANCHORED_TEST'+(viewDate==='1999-01-01'?'':'&date='+viewDate)+(extras?'&'+extras:''));
@@ -80,13 +81,19 @@ function sourceFacts(name){
  return {age:String(h.ageAtDate??h.ageAtOpening??1999-Number(h.foalYear)),sex:h.sex||'',
   connections:{trainer,owner:ownerNames.get(h.ownerId)||selectedOwner,breeder:h.breeder||h.breederName||''},
   name:h.name,ability:h.ability||null,source:source?'1999_CANON_LOCKED':'1999_TEST_GENERATED',
-  racing_status:source?h.racingStatus:'TEST_WORLD_NO_1999_RESULTS',
+  racing_status:h.racingStatus1999||h.racingStatus||'SOURCE_STATUS_NOT_VERIFIED',
+  record:!source&&h.career&&Number.isInteger(h.career.starts)?{
+   starts:h.career.starts,wins:h.career.wins,seconds:h.career.seconds,thirds:h.career.thirds,
+   earnings:h.career.earnings,lastRaced:h.career.lastRaceDate,
+   provenance:h.career.provenance}:null,
+  modelRaceHistory:!source?h.career?.raceHistory||[]:[],
   current_base:h.openingStable?.locality||h.location?.city||'',
   sire_id:h.sireId,dam_id:h.damId};
 }
 const ownerFor=name=>{const h=horseLookup.get(name);return h?(h.ownerId===activeOwnerId?selectedOwner:ownerNames.get(h.ownerId)||h.ownerId||''):null;};
 function roster(){return stableHorses.map((h,i)=>({name:h.name,
- activity:sourceHorseIds.has(h.id)?h.trainingStatus||'PRE-RACE TRAINING':'TEST HORSE · CONDITION UNOBSERVED',
+ activity:sourceHorseIds.has(h.id)?h.trainingStatus||'SOURCE · CONDITION NOT OBSERVED':
+  'TEST · '+String(h.racingStatus1999||'STATUS UNAVAILABLE').replaceAll('_',' '),
   currentAbility:h.ability?.currentStars??null,potentialAbility:h.ability?.potentialStars??null,
  tag:(sourceHorseIds.has(h.id)?'CANON':'TEST')+' · '+h.sex+' · '+(h.ageAtDate??1999-Number(h.foalYear))+'YO',index:i+1,horseId:h.id}));}
 function stableHorsePreview(name){
@@ -96,6 +103,8 @@ function stableHorsePreview(name){
  return {_kind:'horse',_name:h.name,name:h.name,_canonId:source?h.id:'',
   _id:h.id,_testGenerated:!source,_testAttrs:h.attributes||{},_testCareer:h.career||{},_testFinances:h.finances||{},
   _testReputation:h.reputation||{},_testAbility:h.ability||null,
+  _testRelationships:h.relationships||{},_preferredJockeyId:h.preferredJockeyId||'',
+  racingStatus1999:h.racingStatus1999||h.racingStatus||'SOURCE_STATUS_NOT_VERIFIED',
    ca:String(h.ability?.currentStars??''),pa:String(h.ability?.potentialStars??''),
    age:String(h.ageAtDate??h.ageAtOpening??1999-Number(h.foalYear)),foalYear:h.foalYear,dateOfBirth:h.dateOfBirth||'',
   foalingGeography:h.foalingGeography||h.foalingLocation||h.foalingPlace||null,
@@ -181,8 +190,13 @@ function makeDepartmentRows(section,page,context={}){
     ca:rating(p.ability?.currentStars),pa:rating(p.ability?.potentialStars),specialty:roleNames[p.role]||'',
     morale:typeof p.morale==='number'?Math.round(p.morale*100)+'%':'',
     workload:typeof p.workload==='number'?Math.round(p.workload*100)+'%':'',
-    salary:money(p.payrollAnnual??p.annualBaseSalary??0),contract:'1999 test appointment',
+    salary:p.role==='jockey'?money(p.compensation?.projectedAnnualGross||0):
+     money(p.compensation?.estimatedAnnualFees??p.payrollAnnual??p.annualBaseSalary??0),
+    contract:p.role==='jockey'?'MOUNT + PURSE SHARE · TEST':
+     p.role==='trainer'?'DAY FEE + PURSE SHARE · TEST':'1999 test appointment',
     assignment:p.barnId||p.organizationId||'',base:city(p.location||p.base),birthCountry:p.birthCountry||'',wins:'',
+    commission:p.compensation?.winShareRate!=null?(Math.round(p.compensation.winShareRate*1000)/10)+'%':'',
+    _testCompensation:p.compensation||null,
     _testGenerated:!p.authority?.startsWith('CANON'),_testAttrs:attrs,_testAbility:p.ability||null,
     _testReputation:p.reputation||{},ageBasis:p.ageBasis||'',
     _testOrigin:!srcPeople.some(source=>source.id===p.id)};
@@ -260,6 +274,8 @@ function worldHorsePage(offset=0,limit=20,filter=''){
    _worldKey:source?'horse:'+h.id:undefined,_testGenerated:!source,
    _testAttrs:h.attributes||{},_testCareer:h.career||{},_testFinances:h.finances||{},_testReputation:h.reputation||{},
    _testAbility:h.ability||null,ca:String(h.ability?.currentStars??''),pa:String(h.ability?.potentialStars??''),
+   racingStatus1999:h.racingStatus1999||h.racingStatus||'SOURCE_STATUS_NOT_VERIFIED',
+   _testRelationships:h.relationships||{},_preferredJockeyId:h.preferredJockeyId||'',
     foalYear:h.foalYear,dateOfBirth:h.dateOfBirth||'',foalingGeography:h.foalingGeography||h.foalingLocation||h.foalingPlace||null,
    ownerId:h.ownerId||'',trainerId:h.trainerId||'',
    breederId:h.breederId||'',breeder:h.breeder||h.breederName||'',
@@ -297,6 +313,11 @@ const findRace=id=>{
   .races?.find(r=>r.id===id)||null;
 };
 const ownedHorses=()=>stableHorses;
+const horseAttributeGroups=Object.entries(attributeCatalog.horse_categories).map(([name,defs])=>({
+ name,definitions:defs.map(d=>({key:d.key,label:d.label,scope:d.scope}))
+}));
+const stableHorseAttributes=name=>horseLookup.get(name)?.attributes||null;
+const stableHorseCareer=name=>horseLookup.get(name)?.career||null;
 const breederProfile=id=>{
  if(!id)return null;
  return get('breeder-owners','/api/1999/sim/owners',worldCounts.owners).find(o=>o.id===id)||null;
@@ -325,6 +346,7 @@ window.__WTW_1999_UI_DATA__={
  ownedHorseCount,
  sourceFacts,ownerFor,stableHorsePreview,setGameDate,departmentRows,auctionList,extraTracks,
  officeMessages,officeDesks,openingCash,worldHorsePage,
+ horseAttributeGroups,stableHorseAttributes,stableHorseCareer,
  stakesForTrack,findStake,findRace,ownedHorses,breederProfile,foalingFarmProfile,trackProgramById:trackProgram1999,
  sourceHorseAbility:id=>{const index=sourceHorseOffset.get(id);
   return index===undefined?null:q('/api/1999/sim/horses','offset='+index+'&limit=1').items?.[0]?.ability||null;},
