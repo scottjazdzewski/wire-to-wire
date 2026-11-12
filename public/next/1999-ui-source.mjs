@@ -81,6 +81,18 @@ const ownerFor=name=>{const h=horseLookup.get(name);return h?(h.ownerId===active
 function roster(){return stableHorses.map((h,i)=>({name:h.name,
  activity:sourceHorseIds.has(h.id)?h.trainingStatus||'PRE-RACE TRAINING':'TEST HORSE · CONDITION UNOBSERVED',
  tag:(sourceHorseIds.has(h.id)?'CANON':'TEST')+' · '+h.sex+' · '+(1999-Number(h.foalYear))+'YO',index:i+1,horseId:h.id}));}
+function stableHorsePreview(name){
+ const h=horseLookup.get(name);
+ if(!h)return null;
+ const source=sourceHorseIds.has(h.id);
+ return {_kind:'horse',_name:h.name,name:h.name,_canonId:source?h.id:'',
+  _id:h.id,_testGenerated:!source,_testAttrs:h.attributes||{},_testFinances:h.finances||{},
+  _testReputation:h.reputation||{},age:String(1999-Number(h.foalYear)),
+  sex:h.sex||'',sire:h.sireId||'',dam:h.damId||'',owner:ownerFor(name)||'',
+  trainer:sourceFacts(name)?.connections.trainer||'',track:h.openingStable?.name||h.stableTrackId||'',
+  location:city(h.location||h.openingStable)||'',
+  status:source?h.racingStatus||'SOURCE OPENING':'1999 GENERATED TEST — NO RESULTS'};
+}
 function auctionList(){
  const source=get('sales','/api/1999/sim/auctions',36);
  return source.map((a,i)=>({id:a.id,name:a.name,date:a.date,endDate:a.date,sortKey:a.date,
@@ -223,7 +235,7 @@ window.__WTW_1999_UI_DATA__={
  schema:'WTW_1999_CANON_ANCHORED_UI_ADAPTER_V1',
  sourceOwnerId:activeOwnerId,sourceOwnerName:selectedOwner,stableHorses:roster(),
  ownedHorseCount,
- sourceFacts,ownerFor,departmentRows,auctionList,extraTracks,
+ sourceFacts,ownerFor,stableHorsePreview,departmentRows,auctionList,extraTracks,
  officeMessages,officeDesks,openingCash,worldHorsePage,
  counts:q('/api/1999/sim/overview').counts,
  bridgeStatus:'SOURCE_IDS_LOCKED; OTHER VALUES_MARKED_TEST; NO_1999_OUTCOME_COMMITTED'
