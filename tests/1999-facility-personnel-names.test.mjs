@@ -83,3 +83,47 @@ test('breaking-and-training facility names are separately generated and collisio
  assert.ok(!a.some(name=>['Highpoint Training Center','Ashbourne Training Farm'].includes(name)));
  assert.deepEqual(createBreakingTrainingNames(19990101,400,['Highpoint Training Center','Ashbourne Training Farm']),a);
 });
+
+
+test('role-conditioned professions have a wide mix of name structures without fake family suffixes',()=>{
+ const seeded=createPersonnelNameRoster(19990101,STAFF_COUNT+3308,roleAt,['Gabe Larkin','Nico Arroyo']);
+ const byStyle=seeded.reduce((out,p)=>(out[p.nameStyle]=(out[p.nameStyle]||0)+1,out),{});
+ assert.ok((byStyle.MIDDLE_INITIAL||0)>500,'middle-name diversity collapsed');
+ assert.ok((byStyle.TWO_SURNAMES||0)>100,'international naming variety collapsed');
+ assert.ok((byStyle.COMPOUND_GIVEN_NAME||0)>40,'compound names not represented');
+ assert.ok((byStyle.PROFESSIONAL_TITLE||0)>50,'professional naming patterns missing');
+ assert.ok((byStyle.COMMON_NICKNAME||0)>20,'rider/farrier nickname patterns missing');
+ assert.ok(!seeded.some(p=>/\s(?:Jr\.?|III|IV)$/i.test(p.name)),'fictional family claims should not be fabricated');
+ assert.ok(seeded.filter(p=>p.nameStyle==='TWO_SURNAMES').every(p=>['PR','PA','VE','MX','CL','PE','CO','DO'].includes(p.birthCountry)));
+ assert.ok(seeded.filter(p=>p.nameStyle==='PROFESSIONAL_TITLE').every(p=>p.role==='veterinarian'));
+});
+test('900 distinct farm identities have their own commercial purpose, without cloning historical farm brands',()=>{
+ const seed=19990101,staff=createPersonnelNameRoster(seed,STAFF_COUNT+3308,roleAt);
+ const sources=['Kingsmere Farm','Crescent Mile Stud','Blue Lantern Racing','Marrowfield Farm'];
+ const o=createOrganizationNameRoster({seed,ownerCount:3308,barnCount:4200,farmCount:900,breakingCount:400,
+  protectedNames:[...sources,'Gabe Larkin','Nico Arroyo'],
+  sourceOwnerNames:sources,
+  principalNames:staff.slice(STAFF_COUNT).map(p=>p.name),
+  trainerNames:staff.slice(0,4200).map(p=>p.name)});
+ const names=[...o.owners,...o.barns,...o.farms,...o.breakingCenters];
+ assertNoDuplicates(names,'full generated business directory contains collisions');
+ const sourceBrandRoots=sources.map(s=>normalized(s.replace(/\b(Farm|Stud|Racing)\b/gi,''))).filter(x=>x.length>=7);
+ assert.ok(names.slice(sources.length).every(n=>!sourceBrandRoots.some(root=>normalized(n).startsWith(root))),
+  'generated brand illegally clones a protected historic brand');
+ assert.equal(o.breakingCenters.length,400);
+ assert.ok(o.summary.retries>=0);
+ assert.ok(o.farms.every((name,i)=>{
+  const k=o.farmKinds[i];
+  if(k==='STUD_FARM')return /\b(?:Stud|Stallion)\b/i.test(name);
+  if(k==='THOROUGHBRED_NURSERY')return /\bNursery\b/i.test(name);
+  if(k==='BLOODSTOCK_FARM')return /\b(?:Bloodstock|Thoroughbreds)\b/i.test(name);
+  return /\b(?:Farm|Farms|Farmstead)\b/i.test(name);
+ }));
+ assert.ok(!names.some(s=>/Three Chimneys|Farm Farm|Stud Stud|Stud Farm Stud/i.test(s)),'unwanted brand or malformed suffix');
+ assert.ok(o.barns.every((name,i)=>name.toLowerCase().includes(staff[i].name.split(/\s+/).at(-1).toLowerCase())),
+  'trainer-led racing stables must keep their trainer name');
+ assert.deepEqual(createOrganizationNameRoster({seed,ownerCount:3308,barnCount:4200,farmCount:900,breakingCount:400,
+  protectedNames:[...sources,'Gabe Larkin','Nico Arroyo'],sourceOwnerNames:sources,
+  principalNames:staff.slice(STAFF_COUNT).map(p=>p.name),
+  trainerNames:staff.slice(0,4200).map(p=>p.name)}).farms,o.farms);
+});
