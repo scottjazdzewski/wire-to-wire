@@ -517,7 +517,11 @@ async function worldEditSave(){
    const nameField=field.endsWith('Id')?field.slice(0,-2):'';
    if(nameField&&nameField in clean)clean[nameField]=target.name;
   }
-  const updates={...worldUserPatches,[key]:clean};
+  // Save only user-changed fields. New source revisions remain visible rather
+  // than being masked by dozens of unchanged snapshot attributes.
+  const delta=Object.fromEntries(Object.entries(clean).filter(([field,value])=>
+   !Object.is(base[field],value)));
+  const updates={...worldUserPatches,[key]:delta};
   // Persist text first. If quota is exhausted, never report a successful save.
   localStorage.setItem(WORLD_EDIT_KEY,JSON.stringify(updates));
   if(APP.worldPhotoDraft!==undefined)await worldSetImage(key,APP.worldPhotoDraft||'');
