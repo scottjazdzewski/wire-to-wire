@@ -16,6 +16,9 @@ import attributeCatalog from './attribute-catalog.mjs';
 import {WTW_TEST_START_DATE} from '../test-clock.mjs';
 export const FULL_WORLD_SCHEMA='WTW_1999_FULL_SCALE_TEST_V1';
 export const HORSE_POPULATION=87500;
+// All distinct living horses in the January 1999 playable North American world.
+// The 87,500 original racehorse IDs remain unchanged for existing saves.
+export const WORLD_HORSE_POPULATION=325000;
 export const CANON_HORSES=267;
 export const MODES=['CANON_ANCHORED_TEST','FULLY_FICTIONAL_TEST'];
 // Independent, deterministic TEST foaling hubs. Never substitute a 1999 race barn or
@@ -144,6 +147,17 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
  const generatedCount=HORSE_POPULATION-locked.length;
  const ownersTotal=3308,trainersTotal=4200,ownersSlots=makeSlots(ownersTotal,generatedCount,seed,'owner'),trainerSlots=makeSlots(trainersTotal,generatedCount,seed,'trainer');
  const trackCache=new Map(),ownerCache=new Map(),trainerCache=new Map(),horseCache=new Map();
+ const MAX_FULL_HORSE_CACHE=512;
+ function cachedHorse(index){
+  const row=horseCache.get(index);
+  if(row){horseCache.delete(index);horseCache.set(index,row)}
+  return row;
+ }
+ function retainHorse(index,row){
+  horseCache.set(index,row);
+  if(horseCache.size>MAX_FULL_HORSE_CACHE)horseCache.delete(horseCache.keys().next().value);
+  return row;
+ }
   const canonTrainers=sourcePeople.filter(x=>String(x.role||'').toLowerCase().includes('trainer'));
   const protectedPersonNames=new Set(sourcePeople.map(x=>String(x.name||'').toLowerCase()));
   const generatedPrincipalCount=ownersTotal-sourceOrgs.length;
@@ -424,7 +438,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
  }
  function horseAt(index){
   if(!Number.isInteger(index)||index<0||index>=HORSE_POPULATION)throw Error('Horse index out of range');
-  if(horseCache.has(index))return horseCache.get(index);
+  if(horseCache.has(index))return cachedHorse(index);
   if(anchored&&index<locked.length){
    const c=locked[index],known=Number.isInteger(Number(c.foalYear))&&Number(c.foalYear)>1850;
    const age=known?Math.max(0,1999-Number(c.foalYear)):3+hash(seed,c.id+':test:age')%5;
@@ -439,7 +453,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
     racingStatus1999:c.racingStatus||c.trainingStatus||'SOURCE_STATUS_NOT_VERIFIED',
     openingCondition:openingCondition(c.id,age,c.racingStatus||c.trainingStatus||'SOURCE_STATUS_NOT_VERIFIED'),
     ownerId:c.ownerId,trainerId:c.trainerId,stableTrackId:c.openingStable.trackId,authority:'LOCKED_NAME_ID_HISTORY_TEST_TRAITS'};
-   horseCache.set(index,o);return o;
+   return retainHorse(index,o);
   }
   const i=anchored?index-locked.length:index,oi=ownersSlots.at(perm(i,generatedCount,seed,65537)),
    ti=trainerSlots.at(perm(i,generatedCount,seed+32,8191)),owner=ownerAt(oi),trainer=trainerAt(ti);
@@ -501,7 +515,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    eligibility:{licensedAt1999Start:age>=2&&!['STALLION'].includes(sex)&&
     !['RETIRED','AT_STUD','BROODMARE'].includes(careerState),
     soundnessEvidence:'SIMULATED_TEST_STATE',futureRaceStarts:[]}};
-  horseCache.set(index,horse);return horse;
+  return retainHorse(index,horse);
  }
  let leadingOwnerPool=null;
  function leadingOwnerCandidates(){
@@ -694,6 +708,158 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   return ((t%m)+m)%m;
  };
  const ownerInverse=modularInverse(ownerMultiplier,generatedCount);
+
+ // Strictly disjoint world registry partitions. Original H-TEST-1999 names/IDs,
+ // existing 60,000 broodmare IDs and 1,400 sire IDs never move.
+ const WORLD_CORE_END=HORSE_POPULATION;
+ const WORLD_MARE_END=WORLD_CORE_END+MARE_BREEDING_STOCK;
+ const WORLD_SIRE_END=WORLD_MARE_END+STALLION_BREEDING_STOCK;
+ const WORLD_EXTRA_COUNT=WORLD_HORSE_POPULATION-WORLD_SIRE_END;
+ const WORLD_COHORTS=Object.freeze([
+  {kind:'YEARLING',count:36250,foalYear:1998},
+  {kind:'TWO_YEAR_OLD',count:36250,foalYear:1997},
+  {kind:'RACING_AGE',count:70000},
+  {kind:'RETIRED',count:WORLD_EXTRA_COUNT-142500}
+ ]);
+ if(WORLD_EXTRA_COUNT<142500||WORLD_COHORTS.some(c=>c.count<0)||
+    WORLD_COHORTS.reduce((n,c)=>n+c.count,0)!==WORLD_EXTRA_COUNT)
+  throw Error('Invalid 325k population partition');
+ const WORLD_EXTRA_CACHE_LIMIT=256,extraHorseCache=new Map();
+ function worldPartition(index){
+  if(!Number.isInteger(index)||index<0||index>=WORLD_HORSE_POPULATION)
+   throw Error('World horse index outside 1999 registry');
+  if(index<WORLD_CORE_END)return {kind:'REGISTERED',offset:index};
+  if(index<WORLD_MARE_END)return {kind:'BROODMARE',offset:index-WORLD_CORE_END};
+  if(index<WORLD_SIRE_END)return {kind:'STALLION',offset:index-WORLD_MARE_END};
+  let local=index-WORLD_SIRE_END;
+  for(const cohort of WORLD_COHORTS){
+   if(local<cohort.count)return {kind:cohort.kind,offset:index-WORLD_SIRE_END,cohortIndex:local};
+   local-=cohort.count;
+  }
+  throw Error('World horse partition exhausted');
+ }
+ function breedingDirectoryAt(index,sex){
+  const sire=sex==='SIRE',id='H-TEST-'+(sire?'SIRE':'DAM')+'-'+pad(index+1,6);
+  const age=1999-(sire?1970+index%12:
+    index<damCount?1971+index%13:1979+hash(seed,id+':foal-year')%16);
+  const ability=createAgeAbility({seed,id,role:'horse',age});
+  const farmIndex=index%900,owner=ownerAt(hash(seed,id+':owner')%ownersTotal);
+  const mae=sire?null:mare1999(index),standing=sire?hash(seed,id+':1999-active-stud')%100<80:false;
+  return {id,name:mixName(seed+1,sire?index+100000:index+101500),
+   age,foalYear:1999-age,sex:sire?'STALLION':'MARE',ownerId:owner.id,trainerId:'',
+   breederId:owner.id,homebred:true,sireId:'',damId:'',sire:'',dam:'',
+   trackId:'',farmId:'F-TEST-FARM-'+pad(farmIndex+1),canonical:false,
+   status:sire?(standing?'STANDING':'RETIRED_STUD'):
+    !mae.active?'RESTING':mae.covered?'COVERED_1999_TEST':'AVAILABLE_FOR_COVER',
+   ca:ability.currentStars,pa:ability.potentialStars,registryGroup:sire?'STALLION':'BROODMARE'};
+ }
+ function additionalWorldHorseAt(index){
+  if(!Number.isInteger(index)||index<0||index>=WORLD_EXTRA_COUNT)
+   throw Error('Additional world horse index');
+  let local=index,cohort=null;
+  for(const item of WORLD_COHORTS){if(local<item.count){cohort=item;break}local-=item.count}
+  if(!cohort)throw Error('Additional world cohort missing');
+  const id='H-TEST-WORLD-1999-'+pad(index+1,6);
+  const foalYear=cohort.foalYear??(cohort.kind==='RACING_AGE'?
+   1996-hash(seed,id+':cohort-age')%7:
+   1977+hash(seed,id+':retirement-year')%17);
+  const age=1999-foalYear;
+  const sex=age<=2?pick(['COLT','FILLY'],seed,id+':sex'):
+   pick(['GELDING','MARE','STALLION','GELDING','MARE'],seed,id+':sex');
+  const owner=ownerAt(hash(seed,id+':owner')%ownersTotal);
+  const trainer=cohort.kind==='RETIRED'||cohort.kind==='YEARLING'?null:
+   trainerAt(hash(seed,id+':trainer')%trainersTotal);
+  const homebred=hash(seed,id+':homebred')%100<48;
+  const breeder=homebred?owner:ownerAt(hash(seed,id+':breeder')%ownersTotal);
+  const sireIndex=hash(seed,id+':sire')%sireCount;
+  const damIndex=hash(seed,id+':dam')%MARE_BREEDING_STOCK;
+  const sireId='H-TEST-SIRE-'+pad(sireIndex+1,6);
+  const damId='H-TEST-DAM-'+pad(damIndex+1,6);
+  const abi=createAgeAbility({seed,id,role:'horse',age,pedigree:{sireId,damId}});
+  const status=cohort.kind==='YEARLING'?'YEARLING':
+   cohort.kind==='TWO_YEAR_OLD'?'PRE_RACE_DEVELOPMENT':
+   cohort.kind==='RETIRED'?'RETIRED':
+   hash(seed,id+':layoff')%9===0?'RESTING':'IN_TRAINING';
+  return {id,name:mixName(seed+4,index+124000),age,foalYear,sex,
+   status,ownerId:owner.id,trainerId:trainer?.id||'',breederId:breeder.id,
+   sireId,damId,sire:mixName(seed+1,sireIndex+100000),
+   dam:mixName(seed+1,damIndex+101500),homebred,
+   trackId:trainer?.homeTrackId||'',canonical:false,
+   ca:abi.currentStars,pa:abi.potentialStars,registryGroup:cohort.kind,
+   farmId:'F-TEST-FARM-'+pad(1+hash(seed,breeder.id+':foaling-farm')%900)};
+ }
+ function worldHorseDirectoryAt(index){
+  const where=worldPartition(index);
+  let record;
+  if(where.kind==='REGISTERED')record=horseDirectoryAt(where.offset);
+  else if(where.kind==='BROODMARE')record=breedingDirectoryAt(where.offset,'DAM');
+  else if(where.kind==='STALLION')record=breedingDirectoryAt(where.offset,'SIRE');
+  else record=additionalWorldHorseAt(where.offset);
+  return {...record,index,registryGroup:where.kind};
+ }
+ function worldHorseAttributeAt(index,key){
+  const def=horseTraitDefinitions.get(String(key||''));
+  if(!def)throw Error('Unknown world horse trait '+key);
+  const where=worldPartition(index);
+  if(where.kind==='REGISTERED')return horseAttributeAt(where.offset,key);
+  const horse=worldHorseDirectoryAt(index),ability=createAgeAbility({
+   seed,id:horse.id,role:'horse',age:horse.age,
+   pedigree:where.kind==='BROODMARE'||where.kind==='STALLION'?undefined:
+    {sireId:horse.sireId,damId:horse.damId}});
+  return traits([def],seed,horse.id,ability)[def.key];
+ }
+ function worldHorseAt(index){
+  const where=worldPartition(index);
+  if(where.kind==='REGISTERED')return horseAt(where.offset);
+  if(where.kind==='BROODMARE'||where.kind==='STALLION'){
+   const record=parentAt(where.offset,where.kind==='STALLION'?'SIRE':'DAM');
+   const profile=worldHorseDirectoryAt(index);
+   return {...record,worldIndex:index,ownerId:profile.ownerId,
+    breederId:profile.breederId,homebred:profile.homebred,
+    racingStatus1999:profile.status,registryGroup:where.kind};
+  }
+  const key=where.offset;
+  if(extraHorseCache.has(key)){
+   const value=extraHorseCache.get(key);
+   extraHorseCache.delete(key);extraHorseCache.set(key,value);return value;
+  }
+  const meta=additionalWorldHorseAt(key),age=meta.age;
+  const ability=createAgeAbility({seed,id:meta.id,role:'horse',age,
+   pedigree:{sireId:meta.sireId,damId:meta.damId}});
+  const farm=facilityAt(trainersTotal+hash(seed,meta.breederId+':foaling-farm')%900);
+  const record={...meta,worldIndex:index,ageAtOpening:age,ability,
+   attributes:traits(hor,seed,meta.id,ability),
+   foalingGeography:{locality:farm.location.city,region:farm.location.state,
+    country:farm.location.country,
+    countryCode:farm.location.country==='Canada'?'CA':'US',
+    authority:'SIMULATED_1999_ADDITIONAL_POPULATION'},
+   breedingFarmId:farm.id,breedingFarm:farm.name,
+   racingStatus1999:meta.status,career:{starts:0,wins:0,seconds:0,thirds:0,
+    earnings:0,raceHistory:[],
+    provenance:'1999_ADDITIONAL_POPULATION_NO_VERIFIED_RACE_RESULTS'},
+   authority:'TEST_ADDITIONAL_1999_POPULATION_NOT_HISTORICAL_FACT'};
+  extraHorseCache.set(key,record);
+  if(extraHorseCache.size>WORLD_EXTRA_CACHE_LIMIT)
+   extraHorseCache.delete(extraHorseCache.keys().next().value);
+  return record;
+ }
+ function worldIndexByHorseId(id){
+  const value=String(id||'');
+  const extra=/^H-TEST-WORLD-1999-(\d{6})$/.exec(value);
+  if(extra){const index=Number(extra[1])-1;
+   return index>=0&&index<WORLD_EXTRA_COUNT?WORLD_SIRE_END+index:-1;}
+  const mare=/^H-TEST-DAM-(\d{6})$/.exec(value);
+  if(mare){const index=Number(mare[1])-1;
+   return index>=0&&index<MARE_BREEDING_STOCK?WORLD_CORE_END+index:-1;}
+  const sire=/^H-TEST-SIRE-(\d{6})$/.exec(value);
+  if(sire){const index=Number(sire[1])-1;
+   return index>=0&&index<STALLION_BREEDING_STOCK?WORLD_MARE_END+index:-1;}
+  const test=/^H-TEST-1999-(\d+)$/.exec(value);
+  if(test){const index=Number(test[1])-1+(anchored?locked.length:0);
+   return index>=0&&index<HORSE_POPULATION?index:-1;}
+  return anchored?locked.findIndex(h=>h.id===value):-1;
+ }
+
  function ownedHorseIndexes(ownerId){
   if(typeof ownerId!=='string'||!ownerId)return [];
   const canonicalOwner=anchored?sourceOrgs.findIndex(o=>o.id===ownerId):-1;
@@ -727,12 +893,16 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   return {schema:FULL_WORLD_SCHEMA,seed,mode,startDate:WTW_TEST_START_DATE,currentDate:WTW_TEST_START_DATE,
   canonProtected:anchored,identityLayer:'CANON_LOCKS_PLUS_REPLACEABLE_TEST_IDENTITIES',attributesSchema:attributeCatalog.schema,
    nameModel:GEO_NAME_MODEL,
-  counts:{horses:HORSE_POPULATION,canonicalHorses:anchored?CANON_HORSES:0,generatedHorses:generatedCount,owners:ownersTotal,trainers:trainersTotal,
+  counts:{horses:HORSE_POPULATION,worldHorses:WORLD_HORSE_POPULATION,
+   populationAdditional:WORLD_EXTRA_COUNT,
+   populationGroups:{registered:HORSE_POPULATION,broodmares:MARE_BREEDING_STOCK,
+    stallions:STALLION_BREEDING_STOCK,additional:WORLD_EXTRA_COUNT},
+   canonicalHorses:anchored?CANON_HORSES:0,generatedHorses:generatedCount,owners:ownersTotal,trainers:trainersTotal,
    people:peopleCount+(anchored?sourcePeople.length:0),tracks:trackCount,nonPlayableInternationalTracks:canon.tracks.length-trackCount,
    facilities:trainersTotal+900+trackCount,breedingFarms:900,
    breedingMares:MARE_BREEDING_STOCK,breedingStallions:STALLION_BREEDING_STOCK,auctions:36,
    sourceStallions:anchored?canon.activeStallions1999.length:0,sourceBroodmareLocations:anchored?canon.productionBroodmareBoarding1999.length:0},
-  ownerAt,trainerAt,trackAt,horseAt,horseDirectoryAt,horseAttributeAt,personAt,jockeyBookingMarket,sourcePersonAt,projectAtDate,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
+  ownerAt,trainerAt,trackAt,horseAt,horseDirectoryAt,horseAttributeAt,worldHorseAt,worldHorseDirectoryAt,worldHorseAttributeAt,worldIndexByHorseId,worldPartition,personAt,jockeyBookingMarket,sourcePersonAt,projectAtDate,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
   parentAt,mareDirectoryAt,annualFoalingForecast,attributeCatalog,sourceStakes:anchored?canon.stakes1999.filter(r=>sourceTracks.some(t=>t.id===r.trackId)).map(applyVerifiedStakeDay1999):[],
    sourceOrganizations:sourceOrgs,sourcePeople,excludedActiveStaffRoles:['groom','exercise_rider'],
   audit:{ownershipSlots:ownersSlots.counts.reduce((a,b)=>a+b,0),trainerSlots:trainerSlots.counts.reduce((a,b)=>a+b,0),
