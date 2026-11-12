@@ -808,6 +808,12 @@ function world1999Profile(){
  const trackLink=(id,name)=>world1999Linked('track',id,name);
  if(kind==='person'){
   add('CANONICAL ID',d.id);add('ROLE',titleCaseUIRole(d.role));
+   const personModel=window.__WTW_1999_UI_DATA__?.sourcePersonModel?.(d.id)?.ability;
+   if(personModel?.schema==='WTW_1999_AGE_ABILITY_V1'){
+    add('CURRENT ABILITY · TEST',personModel.currentStars+'/5');
+    add('FUTURE POTENTIAL · TEST',personModel.potentialStars+'/5');
+    add('CAREER STAGE · TEST',personModel.careerStage);
+   }
   add('1999 BASE',d.base||'—');add('BIRTHPLACE',d.birthplace||'—');
   add('1999 HOME TRACK',d.homeTrack||'',d.homeTrack?trackLink(d.homeTrackId,d.homeTrack):'');
   add('OWNERSHIP OPERATION',d.ownershipOperation||'',d.ownershipOperation?farmLink(d.ownershipOperationId,d.ownershipOperation):'');
@@ -2600,6 +2606,9 @@ function previewRecordView(){
  const fixture=DEP_FACILITY_PREVIEW.find(item=>item[0]===name);
  const relevant=[
   ['ENTITY TYPE',fields.type||fixture?.[1]||kind.toUpperCase()],
+   ['CURRENT ABILITY · TEST',fields._testAbility?.schema==='WTW_1999_AGE_ABILITY_V1'?fields._testAbility.currentStars+'/5':''],
+   ['FUTURE POTENTIAL · TEST',fields._testAbility?.schema==='WTW_1999_AGE_ABILITY_V1'?fields._testAbility.potentialStars+'/5':''],
+   ['CAREER STAGE · TEST',fields._testAbility?.schema==='WTW_1999_AGE_ABILITY_V1'?fields._testAbility.careerStage:''],
   ['LOCATION',fields.location||fixture?.[2]||'Not recorded'],
   ['OWNER',fields.owner||'Not recorded'],['PRINCIPAL OWNER',fields.principal||''],['COUNTRY OF ORIGIN',fields.birthCountry||''],['ENTITY ID',fields._id||''],
   ['CAPACITY',fields.capacity||'Not recorded'],
