@@ -2746,7 +2746,8 @@ function previewRecordRoute(kind,name,row=null){
  APP.previewEntity={kind,name,row:row||null};
  // URL contains the specific preview name: browser back/forward and refresh
  // keep the identity; it is not a new canonical horse or organization record.
- const identity=kind==='person'&&row?._kind==='person'&&row._id?row._id:name;
+ const identity=kind==='person'&&row?._kind==='person'&&row._id?row._id:
+  kind==='horse'&&row?._directoryIndex!=null&&row._id?row._id:name;
  openCustomView('Preview:'+encodeURIComponent(kind)+':'+encodeURIComponent(identity),APP.section,APP.page);
 }
 function openEntityRecord(name,preferred='',row=null){
@@ -2788,13 +2789,15 @@ function previewRecordView(){
  const kind=fromState?.kind||decodeURIComponent(pieces[1]||'record');
  const routeIdentity=decodeURIComponent(pieces.slice(2).join(':')||'Record');
  const hydratedPerson=kind==='person'?window.__WTW_1999_UI_DATA__?.personProfileById?.(routeIdentity):null;
- const name=fromState?.name||hydratedPerson?.name||routeIdentity;
+ const hydratedHorse=!fromState?.row&&kind==='horse'&&/^H-[A-Za-z0-9-]+$/.test(routeIdentity)?
+  window.__WTW_1999_UI_DATA__?.worldHorseById?.(routeIdentity):null;
+ const name=fromState?.name||hydratedPerson?.name||hydratedHorse?.name||routeIdentity;
  const demo=(fromState?.row?._kind||'').startsWith('demo')||
   (Boolean(fromState?.row)&&Boolean(APP.departmentDemo))||
   DEP_FACILITY_PREVIEW.some(item=>item[0]===name);
  // Rehydrate the canonical browser-world horse on refresh or deep-link load.
  // The URL stores identity, not an old UI snapshot or fabricated horse values.
- const fields=fromState?.row||hydratedPerson||
+ const fields=fromState?.row||hydratedPerson||hydratedHorse||
   (kind==='horse'?window.__WTW_1999_UI_DATA__?.stableHorsePreview?.(name):null)||{};
  const generated=Boolean(fields._testGenerated),hasTestData=Boolean(fields._testAttrs||fields._testFinances||fields._testReputation);
  // All actual or pending people and horse records use the approved FM dossier.
