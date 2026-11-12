@@ -3,7 +3,7 @@
  * Reuses the same browser 1999 world projection as the diagnostic test lab.
  * All generated values are TEST state, canonical values retain source authority.
  */
-import {readLocal1999World} from '/1999/engine/local-api.mjs';
+import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-20261112-r2';
 const q=(route,extras='')=>readLocal1999World(route+(route.includes('?')?'&':'?')+'seed=19990101&mode=CANON_ANCHORED_TEST'+(extras?'&'+extras:''));
 const allPages=(route,total)=>{const rows=[];for(let offset=0;offset<total;offset+=100){const page=q(route,'offset='+offset+'&limit=100');rows.push(...(page.items||[]));}return rows;};
 const srcHorses=allPages('/api/1999/horses',267);
