@@ -80,7 +80,11 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    !d.querySelector('#wtwNextgen .ng-person-workspace')?.textContent.includes('Workout Design'));
   click('World');await pause(240);
   const peopleTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='People');
-  check('Existing World people tab is available',Boolean(peopleTab));
+  if(!peopleTab)throw Error('World People tab missing after Jockey profile: '+JSON.stringify({
+   custom:w.__WTW_NEXT__?.app?.custom,section:w.__WTW_NEXT__?.app?.section,page:w.__WTW_NEXT__?.app?.page,
+   tabs:[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].map(x=>x.dataset.val),
+   screen:d.querySelector('#wtwNextgen .ng-route')?.textContent.slice(0,150),errors:browserErrors.slice(-4)}));
+  steps.push('Existing World people tab is available');
   peopleTab.click();await pause(270);
   const sourcePersonButton=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
   check('1999 world person source row is navigable',Boolean(sourcePersonButton));
