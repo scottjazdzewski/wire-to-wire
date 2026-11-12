@@ -357,7 +357,8 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    const abi=createAgeAbility({seed,id:c.id,role:'horse',age,
     pedigree:{sireId:c.sireId||c.pedigree?.sireId||null,damId:c.damId||c.pedigree?.damId||null}});
    return {index,id:c.id,name:c.name,age,sex:c.sex||'',foalYear:c.foalYear||null,
-    ownerId:c.ownerId,trainerId:c.trainerId,sireId:c.sireId||'',damId:c.damId||'',
+    ownerId:c.ownerId,trainerId:c.trainerId,breederId:c.breederId||'',homebred:c.breederId===c.ownerId&&Boolean(c.breederId),
+    sireId:c.sireId||'',damId:c.damId||'',
     sire:c.sire||c.sireId||'',dam:c.dam||c.damId||'',
     trackId:c.openingStable?.trackId||'',status:c.racingStatus||c.trainingStatus||'SOURCE_STATUS_NOT_VERIFIED',
     ca:abi.currentStars,pa:abi.potentialStars,canonical:true};
@@ -382,7 +383,11 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    age>=9&&hash(seed,id+':retired')%4===0?'RETIRED':
    hash(seed,id+':break')%8===0?'RESTING':'IN_TRAINING';
   const trainer=trainerAt(ti),owner=ownerAt(oi);
+  const homebred=hash(seed,id+':owner-bred')%100<48;
+  const breederIndex=homebred?oi:(oi+1+hash(seed,id+':external-breeder')%(ownersTotal-1))%ownersTotal;
+  const breeder=homebred?owner:ownerAt(breederIndex);
   return {index,id,name,age,foalYear,sex,status,ownerId:owner.id,trainerId:trainer.id,
+   breederId:breeder.id,homebred,
    sireId,damId,sire:mixName(seed+1,si+100000),dam:mixName(seed+1,di+101500),
    trackId:trainer.homeTrackId,ca:abi.currentStars,pa:abi.potentialStars,canonical:false};
  }
