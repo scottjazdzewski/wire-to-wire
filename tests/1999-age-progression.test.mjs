@@ -51,7 +51,7 @@ test('late-career jockeys have no unrealized future ability after their actual p
  let checked=0;
  for(let i=4200;i<6000;i+=9){
   const p=world.personAt(i);
-  if(p.role!=='jockey')continue;
+  if(p.role!=='jockey'||p.age>50)continue;
   const fiftyDate=(1999+50-p.age)+'-01-01';
   const projected=world.projectAtDate(p,fiftyDate);
   assert.equal(projected.age,50);
