@@ -197,6 +197,11 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
      monthlyFixedOverhead:money(annualRun/12*.2),currency:'USD',basis:'1999_TEST_MODEL_NOT_VERIFIED_CANON_FUNDS'},
    reputation:standing(seed,id,clamp(.2+Math.log1p(portfolio)/Math.log(700)*.7,0,1)),
     attributes:{capital_resilience:round(.2+unit(seed,id+':capital')*.75),management_quality:round(.2+unit(seed,id+':management')*.75),risk_appetite:round(.15+unit(seed,id+':risk')*.8),welfare_priority:round(.25+unit(seed,id+':welfare')*.7),commercial_judgment:round(.25+unit(seed,id+':market')*.7),long_term_strategy:round(.25+unit(seed,id+':strategy')*.7)},
+    negotiation:{jockeyBudgetBand:tier==='major'?'ELITE':tier==='established'?'COMPETITIVE':tier==='regional'?'REGIONAL':'LOCAL',
+     mountFeeTolerance:round(.8+unit(seed,id+':booking-budget')*1.7),
+     commissionFlexibility:round(.04+.06*unit(seed,id+':commission-flex')),
+     racePursePriority:round(.25+unit(seed,id+':purse-priority')*.75),
+     authority:'SIMULATED_1999_OWNER_RACING_MARKET'},
     authority:canonSource?'CANON_ID_AND_ORIGIN__TEST_FINANCES':'FULLY_TEST_GENERATED'};
   ownerCache.set(i,obj);return obj;
  }
@@ -462,6 +467,44 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
     soundnessEvidence:'SIMULATED_TEST_STATE',futureRaceStarts:[]}};
   horseCache.set(index,horse);return horse;
  }
+ let leadingOwnerPool=null;
+ function leadingOwnerCandidates(){
+  if(!leadingOwnerPool)leadingOwnerPool=ownersSlots.counts.map((size,i)=>({i,size}))
+    .sort((a,b)=>b.size-a.size||a.i-b.i).slice(0,45).map(v=>v.i);
+  return leadingOwnerPool;
+ }
+ function jockeyBookingMarket(jockey,ownerId='',racePurse=250000,raceId='1999-MAJOR-RACE'){
+  if(!jockey||jockey.role!=='jockey')return null;
+  const race=String(raceId||'1999-MAJOR-RACE');
+  const fee=jockey.compensation?.mountFee||0;
+  const quality=clamp((jockey.ability.current*.58+jockey.reputation.overall*.42)/100,0,1);
+  const prestige=clamp(Math.log10(1+Math.max(0,Number(racePurse)||0)/15000)/1.7,0,1);
+  const demand=clamp(.15+.55*quality+.2*prestige+.1*unit(seed,jockey.id+':market-demand'),0,1);
+  const count=Math.max(0,Math.min(5,Math.floor(demand*6)-1));
+  const pool=leadingOwnerCandidates();
+  const competing=[];
+  const used=new Set(ownerId?[ownerId]:[]);
+  for(let k=0;k<count&&k<pool.length;k++){
+   const i=pool[(hash(seed,jockey.id+':'+race+':rival:'+k)+k)%pool.length];
+   const owner=ownerAt(i);
+   if(used.has(owner.id))continue;used.add(owner.id);
+   const premium=(.7+unit(seed,owner.id+jockey.id+':fee')*1.3)*demand;
+   competing.push({ownerId:owner.id,ownerName:owner.name,teamTier:owner.portfolio.tier,
+    projectedMountOffer:money(fee*(1+premium)*owner.negotiation.mountFeeTolerance),
+    projectedWinCommission:round(clamp(jockey.compensation.winShareRate+
+     .012*owner.negotiation.commissionFlexibility,0.08,0.125)),
+    offerStatus:'SIMULATED_INTEREST_NOT_BOOKED'});
+  }
+  const requestedOwner=ownerId?ownerAt(ownersSlots.counts.findIndex((_,i)=>ownerAt(i).id===ownerId)):null;
+  const playerTolerance=requestedOwner?.negotiation.mountFeeTolerance||1;
+  return {raceId:race,assumedRacePurse:money(racePurse),
+   demandTier:demand>=.77?'ELITE':demand>=.58?'HIGH':demand>=.4?'ACTIVE':'LOCAL',
+   demandScore:Math.round(demand*100),competingBarns:competing,
+   suggestedMountFee:money(fee*(1+.55*demand)*playerTolerance),
+   suggestedWinCommission:round(clamp(jockey.compensation.winShareRate+.006*demand,0.085,.125)),
+   relationshipPriority:round(quality*.6+jockey.compensation.winShareRate*.4),
+   status:'MARKET_FORECAST_ONLY_NO_BOOKINGS',provenance:'1999_TEST_BOOKING_COMPETITION_NOT_REAL_OFFERS'};
+ }
  function personAt(index){
   if(!Number.isInteger(index)||index<0||index>=ACTIVE_STAFF_COUNT+generatedPrincipalCount)throw Error('Person index');
    if(index>=ACTIVE_STAFF_COUNT){const owner=ownerAt(index-ACTIVE_STAFF_COUNT+sourceOrgs.length),id=owner.principalOwnerId;
@@ -497,7 +540,10 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    nameStatus:'TEST_RENAME_ALLOWED',role,location:track.location,baseTrackId:track.id,
    ability:ageAbility,attributes:traits([...common,...(roleDef[role]||[])],seed,id,ageAbility),
    reputation:repScore,payrollAnnual:jockey?0:money(18000+unit(seed,id+'pay')*90000),
-   compensation,age:ageInfo.age,ageBasis:ageInfo.basis,morale:round(.3+unit(seed,id+':morale')*.68),workload:round(.2+unit(seed,id+':load')*.7),licenseStatus:'SIMULATED_TEST_ACTIVE',source:'SIMULATED_WORKFORCE'};
+   compensation,bookingDemand:jockey?{tier:quality>.83?'ELITE':quality>.65?'HIGH':quality>.4?'COMPETITIVE':'LOCAL',
+    baselineDemand:Math.round((.15+.75*quality)*100),
+    market:'MAJOR_RACE_INTEREST_SIMULATED_NOT_CONFIRMED'}:null,
+   age:ageInfo.age,ageBasis:ageInfo.basis,morale:round(.3+unit(seed,id+':morale')*.68),workload:round(.2+unit(seed,id+':load')*.7),licenseStatus:'SIMULATED_TEST_ACTIVE',source:'SIMULATED_WORKFORCE'};
  }
  function meetOpen(track,date){
   return trackMeetOpen1999(track.sourceTrackId||track.id,date);
@@ -645,7 +691,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    facilities:trainersTotal+900+trackCount,breedingFarms:900,
    breedingMares:MARE_BREEDING_STOCK,breedingStallions:STALLION_BREEDING_STOCK,auctions:36,
    sourceStallions:anchored?canon.activeStallions1999.length:0,sourceBroodmareLocations:anchored?canon.productionBroodmareBoarding1999.length:0},
-  ownerAt,trainerAt,trackAt,horseAt,horseDirectoryAt,personAt,sourcePersonAt,projectAtDate,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
+  ownerAt,trainerAt,trackAt,horseAt,horseDirectoryAt,personAt,jockeyBookingMarket,sourcePersonAt,projectAtDate,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
   parentAt,annualFoalingForecast,attributeCatalog,sourceStakes:anchored?canon.stakes1999.filter(r=>sourceTracks.some(t=>t.id===r.trackId||t.name===r.trackName)):[],
    sourceOrganizations:sourceOrgs,sourcePeople,excludedActiveStaffRoles:['groom','exercise_rider'],
   audit:{ownershipSlots:ownersSlots.counts.reduce((a,b)=>a+b,0),trainerSlots:trainerSlots.counts.reduce((a,b)=>a+b,0),
