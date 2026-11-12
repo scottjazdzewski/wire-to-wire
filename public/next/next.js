@@ -435,7 +435,7 @@ async function worldImageFile(file){
     const ctx=canvas.getContext('2d');
     if(!ctx)return reject(Error('Image processing unavailable.'));
     ctx.drawImage(image,0,0,canvas.width,canvas.height);
-    resolve(canvas.toDataURL('image/jpeg',.86));
+    resolve(canvas.toDataURL('image/webp',.86));
    };
    image.src=reader.result;
   };
@@ -508,7 +508,12 @@ async function worldEditSave(){
    if(!(field in clean)||!clean[field])continue;
    const group={horse:'horses',person:'people',farm:'organizations',track:'tracks'}[kind];
    const target=(world1999Data[group]||[]).find(r=>r.id===clean[field]);
-   if(!target)throw Error('Unknown '+field+' reference. Select a valid record.');
+   if(!target){
+    // A pre-existing historical ancestor may not be in this 1999 subset.
+    // Never reject an unchanged approved external Horse_ID.
+    if(clean[field]===base[field])continue;
+    throw Error('Unknown '+field+' reference. Select a valid record.');
+   }
    const nameField=field.endsWith('Id')?field.slice(0,-2):'';
    if(nameField&&nameField in clean)clean[nameField]=target.name;
   }
