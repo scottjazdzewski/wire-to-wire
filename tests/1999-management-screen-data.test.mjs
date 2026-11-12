@@ -65,7 +65,7 @@ test('Racing screen uses 93 source stakes plus separate WTW game-modeled stakes,
  assert.deepEqual(Array.from(ui.departmentRows('Racing','Results',{date:'1999-01-01'})),[]);
  const stakes=ui.departmentRows('Racing','Stakes',{date:'1999-01-01'});
  assert.equal(stakes.length,93+WTW_ALTERNATE_STAKES_1999.length);
-  assert.equal(WTW_ALTERNATE_STAKES_1999.length,124);
+  assert.equal(WTW_ALTERNATE_STAKES_1999.length,124+8*11);
  assert.ok(stakes.every(r=>r._iso.startsWith('1999-')&&r.status.includes('NOT ENTERED')));
  const card=ui.departmentRows('Racing','Race Planning',{date:'1999-01-01'});
  assert.ok(card.length>=40);

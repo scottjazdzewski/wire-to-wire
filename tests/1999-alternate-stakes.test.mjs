@@ -8,8 +8,8 @@ test('every WTW 1999 course has a stake source or an explicitly modeled ungraded
  assert.equal(all.length,134);
  assert.ok(all.every(p=>p.trackOperating==='OPEN_1999'));
  assert.ok(all.every(p=>p.stakesIds.length||WTW_ALTERNATE_STAKES_1999.some(e=>e.trackId===p.id)));
- assert.equal(WTW_ALTERNATE_STAKES_1999.length,124);
- assert.equal(new Set(WTW_ALTERNATE_STAKES_1999.map(r=>r.id)).size,124);
+ assert.equal(WTW_ALTERNATE_STAKES_1999.length,124+8*11);
+ assert.equal(new Set(WTW_ALTERNATE_STAKES_1999.map(r=>r.id)).size,124+8*11);
  assert.equal(openingWorld1999.stakes1999.length,93);
 });
 test('modeled races never trespass off-meet or off-surface and never pretend to be official',()=>{
@@ -19,8 +19,10 @@ test('modeled races never trespass off-meet or off-surface and never pretend to 
   assert.ok(p,r.id+' missing track');
   assert.equal(p.name,r.trackName);
   assert.equal(r.canonical,false);
-  assert.equal(r.calendarBasis,'WTW_ALTERNATE_HISTORY_GAME_MODELED');
-  assert.equal(r.grade,'WTW UNGRADED FEATURE');
+  const fictionalExpansion=r.calendarBasis==='WTW_FICTIONAL_GAME_MODELED';
+  if(fictionalExpansion)assert.equal(TRACK_PROGRAM_1999[r.trackId].basis,'WTW_FICTIONAL_GAME_MODELED');
+  else assert.equal(r.calendarBasis,'WTW_ALTERNATE_HISTORY_GAME_MODELED');
+  assert.ok(fictionalExpansion?/^WTW G[123]$|^REGIONAL STAKES$/.test(r.grade):r.grade==='WTW UNGRADED FEATURE');
   assert.ok(!original.has(r.id),'duplicate historical stake identity');
   assert.ok(trackMeetOpen1999(r.trackId,r.localDate),r.id+' off-meet '+r.localDate);
   assert.ok(r.surface==='DIRT'||r.surface==='TURF');
