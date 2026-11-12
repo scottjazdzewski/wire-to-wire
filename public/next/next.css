@@ -3021,3 +3021,20 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 #wtwNextgen .ng-1999-source-note{border-top:1px solid #3a4b43;font-style:italic}
 @media(max-width:1050px){#wtwNextgen .ng-race-file-grid{grid-template-columns:1fr}}
 @media(max-width:600px){#wtwNextgen .ng-race-file-facts,#wtwNextgen .ng-race-eligible-list{grid-template-columns:1fr}}
+
+/* 1999 stable attribute-comparison pane; does not change the approved horse dossier. */
+#wtwNextgen .ng-attribute-picker{display:flex;align-items:center;flex-wrap:wrap;gap:9px;padding:9px 13px;
+ background:#192428;border:1px solid #354740}
+#wtwNextgen .ng-attribute-picker label{color:#d4be77;font-size:11px;font-weight:800}
+#wtwNextgen .ng-attribute-picker select{min-width:220px;max-width:340px;background:#111d21;color:#e7e5d8;
+ border:1px solid #526658;border-radius:3px;padding:7px}
+#wtwNextgen .ng-attribute-picker span{color:#a9b9b0;font-size:10px}
+#wtwNextgen .ng-attr-table td{white-space:nowrap;font-size:11px}
+#wtwNextgen .ng-attr-score{display:flex;align-items:center;gap:7px;min-width:100px}
+#wtwNextgen .ng-attr-score b{min-width:20px;text-align:right;color:#e5dabe}
+#wtwNextgen .ng-attr-track{display:inline-block;width:77px;height:8px;border-radius:2px;background:#34453c;overflow:hidden}
+#wtwNextgen .ng-attr-track i{display:block;height:100%;background:#66b77c}
+#wtwNextgen .ng-attr-score.ability-high .ng-attr-track i{background:#65c18a}
+#wtwNextgen .ng-attr-score.ability-good .ng-attr-track i{background:#d3c16b}
+#wtwNextgen .ng-attr-score.ability-moderate .ng-attr-track i{background:#d39555}
+#wtwNextgen .ng-attr-score.ability-low .ng-attr-track i{background:#d06473}
