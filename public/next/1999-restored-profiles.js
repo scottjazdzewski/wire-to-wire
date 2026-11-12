@@ -40,6 +40,8 @@ function source(kind,record,ui){
   node.dataset.homebred=d._testGenerated&&d.homebred===true?'true':'false';
   node.dataset.testGenerated=d._testGenerated?'true':'false';
   node.dataset.testAttributes=JSON.stringify(d._testAttrs||{});
+  node.dataset.testCareer=JSON.stringify(d._testCareer||{});
+  node.dataset.testRelationships=JSON.stringify(d._testRelationships||{});
   const career=d._testCareer||{};
   const testCareer=career.provenance==='GENERATED_1998_AND_PRIOR_NONCANON_TEST_RACES_ONLY';
   node.innerHTML='<div class="profileSubline">'+safe(d._testGenerated?'1999 GENERATED TEST HORSE':'1999 SOURCE-LINKED HORSE')+'</div>'+
@@ -49,7 +51,7 @@ function source(kind,record,ui){
       field('CAREER STAGE · TEST',ability.careerStage):'')+
     field('Date of birth',d.dateOfBirth||d.birthDate||'Not recorded')+
     field('Foaling year',year||'—')+field('Current stable',d.track||d.location||'—')+
-    field('Racing status',d.racingStatus||d.status||'1999 opening')+
+    field('Racing status',String(d.racingStatus1999||d.racingStatus||d.status||'Status not recorded').replaceAll('_',' '))+
     link('Owner',owner)+link('Trainer',d.trainer||'')+
     link('Breeder',d.breeder||d.breederName||'')+
     (d.breedingFarm?link('Foaling farm',d.breedingFarm):'')+
@@ -57,8 +59,47 @@ function source(kind,record,ui){
     link('Current stable',d.track||d.location||'')+
     '<div class="pedigreeNode"><span>Sire</span><strong>'+safe(d.sire||d.sireId||'—')+'</strong></div>'+
     '<div class="pedigreeNode"><span>Dam</span><strong>'+safe(d.dam||d.damId||'—')+'</strong></div>'+
-    (testCareer?'<div class="recordStat"><span>PRE-1999 TEST STARTS</span><b>'+safe(career.starts??'—')+'</b></div>'+
-      '<div class="recordStat"><span>PRE-1999 TEST WINS</span><b>'+safe(career.wins??'—')+'</b></div>':'')+
+    (testCareer?[
+      ['PRE-1999 TEST STARTS',career.starts],
+      ['PRE-1999 TEST WINS',career.wins],
+      ['PRE-1999 TEST SECONDS',career.seconds],
+      ['PRE-1999 TEST THIRDS',career.thirds],
+      ['PRE-1999 TEST EARNINGS',career.earnings!=null?'
+    panel('Achievements')+panel('Racing notes',[d._testGenerated?
+      'All generated ability, financial and pre-1999 career values are explicitly test data, not certified historical results.':
+      'Historical identity preserved. No 1999 race result or future transaction is committed.']);
+ }else if(kind==='track'){
+  const stakes=ui?.stakesForTrack?.(name)||[];
+  const location=d.location||[d.locality,d.region].filter(Boolean).join(', ')||'—';
+  node.innerHTML='<div class="profileSubline">1999 Racecourse · '+safe(d.circuit||d.region||'')+'</div>'+
+    field('Location',location)+field('Surfaces',d.surfaces||d.surface||'Not certified')+
+    field('Operating state',d.trackOperating==='OPEN_1999'?'OPEN · 1999 WTW WORLD':d.operating||'1999 schedule dependent')+
+    '<div class="meetBlock"><span>1999 MEET WINDOW</span><strong>'+safe(d.meetWindow||'Schedule dependent')+'</strong></div>'+
+    '<div class="meetBlock"><span>RACE DAYS</span><strong>'+safe(d.raceDays||'Schedule dependent')+'</strong></div>'+
+    '<div class="trackNote"><b>Preferred days</b><span>'+safe(d.preferredDays||'Not certified')+'</span></div>'+
+     '<div class="trackNote"><b>Meet evidence</b><span>'+safe(d.basis==='VERIFIED_1999_CALENDAR'?'1999 commission racing dates':d.basis==='APPROVED_WTW_1999_GAME_CALENDAR'?'Locked 1999 game calendar':d.basis==='WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION'?'WTW alternate-history racecourse · active modeled meet':d.basis==='HISTORICAL_ONLY_NO_1999_MEET'?'Historical-only venue':'Wire to Wire game model · not historically certified')+'</span></div>'+
+    stakes.map(x=>{
+      const grade=String(x.grade||x.grade1999||x.status||'').match(/(?:G|GRADE\s*)([123])/i);
+      const gradeLabel=grade?'G'+grade[1]:(x.status||'Major Stakes');
+      const purse=Number(x.purse1999),purseLabel=Number.isFinite(purse)&&purse>0?'$'+purse.toLocaleString('en-US'):'—';
+      return '<div class="stakesRow" data-stake-id="'+safe(x.id||'')+'"><span>'+safe(x.name||'')+'</span>'+
+        '<span>'+safe(x.localDate||x.date||'—')+'</span><span>'+safe(gradeLabel)+'</span><span>'+safe(purseLabel)+'</span></div>';
+    }).join('')+
+    panel('Track context',[d.realAnchor?'Source track geography preserved.':'WTW expanded-universe track.',
+      d.basis==='VERIFIED_1999_CALENDAR'?'1999 meet windows verified against source commission calendar.':d.basis==='WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION'?'This track survives and races in the WTW alternate 1999 world. Meet dates and new stakes are modeled, not historical facts.':d.basis==='HISTORICAL_ONLY_NO_1999_MEET'?'Historical course. No 1999 meet; no active races.':d.basis==='APPROVED_WTW_1999_GAME_CALENDAR'?'Meets are locked in game canon, not independently certified as an actual 1999 calendar.':'1999 meets are game models, not historically source-certified.']);
+ }
+ return {node,route:{kicker:kind==='horse'?'Horse Profile':'Track Profile',title:name}};
+}
+window.WTW1999Profiles=Object.freeze({source});
+})();
++Number(career.earnings).toLocaleString('en-US'):'—'],
+      ['LAST TEST START',career.lastRaceDate||'Unraced']
+     ].map(([k,v])=>'<div class="recordStat"><span>'+safe(k)+'</span><b>'+safe(v??'—')+'</b></div>').join(''):'')+
+    (d._testGenerated&&d._testRelationships?[
+      ['OWNER–TRAINER TRUST',d._testRelationships.ownerTrainer?.trust],
+      ['TRAINER–JOCKEY CHEMISTRY',d._testRelationships.trainerJockey?.chemistry],
+      ['HORSE–TRAINER FAMILIARITY',d._testRelationships.horseTrainer?.familiarity]
+     ].filter(([,v])=>v!=null).map(([k,v])=>'<div class="profileLine"><b>'+safe(k)+' · TEST</b><span>'+safe(v)+'</span></div>').join(''):'')+
     panel('Achievements')+panel('Racing notes',[d._testGenerated?
       'All generated ability, financial and pre-1999 career values are explicitly test data, not certified historical results.':
       'Historical identity preserved. No 1999 race result or future transaction is committed.']);
