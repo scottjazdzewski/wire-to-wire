@@ -11,6 +11,7 @@ import attributeCatalog from '../../public/assets/game/attribute-catalog.v1.json
 import {WTW_TEST_START_DATE} from './test-clock.mjs';
 export const FULL_WORLD_SCHEMA='WTW_1999_FULL_SCALE_TEST_V1';
 export const HORSE_POPULATION=87500;
+export const CANON_HORSES=267;
 export const MODES=['CANON_ANCHORED_TEST','FULLY_FICTIONAL_TEST'];
 const A=['Quiet','Silver','Cross','High','Small','Golden','West','Blue','North','Grand','River','Long','Fine','Little','Black','Red','White','Early','Late','Open','Second','True','Bold','Bright','Old','Wild','Brave','Fair','Deep','Steady','Autumn','Winter','Summer','Spring','First','Last','Hidden','Clear','Royal','Southern','Eastern','Western','Broken','Sweet','Dark','Plain','Soft','Strong','Lucky','Amber','Coastal','Morning','Evening','Bluebird','Overland','Free','Willow','Maple','Copper','Northern','Harbor','Stone'];
 const B=['Road','Window','River','Harbor','Sunday','Market','Garden','Coast','Day','Night','Friend','Mountain','Valley','Song','Hope','Memory','Light','Thunder','Stone','Hill','Crown','Map','Letter','Gold','Silver','Rain','Wind','Paper','Town','Home','Glass','Gate','Watch','Train','Seventh','Riddle','Field','Cloud','Sky','Moon','Sun','Lark','Chance','Grace','Whisper','Bell','Drift','Fire','Autumn','Pocket','April','June','Mabel','Ruth','Clara','Doyle','Fitch','Carson','Mercer','Kettle'];
@@ -38,7 +39,7 @@ const fmtLoc=x=>({city:x.locality??x.city??null,state:x.region??x.state??null,co
 const sourceTracks=canon.tracks;
 function mixName(seed,i){const total=A.length*B.length*C.length,k=(i*71083+seed)%total;
  const a=A[k%A.length],b=B[Math.floor(k/A.length)%B.length],c=C[Math.floor(k/(A.length*B.length))%C.length];
- return a+' '+b+(i%6===0?' '+c:'');}
+ return a+' '+b+' '+c;}
 function makeSlots(count,available,seed,kind){
  const weights=[],min=1;
  for(let i=0;i<count;i++)weights.push(Math.pow(i+10,-.82)*(.83+unit(seed,kind+':weight:'+i)*.34));
@@ -223,6 +224,19 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   return {id:'F-TEST-TRACK-'+pad(index-trainersTotal-900+1,3),name:t.name+' Training Center',type:'TRAINING_CENTER',location:t.location,trackId:t.id,
    capacity:money(120+unit(seed,t.id+'cap')*500),occupied:0,landAcres:45+hash(seed,t.id+'land')%230,
    annualOperatingCost:money(950000+unit(seed,t.id+'cost')*4800000),reputation:t.reputation,source:'TEST_TRACK_CENTER'};
+ }
+ const trackIndexById=new Map(sourceTracks.map((t,i)=>[anchored?t.id:'T-TEST-1999-'+pad(i+1,4),i]));
+ for(let i=0;i<trainersTotal;i++){
+  const tr=trainerAt(i),idx=trackIndexById.get(tr.homeTrackId);
+  if(idx===undefined)throw Error('Trainer barn track missing');
+  const track=trackAt(idx);
+  track.facility.barnStalls+=tr.barnCapacity;
+  track.facility.occupied=(track.facility.occupied||0)+tr.generatedRunners;
+ }
+ for(const h of locked){const idx=trackIndexById.get(h.openingStable.trackId);
+  if(idx===undefined)throw Error('Canonical horse track not present');
+  trackAt(idx).facility.occupied++;
+  trackAt(idx).facility.barnStalls++;
  }
  const peopleCount=ROLES.reduce((s,r)=>s+r[1],0);
  return {schema:FULL_WORLD_SCHEMA,seed,mode,startDate:WTW_TEST_START_DATE,currentDate:WTW_TEST_START_DATE,
