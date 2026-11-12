@@ -269,22 +269,24 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const weights=placements.map((p,i)=>p===1?10:p===2?4:p===3?2:p===4?1:0);
   const weightTotal=weights.reduce((a,b)=>a+b,0);
   const last=new Date(Date.UTC(careerState==='RETIRED'||careerState==='AT_STUD'||careerState==='BROODMARE'?1997:1998,10,18));
-  const history=[];let remaining=earnings;
+  const history=[];let allocated=0;
   for(let i=0;i<starts;i++){
    const rest=24*i+hash(seed,id+':race-spacing:'+i)%5;
    const raceDate=new Date(last.getTime()-rest*86400000).toISOString().slice(0,10);
    const result=placements[i]||5+hash(seed,id+':other-place:'+i)%6;
-   const prize=weightTotal?Math.round(earnings*weights[i]/weightTotal):0;
-   const earned=i===starts-1?prize+remaining-weights.slice(i).reduce((v,w)=>v+Math.round(earnings*w/weightTotal||0),0):prize;
+   const prize=weightTotal?(i===starts-1?earnings-allocated:Math.round(earnings*weights[i]/weightTotal)):0;
+   allocated+=prize;
    const priorWins=placements.slice(i+1).filter(x=>x===1).length;
    const group=priorWins===0?'Maiden Special Weight':
     priorWins>=3&&hash(seed,id+':race-level:'+i)%6===0?'Listed Stakes':
     hash(seed,id+':race-level:'+i)%3===0?'Claiming':'Allowance';
    const distanceFurlongs=5+hash(seed,id+':race-dist:'+i)%8;
    const jockeyIndex=hash(seed,trainer.id+':race-jockey:'+i)%1800;
+   const trackName=anchored?sourceTracks.find(t=>t.id===trainer.homeTrackId)?.name:
+    trackAt(Number(String(trainer.homeTrackId).slice(-4))-1).name;
    history.push({id:'RH-TEST-1999-'+id.slice(-6)+'-'+String(i+1).padStart(2,'0'),
     date:raceDate,trackId:trainer.homeTrackId,
-    trackName:trackAt(sourceTracks.findIndex(t=>t.id===trainer.homeTrackId)).name,
+    trackName:trackName||'Unknown test venue',
     raceClass:group,surface:distanceFurlongs>9?'TURF':'DIRT',
     distanceFurlongs,finishPosition:result,fieldSize:Math.max(8,result+hash(seed,id+':field:'+i)%5),
     earnings:prize,trainerId:trainer.id,jockeyId:'P-TEST-JOCKEY-'+pad(jockeyIndex+1),
