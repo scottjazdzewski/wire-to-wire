@@ -266,12 +266,39 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   trackAt(idx).facility.barnStalls++;
  }
  const peopleCount=ROLES.reduce((s,r)=>s+r[1],0);
+ 
+ // Read-only inverse of the existing horse allocation permutation.
+ // Lets the game inspect a complete owner's stable without generating every horse.
+ const ownerMultiplier=(()=>{let m=65537;while(gcd(m,generatedCount)!==1)m+=2;return m})();
+ const modularInverse=(a,m)=>{
+  let t=0,nextT=1,r=m,nextR=a;
+  while(nextR!==0){const q=Math.floor(r/nextR);[t,nextT]=[nextT,t-q*nextT];[r,nextR]=[nextR,r-q*nextR]}
+  if(r!==1)throw Error('Owner allocation is not invertible');
+  return ((t%m)+m)%m;
+ };
+ const ownerInverse=modularInverse(ownerMultiplier,generatedCount);
+ function ownedHorseIndexes(ownerId){
+  if(typeof ownerId!=='string'||!ownerId)return [];
+  const canonicalOwner=anchored?sourceOrgs.findIndex(o=>o.id===ownerId):-1;
+  const testOwner=ownerId.match(/^O-TEST-1999-(\d+)$/);
+  const ownerIndex=canonicalOwner>=0?canonicalOwner:testOwner?Number(testOwner[1])-1:-1;
+  if(ownerIndex<0||ownerIndex>=ownersTotal)return [];
+  const indices=[];
+  if(anchored)locked.forEach((horse,index)=>{if(horse.ownerId===ownerId)indices.push(index)});
+  const begin=ownerIndex===0?0:ownersSlots.ends[ownerIndex-1],end=ownersSlots.ends[ownerIndex];
+  for(let slot=begin;slot<end;slot++){
+   const normalized=(slot-(seed%generatedCount)+generatedCount)%generatedCount;
+   const index=(normalized*ownerInverse)%generatedCount;
+   indices.push((anchored?locked.length:0)+index);
+  }
+  return indices.sort((a,b)=>a-b);
+ }
  return {schema:FULL_WORLD_SCHEMA,seed,mode,startDate:WTW_TEST_START_DATE,currentDate:WTW_TEST_START_DATE,
   canonProtected:anchored,identityLayer:'CANON_LOCKS_PLUS_REPLACEABLE_TEST_IDENTITIES',attributesSchema:attributeCatalog.schema,
   counts:{horses:HORSE_POPULATION,canonicalHorses:anchored?CANON_HORSES:0,generatedHorses:generatedCount,owners:ownersTotal,trainers:trainersTotal,
    people:peopleCount+(anchored?sourcePeople.length:0),tracks:trackCount,facilities:trainersTotal+900+trackCount,auctions:36,
    sourceStallions:anchored?canon.activeStallions1999.length:0,sourceBroodmareLocations:anchored?canon.productionBroodmareBoarding1999.length:0},
-  ownerAt,trainerAt,trackAt,horseAt,personAt,auctionAt,facilityAt,conditionBook,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
+  ownerAt,trainerAt,trackAt,horseAt,personAt,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
   parentAt,attributeCatalog,sourceStakes:anchored?canon.stakes1999:[],sourceOrganizations:sourceOrgs,sourcePeople,
   audit:{ownershipSlots:ownersSlots.counts.reduce((a,b)=>a+b,0),trainerSlots:trainerSlots.counts.reduce((a,b)=>a+b,0),
    maxOwnerHorses:Math.max(...ownersSlots.counts),minOwnerHorses:Math.min(...ownersSlots.counts),
