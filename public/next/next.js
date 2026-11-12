@@ -2033,7 +2033,7 @@ const DEP_COLUMNS={
  SaleCompanies:[['name','SALES COMPANY',19],['city','HEADQUARTERS',15],['saleCount','SALES',8],['nextSale','NEXT UPCOMING AUCTION',33],['months','USUAL SALE MONTHS',25]],
  Sales:[['hip','HIP',4],['horse','HORSE',12],['age','AGE',3],['sex','SEX',3],['sire','SIRE',11],['dam','DAM',11],['consignor','CONSIGNOR',10],['reserve','RESERVE',8],['bid','CURRENT BID',8],['value','EST VALUE',8],['ca','CA',4],['pa','PA',4],['condition','COND',7],['status','SALE STATUS',7]],
  OwnershipGroups:[['name','OWNER / OPERATION',25],['type','OWNER TYPE',19],['location','OPERATING BASE',22],['principal','PRINCIPAL OWNER',18],['status','STATUS',16]],
- Personnel:[['name','PERSON',13],['age','AGE',3],['role','ROLE',10],['ca','CA',4],['pa','PA',4],['reputation','REP',6],['specialty','SPECIALTY',10],['morale','MORALE',6],['workload','LOAD',6],['salary','SALARY',8],['contract','CONTRACT',8],['assignment','ASSIGNED',9],['base','BASE',9],['wins','WINS',4]],
+ Personnel:[['name','PERSON',13],['age','AGE',3],['role','ROLE',10],['ca','CA',4],['pa','PA',4],['reputation','REP',6],['specialty','SPECIALTY',10],['morale','MORALE',6],['workload','LOAD',6],['salary','EST. FEES / PAY',11],['commission','WIN %',5],['relationship','OUR REL',11],['contract','CONTRACT',9],['assignment','ASSIGNED',9],['base','BASE',9],['wins','WINS',4]],
  Facilities:[['name','FACILITY',14],['type','TYPE',9],['location','CITY / STATE',13],['capacity','CAP',5],['occupied','USED',5],['free','FREE',5],['condition','COND',7],['quality','QUALITY',7],['staff','STAFF',5],['cost','MONTHLY COST',10],['owner','OWNER',12],['status','STATUS',8]],
  Finances:[['date','DATE',11],['category','CATEGORY',16],['description','TRANSACTION / PURPOSE',28],['department','HORSE / DEPARTMENT',19],['income','INCOME',10],['expense','EXPENSE',10],['balance','BALANCE',6]]
 };
@@ -2686,6 +2686,24 @@ function previewRecordView(){
   ['OWNER',fields.owner||'Not recorded'],['PRINCIPAL OWNER',fields.principal||''],['COUNTRY OF ORIGIN',fields.birthCountry||''],['ENTITY ID',fields._id||''],
   ['CAPACITY',fields.capacity||'Not recorded'],
   ['OPERATING STATUS',fields.status||'Not recorded'],
+  ...(fields._testCompensation?[
+   ['COMPENSATION TYPE · TEST',fields._testCompensation.basis||''],
+   ['WIN PURSE COMMISSION · TEST',fields._testCompensation.winShareRate!=null?
+    (100*fields._testCompensation.winShareRate).toFixed(1)+'%':''],
+   ['SECOND PURSE COMMISSION · TEST',fields._testCompensation.secondShareRate!=null?
+    (100*fields._testCompensation.secondShareRate).toFixed(1)+'%':''],
+   ['THIRD PURSE COMMISSION · TEST',fields._testCompensation.thirdShareRate!=null?
+    (100*fields._testCompensation.thirdShareRate).toFixed(1)+'%':''],
+   ['DAILY TRAINING FEE · TEST',fields._testCompensation.dayRate!=null?
+    '$'+Number(fields._testCompensation.dayRate).toLocaleString('en-US'):''],
+   ['JOCKEY MOUNT FEE · TEST',fields._testCompensation.mountFee!=null?
+    '$'+Number(fields._testCompensation.mountFee).toLocaleString('en-US'):''],
+   ['EST. ANNUAL GROSS FEES · TEST',fields._testCompensation.projectedAnnualGross!=null?
+    '$'+Number(fields._testCompensation.projectedAnnualGross).toLocaleString('en-US'):
+    fields._testCompensation.estimatedAnnualFees!=null?
+     '$'+Number(fields._testCompensation.estimatedAnnualFees).toLocaleString('en-US'):'']
+  ]:[]),
+  ['RELATIONSHIP TO OUR STABLE · TEST',fields.relationship||''],
   ...(generated?[
    ['HORSE ID',fields._id],['AGE',fields.age],['SEX',fields.sex],
    ['SIRE ID',fields.sire],['DAM ID',fields.dam],['TRAINER',fields.trainer],
@@ -3138,7 +3156,8 @@ window.addEventListener('click',e=>{
  if(key==='dept-open'){
   const r=APP.departmentVisible[Number(val)];if(!r)return;
    if(r._kind==='race')return open1999Race(r._raceData||r);
-  if(r._testGenerated)return previewRecordRoute('horse',r._name,r);
+  if(r._testGenerated)return previewRecordRoute(r._kind==='person'?'person':
+   r._kind==='farm'?'farm':'horse',r._name,r);
   if(r._worldKey)return openWorld1999Entity(r._worldKey);
   if(r._canonId){const match=world1999Entries().find(x=>x.canonicalId===r._canonId);
    if(match&&!window.__wtwOfficeSearchRecords?.().some(x=>x.kind===match.kind&&x.name===match.name))return openWorld1999Entity(match.worldKey);
