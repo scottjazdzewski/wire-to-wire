@@ -1472,10 +1472,14 @@ function profileDetail(route){
    '<div><small>'+safe(x.label)+'</small><strong>'+safe(x.value)+'</strong></div>').join('')+'</div>':'';
  const entityIdentityRow=entityHeaderFields.length?
   `<div class="ng-tier1-biography" aria-label="${safe(route.kicker)} identity summary">${entityHeaderFields.map(([label,value,flag])=>`<span><small>${safe(label)}</small><strong title="${safe(value)}">${flag||''}${safe(value)}</strong></span>`).join('')}</div>`:'';
+  const worldSourceKind=isHorse?'horse':isPerson?'person':isFarm?'farm':isTrack?'track':'';
+ const worldSourceEntry=worldSourceKind?world1999Match(worldSourceKind,route.title):null;
+ const sourceEditButton=worldSourceEntry?'<button type="button" data-ng="world-edit-source" data-kind="'+
+  safe(worldSourceKind)+'" data-name="'+safe(route.title)+'" title="Edit this source-backed record">EDIT RECORD</button>':'';
  const identity=`<div class="ng-profile-intro">
   ${profileMark}
   <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${isHorse?horseOwnerBadge(route.title):''}${safe(route.title)}</h2>${horseIdentityRow}${horseStarRow}${entityIdentityRow}${horseConnectionHeader}${isHorse||isPerson||isFarm||isTrack?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${horseImage?`<div class="ng-profile-source-photo" role="img" aria-label="Approved image of ${safe(route.title)}"><img src="${safe(horseImage)}" alt="" loading="lazy" decoding="async"/></div>`:''}
-  <div class="ng-profile-tools"><button data-ng="office" aria-label="Return to Racing Office">← OFFICE</button><button data-ng="menu" data-val="${isTrack?'Racing':isPerson||isFarm?'World':'Stable'}">${isTrack?'RACE CALENDAR':isPerson?'PEOPLE DIRECTORY':isFarm?'FARM DIRECTORY':'STABLE DIRECTORY'} ↗</button></div>
+  <div class="ng-profile-tools"><button data-ng="office" aria-label="Return to Racing Office">← OFFICE</button><button data-ng="menu" data-val="${isTrack?'Racing':isPerson||isFarm?'World':'Stable'}">${isTrack?'RACE CALENDAR':isPerson?'PEOPLE DIRECTORY':isFarm?'FARM DIRECTORY':'STABLE DIRECTORY'} ↗</button>${sourceEditButton}</div>
  </div>`;
  let left='',right='',footer='';
  if(APP.detailTab==='Overview'){
@@ -2794,6 +2798,33 @@ window.addEventListener('click',e=>{
    type:'Race',location:r.track||'',date:r.date||'',status:r.status||''
   }:null);
  }
+ if(key==='world-edit')return worldEditOpen(val);
+ if(key==='world-edit-source'){
+  const kind=btn.dataset.kind,name=btn.dataset.name;
+  const world=world1999Match(kind,name);
+  if(world){openWorld1999Entity(world.worldKey);return worldEditOpen(world.worldKey)}
+  return;
+ }
+ if(key==='world-cancel')return worldEditCancel();
+ if(key==='world-save')return worldEditSave();
+ if(key==='world-export')return worldExportEdits();
+ if(key==='world-import-open')return root.querySelector('#wtwWorldImportInput')?.click();
+ if(key==='world-photo-clear'){
+  if(!APP.worldEditDraft)return;
+  APP.worldPhotoDraft=null;APP.worldEditStatus='Custom image will be removed when you save.';
+  return paint();
+ }
+ if(key==='world-add-field'){
+  if(!APP.worldEditDraft)return;
+  const name=(root.querySelector('#wtwWorldNewField')?.value||'').trim();
+  const value=root.querySelector('#wtwWorldNewValue')?.value||'';
+  if(!worldEditValidField(name)){APP.worldEditStatus='Invalid or protected attribute key.';return paint()}
+  if(Object.prototype.hasOwnProperty.call(APP.worldEditDraft,name)){
+   APP.worldEditStatus='Attribute already exists. Edit it in the list.';return paint()
+  }
+  APP.worldEditDraft[name]=value;APP.worldEditStatus='Added '+name+' to this draft. Save to keep it.';
+  return paint();
+ }
  if(key==='world-back')return openMenu('World');
  if(key==='world-view'){
   if(val==='Tracks')return openMenu('Tracks');
@@ -2917,6 +2948,43 @@ function restoreNextUIRoute(){
   APP.section=mapped[p.get('page')]||'Office';APP.page='Overview';
  }
 }
+// Keep editors mounted while typing. Only the Save action writes to storage.
+root.addEventListener('input',event=>{
+ const node=event.target.closest('[data-world-field]');
+ if(!node||!APP.worldEditDraft)return;
+ const field=node.dataset.worldField;
+ if(!worldEditValidField(field))return;
+ let value=node.value;
+ const original=APP.worldEditDraft[field];
+ if(typeof original==='number'){
+  const number=Number(value);
+  value=value!==''&&Number.isFinite(number)?number:value;
+ }else if(typeof original==='boolean')value=value==='true';
+ APP.worldEditDraft[field]=value;APP.worldEditStatus='Unsaved changes';
+});
+root.addEventListener('change',async event=>{
+ const node=event.target;
+ if(node.id==='wtwWorldImageInput'&&APP.worldEditKey){
+  try{
+   APP.worldPhotoDraft=await worldImageFile(node.files?.[0]);
+   APP.worldEditStatus='Image loaded. Save changes to keep it.';paint();
+  }catch(err){APP.worldEditStatus=err?.message||'Image not accepted';paint()}
+  return;
+ }
+ if(node.id==='wtwWorldImportInput')return worldImportEdits(node.files?.[0]);
+ if(node.matches('[data-world-field]')&&WORLD_LINK_FIELDS[node.dataset.worldField]&&APP.worldEditDraft){
+  const field=node.dataset.worldField,kind=WORLD_LINK_FIELDS[field];
+  const id=node.value,group={horse:'horses',person:'people',farm:'organizations',track:'tracks'}[kind];
+  const linked=(world1999Data?.[group]||[]).find(x=>x.id===id);
+  const nameKey=field.slice(0,-2);
+  if(nameKey in APP.worldEditDraft){
+   APP.worldEditDraft[nameKey]=linked?.name||'';
+   const el=[...root.querySelectorAll('[data-world-field]')].find(x=>x.dataset.worldField===nameKey);
+   if(el)el.value=APP.worldEditDraft[nameKey];
+  }
+ }
+});
+
 window.addEventListener('popstate',()=>{
  restoreNextUIRoute();
  schedulePaint(40);
