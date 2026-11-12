@@ -795,12 +795,12 @@ export const TRACK_PROGRAM_1999=Object.freeze({
     "surfaces": "Dirt",
     "meets": [
       [
-        "01-15",
-        "04-17"
+        "01-29",
+        "04-10"
       ]
     ],
-    "meetWindow": "Jan 15–Apr 17",
-    "raceDays": "~67",
+    "meetWindow": "Jan 29–Apr 10",
+    "raceDays": "52",
     "preferredDays": "Wed–Sun",
     "dayPattern": [
       0,
@@ -809,8 +809,8 @@ export const TRACK_PROGRAM_1999=Object.freeze({
       5,
       6
     ],
-    "basis": "WTW_SEASONAL_GAME_MODELED",
-    "sourceUrl": null,
+    "basis": "VERIFIED_1999_CALENDAR",
+    "sourceUrl": "https://www.oaklawn.com/site/assets/files/20315/oaklawnmediaguide25-26.pdf",
     "stakesIds": [
       "STK-0010",
       "STK-0011",
@@ -827,7 +827,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
     ],
     "trackOperating": "OPEN_1999",
     "surfaceStatus": "WORKING_1999_SURFACE_UNVERIFIED",
-    "calendarExceptions": null,
+    "calendarExceptions": "1999 official Oaklawn live-meet statistics: Jan 29–Apr 10, 52 days. Individual dark dates are modeled except known stakes dates.",
     "playableIn1999": true
   },
   "T-0022": {

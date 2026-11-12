@@ -39,6 +39,16 @@ test('Keeneland meet bounds are exact historic 1999 date spans with 31 days',()=
  assert.equal(trackMeetOpen1999(p.id,'1999-10-09'),true);
 });
 
+test('Oaklawn 1999 meet dates follow track-published 52-day season',()=>{
+ const p=trackProgram1999('T-0021');
+ assert.deepEqual(p.meets,[['01-29','04-10']]);
+ assert.equal(p.raceDays,'52');
+ assert.equal(trackMeetOpen1999(p.id,'1999-01-15'),false);
+ assert.equal(trackMeetOpen1999(p.id,'1999-01-29'),true);
+ assert.equal(trackMeetOpen1999(p.id,'1999-04-10'),true);
+ assert.equal(trackMeetOpen1999(p.id,'1999-04-11'),false);
+});
+
 test('historical 1999 corrections preserve every stake ID and are playable on the researched day',()=>{
  assert.equal(Object.keys(VERIFIED_1999_STAKES_DATES).length,24);
  assert.equal(canon.stakes1999.length,93);
