@@ -2065,7 +2065,8 @@ function depTrackCalendar(){
  const extra=window.__WTW_1999_UI_DATA__?.extraTracks?.()||[];
  const seen=new Set([...office,...others].flatMap(t=>[t.id,t.name]).filter(Boolean));
  const missing=extra.filter(t=>!seen.has(t.id)&&!seen.has(t.name));
- return [...office,...others,...missing];
+ return [...office,...others,...missing].map(t=>({...t,stakes:Array.isArray(t.stakes)&&t.stakes.length?t.stakes:
+   (window.__WTW_1999_UI_DATA__?.stakesForTrack?.(t.name)||[]).map(r=>({...r,date:r.localDate||r.date||'',class:r.division||r.grade||'',purse:r.purse1999}))}));
 }
 function depCalendarIso(value,year=depGameDay().slice(0,4)){
  const d=String(value||'').match(/^([A-Za-z]{3})\s+(\d{1,2})$/);
@@ -2107,8 +2108,8 @@ function depTrackRaceRows(trackName,demo){
  if(!track)return [];
  const now=depGameDay();
  const rows=(track.stakes||[]).map(event=>{
-  const iso=depCalendarIso(event.date,now.slice(0,4));
-  return iso&&iso>=now?{_kind:'race',_name:event.name,_track:trackName,_iso:iso,
+  const iso=liveStableDate(event.localDate||event.date)||depCalendarIso(event.date,now.slice(0,4));
+  return iso&&iso>=now?{_kind:'race',_name:event.name,_track:trackName,_iso:iso,_raceId:event.id,_raceData:event,
    date:stableShortDate(iso),track:trackName,race:event.name,class:event.class||'',
    surface:'',distance:'',purse:event.purse||'',horse:'',base:'',ship:'',jockey:'',
    trainer:'',ready:'',status:'STAKES'}:null;
