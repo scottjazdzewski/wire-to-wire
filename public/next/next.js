@@ -3050,7 +3050,12 @@ window.addEventListener('click',e=>{
    window.location.assign('/archive/?page=horses&horse='+encodeURIComponent(val));
   return;
  }
- if(key==='horse')return openEntityRecord(val,'horse');
+ if(key==='horse'){
+  const row=window.__WTW_1999_UI_DATA__?.stableHorsePreview?.(val);
+  if(row?._testGenerated)return previewRecordRoute('horse',val,row);
+  if(row?._canonId)return openWorld1999Entity('horse:'+row._canonId);
+  return openEntityRecord(val,'horse');
+ }
  if(key==='fixture'){const n=$$('.right .fixtureList .fixture[data-track]')[Number(val)];return bridgeNode(n)}
  if(key==='track'){const row=$$('.right .fixture').find(x=>x.dataset.track===val);if(row){const p=$('p',row);return bridgeNode(p)}return bridgeNode(originalAct('World'))}
  if(key==='move'){const n=$$('#moveGrid .moveCard')[Number(val)];bridgeNode(n);return}
