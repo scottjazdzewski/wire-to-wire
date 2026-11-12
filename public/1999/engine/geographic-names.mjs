@@ -10,7 +10,7 @@
  * https://www2.census.gov/topics/genealogy/1990surnames/dist.all.last
  * Future state/cohort ingestion: https://www.ssa.gov/oact/babynames/limits.html
  */
-export const GEO_NAME_MODEL='WTW_1999_CENSUS_US_BASE_WITH_EDITORIAL_INTERNATIONAL_V1';
+export const GEO_NAME_MODEL='WTW_1999_CENSUS_US_BASE_WITH_EDITORIAL_INTERNATIONAL_V2';
 const US_M='James John Robert Michael William David Richard Charles Joseph Thomas Christopher Daniel Paul Mark Donald George Kenneth Steven Edward Brian Ronald Anthony Kevin Jason Matthew Gary Timothy Jose Larry Jeffrey Frank Scott Eric Stephen Andrew Raymond Gregory Joshua Jerry Dennis Walter Patrick Peter Harold Douglas Henry Carl Arthur Ryan Roger Juan Jack Albert Jonathan Justin Keith Samuel Louis Eugene Carlos Victor Martin Jesse Craig Alan Clarence Sean Antonio Luis Leonard Manuel Vincent Francis Mario Francisco Miguel Oscar'.split(' ');
 const US_F='Mary Patricia Linda Barbara Elizabeth Jennifer Maria Susan Margaret Dorothy Lisa Nancy Karen Betty Helen Sandra Donna Carol Ruth Sharon Michelle Laura Sarah Kimberly Deborah Jessica Shirley Cynthia Angela Melissa Brenda Amy Anna Rebecca Virginia Kathleen Pamela Martha Amanda Stephanie Carolyn Christine Marie Janet Catherine Frances Ann Joyce Diane Alice Julie Heather Teresa Doris Gloria Evelyn Jean Cheryl Mildred Katherine Joan Ashley Judith Rose Janice Kelly Nicole Judy Christina Irene Rachel Andrea Anne Jacqueline Ruby Diana Emily Victoria'.split(' ');
 const US_S='Smith Johnson Williams Jones Brown Davis Miller Wilson Moore Taylor Anderson Thomas Jackson White Harris Martin Thompson Garcia Martinez Robinson Clark Rodriguez Lewis Lee Walker Hall Allen Young Hernandez King Wright Lopez Hill Scott Green Adams Baker Gonzalez Nelson Carter Mitchell Perez Roberts Turner Phillips Campbell Parker Evans Edwards Collins Stewart Sanchez Morris Rogers Reed Cook Morgan Bell Murphy Bailey Rivera Cooper Richardson Cox Howard Ward Torres Peterson Gray Ramirez James Watson Brooks Kelly Sanders Price Bennett Wood Barnes Ross Henderson Coleman Jenkins Perry Powell Long Patterson Hughes Flores Washington Butler Simmons Foster Bryant Alexander Russell Griffin Diaz Hayes Ford Hamilton Graham Sullivan Wallace Woods Cole West Jordan Owens Reynolds Fisher Ellis Harrison Gibson McDonald Cruz Marshall Ortiz Gomez Freeman Webb Simpson Stevens Tucker Porter Hunter Hicks Crawford Boyd Mason Morales Kennedy Dixon Ramos Reyes Gordon Shaw Holmes Rice Robertson Hunt Black Daniels Palmer Mills Nichols Grant Knight Ferguson Rose Stone Hawkins Dunn Perkins Hudson Spencer Gardner Payne Pierce Berry Matthews Arnold Wagner Willis Ray Watkins Olson Carroll Duncan Snyder Hart Cunningham Bradley Lane Andrews Ruiz Harper Fox Riley Armstrong Carpenter Weaver Greene Lawrence Elliott Chavez Austin Peters Franklin Lawson Fields Gutierrez'.split(' ');
@@ -79,9 +79,18 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[]){
    const candidate=first+' '+surname;
    if(!reserved.has(candidate.toLocaleLowerCase('en-US'))){name=candidate;break}
   }
-  if(!name){const first=pick(given,seed,'given:'+i),last=pick(family,seed,'family:'+i);
-    name=first+' '+String.fromCharCode(65+i%26)+'. '+last;
-    while(reserved.has(name.toLocaleLowerCase('en-US')))name=first+' '+(i+1)+' '+last;
+  if(!name){
+   // Weighted Census names can exhaust high-frequency combinations. Fall
+   // back to plausible combinations from the SAME country's name pools.
+   // Do not append numeric row identifiers to human names.
+   for(let attempt=0;attempt<4096;attempt++){
+    const first=pick(given,seed,'fallback-given:'+i+':'+attempt);
+    const last=pick(family,seed,'fallback-family:'+i+':'+attempt);
+    const letter=String.fromCharCode(65+hash(seed,'fallback-middle:'+i+':'+attempt)%26);
+    const candidate=attempt<1024?first+' '+last:first+' '+letter+'. '+last;
+    if(!reserved.has(candidate.toLocaleLowerCase('en-US'))){name=candidate;break}
+   }
+   if(!name)throw Error('Country-specific personnel name pool exhausted; expand it instead of adding numbered identities');
   }
   reserved.add(name.toLocaleLowerCase('en-US'));
   records.push({name,birthCountry:country,role,source:country==='US'?'CENSUS_1990_US_NATIONAL_EXCERPT_PLUS_TEST_DRAW':'CURATED_COUNTRY_TEST_POOL_NOT_CENSUS',originModel:'PROVISIONAL_RACING_ROLE_MIX_NOT_MEASURED'});
