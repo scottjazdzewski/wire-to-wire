@@ -330,6 +330,17 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   }
   return history;
  }
+ function openingCondition(id,age,status){
+  const fitness=45+hash(seed,id+':opening-fitness')%51;
+  const fatigue=5+hash(seed,id+':opening-fatigue')%43;
+  const risk=hash(seed,id+':opening-risk')%100;
+  const health=risk>=92?'TEST_VET_WATCH':risk>=76?'TEST_MONITOR':'TEST_NO_ALERT';
+  const nonrunner=['TOO_YOUNG','AT_STUD','BROODMARE','RETIRED'].includes(status);
+  const readiness=nonrunner?0:Math.max(24,Math.min(98,Math.round(fitness*.78+(100-fatigue)*.22)));
+  return {fitness,fatigue,health,readiness,status,
+   confidence:35+hash(seed,id+':opening-confidence')%61,
+   provenance:'SIMULATED_1999_START_STATE_NOT_OBSERVED_VET_FACT'};
+ }
  function horseAt(index){
   if(!Number.isInteger(index)||index<0||index>=HORSE_POPULATION)throw Error('Horse index out of range');
   if(horseCache.has(index))return horseCache.get(index);
@@ -345,6 +356,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
     finances:{estimatedValue:money(5000+unit(seed,c.id+':value')*700000),monthlyCareCost:money(1200+unit(seed,c.id+':cost')*1500)},
     career:c.sourceRecordedStakesSeasons,sourceRecordedStakesSeasons:c.sourceRecordedStakesSeasons,
     racingStatus1999:c.racingStatus||c.trainingStatus||'SOURCE_STATUS_NOT_VERIFIED',
+    openingCondition:openingCondition(c.id,age,c.racingStatus||c.trainingStatus||'SOURCE_STATUS_NOT_VERIFIED'),
     ownerId:c.ownerId,trainerId:c.trainerId,stableTrackId:c.openingStable.trackId,authority:'LOCKED_NAME_ID_HISTORY_TEST_TRAITS'};
    horseCache.set(index,o);return o;
   }
@@ -396,7 +408,8 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    pedigree:{sireId:sire.id,damId:dam.id,parentBirthYears:[sire.foalYear,dam.foalYear]},
    ability,attributes:traits(hor,seed,id,ability),
    reputation:standing(seed,id,.15+unit(seed,id+'standing')*.65),
-   racingStatus1999:careerState,preferredJockeyId,
+   racingStatus1999:careerState,
+   openingCondition:openingCondition(id,age,careerState),preferredJockeyId,
    relationships:{ownerTrainer:relationship(owner.id,trainer.id,'OWNER_TRAINER'),
     trainerJockey:relationship(trainer.id,preferredJockeyId,'TRAINER_JOCKEY'),
     horseTrainer:relationship(id,trainer.id,'HORSE_TRAINER')},
