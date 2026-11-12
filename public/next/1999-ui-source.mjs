@@ -24,6 +24,15 @@ const ownedHorseCount=q('/api/1999/sim/owner-horses',portfolioQuery+'&offset=0&l
 const stableHorses=allPages('/api/1999/sim/owner-horses?'+portfolioQuery,ownedHorseCount);
 const horseLookup=new Map([...srcHorses,...stableHorses].map(h=>[h.name,h]));
 const sourceHorseIds=new Set(srcHorses.map(h=>h.id));
+function openingPedigree(h){
+ if(!h||!sourceHorseIds.has(h.id))return null;
+ const historic=historicalHorseById(h.id);
+ return historic?historicalPedigree(h.id,2):{
+  id:h.id,name:h.name,foalYear:h.foalYear,sex:h.sex,
+  source:'1999_SOURCE_LOCKED_OPENING',
+  sire:historicalPedigree(h.sireId,1),dam:historicalPedigree(h.damId,1)
+ };
+}
 
 const ownerIndex=srcOrgs.findIndex(o=>o.id===activeOwnerId);
 const initialOwner=q('/api/1999/sim/owners','offset='+Math.max(0,ownerIndex)+'&limit=1').items?.[0]||null;
@@ -80,7 +89,7 @@ function sourceFacts(name){
   sire_id:h.sireId,dam_id:h.damId,
   sire_name:historicalHorseById(h.sireId)?.name||null,
   dam_name:historicalHorseById(h.damId)?.name||null,
-  historicalPedigree:source?historicalPedigree(h.id,2):null};
+  historicalPedigree:source?openingPedigree(h):null};
 }
 const ownerFor=name=>{const h=horseLookup.get(name);return h?(h.ownerId===activeOwnerId?selectedOwner:ownerNames.get(h.ownerId)||h.ownerId||''):null;};
 function roster(){return stableHorses.map((h,i)=>({name:h.name,
@@ -97,7 +106,7 @@ function stableHorsePreview(name){
   ownerId:h.ownerId||'',trainerId:h.trainerId||'',
   sex:h.sex||'',sire:historicalHorseById(h.sireId)?.name||h.sireId||'',
   dam:historicalHorseById(h.damId)?.name||h.damId||'',
-  historicalPedigree:source?historicalPedigree(h.id,2):null,owner:ownerFor(name)||'',
+  historicalPedigree:source?openingPedigree(h):null,owner:ownerFor(name)||'',
   trainer:sourceFacts(name)?.connections.trainer||'',track:h.openingStable?.name||h.stableTrackId||'',
   location:city(h.location||h.openingStable)||'',
   status:source?h.racingStatus||'SOURCE OPENING':'1999 GENERATED TEST — NO RESULTS'};
