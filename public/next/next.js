@@ -1456,7 +1456,7 @@ function profileDetail(route,sourceOverride=null){
    (known(x.track)?' · '+entityReferenceButton(x.track,'track'):'')+
    '</span><span>'+safe(x.finish||'—')+'</span><span>Verified</span></div>').join('')+'</div>':
    testRaceHistory.length?testHistoryTable(testRaceHistory.slice(0,5)):
-   '<p class="ng-horse-small-note">No pre-1999 starts attached; source and test histories remain separate.</p>';
+   '<p class="ng-horse-small-note">No certified race-by-race form or pre-1999 starts attached; source and test histories remain separate.</p>';
   const panel=(name,body,cls='')=>'<section class="ng-horse-mgr-panel '+cls+'"><header><strong>'+name+'</strong></header>'+body+'</section>';
   return '<div class="ng-horse-dossier">'+
    '<div class="ng-horse-dossier-caption"><strong>ATHLETE & RACING INTELLIGENCE</strong><span>'+observedCount+
