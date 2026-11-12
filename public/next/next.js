@@ -2836,12 +2836,19 @@ function managerDashboard(){
      '<div class="ng-manager-secondary-list">'+(schedule||'<p class="ng-manager-empty">No recorded race targets.</p>')+'</div></section>'+
    '</aside></div></section>';
 }
+function open1999Race(record){
+ if(!record)return false;
+ APP.raceDetail=record._raceData||record;
+ openCustomView('RaceFile:'+encodeURIComponent(APP.raceDetail.id||record._raceId||record._name||record.name),'Racing',APP.page);
+ return true;
+}
 function renderRoute(){const route=APP.custom?null:currentRoute();const previewMode=APP.custom.startsWith('Preview:');const title=previewMode?(APP.previewEntity?.name||decodeURIComponent(APP.custom.split(':').slice(2).join(':'))):route?.title||APP.custom||'Page';const kicker=previewMode?'RECORD PREVIEW':route?.kicker||APP.section;const bdg=route?badge(({'Horse Profile':'horse','People Profile':'people','Farm Profile':'farm_stable','Track Profile':'track','Race Calendar':'meet_schedule','Stable':'farm_stable','Sales':'connections','News':'history','World':'track','Opportunity Board':'reputation'}[route.kicker])||'history'):pageBadge();
 let body='';const profile=route&&/Profile$/.test(route.kicker)?profileDetail(route):null;const functional=route?functionalRoute(route):null;if(profile)body=profile;else if(functional)body=functional;else if(route)body=route.body;else if(APP.custom==='Organization Overview'){body=organizationOverview()}
 else if(APP.custom==='Due Actions'){body=dueActionOverview()}
 else if(['Messages','Decisions','Opportunities'].includes(APP.custom)){body=managerDashboard()}
 else if(APP.custom==='Search'){body=searchView()}
 else if(APP.custom.startsWith('WorldRecord:')){body=world1999Profile()}
+else if(APP.custom.startsWith('RaceFile:')){const id=decodeURIComponent(APP.custom.slice('RaceFile:'.length));body=window.WTW1999RaceConditions?.render(APP.raceDetail?.id===id?APP.raceDetail:window.__WTW_1999_UI_DATA__?.findStake?.(id),window.__WTW_1999_UI_DATA__)||''}
 else if(APP.custom.startsWith('Preview:')){body=previewRecordView()}
 else {body=managerDashboard()}
 const isProfile=Boolean(profile)||body.startsWith('<div class="ng-profile-view '),isOrganization=APP.custom==='Organization Overview',isSearch=APP.custom==='Search',isManager=body.startsWith('<section class="ng-manager-screen">');
@@ -2998,6 +3005,7 @@ window.addEventListener('click',e=>{
  if(key==='dept-company'){APP.departmentCompany=val;return pageTab('Sale Calendar')}
  if(key==='dept-open'){
   const r=APP.departmentVisible[Number(val)];if(!r)return;
+   if(r._kind==='race'&&r._raceData)return open1999Race(r._raceData);
   if(r._testGenerated)return previewRecordRoute('horse',r._name,r);
   if(r._worldKey)return openWorld1999Entity(r._worldKey);
   if(r._canonId){const match=world1999Entries().find(x=>x.canonicalId===r._canonId);
@@ -3056,6 +3064,7 @@ window.addEventListener('click',e=>{
   APP.section='World';return pageTab(val);
  }
  if(key==='world-open')return openWorld1999Entity(val);
+ if(key==='1999-stake')return open1999Race(window.__WTW_1999_UI_DATA__?.findStake?.(val));
  if(key==='named-entity')return openEntityRecord(btn.dataset.name||'',btn.dataset.kind||'',btn.dataset.track?{_track:btn.dataset.track}:null);
  if(key==='stable-sort'){if(APP.stableSort===val)APP.stableSortDesc=!APP.stableSortDesc;else{APP.stableSort=val;APP.stableSortDesc=false}return paint()}
  if(key==='stable-filter'){APP.stableFilter=val;return paint()}
@@ -3088,7 +3097,9 @@ window.addEventListener('click',e=>{
  if(key==='network-select'){APP.networkFocus=val;return paint()}
  if(key==='detailtab'){APP.detailTab=val;return paint()}
  if(key==='stake-sort'){if(APP.stakeSort===val)APP.stakeSortDesc=!APP.stakeSortDesc;else{APP.stakeSort=val;APP.stakeSortDesc=false}return paint()}
- if(key==='sourcebutton'){const n=$$('#routeBody [data-act]')[Number(val)];return bridgeNode(n)}
+ if(key==='sourcebutton'){const n=$('#routeBody [data-act]')[Number(val)];
+  if(n?.classList.contains('stakesRow')){const track=currentRoute()?.title||'';const title=n.querySelector('strong')?.textContent.trim()||n.children[0]?.textContent.trim()||'';const match=window.__WTW_1999_UI_DATA__?.stakesForTrack?.(track)?.find(r=>r.name===title);if(match)return open1999Race(match)}
+  return bridgeNode(n)}
  if(key==='action'){
   if(window.__WTW_1999_MANAGEMENT__&&val==='Continue'){
     window.__WTW_1999_MANAGEMENT__.advanceOneDay?.();
