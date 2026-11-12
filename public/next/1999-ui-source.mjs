@@ -93,7 +93,7 @@ const fictionalOwner=[...fictionalOwnerTally].sort((a,b)=>b[1]-a[1]||a[0].locale
 const activeOwnerId=gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?fictionalOwner:
  [...ownership].filter(([id])=>id).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))[0]?.[0]||null;
 const fictionalOwnerIndex=activeOwnerId&&gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?
- Math.max(0,Number(String(activeOwnerId).match(/(\\d+)$/)?.[1]||1)-1):0;
+ Math.max(0,Number(String(activeOwnerId).match(/(\d+)$/)?.[1]||1)-1):0;
 const ownerRecord=activeOwnerId&&gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?
  q('/api/1999/sim/owners','offset='+fictionalOwnerIndex+'&limit=1').items?.[0]:null;
 const selectedOwner=ownerNames.get(activeOwnerId)||
