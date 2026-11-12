@@ -131,7 +131,7 @@ function makeDepartmentRows(section,page,context={}){
     jockey:'',trainer:'',ready:'',status:r.canonical===false?'WTW 1999 GAME STAKES · NOT ENTERED':'1999 CANON SCHEDULE · NOT ENTERED'}));
   }
   if(page==='Race Planning'){
-   const tracks=get('racing-tracks','/api/1999/sim/tracks',134);
+   const tracks=get('racing-tracks','/api/1999/sim/tracks',worldCounts.tracks);
    const rows=[];
    for(let i=0;i<tracks.length;i++){
     const card=q('/api/1999/sim/conditions','date='+encodeURIComponent(date)+'&trackIndex='+i);
