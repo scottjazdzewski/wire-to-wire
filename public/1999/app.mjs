@@ -24,7 +24,7 @@ let mode=localStorage.getItem(SAVE_MODE_KEY)==='FULLY_FICTIONAL_TEST'?'FULLY_FIC
 let tab='full-horses',offset=0,term='',token=0,trackIndex=0,tracksLoaded=false;
 let visibleRecords=[];
 const fmtDate=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-US',{timeZone:'UTC',weekday:'long',year:'numeric',month:'long',day:'numeric'});
-const modelArgs=()=>new URLSearchParams({seed:String(clock.seed),mode});
+const modelArgs=()=>new URLSearchParams({seed:String(clock.seed),mode,date:clock.currentDate});
 function drawClock(){
  $('gameDate').textContent=fmtDate(clock.currentDate);$('gameDay').textContent='DAY '+clock.day;
  $('runMode').textContent=(mode==='FULLY_FICTIONAL_TEST'?'FULLY FICTIONAL':'CANON ANCHORED')+' · SEED '+clock.seed;
@@ -79,7 +79,7 @@ function select(next){
 async function json(path){return readLocal1999World(path);}
 function metric(n,label){return '<div class="metric"><strong>'+esc(Number(n||0).toLocaleString('en-US'))+'</strong><span>'+esc(label)+'</span></div>';}
 async function overview(){
- try{const data=await json('/api/1999/sim/overview?'+modelArgs().toString());if(data.asOf!=='1999-01-01')throw Error('World has wrong date');
+ try{const data=await json('/api/1999/sim/overview?'+modelArgs().toString());if(data.asOf!==clock.currentDate)throw Error('World projection does not match game date');
  const c=data.counts||{};
  $('metrics').innerHTML=metric(c.horses,'Horses in test world')+metric(c.owners,'Ownership groups')+metric(c.trainers,'Trainer strings')+metric(c.tracks,'Racing tracks')+metric(c.facilities,'Physical facilities')+metric(c.auctions,'1999 sales events');
  }catch(e){$('metrics').textContent=e.message;}
