@@ -56,8 +56,8 @@ const unit=(seed,key)=>hash(seed,key)/4294967296;
 const pick=(arr,seed,key)=>arr[Math.floor(unit(seed,key)*arr.length)];
 const round=n=>Math.round(n*10000)/10000;
 const fmtLoc=x=>({city:x.locality??x.city??null,state:x.region??x.state??null,country:x.country??'USA'});
-// Playable 1999 racing is U.S. and Canada only. Historical canon is never
-// rewritten; international records remain available in the historical archive.
+// North American locality helpers are retained for breeding geography only.
+// Racecourse calendars span all canonical 1999 courses, including overseas tracks.
 const DOMESTIC_REGIONS=new Set(('AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY DC AB BC MB NB NL NS NT NU ON PE QC SK YT').split(' '));
 const domesticTrack=t=>{
  const country=String(t?.country||t?.countryCode||'').trim().toLowerCase().replace(/[^a-z]/g,'');
@@ -65,7 +65,9 @@ const domesticTrack=t=>{
  const region=String(t?.region||t?.state||'').trim().toUpperCase();
  return DOMESTIC_REGIONS.has(region)||/^(ALABAMA|ALASKA|ARIZONA|ARKANSAS|CALIFORNIA|COLORADO|CONNECTICUT|DELAWARE|FLORIDA|GEORGIA|HAWAII|IDAHO|ILLINOIS|INDIANA|IOWA|KANSAS|KENTUCKY|LOUISIANA|MAINE|MARYLAND|MASSACHUSETTS|MICHIGAN|MINNESOTA|MISSISSIPPI|MISSOURI|MONTANA|NEBRASKA|NEVADA|NEW HAMPSHIRE|NEW JERSEY|NEW MEXICO|NEW YORK|NORTH CAROLINA|NORTH DAKOTA|OHIO|OKLAHOMA|OREGON|PENNSYLVANIA|RHODE ISLAND|SOUTH CAROLINA|SOUTH DAKOTA|TENNESSEE|TEXAS|UTAH|VERMONT|VIRGINIA|WASHINGTON|WEST VIRGINIA|WISCONSIN|WYOMING|ONTARIO|QUEBEC|BRITISH COLUMBIA|ALBERTA|MANITOBA|SASKATCHEWAN|NOVA SCOTIA|NEW BRUNSWICK|PRINCE EDWARD ISLAND|NEWFOUNDLAND AND LABRADOR)$/i.test(region);
 };
-const sourceTracks=canon.tracks.filter(domesticTrack);
+// Preserve the full 134-course 1999 universe and international fixture access.
+// North-American-only breeding hubs remain a separate, explicit generator rule.
+const sourceTracks=canon.tracks;
 const NORTH_AMERICAN_FOALING_HUBS=TEST_FOALING_HUBS.filter(h=>h[2]==='United States'||h[2]==='Canada');
 function mixName(seed,i){const total=A.length*B.length*C.length,k=(i*71081+seed)%total;
  const a=A[k%A.length],b=B[Math.floor(k/A.length)%B.length],c=C[Math.floor(k/(A.length*B.length))%C.length];
