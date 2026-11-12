@@ -32,4 +32,4 @@ jobs:
           node --check public/1999/app.mjs
           node --check src/worker.js
       - name: Jan 1 source and player-AI safety verification
-        run: node --test tests/1999-opening-world.test.mjs tests/1999-entry-gate.test.mjs tests/1999-full-universe.test.mjs tests/1999-test-clock.test.mjs
+        run: node --test tests/1999-opening-world.test.mjs tests/1999-entry-gate.test.mjs tests/1999-full-universe.test.mjs tests/1999-test-clock.test.mjs tests/1999-full-world-api.test.mjs
