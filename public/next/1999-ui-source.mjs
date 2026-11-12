@@ -178,6 +178,14 @@ function makeDepartmentRows(section,page,context={}){
    _testFinances:o.finances||{},_testReputation:o.reputation||{}}));
  }
  if(section==='Personnel'){
+  const trainerRelations=new Map(),jockeyRelations=new Map();
+  for(const h of stableHorses){
+   const own=h.relationships?.ownerTrainer,ride=h.relationships?.trainerJockey;
+   if(own&&h.trainerId){const entry=trainerRelations.get(h.trainerId)||{total:0,count:0};
+    entry.total+=own.trust;entry.count++;trainerRelations.set(h.trainerId,entry)}
+   if(ride&&h.preferredJockeyId){const entry=jockeyRelations.get(h.preferredJockeyId)||{total:0,count:0};
+    entry.total+=ride.chemistry;entry.count++;jockeyRelations.set(h.preferredJockeyId,entry)}
+  }
   const roles={Trainers:'trainer',Jockeys:'jockey',Staff:'staff'},wanted=roles[page]||'all';
   const base=page==='Trainers'?get('trainers','/api/1999/sim/trainers',worldCounts.trainers):
    page==='Jockeys'||page==='Staff'||page==='Overview'?get('workforce','/api/1999/sim/people',generatedPeopleCount):[];
@@ -186,7 +194,10 @@ function makeDepartmentRows(section,page,context={}){
    const attrs=p.attributes||p.roleAttributes||{},rating=v=>v==null?'':String(v);
    const roleNames={trainer:'Conditioning & placement',jockey:'Riding & tactics',farm_manager:'Farm management',
     veterinarian:'Veterinary medicine',farrier:'Hoof care',bloodstock_agent:'Bloodstock selection',racing_secretary:'Race conditions'};
+   const link=(p.role==='trainer'?trainerRelations:jockeyRelations).get(p.id);
+   const stableRelationship=link?Math.round(link.total/link.count):null;
    return {_kind:'person',_name:p.name,_id:p.id,name:p.name,age:p.age||'',role:p.role||'',reputation:rep(p.reputation),
+    relationship:stableRelationship!=null?stableRelationship+'/100 · '+link.count+' HORSES':'',
     ca:rating(p.ability?.currentStars),pa:rating(p.ability?.potentialStars),specialty:roleNames[p.role]||'',
     morale:typeof p.morale==='number'?Math.round(p.morale*100)+'%':'',
     workload:typeof p.workload==='number'?Math.round(p.workload*100)+'%':'',
