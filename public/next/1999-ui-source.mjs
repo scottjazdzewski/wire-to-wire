@@ -17,6 +17,44 @@ const ownership=new Map();for(const h of srcHorses){ownership.set(h.ownerId,(own
 const activeOwnerId=[...ownership].filter(([id])=>id).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))[0]?.[0]||null;
 const stableHorses=srcHorses.filter(h=>h.ownerId===activeOwnerId && h.foalYear<=1997).slice(0,24);
 const selectedOwner=ownerNames.get(activeOwnerId)||activeOwnerId||'1999 Foundation Stable';
+
+const ownerIndex=srcOrgs.findIndex(o=>o.id===activeOwnerId);
+const initialOwner=q('/api/1999/sim/owners','offset='+Math.max(0,ownerIndex)+'&limit=1').items?.[0]||null;
+const openingCash=initialOwner?.finances?.cash??null;
+const messageSpecs=[
+ ['opening-stable','Stable Office','1999 opening roster: '+selectedOwner,
+  'Source-locked horses · ownership and barns',true,'Stable'],
+ ['opening-stakes','Racing Secretary','1999 stakes calendar: 93 scheduled events',
+  'No entries or results recorded',true,'Racing'],
+ ['opening-breeding','Breeding Office','31 stallions and 2,036 mare boarding files',
+  'Source records, not declared matings',false,'Breeding'],
+ ['opening-market','Sales Desk','36 generated sale dates to test',
+  'Auction transactions have NOT occurred',false,'Sales'],
+ ['opening-finance','Accounting','Opening cash and budgets are TEST valuations',
+  'No accounting transactions have posted',true,'Finances'],
+ ['opening-tracks','Track Operations','134 racecourses available for test planning',
+  'Operating conditions and meet dates remain test data',false,'Tracks'],
+ ['opening-people','Personnel Office','4,200 trainers in the test economy',
+  'Only known people identities are source-locked',false,'Personnel'],
+ ['opening-universe','World Registrar','87,500-horse 1999 universe loaded',
+  '267 source-locked opening runners, remainder test-generated',false,'World']
+];
+const officeMessages=messageSpecs.map(([caseId,from,title,meta,urgent,section],i)=>({
+ case:caseId,from,title,meta,time:'DAY 1',urgent,resolved:false,
+ initials:from.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase(),section
+}));
+const officeDesks=Object.fromEntries(messageSpecs.map(([key,from,title,meta,urgent,section])=>[key,{
+ type:'1999 OPENING / '+(urgent?'REVIEW':'INTELLIGENCE'),title,summary:meta,
+ pressure:urgent?'Review before 1999 play':'Planning',
+ risk:'No 1999 result or payment may be precommitted',
+ read:'Source canon preserved; simulated attributes flagged',source:from,
+ moves:[{tag:'INSPECT',title:'Open '+section+' department',menu:section},
+  {tag:'CROSS-CHECK',title:'Open World directory',menu:'World'}],
+ intel:[{title:'Evidence boundary',body:'Source identities remain locked; operating values are test-world assumptions.'},
+  {title:'Calendar boundary',body:'January 1, 1999 start. No future race result, auction settlement, or mating is preloaded.'},
+  {title:'Production status',body:'World is populated for UI testing; transaction and race engines are not yet operational.'}]
+}]));
+
 const records=new Map();
 const get=(key,route,count)=>{if(!records.has(key))records.set(key,allPages(route,count));return records.get(key);};
 const city=v=>[v?.city||v?.locality,v?.state||v?.region].filter(Boolean).join(', ');
@@ -175,8 +213,10 @@ function extraTracks(){
 window.__WTW_1999_UI_DATA__={
  schema:'WTW_1999_CANON_ANCHORED_UI_ADAPTER_V1',
  sourceOwnerId:activeOwnerId,sourceOwnerName:selectedOwner,stableHorses:roster(),
- sourceFacts,ownerFor,departmentRows,auctionList,extraTracks,worldHorsePage,
+ sourceFacts,ownerFor,departmentRows,auctionList,extraTracks,
+ officeMessages,officeDesks,openingCash,worldHorsePage,
  counts:q('/api/1999/sim/overview').counts,
  bridgeStatus:'SOURCE_IDS_LOCKED; OTHER VALUES_MARKED_TEST; NO_1999_OUTCOME_COMMITTED'
 };
+if(window.__WTW_NEXT__?.app)window.__WTW_NEXT__.app.activeCase='opening-stable';
 window.__WTW_NEXT__?.paint?.();
