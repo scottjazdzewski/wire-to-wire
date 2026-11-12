@@ -3,11 +3,12 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {readLocal1999World} from '../public/1999/engine/local-api.mjs';
+import {trackProgram1999} from '../public/next/1999-track-program.mjs';
 const source=readFileSync('public/next/1999-ui-source.mjs','utf8');
 const js=readFileSync('public/next/next.js','utf8');
 const html=readFileSync('public/next/index.html','utf8');
-const context={window:{__WTW_NEXT__:{paint(){}}},readLocal1999World};
-vm.runInNewContext(source.replace(/^import\s+\{readLocal1999World\}\s+from\s+'\/1999\/engine\/local-api.mjs(?:\?[^']+)?';\s*$/m,''),context,{timeout:20000});
+const context={window:{__WTW_NEXT__:{paint(){}}},readLocal1999World,trackProgram1999};
+vm.runInNewContext(source.replace(/^import\s+\{(?:readLocal1999World|trackProgram1999)\}\s+from\s+'\/(?:1999\/engine\/local-api|next\/1999-track-program).mjs(?:\?[^']+)?';\s*$/gm,''),context,{timeout:20000});
 const ui=context.window.__WTW_1999_UI_DATA__;
 test('1999 source data is mounted behind unchanged existing management UI',()=>{
  assert.ok(ui);
