@@ -30,10 +30,12 @@ test('every human has common traits, with role-specific abilities and valid comb
  const dual=requiredAttributeKeys(catalog,'people',['trainer','breeder']);
  assert.ok(dual.includes('conditioning')&&dual.includes('mating_planning'));
  assert.equal(dual.length,new Set(dual).size,'Dual roles must not repeat shared traits');
- for(const role of ['owner','breeder','farm_manager','veterinarian','bloodstock_agent','groom','farrier','exercise_rider','racing_secretary']){
+ for(const role of ['owner','breeder','farm_manager','veterinarian','bloodstock_agent','farrier','racing_secretary']){
    assert.ok(requiredAttributeKeys(catalog,'people',[role]).length>catalog.person_common.length,role+' must have specialties');
  }
  assert.throws(()=>requiredAttributeKeys(catalog,'people',['nonexistent']),/roles/);
+ assert.equal(catalog.person_roles.groom,undefined);
+ assert.equal(catalog.person_roles.exercise_rider,undefined);
 });
 
 test('generator coverage audit catches missing ability values but does not create any',()=>{

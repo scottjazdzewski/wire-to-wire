@@ -136,3 +136,22 @@ test('fully fictional universe keeps all tracks and attributes but no locked sou
  assert.notEqual(f.trackAt(0).name,canon.tracks[0].name);
  assert.equal(f.startDate,'1999-01-01');
 });
+
+test('1999 generated names have unique identities and role-appropriate international jockeys',()=>{
+ const w=create1999Universe({seed:19990101}),names=new Set(),countries=new Map();
+ for(let i=0;i<w.counts.people-w.sourcePeople.length;i++){
+  const p=w.personAt(i);
+  assert.ok(p.id&&p.name);
+  assert.ok(p.role!=='groom'&&p.role!=='exercise_rider');
+  if(p.nameStatus!=='CANON_LOCKED'){
+   assert.ok(!names.has(p.name),p.id+' duplicate name '+p.name);
+   names.add(p.name);
+   assert.ok(p.birthCountry,p.id+' has no origin country');
+  }
+  if(p.role==='jockey')countries.set(p.birthCountry,(countries.get(p.birthCountry)||0)+1);
+ }
+ assert.ok(countries.size>=8,'Geographically diverse jockey population');
+ const regional=['PR','PA','VE','MX','CL','PE','CO','DO'].reduce((n,c)=>n+(countries.get(c)||0),0);
+ assert.ok(regional>=500,'Provisional racing test scenario includes Latin American / Caribbean riders');
+ assert.deepEqual(w.excludedActiveStaffRoles,['groom','exercise_rider']);
+});

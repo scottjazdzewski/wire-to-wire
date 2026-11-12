@@ -726,32 +726,6 @@
         "meaning": "Executing bids, offers and terms"
       }
     ],
-    "groom": [
-      {
-        "key": "handling",
-        "label": "Horse Handling",
-        "scope": "latent",
-        "meaning": "Safe handling and consistent horse routines"
-      },
-      {
-        "key": "observation",
-        "label": "Observation",
-        "scope": "latent",
-        "meaning": "Noticing meaningful changes in behavior, appetite and movement"
-      },
-      {
-        "key": "daily_care",
-        "label": "Daily Care",
-        "scope": "latent",
-        "meaning": "Quality and consistency of everyday horse care"
-      },
-      {
-        "key": "stress_reduction",
-        "label": "Stress Reduction",
-        "scope": "latent",
-        "meaning": "Minimizing stress in routine stable work"
-      }
-    ],
     "farrier": [
       {
         "key": "hoof_assessment",
@@ -776,32 +750,6 @@
         "label": "Soundness Collaboration",
         "scope": "latent",
         "meaning": "Coordinating responsibly with trainers and veterinarians"
-      }
-    ],
-    "exercise_rider": [
-      {
-        "key": "work_pace",
-        "label": "Workout Pace",
-        "scope": "latent",
-        "meaning": "Maintaining prescribed speeds in training"
-      },
-      {
-        "key": "horse_feedback",
-        "label": "Horse Feedback",
-        "scope": "latent",
-        "meaning": "Detecting changes in action and response"
-      },
-      {
-        "key": "horse_control",
-        "label": "Horse Control",
-        "scope": "latent",
-        "meaning": "Keeping a horse balanced and settled"
-      },
-      {
-        "key": "safety",
-        "label": "Safety",
-        "scope": "latent",
-        "meaning": "Managing training risks and responding to problems"
       }
     ],
     "racing_secretary": [

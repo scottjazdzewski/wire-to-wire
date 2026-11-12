@@ -1393,8 +1393,8 @@ function profileDetail(route){
    'stable staff':'stable_staff','bloodstock':'bloodstock_professional',
    'bloodstock agent':'bloodstock_agent','trainer':'trainer','jockey':'jockey',
    'owner':'owner','breeder':'breeder','farm manager':'farm_manager',
-   'veterinarian':'veterinarian','groom':'groom','farrier':'farrier',
-   'exercise rider':'exercise_rider','racing secretary':'racing_secretary'
+   'veterinarian':'veterinarian','farrier':'farrier',
+   'racing secretary':'racing_secretary'
   };
   const role=namedRoles[roleName]||null,cat=athleteAttributeCatalog||{};
   const work=state().staffState?.[route.title]||{};
@@ -2329,7 +2329,7 @@ function depRows(section,page,demo,auction){
     base:r.location||saved.base||'',
     wins:demo?String(n%410):'',_sourceIndex:r._index});
   });
-  const match={Trainers:/trainer/i,Jockeys:/jockey/i,Owners:/owner|patron/i,Staff:/staff|groom|exercise|vet|farrier/i}[page];
+  const match={Trainers:/trainer/i,Jockeys:/jockey/i,Owners:/owner|patron/i,Staff:/staff|vet|farrier|farm manager|bloodstock agent|racing secretary/i}[page];
   if(match)out=out.filter(r=>match.test(r.role));
   return out;
  }
@@ -2764,7 +2764,7 @@ function managerDashboard(){
   if(section==='Office'&&['Messages','Decisions'].includes(page))return kind==='decision';
   if(section==='Personnel'&&/^(Trainers|Jockeys|Owners|Staff)$/.test(page)&&kind==='person'){
    const role=(detail||'').toLowerCase(),target={Trainers:'trainer',Jockeys:'jockey',Owners:'owner',Staff:'staff'}[page];
-   return role.includes(target)||(page==='Staff'&&role.includes('groom'));
+   return role.includes(target);
   }
   if(section==='Facilities'&&page==='Farms')return kind==='farm';
   if(section==='Facilities'&&page==='Training Centers')return kind==='farm'||kind==='track';

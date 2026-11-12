@@ -35,12 +35,15 @@ test('source horses and owner identities drive existing stable, not 2014 demo',(
 test('all department rosters have usable test records on original screens',()=>{
  assert.equal(ui.departmentRows('Breeding','Stallions').length,31);
  assert.equal(ui.departmentRows('Breeding','Broodmares').length,2036);
- assert.equal(ui.departmentRows('Personnel','Ownership Groups').length,3308);
- assert.ok(ui.departmentRows('Personnel','Owners').length>=1);
+ assert.equal(ui.departmentRows('Personnel','Ownership Groups').length,0);
+ assert.equal(ui.departmentRows('Personnel','Owners').length,3308);
+  assert.ok(ui.departmentRows('Personnel','Owners').every(x=>x.principal&&x._testAttrs));
  assert.equal(ui.departmentRows('Personnel','Trainers').length,4200);
  assert.equal(ui.departmentRows('Personnel','Jockeys').length,1800);
- assert.ok(ui.departmentRows('Personnel','Staff').length>=10000);
+ assert.ok(ui.departmentRows('Personnel','Staff').length>=1000);
+  assert.ok(ui.departmentRows('Personnel','Staff').every(x=>!['groom','exercise_rider'].includes(x.role)));
  assert.equal(ui.departmentRows('Facilities','Overview').length,5234);
+  assert.ok(ui.departmentRows('Facilities','Overview').every(x=>Object.keys(x._testAttrs||{}).length>=4));
  assert.ok(ui.departmentRows('Finances','Overview').length>=3);
  assert.equal(ui.auctionList().length,36);
  assert.equal(ui.extraTracks().length,134);
