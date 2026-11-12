@@ -6,8 +6,8 @@
   const routeKicker = document.getElementById('routeKicker');
   const routeBody = document.getElementById('routeBody');
   const dateChip = document.querySelector('.dateChip');
-  let officeDate = new Date(window.__WTW_1999_MANAGEMENT__?'1999-01-01T12:00:00':'2014-07-15T12:00:00');
-  let currentCase = 'powerline';
+  let officeDate = new Date('1999-01-01T12:00:00');
+  let currentCase = 'opening-stable';
   let history = ['Office Overview'];
   let historyIndex = 0;
   const caseOrder = ['powerline','lastmatch','saratoga','pieta','cash','newsbuzz','entries','cedar'];
@@ -76,12 +76,13 @@
   };
 
   const decisionOutcomes = {"powerline":[{"immediate":"Powerline is entered for Saturday; the barn shifts into race-prep mode.","reaction":"The owner likes the intent. Gabe stays watchful about the colt getting too keen early.","followUp":"Final pre-race check and rider instructions.","dueDays":2,"affected":"Powerline / Gabe Larkin","destination":"Horse Profile","effects":[{"bucket":"horseState","id":"Powerline","key":"status","value":"Entered Saturday maiden"},{"bucket":"calendarState","id":"Powerline","key":"race_target","value":"Saturday maiden"},{"bucket":"ownerState","id":"Powerline ownership","key":"patience","delta":1},{"bucket":"staffState","id":"Gabe Larkin","key":"trust","delta":0},{"bucket":"horseState","id":"Powerline","key":"confidence","delta":0}]},{"immediate":"The entry is held while Powerline gets one more controlled work.","reaction":"Gabe appreciates the extra read. The owner accepts the delay but wants a clear answer after the work.","followUp":"Review the next work and decide whether to enter.","dueDays":3,"affected":"Powerline / Gabe Larkin","destination":"Horse Profile","effects":[{"bucket":"horseState","id":"Powerline","key":"status","value":"One more work requested"},{"bucket":"calendarState","id":"Powerline","key":"race_target","value":"Pending next work"},{"bucket":"staffState","id":"Gabe Larkin","key":"trust","delta":1},{"bucket":"ownerState","id":"Powerline ownership","key":"patience","delta":-1},{"bucket":"horseState","id":"Powerline","key":"confidence","delta":1}]},{"immediate":"Saturday is passed and the office begins looking for a cleaner first-race setup.","reaction":"The barn is comfortable protecting the lesson. Ownership is patient, but only if the next target is concrete.","followUp":"Shortlist the next two maiden options.","dueDays":4,"affected":"Powerline","destination":"Race Calendar","effects":[{"bucket":"horseState","id":"Powerline","key":"status","value":"Waiting for softer debut spot"},{"bucket":"calendarState","id":"Powerline","key":"race_target","value":"Alternate maiden target"},{"bucket":"ownerState","id":"Powerline ownership","key":"patience","delta":-1},{"bucket":"horseState","id":"Powerline","key":"confidence","delta":1}]}],"lastmatch":[{"immediate":"The Last Match is limited to a light jog and will be checked again before harder training.","reaction":"The vet team is comfortable with movement and monitoring. The trainer loses no useful schedule time today.","followUp":"Re-check filling after the jog and again tomorrow morning.","dueDays":1,"affected":"The Last Match / Harrow & Pike Vet","destination":"Horse Profile","effects":[{"bucket":"horseState","id":"The Last Match","key":"status","value":"Light jog only"},{"bucket":"horseState","id":"The Last Match","key":"soundness_risk","delta":-1},{"bucket":"horseState","id":"The Last Match","key":"vet_flag","value":"Monitor filling"},{"bucket":"staffState","id":"Trainer","key":"trust","delta":1}]},{"immediate":"Training is paused long enough to scan the area and get a firmer medical read.","reaction":"The vet likes the conservative call. The trainer accepts the interruption because uncertainty comes off the board.","followUp":"Review scan result before the next work is assigned.","dueDays":0,"affected":"The Last Match / Harrow & Pike Vet","destination":"Horse Profile","effects":[{"bucket":"horseState","id":"The Last Match","key":"status","value":"Diagnostic scan ordered"},{"bucket":"horseState","id":"The Last Match","key":"vet_flag","value":"Scan pending"},{"bucket":"horseState","id":"The Last Match","key":"soundness_risk","delta":-1},{"bucket":"finances","id":"stable","key":"medical_spend","delta":1}]},{"immediate":"The Last Match stays on the original training schedule with added observation after work.","reaction":"The trainer keeps momentum, but the vet wants the leg watched closely for any change.","followUp":"Mandatory post-work leg check.","dueDays":1,"affected":"The Last Match","destination":"Horse Profile","effects":[{"bucket":"horseState","id":"The Last Match","key":"status","value":"Training as planned"},{"bucket":"horseState","id":"The Last Match","key":"fitness","delta":1},{"bucket":"horseState","id":"The Last Match","key":"soundness_risk","delta":1},{"bucket":"staffState","id":"Harrow & Pike Vet","key":"trust","delta":-1}]}],"saratoga":[{"immediate":"The three hips stay live while the team completes physical inspections before setting a buying stance.","reaction":"Bloodstock likes the discipline; the farm office wants clean notes before any money is committed.","followUp":"Inspection notes and physical grades return to the office.","dueDays":1,"affected":"Saratoga shortlist / Alistair Dunleavy","destination":"Sales","effects":[{"bucket":"scoutingState","id":"Saratoga","key":"interest","delta":1},{"bucket":"scoutingState","id":"Saratoga","key":"status","value":"Physical inspection underway"},{"bucket":"finances","id":"stable","key":"scouting_spend","delta":1}]},{"immediate":"Hard ceilings are placed on all three hips before the ring opens.","reaction":"The finance side is relieved. Bloodstock can still bid, but emotion cannot move the number.","followUp":"Reconfirm ceilings after final vet notes.","dueDays":1,"affected":"Saratoga shortlist","destination":"Sales","effects":[{"bucket":"scoutingState","id":"Saratoga","key":"status","value":"Bid ceilings locked"},{"bucket":"finances","id":"stable","key":"discipline","delta":1},{"bucket":"staffState","id":"Alistair Dunleavy","key":"trust","delta":1}]},{"immediate":"The stable passes on the current buying push and keeps cash available for later opportunities.","reaction":"The finance desk approves. Bloodstock is disappointed but keeps the three profiles on file.","followUp":"Revisit only if a horse is unexpectedly still available after the session.","dueDays":2,"affected":"Saratoga shortlist","destination":"Sales","effects":[{"bucket":"scoutingState","id":"Saratoga","key":"status","value":"Passed for now"},{"bucket":"finances","id":"stable","key":"cash_flexibility","delta":1},{"bucket":"staffState","id":"Alistair Dunleavy","key":"trust","delta":0}]}],"pieta":[{"immediate":"Pieta moves one step forward in the breeze plan without changing the broader timetable.","reaction":"Anika likes the progress but keeps the instruction simple: forward, not fast.","followUp":"Evaluate how Pieta finishes the next breeze.","dueDays":3,"affected":"Pieta / Anika Rowe","destination":"Horse Profile","effects":[{"bucket":"horseState","id":"Pieta","key":"status","value":"Breeze plan advanced"},{"bucket":"horseState","id":"Pieta","key":"fitness","delta":1},{"bucket":"staffState","id":"Anika Rowe","key":"trust","delta":1}]},{"immediate":"Pieta stays on the current rhythm and no new pressure is added.","reaction":"The barn is comfortable letting confidence keep building. No one is forcing a date.","followUp":"Routine progress report after the next gallop-out.","dueDays":4,"affected":"Pieta","destination":"Horse Profile","effects":[{"bucket":"horseState","id":"Pieta","key":"status","value":"Holding current training rhythm"},{"bucket":"horseState","id":"Pieta","key":"confidence","delta":1},{"bucket":"calendarState","id":"Pieta","key":"race_target","value":"No forced target"}]},{"immediate":"Pieta gets a gate-school session before the next speed step.","reaction":"The staff likes addressing manners while she is mentally improving rather than waiting for a problem.","followUp":"Gate report and rider feedback.","dueDays":2,"affected":"Pieta / Anika Rowe","destination":"Horse Profile","effects":[{"bucket":"horseState","id":"Pieta","key":"status","value":"Gate school added"},{"bucket":"horseState","id":"Pieta","key":"confidence","delta":1},{"bucket":"staffState","id":"Anika Rowe","key":"trust","delta":1}]}],"cash":[{"immediate":"Normal operating spend remains approved; the barn can continue routine purchases and shipping.","reaction":"Department leads get predictability. The finance desk will still watch the small-cost drift.","followUp":"Review the next monthly projection for expense creep.","dueDays":14,"affected":"Stable operations / Farm Desk","destination":"Sales","effects":[{"bucket":"finances","id":"stable","key":"status","value":"Normal spend approved"},{"bucket":"staffState","id":"Barn staff","key":"trust","delta":1}]},{"immediate":"Nonessential purchases are paused while core racing and care expenses remain open.","reaction":"Finance likes the cushion. Some staff requests will wait, which creates mild friction but no operational stop.","followUp":"Review paused requests before the next sales decision.","dueDays":7,"affected":"Stable operations","destination":"Sales","effects":[{"bucket":"finances","id":"stable","key":"status","value":"Extras frozen"},{"bucket":"finances","id":"stable","key":"cash_flexibility","delta":1},{"bucket":"staffState","id":"Barn staff","key":"trust","delta":-1}]},{"immediate":"No spending rule changes yet; the office opens the ledger for a line-by-line review.","reaction":"The farm desk welcomes the audit because it separates normal costs from real drift.","followUp":"Ledger review with shipping, vet, and sales costs isolated.","dueDays":1,"affected":"Farm Desk","destination":"Sales","effects":[{"bucket":"finances","id":"stable","key":"status","value":"Ledger audit open"},{"bucket":"finances","id":"stable","key":"discipline","delta":1}]}],"newsbuzz":[{"immediate":"The full Argosy item is opened and added to the office context without changing the barn plan.","reaction":"Ownership gets the information it wanted. The racing staff is glad the headline is not driving a training call.","followUp":"News desk summary after the colt's next public appearance.","dueDays":5,"affected":"Argosy colt / News Desk","destination":"News","effects":[{"bucket":"scoutingState","id":"Argosy colt","key":"interest","delta":1},{"bucket":"scoutingState","id":"Argosy colt","key":"status","value":"News file opened"}]},{"immediate":"The Argosy colt is placed on a rival watchlist for race, work, and market updates.","reaction":"The scouting side likes having a formal eye on him; the barn keeps its own program unchanged.","followUp":"Rival watch update after his next work or entry.","dueDays":4,"affected":"Argosy colt","destination":"News","effects":[{"bucket":"scoutingState","id":"Argosy colt","key":"interest","delta":2},{"bucket":"scoutingState","id":"Argosy colt","key":"status","value":"Active rival watch"}]},{"immediate":"The headline is dismissed from the active desk and the stable makes no tactical change.","reaction":"The racing staff appreciates the restraint. Ownership may ask again if the story grows.","followUp":"No scheduled action; reopen only if the story gains substance.","dueDays":null,"affected":"Stable office","destination":"News","effects":[{"bucket":"scoutingState","id":"Argosy colt","key":"status","value":"Not actively tracked"},{"bucket":"ownerState","id":"Stable ownership","key":"patience","delta":0}]}],"entries":[{"immediate":"The Churchill R3 entry is filed before the window closes.","reaction":"The office gets certainty. The trainer accepts the commitment but still wants the final behavior read handled in prep.","followUp":"Confirm draw, rider, and final barn check.","dueDays":1,"affected":"Churchill R3 entry","destination":"Race Calendar","effects":[{"bucket":"calendarState","id":"Churchill R3","key":"status","value":"Entered"},{"bucket":"calendarState","id":"Churchill R3","key":"race_target","value":"Locked"},{"bucket":"ownerState","id":"Stable ownership","key":"patience","delta":1}]},{"immediate":"The entry decision is held briefly while the trainer gives a final behavior and readiness read.","reaction":"The trainer values being asked before the deadline. The office now has less time to pivot.","followUp":"Trainer call must be closed before entries lock.","dueDays":0,"affected":"Trainer / Churchill R3","destination":"Race Calendar","effects":[{"bucket":"staffState","id":"Trainer","key":"trust","delta":1},{"bucket":"calendarState","id":"Churchill R3","key":"status","value":"Awaiting final trainer call"}]},{"immediate":"The office declines to lock Churchill R3 yet and opens alternate targets.","reaction":"The barn keeps flexibility, but the current usable field may disappear.","followUp":"Return a ranked alternate-race shortlist.","dueDays":1,"affected":"Race office","destination":"Race Calendar","effects":[{"bucket":"calendarState","id":"Churchill R3","key":"status","value":"Alternate search open"},{"bucket":"calendarState","id":"Churchill R3","key":"race_target","value":"Not committed"}]}],"cedar":[{"immediate":"The turnout note is acknowledged and the current young-horse plan remains in place.","reaction":"Cedar Spoke knows the office saw the report. No one feels a management change is being forced onto a healthy group.","followUp":"Routine young-horse report at the next scheduled update.","dueDays":7,"affected":"Cedar Spoke young group","destination":"Stable","effects":[{"bucket":"horseState","id":"Cedar Spoke group","key":"status","value":"Current turnout plan maintained"},{"bucket":"messageState","id":"cedar","key":"note","value":"Acknowledged"}]},{"immediate":"The immature horses move to quieter handling and a lower-tempo turnout routine.","reaction":"Farm staff agrees the change matches what they are seeing rather than treating it like a soundness issue.","followUp":"Compare behavior notes after two days of quieter handling.","dueDays":2,"affected":"Cedar Spoke young group","destination":"Stable","effects":[{"bucket":"horseState","id":"Cedar Spoke group","key":"status","value":"Quieter turnout handling"},{"bucket":"horseState","id":"Cedar Spoke group","key":"confidence","delta":1},{"bucket":"staffState","id":"Cedar Spoke staff","key":"trust","delta":1}]},{"immediate":"The office opens the full young-horse roster and reviews each development timeline before changing individual plans.","reaction":"Farm staff welcomes a broader look, but no horse is singled out until the review is complete.","followUp":"Roster review with any horse-specific adjustments flagged.","dueDays":2,"affected":"Cedar Spoke roster","destination":"Stable","effects":[{"bucket":"horseState","id":"Cedar Spoke group","key":"status","value":"Roster review open"},{"bucket":"staffState","id":"Cedar Spoke staff","key":"trust","delta":1}]}]};
-  const STATE_KEY = 'wtwOfficeStateV30';
+  const STATE_KEY = window.__WTW_1999_MANAGEMENT__?.saveKey || 'wtw1999ManagementStateV1';
   function blankGameState(){
+    if(window.__WTW_1999_MANAGEMENT__?.createFreshState)return window.__WTW_1999_MANAGEMENT__.createFreshState();
     return {
       version:'Office FM Track Profile Foundation v30',
-      date:window.__WTW_1999_MANAGEMENT__?'1999-01-01':'2014-07-15',
-      currentCase:'powerline',
+      date:'1999-01-01',
+      currentCase:'opening-stable',
       turn:0,
       resolvedCases:{},
       decisionLog:[],
@@ -100,7 +101,7 @@
   function currentGameDate(){
     const raw = dateChip ? dateChip.textContent.trim() : gameState.date;
     const m = raw.match(/\d{4}-\d{2}-\d{2}/);
-    return m ? m[0] : (gameState.date || (window.__WTW_1999_MANAGEMENT__?'1999-01-01':'2014-07-15'));
+    return m ? m[0] : (gameState.date || '1999-01-01');
   }
   function dueDate(days){
     if(days===null || days===undefined) return null;
@@ -576,6 +577,14 @@
       </div></section>`);
   }
   function loadCase(key, quiet=false){
+    if(window.__WTW_1999_MANAGEMENT__){
+      currentCase=String(key||'').startsWith('opening-')?key:'opening-stable';
+      gameState.currentCase=currentCase;
+      closeRoute();
+      if(!quiet)showToast('1999 Office: '+currentCase.replaceAll('-',' '));
+      window.__WTW_NEXT__?.paint?.();
+      return;
+    }
     currentCase = key || currentCase;
     gameState.currentCase = currentCase;
     closeRoute();
@@ -958,6 +967,10 @@
   }
   function applyImportedState(payload, persist=true){
     if(!payload || typeof payload !== 'object') { showToast('Load failed: bad JSON'); return; }
+    if(window.__WTW_1999_MANAGEMENT__&&(payload.schema!==window.__WTW_1999_MANAGEMENT__.schema || payload.worldAnchor?.startDate!=='1999-01-01' || String(payload.date||'')<'1999-01-01')){
+      showToast('Only a clean 1999 career save can be loaded');
+      return;
+    }
     const migrated = blankGameState();
     if(payload.version || payload.resolvedCases || payload.decisionLog){
       Object.assign(migrated, payload);
@@ -969,12 +982,12 @@
       migrated.date = payload.date || migrated.date;
       migrated.currentCase = payload.currentCase || migrated.currentCase;
     }
-    migrated.version = 'Office FM Track Profile Foundation v30';
+    migrated.version = window.__WTW_1999_MANAGEMENT__?.schema||'WTW_1999_CLEAN_CAREER_V3';
     gameState = migrated;
-    const nextCase = gameState.currentCase || 'powerline';
+    const nextCase = gameState.currentCase || 'opening-stable';
     if(gameState.date) setDateChipText(gameState.date);
     closeRoute();
-    currentCase = caseOrder.includes(nextCase) ? nextCase : 'powerline';
+    currentCase = window.__WTW_1999_MANAGEMENT__ ? 'opening-stable' : caseOrder.includes(nextCase) ? nextCase : 'opening-stable';
     loadCase(currentCase, true);
     processDueFollowUps();
     syncResolvedMessages();
@@ -1003,13 +1016,14 @@
     gameState.screen = 'Office FM Track Profile Foundation v30';
     gameState.currentDecision = currentDeskText();
     const blob = new Blob([JSON.stringify(gameState,null,2)], {type:'application/json'});
-    const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='wire_to_wire_office_state_v30.json'; a.click(); URL.revokeObjectURL(url);
+    const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='wire_to_wire_1999_management_state.json'; a.click(); URL.revokeObjectURL(url);
     showToast('Exported Office state');
   }
   function saveState(){
     persistState(false);
   }
   function cycleCase(dir){
+    if(window.__WTW_1999_MANAGEMENT__){window.__WTW_NEXT__?.paint?.();return;}
     const i = Math.max(0, caseOrder.indexOf(currentCase));
     const next = caseOrder[(i + dir + caseOrder.length) % caseOrder.length];
     loadCase(next);
@@ -1041,8 +1055,8 @@
         showToast('New clean game: January 1, 1999');
         return true;
       }
-      localStorage.removeItem(STATE_KEY); localStorage.removeItem('wtwOfficeStateV29'); localStorage.removeItem('wtwOfficeStateV28'); localStorage.removeItem('wtwOfficeStateV27'); localStorage.removeItem('wtwOfficeStateV26'); localStorage.removeItem('wtwOfficeStateV25'); localStorage.removeItem('wtwOfficeStateV20'); localStorage.removeItem('wtwOfficeStateV19');
-      gameState = blankGameState(); closeRoute(); setDateChipText(window.__WTW_1999_MANAGEMENT__?'1999-01-01':'2014-07-15'); currentCase='powerline'; loadCase('powerline'); processDueFollowUps(); syncResolvedMessages(); propagateOfficeState();
+      localStorage.removeItem(STATE_KEY);
+      gameState = blankGameState(); closeRoute(); setDateChipText('1999-01-01'); currentCase='opening-stable'; loadCase('opening-stable'); processDueFollowUps(); syncResolvedMessages(); propagateOfficeState();
       showToast('Reset Office state'); return true;
     }
     if(act==='Back'){ window.history.back(); return true; }
@@ -1130,7 +1144,7 @@
     });
   }
   try{
-    const saved = localStorage.getItem(STATE_KEY) || localStorage.getItem('wtwOfficeStateV29') || localStorage.getItem('wtwOfficeStateV28') || localStorage.getItem('wtwOfficeStateV27') || localStorage.getItem('wtwOfficeStateV26') || localStorage.getItem('wtwOfficeStateV25') || localStorage.getItem('wtwOfficeStateV20') || localStorage.getItem('wtwOfficeStateV19');
+    const saved = localStorage.getItem(STATE_KEY); // Historical and old demo saves are NEVER migrated into 1999.
     if(saved){
       const s = JSON.parse(saved);
       applyImportedState(s, false);
