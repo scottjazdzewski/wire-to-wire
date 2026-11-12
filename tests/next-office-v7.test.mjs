@@ -423,7 +423,8 @@ test('Track history is permanently visible below meet conditions for four regist
  assert.ok(css.includes('.ng-track-info-stack{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(155px,194px)'));
  assert.ok(css.includes('.ng-track-info-stack>.ng-track-history-card{'));
  assert.ok(css.includes('.ng-track-history-content{')&&css.includes('.ng-track-history-facts{'));
- assert.ok(css.includes("g123-sprite.png"),'Trophy art must remain untouched');
+ assert.ok(js.includes("approved-grade-'+grade+'-64.png")&&css.includes('width:16px!important;height:16px!important'),
+  'Approved G1/G2/G3 artwork must remain intact and compact');
 });
 test('Tracks and Facilities are separate full-width directory rosters; all pages share roster fonts',()=>{
  const js=get('public/next/next.js'),css=get('public/next/next.css'),office=get('public/office-v30-4.js');
@@ -441,7 +442,8 @@ test('Tracks and Facilities are separate full-width directory rosters; all pages
  for(const label of ['Stud Farms','Training Centers','Breaking Facilities','Racing Stables','Ownership Groups']){
   assert.ok(js.includes(label),'Missing Facilities subview: '+label);
  }
- assert.ok(code.includes("'Ownership Office'"),'Individual owners should not be misrepresented as syndicates');
+ assert.ok(!code.includes("type:'Ownership Office'")&&code.includes('owner:canonical?.publicPrincipal'),
+  'An ownership organization appears once and its individual principal belongs in the Owner column');
  assert.ok(code.includes("_kind:'demo-facility'"),'Fictional facility entities must remain visibly non-authoritative');
  assert.ok(js.includes('previewRecordRoute(kind,name,row)')&&js.includes('FICTIONAL DESIGN PREVIEW'),'Demo facilities must open distinct labeled previews, never forged canonical profiles');
  assert.ok(office.includes('window.__wtwOfficeTrackDirectory = function()'),
