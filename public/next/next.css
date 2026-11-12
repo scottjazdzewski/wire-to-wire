@@ -2836,3 +2836,13 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  .ng-world-editor>footer{height:auto;min-height:33px;flex-wrap:wrap}
  .ng-world-profile-photo{display:none}
 }
+
+
+.ng-world-extra-attributes{margin:5px 9px;border:1px solid #4d614c;background:#1d2c29;font-size:9px;color:#d9e1d5}
+.ng-world-extra-attributes summary{cursor:pointer;padding:7px 10px;color:#e0cc93;font-size:9px;letter-spacing:.035em;font-weight:780;background:#293b33;list-style-position:inside}
+.ng-world-extra-attributes summary:hover{background:#354b3d}
+.ng-world-extra-attributes>div{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;max-height:210px;overflow:auto;padding:7px}
+.ng-world-extra-attributes p{min-width:0;display:flex;flex-direction:column;gap:4px;margin:0;padding:6px 8px;background:#1b2827;border:1px solid #3b5043}
+.ng-world-extra-attributes p small{font-size:8px;color:#a3bba9}
+.ng-world-extra-attributes p strong{font-size:10px;color:#dfe6da;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:980px){.ng-world-extra-attributes>div{grid-template-columns:repeat(2,minmax(0,1fr))}}
