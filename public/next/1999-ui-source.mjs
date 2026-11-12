@@ -213,17 +213,38 @@ function makeDepartmentRows(section,page,context={}){
   }
  }
  if(section==='Breeding'&&page==='Stallions'){
-  return activeStallions.map(h=>({_kind:'horse',_name:h.name,_canonId:h.id,name:h.name,horse:h.name,
-   age:String(1999-Number(h.firstBreedingSeason)),sex:'STALLION',sire:'',dam:'',
-   farm:h.standingFarm1999?.farmName||'',status:'STANDING 1999 · SOURCE',health:'UNASSESSED',pedigree:'',
+  const modeled=get('breeding-sires','/api/1999/sim/breeding-stock?sex=SIRE',worldCounts.breedingStallions);
+  const source=activeStallions.map(h=>({_kind:'horse',_name:h.name,_canonId:h.id,name:h.name,horse:h.name,
+   age:'',sex:'STALLION',sire:'',dam:'',farm:h.standingFarm1999?.farmName||'',
+   status:'STANDING 1999 · SOURCE',health:'UNASSESSED',pedigree:'',
    value:'',owner:'',studFee:'NOT ESTABLISHED',bookings:'',foals:'',winners:''}));
+  return [...source,...modeled.map(h=>({_kind:'horse',_name:h.name,_id:h.id,_testGenerated:true,
+   name:h.name,horse:h.name,age:String(h.ageAtOpening),sex:'STALLION',sire:'',dam:'',
+   farm:h.farmName,status:h.breedingStatus1999.replaceAll('_',' ')+' · TEST',
+   health:'TEST · NOT EXAMINED',pedigree:'',value:'',owner:'',
+   studFee:h.studFee1999?'$'+Number(h.studFee1999).toLocaleString('en-US'):'NOT STANDING',
+   bookings:String(h.projected1999BookSize||0),foals:'NOT RECORDED',winners:'NOT RECORDED'}))];
  }
  if(section==='Breeding'&&page==='Broodmares'){
-  const x=get('mares','/api/1999/broodmare-boarding',2036);
-  return x.map(h=>({_kind:'horse',_name:h.name,_canonId:h.id,name:h.name,horse:h.name,
-   age:String(1999-Number(h.foalYear)),sex:h.sex,sire:h.sireId||'',dam:h.damId||'',
-   farm:h.boardingFarm1999?.farmName||'',owner:'',status:'BOARDING · NO PREGNANCY ASSUMED',
-   health:'UNASSESSED',pedigree:'',value:'',studFee:'',bookings:'',foals:'',winners:''}));
+  // Broodmares are a large virtual list, paged by the same deterministic model.
+  return null;
+ }
+ if(section==='Breeding'&&page==='Stud Farms'){
+  return get('breeding-farms','/api/1999/sim/facilities',worldCounts.facilities)
+   .filter(f=>f.type==='BREEDING_FARM').map(f=>({_kind:'farm',_name:f.name,_id:f.id,
+    _testGenerated:true,name:f.name,type:'BREEDING FARM',location:city(f.location),
+    capacity:String(f.capacity),occupied:String(f.occupied),free:String(f.capacity-f.occupied),
+    condition:Math.round((f.equipmentCondition||0)*100)+'%',quality:Math.round((f.attributes?.horse_care||0)*100)+'/100',
+    staff:String(f.staffingRequirement||''),cost:money(f.annualOperatingCost),
+    owner:'',status:'1999 TEST BREEDING FARM'}));
+ }
+ if(section==='Breeding'&&page==='Foals'){
+  const forecast=q('/api/1999/sim/foaling-forecast');
+  return [{_kind:'foal-forecast',_name:'1999 test foaling pipeline',horse:'1999 PROJECTED FOAL CROP',
+   age:'0',sex:'—',sire:'1,400 modeled sire records',dam:forecast.mares.toLocaleString('en-US')+' MARES',
+   farm:forecast.farmCount+' FARMS',status:'FORECAST · NOT BORN',health:'NOT APPLICABLE',pedigree:'',
+   value:'',owner:'',studFee:'',bookings:forecast.projectedCoverings.toLocaleString('en-US'),
+   foals:forecast.projectedLiveFoals.toLocaleString('en-US'),winners:'—'}];
  }
  if(section==='Personnel'&&page==='Ownership Groups')return [];
  if(section==='Personnel'&&page==='Owners'){
