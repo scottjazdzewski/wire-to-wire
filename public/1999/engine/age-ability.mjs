@@ -189,7 +189,7 @@ export function createAgeAbility({seed,id,role,age,pedigree=null,asOf='1999-01-0
  * mutation, race outcome, injury, training result or historical observation.
  */
 export function validateCareerGameDate(date){
- if(typeof date!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(date))throw Error('Expected YYYY-MM-DD game date');
+ if(typeof date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(date))throw Error('Expected YYYY-MM-DD game date');
  const ms=Date.parse(date+'T00:00:00Z');
  if(!Number.isFinite(ms)||new Date(ms).toISOString().slice(0,10)!==date||
    date<'1999-01-01'||date>'2080-12-31')throw Error('Game date outside supported 1999 career projection');
