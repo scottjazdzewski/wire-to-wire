@@ -252,7 +252,6 @@ function selectAdjacentCase(direction=1,onlyOpen=false){
 const currDesk=()=>window.__WTW_1999_UI_DATA__?.officeDesks?.[APP.activeCase]||({type:$('#deskType')?.textContent.trim()||'RACING FILE',title:$('#deskTitle')?.textContent.trim()||'',summary:$('#deskSummary')?.textContent.trim()||'',pressure:$('#deskPressure')?.textContent.trim()||'',risk:$('#deskRisk')?.textContent.trim()||'',read:$('#deskRead')?.textContent.trim()||'',source:$('#deskSource')?.textContent.trim()||'',moves:$$('#moveGrid .moveCard').map(n=>({title:$('strong',n)?.textContent.trim()||'',tag:$('span',n)?.textContent.trim()||'',node:n})),intel:$$('#intelGrid .intelCard').map(n=>({title:$('b',n)?.textContent.trim()||'',body:$('p',n)?.textContent.trim()||'',tone:n.classList.contains('red')?'red':n.classList.contains('gold')?'gold':n.classList.contains('blue')?'blue':'green'}))});
 const horseRows=()=>window.__WTW_1999_UI_DATA__?.stableHorses?.length?window.__WTW_1999_UI_DATA__.stableHorses:$('.right .boardRows .rankRow').map((n,i)=>({name:$('strong',n)?.textContent.trim()||'',activity:$('.wtwV37HorseActivity',n)?.textContent.trim()||n.title||'No current Office activity recorded',tag:n.querySelector(':scope > span:last-child')?.textContent.trim()||'',index:i+1}));
 const racingRows=()=>window.__WTW_1999_MANAGEMENT__?[]:$('.right .fixtureList .fixture[data-track]').map(n=>{const name=$('h4',n)?.textContent.trim()||'';const saved=state();const isPowerline=name==='Powerline';const confirmed=isPowerline && (saved.calendarState?.['Churchill R3']?.status==='Entered' || /^Entered/i.test(saved.horseState?.Powerline?.status||''));return {name,date:$('.d',n)?.textContent.trim()||'',track:n.dataset.track||'',tag:$('.raceTag',n)?.textContent.trim()||'',status:confirmed?'Entered':($('.wtwV37EntryFlag',n)?.textContent.trim()||'Target')}});
-function menuIcon(kind){const names={mail:'✉',horse:'♞',race:'▤',intel:'◈',move:'➜',lead:'✦'};return names[kind]||'●'}
 const glyph=(name,size=16)=>{const paths={
   chevron:'<path d="m6 9 6 6 6-6"/>',
   left:'<path d="m15 18-6-6 6-6"/>',
@@ -2331,36 +2330,6 @@ function depTrackRows(page='Overview',day=depGameDay()){
  if(page==='Active Meets')return rows.filter(r=>r._meetState.active);
  if(page==='Stakes')return rows.filter(r=>Number(r.stakesCount)>0);
  return rows;
-}
-function depCurrentMeetRows(day=depGameDay()){return depTrackRows('Overview',day).filter(r=>r._meetState.active)}
-function depTrackRaceRows(trackName,demo){
- const track=depTrackCalendar().find(t=>t.name===trackName);
- if(!track)return [];
- const now=depGameDay();
- const rows=(track.stakes||[]).map(event=>{
-  const iso=liveStableDate(event.localDate||event.date)||depCalendarIso(event.date,now.slice(0,4));
-  return iso&&iso>=now?{_kind:'race',_name:event.name,_track:trackName,_iso:iso,_raceId:event.id,_raceData:event,
-   date:stableShortDate(iso),track:trackName,race:event.name,class:event.status||event.grade||event.class||'',
-   surface:event.surface||'',distance:Number.isFinite(Number(event.distanceF))?String(event.distanceF)+'f':'',purse:event.purse1999??event.purse??'',horse:'',base:'',ship:'',jockey:'',
-   trainer:'',ready:'',status:'STAKES'}:null;
- }).filter(Boolean);
- if(demo){
-  const meet=depMeetState(track,now).window;
-  const when=meet&&meet.end>=now?now:(meet?.start||now);
-  for(let i=0;i<5;i++){
-   const date=new Date(when+'T12:00:00Z');
-   date.setUTCDate(date.getUTCDate()+Math.floor(i/2));
-   const iso=date.toISOString().slice(0,10);
-   if(meet&&iso>meet.end)continue;
-   rows.push({_kind:'demo-race',_name:'Preview Race '+(i+1),_track:trackName,_iso:iso,
-    date:stableShortDate(iso),track:trackName,race:'R'+(i+1),
-    class:['MSW','CLM','ALW','OC','MSW'][i],surface:i%2?'TURF':'DIRT',
-    distance:['6f','1m','7f','8.5f','5.5f'][i],
-    purse:depMoney([42000,25000,62000,48000,35000][i]),horse:'',base:'',ship:'',
-    jockey:'',trainer:'',ready:'',status:'DEMO CARD'});
-  }
- }
- return rows.sort((a,b)=>a._iso.localeCompare(b._iso)||a.race.localeCompare(b.race));
 }
 const DEP_FACILITY_PREVIEW=[
  ['Kingsmere Stud Farm','Stud Farm','Versailles, KY'],
