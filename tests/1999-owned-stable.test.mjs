@@ -20,7 +20,7 @@ test('every 1999 horse belongs to exactly one owner, including all source-locked
   }
  }
  assert.equal(visited.size,87500);
- for(const id of [source.organizations[0].id,source.organizations[10].id,'O-TEST-1999-00200','O-TEST-1999-03308']){
+ for(const id of [source.organizations[0].id,source.organizations[10].id,'O-TEST-1999-000200','O-TEST-1999-003308']){
   for(const idx of world.ownedHorseIndexes(id).slice(0,25)){
    assert.equal(world.horseAt(idx).ownerId,id,'wrong owner for '+idx);
   }
