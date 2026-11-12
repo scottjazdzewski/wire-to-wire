@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:true,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:true,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
+const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:!window.__WTW_1999_MANAGEMENT__,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:!window.__WTW_1999_MANAGEMENT__,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -245,7 +245,7 @@ function selectAdjacentCase(direction=1,onlyOpen=false){
  }
 }
 const currDesk=()=>({type:$('#deskType')?.textContent.trim()||'RACING FILE',title:$('#deskTitle')?.textContent.trim()||'',summary:$('#deskSummary')?.textContent.trim()||'',pressure:$('#deskPressure')?.textContent.trim()||'',risk:$('#deskRisk')?.textContent.trim()||'',read:$('#deskRead')?.textContent.trim()||'',source:$('#deskSource')?.textContent.trim()||'',moves:$$('#moveGrid .moveCard').map(n=>({title:$('strong',n)?.textContent.trim()||'',tag:$('span',n)?.textContent.trim()||'',node:n})),intel:$$('#intelGrid .intelCard').map(n=>({title:$('b',n)?.textContent.trim()||'',body:$('p',n)?.textContent.trim()||'',tone:n.classList.contains('red')?'red':n.classList.contains('gold')?'gold':n.classList.contains('blue')?'blue':'green'}))});
-const horseRows=()=>$$('.right .boardRows .rankRow').map((n,i)=>({name:$('strong',n)?.textContent.trim()||'',activity:$('.wtwV37HorseActivity',n)?.textContent.trim()||n.title||'No current Office activity recorded',tag:n.querySelector(':scope > span:last-child')?.textContent.trim()||'',index:i+1}));
+const horseRows=()=>window.__WTW_1999_UI_DATA__?.stableHorses?.length?window.__WTW_1999_UI_DATA__.stableHorses:$('.right .boardRows .rankRow').map((n,i)=>({name:$('strong',n)?.textContent.trim()||'',activity:$('.wtwV37HorseActivity',n)?.textContent.trim()||n.title||'No current Office activity recorded',tag:n.querySelector(':scope > span:last-child')?.textContent.trim()||'',index:i+1}));
 const racingRows=()=>$$('.right .fixtureList .fixture[data-track]').map(n=>{const name=$('h4',n)?.textContent.trim()||'';const saved=state();const isPowerline=name==='Powerline';const confirmed=isPowerline && (saved.calendarState?.['Churchill R3']?.status==='Entered' || /^Entered/i.test(saved.horseState?.Powerline?.status||''));return {name,date:$('.d',n)?.textContent.trim()||'',track:n.dataset.track||'',tag:$('.raceTag',n)?.textContent.trim()||'',status:confirmed?'Entered':($('.wtwV37EntryFlag',n)?.textContent.trim()||'Target')}});
 function menuIcon(kind){const names={mail:'✉',horse:'♞',race:'▤',intel:'◈',move:'➜',lead:'✦'};return names[kind]||'●'}
 const glyph=(name,size=16)=>{const paths={
@@ -1756,7 +1756,7 @@ function liveStableRating(name,key,game){
    '<span class="ng-rs-missing" title="No sourced current rating">—</span>'};
 }
 function liveStableHorseData(h,r,game,caseFiles){
- const name=h.name,source=typeof window.__wtwOfficeHorseRosterFacts==='function'?window.__wtwOfficeHorseRosterFacts(name)||{}:{};
+ const name=h.name,source=window.__WTW_1999_UI_DATA__?.sourceFacts?.(h.name)|| (typeof window.__wtwOfficeHorseRosterFacts==='function'?window.__wtwOfficeHorseRosterFacts(name)||{}:{});
  const saved=game.horseState?.[name]||{},scout=game.scoutingState?.[name]||{},cal=game.calendarState?.[name]||{};
  const related=caseFiles.filter(x=>x.title.toLowerCase().includes(name.toLowerCase()));
  const vetFile=related.find(x=>/vet|filling|soundness|medical/i.test(x.title||''));
@@ -1789,7 +1789,7 @@ function liveStableHorseData(h,r,game,caseFiles){
  const entered=Boolean(r&&/entered/i.test(r.status||''));
  const upcoming=entered?raceLabel:liveStableKnown(cal.scheduled_race);
  const money=liveStableKnown(source.earnings)||(saved.earnings_source_refs?.length?liveStableKnown(saved.career_earnings):'');
- const links=source.connections||{},owner=horseOwnership(name)?.name||'',trainer=liveStableKnown(links.trainer)||(saved.trainer_source_refs?.length?liveStableKnown(saved.trainer_name):'');
+ const links=source.connections||{},owner=window.__WTW_1999_UI_DATA__?.ownerFor?.(name)||horseOwnership(name)?.name||'',trainer=liveStableKnown(links.trainer)||(saved.trainer_source_refs?.length?liveStableKnown(saved.trainer_name):'');
  const breeder=liveStableKnown(links.breeder)||(saved.breeder_source_refs?.length?liveStableKnown(saved.breeder_name):'');
  const tally=source.record||{},validRecord=['starts','wins','seconds','thirds'].every(k=>/^\d+$/.test(String(tally[k])));
  const record=validRecord?[tally.starts,tally.wins,tally.seconds,tally.thirds].join('-'):'';
@@ -2042,7 +2042,10 @@ function depTrackCalendar(){
   .filter(t=>['OPEN','OPEN_1999'].includes(t.operating)&&!known.has(t.id)&&!known.has(t.name))
   .map(t=>({id:t.id,name:t.name,location:t.location,region:t.region,circuit:t.circuit,
    operating:t.operating,meetWindow:'',raceDays:'',preferredDays:'',stakes:[],_source1999:true}));
- return [...office,...others];
+ const extra=window.__WTW_1999_UI_DATA__?.extraTracks?.()||[];
+ const seen=new Set([...office,...others].flatMap(t=>[t.id,t.name]).filter(Boolean));
+ const missing=extra.filter(t=>!seen.has(t.id)&&!seen.has(t.name));
+ return [...office,...others,...missing];
 }
 function depCalendarIso(value,year=depGameDay().slice(0,4)){
  const d=String(value||'').match(/^([A-Za-z]{3})\s+(\d{1,2})$/);
@@ -2166,6 +2169,9 @@ function depFacilityRows(page,demo){
 }
 
 function depRows(section,page,demo,auction){
+ // Existing manager tables stay unchanged; only their source rows are substituted.
+ const modelRows=window.__WTW_1999_UI_DATA__?.departmentRows?.(section,page);
+ if(Array.isArray(modelRows))return modelRows;
  const game=state(),stable=horseRows(),races=racingRows(),all=globalSearchItems();
  APP.searchIndex=all;
  const source=kind=>all.map((r,i)=>({...r,_index:i})).filter(r=>r.kind===kind);
@@ -2426,6 +2432,8 @@ function salesDesk(page,auction,auctions,visibleTotal){
 }
 
 function depAuctionList(preview){
+ const live1999=window.__WTW_1999_UI_DATA__?.auctionList?.();
+ if(Array.isArray(live1999)&&window.__WTW_1999_MANAGEMENT__)return live1999;
  const year=Number(depGameDay().slice(0,4))||2014;
  const result=preview?
   [...(year===2014?DEP_SALE_EVENTS_2014.map((r,i)=>depSaleCatalogRow(r,i,2014)):
