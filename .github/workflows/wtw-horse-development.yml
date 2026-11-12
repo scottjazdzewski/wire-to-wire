@@ -1,0 +1,42 @@
+name: WTW 1999 horse development
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'public/1999/engine/horse-development.mjs'
+      - 'public/next/1999-ui-source.mjs'
+      - 'public/next/next.js'
+      - 'public/office-v30-4.js'
+      - 'tests/1999-horse-development.test.mjs'
+      - 'scripts/1999-training-browser-smoke.sh'
+      - '.github/workflows/wtw-horse-development.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  training-domain-and-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate core training and UI syntax
+        run: |
+          node --check public/1999/engine/horse-development.mjs
+          node --check public/next/1999-ui-source.mjs
+          node --check public/next/next.js
+          node --check public/office-v30-4.js
+      - name: Test deterministic 30-day horse development
+        run: node --test tests/1999-horse-development.test.mjs
+      - name: Exercise Stable management in Chromium with save/reload
+        run: bash scripts/1999-training-browser-smoke.sh
+      - name: Preserve training browser QA trace
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-1999-horse-development-qa
+          path: visual-audit/training-1999/
+          retention-days: 7
+          if-no-files-found: warn
