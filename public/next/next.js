@@ -579,20 +579,24 @@ async function worldImportEdits(file){
  }catch(err){APP.worldEditStatus='Import failed: '+(err?.message||err);paint()}
 }
 
+let world1999Promise=null;
 function loadWorld1999(){
- if(world1999Data||world1999Loading||world1999LoadFailed)return;
+ if(world1999Data||world1999LoadFailed)return Promise.resolve();
+ if(world1999Loading)return world1999Promise||Promise.resolve();
  world1999Loading=true;
- fetch('/data/wtw-1999-world-directory-v33.json',{credentials:'same-origin',cache:'force-cache'})
+ world1999Promise=fetch('/data/wtw-1999-world-directory-v33.json',{credentials:'same-origin',cache:'force-cache'})
   .then(r=>r.ok?r.json():Promise.reject(Error('1999 directory unavailable')))
   .then(data=>{
    if(data?.schema!=='WTW_1999_WORLD_DIRECTORY_V1'||
      !Array.isArray(data.tracks)||!Array.isArray(data.people)||
      !Array.isArray(data.organizations)||!Array.isArray(data.horses))
     throw Error('Unrecognized 1999 directory schema');
-   world1999Base=data;world1999Data=worldApplyEdits(data);schedulePaint(15);
+   world1999Base=data;world1999Data=worldApplyEdits(data);
+   if(APP.ready)schedulePaint(15);
   })
-  .catch(()=>{world1999LoadFailed=true;schedulePaint(15)})
+  .catch(()=>{world1999LoadFailed=true;if(APP.ready)schedulePaint(15)})
   .finally(()=>{world1999Loading=false});
+ return world1999Promise;
 }
 function world1999Key(kind,item){
  return kind+':'+(item.id||item.key||'');
@@ -3045,22 +3049,33 @@ root.addEventListener('error',event=>{
  img.closest('.ng-badge-slot,.ng-route-badge-slot,.ng-profile-badgeframe')?.classList.add('wtw-badge-missing');
  console.warn('WTW approved badge failed to load:',img.getAttribute('src'));
 },true);
-document.body.append(root);document.body.classList.add('wtw-next-active');APP.ready=true;
+// One initial paint after core UI indexes arrive. Previously we painted twice
+// and repainted once per fetch, visibly swapping the track logo after refresh.
+root.innerHTML='<div class="ng-boot-shell" role="status" aria-live="polite"><strong>WIRE TO WIRE</strong><span>Preparing Racing Office…</span></div>';
+document.body.append(root);document.body.classList.add('wtw-next-active');
 restoreNextUIRoute();
-// Restore direct route link: existing Office script owns history and route hydration.
-paint();setTimeout(paint,110);
-fetch('/assets/office/organization-logo-index.json',{credentials:'same-origin',cache:'no-store'})
- .then(r=>{if(!r.ok)throw Error('Logo index unavailable');return r.json()})
- .then(index=>{if(index&&typeof index==='object'&&!Array.isArray(index)){organizationLogoIndex=index;schedulePaint(20)}})
- .catch(()=>{/* The neutral organization mark is intentional until a real logo is registered. */});
-fetch('/assets/game/attribute-catalog.v1.json',{credentials:'same-origin',cache:'no-store'})
- .then(r=>{if(!r.ok)throw Error('Attribute definitions unavailable');return r.json()})
- .then(data=>{if(data?.schema==='WTW_ATTRIBUTE_CATALOG_V1'&&data.horse_categories&&data.display?.horse_overview){athleteAttributeCatalog=data;schedulePaint(20)}})
- .catch(()=>{/* No guessed ratings or parallel definitions when catalog is unavailable. */});
-fetch('/assets/office/decision-photo-index.json',{credentials:'same-origin',cache:'no-store'})
- .then(response=>{if(!response.ok)throw Error('Photo index unavailable');return response.json()})
- .then(index=>{if(index&&typeof index==='object'&&!Array.isArray(index)){officePhotoIndex=index;schedulePaint(20)}})
- .catch(()=>{/* The approved reference photograph is the intentional fallback. */});
+// Cache-busted once per build: no stale JSON and no forced full reloads of
+// unversioned indexes on every refresh.
+const bootVersion='20261111-track-identity-boot-2';
+const bootJson=path=>fetch(path+'?v='+bootVersion,{credentials:'same-origin',cache:'default'})
+ .then(r=>r.ok?r.json():Promise.reject(Error('UI asset index unavailable')));
+const bootJobs=[
+ loadWorld1999(),
+ bootJson('/assets/office/organization-logo-index.json')
+  .then(index=>{if(index&&typeof index==='object'&&!Array.isArray(index)){organizationLogoIndex=index;if(APP.ready)schedulePaint(20)}})
+  .catch(()=>{/* Neutral organization mark is the fallback. */}),
+ bootJson('/assets/game/attribute-catalog.v1.json')
+  .then(data=>{if(data?.schema==='WTW_ATTRIBUTE_CATALOG_V1'&&data.horse_categories&&data.display?.horse_overview){athleteAttributeCatalog=data;if(APP.ready)schedulePaint(20)}})
+  .catch(()=>{/* Display verified source attributes only. */}),
+ bootJson('/assets/office/decision-photo-index.json')
+  .then(index=>{if(index&&typeof index==='object'&&!Array.isArray(index)){officePhotoIndex=index;if(APP.ready)schedulePaint(20)}})
+  .catch(()=>{/* Generic desk photo is the fallback. */})
+];
+let bootFinished=false;
+const finishBoot=()=>{if(bootFinished)return;bootFinished=true;APP.ready=true;paint()};
+Promise.allSettled(bootJobs).then(finishBoot);
+// Fail open after a stalled network request, not indefinitely blank.
+setTimeout(finishBoot,2500);
 
 window.__WTW_NEXT__={paint,app:APP,horseRows,racingRows,currentMessages,state};
 })();
