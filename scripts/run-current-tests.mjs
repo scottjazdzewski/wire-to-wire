@@ -7,6 +7,8 @@ const obsolete=new Set([
  'fm-management-screen-family.test.mjs',
  'manager-v2-independent.test.mjs',
  'next-office-v6.test.mjs',
+ 'next-office-v3.test.mjs',
+ 'nextgen-ui.test.mjs',
  'next-office-v7.test.mjs',
  'office-pedigree-existing-tab.test.mjs',
  'office-single-visual-layer.test.mjs',
