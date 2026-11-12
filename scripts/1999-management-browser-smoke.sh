@@ -76,10 +76,11 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    d.querySelector('.ng-global-date strong')?.textContent.trim()==='1999-01-01');
   click('Breeding');await pause(180);
   check('Original Breeding screen shown',Boolean(d.querySelector('.ng-manager-stage')));
-  const breedingTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')]
-   .find(x=>x.dataset.val==='Stallions');
-  check('Breeding stallion roster remains accessible',Boolean(breedingTab));
-  breedingTab.click();await pause(210);
+  const breedingView=d.querySelector('#wtwNextgen select[data-ng-select="department-tab"]');
+  check('Breeding uses its approved compact in-page view picker',Boolean(breedingView));
+  check('Breeding stallion roster remains accessible',Boolean([...breedingView.options].some(o=>o.value==='Stallions')));
+  breedingView.value='Stallions';
+  breedingView.dispatchEvent(new w.Event('change',{bubbles:true}));await pause(230);
   const breedingHorse=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
   check('Stallion record is linked from Breeding',Boolean(breedingHorse));
   breedingHorse.click();await pause(230);
