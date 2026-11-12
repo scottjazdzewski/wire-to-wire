@@ -1364,7 +1364,7 @@ function profileDetail(route,sourceOverride=null){
   const categories=catalog?.horse_categories||{};
   const display=catalog?.display?.horse_overview||{};
   const genuineReports=state().scoutingState?.[route.title]?.attribute_observations||[];
-   const testSource=typeof source!=='undefined'&&source?.dataset?.testGenerated==='true';
+   const testSource=typeof source!=='undefined'&&(source?.dataset?.testGenerated==='true'||source?.dataset?.testAttributeModel==='true');
    const testAttrs=typeof source!=='undefined'?source?.dataset?.testAttributes:'';
    let testModel={};if(testSource){try{testModel=JSON.parse(testAttrs||'{}')}catch{}}
    const demoReports=Object.entries(testModel).filter(([,v])=>typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<=1)
@@ -1489,7 +1489,7 @@ function profileDetail(route,sourceOverride=null){
   const observations=Array.isArray(work.attribute_observations)?work.attribute_observations:[];
   const observed=new Map(observations.filter(x=>x&&typeof x.attribute_key==='string').map(x=>[x.attribute_key,x]));
   const common=cat.person_common||[],special=[...new Map(roles.flatMap(role=>cat.person_roles?.[role]||[]).map(def=>[def.key,def])).values()];
-  const simulatedPerson=source?.dataset?.testGenerated==='true';
+  const simulatedPerson=source?.dataset?.testGenerated==='true'||source?.dataset?.testAttributeModel==='true';
   let modeled={};if(simulatedPerson)try{modeled=JSON.parse(source.dataset.testAttributes||'{}')}catch{}
   // A model-only number is not an observed skill rating or certified fact.
   const modelNumber=def=>{const n=modeled?.[def.key];return typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=1?n:null;};
