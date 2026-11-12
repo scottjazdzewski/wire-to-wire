@@ -3062,7 +3062,7 @@ function departmentRoster(section,page='Overview'){
   '<section class="ng-rs-roster"><header><strong>'+safe(section.toUpperCase())+' · SORTABLE ROSTER</strong><div class="ng-dpt-pager">'+pager+'</div></header>'+
   '<div class="ng-rs-scroll" tabindex="0" role="region" aria-label="'+safe(section)+' roster — scroll vertically and click column headings to sort"><table class="ng-rs-table ng-dpt-table"><thead><tr>'+heads+'</tr></thead><tbody>'+
   (body||'<tr><td colspan="'+specs.length+'" class="ng-rs-no-results">'+safe(globalIndexing?
-   'Indexing '+globalProgress.toLocaleString('en-US')+' of '+(globalMareDirectory?'26,000 breeding mares':'87,500 horses')+
+   'Indexing '+globalProgress.toLocaleString('en-US')+' of '+(globalMareDirectory?Number(window.__WTW_1999_UI_DATA__?.counts?.breedingMares||0).toLocaleString('en-US')+' breeding mares':'87,500 horses')+
    ' for global sort/filter — source identities retained.':
    section==='World'&&!world1999Data?'Loading the 1999 world registry…':section==='Sales'&&page==='Watchlist'?'No watched lots yet. Select ☆ beside a catalog hip to watch it for this session.':section==='Sales'&&page==='Private Offers'?'No recorded private offers. Bidding and negotiation are not enabled in this UI preview.':section==='Sales'?'No catalog lots recorded for this view.':demo?'No matching records.':'No supported records in this view.')+'</td></tr>')+
   '</tbody></table></div><div class="ng-dpt-disclosure">'+(demo?'FICTIONAL DISPLAY VALUES ONLY — no prices, locations or medical facts saved.':'SOURCE RECORDS ONLY · unknown values shown as —')+
