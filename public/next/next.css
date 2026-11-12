@@ -2873,7 +2873,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  box-sizing:border-box;display:inline-flex!important;align-items:center!important;
  margin-left:6px!important;border:0!important;border-bottom:1px solid #9bbda0!important;
  padding:1px 0!important;background:transparent!important;color:#d9c486!important;
- font:800 9px/1.2 inherit!important;white-space:nowrap;cursor:pointer;
+ font-family:inherit!important;font-weight:800!important;font-size:9px!important;line-height:1.2!important;white-space:nowrap;cursor:pointer;
 }
 #wtwNextgen .ng-world-inline-edit:hover,
 #wtwNextgen .ng-world-inline-edit:focus-visible{
@@ -2930,7 +2930,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 #wtwNextgen .ng-save-create input{
  flex:1 1 auto;min-width:100px;max-width:100%;min-height:30px;
  padding:5px 9px;border:1px solid #617e68;border-radius:2px;
- background:#101e1e;color:#f5f2e4;font:600 12px/1.2 inherit;
+ background:#101e1e;color:#f5f2e4;font-family:inherit;font-weight:600;font-size:12px;line-height:1.2;
 }
 #wtwNextgen .ng-save-error{
  color:#f0ba81;font-size:11px;padding:7px 14px;margin:0;border-bottom:1px solid #604a39;
