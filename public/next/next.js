@@ -1475,7 +1475,7 @@ function profileDetail(route,sourceOverride=null){
  };
 
  const personWork=()=>{
-  const roleName=text('.profileSubline').replace(/^Job:\s*/i,'').trim().toLowerCase(),roleDisplay=titleCaseUIRole(roleName);
+  const roleName=String(source?.dataset?.personRole||text('.profileSubline').replace(/^Job:\s*/i,'')).replaceAll('_',' ').trim().toLowerCase(),roleDisplay=titleCaseUIRole(roleName);
   const namedRoles={
    'stable staff':'stable_staff','bloodstock':'bloodstock_professional',
    'bloodstock agent':'bloodstock_agent','trainer':'trainer','jockey':'jockey',
@@ -1483,34 +1483,44 @@ function profileDetail(route,sourceOverride=null){
    'veterinarian':'veterinarian','farrier':'farrier',
    'racing secretary':'racing_secretary'
   };
-  const role=namedRoles[roleName]||null,cat=athleteAttributeCatalog||{};
+  const roleTokens=roleName.split(/\s*(?:\/|,|\+|&)\s*/).map(x=>namedRoles[x]||x.replaceAll(' ','_'));
+  const roles=[...new Set(roleTokens.filter(Boolean))],cat=athleteAttributeCatalog||{};
   const work=state().staffState?.[route.title]||{};
   const observations=Array.isArray(work.attribute_observations)?work.attribute_observations:[];
   const observed=new Map(observations.filter(x=>x&&typeof x.attribute_key==='string').map(x=>[x.attribute_key,x]));
-  const common=cat.person_common||[],special=role?(cat.person_roles?.[role]||[]):[];
+  const common=cat.person_common||[],special=[...new Map(roles.flatMap(role=>cat.person_roles?.[role]||[]).map(def=>[def.key,def])).values()];
+  const simulatedPerson=source?.dataset?.testGenerated==='true';
+  let modeled={};if(simulatedPerson)try{modeled=JSON.parse(source.dataset.testAttributes||'{}')}catch{}
+  // A model-only number is not an observed skill rating or certified fact.
+  const modelNumber=def=>{const n=modeled?.[def.key];return typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=1?n:null;};
   const quick=cat.display?.person_overview||{},commonQuick=(quick.common||[]).map(key=>common.find(t=>t.key===key)).filter(Boolean);
-  const source=work.reputation_profile;
-  const validRep=source?.schema==='WTW_PERSON_REPUTATION_V1'&&typeof source.scores?.overall==='number'&&
-   Number.isFinite(source.scores.overall)&&source.scores.overall>=0&&source.scores.overall<=100&&
-   Array.isArray(source.source?.refs)&&source.source.refs.length>0;
-  const rep=validRep?source:null,axes=cat.reputation?.axes||[];
+  const reputationSource=work.reputation_profile;
+  const validRep=reputationSource?.schema==='WTW_PERSON_REPUTATION_V1'&&typeof reputationSource.scores?.overall==='number'&&
+   Number.isFinite(reputationSource.scores.overall)&&reputationSource.scores.overall>=0&&reputationSource.scores.overall<=100&&
+   Array.isArray(reputationSource.source?.refs)&&reputationSource.source.refs.length>0;
+  const rep=validRep?reputationSource:null,axes=cat.reputation?.axes||[];
   const trust=typeof work.trust==='number'&&Number.isFinite(work.trust)?work.trust:null;
   const relationshipNotice=trust===null?'':'<div class="ng-person-relationship"><span>WORKING RELATIONSHIP TRUST</span><strong>'+(trust>0?'+':'')+safe(String(trust))+'</strong></div>';
   const attr=(def)=>{
    const obs=observed.get(def.key);
    const valid=obs&&(obs.status==='estimated'||obs.status==='measured')&&obs.estimate!==null&&obs.estimate!==undefined&&
     Array.isArray(obs.evidence_refs)&&obs.evidence_refs.length>0;
-   return `<div class="ng-person-attribute" title="${safe(def.meaning)}"><span>${safe(def.label)}</span><strong class="${valid?'assessed':'unassessed'}">${valid?safe(String(obs.estimate)):'—'}</strong></div>`;
+   const preview=modelNumber(def),modeledValue=!valid&&preview!==null;
+   const displayed=valid?String(obs.estimate):modeledValue?preview.toFixed(2)+' · TEST':'—';
+   const provenance=modeledValue?' · 1999 normalized TEST estimate; not an observed rating or source fact':'';
+   return `<div class="ng-person-attribute" title="${safe(def.meaning+provenance)}"><span>${safe(def.label)}</span><strong class="${valid?'assessed':modeledValue?'test-modeled':'unassessed'}">${safe(displayed)}</strong></div>`;
   };
   const attributes=(full=false)=>{
    const isObserved=def=>{const o=observed.get(def.key);return o&&
     (o.status==='measured'||o.status==='estimated')&&o.estimate!=null&&Array.isArray(o.evidence_refs)&&o.evidence_refs.length;};
    const found=common.filter(isObserved).length+special.filter(isObserved).length;
-   if(full)return `<div class="ng-person-attribute-block"><div class="ng-person-minihead">PROFESSIONAL FOUNDATIONS <small>${common.filter(isObserved).length}/${common.length} ASSESSED</small></div>${common.map(attr).join('')}${special.length?`<div class="ng-person-minihead">${safe(roleDisplay.toUpperCase())} SKILLS <small>ROLE SPECIALTIES</small></div>${special.map(attr).join('')}`:''}</div>`;
+   const modelCount=[...common,...special].filter(def=>!isObserved(def)&&modelNumber(def)!==null).length;
+   const modelNotice=modelCount?'<small>'+modelCount+' SIMULATED TEST VALUES · NOT OBSERVATIONS</small>':'';
+   if(full)return `<div class="ng-person-attribute-block"><div class="ng-person-minihead">PROFESSIONAL FOUNDATIONS <small>${common.filter(isObserved).length}/${common.length} ASSESSED</small>${modelNotice}</div>${common.map(attr).join('')}${special.length?`<div class="ng-person-minihead">${safe(roleDisplay.toUpperCase())} SKILLS <small>ROLE SPECIALTIES</small></div>${special.map(attr).join('')}`:''}</div>`;
    const first=common.slice(0,Math.ceil(common.length/2)),second=common.slice(Math.ceil(common.length/2));
    const column=(rows,label)=>`<section class="ng-person-skill-column"><div class="ng-person-minihead">${safe(label)}</div>${rows.map(attr).join('')}</section>`;
    return `<div class="ng-person-attribute-block ng-person-skill-matrix">
-     <div class="ng-person-assessment-summary"><span>SCOUTING COVERAGE</span><strong>${found} / ${common.length+special.length} ASSESSED</strong><small>UNKNOWN DOES NOT MEAN ZERO</small></div>
+     <div class="ng-person-assessment-summary"><span>SCOUTING COVERAGE</span><strong>${found} / ${common.length+special.length} ASSESSED</strong><small>UNKNOWN DOES NOT MEAN ZERO</small>${modelNotice}</div>
      <div class="ng-person-skill-columns">${column(first,'CORE ABILITIES')}${column(second,'PROFESSIONAL HABITS')}${special.length?column(special,roleDisplay.toUpperCase()+' SKILLS'):''}</div>
      ${!common.length?'<p class="ng-person-unrated">Source-backed attribute catalog is not loaded.</p>':''}
     </div>`;
