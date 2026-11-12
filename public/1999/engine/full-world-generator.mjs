@@ -19,7 +19,19 @@ const C=['Again','Ahead','Today','Tomorrow','Morning','Tonight','Somewhere','Way
 const GIVEN=['James','Anne','Robert','Maria','Charles','Elizabeth','Thomas','Daniel','Helen','Frank','Joseph','Ellen','Catherine','Ruth','Richard','Louise','Henry','Walter','Arthur','Sarah','David','Harold','Carolyn','George','Patrick','Albert','Nora','William','Martha','Edith','Eugene','Paul','Andrew','Lydia','Francis','Irene','Michael','Martin','Katherine','Victor','Rebecca','Peter','John','Susan','Margaret','Louis','Gordon','Claire','Dominic','Raymond','Caroline','Miguel','Nadia','Marianne','Edwin','Christopher','Diane','Samuel','Evelyn','Warren'];
 const FAMILY=['Morgan','Bennett','Harlan','Doyle','Whitcomb','Reed','Fletcher','Baxter','Norton','Hayes','Keller','Miller','Sullivan','Carter','Grady','Bishop','Rivers','Palmer','Foster','Quinn','Harrison','Weller','Franklin','Graham','Benton','Mercer','Langley','Donovan','Keene','Holloway','Murphy','Dalton','Crawford','Hawthorne','Parker','Sloan','Conway','Walsh','Beckett','Everett','Rowan','Dawson','Lancaster','Montrose','Sterling','Calhoun','Fitzgerald','Harris','Lowell','Willis','Thatcher','Henderson','Barrett','Simmons','Stanton','Callahan','Powers','Larkin','Davenport','Weston','Bradshaw'];
 const OWNER_TERMS=['Racing','Stables','Partnership','Bloodstock','Farms','Thoroughbreds','Racing Club','Farm & Racing','Racing Group','Farm','Racing Partners','Stud & Racing'];
-const ROLES=[['trainer',4200],['jockey',1800],['groom',7600],['exercise_rider',1700],['farm_manager',550],['veterinarian',430],['farrier',420],['bloodstock_agent',360],['racing_secretary',134]];
+const ROLES=[['trainer',4200],['jockey',1800],['farm_manager',550],['veterinarian',430],['farrier',420],['bloodstock_agent',360],['racing_secretary',134]];
+const EXTRA_GIVEN='Aaron|Adelaide|Adriana|Aileen|Alejandro|Alfred|Alma|Amelia|Anita|Antonio|Beatrice|Bernard|Blanche|Brenda|Calvin|Carmen|Cecilia|Clarence|Claudia|Colin|Constance|Curtis|Daphne|Darius|Deborah|Dennis|Douglas|Elaine|Elena|Elias|Emilio|Esther|Felix|Fernando|Florence|Frederick|Gabriel|Gloria|Grace|Gregory|Guillermo|Hector|Hilda|Howard|Hugh|Ingrid|Isabel|Jacqueline|Javier|Jean|Jerome|Joaquin|Judith|Julian|Karen|Keith|Kenneth|Laura|Leon|Leonard|Lillian|Linda|Lionel|Loretta|Lucia|Malcolm|Manuel|Marcel|Marcia|Marilyn|Marjorie|Maxwell|Meredith|Mildred|Monica|Nathan|Neil|Nicholas|Olivia|Oscar|Pamela|Patricia|Philip|Phyllis|Raul|Regina|Renee|Ricardo|Rosa|Rosalind|Ruben|Russell|Sandra|Sergio|Sharon|Simon|Sofia|Sylvia|Teresa|Theodore|Timothy|Valerie|Veronica|Vincent|Wesley|Yvonne'.split('|'),EXTRA_FAMILY="Abbott|Aguilar|Alvarez|Anderson|Armstrong|Atkinson|Baldwin|Banks|Barnes|Bell|Blair|Bolton|Boyle|Bradley|Brennan|Brooks|Burke|Campbell|Castillo|Chambers|Chavez|Chen|Clark|Cohen|Collins|Cooper|Cruz|Daniels|Delgado|Dixon|Dominguez|Douglas|Duarte|Edwards|Elliott|Espinoza|Estrada|Faulkner|Ferguson|Fernandez|Fields|Fisher|Fleming|Flores|Ford|Fowler|Garcia|Gardner|Garrett|Gibson|Gilbert|Gomez|Gonzales|Goodman|Grant|Griffin|Gutierrez|Hamilton|Hanson|Harding|Hart|Hernandez|Higgins|Hines|Holland|Hughes|Hunt|Ibarra|Ingram|Jackson|Jacobs|James|Jennings|Jimenez|Johnson|Jones|Kaufman|Kennedy|Kim|King|Knight|Lamb|Lawson|Lee|Lewis|Lloyd|Logan|Lopez|Lynch|Mackenzie|Maddox|Manning|Marquez|Marshall|Martinez|Mason|Matthews|McCarthy|McConnell|McDonald|McIntyre|McKay|Mendoza|Mitchell|Morales|Moreno|Morris|Navarro|Nelson|Nichols|O'Brien|Ochoa|Olson|Ortega|Owens|Page|Patel|Patterson|Pearson|Pena|Peters|Peterson|Phillips|Pierce|Porter|Price|Ramirez|Ramos|Reyes|Rhodes|Richardson|Riley|Roberts|Robinson|Rodriguez|Rogers|Romero|Rose|Ross|Russell|Salazar|Sanchez|Sandoval|Santos|Schneider|Scott|Shaw|Shepherd|Silva|Smith|Soto|Stevens|Stewart|Stone|Strickland|Taylor|Thompson|Torres|Turner|Valdez|Vargas|Vasquez|Vega|Wagner|Walker|Wallace|Ward|Watkins|Weaver|Webb|Wells|White|Williams|Wilson|Wong|Wood|Wright|Young".split('|');
+const ALL_GIVEN=[...GIVEN,...EXTRA_GIVEN],ALL_FAMILY=[...FAMILY,...EXTRA_FAMILY];
+const PLACE_WORDS='Ashbrook|Briarfield|Cedar Gate|Clearwater|Copper Creek|Crescent Hill|Deep Hollow|Eastbrook|Elm Grove|Fairfield|Fernwood|Fox Chase|Glenhaven|Grandview|Green Briar|Hearthstone|Highland|Hillcrest|Iron Gate|Laurel Run|Little Creek|Long Meadow|Maple Hill|Meadowbrook|Midland|Millstone|Morning Star|North Point|Oak Ridge|Old Bridge|Overlook|Pine Hollow|Quarry Hill|Red Clay|Red Oak|Ridgefield|Riverton|Rockbridge|Rose Hill|Sagebrush|Silver Brook|South Fork|Springbank|Stonebrook|Stonegate|Summer Hill|Sun Valley|Tall Oaks|Three Pines|Timberline|Twin Oaks|Valley Gate|Westbank|Westbrook|White Fence|Wildwood|Willow Creek|Windward|Winter Hill|Woodhaven|Yellow Creek'.split('|');
+const ACTIVE_STAFF_COUNT=ROLES.reduce((n,[,count])=>n+count,0);
+function generatedPersonName(seed,ordinal,locked){const total=ALL_GIVEN.length*ALL_FAMILY.length,k=(ordinal*7919+(seed%total))%total;
+ const name=ALL_GIVEN[k%ALL_GIVEN.length]+' '+ALL_FAMILY[Math.floor(k/ALL_GIVEN.length)];
+ return locked.has(name.toLowerCase())?name+' '+String.fromCharCode(65+ordinal%26)+'.':name;}
+function generatedOrganizationName(seed,i,kind){const total=PLACE_WORDS.length*ALL_FAMILY.length,k=(i*307+(seed%total))%total;
+ const p=PLACE_WORDS[k%PLACE_WORDS.length],f=ALL_FAMILY[Math.floor(k/PLACE_WORDS.length)];
+ if(kind==='farm')return [p+' '+f+' Farm',f+' '+p+' Stud',p+' '+f+' Bloodstock',f+' '+p+' Nursery'][i%4];
+ if(kind==='barn')return [p+' '+f+' Racing',f+' '+p+' Stables',p+' '+f+' Training Yard',f+' '+p+' Racing Stable'][i%4];
+ return [p+' '+f+' Racing',f+' & '+p+' Partners',p+' '+f+' Bloodstock',f+' '+p+' Thoroughbreds',p+' '+f+' Syndicate',f+' '+p+' Racing Club'][i%6];}
 const hor=Object.values(attributeCatalog.horse_categories).flat();
 const common=attributeCatalog.person_common;
 const roleDef=attributeCatalog.person_roles;
@@ -87,6 +99,9 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
  const generatedCount=HORSE_POPULATION-locked.length;
  const ownersTotal=3308,trainersTotal=4200,ownersSlots=makeSlots(ownersTotal,generatedCount,seed,'owner'),trainerSlots=makeSlots(trainersTotal,generatedCount,seed,'trainer');
  const trackCache=new Map(),ownerCache=new Map(),trainerCache=new Map(),horseCache=new Map();
+  const canonTrainers=sourcePeople.filter(x=>String(x.role||'').toLowerCase().includes('trainer'));
+  const protectedPersonNames=new Set(sourcePeople.map(x=>String(x.name||'').toLowerCase()));
+  const generatedPrincipalCount=ownersTotal-sourceOrgs.length;
  const trackCount=sourceTracks.length,canonicalNames=new Set(locked.map(x=>x.name.toLowerCase()));
  if(trackCount<130)throw Error('Fewer than 130 physical tracks');
  function regionTrack(geo,id){
@@ -119,27 +134,35 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const canonSource=anchored&&i<sourceOrgs.length?sourceOrgs[i]:null;
   const id=canonSource?.id||'O-TEST-1999-'+pad(i+1),t=regionTrack(canonSource?.geographyRecords?.[0]||null,id);
   const portfolio=ownersSlots.counts[i],tier=portfolio>=200?'major':portfolio>=40?'established':portfolio>=8?'regional':'small';
-  const nameSlot=(i*173+seed)%(FAMILY.length*A.length*OWNER_TERMS.length),family=FAMILY[nameSlot%FAMILY.length],familyPrefix=A[Math.floor(nameSlot/FAMILY.length)%A.length],officeType=OWNER_TERMS[Math.floor(nameSlot/(FAMILY.length*A.length))%OWNER_TERMS.length],name=canonSource?.name||(family+' '+familyPrefix+' '+officeType);
+  const syntheticPrincipal=generatedPersonName(seed,ACTIVE_STAFF_COUNT+i,protectedPersonNames);
+   const name=canonSource?.name||(i%11===0?syntheticPrincipal:generatedOrganizationName(seed,i,'owner'));
+   const principalOwner=canonSource?(canonSource.publicPrincipal||null):syntheticPrincipal;
+   const principalOwnerId=canonSource?(canonSource.publicPrincipalId||null):'P-TEST-OWNER-'+pad(i+1);
   const annualRun=portfolio*money(12000+unit(seed,id+'run')*25000),wealthScale=tier==='major'?12:tier==='established'?5:tier==='regional'?2:1;
   const cash=money(annualRun*(.75+unit(seed,id+'liquidity')*2.5)*wealthScale);
-  const obj={id,name,nameStatus:canonSource?'CANON_LOCKED':'TEST_RENAME_ALLOWED',type:canonSource?.type||'RACING_OWNER',
+  const obj={id,name,nameStatus:canonSource?'CANON_LOCKED':'TEST_RENAME_ALLOWED',type:canonSource?.type||(i%11===0?'SOLE_OWNER':'OWNERSHIP_OPERATION'),
+    principalOwner,principalOwnerId,principalBasis:canonSource?'SOURCE_IF_RECORDED':'GENERATED_TEST_PRINCIPAL',
    location:canonSource?.geographyRecords?.[0]?.locality?fmtLoc({city:canonSource.geographyRecords[0].locality,state:canonSource.geographyRecords[0].region,country:canonSource.geographyRecords[0].country}):t.location,
    locationBasis:canonSource?.geographyRecords?.[0]?.locality?'SOURCE_VERIFIED_HISTORICAL_ORG_LOCALITY':'SIMULATED_1999_OPERATIONAL_BASE_NOT_HISTORICAL_HEADQUARTERS',
    mainTrackId:t.id,portfolio:{generatedHorseSlots:portfolio,sourceHorseCount:0,tier},
    finances:{cash,annualHorseOperatingBudget:annualRun,propertyAndEquineAssets:money(cash*(.6+unit(seed,id+'assets')*3)),debt:money(cash*unit(seed,id+'debt')*.4),
      monthlyFixedOverhead:money(annualRun/12*.2),currency:'USD',basis:'1999_TEST_MODEL_NOT_VERIFIED_CANON_FUNDS'},
-   reputation:standing(seed,id,clamp(.2+Math.log1p(portfolio)/Math.log(700)*.7,0,1)),authority:canonSource?'CANON_ID_AND_ORIGIN__TEST_FINANCES':'FULLY_TEST_GENERATED'};
+   reputation:standing(seed,id,clamp(.2+Math.log1p(portfolio)/Math.log(700)*.7,0,1)),
+    attributes:{capital_resilience:round(.2+unit(seed,id+':capital')*.75),management_quality:round(.2+unit(seed,id+':management')*.75),risk_appetite:round(.15+unit(seed,id+':risk')*.8),welfare_priority:round(.25+unit(seed,id+':welfare')*.7),commercial_judgment:round(.25+unit(seed,id+':market')*.7),long_term_strategy:round(.25+unit(seed,id+':strategy')*.7)},
+    authority:canonSource?'CANON_ID_AND_ORIGIN__TEST_FINANCES':'FULLY_TEST_GENERATED'};
   ownerCache.set(i,obj);return obj;
  }
  function trainerAt(i){
   if(i<0||i>=trainersTotal)throw Error('Trainer index');
   if(trainerCache.has(i))return trainerCache.get(i);
-  const canonSource=anchored&&i<sourcePeople.filter(x=>String(x.role).toLowerCase().includes('trainer')).length?sourcePeople.filter(x=>String(x.role).toLowerCase().includes('trainer'))[i]:null;
+  const canonSource=anchored&&i<canonTrainers.length?canonTrainers[i]:null;
   const id=canonSource?.id||'P-TEST-TRAINER-'+pad(i+1),track=regionTrack(canonSource?.base?{locality:canonSource.base.locality,region:canonSource.base.region,country:canonSource.base.country}:null,id);
-  const slots=trainerSlots.counts[i],name=canonSource?.name||GIVEN[(i+seed)%GIVEN.length]+' '+FAMILY[Math.floor(i/GIVEN.length)%FAMILY.length];
+  const slots=trainerSlots.counts[i],name=canonSource?.name||generatedPersonName(seed,i,protectedPersonNames);
+   const ability=traits([...common,...(roleDef.trainer||[])],seed,id,.3+unit(seed,id+'talent')*.6);
   const obj={id,name,nameStatus:canonSource?'CANON_LOCKED':'TEST_RENAME_ALLOWED',role:'trainer',location:canonSource?.base?fmtLoc(canonSource.base):track.location,
    homeTrackId:track.id,barnId:'F-TEST-BARN-'+pad(i+1),barnCapacity:Math.max(slots+Math.ceil(slots*.12),slots+2),
-   generatedRunners:slots,roleAttributes:traits([...common,...(roleDef.trainer||[])],seed,id,.3+unit(seed,id+'talent')*.6),
+   generatedRunners:slots,roleAttributes:ability,attributes:ability,
+    age:25+hash(seed,id+':age')%45,morale:round(.3+unit(seed,id+':morale')*.68),workload:round(clamp(slots/(slots+Math.max(2,Math.ceil(slots*.12))),0,1)),
    reputation:standing(seed,id,.25+unit(seed,id+'status')*.55),annualBaseSalary:money(28000+slots*4000),
    authority:canonSource?'CANON_ID__TEST_ATTRIBUTES':'FULLY_TEST_GENERATED'};
   trainerCache.set(i,obj);return obj;
@@ -188,16 +211,22 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   horseCache.set(index,horse);return horse;
  }
  function personAt(index){
-  if(!Number.isInteger(index)||index<0||index>=ROLES.reduce((s,r)=>s+r[1],0))throw Error('Person index');
+  if(!Number.isInteger(index)||index<0||index>=ACTIVE_STAFF_COUNT+generatedPrincipalCount)throw Error('Person index');
+   if(index>=ACTIVE_STAFF_COUNT){const owner=ownerAt(index-ACTIVE_STAFF_COUNT+sourceOrgs.length),id=owner.principalOwnerId;
+    return {id,name:owner.principalOwner,nameStatus:'TEST_RENAME_ALLOWED',role:'owner',organizationId:owner.id,location:owner.location,baseTrackId:owner.mainTrackId,
+     attributes:traits([...common,...(roleDef.owner||[])],seed,id,.24+unit(seed,id+':talent')*.7),
+     reputation:standing(seed,id,.22+unit(seed,id+':standing')*.65),payrollAnnual:0,age:27+hash(seed,id+':age')%47,
+     morale:round(.3+unit(seed,id+':morale')*.68),workload:round(.2+unit(seed,id+':load')*.65),licenseStatus:'SIMULATED_TEST_ACTIVE',source:'SIMULATED_OWNERSHIP_PRINCIPAL'};
+   }
   let j=index,role;
   for(const r of ROLES){if(j<r[1]){role=r[0];break}j-=r[1]}
   if(role==='trainer')return trainerAt(j);
   const id='P-TEST-'+role.toUpperCase()+'-'+pad(j+1),track=trackAt(hash(seed,id)%trackCount);
-  return {id,name:GIVEN[(j+index+seed)%GIVEN.length]+' '+FAMILY[Math.floor(j/GIVEN.length)%FAMILY.length],
+  return {id,name:generatedPersonName(seed,index,protectedPersonNames),
    nameStatus:'TEST_RENAME_ALLOWED',role,location:track.location,baseTrackId:track.id,
    attributes:traits([...common,...(roleDef[role]||[])],seed,id,.22+unit(seed,id+'talent')*.7),
    reputation:standing(seed,id,.2+unit(seed,id+'standing')*.65),payrollAnnual:money(18000+unit(seed,id+'pay')*90000),
-   age:21+hash(seed,id+':age')%48,licenseStatus:'SIMULATED_TEST_ACTIVE',source:'SIMULATED_WORKFORCE'};
+   age:21+hash(seed,id+':age')%48,morale:round(.3+unit(seed,id+':morale')*.68),workload:round(.2+unit(seed,id+':load')*.7),licenseStatus:'SIMULATED_TEST_ACTIVE',source:'SIMULATED_WORKFORCE'};
  }
  function meetOpen(track,date){
   const month=+date.slice(5,7),day=new Date(date+'T12:00:00Z').getUTCDay(),region=String(track.location.state).toLowerCase();
@@ -237,12 +266,12 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
  }
  function facilityAt(index){
   if(!Number.isInteger(index)||index<0||index>=trainersTotal+900+trackCount)throw Error('Facility index');
-  if(index<trainersTotal){const tr=trainerAt(index);return {id:tr.barnId,name:tr.name+' Racing Barn',type:'RACE_BARN',
+  if(index<trainersTotal){const tr=trainerAt(index);return {id:tr.barnId,name:generatedOrganizationName(seed,index+3308,'barn'),type:'RACE_BARN',
    location:tr.location,trainerId:tr.id,trackId:tr.homeTrackId,capacity:tr.barnCapacity,occupied:tr.generatedRunners,
    landAcres:0,equipmentCondition:round(.4+unit(seed,tr.id+'eq')*.58),staffingRequirement:Math.max(1,Math.ceil(tr.barnCapacity/6)),
    annualOperatingCost:money(tr.barnCapacity*29000),reputation:tr.reputation,source:'TEST_BARN'};}
   if(index<trainersTotal+900){const i=index-trainersTotal,t=trackAt(hash(seed,'farm:'+i)%trackCount),id='F-TEST-FARM-'+pad(i+1);
-   return {id,name:FAMILY[i%FAMILY.length]+' '+pick(['Stud','Farm','Bloodstock','Thoroughbreds'],seed,id),
+   return {id,name:generatedOrganizationName(seed,i+8000,'farm'),
    type:'BREEDING_FARM',location:t.location,trackId:t.id,capacity:80+hash(seed,id+'cap')%350,occupied:0,
    landAcres:80+hash(seed,id+'acres')%1100,foalingBarns:2+hash(seed,id+'foal')%10,
    annualOperatingCost:money(120000+unit(seed,id+'cost')*1400000),
@@ -265,7 +294,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   trackAt(idx).facility.occupied++;
   trackAt(idx).facility.barnStalls++;
  }
- const peopleCount=ROLES.reduce((s,r)=>s+r[1],0);
+ const peopleCount=ACTIVE_STAFF_COUNT+generatedPrincipalCount;
  
  // Read-only inverse of the existing horse allocation permutation.
  // Lets the game inspect a complete owner's stable without generating every horse.
