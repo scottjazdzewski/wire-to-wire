@@ -495,7 +495,10 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
      .012*owner.negotiation.commissionFlexibility,0.08,0.125)),
     offerStatus:'SIMULATED_INTEREST_NOT_BOOKED'});
   }
-  const requestedOwner=ownerId?ownerAt(ownersSlots.counts.findIndex((_,i)=>ownerAt(i).id===ownerId)):null;
+  const sourceIndex=ownerId?sourceOrgs.findIndex(o=>o.id===ownerId):-1;
+  const generatedMatch=/^O-TEST-1999-(\d+)$/.exec(String(ownerId||''));
+  const ownerIndex=sourceIndex>=0?sourceIndex:generatedMatch?Number(generatedMatch[1])-1:-1;
+  const requestedOwner=ownerIndex>=0&&ownerIndex<ownersTotal?ownerAt(ownerIndex):null;
   const playerTolerance=requestedOwner?.negotiation.mountFeeTolerance||1;
   return {raceId:race,assumedRacePurse:money(racePurse),
    demandTier:demand>=.77?'ELITE':demand>=.58?'HIGH':demand>=.4?'ACTIVE':'LOCAL',
