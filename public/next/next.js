@@ -1536,6 +1536,7 @@ function profileDetail(route,sourceOverride=null){
  const horseFoalingCity=isHorse?(source.dataset.foalingCity||'').trim():'';
   const horseFoalingState=isHorse?(source.dataset.foalingState||'').trim():'';
  const horseFoalingCountry=isHorse?(source.dataset.foalingCountry||'').trim():'';
+  const horseFoalingEvidence=isHorse?(source.dataset.foalingEvidence||'').trim():'';
  const horseFoalingCode=isHorse?(source.dataset.foalingCountryCode||'').trim().toUpperCase():'';
  const horseCountryLabel=horseFoalingCountry==='United States'?'USA':horseFoalingCountry;
  // One source-backed country icon per approved foaling origin. Real vector
@@ -1554,7 +1555,7 @@ function profileDetail(route,sourceOverride=null){
  const horseFlagPath=horseFlagCodes.has(horseFlagCode)?'/assets/flags/v1/'+horseFlagCode+'.svg':'';
  const horseFoalingDisplay=[horseFoalingCity,horseFoalingState,horseCountryLabel].filter(v=>v&&v!=='—').join(', ')||'Not recorded';
  const horseIdentityRow=isHorse?`<div class="ng-horse-biography" aria-label="Horse foaling and identity facts">
-  <span class="ng-horse-bio-foaling"><small>FOALED</small><strong>${horseFlagPath?`<img class="ng-horse-bio-flag" src="${safe(horseFlagPath)}" alt="" width="22" height="16" decoding="async"/>`:''}${safe(horseFoalingDisplay)}</strong></span>
+  <span class="ng-horse-bio-foaling" title="${safe(horseFoalingEvidence)}"><small>FOALED</small><strong>${horseFlagPath?`<img class="ng-horse-bio-flag" src="${safe(horseFlagPath)}" alt="" width="22" height="16" decoding="async"/>`:''}${safe(horseFoalingDisplay)}</strong></span>
   <span><small>DATE OF BIRTH</small><strong>${safe(horseField('Date of birth'))}</strong></span>
   <span><small>SEX</small><strong>${safe(horseField('Sex'))}</strong></span>
   <span><small>AGE</small><strong>${safe(horseField('Age'))}</strong></span>
