@@ -264,6 +264,15 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    projectedLiveFoals:expected,basis:'SIMULATED_1999_EXPECTATION_NOT_LIVE_BIRTHS',
    farmCount:900,stallionPopulation:STALLION_BREEDING_STOCK};
  };
+ function mareDirectoryAt(i){
+  if(!Number.isInteger(i)||i<0||i>=MARE_BREEDING_STOCK)throw Error('Broodmare directory index');
+  const id='H-TEST-DAM-'+pad(i+1,6),pro=mare1999(i);
+  const status=!pro.active?'RESTING':pro.covered?'COVERED_1999_TEST':'AVAILABLE_FOR_COVER';
+  return {index:i,id,name:mixName(seed+1,i+101500),age:1999-(1971+(i%13)),sex:'MARE',
+   farm:generatedOrganizationName(seed,i%900+8000,'farm'),
+   farmId:'F-TEST-FARM-'+pad(i%900+1),status,
+   bookings:pro.covered?1:0,foals:pro.projectedFoal?1:0};
+ }
  function parentAt(i,sex){
   const isSire=sex==='SIRE',max=isSire?STALLION_BREEDING_STOCK:MARE_BREEDING_STOCK;
   if(!Number.isInteger(i)||i<0||i>=max)throw Error('Parent breeding stock index');
@@ -702,7 +711,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    breedingMares:MARE_BREEDING_STOCK,breedingStallions:STALLION_BREEDING_STOCK,auctions:36,
    sourceStallions:anchored?canon.activeStallions1999.length:0,sourceBroodmareLocations:anchored?canon.productionBroodmareBoarding1999.length:0},
   ownerAt,trainerAt,trackAt,horseAt,horseDirectoryAt,personAt,jockeyBookingMarket,sourcePersonAt,projectAtDate,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
-  parentAt,annualFoalingForecast,attributeCatalog,sourceStakes:anchored?canon.stakes1999.filter(r=>sourceTracks.some(t=>t.id===r.trackId||t.name===r.trackName)):[],
+  parentAt,mareDirectoryAt,annualFoalingForecast,attributeCatalog,sourceStakes:anchored?canon.stakes1999.filter(r=>sourceTracks.some(t=>t.id===r.trackId||t.name===r.trackName)):[],
    sourceOrganizations:sourceOrgs,sourcePeople,excludedActiveStaffRoles:['groom','exercise_rider'],
   audit:{ownershipSlots:ownersSlots.counts.reduce((a,b)=>a+b,0),trainerSlots:trainerSlots.counts.reduce((a,b)=>a+b,0),
    maxOwnerHorses:Math.max(...ownersSlots.counts),minOwnerHorses:Math.min(...ownersSlots.counts),
