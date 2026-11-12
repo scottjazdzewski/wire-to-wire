@@ -40,6 +40,7 @@ export function readLocal1999World(raw){
    gameplayReady:false,counts:w.counts,audit:w.audit,clock:createClean1999Clock(w.seed)};
  }
  if(p==='/api/1999/sim/horses')return pager(q,w.counts.horses,i=>atDate(w.horseAt(i)),'SOURCE_267_PLUS_TEST_GENERATED');
+ if(p==='/api/1999/sim/horse-directory')return pager(q,w.counts.horses,i=>w.horseDirectoryAt(i),'FULL_87500_INDEX_SOURCE_AND_TEST');
  if(p==='/api/1999/sim/owner-horses'){
   const id=String(q.get('ownerId')||'').trim();
   if(!id||!/^O-[A-Z0-9-]{1,45}$/.test(id))throw Error('Valid owner ID required');
