@@ -3038,3 +3038,31 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 #wtwNextgen .ng-attr-score.ability-good .ng-attr-track i{background:#d3c16b}
 #wtwNextgen .ng-attr-score.ability-moderate .ng-attr-track i{background:#d39555}
 #wtwNextgen .ng-attr-score.ability-low .ng-attr-track i{background:#d06473}
+
+
+/* 1999 Stable Training Command — scoped inside the approved roster shell. */
+#wtwNextgen .ng-training-desk{min-width:0;max-width:100%;padding:0 10px 12px}
+#wtwNextgen .ng-training-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:11px 0}
+#wtwNextgen .ng-training-summary>div{display:flex;flex-direction:column;gap:4px;min-width:0;border:1px solid #4a5a4a;border-radius:5px;background:#16231f;padding:11px 12px}
+#wtwNextgen .ng-training-summary small{font-size:10px;letter-spacing:.07em;color:#b2bea9;font-weight:650}
+#wtwNextgen .ng-training-summary strong{font-size:19px;line-height:1.2;color:#f0e6ce;overflow-wrap:anywhere}
+#wtwNextgen .ng-training-explainer,#wtwNextgen .ng-training-notice{font-size:12px;line-height:1.55;max-width:1100px;margin:6px 0 12px;color:#c5d0c0}
+#wtwNextgen .ng-training-notice{color:#f0d69c}
+#wtwNextgen .ng-training-table{table-layout:auto;min-width:1080px}
+#wtwNextgen .ng-training-table th{white-space:nowrap}
+#wtwNextgen .ng-training-table td{vertical-align:top;padding:9px 7px}
+#wtwNextgen .ng-training-table td:first-child{min-width:160px}
+#wtwNextgen .ng-training-table td:first-child button{font-size:12px;font-weight:750;display:block;text-align:left}
+#wtwNextgen .ng-training-table td:first-child small{display:block;font-size:9px;opacity:.65;margin-top:3px}
+#wtwNextgen .ng-training-table td:nth-child(7){min-width:350px}
+#wtwNextgen .ng-training-choices{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+#wtwNextgen .ng-training-choices button{background:#203229;color:#d5dfce;border:1px solid #526753;border-radius:4px;font-size:9px;letter-spacing:.04em;font-weight:700;padding:5px 7px;cursor:pointer}
+#wtwNextgen .ng-training-choices button.on{background:#b38c4f;border-color:#d0ad71;color:#17211b}
+#wtwNextgen .ng-training-choices button:disabled{opacity:.35;cursor:default}
+#wtwNextgen .ng-training-choices button:focus-visible{outline:2px solid #eee1a4;outline-offset:2px}
+#wtwNextgen .ng-training-desk .ng-rs-scroll{overflow:auto;max-height:min(66vh,650px);scrollbar-width:thin}
+@media(max-width:790px){
+ #wtwNextgen .ng-training-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #wtwNextgen .ng-training-summary strong{font-size:15px}
+ #wtwNextgen .ng-training-desk{padding:0 6px 8px}
+}
