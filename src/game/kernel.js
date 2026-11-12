@@ -8,8 +8,9 @@ import {
 } from './contracts.js';
 import { validateGameRun } from './state.js';
 import {makeReputationBaseline,applyReputationSignal} from './reputation.js';
+import {FACILITY_COMMANDS,facilityAction,advanceFacilities} from './facility-operations.js';
 
-const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL']);
+const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS]);
 const MAX_PENDING = 5000;
 function appendLog(state, commandId, kind, details) {
   const event = { seq: state.event_log.length + 1, command_id: commandId,
@@ -94,11 +95,14 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     next.runtime.people[p.person_id].reputation=updated;
     emit('PERSON_REPUTATION_CHANGED',{person_id:p.person_id,signal:p.signal,
       before:current.scores,after:updated.scores,source_refs:p.source_refs});
+  } else if (FACILITY_COMMANDS.includes(c.type)) {
+    facilityAction({state:next,world,command:c,emit});
   } else if (c.type === 'ADVANCE_DAY') {
     ensure(Object.keys(c.payload).length === 0, 'INVALID_COMMAND', 'ADVANCE_DAY takes no payload; no silent skips');
     next.clock.date = nextDate(next.clock.date);
     next.clock.days_elapsed += 1;
     emit('DAY_ADVANCED', { date: next.clock.date });
+    advanceFacilities({state:next,world,emit});
     const ready = next.scheduler.pending.filter(x => x.due_date <= next.clock.date);
     next.scheduler.pending = next.scheduler.pending.filter(x => x.due_date > next.clock.date);
     for (const event of ready) {

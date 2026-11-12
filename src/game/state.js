@@ -4,6 +4,7 @@ import {
 } from './contracts.js';
 import { validateSeed } from './rng.js';
 import {generatePeopleRuntime} from './people-generator.js';
+import {createFacilityState,validateFacilityState} from './facility-operations.js';
 
 export function createGameRun({ world, runId, seed, player, stableHorseIds = [], startDate, personGenerationCatalog = null } = {}) {
   validateWorld(world);
@@ -28,7 +29,7 @@ export function createGameRun({ world, runId, seed, player, stableHorseIds = [],
     rng: { seed: seed >>> 0 },
     player: { role: player.role, involvement: player.involvement, operation_id: operationId },
     stable_horse_ids: [...stableHorseIds],
-    runtime: { horse: {}, races: {}, entries: {}, people: personGenerationCatalog?generatePeopleRuntime({world,catalog:personGenerationCatalog}):{}, finances: { balance_minor: null, ledger: [] } },
+    runtime: { horse: {}, races: {}, entries: {}, people: personGenerationCatalog?generatePeopleRuntime({world,catalog:personGenerationCatalog}):{}, finances: { balance_minor: null, ledger: [], operation_balances_minor: {} }, facilities:createFacilityState() },
     decisions: { pending: {}, resolved: {} },
     scheduler: { pending: [], delivered_ids: [] },
     command_receipts: {},
@@ -83,6 +84,7 @@ export function validateGameRun(state, world) {
     ensure(isObject(event) && event.seq === i + 1 && typeof event.kind === 'string' && typeof event.command_id === 'string' && validDate(event.date),
       'RUN_JOURNAL', 'Broken event journal sequence');
   }
+  validateFacilityState(state,world);
   strictJSON(state);
   return state;
 }
