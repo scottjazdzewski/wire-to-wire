@@ -921,7 +921,11 @@ function globalSearchItems(){
   }))),
   ...currentMessages().map(m=>({kind:'decision',name:m.title,detail:'Office · '+m.from,caseId:m.case}))
  ];
- const original=rows.filter(r=>r&&typeof r.name==='string').map(r=>{
+ const playableTracks=window.__WTW_1999_UI_DATA__?.extraTracks?.()||[];
+ const playableTrackIds=new Set(playableTracks.map(t=>t.id));
+ const playableTrackNames=new Set(playableTracks.map(t=>t.name));
+ const original=rows.filter(r=>r&&typeof r.name==='string'&&
+   (r.kind!=='track'||playableTrackIds.has(r.id)||playableTrackNames.has(r.name))).map(r=>{
   const bucket={horse:'horses',person:'people',farm:'organizations',track:'tracks'}[r.kind];
   const base=(world1999Base?.[bucket]||[]).filter(x=>x.name===r.name);
   const unchanged=base.length===1?base[0].id||base[0].key:'';
