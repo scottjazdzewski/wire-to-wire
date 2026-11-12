@@ -41,17 +41,31 @@ function mixName(seed,i){const total=A.length*B.length*C.length,k=(i*71083+seed)
  const a=A[k%A.length],b=B[Math.floor(k/A.length)%B.length],c=C[Math.floor(k/(A.length*B.length))%C.length];
  return a+' '+b+' '+c;}
 function makeSlots(count,available,seed,kind){
- const weights=[],min=1;
- for(let i=0;i<count;i++)weights.push(Math.pow(i+10,-.82)*(.83+unit(seed,kind+':weight:'+i)*.34));
- const total=weights.reduce((a,b)=>a+b,0);
- const counts=new Array(count).fill(min),fraction=[];
- let used=count;
- for(let i=0;i<count;i++){const exact=(available-count)*(weights[i]/total);const n=Math.floor(exact);counts[i]+=n;used+=n;fraction.push([exact-n,i]);}
+ const owner=kind==='owner',counts=new Array(count).fill(0),eligible=[],weights=[];
+ let used=0;
+ for(let i=0;i<count;i++){
+  if(owner&&i>=Math.floor(count*.48)){counts[i]=1+hash(seed,kind+':tiny:'+i)%3;}
+  else if(owner&&i<90){counts[i]=135;eligible.push(i);}
+  else if(owner&&i<510){counts[i]=26;eligible.push(i);}
+  else if(owner){counts[i]=5;eligible.push(i);}
+  else if(i<80){counts[i]=80;eligible.push(i);}
+  else if(i<800){counts[i]=11;eligible.push(i);}
+  else if(i<2600){counts[i]=3;eligible.push(i);}
+  else counts[i]=2;
+  used+=counts[i];
+ }
+ if(used>available)throw Error('Minimum roster exceeds population');
+ for(const i of eligible)weights.push(Math.pow(i+14,-.71)*(.83+unit(seed,kind+':weight:'+i)*.34));
+ const weightTotal=weights.reduce((a,b)=>a+b,0),fraction=[];
+ for(let j=0;j<eligible.length;j++){
+  const exact=(available-used)*(weights[j]/weightTotal),n=Math.floor(exact),i=eligible[j];
+  counts[i]+=n;used+=n;fraction.push([exact-n,i]);
+ }
  fraction.sort((a,b)=>b[0]-a[0]||a[1]-b[1]);
  for(let j=0;j<available-used;j++)counts[fraction[j][1]]++;
- const ends=[];let running=0;for(const n of counts){running+=n;ends.push(running);}
+ const ends=[];let running=0;for(const n of counts){running+=n;ends.push(running)}
  if(running!==available)throw Error('Owner/trainer slots do not equal generated population');
- return {counts,ends,at(slot){let l=0,r=ends.length-1;while(l<r){let m=(l+r)>>1;if(slot<ends[m])r=m;else l=m+1;}return l;}};
+ return {counts,ends,at(slot){let l=0,r=ends.length-1;while(l<r){const m=(l+r)>>1;if(slot<ends[m])r=m;else l=m+1;}return l;}};
 }
 const gcd=(a,b)=>b?gcd(b,a%b):a;
 const perm=(i,total,seed,constant)=>{let mult=constant;while(gcd(mult,total)!==1)mult+=2;return (i*mult+(seed%total))%total;};
@@ -100,7 +114,8 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const annualRun=portfolio*money(12000+unit(seed,id+'run')*25000),wealthScale=tier==='major'?12:tier==='established'?5:tier==='regional'?2:1;
   const cash=money(annualRun*(.75+unit(seed,id+'liquidity')*2.5)*wealthScale);
   const obj={id,name,nameStatus:canonSource?'CANON_LOCKED':'TEST_RENAME_ALLOWED',type:canonSource?.type||'RACING_OWNER',
-   location:canonSource?.geographyRecords?.[0]?fmtLoc({city:canonSource.geographyRecords[0].locality,state:canonSource.geographyRecords[0].region,country:canonSource.geographyRecords[0].country}):t.location,
+   location:canonSource?.geographyRecords?.[0]?.locality?fmtLoc({city:canonSource.geographyRecords[0].locality,state:canonSource.geographyRecords[0].region,country:canonSource.geographyRecords[0].country}):t.location,
+   locationBasis:canonSource?.geographyRecords?.[0]?.locality?'SOURCE_VERIFIED_HISTORICAL_ORG_LOCALITY':'SIMULATED_1999_OPERATIONAL_BASE_NOT_HISTORICAL_HEADQUARTERS',
    mainTrackId:t.id,portfolio:{generatedHorseSlots:portfolio,sourceHorseCount:0,tier},
    finances:{cash,annualHorseOperatingBudget:annualRun,propertyAndEquineAssets:money(cash*(.6+unit(seed,id+'assets')*3)),debt:money(cash*unit(seed,id+'debt')*.4),
      monthlyFixedOverhead:money(annualRun/12*.2),currency:'USD',basis:'1999_TEST_MODEL_NOT_VERIFIED_CANON_FUNDS'},
