@@ -2274,19 +2274,14 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 .ng-track-stakes .ng-stakes-head{min-height:26px!important;padding:3px 7px!important}
 .ng-track-stakes .ng-stakes-data span{font-size:10.5px!important}
 .ng-track-stakes>header span{display:block;max-width:58%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px!important;font-weight:800;letter-spacing:.02em;color:#dfcfab}
-/* User's original full-color graded trophy artwork, cropped from the existing
-   2048x682 three-panel sprite. Preserve a 16px square, not a squeezed image. */
+/* Gold/silver/bronze G1/G2/G3 are resized copies of the exact
+   SHA-verified approved Rail & Rye artwork, not substitute vector cups.
+   Keep original 64px alpha PNGs sharp in the 16px track-list slots. */
 .ng-track-stakes .ng-stakes-grade{display:inline-flex;align-items:center;justify-content:flex-end;gap:3px;min-width:0;min-height:18px;overflow:visible}
-.ng-track-stakes .ng-stakes-trophy{display:block!important;box-sizing:content-box;width:16px!important;height:16px!important;min-width:16px!important;min-height:16px!important;max-width:16px!important;max-height:16px!important;flex:0 0 16px!important;vertical-align:middle;background-image:url('/assets/trophies/g123-sprite.png')!important;background-repeat:no-repeat!important;background-size:48px 16px!important;background-position:0 0;image-rendering:auto;filter:drop-shadow(0 1px 1px rgba(0,0,0,.55))}
-.ng-track-stakes .ng-stakes-trophy.g1{background-position:0 0!important}
-.ng-track-stakes .ng-stakes-trophy.g2{background-position:-16px 0!important}
-.ng-track-stakes .ng-stakes-trophy.g3{background-position:-32px 0!important}
+.ng-track-stakes .ng-stakes-trophy{display:block!important;box-sizing:content-box;width:16px!important;height:16px!important;min-width:16px!important;min-height:16px!important;max-width:16px!important;max-height:16px!important;flex:0 0 16px!important;object-fit:contain!important;vertical-align:middle;image-rendering:auto;filter:drop-shadow(0 1px 1px rgba(0,0,0,.55))}
 .ng-track-stakes .ng-stakes-grade-text{display:block;flex:0 0 auto;color:#d9d3b8;font-size:9px!important;line-height:1;font-weight:800;letter-spacing:.02em;white-space:nowrap}
 @media(max-width:980px){
- .ng-track-stakes .ng-stakes-trophy{width:15px!important;height:15px!important;min-width:15px!important;min-height:15px!important;max-width:15px!important;max-height:15px!important;flex-basis:15px!important;background-size:45px 15px!important}
- .ng-track-stakes .ng-stakes-trophy.g1{background-position:0 0!important}
- .ng-track-stakes .ng-stakes-trophy.g2{background-position:-15px 0!important}
- .ng-track-stakes .ng-stakes-trophy.g3{background-position:-30px 0!important}
+ .ng-track-stakes .ng-stakes-trophy{width:15px!important;height:15px!important;min-width:15px!important;min-height:15px!important;max-width:15px!important;max-height:15px!important;flex-basis:15px!important}
  .ng-track-stakes .ng-stakes-grade-text{font-size:8px!important}
 }
 .ng-track-info-stack{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(155px,194px);gap:7px;min-height:0;height:100%;overflow:hidden}
