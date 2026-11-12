@@ -121,6 +121,9 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   check('Canonical World person uses the same professional attribute dossier',
    Boolean(d.querySelector('#wtwNextgen .ng-profile-person'))&&
    d.querySelectorAll('#wtwNextgen .ng-person-attribute').length>=11);
+  check('Source person identity displays role-specific modeled test skills, not a generic profile',
+   d.querySelectorAll('#wtwNextgen .ng-person-attribute strong.test-modeled').length>=11&&
+   d.querySelector('#wtwNextgen .ng-person-workspace')?.textContent.includes('SIMULATED TEST VALUES'));
   click('Breeding');await pause(180);
   const stallions=ui.departmentRows('Breeding','Stallions');
   check('31 source-backed stallions preserved alongside model stallions',stallions.length>=31&&stallions.filter(h=>h.status?.includes('SOURCE')).length===31&&stallions.every(h=>h._canonId||h._testGenerated));
