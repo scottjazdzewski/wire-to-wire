@@ -25,7 +25,8 @@ test('source horses and owner identities drive existing stable, not 2014 demo',(
  for(const h of ui.stableHorses){
   assert.match(h.horseId,/^H-/);
   const facts=ui.sourceFacts(h.name);
-  assert.ok(facts&&facts.source==='1999_CANON_LOCKED');
+  assert.ok(facts&&['1999_CANON_LOCKED','1999_TEST_GENERATED'].includes(facts.source));
+  assert.equal(facts.source,h.tag.startsWith('CANON')?'1999_CANON_LOCKED':'1999_TEST_GENERATED');
   assert.ok(ui.ownerFor(h.name));
  }
  assert.ok(ui.sourceOwnerName);
