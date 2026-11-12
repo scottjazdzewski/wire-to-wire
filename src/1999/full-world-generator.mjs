@@ -89,6 +89,15 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
  const trackCache=new Map(),ownerCache=new Map(),trainerCache=new Map(),horseCache=new Map();
  const trackCount=sourceTracks.length,canonicalNames=new Set(locked.map(x=>x.name.toLowerCase()));
  if(trackCount<130)throw Error('Fewer than 130 physical tracks');
+ function regionTrack(geo,id){
+  if(!geo)return trackAt(hash(seed,id+':track')%trackCount);
+  const reg=String(geo.region??geo.state??'').toLowerCase(),city=String(geo.locality??geo.city??'').toLowerCase();
+  let index=sourceTracks.findIndex(t=>city&&t.locality&&t.locality.toLowerCase()===city&&t.region&&reg.includes(t.region.toLowerCase()));
+  if(index<0)index=sourceTracks.findIndex(t=>t.region&&reg.includes(t.region.toLowerCase()));
+  if(index<0)index=sourceTracks.findIndex(t=>t.region&&t.region.toLowerCase().includes(reg)&&reg.length>2);
+  if(index<0)index=hash(seed,id+':track')%trackCount;
+  return trackAt(index);
+ }
  function trackAt(i){
   if(i<0||i>=trackCount)throw Error('Track index out of range');
   if(trackCache.has(i))return trackCache.get(i);
@@ -108,9 +117,9 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   if(i<0||i>=ownersTotal)throw Error('Owner index out of range');
   if(ownerCache.has(i))return ownerCache.get(i);
   const canonSource=anchored&&i<sourceOrgs.length?sourceOrgs[i]:null;
-  const id=canonSource?.id||'O-TEST-1999-'+pad(i+1),t=trackAt(hash(seed,'owner:'+id)%trackCount);
+  const id=canonSource?.id||'O-TEST-1999-'+pad(i+1),t=regionTrack(canonSource?.geographyRecords?.[0]||null,id);
   const portfolio=ownersSlots.counts[i],tier=portfolio>=200?'major':portfolio>=40?'established':portfolio>=8?'regional':'small';
-  const family=FAMILY[(i+seed)%FAMILY.length],name=canonSource?.name||(family+' '+pick(OWNER_TERMS,seed,id));
+  const nameSlot=(i*173+seed)%(FAMILY.length*A.length*OWNER_TERMS.length),family=FAMILY[nameSlot%FAMILY.length],familyPrefix=A[Math.floor(nameSlot/FAMILY.length)%A.length],officeType=OWNER_TERMS[Math.floor(nameSlot/(FAMILY.length*A.length))%OWNER_TERMS.length],name=canonSource?.name||(family+' '+familyPrefix+' '+officeType);
   const annualRun=portfolio*money(12000+unit(seed,id+'run')*25000),wealthScale=tier==='major'?12:tier==='established'?5:tier==='regional'?2:1;
   const cash=money(annualRun*(.75+unit(seed,id+'liquidity')*2.5)*wealthScale);
   const obj={id,name,nameStatus:canonSource?'CANON_LOCKED':'TEST_RENAME_ALLOWED',type:canonSource?.type||'RACING_OWNER',
@@ -126,7 +135,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   if(i<0||i>=trainersTotal)throw Error('Trainer index');
   if(trainerCache.has(i))return trainerCache.get(i);
   const canonSource=anchored&&i<sourcePeople.filter(x=>String(x.role).toLowerCase().includes('trainer')).length?sourcePeople.filter(x=>String(x.role).toLowerCase().includes('trainer'))[i]:null;
-  const id=canonSource?.id||'P-TEST-TRAINER-'+pad(i+1),track=trackAt(hash(seed,id+':track')%trackCount);
+  const id=canonSource?.id||'P-TEST-TRAINER-'+pad(i+1),track=regionTrack(canonSource?.base?{locality:canonSource.base.city,region:canonSource.base.state,country:canonSource.base.country}:null,id);
   const slots=trainerSlots.counts[i],name=canonSource?.name||GIVEN[(i+seed)%GIVEN.length]+' '+FAMILY[Math.floor(i/GIVEN.length)%FAMILY.length];
   const obj={id,name,nameStatus:canonSource?'CANON_LOCKED':'TEST_RENAME_ALLOWED',role:'trainer',location:canonSource?.base?fmtLoc(canonSource.base):track.location,
    homeTrackId:track.id,barnId:'F-TEST-BARN-'+pad(i+1),barnCapacity:Math.max(slots+Math.ceil(slots*.12),slots+2),
@@ -142,7 +151,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const isSire=sex==='SIRE',id='H-TEST-'+sex+'-'+pad(i+1,6),t=trackAt(hash(seed,id+':home')%trackCount);
   return {id,name:mixName(seed+1,isSire?i+100000:i+101500),sex:isSire?'STALLION':'MARE',
    foalYear:isSire?1970+(i%12):1971+(i%13),location:t.location,farmId:'F-TEST-FARM-'+pad(i%900+1),
-   reputation:standing(seed,id,.25+unit(seed,id+'rep')*.5),nameStatus:'TEST_RENAME_ALLOWED',
+   reputation:standing(seed,id,.25+unit(seed,id+'rep')*.5),attributes:traits(hor,seed,id,.4),nameStatus:'TEST_RENAME_ALLOWED',
    source:'GENERATED_ANCESTRAL_STOCK'};
  }
  function horseAt(index){
