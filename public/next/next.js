@@ -1303,7 +1303,12 @@ function profileDetail(route,sourceOverride=null){
   const catalog=athleteAttributeCatalog;
   const categories=catalog?.horse_categories||{};
   const display=catalog?.display?.horse_overview||{};
-  const reports=state().scoutingState?.[route.title]?.attribute_observations||[];
+  const genuineReports=state().scoutingState?.[route.title]?.attribute_observations||[];
+   let testModel={};if(source.dataset.testGenerated==='true'){try{testModel=JSON.parse(source.dataset.testAttributes||'{}')}catch{}}
+   const demoReports=Object.entries(testModel).filter(([,v])=>typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<=1)
+    .map(([attribute_key,v])=>({attribute_key,status:'estimated',estimate:Math.round(v*99),scale_min:0,scale_max:99,
+     evidence_refs:['SIMULATED_1999_TEST_MODEL'],testGenerated:true}));
+   const reports=[...demoReports,...(Array.isArray(genuineReports)?genuineReports:[])];
   const observed=new Map((Array.isArray(reports)?reports:[])
    .filter(r=>r&&typeof r.attribute_key==='string').map(r=>[r.attribute_key,r]));
   const known=x=>x!=null&&String(x).trim()&&!['—','Unknown','Not recorded','N/A'].includes(String(x).trim());
@@ -1317,7 +1322,7 @@ function profileDetail(route,sourceOverride=null){
    const lines=keys.map(key=>{
     const def=defs.get(key);if(!def)return '';
     const report=observed.get(key),verified=assessed(report);
-    const label=verified?(report.status==='measured'?'Measured':'Scout estimate'):'Not yet assessed';
+    const label=verified?(report.testGenerated?'SIMULATED TEST SCORE · NOT AN OBSERVATION':report.status==='measured'?'Measured':'Scout estimate'):'Not yet assessed';
     const value=verified?String(report.estimate)+(report.unit?' '+report.unit:''):'—';
     const scaled=verified&&Number.isFinite(Number(report.estimate))&&
      Number.isFinite(Number(report.scale_min))&&Number.isFinite(Number(report.scale_max))&&
@@ -1338,7 +1343,7 @@ function profileDetail(route,sourceOverride=null){
    conditionDefs.map(def=>{
     const report=observed.get(def.key),verified=assessed(report);
     return '<div class="ng-horse-condition-cell"><span>'+safe(def.label)+'</span>'+
-     '<strong class="'+(verified?'known':'unknown')+'" title="'+safe(verified?'Source-backed '+report.status:'Not yet assessed')+'">'+
+     '<strong class="'+(verified?'known':'unknown')+'" title="'+safe(verified?report.testGenerated?'1999 SIMULATED TEST STATE':'Source-backed '+report.status:'Not yet assessed')+'">'+
       (verified?safe(String(report.estimate)+(report.unit?' '+report.unit:'')):'—')+'</strong></div>';
    }).join('')+'</div>';
   const asMap=items=>'<div class="ng-horse-mgr-rows">'+items.map(([name,value])=>
@@ -1380,7 +1385,7 @@ function profileDetail(route,sourceOverride=null){
   const panel=(name,body,cls='')=>'<section class="ng-horse-mgr-panel '+cls+'"><header><strong>'+name+'</strong></header>'+body+'</section>';
   return '<div class="ng-horse-dossier">'+
    '<div class="ng-horse-dossier-caption"><strong>ATHLETE & RACING INTELLIGENCE</strong><span>'+observedCount+
-   ' OF '+allDefs.length+' ATTRIBUTES ASSESSED · UNASSESSED ≠ ZERO</span></div>'+
+   ' OF '+allDefs.length+(source.dataset.testGenerated==='true'?' SIMULATED TEST ATTRIBUTES · NOT OBSERVED':' ATTRIBUTES ASSESSED · UNASSESSED ≠ ZERO')+'</span></div>'+
    '<div class="ng-horse-mgr-four">'+(attributeColumns||'<p class="ng-horse-small-note">Horse attribute definitions have not loaded.</p>')+'</div>'+conditionStrip+
    '<div class="ng-horse-mgr-five">'+
     panel('CAREER RECORD',careerBody)+panel('CURRENT CONDITION',condition)+
