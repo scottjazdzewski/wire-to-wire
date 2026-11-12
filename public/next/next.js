@@ -191,13 +191,16 @@ function goOffice(){
 }
 function openMenu(section){
  APP.moreOpen=false;
- APP.departmentPageIndex=0;APP.departmentSearch='';APP.departmentSortKey='';
+ APP.departmentPageIndex=0;APP.departmentSearch='';APP.departmentSortKey='';APP.departmentScrollLimit=160;APP.departmentScrollReset=true;
  if(section==='Sales'){APP.departmentAuction='';APP.departmentCompany=''}
  if(section==='Racing'){APP.racingMode='meets';APP.racingTrack=''}
  if(section==='History'){window.location.assign('/archive/?page=races');return}
  // Stable is a first-class next-generation screen. Clicking it must NOT
  // depend on the hidden Office's legacy click handler or its route shell.
  if(section==='Stable')return openCustomView('Stable — Overview','Stable','Overview');
+ // The January 1999 Racing office must never depend on the legacy Office route,
+ // which can reopen demo state or fail while the real world is loaded.
+ if(section==='Racing')return openCustomView('Racing — Overview','Racing','Overview');
  APP.section=section;APP.page='Overview';APP.custom='';
  if(actions[section])bridgeNode(originalAct(actions[section]));
  else{openCustomView(section,section,'Overview')}
@@ -213,14 +216,13 @@ function pageTab(name){if(APP.section==='History'){const pages={'Race Results':'
  }
  if(DEP_NAMES.has(s)){
   APP.departmentPageIndex=0;APP.departmentSearch='';APP.departmentSortKey='';
-  if(s==='Racing'&&name==='Overview'){APP.custom='';return bridgeNode(originalAct('Race Calendar'))}
+  APP.departmentScrollLimit=160;APP.departmentScrollReset=true;
+  if(s==='Racing')return openCustomView('Racing — '+name,'Racing',name);
   if(s==='Sales'&&name==='Overview'){APP.custom='';return bridgeNode(originalAct('Sales'))}
   return openCustomView(s+' — '+name,s,name);
  }
  if(s==='Stable'&&(name==='Overview'||name==='Horses'))
   return openCustomView('Stable — '+name,'Stable',name);
- if(s==='Racing'&&(name==='Overview'||name==='Calendar'||name==='Entries'||name==='Stakes'))return bridgeNode(originalAct('Race Calendar'));
- if(s==='Sales'&&(name==='Overview'||name==='Auctions'))return bridgeNode(originalAct('Sales'));
  if(s==='World'&&['1999 Horses','People','Organizations'].includes(name)){
   APP.departmentPageIndex=0;APP.departmentSearch='';APP.departmentSortKey='';
   return openCustomView('World — '+name,'World',name);
@@ -2678,14 +2680,25 @@ function departmentRoster(section,page='Overview'){
   section==='World'?(page==='1999 Horses'?WORLD_1999_COLUMNS.Horses:page==='People'?WORLD_1999_COLUMNS.People:WORLD_1999_COLUMNS.Organizations):
   section==='Sales'&&page==='Watchlist'?DEP_COLUMNS.SalesWatchlist:section==='Sales'&&page==='Sale Calendar'?DEP_COLUMNS.SaleCalendar:section==='Sales'&&page==='Sale Companies'?DEP_COLUMNS.SaleCompanies:section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'?(APP.racingTrack?DEP_COLUMNS.Racing:DEP_COLUMNS.Meets):DEP_COLUMNS[section];
  const perPage=depPageLimit(section);
- const continuousPersonnel=section==='Personnel'; // All Personnel tabs use the same continuous sortable roster.
+ const continuousRoster=true; // The same sort + endless-scroll model applies to every department.
  const virtualHorseIndex=section==='World'&&page==='1999 Horses'&&
   window.__WTW_1999_UI_DATA__?.worldHorsePage;
- const pageData=virtualHorseIndex?window.__WTW_1999_UI_DATA__.worldHorsePage(
-  APP.departmentPageIndex*perPage,perPage,APP.departmentSearch):null;
- let rows=pageData?pageData.items:depRows(section,page,demo,auction);
+ // World horses are 87,500 rows. Fetch only the progressive visible window;
+ // ordinary departments are globally sortable because their arrays are loaded.
+ const virtualData=virtualHorseIndex?[]:null;
+ let virtualTotal=0;
+ if(virtualHorseIndex){
+  for(let offset=0;offset<APP.departmentScrollLimit;offset+=100){
+   const response=window.__WTW_1999_UI_DATA__.worldHorsePage(offset,
+    Math.min(100,APP.departmentScrollLimit-offset),APP.departmentSearch);
+   virtualTotal=response.total||0;
+   virtualData.push(...(response.items||[]));
+   if(offset+100>=virtualTotal)break;
+  }
+ }
+ let rows=virtualHorseIndex?virtualData:depRows(section,page,demo,auction);
  const search=APP.departmentSearch.trim().toLowerCase();
- if(search&&!pageData)rows=rows.filter(r=>specs.some(([key])=>String(r[key]??'').toLowerCase().includes(search)));
+ if(search&&!virtualHorseIndex)rows=rows.filter(r=>specs.some(([key])=>String(r[key]??'').toLowerCase().includes(search)));
  const defaultSort=section==='World'?'name':section==='Sales'&&page==='Watchlist'?'auction':section==='Racing'&&(page!=='Overview'||APP.racingMode==='mine'||APP.racingTrack)?'date':section==='Sales'&&page!=='Sale Calendar'&&page!=='Sale Companies'?'hip':section==='Finances'?'date':specs[0][0];
  const selectedSort=specs.some(x=>x[0]===APP.departmentSortKey)?APP.departmentSortKey:defaultSort;
  const sign=APP.departmentSortKey?(APP.departmentSortDesc?-1:1):(section==='Finances'?-1:1);
@@ -2697,10 +2710,8 @@ function departmentRoster(section,page='Overview'){
   const comp=an!==null&&bn!==null?an-bn:String(av).localeCompare(String(bv),undefined,{numeric:true,sensitivity:'base'});
   return comp*sign||String(a._name).localeCompare(String(b._name));
  });
- const totalRecords=pageData?pageData.total:rows.length;
- const limit=perPage,pages=Math.max(1,Math.ceil(totalRecords/limit));
- APP.departmentPageIndex=Math.min(Math.max(0,APP.departmentPageIndex),pages-1);
- const shown=pageData?rows:continuousPersonnel?rows.slice(0,Math.min(rows.length,APP.departmentScrollLimit)):rows.slice(APP.departmentPageIndex*limit,(APP.departmentPageIndex+1)*limit);
+ const totalRecords=virtualHorseIndex?virtualTotal:rows.length;
+ const shown=virtualHorseIndex?rows:rows.slice(0,Math.min(rows.length,APP.departmentScrollLimit));
  APP.departmentVisible=shown;
 
  const heads=specs.map(([key,label])=>'<th scope="col" aria-sort="'+(selectedSort===key?(sign===1?'ascending':'descending'):'none')+'"><button data-ng="dept-sort" data-val="'+key+'" title="Sort by '+safe(label)+'">'+safe(label)+'<span aria-hidden="true">'+(selectedSort===key?(sign===1?'▲':'▼'):'↕')+'</span></button></th>').join('');
@@ -2749,11 +2760,8 @@ function departmentRoster(section,page='Overview'){
    return '<td title="'+safe(String(r[key]??''))+'">'+v+'</td>';
   }).join('')+'</tr>';
  }).join('');
- const pager=continuousPersonnel?'<span class="ng-dpt-records">'+totalRecords+' RECORDS · '+shown.length+' LOADED · SCROLL TO SEE MORE</span>':
-  '<span class="ng-dpt-records">'+totalRecords+' RECORDS · '+shown.length+' SHOWN'+(pageData?.isPageFilter?' · PAGE FILTER':'')+'</span>'+
-  '<button data-ng="dept-page" data-val="-1" '+(APP.departmentPageIndex===0?'disabled':'')+' aria-label="Previous page">‹ PREV</button>'+
-  '<strong>'+(APP.departmentPageIndex+1)+' / '+pages+'</strong>'+
-  '<button data-ng="dept-page" data-val="1" '+(APP.departmentPageIndex>=pages-1?'disabled':'')+' aria-label="Next page">NEXT ›</button>';
+ const pager='<span class="ng-dpt-records">'+totalRecords+' RECORDS · '+shown.length+
+  ' LOADED · SCROLL FOR MORE'+(virtualHorseIndex?' · WORLD SORT/SEARCH: LOADED WINDOW':'')+'</span>';
  const viewOptions=(tabmap[section]||[]).map(t=>'<option value="'+safe(t)+'" '+(t===page?'selected':'')+'>'+safe(t)+'</option>').join('');
  const racingTracks=section==='Racing'?depCurrentMeetRows():[];
  if(section==='Racing'&&APP.racingTrack&&!racingTracks.some(x=>x.name===APP.racingTrack)){
@@ -2952,7 +2960,10 @@ function paint(){
  const oldRoute=$('.ng-routegrid',root),oldTab=$('.ng-profiletabs .on',root)?.dataset.val||'';
  const previousRouteKey=oldRoute?.dataset.routeKey||'';
  const previousRouteScroll=oldRoute?.scrollTop||0;
- const previousPersonnelScroll=$('.ng-dept-roster[data-department="Personnel"] .ng-rs-scroll',root)?.scrollTop||0;
+ const previousRoster=$('.ng-dept-roster .ng-rs-scroll',root);
+ const previousRosterKey=previousRoster?.closest('.ng-dept-roster')?.getAttribute('data-department')+'|'+
+   previousRoster?.closest('.ng-dept-roster')?.getAttribute('data-page');
+ const previousRosterScroll=previousRoster?.scrollTop||0;
  const previousDetailScroll=$('.ng-profile-view .ng-detail-cols',root)?.scrollTop||0;
  const oldCards=$$('.ng-profile-view .ng-detailcard',root).map((card,index)=>({
   key:index+'|'+($('header',card)?.textContent.trim()||''),
@@ -2964,8 +2975,13 @@ function paint(){
  root.innerHTML=header()+'<div class="ng-manager-shell">'+managerSidebar()+
    '<div class="ng-manager-stage">'+stage+'</div></div>'+(APP.savePanelOpen?namedSavePanel():'');
  const nextRoute=$('.ng-routegrid',root),nextTab=$('.ng-profiletabs .on',root)?.dataset.val||'';
- const newPersonnelScroll=$('.ng-dept-roster[data-department="Personnel"] .ng-rs-scroll',root);
- if(newPersonnelScroll){newPersonnelScroll.scrollTop=APP.departmentScrollReset?0:previousPersonnelScroll;APP.departmentScrollReset=false}
+ const nextRoster=$('.ng-dept-roster .ng-rs-scroll',root);
+ if(nextRoster){
+  const nextRosterKey=nextRoster.closest('.ng-dept-roster')?.getAttribute('data-department')+'|'+
+    nextRoster.closest('.ng-dept-roster')?.getAttribute('data-page');
+  nextRoster.scrollTop=APP.departmentScrollReset||previousRosterKey!==nextRosterKey?0:previousRosterScroll;
+  APP.departmentScrollReset=false;
+ }
  if(nextRoute&&previousRouteKey&&nextRoute.dataset.routeKey===previousRouteKey){
   nextRoute.scrollTop=previousRouteScroll;
   if(oldTab===nextTab){
@@ -3024,7 +3040,7 @@ window.addEventListener('click',e=>{
   else{APP.departmentSortKey=val;APP.departmentSortDesc=false}
   APP.departmentPageIndex=0;APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint();
  }
- if(key==='dept-page'){APP.departmentPageIndex=Math.max(0,APP.departmentPageIndex+Number(val));return paint()}
+ // Previous/Next buttons have been retired from the department rosters.
  if(key==='dept-demo'){APP.departmentDemo=!APP.departmentDemo;APP.departmentPageIndex=0;return paint()}
  if(key==='sale-watch'){
   if(APP.section!=='Sales')return;
@@ -3186,7 +3202,7 @@ root.addEventListener('change',event=>{
   if(field?.tagName==='SELECT')endNativeSelectInteraction(false);
   if(field.matches('select[data-ng-select="department-track"]')){APP.racingTrack=field.value;APP.racingMode=field.value?'track':'meets';APP.departmentPageIndex=0;APP.departmentSortKey='';if(APP.page!=='Overview')return pageTab('Overview');return paint()}
   if(field.matches('select[data-ng-select="department-sales-company"]')){APP.departmentCompany=field.value;APP.departmentPageIndex=0;APP.departmentSortKey='';return paint()}
-  if(field.matches('select[data-ng-select="department-auction"]')){APP.departmentAuction=field.value;APP.departmentPageIndex=0;return paint()}
+  if(field.matches('select[data-ng-select="department-auction"]')){APP.departmentAuction=field.value;APP.departmentPageIndex=0;APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint()}
   if(field.matches('select[data-ng-select="department-tab"]'))return pageTab(field.value);
   if(field.matches('select[data-ng-select="manager-screen"]')&&field.value){
   pageTab(field.value);
@@ -3222,7 +3238,7 @@ window.addEventListener('keydown',event=>{
 });
 root.addEventListener('scroll',event=>{
  const scroller=event.target;
- if(!scroller?.matches?.('.ng-dept-roster[data-department="Personnel"] .ng-rs-scroll'))return;
+ if(!scroller?.matches?.('.ng-dept-roster .ng-rs-scroll'))return;
  if(scroller.scrollTop+scroller.clientHeight<scroller.scrollHeight-240)return;
  const total=Number($('.ng-dpt-records',root)?.textContent.match(/^(\d+)/)?.[1]||0);
  if(total&&APP.departmentScrollLimit<total){APP.departmentScrollLimit=Math.min(total,APP.departmentScrollLimit+160);schedulePaint(0)}
