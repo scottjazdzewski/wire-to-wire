@@ -769,6 +769,10 @@ function openWorld1999Entity(key){
  if(!found)return false;
  return openCustomView('WorldRecord:'+encodeURIComponent(key),'World','Overview');
 }
+function restored1999Profile(kind,record){
+ const x=window.WTW1999Profiles?.source(kind,record,window.__WTW_1999_UI_DATA__);
+ return x?profileDetail(x.route,x.node):null;
+}
 function world1999Profile(){
  const key=decodeURIComponent(String(APP.custom||'').slice('WorldRecord:'.length));
  const e=world1999Entry(key);
@@ -776,6 +780,7 @@ function world1999Profile(){
  if(!e)return '<section class="ng-world-source-profile"><header><strong>1999 WORLD REGISTRY</strong></header>'+
   '<p>'+safe(world1999LoadFailed?'World source file is unavailable.':'Loading the 1999 source records…')+'</p></section>';
  const d=e._world||{},kind=e.kind;
+ if(kind==='horse'||kind==='track')return restored1999Profile(kind,{...d,name:e.name});
  const display=kind==='farm'?'ORGANIZATION':kind==='person'?'PERSON':kind==='track'?'TRACK':'HORSE';
  const details=[];
  const add=(label,value,markup='')=>{if(value||markup)details.push({label,value:String(value||''),html:markup})};
@@ -2559,6 +2564,7 @@ function previewRecordView(){
   DEP_FACILITY_PREVIEW.some(item=>item[0]===name);
  const fields=fromState?.row||{};
  const generated=Boolean(fields._testGenerated);
+ if(kind==='horse'&&generated)return restored1999Profile('horse',{...fields,name});
  const fixture=DEP_FACILITY_PREVIEW.find(item=>item[0]===name);
  const relevant=[
   ['ENTITY TYPE',fields.type||fixture?.[1]||kind.toUpperCase()],
