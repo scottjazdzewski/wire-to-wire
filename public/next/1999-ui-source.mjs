@@ -74,7 +74,7 @@ function sourceFacts(name){
  const trainer=peopleNames.get(h.trainerId)||get('trainerNames','/api/1999/sim/trainers',4200).find(t=>t.id===h.trainerId)?.name||'';
  return {age:String(h.ageAtOpening||1999-Number(h.foalYear)),sex:h.sex||'',
   connections:{trainer,owner:ownerNames.get(h.ownerId)||selectedOwner,breeder:''},
-  name:h.name,source:source?'1999_CANON_LOCKED':'1999_TEST_GENERATED',
+  name:h.name,ability:h.ability||null,source:source?'1999_CANON_LOCKED':'1999_TEST_GENERATED',
   racing_status:source?h.racingStatus:'TEST_WORLD_NO_1999_RESULTS',
   current_base:h.openingStable?.locality||h.location?.city||'',
   sire_id:h.sireId,dam_id:h.damId};
@@ -82,6 +82,7 @@ function sourceFacts(name){
 const ownerFor=name=>{const h=horseLookup.get(name);return h?(h.ownerId===activeOwnerId?selectedOwner:ownerNames.get(h.ownerId)||h.ownerId||''):null;};
 function roster(){return stableHorses.map((h,i)=>({name:h.name,
  activity:sourceHorseIds.has(h.id)?h.trainingStatus||'PRE-RACE TRAINING':'TEST HORSE · CONDITION UNOBSERVED',
+  currentAbility:h.ability?.currentStars??null,potentialAbility:h.ability?.potentialStars??null,
  tag:(sourceHorseIds.has(h.id)?'CANON':'TEST')+' · '+h.sex+' · '+(1999-Number(h.foalYear))+'YO',index:i+1,horseId:h.id}));}
 function stableHorsePreview(name){
  const h=horseLookup.get(name);
@@ -89,7 +90,9 @@ function stableHorsePreview(name){
  const source=sourceHorseIds.has(h.id);
  return {_kind:'horse',_name:h.name,name:h.name,_canonId:source?h.id:'',
   _id:h.id,_testGenerated:!source,_testAttrs:h.attributes||{},_testCareer:h.career||{},_testFinances:h.finances||{},
-  _testReputation:h.reputation||{},age:String(1999-Number(h.foalYear)),foalYear:h.foalYear,dateOfBirth:h.dateOfBirth||'',
+  _testReputation:h.reputation||{},_testAbility:h.ability||null,
+   ca:String(h.ability?.currentStars??''),pa:String(h.ability?.potentialStars??''),
+   age:String(h.ageAtOpening??1999-Number(h.foalYear)),foalYear:h.foalYear,dateOfBirth:h.dateOfBirth||'',
   foalingGeography:h.foalingGeography||h.foalingLocation||h.foalingPlace||null,
   ownerId:h.ownerId||'',trainerId:h.trainerId||'',
   sex:h.sex||'',sire:h.sireId||'',dam:h.damId||'',owner:ownerFor(name)||'',
@@ -153,7 +156,8 @@ function makeDepartmentRows(section,page,context={}){
   return get('owners','/api/1999/sim/owners',worldCounts.owners).map(o=>({
    _kind:'farm',_name:o.name,_id:o.id,name:o.name,type:o.type,
    location:city(o.location),principal:o.principalOwner||'Not recorded',principalId:o.principalOwnerId||'',
-   status:'1999 · '+o.portfolio?.tier,_canonId:o.authority?.startsWith('CANON')?o.id:'',
+   status:'1999 · '+o.portfolio?.tier,principalAge:o.principalAge??'',
+    _testAbility:o.principalAbility||null,_canonId:o.authority?.startsWith('CANON')?o.id:'',
    _testGenerated:!o.authority?.startsWith('CANON'),_testAttrs:o.attributes||{},
    _testFinances:o.finances||{},_testReputation:o.reputation||{}}));
  }
@@ -163,16 +167,17 @@ function makeDepartmentRows(section,page,context={}){
    page==='Jockeys'||page==='Staff'||page==='Overview'?get('workforce','/api/1999/sim/people',generatedPeopleCount):[];
   return base.filter(p=>wanted==='all'?p.role!=='owner':
    wanted==='staff'?!['trainer','jockey','owner','groom','exercise_rider'].includes(p.role):p.role===wanted).map(p=>{
-   const attrs=p.attributes||p.roleAttributes||{},rating=v=>String(Math.max(1,Math.min(5,Math.round(Number(v??.5)*5))));
+   const attrs=p.attributes||p.roleAttributes||{},rating=v=>v==null?'':String(v);
    const roleNames={trainer:'Conditioning & placement',jockey:'Riding & tactics',farm_manager:'Farm management',
     veterinarian:'Veterinary medicine',farrier:'Hoof care',bloodstock_agent:'Bloodstock selection',racing_secretary:'Race conditions'};
    return {_kind:'person',_name:p.name,_id:p.id,name:p.name,age:p.age||'',role:p.role||'',reputation:rep(p.reputation),
-    ca:rating(attrs.planning),pa:rating(attrs.judgment),specialty:roleNames[p.role]||'',
+    ca:rating(p.ability?.currentStars),pa:rating(p.ability?.potentialStars),specialty:roleNames[p.role]||'',
     morale:typeof p.morale==='number'?Math.round(p.morale*100)+'%':'',
     workload:typeof p.workload==='number'?Math.round(p.workload*100)+'%':'',
     salary:money(p.payrollAnnual??p.annualBaseSalary??0),contract:'1999 test appointment',
     assignment:p.barnId||p.organizationId||'',base:city(p.location||p.base),birthCountry:p.birthCountry||'',wins:'',
-    _testGenerated:!p.authority?.startsWith('CANON'),_testAttrs:attrs,_testReputation:p.reputation||{},
+    _testGenerated:!p.authority?.startsWith('CANON'),_testAttrs:attrs,_testAbility:p.ability||null,
+    _testReputation:p.reputation||{},ageBasis:p.ageBasis||'',
     _testOrigin:!srcPeople.some(source=>source.id===p.id)};
   });
  }
@@ -230,7 +235,8 @@ function worldHorsePage(offset=0,limit=20,filter=''){
   return {_kind:'horse',_name:h.name,_canonId:source?h.id:'',
    _worldKey:source?'horse:'+h.id:undefined,_testGenerated:!source,
    _testAttrs:h.attributes||{},_testCareer:h.career||{},_testFinances:h.finances||{},_testReputation:h.reputation||{},
-   foalYear:h.foalYear,dateOfBirth:h.dateOfBirth||'',foalingGeography:h.foalingGeography||h.foalingLocation||h.foalingPlace||null,
+   _testAbility:h.ability||null,ca:String(h.ability?.currentStars??''),pa:String(h.ability?.potentialStars??''),
+    foalYear:h.foalYear,dateOfBirth:h.dateOfBirth||'',foalingGeography:h.foalingGeography||h.foalingLocation||h.foalingPlace||null,
    ownerId:h.ownerId||'',trainerId:h.trainerId||'',
    name:h.name,age:String(h.ageAtOpening||1999-Number(h.foalYear)),sex:h.sex,
    sire:sireName||h.sireId||'',dam:damName||h.damId||'',
@@ -264,6 +270,8 @@ window.__WTW_1999_UI_DATA__={
  sourceFacts,ownerFor,stableHorsePreview,departmentRows,auctionList,extraTracks,
  officeMessages,officeDesks,openingCash,worldHorsePage,
  stakesForTrack,findStake,ownedHorses,
+ sourcePersonModel:id=>{const index=srcPeople.findIndex(p=>p.id===id);
+  return index<0?null:q('/api/1999/sim/source-people','offset='+index+'&limit=1').items?.[0]||null;},
  counts:q('/api/1999/sim/overview').counts,
  bridgeStatus:'SOURCE_IDS_LOCKED; OTHER VALUES_MARKED_TEST; NO_1999_OUTCOME_COMMITTED'
 };
