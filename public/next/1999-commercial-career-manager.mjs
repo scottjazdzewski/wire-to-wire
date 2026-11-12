@@ -10,7 +10,7 @@ import {encodeCareerSave,decodeCareerSave,packCareerFile,unpackCareerFile}
 
 const DB_NAME='WireToWireCompactCareersV1',MAIN='wtw1999ManagementStateV1';
 const LEGACY='wtw1999NamedGameSavesV1';
-const MAX_SLOTS=60;
+const MAX_SLOTS=60,MAX_TOTAL_BYTES=512*1024*1024;
 const $=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({
  '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -116,6 +116,9 @@ async function storeGame(name,game,{id=null}={}){
  const baseline=baselineFor(profile);
  const record=await encodeCareerSave(game,baseline,profile);
  const old=id?current.find(s=>s.id===id):null;
+ const otherBytes=current.reduce((sum,slot)=>sum+(slot.id===id?0:Number(slot.bytes||0)),0);
+ if(otherBytes+record.bytes.byteLength>MAX_TOTAL_BYTES)
+  throw Error('Local careers would exceed the 512 MB safety budget. Export and delete old slots');
  const date=new Date().toISOString();
  const meta={id:id||nextID(),name:String(name||'1999 Career').trim().slice(0,80),
   createdAt:old?.createdAt||date,updatedAt:date,date:game.date,
@@ -223,7 +226,7 @@ async function refresh(){
   '<p class="wtw-cc-warning">World presets scale the population directory and breeding stock. The existing January 1999 race scheduler still uses its original 87,500-horse gameplay scope until lifecycle integration is completed.</p>'+
   '<button data-cc-action="new-world" class="primary">CREATE NEW WORLD (BACK UP CURRENT CAREER FIRST)</button></div>'+
   '<div class="wtw-cc-section"><h3>COMPACT SAVES · '+slots.length+' SLOTS</h3>'+
-  '<p>Local device only. No account, monthly fee or cloud storage required. Portable .wtwsave files have checksums and gzip compression where supported.</p>'+
+  '<p>Local device only. No account, monthly fee or cloud storage required. Portable .wtwsave files have checksums and gzip compression where supported. Total compact-save budget: 512 MB across slots.</p>'+
   '<div class="wtw-cc-actions"><input data-cc="save-name" maxlength="80" placeholder="Name current career" value="1999 Career"/>'+
   '<button data-cc-action="save" class="primary">SAVE CURRENT CAREER</button>'+
   '<button data-cc-action="import">IMPORT .WTWSAVE</button>'+
