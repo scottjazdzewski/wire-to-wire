@@ -296,9 +296,10 @@ function organizationLogoMarkup(id,name,kind='organization',large=false,brandFal
 // only from Office horse owner references; training/boarding != ownership.
 function horseOwnership(name){
  const linked=typeof window.__wtwOfficeHorseOwner==='function'?window.__wtwOfficeHorseOwner(name):null;
+ const fallback=window.__WTW_1999_UI_DATA__?.ownerFor?.(name)||'';
  const horse=state().horseState?.[name]||{};
  const id=linked?.id||(typeof horse.owner_id==='string'?horse.owner_id.trim():'');
- const raw=linked?.name||horse.owner_name||horse.owner;
+ const raw=linked?.name||horse.owner_name||horse.owner||fallback;
  const owner=typeof raw==='string'?raw.trim():'';
  return owner&&owner!=='—'&&owner!=='Unknown'?{id,name:owner}:null;
 }
@@ -1144,8 +1145,8 @@ const trackCourseFacts={
   ['INNER TURF','7 furlongs + 304 ft'],['HOME STRETCH','1,144 feet']]}
 };
 
-function profileDetail(route){
- const source=$('#routeBody .profilePage');if(!source)return null;
+function profileDetail(route,sourceOverride=null){
+ const source=sourceOverride||$('#routeBody .profilePage');if(!source)return null;
  const id=route.kicker+'|'+route.title;
  if(APP.routeId!==id){APP.routeId=id;APP.detailTab='Overview';APP.networkPage=0;APP.networkRole='all';APP.networkFocus='';APP.stakeSort='date';APP.stakeSortDesc=false}
  const text=(query,scope=source)=>$(query,scope)?.textContent.trim()||'';
@@ -1281,7 +1282,8 @@ function profileDetail(route){
     const index=$$('#routeBody [data-act]').indexOf(row.node);
     const grade=(cols[2].match(/\bG([123])\b/i)||[])[1];
     const gradeCell=grade?'<span class="ng-stakes-grade" aria-label="Grade '+grade+'" title="Grade '+grade+'"><img class="ng-stakes-trophy" src="/assets/trophies/approved-grade-'+grade+'-64.png" alt="" width="16" height="16" decoding="async"/><small class="ng-stakes-grade-text" aria-hidden="true">G'+grade+'</small></span>':'<span>'+safe(cols[2])+'</span>';
-    return index<0?'':'<button class="ng-stakes-data" data-ng="sourcebutton" data-val="'+index+'">'+
+    const stakeId=row.node.dataset.stakeId||'';
+    return index<0&&!stakeId?'':'<button class="ng-stakes-data" data-ng="'+(stakeId?'1999-stake':'sourcebutton')+'" data-val="'+safe(stakeId||index)+'">'+
      '<span>'+safe(cols[0])+'</span><span>'+safe(cols[1])+'</span>'+gradeCell+'<span>'+safe(cols[3])+'</span></button>';
    }).join('')||'<div class="ng-empty-record">No verified stakes rows connected.</div>')+'</div>';
  };
@@ -1615,6 +1617,8 @@ function profileDetail(route){
   isFarm?[['LOCATION',factByName('Location')],['TYPE',factByName('Type')],['OWNER',factByName('Owner')],['STATUS',factByName('Current status')]]:
   isTrack?[['LOCATION',factByName('Location')],['SURFACES',factByName('Surfaces')],['OPERATING',factByName('Operating state')],['CIRCUIT',text('.profileSubline').split('·').slice(1).join('·').trim()||'—']]:[];
  const horseIdentityConnections=isHorse?connection.filter(x=>['owner','trainer','jockey','current stable'].includes(x.label.toLowerCase())&&knownField(x.value)).slice(0,3):[];
+ const horseOwnershipGroup=isHorse?(source.dataset.ownershipGroup||'').trim():'';
+ const horseOwnershipPanel=isHorse?'<div class="ng-horse-owner-group"><span>OWNERSHIP GROUP</span>'+organizationLogoMarkup(source.dataset.ownerId||'',horseOwnershipGroup||'Unassigned','owner',false,false)+'<strong>'+safe(horseOwnershipGroup||'Ownership group not yet recorded')+'</strong></div>':'';
  const horseConnectionHeader=horseIdentityConnections.length?
   '<div class="ng-horse-header-connections">'+horseIdentityConnections.map(x=>
    '<div><small>'+safe(x.label)+'</small><strong>'+safe(x.value)+'</strong></div>').join('')+'</div>':'';
@@ -1628,7 +1632,7 @@ function profileDetail(route){
  const visualName=worldSourceEntry?.name||route.title;
  const identity=`<div class="ng-profile-intro">
   ${profileMark}
-  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${isHorse?horseOwnerBadge(route.title):''}${safe(visualName)}</h2>${horseIdentityRow}${horseStarRow}${entityIdentityRow}${horseConnectionHeader}${isHorse||isPerson||isFarm||isTrack?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${sourceImage||horseImage?`<div class="ng-profile-source-photo" role="img" aria-label="Image of ${safe(visualName)}"><img src="${safe(sourceImage||horseImage)}" alt="" loading="${isTrack?'eager':'lazy'}" fetchpriority="${isTrack?'high':'auto'}" decoding="async"/></div>`:''}
+  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${isHorse?horseOwnerBadge(route.title):''}${safe(visualName)}</h2>${horseIdentityRow}${horseStarRow}${horseOwnershipPanel}${entityIdentityRow}${horseConnectionHeader}${isHorse||isPerson||isFarm||isTrack?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${sourceImage||horseImage?`<div class="ng-profile-source-photo" role="img" aria-label="Image of ${safe(visualName)}"><img src="${safe(sourceImage||horseImage)}" alt="" loading="${isTrack?'eager':'lazy'}" fetchpriority="${isTrack?'high':'auto'}" decoding="async"/></div>`:''}
   <div class="ng-profile-tools"><button data-ng="office" aria-label="Return to Racing Office">← OFFICE</button><button data-ng="menu" data-val="${isTrack?'Racing':isPerson||isFarm?'World':'Stable'}">${isTrack?'RACE CALENDAR':isPerson?'PEOPLE DIRECTORY':isFarm?'FARM DIRECTORY':'STABLE DIRECTORY'} ↗</button>${sourceEditButton}</div>
  </div>`;
  let left='',right='',footer='';
@@ -2834,7 +2838,7 @@ else if(APP.custom==='Search'){body=searchView()}
 else if(APP.custom.startsWith('WorldRecord:')){body=world1999Profile()}
 else if(APP.custom.startsWith('Preview:')){body=previewRecordView()}
 else {body=managerDashboard()}
-const isProfile=Boolean(profile),isOrganization=APP.custom==='Organization Overview',isSearch=APP.custom==='Search',isManager=body.startsWith('<section class="ng-manager-screen">');
+const isProfile=Boolean(profile)||body.startsWith('<div class="ng-profile-view '),isOrganization=APP.custom==='Organization Overview',isSearch=APP.custom==='Search',isManager=body.startsWith('<section class="ng-manager-screen">');
 return `<main class="ng-route ${isProfile?'ng-route-profile':isOrganization?'ng-route-organization':isSearch?'ng-route-search':isManager?'ng-route-manager':''}">${isProfile||isOrganization||isManager?'':`<header class="ng-routeheading"><span class="ng-route-badge-slot" aria-hidden="true">${APP.custom==='Organization Overview'?organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',true,true):`<img class="ng-routebadge" src="${safe(bdg)}" alt=""/>`}</span><div class="ng-routetext"><small>${safe(kicker)}</small><h1>${safe(title)}</h1></div><button class="ng-back" data-ng="office">← RACING OFFICE</button></header>`}<div class="ng-routegrid" data-route-key="${safe((route?.kicker||APP.custom||APP.section)+'|'+(route?.title||APP.custom||APP.page))}"><div class="ng-routeinner">${body}</div></div></main>`;}
 // Keep browser-native select menus mounted while the user chooses an option.
 // Hidden Office mutations repaint this interface frequently; a full re-render
