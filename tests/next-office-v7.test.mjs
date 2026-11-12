@@ -704,6 +704,72 @@ test('Named management entities open exact profiles or clearly marked unregister
  assert.equal(syntax.status,0,syntax.stderr);
 });
 
+test('World Editor stores user edits across reloads, keeps permanent IDs and never mutates source',async()=>{
+ const js=get('public/next/next.js'),css=get('public/next/next.css');
+ const world=JSON.parse(get('public/data/wtw-1999-world-directory-v33.json'));
+ const start=js.indexOf('let world1999Data=null,world1999Loading=false,world1999LoadFailed=false;');
+ const end=js.indexOf('function loadWorld1999()',start);
+ assert.ok(start>0&&end>start,'World Editor storage module must exist');
+ const source=js.slice(start,end),memory=new Map();
+ const storage={getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v)};
+ const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditBusy:false,worldEditStatus:''};
+ const safe=value=>String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;')
+  .replaceAll('"','&quot;');
+ const unit=new Function('original','localStorage','window','APP','safe','schedulePaint','paint','world1999Entry',
+  source+'\nworld1999Base=original;world1999Data=worldApplyEdits(original);'+
+  '\nreturn {get:()=>world1999Data,fromDisk:()=>worldReadPatches(),patches:()=>worldUserPatches,'+
+  'reload:()=>{worldUserPatches=worldReadPatches();world1999Data=worldApplyEdits(world1999Base)},'+
+  'worldSourceRecord,worldEditValidField,worldSanitizedPatch,worldEditSave,worldRecordName,worldEditMarkup};');
+ let unitInstance;
+ const runtime=unit(world,storage,{indexedDB:null},APP,safe,()=>{},()=>{},key=>{
+  const kind=key.split(':')[0],id=key.slice(kind.length+1);
+  const group={person:'people',horse:'horses',farm:'organizations',track:'tracks'}[kind];
+  const found=unitInstance?.get()?.[group]?.find(x=>(x.id||x.key)===id);
+  return found?{worldKey:key,_world:found,name:found.name}:null;
+ });
+ unitInstance=runtime;
+ const person=world.people[0],key='person:'+person.id;
+ APP.worldEditKey=key;
+ APP.worldEditDraft={...person,id:'HACKED-ID',name:'Renamed '+person.name,base:'Versailles, KY'};
+ assert.ok(runtime.worldEditMarkup({worldKey:key,_world:person,name:person.name}).includes('SAVE CHANGES'));
+ assert.ok(runtime.worldEditMarkup({worldKey:key,_world:person,name:person.name}).includes('wtwWorldImageInput'));
+ assert.ok(!runtime.worldEditValidField('id')&&!runtime.worldEditValidField('__proto__'));
+ assert.ok(!('id' in runtime.worldSanitizedPatch({id:'wrong',name:'Safe',_role:'wrong'})));
+ await runtime.worldEditSave();
+ assert.equal(runtime.get().people[0].id,person.id,'Permanent ID cannot be edited');
+ assert.equal(runtime.get().people[0].name,'Renamed '+person.name);
+ assert.equal(runtime.get().people[0].base,'Versailles, KY');
+ assert.equal(world.people[0].name,person.name,'Loaded canonical source must remain unchanged');
+ assert.equal(APP.worldEditStatus.startsWith('Saved in this browser.'),true);
+ runtime.reload();
+ assert.equal(runtime.get().people[0].name,'Renamed '+person.name,
+  'A new page load must reapply local browser edit overlay');
+ assert.equal(runtime.worldRecordName('person',person.id),'Renamed '+person.name,
+  'All related owner and trainer labels must resolve by permanent person ID');
+ assert.equal(runtime.fromDisk()[key].id,undefined,'Never persist a mutated canonical ID');
+ const external=world.horses.find(h=>h._role==='opening'&&h.sireId&&
+  !world.horses.some(s=>s.id===h.sireId));
+ assert.ok(external,'Fixture includes sire IDs registered outside the current 1999 world subset');
+ APP.worldEditKey='horse:'+external.id;
+ APP.worldEditDraft={...external,status:'Inspected'};
+ await runtime.worldEditSave();
+ assert.equal(runtime.get().horses.find(h=>h.id===external.id).sireId,external.sireId,
+  'Editing a horse must preserve approved source pedigree IDs absent from this subset');
+ assert.equal(runtime.get().horses.find(h=>h.id===external.id).status,'Inspected');
+ for(const fragment of ['data-ng="world-edit"','data-ng="world-save"',
+  'data-ng="world-cancel"','data-ng="world-add-field"','data-ng="world-export"',
+  'data-ng="world-import-open"','data-ng="world-photo-clear"',
+  'worldImageFile(node.files?.[0])','worldImportEdits(node.files?.[0])',
+  'data-ng="world-edit-source"','worldImageURL(worldSourceEntry.worldKey',
+  'world1999Data=worldApplyEdits(data)','indexedDB.open(',
+  "image/webp",'.ng-world-editor-fields','ng-world-edit-photo']){
+  assert.ok((js+css).includes(fragment),'Missing editor integration: '+fragment);
+ }
+ assert.ok(!source.includes("wtwOfficeStateV30"),'Never alter existing gameplay save');
+ const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
+ assert.equal(syntax.status,0,syntax.stderr);
+});
+
 test('1999 source registries populate the whole game world without invented identities or game-state changes',()=>{
  const js=get('public/next/next.js'),css=get('public/next/next.css');
  const file='public/data/wtw-1999-world-directory-v33.json';
@@ -769,7 +835,9 @@ test('1999 source registries populate the whole game world without invented iden
   "v=world1999Linked('person',r._principalId,r.principal)"
  ])assert.ok(js.includes(text),'Missing 1999 directory route: '+text);
  assert.ok(css.includes('ng-world-source-profile')&&css.includes('data-page="1999 Horses"'));
- assert.ok(!helpers.includes('localStorage.setItem'),'The 1999 world projection must never change the canonical save');
+ assert.ok(!helpers.includes("localStorage.setItem('wtwOfficeStateV30'")&&
+  js.includes("const WORLD_EDIT_KEY='wtwWorldEditPatchesV1'"),
+  'World edits must use their own browser overlay and never overwrite the canonical gameplay save');
  assert.ok(!raw.includes('futureWinner')&&!raw.includes('post1999Result'),'Do not publish imaginary future racing results');
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);

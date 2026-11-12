@@ -2781,3 +2781,68 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  #wtwNextgen .ng-world-profile-facts{grid-template-columns:repeat(3,minmax(0,1fr))}
  #wtwNextgen .ng-world-related{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+
+/* World Editor - one purposeful profile-level Edit action, not scattered pencils.
+   Local user edit overlay; same charcoal/green/gold FM desktop scale. */
+.ng-world-profile-photo{flex:0 0 78px;width:78px;height:68px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#25312f;border:1px solid #58705c;border-radius:3px}
+.ng-world-profile-photo .ng-world-edit-photo{width:100%;height:100%;object-fit:contain}
+.ng-world-profile-photo .ng-world-edit-photo-placeholder{font-size:8px;color:#86978b;text-align:center;padding:4px}
+.ng-world-editor{box-sizing:border-box;display:flex;flex-direction:column;gap:0;width:100%;height:100%;min-height:0;overflow:hidden;background:#171f21;border:1px solid #51664f;color:#e4ebde}
+.ng-world-editor>header{min-height:50px;flex:0 0 50px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 11px;background:#273932;border-bottom:1px solid #687c60}
+.ng-world-editor>header small{display:block;font-size:8px;letter-spacing:.06em;font-weight:780;color:#b6c6b6}
+.ng-world-editor>header h2{font-size:18px;line-height:1.2;color:#e9d7a4;margin:3px 0}
+.ng-world-editor-actions{display:flex;gap:5px}
+.ng-world-editor button{box-sizing:border-box;cursor:pointer;border:1px solid #627e69;background:#30473d;color:#e6d5a4;border-radius:2px;padding:5px 9px;font-size:9px;font-weight:760;line-height:1.2;white-space:nowrap}
+.ng-world-editor button:hover,.ng-world-editor button:focus-visible{background:#3a5848;border-color:#c0ae78;color:#fff0bf}
+.ng-world-editor button.save{background:#41694b;color:#fff5d8;border-color:#87a47a}
+.ng-world-editor button:disabled{opacity:.5;cursor:wait}
+.ng-world-editor-info{flex:0 0 auto;margin:0;padding:6px 12px;font-size:9px;line-height:1.4;background:#212b29;color:#b9cabd;border-bottom:1px solid #344d3e}
+.ng-world-editor-body{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;padding:8px 11px}
+.ng-world-editor-media{display:flex;align-items:stretch;gap:11px;padding:7px;background:#24312d;border:1px solid #405749;margin-bottom:8px;max-width:100%}
+.ng-world-editor-photo{width:112px;min-width:112px;height:96px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid #657c63;background:#111e1d}
+.ng-world-editor-photo img{width:100%;height:100%;object-fit:contain}
+.ng-world-edit-photo-placeholder{font-size:9px;font-weight:760;color:#a7baa7;letter-spacing:.025em;text-align:center;padding:5px}
+.ng-world-editor-media>div:last-child{display:flex;flex-direction:column;align-items:flex-start;gap:5px;flex:1 1 0;min-width:0}
+.ng-world-editor-media strong{font-size:10px;color:#e5d8b2}
+.ng-world-editor-media p{margin:0;font-size:9px;color:#b5c4b6}
+.ng-world-editor-media input[type=file]{max-width:100%;font-size:9px;color:#d1ddce}
+.ng-world-editor-media small{font-size:8px;color:#91a993}
+.ng-world-editor-lock{margin:0 0 7px;padding:5px 8px;border-left:2px solid #a88d57;background:#302e27;color:#d8c7a3;font-size:8.5px;line-height:1.4}
+.ng-world-editor-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.ng-world-edit-field{box-sizing:border-box;display:flex;flex-direction:column;gap:4px;min-width:0;padding:6px;background:#1f2c2a;border:1px solid #405247}
+.ng-world-edit-field>span{font-size:8.3px;font-weight:750;letter-spacing:.035em;color:#a9bfb0;display:flex;justify-content:space-between;gap:5px}
+.ng-world-edit-field small{font-size:7.6px;color:#8d9f93;letter-spacing:0}
+.ng-world-edit-field input,.ng-world-edit-field select,.ng-world-edit-field textarea,
+.ng-world-editor-add input{box-sizing:border-box;width:100%;min-width:0;background:#111d1c;color:#e9ecdf;border:1px solid #526b56;border-radius:2px;padding:5px 7px;font-size:10px;line-height:1.2;font-family:inherit}
+.ng-world-edit-field input:focus,.ng-world-edit-field select:focus,.ng-world-edit-field textarea:focus,.ng-world-editor-add input:focus{outline:1px solid #d5bf83;outline-offset:0}
+.ng-world-edit-field textarea{resize:vertical;min-height:43px;max-height:160px}
+.ng-world-editor-add{display:flex;align-items:center;gap:5px;margin-top:9px;padding:7px;background:#22322c;border:1px solid #46594a}
+.ng-world-editor-add input{max-width:240px}
+.ng-world-editor>footer{display:flex;justify-content:space-between;align-items:center;gap:6px;min-height:33px;flex:0 0 33px;padding:4px 9px;background:#25352e;border-top:1px solid #60725b}
+.ng-world-editor>footer span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#b8ccbc;font-size:8.8px}
+.ng-world-editor>footer button{padding:3px 7px}
+@media(min-width:1050px){
+ #wtwNextgen .ng-route:has(.ng-world-editor)>.ng-routeheading{display:none!important}
+ #wtwNextgen .ng-route:has(.ng-world-editor){padding:4px 8px 6px!important}
+ #wtwNextgen .ng-route:has(.ng-world-editor) .ng-routegrid{display:block!important;flex:1 1 0!important;min-height:0!important;overflow:hidden!important;padding:0!important}
+ #wtwNextgen .ng-routeinner:has(.ng-world-editor){display:block!important;min-height:0!important;height:100%!important;overflow:hidden!important}
+}
+@media(max-width:1250px){.ng-world-editor-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:750px){
+ .ng-world-editor-fields{grid-template-columns:minmax(0,1fr)}
+ .ng-world-editor-media{flex-wrap:wrap}
+ .ng-world-editor-add{flex-wrap:wrap}
+ .ng-world-editor>footer{height:auto;min-height:33px;flex-wrap:wrap}
+ .ng-world-profile-photo{display:none}
+}
+
+
+.ng-world-extra-attributes{margin:5px 9px;border:1px solid #4d614c;background:#1d2c29;font-size:9px;color:#d9e1d5}
+.ng-world-extra-attributes summary{cursor:pointer;padding:7px 10px;color:#e0cc93;font-size:9px;letter-spacing:.035em;font-weight:780;background:#293b33;list-style-position:inside}
+.ng-world-extra-attributes summary:hover{background:#354b3d}
+.ng-world-extra-attributes>div{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;max-height:210px;overflow:auto;padding:7px}
+.ng-world-extra-attributes p{min-width:0;display:flex;flex-direction:column;gap:4px;margin:0;padding:6px 8px;background:#1b2827;border:1px solid #3b5043}
+.ng-world-extra-attributes p small{font-size:8px;color:#a3bba9}
+.ng-world-extra-attributes p strong{font-size:10px;color:#dfe6da;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:980px){.ng-world-extra-attributes>div{grid-template-columns:repeat(2,minmax(0,1fr))}}
