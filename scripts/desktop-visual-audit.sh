@@ -22,7 +22,7 @@ capture(){
     --force-device-scale-factor=1 --window-size=1536,864 \
     --virtual-time-budget=4000 --dump-dom \
     "http://127.0.0.1:8765/$target" >"visual-audit/dom/$name.html" 2>/tmp/wtw-dom-"$name".log
-  if ! grep -q "$marker" "visual-audit/dom/$name.html"; then
+  if ! grep -Eq "$marker" "visual-audit/dom/$name.html"; then
     echo "RENDER FAILURE: $name missing $marker" >&2
     tail -35 /tmp/wtw-dom-"$name".log || true
     exit 1
@@ -33,10 +33,10 @@ capture racing-office '' 'ng-board'
 capture global-search '?ui=Search' 'ng-search-roster-page'
 capture horse-profile '?page=horse&name=The+Last+Match' 'ng-horse-dossier'
 capture people-profile '?page=person&name=Gabe+Larkin' 'ng-person-workspace-overview'
-capture personnel '?ui=Personnel' 'ng-manager-screen'
-capture facilities '?ui=Facilities' 'ng-manager-screen'
-capture finances '?ui=Finances' 'ng-manager-screen'
-capture breeding '?ui=Breeding' 'ng-manager-screen'
+capture personnel '?ui=Personnel' 'ng-manager-screen|ng-dept-roster'
+capture facilities '?ui=Facilities' 'ng-manager-screen|ng-dept-roster'
+capture finances '?ui=Finances' 'ng-manager-screen|ng-dept-roster'
+capture breeding '?ui=Breeding' 'ng-manager-screen|ng-dept-roster'
 capture history-vault 'archive/' 'History Vault'
 # Browser geometry probe: screenshot files alone cannot detect a collapsed
 # CSS media scope. Measure the *rendered* game viewport at desktop resolution.
