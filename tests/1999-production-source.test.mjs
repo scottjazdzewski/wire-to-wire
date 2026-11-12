@@ -99,7 +99,7 @@ test('accepted participant source names are linked by permanent IDs and unresolv
  assert.ok(info.featuredIdOverlaps.length<=267);
  const h=productionHorseById('H-1995-060001');
  assert.ok(h.ownerName&&h.trainerName);
- assert.equal(h.trainerName,'Ike Benton'===h.trainerName?'Ike Benton':h.trainerName);
+ assert.match(h.trainerName,/./);
  assert.ok(['1999_FOUNDATION_SOURCE','ACCEPTED_PRODUCTION_PARTICIPANT'].includes(h.ownerNameBasis));
  const p=await readLocal1999World('/api/1999/production/participants/P-000043');
  assert.equal(p.participant.name,'Ike Benton');
