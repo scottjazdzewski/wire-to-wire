@@ -6,7 +6,7 @@
 import {trackProgram1999} from '/next/1999-track-program.mjs';
 import {WTW_ALTERNATE_STAKES_1999} from '/next/1999-alternate-stakes.mjs';
 import {WTW_REGIONAL_STAKES_1999} from '/next/1999-regional-stakes.mjs';
-import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-20261112-r7';
+import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-20261112-r8';
 import attributeCatalog from '/1999/engine/attribute-catalog.mjs';
 import {TRAINING_PLANS,createHorseTrainingRecord,horseTrainingSnapshot,
  assignHorseTrainingPlan,simulateStableTrainingThrough,trainingFinancials}
