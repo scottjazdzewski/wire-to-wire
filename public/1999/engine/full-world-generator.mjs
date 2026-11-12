@@ -10,7 +10,7 @@ import {openingWorld1999 as canon} from './canon-mini.mjs';
 import {createGeographicNameRoster,GEO_NAME_MODEL} from './geographic-names.mjs';
 import {existingPrincipals1999} from './source-principals-1999.mjs';
 import {trackProgram1999,trackMeetOpen1999,trackCardSurface1999} from '../../next/1999-track-program.mjs';
-import {createAgeAbility,inferProfessionalRole} from './age-ability.mjs';
+import {createAgeAbility,inferProfessionalRole,project1999CareerEntity,validateCareerGameDate} from './age-ability.mjs';
 import attributeCatalog from './attribute-catalog.mjs';
 import {WTW_TEST_START_DATE} from '../test-clock.mjs';
 export const FULL_WORLD_SCHEMA='WTW_1999_FULL_SCALE_TEST_V1';
@@ -436,14 +436,28 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   }
   return indices.sort((a,b)=>a-b);
  }
- return {schema:FULL_WORLD_SCHEMA,seed,mode,startDate:WTW_TEST_START_DATE,currentDate:WTW_TEST_START_DATE,
+ // Project the existing immutable opening entity instead of resampling the world.
+ function projectAtDate(record,date='1999-01-01'){
+  validateCareerGameDate(date);
+  if(record?.ability?.schema)return project1999CareerEntity(record,date,attributeCatalog);
+  if(record?.principalAbility?.schema){
+   const principal=project1999CareerEntity({
+    id:record.principalOwnerId,name:record.principalOwner,age:record.principalAge,
+    role:'owner',ability:record.principalAbility
+   },date,attributeCatalog);
+   return {...record,principalAbility:principal.ability,principalAgeAtDate:principal.age,
+    gameDate:date,careerModelDate:date};
+  }
+  return record;
+ }
+  return {schema:FULL_WORLD_SCHEMA,seed,mode,startDate:WTW_TEST_START_DATE,currentDate:WTW_TEST_START_DATE,
   canonProtected:anchored,identityLayer:'CANON_LOCKS_PLUS_REPLACEABLE_TEST_IDENTITIES',attributesSchema:attributeCatalog.schema,
    nameModel:GEO_NAME_MODEL,
   counts:{horses:HORSE_POPULATION,canonicalHorses:anchored?CANON_HORSES:0,generatedHorses:generatedCount,owners:ownersTotal,trainers:trainersTotal,
    people:peopleCount+(anchored?sourcePeople.length:0),tracks:trackCount,nonPlayableInternationalTracks:canon.tracks.length-trackCount,
    facilities:trainersTotal+900+trackCount,auctions:36,
    sourceStallions:anchored?canon.activeStallions1999.length:0,sourceBroodmareLocations:anchored?canon.productionBroodmareBoarding1999.length:0},
-  ownerAt,trainerAt,trackAt,horseAt,personAt,sourcePersonAt,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
+  ownerAt,trainerAt,trackAt,horseAt,personAt,sourcePersonAt,projectAtDate,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
   parentAt,attributeCatalog,sourceStakes:anchored?canon.stakes1999.filter(r=>sourceTracks.some(t=>t.id===r.trackId||t.name===r.trackName)):[],
    sourceOrganizations:sourceOrgs,sourcePeople,excludedActiveStaffRoles:['groom','exercise_rider'],
   audit:{ownershipSlots:ownersSlots.counts.reduce((a,b)=>a+b,0),trainerSlots:trainerSlots.counts.reduce((a,b)=>a+b,0),
