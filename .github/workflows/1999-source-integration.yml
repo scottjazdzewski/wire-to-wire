@@ -5,6 +5,9 @@ on:
     paths:
       - "src/1999/**"
       - "public/1999/**"
+      - "public/index.html"
+      - "public/next/index.html"
+      - "public/next/1999-bootstrap.js"
       - "src/worker.js"
       - "tests/1999-*.test.mjs"
       - ".github/workflows/1999-source-integration.yml"
@@ -32,6 +35,7 @@ jobs:
           node --check src/1999/test-clock.mjs
           node --check public/1999/test-clock.mjs
           node --check public/1999/app.mjs
+          node --check public/next/1999-bootstrap.js
           node --check src/worker.js
       - name: Source and browser JavaScript syntax
         run: |
@@ -40,4 +44,4 @@ jobs:
           node --check public/1999/engine/attribute-catalog.mjs
           node --check public/1999/engine/local-api.mjs
       - name: Jan 1 source and OFFLINE browser population verification
-        run: node --test tests/1999-opening-world.test.mjs tests/1999-entry-gate.test.mjs tests/1999-full-universe.test.mjs tests/1999-test-clock.test.mjs tests/1999-browser-offline.test.mjs tests/1999-full-world-api.test.mjs
+        run: node --test tests/1999-opening-world.test.mjs tests/1999-entry-gate.test.mjs tests/1999-full-universe.test.mjs tests/1999-test-clock.test.mjs tests/1999-browser-offline.test.mjs tests/1999-full-world-api.test.mjs tests/1999-management-ui-restore.test.mjs
