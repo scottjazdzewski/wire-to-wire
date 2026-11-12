@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,stableMode:'all',stableDemo:!window.__WTW_1999_MANAGEMENT__,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:!window.__WTW_1999_MANAGEMENT__,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
+const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,worldAttributeKey:'raw_speed',stableMode:'all',stableDemo:!window.__WTW_1999_MANAGEMENT__,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:!window.__WTW_1999_MANAGEMENT__,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -2882,8 +2882,15 @@ function departmentRoster(section,page='Overview'){
  const auctions=section==='Sales'?depAuctionList(demo):[];
  const gameDay=depGameDay();
  const auction=auctions.find(a=>a.id===APP.departmentAuction)||auctions.find(a=>(a.endDate||a.sortKey)>=gameDay)||null;
+ const worldTraitGroups=section==='World'&&page==='1999 Horses'?
+  window.__WTW_1999_UI_DATA__?.horseAttributeGroups||[]:[];
+ const worldTraits=worldTraitGroups.flatMap(g=>g.definitions);
+ const worldTrait=worldTraits.find(d=>d.key===APP.worldAttributeKey)||worldTraits[0]||null;
+ const worldAttributeKey=worldTrait?.key||'';
  const specs=section==='Personnel'&&page==='Owners'?DEP_COLUMNS.OwnershipGroups:
-  section==='World'?(page==='1999 Horses'?WORLD_1999_COLUMNS.Horses:page==='People'?WORLD_1999_COLUMNS.People:WORLD_1999_COLUMNS.Organizations):
+  section==='World'?(page==='1999 Horses'?
+   [...WORLD_1999_COLUMNS.Horses,...(worldTrait?[['attr:'+worldAttributeKey,worldTrait.label+' · TEST',10]]:[])]:
+   page==='People'?WORLD_1999_COLUMNS.People:WORLD_1999_COLUMNS.Organizations):
   section==='Sales'&&page==='Watchlist'?DEP_COLUMNS.SalesWatchlist:section==='Sales'&&page==='Sale Calendar'?DEP_COLUMNS.SaleCalendar:section==='Sales'&&page==='Sale Companies'?DEP_COLUMNS.SaleCompanies:section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'?(APP.racingTrack?DEP_COLUMNS.Racing:DEP_COLUMNS.Meets):DEP_COLUMNS[section];
  // Every department now uses one progressive, sortable roster without pagination.
  const globalHorseDirectory=section==='World'&&page==='1999 Horses'&&
@@ -2923,7 +2930,7 @@ function departmentRoster(section,page='Overview'){
   const browse=globalHorseDirectory?'worldHorseBrowse':'breedingMareBrowse';
   const result=window.__WTW_1999_UI_DATA__[browse]({
    offset:0,limit:APP.departmentScrollLimit,search:APP.departmentSearch,
-   sort:selectedSort,desc:sign<0,filters:rosterFilter||{}
+   sort:selectedSort,desc:sign<0,filters:rosterFilter||{},attributeKey:globalHorseDirectory?worldAttributeKey:''
   });
   rows=result.items||[];virtualTotal=result.total||0;
   globalIndexing=Boolean(result.indexing);globalProgress=result.progress||0;
@@ -2944,6 +2951,17 @@ function departmentRoster(section,page='Overview'){
  const body=shown.map((r,i)=>{
   return '<tr>'+specs.map(([key])=>{
    let v=depCell(r[key],key);
+   if(globalHorseDirectory&&key.startsWith('attr:')){
+    const raw=r[key];
+    if(typeof raw==='number'&&Number.isFinite(raw)){
+     const percentage=raw<=1?Math.round(raw*99):null;
+     const shownValue=percentage===null?Number(raw.toFixed(2)):percentage;
+     const band=percentage===null?'good':percentage>=75?'high':percentage>=55?'good':percentage>=35?'moderate':'low';
+     v='<span class="ng-attr-score ability-'+band+'">'+
+      (percentage===null?'':'<span class="ng-attr-track"><i style="width:'+percentage+'%"></i></span>')+
+      '<b>'+shownValue+'</b></span>';
+    }else v=raw==null?'—':safe(String(raw));
+   }
    const kind=entityKindForField(key,r);
    if(section==='World'&&key==='operation'&&r.operation)
     v=world1999Linked('farm',r._operationId,r.operation);
@@ -2987,7 +3005,7 @@ function departmentRoster(section,page='Overview'){
   }).join('')+'</tr>';
  }).join('');
  const pager='<span class="ng-dpt-records">'+totalRecords+' RECORDS · '+shown.length+
-  (globalIndexing?' LOADED · INDEXING '+globalProgress+' / '+(globalMareDirectory?'26000 MARES':'87500 HORSES')+'…':
+  (globalIndexing?' LOADED · INDEXING '+globalProgress+' / '+(globalMareDirectory?Number(window.__WTW_1999_UI_DATA__?.counts?.breedingMares||0).toLocaleString('en-US')+' MARES':'87500 HORSES')+'…':
    ' LOADED · SCROLL FOR MORE')+
   (globalHorseDirectory?' · SORT/FILTER ALL 87,500 HORSES':
    globalMareDirectory?' · SORT/FILTER ALL BROODMARES':
@@ -3012,6 +3030,11 @@ function departmentRoster(section,page='Overview'){
   '<option value="" '+(!APP.departmentCompany?'selected':'')+'>ALL SALE COMPANIES</option>'+
   Object.entries(DEP_SALE_HOUSES).map(([id,house])=>'<option value="'+safe(id)+'" '+(APP.departmentCompany===id?'selected':'')+'>'+safe(house.name)+'</option>').join('')+
   '</select></label>':'';
+ const worldAttributePicker=section==='World'&&page==='1999 Horses'&&worldTrait?
+  '<label class="ng-dpt-track-picker">RANK WORLD HORSES BY <select data-ng-select="world-attribute" aria-label="Choose an attribute to rank every world horse">'+
+  worldTraitGroups.map(group=>'<optgroup label="'+safe(group.name)+'">'+group.definitions.map(def=>
+   '<option value="'+safe(def.key)+'" '+(worldAttributeKey===def.key?'selected':'')+'>'+safe(def.label)+'</option>').join('')+
+   '</optgroup>').join('')+'</select></label>':'';
  const salesDeskView=section==='Sales'?salesDesk(page,auction,auctions,rows.length):'';
  const cash=availableCash();
  const finance=section==='Finances'?'<div class="ng-dpt-finance">'+[
@@ -3026,7 +3049,7 @@ function departmentRoster(section,page='Overview'){
   section==='Facilities'?'CAPACITY · QUALITY · MAINTENANCE':'INCOME · EXPENSES · CASH FLOW';
  return '<section class="ng-functional ng-stable-roster-v2 ng-dept-roster" data-department="'+safe(section)+'" data-page="'+safe(page)+'" data-roster-kind="'+(specs===DEP_COLUMNS.Meets?'meet':'regular')+'">'+
   '<div class="ng-rs-title"><strong>'+safe(section.toUpperCase())+' · '+safe(page.toUpperCase())+'</strong><span title="'+safe(purpose)+'">'+safe(purpose)+(demo?' · FICTIONAL PREVIEW':'')+'</span></div>'+
-  finance+'<div class="ng-rs-tools">'+racingPicker+salePicker+saleHouseLink+saleCompanyPicker+'<label>VIEW <select data-ng-select="department-tab" aria-label="Choose '+safe(section)+' view">'+viewOptions+'</select></label>'+
+  finance+'<div class="ng-rs-tools">'+racingPicker+salePicker+saleHouseLink+saleCompanyPicker+worldAttributePicker+'<label>VIEW <select data-ng-select="department-tab" aria-label="Choose '+safe(section)+' view">'+viewOptions+'</select></label>'+
   '<input id="ngDepartmentSearch" data-ng-input="department-search" type="search" aria-label="Search '+safe(section)+' roster" value="'+safe(APP.departmentSearch)+'" placeholder="Find records…" autocomplete="off"/>'+
   (section==='World'||['Personnel','Facilities','Tracks'].includes(section)||section==='Breeding'&&['Stallions','Broodmares'].includes(page)?'':
    '<button data-ng="dept-demo" class="'+(demo?'on':'')+'" title="Preview-only invented values; no game data changes">'+(demo?'DEMO ON':'DEMO OFF')+'</button>')+
@@ -3492,6 +3515,13 @@ root.addEventListener('change',event=>{
    const scope=field.closest('.ng-list-filters')?.dataset.filterScope;
    if(scope){window.WTW1999RosterFilters.get(APP,scope)[k]=field.value;
     APP.departmentScrollLimit=160;APP.departmentScrollReset=true;}
+   return paint();
+  }
+  if(field.matches('select[data-ng-select="world-attribute"]')){
+   APP.worldAttributeKey=field.value;
+   APP.departmentSortKey='attr:'+field.value;
+   APP.departmentSortDesc=true;
+   APP.departmentScrollLimit=160;APP.departmentScrollReset=true;
    return paint();
   }
   if(field.matches('select[data-ng-select="stable-attribute"]')){
