@@ -1,2 +1,8 @@
 /manager/*
   Cache-Control: public, max-age=0, must-revalidate
+
+/next/next.css
+  Cache-Control: public, max-age=0, must-revalidate
+
+/next/next.js
+  Cache-Control: public, max-age=0, must-revalidate
