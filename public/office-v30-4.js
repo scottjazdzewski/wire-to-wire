@@ -901,6 +901,25 @@
     openRoute('World','Profiles & Connections',`<section class="routeCard directoryCard"><div class="directorySection"><h3>Horses</h3><div class="directoryList">${horseRows}</div></div><div class="directorySection"><h3>People</h3><div class="directoryList">${personRows}</div></div><div class="directorySection"><h3>Farms</h3><div class="directoryList">${farmRows}</div></div><div class="directorySection"><h3>Tracks</h3><div class="directoryList">${trackRows}</div></div></section>`);
   }
   function setDate(delta){
+    if(window.__WTW_1999_MANAGEMENT__){
+      // 1999 game time advances without replaying any old Office demo
+      // outcomes, case follow-ups, payments, or racing starts.
+      const current=new Date((gameState.date||'1999-01-01')+'T12:00:00Z');
+      if(Number.isNaN(current.getTime()))throw Error('Invalid January 1999 game date');
+      if(delta==='day')current.setUTCDate(current.getUTCDate()+1);
+      else if(delta==='week')current.setUTCDate(current.getUTCDate()+7);
+      else if(delta==='month'){const previous=current.getUTCDate();current.setUTCDate(1);current.setUTCMonth(current.getUTCMonth()+1);const last=new Date(Date.UTC(current.getUTCFullYear(),current.getUTCMonth()+1,0)).getUTCDate();current.setUTCDate(Math.min(previous,last));}
+      else if(delta==='year'){const previous=current.getUTCDate(),month=current.getUTCMonth();current.setUTCDate(1);current.setUTCFullYear(current.getUTCFullYear()+1);const last=new Date(Date.UTC(current.getUTCFullYear(),month+1,0)).getUTCDate();current.setUTCMonth(month);current.setUTCDate(Math.min(previous,last));}
+      const next=current.toISOString().slice(0,10);
+      if(next<'1999-01-01')throw Error('Cannot advance before the playable Jan 1, 1999 epoch');
+      gameState.date=next;
+      gameState.turn=Math.floor((Date.parse(next+'T00:00:00Z')-Date.parse('1999-01-01T00:00:00Z'))/86400000);
+      setDateChipText(next);
+      persistState(true);
+      window.dispatchEvent(new CustomEvent('wtw:1999-clock',{detail:{date:next,day:gameState.turn}}));
+      showToast('1999 game date · '+next+' · no race results posted');
+      return;
+    }
     if(delta==='day') officeDate.setDate(officeDate.getDate()+1);
     if(delta==='week') officeDate.setDate(officeDate.getDate()+7);
     if(delta==='month') officeDate.setMonth(officeDate.getMonth()+1);
@@ -1008,6 +1027,20 @@
     if(act==='Load'){ const inp=document.getElementById('loadStateInput'); if(inp) inp.click(); return true; }
     if(act==='Export'){ exportState(); return true; }
     if(act==='Reset'){
+      if(window.__WTW_1999_MANAGEMENT__){
+        // Only the current 1999 career is reset. Preserve approved UI
+        // assets and immutable historical archive; no 2014 case replay.
+        gameState=blankGameState();
+        gameState.schema=window.__WTW_1999_MANAGEMENT__.schema;
+        gameState.version=window.__WTW_1999_MANAGEMENT__.schema;
+        gameState.worldAnchor={schema:gameState.schema,startDate:'1999-01-01',seed:19990101,mode:'CANON_ANCHORED_TEST',historicalResultsImmutable:true,observationsOnly:true,lastCommittedRaceResult:null,lastCommittedTransaction:null};
+        gameState.date='1999-01-01';
+        setDateChipText('1999-01-01');
+        persistState(true);
+        window.dispatchEvent(new CustomEvent('wtw:1999-reset',{detail:{date:'1999-01-01'}}));
+        showToast('New clean game: January 1, 1999');
+        return true;
+      }
       localStorage.removeItem(STATE_KEY); localStorage.removeItem('wtwOfficeStateV29'); localStorage.removeItem('wtwOfficeStateV28'); localStorage.removeItem('wtwOfficeStateV27'); localStorage.removeItem('wtwOfficeStateV26'); localStorage.removeItem('wtwOfficeStateV25'); localStorage.removeItem('wtwOfficeStateV20'); localStorage.removeItem('wtwOfficeStateV19');
       gameState = blankGameState(); closeRoute(); setDateChipText(window.__WTW_1999_MANAGEMENT__?'1999-01-01':'2014-07-15'); currentCase='powerline'; loadCase('powerline'); processDueFollowUps(); syncResolvedMessages(); propagateOfficeState();
       showToast('Reset Office state'); return true;
