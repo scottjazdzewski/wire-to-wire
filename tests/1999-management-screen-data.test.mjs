@@ -51,6 +51,17 @@ test('all generated finances, pedigrees, and source boundaries are clearly test/
  assert.ok(ui.departmentRows('Breeding','Broodmares').every(x=>x.status.includes('NO PREGNANCY ASSUMED')));
  assert.match(ui.bridgeStatus,/NO_1999_OUTCOME_COMMITTED/);
 });
+test('Racing screen uses source stakes and dated test condition books instead of the old 2014 fixture targets',()=>{
+ assert.deepEqual(Array.from(ui.departmentRows('Racing','Entries',{date:'1999-01-01'})),[]);
+ assert.deepEqual(Array.from(ui.departmentRows('Racing','Results',{date:'1999-01-01'})),[]);
+ const stakes=ui.departmentRows('Racing','Stakes',{date:'1999-01-01'});
+ assert.equal(stakes.length,93);
+ assert.ok(stakes.every(r=>r._iso.startsWith('1999-')&&r.status.includes('NOT ENTERED')));
+ const card=ui.departmentRows('Racing','Race Planning',{date:'1999-01-01'});
+ assert.ok(card.length>=40);
+ assert.ok(card.every(r=>r.date==='1999-01-01'&&r.status.includes('NOT ENTERED')&&r.horse===''));
+ assert.match(js,/const racingRows=\(\)=>window.__WTW_1999_MANAGEMENT__\?\[\]/);
+});
 test('large rosters are cached so native UI pagination does not regenerate all records on every paint',()=>{
  const a=ui.departmentRows('Personnel','Staff');
  const b=ui.departmentRows('Personnel','Staff');
