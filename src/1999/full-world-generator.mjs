@@ -201,8 +201,11 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
  }
  function meetOpen(track,date){
   const month=+date.slice(5,7),day=new Date(date+'T12:00:00Z').getUTCDay(),region=String(track.location.state).toLowerCase();
-  const winter=/fl|ca|arizona|la|tx|nm|arkansas|louisiana|california|florida|texas/.test(region);
-  const active=winter?[1,2,3,4,10,11,12]:[3,4,5,6,7,8,9,10,11];
+  const name=track.name.toLowerCase(),winter=/fl|ca|arizona|la|tx|nm|arkansas|louisiana|california|florida|texas/.test(region);
+  let active=winter?[1,2,3,4,10,11,12]:[3,4,5,6,7,8,9,10,11];
+  if(/timonium|pleasanton|stockton|fresno|fairplex|county fair|sacramento|del mar fair/.test(name))active=[5,6,7,8,9,10];
+  if(/hollywood park/.test(name))active=[4,5,6,7,11,12];
+  if(/aqueduct|laurel park|charles town|turfway park/.test(name))active=[1,2,3,4,10,11,12];
   return active.includes(month)&&([2,4,6,0].includes(day)||hash(seed,track.id+':weekday:'+day)%4===0);
  }
  function conditionBook(date,trackIndex){
