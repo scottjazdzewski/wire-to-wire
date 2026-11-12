@@ -17,7 +17,7 @@ try{
  const existing=localStorage.getItem(MAIN);
  const state=safeParse(existing);
  const marker=localStorage.getItem(MARK);
- const is1999OrLater=typeof state?.date==='string' && /^19(?:99)|20\d\d-\d\d-\d\d$/.test(state.date) && state.date>=START;
+ const is1999OrLater=typeof state?.date==='string' && /^\d{4}-\d{2}-\d{2}$/.test(state.date) && state.date>=START;
  // Bootstrap only once; never reset an in-progress 1999 career on page reload.
  if(marker!=='active'){
    if(state&&typeof state.date==='string'&&state.date>=START){
