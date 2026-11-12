@@ -135,7 +135,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   if(i<0||i>=trainersTotal)throw Error('Trainer index');
   if(trainerCache.has(i))return trainerCache.get(i);
   const canonSource=anchored&&i<sourcePeople.filter(x=>String(x.role).toLowerCase().includes('trainer')).length?sourcePeople.filter(x=>String(x.role).toLowerCase().includes('trainer'))[i]:null;
-  const id=canonSource?.id||'P-TEST-TRAINER-'+pad(i+1),track=regionTrack(canonSource?.base?{locality:canonSource.base.city,region:canonSource.base.state,country:canonSource.base.country}:null,id);
+  const id=canonSource?.id||'P-TEST-TRAINER-'+pad(i+1),track=regionTrack(canonSource?.base?{locality:canonSource.base.locality,region:canonSource.base.region,country:canonSource.base.country}:null,id);
   const slots=trainerSlots.counts[i],name=canonSource?.name||GIVEN[(i+seed)%GIVEN.length]+' '+FAMILY[Math.floor(i/GIVEN.length)%FAMILY.length];
   const obj={id,name,nameStatus:canonSource?'CANON_LOCKED':'TEST_RENAME_ALLOWED',role:'trainer',location:canonSource?.base?fmtLoc(canonSource.base):track.location,
    homeTrackId:track.id,barnId:'F-TEST-BARN-'+pad(i+1),barnCapacity:Math.max(slots+Math.ceil(slots*.12),slots+2),
