@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:!window.__WTW_1999_MANAGEMENT__,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:!window.__WTW_1999_MANAGEMENT__,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
+const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:!window.__WTW_1999_MANAGEMENT__,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:!window.__WTW_1999_MANAGEMENT__,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -2617,6 +2617,7 @@ function departmentRoster(section,page='Overview'){
   section==='World'?(page==='1999 Horses'?WORLD_1999_COLUMNS.Horses:page==='People'?WORLD_1999_COLUMNS.People:WORLD_1999_COLUMNS.Organizations):
   section==='Sales'&&page==='Watchlist'?DEP_COLUMNS.SalesWatchlist:section==='Sales'&&page==='Sale Calendar'?DEP_COLUMNS.SaleCalendar:section==='Sales'&&page==='Sale Companies'?DEP_COLUMNS.SaleCompanies:section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'?(APP.racingTrack?DEP_COLUMNS.Racing:DEP_COLUMNS.Meets):DEP_COLUMNS[section];
  const perPage=depPageLimit(section);
+ const continuousPersonnel=section==='Personnel';
  const virtualHorseIndex=section==='World'&&page==='1999 Horses'&&
   window.__WTW_1999_UI_DATA__?.worldHorsePage;
  const pageData=virtualHorseIndex?window.__WTW_1999_UI_DATA__.worldHorsePage(
@@ -2638,7 +2639,7 @@ function departmentRoster(section,page='Overview'){
  const totalRecords=pageData?pageData.total:rows.length;
  const limit=perPage,pages=Math.max(1,Math.ceil(totalRecords/limit));
  APP.departmentPageIndex=Math.min(Math.max(0,APP.departmentPageIndex),pages-1);
- const shown=pageData?rows:rows.slice(APP.departmentPageIndex*limit,(APP.departmentPageIndex+1)*limit);
+ const shown=pageData?rows:continuousPersonnel?rows.slice(0,Math.min(rows.length,APP.departmentScrollLimit)):rows.slice(APP.departmentPageIndex*limit,(APP.departmentPageIndex+1)*limit);
  APP.departmentVisible=shown;
 
  const heads=specs.map(([key,label])=>'<th scope="col" aria-sort="'+(selectedSort===key?(sign===1?'ascending':'descending'):'none')+'"><button data-ng="dept-sort" data-val="'+key+'" title="Sort by '+safe(label)+'">'+safe(label)+'<span aria-hidden="true">'+(selectedSort===key?(sign===1?'▲':'▼'):'↕')+'</span></button></th>').join('');
@@ -2687,7 +2688,8 @@ function departmentRoster(section,page='Overview'){
    return '<td title="'+safe(String(r[key]??''))+'">'+v+'</td>';
   }).join('')+'</tr>';
  }).join('');
- const pager='<span class="ng-dpt-records">'+totalRecords+' RECORDS · '+shown.length+' SHOWN'+(pageData?.isPageFilter?' · PAGE FILTER':'')+'</span>'+
+ const pager=continuousPersonnel?'<span class="ng-dpt-records">'+totalRecords+' RECORDS · '+shown.length+' LOADED · SCROLL TO SEE MORE</span>':
+  '<span class="ng-dpt-records">'+totalRecords+' RECORDS · '+shown.length+' SHOWN'+(pageData?.isPageFilter?' · PAGE FILTER':'')+'</span>'+
   '<button data-ng="dept-page" data-val="-1" '+(APP.departmentPageIndex===0?'disabled':'')+' aria-label="Previous page">‹ PREV</button>'+
   '<strong>'+(APP.departmentPageIndex+1)+' / '+pages+'</strong>'+
   '<button data-ng="dept-page" data-val="1" '+(APP.departmentPageIndex>=pages-1?'disabled':'')+' aria-label="Next page">NEXT ›</button>';
@@ -2877,6 +2879,7 @@ function paint(){
  const oldRoute=$('.ng-routegrid',root),oldTab=$('.ng-profiletabs .on',root)?.dataset.val||'';
  const previousRouteKey=oldRoute?.dataset.routeKey||'';
  const previousRouteScroll=oldRoute?.scrollTop||0;
+ const previousPersonnelScroll=$('.ng-dept-roster[data-department="Personnel"] .ng-rs-scroll',root)?.scrollTop||0;
  const previousDetailScroll=$('.ng-profile-view .ng-detail-cols',root)?.scrollTop||0;
  const oldCards=$$('.ng-profile-view .ng-detailcard',root).map((card,index)=>({
   key:index+'|'+($('header',card)?.textContent.trim()||''),
@@ -2888,6 +2891,8 @@ function paint(){
  root.innerHTML=header()+'<div class="ng-manager-shell">'+managerSidebar()+
    '<div class="ng-manager-stage">'+stage+'</div></div>'+(APP.savePanelOpen?namedSavePanel():'');
  const nextRoute=$('.ng-routegrid',root),nextTab=$('.ng-profiletabs .on',root)?.dataset.val||'';
+ const newPersonnelScroll=$('.ng-dept-roster[data-department="Personnel"] .ng-rs-scroll',root);
+ if(newPersonnelScroll){newPersonnelScroll.scrollTop=APP.departmentScrollReset?0:previousPersonnelScroll;APP.departmentScrollReset=false}
  if(nextRoute&&previousRouteKey&&nextRoute.dataset.routeKey===previousRouteKey){
   nextRoute.scrollTop=previousRouteScroll;
   if(oldTab===nextTab){
@@ -2944,7 +2949,7 @@ window.addEventListener('click',e=>{
  if(key==='dept-sort'){
   if(APP.departmentSortKey===val)APP.departmentSortDesc=!APP.departmentSortDesc;
   else{APP.departmentSortKey=val;APP.departmentSortDesc=false}
-  APP.departmentPageIndex=0;return paint();
+  APP.departmentPageIndex=0;APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint();
  }
  if(key==='dept-page'){APP.departmentPageIndex=Math.max(0,APP.departmentPageIndex+Number(val));return paint()}
  if(key==='dept-demo'){APP.departmentDemo=!APP.departmentDemo;APP.departmentPageIndex=0;return paint()}
@@ -3131,6 +3136,13 @@ window.addEventListener('keydown',event=>{
   requestAnimationFrame(()=>$('#ngGlobalSearch',root)?.focus());
  }
 });
+root.addEventListener('scroll',event=>{
+ const scroller=event.target;
+ if(!scroller?.matches?.('.ng-dept-roster[data-department="Personnel"] .ng-rs-scroll'))return;
+ if(scroller.scrollTop+scroller.clientHeight<scroller.scrollHeight-240)return;
+ const total=Number($('.ng-dpt-records',root)?.textContent.match(/^(\d+)/)?.[1]||0);
+ if(total&&APP.departmentScrollLimit<total){APP.departmentScrollLimit=Math.min(total,APP.departmentScrollLimit+160);schedulePaint(0)}
+},true);
 root.addEventListener('input',event=>{
  const input=event.target;
  if(input.matches('input[data-ng-input="global-search"]')){
@@ -3139,7 +3151,7 @@ root.addEventListener('input',event=>{
   return;
  }
  if(input.matches('input[data-ng-input="department-search"]')){
-  APP.departmentSearch=input.value;APP.departmentPageIndex=0;
+  APP.departmentSearch=input.value;APP.departmentPageIndex=0;APP.departmentScrollLimit=160;APP.departmentScrollReset=true;
   const caret=input.selectionStart;
   paint();const el=$('#ngDepartmentSearch',root);if(el){el.focus();el.setSelectionRange(caret,caret)}
   return;
