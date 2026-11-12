@@ -1531,7 +1531,8 @@ function profileDetail(route,sourceOverride=null){
  const profileMark=isOrganizationProfile?organizationLogoMarkup('',route.title,route.kicker==='Farm Profile'?'farm':'organization',true):`<div class="ng-profile-badgeframe"><img src="${badge(route.kicker==='Horse Profile'?'horse':route.kicker==='Track Profile'?'track':route.kicker==='People Profile'?'people':'farm_stable')}" alt="Approved ${safe(route.kicker)} badge"/></div>`;
 
  const horseField=(label)=>fields.find(f=>f.label.toLowerCase()===label.toLowerCase())?.value||'—';
- const horseFoalingState=isHorse?(source.dataset.foalingState||'').trim():'';
+ const horseFoalingCity=isHorse?(source.dataset.foalingCity||'').trim():'';
+  const horseFoalingState=isHorse?(source.dataset.foalingState||'').trim():'';
  const horseFoalingCountry=isHorse?(source.dataset.foalingCountry||'').trim():'';
  const horseFoalingCode=isHorse?(source.dataset.foalingCountryCode||'').trim().toUpperCase():'';
  const horseCountryLabel=horseFoalingCountry==='United States'?'USA':horseFoalingCountry;
@@ -1549,7 +1550,7 @@ function profileDetail(route,sourceOverride=null){
  // England has its own flag; GB flags must not silently replace it.
  const horseFlagCode=horseFoalingAlias||((horseFlagCodes.has(horseCountryCode))?horseCountryCode:'');
  const horseFlagPath=horseFlagCodes.has(horseFlagCode)?'/assets/flags/v1/'+horseFlagCode+'.svg':'';
- const horseFoalingDisplay=[horseFoalingState,horseCountryLabel].filter(v=>v&&v!=='—').join(', ')||'—';
+ const horseFoalingDisplay=[horseFoalingCity,horseFoalingState,horseCountryLabel].filter(v=>v&&v!=='—').join(', ')||'Not recorded';
  const horseIdentityRow=isHorse?`<div class="ng-horse-biography" aria-label="Horse foaling and identity facts">
   <span class="ng-horse-bio-foaling"><small>FOALED</small><strong>${horseFlagPath?`<img class="ng-horse-bio-flag" src="${safe(horseFlagPath)}" alt="" width="22" height="16" decoding="async"/>`:''}${safe(horseFoalingDisplay)}</strong></span>
   <span><small>DATE OF BIRTH</small><strong>${safe(horseField('Date of birth'))}</strong></span>
