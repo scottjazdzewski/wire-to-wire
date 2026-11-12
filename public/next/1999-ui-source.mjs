@@ -524,6 +524,10 @@ function worldHorseBrowse({offset=0,limit=160,search='',sort='name',desc=false,f
    status:String(h.status).replaceAll('_',' '),ca:String(h.ca??''),pa:String(h.pa??'')}));
  return {total,loaded:worldCounts.horses,indexing:false,items,progress:globalHorseProgress};
 }
+const breedingMareByModelIndex=index=>{
+ const sourceCount=get('mares','/api/1999/broodmare-boarding',2036).length;
+ return breedingMarePage(sourceCount+Number(index),1).items?.[0]||null;
+};
 function worldHorsePage(offset=0,limit=20,filter=''){
  if(!universeLabels){
   const owners=get('world-owners','/api/1999/sim/owners',3308);
@@ -614,7 +618,7 @@ window.__WTW_1999_UI_DATA__={
  ownedHorseCount,
  sourceFacts,ownerFor,stableHorsePreview,setGameDate,departmentRows,auctionList,extraTracks,
  TRAINING_PLANS,horseTraining,assignTraining,trainingCosts,
- officeMessages,officeDesks,openingCash,worldHorsePage,worldHorseBrowse,breedingMarePage,breedingMareBrowse,
+ officeMessages,officeDesks,openingCash,worldHorsePage,worldHorseBrowse,breedingMarePage,breedingMareBrowse,breedingMareByModelIndex,
  horseAttributeGroups,stableHorseAttributes,stableHorseCareer,
  stakesForTrack,findStake,findRace,ownedHorses,breederProfile,foalingFarmProfile,trackProgramById:trackProgram1999,
  sourceHorseAbility:id=>{const index=sourceHorseOffset.get(id);
