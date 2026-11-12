@@ -1791,9 +1791,17 @@ function profileDetail(route,sourceOverride=null){
   left=`<section class="ng-detailcard"><header>PEOPLE & FARM CONNECTIONS</header>${connectionRows()}</section>`;
   right=`<section class="ng-detailcard"><header>OFFICE CONTEXT</header>${factsBlock}</section>`;
  }else if(APP.detailTab==='History'&&isHorse&&source.dataset.testGenerated==='true'){
+  let history=[];
+  try{const career=JSON.parse(source.dataset.testCareer||'{}');
+   history=Array.isArray(career.raceHistory)?career.raceHistory:[];}catch{}
+  const rows=history.map(x=>'<div class="ng-horse-form-row"><span>'+safe(x.date)+'</span><span>'+
+   safe(x.raceClass||'Race')+' · '+safe(x.trackName||'')+' · '+
+   safe(x.distanceFurlongs||'')+'f '+safe(x.surface||'')+'</span><span>'+
+   safe(x.finishPosition||'—')+'</span><span>1999 TEST MODEL</span></div>').join('');
   left='<section class="ng-detailcard ng-detailwide"><header>PRE-1999 SIMULATED RACE HISTORY · '+
-   testRaceHistory.length+' STARTS · NOT OFFICIAL RESULTS</header>'+
-   (testRaceHistory.length?testHistoryTable(testRaceHistory):
+   history.length+' STARTS · NOT OFFICIAL RESULTS</header>'+
+   (history.length?'<div class="ng-horse-form-table"><div class="ng-horse-form-head"><span>DATE</span>'+
+    '<span>RACE / TRACK</span><span>FINISH</span><span>SOURCE</span></div>'+rows+'</div>':
     '<p class="ng-horse-small-note">Unraced in the 1999 test world at opening.</p>')+'</section>';
  }else if(APP.detailTab==='Achievements'&&isHorse){
   left=`<section class="ng-detailcard ng-detailwide"><header>RECORDED ACHIEVEMENTS</header><div class="ng-notes">${horseAchievements.map(n=>`<div>${safe(n)}</div>`).join('')||'<div>No achievements documented in the current source record.</div>'}</div></section>`;
