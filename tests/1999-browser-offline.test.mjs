@@ -68,7 +68,7 @@ test('fully fictional mode changes identifiers without mutating source canon',()
  assert.equal(create1999Universe().currentDate,'1999-01-01');
 });
 test('minimal browser with broken network still shows metrics and populated rows',async()=>{
- const idList=['gameDate','gameDay','runMode','metrics','records','status','sectionTitle','sectionDescription','sectionKicker','mode','search','trackPicker','trackPickerLabel','prevPage','nextPage','pageInfo','oneDay','oneWeek','oneMonth','reset','fictional','canonWorld','refresh,'recordDetails','jumpIndex','jumpTo''];
+ const idList=['gameDate','gameDay','runMode','metrics','records','status','sectionTitle','sectionDescription','sectionKicker','mode','search','trackPicker','trackPickerLabel','prevPage','nextPage','pageInfo','oneDay','oneWeek','oneMonth','reset','fictional','canonWorld','refresh','recordDetails','jumpIndex','jumpTo'];
  const handlers=new Map();
  const elements=new Map(idList.map(id=>[id,{
   innerHTML:'',textContent:'',value:'',hidden:false,disabled:false,dataset:{},
