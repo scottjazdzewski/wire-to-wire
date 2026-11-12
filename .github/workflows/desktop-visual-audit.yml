@@ -23,8 +23,13 @@ jobs:
           command -v google-chrome || command -v chromium || command -v chromium-browser
       - name: Capture and inspect WTW desktop routes
         run: bash scripts/desktop-visual-audit.sh
-      - name: Capture clean-sheet Management Studio V2 screens
-        run: bash scripts/manager-v2-visual-audit.sh
+      - name: Capture clean-sheet Management Studio V2 screens (only while legacy V2 is served)
+        run: |
+          if grep -qiE 'http-equiv="refresh"|location\.replace\(' public/manager/index.html; then
+            echo 'Legacy /manager/ redirects to the active /next/ Office; obsolete V2 screenshots are not applicable.'
+          else
+            bash scripts/manager-v2-visual-audit.sh
+          fi
       - name: Upload screenshots and captured DOM
         if: always()
         uses: actions/upload-artifact@v4
