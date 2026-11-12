@@ -132,7 +132,9 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   const auction=ui.auctionList();
   check('36 scheduled test sales',auction.length===36);
   const horses=ui.worldHorsePage(267,20);
-  check('Generated horses paged without loading all 87,500 at once',horses.total===87500&&horses.items.length===20);
+  check('Generated horses paged against the full source world without materializing all records',
+   horses.total===(ui.counts.worldHorses||ui.counts.horses)&&horses.items.length===20&&
+   ui.counts.horses===87500);
   const first=horses.items[0];
   check('Generated horse profile retains required values',first?._testGenerated&&first?._id&&first?.owner&&first?.trainer&&first?._testAttrs);
   check('No 1999 future outcomes pre-recorded',ui.bridgeStatus.includes('NO_1999_OUTCOME_COMMITTED'));
