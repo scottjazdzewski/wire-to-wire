@@ -2846,6 +2846,9 @@ function departmentRoster(section,page='Overview'){
  let rows=virtualMethod?virtualData:depRows(section,page,demo,auction);
  const search=APP.departmentSearch.trim().toLowerCase();
  if(search&&!virtualMethod)rows=rows.filter(r=>specs.some(([key])=>String(r[key]??'').toLowerCase().includes(search)));
+ const rosterScope=section+'|'+page;
+ const rosterFilter=window.WTW1999RosterFilters?.get(APP,rosterScope)||null;
+ if(rosterFilter)rows=rows.filter(r=>window.WTW1999RosterFilters.matches(r,rosterFilter));
  const defaultSort=section==='World'?'name':section==='Sales'&&page==='Watchlist'?'auction':section==='Racing'&&(page!=='Overview'||APP.racingMode==='mine'||APP.racingTrack)?'date':section==='Sales'&&page!=='Sale Calendar'&&page!=='Sale Companies'?'hip':section==='Finances'?'date':specs[0][0];
  const selectedSort=specs.some(x=>x[0]===APP.departmentSortKey)?APP.departmentSortKey:defaultSort;
  const sign=APP.departmentSortKey?(APP.departmentSortDesc?-1:1):(section==='Finances'?-1:1);
@@ -2950,7 +2953,8 @@ function departmentRoster(section,page='Overview'){
   (section==='World'?'<button type="button" data-ng="world-export" title="Download all World edits and images">EXPORT EDITS</button>'+
    '<button type="button" data-ng="world-import-open" title="Import World editing backup">IMPORT EDITS</button>'+
    '<input type="file" id="wtwWorldImportInput" accept="application/json,.json" hidden/>':'')+
-  '<span class="ng-dpt-mode">FULL-WIDTH ROSTER</span></div>'+salesDeskView+
+  '<span class="ng-dpt-mode">FULL-WIDTH ROSTER</span></div>'+
+  (window.WTW1999RosterFilters?.render(specs,rosterFilter,safe,rosterScope)||'')+salesDeskView+
   '<section class="ng-rs-roster"><header><strong>'+safe(section.toUpperCase())+' · SORTABLE ROSTER</strong><div class="ng-dpt-pager">'+pager+'</div></header>'+
   '<div class="ng-rs-scroll" tabindex="0" role="region" aria-label="'+safe(section)+' roster — scroll vertically and click column headings to sort"><table class="ng-rs-table ng-dpt-table"><thead><tr>'+heads+'</tr></thead><tbody>'+
   (body||'<tr><td colspan="'+specs.length+'" class="ng-rs-no-results">'+safe(section==='World'&&!world1999Data?'Loading the 1999 world registry…':section==='Sales'&&page==='Watchlist'?'No watched lots yet. Select ☆ beside a catalog hip to watch it for this session.':section==='Sales'&&page==='Private Offers'?'No recorded private offers. Bidding and negotiation are not enabled in this UI preview.':section==='Sales'?'No catalog lots recorded for this view.':demo?'No matching records.':'No supported records in this view.')+'</td></tr>')+
@@ -3185,6 +3189,11 @@ window.addEventListener('click',e=>{
  if(key==='nextopen')return selectAdjacentCase(1,true);
  if(key==='dept-meets'){APP.racingMode=APP.racingTrack?'track':'meets';APP.departmentPageIndex=0;APP.departmentSortKey='';APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint()}
  if(key==='dept-myhorses'){APP.racingMode=APP.racingMode==='mine'?(APP.racingTrack?'track':'meets'):'mine';APP.departmentPageIndex=0;APP.departmentSortKey='';APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint()}
+ if(key==='roster-filter-clear'){
+  const scope=btn.closest('.ng-list-filters')?.dataset.filterScope;
+  if(scope&&APP.rosterFilters)APP.rosterFilters[scope]=window.WTW1999RosterFilters.initial();
+  APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint();
+ }
  if(key==='dept-sort'){
   if(APP.departmentSortKey===val)APP.departmentSortDesc=!APP.departmentSortDesc;
   else{APP.departmentSortKey=val;APP.departmentSortDesc=false}
@@ -3385,6 +3394,13 @@ root.addEventListener('change',event=>{
   const field=event.target;
   if(field.id==='ngNamedSavesImport')return namedSaveImport(field.files?.[0]);
   if(field?.tagName==='SELECT')endNativeSelectInteraction(false);
+  if(field.matches('select[data-ng-select^="roster-filter-"]')){
+   const k=field.dataset.ngSelect.slice('roster-filter-'.length);
+   const scope=field.closest('.ng-list-filters')?.dataset.filterScope;
+   if(scope){window.WTW1999RosterFilters.get(APP,scope)[k]=field.value;
+    APP.departmentScrollLimit=160;APP.departmentScrollReset=true;}
+   return paint();
+  }
   if(field.matches('select[data-ng-select="stable-attribute"]')){
    APP.stableAttributeKey=field.value;APP.stableAttributeSort=field.value;
    APP.stableAttributeDesc=true;return paint();
@@ -3434,6 +3450,18 @@ root.addEventListener('scroll',event=>{
 },true);
 root.addEventListener('input',event=>{
  const input=event.target;
+ if(input.matches('input[data-ng-input^="roster-filter-"]')){
+  const k=input.dataset.ngInput.slice('roster-filter-'.length);
+  const scope=input.closest('.ng-list-filters')?.dataset.filterScope;
+  if(scope){window.WTW1999RosterFilters.get(APP,scope)[k]=input.value;
+   APP.departmentScrollLimit=160;APP.departmentScrollReset=true;}
+  const caret=input.selectionStart;
+  paint();
+  const field=[...root.querySelectorAll('input[data-ng-input^="roster-filter-"]')]
+    .find(x=>x.dataset.ngInput===input.dataset.ngInput&&x.closest('.ng-list-filters')?.dataset.filterScope===scope);
+  if(field){field.focus();if(field.type==='search')field.setSelectionRange(caret,caret);}
+  return;
+ }
  if(input.matches('input[data-ng-input="global-search"]')){
   APP.searchQuery=input.value;APP.searchPage=0;
   updateSearchRoster();
