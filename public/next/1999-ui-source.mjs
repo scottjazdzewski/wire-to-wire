@@ -64,8 +64,8 @@ function departmentRows(section,page){
   const roles={Trainers:'trainer',Jockeys:'jockey',Owners:'owner',Staff:'staff'};
   const wanted=roles[page]||'all';
   const base=page==='Trainers'?get('trainers','/api/1999/sim/trainers',4200):
-   page==='Jockeys'||page==='Staff'||page==='Overview'?get('workforce','/api/1999/sim/people',13248):[];
-  return base.filter(p=>wanted==='all'||wanted==='staff'?!['trainer','jockey'].includes(p.role):p.role===wanted).map(p=>({
+   page==='Jockeys'||page==='Staff'||page==='Overview'?get('workforce','/api/1999/sim/people',17194):[];
+  return base.filter(p=>wanted==='all'?true:wanted==='staff'?!['trainer','jockey'].includes(p.role):p.role===wanted).map(p=>({
    _kind:'person',_name:p.name,name:p.name,age:p.age||'',role:p.role||'',reputation:rep(p.reputation),
    ca:'',pa:'',specialty:'',morale:'',workload:'',salary:money(p.payrollAnnual||p.annualBaseSalary),
    contract:'',assignment:p.barnId||'',base:city(p.location),wins:'',_testOrigin:true}));
@@ -99,7 +99,7 @@ function departmentRows(section,page){
 function extraTracks(){
  const ts=get('tracks','/api/1999/sim/tracks',134);
  return ts.map(t=>({...t,location:city(t.location),region:t.location?.state||'',country:t.location?.country||'',
-    operating:'OPEN_1999',racingStatus:'TEST',_source1999:true,
+    operating:'TEST_1999_MEET_STATUS_UNVERIFIED',racingStatus:'TEST',_source1999:true,
     meetWindow:'1999 test meet rules',raceDays:'SCHEDULE_DEPENDENT',preferredDays:'',stakes:[]}));
 }
 window.__WTW_1999_UI_DATA__={
