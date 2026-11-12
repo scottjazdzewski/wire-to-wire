@@ -51,7 +51,9 @@ test('all visible departments have a named, physically located test population',
   assert.ok(response.items[0].id,path);
  }
  assert.equal(readLocal1999World('/api/1999/stallions').active.length,31);
- assert.equal(readLocal1999World('/api/1999/sim/conditions?date=1999-01-01&trackIndex=0').races.length,0);
+ const janConditions=readLocal1999World('/api/1999/sim/conditions?date=1999-01-01&trackIndex=0').races;
+ assert.ok(Array.isArray(janConditions));
+ assert.ok(janConditions.every(r=>r.date==='1999-01-01'&&r.status==='CONDITION_BOOK_PROPOSAL_NOT_RUN'));
 });
 test('browser runs entirely from static modules with no fetch() dependency',()=>{
  const script=readFileSync(new URL('../public/1999/app.mjs',import.meta.url),'utf8');
