@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import {readLocal1999World} from '../public/1999/engine/local-api.mjs';
 import {trackProgram1999} from '../public/next/1999-track-program.mjs';
 import {WTW_ALTERNATE_STAKES_1999} from '../public/next/1999-alternate-stakes.mjs';
+import {WTW_REGIONAL_STAKES_1999} from '../public/next/1999-regional-stakes.mjs';
 import attributeCatalog from '../public/1999/engine/attribute-catalog.mjs';
 import {TRAINING_PLANS,createHorseTrainingRecord,horseTrainingSnapshot,
  assignHorseTrainingPlan,simulateStableTrainingThrough,trainingFinancials}
@@ -13,10 +14,10 @@ const source=readFileSync('public/next/1999-ui-source.mjs','utf8');
 const js=readFileSync('public/next/next.js','utf8');
 const html=readFileSync('public/next/index.html','utf8');
 const context={window:{__WTW_NEXT__:{paint(){}}},readLocal1999World,trackProgram1999,
- WTW_ALTERNATE_STAKES_1999,attributeCatalog,
+ WTW_ALTERNATE_STAKES_1999,WTW_REGIONAL_STAKES_1999,attributeCatalog,
  TRAINING_PLANS,createHorseTrainingRecord,horseTrainingSnapshot,assignHorseTrainingPlan,
  simulateStableTrainingThrough,trainingFinancials};
-const browserImports=/^import\s+(?:\{[^}]+\}|attributeCatalog)\s+from\s+'\/(?:1999\/engine\/(?:local-api|attribute-catalog|horse-development)|next\/(?:1999-track-program|1999-alternate-stakes))\.mjs(?:\?[^']+)?';[ \t]*$/gm;
+const browserImports=/^import\s+(?:\{[^}]+\}|attributeCatalog)\s+from\s+'\/(?:1999\/engine\/(?:local-api|attribute-catalog|horse-development)|next\/(?:1999-track-program|1999-alternate-stakes|1999-regional-stakes))\.mjs(?:\?[^']+)?';[ \t]*$/gm;
 vm.runInNewContext(source.replace(browserImports,''),context,{timeout:20000});
 const ui=context.window.__WTW_1999_UI_DATA__;
 test('1999 source data is mounted behind unchanged existing management UI',()=>{
