@@ -1,6 +1,6 @@
 /* WIRE TO WIRE: January 1999 325,000-horse registry search worker.
  * Owns the global sortable/searchable index OFF the rendering thread.
- * Only returns one visible page. No 325k snapshot enters localStorage.
+ * Only returns one visible page. No full 325k snapshot is persisted by the UI.
  * The existing game authority, IDs, and career-save schema are unchanged. */
 import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-commercial-r1';
 
@@ -65,7 +65,7 @@ async function ensureTrait(key){
  if(!state){
   // Keep only two selected traits: 325k x 53 full vectors are never cached.
   if(cachedTraits.size>=2)cachedTraits.delete(cachedTraits.keys().next().value);
-  state={progress:0,values:new Array(populationCount,done:false};
+  state={progress:0,values:new Array(populationCount),done:false};
   cachedTraits.set(key,state);
  }
  if(state.done)return true;
