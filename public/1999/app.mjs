@@ -1,4 +1,5 @@
 import {readLocal1999World} from './engine/local-api.mjs';
+import {loadApprovedAssets,recordArt,sectionBadge} from './asset-bridge.mjs';
 import {createClean1999Clock,advance1999Clock,reset1999Clock,validate1999Clock,WTW_TEST_SAVE_NAMESPACE} from './test-clock.mjs';
 const $=id=>document.getElementById(id),SAVE_MODE_KEY='wtw:1999:test-universe-mode:v1';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -69,7 +70,7 @@ function select(next){
   b.classList.toggle('selected',b.dataset.tab===next);
   b.hidden=mode==='FULLY_FICTIONAL_TEST'&&['horses','organizations','people','calendar','stallions','broodmare-boarding','events'].includes(b.dataset.tab);
  }
- $('sectionTitle').textContent=defs[next][0];$('sectionDescription').textContent=defs[next][1];
+ $('sectionTitle').innerHTML=sectionBadge(next)+'<span>'+esc(defs[next][0])+'</span>';$('sectionDescription').textContent=defs[next][1];
  const condition=next==='conditions';$('trackPicker').hidden=!condition;$('trackPickerLabel').hidden=!condition;
  $('sectionKicker').textContent=condition?'1999 RACING CONDITIONS':'OPENING UNIVERSE';
  $('mode').textContent=mode==='FULLY_FICTIONAL_TEST'?'FICTIONAL SEED':'CANON LOCKED + TEST';
@@ -98,7 +99,7 @@ function showRecordDetails(x){
    .map(([k,v])=>'<div class="trait"><span>'+esc(k.replaceAll('_',' '))+'</span><strong>'+esc(labelValue(v))+'</strong></div>').join('');
  const location=x.location||x.openingStable||x.standingFarm1999||x.boardingFarm1999||null;
  const loc=location?Object.entries(location).filter(([k,v])=>['city','state','country','locality','region','farmName','name'].includes(k)&&v).map(([k,v])=>esc(v)).join(' · '):'No location in this source record';
- $('recordDetails').innerHTML='<div class="detailTop"><div><p class="eyebrow">FULL SOURCE / TEST PROFILE</p><h3>'+esc(title)+'</h3><p>'+esc(x.id||'')+' · '+esc(loc)+'</p></div><button data-close-record type="button">Close</button></div>'+
+ $('recordDetails').innerHTML='<div class="detailTop">'+recordArt(x,tab,true)+'<div><p class="eyebrow">FULL SOURCE / TEST PROFILE</p><h3>'+esc(title)+'</h3><p>'+esc(x.id||'')+' · '+esc(loc)+'</p></div><button data-close-record type="button">Close</button></div>'+
  (Object.keys(finance).length?'<h4>Finances and operating costs</h4><div class="detailFacts">'+fields(finance)+'</div>':'')+
  (Object.keys(reputation).length?'<h4>Reputation</h4><div class="detailFacts">'+fields(reputation)+'</div>':'')+
  (Object.keys(attrs).length?'<h4>All '+Object.keys(attrs).length+' modeled attributes <small>administrator test values</small></h4><div class="traitGrid">'+lines+'</div>':'')+
@@ -121,7 +122,7 @@ function row(x,i){
  else if(tab==='stallions'){title=x.name;sub=x.id+' · stud '+x.firstBreedingSeason;where=x.standingFarm1999?.farmName;right=x.standingFarm1999?.region;}
  else if(tab==='broodmare-boarding'){title=x.name;sub=x.id;where=x.boardingFarm1999?.farmName;right=x.boardingFarm1999?.region;}
  else if(tab==='events'){title=x.type;sub=x.id+' · '+x.scheduledLocalDateTime;where=x.circuit;right='Not executed';}
- return '<article class="record"><div><strong>'+esc(title)+'</strong><small>'+esc(sub)+'</small></div><div class="second">'+esc(where)+'</div><div class="third">'+esc(right)+'<button class="inspect" data-record-index="'+i+'" type="button">Inspect full record</button></div></article>';
+ return '<article class="record">'+recordArt(x,tab)+'<div><strong>'+esc(title)+'</strong><small>'+esc(sub)+'</small></div><div class="second">'+esc(where)+'</div><div class="third">'+esc(right)+'<button class="inspect" data-record-index="'+i+'" type="button">Inspect full record</button></div></article>';
 }
 async function populateTracks(){
  if(tracksLoaded)return;
@@ -138,6 +139,8 @@ async function load(){
  const request=++token,def=defs[tab],type=def[3],args=modelArgs();
  $('records').innerHTML='';$('status').textContent='Loading '+def[0]+'…';
  try{
+  await loadApprovedAssets();
+  if(request!==token)return;
   let items=[],total=0;
   if(type==='condition'){
    await populateTracks();
