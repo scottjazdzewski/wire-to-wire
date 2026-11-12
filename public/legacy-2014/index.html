@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>WIRE TO WIRE — Racing Office</title>
+<link rel="stylesheet" href="/next/next.css" />
+</head>
+<body class="wtw-next-active">
+<div class="app">
+  <header class="top">
+    <div class="brand" data-act="Office Overview"><img class="logo" src="/assets/wtw-office-approved-logo.png" alt="Wire to Wire"><div><h1>Wire to Wire</h1></div></div>
+    <div class="navBlock">
+      <nav class="nav"><button class="active" data-act="Office">Office</button><button data-act="Stable">Stable</button><button data-act="Race Calendar">Race Calendar</button><button data-act="Sales">Sales</button><button data-act="World">World</button><button data-act="News">News</button></nav>
+      <div class="subnav"><span class="dateChip"><span class="dateIcon"><svg viewBox="0 0 24 24"><path d="M5 5h14v15H5z"/><path d="M8 3v4M16 3v4M5 9h14"/></svg></span>2014-07-15</span><button class="active" data-act="Office Overview" title="Return to the main office dashboard view">Overview</button><button class="jump" data-act="+ Day">+ Day</button><button class="jump" data-act="+ Week">+ Week</button><button class="jump" data-act="+ Month">+ Month</button><button class="jump" data-act="+ Year">+ Year</button></div>
+    </div>
+    <div class="actions"><button class="disabled" data-act="Back">‹ Back</button><button data-act="Forward">Forward ›</button><button data-act="Save">▣ Save</button><button data-act="Load">Load</button><button class="red" data-act="Continue">Continue</button><button data-act="Export">Export</button><button data-act="Reset">Reset</button></div><input id="loadStateInput" type="file" accept="application/json,.json" hidden>
+  </header>
+  <main class="main">
+    <section class="left panel messages">
+      <div class="panelHead"><div class="panelTitle"><span class="panelIcon"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></svg></span>Messages</div><span class="link" data-act="Filter Unread">Unread 3</span></div>
+      <div class="filters"><button class="filter active" data-act="Filter All">All</button><button class="filter" data-act="Filter New">New</button><button class="filter" data-act="Filter Urgent">Urgent (2)</button><button class="filter" data-act="Filter Unread">Unread</button><div class="filterTools clean" data-act="Filter Priority Feed">Priority feed</div></div>
+      <div class="msgList">
+        <div class="msg urgent selected" data-act="Open message Powerline" data-case="powerline"><div></div><div class="avatar">GL</div><div class="msgText"><div class="from">Gabe Larkin</div><div class="title">Powerline — Saturday Maiden</div><div class="meta">Race placement · deadline Jul 17</div></div><div class="time">08:48</div></div>
+        <div class="msg urgent" data-act="Open message The Last Match" data-case="lastmatch"><div></div><div class="avatar">HV</div><div class="msgText"><div class="from">Harrow & Pike Vet</div><div class="title">The Last Match — post-work filling</div><div class="meta">Soundness caution · mild filling</div></div><div class="time">08:41</div></div>
+        <div class="msg normal" data-act="Open message Saratoga" data-case="saratoga"><div></div><div class="avatar">AD</div><div class="msgText"><div class="from">Alistair Dunleavy</div><div class="title">Saratoga catalog notes posted</div><div class="meta">Sales watchlist · three hips flagged</div></div><div class="time">08:29</div></div>
+        <div class="msg normal" data-act="Open message Pieta" data-case="pieta"><div></div><div class="avatar">AR</div><div class="msgText"><div class="from">Anika Rowe</div><div class="title">Pieta gallop-out report</div><div class="meta">Training · attitude trending up</div></div><div class="time">08:17</div></div>
+        <div class="msg normal" data-act="Open message Cash" data-case="cash"><div></div><div class="avatar">FD</div><div class="msgText"><div class="from">Farm Desk</div><div class="title">Monthly cash projection</div><div class="meta">Liquidity stable · shipping costs</div></div><div class="time">08:06</div></div>
+        <div class="msg normal" data-act="Open message World" data-case="newsbuzz"><div></div><div class="avatar">WP</div><div class="msgText"><div class="from">World Pulse</div><div class="title">Argosy colt buzz building</div><div class="meta">Media thread · public pressure rising</div></div><div class="time">07:54</div></div>
+        <div class="msg normal" data-act="Open message Entries" data-case="entries"><div></div><div class="avatar">RC</div><div class="msgText"><div class="from">Race Calendar</div><div class="title">Entries close Saturday</div><div class="meta">Churchill Downs · Race 3</div></div><div class="time">07:43</div></div>
+        <div class="msg normal" data-act="Open message Cedar" data-case="cedar"><div></div><div class="avatar">CS</div><div class="msgText"><div class="from">Cedar Spoke</div><div class="title">Young horse turnout notes</div><div class="meta">Development · no restrictions</div></div><div class="time">07:31</div></div>
+      </div>
+    </section>
+    
+<section class="mid decisionDeskShell">
+  <section class="panel decisionDesk" id="decisionDesk">
+    <div class="panelHead"><div class="panelTitle"><span class="panelIcon"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span>Decision Desk</div><span class="link" id="deskDue" data-act="Open current deadline">Decision Today</span></div>
+    <div class="deskCase">
+      <div class="caseHero" data-act="Open selected file"><img id="deskImage" src="/assets/wtw-office-approved-logo.png" alt="Decision image"><div class="caseShade"></div><div class="caseCopy"><div class="caseKicker" id="deskType">Race Placement</div><h2 id="deskTitle">Powerline: Saturday maiden is live, not soft</h2><p id="deskSummary">Gabe Larkin says the colt is sharp but aggressive. Run for answers, or wait for a cleaner confidence-building spot.</p></div></div>
+      <aside class="caseFacts">
+        <div class="factBox danger"><span>Pressure</span><strong id="deskPressure">Medium-high</strong></div>
+        <div class="factBox"><span>Primary Risk</span><strong id="deskRisk">Hot pace / confidence</strong></div>
+        <div class="factBox"><span>Best Read</span><strong id="deskRead">Trainer split</strong></div>
+        <div class="factActions"><button class="btn" data-act="Open file">Open File</button><button class="btn light" data-act="Horse Profile">Horse Profile</button></div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="panel intelPanel">
+    <div class="panelHead"><div class="panelTitle"><span class="panelIcon"><svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M5 8h14"/><path d="M7 16h10"/></svg></span>Intel Stack</div><span class="link" id="deskSource" data-act="Open current source">Gabe Larkin</span></div>
+    <div class="intelGrid" id="intelGrid"></div>
+  </section>
+
+  <section class="panel movePanel">
+    <div class="panelHead"><div class="panelTitle"><span class="panelIcon"><svg viewBox="0 0 24 24"><path d="M6 12h12"/><path d="M13 7l5 5-5 5"/></svg></span>Your Move</div><span class="link" id="deskChoiceHint" data-act="Open move history">choose or open file</span></div>
+    <div class="moveGrid" id="moveGrid"></div>
+  </section>
+</section>
+<section class="right">
+      <section class="panel fixtures"><div class="panelHead"><div class="panelTitle">Race Schedule</div><span class="link" data-act="Open Race Calendar">View all</span></div><div class="fixtureList">
+        <div class="fixture" data-act="Open fixture Powerline" data-case="powerline" data-profile="Powerline" data-track="Churchill Downs"><div class="d">Sat 7/19</div><div><h4>Powerline</h4><p>Churchill Downs R3</p></div><div class="raceTag">6F</div></div>
+        <div class="fixture" data-act="Open fixture Last Match" data-case="lastmatch" data-profile="The Last Match" data-track="Keeneland"><div class="d">Sun 7/20</div><div><h4>The Last Match</h4><p>Keeneland R6</p></div><div class="raceTag">8.5F</div></div>
+        <div class="fixture" data-act="Open fixture Iron Harbor" data-profile="Iron Harbor" data-track="Saratoga"><div class="d">Wed 7/23</div><div><h4>Iron Harbor</h4><p>Saratoga R8</p></div><div class="raceTag">Turf</div></div>
+        <div class="fixture" data-act="Open fixture Sales" data-case="saratoga"><div class="d">Fri 7/25</div><div><h4>Sales watch</h4><p>Fasig-Tipton July</p></div><div class="raceTag">Cat</div></div>
+        <div class="fixture" data-act="Open fixture Works" data-case="cedar"><div class="d">Sat 7/26</div><div><h4>Stable works</h4><p>Cedar Spoke</p></div><div class="raceTag">AM</div></div>
+        <div class="fixture" data-act="Open fixture Owner"><div class="d">Mon 7/28</div><div><h4>Owner call</h4><p>Monthly review</p></div><div class="raceTag">Desk</div></div>
+      </div></section>
+      <section class="panel board"><div class="panelHead"><div class="panelTitle">Stable Board</div><span class="link" data-act="Sort Stable Board">Rank</span></div><div class="boardRows">
+        <div class="rankRow" data-act="Open board Powerline" data-profile="Powerline" data-case="powerline"><span class="n">1</span><strong>Powerline</strong><span class="form"><i class="w"></i><i class="p"></i><i></i></span><span>6/1</span></div><div class="rankRow" data-act="Open board The Last Match" data-profile="The Last Match" data-case="lastmatch"><span class="n">2</span><strong>The Last Match</strong><span class="form"><i class="w"></i><i class="p"></i><i></i></span><span>Vet</span></div><div class="rankRow" data-act="Open board Iron Harbor"><span class="n">3</span><strong>Iron Harbor</strong><span class="form"><i class="w"></i><i class="p"></i><i></i></span><span>Fit</span></div><div class="rankRow" data-act="Open board Pieta"><span class="n">4</span><strong>Pieta</strong><span class="form"><i class="w"></i><i class="p"></i><i></i></span><span>2YO</span></div><div class="rankRow" data-act="Open board Bellarmine"><span class="n">5</span><strong>Bellarmine</strong><span class="form"><i class="w"></i><i class="p"></i><i></i></span><span>Dev</span></div><div class="rankRow" data-act="Open board Hardtack"><span class="n">6</span><strong>Hardtack</strong><span class="form"><i class="w"></i><i class="p"></i><i></i></span><span>Risk</span></div>
+      </div></section>
+      
+
+<section class="panel opportunities"><div class="panelHead"><div class="panelTitle"><span class="panelIcon"><svg viewBox="0 0 24 24"><path d="M12 3l2.5 5.5 6 .7-4.4 4 1.2 5.8L12 16l-5.3 3 1.2-5.8-4.4-4 6-.7z"/></svg></span>Opportunity Board</div><span class="link" data-act="Open opportunity board">Review all</span></div>
+  <div class="oppList">
+    <article class="oppItem hot" data-act="Open private offer" data-case="powerline">
+      <div class="oppTag">OFFER</div>
+      <div class="oppText"><h4>Powerline inquiry</h4><p>St. Alloy partners want a read before Saturday.</p></div>
+      <button data-act="Review offer">Review</button>
+    </article>
+    <article class="oppItem" data-act="Open claim watch">
+      <div class="oppTag">CLAIM</div>
+      <div class="oppText"><h4>Aqueduct cheap speed</h4><p>Scout says one runner may fit the lower barn.</p></div>
+      <button data-act="Scout claim">Scout</button>
+    </article>
+    <article class="oppItem" data-act="Open sales lead" data-case="saratoga">
+      <div class="oppTag">SALES</div>
+      <div class="oppText"><h4>Saratoga hip flagged</h4><p>Alistair marked a late-developing turf type.</p></div>
+      <button data-act="Open sales lead" data-case="saratoga">Open</button>
+    </article>
+  </div>
+</section>
+
+
+    </section>
+  </main>
+</div>
+
+<div id="routeShell" class="routeShell" hidden>
+  <section class="routePanel">
+    <div class="routeHead">
+      <div><span class="routeKicker" id="routeKicker">Destination</span><h2 id="routeTitle">Page</h2></div>
+      <button class="routeClose" data-act="Close route">×</button>
+    </div>
+    <div class="routeBody" id="routeBody"></div>
+  </section>
+</div>
+
+<div id="toast" class="toast">Action</div>
+
+<script src="/office-v30-1.js"></script>
+
+
+<script src="/office-v30-2.js"></script>
+
+
+<script src="/office-v30-3.js"></script>
+
+
+<script src="/office-v30-4.js?v=20261111-track-history-corner-1"></script>
+<script src="/office-fm-v32.js"></script>
+<script src="/office-fm-v34.js"></script>
+<script src="/office-fm-v35.js"></script>
+<script src="/office-fm-v36.js"></script>
+<script src="/office-fm-v37.js"></script>
+<script src="/next/next.js"></script>
+
+<a class="wtw-site-archive-link" href="/archive/" title="Open the historical archive and record-review tools">History Vault</a>
+</body>
+</html>
