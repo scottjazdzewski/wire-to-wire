@@ -9,10 +9,11 @@
     "dev": "wrangler dev",
     "db:local": "wrangler d1 migrations apply wtw-canon-desk-db --local",
     "db:seed:local": "node scripts/build-seed.mjs && wrangler d1 execute wtw-canon-desk-db --local --file=./data/seed.sql",
-    "test": "node --test tests/*.test.mjs",
+    "test": "node scripts/run-current-tests.mjs",
     "deploy": "wrangler deploy",
     "db:build:full": "node scripts/build-full-history.mjs",
-    "db:build:geo": "node scripts/build-geography-import.mjs"
+    "db:build:geo": "node scripts/build-geography-import.mjs",
+    "test:legacy-ui": "node --test tests/approved-badges-v2.test.mjs tests/fm-management-screen-family.test.mjs tests/manager-v2-independent.test.mjs tests/next-office-v6.test.mjs tests/next-office-v7.test.mjs tests/office-pedigree-existing-tab.test.mjs tests/office-single-visual-layer.test.mjs tests/office-v30-site.test.mjs tests/site-main-promotion.test.mjs tests/ui-canonical-style.test.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"
