@@ -20,7 +20,8 @@ function source(kind,record,ui){
  if(kind==='horse'){
   const year=Number(d.foalYear||d._foalYear||0);
   const sourceId=d.id||d._canonId||d._id||'';
-  const candidateAbility=d._testAbility||ui?.sourceHorseAbility?.(sourceId)||null;
+  const sourceModel=sourceId?ui?.sourceHorseModel?.(sourceId):null;
+  const candidateAbility=d._testAbility||sourceModel?.ability||ui?.sourceHorseAbility?.(sourceId)||null;
   const ability=candidateAbility?.schema==='WTW_1999_AGE_ABILITY_V1'?candidateAbility:null;
   const foalRegistry=registry?.[sourceId]||null;
   const geo=d.foalingGeography||d.foalingLocation||d.foalingPlace||d.foaling||d.birthplace||
@@ -39,7 +40,9 @@ function source(kind,record,ui){
   node.dataset.foalingFarmId=d.breedingFarmId||'';
   node.dataset.homebred=d._testGenerated&&d.homebred===true?'true':'false';
   node.dataset.testGenerated=d._testGenerated?'true':'false';
-  node.dataset.testAttributes=JSON.stringify(d._testAttrs||{});
+  const modelHorseTraits=d._testAttrs||sourceModel?.attributes||{};
+  node.dataset.testAttributeModel=Object.keys(modelHorseTraits).length?'true':'false';
+  node.dataset.testAttributes=JSON.stringify(modelHorseTraits);
   node.dataset.testCareer=JSON.stringify(d._testCareer||{});
   node.dataset.testRelationships=JSON.stringify(d._testRelationships||{});
   const career=d._testCareer||{};
@@ -90,11 +93,14 @@ function source(kind,record,ui){
   const birthplace=place(d.birthplace||d.birthPlace);
   const age=d.ageAtDate??d.ageAtOpening??d.age??'';
   const generated=d._testGenerated===true;
+  const sourceModel=personId?ui?.sourcePersonModel?.(personId):null;
+  const modelPersonTraits=d._testAttrs||sourceModel?.attributes||{};
   node.dataset.personId=personId;
   node.dataset.testGenerated=generated?'true':'false';
+  node.dataset.testAttributeModel=Object.keys(modelPersonTraits).length?'true':'false';
   // These values already exist in the site's TEST population. They never
   // become canonical scouting observations or engine-facing decisions.
-  node.dataset.testAttributes=JSON.stringify(generated?d._testAttrs||{}:{});
+  node.dataset.testAttributes=JSON.stringify(modelPersonTraits);
   node.dataset.personRole=role.toLowerCase().replaceAll(' ','_');
   node.innerHTML='<div class="profileSubline">Job: '+safe(role)+'</div>'+
    field('Role',role)+field('Age',age||'Not recorded')+
@@ -110,7 +116,7 @@ function source(kind,record,ui){
    panel('Stable Horses')+
    panel('Professional context',[generated?
     '1999 SIMULATED TEST PERSON · modeled attributes must not be represented as certified scouting or historical facts.':
-    personId?'Canonical person identity and recorded geography preserved. Unassessed professional skills remain unknown.':
+    personId?'Canonical person identity and recorded geography preserved. Displayed modeled skills are clearly identified as TEST estimates, not historical observations; unassessed skills remain unknown.':
     'Unlinked person name; no canonical identity or skill observation has been invented.']);
  }else if(kind==='track'){
   const stakes=ui?.stakesForTrack?.(name)||[];
