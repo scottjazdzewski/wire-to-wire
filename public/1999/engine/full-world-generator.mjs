@@ -320,7 +320,9 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const si=hash(seed,id+':sire')%sireCount,di=hash(seed,id+':dam')%damCount;
   const sire=parentAt(si,'SIRE'),dam=parentAt(di,'DAM'),age=1999-foalYear;
   const ability=createAgeAbility({seed,id,role:'horse',age,pedigree:{sireId:sire.id,damId:dam.id}});
-  const raced=age>=2&&sex!=='STALLION',starts=raced?Math.floor(unit(seed,id+'starts')*Math.max(2,(age-1)*6)):0;
+  // At the Jan 1, 1999 opening, a current 2YO was 1YO during 1998 and cannot
+  // have a pre-1999 race start, irrespective of the horse's ability.
+  const raced=age>=3&&sex!=='STALLION',starts=raced?Math.floor(unit(seed,id+'starts')*Math.max(2,(age-2)*6)):0;
   const wins=starts?Math.min(starts,Math.floor(starts*(.08+unit(seed,id+'win')*.27))):0;
   const tempName=canonicalNames.has(n.toLowerCase())?n+' from '+FAMILY[i%FAMILY.length]:n;
   // A breeder is an actual game organization, distinct from the horse's
@@ -346,6 +348,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const raceHistory=simulatedRaceHistory(id,age,sex,trainer,starts,wins,purseEarnings,careerState);
   const seconds=raceHistory.filter(r=>r.finishPosition===2).length;
   const thirds=raceHistory.filter(r=>r.finishPosition===3).length;
+  const careerEarnings=raceHistory.reduce((total,r)=>total+r.earnings,0);
   const preferredJockeyId=raceHistory[0]?.jockeyId||'P-TEST-JOCKEY-'+pad(1+hash(seed,trainer.id+':preferred-jockey')%1800);
   const horse={id,name:tempName,nameStatus:'TEST_RENAME_ALLOWED',foalYear,ageAtOpening:age,sex,dateOfBirth,foalingGeography,
    breederId:breederOwner.id,breeder:breederOwner.name,
@@ -361,7 +364,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    relationships:{ownerTrainer:relationship(owner.id,trainer.id,'OWNER_TRAINER'),
     trainerJockey:relationship(trainer.id,preferredJockeyId,'TRAINER_JOCKEY'),
     horseTrainer:relationship(id,trainer.id,'HORSE_TRAINER')},
-   career:{starts,wins,seconds,thirds,places:seconds+thirds,earnings:purseEarnings,
+   career:{starts,wins,seconds,thirds,places:seconds+thirds,earnings:careerEarnings,
     lastRaceDate:raceHistory[0]?.date||null,status:careerState,raceHistory,
     provenance:'GENERATED_1998_AND_PRIOR_NONCANON_TEST_RACES_ONLY'},
    finances:{estimatedValue:money(3000+Math.pow(unit(seed,id+'market'),3)*1200000),monthlyCareCost:money(1100+unit(seed,id+'care')*2200)},
