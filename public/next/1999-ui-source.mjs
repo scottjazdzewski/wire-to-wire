@@ -89,7 +89,7 @@ function stableHorsePreview(name){
  const source=sourceHorseIds.has(h.id);
  return {_kind:'horse',_name:h.name,name:h.name,_canonId:source?h.id:'',
   _id:h.id,_testGenerated:!source,_testAttrs:h.attributes||{},_testCareer:h.career||{},_testFinances:h.finances||{},
-  _testReputation:h.reputation||{},age:String(1999-Number(h.foalYear)),foalYear:h.foalYear,
+  _testReputation:h.reputation||{},age:String(1999-Number(h.foalYear)),foalYear:h.foalYear,dateOfBirth:h.dateOfBirth||'',
   foalingGeography:h.foalingGeography||h.foalingLocation||h.foalingPlace||null,
   ownerId:h.ownerId||'',trainerId:h.trainerId||'',
   sex:h.sex||'',sire:h.sireId||'',dam:h.damId||'',owner:ownerFor(name)||'',
@@ -230,7 +230,7 @@ function worldHorsePage(offset=0,limit=20,filter=''){
   return {_kind:'horse',_name:h.name,_canonId:source?h.id:'',
    _worldKey:source?'horse:'+h.id:undefined,_testGenerated:!source,
    _testAttrs:h.attributes||{},_testCareer:h.career||{},_testFinances:h.finances||{},_testReputation:h.reputation||{},
-   foalYear:h.foalYear,foalingGeography:h.foalingGeography||h.foalingLocation||h.foalingPlace||null,
+   foalYear:h.foalYear,dateOfBirth:h.dateOfBirth||'',foalingGeography:h.foalingGeography||h.foalingLocation||h.foalingPlace||null,
    ownerId:h.ownerId||'',trainerId:h.trainerId||'',
    name:h.name,age:String(h.ageAtOpening||1999-Number(h.foalYear)),sex:h.sex,
    sire:sireName||h.sireId||'',dam:damName||h.damId||'',
