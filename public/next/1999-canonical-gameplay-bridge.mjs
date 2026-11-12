@@ -3,7 +3,7 @@
  *
  * This is a proposed UI-side V1 boundary, NOT the game engine or live binding.
  * It never runs AI, advances a clock, posts money, mutates canonical records,
- * creates a save, or writes to localStorage. The Drive game-engine owner must
+ * creates or persists a browser game save. The Drive game-engine owner must
  * implement and approve a matching projection/command transport before mount.
  */
 export const UI_PROJECTION_SCHEMA='WTW_1999_PLAYER_PROJECTION_V1';
