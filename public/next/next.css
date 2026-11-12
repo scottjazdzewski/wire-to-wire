@@ -3089,3 +3089,60 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 #wtwNextgen .ng-attr-table .ng-attr-score b{min-width:25px;flex:0 0 25px;text-align:right}
 @media(max-width:700px){#wtwNextgen .ng-list-filters{gap:6px;padding:6px}
 #wtwNextgen .ng-list-filters label{font-size:8px}#wtwNextgen .ng-attr-table{min-width:1600px!important}}
+
+/* WTW 1999 Racing Secretary: browse all tracks and day-card calendars in-place. */
+#wtwNextgen .ng-dept-roster[data-department="Racing"] .ng-rs-tools{
+ flex-wrap:wrap!important;flex:0 0 auto!important;min-height:30px;row-gap:4px;padding:5px 7px;
+}
+#wtwNextgen .ng-dept-roster[data-department="Racing"] .ng-rs-tools .ng-dpt-track-picker{
+ flex:0 1 300px!important;max-width:300px!important;min-width:176px!important;
+}
+#wtwNextgen .ng-dept-roster[data-department="Racing"] .ng-rs-tools .ng-dpt-track-picker select{
+ width:100%!important;max-width:260px!important;
+}
+#wtwNextgen .ng-dept-roster[data-department="Racing"] .ng-racing-date-label{display:flex;align-items:center;gap:5px;white-space:nowrap;}
+#wtwNextgen .ng-dept-roster[data-department="Racing"] .ng-racing-date-label input[type="date"]{
+ flex:0 0 128px!important;width:128px!important;min-width:128px!important;max-width:128px!important;
+ margin:0!important;color-scheme:dark;color:#f5e8bc!important;
+}
+#wtwNextgen .ng-dept-roster[data-department="Racing"] #ngDepartmentSearch{margin-left:auto!important;}
+#wtwNextgen .ng-racing-day-summary{
+ display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:5px 12px;
+ padding:5px 11px;background:#202b2b;border-bottom:1px solid #40574a;flex:0 0 auto;
+}
+#wtwNextgen .ng-racing-day-summary strong{font-size:10.5px;letter-spacing:.04em;color:#f4dfa7;}
+#wtwNextgen .ng-racing-day-summary span{font-size:10px;font-weight:730;letter-spacing:.025em;color:#b8d4c2;}
+#wtwNextgen .ng-racing-calendar{
+ flex:0 0 auto;min-width:0;max-height:290px;overflow-y:auto;
+ padding:8px 10px 5px;background:#142022;border-bottom:1px solid #526452;
+}
+#wtwNextgen .ng-racing-calendar header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px;}
+#wtwNextgen .ng-racing-calendar header strong{font-size:10.5px;letter-spacing:.055em;color:#f4dfa7;}
+#wtwNextgen .ng-racing-calendar header>div{display:flex;align-items:center;gap:8px;color:#d6e2d6;font-size:11px;font-weight:760;}
+#wtwNextgen .ng-racing-calendar header button{
+ width:25px;height:23px;border:1px solid #587460;border-radius:3px;background:#22362c;
+ color:#e9dfb8;cursor:pointer;font-size:16px;line-height:1;
+}
+#wtwNextgen .ng-racing-calendar header button:disabled{opacity:.25;cursor:default;}
+#wtwNextgen .ng-racing-cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;}
+#wtwNextgen .ng-racing-cal-grid .weekday{
+ color:#b1cabc;font-size:9.5px;text-align:center;padding-bottom:3px;font-weight:800;
+}
+#wtwNextgen .ng-racing-cal-grid button{
+ min-width:0;height:31px;display:flex;align-items:center;justify-content:space-between;
+ gap:4px;text-align:left;background:#20312c;border:1px solid #425f4b;border-radius:2px;
+ padding:3px 6px;color:#ecf1e7;cursor:pointer;
+}
+#wtwNextgen .ng-racing-cal-grid button b{font-size:11px;font-variant-numeric:tabular-nums;}
+#wtwNextgen .ng-racing-cal-grid button small{font-size:8.6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#c6d8be;}
+#wtwNextgen .ng-racing-cal-grid button.dark{background:#1b2425;border-color:#344440;opacity:.62;}
+#wtwNextgen .ng-racing-cal-grid button.selected{border-color:#e1c577;background:#445c40;color:#fff2c8;}
+#wtwNextgen .ng-racing-cal-grid button:hover{background:#395943;border-color:#d6c178;}
+#wtwNextgen .ng-racing-calendar p{font-size:9.7px;color:#b5cabe;margin:7px 0 0;line-height:1.35;}
+#wtwNextgen .ng-dept-roster[data-department="Racing"] .ng-rs-table td:nth-child(7){font-variant-numeric:tabular-nums;}
+@media(max-width:1100px){
+ #wtwNextgen .ng-dept-roster[data-department="Racing"] .ng-rs-tools .ng-dpt-track-picker{max-width:225px!important;}
+ #wtwNextgen .ng-racing-day-summary{align-items:flex-start;}
+ #wtwNextgen .ng-racing-cal-grid button{height:34px;padding:2px 3px;}
+ #wtwNextgen .ng-racing-cal-grid button small{font-size:8px;}
+}

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {readLocal1999World} from '../public/1999/engine/local-api.mjs';
-import {trackProgram1999} from '../public/next/1999-track-program.mjs';
+import {trackProgram1999,trackMeetOpen1999} from '../public/next/1999-track-program.mjs';
 import {WTW_ALTERNATE_STAKES_1999} from '../public/next/1999-alternate-stakes.mjs';
 import {WTW_REGIONAL_STAKES_1999} from '../public/next/1999-regional-stakes.mjs';
 import attributeCatalog from '../public/1999/engine/attribute-catalog.mjs';
@@ -13,7 +13,7 @@ import {TRAINING_PLANS,createHorseTrainingRecord,horseTrainingSnapshot,
 const source=readFileSync('public/next/1999-ui-source.mjs','utf8');
 const js=readFileSync('public/next/next.js','utf8');
 const html=readFileSync('public/next/index.html','utf8');
-const context={window:{__WTW_NEXT__:{paint(){}}},readLocal1999World,trackProgram1999,
+const context={window:{__WTW_NEXT__:{paint(){}}},readLocal1999World,trackProgram1999,trackMeetOpen1999,
  WTW_ALTERNATE_STAKES_1999,WTW_REGIONAL_STAKES_1999,attributeCatalog,
  TRAINING_PLANS,createHorseTrainingRecord,horseTrainingSnapshot,assignHorseTrainingPlan,
  simulateStableTrainingThrough,trainingFinancials};
@@ -115,4 +115,41 @@ test('large rosters are cached so native UI pagination does not regenerate all r
  assert.equal(a,b);
  const farms=ui.departmentRows('Facilities','Overview');
  assert.equal(farms,ui.departmentRows('Facilities','Overview'));
+});
+
+test('Racing browse has all 118 tracks, daily condition books and no off-meet cards',()=>{
+ const tracks=ui.extraTracks();
+ assert.equal(tracks.length,118);
+ assert.equal(new Set(tracks.map(t=>t.id)).size,118);
+ assert.ok(tracks.some(t=>t.name==='Saratoga'));
+ assert.ok(tracks.some(t=>t.name==='Oriental Park'&&t.country==='Cuba'));
+ assert.ok(!tracks.some(t=>t.id.startsWith('IT-')));
+ const report=ui.racingDaySummary('1999-01-01');
+ const all=ui.racingDayCards('1999-01-01');
+ assert.ok(report.trackCount>=5,'January 1 has active modeled cards');
+ assert.ok(all.length>=40,'All-tracks January 1 includes races across different venues');
+ assert.ok(all.every(r=>r._iso==='1999-01-01'&&r._raceId&&r._raceData));
+ assert.ok(all.every(r=>/^\$[\d,]+$/.test(r.purse)), 'All proposed card purses are full dollar amounts');
+ assert.ok(all.every(r=>!r._raceData.results?.length),'Browsing races must never generate a result');
+ assert.equal(ui.racingDayCards('1999-01-01','Saratoga').length,0,'Saratoga is out of meet in January');
+ const first=all[0].track;
+ const subset=ui.racingDayCards('1999-01-01',first);
+ assert.ok(subset.length>0&&subset.length<all.length);
+ assert.ok(subset.every(r=>r.track===first));
+ assert.deepEqual(ui.racingDayCards('1999-01-01',first),subset,'Daily card is stable across reads');
+ assert.ok(ui.racingDayCards('1999-08-28','Saratoga').some(r=>r._raceId==='STK-0022'),'Travers sits on its retained August 28 date');
+ assert.deepEqual(ui.racingDayCards('1999-02-30'),[],'Invalid dates do not produce false cards');
+ assert.deepEqual(ui.racingDayCards('1999-01-01','Ascot'),[],'Overseas tracks are not playable');
+});
+test('Racing date navigation, condition books and purse formatting are visible in the existing UI',()=>{
+ for(const marker of [
+  'data-ng="dept-day-card"','data-ng="dept-race-calendar"','data-ng="dept-race-game-date"',
+  'data-ng="racing-calendar-day"','data-ng="racing-calendar-month"',
+  'data-ng-input="department-race-date"','data-ng-select="department-track"',
+  'function depRaceBrowseDate()','function depRacingCalendar()',
+  'racingDayCards?.(depRaceBrowseDate(),APP.racingTrack)'
+ ])assert.ok(js.includes(marker),marker);
+ assert.ok(js.includes('ALL TRACKS ('),'All active tracks must be selectable without an in-meet restriction');
+ assert.match(js,/const t=key==='purse'\?depMoney\(value\):String\(value\)/);
+ assert.ok(!js.includes("const racingTracks=section==='Racing'?depCurrentMeetRows():[]"),'All Tracks menu must not be restricted to active meets');
 });

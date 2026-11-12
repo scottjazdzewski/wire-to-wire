@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,worldAttributeKey:'',stableMode:'all',stableDemo:!window.__WTW_1999_MANAGEMENT__,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:!window.__WTW_1999_MANAGEMENT__,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
+const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,worldAttributeKey:'',stableMode:'all',stableDemo:!window.__WTW_1999_MANAGEMENT__,stableSearch:'',racingMode:'meets',racingTrack:'',racingDate:'',racingCalendarOpen:false,departmentDemo:!window.__WTW_1999_MANAGEMENT__,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -2148,7 +2148,8 @@ const WORLD_1999_COLUMNS={
   ['principal','PRINCIPAL',13],['status','CANON STATUS',10]]
 };
 const DEP_COLUMNS={
- Meets:[['name','TRACK',18],['location','CITY / STATE',18],['surfaces','SURFACES',13],['meetWindow','CURRENT MEET',19],['status','MEET STATUS',10],['raceDays','DAYS',5],['preferredDays','RACE DAYS',11],['stakesCount','STAKES',6]],
+ Meets:[['name','TRACK',18],['location','CITY / STATE',18],['surfaces','SURFACES',13],['meetWindow','MEET WINDOW',19],['status','MEET STATUS',10],['raceDays','DAYS',5],['preferredDays','RACE DAYS',11],['stakesCount','STAKES',6]],
+ DayCard:[['date','DATE',10],['track','TRACK',18],['race','RACE / STAKES',21],['class','CONDITIONS',23],['surface','SURFACE',8],['distance','DISTANCE',8],['purse','PURSE',12],['status','PROGRAM STATUS',13]],
  Tracks:[['name','TRACK',18],['location','CITY / STATE',18],['surfaces','SURFACES',12],['circuit','CIRCUIT',16],['meetWindow','MEET WINDOWS',19],['status','STATUS',9],['raceDays','DAYS',4],['stakesCount','STAKES',4]],
  Racing:[['date','DATE',7],['track','TRACK',8],['race','RACE',6],['class','CLASS',7],['surface','SURF',4],['distance','DIST',5],['purse','PURSE',7],['horse','HORSE',11],['base','CURRENT BASE',12],['ship','SHIP MI',6],['jockey','JOCKEY',9],['trainer','TRAINER',8],['ready','READY',5],['status','ENTRY',5]],
  Breeding:[['horse','HORSE',12],['age','AGE',3],['sex','SEX',3],['sire','SIRE',9],['dam','DAM',9],['farm','FARM',9],['status','BREED STATUS',7],['health','HEALTH',6],['pedigree','PED',5],['value','BREED VAL',6],['owner','OWNER',10],['studFee','STUD FEE',8],['bookings','BOOK',5],['foals','FOALS',4],['winners','WINS',4]],
@@ -2254,7 +2255,13 @@ const DEP_SALE_SEASONAL=[
 const DEP_SALE_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 function depHash(v){let x=13;for(const c of String(v))x=(x*31+c.charCodeAt(0))%9973;return x}
-function depMoney(n){if(n==null||n==='')return '';return typeof n==='number'?'$'+Math.round(n).toLocaleString('en-US'):String(n)}
+function depMoney(n){
+ if(n==null||n==='')return '';
+ const value=String(n).trim(),match=value.match(/^\$?\s*(\d[\d,]*(?:\.\d+)?)([kKmM]?)$/);
+ if(!match)return value;
+ const amount=Number(match[1].replaceAll(',',''))*(/[mM]/.test(match[2])?1000000:/[kK]/.test(match[2])?1000:1);
+ return Number.isFinite(amount)?'$'+Math.round(amount).toLocaleString('en-US'):value;
+}
 
 
 function depRaceIso(value){
@@ -2267,6 +2274,38 @@ function depRaceIso(value){
 /* Canonical track meet windows are read from Office; the game date governs active meets. */
 const DEP_MONTH={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
 function depGameDay(){return liveStableDate($('.dateChip')?.textContent.trim())||liveStableDate(state().date)||'1999-01-01'}
+function depRaceBrowseDate(){
+ const chosen=APP.racingDate;
+ return /^1999-\d{2}-\d{2}$/.test(String(chosen||''))&&liveStableDate(chosen)?chosen:depGameDay();
+}
+// Calendar browsing never advances the simulation or commits results.
+function depRacingCalendar(){
+ const date=depRaceBrowseDate(),month=date.slice(0,7),first=new Date(month+'-01T12:00:00Z');
+ const days=new Date(Date.UTC(1999,Number(date.slice(5,7)),0)).getUTCDate();
+ const leading=(first.getUTCDay()+6)%7;
+ const label=first.toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'});
+ const weekday=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+ const selected=APP.racingTrack||'';
+ const rows=Array.from({length:leading},()=>'<span class="ng-racing-calendar-pad"></span>');
+ for(let day=1;day<=days;day++){
+  const iso=month+'-'+String(day).padStart(2,'0');
+  const counts=window.__WTW_1999_UI_DATA__?.racingDaySummary?.(iso,selected)||{trackCount:0,plannedStakes:0};
+  const activity=counts.trackCount?counts.trackCount+' '+(selected?'card':'tracks'):'DARK';
+  const stake=counts.plannedStakes?' · '+counts.plannedStakes+' stakes':'';
+  rows.push('<button type="button" data-ng="racing-calendar-day" data-val="'+iso+'" class="'+
+   (iso===date?'selected ':'')+(counts.trackCount?'has-racing':'dark')+'" aria-pressed="'+(iso===date)+'" '+
+   'title="View proposed '+iso+' race cards"><b>'+day+'</b><small>'+safe(activity+stake)+'</small></button>');
+ }
+ return '<section class="ng-racing-calendar" aria-label="1999 meeting and condition-book calendar">'+
+  '<header><strong>1999 RACING CALENDAR</strong><div>'+
+  '<button type="button" data-ng="racing-calendar-month" data-val="-1" '+(month==='1999-01'?'disabled':'')+' aria-label="Previous month">‹</button>'+
+  '<span>'+safe(label)+(selected?' · '+safe(selected):' · ALL TRACKS')+'</span>'+
+  '<button type="button" data-ng="racing-calendar-month" data-val="1" '+(month==='1999-12'?'disabled':'')+' aria-label="Next month">›</button></div></header>'+
+  '<div class="ng-racing-cal-grid">'+weekday.map(x=>'<span class="weekday">'+x+'</span>').join('')+rows.join('')+'</div>'+
+  '<p>Choose a date to inspect every proposed race. Meet windows follow track calendars; ordinary card dates remain modeled where exact fixtures are unavailable.</p>'+
+  '</section>';
+}
+
 function depTrackCalendar(){
  const raw=typeof window.__wtwOfficeTrackDirectory==='function'?window.__wtwOfficeTrackDirectory():[];
  const office=Array.isArray(raw)?raw.filter(x=>x&&typeof x.name==='string'):[];
@@ -2315,8 +2354,7 @@ function depMeetState(track,date=depGameDay()){
  return {active:Boolean(active),next:Boolean(next),window:active||next||null,
   status:active?'IN MEET':next?'UPCOMING':'OUT OF MEET'};
 }
-function depTrackRows(page='Overview'){
- const day=depGameDay();
+function depTrackRows(page='Overview',day=depGameDay()){
  const rows=depTrackCalendar().map(t=>{
   const meet=depMeetState(t,day);
   return {_kind:'track',_name:t.name,_canonId:t.id||'',name:t.name,location:t.location||'',surfaces:t.surfaces||'',
@@ -2328,7 +2366,7 @@ function depTrackRows(page='Overview'){
  if(page==='Stakes')return rows.filter(r=>Number(r.stakesCount)>0);
  return rows;
 }
-function depCurrentMeetRows(){return depTrackRows('Overview').filter(r=>r._meetState.active)}
+function depCurrentMeetRows(day=depGameDay()){return depTrackRows('Overview',day).filter(r=>r._meetState.active)}
 function depTrackRaceRows(trackName,demo){
  const track=depTrackCalendar().find(t=>t.name===trackName);
  if(!track)return [];
@@ -2416,9 +2454,13 @@ function depFacilityRows(page,demo){
 }
 
 function depRows(section,page,demo,auction){
+ // Daily condition books use the existing 1999 source generator; no entry is committed.
+ if(section==='Racing'&&(page==='Calendar'||page==='Race Planning'||(page==='Overview'&&APP.racingMode==='day')))
+  return window.__WTW_1999_UI_DATA__?.racingDayCards?.(depRaceBrowseDate(),APP.racingTrack)||[];
  // Existing manager tables stay unchanged; only their source rows are substituted.
- const modelRows=window.__WTW_1999_UI_DATA__?.departmentRows?.(section,page,{date:depGameDay(),racingMode:APP.racingMode});
- if(Array.isArray(modelRows))return modelRows;
+ const modelRows=window.__WTW_1999_UI_DATA__?.departmentRows?.(section,page,{date:section==='Racing'?depRaceBrowseDate():depGameDay(),racingMode:APP.racingMode});
+ if(Array.isArray(modelRows))return section==='Racing'&&APP.racingTrack&&page==='Stakes'?
+  modelRows.filter(r=>r._track===APP.racingTrack||r.track===APP.racingTrack):modelRows;
  const game=state(),stable=horseRows(),races=racingRows(),all=globalSearchItems();
  APP.searchIndex=all;
  const source=kind=>all.map((r,i)=>({...r,_index:i})).filter(r=>r.kind===kind);
@@ -2448,8 +2490,11 @@ function depRows(section,page,demo,auction){
  }
  if(section==='Tracks')return depTrackRows(page);
  if(section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'){
-  if(APP.racingTrack)return depTrackRaceRows(APP.racingTrack,demo);
-  return depCurrentMeetRows();
+  const tracks=depTrackRows('Overview',depRaceBrowseDate());
+  if(APP.racingTrack)return tracks.filter(t=>t.name===APP.racingTrack).map(t=>({
+   ...t,meetWindow:depTrackCalendar().find(x=>x.name===t.name)?.meetWindow||t.meetWindow
+  }));
+  return tracks.filter(t=>t._meetState.active);
  }
  if(section==='Racing'){
   const list=demo?stable:stable.filter(h=>fixture(h.name));
@@ -2883,7 +2928,7 @@ function previewRecordView(){
 }
 function depCell(value,key){
  if(value==null||value==='')return '<span class="ng-rs-missing">—</span>';
- const t=String(value);
+ const t=key==='purse'?depMoney(value):String(value);
  if(['health','condition','status','morale','ready'].includes(key)){
   const tone=/treat|unfit|injur|poor|overdue|declin/i.test(t)?'treat':
    /watch|needs|risk|inspect|restricted|pending|not ready/i.test(t)?'watch':
@@ -2914,7 +2959,7 @@ function departmentRoster(section,page='Overview'){
   section==='World'?(page==='1999 Horses'?
    [...WORLD_1999_COLUMNS.Horses,...(worldTrait?[['attr:'+worldAttributeKey,worldTrait.label+' · TEST',10]]:[])]:
    page==='People'?WORLD_1999_COLUMNS.People:WORLD_1999_COLUMNS.Organizations):
-  section==='Sales'&&page==='Watchlist'?DEP_COLUMNS.SalesWatchlist:section==='Sales'&&page==='Sale Calendar'?DEP_COLUMNS.SaleCalendar:section==='Sales'&&page==='Sale Companies'?DEP_COLUMNS.SaleCompanies:section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'?(APP.racingTrack?DEP_COLUMNS.Racing:DEP_COLUMNS.Meets):DEP_COLUMNS[section];
+  section==='Sales'&&page==='Watchlist'?DEP_COLUMNS.SalesWatchlist:section==='Sales'&&page==='Sale Calendar'?DEP_COLUMNS.SaleCalendar:section==='Sales'&&page==='Sale Companies'?DEP_COLUMNS.SaleCompanies:section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:section==='Racing'&&(page==='Calendar'||page==='Race Planning'||page==='Overview'&&APP.racingMode==='day')?DEP_COLUMNS.DayCard:section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'?DEP_COLUMNS.Meets:DEP_COLUMNS[section];
  // Every department now uses one progressive, sortable roster without pagination.
  const globalHorseDirectory=section==='World'&&page==='1999 Horses'&&
   Boolean(window.__WTW_1999_UI_DATA__?.worldHorseBrowse);
@@ -2945,7 +2990,7 @@ function departmentRoster(section,page='Overview'){
  const rosterScope=section+'|'+page;
  const rosterFilter=window.WTW1999RosterFilters?.get(APP,rosterScope)||null;
  if(rosterFilter)rows=rows.filter(r=>window.WTW1999RosterFilters.matches(r,rosterFilter));
- const defaultSort=section==='World'?'name':section==='Sales'&&page==='Watchlist'?'auction':section==='Racing'&&(page!=='Overview'||APP.racingMode==='mine'||APP.racingTrack)?'date':section==='Sales'&&page!=='Sale Calendar'&&page!=='Sale Companies'?'hip':section==='Finances'?'date':specs[0][0];
+ const defaultSort=section==='World'?'name':section==='Sales'&&page==='Watchlist'?'auction':section==='Racing'&&(page==='Calendar'||page==='Race Planning'||page==='Overview'&&APP.racingMode==='day')?'track':section==='Racing'&&(page!=='Overview'||APP.racingMode==='mine'||APP.racingTrack)?'date':section==='Sales'&&page!=='Sale Calendar'&&page!=='Sale Companies'?'hip':section==='Finances'?'date':specs[0][0];
  const selectedSort=specs.some(x=>x[0]===APP.departmentSortKey)?APP.departmentSortKey:defaultSort;
  const sign=APP.departmentSortKey?(APP.departmentSortDesc?-1:1):(section==='Finances'?-1:1);
  let globalIndexing=false,globalProgress=0;
@@ -2959,6 +3004,11 @@ function departmentRoster(section,page='Overview'){
   globalIndexing=Boolean(result.indexing);globalProgress=result.progress||0;
  }
  if(!globalDirectory)rows.sort((a,b)=>{
+  if(section==='Racing'&&(page==='Calendar'||page==='Race Planning'||page==='Overview'&&APP.racingMode==='day')&&
+     (!APP.departmentSortKey||APP.departmentSortKey==='track'||APP.departmentSortKey==='date'))
+   return String(a.track).localeCompare(String(b.track))||
+    Number(a._cardOrder??999)-Number(b._cardOrder??999)||
+    String(a.race).localeCompare(String(b.race),undefined,{numeric:true});
   let av=selectedSort==='date'&&a._iso?a._iso:a[selectedSort],bv=selectedSort==='date'&&b._iso?b._iso:b[selectedSort];
   const am=av===null||av===undefined||av==='',bm=bv===null||bv===undefined||bv==='';
   if(am!==bm)return am?1:-1;
@@ -3034,16 +3084,21 @@ function departmentRoster(section,page='Overview'){
    globalMareDirectory?' · SORT/FILTER ALL BROODMARES':
    virtualMethod?' · SCROLLING LARGE TEST POPULATION':'')+'</span>';
  const viewOptions=(tabmap[section]||[]).map(t=>'<option value="'+safe(t)+'" '+(t===page?'selected':'')+'>'+safe(t)+'</option>').join('');
- const racingTracks=section==='Racing'?depCurrentMeetRows():[];
+ const racingTracks=section==='Racing'?depTrackCalendar().slice().sort((a,b)=>a.name.localeCompare(b.name)):[];
  if(section==='Racing'&&APP.racingTrack&&!racingTracks.some(x=>x.name===APP.racingTrack)){
   APP.racingTrack='';if(APP.racingMode==='track')APP.racingMode='meets';
  }
- const racingPicker=section==='Racing'?'<label class="ng-dpt-track-picker">ACTIVE MEET <select data-ng-select="department-track" aria-label="Select active racing meet to view its races">'+
-  '<option value="" '+(!APP.racingTrack?'selected':'')+'>ALL ACTIVE MEETS</option>'+
+ const racingDate=depRaceBrowseDate();
+ const racingPicker=section==='Racing'?'<label class="ng-dpt-track-picker">TRACK <select data-ng-select="department-track" aria-label="Select any 1999 racecourse to inspect meets and condition books">'+
+  '<option value="" '+(!APP.racingTrack?'selected':'')+'>ALL TRACKS ('+racingTracks.length+')</option>'+
   racingTracks.map(t=>'<option value="'+safe(t.name)+'" '+(APP.racingTrack===t.name?'selected':'')+'>'+safe(t.name+' · '+t.location)+'</option>').join('')+
   '</select></label>'+
-  '<button data-ng="dept-meets" class="'+(APP.racingMode!=='mine'?'on':'')+'" title="Show tracks racing at the current in-game date">ACTIVE MEETS</button>'+
-  '<button data-ng="dept-myhorses" class="'+(APP.racingMode==='mine'?'on':'')+'" title="Show every upcoming race entry or target for horses in your stable, across all tracks">MY HORSES</button>':'';
+  '<label class="ng-racing-date-label" for="ngRacingBrowseDate">DATE <input id="ngRacingBrowseDate" data-ng-input="department-race-date" type="date" min="1999-01-01" max="1999-12-31" value="'+safe(racingDate)+'" aria-label="Browse 1999 race date"/></label>'+
+  '<button data-ng="dept-meets" class="'+(APP.racingMode==='meets'||APP.racingMode==='track'?'on':'')+'" title="See all active meets on the selected date, or one track\'s full meet schedule">MEETS</button>'+
+  '<button data-ng="dept-day-card" class="'+(APP.racingMode==='day'||page==='Race Planning'?'on':'')+'" title="All proposed race cards on the selected date">DAY\'S RACES</button>'+
+  '<button data-ng="dept-race-calendar" class="'+(APP.racingCalendarOpen||page==='Calendar'?'on':'')+'" title="Show or hide the monthly racing calendar">CALENDAR</button>'+
+  '<button data-ng="dept-race-game-date" title="Browse the game date without advancing time">GAME DATE</button>'+
+  '<button data-ng="dept-myhorses" class="'+(APP.racingMode==='mine'?'on':'')+'" title="Upcoming plans for your owned horses">MY HORSES</button>':'';
  const salePicker=section==='Sales'&&!['Sale Calendar','Sale Companies','Watchlist'].includes(page)?'<label class="ng-dpt-auction-picker">AUCTION <select data-ng-select="department-auction" aria-label="Choose auction chronologically">'+
   (auctions.length?auctions.map(a=>'<option value="'+safe(a.id)+'" '+(auction?.id===a.id?'selected':'')+'>'+safe(depSaleLabel(a))+'</option>').join(''):'<option>No upcoming auction data</option>')+
   '</select></label>':'';
@@ -3065,7 +3120,11 @@ function departmentRoster(section,page='Overview'){
   ['CASH',demo?'$2.84M':cash!=null?depMoney(cash):'—'],
   ['MONTHLY INCOME',demo?'$186k':'—'],['MONTHLY COSTS',demo?'$143k':'—'],['NET CASH FLOW',demo?'+$43k':'—']
  ].map(([name,value])=>'<span><small>'+safe(name)+'</small><b>'+safe(value)+'</b></span>').join('')+'</div>':'';
- const purpose=section==='Racing'?(APP.racingMode==='mine'?'MY HORSES · ALL UPCOMING ENTRIES AND TARGETS':APP.racingTrack?'UPCOMING RACES AT '+APP.racingTrack.toUpperCase():'TRACKS CURRENTLY HOLDING MEETS'):
+ const racingDayView=section==='Racing'&&(page==='Calendar'||page==='Race Planning'||page==='Overview'&&APP.racingMode==='day');
+ const racingDaySummary=section==='Racing'?window.__WTW_1999_UI_DATA__?.racingDaySummary?.(racingDate,APP.racingTrack):null;
+ const racingSummary=section==='Racing'?'<div class="ng-racing-day-summary"><strong>'+safe(racingDate)+' · '+safe(APP.racingTrack||'ALL TRACKS')+'</strong>'+
+  '<span>'+Number(racingDaySummary?.trackCount||0)+' TRACKS SCHEDULED TO RACE · '+Number(racingDaySummary?.plannedStakes||0)+' PLANNED STAKES · '+(racingDayView?totalRecords+' PROPOSED RACES / FEATURES':'VIEW MEET WINDOWS')+'</span></div>':'';
+ const purpose=section==='Racing'?(racingDayView?'PROPOSED RACE CARDS · '+racingDate+' · '+(APP.racingTrack||'ALL TRACKS'):APP.racingMode==='mine'?'MY HORSES · ALL UPCOMING ENTRIES AND TARGETS':APP.racingTrack?'1999 MEETS AT '+APP.racingTrack.toUpperCase():'TRACKS HOLDING MEETS ON '+racingDate):
   section==='Breeding'?'STUD FEES, COVERINGS & PRODUCTION':
   section==='Sales'?(page==='Watchlist'?'WATCHED LOTS · UI SESSION ONLY':page==='Sale Calendar'?'CHRONOLOGICAL SALES · COMPANY · VENUE · DATE':page==='Sale Companies'?'AUCTION HOUSE DIRECTORY · SALES CALENDAR':auction?depSaleLabel(auction).toUpperCase()+' · '+depSaleDateLabel(auction)+' · '+(auction.city||''):'NO UPCOMING AUCTIONS'):
   section==='World'?'CANONICAL JANUARY 1999 POPULATION · SOURCE-LINKED IDENTITIES':
@@ -3081,14 +3140,15 @@ function departmentRoster(section,page='Overview'){
    '<button type="button" data-ng="world-import-open" title="Import World editing backup">IMPORT EDITS</button>'+
    '<input type="file" id="wtwWorldImportInput" accept="application/json,.json" hidden/>':'')+
   '<span class="ng-dpt-mode">FULL-WIDTH ROSTER</span></div>'+
-  (window.WTW1999RosterFilters?.render(specs,rosterFilter,safe,rosterScope)||'')+salesDeskView+
+  (window.WTW1999RosterFilters?.render(specs,rosterFilter,safe,rosterScope)||'')+
+  (section==='Racing'&&(APP.racingCalendarOpen||page==='Calendar')?depRacingCalendar():'')+racingSummary+salesDeskView+
   '<section class="ng-rs-roster"><header><strong>'+safe(section.toUpperCase())+' · SORTABLE ROSTER</strong><div class="ng-dpt-pager">'+pager+'</div></header>'+
   '<div class="ng-rs-scroll" tabindex="0" role="region" aria-label="'+safe(section)+' roster — scroll vertically and click column headings to sort"><table class="ng-rs-table ng-dpt-table"><thead><tr>'+heads+'</tr></thead><tbody>'+
   (body||'<tr><td colspan="'+specs.length+'" class="ng-rs-no-results">'+safe(globalIndexing?
    'Indexing '+globalProgress.toLocaleString('en-US')+' of '+(globalMareDirectory?Number(window.__WTW_1999_UI_DATA__?.counts?.breedingMares||0).toLocaleString('en-US')+' breeding mares':Number(window.__WTW_1999_UI_DATA__?.counts?.worldHorses||87500).toLocaleString('en-US')+' horses')+
    ' for global sort/filter — source identities retained.':
-   section==='World'&&!world1999Data?'Loading the 1999 world registry…':section==='Sales'&&page==='Watchlist'?'No watched lots yet. Select ☆ beside a catalog hip to watch it for this session.':section==='Sales'&&page==='Private Offers'?'No recorded private offers. Bidding and negotiation are not enabled in this UI preview.':section==='Sales'?'No catalog lots recorded for this view.':demo?'No matching records.':'No supported records in this view.')+'</td></tr>')+
-  '</tbody></table></div><div class="ng-dpt-disclosure">'+(demo?'FICTIONAL DISPLAY VALUES ONLY — no prices, locations or medical facts saved.':'SOURCE RECORDS ONLY · unknown values shown as —')+
+   section==='Racing'&&racingDayView?'No races in the proposed condition book on '+racingDate+'. Choose another track or date.':section==='World'&&!world1999Data?'Loading the 1999 world registry…':section==='Sales'&&page==='Watchlist'?'No watched lots yet. Select ☆ beside a catalog hip to watch it for this session.':section==='Sales'&&page==='Private Offers'?'No recorded private offers. Bidding and negotiation are not enabled in this UI preview.':section==='Sales'?'No catalog lots recorded for this view.':demo?'No matching records.':'No supported records in this view.')+'</td></tr>')+
+  '</tbody></table></div><div class="ng-dpt-disclosure">'+(racingDayView?'1999 GAME-MODELED CONDITION BOOKS · NO OFFICIAL ENTRIES · NO RESULTS COMMITTED · STAKES ARE PLANNED FEATURES':demo?'FICTIONAL DISPLAY VALUES ONLY — no prices, locations or medical facts saved.':'SOURCE RECORDS ONLY · unknown values shown as —')+
   '</div></section></section>';
 }
 
@@ -3317,7 +3377,12 @@ window.addEventListener('click',e=>{
  if(key==='caseprev')return selectAdjacentCase(-1);
  if(key==='casenext')return selectAdjacentCase(1);
  if(key==='nextopen')return selectAdjacentCase(1,true);
- if(key==='dept-meets'){APP.racingMode=APP.racingTrack?'track':'meets';APP.departmentPageIndex=0;APP.departmentSortKey='';APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint()}
+ if(key==='dept-meets'){APP.page='Overview';APP.racingMode=APP.racingTrack?'track':'meets';APP.departmentPageIndex=0;APP.departmentSortKey='';APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint()}
+ if(key==='dept-day-card'){APP.page='Overview';APP.racingMode='day';APP.departmentPageIndex=0;APP.departmentSortKey='';APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint()}
+ if(key==='dept-race-calendar'){APP.racingCalendarOpen=!APP.racingCalendarOpen;APP.departmentScrollReset=true;return paint()}
+ if(key==='dept-race-game-date'){APP.racingDate=depGameDay();APP.page='Overview';APP.racingMode='day';APP.departmentPageIndex=0;APP.departmentSortKey='';APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint()}
+ if(key==='racing-calendar-day'){if(!/^1999-\d{2}-\d{2}$/.test(val))return;APP.racingDate=val;APP.page='Overview';APP.racingMode='day';APP.departmentPageIndex=0;APP.departmentSortKey='';APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint()}
+ if(key==='racing-calendar-month'){const day=depRaceBrowseDate(),month=Number(day.slice(5,7))+Number(val);if(month<1||month>12)return;APP.racingDate='1999-'+String(month).padStart(2,'0')+'-01';APP.racingCalendarOpen=true;APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint()}
  if(key==='dept-myhorses'){APP.racingMode=APP.racingMode==='mine'?(APP.racingTrack?'track':'meets'):'mine';APP.departmentPageIndex=0;APP.departmentSortKey='';APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint()}
  if(key==='roster-filter-clear'){
   const scope=btn.closest('.ng-list-filters')?.dataset.filterScope;
@@ -3552,7 +3617,19 @@ root.addEventListener('change',event=>{
    APP.stableAttributeKey=field.value;APP.stableAttributeSort=field.value;
    APP.stableAttributeDesc=true;return paint();
   }
-  if(field.matches('select[data-ng-select="department-track"]')){APP.racingTrack=field.value;APP.racingMode=field.value?'track':'meets';APP.departmentPageIndex=0;APP.departmentSortKey='';APP.departmentScrollLimit=160;APP.departmentScrollReset=true;if(APP.page!=='Overview')return pageTab('Overview');return paint()}
+  if(field.matches('select[data-ng-select="department-track"]')){
+   APP.racingTrack=field.value;
+   if(APP.racingMode!=='day'&&APP.page!=='Calendar'&&APP.page!=='Race Planning')APP.racingMode=field.value?'track':'meets';
+   APP.departmentPageIndex=0;APP.departmentSortKey='';APP.departmentScrollLimit=160;APP.departmentScrollReset=true;
+   return paint();
+  }
+  if(field.matches('input[data-ng-input="department-race-date"]')){
+   const date=field.value;
+   if(!/^1999-\d{2}-\d{2}$/.test(date)||!liveStableDate(date))return;
+   APP.racingDate=date;APP.page='Overview';APP.racingMode='day';
+   APP.departmentPageIndex=0;APP.departmentSortKey='';APP.departmentScrollLimit=160;APP.departmentScrollReset=true;
+   return paint();
+  }
   if(field.matches('select[data-ng-select="department-sales-company"]')){APP.departmentCompany=field.value;APP.departmentPageIndex=0;APP.departmentSortKey='';APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint()}
   if(field.matches('select[data-ng-select="department-auction"]')){APP.departmentAuction=field.value;APP.departmentPageIndex=0;APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint()}
   if(field.matches('select[data-ng-select="department-tab"]'))return pageTab(field.value);

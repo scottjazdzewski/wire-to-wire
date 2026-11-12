@@ -3,7 +3,7 @@
  * Reuses the same browser 1999 world projection as the diagnostic test lab.
  * All generated values are TEST state, canonical values retain source authority.
  */
-import {trackProgram1999} from '/next/1999-track-program.mjs';
+import {trackProgram1999,trackMeetOpen1999} from '/next/1999-track-program.mjs';
 import {WTW_ALTERNATE_STAKES_1999} from '/next/1999-alternate-stakes.mjs';
 import {WTW_REGIONAL_STAKES_1999} from '/next/1999-regional-stakes.mjs';
 import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-20261112-r11';
@@ -103,7 +103,7 @@ const messageSpecs=[
   'Auction transactions have NOT occurred',false,'Sales'],
  ['opening-finance','Accounting','Opening cash and budgets are TEST valuations',
   'No accounting transactions have posted',true,'Finances'],
- ['opening-tracks','Track Operations',worldCounts.tracks+' U.S. and Canadian tracks available',
+ ['opening-tracks','Track Operations',worldCounts.tracks+' U.S., Canadian and Cuban tracks available',
   'Operating conditions and meet dates remain test data',false,'Tracks'],
  ['opening-people','Personnel Office','4,200 trainers in the test economy',
   'Only known people identities are source-locked',false,'Personnel'],
@@ -682,6 +682,54 @@ const activeTrackNames=new Set(activeRacecourses.map(t=>t.name));
 const sourceStakes=get('1999-source-stakes','/api/1999/calendar',93);
 const allStakes1999=[...sourceStakes,...WTW_ALTERNATE_STAKES_1999,...WTW_REGIONAL_STAKES_1999]
  .filter(r=>activeTrackIds.has(r.trackId)||activeTrackNames.has(r.trackName));
+// Browsable 1999 day cards: read the ONE deterministic condition-book generator.
+ // No live results, horses entered, or official race-card fixtures are inferred.
+ const racingTrackIndexByName=new Map(activeRacecourses.map((t,i)=>[t.name,i]));
+ const racingCardCache=new Map();
+ const validCalendarDate=date=>/^1999-\d{2}-\d{2}$/.test(String(date||''))&&
+  !Number.isNaN(Date.parse(date+'T12:00:00Z'))&&
+  new Date(date+'T12:00:00Z').toISOString().slice(0,10)===date;
+ function racingDaySummary(date,trackName=''){
+  if(!validCalendarDate(date))return {date,trackCount:0,plannedStakes:0};
+  const eligible=activeRacecourses.filter(t=>(!trackName||t.name===trackName)&&trackMeetOpen1999(t.id,date));
+  const ids=new Set(eligible.map(t=>t.id)),names=new Set(eligible.map(t=>t.name));
+  return {date,trackCount:eligible.length,
+   plannedStakes:allStakes1999.filter(r=>r.localDate===date&&(ids.has(r.trackId)||names.has(r.trackName))).length};
+ }
+ function racingDayCards(date,trackName=''){
+  if(!validCalendarDate(date))return [];
+  const key=date+'|'+trackName;
+  if(racingCardCache.has(key))return racingCardCache.get(key);
+  const records=[];
+  const chosen=trackName?racingTrackIndexByName.get(trackName):null;
+  const indices=trackName?(chosen===undefined?[]:[chosen]):activeRacecourses.map((_,i)=>i);
+  for(const index of indices){
+   const t=activeRacecourses[index];
+   if(!trackMeetOpen1999(t.id,date))continue;
+   const conditions=readLocal1999World('/api/1999/sim/conditions?seed=19990101&mode=CANON_ANCHORED_TEST&date='+
+     encodeURIComponent(date)+'&trackIndex='+index);
+   for(const race of conditions.races||[]){
+    records.push({_kind:'race',_name:'Race '+race.number,_track:t.name,_iso:date,_raceId:race.id,_raceData:race,
+     date,track:t.name,race:'R'+race.number,number:race.number,class:race.conditions||'MODELED',
+     surface:race.surface||'',distance:Number(race.distanceFurlongs)+'f',
+     purse:money(race.purse),status:'CONDITION BOOK · PROPOSED',_cardOrder:race.number});
+   }
+  }
+  const activeIds=new Set(indices.filter(i=>trackMeetOpen1999(activeRacecourses[i].id,date)).map(i=>activeRacecourses[i].id));
+  const activeNames=new Set(indices.filter(i=>trackMeetOpen1999(activeRacecourses[i].id,date)).map(i=>activeRacecourses[i].name));
+  for(const race of allStakes1999){
+   if(race.localDate!==date||!(activeIds.has(race.trackId)||activeNames.has(race.trackName)))continue;
+   records.push({_kind:'race',_name:race.name,_track:race.trackName,_iso:date,_raceId:race.id,_raceData:race,
+    date,track:race.trackName,race:race.name,number:999,class:race.grade||race.division||'STAKES',
+    surface:race.surface||'',distance:Number(race.distanceFurlongs||race.distanceF||0)?String(race.distanceFurlongs||race.distanceF)+'f':'',
+    purse:money(race.purse1999??race.purse),status:'PLANNED STAKES · NOT RUN',_cardOrder:999});
+  }
+  records.sort((a,b)=>a.track.localeCompare(b.track)||a._cardOrder-b._cardOrder||a.race.localeCompare(b.race));
+  if(racingCardCache.size>=16)racingCardCache.delete(racingCardCache.keys().next().value);
+  racingCardCache.set(key,records);
+  return records;
+ }
+
 const stakesForTrack=name=>allStakes1999.filter(r=>r.trackName===name);
 const findStake=id=>allStakes1999.find(r=>r.id===id)||null;
 const findRace=id=>{
@@ -740,7 +788,7 @@ window.__WTW_1999_UI_DATA__={
  TRAINING_PLANS,horseTraining,assignTraining,trainingCosts,
  officeMessages,officeDesks,openingCash,worldHorsePage,worldHorseById,worldHorseBrowse,breedingMarePage,breedingMareBrowse,breedingMareByModelIndex,
  horseAttributeGroups,stableHorseAttributes,stableHorseCareer,
- stakesForTrack,findStake,findRace,ownedHorses,breederProfile,foalingFarmProfile,trackProgramById:trackProgram1999,
+ stakesForTrack,findStake,findRace,racingDayCards,racingDaySummary,ownedHorses,breederProfile,foalingFarmProfile,trackProgramById:trackProgram1999,
  sourceHorseAbility:id=>{const index=sourceHorseOffset.get(id);
   return index===undefined?null:q('/api/1999/sim/horses','offset='+index+'&limit=1').items?.[0]?.ability||null;},
  sourcePersonModel:id=>{const index=srcPeople.findIndex(p=>p.id===id);
