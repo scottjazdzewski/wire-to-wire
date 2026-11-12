@@ -12,6 +12,15 @@ const MAX_ARCHIVE_JSON=64*1024*1024;
 const surfaces=Object.freeze(['DIRT','TURF','SYNTHETIC','OTHER']);
 const provenance=Object.freeze(['SIMULATED_1999_PLUS','SOURCE_VERIFIED']);
 const encoder=new TextEncoder(),decoder=new TextDecoder();
+async function archiveChecksum(bytes){
+ if(globalThis.crypto?.subtle){
+  const digest=new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256',bytes));
+  return 'sha256-'+Array.from(digest,v=>v.toString(16).padStart(2,'0')).join('');
+ }
+ let value=2166136261;
+ for(const b of bytes){value^=b;value=Math.imul(value,16777619)}
+ return 'fnv32-'+(value>>>0).toString(16).padStart(8,'0');
+}
 function nonempty(value,key,max=100){
  const s=String(value||'');
  if(!s||s.length>max)throw Error('Invalid race '+key);
@@ -121,7 +130,7 @@ export async function encodeRaceMonth(month,results){
    new CompressionStream('gzip'))).arrayBuffer());
   if(gz.length<raw.length){encoding='gzip';bytes=gz}
  }
- return {metadata:{schema:RACE_ARCHIVE_SCHEMA,month,races:packed.races.length,
+ return {metadata:{schema:RACE_ARCHIVE_SCHEMA,month,checksum:await archiveChecksum(bytes),races:packed.races.length,
   starters:packed.starts.length,encoding,bytes:bytes.length,rawBytes:raw.length},
   bytes};
 }
@@ -130,6 +139,8 @@ export async function decodeRaceMonth(archive){
  const payload=archive.bytes instanceof Uint8Array?archive.bytes:new Uint8Array(archive.bytes);
  if(payload.length!==archive.metadata.bytes||payload.length>MAX_ARCHIVE_JSON)
   throw Error('Corrupt or oversized race archive');
+ if(await archiveChecksum(payload)!==archive.metadata.checksum)
+  throw Error('Race archive checksum mismatch');
  let raw=payload;
  if(archive.metadata.encoding==='gzip'){
   if(typeof DecompressionStream!=='function')throw Error('Cannot decompress race archive');
