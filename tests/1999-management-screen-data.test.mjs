@@ -4,11 +4,12 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {readLocal1999World} from '../public/1999/engine/local-api.mjs';
 import {trackProgram1999} from '../public/next/1999-track-program.mjs';
+import {WTW_ALTERNATE_STAKES_1999} from '../public/next/1999-alternate-stakes.mjs';
 const source=readFileSync('public/next/1999-ui-source.mjs','utf8');
 const js=readFileSync('public/next/next.js','utf8');
 const html=readFileSync('public/next/index.html','utf8');
-const context={window:{__WTW_NEXT__:{paint(){}}},readLocal1999World,trackProgram1999};
-vm.runInNewContext(source.replace(/^import\s+\{(?:readLocal1999World|trackProgram1999)\}\s+from\s+'\/(?:1999\/engine\/local-api|next\/1999-track-program).mjs(?:\?[^']+)?';\s*$/gm,''),context,{timeout:20000});
+const context={window:{__WTW_NEXT__:{paint(){}}},readLocal1999World,trackProgram1999,WTW_ALTERNATE_STAKES_1999};
+vm.runInNewContext(source.replace(/^import\s+\{(?:readLocal1999World|trackProgram1999|WTW_ALTERNATE_STAKES_1999)\}\s+from\s+'\/(?:1999\/engine\/local-api|next\/1999-track-program|next\/1999-alternate-stakes).mjs(?:\?[^']+)?';\s*$/gm,''),context,{timeout:20000});
 const ui=context.window.__WTW_1999_UI_DATA__;
 test('1999 source data is mounted behind unchanged existing management UI',()=>{
  assert.ok(ui);
@@ -59,11 +60,12 @@ test('all generated finances, pedigrees, and source boundaries are clearly test/
  assert.ok(ui.departmentRows('Breeding','Broodmares').every(x=>x.status.includes('NO PREGNANCY ASSUMED')));
  assert.match(ui.bridgeStatus,/NO_1999_OUTCOME_COMMITTED/);
 });
-test('Racing screen uses source stakes and dated test condition books instead of the old 2014 fixture targets',()=>{
+test('Racing screen uses 93 source stakes plus separate WTW game-modeled stakes, not old 2014 fixtures',()=>{
  assert.deepEqual(Array.from(ui.departmentRows('Racing','Entries',{date:'1999-01-01'})),[]);
  assert.deepEqual(Array.from(ui.departmentRows('Racing','Results',{date:'1999-01-01'})),[]);
  const stakes=ui.departmentRows('Racing','Stakes',{date:'1999-01-01'});
- assert.equal(stakes.length,93);
+ assert.equal(stakes.length,93+WTW_ALTERNATE_STAKES_1999.length);
+  assert.equal(WTW_ALTERNATE_STAKES_1999.length,124);
  assert.ok(stakes.every(r=>r._iso.startsWith('1999-')&&r.status.includes('NOT ENTERED')));
  const card=ui.departmentRows('Racing','Race Planning',{date:'1999-01-01'});
  assert.ok(card.length>=40);
