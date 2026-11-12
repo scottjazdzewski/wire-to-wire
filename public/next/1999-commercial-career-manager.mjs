@@ -220,7 +220,7 @@ async function refresh(){
   '<label>WORLD SOURCE<select data-cc="mode"><option value="CANON_ANCHORED_TEST" '+
    (current.mode==='CANON_ANCHORED_TEST'?'selected':'')+'>Historical foundation</option>'+
    '<option value="FULLY_FICTIONAL_TEST" '+(current.mode==='FULLY_FICTIONAL_TEST'?'selected':'')+
-   '>Entirely fictional</option></select></label>'+
+   '>Fictional horse population (test)</option></select></label>'+
   '<label>WORLD SEED<input data-cc="seed" type="number" min="1" max="4294967295" step="1" value="'+esc(current.seed)+'"/></label></div>'+
   '<div class="wtw-cc-actions">'+config().presets.map(p=>'<button data-cc-action="preset" data-population="'+p.population+'">'+esc(p.label)+'</button>').join('')+'</div>'+
   '<p class="wtw-cc-warning">World presets scale the population directory and breeding stock. The existing January 1999 race scheduler still uses its original 87,500-horse gameplay scope until lifecycle integration is completed.</p>'+
