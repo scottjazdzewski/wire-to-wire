@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,worldAttributeKey:'raw_speed',stableMode:'all',stableDemo:!window.__WTW_1999_MANAGEMENT__,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:!window.__WTW_1999_MANAGEMENT__,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
+const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,worldAttributeKey:'',stableMode:'all',stableDemo:!window.__WTW_1999_MANAGEMENT__,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:!window.__WTW_1999_MANAGEMENT__,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -2885,7 +2885,7 @@ function departmentRoster(section,page='Overview'){
  const worldTraitGroups=section==='World'&&page==='1999 Horses'?
   window.__WTW_1999_UI_DATA__?.horseAttributeGroups||[]:[];
  const worldTraits=worldTraitGroups.flatMap(g=>g.definitions);
- const worldTrait=worldTraits.find(d=>d.key===APP.worldAttributeKey)||worldTraits[0]||null;
+ const worldTrait=worldTraits.find(d=>d.key===APP.worldAttributeKey)||null;
  const worldAttributeKey=worldTrait?.key||'';
  const specs=section==='Personnel'&&page==='Owners'?DEP_COLUMNS.OwnershipGroups:
   section==='World'?(page==='1999 Horses'?
@@ -3030,8 +3030,9 @@ function departmentRoster(section,page='Overview'){
   '<option value="" '+(!APP.departmentCompany?'selected':'')+'>ALL SALE COMPANIES</option>'+
   Object.entries(DEP_SALE_HOUSES).map(([id,house])=>'<option value="'+safe(id)+'" '+(APP.departmentCompany===id?'selected':'')+'>'+safe(house.name)+'</option>').join('')+
   '</select></label>':'';
- const worldAttributePicker=section==='World'&&page==='1999 Horses'&&worldTrait?
+ const worldAttributePicker=section==='World'&&page==='1999 Horses'&&worldTraits.length?
   '<label class="ng-dpt-track-picker">RANK WORLD HORSES BY <select data-ng-select="world-attribute" aria-label="Choose an attribute to rank every world horse">'+
+  '<option value="" '+(!worldTrait?'selected':'')+'>SELECT AN ATTRIBUTE</option>'+
   worldTraitGroups.map(group=>'<optgroup label="'+safe(group.name)+'">'+group.definitions.map(def=>
    '<option value="'+safe(def.key)+'" '+(worldAttributeKey===def.key?'selected':'')+'>'+safe(def.label)+'</option>').join('')+
    '</optgroup>').join('')+'</select></label>':'';
@@ -3519,8 +3520,8 @@ root.addEventListener('change',event=>{
   }
   if(field.matches('select[data-ng-select="world-attribute"]')){
    APP.worldAttributeKey=field.value;
-   APP.departmentSortKey='attr:'+field.value;
-   APP.departmentSortDesc=true;
+   APP.departmentSortKey=field.value?'attr:'+field.value:'name';
+   APP.departmentSortDesc=Boolean(field.value);
    APP.departmentScrollLimit=160;APP.departmentScrollReset=true;
    return paint();
   }
