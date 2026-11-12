@@ -25,12 +25,13 @@ function source(kind,record,ui){
     (foalRegistry?{region:foalRegistry.region,country:foalRegistry.foalingCountry,countryCode:foalRegistry.foalingCountryCode}:{});
   const place=geo&&typeof geo==='object'?geo:{};
   const owner=d.owner||d.ownerName||ui?.ownerFor?.(name)||'';
-  node.dataset.foalingCity=d.foalingCity||place.locality||place.city||'';
-  node.dataset.foalingState=d.foalingState||place.region||place.state||place.province||'';
-  node.dataset.foalingCountry=d.foalingCountry||place.country||'';
-  node.dataset.foalingCountryCode=d.foalingCountryCode||place.countryCode||place.country_code||'';
-  node.dataset.foalingEvidence=foalRegistry?
-   'Foaling country is source registered; regional label is breeding jurisdiction, NOT a separately verified foaling municipality.':'';
+  node.dataset.foalingCity=d.foalingCity||place.locality||place.city||foalRegistry?.locality?.trim()||'';
+  node.dataset.foalingState=d.foalingState||place.region||place.state||place.province||foalRegistry?.region||'';
+  node.dataset.foalingCountry=d.foalingCountry||place.country||foalRegistry?.foalingCountry||'';
+  node.dataset.foalingCountryCode=d.foalingCountryCode||place.countryCode||place.country_code||foalRegistry?.foalingCountryCode||'';
+  node.dataset.foalingEvidence=place.authority==='SIMULATED_1999_TEST_BIRTHPLACE'?
+   'SIMULATED 1999 TEST WORLD birthplace; not a verified historic foaling site.':
+   foalRegistry?'Source country is registered; region is the breeding jurisdiction, not a verified foaling municipality.':'';
   node.dataset.ownershipGroup=owner;node.dataset.ownerId=d.ownerId||'';
   node.dataset.testGenerated=d._testGenerated?'true':'false';
   node.dataset.testAttributes=JSON.stringify(d._testAttrs||{});
