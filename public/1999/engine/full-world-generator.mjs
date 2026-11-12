@@ -7,6 +7,7 @@
  * capacity, reputation and applicable catalog attributes on demand.
  */
 import {openingWorld1999 as canon} from './canon-mini.mjs';
+import {createGeographicNameRoster,GEO_NAME_MODEL} from './geographic-names.mjs';
 import attributeCatalog from './attribute-catalog.mjs';
 import {WTW_TEST_START_DATE} from '../test-clock.mjs';
 export const FULL_WORLD_SCHEMA='WTW_1999_FULL_SCALE_TEST_V1';
@@ -102,6 +103,8 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const canonTrainers=sourcePeople.filter(x=>String(x.role||'').toLowerCase().includes('trainer'));
   const protectedPersonNames=new Set(sourcePeople.map(x=>String(x.name||'').toLowerCase()));
   const generatedPrincipalCount=ownersTotal-sourceOrgs.length;
+  const roleForIndex=index=>{if(index>=ACTIVE_STAFF_COUNT)return 'owner';let j=index;for(const [role,count] of ROLES){if(j<count)return role;j-=count}return 'owner';};
+  const namedPeople=createGeographicNameRoster(seed,ACTIVE_STAFF_COUNT+ownersTotal,roleForIndex,sourcePeople.map(x=>x.name));
  const trackCount=sourceTracks.length,canonicalNames=new Set(locked.map(x=>x.name.toLowerCase()));
  if(trackCount<130)throw Error('Fewer than 130 physical tracks');
  function regionTrack(geo,id){
@@ -134,7 +137,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const canonSource=anchored&&i<sourceOrgs.length?sourceOrgs[i]:null;
   const id=canonSource?.id||'O-TEST-1999-'+pad(i+1),t=regionTrack(canonSource?.geographyRecords?.[0]||null,id);
   const portfolio=ownersSlots.counts[i],tier=portfolio>=200?'major':portfolio>=40?'established':portfolio>=8?'regional':'small';
-  const syntheticPrincipal=generatedPersonName(seed,ACTIVE_STAFF_COUNT+i,protectedPersonNames);
+  const syntheticPrincipal=namedPeople[ACTIVE_STAFF_COUNT+i].name;
    const name=canonSource?.name||(i%11===0?syntheticPrincipal:generatedOrganizationName(seed,i,'owner'));
    const principalOwner=canonSource?(canonSource.publicPrincipal||null):syntheticPrincipal;
    const principalOwnerId=canonSource?(canonSource.publicPrincipalId||null):'P-TEST-OWNER-'+pad(i+1);
@@ -157,12 +160,13 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   if(trainerCache.has(i))return trainerCache.get(i);
   const canonSource=anchored&&i<canonTrainers.length?canonTrainers[i]:null;
   const id=canonSource?.id||'P-TEST-TRAINER-'+pad(i+1),track=regionTrack(canonSource?.base?{locality:canonSource.base.locality,region:canonSource.base.region,country:canonSource.base.country}:null,id);
-  const slots=trainerSlots.counts[i],name=canonSource?.name||generatedPersonName(seed,i,protectedPersonNames);
+  const slots=trainerSlots.counts[i],name=canonSource?.name||namedPeople[i].name;
    const ability=traits([...common,...(roleDef.trainer||[])],seed,id,.3+unit(seed,id+'talent')*.6);
   const obj={id,name,nameStatus:canonSource?'CANON_LOCKED':'TEST_RENAME_ALLOWED',role:'trainer',location:canonSource?.base?fmtLoc(canonSource.base):track.location,
    homeTrackId:track.id,barnId:'F-TEST-BARN-'+pad(i+1),barnCapacity:Math.max(slots+Math.ceil(slots*.12),slots+2),
    generatedRunners:slots,roleAttributes:ability,attributes:ability,
-    age:25+hash(seed,id+':age')%45,morale:round(.3+unit(seed,id+':morale')*.68),workload:round(clamp(slots/(slots+Math.max(2,Math.ceil(slots*.12))),0,1)),
+    age:25+hash(seed,id+':age')%45,birthCountry:canonSource?.birthplace?.country||namedPeople[i].birthCountry,
+    nameOrigin:canonSource?'CANON_LOCKED':'GEO_ROLE_TEST_POPULATION',morale:round(.3+unit(seed,id+':morale')*.68),workload:round(clamp(slots/(slots+Math.max(2,Math.ceil(slots*.12))),0,1)),
    reputation:standing(seed,id,.25+unit(seed,id+'status')*.55),annualBaseSalary:money(28000+slots*4000),
    authority:canonSource?'CANON_ID__TEST_ATTRIBUTES':'FULLY_TEST_GENERATED'};
   trainerCache.set(i,obj);return obj;
@@ -214,6 +218,8 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   if(!Number.isInteger(index)||index<0||index>=ACTIVE_STAFF_COUNT+generatedPrincipalCount)throw Error('Person index');
    if(index>=ACTIVE_STAFF_COUNT){const owner=ownerAt(index-ACTIVE_STAFF_COUNT+sourceOrgs.length),id=owner.principalOwnerId;
     return {id,name:owner.principalOwner,nameStatus:'TEST_RENAME_ALLOWED',role:'owner',organizationId:owner.id,location:owner.location,baseTrackId:owner.mainTrackId,
+     birthCountry:namedPeople[ACTIVE_STAFF_COUNT+index-ACTIVE_STAFF_COUNT+sourceOrgs.length].birthCountry,
+     nameOrigin:'GEO_ROLE_TEST_POPULATION',
      attributes:traits([...common,...(roleDef.owner||[])],seed,id,.24+unit(seed,id+':talent')*.7),
      reputation:standing(seed,id,.22+unit(seed,id+':standing')*.65),payrollAnnual:0,age:27+hash(seed,id+':age')%47,
      morale:round(.3+unit(seed,id+':morale')*.68),workload:round(.2+unit(seed,id+':load')*.65),licenseStatus:'SIMULATED_TEST_ACTIVE',source:'SIMULATED_OWNERSHIP_PRINCIPAL'};
@@ -222,7 +228,8 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   for(const r of ROLES){if(j<r[1]){role=r[0];break}j-=r[1]}
   if(role==='trainer')return trainerAt(j);
   const id='P-TEST-'+role.toUpperCase()+'-'+pad(j+1),track=trackAt(hash(seed,id)%trackCount);
-  return {id,name:generatedPersonName(seed,index,protectedPersonNames),
+  return {id,name:namedPeople[index].name,birthCountry:namedPeople[index].birthCountry,
+    nameOrigin:'GEO_ROLE_TEST_POPULATION',
    nameStatus:'TEST_RENAME_ALLOWED',role,location:track.location,baseTrackId:track.id,
    attributes:traits([...common,...(roleDef[role]||[])],seed,id,.22+unit(seed,id+'talent')*.7),
    reputation:standing(seed,id,.2+unit(seed,id+'standing')*.65),payrollAnnual:money(18000+unit(seed,id+'pay')*90000),
@@ -324,11 +331,12 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
  }
  return {schema:FULL_WORLD_SCHEMA,seed,mode,startDate:WTW_TEST_START_DATE,currentDate:WTW_TEST_START_DATE,
   canonProtected:anchored,identityLayer:'CANON_LOCKS_PLUS_REPLACEABLE_TEST_IDENTITIES',attributesSchema:attributeCatalog.schema,
+   nameModel:GEO_NAME_MODEL,
   counts:{horses:HORSE_POPULATION,canonicalHorses:anchored?CANON_HORSES:0,generatedHorses:generatedCount,owners:ownersTotal,trainers:trainersTotal,
    people:peopleCount+(anchored?sourcePeople.length:0),tracks:trackCount,facilities:trainersTotal+900+trackCount,auctions:36,
    sourceStallions:anchored?canon.activeStallions1999.length:0,sourceBroodmareLocations:anchored?canon.productionBroodmareBoarding1999.length:0},
   ownerAt,trainerAt,trackAt,horseAt,personAt,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
-  parentAt,attributeCatalog,sourceStakes:anchored?canon.stakes1999:[],sourceOrganizations:sourceOrgs,sourcePeople,
+  parentAt,attributeCatalog,sourceStakes:anchored?canon.stakes1999:[],sourceOrganizations:sourceOrgs,sourcePeople,excludedActiveStaffRoles:['groom','exercise_rider'],
   audit:{ownershipSlots:ownersSlots.counts.reduce((a,b)=>a+b,0),trainerSlots:trainerSlots.counts.reduce((a,b)=>a+b,0),
    maxOwnerHorses:Math.max(...ownersSlots.counts),minOwnerHorses:Math.min(...ownersSlots.counts),
    maxTrainerHorses:Math.max(...trainerSlots.counts),minTrainerHorses:Math.min(...trainerSlots.counts)}};
