@@ -143,6 +143,10 @@ function breakingName(seed,i,attempt){
  const family=draw(SURNAMES,seed,k+':family');
  const landmark=draw(LANDMARK,seed,k+':landmark');
  const suffix=draw(TRAINING_END,seed,k+':suffix');
+ // A small geographic vocabulary may be saturated by existing farms and
+ // owners. Prefer an owner's family name plus locality instead of reusing
+ // the same location root with yet another business suffix.
+ if(attempt>=28)return family+' '+land+' '+suffix;
  if(roll<33)return land+' '+suffix;
  if(roll<55)return family+' '+suffix;
  if(roll<68)return landmark+' '+suffix;
