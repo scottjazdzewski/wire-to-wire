@@ -406,7 +406,7 @@ function worldImageURL(key,record){
  if(worldImageCache.has(key))return worldImageCache.get(key)||'';
  if(!worldImageFetching.has(key)){
   worldImageFetching.add(key);
-  worldGetImage(key).then(src=>{worldImageCache.set(key,src);schedulePaint(30)})
+  worldGetImage(key).then(src=>{const image=src||'';worldImageCache.set(key,image);if(image&&image!==record?.photoUrl)schedulePaint(30)})
    .catch(()=>{worldImageCache.set(key,'')}).finally(()=>worldImageFetching.delete(key));
  }
  const url=record?.photoUrl||'';
