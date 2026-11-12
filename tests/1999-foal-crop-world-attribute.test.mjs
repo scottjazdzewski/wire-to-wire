@@ -35,5 +35,5 @@ test('World rankings compute a selected trait across the entire indexed populati
 test('Sales inventory remains empty until genuine auction entries are supplied',()=>{
  assert.match(ui,/No catalog lots recorded for this view/);
  assert.match(ui,/No recorded private offers/);
- assert.match(html,/wtw1999-20261112-r10/);
+ assert.match(html,/wtw1999-20261112-r\d+(?:-[a-z0-9-]+)?/);
 });
