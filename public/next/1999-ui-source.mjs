@@ -354,6 +354,10 @@ function breedingMarePage(offset=0,limit=100,filter=''){
  const start=Math.max(0,Math.min(allCount,Number(offset)||0));
  const count=Math.max(1,Math.min(100,Number(limit)||100));
  const items=[];
+ const modelStart=Math.max(0,start-sourceCount);
+ const modelLength=Math.max(0,Math.min(allCount,start+count)-Math.max(sourceCount,start));
+ const model=modelLength?q('/api/1999/sim/breeding-stock',
+  'sex=DAM&offset='+modelStart+'&limit='+modelLength).items||[]:[];
  for(let i=start;i<Math.min(allCount,start+count);i++){
   if(i<sourceCount){
    const h=source[i];
@@ -363,7 +367,7 @@ function breedingMarePage(offset=0,limit=100,filter=''){
     status:'1999 REGISTERED BOARDING · SOURCE',health:'UNASSESSED',pedigree:'',value:'',
     studFee:'',bookings:'NOT VERIFIED',foals:'NOT VERIFIED',winners:'NOT VERIFIED'});
   }else{
-   const h=q('/api/1999/sim/breeding-stock','sex=DAM&offset='+(i-sourceCount)+'&limit=1').items?.[0];
+   const h=model[i-Math.max(sourceCount,start)];
    if(!h)continue;
    items.push({_kind:'horse',_name:h.name,_id:h.id,_testGenerated:true,
     _testAttrs:h.attributes||{},_testAbility:h.ability||{},_testReputation:h.reputation||{},
