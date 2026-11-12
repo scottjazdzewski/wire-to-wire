@@ -194,6 +194,9 @@ function openMenu(section){
  if(section==='Sales'){APP.departmentAuction='';APP.departmentCompany=''}
  if(section==='Racing'){APP.racingMode='meets';APP.racingTrack=''}
  if(section==='History'){window.location.assign('/archive/?page=races');return}
+ // Stable is a first-class next-generation screen. Clicking it must NOT
+ // depend on the hidden Office's legacy click handler or its route shell.
+ if(section==='Stable')return openCustomView('Stable — Overview','Stable','Overview');
  APP.section=section;APP.page='Overview';APP.custom='';
  if(actions[section])bridgeNode(originalAct(actions[section]));
  else{openCustomView(section,section,'Overview')}
@@ -213,7 +216,8 @@ function pageTab(name){if(APP.section==='History'){const pages={'Race Results':'
   if(s==='Sales'&&name==='Overview'){APP.custom='';return bridgeNode(originalAct('Sales'))}
   return openCustomView(s+' — '+name,s,name);
  }
- if(s==='Stable'&&(name==='Overview'||name==='Horses'))return bridgeNode(originalAct('Stable'));
+ if(s==='Stable'&&(name==='Overview'||name==='Horses'))
+  return openCustomView('Stable — '+name,'Stable',name);
  if(s==='Racing'&&(name==='Overview'||name==='Calendar'||name==='Entries'||name==='Stakes'))return bridgeNode(originalAct('Race Calendar'));
  if(s==='Sales'&&(name==='Overview'||name==='Auctions'))return bridgeNode(originalAct('Sales'));
  if(s==='World'&&['1999 Horses','People','Organizations'].includes(name)){
@@ -377,7 +381,8 @@ function managerSidebar(){
   ]]
  ];
  const on=(label,key,value)=>key==='office'&&!APP.custom&&APP.section==='Office'&&!currentRoute()||
-  key==='custom'&&APP.custom===value||key==='menu'&&APP.section===value&&!APP.custom;
+  key==='custom'&&APP.custom===value||key==='menu'&&APP.section===value&&
+  (!APP.custom||APP.custom===value||APP.custom.startsWith(value+' — '));
  const btn=([label,key,value,icon])=>'<button type="button" data-ng="'+key+'"'+
   (value?' data-val="'+safe(value)+'"':'')+' class="ng-manager-rail-link'+(on(label,key,value)?' on':'')+'"'+
   ' title="'+safe(label)+'"'+(on(label,key,value)?' aria-current="page"':'')+'>'+
@@ -2695,6 +2700,8 @@ function departmentRoster(section,page='Overview'){
 
 function managerDashboard(){
  const section=APP.section||'Office',page=APP.page||'Overview';
+ // The live Stable roster is routed directly, even without a legacy Office route.
+ if(section==='Stable'&&(page==='Overview'||page==='Horses'))return liveStableRosterView();
  if(typeof DEP_NAMES!=='undefined'&&DEP_NAMES.has(section))return departmentRoster(section,page);
  if(section==='World'&&['1999 Horses','People','Organizations'].includes(page))return departmentRoster('World',page);
  const configs={
