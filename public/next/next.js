@@ -39,7 +39,7 @@ function personGeographyRecord(source,name){
 const genericDeskPhoto='/assets/office/approved-office-photo.jpg';
 let organizationLogoIndex=null; // UI-only logo asset refs; organization authority stays in the game database.
 
-const tabmap={Office:['Overview','Messages','Decisions','Calendar','News','Reports','Career'],History:['Race Results','Horses','People & Farms','Facilities & Tracks','Historical Calendar','Coverage'],Stable:['Overview','Horses','Training','Health','Race Plans','Barns'],Racing:['Overview','Calendar','Entries','Results','Stakes','Race Planning'],Breeding:['Overview','Stallions','Broodmares','Foals','Pedigrees','Stud Farms'],Sales:['Overview','Auctions','Sale Calendar','Sale Companies','Catalogs','Watchlist','Private Offers'],Personnel:['Overview','Trainers','Jockeys','Owners','Ownership Groups','Staff'],Facilities:['Overview','Stud Farms','Training Centers','Breaking Facilities','Racing Stables','Barns','Farms'],Tracks:['Overview','Active Meets','All Tracks','Stakes'],Finances:['Overview','Cash Flow','Operating Costs','Budgets'],World:['Overview','1999 Horses','People','Organizations','Tracks','Meets','Major Races','News']};
+const tabmap={Office:['Overview','Messages','Decisions','Calendar','News','Reports','Career'],History:['Race Results','Horses','People & Farms','Facilities & Tracks','Historical Calendar','Coverage'],Stable:['Overview','Horses','Training','Health','Race Plans','Barns'],Racing:['Overview','Calendar','Entries','Results','Stakes','Race Planning'],Breeding:['Overview','Stallions','Broodmares','Foals','Pedigrees','Stud Farms'],Sales:['Overview','Auctions','Sale Calendar','Sale Companies','Catalogs','Watchlist','Private Offers'],Personnel:['Overview','Trainers','Jockeys','Owners','Staff'],Facilities:['Overview','Stud Farms','Training Centers','Breaking Facilities','Racing Stables','Barns','Farms'],Tracks:['Overview','Active Meets','All Tracks','Stakes'],Finances:['Overview','Cash Flow','Operating Costs','Budgets'],World:['Overview','1999 Horses','People','Organizations','Tracks','Meets','Major Races','News']};
 const actions={Office:'Office Overview',Stable:'Stable',Racing:'Race Calendar',Sales:'Sales',World:'World'};
 const officeMenu={Overview:'Office Overview',Messages:'Filter All',Decisions:'Open move history',Calendar:'Open Race Calendar',News:'News',Reports:'Open move history',Career:'Open move history'};
 const state=()=>{try{return JSON.parse(localStorage.getItem((window.__WTW_1999_MANAGEMENT__?.saveKey||'wtw1999ManagementStateV1'))||'{}')}catch{return {}}};
@@ -1929,7 +1929,7 @@ const DEP_COLUMNS={
  SaleCalendar:[['date','DATES',12],['name','AUCTION',27],['company','SALES COMPANY',16],['city','LOCATION',16],['category','TYPE',14],['status','STATUS',15]],
  SaleCompanies:[['name','SALES COMPANY',19],['city','HEADQUARTERS',15],['saleCount','SALES',8],['nextSale','NEXT UPCOMING AUCTION',33],['months','USUAL SALE MONTHS',25]],
  Sales:[['hip','HIP',4],['horse','HORSE',12],['age','AGE',3],['sex','SEX',3],['sire','SIRE',11],['dam','DAM',11],['consignor','CONSIGNOR',10],['reserve','RESERVE',8],['bid','CURRENT BID',8],['value','EST VALUE',8],['ca','CA',4],['pa','PA',4],['condition','COND',7],['status','SALE STATUS',7]],
- OwnershipGroups:[['name','OWNERSHIP GROUP',25],['type','ORGANIZATION TYPE',19],['location','OPERATING BASE',22],['principal','PRINCIPAL',18],['status','STATUS',16]],
+ OwnershipGroups:[['name','OWNER / OPERATION',25],['type','OWNER TYPE',19],['location','OPERATING BASE',22],['principal','PRINCIPAL OWNER',18],['status','STATUS',16]],
  Personnel:[['name','PERSON',13],['age','AGE',3],['role','ROLE',10],['ca','CA',4],['pa','PA',4],['reputation','REP',6],['specialty','SPECIALTY',10],['morale','MORALE',6],['workload','LOAD',6],['salary','SALARY',8],['contract','CONTRACT',8],['assignment','ASSIGNED',9],['base','BASE',9],['wins','WINS',4]],
  Facilities:[['name','FACILITY',14],['type','TYPE',9],['location','CITY / STATE',13],['capacity','CAP',5],['occupied','USED',5],['free','FREE',5],['condition','COND',7],['quality','QUALITY',7],['staff','STAFF',5],['cost','MONTHLY COST',10],['owner','OWNER',12],['status','STATUS',8]],
  Finances:[['date','DATE',11],['category','CATEGORY',16],['description','TRANSACTION / PURPOSE',28],['department','HORSE / DEPARTMENT',19],['income','INCOME',10],['expense','EXPENSE',10],['balance','BALANCE',6]]
@@ -2554,12 +2554,12 @@ function previewRecordView(){
   (Boolean(fromState?.row)&&Boolean(APP.departmentDemo))||
   DEP_FACILITY_PREVIEW.some(item=>item[0]===name);
  const fields=fromState?.row||{};
- const generated=Boolean(fields._testGenerated);
+ const generated=Boolean(fields._testGenerated),hasTestData=Boolean(fields._testAttrs||fields._testFinances||fields._testReputation);
  const fixture=DEP_FACILITY_PREVIEW.find(item=>item[0]===name);
  const relevant=[
   ['ENTITY TYPE',fields.type||fixture?.[1]||kind.toUpperCase()],
   ['LOCATION',fields.location||fixture?.[2]||'Not recorded'],
-  ['OWNER',fields.owner||'Not recorded'],
+  ['OWNER',fields.owner||'Not recorded'],['PRINCIPAL OWNER',fields.principal||''],['COUNTRY OF ORIGIN',fields.birthCountry||''],['ENTITY ID',fields._id||''],
   ['CAPACITY',fields.capacity||'Not recorded'],
   ['OPERATING STATUS',fields.status||'Not recorded'],
   ...(generated?[
@@ -2569,7 +2569,7 @@ function previewRecordView(){
   ]:[])
  ].filter(([label,value])=>!entityNotRecorded(value)||label==='ENTITY TYPE');
  const description=generated?
-  '1999 SIMULATED TEST HORSE — permanent test ID, owner, trainer, pedigree and all 53 admin attributes. Values are test-world fixtures, not historical evidence or scouting observations. No 1999 race result has been generated.':demo?
+  '1999 SIMULATED TEST ENTITY — permanent test identity and modeled attributes. Values are test-world fixtures, not historical evidence or scouting observations. No future racing outcomes are preloaded.':demo?
   'FICTIONAL DESIGN PREVIEW — this named operation has no registered game profile yet. None of the displayed information is part of the authoritative database.':
   'SOURCE CONNECTION PENDING — this name is not connected to an individual profile in the current game records. No profile identity has been invented.';
  return '<section class="ng-entity-preview ng-stable-roster-v2">'+
@@ -2578,7 +2578,7 @@ function previewRecordView(){
   '<p class="ng-entity-preview-notice">'+safe(description)+'</p>'+
   '<div class="ng-entity-preview-grid">'+relevant.map(([label,value])=>
    '<div><small>'+safe(label)+'</small>'+namedProfileValue(label,String(value))+'</div>').join('')+'</div>'+
-  (generated?[
+  (hasTestData?[
    ['MODELLED ABILITY / CONDITION',fields._testAttrs],
    ['OPENING FINANCES / VALUE',fields._testFinances],
    ['GENERATED REPUTATION',fields._testReputation]
@@ -2613,7 +2613,7 @@ function departmentRoster(section,page='Overview'){
  const auctions=section==='Sales'?depAuctionList(demo):[];
  const gameDay=depGameDay();
  const auction=auctions.find(a=>a.id===APP.departmentAuction)||auctions.find(a=>(a.endDate||a.sortKey)>=gameDay)||null;
- const specs=section==='Personnel'&&page==='Ownership Groups'?DEP_COLUMNS.OwnershipGroups:
+ const specs=section==='Personnel'&&page==='Owners'?DEP_COLUMNS.OwnershipGroups:
   section==='World'?(page==='1999 Horses'?WORLD_1999_COLUMNS.Horses:page==='People'?WORLD_1999_COLUMNS.People:WORLD_1999_COLUMNS.Organizations):
   section==='Sales'&&page==='Watchlist'?DEP_COLUMNS.SalesWatchlist:section==='Sales'&&page==='Sale Calendar'?DEP_COLUMNS.SaleCalendar:section==='Sales'&&page==='Sale Companies'?DEP_COLUMNS.SaleCompanies:section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'?(APP.racingTrack?DEP_COLUMNS.Racing:DEP_COLUMNS.Meets):DEP_COLUMNS[section];
  const perPage=depPageLimit(section);
@@ -2721,7 +2721,7 @@ function departmentRoster(section,page='Overview'){
   section==='Breeding'?'STUD FEES, COVERINGS & PRODUCTION':
   section==='Sales'?(page==='Watchlist'?'WATCHED LOTS · UI SESSION ONLY':page==='Sale Calendar'?'CHRONOLOGICAL SALES · COMPANY · VENUE · DATE':page==='Sale Companies'?'AUCTION HOUSE DIRECTORY · SALES CALENDAR':auction?depSaleLabel(auction).toUpperCase()+' · '+depSaleDateLabel(auction)+' · '+(auction.city||''):'NO UPCOMING AUCTIONS'):
   section==='World'?'CANONICAL JANUARY 1999 POPULATION · SOURCE-LINKED IDENTITIES':
-  section==='Personnel'?(page==='Ownership Groups'?'PARTNERSHIPS · SYNDICATES · OWNERSHIP OPERATIONS':'TRAINERS · JOCKEYS · OWNERS · OWNERSHIP GROUPS · STAFF'):
+  section==='Personnel'?(page==='Owners'?'OWNERS · PARTNERSHIPS · SYNDICATES · PRINCIPALS':'TRAINERS · JOCKEYS · PROFESSIONAL STAFF'):
   section==='Facilities'?'CAPACITY · QUALITY · MAINTENANCE':'INCOME · EXPENSES · CASH FLOW';
  return '<section class="ng-functional ng-stable-roster-v2 ng-dept-roster" data-department="'+safe(section)+'" data-page="'+safe(page)+'" data-roster-kind="'+(specs===DEP_COLUMNS.Meets?'meet':'regular')+'">'+
   '<div class="ng-rs-title"><strong>'+safe(section.toUpperCase())+' · '+safe(page.toUpperCase())+'</strong><span title="'+safe(purpose)+'">'+safe(purpose)+(demo?' · FICTIONAL PREVIEW':'')+'</span></div>'+
