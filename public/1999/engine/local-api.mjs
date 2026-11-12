@@ -59,6 +59,7 @@ export function readLocal1999World(raw){
   return pager(q,sex==='SIRE'?w.counts.breedingStallions:w.counts.breedingMares,
    i=>w.parentAt(i,sex),'VIRTUAL_SIMULATED_BREEDING_STOCK');
  }
+ if(p==='/api/1999/sim/mare-directory')return pager(q,w.counts.breedingMares,i=>w.mareDirectoryAt(i),'GLOBAL_26000_MARES_TEST_INDEX');
  if(p==='/api/1999/sim/foaling-forecast')return w.annualFoalingForecast();
  if(p==='/api/1999/sim/conditions'){
   const trackIndex=int(q.get('trackIndex'),0,w.counts.tracks-1);
