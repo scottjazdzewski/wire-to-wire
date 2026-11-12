@@ -92,7 +92,10 @@ for(const h of fictionalOpeningOwners)if(h.ownerId)
 const fictionalOwner=[...fictionalOwnerTally].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))[0]?.[0]||null;
 const activeOwnerId=gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?fictionalOwner:
  [...ownership].filter(([id])=>id).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))[0]?.[0]||null;
-const ownerRecord=activeOwnerId?q('/api/1999/sim/owners','offset=0&limit=1').items?.[0]:null;
+const fictionalOwnerIndex=activeOwnerId&&gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?
+ Math.max(0,Number(String(activeOwnerId).match(/(\\d+)$/)?.[1]||1)-1):0;
+const ownerRecord=activeOwnerId&&gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?
+ q('/api/1999/sim/owners','offset='+fictionalOwnerIndex+'&limit=1').items?.[0]:null;
 const selectedOwner=ownerNames.get(activeOwnerId)||
  (ownerRecord?.id===activeOwnerId?ownerRecord.name:'')||activeOwnerId||'1999 Foundation Stable';
 // The player's entire horse portfolio is resolved from the ONE deterministic world.
@@ -112,7 +115,7 @@ let horseLookup=new Map([...srcHorses,...stableHorses].map(h=>[h.name,h]));
 const sourceHorseIds=new Set(srcHorses.map(h=>h.id));
 
 const ownerIndex=srcOrgs.findIndex(o=>o.id===activeOwnerId);
-const initialOwner=q('/api/1999/sim/owners','offset='+Math.max(0,ownerIndex)+'&limit=1').items?.[0]||null;
+const initialOwner=q('/api/1999/sim/owners','offset='+Math.max(0,gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?fictionalOwnerIndex:ownerIndex)+'&limit=1').items?.[0]||null;
 const openingCash=initialOwner?.finances?.cash??null;
 const messageSpecs=[
  ['opening-stable','Stable Office','1999 opening roster: '+selectedOwner,
