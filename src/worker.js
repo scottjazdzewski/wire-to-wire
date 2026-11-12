@@ -1,6 +1,7 @@
 import {qaPendingInactiveAuthority,qaPendingInactiveEditionIds} from './history-inactive-read-model.js';
 import {readOpeningWorld1999} from './1999/opening-readmodel.mjs';
 import {evaluate1999Entry} from './1999/entry-gate.mjs';
+import {readFull1999TestWorld} from './1999/full-world-readmodel.mjs';
 // Cloudflare Worker / D1 API. Deliberately separate from all other WTW and non-WTW projects.
 // Privacy: every request requires authenticated Cloudflare Access in deployed environments.
 const jsonHeaders = {
@@ -140,6 +141,11 @@ async function bootstrap(db) {
 async function api(request,env,email) {
   const url = new URL(request.url);
   // Protected, source-only 1999 handoff. No player decisions or future racing writes here.
+  if(url.pathname.startsWith('/api/1999/sim/')) {
+    if(request.method!=='GET')return response({error:'Full simulated test universe is read-only until STG7 has authoritative transactional persistence.'},405);
+    const result=readFull1999TestWorld(url);
+    return response(result.data,result.status);
+  }
   if(url.pathname.startsWith('/api/1999/')) {
     if(url.pathname==='/api/1999/entry/evaluate' && request.method==='POST') {
       if(request.headers.get('content-type')?.split(';')[0]!=='application/json') return response({error:'JSON required'},415);
