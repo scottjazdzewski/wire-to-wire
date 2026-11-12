@@ -1,43 +1,35 @@
-/* Wire to Wire — 1999 boot bridge for the EXISTING management UI.
- * Preserves the pre-1999/2014 demo save under a separate backup key.
- * Does not replace UI screens, CSS, pedigree/racing authority, or event logic. */
+/* Wire to Wire 1999: clean management-game bootstrap.
+ * The approved UI is preserved. No 2014 case, save, finance or horse state may be
+ * used to initialize a 1999 game, including when loading a browser on a phone.
+ */
 (()=>{
-'use strict';
-const START='1999-01-01';
-const MAIN='wtwOfficeStateV30';
-const LEGACY='wtwLegacy2014OfficeBackupV30';
-const MARK='wtwManagement1999BootstrapV1';
-const NONE={version:'Office FM Track Profile Foundation v30',date:START,currentCase:'powerline',
- turn:0,resolvedCases:{},decisionLog:[],horseState:{},ownerState:{},staffState:{},
- calendarState:{},finances:{},scoutingState:{},messageState:{},followUps:[],
- worldAnchor:{schema:'WTW_1999_CANON_ANCHORED_TEST_V1',startDate:START,seed:19990101,
- status:'DATA_AND_UI_INTEGRATION_IN_PROGRESS',historicalResultsImmutable:true}};
-function safeParse(raw){try{const x=JSON.parse(raw);return x&&typeof x==='object'&&!Array.isArray(x)?x:null}catch{return null}}
-try{
- const existing=localStorage.getItem(MAIN);
- const state=safeParse(existing);
- const marker=localStorage.getItem(MARK);
- const hasValidDate=typeof state?.date==='string' && /^\d{4}-\d{2}-\d{2}$/.test(state.date);
- const is1999Career=hasValidDate && (state.worldAnchor?.startDate===START || /^1999-\d{2}-\d{2}$/.test(state.date));
- // Bootstrap only once; never reset an in-progress 1999 career on page reload.
- if(marker!=='active'){
-   if(is1999Career){
-     localStorage.setItem(MARK,'active');
-   }else{
-     if(existing&&!localStorage.getItem(LEGACY))localStorage.setItem(LEGACY,existing);
-     localStorage.setItem(MAIN,JSON.stringify(NONE));
-     localStorage.setItem(MARK,'active');
-   }
- }else if(!is1999Career){
-   // Reset or invalid earlier-era Office state cannot silently reintroduce 2014.
-   if(existing&&!localStorage.getItem(LEGACY))localStorage.setItem(LEGACY,existing);
-   localStorage.setItem(MAIN,JSON.stringify(NONE));
- }
-}catch(e){
- // Do not make the management UI dependent on browser storage permission.
- window.__WTW_1999_BOOT_WARNING__=String(e?.message||e);
-}
-window.__WTW_1999_MANAGEMENT__={startDate:START,mode:'CANON_ANCHORED_TEST',
- saveKey:MAIN,priorDemoBackupKey:LEGACY,worldRoute:'/1999/',sourceDirectory:'/data/wtw-1999-world-directory-v33.json',
- status:'UI_RESTORED__SOURCE_RUNTIME_INTEGRATION_IN_PROGRESS'};
+ 'use strict';
+ const START='1999-01-01';
+ const KEY='wtw1999ManagementStateV1';
+ const SCHEMA='WTW_1999_CLEAN_MANAGEMENT_V1';
+ const fresh=()=>({
+   schema:SCHEMA,version:'WTW 1999 Management v1',
+   date:START,worldStartDate:START,currentCase:'opening-stable',turn:0,
+   resolvedCases:{},decisionLog:[],horseState:{},ownerState:{},
+   staffState:{},calendarState:{},finances:{},scoutingState:{},
+   messageState:{},followUps:[],enteredRaces:[],committedResults:[],
+   worldAnchor:{schema:'WTW_1999_CANON_ANCHORED_TEST_V1',
+     startDate:START,seed:19990101,canonHistoryImmutable:true,
+     status:'SOURCE_WORLD_TEST__RACE_ENGINE_NOT_YET_COMMITTED'}
+ });
+ const valid=x=>x&&typeof x==='object'&&!Array.isArray(x)&&
+   x.schema===SCHEMA&&x.worldAnchor?.startDate===START&&
+   typeof x.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x.date)&&
+   x.date>=START&&x.currentCase!=='powerline'&&
+   Array.isArray(x.decisionLog)&&Array.isArray(x.committedResults);
+ window.__WTW_1999_MANAGEMENT__={
+   startDate:START,mode:'CANON_ANCHORED_TEST',saveKey:KEY,saveSchema:SCHEMA,
+   worldRoute:'/1999/',sourceDirectory:'/data/wtw-1999-world-directory-v33.json',
+   status:'CLEAN_1999_UI__SOURCE_RUNTIME_NOT_FULL_PLAYABLE'
+ };
+ try{
+   let data=null;
+   try{data=JSON.parse(localStorage.getItem(KEY)||'null')}catch{}
+   if(!valid(data))localStorage.setItem(KEY,JSON.stringify(fresh()));
+ }catch(e){window.__WTW_1999_BOOT_WARNING__=String(e?.message||e)}
 })();
