@@ -219,7 +219,7 @@ function makeDepartmentRows(section,page,context={}){
 }
 const departmentCache=new Map();
 function setGameDate(date){
- if(typeof date!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)||date<'1999-01-01'||date>'2080-12-31')return;
+ if(typeof date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(date)||date<'1999-01-01'||date>'2080-12-31')return;
  if(date===viewDate)return;
  // Model reads validate the date and return deterministic as-of ability.
  const previous=viewDate;viewDate=date;
