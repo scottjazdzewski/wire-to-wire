@@ -223,7 +223,7 @@ export function project1999CareerEntity(openingEntity,date='1999-01-01',catalog=
  const startAge=h?Number(openingEntity.ageAtOpening):Number(openingEntity.age);
  const exactAge=careerAgeAtDate(startAge,date);
  const officialAge=Math.floor(careerAgeAtDate(startAge,date,{annual:true}));
- const current=evaluateAgeAbility(openingEntity.ability,exactAge);
+ const current={...evaluateAgeAbility(openingEntity.ability,exactAge),asOf:date};
  const base=openingEntity.ability;
  const changed=current.current-base.current;
  const attrs=openingEntity.attributes||openingEntity.roleAttributes;
