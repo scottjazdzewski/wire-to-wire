@@ -91,3 +91,77 @@ test('source and browser read APIs expose the same normalized ability for every 
  assert.equal(h.items[0].ability.current,world.horseAt(275).ability.current);
  assert.equal(sourcePeople.items[0].id,world.sourcePeople[0].id);
 });
+
+test('individual Thoroughbreds include early champions, 3-year-old, classic and late peaks',()=>{
+ const bucket={two:0,three:0,four:0,five:0,later:0};
+ for(let i=0;i<16000;i++){
+  const p=createAgeAbility({seed,id:'MATURITY-DISTRIBUTION-'+i,role:'horse',age:2});
+  assert.ok(p.peakAge>=2.1&&p.peakAge<=7.35);
+  if(p.peakAge<3)bucket.two++;
+  else if(p.peakAge<4)bucket.three++;
+  else if(p.peakAge<4.9)bucket.four++;
+  else if(p.peakAge<5.8)bucket.five++;
+  else bucket.later++;
+ }
+ // Broad guardrails, not an invented claim of exact national percentages.
+ assert.ok(bucket.two>=200&&bucket.two<=1600,JSON.stringify(bucket));
+ assert.ok(bucket.three>=1600&&bucket.four>=3000,JSON.stringify(bucket));
+ assert.ok(bucket.five>=1600&&bucket.later>=700,JSON.stringify(bucket));
+});
+
+test('sire/dam IDs affect inherited TEST precocity without making siblings identical',()=>{
+ const pedigrees=Array.from({length:150},(_,i)=>({
+  sireId:'S-MATURITY-'+i,damId:'D-MATURITY-'+i
+ }));
+ const lookup=pedigrees.map(p=>({
+  pedigree:p,index:createAgeAbility({seed,id:'REFERENCE-FOAL',role:'horse',age:2,pedigree:p})
+   .pedigreeMaturity.modeledAncestryPrecocity
+ })).sort((a,b)=>a.index-b.index);
+ const early=lookup[lookup.length-1].pedigree,late=lookup[0].pedigree;
+ let earlyAge=0,lateAge=0;
+ const siblingPeaks=new Set();
+ for(let i=0;i<600;i++){
+  const id='TEST-SIBLING-'+i;
+  const a=createAgeAbility({seed,id,role:'horse',age:2,pedigree:early});
+  const b=createAgeAbility({seed,id,role:'horse',age:2,pedigree:late});
+  earlyAge+=a.peakAge;lateAge+=b.peakAge;
+  siblingPeaks.add(a.peakAge);
+  assert.equal(a.pedigreeMaturity.sireId,early.sireId);
+  assert.equal(a.pedigreeMaturity.damId,early.damId);
+  assert.ok(valid(a)&&valid(b));
+ }
+ assert.ok(siblingPeaks.size>100,'Brothers and sisters need distinct maturation schedules');
+ assert.ok(earlyAge/600+0.4<lateAge/600,'Early-maturing families should produce earlier-peaking foals on average');
+});
+
+test('jockey development spans twenty-something to late thirties without fifty-year-old potential',()=>{
+ let peak25=0,peak35=0,peak40=0;
+ for(let i=0;i<12000;i++){
+  const id='JOCKEY-CAREER-SAMPLE-'+i;
+  const a=createAgeAbility({seed,id,role:'jockey',age:18});
+  const m=createAgeAbility({seed,id,role:'jockey',age:36});
+  const senior=createAgeAbility({seed,id,role:'jockey',age:50});
+  if(a.peakAge>=24&&a.peakAge<=26)peak25++;
+  if(a.peakAge>=34&&a.peakAge<=37)peak35++;
+  if(a.peakAge>=40)peak40++;
+  assert.ok(valid(a)&&valid(m)&&valid(senior));
+  assert.equal(senior.current,senior.potential);
+  assert.equal(senior.currentStars,senior.potentialStars);
+  assert.ok(a.peakAge<=42.5);
+ }
+ assert.ok(peak25>=300&&peak35>=500&&peak40>=100);
+});
+
+test('opening-world foals derive maturation traits from source-linked breeding records',()=>{
+ for(const i of [267,290,345,500,800,6000,32000,75000,87499]){
+  const h=world.horseAt(i);
+  assert.equal(h.ability.pedigreeMaturity.sireId,h.sireId);
+  assert.equal(h.ability.pedigreeMaturity.damId,h.damId);
+  assert.equal(h.ability.modelRevision,'INDIVIDUAL_MATURITY_PEDIGREE_V2');
+  assert.ok(Math.abs(h.attributes.maturation_curve-(Math.round(
+   Math.min(.99,Math.max(.01,(7.8-h.ability.peakAge)/6))*10000)/10000))<.0001);
+  const future=evaluateAgeAbility(h.ability,h.ability.peakAge+1);
+  assert.equal(future.peakAge,h.ability.peakAge);
+  assert.equal(future.peakCeiling,h.ability.peakCeiling);
+ }
+});
