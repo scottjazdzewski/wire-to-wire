@@ -7,7 +7,7 @@ const source=readFileSync('public/next/1999-ui-source.mjs','utf8');
 const js=readFileSync('public/next/next.js','utf8');
 const html=readFileSync('public/next/index.html','utf8');
 const context={window:{__WTW_NEXT__:{paint(){}}},readLocal1999World};
-vm.runInNewContext(source.replace(/^import\s+\{readLocal1999World\}\s+from\s+'\/1999\/engine\/local-api.mjs';\s*$/m,''),context,{timeout:20000});
+vm.runInNewContext(source.replace(/^import\s+\{readLocal1999World\}\s+from\s+'\/1999\/engine\/local-api.mjs(?:\?[^']+)?';\s*$/m,''),context,{timeout:20000});
 const ui=context.window.__WTW_1999_UI_DATA__;
 test('1999 source data is mounted behind unchanged existing management UI',()=>{
  assert.ok(ui);
@@ -40,6 +40,9 @@ test('all department rosters have usable test records on original screens',()=>{
   assert.ok(ui.departmentRows('Personnel','Owners').every(x=>x.principal&&x._testAttrs));
  assert.equal(ui.departmentRows('Personnel','Trainers').length,4200);
  assert.equal(ui.departmentRows('Personnel','Jockeys').length,1800);
+ const jockeys=ui.departmentRows('Personnel','Jockeys');
+ assert.ok(jockeys.every(p=>p._testAbility&&p.ca===String(p._testAbility.currentStars)&&p.pa===String(p._testAbility.potentialStars)));
+ assert.ok(jockeys.filter(p=>Number(p.age)>=32&&Number(p.age)<=40).every(p=>Number(p.pa)-Number(p.ca)<=1));
  assert.ok(ui.departmentRows('Personnel','Staff').length>=1000);
   assert.ok(ui.departmentRows('Personnel','Staff').every(x=>!['groom','exercise_rider'].includes(x.role)));
  assert.equal(ui.departmentRows('Facilities','Overview').length,5234);
