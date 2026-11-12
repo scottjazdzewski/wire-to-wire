@@ -4,10 +4,16 @@
  * The existing game authority, IDs, and career-save schema are unchanged. */
 import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-20261112-r11';
 
-const q=(path,args='')=>readLocal1999World(path+'?seed=19990101&mode=CANON_ANCHORED_TEST'+(args?'&'+args:''));
+const worldOptions=new URLSearchParams(self.location?.search||'');
+const population=worldOptions.get('population')||'325000';
+const seed=worldOptions.get('seed')||'19990101';
+const mode=worldOptions.get('mode')||'CANON_ANCHORED_TEST';
+const queryOptions='seed='+encodeURIComponent(seed)+'&mode='+encodeURIComponent(mode)+
+ '&population='+encodeURIComponent(population);
+const q=(path,args='')=>readLocal1999World(path+'?'+queryOptions+(args?'&'+args:''));
 const pageSize=100,yieldTask=()=>new Promise(resolve=>setTimeout(resolve,0));
 const counts=q('/api/1999/sim/overview').counts;
-const population=counts.worldHorses||counts.horses;
+const populationCount=counts.worldHorses||counts.horses;
 let records=[],loaded=0,ready=false,loading=null,labels=null;
 let pending=null,draining=false,lastSort=null;
 const cachedTraits=new Map();
@@ -18,14 +24,14 @@ async function buildIndex(){
  if(ready)return;
  if(loading)return loading;
  loading=(async()=>{
-  while(loaded<population){
+  while(loaded<populationCount){
    const response=q('/api/1999/sim/world-horse-directory',
-    'offset='+loaded+'&limit='+Math.min(pageSize,population-loaded));
+    'offset='+loaded+'&limit='+Math.min(pageSize,populationCount-loaded));
    const items=response.items||[];
    if(!items.length)throw Error('World index ended at '+loaded+' of '+population);
    records.push(...items);loaded+=items.length;
-   if(loaded%10000<pageSize||loaded===population)
-    self.postMessage({type:'progress',loaded,total:population});
+   if(loaded%10000<pageSize||loaded===populationCount)
+    self.postMessage({type:'progress',loaded,total:populationCount});
    if(loaded%1000<pageSize)await yieldTask();
   }
   const mapFor=(type,count)=>{
@@ -41,7 +47,7 @@ async function buildIndex(){
    tracks:mapFor('tracks',counts.tracks)
   };
   ready=true;
-  self.postMessage({type:'index-ready',loaded,total:population});
+  self.postMessage({type:'index-ready',loaded,total:populationCount});
  })();
  return loading;
 }
@@ -59,19 +65,19 @@ async function ensureTrait(key){
  if(!state){
   // Keep only two selected traits: 325k x 53 full vectors are never cached.
   if(cachedTraits.size>=2)cachedTraits.delete(cachedTraits.keys().next().value);
-  state={progress:0,values:new Array(population),done:false};
+  state={progress:0,values:new Array(populationCount,done:false};
   cachedTraits.set(key,state);
  }
  if(state.done)return true;
- while(state.progress<population){
+ while(state.progress<populationCount){
   if(pending&&pending.query.attributeKey!==key)return false;
   const page=q('/api/1999/sim/world-horse-attribute',
    'key='+encodeURIComponent(key)+'&offset='+state.progress+'&limit=100');
   if(!page.items?.length)throw Error('Attribute index stopped at '+state.progress);
   for(const item of page.items)state.values[item.index]=item.value;
   state.progress+=page.items.length;
-  if(state.progress%10000<100||state.progress===population)
-   self.postMessage({type:'progress',loaded:state.progress,total:population,attributeKey:key});
+  if(state.progress%10000<100||state.progress===populationCount)
+   self.postMessage({type:'progress',loaded:state.progress,total:populationCount,attributeKey:key});
   if(state.progress%1000<100)await yieldTask();
  }
  state.done=true;lastSort=null;
