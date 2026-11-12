@@ -4,6 +4,7 @@
  * All generated values are TEST state, canonical values retain source authority.
  */
 import {trackProgram1999} from '/next/1999-track-program.mjs';
+import {WTW_ALTERNATE_STAKES_1999} from '/next/1999-alternate-stakes.mjs';
 import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-20261112-r4';
 const q=(route,extras='')=>readLocal1999World(route+(route.includes('?')?'&':'?')+'seed=19990101&mode=CANON_ANCHORED_TEST'+(extras?'&'+extras:''));
 const allPages=(route,total)=>{const rows=[];for(let offset=0;offset<total;offset+=100){const page=q(route,'offset='+offset+'&limit=100');rows.push(...(page.items||[]));}return rows;};
@@ -116,14 +117,14 @@ function makeDepartmentRows(section,page,context={}){
   if(page==='Overview')return meets==='mine'?[]:null;
   if(page==='Entries'||page==='Results')return []; // No committed 1999 runners/results.
   if(page==='Stakes'){
-   const stakes=get('stakes','/api/1999/calendar',93);
+   const stakes=allStakes1999;
    return stakes.filter(r=>r.localDate>=date).map(r=>({
     _kind:'race',_name:r.name,_track:r.trackName,_iso:r.localDate,_raceId:r.id,_raceData:r,
     date:r.localDate,track:r.trackName,race:r.name,
     class:r.status||r.division||'STAKES',surface:r.surface||'',
     distance:r.distanceF?String(r.distanceF)+'f':'',
     purse:r.purse1999?money(r.purse1999):'',horse:'',base:'',ship:'',
-    jockey:'',trainer:'',ready:'',status:'1999 CANON SCHEDULE · NOT ENTERED'}));
+    jockey:'',trainer:'',ready:'',status:r.canonical===false?'WTW 1999 GAME STAKES · NOT ENTERED':'1999 CANON SCHEDULE · NOT ENTERED'}));
   }
   if(page==='Race Planning'){
    const tracks=get('racing-tracks','/api/1999/sim/tracks',134);
@@ -255,8 +256,9 @@ function worldHorsePage(offset=0,limit=20,filter=''){
   isPageFilter:Boolean(needle),pageStart:start};
 }
 const sourceStakes=get('1999-source-stakes','/api/1999/calendar',93);
-const stakesForTrack=name=>sourceStakes.filter(r=>r.trackName===name);
-const findStake=id=>sourceStakes.find(r=>r.id===id)||null;
+const allStakes1999=[...sourceStakes,...WTW_ALTERNATE_STAKES_1999];
+const stakesForTrack=name=>allStakes1999.filter(r=>r.trackName===name);
+const findStake=id=>allStakes1999.find(r=>r.id===id)||null;
 const findRace=id=>{
  const stake=findStake(id);if(stake)return stake;
  const test=/^R-TEST-1999-(\d{8})-(\d{3})-(\d{2})$/.exec(String(id||''));

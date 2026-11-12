@@ -752,7 +752,7 @@ function world1999Key(kind,item){
 function world1999Entries(){
  if(!world1999Data)return [];
  return [
-  ...world1999Data.tracks.filter(t=>['OPEN','OPEN_1999'].includes(t.operating)).map(t=>({
+  ...world1999Data.tracks.filter(t=>['OPEN','OPEN_1999'].includes(t.operating)||window.__WTW_1999_UI_DATA__?.trackProgramById?.(t.id)?.trackOperating==='OPEN_1999').map(t=>({
    kind:'track',name:t.name,detail:t.region||t.circuit||'',location:t.location||'',
    canonicalId:t.id,worldKey:world1999Key('track',t),_world:t
   })),

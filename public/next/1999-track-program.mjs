@@ -3236,274 +3236,582 @@ export const TRACK_PROGRAM_1999=Object.freeze({
  "T-0103": {
   "id": "T-0103",
   "name": "Jerome Park",
-  "surfaces": "Historical course · not active in 1999",
-  "meets": [],
-  "meetWindow": "",
-  "raceDays": "—",
-  "preferredDays": "—",
-  "dayPattern": [],
-  "basis": "HISTORICAL_ONLY_NO_1999_MEET",
+  "surfaces": "Dirt",
+  "meets": [
+   [
+    "05-01",
+    "06-13"
+   ],
+   [
+    "09-10",
+    "10-10"
+   ]
+  ],
+  "meetWindow": "May 1–Jun 13; Sep 10–Oct 10",
+  "raceDays": "~43",
+  "preferredDays": "Thu–Sun",
+  "dayPattern": [
+   3,
+   4,
+   5,
+   6
+  ],
+  "basis": "WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION",
   "sourceUrl": null,
   "stakesIds": [],
   "stakesDates": [],
-  "trackOperating": "HISTORICAL_ONLY",
-  "surfaceStatus": "HISTORIC_NOT_VERIFIED",
-  "calendarExceptions": null
+  "trackOperating": "OPEN_1999",
+  "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
+  "calendarExceptions": null,
+  "realWorldClosure": "CLOSED_BEFORE_1999",
+  "wtwFeatureNames": [
+   "Jerome Park Spring Handicap",
+   "Jerome Park Autumn Cup"
+  ]
  },
  "T-0104": {
   "id": "T-0104",
   "name": "Morris Park",
-  "surfaces": "Historical course · not active in 1999",
-  "meets": [],
-  "meetWindow": "",
-  "raceDays": "—",
-  "preferredDays": "—",
-  "dayPattern": [],
-  "basis": "HISTORICAL_ONLY_NO_1999_MEET",
+  "surfaces": "Dirt",
+  "meets": [
+   [
+    "03-20",
+    "04-25"
+   ],
+   [
+    "10-01",
+    "11-07"
+   ]
+  ],
+  "meetWindow": "Mar 20–Apr 25; Oct 1–Nov 7",
+  "raceDays": "~43",
+  "preferredDays": "Thu–Sun",
+  "dayPattern": [
+   3,
+   4,
+   5,
+   6
+  ],
+  "basis": "WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION",
   "sourceUrl": null,
   "stakesIds": [],
   "stakesDates": [],
-  "trackOperating": "HISTORICAL_ONLY",
-  "surfaceStatus": "HISTORIC_NOT_VERIFIED",
-  "calendarExceptions": null
+  "trackOperating": "OPEN_1999",
+  "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
+  "calendarExceptions": null,
+  "realWorldClosure": "CLOSED_BEFORE_1999",
+  "wtwFeatureNames": [
+   "Morris Park Spring Classic",
+   "Morris Park Autumn Invitational"
+  ]
  },
  "T-0105": {
   "id": "T-0105",
   "name": "Gravesend Racetrack",
-  "surfaces": "Historical course · not active in 1999",
-  "meets": [],
-  "meetWindow": "",
-  "raceDays": "—",
-  "preferredDays": "—",
-  "dayPattern": [],
-  "basis": "HISTORICAL_ONLY_NO_1999_MEET",
+  "surfaces": "Dirt",
+  "meets": [
+   [
+    "07-01",
+    "08-15"
+   ],
+   [
+    "10-24",
+    "11-27"
+   ]
+  ],
+  "meetWindow": "Jul 1–Aug 15; Oct 24–Nov 27",
+  "raceDays": "~47",
+  "preferredDays": "Thu–Sun",
+  "dayPattern": [
+   3,
+   4,
+   5,
+   6
+  ],
+  "basis": "WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION",
   "sourceUrl": null,
   "stakesIds": [],
   "stakesDates": [],
-  "trackOperating": "HISTORICAL_ONLY",
-  "surfaceStatus": "HISTORIC_NOT_VERIFIED",
-  "calendarExceptions": null
+  "trackOperating": "OPEN_1999",
+  "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
+  "calendarExceptions": null,
+  "realWorldClosure": "CLOSED_BEFORE_1999",
+  "wtwFeatureNames": [
+   "Gravesend Summer Mile",
+   "Gravesend Autumn Handicap"
+  ]
  },
  "T-0106": {
   "id": "T-0106",
   "name": "Sheepshead Bay Race Track",
-  "surfaces": "Historical course · not active in 1999",
-  "meets": [],
-  "meetWindow": "",
-  "raceDays": "—",
-  "preferredDays": "—",
-  "dayPattern": [],
-  "basis": "HISTORICAL_ONLY_NO_1999_MEET",
+  "surfaces": "Dirt · Turf",
+  "meets": [
+   [
+    "05-15",
+    "06-27"
+   ],
+   [
+    "08-01",
+    "09-06"
+   ]
+  ],
+  "meetWindow": "May 15–Jun 27; Aug 1–Sep 6",
+  "raceDays": "~45",
+  "preferredDays": "Thu–Sun",
+  "dayPattern": [
+   3,
+   4,
+   5,
+   6
+  ],
+  "basis": "WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION",
   "sourceUrl": null,
   "stakesIds": [],
   "stakesDates": [],
-  "trackOperating": "HISTORICAL_ONLY",
-  "surfaceStatus": "HISTORIC_NOT_VERIFIED",
-  "calendarExceptions": null
+  "trackOperating": "OPEN_1999",
+  "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
+  "calendarExceptions": null,
+  "realWorldClosure": "CLOSED_BEFORE_1999",
+  "wtwFeatureNames": [
+   "Sheepshead Bay Turf Cup",
+   "Sheepshead Bay September Classic"
+  ]
  },
  "T-0107": {
   "id": "T-0107",
   "name": "Jamaica Race Course",
-  "surfaces": "Historical course · not active in 1999",
-  "meets": [],
-  "meetWindow": "",
-  "raceDays": "—",
-  "preferredDays": "—",
-  "dayPattern": [],
-  "basis": "HISTORICAL_ONLY_NO_1999_MEET",
+  "surfaces": "Dirt",
+  "meets": [
+   [
+    "01-01",
+    "03-15"
+   ],
+   [
+    "11-01",
+    "12-31"
+   ]
+  ],
+  "meetWindow": "Jan 1–Mar 15; Nov 1–Dec 31",
+  "raceDays": "~96",
+  "preferredDays": "Wed–Sun",
+  "dayPattern": [
+   0,
+   3,
+   4,
+   5,
+   6
+  ],
+  "basis": "WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION",
   "sourceUrl": null,
   "stakesIds": [],
   "stakesDates": [],
-  "trackOperating": "HISTORICAL_ONLY",
-  "surfaceStatus": "HISTORIC_NOT_VERIFIED",
-  "calendarExceptions": null
+  "trackOperating": "OPEN_1999",
+  "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
+  "calendarExceptions": null,
+  "realWorldClosure": "CLOSED_BEFORE_1999",
+  "wtwFeatureNames": [
+   "Jamaica Winter Handicap",
+   "Jamaica Autumn Classic"
+  ]
  },
  "T-0108": {
   "id": "T-0108",
   "name": "Empire City Race Track",
-  "surfaces": "Historical course · not active in 1999",
-  "meets": [],
-  "meetWindow": "",
-  "raceDays": "—",
-  "preferredDays": "—",
-  "dayPattern": [],
-  "basis": "HISTORICAL_ONLY_NO_1999_MEET",
+  "surfaces": "Dirt",
+  "meets": [
+   [
+    "01-15",
+    "03-07"
+   ],
+   [
+    "11-13",
+    "12-31"
+   ]
+  ],
+  "meetWindow": "Jan 15–Mar 7; Nov 13–Dec 31",
+  "raceDays": "~73",
+  "preferredDays": "Wed–Sun",
+  "dayPattern": [
+   0,
+   3,
+   4,
+   5,
+   6
+  ],
+  "basis": "WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION",
   "sourceUrl": null,
   "stakesIds": [],
   "stakesDates": [],
-  "trackOperating": "HISTORICAL_ONLY",
-  "surfaceStatus": "HISTORIC_NOT_VERIFIED",
-  "calendarExceptions": null
+  "trackOperating": "OPEN_1999",
+  "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
+  "calendarExceptions": null,
+  "realWorldClosure": "CLOSED_BEFORE_1999",
+  "wtwFeatureNames": [
+   "Empire City Winter Cup",
+   "Empire City Fall Championship"
+  ]
  },
  "T-0109": {
   "id": "T-0109",
   "name": "Kentucky Association Track",
-  "surfaces": "Historical course · not active in 1999",
-  "meets": [],
-  "meetWindow": "",
-  "raceDays": "—",
-  "preferredDays": "—",
-  "dayPattern": [],
-  "basis": "HISTORICAL_ONLY_NO_1999_MEET",
+  "surfaces": "Dirt",
+  "meets": [
+   [
+    "05-07",
+    "06-20"
+   ],
+   [
+    "08-19",
+    "09-26"
+   ]
+  ],
+  "meetWindow": "May 7–Jun 20; Aug 19–Sep 26",
+  "raceDays": "~49",
+  "preferredDays": "Thu–Sun",
+  "dayPattern": [
+   3,
+   4,
+   5,
+   6
+  ],
+  "basis": "WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION",
   "sourceUrl": null,
   "stakesIds": [],
   "stakesDates": [],
-  "trackOperating": "HISTORICAL_ONLY",
-  "surfaceStatus": "HISTORIC_NOT_VERIFIED",
-  "calendarExceptions": null
+  "trackOperating": "OPEN_1999",
+  "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
+  "calendarExceptions": null,
+  "realWorldClosure": "CLOSED_BEFORE_1999",
+  "wtwFeatureNames": [
+   "Kentucky Association Spring Mile",
+   "Lexington Heritage Handicap"
+  ]
  },
  "T-0110": {
   "id": "T-0110",
   "name": "Chester Park",
-  "surfaces": "Historical course · not active in 1999",
-  "meets": [],
-  "meetWindow": "",
-  "raceDays": "—",
-  "preferredDays": "—",
-  "dayPattern": [],
-  "basis": "HISTORICAL_ONLY_NO_1999_MEET",
+  "surfaces": "Dirt",
+  "meets": [
+   [
+    "04-09",
+    "06-20"
+   ],
+   [
+    "09-03",
+    "10-24"
+   ]
+  ],
+  "meetWindow": "Apr 9–Jun 20; Sep 3–Oct 24",
+  "raceDays": "~72",
+  "preferredDays": "Thu–Sun",
+  "dayPattern": [
+   3,
+   4,
+   5,
+   6
+  ],
+  "basis": "WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION",
   "sourceUrl": null,
   "stakesIds": [],
   "stakesDates": [],
-  "trackOperating": "HISTORICAL_ONLY",
-  "surfaceStatus": "HISTORIC_NOT_VERIFIED",
-  "calendarExceptions": null
+  "trackOperating": "OPEN_1999",
+  "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
+  "calendarExceptions": null,
+  "realWorldClosure": "CLOSED_BEFORE_1999",
+  "wtwFeatureNames": [
+   "Chester Park Spring Classic",
+   "Chester Park Autumn Cup"
+  ]
  },
  "T-0111": {
   "id": "T-0111",
   "name": "Maple Heights Park",
-  "surfaces": "Historical course · not active in 1999",
-  "meets": [],
-  "meetWindow": "",
-  "raceDays": "—",
-  "preferredDays": "—",
-  "dayPattern": [],
-  "basis": "HISTORICAL_ONLY_NO_1999_MEET",
+  "surfaces": "Dirt",
+  "meets": [
+   [
+    "05-07",
+    "07-18"
+   ],
+   [
+    "08-20",
+    "10-10"
+   ]
+  ],
+  "meetWindow": "May 7–Jul 18; Aug 20–Oct 10",
+  "raceDays": "~72",
+  "preferredDays": "Thu–Sun",
+  "dayPattern": [
+   3,
+   4,
+   5,
+   6
+  ],
+  "basis": "WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION",
   "sourceUrl": null,
   "stakesIds": [],
   "stakesDates": [],
-  "trackOperating": "HISTORICAL_ONLY",
-  "surfaceStatus": "HISTORIC_NOT_VERIFIED",
-  "calendarExceptions": null
+  "trackOperating": "OPEN_1999",
+  "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
+  "calendarExceptions": null,
+  "realWorldClosure": "CLOSED_BEFORE_1999",
+  "wtwFeatureNames": [
+   "Maple Heights Summer Stakes",
+   "Maple Heights Fall Handicap"
+  ]
  },
  "T-0112": {
   "id": "T-0112",
   "name": "Bainbridge Park",
-  "surfaces": "Historical course · not active in 1999",
-  "meets": [],
-  "meetWindow": "",
-  "raceDays": "—",
-  "preferredDays": "—",
-  "dayPattern": [],
-  "basis": "HISTORICAL_ONLY_NO_1999_MEET",
+  "surfaces": "Dirt",
+  "meets": [
+   [
+    "04-30",
+    "06-27"
+   ],
+   [
+    "09-03",
+    "11-07"
+   ]
+  ],
+  "meetWindow": "Apr 30–Jun 27; Sep 3–Nov 7",
+  "raceDays": "~72",
+  "preferredDays": "Thu–Sun",
+  "dayPattern": [
+   3,
+   4,
+   5,
+   6
+  ],
+  "basis": "WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION",
   "sourceUrl": null,
   "stakesIds": [],
   "stakesDates": [],
-  "trackOperating": "HISTORICAL_ONLY",
-  "surfaceStatus": "HISTORIC_NOT_VERIFIED",
-  "calendarExceptions": null
+  "trackOperating": "OPEN_1999",
+  "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
+  "calendarExceptions": null,
+  "realWorldClosure": "CLOSED_BEFORE_1999",
+  "wtwFeatureNames": [
+   "Bainbridge Park Spring Cup",
+   "Bainbridge Park Autumn Mile"
+  ]
  },
  "T-0113": {
   "id": "T-0113",
   "name": "Jefferson Park",
-  "surfaces": "Historical course · not active in 1999",
-  "meets": [],
-  "meetWindow": "",
-  "raceDays": "—",
-  "preferredDays": "—",
-  "dayPattern": [],
-  "basis": "HISTORICAL_ONLY_NO_1999_MEET",
+  "surfaces": "Dirt",
+  "meets": [
+   [
+    "01-02",
+    "04-04"
+   ],
+   [
+    "10-15",
+    "12-31"
+   ]
+  ],
+  "meetWindow": "Jan 2–Apr 4; Oct 15–Dec 31",
+  "raceDays": "~123",
+  "preferredDays": "Wed–Sun",
+  "dayPattern": [
+   0,
+   3,
+   4,
+   5,
+   6
+  ],
+  "basis": "WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION",
   "sourceUrl": null,
   "stakesIds": [],
   "stakesDates": [],
-  "trackOperating": "HISTORICAL_ONLY",
-  "surfaceStatus": "HISTORIC_NOT_VERIFIED",
-  "calendarExceptions": null
+  "trackOperating": "OPEN_1999",
+  "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
+  "calendarExceptions": null,
+  "realWorldClosure": "CLOSED_BEFORE_1999",
+  "wtwFeatureNames": [
+   "Jefferson Park Winter Classic",
+   "Jefferson Park Holiday Handicap"
+  ]
  },
  "T-0114": {
   "id": "T-0114",
   "name": "Old Woodbine / Greenwood",
-  "surfaces": "Historical course · not active in 1999",
-  "meets": [],
-  "meetWindow": "",
-  "raceDays": "—",
-  "preferredDays": "—",
-  "dayPattern": [],
-  "basis": "HISTORICAL_ONLY_NO_1999_MEET",
+  "surfaces": "Dirt",
+  "meets": [
+   [
+    "04-23",
+    "07-11"
+   ],
+   [
+    "08-27",
+    "11-14"
+   ]
+  ],
+  "meetWindow": "Apr 23–Jul 11; Aug 27–Nov 14",
+  "raceDays": "~92",
+  "preferredDays": "Thu–Sun",
+  "dayPattern": [
+   3,
+   4,
+   5,
+   6
+  ],
+  "basis": "WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION",
   "sourceUrl": null,
   "stakesIds": [],
   "stakesDates": [],
-  "trackOperating": "HISTORICAL_ONLY",
-  "surfaceStatus": "HISTORIC_NOT_VERIFIED",
-  "calendarExceptions": null
+  "trackOperating": "OPEN_1999",
+  "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
+  "calendarExceptions": null,
+  "realWorldClosure": "CLOSED_BEFORE_1999",
+  "wtwFeatureNames": [
+   "Greenwood Spring Mile",
+   "Old Woodbine Autumn Cup"
+  ]
  },
  "T-0115": {
   "id": "T-0115",
   "name": "Aurora Downs",
-  "surfaces": "Historical course · not active in 1999",
-  "meets": [],
-  "meetWindow": "",
-  "raceDays": "—",
-  "preferredDays": "—",
-  "dayPattern": [],
-  "basis": "HISTORICAL_ONLY_NO_1999_MEET",
+  "surfaces": "Dirt",
+  "meets": [
+   [
+    "04-02",
+    "06-27"
+   ],
+   [
+    "08-20",
+    "11-28"
+   ]
+  ],
+  "meetWindow": "Apr 2–Jun 27; Aug 20–Nov 28",
+  "raceDays": "~108",
+  "preferredDays": "Thu–Sun",
+  "dayPattern": [
+   3,
+   4,
+   5,
+   6
+  ],
+  "basis": "WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION",
   "sourceUrl": null,
   "stakesIds": [],
   "stakesDates": [],
-  "trackOperating": "HISTORICAL_ONLY",
-  "surfaceStatus": "HISTORIC_NOT_VERIFIED",
-  "calendarExceptions": null
+  "trackOperating": "OPEN_1999",
+  "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
+  "calendarExceptions": null,
+  "realWorldClosure": "CLOSED_BEFORE_1999",
+  "wtwFeatureNames": [
+   "Aurora Downs Spring Handicap",
+   "Aurora Downs Fall Classic"
+  ]
  },
  "T-0116": {
   "id": "T-0116",
   "name": "Cranwood Park",
-  "surfaces": "Historical course · not active in 1999",
-  "meets": [],
-  "meetWindow": "",
-  "raceDays": "—",
-  "preferredDays": "—",
-  "dayPattern": [],
-  "basis": "HISTORICAL_ONLY_NO_1999_MEET",
+  "surfaces": "Dirt",
+  "meets": [
+   [
+    "04-01",
+    "05-30"
+   ],
+   [
+    "09-10",
+    "10-31"
+   ]
+  ],
+  "meetWindow": "Apr 1–May 30; Sep 10–Oct 31",
+  "raceDays": "~65",
+  "preferredDays": "Thu–Sun",
+  "dayPattern": [
+   3,
+   4,
+   5,
+   6
+  ],
+  "basis": "WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION",
   "sourceUrl": null,
   "stakesIds": [],
   "stakesDates": [],
-  "trackOperating": "HISTORICAL_ONLY",
-  "surfaceStatus": "HISTORIC_NOT_VERIFIED",
-  "calendarExceptions": null
+  "trackOperating": "OPEN_1999",
+  "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
+  "calendarExceptions": null,
+  "realWorldClosure": "CLOSED_BEFORE_1999",
+  "wtwFeatureNames": [
+   "Cranwood Spring Invitational",
+   "Cranwood Fall Handicap"
+  ]
  },
  "T-0117": {
   "id": "T-0117",
   "name": "Randall Park",
-  "surfaces": "Historical course · not active in 1999",
-  "meets": [],
-  "meetWindow": "",
-  "raceDays": "—",
-  "preferredDays": "—",
-  "dayPattern": [],
-  "basis": "HISTORICAL_ONLY_NO_1999_MEET",
+  "surfaces": "Dirt",
+  "meets": [
+   [
+    "04-22",
+    "07-11"
+   ],
+   [
+    "08-06",
+    "10-31"
+   ]
+  ],
+  "meetWindow": "Apr 22–Jul 11; Aug 6–Oct 31",
+  "raceDays": "~97",
+  "preferredDays": "Thu–Sun",
+  "dayPattern": [
+   3,
+   4,
+   5,
+   6
+  ],
+  "basis": "WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION",
   "sourceUrl": null,
   "stakesIds": [],
   "stakesDates": [],
-  "trackOperating": "HISTORICAL_ONLY",
-  "surfaceStatus": "HISTORIC_NOT_VERIFIED",
-  "calendarExceptions": null
+  "trackOperating": "OPEN_1999",
+  "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
+  "calendarExceptions": null,
+  "realWorldClosure": "CLOSED_BEFORE_1999",
+  "wtwFeatureNames": [
+   "Randall Park Summer Stakes",
+   "Randall Park Autumn Cup"
+  ]
  },
  "T-0118": {
   "id": "T-0118",
   "name": "Latonia Race Track",
-  "surfaces": "Historical course · not active in 1999",
-  "meets": [],
-  "meetWindow": "",
-  "raceDays": "—",
-  "preferredDays": "—",
-  "dayPattern": [],
-  "basis": "HISTORICAL_ONLY_NO_1999_MEET",
+  "surfaces": "Dirt",
+  "meets": [
+   [
+    "01-01",
+    "03-21"
+   ],
+   [
+    "11-04",
+    "12-31"
+   ]
+  ],
+  "meetWindow": "Jan 1–Mar 21; Nov 4–Dec 31",
+  "raceDays": "~100",
+  "preferredDays": "Wed–Sun",
+  "dayPattern": [
+   0,
+   3,
+   4,
+   5,
+   6
+  ],
+  "basis": "WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION",
   "sourceUrl": null,
   "stakesIds": [],
   "stakesDates": [],
-  "trackOperating": "HISTORICAL_ONLY",
-  "surfaceStatus": "HISTORIC_NOT_VERIFIED",
-  "calendarExceptions": null
+  "trackOperating": "OPEN_1999",
+  "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
+  "calendarExceptions": null,
+  "realWorldClosure": "CLOSED_BEFORE_1999",
+  "wtwFeatureNames": [
+   "Latonia Winter Classic",
+   "Latonia Holiday Handicap"
+  ]
  },
  "IT-0001": {
   "id": "IT-0001",

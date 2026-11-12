@@ -13,7 +13,7 @@ const sexOK=(sex,horse)=>{
 };
 function render(race,ui){
  if(!race)return '<section class="ng-1999-race-file"><h2>Race source unavailable</h2><p>No record found. No race or eligibility details were invented.</p></section>';
- const id=String(race.id||''),proposal=id.startsWith('R-TEST-')||race.canonical===false;
+ const id=String(race.id||''),alternate=race.calendarBasis==='WTW_ALTERNATE_HISTORY_GAME_MODELED',proposal=id.startsWith('R-TEST-')||race.canonical===false;
  const name=race.name||race.race||race.conditions||('Race '+(race.number||'')),track=race.trackName||race.track||'';
  const date=race.localDate||race.date||'Not recorded';
  const age=known(race.ageRequirement,race.ageRestriction,race.ageCondition,race.eligibility?.ageRequirement);
@@ -66,7 +66,7 @@ function render(race,ui){
   ' All remain provisional: vet clearance, nominations, class exceptions, imposts, and entry deadlines must still be checked.</p>'+
   '<div class="ng-race-eligible-list">'+screened.map(row).join('')+'</div>';
  return '<section class="ng-1999-race-file"><header><div><small>'+
-   safe(proposal?'1999 SIMULATED CONDITION BOOK · NOT ENTERED':'1999 SOURCE STAKES · NOT YET RUN')+
+   safe(alternate?'WTW 1999 ALTERNATE-HISTORY STAKES · NOT YET RUN':proposal?'1999 SIMULATED CONDITION BOOK · NOT ENTERED':'1999 SOURCE STAKES · NOT YET RUN')+
    '</small><h2>'+safe(name)+'</h2><p>'+safe(track)+' · '+safe(date)+'</p></div>'+
    '<button data-ng="named-entity" data-kind="track" data-name="'+safe(track)+'">TRACK PROFILE ↗</button></header>'+
    '<div class="ng-race-file-grid"><section class="ng-race-file-panel"><h3>FULL AVAILABLE RACE CONDITIONS</h3>'+

@@ -61,11 +61,11 @@ function source(kind,record,ui){
   const location=d.location||[d.locality,d.region].filter(Boolean).join(', ')||'—';
   node.innerHTML='<div class="profileSubline">1999 Racecourse · '+safe(d.circuit||d.region||'')+'</div>'+
     field('Location',location)+field('Surfaces',d.surfaces||d.surface||'Not certified')+
-    field('Operating state',d.operating||'1999 schedule dependent')+
+    field('Operating state',d.trackOperating==='OPEN_1999'?'OPEN · 1999 WTW WORLD':d.operating||'1999 schedule dependent')+
     '<div class="meetBlock"><span>1999 MEET WINDOW</span><strong>'+safe(d.meetWindow||'Schedule dependent')+'</strong></div>'+
     '<div class="meetBlock"><span>RACE DAYS</span><strong>'+safe(d.raceDays||'Schedule dependent')+'</strong></div>'+
     '<div class="trackNote"><b>Preferred days</b><span>'+safe(d.preferredDays||'Not certified')+'</span></div>'+
-     '<div class="trackNote"><b>Meet evidence</b><span>'+safe(d.basis==='VERIFIED_1999_CALENDAR'?'1999 commission racing dates':d.basis==='APPROVED_WTW_1999_GAME_CALENDAR'?'Locked 1999 game calendar':d.basis==='HISTORICAL_ONLY_NO_1999_MEET'?'Historical-only venue':'Wire to Wire game model · not historically certified')+'</span></div>'+
+     '<div class="trackNote"><b>Meet evidence</b><span>'+safe(d.basis==='VERIFIED_1999_CALENDAR'?'1999 commission racing dates':d.basis==='APPROVED_WTW_1999_GAME_CALENDAR'?'Locked 1999 game calendar':d.basis==='WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION'?'WTW alternate-history racecourse · active modeled meet':d.basis==='HISTORICAL_ONLY_NO_1999_MEET'?'Historical-only venue':'Wire to Wire game model · not historically certified')+'</span></div>'+
     stakes.map(x=>{
       const grade=String(x.grade||x.grade1999||x.status||'').match(/(?:G|GRADE\s*)([123])/i);
       const gradeLabel=grade?'G'+grade[1]:(x.status||'Major Stakes');
@@ -74,7 +74,7 @@ function source(kind,record,ui){
         '<span>'+safe(x.localDate||x.date||'—')+'</span><span>'+safe(gradeLabel)+'</span><span>'+safe(purseLabel)+'</span></div>';
     }).join('')+
     panel('Track context',[d.realAnchor?'Source track geography preserved.':'WTW expanded-universe track.',
-      d.basis==='VERIFIED_1999_CALENDAR'?'1999 meet windows verified against source commission calendar.':d.basis==='HISTORICAL_ONLY_NO_1999_MEET'?'Historical course. No 1999 meet; no active races.':d.basis==='APPROVED_WTW_1999_GAME_CALENDAR'?'Meets are locked in game canon, not independently certified as an actual 1999 calendar.':'1999 meets are game models, not historically source-certified.']);
+      d.basis==='VERIFIED_1999_CALENDAR'?'1999 meet windows verified against source commission calendar.':d.basis==='WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION'?'This track survives and races in the WTW alternate 1999 world. Meet dates and new stakes are modeled, not historical facts.':d.basis==='HISTORICAL_ONLY_NO_1999_MEET'?'Historical course. No 1999 meet; no active races.':d.basis==='APPROVED_WTW_1999_GAME_CALENDAR'?'Meets are locked in game canon, not independently certified as an actual 1999 calendar.':'1999 meets are game models, not historically source-certified.']);
  }
  return {node,route:{kicker:kind==='horse'?'Horse Profile':'Track Profile',title:name}};
 }

@@ -34,14 +34,18 @@ test('all 93 canonical stakes remain ID-linked inside their host 1999 meet windo
  assert.equal(Object.values(TRACK_PROGRAM_1999).reduce((a,p)=>a+p.stakesIds.length,0),93);
 });
 
-test('closed historic tracks have no future 1999 racing calendars',()=>{
- const closed=Object.values(TRACK_PROGRAM_1999).filter(x=>x.trackOperating==='HISTORICAL_ONLY');
- assert.equal(closed.length,16);
- for(const p of closed){
-  assert.deepEqual(p.meets,[]);
-  assert.deepEqual(p.stakesIds,[]);
-  assert.equal(trackMeetOpen1999(p.id,'1999-06-05'),false);
-  assert.equal(trackCardSurface1999(p.id),null);
+test('every North American course operates in the WTW 1999 alternative universe',()=>{
+ const northAmerican=Object.values(TRACK_PROGRAM_1999).filter(x=>x.id.startsWith('T-'));
+ assert.equal(northAmerican.length,118);
+ assert.equal(northAmerican.filter(x=>x.trackOperating==='OPEN_1999').length,118);
+ const revived=northAmerican.filter(x=>x.basis==='WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION');
+ assert.equal(revived.length,16);
+ for(const p of revived){
+  assert.ok(p.meets.length>=2,p.name+' missing revived meet');
+  assert.ok(p.dayPattern.length>=4,p.name+' missing race-day pattern');
+  assert.ok(['Dirt','Dirt · Turf','Turf'].includes(p.surfaces),p.name+' unsupported course');
+  assert.equal(p.trackOperating,'OPEN_1999');
+  assert.ok(p.meets.some(([a,b])=>{for(let d=Date.parse('1999-'+a+'T12:00:00Z'),end=Date.parse('1999-'+b+'T12:00:00Z');d<=end;d+=86400000){if(trackMeetOpen1999(p.id,new Date(d).toISOString().slice(0,10)))return true;}return false;}),p.name+' no racing dates');
  }
 });
 
