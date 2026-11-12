@@ -10,6 +10,7 @@ on:
       - "public/next/1999-bootstrap.js"
       - "public/next/1999-ui-source.mjs"
       - "public/next/next.js"
+      - "scripts/1999-management-browser-smoke.sh"
       - "src/worker.js"
       - "tests/1999-*.test.mjs"
       - ".github/workflows/1999-source-integration.yml"
@@ -49,3 +50,19 @@ jobs:
           node --check public/1999/engine/local-api.mjs
       - name: Jan 1 source and OFFLINE browser population verification
         run: node --test tests/1999-opening-world.test.mjs tests/1999-entry-gate.test.mjs tests/1999-full-universe.test.mjs tests/1999-test-clock.test.mjs tests/1999-browser-offline.test.mjs tests/1999-full-world-api.test.mjs tests/1999-management-ui-restore.test.mjs tests/1999-management-screen-data.test.mjs
+
+  management-1999-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify approved management UI boots with 1999 data in Chromium
+        run: bash scripts/1999-management-browser-smoke.sh
+      - name: Save browser probe output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-1999-management-browser-qa
+          path: visual-audit/1999/
+          retention-days: 7
+          if-no-files-found: warn
