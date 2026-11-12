@@ -223,7 +223,11 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const quality=clamp((ageAbility.current*.55+obj.reputation.overall*.45)/100,0,1);
   const market=.88+unit(seed,id+':contract-negotiation')*.24;
   const dayRate=money((38+Math.pow(quality,2)*145+Math.sqrt(slots)*1.3)*market);
-  const annualBaseSalary=money((dayRate*220)+Math.min(75000,slots*280));
+  // This is estimated annual professional fee income, not a guaranteed
+  // employee salary or total barn revenue. Retainers depend on quality and
+  // roster demand; day rates are charged to individual horses separately.
+  const annualBaseSalary=money((32000+190000*Math.pow(quality,2.4)+
+    3000*Math.sqrt(slots))*market);
   const winShareRate=round(.085+.025*quality+unit(seed,id+':purse-negotiation')*.01);
   obj.annualBaseSalary=annualBaseSalary;
   obj.compensation={role:'TRAINER',basis:'1999_TEST_NEGOTIATED_DAY_FEES_AND_PURSE',
@@ -397,8 +401,9 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const jockeyWinRate=round(.09+.02*quality);
   // Jockey compensation is not a guaranteed salary. Gross projection includes
   // the winning-place/show commission and mount fee opportunity assumptions.
-  const jockeyGross=money((160+Math.round(460*quality))*
-   (jockeyMountFee+48+310*Math.pow(quality,2))*(.86+.28*unit(seed,id+':bookings')));
+  const jockeyGross=money((180+Math.round(780*quality))*
+   (jockeyMountFee+75+1300*Math.pow(quality,3.5))*
+    (.86+.28*unit(seed,id+':bookings')));
   const compensation=jockey?{role:'JOCKEY',basis:'1999_TEST_MOUNT_AND_PURSE_FEES',
    mountFee:jockeyMountFee,winShareRate:jockeyWinRate,secondShareRate:.05,thirdShareRate:.05,
    projectedAnnualGross:jockeyGross,currency:'USD',notGuaranteedSalary:true}:null;
