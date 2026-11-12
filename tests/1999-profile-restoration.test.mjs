@@ -44,6 +44,14 @@ test('source-backed 1999 horse birthplace mapping uses Horse_ID and does not cla
  assert.equal(horse.node.dataset.foalingCountry,'');
  assert.match(horse.node.innerHTML,/Foaling year/);
  assert.match(horse.node.innerHTML,/Current stable/);
+ const rated=context.window.WTW1999Profiles.source('horse',{
+  id:'H-TEST-1999-0001',name:'Age Model Horse',age:3,sex:'COLT',_testGenerated:true,
+  _testAbility:{schema:'WTW_1999_AGE_ABILITY_V1',currentStars:2,potentialStars:5,careerStage:'DEVELOPING'}
+ },null);
+ assert.match(rated.node.innerHTML,/CURRENT ABILITY · TEST/);
+ assert.match(rated.node.innerHTML,/FUTURE POTENTIAL · TEST/);
+ assert.match(rated.node.innerHTML,/2\/5/);
+ assert.match(rated.node.innerHTML,/5\/5/);
 });
 
 test('race conditions show documented restrictions and explicitly provisional eligibility',()=>{
