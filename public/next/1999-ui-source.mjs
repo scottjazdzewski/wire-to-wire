@@ -157,7 +157,7 @@ function makeDepartmentRows(section,page,context={}){
   const base=page==='Trainers'?get('trainers','/api/1999/sim/trainers',4200):
    page==='Owners'?srcPeople.filter(p=>/owner|patron/i.test(p.role||'')):
    page==='Jockeys'||page==='Staff'||page==='Overview'?get('workforce','/api/1999/sim/people',17194):[];
-  return base.filter(p=>wanted==='all'?true:wanted==='staff'?!['trainer','jockey'].includes(p.role):wanted==='owner'?/owner|patron/i.test(p.role||''):p.role===wanted).map(p=>({
+  return base.filter(p=>wanted==='all'?true:wanted==='staff'?true:wanted==='owner'?/owner|patron/i.test(p.role||''):p.role===wanted).map(p=>({
    _kind:'person',_name:p.name,name:p.name,age:p.age||'',role:p.role||'',reputation:rep(p.reputation),
    ca:'',pa:'',specialty:'',morale:'',workload:'',salary:money(p.payrollAnnual||p.annualBaseSalary),
    contract:'',assignment:p.barnId||'',base:city(p.location||p.base),wins:'',_testOrigin:!srcPeople.some(source=>source.id===p.id)}));
