@@ -15,6 +15,10 @@ export const FULL_WORLD_SCHEMA='WTW_1999_FULL_SCALE_TEST_V1';
 export const HORSE_POPULATION=87500;
 export const CANON_HORSES=267;
 export const MODES=['CANON_ANCHORED_TEST','FULLY_FICTIONAL_TEST'];
+// Independent, deterministic TEST foaling hubs. Never substitute a 1999 race barn or
+// ownership base for a horse's birthplace, and never change source-locked foalings.
+const TEST_FOALING_HUBS=[["Lexington","Kentucky","United States","US"],["Versailles","Kentucky","United States","US"],["Paris","Kentucky","United States","US"],["Georgetown","Kentucky","United States","US"],["Midway","Kentucky","United States","US"],["Frankfort","Kentucky","United States","US"],["Ocala","Florida","United States","US"],["Gainesville","Florida","United States","US"],["Williston","Florida","United States","US"],["Wellington","Florida","United States","US"],["Saratoga Springs","New York","United States","US"],["Millbrook","New York","United States","US"],["Old Westbury","New York","United States","US"],["Laurel","Maryland","United States","US"],["Chesapeake City","Maryland","United States","US"],["Unionville","Pennsylvania","United States","US"],["New Bolton","Pennsylvania","United States","US"],["Middleburg","Virginia","United States","US"],["Upperville","Virginia","United States","US"],["Santa Ynez","California","United States","US"],["Bonsall","California","United States","US"],["Temecula","California","United States","US"],["Arcadia","Louisiana","United States","US"],["Carencro","Louisiana","United States","US"],["Weatherford","Texas","United States","US"],["Guthrie","Oklahoma","United States","US"],["Georgetown","Ontario","Canada","CA"],["Milton","Ontario","Canada","CA"],["Caledon","Ontario","Canada","CA"],["Kildare","County Kildare","Ireland","IE"],["Newbridge","County Kildare","Ireland","IE"],["Cashel","County Tipperary","Ireland","IE"],["Newmarket","Suffolk","England","GB-ENG"],["Lambourn","Berkshire","England","GB-ENG"],["Chantilly","Oise","France","FR"],["Deauville","Calvados","France","FR"],["Scone","New South Wales","Australia","AU"],["Cambridge","Waikato","New Zealand","NZ"],["San Isidro","Buenos Aires","Argentina","AR"],["Shizunai","Hokkaido","Japan","JP"]];
+
 const A=['Quiet','Silver','Cross','High','Small','Golden','West','Blue','North','Grand','River','Long','Fine','Little','Black','Red','White','Early','Late','Open','Second','True','Bold','Bright','Old','Wild','Brave','Fair','Deep','Steady','Autumn','Winter','Summer','Spring','First','Last','Hidden','Clear','Royal','Southern','Eastern','Western','Broken','Sweet','Dark','Plain','Soft','Strong','Lucky','Amber','Coastal','Morning','Evening','Bluebird','Overland','Free','Willow','Maple','Copper','Northern','Harbor','Stone'];
 const B=['Road','Window','River','Harbor','Sunday','Market','Garden','Coast','Day','Night','Friend','Mountain','Valley','Song','Hope','Memory','Light','Thunder','Stone','Hill','Crown','Map','Letter','Gold','Silver','Rain','Wind','Paper','Town','Home','Glass','Gate','Watch','Train','Seventh','Riddle','Field','Cloud','Sky','Moon','Sun','Lark','Chance','Grace','Whisper','Bell','Drift','Fire','Autumn','Pocket','April','June','Mabel','Ruth','Clara','Doyle','Fitch','Carson','Mercer','Kettle'];
 const C=['Again','Ahead','Today','Tomorrow','Morning','Tonight','Somewhere','Way','Reply','Ticket','Story','Time','Road','Mark','Rose','Light','Harbor','Echo','Day','Night','Dawn','Parade','Letter','Promise','Reason','Habit','Idea','Home','Song','Breeze','Measure','Ledger','Signal','Sunrise','Chance','Question','Crown','Rider','Course','Country','Money','Sunday','Quietly','Early','Forever','Later','North','West','East','South'];
@@ -204,7 +208,14 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const raced=age>=2&&sex!=='STALLION',starts=raced?Math.floor(unit(seed,id+'starts')*Math.max(2,(age-1)*6)):0;
   const wins=starts?Math.min(starts,Math.floor(starts*(.08+unit(seed,id+'win')*.27))):0;
   const tempName=canonicalNames.has(n.toLowerCase())?n+' from '+FAMILY[i%FAMILY.length]:n;
-  const horse={id,name:tempName,nameStatus:'TEST_RENAME_ALLOWED',foalYear,ageAtOpening:age,sex,
+  const testFoaling=TEST_FOALING_HUBS[hash(seed,id+':foaling-geography')%TEST_FOALING_HUBS.length];
+  // An explicitly modeled birthplace is distinct from the horse's current 1999 barn.
+  const foalingGeography={locality:testFoaling[0],region:testFoaling[1],
+   country:testFoaling[2],countryCode:testFoaling[3],authority:'SIMULATED_1999_TEST_BIRTHPLACE'};
+  const foalMonth=1+hash(seed,id+':foaling-month')%6;
+  const foalDay=1+hash(seed,id+':foaling-day')%28;
+  const dateOfBirth=foalYear+'-'+pad(foalMonth,2)+'-'+pad(foalDay,2);
+  const horse={id,name:tempName,nameStatus:'TEST_RENAME_ALLOWED',foalYear,ageAtOpening:age,sex,dateOfBirth,foalingGeography,
    sireId:sire.id,damId:dam.id,ownerId:owner.id,trainerId:trainer.id,stableTrackId:trainer.homeTrackId,
    location:trainer.location,stableId:trainer.barnId,source:'SIMULATED_HORSE_NOT_CANON',
    pedigree:{sireId:sire.id,damId:dam.id,parentBirthYears:[sire.foalYear,dam.foalYear]},
