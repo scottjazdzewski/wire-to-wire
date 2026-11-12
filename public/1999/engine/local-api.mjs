@@ -41,6 +41,13 @@ export function readLocal1999World(raw){
  }
  if(p==='/api/1999/sim/horses')return pager(q,w.counts.horses,i=>atDate(w.horseAt(i)),'SOURCE_267_PLUS_TEST_GENERATED');
  if(p==='/api/1999/sim/horse-directory')return pager(q,w.counts.horses,i=>w.horseDirectoryAt(i),'FULL_87500_INDEX_SOURCE_AND_TEST');
+ if(p==='/api/1999/sim/horse-attribute'){
+  const key=String(q.get('key')||'');
+  if(!w.attributeCatalog.horse_categories||!Object.values(w.attributeCatalog.horse_categories)
+   .flat().some(d=>d.key===key))throw Error('Unknown horse attribute');
+  return pager(q,w.counts.horses,i=>({index:i,value:w.horseAttributeAt(i,key)}),
+   'SIMULATED_1999_ATTRIBUTE_NOT_SCOUTING_EVIDENCE');
+ }
  if(p==='/api/1999/sim/owner-horses'){
   const id=String(q.get('ownerId')||'').trim();
   if(!id||!/^O-[A-Z0-9-]{1,45}$/.test(id))throw Error('Valid owner ID required');
@@ -59,7 +66,7 @@ export function readLocal1999World(raw){
   return pager(q,sex==='SIRE'?w.counts.breedingStallions:w.counts.breedingMares,
    i=>w.parentAt(i,sex),'VIRTUAL_SIMULATED_BREEDING_STOCK');
  }
- if(p==='/api/1999/sim/mare-directory')return pager(q,w.counts.breedingMares,i=>w.mareDirectoryAt(i),'GLOBAL_26000_MARES_TEST_INDEX');
+ if(p==='/api/1999/sim/mare-directory')return pager(q,w.counts.breedingMares,i=>w.mareDirectoryAt(i),'GLOBAL_BREEDING_MARES_TEST_INDEX');
  if(p==='/api/1999/sim/foaling-forecast')return w.annualFoalingForecast();
  if(p==='/api/1999/sim/conditions'){
   const trackIndex=int(q.get('trackIndex'),0,w.counts.tracks-1);
