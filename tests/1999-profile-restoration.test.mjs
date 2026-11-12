@@ -22,7 +22,8 @@ test('Personnel roster sorts full working set and scrolls instead of Prev/Next',
  assert.match(ui,/const shown=virtualHorseIndex\?rows:rows\.slice\(0,Math\.min\(rows\.length,APP\.departmentScrollLimit\)\)/);
  assert.match(ui,/const pager='<span class="ng-dpt-records">/);
  assert.match(ui,/departmentScrollLimit\+160/);
- assert.match(get('public/next/next.css'),/ng-dept-roster\[data-department="Personnel"\] \.ng-rs-scroll/);
+ assert.match(get('public/next/next.css'),/\.ng-stable-roster-v2 \.ng-rs-scroll/);
+ assert.match(get('public/next/next.css'),/ng-dept-roster\[data-department="Personnel"\] \.ng-dpt-pager/);
 });
 
 test('source-backed 1999 horse birthplace mapping uses Horse_ID and does not claim a stable is birthplace',()=>{
