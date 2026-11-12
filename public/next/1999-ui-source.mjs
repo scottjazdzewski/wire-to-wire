@@ -34,7 +34,7 @@ const openingCash=initialOwner?.finances?.cash??null;
 const messageSpecs=[
  ['opening-stable','Stable Office','1999 opening roster: '+selectedOwner,
   'Source-locked horses · ownership and barns',true,'Stable'],
- ['opening-stakes','Racing Secretary','1999 stakes calendar: 93 scheduled events',
+ ['opening-stakes','Racing Secretary','1999 domestic stakes program',
   'No entries or results recorded',true,'Racing'],
  ['opening-breeding','Breeding Office','31 stallions and 2,036 mare boarding files',
   'Source records, not declared matings',false,'Breeding'],
@@ -42,7 +42,7 @@ const messageSpecs=[
   'Auction transactions have NOT occurred',false,'Sales'],
  ['opening-finance','Accounting','Opening cash and budgets are TEST valuations',
   'No accounting transactions have posted',true,'Finances'],
- ['opening-tracks','Track Operations','134 racecourses available for test planning',
+ ['opening-tracks','Track Operations',worldCounts.tracks+' U.S. and Canadian tracks available',
   'Operating conditions and meet dates remain test data',false,'Tracks'],
  ['opening-people','Personnel Office','4,200 trainers in the test economy',
   'Only known people identities are source-locked',false,'Personnel'],
@@ -76,7 +76,7 @@ function sourceFacts(name){
  const source=sourceHorseIds.has(h.id);
  const trainer=peopleNames.get(h.trainerId)||get('trainerNames','/api/1999/sim/trainers',4200).find(t=>t.id===h.trainerId)?.name||'';
  return {age:String(h.ageAtOpening||1999-Number(h.foalYear)),sex:h.sex||'',
-  connections:{trainer,owner:ownerNames.get(h.ownerId)||selectedOwner,breeder:''},
+  connections:{trainer,owner:ownerNames.get(h.ownerId)||selectedOwner,breeder:h.breeder||h.breederName||''},
   name:h.name,ability:h.ability||null,source:source?'1999_CANON_LOCKED':'1999_TEST_GENERATED',
   racing_status:source?h.racingStatus:'TEST_WORLD_NO_1999_RESULTS',
   current_base:h.openingStable?.locality||h.location?.city||'',
@@ -98,6 +98,8 @@ function stableHorsePreview(name){
    age:String(h.ageAtOpening??1999-Number(h.foalYear)),foalYear:h.foalYear,dateOfBirth:h.dateOfBirth||'',
   foalingGeography:h.foalingGeography||h.foalingLocation||h.foalingPlace||null,
   ownerId:h.ownerId||'',trainerId:h.trainerId||'',
+  breederId:h.breederId||'',breeder:h.breeder||h.breederName||'',
+  breedingFarmId:h.breedingFarmId||'',breedingFarm:h.breedingFarm||'',homebred:h.homebred===true,
   sex:h.sex||'',sire:h.sireId||'',dam:h.damId||'',owner:ownerFor(name)||'',
   trainer:sourceFacts(name)?.connections.trainer||'',track:h.openingStable?.name||h.stableTrackId||'',
   location:city(h.location||h.openingStable)||'',
@@ -241,6 +243,8 @@ function worldHorsePage(offset=0,limit=20,filter=''){
    _testAbility:h.ability||null,ca:String(h.ability?.currentStars??''),pa:String(h.ability?.potentialStars??''),
     foalYear:h.foalYear,dateOfBirth:h.dateOfBirth||'',foalingGeography:h.foalingGeography||h.foalingLocation||h.foalingPlace||null,
    ownerId:h.ownerId||'',trainerId:h.trainerId||'',
+   breederId:h.breederId||'',breeder:h.breeder||h.breederName||'',
+   breedingFarmId:h.breedingFarmId||'',breedingFarm:h.breedingFarm||'',homebred:h.homebred===true,
    name:h.name,age:String(h.ageAtOpening||1999-Number(h.foalYear)),sex:h.sex,
    sire:sireName||h.sireId||'',dam:damName||h.damId||'',
    owner:universeLabels.owners.get(h.ownerId)||ownerNames.get(h.ownerId)||h.ownerId||'',
@@ -255,8 +259,12 @@ function worldHorsePage(offset=0,limit=20,filter=''){
   [row.name,row._id,row.owner,row.trainer,row.sire,row.dam,row.track].some(value=>String(value||'').toLowerCase().includes(needle))):rows,
   isPageFilter:Boolean(needle),pageStart:start};
 }
+const activeRacecourses=get('1999-active-tracks','/api/1999/sim/tracks',worldCounts.tracks);
+const activeTrackIds=new Set(activeRacecourses.map(t=>t.id));
+const activeTrackNames=new Set(activeRacecourses.map(t=>t.name));
 const sourceStakes=get('1999-source-stakes','/api/1999/calendar',93);
-const allStakes1999=[...sourceStakes,...WTW_ALTERNATE_STAKES_1999];
+const allStakes1999=[...sourceStakes,...WTW_ALTERNATE_STAKES_1999]
+ .filter(r=>activeTrackIds.has(r.trackId)||activeTrackNames.has(r.trackName));
 const stakesForTrack=name=>allStakes1999.filter(r=>r.trackName===name);
 const findStake=id=>allStakes1999.find(r=>r.id===id)||null;
 const findRace=id=>{
@@ -265,13 +273,22 @@ const findRace=id=>{
  if(!test)return null;
  const ymd=test[1],date=ymd.slice(0,4)+'-'+ymd.slice(4,6)+'-'+ymd.slice(6);
  const trackIndex=Number(test[2])-1;
- if(trackIndex<0||trackIndex>=134)return null;
+ if(trackIndex<0||trackIndex>=worldCounts.tracks)return null;
  return q('/api/1999/sim/conditions','date='+encodeURIComponent(date)+'&trackIndex='+trackIndex)
   .races?.find(r=>r.id===id)||null;
 };
 const ownedHorses=()=>stableHorses;
+const breederProfile=id=>{
+ if(!id)return null;
+ return get('breeder-owners','/api/1999/sim/owners',worldCounts.owners).find(o=>o.id===id)||null;
+};
+const foalingFarmProfile=id=>{
+ const n=/^F-TEST-FARM-(\d+)$/.exec(String(id||''));
+ if(!n||Number(n[1])<1||Number(n[1])>900)return null;
+ return q('/api/1999/sim/facilities','offset='+(worldCounts.trainers+Number(n[1])-1)+'&limit=1').items?.[0]||null;
+};
 function extraTracks(){
- const ts=get('tracks','/api/1999/sim/tracks',134);
+ const ts=activeRacecourses;
  return ts.map(t=>{
   const p=trackProgram1999(t.id);
   return {...t,location:city(t.location),region:t.location?.state||'',country:t.location?.country||'',
@@ -289,7 +306,7 @@ window.__WTW_1999_UI_DATA__={
  ownedHorseCount,
  sourceFacts,ownerFor,stableHorsePreview,departmentRows,auctionList,extraTracks,
  officeMessages,officeDesks,openingCash,worldHorsePage,
- stakesForTrack,findStake,findRace,ownedHorses,trackProgramById:trackProgram1999,
+ stakesForTrack,findStake,findRace,ownedHorses,breederProfile,foalingFarmProfile,trackProgramById:trackProgram1999,
  sourceHorseAbility:id=>{const index=sourceHorseOffset.get(id);
   return index===undefined?null:q('/api/1999/sim/horses','offset='+index+'&limit=1').items?.[0]?.ability||null;},
  sourcePersonModel:id=>{const index=srcPeople.findIndex(p=>p.id===id);
