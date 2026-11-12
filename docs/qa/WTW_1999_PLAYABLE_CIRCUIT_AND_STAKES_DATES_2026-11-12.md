@@ -1,0 +1,11 @@
+# WTW 1999 playable circuit and 1999 stakes-date corrections · 12 November 2026
+
+**Scope:** game schedule/view adapters only, no UI/CSS, no source archive, no horse/owner/trainer histories changed.
+
+- Playable circuit: **118** physical courses, only USA, Canada and Cuba; includes Oriental Park and historical alternate-survival racing tracks. The **16 overseas IT-** courses remain retrievable in the archival 134-ID registry but are `ARCHIVE_ONLY_1999`, not scheduled, entered or offered in the playable game.
+- Existing 87,500-horse deterministic world preserved. Server and browser generators both use the same 118 active source IDs and matching condition-book rules. The exact date-by-date ordinary-race schedule stays GAME MODELED inside verified/approved meet date bounds.
+- Keeneland T-0014: Spring **Apr 2–23** (15 racing days), Fall **Oct 9–30** (16 racing days), as published by Keeneland: https://www.keeneland.com/sites/default/files/Meet%20Dates.pdf. Dark Apr 4.
+- **24 source-stake date corrections** are held in `public/next/1999-verified-stakes-dates.mjs` and applied in the playable source-stakes projection. Example: Louisiana Derby Mar 14, Lexington Stakes Apr 18, Whitney Aug 1, Hollywood Gold Cup Jun 27. Each row includes research URL. The historical canonical 93 source records and their IDs are unchanged; the original source date is explicitly retained as `sourceCalendarDate1999` when displaying a correction.
+- Eight fictional WTW courses retain 12 planned game stakes each. Original game-stakes and source-stakes remain separated; no fictitious results have been asserted.
+- **Do not mistake partially completed historical verification for full certification:** older 1999 projection already covered ~23 documented state-based real track calendars; many other real-track meet bounds still show `WTW_SEASONAL_GAME_MODELED`, and source stakes not in 24-override map still use earlier working dates and have not been newly verified. The source registry itself includes some alternate-history named races. Further historical verification required to guarantee every historical stakes date is correct.
+- Active source-of-truth project layer: `public/next/1999-track-program.mjs`; canonical archive retained at `src/1999/opening-world.v1.mjs` and Drive. No parallel historical ledger.

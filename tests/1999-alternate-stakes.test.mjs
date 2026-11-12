@@ -6,10 +6,11 @@ import {openingWorld1999} from '../src/1999/opening-world.v1.mjs';
 test('every WTW 1999 course has a stake source or an explicitly modeled ungraded feature',()=>{
  const all=Object.values(TRACK_PROGRAM_1999);
  assert.equal(all.length,134);
- assert.ok(all.every(p=>p.trackOperating==='OPEN_1999'));
- assert.ok(all.every(p=>p.stakesIds.length||WTW_ALTERNATE_STAKES_1999.some(e=>e.trackId===p.id)));
- assert.equal(WTW_ALTERNATE_STAKES_1999.length,124+8*11);
- assert.equal(new Set(WTW_ALTERNATE_STAKES_1999.map(r=>r.id)).size,124+8*11);
+ assert.equal(all.filter(p=>p.trackOperating==='OPEN_1999').length,118);
+ assert.equal(all.filter(p=>p.trackOperating==='ARCHIVE_ONLY_1999').length,16);
+ assert.ok(all.filter(p=>p.trackOperating==='OPEN_1999').every(p=>p.stakesIds.length||WTW_ALTERNATE_STAKES_1999.some(e=>e.trackId===p.id)));
+ assert.equal(WTW_ALTERNATE_STAKES_1999.length,108+8*11);
+ assert.equal(new Set(WTW_ALTERNATE_STAKES_1999.map(r=>r.id)).size,108+8*11);
  assert.equal(openingWorld1999.stakes1999.length,93);
 });
 test('modeled races never trespass off-meet or off-surface and never pretend to be official',()=>{

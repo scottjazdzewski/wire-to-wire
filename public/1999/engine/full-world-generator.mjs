@@ -10,6 +10,7 @@ import {openingWorld1999 as canon} from './canon-mini.mjs';
 import {createGeographicNameRoster,GEO_NAME_MODEL} from './geographic-names.mjs';
 import {existingPrincipals1999} from './source-principals-1999.mjs';
 import {trackProgram1999,trackMeetOpen1999,trackCardSurface1999} from '../../next/1999-track-program.mjs';
+import {applyVerifiedStakeDay1999} from '../../next/1999-verified-stakes-dates.mjs';
 import {createAgeAbility,inferProfessionalRole,project1999CareerEntity,validateCareerGameDate} from './age-ability.mjs';
 import attributeCatalog from './attribute-catalog.mjs';
 import {WTW_TEST_START_DATE} from '../test-clock.mjs';
@@ -66,9 +67,9 @@ const domesticTrack=t=>{
  const region=String(t?.region||t?.state||'').trim().toUpperCase();
  return DOMESTIC_REGIONS.has(region)||/^(ALABAMA|ALASKA|ARIZONA|ARKANSAS|CALIFORNIA|COLORADO|CONNECTICUT|DELAWARE|FLORIDA|GEORGIA|HAWAII|IDAHO|ILLINOIS|INDIANA|IOWA|KANSAS|KENTUCKY|LOUISIANA|MAINE|MARYLAND|MASSACHUSETTS|MICHIGAN|MINNESOTA|MISSISSIPPI|MISSOURI|MONTANA|NEBRASKA|NEVADA|NEW HAMPSHIRE|NEW JERSEY|NEW MEXICO|NEW YORK|NORTH CAROLINA|NORTH DAKOTA|OHIO|OKLAHOMA|OREGON|PENNSYLVANIA|RHODE ISLAND|SOUTH CAROLINA|SOUTH DAKOTA|TENNESSEE|TEXAS|UTAH|VERMONT|VIRGINIA|WASHINGTON|WEST VIRGINIA|WISCONSIN|WYOMING|ONTARIO|QUEBEC|BRITISH COLUMBIA|ALBERTA|MANITOBA|SASKATCHEWAN|NOVA SCOTIA|NEW BRUNSWICK|PRINCE EDWARD ISLAND|NEWFOUNDLAND AND LABRADOR)$/i.test(region);
 };
-// Preserve the full 134-course 1999 universe and international fixture access.
-// North-American-only breeding hubs remain a separate, explicit generator rule.
-const sourceTracks=canon.tracks;
+// Preserve the full historical archive, but only U.S., Canadian and Cuban tracks race in the playable 1999 world.
+// Breeding geography and historical archives are separate from the active racing circuit.
+const sourceTracks=canon.tracks.filter(t=>trackProgram1999(t.id)?.trackOperating==='OPEN_1999');
 const NORTH_AMERICAN_FOALING_HUBS=TEST_FOALING_HUBS.filter(h=>h[2]==='United States'||h[2]==='Canada');
 function mixName(seed,i){const total=A.length*B.length*C.length,k=(i*71081+seed)%total;
  const a=A[k%A.length],b=B[Math.floor(k/A.length)%B.length],c=C[Math.floor(k/(A.length*B.length))%C.length];
@@ -732,7 +733,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    breedingMares:MARE_BREEDING_STOCK,breedingStallions:STALLION_BREEDING_STOCK,auctions:36,
    sourceStallions:anchored?canon.activeStallions1999.length:0,sourceBroodmareLocations:anchored?canon.productionBroodmareBoarding1999.length:0},
   ownerAt,trainerAt,trackAt,horseAt,horseDirectoryAt,horseAttributeAt,personAt,jockeyBookingMarket,sourcePersonAt,projectAtDate,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
-  parentAt,mareDirectoryAt,annualFoalingForecast,attributeCatalog,sourceStakes:anchored?canon.stakes1999.filter(r=>sourceTracks.some(t=>t.id===r.trackId||t.name===r.trackName)):[],
+  parentAt,mareDirectoryAt,annualFoalingForecast,attributeCatalog,sourceStakes:anchored?canon.stakes1999.filter(r=>sourceTracks.some(t=>t.id===r.trackId)).map(applyVerifiedStakeDay1999):[],
    sourceOrganizations:sourceOrgs,sourcePeople,excludedActiveStaffRoles:['groom','exercise_rider'],
   audit:{ownershipSlots:ownersSlots.counts.reduce((a,b)=>a+b,0),trainerSlots:trainerSlots.counts.reduce((a,b)=>a+b,0),
    maxOwnerHorses:Math.max(...ownersSlots.counts),minOwnerHorses:Math.min(...ownersSlots.counts),

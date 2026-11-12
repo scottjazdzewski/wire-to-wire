@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import {create1999Universe,FULL_WORLD_SCHEMA,HORSE_POPULATION} from '../src/1999/full-world-generator.mjs';
 import {openingWorld1999 as canon} from '../src/1999/opening-world.v1.mjs';
 const world=create1999Universe();
-test('1999 full universe starts at Jan 1 with 87500 horses and 130+ named tracks',()=>{
+test('1999 full universe starts at Jan 1 with 87500 horses and 118 playable tracks',()=>{
  assert.equal(world.schema,FULL_WORLD_SCHEMA);
  assert.equal(world.startDate,'1999-01-01');
  assert.equal(world.currentDate,'1999-01-01');
  assert.equal(world.counts.horses,87500);
  assert.equal(HORSE_POPULATION,87500);
  assert.equal(world.counts.canonicalHorses,267);
- assert.equal(world.counts.tracks,134);
+ assert.equal(world.counts.tracks,118);
  assert.ok(world.counts.facilities>5000);
  assert.equal(world.counts.auctions,36);
  assert.equal(world.audit.ownershipSlots,87233);
@@ -131,7 +131,7 @@ test('fully fictional universe keeps all tracks and attributes but no locked sou
  const f=create1999Universe({seed:19990101,mode:'FULLY_FICTIONAL_TEST'});
  assert.equal(f.counts.canonicalHorses,0);
  assert.equal(f.counts.horses,87500);
- assert.equal(f.counts.tracks,134);
+ assert.equal(f.counts.tracks,118);
  assert.equal(f.horseAt(0).nameStatus,'TEST_RENAME_ALLOWED');
  assert.notEqual(f.trackAt(0).name,canon.tracks[0].name);
  assert.equal(f.startDate,'1999-01-01');

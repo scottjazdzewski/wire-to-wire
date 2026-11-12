@@ -9,13 +9,13 @@ test('full world test read API uses January 1, 1999 and full counts without game
  assert.equal(r.data.clock.currentDate,'1999-01-01');
  assert.equal(r.data.clock.day,0);
  assert.equal(r.data.counts.horses,87500);
- assert.equal(r.data.counts.tracks,134);
+ assert.equal(r.data.counts.tracks,118);
  assert.equal(r.data.counts.owners,3308);
  assert.equal(r.data.counts.trainers,4200);
  assert.equal(r.data.gameplayReady,false);
 });
 test('all test directories return nonempty bounded records with names, locations and finances',()=>{
- for(const [url,n] of [['horses',87500],['owners',3308],['trainers',4200],['tracks',134],['facilities',5234],['auctions',36]]){
+ for(const [url,n] of [['horses',87500],['owners',3308],['trainers',4200],['tracks',118],['facilities',5218],['auctions',36]]){
   const r=get('/api/1999/sim/'+url);
   assert.equal(r.status,200);
   assert.equal(r.data.total,n);

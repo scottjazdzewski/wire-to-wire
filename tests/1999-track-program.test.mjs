@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {openingWorld1999} from '../src/1999/opening-world.v1.mjs';
 import {TRACK_PROGRAM_1999,trackProgram1999,trackMeetOpen1999,trackCardSurface1999}
  from '../public/next/1999-track-program.mjs';
+import {applyVerifiedStakeDay1999} from '../public/next/1999-verified-stakes-dates.mjs';
 
 test('every one of the 134 canonical track IDs has one 1999 program',()=>{
  const ids=openingWorld1999.tracks.map(t=>t.id);
@@ -21,7 +22,8 @@ test('every one of the 134 canonical track IDs has one 1999 program',()=>{
 test('all 93 canonical stakes remain ID-linked inside their host 1999 meet windows',()=>{
  assert.equal(openingWorld1999.stakes1999.length,93);
  const seen=new Set();
- for(const stake of openingWorld1999.stakes1999){
+ for(const sourced of openingWorld1999.stakes1999){
+  const stake=applyVerifiedStakeDay1999(sourced);
   assert.ok(!seen.has(stake.id),'duplicate source stake '+stake.id);
   seen.add(stake.id);
   const p=trackProgram1999(stake.trackId);
@@ -70,11 +72,12 @@ test('source surface restrictions carry into generated race conditions',()=>{
 });
 
 test('real state calendars, established game windows and fictitious meets remain distinct',()=>{
- assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='VERIFIED_1999_CALENDAR').length,23);
- assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='APPROVED_WTW_1999_GAME_CALENDAR').length,3);
+ assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='VERIFIED_1999_CALENDAR').length,24);
+ assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='APPROVED_WTW_1999_GAME_CALENDAR').length,2);
  assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='WTW_FICTIONAL_GAME_MODELED').length,8);
  assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='PUBLISHED_1999_SARATOGA_PROPOSAL').length,1);
  assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='INTERNATIONAL_GAME_MODELED').length,16);
+ assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.trackOperating==='ARCHIVE_ONLY_1999').length,16);
  for(const p of Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='VERIFIED_1999_CALENDAR'))
   assert.ok(/^https:\/\//.test(p.sourceUrl),'verified calendar has no source '+p.id);
 });

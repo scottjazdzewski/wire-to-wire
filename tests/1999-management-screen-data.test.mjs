@@ -29,7 +29,7 @@ test('1999 source data is mounted behind unchanged existing management UI',()=>{
  assert.match(js,/function liveStableRosterView\(/);
  assert.match(js,/function managerSidebar\(/);
  assert.equal(ui.counts.horses,87500);
- assert.equal(ui.counts.tracks,134);
+ assert.equal(ui.counts.tracks,118);
 });
 test('source horses and owner identities drive existing stable, not 2014 demo',()=>{
  assert.ok(ui.stableHorses.length>=1);
@@ -56,11 +56,11 @@ test('all department rosters have usable test records on original screens',()=>{
  assert.ok(jockeys.filter(p=>Number(p.age)>=32&&Number(p.age)<=40).every(p=>Number(p.pa)-Number(p.ca)<=1));
  assert.ok(ui.departmentRows('Personnel','Staff').length>=1000);
   assert.ok(ui.departmentRows('Personnel','Staff').every(x=>!['groom','exercise_rider'].includes(x.role)));
- assert.equal(ui.departmentRows('Facilities','Overview').length,5234);
+ assert.equal(ui.departmentRows('Facilities','Overview').length,5218);
   assert.ok(ui.departmentRows('Facilities','Overview').every(x=>Object.keys(x._testAttrs||{}).length>=4));
  assert.ok(ui.departmentRows('Finances','Overview').length>=3);
  assert.equal(ui.auctionList().length,36);
- assert.equal(ui.extraTracks().length,134);
+ assert.equal(ui.extraTracks().length,118);
 });
 test('all generated finances, pedigrees, and source boundaries are clearly test/provenance-marked',()=>{
  const rows=ui.departmentRows('Finances','Overview');
@@ -73,8 +73,8 @@ test('Racing screen uses 93 source stakes plus separate WTW game-modeled stakes,
  assert.deepEqual(Array.from(ui.departmentRows('Racing','Entries',{date:'1999-01-01'})),[]);
  assert.deepEqual(Array.from(ui.departmentRows('Racing','Results',{date:'1999-01-01'})),[]);
  const stakes=ui.departmentRows('Racing','Stakes',{date:'1999-01-01'});
- assert.equal(stakes.length,93+WTW_ALTERNATE_STAKES_1999.length);
-  assert.equal(WTW_ALTERNATE_STAKES_1999.length,124+8*11);
+ assert.equal(stakes.length,93+WTW_ALTERNATE_STAKES_1999.length+WTW_REGIONAL_STAKES_1999.length);
+  assert.equal(WTW_ALTERNATE_STAKES_1999.length,108+8*11);
  assert.ok(stakes.every(r=>r._iso.startsWith('1999-')&&r.status.includes('NOT ENTERED')));
  const card=ui.departmentRows('Racing','Race Planning',{date:'1999-01-01'});
  assert.ok(card.length>=40);

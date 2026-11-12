@@ -10,6 +10,7 @@ import {openingWorld1999 as canon} from './opening-world.v1.mjs';
 import {createGeographicNameRoster,GEO_NAME_MODEL} from '../../public/1999/engine/geographic-names.mjs';
 import {existingPrincipals1999} from '../../public/1999/engine/source-principals-1999.mjs';
 import {trackProgram1999,trackMeetOpen1999,trackCardSurface1999} from '../../public/next/1999-track-program.mjs';
+import {applyVerifiedStakeDay1999} from '../../public/next/1999-verified-stakes-dates.mjs';
 import {createAgeAbility,inferProfessionalRole,project1999CareerEntity,validateCareerGameDate} from '../../public/1999/engine/age-ability.mjs';
 import attributeCatalog from '../../public/1999/engine/attribute-catalog.mjs';
 import {WTW_TEST_START_DATE} from './test-clock.mjs';
@@ -52,7 +53,7 @@ const unit=(seed,key)=>hash(seed,key)/4294967296;
 const pick=(arr,seed,key)=>arr[Math.floor(unit(seed,key)*arr.length)];
 const round=n=>Math.round(n*10000)/10000;
 const fmtLoc=x=>({city:x.locality??x.city??null,state:x.region??x.state??null,country:x.country??'USA'});
-const sourceTracks=canon.tracks;
+const sourceTracks=canon.tracks.filter(t=>trackProgram1999(t.id)?.trackOperating==='OPEN_1999');
 function mixName(seed,i){const total=A.length*B.length*C.length,k=(i*71081+seed)%total;
  const a=A[k%A.length],b=B[Math.floor(k/A.length)%B.length],c=C[Math.floor(k/(A.length*B.length))%C.length];
  return a+' '+b+' '+c;}
@@ -132,7 +133,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const roleForIndex=index=>{if(index>=ACTIVE_STAFF_COUNT)return 'owner';let j=index;for(const [role,count] of ROLES){if(j<count)return role;j-=count}return 'owner';};
   const namedPeople=createGeographicNameRoster(seed,ACTIVE_STAFF_COUNT+ownersTotal,roleForIndex,sourcePeople.map(x=>x.name));
  const trackCount=sourceTracks.length,canonicalNames=new Set(locked.map(x=>x.name.toLowerCase()));
- if(trackCount<130)throw Error('Fewer than 130 physical tracks');
+ if(trackCount<100)throw Error('Fewer than 100 playable U.S., Canadian and Cuban racecourses');
  function regionTrack(geo,id){
   if(!geo)return trackAt(hash(seed,id+':track')%trackCount);
   const reg=String(geo.region??geo.state??'').toLowerCase(),city=String(geo.locality??geo.city??'').toLowerCase();
@@ -419,7 +420,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    people:peopleCount+(anchored?sourcePeople.length:0),tracks:trackCount,facilities:trainersTotal+900+trackCount,auctions:36,
    sourceStallions:anchored?canon.activeStallions1999.length:0,sourceBroodmareLocations:anchored?canon.productionBroodmareBoarding1999.length:0},
   ownerAt,trainerAt,trackAt,horseAt,personAt,sourcePersonAt,projectAtDate,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
-  parentAt,attributeCatalog,sourceStakes:anchored?canon.stakes1999:[],sourceOrganizations:sourceOrgs,sourcePeople,excludedActiveStaffRoles:['groom','exercise_rider'],
+  parentAt,attributeCatalog,sourceStakes:anchored?canon.stakes1999.filter(s=>sourceTracks.some(t=>t.id===s.trackId)).map(applyVerifiedStakeDay1999):[],sourceOrganizations:sourceOrgs,sourcePeople,excludedActiveStaffRoles:['groom','exercise_rider'],
   audit:{ownershipSlots:ownersSlots.counts.reduce((a,b)=>a+b,0),trainerSlots:trainerSlots.counts.reduce((a,b)=>a+b,0),
    maxOwnerHorses:Math.max(...ownersSlots.counts),minOwnerHorses:Math.min(...ownersSlots.counts),
    maxTrainerHorses:Math.max(...trainerSlots.counts),minTrainerHorses:Math.min(...trainerSlots.counts)}};

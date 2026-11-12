@@ -9,10 +9,10 @@ test('populated world loads without any Cloudflare API / D1 database',()=>{
  const data=readLocal1999World('/api/1999/sim/overview');
  assert.equal(data.asOf,'1999-01-01');
  assert.equal(data.counts.horses,87500);
- assert.equal(data.counts.tracks,134);
+ assert.equal(data.counts.tracks,118);
  assert.equal(data.counts.owners,3308);
  assert.equal(data.counts.trainers,4200);
- assert.equal(data.counts.facilities,5234);
+ assert.equal(data.counts.facilities,5218);
  assert.equal(data.counts.auctions,36);
  assert.equal(data.gameplayReady,false);
  assert.match(data.source,/NO_API_OR_DATABASE_REQUIRED/);
@@ -33,13 +33,13 @@ test('all visible departments have a named, physically located test population',
  const paths=[
  ['/api/1999/sim/owners',3308],
  ['/api/1999/sim/trainers',4200],
- ['/api/1999/sim/tracks',134],
- ['/api/1999/sim/facilities',5234],
+ ['/api/1999/sim/tracks',118],
+ ['/api/1999/sim/facilities',5218],
  ['/api/1999/sim/auctions',36],
  ['/api/1999/horses',267],
  ['/api/1999/organizations',108],
  ['/api/1999/people',154],
- ['/api/1999/tracks',134],
+ ['/api/1999/tracks',118],
  ['/api/1999/calendar',93],
  ['/api/1999/broodmare-boarding',2036],
  ['/api/1999/events',38]
