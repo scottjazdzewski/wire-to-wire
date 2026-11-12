@@ -28,7 +28,7 @@ async function buildIndex(){
    const response=q('/api/1999/sim/world-horse-directory',
     'offset='+loaded+'&limit='+Math.min(pageSize,populationCount-loaded));
    const items=response.items||[];
-   if(!items.length)throw Error('World index ended at '+loaded+' of '+population);
+   if(!items.length)throw Error('World index ended at '+loaded+' of '+populationCount);
    records.push(...items);loaded+=items.length;
    if(loaded%10000<pageSize||loaded===populationCount)
     self.postMessage({type:'progress',loaded,total:populationCount});
@@ -136,7 +136,7 @@ function resultPage(query){
    registryGroup:String(h.registryGroup||'REGISTERED').replaceAll('_',' '),
    ...(trait?{['attr:'+trait]:cachedTraits.get(trait).values[i]}:{})};
  });
- return {total:indexes.length,loaded:population,items,indexing:false,progress:population};
+ return {total:indexes.length,loaded:populationCount,items,indexing:false,progress:populationCount};
 }
 async function drain(){
  if(draining)return;
