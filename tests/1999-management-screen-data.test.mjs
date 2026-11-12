@@ -85,7 +85,8 @@ test('original World roster can inspect all 87500 names by virtual page without 
  assert.ok(synthetic.items.every(x=>Object.keys(x._testAttrs).length===53));
  assert.ok(synthetic.items.every(x=>x.owner&&x.trainer&&x.sire&&x.dam&&x.location));
  assert.match(js,/worldHorsePage/);
- assert.match(js,/totalRecords=pageData\?pageData.total:rows.length/);
+ assert.match(js,/const totalRecords=virtualHorseIndex\?virtualTotal:rows.length/);
+ assert.match(js,/worldHorsePage\(offset,/);
 });
 test('large rosters are cached so native UI pagination does not regenerate all records on every paint',()=>{
  const a=ui.departmentRows('Personnel','Staff');
