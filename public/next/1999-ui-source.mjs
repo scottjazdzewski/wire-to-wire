@@ -595,7 +595,7 @@ function worldHorseBrowse({offset=0,limit=160,search='',sort='name',desc=false,f
    return true;
   });
   const sortKey=sort==='attr:'+selectedTrait&&selectedTrait?sort:
-   ['name','age','sex','sire','dam','owner','breeder','homebred','trainer','track','status','ca','pa'].includes(sort)?sort:'name';
+   ['name','age','sex','sire','dam','owner','breeder','homebred','trainer','track','status','registryGroup','ca','pa'].includes(sort)?sort:'name';
   const sign=desc?-1:1;
   globalHorseCache.sort((a,b)=>{
    const av=a[sortKey],bv=b[sortKey];
@@ -614,7 +614,7 @@ function worldHorseBrowse({offset=0,limit=160,search='',sort='name',desc=false,f
    _testGenerated:!h.canonical,name:h.name,age:String(h.age),sex:h.sex,
    sire:h.sire,dam:h.dam,owner:h.owner,breeder:h.breeder,
    homebred:h.homebred?'YES':'NO',trainer:h.trainer,track:h.track,
-   status:String(h.status).replaceAll('_',' '),ca:String(h.ca??''),pa:String(h.pa??''),
+   status:String(h.status).replaceAll('_',' '),registryGroup:String(h.registryGroup||'REGISTERED').replaceAll('_',' '),ca:String(h.ca??''),pa:String(h.pa??''),
    ...(selectedTrait?{['attr:'+selectedTrait]:h['attr:'+selectedTrait]}:{})}));
  return {total,loaded:(worldCounts.worldHorses||worldCounts.horses),indexing:false,items,progress:globalHorseProgress};
 }
