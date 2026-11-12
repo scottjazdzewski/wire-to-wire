@@ -2827,22 +2827,25 @@ function departmentRoster(section,page='Overview'){
  // Every department now uses one progressive, sortable roster without pagination.
  const virtualHorseIndex=section==='World'&&page==='1999 Horses'&&
   window.__WTW_1999_UI_DATA__?.worldHorsePage;
- // World horses are 87,500 rows. Fetch only the progressive visible window;
- // ordinary departments are globally sortable because their arrays are loaded.
- const virtualData=virtualHorseIndex?[]:null;
+ const virtualBroodmares=section==='Breeding'&&page==='Broodmares'&&
+  window.__WTW_1999_UI_DATA__?.breedingMarePage;
+ const virtualMethod=virtualHorseIndex?'worldHorsePage':virtualBroodmares?'breedingMarePage':null;
+ // Large populations stay in the generator. Load a window, not 26k or 87.5k
+ // complete horse profiles into every table render.
+ const virtualData=virtualMethod?[]:null;
  let virtualTotal=0;
- if(virtualHorseIndex){
+ if(virtualMethod){
   for(let offset=0;offset<APP.departmentScrollLimit;offset+=100){
-   const response=window.__WTW_1999_UI_DATA__.worldHorsePage(offset,
+   const response=window.__WTW_1999_UI_DATA__[virtualMethod](offset,
     Math.min(100,APP.departmentScrollLimit-offset),APP.departmentSearch);
    virtualTotal=response.total||0;
    virtualData.push(...(response.items||[]));
    if(offset+100>=virtualTotal)break;
   }
  }
- let rows=virtualHorseIndex?virtualData:depRows(section,page,demo,auction);
+ let rows=virtualMethod?virtualData:depRows(section,page,demo,auction);
  const search=APP.departmentSearch.trim().toLowerCase();
- if(search&&!virtualHorseIndex)rows=rows.filter(r=>specs.some(([key])=>String(r[key]??'').toLowerCase().includes(search)));
+ if(search&&!virtualMethod)rows=rows.filter(r=>specs.some(([key])=>String(r[key]??'').toLowerCase().includes(search)));
  const defaultSort=section==='World'?'name':section==='Sales'&&page==='Watchlist'?'auction':section==='Racing'&&(page!=='Overview'||APP.racingMode==='mine'||APP.racingTrack)?'date':section==='Sales'&&page!=='Sale Calendar'&&page!=='Sale Companies'?'hip':section==='Finances'?'date':specs[0][0];
  const selectedSort=specs.some(x=>x[0]===APP.departmentSortKey)?APP.departmentSortKey:defaultSort;
  const sign=APP.departmentSortKey?(APP.departmentSortDesc?-1:1):(section==='Finances'?-1:1);
@@ -2854,8 +2857,8 @@ function departmentRoster(section,page='Overview'){
   const comp=an!==null&&bn!==null?an-bn:String(av).localeCompare(String(bv),undefined,{numeric:true,sensitivity:'base'});
   return comp*sign||String(a._name).localeCompare(String(b._name));
  });
- const totalRecords=virtualHorseIndex?virtualTotal:rows.length;
- const shown=virtualHorseIndex?rows:rows.slice(0,Math.min(rows.length,APP.departmentScrollLimit));
+ const totalRecords=virtualMethod?virtualTotal:rows.length;
+ const shown=virtualMethod?rows:rows.slice(0,Math.min(rows.length,APP.departmentScrollLimit));
  APP.departmentVisible=shown;
 
  const heads=specs.map(([key,label])=>'<th scope="col" aria-sort="'+(selectedSort===key?(sign===1?'ascending':'descending'):'none')+'"><button data-ng="dept-sort" data-val="'+key+'" title="Sort by '+safe(label)+'">'+safe(label)+'<span aria-hidden="true">'+(selectedSort===key?(sign===1?'▲':'▼'):'↕')+'</span></button></th>').join('');
@@ -2905,7 +2908,7 @@ function departmentRoster(section,page='Overview'){
   }).join('')+'</tr>';
  }).join('');
  const pager='<span class="ng-dpt-records">'+totalRecords+' RECORDS · '+shown.length+
-  ' LOADED · SCROLL FOR MORE'+(virtualHorseIndex?' · WORLD SORT/SEARCH: LOADED WINDOW':'')+'</span>';
+  ' LOADED · SCROLL FOR MORE'+(virtualMethod?' · GLOBAL SORT/SEARCH: LOADED WINDOW':'')+'</span>';
  const viewOptions=(tabmap[section]||[]).map(t=>'<option value="'+safe(t)+'" '+(t===page?'selected':'')+'>'+safe(t)+'</option>').join('');
  const racingTracks=section==='Racing'?depCurrentMeetRows():[];
  if(section==='Racing'&&APP.racingTrack&&!racingTracks.some(x=>x.name===APP.racingTrack)){
