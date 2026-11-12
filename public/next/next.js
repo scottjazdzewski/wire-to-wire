@@ -2127,9 +2127,11 @@ function functionalRoute(route){
 /* Domain-specific department roster structures; no authoritative game-data edits. */
 const DEP_NAMES=new Set(['Racing','Breeding','Sales','Personnel','Facilities','Finances','Tracks']);
 const WORLD_1999_COLUMNS={
- Horses:[['name','HORSE',17],['age','AGE',4],['sex','SEX',6],['sire','SIRE',14],
-  ['dam','DAM',14],['owner','OWNER / FARM',15],['trainer','TRAINER',12],
-  ['track','1999 HOME TRACK',12],['status','1999 STATUS',18]],
+ Horses:[['name','HORSE',17],['age','AGE',4],['sex','SEX',6],
+  ['ca','CA · TEST',5],['pa','PA · TEST',5],['status','1999 STATUS',15],
+  ['sire','SIRE',13],['dam','DAM',13],['breeder','BREEDER',16],
+  ['homebred','HOME-BRED',7],['owner','OWNER / FARM',15],
+  ['trainer','TRAINER',12],['track','1999 HOME TRACK',12]],
  People:[['name','PERSON',22],['role','CANONICAL ROLE',25],['base','1999 OPERATING BASE',30],
   ['operation','OWNERSHIP OPERATION',23]],
  Organizations:[['name','ORGANIZATION',25],['type','OPERATION TYPE',27],['location','APPROVED LOCATION',25],
