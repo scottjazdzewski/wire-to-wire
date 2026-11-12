@@ -128,6 +128,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    racing:{racesPerCard:8+Math.floor(unit(seed,'races:'+i)*3),firstPostHour:12+Math.floor(unit(seed,'post:'+i)*4),
     meetStatus:'SCHEDULE_DEPENDENT',annualPurseBudget:money(2000000+unit(seed,'purse:'+i)*24000000)},
    finances:{cash:money(300000+unit(seed,'tcash:'+i)*7500000),annualOperatingBudget:money(700000+unit(seed,'tbgt:'+i)*7000000)},
+    attributes:{surface_quality:round(.3+unit(seed,'surf:'+i)*.69),horse_safety:round(.3+unit(seed,'safe:'+i)*.69),grounds_maintenance:round(.3+unit(seed,'maint:'+i)*.69),race_program:round(.3+unit(seed,'program:'+i)*.69),fan_experience:round(.3+unit(seed,'fan:'+i)*.69)},
    sourceTrackId:base.id};
   trackCache.set(i,obj);return obj;
  }
@@ -265,6 +266,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const track=trackAt(hash(seed,'auction:'+index)%trackCount),month=1+Math.floor(index/3),day=[6,14,22][index%3];
   const id='A-TEST-1999-'+pad(index+1,3);
   return {id,name:pick(['Midwinter','Spring','Summer','Autumn','Regional','Select','Yearling','Mixed'],seed,id)+' '+track.location.city+' Sale',
+    attributes:{catalog_quality:round(.2+unit(seed,id+':catalog')*.75),buyer_demand:round(.2+unit(seed,id+':demand')*.75),vendor_depth:round(.2+unit(seed,id+':vendors')*.75),inspection_quality:round(.3+unit(seed,id+':inspection')*.65)},
    location:track.location,trackId:track.id,date:'1999-'+pad(month,2)+'-'+pad(day,2),
    sellerFeeRate:round(.03+unit(seed,id+'sellerFee')*.04),buyerPremiumRate:round(.01+unit(seed,id+'buyerFee')*.03),
    catalogLots:120+hash(seed,id+'lots')%570,reputation:standing(seed,id,.35+unit(seed,id+'rep')*.6),
@@ -276,16 +278,21 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   if(index<trainersTotal){const tr=trainerAt(index);return {id:tr.barnId,name:generatedOrganizationName(seed,index+3308,'barn'),type:'RACE_BARN',
    location:tr.location,trainerId:tr.id,trackId:tr.homeTrackId,capacity:tr.barnCapacity,occupied:tr.generatedRunners,
    landAcres:0,equipmentCondition:round(.4+unit(seed,tr.id+'eq')*.58),staffingRequirement:Math.max(1,Math.ceil(tr.barnCapacity/6)),
+    attributes:{horse_care:round(.3+unit(seed,tr.id+':care')*.69),training_environment:round(.3+unit(seed,tr.id+':training')*.69),biosecurity:round(.3+unit(seed,tr.id+':bio')*.69),facility_condition:round(.4+unit(seed,tr.id+'eq')*.58)},
    annualOperatingCost:money(tr.barnCapacity*29000),reputation:tr.reputation,source:'TEST_BARN'};}
   if(index<trainersTotal+900){const i=index-trainersTotal,t=trackAt(hash(seed,'farm:'+i)%trackCount),id='F-TEST-FARM-'+pad(i+1);
    return {id,name:generatedOrganizationName(seed,i+8000,'farm'),
    type:'BREEDING_FARM',location:t.location,trackId:t.id,capacity:80+hash(seed,id+'cap')%350,occupied:0,
    landAcres:80+hash(seed,id+'acres')%1100,foalingBarns:2+hash(seed,id+'foal')%10,
+    equipmentCondition:round(.4+unit(seed,id+':eq')*.59),staffingRequirement:Math.ceil((80+hash(seed,id+'cap')%350)/25),
+    attributes:{horse_care:round(.3+unit(seed,id+':care')*.69),breeding_management:round(.3+unit(seed,id+':breed')*.69),biosecurity:round(.3+unit(seed,id+':bio')*.69),facility_condition:round(.4+unit(seed,id+':eq')*.59)},
    annualOperatingCost:money(120000+unit(seed,id+'cost')*1400000),
    reputation:standing(seed,id,.3+unit(seed,id+'rep')*.6),source:'TEST_FARM'};}
   const t=trackAt(index-trainersTotal-900);
   return {id:'F-TEST-TRACK-'+pad(index-trainersTotal-900+1,3),name:t.name+' Training Center',type:'TRAINING_CENTER',location:t.location,trackId:t.id,
    capacity:money(120+unit(seed,t.id+'cap')*500),occupied:0,landAcres:45+hash(seed,t.id+'land')%230,
+    equipmentCondition:round(.4+unit(seed,t.id+':eq')*.59),staffingRequirement:12+hash(seed,t.id+':staff')%35,
+    attributes:{horse_care:round(.3+unit(seed,t.id+':care')*.69),training_environment:round(.3+unit(seed,t.id+':training')*.69),biosecurity:round(.3+unit(seed,t.id+':bio')*.69),facility_condition:round(.4+unit(seed,t.id+':eq')*.59)},
    annualOperatingCost:money(950000+unit(seed,t.id+'cost')*4800000),reputation:t.reputation,source:'TEST_TRACK_CENTER'};
  }
  const trackIndexById=new Map(sourceTracks.map((t,i)=>[anchored?t.id:'T-TEST-1999-'+pad(i+1,4),i]));
