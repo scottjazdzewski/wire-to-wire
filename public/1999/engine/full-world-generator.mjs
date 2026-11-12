@@ -341,6 +341,46 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    confidence:35+hash(seed,id+':opening-confidence')%61,
    provenance:'SIMULATED_1999_START_STATE_NOT_OBSERVED_VET_FACT'};
  }
+ // Lightweight directory projection: returns the EXACT seeded identity and
+ // current status without allocating 53 attributes and entire prior race files.
+ // This permits globally sorted/filtered 87,500-horse search in bounded memory.
+ function horseDirectoryAt(index){
+  if(!Number.isInteger(index)||index<0||index>=HORSE_POPULATION)throw Error('Horse directory index');
+  if(anchored&&index<locked.length){
+   const c=locked[index],known=Number.isInteger(Number(c.foalYear))&&Number(c.foalYear)>1850;
+   const age=known?Math.max(0,1999-Number(c.foalYear)):3+hash(seed,c.id+':test:age')%5;
+   const abi=createAgeAbility({seed,id:c.id,role:'horse',age,
+    pedigree:{sireId:c.sireId||c.pedigree?.sireId||null,damId:c.damId||c.pedigree?.damId||null}});
+   return {index,id:c.id,name:c.name,age,sex:c.sex||'',foalYear:c.foalYear||null,
+    ownerId:c.ownerId,trainerId:c.trainerId,sireId:c.sireId||'',damId:c.damId||'',
+    sire:c.sire||c.sireId||'',dam:c.dam||c.damId||'',
+    trackId:c.openingStable?.trackId||'',status:c.racingStatus||c.trainingStatus||'SOURCE_STATUS_NOT_VERIFIED',
+    ca:abi.currentStars,pa:abi.potentialStars,canonical:true};
+  }
+  const i=anchored?index-locked.length:index;
+  const oi=ownersSlots.at(perm(i,generatedCount,seed,65537));
+  const ti=trainerSlots.at(perm(i,generatedCount,seed+32,8191));
+  const id=generatedId(i),k=perm(i,generatedCount,seed,71083);
+  const shortName=mixName(seed,k);
+  const name=canonicalNames.has(shortName.toLowerCase())?shortName+' from '+FAMILY[i%FAMILY.length]:shortName;
+  const foalYear=pick([1998,1997,1996,1995,1994,1993,1992,1991,1990,1989],seed,id+':age');
+  const sex=foalYear<=1994?pick(['MARE','GELDING','STALLION','MARE','GELDING'],seed,id+':sex'):
+   pick(['COLT','FILLY','COLT','FILLY','GELDING'],seed,id+':sex');
+  const si=hash(seed,id+':sire')%sireCount,di=hash(seed,id+':dam')%damCount;
+  const sireId='H-TEST-SIRE-'+pad(si+1,6),damId='H-TEST-DAM-'+pad(di+1,6);
+  const age=1999-foalYear;
+  const abi=createAgeAbility({seed,id,role:'horse',age,pedigree:{sireId,damId}});
+  const raced=age>=3&&sex!=='STALLION';
+  const starts=raced?Math.floor(unit(seed,id+'starts')*Math.max(2,(age-2)*6)):0;
+  const status=age<2?'TOO_YOUNG':sex==='STALLION'&&age>=5?'AT_STUD':
+   sex==='MARE'&&age>=8?'BROODMARE':starts===0?'UNRACED':
+   age>=9&&hash(seed,id+':retired')%4===0?'RETIRED':
+   hash(seed,id+':break')%8===0?'RESTING':'IN_TRAINING';
+  const trainer=trainerAt(ti),owner=ownerAt(oi);
+  return {index,id,name,age,foalYear,sex,status,ownerId:owner.id,trainerId:trainer.id,
+   sireId,damId,sire:mixName(seed+1,si+100000),dam:mixName(seed+1,di+101500),
+   trackId:trainer.homeTrackId,ca:abi.currentStars,pa:abi.potentialStars,canonical:false};
+ }
  function horseAt(index){
   if(!Number.isInteger(index)||index<0||index>=HORSE_POPULATION)throw Error('Horse index out of range');
   if(horseCache.has(index))return horseCache.get(index);
@@ -605,7 +645,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    facilities:trainersTotal+900+trackCount,breedingFarms:900,
    breedingMares:MARE_BREEDING_STOCK,breedingStallions:STALLION_BREEDING_STOCK,auctions:36,
    sourceStallions:anchored?canon.activeStallions1999.length:0,sourceBroodmareLocations:anchored?canon.productionBroodmareBoarding1999.length:0},
-  ownerAt,trainerAt,trackAt,horseAt,personAt,sourcePersonAt,projectAtDate,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
+  ownerAt,trainerAt,trackAt,horseAt,horseDirectoryAt,personAt,sourcePersonAt,projectAtDate,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
   parentAt,annualFoalingForecast,attributeCatalog,sourceStakes:anchored?canon.stakes1999.filter(r=>sourceTracks.some(t=>t.id===r.trackId||t.name===r.trackName)):[],
    sourceOrganizations:sourceOrgs,sourcePeople,excludedActiveStaffRoles:['groom','exercise_rider'],
   audit:{ownershipSlots:ownersSlots.counts.reduce((a,b)=>a+b,0),trainerSlots:trainerSlots.counts.reduce((a,b)=>a+b,0),
