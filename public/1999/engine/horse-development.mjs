@@ -161,9 +161,9 @@ function dayCharges(horse,trainer,plan,work){
  const rate=Number(trainer?.compensation?.dayRate);
  const trainerRate=Number.isFinite(rate)&&rate>=0?rate:54;
  const extras=work==='REST'?0:TRAINING_PLANS[work].cost;
- const care=Math.round(monthly/30.4375*100)/100;
- return {amount:Math.round((care+trainerRate+extras)*100)/100,
-  components:{care,trainerDayFee:trainerRate,workoutSupplies:extras},
+ const dailyCare=Math.round(monthly/30.4375*100)/100;
+ return {amount:Math.round((dailyCare+trainerRate+extras)*100)/100,
+  components:{care:dailyCare,trainerDayFee:trainerRate,workoutSupplies:extras},
   basis:'1999_TEST_COST_ACCRUAL_NOT_CASH_POSTING'};
 
 }
