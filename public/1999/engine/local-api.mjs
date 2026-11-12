@@ -57,8 +57,11 @@ export function readLocal1999World(raw){
  if(p==='/api/1999/horses')return canonList(q,canon.horses,['name','id','ownerId','trainerId']);
  if(p==='/api/1999/organizations')return canonList(q,canon.organizations,['name','id','type','locationLabel']);
  if(p==='/api/1999/people')return canonList(q,canon.people,['name','id','role']);
- if(p==='/api/1999/tracks')return canonList(q,canon.tracks,['name','id','locality','region']);
- if(p==='/api/1999/calendar')return canonList(q,canon.stakes1999,['name','id','trackName','division']);
+ if(p==='/api/1999/tracks'){
+  const activeIds=new Set(Array.from({length:w.counts.tracks},(_,i)=>w.trackAt(i).sourceTrackId));
+  return canonList(q,canon.tracks.filter(t=>activeIds.has(t.id)),['name','id','locality','region']);
+}
+ if(p==='/api/1999/calendar')return canonList(q,w.sourceStakes,['name','id','trackName','division']);
  if(p==='/api/1999/stallions')return {active:canon.activeStallions1999,pendingNotBookable:canon.pendingNotBookableStallions,
   source:'JANUARY_1999_SOURCE_STALLION_AND_FARM_RECORDS'};
  if(p==='/api/1999/broodmare-boarding')return canonList(q,canon.productionBroodmareBoarding1999,['name','id']);
