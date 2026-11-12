@@ -75,6 +75,43 @@ function source(kind,record,ui){
     panel('Achievements')+panel('Racing notes',[d._testGenerated?
       'All generated ability, financial and pre-1999 career values are explicitly test data, not certified historical results.':
       'Historical identity preserved. No 1999 race result or future transaction is committed.']);
+ }else if(kind==='person'){
+  // All 1999 World and Personnel people use the EXISTING FM attribute dossier.
+  // This node is a source adapter only; it does not invent skills or people.
+  const personId=d.id||d._canonId||d._id||'';
+  const role=String(d.role||d.job||d.profession||d.type||'Not recorded').replaceAll('_',' ');
+  const place=value=>{
+   if(typeof value==='string')return value;
+   if(!value||typeof value!=='object')return '';
+   return [value.city||value.locality||'',value.state||value.region||value.province||'',value.country||'']
+    .filter(Boolean).join(', ');
+  };
+  const openingBase=place(d.base||d.openingBase||d.location);
+  const birthplace=place(d.birthplace||d.birthPlace);
+  const age=d.ageAtDate??d.ageAtOpening??d.age??'';
+  const generated=d._testGenerated===true;
+  node.dataset.personId=personId;
+  node.dataset.testGenerated=generated?'true':'false';
+  // These values already exist in the site's TEST population. They never
+  // become canonical scouting observations or engine-facing decisions.
+  node.dataset.testAttributes=JSON.stringify(generated?d._testAttrs||{}:{});
+  node.dataset.personRole=role.toLowerCase().replaceAll(' ','_');
+  node.innerHTML='<div class="profileSubline">Job: '+safe(role)+'</div>'+
+   field('Role',role)+field('Age',age||'Not recorded')+
+   field('Birthplace',birthplace||'Not recorded')+
+   field('Location',openingBase||'Not recorded')+
+   field('1999 base',openingBase||'Not recorded')+
+   field('Person ID',personId||'Not linked')+
+   (d.homeTrack?link('Home track',d.homeTrack):'')+
+   (d.ownershipOperation?link('Ownership operation',d.ownershipOperation):'')+
+   (d.assignment?link('Appointment',d.assignment):'')+
+   (d.relationship?link('Stable relationship',d.relationship):'')+
+   panel('Career Wins',d.wins?[String(d.wins)+' recorded wins']:[])+
+   panel('Stable Horses')+
+   panel('Professional context',[generated?
+    '1999 SIMULATED TEST PERSON · modeled attributes must not be represented as certified scouting or historical facts.':
+    personId?'Canonical person identity and recorded geography preserved. Unassessed professional skills remain unknown.':
+    'Unlinked person name; no canonical identity or skill observation has been invented.']);
  }else if(kind==='track'){
   const stakes=ui?.stakesForTrack?.(name)||[];
   const location=d.location||[d.locality,d.region].filter(Boolean).join(', ')||'—';
@@ -95,7 +132,7 @@ function source(kind,record,ui){
     panel('Track context',[d.realAnchor?'Source track geography preserved.':'WTW expanded-universe track.',
       d.basis==='VERIFIED_1999_CALENDAR'?'1999 meet windows verified against source commission calendar.':d.basis==='WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION'?'This track survives and races in the WTW alternate 1999 world. Meet dates and new stakes are modeled, not historical facts.':d.basis==='HISTORICAL_ONLY_NO_1999_MEET'?'Historical course. No 1999 meet; no active races.':d.basis==='APPROVED_WTW_1999_GAME_CALENDAR'?'Meets are locked in game canon, not independently certified as an actual 1999 calendar.':'1999 meets are game models, not historically source-certified.']);
  }
- return {node,route:{kicker:kind==='horse'?'Horse Profile':'Track Profile',title:name}};
+ return {node,route:{kicker:kind==='horse'?'Horse Profile':kind==='person'?'People Profile':'Track Profile',title:name}};
 }
 window.WTW1999Profiles=Object.freeze({source});
 })();
