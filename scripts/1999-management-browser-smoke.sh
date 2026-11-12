@@ -19,6 +19,9 @@ function check(title,condition){if(!condition)throw Error(title);steps.push(titl
 frame.addEventListener('load',()=>setTimeout(async()=>{
  try{
   const w=frame.contentWindow,d=frame.contentDocument;
+  const browserErrors=[];
+  w.addEventListener('error',e=>browserErrors.push(String(e.message)+' at '+String(e.filename)+':'+e.lineno));
+  w.addEventListener('unhandledrejection',e=>browserErrors.push(String(e.reason)));
   check('1999 approved UI mounted',Boolean(d.querySelector('#wtwNextgen .ng-manager-shell')));
   check('Correct January 1 game date',d.querySelector('.ng-global-date strong')?.textContent.trim()==='1999-01-01');
   const ui=w.__WTW_1999_UI_DATA__;
@@ -57,7 +60,8 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
     custom:w.__WTW_NEXT__?.app?.custom,section:w.__WTW_NEXT__?.app?.section,
     trainer:trainerButton.dataset.val,route:d.querySelector('#wtwNextgen .ng-route')?.textContent.slice(0,200),
     generic:Boolean(d.querySelector('#wtwNextgen .ng-entity-preview')),
-    dossier:Boolean(d.querySelector('#wtwNextgen .ng-person-workspace'))}));
+    dossier:Boolean(d.querySelector('#wtwNextgen .ng-person-workspace')),
+    errors:browserErrors.slice(-5)}));
   }
   steps.push('Trainer opens approved FM people profile, not legacy generic preview');
   check('Trainer profile shows common and trainer-only detailed attributes',
