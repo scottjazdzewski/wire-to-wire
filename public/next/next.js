@@ -2549,24 +2549,38 @@ function previewRecordView(){
   (Boolean(fromState?.row)&&Boolean(APP.departmentDemo))||
   DEP_FACILITY_PREVIEW.some(item=>item[0]===name);
  const fields=fromState?.row||{};
+ const generated=Boolean(fields._testGenerated);
  const fixture=DEP_FACILITY_PREVIEW.find(item=>item[0]===name);
  const relevant=[
   ['ENTITY TYPE',fields.type||fixture?.[1]||kind.toUpperCase()],
   ['LOCATION',fields.location||fixture?.[2]||'Not recorded'],
   ['OWNER',fields.owner||'Not recorded'],
   ['CAPACITY',fields.capacity||'Not recorded'],
-  ['OPERATING STATUS',fields.status||'Not recorded']
+  ['OPERATING STATUS',fields.status||'Not recorded'],
+  ...(generated?[
+   ['HORSE ID',fields._id],['AGE',fields.age],['SEX',fields.sex],
+   ['SIRE ID',fields.sire],['DAM ID',fields.dam],['TRAINER',fields.trainer],
+   ['HOME TRACK',fields.track]
+  ]:[])
  ].filter(([label,value])=>!entityNotRecorded(value)||label==='ENTITY TYPE');
- const description=demo?
+ const description=generated?
+  '1999 SIMULATED TEST HORSE — permanent test ID, owner, trainer, pedigree and all 53 admin attributes. Values are test-world fixtures, not historical evidence or scouting observations. No 1999 race result has been generated.':demo?
   'FICTIONAL DESIGN PREVIEW — this named operation has no registered game profile yet. None of the displayed information is part of the authoritative database.':
   'SOURCE CONNECTION PENDING — this name is not connected to an individual profile in the current game records. No profile identity has been invented.';
  return '<section class="ng-entity-preview ng-stable-roster-v2">'+
-  '<header><div><small>'+safe(demo?'DEMO RECORD':'UNLINKED RECORD')+' · '+safe(kind.toUpperCase())+'</small>'+
+  '<header><div><small>'+safe(generated?'1999 TEST ENTITY':demo?'DEMO RECORD':'UNLINKED RECORD')+' · '+safe(kind.toUpperCase())+'</small>'+
   '<h2>'+safe(name)+'</h2></div><button data-ng="back" aria-label="Return to previous screen">← BACK</button></header>'+
   '<p class="ng-entity-preview-notice">'+safe(description)+'</p>'+
   '<div class="ng-entity-preview-grid">'+relevant.map(([label,value])=>
    '<div><small>'+safe(label)+'</small>'+namedProfileValue(label,String(value))+'</div>').join('')+'</div>'+
-  '<p class="ng-entity-preview-footer">Use the BACK button to return to the management roster. Registered entities open their full Horse, People, Farm or Track profiles.</p></section>';
+  (generated?[
+   ['MODELLED ABILITY / CONDITION',fields._testAttrs],
+   ['OPENING FINANCES / VALUE',fields._testFinances],
+   ['GENERATED REPUTATION',fields._testReputation]
+ ].map(([heading,items])=>'<section class="ng-entity-preview-traits"><h3>'+safe(heading)+'</h3><div class="ng-entity-preview-grid">'+
+  Object.entries(items||{}).map(([key,value])=>
+   '<div><small>'+safe(key.replaceAll('_',' '))+'</small><strong>'+safe(String(value))+'</strong></div>').join('')+'</div></section>').join(''):'')+
+ '<p class="ng-entity-preview-footer">Use the BACK button to return to the management roster. Canonical records open their protected historical profiles; generated records remain clearly labeled TEST.</p></section>';
 }
 function depCell(value,key){
  if(value==null||value==='')return '<span class="ng-rs-missing">—</span>';
