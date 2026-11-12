@@ -3,7 +3,7 @@ import {createClean1999Clock} from './test-clock.mjs';
 
 const ACTIVE=new Map(),MAX_CACHE=2;
 const send=(data,status=200)=>({status,data});
-function number(raw,defaultValue,max){const v=Number(raw);return Number.isInteger(v)&&v>=0&&v<=max?v:defaultValue;}
+function number(raw,defaultValue,max){if(raw===null||raw===undefined||raw==='')return defaultValue;const v=Number(raw);return Number.isInteger(v)&&v>=0&&v<=max?v:defaultValue;}
 function world(url){
  const rawSeed=url.searchParams.get('seed');
  const seed=number(rawSeed,19990101,4294967295)||19990101;
