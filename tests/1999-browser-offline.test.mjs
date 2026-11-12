@@ -68,10 +68,11 @@ test('fully fictional mode changes identifiers without mutating source canon',()
  assert.equal(create1999Universe().currentDate,'1999-01-01');
 });
 test('minimal browser with broken network still shows metrics and populated rows',async()=>{
- const idList=['gameDate','gameDay','runMode','metrics','records','status','sectionTitle','sectionDescription','sectionKicker','mode','search','trackPicker','trackPickerLabel','prevPage','nextPage','pageInfo','oneDay','oneWeek','oneMonth','reset','fictional','canonWorld','refresh'];
+ const idList=['gameDate','gameDay','runMode','metrics','records','status','sectionTitle','sectionDescription','sectionKicker','mode','search','trackPicker','trackPickerLabel','prevPage','nextPage','pageInfo','oneDay','oneWeek','oneMonth','reset','fictional','canonWorld','refresh','recordDetails','jumpIndex','jumpTo'];
+ const handlers=new Map();
  const elements=new Map(idList.map(id=>[id,{
   innerHTML:'',textContent:'',value:'',hidden:false,disabled:false,dataset:{},
-  addEventListener(){},classList:{toggle(){}}
+  addEventListener(type,fn){handlers.set(id+':'+type,fn);},classList:{toggle(){}}
  }]));
  globalThis.document={getElementById:id=>elements.get(id),querySelectorAll:()=>[]};
  globalThis.localStorage={getItem(){return null;},setItem(){}};
@@ -83,6 +84,14 @@ test('minimal browser with broken network still shows metrics and populated rows
  assert.match(elements.get('metrics').innerHTML,/3,308/);
  assert.match(elements.get('records').innerHTML,/class="record"/);
  assert.match(elements.get('records').innerHTML,/H-/);
+ assert.match(elements.get('records').innerHTML,/Inspect full record/);
+ const handler=handlers.get('records:click');
+ assert.equal(typeof handler,'function');
+ handler({target:{closest:()=>({dataset:{recordIndex:'0'}})}});
+ assert.equal(elements.get('recordDetails').hidden,false);
+ assert.match(elements.get('recordDetails').innerHTML,/All 53 modeled attributes/);
+ assert.match(elements.get('recordDetails').innerHTML,/Finances and operating costs/);
+ assert.match(elements.get('recordDetails').innerHTML,/View every stored field/);
  assert.match(elements.get('status').textContent,/Population loaded in this browser/);
  assert.match(elements.get('gameDate').textContent,/January 1, 1999/);
 });
