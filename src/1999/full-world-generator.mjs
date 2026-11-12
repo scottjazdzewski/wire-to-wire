@@ -37,7 +37,7 @@ const pick=(arr,seed,key)=>arr[Math.floor(unit(seed,key)*arr.length)];
 const round=n=>Math.round(n*10000)/10000;
 const fmtLoc=x=>({city:x.locality??x.city??null,state:x.region??x.state??null,country:x.country??'USA'});
 const sourceTracks=canon.tracks;
-function mixName(seed,i){const total=A.length*B.length*C.length,k=(i*71083+seed)%total;
+function mixName(seed,i){const total=A.length*B.length*C.length,k=(i*71081+seed)%total;
  const a=A[k%A.length],b=B[Math.floor(k/A.length)%B.length],c=C[Math.floor(k/(A.length*B.length))%C.length];
  return a+' '+b+' '+c;}
 function makeSlots(count,available,seed,kind){
