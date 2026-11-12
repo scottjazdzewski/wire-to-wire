@@ -4,6 +4,7 @@
 import {create1999Universe,MODES} from './full-world-generator.mjs?rev=wtw1999-20261112-r4';
 import {openingWorld1999 as canon} from './canon-mini.mjs';
 import {createClean1999Clock} from '../test-clock.mjs';
+import {validateCareerGameDate} from './age-ability.mjs';
 const CACHE=new Map();
 function parse(raw){return new URL(raw,'https://wire-to-wire.invalid');}
 function int(raw,defaultValue,max){const n=Number(raw);return raw!==null&&raw!==''&&Number.isInteger(n)&&n>=0&&n<=max?n:defaultValue;}
@@ -30,22 +31,25 @@ function canonList(q,records,fields){
 export function readLocal1999World(raw){
  const url=parse(raw),p=url.pathname,q=url.searchParams;
  const w=currentWorld(q);
+ const gameDate=q.get('date');
+ if(gameDate)validateCareerGameDate(gameDate);
+ const atDate=entity=>gameDate?w.projectAtDate(entity,gameDate):entity;
  if(p==='/api/1999/sim/overview'){
-  return {asOf:'1999-01-01',schema:w.schema,mode:w.mode,seed:w.seed,
+  return {asOf:gameDate||'1999-01-01',careerProjection:gameDate?'READ_ONLY_AGE_AND_ABILITY__NO_OUTCOMES':null,schema:w.schema,mode:w.mode,seed:w.seed,
    source:'BROWSER_DETERMINISTIC_GENERATOR__NO_API_OR_DATABASE_REQUIRED',
    gameplayReady:false,counts:w.counts,audit:w.audit,clock:createClean1999Clock(w.seed)};
  }
- if(p==='/api/1999/sim/horses')return pager(q,w.counts.horses,i=>w.horseAt(i),'SOURCE_267_PLUS_TEST_GENERATED');
+ if(p==='/api/1999/sim/horses')return pager(q,w.counts.horses,i=>atDate(w.horseAt(i)),'SOURCE_267_PLUS_TEST_GENERATED');
  if(p==='/api/1999/sim/owner-horses'){
   const id=String(q.get('ownerId')||'').trim();
   if(!id||!/^O-[A-Z0-9-]{1,45}$/.test(id))throw Error('Valid owner ID required');
   const horseIndexes=w.ownedHorseIndexes(id);
-  return pager(q,horseIndexes.length,i=>w.horseAt(horseIndexes[i]),'CANON_AND_TEST_OWNERSHIP_ROSTER');
+  return pager(q,horseIndexes.length,i=>atDate(w.horseAt(horseIndexes[i])),'CANON_AND_TEST_OWNERSHIP_ROSTER');
  }
- if(p==='/api/1999/sim/owners')return pager(q,w.counts.owners,i=>w.ownerAt(i),'SOURCE_LINKED_PLUS_TEST_ECONOMY');
- if(p==='/api/1999/sim/trainers')return pager(q,w.counts.trainers,i=>w.trainerAt(i),'SOURCE_LINKED_PLUS_TEST_HORSEMEN');
- if(p==='/api/1999/sim/people')return pager(q,w.counts.people-w.sourcePeople.length,i=>w.personAt(i),'SIMULATED_WORKFORCE');
- if(p==='/api/1999/sim/source-people')return pager(q,w.sourcePeople.length,i=>w.sourcePersonAt(i),'CANON_IDS_PLUS_TEST_ONLY_ABILITY');
+ if(p==='/api/1999/sim/owners')return pager(q,w.counts.owners,i=>atDate(w.ownerAt(i)),'SOURCE_LINKED_PLUS_TEST_ECONOMY');
+ if(p==='/api/1999/sim/trainers')return pager(q,w.counts.trainers,i=>atDate(w.trainerAt(i)),'SOURCE_LINKED_PLUS_TEST_HORSEMEN');
+ if(p==='/api/1999/sim/people')return pager(q,w.counts.people-w.sourcePeople.length,i=>atDate(w.personAt(i)),'SIMULATED_WORKFORCE');
+ if(p==='/api/1999/sim/source-people')return pager(q,w.sourcePeople.length,i=>atDate(w.sourcePersonAt(i)),'CANON_IDS_PLUS_TEST_ONLY_ABILITY');
  if(p==='/api/1999/sim/tracks')return pager(q,w.counts.tracks,i=>w.trackAt(i),'CANON_GEOGRAPHY_WITH_SIMULATED_OPERATIONS');
  if(p==='/api/1999/sim/facilities')return pager(q,w.counts.facilities,i=>w.facilityAt(i),'SIMULATED_FACILITIES');
  if(p==='/api/1999/sim/auctions')return pager(q,w.counts.auctions,i=>w.auctionAt(i),'SIMULATED_AUCTIONS');
