@@ -44,7 +44,7 @@ function source(kind,record,ui){
   node.dataset.testRelationships=JSON.stringify(d._testRelationships||{});
   const career=d._testCareer||{};
   const testCareer=career.provenance==='GENERATED_1998_AND_PRIOR_NONCANON_TEST_RACES_ONLY';
-  node.innerHTML='<div class="profileSubline">'+safe(d._testGenerated?'1999 GENERATED TEST HORSE':'1999 SOURCE-LINKED HORSE')+'</div>'+
+  node.innerHTML='<div class="profileSubline">'+safe(d._testGenerated?'1999 GENERATED TEST HORSE':sourceId?'1999 SOURCE-LINKED HORSE':'UNLINKED HORSE RECORD · ID NOT ESTABLISHED')+'</div>'+
     field('Age',d.age||(year>0?1999-year:'—'))+field('Sex',d.sex||'—')+
     (ability?field('CURRENT ABILITY · TEST',ability.currentStars+'/5')+
       field('FUTURE POTENTIAL · TEST',ability.potentialStars+'/5')+
