@@ -3284,7 +3284,12 @@ window.addEventListener('click',e=>{
  e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();
  const key=btn.dataset.ng, val=btn.dataset.val||'';
  if(!key && btn.dataset.act){syntheticAction(btn);return}
- if(key==='save-open'){APP.savePanelOpen=true;APP.saveError='';paint();root.querySelector('#ngNamedSaveName')?.focus();return}
+ if(key==='save-open'){
+  // Compact IndexedDB careers are the default commercial path.
+  // The old named-save dialog remains accessible as a compatibility fallback.
+  if(window.WTWCompactCareerManager?.open)return window.WTWCompactCareerManager.open();
+  APP.savePanelOpen=true;APP.saveError='';paint();root.querySelector('#ngNamedSaveName')?.focus();return;
+ }
  if(key==='save-close'){APP.savePanelOpen=false;APP.saveError='';return paint()}
  if(key==='commercial-career-open'){
   if(!window.WTWCompactCareerManager?.open)return namedSaveError('Compact career manager has not loaded. Refresh this page.');
