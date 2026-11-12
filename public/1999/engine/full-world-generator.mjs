@@ -41,6 +41,7 @@ function generatedOrganizationName(seed,i,kind){const total=PLACE_WORDS.length*A
  if(kind==='barn')return [p+' '+f+' Racing',f+' '+p+' Stables',p+' '+f+' Training Yard',f+' '+p+' Racing Stable'][i%4];
  return [p+' '+f+' Racing',f+' & '+p+' Partners',p+' '+f+' Bloodstock',f+' '+p+' Thoroughbreds',p+' '+f+' Syndicate',f+' '+p+' Racing Club'][i%6];}
 const hor=Object.values(attributeCatalog.horse_categories).flat();
+const horseTraitDefinitions=new Map(hor.map(d=>[d.key,d]));
 const common=attributeCatalog.person_common;
 const roleDef=attributeCatalog.person_roles;
 const pad=(n,width=6)=>String(n).padStart(width,'0');
@@ -410,6 +411,16 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    sireId,damId,sire:mixName(seed+1,si+100000),dam:mixName(seed+1,di+101500),
    trackId:trainer.homeTrackId,ca:abi.currentStars,pa:abi.potentialStars,canonical:false};
  }
+ // Read one exact, model-derived attribute without materializing the 53-value
+ // profile or any racing history. Enables sorting all 87,500 World horses.
+ function horseAttributeAt(index,key){
+  const def=horseTraitDefinitions.get(String(key||''));
+  if(!def)throw Error('Unknown horse trait: '+key);
+  const meta=horseDirectoryAt(index);
+  const ability=createAgeAbility({seed,id:meta.id,role:'horse',age:meta.age,
+   pedigree:{sireId:meta.sireId||null,damId:meta.damId||null}});
+  return traits([def],seed,meta.id,ability)[def.key];
+ }
  function horseAt(index){
   if(!Number.isInteger(index)||index<0||index>=HORSE_POPULATION)throw Error('Horse index out of range');
   if(horseCache.has(index))return horseCache.get(index);
@@ -720,7 +731,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    facilities:trainersTotal+900+trackCount,breedingFarms:900,
    breedingMares:MARE_BREEDING_STOCK,breedingStallions:STALLION_BREEDING_STOCK,auctions:36,
    sourceStallions:anchored?canon.activeStallions1999.length:0,sourceBroodmareLocations:anchored?canon.productionBroodmareBoarding1999.length:0},
-  ownerAt,trainerAt,trackAt,horseAt,horseDirectoryAt,personAt,jockeyBookingMarket,sourcePersonAt,projectAtDate,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
+  ownerAt,trainerAt,trackAt,horseAt,horseDirectoryAt,horseAttributeAt,personAt,jockeyBookingMarket,sourcePersonAt,projectAtDate,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
   parentAt,mareDirectoryAt,annualFoalingForecast,attributeCatalog,sourceStakes:anchored?canon.stakes1999.filter(r=>sourceTracks.some(t=>t.id===r.trackId||t.name===r.trackName)):[],
    sourceOrganizations:sourceOrgs,sourcePeople,excludedActiveStaffRoles:['groom','exercise_rider'],
   audit:{ownershipSlots:ownersSlots.counts.reduce((a,b)=>a+b,0),trainerSlots:trainerSlots.counts.reduce((a,b)=>a+b,0),
