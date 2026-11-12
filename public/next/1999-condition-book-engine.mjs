@@ -35,6 +35,67 @@ const hash=(seed,value)=>{let h=(2166136261^(seed>>>0))>>>0;for(const c of Strin
 const ratio=(seed,key)=>hash(seed,key)/4294967296;
 const round500=value=>Math.round(value/500)*500;
 const pad=(v,width)=>String(v).padStart(width,'0');
+
+const WEEKLY_PROGRAM_THEMES=Object.freeze([
+ 'MAIDEN_DEVELOPMENT','SPRINT_SPEED','ROUTE_TESTS',
+ 'ALLOWANCE_LADDER','CLAIMING_MARKET','DISTAFF_PROGRAM'
+]);
+const WEEKLY_CLASS_FOCUS=Object.freeze({
+ MAIDEN_DEVELOPMENT:'Maiden Special Weight',
+ SPRINT_SPEED:'Claiming',
+ ROUTE_TESTS:'Allowance',
+ ALLOWANCE_LADDER:'Allowance',
+ CLAIMING_MARKET:'Claiming',
+ DISTAFF_PROGRAM:'Allowance'
+});
+/**
+ * Meet-local progression, not world-population-driven card inflation.
+ * A roughly 325–350K total universe includes unraced youngsters, breeding stock,
+ * retirees and other horses; it is NOT a count of active/eligible racehorses.
+ */
+export function meetProgramPhase1999(id,date){
+ const program=trackProgram1999(id);
+ if(!program||program.trackOperating!=='OPEN_1999'||!trackMeetOpen1999(id,date))return null;
+ const md=date.slice(5);
+ const meetNumber=program.meets.findIndex(([start,end])=>start<=md&&md<=end);
+ if(meetNumber<0)return null;
+ const [start,end]=program.meets[meetNumber];
+ const startMs=Date.parse('1999-'+start+'T12:00:00Z');
+ const endMs=Date.parse('1999-'+end+'T12:00:00Z');
+ const dayMs=Date.parse(date+'T12:00:00Z');
+ const elapsedDays=Math.round((dayMs-startMs)/86400000);
+ const totalDays=Math.max(1,Math.round((endMs-startMs)/86400000));
+ const progress=Math.min(1,elapsedDays/totalDays);
+ const week=Math.floor(elapsedDays/7);
+ const phase=progress<.22?'OPENING':progress<.65?'DEVELOPMENT':progress<.88?'CHAMPIONSHIP':'CLOSING';
+ const theme=WEEKLY_PROGRAM_THEMES[(week+hash(19990101,'1999:'+id+':focus'))%WEEKLY_PROGRAM_THEMES.length];
+ return {meetNumber:meetNumber+1,meetStart:'1999-'+start,meetEnd:'1999-'+end,
+  week:week+1,phase,theme,progress:Math.round(progress*1000)/1000,
+  basis:'WTW_MEET_LOCAL_PROGRAM_PROGRESSION'};
+}
+function ordinaryRaceClass1999(profile,seed,raceId,weekPlan,number,priorClass){
+ const pool=MIX[profile.tier];
+ const focus=WEEKLY_CLASS_FOCUS[weekPlan.theme];
+ let selection=pool[hash(seed,raceId+':class')%pool.length];
+ const focusChance=weekPlan.theme==='MAIDEN_DEVELOPMENT'&&weekPlan.phase==='OPENING'?.7:.52;
+ if(pool.includes(focus)&&number%3===(weekPlan.week%3)&&ratio(seed,raceId+':weekly-theme')<focusChance)
+  selection=focus;
+ // Condition books should not repeat the same race class three times in a row.
+ if(priorClass===selection){
+  const alternatives=pool.filter(x=>x!==priorClass);
+  selection=alternatives[hash(seed,raceId+':variety')%alternatives.length];
+ }
+ return selection;
+}
+function ordinaryAge1999(seed,raceId,date,weekPlan){
+ const month=Number(date.slice(5,7));
+ const juvenileShare=month<=3?0:month<=5?.06:month<=7?.13:month<=9?.22:.17;
+ const n=ratio(seed,raceId+':age');
+ if(n<juvenileShare)return '2YO';
+ const threeYearShare=weekPlan.phase==='OPENING'?.37:weekPlan.phase==='CHAMPIONSHIP'?.24:.29;
+ return n<juvenileShare+(1-juvenileShare)*threeYearShare?'3YO':'3YO+';
+}
+
 function levelFor(id,program){
  if(program?.basis==='WTW_FICTIONAL_GAME_MODELED')return 'GROWTH';
  if(/WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION|WTW_ALTERNATE_SURVIVAL_MODELED/.test(program?.basis||''))return 'REVIVAL';
@@ -76,8 +137,17 @@ function raceSurface(program,profile,number,trackIndex){
  if(!program.surfaces.includes('Turf'))return 'DIRT';
  return (number+trackIndex)%profile.turfEvery===0?'TURF':'DIRT';
 }
-function raceDistance(seed,id,surface,level){
- const turf=surface==='TURF',sprint=ratio(seed,id+':distance')<(turf?.24:.51);
+function raceDistance(seed,id,surface,level,ageRequirement,weekPlan,date){
+ const turf=surface==='TURF';
+ const sprintChance=weekPlan.theme==='SPRINT_SPEED'?.76:weekPlan.theme==='ROUTE_TESTS'?.22:(turf?.27:.53);
+ const sprint=ratio(seed,id+':distance')<sprintChance;
+ // Juvenile conditions mature through the season. An early 2YO maiden is not a
+ // January route or a ten-furlong contest.
+ if(ageRequirement==='2YO'){
+  const early=date<'1999-07-01';
+  const distances=early?[4.5,5,5.5,6]:sprint?[5,5.5,6,6.5,7]:[7,8,8.5];
+  return distances[hash(seed,id+':juvenile-furlongs')%distances.length];
+ }
  const distances=turf?(sprint?[5.5,6,6.5]:[8,8.5,9,10,11,12]):
   sprint?[5.5,6,6.5,7]:level==='FAIR'?[8,8.5,9]:[8,8.5,9,9.5,10];
  return distances[hash(seed,id+':furlongs')%distances.length];
@@ -104,6 +174,7 @@ export function buildConditionBook1999({date,track,trackIndex,seed=19990101,sour
  const id=track.sourceTrackId||track.id,program=trackProgram1999(id),profile=trackConditionProfile1999(id,seed);
  if(!program||!profile||!trackMeetOpen1999(id,date))return [];
  const stakes=includeKnownStakes?plannedStakes(date,id,sourceStakes):[];
+ const meetPlan=meetProgramPhase1999(id,date);
  const weekday=new Date(date+'T12:00:00Z').getUTCDay();
  const weekend=weekday===0||weekday===6;
  let count=profile.racesMin+hash(seed,'1999:'+id+':races:'+date)%(profile.racesMax-profile.racesMin+1);
@@ -132,20 +203,21 @@ export function buildConditionBook1999({date,track,trackIndex,seed=19990101,sour
    distanceFurlongs=Number(stake.distanceFurlongs??stake.distanceF)||8;
    purse=Number(stake.purse1999??stake.purse)||round500(profile.purses.handicap*3);
   }else{
-   const pool=MIX[profile.tier];
-   cl=pool[hash(seed,raceId+':class')%pool.length];
-   const ageUnit=ratio(seed,raceId+':age'),twoEligible=date.slice(5)>='04-01';
-   ageRequirement=twoEligible&&ageUnit<.09?'2YO':ageUnit<.34?'3YO':'3YO+';
-   const females=hash(seed,raceId+':female')%6===0;
+   const previous=result.length?result[result.length-1]:null;
+   cl=ordinaryRaceClass1999(profile,seed,raceId,meetPlan,number,
+    previous?.stakeId?null:previous?.conditions);
+   ageRequirement=ordinaryAge1999(seed,raceId,date,meetPlan);
+   const females=ratio(seed,raceId+':female')<(meetPlan.theme==='DISTAFF_PROGRAM'?.4:1/6);
    sexRestriction=females?'FILLIES_AND_MARES':'OPEN';
    const maidenOnly=cl.startsWith('Maiden');
    const claiming=cl==='Claiming'||cl==='Maiden Claiming'||cl==='Allowance Optional Claiming';
    if(claiming){
     const bands=profile.claimingBands;
-    claimingPrice=bands[hash(seed,raceId+':claim')%bands.length];
+    claimingPrice=bands[(hash(seed,raceId+':claim')+meetPlan.week)%bands.length];
    }
-   maxCareerWins=cl==='Allowance'?1:null;
+   maxCareerWins=cl==='Allowance'?(hash(seed,raceId+':nwx')%3===0?2:1):null;
    winRestriction=maidenOnly?'Maidens (no career wins)':maxCareerWins===1?'Non-winners of two lifetime':
+    maxCareerWins===2?'Non-winners of three lifetime':
     cl==='Starter Allowance'?'A qualifying prior claiming start is required':
     cl==='Allowance Optional Claiming'?'Allowance eligibility or modeled optional claiming terms':
     cl==='Handicap'?'Handicap weights pending declaration':'Open to eligible starters';
@@ -153,7 +225,7 @@ export function buildConditionBook1999({date,track,trackIndex,seed=19990101,sour
     '; '+winRestriction+(claimingPrice?' · modeled claiming price $'+claimingPrice.toLocaleString('en-US'):'')+
     '. This is a modeled 1999 condition, not an official published race.';
    surface=raceSurface(program,profile,number,trackIndex);
-   distanceFurlongs=raceDistance(seed,raceId,surface,profile.tier);
+   distanceFurlongs=raceDistance(seed,raceId,surface,profile.tier,ageRequirement,meetPlan,date);
    const key=purseKey(cl);
    purse=round500(profile.purses[key]*(0.89+0.22*ratio(seed,raceId+':purse')));
   }
@@ -165,7 +237,10 @@ export function buildConditionBook1999({date,track,trackIndex,seed=19990101,sour
    ageRequirement,sexRestriction,surface,distanceFurlongs,purse,
    fieldCapacity:8+hash(seed,raceId+':field')%7,currentEntries:[],results:[],
    status:'CONDITION_BOOK_PROPOSAL_NOT_RUN',canonical:false,programTier:profile.tier,
-   conditionBookBasis:'WTW_1999_TRACK_SPECIFIC_MODELED',
+   meetNumber:meetPlan.meetNumber,meetWeek:meetPlan.week,meetPhase:meetPlan.phase,
+   weeklyProgramTheme:meetPlan.theme,
+   eligibleRunnerDemandStatus:'NOT_CALCULATED_FROM_TOTAL_WORLD_POPULATION',
+   conditionBookBasis:'WTW_1999_TRACK_SPECIFIC_MEET_PROGRESSION',
    ...(stake?{stakeId:stake.id,stakeName:stake.name,stakesGrade:cl,
     stakeSourceStatus:stake.canonStatus||stake.calendarBasis||stake.source||'WTW_PLANNED_STAKES',
     stakesPurse1999:purse}: {})
