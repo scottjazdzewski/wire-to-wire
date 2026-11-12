@@ -42,6 +42,9 @@ test('all 8,408 generated organization/facility names are globally distinct with
   assert.deepEqual(names.owners.slice(0,sourceNames.length),sourceNames);
   assert.equal(names.barns.length,4200);assert.equal(names.farms.length,900);
   assertNoDuplicates([...names.owners,...names.barns,...names.farms],'duplicate organization');
+  assert.equal(names.summary.maxDistinctiveRootUses,6);
+  assert.ok(names.summary.highestDistinctiveRootUse<=6,
+   'a distinctive business name family was overused');
   assert.ok(names.farms.every(name=>!/\bFarm Farm\b|\bFarm Stud\b|\bStud Stud\b/i.test(name)));
   assert.ok(names.farmKinds.some(kind=>kind==='STUD_FARM'));
   assert.ok(names.farmKinds.some(kind=>kind==='FARM'));
@@ -111,6 +114,18 @@ test('900 distinct farm identities have their own commercial purpose, without cl
  assert.ok(names.slice(sources.length).every(n=>!sourceBrandRoots.some(root=>normalized(n).startsWith(root))),
   'generated brand illegally clones a protected historic brand');
  assert.equal(o.breakingCenters.length,400);
+ // Exact-duplicate screening is insufficient. Swapping Racing, Stud and Farm
+ // after the same landmark repeatedly still looks like a duplicated business.
+ const distinctiveRoots=['Union Hill','River City','Trade Wind','Iron Gate',
+  'Old Dominion','Highpoint','Landmark','Westline','Redline','Stonefield'];
+ for(const root of distinctiveRoots){
+  const rootPrefix=root.toLowerCase()+' ';
+  const repeated=names.filter(s=>s.replace(/^The\\s+/i,'').toLowerCase().startsWith(rootPrefix));
+  assert.ok(repeated.length<=6,
+   root+' was reused '+repeated.length+' times in the 1999 business population');
+ }
+ assert.equal(o.summary.maxDistinctiveRootUses,6);
+ assert.ok(o.summary.highestDistinctiveRootUse<=6);
  assert.ok(o.summary.retries>=0);
  assert.ok(o.farms.every((name,i)=>{
   const k=o.farmKinds[i];
