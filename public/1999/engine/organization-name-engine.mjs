@@ -27,7 +27,7 @@ export function createOrganizationNameRoster({
  if(!Number.isSafeInteger(seed)||seed<1)throw Error('Invalid naming seed');
  for(const n of [ownerCount,barnCount,farmCount])if(!Number.isInteger(n)||n<0)throw Error('Invalid naming count');
  const used=new Set(protectedNames.map(norm).filter(Boolean));
- const roots=new Set();
+ const roots=new Set(protectedNames.map(rootOf).filter(Boolean));
  const reserve=(candidate,{distinctRoot=false}={})=>{
   const key=norm(candidate),root=rootOf(candidate);
   if(!key||used.has(key)||(distinctRoot&&roots.has(root)))return false;
@@ -60,7 +60,7 @@ export function createOrganizationNameRoster({
    if(style<79)return 'The '+draw(['First Turn','Furlong','Rail','Winning Post','Home Stretch','Clubhouse'],seed,k+':club')+' '+draw(['Partnership','Racing Club','Syndicate'],seed,k+':club-suffix');
    if(style<90)return place+' '+family+' '+draw(['Racing','Thoroughbreds','Bloodstock'],seed,k+':corporate');
    return principal+' '+draw(['Racing','Thoroughbreds','Stable'],seed,k+':principal');
-  });
+  },{distinctRoot:true});
  }
  const farms=new Array(farmCount);
  const farmKinds=new Array(farmCount);
@@ -70,8 +70,8 @@ export function createOrganizationNameRoster({
   farms[i]=claim(attempt=>{
    const key=k+':'+attempt,style=hash(seed,key+':style')%100;
    const land=draw(LAND,seed,key+':land'),place=draw(PLACES,seed,key+':place');
-   const family=draw(SURNAMES,seed,key+':family'),other=draw(LAND,seed,key+':second-land');
-   const stem=style<48?land:style<68?family+' '+draw(['Hill','Creek','Fields','Grove','Place','Run','Ridge','Vale'],seed,key+':topo'):style<89?place+' '+draw(['Valley','Meadows','Farm','Hollow','Hill'],seed,key+':geo'):land+' '+other;
+   const family=draw(SURNAMES,seed,key+':family');
+   const stem=style<48?land:style<74?family+' '+draw(['Hill','Creek','Fields','Grove','Place','Run','Ridge','Vale'],seed,key+':topo'):place+' '+draw(['Valley','Meadows','Hollow','Hill','Point'],seed,key+':geo');
    let suffix=farmKinds[i]==='STUD_FARM'?'Stud':farmKinds[i]==='THOROUGHBRED_NURSERY'?'Nursery':farmKinds[i]==='BLOODSTOCK_FARM'?'Bloodstock Farm':draw(['Farm','Farm','Farm','Thoroughbred Farm'],seed,key+':suffix');
    // Do not yield a duplicate suffix such as "... Farm Farm".
    if(/\bFarm$/i.test(stem)&&/Farm/i.test(suffix))suffix='';
