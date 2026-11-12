@@ -12,11 +12,16 @@ const srcPeople=allPages('/api/1999/people',154);
 const activeStallions=q('/api/1999/stallions').active;
 const ownerNames=new Map(srcOrgs.map(o=>[o.id,o.name]));
 const peopleNames=new Map(srcPeople.map(p=>[p.id,p.name]));
-const horseLookup=new Map(srcHorses.map(h=>[h.name,h]));
 const ownership=new Map();for(const h of srcHorses){ownership.set(h.ownerId,(ownership.get(h.ownerId)||0)+1);}
 const activeOwnerId=[...ownership].filter(([id])=>id).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))[0]?.[0]||null;
-const stableHorses=srcHorses.filter(h=>h.ownerId===activeOwnerId && h.foalYear<=1997).slice(0,24);
 const selectedOwner=ownerNames.get(activeOwnerId)||activeOwnerId||'1999 Foundation Stable';
+// The player's entire horse portfolio is resolved from the ONE deterministic world.
+// This does not fabricate additional historical source records or outcomes.
+const portfolioQuery='ownerId='+encodeURIComponent(activeOwnerId||'');
+const ownedHorseCount=q('/api/1999/sim/owner-horses',portfolioQuery+'&offset=0&limit=1').total;
+const stableHorses=allPages('/api/1999/sim/owner-horses?'+portfolioQuery,ownedHorseCount);
+const horseLookup=new Map([...srcHorses,...stableHorses].map(h=>[h.name,h]));
+const sourceHorseIds=new Set(srcHorses.map(h=>h.id));
 
 const ownerIndex=srcOrgs.findIndex(o=>o.id===activeOwnerId);
 const initialOwner=q('/api/1999/sim/owners','offset='+Math.max(0,ownerIndex)+'&limit=1').items?.[0]||null;
@@ -63,15 +68,19 @@ const label=v=>v==null?'':String(v);
 const rep=v=>Number.isFinite(Number(v?.overall))?String(v.overall)+'/99':'';
 function sourceFacts(name){
  const h=horseLookup.get(name);if(!h)return null;
+ const source=sourceHorseIds.has(h.id);
+ const trainer=peopleNames.get(h.trainerId)||get('trainerNames','/api/1999/sim/trainers',4200).find(t=>t.id===h.trainerId)?.name||'';
  return {age:String(h.ageAtOpening||1999-Number(h.foalYear)),sex:h.sex||'',
-  connections:{trainer:peopleNames.get(h.trainerId)||'',owner:ownerNames.get(h.ownerId)||'',breeder:''},
-  name:h.name,source:'1999_CANON_LOCKED',
-  racing_status:h.racingStatus||'',current_base:h.openingStable?.locality||'',
+  connections:{trainer,owner:ownerNames.get(h.ownerId)||selectedOwner,breeder:''},
+  name:h.name,source:source?'1999_CANON_LOCKED':'1999_TEST_GENERATED',
+  racing_status:source?h.racingStatus:'TEST_WORLD_NO_1999_RESULTS',
+  current_base:h.openingStable?.locality||h.location?.city||'',
   sire_id:h.sireId,dam_id:h.damId};
 }
-const ownerFor=name=>{const h=horseLookup.get(name);return h?ownerNames.get(h.ownerId)||h.ownerId||'':null;};
-function roster(){return stableHorses.map((h,i)=>({name:h.name,activity:h.trainingStatus||'CURRENT CONDITION NOT OBSERVED',
- tag:h.sex+' · '+(1999-Number(h.foalYear))+'YO',index:i+1,horseId:h.id}));}
+const ownerFor=name=>{const h=horseLookup.get(name);return h?(h.ownerId===activeOwnerId?selectedOwner:ownerNames.get(h.ownerId)||h.ownerId||''):null;};
+function roster(){return stableHorses.map((h,i)=>({name:h.name,
+ activity:sourceHorseIds.has(h.id)?h.trainingStatus||'PRE-RACE TRAINING':'TEST HORSE · CONDITION UNOBSERVED',
+ tag:(sourceHorseIds.has(h.id)?'CANON':'TEST')+' · '+h.sex+' · '+(1999-Number(h.foalYear))+'YO',index:i+1,horseId:h.id}));}
 function auctionList(){
  const source=get('sales','/api/1999/sim/auctions',36);
  return source.map((a,i)=>({id:a.id,name:a.name,date:a.date,endDate:a.date,sortKey:a.date,
@@ -213,6 +222,7 @@ function extraTracks(){
 window.__WTW_1999_UI_DATA__={
  schema:'WTW_1999_CANON_ANCHORED_UI_ADAPTER_V1',
  sourceOwnerId:activeOwnerId,sourceOwnerName:selectedOwner,stableHorses:roster(),
+ ownedHorseCount,
  sourceFacts,ownerFor,departmentRows,auctionList,extraTracks,
  officeMessages,officeDesks,openingCash,worldHorsePage,
  counts:q('/api/1999/sim/overview').counts,
