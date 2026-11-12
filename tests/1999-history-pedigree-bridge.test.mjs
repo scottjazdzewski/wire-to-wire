@@ -32,6 +32,12 @@ test('1999 source-locked opening horses retain parent IDs independently of histo
  assert.ok(horse);
  assert.equal(horse.sireId,'H-1987-000001');
  assert.equal(horse.damId,'H-1989-020001');
- assert.ok(historicalHorseById(horse.sireId));
- assert.ok(historicalHorseById(horse.damId));
+ // Opening production parents can live outside the pre-1999 historical master.
+ // Never fabricate a parent identity to satisfy a pedigree lookup.
+ const sire=historicalPedigree(horse.sireId,1);
+ const dam=historicalPedigree(horse.damId,1);
+ assert.equal(sire.id,horse.sireId);
+ assert.equal(dam.id,horse.damId);
+ assert.ok(sire.name||sire.source==='UNRESOLVED_HISTORICAL_PARENT_ID');
+ assert.ok(dam.name||dam.source==='UNRESOLVED_HISTORICAL_PARENT_ID');
 });
