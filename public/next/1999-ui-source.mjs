@@ -13,25 +13,36 @@ import {TRAINING_PLANS,createHorseTrainingRecord,horseTrainingSnapshot,
  from '/1999/engine/horse-development.mjs';
 let viewDate='1999-01-01';
 const saveKey=()=>window.__WTW_1999_MANAGEMENT__?.saveKey||'wtw1999ManagementStateV1';
+let cachedCareerRaw=null,cachedCareer=null,trainerYear='',trainerModels=null;
 function gameCareer(){
  if(typeof localStorage==='undefined'||!window.__WTW_1999_MANAGEMENT__)return null;
  const raw=localStorage.getItem(saveKey());if(!raw)return null;
+ if(raw===cachedCareerRaw)return cachedCareer;
  const game=JSON.parse(raw);
  if(game?.worldAnchor?.schema!==window.__WTW_1999_MANAGEMENT__.schema)return null;
- return game;
+ cachedCareerRaw=raw;cachedCareer=game;return game;
+}
+function storeCareer(game){
+ const raw=JSON.stringify(game);localStorage.setItem(saveKey(),raw);
+ cachedCareerRaw=raw;cachedCareer=game;
 }
 function trainingTrainerMap(){
+ const year=viewDate.slice(0,4);
+ if(trainerYear===year&&trainerModels)return trainerModels;
  const trainers=get('trainers','/api/1999/sim/trainers',worldCounts.trainers);
- return Object.fromEntries(trainers.map(t=>[t.id,t]));
+ trainerModels=Object.fromEntries(trainers.map(t=>[t.id,t]));
+ trainerYear=year;
+ return trainerModels;
 }
 function syncDevelopment(date){
  const game=gameCareer();
  if(!game||game.date!==date)return game;
+ if(game.horseDevelopment?.processedThrough===date)return game;
  const done=simulateStableTrainingThrough(game,{
   horses:stableHorses,trainerById:trainingTrainerMap(),seed:game.worldAnchor.seed,date
  });
  if(done.daysProcessed){
-  localStorage.setItem(saveKey(),JSON.stringify(done.game));
+  storeCareer(done.game);
   return done.game;
  }
  return game;
@@ -51,7 +62,7 @@ function assignTraining(horseId,plan){
  const prepared=syncDevelopment(game.date)||game;
  const updated=assignHorseTrainingPlan(prepared,{horse:h,plan,stableHorses, date:game.date});
  if(updated!==prepared){
-  localStorage.setItem(saveKey(),JSON.stringify(updated));
+  storeCareer(updated);
  }
  return horseTrainingSnapshot(updated,h);
 }
