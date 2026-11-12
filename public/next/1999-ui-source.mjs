@@ -88,8 +88,10 @@ function stableHorsePreview(name){
  if(!h)return null;
  const source=sourceHorseIds.has(h.id);
  return {_kind:'horse',_name:h.name,name:h.name,_canonId:source?h.id:'',
-  _id:h.id,_testGenerated:!source,_testAttrs:h.attributes||{},_testFinances:h.finances||{},
-  _testReputation:h.reputation||{},age:String(1999-Number(h.foalYear)),
+  _id:h.id,_testGenerated:!source,_testAttrs:h.attributes||{},_testCareer:h.career||{},_testFinances:h.finances||{},
+  _testReputation:h.reputation||{},age:String(1999-Number(h.foalYear)),foalYear:h.foalYear,
+  foalingGeography:h.foalingGeography||h.foalingLocation||h.foalingPlace||null,
+  ownerId:h.ownerId||'',trainerId:h.trainerId||'',
   sex:h.sex||'',sire:h.sireId||'',dam:h.damId||'',owner:ownerFor(name)||'',
   trainer:sourceFacts(name)?.connections.trainer||'',track:h.openingStable?.name||h.stableTrackId||'',
   location:city(h.location||h.openingStable)||'',
@@ -111,7 +113,7 @@ function makeDepartmentRows(section,page,context={}){
   if(page==='Stakes'){
    const stakes=get('stakes','/api/1999/calendar',93);
    return stakes.filter(r=>r.localDate>=date).map(r=>({
-    _kind:'race',_name:r.name,_track:r.trackName,_iso:r.localDate,
+    _kind:'race',_name:r.name,_track:r.trackName,_iso:r.localDate,_raceId:r.id,_raceData:r,
     date:r.localDate,track:r.trackName,race:r.name,
     class:r.status||r.division||'STAKES',surface:r.surface||'',
     distance:r.distanceF?String(r.distanceF)+'f':'',
@@ -124,7 +126,7 @@ function makeDepartmentRows(section,page,context={}){
    for(let i=0;i<tracks.length;i++){
     const card=q('/api/1999/sim/conditions','date='+encodeURIComponent(date)+'&trackIndex='+i);
     for(const r of card.races||[])rows.push({
-     _kind:'race',_name:r.id,_track:r.trackName,_iso:r.date,
+     _kind:'race',_name:r.id,_track:r.trackName,_iso:r.date,_raceId:r.id,_raceData:r,
      date:r.date,track:r.trackName,race:'R'+r.number,class:r.conditions,
      surface:r.surface,distance:String(r.distanceFurlongs)+'f',
      purse:money(r.purse),horse:'',base:'',ship:'',jockey:'',trainer:'',
@@ -227,7 +229,9 @@ function worldHorsePage(offset=0,limit=20,filter=''){
   const damName=source?srcHorses.find(p=>p.id===h.damId)?.name:null;
   return {_kind:'horse',_name:h.name,_canonId:source?h.id:'',
    _worldKey:source?'horse:'+h.id:undefined,_testGenerated:!source,
-   _testAttrs:h.attributes||{},_testFinances:h.finances||{},_testReputation:h.reputation||{},
+   _testAttrs:h.attributes||{},_testCareer:h.career||{},_testFinances:h.finances||{},_testReputation:h.reputation||{},
+   foalYear:h.foalYear,foalingGeography:h.foalingGeography||h.foalingLocation||h.foalingPlace||null,
+   ownerId:h.ownerId||'',trainerId:h.trainerId||'',
    name:h.name,age:String(h.ageAtOpening||1999-Number(h.foalYear)),sex:h.sex,
    sire:sireName||h.sireId||'',dam:damName||h.damId||'',
    owner:universeLabels.owners.get(h.ownerId)||ownerNames.get(h.ownerId)||h.ownerId||'',
@@ -242,6 +246,10 @@ function worldHorsePage(offset=0,limit=20,filter=''){
   [row.name,row._id,row.owner,row.trainer,row.sire,row.dam,row.track].some(value=>String(value||'').toLowerCase().includes(needle))):rows,
   isPageFilter:Boolean(needle),pageStart:start};
 }
+const sourceStakes=get('1999-source-stakes','/api/1999/calendar',93);
+const stakesForTrack=name=>sourceStakes.filter(r=>r.trackName===name);
+const findStake=id=>sourceStakes.find(r=>r.id===id)||null;
+const ownedHorses=()=>stableHorses;
 function extraTracks(){
  const ts=get('tracks','/api/1999/sim/tracks',134);
  return ts.map(t=>({...t,location:city(t.location),region:t.location?.state||'',country:t.location?.country||'',
@@ -255,6 +263,7 @@ window.__WTW_1999_UI_DATA__={
  ownedHorseCount,
  sourceFacts,ownerFor,stableHorsePreview,departmentRows,auctionList,extraTracks,
  officeMessages,officeDesks,openingCash,worldHorsePage,
+ stakesForTrack,findStake,ownedHorses,
  counts:q('/api/1999/sim/overview').counts,
  bridgeStatus:'SOURCE_IDS_LOCKED; OTHER VALUES_MARKED_TEST; NO_1999_OUTCOME_COMMITTED'
 };
