@@ -21,6 +21,7 @@ const defs={
 let clock;try{const p=JSON.parse(localStorage.getItem(WTW_TEST_SAVE_NAMESPACE)||'null');clock=p?validate1999Clock(p):createClean1999Clock();}catch{clock=createClean1999Clock();}
 let mode=localStorage.getItem(SAVE_MODE_KEY)==='FULLY_FICTIONAL_TEST'?'FULLY_FICTIONAL_TEST':'CANON_ANCHORED_TEST';
 let tab='full-horses',offset=0,term='',token=0,trackIndex=0,tracksLoaded=false;
+let visibleRecords=[];
 const fmtDate=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-US',{timeZone:'UTC',weekday:'long',year:'numeric',month:'long',day:'numeric'});
 const modelArgs=()=>new URLSearchParams({seed:String(clock.seed),mode});
 function drawClock(){
@@ -43,6 +44,20 @@ drawClock();
 for(const b of document.querySelectorAll('#tabs button'))b.addEventListener('click',()=>select(b.dataset.tab));
 $('search').addEventListener('change',()=>{term=$('search').value.trim().toLowerCase();offset=0;load();});
 $('refresh').addEventListener('click',()=>load());
+$('jumpTo').addEventListener('click',()=>{
+ const number=Number($('jumpIndex').value);
+ if(!Number.isSafeInteger(number)||number<1){$('status').textContent='Enter a valid record number.';return;}
+ offset=number-1;term='';$('search').value='';load();
+});
+$('records').addEventListener('click',e=>{
+ const button=e.target.closest('[data-record-index]');
+ if(!button)return;
+ const record=visibleRecords[Number(button.dataset.recordIndex)];
+ if(record)showRecordDetails(record);
+});
+$('recordDetails').addEventListener('click',e=>{
+ if(e.target.closest('[data-close-record]')){$('recordDetails').hidden=true;$('recordDetails').innerHTML='';}
+});
 $('prevPage').addEventListener('click',()=>{offset=Math.max(0,offset-15);load();});
 $('nextPage').addEventListener('click',()=>{offset+=15;load();});
 $('trackPicker').addEventListener('change',()=>{trackIndex=Number($('trackPicker').value)||0;load();});
@@ -68,7 +83,30 @@ async function overview(){
  $('metrics').innerHTML=metric(c.horses,'Horses in test world')+metric(c.owners,'Ownership groups')+metric(c.trainers,'Trainer strings')+metric(c.tracks,'Racing tracks')+metric(c.facilities,'Physical facilities')+metric(c.auctions,'1999 sales events');
  }catch(e){$('metrics').textContent=e.message;}
 }
-function row(x){
+function labelValue(value){
+ if(value===null||value===undefined)return 'Not recorded';
+ if(typeof value==='number')return Number.isInteger(value)?value.toLocaleString('en-US'):value.toFixed(4);
+ return String(value);
+}
+function showRecordDetails(x){
+ const attrs=x.attributes||x.roleAttributes||{};
+ const reputation=x.reputation||{};
+ const finance=x.finances||{};
+ const title=x.name||x.conditions||x.type||x.id||'Recorded entity';
+ const fields=(value)=>Object.entries(value).map(([k,v])=>'<div class="detailFact"><span>'+esc(k.replaceAll('_',' '))+'</span><strong>'+esc(labelValue(v))+'</strong></div>').join('');
+ const lines=(Object.entries(attrs)).sort((a,b)=>a[0].localeCompare(b[0]))
+   .map(([k,v])=>'<div class="trait"><span>'+esc(k.replaceAll('_',' '))+'</span><strong>'+esc(labelValue(v))+'</strong></div>').join('');
+ const location=x.location||x.openingStable||x.standingFarm1999||x.boardingFarm1999||null;
+ const loc=location?Object.entries(location).filter(([k,v])=>['city','state','country','locality','region','farmName','name'].includes(k)&&v).map(([k,v])=>esc(v)).join(' · '):'No location in this source record';
+ $('recordDetails').innerHTML='<div class="detailTop"><div><p class="eyebrow">FULL SOURCE / TEST PROFILE</p><h3>'+esc(title)+'</h3><p>'+esc(x.id||'')+' · '+esc(loc)+'</p></div><button data-close-record type="button">Close</button></div>'+
+ (Object.keys(finance).length?'<h4>Finances and operating costs</h4><div class="detailFacts">'+fields(finance)+'</div>':'')+
+ (Object.keys(reputation).length?'<h4>Reputation</h4><div class="detailFacts">'+fields(reputation)+'</div>':'')+
+ (Object.keys(attrs).length?'<h4>All '+Object.keys(attrs).length+' modeled attributes <small>administrator test values</small></h4><div class="traitGrid">'+lines+'</div>':'')+
+ '<details class="sourceJson"><summary>View every stored field (complete source / test JSON)</summary><pre>'+esc(JSON.stringify(x,null,2))+'</pre></details>';
+ $('recordDetails').hidden=false;
+ $('recordDetails').scrollIntoView?.({behavior:'smooth',block:'nearest'});
+}
+function row(x,i){
  let title='',sub='',where='',right='';
  if(tab==='full-horses'||tab==='horses'){title=x.name;sub=x.id+' · '+(x.ageAtOpening??'?')+'YO · '+x.sex;where=x.location?.city||x.openingStable?.name||'';right=(x.ownerId||'')+' · '+(x.trainerId||'');}
  else if(tab==='owner-economy'){title=x.name;sub=x.id+' · '+x.portfolio.tier;where=[x.location.city,x.location.state].filter(Boolean).join(', ');right=x.portfolio.generatedHorseSlots+' horses · $'+Number(x.finances.cash).toLocaleString('en-US');}
@@ -83,7 +121,7 @@ function row(x){
  else if(tab==='stallions'){title=x.name;sub=x.id+' · stud '+x.firstBreedingSeason;where=x.standingFarm1999?.farmName;right=x.standingFarm1999?.region;}
  else if(tab==='broodmare-boarding'){title=x.name;sub=x.id;where=x.boardingFarm1999?.farmName;right=x.boardingFarm1999?.region;}
  else if(tab==='events'){title=x.type;sub=x.id+' · '+x.scheduledLocalDateTime;where=x.circuit;right='Not executed';}
- return '<article class="record"><div><strong>'+esc(title)+'</strong><small>'+esc(sub)+'</small></div><div class="second">'+esc(where)+'</div><div class="third">'+esc(right)+'</div></article>';
+ return '<article class="record"><div><strong>'+esc(title)+'</strong><small>'+esc(sub)+'</small></div><div class="second">'+esc(where)+'</div><div class="third">'+esc(right)+'<button class="inspect" data-record-index="'+i+'" type="button">Inspect full record</button></div></article>';
 }
 async function populateTracks(){
  if(tracksLoaded)return;
@@ -123,6 +161,9 @@ async function load(){
    if(type==='sim'&&term)items=items.filter(x=>JSON.stringify([x.name,x.id]).toLowerCase().includes(term));
   }
   if(request!==token)return;
+  visibleRecords=items;
+  $('recordDetails').hidden=true;
+  $('recordDetails').innerHTML='';
   $('records').innerHTML=items.length?items.map(row).join(''):'<article class="record">No records on this date or at this track.</article>';
   $('pageInfo').textContent=total?(offset+1)+'–'+Math.min(offset+items.length,total)+' of '+Number(total).toLocaleString('en-US'):'0 records';
   $('prevPage').disabled=offset===0||type==='condition';$('nextPage').disabled=offset+15>=total||type==='condition';$('status').textContent='Population loaded in this browser · Jan 1, 1999 source canon stays read-only.';
