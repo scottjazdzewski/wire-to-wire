@@ -2976,3 +2976,44 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  #wtwNextgen .ng-save-slot{align-items:flex-start;flex-direction:column}
  #wtwNextgen .ng-save-slot-actions{justify-content:flex-start}
 }
+
+/* WTW 1999: personnel roster scrolls continuously; no previous/next paging. */
+#wtwNextgen .ng-dept-roster[data-department="Personnel"] .ng-rs-scroll{
+ overflow-y:auto!important;overflow-x:auto!important;overscroll-behavior:contain!important;
+ scrollbar-width:thin;scrollbar-color:#718b76 #172125;
+}
+#wtwNextgen .ng-dept-roster[data-department="Personnel"] .ng-rs-table thead{
+ position:sticky;top:0;z-index:3;background:#25332f;
+}
+#wtwNextgen .ng-dept-roster[data-department="Personnel"] .ng-dpt-pager{
+ gap:4px;white-space:nowrap;
+}
+
+/* 1999 restored Tier One horse owner-identity slot: a replaceable crest, never WTW branding. */
+#wtwNextgen .ng-horse-owner-group{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:4px 0 3px;padding:4px 7px;border:1px solid #43564c;background:#202a28;border-radius:3px}
+#wtwNextgen .ng-horse-owner-group>span:first-child{font-size:9px;font-weight:800;color:#b9cbb7;letter-spacing:.05em}
+#wtwNextgen .ng-horse-owner-group strong{font-size:11px;font-weight:760;color:#f0deb7}
+#wtwNextgen .ng-horse-owner-group .ng-org-mark{width:24px;height:24px;flex:0 0 24px}
+#wtwNextgen .ng-horse-owner-group .ng-org-initials{font-size:10px}
+/* Compact race file: conditions and provisional eligibility remain visibly distinct. */
+#wtwNextgen .ng-1999-race-file{display:flex;flex-direction:column;gap:10px;width:100%;min-width:0;min-height:0;color:#ebeadb}
+#wtwNextgen .ng-1999-race-file>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 19px;border:1px solid #56614f;border-top:2px solid #d3b773;background:#202b2b}
+#wtwNextgen .ng-1999-race-file>header small{color:#e4c57e;font-size:10px;font-weight:800;letter-spacing:.07em}
+#wtwNextgen .ng-1999-race-file>header h2{color:#f6ead2;margin:3px 0;font-size:24px;font-family:Georgia,serif}
+#wtwNextgen .ng-1999-race-file>header p{color:#bcd1be;margin:0;font-size:12px}
+#wtwNextgen .ng-1999-race-file button{cursor:pointer;background:#233634;color:#f1dca6;border:1px solid #536a59;border-radius:3px;padding:7px 9px;font-size:11px;font-weight:800}
+#wtwNextgen .ng-1999-race-file button:hover{background:#335044}
+#wtwNextgen .ng-race-file-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,.8fr);gap:10px;min-height:0;flex:1 1 auto}
+#wtwNextgen .ng-race-file-panel{min-width:0;min-height:0;overflow:auto;background:#161f22;border:1px solid #3e5148}
+#wtwNextgen .ng-race-file-panel>h3{position:sticky;top:0;z-index:2;margin:0;padding:10px 13px;background:#283633;color:#f1dfb2;border-bottom:1px solid #475950;font-size:12px;letter-spacing:.02em}
+#wtwNextgen .ng-race-file-panel>p{padding:10px 13px;margin:0;color:#b5c7ba;line-height:1.45;font-size:12px}
+#wtwNextgen .ng-race-file-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:10px}
+#wtwNextgen .ng-race-file-facts>div{background:#202b2c;border:1px solid #3d4e46;padding:9px;min-width:0}
+#wtwNextgen .ng-race-file-facts small{display:block;color:#aebfae;font-size:10px;font-weight:750;letter-spacing:.04em}
+#wtwNextgen .ng-race-file-facts strong{display:block;color:#f0ddac;font-size:12px;line-height:1.45;margin-top:4px;overflow-wrap:anywhere}
+#wtwNextgen .ng-race-eligible-list{max-height:470px;overflow:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:5px 11px 12px}
+#wtwNextgen .ng-race-eligible-list button{text-align:left;display:flex;flex-direction:column;gap:3px;min-width:0;overflow:hidden;text-overflow:ellipsis}
+#wtwNextgen .ng-race-eligible-list span{color:#afc2b0;font-size:10px;font-weight:500}
+#wtwNextgen .ng-1999-source-note{border-top:1px solid #3a4b43;font-style:italic}
+@media(max-width:1050px){#wtwNextgen .ng-race-file-grid{grid-template-columns:1fr}}
+@media(max-width:600px){#wtwNextgen .ng-race-file-facts,#wtwNextgen .ng-race-eligible-list{grid-template-columns:1fr}}
