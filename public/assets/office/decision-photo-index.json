@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "description": "WTW game UI-only candidate asset pointers keyed by canonical ID and display name; not a parallel historical or gameplay database. All newly connected visual assets remain production candidates, not approved/locked.",
+  "description": "WTW UI-only approved asset pointers keyed by canonical identity. Paths point to existing committed asset files; no generated history or unsourced identity inference. Custom user images take precedence.",
   "default": "/assets/office/approved-office-photo.jpg",
   "cases": {},
   "entities": {
@@ -73,7 +73,30 @@
     "track:T-0013": "/assets/places/track-logos/T-0013.webp",
     "track:Churchill Downs": "/assets/places/track-logos/T-0013.webp",
     "horse:There's Pie Left": "/assets/portraits/horses/H-1996-000001.webp",
-    "horse:H-1996-000001": "/assets/portraits/horses/H-1996-000001.webp"
+    "horse:H-1996-000001": "/assets/portraits/horses/H-1996-000001.webp",
+    "horse:H-1989-000007": "/assets/portraits/horses/H-1989-000007.webp",
+    "horse:H-1990-000009": "/assets/portraits/horses/H-1990-000009.webp",
+    "horse:H-1994-000001": "/assets/portraits/horses/H-1994-000001.webp",
+    "horse:H-1994-000003": "/assets/portraits/horses/H-1994-000003.webp",
+    "horse:H-1995-000003": "/assets/portraits/horses/H-1995-000003.webp",
+    "horse:H-1995-000004": "/assets/portraits/horses/H-1995-000004.webp",
+    "horse:H-1995-000005": "/assets/portraits/horses/H-1995-000005.webp",
+    "horse:H-1995-000007": "/assets/portraits/horses/H-1995-000007.webp",
+    "horse:H-1996-000003": "/assets/portraits/horses/H-1996-000003.webp",
+    "horse:H-1996-000005": "/assets/portraits/horses/H-1996-000005.webp",
+    "horse:H-1996-000007": "/assets/portraits/horses/H-1996-000007.webp",
+    "horse:H-1997-000001": "/assets/portraits/horses/H-1997-000001.webp",
+    "horse:H-1997-000002": "/assets/portraits/horses/H-1997-000002.webp",
+    "horse:H-1997-000003": "/assets/portraits/horses/H-1997-000003.webp",
+    "track:T-0006": "/assets/places/track-logos/T-0006.webp",
+    "track:T-0007": "/assets/places/track-logos/T-0007.webp",
+    "track:T-0008": "/assets/places/track-logos/T-0008.webp",
+    "track:T-0009": "/assets/places/track-logos/T-0009.webp",
+    "track:T-0012": "/assets/places/track-logos/T-0012.webp",
+    "track:T-0015": "/assets/places/track-logos/T-0015.webp",
+    "track:T-0016": "/assets/places/track-logos/T-0016.webp",
+    "track:T-0017": "/assets/places/track-logos/T-0017.webp",
+    "track:T-0018": "/assets/places/track-logos/T-0018.webp"
   },
   "categories": {}
 }
