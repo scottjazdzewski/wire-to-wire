@@ -20,6 +20,8 @@ function source(kind,record,ui){
  if(kind==='horse'){
   const year=Number(d.foalYear||d._foalYear||0);
   const sourceId=d.id||d._canonId||d._id||'';
+  const candidateAbility=d._testAbility||ui?.sourceHorseAbility?.(sourceId)||null;
+  const ability=candidateAbility?.schema==='WTW_1999_AGE_ABILITY_V1'?candidateAbility:null;
   const foalRegistry=registry?.[sourceId]||null;
   const geo=d.foalingGeography||d.foalingLocation||d.foalingPlace||d.foaling||d.birthplace||
     (foalRegistry?{region:foalRegistry.region,country:foalRegistry.foalingCountry,countryCode:foalRegistry.foalingCountryCode}:{});
@@ -39,6 +41,9 @@ function source(kind,record,ui){
   const testCareer=career.provenance==='GENERATED_1998_AND_PRIOR_NONCANON_TEST_RACES_ONLY';
   node.innerHTML='<div class="profileSubline">'+safe(d._testGenerated?'1999 GENERATED TEST HORSE':'1999 SOURCE-LINKED HORSE')+'</div>'+
     field('Age',d.age||(year>0?1999-year:'—'))+field('Sex',d.sex||'—')+
+    (ability?field('CURRENT ABILITY · TEST',ability.currentStars+'/5')+
+      field('FUTURE POTENTIAL · TEST',ability.potentialStars+'/5')+
+      field('CAREER STAGE · TEST',ability.careerStage):'')+
     field('Date of birth',d.dateOfBirth||d.birthDate||'Not recorded')+
     field('Foaling year',year||'—')+field('Current stable',d.track||d.location||'—')+
     field('Racing status',d.racingStatus||d.status||'1999 opening')+
