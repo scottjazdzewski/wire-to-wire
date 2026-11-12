@@ -1414,7 +1414,7 @@ function profileDetail(route,sourceOverride=null){
    '<div class="ng-horse-mgr-row"><span>'+safe(name)+'</span>'+namedProfileValue(name,value)+'</div>').join('')+'</div>';
   const career=record.filter(x=>known(x.value)).map(x=>[x.label,x.value]);
   let testCareer={};
-  if(source.dataset.testGenerated==='true')try{testCareer=JSON.parse(source.dataset.testCareer||'{}')}catch{}
+  if(testSource)try{testCareer=JSON.parse(source.dataset.testCareer||'{}')}catch{}
   const testRaceHistory=Array.isArray(testCareer.raceHistory)?testCareer.raceHistory:[];
   const careerBody=career.length?asMap(career):
    '<p class="ng-horse-small-note">No verified career figures in this Office record.</p>';
