@@ -135,6 +135,37 @@ function departmentRows(section,page,context={}){
  if(Array.isArray(rows))departmentCache.set(key,rows);
  return rows;
 }
+let universeLabels=null;
+function worldHorsePage(offset=0,limit=20,filter=''){
+ if(!universeLabels){
+  const owners=get('world-owners','/api/1999/sim/owners',3308);
+  const trainers=get('world-trainers','/api/1999/sim/trainers',4200);
+  universeLabels={owners:new Map(owners.map(o=>[o.id,o.name])),trainers:new Map(trainers.map(t=>[t.id,t.name]))};
+ }
+ const start=Math.max(0,Math.min(87499,Number(offset)||0)),count=Math.max(1,Math.min(100,Number(limit)||20));
+ const data=q('/api/1999/sim/horses','offset='+start+'&limit='+count);
+ const sourceIds=new Set(srcHorses.map(h=>h.id));
+ const rows=(data.items||[]).map(h=>{
+  const source=sourceIds.has(h.id);
+  const sireName=source?srcHorses.find(p=>p.id===h.sireId)?.name:null;
+  const damName=source?srcHorses.find(p=>p.id===h.damId)?.name:null;
+  return {_kind:'horse',_name:h.name,_canonId:source?h.id:'',
+   _worldKey:source?'horse:'+h.id:undefined,_testGenerated:!source,
+   _testAttrs:h.attributes||{},_testFinances:h.finances||{},_testReputation:h.reputation||{},
+   name:h.name,age:String(h.ageAtOpening||1999-Number(h.foalYear)),sex:h.sex,
+   sire:sireName||h.sireId||'',dam:damName||h.damId||'',
+   owner:universeLabels.owners.get(h.ownerId)||ownerNames.get(h.ownerId)||h.ownerId||'',
+   trainer:universeLabels.trainers.get(h.trainerId)||peopleNames.get(h.trainerId)||h.trainerId||'',
+   track:source?h.openingStable?.name||'':h.stableTrackId,
+   status:source?h.racingStatus||'SOURCE OPENING':
+    'GENERATED TEST · NO ENTRY/RESULT',_id:h.id,
+   location:city(h.location||h.openingStable)||''};
+ });
+ const needle=String(filter||'').trim().toLowerCase();
+ return {total:data.total,items:needle?rows.filter(row=>
+  [row.name,row._id,row.owner,row.trainer,row.sire,row.dam,row.track].some(value=>String(value||'').toLowerCase().includes(needle))):rows,
+  isPageFilter:Boolean(needle),pageStart:start};
+}
 function extraTracks(){
  const ts=get('tracks','/api/1999/sim/tracks',134);
  return ts.map(t=>({...t,location:city(t.location),region:t.location?.state||'',country:t.location?.country||'',
@@ -144,7 +175,7 @@ function extraTracks(){
 window.__WTW_1999_UI_DATA__={
  schema:'WTW_1999_CANON_ANCHORED_UI_ADAPTER_V1',
  sourceOwnerId:activeOwnerId,sourceOwnerName:selectedOwner,stableHorses:roster(),
- sourceFacts,ownerFor,departmentRows,auctionList,extraTracks,
+ sourceFacts,ownerFor,departmentRows,auctionList,extraTracks,worldHorsePage,
  counts:q('/api/1999/sim/overview').counts,
  bridgeStatus:'SOURCE_IDS_LOCKED; OTHER VALUES_MARKED_TEST; NO_1999_OUTCOME_COMMITTED'
 };
