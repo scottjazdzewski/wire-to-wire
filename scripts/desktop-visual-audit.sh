@@ -9,16 +9,19 @@ trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
 for i in {1..30}; do curl -fsS 'http://127.0.0.1:8765/' >/dev/null 2>&1 && break; sleep .5; done
 
 capture(){
-  local name="$1" route="$2" marker="$3"
-  echo "Rendering $name -> $route"
+  local name="$1" route="$2" marker="$3" target="$2"
+  # The management app now lives at /next/; the root forwards there.
+  # Go directly to /next/ so route-specific query strings survive.
+  if [[ "$route" != archive/* ]]; then target="next/$route"; fi
+  echo "Rendering $name -> /$target"
   "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
     --force-device-scale-factor=1 --window-size=1536,864 \
     --virtual-time-budget=4000 --screenshot="visual-audit/screenshots/$name.png" \
-    "http://127.0.0.1:8765/$route" >/tmp/wtw-chrome-"$name".log 2>&1
+    "http://127.0.0.1:8765/$target" >/tmp/wtw-chrome-"$name".log 2>&1
   "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
     --force-device-scale-factor=1 --window-size=1536,864 \
     --virtual-time-budget=4000 --dump-dom \
-    "http://127.0.0.1:8765/$route" >"visual-audit/dom/$name.html" 2>/tmp/wtw-dom-"$name".log
+    "http://127.0.0.1:8765/$target" >"visual-audit/dom/$name.html" 2>/tmp/wtw-dom-"$name".log
   if ! grep -q "$marker" "visual-audit/dom/$name.html"; then
     echo "RENDER FAILURE: $name missing $marker" >&2
     tail -35 /tmp/wtw-dom-"$name".log || true
@@ -72,7 +75,7 @@ frame.onload=()=>setTimeout(()=>{
   node.textContent=JSON.stringify(result);
  }catch(e){const node=document.getElementById('measure');node.dataset.check='error';node.textContent=String(e)}
 },700);
-frame.src='/'+route;
+frame.src='/next/'+route;
 </script></body></html>
 HTML
 probe(){
