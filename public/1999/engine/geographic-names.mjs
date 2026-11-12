@@ -14,6 +14,19 @@ export const GEO_NAME_MODEL='WTW_1999_CENSUS_US_BASE_WITH_EDITORIAL_INTERNATIONA
 const US_M='James John Robert Michael William David Richard Charles Joseph Thomas Christopher Daniel Paul Mark Donald George Kenneth Steven Edward Brian Ronald Anthony Kevin Jason Matthew Gary Timothy Jose Larry Jeffrey Frank Scott Eric Stephen Andrew Raymond Gregory Joshua Jerry Dennis Walter Patrick Peter Harold Douglas Henry Carl Arthur Ryan Roger Juan Jack Albert Jonathan Justin Keith Samuel Louis Eugene Carlos Victor Martin Jesse Craig Alan Clarence Sean Antonio Luis Leonard Manuel Vincent Francis Mario Francisco Miguel Oscar'.split(' ');
 const US_F='Mary Patricia Linda Barbara Elizabeth Jennifer Maria Susan Margaret Dorothy Lisa Nancy Karen Betty Helen Sandra Donna Carol Ruth Sharon Michelle Laura Sarah Kimberly Deborah Jessica Shirley Cynthia Angela Melissa Brenda Amy Anna Rebecca Virginia Kathleen Pamela Martha Amanda Stephanie Carolyn Christine Marie Janet Catherine Frances Ann Joyce Diane Alice Julie Heather Teresa Doris Gloria Evelyn Jean Cheryl Mildred Katherine Joan Ashley Judith Rose Janice Kelly Nicole Judy Christina Irene Rachel Andrea Anne Jacqueline Ruby Diana Emily Victoria'.split(' ');
 const US_S='Smith Johnson Williams Jones Brown Davis Miller Wilson Moore Taylor Anderson Thomas Jackson White Harris Martin Thompson Garcia Martinez Robinson Clark Rodriguez Lewis Lee Walker Hall Allen Young Hernandez King Wright Lopez Hill Scott Green Adams Baker Gonzalez Nelson Carter Mitchell Perez Roberts Turner Phillips Campbell Parker Evans Edwards Collins Stewart Sanchez Morris Rogers Reed Cook Morgan Bell Murphy Bailey Rivera Cooper Richardson Cox Howard Ward Torres Peterson Gray Ramirez James Watson Brooks Kelly Sanders Price Bennett Wood Barnes Ross Henderson Coleman Jenkins Perry Powell Long Patterson Hughes Flores Washington Butler Simmons Foster Bryant Alexander Russell Griffin Diaz Hayes Ford Hamilton Graham Sullivan Wallace Woods Cole West Jordan Owens Reynolds Fisher Ellis Harrison Gibson McDonald Cruz Marshall Ortiz Gomez Freeman Webb Simpson Stevens Tucker Porter Hunter Hicks Crawford Boyd Mason Morales Kennedy Dixon Ramos Reyes Gordon Shaw Holmes Rice Robertson Hunt Black Daniels Palmer Mills Nichols Grant Knight Ferguson Rose Stone Hawkins Dunn Perkins Hudson Spencer Gardner Payne Pierce Berry Matthews Arnold Wagner Willis Ray Watkins Olson Carroll Duncan Snyder Hart Cunningham Bradley Lane Andrews Ruiz Harper Fox Riley Armstrong Carpenter Weaver Greene Lawrence Elliott Chavez Austin Peters Franklin Lawson Fields Gutierrez'.split(' ');
+// Exact 1990 Census rank-ordered percentages for the first 40 U.S. names in each table.
+// The remaining listed names get a small tail weight; the complete federal
+// files can replace this bounded shipping excerpt without changing IDs.
+const M_FREQ='3.318 3.271 3.143 2.629 2.451 2.363 1.703 1.523 1.404 1.380 1.035 .974 .948 .938 .931 .927 .826 .780 .779 .736 .725 .721 .671 .660 .657 .650 .640 .613 .598 .591 .581 .546 .544 .540 .537 .488 .441 .435 .432 .415'.split(' ').map(Number);
+const F_FREQ='2.629 1.073 1.035 .980 .937 .932 .828 .794 .768 .727 .704 .669 .667 .666 .663 .629 .583 .565 .562 .522 .519 .510 .508 .504 .494 .490 .482 .469 .468 .462 .455 .451 .440 .430 .430 .424 .416 .412 .408 .404'.split(' ').map(Number);
+const S_FREQ='1.006 .810 .699 .621 .621 .480 .424 .339 .312 .311 .311 .311 .310 .279 .275 .273 .269 .254 .234 .233 .231 .229 .226 .220 .219 .200 .199 .193 .192 .190 .189 .187 .187 .185 .183 .174 .171 .166 .162 .162'.split(' ').map(Number);
+function censusPick(names,knownFrequency,seed,key){
+ const weights=names.map((_,i)=>knownFrequency[i]??.045);
+ const total=weights.reduce((a,b)=>a+b,0);
+ let draw=(hash(seed,key)/4294967296)*total;
+ for(let i=0;i<names.length;i++){draw-=weights[i];if(draw<0)return names[i]}
+ return names.at(-1);
+}
 const LATIN_M='Jose Juan Carlos Luis Miguel Rafael Antonio Pedro Jorge Roberto Ricardo Fernando Francisco Manuel Gabriel Alejandro Hector Victor Oscar Raul Ramon Edwin Edgar Mario Daniel Andres Julio Eduardo Enrique Alberto Cesar Guillermo Nicolas Sergio Javier Orlando Nelson Ismael Armando'.split(' ');
 const LATIN_F='Maria Ana Carmen Rosa Sofia Lucia Elena Patricia Gabriela Andrea Isabel Beatriz Claudia Teresa Lourdes Marisol Alejandra Daniela Adriana Carolina Vanessa Paola Mercedes Yolanda Veronica Natalia Silvia'.split(' ');
 const LATIN_S='Garcia Rodriguez Martinez Hernandez Lopez Gonzalez Perez Sanchez Ramirez Torres Flores Rivera Gomez Diaz Ortiz Morales Ruiz Alvarez Cruz Jimenez Romero Castro Mendez Mendoza Vargas Salazar Rojas Silva Cabrera Castillo Valdez Delgado Dominguez Escobar Estrada Guerrero Acosta Delgado Mendoza Ortega Quintero Andrade Molina Cordero Perdomo Valenzuela Gutierrez Chavez Marquez Navarro Pinto Campos Paredes Reyes Figueroa Fernandez'.split(' ');
@@ -61,8 +74,8 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[]){
    country==='GB'?GB_S:country==='IE'?IE_S:[...(LOCAL_SURNAME[country]||[]),...LATIN_S];
   let name=null;
   for(let attempt=0;attempt<400;attempt++){
-   const first=pick(given,seed,'given:'+i+':'+attempt);
-   const surname=pick(family,seed,'family:'+i+':'+attempt);
+   const first=(country==='US'||country==='CA'?censusPick(given,feminine?F_FREQ:M_FREQ,seed,'given:'+i+':'+attempt):pick(given,seed,'given:'+i+':'+attempt));
+   const surname=(country==='US'||country==='CA'?censusPick(family,S_FREQ,seed,'family:'+i+':'+attempt):pick(family,seed,'family:'+i+':'+attempt));
    const candidate=first+' '+surname;
    if(!reserved.has(candidate.toLocaleLowerCase('en-US'))){name=candidate;break}
   }
