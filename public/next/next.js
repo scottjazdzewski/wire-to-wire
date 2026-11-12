@@ -1151,7 +1151,7 @@ const trackCourseFacts={
 };
 
 function profileDetail(route,sourceOverride=null){
- const source=sourceOverride||$('#routeBody .profilePage');if(!source)return null;
+ const source=$('#routeBody .profilePage')&&!sourceOverride?$('#routeBody .profilePage'):sourceOverride;if(!source)return null;
  const id=route.kicker+'|'+route.title;
  if(APP.routeId!==id){APP.routeId=id;APP.detailTab='Overview';APP.networkPage=0;APP.networkRole='all';APP.networkFocus='';APP.stakeSort='date';APP.stakeSortDesc=false}
  const text=(query,scope=source)=>$(query,scope)?.textContent.trim()||'';
@@ -1304,7 +1304,9 @@ function profileDetail(route,sourceOverride=null){
   const categories=catalog?.horse_categories||{};
   const display=catalog?.display?.horse_overview||{};
   const genuineReports=state().scoutingState?.[route.title]?.attribute_observations||[];
-   let testModel={};if(source.dataset.testGenerated==='true'){try{testModel=JSON.parse(source.dataset.testAttributes||'{}')}catch{}}
+   const testSource=typeof source!=='undefined'&&source?.dataset?.testGenerated==='true';
+   const testAttrs=typeof source!=='undefined'?source?.dataset?.testAttributes:'';
+   let testModel={};if(testSource){try{testModel=JSON.parse(testAttrs||'{}')}catch{}}
    const demoReports=Object.entries(testModel).filter(([,v])=>typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<=1)
     .map(([attribute_key,v])=>({attribute_key,status:'estimated',estimate:Math.round(v*99),scale_min:0,scale_max:99,
      evidence_refs:['SIMULATED_1999_TEST_MODEL'],testGenerated:true}));
@@ -1385,7 +1387,7 @@ function profileDetail(route,sourceOverride=null){
   const panel=(name,body,cls='')=>'<section class="ng-horse-mgr-panel '+cls+'"><header><strong>'+name+'</strong></header>'+body+'</section>';
   return '<div class="ng-horse-dossier">'+
    '<div class="ng-horse-dossier-caption"><strong>ATHLETE & RACING INTELLIGENCE</strong><span>'+observedCount+
-   ' OF '+allDefs.length+(source.dataset.testGenerated==='true'?' SIMULATED TEST ATTRIBUTES · NOT OBSERVED':' ATTRIBUTES ASSESSED · UNASSESSED ≠ ZERO')+'</span></div>'+
+   ' OF '+allDefs.length+(testSource?' SIMULATED TEST ATTRIBUTES · NOT OBSERVED':' ATTRIBUTES ASSESSED · UNASSESSED ≠ ZERO')+'</span></div>'+
    '<div class="ng-horse-mgr-four">'+(attributeColumns||'<p class="ng-horse-small-note">Horse attribute definitions have not loaded.</p>')+'</div>'+conditionStrip+
    '<div class="ng-horse-mgr-five">'+
     panel('CAREER RECORD',careerBody)+panel('CURRENT CONDITION',condition)+
