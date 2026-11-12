@@ -355,7 +355,7 @@ function departmentRows(section,page,context={}){
 }
 let universeLabels=null;
 // All breeding mares can be sorted and filtered globally without loading
-// 26,000 complete attribute/ancestry profiles into the page.
+// 60,000 complete attribute/ancestry profiles into the page.
 const mareDirectorySummaries=[];
 let mareDirectoryProgress=0,mareDirectoryComplete=false,mareDirectoryStarted=false;
 let mareDirectoryKey='',mareDirectoryCache=[];
