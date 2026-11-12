@@ -56,9 +56,9 @@ function makeSlots(count,available,seed,kind){
  }
  if(used>available)throw Error('Minimum roster exceeds population');
  for(const i of eligible)weights.push(Math.pow(i+14,-.71)*(.83+unit(seed,kind+':weight:'+i)*.34));
- const weightTotal=weights.reduce((a,b)=>a+b,0),fraction=[];
+ const weightTotal=weights.reduce((a,b)=>a+b,0),fraction=[],extra=available-used;
  for(let j=0;j<eligible.length;j++){
-  const exact=(available-used)*(weights[j]/weightTotal),n=Math.floor(exact),i=eligible[j];
+  const exact=extra*(weights[j]/weightTotal),n=Math.floor(exact),i=eligible[j];
   counts[i]+=n;used+=n;fraction.push([exact-n,i]);
  }
  fraction.sort((a,b)=>b[0]-a[0]||a[1]-b[1]);
