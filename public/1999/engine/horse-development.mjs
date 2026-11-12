@@ -8,6 +8,7 @@
  */
 export const HORSE_DEVELOPMENT_SCHEMA='WTW_1999_HORSE_DEVELOPMENT_V1';
 export const TRAINING_PLANS=Object.freeze({
+ AUTO:{label:'Trainer-Directed',load:.44,cost:0,focus:'autonomy'},
  REST:{label:'Rest & Recover',load:0,cost:0,focus:'recovery'},
  LIGHT:{label:'Light Gallops',load:.23,cost:12,focus:'base'},
  BALANCED:{label:'Balanced Conditioning',load:.46,cost:24,focus:'base'},
@@ -134,6 +135,24 @@ function workFor(plan,dayOrdinal){
  if(plan==='PREP')return weekday===1?'SPEED':weekday===4?'PREP':'LIGHT';
  return plan;
 }
+/**
+ * Delegated trainer chooses actual exercises from the same programs and
+ * workload/health rules as the human. No scripted privilege or hidden stamina.
+ * Better health coordination reduces unnecessary hard days.
+ */
+export function recommendHorseWorkout(record,horse,trainer,date){
+ assertHorse(horse);validateRecord(record,horse);const ordinal=serial(date);
+ const weekday=(ordinal+5)%7,t=trainerQuality(trainer);
+ if(record.status==='INACTIVE'||record.sorenessDays>0||weekday===0)return 'REST';
+ const limit=.48-t.health*.12;
+ if(record.fatigue>limit+.13||record.currentRisk>.72-t.health*.1)return 'REST';
+ if(record.fatigue>limit)return 'LIGHT';
+ if(record.gateSchooling<.47&&weekday===2)return 'GATE';
+ if(record.fitness<.53)return weekday===1||weekday===4?'STAMINA':'BALANCED';
+ if(record.daysSinceSpeed>=5&&weekday===1&&record.fatigue<.35)return 'SPEED';
+ if(record.readiness>.71&&record.fatigue<.28&&weekday===4)return 'PREP';
+ return weekday===3?'LIGHT':'BALANCED';
+}
 function dayCharges(horse,trainer,plan,work){
  // Modeled 1999 per-diem care + trainer day fees + variable workout supplies.
  // No wage is charged twice: trainers are contractors paid horse-by-horse.
@@ -155,7 +174,7 @@ export function advanceHorseTrainingDay(record,horse,trainer,date,seed=19990101)
  if(!Number.isSafeInteger(seed)||seed<1)throw Error('Invalid training seed');
  const next={...record,history:[...record.history],alerts:[...record.alerts]};
  const t=trainerQuality(trainer),dayOrdinal=now;
- let work=next.status==='INACTIVE'?'REST':workFor(next.plan,dayOrdinal);
+ let work=next.status==='INACTIVE'?'REST':next.plan==='AUTO'?recommendHorseWorkout(next,horse,trainer,date):workFor(next.plan,dayOrdinal);
  if(next.sorenessDays>0)work='REST';
  const intensity=TRAINING_PLANS[work].load;
  const geneticallyTough=1-attr(horse.attributes,'soundness_risk',.48);
