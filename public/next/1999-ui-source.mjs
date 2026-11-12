@@ -779,6 +779,27 @@ function extraTracks(){
    _source1999:!p,stakes:[]};
  });
 }
+// Source identities are exact; generated ratings remain explicitly TEST-only.
+const sourceHorseModelCache=new Map(),sourcePersonModelCache=new Map();
+const sourcePersonOffset=new Map(srcPeople.map((p,index)=>[p.id,index]));
+const sourceHorseModel=id=>{
+ const index=sourceHorseOffset.get(id);
+ if(index===undefined)return null;
+ if(!sourceHorseModelCache.has(id)){
+  const row=q('/api/1999/sim/horses','offset='+index+'&limit=1').items?.[0]||null;
+  sourceHorseModelCache.set(id,row?.id===id?row:null);
+ }
+ return sourceHorseModelCache.get(id);
+};
+const sourcePersonModel=id=>{
+ const index=sourcePersonOffset.get(id);
+ if(index===undefined)return null;
+ if(!sourcePersonModelCache.has(id)){
+  const row=q('/api/1999/sim/source-people','offset='+index+'&limit=1').items?.[0]||null;
+  sourcePersonModelCache.set(id,row?.id===id?row:null);
+ }
+ return sourcePersonModelCache.get(id);
+};
 window.__WTW_1999_UI_DATA__={
  schema:'WTW_1999_CANON_ANCHORED_UI_ADAPTER_V1',
  sourceOwnerId:activeOwnerId,sourceOwnerName:selectedOwner,stableHorses:roster(),
@@ -789,10 +810,8 @@ window.__WTW_1999_UI_DATA__={
  officeMessages,officeDesks,openingCash,worldHorsePage,worldHorseById,worldHorseBrowse,breedingMarePage,breedingMareBrowse,breedingMareByModelIndex,
  horseAttributeGroups,stableHorseAttributes,stableHorseCareer,
  stakesForTrack,findStake,findRace,racingDayCards,racingDaySummary,ownedHorses,breederProfile,foalingFarmProfile,trackProgramById:trackProgram1999,
- sourceHorseAbility:id=>{const index=sourceHorseOffset.get(id);
-  return index===undefined?null:q('/api/1999/sim/horses','offset='+index+'&limit=1').items?.[0]?.ability||null;},
- sourcePersonModel:id=>{const index=srcPeople.findIndex(p=>p.id===id);
-  return index<0?null:q('/api/1999/sim/source-people','offset='+index+'&limit=1').items?.[0]||null;},
+ sourceHorseModel,sourceHorseAbility:id=>sourceHorseModel(id)?.ability||null,
+ sourcePersonModel,
  counts:q('/api/1999/sim/overview').counts,
  bridgeStatus:'SOURCE_IDS_LOCKED; OTHER VALUES_MARKED_TEST; NO_1999_OUTCOME_COMMITTED'
 };
