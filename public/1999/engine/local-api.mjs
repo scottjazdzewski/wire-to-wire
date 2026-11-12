@@ -2,6 +2,7 @@
 // deterministic generator/canon snapshot WITHOUT Cloudflare Pages Functions,
 // JWT, D1 migrations, or an online API request. Read-only test projection.
 import {create1999Universe,MODES} from './full-world-generator.mjs?rev=wtw1999-20261112-r11';
+import {scopeWorldPopulation,normalizeWorldProfile} from './world-profiles.mjs';
 import {openingWorld1999 as canon} from './canon-mini.mjs';
 import {createClean1999Clock} from '../test-clock.mjs';
 import {validateCareerGameDate} from './age-ability.mjs';
@@ -12,9 +13,11 @@ function currentWorld(q){
  const seed=int(q.get('seed'),19990101,4294967295)||19990101;
  const mode=q.get('mode')||'CANON_ANCHORED_TEST';
  if(!MODES.includes(mode))throw Error('Unknown world generation mode');
- const key=seed+'|'+mode;
+ const population=int(q.get('population'),325000,325000)||325000;
+ const profile=normalizeWorldProfile({population,seed,mode});
+ const key=seed+'|'+mode+'|'+profile.population;
  if(CACHE.has(key)){const v=CACHE.get(key);CACHE.delete(key);CACHE.set(key,v);return v;}
- const v=create1999Universe({seed,mode});CACHE.set(key,v);
+ const v=scopeWorldPopulation(create1999Universe({seed,mode}),profile);CACHE.set(key,v);
  if(CACHE.size>2)CACHE.delete(CACHE.keys().next().value);
  return v;
 }
@@ -37,7 +40,7 @@ export function readLocal1999World(raw){
  if(p==='/api/1999/sim/overview'){
   return {asOf:gameDate||'1999-01-01',careerProjection:gameDate?'READ_ONLY_AGE_AND_ABILITY__NO_OUTCOMES':null,schema:w.schema,mode:w.mode,seed:w.seed,
    source:'BROWSER_DETERMINISTIC_GENERATOR__NO_API_OR_DATABASE_REQUIRED',
-   gameplayReady:false,counts:w.counts,audit:w.audit,clock:createClean1999Clock(w.seed)};
+   gameplayReady:false,worldProfile:w.worldProfile,counts:w.counts,audit:w.audit,clock:createClean1999Clock(w.seed)};
  }
  if(p==='/api/1999/sim/horses')return pager(q,w.counts.horses,i=>atDate(w.horseAt(i)),'SOURCE_267_PLUS_TEST_GENERATED');
  if(p==='/api/1999/sim/horse-directory')return pager(q,w.counts.horses,i=>w.horseDirectoryAt(i),'FULL_87500_INDEX_SOURCE_AND_TEST');
