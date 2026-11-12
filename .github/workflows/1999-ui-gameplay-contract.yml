@@ -1,0 +1,30 @@
+name: WTW 1999 player UI contract
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'public/next/1999-canonical-gameplay-bridge.mjs'
+      - 'tests/1999-canonical-gameplay-bridge.test.mjs'
+      - 'docs/contracts/WTW_1999_PLAYER_UI_ENGINE_CONTRACT_V1.md'
+      - '.github/workflows/1999-ui-gameplay-contract.yml'
+  pull_request:
+    paths:
+      - 'public/next/1999-canonical-gameplay-bridge.mjs'
+      - 'tests/1999-canonical-gameplay-bridge.test.mjs'
+      - '.github/workflows/1999-ui-gameplay-contract.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  projection-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify pure website projection module
+        run: node --check public/next/1999-canonical-gameplay-bridge.mjs
+      - name: Verify permission/receipt/identity safety
+        run: node --test tests/1999-canonical-gameplay-bridge.test.mjs
