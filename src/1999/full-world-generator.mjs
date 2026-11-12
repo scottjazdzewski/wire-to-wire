@@ -8,6 +8,7 @@
  */
 import {openingWorld1999 as canon} from './opening-world.v1.mjs';
 import {createGeographicNameRoster,GEO_NAME_MODEL} from '../../public/1999/engine/geographic-names.mjs';
+import {existingPrincipals1999} from '../../public/1999/engine/source-principals-1999.mjs';
 import attributeCatalog from '../../public/1999/engine/attribute-catalog.mjs';
 import {WTW_TEST_START_DATE} from './test-clock.mjs';
 export const FULL_WORLD_SCHEMA='WTW_1999_FULL_SCALE_TEST_V1';
@@ -140,8 +141,8 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const portfolio=ownersSlots.counts[i],tier=portfolio>=200?'major':portfolio>=40?'established':portfolio>=8?'regional':'small';
   const syntheticPrincipal=namedPeople[ACTIVE_STAFF_COUNT+i].name;
    const name=canonSource?.name||(i%11===0?syntheticPrincipal:generatedOrganizationName(seed,i,'owner'));
-   const principalOwner=canonSource?(canonSource.publicPrincipal||null):syntheticPrincipal;
-   const principalOwnerId=canonSource?(canonSource.publicPrincipalId||null):'P-TEST-OWNER-'+pad(i+1);
+   const principalOwner=canonSource?(canonSource.publicPrincipal||existingPrincipals1999[id]?.name||null):syntheticPrincipal;
+   const principalOwnerId=canonSource?(canonSource.publicPrincipalId||existingPrincipals1999[id]?.personId||null):'P-TEST-OWNER-'+pad(i+1);
   const annualRun=portfolio*money(12000+unit(seed,id+'run')*25000),wealthScale=tier==='major'?12:tier==='established'?5:tier==='regional'?2:1;
   const cash=money(annualRun*(.75+unit(seed,id+'liquidity')*2.5)*wealthScale);
   const obj={id,name,nameStatus:canonSource?'CANON_LOCKED':'TEST_RENAME_ALLOWED',type:canonSource?.type||(i%11===0?'SOLE_OWNER':'OWNERSHIP_OPERATION'),
