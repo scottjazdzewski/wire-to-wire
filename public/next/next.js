@@ -751,8 +751,13 @@ function world1999Key(kind,item){
 }
 function world1999Entries(){
  if(!world1999Data)return [];
+ const domestic=window.__WTW_1999_UI_DATA__?.extraTracks?.()||[];
+ const playableIds=new Set(domestic.map(t=>t.id));
+ const playableNames=new Set(domestic.map(t=>t.name));
  return [
-  ...world1999Data.tracks.filter(t=>['OPEN','OPEN_1999'].includes(t.operating)||window.__WTW_1999_UI_DATA__?.trackProgramById?.(t.id)?.trackOperating==='OPEN_1999').map(t=>({
+  ...world1999Data.tracks.filter(t=>
+   (playableIds.has(t.id)||playableNames.has(t.name))&&
+   (['OPEN','OPEN_1999'].includes(t.operating)||window.__WTW_1999_UI_DATA__?.trackProgramById?.(t.id)?.trackOperating==='OPEN_1999')).map(t=>({
    kind:'track',name:t.name,detail:t.region||t.circuit||'',location:t.location||'',
    canonicalId:t.id,worldKey:world1999Key('track',t),_world:t
   })),
@@ -778,6 +783,10 @@ function world1999Entry(key){
  const source=worldSourceRecord(key,world1999Data);
  if(!source)return null;
  const kind=key.split(':',1)[0];
+ if(kind==='track'){
+  const allowed=window.__WTW_1999_UI_DATA__?.extraTracks?.()||[];
+  if(!allowed.some(t=>t.id===source.id||t.name===source.name))return null;
+ }
  return {kind,name:source.name,canonicalId:source.id||'',worldKey:key,_world:source};
 }
 function world1999Match(kind,name){
@@ -1215,7 +1224,22 @@ function profileDetail(route,sourceOverride=null){
 
  const horseAchievementPanel=isHorse?$$('.profilePanel',source).find(panel=>text('h3',panel).includes('Achievements')):null;
  const horseAchievements=horseAchievementPanel?$$('.achievementItem',horseAchievementPanel).map(el=>el.textContent.trim()).filter(Boolean):[];
- const connectionRows=(items=connection)=>`<div class="ng-data-rows">${items.map(f=>`<div class="ng-data-row"><span>${safe(f.label)}</span>${f.button?`<button data-ng="sourcebutton" data-val="${$$('#routeBody [data-act]').indexOf(f.button)}" aria-label="Open ${safe(f.label)} profile: ${safe(f.value)}">${safe(f.value)} ↗</button>`:`${namedProfileValue(f.label,f.value)}`}</div>`).join('')||'<div class="ng-empty-record">No connected profiles recorded.</div>'}</div>`;
+ const horseLinkedConnection=f=>{
+  const key=String(f.label).trim().toLowerCase();
+  const id=key==='breeder'?source.dataset.breederId:
+   key==='foaling farm'?source.dataset.foalingFarmId:'';
+  if(isHorse&&source.dataset.testGenerated==='true'&&id){
+   const action=key==='breeder'?'1999-breeder':'1999-foaling-farm';
+   return '<button type="button" class="ng-entity-reference" data-ng="'+action+
+    '" data-val="'+safe(id)+'" title="Open linked '+safe(f.label)+' record">'+safe(f.value)+' ↗</button>';
+  }
+  if(f.button)return '<button data-ng="sourcebutton" data-val="'+$('#routeBody [data-act]').indexOf(f.button)+
+   '" aria-label="Open '+safe(f.label)+' profile: '+safe(f.value)+'">'+safe(f.value)+' ↗</button>';
+  return namedProfileValue(f.label,f.value);
+ };
+ const connectionRows=(items=connection)=>'<div class="ng-data-rows">'+items.map(f=>
+  '<div class="ng-data-row"><span>'+safe(f.label)+'</span>'+horseLinkedConnection(f)+'</div>'
+ ).join('')+'</div>';
 
  const sourcePanels=$$('.profilePanel',source);
  const sourcePanel=word=>sourcePanels.find(panel=>text('h3',panel).toLowerCase().includes(word.toLowerCase()));
@@ -1663,10 +1687,11 @@ function profileDetail(route,sourceOverride=null){
  const entityHeaderFields=isPerson?personIdentityFields:
   isFarm?[['LOCATION',factByName('Location')],['TYPE',factByName('Type')],['OWNER',factByName('Owner')],['STATUS',factByName('Current status')]]:
   isTrack?[['LOCATION',factByName('Location')],['SURFACES',factByName('Surfaces')],['OPERATING',factByName('Operating state')],['CIRCUIT',text('.profileSubline').split('·').slice(1).join('·').trim()||'—']]:[];
- const horseIdentityConnections=isHorse?connection.filter(x=>['owner','trainer','jockey','current stable'].includes(x.label.toLowerCase())&&knownField(x.value)).slice(0,3):[];
+ const horseIdentityConnections=isHorse?connection.filter(x=>['owner','breeder','trainer','current stable'].includes(x.label.toLowerCase())&&knownField(x.value)).slice(0,4):[];
  const horseConnectionHeader=horseIdentityConnections.length?
   '<div class="ng-horse-header-connections">'+horseIdentityConnections.map(x=>
-   '<div><small>'+safe(x.label)+'</small><strong>'+safe(x.value)+'</strong></div>').join('')+'</div>':'';
+   '<div><small>'+safe(x.label)+(x.label.toLowerCase()==='breeder'&&source.dataset.homebred==='true'?' · OWNER-BRED':'')+
+   '</small><strong>'+horseLinkedConnection(x)+'</strong></div>').join('')+'</div>':'';
  const entityIdentityRow=entityHeaderFields.length?
   `<div class="ng-tier1-biography" aria-label="${safe(route.kicker)} identity summary">${entityHeaderFields.map(([label,value,flag])=>`<span><small>${safe(label)}</small><strong title="${safe(value)}">${flag||''}${safe(value)}</strong></span>`).join('')}</div>`:'';
   const worldSourceKind=isHorse?'horse':isPerson?'person':isFarm?'farm':isTrack?'track':'';
@@ -2101,7 +2126,10 @@ function depTrackCalendar(){
  const byName=new Map(extra.map(t=>[t.name,t]));
  const seen=new Set([...office,...others].flatMap(t=>[t.id,t.name]).filter(Boolean));
  const missing=extra.filter(t=>!seen.has(t.id)&&!seen.has(t.name));
- return [...office,...others,...missing].map(t=>{
+ const availableIds=new Set(extra.map(t=>t.id));
+ const availableNames=new Set(extra.map(t=>t.name));
+ return [...office,...others,...missing]
+  .filter(t=>availableIds.has(t.id)||availableNames.has(t.name)).map(t=>{
   const p=byId.get(t.id)||byName.get(t.name)||null;
   const sourceStakes=(window.__WTW_1999_UI_DATA__?.stakesForTrack?.(t.name)||[])
    .map(r=>({...r,date:r.localDate||r.date||'',class:r.status||r.division||r.grade||'',purse:r.purse1999}));
@@ -3144,6 +3172,24 @@ window.addEventListener('click',e=>{
   const byName=source?.stakesForTrack?.(track)?.find(r=>r.name===name);
   const fallback=name?{id:val||'',name,trackName:track,localDate:btn.dataset.date||''}:null;
   return open1999Race(byId||byName||fallback);
+ }
+ if(key==='1999-breeder'){
+  const owner=window.__WTW_1999_UI_DATA__?.breederProfile?.(val);
+  if(!owner)return;
+  const canonical=world1999Entries().find(x=>x.kind==='farm'&&x.canonicalId===val);
+  if(canonical)return openWorld1999Entity(canonical.worldKey);
+  const loc=owner.location||{};
+  return previewRecordRoute('farm',owner.name,{_kind:'farm',_id:owner.id,name:owner.name,
+   type:'BREEDING / OWNERSHIP OPERATION',location:[loc.city,loc.state,loc.country].filter(Boolean).join(', '),
+   principal:owner.principalOwner||'',status:'1999 TEST WORLD BREEDER',_testGenerated:true});
+ }
+ if(key==='1999-foaling-farm'){
+  const farm=window.__WTW_1999_UI_DATA__?.foalingFarmProfile?.(val);
+  if(!farm)return;
+  const loc=farm.location||{};
+  return previewRecordRoute('farm',farm.name,{_kind:'farm',_id:farm.id,name:farm.name,
+   type:'FOALING / BREEDING FARM',location:[loc.city,loc.state,loc.country].filter(Boolean).join(', '),
+   capacity:farm.capacity||'',status:'1999 TEST WORLD FACILITY',_testGenerated:true});
  }
  if(key==='named-entity')return openEntityRecord(btn.dataset.name||'',btn.dataset.kind||'',btn.dataset.track?{_track:btn.dataset.track}:null);
  if(key==='stable-sort'){if(APP.stableSort===val)APP.stableSortDesc=!APP.stableSortDesc;else{APP.stableSort=val;APP.stableSortDesc=false}return paint()}
