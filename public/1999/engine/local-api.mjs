@@ -4,6 +4,27 @@
 import {create1999Universe,MODES} from './full-world-generator.mjs';
 import {openingWorld1999 as canon} from './canon-mini.mjs';
 import {createClean1999Clock} from '../test-clock.mjs';
+import {HISTORICAL_HORSES,HISTORICAL_HORSE_FIELDS} from './historical-horse-index.mjs';
+import {HISTORY_ORGANIZATIONS,HISTORY_ORGANIZATION_FIELDS} from './historical-organization-bridge.mjs';
+const HISTORICAL_ORG_BY_ID=new Map(HISTORY_ORGANIZATIONS.map(row=>[row[0],Object.fromEntries(HISTORY_ORGANIZATION_FIELDS.map((key,i)=>[key,row[i]??null]))]));
+export function historicalOrganizationById(id){return HISTORICAL_ORG_BY_ID.get(String(id||''))||null;}
+const HISTORICAL_BY_ID=new Map(HISTORICAL_HORSES.map(row=>[row[0],Object.fromEntries(HISTORICAL_HORSE_FIELDS.map((key,i)=>[key,row[i]||null]))]));
+export function historicalHorseById(id){return HISTORICAL_BY_ID.get(String(id||''))||null;}
+export function historicalPedigree(id,depth=2){
+ const visited=new Set();
+ const walk=(horseId,level)=>{
+  if(!horseId)return null;
+  const horse=historicalHorseById(horseId);
+  if(!horse)return {id:horseId,source:'UNRESOLVED_HISTORICAL_PARENT_ID'};
+  if(visited.has(horseId))return {id:horseId,source:'CYCLE_GUARD'};
+  if(level<=0)return {...horse,source:'HISTORICAL_HORSE_MASTER_V3_3'};
+  visited.add(horseId);
+  const result={...horse,source:'HISTORICAL_HORSE_MASTER_V3_3',sire:walk(horse.sireId,level-1),dam:walk(horse.damId,level-1)};
+  visited.delete(horseId);
+  return result;
+ };
+ return walk(id,Math.max(0,Math.min(5,Math.trunc(Number(depth)||0))));
+}
 const CACHE=new Map();
 function parse(raw){return new URL(raw,'https://wire-to-wire.invalid');}
 function int(raw,defaultValue,max){const n=Number(raw);return raw!==null&&raw!==''&&Number.isInteger(n)&&n>=0&&n<=max?n:defaultValue;}
@@ -53,6 +74,9 @@ export function readLocal1999World(raw){
   const date=q.get('date')||'1999-01-01';
   return {source:'TEST_CONDITION_BOOK_NOT_OFFICIAL_ENTRIES',date,track:w.trackAt(trackIndex),races:w.conditionBook(date,trackIndex)};
  }
+ if(p==='/api/1999/history/organization')return {source:'1999_ORGANIZATION_CAREER_BRIDGE_V3_3',organization:historicalOrganizationById(q.get('id'))};
+ if(p==='/api/1999/history/horse')return {source:'HISTORICAL_HORSE_MASTER_V3_3',horse:historicalHorseById(q.get('id'))};
+ if(p==='/api/1999/history/pedigree')return {source:'HISTORICAL_HORSE_MASTER_V3_3',pedigree:historicalPedigree(q.get('id'),int(q.get('depth'),2,5))};
  if(p==='/api/1999/horses')return canonList(q,canon.horses,['name','id','ownerId','trainerId']);
  if(p==='/api/1999/organizations')return canonList(q,canon.organizations,['name','id','type','locationLabel']);
  if(p==='/api/1999/people')return canonList(q,canon.people,['name','id','role']);
