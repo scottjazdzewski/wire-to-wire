@@ -3146,3 +3146,18 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  #wtwNextgen .ng-racing-cal-grid button{height:34px;padding:2px 3px;}
  #wtwNextgen .ng-racing-cal-grid button small{font-size:8px;}
 }
+
+/* Racing selector: all playable courses remain in the native dropdown; an adjacent
+   datalist finds a specific course by name without limiting the original roster. */
+#wtwNextgen .ng-dept-roster[data-department="Racing"] .ng-racing-track-find{
+ display:flex;align-items:center;gap:5px;white-space:nowrap;flex:0 1 195px;max-width:195px;min-width:120px;
+ font-size:10px;
+}
+#wtwNextgen .ng-dept-roster[data-department="Racing"] .ng-racing-track-find input{
+ box-sizing:border-box;flex:1 1 130px;width:130px;min-width:90px;max-width:145px;
+ height:25px;margin:0;padding:3px 6px;border:1px solid #526451;border-radius:3px;
+ background:#101a1f;color:#e8eadf;font:inherit;font-size:11px;
+}
+#wtwNextgen .ng-dept-roster[data-department="Racing"] .ng-racing-track-find input:focus{
+ outline:1px solid #d3bb74;outline-offset:1px;
+}

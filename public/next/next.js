@@ -3093,6 +3093,8 @@ function departmentRoster(section,page='Overview'){
   '<option value="" '+(!APP.racingTrack?'selected':'')+'>ALL TRACKS ('+racingTracks.length+')</option>'+
   racingTracks.map(t=>'<option value="'+safe(t.name)+'" '+(APP.racingTrack===t.name?'selected':'')+'>'+safe(t.name+' · '+t.location)+'</option>').join('')+
   '</select></label>'+
+  '<label class="ng-racing-track-find">FIND TRACK <input type="search" data-ng-input="racing-track-find" list="ngRacingTrackNameList" value="'+safe(APP.racingTrack)+'" placeholder="Type a track name…" autocomplete="off" aria-label="Find a racecourse by name"/><datalist id="ngRacingTrackNameList">'+
+  racingTracks.map(t=>'<option value="'+safe(t.name)+'"></option>').join('')+'</datalist></label>'+
   '<label class="ng-racing-date-label" for="ngRacingBrowseDate">DATE <input id="ngRacingBrowseDate" data-ng-input="department-race-date" type="date" min="1999-01-01" max="1999-12-31" value="'+safe(racingDate)+'" aria-label="Browse 1999 race date"/></label>'+
   '<button data-ng="dept-meets" class="'+(APP.racingMode==='meets'||APP.racingMode==='track'?'on':'')+'" title="See all active meets on the selected date, or one track\'s full meet schedule">MEETS</button>'+
   '<button data-ng="dept-day-card" class="'+(APP.racingMode==='day'||page==='Race Planning'?'on':'')+'" title="All proposed race cards on the selected date">DAY\'S RACES</button>'+
@@ -3616,6 +3618,20 @@ root.addEventListener('change',event=>{
   if(field.matches('select[data-ng-select="stable-attribute"]')){
    APP.stableAttributeKey=field.value;APP.stableAttributeSort=field.value;
    APP.stableAttributeDesc=true;return paint();
+  }
+  if(field.matches('input[data-ng-input="racing-track-find"]')){
+   const query=field.value.trim().toLocaleLowerCase('en-US');
+   const all=depTrackCalendar();
+   const exact=all.find(t=>t.name.toLocaleLowerCase('en-US')===query);
+   const partial=query?all.filter(t=>t.name.toLocaleLowerCase('en-US').includes(query)):[];
+   const picked=!query?'':exact?.name||(partial.length===1?partial[0].name:null);
+   if(picked===null){field.setCustomValidity('Choose one racecourse from the suggestions.');field.reportValidity();return;}
+   field.setCustomValidity('');
+   APP.racingTrack=picked;
+   if(APP.racingMode!=='day'&&APP.page!=='Calendar'&&APP.page!=='Race Planning')
+    APP.racingMode=picked?'track':'meets';
+   APP.departmentSortKey='';APP.departmentPageIndex=0;APP.departmentScrollLimit=160;APP.departmentScrollReset=true;
+   return paint();
   }
   if(field.matches('select[data-ng-select="department-track"]')){
    APP.racingTrack=field.value;
