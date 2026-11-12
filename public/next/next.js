@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:true,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:true,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
+const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:true,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:true,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -43,7 +43,120 @@ const tabmap={Office:['Overview','Messages','Decisions','Calendar','News','Repor
 const actions={Office:'Office Overview',Stable:'Stable',Racing:'Race Calendar',Sales:'Sales',World:'World'};
 const officeMenu={Overview:'Office Overview',Messages:'Filter All',Decisions:'Open move history',Calendar:'Open Race Calendar',News:'News',Reports:'Open move history',Career:'Open move history'};
 const state=()=>{try{return JSON.parse(localStorage.getItem('wtwOfficeStateV30')||'{}')}catch{return {}}};
-const originalAct=(act)=>{const o=$$('.app [data-act]').find(n=>n.dataset.act===act);return o||null;};
+/* Named saves are snapshots of the canonical Office game state, never a new
+   simulation ledger. World Editor patches and media remain independently stored. */
+const NAMED_SAVE_KEY='wtwNamedGameSavesV1';
+function namedSaves(){
+ try{const rows=JSON.parse(localStorage.getItem(NAMED_SAVE_KEY)||'[]');
+  return Array.isArray(rows)?rows.filter(x=>x&&typeof x.id==='string'&&typeof x.name==='string'&&x.game&&typeof x.game==='object'):[];
+ }catch{return []}
+}
+function namedSaveWrite(rows){localStorage.setItem(NAMED_SAVE_KEY,JSON.stringify(rows))}
+function namedSaveError(message){APP.saveError=message;paint()}
+function namedSaveCapture(){
+ const native=$('.app [data-act]').find(n=>n.dataset.act==='Save');
+ if(!native)throw Error('The original game save control is unavailable.');
+ native.click(); // Canonical Office writes its current simulation state synchronously.
+ const payload=JSON.parse(localStorage.getItem('wtwOfficeStateV30')||'null');
+ if(!payload||typeof payload!=='object'||!payload.version||!payload.date)
+  throw Error('The live game did not provide a valid save. Nothing was stored.');
+ return payload;
+}
+function namedSavePanel(){
+ const rows=namedSaves().sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));
+ const html=rows.map(slot=>'<div class="ng-save-slot"><div class="ng-save-slot-info"><strong>'+
+  safe(slot.name)+'</strong><small>GAME '+safe(slot.game?.date||'Unknown date')+
+  ' · SAVED '+safe(slot.updatedAt?new Date(slot.updatedAt).toLocaleString():'Unknown')+
+  '</small></div><div class="ng-save-slot-actions">'+
+  '<button type="button" data-ng="named-load" data-val="'+safe(slot.id)+'" class="primary">LOAD</button>'+
+  '<button type="button" data-ng="named-rename" data-val="'+safe(slot.id)+'">RENAME</button>'+
+  '<button type="button" data-ng="named-overwrite" data-val="'+safe(slot.id)+'">OVERWRITE</button>'+
+  '<button type="button" data-ng="named-delete" data-val="'+safe(slot.id)+'" aria-label="Delete save '+safe(slot.name)+'">DELETE</button>'+
+  '</div></div>').join('');
+ return '<div class="ng-save-shade"><section class="ng-save-dialog" role="dialog" aria-modal="true" aria-label="Save and load game">'+
+  '<header><div><small>WIRE TO WIRE / CAREER MANAGEMENT</small><h2>SAVE & LOAD GAME</h2></div>'+
+  '<button type="button" data-ng="save-close" aria-label="Close save manager">✕ CLOSE</button></header>'+
+  '<div class="ng-save-create"><label for="ngNamedSaveName">NAME NEW SAVE</label>'+
+  '<input id="ngNamedSaveName" type="text" maxlength="60" placeholder="e.g. 1999 World Test — Opening Day" value="'+safe(APP.saveDraftName)+'"/>'+
+  '<button type="button" data-ng="named-create" class="primary">SAVE NEW GAME</button></div>'+
+  (APP.saveError?'<p class="ng-save-error" role="status">'+safe(APP.saveError)+'</p>':'')+
+  '<div class="ng-save-list"><h3>YOUR NAMED SAVES <span>'+rows.length+' SLOTS</span></h3>'+
+  (html||'<p class="ng-save-empty">No named saves yet. Give this career a name to save it.</p>')+'</div>'+
+  '<footer><span>Stored in this browser. Loading replaces current progress. 1999 World record edits are backed up separately.</span>'+
+  '<button type="button" data-ng="named-backup">EXPORT ALL SAVES</button>'+
+  '<button type="button" data-ng="named-import">IMPORT SAVES</button>'+
+  '<input type="file" id="ngNamedSavesImport" accept="application/json,.json" hidden/>'+
+  '<button type="button" data-ng="named-export-current">EXPORT CURRENT GAME</button></footer>'+
+  '</section></div>';
+}
+function namedSaveCreate(){
+ const name=APP.saveDraftName.trim(),rows=namedSaves();
+ if(!name)return namedSaveError('Enter a name so you can recognize this save later.');
+ if(rows.some(x=>x.name.toLocaleLowerCase()===name.toLocaleLowerCase()))return namedSaveError('That name is already in use. Rename the existing slot or choose another.');
+ try{
+  const game=namedSaveCapture(),now=new Date().toISOString();
+  rows.unshift({id:'slot-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8),name,game,createdAt:now,updatedAt:now});
+  namedSaveWrite(rows);APP.saveDraftName='';APP.saveError='';paint();
+ }catch(e){namedSaveError('SAVE FAILED: '+(e?.message||'Browser storage unavailable'))}
+}
+function namedSaveHandle(action,id){
+ const rows=namedSaves(),index=rows.findIndex(x=>x.id===id);
+ if(index<0)return namedSaveError('This save is no longer available.');
+ const slot=rows[index];
+ if(action==='named-rename'){
+  const next=window.prompt('Rename saved game:',slot.name);
+  if(next===null)return;
+  const name=next.trim().slice(0,60);
+  if(!name)return namedSaveError('Save names cannot be blank.');
+  if(rows.some(x=>x.id!==id&&x.name.toLocaleLowerCase()===name.toLocaleLowerCase()))
+   return namedSaveError('Another save already has that name.');
+  rows[index]={...slot,name};
+ }else if(action==='named-delete'){
+  if(!window.confirm('Permanently delete the save "'+slot.name+'"?'))return;
+  rows.splice(index,1);
+ }else if(action==='named-overwrite'){
+  if(!window.confirm('Replace "'+slot.name+'" with the current game?'))return;
+  try{rows[index]={...slot,game:namedSaveCapture(),updatedAt:new Date().toISOString()}}
+  catch(e){return namedSaveError('OVERWRITE FAILED: '+(e?.message||'Could not capture game'))}
+ }else if(action==='named-load'){
+  if(!window.confirm('Load "'+slot.name+'"? Current unsaved progress will be replaced.'))return;
+  try{
+   // The original Office restores wtwOfficeStateV30 at startup; keep its native
+   // migrations, chronology and decision application as the single authority.
+   localStorage.setItem('wtwOfficeStateV30',JSON.stringify(slot.game));
+   window.location.reload();
+  }catch(e){namedSaveError('LOAD FAILED: '+(e?.message||'Storage is unavailable'))}
+  return;
+ }
+ try{namedSaveWrite(rows);APP.saveError='';paint()}
+ catch(e){namedSaveError('CHANGE FAILED: '+(e?.message||'Browser storage unavailable'))}
+}
+function namedSaveDownload(fileName,payload){
+ const url=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));
+ const a=document.createElement('a');a.href=url;a.download=fileName;a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+async function namedSaveImport(file){
+ if(!file)return;
+ try{
+  const data=JSON.parse(await file.text());
+  if(data?.schema!=='WTW_NAMED_SAVE_SLOTS_V1'||!Array.isArray(data.slots))
+   throw Error('Not a Wire to Wire named-saves backup.');
+  const imported=data.slots.filter(x=>x&&typeof x.id==='string'&&typeof x.name==='string'&&x.game?.version&&x.game?.date);
+  if(imported.length!==data.slots.length||imported.length>100)throw Error('One or more save slots are invalid.');
+  const current=namedSaves(),ids=new Set(current.map(x=>x.id));
+  const names=new Set(current.map(x=>x.name.toLocaleLowerCase()));
+  let added=0;
+  for(const slot of imported){
+   if(ids.has(slot.id)||names.has(slot.name.toLocaleLowerCase()))continue;
+   current.push({id:slot.id,name:slot.name.slice(0,60),game:slot.game,
+    createdAt:slot.createdAt||new Date().toISOString(),updatedAt:slot.updatedAt||new Date().toISOString()});
+   ids.add(slot.id);names.add(slot.name.toLocaleLowerCase());added++;
+  }
+  namedSaveWrite(current);APP.saveError=added+' saved game(s) imported. Choose LOAD to play one.';paint();
+ }catch(e){namedSaveError('IMPORT FAILED: '+(e?.message||'Invalid file'))}
+}
+const originalAct=(act)=>{const o=$('.app [data-act]').find(n=>n.dataset.act===act);return o||null;};
 function bridgeNode(node){if(!node)return;node.click(); schedulePaint(15)}
 function syntheticAction(el){const dummy=el.cloneNode(true); dummy.style.display='none'; document.body.appendChild(dummy);dummy.click();dummy.remove();schedulePaint(15)}
 // One browser-history entry per custom UI destination; original Office
@@ -290,7 +403,7 @@ function header(){
   <div class="ng-hist"><button data-ng="back" aria-label="Previous page" title="Previous page">${glyph('left',15)}</button><button data-ng="forward" aria-label="Next page" title="Next page">${glyph('right',15)}</button></div>
   <button class="ng-mini-home" data-ng="office" title="Racing Office" aria-label="Go to Racing Office"><img class="ng-logo-mini" src="/assets/wtw-office-approved-logo.png" alt=""/><span class="ng-wordmark"><strong>WIRE TO WIRE</strong><small>RACING MANAGER</small></span></button>
   <div class="ng-manager-top-context"><strong>${safe(APP.section.toUpperCase())}</strong><span>${safe((APP.custom||profileRoute?.title||APP.page||'Overview').replace(/^Office$/,'Overview'))}</span></div>
-  <div class="ng-global-tools"><button class="ng-iconbtn" data-ng="custom" data-val="Search" aria-label="Search">${glyph('search',17)}</button><button class="ng-iconbtn" data-ng="custom" data-val="Messages" aria-label="Inbox">${glyph('mail',17)}<i></i></button><button class="ng-iconbtn" data-ng="action" data-val="Save" aria-label="Save game">${glyph('save',17)}</button></div>
+  <div class="ng-global-tools"><button class="ng-iconbtn" data-ng="custom" data-val="Search" aria-label="Search">${glyph('search',17)}</button><button class="ng-iconbtn" data-ng="custom" data-val="Messages" aria-label="Inbox">${glyph('mail',17)}<i></i></button><button class="ng-iconbtn" data-ng="save-open" aria-label="Save or load named games" title="Save, load, or rename a game">${glyph('save',17)}</button></div>
   <button class="ng-global-date" data-ng="menu" data-val="Racing" title="Open calendar for in-world date ${safe(date)}" aria-label="In-world date ${safe(date)}. Open racing calendar"><span>GAME DATE</span><strong>${safe(date)}</strong></button>
   ${due.length?'<button class="ng-global-due" data-ng="due" title="Review due management follow-ups">'+glyph('alert',13)+' DUE '+due.length+'</button>':''}
   <button class="ng-global-continue" data-ng="action" data-val="Continue" title="Advance in-world game" aria-label="Continue game">${glyph('play',14)}<span>CONTINUE</span>${glyph('right',15)}</button>
@@ -367,6 +480,8 @@ function worldEditOpen(key){
  if(!source)return;
  APP.worldEditKey=key;APP.worldEditDraft={...source._world};APP.worldEditStatus='';
  APP.worldPhotoDraft=undefined;APP.worldEditBusy=false;
+ // An EDIT button in the World roster must open its record, not simply repaint the directory.
+ if(APP.custom!=='WorldRecord:'+encodeURIComponent(key))return openWorld1999Entity(key);
  paint();
 }
 function worldEditCancel(){
@@ -1758,7 +1873,7 @@ function liveStableRosterView(){
  return '<section class="ng-functional ng-stable-roster-v2">'+
   '<div class="ng-rs-title"><strong>STABLE & HORSES</strong><span>'+(APP.stableDemo?'FICTIONAL DEMO VALUES · NO GAME DATA CHANGED · ':'')+all.length+' HORSES · '+all.filter(x=>x.entered).length+
    ' ENTERED · '+all.filter(x=>x.hasTarget&&!x.entered).length+' TARGETED · '+all.filter(x=>['watch','treat'].includes(x.health[0])).length+
-   ' VET WATCH</span><button data-ng="menu" data-val="Racing">RACE CALENDAR ↗</button></div>'+
+   ' VET WATCH</span><button data-ng="stable-world-edit" title="Open the editable 1999 World horse records">✎ EDIT 1999 RECORDS</button><button data-ng="menu" data-val="Racing">RACE CALENDAR ↗</button></div>'+
   '<div class="ng-rs-tools"><label for="ngStableSearch">SEARCH</label><input id="ngStableSearch" data-ng-input="stable-search" type="search" value="'+safe(APP.stableSearch)+
    '" placeholder="Horse, owner, trainer, status…" autocomplete="off"/><div class="ng-rs-filters">'+filters+'</div>'+
    '<div class="ng-rs-mode"><button data-ng="stable-demo" data-val="toggle" class="'+(APP.stableDemo?'on':'')+'" title="Show fictional design-preview values; no game data changed">'+(APP.stableDemo?'DEMO ON':'DEMO OFF')+'</button><button data-ng="stable-mode" data-val="all" class="'+(APP.stableMode!=='compact'?'on':'')+'">ALL COLUMNS</button>'+
@@ -2513,6 +2628,8 @@ function departmentRoster(section,page='Overview'){
     v='<button type="button" class="ng-rs-horse" data-ng="dept-open" data-val="'+i+
      '" aria-label="Open '+safe(r._name)+'" title="'+safe(r._kind==='sale-event'?'Open this auction':r._kind==='sale-company'?'View this company\'s sales':'Open '+r._name+' profile')+'">'+first+
      '<span>'+safe(r._name)+'</span></button>';
+    if(section==='World'&&r._worldKey)
+     v+='<button type="button" class="ng-world-inline-edit" data-ng="world-edit" data-val="'+safe(r._worldKey)+'" title="Edit '+safe(r._name)+'">✎ EDIT</button>';
    }else if(section==='World'&&r._role==='opening'&&['owner','trainer','track'].includes(key)){
     // Canonical IDs take precedence over similarly named unrelated entities.
    }else if(kind&&!entityNotRecorded(r[key])&&r._kind!=='finance'){
@@ -2716,7 +2833,7 @@ function paint(){
  const route=currentRoute();
  const stage=(route||APP.custom)?renderRoute():`<main class="ng-board">${inbox()}${center()}${right()}</main>`;
  root.innerHTML=header()+'<div class="ng-manager-shell">'+managerSidebar()+
-   '<div class="ng-manager-stage">'+stage+'</div></div>';
+   '<div class="ng-manager-stage">'+stage+'</div></div>'+(APP.savePanelOpen?namedSavePanel():'');
  const nextRoute=$('.ng-routegrid',root),nextTab=$('.ng-profiletabs .on',root)?.dataset.val||'';
  if(nextRoute&&previousRouteKey&&nextRoute.dataset.routeKey===previousRouteKey){
   nextRoute.scrollTop=previousRouteScroll;
@@ -2739,6 +2856,14 @@ window.addEventListener('click',e=>{
  e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();
  const key=btn.dataset.ng, val=btn.dataset.val||'';
  if(!key && btn.dataset.act){syntheticAction(btn);return}
+ if(key==='save-open'){APP.savePanelOpen=true;APP.saveError='';paint();root.querySelector('#ngNamedSaveName')?.focus();return}
+ if(key==='save-close'){APP.savePanelOpen=false;APP.saveError='';return paint()}
+ if(key==='named-create')return namedSaveCreate();
+ if(['named-load','named-rename','named-delete','named-overwrite'].includes(key))return namedSaveHandle(key,val);
+ if(key==='named-export-current')return bridgeNode(originalAct('Export'));
+ if(key==='named-backup')return namedSaveDownload('wire_to_wire_named_saves.json',
+  {schema:'WTW_NAMED_SAVE_SLOTS_V1',exportedAt:new Date().toISOString(),slots:namedSaves()});
+ if(key==='named-import')return root.querySelector('#ngNamedSavesImport')?.click();
  if(key==='organization')return openOrganization();
  if(key==='search-go')return openSearchItem(APP.searchIndex[Number(val)]);
  if(key==='search-type'){APP.searchType=val;APP.searchPage=0;return updateSearchRoster()}
@@ -2828,6 +2953,7 @@ window.addEventListener('click',e=>{
    type:'Race',location:r.track||'',date:r.date||'',status:r.status||''
   }:null);
  }
+ if(key==='stable-world-edit'){APP.section='World';return pageTab('1999 Horses')}
  if(key==='world-edit')return worldEditOpen(val);
  if(key==='world-edit-source'){
   const kind=btn.dataset.kind,name=btn.dataset.name;
@@ -2901,6 +3027,7 @@ window.addEventListener('click',e=>{
 },true);
 root.addEventListener('change',event=>{
   const field=event.target;
+  if(field.id==='ngNamedSavesImport')return namedSaveImport(field.files?.[0]);
   if(field?.tagName==='SELECT')endNativeSelectInteraction(false);
   if(field.matches('select[data-ng-select="department-track"]')){APP.racingTrack=field.value;APP.racingMode=field.value?'track':'meets';APP.departmentPageIndex=0;APP.departmentSortKey='';if(APP.page!=='Overview')return pageTab('Overview');return paint()}
   if(field.matches('select[data-ng-select="department-sales-company"]')){APP.departmentCompany=field.value;APP.departmentPageIndex=0;APP.departmentSortKey='';return paint()}
@@ -2915,7 +3042,12 @@ root.addEventListener('change',event=>{
    paint();
   }
 });
+root.addEventListener('input',event=>{
+ if(event.target?.id==='ngNamedSaveName')APP.saveDraftName=event.target.value;
+});
 root.addEventListener('keydown',event=>{
+ if(APP.savePanelOpen&&event.key==='Escape'){event.preventDefault();APP.savePanelOpen=false;return paint()}
+ if(APP.savePanelOpen&&event.key==='Enter'&&event.target?.id==='ngNamedSaveName'){event.preventDefault();return namedSaveCreate()}
  if(event.key==='Escape'&&event.target===activeNativeSelect){
   setTimeout(()=>{if(activeNativeSelect===event.target)endNativeSelectInteraction(true)},0);
  }
