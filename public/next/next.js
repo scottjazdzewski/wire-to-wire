@@ -2597,9 +2597,14 @@ function departmentRoster(section,page='Overview'){
  const specs=section==='Personnel'&&page==='Ownership Groups'?DEP_COLUMNS.OwnershipGroups:
   section==='World'?(page==='1999 Horses'?WORLD_1999_COLUMNS.Horses:page==='People'?WORLD_1999_COLUMNS.People:WORLD_1999_COLUMNS.Organizations):
   section==='Sales'&&page==='Watchlist'?DEP_COLUMNS.SalesWatchlist:section==='Sales'&&page==='Sale Calendar'?DEP_COLUMNS.SaleCalendar:section==='Sales'&&page==='Sale Companies'?DEP_COLUMNS.SaleCompanies:section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'?(APP.racingTrack?DEP_COLUMNS.Racing:DEP_COLUMNS.Meets):DEP_COLUMNS[section];
- let rows=depRows(section,page,demo,auction);
+ const perPage=depPageLimit(section);
+ const virtualHorseIndex=section==='World'&&page==='1999 Horses'&&
+  window.__WTW_1999_UI_DATA__?.worldHorsePage;
+ const pageData=virtualHorseIndex?window.__WTW_1999_UI_DATA__.worldHorsePage(
+  APP.departmentPageIndex*perPage,perPage,APP.departmentSearch):null;
+ let rows=pageData?pageData.items:depRows(section,page,demo,auction);
  const search=APP.departmentSearch.trim().toLowerCase();
- if(search)rows=rows.filter(r=>specs.some(([key])=>String(r[key]??'').toLowerCase().includes(search)));
+ if(search&&!pageData)rows=rows.filter(r=>specs.some(([key])=>String(r[key]??'').toLowerCase().includes(search)));
  const defaultSort=section==='World'?'name':section==='Sales'&&page==='Watchlist'?'auction':section==='Racing'&&(page!=='Overview'||APP.racingMode==='mine'||APP.racingTrack)?'date':section==='Sales'&&page!=='Sale Calendar'&&page!=='Sale Companies'?'hip':section==='Finances'?'date':specs[0][0];
  const selectedSort=specs.some(x=>x[0]===APP.departmentSortKey)?APP.departmentSortKey:defaultSort;
  const sign=APP.departmentSortKey?(APP.departmentSortDesc?-1:1):(section==='Finances'?-1:1);
@@ -2611,9 +2616,10 @@ function departmentRoster(section,page='Overview'){
   const comp=an!==null&&bn!==null?an-bn:String(av).localeCompare(String(bv),undefined,{numeric:true,sensitivity:'base'});
   return comp*sign||String(a._name).localeCompare(String(b._name));
  });
- const limit=depPageLimit(section),pages=Math.max(1,Math.ceil(rows.length/limit));
+ const totalRecords=pageData?pageData.total:rows.length;
+ const limit=perPage,pages=Math.max(1,Math.ceil(totalRecords/limit));
  APP.departmentPageIndex=Math.min(Math.max(0,APP.departmentPageIndex),pages-1);
- const shown=rows.slice(APP.departmentPageIndex*limit,(APP.departmentPageIndex+1)*limit);
+ const shown=pageData?rows:rows.slice(APP.departmentPageIndex*limit,(APP.departmentPageIndex+1)*limit);
  APP.departmentVisible=shown;
 
  const heads=specs.map(([key,label])=>'<th scope="col" aria-sort="'+(selectedSort===key?(sign===1?'ascending':'descending'):'none')+'"><button data-ng="dept-sort" data-val="'+key+'" title="Sort by '+safe(label)+'">'+safe(label)+'<span aria-hidden="true">'+(selectedSort===key?(sign===1?'▲':'▼'):'↕')+'</span></button></th>').join('');
@@ -2662,7 +2668,7 @@ function departmentRoster(section,page='Overview'){
    return '<td title="'+safe(String(r[key]??''))+'">'+v+'</td>';
   }).join('')+'</tr>';
  }).join('');
- const pager='<span class="ng-dpt-records">'+rows.length+' RECORDS · '+shown.length+' SHOWN</span>'+
+ const pager='<span class="ng-dpt-records">'+totalRecords+' RECORDS · '+shown.length+' SHOWN'+(pageData?.isPageFilter?' · PAGE FILTER':'')+'</span>'+
   '<button data-ng="dept-page" data-val="-1" '+(APP.departmentPageIndex===0?'disabled':'')+' aria-label="Previous page">‹ PREV</button>'+
   '<strong>'+(APP.departmentPageIndex+1)+' / '+pages+'</strong>'+
   '<button data-ng="dept-page" data-val="1" '+(APP.departmentPageIndex>=pages-1?'disabled':'')+' aria-label="Next page">NEXT ›</button>';
@@ -2954,6 +2960,7 @@ window.addEventListener('click',e=>{
  if(key==='dept-company'){APP.departmentCompany=val;return pageTab('Sale Calendar')}
  if(key==='dept-open'){
   const r=APP.departmentVisible[Number(val)];if(!r)return;
+  if(r._testGenerated)return previewRecordRoute('horse',r._name,r);
   if(r._worldKey)return openWorld1999Entity(r._worldKey);
   if(r._canonId){const match=world1999Entries().find(x=>x.canonicalId===r._canonId);
    if(match&&!window.__wtwOfficeSearchRecords?.().some(x=>x.kind===match.kind&&x.name===match.name))return openWorld1999Entity(match.worldKey);
