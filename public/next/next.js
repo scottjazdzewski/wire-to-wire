@@ -157,7 +157,7 @@ async function namedSaveImport(file){
   namedSaveWrite(current);APP.saveError=added+' saved game(s) imported. Choose LOAD to play one.';paint();
  }catch(e){namedSaveError('IMPORT FAILED: '+(e?.message||'Invalid file'))}
 }
-const originalAct=(act)=>{const o=$('.app [data-act]').find(n=>n.dataset.act===act);return o||null;};
+const originalAct=(act)=>{const o=$$('.app [data-act]').find(n=>n.dataset.act===act);return o||null;};
 function bridgeNode(node){if(!node)return;node.click(); schedulePaint(15)}
 function syntheticAction(el){const dummy=el.cloneNode(true); dummy.style.display='none'; document.body.appendChild(dummy);dummy.click();dummy.remove();schedulePaint(15)}
 // One browser-history entry per custom UI destination; original Office
