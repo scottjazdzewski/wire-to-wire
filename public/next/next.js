@@ -1872,9 +1872,21 @@ function liveStableHorseData(h,r,game,caseFiles){
  const isTreating=/under treatment|receiving treatment|treatment ongoing|in rehabilitation|on medication|under veterinary care/i.test(treatment);
  const isWatch=/vet|filling|scan|diagnos|monitor|injur|unsound|sore|caution|medical/i.test(treatment)||Boolean(vetFile);
  const cleared=/^(sound|cleared|fit|healthy|no active concerns)$/i.test(liveStableKnown(saved.health_status));
- const health=isTreating?['treat','Treatment',treatment]:isWatch?['watch','Vet watch',treatment||vetFile?.title]:cleared?['sound','Sound','Explicitly recorded sound']:['unknown','Unassessed','No confirmed health assessment'];
+ let health=isTreating?['treat','Treatment',treatment]:isWatch?['watch','Vet watch',treatment||vetFile?.title]:cleared?['sound','Sound','Explicitly recorded sound']:['unknown','Unassessed','No confirmed health assessment'];
+ const opening=source.openingCondition;
+ if(health[0]==='unknown'&&opening){
+  health=opening.health==='TEST_VET_WATCH'?['watch','Test · Vet watch','SIMULATED CONDITION · vet review needed, not an examination']:
+   opening.health==='TEST_MONITOR'?['watch','Test · Monitor','SIMULATED CONDITION · monitoring risk, not a diagnosis']:
+   ['sound','Test · No alert','SIMULATED CONDITION · no modeled alert; veterinary status unverified'];
+ }
  const rawReady=liveStableKnown(saved.readiness_status)||liveStableKnown(saved.status)||liveStableKnown(h.activity);
  let ready=['unknown','Unassessed','No sourced race readiness assessment'];
+ if(opening){
+  const status=String(source.racing_status||'');
+  ready=/TOO_YOUNG|AT_STUD|BROODMARE|RETIRED/.test(status)?
+   ['restricted',status.replaceAll('_',' '),'MODEL · not eligible for a race as presently classified']:
+   [opening.readiness>=77?'ready':'building',opening.readiness+'%','1999 SIMULATED OPENING READINESS · not race-entry clearance'];
+ }
  if(/light jog|training paused|resting|scan pending|diagnostic|restricted|laid up|not ready|hold/i.test(rawReady))ready=['restricted','Restricted',rawReady];
  else if(/ready to race|ready to run|race ready|cleared to race/i.test(rawReady))ready=['ready','Ready',rawReady];
  else if(/work requested|more work|breeze|gate school|gallop|building|training rhythm|trending up|progressing/i.test(rawReady))ready=['building','Building',rawReady];
@@ -1895,6 +1907,17 @@ function liveStableHorseData(h,r,game,caseFiles){
  if(isTreating)ready=['restricted','Restricted','Explicit ongoing treatment'];
  const trend=String(saved.form_trend||scout.form_trend||'').trim().toLowerCase();
  let form=['unknown','—','No certified form trend'];
+ if(!trend&&source.source==='1999_TEST_GENERATED'){
+  const history=source.modelRaceHistory||[];
+  if(history.length>=2){
+   const recent=history.slice(0,3),previous=history.slice(3,6);
+   const score=arr=>arr.reduce((sum,r)=>sum+Math.max(0,8-Number(r.finishPosition||8)),0)/Math.max(1,arr.length);
+   const delta=score(recent)-score(previous);
+   form=delta>1.2?['up','Test ↑','Simulated recent finishes improving']:
+    delta<-.8?['down','Test ↓','Simulated recent finishes declining']:
+    ['level','Test →','Simulated recent finishes relatively stable'];
+  }else form=['unknown','Unraced','No prior race form at the 1999 opening'];
+ }
  if(/^(up|improving|positive)$/.test(trend))form=['up','Up','Recorded racing form improving'];
  else if(/^(down|declining|negative)$/.test(trend))form=['down','Down','Recorded racing form declining'];
  else if(/^(flat|level|steady)$/.test(trend))form=['level','Flat','Recorded racing form steady'];
@@ -1919,8 +1942,20 @@ function liveStableHorseData(h,r,game,caseFiles){
  const breeder=liveStableKnown(links.breeder)||(saved.breeder_source_refs?.length?liveStableKnown(saved.breeder_name):'');
  const tally=source.record||{},validRecord=['starts','wins','seconds','thirds'].every(k=>/^\d+$/.test(String(tally[k])));
  const record=validRecord?[tally.starts,tally.wins,tally.seconds,tally.thirds].join('-'):'';
- return {name,age,sex:sexCode,sexFull:sex,health,ready,form,last,upcoming,target,money,owner,trainer,breeder,record,
-  activity:h.activity,ability:liveStableRating(name,'current_ability',game),potential:liveStableRating(name,'future_potential',game),
+ const modelRating=key=>{
+  const sourced=liveStableRating(name,key,game);
+  if(sourced.value!=null)return sourced;
+  const n=Number(key==='current_ability'?source.ability?.currentStars:source.ability?.potentialStars);
+  if(!Number.isInteger(n)||n<1||n>5)return sourced;
+  return {value:n,display:'<span class="ng-rs-stars ng-test-rating" title="SIMULATED 1999 model rating · not a verified scout assessment"><b>'+
+   '★'.repeat(n)+'</b>'+'☆'.repeat(5-n)+'</span>'};
+ };
+ return {name,age,sex:sexCode,sexFull:sex,health,ready,form,
+  last:last||'Unraced',upcoming:upcoming||'Not entered',target:target||'No target',
+  money:money||'Not recorded',owner:owner||'Not recorded',trainer:trainer||'Not recorded',
+  breeder:breeder||'Not recorded',record:record||'Not recorded',
+  activity:h.activity||'No current activity',
+  ability:modelRating('current_ability'),potential:modelRating('future_potential'),
   entered,hasTarget:Boolean(r||target),cases:related};
 }
 
