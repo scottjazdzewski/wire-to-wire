@@ -687,6 +687,16 @@ const findRace=id=>{
  return q('/api/1999/sim/conditions','date='+encodeURIComponent(date)+'&trackIndex='+trackIndex)
   .races?.find(r=>r.id===id)||null;
 };
+// Rehydrate a generated 1999 PERSON by its established test person ID, not
+// by a possibly duplicated display name. Read only; no new people created.
+function personProfileById(id){
+ if(typeof id!=='string'||!id)return null;
+ for(const page of ['Trainers','Jockeys','Staff']){
+  const exact=departmentRows('Personnel',page).find(p=>p._id===id);
+  if(exact)return exact;
+ }
+ return null;
+}
 const ownedHorses=()=>stableHorses;
 const horseAttributeGroups=Object.entries(attributeCatalog.horse_categories).map(([name,defs])=>({
  name,definitions:defs.map(d=>({key:d.key,label:d.label,scope:d.scope}))
@@ -719,7 +729,7 @@ window.__WTW_1999_UI_DATA__={
  sourceOwnerId:activeOwnerId,sourceOwnerName:selectedOwner,stableHorses:roster(),
   generatedStaffRoles:['trainer','jockey','farm_manager','veterinarian','farrier','bloodstock_agent','racing_secretary'],
  ownedHorseCount,
- sourceFacts,ownerFor,stableHorsePreview,setGameDate,departmentRows,auctionList,extraTracks,
+ sourceFacts,ownerFor,stableHorsePreview,personProfileById,setGameDate,departmentRows,auctionList,extraTracks,
  TRAINING_PLANS,horseTraining,assignTraining,trainingCosts,
  officeMessages,officeDesks,openingCash,worldHorsePage,worldHorseBrowse,breedingMarePage,breedingMareBrowse,breedingMareByModelIndex,
  horseAttributeGroups,stableHorseAttributes,stableHorseCareer,
