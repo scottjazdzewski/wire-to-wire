@@ -450,7 +450,7 @@ function worldHorseBrowse({offset=0,limit=160,search='',sort='name',desc=false,f
   globalHorseCacheKey=key;
  }
  const total=globalHorseCache.length;
- const items=globalHorseCache.slice(Math.max(0,offset),Math.max(0,offset)+Math.min(400,Math.max(1,limit)))
+ const items=globalHorseCache.slice(Math.max(0,offset),Math.max(0,offset)+Math.min(worldCounts.horses,Math.max(1,limit)))
   .map(h=>({_directoryIndex:h.index,_kind:'horse',_name:h.name,_id:h.id,
    _canonId:h.canonical?h.id:'',_worldKey:h.canonical?'horse:'+h.id:undefined,
    _testGenerated:!h.canonical,name:h.name,age:String(h.age),sex:h.sex,
