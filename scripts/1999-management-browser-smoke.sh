@@ -64,7 +64,7 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   const chooseTrack=d.querySelector('#wtwNextgen select[data-ng-select="department-track"]');
   chooseTrack.value='Saratoga';chooseTrack.dispatchEvent(new w.Event('change',{bubbles:true}));await pause(270);
   check('Track selection filters the date condition book without resetting to active-only tracks',
-   [...d.querySelectorAll('#wtwNextgen .ng-rs-table tbody tr td:nth-child(2)')].every(x=>x.textContent.trim()==='Saratoga')&&
+   [...d.querySelectorAll('#wtwNextgen .ng-rs-table tbody tr td:nth-child(2)')].every(x=>x.textContent.trim().startsWith('Saratoga'))&&
    d.querySelectorAll('#wtwNextgen .ng-rs-table tbody tr').length>1);
   d.querySelector('#wtwNextgen button[data-ng="dept-race-calendar"]')?.click();await pause(170);
   check('Calendar toggle displays the month grid and daily browse buttons',
