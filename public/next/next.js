@@ -2144,7 +2144,8 @@ const DEP_COLUMNS={
  SaleCompanies:[['name','SALES COMPANY',19],['city','HEADQUARTERS',15],['saleCount','SALES',8],['nextSale','NEXT UPCOMING AUCTION',33],['months','USUAL SALE MONTHS',25]],
  Sales:[['hip','HIP',4],['horse','HORSE',12],['age','AGE',3],['sex','SEX',3],['sire','SIRE',11],['dam','DAM',11],['consignor','CONSIGNOR',10],['reserve','RESERVE',8],['bid','CURRENT BID',8],['value','EST VALUE',8],['ca','CA',4],['pa','PA',4],['condition','COND',7],['status','SALE STATUS',7]],
  OwnershipGroups:[['name','OWNER / OPERATION',25],['type','OWNER TYPE',19],['location','OPERATING BASE',22],['principal','PRINCIPAL OWNER',18],['status','STATUS',16]],
- Personnel:[['name','PERSON',13],['age','AGE',3],['role','ROLE',10],['ca','CA',4],['pa','PA',4],['reputation','REP',6],['specialty','SPECIALTY',10],['morale','MORALE',6],['workload','LOAD',6],['salary','EST. FEES / PAY',11],['commission','WIN %',5],['relationship','OUR REL',11],['contract','CONTRACT',9],['assignment','ASSIGNED',9],['base','BASE',9],['wins','WINS',4]],
+ Personnel:[['name','PERSON',13],['age','AGE',3],['role','ROLE',10],['ca','CA',4],['pa','PA',4],['reputation','REP',6],['specialty','SPECIALTY',10],['morale','MORALE',6],['workload','LOAD',6],['salary','EST. FEES / PAY',11],['commission','WIN %',5],['demand','DEMAND',7],
+ ['competingBarns','RIVAL BARNS',7],['quotedMount','MOUNT QUOTE',8],['relationship','OUR REL',11],['contract','CONTRACT',9],['assignment','ASSIGNED',9],['base','BASE',9],['wins','WINS',4]],
  Facilities:[['name','FACILITY',14],['type','TYPE',9],['location','CITY / STATE',13],['capacity','CAP',5],['occupied','USED',5],['free','FREE',5],['condition','COND',7],['quality','QUALITY',7],['staff','STAFF',5],['cost','MONTHLY COST',10],['owner','OWNER',12],['status','STATUS',8]],
  Finances:[['date','DATE',11],['category','CATEGORY',16],['description','TRANSACTION / PURPOSE',28],['department','HORSE / DEPARTMENT',19],['income','INCOME',10],['expense','EXPENSE',10],['balance','BALANCE',6]]
 };
@@ -2815,6 +2816,20 @@ function previewRecordView(){
      '$'+Number(fields._testCompensation.estimatedAnnualFees).toLocaleString('en-US'):'']
   ]:[]),
   ['RELATIONSHIP TO OUR STABLE · TEST',fields.relationship||''],
+  ...(fields._testMarket?[
+   ['MAJOR-RACE JOCKEY DEMAND · TEST',fields._testMarket.demandTier],
+   ['COMPETING TOP BARNS · TEST',fields._testMarket.competingBarns?.length||0],
+   ['NEGOTIATED MOUNT QUOTE · TEST',fields._testMarket.suggestedMountFee!=null?
+    '$'+Number(fields._testMarket.suggestedMountFee).toLocaleString('en-US'):''],
+   ['EXPECTED RIVAL INTEREST · NOT OFFERS',
+    (fields._testMarket.competingBarns||[]).map(o=>o.ownerName).join(', ')],
+   ['BOOKING STATUS',fields._testMarket.status]
+  ]:[]),
+  ...(fields._testNegotiation?[
+   ['OWNER JOCKEY BUDGET TIER · TEST',fields._testNegotiation.jockeyBudgetBand],
+   ['OWNER MOUNT FEE TOLERANCE · TEST',String(fields._testNegotiation.mountFeeTolerance||'')],
+   ['OWNER COMMISSION FLEXIBILITY · TEST',String(fields._testNegotiation.commissionFlexibility||'')]
+  ]:[]),
   ...(generated?[
    ['HORSE ID',fields._id],['AGE',fields.age],['SEX',fields.sex],
    ['SIRE ID',fields.sire],['DAM ID',fields.dam],['TRAINER',fields.trainer],
