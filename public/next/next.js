@@ -812,7 +812,7 @@ function world1999Profile(){
  if(!e)return '<section class="ng-world-source-profile"><header><strong>1999 WORLD REGISTRY</strong></header>'+
   '<p>'+safe(world1999LoadFailed?'World source file is unavailable.':'Loading the 1999 source records…')+'</p></section>';
  const d=e._world||{},kind=e.kind;
- if(kind==='horse'||kind==='track')return restored1999Profile(kind,{...d,name:e.name});
+ if(kind==='horse'||kind==='person'||kind==='track')return restored1999Profile(kind,{...d,name:e.name});
  const display=kind==='farm'?'ORGANIZATION':kind==='person'?'PERSON':kind==='track'?'TRACK':'HORSE';
  const details=[];
  const add=(label,value,markup='')=>{if(value||markup)details.push({label,value:String(value||''),html:markup})};
@@ -2746,10 +2746,15 @@ function previewRecordRoute(kind,name,row=null){
  APP.previewEntity={kind,name,row:row||null};
  // URL contains the specific preview name: browser back/forward and refresh
  // keep the identity; it is not a new canonical horse or organization record.
- openCustomView('Preview:'+encodeURIComponent(kind)+':'+encodeURIComponent(name),APP.section,APP.page);
+ const identity=kind==='person'&&row?._kind==='person'&&row._id?row._id:name;
+ openCustomView('Preview:'+encodeURIComponent(kind)+':'+encodeURIComponent(identity),APP.section,APP.page);
 }
 function openEntityRecord(name,preferred='',row=null){
  if(entityNotRecorded(name))return false;
+ // Generated personnel open their exact ID-backed FM dossier, never an
+ // unrelated Office person with the same display name.
+ if((preferred==='person'||row?._kind==='person')&&row?._kind==='person'&&row._testGenerated&&row._id)
+  return previewRecordRoute('person',name,row);
  const exact=entitySourceMatch(name,preferred,row?._track||'');
  const kind=exact?.kind||preferred||row?._kind||'record';
  if(exact&&window.__wtwOfficeOpenSearchRecord?.(exact.kind,name,exact.track||row?._track)){
@@ -2781,15 +2786,20 @@ function previewRecordView(){
  const fromState=APP.previewEntity;
  const pieces=(APP.custom||'').split(':');
  const kind=fromState?.kind||decodeURIComponent(pieces[1]||'record');
- const name=fromState?.name||decodeURIComponent(pieces.slice(2).join(':')||'Record');
+ const routeIdentity=decodeURIComponent(pieces.slice(2).join(':')||'Record');
+ const hydratedPerson=kind==='person'?window.__WTW_1999_UI_DATA__?.personProfileById?.(routeIdentity):null;
+ const name=fromState?.name||hydratedPerson?.name||routeIdentity;
  const demo=(fromState?.row?._kind||'').startsWith('demo')||
   (Boolean(fromState?.row)&&Boolean(APP.departmentDemo))||
   DEP_FACILITY_PREVIEW.some(item=>item[0]===name);
  // Rehydrate the canonical browser-world horse on refresh or deep-link load.
  // The URL stores identity, not an old UI snapshot or fabricated horse values.
- const fields=fromState?.row||
+ const fields=fromState?.row||hydratedPerson||
   (kind==='horse'?window.__WTW_1999_UI_DATA__?.stableHorsePreview?.(name):null)||{};
  const generated=Boolean(fields._testGenerated),hasTestData=Boolean(fields._testAttrs||fields._testFinances||fields._testReputation);
+ // All actual or pending people and horse records use the approved FM dossier.
+ // Missing IDs remain explicitly unlinked, never guessed from a name.
+ if(kind==='person')return restored1999Profile('person',{...fields,name});
  if(kind==='horse'&&generated)return restored1999Profile('horse',{...fields,name});
  const fixture=DEP_FACILITY_PREVIEW.find(item=>item[0]===name);
  const relevant=[
