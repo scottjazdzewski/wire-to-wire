@@ -2890,8 +2890,11 @@ function departmentRoster(section,page='Overview'){
   Boolean(window.__WTW_1999_UI_DATA__?.worldHorseBrowse);
  const virtualHorseIndex=section==='World'&&page==='1999 Horses'&&!globalHorseDirectory&&
   window.__WTW_1999_UI_DATA__?.worldHorsePage;
- const virtualBroodmares=section==='Breeding'&&page==='Broodmares'&&
+ const globalMareDirectory=section==='Breeding'&&page==='Broodmares'&&
+  Boolean(window.__WTW_1999_UI_DATA__?.breedingMareBrowse);
+ const virtualBroodmares=section==='Breeding'&&page==='Broodmares'&&!globalMareDirectory&&
   window.__WTW_1999_UI_DATA__?.breedingMarePage;
+ const globalDirectory=globalHorseDirectory||globalMareDirectory;
  const virtualMethod=virtualHorseIndex?'worldHorsePage':virtualBroodmares?'breedingMarePage':null;
  // Large populations stay in the generator. Load a window, not 26k or 87.5k
  // complete horse profiles into every table render.
@@ -2916,15 +2919,16 @@ function departmentRoster(section,page='Overview'){
  const selectedSort=specs.some(x=>x[0]===APP.departmentSortKey)?APP.departmentSortKey:defaultSort;
  const sign=APP.departmentSortKey?(APP.departmentSortDesc?-1:1):(section==='Finances'?-1:1);
  let globalIndexing=false,globalProgress=0;
- if(globalHorseDirectory){
-  const result=window.__WTW_1999_UI_DATA__.worldHorseBrowse({
+ if(globalDirectory){
+  const browse=globalHorseDirectory?'worldHorseBrowse':'breedingMareBrowse';
+  const result=window.__WTW_1999_UI_DATA__[browse]({
    offset:0,limit:APP.departmentScrollLimit,search:APP.departmentSearch,
    sort:selectedSort,desc:sign<0,filters:rosterFilter||{}
   });
   rows=result.items||[];virtualTotal=result.total||0;
   globalIndexing=Boolean(result.indexing);globalProgress=result.progress||0;
  }
- if(!globalHorseDirectory)rows.sort((a,b)=>{
+ if(!globalDirectory)rows.sort((a,b)=>{
   let av=selectedSort==='date'&&a._iso?a._iso:a[selectedSort],bv=selectedSort==='date'&&b._iso?b._iso:b[selectedSort];
   const am=av===null||av===undefined||av==='',bm=bv===null||bv===undefined||bv==='';
   if(am!==bm)return am?1:-1;
@@ -2932,8 +2936,8 @@ function departmentRoster(section,page='Overview'){
   const comp=an!==null&&bn!==null?an-bn:String(av).localeCompare(String(bv),undefined,{numeric:true,sensitivity:'base'});
   return comp*sign||String(a._name).localeCompare(String(b._name));
  });
- const totalRecords=globalHorseDirectory||virtualMethod?virtualTotal:rows.length;
- const shown=globalHorseDirectory||virtualMethod?rows:rows.slice(0,Math.min(rows.length,APP.departmentScrollLimit));
+ const totalRecords=globalDirectory||virtualMethod?virtualTotal:rows.length;
+ const shown=globalDirectory||virtualMethod?rows:rows.slice(0,Math.min(rows.length,APP.departmentScrollLimit));
  APP.departmentVisible=shown;
 
  const heads=specs.map(([key,label])=>'<th scope="col" aria-sort="'+(selectedSort===key?(sign===1?'ascending':'descending'):'none')+'"><button data-ng="dept-sort" data-val="'+key+'" title="Sort by '+safe(label)+'">'+safe(label)+'<span aria-hidden="true">'+(selectedSort===key?(sign===1?'▲':'▼'):'↕')+'</span></button></th>').join('');
@@ -2983,9 +2987,10 @@ function departmentRoster(section,page='Overview'){
   }).join('')+'</tr>';
  }).join('');
  const pager='<span class="ng-dpt-records">'+totalRecords+' RECORDS · '+shown.length+
-  (globalIndexing?' LOADED · INDEXING '+globalProgress+' / 87500 HORSES…':
+  (globalIndexing?' LOADED · INDEXING '+globalProgress+' / '+(globalMareDirectory?'26000 MARES':'87500 HORSES')+'…':
    ' LOADED · SCROLL FOR MORE')+
   (globalHorseDirectory?' · SORT/FILTER ALL 87,500 HORSES':
+   globalMareDirectory?' · SORT/FILTER ALL BROODMARES':
    virtualMethod?' · SCROLLING LARGE TEST POPULATION':'')+'</span>';
  const viewOptions=(tabmap[section]||[]).map(t=>'<option value="'+safe(t)+'" '+(t===page?'selected':'')+'>'+safe(t)+'</option>').join('');
  const racingTracks=section==='Racing'?depCurrentMeetRows():[];
@@ -3033,7 +3038,8 @@ function departmentRoster(section,page='Overview'){
   '<section class="ng-rs-roster"><header><strong>'+safe(section.toUpperCase())+' · SORTABLE ROSTER</strong><div class="ng-dpt-pager">'+pager+'</div></header>'+
   '<div class="ng-rs-scroll" tabindex="0" role="region" aria-label="'+safe(section)+' roster — scroll vertically and click column headings to sort"><table class="ng-rs-table ng-dpt-table"><thead><tr>'+heads+'</tr></thead><tbody>'+
   (body||'<tr><td colspan="'+specs.length+'" class="ng-rs-no-results">'+safe(globalIndexing?
-   'Indexing '+globalProgress.toLocaleString('en-US')+' of 87,500 horses for global sort/filter — source identities retained.':
+   'Indexing '+globalProgress.toLocaleString('en-US')+' of '+(globalMareDirectory?'26,000 breeding mares':'87,500 horses')+
+   ' for global sort/filter — source identities retained.':
    section==='World'&&!world1999Data?'Loading the 1999 world registry…':section==='Sales'&&page==='Watchlist'?'No watched lots yet. Select ☆ beside a catalog hip to watch it for this session.':section==='Sales'&&page==='Private Offers'?'No recorded private offers. Bidding and negotiation are not enabled in this UI preview.':section==='Sales'?'No catalog lots recorded for this view.':demo?'No matching records.':'No supported records in this view.')+'</td></tr>')+
   '</tbody></table></div><div class="ng-dpt-disclosure">'+(demo?'FICTIONAL DISPLAY VALUES ONLY — no prices, locations or medical facts saved.':'SOURCE RECORDS ONLY · unknown values shown as —')+
   '</div></section></section>';
@@ -3314,6 +3320,10 @@ window.addEventListener('click',e=>{
  if(key==='dept-open'){
   const r=APP.departmentVisible[Number(val)];if(!r)return;
    if(r._kind==='race')return open1999Race(r._raceData||r);
+  if(r._mareIndex!=null){
+   const full=window.__WTW_1999_UI_DATA__?.breedingMareByModelIndex?.(r._mareIndex);
+   if(full)return previewRecordRoute('horse',full._name||full.name,full);
+  }
   if(r._directoryIndex!=null){
    const full=window.__WTW_1999_UI_DATA__?.worldHorsePage?.(r._directoryIndex,1)?.items?.[0];
    if(full?._canonId)return openWorld1999Entity('horse:'+full._canonId);
