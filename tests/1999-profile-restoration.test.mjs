@@ -55,6 +55,62 @@ test('source-backed 1999 horse birthplace mapping uses Horse_ID and does not cla
  assert.match(rated.node.innerHTML,/5\/5/);
 });
 
+test('source-backed horse and personnel attributes display the same detailed dossier, marked TEST not historical',()=>{
+ const context={
+  window:{},document:{createElement(){return {dataset:{},innerHTML:'',className:''}}},
+  fetch(){return new Promise(()=>{})}
+ };
+ vm.runInNewContext(get('public/next/1999-restored-profiles.js'),context);
+ const horse=context.window.WTW1999Profiles.source('horse',{
+  id:'H-SOURCE-1999-1',name:'Registered Opening Horse',age:3,sex:'COLT'
+ },{
+  sourceHorseModel:id=>{
+   assert.equal(id,'H-SOURCE-1999-1');
+   return {id,attributes:{raw_speed:.82,conformation:.72,fitness:.63},
+    ability:{schema:'WTW_1999_AGE_ABILITY_V1',currentStars:3,potentialStars:4,careerStage:'DEVELOPING'}};
+  }
+ });
+ assert.equal(horse.route.kicker,'Horse Profile');
+ assert.equal(horse.node.dataset.testGenerated,'false','Historical identity is not reclassified as invented');
+ assert.equal(horse.node.dataset.testAttributeModel,'true');
+ assert.equal(JSON.parse(horse.node.dataset.testAttributes).raw_speed,.82);
+ assert.match(horse.node.innerHTML,/CURRENT ABILITY · TEST/);
+ const jockey=context.window.WTW1999Profiles.source('person',{
+  id:'P-SOURCE-1999-1',name:'Registered Jockey',role:'jockey'
+ },{
+  sourcePersonModel:id=>{
+   assert.equal(id,'P-SOURCE-1999-1');
+   return {id,attributes:{judgment:.75,break_timing:.88,race_tactics:.83}};
+  }
+ });
+ assert.equal(jockey.route.kicker,'People Profile');
+ assert.equal(jockey.node.dataset.testGenerated,'false');
+ assert.equal(jockey.node.dataset.testAttributeModel,'true');
+ assert.equal(jockey.node.dataset.personRole,'jockey');
+ assert.equal(JSON.parse(jockey.node.dataset.testAttributes).break_timing,.88);
+ assert.match(jockey.node.innerHTML,/Canonical person identity and recorded geography preserved/);
+ const trainer=context.window.WTW1999Profiles.source('person',{
+  id:'P-SOURCE-1999-2',name:'Registered Trainer',role:'trainer'
+ },{
+  sourcePersonModel:id=>({id,attributes:{conditioning:.81,workout_design:.78,planning:.7}})
+ });
+ assert.equal(trainer.node.dataset.personRole,'trainer');
+ assert.equal(JSON.parse(trainer.node.dataset.testAttributes).workout_design,.78);
+ assert.equal(trainer.route.kicker,jockey.route.kicker,'All people share the same detailed FM profile framework');
+});
+
+test('only organizations retain generic World view; horse and people duplicate renderers are absent',()=>{
+ const start=ui.indexOf('function world1999Profile(){');
+ const stop=ui.indexOf('function world1999Linked(',start);
+ assert.ok(start>0&&stop>start);
+ const block=ui.slice(start,stop);
+ assert.match(block,/if\(kind==='horse'\|\|kind==='person'\|\|kind==='track'\)return restored1999Profile/);
+ assert.match(block,/const display='ORGANIZATION'/);
+ assert.doesNotMatch(block,/add\('HORSE ID'/);
+ assert.doesNotMatch(block,/add\('1999 BASE'/);
+ assert.match(ui,/if\(kind==='person'\)return restored1999Profile\('person'/);
+ assert.match(ui,/if\(kind==='horse'\)return restored1999Profile\('horse'/);
+});
 test('race conditions show documented restrictions and explicitly provisional eligibility',()=>{
  assert.match(html,/\/next\/1999-race-conditions\.js/);
  const context={window:{}};
