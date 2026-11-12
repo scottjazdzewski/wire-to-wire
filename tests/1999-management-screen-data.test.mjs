@@ -154,7 +154,11 @@ test('Racing browse has all 118 tracks, daily condition books and no off-meet ca
  assert.ok(subset.length>0&&subset.length<all.length);
  assert.ok(subset.every(r=>r.track===first));
  assert.deepEqual(ui.racingDayCards('1999-01-01',first),subset,'Daily card is stable across reads');
- assert.ok(ui.racingDayCards('1999-08-28','Saratoga').some(r=>r._raceId==='STK-0022'),'Travers sits on its retained August 28 date');
+  const saratoga=ui.racingDayCards('1999-08-28','Saratoga');
+  const travers=saratoga.filter(r=>r._stakeId==='STK-0022');
+  assert.equal(travers.length,1,'Travers sits ONCE on its retained August 28 date');
+  assert.match(travers[0].race,/^R\d+ · Travers Stakes$/,'Stakes has a numbered card position');
+  assert.ok(travers[0].number<=saratoga.length,'Stakes does not inflate card length');
  assert.equal(ui.racingDayCards('1999-02-30').length,0,'Invalid dates do not produce false cards');
  assert.equal(ui.racingDayCards('1999-01-01','Ascot').length,0,'Overseas tracks are not playable');
 });
