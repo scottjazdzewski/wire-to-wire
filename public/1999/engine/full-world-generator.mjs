@@ -239,15 +239,47 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
  const reserved=anchored?new Set(locked.map(x=>x.id)):new Set();
  const generatedId=i=>'H-TEST-1999-'+pad(i+1);
  const sireCount=1400,damCount=26000;
+ // Maternal and paternal population is virtualized; every record is deterministic.
+ // Existing H-TEST parent IDs remain stable; production projections are not
+ // fictional certified pregnancies or historical foaling records.
+ const MARE_BREEDING_STOCK=26000,STALLION_BREEDING_STOCK=1400;
+ const mare1999=(i)=>{
+  const id='H-TEST-DAM-'+pad(i+1,6);
+  const active=hash(seed,id+':1999-breeding-active')%100<88;
+  const covered=active&&hash(seed,id+':1999-covered')%100<88;
+  const projectedFoal=covered&&hash(seed,id+':1999-live-foal')%100<86;
+  return {active,covered,projectedFoal};
+ };
+ const annualFoalingForecast=()=>{
+  let active=0,covered=0,expected=0;
+  for(let i=0;i<MARE_BREEDING_STOCK;i++){
+   const v=mare1999(i);active+=Number(v.active);covered+=Number(v.covered);expected+=Number(v.projectedFoal);
+  }
+  return {season:1999,mares:MARE_BREEDING_STOCK,activeMares:active,projectedCoverings:covered,
+   projectedLiveFoals:expected,basis:'SIMULATED_1999_EXPECTATION_NOT_LIVE_BIRTHS',
+   farmCount:900,stallionPopulation:STALLION_BREEDING_STOCK};
+ };
  function parentAt(i,sex){
-  const isSire=sex==='SIRE',id='H-TEST-'+sex+'-'+pad(i+1,6),t=trackAt(hash(seed,id+':home')%trackCount);
+  const isSire=sex==='SIRE',max=isSire?STALLION_BREEDING_STOCK:MARE_BREEDING_STOCK;
+  if(!Number.isInteger(i)||i<0||i>=max)throw Error('Parent breeding stock index');
+  const id='H-TEST-'+sex+'-'+pad(i+1,6),foalYear=isSire?1970+(i%12):1971+(i%13);
+  const age=1999-foalYear, farm=facilityAt(trainersTotal+i%900);
+  const projection=isSire?null:mare1999(i);
+  const activeStud=isSire?hash(seed,id+':1999-active-stud')%100<42:false;
+  const studFee=isSire?(activeStud?1500+100*hash(seed,id+':1999-stud-fee')%190:0):0;
+  const bookSize=isSire&&activeStud?12+hash(seed,id+':1999-stud-book')%82:0;
   return {id,name:mixName(seed+1,isSire?i+100000:i+101500),sex:isSire?'STALLION':'MARE',
-   foalYear:isSire?1970+(i%12):1971+(i%13),ageAtOpening:1999-(isSire?1970+(i%12):1971+(i%13)),location:t.location,farmId:'F-TEST-FARM-'+pad(i%900+1),
+   foalYear,ageAtOpening:age,location:farm.location,farmId:farm.id,farmName:farm.name,
    reputation:standing(seed,id,.25+unit(seed,id+'rep')*.5),
-    ability:createAgeAbility({seed,id,role:'horse',age:1999-(isSire?1970+(i%12):1971+(i%13))}),
-    attributes:traits(hor,seed,id,createAgeAbility({seed,id,role:'horse',age:1999-(isSire?1970+(i%12):1971+(i%13))})),
-    nameStatus:'TEST_RENAME_ALLOWED',
-   source:'GENERATED_ANCESTRAL_STOCK'};
+   ability:createAgeAbility({seed,id,role:'horse',age}),
+   attributes:traits(hor,seed,id,createAgeAbility({seed,id,role:'horse',age})),
+   breedingStatus1999:isSire?(activeStud?'STANDING':'RETIRED_STUD'):
+    !projection.active?'RESTING':projection.covered?'COVERED_1999_TEST':'AVAILABLE_FOR_COVER',
+   projected1999Foal:isSire?null:projection.projectedFoal,
+   projected1999Covering:isSire?null:projection.covered,
+   projected1999BookSize:bookSize,studFee1999:studFee,
+   breederStateBasis:'SIMULATED_1999_REPRODUCTION_FORECAST_NOT_SOURCE',
+   nameStatus:'TEST_RENAME_ALLOWED',source:'GENERATED_ANCESTRAL_STOCK'};
  }
 
  function relationship(a,b,kind){
@@ -557,10 +589,11 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    nameModel:GEO_NAME_MODEL,
   counts:{horses:HORSE_POPULATION,canonicalHorses:anchored?CANON_HORSES:0,generatedHorses:generatedCount,owners:ownersTotal,trainers:trainersTotal,
    people:peopleCount+(anchored?sourcePeople.length:0),tracks:trackCount,nonPlayableInternationalTracks:canon.tracks.length-trackCount,
-   facilities:trainersTotal+900+trackCount,auctions:36,
+   facilities:trainersTotal+900+trackCount,breedingFarms:900,
+   breedingMares:MARE_BREEDING_STOCK,breedingStallions:STALLION_BREEDING_STOCK,auctions:36,
    sourceStallions:anchored?canon.activeStallions1999.length:0,sourceBroodmareLocations:anchored?canon.productionBroodmareBoarding1999.length:0},
   ownerAt,trainerAt,trackAt,horseAt,personAt,sourcePersonAt,projectAtDate,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
-  parentAt,attributeCatalog,sourceStakes:anchored?canon.stakes1999.filter(r=>sourceTracks.some(t=>t.id===r.trackId||t.name===r.trackName)):[],
+  parentAt,annualFoalingForecast,attributeCatalog,sourceStakes:anchored?canon.stakes1999.filter(r=>sourceTracks.some(t=>t.id===r.trackId||t.name===r.trackName)):[],
    sourceOrganizations:sourceOrgs,sourcePeople,excludedActiveStaffRoles:['groom','exercise_rider'],
   audit:{ownershipSlots:ownersSlots.counts.reduce((a,b)=>a+b,0),trainerSlots:trainerSlots.counts.reduce((a,b)=>a+b,0),
    maxOwnerHorses:Math.max(...ownersSlots.counts),minOwnerHorses:Math.min(...ownersSlots.counts),
