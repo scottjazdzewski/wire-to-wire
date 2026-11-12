@@ -233,12 +233,12 @@ function makeDepartmentRows(section,page,context={}){
  }
  if(section==='Breeding'&&page==='Stud Farms'){
   return get('breeding-farms','/api/1999/sim/facilities',worldCounts.facilities)
-   .filter(f=>f.type==='BREEDING_FARM').map(f=>({_kind:'farm',_name:f.name,_id:f.id,
-    _testGenerated:true,name:f.name,type:'BREEDING FARM',location:city(f.location),
+   .filter(f=>f.facilityClass==='STUD_FARM'||f.type==='STUD_FARM').map(f=>({_kind:'farm',_name:f.name,_id:f.id,
+    _testGenerated:true,name:f.name,type:'STUD FARM',location:city(f.location),
     capacity:String(f.capacity),occupied:String(f.occupied),free:String(f.capacity-f.occupied),
     condition:Math.round((f.equipmentCondition||0)*100)+'%',quality:Math.round((f.attributes?.horse_care||0)*100)+'/100',
     staff:String(f.staffingRequirement||''),cost:money(f.annualOperatingCost),
-    owner:'',status:'1999 TEST BREEDING FARM'}));
+    owner:'',status:'1999 TEST STUD FARM'}));
  }
  if(section==='Breeding'&&page==='Foals'){
   const forecast=q('/api/1999/sim/foaling-forecast');
@@ -299,14 +299,20 @@ function makeDepartmentRows(section,page,context={}){
   });
  }
  if(section==='Facilities'){
-  const names={'Stud Farms':'BREEDING_FARM','Training Centers':'TRAINING_CENTER',
-   'Breaking Facilities':'BREAKING_FACILITY','Racing Stables':'RACE_BARN','Barns':'RACE_BARN'};
+  const names={'Training Centers':'TRAINING_CENTER','Breaking Facilities':'BREAKING_FACILITY',
+   'Racing Stables':'RACE_BARN'};
   const filtered=get('facilities','/api/1999/sim/facilities',worldCounts.facilities).filter(f=>{
-   if(page==='Farms')return f.type==='BREEDING_FARM';
+   if(page==='Stud Farms')return f.facilityClass==='STUD_FARM'||f.type==='STUD_FARM';
+   if(page==='Farms')return f.type==='FARM'||
+    (f.type==='BREEDING_FARM'&&f.facilityClass!=='STUD_FARM');
    if(!names[page])return true;return f.type===names[page];});
-  return filtered.map(f=>({_kind:'farm',_name:f.name,name:f.name,type:f.type.replaceAll('_',' '),
+  return filtered.map(f=>({_kind:'farm',_name:f.name,name:f.name,
+   type:f.type==='RACE_BARN'?'RACING STABLE':
+    f.type==='BREEDING_FARM'?(f.facilityClass==='STUD_FARM'?'STUD FARM':'FARM'):
+    f.type.replaceAll('_',' '),
    location:city(f.location),capacity:String(f.capacity),occupied:String(f.occupied),
-    _id:f.id,_testGenerated:true,_testAttrs:f.attributes||{},_testReputation:f.reputation||{},
+    _id:f.id,_facilityClass:f.facilityClass||'',_testGenerated:true,
+    _testAttrs:f.attributes||{},_testReputation:f.reputation||{},
     _testFinances:{annualOperatingCost:f.annualOperatingCost},
    free:String(f.capacity-f.occupied),condition:typeof f.equipmentCondition==='number'?Math.round(f.equipmentCondition*100)+'%':'',
     quality:typeof f.attributes?.horse_care==='number'?Math.round(f.attributes.horse_care*100)+'/100':'',

@@ -39,7 +39,7 @@ function personGeographyRecord(source,name){
 const genericDeskPhoto='/assets/office/approved-office-photo.jpg';
 let organizationLogoIndex=null; // UI-only logo asset refs; organization authority stays in the game database.
 
-const tabmap={Office:['Overview','Messages','Decisions','Calendar','News','Reports','Career'],History:['Race Results','Horses','People & Farms','Facilities & Tracks','Historical Calendar','Coverage'],Stable:['Overview','Horses','Training','Health','Race Plans','Barns'],Racing:['Overview','Calendar','Entries','Results','Stakes','Race Planning'],Breeding:['Overview','Stallions','Broodmares','Foals','Pedigrees','Stud Farms'],Sales:['Overview','Auctions','Sale Calendar','Sale Companies','Catalogs','Watchlist','Private Offers'],Personnel:['Overview','Trainers','Jockeys','Owners','Staff'],Facilities:['Overview','Stud Farms','Training Centers','Breaking Facilities','Racing Stables','Barns','Farms'],Tracks:['Overview','Active Meets','All Tracks','Stakes'],Finances:['Overview','Cash Flow','Operating Costs','Budgets'],World:['Overview','1999 Horses','People','Organizations','Tracks','Meets','Major Races','News']};
+const tabmap={Office:['Overview','Messages','Decisions','Calendar','News','Reports','Career'],History:['Race Results','Horses','People & Farms','Facilities & Tracks','Historical Calendar','Coverage'],Stable:['Overview','Horses','Training','Health','Race Plans','Barns'],Racing:['Overview','Calendar','Entries','Results','Stakes','Race Planning'],Breeding:['Overview','Stallions','Broodmares','Foals','Pedigrees','Stud Farms'],Sales:['Overview','Auctions','Sale Calendar','Sale Companies','Catalogs','Watchlist','Private Offers'],Personnel:['Overview','Trainers','Jockeys','Owners','Staff'],Facilities:['Overview','Stud Farms','Training Centers','Breaking Facilities','Racing Stables','Farms'],Tracks:['Overview','Active Meets','All Tracks','Stakes'],Finances:['Overview','Cash Flow','Operating Costs','Budgets'],World:['Overview','1999 Horses','People','Organizations','Tracks','Meets','Major Races','News']};
 const actions={Office:'Office Overview',Stable:'Stable',Racing:'Race Calendar',Sales:'Sales',World:'World'};
 const officeMenu={Overview:'Office Overview',Messages:'Filter All',Decisions:'Open move history',Calendar:'Open Race Calendar',News:'News',Reports:'Open move history',Career:'Open move history'};
 const state=()=>{try{return JSON.parse(localStorage.getItem((window.__WTW_1999_MANAGEMENT__?.saveKey||'wtw1999ManagementStateV1'))||'{}')}catch{return {}}};
@@ -2402,16 +2402,16 @@ const DEP_FACILITY_PREVIEW=[
  ['Oak Hollow Breaking Yard','Breaking Facility','Lexington, KY'],
  ['Crescent Mile Racing Stable','Racing Stable','Saratoga Springs, NY'],
  ['Ashford Racing Partnership','Ownership Group','Lexington, KY'],
- ['Ironweed Racing Barn','Barn','Paris, KY']
+ ['Ironweed Racing Barn','Racing Stable','Paris, KY']
 ];
 function depFacilityType(raw){
  const t=String(raw||'').toLowerCase();
  if(/own|syndicate|partnership|bloodstock group/.test(t))return 'Ownership Group';
  if(/break|pre.train/.test(t))return 'Breaking Facility';
- if(/train/.test(t))return 'Training Center';
- if(/racing stable|race barn|racing barn/.test(t))return 'Racing Stable';
  if(/stud|breeding/.test(t))return 'Stud Farm';
- if(/barn|shedrow/.test(t))return 'Barn';
+ // A barn is infrastructure within a racing operation, not a separate facility class.
+ if(/racing stable|race barn|racing barn|training barn|\bstables?\b|\bbarn\b|shedrow/.test(t))return 'Racing Stable';
+ if(/train/.test(t))return 'Training Center';
  return 'Farm';
 }
 function depFacilityRows(page,demo){
@@ -2444,9 +2444,9 @@ function depFacilityRows(page,demo){
  }));
  const typeForPage={'Stud Farms':'Stud Farm','Training Centers':'Training Center',
   'Breaking Facilities':'Breaking Facility','Racing Stables':'Racing Stable',
-  'Ownership Groups':'Ownership Group','Barns':'Barn'};
+  'Ownership Groups':'Ownership Group'};
  if(typeForPage[page])result=result.filter(r=>r.type===typeForPage[page]);
- if(page==='Farms')result=result.filter(r=>['Farm','Stud Farm'].includes(r.type));
+ if(page==='Farms')result=result.filter(r=>r.type==='Farm');
  // Facilities contains physical sites only. Ownership Groups has its own
  // Personnel roster; each underlying organization retains its canonical ID.
  if(page!=='Ownership Groups')result=result.filter(r=>r.type!=='Ownership Group');
