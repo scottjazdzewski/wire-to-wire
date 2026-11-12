@@ -98,6 +98,13 @@ function barnName(seed,i,attempt,trainer,familyIsRare){
  const full=String(trainer||'').trim()||draw(SURNAMES,seed,k+':fallback');
  const family=surname(full);
  const roll=style(seed,'barn',i,attempt);
+ // Sometimes the same full personal name is already an anchored owner or a
+ // different named operation. Vary the business root, not just its suffix.
+ // Preserve a traceable trainer surname while preventing business clones.
+ if(attempt>=18){
+  const landmark=draw([...LAND,...LANDMARK,...PLACES],seed,k+':reserve-landmark');
+  return landmark+' '+family+' '+draw(['Racing Stable','Racing Stables','Training Barn','Racing'],seed,k+':reserve-style');
+ }
  // Common family names require a full personal identity; do not generate dozens
  // of indistinguishable Smith Stables, Garcia Stables and Brown Racing entries.
  if(!familyIsRare){
