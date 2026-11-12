@@ -89,6 +89,10 @@ const perm=(i,total,seed,constant)=>{let mult=constant;while(gcd(mult,total)!==1
 function traits(definitions,seed,id,ability){
  const out={};
  for(const d of definitions){
+  if(d.key==='maturation_curve'&&ability.role==='horse'){
+   // A high maturation value means genetically modeled early development.
+   out[d.key]=round(clamp((7.8-ability.peakAge)/6,.01,.99));continue;
+  }
   const u=unit(seed,id+':trait:'+d.key);
   const permanent=ability.role==='horse'&&/aptitude|tolerance|adaptability|durability|maturation_curve|soundness_risk/.test(d.key);
   const level=(permanent?ability.peakCeiling:ability.current)/100;
@@ -219,7 +223,8 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   if(anchored&&index<locked.length){
    const c=locked[index],known=Number.isInteger(Number(c.foalYear))&&Number(c.foalYear)>1850;
    const age=known?Math.max(0,1999-Number(c.foalYear)):3+hash(seed,c.id+':test:age')%5;
-   const ability=createAgeAbility({seed,id:c.id,role:'horse',age});
+   const ability=createAgeAbility({seed,id:c.id,role:'horse',age,
+    pedigree:{sireId:c.sireId||c.pedigree?.sireId||null,damId:c.damId||c.pedigree?.damId||null}});
    const o={...c,location:fmtLoc({city:c.openingStable.locality,state:c.openingStable.region,country:c.openingStable.country}),
     ageAtOpening:age,ageBasis:known?'SOURCE_RECORDED_FOAL_YEAR':'SIMULATED_TEST_AGE_FOAL_YEAR_UNKNOWN',ability,
     nameStatus:'CANON_LOCKED',reputation:standing(seed,c.id,.4),attributes:traits(hor,seed,c.id,ability),
@@ -235,7 +240,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const sex=foalYear<=1994?pick(['MARE','GELDING','STALLION','MARE','GELDING'],seed,id+':sex'):pick(['COLT','FILLY','COLT','FILLY','GELDING'],seed,id+':sex');
   const si=hash(seed,id+':sire')%sireCount,di=hash(seed,id+':dam')%damCount;
   const sire=parentAt(si,'SIRE'),dam=parentAt(di,'DAM'),age=1999-foalYear;
-  const ability=createAgeAbility({seed,id,role:'horse',age});
+  const ability=createAgeAbility({seed,id,role:'horse',age,pedigree:{sireId:sire.id,damId:dam.id}});
   const raced=age>=2&&sex!=='STALLION',starts=raced?Math.floor(unit(seed,id+'starts')*Math.max(2,(age-1)*6)):0;
   const wins=starts?Math.min(starts,Math.floor(starts*(.08+unit(seed,id+'win')*.27))):0;
   const tempName=canonicalNames.has(n.toLowerCase())?n+' from '+FAMILY[i%FAMILY.length]:n;
