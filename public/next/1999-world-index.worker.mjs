@@ -85,7 +85,7 @@ function filterRow(row,needle,filters){
  if(filters.sex&&text(row.sex)!==text(filters.sex))return false;
  if(filters.status&&!text(row.status).includes(text(filters.status)))return false;
  if(filters.field&&filters.query&&!text(labelled(row,filters.field)).includes(text(filters.query)))return false;
- if(needle&&!['name','id','owner','breeder','trainer','track','sire','dam','status']
+ if(needle&&!['name','id','owner','breeder','trainer','track','sire','dam','status','registryGroup']
   .some(k=>text(labelled(row,k)).includes(needle)))return false;
  return true;
 }
@@ -102,7 +102,7 @@ function resultPage(query){
  const trait=attributeKey&&cachedTraits.get(attributeKey)?.done?attributeKey:'';
  const sortField=String(sort||'name');
  const sortKey=sortField.startsWith('attr:')&&sortField.slice(5)===trait?sortField:
-  ['name','age','sex','sire','dam','owner','breeder','homebred','trainer','track','status','ca','pa'].includes(sortField)?sortField:'name';
+  ['name','age','sex','sire','dam','owner','breeder','homebred','trainer','track','status','registryGroup','ca','pa'].includes(sortField)?sortField:'name';
  const key=JSON.stringify([search,sortKey,desc,filters,trait]);
  if(!lastSort||lastSort.key!==key){
   const needle=text(search),sign=desc?-1:1;
@@ -127,7 +127,7 @@ function resultPage(query){
    homebred:h.homebred?'YES':'NO',trainer:labelled(h,'trainer'),
    track:labelled(h,'track'),status:String(h.status||'').replaceAll('_',' '),
    ca:String(h.ca??''),pa:String(h.pa??''),
-   registryGroup:h.registryGroup||'REGISTERED',
+   registryGroup:String(h.registryGroup||'REGISTERED').replaceAll('_',' '),
    ...(trait?{['attr:'+trait]:cachedTraits.get(trait).values[i]}:{})};
  });
  return {total:indexes.length,loaded:population,items,indexing:false,progress:population};
