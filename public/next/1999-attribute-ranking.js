@@ -23,7 +23,8 @@ function render({horses,adapter,app,ownerBadge,safe}){
   .filter(h=>[h.name,h.info.connections?.owner,h.info.connections?.trainer,
    h.info.racing_status].some(t=>String(t||'').toLowerCase().includes(query)))
   .filter(h=>!criteria||window.WTW1999RosterFilters.matches({name:h.name,age:h.info.age,
-   sex:h.info.sex,status:h.info.racing_status,...h.attrs},criteria));
+   sex:h.info.sex,status:h.info.racing_status,
+   ...Object.fromEntries(Object.keys(h.attrs).map(k=>[k,score(h.attrs,k)]))},criteria));
  const sort=app.stableAttributeSort||selected.key;
  rows.sort((a,b)=>{
   const value=h=>sort==='name'?h.name:sort==='age'?Number(h.info.age):sort==='sex'?h.info.sex:
