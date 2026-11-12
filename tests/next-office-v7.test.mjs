@@ -835,7 +835,9 @@ test('1999 source registries populate the whole game world without invented iden
   "v=world1999Linked('person',r._principalId,r.principal)"
  ])assert.ok(js.includes(text),'Missing 1999 directory route: '+text);
  assert.ok(css.includes('ng-world-source-profile')&&css.includes('data-page="1999 Horses"'));
- assert.ok(!helpers.includes('localStorage.setItem'),'The 1999 world projection must never change the canonical save');
+ assert.ok(!helpers.includes("localStorage.setItem('wtwOfficeStateV30'")&&
+  js.includes("const WORLD_EDIT_KEY='wtwWorldEditPatchesV1'"),
+  'World edits must use their own browser overlay and never overwrite the canonical gameplay save');
  assert.ok(!raw.includes('futureWinner')&&!raw.includes('post1999Result'),'Do not publish imaginary future racing results');
  const syntax=spawnSync(process.execPath,['--check',path.join(root,'public/next/next.js')],{encoding:'utf8'});
  assert.equal(syntax.status,0,syntax.stderr);
