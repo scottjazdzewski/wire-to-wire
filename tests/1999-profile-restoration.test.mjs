@@ -13,13 +13,14 @@ test('restored Tier One horse and track profiles reuse the existing renderer and
  assert.match(ui,/profileDetail\(route,sourceOverride=null\)/);
  assert.match(ui,/function restored1999Profile\(/);
  assert.match(ui,/window\.WTW1999Profiles\?\.source/);
- assert.match(ui,/if\(kind==='horse'\|\|kind==='track'\)return restored1999Profile/);
- assert.match(ui,/if\(kind==='horse'&&generated\)return restored1999Profile/);
+ assert.match(ui,/if\(kind==='horse'\|\|kind==='person'\|\|kind==='track'\)return restored1999Profile/);
+ assert.match(ui,/if\(kind==='person'\)return restored1999Profile/);
+ assert.match(ui,/if\(kind==='horse'\)return restored1999Profile/);
  assert.match(ui,/\/assets\/trophies\/approved-grade-/);
 });
 
 test('Personnel roster sorts full working set and scrolls instead of Prev/Next',()=>{
- assert.match(ui,/const shown=virtualHorseIndex\?rows:rows\.slice\(0,Math\.min\(rows\.length,APP\.departmentScrollLimit\)\)/);
+ assert.match(ui,/const shown=globalDirectory\|\|virtualMethod\?rows:rows\.slice\(0,Math\.min\(rows\.length,APP\.departmentScrollLimit\)\)/);
  assert.match(ui,/const pager='<span class="ng-dpt-records">/);
  assert.match(ui,/departmentScrollLimit\+160/);
  assert.match(get('public/next/next.css'),/\.ng-stable-roster-v2 \.ng-rs-scroll/);
