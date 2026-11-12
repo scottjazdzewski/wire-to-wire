@@ -257,6 +257,16 @@ function worldHorsePage(offset=0,limit=20,filter=''){
 const sourceStakes=get('1999-source-stakes','/api/1999/calendar',93);
 const stakesForTrack=name=>sourceStakes.filter(r=>r.trackName===name);
 const findStake=id=>sourceStakes.find(r=>r.id===id)||null;
+const findRace=id=>{
+ const stake=findStake(id);if(stake)return stake;
+ const test=/^R-TEST-1999-(\d{8})-(\d{3})-(\d{2})$/.exec(String(id||''));
+ if(!test)return null;
+ const ymd=test[1],date=ymd.slice(0,4)+'-'+ymd.slice(4,6)+'-'+ymd.slice(6);
+ const trackIndex=Number(test[2])-1;
+ if(trackIndex<0||trackIndex>=134)return null;
+ return q('/api/1999/sim/conditions','date='+encodeURIComponent(date)+'&trackIndex='+trackIndex)
+  .races?.find(r=>r.id===id)||null;
+};
 const ownedHorses=()=>stableHorses;
 function extraTracks(){
  const ts=get('tracks','/api/1999/sim/tracks',134);
@@ -277,7 +287,7 @@ window.__WTW_1999_UI_DATA__={
  ownedHorseCount,
  sourceFacts,ownerFor,stableHorsePreview,departmentRows,auctionList,extraTracks,
  officeMessages,officeDesks,openingCash,worldHorsePage,
- stakesForTrack,findStake,ownedHorses,trackProgramById:trackProgram1999,
+ stakesForTrack,findStake,findRace,ownedHorses,trackProgramById:trackProgram1999,
  sourceHorseAbility:id=>{const index=sourceHorseOffset.get(id);
   return index===undefined?null:q('/api/1999/sim/horses','offset='+index+'&limit=1').items?.[0]?.ability||null;},
  sourcePersonModel:id=>{const index=srcPeople.findIndex(p=>p.id===id);
