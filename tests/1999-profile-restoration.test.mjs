@@ -46,7 +46,7 @@ test('source-backed 1999 horse birthplace mapping uses Horse_ID and does not cla
  assert.match(horse.node.innerHTML,/Current stable/);
 });
 
-test('race conditions show source data and only age/sex screen instead of fabricating entry eligibility',()=>{
+test('race conditions show documented restrictions and explicitly provisional eligibility',()=>{
  assert.match(html,/\/next\/1999-race-conditions\.js/);
  const context={window:{}};
  vm.runInNewContext(get('public/next/1999-race-conditions.js'),context);
@@ -61,11 +61,11 @@ test('race conditions show source data and only age/sex screen instead of fabric
  assert.match(rendered,/DIRT/);
  assert.match(rendered,/8 furlongs/);
  assert.match(rendered,/Maiden Special Weight/);
- assert.match(rendered,/1 of 3 horses pass/);
+ assert.match(rendered,/1 of 3<\/strong> owned horses satisfy/);
  assert.match(rendered,/Meets Conditions/);
  assert.doesNotMatch(rendered,/data-val="Too Young"/);
  assert.doesNotMatch(rendered,/data-val="Wrong Sex"/);
- assert.match(rendered,/This is not entry clearance/);
+ assert.match(rendered,/All remain provisional/);
  const unknown=context.window.WTW1999RaceConditions.render({id:'S-1999',name:'Stakes',trackName:'Belmont Park'},{ownedHorses:()=>horses});
- assert.match(unknown,/Eligibility remains unconfirmed/);
+ assert.match(unknown,/No named horse can be certified eligible/);
 });
