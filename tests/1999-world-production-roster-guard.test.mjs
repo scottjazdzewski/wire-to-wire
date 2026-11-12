@@ -25,6 +25,10 @@ test('large horse and breeding populations are paged against one source world',(
  assert.match(api,/\/api\/1999\/sim\/breeding-stock/);
  assert.match(api,/\/api\/1999\/sim\/foaling-forecast/);
  assert.match(source,/function breedingMarePage\(/);
+ assert.match(source,/function breedingMareBrowse\(/);
+ assert.match(model,/function mareDirectoryAt\(i\)/);
+ assert.match(api,/\/api\/1999\/sim\/mare-directory/);
+ assert.match(ui,/globalMareDirectory/);
  assert.match(source,/function worldHorseBrowse\(/);
  assert.match(ui,/worldHorseBrowse\(\{/);
  assert.match(ui,/_directoryIndex/);
