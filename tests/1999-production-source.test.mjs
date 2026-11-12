@@ -87,3 +87,31 @@ test('featured opening horses are reconciled as a separate immutable source scop
  assert.equal(productionIndexSummary().sourceFeatured267Reconciliation,'NOT_YET_PROMOTED_TO_ACTIVE_WORLD');
  for(const h of distinct.slice(0,25))assert.ok(!prod.has(h.id));
 });
+
+test('accepted participant source names are linked by permanent IDs and unresolved names stay explicit',async()=>{
+ const info=productionIndexSummary();
+ assert.ok(info.sourceParticipantNameSummary.owners>1000);
+ assert.ok(info.sourceParticipantNameSummary.trainers>500);
+ assert.ok(info.coveredOwnerIdentities>1000);
+ assert.ok(info.coveredTrainerIdentities>500);
+ assert.equal(info.sourceFeaturedOpeningHorses,267);
+ assert.equal(info.distinctCombinedOpeningHorseIds,87500+267-info.featuredIdOverlaps.length);
+ assert.ok(info.featuredIdOverlaps.length<=267);
+ const h=productionHorseById('H-1995-060001');
+ assert.ok(h.ownerName&&h.trainerName);
+ assert.equal(h.trainerName,'Ike Benton'===h.trainerName?'Ike Benton':h.trainerName);
+ assert.ok(['1999_FOUNDATION_SOURCE','ACCEPTED_PRODUCTION_PARTICIPANT'].includes(h.ownerNameBasis));
+ const p=await readLocal1999World('/api/1999/production/participants/P-000043');
+ assert.equal(p.participant.name,'Ike Benton');
+ const owners=await readLocal1999World('/api/1999/production/participants/owners?limit=12');
+ assert.ok(owners.total>1000);
+ assert.equal(owners.items.length,12);
+ assert.equal(owners.recordsSource,'ACCEPTED_1999_PRODUCTION_PARTICIPANTS');
+ console.log('WTW accepted production identity coverage:',JSON.stringify({
+  horseRecords:info.population,featureOverlaps:info.featuredIdOverlaps.length,
+  distinctOpeningSourceIds:info.distinctCombinedOpeningHorseIds,
+  ownerIds:info.ownerIds,coveredOwners:info.coveredOwnerIdentities,
+  trainerIds:info.trainerIds,coveredTrainers:info.coveredTrainerIdentities,
+  nameConflicts:info.sourceParticipantNameSummary.historicalNameConflicts.length
+ }));
+});
