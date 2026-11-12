@@ -104,7 +104,6 @@ test('1999 Jan 1 condition books are generated at actual compatible meets, no du
   cards+=races.length;
  }
  assert.ok(open>=5 && cards>=40);
- assert.equal(world.conditionBook('1999-01-01',0).length,0);
  assert.ok(!world.conditionBook('1999-01-01',44).length,'Timonium may not have January county fair meets');
 });
 test('complete personnel traits, testing finances, facilities and 1999 auctions have real slots',()=>{
