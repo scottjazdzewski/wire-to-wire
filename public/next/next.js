@@ -2877,7 +2877,7 @@ function paint(){
   key:index+'|'+($('header',card)?.textContent.trim()||''),
   scroll:card.scrollTop
  }));
- APP.activeCase=$('.left .msg.selected')?.dataset.case||APP.activeCase;
+ if(!window.__WTW_1999_MANAGEMENT__)APP.activeCase=$('.left .msg.selected')?.dataset.case||APP.activeCase;
  const route=currentRoute();
  const stage=(route||APP.custom)?renderRoute():`<main class="ng-board">${inbox()}${center()}${right()}</main>`;
  root.innerHTML=header()+'<div class="ng-manager-shell">'+managerSidebar()+
