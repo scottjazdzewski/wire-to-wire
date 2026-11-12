@@ -25,6 +25,10 @@ import {records as identity8,partitionId as partition8} from './P10000-07.mjs';
 import {records as observed8} from './P10000-07.observable.mjs';
 import {records as identity9,partitionId as partition9} from './P10000-08.mjs';
 import {records as observed9} from './P10000-08.observable.mjs';
+import {participantById,productionParticipantSummary} from './participant-readmodel.mjs';
+import {openingWorld1999 as featured} from '../engine/canon-mini.mjs';
+const foundationOwners=new Map(featured.organizations.map(x=>[x.id,x]));
+const foundationPeople=new Map(featured.people.map(x=>[x.id,x]));
 const parts=[{id:partition0,identities:identity0,observations:observed0},{id:partition1,identities:identity1,observations:observed1},{id:partition2,identities:identity2,observations:observed2},{id:partition3,identities:identity3,observations:observed3},{id:partition4,identities:identity4,observations:observed4},{id:partition5,identities:identity5,observations:observed5},{id:partition6,identities:identity6,observations:observed6},{id:partition7,identities:identity7,observations:observed7},{id:partition8,identities:identity8,observations:observed8},{id:partition9,identities:identity9,observations:observed9}];
 export const PRODUCTION_COUNT=87500;
 const all=[],byId=new Map(),byOwner=new Map(),byTrainer=new Map();
@@ -66,6 +70,10 @@ export function productionHorseAt(i){
  const r=v.row,o=v.observation;
  return {id:r[0],name:r[1],foalYear:Number(r[2]),ageAtOpening:1999-Number(r[2]),
   sex:r[3],homeCircuit:r[4],trainerId:r[5],ownerId:r[6],
+  ownerName:foundationOwners.get(r[6])?.name||participantById(r[6])?.name||null,
+  trainerName:foundationPeople.get(r[5])?.name||participantById(r[5])?.name||null,
+  ownerNameBasis:foundationOwners.has(r[6])?'1999_FOUNDATION_SOURCE':participantById(r[6])?'ACCEPTED_PRODUCTION_PARTICIPANT':'UNRESOLVED_SOURCE_OWNER_ID',
+  trainerNameBasis:foundationPeople.has(r[5])?'1999_FOUNDATION_SOURCE':participantById(r[5])?'ACCEPTED_PRODUCTION_PARTICIPANT':'UNRESOLVED_SOURCE_TRAINER_ID',
   sireId:r[7],sireName:r[8],damId:r[9],damName:r[10],
   sourcePartitionId:v.partition,sourceStatus:'CANONICAL_ACCEPTED_OPENING_PRODUCTION',
   nameStatus:'CANON_LOCKED',locationStatus:'CIRCUIT_ONLY_EXACT_BARN_NOT_IN_IDENTITY_PARTITION',
@@ -94,6 +102,12 @@ export function productionPedigree(id,depth=4){
 export function productionIndexSummary(){
  return {asOf:'1999-01-01',population:all.length,partitions:sourcePartitionCounts,
   ownerIds:byOwner.size,trainerIds:byTrainer.size,
+  coveredOwnerIdentities:[...byOwner.keys()].filter(id=>foundationOwners.has(id)||participantById(id)).length,
+  coveredTrainerIdentities:[...byTrainer.keys()].filter(id=>foundationPeople.has(id)||participantById(id)).length,
+  sourceFeaturedOpeningHorses:featured.horses.length,
+  featuredIdOverlaps:featured.horses.filter(h=>byId.has(h.id)).map(h=>h.id),
+  distinctCombinedOpeningHorseIds:PRODUCTION_COUNT+featured.horses.filter(h=>!byId.has(h.id)).length,
+  sourceParticipantNameSummary:productionParticipantSummary(),
   provenance:'TEN_ACCEPTED_BULK_PARTITIONS__CANONICAL_IDENTITY_AND_OPENING_OBSERVABLE',
   financialOrPhysicalBarnCertification:false,sourceFeatured267Reconciliation:'NOT_YET_PROMOTED_TO_ACTIVE_WORLD',
   immutableHistoricalOutcomes:true,post1999ResultsCommitted:0};
