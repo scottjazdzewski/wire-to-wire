@@ -348,6 +348,36 @@ function departmentRows(section,page,context={}){
  return rows;
 }
 let universeLabels=null;
+function breedingMarePage(offset=0,limit=100,filter=''){
+ const source=get('mares','/api/1999/broodmare-boarding',2036),sourceCount=source.length;
+ const allCount=sourceCount+worldCounts.breedingMares;
+ const start=Math.max(0,Math.min(allCount,Number(offset)||0));
+ const count=Math.max(1,Math.min(100,Number(limit)||100));
+ const items=[];
+ for(let i=start;i<Math.min(allCount,start+count);i++){
+  if(i<sourceCount){
+   const h=source[i];
+   items.push({_kind:'horse',_name:h.name,_canonId:h.id,name:h.name,horse:h.name,
+    age:String(1999-Number(h.foalYear)),sex:h.sex||'MARE',sire:h.sireId||'',dam:h.damId||'',
+    farm:h.boardingFarm1999?.farmName||'',owner:'',
+    status:'1999 REGISTERED BOARDING · SOURCE',health:'UNASSESSED',pedigree:'',value:'',
+    studFee:'',bookings:'NOT VERIFIED',foals:'NOT VERIFIED',winners:'NOT VERIFIED'});
+  }else{
+   const h=q('/api/1999/sim/breeding-stock','sex=DAM&offset='+(i-sourceCount)+'&limit=1').items?.[0];
+   if(!h)continue;
+   items.push({_kind:'horse',_name:h.name,_id:h.id,_testGenerated:true,
+    _testAttrs:h.attributes||{},_testAbility:h.ability||{},_testReputation:h.reputation||{},
+    name:h.name,horse:h.name,age:String(h.ageAtOpening),sex:'MARE',sire:'',dam:'',
+    farm:h.farmName,location:city(h.location),status:h.breedingStatus1999.replaceAll('_',' ')+' · TEST',
+    health:'TEST · NOT EXAMINED',pedigree:'',value:'',owner:'',studFee:'',
+    bookings:h.projected1999Covering?'1 PROJECTED':'0',foals:h.projected1999Foal?'1 EXPECTED':'0',
+    winners:'NOT RECORDED'});
+  }
+ }
+ const needle=String(filter||'').trim().toLowerCase();
+ return {total:allCount,items:needle?items.filter(h=>[h.name,h.farm,h.status,h.sex].some(v=>String(v||'').toLowerCase().includes(needle))):items,
+  isPageFilter:Boolean(needle)};
+}
 function worldHorsePage(offset=0,limit=20,filter=''){
  if(!universeLabels){
   const owners=get('world-owners','/api/1999/sim/owners',3308);
@@ -437,7 +467,7 @@ window.__WTW_1999_UI_DATA__={
  ownedHorseCount,
  sourceFacts,ownerFor,stableHorsePreview,setGameDate,departmentRows,auctionList,extraTracks,
  TRAINING_PLANS,horseTraining,assignTraining,trainingCosts,
- officeMessages,officeDesks,openingCash,worldHorsePage,
+ officeMessages,officeDesks,openingCash,worldHorsePage,breedingMarePage,
  horseAttributeGroups,stableHorseAttributes,stableHorseCareer,
  stakesForTrack,findStake,findRace,ownedHorses,breederProfile,foalingFarmProfile,trackProgramById:trackProgram1999,
  sourceHorseAbility:id=>{const index=sourceHorseOffset.get(id);
