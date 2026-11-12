@@ -2138,7 +2138,7 @@ function functionalRoute(route){
 const DEP_NAMES=new Set(['Racing','Breeding','Sales','Personnel','Facilities','Finances','Tracks']);
 const WORLD_1999_COLUMNS={
  Horses:[['name','HORSE',17],['age','AGE',4],['sex','SEX',6],
-  ['ca','CA · TEST',5],['pa','PA · TEST',5],['status','1999 STATUS',15],
+  ['ca','CA · TEST',5],['pa','PA · TEST',5],['status','1999 STATUS',15],['registryGroup','COHORT',13],
   ['sire','SIRE',13],['dam','DAM',13],['breeder','BREEDER',16],
   ['homebred','HOME-BRED',7],['owner','OWNER / FARM',15],
   ['trainer','TRAINER',12],['track','1999 HOME TRACK',12]],
