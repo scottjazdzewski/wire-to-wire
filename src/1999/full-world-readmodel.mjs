@@ -33,15 +33,22 @@ export function readFull1999TestWorld(url){
  if(typeof url==='string')url=new URL(url,'https://wtw.invalid');
  let g;try{g=world(url)}catch(e){return send({error:e.message},400);}
  const path=url.pathname,body=identity(g);
- if(path==='/api/1999/sim/overview')return send({...body,counts:g.counts,audit:g.audit,clock:createClean1999Clock(g.seed),
+ let gameDate=null;
+ try{const raw=url.searchParams.get('date');if(raw){
+  // Projectors validate ISO and the supported era before any array is read.
+  g.projectAtDate(g.horseAt(0),raw);gameDate=raw;
+ }}catch(e){return send({error:e.message},400);}
+ const atDate=entity=>gameDate?g.projectAtDate(entity,gameDate):entity;
+ const meta=gameDate?{...body,asOf:gameDate,careerProjection:'READ_ONLY_AGE_AND_ABILITY__NO_OUTCOMES'}:body;
+ if(path==='/api/1999/sim/overview')return send({...meta,counts:g.counts,audit:g.audit,clock:createClean1999Clock(g.seed),
   auctionCalendar:'36 SIMULATED_1999_AUCTIONS',conditionBooks:'DETERMINISTIC_1999_RACE_CARDS_GENERATED_BY_DATE_AND_TRACK',
   important:'The 87,500 population is indexed, synthetic and reproducible; it is NOT certification that the retained 87,500 protected P01–P08 production horses have been loaded. Gameplay transactions and results require STG7.'});
  if(path==='/api/1999/sim/horse-attributes')return send({...body,definitions:g.attributeCatalog.horse_categories});
- if(path==='/api/1999/sim/horses')return send({...body,...list(url,g.counts.horses,index=>g.horseAt(index))});
- if(path==='/api/1999/sim/owners')return send({...body,...list(url,g.counts.owners,index=>g.ownerAt(index))});
- if(path==='/api/1999/sim/trainers')return send({...body,...list(url,g.counts.trainers,index=>g.trainerAt(index))});
- if(path==='/api/1999/sim/people')return send({...body,...list(url,g.counts.people-g.sourcePeople.length,index=>g.personAt(index))});
- if(path==='/api/1999/sim/source-people')return send({...body,...list(url,g.sourcePeople.length,index=>g.sourcePersonAt(index)),provenance:'CANONICAL_IDENTITIES_WITH_SEPARATE_TEST_ABILITY'});
+ if(path==='/api/1999/sim/horses')return send({...body,...list(url,g.counts.horses,index=>atDate(g.horseAt(index)))});
+ if(path==='/api/1999/sim/owners')return send({...body,...list(url,g.counts.owners,index=>atDate(g.ownerAt(index)))});
+ if(path==='/api/1999/sim/trainers')return send({...body,...list(url,g.counts.trainers,index=>atDate(g.trainerAt(index)))});
+ if(path==='/api/1999/sim/people')return send({...body,...list(url,g.counts.people-g.sourcePeople.length,index=>atDate(g.personAt(index)))});
+ if(path==='/api/1999/sim/source-people')return send({...body,...list(url,g.sourcePeople.length,index=>atDate(g.sourcePersonAt(index))),provenance:'CANONICAL_IDENTITIES_WITH_SEPARATE_TEST_ABILITY'});
  if(path==='/api/1999/sim/tracks')return send({...body,...list(url,g.counts.tracks,index=>g.trackAt(index))});
  if(path==='/api/1999/sim/facilities')return send({...body,...list(url,g.counts.facilities,index=>g.facilityAt(index))});
  if(path==='/api/1999/sim/auctions')return send({...body,...list(url,g.counts.auctions,index=>g.auctionAt(index))});
@@ -51,6 +58,6 @@ export function readFull1999TestWorld(url){
   catch(e){return send({error:e.message},400);}
  }
  const horse=path.match(/^\/api\/1999\/sim\/horses\/(\d+)$/);
- if(horse){const index=number(horse[1],-1,g.counts.horses-1);return index>=0?send({...body,horse:g.horseAt(index)}):send({error:'Unknown horse'},404);}
+ if(horse){const index=number(horse[1],-1,g.counts.horses-1);return index>=0?send({...meta,horse:atDate(g.horseAt(index))}):send({error:'Unknown horse'},404);}
  return send({error:'Unknown full-universe test endpoint'},404);
 }
