@@ -29,6 +29,11 @@ function canonList(q,records,fields){
 }
 export function readLocal1999World(raw){
  const url=parse(raw),p=url.pathname,q=url.searchParams;
+ // Accepted production partitions load only when explicitly requested.
+ // Existing synchronous management UI /sim calls remain unchanged.
+ // This is one source projection, not a parallel save/database or new screen.
+ if(p.startsWith('/api/1999/production/'))
+  return import('../production/api.mjs').then(({readProduction1999World})=>readProduction1999World(url));
  const w=currentWorld(q);
  if(p==='/api/1999/sim/overview'){
   return {asOf:'1999-01-01',schema:w.schema,mode:w.mode,seed:w.seed,
