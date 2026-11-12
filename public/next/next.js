@@ -1481,9 +1481,11 @@ function profileDetail(route){
  const worldSourceEntry=worldSourceKind?world1999Match(worldSourceKind,route.title):null;
  const sourceEditButton=worldSourceEntry?'<button type="button" data-ng="world-edit-source" data-kind="'+
   safe(worldSourceKind)+'" data-name="'+safe(route.title)+'" title="Edit this source-backed record">EDIT RECORD</button>':'';
+ const sourceImage=worldSourceEntry?worldImageURL(worldSourceEntry.worldKey,worldSourceEntry._world):'';
+ const visualName=worldSourceEntry?.name||route.title;
  const identity=`<div class="ng-profile-intro">
   ${profileMark}
-  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${isHorse?horseOwnerBadge(route.title):''}${safe(route.title)}</h2>${horseIdentityRow}${horseStarRow}${entityIdentityRow}${horseConnectionHeader}${isHorse||isPerson||isFarm||isTrack?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${horseImage?`<div class="ng-profile-source-photo" role="img" aria-label="Approved image of ${safe(route.title)}"><img src="${safe(horseImage)}" alt="" loading="lazy" decoding="async"/></div>`:''}
+  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${isHorse?horseOwnerBadge(route.title):''}${safe(visualName)}</h2>${horseIdentityRow}${horseStarRow}${entityIdentityRow}${horseConnectionHeader}${isHorse||isPerson||isFarm||isTrack?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${sourceImage||horseImage?`<div class="ng-profile-source-photo" role="img" aria-label="Image of ${safe(visualName)}"><img src="${safe(sourceImage||horseImage)}" alt="" loading="lazy" decoding="async"/></div>`:''}
   <div class="ng-profile-tools"><button data-ng="office" aria-label="Return to Racing Office">← OFFICE</button><button data-ng="menu" data-val="${isTrack?'Racing':isPerson||isFarm?'World':'Stable'}">${isTrack?'RACE CALENDAR':isPerson?'PEOPLE DIRECTORY':isFarm?'FARM DIRECTORY':'STABLE DIRECTORY'} ↗</button>${sourceEditButton}</div>
  </div>`;
  let left='',right='',footer='';
