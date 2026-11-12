@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:!window.__WTW_1999_MANAGEMENT__,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:!window.__WTW_1999_MANAGEMENT__,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
+const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:!window.__WTW_1999_MANAGEMENT__,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:!window.__WTW_1999_MANAGEMENT__,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -296,9 +296,10 @@ function organizationLogoMarkup(id,name,kind='organization',large=false,brandFal
 // only from Office horse owner references; training/boarding != ownership.
 function horseOwnership(name){
  const linked=typeof window.__wtwOfficeHorseOwner==='function'?window.__wtwOfficeHorseOwner(name):null;
+ const fallback=window.__WTW_1999_UI_DATA__?.ownerFor?.(name)||'';
  const horse=state().horseState?.[name]||{};
  const id=linked?.id||(typeof horse.owner_id==='string'?horse.owner_id.trim():'');
- const raw=linked?.name||horse.owner_name||horse.owner;
+ const raw=linked?.name||horse.owner_name||horse.owner||fallback;
  const owner=typeof raw==='string'?raw.trim():'';
  return owner&&owner!=='—'&&owner!=='Unknown'?{id,name:owner}:null;
 }
@@ -768,6 +769,10 @@ function openWorld1999Entity(key){
  if(!found)return false;
  return openCustomView('WorldRecord:'+encodeURIComponent(key),'World','Overview');
 }
+function restored1999Profile(kind,record){
+ const x=window.WTW1999Profiles?.source(kind,record,window.__WTW_1999_UI_DATA__);
+ return x?profileDetail(x.route,x.node):null;
+}
 function world1999Profile(){
  const key=decodeURIComponent(String(APP.custom||'').slice('WorldRecord:'.length));
  const e=world1999Entry(key);
@@ -775,6 +780,7 @@ function world1999Profile(){
  if(!e)return '<section class="ng-world-source-profile"><header><strong>1999 WORLD REGISTRY</strong></header>'+
   '<p>'+safe(world1999LoadFailed?'World source file is unavailable.':'Loading the 1999 source records…')+'</p></section>';
  const d=e._world||{},kind=e.kind;
+ if(kind==='horse'||kind==='track')return restored1999Profile(kind,{...d,name:e.name});
  const display=kind==='farm'?'ORGANIZATION':kind==='person'?'PERSON':kind==='track'?'TRACK':'HORSE';
  const details=[];
  const add=(label,value,markup='')=>{if(value||markup)details.push({label,value:String(value||''),html:markup})};
@@ -1144,8 +1150,8 @@ const trackCourseFacts={
   ['INNER TURF','7 furlongs + 304 ft'],['HOME STRETCH','1,144 feet']]}
 };
 
-function profileDetail(route){
- const source=$('#routeBody .profilePage');if(!source)return null;
+function profileDetail(route,sourceOverride=null){
+ const source=$('#routeBody .profilePage')&&!sourceOverride?$('#routeBody .profilePage'):sourceOverride;if(!source)return null;
  const id=route.kicker+'|'+route.title;
  if(APP.routeId!==id){APP.routeId=id;APP.detailTab='Overview';APP.networkPage=0;APP.networkRole='all';APP.networkFocus='';APP.stakeSort='date';APP.stakeSortDesc=false}
  const text=(query,scope=source)=>$(query,scope)?.textContent.trim()||'';
@@ -1281,7 +1287,8 @@ function profileDetail(route){
     const index=$$('#routeBody [data-act]').indexOf(row.node);
     const grade=(cols[2].match(/\bG([123])\b/i)||[])[1];
     const gradeCell=grade?'<span class="ng-stakes-grade" aria-label="Grade '+grade+'" title="Grade '+grade+'"><img class="ng-stakes-trophy" src="/assets/trophies/approved-grade-'+grade+'-64.png" alt="" width="16" height="16" decoding="async"/><small class="ng-stakes-grade-text" aria-hidden="true">G'+grade+'</small></span>':'<span>'+safe(cols[2])+'</span>';
-    return index<0?'':'<button class="ng-stakes-data" data-ng="sourcebutton" data-val="'+index+'">'+
+    const stakeId=row.node.dataset.stakeId||'';
+    return index<0&&!stakeId?'':'<button class="ng-stakes-data" data-ng="'+(stakeId?'1999-stake':'sourcebutton')+'" data-val="'+safe(stakeId||index)+'">'+
      '<span>'+safe(cols[0])+'</span><span>'+safe(cols[1])+'</span>'+gradeCell+'<span>'+safe(cols[3])+'</span></button>';
    }).join('')||'<div class="ng-empty-record">No verified stakes rows connected.</div>')+'</div>';
  };
@@ -1296,7 +1303,14 @@ function profileDetail(route){
   const catalog=athleteAttributeCatalog;
   const categories=catalog?.horse_categories||{};
   const display=catalog?.display?.horse_overview||{};
-  const reports=state().scoutingState?.[route.title]?.attribute_observations||[];
+  const genuineReports=state().scoutingState?.[route.title]?.attribute_observations||[];
+   const testSource=typeof source!=='undefined'&&source?.dataset?.testGenerated==='true';
+   const testAttrs=typeof source!=='undefined'?source?.dataset?.testAttributes:'';
+   let testModel={};if(testSource){try{testModel=JSON.parse(testAttrs||'{}')}catch{}}
+   const demoReports=Object.entries(testModel).filter(([,v])=>typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<=1)
+    .map(([attribute_key,v])=>({attribute_key,status:'estimated',estimate:Math.round(v*99),scale_min:0,scale_max:99,
+     evidence_refs:['SIMULATED_1999_TEST_MODEL'],testGenerated:true}));
+   const reports=[...demoReports,...(Array.isArray(genuineReports)?genuineReports:[])];
   const observed=new Map((Array.isArray(reports)?reports:[])
    .filter(r=>r&&typeof r.attribute_key==='string').map(r=>[r.attribute_key,r]));
   const known=x=>x!=null&&String(x).trim()&&!['—','Unknown','Not recorded','N/A'].includes(String(x).trim());
@@ -1310,7 +1324,7 @@ function profileDetail(route){
    const lines=keys.map(key=>{
     const def=defs.get(key);if(!def)return '';
     const report=observed.get(key),verified=assessed(report);
-    const label=verified?(report.status==='measured'?'Measured':'Scout estimate'):'Not yet assessed';
+    const label=verified?(report.testGenerated?'SIMULATED TEST SCORE · NOT AN OBSERVATION':report.status==='measured'?'Measured':'Scout estimate'):'Not yet assessed';
     const value=verified?String(report.estimate)+(report.unit?' '+report.unit:''):'—';
     const scaled=verified&&Number.isFinite(Number(report.estimate))&&
      Number.isFinite(Number(report.scale_min))&&Number.isFinite(Number(report.scale_max))&&
@@ -1331,7 +1345,7 @@ function profileDetail(route){
    conditionDefs.map(def=>{
     const report=observed.get(def.key),verified=assessed(report);
     return '<div class="ng-horse-condition-cell"><span>'+safe(def.label)+'</span>'+
-     '<strong class="'+(verified?'known':'unknown')+'" title="'+safe(verified?'Source-backed '+report.status:'Not yet assessed')+'">'+
+     '<strong class="'+(verified?'known':'unknown')+'" title="'+safe(verified?report.testGenerated?'1999 SIMULATED TEST STATE':'Source-backed '+report.status:'Not yet assessed')+'">'+
       (verified?safe(String(report.estimate)+(report.unit?' '+report.unit:'')):'—')+'</strong></div>';
    }).join('')+'</div>';
   const asMap=items=>'<div class="ng-horse-mgr-rows">'+items.map(([name,value])=>
@@ -1373,7 +1387,7 @@ function profileDetail(route){
   const panel=(name,body,cls='')=>'<section class="ng-horse-mgr-panel '+cls+'"><header><strong>'+name+'</strong></header>'+body+'</section>';
   return '<div class="ng-horse-dossier">'+
    '<div class="ng-horse-dossier-caption"><strong>ATHLETE & RACING INTELLIGENCE</strong><span>'+observedCount+
-   ' OF '+allDefs.length+' ATTRIBUTES ASSESSED · UNASSESSED ≠ ZERO</span></div>'+
+   ' OF '+allDefs.length+(testSource?' SIMULATED TEST ATTRIBUTES · NOT OBSERVED':' ATTRIBUTES ASSESSED · UNASSESSED ≠ ZERO')+'</span></div>'+
    '<div class="ng-horse-mgr-four">'+(attributeColumns||'<p class="ng-horse-small-note">Horse attribute definitions have not loaded.</p>')+'</div>'+conditionStrip+
    '<div class="ng-horse-mgr-five">'+
     panel('CAREER RECORD',careerBody)+panel('CURRENT CONDITION',condition)+
@@ -1519,8 +1533,10 @@ function profileDetail(route){
  const profileMark=isOrganizationProfile?organizationLogoMarkup('',route.title,route.kicker==='Farm Profile'?'farm':'organization',true):`<div class="ng-profile-badgeframe"><img src="${badge(route.kicker==='Horse Profile'?'horse':route.kicker==='Track Profile'?'track':route.kicker==='People Profile'?'people':'farm_stable')}" alt="Approved ${safe(route.kicker)} badge"/></div>`;
 
  const horseField=(label)=>fields.find(f=>f.label.toLowerCase()===label.toLowerCase())?.value||'—';
- const horseFoalingState=isHorse?(source.dataset.foalingState||'').trim():'';
+ const horseFoalingCity=isHorse?(source.dataset.foalingCity||'').trim():'';
+  const horseFoalingState=isHorse?(source.dataset.foalingState||'').trim():'';
  const horseFoalingCountry=isHorse?(source.dataset.foalingCountry||'').trim():'';
+  const horseFoalingEvidence=isHorse?(source.dataset.foalingEvidence||'').trim():'';
  const horseFoalingCode=isHorse?(source.dataset.foalingCountryCode||'').trim().toUpperCase():'';
  const horseCountryLabel=horseFoalingCountry==='United States'?'USA':horseFoalingCountry;
  // One source-backed country icon per approved foaling origin. Real vector
@@ -1537,9 +1553,9 @@ function profileDetail(route){
  // England has its own flag; GB flags must not silently replace it.
  const horseFlagCode=horseFoalingAlias||((horseFlagCodes.has(horseCountryCode))?horseCountryCode:'');
  const horseFlagPath=horseFlagCodes.has(horseFlagCode)?'/assets/flags/v1/'+horseFlagCode+'.svg':'';
- const horseFoalingDisplay=[horseFoalingState,horseCountryLabel].filter(v=>v&&v!=='—').join(', ')||'—';
+ const horseFoalingDisplay=[horseFoalingCity,horseFoalingState,horseCountryLabel].filter(v=>v&&v!=='—').join(', ')||'Not recorded';
  const horseIdentityRow=isHorse?`<div class="ng-horse-biography" aria-label="Horse foaling and identity facts">
-  <span class="ng-horse-bio-foaling"><small>FOALED</small><strong>${horseFlagPath?`<img class="ng-horse-bio-flag" src="${safe(horseFlagPath)}" alt="" width="22" height="16" decoding="async"/>`:''}${safe(horseFoalingDisplay)}</strong></span>
+  <span class="ng-horse-bio-foaling" title="${safe(horseFoalingEvidence)}"><small>FOALED</small><strong>${horseFlagPath?`<img class="ng-horse-bio-flag" src="${safe(horseFlagPath)}" alt="" width="22" height="16" decoding="async"/>`:''}${safe(horseFoalingDisplay)}</strong></span>
   <span><small>DATE OF BIRTH</small><strong>${safe(horseField('Date of birth'))}</strong></span>
   <span><small>SEX</small><strong>${safe(horseField('Sex'))}</strong></span>
   <span><small>AGE</small><strong>${safe(horseField('Age'))}</strong></span>
@@ -1615,6 +1631,8 @@ function profileDetail(route){
   isFarm?[['LOCATION',factByName('Location')],['TYPE',factByName('Type')],['OWNER',factByName('Owner')],['STATUS',factByName('Current status')]]:
   isTrack?[['LOCATION',factByName('Location')],['SURFACES',factByName('Surfaces')],['OPERATING',factByName('Operating state')],['CIRCUIT',text('.profileSubline').split('·').slice(1).join('·').trim()||'—']]:[];
  const horseIdentityConnections=isHorse?connection.filter(x=>['owner','trainer','jockey','current stable'].includes(x.label.toLowerCase())&&knownField(x.value)).slice(0,3):[];
+ const horseOwnershipGroup=isHorse?(source.dataset.ownershipGroup||'').trim():'';
+ const horseOwnershipPanel=isHorse?'<div class="ng-horse-owner-group"><span>OWNERSHIP GROUP</span>'+organizationLogoMarkup(source.dataset.ownerId||'',horseOwnershipGroup||'Unassigned','owner',false,false)+'<strong>'+safe(horseOwnershipGroup||'Ownership group not yet recorded')+'</strong></div>':'';
  const horseConnectionHeader=horseIdentityConnections.length?
   '<div class="ng-horse-header-connections">'+horseIdentityConnections.map(x=>
    '<div><small>'+safe(x.label)+'</small><strong>'+safe(x.value)+'</strong></div>').join('')+'</div>':'';
@@ -1628,7 +1646,7 @@ function profileDetail(route){
  const visualName=worldSourceEntry?.name||route.title;
  const identity=`<div class="ng-profile-intro">
   ${profileMark}
-  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${isHorse?horseOwnerBadge(route.title):''}${safe(visualName)}</h2>${horseIdentityRow}${horseStarRow}${entityIdentityRow}${horseConnectionHeader}${isHorse||isPerson||isFarm||isTrack?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${sourceImage||horseImage?`<div class="ng-profile-source-photo" role="img" aria-label="Image of ${safe(visualName)}"><img src="${safe(sourceImage||horseImage)}" alt="" loading="${isTrack?'eager':'lazy'}" fetchpriority="${isTrack?'high':'auto'}" decoding="async"/></div>`:''}
+  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${isHorse?horseOwnerBadge(route.title):''}${safe(visualName)}</h2>${horseIdentityRow}${horseStarRow}${horseOwnershipPanel}${entityIdentityRow}${horseConnectionHeader}${isHorse||isPerson||isFarm||isTrack?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${sourceImage||horseImage?`<div class="ng-profile-source-photo" role="img" aria-label="Image of ${safe(visualName)}"><img src="${safe(sourceImage||horseImage)}" alt="" loading="${isTrack?'eager':'lazy'}" fetchpriority="${isTrack?'high':'auto'}" decoding="async"/></div>`:''}
   <div class="ng-profile-tools"><button data-ng="office" aria-label="Return to Racing Office">← OFFICE</button><button data-ng="menu" data-val="${isTrack?'Racing':isPerson||isFarm?'World':'Stable'}">${isTrack?'RACE CALENDAR':isPerson?'PEOPLE DIRECTORY':isFarm?'FARM DIRECTORY':'STABLE DIRECTORY'} ↗</button>${sourceEditButton}</div>
  </div>`;
  let left='',right='',footer='';
@@ -2050,7 +2068,8 @@ function depTrackCalendar(){
  const extra=window.__WTW_1999_UI_DATA__?.extraTracks?.()||[];
  const seen=new Set([...office,...others].flatMap(t=>[t.id,t.name]).filter(Boolean));
  const missing=extra.filter(t=>!seen.has(t.id)&&!seen.has(t.name));
- return [...office,...others,...missing];
+ return [...office,...others,...missing].map(t=>({...t,stakes:Array.isArray(t.stakes)&&t.stakes.length?t.stakes:
+   (window.__WTW_1999_UI_DATA__?.stakesForTrack?.(t.name)||[]).map(r=>({...r,date:r.localDate||r.date||'',class:r.division||r.grade||'',purse:r.purse1999}))}));
 }
 function depCalendarIso(value,year=depGameDay().slice(0,4)){
  const d=String(value||'').match(/^([A-Za-z]{3})\s+(\d{1,2})$/);
@@ -2092,8 +2111,8 @@ function depTrackRaceRows(trackName,demo){
  if(!track)return [];
  const now=depGameDay();
  const rows=(track.stakes||[]).map(event=>{
-  const iso=depCalendarIso(event.date,now.slice(0,4));
-  return iso&&iso>=now?{_kind:'race',_name:event.name,_track:trackName,_iso:iso,
+  const iso=liveStableDate(event.localDate||event.date)||depCalendarIso(event.date,now.slice(0,4));
+  return iso&&iso>=now?{_kind:'race',_name:event.name,_track:trackName,_iso:iso,_raceId:event.id,_raceData:event,
    date:stableShortDate(iso),track:trackName,race:event.name,class:event.class||'',
    surface:'',distance:'',purse:event.purse||'',horse:'',base:'',ship:'',jockey:'',
    trainer:'',ready:'',status:'STAKES'}:null;
@@ -2555,6 +2574,7 @@ function previewRecordView(){
   DEP_FACILITY_PREVIEW.some(item=>item[0]===name);
  const fields=fromState?.row||{};
  const generated=Boolean(fields._testGenerated),hasTestData=Boolean(fields._testAttrs||fields._testFinances||fields._testReputation);
+ if(kind==='horse'&&generated)return restored1999Profile('horse',{...fields,name});
  const fixture=DEP_FACILITY_PREVIEW.find(item=>item[0]===name);
  const relevant=[
   ['ENTITY TYPE',fields.type||fixture?.[1]||kind.toUpperCase()],
@@ -2617,6 +2637,7 @@ function departmentRoster(section,page='Overview'){
   section==='World'?(page==='1999 Horses'?WORLD_1999_COLUMNS.Horses:page==='People'?WORLD_1999_COLUMNS.People:WORLD_1999_COLUMNS.Organizations):
   section==='Sales'&&page==='Watchlist'?DEP_COLUMNS.SalesWatchlist:section==='Sales'&&page==='Sale Calendar'?DEP_COLUMNS.SaleCalendar:section==='Sales'&&page==='Sale Companies'?DEP_COLUMNS.SaleCompanies:section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'?(APP.racingTrack?DEP_COLUMNS.Racing:DEP_COLUMNS.Meets):DEP_COLUMNS[section];
  const perPage=depPageLimit(section);
+ const continuousPersonnel=section==='Personnel';
  const virtualHorseIndex=section==='World'&&page==='1999 Horses'&&
   window.__WTW_1999_UI_DATA__?.worldHorsePage;
  const pageData=virtualHorseIndex?window.__WTW_1999_UI_DATA__.worldHorsePage(
@@ -2638,7 +2659,7 @@ function departmentRoster(section,page='Overview'){
  const totalRecords=pageData?pageData.total:rows.length;
  const limit=perPage,pages=Math.max(1,Math.ceil(totalRecords/limit));
  APP.departmentPageIndex=Math.min(Math.max(0,APP.departmentPageIndex),pages-1);
- const shown=pageData?rows:rows.slice(APP.departmentPageIndex*limit,(APP.departmentPageIndex+1)*limit);
+ const shown=pageData?rows:continuousPersonnel?rows.slice(0,Math.min(rows.length,APP.departmentScrollLimit)):rows.slice(APP.departmentPageIndex*limit,(APP.departmentPageIndex+1)*limit);
  APP.departmentVisible=shown;
 
  const heads=specs.map(([key,label])=>'<th scope="col" aria-sort="'+(selectedSort===key?(sign===1?'ascending':'descending'):'none')+'"><button data-ng="dept-sort" data-val="'+key+'" title="Sort by '+safe(label)+'">'+safe(label)+'<span aria-hidden="true">'+(selectedSort===key?(sign===1?'▲':'▼'):'↕')+'</span></button></th>').join('');
@@ -2687,7 +2708,8 @@ function departmentRoster(section,page='Overview'){
    return '<td title="'+safe(String(r[key]??''))+'">'+v+'</td>';
   }).join('')+'</tr>';
  }).join('');
- const pager='<span class="ng-dpt-records">'+totalRecords+' RECORDS · '+shown.length+' SHOWN'+(pageData?.isPageFilter?' · PAGE FILTER':'')+'</span>'+
+ const pager=continuousPersonnel?'<span class="ng-dpt-records">'+totalRecords+' RECORDS · '+shown.length+' LOADED · SCROLL TO SEE MORE</span>':
+  '<span class="ng-dpt-records">'+totalRecords+' RECORDS · '+shown.length+' SHOWN'+(pageData?.isPageFilter?' · PAGE FILTER':'')+'</span>'+
   '<button data-ng="dept-page" data-val="-1" '+(APP.departmentPageIndex===0?'disabled':'')+' aria-label="Previous page">‹ PREV</button>'+
   '<strong>'+(APP.departmentPageIndex+1)+' / '+pages+'</strong>'+
   '<button data-ng="dept-page" data-val="1" '+(APP.departmentPageIndex>=pages-1?'disabled':'')+' aria-label="Next page">NEXT ›</button>';
@@ -2824,15 +2846,22 @@ function managerDashboard(){
      '<div class="ng-manager-secondary-list">'+(schedule||'<p class="ng-manager-empty">No recorded race targets.</p>')+'</div></section>'+
    '</aside></div></section>';
 }
+function open1999Race(record){
+ if(!record)return false;
+ APP.raceDetail=record._raceData||record;
+ openCustomView('RaceFile:'+encodeURIComponent(APP.raceDetail.id||record._raceId||record._name||record.name),'Racing',APP.page);
+ return true;
+}
 function renderRoute(){const route=APP.custom?null:currentRoute();const previewMode=APP.custom.startsWith('Preview:');const title=previewMode?(APP.previewEntity?.name||decodeURIComponent(APP.custom.split(':').slice(2).join(':'))):route?.title||APP.custom||'Page';const kicker=previewMode?'RECORD PREVIEW':route?.kicker||APP.section;const bdg=route?badge(({'Horse Profile':'horse','People Profile':'people','Farm Profile':'farm_stable','Track Profile':'track','Race Calendar':'meet_schedule','Stable':'farm_stable','Sales':'connections','News':'history','World':'track','Opportunity Board':'reputation'}[route.kicker])||'history'):pageBadge();
 let body='';const profile=route&&/Profile$/.test(route.kicker)?profileDetail(route):null;const functional=route?functionalRoute(route):null;if(profile)body=profile;else if(functional)body=functional;else if(route)body=route.body;else if(APP.custom==='Organization Overview'){body=organizationOverview()}
 else if(APP.custom==='Due Actions'){body=dueActionOverview()}
 else if(['Messages','Decisions','Opportunities'].includes(APP.custom)){body=managerDashboard()}
 else if(APP.custom==='Search'){body=searchView()}
 else if(APP.custom.startsWith('WorldRecord:')){body=world1999Profile()}
+else if(APP.custom.startsWith('RaceFile:')){const id=decodeURIComponent(APP.custom.slice('RaceFile:'.length));body=window.WTW1999RaceConditions?.render(APP.raceDetail?.id===id?APP.raceDetail:window.__WTW_1999_UI_DATA__?.findStake?.(id),window.__WTW_1999_UI_DATA__)||''}
 else if(APP.custom.startsWith('Preview:')){body=previewRecordView()}
 else {body=managerDashboard()}
-const isProfile=Boolean(profile),isOrganization=APP.custom==='Organization Overview',isSearch=APP.custom==='Search',isManager=body.startsWith('<section class="ng-manager-screen">');
+const isProfile=Boolean(profile)||body.startsWith('<div class="ng-profile-view '),isOrganization=APP.custom==='Organization Overview',isSearch=APP.custom==='Search',isManager=body.startsWith('<section class="ng-manager-screen">');
 return `<main class="ng-route ${isProfile?'ng-route-profile':isOrganization?'ng-route-organization':isSearch?'ng-route-search':isManager?'ng-route-manager':''}">${isProfile||isOrganization||isManager?'':`<header class="ng-routeheading"><span class="ng-route-badge-slot" aria-hidden="true">${APP.custom==='Organization Overview'?organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',true,true):`<img class="ng-routebadge" src="${safe(bdg)}" alt=""/>`}</span><div class="ng-routetext"><small>${safe(kicker)}</small><h1>${safe(title)}</h1></div><button class="ng-back" data-ng="office">← RACING OFFICE</button></header>`}<div class="ng-routegrid" data-route-key="${safe((route?.kicker||APP.custom||APP.section)+'|'+(route?.title||APP.custom||APP.page))}"><div class="ng-routeinner">${body}</div></div></main>`;}
 // Keep browser-native select menus mounted while the user chooses an option.
 // Hidden Office mutations repaint this interface frequently; a full re-render
@@ -2877,6 +2906,7 @@ function paint(){
  const oldRoute=$('.ng-routegrid',root),oldTab=$('.ng-profiletabs .on',root)?.dataset.val||'';
  const previousRouteKey=oldRoute?.dataset.routeKey||'';
  const previousRouteScroll=oldRoute?.scrollTop||0;
+ const previousPersonnelScroll=$('.ng-dept-roster[data-department="Personnel"] .ng-rs-scroll',root)?.scrollTop||0;
  const previousDetailScroll=$('.ng-profile-view .ng-detail-cols',root)?.scrollTop||0;
  const oldCards=$$('.ng-profile-view .ng-detailcard',root).map((card,index)=>({
   key:index+'|'+($('header',card)?.textContent.trim()||''),
@@ -2888,6 +2918,8 @@ function paint(){
  root.innerHTML=header()+'<div class="ng-manager-shell">'+managerSidebar()+
    '<div class="ng-manager-stage">'+stage+'</div></div>'+(APP.savePanelOpen?namedSavePanel():'');
  const nextRoute=$('.ng-routegrid',root),nextTab=$('.ng-profiletabs .on',root)?.dataset.val||'';
+ const newPersonnelScroll=$('.ng-dept-roster[data-department="Personnel"] .ng-rs-scroll',root);
+ if(newPersonnelScroll){newPersonnelScroll.scrollTop=APP.departmentScrollReset?0:previousPersonnelScroll;APP.departmentScrollReset=false}
  if(nextRoute&&previousRouteKey&&nextRoute.dataset.routeKey===previousRouteKey){
   nextRoute.scrollTop=previousRouteScroll;
   if(oldTab===nextTab){
@@ -2944,7 +2976,7 @@ window.addEventListener('click',e=>{
  if(key==='dept-sort'){
   if(APP.departmentSortKey===val)APP.departmentSortDesc=!APP.departmentSortDesc;
   else{APP.departmentSortKey=val;APP.departmentSortDesc=false}
-  APP.departmentPageIndex=0;return paint();
+  APP.departmentPageIndex=0;APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint();
  }
  if(key==='dept-page'){APP.departmentPageIndex=Math.max(0,APP.departmentPageIndex+Number(val));return paint()}
  if(key==='dept-demo'){APP.departmentDemo=!APP.departmentDemo;APP.departmentPageIndex=0;return paint()}
@@ -2983,6 +3015,7 @@ window.addEventListener('click',e=>{
  if(key==='dept-company'){APP.departmentCompany=val;return pageTab('Sale Calendar')}
  if(key==='dept-open'){
   const r=APP.departmentVisible[Number(val)];if(!r)return;
+   if(r._kind==='race'&&r._raceData)return open1999Race(r._raceData);
   if(r._testGenerated)return previewRecordRoute('horse',r._name,r);
   if(r._worldKey)return openWorld1999Entity(r._worldKey);
   if(r._canonId){const match=world1999Entries().find(x=>x.canonicalId===r._canonId);
@@ -3041,6 +3074,7 @@ window.addEventListener('click',e=>{
   APP.section='World';return pageTab(val);
  }
  if(key==='world-open')return openWorld1999Entity(val);
+ if(key==='1999-stake')return open1999Race(window.__WTW_1999_UI_DATA__?.findStake?.(val));
  if(key==='named-entity')return openEntityRecord(btn.dataset.name||'',btn.dataset.kind||'',btn.dataset.track?{_track:btn.dataset.track}:null);
  if(key==='stable-sort'){if(APP.stableSort===val)APP.stableSortDesc=!APP.stableSortDesc;else{APP.stableSort=val;APP.stableSortDesc=false}return paint()}
  if(key==='stable-filter'){APP.stableFilter=val;return paint()}
@@ -3073,7 +3107,9 @@ window.addEventListener('click',e=>{
  if(key==='network-select'){APP.networkFocus=val;return paint()}
  if(key==='detailtab'){APP.detailTab=val;return paint()}
  if(key==='stake-sort'){if(APP.stakeSort===val)APP.stakeSortDesc=!APP.stakeSortDesc;else{APP.stakeSort=val;APP.stakeSortDesc=false}return paint()}
- if(key==='sourcebutton'){const n=$$('#routeBody [data-act]')[Number(val)];return bridgeNode(n)}
+ if(key==='sourcebutton'){const n=$('#routeBody [data-act]')[Number(val)];
+  if(n?.classList.contains('stakesRow')){const track=currentRoute()?.title||'';const title=n.querySelector('strong')?.textContent.trim()||n.children[0]?.textContent.trim()||'';const match=window.__WTW_1999_UI_DATA__?.stakesForTrack?.(track)?.find(r=>r.name===title);if(match)return open1999Race(match)}
+  return bridgeNode(n)}
  if(key==='action'){
   if(window.__WTW_1999_MANAGEMENT__&&val==='Continue'){
     window.__WTW_1999_MANAGEMENT__.advanceOneDay?.();
@@ -3131,6 +3167,13 @@ window.addEventListener('keydown',event=>{
   requestAnimationFrame(()=>$('#ngGlobalSearch',root)?.focus());
  }
 });
+root.addEventListener('scroll',event=>{
+ const scroller=event.target;
+ if(!scroller?.matches?.('.ng-dept-roster[data-department="Personnel"] .ng-rs-scroll'))return;
+ if(scroller.scrollTop+scroller.clientHeight<scroller.scrollHeight-240)return;
+ const total=Number($('.ng-dpt-records',root)?.textContent.match(/^(\d+)/)?.[1]||0);
+ if(total&&APP.departmentScrollLimit<total){APP.departmentScrollLimit=Math.min(total,APP.departmentScrollLimit+160);schedulePaint(0)}
+},true);
 root.addEventListener('input',event=>{
  const input=event.target;
  if(input.matches('input[data-ng-input="global-search"]')){
@@ -3139,7 +3182,7 @@ root.addEventListener('input',event=>{
   return;
  }
  if(input.matches('input[data-ng-input="department-search"]')){
-  APP.departmentSearch=input.value;APP.departmentPageIndex=0;
+  APP.departmentSearch=input.value;APP.departmentPageIndex=0;APP.departmentScrollLimit=160;APP.departmentScrollReset=true;
   const caret=input.selectionStart;
   paint();const el=$('#ngDepartmentSearch',root);if(el){el.focus();el.setSelectionRange(caret,caret)}
   return;
