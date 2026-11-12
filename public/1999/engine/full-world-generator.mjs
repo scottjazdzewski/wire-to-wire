@@ -249,12 +249,15 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
  // Maternal and paternal population is virtualized; every record is deterministic.
  // Existing H-TEST parent IDs remain stable; production projections are not
  // fictional certified pregnancies or historical foaling records.
- const MARE_BREEDING_STOCK=26000,STALLION_BREEDING_STOCK=1400;
+ // A healthy expanded racing economy targets roughly 45k live foals a year.
+ // This separate 1999 forecast does NOT insert newborns into the 87.5k opening
+ // horse registry. Preserve sireCount/damCount so existing pedigrees never drift.
+ const ANNUAL_FOAL_CROP_TARGET=45000,MARE_BREEDING_STOCK=60000,STALLION_BREEDING_STOCK=1400;
  const mare1999=(i)=>{
   const id='H-TEST-DAM-'+pad(i+1,6);
-  const active=hash(seed,id+':1999-breeding-active')%100<88;
-  const covered=active&&hash(seed,id+':1999-covered')%100<88;
-  const projectedFoal=covered&&hash(seed,id+':1999-live-foal')%100<86;
+  const active=hash(seed,id+':1999-breeding-active')%100<90;
+  const covered=active&&hash(seed,id+':1999-covered')%100<93;
+  const projectedFoal=covered&&hash(seed,id+':1999-live-foal')%100<90;
   return {active,covered,projectedFoal};
  };
  const annualFoalingForecast=()=>{
@@ -263,14 +266,18 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    const v=mare1999(i);active+=Number(v.active);covered+=Number(v.covered);expected+=Number(v.projectedFoal);
   }
   return {season:1999,mares:MARE_BREEDING_STOCK,activeMares:active,projectedCoverings:covered,
-   projectedLiveFoals:expected,basis:'SIMULATED_1999_EXPECTATION_NOT_LIVE_BIRTHS',
+   projectedLiveFoals:expected,annualFoalCropTarget:ANNUAL_FOAL_CROP_TARGET,
+   healthyRange:{min:40000,max:50000},registeredRacehorsePopulation:HORSE_POPULATION,
+   racehorsePopulationIsAnnualFoalCrop:false,
+   basis:'SIMULATED_1999_EXPECTATION_NOT_LIVE_BIRTHS',
    farmCount:900,stallionPopulation:STALLION_BREEDING_STOCK};
  };
  function mareDirectoryAt(i){
   if(!Number.isInteger(i)||i<0||i>=MARE_BREEDING_STOCK)throw Error('Broodmare directory index');
   const id='H-TEST-DAM-'+pad(i+1,6),pro=mare1999(i);
   const status=!pro.active?'RESTING':pro.covered?'COVERED_1999_TEST':'AVAILABLE_FOR_COVER';
-  return {index:i,id,name:mixName(seed+1,i+101500),age:1999-(1971+(i%13)),sex:'MARE',
+  const foalYear=i<damCount?1971+(i%13):1979+hash(seed,id+':foal-year')%16;
+  return {index:i,id,name:mixName(seed+1,i+101500),age:1999-foalYear,sex:'MARE',
    farm:generatedOrganizationName(seed,i%900+8000,'farm'),
    farmId:'F-TEST-FARM-'+pad(i%900+1),status,
    bookings:pro.covered?1:0,foals:pro.projectedFoal?1:0};
@@ -278,12 +285,13 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
  function parentAt(i,sex){
   const isSire=sex==='SIRE',max=isSire?STALLION_BREEDING_STOCK:MARE_BREEDING_STOCK;
   if(!Number.isInteger(i)||i<0||i>=max)throw Error('Parent breeding stock index');
-  const id='H-TEST-'+sex+'-'+pad(i+1,6),foalYear=isSire?1970+(i%12):1971+(i%13);
+  const id='H-TEST-'+sex+'-'+pad(i+1,6),
+   foalYear=isSire?1970+(i%12):i<damCount?1971+(i%13):1979+hash(seed,id+':foal-year')%16;
   const age=1999-foalYear, farm=facilityAt(trainersTotal+i%900);
   const projection=isSire?null:mare1999(i);
-  const activeStud=isSire?hash(seed,id+':1999-active-stud')%100<42:false;
+  const activeStud=isSire?hash(seed,id+':1999-active-stud')%100<80:false;
   const studFee=isSire?(activeStud?1500+100*hash(seed,id+':1999-stud-fee')%190:0):0;
-  const bookSize=isSire&&activeStud?12+hash(seed,id+':1999-stud-book')%82:0;
+  const bookSize=isSire&&activeStud?30+hash(seed,id+':1999-stud-book')%46:0;
   return {id,name:mixName(seed+1,isSire?i+100000:i+101500),sex:isSire?'STALLION':'MARE',
    foalYear,ageAtOpening:age,location:farm.location,farmId:farm.id,farmName:farm.name,
    reputation:standing(seed,id,.25+unit(seed,id+'rep')*.5),
