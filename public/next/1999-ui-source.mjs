@@ -5,7 +5,7 @@
  */
 import {trackProgram1999} from '/next/1999-track-program.mjs';
 import {WTW_ALTERNATE_STAKES_1999} from '/next/1999-alternate-stakes.mjs';
-import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-20261112-r5';
+import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-20261112-r6';
 let viewDate='1999-01-01';
 const q=(route,extras='')=>readLocal1999World(route+(route.includes('?')?'&':'?')+
  'seed=19990101&mode=CANON_ANCHORED_TEST'+(viewDate==='1999-01-01'?'':'&date='+viewDate)+(extras?'&'+extras:''));
