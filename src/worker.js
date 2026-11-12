@@ -1,4 +1,7 @@
 import {qaPendingInactiveAuthority,qaPendingInactiveEditionIds} from './history-inactive-read-model.js';
+import {readOpeningWorld1999} from './1999/opening-readmodel.mjs';
+import {evaluate1999Entry} from './1999/entry-gate.mjs';
+import {readFull1999TestWorld} from './1999/full-world-readmodel.mjs';
 // Cloudflare Worker / D1 API. Deliberately separate from all other WTW and non-WTW projects.
 // Privacy: every request requires authenticated Cloudflare Access in deployed environments.
 const jsonHeaders = {
@@ -136,6 +139,29 @@ async function bootstrap(db) {
   };
 }
 async function api(request,env,email) {
+  const openingUrl=new URL(request.url);
+  if(openingUrl.pathname.startsWith('/api/1999/sim/')){
+    if(request.method!=='GET')return response({error:'1999 test world directory is read-only until the independent game runtime is certified.'},405);
+    const result=readFull1999TestWorld(openingUrl);
+    return response(result.data,result.status);
+  }
+  if(openingUrl.pathname.startsWith('/api/1999/')){
+    if(openingUrl.pathname==='/api/1999/entry/evaluate' && request.method==='POST'){
+      if(request.headers.get('content-type')?.split(';')[0]!=='application/json')return response({error:'JSON required'},415);
+      const origin=request.headers.get('Origin');
+      if(origin && origin!==openingUrl.origin)return response({error:'Origin mismatch'},403);
+      const declared=Number(request.headers.get('Content-Length')||0);
+      if(declared>12000)return response({error:'Scenario too large'},413);
+      const input=await request.json().catch(()=>null);
+      if(!input||typeof input.horseId!=='string'||typeof input.raceId!=='string'||input.horseId.length>140||input.raceId.length>140||
+        (input.observations!==undefined && (!input.observations||typeof input.observations!=='object'||Array.isArray(input.observations))))return response({error:'Invalid entry screening input'},400);
+      const result=evaluate1999Entry({horseId:input.horseId,raceId:input.raceId,observations:input.observations||{}});
+      return response({...result,mode:'NONCOMMITTING_SCREEN_ONLY__OBSERVATIONS_UNVERIFIED'});
+    }
+    if(request.method!=='GET')return response({error:'1999 source history is read-only'},405);
+    const result=readOpeningWorld1999(openingUrl);
+    return response(result.data,result.status);
+  }
   if(!env.DB) return response({error:'D1 not bound. Preview is available using sample-history.json.'},503);
   const url = new URL(request.url);
   if(request.method==='POST' && url.pathname==='/api/names') {
