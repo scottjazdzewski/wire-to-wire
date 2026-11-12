@@ -41,7 +41,7 @@ function auctionList(){
   city:city(a.location),category:'SIMULATED SALE — NOT A COMPLETED TRANSACTION',
   confirmedDate:true,dateLabel:a.date,lots:[],previewIndex:i,source:'TEST_CONDITION_AND_MARKET'}));
 }
-function departmentRows(section,page){
+function makeDepartmentRows(section,page){
  if(section==='Breeding'&&page==='Stallions'){
   return activeStallions.map(h=>({_kind:'horse',_name:h.name,_canonId:h.id,name:h.name,horse:h.name,
    age:String(1999-Number(h.firstBreedingSeason)),sex:'STALLION',sire:'',dam:'',
@@ -64,11 +64,12 @@ function departmentRows(section,page){
   const roles={Trainers:'trainer',Jockeys:'jockey',Owners:'owner',Staff:'staff'};
   const wanted=roles[page]||'all';
   const base=page==='Trainers'?get('trainers','/api/1999/sim/trainers',4200):
+   page==='Owners'?srcPeople.filter(p=>/owner|patron/i.test(p.role||'')):
    page==='Jockeys'||page==='Staff'||page==='Overview'?get('workforce','/api/1999/sim/people',17194):[];
-  return base.filter(p=>wanted==='all'?true:wanted==='staff'?!['trainer','jockey'].includes(p.role):p.role===wanted).map(p=>({
+  return base.filter(p=>wanted==='all'?true:wanted==='staff'?!['trainer','jockey'].includes(p.role):wanted==='owner'?/owner|patron/i.test(p.role||''):p.role===wanted).map(p=>({
    _kind:'person',_name:p.name,name:p.name,age:p.age||'',role:p.role||'',reputation:rep(p.reputation),
    ca:'',pa:'',specialty:'',morale:'',workload:'',salary:money(p.payrollAnnual||p.annualBaseSalary),
-   contract:'',assignment:p.barnId||'',base:city(p.location),wins:'',_testOrigin:true}));
+   contract:'',assignment:p.barnId||'',base:city(p.location||p.base),wins:'',_testOrigin:!srcPeople.some(source=>source.id===p.id)}));
  }
  if(section==='Facilities'){
   const names={'Stud Farms':'BREEDING_FARM','Training Centers':'TRAINING_CENTER',
@@ -95,6 +96,14 @@ function departmentRows(section,page){
     page!=='Operating Costs'||Boolean(r.expense));
  }
  return null;
+}
+const departmentCache=new Map();
+function departmentRows(section,page){
+ const key=section+'|'+page;
+ if(departmentCache.has(key))return departmentCache.get(key);
+ const rows=makeDepartmentRows(section,page);
+ if(Array.isArray(rows))departmentCache.set(key,rows);
+ return rows;
 }
 function extraTracks(){
  const ts=get('tracks','/api/1999/sim/tracks',134);
