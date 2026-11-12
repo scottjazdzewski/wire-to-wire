@@ -124,6 +124,18 @@
   function persistState(silent=true){
     gameState.date = currentGameDate();
     gameState.currentCase = currentCase;
+    // The approved training engine commits to this SAME career save. Refresh
+    // the current training substate before every legacy Office persistence so
+    // Continue/Decisions cannot erase day-by-day conditioning or player plans.
+    // Never import a training state from a different game/canon snapshot.
+    try{
+      const saved=JSON.parse(localStorage.getItem(STATE_KEY)||'null');
+      const sameWorld=saved?.worldAnchor?.schema===gameState.worldAnchor?.schema&&
+       saved?.worldAnchor?.startDate===gameState.worldAnchor?.startDate&&
+       saved?.worldAnchor?.seed===gameState.worldAnchor?.seed;
+      if(sameWorld&&saved.horseDevelopment?.schema==='WTW_1999_HORSE_DEVELOPMENT_V1')
+        gameState.horseDevelopment=saved.horseDevelopment;
+    }catch{/* A damaged browser cache cannot silently become a source record. */}
     localStorage.setItem(STATE_KEY, JSON.stringify(gameState));
     if(!silent) showToast('Saved Office state');
   }
