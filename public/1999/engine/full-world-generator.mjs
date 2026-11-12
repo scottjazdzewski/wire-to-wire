@@ -843,6 +843,11 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    extraHorseCache.delete(extraHorseCache.keys().next().value);
   return record;
  }
+ function populationCacheStats(){
+  return {legacyFullProfiles:horseCache.size,legacyFullProfileLimit:MAX_FULL_HORSE_CACHE,
+   additionalFullProfiles:extraHorseCache.size,additionalFullProfileLimit:WORLD_EXTRA_CACHE_LIMIT,
+   worldDirectoryEntries:WORLD_HORSE_POPULATION};
+ }
  function worldIndexByHorseId(id){
   const value=String(id||'');
   const extra=/^H-TEST-WORLD-1999-(\d{6})$/.exec(value);
@@ -902,7 +907,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    facilities:trainersTotal+900+trackCount,breedingFarms:900,
    breedingMares:MARE_BREEDING_STOCK,breedingStallions:STALLION_BREEDING_STOCK,auctions:36,
    sourceStallions:anchored?canon.activeStallions1999.length:0,sourceBroodmareLocations:anchored?canon.productionBroodmareBoarding1999.length:0},
-  ownerAt,trainerAt,trackAt,horseAt,horseDirectoryAt,horseAttributeAt,worldHorseAt,worldHorseDirectoryAt,worldHorseAttributeAt,worldIndexByHorseId,worldPartition,personAt,jockeyBookingMarket,sourcePersonAt,projectAtDate,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
+  ownerAt,trainerAt,trackAt,horseAt,horseDirectoryAt,horseAttributeAt,worldHorseAt,worldHorseDirectoryAt,worldHorseAttributeAt,worldIndexByHorseId,worldPartition,populationCacheStats,personAt,jockeyBookingMarket,sourcePersonAt,projectAtDate,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
   parentAt,mareDirectoryAt,annualFoalingForecast,attributeCatalog,sourceStakes:anchored?canon.stakes1999.filter(r=>sourceTracks.some(t=>t.id===r.trackId)).map(applyVerifiedStakeDay1999):[],
    sourceOrganizations:sourceOrgs,sourcePeople,excludedActiveStaffRoles:['groom','exercise_rider'],
   audit:{ownershipSlots:ownersSlots.counts.reduce((a,b)=>a+b,0),trainerSlots:trainerSlots.counts.reduce((a,b)=>a+b,0),
