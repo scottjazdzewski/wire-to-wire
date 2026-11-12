@@ -214,8 +214,22 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    generatedRunners:slots,roleAttributes:skillAttributes,attributes:skillAttributes,ability:ageAbility,
     age:ageInfo.age,ageBasis:ageInfo.basis,birthCountry:canonSource?.birthplace?.country||namedPeople[i].birthCountry,
     nameOrigin:canonSource?'CANON_LOCKED':'GEO_ROLE_TEST_POPULATION',morale:round(.3+unit(seed,id+':morale')*.68),workload:round(clamp(slots/(slots+Math.max(2,Math.ceil(slots*.12))),0,1)),
-   reputation:standing(seed,id,.25+unit(seed,id+'status')*.55),annualBaseSalary:money(28000+slots*4000),
+   reputation:standing(seed,id,.25+unit(seed,id+'status')*.55),
+   annualBaseSalary:0,
    authority:canonSource?'CANON_ID__TEST_ATTRIBUTES':'FULLY_TEST_GENERATED'};
+  // Trainers earn day fees and a negotiated share of purse distributions.
+  // Reputation and skill raise fees; barn size and negotiations introduce
+  // non-linear market variation. These are 1999 GAME contracts, not facts.
+  const quality=clamp((ageAbility.current*.55+obj.reputation.overall*.45)/100,0,1);
+  const market=.88+unit(seed,id+':contract-negotiation')*.24;
+  const dayRate=money((38+Math.pow(quality,2)*145+Math.sqrt(slots)*1.3)*market);
+  const annualBaseSalary=money((dayRate*220)+Math.min(75000,slots*280));
+  const winShareRate=round(.085+.025*quality+unit(seed,id+':purse-negotiation')*.01);
+  obj.annualBaseSalary=annualBaseSalary;
+  obj.compensation={role:'TRAINER',basis:'1999_TEST_NEGOTIATED_DAY_FEES_AND_PURSE',
+   dayRate,estimatedAnnualFees:annualBaseSalary,winShareRate,
+   secondShareRate:round(.035+.03*quality),thirdShareRate:round(.025+.02*quality),
+   barnStaffShareRate:.02,currency:'USD',notGuaranteedSalary:true};
   trainerCache.set(i,obj);return obj;
  }
  const reserved=anchored?new Set(locked.map(x=>x.id)):new Set();
@@ -231,6 +245,53 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
     nameStatus:'TEST_RENAME_ALLOWED',
    source:'GENERATED_ANCESTRAL_STOCK'};
  }
+
+ function relationship(a,b,kind){
+  const anchor=kind+':'+a+':'+b;
+  return {kind,participants:[a,b],trust:35+hash(seed,anchor+':trust')%61,
+   respect:30+hash(seed,anchor+':respect')%66,
+   chemistry:25+hash(seed,anchor+':chemistry')%71,
+   familiarity:1+hash(seed,anchor+':familiarity')%5,
+   provenance:'SIMULATED_1999_TEST_RELATIONSHIP_NOT_SOURCE'};
+ }
+ function simulatedRaceHistory(id,age,sex,trainer,starts,wins,earnings,careerState){
+  if(!starts)return [];
+  const secondCount=Math.min(starts-wins,Math.floor(starts*(.12+unit(seed,id+':seconds')*.12)));
+  const thirdCount=Math.min(starts-wins-secondCount,Math.floor(starts*(.10+unit(seed,id+':thirds')*.09)));
+  const fourthCount=Math.min(starts-wins-secondCount-thirdCount,Math.floor(starts*.1));
+  const ranked=Array.from({length:starts},(_,i)=>i).sort((a,b)=>
+   hash(seed,id+':finish:'+a)-hash(seed,id+':finish:'+b)||a-b);
+  const placements=new Array(starts).fill(0);
+  ranked.slice(0,wins).forEach(i=>placements[i]=1);
+  ranked.slice(wins,wins+secondCount).forEach(i=>placements[i]=2);
+  ranked.slice(wins+secondCount,wins+secondCount+thirdCount).forEach(i=>placements[i]=3);
+  ranked.slice(wins+secondCount+thirdCount,wins+secondCount+thirdCount+fourthCount).forEach(i=>placements[i]=4);
+  const weights=placements.map((p,i)=>p===1?10:p===2?4:p===3?2:p===4?1:0);
+  const weightTotal=weights.reduce((a,b)=>a+b,0);
+  const last=new Date(Date.UTC(careerState==='RETIRED'||careerState==='AT_STUD'||careerState==='BROODMARE'?1997:1998,10,18));
+  const history=[];let remaining=earnings;
+  for(let i=0;i<starts;i++){
+   const rest=24*i+hash(seed,id+':race-spacing:'+i)%5;
+   const raceDate=new Date(last.getTime()-rest*86400000).toISOString().slice(0,10);
+   const result=placements[i]||5+hash(seed,id+':other-place:'+i)%6;
+   const prize=weightTotal?Math.round(earnings*weights[i]/weightTotal):0;
+   const earned=i===starts-1?prize+remaining-weights.slice(i).reduce((v,w)=>v+Math.round(earnings*w/weightTotal||0),0):prize;
+   const priorWins=placements.slice(i+1).filter(x=>x===1).length;
+   const group=priorWins===0?'Maiden Special Weight':
+    priorWins>=3&&hash(seed,id+':race-level:'+i)%6===0?'Listed Stakes':
+    hash(seed,id+':race-level:'+i)%3===0?'Claiming':'Allowance';
+   const distanceFurlongs=5+hash(seed,id+':race-dist:'+i)%8;
+   const jockeyIndex=hash(seed,trainer.id+':race-jockey:'+i)%1800;
+   history.push({id:'RH-TEST-1999-'+id.slice(-6)+'-'+String(i+1).padStart(2,'0'),
+    date:raceDate,trackId:trainer.homeTrackId,
+    trackName:trackAt(sourceTracks.findIndex(t=>t.id===trainer.homeTrackId)).name,
+    raceClass:group,surface:distanceFurlongs>9?'TURF':'DIRT',
+    distanceFurlongs,finishPosition:result,fieldSize:Math.max(8,result+hash(seed,id+':field:'+i)%5),
+    earnings:prize,trainerId:trainer.id,jockeyId:'P-TEST-JOCKEY-'+pad(jockeyIndex+1),
+    provenance:'GENERATED_PRE_1999_TEST_RACE_NOT_VERIFIED'});
+  }
+  return history;
+ }
  function horseAt(index){
   if(!Number.isInteger(index)||index<0||index>=HORSE_POPULATION)throw Error('Horse index out of range');
   if(horseCache.has(index))return horseCache.get(index);
@@ -244,7 +305,9 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
     nameStatus:'CANON_LOCKED',reputation:standing(seed,c.id,.4),attributes:traits(hor,seed,c.id,ability),
     attributesProvenance:'SIMULATED_TEST_TRAITS_NOT_HISTORICAL_FACT',
     finances:{estimatedValue:money(5000+unit(seed,c.id+':value')*700000),monthlyCareCost:money(1200+unit(seed,c.id+':cost')*1500)},
-    career:c.sourceRecordedStakesSeasons,ownerId:c.ownerId,trainerId:c.trainerId,stableTrackId:c.openingStable.trackId,authority:'LOCKED_NAME_ID_HISTORY_TEST_TRAITS'};
+    career:c.sourceRecordedStakesSeasons,sourceRecordedStakesSeasons:c.sourceRecordedStakesSeasons,
+    racingStatus1999:c.racingStatus||c.trainingStatus||'SOURCE_STATUS_NOT_VERIFIED',
+    ownerId:c.ownerId,trainerId:c.trainerId,stableTrackId:c.openingStable.trackId,authority:'LOCKED_NAME_ID_HISTORY_TEST_TRAITS'};
    horseCache.set(index,o);return o;
   }
   const i=anchored?index-locked.length:index,oi=ownersSlots.at(perm(i,generatedCount,seed,65537)),
@@ -273,6 +336,15 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const foalMonth=1+hash(seed,id+':foaling-month')%6;
   const foalDay=1+hash(seed,id+':foaling-day')%28;
   const dateOfBirth=foalYear+'-'+pad(foalMonth,2)+'-'+pad(foalDay,2);
+  const careerState=age<2?'TOO_YOUNG':sex==='STALLION'&&age>=5?'AT_STUD':
+   sex==='MARE'&&age>=8?'BROODMARE':starts===0?'UNRACED':
+   age>=9&&hash(seed,id+':retired')%4===0?'RETIRED':
+   hash(seed,id+':break')%8===0?'RESTING':'IN_TRAINING';
+  const purseEarnings=money(wins*8000+starts*1700*unit(seed,id+'prize'));
+  const raceHistory=simulatedRaceHistory(id,age,sex,trainer,starts,wins,purseEarnings,careerState);
+  const seconds=raceHistory.filter(r=>r.finishPosition===2).length;
+  const thirds=raceHistory.filter(r=>r.finishPosition===3).length;
+  const preferredJockeyId=raceHistory[0]?.jockeyId||'P-TEST-JOCKEY-'+pad(1+hash(seed,trainer.id+':preferred-jockey')%1800);
   const horse={id,name:tempName,nameStatus:'TEST_RENAME_ALLOWED',foalYear,ageAtOpening:age,sex,dateOfBirth,foalingGeography,
    breederId:breederOwner.id,breeder:breederOwner.name,
    breedingFarmId:foalingFarm.id,breedingFarm:foalingFarm.name,
@@ -283,10 +355,17 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    pedigree:{sireId:sire.id,damId:dam.id,parentBirthYears:[sire.foalYear,dam.foalYear]},
    ability,attributes:traits(hor,seed,id,ability),
    reputation:standing(seed,id,.15+unit(seed,id+'standing')*.65),
-   career:{starts,wins,places:Math.max(wins,Math.floor(starts*(.2+unit(seed,id+'place')*.2))),earnings:money(wins*8000+starts*1700*unit(seed,id+'prize')),
+   racingStatus1999:careerState,preferredJockeyId,
+   relationships:{ownerTrainer:relationship(owner.id,trainer.id,'OWNER_TRAINER'),
+    trainerJockey:relationship(trainer.id,preferredJockeyId,'TRAINER_JOCKEY'),
+    horseTrainer:relationship(id,trainer.id,'HORSE_TRAINER')},
+   career:{starts,wins,seconds,thirds,places:seconds+thirds,earnings:purseEarnings,
+    lastRaceDate:raceHistory[0]?.date||null,status:careerState,raceHistory,
     provenance:'GENERATED_1998_AND_PRIOR_NONCANON_TEST_RACES_ONLY'},
    finances:{estimatedValue:money(3000+Math.pow(unit(seed,id+'market'),3)*1200000),monthlyCareCost:money(1100+unit(seed,id+'care')*2200)},
-   eligibility:{licensedAt1999Start:age>=2&&!['STALLION'].includes(sex),soundnessEvidence:'SIMULATED_TEST_STATE',futureRaceStarts:[]}};
+   eligibility:{licensedAt1999Start:age>=2&&!['STALLION'].includes(sex)&&
+    !['RETIRED','AT_STUD','BROODMARE'].includes(careerState),
+    soundnessEvidence:'SIMULATED_TEST_STATE',futureRaceStarts:[]}};
   horseCache.set(index,horse);return horse;
  }
  function personAt(index){
@@ -305,12 +384,25 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   if(role==='trainer')return trainerAt(j);
   const id='P-TEST-'+role.toUpperCase()+'-'+pad(j+1),track=trackAt(hash(seed,id)%trackCount);
   const ageInfo=personAge(seed,id,role),ageAbility=createAgeAbility({seed,id,role,age:ageInfo.age});
+  const repScore=standing(seed,id,.2+unit(seed,id+'standing')*.65);
+  const quality=clamp((ageAbility.current*.58+repScore.overall*.42)/100,0,1);
+  const feeFactor=.82+unit(seed,id+':contract-negotiation')*.36;
+  const jockey=role==='jockey';
+  const jockeyMountFee=money((32+46*Math.pow(quality,1.5))*feeFactor);
+  const jockeyWinRate=round(.09+.02*quality);
+  // Jockey compensation is not a guaranteed salary. Gross projection includes
+  // the winning-place/show commission and mount fee opportunity assumptions.
+  const jockeyGross=money((160+Math.round(460*quality))*
+   (jockeyMountFee+48+310*Math.pow(quality,2))*(.86+.28*unit(seed,id+':bookings')));
+  const compensation=jockey?{role:'JOCKEY',basis:'1999_TEST_MOUNT_AND_PURSE_FEES',
+   mountFee:jockeyMountFee,winShareRate:jockeyWinRate,secondShareRate:.05,thirdShareRate:.05,
+   projectedAnnualGross:jockeyGross,currency:'USD',notGuaranteedSalary:true}:null;
   return {id,name:namedPeople[index].name,birthCountry:namedPeople[index].birthCountry,
     nameOrigin:'GEO_ROLE_TEST_POPULATION',
    nameStatus:'TEST_RENAME_ALLOWED',role,location:track.location,baseTrackId:track.id,
    ability:ageAbility,attributes:traits([...common,...(roleDef[role]||[])],seed,id,ageAbility),
-   reputation:standing(seed,id,.2+unit(seed,id+'standing')*.65),payrollAnnual:money(18000+unit(seed,id+'pay')*90000),
-   age:ageInfo.age,ageBasis:ageInfo.basis,morale:round(.3+unit(seed,id+':morale')*.68),workload:round(.2+unit(seed,id+':load')*.7),licenseStatus:'SIMULATED_TEST_ACTIVE',source:'SIMULATED_WORKFORCE'};
+   reputation:repScore,payrollAnnual:jockey?0:money(18000+unit(seed,id+'pay')*90000),
+   compensation,age:ageInfo.age,ageBasis:ageInfo.basis,morale:round(.3+unit(seed,id+':morale')*.68),workload:round(.2+unit(seed,id+':load')*.7),licenseStatus:'SIMULATED_TEST_ACTIVE',source:'SIMULATED_WORKFORCE'};
  }
  function meetOpen(track,date){
   return trackMeetOpen1999(track.sourceTrackId||track.id,date);
