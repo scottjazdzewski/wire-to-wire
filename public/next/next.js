@@ -210,7 +210,7 @@ function pageTab(name){if(APP.section==='History'){const pages={'Race Results':'
    if(name==='Overview')return goOffice();
    if(name==='Messages')return openCustomView('Messages','Office',name)
    if(name==='Decisions')return openCustomView('Decisions','Office',name)
-   if(name==='Calendar')return bridgeNode(originalAct('Race Calendar'));
+   if(name==='Calendar')return openMenu('Racing');
    if(name==='News')return bridgeNode(originalAct('News'));
    if(name==='Reports'||name==='Career')return openCustomView(name,'Office',name)
  }
@@ -2668,19 +2668,16 @@ function depNumeric(v){
  if(!/^-?\d+(?:\.\d+)?[kKmM]?$/.test(s))return null;
  return Number(s.replace(/[kKmM]$/,''))*(/[mM]$/.test(s)?1000000:/[kK]$/.test(s)?1000:1);
 }
-function depPageLimit(section){const financeHeader=section==='Finances'?42:0,salesHeader=section==='Sales'?43:0;return Math.max(8,Math.min(22,Math.floor(((window.innerHeight||850)-250-financeHeader-salesHeader)/29)))}
 function departmentRoster(section,page='Overview'){
  const demo=section==='World'||['Personnel','Facilities','Tracks'].includes(section)||
   section==='Breeding'&&['Stallions','Broodmares'].includes(page)?false:APP.departmentDemo;
- const current=$('.dateChip')?.textContent.trim()||'1999-01-01';
  const auctions=section==='Sales'?depAuctionList(demo):[];
  const gameDay=depGameDay();
  const auction=auctions.find(a=>a.id===APP.departmentAuction)||auctions.find(a=>(a.endDate||a.sortKey)>=gameDay)||null;
  const specs=section==='Personnel'&&page==='Owners'?DEP_COLUMNS.OwnershipGroups:
   section==='World'?(page==='1999 Horses'?WORLD_1999_COLUMNS.Horses:page==='People'?WORLD_1999_COLUMNS.People:WORLD_1999_COLUMNS.Organizations):
   section==='Sales'&&page==='Watchlist'?DEP_COLUMNS.SalesWatchlist:section==='Sales'&&page==='Sale Calendar'?DEP_COLUMNS.SaleCalendar:section==='Sales'&&page==='Sale Companies'?DEP_COLUMNS.SaleCompanies:section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'?(APP.racingTrack?DEP_COLUMNS.Racing:DEP_COLUMNS.Meets):DEP_COLUMNS[section];
- const perPage=depPageLimit(section);
- const continuousRoster=true; // The same sort + endless-scroll model applies to every department.
+ // Every department now uses one progressive, sortable roster without pagination.
  const virtualHorseIndex=section==='World'&&page==='1999 Horses'&&
   window.__WTW_1999_UI_DATA__?.worldHorsePage;
  // World horses are 87,500 rows. Fetch only the progressive visible window;
@@ -3180,6 +3177,7 @@ window.addEventListener('click',e=>{
   if(n?.classList.contains('stakesRow')){const track=currentRoute()?.title||'';const title=n.querySelector('strong')?.textContent.trim()||n.children[0]?.textContent.trim()||'';const match=window.__WTW_1999_UI_DATA__?.stakesForTrack?.(track)?.find(r=>r.name===title);if(match)return open1999Race(match)}
   return bridgeNode(n)}
  if(key==='action'){
+  if(window.__WTW_1999_MANAGEMENT__&&/^(?:Open )?Race Calendar$/.test(val))return openMenu('Racing');
   if(window.__WTW_1999_MANAGEMENT__&&val==='Continue'){
     window.__WTW_1999_MANAGEMENT__.advanceOneDay?.();
     return paint();
