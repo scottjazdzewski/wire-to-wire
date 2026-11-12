@@ -24,7 +24,7 @@ test('approved interface loads commercial config before bootstrap and manager af
 test('a world choice belongs to its career and the original save namespace remains',()=>{
  assert.match(bootstrap,/worldProfile:world/);
  assert.match(bootstrap,/population:world\.population/);
- assert.match(bootstrap,/const MAIN='wtw1999ManagementStateV1'/);
+ assert.match(bootstrap,/MAIN='wtw1999ManagementStateV1'/);
  assert.match(bootstrap,/SCHEMA='WTW_1999_CLEAN_CAREER_V3'/);
  assert.match(config,/wtwCommercialWorldProfileV1/);
  assert.match(config,/anchor\.worldProfile\?\.population/);
