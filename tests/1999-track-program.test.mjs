@@ -72,7 +72,7 @@ test('source surface restrictions carry into generated race conditions',()=>{
 });
 
 test('real state calendars, established game windows and fictitious meets remain distinct',()=>{
- assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='VERIFIED_1999_CALENDAR').length,24);
+ assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='VERIFIED_1999_CALENDAR').length,25);
  assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='APPROVED_WTW_1999_GAME_CALENDAR').length,1);
  assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='WTW_FICTIONAL_GAME_MODELED').length,8);
  assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='PUBLISHED_1999_SARATOGA_PROPOSAL').length,1);
