@@ -715,21 +715,17 @@ const allStakes1999=[...sourceStakes,...WTW_ALTERNATE_STAKES_1999,...WTW_REGIONA
    const conditions=readLocal1999World('/api/1999/sim/conditions?seed=19990101&mode=CANON_ANCHORED_TEST&date='+
      encodeURIComponent(date)+'&trackIndex='+index);
    for(const race of conditions.races||[]){
-    records.push({_kind:'race',_name:'Race '+race.number,_track:t.name,_iso:date,_raceId:race.id,_raceData:race,
-     date,track:t.name,race:'R'+race.number,number:race.number,class:race.conditions||'MODELED',
-     surface:race.surface||'',distance:Number(race.distanceFurlongs)+'f',
-     purse:money(race.purse),status:'CONDITION BOOK · PROPOSED',_cardOrder:race.number});
-   }
+   const feature=Boolean(race.stakeId);
+   records.push({_kind:'race',_name:race.name||'Race '+race.number,_track:t.name,_iso:date,_raceId:race.id,_raceData:race,
+    _stakeId:race.stakeId||null,date,track:t.name,
+    race:feature?'R'+race.number+' · '+race.stakeName:'R'+race.number,
+    number:race.number,class:feature?'STAKES · '+race.stakesGrade:(race.conditions||'MODELED'),
+    surface:race.surface||'',distance:Number(race.distanceFurlongs)+'f',
+    purse:money(race.purse),
+    status:feature?'PLANNED STAKES · NOT RUN':'CONDITION BOOK · PROPOSED',
+    _cardOrder:race.number});
   }
-  const activeIds=new Set(indices.filter(i=>trackMeetOpen1999(activeRacecourses[i].id,date)).map(i=>activeRacecourses[i].id));
-  const activeNames=new Set(indices.filter(i=>trackMeetOpen1999(activeRacecourses[i].id,date)).map(i=>activeRacecourses[i].name));
-  for(const race of allStakes1999){
-   if(race.localDate!==date||!(activeIds.has(race.trackId)||activeNames.has(race.trackName)))continue;
-   records.push({_kind:'race',_name:race.name,_track:race.trackName,_iso:date,_raceId:race.id,_raceData:race,
-    date,track:race.trackName,race:race.name,number:999,class:race.grade||race.division||'STAKES',
-    surface:race.surface||'',distance:Number(race.distanceFurlongs||race.distanceF||0)?String(race.distanceFurlongs||race.distanceF)+'f':'',
-    purse:money(race.purse1999??race.purse),status:'PLANNED STAKES · NOT RUN',_cardOrder:999});
-  }
+ }
   records.sort((a,b)=>a.track.localeCompare(b.track)||a._cardOrder-b._cardOrder||a.race.localeCompare(b.race));
   if(racingCardCache.size>=16)racingCardCache.delete(racingCardCache.keys().next().value);
   racingCardCache.set(key,records);

@@ -11,6 +11,7 @@ import {createGeographicNameRoster,GEO_NAME_MODEL} from '../../public/1999/engin
 import {existingPrincipals1999} from '../../public/1999/engine/source-principals-1999.mjs';
 import {trackProgram1999,trackMeetOpen1999,trackCardSurface1999} from '../../public/next/1999-track-program.mjs';
 import {applyVerifiedStakeDay1999} from '../../public/next/1999-verified-stakes-dates.mjs';
+import {trackConditionProfile1999,buildConditionBook1999} from '../../public/next/1999-condition-book-engine.mjs';
 import {createAgeAbility,inferProfessionalRole,project1999CareerEntity,validateCareerGameDate} from '../../public/1999/engine/age-ability.mjs';
 import attributeCatalog from '../../public/1999/engine/attribute-catalog.mjs';
 import {WTW_TEST_START_DATE} from './test-clock.mjs';
@@ -146,14 +147,17 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
  function trackAt(i){
   if(i<0||i>=trackCount)throw Error('Track index out of range');
   if(trackCache.has(i))return trackCache.get(i);
-  const base=sourceTracks[i],generatedName=A[i%A.length]+' '+B[Math.floor(i/A.length)%B.length]+' Downs';
+  const base=sourceTracks[i],racingProfile=trackConditionProfile1999(base.id,seed),generatedName=A[i%A.length]+' '+B[Math.floor(i/A.length)%B.length]+' Downs';
   const obj={id:anchored?base.id:'T-TEST-1999-'+pad(i+1,4),name:anchored?base.name:generatedName,
    location:fmtLoc(base),nameStatus:anchored?'CANON_LOCKED':'TEST_RENAME_ALLOWED',surface:trackCardSurface1999(base.id,1)||'HISTORICAL',surfaces:trackProgram1999(base.id)?.surfaces||'Not recorded',
    reputation:standing(seed,'track:'+i,.4+unit(seed,'track:quality:'+i)*.5),
    facility:{grandstandCapacity:money(3000+unit(seed,'stand:'+i)*40000),barnStalls:0,
     trainingTrack:true,medicalCenter:true,startingGates:2,groundsCondition:round(.55+unit(seed,'ground:'+i)*.4)},
-   racing:{racesPerCard:8+Math.floor(unit(seed,'races:'+i)*3),firstPostHour:12+Math.floor(unit(seed,'post:'+i)*4),
-    meetStatus:'SCHEDULE_DEPENDENT',annualPurseBudget:money(2000000+unit(seed,'purse:'+i)*24000000)},
+   racing:{racesPerCard:racingProfile.typicalRaces,firstPostHour:12+Math.floor(unit(seed,'post:'+i)*4),
+     meetStatus:'SCHEDULE_DEPENDENT',programTier:racingProfile.tier,conditionBookBasis:'WTW_1999_TRACK_SPECIFIC_MODELED',
+     annualPurseBudget:money(racingProfile.typicalRaces*
+      (racingProfile.purses.claim+racingProfile.purses.allowance)/2*
+      (Number(String(trackProgram1999(base.id)?.raceDays||'').match(/\d+/)?.[0])||100))},
    finances:{cash:money(300000+unit(seed,'tcash:'+i)*7500000),annualOperatingBudget:money(700000+unit(seed,'tbgt:'+i)*7000000)},
     attributes:{surface_quality:round(.3+unit(seed,'surf:'+i)*.69),horse_safety:round(.3+unit(seed,'safe:'+i)*.69),grounds_maintenance:round(.3+unit(seed,'maint:'+i)*.69),race_program:round(.3+unit(seed,'program:'+i)*.69),fan_experience:round(.3+unit(seed,'fan:'+i)*.69)},
    sourceTrackId:base.id};
@@ -286,33 +290,8 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
  function conditionBook(date,trackIndex){
   if(typeof date!=='string'||!/^1999-\d{2}-\d{2}$/.test(date)||Number.isNaN(Date.parse(date+'T12:00:00Z')))throw Error('1999 date required');
   const track=trackAt(trackIndex);if(!meetOpen(track,date))return [];
-  const count=track.racing.racesPerCard,classes=['Maiden Special Weight','Maiden Claiming','Claiming','Allowance','Allowance Optional Claiming','Starter Allowance','Handicap','Open Allowance','Claiming','Maiden Special Weight'];
-  const result=[];
-  for(let n=1;n<=count;n++){
-   const id='R-TEST-1999-'+date.replaceAll('-','')+'-'+pad(trackIndex+1,3)+'-'+pad(n,2),cl=classes[(n+trackIndex)%classes.length],
-    minAge=2+hash(seed,id+':age')%3,sprint=unit(seed,id+':dist')<.52;
-   const maidenOnly=cl.startsWith('Maiden'),claiming=cl.includes('Claiming');
-   const claimingPrice=claiming?[10000,15000,20000,25000,35000,50000][hash(seed,id+':claim')%6]:null;
-   const maxCareerWins=cl==='Allowance'?1:null;
-   const winRestriction=maidenOnly?'Maidens (horses without a career win)':
-    maxCareerWins!==null?'Non-winners of two lifetime races':
-    cl==='Starter Allowance'?'Prior qualifying claiming start required — records not yet modeled':
-    cl==='Allowance Optional Claiming'?'Allowance qualification or optional claiming entry — terms not yet modeled':
-    cl==='Handicap'?'Handicap weights pending declaration':'Open to eligible starters';
-   const females=hash(seed,id+'female')%7===0;
-   const fullConditions=cl+'; '+minAge+' years old and upward; '+(females?'fillies and mares only':'open sexes')+
-    '; '+winRestriction+(claimingPrice?' · modeled claiming price $'+claimingPrice.toLocaleString('en-US'):'')+
-    '. Remaining official terms and nominations are not supplied in this TEST condition book.';
-   result.push({id,date,trackId:track.id,trackName:track.name,number:n,conditions:cl,
-    maidenOnly,maxCareerWins,claimingPrice,winRestriction,fullConditions,
-    weightConditions:'Assigned weights and allowances pending; no official impost recorded',
-    entryTerms:'No official entry deadline or nomination terms recorded',
-    ageRequirement:minAge+'YO+',sexRestriction:females?'FILLIES_AND_MARES':'OPEN',
-    surface:trackCardSurface1999(track.sourceTrackId||track.id,n)||'DIRT',distanceFurlongs:sprint?6+hash(seed,id+'sprint')%3:8+hash(seed,id+'route')%5,
-    purse:money((cl.includes('Maiden')?22000:cl.includes('Claiming')?13000:39000)*(0.65+unit(seed,id+'purse')*1.5)),
-    fieldCapacity:8+hash(seed,id+'field')%7,currentEntries:[],results:[],status:'CONDITION_BOOK_PROPOSAL_NOT_RUN',canonical:false});
-  }
-  return result;
+  return buildConditionBook1999({date,track,trackIndex,seed,
+   sourceStakes:anchored?canon.stakes1999:[],includeKnownStakes:anchored});
  }
  function auctionAt(index){
   if(!Number.isInteger(index)||index<0||index>=36)throw Error('Auction index');
