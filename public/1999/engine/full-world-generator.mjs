@@ -265,7 +265,118 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   for(let n=1;n<=count;n++){
    const id='R-TEST-1999-'+date.replaceAll('-','')+'-'+pad(trackIndex+1,3)+'-'+pad(n,2),cl=classes[(n+trackIndex)%classes.length],
     minAge=2+hash(seed,id+':age')%3,sprint=unit(seed,id+':dist')<.52;
+   // These are modeled 1999 TEST race conditions, not reconstructed official clauses.
+   const maidenOnly=cl.startsWith('Maiden'),claiming=cl.includes('Claiming');
+   const claimingPrice=claiming?[10000,15000,20000,25000,35000,50000][hash(seed,id+':claim')%6]:null;
+   const maxCareerWins=cl==='Allowance'?1:null;
+   const winRestriction=maidenOnly?'Maidens (horses without a career win)':
+    maxCareerWins!==null?'Non-winners of two lifetime races':
+    cl==='Starter Allowance'?'Prior qualifying claiming start required — records not yet modeled':
+    cl==='Allowance Optional Claiming'?'Allowance qualification or optional claiming entry — terms not yet modeled':
+    cl==='Handicap'?'Handicap weights pending declaration':'Open to eligible starters';
+   const fullConditions=cl+'; '+minAge+' years old and upward; '+
+    (hash(seed,id+'female')%7===0?'fillies and mares only':'open sexes')+'; '+
+    winRestriction+(claimingPrice?' · modeled claiming price 
+    ageRequirement:minAge+'YO+',sexRestriction:hash(seed,id+'female')%7===0?'FILLIES_AND_MARES':'OPEN',
+    surface:hash(seed,id+'surface')%5===0?'TURF':'DIRT',distanceFurlongs:sprint?6+hash(seed,id+'sprint')%3:8+hash(seed,id+'route')%5,
+    purse:money((cl.includes('Maiden')?22000:cl.includes('Claiming')?13000:39000)*(0.65+unit(seed,id+'purse')*1.5)),
+    fieldCapacity:8+hash(seed,id+'field')%7,currentEntries:[],results:[],status:'CONDITION_BOOK_PROPOSAL_NOT_RUN',canonical:false});
+  }
+  return result;
+ }
+ function auctionAt(index){
+  if(!Number.isInteger(index)||index<0||index>=36)throw Error('Auction index');
+  const track=trackAt(hash(seed,'auction:'+index)%trackCount),month=1+Math.floor(index/3),day=[6,14,22][index%3];
+  const id='A-TEST-1999-'+pad(index+1,3);
+  return {id,name:pick(['Midwinter','Spring','Summer','Autumn','Regional','Select','Yearling','Mixed'],seed,id)+' '+track.location.city+' Sale',
+    attributes:{catalog_quality:round(.2+unit(seed,id+':catalog')*.75),buyer_demand:round(.2+unit(seed,id+':demand')*.75),vendor_depth:round(.2+unit(seed,id+':vendors')*.75),inspection_quality:round(.3+unit(seed,id+':inspection')*.65)},
+   location:track.location,trackId:track.id,date:'1999-'+pad(month,2)+'-'+pad(day,2),
+   sellerFeeRate:round(.03+unit(seed,id+'sellerFee')*.04),buyerPremiumRate:round(.01+unit(seed,id+'buyerFee')*.03),
+   catalogLots:120+hash(seed,id+'lots')%570,reputation:standing(seed,id,.35+unit(seed,id+'rep')*.6),
+   cashOperatingReserve:money(250000+unit(seed,id+'cash')*3000000),
+   source:'SIMULATED_TEST_AUCTION',outcomes:[]};
+ }
+ function facilityAt(index){
+  if(!Number.isInteger(index)||index<0||index>=trainersTotal+900+trackCount)throw Error('Facility index');
+  if(index<trainersTotal){const tr=trainerAt(index);return {id:tr.barnId,name:generatedOrganizationName(seed,index+3308,'barn'),type:'RACE_BARN',
+   location:tr.location,trainerId:tr.id,trackId:tr.homeTrackId,capacity:tr.barnCapacity,occupied:tr.generatedRunners,
+   landAcres:0,equipmentCondition:round(.4+unit(seed,tr.id+'eq')*.58),staffingRequirement:Math.max(1,Math.ceil(tr.barnCapacity/6)),
+    attributes:{horse_care:round(.3+unit(seed,tr.id+':care')*.69),training_environment:round(.3+unit(seed,tr.id+':training')*.69),biosecurity:round(.3+unit(seed,tr.id+':bio')*.69),facility_condition:round(.4+unit(seed,tr.id+'eq')*.58)},
+   annualOperatingCost:money(tr.barnCapacity*29000),reputation:tr.reputation,source:'TEST_BARN'};}
+  if(index<trainersTotal+900){const i=index-trainersTotal,t=trackAt(hash(seed,'farm:'+i)%trackCount),id='F-TEST-FARM-'+pad(i+1);
+   return {id,name:generatedOrganizationName(seed,i+8000,'farm'),
+   type:'BREEDING_FARM',location:t.location,trackId:t.id,capacity:80+hash(seed,id+'cap')%350,occupied:0,
+   landAcres:80+hash(seed,id+'acres')%1100,foalingBarns:2+hash(seed,id+'foal')%10,
+    equipmentCondition:round(.4+unit(seed,id+':eq')*.59),staffingRequirement:Math.ceil((80+hash(seed,id+'cap')%350)/25),
+    attributes:{horse_care:round(.3+unit(seed,id+':care')*.69),breeding_management:round(.3+unit(seed,id+':breed')*.69),biosecurity:round(.3+unit(seed,id+':bio')*.69),facility_condition:round(.4+unit(seed,id+':eq')*.59)},
+   annualOperatingCost:money(120000+unit(seed,id+'cost')*1400000),
+   reputation:standing(seed,id,.3+unit(seed,id+'rep')*.6),source:'TEST_FARM'};}
+  const t=trackAt(index-trainersTotal-900);
+  return {id:'F-TEST-TRACK-'+pad(index-trainersTotal-900+1,3),name:t.name+' Training Center',type:'TRAINING_CENTER',location:t.location,trackId:t.id,
+   capacity:money(120+unit(seed,t.id+'cap')*500),occupied:0,landAcres:45+hash(seed,t.id+'land')%230,
+    equipmentCondition:round(.4+unit(seed,t.id+':eq')*.59),staffingRequirement:12+hash(seed,t.id+':staff')%35,
+    attributes:{horse_care:round(.3+unit(seed,t.id+':care')*.69),training_environment:round(.3+unit(seed,t.id+':training')*.69),biosecurity:round(.3+unit(seed,t.id+':bio')*.69),facility_condition:round(.4+unit(seed,t.id+':eq')*.59)},
+   annualOperatingCost:money(950000+unit(seed,t.id+'cost')*4800000),reputation:t.reputation,source:'TEST_TRACK_CENTER'};
+ }
+ const trackIndexById=new Map(sourceTracks.map((t,i)=>[anchored?t.id:'T-TEST-1999-'+pad(i+1,4),i]));
+ for(let i=0;i<trainersTotal;i++){
+  const tr=trainerAt(i),idx=trackIndexById.get(tr.homeTrackId);
+  if(idx===undefined)throw Error('Trainer barn track missing');
+  const track=trackAt(idx);
+  track.facility.barnStalls+=tr.barnCapacity;
+  track.facility.occupied=(track.facility.occupied||0)+tr.generatedRunners;
+ }
+ for(const h of locked){const idx=trackIndexById.get(h.openingStable.trackId);
+  if(idx===undefined)throw Error('Canonical horse track not present');
+  trackAt(idx).facility.occupied++;
+  trackAt(idx).facility.barnStalls++;
+ }
+ const peopleCount=ACTIVE_STAFF_COUNT+generatedPrincipalCount;
+ 
+ // Read-only inverse of the existing horse allocation permutation.
+ // Lets the game inspect a complete owner's stable without generating every horse.
+ const ownerMultiplier=(()=>{let m=65537;while(gcd(m,generatedCount)!==1)m+=2;return m})();
+ const modularInverse=(a,m)=>{
+  let t=0,nextT=1,r=m,nextR=a;
+  while(nextR!==0){const q=Math.floor(r/nextR);[t,nextT]=[nextT,t-q*nextT];[r,nextR]=[nextR,r-q*nextR]}
+  if(r!==1)throw Error('Owner allocation is not invertible');
+  return ((t%m)+m)%m;
+ };
+ const ownerInverse=modularInverse(ownerMultiplier,generatedCount);
+ function ownedHorseIndexes(ownerId){
+  if(typeof ownerId!=='string'||!ownerId)return [];
+  const canonicalOwner=anchored?sourceOrgs.findIndex(o=>o.id===ownerId):-1;
+  const testOwner=ownerId.match(/^O-TEST-1999-(\d+)$/);
+  const ownerIndex=canonicalOwner>=0?canonicalOwner:testOwner?Number(testOwner[1])-1:-1;
+  if(ownerIndex<0||ownerIndex>=ownersTotal)return [];
+  const indices=[];
+  if(anchored)locked.forEach((horse,index)=>{if(horse.ownerId===ownerId)indices.push(index)});
+  const begin=ownerIndex===0?0:ownersSlots.ends[ownerIndex-1],end=ownersSlots.ends[ownerIndex];
+  for(let slot=begin;slot<end;slot++){
+   const normalized=(slot-(seed%generatedCount)+generatedCount)%generatedCount;
+   const index=(normalized*ownerInverse)%generatedCount;
+   indices.push((anchored?locked.length:0)+index);
+  }
+  return indices.sort((a,b)=>a-b);
+ }
+ return {schema:FULL_WORLD_SCHEMA,seed,mode,startDate:WTW_TEST_START_DATE,currentDate:WTW_TEST_START_DATE,
+  canonProtected:anchored,identityLayer:'CANON_LOCKS_PLUS_REPLACEABLE_TEST_IDENTITIES',attributesSchema:attributeCatalog.schema,
+   nameModel:GEO_NAME_MODEL,
+  counts:{horses:HORSE_POPULATION,canonicalHorses:anchored?CANON_HORSES:0,generatedHorses:generatedCount,owners:ownersTotal,trainers:trainersTotal,
+   people:peopleCount+(anchored?sourcePeople.length:0),tracks:trackCount,facilities:trainersTotal+900+trackCount,auctions:36,
+   sourceStallions:anchored?canon.activeStallions1999.length:0,sourceBroodmareLocations:anchored?canon.productionBroodmareBoarding1999.length:0},
+  ownerAt,trainerAt,trackAt,horseAt,personAt,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
+  parentAt,attributeCatalog,sourceStakes:anchored?canon.stakes1999:[],sourceOrganizations:sourceOrgs,sourcePeople,excludedActiveStaffRoles:['groom','exercise_rider'],
+  audit:{ownershipSlots:ownersSlots.counts.reduce((a,b)=>a+b,0),trainerSlots:trainerSlots.counts.reduce((a,b)=>a+b,0),
+   maxOwnerHorses:Math.max(...ownersSlots.counts),minOwnerHorses:Math.min(...ownersSlots.counts),
+   maxTrainerHorses:Math.max(...trainerSlots.counts),minTrainerHorses:Math.min(...trainerSlots.counts)}};
+}
++claimingPrice.toLocaleString('en-US'):'')+
+    '. Remaining official terms and nominations are not supplied in this TEST condition book.';
    result.push({id,date,trackId:track.id,trackName:track.name,number:n,conditions:cl,
+    maidenOnly,maxCareerWins,claimingPrice,winRestriction,fullConditions,
+    weightConditions:'Assigned weights and allowances pending; no official impost recorded',
+    entryTerms:'No official entry deadline or nomination terms recorded',
     ageRequirement:minAge+'YO+',sexRestriction:hash(seed,id+'female')%7===0?'FILLIES_AND_MARES':'OPEN',
     surface:hash(seed,id+'surface')%5===0?'TURF':'DIRT',distanceFurlongs:sprint?6+hash(seed,id+'sprint')%3:8+hash(seed,id+'route')%5,
     purse:money((cl.includes('Maiden')?22000:cl.includes('Claiming')?13000:39000)*(0.65+unit(seed,id+'purse')*1.5)),
