@@ -45,10 +45,11 @@ const officeMenu={Overview:'Office Overview',Messages:'Filter All',Decisions:'Op
 const state=()=>{try{return JSON.parse(localStorage.getItem('wtwOfficeStateV30')||'{}')}catch{return {}}};
 /* Named saves are snapshots of the canonical Office game state, never a new
    simulation ledger. World Editor patches and media remain independently stored. */
-const NAMED_SAVE_KEY='wtwNamedGameSavesV1';
+const NAMED_SAVE_KEY=window.__WTW_1999_MANAGEMENT__?.namedSaveKey||'wtwNamedGameSavesV1';
+const valid1999Save=game=>!window.__WTW_1999_MANAGEMENT__||(game?.worldAnchor?.schema===window.__WTW_1999_MANAGEMENT__.schema&&game?.worldAnchor?.startDate==='1999-01-01'&&/^\\d{4}-\\d{2}-\\d{2}$/.test(game?.date||'')&&game.date>='1999-01-01');
 function namedSaves(){
  try{const rows=JSON.parse(localStorage.getItem(NAMED_SAVE_KEY)||'[]');
-  return Array.isArray(rows)?rows.filter(x=>x&&typeof x.id==='string'&&typeof x.name==='string'&&x.game&&typeof x.game==='object'):[];
+  return Array.isArray(rows)?rows.filter(x=>x&&typeof x.id==='string'&&typeof x.name==='string'&&x.game&&typeof x.game==='object'&&valid1999Save(x.game)):[];
  }catch{return []}
 }
 function namedSaveWrite(rows){localStorage.setItem(NAMED_SAVE_KEY,JSON.stringify(rows))}
@@ -58,8 +59,8 @@ function namedSaveCapture(){
  if(!native)throw Error('The original game save control is unavailable.');
  native.click(); // Canonical Office writes its current simulation state synchronously.
  const payload=JSON.parse(localStorage.getItem('wtwOfficeStateV30')||'null');
- if(!payload||typeof payload!=='object'||!payload.version||!payload.date)
-  throw Error('The live game did not provide a valid save. Nothing was stored.');
+ if(!payload||typeof payload!=='object'||!payload.version||!payload.date||!valid1999Save(payload))
+  throw Error('Only a clean Jan 1, 1999 world career can be saved here.');
  return payload;
 }
 function namedSavePanel(){
@@ -142,7 +143,7 @@ async function namedSaveImport(file){
   const data=JSON.parse(await file.text());
   if(data?.schema!=='WTW_NAMED_SAVE_SLOTS_V1'||!Array.isArray(data.slots))
    throw Error('Not a Wire to Wire named-saves backup.');
-  const imported=data.slots.filter(x=>x&&typeof x.id==='string'&&typeof x.name==='string'&&x.game?.version&&x.game?.date);
+  const imported=data.slots.filter(x=>x&&typeof x.id==='string'&&typeof x.name==='string'&&x.game?.version&&x.game?.date&&valid1999Save(x.game));
   if(imported.length!==data.slots.length||imported.length>100)throw Error('One or more save slots are invalid.');
   const current=namedSaves(),ids=new Set(current.map(x=>x.id));
   const names=new Set(current.map(x=>x.name.toLocaleLowerCase()));
@@ -401,7 +402,7 @@ function managerSidebar(){
  '</aside>';
 }
 function header(){
- const date=$('.dateChip')?.textContent.trim()||'2014-07-15';
+ const date=$('.dateChip')?.textContent.trim()||window.__WTW_1999_MANAGEMENT__?.startDate||'1999-01-01';
  const due=dueActions();
  // Each entity Overview has its own fully visible profile navigation.
  // Do not waste desktop height on unrelated department subtabs.
@@ -2037,7 +2038,7 @@ function depRaceIso(value){
 
 /* Canonical track meet windows are read from Office; the game date governs active meets. */
 const DEP_MONTH={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
-function depGameDay(){return liveStableDate($('.dateChip')?.textContent.trim())||liveStableDate(state().date)||'2014-07-15'}
+function depGameDay(){return liveStableDate($('.dateChip')?.textContent.trim())||liveStableDate(state().date)||'1999-01-01'}
 function depTrackCalendar(){
  const raw=typeof window.__wtwOfficeTrackDirectory==='function'?window.__wtwOfficeTrackDirectory():[];
  const office=Array.isArray(raw)?raw.filter(x=>x&&typeof x.name==='string'):[];
@@ -2866,6 +2867,10 @@ root.addEventListener('focusout',event=>{
 },true);
 function paint(){
  if(!APP.ready)return;
+ if(window.__WTW_1999_MANAGEMENT__&&!window.__WTW_1999_UI_DATA__){
+  root.innerHTML='<div class="ng-manager-shell" role="status" aria-label="Loading January 1999 game world"><div class="ng-manager-stage"><p style="padding:24px">Opening January 1, 1999 racing world…</p></div></div>';
+  return;
+ }
  loadWorld1999();
  if(activeNativeSelect&&activeNativeSelect.isConnected){deferredNativeSelectPaint=true;return}
  if(activeNativeSelect&&!activeNativeSelect.isConnected)endNativeSelectInteraction(false);
