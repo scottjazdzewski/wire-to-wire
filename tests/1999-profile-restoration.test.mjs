@@ -19,9 +19,8 @@ test('restored Tier One horse and track profiles reuse the existing renderer and
 });
 
 test('Personnel roster sorts full working set and scrolls instead of Prev/Next',()=>{
- assert.match(ui,/const continuousPersonnel=section==='Personnel'/);
- assert.match(ui,/continuousPersonnel\?rows\.slice\(0,Math\.min\(rows\.length,APP\.departmentScrollLimit\)\)/);
- assert.match(ui,/const pager=continuousPersonnel\?/);
+ assert.match(ui,/const shown=virtualHorseIndex\?rows:rows\.slice\(0,Math\.min\(rows\.length,APP\.departmentScrollLimit\)\)/);
+ assert.match(ui,/const pager='<span class="ng-dpt-records">/);
  assert.match(ui,/departmentScrollLimit\+160/);
  assert.match(get('public/next/next.css'),/ng-dept-roster\[data-department="Personnel"\] \.ng-rs-scroll/);
 });
