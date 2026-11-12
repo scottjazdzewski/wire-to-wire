@@ -6,7 +6,9 @@
 import {trackProgram1999} from '/next/1999-track-program.mjs';
 import {WTW_ALTERNATE_STAKES_1999} from '/next/1999-alternate-stakes.mjs';
 import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-20261112-r4';
-const q=(route,extras='')=>readLocal1999World(route+(route.includes('?')?'&':'?')+'seed=19990101&mode=CANON_ANCHORED_TEST'+(extras?'&'+extras:''));
+let viewDate='1999-01-01';
+const q=(route,extras='')=>readLocal1999World(route+(route.includes('?')?'&':'?')+
+ 'seed=19990101&mode=CANON_ANCHORED_TEST'+(viewDate==='1999-01-01'?'':'&date='+viewDate)+(extras?'&'+extras:''));
 const allPages=(route,total)=>{const rows=[];for(let offset=0;offset<total;offset+=100){const page=q(route,'offset='+offset+'&limit=100');rows.push(...(page.items||[]));}return rows;};
 const srcHorses=allPages('/api/1999/horses',267);
 const sourceHorseOffset=new Map(srcHorses.map((h,index)=>[h.id,index]));
@@ -24,8 +26,8 @@ const selectedOwner=ownerNames.get(activeOwnerId)||activeOwnerId||'1999 Foundati
 // This does not fabricate additional historical source records or outcomes.
 const portfolioQuery='ownerId='+encodeURIComponent(activeOwnerId||'');
 const ownedHorseCount=q('/api/1999/sim/owner-horses',portfolioQuery+'&offset=0&limit=1').total;
-const stableHorses=allPages('/api/1999/sim/owner-horses?'+portfolioQuery,ownedHorseCount);
-const horseLookup=new Map([...srcHorses,...stableHorses].map(h=>[h.name,h]));
+let stableHorses=allPages('/api/1999/sim/owner-horses?'+portfolioQuery,ownedHorseCount);
+let horseLookup=new Map([...srcHorses,...stableHorses].map(h=>[h.name,h]));
 const sourceHorseIds=new Set(srcHorses.map(h=>h.id));
 
 const ownerIndex=srcOrgs.findIndex(o=>o.id===activeOwnerId);
@@ -75,7 +77,7 @@ function sourceFacts(name){
  const h=horseLookup.get(name);if(!h)return null;
  const source=sourceHorseIds.has(h.id);
  const trainer=peopleNames.get(h.trainerId)||get('trainerNames','/api/1999/sim/trainers',4200).find(t=>t.id===h.trainerId)?.name||'';
- return {age:String(h.ageAtOpening||1999-Number(h.foalYear)),sex:h.sex||'',
+ return {age:String(h.ageAtDate??h.ageAtOpening??1999-Number(h.foalYear)),sex:h.sex||'',
   connections:{trainer,owner:ownerNames.get(h.ownerId)||selectedOwner,breeder:h.breeder||h.breederName||''},
   name:h.name,ability:h.ability||null,source:source?'1999_CANON_LOCKED':'1999_TEST_GENERATED',
   racing_status:source?h.racingStatus:'TEST_WORLD_NO_1999_RESULTS',
@@ -86,7 +88,7 @@ const ownerFor=name=>{const h=horseLookup.get(name);return h?(h.ownerId===active
 function roster(){return stableHorses.map((h,i)=>({name:h.name,
  activity:sourceHorseIds.has(h.id)?h.trainingStatus||'PRE-RACE TRAINING':'TEST HORSE · CONDITION UNOBSERVED',
   currentAbility:h.ability?.currentStars??null,potentialAbility:h.ability?.potentialStars??null,
- tag:(sourceHorseIds.has(h.id)?'CANON':'TEST')+' · '+h.sex+' · '+(1999-Number(h.foalYear))+'YO',index:i+1,horseId:h.id}));}
+ tag:(sourceHorseIds.has(h.id)?'CANON':'TEST')+' · '+h.sex+' · '+(h.ageAtDate??1999-Number(h.foalYear))+'YO',index:i+1,horseId:h.id}));}
 function stableHorsePreview(name){
  const h=horseLookup.get(name);
  if(!h)return null;
@@ -95,7 +97,7 @@ function stableHorsePreview(name){
   _id:h.id,_testGenerated:!source,_testAttrs:h.attributes||{},_testCareer:h.career||{},_testFinances:h.finances||{},
   _testReputation:h.reputation||{},_testAbility:h.ability||null,
    ca:String(h.ability?.currentStars??''),pa:String(h.ability?.potentialStars??''),
-   age:String(h.ageAtOpening??1999-Number(h.foalYear)),foalYear:h.foalYear,dateOfBirth:h.dateOfBirth||'',
+   age:String(h.ageAtDate??h.ageAtOpening??1999-Number(h.foalYear)),foalYear:h.foalYear,dateOfBirth:h.dateOfBirth||'',
   foalingGeography:h.foalingGeography||h.foalingLocation||h.foalingPlace||null,
   ownerId:h.ownerId||'',trainerId:h.trainerId||'',
   breederId:h.breederId||'',breeder:h.breeder||h.breederName||'',
@@ -161,7 +163,7 @@ function makeDepartmentRows(section,page,context={}){
   return get('owners','/api/1999/sim/owners',worldCounts.owners).map(o=>({
    _kind:'farm',_name:o.name,_id:o.id,name:o.name,type:o.type,
    location:city(o.location),principal:o.principalOwner||'Not recorded',principalId:o.principalOwnerId||'',
-   status:'1999 · '+o.portfolio?.tier,principalAge:o.principalAge??'',
+   status:'1999 · '+o.portfolio?.tier,principalAge:o.principalAgeAtDate??o.principalAge??'',
     _testAbility:o.principalAbility||null,_canonId:o.authority?.startsWith('CANON')?o.id:'',
    _testGenerated:!o.authority?.startsWith('CANON'),_testAttrs:o.attributes||{},
    _testFinances:o.finances||{},_testReputation:o.reputation||{}}));
@@ -216,7 +218,24 @@ function makeDepartmentRows(section,page,context={}){
  return null;
 }
 const departmentCache=new Map();
+function setGameDate(date){
+ if(typeof date!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)||date<'1999-01-01'||date>'2080-12-31')return;
+ if(date===viewDate)return;
+ // Model reads validate the date and return deterministic as-of ability.
+ const previous=viewDate;viewDate=date;
+ try{
+  q('/api/1999/sim/overview');
+  records.clear();departmentCache.clear();
+  stableHorses=allPages('/api/1999/sim/owner-horses?'+portfolioQuery,ownedHorseCount);
+  horseLookup=new Map([...srcHorses,...stableHorses].map(h=>[h.name,h]));
+  if(window.__WTW_1999_UI_DATA__)window.__WTW_1999_UI_DATA__.stableHorses=roster();
+ }catch(error){
+  viewDate=previous;
+  throw error;
+ }
+}
 function departmentRows(section,page,context={}){
+ if(context.date)setGameDate(context.date);
  const key=section+'|'+page+(section==='Racing'?'|'+(context.date||'1999-01-01')+'|'+(context.racingMode||'meets'):'');
  if(departmentCache.has(key))return departmentCache.get(key);
  const rows=makeDepartmentRows(section,page,context);
@@ -245,7 +264,7 @@ function worldHorsePage(offset=0,limit=20,filter=''){
    ownerId:h.ownerId||'',trainerId:h.trainerId||'',
    breederId:h.breederId||'',breeder:h.breeder||h.breederName||'',
    breedingFarmId:h.breedingFarmId||'',breedingFarm:h.breedingFarm||'',homebred:h.homebred===true,
-   name:h.name,age:String(h.ageAtOpening||1999-Number(h.foalYear)),sex:h.sex,
+   name:h.name,age:String(h.ageAtDate??h.ageAtOpening??1999-Number(h.foalYear)),sex:h.sex,
    sire:sireName||h.sireId||'',dam:damName||h.damId||'',
    owner:universeLabels.owners.get(h.ownerId)||ownerNames.get(h.ownerId)||h.ownerId||'',
    trainer:universeLabels.trainers.get(h.trainerId)||peopleNames.get(h.trainerId)||h.trainerId||'',
@@ -304,7 +323,7 @@ window.__WTW_1999_UI_DATA__={
  sourceOwnerId:activeOwnerId,sourceOwnerName:selectedOwner,stableHorses:roster(),
   generatedStaffRoles:['trainer','jockey','farm_manager','veterinarian','farrier','bloodstock_agent','racing_secretary'],
  ownedHorseCount,
- sourceFacts,ownerFor,stableHorsePreview,departmentRows,auctionList,extraTracks,
+ sourceFacts,ownerFor,stableHorsePreview,setGameDate,departmentRows,auctionList,extraTracks,
  officeMessages,officeDesks,openingCash,worldHorsePage,
  stakesForTrack,findStake,findRace,ownedHorses,breederProfile,foalingFarmProfile,trackProgramById:trackProgram1999,
  sourceHorseAbility:id=>{const index=sourceHorseOffset.get(id);
