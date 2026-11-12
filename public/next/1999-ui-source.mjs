@@ -669,6 +669,13 @@ function worldHorsePage(offset=0,limit=20,filter=''){
   [row.name,row._id,row.owner,row.trainer,row.sire,row.dam,row.track].some(value=>String(value||'').toLowerCase().includes(needle))):rows,
   isPageFilter:Boolean(needle),pageStart:start};
 }
+const worldHorseById=id=>{
+ if(!/^H-[A-Za-z0-9-]+$/.test(String(id||'')))return null;
+ try{
+  const found=q('/api/1999/sim/world-horse-profile','id='+encodeURIComponent(id));
+  return found?.index>=0?worldHorsePage(found.index,1).items?.[0]||null:null;
+ }catch{return null}
+};
 const activeRacecourses=get('1999-active-tracks','/api/1999/sim/tracks',worldCounts.tracks);
 const activeTrackIds=new Set(activeRacecourses.map(t=>t.id));
 const activeTrackNames=new Set(activeRacecourses.map(t=>t.name));
@@ -731,7 +738,7 @@ window.__WTW_1999_UI_DATA__={
  ownedHorseCount,
  sourceFacts,ownerFor,stableHorsePreview,personProfileById,setGameDate,departmentRows,auctionList,extraTracks,
  TRAINING_PLANS,horseTraining,assignTraining,trainingCosts,
- officeMessages,officeDesks,openingCash,worldHorsePage,worldHorseBrowse,breedingMarePage,breedingMareBrowse,breedingMareByModelIndex,
+ officeMessages,officeDesks,openingCash,worldHorsePage,worldHorseById,worldHorseBrowse,breedingMarePage,breedingMareBrowse,breedingMareByModelIndex,
  horseAttributeGroups,stableHorseAttributes,stableHorseCareer,
  stakesForTrack,findStake,findRace,ownedHorses,breederProfile,foalingFarmProfile,trackProgramById:trackProgram1999,
  sourceHorseAbility:id=>{const index=sourceHorseOffset.get(id);
