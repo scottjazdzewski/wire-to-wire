@@ -44,14 +44,14 @@ export function readFull1999TestWorld(url){
   auctionCalendar:'36 SIMULATED_1999_AUCTIONS',conditionBooks:'DETERMINISTIC_1999_RACE_CARDS_GENERATED_BY_DATE_AND_TRACK',
   important:'The 87,500 population is indexed, synthetic and reproducible; it is NOT certification that the retained 87,500 protected P01–P08 production horses have been loaded. Gameplay transactions and results require STG7.'});
  if(path==='/api/1999/sim/horse-attributes')return send({...body,definitions:g.attributeCatalog.horse_categories});
- if(path==='/api/1999/sim/horses')return send({...body,...list(url,g.counts.horses,index=>atDate(g.horseAt(index)))});
- if(path==='/api/1999/sim/owners')return send({...body,...list(url,g.counts.owners,index=>atDate(g.ownerAt(index)))});
- if(path==='/api/1999/sim/trainers')return send({...body,...list(url,g.counts.trainers,index=>atDate(g.trainerAt(index)))});
- if(path==='/api/1999/sim/people')return send({...body,...list(url,g.counts.people-g.sourcePeople.length,index=>atDate(g.personAt(index)))});
- if(path==='/api/1999/sim/source-people')return send({...body,...list(url,g.sourcePeople.length,index=>atDate(g.sourcePersonAt(index))),provenance:'CANONICAL_IDENTITIES_WITH_SEPARATE_TEST_ABILITY'});
- if(path==='/api/1999/sim/tracks')return send({...body,...list(url,g.counts.tracks,index=>g.trackAt(index))});
- if(path==='/api/1999/sim/facilities')return send({...body,...list(url,g.counts.facilities,index=>g.facilityAt(index))});
- if(path==='/api/1999/sim/auctions')return send({...body,...list(url,g.counts.auctions,index=>g.auctionAt(index))});
+ if(path==='/api/1999/sim/horses')return send({...meta,...list(url,g.counts.horses,index=>atDate(g.horseAt(index)))});
+ if(path==='/api/1999/sim/owners')return send({...meta,...list(url,g.counts.owners,index=>atDate(g.ownerAt(index)))});
+ if(path==='/api/1999/sim/trainers')return send({...meta,...list(url,g.counts.trainers,index=>atDate(g.trainerAt(index)))});
+ if(path==='/api/1999/sim/people')return send({...meta,...list(url,g.counts.people-g.sourcePeople.length,index=>atDate(g.personAt(index)))});
+ if(path==='/api/1999/sim/source-people')return send({...meta,...list(url,g.sourcePeople.length,index=>atDate(g.sourcePersonAt(index))),provenance:'CANONICAL_IDENTITIES_WITH_SEPARATE_TEST_ABILITY'});
+ if(path==='/api/1999/sim/tracks')return send({...meta,...list(url,g.counts.tracks,index=>g.trackAt(index))});
+ if(path==='/api/1999/sim/facilities')return send({...meta,...list(url,g.counts.facilities,index=>g.facilityAt(index))});
+ if(path==='/api/1999/sim/auctions')return send({...meta,...list(url,g.counts.auctions,index=>g.auctionAt(index))});
  if(path==='/api/1999/sim/conditions'){
   const date=url.searchParams.get('date')||g.startDate,idx=number(url.searchParams.get('trackIndex'),0,g.counts.tracks-1);
   try{return send({...body,date,track:g.trackAt(idx),races:g.conditionBook(date,idx)});}
