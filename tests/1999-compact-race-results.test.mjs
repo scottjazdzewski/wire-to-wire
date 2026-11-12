@@ -46,6 +46,13 @@ test('archive does not invent missing winners or permit repeated horses and race
  assert.throws(()=>packRaceMonth('1999-01',[race(2),race(2)]),/Duplicate race ID/);
  assert.throws(()=>packRaceMonth('1999-02',[race(2)]),/outside target month/);
 });
+test('an altered archive fails its mandatory integrity check',async()=>{
+ const block=await encodeRaceMonth('1999-01',[race(12),race(13)]);
+ const damaged={metadata:block.metadata,bytes:block.bytes.slice()};
+ damaged.bytes[damaged.bytes.length-1]^=1;
+ await assert.rejects(()=>decodeRaceMonth(damaged),/checksum mismatch/);
+});
+
 test('race facts cannot be silently reconstructed from rerunning new simulation code',()=>{
  const archived=packRaceMonth('1999-01',[race(5)]);
  const historical=unpackRaceMonth(archived)[0];
