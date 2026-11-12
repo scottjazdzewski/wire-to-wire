@@ -177,3 +177,74 @@ export function createAgeAbility({seed,id,role,age,pedigree=null,asOf='1999-01-0
   }:null,
   provenance:'DETERMINISTIC_1999_TEST_ABILITY_NOT_HISTORICAL_OR_SCOUT_EVIDENCE'},age);
 }
+
+/**
+ * READ-ONLY career projection driven by the actual game date.
+ * Annual official Thoroughbred age changes on January 1. Within each racing
+ * year the continuous curve also develops month by month. Human ages remain
+ * year-granular where their exact birthday is not source-established; no
+ * fabricated biographical birthday is invented.
+ *
+ * Opening entity data is unchanged. This is a deterministic view, not a
+ * mutation, race outcome, injury, training result or historical observation.
+ */
+export function validateCareerGameDate(date){
+ if(typeof date!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(date))throw Error('Expected YYYY-MM-DD game date');
+ const ms=Date.parse(date+'T00:00:00Z');
+ if(!Number.isFinite(ms)||new Date(ms).toISOString().slice(0,10)!==date||
+   date<'1999-01-01'||date>'2080-12-31')throw Error('Game date outside supported 1999 career projection');
+ return date;
+}
+export function careerAgeAtDate(openingAge,date,{annual=false}={}){
+ validateCareerGameDate(date);
+ if(!Number.isFinite(openingAge)||openingAge<0||openingAge>120)throw Error('Invalid opening age');
+ const year=Number(date.slice(0,4)),jan1=Date.parse(year+'-01-01T00:00:00Z'),
+  next=Date.parse((year+1)+'-01-01T00:00:00Z'),
+  now=Date.parse(date+'T00:00:00Z'),completed=year-1999;
+ // For horses a 2YO is officially 2 all year, and the maturity factor
+ // moves continuously until the horse's next official birthday.
+ return openingAge+completed+(annual?0:(now-jan1)/(next-jan1));
+}
+function ageResponsiveAttribute(key,role,scope){
+ if(key==='maturation_curve'||key==='soundness_risk')return false;
+ if(scope==='dynamic'||scope==='derived'||scope==='profile'||scope==='measured')return false;
+ if(role==='horse'&&/aptitude|tolerance|adaptability|durability|conformation/.test(key))return false;
+ return true;
+}
+/**
+ * Source of truth for advancing any generated horse or professional.
+ * Inputs are the immutable opening entity from create1999Universe.
+ */
+export function project1999CareerEntity(openingEntity,date='1999-01-01',catalog=null){
+ validateCareerGameDate(date);
+ if(!openingEntity||!openingEntity.ability?.schema||openingEntity.ability.schema!==AGE_ABILITY_SCHEMA)
+  throw Error('Opening entity has no WTW age-ability model');
+ const role=openingEntity.ability.role,h=role==='horse';
+ const startAge=h?Number(openingEntity.ageAtOpening):Number(openingEntity.age);
+ const exactAge=careerAgeAtDate(startAge,date);
+ const officialAge=Math.floor(careerAgeAtDate(startAge,date,{annual:true}));
+ const current=evaluateAgeAbility(openingEntity.ability,exactAge);
+ const base=openingEntity.ability;
+ const changed=current.current-base.current;
+ const attrs=openingEntity.attributes||openingEntity.roleAttributes;
+ let nextAttrs=attrs;
+ if(attrs&&changed){
+  const definitions=h?Object.values(catalog?.horse_categories||{}).flat():
+   [...(catalog?.person_common||[]),...(catalog?.person_roles?.[role]||[])];
+  const scopes=new Map(definitions.map(d=>[d.key,d.scope]));
+  nextAttrs=Object.fromEntries(Object.entries(attrs).map(([key,value])=>{
+   if(typeof value!=='number'||!ageResponsiveAttribute(key,role,scopes.get(key)))return [key,value];
+   // Original trait idiosyncrasy is retained; only the portion proportional to
+   // effective ability moves. No change to genetic aptitude or current health.
+   return [key,round(clamp(value+changed*.006536,.01,.99))];
+  }));
+ }
+ const projection={...openingEntity,ability:current,
+  ageAtDate:officialAge,gameDate:date,careerModelDate:date,
+  careerProjectionBasis:'AGE_MODEL_ONLY__NO_RACE_TRAINING_OR_HEALTH_OUTCOMES',
+  ...(h?{}:{age:officialAge}),
+  ...(attrs?{attributes:nextAttrs}:{}),
+  ...(openingEntity.roleAttributes?{roleAttributes:nextAttrs}:{})};
+ // A 1999 foal-year age is still the opening snapshot; do not rewrite source.
+ return projection;
+}
