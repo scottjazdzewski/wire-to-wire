@@ -7,7 +7,7 @@
  * capacity, reputation and applicable catalog attributes on demand.
  */
 import {openingWorld1999 as canon} from './opening-world.v1.mjs';
-import attributeCatalog from '../../public/assets/game/attribute-catalog.v1.json' with {type:'json'};
+import attributeCatalog from '../../public/1999/engine/attribute-catalog.mjs';
 import {WTW_TEST_START_DATE} from './test-clock.mjs';
 export const FULL_WORLD_SCHEMA='WTW_1999_FULL_SCALE_TEST_V1';
 export const HORSE_POPULATION=87500;
