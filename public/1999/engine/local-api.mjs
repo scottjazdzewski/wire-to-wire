@@ -1,7 +1,7 @@
 // 1999 browser population adapter. Every visible directory uses the same
 // deterministic generator/canon snapshot WITHOUT Cloudflare Pages Functions,
 // JWT, D1 migrations, or an online API request. Read-only test projection.
-import {create1999Universe,MODES} from './full-world-generator.mjs?rev=wtw1999-20261112-r6';
+import {create1999Universe,MODES} from './full-world-generator.mjs?rev=wtw1999-20261112-r7';
 import {openingWorld1999 as canon} from './canon-mini.mjs';
 import {createClean1999Clock} from '../test-clock.mjs';
 import {validateCareerGameDate} from './age-ability.mjs';
