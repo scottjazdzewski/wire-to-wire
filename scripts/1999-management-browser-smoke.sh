@@ -32,10 +32,17 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   const click=(section)=>{const button=[...d.querySelectorAll('#wtwNextgen [data-ng="menu"]')].find(n=>n.dataset.val===section);if(!button)throw Error(section+' menu absent');button.click()};
   click('Stable');await pause(250);
   check('Original stable roster displays source horse',Boolean(d.querySelector('.ng-wtw-roster-row'))||Boolean(d.querySelector('.ng-rs-horse')));
+  const firstHorse=d.querySelector('#wtwNextgen .ng-rs-horse');
+  check('Stable horse profile navigation button is present',Boolean(firstHorse?.dataset.val));
+  const openingHorseName=firstHorse.dataset.val;
+  firstHorse.click();await pause(240);
+  check('Stable horse opens a linked 1999 profile',Boolean(d.querySelector('#wtwNextgen .ng-world-profile, #wtwNextgen .ng-profile-view, #wtwNextgen .ng-horse-dossier'))||
+   d.querySelector('#wtwNextgen')?.textContent.includes(openingHorseName));
+  click('Stable');await pause(180);
   click('Breeding');await pause(180);
   check('Original Breeding screen shown',Boolean(d.querySelector('.ng-manager-stage')));
   const stallions=ui.departmentRows('Breeding','Stallions');
-  check('31 source-backed stallions',stallions.length===31);
+  check('31 source-backed stallions preserved alongside model stallions',stallions.length>=31&&stallions.filter(h=>h.status?.includes('SOURCE')).length===31&&stallions.every(h=>h._canonId||h._testGenerated));
   const finances=ui.departmentRows('Finances','Overview');
   check('Test finances marked',finances.length>0&&finances.every(x=>x.source==='GENERATED_TEST_BASELINE'));
   const auction=ui.auctionList();
