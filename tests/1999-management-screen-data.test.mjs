@@ -62,6 +62,23 @@ test('Racing screen uses source stakes and dated test condition books instead of
  assert.ok(card.every(r=>r.date==='1999-01-01'&&r.status.includes('NOT ENTERED')&&r.horse===''));
  assert.match(js,/const racingRows=\(\)=>window.__WTW_1999_MANAGEMENT__\?\[\]/);
 });
+test('original World roster can inspect all 87500 names by virtual page without loading 87500 trait objects',()=>{
+ assert.equal(typeof ui.worldHorsePage,'function');
+ const first=ui.worldHorsePage(0,18);
+ const synthetic=ui.worldHorsePage(300,18);
+ const last=ui.worldHorsePage(87482,18);
+ assert.equal(first.total,87500);
+ assert.equal(last.total,87500);
+ assert.equal(first.items.length,18);
+ assert.equal(synthetic.items.length,18);
+ assert.equal(last.items.length,18);
+ assert.ok(first.items.every(x=>x._worldKey?.startsWith('horse:')));
+ assert.ok(synthetic.items.every(x=>x._testGenerated&&!x._worldKey));
+ assert.ok(synthetic.items.every(x=>Object.keys(x._testAttrs).length===53));
+ assert.ok(synthetic.items.every(x=>x.owner&&x.trainer&&x.sire&&x.dam&&x.location));
+ assert.match(js,/worldHorsePage/);
+ assert.match(js,/totalRecords=pageData\?pageData.total:rows.length/);
+});
 test('large rosters are cached so native UI pagination does not regenerate all records on every paint',()=>{
  const a=ui.departmentRows('Personnel','Staff');
  const b=ui.departmentRows('Personnel','Staff');
