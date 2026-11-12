@@ -691,6 +691,16 @@ function world1999Profile(){
    '" '+(!child?'disabled':'')+' title="Open source-linked horse '+safe(h.name)+'"><strong>'+safe(h.name)+
    '</strong><span>'+safe(h.trainer||h.owner||h.racingStatus||'1999 horse')+'</span>↗</button>';
  }).join('');
+ const extraFields=Object.entries(d).filter(([field,value])=>
+  worldEditValidField(field)&&!['name','status','role','type','location','owner','trainer',
+  'sire','dam','track','base','birthplace','racingStatus','trainingStatus','healthStatus',
+  'publicPrincipal','homeTrack','ownershipOperation','foalYear','sex','region','circuit',
+  'operating','realAnchor','geographyStatus','locationGranularity'].includes(field)&&
+  value!==null&&value!==undefined&&String(value).trim()!=='');
+ const attributes=extraFields.length?'<details class="ng-world-extra-attributes"><summary>ALL RECORDED ATTRIBUTES · '+
+  extraFields.length+'</summary><div>'+extraFields.map(([field,value])=>
+   '<p><small>'+safe(field.replace(/([a-z])([A-Z])/g,'$1 $2').toUpperCase())+'</small><strong>'+
+   safe(String(value))+'</strong></p>').join('')+'</div></details>':'';
  const toDir=kind==='horse'?'1999 Horses':kind==='farm'?'Organizations':kind==='person'?'People':'Tracks';
  const related=kind==='horse'?'':('<section class="ng-world-related"><header><strong>1999 ASSOCIATED HORSES</strong>'+
   '<span>'+matches.length+' source-linked · '+Math.min(12,matches.length)+' shown</span></header>'+
@@ -707,7 +717,7 @@ function world1999Profile(){
   safe(d.location||d.base||d.track||'1999 Start')+'</span><span>'+safe(d.id||'DOCUMENT-BASED IDENTITY')+'</span></div>'+
   '<div class="ng-world-profile-facts">'+details.map(x=>
    '<div><small>'+safe(x.label)+'</small><strong>'+(x.html||safe(x.value||'—'))+'</strong></div>').join('')+'</div>'+
-  related+'<p class="ng-world-profile-footnote">'+safe(sourceNote)+'</p>'+
+  related+attributes+'<p class="ng-world-profile-footnote">'+safe(sourceNote)+'</p>'+
   '<div class="ng-world-profile-reference"><small>AUTHORITY: WTW 1999 START v3.3 · SOURCE + USER EDIT OVERLAY · '+safe(APP.worldEditStatus||'SOURCE ID PRESERVED')+'</small></div></section>';
 }
 
@@ -2547,6 +2557,9 @@ function departmentRoster(section,page='Overview'){
   '<input id="ngDepartmentSearch" data-ng-input="department-search" type="search" aria-label="Search '+safe(section)+' roster" value="'+safe(APP.departmentSearch)+'" placeholder="Find records…" autocomplete="off"/>'+
   (section==='World'||['Personnel','Facilities','Tracks'].includes(section)||section==='Breeding'&&['Stallions','Broodmares'].includes(page)?'':
    '<button data-ng="dept-demo" class="'+(demo?'on':'')+'" title="Preview-only invented values; no game data changes">'+(demo?'DEMO ON':'DEMO OFF')+'</button>')+
+  (section==='World'?'<button type="button" data-ng="world-export" title="Download all World edits and images">EXPORT EDITS</button>'+
+   '<button type="button" data-ng="world-import-open" title="Import World editing backup">IMPORT EDITS</button>'+
+   '<input type="file" id="wtwWorldImportInput" accept="application/json,.json" hidden/>':'')+
   '<span class="ng-dpt-mode">FULL-WIDTH ROSTER</span></div>'+salesDeskView+
   '<section class="ng-rs-roster"><header><strong>'+safe(section.toUpperCase())+' · SORTABLE ROSTER</strong><div class="ng-dpt-pager">'+pager+'</div></header>'+
   '<div class="ng-rs-scroll"><table class="ng-rs-table ng-dpt-table"><thead><tr>'+heads+'</tr></thead><tbody>'+
