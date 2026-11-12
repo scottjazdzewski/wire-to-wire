@@ -37,3 +37,20 @@ No production main-branch UI or Cloudflare deployed state changed.
 
 ## Verification and limits
 Source-matched 267 featured horses; 31 unique standing stallions; 2,056 January broodmares; 2,876 ancestors; 93 dated stakes; 38 preauthorized, not executed events. In-memory JavaScript module compilation and **19 direct source/entry invariants** passed. This is not a substitute for full repository npm test, GitHub CI, Cloudflare Access/D1 testing, or STG7 production gameplay acceptance.
+
+
+## 2026-11-11: Full 1999 synthetic testing universe (additive to the verified source handoff)
+
+The complete 87,500-horse TEST population is now a deterministic game model. It is **not** a claimed import of the separately preserved 87,500 canonical production horses in P01–P08. Canon-anchored test mode protects 267 historical opening identities and generates 87,233 replaceable fictional horses. Full-fiction mode builds all 87,500 from seed, preserving the original historical authority elsewhere. Both modes begin on Friday, January 1, 1999 (Day 0).
+
+The separate /1999/ Test Office supports daily/weekly/monthly date advancement, New Clean World reset, Generate Fictional Universe, and Return to 1999 Canon Test. Its browser save namespace does not overwrite existing 2014 Office/demo saves. The main premium Office homepage is deliberately unchanged.
+
+Population model: 134 known geographical track nodes, 3,308 owner groups, 4,200 trainer strings, 17,348 people including 154 protected source people, 5,234 named physical facilities, 36 simulated sales events, 31 protected stud stallions, and 2,036 sourced broodmare boarding records. Owner distribution includes 1,721 operations holding only 1–3 horses and 136 with 100+ horses. Each operation has ID, name, location, reputation, money and horse-slot capacity; every trainer barn is assigned a real track/region and sufficient stalls.
+
+Every generated horse has a stable Horse_ID, temporary renameable three-word name, exact as-of-1999 location, owner/trainer, plausible parent ages, simulated prior noncanonical racing activity, financial care/value model, and all 53 applicable attribute-catalog keys. Canonical horse IDs, names, placings, awards and pedigrees remain protected. The temporary name source can be replaced later without renumbering horses. Unverified canonical headquarters are not fabricated; an alternate regional test-operating base is identified as such.
+
+The source-backed calendars and deterministic condition books supply 8–10 modeled races per active card day with explicit distance, surface, age, class and purse. Summer fair meetings are excluded from January. Entries, breeding/auction transactions, race finishes and finances are NOT yet committed to a persistent game ledger. The model is a full population **testing foundation**, not a falsely certified STG7 world.
+
+Code: src/1999/full-world-generator.mjs, full-world-readmodel.mjs, test-clock.mjs; public/1999. Protected testing endpoints: /api/1999/sim/overview, /horses, /owners, /trainers, /people, /tracks, /facilities, /auctions, /conditions, /horse-attributes. Tests: 1999-full-universe, 1999-full-world-api, 1999-test-clock and earlier source/parity suites. The dedicated WTW 1999 source integration GitHub workflow passed; historical Office UI legacy assertions are a separate, still-failing CI concern.
+
+**Remaining before the universe is truly playable:** import the complete protected P01–P08 production population, persistent STG7 AI/Player event execution, authoritative purchases/entries/breeding/costs, race scoring, save/reload and player progression. Do not conflate deterministic population test coverage with transactional gameplay certification.
