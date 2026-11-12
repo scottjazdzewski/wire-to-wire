@@ -99,7 +99,7 @@ function createDevelopmentRoot(horses){
   records[horse.id]=createHorseTrainingRecord(horse);
  }
  return {schema:HORSE_DEVELOPMENT_SCHEMA,processedThrough:START,horses:records,
-  ledger:[],events:[],totalSpent:0,revision:0,
+  ledger:[],monthlyArchive:{},trainingDays:0,events:[],totalSpent:0,revision:0,
   provenance:'1999_GAME_RUN_MUTABLE_TRAINING_NOT_HISTORICAL_CANON'};
 }
 function validateRoot(root,horses){
@@ -299,16 +299,35 @@ export function simulateStableTrainingThrough(game,{horses,trainerById={},seed=1
     provenance:'SIMULATED_GAMEPLAY_NOT_VET_MEDICAL_RECORD'});
   }
   const amount=Math.round(horseCharges.reduce((a,x)=>a+x.amount,0)*100)/100;
+  const beforeDays=Number.isInteger(root.trainingDays)?root.trainingDays:root.ledger.length;
   root.ledger.push({id:'TRAIN-'+day,date:day,category:'STABLE_TRAINING_AND_CARE',
    amount,currency:'USD',charges:horseCharges,provenance:'1999_GAMEPLAY_TEST_COST_NOT_BANK_PAYMENT'});
+  root.trainingDays=beforeDays+1;
+  // Preserve day-by-day detail for the recent quarter. Older rows fold into
+  // per-month, per-horse totals in the SAME career ledger to keep browser
+  // localStorage viable across multi-year saves without losing accounting.
+  if(root.ledger.length>90){
+   root.monthlyArchive=root.monthlyArchive||{};
+   const archived=root.ledger.splice(0,root.ledger.length-90);
+   for(const entry of archived){
+    const month=entry.date.slice(0,7);
+    const summary=root.monthlyArchive[month]||{month,days:0,total:0,byHorse:{}};
+    summary.days++;
+    summary.total=Math.round((summary.total+entry.amount)*100)/100;
+    for(const charge of entry.charges){
+     summary.byHorse[charge.horseId]=Math.round(((summary.byHorse[charge.horseId]||0)+charge.amount)*100)/100;
+    }
+    root.monthlyArchive[month]=summary;
+   }
+  }
   root.events.push(...dayEvents);
   root.totalSpent=Math.round((root.totalSpent+amount)*100)/100;
   root.processedThrough=day;
   root.revision++;daysProcessed++;
  }
  if(!daysProcessed)return {game,daysProcessed:0};
- // Bound records for saves that span long careers; per-horse history is 45-day.
- // Full daily expenses remain append-only for financial auditing.
+ // Bound per-horse 45-day histories and 90-day daily ledgers. Monthly older
+ // per-horse totals retain accounting custody without blowing save quotas.
  const development=root;
  return {game:{...game,horseDevelopment:development},daysProcessed};
 }
@@ -320,7 +339,7 @@ export function horseTrainingSnapshot(game,horse){
 export function trainingFinancials(game){
  const d=game?.horseDevelopment;
  return {processedThrough:d?.processedThrough||START,
-  totalSpent:Number(d?.totalSpent)||0,entries:d?.ledger?.length||0,
+  totalSpent:Number(d?.totalSpent)||0,entries:d?.trainingDays??d?.ledger?.length??0,
   recordedHealthAlerts:d?.events?.filter(e=>e.type==='MODELED_SORENESS_WATCH').length||0,
   provenance:'SIMULATED_GAMEPLAY_COST_LEDGER_NOT_SOURCE_FINANCIAL_HISTORY'};
 }
