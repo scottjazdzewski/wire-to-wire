@@ -138,8 +138,8 @@ test('Racing browse has all 118 tracks, daily condition books and no off-meet ca
  assert.ok(subset.every(r=>r.track===first));
  assert.deepEqual(ui.racingDayCards('1999-01-01',first),subset,'Daily card is stable across reads');
  assert.ok(ui.racingDayCards('1999-08-28','Saratoga').some(r=>r._raceId==='STK-0022'),'Travers sits on its retained August 28 date');
- assert.deepEqual(ui.racingDayCards('1999-02-30'),[],'Invalid dates do not produce false cards');
- assert.deepEqual(ui.racingDayCards('1999-01-01','Ascot'),[],'Overseas tracks are not playable');
+ assert.equal(ui.racingDayCards('1999-02-30').length,0,'Invalid dates do not produce false cards');
+ assert.equal(ui.racingDayCards('1999-01-01','Ascot').length,0,'Overseas tracks are not playable');
 });
 test('Racing date navigation, condition books and purse formatting are visible in the existing UI',()=>{
  for(const marker of [
