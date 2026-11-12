@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {create1999Universe} from '../src/1999/full-world-generator.mjs';
+import {create1999Universe as createBrowserWorld} from '../public/1999/engine/full-world-generator.mjs';
 import {meetProgramPhase1999,trackConditionProfile1999} from '../public/next/1999-condition-book-engine.mjs';
 import {trackMeetOpen1999} from '../public/next/1999-track-program.mjs';
 
@@ -38,7 +39,8 @@ test('weekly programs rotate themes and 1999 winter cards have no two-year-old r
  assert.ok(juvenile.every(x=>x.distanceFurlongs>=5&&x.distanceFurlongs<=8.5));
 });
 test('condition books carry meet phase, weekly theme and do not infer demand from total horse population',()=>{
- assert.ok(world.counts.worldHorses>world.counts.horses,'world horse population must include non-racing cohorts');
+ const worldPopulation=createBrowserWorld({seed:19990101,mode:'CANON_ANCHORED_TEST'}).counts;
+ assert.ok(worldPopulation.worldHorses>worldPopulation.horses,'world horse population must include non-racing cohorts');
  assert.equal(world.counts.horses,87500);
  assert.equal(world.counts.tracks,118);
  for(const [id,date] of [['T-0014','1999-04-02'],['T-0014','1999-04-23'],
