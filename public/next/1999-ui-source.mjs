@@ -7,6 +7,7 @@ import {readLocal1999World} from '/1999/engine/local-api.mjs';
 const q=(route,extras='')=>readLocal1999World(route+(route.includes('?')?'&':'?')+'seed=19990101&mode=CANON_ANCHORED_TEST'+(extras?'&'+extras:''));
 const historicalHorseById=id=>id?q('/api/1999/history/horse','id='+encodeURIComponent(id)).horse:null;
 const historicalPedigree=(id,depth=2)=>id?q('/api/1999/history/pedigree','id='+encodeURIComponent(id)+'&depth='+depth).pedigree:null;
+const historicalOrganizationById=id=>id?q('/api/1999/history/organization','id='+encodeURIComponent(id)).organization:null;
 const allPages=(route,total)=>{const rows=[];for(let offset=0;offset<total;offset+=100){const page=q(route,'offset='+offset+'&limit=100');rows.push(...(page.items||[]));}return rows;};
 const srcHorses=allPages('/api/1999/horses',267);
 const srcOrgs=allPages('/api/1999/organizations',108);
@@ -91,7 +92,8 @@ function sourceFacts(name){
   sire_id:h.sireId,dam_id:h.damId,
   sire_name:historicalHorseById(h.sireId)?.name||null,
   dam_name:historicalHorseById(h.damId)?.name||null,
-  historicalPedigree:source?openingPedigree(h):null};
+  historicalPedigree:source?openingPedigree(h):null,
+  ownerHistoricalCareer:historicalOrganizationById(h.ownerId)};
 }
 const ownerFor=name=>{const h=horseLookup.get(name);return h?(h.ownerId===activeOwnerId?selectedOwner:ownerNames.get(h.ownerId)||h.ownerId||''):null;};
 function roster(){return stableHorses.map((h,i)=>({name:h.name,
@@ -108,7 +110,8 @@ function stableHorsePreview(name){
   ownerId:h.ownerId||'',trainerId:h.trainerId||'',
   sex:h.sex||'',sire:historicalHorseById(h.sireId)?.name||h.sireId||'',
   dam:historicalHorseById(h.damId)?.name||h.damId||'',
-  historicalPedigree:source?openingPedigree(h):null,owner:ownerFor(name)||'',
+  historicalPedigree:source?openingPedigree(h):null,
+  ownerHistoricalCareer:historicalOrganizationById(h.ownerId),owner:ownerFor(name)||'',
   trainer:sourceFacts(name)?.connections.trainer||'',track:h.openingStable?.name||h.stableTrackId||'',
   location:city(h.location||h.openingStable)||'',
   status:source?h.racingStatus||'SOURCE OPENING':'1999 GENERATED TEST — NO RESULTS'};
