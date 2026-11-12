@@ -538,7 +538,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const compensation=jockey?{role:'JOCKEY',basis:'1999_TEST_MOUNT_AND_PURSE_FEES',
    mountFee:jockeyMountFee,winShareRate:jockeyWinRate,secondShareRate:.05,thirdShareRate:.05,
    projectedAnnualGross:jockeyGross,currency:'USD',notGuaranteedSalary:true}:null;
-  return {id,name:namedPeople[index].name,birthCountry:namedPeople[index].birthCountry,
+  const person={id,name:namedPeople[index].name,birthCountry:namedPeople[index].birthCountry,
     nameOrigin:'GEO_ROLE_TEST_POPULATION',
    nameStatus:'TEST_RENAME_ALLOWED',role,location:track.location,baseTrackId:track.id,
    ability:ageAbility,attributes:traits([...common,...(roleDef[role]||[])],seed,id,ageAbility),
@@ -547,6 +547,8 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
     baselineDemand:Math.round((.15+.75*quality)*100),
     market:'MAJOR_RACE_INTEREST_SIMULATED_NOT_CONFIRMED'}:null,
    age:ageInfo.age,ageBasis:ageInfo.basis,morale:round(.3+unit(seed,id+':morale')*.68),workload:round(.2+unit(seed,id+':load')*.7),licenseStatus:'SIMULATED_TEST_ACTIVE',source:'SIMULATED_WORKFORCE'};
+  if(jockey)person.bookingMarket=jockeyBookingMarket(person,'',250000,'MAJOR_RACE_MARKET');
+  return person;
  }
  function meetOpen(track,date){
   return trackMeetOpen1999(track.sourceTrackId||track.id,date);
