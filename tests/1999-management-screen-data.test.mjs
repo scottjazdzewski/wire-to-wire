@@ -16,7 +16,7 @@ const context={window:{__WTW_NEXT__:{paint(){}}},readLocal1999World,trackProgram
  WTW_ALTERNATE_STAKES_1999,attributeCatalog,
  TRAINING_PLANS,createHorseTrainingRecord,horseTrainingSnapshot,assignHorseTrainingPlan,
  simulateStableTrainingThrough,trainingFinancials};
-const browserImports=/^import\\s+(?:\\{[^}]+\\}|attributeCatalog)\\s+from\\s+'\\/(?:1999\\/engine\\/(?:local-api|attribute-catalog|horse-development)|next\\/(?:1999-track-program|1999-alternate-stakes))\\.mjs(?:\\?[^']+)?';[ \\t]*$/gm;
+const browserImports=/^import\s+(?:\{[^}]+\}|attributeCatalog)\s+from\s+'\/(?:1999\/engine\/(?:local-api|attribute-catalog|horse-development)|next\/(?:1999-track-program|1999-alternate-stakes))\.mjs(?:\?[^']+)?';[ \t]*$/gm;
 vm.runInNewContext(source.replace(browserImports,''),context,{timeout:20000});
 const ui=context.window.__WTW_1999_UI_DATA__;
 test('1999 source data is mounted behind unchanged existing management UI',()=>{
