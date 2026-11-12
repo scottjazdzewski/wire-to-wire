@@ -3066,3 +3066,26 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  #wtwNextgen .ng-training-summary strong{font-size:15px}
  #wtwNextgen .ng-training-desk{padding:0 6px 8px}
 }
+
+/* WTW 1999 universal compact roster filters; same toolbar on all lists. */
+#wtwNextgen .ng-list-filters{display:flex;align-items:flex-end;flex-wrap:wrap;gap:8px;
+ padding:9px 12px;background:#172126;border:1px solid #344941;border-top:0}
+#wtwNextgen .ng-list-filters label{display:flex;flex-direction:column;gap:4px;font-size:9px;
+ font-weight:800;letter-spacing:.04em;color:#b8cbbe}
+#wtwNextgen .ng-list-filters input,#wtwNextgen .ng-list-filters select{
+ background:#101b1f;color:#e2ebe1;border:1px solid #476052;border-radius:3px;
+ font-size:11px;min-height:29px;padding:5px 7px;max-width:170px}
+#wtwNextgen .ng-list-filters input[type=number]{max-width:66px}
+#wtwNextgen .ng-list-filters button{background:#243630;color:#e3d09a;border:1px solid #56735a;
+ border-radius:3px;padding:7px 10px;font-size:10px;font-weight:700}
+#wtwNextgen .ng-attr-table{min-width:1730px!important;width:max-content!important;table-layout:fixed!important}
+#wtwNextgen .ng-attr-table th:first-child,#wtwNextgen .ng-attr-table td:first-child{min-width:225px;width:225px}
+#wtwNextgen .ng-attr-table th:nth-child(2),#wtwNextgen .ng-attr-table td:nth-child(2),
+#wtwNextgen .ng-attr-table th:nth-child(3),#wtwNextgen .ng-attr-table td:nth-child(3){min-width:70px;width:70px}
+#wtwNextgen .ng-attr-table th:nth-child(4),#wtwNextgen .ng-attr-table td:nth-child(4){min-width:150px;width:150px}
+#wtwNextgen .ng-attr-table th:nth-child(n+5),#wtwNextgen .ng-attr-table td:nth-child(n+5){min-width:142px;width:142px}
+#wtwNextgen .ng-attr-table .ng-attr-score{min-width:110px;display:flex;align-items:center;justify-content:space-between;gap:6px}
+#wtwNextgen .ng-attr-table .ng-attr-track{width:78px;min-width:78px;flex:0 0 78px}
+#wtwNextgen .ng-attr-table .ng-attr-score b{min-width:25px;flex:0 0 25px;text-align:right}
+@media(max-width:700px){#wtwNextgen .ng-list-filters{gap:6px;padding:6px}
+#wtwNextgen .ng-list-filters label{font-size:8px}#wtwNextgen .ng-attr-table{min-width:1600px!important}}
