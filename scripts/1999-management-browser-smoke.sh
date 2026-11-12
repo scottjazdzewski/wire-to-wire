@@ -36,11 +36,38 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   check('Stable horse profile navigation button is present',Boolean(firstHorse?.dataset.val));
   const openingHorseName=firstHorse.dataset.val;
   firstHorse.click();await pause(240);
-  check('Stable horse opens a linked 1999 profile',Boolean(d.querySelector('#wtwNextgen .ng-world-profile, #wtwNextgen .ng-profile-view, #wtwNextgen .ng-horse-dossier'))||
+  check('Stable horse opens a linked 1999 profile',Boolean(d.querySelector('#wtwNextgen .ng-profile-horse'))&&
    d.querySelector('#wtwNextgen')?.textContent.includes(openingHorseName));
+  check('Original FM horse profile shows all 46 specialized horse ratings',
+   d.querySelectorAll('#wtwNextgen .ng-horse-rating-row').length===46&&
+   d.querySelector('#wtwNextgen .ng-horse-dossier')?.textContent.includes('SPEED & PACE'));
   click('Stable');await pause(180);
   click('Breeding');await pause(180);
   check('Original Breeding screen shown',Boolean(d.querySelector('.ng-manager-stage')));
+  click('Personnel');await pause(280);
+  const trainerTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Trainers');
+  check('Existing Personnel trainer tab is available',Boolean(trainerTab));
+  trainerTab.click();await pause(330);
+  const trainerButton=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
+  check('Personnel trainer opens from the existing roster',Boolean(trainerButton));
+  trainerButton.click();await pause(240);
+  check('Trainer opens approved FM people profile, not legacy generic preview',
+   Boolean(d.querySelector('#wtwNextgen .ng-profile-person'))&&
+   !d.querySelector('#wtwNextgen .ng-entity-preview'));
+  check('Trainer profile shows common and trainer-only detailed attributes',
+   d.querySelectorAll('#wtwNextgen .ng-person-attribute').length>=21&&
+   d.querySelector('#wtwNextgen .ng-person-workspace')?.textContent.includes('Conditioning'));
+  click('World');await pause(240);
+  const peopleTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='People');
+  check('Existing World people tab is available',Boolean(peopleTab));
+  peopleTab.click();await pause(270);
+  const sourcePersonButton=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
+  check('1999 world person source row is navigable',Boolean(sourcePersonButton));
+  sourcePersonButton.click();await pause(220);
+  check('Canonical World person uses the same professional attribute dossier',
+   Boolean(d.querySelector('#wtwNextgen .ng-profile-person'))&&
+   d.querySelectorAll('#wtwNextgen .ng-person-attribute').length>=11);
+  click('Breeding');await pause(180);
   const stallions=ui.departmentRows('Breeding','Stallions');
   check('31 source-backed stallions preserved alongside model stallions',stallions.length>=31&&stallions.filter(h=>h.status?.includes('SOURCE')).length===31&&stallions.every(h=>h._canonId||h._testGenerated));
   const finances=ui.departmentRows('Finances','Overview');
