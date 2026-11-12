@@ -6,19 +6,31 @@
 const safe=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const field=(name,value)=>'<div class="profileField"><span>'+safe(name)+'</span><strong>'+safe(value??'—')+'</strong></div>';
 const link=(name,value)=>value?'<div class="profileLine"><b>'+safe(name)+'</b><span>'+safe(value)+'</span></div>':'';
+let registry=null;
+fetch('/data/horse-foaling-registry-projection-v33.json',{credentials:'same-origin',cache:'force-cache'})
+ .then(r=>r.ok?r.json():Promise.reject(Error('Registry foaling projection unavailable')))
+ .then(data=>{if(data?.schema==='WTW_1999_HORSE_FOALING_REGISTRY_PROJECTION_V1'&&data.records){
+  registry=data.records;window.__WTW_NEXT__?.paint?.();
+ }})
+ .catch(()=>{/* Missing source remains unknown: do not substitute racing base. */});
 const panel=(name,items=[])=>'<section class="profilePanel"><h3>'+safe(name)+'</h3>'+items.map(x=>'<div class="achievementItem">'+safe(x)+'</div>').join('')+'</section>';
 function source(kind,record,ui){
  const d=record||{},name=d.name||d._name||'Unresolved record';
  const node=document.createElement('section');node.className='profilePage';
  if(kind==='horse'){
   const year=Number(d.foalYear||d._foalYear||0);
-  const geo=d.foalingGeography||d.foalingLocation||d.foalingPlace||d.foaling||d.birthplace||{};
+  const sourceId=d.id||d._canonId||d._id||'';
+  const foalRegistry=registry?.[sourceId]||null;
+  const geo=d.foalingGeography||d.foalingLocation||d.foalingPlace||d.foaling||d.birthplace||
+    (foalRegistry?{region:foalRegistry.region,country:foalRegistry.foalingCountry,countryCode:foalRegistry.foalingCountryCode}:{});
   const place=geo&&typeof geo==='object'?geo:{};
   const owner=d.owner||d.ownerName||ui?.ownerFor?.(name)||'';
   node.dataset.foalingCity=d.foalingCity||place.locality||place.city||'';
   node.dataset.foalingState=d.foalingState||place.region||place.state||place.province||'';
   node.dataset.foalingCountry=d.foalingCountry||place.country||'';
   node.dataset.foalingCountryCode=d.foalingCountryCode||place.countryCode||place.country_code||'';
+  node.dataset.foalingEvidence=foalRegistry?
+   'Foaling country is source registered; regional label is breeding jurisdiction, NOT a separately verified foaling municipality.':'';
   node.dataset.ownershipGroup=owner;node.dataset.ownerId=d.ownerId||'';
   node.dataset.testGenerated=d._testGenerated?'true':'false';
   node.dataset.testAttributes=JSON.stringify(d._testAttrs||{});
