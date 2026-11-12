@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:true,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:true,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
+const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:true,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:true,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -612,7 +612,12 @@ function world1999Entries(){
  ];
 }
 function world1999Entry(key){
- return world1999Entries().find(e=>e.worldKey===key)||null;
+ const listed=world1999Entries().find(e=>e.worldKey===key);
+ if(listed)return listed;
+ const source=worldSourceRecord(key,world1999Data);
+ if(!source)return null;
+ const kind=key.split(':',1)[0];
+ return {kind,name:source.name,canonicalId:source.id||'',worldKey:key,_world:source};
 }
 function world1999Match(kind,name){
  const target=String(name||'').toLocaleLowerCase('en-US').trim();
@@ -628,6 +633,7 @@ function openWorld1999Entity(key){
 function world1999Profile(){
  const key=decodeURIComponent(String(APP.custom||'').slice('WorldRecord:'.length));
  const e=world1999Entry(key);
+ if(e&&APP.worldEditKey===key)return worldEditMarkup(e);
  if(!e)return '<section class="ng-world-source-profile"><header><strong>1999 WORLD REGISTRY</strong></header>'+
   '<p>'+safe(world1999LoadFailed?'World source file is unavailable.':'Loading the 1999 source records…')+'</p></section>';
  const d=e._world||{},kind=e.kind;
@@ -688,7 +694,8 @@ function world1999Profile(){
  return '<section class="ng-world-source-profile" data-world-kind="'+safe(kind)+'" data-world-id="'+
   safe(d.id||d.key||'')+'">'+
   '<header><div><small>WIRE TO WIRE / 1999 WORLD / '+safe(display)+'</small><h2>'+
-  safe(e.name)+'</h2></div><div class="ng-world-profile-actions">'+
+  safe(e.name)+'</h2></div><div class="ng-world-profile-photo">'+worldMediaPreview(key,d)+'</div><div class="ng-world-profile-actions">'+
+  '<button type="button" data-ng="world-edit" data-val="'+safe(key)+'">EDIT RECORD</button>'+
   '<button data-ng="world-view" data-val="'+safe(toDir)+'">← '+safe(toDir.toUpperCase())+'</button>'+
   '<button data-ng="world-back">WORLD OVERVIEW</button></div></header>'+
   '<div class="ng-world-profile-sub"><strong>CANONICAL WORLD FILE</strong><span>'+
@@ -696,7 +703,7 @@ function world1999Profile(){
   '<div class="ng-world-profile-facts">'+details.map(x=>
    '<div><small>'+safe(x.label)+'</small><strong>'+(x.html||safe(x.value||'—'))+'</strong></div>').join('')+'</div>'+
   related+'<p class="ng-world-profile-footnote">'+safe(sourceNote)+'</p>'+
-  '<div class="ng-world-profile-reference"><small>AUTHORITY: WTW 1999 START v3.3 WORKING RECONCILIATION · READ-ONLY</small></div></section>';
+  '<div class="ng-world-profile-reference"><small>AUTHORITY: WTW 1999 START v3.3 · SOURCE + USER EDIT OVERLAY · '+safe(APP.worldEditStatus||'SOURCE ID PRESERVED')+'</small></div></section>';
 }
 
 function world1999Linked(kind,id,label){
@@ -707,7 +714,7 @@ function world1999Linked(kind,id,label){
   world1999Match(targetKind,label);
  if(!entry)return safe(label||id||'—');
  return '<button type="button" class="ng-entity-reference" data-ng="world-open" data-val="'+
-  safe(entry.worldKey)+'" title="Open '+safe(entry.name)+'">'+safe(label||entry.name)+' ↗</button>';
+  safe(entry.worldKey)+'" title="Open '+safe(entry.name)+'">'+safe(entry.name)+' ↗</button>';
 }
 
 function globalSearchItems(){
@@ -724,12 +731,17 @@ function globalSearchItems(){
   ...currentMessages().map(m=>({kind:'decision',name:m.title,detail:'Office · '+m.from,caseId:m.case}))
  ];
  const original=rows.filter(r=>r&&typeof r.name==='string').map(r=>{
-  const extra=universe.find(u=>u.kind===r.kind&&u.name===r.name);
-  return {kind:r.kind,name:r.name,track:r.track||'',detail:r.kind==='person'?titleCaseUIRole(r.detail):r.detail||'',
+  const bucket={horse:'horses',person:'people',farm:'organizations',track:'tracks'}[r.kind];
+  const base=(world1999Base?.[bucket]||[]).filter(x=>x.name===r.name);
+  const unchanged=base.length===1?base[0].id||base[0].key:'';
+  const extra=universe.find(u=>u.kind===r.kind&&
+   (u.name===r.name||unchanged&&u.canonicalId===unchanged));
+  return {kind:r.kind,name:extra?.name||r.name,sourceName:r.name,track:r.track||'',
+   detail:r.kind==='person'?titleCaseUIRole(extra?._world?.role||r.detail):extra?._world?.type||r.detail||'',
    location:extra?.location||'',canonicalId:extra?.canonicalId||'',worldKey:extra?.worldKey||''};
  });
- const seen=new Set(original.map(r=>r.kind+'|'+r.name));
- const rest=universe.filter(r=>!seen.has(r.kind+'|'+r.name));
+ const seen=new Set(original.map(r=>r.worldKey||r.kind+'|'+r.name));
+ const rest=universe.filter(r=>!seen.has(r.worldKey||r.kind+'|'+r.name));
  return [...original,...rest,...pages];
 }
 const searchWords=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().split(/\s+/).filter(Boolean);
@@ -813,8 +825,8 @@ function searchView(){
 function openSearchItem(item){
  if(!item)return;
  if(['horse','person','farm','track','race'].includes(item.kind)){
-  if(window.__wtwOfficeOpenSearchRecord?.(item.kind,item.name,item.track)){APP.custom='';APP.moreOpen=false;return schedulePaint(20)}
   if(item.worldKey)return openWorld1999Entity(item.worldKey);
+  if(window.__wtwOfficeOpenSearchRecord?.(item.kind,item.sourceName||item.name,item.track)){APP.custom='';APP.moreOpen=false;return schedulePaint(20)}
   return openEntityRecord(item.name,item.kind);
  }
  if(item.kind==='decision'){
