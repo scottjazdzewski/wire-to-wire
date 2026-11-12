@@ -256,7 +256,8 @@ function makeDepartmentRows(section,page,context={}){
    status:'1999 · '+o.portfolio?.tier,principalAge:o.principalAgeAtDate??o.principalAge??'',
     _testAbility:o.principalAbility||null,_canonId:o.authority?.startsWith('CANON')?o.id:'',
    _testGenerated:!o.authority?.startsWith('CANON'),_testAttrs:o.attributes||{},
-   _testFinances:o.finances||{},_testReputation:o.reputation||{}}));
+   _testFinances:o.finances||{},_testNegotiation:o.negotiation||null,
+   _testReputation:o.reputation||{}}));
  }
  if(section==='Personnel'){
   const trainerRelations=new Map(),jockeyRelations=new Map();
@@ -288,7 +289,10 @@ function makeDepartmentRows(section,page,context={}){
      p.role==='trainer'?'DAY FEE + PURSE SHARE · TEST':'1999 test appointment',
     assignment:p.barnId||p.organizationId||'',base:city(p.location||p.base),birthCountry:p.birthCountry||'',wins:'',
     commission:p.compensation?.winShareRate!=null?(Math.round(p.compensation.winShareRate*1000)/10)+'%':'',
-    _testCompensation:p.compensation||null,
+    demand:p.bookingMarket?.demandTier||p.bookingDemand?.tier||'',
+    competingBarns:p.bookingMarket?.competingBarns?.length!=null?String(p.bookingMarket.competingBarns.length):'',
+    quotedMount:p.bookingMarket?.suggestedMountFee?'$'+Number(p.bookingMarket.suggestedMountFee).toLocaleString('en-US'):'',
+    _testMarket:p.bookingMarket||null,_testCompensation:p.compensation||null,
     _testGenerated:!p.authority?.startsWith('CANON'),_testAttrs:attrs,_testAbility:p.ability||null,
     _testReputation:p.reputation||{},ageBasis:p.ageBasis||'',
     _testOrigin:!srcPeople.some(source=>source.id===p.id)};
