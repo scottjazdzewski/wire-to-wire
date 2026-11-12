@@ -45,6 +45,7 @@ export function readLocal1999World(raw){
  if(p==='/api/1999/sim/owners')return pager(q,w.counts.owners,i=>w.ownerAt(i),'SOURCE_LINKED_PLUS_TEST_ECONOMY');
  if(p==='/api/1999/sim/trainers')return pager(q,w.counts.trainers,i=>w.trainerAt(i),'SOURCE_LINKED_PLUS_TEST_HORSEMEN');
  if(p==='/api/1999/sim/people')return pager(q,w.counts.people-w.sourcePeople.length,i=>w.personAt(i),'SIMULATED_WORKFORCE');
+ if(p==='/api/1999/sim/source-people')return pager(q,w.sourcePeople.length,i=>w.sourcePersonAt(i),'CANON_IDS_PLUS_TEST_ONLY_ABILITY');
  if(p==='/api/1999/sim/tracks')return pager(q,w.counts.tracks,i=>w.trackAt(i),'CANON_GEOGRAPHY_WITH_SIMULATED_OPERATIONS');
  if(p==='/api/1999/sim/facilities')return pager(q,w.counts.facilities,i=>w.facilityAt(i),'SIMULATED_FACILITIES');
  if(p==='/api/1999/sim/auctions')return pager(q,w.counts.auctions,i=>w.auctionAt(i),'SIMULATED_AUCTIONS');
