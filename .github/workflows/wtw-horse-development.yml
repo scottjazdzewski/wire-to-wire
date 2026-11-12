@@ -5,6 +5,8 @@ on:
     paths:
       - 'public/1999/engine/horse-development.mjs'
       - 'public/next/1999-ui-source.mjs'
+      - 'public/next/index.html'
+      - 'public/next/next.css'
       - 'public/next/next.js'
       - 'public/office-v30-4.js'
       - 'tests/1999-horse-development.test.mjs'
