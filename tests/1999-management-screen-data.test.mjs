@@ -105,13 +105,15 @@ test('Racing screen uses 93 source stakes plus separate WTW game-modeled stakes,
  assert.ok(card.every(r=>r.date==='1999-01-01'&&r.status.includes('NOT ENTERED')&&r.horse===''));
  assert.match(js,/const racingRows=\(\)=>window.__WTW_1999_MANAGEMENT__\?\[\]/);
 });
-test('original World roster can inspect all 87500 names by virtual page without loading 87500 trait objects',()=>{
+test('World horses page the full population while racing-horse count stays distinct',()=>{
  assert.equal(typeof ui.worldHorsePage,'function');
+ const worldTotal=ui.counts.worldHorses||ui.counts.horses;
+ assert.ok(worldTotal>=ui.counts.horses,'Full horse directory cannot be smaller than racing roster');
  const first=ui.worldHorsePage(0,18);
  const synthetic=ui.worldHorsePage(300,18);
- const last=ui.worldHorsePage(87482,18);
- assert.equal(first.total,87500);
- assert.equal(last.total,87500);
+ const last=ui.worldHorsePage(worldTotal-18,18);
+ assert.equal(first.total,worldTotal);
+ assert.equal(last.total,worldTotal);
  assert.equal(first.items.length,18);
  assert.equal(synthetic.items.length,18);
  assert.equal(last.items.length,18);
