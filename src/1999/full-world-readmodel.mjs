@@ -41,6 +41,7 @@ export function readFull1999TestWorld(url){
  if(path==='/api/1999/sim/owners')return send({...body,...list(url,g.counts.owners,index=>g.ownerAt(index))});
  if(path==='/api/1999/sim/trainers')return send({...body,...list(url,g.counts.trainers,index=>g.trainerAt(index))});
  if(path==='/api/1999/sim/people')return send({...body,...list(url,g.counts.people-g.sourcePeople.length,index=>g.personAt(index))});
+ if(path==='/api/1999/sim/source-people')return send({...body,...list(url,g.sourcePeople.length,index=>g.sourcePersonAt(index)),provenance:'CANONICAL_IDENTITIES_WITH_SEPARATE_TEST_ABILITY'});
  if(path==='/api/1999/sim/tracks')return send({...body,...list(url,g.counts.tracks,index=>g.trackAt(index))});
  if(path==='/api/1999/sim/facilities')return send({...body,...list(url,g.counts.facilities,index=>g.facilityAt(index))});
  if(path==='/api/1999/sim/auctions')return send({...body,...list(url,g.counts.auctions,index=>g.auctionAt(index))});
