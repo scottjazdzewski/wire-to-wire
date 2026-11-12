@@ -2813,7 +2813,7 @@ function previewRecordView(){
  // All actual or pending people and horse records use the approved FM dossier.
  // Missing IDs remain explicitly unlinked, never guessed from a name.
  if(kind==='person')return restored1999Profile('person',{...fields,name});
- if(kind==='horse'&&generated)return restored1999Profile('horse',{...fields,name});
+ if(kind==='horse')return restored1999Profile('horse',{...fields,name});
  const fixture=DEP_FACILITY_PREVIEW.find(item=>item[0]===name);
  const relevant=[
   ['ENTITY TYPE',fields.type||fixture?.[1]||kind.toUpperCase()],
