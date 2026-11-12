@@ -49,7 +49,7 @@ jobs:
           node --check public/1999/engine/attribute-catalog.mjs
           node --check public/1999/engine/local-api.mjs
       - name: Jan 1 source and OFFLINE browser population verification
-        run: node --test tests/1999-opening-world.test.mjs tests/1999-entry-gate.test.mjs tests/1999-full-universe.test.mjs tests/1999-test-clock.test.mjs tests/1999-browser-offline.test.mjs tests/1999-full-world-api.test.mjs tests/1999-management-ui-restore.test.mjs tests/1999-management-screen-data.test.mjs
+        run: node --test tests/1999-opening-world.test.mjs tests/1999-entry-gate.test.mjs tests/1999-full-universe.test.mjs tests/1999-test-clock.test.mjs tests/1999-browser-offline.test.mjs tests/1999-full-world-api.test.mjs tests/1999-management-ui-restore.test.mjs tests/1999-management-screen-data.test.mjs tests/1999-owned-stable.test.mjs
 
   management-1999-browser:
     runs-on: ubuntu-latest
