@@ -46,7 +46,7 @@ const state=()=>{try{return JSON.parse(localStorage.getItem((window.__WTW_1999_M
 /* Named saves are snapshots of the canonical Office game state, never a new
    simulation ledger. World Editor patches and media remain independently stored. */
 const NAMED_SAVE_KEY=window.__WTW_1999_MANAGEMENT__?.namedSaveKey||'wtwNamedGameSavesV1';
-const valid1999Save=game=>!window.__WTW_1999_MANAGEMENT__||(game?.worldAnchor?.schema===window.__WTW_1999_MANAGEMENT__.schema&&game?.worldAnchor?.startDate==='1999-01-01'&&/^\\d{4}-\\d{2}-\\d{2}$/.test(game?.date||'')&&game.date>='1999-01-01');
+const valid1999Save=game=>!window.__WTW_1999_MANAGEMENT__||(game?.worldAnchor?.schema===window.__WTW_1999_MANAGEMENT__.schema&&game?.worldAnchor?.startDate==='1999-01-01'&&/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(game?.date||'')&&game.date>='1999-01-01');
 function namedSaves(){
  try{const rows=JSON.parse(localStorage.getItem(NAMED_SAVE_KEY)||'[]');
   return Array.isArray(rows)?rows.filter(x=>x&&typeof x.id==='string'&&typeof x.name==='string'&&x.game&&typeof x.game==='object'&&valid1999Save(x.game)):[];
