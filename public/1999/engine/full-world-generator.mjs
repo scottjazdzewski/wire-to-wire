@@ -9,6 +9,7 @@
 import {openingWorld1999 as canon} from './canon-mini.mjs';
 import {createGeographicNameRoster,GEO_NAME_MODEL} from './geographic-names.mjs';
 import {existingPrincipals1999} from './source-principals-1999.mjs';
+import {createAgeAbility,inferProfessionalRole} from './age-ability.mjs';
 import attributeCatalog from './attribute-catalog.mjs';
 import {WTW_TEST_START_DATE} from '../test-clock.mjs';
 export const FULL_WORLD_SCHEMA='WTW_1999_FULL_SCALE_TEST_V1';
@@ -87,15 +88,34 @@ function makeSlots(count,available,seed,kind){
 }
 const gcd=(a,b)=>b?gcd(b,a%b):a;
 const perm=(i,total,seed,constant)=>{let mult=constant;while(gcd(mult,total)!==1)mult+=2;return (i*mult+(seed%total))%total;};
-function traits(definitions,seed,id,base){
+// Age and ability are assigned before professional/athletic traits.
+function traits(definitions,seed,id,ability){
  const out={};
  for(const d of definitions){
-  const u=unit(seed,id+':trait:'+d.key),v=clamp(.12+base*.34+u*.54,.01,.99);
-  if(d.scope==='latent'||d.scope==='dynamic'||d.scope==='derived')out[d.key]=round(v);
+  const u=unit(seed,id+':trait:'+d.key);
+  const permanent=ability.role==='horse'&&/aptitude|tolerance|adaptability|durability|maturation_curve|soundness_risk/.test(d.key);
+  const level=(permanent?ability.peakCeiling:ability.current)/100;
+  const v=clamp(.07+.86*(level*.76+u*.24)+(unit(seed,id+':noise:'+d.key)-.5)*.08,.01,.99);
+  if(d.scope==='latent')out[d.key]=round(d.key==='soundness_risk'?1-v:v);
+  else if(d.scope==='dynamic'||d.scope==='derived')
+   out[d.key]=round(d.key==='fitness'||d.key==='race_readiness'?
+    clamp(.1+ability.ageFactor*.45+u*.35,.01,.99):clamp(.14+u*.72,.01,.99));
   else if(d.scope==='measured')out[d.key]=d.key.includes('stride_length')?round(5.5+2*v):d.key.includes('stride_frequency')?round(1.5+v):round(v);
-  else out[d.key]=d.key.includes('style')?pick(['front','press','stalk','midpack','close'],seed,id+d.key):d.key.includes('distance')?pick(['sprint','mile','route','classic'],seed,id+d.key):d.key.includes('surface')?pick(['dirt','turf','all_weather'],seed,id+d.key):round(v);
+  else out[d.key]=d.key.includes('style')?pick(['front','press','stalk','midpack','close'],seed,id+d.key):
+   d.key.includes('distance')?pick(['sprint','mile','route','classic'],seed,id+d.key):
+   d.key.includes('surface')?pick(['dirt','turf','all_weather'],seed,id+d.key):round(v);
  }
  return out;
+}
+function personAge(seed,id,role,source=null){
+ const raw=source?.birthYear??source?.birth_year??source?.yearOfBirth??
+  (typeof source?.dateOfBirth==='string'?source.dateOfBirth.slice(0,4):null);
+ const year=raw==null||raw===''?NaN:Number(raw);
+ if(Number.isInteger(year)&&year>=1905&&year<=1982)return {age:1999-year,basis:'SOURCE_RECORDED_BIRTH_YEAR'};
+ const limits={jockey:[18,58],trainer:[26,75],owner:[29,83],breeder:[29,78],farm_manager:[24,72],
+  veterinarian:[27,72],farrier:[20,69],bloodstock_agent:[24,75],racing_secretary:[27,73]};
+ const [min,max]=limits[role]||limits.owner;
+ return {age:min+hash(seed,id+':test:age')%(max-min+1),basis:'SIMULATED_TEST_AGE_BIRTH_YEAR_NOT_ESTABLISHED'};
 }
 function standing(seed,id,level=0.5){const n=clamp(Math.round(12+level*71+(unit(seed,id+':reputation')-.5)*18),1,99);
  return {overall:n,regional:clamp(n+Math.round((unit(seed,id+'reg')-.5)*17),1,99),national:clamp(Math.round(n*.8),1,99),commercialTrust:clamp(n+Math.round((unit(seed,id+'trust')-.5)*19),1,99),asOf:WTW_TEST_START_DATE,provenance:'GENERATED_TEST_REPUTATION_NOT_HISTORICAL_VERIFIED'};}
@@ -147,10 +167,14 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    const name=canonSource?.name||(i%11===0?syntheticPrincipal:generatedOrganizationName(seed,i,'owner'));
    const principalOwner=canonSource?(canonSource.publicPrincipal||existingPrincipals1999[id]?.name||null):syntheticPrincipal;
    const principalOwnerId=canonSource?(canonSource.publicPrincipalId||existingPrincipals1999[id]?.personId||null):'P-TEST-OWNER-'+pad(i+1);
+   const principalSource=sourcePeople.find(p=>p.id===principalOwnerId)||null;
+   const principalAge=principalOwnerId?personAge(seed,principalOwnerId,'owner',principalSource):null;
+   const principalAbility=principalAge?createAgeAbility({seed,id:principalOwnerId,role:'owner',age:principalAge.age}):null;
   const annualRun=portfolio*money(12000+unit(seed,id+'run')*25000),wealthScale=tier==='major'?12:tier==='established'?5:tier==='regional'?2:1;
   const cash=money(annualRun*(.75+unit(seed,id+'liquidity')*2.5)*wealthScale);
   const obj={id,name,nameStatus:canonSource?'CANON_LOCKED':'TEST_RENAME_ALLOWED',type:canonSource?.type||(i%11===0?'SOLE_OWNER':'OWNERSHIP_OPERATION'),
-    principalOwner,principalOwnerId,principalBasis:canonSource?'SOURCE_IF_RECORDED':'GENERATED_TEST_PRINCIPAL',
+    principalOwner,principalOwnerId,principalAge:principalAge?.age??null,
+    principalAgeBasis:principalAge?.basis??null,principalAbility,principalBasis:canonSource?'SOURCE_IF_RECORDED':'GENERATED_TEST_PRINCIPAL',
    location:canonSource?.geographyRecords?.[0]?.locality?fmtLoc({city:canonSource.geographyRecords[0].locality,state:canonSource.geographyRecords[0].region,country:canonSource.geographyRecords[0].country}):t.location,
    locationBasis:canonSource?.geographyRecords?.[0]?.locality?'SOURCE_VERIFIED_HISTORICAL_ORG_LOCALITY':'SIMULATED_1999_OPERATIONAL_BASE_NOT_HISTORICAL_HEADQUARTERS',
    mainTrackId:t.id,portfolio:{generatedHorseSlots:portfolio,sourceHorseCount:0,tier},
@@ -167,11 +191,13 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const canonSource=anchored&&i<canonTrainers.length?canonTrainers[i]:null;
   const id=canonSource?.id||'P-TEST-TRAINER-'+pad(i+1),track=regionTrack(canonSource?.base?{locality:canonSource.base.locality,region:canonSource.base.region,country:canonSource.base.country}:null,id);
   const slots=trainerSlots.counts[i],name=canonSource?.name||namedPeople[i].name;
-   const ability=traits([...common,...(roleDef.trainer||[])],seed,id,.3+unit(seed,id+'talent')*.6);
+   const ageInfo=personAge(seed,id,'trainer',canonSource);
+   const ageAbility=createAgeAbility({seed,id,role:'trainer',age:ageInfo.age});
+   const skillAttributes=traits([...common,...(roleDef.trainer||[])],seed,id,ageAbility);
   const obj={id,name,nameStatus:canonSource?'CANON_LOCKED':'TEST_RENAME_ALLOWED',role:'trainer',location:canonSource?.base?fmtLoc(canonSource.base):track.location,
    homeTrackId:track.id,barnId:'F-TEST-BARN-'+pad(i+1),barnCapacity:Math.max(slots+Math.ceil(slots*.12),slots+2),
-   generatedRunners:slots,roleAttributes:ability,attributes:ability,
-    age:25+hash(seed,id+':age')%45,birthCountry:canonSource?.birthplace?.country||namedPeople[i].birthCountry,
+   generatedRunners:slots,roleAttributes:skillAttributes,attributes:skillAttributes,ability:ageAbility,
+    age:ageInfo.age,ageBasis:ageInfo.basis,birthCountry:canonSource?.birthplace?.country||namedPeople[i].birthCountry,
     nameOrigin:canonSource?'CANON_LOCKED':'GEO_ROLE_TEST_POPULATION',morale:round(.3+unit(seed,id+':morale')*.68),workload:round(clamp(slots/(slots+Math.max(2,Math.ceil(slots*.12))),0,1)),
    reputation:standing(seed,id,.25+unit(seed,id+'status')*.55),annualBaseSalary:money(28000+slots*4000),
    authority:canonSource?'CANON_ID__TEST_ATTRIBUTES':'FULLY_TEST_GENERATED'};
@@ -184,15 +210,22 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const isSire=sex==='SIRE',id='H-TEST-'+sex+'-'+pad(i+1,6),t=trackAt(hash(seed,id+':home')%trackCount);
   return {id,name:mixName(seed+1,isSire?i+100000:i+101500),sex:isSire?'STALLION':'MARE',
    foalYear:isSire?1970+(i%12):1971+(i%13),location:t.location,farmId:'F-TEST-FARM-'+pad(i%900+1),
-   reputation:standing(seed,id,.25+unit(seed,id+'rep')*.5),attributes:traits(hor,seed,id,.4),nameStatus:'TEST_RENAME_ALLOWED',
+   reputation:standing(seed,id,.25+unit(seed,id+'rep')*.5),
+    ability:createAgeAbility({seed,id,role:'horse',age:1999-(isSire?1970+(i%12):1971+(i%13))}),
+    attributes:traits(hor,seed,id,createAgeAbility({seed,id,role:'horse',age:1999-(isSire?1970+(i%12):1971+(i%13))})),
+    nameStatus:'TEST_RENAME_ALLOWED',
    source:'GENERATED_ANCESTRAL_STOCK'};
  }
  function horseAt(index){
   if(!Number.isInteger(index)||index<0||index>=HORSE_POPULATION)throw Error('Horse index out of range');
   if(horseCache.has(index))return horseCache.get(index);
   if(anchored&&index<locked.length){
-   const c=locked[index];const o={...c,location:fmtLoc({city:c.openingStable.locality,state:c.openingStable.region,country:c.openingStable.country}),
-    nameStatus:'CANON_LOCKED',reputation:standing(seed,c.id,.4),attributes:traits(hor,seed,c.id,.45),
+   const c=locked[index],known=Number.isInteger(Number(c.foalYear))&&Number(c.foalYear)>1850;
+   const age=known?Math.max(0,1999-Number(c.foalYear)):3+hash(seed,c.id+':test:age')%5;
+   const ability=createAgeAbility({seed,id:c.id,role:'horse',age});
+   const o={...c,location:fmtLoc({city:c.openingStable.locality,state:c.openingStable.region,country:c.openingStable.country}),
+    ageAtOpening:age,ageBasis:known?'SOURCE_RECORDED_FOAL_YEAR':'SIMULATED_TEST_AGE_FOAL_YEAR_UNKNOWN',ability,
+    nameStatus:'CANON_LOCKED',reputation:standing(seed,c.id,.4),attributes:traits(hor,seed,c.id,ability),
     attributesProvenance:'SIMULATED_TEST_TRAITS_NOT_HISTORICAL_FACT',
     finances:{estimatedValue:money(5000+unit(seed,c.id+':value')*700000),monthlyCareCost:money(1200+unit(seed,c.id+':cost')*1500)},
     career:c.sourceRecordedStakesSeasons,ownerId:c.ownerId,trainerId:c.trainerId,stableTrackId:c.openingStable.trackId,authority:'LOCKED_NAME_ID_HISTORY_TEST_TRAITS'};
@@ -205,6 +238,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const sex=foalYear<=1994?pick(['MARE','GELDING','STALLION','MARE','GELDING'],seed,id+':sex'):pick(['COLT','FILLY','COLT','FILLY','GELDING'],seed,id+':sex');
   const si=hash(seed,id+':sire')%sireCount,di=hash(seed,id+':dam')%damCount;
   const sire=parentAt(si,'SIRE'),dam=parentAt(di,'DAM'),age=1999-foalYear;
+  const ability=createAgeAbility({seed,id,role:'horse',age});
   const raced=age>=2&&sex!=='STALLION',starts=raced?Math.floor(unit(seed,id+'starts')*Math.max(2,(age-1)*6)):0;
   const wins=starts?Math.min(starts,Math.floor(starts*(.08+unit(seed,id+'win')*.27))):0;
   const tempName=canonicalNames.has(n.toLowerCase())?n+' from '+FAMILY[i%FAMILY.length]:n;
@@ -219,7 +253,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    sireId:sire.id,damId:dam.id,ownerId:owner.id,trainerId:trainer.id,stableTrackId:trainer.homeTrackId,
    location:trainer.location,stableId:trainer.barnId,source:'SIMULATED_HORSE_NOT_CANON',
    pedigree:{sireId:sire.id,damId:dam.id,parentBirthYears:[sire.foalYear,dam.foalYear]},
-   attributes:traits(hor,seed,id,.25+unit(seed,id+':talent')*.7),
+   ability,attributes:traits(hor,seed,id,ability),
    reputation:standing(seed,id,.15+unit(seed,id+'standing')*.65),
    career:{starts,wins,places:Math.max(wins,Math.floor(starts*(.2+unit(seed,id+'place')*.2))),earnings:money(wins*8000+starts*1700*unit(seed,id+'prize')),
     provenance:'GENERATED_1998_AND_PRIOR_NONCANON_TEST_RACES_ONLY'},
@@ -230,23 +264,25 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
  function personAt(index){
   if(!Number.isInteger(index)||index<0||index>=ACTIVE_STAFF_COUNT+generatedPrincipalCount)throw Error('Person index');
    if(index>=ACTIVE_STAFF_COUNT){const owner=ownerAt(index-ACTIVE_STAFF_COUNT+sourceOrgs.length),id=owner.principalOwnerId;
+    const ageAbility=owner.principalAbility;
     return {id,name:owner.principalOwner,nameStatus:'TEST_RENAME_ALLOWED',role:'owner',organizationId:owner.id,location:owner.location,baseTrackId:owner.mainTrackId,
      birthCountry:namedPeople[ACTIVE_STAFF_COUNT+index-ACTIVE_STAFF_COUNT+sourceOrgs.length].birthCountry,
      nameOrigin:'GEO_ROLE_TEST_POPULATION',
-     attributes:traits([...common,...(roleDef.owner||[])],seed,id,.24+unit(seed,id+':talent')*.7),
-     reputation:standing(seed,id,.22+unit(seed,id+':standing')*.65),payrollAnnual:0,age:27+hash(seed,id+':age')%47,
+     ability:ageAbility,attributes:traits([...common,...(roleDef.owner||[])],seed,id,ageAbility),
+     reputation:standing(seed,id,.22+unit(seed,id+':standing')*.65),payrollAnnual:0,age:owner.principalAge,ageBasis:owner.principalAgeBasis,
      morale:round(.3+unit(seed,id+':morale')*.68),workload:round(.2+unit(seed,id+':load')*.65),licenseStatus:'SIMULATED_TEST_ACTIVE',source:'SIMULATED_OWNERSHIP_PRINCIPAL'};
    }
   let j=index,role;
   for(const r of ROLES){if(j<r[1]){role=r[0];break}j-=r[1]}
   if(role==='trainer')return trainerAt(j);
   const id='P-TEST-'+role.toUpperCase()+'-'+pad(j+1),track=trackAt(hash(seed,id)%trackCount);
+  const ageInfo=personAge(seed,id,role),ageAbility=createAgeAbility({seed,id,role,age:ageInfo.age});
   return {id,name:namedPeople[index].name,birthCountry:namedPeople[index].birthCountry,
     nameOrigin:'GEO_ROLE_TEST_POPULATION',
    nameStatus:'TEST_RENAME_ALLOWED',role,location:track.location,baseTrackId:track.id,
-   attributes:traits([...common,...(roleDef[role]||[])],seed,id,.22+unit(seed,id+'talent')*.7),
+   ability:ageAbility,attributes:traits([...common,...(roleDef[role]||[])],seed,id,ageAbility),
    reputation:standing(seed,id,.2+unit(seed,id+'standing')*.65),payrollAnnual:money(18000+unit(seed,id+'pay')*90000),
-   age:21+hash(seed,id+':age')%48,morale:round(.3+unit(seed,id+':morale')*.68),workload:round(.2+unit(seed,id+':load')*.7),licenseStatus:'SIMULATED_TEST_ACTIVE',source:'SIMULATED_WORKFORCE'};
+   age:ageInfo.age,ageBasis:ageInfo.basis,morale:round(.3+unit(seed,id+':morale')*.68),workload:round(.2+unit(seed,id+':load')*.7),licenseStatus:'SIMULATED_TEST_ACTIVE',source:'SIMULATED_WORKFORCE'};
  }
  function meetOpen(track,date){
   const month=+date.slice(5,7),day=new Date(date+'T12:00:00Z').getUTCDay(),region=String(track.location.state).toLowerCase();
@@ -265,7 +301,6 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   for(let n=1;n<=count;n++){
    const id='R-TEST-1999-'+date.replaceAll('-','')+'-'+pad(trackIndex+1,3)+'-'+pad(n,2),cl=classes[(n+trackIndex)%classes.length],
     minAge=2+hash(seed,id+':age')%3,sprint=unit(seed,id+':dist')<.52;
-   // These are modeled 1999 TEST race conditions, not reconstructed official clauses.
    const maidenOnly=cl.startsWith('Maiden'),claiming=cl.includes('Claiming');
    const claimingPrice=claiming?[10000,15000,20000,25000,35000,50000][hash(seed,id+':claim')%6]:null;
    const maxCareerWins=cl==='Allowance'?1:null;
@@ -274,110 +309,15 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
     cl==='Starter Allowance'?'Prior qualifying claiming start required — records not yet modeled':
     cl==='Allowance Optional Claiming'?'Allowance qualification or optional claiming entry — terms not yet modeled':
     cl==='Handicap'?'Handicap weights pending declaration':'Open to eligible starters';
-   const fullConditions=cl+'; '+minAge+' years old and upward; '+
-    (hash(seed,id+'female')%7===0?'fillies and mares only':'open sexes')+'; '+
-    winRestriction+(claimingPrice?' · modeled claiming price 
-    ageRequirement:minAge+'YO+',sexRestriction:hash(seed,id+'female')%7===0?'FILLIES_AND_MARES':'OPEN',
-    surface:hash(seed,id+'surface')%5===0?'TURF':'DIRT',distanceFurlongs:sprint?6+hash(seed,id+'sprint')%3:8+hash(seed,id+'route')%5,
-    purse:money((cl.includes('Maiden')?22000:cl.includes('Claiming')?13000:39000)*(0.65+unit(seed,id+'purse')*1.5)),
-    fieldCapacity:8+hash(seed,id+'field')%7,currentEntries:[],results:[],status:'CONDITION_BOOK_PROPOSAL_NOT_RUN',canonical:false});
-  }
-  return result;
- }
- function auctionAt(index){
-  if(!Number.isInteger(index)||index<0||index>=36)throw Error('Auction index');
-  const track=trackAt(hash(seed,'auction:'+index)%trackCount),month=1+Math.floor(index/3),day=[6,14,22][index%3];
-  const id='A-TEST-1999-'+pad(index+1,3);
-  return {id,name:pick(['Midwinter','Spring','Summer','Autumn','Regional','Select','Yearling','Mixed'],seed,id)+' '+track.location.city+' Sale',
-    attributes:{catalog_quality:round(.2+unit(seed,id+':catalog')*.75),buyer_demand:round(.2+unit(seed,id+':demand')*.75),vendor_depth:round(.2+unit(seed,id+':vendors')*.75),inspection_quality:round(.3+unit(seed,id+':inspection')*.65)},
-   location:track.location,trackId:track.id,date:'1999-'+pad(month,2)+'-'+pad(day,2),
-   sellerFeeRate:round(.03+unit(seed,id+'sellerFee')*.04),buyerPremiumRate:round(.01+unit(seed,id+'buyerFee')*.03),
-   catalogLots:120+hash(seed,id+'lots')%570,reputation:standing(seed,id,.35+unit(seed,id+'rep')*.6),
-   cashOperatingReserve:money(250000+unit(seed,id+'cash')*3000000),
-   source:'SIMULATED_TEST_AUCTION',outcomes:[]};
- }
- function facilityAt(index){
-  if(!Number.isInteger(index)||index<0||index>=trainersTotal+900+trackCount)throw Error('Facility index');
-  if(index<trainersTotal){const tr=trainerAt(index);return {id:tr.barnId,name:generatedOrganizationName(seed,index+3308,'barn'),type:'RACE_BARN',
-   location:tr.location,trainerId:tr.id,trackId:tr.homeTrackId,capacity:tr.barnCapacity,occupied:tr.generatedRunners,
-   landAcres:0,equipmentCondition:round(.4+unit(seed,tr.id+'eq')*.58),staffingRequirement:Math.max(1,Math.ceil(tr.barnCapacity/6)),
-    attributes:{horse_care:round(.3+unit(seed,tr.id+':care')*.69),training_environment:round(.3+unit(seed,tr.id+':training')*.69),biosecurity:round(.3+unit(seed,tr.id+':bio')*.69),facility_condition:round(.4+unit(seed,tr.id+'eq')*.58)},
-   annualOperatingCost:money(tr.barnCapacity*29000),reputation:tr.reputation,source:'TEST_BARN'};}
-  if(index<trainersTotal+900){const i=index-trainersTotal,t=trackAt(hash(seed,'farm:'+i)%trackCount),id='F-TEST-FARM-'+pad(i+1);
-   return {id,name:generatedOrganizationName(seed,i+8000,'farm'),
-   type:'BREEDING_FARM',location:t.location,trackId:t.id,capacity:80+hash(seed,id+'cap')%350,occupied:0,
-   landAcres:80+hash(seed,id+'acres')%1100,foalingBarns:2+hash(seed,id+'foal')%10,
-    equipmentCondition:round(.4+unit(seed,id+':eq')*.59),staffingRequirement:Math.ceil((80+hash(seed,id+'cap')%350)/25),
-    attributes:{horse_care:round(.3+unit(seed,id+':care')*.69),breeding_management:round(.3+unit(seed,id+':breed')*.69),biosecurity:round(.3+unit(seed,id+':bio')*.69),facility_condition:round(.4+unit(seed,id+':eq')*.59)},
-   annualOperatingCost:money(120000+unit(seed,id+'cost')*1400000),
-   reputation:standing(seed,id,.3+unit(seed,id+'rep')*.6),source:'TEST_FARM'};}
-  const t=trackAt(index-trainersTotal-900);
-  return {id:'F-TEST-TRACK-'+pad(index-trainersTotal-900+1,3),name:t.name+' Training Center',type:'TRAINING_CENTER',location:t.location,trackId:t.id,
-   capacity:money(120+unit(seed,t.id+'cap')*500),occupied:0,landAcres:45+hash(seed,t.id+'land')%230,
-    equipmentCondition:round(.4+unit(seed,t.id+':eq')*.59),staffingRequirement:12+hash(seed,t.id+':staff')%35,
-    attributes:{horse_care:round(.3+unit(seed,t.id+':care')*.69),training_environment:round(.3+unit(seed,t.id+':training')*.69),biosecurity:round(.3+unit(seed,t.id+':bio')*.69),facility_condition:round(.4+unit(seed,t.id+':eq')*.59)},
-   annualOperatingCost:money(950000+unit(seed,t.id+'cost')*4800000),reputation:t.reputation,source:'TEST_TRACK_CENTER'};
- }
- const trackIndexById=new Map(sourceTracks.map((t,i)=>[anchored?t.id:'T-TEST-1999-'+pad(i+1,4),i]));
- for(let i=0;i<trainersTotal;i++){
-  const tr=trainerAt(i),idx=trackIndexById.get(tr.homeTrackId);
-  if(idx===undefined)throw Error('Trainer barn track missing');
-  const track=trackAt(idx);
-  track.facility.barnStalls+=tr.barnCapacity;
-  track.facility.occupied=(track.facility.occupied||0)+tr.generatedRunners;
- }
- for(const h of locked){const idx=trackIndexById.get(h.openingStable.trackId);
-  if(idx===undefined)throw Error('Canonical horse track not present');
-  trackAt(idx).facility.occupied++;
-  trackAt(idx).facility.barnStalls++;
- }
- const peopleCount=ACTIVE_STAFF_COUNT+generatedPrincipalCount;
- 
- // Read-only inverse of the existing horse allocation permutation.
- // Lets the game inspect a complete owner's stable without generating every horse.
- const ownerMultiplier=(()=>{let m=65537;while(gcd(m,generatedCount)!==1)m+=2;return m})();
- const modularInverse=(a,m)=>{
-  let t=0,nextT=1,r=m,nextR=a;
-  while(nextR!==0){const q=Math.floor(r/nextR);[t,nextT]=[nextT,t-q*nextT];[r,nextR]=[nextR,r-q*nextR]}
-  if(r!==1)throw Error('Owner allocation is not invertible');
-  return ((t%m)+m)%m;
- };
- const ownerInverse=modularInverse(ownerMultiplier,generatedCount);
- function ownedHorseIndexes(ownerId){
-  if(typeof ownerId!=='string'||!ownerId)return [];
-  const canonicalOwner=anchored?sourceOrgs.findIndex(o=>o.id===ownerId):-1;
-  const testOwner=ownerId.match(/^O-TEST-1999-(\d+)$/);
-  const ownerIndex=canonicalOwner>=0?canonicalOwner:testOwner?Number(testOwner[1])-1:-1;
-  if(ownerIndex<0||ownerIndex>=ownersTotal)return [];
-  const indices=[];
-  if(anchored)locked.forEach((horse,index)=>{if(horse.ownerId===ownerId)indices.push(index)});
-  const begin=ownerIndex===0?0:ownersSlots.ends[ownerIndex-1],end=ownersSlots.ends[ownerIndex];
-  for(let slot=begin;slot<end;slot++){
-   const normalized=(slot-(seed%generatedCount)+generatedCount)%generatedCount;
-   const index=(normalized*ownerInverse)%generatedCount;
-   indices.push((anchored?locked.length:0)+index);
-  }
-  return indices.sort((a,b)=>a-b);
- }
- return {schema:FULL_WORLD_SCHEMA,seed,mode,startDate:WTW_TEST_START_DATE,currentDate:WTW_TEST_START_DATE,
-  canonProtected:anchored,identityLayer:'CANON_LOCKS_PLUS_REPLACEABLE_TEST_IDENTITIES',attributesSchema:attributeCatalog.schema,
-   nameModel:GEO_NAME_MODEL,
-  counts:{horses:HORSE_POPULATION,canonicalHorses:anchored?CANON_HORSES:0,generatedHorses:generatedCount,owners:ownersTotal,trainers:trainersTotal,
-   people:peopleCount+(anchored?sourcePeople.length:0),tracks:trackCount,facilities:trainersTotal+900+trackCount,auctions:36,
-   sourceStallions:anchored?canon.activeStallions1999.length:0,sourceBroodmareLocations:anchored?canon.productionBroodmareBoarding1999.length:0},
-  ownerAt,trainerAt,trackAt,horseAt,personAt,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
-  parentAt,attributeCatalog,sourceStakes:anchored?canon.stakes1999:[],sourceOrganizations:sourceOrgs,sourcePeople,excludedActiveStaffRoles:['groom','exercise_rider'],
-  audit:{ownershipSlots:ownersSlots.counts.reduce((a,b)=>a+b,0),trainerSlots:trainerSlots.counts.reduce((a,b)=>a+b,0),
-   maxOwnerHorses:Math.max(...ownersSlots.counts),minOwnerHorses:Math.min(...ownersSlots.counts),
-   maxTrainerHorses:Math.max(...trainerSlots.counts),minTrainerHorses:Math.min(...trainerSlots.counts)}};
-}
-+claimingPrice.toLocaleString('en-US'):'')+
+   const females=hash(seed,id+'female')%7===0;
+   const fullConditions=cl+'; '+minAge+' years old and upward; '+(females?'fillies and mares only':'open sexes')+
+    '; '+winRestriction+(claimingPrice?' · modeled claiming price $'+claimingPrice.toLocaleString('en-US'):'')+
     '. Remaining official terms and nominations are not supplied in this TEST condition book.';
    result.push({id,date,trackId:track.id,trackName:track.name,number:n,conditions:cl,
     maidenOnly,maxCareerWins,claimingPrice,winRestriction,fullConditions,
     weightConditions:'Assigned weights and allowances pending; no official impost recorded',
     entryTerms:'No official entry deadline or nomination terms recorded',
-    ageRequirement:minAge+'YO+',sexRestriction:hash(seed,id+'female')%7===0?'FILLIES_AND_MARES':'OPEN',
+    ageRequirement:minAge+'YO+',sexRestriction:females?'FILLIES_AND_MARES':'OPEN',
     surface:hash(seed,id+'surface')%5===0?'TURF':'DIRT',distanceFurlongs:sprint?6+hash(seed,id+'sprint')%3:8+hash(seed,id+'route')%5,
     purse:money((cl.includes('Maiden')?22000:cl.includes('Claiming')?13000:39000)*(0.65+unit(seed,id+'purse')*1.5)),
     fieldCapacity:8+hash(seed,id+'field')%7,currentEntries:[],results:[],status:'CONDITION_BOOK_PROPOSAL_NOT_RUN',canonical:false});
@@ -431,6 +371,16 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   trackAt(idx).facility.occupied++;
   trackAt(idx).facility.barnStalls++;
  }
+ // Source identities are immutable. Only a separate TEST career layer is added.
+ function sourcePersonAt(index){
+  if(!Number.isInteger(index)||index<0||index>=sourcePeople.length)throw Error('Source person index');
+  const person=sourcePeople[index],role=inferProfessionalRole(person.role);
+  const ageInfo=personAge(seed,person.id,role,person);
+  const ability=createAgeAbility({seed,id:person.id,role,age:ageInfo.age});
+  return {...person,modelRole:role,age:ageInfo.age,ageBasis:ageInfo.basis,ability,
+   attributes:traits([...common,...(roleDef[role]||[])],seed,person.id,ability),
+   testAbilityProvenance:'TEST_ONLY_NOT_VERIFIED_HISTORICAL_PERSON_FACTS'};
+ }
  const peopleCount=ACTIVE_STAFF_COUNT+generatedPrincipalCount;
  
  // Read-only inverse of the existing horse allocation permutation.
@@ -465,7 +415,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   counts:{horses:HORSE_POPULATION,canonicalHorses:anchored?CANON_HORSES:0,generatedHorses:generatedCount,owners:ownersTotal,trainers:trainersTotal,
    people:peopleCount+(anchored?sourcePeople.length:0),tracks:trackCount,facilities:trainersTotal+900+trackCount,auctions:36,
    sourceStallions:anchored?canon.activeStallions1999.length:0,sourceBroodmareLocations:anchored?canon.productionBroodmareBoarding1999.length:0},
-  ownerAt,trainerAt,trackAt,horseAt,personAt,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
+  ownerAt,trainerAt,trackAt,horseAt,personAt,sourcePersonAt,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
   parentAt,attributeCatalog,sourceStakes:anchored?canon.stakes1999:[],sourceOrganizations:sourceOrgs,sourcePeople,excludedActiveStaffRoles:['groom','exercise_rider'],
   audit:{ownershipSlots:ownersSlots.counts.reduce((a,b)=>a+b,0),trainerSlots:trainerSlots.counts.reduce((a,b)=>a+b,0),
    maxOwnerHorses:Math.max(...ownersSlots.counts),minOwnerHorses:Math.min(...ownersSlots.counts),
