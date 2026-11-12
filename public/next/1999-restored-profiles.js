@@ -15,6 +15,7 @@ function source(kind,record,ui){
   const geo=d.foalingGeography||d.foalingLocation||d.foalingPlace||d.foaling||d.birthplace||{};
   const place=geo&&typeof geo==='object'?geo:{};
   const owner=d.owner||d.ownerName||ui?.ownerFor?.(name)||'';
+  node.dataset.foalingCity=d.foalingCity||place.locality||place.city||'';
   node.dataset.foalingState=d.foalingState||place.region||place.state||place.province||'';
   node.dataset.foalingCountry=d.foalingCountry||place.country||'';
   node.dataset.foalingCountryCode=d.foalingCountryCode||place.countryCode||place.country_code||'';
