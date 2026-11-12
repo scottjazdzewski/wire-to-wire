@@ -2028,18 +2028,20 @@ function depRows(section,page,demo,auction){
   if(page==='1999 Horses')return (world1999Data.horses||[]).map(h=>({
    _kind:'horse',_name:h.name,_canonId:h.id||'',_worldKey:world1999Key('horse',h),
    name:h.name,age:h.age||'',sex:h.sex||'',sire:h.sire||'',dam:h.dam||'',
-   owner:h.owner||'',trainer:h.trainer||'',track:h.track||'',
+   owner:worldRecordName('farm',h.ownerId,h.owner||''),
+   trainer:worldRecordName('person',h.trainerId,h.trainer||''),
+   track:worldRecordName('track',h.trackId,h.track||''),
    _ownerId:h.ownerId||'',_trainerId:h.trainerId||'',_trackId:h.trackId||'',
    _sireId:h.sireId||'',_damId:h.damId||'',
    status:h.racingStatus||h.status||'',_role:h._role
   }));
   if(page==='People')return (world1999Data.people||[]).map(p=>({
    _kind:'person',_name:p.name,_canonId:p.id,_worldKey:world1999Key('person',p),
-   name:p.name,role:p.role||'',base:p.base||'',operation:p.ownershipOperation||'',_operationId:p.ownershipOperationId||''
+   name:p.name,role:p.role||'',base:p.base||'',operation:worldRecordName('farm',p.ownershipOperationId,p.ownershipOperation||''),_operationId:p.ownershipOperationId||''
   }));
   return (world1999Data.organizations||[]).map(o=>({
    _kind:'farm',_name:o.name,_canonId:o.id,_worldKey:world1999Key('farm',o),
-   name:o.name,type:o.type||'',location:o.location||'',principal:o.publicPrincipal||'',_principalId:o.publicPrincipalId||'',status:o.status||''
+   name:o.name,type:o.type||'',location:o.location||'',principal:worldRecordName('person',o.publicPrincipalId,o.publicPrincipal||''),_principalId:o.publicPrincipalId||'',status:o.status||''
   }));
  }
  if(section==='Tracks')return depTrackRows(page);
