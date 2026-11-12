@@ -73,7 +73,7 @@ function variant(seed,i,record,role,byCountry,base){
  }
  if(western&&roll>=rules.secondFamily&&roll<rules.secondFamily+rules.middle)
   return {name:first+' '+middleLetter+'. '+last,style:'MIDDLE_INITIAL'};
- if(COMPOUND[first]&&roll>=rules.middle&&roll<rules.middle+rules.compound)
+ if(COMPOUND[first]&&roll>=45&&roll<65)
   return {name:COMPOUND[first]+' '+last,style:'COMPOUND_GIVEN_NAME'};
  if(NICKNAMES[first]&&roll>=80&&roll<80+rules.nickname)
   return {name:first+' "'+NICKNAMES[first]+'" '+last,style:'COMMON_NICKNAME'};
