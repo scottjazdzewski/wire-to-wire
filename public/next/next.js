@@ -1951,7 +1951,8 @@ function liveStableHorseData(h,r,game,caseFiles){
    '★'.repeat(n)+'</b>'+'☆'.repeat(5-n)+'</span>'};
  };
  return {name,age,sex:sexCode,sexFull:sex,health,ready,form,
-  last:last||'Unraced',upcoming:upcoming||'Not entered',target:target||'No target',
+  last:last||(source.source==='1999_TEST_GENERATED'?'Unraced':'Not recorded'),
+  upcoming:upcoming||'Not entered',target:target||'No target',
   money:money||'Not recorded',owner:owner||'Not recorded',trainer:trainer||'Not recorded',
   breeder:breeder||'Not recorded',record:record||'Not recorded',
   activity:h.activity||'No current activity',
