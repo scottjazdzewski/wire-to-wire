@@ -142,3 +142,20 @@ test('900 distinct farm identities have their own commercial purpose, without cl
   principalNames:staff.slice(STAFF_COUNT).map(p=>p.name),
   trainerNames:staff.slice(0,4200).map(p=>p.name)}).farms,o.farms);
 });
+
+
+test('full 1999 personnel roster never resorts to numbered people or doubled middle initials',()=>{
+ const reserved=['Gabe Larkin','Nico Arroyo','Dr. Elias Venn'];
+ for(const seed of [19990101,19990102,23451233,99911111]){
+  const generated=createPersonnelNameRoster(seed,STAFF_COUNT+3308,roleAt,reserved);
+  assert.equal(generated.length,11202);
+  assertNoDuplicates(generated.map(p=>p.name),'duplicate full professional identity');
+  const numbered=generated.filter(p=>/\b\d+\b/.test(p.name));
+  const stackedInitials=generated.filter(p=>/\b[A-Z]\.\s+[A-Z]\.\s/.test(p.name));
+  assert.deepEqual(numbered.map(p=>p.name),[],'numeric suffix used to disguise duplicated person');
+  assert.deepEqual(stackedInitials.map(p=>p.name),[],'two middle initials were stacked by independent generators');
+  assert.ok(generated.some(p=>p.nameStyle==='MIDDLE_INITIAL'),'middle initials disappeared');
+  assert.ok(generated.every(p=>p.nameModel===PERSONNEL_NAME_MODEL));
+  assert.ok(generated.every(p=>!reserved.some(n=>normalized(n)===normalized(p.name))));
+ }
+});
