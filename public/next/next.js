@@ -87,7 +87,8 @@ function namedSavePanel(){
   '<button type="button" data-ng="named-backup">EXPORT ALL SAVES</button>'+
   '<button type="button" data-ng="named-import">IMPORT SAVES</button>'+
   '<input type="file" id="ngNamedSavesImport" accept="application/json,.json" hidden/>'+
-  '<button type="button" data-ng="named-export-current">EXPORT CURRENT GAME</button></footer>'+
+  '<button type="button" data-ng="named-export-current">EXPORT CURRENT GAME</button>'+
+  '<button type="button" data-ng="commercial-career-open" class="primary">WORLD SETUP & COMPACT SAVES</button></footer>'+
   '</section></div>';
 }
 function namedSaveCreate(){
@@ -3285,6 +3286,10 @@ window.addEventListener('click',e=>{
  if(!key && btn.dataset.act){syntheticAction(btn);return}
  if(key==='save-open'){APP.savePanelOpen=true;APP.saveError='';paint();root.querySelector('#ngNamedSaveName')?.focus();return}
  if(key==='save-close'){APP.savePanelOpen=false;APP.saveError='';return paint()}
+ if(key==='commercial-career-open'){
+  if(!window.WTWCompactCareerManager?.open)return namedSaveError('Compact career manager has not loaded. Refresh this page.');
+  APP.savePanelOpen=false;paint();return window.WTWCompactCareerManager.open();
+ }
  if(key==='named-create')return namedSaveCreate();
  if(['named-load','named-rename','named-delete','named-overwrite'].includes(key))return namedSaveHandle(key,val);
  if(key==='named-export-current')return bridgeNode(originalAct('Export'));
