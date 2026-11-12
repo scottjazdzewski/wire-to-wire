@@ -75,5 +75,48 @@ for(const p of Object.values(TRACK_PROGRAM_1999)){
   }));
  }
 }
+
+/* Eight expressly fictional WTW 1999 racecourses have full supporting stakes
+ * programs, not only their pre-existing -01 showcase. Every extra feature
+ * is GAME MODELED: it never claims a 1999 historical result or official grade. */
+const fictionalStakes={
+ 'T-0094':['Georgia Derby','Peach State Oaks','Piedmont Mile','Southern Sprint','Sweetwater Juvenile','Chattahoochee Turf Cup','Georgia Distaff','Sweetwater Classic','Southern Turf Mile','Georgia Summer Cup','Sweetwater Marathon'],
+ 'T-0095':['Cumberland Derby','Volunteer Oaks','Tennessee Mile','Music City Sprint','Cumberland Juvenile','Appalachian Turf Cup','Volunteer Distaff','Cumberland Classic','Nashville Turf Mile','Cumberland Summer Cup','Tennessee Marathon'],
+ 'T-0096':['Carolina Derby','Queen City Oaks','Tar Heel Mile','Piedmont Sprint','Charlotte Juvenile','Carolina Turf Cup','Queen City Distaff','Carolina Classic','Charlotte Turf Mile','Blue Ridge Cup','Carolina Marathon'],
+ 'T-0097':['Colorado Derby','Rocky Mountain Oaks','Continental Divide Mile','High Plains Sprint','Front Range Juvenile','Colorado Summer Cup','Aspen Distaff','Front Range Classic','Centennial Dirt Mile','Colorado Championship','Rocky Mountain Marathon'],
+ 'T-0098':['Nevada Derby','Silver State Oaks','Desert Mile','Reno Sprint','Silver State Juvenile','High Desert Cup','Sierra Distaff','Nevada Classic','Silver State Dirt Mile','Nevada Championship','Desert Marathon'],
+ 'T-0099':['Wasatch Derby','Great Salt Lake Oaks','Deseret Mile','Wasatch Sprint','Utah Juvenile','Alpine Cup','Mountain Distaff','Salt Lake Classic','Utah Dirt Mile','Wasatch Championship','Mountain Marathon'],
+ 'T-0100':['Missouri Derby','Heartland Oaks','Show-Me Mile','Missouri River Sprint','Heartland Juvenile','Gateway Turf Cup','Ozark Distaff','Heartland Classic','Missouri Turf Mile','Missouri Summer Cup','Heartland Marathon'],
+ 'T-0101':['Wisconsin Derby','Cream City Oaks','Great Lakes Mile','Brew City Sprint','Cream City Juvenile','Lakefront Cup','Badger State Distaff','Cream City Classic','Wisconsin Dirt Mile','Cream City Championship','Dairyland Marathon']
+};
+const grades=['WTW G1','WTW G2','WTW G3','WTW G3','WTW G3','WTW G2','WTW G3','WTW G1','WTW G3','WTW G2','REGIONAL STAKES'];
+const purses=[600000,400000,300000,250000,200000,300000,225000,650000,220000,325000,175000];
+for(const [id,names] of Object.entries(fictionalStakes)){
+ const p=TRACK_PROGRAM_1999[id];
+ if(!p||p.basis!=='WTW_FICTIONAL_GAME_MODELED'||names.length!==11)
+  throw Error('Incorrect WTW fictional track program: '+id);
+ const saturdays=[];
+ for(let t=Date.parse('1999-01-01T12:00:00Z');t<=Date.parse('1999-12-31T12:00:00Z');t+=86400000){
+  const d=new Date(t).toISOString().slice(0,10);
+  if(new Date(t).getUTCDay()===6&&trackMeetOpen1999(id,d))saturdays.push(d);
+ }
+ if(saturdays.length<11)throw Error('Too few race dates for '+id);
+ for(let i=0;i<names.length;i++){
+  const name=names[i],date=saturdays[Math.floor((i+.5)*saturdays.length/names.length)];
+  const turf=/Turf/i.test(name)||p.surfaces.includes('Turf')&&i===7;
+  if(turf&&!p.surfaces.includes('Turf'))throw Error('Turf race on dirt course '+id);
+  const surface=turf?'TURF':'DIRT',distance=/Sprint/.test(name)?6:/Marathon/.test(name)?12:/Derby|Classic/.test(name)?10:8.5;
+  out.push(Object.freeze({
+   id:'WTW-STK-1999-'+id+'-'+String(i+2).padStart(2,'0'),
+   name,trackId:id,trackName:p.name,localDate:date,date,
+   division:grades[i],grade:grades[i],status:'WTW PLANNED STAKES · NOT RUN',
+   ageRequirement:[0,1,4].includes(i)?'3YO':'3YO+',sexRestriction:[1,6].includes(i)?'FILLIES_AND_MARES':'OPEN',
+   surface,distanceF:distance,distanceFurlongs:distance,purse1999:purses[i],
+   canonical:false,calendarBasis:'WTW_FICTIONAL_GAME_MODELED',
+   fullConditions:'WTW fictional stakes; final imposts, nominations and entry terms are not yet issued. No result or entry has occurred.'
+  }));
+ }
+}
+
 export const WTW_ALTERNATE_STAKES_1999=Object.freeze(out);
 export const alternateStakesForTrack1999=(name)=>WTW_ALTERNATE_STAKES_1999.filter(r=>r.trackName===name);

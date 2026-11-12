@@ -129,11 +129,11 @@ export const TRACK_PROGRAM_1999=Object.freeze({
   "surfaces": "Dirt · Turf",
   "meets": [
    [
-    "07-21",
+    "07-28",
     "09-06"
    ]
   ],
-  "meetWindow": "Jul 21–Sep 6",
+  "meetWindow": "Jul 28–Sep 6",
   "raceDays": "36",
   "preferredDays": "Wed–Mon",
   "dayPattern": [
@@ -144,8 +144,8 @@ export const TRACK_PROGRAM_1999=Object.freeze({
    5,
    6
   ],
-  "basis": "APPROVED_WTW_1999_GAME_CALENDAR",
-  "sourceUrl": null,
+  "basis": "PUBLISHED_1999_SARATOGA_PROPOSAL",
+  "sourceUrl": "https://www.thoroughbreddailynews.com/pdf/tdn/1998/tdn980813.pdf",
   "stakesIds": [
    "STK-0022",
    "STK-0023",
@@ -488,17 +488,17 @@ export const TRACK_PROGRAM_1999=Object.freeze({
   "surfaces": "Dirt · Turf",
   "meets": [
    [
-    "04-29",
-    "07-04"
+    "04-24",
+    "06-27"
    ],
    [
     "10-31",
-    "11-25"
+    "11-27"
    ]
   ],
-  "meetWindow": "Apr 29–Jul 4; Oct 31–Nov 25",
-  "raceDays": "69",
-  "preferredDays": "Wed–Sun",
+  "meetWindow": "Apr 24–Jun 27; Oct 31–Nov 27",
+  "raceDays": "71",
+  "preferredDays": "Wed–Sun (modeled weekdays)",
   "dayPattern": [
    0,
    3,
@@ -506,8 +506,8 @@ export const TRACK_PROGRAM_1999=Object.freeze({
    5,
    6
   ],
-  "basis": "APPROVED_WTW_1999_GAME_CALENDAR",
-  "sourceUrl": null,
+  "basis": "VERIFIED_1999_CALENDAR",
+  "sourceUrl": "https://financialfilings.com/filings/churchill-downs-inc/annual-report/2000/10492900/",
   "stakesIds": [
    "STK-0001",
    "STK-0019",
@@ -607,22 +607,23 @@ export const TRACK_PROGRAM_1999=Object.freeze({
   "surfaces": "Dirt · Turf",
   "meets": [
    [
-    "07-01",
+    "06-28",
     "09-06"
    ]
   ],
-  "meetWindow": "Jul 1–Sep 6",
-  "raceDays": "~49",
-  "preferredDays": "Wed–Sun",
+  "meetWindow": "Jun 28–Sep 6",
+  "raceDays": "61",
+  "preferredDays": "Tue–Sun (modeled weekdays)",
   "dayPattern": [
    0,
+   2,
    3,
    4,
    5,
    6
   ],
-  "basis": "WTW_SEASONAL_GAME_MODELED",
-  "sourceUrl": null,
+  "basis": "VERIFIED_1999_CALENDAR",
+  "sourceUrl": "https://financialfilings.com/filings/churchill-downs-inc/annual-report/2000/10492900/",
   "stakesIds": [],
   "stakesDates": [],
   "trackOperating": "OPEN_1999",
