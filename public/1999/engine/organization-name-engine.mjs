@@ -20,9 +20,9 @@ const CLUB_ROOTS='First Turn|Backstretch|Two Furlongs|Finish Line|Clubhouse|Home
 const FAMILY_SUFFIX='Family Racing|Family Stables|Family Thoroughbreds|Family Partnership'.split('|');
 const LANDMARK='Autumn Grove|Black Walnut|Blue Heron|Cedar Bluff|Cedar Lane|Clover Hill|Dry Stone|Elm Ridge|Fair Oaks|Fox Den|Golden Valley|High Meadow|Iron Gate|Little River|Long Pasture|Old Bridge|Old Gate|Old School|Red Barn|Red Rock|River Stone|Round Oak|Silver Creek|Stone Fence|Stone House|Sycamore Lane|Three Maples|White Birch|White Post|Willow Lane|Winter Hill|Winding Creek'.split('|');
 const TOPO='Bluff|Branch|Brook|Chase|Crossing|Downs|Fields|Ford|Glen|Grove|Hollow|Knoll|Landing|Meadow|Mill|Oaks|Pasture|Place|Ridge|Run|Spring|Vale|Valley|Wood'.split('|');
-const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'');
+const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'');
 const trailing=/(?:\s+(?:Thoroughbred\s+Nursery|Thoroughbred\s+Farm|Bloodstock\s+Stud|Bloodstock\s+Farm|Bloodstock\s+Operation|Stallion\s+Station|Stallion\s+Farm|Stud\s+Farm|Farm\s+&\s+Nursery|Young\s+Horse\s+Development|Equine\s+Training\s+Center|Equine\s+Development|Racing\s+Partnership|Racing\s+Partners|Racing\s+Syndicate|Racing\s+Group|Racing\s+Club|Racing\s+Stables|Racing\s+Stable|Racing\s+Team|Racing\s+Operation|Training\s+Center|Training\s+Grounds|Training\s+Farm|Training\s+Barn|Training\s+Yard|Race\s+Barn|Race\s+Stable|Breaking\s+&\s+Training|Starting\s+&\s+Training|Pre-Training|Colt\s+Starting|Family\s+Partnership|Family\s+Thoroughbreds|Family\s+Racing|Family\s+Stables|Thoroughbreds|Partnership|Syndicate|Partners|Stables|Stable|Bloodstock|Nursery|Farmstead|Farms|Farm|Stud|Racing))$/i;
-const rootOf=name=>norm(String(name).replace(trailing,'').replace(/^the\s+/i,''));
+const rootOf=name=>String(name).replace(trailing,'').replace(/^the\s+/i,'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
 function hash(seed,key){
  let h=(2166136261^(seed>>>0))>>>0;
  for(const c of String(key)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}
