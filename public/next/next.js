@@ -854,7 +854,7 @@ function profileDetail(route){
     while(cols.length<4)cols.push('—');
     const index=$$('#routeBody [data-act]').indexOf(row.node);
     const grade=(cols[2].match(/\bG([123])\b/i)||[])[1];
-    const gradeCell=grade?'<span class="ng-stakes-grade" aria-label="Grade '+grade+'" title="Grade '+grade+'"><img class="ng-stakes-trophy" src="/assets/trophies/grade-'+grade+'.svg" alt="" width="16" height="16" decoding="async"/><small class="ng-stakes-grade-text" aria-hidden="true">G'+grade+'</small></span>':'<span>'+safe(cols[2])+'</span>';
+    const gradeCell=grade?'<span class="ng-stakes-grade" aria-label="Grade '+grade+'" title="Grade '+grade+'"><img class="ng-stakes-trophy" src="/assets/trophies/approved-grade-'+grade+'-64.png" alt="" width="16" height="16" decoding="async"/><small class="ng-stakes-grade-text" aria-hidden="true">G'+grade+'</small></span>':'<span>'+safe(cols[2])+'</span>';
     return index<0?'':'<button class="ng-stakes-data" data-ng="sourcebutton" data-val="'+index+'">'+
      '<span>'+safe(cols[0])+'</span><span>'+safe(cols[1])+'</span>'+gradeCell+'<span>'+safe(cols[3])+'</span></button>';
    }).join('')||'<div class="ng-empty-record">No verified stakes rows connected.</div>')+'</div>';
@@ -1701,22 +1701,21 @@ function depFacilityType(raw){
 function depFacilityRows(page,demo){
  const all=globalSearchItems();APP.searchIndex=all;
  const farms=all.map((r,i)=>({...r,_index:i})).filter(r=>r.kind==='farm');
- const owned=all.map((r,i)=>({...r,_index:i})).filter(r=>r.kind==='person'&&/owner|bloodstock/i.test(r.detail||''));
+ // Ownership Groups are real organizations, not duplicate person rows.
+ // People remain in Personnel / People and show as an organization's principal.
  let result=farms.map(r=>{
   const saved=state().facilityState?.[r.name]||{},kind=depFacilityType(r.detail);
+  const canonical=r._world||(world1999Data?.organizations||[]).find(o=>
+   (r.canonicalId&&o.id===r.canonicalId)||o.name===r.name);
   const n=depHash(r.name),cap=demo?24+n%75:saved.capacity;
   const used=demo?Math.floor(cap*.6):saved.occupied;
   return {_kind:'farm',_name:r.name,_canonId:r.canonicalId||'',name:r.name,type:kind,location:r.location||'',
    capacity:cap??'',occupied:used??'',free:cap!=null&&used!=null?cap-used:'',
    condition:demo?'Good':saved.condition||'',quality:demo?'80/100':saved.quality||'',
    staff:demo?String(5+n%11):saved.staff_count||'',
-   cost:demo?depMoney(12000+n%24000):saved.monthly_cost||'',owner:r._world?.publicPrincipal||saved.owner||'',
+   cost:demo?depMoney(12000+n%24000):saved.monthly_cost||'',owner:canonical?.publicPrincipal||saved.owner||'',
    status:demo?'Active':saved.status||''};
  });
- // Only source owners are linked as people; they are not fabricated businesses.
- result.push(...owned.map(r=>({_kind:'person',_name:r.name,name:r.name,type:'Ownership Office',
-  location:'',capacity:'',occupied:'',free:'',condition:'',quality:'',staff:'',cost:'',
-  owner:r.name,status:'',_sourcePerson:true})));
  if(demo)result.push(...DEP_FACILITY_PREVIEW.map(([name,type,location],i)=>{
   const physical=type!=='Ownership Group';
   return {_kind:'demo-facility',_name:name,name,type,location,
@@ -1730,7 +1729,7 @@ function depFacilityRows(page,demo){
  const typeForPage={'Stud Farms':'Stud Farm','Training Centers':'Training Center',
   'Breaking Facilities':'Breaking Facility','Racing Stables':'Racing Stable',
   'Ownership Groups':'Ownership Group','Barns':'Barn'};
- if(typeForPage[page])result=result.filter(r=>r.type===typeForPage[page]||(page==='Ownership Groups'&&r.type==='Ownership Office'));
+ if(typeForPage[page])result=result.filter(r=>r.type===typeForPage[page]);
  if(page==='Farms')result=result.filter(r=>['Farm','Stud Farm'].includes(r.type));
  return result;
 }
