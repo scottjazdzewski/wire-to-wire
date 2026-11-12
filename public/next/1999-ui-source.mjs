@@ -3,7 +3,7 @@
  * Reuses the same browser 1999 world projection as the diagnostic test lab.
  * All generated values are TEST state, canonical values retain source authority.
  */
-import {readLocal1999World} from '/1999/engine/local-api.mjs';
+import {readLocal1999World,historicalHorseById,historicalPedigree} from '/1999/engine/local-api.mjs';
 const q=(route,extras='')=>readLocal1999World(route+(route.includes('?')?'&':'?')+'seed=19990101&mode=CANON_ANCHORED_TEST'+(extras?'&'+extras:''));
 const allPages=(route,total)=>{const rows=[];for(let offset=0;offset<total;offset+=100){const page=q(route,'offset='+offset+'&limit=100');rows.push(...(page.items||[]));}return rows;};
 const srcHorses=allPages('/api/1999/horses',267);
@@ -77,7 +77,10 @@ function sourceFacts(name){
   name:h.name,source:source?'1999_CANON_LOCKED':'1999_TEST_GENERATED',
   racing_status:source?h.racingStatus:'TEST_WORLD_NO_1999_RESULTS',
   current_base:h.openingStable?.locality||h.location?.city||'',
-  sire_id:h.sireId,dam_id:h.damId};
+  sire_id:h.sireId,dam_id:h.damId,
+  sire_name:historicalHorseById(h.sireId)?.name||null,
+  dam_name:historicalHorseById(h.damId)?.name||null,
+  historicalPedigree:source?historicalPedigree(h.id,2):null};
 }
 const ownerFor=name=>{const h=horseLookup.get(name);return h?(h.ownerId===activeOwnerId?selectedOwner:ownerNames.get(h.ownerId)||h.ownerId||''):null;};
 function roster(){return stableHorses.map((h,i)=>({name:h.name,
@@ -92,7 +95,9 @@ function stableHorsePreview(name){
   _testReputation:h.reputation||{},age:String(1999-Number(h.foalYear)),foalYear:h.foalYear,
   foalingGeography:h.foalingGeography||h.foalingLocation||h.foalingPlace||null,
   ownerId:h.ownerId||'',trainerId:h.trainerId||'',
-  sex:h.sex||'',sire:h.sireId||'',dam:h.damId||'',owner:ownerFor(name)||'',
+  sex:h.sex||'',sire:historicalHorseById(h.sireId)?.name||h.sireId||'',
+  dam:historicalHorseById(h.damId)?.name||h.damId||'',
+  historicalPedigree:source?historicalPedigree(h.id,2):null,owner:ownerFor(name)||'',
   trainer:sourceFacts(name)?.connections.trainer||'',track:h.openingStable?.name||h.stableTrackId||'',
   location:city(h.location||h.openingStable)||'',
   status:source?h.racingStatus||'SOURCE OPENING':'1999 GENERATED TEST — NO RESULTS'};
