@@ -161,7 +161,11 @@ function dayCharges(horse,trainer,plan,work){
  const rate=Number(trainer?.compensation?.dayRate);
  const trainerRate=Number.isFinite(rate)&&rate>=0?rate:54;
  const extras=work==='REST'?0:TRAINING_PLANS[work].cost;
- return Math.round((monthly/30.4375+trainerRate+extras)*100)/100;
+ const care=Math.round(monthly/30.4375*100)/100;
+ return {amount:Math.round((care+trainerRate+extras)*100)/100,
+  components:{care,trainerDayFee:trainerRate,workoutSupplies:extras},
+  basis:'1999_TEST_COST_ACCRUAL_NOT_CASH_POSTING'};
+
 }
 /**
  * One calendar day for one horse. The same inputs ALWAYS produce the same result.
@@ -242,10 +246,11 @@ export function advanceHorseTrainingDay(record,horse,trainer,date,seed=19990101)
   readiness:next.readiness,risk:next.currentRisk});
  if(next.history.length>45)next.history=next.history.slice(-45);
  if(next.alerts.length>35)next.alerts=next.alerts.slice(-35);
- const charge=dayCharges(horse,trainer,next.plan,work);
+ const breakdown=dayCharges(horse,trainer,next.plan,work);
+ const charge=breakdown.amount;
  next.trainingSpent=Math.round((next.trainingSpent+charge)*100)/100;
  validateRecord(next,horse);
- return {horse:next,charge,work};
+ return {horse:next,charge,work,breakdown:breakdown.components};
 }
 function horseRosterIndex(horses){
  const seen=new Set(),byId=new Map();
@@ -292,7 +297,7 @@ export function simulateStableTrainingThrough(game,{horses,trainerById={},seed=1
    const r=advanceHorseTrainingDay(prior,horse,trainer,day,seed);
    root.horses[id]=r.horse;
    horseCharges.push({horseId:id,trainerId:horse.trainerId||null,amount:r.charge,
-    workout:r.work});
+    components:r.breakdown,workout:r.work});
    const newAlerts=r.horse.alerts.filter(a=>a.date===day);
    for(const alert of newAlerts)dayEvents.push({id:'HEALTH-'+day+'-'+id+'-'+alert.kind,
     date:day,horseId:id,type:alert.kind,note:alert.note,
