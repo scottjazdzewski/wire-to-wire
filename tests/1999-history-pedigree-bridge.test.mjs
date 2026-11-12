@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {HISTORY_ORGANIZATIONS} from '../public/1999/engine/historical-organization-bridge.mjs';
 import {HISTORICAL_HORSES} from '../public/1999/engine/historical-horse-index.mjs';
-import {historicalHorseById,historicalPedigree,readLocal1999World} from '../public/1999/engine/local-api.mjs';
+import {historicalHorseById,historicalOrganizationById,historicalPedigree,readLocal1999World} from '../public/1999/engine/local-api.mjs';
 
 test('history graph imports full ID-locked master, no duplicates',()=>{
  assert.equal(HISTORICAL_HORSES.length,3856);
@@ -40,4 +41,19 @@ test('1999 source-locked opening horses retain parent IDs independently of histo
  assert.equal(dam.id,horse.damId);
  assert.ok(sire.name||sire.source==='UNRESOLVED_HISTORICAL_PARENT_ID');
  assert.ok(dam.name||dam.source==='UNRESOLVED_HISTORICAL_PARENT_ID');
+});
+
+test('historic owner and breeder career links remain separate from generated finances',()=>{
+ assert.equal(HISTORY_ORGANIZATIONS.length,108);
+ assert.equal(new Set(HISTORY_ORGANIZATIONS.map(row=>row[0])).size,108);
+ const org=historicalOrganizationById('O-000001');
+ assert.equal(org.name,'Wetherby Plain');
+ assert.equal(org.ownerSeasonLinks,84);
+ assert.equal(org.breederSeasonLinks,40);
+ assert.equal(org.uniqueSourceHorses,41);
+ assert.equal(historicalOrganizationById('O-NOT-REAL'),null);
+ const routed=readLocal1999World('/api/1999/history/organization?id=O-000001');
+ assert.equal(routed.organization.id,org.id);
+ assert.equal(routed.organization.awards,org.awards);
+ assert.equal(Object.hasOwn(routed.organization,'finances'),false);
 });
