@@ -63,26 +63,40 @@ function chooseBand(bands,roll){let p=clamp(roll,0,.999999);
  for(const band of bands){if(p<band.weight)return {...band,position:p/band.weight};p-=band.weight}
  const b=bands[bands.length-1];return {...b,position:1};
 }
+// Gaussian-copula construction preserves the intended marginal peak frequencies
+// while allowing shared bloodline effects. Clipping a shifted uniform roll would
+// overproduce 2-year-old stars and late bloomers; never use that distribution.
+function normal(seed,key){
+ const u=Math.max(1e-12,unit(seed,key+':gaussian:u')),v=unit(seed,key+':gaussian:v');
+ return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+function cdf(z){
+ // Abramowitz-Stegun erf approximation, max error ~1.5e-7.
+ const x=Math.abs(z)/Math.SQRT2,t=1/(1+.3275911*x);
+ const erf=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-.284496736)*t+.254829592)*t*Math.exp(-x*x);
+ return clamp(.5*(1+(z<0?-erf:erf)),0,.999999);
+}
 function horsePedigree(seed,id,pedigree){
  const sireId=typeof pedigree?.sireId==='string'&&pedigree.sireId?pedigree.sireId:null;
  const damId=typeof pedigree?.damId==='string'&&pedigree.damId?pedigree.damId:null;
- const sirePrecocity=sireId?unit(seed,sireId+':inherited_precocity'):null;
- const damPrecocity=damId?unit(seed,damId+':inherited_precocity'):null;
- const values=[sirePrecocity,damPrecocity].filter(v=>v!==null);
- const ancestry=values.length?values.reduce((a,b)=>a+b,0)/values.length:.5;
- const ownGenotype=unit(seed,id+':inherited_precocity');
- // A sire's own maturation and what offspring can inherit share the same
- // stable latent genotype; the sire's individual experience also varies.
- const expressedPrecocity=values.length?.72*ancestry+.28*ownGenotype:ownGenotype;
- const own=unit(seed,id+':individual_maturity');
- const sprintInfluence=values.length?(unit(seed,sireId||id+':distance_preference')+
-  unit(seed,damId||id+':distance_preference'))/2:.5;
- // High precocity favors earlier peak, high sprint index a little earlier.
- // Heritable pressure is modest; own development is intentionally dominant.
- const distribution=clamp(own+(.5-expressedPrecocity)*.70+(.5-sprintInfluence)*.14,0,.999999);
- return {sireId,damId,ancestry:round(ancestry),expressedPrecocity:round(expressedPrecocity),
-  ownGenotype:round(ownGenotype),individual:round(own),
-  distanceInfluence:round(sprintInfluence),distribution};
+ const sire=sireId?normal(seed,sireId+':inherited_precocity'):null;
+ const dam=damId?normal(seed,damId+':inherited_precocity'):null;
+ const familyZ=sire!==null&&dam!==null?(sire+dam)*Math.SQRT1_2:
+  sire!==null?sire:dam!==null?dam:normal(seed,id+':inherited_precocity');
+ const ownZ=normal(seed,id+':inherited_precocity');
+ // The same inherited genotype influences the parent's own maturation and
+ // its offspring's maturity. Family inheritance is substantial but not absolute.
+ const expressedZ=(sire!==null||dam!==null)?
+  .72*familyZ+Math.sqrt(1-.72*.72)*ownZ:ownZ;
+ const sprintZ=sireId&&damId?
+  (normal(seed,sireId+':distance_preference')+normal(seed,damId+':distance_preference'))*Math.SQRT1_2:
+  normal(seed,id+':distance_preference');
+ const environmentZ=normal(seed,id+':individual_maturity');
+ const combined=.54*expressedZ+.18*sprintZ+Math.sqrt(1-.54*.54-.18*.18)*environmentZ;
+ const distribution=cdf(-combined); // Higher genetic precocity -> younger peak.
+ return {sireId,damId,ancestry:round(cdf(familyZ)),ownGenotype:round(cdf(ownZ)),
+  expressedPrecocity:round(cdf(expressedZ)),individual:round(cdf(environmentZ)),
+  distanceInfluence:round(cdf(sprintZ)),distribution};
 }
 export const supportedAgeRoles=Object.freeze(Object.keys(ROLES));
 export function inferProfessionalRole(raw){const s=String(raw||'').toLowerCase().replace(/[_-]/g,' ');
