@@ -1,3 +1,4 @@
+import {readLocal1999World} from './engine/local-api.mjs';
 import {createClean1999Clock,advance1999Clock,reset1999Clock,validate1999Clock,WTW_TEST_SAVE_NAMESPACE} from './test-clock.mjs';
 const $=id=>document.getElementById(id),SAVE_MODE_KEY='wtw:1999:test-universe-mode:v1';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -59,7 +60,7 @@ function select(next){
  $('mode').textContent=mode==='FULLY_FICTIONAL_TEST'?'FICTIONAL SEED':'CANON LOCKED + TEST';
  load();
 }
-async function json(path){const r=await fetch(path,{credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json'}});if(!r.ok)throw Error('Test source returned '+r.status+'; no invented fallback was used.');return r.json();}
+async function json(path){return readLocal1999World(path);}
 function metric(n,label){return '<div class="metric"><strong>'+esc(Number(n||0).toLocaleString('en-US'))+'</strong><span>'+esc(label)+'</span></div>';}
 async function overview(){
  try{const data=await json('/api/1999/sim/overview?'+modelArgs().toString());if(data.asOf!=='1999-01-01')throw Error('World has wrong date');
@@ -124,7 +125,7 @@ async function load(){
   if(request!==token)return;
   $('records').innerHTML=items.length?items.map(row).join(''):'<article class="record">No records on this date or at this track.</article>';
   $('pageInfo').textContent=total?(offset+1)+'–'+Math.min(offset+items.length,total)+' of '+Number(total).toLocaleString('en-US'):'0 records';
-  $('prevPage').disabled=offset===0||type==='condition';$('nextPage').disabled=offset+15>=total||type==='condition';$('status').textContent='';
+  $('prevPage').disabled=offset===0||type==='condition';$('nextPage').disabled=offset+15>=total||type==='condition';$('status').textContent='Population loaded in this browser · Jan 1, 1999 source canon stays read-only.';
  }catch(e){if(request!==token)return;$('status').textContent=e.message;$('pageInfo').textContent='Unavailable';$('prevPage').disabled=true;$('nextPage').disabled=true;}
 }
 select('full-horses');overview();
