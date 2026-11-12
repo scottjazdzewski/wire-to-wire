@@ -3075,6 +3075,10 @@ window.addEventListener('click',e=>{
  if(key==='stake-sort'){if(APP.stakeSort===val)APP.stakeSortDesc=!APP.stakeSortDesc;else{APP.stakeSort=val;APP.stakeSortDesc=false}return paint()}
  if(key==='sourcebutton'){const n=$$('#routeBody [data-act]')[Number(val)];return bridgeNode(n)}
  if(key==='action'){
+  if(window.__WTW_1999_MANAGEMENT__&&val==='Continue'){
+    window.__WTW_1999_MANAGEMENT__.advanceOneDay?.();
+    return paint();
+  }
   if(window.__WTW_1999_MANAGEMENT__&&['Open file','Open current source'].includes(val))
    return openMenu(window.__WTW_1999_UI_DATA__?.officeDesks?.[APP.activeCase]?.moves?.[0]?.menu||'World');
   const x=originalAct(val); if(x)return bridgeNode(x);if(val==='Open file')return bridgeNode(originalAct('Open file'));return}
