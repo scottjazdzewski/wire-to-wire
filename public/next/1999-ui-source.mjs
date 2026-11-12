@@ -7,7 +7,53 @@ import {trackProgram1999} from '/next/1999-track-program.mjs';
 import {WTW_ALTERNATE_STAKES_1999} from '/next/1999-alternate-stakes.mjs';
 import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-20261112-r7';
 import attributeCatalog from '/1999/engine/attribute-catalog.mjs';
+import {TRAINING_PLANS,createHorseTrainingRecord,horseTrainingSnapshot,
+ assignHorseTrainingPlan,simulateStableTrainingThrough,trainingFinancials}
+ from '/1999/engine/horse-development.mjs';
 let viewDate='1999-01-01';
+const saveKey=()=>window.__WTW_1999_MANAGEMENT__?.saveKey||'wtw1999ManagementStateV1';
+function gameCareer(){
+ if(typeof localStorage==='undefined'||!window.__WTW_1999_MANAGEMENT__)return null;
+ const raw=localStorage.getItem(saveKey());if(!raw)return null;
+ const game=JSON.parse(raw);
+ if(game?.worldAnchor?.schema!==window.__WTW_1999_MANAGEMENT__.schema)return null;
+ return game;
+}
+function trainingTrainerMap(){
+ const trainers=get('trainers','/api/1999/sim/trainers',worldCounts.trainers);
+ return Object.fromEntries(trainers.map(t=>[t.id,t]));
+}
+function syncDevelopment(date){
+ const game=gameCareer();
+ if(!game||game.date!==date)return game;
+ const done=simulateStableTrainingThrough(game,{
+  horses:stableHorses,trainerById:trainingTrainerMap(),seed:game.worldAnchor.seed,date
+ });
+ if(done.daysProcessed){
+  localStorage.setItem(saveKey(),JSON.stringify(done.game));
+  return done.game;
+ }
+ return game;
+}
+function horseTraining(nameOrId){
+ const h=stableHorses.find(x=>x.id===nameOrId||x.name===nameOrId);
+ if(!h)return null;
+ const game=gameCareer();
+ return horseTrainingSnapshot(game,h);
+}
+function trainingCosts(){return trainingFinancials(gameCareer())}
+function assignTraining(horseId,plan){
+ const game=gameCareer();if(!game)throw Error('Active 1999 career save unavailable');
+ if(game.date!==viewDate)throw Error('Game date and training date are not synchronized');
+ const h=stableHorses.find(x=>x.id===horseId);
+ if(!h)throw Error('That horse is not in your stable');
+ const prepared=syncDevelopment(game.date)||game;
+ const updated=assignHorseTrainingPlan(prepared,{horse:h,plan,stableHorses, date:game.date});
+ if(updated!==prepared){
+  localStorage.setItem(saveKey(),JSON.stringify(updated));
+ }
+ return horseTrainingSnapshot(updated,h);
+}
 const q=(route,extras='')=>readLocal1999World(route+(route.includes('?')?'&':'?')+
  'seed=19990101&mode=CANON_ANCHORED_TEST'+(viewDate==='1999-01-01'?'':'&date='+viewDate)+(extras?'&'+extras:''));
 const allPages=(route,total)=>{const rows=[];for(let offset=0;offset<total;offset+=100){const page=q(route,'offset='+offset+'&limit=100');rows.push(...(page.items||[]));}return rows;};
@@ -253,6 +299,7 @@ function setGameDate(date){
   records.clear();departmentCache.clear();
   stableHorses=allPages('/api/1999/sim/owner-horses?'+portfolioQuery,ownedHorseCount);
   horseLookup=new Map([...srcHorses,...stableHorses].map(h=>[h.name,h]));
+  syncDevelopment(date);
   if(window.__WTW_1999_UI_DATA__)window.__WTW_1999_UI_DATA__.stableHorses=roster();
  }catch(error){
   viewDate=previous;
@@ -356,6 +403,7 @@ window.__WTW_1999_UI_DATA__={
   generatedStaffRoles:['trainer','jockey','farm_manager','veterinarian','farrier','bloodstock_agent','racing_secretary'],
  ownedHorseCount,
  sourceFacts,ownerFor,stableHorsePreview,setGameDate,departmentRows,auctionList,extraTracks,
+ TRAINING_PLANS,horseTraining,assignTraining,trainingCosts,
  officeMessages,officeDesks,openingCash,worldHorsePage,
  horseAttributeGroups,stableHorseAttributes,stableHorseCareer,
  stakesForTrack,findStake,findRace,ownedHorses,breederProfile,foalingFarmProfile,trackProgramById:trackProgram1999,
