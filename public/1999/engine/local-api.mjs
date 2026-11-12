@@ -36,6 +36,12 @@ export function readLocal1999World(raw){
    gameplayReady:false,counts:w.counts,audit:w.audit,clock:createClean1999Clock(w.seed)};
  }
  if(p==='/api/1999/sim/horses')return pager(q,w.counts.horses,i=>w.horseAt(i),'SOURCE_267_PLUS_TEST_GENERATED');
+ if(p==='/api/1999/sim/owner-horses'){
+  const id=String(q.get('ownerId')||'').trim();
+  if(!id||!/^O-[A-Z0-9-]{1,45}$/.test(id))throw Error('Valid owner ID required');
+  const horseIndexes=w.ownedHorseIndexes(id);
+  return pager(q,horseIndexes.length,i=>w.horseAt(horseIndexes[i]),'CANON_AND_TEST_OWNERSHIP_ROSTER');
+ }
  if(p==='/api/1999/sim/owners')return pager(q,w.counts.owners,i=>w.ownerAt(i),'SOURCE_LINKED_PLUS_TEST_ECONOMY');
  if(p==='/api/1999/sim/trainers')return pager(q,w.counts.trainers,i=>w.trainerAt(i),'SOURCE_LINKED_PLUS_TEST_HORSEMEN');
  if(p==='/api/1999/sim/people')return pager(q,w.counts.people-w.sourcePeople.length,i=>w.personAt(i),'SIMULATED_WORKFORCE');
