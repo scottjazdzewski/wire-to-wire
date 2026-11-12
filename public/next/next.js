@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'powerline',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:!window.__WTW_1999_MANAGEMENT__,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:!window.__WTW_1999_MANAGEMENT__,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
+const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:!window.__WTW_1999_MANAGEMENT__,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:!window.__WTW_1999_MANAGEMENT__,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -42,7 +42,7 @@ let organizationLogoIndex=null; // UI-only logo asset refs; organization authori
 const tabmap={Office:['Overview','Messages','Decisions','Calendar','News','Reports','Career'],History:['Race Results','Horses','People & Farms','Facilities & Tracks','Historical Calendar','Coverage'],Stable:['Overview','Horses','Training','Health','Race Plans','Barns'],Racing:['Overview','Calendar','Entries','Results','Stakes','Race Planning'],Breeding:['Overview','Stallions','Broodmares','Foals','Pedigrees','Stud Farms'],Sales:['Overview','Auctions','Sale Calendar','Sale Companies','Catalogs','Watchlist','Private Offers'],Personnel:['Overview','Trainers','Jockeys','Owners','Ownership Groups','Staff'],Facilities:['Overview','Stud Farms','Training Centers','Breaking Facilities','Racing Stables','Barns','Farms'],Tracks:['Overview','Active Meets','All Tracks','Stakes'],Finances:['Overview','Cash Flow','Operating Costs','Budgets'],World:['Overview','1999 Horses','People','Organizations','Tracks','Meets','Major Races','News']};
 const actions={Office:'Office Overview',Stable:'Stable',Racing:'Race Calendar',Sales:'Sales',World:'World'};
 const officeMenu={Overview:'Office Overview',Messages:'Filter All',Decisions:'Open move history',Calendar:'Open Race Calendar',News:'News',Reports:'Open move history',Career:'Open move history'};
-const state=()=>{try{return JSON.parse(localStorage.getItem('wtwOfficeStateV30')||'{}')}catch{return {}}};
+const state=()=>{try{return JSON.parse(localStorage.getItem((window.__WTW_1999_MANAGEMENT__?.saveKey||'wtw1999ManagementStateV1'))||'{}')}catch{return {}}};
 /* Named saves are snapshots of the canonical Office game state, never a new
    simulation ledger. World Editor patches and media remain independently stored. */
 const NAMED_SAVE_KEY=window.__WTW_1999_MANAGEMENT__?.namedSaveKey||'wtwNamedGameSavesV1';
@@ -58,7 +58,7 @@ function namedSaveCapture(){
  const native=$('.app [data-act]').find(n=>n.dataset.act==='Save');
  if(!native)throw Error('The original game save control is unavailable.');
  native.click(); // Canonical Office writes its current simulation state synchronously.
- const payload=JSON.parse(localStorage.getItem('wtwOfficeStateV30')||'null');
+ const payload=JSON.parse(localStorage.getItem((window.__WTW_1999_MANAGEMENT__?.saveKey||'wtw1999ManagementStateV1'))||'null');
  if(!payload||typeof payload!=='object'||!payload.version||!payload.date||!valid1999Save(payload))
   throw Error('Only a clean Jan 1, 1999 world career can be saved here.');
  return payload;
@@ -122,9 +122,9 @@ function namedSaveHandle(action,id){
  }else if(action==='named-load'){
   if(!window.confirm('Load "'+slot.name+'"? Current unsaved progress will be replaced.'))return;
   try{
-   // The original Office restores wtwOfficeStateV30 at startup; keep its native
+   // The original Office restores the dedicated 1999 save at startup; keep its native
    // migrations, chronology and decision application as the single authority.
-   localStorage.setItem('wtwOfficeStateV30',JSON.stringify(slot.game));
+   localStorage.setItem((window.__WTW_1999_MANAGEMENT__?.saveKey||'wtw1999ManagementStateV1'),JSON.stringify(slot.game));
    window.location.reload();
   }catch(e){namedSaveError('LOAD FAILED: '+(e?.message||'Storage is unavailable'))}
   return;
@@ -1593,7 +1593,7 @@ function profileDetail(route){
  const baseLabel=knownField(currentBase)?'CURRENT BASE':historicalBase?historicalBaseLabel:'CURRENT BASE';
  const personBaseValue=knownField(currentBase)?currentBase:normalizeLocation(historicalBase);
  const isoBorn=provenanceOK(gameIdentity)?gameIdentity.date_of_birth||'':'';
- const currentYear=String(state()?.date||'2014-07-15').slice(0,10);
+ const currentYear=String(state()?.date||'1999-01-01').slice(0,10);
  const personDOB=/^\d{4}-\d{2}-\d{2}$/.test(isoBorn)?isoBorn:'';
  const ageAtGameDate=personDOB&&/^\d{4}-\d{2}-\d{2}$/.test(currentYear)?
   (()=>{const dob=new Date(personDOB+'T00:00:00Z'),now=new Date(currentYear+'T00:00:00Z');
@@ -1718,7 +1718,7 @@ function profileDetail(route){
  return `<div class="ng-profile-view ${isHorse?'ng-profile-horse':isPerson?'ng-profile-person':isFarm?'ng-profile-farm':isTrack?'ng-profile-track':'ng-profile-entity'}">${identity}${tabbar}<div class="ng-detail-cols ${isHorse&&APP.detailTab==='Overview'?'ng-detail-cols-horse-overview':isPerson&&APP.detailTab==='Overview'?'ng-detail-cols-person':(isFarm||isTrack)&&APP.detailTab==='Overview'?'ng-detail-cols-tier1':''}">${left}${right}${footer}</div>${isHorse||isPerson||isFarm||isTrack?'':actions}</div>`;
 }
 function calendarTimeline(races,nonraces){
- const iso=$('.dateChip')?.textContent.trim()||'2014-07-15';
+ const iso=$('.dateChip')?.textContent.trim()||'1999-01-01';
  if(!/^\d{4}-\d{2}-\d{2}$/.test(iso))return '';
  const base=new Date(iso+'T12:00:00');if(Number.isNaN(base.getTime()))return '';
  const events=[];
@@ -1783,7 +1783,7 @@ function liveStableHorseData(h,r,game,caseFiles){
  else if(/^(down|declining|negative)$/.test(trend))form=['down','Down','Recorded racing form declining'];
  else if(/^(flat|level|steady)$/.test(trend))form=['level','Flat','Recorded racing form steady'];
  else if(/trending up|improv(ed|ing)/i.test(h.activity||''))form=['work','Work ↑','Positive work/training trend (not race form)'];
- const birth=liveStableDate(source.date_of_birth||source.born),worldYear=Number(($('.dateChip')?.textContent.trim()||'2014-07-15').slice(0,4));
+ const birth=liveStableDate(source.date_of_birth||source.born),worldYear=Number(($('.dateChip')?.textContent.trim()||'1999-01-01').slice(0,4));
  const by=birth?Number(birth.slice(0,4)):NaN;
  const age=Number.isInteger(worldYear)&&Number.isInteger(by)&&worldYear>=by?String(worldYear-by):liveStableKnown(source.age);
  const sex=liveStableKnown(source.sex),sexCode=({colt:'C',filly:'F',gelding:'G',mare:'M',horse:'H',stallion:'H'})[sex.toLowerCase()]||sex;
@@ -2032,7 +2032,7 @@ function depMoney(n){if(n==null||n==='')return '';return typeof n==='number'?'$'
 function depRaceIso(value){
  const s=String(value||''),direct=liveStableDate(s);if(direct)return direct;
  const m=s.match(/(\d{1,2})\/(\d{1,2})/);if(!m)return '';
- const current=$('.dateChip')?.textContent.trim()||'2014-07-15';
+ const current=$('.dateChip')?.textContent.trim()||'1999-01-01';
  return current.slice(0,4)+'-'+String(Number(m[1])).padStart(2,'0')+'-'+String(Number(m[2])).padStart(2,'0');
 }
 
@@ -2336,7 +2336,7 @@ function depRows(section,page,demo,auction){
  if(section==='Facilities')return depFacilityRows(page,demo);
 
  const entries=demo?[
-  ['2014-07-15','Purse','Race earnings','Racing',28500,0,2840000],
+  ['1999-01-01','Purse','Race earnings','Racing',28500,0,2840000],
   ['2014-07-14','Payroll','Stable employee payroll','Personnel',0,21400,2811500],
   ['2014-07-13','Facilities','Barn and training upkeep','Facilities',0,8200,2832900],
   ['2014-07-12','Breeding','Stud service receipt','Breeding',12500,0,2841100],
@@ -2609,7 +2609,7 @@ function depPageLimit(section){const financeHeader=section==='Finances'?42:0,sal
 function departmentRoster(section,page='Overview'){
  const demo=section==='World'||['Personnel','Facilities','Tracks'].includes(section)||
   section==='Breeding'&&['Stallions','Broodmares'].includes(page)?false:APP.departmentDemo;
- const current=$('.dateChip')?.textContent.trim()||'2014-07-15';
+ const current=$('.dateChip')?.textContent.trim()||'1999-01-01';
  const auctions=section==='Sales'?depAuctionList(demo):[];
  const gameDay=depGameDay();
  const auction=auctions.find(a=>a.id===APP.departmentAuction)||auctions.find(a=>(a.endDate||a.sortKey)>=gameDay)||null;
