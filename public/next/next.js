@@ -1877,6 +1877,19 @@ function liveStableHorseData(h,r,game,caseFiles){
  if(/light jog|training paused|resting|scan pending|diagnostic|restricted|laid up|not ready|hold/i.test(rawReady))ready=['restricted','Restricted',rawReady];
  else if(/ready to race|ready to run|race ready|cleared to race/i.test(rawReady))ready=['ready','Ready',rawReady];
  else if(/work requested|more work|breeze|gate school|gallop|building|training rhythm|trending up|progressing/i.test(rawReady))ready=['building','Building',rawReady];
+ const train=window.__WTW_1999_UI_DATA__?.horseTraining?.(h.horseId||name);
+ if(game.horseDevelopment?.horses?.[h.horseId]&&train){
+  const pct=Math.round(train.readiness*100)+'%';
+  if(train.sorenessDays>0){
+   health=['watch','Training watch','Simulated soreness caution, not a sourced veterinary finding'];
+   ready=['restricted',pct,'MODELED GAMEPLAY · soreness watch, no race clearance implied'];
+  }else{
+   ready=[train.readiness>.7?'ready':'building',pct,
+    'MODELED GAMEPLAY · fitness, fatigue and recovery; not a race entry clearance'];
+   if(train.currentRisk>.7)health=['watch','Risk watch',
+    'Simulated high-workload caution, not a sourced veterinary diagnosis'];
+  }
+ }
  if(r&&/entered/i.test(r.status||''))ready=['entered','Entered','Entry confirmed; race fitness is not independently assessed'];
  if(isTreating)ready=['restricted','Restricted','Explicit ongoing treatment'];
  const trend=String(saved.form_trend||scout.form_trend||'').trim().toLowerCase();
@@ -1931,7 +1944,53 @@ function stableShortDate(value){
  return Number(m)+'/'+Number(d)+'/'+y.slice(2);
 }
 
+function liveStableTrainingView(){
+ const adapter=window.__WTW_1999_UI_DATA__;
+ if(!adapter?.horseTraining)return '<section class="ng-functional"><p>Training engine is unavailable for the current career.</p></section>';
+ const horses=horseRows(),fin=adapter.trainingCosts?.()||{},plans=adapter.TRAINING_PLANS||{};
+ const fmt=x=>Math.round(Number(x||0)*100)+'%';
+ const money=x=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(Number(x||0));
+ const rows=horses.map(h=>{
+  const profile=adapter.horseTraining(h.horseId||h.name);
+  if(!profile)return '';
+  const status=profile.status==='INACTIVE'?'NOT TRAINING':
+   profile.sorenessDays>0?'SORENESS WATCH · '+profile.sorenessDays+'D':
+   profile.currentRisk>.68?'RISK WATCH':'TRAINING';
+  const warning=profile.sorenessDays>0?'Simulated soreness watch—not a veterinary diagnosis':
+   profile.currentRisk>.68?'High workload risk—consider rest or light gallops':'No simulated soreness alert';
+  const actions=Object.entries(plans).map(([id,p])=>{
+   const chosen=profile.plan===id,disabled=profile.status==='INACTIVE'&&id!=='REST';
+   return '<button data-ng="training-set" data-horse-id="'+safe(profile.horseId)+'" data-val="'+safe(id)+
+    '" title="'+safe(p.label)+'" class="'+(chosen?'on':'')+'" aria-pressed="'+chosen+'"'+
+    (disabled?' disabled':'')+'>'+safe(id==='BALANCED'?'BALANCED':id==='STAMINA'?'STAMINA':id==='SPEED'?'SPEED':
+     id==='GATE'?'GATE':id==='PREP'?'RACE PREP':id==='LIGHT'?'LIGHT':'REST')+'</button>';
+  }).join('');
+  return '<tr><td><button data-ng="horse" data-val="'+safe(h.name)+'">'+safe(h.name)+'</button>'+
+   '<small>'+safe(profile.horseId)+'</small></td>'+
+   '<td><strong>'+fmt(profile.fitness)+'</strong></td><td><strong>'+fmt(profile.fatigue)+'</strong></td>'+
+   '<td><strong>'+fmt(profile.readiness)+'</strong></td><td>'+fmt(profile.currentRisk)+'</td>'+
+   '<td><span title="'+safe(warning)+'">'+safe(status)+'</span></td>'+
+   '<td><span>'+safe(plans[profile.plan]?.label||profile.plan)+'</span><div class="ng-training-choices">'+actions+'</div></td>'+
+   '<td><small>'+safe(profile.lastWork?.date||'OPENING')+' · '+safe(profile.lastWork?.work||'NO POST-OPENING WORK')+'</small></td></tr>';
+ }).join('');
+ const notice=APP.trainingNotice?'<p class="ng-training-notice" role="status">'+safe(APP.trainingNotice)+'</p>':'';
+ return '<section class="ng-functional ng-training-desk">'+
+  '<div class="ng-rs-title"><strong>STABLE · TRAINING COMMAND</strong><span>'+horses.length+
+   ' HORSES · IN-GAME DATE '+safe(depGameDay())+' · SIMULATED CONDITION</span>'+
+   '<button data-ng="stable-filter" data-val="all">BACK TO ROSTER</button></div>'+
+  '<div class="ng-training-summary"><div><small>WORKED THROUGH</small><strong>'+safe(fin.processedThrough||'1999-01-01')+
+   '</strong></div><div><small>POSTED TRAINING DAYS</small><strong>'+safe(fin.entries||0)+'</strong></div>'+
+   '<div><small>MODELED STABLE EXPENSES</small><strong>'+safe(money(fin.totalSpent))+
+   '</strong></div><div><small>SORENESS WATCHES</small><strong>'+safe(fin.recordedHealthAlerts||0)+'</strong></div></div>'+
+  notice+
+  '<p class="ng-training-explainer">Choose a horse’s weekly program; continue the calendar to run its workouts, recovery, fatigue, fitness and modeled risk. Sunday rest and graded work are applied automatically. Training costs are recorded in the current save’s simulation ledger—not certified payments or historical veterinary facts.</p>'+
+  '<div class="ng-rs-scroll" tabindex="0" aria-label="Horse training plans and condition"><table class="ng-rs-table ng-training-table"><thead><tr>'+
+   '<th>HORSE</th><th>FITNESS</th><th>FATIGUE</th><th>READINESS</th><th>RISK</th><th>MONITOR</th><th>WEEKLY PROGRAM / CHANGE PLAN</th><th>LATEST WORK</th>'+
+   '</tr></thead><tbody>'+rows+'</tbody></table></div></section>';
+}
+
 function liveStableRosterView(){
+ if(APP.stableFilter==='training')return liveStableTrainingView();
  if(APP.stableFilter==='attributes')return window.WTW1999AttributeRanking?.render({
   horses:horseRows(),adapter:window.__WTW_1999_UI_DATA__,app:APP,
   ownerBadge:horseOwnerBadge,safe
@@ -1985,7 +2044,7 @@ function liveStableRosterView(){
    txt(x.record,'ng-rs-numeric'),txt(x.activity,'ng-rs-activity')];
   return '<tr class="ng-wtw-roster-row" data-search="'+safe([x.name,x.activity,x.target,x.owner,x.trainer,x.breeder,x.health[1],x.ready[1]].join(' ').toLowerCase())+'">'+datum.join('')+'</tr>';
  }).join('');
- const filters=[['all','ALL'],['vet','VET WATCH'],['ready','READY'],['attributes','ATTRIBUTES'],['targets','WITH TARGET'],['entered','ENTERED'],['unassigned','NO TARGET']]
+ const filters=[['all','ALL'],['vet','VET WATCH'],['ready','READY'],['attributes','ATTRIBUTES'],['training','TRAINING'],['targets','WITH TARGET'],['entered','ENTERED'],['unassigned','NO TARGET']]
  .map(([value,label])=>'<button data-ng="stable-filter" data-val="'+value+'" class="'+(APP.stableFilter===value?'on':'')+'" aria-pressed="'+(APP.stableFilter===value?'true':'false')+'">'+label+'</button>').join('');
   const legend='<div class="ng-rs-legend">'+liveStableSignal('watch','Vet watch','Caution without assumed treatment')+
   liveStableSignal('treat','Treatment','Only documented active treatment')+liveStableSignal('building','Building','Training toward a race')+
@@ -3188,6 +3247,15 @@ window.addEventListener('click',e=>{
    _track:r._track||r.track||'',_kind:APP.departmentDemo?'demo-race':'race',
    type:'Race',location:r.track||'',date:r.date||'',status:r.status||''
   }:null);
+ }
+ if(key==='training-set'){
+  const id=btn.dataset.horseId||'';
+  try{
+   const profile=window.__WTW_1999_UI_DATA__?.assignTraining?.(id,val);
+   if(!profile)throw Error('Training is not available for this horse');
+   APP.trainingNotice='Assigned '+safe(profile.nameAtOpening)+' to '+safe(window.__WTW_1999_UI_DATA__.TRAINING_PLANS[val]?.label||val)+'. Advance the game clock to run work.';
+  }catch(error){APP.trainingNotice='TRAINING NOT CHANGED: '+String(error?.message||error)}
+  return paint();
  }
  if(key==='stable-world-edit'){APP.section='World';return pageTab('1999 Horses')}
  if(key==='world-edit')return worldEditOpen(val);
