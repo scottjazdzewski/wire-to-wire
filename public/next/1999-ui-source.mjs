@@ -7,6 +7,7 @@ import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-2026111
 const q=(route,extras='')=>readLocal1999World(route+(route.includes('?')?'&':'?')+'seed=19990101&mode=CANON_ANCHORED_TEST'+(extras?'&'+extras:''));
 const allPages=(route,total)=>{const rows=[];for(let offset=0;offset<total;offset+=100){const page=q(route,'offset='+offset+'&limit=100');rows.push(...(page.items||[]));}return rows;};
 const srcHorses=allPages('/api/1999/horses',267);
+const sourceHorseOffset=new Map(srcHorses.map((h,index)=>[h.id,index]));
 const srcOrgs=allPages('/api/1999/organizations',108);
 const srcPeople=allPages('/api/1999/people',154);
 const worldCounts=q('/api/1999/sim/overview').counts;
@@ -270,6 +271,8 @@ window.__WTW_1999_UI_DATA__={
  sourceFacts,ownerFor,stableHorsePreview,departmentRows,auctionList,extraTracks,
  officeMessages,officeDesks,openingCash,worldHorsePage,
  stakesForTrack,findStake,ownedHorses,
+ sourceHorseAbility:id=>{const index=sourceHorseOffset.get(id);
+  return index===undefined?null:q('/api/1999/sim/horses','offset='+index+'&limit=1').items?.[0]?.ability||null;},
  sourcePersonModel:id=>{const index=srcPeople.findIndex(p=>p.id===id);
   return index<0?null:q('/api/1999/sim/source-people','offset='+index+'&limit=1').items?.[0]||null;},
  counts:q('/api/1999/sim/overview').counts,
