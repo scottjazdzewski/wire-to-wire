@@ -1,0 +1,50 @@
+/* WTW commercial career dialog — intentionally isolated from approved game UI. */
+.wtw-cc-backdrop[hidden]{display:none!important}
+.wtw-cc-backdrop{position:fixed;inset:0;background:rgba(4,11,10,.88);z-index:2147483000;
+ display:flex;align-items:center;justify-content:center;padding:18px;overflow:auto;
+ font-family:inherit;color:#ece7d7}
+.wtw-cc-panel{width:min(980px,100%);max-height:min(92vh,1050px);overflow:auto;
+ border:1px solid #9b946b;background:#14211e;box-shadow:0 24px 80px rgba(0,0,0,.65)}
+.wtw-cc-panel header{display:flex;align-items:center;justify-content:space-between;gap:16px;
+ padding:19px 24px;border-bottom:1px solid #45584c;background:#20332b}
+.wtw-cc-panel header small{font-size:10px;letter-spacing:.2em;color:#c9bc81}
+.wtw-cc-panel h2{font-size:21px;letter-spacing:.08em;margin:5px 0 0;color:#f0e7ca}
+.wtw-cc-panel h3{font-size:14px;letter-spacing:.12em;color:#d8c992;margin:0 0 10px}
+.wtw-cc-panel p{color:#c5cbbf;font-size:12px;line-height:1.55;margin:5px 0 12px}
+.wtw-cc-panel button{background:#273c32;border:1px solid #68816b;color:#f2ecd9;
+ padding:9px 12px;border-radius:3px;font-size:11px;font-weight:750;cursor:pointer;
+ letter-spacing:.03em;white-space:normal;text-align:center}
+.wtw-cc-panel button:hover{background:#435b48;border-color:#c0b17d}
+.wtw-cc-panel button.primary{background:#af9560;border-color:#e2c482;color:#15231c}
+.wtw-cc-panel input,.wtw-cc-panel select{background:#101d1a;color:#f2ecd9;
+ border:1px solid #5e755f;padding:9px 10px;font-size:13px;border-radius:3px;min-width:0;
+ width:100%}
+.wtw-cc-panel input:focus,.wtw-cc-panel select:focus,.wtw-cc-panel button:focus-visible{
+ outline:2px solid #f0c96e;outline-offset:2px}
+.wtw-cc-current{padding:14px 24px;background:#192c23;color:#e7cf89;
+ border-bottom:1px solid #475348;font-size:12px;font-weight:800;letter-spacing:.04em}
+.wtw-cc-section{padding:20px 24px;border-bottom:1px solid #435347}
+.wtw-cc-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
+ margin:15px 0}
+.wtw-cc-grid label{display:flex;flex-direction:column;gap:7px;color:#c8bd8d;
+ font-size:10px;font-weight:800;letter-spacing:.07em}
+.wtw-cc-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}
+.wtw-cc-actions input{max-width:260px}
+.wtw-cc-warning{padding:10px 13px;border-left:3px solid #d4a35e;
+ background:rgba(184,129,64,.08)}
+.wtw-cc-notice{padding:10px;border:1px solid #64866e;background:#1d382a;color:#e4eddd}
+.wtw-cc-slots{display:flex;flex-direction:column;gap:9px;max-height:310px;overflow:auto}
+.wtw-cc-slot{display:flex;justify-content:space-between;align-items:center;gap:16px;
+ border:1px solid #425a49;background:#1b2e25;padding:11px 13px}
+.wtw-cc-slot strong{display:block;font-size:13px;color:#f3e6c5}
+.wtw-cc-slot small{display:block;font-size:10px;color:#bac9ba;margin-top:4px;line-height:1.6}
+.wtw-cc-quota{font-size:10px!important;color:#a2b6a4!important;margin-top:15px!important}
+.wtw-cc-panel footer{padding:15px 24px;font-size:11px;color:#acbcae}
+@media(max-width:650px){
+ .wtw-cc-backdrop{padding:0}
+ .wtw-cc-panel{max-height:100vh;height:100vh}
+ .wtw-cc-grid{grid-template-columns:1fr}
+ .wtw-cc-section,.wtw-cc-panel header{padding:16px}
+ .wtw-cc-slot{flex-direction:column;align-items:flex-start}
+ .wtw-cc-slot .wtw-cc-actions{margin:4px 0}
+}
