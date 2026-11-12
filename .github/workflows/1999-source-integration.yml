@@ -4,12 +4,14 @@ on:
   pull_request:
     paths:
       - "src/1999/**"
+      - "public/1999/**"
       - "src/worker.js"
       - "tests/1999-*.test.mjs"
       - ".github/workflows/1999-source-integration.yml"
   push:
     branches:
-      - "feature/1999-canon-opening-handoff-20261111"
+      - main
+      - "fix/1999-browser-population-20261111"
 
 jobs:
   january-1999-source:
@@ -31,5 +33,11 @@ jobs:
           node --check public/1999/test-clock.mjs
           node --check public/1999/app.mjs
           node --check src/worker.js
-      - name: Jan 1 source and player-AI safety verification
-        run: node --test tests/1999-opening-world.test.mjs tests/1999-entry-gate.test.mjs tests/1999-full-universe.test.mjs tests/1999-test-clock.test.mjs tests/1999-full-world-api.test.mjs
+      - name: Source and browser JavaScript syntax
+        run: |
+          node --check public/1999/engine/canon-mini.mjs
+          node --check public/1999/engine/full-world-generator.mjs
+          node --check public/1999/engine/attribute-catalog.mjs
+          node --check public/1999/engine/local-api.mjs
+      - name: Jan 1 source and OFFLINE browser population verification
+        run: node --test tests/1999-opening-world.test.mjs tests/1999-entry-gate.test.mjs tests/1999-full-universe.test.mjs tests/1999-test-clock.test.mjs tests/1999-browser-offline.test.mjs tests/1999-full-world-api.test.mjs
