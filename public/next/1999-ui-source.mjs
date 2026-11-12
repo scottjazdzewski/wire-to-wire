@@ -3,6 +3,7 @@
  * Reuses the same browser 1999 world projection as the diagnostic test lab.
  * All generated values are TEST state, canonical values retain source authority.
  */
+import {trackProgram1999} from '/next/1999-track-program.mjs';
 import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-20261112-r2';
 const q=(route,extras='')=>readLocal1999World(route+(route.includes('?')?'&':'?')+'seed=19990101&mode=CANON_ANCHORED_TEST'+(extras?'&'+extras:''));
 const allPages=(route,total)=>{const rows=[];for(let offset=0;offset<total;offset+=100){const page=q(route,'offset='+offset+'&limit=100');rows.push(...(page.items||[]));}return rows;};
@@ -259,9 +260,15 @@ const findStake=id=>sourceStakes.find(r=>r.id===id)||null;
 const ownedHorses=()=>stableHorses;
 function extraTracks(){
  const ts=get('tracks','/api/1999/sim/tracks',134);
- return ts.map(t=>({...t,location:city(t.location),region:t.location?.state||'',country:t.location?.country||'',
-    operating:'TEST_1999_MEET_STATUS_UNVERIFIED',racingStatus:'TEST',_source1999:true,
-    meetWindow:'1999 test meet rules',raceDays:'SCHEDULE_DEPENDENT',preferredDays:'',stakes:[]}));
+ return ts.map(t=>{
+  const p=trackProgram1999(t.id);
+  return {...t,location:city(t.location),region:t.location?.state||'',country:t.location?.country||'',
+   operating:p?.trackOperating||'1999_SCHEDULE_UNVERIFIED',racingStatus:p?.basis||'TEST',
+   surfaces:p?.surfaces||'Not certified',meetWindow:p?.meetWindow||'',raceDays:p?.raceDays||'—',
+   preferredDays:p?.preferredDays||'',calendarBasis:p?.basis||'NOT_VERIFIED',
+   calendarSource:p?.sourceUrl||'',surfaceStatus:p?.surfaceStatus||'NOT_VERIFIED',
+   _source1999:!p,stakes:[]};
+ });
 }
 window.__WTW_1999_UI_DATA__={
  schema:'WTW_1999_CANON_ANCHORED_UI_ADAPTER_V1',
@@ -270,7 +277,7 @@ window.__WTW_1999_UI_DATA__={
  ownedHorseCount,
  sourceFacts,ownerFor,stableHorsePreview,departmentRows,auctionList,extraTracks,
  officeMessages,officeDesks,openingCash,worldHorsePage,
- stakesForTrack,findStake,ownedHorses,
+ stakesForTrack,findStake,ownedHorses,trackProgramById:trackProgram1999,
  sourceHorseAbility:id=>{const index=sourceHorseOffset.get(id);
   return index===undefined?null:q('/api/1999/sim/horses','offset='+index+'&limit=1').items?.[0]?.ability||null;},
  sourcePersonModel:id=>{const index=srcPeople.findIndex(p=>p.id===id);

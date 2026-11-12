@@ -15,7 +15,7 @@ fetch('/data/horse-foaling-registry-projection-v33.json',{credentials:'same-orig
  .catch(()=>{/* Missing source remains unknown: do not substitute racing base. */});
 const panel=(name,items=[])=>'<section class="profilePanel"><h3>'+safe(name)+'</h3>'+items.map(x=>'<div class="achievementItem">'+safe(x)+'</div>').join('')+'</section>';
 function source(kind,record,ui){
- const d=record||{},name=d.name||d._name||'Unresolved record';
+ const base=record||{},d=kind==='track'?{...base,...(ui?.trackProgramById?.(base.id)||{})}:base,name=d.name||d._name||'Unresolved record';
  const node=document.createElement('section');node.className='profilePage';
  if(kind==='horse'){
   const year=Number(d.foalYear||d._foalYear||0);
@@ -65,6 +65,7 @@ function source(kind,record,ui){
     '<div class="meetBlock"><span>1999 MEET WINDOW</span><strong>'+safe(d.meetWindow||'Schedule dependent')+'</strong></div>'+
     '<div class="meetBlock"><span>RACE DAYS</span><strong>'+safe(d.raceDays||'Schedule dependent')+'</strong></div>'+
     '<div class="trackNote"><b>Preferred days</b><span>'+safe(d.preferredDays||'Not certified')+'</span></div>'+
+     '<div class="trackNote"><b>Meet evidence</b><span>'+safe(d.basis==='VERIFIED_1999_CALENDAR'?'1999 commission racing dates':d.basis==='APPROVED_WTW_1999_GAME_CALENDAR'?'Locked 1999 game calendar':d.basis==='HISTORICAL_ONLY_NO_1999_MEET'?'Historical-only venue':'Wire to Wire game model · not historically certified')+'</span></div>'+
     stakes.map(x=>{
       const grade=String(x.grade||x.grade1999||x.status||'').match(/(?:G|GRADE\s*)([123])/i);
       const gradeLabel=grade?'G'+grade[1]:(x.status||'Major Stakes');
@@ -73,7 +74,7 @@ function source(kind,record,ui){
         '<span>'+safe(x.localDate||x.date||'—')+'</span><span>'+safe(gradeLabel)+'</span><span>'+safe(purseLabel)+'</span></div>';
     }).join('')+
     panel('Track context',[d.realAnchor?'Source track geography preserved.':'WTW expanded-universe track.',
-      '1999 operating windows are test assumptions until source-certified.']);
+      d.basis==='VERIFIED_1999_CALENDAR'?'1999 meet windows verified against source commission calendar.':d.basis==='HISTORICAL_ONLY_NO_1999_MEET'?'Historical course. No 1999 meet; no active races.':d.basis==='APPROVED_WTW_1999_GAME_CALENDAR'?'Meets are locked in game canon, not independently certified as an actual 1999 calendar.':'1999 meets are game models, not historically source-certified.']);
  }
  return {node,route:{kicker:kind==='horse'?'Horse Profile':'Track Profile',title:name}};
 }

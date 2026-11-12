@@ -2094,10 +2094,20 @@ function depTrackCalendar(){
   .map(t=>({id:t.id,name:t.name,location:t.location,region:t.region,circuit:t.circuit,
    operating:t.operating,meetWindow:'',raceDays:'',preferredDays:'',stakes:[],_source1999:true}));
  const extra=window.__WTW_1999_UI_DATA__?.extraTracks?.()||[];
+ const byId=new Map(extra.map(t=>[t.id,t]));
+ const byName=new Map(extra.map(t=>[t.name,t]));
  const seen=new Set([...office,...others].flatMap(t=>[t.id,t.name]).filter(Boolean));
  const missing=extra.filter(t=>!seen.has(t.id)&&!seen.has(t.name));
- return [...office,...others,...missing].map(t=>({...t,stakes:Array.isArray(t.stakes)&&t.stakes.length?t.stakes:
-   (window.__WTW_1999_UI_DATA__?.stakesForTrack?.(t.name)||[]).map(r=>({...r,date:r.localDate||r.date||'',class:r.division||r.grade||'',purse:r.purse1999}))}));
+ return [...office,...others,...missing].map(t=>{
+  const p=byId.get(t.id)||byName.get(t.name)||null;
+  const sourceStakes=(window.__WTW_1999_UI_DATA__?.stakesForTrack?.(t.name)||[])
+   .map(r=>({...r,date:r.localDate||r.date||'',class:r.status||r.division||r.grade||'',purse:r.purse1999}));
+  return {...t,...(p?{
+   surfaces:p.surfaces,meetWindow:p.meetWindow,raceDays:p.raceDays,
+   preferredDays:p.preferredDays,calendarBasis:p.calendarBasis,
+   calendarSource:p.calendarSource,operating:p.operating,_source1999:false
+  }:{}),stakes:sourceStakes.length?sourceStakes:(Array.isArray(t.stakes)?t.stakes:[])};
+ });
 }
 function depCalendarIso(value,year=depGameDay().slice(0,4)){
  const d=String(value||'').match(/^([A-Za-z]{3})\s+(\d{1,2})$/);
@@ -2126,7 +2136,7 @@ function depTrackRows(page='Overview'){
   const meet=depMeetState(t,day);
   return {_kind:'track',_name:t.name,_canonId:t.id||'',name:t.name,location:t.location||'',surfaces:t.surfaces||'',
    circuit:t.circuit||'',meetWindow:meet.window?.label||t.meetWindow||'',
-   status:t._source1999?'OPEN · MEET NOT RECORDED':meet.status,raceDays:t.raceDays||'',preferredDays:t.preferredDays||'',
+   status:t.operating==='HISTORICAL_ONLY'?'HISTORICAL ONLY':t._source1999?'MEET NOT RECORDED':meet.status,raceDays:t.raceDays||'',preferredDays:t.preferredDays||'',
    stakesCount:String(t.stakes?.length||0),_meetState:meet};
  });
  if(page==='Active Meets')return rows.filter(r=>r._meetState.active);
@@ -2141,8 +2151,8 @@ function depTrackRaceRows(trackName,demo){
  const rows=(track.stakes||[]).map(event=>{
   const iso=liveStableDate(event.localDate||event.date)||depCalendarIso(event.date,now.slice(0,4));
   return iso&&iso>=now?{_kind:'race',_name:event.name,_track:trackName,_iso:iso,_raceId:event.id,_raceData:event,
-   date:stableShortDate(iso),track:trackName,race:event.name,class:event.class||'',
-   surface:'',distance:'',purse:event.purse||'',horse:'',base:'',ship:'',jockey:'',
+   date:stableShortDate(iso),track:trackName,race:event.name,class:event.status||event.grade||event.class||'',
+   surface:event.surface||'',distance:Number.isFinite(Number(event.distanceF))?String(event.distanceF)+'f':'',purse:event.purse1999??event.purse??'',horse:'',base:'',ship:'',jockey:'',
    trainer:'',ready:'',status:'STAKES'}:null;
  }).filter(Boolean);
  if(demo){

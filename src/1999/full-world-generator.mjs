@@ -9,6 +9,7 @@
 import {openingWorld1999 as canon} from './opening-world.v1.mjs';
 import {createGeographicNameRoster,GEO_NAME_MODEL} from '../../public/1999/engine/geographic-names.mjs';
 import {existingPrincipals1999} from '../../public/1999/engine/source-principals-1999.mjs';
+import {trackProgram1999,trackMeetOpen1999,trackCardSurface1999} from '../../public/next/1999-track-program.mjs';
 import {createAgeAbility,inferProfessionalRole} from '../../public/1999/engine/age-ability.mjs';
 import attributeCatalog from '../../public/1999/engine/attribute-catalog.mjs';
 import {WTW_TEST_START_DATE} from './test-clock.mjs';
@@ -142,7 +143,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   if(trackCache.has(i))return trackCache.get(i);
   const base=sourceTracks[i],generatedName=A[i%A.length]+' '+B[Math.floor(i/A.length)%B.length]+' Downs';
   const obj={id:anchored?base.id:'T-TEST-1999-'+pad(i+1,4),name:anchored?base.name:generatedName,
-   location:fmtLoc(base),nameStatus:anchored?'CANON_LOCKED':'TEST_RENAME_ALLOWED',surface:unit(seed,'track:'+i)<.2?'TURF':'DIRT',
+   location:fmtLoc(base),nameStatus:anchored?'CANON_LOCKED':'TEST_RENAME_ALLOWED',surface:trackCardSurface1999(base.id,1)||'HISTORICAL',surfaces:trackProgram1999(base.id)?.surfaces||'Not recorded',
    reputation:standing(seed,'track:'+i,.4+unit(seed,'track:quality:'+i)*.5),
    facility:{grandstandCapacity:money(3000+unit(seed,'stand:'+i)*40000),barnStalls:0,
     trainingTrack:true,medicalCenter:true,startingGates:2,groundsCondition:round(.55+unit(seed,'ground:'+i)*.4)},
@@ -274,13 +275,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    age:ageInfo.age,ageBasis:ageInfo.basis,morale:round(.3+unit(seed,id+':morale')*.68),workload:round(.2+unit(seed,id+':load')*.7),licenseStatus:'SIMULATED_TEST_ACTIVE',source:'SIMULATED_WORKFORCE'};
  }
  function meetOpen(track,date){
-  const month=+date.slice(5,7),day=new Date(date+'T12:00:00Z').getUTCDay(),region=String(track.location.state).toLowerCase();
-  const name=track.name.toLowerCase(),winter=/fl|ca|arizona|la|tx|nm|arkansas|louisiana|california|florida|texas/.test(region);
-  let active=winter?[1,2,3,4,10,11,12]:[3,4,5,6,7,8,9,10,11];
-  if(/timonium|pleasanton|stockton|fresno|fairplex|county fair|sacramento|del mar fair/.test(name))active=[5,6,7,8,9,10];
-  if(/hollywood park/.test(name))active=[4,5,6,7,11,12];
-  if(/aqueduct|laurel park|charles town|turfway park/.test(name))active=[1,2,3,4,10,11,12];
-  return active.includes(month)&&([2,4,6,0].includes(day)||hash(seed,track.id+':weekday:'+day)%4===0);
+  return trackMeetOpen1999(track.sourceTrackId||track.id,date);
  }
  function conditionBook(date,trackIndex){
   if(typeof date!=='string'||!/^1999-\d{2}-\d{2}$/.test(date)||Number.isNaN(Date.parse(date+'T12:00:00Z')))throw Error('1999 date required');
@@ -307,7 +302,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
     weightConditions:'Assigned weights and allowances pending; no official impost recorded',
     entryTerms:'No official entry deadline or nomination terms recorded',
     ageRequirement:minAge+'YO+',sexRestriction:females?'FILLIES_AND_MARES':'OPEN',
-    surface:hash(seed,id+'surface')%5===0?'TURF':'DIRT',distanceFurlongs:sprint?6+hash(seed,id+'sprint')%3:8+hash(seed,id+'route')%5,
+    surface:trackCardSurface1999(track.sourceTrackId||track.id,n)||'DIRT',distanceFurlongs:sprint?6+hash(seed,id+'sprint')%3:8+hash(seed,id+'route')%5,
     purse:money((cl.includes('Maiden')?22000:cl.includes('Claiming')?13000:39000)*(0.65+unit(seed,id+'purse')*1.5)),
     fieldCapacity:8+hash(seed,id+'field')%7,currentEntries:[],results:[],status:'CONDITION_BOOK_PROPOSAL_NOT_RUN',canonical:false});
   }
