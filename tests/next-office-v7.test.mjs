@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const get=p=>fs.readFileSync(path.join(root,p),'utf8');
 
@@ -354,34 +355,43 @@ test('Facilities Ownership Groups list organizations once, with the principal as
  assert.equal(app.searchIndex.length,directory.length,'Person directory remains available for Personnel and identity links');
  assert.ok(js.includes("if(section==='Personnel')"),'People should remain listed under Personnel');
 });
-test('Track stakes use the original G1/G2/G3 sprite, one complete 16px trophy per grade',()=>{
+test('Track stakes use the SHA-verified original gold, silver and bronze trophy art at 16px',()=>{
  const css=get('public/next/next.css'),js=get('public/next/next.js');
- const png=fs.readFileSync(path.join(root,'public/assets/trophies/g123-sprite.png'));
- assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
- assert.equal(png.readUInt32BE(16),2048,'Original sprite width must stay 2048');
- assert.equal(png.readUInt32BE(20),682,'Original sprite height must stay 682');
- const rule=sel=>{
-  const i=css.indexOf(sel+'{');assert.ok(i>=0,'Missing '+sel);
-  return css.slice(i+sel.length+1,css.indexOf('}',i));
- };
- const t=rule('.ng-track-stakes .ng-stakes-trophy');
- for(const p of ['width:16px','height:16px','background-size:48px 16px',
-  "background-image:url('/assets/trophies/g123-sprite.png')",'background-repeat:no-repeat']){
-  assert.ok(t.includes(p),'The user-provided full-color artwork must be cropped: '+p);
+ const hashes=[
+  [1,'6a2d3ff6ae7c189f797d6fa40ab980c4e8361ee8741029c3439aa91880b2f81b'],
+  [2,'f52f728d52903b97e5e5aa48d5fe70dd5e099b1abbf6a919feb2ffff99387c94'],
+  [3,'94c50c313bcf4824953241ff2e7d8d243391ac8a1eb34372e2563ded077c8822']
+ ];
+ const provenance=get('public/assets/trophies/APPROVED_SOURCE_PROVENANCE.md');
+ for(const [grade,hash] of hashes){
+  const png=fs.readFileSync(path.join(root,'public/assets/trophies/approved-grade-'+grade+'-64.png'));
+  assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a','Original trophy crop is a PNG');
+  assert.equal(png.readUInt32BE(16),64,'Each icon keeps 4x retina pixels for 16px rendering');
+  assert.equal(png.readUInt32BE(20),64,'Every grade is a square icon');
+  assert.equal(createHash('sha256').update(png).digest('hex'),hash,'Original art cannot drift unnoticed for G'+grade);
+  assert.ok(provenance.includes(hash),'Artwork provenance remains documented for G'+grade);
  }
- assert.ok(!t.includes('height:7px'),'No cropped slivers');
- for(const [g,pos] of [[1,'0 0'],[2,'-16px 0'],[3,'-32px 0']])
-  assert.ok(rule('.ng-track-stakes .ng-stakes-trophy.g'+g).includes('background-position:'+pos),
-   'Grade '+g+' must show its own original full square trophy');
- assert.ok(css.includes('background-size:45px 15px')&&css.includes('background-position:-30px 0'),
-  'Mobile layout must preserve three proportional sprite frames at 15px');
- assert.ok(js.includes('class="ng-stakes-trophy g'+ "'+grade+'")&&
-  !js.includes('src="/assets/trophies/grade-'+ "'+grade+'"),
-  'Original source trophy replaces the unrelated newly drawn SVG cups');
- assert.ok(js.includes('class="ng-stakes-grade-text"')&&js.includes(">G'+grade+'</small>"),
-  'Grade label remains visible alongside original trophy art');
+ for(const original of [
+  '182b6a71ad86928037625550b8ac2542f85fac4f0d6f753e06696f4410f0e6ec',
+  'd0b11aac0f0d75169f19c7aceeeb3e30f73e3c78d932c0ad236e1790481f5a52',
+  'b6dbeed7675f8c866b5d3feddc68f3ef521c758fa814807d39da60e7fb86c2d8'
+ ])assert.ok(provenance.includes(original),'Original approved source SHA must remain recorded');
+ assert.ok(js.includes('src="/assets/trophies/approved-grade-'+ "'+grade+'"+'-64.png"'),
+  'Actual graded stakes use the correct approved G1/G2/G3 artwork asset');
+ assert.ok(!js.includes('src="/assets/trophies/grade-'+ "'+grade+'"+'.svg"'),
+  'The generic substitute SVGs cannot replace approved artwork');
+ assert.ok(!js.includes('class="ng-stakes-trophy g'+ "'+grade+'"),
+  'The damaged historic 2048px sprite must not be reused in the stakes list');
+ const marker='.ng-track-stakes .ng-stakes-trophy{';
+ const at=css.indexOf(marker);assert.ok(at>0);
+ const iconRule=css.slice(at+marker.length,css.indexOf('}',at));
+ for(const property of ['width:16px','height:16px','object-fit:contain'])
+  assert.ok(iconRule.includes(property),'Each trophy fits the existing compact track row');
+ assert.ok(css.includes('width:15px!important;height:15px!important'),
+  'Narrow layouts preserve the same original art at 15px');
+ assert.ok(js.includes('class="ng-stakes-grade-text"'),'Grades remain readable alongside trophy artwork');
  assert.ok(js.includes("const grade=(cols[2].match(/\\bG([123])\\b/i)||[])[1]"),
-  'Each source-backed grade must still choose its own trophy');
+  'Grade eligibility must stay source-backed');
 });
 
 test('Track history is permanently visible below meet conditions for four registered courses',()=>{
