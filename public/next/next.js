@@ -304,6 +304,272 @@ function header(){
    This projects identities to the UI; it NEVER creates history, runs races,
    changes game saves, or infers missing birthplace/operations/finance data. */
 let world1999Data=null,world1999Loading=false,world1999LoadFailed=false;
+
+/* World Editor v1: canonical IDs remain immutable. The 1999 source JSON is
+   immutable; user's edits are a browser-owned overlay, never a false source
+   certification or a mutation to the global simulation save. */
+const WORLD_EDIT_KEY='wtwWorldEditPatchesV1';
+const WORLD_EDIT_EXPORT='WTW_WORLD_USER_EDITS_V1';
+const WORLD_LOCKED_FIELDS=new Set(['id','key','_role','registeredInV33','basis','source','sourceGate','chronologyCheck','population']);
+const WORLD_FORBIDDEN_FIELDS=new Set(['__proto__','prototype','constructor']);
+const WORLD_LINK_FIELDS={ownerId:'farm',trainerId:'person',sireId:'horse',damId:'horse',
+ trackId:'track',homeTrackId:'track',publicPrincipalId:'person',ownershipOperationId:'farm'};
+let world1999Base=null;
+let worldUserPatches=worldReadPatches(),worldImageDB=null;
+const worldImageCache=new Map(),worldImageFetching=new Set();
+function worldReadPatches(){
+ try{
+  const raw=JSON.parse(localStorage.getItem(WORLD_EDIT_KEY)||'{}');
+  return raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
+ }catch{return {}}
+}
+function worldEditValidField(key){
+ return typeof key==='string'&&/^[a-zA-Z][a-zA-Z0-9_]{0,79}$/.test(key)&&
+  !WORLD_LOCKED_FIELDS.has(key)&&!WORLD_FORBIDDEN_FIELDS.has(key);
+}
+function worldSanitizedPatch(raw){
+ const out=Object.create(null);
+ if(!raw||typeof raw!=='object'||Array.isArray(raw))return out;
+ for(const [key,value] of Object.entries(raw)){
+  if(!worldEditValidField(key))continue;
+  if(typeof value==='string'&&value.length<=10000)out[key]=value;
+  else if(typeof value==='boolean'||typeof value==='number'&&Number.isFinite(value))out[key]=value;
+ }
+ return out;
+}
+function worldSourceRecord(key,source=world1999Base){
+ if(!source||!key||typeof key!=='string')return null;
+ const type=key.split(':',1)[0],id=key.slice(type.length+1);
+ const bucket={horse:'horses',person:'people',farm:'organizations',track:'tracks'}[type];
+ return (source[bucket]||[]).find(r=>(r.id||r.key)===id)||null;
+}
+function worldApplyEdits(source){
+ if(!source)return source;
+ const copy={...source,tracks:source.tracks.map(r=>({...r})),people:source.people.map(r=>({...r})),
+  organizations:source.organizations.map(r=>({...r})),horses:source.horses.map(r=>({...r}))};
+ for(const kind of ['tracks','people','organizations','horses']){
+  const type={tracks:'track',people:'person',organizations:'farm',horses:'horse'}[kind];
+  for(const record of copy[kind]){
+   const key=type+':'+(record.id||record.key);
+   Object.assign(record,worldSanitizedPatch(worldUserPatches[key]));
+  }
+ }
+ return copy;
+}
+function worldRecordName(kind,id,otherwise=''){
+ if(!id)return otherwise;
+ const list={horse:'horses',person:'people',farm:'organizations',track:'tracks'}[kind];
+ const found=(world1999Data?.[list]||[]).find(x=>x.id===id||x.key===id);
+ return found?.name||otherwise;
+}
+function worldEditOpen(key){
+ const source=world1999Entry(key);
+ if(!source)return;
+ APP.worldEditKey=key;APP.worldEditDraft={...source._world};APP.worldEditStatus='';
+ APP.worldPhotoDraft=undefined;APP.worldEditBusy=false;
+ paint();
+}
+function worldEditCancel(){
+ APP.worldEditKey='';APP.worldEditDraft=null;APP.worldPhotoDraft=undefined;
+ APP.worldEditStatus='Edit cancelled. No changes saved.';paint();
+}
+function worldImageStore(){
+ if(worldImageDB)return worldImageDB;
+ if(!window.indexedDB)return Promise.reject(Error('Image storage is unavailable in this browser'));
+ worldImageDB=new Promise((resolve,reject)=>{
+  const req=indexedDB.open('WireToWireWorldMediaV1',1);
+  req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains('images'))db.createObjectStore('images')};
+  req.onsuccess=()=>resolve(req.result);
+  req.onerror=()=>reject(req.error||Error('Unable to open local image storage'));
+ });
+ return worldImageDB;
+}
+async function worldGetImage(key){
+ const db=await worldImageStore();
+ return new Promise((resolve,reject)=>{
+  const tx=db.transaction('images','readonly'),req=tx.objectStore('images').get(key);
+  req.onsuccess=()=>resolve(req.result||'');
+  req.onerror=()=>reject(req.error||Error('Image read failed'));
+ });
+}
+async function worldSetImage(key,image){
+ const db=await worldImageStore();
+ return new Promise((resolve,reject)=>{
+  const tx=db.transaction('images','readwrite');
+  tx.objectStore('images').put(image||'',key);
+  tx.oncomplete=()=>resolve();
+  tx.onerror=()=>reject(tx.error||Error('Image save failed'));
+  tx.onabort=()=>reject(tx.error||Error('Image save cancelled'));
+ });
+}
+function worldImageURL(key,record){
+ if(worldImageCache.has(key))return worldImageCache.get(key)||'';
+ if(!worldImageFetching.has(key)){
+  worldImageFetching.add(key);
+  worldGetImage(key).then(src=>{worldImageCache.set(key,src);schedulePaint(30)})
+   .catch(()=>{worldImageCache.set(key,'')}).finally(()=>worldImageFetching.delete(key));
+ }
+ const url=record?.photoUrl||'';
+ return /^(?:https:\/\/|http:\/\/|\/assets\/)/i.test(url)?url:'';
+}
+function worldMediaPreview(key,record,editing=false){
+ const current=editing&&APP.worldPhotoDraft!==undefined?APP.worldPhotoDraft:worldImageURL(key,record);
+ const url=current||record?.photoUrl||'';
+ return /^(?:data:image\/(?:png|jpe?g|webp);base64,|https?:\/\/|\/assets\/)/i.test(url)?
+  '<img class="ng-world-edit-photo" src="'+safe(url)+'" alt="Selected image for '+safe(record?.name||'world record')+'" loading="lazy"/>':
+  '<span class="ng-world-edit-photo-placeholder">NO IMAGE SELECTED</span>';
+}
+async function worldImageFile(file){
+ if(!file||!/^image\/(jpeg|png|webp)$/.test(file.type)||file.size>12000000)
+  throw Error('Choose a PNG, JPEG or WebP image smaller than 12 MB.');
+ return new Promise((resolve,reject)=>{
+  const reader=new FileReader();
+  reader.onerror=()=>reject(Error('Could not read the selected image.'));
+  reader.onload=()=>{
+   const image=new Image();
+   image.onerror=()=>reject(Error('Selected file was not a usable image.'));
+   image.onload=()=>{
+    const scale=Math.min(1,1000/Math.max(image.width,image.height)),canvas=document.createElement('canvas');
+    canvas.width=Math.max(1,Math.round(image.width*scale));
+    canvas.height=Math.max(1,Math.round(image.height*scale));
+    const ctx=canvas.getContext('2d');
+    if(!ctx)return reject(Error('Image processing unavailable.'));
+    ctx.drawImage(image,0,0,canvas.width,canvas.height);
+    resolve(canvas.toDataURL('image/jpeg',.86));
+   };
+   image.src=reader.result;
+  };
+  reader.readAsDataURL(file);
+ });
+}
+function worldEditRelationOptions(field,current){
+ const kind=WORLD_LINK_FIELDS[field],group={horse:'horses',person:'people',farm:'organizations',track:'tracks'}[kind];
+ const candidates=world1999Data?.[group]||[];
+ const selected=String(current||'');
+ return '<select data-world-field="'+safe(field)+'" aria-label="'+safe(field)+'">'+
+  '<option value="">None / unlinked</option>'+
+  candidates.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(x=>'<option value="'+safe(x.id||x.key)+'"'+
+   ((x.id||x.key)===selected?' selected':'')+'>'+safe(x.name)+' · '+safe(x.id||x.key)+'</option>').join('')+
+  (selected&&!candidates.some(x=>(x.id||x.key)===selected)?
+   '<option value="'+safe(selected)+'" selected>Unknown source ID: '+safe(selected)+'</option>':'')+'</select>';
+}
+function worldEditFieldHTML(field,value){
+ const label=field.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/_/g,' ').toUpperCase();
+ const hint=WORLD_LINK_FIELDS[field]?'CANONICAL RELATIONSHIP · ID':typeof value==='boolean'?'BOOLEAN':'';
+ let control='';
+ if(WORLD_LINK_FIELDS[field])control=worldEditRelationOptions(field,value);
+ else if(typeof value==='boolean')control='<select data-world-field="'+safe(field)+'">'+
+  '<option value="true"'+(value?' selected':'')+'>Yes</option>'+
+  '<option value="false"'+(!value?' selected':'')+'>No</option></select>';
+ else if(/^(notes?|description|legacySummary|history|biography|background|conditionReport)$/i.test(field)||String(value??'').length>140)
+  control='<textarea data-world-field="'+safe(field)+'" rows="2">'+safe(String(value??''))+'</textarea>';
+ else control='<input data-world-field="'+safe(field)+'" type="text" maxlength="10000" value="'+safe(String(value??''))+'"/>';
+ return '<label class="ng-world-edit-field"><span>'+safe(label)+
+  (hint?'<small>'+safe(hint)+'</small>':'')+'</span>'+control+'</label>';
+}
+function worldEditMarkup(entry){
+ const key=entry.worldKey,d=APP.worldEditDraft||entry._world;
+ const fields=Object.keys(d).filter(worldEditValidField).sort((a,b)=>
+  a==='name'?-1:b==='name'?1:a.localeCompare(b));
+ const locked=['id','key','_role','registeredInV33'].filter(k=>d[k]!==undefined);
+ return '<section class="ng-world-editor" data-world-record="'+safe(key)+'">'+
+  '<header><div><small>WIRE TO WIRE / WORLD EDITOR</small><h2>'+safe(d.name||entry.name)+'</h2></div>'+
+  '<div class="ng-world-editor-actions"><button type="button" data-ng="world-cancel">CANCEL</button>'+
+  '<button type="button" class="save" data-ng="world-save"'+(APP.worldEditBusy?' disabled':'')+'>SAVE CHANGES</button></div></header>'+
+  '<p class="ng-world-editor-info">Edit any displayed attribute. Names and relationships retain their permanent IDs. '+
+  'Changes save to this browser; use Export/Import to move them between devices.</p>'+
+  '<div class="ng-world-editor-body">'+
+  '<section class="ng-world-editor-media"><div class="ng-world-editor-photo">'+worldMediaPreview(key,d,true)+'</div>'+
+  '<div><strong>PORTRAIT / LOGO / TRACK IMAGE</strong><p>Replace the image for this world record. The original file is never overwritten.</p>'+
+  '<input type="file" id="wtwWorldImageInput" accept="image/png,image/jpeg,image/webp" aria-label="Choose replacement image"/>'+
+  '<button type="button" data-ng="world-photo-clear">REMOVE CUSTOM IMAGE</button>'+
+  '<small>Images are optimized for the site and saved in browser media storage.</small></div></section>'+
+  '<div class="ng-world-editor-lock">PERMANENT IDENTITY: '+locked.map(k=>safe(k)+': '+safe(String(d[k]))).join(' · ')+'</div>'+
+  '<div class="ng-world-editor-fields">'+fields.map(k=>worldEditFieldHTML(k,d[k])).join('')+'</div>'+
+  '<div class="ng-world-editor-add"><input id="wtwWorldNewField" type="text" placeholder="Attribute key (e.g. biography)"/>'+
+  '<input id="wtwWorldNewValue" type="text" placeholder="Value"/>'+
+  '<button type="button" data-ng="world-add-field">ADD ATTRIBUTE</button></div>'+
+  '</div><footer><span>'+safe(APP.worldEditStatus||'Unsaved changes will be discarded if you cancel.')+'</span>'+
+  '<button type="button" data-ng="world-export">EXPORT BACKUP</button>'+
+  '<button type="button" data-ng="world-import-open">IMPORT BACKUP</button>'+
+  '<input type="file" id="wtwWorldImportInput" accept="application/json,.json" hidden/>'+
+  '</footer></section>';
+}
+async function worldEditSave(){
+ const key=APP.worldEditKey,entry=world1999Entry(key),draft=APP.worldEditDraft;
+ if(!key||!entry||!draft||APP.worldEditBusy)return;
+ APP.worldEditBusy=true;
+ try{
+  const base=worldSourceRecord(key);
+  if(!base)throw Error('This record has no stable source ID.');
+  const clean=worldSanitizedPatch(draft);
+  if(!String(clean.name||'').trim())throw Error('A record must have a name.');
+  for(const [field,kind] of Object.entries(WORLD_LINK_FIELDS)){
+   if(!(field in clean)||!clean[field])continue;
+   const group={horse:'horses',person:'people',farm:'organizations',track:'tracks'}[kind];
+   const target=(world1999Data[group]||[]).find(r=>r.id===clean[field]);
+   if(!target)throw Error('Unknown '+field+' reference. Select a valid record.');
+   const nameField=field.endsWith('Id')?field.slice(0,-2):'';
+   if(nameField&&nameField in clean)clean[nameField]=target.name;
+  }
+  const updates={...worldUserPatches,[key]:clean};
+  // Persist text first. If quota is exhausted, never report a successful save.
+  localStorage.setItem(WORLD_EDIT_KEY,JSON.stringify(updates));
+  if(APP.worldPhotoDraft!==undefined)await worldSetImage(key,APP.worldPhotoDraft||'');
+  worldUserPatches=updates;
+  if(APP.worldPhotoDraft!==undefined)worldImageCache.set(key,APP.worldPhotoDraft||'');
+  world1999Data=worldApplyEdits(world1999Base);
+  APP.worldEditKey='';APP.worldEditDraft=null;APP.worldPhotoDraft=undefined;
+  APP.worldEditStatus='Saved in this browser. Export a backup to keep a portable copy.';
+  APP.worldEditBusy=false;paint();
+ }catch(err){APP.worldEditBusy=false;APP.worldEditStatus='SAVE FAILED: '+(err?.message||'Storage unavailable');paint()}
+}
+async function worldExportEdits(){
+ try{
+  const images=Object.create(null);
+  const db=await worldImageStore();
+  const rows=await new Promise((resolve,reject)=>{
+   const tx=db.transaction('images','readonly'),store=tx.objectStore('images');
+   const request=store.getAllKeys(),vals=store.getAll();
+   tx.oncomplete=()=>resolve((request.result||[]).map((key,i)=>[key,vals.result?.[i]]));
+   tx.onerror=()=>reject(tx.error||Error('Unable to export pictures'));
+  });
+  for(const [key,img] of rows)if(img)images[key]=img;
+  const data={schema:WORLD_EDIT_EXPORT,exportedAt:new Date().toISOString(),
+   changes:worldUserPatches,images};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),anchor=document.createElement('a');
+  anchor.href=url;anchor.download='wire-to-wire-world-edits.json';anchor.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  APP.worldEditStatus='World edit backup exported.';paint();
+ }catch(err){APP.worldEditStatus='Export failed: '+(err?.message||err);paint()}
+}
+async function worldImportEdits(file){
+ if(!file)return;
+ try{
+  const input=JSON.parse(await file.text());
+  if(input.schema!==WORLD_EDIT_EXPORT||!input.changes||typeof input.changes!=='object')
+   throw Error('Not a Wire to Wire world edit backup.');
+  const changes=Object.create(null);
+  for(const [key,patch] of Object.entries(input.changes)){
+   if(worldSourceRecord(key))changes[key]=worldSanitizedPatch(patch);
+  }
+  if(!window.confirm('Replace world edits saved in this browser with this backup?'))return;
+  localStorage.setItem(WORLD_EDIT_KEY,JSON.stringify(changes));
+  if(input.images&&typeof input.images==='object'){
+   for(const [key,url] of Object.entries(input.images)){
+    if(worldSourceRecord(key)&&typeof url==='string'&&
+       /^data:image\/(?:png|jpe?g|webp);base64,/i.test(url)){
+     await worldSetImage(key,url);worldImageCache.set(key,url);
+    }
+   }
+  }
+  worldUserPatches=changes;world1999Data=worldApplyEdits(world1999Base);
+  APP.worldEditKey='';APP.worldEditDraft=null;APP.worldEditStatus='Imported edits and images.';
+  paint();
+ }catch(err){APP.worldEditStatus='Import failed: '+(err?.message||err);paint()}
+}
+
 function loadWorld1999(){
  if(world1999Data||world1999Loading||world1999LoadFailed)return;
  world1999Loading=true;
@@ -314,7 +580,7 @@ function loadWorld1999(){
      !Array.isArray(data.tracks)||!Array.isArray(data.people)||
      !Array.isArray(data.organizations)||!Array.isArray(data.horses))
     throw Error('Unrecognized 1999 directory schema');
-   world1999Data=data;schedulePaint(15);
+   world1999Base=data;world1999Data=worldApplyEdits(data);schedulePaint(15);
   })
   .catch(()=>{world1999LoadFailed=true;schedulePaint(15)})
   .finally(()=>{world1999Loading=false});
