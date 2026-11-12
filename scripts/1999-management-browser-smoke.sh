@@ -45,6 +45,35 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    d.querySelectorAll('#wtwNextgen .ng-horse-rating-row').length===46&&
    d.querySelector('#wtwNextgen .ng-horse-dossier')?.textContent.includes('SPEED & PACE'));
   click('Stable');await pause(180);
+  click('Racing');await pause(300);
+  const fullTrackPicker=d.querySelector('#wtwNextgen select[data-ng-select="department-track"]');
+  check('Racing drop-down includes all 118 playable tracks',
+   Boolean(fullTrackPicker)&&fullTrackPicker.options.length===119&&[...fullTrackPicker.options].some(o=>o.value==='Saratoga'));
+  check('Date browser opens on Jan 1 without advancing the game',
+   d.querySelector('#ngRacingBrowseDate')?.value==='1999-01-01');
+  d.querySelector('#wtwNextgen button[data-ng="dept-day-card"]')?.click();await pause(260);
+  check('January 1 condition books list races across all tracks',
+   d.querySelectorAll('#wtwNextgen .ng-rs-table tbody tr').length>=40);
+  const racePurses=[...d.querySelectorAll('#wtwNextgen .ng-rs-table tbody tr td:nth-child(7)')].map(x=>x.textContent.trim());
+  check('Daily racing purses display complete dollar amounts',
+   racePurses.length>30&&racePurses.every(x=>/^\$[\d,]+$/.test(x)));
+  const browseDate=d.querySelector('#ngRacingBrowseDate');
+  browseDate.value='1999-08-28';browseDate.dispatchEvent(new w.Event('change',{bubbles:true}));await pause(270);
+  check('Date search displays the selected August 28 condition book',
+   Boolean(d.querySelector('#wtwNextgen .ng-racing-day-summary')?.textContent.includes('1999-08-28')));
+  const chooseTrack=d.querySelector('#wtwNextgen select[data-ng-select="department-track"]');
+  chooseTrack.value='Saratoga';chooseTrack.dispatchEvent(new w.Event('change',{bubbles:true}));await pause(270);
+  check('Track selection filters the date condition book without resetting to active-only tracks',
+   [...d.querySelectorAll('#wtwNextgen .ng-rs-table tbody tr td:nth-child(2)')].every(x=>x.textContent.trim()==='Saratoga')&&
+   d.querySelectorAll('#wtwNextgen .ng-rs-table tbody tr').length>1);
+  d.querySelector('#wtwNextgen button[data-ng="dept-race-calendar"]')?.click();await pause(170);
+  check('Calendar toggle displays the month grid and daily browse buttons',
+   d.querySelectorAll('#wtwNextgen .ng-racing-calendar button[data-ng="racing-calendar-day"]').length===31);
+  d.querySelector('#wtwNextgen button[data-ng="dept-meets"]')?.click();await pause(170);
+  check('Selected track shows complete meet dates even outside active meets',
+   Boolean(d.querySelector('#wtwNextgen .ng-rs-table')?.textContent.includes('Jul 28–Sep 6')));
+  check('Browsing races and meets has not advanced January 1 game date',
+   d.querySelector('.ng-global-date strong')?.textContent.trim()==='1999-01-01');
   click('Breeding');await pause(180);
   check('Original Breeding screen shown',Boolean(d.querySelector('.ng-manager-stage')));
   click('Personnel');await pause(280);
