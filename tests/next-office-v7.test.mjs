@@ -327,36 +327,61 @@ test('Six department rosters share FM density but preserve their own management 
  assert.equal(syntax.status,0,syntax.stderr);
 });
 
-test('Track stakes show each complete G1/G2/G3 trophy at a predictable square icon size',()=>{
+test('Facilities Ownership Groups list organizations once, with the principal as owner rather than a second person row',()=>{
+ const js=get('public/next/next.js');
+ const start=js.indexOf('function depFacilityType('),end=js.indexOf('function depRows(',start);
+ assert.ok(start>0&&end>start,'Facility roster should have one canonical organization builder');
+ const directory=[
+  {kind:'farm',name:'Partners Farm',detail:'OWNERSHIP ENTITY',canonicalId:'O-006036',location:'New York'},
+  {kind:'farm',name:'Elm Stable',detail:'OWNERSHIP ENTITY',canonicalId:'O-2345',location:'Maryland'},
+  {kind:'farm',name:'Half Crown Stud',detail:'STALLION / BREEDING OPERATION',canonicalId:'O-555',location:'Kentucky'},
+  {kind:'person',name:'George Steinbrenner',detail:'PUBLIC FIGURE / HORSE OWNER',canonicalId:'P-910001'},
+  {kind:'person',name:'Second Racing Principal',detail:'OWNER',canonicalId:'P-888'}
+ ];
+ const world={organizations:[
+  {id:'O-006036',name:'Partners Farm',publicPrincipal:'George Steinbrenner'},
+  {id:'O-2345',name:'Elm Stable',publicPrincipal:'Second Racing Principal'}
+ ]};
+ const build=new Function('globalSearchItems','state','depHash','depMoney','DEP_FACILITY_PREVIEW',
+  'world1999Data','APP',js.slice(start,end)+'\nreturn depFacilityRows;');
+ const app={searchIndex:null};
+ const rows=build(()=>directory,()=>({}),()=>7,n=>String(n),[],world,app)('Ownership Groups',false);
+ assert.equal(rows.length,2,'Two organizations, not four organization/person duplications');
+ assert.deepEqual(rows.map(r=>r.name),['Partners Farm','Elm Stable']);
+ assert.deepEqual(rows.map(r=>r.owner),['George Steinbrenner','Second Racing Principal']);
+ assert.ok(rows.every(r=>r._kind==='farm'&&r.type==='Ownership Group'),'Ownership group entries must be organizations only');
+ assert.ok(!rows.some(r=>r._kind==='person'||r.type==='Ownership Office'));
+ assert.equal(app.searchIndex.length,directory.length,'Person directory remains available for Personnel and identity links');
+ assert.ok(js.includes("if(section==='Personnel')"),'People should remain listed under Personnel');
+});
+test('Track stakes use the original G1/G2/G3 sprite, one complete 16px trophy per grade',()=>{
  const css=get('public/next/next.css'),js=get('public/next/next.js');
  const png=fs.readFileSync(path.join(root,'public/assets/trophies/g123-sprite.png'));
  assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
- assert.equal(png.readUInt32BE(16),2048,'Original sprite width must be verified before applying third-of-sprite crops');
- assert.equal(png.readUInt32BE(20),682,'Original sprite height must be verified before applying 22px box');
- const cssRule=sel=>{
-  const start=css.indexOf(sel+'{');
-  assert.ok(start>0,'Missing '+sel);
-  return css.slice(start+sel.length+1,css.indexOf('}',start));
+ assert.equal(png.readUInt32BE(16),2048,'Original sprite width must stay 2048');
+ assert.equal(png.readUInt32BE(20),682,'Original sprite height must stay 682');
+ const rule=sel=>{
+  const i=css.indexOf(sel+'{');assert.ok(i>=0,'Missing '+sel);
+  return css.slice(i+sel.length+1,css.indexOf('}',i));
  };
- const trophy=cssRule('.ng-stakes-trophy');
- for(const key of ['width:22px','height:22px','flex:0 0 22px','background-size:66px 22px',
-  "background-image:url('/assets/trophies/g123-sprite.png')"]){
-  assert.ok(trophy.includes(key),'Trophy must use one full-size sprite cell: '+key);
+ const t=rule('.ng-track-stakes .ng-stakes-trophy');
+ for(const p of ['width:16px','height:16px','background-size:48px 16px',
+  "background-image:url('/assets/trophies/g123-sprite.png')",'background-repeat:no-repeat']){
+  assert.ok(t.includes(p),'The user-provided full-color artwork must be cropped: '+p);
  }
- assert.ok(!trophy.includes('height:7px'),'No vertically clipped trophy slivers');
- for(const [g,pos] of [[1,'0 0'],[2,'-22px 0'],[3,'-44px 0']])
-  assert.ok(cssRule('.ng-stakes-trophy.g'+g).includes('background-position:'+pos),
-   'Grade '+g+' must show its own full square trophy frame');
- assert.ok(css.includes('background-size:60px 20px')&&css.includes('background-position:-40px 0'),
-  'Responsive layout scales all three trophy frames proportionally');
- assert.ok(css.includes('.ng-track-stakes .ng-stakes-grade-text{'),
-  'Trophy artwork needs a legible fallback grade label');
- assert.ok(js.includes('class="ng-stakes-grade-text"')&&js.includes('>G'+ "'+grade+'"+'</small>'),
-  'Each row must clearly identify its graded class alongside the existing artwork');
+ assert.ok(!t.includes('height:7px'),'No cropped slivers');
+ for(const [g,pos] of [[1,'0 0'],[2,'-16px 0'],[3,'-32px 0']])
+  assert.ok(rule('.ng-track-stakes .ng-stakes-trophy.g'+g).includes('background-position:'+pos),
+   'Grade '+g+' must show its own original full square trophy');
+ assert.ok(css.includes('background-size:45px 15px')&&css.includes('background-position:-30px 0'),
+  'Mobile layout must preserve three proportional sprite frames at 15px');
+ assert.ok(js.includes('class="ng-stakes-trophy g'+ "'+grade+'")&&
+  !js.includes('src="/assets/trophies/grade-'+ "'+grade+'"),
+  'Original source trophy replaces the unrelated newly drawn SVG cups');
+ assert.ok(js.includes('class="ng-stakes-grade-text"')&&js.includes(">G'+grade+'</small>"),
+  'Grade label remains visible alongside original trophy art');
  assert.ok(js.includes("const grade=(cols[2].match(/\\bG([123])\\b/i)||[])[1]"),
-  'Grade icon selection must use real sourced G1/G2/G3 race data');
- assert.ok(css.includes('.ng-track-stakes .ng-stakes-data{min-height:30px!important'),
-  'Source-backed grade icon must fit the existing compact stakes row');
+  'Each source-backed grade must still choose its own trophy');
 });
 
 test('Track history is permanently visible below meet conditions for four registered courses',()=>{
