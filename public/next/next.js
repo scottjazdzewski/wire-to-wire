@@ -1484,7 +1484,7 @@ function profileDetail(route,sourceOverride=null){
    'racing secretary':'racing_secretary'
   };
   const roleTokens=roleName.split(/\s*(?:\/|,|\+|&)\s*/).map(x=>namedRoles[x]||x.replaceAll(' ','_'));
-  const roles=[...new Set(roleTokens.filter(Boolean))],cat=athleteAttributeCatalog||{};
+  const roles=[...new Set(roleTokens.filter(Boolean))],role=roles[0]||null,cat=athleteAttributeCatalog||{};
   const work=state().staffState?.[route.title]||{};
   const observations=Array.isArray(work.attribute_observations)?work.attribute_observations:[];
   const observed=new Map(observations.filter(x=>x&&typeof x.attribute_key==='string').map(x=>[x.attribute_key,x]));
