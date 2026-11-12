@@ -9,7 +9,7 @@
  * Stable ordering and a fixed seed guarantee repeatable identities.
  */
 import {createGeographicNameRoster,GEO_NAME_MODEL} from './geographic-names.mjs';
-export const PERSONNEL_NAME_MODEL='WTW_1999_PROFESSIONAL_ROLE_NAMES_V2';
+export const PERSONNEL_NAME_MODEL='WTW_1999_PROFESSIONAL_ROLE_NAMES_V3';
 
 function hash(seed,key){
  let h=(2166136261^(seed>>>0))>>>0;
@@ -71,7 +71,7 @@ function variant(seed,i,record,role,byCountry,base){
   const surname2=secondSurname(seed,i,country,byCountry,base,last);
   if(surname2)return {name:name+' '+surname2,style:'TWO_SURNAMES'};
  }
- if(western&&roll>=rules.secondFamily&&roll<rules.secondFamily+rules.middle)
+ if(western&&!/\b[A-Z]\.\s/.test(name)&&roll>=rules.secondFamily&&roll<rules.secondFamily+rules.middle)
   return {name:first+' '+middleLetter+'. '+last,style:'MIDDLE_INITIAL'};
  if(COMPOUND[first]&&roll>=45&&roll<65)
   return {name:COMPOUND[first]+' '+last,style:'COMPOUND_GIVEN_NAME'};
@@ -99,7 +99,7 @@ export function createPersonnelNameRoster(seed,count,roleAt,protectedNames=[]){
  }
  return base.map((record,i)=>{
   const role=roleAt(i),candidate=variant(seed,i,record,role,byCountry,base);
-  let name=record.name,nameStyle='GIVEN_SURNAME';
+  let name=record.name,nameStyle=/\b[A-Z]\.\s/.test(name)?'MIDDLE_INITIAL':'GIVEN_SURNAME';
   if(candidate.name!==name&&!reserved.has(norm(candidate.name))){
    name=candidate.name;nameStyle=candidate.style;reserved.add(norm(name));
   }
