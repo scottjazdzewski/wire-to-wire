@@ -75,23 +75,39 @@ const worldQuery='seed='+encodeURIComponent(gameWorldProfile.seed)+
 const q=(route,extras='')=>readLocal1999World(route+(route.includes('?')?'&':'?')+
  worldQuery+(viewDate==='1999-01-01'?'':'&date='+viewDate)+(extras?'&'+extras:''));
 const allPages=(route,total)=>{const rows=[];for(let offset=0;offset<total;offset+=100){const page=q(route,'offset='+offset+'&limit=100');rows.push(...(page.items||[]));}return rows;};
-const srcHorses=allPages('/api/1999/horses',267);
+const srcHorses=gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?[]:allPages('/api/1999/horses',267);
 const sourceHorseOffset=new Map(srcHorses.map((h,index)=>[h.id,index]));
-const srcOrgs=allPages('/api/1999/organizations',108);
-const srcPeople=allPages('/api/1999/people',154);
+const srcOrgs=gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?[]:allPages('/api/1999/organizations',108);
+const srcPeople=gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?[]:allPages('/api/1999/people',154);
 const worldCounts=q('/api/1999/sim/overview').counts;
 const generatedPeopleCount=worldCounts.people-srcPeople.length;
 const activeStallions=q('/api/1999/stallions').active;
 const ownerNames=new Map(srcOrgs.map(o=>[o.id,o.name]));
 const peopleNames=new Map(srcPeople.map(p=>[p.id,p.name]));
 const ownership=new Map();for(const h of srcHorses){ownership.set(h.ownerId,(ownership.get(h.ownerId)||0)+1);}
-const activeOwnerId=[...ownership].filter(([id])=>id).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))[0]?.[0]||null;
-const selectedOwner=ownerNames.get(activeOwnerId)||activeOwnerId||'1999 Foundation Stable';
+const fictionalOpeningOwners=q('/api/1999/sim/world-horse-directory','offset=0&limit=100').items||[];
+const fictionalOwnerTally=new Map();
+for(const h of fictionalOpeningOwners)if(h.ownerId)
+ fictionalOwnerTally.set(h.ownerId,(fictionalOwnerTally.get(h.ownerId)||0)+1);
+const fictionalOwner=[...fictionalOwnerTally].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))[0]?.[0]||null;
+const activeOwnerId=gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?fictionalOwner:
+ [...ownership].filter(([id])=>id).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))[0]?.[0]||null;
+const ownerRecord=activeOwnerId?q('/api/1999/sim/owners','offset=0&limit=1').items?.[0]:null;
+const selectedOwner=ownerNames.get(activeOwnerId)||
+ (ownerRecord?.id===activeOwnerId?ownerRecord.name:'')||activeOwnerId||'1999 Foundation Stable';
 // The player's entire horse portfolio is resolved from the ONE deterministic world.
 // This does not fabricate additional historical source records or outcomes.
 const portfolioQuery='ownerId='+encodeURIComponent(activeOwnerId||'');
 const ownedHorseCount=q('/api/1999/sim/owner-horses',portfolioQuery+'&offset=0&limit=1').total;
 let stableHorses=allPages('/api/1999/sim/owner-horses?'+portfolioQuery,ownedHorseCount);
+if(gameWorldProfile.population<325000){
+ // The old 87.5k scheduling API is not the reduced directory. Never show
+ // nonmember horses as if the player owned them in a smaller selected world.
+ stableHorses=stableHorses.filter(h=>{
+  try{return q('/api/1999/sim/world-horse-profile','id='+encodeURIComponent(h.id)).index>=0}
+  catch{return false}
+ });
+}
 let horseLookup=new Map([...srcHorses,...stableHorses].map(h=>[h.name,h]));
 const sourceHorseIds=new Set(srcHorses.map(h=>h.id));
 
