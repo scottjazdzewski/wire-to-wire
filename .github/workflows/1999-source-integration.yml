@@ -1,0 +1,35 @@
+name: WTW 1999 source integration
+
+on:
+  pull_request:
+    paths:
+      - "src/1999/**"
+      - "src/worker.js"
+      - "tests/1999-*.test.mjs"
+      - ".github/workflows/1999-source-integration.yml"
+  push:
+    branches:
+      - "feature/1999-canon-opening-handoff-20261111"
+
+jobs:
+  january-1999-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source world and protected entry syntax
+        run: |
+          node --check src/1999/opening-world.v1.mjs
+          node --check src/1999/opening-readmodel.mjs
+          node --check src/1999/entry-gate.mjs
+          node --check src/1999/full-world-generator.mjs
+          node --check src/1999/full-world-readmodel.mjs
+          node --check src/1999/test-clock.mjs
+          node --check public/1999/test-clock.mjs
+          node --check public/1999/app.mjs
+          node --check src/worker.js
+      - name: Jan 1 source and player-AI safety verification
+        run: node --test tests/1999-opening-world.test.mjs tests/1999-entry-gate.test.mjs tests/1999-full-universe.test.mjs tests/1999-test-clock.test.mjs tests/1999-full-world-api.test.mjs
