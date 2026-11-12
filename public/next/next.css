@@ -2267,6 +2267,9 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 .ng-route-profile .ng-profile-track .ng-profile-source-photo::before{content:'';position:absolute;inset:3px;pointer-events:none;z-index:0;border:1px solid rgba(99,81,43,.17);border-radius:3px;background:linear-gradient(125deg,rgba(255,255,255,.36),transparent 40%,rgba(107,86,48,.07) 100%)}
 
 .ng-route-profile .ng-profile-track .ng-profile-source-photo img{position:relative;z-index:1;object-fit:contain!important;object-position:center center!important;padding:0!important;box-sizing:border-box;transform:scale(1.18);transform-origin:center center;filter:drop-shadow(0 1px 1px rgba(15,27,23,.52)) drop-shadow(0 2px 2px rgba(30,26,18,.22))}
+/* Wordmarks have much larger transparent top/bottom margins than the crests. */
+.ng-route-profile .ng-profile-track .ng-profile-source-photo img[src$="/T-0001.webp"]{transform:scale(1.52)}
+.ng-route-profile .ng-profile-track .ng-profile-source-photo img[src$="/T-0003.webp"]{transform:scale(1.47)}
 .ng-track-workspace{display:grid!important;grid-template-columns:minmax(0,1.23fr) minmax(285px,.77fr)!important;gap:8px!important;width:100%;height:100%;min-height:0;overflow:hidden}
 .ng-track-workspace>.ng-tier1-card,.ng-track-info-stack>.ng-tier1-card{min-height:0!important}
 .ng-track-stakes .ng-stakes-table{flex:1 1 auto;min-height:0;overflow:hidden;padding:2px 5px 4px}
