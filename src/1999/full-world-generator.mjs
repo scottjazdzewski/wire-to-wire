@@ -210,7 +210,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
  function parentAt(i,sex){
   const isSire=sex==='SIRE',id='H-TEST-'+sex+'-'+pad(i+1,6),t=trackAt(hash(seed,id+':home')%trackCount);
   return {id,name:mixName(seed+1,isSire?i+100000:i+101500),sex:isSire?'STALLION':'MARE',
-   foalYear:isSire?1970+(i%12):1971+(i%13),location:t.location,farmId:'F-TEST-FARM-'+pad(i%900+1),
+   foalYear:isSire?1970+(i%12):1971+(i%13),ageAtOpening:1999-(isSire?1970+(i%12):1971+(i%13)),location:t.location,farmId:'F-TEST-FARM-'+pad(i%900+1),
    reputation:standing(seed,id,.25+unit(seed,id+'rep')*.5),
     ability:createAgeAbility({seed,id,role:'horse',age:1999-(isSire?1970+(i%12):1971+(i%13))}),
     attributes:traits(hor,seed,id,createAgeAbility({seed,id,role:'horse',age:1999-(isSire?1970+(i%12):1971+(i%13))})),
