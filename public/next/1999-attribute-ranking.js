@@ -15,10 +15,15 @@ function render({horses,adapter,app,ownerBadge,safe}){
  const score=(attrs,key)=>{const v=attrs?.[key];return typeof v==='number'&&Number.isFinite(v)?
   Math.round(v*99):typeof v==='string'?v:null};
  const query=String(app.stableSearch||'').toLowerCase().trim();
+ const schema=[['name','HORSE'],['age','AGE'],['sex','SEX'],['status','RACING STATUS'],
+  ...defs.map(d=>[d.key,d.label])];
+ const criteria=window.WTW1999RosterFilters?.get(app,'Stable|Attributes')||null;
  const rows=horses.map(h=>({name:h.name,attrs:adapter.stableHorseAttributes?.(h.name)||{},
   info:adapter.sourceFacts?.(h.name)||{}}))
   .filter(h=>[h.name,h.info.connections?.owner,h.info.connections?.trainer,
-   h.info.racing_status].some(t=>String(t||'').toLowerCase().includes(query)));
+   h.info.racing_status].some(t=>String(t||'').toLowerCase().includes(query)))
+  .filter(h=>!criteria||window.WTW1999RosterFilters.matches({name:h.name,age:h.info.age,
+   sex:h.info.sex,status:h.info.racing_status,...h.attrs},criteria));
  const sort=app.stableAttributeSort||selected.key;
  rows.sort((a,b)=>{
   const value=h=>sort==='name'?h.name:sort==='age'?Number(h.info.age):sort==='sex'?h.info.sex:
@@ -58,6 +63,7 @@ function render({horses,adapter,app,ownerBadge,safe}){
   '<div class="ng-attribute-picker"><label for="ngSelectedAttribute">SORT BY ATTRIBUTE</label>'+
   '<select id="ngSelectedAttribute" data-ng-select="stable-attribute">'+options+'</select><span>'+safe(selected.group)+
   ' · SIMULATED TEST SCORES · NOT OBSERVED SCOUTING</span></div>'+
+  (window.WTW1999RosterFilters?.render(schema,criteria,safe,'Stable|Attributes')||'')+
   '<section class="ng-rs-roster"><header><strong>HORSE ATTRIBUTE RANKINGS</strong><span class="ng-stable-visible">'+rows.length+
   ' OF '+horses.length+' HORSES · CLICK HEADINGS TO SORT</span></header>'+
   '<div class="ng-rs-scroll" tabindex="0" aria-label="Sortable horse attributes"><table class="ng-rs-table ng-attr-table">'+
