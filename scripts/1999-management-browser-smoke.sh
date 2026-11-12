@@ -51,9 +51,15 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   const trainerButton=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
   check('Personnel trainer opens from the existing roster',Boolean(trainerButton));
   trainerButton.click();await pause(240);
-  check('Trainer opens approved FM people profile, not legacy generic preview',
-   Boolean(d.querySelector('#wtwNextgen .ng-profile-person'))&&
-   !d.querySelector('#wtwNextgen .ng-entity-preview'));
+  if(!d.querySelector('#wtwNextgen .ng-profile-person')||
+   d.querySelector('#wtwNextgen .ng-entity-preview')){
+   throw Error('Trainer did not open FM profile: '+JSON.stringify({
+    custom:w.__WTW_NEXT__?.app?.custom,section:w.__WTW_NEXT__?.app?.section,
+    trainer:trainerButton.dataset.val,route:d.querySelector('#wtwNextgen .ng-route')?.textContent.slice(0,200),
+    generic:Boolean(d.querySelector('#wtwNextgen .ng-entity-preview')),
+    dossier:Boolean(d.querySelector('#wtwNextgen .ng-person-workspace'))}));
+  }
+  steps.push('Trainer opens approved FM people profile, not legacy generic preview');
   check('Trainer profile shows common and trainer-only detailed attributes',
    d.querySelectorAll('#wtwNextgen .ng-person-attribute').length>=21&&
    d.querySelector('#wtwNextgen .ng-person-workspace')?.textContent.includes('Conditioning'));
