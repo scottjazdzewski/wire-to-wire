@@ -45,6 +45,20 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   const first=horses.items[0];
   check('Generated horse profile retains required values',first?._testGenerated&&first?._id&&first?.owner&&first?.trainer&&first?._testAttrs);
   check('No 1999 future outcomes pre-recorded',ui.bridgeStatus.includes('NO_1999_OUTCOME_COMMITTED'));
+  const saveKey=w.__WTW_1999_MANAGEMENT__.saveKey;
+  const before=JSON.parse(w.localStorage.getItem(saveKey)||'null');
+  check('1999 session uses dedicated save state',saveKey==='wtw1999ManagementStateV1'&&before?.date==='1999-01-01');
+  check('No old 2014 case or follow-ups imported',before?.currentCase==='opening-stable'&&before.decisionLog.length===0&&before.followUps.length===0);
+  const continueButton=d.querySelector('#wtwNextgen [data-ng="action"][data-val="Continue"]');
+  check('Approved UI Continue control is wired',Boolean(continueButton));
+  continueButton.click();await pause(350);
+  const advanced=JSON.parse(w.localStorage.getItem(saveKey)||'null');
+  check('Continue advances to January 2, 1999',advanced?.date==='1999-01-02');
+  check('January 1999 date is visible in header',d.querySelector('.ng-global-date strong')?.textContent.trim()==='1999-01-02');
+  check('Advance does not invent a race result or old Office decision',advanced.decisionLog.length===0&&advanced.followUps.length===0&&advanced.worldAnchor.lastCommittedRaceResult===null);
+  const archive=await w.fetch('/archive/?page=seasons');
+  check('Pre-1999 historical archive remains accessible',archive.ok);
+  check('No 2014 demo content visible in manager',!d.querySelector('#wtwNextgen')?.innerText.includes('2014-07-15'));
   node.dataset.state='passed';node.textContent=JSON.stringify({state:'passed',steps});
  }catch(e){node.dataset.state='failed';node.textContent=JSON.stringify({state:'failed',error:String(e),steps});}
 },2800));
