@@ -40,10 +40,10 @@ test('a single cache-fresh approved UI shell loads the race and profile adapters
  assert.match(site,/next\.js\?rev=/);
 });
 
-test('1999 track registry and active calendars enforce the U.S./Canada boundary',()=>{
+test('1999 track registry and active calendars enforce the U.S./Canada/Cuba boundary',()=>{
  const generator=read('public/1999/engine/full-world-generator.mjs');
  const api=read('public/1999/engine/local-api.mjs');
- assert.match(generator,/const sourceTracks=canon\.tracks\.filter\(domesticTrack\)/);
+ assert.match(generator,/const sourceTracks=canon\.tracks\.filter\(t=>trackProgram1999\(t\.id\)\?\.trackOperating==='OPEN_1999'\)/);
  assert.match(generator,/nonPlayableInternationalTracks:canon\.tracks\.length-trackCount/);
  assert.match(api,/canon\.tracks\.filter\(t=>activeIds\.has\(t\.id\)\)/);
  assert.match(api,/w\.sourceStakes/);

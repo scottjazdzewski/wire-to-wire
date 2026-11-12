@@ -24,7 +24,7 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   const ui=w.__WTW_1999_UI_DATA__;
   check('1999 data adapter initialized',Boolean(ui));
   check('87,500-horse world available',ui.counts.horses===87500);
-  check('134 track universe available',ui.counts.tracks===134);
+  check('118 US/Canada/Cuba courses available',ui.counts.tracks===118);
   check('Opening stable has source-recorded horses',ui.stableHorses.length>0&&ui.stableHorses.every(h=>h.horseId?.startsWith('H-')));
   check('1999 inbox not 2014 demo',d.querySelector('.ng-msgtitle')?.textContent.includes('1999'));
   check('1999 decision desk not 2014 case',d.querySelector('.ng-casetitle')?.textContent.includes('1999'));
