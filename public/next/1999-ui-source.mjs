@@ -429,10 +429,11 @@ function worldHorseBrowse({offset=0,limit=160,search='',sort='name',desc=false,f
   const needle=text(search),filterValue=text(filters.query);
   globalHorseCache=globalHorseSummaries.map(h=>({
    ...h,owner:universeLabels.owners.get(h.ownerId)||ownerNames.get(h.ownerId)||h.ownerId||'',
+   breeder:universeLabels.owners.get(h.breederId)||ownerNames.get(h.breederId)||h.breederId||'',
    trainer:universeLabels.trainers.get(h.trainerId)||peopleNames.get(h.trainerId)||h.trainerId||'',
    track:trackLabels.get(h.trackId)||h.trackId||'',status:h.status||''
   })).filter(h=>{
-   if(needle&&!['name','id','owner','trainer','track','sire','dam','status']
+   if(needle&&!['name','id','owner','breeder','trainer','track','sire','dam','status']
     .some(k=>text(h[k]).includes(needle)))return false;
    if(ageMin!==null&&(h.age==null||h.age<ageMin))return false;
    if(ageMax!==null&&(h.age==null||h.age>ageMax))return false;
@@ -441,7 +442,7 @@ function worldHorseBrowse({offset=0,limit=160,search='',sort='name',desc=false,f
    if(filters.field&&filters.query&&!text(h[filters.field]).includes(filterValue))return false;
    return true;
   });
-  const sortKey=['name','age','sex','sire','dam','owner','trainer','track','status','ca','pa'].includes(sort)?sort:'name';
+  const sortKey=['name','age','sex','sire','dam','owner','breeder','homebred','trainer','track','status','ca','pa'].includes(sort)?sort:'name';
   const sign=desc?-1:1;
   globalHorseCache.sort((a,b)=>{
    const av=a[sortKey],bv=b[sortKey];
@@ -458,7 +459,8 @@ function worldHorseBrowse({offset=0,limit=160,search='',sort='name',desc=false,f
   .map(h=>({_directoryIndex:h.index,_kind:'horse',_name:h.name,_id:h.id,
    _canonId:h.canonical?h.id:'',_worldKey:h.canonical?'horse:'+h.id:undefined,
    _testGenerated:!h.canonical,name:h.name,age:String(h.age),sex:h.sex,
-   sire:h.sire,dam:h.dam,owner:h.owner,trainer:h.trainer,track:h.track,
+   sire:h.sire,dam:h.dam,owner:h.owner,breeder:h.breeder,
+   homebred:h.homebred?'YES':'NO',trainer:h.trainer,track:h.track,
    status:String(h.status).replaceAll('_',' '),ca:String(h.ca??''),pa:String(h.pa??'')}));
  return {total,loaded:worldCounts.horses,indexing:false,items,progress:globalHorseProgress};
 }
