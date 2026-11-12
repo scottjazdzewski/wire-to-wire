@@ -70,13 +70,18 @@ function horsePedigree(seed,id,pedigree){
  const damPrecocity=damId?unit(seed,damId+':inherited_precocity'):null;
  const values=[sirePrecocity,damPrecocity].filter(v=>v!==null);
  const ancestry=values.length?values.reduce((a,b)=>a+b,0)/values.length:.5;
+ const ownGenotype=unit(seed,id+':inherited_precocity');
+ // A sire's own maturation and what offspring can inherit share the same
+ // stable latent genotype; the sire's individual experience also varies.
+ const expressedPrecocity=values.length?.72*ancestry+.28*ownGenotype:ownGenotype;
  const own=unit(seed,id+':individual_maturity');
  const sprintInfluence=values.length?(unit(seed,sireId||id+':distance_preference')+
   unit(seed,damId||id+':distance_preference'))/2:.5;
  // High precocity favors earlier peak, high sprint index a little earlier.
  // Heritable pressure is modest; own development is intentionally dominant.
- const distribution=clamp(own+(.5-ancestry)*.62+(.5-sprintInfluence)*.14,0,.999999);
- return {sireId,damId,ancestry:round(ancestry),individual:round(own),
+ const distribution=clamp(own+(.5-expressedPrecocity)*.70+(.5-sprintInfluence)*.14,0,.999999);
+ return {sireId,damId,ancestry:round(ancestry),expressedPrecocity:round(expressedPrecocity),
+  ownGenotype:round(ownGenotype),individual:round(own),
   distanceInfluence:round(sprintInfluence),distribution};
 }
 export const supportedAgeRoles=Object.freeze(Object.keys(ROLES));
@@ -151,6 +156,8 @@ export function createAgeAbility({seed,id,role,age,pedigree=null,asOf='1999-01-0
   pedigreeMaturity:pedigreeModel?{
    sireId:pedigreeModel.sireId,damId:pedigreeModel.damId,
    modeledAncestryPrecocity:pedigreeModel.ancestry,
+   modeledInheritedGenotype:pedigreeModel.ownGenotype,
+   modeledExpressedPrecocity:pedigreeModel.expressedPrecocity,
    modeledIndividualPrecocity:pedigreeModel.individual,
    basis:'SIMULATED_ID_BASED_BREEDING_PROPENSITY_NOT_VERIFIED_GENOTYPE'
   }:null,
