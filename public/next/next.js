@@ -528,14 +528,33 @@ async function worldSetImage(key,image){
   tx.onabort=()=>reject(tx.error||Error('Image save cancelled'));
  });
 }
+function approvedIdentityAsset(kind,id,name){
+ const category=kind==='organization'||kind==='owner'?'farm':kind;
+ const assets=officePhotoIndex?.entities||{};
+ const byId=officeAssetPath(id?assets[category+':'+id]:'');
+ if(byId)return byId;
+ const byName=officeAssetPath(name?assets[category+':'+name]:'');
+ if(byName)return byName;
+ if(category==='farm'){
+  const logos=organizationLogoIndex?.organizations||{};
+  return officeAssetPath((id&&logos['organization:'+id])||
+    (name&&logos['organization:'+name])||'');
+ }
+ return '';
+}
 function worldImageURL(key,record){
- if(worldImageCache.has(key))return worldImageCache.get(key)||'';
+ const stored=worldImageCache.get(key);
+ if(stored)return stored;
+ const kind=key.split(':')[0],id=record?.id||key.slice(key.indexOf(':')+1);
+ const fallback=approvedIdentityAsset(kind,id,record?.name);
+ if(worldImageCache.has(key))return record?.photoUrl||fallback||'';
+
  if(!worldImageFetching.has(key)){
   worldImageFetching.add(key);
   worldGetImage(key).then(src=>{const image=src||'';worldImageCache.set(key,image);if(image&&image!==record?.photoUrl)schedulePaint(30)})
    .catch(()=>{worldImageCache.set(key,'')}).finally(()=>worldImageFetching.delete(key));
  }
- const url=record?.photoUrl||'';
+ const url=record?.photoUrl||fallback||'';
  return /^(?:https:\/\/|http:\/\/|\/assets\/)/i.test(url)?url:'';
 }
 function worldMediaPreview(key,record,editing=false){
@@ -1295,7 +1314,8 @@ function profileDetail(route,sourceOverride=null){
    }).join('')||'<div class="ng-empty-record">No verified stakes rows connected.</div>')+'</div>';
  };
  const entityPhotoKind=isHorse?'horse':isPerson?'person':isFarm?'farm':isTrack?'track':'';
- const horseImage=entityPhotoKind?officeAssetPath(officePhotoIndex?.entities?.[entityPhotoKind+':'+route.title]):'';
+ const profileSource=entityPhotoKind?world1999Match(entityPhotoKind,route.title):null;
+ const horseImage=entityPhotoKind?approvedIdentityAsset(entityPhotoKind,profileSource?._world?.id||'',route.title):'';
  const sourceDecision=isHorse?$('#routeBody [data-act="Open profile decision"]'):null;
  const sourceFollowUp=isHorse?$('#routeBody [data-act="Open follow-up"]'):null;
  const quickLinks=[sourceDecision?'<button data-ng="sourcebutton" data-val="'+$$('#routeBody [data-act]').indexOf(sourceDecision)+'">OPEN RELATED DECISION '+glyph('arrow',12)+'</button>':'',
