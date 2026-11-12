@@ -53,6 +53,12 @@ export function readLocal1999World(raw){
  if(p==='/api/1999/sim/tracks')return pager(q,w.counts.tracks,i=>w.trackAt(i),'CANON_GEOGRAPHY_WITH_SIMULATED_OPERATIONS');
  if(p==='/api/1999/sim/facilities')return pager(q,w.counts.facilities,i=>w.facilityAt(i),'SIMULATED_FACILITIES');
  if(p==='/api/1999/sim/auctions')return pager(q,w.counts.auctions,i=>w.auctionAt(i),'SIMULATED_AUCTIONS');
+ if(p==='/api/1999/sim/breeding-stock'){
+  const sex=q.get('sex')==='SIRE'?'SIRE':'DAM';
+  return pager(q,sex==='SIRE'?w.counts.breedingStallions:w.counts.breedingMares,
+   i=>w.parentAt(i,sex),'VIRTUAL_SIMULATED_BREEDING_STOCK');
+ }
+ if(p==='/api/1999/sim/foaling-forecast')return w.annualFoalingForecast();
  if(p==='/api/1999/sim/conditions'){
   const trackIndex=int(q.get('trackIndex'),0,w.counts.tracks-1);
   const date=q.get('date')||'1999-01-01';
