@@ -1,21 +1,57 @@
-/** WTW 1999 canonical TEST aging model, shared by both world generators.
- * Horse peak calibrated around 4.5 years (Gramm & Marksteiner, 2010,
- * Journal of Equine Science, DOI 10.1294/jes.21.73).
- * Human role curves are explicit GAMEPLAY assumptions, not career-study facts.
- * No historical identities, achievements, measured scouting or health facts change.
+/**
+ * WIRE TO WIRE — January 1999 age and career potential, shared by server and browser.
+ *
+ * A separate individual peak and trajectory is generated once for each entity.
+ * Horse distribution has a population average around 4-5, but permits exceptional
+ * two-year-old peaks and late-maturing older runners. Precocity can be inherited
+ * partly from the same sire/dam IDs; this is a modeled trait, NOT verified genetics.
+ * Based on typical Thoroughbred ages in Gramm & Marksteiner (2010), and the
+ * existence—not the precise effect size—of genetic precocity in Hill et al. (2017).
+ * Human role bands are GAMEPLAY assumptions; they are not empirical census data.
  */
 export const AGE_ABILITY_SCHEMA='WTW_1999_AGE_ABILITY_V1';
-const CURVES=Object.freeze({
- horse:{start:1,peak:4.5,jitter:.7,foundation:.23,growth:.76,decline:.058,minimum:.24,end:16},
- jockey:{start:16,peak:33.5,jitter:3,foundation:.37,growth:.83,decline:.021,minimum:.27,end:63},
- trainer:{start:22,peak:52,jitter:5,foundation:.47,growth:.85,decline:.010,minimum:.38,end:86},
- owner:{start:20,peak:54,jitter:6,foundation:.53,growth:.88,decline:.008,minimum:.41,end:92},
- breeder:{start:22,peak:53,jitter:5,foundation:.47,growth:.90,decline:.010,minimum:.40,end:89},
- farm_manager:{start:20,peak:48,jitter:5,foundation:.47,growth:.85,decline:.012,minimum:.36,end:84},
- veterinarian:{start:25,peak:49,jitter:5,foundation:.55,growth:.85,decline:.012,minimum:.39,end:84},
- farrier:{start:18,peak:43,jitter:5,foundation:.45,growth:.85,decline:.019,minimum:.30,end:78},
- bloodstock_agent:{start:21,peak:53,jitter:6,foundation:.48,growth:.90,decline:.009,minimum:.39,end:89},
- racing_secretary:{start:22,peak:51,jitter:5,foundation:.54,growth:.90,decline:.010,minimum:.39,end:85}
+export const AGE_CURVE_REVISION='INDIVIDUAL_MATURITY_PEDIGREE_V2';
+const ROLES=Object.freeze({
+ horse:{start:1,foundation:.22,growth:.78,decline:.062,minimum:.19,end:16},
+ jockey:{start:16,foundation:.31,growth:.88,decline:.019,minimum:.22,end:66},
+ trainer:{start:22,foundation:.46,growth:.85,decline:.010,minimum:.34,end:88},
+ owner:{start:20,foundation:.50,growth:.88,decline:.009,minimum:.38,end:94},
+ breeder:{start:23,foundation:.46,growth:.89,decline:.010,minimum:.36,end:90},
+ farm_manager:{start:20,foundation:.45,growth:.88,decline:.013,minimum:.32,end:85},
+ veterinarian:{start:25,foundation:.51,growth:.91,decline:.013,minimum:.34,end:85},
+ farrier:{start:18,foundation:.39,growth:.88,decline:.018,minimum:.25,end:79},
+ bloodstock_agent:{start:21,foundation:.46,growth:.87,decline:.010,minimum:.35,end:90},
+ racing_secretary:{start:22,foundation:.50,growth:.90,decline:.011,minimum:.34,end:86}
+});
+/**
+ * Horse target weights are gameplay population approximations, not a fitted
+ * estimate from individual-level race data. Most peak at 3-5, a few at 2 or 7.
+ */
+const HORSE_PEAKS=Object.freeze([
+ {label:'PRECOCIOUS',from:2.1,to:2.95,weight:.045},
+ {label:'EARLY',from:3.0,to:3.9,weight:.22},
+ {label:'CLASSIC',from:4.0,to:4.85,weight:.34},
+ {label:'MATURE',from:4.9,to:5.75,weight:.245},
+ {label:'LATE',from:5.8,to:6.65,weight:.11},
+ {label:'VERY_LATE',from:6.7,to:7.35,weight:.04}
+]);
+/** Jockey careers legitimately differ. A late-blooming rider still peaks by ~43. */
+const JOCKEY_PEAKS=Object.freeze([
+ {label:'EARLY_PROFESSIONAL',from:22.5,to:25.5,weight:.10},
+ {label:'EARLY_PRIME',from:25.5,to:29.5,weight:.22},
+ {label:'ESTABLISHED_PRIME',from:29.5,to:34.5,weight:.38},
+ {label:'MATURE_PRIME',from:34.5,to:39.5,weight:.27},
+ {label:'LATE_PROFESSIONAL',from:39.5,to:42.5,weight:.03}
+]);
+const HUMAN_BANDS=Object.freeze({
+ trainer:[{from:34,to:45,weight:.13},{from:45,to:57,weight:.54},{from:57,to:72,weight:.33}],
+ owner:[{from:34,to:46,weight:.18},{from:46,to:60,weight:.54},{from:60,to:72,weight:.28}],
+ breeder:[{from:33,to:45,weight:.20},{from:45,to:59,weight:.55},{from:59,to:71,weight:.25}],
+ farm_manager:[{from:30,to:42,weight:.25},{from:42,to:53,weight:.60},{from:53,to:65,weight:.15}],
+ veterinarian:[{from:33,to:44,weight:.22},{from:44,to:55,weight:.61},{from:55,to:65,weight:.17}],
+ farrier:[{from:27,to:39,weight:.27},{from:39,to:48,weight:.54},{from:48,to:58,weight:.19}],
+ bloodstock_agent:[{from:34,to:46,weight:.20},{from:46,to:59,weight:.56},{from:59,to:70,weight:.24}],
+ racing_secretary:[{from:33,to:44,weight:.18},{from:44,to:57,weight:.58},{from:57,to:68,weight:.24}]
 });
 const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
 const round=n=>Math.round(n*10000)/10000;
@@ -23,7 +59,27 @@ function hash(seed,key){let h=(2166136261^(seed>>>0))>>>0;
  for(const c of String(key)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}
  h^=h>>>16;h=Math.imul(h,2246822507);h^=h>>>13;return h>>>0;}
 const unit=(seed,key)=>hash(seed,key)/4294967296;
-export const supportedAgeRoles=Object.freeze(Object.keys(CURVES));
+function chooseBand(bands,roll){let p=clamp(roll,0,.999999);
+ for(const band of bands){if(p<band.weight)return {...band,position:p/band.weight};p-=band.weight}
+ const b=bands[bands.length-1];return {...b,position:1};
+}
+function horsePedigree(seed,id,pedigree){
+ const sireId=typeof pedigree?.sireId==='string'&&pedigree.sireId?pedigree.sireId:null;
+ const damId=typeof pedigree?.damId==='string'&&pedigree.damId?pedigree.damId:null;
+ const sirePrecocity=sireId?unit(seed,sireId+':inherited_precocity'):null;
+ const damPrecocity=damId?unit(seed,damId+':inherited_precocity'):null;
+ const values=[sirePrecocity,damPrecocity].filter(v=>v!==null);
+ const ancestry=values.length?values.reduce((a,b)=>a+b,0)/values.length:.5;
+ const own=unit(seed,id+':individual_maturity');
+ const sprintInfluence=values.length?(unit(seed,sireId||id+':distance_preference')+
+  unit(seed,damId||id+':distance_preference'))/2:.5;
+ // High precocity favors earlier peak, high sprint index a little earlier.
+ // Heritable pressure is modest; own development is intentionally dominant.
+ const distribution=clamp(own+(.5-ancestry)*.62+(.5-sprintInfluence)*.14,0,.999999);
+ return {sireId,damId,ancestry:round(ancestry),individual:round(own),
+  distanceInfluence:round(sprintInfluence),distribution};
+}
+export const supportedAgeRoles=Object.freeze(Object.keys(ROLES));
 export function inferProfessionalRole(raw){const s=String(raw||'').toLowerCase().replace(/[_-]/g,' ');
  if(/jockey|rider/.test(s))return 'jockey';
  if(/trainer/.test(s))return 'trainer';
@@ -35,34 +91,68 @@ export function inferProfessionalRole(raw){const s=String(raw||'').toLowerCase()
  if(/breeder/.test(s))return 'breeder';
  return 'owner';
 }
-function factorAt(role,age,peakAge){const c=CURVES[role];
- if(age<=c.start)return c.foundation;
- if(age<peakAge){const fraction=clamp((age-c.start)/(peakAge-c.start),0,1);
-  return c.foundation+(1-c.foundation)*Math.pow(fraction,c.growth);}
- const elapsed=Math.max(0,age-peakAge);
- return Math.max(c.minimum,1-c.decline*Math.pow(elapsed,1.12));
+function factorAt(profile,age){const c=ROLES[profile.role],peak=profile.peakAge;
+ const foundation=profile.foundation??c.foundation;
+ const growth=profile.growthExponent??c.growth;
+ const decline=profile.declineRate??c.decline;
+ const minimum=profile.minimumFactor??c.minimum;
+ if(age<=c.start)return foundation;
+ if(age<peak){const progress=clamp((age-c.start)/(peak-c.start),0,1);
+  return foundation+(1-foundation)*Math.pow(progress,growth);}
+ return Math.max(minimum,1-decline*Math.pow(Math.max(0,age-peak),profile.declineExponent??1.12));
 }
-function stars(score){return clamp(Math.round(score/20),1,5)}
-/** A future year is recalculated with the same person's or horse's peak; no reroll. */
+const stars=score=>clamp(Math.round(score/20),1,5);
+/** Reuse a fixed individual peak/ceiling as time advances. Never reroll identity. */
 export function evaluateAgeAbility(profile,age){
- if(!profile||profile.schema!==AGE_ABILITY_SCHEMA||!CURVES[profile.role])throw Error('Invalid WTW career profile');
+ if(!profile||profile.schema!==AGE_ABILITY_SCHEMA||!ROLES[profile.role])throw Error('Invalid WTW career profile');
  if(!Number.isFinite(age)||age<0||age>120)throw Error('Invalid entity age');
- const current=Math.round(clamp(profile.peakCeiling*factorAt(profile.role,age,profile.peakAge),1,99));
- // Potential is the BEST result still achievable FROM NOW; past prime is not potential.
- const c=CURVES[profile.role];
- const future=age<profile.peakAge&&age<=c.end?profile.peakCeiling:current;
- const potential=clamp(Math.max(current,future),1,99);
- const stage=age<c.start?'PRECAREER':age<profile.peakAge-2?'DEVELOPING':age<=profile.peakAge+2?'PRIME':'DECLINING';
- return {...profile,age,careerStage:stage,current,potential,currentStars:stars(current),
-  potentialStars:stars(potential),ageFactor:round(factorAt(profile.role,age,profile.peakAge))};
+ const factor=factorAt(profile,age);
+ const current=Math.round(clamp(profile.peakCeiling*factor,1,99));
+ // Future potential excludes vanished youthful talent and is never below current.
+ const potential=age<profile.peakAge&&age<=ROLES[profile.role].end?Math.max(current,profile.peakCeiling):current;
+ const careerStage=age<ROLES[profile.role].start?'PRECAREER':
+  age<profile.peakAge-1.75?'DEVELOPING':age<=profile.peakAge+1.75?'PRIME':'DECLINING';
+ return {...profile,age,current,potential,currentStars:stars(current),potentialStars:stars(potential),
+  careerStage,ageFactor:round(factor)};
 }
-export function createAgeAbility({seed,id,role,age,asOf='1999-01-01'}={}){
- if(!Number.isSafeInteger(seed)||seed<1||!String(id||'').trim()||!CURVES[role])throw Error('Invalid age-model identity');
+/**
+ * For horses, pass pedigree: {sireId, damId}. The same parents exert a stable
+ * partial effect on foals, but no unverifiable real-world maturity is asserted.
+ */
+export function createAgeAbility({seed,id,role,age,pedigree=null,asOf='1999-01-01'}={}){
+ if(!Number.isSafeInteger(seed)||seed<1||!String(id||'').trim()||!ROLES[role])throw Error('Invalid age-model identity');
  if(!Number.isFinite(age)||age<0||age>120)throw Error('Invalid age');
- const c=CURVES[role],late=role!=='horse'&&unit(seed,id+':late-bloom')<.018;
- const peakAge=round(c.peak+(unit(seed,id+':peak')-.5)*2*c.jitter+(late?3.5:0));
- const peakCeiling=clamp(Math.round(17+81*Math.pow(unit(seed,id+':ceiling'),.80)),18,99);
- return evaluateAgeAbility({schema:AGE_ABILITY_SCHEMA,role,peakAge,peakCeiling,asOf,
-  developmentAnomaly:late?'LATE_BLOOMER':null,
+ const curve=ROLES[role];let band,pedigreeModel=null,peakAge;
+ if(role==='horse'){
+  pedigreeModel=horsePedigree(seed,id,pedigree);
+  band=chooseBand(HORSE_PEAKS,pedigreeModel.distribution);
+ }else{
+  band=chooseBand(role==='jockey'?JOCKEY_PEAKS:HUMAN_BANDS[role],unit(seed,id+':career_peak_band'));
+ }
+ peakAge=round(band.from+(band.to-band.from)*clamp(band.position,0,1));
+ // Both trajectory and decline vary within every role, but stay attached to ID.
+ const foundation=round(clamp(curve.foundation+(.5-unit(seed,id+':foundation'))*.12,.08,.75));
+ const growthExponent=round(curve.growth*(.70+unit(seed,id+':development_rate')*.62));
+ const declineRate=round(curve.decline*(.65+unit(seed,id+':aging_resilience')*.70));
+ const declineExponent=round(1.03+unit(seed,id+':aging_shape')*.28);
+ const minimumFactor=round(curve.minimum*(.85+unit(seed,id+':late_floor')*.3));
+ const ceilingRoll=unit(seed,id+':ceiling');
+ const familyTalent=pedigreeModel?.sireId||pedigreeModel?.damId?
+  ((pedigreeModel.sireId?unit(seed,pedigreeModel.sireId+':inherited_talent'):.5)+
+   (pedigreeModel.damId?unit(seed,pedigreeModel.damId+':inherited_talent'):.5))/2:.5;
+ const talent=role==='horse'&&pedigreeModel?.sireId&&pedigreeModel?.damId?
+  .84*ceilingRoll+.16*familyTalent:ceilingRoll;
+ const peakCeiling=clamp(Math.round(17+81*Math.pow(talent,.8)),18,99);
+ return evaluateAgeAbility({schema:AGE_ABILITY_SCHEMA,modelRevision:AGE_CURVE_REVISION,
+  role,asOf,peakAge,peakCeiling,foundation,growthExponent,declineRate,declineExponent,minimumFactor,
+  maturityClass:band.label||'ROLE_DEVELOPMENT',developmentAnomaly:
+  role==='horse'&&['PRECOCIOUS','VERY_LATE'].includes(band.label)?band.label:
+  role==='jockey'&&['EARLY_PROFESSIONAL','LATE_PROFESSIONAL'].includes(band.label)?band.label:null,
+  pedigreeMaturity:pedigreeModel?{
+   sireId:pedigreeModel.sireId,damId:pedigreeModel.damId,
+   modeledAncestryPrecocity:pedigreeModel.ancestry,
+   modeledIndividualPrecocity:pedigreeModel.individual,
+   basis:'SIMULATED_ID_BASED_BREEDING_PROPENSITY_NOT_VERIFIED_GENOTYPE'
+  }:null,
   provenance:'DETERMINISTIC_1999_TEST_ABILITY_NOT_HISTORICAL_OR_SCOUT_EVIDENCE'},age);
 }
