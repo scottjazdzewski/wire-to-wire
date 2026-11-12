@@ -35,6 +35,9 @@ function source(kind,record,ui){
    'SIMULATED 1999 TEST WORLD birthplace; not a verified historic foaling site.':
    foalRegistry?'Source country is registered; region is the breeding jurisdiction, not a verified foaling municipality.':'';
   node.dataset.ownershipGroup=owner;node.dataset.ownerId=d.ownerId||'';
+  node.dataset.breederId=d.breederId||'';
+  node.dataset.foalingFarmId=d.breedingFarmId||'';
+  node.dataset.homebred=d._testGenerated&&d.homebred===true?'true':'false';
   node.dataset.testGenerated=d._testGenerated?'true':'false';
   node.dataset.testAttributes=JSON.stringify(d._testAttrs||{});
   const career=d._testCareer||{};
@@ -47,7 +50,10 @@ function source(kind,record,ui){
     field('Date of birth',d.dateOfBirth||d.birthDate||'Not recorded')+
     field('Foaling year',year||'—')+field('Current stable',d.track||d.location||'—')+
     field('Racing status',d.racingStatus||d.status||'1999 opening')+
-    link('Owner',owner)+link('Trainer',d.trainer||'')+link('Breeder',d.breeder||'')+
+    link('Owner',owner)+link('Trainer',d.trainer||'')+
+    link('Breeder',d.breeder||d.breederName||'')+
+    (d.breedingFarm?link('Foaling farm',d.breedingFarm):'')+
+    (d._testGenerated&&d.homebred?'<div class="profileLine"><b>Breeding relationship</b><span>OWNER-BRED · TEST WORLD</span></div>':'')+
     link('Current stable',d.track||d.location||'')+
     '<div class="pedigreeNode"><span>Sire</span><strong>'+safe(d.sire||d.sireId||'—')+'</strong></div>'+
     '<div class="pedigreeNode"><span>Dam</span><strong>'+safe(d.dam||d.damId||'—')+'</strong></div>'+
