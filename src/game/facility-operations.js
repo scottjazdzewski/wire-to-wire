@@ -6,13 +6,15 @@
 import {ensure,isObject,requireString,validDate,nextDate,worldIdentity} from './contracts.js';
 export const FACILITY_SCHEMA='WTW_FACILITY_OPERATIONS_V1';
 export const FACILITY_TYPES=Object.freeze(['RACING_STABLE','FARM','STUD_FARM','BREAKING_FACILITY','TRAINING_CENTER']);
-export const FACILITY_COMMANDS=Object.freeze(['FACILITY_SEED_FUNDS','FACILITY_LIST_PROPERTY','FACILITY_ACQUIRE','FACILITY_UPGRADE','FACILITY_BOARDING_CONTRACT','FACILITY_AI_CYCLE']);
+export const FACILITY_COMMANDS=Object.freeze(['FACILITY_SEED_FUNDS','FACILITY_LIST_PROPERTY','FACILITY_ACQUIRE','FACILITY_UPGRADE','FACILITY_BOARDING_CONTRACT','FACILITY_AI_CYCLE','FACILITY_SET_STAFFING','FACILITY_SET_MAINTENANCE']);
 const IMPROVEMENTS=Object.freeze({
  STALL_BLOCK:{cost_minor:22000000,days:30,stalls:12,quality:0},
  CARE_SYSTEM:{cost_minor:8500000,days:14,stalls:0,quality:10},
  FOALING_WING:{cost_minor:28000000,days:45,stalls:6,quality:6,type:'STUD_FARM'}
 });
+const MAINTENANCE_MULTIPLIER=Object.freeze({ECONOMY:50,STANDARD:100,PREMIUM:180});
 const integer=Number.isSafeInteger;
+const operationalStalls=s=>s.staff_required>0?Math.floor(s.stalls*Math.min(s.staff_count,s.staff_required)/s.staff_required):s.stalls;
 const number=(v,lo,hi,label)=>ensure(integer(v)&&v>=lo&&v<=hi,'FACILITY_INVALID','Invalid '+label);
 const addDays=(d,n)=>{for(let i=0;i<n;i++)d=nextDate(d);return d;};
 const organization=(world,id)=>{ensure(typeof id==='string'&&!!worldIdentity(world,'organizations',id),
@@ -61,7 +63,13 @@ function acquire(state,world,p,command,emit){
   acquired_date:state.clock.date,open_date:addDays(state.clock.date,offer.opening_days),
   stalls:offer.stalls,max_stalls:offer.max_stalls,quality:offer.quality,
   land_acres:offer.land_acres,daily_upkeep_minor:offer.daily_upkeep_minor,
-  daily_boarding_minor:offer.daily_boarding_minor,upgrade:null,contracts:[]};
+  daily_boarding_minor:offer.daily_boarding_minor,upgrade:null,contracts:[],
+  source_facility_id:offer.source_facility_id||null,
+  staff_required:offer.staff_required??0,
+  staff_count:offer.mode==='PURCHASE'?(offer.staff_required??0):0,
+  staff_wage_daily_minor:offer.staff_wage_daily_minor??0,
+  maintenance_daily_minor:offer.maintenance_daily_minor??0,
+  maintenance_policy:'STANDARD'};
  emit('FACILITY_ACQUIRED',{site_id:siteId,owner_id:id,type:offer.type,
   mode:offer.mode,price_minor:offer.price_minor,opens:f.sites[siteId].open_date,
   source_kind:offer.source_kind});
@@ -89,7 +97,7 @@ function boarding(state,p,actor,emit){
  requireString(p.contract_id,'contract_id',100);
  ensure(/^FAC-CONTRACT-[A-Za-z0-9-]+$/.test(p.contract_id)&&
   !site.contracts.some(c=>c.id===p.contract_id),'FACILITY_CONTRACT','Invalid or duplicate contract');
- number(p.stalls,1,site.stalls,'contract stalls');
+ number(p.stalls,1,operationalStalls(site),'contract stalls');
  number(p.duration_days,1,365,'contract days');
  const start=p.start_date||state.clock.date;
  ensure(validDate(start)&&start>=state.clock.date&&start>=site.open_date,
@@ -97,7 +105,7 @@ function boarding(state,p,actor,emit){
  const end=addDays(start,p.duration_days-1);
  for(let day=start;day<=end;day=nextDate(day)){
   const used=site.contracts.filter(c=>c.start<=day&&c.end>=day).reduce((sum,c)=>sum+c.stalls,0);
-  ensure(used+p.stalls<=site.stalls,'FACILITY_OVERBOOKED','Stalls already committed on '+day);
+  ensure(used+p.stalls<=operationalStalls(site),'FACILITY_OVERBOOKED','Stalls already committed on '+day);
  }
  const price=p.daily_rate_minor??site.daily_boarding_minor;
  number(price,0,10000000,'boarding price');
@@ -106,6 +114,36 @@ function boarding(state,p,actor,emit){
  emit('FACILITY_BOARDING_BOOKED',{site_id:site.id,contract_id:p.contract_id,
   stalls:p.stalls,start,end,rate_minor:price,
   note:'Aggregate business contract; no imaginary horse IDs or transfers'});
+}
+function setStaffing(state,world,p,command,emit){
+ const site=ensureRoot(state).sites[p.site_id],id=organization(world,p.operation_id);
+ permit(state,command,id);
+ ensure(site&&site.owner_id===id,'FACILITY_PROPERTY','Not the owner of this property');
+ number(p.staff_count,0,500,'staffing headcount');
+ const capacity=site.staff_required>0?
+  Math.floor(site.stalls*Math.min(p.staff_count,site.staff_required)/site.staff_required):
+  site.stalls;
+ for(const c of site.contracts){
+  if(c.end<state.clock.date)continue;
+  for(let day=c.start<state.clock.date?state.clock.date:c.start;day<=c.end;day=nextDate(day)){
+   const reserved=site.contracts.filter(x=>x.start<=day&&x.end>=day)
+    .reduce((sum,x)=>sum+x.stalls,0);
+   ensure(reserved<=capacity,'FACILITY_STAFFING_CONTRACT','Staff reduction would break booked stall contracts');
+  }
+ }
+ site.staff_count=p.staff_count;
+ emit('FACILITY_STAFFING_UPDATED',{site_id:site.id,owner_id:id,
+  staff_count:site.staff_count,required:site.staff_required,
+  daily_payroll_minor:site.staff_count*site.staff_wage_daily_minor});
+}
+function setMaintenance(state,world,p,command,emit){
+ const site=ensureRoot(state).sites[p.site_id],id=organization(world,p.operation_id);
+ permit(state,command,id);
+ ensure(site&&site.owner_id===id,'FACILITY_PROPERTY','Not the owner of this property');
+ ensure(Object.hasOwn(MAINTENANCE_MULTIPLIER,p.policy),
+  'FACILITY_MAINTENANCE_POLICY','Invalid maintenance program');
+ site.maintenance_policy=p.policy;
+ emit('FACILITY_MAINTENANCE_SET',{site_id:site.id,owner_id:id,policy:p.policy});
 }
 function aiCycle(state,world,emit){
  const f=ensureRoot(state),month=state.clock.date.slice(0,7);
@@ -171,6 +209,14 @@ export function facilityAction({state,world,command,emit}){
   number(p.land_acres,0,5000,'acreage');
   number(p.opening_days,0,730,'construction days');
   number(p.quality,0,100,'initial quality');
+  if(p.staff_required!==undefined)number(p.staff_required,0,250,'required staff');
+  if(p.staff_wage_daily_minor!==undefined)number(p.staff_wage_daily_minor,0,1000000,'daily wage');
+  if(p.maintenance_daily_minor!==undefined)number(p.maintenance_daily_minor,0,100000000,'maintenance provision');
+  if(p.source_facility_id!==undefined){
+   requireString(p.source_facility_id,'source_facility_id',128);
+   ensure(!Object.values(f.offers).some(o=>o.source_facility_id===p.source_facility_id),
+    'FACILITY_SOURCE_DUPLICATE','Facility cannot have two competing property offers');
+  }
   requireString(p.source_ref,'market provenance',200);
   ensure(['SIMULATED_TEST','SOURCE_RECORDED'].includes(p.source_kind),
    'FACILITY_SOURCE','Source provenance is required');
@@ -180,7 +226,12 @@ export function facilityAction({state,world,command,emit}){
    price_minor:p.price_minor,stalls:p.stalls,max_stalls:p.max_stalls,
    daily_upkeep_minor:p.daily_upkeep_minor,daily_boarding_minor:p.daily_boarding_minor,
    land_acres:p.land_acres,opening_days:p.opening_days,quality:p.quality,
-   source_kind:p.source_kind,source_ref:p.source_ref,acquired_by:null};
+   source_kind:p.source_kind,source_ref:p.source_ref,
+   source_facility_id:p.source_facility_id||null,
+   staff_required:p.staff_required??0,
+   staff_wage_daily_minor:p.staff_wage_daily_minor??0,
+   maintenance_daily_minor:p.maintenance_daily_minor??0,
+   acquired_by:null};
   emit('FACILITY_PROPERTY_LISTED',{offer_id:p.offer_id,type:p.type,mode:p.mode,
    source_kind:p.source_kind});
  }else if(command.type==='FACILITY_ACQUIRE')acquire(state,world,p,command,emit);
@@ -189,7 +240,9 @@ export function facilityAction({state,world,command,emit}){
  else if(command.type==='FACILITY_AI_CYCLE'){
   ensure(command.actor==='system','FACILITY_PERMISSION','Only game AI executes rival cycle');
   aiCycle(state,world,emit);
- }else ensure(false,'FACILITY_COMMAND','Unknown facility command');
+ }else if(command.type==='FACILITY_SET_STAFFING')setStaffing(state,world,p,command,emit);
+ else if(command.type==='FACILITY_SET_MAINTENANCE')setMaintenance(state,world,p,command,emit);
+ else ensure(false,'FACILITY_COMMAND','Unknown facility command');
 }
 export function advanceFacilities({state,world,emit}){
  const f=ensureRoot(state),day=state.clock.date;
@@ -200,6 +253,12 @@ export function advanceFacilities({state,world,emit}){
  for(const site of Object.values(f.sites)){
   if(site.status==='UNDER_CONSTRUCTION'&&site.open_date<=day){
    site.status='ACTIVE';emit('FACILITY_OPENED',{site_id:site.id,owner_id:site.owner_id});
+   if(site.owner_id!==state.player.operation_id&&site.staff_required>0&&
+    funds(state,site.owner_id)>=90*site.daily_upkeep_minor+
+      30*site.staff_required*site.staff_wage_daily_minor){
+    setStaffing(state,world,{site_id:site.id,operation_id:site.owner_id,
+     staff_count:site.staff_required},{actor:'system'},emit);
+   }
   }
   if(site.upgrade&&site.upgrade.finishes<=day){
    const work=IMPROVEMENTS[site.upgrade.kind];
@@ -209,14 +268,26 @@ export function advanceFacilities({state,world,emit}){
    site.upgrade=null;
   }
   if(site.status!=='ACTIVE')continue;
-  if(day.slice(8)==='01')site.quality=Math.max(0,site.quality-1);
+  // Worn buildings, thin staffing and maintenance policy change care quality.
+  if(day.slice(8)==='01'){
+   const wear=site.maintenance_policy==='ECONOMY'?-3:
+    site.maintenance_policy==='PREMIUM'?1:-1;
+   const shortage=site.staff_required>site.staff_count?2:0;
+   site.quality=Math.max(0,Math.min(100,site.quality+wear-shortage));
+  }
   const revenue=site.contracts.filter(c=>c.start<=day&&c.end>=day)
    .reduce((sum,c)=>sum+c.stalls*c.rate_minor,0);
   ensure(integer(revenue),'FACILITY_MONEY','Boarding revenue overflow');
   const cost=site.daily_upkeep_minor;
-  gross+=revenue;expense+=cost;
+  const wages=(site.staff_count??0)*(site.staff_wage_daily_minor??0);
+  const maintenance=Math.round((site.maintenance_daily_minor??0)*
+   MAINTENANCE_MULTIPLIER[site.maintenance_policy||'STANDARD']/100);
+  ensure(integer(wages)&&integer(maintenance),'FACILITY_MONEY','Operating expense overflow');
+  gross+=revenue;expense+=cost+wages+maintenance;
   if(revenue)post(state,site.owner_id,revenue,'FACILITY_BOARDING_REVENUE',site.id,null);
   if(cost)post(state,site.owner_id,-cost,'FACILITY_DAILY_OPERATIONS',site.id,null);
+  if(wages)post(state,site.owner_id,-wages,'FACILITY_STAFF_PAYROLL',site.id,null);
+  if(maintenance)post(state,site.owner_id,-maintenance,'FACILITY_MAINTENANCE',site.id,null);
  }
  if(gross||expense)emit('FACILITY_OPERATING_DAY',{date:day,
   gross_minor:gross,cost_minor:expense,net_minor:gross-expense});
@@ -252,6 +323,13 @@ export function validateFacilityState(state,world){
   ensure(validDate(site.open_date)&&
    ['ACTIVE','UNDER_CONSTRUCTION'].includes(site.status)&&
    Array.isArray(site.contracts),'FACILITY_SITE','Invalid property record');
+  number(site.staff_required??0,0,250,'staff required');
+  number(site.staff_count??0,0,500,'current staff');
+  number(site.staff_wage_daily_minor??0,0,1000000,'staff wages');
+  number(site.maintenance_daily_minor??0,0,100000000,'maintenance cost');
+  ensure(site.maintenance_policy===undefined||
+   Object.hasOwn(MAINTENANCE_MULTIPLIER,site.maintenance_policy),
+   'FACILITY_MAINTENANCE_POLICY','Invalid saved maintenance plan');
   if(site.upgrade)ensure(IMPROVEMENTS[site.upgrade.kind]&&validDate(site.upgrade.finishes),
    'FACILITY_UPGRADE','Invalid ongoing development');
   for(const contract of site.contracts){
@@ -274,3 +352,51 @@ export function facilityPortfolio(state,world,operationId){
 }
 export const facilityMarket=state=>Object.values(
  state.runtime.facilities?.offers||{}).filter(o=>!o.acquired_by).map(o=>structuredClone(o));
+
+/**
+ * Facility-only cash and operating P&L. Purchases and renovations are capital
+ * cash flows, not expenses in operating profit. Values are integer cents.
+ * No fabricated sales, horse ownership, depreciation, or accrual entries.
+ */
+export function facilityFinancialReport(state,world,operationId,{from,to}={}){
+ organization(world,operationId);
+ const start=from||state.clock.date.slice(0,7)+'-01',end=to||state.clock.date;
+ ensure(validDate(start)&&validDate(end)&&start<=end&&end<=state.clock.date,
+  'FACILITY_REPORT_DATES','Report period must be within completed game days');
+ const sites=state.runtime.facilities?.sites||{};
+ const rows=state.runtime.finances.ledger.filter(e=>e.operation_id===operationId&&
+  typeof e.site_id==='string'&&e.date>=start&&e.date<=end);
+ const amounts={FACILITY_BOARDING_REVENUE:0,FACILITY_DAILY_OPERATIONS:0,
+  FACILITY_STAFF_PAYROLL:0,FACILITY_MAINTENANCE:0,FACILITY_PURCHASE:0,FACILITY_UPGRADE:0};
+ const siteMap={};
+ for(const e of rows){
+  ensure(integer(e.amount_minor)&&Object.hasOwn(amounts,e.kind),
+   'FACILITY_REPORT_LEDGER','Invalid posted facility transaction');
+  amounts[e.kind]+=e.amount_minor;
+  if(!siteMap[e.site_id]){
+   const site=sites[e.site_id];
+   siteMap[e.site_id]={site_id:e.site_id,site_name:site?.name||e.site_id,
+    type:site?.type||'UNKNOWN',revenue_minor:0,operating_cost_minor:0,
+    capital_minor:0,net_operating_minor:0};
+  }
+  const s=siteMap[e.site_id];
+  if(e.kind==='FACILITY_BOARDING_REVENUE')s.revenue_minor+=e.amount_minor;
+  else if(e.kind==='FACILITY_PURCHASE'||e.kind==='FACILITY_UPGRADE')
+   s.capital_minor-=e.amount_minor;
+  else s.operating_cost_minor-=e.amount_minor;
+  s.net_operating_minor=s.revenue_minor-s.operating_cost_minor;
+ }
+ const revenue=amounts.FACILITY_BOARDING_REVENUE;
+ const costs=-(amounts.FACILITY_DAILY_OPERATIONS+amounts.FACILITY_STAFF_PAYROLL+
+  amounts.FACILITY_MAINTENANCE);
+ const capex=-(amounts.FACILITY_PURCHASE+amounts.FACILITY_UPGRADE);
+ return {operation_id:operationId,from:start,to:end,
+  revenue_minor:revenue,operating_cost_minor:costs,
+  operating_profit_minor:revenue-costs,
+  capital_investment_minor:capex,net_cash_flow_minor:revenue-costs-capex,
+  payroll_minor:-amounts.FACILITY_STAFF_PAYROLL,
+  maintenance_minor:-amounts.FACILITY_MAINTENANCE,
+  overhead_minor:-amounts.FACILITY_DAILY_OPERATIONS,
+  cash_minor:state.runtime.finances.operation_balances_minor?.[operationId]??null,
+  sites:Object.values(siteMap).sort((a,b)=>a.site_name.localeCompare(b.site_name))};
+}
