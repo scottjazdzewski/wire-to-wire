@@ -2979,6 +2979,8 @@ root.addEventListener('focusout',event=>{
 },true);
 function paint(){
  if(!APP.ready)return;
+ // Read-only career progression: date drives the one source world, not UI stars.
+ window.__WTW_1999_UI_DATA__?.setGameDate?.(depGameDay());
  if(window.__WTW_1999_MANAGEMENT__&&!window.__WTW_1999_UI_DATA__){
   root.innerHTML='<div class="ng-manager-shell" role="status" aria-label="Loading January 1999 game world"><div class="ng-manager-stage"><p style="padding:24px">Opening January 1, 1999 racing world…</p></div></div>';
   return;
