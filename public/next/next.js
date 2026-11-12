@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableMode:'all',stableDemo:!window.__WTW_1999_MANAGEMENT__,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:!window.__WTW_1999_MANAGEMENT__,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
+const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,stableMode:'all',stableDemo:!window.__WTW_1999_MANAGEMENT__,stableSearch:'',racingMode:'meets',racingTrack:'',departmentDemo:!window.__WTW_1999_MANAGEMENT__,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -1924,6 +1924,10 @@ function stableShortDate(value){
 }
 
 function liveStableRosterView(){
+ if(APP.stableFilter==='attributes')return window.WTW1999AttributeRanking?.render({
+  horses:horseRows(),adapter:window.__WTW_1999_UI_DATA__,app:APP,
+  ownerBadge:horseOwnerBadge,safe
+ })||'<section class="ng-functional">Attribute table unavailable.</section>';
  const horses=horseRows(),races=racingRows(),game=state(),files=currentMessages(),search=APP.stableSearch.trim().toLowerCase();
  const all=horses.map(h=>{const source=liveStableHorseData(h,races.find(r=>r.name===h.name),game,files);return APP.stableDemo?liveStableDemoApply(source):source;});
  const filtered=all.filter(x=>{
@@ -1973,7 +1977,7 @@ function liveStableRosterView(){
    txt(x.record,'ng-rs-numeric'),txt(x.activity,'ng-rs-activity')];
   return '<tr class="ng-wtw-roster-row" data-search="'+safe([x.name,x.activity,x.target,x.owner,x.trainer,x.breeder,x.health[1],x.ready[1]].join(' ').toLowerCase())+'">'+datum.join('')+'</tr>';
  }).join('');
- const filters=[['all','ALL'],['vet','VET WATCH'],['ready','READY'],['targets','WITH TARGET'],['entered','ENTERED'],['unassigned','NO TARGET']]
+ const filters=[['all','ALL'],['vet','VET WATCH'],['ready','READY'],['attributes','ATTRIBUTES'],['targets','WITH TARGET'],['entered','ENTERED'],['unassigned','NO TARGET']]
  .map(([value,label])=>'<button data-ng="stable-filter" data-val="'+value+'" class="'+(APP.stableFilter===value?'on':'')+'" aria-pressed="'+(APP.stableFilter===value?'true':'false')+'">'+label+'</button>').join('');
   const legend='<div class="ng-rs-legend">'+liveStableSignal('watch','Vet watch','Caution without assumed treatment')+
   liveStableSignal('treat','Treatment','Only documented active treatment')+liveStableSignal('building','Building','Training toward a race')+
@@ -3220,6 +3224,12 @@ window.addEventListener('click',e=>{
  }
  if(key==='named-entity')return openEntityRecord(btn.dataset.name||'',btn.dataset.kind||'',btn.dataset.track?{_track:btn.dataset.track}:null);
  if(key==='stable-sort'){if(APP.stableSort===val)APP.stableSortDesc=!APP.stableSortDesc;else{APP.stableSort=val;APP.stableSortDesc=false}return paint()}
+ if(key==='stable-attribute-sort'){
+  if(APP.stableAttributeSort===val)APP.stableAttributeDesc=!APP.stableAttributeDesc;
+  else{APP.stableAttributeSort=val;APP.stableAttributeDesc=true}
+  if(!['name','age','sex','status'].includes(val))APP.stableAttributeKey=val;
+  return paint();
+ }
  if(key==='stable-filter'){APP.stableFilter=val;return paint()}
   if(key==='stable-mode'){APP.stableMode=val;return paint()}
   if(key==='stable-demo'){APP.stableDemo=!APP.stableDemo;return paint()}
@@ -3275,6 +3285,10 @@ root.addEventListener('change',event=>{
   const field=event.target;
   if(field.id==='ngNamedSavesImport')return namedSaveImport(field.files?.[0]);
   if(field?.tagName==='SELECT')endNativeSelectInteraction(false);
+  if(field.matches('select[data-ng-select="stable-attribute"]')){
+   APP.stableAttributeKey=field.value;APP.stableAttributeSort=field.value;
+   APP.stableAttributeDesc=true;return paint();
+  }
   if(field.matches('select[data-ng-select="department-track"]')){APP.racingTrack=field.value;APP.racingMode=field.value?'track':'meets';APP.departmentPageIndex=0;APP.departmentSortKey='';APP.departmentScrollLimit=160;APP.departmentScrollReset=true;if(APP.page!=='Overview')return pageTab('Overview');return paint()}
   if(field.matches('select[data-ng-select="department-sales-company"]')){APP.departmentCompany=field.value;APP.departmentPageIndex=0;APP.departmentSortKey='';APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint()}
   if(field.matches('select[data-ng-select="department-auction"]')){APP.departmentAuction=field.value;APP.departmentPageIndex=0;APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint()}
