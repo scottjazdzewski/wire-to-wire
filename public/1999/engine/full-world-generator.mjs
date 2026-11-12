@@ -7,7 +7,8 @@
  * capacity, reputation and applicable catalog attributes on demand.
  */
 import {openingWorld1999 as canon} from './canon-mini.mjs';
-import {createGeographicNameRoster,GEO_NAME_MODEL} from './geographic-names.mjs';
+import {createPersonnelNameRoster,PERSONNEL_NAME_MODEL} from './personnel-name-engine.mjs';
+import {createOrganizationNameRoster,ORGANIZATION_NAME_MODEL} from './organization-name-engine.mjs';
 import {existingPrincipals1999} from './source-principals-1999.mjs';
 import {trackProgram1999,trackMeetOpen1999,trackCardSurface1999} from '../../next/1999-track-program.mjs';
 import {applyVerifiedStakeDay1999} from '../../next/1999-verified-stakes-dates.mjs';
@@ -36,14 +37,6 @@ const EXTRA_GIVEN='Aaron|Adelaide|Adriana|Aileen|Alejandro|Alfred|Alma|Amelia|An
 const ALL_GIVEN=[...GIVEN,...EXTRA_GIVEN],ALL_FAMILY=[...FAMILY,...EXTRA_FAMILY];
 const PLACE_WORDS='Ashbrook|Briarfield|Cedar Gate|Clearwater|Copper Creek|Crescent Hill|Deep Hollow|Eastbrook|Elm Grove|Fairfield|Fernwood|Fox Chase|Glenhaven|Grandview|Green Briar|Hearthstone|Highland|Hillcrest|Iron Gate|Laurel Run|Little Creek|Long Meadow|Maple Hill|Meadowbrook|Midland|Millstone|Morning Star|North Point|Oak Ridge|Old Bridge|Overlook|Pine Hollow|Quarry Hill|Red Clay|Red Oak|Ridgefield|Riverton|Rockbridge|Rose Hill|Sagebrush|Silver Brook|South Fork|Springbank|Stonebrook|Stonegate|Summer Hill|Sun Valley|Tall Oaks|Three Pines|Timberline|Twin Oaks|Valley Gate|Westbank|Westbrook|White Fence|Wildwood|Willow Creek|Windward|Winter Hill|Woodhaven|Yellow Creek'.split('|');
 const ACTIVE_STAFF_COUNT=ROLES.reduce((n,[,count])=>n+count,0);
-function generatedPersonName(seed,ordinal,locked){const total=ALL_GIVEN.length*ALL_FAMILY.length,k=(ordinal*7919+(seed%total))%total;
- const name=ALL_GIVEN[k%ALL_GIVEN.length]+' '+ALL_FAMILY[Math.floor(k/ALL_GIVEN.length)];
- return locked.has(name.toLowerCase())?name+' '+String.fromCharCode(65+ordinal%26)+'.':name;}
-function generatedOrganizationName(seed,i,kind){const total=PLACE_WORDS.length*ALL_FAMILY.length,k=(i*307+(seed%total))%total;
- const p=PLACE_WORDS[k%PLACE_WORDS.length],f=ALL_FAMILY[Math.floor(k/PLACE_WORDS.length)];
- if(kind==='farm')return [p+' '+f+' Farm',f+' '+p+' Stud',p+' '+f+' Bloodstock',f+' '+p+' Nursery'][i%4];
- if(kind==='barn')return [p+' '+f+' Racing',f+' '+p+' Stables',p+' '+f+' Training Yard',f+' '+p+' Racing Stable'][i%4];
- return [p+' '+f+' Racing',f+' & '+p+' Partners',p+' '+f+' Bloodstock',f+' '+p+' Thoroughbreds',p+' '+f+' Syndicate',f+' '+p+' Racing Club'][i%6];}
 const hor=Object.values(attributeCatalog.horse_categories).flat();
 const horseTraitDefinitions=new Map(hor.map(d=>[d.key,d]));
 const common=attributeCatalog.person_common;
@@ -162,7 +155,16 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const protectedPersonNames=new Set(sourcePeople.map(x=>String(x.name||'').toLowerCase()));
   const generatedPrincipalCount=ownersTotal-sourceOrgs.length;
   const roleForIndex=index=>{if(index>=ACTIVE_STAFF_COUNT)return 'owner';let j=index;for(const [role,count] of ROLES){if(j<count)return role;j-=count}return 'owner';};
-  const namedPeople=createGeographicNameRoster(seed,ACTIVE_STAFF_COUNT+ownersTotal,roleForIndex,sourcePeople.map(x=>x.name));
+  const namedPeople=createPersonnelNameRoster(seed,ACTIVE_STAFF_COUNT+ownersTotal,roleForIndex,sourcePeople.map(x=>x.name));
+   // One global organization registry: no collisions between owners, racing
+   // stables, stud farms and general farms. Stable IDs are unchanged.
+   const organizationNames=createOrganizationNameRoster({
+    seed,ownerCount:ownersTotal,barnCount:trainersTotal,farmCount:900,
+    sourceOwnerNames:sourceOrgs.map(o=>o.name),
+    protectedNames:[...sourceOrgs.map(o=>o.name),...sourcePeople.map(p=>p.name)],
+    principalNames:Array.from({length:ownersTotal},(_,i)=>namedPeople[ACTIVE_STAFF_COUNT+i].name),
+    trainerNames:Array.from({length:trainersTotal},(_,i)=>canonTrainers[i]?.name||namedPeople[i].name)
+   });
  const trackCount=sourceTracks.length,canonicalNames=new Set(locked.map(x=>x.name.toLowerCase()));
  if(trackCount<20)throw Error('Insufficient U.S./Canadian racecourses for the playable 1999 calendar');
  function regionTrack(geo,id){
@@ -197,7 +199,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const id=canonSource?.id||'O-TEST-1999-'+pad(i+1),t=regionTrack(canonSource?.geographyRecords?.[0]||null,id);
   const portfolio=ownersSlots.counts[i],tier=portfolio>=200?'major':portfolio>=40?'established':portfolio>=8?'regional':'small';
   const syntheticPrincipal=namedPeople[ACTIVE_STAFF_COUNT+i].name;
-   const name=canonSource?.name||(i%11===0?syntheticPrincipal:generatedOrganizationName(seed,i,'owner'));
+   const name=canonSource?.name||organizationNames.owners[i];
    const principalOwner=canonSource?(canonSource.publicPrincipal||existingPrincipals1999[id]?.name||null):syntheticPrincipal;
    const principalOwnerId=canonSource?(canonSource.publicPrincipalId||existingPrincipals1999[id]?.personId||null):'P-TEST-OWNER-'+pad(i+1);
    const principalSource=sourcePeople.find(p=>p.id===principalOwnerId)||null;
@@ -294,7 +296,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const status=!pro.active?'RESTING':pro.covered?'COVERED_1999_TEST':'AVAILABLE_FOR_COVER';
   const foalYear=i<damCount?1971+(i%13):1979+hash(seed,id+':foal-year')%16;
   return {index:i,id,name:mixName(seed+1,i+101500),age:1999-foalYear,sex:'MARE',
-   farm:generatedOrganizationName(seed,i%900+8000,'farm'),
+   farm:organizationNames.farms[i%900],
    farmId:'F-TEST-FARM-'+pad(i%900+1),status,
    bookings:pro.covered?1:0,foals:pro.projectedFoal?1:0};
  }
@@ -648,7 +650,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
  }
  function facilityAt(index){
   if(!Number.isInteger(index)||index<0||index>=trainersTotal+900+trackCount)throw Error('Facility index');
-  if(index<trainersTotal){const tr=trainerAt(index);return {id:tr.barnId,name:generatedOrganizationName(seed,index+3308,'barn'),type:'RACE_BARN',
+  if(index<trainersTotal){const tr=trainerAt(index);return {id:tr.barnId,name:organizationNames.barns[index],type:'RACE_BARN',facilityClass:'RACING_STABLE',nameModel:ORGANIZATION_NAME_MODEL,
    location:tr.location,trainerId:tr.id,trackId:tr.homeTrackId,capacity:tr.barnCapacity,occupied:tr.generatedRunners,
    landAcres:0,equipmentCondition:round(.4+unit(seed,tr.id+'eq')*.58),staffingRequirement:Math.max(1,Math.ceil(tr.barnCapacity/6)),
     attributes:{horse_care:round(.3+unit(seed,tr.id+':care')*.69),training_environment:round(.3+unit(seed,tr.id+':training')*.69),biosecurity:round(.3+unit(seed,tr.id+':bio')*.69),facility_condition:round(.4+unit(seed,tr.id+'eq')*.58)},
@@ -657,7 +659,8 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    const hub=NORTH_AMERICAN_FOALING_HUBS[hash(seed,id+':breeding-hub')%NORTH_AMERICAN_FOALING_HUBS.length];
    const locality={city:hub[0],state:hub[1],country:hub[2]};
    const t=regionTrack(locality,id);
-   return {id,name:generatedOrganizationName(seed,i+8000,'farm'),
+   return {id,name:organizationNames.farms[i],nameModel:ORGANIZATION_NAME_MODEL,
+   facilityClass:organizationNames.farmKinds[i],
    type:'BREEDING_FARM',location:locality,trackId:t.id,capacity:80+hash(seed,id+'cap')%350,occupied:0,
    landAcres:80+hash(seed,id+'acres')%1100,foalingBarns:2+hash(seed,id+'foal')%10,
     equipmentCondition:round(.4+unit(seed,id+':eq')*.59),staffingRequirement:Math.ceil((80+hash(seed,id+'cap')%350)/25),
@@ -897,7 +900,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
  }
   return {schema:FULL_WORLD_SCHEMA,seed,mode,startDate:WTW_TEST_START_DATE,currentDate:WTW_TEST_START_DATE,
   canonProtected:anchored,identityLayer:'CANON_LOCKS_PLUS_REPLACEABLE_TEST_IDENTITIES',attributesSchema:attributeCatalog.schema,
-   nameModel:GEO_NAME_MODEL,
+   nameModel:PERSONNEL_NAME_MODEL,organizationNameModel:ORGANIZATION_NAME_MODEL,
   counts:{horses:HORSE_POPULATION,worldHorses:WORLD_HORSE_POPULATION,
    populationAdditional:WORLD_EXTRA_COUNT,
    populationGroups:{registered:HORSE_POPULATION,broodmares:MARE_BREEDING_STOCK,
