@@ -2261,12 +2261,12 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 }
 
 /* Track identity logos on an inset presentation plate; preserve transparent pixels and full artwork. */
-.ng-route-profile .ng-profile-track .ng-profile-source-photo{position:relative;isolation:isolate;width:214px!important;height:108px!important;flex:0 0 214px!important;overflow:hidden!important;border:1px solid #a48b56!important;border-top-color:#dfca97!important;border-radius:7px!important;background:radial-gradient(ellipse at 50% 44%,rgba(161,143,100,.25) 0%,rgba(74,95,77,.4) 38%,rgba(15,24,25,.95) 82%),linear-gradient(135deg,#263e33,#141d21)!important;box-shadow:inset 0 1px 0 rgba(255,238,187,.31),inset 0 -10px 18px rgba(0,0,0,.31),0 3px 10px rgba(0,0,0,.41),0 0 0 2px rgba(171,141,75,.09)!important}
+.ng-route-profile .ng-profile-track .ng-profile-source-photo{position:relative;isolation:isolate;width:214px!important;height:108px!important;flex:0 0 214px!important;overflow:hidden!important;border:2px solid #a68a50!important;border-top-color:#efe1b3!important;border-radius:7px!important;background:radial-gradient(ellipse at 50% 26%,#fffdf6 0%,#eee4cd 52%,#d0c19f 100%)!important;box-shadow:inset 0 0 0 1px rgba(255,255,247,.8),inset 0 -7px 14px rgba(75,56,21,.14),0 4px 13px rgba(0,0,0,.5),0 0 0 2px rgba(191,159,87,.14)!important}
 /* Restrained depth only on racecourse identities: retains current geometry. */
 .ng-route-profile .ng-profile-track .ng-profile-intro{background:radial-gradient(ellipse at 77% 42%,rgba(148,124,76,.16),transparent 52%),linear-gradient(105deg,#233631 0%,#252d2c 39%,#30272a 68%,#161f23 100%)!important;border:1px solid #675d49!important;border-top:2px solid #ad955f!important;box-shadow:inset 0 1px 0 rgba(255,236,174,.14),inset 0 -10px 24px rgba(0,0,0,.22),0 5px 16px rgba(0,0,0,.36)!important}
-.ng-route-profile .ng-profile-track .ng-profile-source-photo::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background:linear-gradient(122deg,rgba(255,235,177,.14),transparent 29%,transparent 75%,rgba(0,0,0,.16))}
+.ng-route-profile .ng-profile-track .ng-profile-source-photo::before{content:'';position:absolute;inset:3px;pointer-events:none;z-index:0;border:1px solid rgba(99,81,43,.17);border-radius:3px;background:linear-gradient(125deg,rgba(255,255,255,.36),transparent 40%,rgba(107,86,48,.07) 100%)}
 
-.ng-route-profile .ng-profile-track .ng-profile-source-photo img{position:relative;z-index:1;object-fit:contain!important;object-position:center center!important;padding:2px 4px!important;box-sizing:border-box;transform:scale(1.08);transform-origin:center center;filter:drop-shadow(0 3px 4px rgba(0,0,0,.74)) drop-shadow(0 0 6px rgba(244,218,164,.27))}
+.ng-route-profile .ng-profile-track .ng-profile-source-photo img{position:relative;z-index:1;object-fit:contain!important;object-position:center center!important;padding:0!important;box-sizing:border-box;transform:scale(1.18);transform-origin:center center;filter:drop-shadow(0 1px 1px rgba(15,27,23,.52)) drop-shadow(0 2px 2px rgba(30,26,18,.22))}
 .ng-track-workspace{display:grid!important;grid-template-columns:minmax(0,1.23fr) minmax(285px,.77fr)!important;gap:8px!important;width:100%;height:100%;min-height:0;overflow:hidden}
 .ng-track-workspace>.ng-tier1-card,.ng-track-info-stack>.ng-tier1-card{min-height:0!important}
 .ng-track-stakes .ng-stakes-table{flex:1 1 auto;min-height:0;overflow:hidden;padding:2px 5px 4px}
@@ -2846,3 +2846,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 .ng-world-extra-attributes p small{font-size:8px;color:#a3bba9}
 .ng-world-extra-attributes p strong{font-size:10px;color:#dfe6da;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:980px){.ng-world-extra-attributes>div{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Stable first paint while the canonical indexes are read. */
+#wtwNextgen .ng-boot-shell{display:flex;flex:1;min-height:100dvh;align-items:center;justify-content:center;flex-direction:column;gap:8px;background:#0b1014;color:#d5c493;font:600 17px Inter,"Segoe UI",sans-serif;letter-spacing:.13em}
+#wtwNextgen .ng-boot-shell span{font:400 11px Inter,"Segoe UI",sans-serif;letter-spacing:.06em;color:#8caaa0}
