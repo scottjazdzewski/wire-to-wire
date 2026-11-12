@@ -43,6 +43,21 @@ test('source horses and owner identities drive existing stable, not 2014 demo',(
  assert.ok(ui.sourceOwnerName);
  assert.match(js,/stableDemo:!window.__WTW_1999_MANAGEMENT__/);
 });
+test('canonical horse and person profiles resolve modeled skills strictly by existing source ID',()=>{
+ const horse=readLocal1999World('/api/1999/horses?offset=0&limit=1').items[0];
+ const person=readLocal1999World('/api/1999/people?offset=0&limit=1').items[0];
+ const horseModel=ui.sourceHorseModel(horse.id),personModel=ui.sourcePersonModel(person.id);
+ assert.equal(horseModel.id,horse.id);
+ assert.equal(personModel.id,person.id);
+ assert.equal(Object.keys(horseModel.attributes).length,53,'Full horse catalog projected, not an empty source preview');
+ assert.ok(Object.keys(personModel.attributes).length>=attributeCatalog.person_common.length,
+  'Person profile has all common skills plus its professional role');
+ assert.equal(ui.sourceHorseAbility(horse.id).current,horseModel.ability.current);
+ assert.strictEqual(ui.sourceHorseModel(horse.id),horseModel,'Source profile uses a stable read-only model lookup');
+ assert.strictEqual(ui.sourcePersonModel(person.id),personModel);
+ assert.equal(ui.sourceHorseModel('H-UNKNOWN-777'),null,'Never match an unregistered horse by name');
+ assert.equal(ui.sourcePersonModel('P-UNKNOWN-777'),null,'Never invent a professional identity');
+});
 test('all department rosters have usable test records on original screens',()=>{
  const standing=ui.departmentRows('Breeding','Stallions');
  assert.equal(standing.filter(x=>x._canonId&&x.status.includes('SOURCE')).length,31,'All source stallions remain identifiable');
