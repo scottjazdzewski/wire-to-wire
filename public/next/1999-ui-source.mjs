@@ -66,8 +66,14 @@ function assignTraining(horseId,plan){
  }
  return horseTrainingSnapshot(updated,h);
 }
+const gameWorldProfile=window.__WTW_1999_MANAGEMENT__?.worldProfile||
+ window.WTW1999CommercialConfig?.current?.()||
+ {seed:19990101,mode:'CANON_ANCHORED_TEST',population:325000};
+const worldQuery='seed='+encodeURIComponent(gameWorldProfile.seed)+
+ '&mode='+encodeURIComponent(gameWorldProfile.mode)+
+ '&population='+encodeURIComponent(gameWorldProfile.population);
 const q=(route,extras='')=>readLocal1999World(route+(route.includes('?')?'&':'?')+
- 'seed=19990101&mode=CANON_ANCHORED_TEST'+(viewDate==='1999-01-01'?'':'&date='+viewDate)+(extras?'&'+extras:''));
+ worldQuery+(viewDate==='1999-01-01'?'':'&date='+viewDate)+(extras?'&'+extras:''));
 const allPages=(route,total)=>{const rows=[];for(let offset=0;offset<total;offset+=100){const page=q(route,'offset='+offset+'&limit=100');rows.push(...(page.items||[]));}return rows;};
 const srcHorses=allPages('/api/1999/horses',267);
 const sourceHorseOffset=new Map(srcHorses.map((h,index)=>[h.id,index]));
@@ -473,7 +479,7 @@ function getWorldBrowseWorker(){
  if(worldBrowseWorkerUnavailable||typeof Worker==='undefined')return null;
  if(worldBrowseWorker)return worldBrowseWorker;
  try{
-  const worker=new Worker('/next/1999-world-index.worker.mjs?rev=wtw1999-20261112-r11',
+  const worker=new Worker('/next/1999-world-index.worker.mjs?rev=wtw1999-20261112-r14&'+worldQuery,
    {type:'module',name:'wtw1999-world-registry'});
   worker.onmessage=event=>{
    const message=event.data||{};
@@ -637,14 +643,8 @@ function worldHorsePage(offset=0,limit=20,filter=''){
  const start=Math.max(0,Math.min((worldCounts.worldHorses||worldCounts.horses)-1,Number(offset)||0));
  const count=Math.max(1,Math.min(100,Number(limit)||20,
    (worldCounts.worldHorses||worldCounts.horses)-start));
- const data=start+count<=worldCounts.horses?
-  q('/api/1999/sim/horses','offset='+start+'&limit='+count):
-  {total:worldCounts.worldHorses,items:Array.from({length:count},(_,n)=>{
-   const i=start+n;
-   return i<worldCounts.horses?
-    q('/api/1999/sim/horses','offset='+i+'&limit=1').items?.[0]:
-    q('/api/1999/sim/world-horse-profile','index='+i).horse;
-  })};
+ const data={total:worldCounts.worldHorses,items:Array.from({length:count},(_,n)=>
+  q('/api/1999/sim/world-horse-profile','index='+(start+n)).horse)};
  const sourceIds=new Set(srcHorses.map(h=>h.id));
  const rows=(data.items||[]).map((h,rowOffset)=>{
   const source=sourceIds.has(h.id);
