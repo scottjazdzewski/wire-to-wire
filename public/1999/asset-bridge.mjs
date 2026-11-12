@@ -13,13 +13,17 @@ const badgeNames=Object.freeze({
 });
 let photoIndex={},logoIndex={},loaded;
 const validAsset=p=>typeof p==='string'&&/^\/assets\/[a-zA-Z0-9_/.\-]+\.(?:webp|png|jpg|jpeg|svg)$/.test(p)?p:'';
+// Optional artwork must NEVER prevent the source world from opening.
+async function readOptionalIndex(url){
+ try{
+  const response=await fetch(url,{credentials:'same-origin'});
+  return response?.ok?await response.json():{};
+ }catch{return {}}
+}
 export function loadApprovedAssets(){
- if(!loaded)loaded=Promise.all([
-  fetch(PHOTO_INDEX,{credentials:'same-origin'}).then(r=>r.ok?r.json():{}).catch(()=>({})),
-  fetch(LOGO_INDEX,{credentials:'same-origin'}).then(r=>r.ok?r.json():{}).catch(()=>({}))
- ]).then(([photos,logos])=>{
-  photoIndex=photos?.entities||{};logoIndex=logos?.organizations||{};
- }).catch(()=>{});
+ if(!loaded)loaded=Promise.all([readOptionalIndex(PHOTO_INDEX),readOptionalIndex(LOGO_INDEX)])
+  .then(([photos,logos])=>{photoIndex=photos?.entities||{};logoIndex=logos?.organizations||{};})
+  .catch(()=>{photoIndex={};logoIndex={};});
  return loaded;
 }
 function recordKind(record,tab){
