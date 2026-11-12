@@ -2985,12 +2985,14 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  #wtwNextgen .ng-save-slot-actions{justify-content:flex-start}
 }
 
-/* WTW 1999: personnel roster scrolls continuously; no previous/next paging. */
-#wtwNextgen .ng-dept-roster[data-department="Personnel"] .ng-rs-scroll{
+/* WTW 1999: all roster views — stable, racing, sales, facilities, breeding,
+   tracks, finance, personnel and World — have the same internal scroll.
+   The column header remains visible and sortable, without pager controls. */
+#wtwNextgen .ng-stable-roster-v2 .ng-rs-scroll{
  overflow-y:auto!important;overflow-x:auto!important;overscroll-behavior:contain!important;
  scrollbar-width:thin;scrollbar-color:#718b76 #172125;
 }
-#wtwNextgen .ng-dept-roster[data-department="Personnel"] .ng-rs-table thead{
+#wtwNextgen .ng-stable-roster-v2 .ng-rs-table thead{
  position:sticky;top:0;z-index:3;background:#25332f;
 }
 #wtwNextgen .ng-dept-roster[data-department="Personnel"] .ng-dpt-pager{
