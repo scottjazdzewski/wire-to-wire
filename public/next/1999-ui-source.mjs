@@ -450,6 +450,63 @@ function breedingMarePage(offset=0,limit=100,filter=''){
 }
 // Build one lightweight global index in small browser tasks. Never scan all
 // 87,500 full race files or block user interaction with a giant synchronous load.
+
+/* Keep 325k global index and sort state outside the game-render thread.
+ * Worker replies contain one visible page, never the complete population.
+ * The original incremental browser index remains as compatibility fallback. */
+let worldBrowseWorker=null,worldBrowseWorkerUnavailable=false;
+let worldBrowseRequest=null,worldBrowseResponse=null,worldBrowseSerial=0;
+let worldBrowseProgress=0,worldBrowseProgressTotal=worldCounts.worldHorses||worldCounts.horses;
+function fallbackWorldBrowse(){
+ worldBrowseWorkerUnavailable=true;
+ try{worldBrowseWorker?.terminate()}catch{}
+ worldBrowseWorker=null;worldBrowseRequest=null;worldBrowseResponse=null;
+ window.__WTW_NEXT__?.paint?.();
+}
+function getWorldBrowseWorker(){
+ if(worldBrowseWorkerUnavailable||typeof Worker==='undefined')return null;
+ if(worldBrowseWorker)return worldBrowseWorker;
+ try{
+  const worker=new Worker('/next/1999-world-index.worker.mjs?rev=wtw1999-20261112-r11',
+   {type:'module',name:'wtw1999-world-registry'});
+  worker.onmessage=event=>{
+   const message=event.data||{};
+   if(message.type==='progress'||message.type==='index-ready'){
+    worldBrowseProgress=message.loaded||0;
+    worldBrowseProgressTotal=message.total||worldBrowseProgressTotal;
+    window.__WTW_NEXT__?.paint?.();
+   }
+   if(message.type==='result'&&message.requestId===worldBrowseRequest?.id){
+    worldBrowseResponse={key:worldBrowseRequest.key,data:message.result};
+    window.__WTW_NEXT__?.paint?.();
+   }
+   if(message.type==='error'){
+    // Real error is never presented as a false empty population.
+    console.warn('World roster worker fallback:',message.message||'unavailable');
+    fallbackWorldBrowse();
+   }
+  };
+  worker.onerror=()=>fallbackWorldBrowse();
+  worldBrowseWorker=worker;
+  return worker;
+ }catch(error){worldBrowseWorkerUnavailable=true;return null}
+}
+function workerWorldBrowse(query){
+ const worker=getWorldBrowseWorker();
+ if(!worker)return null;
+ const key=JSON.stringify(query);
+ if(worldBrowseResponse?.key===key)return worldBrowseResponse.data;
+ if(worldBrowseRequest?.key!==key){
+  const id=++worldBrowseSerial;
+  worldBrowseRequest={id,key};worldBrowseResponse=null;
+  try{worker.postMessage({type:'browse',requestId:id,query})}
+  catch{fallbackWorldBrowse();return null}
+ }
+ return {total:worldCounts.worldHorses||worldCounts.horses,indexing:true,items:[],
+  progress:worldBrowseProgress,loaded:worldBrowseProgress,
+  worldWorker:true,progressTotal:worldBrowseProgressTotal};
+}
+
 const globalHorseSummaries=[];
 let globalHorseComplete=false,globalHorseStarted=false,globalHorseProgress=0;
 let globalHorseCacheKey='',globalHorseCache=[];
@@ -458,11 +515,11 @@ const globalHorseTraitScores=new Map();
 function scanWorldHorseTrait(key){
  const job=globalHorseTraitScores.get(key);
  if(!job||job.complete)return;
- const page=q('/api/1999/sim/horse-attribute',
+ const page=q('/api/1999/sim/world-horse-attribute',
   'key='+encodeURIComponent(key)+'&offset='+job.progress+'&limit=100');
  for(const entry of page.items||[])job.scores[entry.index]=entry.value;
  job.progress+=(page.items||[]).length;
- if(!page.items?.length||job.progress>=worldCounts.horses){
+ if(!page.items?.length||job.progress>=(worldCounts.worldHorses||(worldCounts.worldHorses||worldCounts.horses))){
   job.complete=true;globalHorseCacheKey='';
   return window.__WTW_NEXT__?.paint?.();
  }
@@ -475,7 +532,7 @@ function worldTraitProjection(key){
  if(!job){
   // Project only the selected trait, not 53 attributes for each horse.
   if(globalHorseTraitScores.size>=4)globalHorseTraitScores.delete(globalHorseTraitScores.keys().next().value);
-  job={progress:0,complete:false,scores:new Array(worldCounts.horses)};
+  job={progress:0,complete:false,scores:new Array(worldCounts.worldHorses||(worldCounts.worldHorses||worldCounts.horses))};
   globalHorseTraitScores.set(key,job);
   setTimeout(()=>scanWorldHorseTrait(key),0);
  }
@@ -483,11 +540,11 @@ function worldTraitProjection(key){
 }
 function scanGlobalHorseIndex(){
  const offset=globalHorseProgress;
- const page=q('/api/1999/sim/horse-directory','offset='+offset+'&limit=100');
+ const page=q('/api/1999/sim/world-horse-directory','offset='+offset+'&limit=100');
  if(!page.items?.length){globalHorseComplete=true;return window.__WTW_NEXT__?.paint?.()}
  globalHorseSummaries.push(...page.items);
  globalHorseProgress=globalHorseSummaries.length;
- if(globalHorseProgress>=worldCounts.horses){
+ if(globalHorseProgress>=(worldCounts.worldHorses||(worldCounts.worldHorses||worldCounts.horses))){
   globalHorseComplete=true;
   window.__WTW_NEXT__?.paint?.();
   return;
@@ -496,15 +553,17 @@ function scanGlobalHorseIndex(){
  setTimeout(scanGlobalHorseIndex,0);
 }
 function worldHorseBrowse({offset=0,limit=160,search='',sort='name',desc=false,filters={},attributeKey=''}={}){
+ const worker=workerWorldBrowse({offset,limit,search,sort,desc,filters,attributeKey});
+ if(worker)return worker;
  if(!globalHorseStarted){
   globalHorseStarted=true;
   setTimeout(scanGlobalHorseIndex,0);
  }
- if(!globalHorseComplete)return {total:worldCounts.horses,loaded:globalHorseProgress,
+ if(!globalHorseComplete)return {total:(worldCounts.worldHorses||worldCounts.horses),loaded:globalHorseProgress,
   indexing:true,items:[],progress:globalHorseProgress};
  const selectedTrait=knownWorldHorseTraits.has(attributeKey)?attributeKey:'';
  const attributeJob=selectedTrait?worldTraitProjection(selectedTrait):null;
- if(attributeJob&&!attributeJob.complete)return {total:worldCounts.horses,
+ if(attributeJob&&!attributeJob.complete)return {total:(worldCounts.worldHorses||worldCounts.horses),
   indexing:true,attributeIndexing:true,items:[],progress:attributeJob.progress};
  if(!universeLabels){
   const owners=get('world-owners','/api/1999/sim/owners',worldCounts.owners);
@@ -549,7 +608,7 @@ function worldHorseBrowse({offset=0,limit=160,search='',sort='name',desc=false,f
   globalHorseCacheKey=key;
  }
  const total=globalHorseCache.length;
- const items=globalHorseCache.slice(Math.max(0,offset),Math.max(0,offset)+Math.min(worldCounts.horses,Math.max(1,limit)))
+ const items=globalHorseCache.slice(Math.max(0,offset),Math.max(0,offset)+Math.min((worldCounts.worldHorses||worldCounts.horses),Math.max(1,limit)))
   .map(h=>({_directoryIndex:h.index,_kind:'horse',_name:h.name,_id:h.id,
    _canonId:h.canonical?h.id:'',_worldKey:h.canonical?'horse:'+h.id:undefined,
    _testGenerated:!h.canonical,name:h.name,age:String(h.age),sex:h.sex,
@@ -557,7 +616,7 @@ function worldHorseBrowse({offset=0,limit=160,search='',sort='name',desc=false,f
    homebred:h.homebred?'YES':'NO',trainer:h.trainer,track:h.track,
    status:String(h.status).replaceAll('_',' '),ca:String(h.ca??''),pa:String(h.pa??''),
    ...(selectedTrait?{['attr:'+selectedTrait]:h['attr:'+selectedTrait]}:{})}));
- return {total,loaded:worldCounts.horses,indexing:false,items,progress:globalHorseProgress};
+ return {total,loaded:(worldCounts.worldHorses||worldCounts.horses),indexing:false,items,progress:globalHorseProgress};
 }
 const breedingMareByModelIndex=index=>{
  const sourceCount=get('mares','/api/1999/broodmare-boarding',2036).length;
