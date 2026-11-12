@@ -41,6 +41,27 @@ export function readLocal1999World(raw){
  }
  if(p==='/api/1999/sim/horses')return pager(q,w.counts.horses,i=>atDate(w.horseAt(i)),'SOURCE_267_PLUS_TEST_GENERATED');
  if(p==='/api/1999/sim/horse-directory')return pager(q,w.counts.horses,i=>w.horseDirectoryAt(i),'FULL_87500_INDEX_SOURCE_AND_TEST');
+ // Complete 325k registry, disjoint from the existing 87.5k racehorse ID index.
+ // All endpoints page at <=100 and never serialize the whole population.
+ if(p==='/api/1999/sim/world-horse-directory')
+  return pager(q,w.counts.worldHorses,i=>w.worldHorseDirectoryAt(i),
+   '325K_DISTINCT_WORLD_HORSE_INDEX_SOURCE_AND_TEST');
+ if(p==='/api/1999/sim/world-horse-attribute'){
+  const key=String(q.get('key')||'');
+  if(!w.attributeCatalog.horse_categories||!Object.values(w.attributeCatalog.horse_categories)
+   .flat().some(d=>d.key===key))throw Error('Unknown world horse attribute');
+  return pager(q,w.counts.worldHorses,i=>({index:i,value:w.worldHorseAttributeAt(i,key)}),
+   '325K_WORLD_TRAIT_PROJECTION_TEST_ONLY');
+ }
+ if(p==='/api/1999/sim/world-horse-profile'){
+  const id=String(q.get('id')||'');
+  const index=id?w.worldIndexByHorseId(id):
+   int(q.get('index'),-1,w.counts.worldHorses-1);
+  if(index<0||index>=w.counts.worldHorses)throw Error('Unknown world horse identity');
+  return {index,horse:w.worldHorseAt(index),
+   source:'1999_WORLD_HORSE_PROFILE_BY_STABLE_ID_OR_INDEX'};
+ }
+
  if(p==='/api/1999/sim/horse-attribute'){
   const key=String(q.get('key')||'');
   if(!w.attributeCatalog.horse_categories||!Object.values(w.attributeCatalog.horse_categories)
