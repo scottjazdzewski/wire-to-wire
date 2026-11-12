@@ -453,6 +453,34 @@ function breedingMarePage(offset=0,limit=100,filter=''){
 const globalHorseSummaries=[];
 let globalHorseComplete=false,globalHorseStarted=false,globalHorseProgress=0;
 let globalHorseCacheKey='',globalHorseCache=[];
+const knownWorldHorseTraits=new Set(Object.values(attributeCatalog.horse_categories).flat().map(d=>d.key));
+const globalHorseTraitScores=new Map();
+function scanWorldHorseTrait(key){
+ const job=globalHorseTraitScores.get(key);
+ if(!job||job.complete)return;
+ const page=q('/api/1999/sim/horse-attribute',
+  'key='+encodeURIComponent(key)+'&offset='+job.progress+'&limit=100');
+ for(const entry of page.items||[])job.scores[entry.index]=entry.value;
+ job.progress+=(page.items||[]).length;
+ if(!page.items?.length||job.progress>=worldCounts.horses){
+  job.complete=true;globalHorseCacheKey='';
+  return window.__WTW_NEXT__?.paint?.();
+ }
+ if(job.progress%5000===0)window.__WTW_NEXT__?.paint?.();
+ setTimeout(()=>scanWorldHorseTrait(key),0);
+}
+function worldTraitProjection(key){
+ if(!knownWorldHorseTraits.has(key))return null;
+ let job=globalHorseTraitScores.get(key);
+ if(!job){
+  // Project only the selected trait, not 53 attributes for each horse.
+  if(globalHorseTraitScores.size>=4)globalHorseTraitScores.delete(globalHorseTraitScores.keys().next().value);
+  job={progress:0,complete:false,scores:new Array(worldCounts.horses)};
+  globalHorseTraitScores.set(key,job);
+  setTimeout(()=>scanWorldHorseTrait(key),0);
+ }
+ return job;
+}
 function scanGlobalHorseIndex(){
  const offset=globalHorseProgress;
  const page=q('/api/1999/sim/horse-directory','offset='+offset+'&limit=100');
@@ -467,13 +495,17 @@ function scanGlobalHorseIndex(){
  if(globalHorseProgress%5000===0)window.__WTW_NEXT__?.paint?.();
  setTimeout(scanGlobalHorseIndex,0);
 }
-function worldHorseBrowse({offset=0,limit=160,search='',sort='name',desc=false,filters={}}={}){
+function worldHorseBrowse({offset=0,limit=160,search='',sort='name',desc=false,filters={},attributeKey=''}={}){
  if(!globalHorseStarted){
   globalHorseStarted=true;
   setTimeout(scanGlobalHorseIndex,0);
  }
  if(!globalHorseComplete)return {total:worldCounts.horses,loaded:globalHorseProgress,
   indexing:true,items:[],progress:globalHorseProgress};
+ const selectedTrait=knownWorldHorseTraits.has(attributeKey)?attributeKey:'';
+ const attributeJob=selectedTrait?worldTraitProjection(selectedTrait):null;
+ if(attributeJob&&!attributeJob.complete)return {total:worldCounts.horses,
+  indexing:true,attributeIndexing:true,items:[],progress:attributeJob.progress};
  if(!universeLabels){
   const owners=get('world-owners','/api/1999/sim/owners',worldCounts.owners);
   const trainers=get('world-trainers','/api/1999/sim/trainers',worldCounts.trainers);
@@ -484,10 +516,11 @@ function worldHorseBrowse({offset=0,limit=160,search='',sort='name',desc=false,f
  const text=v=>String(v??'').replaceAll('_',' ').toLowerCase().trim();
  const ageMin=filters.ageMin===''||filters.ageMin==null?null:Number(filters.ageMin);
  const ageMax=filters.ageMax===''||filters.ageMax==null?null:Number(filters.ageMax);
- const key=JSON.stringify([search,sort,desc,filters]);
+ const key=JSON.stringify([search,sort,desc,filters,selectedTrait]);
  if(key!==globalHorseCacheKey){
   const needle=text(search),filterValue=text(filters.query);
   globalHorseCache=globalHorseSummaries.map(h=>({
+   ...(selectedTrait?{['attr:'+selectedTrait]:attributeJob.scores[h.index]}:{}),
    ...h,owner:universeLabels.owners.get(h.ownerId)||ownerNames.get(h.ownerId)||h.ownerId||'',
    breeder:universeLabels.owners.get(h.breederId)||ownerNames.get(h.breederId)||h.breederId||'',
    trainer:universeLabels.trainers.get(h.trainerId)||peopleNames.get(h.trainerId)||h.trainerId||'',
@@ -502,7 +535,8 @@ function worldHorseBrowse({offset=0,limit=160,search='',sort='name',desc=false,f
    if(filters.field&&filters.query&&!text(h[filters.field]).includes(filterValue))return false;
    return true;
   });
-  const sortKey=['name','age','sex','sire','dam','owner','breeder','homebred','trainer','track','status','ca','pa'].includes(sort)?sort:'name';
+  const sortKey=sort==='attr:'+selectedTrait&&selectedTrait?sort:
+   ['name','age','sex','sire','dam','owner','breeder','homebred','trainer','track','status','ca','pa'].includes(sort)?sort:'name';
   const sign=desc?-1:1;
   globalHorseCache.sort((a,b)=>{
    const av=a[sortKey],bv=b[sortKey];
@@ -521,7 +555,8 @@ function worldHorseBrowse({offset=0,limit=160,search='',sort='name',desc=false,f
    _testGenerated:!h.canonical,name:h.name,age:String(h.age),sex:h.sex,
    sire:h.sire,dam:h.dam,owner:h.owner,breeder:h.breeder,
    homebred:h.homebred?'YES':'NO',trainer:h.trainer,track:h.track,
-   status:String(h.status).replaceAll('_',' '),ca:String(h.ca??''),pa:String(h.pa??'')}));
+   status:String(h.status).replaceAll('_',' '),ca:String(h.ca??''),pa:String(h.pa??''),
+   ...(selectedTrait?{['attr:'+selectedTrait]:h['attr:'+selectedTrait]}:{})}));
  return {total,loaded:worldCounts.horses,indexing:false,items,progress:globalHorseProgress};
 }
 const breedingMareByModelIndex=index=>{
