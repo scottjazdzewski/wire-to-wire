@@ -39,3 +39,27 @@ test('a single cache-fresh approved UI shell loads the race and profile adapters
  assert.match(site,/1999-race-conditions\.js\?rev=/);
  assert.match(site,/next\.js\?rev=/);
 });
+
+test('1999 track registry and active calendars enforce the U.S./Canada boundary',()=>{
+ const generator=read('public/1999/engine/full-world-generator.mjs');
+ const api=read('public/1999/engine/local-api.mjs');
+ assert.match(generator,/const sourceTracks=canon\.tracks\.filter\(domesticTrack\)/);
+ assert.match(generator,/nonPlayableInternationalTracks:canon\.tracks\.length-trackCount/);
+ assert.match(api,/canon\.tracks\.filter\(t=>activeIds\.has\(t\.id\)\)/);
+ assert.match(api,/w\.sourceStakes/);
+ assert.match(ui,/\.filter\(t=>availableIds\.has\(t\.id\)\|\|availableNames\.has\(t\.name\)\)/);
+ assert.match(source,/activeTrackNames\.has\(r\.trackName\)/);
+});
+
+test('breeder IDs, homebred identity and foaling farm survive the 1999 UI adapters',()=>{
+ const generator=read('public/1999/engine/full-world-generator.mjs');
+ assert.match(generator,/breederId:breederOwner\.id,breeder:breederOwner\.name/);
+ assert.match(generator,/homebred,breederRelationship:homebred\?'OWNER_BRED':'OTHER_BREEDER'/);
+ assert.match(generator,/foalingFarm\.location\.city/);
+ assert.match(source,/breederId:h\.breederId/);
+ assert.match(source,/foalingFarmProfile/);
+ assert.match(profiles,/node\.dataset\.breederId/);
+ assert.match(profiles,/Breeding relationship/);
+ assert.match(ui,/if\(key==='1999-breeder'\)/);
+ assert.match(ui,/if\(key==='1999-foaling-farm'\)/);
+});
