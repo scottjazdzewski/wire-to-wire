@@ -201,6 +201,7 @@ function openMenu(section){
  // The January 1999 Racing office must never depend on the legacy Office route,
  // which can reopen demo state or fail while the real world is loaded.
  if(section==='Racing')return openCustomView('Racing — Overview','Racing','Overview');
+ if(section==='Sales')return openCustomView('Sales — Overview','Sales','Overview');
  APP.section=section;APP.page='Overview';APP.custom='';
  if(actions[section])bridgeNode(originalAct(actions[section]));
  else{openCustomView(section,section,'Overview')}
@@ -218,7 +219,7 @@ function pageTab(name){if(APP.section==='History'){const pages={'Race Results':'
   APP.departmentPageIndex=0;APP.departmentSearch='';APP.departmentSortKey='';
   APP.departmentScrollLimit=160;APP.departmentScrollReset=true;
   if(s==='Racing')return openCustomView('Racing — '+name,'Racing',name);
-  if(s==='Sales'&&name==='Overview'){APP.custom='';return bridgeNode(originalAct('Sales'))}
+  if(s==='Sales'&&name==='Overview')return openCustomView('Sales — Overview','Sales','Overview');
   return openCustomView(s+' — '+name,s,name);
  }
  if(s==='Stable'&&(name==='Overview'||name==='Horses'))
@@ -386,11 +387,11 @@ function managerSidebar(){
    ['Finances','menu','Finances','grid']
   ]],
   ['RACING WORLD',[
-   ['Tracks','menu','Tracks','calendar'],['World','menu','World','grid'],['History','menu','History','calendar']
+   ['Tracks','menu','Tracks','calendar'],['Horse Directory','world-directory','1999 Horses','search'],['World','menu','World','grid'],['History','menu','History','calendar']
   ]]
  ];
  const on=(label,key,value)=>key==='office'&&!APP.custom&&APP.section==='Office'&&!currentRoute()||
-  key==='custom'&&APP.custom===value||key==='menu'&&APP.section===value&&
+  key==='custom'&&APP.custom===value||key==='world-directory'&&APP.section==='World'&&APP.page==='1999 Horses'||key==='menu'&&APP.section===value&&
   (!APP.custom||APP.custom===value||APP.custom.startsWith(value+' — '));
  const btn=([label,key,value,icon])=>'<button type="button" data-ng="'+key+'"'+
   (value?' data-val="'+safe(value)+'"':'')+' class="ng-manager-rail-link'+(on(label,key,value)?' on':'')+'"'+
@@ -412,7 +413,7 @@ function header(){
  // Do not waste desktop height on unrelated department subtabs.
  const profileRoute=APP.custom?null:currentRoute();
  const hasOwnNavigation=Boolean(profileRoute&&/Profile$/.test(profileRoute.kicker))||
-  APP.custom==='Search'||APP.custom==='Organization Overview'||Boolean(APP.custom&&APP.custom.includes(' — '));
+  APP.custom==='Search'||APP.custom==='Organization Overview'||APP.section==='Breeding'||Boolean(APP.custom&&APP.custom.includes(' — '));
  return `<header class="ng-global" aria-label="Wire to Wire application navigation">
   <div class="ng-hist"><button data-ng="back" aria-label="Previous page" title="Previous page">${glyph('left',15)}</button><button data-ng="forward" aria-label="Next page" title="Next page">${glyph('right',15)}</button></div>
   <button class="ng-mini-home" data-ng="office" title="Racing Office" aria-label="Go to Racing Office"><img class="ng-logo-mini" src="/assets/wtw-office-approved-logo.png" alt=""/><span class="ng-wordmark"><strong>WIRE TO WIRE</strong><small>RACING MANAGER</small></span></button>
@@ -3171,6 +3172,7 @@ window.addEventListener('click',e=>{
  }
  if(key==='more'){APP.moreOpen=!APP.moreOpen;return paint()}
  if(key==='menu')return openMenu(val);
+ if(key==='world-directory'){APP.section='World';return pageTab('1999 Horses')}
  if(key==='tab')return pageTab(val);
  if(key==='office')return goOffice();
  if(key==='case'){APP.custom='';APP.section='Office';APP.page='Overview';selectMessage(val);return}
