@@ -76,6 +76,16 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    d.querySelector('.ng-global-date strong')?.textContent.trim()==='1999-01-01');
   click('Breeding');await pause(180);
   check('Original Breeding screen shown',Boolean(d.querySelector('.ng-manager-stage')));
+  const breedingTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')]
+   .find(x=>x.dataset.val==='Stallions');
+  check('Breeding stallion roster remains accessible',Boolean(breedingTab));
+  breedingTab.click();await pause(210);
+  const breedingHorse=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
+  check('Stallion record is linked from Breeding',Boolean(breedingHorse));
+  breedingHorse.click();await pause(230);
+  check('Breeding horse opens the SAME detailed 46-rating dossier, not a simplified alternative',
+   Boolean(d.querySelector('#wtwNextgen .ng-profile-horse'))&&
+   d.querySelectorAll('#wtwNextgen .ng-horse-rating-row').length===46);
   click('Personnel');await pause(280);
   const trainerTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Trainers');
   check('Existing Personnel trainer tab is available',Boolean(trainerTab));
