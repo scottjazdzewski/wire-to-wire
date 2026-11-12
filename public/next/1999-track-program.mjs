@@ -638,10 +638,14 @@ export const TRACK_PROGRAM_1999=Object.freeze({
    [
     "01-03",
     "04-18"
+   ],
+   [
+    "11-05",
+    "11-07"
    ]
   ],
-  "meetWindow": "Jan 3–Apr 18",
-  "raceDays": "~76",
+  "meetWindow": "Jan 3–Apr 18; Nov 5–Nov 7",
+  "raceDays": "~79",
   "preferredDays": "Wed–Sun",
   "dayPattern": [
    0,
@@ -651,7 +655,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
    6
   ],
   "basis": "WTW_SEASONAL_GAME_MODELED",
-  "sourceUrl": null,
+  "sourceUrl": "https://flgaming.gov/pmw/annual-reports/docs/AnnualReport-1999-2000--69th.pdf",
   "stakesIds": [
    "STK-0004",
    "STK-0005",
@@ -667,7 +671,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
   ],
   "trackOperating": "OPEN_1999",
   "surfaceStatus": "HISTORICALLY_KNOWN_GENERAL",
-  "calendarExceptions": null
+  "calendarExceptions": "Nov 5–7, 1999 Breeders Cup Championship meet at Gulfstream; winter dates remain WTW modeled, not certified."
  },
  "T-0018": {
   "id": "T-0018",
