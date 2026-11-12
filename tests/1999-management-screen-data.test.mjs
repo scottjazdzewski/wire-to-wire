@@ -44,8 +44,12 @@ test('source horses and owner identities drive existing stable, not 2014 demo',(
  assert.match(js,/stableDemo:!window.__WTW_1999_MANAGEMENT__/);
 });
 test('all department rosters have usable test records on original screens',()=>{
- assert.equal(ui.departmentRows('Breeding','Stallions').length,31);
- assert.equal(ui.departmentRows('Breeding','Broodmares').length,2036);
+ const standing=ui.departmentRows('Breeding','Stallions');
+ assert.equal(standing.filter(x=>x._canonId&&x.status.includes('SOURCE')).length,31,'All source stallions remain identifiable');
+ assert.equal(standing.length,31+ui.counts.breedingStallions,'The modeled stallions coexist with 31 source stallions');
+ const mares=ui.breedingMarePage(0,20);
+ assert.equal(mares.total,2036+ui.counts.breedingMares,'Broodmares use source-aware virtual paging');
+ assert.ok(mares.items.length===20&&mares.items.every(x=>x._canonId&&x.status.includes('SOURCE')));
  assert.equal(ui.departmentRows('Personnel','Ownership Groups').length,0);
  assert.equal(ui.departmentRows('Personnel','Owners').length,3308);
   assert.ok(ui.departmentRows('Personnel','Owners').every(x=>x.principal&&x._testAttrs));
@@ -65,8 +69,13 @@ test('all department rosters have usable test records on original screens',()=>{
 test('all generated finances, pedigrees, and source boundaries are clearly test/provenance-marked',()=>{
  const rows=ui.departmentRows('Finances','Overview');
  assert.ok(rows.every(x=>x.source==='GENERATED_TEST_BASELINE'));
- assert.ok(ui.departmentRows('Breeding','Stallions').every(x=>x.status.includes('SOURCE')));
- assert.ok(ui.departmentRows('Breeding','Broodmares').every(x=>x.status.includes('NO PREGNANCY ASSUMED')));
+ const sires=ui.departmentRows('Breeding','Stallions');
+ assert.ok(sires.every(x=>x._canonId?x.status.includes('SOURCE'):(x._testGenerated&&x.status.includes('TEST'))),
+  'Historical and modeled breeding identities remain distinct');
+ const mares=ui.breedingMarePage(2026,25);
+ assert.equal(mares.items.filter(x=>x._canonId).length,10,'Boundary preserves 2,036 registered mares');
+ assert.ok(mares.items.filter(x=>x._testGenerated).every(x=>x.status.includes('TEST')),
+  'Generated mares never claim to be source observations');
  assert.match(ui.bridgeStatus,/NO_1999_OUTCOME_COMMITTED/);
 });
 test('Racing screen uses 93 source stakes plus separate WTW game-modeled stakes, not old 2014 fixtures',()=>{
@@ -96,7 +105,7 @@ test('original World roster can inspect all 87500 names by virtual page without 
  assert.ok(synthetic.items.every(x=>Object.keys(x._testAttrs).length===53));
  assert.ok(synthetic.items.every(x=>x.owner&&x.trainer&&x.sire&&x.dam&&x.location));
  assert.match(js,/worldHorsePage/);
- assert.match(js,/const totalRecords=virtualHorseIndex\?virtualTotal:rows.length/);
+ assert.match(js,/const totalRecords=globalDirectory\|\|virtualMethod\?virtualTotal:rows.length/);
  assert.match(js,/worldHorsePage\(offset,/);
 });
 test('large rosters are cached so native UI pagination does not regenerate all records on every paint',()=>{
