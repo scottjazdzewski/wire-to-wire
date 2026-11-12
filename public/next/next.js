@@ -2868,7 +2868,9 @@ function departmentRoster(section,page='Overview'){
   section==='World'?(page==='1999 Horses'?WORLD_1999_COLUMNS.Horses:page==='People'?WORLD_1999_COLUMNS.People:WORLD_1999_COLUMNS.Organizations):
   section==='Sales'&&page==='Watchlist'?DEP_COLUMNS.SalesWatchlist:section==='Sales'&&page==='Sale Calendar'?DEP_COLUMNS.SaleCalendar:section==='Sales'&&page==='Sale Companies'?DEP_COLUMNS.SaleCompanies:section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'?(APP.racingTrack?DEP_COLUMNS.Racing:DEP_COLUMNS.Meets):DEP_COLUMNS[section];
  // Every department now uses one progressive, sortable roster without pagination.
- const virtualHorseIndex=section==='World'&&page==='1999 Horses'&&
+ const globalHorseDirectory=section==='World'&&page==='1999 Horses'&&
+  Boolean(window.__WTW_1999_UI_DATA__?.worldHorseBrowse);
+ const virtualHorseIndex=section==='World'&&page==='1999 Horses'&&!globalHorseDirectory&&
   window.__WTW_1999_UI_DATA__?.worldHorsePage;
  const virtualBroodmares=section==='Breeding'&&page==='Broodmares'&&
   window.__WTW_1999_UI_DATA__?.breedingMarePage;
@@ -2895,7 +2897,16 @@ function departmentRoster(section,page='Overview'){
  const defaultSort=section==='World'?'name':section==='Sales'&&page==='Watchlist'?'auction':section==='Racing'&&(page!=='Overview'||APP.racingMode==='mine'||APP.racingTrack)?'date':section==='Sales'&&page!=='Sale Calendar'&&page!=='Sale Companies'?'hip':section==='Finances'?'date':specs[0][0];
  const selectedSort=specs.some(x=>x[0]===APP.departmentSortKey)?APP.departmentSortKey:defaultSort;
  const sign=APP.departmentSortKey?(APP.departmentSortDesc?-1:1):(section==='Finances'?-1:1);
- rows.sort((a,b)=>{
+ let globalIndexing=false,globalProgress=0;
+ if(globalHorseDirectory){
+  const result=window.__WTW_1999_UI_DATA__.worldHorseBrowse({
+   offset:0,limit:APP.departmentScrollLimit,search:APP.departmentSearch,
+   sort:selectedSort,desc:sign<0,filters:rosterFilter||{}
+  });
+  rows=result.items||[];virtualTotal=result.total||0;
+  globalIndexing=Boolean(result.indexing);globalProgress=result.progress||0;
+ }
+ if(!globalHorseDirectory)rows.sort((a,b)=>{
   let av=selectedSort==='date'&&a._iso?a._iso:a[selectedSort],bv=selectedSort==='date'&&b._iso?b._iso:b[selectedSort];
   const am=av===null||av===undefined||av==='',bm=bv===null||bv===undefined||bv==='';
   if(am!==bm)return am?1:-1;
@@ -2903,8 +2914,8 @@ function departmentRoster(section,page='Overview'){
   const comp=an!==null&&bn!==null?an-bn:String(av).localeCompare(String(bv),undefined,{numeric:true,sensitivity:'base'});
   return comp*sign||String(a._name).localeCompare(String(b._name));
  });
- const totalRecords=virtualMethod?virtualTotal:rows.length;
- const shown=virtualMethod?rows:rows.slice(0,Math.min(rows.length,APP.departmentScrollLimit));
+ const totalRecords=globalHorseDirectory||virtualMethod?virtualTotal:rows.length;
+ const shown=globalHorseDirectory||virtualMethod?rows:rows.slice(0,Math.min(rows.length,APP.departmentScrollLimit));
  APP.departmentVisible=shown;
 
  const heads=specs.map(([key,label])=>'<th scope="col" aria-sort="'+(selectedSort===key?(sign===1?'ascending':'descending'):'none')+'"><button data-ng="dept-sort" data-val="'+key+'" title="Sort by '+safe(label)+'">'+safe(label)+'<span aria-hidden="true">'+(selectedSort===key?(sign===1?'▲':'▼'):'↕')+'</span></button></th>').join('');
@@ -2954,7 +2965,10 @@ function departmentRoster(section,page='Overview'){
   }).join('')+'</tr>';
  }).join('');
  const pager='<span class="ng-dpt-records">'+totalRecords+' RECORDS · '+shown.length+
-  ' LOADED · SCROLL FOR MORE'+(virtualMethod?' · GLOBAL SORT/SEARCH: LOADED WINDOW':'')+'</span>';
+  (globalIndexing?' LOADED · INDEXING '+globalProgress+' / 87500 HORSES…':
+   ' LOADED · SCROLL FOR MORE')+
+  (globalHorseDirectory?' · SORT/FILTER ALL 87,500 HORSES':
+   virtualMethod?' · SCROLLING LARGE TEST POPULATION':'')+'</span>';
  const viewOptions=(tabmap[section]||[]).map(t=>'<option value="'+safe(t)+'" '+(t===page?'selected':'')+'>'+safe(t)+'</option>').join('');
  const racingTracks=section==='Racing'?depCurrentMeetRows():[];
  if(section==='Racing'&&APP.racingTrack&&!racingTracks.some(x=>x.name===APP.racingTrack)){
@@ -3000,7 +3014,9 @@ function departmentRoster(section,page='Overview'){
   (window.WTW1999RosterFilters?.render(specs,rosterFilter,safe,rosterScope)||'')+salesDeskView+
   '<section class="ng-rs-roster"><header><strong>'+safe(section.toUpperCase())+' · SORTABLE ROSTER</strong><div class="ng-dpt-pager">'+pager+'</div></header>'+
   '<div class="ng-rs-scroll" tabindex="0" role="region" aria-label="'+safe(section)+' roster — scroll vertically and click column headings to sort"><table class="ng-rs-table ng-dpt-table"><thead><tr>'+heads+'</tr></thead><tbody>'+
-  (body||'<tr><td colspan="'+specs.length+'" class="ng-rs-no-results">'+safe(section==='World'&&!world1999Data?'Loading the 1999 world registry…':section==='Sales'&&page==='Watchlist'?'No watched lots yet. Select ☆ beside a catalog hip to watch it for this session.':section==='Sales'&&page==='Private Offers'?'No recorded private offers. Bidding and negotiation are not enabled in this UI preview.':section==='Sales'?'No catalog lots recorded for this view.':demo?'No matching records.':'No supported records in this view.')+'</td></tr>')+
+  (body||'<tr><td colspan="'+specs.length+'" class="ng-rs-no-results">'+safe(globalIndexing?
+   'Indexing '+globalProgress.toLocaleString('en-US')+' of 87,500 horses for global sort/filter — source identities retained.':
+   section==='World'&&!world1999Data?'Loading the 1999 world registry…':section==='Sales'&&page==='Watchlist'?'No watched lots yet. Select ☆ beside a catalog hip to watch it for this session.':section==='Sales'&&page==='Private Offers'?'No recorded private offers. Bidding and negotiation are not enabled in this UI preview.':section==='Sales'?'No catalog lots recorded for this view.':demo?'No matching records.':'No supported records in this view.')+'</td></tr>')+
   '</tbody></table></div><div class="ng-dpt-disclosure">'+(demo?'FICTIONAL DISPLAY VALUES ONLY — no prices, locations or medical facts saved.':'SOURCE RECORDS ONLY · unknown values shown as —')+
   '</div></section></section>';
 }
@@ -3280,6 +3296,11 @@ window.addEventListener('click',e=>{
  if(key==='dept-open'){
   const r=APP.departmentVisible[Number(val)];if(!r)return;
    if(r._kind==='race')return open1999Race(r._raceData||r);
+  if(r._directoryIndex!=null){
+   const full=window.__WTW_1999_UI_DATA__?.worldHorsePage?.(r._directoryIndex,1)?.items?.[0];
+   if(full?._canonId)return openWorld1999Entity('horse:'+full._canonId);
+   if(full)return previewRecordRoute('horse',full._name,full);
+  }
   if(r._testGenerated)return previewRecordRoute(r._kind==='person'?'person':
    r._kind==='farm'?'farm':'horse',r._name,r);
   if(r._worldKey)return openWorld1999Entity(r._worldKey);
