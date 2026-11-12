@@ -9,6 +9,8 @@ const allPages=(route,total)=>{const rows=[];for(let offset=0;offset<total;offse
 const srcHorses=allPages('/api/1999/horses',267);
 const srcOrgs=allPages('/api/1999/organizations',108);
 const srcPeople=allPages('/api/1999/people',154);
+const worldCounts=q('/api/1999/sim/overview').counts;
+const generatedPeopleCount=worldCounts.people-srcPeople.length;
 const activeStallions=q('/api/1999/stallions').active;
 const ownerNames=new Map(srcOrgs.map(o=>[o.id,o.name]));
 const peopleNames=new Map(srcPeople.map(p=>[p.id,p.name]));
@@ -144,31 +146,46 @@ function makeDepartmentRows(section,page,context={}){
    farm:h.boardingFarm1999?.farmName||'',owner:'',status:'BOARDING · NO PREGNANCY ASSUMED',
    health:'UNASSESSED',pedigree:'',value:'',studFee:'',bookings:'',foals:'',winners:''}));
  }
- if(section==='Personnel'&&page==='Ownership Groups'){
-  return get('owners','/api/1999/sim/owners',3308).map(o=>({_kind:'farm',_name:o.name,name:o.name,
-   type:o.type,location:city(o.location),principal:'',status:'TEST · '+o.portfolio?.tier,
-   _canonId:o.authority?.startsWith('CANON')?o.id:''}));
+ if(section==='Personnel'&&page==='Ownership Groups')return [];
+ if(section==='Personnel'&&page==='Owners'){
+  return get('owners','/api/1999/sim/owners',worldCounts.owners).map(o=>({
+   _kind:'farm',_name:o.name,_id:o.id,name:o.name,type:o.type,
+   location:city(o.location),principal:o.principalOwner||'Not recorded',principalId:o.principalOwnerId||'',
+   status:'1999 · '+o.portfolio?.tier,_canonId:o.authority?.startsWith('CANON')?o.id:'',
+   _testGenerated:!o.authority?.startsWith('CANON'),_testAttrs:o.attributes||{},
+   _testFinances:o.finances||{},_testReputation:o.reputation||{}}));
  }
  if(section==='Personnel'){
-  const roles={Trainers:'trainer',Jockeys:'jockey',Owners:'owner',Staff:'staff'};
-  const wanted=roles[page]||'all';
-  const base=page==='Trainers'?get('trainers','/api/1999/sim/trainers',4200):
-   page==='Owners'?srcPeople.filter(p=>/owner|patron/i.test(p.role||'')):
-   page==='Jockeys'||page==='Staff'||page==='Overview'?get('workforce','/api/1999/sim/people',17194):[];
-  return base.filter(p=>wanted==='all'?true:wanted==='staff'?!['trainer','jockey'].includes(p.role):wanted==='owner'?/owner|patron/i.test(p.role||''):p.role===wanted).map(p=>({
-   _kind:'person',_name:p.name,name:p.name,age:p.age||'',role:p.role||'',reputation:rep(p.reputation),
-   ca:'',pa:'',specialty:'',morale:'',workload:'',salary:money(p.payrollAnnual||p.annualBaseSalary),
-   contract:'',assignment:p.barnId||'',base:city(p.location||p.base),wins:'',_testOrigin:!srcPeople.some(source=>source.id===p.id)}));
+  const roles={Trainers:'trainer',Jockeys:'jockey',Staff:'staff'},wanted=roles[page]||'all';
+  const base=page==='Trainers'?get('trainers','/api/1999/sim/trainers',worldCounts.trainers):
+   page==='Jockeys'||page==='Staff'||page==='Overview'?get('workforce','/api/1999/sim/people',generatedPeopleCount):[];
+  return base.filter(p=>wanted==='all'?p.role!=='owner':
+   wanted==='staff'?!['trainer','jockey','owner','groom','exercise_rider'].includes(p.role):p.role===wanted).map(p=>{
+   const attrs=p.attributes||p.roleAttributes||{},rating=v=>String(Math.max(1,Math.min(5,Math.round(Number(v??.5)*5))));
+   const roleNames={trainer:'Conditioning & placement',jockey:'Riding & tactics',farm_manager:'Farm management',
+    veterinarian:'Veterinary medicine',farrier:'Hoof care',bloodstock_agent:'Bloodstock selection',racing_secretary:'Race conditions'};
+   return {_kind:'person',_name:p.name,_id:p.id,name:p.name,age:p.age||'',role:p.role||'',reputation:rep(p.reputation),
+    ca:rating(attrs.planning),pa:rating(attrs.judgment),specialty:roleNames[p.role]||'',
+    morale:typeof p.morale==='number'?Math.round(p.morale*100)+'%':'',
+    workload:typeof p.workload==='number'?Math.round(p.workload*100)+'%':'',
+    salary:money(p.payrollAnnual??p.annualBaseSalary??0),contract:'1999 test appointment',
+    assignment:p.barnId||p.organizationId||'',base:city(p.location||p.base),birthCountry:p.birthCountry||'',wins:'',
+    _testGenerated:!p.authority?.startsWith('CANON'),_testAttrs:attrs,_testReputation:p.reputation||{},
+    _testOrigin:!srcPeople.some(source=>source.id===p.id)};
+  });
  }
  if(section==='Facilities'){
   const names={'Stud Farms':'BREEDING_FARM','Training Centers':'TRAINING_CENTER',
    'Breaking Facilities':'BREAKING_FACILITY','Racing Stables':'RACE_BARN','Barns':'RACE_BARN'};
-  const filtered=get('facilities','/api/1999/sim/facilities',5234).filter(f=>{
+  const filtered=get('facilities','/api/1999/sim/facilities',worldCounts.facilities).filter(f=>{
    if(page==='Farms')return f.type==='BREEDING_FARM';
    if(!names[page])return true;return f.type===names[page];});
   return filtered.map(f=>({_kind:'farm',_name:f.name,name:f.name,type:f.type.replaceAll('_',' '),
    location:city(f.location),capacity:String(f.capacity),occupied:String(f.occupied),
-   free:String(f.capacity-f.occupied),condition:f.equipmentCondition||'',quality:'',
+    _id:f.id,_testGenerated:true,_testAttrs:f.attributes||{},_testReputation:f.reputation||{},
+    _testFinances:{annualOperatingCost:f.annualOperatingCost},
+   free:String(f.capacity-f.occupied),condition:typeof f.equipmentCondition==='number'?Math.round(f.equipmentCondition*100)+'%':'',
+    quality:typeof f.attributes?.horse_care==='number'?Math.round(f.attributes.horse_care*100)+'/100':'',
    staff:String(f.staffingRequirement||''),cost:money(f.annualOperatingCost),owner:f.trainerId||'',
    status:'1999 TEST FACILITY',_testOrigin:true}));
  }
@@ -234,6 +251,7 @@ function extraTracks(){
 window.__WTW_1999_UI_DATA__={
  schema:'WTW_1999_CANON_ANCHORED_UI_ADAPTER_V1',
  sourceOwnerId:activeOwnerId,sourceOwnerName:selectedOwner,stableHorses:roster(),
+  generatedStaffRoles:['trainer','jockey','farm_manager','veterinarian','farrier','bloodstock_agent','racing_secretary'],
  ownedHorseCount,
  sourceFacts,ownerFor,stableHorsePreview,departmentRows,auctionList,extraTracks,
  officeMessages,officeDesks,openingCash,worldHorsePage,
