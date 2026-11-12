@@ -39,24 +39,12 @@ body.wtw-next-active>.app,body.wtw-next-active>#routeShell,body.wtw-next-active>
 .ng-hist{display:flex;align-items:center;gap:3px}
 .ng-hist button{height:27px;width:27px;display:grid;place-items:center;background:#171e22;border:1px solid #3c4b47;border-radius:4px;color:#d2ddda}
 .ng-hist button:hover,.ng-iconbtn:hover{background:#315e48;border-color:#5a816a}
-.ng-primary button .ng-svg{opacity:.58}
-.ng-primary button:hover{background:#234738;color:#fff}
 .ng-global-tools{display:flex;align-items:center;gap:5px}
 .ng-iconbtn{width:29px;height:29px;display:grid;place-items:center;color:#cad5d5;background:#171e22;border:1px solid #3c4b47;border-radius:4px;position:relative}
 .ng-iconbtn i{position:absolute;top:4px;right:3px;width:4px;height:4px;border-radius:50%;background:#d5bc74}
-.ng-brand{display:flex;align-items:center;gap:13px;min-width:0;flex:1}
-.ng-brand-copy{min-width:0}
 .ng-sep{color:#7d9788;margin:0 4px}
-.ng-mast-centre{display:flex;align-items:center;gap:0;margin-right:0}
-.ng-mast-fig b em{font-size:13px;color:#a2b5aa;font-style:normal}
-.ng-clockblock small{font-size:9.5px;color:#b8c8bc;font-weight:700;letter-spacing:.06em}
-.ng-continue .ng-svg:last-child{margin-left:auto;margin-right:7px}
-.ng-continue .ng-svg:first-child{margin-left:9px}
-.ng-continue:hover{filter:brightness(1.1)}
 .ng-subnav{display:flex;align-items:stretch;min-width:0}
 .ng-subnav button:hover{background:#315e48;color:#fff}
-.ng-fastnav{display:flex;align-items:center;gap:5px}
-.ng-fastnav button:hover{border-color:#5a816a;background:#315e48}
 .ng-left,.ng-main,.ng-right{min-width:0;min-height:0}
 .ng-headinggroup{min-width:0;display:flex;flex-direction:column;gap:2px;justify-content:center}
 .ng-cardlink:hover{color:#fff;text-decoration:underline}
@@ -111,41 +99,25 @@ body.wtw-next-active>.app,body.wtw-next-active>#routeShell,body.wtw-next-active>
 .ng-caseactions{margin-top:8px}
 .ng-caseactions button{font-size:9px!important;padding:7px 6px}
 .ng-msg{padding:5px}
-.ng-mast-centre{gap:0}
-.ng-mast-fig{min-width:73px;padding:1px 6px}
-.ng-continue{min-width:122px}
-.ng-clockblock{min-width:117px}
 .ng-rostertag{font-size:9px}
 }
 @media(max-width:1100px){
 .ng-global-tools button:nth-child(2){display:none}
-.ng-mast-fig:last-child{display:none}
 .ng-board{grid-template-columns:minmax(245px,260px) minmax(0,1fr) minmax(250px,270px)}
-.ng-photo-ribbon{display:none}
 }
 @media(max-height:720px) and (min-width:850px){
-.ng-brand-logo{width:49px;height:49px}
-.ng-brand-name{font-size:20px}
-.ng-mast-centre .ng-mast-fig b{font-size:18px}
 .ng-fact{padding:5px}
 .ng-rostercolumns,.ng-entrycolumns{height:21px}
 }
 @media(max-width:780px){
 body.wtw-next-active{overflow:auto}
 #wtwNextgen{height:auto;overflow:visible;min-height:100dvh}
-.ng-primary{min-width:690px}
-.ng-mast{height:auto;min-height:75px}
-.ng-mast-centre,.ng-clockblock{display:none}
 .ng-subnav{min-width:480px}
-.ng-fastnav{display:none}
 .ng-left{height:500px}
 .ng-right{height:580px}
 .ng-route{min-height:calc(100vh - 160px)}
 }
 @media(max-height:660px) and (min-width:850px){
-.ng-mast{height:61px!important;padding:3px 10px!important}
-.ng-brand-logo{width:43px;height:43px}
-.ng-brand-name{font-size:19px}
 .ng-featurebody{grid-template-columns:1fr}
 .ng-featurephoto{display:none}
 .ng-case{padding:5px 10px}
@@ -442,8 +414,6 @@ body.wtw-next-active{overflow:auto}
 .ng-wordmark small{font-size:8px;letter-spacing:.12em;color:#a1bca9;font-weight:750}
 .ng-logo-mini{height:25px;width:25px;object-fit:contain;margin:0 9px 0 14px;border-radius:4px}
 .ng-mini-home:hover{background:#234738;border-color:#5a816a}
-.ng-mast-fig:hover{background:#ffffff0b;color:#fff}
-.ng-clockblock:hover{background:#ffffff0b}
 .ng-casetitle{display:block;width:100%;border:0;background:transparent;color:inherit;text-align:left;margin:0;padding:0;cursor:pointer}
 .ng-casetitle h2{display:block}
 .ng-casetitle .ng-svg{display:inline-block;color:#b4cdbb;opacity:.52;transition:opacity .12s,transform .12s}
@@ -484,17 +454,9 @@ body.wtw-next-active{overflow:auto}
 .ng-resolved .ng-outtext{font-size:9.7px;line-height:1.3;padding:5px}
 .ng-resolved .ng-outcome-actions button{min-height:22px;font-size:8.5px!important}
 }
-
-.ng-primary button{height:100%;display:flex;align-items:center;gap:5px;padding:0 clamp(6px,.9vw,14px);font-size:11.5px!important;font-weight:670!important;white-space:nowrap;letter-spacing:.005em;color:#b4cdbb;background:transparent;border:0;border-bottom:3px solid transparent;text-transform:uppercase}
-.ng-primary button.on{background:linear-gradient(180deg,#234738,#234738);border-bottom-color:var(--wt-gold);color:#fbf8e9;box-shadow:inset 0 -2px #cfb16c}
 .ng-primary button:hover:not(.on){background:#234738;color:#fff}
 .ng-global-tools .ng-iconbtn,.ng-hist button{width:27px;height:27px;background:#171e22;border:1px solid #3c4b47;box-shadow:none}
-.ng-brand-logo{height:50px;width:50px;flex:none;object-fit:contain;background:#101518;border:1px solid #3c4b47;border-radius:7px;box-shadow:0 0 0 2px #11261d,0 6px 14px #0005;border-color:#3c4b47}
 .ng-eyebrow{color:#ddc67d;font-size:9px;font-weight:800;letter-spacing:.115em}
-.ng-mast-fig b{display:block;font-size:22px;line-height:1.05;font-weight:750;font-variant-numeric:tabular-nums;letter-spacing:-.035em}
-.ng-mast-fig span{display:block;margin-top:3px;font-size:8.5px;font-weight:750;color:#b4cdbb;letter-spacing:.06em}
-.ng-clockblock{display:flex;flex-direction:column;text-align:right;gap:5px;padding-right:12px;border-right:1px solid #3c4b47;min-width:115px;background:transparent;color:var(--wt-text);border-top:0;border-left:0;border-bottom:0;border-radius:0;cursor:pointer}
-.ng-clockblock strong{font-size:12px;font-variant-numeric:tabular-nums}
 .ng-card{min-height:0;overflow:hidden;background:#1a2024;border:1px solid #384443;border-radius:3px;box-shadow:none}
 .ng-sectionicon{height:23px;width:23px;border-radius:3px;background:#1e262a;border:1px solid #3c4b47;color:#d3e1d5;display:grid;place-items:center;flex:none;border-color:#3c4b47}
 .ng-sectionicon.gold{background:#3f3828;color:#eed187;border-color:#62583d}
@@ -544,10 +506,6 @@ body.wtw-next-active{overflow:auto}
 .ng-entryrow:nth-child(even){background:#242d2e}
 .ng-entrytag b{font-size:10.2px;color:#f0d385;font-weight:780}
 @media(max-width:1250px){
-.ng-mast{height:66px;padding:7px 10px;gap:7px}
-.ng-brand-logo{width:46px;height:46px}
-.ng-brand-name{font-size:21px!important}
-.ng-primary button{padding:0 6px!important;font-size:10.6px!important}
 .ng-case{padding:9px 11px}
 .ng-case h2{font-size:clamp(19px,2vw,23px)}
 .ng-facts{margin-top:8px;max-width:98%}
@@ -566,7 +524,6 @@ body.wtw-next-active{overflow:auto}
 }
 @media(max-height:720px) and (min-width:850px){
 .ng-global{height:35px}
-.ng-mast{height:60px;padding:5px 12px}
 .ng-subbar{height:30px}
 .ng-board{padding:6px;gap:6px}
 .ng-cardhead{height:37px}
@@ -623,7 +580,6 @@ body.wtw-next-active{overflow:auto}
 .ng-featurephoto::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#101518f5 0%,#171e22ea 25%,#171e22d0 49%,#10151845 80%,#10151829 100%),linear-gradient(0deg,#1015187e,transparent 58%);pointer-events:none;z-index:1}
 .ng-featurebody>.ng-case{position:relative;z-index:2}
 .ng-photo-label{position:absolute;z-index:2;right:9px;bottom:8px;color:#e2ebe4;background:#101518a8;padding:5px 6px;border:1px solid #3c4b47;border-radius:2px;font-size:8px;letter-spacing:.05em;font-weight:750;opacity:.85;border-color:#3c4b47}
-.ng-photo-ribbon{position:absolute;z-index:2;right:12px;top:12px;color:#e1d1a0;font-size:8.6px;letter-spacing:.06em;writing-mode:vertical-rl;opacity:.9;display:none}
 .ng-feature .ng-case-summary{max-width:46ch;color:#d7e2df;line-height:1.45}
 .ng-intelgrid{flex:1;min-height:0;display:grid;grid-template-columns:1fr;grid-template-rows:repeat(4,minmax(0,1fr));gap:0!important;padding:0!important}
 .ng-intelitem{position:relative;min-width:0;display:grid;flex-direction:column;justify-content:initial;align-items:center;text-align:left;border:0;border-left:3px solid var(--wt-green)!important;background:#1e2629!important;color:#edf4f3;border-radius:0;padding:6px 7px 6px 8px;grid-template-columns:72px minmax(0,1fr);grid-template-rows:min-content min-content;align-content:center;column-gap:9px;row-gap:2px;border-bottom:1px solid #384743!important;border-right:0!important;border-top:0!important;box-shadow:none!important}
@@ -680,18 +636,9 @@ body.wtw-next-active{overflow:auto}
 :root{color-scheme:dark;--wt-bg:#0b1014;--wt-shell:#10161a;--wt-head:#262e30;--wt-card:#191f23;--wt-card2:#222a2d;--wt-row:#1c2528;--wt-row2:#252d30;--wt-line:#3a4644;--wt-line2:#4c5a55;--wt-text:#eef1ef;--wt-muted:#bdcbc4;--wt-dim:#96aaa2;--wt-gold:#dcc487;--wt-forest:#244d3d;--wt-green:#60bd93;--wt-red:#ca5061;--wt-blue:#8aaebc;--wt-radius:3px}
 body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 #wtwNextgen{height:100dvh;width:100%;min-width:0;overflow:hidden;display:flex;flex-direction:column;background:#0b1014;color:var(--wt-text);font-family:"Inter Display",Inter,"Segoe UI",system-ui,sans-serif;font-kerning:normal;font-optical-sizing:auto}
-.ng-primary>button.on{background:#234738!important;box-shadow:inset 0 -3px 0 #ddc27f!important}
 .ng-global-tools .ng-iconbtn{border:1px solid #3c4b47!important;background:#171e22!important;border-radius:5px!important}
-.ng-mast{height:74px;flex:none;display:flex;align-items:center;gap:12px;background:linear-gradient(90deg,#101518,#171e22 35%,#171e22 69%,#101518)!important;padding:8px 17px;border-bottom:1px solid #3c4b47;min-height:80px!important;box-shadow:inset 0 -1px 0 #304e46!important}
-.ng-brand-name{color:#fff;font-size:25px!important;font-weight:790!important;line-height:1.04;letter-spacing:-.05em!important;margin:5px 0 3px;font-family:"Segoe UI Variable Display","Segoe UI",Arial,sans-serif}
-.ng-brand-sub{font-size:11px!important;color:#b4cdbb!important}
-.ng-mast-fig{min-width:87px!important;text-align:center;border-left:1px solid #3c4b47!important;padding:0 12px!important;display:flex;flex-direction:column;align-items:center;justify-content:center;background:transparent;border-top:0;border-bottom:0;border-right:0;color:var(--wt-text);cursor:pointer;min-height:41px;border-radius:0}
-.ng-mast-fig>b{font-size:24px!important;line-height:1!important;font-weight:800!important}
-.ng-mast-fig>span{font-size:9px!important;letter-spacing:.06em!important}
-.ng-continue{height:39px;min-width:139px;display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(180deg,#d64c54,#aa2635)!important;color:#fff;border:1px solid #e37476!important;border-radius:3px;box-shadow:0 3px 12px #0005,inset 0 1px #f6a5a43d!important;font-weight:800!important;font-size:12.5px!important;letter-spacing:.035em!important;border-color:#e66a73}
 .ng-subnav button{color:#b4c2bf;background:transparent;border:0;border-bottom:2px solid transparent;padding:0 13px;white-space:nowrap;font-size:11.6px!important;font-weight:650!important}
 .ng-subnav button.on{color:#fdf9ec!important;border-bottom-color:var(--wt-gold);background:#234738;box-shadow:inset 0 -3px 0 #ddc17d!important}
-.ng-fastnav button{display:flex;gap:6px;align-items:center;height:26px;padding:0 10px;border:1px solid #3c4b47;border-radius:2px;background:#171e22;color:#b4cdbb;font-size:10.8px!important;font-weight:650!important;border-color:#3c4b47!important}
 .ng-board{flex:1;min-height:0;display:grid;grid-template-columns:minmax(270px, 300px) minmax(0,1fr) minmax(288px,322px)!important;gap:7px!important;padding:7px!important;background:#0d1317!important;overflow:hidden}
 .ng-left,.ng-right,.ng-main{border-radius:4px!important;overflow:hidden!important;min-height:0!important}
 .ng-left{display:flex;flex-direction:column;background:#171e22!important;border:1px solid #3c4b47!important;box-shadow:0 5px 14px #0003}
@@ -923,14 +870,9 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-main>.ng-centerbottom{display:flex!important;flex-direction:column!important;min-height:580px!important;gap:0!important}
 .ng-main .ng-intel,.ng-main .ng-choices{flex:1 0 auto!important;min-height:300px!important}
 }
-.ng-primary{height:100%;display:flex;align-items:stretch;gap:0;flex:1;min-width:0;overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:none!important}
-.ng-primary::-webkit-scrollbar{display:none}
-.ng-primary>button{font-family:"Segoe UI Variable Display","Segoe UI",Arial,sans-serif;font-size:12.4px!important;font-weight:680!important;letter-spacing:.025em!important;padding:0 13px!important;flex:0 0 auto!important}
 @media(max-width:1450px){
-.ng-primary>button{font-size:10.8px!important;padding:0 8px!important}
 }
 @media(max-width:1100px){
-.ng-primary>button{font-size:10px!important;padding:0 7px!important}
 }
 #wtwNextgen .ng-board button:focus-visible,
 #wtwNextgen .ng-global button:focus-visible,
@@ -1062,8 +1004,6 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-global .ng-logo-mini{width:30px!important;height:30px!important;margin:0 7px!important}
 .ng-global .ng-hist{flex:none}
 .ng-global .ng-global-tools{flex:none;gap:4px!important}
-.ng-global .ng-primary{flex:1 1 0!important;min-width:0!important;overflow-x:auto!important;scrollbar-width:thin!important;scrollbar-color:#546e63 #0b1819}
-.ng-global .ng-primary>button{flex:0 0 auto!important;white-space:nowrap!important;padding:0 10px!important}
 .ng-global .ng-global-date{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-width:92px;min-height:35px;gap:0;padding:2px 8px;margin-left:5px;color:#e2ece7;background:transparent;border:0;border-left:1px solid #3c4b47;text-align:left}
 .ng-global .ng-global-date span{font-size:8px;font-weight:750;letter-spacing:.07em;color:#b4cdbb}
 .ng-global .ng-global-date strong{font-size:12px;font-weight:780;font-variant-numeric:tabular-nums;line-height:1.24;color:#f6f4e8}
@@ -1076,7 +1016,6 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-subbar .ng-subnav::-webkit-scrollbar{display:none}
 .ng-subbar .ng-subnav button{flex:0 0 auto;padding:0 12px;font-size:11px!important}
 @media(max-width:1380px) and (min-width:781px){
-.ng-global .ng-primary>button{padding:0 7px!important;font-size:10.4px!important}
 .ng-global .ng-global-date{min-width:86px;padding-left:6px;padding-right:5px}
 .ng-global .ng-global-continue{min-width:105px;padding:0 7px;gap:5px;font-size:10.7px!important}
 }
@@ -1087,8 +1026,6 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-global .ng-global-tools{order:3;margin-left:auto}
 .ng-global .ng-global-date{order:4;min-width:78px;margin:0;border-left:0;padding:0 4px}
 .ng-global .ng-global-continue{order:5;min-width:104px;height:32px;margin-left:0}
-.ng-global .ng-primary{order:6;flex:0 0 100%!important;width:100%!important;height:35px!important;min-width:0!important;overflow-x:auto!important;overflow-y:hidden!important;border-top:1px solid #3c4b47}
-.ng-global .ng-primary>button{font-size:11px!important;height:35px!important;padding:0 12px!important}
 .ng-subbar{overflow-x:auto;overflow:hidden!important}
 .ng-subbar .ng-subnav{min-width:0!important}
 }
@@ -1178,8 +1115,6 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-profile-intro>.ng-org-mark-large .ng-org-initials{font-size:28px}
 @media(min-width:781px){
 .ng-global{overflow:visible!important;flex-wrap:nowrap!important}
-.ng-global .ng-primary{flex:1 1 0!important;min-width:0!important;overflow-x:hidden!important;overflow-y:hidden!important;scrollbar-width:none!important;white-space:nowrap!important}
-.ng-global .ng-global-morewrap{display:none}
 .ng-main .ng-feature>.ng-cardhead .ng-org-chip{flex:0 0 auto!important;width:auto!important;max-width:140px!important;min-width:85px!important;height:35px!important;padding:2px 7px 2px 3px!important;margin-left:clamp(6px,.9vw,13px)!important;gap:7px!important;background:#234738!important;border:1px solid #5a816a!important}
 .ng-main .ng-feature>.ng-cardhead .ng-org-chip .ng-org-mark{width:29px!important;height:29px!important;flex:0 0 29px!important;border:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important}
 .ng-main .ng-feature>.ng-cardhead .ng-org-chip .ng-org-image{display:block!important;width:29px!important;height:29px!important;border-radius:4px!important;object-fit:contain!important}
@@ -1188,21 +1123,8 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-main .ng-feature>.ng-cardhead .ng-org-chip-cash strong{color:#f0dcab!important;font-size:12px!important;line-height:1.15!important;font-variant-numeric:tabular-nums!important;font-weight:820!important}
 }
 @media(min-width:781px) and (max-width:1370px){
-.ng-global .ng-primary>button[data-val="Breeding"],
- .ng-global .ng-primary>button[data-val="Personnel"],
- .ng-global .ng-primary>button[data-val="Facilities"],
- .ng-global .ng-primary>button[data-val="Finances"],
- .ng-global .ng-primary>button[data-val="World"]{display:none!important}
-.ng-global .ng-global-morewrap{position:relative;display:flex!important;height:100%;flex:0 0 auto;align-items:center;z-index:8}
-.ng-global .ng-global-more{display:inline-flex;align-items:center;justify-content:center;gap:3px;height:32px;padding:0 8px;border:1px solid #3c4b47;border-radius:4px;background:#171e22;color:#e5eee6;font-weight:750!important;font-size:10.5px!important;letter-spacing:.02em}
-.ng-global .ng-global-more:hover,.ng-global .ng-global-more[aria-expanded="true"]{background:#315e48;border-color:#a7a16f}
-.ng-global .ng-global-moremenu{position:absolute;top:calc(100% - 2px);right:0;width:164px;display:flex;flex-direction:column;padding:4px;gap:2px;border:1px solid #3c4b47;border-radius:0 0 5px 5px;background:#171e22;box-shadow:0 8px 22px #0009;z-index:40}
-.ng-global .ng-global-moremenu>button{width:100%;padding:9px 10px;text-align:left;border:0;background:transparent;color:#e6eee8;font-size:11px!important;font-weight:700!important;border-radius:3px}
-.ng-global .ng-global-moremenu>button:hover{background:#315e48}
 }
 @media(min-width:781px) and (max-width:1090px){
-.ng-global .ng-primary>button{font-size:9.6px!important;padding:0 6px!important}
-.ng-global .ng-primary>button .ng-svg{display:none!important}
 .ng-global .ng-hist{gap:0!important}
 .ng-global .ng-hist button{width:24px!important}
 .ng-global .ng-global-date{min-width:72px!important}
@@ -1214,7 +1136,6 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
  .ng-main .ng-feature>.ng-cardhead .ng-org-chip .ng-org-image{width:24px!important;height:24px!important;flex-basis:24px!important}
 }
 @media(max-width:780px){
-.ng-global .ng-global-morewrap{display:none!important}
 }
 @media(min-width:1081px){
 .ng-route-profile .ng-profile-horse{gap:7px!important}
@@ -1232,10 +1153,6 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-route-profile .ng-profile-horse .ng-profile-facts>div{min-height:57px!important;padding:9px 10px!important;background:#1e262a!important;border-left:2px solid #3c4b47!important}
 .ng-route-profile .ng-profile-horse .ng-profile-facts small{font-size:var(--wtw-ui-profile-label)!important;line-height:1.2!important}
 .ng-route-profile .ng-profile-horse .ng-profile-facts strong{font-size:var(--wtw-ui-profile-value)!important;line-height:1.3!important;overflow-wrap:anywhere}
-.ng-route-profile .ng-profile-horse .ng-horse-careercard .ng-kpis{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:4px!important;padding:6px!important}
-.ng-route-profile .ng-profile-horse .ng-horse-careercard .ng-kpis>div{min-width:0!important;padding:12px 4px!important;background:#1e262a!important;border:1px solid #3c4b47!important}
-.ng-route-profile .ng-profile-horse .ng-horse-careercard .ng-kpis strong{font-size:19px!important;font-variant-numeric:tabular-nums}
-.ng-route-profile .ng-profile-horse .ng-horse-careercard .ng-kpis small{font-size:9px!important}
 .ng-route-profile .ng-profile-horse .ng-horse-context{display:flex;flex-direction:column;gap:0;padding:3px 8px 7px;background:#171e22}
 .ng-route-profile .ng-profile-horse .ng-horse-context>div{border-bottom:1px solid #3c4b47;padding:6px 2px;font-size:11px;line-height:1.3;color:#cedbcf}
 .ng-route-profile .ng-profile-horse .ng-horse-open-record{display:flex;align-items:center;gap:5px;border:0;border-top:1px solid #3c4b47;background:#1e262a;color:#ebdbaa;font-size:10px!important;font-weight:800!important;padding:7px 11px;width:100%;text-align:left}
@@ -1282,18 +1199,6 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-route-profile .ng-profile-view:not(.ng-profile-horse) .ng-status-pills{gap:5px!important;margin-top:5px!important}
 .ng-route-profile .ng-profile-view:not(.ng-profile-horse) .ng-status-pills span{font-size:var(--wtw-ui-profile-status)!important;padding:3px 6px!important}
 .ng-route-profile .ng-profile-view:not(.ng-profile-horse) .ng-profile-tools button{font-size:10px!important;padding:7px 9px!important}
-.ng-route-profile .ng-profile-view .ng-detail-cols-entity{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.03fr)!important;column-gap:8px!important;row-gap:8px!important;min-width:0!important}
-.ng-route-profile .ng-profile-view .ng-detail-cols-entity>.ng-detailwide{grid-column:1 / -1!important}
-.ng-route-profile .ng-profile-view .ng-detail-cols-entity .ng-profile-facts{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:3px!important;padding:5px!important;background:#171e22!important}
-.ng-route-profile .ng-profile-view .ng-detail-cols-entity .ng-profile-facts>div{min-height:50px!important;padding:7px 9px!important;background:#1e262a!important;border-left:2px solid #3c4b47!important}
-.ng-route-profile .ng-profile-view .ng-detail-cols-entity .ng-profile-facts small{font-size:9.8px!important}
-.ng-route-profile .ng-profile-view .ng-detail-cols-entity .ng-profile-facts strong{font-size:12px!important;line-height:1.3!important;overflow-wrap:anywhere!important}
-.ng-route-profile .ng-profile-view .ng-detail-cols-entity .ng-data-row{min-height:36px!important;padding:6px 9px!important;gap:6px!important;background:#1e262a!important;border-bottom-color:#3c5849!important;font-size:11.6px!important}
-.ng-route-profile .ng-profile-view .ng-detail-cols-entity .ng-data-row:nth-child(even){background:#171e22!important}
-.ng-route-profile .ng-profile-view .ng-detail-cols-entity .ng-data-row span{min-width:74px!important}
-.ng-route-profile .ng-profile-view .ng-detail-cols-entity .ng-data-row button{font-size:11.6px!important}
-.ng-route-profile .ng-profile-view .ng-detail-cols-entity .ng-notes{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px!important;padding:6px!important}
-.ng-route-profile .ng-profile-view .ng-detail-cols-entity .ng-notes>div{background:#1e262a!important;font-size:11px!important;padding:8px 10px!important;line-height:1.35!important}
 }
 .ng-entity-links{display:flex;flex-direction:column;padding:5px;gap:2px}
 .ng-entity-links button,.ng-entity-link-static{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:37px;width:100%;padding:7px 9px;text-align:left;background:#1e262a!important;border:1px solid #3c4b47!important;color:#e5efe7!important;border-radius:3px;font-size:11.5px!important;font-weight:720!important}
@@ -1309,10 +1214,6 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-source-meter>span{height:100%;display:block;background:linear-gradient(90deg,#2d373a,#2d373a)}
 .ng-entity-open{display:flex;align-items:center;gap:6px;width:100%;min-height:33px;padding:7px 10px;border:0;border-top:1px solid #3c4b47;background:#1e262a;color:#e8d59b;font-size:10.5px!important;font-weight:790;cursor:pointer}
 .ng-entity-open:hover{background:#315e48}
-.ng-entity-note-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:6px}
-.ng-entity-note-grid>div{background:#1e262a;padding:10px;display:flex;flex-direction:column;gap:4px;min-width:0}
-.ng-entity-note-grid b{font-size:10px;color:#e3ce98}
-.ng-entity-note-grid span{font-size:11px;color:#b4cdbb;line-height:1.36}
 .ng-stakes-table{padding:3px 5px 6px}
 .ng-stakes-head,.ng-stakes-data{display:grid!important;grid-template-columns:minmax(0,2.5fr) minmax(0,.85fr) minmax(0,.67fr) minmax(0,1fr)!important;gap:7px;align-items:center}
 .ng-stakes-head{min-height:29px;padding:5px 7px;color:#b4cdbb;font-size:9px;font-weight:760;letter-spacing:.035em;background:#171e22}
@@ -1326,10 +1227,6 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-stakes-data span{font-size:11px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .ng-stakes-data span:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}
 @media(min-width:1081px) and (max-width:1240px){
-.ng-route-profile .ng-profile-view .ng-detail-cols-entity{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-.ng-route-profile .ng-profile-view .ng-detail-cols-entity>.ng-entity-performance,
- .ng-route-profile .ng-profile-view .ng-detail-cols-entity>.ng-track-stakes{grid-column:1 / -1!important}
-.ng-entity-note-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(min-width:1081px){
 .ng-routegrid:has(.ng-stable-directory){overflow:hidden!important;display:block!important;flex:1 1 auto!important;min-height:0!important}
@@ -1616,109 +1513,12 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 
 .ng-stable-directory{box-sizing:border-box;height:100%!important;min-height:0!important;display:flex!important;flex-direction:column!important;gap:7px!important;overflow:hidden!important}
 }
-.ng-stable-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));flex:0 0 auto;gap:5px}
-.ng-stable-summary>div{display:flex;align-items:center;gap:12px;min-height:46px;padding:6px 12px;background:#1e262a;border:1px solid #3c4b47;border-radius:3px}
-.ng-stable-summary strong{font-size:22px;font-variant-numeric:tabular-nums;color:#edda9f}
-.ng-stable-summary span{color:#b4cdbb;font-size:10px;font-weight:770;letter-spacing:.035em}
-.ng-stable-toolbar{display:flex;align-items:center;gap:7px;flex:0 0 auto;min-height:41px;padding:6px 9px;background:#171e22;border:1px solid #3c4b47;border-radius:3px}
-.ng-stable-toolbar>label{color:#b4cdbb;font-weight:790;letter-spacing:.055em;font-size:10px;white-space:nowrap}
-.ng-stable-toolbar>input{box-sizing:border-box;flex:0 1 280px;min-width:150px;height:29px;padding:5px 10px;color:#eff6ee;background:#101518;border:1px solid #3c4b47;border-radius:3px;font-size:11.5px;outline-offset:2px}
-.ng-stable-toolbar>input:focus{outline:1px solid #d5bd79}
-.ng-stable-toolbar>input::placeholder{color:#91aa99}
-.ng-stable-filters{display:flex;gap:3px;min-width:0;align-items:center}
-.ng-stable-filters button{height:28px;padding:0 9px;white-space:nowrap;font-size:9.8px!important;font-weight:760!important;color:#b4cdbb!important;background:#171e22!important;border:1px solid #3c4b47!important;border-radius:3px!important}
-.ng-stable-filters button.on{color:#fff3cf!important;background:#315e48!important;border-color:#5a816a!important}
 .ng-stable-visible{margin-left:auto;color:#e0cd91;font-size:10px;font-weight:740;white-space:nowrap}
-.ng-stable-workspace{display:grid;grid-template-columns:minmax(0,2.3fr) minmax(265px,.9fr);gap:8px;flex:1 1 0;min-height:0;min-width:0}
-.ng-stable-workspace .ng-managementtable{display:flex;flex-direction:column;min-width:0;min-height:0;border:1px solid #3c4b47;background:#171e22;overflow:hidden}
-.ng-stable-workspace .ng-managementtable>.ng-cardhead{height:43px!important;flex:0 0 43px!important;min-height:43px!important;background:#1e262a!important;border-bottom:1px solid #3c4b47!important;gap:8px!important}
-.ng-stable-workspace .ng-managementtable>.ng-cardhead h3{font-size:12.7px!important}
-.ng-stable-workspace .ng-managementtable>.ng-cardhead small{color:#b4cdbb!important;margin-left:auto;font-size:9.7px;font-weight:730}
-.ng-stable-tablehead{flex:0 0 auto;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr) minmax(0,1.08fr) minmax(85px,.7fr)!important;gap:8px!important;padding:0 8px!important;min-height:32px;background:#171e22!important;border-bottom:1px solid #3c4b47;align-items:stretch!important}
-.ng-stable-tablehead button{width:100%;text-align:left!important;font-size:10px!important;font-weight:770!important;line-height:1.2!important;padding:6px 2px!important;border:0!important;border-radius:0!important;background:transparent!important;color:#b4cdbb!important;white-space:nowrap!important}
-.ng-stable-tablehead button:hover,.ng-stable-tablehead button[aria-pressed="true"]{color:#f5e1ab!important}
-.ng-stable-tablebody{flex:1 1 0;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#66816f #162b23}
-.ng-stable-row{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr) minmax(0,1.08fr) minmax(85px,.7fr)!important;gap:8px!important;box-sizing:border-box!important;width:100%!important;min-height:43px!important;padding:7px 10px!important;background:#1e262a!important;border:0!important;border-bottom:1px solid #3c4b47!important;color:#f1f5ec!important}
-.ng-stable-row:nth-child(even){background:#171e22!important}
-.ng-stable-row:hover{background:#315e48!important}
-.ng-stable-row[hidden]{display:none!important}
-.ng-stable-row strong{font-size:12px!important;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.ng-stable-row span{color:#b4cdbb!important;font-size:10.8px!important;overflow:hidden;white-space:nowrap!important;text-overflow:ellipsis}
-.ng-stable-row i{color:#dbc98d!important;font-size:10.4px!important;font-style:normal!important;text-align:right!important;display:flex;align-items:center;justify-content:flex-end;gap:4px}
-.ng-stable-row i.ng-stable-entered{color:#b4cdbb!important}
-.ng-stable-context{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:0;overflow:hidden}
-.ng-stable-context>.ng-card{display:flex;flex:1 1 0;flex-direction:column;min-height:0;background:#171e22;border:1px solid #3c4b47;overflow:hidden}
-.ng-stable-context>.ng-card>.ng-cardhead{box-sizing:border-box;height:41px!important;min-height:41px!important;flex:0 0 41px!important;background:#1e262a!important;padding:0 9px!important;border-bottom:1px solid #3c4b47}
-.ng-stable-context>.ng-card>.ng-cardhead h3{font-size:12px!important}
-.ng-stable-context>.ng-card>.ng-cardhead small{font-size:9px!important;font-weight:730!important;margin-left:auto;color:#b4cdbb}
-.ng-stable-contextlist{display:flex;flex-direction:column;flex:1 1 0;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#65856f #1b3228}
-.ng-stable-fixture{display:grid;grid-template-columns:minmax(0,1fr) 70px;grid-template-rows:auto auto;column-gap:8px;row-gap:3px;box-sizing:border-box;padding:8px 9px;border:0;border-bottom:1px solid #3c4b47;background:#1e262a;color:#edf3e9;text-align:left;cursor:pointer}
-.ng-stable-fixture:nth-child(even){background:#171e22}
-.ng-stable-fixture:hover{background:#315e48}
-.ng-stable-fixture strong{font-size:11.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ng-stable-fixture span{grid-column:1;font-size:10px;color:#b4cdbb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ng-stable-fixture small{grid-column:2;grid-row:1 / 3;justify-self:end;align-self:center;max-width:70px;font-size:9.4px;font-weight:740;color:#e2c785}
-.ng-stable-fixture small.entered{color:#79cf9d}
-.ng-stable-context-footer{flex:0 0 auto;min-height:31px;padding:6px 10px;display:flex;align-items:center;justify-content:flex-start;gap:5px;border:0;border-top:1px solid #3c4b47;background:#1e262a;color:#f3dca3;font-size:10px!important;font-weight:780!important;cursor:pointer}
-.ng-stable-context-footer:hover{background:#315e48}
 @media(min-width:1081px) and (max-width:1260px){
-.ng-stable-workspace{grid-template-columns:minmax(0,2fr) minmax(245px,.85fr)!important}
-.ng-stable-toolbar>input{flex-basis:210px!important}
-.ng-stable-filters button{padding:0 5px!important;font-size:9px!important}
-.ng-stable-tablehead,.ng-stable-row{column-gap:5px!important}
 }
-.ng-athlete-group-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:26px;padding:4px 10px;background:#1e262a;border:1px solid #3c4b47;border-radius:3px}
-.ng-athlete-group-heading span{color:#f0dfab;font-size:10px;font-weight:850;letter-spacing:.085em}
-.ng-athlete-group-heading small{font-size:9px;letter-spacing:.04em;color:#b4cdbb;text-align:right}
-.ng-athlete-groups{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;min-width:0}
-.ng-athlete-category{display:flex;flex-direction:column;min-width:0;background:#1a2125;border:1px solid #394a43;border-radius:3px;overflow:hidden}
-.ng-athlete-category>header{display:flex;align-items:center;justify-content:space-between;gap:5px;box-sizing:border-box;min-height:36px;padding:7px 9px;background:linear-gradient(90deg,#293b34,#252f2e);border-bottom:1px solid #3c4b47}
-.ng-athlete-category>header h3{margin:0;color:#fff2d4;font-size:11.5px;font-weight:790;line-height:1.2;letter-spacing:.02em}
-.ng-athlete-category>header small{flex:0 0 auto;color:#b4cdbb;font-weight:720;font-size:8px;white-space:nowrap}
-.ng-athlete-attributes{display:flex;flex-direction:column;padding:4px 7px 5px}
-.ng-athlete-attribute{display:grid;grid-template-columns:minmax(0,1fr) minmax(46px,max-content);align-items:center;gap:8px;min-height:29px;padding:4px 5px;border-bottom:1px solid #3c4b47;font-size:11.3px;line-height:1.2}
-.ng-athlete-attribute:nth-child(even){background:#20292a}
-.ng-athlete-attribute:last-child{border-bottom:0}
-.ng-athlete-attribute span{color:#b4cdbb;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ng-athlete-attribute strong{color:#e0d7bb;text-align:right;font-weight:770;font-size:11.6px;font-variant-numeric:tabular-nums;white-space:nowrap}
-.ng-athlete-attribute strong.unknown{color:#8ea79a}
-.ng-athlete-attribute strong.assessed{color:#edd191}
-.ng-athlete-no-catalog{min-height:180px;grid-column:1/-1;padding:20px;border:1px dashed #3c4b47;color:#b4cdbb;background:#171e22;font-size:12px}
-.ng-athlete-secondary{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.87fr) minmax(0,1fr);gap:7px;min-width:0}
-.ng-athlete-info{display:flex;flex-direction:column;min-width:0;min-height:126px;border:1px solid #3c4b47;border-radius:3px;background:#171e22;overflow:hidden}
-.ng-athlete-info>header{display:flex;align-items:center;min-height:33px;flex:0 0 33px;padding:0 10px;background:#1e262a;border-bottom:1px solid #3c4b47;font-size:10.8px;line-height:1.2;font-weight:820;letter-spacing:.02em;color:#f3e8ce}
-.ng-athlete-detailrows{display:flex;flex-direction:column;min-height:0;padding:5px 8px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#607964 #152b22}
-.ng-athlete-detailrows>div{display:grid;grid-template-columns:minmax(75px,.55fr) minmax(0,1fr);gap:6px;align-items:center;min-height:27px;padding:4px 5px;border-bottom:1px solid #3c4b47}
-.ng-athlete-detailrows>div:last-child{border-bottom:0}
-.ng-athlete-detailrows small,
-.ng-athlete-connection span{color:#b4cdbb;font-size:9px;font-weight:730;letter-spacing:.025em}
-.ng-athlete-detailrows strong{color:#e2ece0;font-size:10.7px;font-weight:550;line-height:1.24;overflow-wrap:anywhere}
-.ng-athlete-unavailable{padding:14px 10px;margin:0;color:#b4cdbb;font-size:11px;line-height:1.35}
-.ng-athlete-career-numbers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:7px}
-.ng-athlete-career-numbers>div{display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;min-width:0;padding:8px 2px;border:1px solid #3c4b47;background:#1e262a}
-.ng-athlete-career-numbers strong{font-size:18px;color:#e8d6a2;font-variant-numeric:tabular-nums}
-.ng-athlete-career-numbers small{font-size:9px;color:#b4cdbb}
-.ng-athlete-connection button{border:0;background:transparent;text-align:right;font-size:10.5px;font-weight:720;color:#eadca3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ng-athlete-connection button:hover{text-decoration:underline}
-.ng-athlete-info .ng-entity-open{margin-top:auto;flex:0 0 auto;font-size:9.5px!important;min-height:29px;padding:5px 10px}
-.ng-athlete-info .ng-horse-context-actions{padding:4px 6px!important;margin-top:auto!important;border-top:1px solid #3c4b47}
-.ng-athlete-info .ng-horse-context-actions button{padding:5px 6px!important;font-size:9.3px!important}
 @media(min-width:1081px) and (max-width:1380px){
-.ng-athlete-groups{gap:5px}
-.ng-athlete-category>header{padding:6px 6px;min-height:33px}
-.ng-athlete-category>header h3{font-size:10.1px}
-.ng-athlete-category>header small{font-size:7.2px}
-.ng-athlete-attributes{padding:3px 4px 4px}
-.ng-athlete-attribute{font-size:10px;min-height:26px;padding:3px}
-.ng-athlete-attribute strong{font-size:10.5px}
-.ng-athlete-secondary{gap:5px}
 }
 @media(min-width:1081px) and (max-height:750px){
-.ng-athlete-group-heading{min-height:21px;padding:3px 8px}
-.ng-athlete-category>header{min-height:30px;padding:5px 7px}
-.ng-athlete-attribute{min-height:24px;padding:3px 5px}
-.ng-athlete-info>header{min-height:28px;flex-basis:28px}
-.ng-athlete-secondary .ng-athlete-info{min-height:105px}
 }
 @media(min-width:1081px){
 .ng-route-profile .ng-profile-person .ng-detail-cols-person{display:block!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;padding:0 2px 6px 0!important}
@@ -1752,10 +1552,6 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-person-rep-axes strong.known{color:#e8d59e}
 .ng-person-unrated{padding:8px 9px;margin:0;color:#b4cdbb;font-size:10.2px;line-height:1.35}
 .ng-person-rep-provenance{padding:8px 9px;color:#e0cc97;font-size:9px;letter-spacing:.035em}
-.ng-person-career-top{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:7px}
-.ng-person-career-top>div{padding:10px 9px;background:#1e262a;border:1px solid #3c4b47;min-width:0}
-.ng-person-career-top small{display:block;color:#b4cdbb;font-size:9px;letter-spacing:.025em}
-.ng-person-career-top strong{display:block;margin-top:3px;color:#f1dfad;font-size:16px;overflow-wrap:anywhere}
 .ng-person-work-card .ng-entity-links{max-height:174px;overflow-y:auto;scrollbar-width:thin}
 .ng-person-influence{display:flex;flex-direction:column;gap:4px;padding:10px;margin-top:auto;background:#1e262a;border-top:1px solid #3c4b47}
 .ng-person-influence b{font-size:9px;color:#e4d299;letter-spacing:.06em}
@@ -1877,28 +1673,12 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-route-profile .ng-profile-horse .ng-status-pills{margin-top:4px!important;gap:4px!important}
 .ng-route-profile .ng-profile-horse .ng-status-pills span{padding:2px 6px!important;font-size:var(--wtw-ui-profile-status)!important}
 .ng-route-profile .ng-profile-horse .ng-detail-cols-horse-overview{display:block!important;flex:1 1 0!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;overflow-x:hidden!important;padding:0 3px 6px 0!important;margin:0!important;scrollbar-width:thin;scrollbar-color:#4e6655 #151c1e;overflow:hidden!important;padding-bottom:0!important}
-.ng-route-profile .ng-profile-horse .ng-athlete-screen{display:flex!important;flex-direction:column!important;gap:5px!important;min-height:0!important;width:100%!important;height:auto!important;overflow:hidden!important}
-.ng-route-profile .ng-profile-horse .ng-athlete-groups{gap:5px!important;flex:0 0 auto!important}
-.ng-route-profile .ng-profile-horse .ng-athlete-group-heading{min-height:22px!important;padding:3px 8px!important;flex:0 0 auto!important}
-.ng-route-profile .ng-profile-horse .ng-athlete-category>header{min-height:29px!important;padding:5px 7px!important}
-.ng-route-profile .ng-profile-horse .ng-athlete-attributes{padding:2px 5px 3px!important}
-.ng-route-profile .ng-profile-horse .ng-athlete-attribute{min-height:23px!important;padding:3px 5px!important;line-height:1.1!important}
-.ng-route-profile .ng-profile-horse .ng-athlete-secondary{gap:5px!important;flex:0 0 auto!important;min-height:0!important}
-.ng-route-profile .ng-profile-horse .ng-athlete-info{min-height:0!important;height:auto!important;overflow:hidden!important}
-.ng-route-profile .ng-profile-horse .ng-athlete-info>header{min-height:29px!important;flex-basis:29px!important;padding:0 9px!important}
-.ng-route-profile .ng-profile-horse .ng-athlete-detailrows{padding:3px 7px!important;overflow:visible!important}
-.ng-route-profile .ng-profile-horse .ng-athlete-detailrows>div{min-height:23px!important;padding:3px 5px!important}
-.ng-route-profile .ng-profile-horse .ng-athlete-unavailable{padding:8px 10px!important}
-.ng-route-profile .ng-profile-horse .ng-athlete-info .ng-horse-context-actions{display:flex!important;flex-wrap:wrap!important;gap:4px!important;padding:4px 5px!important}
-.ng-route-profile .ng-profile-horse .ng-athlete-info .ng-horse-context-actions button{padding:4px 6px!important;font-size:9px!important}
 }
 @media(min-width:1081px) and (max-height:740px){
 .ng-route-profile .ng-profile-horse .ng-profile-badgeframe{width:54px!important;height:54px!important;flex-basis:54px!important}
 .ng-route-profile .ng-profile-horse .ng-profile-badgeframe img{width:53px!important;height:53px!important}
 .ng-route-profile .ng-profile-horse .ng-profile-intro{padding:5px 10px!important}
 .ng-route-profile .ng-profile-horse .ng-horse-biography{margin:2px 0!important}
-.ng-route-profile .ng-profile-horse .ng-athlete-category>header{min-height:26px!important;padding:4px 6px!important}
-.ng-route-profile .ng-profile-horse .ng-athlete-attribute{min-height:21px!important;padding:2px 5px!important}
 }
 .ng-tier1-biography{display:flex;align-items:center;flex-wrap:nowrap;gap:4px 14px;margin:4px 0 3px;min-width:0;max-width:100%}
 .ng-tier1-biography>span{display:inline-flex;align-items:center;gap:6px;min-width:0;border-right:1px solid #3c4b47;padding-right:12px}
@@ -2072,29 +1852,11 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-network-footer{flex-wrap:wrap}
 }
 .ng-search-page{display:flex;flex-direction:column;box-sizing:border-box;gap:9px;width:100%;height:100%;min-height:0;padding:9px;color:#eaf2e8;background:#171e22}
-.ng-search-intro{flex:0 0 auto;display:flex;flex-direction:column;gap:3px}
-.ng-search-intro h2{margin:0;font-size:19px;line-height:1.2;color:#f2e6c5}
-.ng-search-intro p{margin:0;font-size:11.5px;color:#b4cdbb}
 .ng-search-entry{box-sizing:border-box;display:flex;align-items:center;gap:10px;flex:0 0 42px;padding:0 12px;border:1px solid #3c4b47;border-radius:4px;background:#101518;color:#dfd2a1}
 .ng-search-entry:focus-within{border-color:#e9cb82;box-shadow:0 0 0 2px #e9cb8229}
 .ng-search-entry input{width:100%;height:100%;border:0;outline:0;background:transparent;font-size:14px;font-weight:570;color:#f6f7e9}
 .ng-search-entry input::placeholder{color:#94aa9d}
-.ng-search-count{display:flex;align-items:center;justify-content:space-between;flex:0 0 27px;min-height:27px;padding:3px 10px;box-sizing:border-box;border:1px solid #3c4b47;background:#1e262a;color:#e7d69d;font-size:10px;font-weight:770}
-.ng-search-count>span:last-child{color:#b4cdbb}
-.ng-search-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:5px;flex:1 1 0;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#6e886e #162a22}
-.ng-search-hit{display:flex;align-items:center;gap:10px;min-width:0;min-height:50px;padding:8px 11px;border:1px solid #3c4b47;border-radius:3px;text-align:left;background:#1e262a;color:#dfe9df;cursor:pointer}
-.ng-search-hit:nth-child(even){background:#1e262a}
-.ng-search-hit:hover,.ng-search-hit:focus-visible{background:#315e48;border-color:#5a816a;outline:0}
-.ng-search-hit[hidden]{display:none!important}
-.ng-search-kind{flex:0 0 67px;text-align:center;padding:4px;color:#f1d99f;background:#1e262a;border:1px solid #3c4b47;border-radius:3px;font-size:9px;font-weight:780}
-.ng-search-description{display:flex;flex:1 1 0;min-width:0;flex-direction:column;gap:3px}
-.ng-search-description strong{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ng-search-description small{font-size:10.5px;color:#b4cdbb;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ng-search-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;flex:0 0 36px;border-top:1px solid #3c4b47;padding:5px 1px 0}
-.ng-search-bottom button{padding:7px 10px;font-size:10px;font-weight:760;border:1px solid #3c4b47;border-radius:3px;color:#f0dda7;background:#252e32;cursor:pointer}
-.ng-search-bottom small{font-size:10px;color:#b4cdbb;text-align:right}
 @media(max-width:1100px){
-.ng-search-results{grid-template-columns:minmax(0,1fr)}
 }
 @media(min-width:1081px){
 .ng-global .ng-hist,.ng-global .ng-global-tools,
