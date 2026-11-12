@@ -5,6 +5,7 @@
  */
 import {trackProgram1999} from '/next/1999-track-program.mjs';
 import {WTW_ALTERNATE_STAKES_1999} from '/next/1999-alternate-stakes.mjs';
+import {WTW_REGIONAL_STAKES_1999} from '/next/1999-regional-stakes.mjs';
 import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-20261112-r7';
 import attributeCatalog from '/1999/engine/attribute-catalog.mjs';
 import {TRAINING_PLANS,createHorseTrainingRecord,horseTrainingSnapshot,
@@ -356,7 +357,7 @@ const activeRacecourses=get('1999-active-tracks','/api/1999/sim/tracks',worldCou
 const activeTrackIds=new Set(activeRacecourses.map(t=>t.id));
 const activeTrackNames=new Set(activeRacecourses.map(t=>t.name));
 const sourceStakes=get('1999-source-stakes','/api/1999/calendar',93);
-const allStakes1999=[...sourceStakes,...WTW_ALTERNATE_STAKES_1999]
+const allStakes1999=[...sourceStakes,...WTW_ALTERNATE_STAKES_1999,...WTW_REGIONAL_STAKES_1999]
  .filter(r=>activeTrackIds.has(r.trackId)||activeTrackNames.has(r.trackName));
 const stakesForTrack=name=>allStakes1999.filter(r=>r.trackName===name);
 const findStake=id=>allStakes1999.find(r=>r.id===id)||null;
