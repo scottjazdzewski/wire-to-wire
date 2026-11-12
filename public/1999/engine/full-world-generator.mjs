@@ -56,7 +56,17 @@ const unit=(seed,key)=>hash(seed,key)/4294967296;
 const pick=(arr,seed,key)=>arr[Math.floor(unit(seed,key)*arr.length)];
 const round=n=>Math.round(n*10000)/10000;
 const fmtLoc=x=>({city:x.locality??x.city??null,state:x.region??x.state??null,country:x.country??'USA'});
-const sourceTracks=canon.tracks;
+// Playable 1999 racing is U.S. and Canada only. Historical canon is never
+// rewritten; international records remain available in the historical archive.
+const DOMESTIC_REGIONS=new Set(('AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY DC AB BC MB NB NL NS NT NU ON PE QC SK YT').split(' '));
+const domesticTrack=t=>{
+ const country=String(t?.country||t?.countryCode||'').trim().toLowerCase().replace(/[^a-z]/g,'');
+ if(country)return ['us','usa','unitedstates','unitedstatesofamerica','ca','can','canada'].includes(country);
+ const region=String(t?.region||t?.state||'').trim().toUpperCase();
+ return DOMESTIC_REGIONS.has(region)||/^(ALABAMA|ALASKA|ARIZONA|ARKANSAS|CALIFORNIA|COLORADO|CONNECTICUT|DELAWARE|FLORIDA|GEORGIA|HAWAII|IDAHO|ILLINOIS|INDIANA|IOWA|KANSAS|KENTUCKY|LOUISIANA|MAINE|MARYLAND|MASSACHUSETTS|MICHIGAN|MINNESOTA|MISSISSIPPI|MISSOURI|MONTANA|NEBRASKA|NEVADA|NEW HAMPSHIRE|NEW JERSEY|NEW MEXICO|NEW YORK|NORTH CAROLINA|NORTH DAKOTA|OHIO|OKLAHOMA|OREGON|PENNSYLVANIA|RHODE ISLAND|SOUTH CAROLINA|SOUTH DAKOTA|TENNESSEE|TEXAS|UTAH|VERMONT|VIRGINIA|WASHINGTON|WEST VIRGINIA|WISCONSIN|WYOMING|ONTARIO|QUEBEC|BRITISH COLUMBIA|ALBERTA|MANITOBA|SASKATCHEWAN|NOVA SCOTIA|NEW BRUNSWICK|PRINCE EDWARD ISLAND|NEWFOUNDLAND AND LABRADOR)$/i.test(region);
+};
+const sourceTracks=canon.tracks.filter(domesticTrack);
+const NORTH_AMERICAN_FOALING_HUBS=TEST_FOALING_HUBS.filter(h=>h[2]==='United States'||h[2]==='Canada');
 function mixName(seed,i){const total=A.length*B.length*C.length,k=(i*71081+seed)%total;
  const a=A[k%A.length],b=B[Math.floor(k/A.length)%B.length],c=C[Math.floor(k/(A.length*B.length))%C.length];
  return a+' '+b+' '+c;}
@@ -136,7 +146,7 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const roleForIndex=index=>{if(index>=ACTIVE_STAFF_COUNT)return 'owner';let j=index;for(const [role,count] of ROLES){if(j<count)return role;j-=count}return 'owner';};
   const namedPeople=createGeographicNameRoster(seed,ACTIVE_STAFF_COUNT+ownersTotal,roleForIndex,sourcePeople.map(x=>x.name));
  const trackCount=sourceTracks.length,canonicalNames=new Set(locked.map(x=>x.name.toLowerCase()));
- if(trackCount<130)throw Error('Fewer than 130 physical tracks');
+ if(trackCount<20)throw Error('Insufficient U.S./Canadian racecourses for the playable 1999 calendar');
  function regionTrack(geo,id){
   if(!geo)return trackAt(hash(seed,id+':track')%trackCount);
   const reg=String(geo.region??geo.state??'').toLowerCase(),city=String(geo.locality??geo.city??'').toLowerCase();
@@ -248,14 +258,26 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   const raced=age>=2&&sex!=='STALLION',starts=raced?Math.floor(unit(seed,id+'starts')*Math.max(2,(age-1)*6)):0;
   const wins=starts?Math.min(starts,Math.floor(starts*(.08+unit(seed,id+'win')*.27))):0;
   const tempName=canonicalNames.has(n.toLowerCase())?n+' from '+FAMILY[i%FAMILY.length]:n;
-  const testFoaling=TEST_FOALING_HUBS[hash(seed,id+':foaling-geography')%TEST_FOALING_HUBS.length];
-  // An explicitly modeled birthplace is distinct from the horse's current 1999 barn.
-  const foalingGeography={locality:testFoaling[0],region:testFoaling[1],
-   country:testFoaling[2],countryCode:testFoaling[3],authority:'SIMULATED_1999_TEST_BIRTHPLACE'};
+  // A breeder is an actual game organization, distinct from the horse's
+  // current owner when purchased. Approximately 48% are owner-bred.
+  const homebred=hash(seed,id+':owner-bred')%100<48;
+  const breederIndex=homebred?oi:(oi+1+hash(seed,id+':external-breeder')%(ownersTotal-1))%ownersTotal;
+  const breederOwner=homebred?owner:ownerAt(breederIndex);
+  const foalingFarm=facilityAt(trainersTotal+hash(seed,breederOwner.id+':foaling-farm')%900);
+  const foalingGeography={
+   locality:foalingFarm.location.city,region:foalingFarm.location.state,
+   country:foalingFarm.location.country,
+   countryCode:foalingFarm.location.country==='Canada'?'CA':'US',
+   authority:'SIMULATED_1999_TEST_BIRTHPLACE_AT_FOALING_FARM'
+  };
   const foalMonth=1+hash(seed,id+':foaling-month')%6;
   const foalDay=1+hash(seed,id+':foaling-day')%28;
   const dateOfBirth=foalYear+'-'+pad(foalMonth,2)+'-'+pad(foalDay,2);
   const horse={id,name:tempName,nameStatus:'TEST_RENAME_ALLOWED',foalYear,ageAtOpening:age,sex,dateOfBirth,foalingGeography,
+   breederId:breederOwner.id,breeder:breederOwner.name,
+   breedingFarmId:foalingFarm.id,breedingFarm:foalingFarm.name,
+   homebred,breederRelationship:homebred?'OWNER_BRED':'OTHER_BREEDER',
+   breedingEvidence:'SIMULATED_1999_TEST_LINEAGE_NOT_HISTORICAL_FACT',
    sireId:sire.id,damId:dam.id,ownerId:owner.id,trainerId:trainer.id,stableTrackId:trainer.homeTrackId,
    location:trainer.location,stableId:trainer.barnId,source:'SIMULATED_HORSE_NOT_CANON',
    pedigree:{sireId:sire.id,damId:dam.id,parentBirthYears:[sire.foalYear,dam.foalYear]},
@@ -343,9 +365,12 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
    landAcres:0,equipmentCondition:round(.4+unit(seed,tr.id+'eq')*.58),staffingRequirement:Math.max(1,Math.ceil(tr.barnCapacity/6)),
     attributes:{horse_care:round(.3+unit(seed,tr.id+':care')*.69),training_environment:round(.3+unit(seed,tr.id+':training')*.69),biosecurity:round(.3+unit(seed,tr.id+':bio')*.69),facility_condition:round(.4+unit(seed,tr.id+'eq')*.58)},
    annualOperatingCost:money(tr.barnCapacity*29000),reputation:tr.reputation,source:'TEST_BARN'};}
-  if(index<trainersTotal+900){const i=index-trainersTotal,t=trackAt(hash(seed,'farm:'+i)%trackCount),id='F-TEST-FARM-'+pad(i+1);
+  if(index<trainersTotal+900){const i=index-trainersTotal,id='F-TEST-FARM-'+pad(i+1);
+   const hub=NORTH_AMERICAN_FOALING_HUBS[hash(seed,id+':breeding-hub')%NORTH_AMERICAN_FOALING_HUBS.length];
+   const locality={city:hub[0],state:hub[1],country:hub[2]};
+   const t=regionTrack(locality,id);
    return {id,name:generatedOrganizationName(seed,i+8000,'farm'),
-   type:'BREEDING_FARM',location:t.location,trackId:t.id,capacity:80+hash(seed,id+'cap')%350,occupied:0,
+   type:'BREEDING_FARM',location:locality,trackId:t.id,capacity:80+hash(seed,id+'cap')%350,occupied:0,
    landAcres:80+hash(seed,id+'acres')%1100,foalingBarns:2+hash(seed,id+'foal')%10,
     equipmentCondition:round(.4+unit(seed,id+':eq')*.59),staffingRequirement:Math.ceil((80+hash(seed,id+'cap')%350)/25),
     attributes:{horse_care:round(.3+unit(seed,id+':care')*.69),breeding_management:round(.3+unit(seed,id+':breed')*.69),biosecurity:round(.3+unit(seed,id+':bio')*.69),facility_condition:round(.4+unit(seed,id+':eq')*.59)},
@@ -366,8 +391,10 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   track.facility.barnStalls+=tr.barnCapacity;
   track.facility.occupied=(track.facility.occupied||0)+tr.generatedRunners;
  }
- for(const h of locked){const idx=trackIndexById.get(h.openingStable.trackId);
-  if(idx===undefined)throw Error('Canonical horse track not present');
+ for(const h of locked){const idx=trackIndexById.get(h.openingStable?.trackId);
+  // Preserve the original overseas historic stable in canon, but never add an
+  // overseas venue to the playable 1999 track economy.
+  if(idx===undefined)continue;
   trackAt(idx).facility.occupied++;
   trackAt(idx).facility.barnStalls++;
  }
@@ -413,10 +440,12 @@ export function create1999Universe({seed=19990101,mode=MODES[0]}={}){
   canonProtected:anchored,identityLayer:'CANON_LOCKS_PLUS_REPLACEABLE_TEST_IDENTITIES',attributesSchema:attributeCatalog.schema,
    nameModel:GEO_NAME_MODEL,
   counts:{horses:HORSE_POPULATION,canonicalHorses:anchored?CANON_HORSES:0,generatedHorses:generatedCount,owners:ownersTotal,trainers:trainersTotal,
-   people:peopleCount+(anchored?sourcePeople.length:0),tracks:trackCount,facilities:trainersTotal+900+trackCount,auctions:36,
+   people:peopleCount+(anchored?sourcePeople.length:0),tracks:trackCount,nonPlayableInternationalTracks:canon.tracks.length-trackCount,
+   facilities:trainersTotal+900+trackCount,auctions:36,
    sourceStallions:anchored?canon.activeStallions1999.length:0,sourceBroodmareLocations:anchored?canon.productionBroodmareBoarding1999.length:0},
   ownerAt,trainerAt,trackAt,horseAt,personAt,sourcePersonAt,auctionAt,facilityAt,conditionBook,ownedHorseIndexes,horseNameStatus:'TEST_NAMES_MAY_BE_REPLACED_AFTER_NAMING_ENGINE_UPDATES',
-  parentAt,attributeCatalog,sourceStakes:anchored?canon.stakes1999:[],sourceOrganizations:sourceOrgs,sourcePeople,excludedActiveStaffRoles:['groom','exercise_rider'],
+  parentAt,attributeCatalog,sourceStakes:anchored?canon.stakes1999.filter(r=>sourceTracks.some(t=>t.id===r.trackId||t.name===r.trackName)):[],
+   sourceOrganizations:sourceOrgs,sourcePeople,excludedActiveStaffRoles:['groom','exercise_rider'],
   audit:{ownershipSlots:ownersSlots.counts.reduce((a,b)=>a+b,0),trainerSlots:trainerSlots.counts.reduce((a,b)=>a+b,0),
    maxOwnerHorses:Math.max(...ownersSlots.counts),minOwnerHorses:Math.min(...ownersSlots.counts),
    maxTrainerHorses:Math.max(...trainerSlots.counts),minTrainerHorses:Math.min(...trainerSlots.counts)}};
