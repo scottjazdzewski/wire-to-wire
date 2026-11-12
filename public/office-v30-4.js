@@ -6,7 +6,7 @@
   const routeKicker = document.getElementById('routeKicker');
   const routeBody = document.getElementById('routeBody');
   const dateChip = document.querySelector('.dateChip');
-  let officeDate = new Date('2014-07-15T12:00:00');
+  let officeDate = new Date(window.__WTW_1999_MANAGEMENT__?'1999-01-01T12:00:00':'2014-07-15T12:00:00');
   let currentCase = 'powerline';
   let history = ['Office Overview'];
   let historyIndex = 0;
@@ -80,7 +80,7 @@
   function blankGameState(){
     return {
       version:'Office FM Track Profile Foundation v30',
-      date:'2014-07-15',
+      date:window.__WTW_1999_MANAGEMENT__?'1999-01-01':'2014-07-15',
       currentCase:'powerline',
       turn:0,
       resolvedCases:{},
@@ -100,7 +100,7 @@
   function currentGameDate(){
     const raw = dateChip ? dateChip.textContent.trim() : gameState.date;
     const m = raw.match(/\d{4}-\d{2}-\d{2}/);
-    return m ? m[0] : (gameState.date || '2014-07-15');
+    return m ? m[0] : (gameState.date || (window.__WTW_1999_MANAGEMENT__?'1999-01-01':'2014-07-15'));
   }
   function dueDate(days){
     if(days===null || days===undefined) return null;
@@ -1009,7 +1009,7 @@
     if(act==='Export'){ exportState(); return true; }
     if(act==='Reset'){
       localStorage.removeItem(STATE_KEY); localStorage.removeItem('wtwOfficeStateV29'); localStorage.removeItem('wtwOfficeStateV28'); localStorage.removeItem('wtwOfficeStateV27'); localStorage.removeItem('wtwOfficeStateV26'); localStorage.removeItem('wtwOfficeStateV25'); localStorage.removeItem('wtwOfficeStateV20'); localStorage.removeItem('wtwOfficeStateV19');
-      gameState = blankGameState(); closeRoute(); setDateChipText('2014-07-15'); currentCase='powerline'; loadCase('powerline'); processDueFollowUps(); syncResolvedMessages(); propagateOfficeState();
+      gameState = blankGameState(); closeRoute(); setDateChipText(window.__WTW_1999_MANAGEMENT__?'1999-01-01':'2014-07-15'); currentCase='powerline'; loadCase('powerline'); processDueFollowUps(); syncResolvedMessages(); propagateOfficeState();
       showToast('Reset Office state'); return true;
     }
     if(act==='Back'){ window.history.back(); return true; }
