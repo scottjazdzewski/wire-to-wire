@@ -1239,6 +1239,11 @@
       closeRoute();
     }finally{restoringBrowserRoute=false;}
   }
+  // One authoritative clock action for the existing 1999 management UI.
+  // Calls the native Office time progression, never a parallel UI-only date.
+  if(window.__WTW_1999_MANAGEMENT__){
+    window.__WTW_1999_MANAGEMENT__.advanceOneDay=()=>setDate('day');
+  }
   window.addEventListener('popstate',restoreLocationPage);
   // Office has its own daily decision desk; Escape is not a substitute for normal
   // back navigation but serves as a keyboard return shortcut.
