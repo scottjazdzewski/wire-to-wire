@@ -17,17 +17,18 @@ try{
  const existing=localStorage.getItem(MAIN);
  const state=safeParse(existing);
  const marker=localStorage.getItem(MARK);
- const is1999OrLater=typeof state?.date==='string' && /^\d{4}-\d{2}-\d{2}$/.test(state.date) && state.date>=START;
+ const hasValidDate=typeof state?.date==='string' && /^\d{4}-\d{2}-\d{2}$/.test(state.date);
+ const is1999Career=hasValidDate && (state.worldAnchor?.startDate===START || /^1999-\d{2}-\d{2}$/.test(state.date));
  // Bootstrap only once; never reset an in-progress 1999 career on page reload.
  if(marker!=='active'){
-   if(state&&typeof state.date==='string'&&state.date>=START){
+   if(is1999Career){
      localStorage.setItem(MARK,'active');
    }else{
      if(existing&&!localStorage.getItem(LEGACY))localStorage.setItem(LEGACY,existing);
      localStorage.setItem(MAIN,JSON.stringify(NONE));
      localStorage.setItem(MARK,'active');
    }
- }else if(!state || !is1999OrLater){
+ }else if(!is1999Career){
    // Reset or invalid earlier-era Office state cannot silently reintroduce 2014.
    if(existing&&!localStorage.getItem(LEGACY))localStorage.setItem(LEGACY,existing);
    localStorage.setItem(MAIN,JSON.stringify(NONE));
