@@ -67,6 +67,17 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   check('Trainer profile shows common and trainer-only detailed attributes',
    d.querySelectorAll('#wtwNextgen .ng-person-attribute').length>=21&&
    d.querySelector('#wtwNextgen .ng-person-workspace')?.textContent.includes('Conditioning'));
+  click('Personnel');await pause(180);
+  const jockeyTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Jockeys');
+  check('Existing jockey roster tab is present',Boolean(jockeyTab));
+  jockeyTab.click();await pause(300);
+  const jockeyButton=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
+  check('Jockey profile is navigable by exact roster entity',Boolean(jockeyButton));
+  jockeyButton.click();await pause(250);
+  check('Jockey profile uses jockey skills rather than trainer skills',
+   Boolean(d.querySelector('#wtwNextgen .ng-profile-person'))&&
+   d.querySelector('#wtwNextgen .ng-person-workspace')?.textContent.includes('Break Timing')&&
+   !d.querySelector('#wtwNextgen .ng-person-workspace')?.textContent.includes('Workout Design'));
   click('World');await pause(240);
   const peopleTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='People');
   check('Existing World people tab is available',Boolean(peopleTab));
