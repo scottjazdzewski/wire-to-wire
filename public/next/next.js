@@ -1998,7 +1998,14 @@ function liveStableRosterView(){
  })||'<section class="ng-functional">Attribute table unavailable.</section>';
  const horses=horseRows(),races=racingRows(),game=state(),files=currentMessages(),search=APP.stableSearch.trim().toLowerCase();
  const all=horses.map(h=>{const source=liveStableHorseData(h,races.find(r=>r.name===h.name),game,files);return APP.stableDemo?liveStableDemoApply(source):source;});
+ const stableCriteria=window.WTW1999RosterFilters?.get(APP,'Stable|Roster')||null;
  const filtered=all.filter(x=>{
+  if(stableCriteria&&!window.WTW1999RosterFilters.matches({
+   name:x.name,age:x.age,sex:x.sexFull||x.sex,status:x.activity,
+   health:x.health?.[1],readiness:x.ready?.[1],form:x.form?.[1],
+   earnings:x.money,owner:x.owner,trainer:x.trainer,breeder:x.breeder,
+   record:x.record,activity:x.activity,ability:x.ability?.value,potential:x.potential?.value
+  },stableCriteria))return false;
   if(APP.stableFilter==='entered'&&!x.entered)return false;
   if(APP.stableFilter==='targets'&&!x.hasTarget)return false;
   if(APP.stableFilter==='unassigned'&&x.hasTarget)return false;
@@ -2059,6 +2066,7 @@ function liveStableRosterView(){
    '" placeholder="Horse, owner, trainer, status…" autocomplete="off"/><div class="ng-rs-filters">'+filters+'</div>'+
    '<div class="ng-rs-mode"><button data-ng="stable-demo" data-val="toggle" class="'+(APP.stableDemo?'on':'')+'" title="Show fictional design-preview values; no game data changed">'+(APP.stableDemo?'DEMO ON':'DEMO OFF')+'</button><button data-ng="stable-mode" data-val="all" class="'+(APP.stableMode!=='compact'?'on':'')+'">ALL COLUMNS</button>'+
    '<button data-ng="stable-mode" data-val="compact" class="'+(APP.stableMode==='compact'?'on':'')+'">QUICK VIEW</button></div></div>'+
+  (window.WTW1999RosterFilters?.render(columns,stableCriteria,safe,'Stable|Roster')||'')+
   '<section class="ng-rs-roster"><header><strong>HORSE MANAGEMENT ROSTER</strong><span class="ng-stable-visible">'+filtered.length+' OF '+all.length+
    ' HORSES · CLICK HEADINGS TO SORT</span></header>'+
    '<div class="ng-rs-scroll" tabindex="0" aria-label="Sortable horse roster; horizontally scroll for every column"><table class="ng-rs-table '+(APP.stableMode==='compact'?'compact':'all')+
@@ -3336,7 +3344,8 @@ window.addEventListener('click',e=>{
  if(key==='stable-attribute-sort'){
   if(APP.stableAttributeSort===val)APP.stableAttributeDesc=!APP.stableAttributeDesc;
   else{APP.stableAttributeSort=val;APP.stableAttributeDesc=true}
-  if(!['name','age','sex','status'].includes(val))APP.stableAttributeKey=val;
+  // Sorting a visible column must NOT rearrange which attributes are displayed.
+  // The selector alone changes the highlighted attribute column.
   return paint();
  }
  if(key==='stable-filter'){APP.stableFilter=val;return paint()}
