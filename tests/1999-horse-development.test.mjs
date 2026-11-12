@@ -171,3 +171,27 @@ test('premium Stable interface uses the same dated career save and exposes real 
  assert.match(adapter,/simulateStableTrainingThrough\(game/);
  assert.match(office,/gameState.horseDevelopment=saved.horseDevelopment/);
 });
+
+test('180-day saves keep recent daily accounting and archive older costs per horse without duplication',()=>{
+ const horses=roster.slice(0,4),date='1999-07-01';
+ const game=simulateStableTrainingThrough({...game0(),date},
+  {horses,trainerById,seed:19990101,date}).game;
+ const ledger=game.horseDevelopment;
+ assert.equal(ledger.trainingDays,181);
+ assert.equal(ledger.ledger.length,90);
+ assert.ok(Object.keys(ledger.monthlyArchive).length>=2);
+ assert.equal(Object.values(ledger.monthlyArchive).reduce((a,x)=>a+x.days,0),91);
+ assert.ok(horses.every(h=>Object.values(ledger.monthlyArchive).some(
+  x=>Number(x.byHorse[h.id])>0)));
+ const cents=n=>Math.round(Number(n||0)*100);
+ const audited=cents(ledger.ledger.reduce((sum,x)=>sum+x.amount,0))+
+  Object.values(ledger.monthlyArchive).reduce((sum,x)=>sum+cents(x.total),0);
+ assert.equal(audited,cents(ledger.totalSpent));
+ assert.equal(trainingFinancials(game).entries,181);
+ assert.ok(horses.every(h=>ledger.horses[h.id].history.length===45));
+ const loaded=JSON.parse(JSON.stringify(game));
+ const replay=simulateStableTrainingThrough(loaded,{horses,trainerById,seed:19990101,date});
+ assert.equal(replay.daysProcessed,0);
+ assert.equal(replay.game.horseDevelopment.totalSpent,ledger.totalSpent);
+ assert.equal(replay.game.horseDevelopment.trainingDays,181);
+});
