@@ -90,3 +90,18 @@ test('business expansion remains a choice; finance, opening and damage never inv
  assert.equal(s.runtime.facilities.sites['F-RUN-FAC-OFFER-RACE'].contracts.length,0);
  assert.equal(s.event_log.filter(e=>e.kind==='FACILITY_ACQUIRED').length,1);
 });
+
+test('AI expands or improves its own facilities without bypassing reserves',()=>{
+ const w=world();let s=game(w);
+ s=funded(w,s,'O-RIVAL',900000000);
+ s=offer(w,s,'GROW','FARM');
+ s=apply(w,s,'ai-open','FACILITY_AI_CYCLE',{},'system');
+ const site='F-RUN-FAC-OFFER-GROW';
+ assert.equal(s.runtime.facilities.sites[site].stalls,20);
+ for(let i=0;i<31;i++)s=apply(w,s,'ai-day-'+i,'ADVANCE_DAY',{});
+ assert.equal(s.clock.date,'1999-02-01');
+ assert.equal(s.runtime.facilities.sites[site].upgrade.kind,'STALL_BLOCK');
+ assert.ok(s.runtime.finances.operation_balances_minor['O-RIVAL']<
+  900000000-100000000-22000000+1);
+ assert.equal(getFacilityPortfolio(s,w,'O-PLAYER').owned_sites,0);
+});

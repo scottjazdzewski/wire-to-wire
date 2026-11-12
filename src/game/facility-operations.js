@@ -109,20 +109,34 @@ function boarding(state,p,actor,emit){
 }
 function aiCycle(state,world,emit){
  const f=ensureRoot(state),month=state.clock.date.slice(0,7);
- let acquisitions=0;
+ let acquisitions=0,improvements=0;
  for(const id of Object.keys(state.runtime.finances.operation_balances_minor).sort()){
   if(id===state.player.operation_id||f.ai_month[id]===month)continue;
   organization(world,id);f.ai_month[id]=month;
-  if(Object.values(f.sites).filter(s=>s.owner_id===id).length>=4)continue;
-  const possible=Object.values(f.offers).filter(o=>!o.acquired_by&&
+  const owned=Object.values(f.sites).filter(s=>s.owner_id===id);
+  const possible=owned.length>=4?[]:Object.values(f.offers).filter(o=>!o.acquired_by&&
    funds(state,id)>=2*o.price_minor+90*o.daily_upkeep_minor);
   possible.sort((a,b)=>hash(state.rng.seed+month+id+a.id)-
    hash(state.rng.seed+month+id+b.id)||a.id.localeCompare(b.id));
-  if(possible.length){acquire(state,world,{operation_id:id,offer_id:possible[0].id},
-    {actor:'system'},emit);acquisitions++;}
+  if(possible.length){
+   acquire(state,world,{operation_id:id,offer_id:possible[0].id},
+    {actor:'system'},emit);acquisitions++;continue;
+  }
+  // AI reinvests using the same property upgrade commands and cash limits.
+  const candidates=owned.filter(s=>s.status==='ACTIVE'&&!s.upgrade)
+   .sort((a,b)=>a.quality-b.quality||a.id.localeCompare(b.id));
+  for(const s of candidates){
+   const choice=s.quality<75?'CARE_SYSTEM':
+    s.stalls+IMPROVEMENTS.STALL_BLOCK.stalls<=s.max_stalls?'STALL_BLOCK':null;
+   if(!choice)continue;
+   const work=IMPROVEMENTS[choice];
+   if(funds(state,id)<work.cost_minor+90*s.daily_upkeep_minor)continue;
+   improve(state,world,{operation_id:id,site_id:s.id,improvement:choice},
+    {actor:'system'},emit);improvements++;break;
+  }
  }
- if(acquisitions)emit('FACILITY_AI_EXPANSION',{month,acquisitions,
-  policy:'Same property purchase and reserve rules for player and AI'});
+ if(acquisitions||improvements)emit('FACILITY_AI_INVESTMENT',{month,
+  acquisitions,improvements,policy:'Same property and development rules as player'});
 }
 export function facilityAction({state,world,command,emit}){
  const f=ensureRoot(state),p=command.payload;
