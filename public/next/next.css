@@ -1803,6 +1803,14 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-horse-rating-row>strong.unknown{color:#8eaa9e}
 .ng-horse-rating-track,.ng-horse-rating-unassessed{height:5px;border-radius:2px;display:block;background:#2a3935;overflow:hidden}
 .ng-horse-rating-track i{display:block;height:100%;background:#66b77c}
+#wtwNextgen .ng-horse-rating-row.ability-high .ng-horse-rating-track i{background:#65c18a}
+#wtwNextgen .ng-horse-rating-row.ability-good .ng-horse-rating-track i{background:#d3c16b}
+#wtwNextgen .ng-horse-rating-row.ability-moderate .ng-horse-rating-track i{background:#d39555}
+#wtwNextgen .ng-horse-rating-row.ability-low .ng-horse-rating-track i{background:#d06473}
+#wtwNextgen .ng-horse-rating-row.ability-high>strong.known{color:#82d49e}
+#wtwNextgen .ng-horse-rating-row.ability-good>strong.known{color:#e1ce87}
+#wtwNextgen .ng-horse-rating-row.ability-moderate>strong.known{color:#e9ac69}
+#wtwNextgen .ng-horse-rating-row.ability-low>strong.known{color:#e6818b}
 .ng-horse-rating-unassessed{height:3px;background:#34413b}
 .ng-horse-mgr-rows{padding:3px 6px}
 .ng-horse-mgr-row{display:grid;grid-template-columns:minmax(0,.78fr) minmax(0,1fr);align-items:center;min-height:22px;gap:6px;padding:3px 5px;border-bottom:1px solid #303b39;font-size:10px}
@@ -2989,12 +2997,6 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  gap:4px;white-space:nowrap;
 }
 
-/* 1999 restored Tier One horse owner-identity slot: a replaceable crest, never WTW branding. */
-#wtwNextgen .ng-horse-owner-group{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:4px 0 3px;padding:4px 7px;border:1px solid #43564c;background:#202a28;border-radius:3px}
-#wtwNextgen .ng-horse-owner-group>span:first-child{font-size:9px;font-weight:800;color:#b9cbb7;letter-spacing:.05em}
-#wtwNextgen .ng-horse-owner-group strong{font-size:11px;font-weight:760;color:#f0deb7}
-#wtwNextgen .ng-horse-owner-group .ng-org-mark{width:24px;height:24px;flex:0 0 24px}
-#wtwNextgen .ng-horse-owner-group .ng-org-initials{font-size:10px}
 /* Compact race file: conditions and provisional eligibility remain visibly distinct. */
 #wtwNextgen .ng-1999-race-file{display:flex;flex-direction:column;gap:10px;width:100%;min-width:0;min-height:0;color:#ebeadb}
 #wtwNextgen .ng-1999-race-file>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 19px;border:1px solid #56614f;border-top:2px solid #d3b773;background:#202b2b}
