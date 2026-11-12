@@ -41,7 +41,37 @@ function auctionList(){
   city:city(a.location),category:'SIMULATED SALE — NOT A COMPLETED TRANSACTION',
   confirmedDate:true,dateLabel:a.date,lots:[],previewIndex:i,source:'TEST_CONDITION_AND_MARKET'}));
 }
-function makeDepartmentRows(section,page){
+function makeDepartmentRows(section,page,context={}){
+ if(section==='Racing'){
+  const date=context.date||'1999-01-01';
+  const meets=context.racingMode||'meets';
+  if(page==='Overview')return meets==='mine'?[]:null;
+  if(page==='Entries'||page==='Results')return []; // No committed 1999 runners/results.
+  if(page==='Stakes'){
+   const stakes=get('stakes','/api/1999/calendar',93);
+   return stakes.filter(r=>r.localDate>=date).map(r=>({
+    _kind:'race',_name:r.name,_track:r.trackName,_iso:r.localDate,
+    date:r.localDate,track:r.trackName,race:r.name,
+    class:r.status||r.division||'STAKES',surface:r.surface||'',
+    distance:r.distanceF?String(r.distanceF)+'f':'',
+    purse:r.purse1999?money(r.purse1999):'',horse:'',base:'',ship:'',
+    jockey:'',trainer:'',ready:'',status:'1999 CANON SCHEDULE · NOT ENTERED'}));
+  }
+  if(page==='Race Planning'){
+   const tracks=get('racing-tracks','/api/1999/sim/tracks',134);
+   const rows=[];
+   for(let i=0;i<tracks.length;i++){
+    const card=q('/api/1999/sim/conditions','date='+encodeURIComponent(date)+'&trackIndex='+i);
+    for(const r of card.races||[])rows.push({
+     _kind:'race',_name:r.id,_track:r.trackName,_iso:r.date,
+     date:r.date,track:r.trackName,race:'R'+r.number,class:r.conditions,
+     surface:r.surface,distance:String(r.distanceFurlongs)+'f',
+     purse:money(r.purse),horse:'',base:'',ship:'',jockey:'',trainer:'',
+     ready:'',status:'TEST CONDITION BOOK · NOT ENTERED'});
+   }
+   return rows;
+  }
+ }
  if(section==='Breeding'&&page==='Stallions'){
   return activeStallions.map(h=>({_kind:'horse',_name:h.name,_canonId:h.id,name:h.name,horse:h.name,
    age:String(1999-Number(h.firstBreedingSeason)),sex:'STALLION',sire:'',dam:'',
@@ -98,10 +128,10 @@ function makeDepartmentRows(section,page){
  return null;
 }
 const departmentCache=new Map();
-function departmentRows(section,page){
- const key=section+'|'+page;
+function departmentRows(section,page,context={}){
+ const key=section+'|'+page+(section==='Racing'?'|'+(context.date||'1999-01-01')+'|'+(context.racingMode||'meets'):'');
  if(departmentCache.has(key))return departmentCache.get(key);
- const rows=makeDepartmentRows(section,page);
+ const rows=makeDepartmentRows(section,page,context);
  if(Array.isArray(rows))departmentCache.set(key,rows);
  return rows;
 }
