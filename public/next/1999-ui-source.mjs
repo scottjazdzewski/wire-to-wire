@@ -140,6 +140,7 @@ function sourceFacts(name){
   connections:{trainer,owner:ownerNames.get(h.ownerId)||selectedOwner,breeder:h.breeder||h.breederName||''},
   name:h.name,ability:h.ability||null,source:source?'1999_CANON_LOCKED':'1999_TEST_GENERATED',
   racing_status:h.racingStatus1999||h.racingStatus||'SOURCE_STATUS_NOT_VERIFIED',
+  openingCondition:h.openingCondition||null,
   record:!source&&h.career&&Number.isInteger(h.career.starts)?{
    starts:h.career.starts,wins:h.career.wins,seconds:h.career.seconds,thirds:h.career.thirds,
    earnings:h.career.earnings,lastRaced:h.career.lastRaceDate,
@@ -162,6 +163,7 @@ function stableHorsePreview(name){
   _id:h.id,_testGenerated:!source,_testAttrs:h.attributes||{},_testCareer:h.career||{},_testFinances:h.finances||{},
   _testReputation:h.reputation||{},_testAbility:h.ability||null,
   _testRelationships:h.relationships||{},_preferredJockeyId:h.preferredJockeyId||'',
+  _openingCondition:h.openingCondition||null,
   racingStatus1999:h.racingStatus1999||h.racingStatus||'SOURCE_STATUS_NOT_VERIFIED',
    ca:String(h.ability?.currentStars??''),pa:String(h.ability?.potentialStars??''),
    age:String(h.ageAtDate??h.ageAtOpening??1999-Number(h.foalYear)),foalYear:h.foalYear,dateOfBirth:h.dateOfBirth||'',
@@ -401,6 +403,7 @@ function worldHorsePage(offset=0,limit=20,filter=''){
    _testAbility:h.ability||null,ca:String(h.ability?.currentStars??''),pa:String(h.ability?.potentialStars??''),
    racingStatus1999:h.racingStatus1999||h.racingStatus||'SOURCE_STATUS_NOT_VERIFIED',
    _testRelationships:h.relationships||{},_preferredJockeyId:h.preferredJockeyId||'',
+   _openingCondition:h.openingCondition||null,
     foalYear:h.foalYear,dateOfBirth:h.dateOfBirth||'',foalingGeography:h.foalingGeography||h.foalingLocation||h.foalingPlace||null,
    ownerId:h.ownerId||'',trainerId:h.trainerId||'',
    breederId:h.breederId||'',breeder:h.breeder||h.breederName||'',
