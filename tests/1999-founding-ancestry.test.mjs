@@ -31,7 +31,7 @@ test('each historic pedigree edge is by source parent ID, not a fabricated sale 
  assert.ok(tree.edges.length>0);
  assert.ok(tree.edges.every(e=>recordIds.has(e.childId)&&recordIds.has(e.parentId)));
  assert.ok(tree.edges.every(e=>['SIRE','DAM'].includes(e.role)));
- assert.ok(tree.edges.every(e=>e.source==='EXACT_HISTORICAL_PARENT_ID'));
+ assert.ok(tree.edges.every(e=>['EXACT_HISTORICAL_PARENT_ID','EXACT_SOURCE_PARENT_ID_TO_SELECTED_HISTORICAL_ROOT'].includes(e.source)));
  assert.ok(tree.missingNamedParents.every(p=>!recordIds.has(p.id)));
  assert.ok(tree.missingNamedParents.every(p=>p.referredBy.length>=1));
  assert.ok(tree.records.filter(x=>!x.activeIn1999).every(x=>x.sourceKind!=='GENERATED_TEST_HORSE'));
