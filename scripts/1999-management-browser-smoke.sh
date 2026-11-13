@@ -138,6 +138,16 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   check('Unapproved modeled ratings and legacy staff do NOT appear in personnel dossier',
    !d.querySelector('#wtwNextgen .ng-profile-person .test-modeled')&&
    d.querySelector('#wtwNextgen .ng-profile-person')?.textContent.includes('UNOBSERVED'));
+  click('World');await pause(220);
+  const trackTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Tracks');
+  check('World still includes the approved North American tracks tab',Boolean(trackTab));
+  trackTab.click();await pause(340);
+  const worldTracks=w.__WTW_NEXT__?.app?.departmentVisible||[];
+  check('Exactly 118 U.S./Canada/Cuba racecourses are visible with no international tracks',
+   worldTracks.length===118&&worldTracks.every(t=>t._kind==='track')&&
+   worldTracks.some(t=>t._canonId==='T-0102'&&t.name==='Oriental Park')&&
+   worldTracks.some(t=>t._canonId==='T-0118'&&t.status.includes('HISTORICAL'))&&
+   !worldTracks.some(t=>/Curragh|Newmarket|Ascot/.test(t.name)));
   click('Personnel');await pause(230);
   const ownersTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Owners');
   check('Ownership roster still uses approved Office navigation',Boolean(ownersTab));
