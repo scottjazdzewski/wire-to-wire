@@ -65,7 +65,7 @@ test('owner, trainer and bloodstock origin mixes are stable and cover appropriat
 test('full 11,202-person fictional populations retain global naming variety and cross-links',()=>{
  for(const seed of [19990101,23451233]){
   const w=createFictionalWorldNameEngine({worldId:'IntlProfessional-1999',seed});
-  assert.match(w.manifest.schema,/V6$/);
+  assert.match(w.manifest.schema,/V7$/);
   assert.equal(w.manifest.internationalProfessionalNameModel,INTERNATIONAL_PROFESSIONAL_NAME_MODEL);
   assert.equal(w.people.length,11202);
   assert.equal(w.owners.length,3308);
