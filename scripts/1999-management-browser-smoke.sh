@@ -121,10 +121,20 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   const sourcePersonButton=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
   check('1999 world person source row is navigable',Boolean(sourcePersonButton));
   sourcePersonButton.click();await pause(220);
-  check('Founding person opens the exact approved Horse-dossier workspace and biography',
-   Boolean(d.querySelector('#wtwNextgen .ng-profile-person.ng-profile-horse'))&&
+  const personDiagnostic=()=>JSON.stringify({
+   custom:w.__WTW_NEXT__?.app?.custom,section:w.__WTW_NEXT__?.app?.section,
+   page:w.__WTW_NEXT__?.app?.page,route:w.__WTW_NEXT__?.app?.routeId,
+   profiles:[...d.querySelectorAll('#wtwNextgen .ng-profile-view')].map(n=>n.className),
+   dossier:d.querySelectorAll('#wtwNextgen .ng-horse-dossier').length,
+   attributes:d.querySelectorAll('#wtwNextgen .ng-person-attribute-block').length,
+   summary:d.querySelector('#wtwNextgen')?.textContent.slice(-450),
+   errors:browserErrors.slice(-3)
+  });
+  if(!(Boolean(d.querySelector('#wtwNextgen .ng-profile-person.ng-profile-horse'))&&
    Boolean(d.querySelector('#wtwNextgen .ng-person-horse-dossier.ng-horse-dossier'))&&
-   Boolean(d.querySelector('#wtwNextgen .ng-person-attribute-block')));
+   Boolean(d.querySelector('#wtwNextgen .ng-person-attribute-block'))))
+   throw Error('Founding Horse-dossier mismatch '+personDiagnostic());
+  steps.push('Founding person uses the same Horse dossier and professional attribute workspace');
   check('Unapproved modeled ratings and legacy staff do NOT appear in personnel dossier',
    !d.querySelector('#wtwNextgen .ng-profile-person .test-modeled')&&
    d.querySelector('#wtwNextgen .ng-profile-person')?.textContent.includes('UNOBSERVED'));
