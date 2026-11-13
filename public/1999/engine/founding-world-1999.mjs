@@ -8,6 +8,7 @@
 import {openingWorld1999 as canon} from './canon-mini.mjs';
 import {create1999Universe} from './full-world-generator.mjs';
 import attributeCatalog from './attribute-catalog.mjs';
+import {createFoundingProfessionals1999,FOUNDING_PERSONNEL_SCHEMA} from './founding-personnel-1999.mjs';
 
 export const FOUNDING_WORLD_MODE='FOUNDING_1999';
 export const FOUNDING_WORLD_SCHEMA='WTW_1999_FOUNDING_WORLD_V1';
@@ -270,13 +271,12 @@ export function createFounding1999Universe({seed=19990101}={}) {
  const indexById=new Map(sourceHorses.map((h,i)=>[h.id,i]));
  stock.forEach((h,i)=>indexById.set(h.id,sourceHorses.length+i));
  const facilities=sourceOrganizations.filter(o=>/FARM|STUD|NURSERY|BLOODSTOCK/.test(String(o.type).toUpperCase()));
- const staffIndices=[...Array.from({length:18},(_,i)=>4200+i),
-  ...Array.from({length:7},(_,i)=>6000+i),
-  ...Array.from({length:5},(_,i)=>6550+i),
-  ...Array.from({length:4},(_,i)=>6980+i),
-  ...Array.from({length:4},(_,i)=>7400+i),
-  ...Array.from({length:2},(_,i)=>7760+i)];
+ // Fresh, regionally named TEST professionals for this founding world only.
+ // No old full-population staff, phantom employers, or inherited payroll.
  const trackCount=base.counts.tracks;
+ const professionalPool=createFoundingProfessionals1999({seed,
+  protectedNames:sourcePeople.map(p=>p.name),
+  tracks:Array.from({length:trackCount},(_,i)=>base.trackAt(i))});
  function ownerAt(i) {
   if(!Number.isInteger(i)||i<0||i>=sourceOrganizations.length)throw Error('Founder owner index');
   const source=sourceOrganizations[i],idx=ownerOriginalIndex.get(source.id);
@@ -390,16 +390,13 @@ export function createFounding1999Universe({seed=19990101}={}) {
    status:'FOUNDING_BOOKING_MARKET_NOT_YET_POPULATED',
    provenance:'1999_FOUNDING_ONLY__NO_PHANTOM_OWNER_BIDS'};
  }
- // Existing generated career staff may appear as unattached free agents for
- // early testing, never as employees of an invented farm or racing stable.
+ // Newly created, uncontracted people replace the previous full-world staff
+ // sampling. No grooms or exercise riders exist in the founding staff UI.
  function personAt(i){
-  if(!Number.isInteger(i)||i<0||i>=staffIndices.length)
+  if(!Number.isInteger(i)||i<0||i>=professionalPool.length)
    throw Error('Founding workforce index');
-  const p=base.personAt(staffIndices[i]);
-  return {...p,employerOrganizationId:null,
-   employmentStatus:'UNATTACHED_SCENARIO_FREE_AGENT',
-   source:'FOUNDING_1999_TEST_STAFF_NOT_HISTORICAL_PERSONNEL',
-   ...(p.role==='jockey'?{bookingMarket:jockeyBookingMarket(p)}:{})};
+  const p=professionalPool[i];
+  return p.role==='jockey'?{...p,bookingMarket:jockeyBookingMarket(p)}:p;
  }
  function auctionAt(i){
   if(!Number.isInteger(i)||i<0||i>=12)throw Error('Founding auction index');
@@ -420,7 +417,7 @@ export function createFounding1999Universe({seed=19990101}={}) {
  const counts={
   horses:sourceHorses.length,worldHorses:sourceHorses.length+stock.length,
   canonicalHorses:sourceHorses.length,generatedHorses:0,owners:sourceOrganizations.length,
-  trainers:trainingPeople.length,people:sourcePeople.length+staffIndices.length,
+  trainers:trainingPeople.length,people:sourcePeople.length+professionalPool.length,
   tracks:trackCount,nonPlayableInternationalTracks:canon.tracks.length-trackCount,
   facilities:trainerList.length+facilities.length+trackCount,breedingFarms:facilities.length,
   breedingMares:breedingMares.length,breedingStallions:sourceStallions.length,auctions:12,
@@ -462,6 +459,8 @@ export function createFounding1999Universe({seed=19990101}={}) {
    linkedHistoricalHorses:historicalLinks.horses.length,
    currentBreedingMares:breedingMares.length,currentStallions:sourceStallions.length,
    sourceBoardingMaresAvailable:sourceBoarding.length,
-   historyArchiveImmutable:true,provisionalOwnerIdsNotPermanent:true}
+   historyArchiveImmutable:true,provisionalOwnerIdsNotPermanent:true,
+   newProfessionalPool:professionalPool.length,professionalSchema:FOUNDING_PERSONNEL_SCHEMA,
+   originalGeneratedStaffImported:0}
  };
 }
