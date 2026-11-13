@@ -16,10 +16,10 @@ The previously selected 39 B01 runners all have the boundary `B01_APPROVED_1999_
 | Component | Current clean state | Authority boundary |
 |---|---:|---|
 | Founding organizations | 37 | 23 established IDs, 14 scenario-only provisional |
-| Organization principals | 37 | 13 established/approved; 24 additional proposals **pending user review** |
-| Named source + game-world people | 46 | Exactly linked to approved founder roster; six old B01-only trainers removed |
+| Organization principals | 37 | 12 established, 21 newly user-approved, four revised names still pending review (Harrowgate, Huntcross, Argosy Racing, Ledbetter Calder) |
+| Named source + game-world people | 47 | Includes newly proposed Ledbetter operating principal; six B01-only trainers remain excluded |
 | New professional candidates | 68 | Jockeys 26, trainers 10, farm managers 8, bloodstock agents 6, vets 4, farriers 4, racing secretaries 4, jockey agents 6 |
-| Total people exposed | 114 | 46 named identities + 68 new uncontracted professional candidates |
+| Total people exposed | 115 | 47 named identities + 68 uncontracted professional candidates |
 | Verified playable racing horses | **0** | No B01 racers carried forward; no new registrations certified |
 | Connected standing stallions | 18 | Existing source IDs and 1999 farms only |
 | Connected broodmares | 55 | Existing source IDs and 1999 farm/boarding references only |
@@ -42,9 +42,9 @@ The separate `founding-ancestry-1999.mjs` traces up to five generations from the
 
 ### Existing Office integration
 
-- The approved Office FM interface remains in `public/next/next.js` and `public/next/1999-ui-source.mjs`; do not redesign it.
+- The approved Office FM interface remains in `public/next/next.js` and `public/next/1999-ui-source.mjs`; do not redesign it. Leadership profiles now distinguish approved principals, four pending names and non-operating investors.
 - New-game API requests default to `FOUNDING_1999`. Full synthetic population benchmarks require an explicit engineering-only mode.
-- Personnel are individually named and age/role-rated, **uncontracted** with no inherited payroll. Grooms and exercise riders are permanently absent from player-facing personnel.
+- Personnel are individually named and age/role-rated, **uncontracted** with no inherited payroll. Magic Johnson remains at immutable `P-910018` as investor, not operating principal. Grooms and exercise riders are permanently absent from player-facing personnel.
 - Live finances show **NOT CERTIFIED** rather than copying invented balances from the retired 3,308-owner experiment.
 - Stallion profiles and broodmare views show their actual historical source IDs; UI does not duplicate the breeding population.
 - The Office Stable can legitimately be empty during initial world creation. Clicking between departments must work even with zero racehorses.
@@ -53,7 +53,7 @@ The separate `founding-ancestry-1999.mjs` traces up to five generations from the
 
 ## Next implementation steps, strictly in order
 
-1. **Accept/revise proposed leadership**: confirm the 24 proposed primary names and six secondary names in [the exact-ID leadership roster](./1999-founding-leadership-roster.md) rather than creating another set.
+1. **Close four revised name proposals**: the user approved 21 of 24 earlier proposed primary leaders and all six unchanged secondary leaders; newly suggested Graham Kincaid, Hugh Radcliffe, Sebastian Pryce and Daniel Calder still require explicit name approval in [the exact-ID leadership roster](./1999-founding-leadership-roster.md). Magic Johnson is a major NON-OPERATING Ledbetter investor.
 2. **Authorize the new birth and ownership foundation**: for each fictional candidate, decide the correct original breeder, foaling site, retained-owner or sale/transfer path, and later racing stable. No false historic pre-1999 transactions and no aliases; use game-approved new entity IDs.
 3. **Create the new 1999 horse population** using the actual released and screened naming/registration rules. Aim initially for a few hundred properly linked horses across the chosen farms and owner groups; 250–400 racing horses is a useful *planning estimate*, not approved canon or an excuse for arbitrary injection.
 4. **Create verified 1999 barns, staff appointments and jockey bookings**: distinguish farm operations from racing barns; every working horse must have one actual owner and one current barn, trainer, state and travel program. Professional staff contracts remain off until an approved employment transaction occurs.
@@ -65,7 +65,7 @@ The separate `founding-ancestry-1999.mjs` traces up to five generations from the
 
 - 37 organizations have **no registered opening racehorse**. The scenario is clean but cannot yet run a player/AI race.
 - No accepted naming-engine release is connected to the live registration workflow. The 84 juvenile/yearling records are only unregistered proposals.
-- The 24 additional leaders remain role/name proposals until approved.
+- Only four revised name proposals remain unapproved; 33 of 37 primary leadership identities are now approved/established. The 27 approved newly proposed people are not historical evidence.
 - New youngstock births, 1997–98 breeding outcomes, historic sale events, foaling locations, 1999 owner contracts and cash balances remain uncertified.
 - Some existing browser, training and visual regression suites were built around nonempty old B01 starting stables. They need QA designed for a deliberately empty opening world, not bogus horses added to pacify tests.
 - Performance tests using 325k synthetic animals are *engineering diagnostics only*, not the playable game world.
@@ -74,7 +74,7 @@ The separate `founding-ancestry-1999.mjs` traces up to five generations from the
 
 - Game-facing scenario: `public/1999/engine/founding-world-1999.mjs`
 - Founding source World registrar: `public/data/wtw-1999-founding-directory-v1.json`
-- Leadership: `public/1999/engine/founding-leadership-1999.mjs`, `docs/1999-founding-leadership-roster.md`
+- Leadership: `public/1999/engine/founding-leadership-1999.mjs` (V2), `docs/1999-founding-leadership-roster.md`
 - New unregistered offspring candidates: `public/1999/engine/founding-youngstock-candidates-1999.mjs`
 - Ancestor view: `public/1999/engine/founding-ancestry-1999.mjs`
 - API / player Office: `public/1999/engine/local-api.mjs`, `public/next/1999-ui-source.mjs`, `public/next/next.js`
