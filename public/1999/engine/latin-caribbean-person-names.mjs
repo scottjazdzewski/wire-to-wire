@@ -75,7 +75,7 @@ export const COUNTRY_NAME_PROFILES=Object.freeze({
   'José Luis Juan Carlos Miguel Ángel Rafael Julio Víctor Edwin',
   'María Carmen Ana Rosa Altagracia Mercedes Teresa',
   'María Yudelka Carolina Ana Patricia Yadira Maribel Vanessa',
-  'Rodríguez Pérez Martínez García Reyes Sánchez Cruz Díaz Morales Ortiz Núñez Santana Rosario Báez deJesus'),
+  'Rodríguez Pérez Martínez García Reyes Sánchez Cruz Díaz Morales Ortiz Núñez Santana Rosario Báez DeJesús'),
  AR:country(
   'Juan José Carlos Jorge Alberto Ricardo Roberto Raúl Héctor Osvaldo',
   'Juan Martín Diego Pablo Fernando Sebastián Federico Nicolás Mariano',
@@ -110,7 +110,7 @@ export function regionalGivenPool(countryCode,birthYear,feminine){
   throw Error('Unsupported Latin/Caribbean country or 1999 adult birth cohort');
  const older=birthYear<1960,kind=(older?'old':'young')+(feminine?'F':'M');
  // Inventories are deliberately layered, not claimed demographic frequency.
- return unique([...group[kind],...COMMON[kind]]);
+ return countryCode==='BR'?group[kind]:unique([...group[kind],...COMMON[kind]]);
 }
 export function regionalSurnamePool(countryCode){
  const group=COUNTRY_NAME_PROFILES[countryCode];
@@ -122,7 +122,7 @@ export function drawRegionalGiven(seed,index,countryCode,birthYear,feminine,atte
  const group=COUNTRY_NAME_PROFILES[countryCode];
  if(!group)throw Error('Unsupported Latin/Caribbean name origin');
  const kind=(birthYear<1960?'old':'young')+(feminine?'F':'M');
- const list=hash(seed,'regional-given-source:'+index+':'+attempt)%100<64?
+ const list=countryCode==='BR'||hash(seed,'regional-given-source:'+index+':'+attempt)%100<64?
   group[kind]:COMMON[kind];
  return pick(list,seed,'regional-given:'+index+':'+countryCode+':'+birthYear+':'+attempt);
 }
