@@ -401,7 +401,8 @@ export function createFictionalWorldNameEngine(input){
   farmContexts:orgContexts(farmNameMarkets,'farm'),
   breakingContexts:orgContexts(breakingNameMarkets,'breaking'),
   alignPrincipalSurnames:true,
-  ...(spec.ownerNamingPolicy??{})
+  ownerPartnershipLimit:spec.ownerNamingPolicy?.partnershipLimit??null,
+  soleOwnerPercent:spec.ownerNamingPolicy?.soleOwnerPercent??null
  });
  const owningOrganizations=Object.freeze(org.owners.map((name,i)=>{
   const id=makeId(worldId,'OWNER',i),principal=principalPeople[i];
