@@ -23,11 +23,16 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   w.addEventListener('error',e=>browserErrors.push(String(e.message)+' at '+String(e.filename)+':'+e.lineno));
   w.addEventListener('unhandledrejection',e=>browserErrors.push(String(e.reason)));
   check('1999 approved UI mounted',Boolean(d.querySelector('#wtwNextgen .ng-manager-shell')));
-  const visibleDate=d.querySelector('.ng-global-date strong')?.textContent.trim()||'';
+  let paintFailure=null;
+  let visibleDate=d.querySelector('.ng-global-date strong')?.textContent.trim()||'';
+  if(!visibleDate&&w.__WTW_NEXT__?.paint){
+   try{w.__WTW_NEXT__.paint()}catch(error){paintFailure=String(error?.stack||error)}
+   visibleDate=d.querySelector('.ng-global-date strong')?.textContent.trim()||'';
+  }
   check('Correct January 1 game date '+JSON.stringify({
    displayed:visibleDate,bootReady:!!w.__WTW_1999_UI_DATA__,
    frameText:d.querySelector('#wtwNextgen')?.textContent.slice(0,190),
-   app:!!w.__WTW_NEXT__,errorList:browserErrors.slice(-3)
+   app:!!w.__WTW_NEXT__,paintFailure,errorList:browserErrors.slice(-3)
   }),visibleDate==='1999-01-01');
   const ui=w.__WTW_1999_UI_DATA__;
   check('1999 data adapter initialized',Boolean(ui));
