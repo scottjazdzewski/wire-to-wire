@@ -79,6 +79,10 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   // Release the previous racing select before switching departments.
   d.activeElement?.blur?.();
   click('Breeding');await pause(180);
+  let breedingPaintFailure=null;
+  try{w.__WTW_NEXT__?.paint?.()}catch(error){breedingPaintFailure=String(error?.stack||error)}
+  check('Breeding switch paints without error '+String(breedingPaintFailure),
+   !breedingPaintFailure);
   check('Original Breeding screen shown',Boolean(d.querySelector('.ng-manager-stage')));
   const breedingView=d.querySelector('#wtwNextgen select[data-ng-select="department-tab"]');
   check('Breeding uses its approved compact in-page view picker',Boolean(breedingView));
