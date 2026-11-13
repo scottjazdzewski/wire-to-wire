@@ -37,6 +37,7 @@ capture founder-owner '?ui=FoundingProfile%3Aownership%3AO-000014' 'ng-track-wor
 capture founder-facility '?ui=FoundingProfile%3Afacility%3AO-000068' 'ng-track-workspace'
 capture personnel '?ui=Personnel' 'ng-manager-screen|ng-dept-roster'
 capture facilities '?ui=Facilities' 'ng-manager-screen|ng-dept-roster'
+capture facility-workspace-preview 'facility-workspace-preview.html' 'data-id="preview-belmont"'
 capture finances '?ui=Finances' 'ng-manager-screen|ng-dept-roster'
 capture breeding '?ui=Breeding' 'ng-manager-screen|ng-dept-roster'
 capture history-vault 'archive/' 'History Vault'
