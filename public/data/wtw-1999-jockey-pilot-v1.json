@@ -1,23 +1,26 @@
 {
   "schema": "WTW_1999_JOCKEY_PILOT_IDENTITY_ROSTER_V1",
-  "version": "1999-11-13-elite-first-identity-review-v2",
+  "version": "2026-11-13-v3-user-male-jockey-identities-woodbine-new-york",
   "authority": {
     "identity": "public/data/wtw-1999-world-directory-v33.json people where role=JOCKEY",
     "foundationCast": "1999 START SNAPSHOT — 1999 TRAINER & JOCKEY FOUNDATION CAST — v0.1",
     "foundationCastUrl": "https://docs.google.com/document/d/1l2_PXxeMbPBbD1f6ysEPeLhj9cIJjSxopqKJjPmx4V4/edit",
-    "interpretation": "Legacy names and ages retained as proposals where exact canonical person name matches. Current v3.3 person ID, name and geography remain authoritative. No contracts/ratings/mounts."
+    "interpretation": "Legacy names and ages retained as proposals where exact canonical person name matches. Current v3.3 person ID, name and geography remain authoritative. No contracts/ratings/mounts.",
+    "restoration": "User directly approved Simonne Beaulieu as male Woodbine-based big-day New York rider Nov 13, 2026. Separate new 1999-jockey pilot ID; no collision with historical v3.3 IDs."
   },
   "counts": {
     "canonicalJockeys": 37,
     "selectedPilot": 26,
-    "reserve": 11,
+    "reserve": 12,
     "originalFoundationCastNamed": 13,
     "originalExactNameMatches": 9,
     "originalNamesNotInV33": 4,
     "sourceRecordConflicts": 0,
-    "liveFoundingPrincipalsUnchanged": 41
+    "liveFoundingPrincipalsUnchanged": 41,
+    "totalJockeysWithUserApprovedRestoration": 38,
+    "restoredByUser": 1
   },
-  "pilotPurpose": "SHOW_EXISTING_CANONICAL_JOCKEY_IDENTITIES_IN_PERSONNEL_ONLY; NOT_RACE_READY_WORKFORCE_RELEASE",
+  "pilotPurpose": "FOUNDATION_1999_PERSONNEL_IDENTITY_ROSTER_ONLY_NOT_RACE_READY",
   "foundationCastReconciliation": {
     "exactMatches": [
       {
@@ -85,7 +88,7 @@
       {
         "name": "Simonne Beaulieu",
         "ageProposal1999": 32,
-        "disposition": "LEGACY_NAME_REQUIRES_IDENTITY_REVIEW; DO_NOT_OVERWRITE_EXISTING_V33_IDENTITY"
+        "disposition": "USER_APPROVED_RESTORATION_AS_NEW_PILOT_ID_P-1999-J-000001; V33_ORIGINAL_UNMODIFIED"
       }
     ]
   },
@@ -228,7 +231,10 @@
       "originalFoundationDescription": "Strong finishing rider; effective with nervous horses",
       "reviewSequence": 1,
       "eliteFirstPriority": true,
-      "potentialEliteAssessment": "FOUNDATION_CAST_DESCRIPTIVE_ONLY"
+      "potentialEliteAssessment": "FOUNDATION_CAST_DESCRIPTIVE_ONLY",
+      "gender": "MALE",
+      "pronouns": "he/him",
+      "genderAuthority": "USER_DIRECT_APPROVAL_2026_11_13"
     },
     {
       "id": "P-000058",
@@ -995,7 +1001,7 @@
       "birthplace": "Chicago, Illinois, USA",
       "homeTrackId": "T-0029",
       "homeTrack": "Hollywood Park",
-      "pilotStatus": "SELECTED_IDENTITY_ONLY",
+      "pilotStatus": "RESERVE_CANONICAL_IDENTITY",
       "ageAtOpening": null,
       "foundationCastProposedAge1999": null,
       "foundationCastNameMatched": false,
@@ -1125,16 +1131,52 @@
       "reviewSequence": 4,
       "eliteFirstPriority": false,
       "potentialEliteAssessment": "NOT_ASSESSED"
+    },
+    {
+      "id": "P-1999-J-000001",
+      "name": "Simonne Beaulieu",
+      "role": "JOCKEY",
+      "sourceStatus": "USER_APPROVED_RESTORATION_FROM_1999_FOUNDATION_CAST",
+      "base": "Ontario, Canada",
+      "birthplace": null,
+      "homeTrackId": "T-0039",
+      "homeTrack": "Woodbine",
+      "secondaryCircuit": "NEW_YORK_SELECTED_MAJOR_STAKES_DAYS",
+      "availabilityPolicy": "CAN_TRAVEL_TO_NEW_YORK_MAJOR_RACES_WHEN_BOOKED_AND_SPACING_ALLOWS",
+      "seasonalResidenceStatus": "WOODBINE_PRIMARY_BASE_NO_PERMANENT_NY_RELOCATION",
+      "travelBookingPolicy": "NO_AUTOMATIC_MOUNTS; PHYSICAL_TRAVEL_AND_CALENDAR_CONSTRAINTS_APPLY",
+      "pilotStatus": "SELECTED_IDENTITY_ONLY",
+      "gender": "MALE",
+      "pronouns": "he/him",
+      "genderAuthority": "USER_DIRECT_APPROVAL_2026_11_13",
+      "ageAtOpening": null,
+      "foundationCastProposedAge1999": 32,
+      "foundationCastNameMatched": true,
+      "abilityStatus": "NOT_SELECTED_FOR_SCORING",
+      "employmentStatus": "UNASSIGNED",
+      "jockeyAgentId": null,
+      "assignedHorseIds": [],
+      "bookedMounts": [],
+      "contract": null,
+      "performanceRatings": null,
+      "earnings": null,
+      "recordProvenance": "ORIGINAL_1999_FOUNDATION_CAST_RESTORED_BY_USER_2026_11_13_NOT_V33_CANON",
+      "originalFoundationProfessionalClass": "WOODBINE LEADING RIDER / US MAJOR-DAY SHIPPER",
+      "originalFoundationDescription": "Patient turf positioning; accomplished Ontario rider who takes selected stakes mounts in New York on major days.",
+      "reviewSequence": 1,
+      "eliteFirstPriority": true,
+      "potentialEliteAssessment": "FOUNDATION_CAST_DESCRIPTIVE_ONLY",
+      "isRestoredUserApprovedIdentity": true
     }
   ],
   "eliteFirstReview": {
-    "status": "SOURCE_PROFILE_PRIORITY_ONLY_NOT_ABILITY_RATINGS",
+    "status": "SOURCE_PROFILE_PRIORITY_AND_USER_APPROVED_GENDER_NOT_ABILITY_RATINGS",
     "canonicallyMatchedIds": [
       "P-000053",
       "P-000055",
       "P-000057"
     ],
-    "count": 3,
+    "count": 4,
     "priority": "Review established elite jockey IDs first; fill elite cohort from original historical roster only after exact identity reconciliation.",
     "originalFoundingCastUrl": "https://docs.google.com/document/d/1l2_PXxeMbPBbD1f6ysEPeLhj9cIJjSxopqKJjPmx4V4/edit",
     "legacyEliteNeedingIdentityReview": [
@@ -1149,14 +1191,16 @@
         "originalAgeProposal1999": 39,
         "sourceDescription": "Veteran major-circuit California rider",
         "note": "No confirmed canonical v3.3 identity"
-      },
-      {
-        "name": "Simonne Beaulieu",
-        "originalAgeProposal1999": 32,
-        "sourceDescription": "Woodbine-leading Ontario rider",
-        "note": "Do NOT alias to Nico Valenti P-000065"
       }
     ],
-    "keepFoundationCastOnlyNamesForReview": true
+    "keepFoundationCastOnlyNamesForReview": true,
+    "userApprovedRestoration": {
+      "name": "Simonne Beaulieu",
+      "id": "P-1999-J-000001",
+      "gender": "MALE",
+      "primary": "Woodbine / Ontario",
+      "selectedMajorDayTravel": "New York",
+      "noAutoBookings": true
+    }
   }
 }
