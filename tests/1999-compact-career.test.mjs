@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import {createCareerDelta,recoverCareerDelta,encodeCareerSave,decodeCareerSave,
  packCareerFile,unpackCareerFile,COMPACT_CAREER_SCHEMA} from '../public/1999/engine/compact-career.mjs';
 
-const profile={schema:'WTW_WORLD_PROFILE_V1',seed:19990101,population:325000,
- mode:'CANON_ANCHORED_TEST',generator:'WTW_1999_FULL_SCALE_TEST_V1'};
+const profile={schema:'WTW_WORLD_PROFILE_V1',seed:19990101,population:73,
+ mode:'FOUNDING_1999',generator:'WTW_1999_FOUNDING_WORLD_V1'};
 const baseline=()=>({
- version:'WTW_1999_CLEAN_CAREER_V3',schema:'WTW_1999_CLEAN_CAREER_V3',
+ version:'WTW_1999_FOUNDING_CAREER_V1',schema:'WTW_1999_FOUNDING_CAREER_V1',
  date:'1999-01-01',currentCase:'opening-stable',turn:0,
- worldAnchor:{schema:'WTW_1999_CLEAN_CAREER_V3',startDate:'1999-01-01',
-  seed:19990101,mode:'CANON_ANCHORED_TEST',population:325000,
+ worldAnchor:{schema:'WTW_1999_FOUNDING_CAREER_V1',startDate:'1999-01-01',
+  seed:19990101,mode:'FOUNDING_1999',population:73,
   worldProfile:profile,historicalResultsImmutable:true},
  horseState:{},ownerState:{},staffState:{},finances:{},decisionLog:[],followUps:[],
  ephemeralTestKey:'to remove'
@@ -19,13 +19,13 @@ test('compact save roundtrips sparse game changes, Unicode, arrays and deletions
  const initial=baseline(),played=structuredClone(initial);
  delete played.ephemeralTestKey;
  played.date='1999-09-17';played.turn=259;
- played.horseState['H-TEST-1999-000001']={
+ played.horseState['H-UNIT-SESSION-0001']={
   status:'IN_TRAINING',reputation:85,notes:'Café del Mar — vitória'};
- played.ownerState['O-TEST-1999-1']={cash:1523125,trust:66};
+ played.ownerState['O-000011']={cash:1523125,trust:66};
  played.decisionLog.push({date:'1999-09-17',type:'RACE',raceId:'R-00001',position:2});
  const delta=createCareerDelta(played,initial,profile);
  assert.equal(delta.schema,COMPACT_CAREER_SCHEMA);
- assert.ok(!JSON.stringify(delta).includes('325000 horse profiles'));
+ assert.ok(!JSON.stringify(delta).includes('unapproved bulk horse profiles'));
  assert.deepEqual(recoverCareerDelta(delta,initial),played);
  const encoded=await encodeCareerSave(played,initial,profile);
  const binary=packCareerFile(encoded);
@@ -53,5 +53,5 @@ test('no entire-world snapshot is serialized when the save is unchanged',async()
  const encoded=await encodeCareerSave(base,base,profile);
  const restored=await decodeCareerSave(encoded,base);
  assert.deepEqual(restored,base);
- assert.ok(encoded.bytes.length<2048,'Seed-only save must not materialize 325k profiles');
+ assert.ok(encoded.bytes.length<2048,'Seed-only save must not materialize discarded test-world profiles');
 });
