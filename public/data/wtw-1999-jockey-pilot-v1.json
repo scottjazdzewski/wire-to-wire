@@ -416,7 +416,7 @@
       "role": "JOCKEY",
       "sourceStatus": "CANONICAL",
       "base": "Carencro, Louisiana, USA",
-      "birthplace": "Houston, Texas, USA",
+      "birthplace": "Louisiana, USA",
       "homeTrackId": "T-0056",
       "homeTrack": "Evangeline Downs",
       "pilotStatus": "SELECTED_IDENTITY_ONLY",
@@ -433,10 +433,11 @@
       "earnings": null,
       "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
       "originalFoundationProfessionalClass": null,
-      "originalFoundationDescription": null,
+      "originalFoundationDescription": "Louisiana-born, based in Carencro near Evangeline Downs; established Louisiana circuit rider, particularly effective in sprints.",
       "reviewSequence": 2,
       "eliteFirstPriority": false,
-      "potentialEliteAssessment": "NOT_ASSESSED"
+      "potentialEliteAssessment": "NOT_ASSESSED",
+      "birthplaceAuthority": "USER_DIRECT_CORRECTION_2026_11_13_CITY_NOT_SPECIFIED"
     },
     {
       "id": "P-000065",
