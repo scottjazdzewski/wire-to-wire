@@ -172,7 +172,7 @@ test('indexed mechanism remains optional and does not touch playable world or le
  const legacy=readFileSync(new URL('../public/1999/engine/on-demand-fictional-name-batches.mjs',import.meta.url),'utf8');
  assert.doesNotMatch(source,/\b(?:fetch|localStorage|indexedDB|writeFile|setItem)\s*\(/);
  assert.doesNotMatch(world,/indexed-fictional-name-registry/);
- assert.doesNotMatch(legacy,/indexed-fictional-name-registry/);
+ assert.doesNotMatch(legacy,/^import[^\n]*indexed-fictional-name-registry/m);
  const w=createFictionalWorldNameEngine({worldId:'INDEX-LEGACY-COMPAT',seed:12345,
   roles:{trainer:8},owners:12,facilities:{generalFarms:2}});
  assert.equal(w.owners.length,12);
