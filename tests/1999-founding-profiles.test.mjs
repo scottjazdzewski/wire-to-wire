@@ -86,7 +86,7 @@ test('118 North American incl. Cuba and 16 historical closures visible; ZERO int
  assert.ok(domestic.some(t=>t.name==='Oriental Park'&&t.country==='Cuba'));
  const names=new Set(domestic.map(t=>t.id));
  assert.ok(directory.tracks.every(t=>names.has(t.id)));
- assert.match(office,/data\.tracks=\{\.\.\.data,tracks:\[\.\.\.data\.tracks,\.\.\.missing\.map\(t=>\(\{/);
+ assert.match(office,/data=\{\.\.\.data,tracks:\[\.\.\.data\.tracks,\.\.\.missing\.map\(t=>\(\{/);
  assert.match(office,/geo\.tracks\.filter\(t=>t\.registry==='NORTH_AMERICA'\)/);
  assert.match(office,/permittedTracks\.has\(t\.id\)/);
  assert.match(office,/HISTORICAL · CLOSED BEFORE 1999/);
