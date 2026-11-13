@@ -7,14 +7,14 @@ const MAIN='wtw1999FoundingStateV1',SCHEMA='WTW_WORLD_PROFILE_V1';
 // Release gate: one small founding scenario until its opening race, staffing,
 // breeding and ownership economy pass. Larger TEST modes remain engineering-only.
 const PRESETS=Object.freeze([
- {id:'founding',label:'Founding 1999 — 112 source horses',population:112,mode:'FOUNDING_1999'}
+ {id:'founding',label:'Founding 1999 — 73 connected breeding animals; new entrants pending',population:73,mode:'FOUNDING_1999'}
 ]);
-const DEFAULT=Object.freeze({schema:SCHEMA,population:112,seed:19990101,
+const DEFAULT=Object.freeze({schema:SCHEMA,population:73,seed:19990101,
  mode:'FOUNDING_1999',generator:'WTW_1999_FOUNDING_WORLD_V1'});
 function normalize(value){
  const seed=Number(value?.seed??DEFAULT.seed);
  const mode=String(value?.mode||DEFAULT.mode);
- const pop=mode==='FOUNDING_1999'?112:Number(value?.population??DEFAULT.population);
+ const pop=mode==='FOUNDING_1999'?73:Number(value?.population??DEFAULT.population);
  if(mode!=='FOUNDING_1999'&&(!Number.isSafeInteger(pop)||pop<10000||pop>325000))
   throw Error('Expanded world size must be 10,000–325,000 horses');
  if(!Number.isSafeInteger(seed)||seed<1||seed>4294967295)throw Error('World seed must be a positive 32-bit integer');
@@ -29,7 +29,7 @@ function current(){
   const anchor=parse(localStorage.getItem(MAIN))?.worldAnchor;
   if(anchor?.schema==='WTW_1999_FOUNDING_CAREER_V1'){
    return normalize({...anchor,...(anchor.worldProfile||{}),
-    population:anchor.worldProfile?.population??anchor.population??112});
+    population:anchor.worldProfile?.population??anchor.population??73});
   }
   const stored=parse(localStorage.getItem(PROFILE_KEY));
   if(stored)return normalize(stored);
