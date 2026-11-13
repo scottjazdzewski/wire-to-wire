@@ -101,8 +101,8 @@ export const INTERNATIONAL_CULTURE_PROFILES=Object.freeze({
 // racing world. Substantive international presence is intentionally strongest
 // in the bloodstock trade, not randomly applied to all stablehands.
 export const INTERNATIONAL_ROLE_ORIGIN_MIXES=Object.freeze({
- trainer:Object.freeze([['US',71],['CA',9],['GB',5],['IE',5],['AU',2],['NZ',1],['FR',2],['DE',1],['JP',1],['PR',1],['MX',1],['VE',1]]),
- owner:Object.freeze([['US',70],['CA',7],['GB',5],['IE',4],['FR',3],['JP',2],['AU',1],['NZ',1],['DE',1],['AE',2],['SA',1],['PR',1],['MX',1],['VE',1]]),
+ trainer:Object.freeze([['US',68],['CA',9],['GB',5],['IE',5],['AU',2],['NZ',1],['FR',2],['DE',1],['JP',1],['PR',2],['MX',2],['VE',2]]),
+ owner:Object.freeze([['US',69],['CA',7],['GB',5],['IE',4],['FR',3],['JP',2],['AU',1],['NZ',1],['DE',1],['AE',2],['SA',1],['PR',2],['MX',1],['VE',1]]),
  bloodstock_agent:Object.freeze([['US',54],['CA',8],['GB',12],['IE',12],['FR',4],['AU',2],['NZ',2],['DE',1],['JP',2],['AE',1],['SA',1],['PR',1]])
 });
 function hash(seed,key){
