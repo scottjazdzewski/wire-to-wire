@@ -154,6 +154,10 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
     historic:worldTracks.find(t=>t._canonId==='T-0118'),
     intl:worldTracks.filter(t=>/Curragh|Newmarket|Ascot/.test(t.name)).map(t=>t.name)
    }));
+  check('All 16 historical North American tracks remain visible, closed and without 1999 meets',
+   worldTracks.filter(t=>t._canonId>='T-0103'&&t._canonId<='T-0118').length===16&&
+   worldTracks.filter(t=>t._canonId>='T-0103'&&t._canonId<='T-0118').every(t=>
+    t.status.includes('HISTORICAL')&&!t.meetWindow&&!t._meetState.active));
   steps.push('All 118 North American including Cuba displayed; 16 historic closed and zero international');
   click('Personnel');await pause(230);
   const ownersTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Owners');
