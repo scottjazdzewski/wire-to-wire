@@ -1,6 +1,10 @@
 /**
  * WIRE TO WIRE — creation-time, on-demand fictional racing-world names.
  *
+ * Legacy V8 checkpoint interface: for new integrations, prefer the V11
+ * indexed-fictional-name-registry.mjs compact-cursor API. This older API
+ * retains growing mintedNames and ownerEntities arrays for compatibility.
+ *
  * This API is a thin, replayable, PURE session wrapper around the existing
  * createFictionalWorldNameEngine. There is no second generation algorithm.
  *
