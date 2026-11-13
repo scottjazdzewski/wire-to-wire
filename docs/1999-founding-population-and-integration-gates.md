@@ -1,115 +1,86 @@
-# WTW — Founding 1999 world: population and gameplay readiness
-Date: November 13, 2026  
-Repository: scottjazdzewski/wire-to-wire  
-Status: actionable implementation backlog, not an alternate world authority
+# WIRE TO WIRE — Clean founding world: January 1, 1999
 
-## Rule: the clean start means ONE starting world
+**Last code checkpoint:** November 13, 2026  
+**Repository:** `scottjazdzewski/wire-to-wire`  
+**Scenario:** `FOUNDING_1999`  
+**Ownership:** Website/Office UI and its connected read-only world projection. Gameplay rules, payouts, economy, save semantics and AI simulation belong to the separate gameplay-engine window.
 
-The January 1, 1999 gameplay scenario is `FOUNDING_1999`, not the full 325,000-horse test generator. The existing premium Office UI, historical archives, horse IDs, pedigrees, stakes, real racecourse geography and approved user stories must be retained as references. Do not migrate, silently import, or delete historical archive data or earlier user saves. Founding saved careers use isolated storage. Unknown owners, breeding relationships, birthplace data and specific race-day credits remain unknown until supported. No organization or horse gets a second immutable ID because its display name changes.
+## Nonnegotiable reset rule
 
-### Verified founding inventory
+The new 1999 starting world is built only around the 37 founder-selected operations and their specifically connected historical animals. The 325,000-horse synthetic world, 3,308 generic owners, previous demo state and 39 B01-generated opening runners are NOT available as new-game participants. Historical horses, parent nodes, stakes results and source information remain immutable *archival reference material*, not playable 1999 race entries. Do not silently restore old test records to make the Stable screen look full.
 
-- 37 organizations: 14 scenario-only provisional IDs; 23 established owner IDs.
-- 39 source-verified active racing horses, 55 broodmares, 18 stallions = 112 living opening horses.
-- 52 listed people in the World Registrar: 22 prior source-linked / approved-proposal people plus 30 additional WTW game-character leadership proposals; there are separately 68 unattached fresh founding-world professionals. Every new role is flagged as a proposal, NOT a historical identity or contracted employee.
-- 102 racecourses present for scheduling and source location; NOT 102 fully populated simultaneous racing meets.
-- 67 documented or approved horse-to-organization historical links covering 61 distinct historic horse identities; one unresolved name-only reference (Widowmaker’s Moon).
-- 30 organizations currently have zero opening runners; 19 have no owned racers or source-located breeding stock. All 37 now have a designated principal, including 24 PROVISIONAL game-world names pending user approval, rather than 24 empty positions. The clean game is not yet a fully populated competitive economy.
-- Source canon and historical data remain unmodified. Verified legacy owner naming updates are mapped by ID in the founding scenario, pending coordinated promotion to the full master.
+The previously selected 39 B01 runners all have the boundary `B01_APPROVED_1999_GENERATED_OPENING__NOT_1998_RACER`. They were retired from the founding projection on November 13. Their source records remain outside the starting world for integrity and troubleshooting only. Six former trainers employed only by those B01 horses were also excluded from the active people directory.
 
-## Production checkpoint — new founding world integrations (November 13, 2026)
+## Verified founding-world opening inventory
 
-- **Hard-reset default is active:** `FOUNDING_1999` is now the fallback even for local read API calls without an explicit mode. `CANON_ANCHORED_TEST` and the 325,000-horse performance model remain opt-in ENGINEERING benchmarks, not player population.
-- **No legacy-generated staff:** `founding-personnel-1999.mjs` supplies 68 NEW scenario professionals (26 jockeys, 10 trainers, 8 farm managers, 6 bloodstock agents, 4 vets, 4 farriers, 4 racing secretaries, 6 jockey agents), with fresh geographic names, age curves, role attributes, uncontracted status and zero payroll. Grooms/exercise riders excluded. The 22 named archival/current source people remain distinct.
-- **Only source-backed opening stock:** 39 directly owned founding runners, 55 source mares and 18 source stallions in the 112 living-animal pilot. The browser no longer duplicates stallions or generates phantom pregnancy entries. These sourced living entries are the temporary VALID carryover; each must still pass founder-relationship QA before seed lock.
-- **History stays history:** `founding-ancestry-1999.mjs` traces five generations from the selected 112 living stock and explicitly linked past horses through immutable parent IDs. The read-only `/api/1999/sim/founding-ancestry?id=H-...` endpoint exposes only the selected root network; no other historic horse is promoted to an active 1999 runner. Missing named parents and unresolved yearbook identities remain transparently flagged, never made up.
-- **No imported old finances:** `founding-world-1999.mjs` now reports founder cash, debt, property and operating budgets as NOT CERTIFIED rather than copying the retired 3,308-owner test economy. The existing Finances screen visibly says opening accounts are not yet certified. Only the gameplay-engine owner can authorize final opening balances and actual payable transactions.
-- **Save isolation:** `wtw1999FoundingStateV1` remains separate from all retired 325k and 2014 saves. Training-browser tests confirm user actions, daily development records and reload persistence in the isolated namespace; this does NOT certify a shared real-money double-entry owner ledger.
-- **UI verified:** 67/67 source integration checks passed, full 302/302 repository tests at the preceding completed checkpoint, main founding browser smoke passed, and separate 30-day training/save/reload browser test passed. Check GitHub Actions after any further change before certifying a release.
+| Component | Current clean state | Authority boundary |
+|---|---:|---|
+| Founding organizations | 37 | 23 established IDs, 14 scenario-only provisional |
+| Organization principals | 37 | 13 established/approved; 24 additional proposals **pending user review** |
+| Named source + game-world people | 46 | Exactly linked to approved founder roster; six old B01-only trainers removed |
+| New professional candidates | 68 | Jockeys 26, trainers 10, farm managers 8, bloodstock agents 6, vets 4, farriers 4, racing secretaries 4, jockey agents 6 |
+| Total people exposed | 114 | 46 named identities + 68 new uncontracted professional candidates |
+| Verified playable racing horses | **0** | No B01 racers carried forward; no new registrations certified |
+| Connected standing stallions | 18 | Existing source IDs and 1999 farms only |
+| Connected broodmares | 55 | Existing source IDs and 1999 farm/boarding references only |
+| Total living animals in active World | **73** | 18 stallions + 55 mares, no other source horses |
+| Retired opening B01 racers | 39 | Quarantined, not playable |
+| Proposed 1997–98 youngstock | **84** | 41 born 1997, 43 born 1998, all **read-only**, no registered name, owner, transaction or historical foaling claim |
+| Historic horse–organization associations | 67 records / 61 horses | Read-only historical ancestry; do not infer breeder vs owner roles from yearbook summaries |
+| Known geographical track references | 102 | Not 102 active simultaneous race meets |
+| Certified opening cash, expenses and owner payouts | **None** | Only the gameplay engine can approve opening ledgers |
 
-**Still to finish before a genuinely playable world:** user review of 24 proposed principal names; 30 organizations lacking opening race horses; 19 organizations without either runners or recorded breeding stock; verified physical farm/barn nodes, contracts and real payroll; a larger NEW name-engine-generated living cohort with valid 5-generation parent chains; 4–6 meaningfully filled test circuits; a certified opening balance ledger and authoritative settlement engine for all AI/player actions. Nothing in this checkpoint constitutes a certified complete world or source-gold historical pedigree record.
+**Important:** There is currently no meaningful playable racing competition. This state is *correctly reset* but **not finished**.
 
-## Founding organization leadership — November 13 closeout
+### Names and ancestry
 
-The complete working leadership roster is maintained at [1999 founding leadership roster](./1999-founding-leadership-roster.md), backed by `public/1999/engine/founding-leadership-1999.mjs`. Each of the 37 selected organizations now has a named primary lead and exact separate Person_ID. Previously established names and public-figure IDs remain unchanged. **The 24 newly assigned primary leads and six secondary directors/partners are game-world proposals pending user review; they are not historical claims, employment contracts, or equity/horse-transfer approvals.** The 112 selected living horses, historic pedigree, race results and opening finance gates are unaffected.
+The independent WTW horse-name research v4.46 is explicitly **NOT DEPLOYED** and is not an approved production registration engine. A race-ready horse must be given a unique, registered name by a game-authoritative registration transaction. Unnamed 1997–98 new-fiction juveniles/yearlings should remain `registeredName:null` and may display pedigree-based labels, not pretend-registered names.
 
-## What gets populated next — in operational order
+`public/1999/engine/founding-youngstock-candidates-1999.mjs` produces deterministic, individually ID'd prestart *proposals* using only the source stallions and mares. It does **not** prove breeding or foaling actually happened in those years. The 1999 residence of a mare cannot be falsely copied as a certified 1997/98 foaling site. It proposes **no breeder or owner IDs** and does not create a player/AI finance event or registered racehorse. Those relationships must be authored and approved in a *new clean scenario data layer*, not inferred from a mare's later residence.
 
-**1. Complete the people and institutional leadership.** **IMPLEMENTED AT PROVISIONAL GAME LEVEL:** all 37 organizations now have a designated 1999 principal; 24 newly assigned working-fiction primary operators and six additional secondary people are individually indexed. User name review and formal status promotion remain outstanding. Keep the proposals explicitly provisional until accepted. Link principals to immutable Organization_ID, their separate personal Person_ID, birthplace, 1999 operating base and actual role. Owners are not automatically trainers; founders are not always current managers. Julian Voss already has an exact Argosy Bloodstock link (P-000018 → O-000014); Charles Wetherby IV and Nathaniel Quill likewise have exact 1999 farm links. Ray Sutter is a professional Ironweed connection, NOT its owner. Miriam Vale is Virginia-based at Ashby Vale; Harrowgate remains unrelated.
+The separate `founding-ancestry-1999.mjs` traces up to five generations from the actual 73 retained breeding animals and 61 linked historical horses. Unrelated ancestors are not playable; contradictory or missing parent evidence stays visibly unresolved.
 
-**2. Create usable barn and staff employment.** Match each operational racing stable to a sourced or approved trainer, barn and circuit. Build a small independent pool of credible jockeys and trainers. Include farm managers, bloodstock agents, veterinarians, farriers, jockey agents and racing secretaries where useful. GROOMS AND EXERCISE RIDERS ARE PERMANENTLY EXCLUDED from the player-facing staff roster. Personnel assignment must have dated employment or contractual status; the NEW 68 generated founding-world professional candidates have NO employer and no payroll or historical-contract claims. The 1999 source has only 22 named people, and missing staff is real work.
+### Existing Office integration
 
-**3. Fill the initial opening horse strings.** The source 39 active horses stay untouched. The other institutions need fresh January 1999 horses generated with approved horse-name engine output and new game IDs; each must have age/sex, sire/dam IDs, foaling farm and geographic birthplace, breeder, current owner, trainer, barn, racing status and source/fictional flag. Never assign a dead champion or previously retired stallion to an active 1999 racing stable. Breeding farms with existing mares and stallions must also keep those same stock identities and physical farm locations. A deliberately small first playable target is roughly 250–400 racing horses over a handful of testing circuits, NOT a hard canon count or the final national population.
+- The approved Office FM interface remains in `public/next/next.js` and `public/next/1999-ui-source.mjs`; do not redesign it.
+- New-game API requests default to `FOUNDING_1999`. Full synthetic population benchmarks require an explicit engineering-only mode.
+- Personnel are individually named and age/role-rated, **uncontracted** with no inherited payroll. Grooms and exercise riders are permanently absent from player-facing personnel.
+- Live finances show **NOT CERTIFIED** rather than copying invented balances from the retired 3,308-owner experiment.
+- Stallion profiles and broodmare views show their actual historical source IDs; UI does not duplicate the breeding population.
+- The Office Stable can legitimately be empty during initial world creation. Clicking between departments must work even with zero racehorses.
+- New read-only API `/api/1999/sim/new-youngstock-proposals` is a *candidate review list*, not a racecard or active game roster.
+- Saved careers are isolated under `wtw1999FoundingStateV1`; the gameplay-engine owner must confirm future world-seed/save migration compatibility.
 
-**4. Prove real racecards at pilot tracks.** Pick 4–6 Jan/Feb 1999 tracks/circuits whose real meet dates and race conditions are supported; do not delete the remaining tracks from history or geography. Generate condition-eligible entries only from live owned horses, credible travel/rest and trainer decisions, real jockey availability, purses and owner finances. Six-horse fields are preferable to displaying full national schedules with no runners. Never fake winning outcomes beforehand.
+## Next implementation steps, strictly in order
 
-**5. Make the economy transactional.** The old 3,308-owner generated balances have been excluded from the founding scenario entirely; starting balances are explicitly NOT CERTIFIED and no payment is authorized. The gameplay-engine owner must assign balanced 1999 finances to approved founding organizations from its own new opening-economy model, never by importing old accounts. Make day fees, travel, feed, staffing, sales, stud fees and purses actually change saved accounts. Initial auctions have ZERO live catalog lots until source-backed or newly created game animals are genuinely consigned. Jockey booking projections have NO phantom rivals outside this scenario. No breeding outcome is predetermined.
+1. **Accept/revise proposed leadership**: confirm the 24 proposed primary names and six secondary names in [the exact-ID leadership roster](./1999-founding-leadership-roster.md) rather than creating another set.
+2. **Authorize the new birth and ownership foundation**: for each fictional candidate, decide the correct original breeder, foaling site, retained-owner or sale/transfer path, and later racing stable. No false historic pre-1999 transactions and no aliases; use game-approved new entity IDs.
+3. **Create the new 1999 horse population** using the actual released and screened naming/registration rules. Aim initially for a few hundred properly linked horses across the chosen farms and owner groups; 250–400 racing horses is a useful *planning estimate*, not approved canon or an excuse for arbitrary injection.
+4. **Create verified 1999 barns, staff appointments and jockey bookings**: distinguish farm operations from racing barns; every working horse must have one actual owner and one current barn, trainer, state and travel program. Professional staff contracts remain off until an approved employment transaction occurs.
+5. **Certify opening owner accounts** through the gameplay engine, with coherent assets, cash, liabilities, payroll, boarding and standing-fee agreements. Never insert fake numbers from the old experiment.
+6. **Run one small, truly playable pilot circuit** with compatible entries, complete racecard fields, correct age and distance eligibility, trainer and jockey availability, real costs and payouts, valid save/reload and no AI/player asymmetry. Expand to 4–6 regions only after this works.
+7. **Expand the world after the whole pilot is proven**, not before. Keep founder names, legacy race results, pedigree IDs and source archive stable.
 
-**6. Finish historical relationship roles.** Distinguish breeder, race owner, farm of foaling, stallion residence, trainer and later owner. For 61 past horses, their source-level ID/year links exist, but many role-specific historical events still require exact ledger joins. In particular the user's retained-homebred ownership for Crescent Mile's Who Knows and Saint Nobody differs from legacy separate-client racing-owner records and requires a controlled historical owner-event reconciliation. Do not alter underlying certified races to force the story. 30 of the year-level source links do not have a corresponding complete identity in the small pedigree/stud index; they retain their exact yearbook horse IDs pending richer historical read access.
+### Blockers not to disguise as successes
 
-**7. Promote identity and reviewed logo assets together.** Approved founding names include Midway, Knight’s Way, All The Colors, Velvet Key Racing, Quickfire Racing, Longleaf Farm, Potomac Heritage Stable and Palma Real Stable; retain exact established owner IDs or mark provisional IDs awaiting actual assignment. The logo designer's briefs are in Google Drive; only user-reviewed APPROVED art should be placed into the owner-logo index. Never conflate a logo with registered racing silks.
+- 37 organizations have **no registered opening racehorse**. The scenario is clean but cannot yet run a player/AI race.
+- No accepted naming-engine release is connected to the live registration workflow. The 84 juvenile/yearling records are only unregistered proposals.
+- The 24 additional leaders remain role/name proposals until approved.
+- New youngstock births, 1997–98 breeding outcomes, historic sale events, foaling locations, 1999 owner contracts and cash balances remain uncertified.
+- Some existing browser, training and visual regression suites were built around nonempty old B01 starting stables. They need QA designed for a deliberately empty opening world, not bogus horses added to pacify tests.
+- Performance tests using 325k synthetic animals are *engineering diagnostics only*, not the playable game world.
 
-## Organization-by-organization opening coverage
+## Source of truth and working assets
 
-| Operation | ID | Racing horses | Broodmares | Stallions | Recorded principal | ID status |
-|---|---|---:|---:|---:|---|---|
-| Wetherby Plain | `O-000001` | 0 | 7 | 0 | Charles Wetherby IV | source ID |
-| Harrowgate Farm | `O-000002` | 0 | 8 | 0 | UNASSIGNED | source ID |
-| Four Corners Farm | `O-000003` | 0 | 5 | 3 | Nathaniel “Nate” Quill | source ID |
-| St. Alloy Partners | `O-000011` | 10 | 0 | 0 | UNASSIGNED | source ID |
-| Argosy Bloodstock | `O-000014` | 0 | 0 | 0 | Julian Voss | source ID |
-| Whitcombe Family | `O-000037` | 3 | 0 | 0 | UNASSIGNED | source ID |
-| Northbank Racing | `O-000045` | 7 | 0 | 0 | UNASSIGNED | source ID |
-| Poppy Lane Racing | `O-000047` | 5 | 0 | 0 | UNASSIGNED | source ID |
-| Quickfire Racing | `O-000056` | 6 | 0 | 0 | Vince Bellini | source ID |
-| Argosy Racing Partners | `O-000057` | 4 | 0 | 0 | UNASSIGNED | source ID |
-| Circle B Racing | `O-000059` | 4 | 0 | 0 | UNASSIGNED | source ID |
-| Kingsmere Farm | `O-000061` | 0 | 4 | 1 | Carolina Kingsley | source ID |
-| Crescent Mile Farm | `O-000062` | 0 | 5 | 2 | UNASSIGNED | source ID |
-| Ironweed Farm | `O-000063` | 0 | 4 | 1 | UNASSIGNED | source ID |
-| Huntcross Farm | `O-000064` | 0 | 4 | 0 | UNASSIGNED | source ID |
-| Aurelian Stud | `O-000066` | 0 | 5 | 4 | David Carlin and Elliot Kessler | source ID |
-| Marrowfield Farm | `O-000067` | 0 | 5 | 0 | UNASSIGNED | source ID |
-| Bellwether Stud | `O-000068` | 0 | 4 | 5 | UNASSIGNED | source ID |
-| Empire Valley Stud | `O-000071` | 0 | 4 | 2 | UNASSIGNED | source ID |
-| Midway | `O-005910` | 0 | 0 | 0 | Mike Ditka | source ID |
-| Knight’s Way | `O-005919` | 0 | 0 | 0 | Bob Knight | source ID |
-| Potomac Heritage Stable | `O-005794` | 0 | 0 | 0 | Pat Buchanan | source ID |
-| Ledbetter Calder Stables | `O-006905` | 0 | 0 | 0 | Magic Johnson | source ID |
-| Davenport Hall Farm | `O-FOUNDING-1999-001` | 0 | 0 | 0 | UNASSIGNED | provisional ID |
-| Takamori Stud — Pacific Division | `O-FOUNDING-1999-002` | 0 | 0 | 0 | UNASSIGNED | provisional ID |
-| Buckley Oaks Farm | `O-FOUNDING-1999-003` | 0 | 0 | 0 | UNASSIGNED | provisional ID |
-| Split Rail Farm | `O-FOUNDING-1999-004` | 0 | 0 | 0 | UNASSIGNED | provisional ID |
-| All The Colors | `O-FOUNDING-1999-005` | 0 | 0 | 0 | UNASSIGNED | provisional ID |
-| Samuels Family Racing | `O-FOUNDING-1999-006` | 0 | 0 | 0 | UNASSIGNED | provisional ID |
-| Velvet Key Racing | `O-FOUNDING-1999-007` | 0 | 0 | 0 | UNASSIGNED | provisional ID |
-| Vesper Brook Racing | `O-FOUNDING-1999-008` | 0 | 0 | 0 | UNASSIGNED | provisional ID |
-| Mar Azul Racing | `O-FOUNDING-1999-009` | 0 | 0 | 0 | UNASSIGNED | provisional ID |
-| Caney Fork Farm | `O-FOUNDING-1999-010` | 0 | 0 | 0 | UNASSIGNED | provisional ID |
-| Longleaf Farm | `O-FOUNDING-1999-011` | 0 | 0 | 0 | Dr. Everett Raines | provisional ID |
-| Palma Real Stable | `O-FOUNDING-1999-012` | 0 | 0 | 0 | Rafael Cienfuegos | provisional ID |
-| Alderwick International Stud | `O-FOUNDING-1999-013` | 0 | 0 | 0 | UNASSIGNED | provisional ID |
-| Ashby Vale Farm | `O-FOUNDING-1999-014` | 0 | 0 | 0 | Miriam Vale | provisional ID |
+- Game-facing scenario: `public/1999/engine/founding-world-1999.mjs`
+- Founding source World registrar: `public/data/wtw-1999-founding-directory-v1.json`
+- Leadership: `public/1999/engine/founding-leadership-1999.mjs`, `docs/1999-founding-leadership-roster.md`
+- New unregistered offspring candidates: `public/1999/engine/founding-youngstock-candidates-1999.mjs`
+- Ancestor view: `public/1999/engine/founding-ancestry-1999.mjs`
+- API / player Office: `public/1999/engine/local-api.mjs`, `public/next/1999-ui-source.mjs`, `public/next/next.js`
+- Original historical record: `public/1999/engine/canon-mini.mjs` (read-only)
+- Tests: `tests/1999-founding-youngstock-candidates.test.mjs`, `tests/1999-founding-world.test.mjs`, `tests/1999-management-screen-data.test.mjs`, `scripts/1999-management-browser-smoke.sh`
+- Working 1999 World Bible: https://docs.google.com/document/d/1zBmtdFenkeP70odONetitXFcruPc0qwt485JAR8lDDs/edit
+- Founder logo design brief: https://docs.google.com/document/d/1tA-4NLG7QoZ4qhugnku40QkV_PsvuWP1tAO81jze0z8/edit
 
-## Pilot exit gates before scaling
-
-1. Fresh career boots at 1999-01-01 in `FOUNDING_1999` mode, with no trace of the 325k synthetic population in World, sales, jockey bidding, or other gameside systems.
-2. Every opening and newly created horse has one valid immutable ID and complete owner, breeder, current barn and sire/dam lineage; no contradictory ownership or duplicates.
-3. Each playable organization has its intended principal, physical facility, assigned roles, sufficient horses or legitimate non-racing business, and balanced starting economy.
-4. Pilot races accept eligible entries, book available jockeys, settle plausible results, record purse distribution and update state correctly for AI and player alike.
-5. Save, reload, date advance and career restart work; no prior-era events or transactions leak in, and none of the history archive is destroyed.
-6. The same entity name, badge/logo, profile, World entry, racecard, sale catalog and history page refer to one canonical ID.
-7. Only after tests pass do we extend the number of farms, horses, circuits and economic participants, using the same source/fictional distinction.
-
-### Live implementation pointers
-
-- Founding source and game facade: `public/1999/engine/founding-world-1999.mjs`.
-- Management API: `public/1999/engine/local-api.mjs`, mode `FOUNDING_1999`.
-- Browser World registrar: `public/data/wtw-1999-founding-directory-v1.json`.
-- Existing UI: `public/next/next.js`, `public/next/1999-ui-source.mjs`; do not replace it.
-- Clean save isolation: `public/next/1999-bootstrap.js`.
-- Tests: `tests/1999-founding-world.test.mjs`.
-- Working World Bible: https://docs.google.com/document/d/1zBmtdFenkeP70odONetitXFcruPc0qwt485JAR8lDDs/edit
-- Approved names & aura handoff: https://docs.google.com/document/d/1tA-4NLG7QoZ4qhugnku40QkV_PsvuWP1tAO81jze0z8/edit
-
-This is a production sequence. Keep building this founding world rather than initiating another general historical audit or spawning an unrelated second world.
+**Release certification:** Recheck the latest GitHub CI suite on the exact final commit; don't cite passing checks from earlier commits as if they certify subsequent changes.
