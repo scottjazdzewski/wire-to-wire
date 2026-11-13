@@ -23,12 +23,15 @@
       "P-000048",
       "P-000049",
       "P-000071"
-    ]
+    ],
+    "foundingFacilityPolicy": "APPROVED_INSTITUTION_REFERENCE_ONLY__NO_PHYSICAL_BUILDINGS_CREATED",
+    "logoManifest": "/assets/office/founding-organization-logo-index.json",
+    "unapprovedPrincipalProposals": "DOCS_ONLY__NOT_IN_PLAYABLE_DIRECTORY"
   },
   "counts": {
     "operatingTracks": 102,
     "historicalTracks": 32,
-    "people": 47,
+    "people": 41,
     "organizations": 37,
     "openingHorses": 0,
     "stallions": 18,
@@ -36,14 +39,20 @@
     "totalHorses": 73,
     "historicalAnchorRecords": 67,
     "linkedHistoricalHorses": 61,
-    "proposedLeadershipPeople": 4,
-    "organizationsWithDesignatedPrincipal": 37,
-    "organizationPrincipalGaps": 0,
+    "proposedLeadershipPeople": 0,
+    "organizationsWithDesignatedPrincipal": 33,
+    "organizationPrincipalGaps": 4,
     "quarantinedRetiredB01Runners": 39,
     "quarantinedB01OnlyTrainers": 6,
-    "leadershipPeopleTotal": 31,
+    "leadershipPeopleTotal": 27,
     "userApprovedNewLeadershipPeople": 27,
-    "pendingPrimaryPrincipalReview": 4
+    "pendingPrimaryPrincipalReview": 4,
+    "approvedOpeningPhysicalFacilities": 0,
+    "institutionalFacilityReferences": 30,
+    "generatedTrainingCenters": 0,
+    "generatedBarns": 0,
+    "generatedProfessionals": 0,
+    "plannedAuctionsActivated": 0
   },
   "tracks": [
     {
@@ -1571,50 +1580,6 @@
       "organizationLinkBasis": "USER_APPROVED_ARGOSY_BLOODSTOCK_FOUNDER"
     },
     {
-      "id": "P-000069",
-      "name": "Ray Sutter",
-      "role": "TRAINER",
-      "status": "CANONICAL_PRODUCTION_SCAFFOLD",
-      "birthplace": {
-        "locality": "Baltimore",
-        "region": "Maryland",
-        "country": "USA",
-        "basis": "USER_DIRECTED_GEOGRAPHY_CANONIZATION_2026-11-09"
-      },
-      "base": "Lexington, Kentucky, USA",
-      "baseType": "HOME_BASE_CANON",
-      "baseGeography": {
-        "locality": "Lexington",
-        "region": "Kentucky",
-        "country": "USA",
-        "basis": "USER_DIRECTED_GEOGRAPHY_CANONIZATION_2026-11-09 + Participant_Current_State + Track_Geography"
-      },
-      "professionalAffinities": [
-        "O-000063"
-      ],
-      "affinityBasis": "USER_APPROVED_IRONWEED_PROFESSIONAL_CONNECTION_NOT_FARM_OWNERSHIP"
-    },
-    {
-      "id": "P-000077",
-      "name": "Arthur Bell",
-      "role": "TRAINER",
-      "status": "CANONICAL_PRODUCTION_SCAFFOLD",
-      "birthplace": {
-        "locality": "Toronto",
-        "region": "Ontario",
-        "country": "Canada",
-        "basis": "USER_DIRECTED_GEOGRAPHY_CANONIZATION_2026-11-09"
-      },
-      "base": "New Kent, Virginia, USA",
-      "baseType": "HOME_BASE_CANON",
-      "baseGeography": {
-        "locality": "New Kent",
-        "region": "Virginia",
-        "country": "USA",
-        "basis": "USER_DIRECTED_GEOGRAPHY_CANONIZATION_2026-11-09 + Participant_Current_State + Track_Geography"
-      }
-    },
-    {
       "id": "P-910023",
       "name": "Mike Ditka",
       "role": "RACING OWNER",
@@ -1711,38 +1676,6 @@
       "role": "STUD COFOUNDER",
       "operatingOrganizationId": "O-000066",
       "status": "USER_APPROVED_NAME__PROVISIONAL_ID"
-    },
-    {
-      "id": "P-FOUNDING-LEADER-001",
-      "name": "Graham Kincaid",
-      "role": "breeder",
-      "positionTitle": "MANAGING_PRINCIPAL",
-      "ageAtOpening": 59,
-      "ageBasis": "PROPOSED_1999_WTW_GAME_CHARACTER",
-      "birthplace": {
-        "locality": "Paris",
-        "region": "Kentucky",
-        "country": "USA",
-        "basis": "WTW_GAME_BIOGRAPHY_PROPOSED_NOT_HISTORICAL"
-      },
-      "baseGeography": {
-        "locality": "Paris",
-        "region": "Kentucky",
-        "country": "USA",
-        "basis": "WTW_GAME_BIOGRAPHY_PROPOSED_NOT_HISTORICAL"
-      },
-      "base": "Paris, Kentucky, USA",
-      "baseType": "1999_PROPOSED_OPERATING_BASE",
-      "operatingOrganizationId": "O-000002",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
-      "proposalSource": "USER_DIRECTED_MALE_LEADER_NAME_PROPOSAL",
-      "isPrimary": true,
-      "safeguards": "Athletic, impeccably sharp 59-year-old with short spiky gray hair; precise commercial breeder; 1958 founder remains unidentified",
-      "hasCertifiedContracts": false,
-      "noHistoricalHorseOwnershipClaim": true,
-      "portraitBrief": "In shape, sharply dressed 59-year-old male with short spiky gray hair; alert and commercially ruthless"
     },
     {
       "id": "P-FOUNDING-LEADER-002",
@@ -1931,38 +1864,6 @@
       "noHistoricalHorseOwnershipClaim": true
     },
     {
-      "id": "P-FOUNDING-LEADER-008",
-      "name": "Sebastian Pryce",
-      "role": "owner",
-      "positionTitle": "MANAGING_QUANTITATIVE_PARTNER",
-      "ageAtOpening": 48,
-      "ageBasis": "PROPOSED_1999_WTW_GAME_CHARACTER",
-      "birthplace": {
-        "locality": "Chicago",
-        "region": "Illinois",
-        "country": "USA",
-        "basis": "WTW_GAME_BIOGRAPHY_PROPOSED_NOT_HISTORICAL"
-      },
-      "baseGeography": {
-        "locality": "Arcadia",
-        "region": "California",
-        "country": "USA",
-        "basis": "WTW_GAME_BIOGRAPHY_PROPOSED_NOT_HISTORICAL"
-      },
-      "base": "Arcadia, California, USA",
-      "baseType": "1999_PROPOSED_OPERATING_BASE",
-      "operatingOrganizationId": "O-000057",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
-      "proposalSource": "USER_DIRECTED_ANALYTICS_LEADER_NAME_PROPOSAL",
-      "isPrimary": true,
-      "safeguards": "Data-first financing and racing portfolio architect; backed by sophisticated investors; Julian Voss independently directs Argosy Bloodstock",
-      "hasCertifiedContracts": false,
-      "noHistoricalHorseOwnershipClaim": true,
-      "portraitBrief": "Sharp, extremely intelligent finance and analytics professional; institutional investor temperament"
-    },
-    {
       "id": "P-FOUNDING-LEADER-009",
       "name": "Travis 'Tex' Colter",
       "role": "owner",
@@ -2054,38 +1955,6 @@
       "safeguards": "Ray Sutter is a trainer affinity, not the farm owner",
       "hasCertifiedContracts": false,
       "noHistoricalHorseOwnershipClaim": true
-    },
-    {
-      "id": "P-FOUNDING-LEADER-012",
-      "name": "Hugh Radcliffe",
-      "role": "breeder",
-      "positionTitle": "FAMILY_FARM_PRINCIPAL",
-      "ageAtOpening": 56,
-      "ageBasis": "PROPOSED_1999_WTW_GAME_CHARACTER",
-      "birthplace": {
-        "locality": "Middleburg",
-        "region": "Virginia",
-        "country": "USA",
-        "basis": "WTW_GAME_BIOGRAPHY_PROPOSED_NOT_HISTORICAL"
-      },
-      "baseGeography": {
-        "locality": "Middleburg",
-        "region": "Virginia",
-        "country": "USA",
-        "basis": "WTW_GAME_BIOGRAPHY_PROPOSED_NOT_HISTORICAL"
-      },
-      "base": "Middleburg, Virginia, USA",
-      "baseType": "1999_PROPOSED_OPERATING_BASE",
-      "operatingOrganizationId": "O-000064",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
-      "proposalSource": "USER_DIRECTED_MALE_LEADER_NAME_PROPOSAL",
-      "isPrimary": true,
-      "safeguards": "Experienced Virginia gentleman horseman; Huntcross remains independent and friendly to Ashby Vale",
-      "hasCertifiedContracts": false,
-      "noHistoricalHorseOwnershipClaim": true,
-      "portraitBrief": "Established male Virginia horseman, traditionally dressed, understated and knowledgeable"
     },
     {
       "id": "P-FOUNDING-LEADER-013",
@@ -2645,37 +2514,6 @@
       "safeguards": "Satellite farm manager only, not the international owner",
       "hasCertifiedContracts": false,
       "noHistoricalHorseOwnershipClaim": true
-    },
-    {
-      "id": "P-FOUNDING-LEADER-031",
-      "name": "Daniel Calder",
-      "role": "owner",
-      "positionTitle": "MANAGING_RACING_PRINCIPAL",
-      "ageAtOpening": 53,
-      "ageBasis": "PROPOSED_1999_WTW_GAME_CHARACTER",
-      "birthplace": {
-        "locality": "Los Angeles",
-        "region": "California",
-        "country": "USA",
-        "basis": "WTW_GAME_BIOGRAPHY_PROPOSED_NOT_HISTORICAL"
-      },
-      "baseGeography": {
-        "locality": "Los Angeles",
-        "region": "California",
-        "country": "USA",
-        "basis": "WTW_GAME_BIOGRAPHY_PROPOSED_NOT_HISTORICAL"
-      },
-      "base": "Los Angeles, California, USA",
-      "baseType": "1999_PROPOSED_OPERATING_BASE",
-      "operatingOrganizationId": "O-006905",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
-      "proposalSource": "USER_DIRECTED_NON_OPERATING_INVESTOR_CORRECTION__NAME_PROPOSAL",
-      "isPrimary": true,
-      "safeguards": "New proposed operational leader, subject to review; Magic Johnson is a major investor only, without implied equity share or day-to-day management",
-      "hasCertifiedContracts": false,
-      "noHistoricalHorseOwnershipClaim": true
     }
   ],
   "organizations": [
@@ -2727,7 +2565,8 @@
       "leadershipPeopleIds": [
         "P-000001"
       ],
-      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK"
+      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK",
+      "facilityDisplayCategory": "FARM"
     },
     {
       "id": "O-000002",
@@ -2765,22 +2604,15 @@
         "limits": "SOURCE_HORSE_YEARS_NOT_RACEDAY_CONTRACTS_OR_VERIFIED_CASH"
       },
       "gameRule": "NO_UNAPPROVED_ORIGIN_OR_FOUNDER_TRANSACTION; NO_INVENTED_1999_BALANCE",
-      "principalOwner": "Graham Kincaid",
-      "principalOwnerId": "P-FOUNDING-LEADER-001",
       "legacyName": "Lattice Farm",
       "displayNameStatus": "USER_APPROVED_PENDING_MASTER_PROPAGATION",
       "scenarioScope": "FOUNDING_WORLD",
       "location": "Paris, Kentucky, USA",
       "locationGranularity": "CITY",
-      "publicPrincipal": "Graham Kincaid",
-      "publicPrincipalId": "P-FOUNDING-LEADER-001",
-      "principalRole": "MANAGING_PRINCIPAL",
-      "leadershipPeopleIds": [
-        "P-FOUNDING-LEADER-001"
-      ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipPeopleIds": [],
+      "leadershipStatus": "PENDING_USER_REVIEW_NO_APPROVED_PRINCIPAL",
       "historicalPrincipalProof": false,
-      "principalPortraitBrief": "In shape, sharply dressed 59-year-old male with short spiky gray hair; alert and commercially ruthless"
+      "facilityDisplayCategory": "FARM"
     },
     {
       "id": "O-000003",
@@ -2830,7 +2662,8 @@
       "leadershipPeopleIds": [
         "P-000003"
       ],
-      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK"
+      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK",
+      "facilityDisplayCategory": "FARM"
     },
     {
       "id": "O-000011",
@@ -2875,7 +2708,8 @@
         "P-FOUNDING-LEADER-002"
       ],
       "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "facilityDisplayCategory": "ORGANIZATION_ONLY"
     },
     {
       "id": "O-000014",
@@ -2918,7 +2752,8 @@
       "leadershipPeopleIds": [
         "P-000018"
       ],
-      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK"
+      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK",
+      "facilityDisplayCategory": "ORGANIZATION_ONLY"
     },
     {
       "id": "O-000037",
@@ -2963,7 +2798,8 @@
         "P-FOUNDING-LEADER-003"
       ],
       "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "facilityDisplayCategory": "ORGANIZATION_ONLY"
     },
     {
       "id": "O-000045",
@@ -3008,7 +2844,8 @@
         "P-FOUNDING-LEADER-004"
       ],
       "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "facilityDisplayCategory": "RACING_STABLE_ORGANIZATION"
     },
     {
       "id": "O-000047",
@@ -3055,7 +2892,8 @@
         "P-FOUNDING-LEADER-007"
       ],
       "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "facilityDisplayCategory": "RACING_STABLE_ORGANIZATION"
     },
     {
       "id": "O-000056",
@@ -3098,7 +2936,8 @@
       "leadershipPeopleIds": [
         "P-FOUNDING-1999-001"
       ],
-      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK"
+      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK",
+      "facilityDisplayCategory": "RACING_STABLE_ORGANIZATION"
     },
     {
       "id": "O-000057",
@@ -3134,22 +2973,15 @@
       "scenarioScope": "FOUNDING_WORLD",
       "location": "Southern California, USA",
       "locationGranularity": "SCENARIO_REGIONAL",
-      "publicPrincipal": "Sebastian Pryce",
-      "publicPrincipalId": "P-FOUNDING-LEADER-008",
-      "principalOwner": "Sebastian Pryce",
-      "principalOwnerId": "P-FOUNDING-LEADER-008",
-      "principalRole": "MANAGING_QUANTITATIVE_PARTNER",
-      "leadershipPeopleIds": [
-        "P-FOUNDING-LEADER-008"
-      ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipPeopleIds": [],
+      "leadershipStatus": "PENDING_USER_REVIEW_NO_APPROVED_PRINCIPAL",
       "historicalPrincipalProof": false,
-      "principalPortraitBrief": "Sharp, extremely intelligent finance and analytics professional; institutional investor temperament",
       "relatedBloodstockAgencyId": "O-000014",
       "relatedBloodstockStrategistId": "P-000018",
       "relatedBloodstockAgencyName": "Argosy Bloodstock",
       "financingDescription": "Substantial financial backers; quantitative racing portfolio leadership",
-      "relationshipBasis": "USER_APPROVED_RELATED_ENTITIES__NO_STAFF_OR_FEE_CONTRACT_IMPLIED"
+      "relationshipBasis": "USER_APPROVED_RELATED_ENTITIES__NO_STAFF_OR_FEE_CONTRACT_IMPLIED",
+      "facilityDisplayCategory": "ORGANIZATION_ONLY"
     },
     {
       "id": "O-000059",
@@ -3194,7 +3026,8 @@
         "P-FOUNDING-LEADER-009"
       ],
       "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "facilityDisplayCategory": "RACING_STABLE_ORGANIZATION"
     },
     {
       "id": "O-000061",
@@ -3244,7 +3077,8 @@
       "leadershipPeopleIds": [
         "P-FOUNDING-1999-004"
       ],
-      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK"
+      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK",
+      "facilityDisplayCategory": "FARM"
     },
     {
       "id": "O-000062",
@@ -3296,7 +3130,8 @@
         "P-FOUNDING-LEADER-010"
       ],
       "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "facilityDisplayCategory": "FARM"
     },
     {
       "id": "O-000063",
@@ -3348,7 +3183,8 @@
         "P-FOUNDING-LEADER-011"
       ],
       "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "facilityDisplayCategory": "FARM"
     },
     {
       "id": "O-000064",
@@ -3391,17 +3227,10 @@
       "scenarioScope": "FOUNDING_WORLD",
       "location": "Middleburg, Virginia, USA",
       "locationGranularity": "CITY",
-      "publicPrincipal": "Hugh Radcliffe",
-      "publicPrincipalId": "P-FOUNDING-LEADER-012",
-      "principalOwner": "Hugh Radcliffe",
-      "principalOwnerId": "P-FOUNDING-LEADER-012",
-      "principalRole": "FAMILY_FARM_PRINCIPAL",
-      "leadershipPeopleIds": [
-        "P-FOUNDING-LEADER-012"
-      ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipPeopleIds": [],
+      "leadershipStatus": "PENDING_USER_REVIEW_NO_APPROVED_PRINCIPAL",
       "historicalPrincipalProof": false,
-      "principalPortraitBrief": "Established male Virginia horseman, traditionally dressed, understated and knowledgeable"
+      "facilityDisplayCategory": "FARM"
     },
     {
       "id": "O-000066",
@@ -3452,7 +3281,8 @@
         "P-FOUNDING-1999-005",
         "P-FOUNDING-1999-006"
       ],
-      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK"
+      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK",
+      "facilityDisplayCategory": "STUD_FARM"
     },
     {
       "id": "O-000067",
@@ -3504,7 +3334,8 @@
         "P-FOUNDING-LEADER-013"
       ],
       "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "facilityDisplayCategory": "FARM"
     },
     {
       "id": "O-000068",
@@ -3556,7 +3387,8 @@
         "P-FOUNDING-LEADER-014"
       ],
       "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "facilityDisplayCategory": "STUD_FARM"
     },
     {
       "id": "O-000071",
@@ -3601,7 +3433,8 @@
         "P-FOUNDING-LEADER-015"
       ],
       "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "facilityDisplayCategory": "STUD_FARM"
     },
     {
       "id": "O-005910",
@@ -3620,7 +3453,8 @@
       "leadershipPeopleIds": [
         "P-910023"
       ],
-      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK"
+      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK",
+      "facilityDisplayCategory": "RACING_STABLE_ORGANIZATION"
     },
     {
       "id": "O-005919",
@@ -3639,7 +3473,8 @@
       "leadershipPeopleIds": [
         "P-910024"
       ],
-      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK"
+      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK",
+      "facilityDisplayCategory": "FARM"
     },
     {
       "id": "O-005794",
@@ -3658,30 +3493,25 @@
       "leadershipPeopleIds": [
         "P-910028"
       ],
-      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK"
+      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK",
+      "facilityDisplayCategory": "ORGANIZATION_ONLY"
     },
     {
       "id": "O-006905",
       "name": "Ledbetter Calder Stables",
       "type": "RACING STABLE",
       "locationLabel": "Los Angeles, California, USA",
-      "publicPrincipal": "Daniel Calder",
-      "publicPrincipalId": "P-FOUNDING-LEADER-031",
       "displayNameStatus": "EXISTING_1999_PUBLIC_FIGURE_LINK",
       "scenarioScope": "FOUNDING_WORLD",
       "location": "Los Angeles, California, USA",
       "locationGranularity": "SCENARIO_REGIONAL",
-      "principalOwner": "Daniel Calder",
-      "principalOwnerId": "P-FOUNDING-LEADER-031",
-      "leadershipPeopleIds": [
-        "P-FOUNDING-LEADER-031"
-      ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
-      "principalRole": "MANAGING_RACING_PRINCIPAL",
+      "leadershipPeopleIds": [],
+      "leadershipStatus": "PENDING_USER_REVIEW_NO_APPROVED_PRINCIPAL",
       "publicInvestor": "Magic Johnson",
       "publicInvestorId": "P-910018",
       "investorRole": "MAJOR_INVESTOR_NON_OPERATING",
-      "operatingPrincipalStatus": "USER_DIRECTED_NEW_OPERATOR_PENDING_NAME_REVIEW"
+      "operatingPrincipalStatus": "USER_DIRECTED_NEW_OPERATOR_PENDING_NAME_REVIEW",
+      "facilityDisplayCategory": "RACING_STABLE_ORGANIZATION"
     },
     {
       "id": "O-FOUNDING-1999-001",
@@ -3703,7 +3533,8 @@
         "P-FOUNDING-LEADER-016"
       ],
       "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "facilityDisplayCategory": "FARM"
     },
     {
       "id": "O-FOUNDING-1999-002",
@@ -3726,7 +3557,8 @@
         "P-FOUNDING-LEADER-018"
       ],
       "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "facilityDisplayCategory": "STUD_FARM"
     },
     {
       "id": "O-FOUNDING-1999-003",
@@ -3748,7 +3580,8 @@
         "P-FOUNDING-LEADER-019"
       ],
       "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "facilityDisplayCategory": "FARM"
     },
     {
       "id": "O-FOUNDING-1999-004",
@@ -3770,7 +3603,8 @@
         "P-FOUNDING-LEADER-020"
       ],
       "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "facilityDisplayCategory": "FARM"
     },
     {
       "id": "O-FOUNDING-1999-005",
@@ -3794,7 +3628,8 @@
       ],
       "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
       "historicalPrincipalProof": false,
-      "principalPortraitBrief": "Dino Marks leads a colorful, betting-rooted racing syndicate with a taste for overlooked yearlings"
+      "principalPortraitBrief": "Dino Marks leads a colorful, betting-rooted racing syndicate with a taste for overlooked yearlings",
+      "facilityDisplayCategory": "ORGANIZATION_ONLY"
     },
     {
       "id": "O-FOUNDING-1999-006",
@@ -3816,7 +3651,8 @@
         "P-FOUNDING-LEADER-023"
       ],
       "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "facilityDisplayCategory": "ORGANIZATION_ONLY"
     },
     {
       "id": "O-FOUNDING-1999-007",
@@ -3838,7 +3674,8 @@
         "P-FOUNDING-LEADER-024"
       ],
       "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "facilityDisplayCategory": "RACING_STABLE_ORGANIZATION"
     },
     {
       "id": "O-FOUNDING-1999-008",
@@ -3861,7 +3698,8 @@
         "P-FOUNDING-LEADER-026"
       ],
       "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "facilityDisplayCategory": "RACING_STABLE_ORGANIZATION"
     },
     {
       "id": "O-FOUNDING-1999-009",
@@ -3883,7 +3721,8 @@
         "P-FOUNDING-LEADER-027"
       ],
       "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "facilityDisplayCategory": "RACING_STABLE_ORGANIZATION"
     },
     {
       "id": "O-FOUNDING-1999-010",
@@ -3905,7 +3744,8 @@
         "P-FOUNDING-LEADER-028"
       ],
       "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "facilityDisplayCategory": "FARM"
     },
     {
       "id": "O-FOUNDING-1999-011",
@@ -3925,7 +3765,8 @@
       "leadershipPeopleIds": [
         "P-FOUNDING-1999-002"
       ],
-      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK"
+      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK",
+      "facilityDisplayCategory": "FARM"
     },
     {
       "id": "O-FOUNDING-1999-012",
@@ -3945,7 +3786,8 @@
       "leadershipPeopleIds": [
         "P-FOUNDING-1999-003"
       ],
-      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK"
+      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK",
+      "facilityDisplayCategory": "RACING_STABLE_ORGANIZATION"
     },
     {
       "id": "O-FOUNDING-1999-013",
@@ -3968,7 +3810,8 @@
         "P-FOUNDING-LEADER-030"
       ],
       "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "facilityDisplayCategory": "STUD_FARM"
     },
     {
       "id": "O-FOUNDING-1999-014",
@@ -3988,7 +3831,8 @@
       "leadershipPeopleIds": [
         "P-000002"
       ],
-      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK"
+      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK",
+      "facilityDisplayCategory": "FARM"
     }
   ],
   "horses": [
@@ -7324,16 +7168,8 @@
       "activeIn1999FoundingWorld": false
     }
   ],
-  "leadershipRevision": "WTW_FOUNDING_1999_LEADERSHIP_V2",
+  "leadershipRevision": "WTW_FOUNDING_1999_APPROVED_ONLY_V3",
   "leadershipAssignments": [
-    {
-      "organizationId": "O-000002",
-      "personId": "P-FOUNDING-LEADER-001",
-      "role": "MANAGING_PRINCIPAL",
-      "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
-      "basis": "USER_DIRECTED_MALE_LEADER_NAME_PROPOSAL"
-    },
     {
       "organizationId": "O-000011",
       "personId": "P-FOUNDING-LEADER-002",
@@ -7383,14 +7219,6 @@
       "basis": "WORLD_BIBLE_PROPOSAL"
     },
     {
-      "organizationId": "O-000057",
-      "personId": "P-FOUNDING-LEADER-008",
-      "role": "MANAGING_QUANTITATIVE_PARTNER",
-      "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
-      "basis": "USER_DIRECTED_ANALYTICS_LEADER_NAME_PROPOSAL"
-    },
-    {
       "organizationId": "O-000059",
       "personId": "P-FOUNDING-LEADER-009",
       "role": "RACING_OWNER_PRINCIPAL",
@@ -7413,14 +7241,6 @@
       "isPrimary": true,
       "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "NEW_PROPOSAL"
-    },
-    {
-      "organizationId": "O-000064",
-      "personId": "P-FOUNDING-LEADER-012",
-      "role": "FAMILY_FARM_PRINCIPAL",
-      "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
-      "basis": "USER_DIRECTED_MALE_LEADER_NAME_PROPOSAL"
     },
     {
       "organizationId": "O-000067",
@@ -7565,14 +7385,6 @@
       "isPrimary": false,
       "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "NEW_PROPOSAL"
-    },
-    {
-      "organizationId": "O-006905",
-      "personId": "P-FOUNDING-LEADER-031",
-      "role": "MANAGING_RACING_PRINCIPAL",
-      "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
-      "basis": "USER_DIRECTED_NON_OPERATING_INVESTOR_CORRECTION__NAME_PROPOSAL"
     }
   ]
 }
