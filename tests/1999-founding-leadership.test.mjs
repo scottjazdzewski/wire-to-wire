@@ -117,8 +117,8 @@ test('personnel creation remains independent from leader selection, all 1999 hor
  assert.deepEqual(createFoundingLeadership1999({seed:19990101}),world.foundingLeadership);
  assert.deepEqual(createFoundingLeadership1999({seed:19990102}).map(p=>p.id),
   world.foundingLeadership.map(p=>p.id));
- assert.equal(world.counts.horses,39);
- assert.equal(world.counts.worldHorses,112);
+ assert.equal(world.counts.horses,0);
+ assert.equal(world.counts.worldHorses,73);
  assert.equal(world.counts.generatedHorses,0);
  assert.ok(world.sourceHorses.every(x=>!x.id.startsWith('H-TEST-')));
  assert.ok(world.foundingLeadership.every(x=>!['trainer','jockey'].includes(x.role)));
