@@ -21,13 +21,17 @@ test('approved interface loads commercial config before bootstrap and manager af
  assert.match(ui,/if\(key==='save-open'\)/);
  assert.match(ui,/window\.WTWCompactCareerManager\?\.open/);
 });
-test('a world choice belongs to its career and the original save namespace remains',()=>{
+test('founding-world career uses isolated save namespaces and never imports prior large-world state',()=>{
  assert.match(bootstrap,/worldProfile:world/);
  assert.match(bootstrap,/population:world\.population/);
- assert.match(bootstrap,/MAIN='wtw1999ManagementStateV1'/);
- assert.match(bootstrap,/SCHEMA='WTW_1999_CLEAN_CAREER_V3'/);
- assert.match(config,/wtwCommercialWorldProfileV1/);
+ assert.match(bootstrap,/MAIN='wtw1999FoundingStateV1'/);
+ assert.match(bootstrap,/SCHEMA='WTW_1999_FOUNDING_CAREER_V1'/);
+ assert.match(bootstrap,/namedSaveKey:'wtw1999FoundingNamedSavesV1'/);
+ assert.match(bootstrap,/Earlier 325k\/2014 saves, decisions and named saves are NOT imported or deleted/);
+ assert.match(config,/wtwFoundingWorldProfileV1/);
  assert.match(config,/anchor\.worldProfile\?\.population/);
+ assert.match(config,/mode:'FOUNDING_1999'/);
+ assert.match(config,/population:112/);
 });
 test('world directory, worker and on-demand horse profiles use the same seed, mode and population',()=>{
  assert.match(source,/const gameWorldProfile=/);
