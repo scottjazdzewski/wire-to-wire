@@ -49,6 +49,7 @@ test('founding Office clearly separates the 24 proposed principals from the 13 e
  assert.equal(owners.filter(o=>o.status==='ESTABLISHED PRINCIPAL').length,12);
  assert.equal(owners.filter(o=>o.status==='APPROVED PRINCIPAL').length,21);
  assert.equal(owners.find(o=>o._id==='O-000002').status,'PROPOSED PRINCIPAL · NOT APPROVED');
+ assert.equal(owners.find(o=>o._id==='O-000002').principal,'Not recorded');
  assert.equal(owners.find(o=>o._id==='O-000061').status,'ESTABLISHED PRINCIPAL');
  assert.match(js,/LEADERSHIP APPROVAL/);
  assert.match(js,/PROPOSED — AWAITING USER APPROVAL/);
@@ -81,24 +82,18 @@ test('no duplicate stallion rows or invented foals enter the founding farm pages
  assert.equal(foals[0].bookings,'0');
 });
 
-test('staff roster is freshly generated, role-specific, and never silently employed',()=>{
- const jockeys=ui.departmentRows('Personnel','Jockeys');
- const staff=ui.departmentRows('Personnel','Staff');
- assert.equal(jockeys.length,26);
- assert.ok(jockeys.every(p=>p._id.startsWith('P-FOUNDING-STAFF-')));
- assert.ok(jockeys.every(p=>p._testAbility?.current>=1&&p._testAbility?.potential>=p._testAbility.current));
- assert.ok(jockeys.every(p=>p.contract.includes('UNCONTRACTED')&&p.salary==='—'));
- assert.ok(staff.length>25);
- assert.ok(staff.every(p=>!['groom','exercise_rider'].includes(p.role)));
- assert.ok(staff.every(p=>p.contract.includes('UNCONTRACTED')&&p.salary==='—'));
- assert.ok(jockeys.every(p=>Object.keys(p._testAttrs||{}).length>=10));
+test('no generated staff, jockeys, contracts or trainers enter the approved-only founding world',()=>{
+ assert.equal(ui.departmentRows('Personnel','Jockeys').length,0);
+ assert.equal(ui.departmentRows('Personnel','Staff').length,0);
+ assert.equal(ui.departmentRows('Personnel','Trainers').length,0);
  assert.equal(ui.departmentRows('Personnel','Ownership Groups').length,0);
  assert.equal(ui.departmentRows('Personnel','Owners').length,37);
- assert.ok(ui.departmentRows('Personnel','Trainers').length>=12);
+ assert.equal(ui.generatedStaffRoles.length,0);
+ assert.equal(ui.counts.people,41);
 });
 
 test('the small founding facility, finance, and sale directories show no phantom catalogs',()=>{
- assert.equal(ui.auctionList().length,12);
+ assert.equal(ui.auctionList().length,0);
  const owners=ui.departmentRows('Personnel','Owners');
  assert.ok(owners.some(o=>o.name==='Midway'));
  assert.ok(owners.some(o=>o.name==='Harrowgate Farm'));
@@ -106,6 +101,14 @@ test('the small founding facility, finance, and sale directories show no phantom
  const facilities=ui.departmentRows('Facilities','Overview');
  assert.equal(facilities.length,ui.counts.facilities);
  assert.ok(facilities.every(f=>Boolean(f._id)));
+ assert.equal(facilities.length,30);
+ assert.equal(ui.departmentRows('Facilities','Stud Farms').length,5);
+ assert.equal(ui.departmentRows('Facilities','Farms').length,15);
+ assert.equal(ui.departmentRows('Facilities','Racing Stables').length,10);
+ assert.equal(ui.departmentRows('Facilities','Training Centers').length,0);
+ assert.equal(ui.departmentRows('Facilities','Breaking Facilities').length,0);
+ assert.equal(ui.departmentRows('Breeding','Stud Farms').length,5);
+ assert.ok(facilities.every(f=>!f.capacity&&!f.cost&&!f._testGenerated));
  const finance=ui.departmentRows('Finances','Overview');
  assert.ok(finance.every(row=>row.source==='FOUNDING_FINANCE_NOT_CERTIFIED__NO_SETTLEMENT_AUTHORITY'&&row.income==='—'&&row.expense==='—'));
 });
