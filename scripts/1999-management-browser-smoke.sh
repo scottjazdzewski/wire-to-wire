@@ -138,6 +138,11 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    d.querySelectorAll('#wtwNextgen .ng-person-horse-dossier .ng-horse-mgr-five>.ng-horse-mgr-panel').length===5&&
    d.querySelectorAll('#wtwNextgen .ng-person-horse-dossier .ng-horse-mgr-bottom>.ng-horse-mgr-panel').length===2))
    throw Error('Full Horse-layout personnel mismatch '+personDiagnostic());
+  const portrait=d.querySelector('#wtwNextgen .ng-profile-person .ng-profile-source-photo.ng-profile-portrait');
+  check('Every person keeps a reserved portrait slot at 4:5 with no fake image',
+   Boolean(portrait)&&
+   Math.abs(portrait.getBoundingClientRect().width/portrait.getBoundingClientRect().height-.8)<.06&&
+   (Boolean(portrait.querySelector('img'))||Boolean(portrait.querySelector('.ng-profile-photo-empty'))));
   steps.push('Founding person uses full Horse structure: four attribute columns, 46 slots, status strip, 5+2 modules');
   check('Unapproved person abilities remain unassigned, not manufactured',
    !d.querySelector('#wtwNextgen .ng-profile-person .test-modeled')&&
@@ -173,8 +178,9 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   firstOwner.click();await pause(220);
   check('Ownership page IS the approved Track workspace with source-linked principals',
    Boolean(d.querySelector('#wtwNextgen .ng-profile-farm.ng-profile-track'))&&
-   Boolean(d.querySelector('#wtwNextgen .ng-track-workspace'))&&
-   Boolean(d.querySelector('#wtwNextgen .ng-track-meet-card')));
+   Boolean(d.querySelector('#wtwNextgen .ng-track-workspace[data-template="track-overview"]'))&&
+   Boolean(d.querySelector('#wtwNextgen .ng-track-meet-card'))&&
+   Boolean(d.querySelector('#wtwNextgen .ng-profile-facility-logo')));
   click('Personnel');await pause(200);
   const principalTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Principals');
   check('Personnel contains the approved Principals directory',Boolean(principalTab));
@@ -195,10 +201,14 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   const firstStud=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
   check('Approved stud farm is selectable without creating separate buildings',Boolean(firstStud));
   firstStud.click();await pause(220);
-  check('Facility page IS the approved Track workspace using the same exact organization ID',
+  check('Facility page exactly follows Track table, configuration and history structure',
    Boolean(d.querySelector('#wtwNextgen .ng-profile-farm.ng-profile-track'))&&
-   Boolean(d.querySelector('#wtwNextgen .ng-track-workspace'))&&
-   d.querySelector('#wtwNextgen .ng-profile-farm')?.textContent.includes('NOT CERTIFIED'));
+   Boolean(d.querySelector('#wtwNextgen .ng-track-workspace[data-template="track-overview"]'))&&
+   Boolean(d.querySelector('#wtwNextgen .ng-facility-records.ng-stakes-table'))&&
+   Boolean(d.querySelector('#wtwNextgen .ng-track-course-panel'))&&
+   Boolean(d.querySelector('#wtwNextgen .ng-track-history-card'))&&
+   Boolean(d.querySelector('#wtwNextgen .ng-profile-facility-logo'))&&
+   d.querySelector('#wtwNextgen .ng-profile-farm')?.textContent.includes('NOT RECORDED'));
   click('Breeding');await pause(210);
   const breedingStudSelect=d.querySelector('#wtwNextgen select[data-ng-select="department-tab"]');
   check('Breeding uses approved Stud Farms picker',Boolean(breedingStudSelect));
