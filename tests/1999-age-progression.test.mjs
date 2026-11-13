@@ -3,7 +3,13 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {create1999Universe} from '../src/1999/full-world-generator.mjs';
 import {readFull1999TestWorld} from '../src/1999/full-world-readmodel.mjs';
-import {readLocal1999World} from '../public/1999/engine/local-api.mjs';
+import {readLocal1999World as read1999Directory} from '../public/1999/engine/local-api.mjs';
+// Explicit older full-world benchmark, not the clean founding-game default.
+const readLocal1999World=raw=>{
+ const url=new URL(raw,'https://wtw.benchmark');
+ if(!url.searchParams.has('mode'))url.searchParams.set('mode','CANON_ANCHORED_TEST');
+ return read1999Directory(url.pathname+url.search);
+};
 import {createClean1999Clock,advance1999Clock} from '../public/1999/test-clock.mjs';
 import {evaluateAgeAbility,careerAgeAtDate,project1999CareerEntity} from '../public/1999/engine/age-ability.mjs';
 
