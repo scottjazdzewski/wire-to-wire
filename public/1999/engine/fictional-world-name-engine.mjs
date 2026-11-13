@@ -223,6 +223,13 @@ export function normalizeFictionalWorldNamingSpec(input={}){
  if(staff+owners>MAX_NAME_RECORDS)throw Error('Too many people in one naming batch');
  if(owners+(roles.trainer??0)+farmCount+facilities.breakingTraining>MAX_NAME_RECORDS)
   throw Error('Too many organizations in one naming batch');
+ // The optional index is a read-only collision interface supplied by a
+ // separate name registry. It is never serialized, cloned or mutated here.
+ const externalNameIndex=input.externalNameIndex??null;
+ if(externalNameIndex!==null&&(!externalNameIndex||
+  typeof externalNameIndex.hasAnyName!=='function'||
+  typeof externalNameIndex.hasOrganizationRootConflict!=='function'))
+  throw Error('Invalid indexed naming registry lookup');
  const reservedNames=input.protectedNames??[];
  if(!Array.isArray(reservedNames)||reservedNames.some(x=>typeof x!=='string'||!x.trim()))
   throw Error('Protected names must be an array of nonempty strings');
@@ -248,7 +255,7 @@ export function normalizeFictionalWorldNamingSpec(input={}){
   throw Error('A jockey population requires at least one racing market');
  return frozen({worldId,year,seed,owners,roles:frozen(roles),facilities:frozen(facilities),
   farmCount,staff,protectedNames:frozen([...reservedNames]),markets,originWeights,
-  jockeyColonyWeights,ownerNamingPolicy});
+  jockeyColonyWeights,ownerNamingPolicy,externalNameIndex});
 }
 /**
  * Pure deterministic naming factory. Returns an IN-MEMORY identity proposal,
@@ -344,6 +351,7 @@ export function createFictionalWorldNameEngine(input){
    regionalCompoundGiven(seed,index,country,given,personBirthYears[index]),
   regionalSecondarySurnameAt:(index,role,country,primary,attempt)=>
    drawRegionalSurname(seed,index,country,attempt,'secondary'),
+  isExternalNameReserved:spec.externalNameIndex?.hasAnyName,
   normalizeNamesForAccent:true,maxBaseNameUses:2,avoidIdenticalGivenSurname:true
  });
  const countrySet=new Set(SUPPORTED_ORIGINS);
@@ -391,6 +399,7 @@ export function createFictionalWorldNameEngine(input){
   seed,ownerCount:owners,barnCount:trainers.length,farmCount,
   breakingCount:facilities.breakingTraining,
   protectedNames:[...spec.protectedNames,...basePeople.map(p=>p.name)],
+  externalNameIndex:spec.externalNameIndex,
   principalNames:principalPeople.map(p=>p.name),
   trainerNames:trainers.map(p=>p.name),
   principalPrimarySurnames:principalPeople.map(p=>p.primarySurname),
@@ -503,7 +512,8 @@ export function createFictionalWorldNameEngine(input){
   internationalCultureModel:INTERNATIONAL_NAME_CULTURE_MODEL,worldId,year,roles,owners,facilities,
   markets:markets.map(m=>[m.id,m.city,m.region,m.country,m.code,m.weight,m.breeding,m.racing,m.jockeyColony]),
   originWeights:spec.originWeights,colonyWeights:spec.jockeyColonyWeights,
-  reserved:spec.protectedNames,ownerNamingPolicy:spec.ownerNamingPolicy})).toString(16).padStart(8,'0');
+  reserved:spec.protectedNames,ownerNamingPolicy:spec.ownerNamingPolicy,
+  indexRevision:spec.externalNameIndex?.revision??null})).toString(16).padStart(8,'0');
  const manifest=frozen({schema:FICTIONAL_WORLD_NAME_ENGINE,worldId,seed,year,
   fingerprint:specFingerprint,jockeyColonyNameModel:JOCKEY_COLONY_NAME_MODEL,
   usBirthCohortNameModel:US_BIRTH_COHORT_NAME_MODEL,
