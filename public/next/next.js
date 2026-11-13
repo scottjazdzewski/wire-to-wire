@@ -458,6 +458,7 @@ let world1999Data=null,world1999Loading=false,world1999LoadFailed=false;
 // Identity-only source-backed pilot jockeys do not alter the 41 founding leaders,
 // and are NOT gameplay employees, mounts, wage obligations or abilities.
 let world1999JockeyRoster=[];
+let world1999TrainerRoster=[];
 
 /* World Editor v1: canonical IDs remain immutable. The 1999 source JSON is
    immutable; user's edits are a browser-owned overlay, never a false source
@@ -794,8 +795,11 @@ function loadWorld1999(){
    r.ok?r.json():Promise.reject(Error('Canonical track geography unavailable'))),
   isClean1999()?fetch('/data/wtw-1999-jockey-pilot-v1.json?rev=source-jockey-identities-v1-20261113',
    {credentials:'same-origin',cache:'force-cache'}).then(r=>
-    r.ok?r.json():Promise.reject(Error('Source jockey pilot unavailable'))):Promise.resolve(null)
- ]).then(([data,geo,pilot])=>{
+    r.ok?r.json():Promise.reject(Error('Source jockey pilot unavailable'))):Promise.resolve(null),
+  isClean1999()?fetch('/data/wtw-1999-trainer-pilot-v1.json?rev=source-trainer-identities-v1-20261113',
+   {credentials:'same-origin',cache:'force-cache'}).then(r=>
+    r.ok?r.json():Promise.reject(Error('Source trainer pilot unavailable'))):Promise.resolve(null)
+ ]).then(([data,geo,pilot,trainerPilot])=>{
    if(data?.schema!=='WTW_1999_WORLD_DIRECTORY_V1'||
      !Array.isArray(data.tracks)||!Array.isArray(data.people)||
      !Array.isArray(data.organizations)||!Array.isArray(data.horses))
@@ -818,6 +822,17 @@ function loadWorld1999(){
         p.employmentStatus!=='UNASSIGNED'))
      throw Error('Pilot jockey roster violates 1999 identity boundary');
     world1999JockeyRoster=chosen;
+    if(trainerPilot?.schema!=='WTW_1999_TRAINER_PILOT_IDENTITIES_V1'||
+      trainerPilot?.counts?.pilotTrainers!==20||
+      !Array.isArray(trainerPilot.trainers)||trainerPilot.trainers.length!==20)
+     throw Error('Trainer identity pilot unavailable or invalid');
+    const trainerIds=new Set(trainerPilot.trainers.map(p=>p.id));
+    if(trainerIds.size!==20||trainerPilot.trainers.some(p=>
+      p.role!=='TRAINER'||p.entryStatus!=='SELECTED_IDENTITY_ONLY'||
+      existingIds.has(p.id)||!p.name||!p.base||p.roleAttributes!==null||
+      p.abilityStatus!=='UNASSESSED'||p.contract!==null))
+     throw Error('Trainer identity pilot violates founding population boundary');
+    world1999TrainerRoster=trainerPilot.trainers;
     if(geo?.counts?.north_america!==118||!Array.isArray(geo.tracks))
      throw Error('Complete North American track authority unavailable');
     const canonical=geo.tracks.filter(t=>t.registry==='NORTH_AMERICA');
@@ -854,7 +869,7 @@ function world1999Entries(){
    kind:'track',name:t.name,detail:t.region||t.circuit||'',location:t.location||'',
    canonicalId:t.id,worldKey:world1999Key('track',t),_world:t
   })),
-  ...[...world1999Data.people,...world1999JockeyRoster].map(p=>({
+  ...[...world1999Data.people,...world1999JockeyRoster,...world1999TrainerRoster].map(p=>({
    kind:'person',name:p.name,detail:p.role||'',location:p.base||'',
    canonicalId:p.id,worldKey:world1999Key('person',p),_world:p
   })),
@@ -907,7 +922,7 @@ function openFounding1999Profile(kind,id){
 function renderFounding1999Profile(kind,id){
  const source=world1999Data||world1999Base;
  if(!source)return '<section class="ng-world-source-profile" role="status"><p>Loading founding profile…</p></section>';
- const list=kind==='person'?[...source.people,...world1999JockeyRoster]:source.organizations;
+ const list=kind==='person'?[...source.people,...world1999JockeyRoster,...world1999TrainerRoster]:source.organizations;
  const record=(list||[]).find(x=>x.id===id);
  if(!record)return '<section class="ng-world-source-profile"><p>Not in the approved 1999 people or organization roster.</p></section>';
  const key=kind+':'+id;
@@ -2760,12 +2775,16 @@ function depFacilityRows(page,demo){
 function depRows(section,page,demo,auction){
  // Populate the EXISTING OOTP/FM Personnel list with source-named pilot jockeys,
  // keeping all ratings, mounts, contracts and income blank until engine authoring.
- if(isClean1999()&&section==='Personnel'&&(page==='Jockeys'||page==='Overview')){
-  return world1999JockeyRoster.map(p=>({
+ if(isClean1999()&&section==='Personnel'&&
+   (page==='Trainers'||page==='Jockeys'||page==='Overview')){
+  const people=page==='Jockeys'?world1999JockeyRoster:
+   page==='Trainers'?world1999TrainerRoster:
+   [...world1999JockeyRoster,...world1999TrainerRoster];
+  return people.map(p=>({
    _kind:'person',_name:p.name,_id:p.id,_canonId:p.id,
-   _worldKey:'person:'+p.id,name:p.name,role:'JOCKEY',
+   _worldKey:'person:'+p.id,name:p.name,role:p.role,
    age:'',base:p.base,homeTrack:p.homeTrack||'',_homeTrackId:p.homeTrackId||'',
-   status:'SOURCE IDENTITY · UNBOOKED',
+   status:'1999 TEST IDENTITY · UNASSIGNED',
    ca:'',pa:'',reputation:'',specialty:'',morale:'',workload:'',
    salary:'',commission:'',demand:'',competingBarns:'',quotedMount:'',
    relationship:'',contract:'',assignment:'',wins:'',
@@ -2797,7 +2816,7 @@ function depRows(section,page,demo,auction){
    _sireId:h.sireId||'',_damId:h.damId||'',
    status:h.racingStatus||h.status||'',_role:h._role
   }));
-  if(page==='People')return [...(world1999Data.people||[]),...world1999JockeyRoster].map(p=>({
+  if(page==='People')return [...(world1999Data.people||[]),...world1999JockeyRoster,...world1999TrainerRoster].map(p=>({
    _kind:'person',_name:p.name,_canonId:p.id,_worldKey:world1999Key('person',p),
    name:p.name,role:p.positionTitle||p.role||'',base:p.base||'',
    operation:worldRecordName('farm',p.operatingOrganizationId||p.ownershipOperationId,
