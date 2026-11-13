@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,worldAttributeKey:'',stableMode:'all',stableDemo:!window.__WTW_1999_MANAGEMENT__,stableSearch:'',racingMode:'meets',racingTrack:'',racingDate:'',racingCalendarOpen:false,departmentDemo:!window.__WTW_1999_MANAGEMENT__,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
+const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,worldAttributeKey:'',stableMode:'all',stableSearch:'',racingMode:'meets',racingTrack:'',racingDate:'',racingCalendarOpen:false,departmentDemo:false,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -2937,7 +2937,7 @@ function salesDesk(page,auction,auctions,visibleTotal){
   safe(auction?depSaleDateLabel(auction):'—')+'</b></div>'+
   '<div class="ng-sales-desk-field"><small>VENUE / TYPE</small><b>'+
   safe([auction?.city,auction?.category].filter(Boolean).join(' · ')||'—')+'</b></div>'+
-  '<div class="ng-sales-desk-field"><small>'+safe(APP.departmentDemo?'PREVIEW LOTS':'CATALOG LOTS')+'</small><b>'+
+  '<div class="ng-sales-desk-field"><small>'+safe('CATALOG LOTS')+'</small><b>'+
   recordCount+(watched?' · ★ '+watched:'')+'</b></div>'+
   '<div class="ng-sales-desk-actions">'+go('sale-prev','‹','Previous scheduled auction',current<=0)+
   go('sale-next','›','Next scheduled auction',current<0||current>=auctions.length-1)+
@@ -3044,92 +3044,15 @@ function openEntityRecord(name,preferred='',row=null){
  return true;
 }
 function previewRecordView(){
- const fromState=APP.previewEntity;
- const pieces=(APP.custom||'').split(':');
+ const fromState=APP.previewEntity,pieces=(APP.custom||'').split(':');
  const kind=fromState?.kind||decodeURIComponent(pieces[1]||'record');
- const routeIdentity=decodeURIComponent(pieces.slice(2).join(':')||'Record');
- const hydratedPerson=kind==='person'?window.__WTW_1999_UI_DATA__?.personProfileById?.(routeIdentity):null;
- const hydratedHorse=!fromState?.row&&kind==='horse'&&/^H-[A-Za-z0-9-]+$/.test(routeIdentity)?
-  window.__WTW_1999_UI_DATA__?.worldHorseById?.(routeIdentity):null;
- const name=fromState?.name||hydratedPerson?.name||hydratedHorse?.name||routeIdentity;
- const demo=(fromState?.row?._kind||'').startsWith('demo')||
-  (Boolean(fromState?.row)&&Boolean(APP.departmentDemo))||
-  DEP_FACILITY_PREVIEW.some(item=>item[0]===name);
- // Rehydrate the canonical browser-world horse on refresh or deep-link load.
- // The URL stores identity, not an old UI snapshot or fabricated horse values.
- const fields=fromState?.row||hydratedPerson||hydratedHorse||
-  (kind==='horse'?window.__WTW_1999_UI_DATA__?.stableHorsePreview?.(name):null)||{};
- const generated=Boolean(fields._testGenerated),hasTestData=Boolean(fields._testAttrs||fields._testFinances||fields._testReputation);
- // All actual or pending people and horse records use the approved FM dossier.
- // Missing IDs remain explicitly unlinked, never guessed from a name.
- if(kind==='person')return restored1999Profile('person',{...fields,name});
- if(kind==='horse')return restored1999Profile('horse',{...fields,name});
- const fixture=DEP_FACILITY_PREVIEW.find(item=>item[0]===name);
- const relevant=[
-  ['ENTITY TYPE',fields.type||fixture?.[1]||kind.toUpperCase()],
-   ['CURRENT ABILITY · TEST',fields._testAbility?.schema==='WTW_1999_AGE_ABILITY_V1'?fields._testAbility.currentStars+'/5':''],
-   ['FUTURE POTENTIAL · TEST',fields._testAbility?.schema==='WTW_1999_AGE_ABILITY_V1'?fields._testAbility.potentialStars+'/5':''],
-   ['CAREER STAGE · TEST',fields._testAbility?.schema==='WTW_1999_AGE_ABILITY_V1'?fields._testAbility.careerStage:''],
-  ['LOCATION',fields.location||fixture?.[2]||'Not recorded'],
-  ['OWNER',fields.owner||'Not recorded'],['PRINCIPAL OWNER',fields.principal||''],['COUNTRY OF ORIGIN',fields.birthCountry||''],['ENTITY ID',fields._id||''],
-  ['CAPACITY',fields.capacity||'Not recorded'],
-  ['OPERATING STATUS',fields.status||'Not recorded'],
-  ...(fields._testCompensation?[
-   ['COMPENSATION TYPE · TEST',fields._testCompensation.basis||''],
-   ['WIN PURSE COMMISSION · TEST',fields._testCompensation.winShareRate!=null?
-    (100*fields._testCompensation.winShareRate).toFixed(1)+'%':''],
-   ['SECOND PURSE COMMISSION · TEST',fields._testCompensation.secondShareRate!=null?
-    (100*fields._testCompensation.secondShareRate).toFixed(1)+'%':''],
-   ['THIRD PURSE COMMISSION · TEST',fields._testCompensation.thirdShareRate!=null?
-    (100*fields._testCompensation.thirdShareRate).toFixed(1)+'%':''],
-   ['DAILY TRAINING FEE · TEST',fields._testCompensation.dayRate!=null?
-    '$'+Number(fields._testCompensation.dayRate).toLocaleString('en-US'):''],
-   ['JOCKEY MOUNT FEE · TEST',fields._testCompensation.mountFee!=null?
-    '$'+Number(fields._testCompensation.mountFee).toLocaleString('en-US'):''],
-   ['EST. ANNUAL GROSS FEES · TEST',fields._testCompensation.projectedAnnualGross!=null?
-    '$'+Number(fields._testCompensation.projectedAnnualGross).toLocaleString('en-US'):
-    fields._testCompensation.estimatedAnnualFees!=null?
-     '$'+Number(fields._testCompensation.estimatedAnnualFees).toLocaleString('en-US'):'']
-  ]:[]),
-  ['RELATIONSHIP TO OUR STABLE · TEST',fields.relationship||''],
-  ...(fields._testMarket?[
-   ['MAJOR-RACE JOCKEY DEMAND · TEST',fields._testMarket.demandTier],
-   ['COMPETING TOP BARNS · TEST',fields._testMarket.competingBarns?.length||0],
-   ['NEGOTIATED MOUNT QUOTE · TEST',fields._testMarket.suggestedMountFee!=null?
-    '$'+Number(fields._testMarket.suggestedMountFee).toLocaleString('en-US'):''],
-   ['EXPECTED RIVAL INTEREST · NOT OFFERS',
-    (fields._testMarket.competingBarns||[]).map(o=>o.ownerName).join(', ')],
-   ['BOOKING STATUS',fields._testMarket.status]
-  ]:[]),
-  ...(fields._testNegotiation?[
-   ['OWNER JOCKEY BUDGET TIER · TEST',fields._testNegotiation.jockeyBudgetBand],
-   ['OWNER MOUNT FEE TOLERANCE · TEST',String(fields._testNegotiation.mountFeeTolerance||'')],
-   ['OWNER COMMISSION FLEXIBILITY · TEST',String(fields._testNegotiation.commissionFlexibility||'')]
-  ]:[]),
-  ...(generated?[
-   ['HORSE ID',fields._id],['AGE',fields.age],['SEX',fields.sex],
-   ['SIRE ID',fields.sire],['DAM ID',fields.dam],['TRAINER',fields.trainer],
-   ['HOME TRACK',fields.track]
-  ]:[])
- ].filter(([label,value])=>!entityNotRecorded(value)||label==='ENTITY TYPE');
- const description=generated?
-  '1999 SIMULATED TEST ENTITY — permanent test identity and modeled attributes. Values are test-world fixtures, not historical evidence or scouting observations. No future racing outcomes are preloaded.':demo?
-  'FICTIONAL DESIGN PREVIEW — this named operation has no registered game profile yet. None of the displayed information is part of the authoritative database.':
-  'SOURCE CONNECTION PENDING — this name is not connected to an individual profile in the current game records. No profile identity has been invented.';
+ const id=decodeURIComponent(pieces.slice(2).join(':')||'');
+ const name=fromState?.name||id||'Unregistered record';
+ const message='This record is not registered in the approved January 1999 world. No entity, finances, pedigree or attributes have been invented.';
  return '<section class="ng-entity-preview ng-stable-roster-v2">'+
-  '<header><div><small>'+safe(generated?'1999 TEST ENTITY':demo?'DEMO RECORD':'UNLINKED RECORD')+' · '+safe(kind.toUpperCase())+'</small>'+
-  '<h2>'+safe(name)+'</h2></div><button data-ng="back" aria-label="Return to previous screen">← BACK</button></header>'+
-  '<p class="ng-entity-preview-notice">'+safe(description)+'</p>'+
-  '<div class="ng-entity-preview-grid">'+relevant.map(([label,value])=>
-   '<div><small>'+safe(label)+'</small>'+namedProfileValue(label,String(value))+'</div>').join('')+'</div>'+
-  (hasTestData?[
-   ['MODELLED ABILITY / CONDITION',fields._testAttrs],
-   ['OPENING FINANCES / VALUE',fields._testFinances],
-   ['GENERATED REPUTATION',fields._testReputation]
- ].map(([heading,items])=>'<section class="ng-entity-preview-traits"><h3>'+safe(heading)+'</h3><div class="ng-entity-preview-grid">'+
-  Object.entries(items||{}).map(([key,value])=>
-   '<div><small>'+safe(key.replaceAll('_',' '))+'</small><strong>'+safe(String(value))+'</strong></div>').join('')+'</div></section>').join(''):'')+
- '<p class="ng-entity-preview-footer">Use the BACK button to return to the management roster. Canonical records open their protected historical profiles; generated records remain clearly labeled TEST.</p></section>';
+  '<header><div><small>UNREGISTERED · '+safe(kind.toUpperCase())+'</small><h2>'+
+  safe(name)+'</h2></div><button data-ng="back" aria-label="Return to previous screen">← BACK</button></header>'+
+  '<p class="ng-entity-preview-notice">'+safe(message)+'</p></section>';
 }
 function depCell(value,key){
  if(value==null||value==='')return '<span class="ng-rs-missing">—</span>';
@@ -3141,7 +3064,7 @@ function depCell(value,key){
   return liveStableSignal(tone,t,t);
  }
  if(['ca','pa'].includes(key)&&/^[1-5]$/.test(t))
-  return '<span class="ng-rs-stars" title="'+(APP.departmentDemo?'Fictional demo':'Recorded')+' rating '+t+'/5"><b>'+('★'.repeat(Number(t)))+'</b>'+('☆'.repeat(5-Number(t)))+'</span>';
+  return '<span class="ng-rs-stars" title="Recorded rating '+t+'/5"><b>'+('★'.repeat(Number(t)))+'</b>'+('☆'.repeat(5-Number(t)))+'</span>';
  return safe(t);
 }
 function depNumeric(v){
@@ -3283,11 +3206,11 @@ function departmentRoster(section,page='Overview'){
   }).join('')+'</tr>';
  }).join('');
  const pager='<span class="ng-dpt-records">'+totalRecords+' RECORDS · '+shown.length+
-  (globalIndexing?' LOADED · INDEXING '+globalProgress+' / '+(globalMareDirectory?Number(window.__WTW_1999_UI_DATA__?.counts?.breedingMares||0).toLocaleString('en-US')+' MARES':Number(window.__WTW_1999_UI_DATA__?.counts?.worldHorses||87500).toLocaleString('en-US')+' HORSES')+'…':
+  (globalIndexing?' LOADED · INDEXING '+globalProgress+' / '+(globalMareDirectory?Number(window.__WTW_1999_UI_DATA__?.counts?.breedingMares||0).toLocaleString('en-US')+' MARES':Number(window.__WTW_1999_UI_DATA__?.counts?.worldHorses||0).toLocaleString('en-US')+' HORSES')+'…':
    ' LOADED · SCROLL FOR MORE')+
-  (globalHorseDirectory?' · SORT/FILTER ALL '+(Number(window.__WTW_1999_UI_DATA__?.counts?.worldHorses||87500).toLocaleString('en-US'))+' HORSES':
+  (globalHorseDirectory?' · SORT/FILTER ALL '+(Number(window.__WTW_1999_UI_DATA__?.counts?.worldHorses||0).toLocaleString('en-US'))+' HORSES':
    globalMareDirectory?' · SORT/FILTER ALL BROODMARES':
-   virtualMethod?' · SCROLLING LARGE TEST POPULATION':'')+'</span>';
+   virtualMethod?' · SCROLL FOR MORE':'')+'</span>';
  const viewOptions=(tabmap[section]||[]).map(t=>'<option value="'+safe(t)+'" '+(t===page?'selected':'')+'>'+safe(t)+'</option>').join('');
  const racingTracks=section==='Racing'?depTrackCalendar().slice().sort((a,b)=>a.name.localeCompare(b.name)):[];
  if(section==='Racing'&&APP.racingTrack&&!racingTracks.some(x=>x.name===APP.racingTrack)){
@@ -3324,8 +3247,8 @@ function departmentRoster(section,page='Overview'){
  const salesDeskView=section==='Sales'?salesDesk(page,auction,auctions,rows.length):'';
  const cash=availableCash();
  const finance=section==='Finances'?'<div class="ng-dpt-finance">'+[
-  ['CASH',demo?'$2.84M':cash!=null?depMoney(cash):'—'],
-  ['MONTHLY INCOME',demo?'$186k':'—'],['MONTHLY COSTS',demo?'$143k':'—'],['NET CASH FLOW',demo?'+$43k':'—']
+  ['CASH',cash!=null?depMoney(cash):'—'],
+  ['MONTHLY INCOME','—'],['MONTHLY COSTS','—'],['NET CASH FLOW','—']
  ].map(([name,value])=>'<span><small>'+safe(name)+'</small><b>'+safe(value)+'</b></span>').join('')+'</div>':'';
  const racingDayView=section==='Racing'&&(page==='Calendar'||page==='Race Planning'||page==='Overview'&&APP.racingMode==='day');
  const racingDaySummary=section==='Racing'?window.__WTW_1999_UI_DATA__?.racingDaySummary?.(racingDate,APP.racingTrack):null;
@@ -3352,7 +3275,7 @@ function departmentRoster(section,page='Overview'){
   '<section class="ng-rs-roster"><header><strong>'+safe(section.toUpperCase())+' · SORTABLE ROSTER</strong><div class="ng-dpt-pager">'+pager+'</div></header>'+
   '<div class="ng-rs-scroll" tabindex="0" role="region" aria-label="'+safe(section)+' roster — scroll vertically and click column headings to sort"><table class="ng-rs-table ng-dpt-table"><thead><tr>'+heads+'</tr></thead><tbody>'+
   (body||'<tr><td colspan="'+specs.length+'" class="ng-rs-no-results">'+safe(globalIndexing?
-   'Indexing '+globalProgress.toLocaleString('en-US')+' of '+(globalMareDirectory?Number(window.__WTW_1999_UI_DATA__?.counts?.breedingMares||0).toLocaleString('en-US')+' breeding mares':Number(window.__WTW_1999_UI_DATA__?.counts?.worldHorses||87500).toLocaleString('en-US')+' horses')+
+   'Indexing '+globalProgress.toLocaleString('en-US')+' of '+(globalMareDirectory?Number(window.__WTW_1999_UI_DATA__?.counts?.breedingMares||0).toLocaleString('en-US')+' breeding mares':Number(window.__WTW_1999_UI_DATA__?.counts?.worldHorses||0).toLocaleString('en-US')+' horses')+
    ' for global sort/filter — source identities retained.':
    section==='Racing'&&racingDayView?'No races in the proposed condition book on '+racingDate+'. Choose another track or date.':section==='World'&&!world1999Data?'Loading the 1999 world registry…':section==='Sales'&&page==='Watchlist'?'No watched lots yet. Select ☆ beside a catalog hip to watch it for this session.':section==='Sales'&&page==='Private Offers'?'No recorded private offers. Bidding and negotiation are not enabled in this UI preview.':section==='Sales'?'No catalog lots recorded for this view.':demo?'No matching records.':'No supported records in this view.')+'</td></tr>')+
   '</tbody></table></div><div class="ng-dpt-disclosure">'+(racingDayView?'1999 GAME-MODELED CONDITION BOOKS · NO OFFICIAL ENTRIES · NO RESULTS COMMITTED · STAKES ARE PLANNED FEATURES':demo?'FICTIONAL DISPLAY VALUES ONLY — no prices, locations or medical facts saved.':'SOURCE RECORDS ONLY · unknown values shown as —')+
@@ -3612,7 +3535,7 @@ window.addEventListener('click',e=>{
   APP.departmentPageIndex=0;APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint();
  }
  // Previous/Next buttons have been retired from the department rosters.
- if(key==='dept-demo'){APP.departmentDemo=!APP.departmentDemo;APP.departmentPageIndex=0;APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint()}
+ if(key==='dept-demo')return;
  if(key==='sale-watch'){
   if(APP.section!=='Sales')return;
   const r=APP.departmentVisible[Number(val)];
