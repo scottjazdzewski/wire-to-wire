@@ -45,8 +45,9 @@ test('new founding stable must not display inherited B01 generated horses as own
 test('founding Office clearly separates the 24 proposed principals from the 13 established links',()=>{
  const owners=ui.departmentRows('Personnel','Owners');
  assert.equal(owners.length,37);
- assert.equal(owners.filter(o=>o.status==='PROPOSED PRINCIPAL · NOT APPROVED').length,24);
- assert.equal(owners.filter(o=>o.status==='ESTABLISHED PRINCIPAL').length,13);
+ assert.equal(owners.filter(o=>o.status==='PROPOSED PRINCIPAL · NOT APPROVED').length,4);
+ assert.equal(owners.filter(o=>o.status==='ESTABLISHED PRINCIPAL').length,12);
+ assert.equal(owners.filter(o=>o.status==='APPROVED PRINCIPAL').length,21);
  assert.equal(owners.find(o=>o._id==='O-000002').status,'PROPOSED PRINCIPAL · NOT APPROVED');
  assert.equal(owners.find(o=>o._id==='O-000061').status,'ESTABLISHED PRINCIPAL');
  assert.match(js,/LEADERSHIP APPROVAL/);
