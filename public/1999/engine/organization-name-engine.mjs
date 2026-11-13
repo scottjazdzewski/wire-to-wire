@@ -43,7 +43,7 @@ const LANDMARK='Autumn Grove|Black Walnut|Blue Heron|Cedar Bluff|Cedar Lane|Clov
 const TOPO='Bluff|Branch|Brook|Chase|Crossing|Downs|Fields|Ford|Glen|Grove|Hollow|Knoll|Landing|Meadow|Mill|Oaks|Pasture|Place|Ridge|Run|Spring|Vale|Valley|Wood'.split('|');
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'');
 const trailing=/(?:\s+(?:Bloodstock\s+Holdings|Bloodstock\s+Partners|Racing\s+Holdings|Thoroughbred\s+Ventures|Racing\s+Ventures|Racing\s+Associates|Thoroughbred\s+Stud|Pre-Training\s+Center|Horse\s+Development|Equine\s+Starting|Thoroughbred\s+Nursery|Thoroughbred\s+Farm|Bloodstock\s+Stud|Bloodstock\s+Farm|Bloodstock\s+Operation|Stallion\s+Station|Stallion\s+Farm|Stud\s+Farm|Farm\s+&\s+Nursery|Foaling\s+Nursery|Nursery\s+Farm|Bloodstock\s+&\s+Breeding|Racing\s+&\s+Breeding|Young\s+Horse\s+Development|Equine\s+Training\s+Center|Equine\s+Development|Racing\s+Partnership|Racing\s+Partners|Racing\s+Syndicate|Racing\s+Group|Racing\s+Club|Racing\s+Stables|Racing\s+Stable|Racing\s+Team|Racing\s+Operation|Training\s+Center|Training\s+Grounds|Training\s+Farm|Training\s+Barn|Training\s+Yard|Race\s+Barn|Race\s+Stable|Breaking\s+&\s+Training|Starting\s+&\s+Training|Pre-Training|Colt\s+Starting|Racehorse\s+Partnership|Family\s+Partnership|Family\s+Thoroughbreds|Family\s+Racing|Family\s+Stables|Thoroughbreds|Partnership|Syndicate|Partners|Stables|Stable|Bloodstock|Nursery|Farmstead|Farms|Farm|Acres|Stud|Training|Racing))$/i;
-const rootOf=name=>String(name).replace(/,?\s+(?:LLC|Inc\.?|Ltd\.?)$/i,'').replace(trailing,'').replace(/^the\s+/i,'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
+export const organizationRootOfName=name=>String(name).replace(/,?\s+(?:LLC|Inc\.?|Ltd\.?)$/i,'').replace(trailing,'').replace(/^the\s+/i,'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
 function hash(seed,key){
  let h=(2166136261^(seed>>>0))>>>0;
  for(const c of String(key)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}
@@ -72,6 +72,8 @@ export const hasArtificialOrganizationPhrase=candidate=>{
  if(/\b(?:Farm|Farms|Stud|Nursery)\s+(?:Farm|Farms|Stud|Nursery)\b/i.test(plain))return true;
  return false;
 };
+const rootOf=organizationRootOfName;
+export const isRecognizedOrganizationName=name=>trailing.test(String(name||'').replace(/,?\s+(?:LLC|Inc\.?|Ltd\.?)$/i,''));
 const isMeaningfullySimilar=(candidate,usedRoots)=>{
  // Catch suffix-swaps, accents/punctuation differences and rooted clones.
  const root=rootOf(candidate);
@@ -222,9 +224,13 @@ export function createOrganizationNameRoster({
  protectedNames=[],principalNames=[],trainerNames=[],sourceOwnerNames=[],farmKindPlan=null,
  alignPrincipalSurnames=false,principalPrimarySurnames=[],trainerPrimarySurnames=[],
  ownerContexts=[],farmContexts=[],trainerContexts=[],breakingContexts=[],
- ownerPartnershipLimit=null,soleOwnerPercent=null
+ ownerPartnershipLimit=null,soleOwnerPercent=null,externalNameIndex=null
 }){
  if(!Number.isSafeInteger(seed)||seed<1)throw Error('Invalid naming seed');
+ if(externalNameIndex!==null&&(!externalNameIndex||
+  typeof externalNameIndex.hasAnyName!=='function'||
+  typeof externalNameIndex.hasOrganizationRootConflict!=='function'))
+  throw Error('Invalid external organization name registry');
  if(ownerPartnershipLimit!==null&&(!Number.isInteger(ownerPartnershipLimit)||ownerPartnershipLimit<0||
   ownerPartnershipLimit>30000))throw Error('Invalid owner partnership limit');
  if(soleOwnerPercent!==null&&(!Number.isInteger(soleOwnerPercent)||
@@ -248,7 +254,9 @@ export function createOrganizationNameRoster({
  let retries=0;
  const reserve=(candidate,kind)=>{
   const key=norm(candidate),root=rootOf(candidate),stem=stemKey(candidate);
-  if(!key||key.length<5||used.has(key)||!root||hasArtificialOrganizationPhrase(candidate)||isMeaningfullySimilar(candidate,roots))return false;
+  if(!key||key.length<5||used.has(key)||!root||hasArtificialOrganizationPhrase(candidate)||
+   isMeaningfullySimilar(candidate,roots)||externalNameIndex?.hasAnyName(candidate)||
+   externalNameIndex?.hasOrganizationRootConflict(root))return false;
   // Protect distinctive prefixes of existing historic racing organizations;
   // do not mint e.g. "Kingsmere Valley Farm" beside "Kingsmere Farm".
   if(hasProtectedPrefixConflict(root))return false;
