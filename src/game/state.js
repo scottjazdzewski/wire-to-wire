@@ -5,6 +5,7 @@ import {
 import { validateSeed } from './rng.js';
 import {generatePeopleRuntime} from './people-generator.js';
 import {createFacilityState,validateFacilityState} from './facility-operations.js';
+import {createOwnershipRuntime,validateOwnershipRuntime} from './ownership.js';
 
 export function createGameRun({ world, runId, seed, player, stableHorseIds = [], startDate, personGenerationCatalog = null } = {}) {
   validateWorld(world);
@@ -29,7 +30,7 @@ export function createGameRun({ world, runId, seed, player, stableHorseIds = [],
     rng: { seed: seed >>> 0 },
     player: { role: player.role, involvement: player.involvement, operation_id: operationId },
     stable_horse_ids: [...stableHorseIds],
-    runtime: { horse: {}, races: {}, entries: {}, people: personGenerationCatalog?generatePeopleRuntime({world,catalog:personGenerationCatalog}):{}, finances: { balance_minor: null, ledger: [], operation_balances_minor: {} }, facilities:createFacilityState() },
+    runtime: { horse: {}, races: {}, entries: {}, people: personGenerationCatalog?generatePeopleRuntime({world,catalog:personGenerationCatalog}):{}, finances: { balance_minor: null, ledger: [], operation_balances_minor: {} }, facilities:createFacilityState(), ownership:createOwnershipRuntime() },
     decisions: { pending: {}, resolved: {} },
     scheduler: { pending: [], delivered_ids: [] },
     command_receipts: {},
@@ -85,6 +86,7 @@ export function validateGameRun(state, world) {
       'RUN_JOURNAL', 'Broken event journal sequence');
   }
   validateFacilityState(state,world);
+  validateOwnershipRuntime(state,world);
   strictJSON(state);
   return state;
 }
