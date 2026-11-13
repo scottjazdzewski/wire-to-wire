@@ -4,60 +4,35 @@ import {createFounding1999Universe} from '../public/1999/engine/founding-world-1
 import {createFoundingProfessionals1999,foundingProfessionalCounts} from
  '../public/1999/engine/founding-personnel-1999.mjs';
 
-const w=createFounding1999Universe({seed:19990101});
-const candidates=Array.from({length:Object.values(foundingProfessionalCounts).reduce((a,b)=>a+b,0)},
- (_,i)=>w.personAt(i));
+const world=createFounding1999Universe({seed:19990101});
+test('clean founding world imports ZERO unapproved generated professionals',()=>{
+ assert.equal(world.audit.newProfessionalPool,0);
+ assert.equal(world.audit.originalGeneratedStaffImported,0);
+ assert.equal(world.counts.trainers,0);
+ assert.equal(world.counts.people,world.sourcePeople.length);
+ assert.equal(world.counts.people,41);
+ assert.throws(()=>world.personAt(0),/Founding workforce index/);
+ assert.ok(world.sourcePeople.every(p=>!p.id.startsWith('P-FOUNDING-STAFF-')));
+ assert.ok(!world.sourcePeople.some(p=>['Graham Kincaid','Hugh Radcliffe',
+  'Sebastian Pryce','Daniel Calder'].includes(p.name)));
+});
 
-test('hard-reset staff are NEW scenario identities only, not the 325k-era generated pool',()=>{
+test('the future staff generator is isolated in tests, not mounted into the game',()=>{
+ const tracks=Array.from({length:world.counts.tracks},(_,i)=>world.trackAt(i));
+ const generate=seed=>createFoundingProfessionals1999({
+  seed,protectedNames:world.sourcePeople.map(p=>p.name),tracks});
+ const candidates=generate(19990101);
+ assert.equal(candidates.length,Object.values(foundingProfessionalCounts).reduce((a,b)=>a+b,0));
  assert.equal(candidates.length,68);
- assert.equal(w.counts.people,w.sourcePeople.length+candidates.length);
- assert.equal(w.audit.newProfessionalPool,68);
- assert.equal(w.audit.originalGeneratedStaffImported,0);
  assert.ok(candidates.every(p=>p.id.startsWith('P-FOUNDING-STAFF-')));
- assert.ok(candidates.every(p=>p.source==='FRESH_FOUNDING_1999_GENERATED_PERSON_NOT_LEGACY_ROSTER'));
  assert.ok(candidates.every(p=>p.employerOrganizationId===null&&p.employmentStatus==='AVAILABLE_UNCONTRACTED'));
- assert.ok(candidates.every(p=>p.payrollAnnual===0&&!p.contractedAtOpening));
- assert.ok(candidates.every(p=>p.name&&!/\d$/.test(p.name)));
- assert.equal(new Set(candidates.map(x=>x.id)).size,68);
- assert.equal(new Set(candidates.map(x=>x.name.toLowerCase())).size,68);
- assert.ok(candidates.every(p=>!['groom','exercise_rider'].includes(p.role)));
- assert.throws(()=>w.personAt(68),/Founding workforce index/);
-});
-
-test('foundation people have exact role counts, geographic names, and age-appropriate ability',()=>{
+ assert.ok(candidates.every(p=>!p.contractedAtOpening&&p.payrollAnnual===0));
+ assert.equal(new Set(candidates.map(p=>p.id)).size,68);
+ assert.equal(new Set(candidates.map(p=>p.name.toLowerCase())).size,68);
+ assert.ok(candidates.every(p=>!world.sourcePeople.some(ap=>ap.id===p.id)));
  for(const [role,n] of Object.entries(foundingProfessionalCounts))
-  assert.equal(candidates.filter(p=>p.role===role).length,n,role);
- const claimed=new Set(w.sourcePeople.map(p=>p.name.toLowerCase()));
- assert.ok(candidates.every(p=>!claimed.has(p.name.toLowerCase())));
- for(const person of candidates){
-  assert.ok(person.location?.city||person.location?.state,person.id+' home base');
-  assert.ok(person.baseTrackId?.startsWith('T-'),person.id+' circuit');
-  assert.ok(person.age>=18&&person.age<=72,person.id+' age');
-  assert.equal(person.ability.age,person.age);
-  assert.ok(person.ability.peakAge>0);
-  assert.ok(person.ability.current>=1&&person.ability.current<=99);
-  assert.ok(person.ability.potential>=person.ability.current);
-  assert.ok(person.ability.potential<=99);
-  assert.ok(Object.keys(person.attributes).length>=10);
-  assert.ok(Object.values(person.attributes).every(x=>typeof x==='number'&&x>=0&&x<=1));
-  assert.ok(person.birthCountry,person.id+' origin');
-  assert.equal(person.nameStatus,'PROVISIONAL_FOUNDING_GAME_PERSON');
- }
- const riders=candidates.filter(p=>p.role==='jockey');
- assert.equal(riders.length,26);
- assert.ok(riders.every(p=>p.compensation.mountFee>0&&p.compensation.notGuaranteedSalary));
- assert.ok(riders.every(p=>p.bookingMarket.competingBarns.length===0));
- assert.ok(riders.some(p=>['PR','PA','VE','MX','CL','PE','CO','DO'].includes(p.birthCountry)),
- 'jockey naming should include Latin-American origins');
-});
-
-test('new founding professionals reproduce exactly for same seed without shadow personnel IDs',()=>{
- const tracks=Array.from({length:w.counts.tracks},(_,i)=>w.trackAt(i));
- const another=createFoundingProfessionals1999({
-  seed:19990101,protectedNames:w.sourcePeople.map(p=>p.name),tracks});
- assert.deepEqual(another,candidates.map(({bookingMarket,...x})=>x));
- const changed=createFoundingProfessionals1999({
-  seed:19990102,protectedNames:w.sourcePeople.map(p=>p.name),tracks});
- assert.notEqual(another[0].name,changed[0].name);
- assert.ok(another.every(x=>!x.id.startsWith('P-TEST-')));
+  assert.equal(candidates.filter(p=>p.role===role).length,n);
+ assert.deepEqual(generate(19990101),candidates);
+ assert.notEqual(generate(19990102)[0].name,candidates[0].name);
+ assert.throws(()=>world.personAt(0),/Founding workforce index/);
 });
