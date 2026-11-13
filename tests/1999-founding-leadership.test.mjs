@@ -9,15 +9,17 @@ import {readLocal1999World} from '../public/1999/engine/local-api.mjs';
 const world=createFounding1999Universe({seed:19990101});
 const byOrg=new Map(world.sourceOrganizations.map(o=>[o.id,o]));
 const known=new Set(['O-000001','O-000003','O-000014','O-000056','O-000061','O-000066',
- 'O-005910','O-005919','O-005794','O-006905',
+ 'O-005910','O-005919','O-005794',
  'O-FOUNDING-1999-011','O-FOUNDING-1999-012','O-FOUNDING-1999-014']);
 
 test('every one of the 37 founding operations has a named, linked principal',()=>{
  assert.equal(world.counts.owners,37);
  assert.equal(world.sourceOrganizations.length,37);
  assert.equal(world.audit.foundingOrganizationsWithoutLeader,0);
- assert.equal(world.audit.newlyAssignedOrganizationPrincipals,24);
- assert.equal(world.audit.proposedLeadershipPeople,30);
+ assert.equal(world.audit.newlyAssignedOrganizationPrincipals,25);
+ assert.equal(world.audit.proposedLeadershipPeople,4);
+ assert.equal(world.audit.newLeadershipPeople,31);
+ assert.equal(world.audit.userApprovedLeadershipPeople,27);
  assert.equal(world.audit.leadershipSchema,FOUNDING_LEADERSHIP_SCHEMA);
  const ids=new Set(world.sourcePeople.map(x=>x.id));
  assert.equal(ids.size,world.sourcePeople.length);
@@ -29,8 +31,8 @@ test('every one of the 37 founding operations has a named, linked principal',()=
   assert.ok(Array.isArray(o.leadershipPeopleIds)&&o.leadershipPeopleIds.length>=1);
   assert.ok(o.leadershipPeopleIds.every(x=>ids.has(x)),o.name+' secondary leadership ID');
  }
- assert.equal(world.sourcePeople.length,46);
- assert.equal(world.counts.people,114); // 46 source and proposed people + 68 new, uncontracted professionals.
+ assert.equal(world.sourcePeople.length,47);
+ assert.equal(world.counts.people,115); // 47 source and leadership identities + 68 uncontracted professionals.
 });
 
 test('known 1999 founders/public people stay in place; proposals do not become historical proof',()=>{
@@ -44,7 +46,7 @@ test('known 1999 founders/public people stay in place; proposals do not become h
   'O-005910':['Mike Ditka','P-910023'],
   'O-005919':['Bob Knight','P-910024'],
   'O-005794':['Pat Buchanan','P-910028'],
-  'O-006905':['Magic Johnson','P-910018'],
+
   'O-FOUNDING-1999-011':['Dr. Everett Raines','P-FOUNDING-1999-002'],
   'O-FOUNDING-1999-012':['Rafael Cienfuegos','P-FOUNDING-1999-003'],
   'O-FOUNDING-1999-014':['Miriam Vale','P-000002']
@@ -54,9 +56,14 @@ test('known 1999 founders/public people stay in place; proposals do not become h
   assert.equal(byOrg.get(org).principalOwnerId,id);
  }
  const proposed=world.sourceOrganizations.filter(o=>!known.has(o.id));
- assert.equal(proposed.length,24);
- assert.ok(proposed.every(o=>o.leadershipStatus.includes('PROVISIONAL')));
+ assert.equal(proposed.length,25);
+ assert.equal(proposed.filter(o=>o.leadershipStatus.includes('PROVISIONAL')).length,4);
+ assert.equal(proposed.filter(o=>o.leadershipStatus==='USER_APPROVED_1999_OPERATOR_LINK').length,21);
  assert.ok(proposed.every(o=>o.principalOwnerId.startsWith('P-FOUNDING-LEADER-')));
+ assert.equal(byOrg.get('O-006905').principalOwner,'Daniel Calder');
+ assert.equal(byOrg.get('O-006905').publicInvestor,'Magic Johnson');
+ assert.equal(byOrg.get('O-006905').publicInvestorId,'P-910018');
+ assert.notEqual(byOrg.get('O-006905').principalOwnerId,'P-910018');
  assert.equal(byOrg.get('O-000063').principalOwnerId!=='P-000069',true,
   'Ray Sutter is not Ironweed owner');
  assert.equal(byOrg.get('O-000002').principalOwnerId!=='P-000002',true,
@@ -65,10 +72,10 @@ test('known 1999 founders/public people stay in place; proposals do not become h
 
 test('all leadership people have unique names/IDs, real geographic bases, age curves and no invented contracts',()=>{
  const people=world.foundingLeadership;
- assert.equal(people.length,30);
- assert.equal(people.filter(x=>x.isPrimary).length,24);
- assert.equal(new Set(people.map(x=>x.name.toLowerCase())).size,30);
- assert.equal(new Set(people.map(x=>x.id)).size,30);
+ assert.equal(people.length,31);
+ assert.equal(people.filter(x=>x.isPrimary).length,25);
+ assert.equal(new Set(people.map(x=>x.name.toLowerCase())).size,31);
+ assert.equal(new Set(people.map(x=>x.id)).size,31);
  assert.ok(people.every(p=>p.source==='WTW_1999_FICTIONAL_LEADERSHIP_PROPOSAL_NOT_HISTORICAL_EVIDENCE'));
  for(const p of people){
   assert.ok(byOrg.has(p.organizationId),p.name);
@@ -81,8 +88,15 @@ test('all leadership people have unique names/IDs, real geographic bases, age cu
   assert.equal(p.contractedAtOpening,false);
   assert.equal(p.payrollAnnual,null);
   assert.equal(p.no1999RaceResultClaim,true);
-  assert.ok(p.leadershipStatus.includes('PENDING_USER_REVIEW'));
+  assert.ok(p.leadershipStatus.includes('PENDING_USER_REVIEW')||p.leadershipStatus==='USER_APPROVED_1999_LEADERSHIP');
  }
+ assert.equal(people.filter(p=>p.leadershipStatus.includes('PENDING_USER_REVIEW')).length,4);
+ assert.equal(people.filter(p=>p.leadershipStatus==='USER_APPROVED_1999_LEADERSHIP').length,27);
+ assert.equal(people.find(p=>p.id==='P-FOUNDING-LEADER-001').age,59);
+ assert.equal(people.find(p=>p.id==='P-FOUNDING-LEADER-021').name,'Dino Marks');
+ assert.equal(people.find(p=>p.id==='P-FOUNDING-LEADER-008').name,'Sebastian Pryce');
+ assert.equal(people.find(p=>p.id==='P-FOUNDING-LEADER-012').name,'Hugh Radcliffe');
+ assert.equal(people.find(p=>p.name==='Daniel Calder').isPrimary,true);
  assert.ok(people.find(p=>p.name==='Charles Buckley').familyRelationshipIds.includes(
   people.find(p=>p.name==='Andrew Buckley').id));
  assert.ok(people.find(p=>p.name==='Hiroshi Takamori').familyRelationshipIds.includes(
@@ -97,14 +111,14 @@ test('World Registrar and exact-ID API both resolve all designated names',()=>{
   import.meta.url),'utf8'));
  assert.equal(file.counts.organizationsWithDesignatedPrincipal,37);
  assert.equal(file.counts.organizationPrincipalGaps,0);
- assert.equal(file.counts.people,46);
- assert.equal(file.leadershipAssignments.length,30);
+ assert.equal(file.counts.people,47);
+ assert.equal(file.leadershipAssignments.length,31);
  assert.deepEqual(file.organizations.map(x=>[x.id,x.principalOwner,x.principalOwnerId]),
   world.sourceOrganizations.map(x=>[x.id,x.principalOwner,x.principalOwnerId]));
  assert.deepEqual(file.people.map(x=>[x.id,x.name]),
   world.sourcePeople.map(x=>[x.id,x.name]));
  const listing=readLocal1999World('/api/1999/people?offset=16&limit=30');
- assert.equal(listing.total,46);
+ assert.equal(listing.total,47);
  assert.equal(listing.items.length,30);
  assert.equal(listing.items[0].id,'P-FOUNDING-LEADER-001');
  const modeled=readLocal1999World('/api/1999/sim/source-people?offset=16&limit=1');
