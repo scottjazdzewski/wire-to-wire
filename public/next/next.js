@@ -1338,6 +1338,21 @@ function profileDetail(route,sourceOverride=null){
  const details=$$('.profilePanel',source).map(n=>({title:text('h3',n),lines:n.textContent.trim().slice(0,700)}));
  const trackRaces=$$('.stakesRow',source).map((n,i)=>({name:text('strong',n),date:n.textContent.trim(),node:n,index:i}));
  const isHorse=route.kicker==='Horse Profile',isPerson=route.kicker==='People Profile',isFarm=route.kicker==='Farm Profile',isTrack=route.kicker==='Track Profile';
+ const personnelAttributeColumns=()=>{
+  const groupSizes=[9,15,12,10];
+  return groupSizes.map((count,index)=>{
+   const list=Array.from({length:count},(_,n)=>
+    '<div class="ng-horse-rating-row ability-unrated"><span>Attribute slot '+
+    String(n+1).padStart(2,'0')+'</span>'+
+    '<span class="ng-horse-rating-unassessed" aria-hidden="true"></span>'+
+    '<strong class="unknown">—</strong></div>').join('');
+   return '<section class="ng-horse-mgr-panel ng-horse-ratings" data-personnel-attribute-group="'+(index+1)+
+    '"><header><strong>ATTRIBUTE GROUP '+String(index+1).padStart(2,'0')+
+    '</strong><span>0/'+count+' ASSIGNED</span></header>'+
+    '<div class="ng-horse-rating-rows">'+list+'</div></section>';
+  }).join('');
+ };
+
  const tabs=(isHorse?['Overview','Career Record','Pedigree','Achievements','Connections','History']:
   isPerson?['Overview','Attributes','Reputation','Network','Stable Horses','Career','Connections','History']:
   isFarm?['Overview','Connected Horses','Operations','Connections','History']:
@@ -1937,18 +1952,7 @@ function profileDetail(route,sourceOverride=null){
    const person=personWork();
    const panel=(name,body,more='')=>'<section class="ng-horse-mgr-panel '+more+'"><header><strong>'+
     name+'</strong></header>'+body+'</section>';
-   const groupSizes=[9,15,12,10];
-   const professionalSlots=groupSizes.map((count,index)=>{
-    const list=Array.from({length:count},(_,n)=>
-     '<div class="ng-horse-rating-row ability-unrated"><span>Attribute slot '+
-     String(n+1).padStart(2,'0')+'</span>'+
-     '<span class="ng-horse-rating-unassessed" aria-hidden="true"></span>'+
-     '<strong class="unknown">—</strong></div>').join('');
-    return '<section class="ng-horse-mgr-panel ng-horse-ratings" data-personnel-attribute-group="'+(index+1)+
-     '"><header><strong>ATTRIBUTE GROUP '+String(index+1).padStart(2,'0')+
-     '</strong><span>0/'+count+' ASSIGNED</span></header>'+
-     '<div class="ng-horse-rating-rows">'+list+'</div></section>';
-   }).join('');
+   const professionalSlots=personnelAttributeColumns();
    const statusSlots='<div class="ng-horse-condition-strip" aria-label="Personnel condition and status slots">'+
     Array.from({length:7},(_,i)=>'<div class="ng-horse-condition-cell"><span>STATUS SLOT '+
     (i+1)+'</span><strong class="unknown">—</strong></div>').join('')+'</div>';
@@ -2069,8 +2073,13 @@ function profileDetail(route,sourceOverride=null){
  }else if((APP.detailTab==='Stable Horses'&&isPerson)||(APP.detailTab==='Connected Horses'&&isFarm)){
   left=`<section class="ng-detailcard ng-detailwide"><header>CONNECTED HORSE RECORDS</header>${isFarm?founderStockRows():connectedHorseRows()}</section>`;
  }else if(APP.detailTab==='Attributes'&&isPerson){
-  const person=personWork();
-  left=`<section class="ng-detailcard ng-detailwide ng-person-detail-sheet"><header>PROFESSIONAL ATTRIBUTE EVALUATIONS</header>${person.attributes(true)}<div class="ng-person-footnote">Estimates require observer evidence. Hidden professional ability is not shown to the player until observed.</div></section>`;
+  // The detail tab is the SAME unassigned Horse-format attribute matrix as
+  // the Overview. Older role scores and simulated legacy sheets never render.
+  left=`<div class="ng-horse-dossier ng-person-horse-dossier" data-template="horse-attributes">
+   <div class="ng-horse-dossier-caption"><strong>PERSONNEL ATTRIBUTES · ROLE DEFINITION PENDING</strong><span>0 OF 46 SLOTS ASSIGNED · NO SCORES</span></div>
+   <div class="ng-horse-mgr-four">${personnelAttributeColumns()}</div>
+   <p class="ng-horse-small-note">The four-category structure is locked to the Horse profile. Role-specific labels and ratings will be approved separately.</p>
+  </div>`;
  }else if(APP.detailTab==='Reputation'&&isPerson){
   const person=personWork();
   left=`<section class="ng-detailcard ng-person-detail-sheet"><header>PROFESSIONAL REPUTATION</header>${person.reputation(true)}</section>`;
