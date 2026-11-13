@@ -94,35 +94,21 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    d.querySelectorAll('#wtwNextgen .ng-horse-rating-row').length===46);
   click('Personnel');await pause(280);
   const trainerTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Trainers');
-  check('Existing Personnel trainer tab is available',Boolean(trainerTab));
-  trainerTab.click();await pause(330);
-  const trainerButton=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
-  check('Personnel trainer opens from the existing roster',Boolean(trainerButton));
-  trainerButton.click();await pause(240);
-  if(!d.querySelector('#wtwNextgen .ng-profile-person')||
-   d.querySelector('#wtwNextgen .ng-entity-preview')){
-   throw Error('Trainer did not open FM profile: '+JSON.stringify({
-    custom:w.__WTW_NEXT__?.app?.custom,section:w.__WTW_NEXT__?.app?.section,
-    trainer:trainerButton.dataset.val,route:d.querySelector('#wtwNextgen .ng-route')?.textContent.slice(0,200),
-    generic:Boolean(d.querySelector('#wtwNextgen .ng-entity-preview')),
-    dossier:Boolean(d.querySelector('#wtwNextgen .ng-person-workspace')),
-    errors:browserErrors.slice(-5)}));
-  }
-  steps.push('Trainer opens approved FM people profile, not legacy generic preview');
-  check('Trainer profile shows common and trainer-only detailed attributes',
-   d.querySelectorAll('#wtwNextgen .ng-person-attribute').length>=21&&
-   d.querySelector('#wtwNextgen .ng-person-workspace')?.textContent.includes('Conditioning'));
-  click('Personnel');await pause(180);
+  check('Personnel trainer tab remains available',Boolean(trainerTab));
+  trainerTab.click();await pause(300);
+  check('Clean founding world has no unapproved trainer roster',
+   ui.departmentRows('Personnel','Trainers').length===0&&!d.querySelector('#wtwNextgen [data-ng="dept-open"]'));
   const jockeyTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Jockeys');
-  check('Existing jockey roster tab is present',Boolean(jockeyTab));
+  check('Jockey roster tab remains available',Boolean(jockeyTab));
   jockeyTab.click();await pause(300);
-  const jockeyButton=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
-  check('Jockey profile is navigable by exact roster entity',Boolean(jockeyButton));
-  jockeyButton.click();await pause(250);
-  check('Jockey profile uses jockey skills rather than trainer skills',
-   Boolean(d.querySelector('#wtwNextgen .ng-profile-person'))&&
-   d.querySelector('#wtwNextgen .ng-person-workspace')?.textContent.includes('Break Timing')&&
-   !d.querySelector('#wtwNextgen .ng-person-workspace')?.textContent.includes('Workout Design'));
+  check('Clean founding world has no unapproved jockey roster',
+   ui.departmentRows('Personnel','Jockeys').length===0&&!d.querySelector('#wtwNextgen [data-ng="dept-open"]'));
+  check('Only agreed founders display and phantom facilities are absent',
+   ui.departmentRows('Personnel','Owners').length===37&&
+   ui.departmentRows('Facilities','Stud Farms').length===5&&
+   ui.departmentRows('Facilities','Farms').length===15&&
+   ui.departmentRows('Facilities','Training Centers').length===0&&
+   ui.departmentRows('Facilities','Breaking Facilities').length===0);
   click('World');await pause(240);
   const peopleTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='People');
   if(!peopleTab)throw Error('World People tab missing after Jockey profile: '+JSON.stringify({
