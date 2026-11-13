@@ -70,6 +70,20 @@ test('quality auditing validates 11,202 people and 8,408 organizations across di
   assert.equal(report.errorCounts.protectedCollisions,0);
  }
 });
+test('Unicode names remain legitimate as both person and sole-owner display names',()=>{
+ const people=[{id:'P1',name:'Raúl López Batista',primarySurname:'López',
+  role:'owner',organizationId:'O1'}];
+ const owners=[{id:'O1',name:'Raúl López Batista',
+  ownershipArchetype:'INDIVIDUAL_OWNER',principalId:'P1'}];
+ const valid=auditFictionalIdentityNaming({people,owners});
+ assert.equal(valid.pass,true,JSON.stringify(valid.issues));
+ assert.equal(valid.errorCounts.unnaturalOrganizationPhrases,0);
+ const bad=auditFictionalIdentityNaming({people,owners:[
+  {...owners[0],name:'Raúl Raúl Racing'}
+ ]});
+ assert.equal(bad.pass,false);
+ assert.ok(bad.errorCounts.unnaturalOrganizationPhrases>0);
+});
 test('audit identifies duplicate names, synthetic facility mismatch and broken relationships',()=>{
  const w=createFictionalWorldNameEngine({
   worldId:'QA-Corruption',seed:345555,roles:{trainer:4},
