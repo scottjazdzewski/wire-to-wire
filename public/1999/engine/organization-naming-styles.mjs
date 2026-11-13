@@ -112,19 +112,31 @@ export function contextualOwnerCandidate(seed,index,attempt,principal,primarySur
  const region=context.region||'GENERAL_NORTH_AMERICA';
  const era=context.era||organizationNamingEra(seed,index,'owner');
  const family=String(primarySurname||'').trim();
- const full=String(principal||'').trim();
+ const full=String(principal||'').replace(/^(?:Dr|Mr|Mrs|Ms)\.\s*/i,'').trim();
  const root=regionRoot(seed,key,region,attempt);
  const roll=hash(seed,key+':style')%100;
- if(family&&roll<16)return family+' '+draw(FINANCE,seed,key+':family');
- if(family&&roll<29)return family+' & '+root+' '+draw(COOWN,seed,key+':partner');
- if(family&&roll<40)return family+' '+draw(['Family Racing','Family Stables','Family Thoroughbreds','Family Partnership'],seed,key+':dynasty');
- if(roll<52)return 'The '+root+' '+draw(MEMBERS,seed,key+':club');
- if(roll<63)return root+' '+draw(FINANCE,seed,key+':root');
- if(family&&roll<74)return root+' '+family+' '+draw(FINANCE,seed,key+':investment');
- if(family&&roll<84)return family+' '+draw(['Racing Holdings','Bloodstock Partners','Racing Associates','Thoroughbred Ventures'],seed,key+':holdings');
- if(full&&roll<91)return full+' '+draw(['Racing','Thoroughbreds','Racing Stable'],seed,key+':proprietor');
- if(era==='HERITAGE'&&family)return family+' '+draw(['Estate Racing','House Thoroughbreds','Racing & Breeding'],seed,key+':heritage');
- return root+' '+draw(['Racing Syndicate','Bloodstock Partners','Racing Club','Racehorse Partnership'],seed,key+':syndicate');
+ const initials=full&&family?full[0].toUpperCase()+'. '+family[0].toUpperCase()+'.':'';
+ // These styles reflect how racing directories are written: people,
+ // family stables, private racing businesses, a limited number of
+ // organized partnerships, and the occasional initials-based company.
+ // Never invent another human co-owner to make a group sound larger.
+ if(family&&roll<24)return family+' '+draw(['Racing','Thoroughbreds','Stables','Racing Stable'],seed,key+':private');
+ if(full&&roll<39)return full+' '+draw(['Racing','Thoroughbreds','Stable'],seed,key+':proprietor');
+ if(roll<52)return root+' '+draw(['Racing','Stables','Thoroughbreds','Bloodstock'],seed,key+':trade');
+ if(family&&roll<65)return family+' '+draw(
+  ['Family Racing','Family Stables','Family Thoroughbreds','Family Stable'],
+  seed,key+':family');
+ if(family&&roll<76)return family+' '+draw(
+  era==='HERITAGE'?['Estate Racing','Thoroughbreds','Racing Stable']:
+   ['Racing Holdings','Thoroughbreds','Racing Associates','Equine'],
+  seed,key+':company');
+ if(roll<87)return root+' '+draw(
+  ['Racing Partners','Racing Partnership','Racing Syndicate','Racing Club','Racing Group'],
+  seed,key+':partnership');
+ if(initials&&roll<95)return initials+' '+draw(['Stable','Racing','Thoroughbreds'],seed,key+':initials');
+ if(roll<98)return root+' '+draw(['Equine','Stable','Racing'],seed,key+':brand');
+ return family?family+' '+draw(['Racing','Stable','Thoroughbreds'],seed,key+':fallback'):
+  root+' Racing';
 }
 export function contextualStableCandidate(seed,index,attempt,trainer,primarySurname,context={}){
  const key='v7-stable:'+index+':'+attempt;

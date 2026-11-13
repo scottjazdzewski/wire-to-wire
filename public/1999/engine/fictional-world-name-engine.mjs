@@ -226,6 +226,21 @@ export function normalizeFictionalWorldNamingSpec(input={}){
  const reservedNames=input.protectedNames??[];
  if(!Array.isArray(reservedNames)||reservedNames.some(x=>typeof x!=='string'||!x.trim()))
   throw Error('Protected names must be an array of nonempty strings');
+ const ownerPolicyInput=input.ownerNamingPolicy??null;
+ if(ownerPolicyInput!==null&&(!ownerPolicyInput||typeof ownerPolicyInput!=='object'||
+  Array.isArray(ownerPolicyInput)||Object.keys(ownerPolicyInput).some(k=>
+   !['partnershipLimit','soleOwnerPercent'].includes(k))))
+  throw Error('Invalid owner naming policy');
+ const ownerNamingPolicy=ownerPolicyInput===null?null:frozen({
+  partnershipLimit:ownerPolicyInput.partnershipLimit??null,
+  soleOwnerPercent:ownerPolicyInput.soleOwnerPercent??null
+ });
+ if(ownerNamingPolicy&&(
+  ownerNamingPolicy.partnershipLimit!==null&&(!Number.isInteger(ownerNamingPolicy.partnershipLimit)||
+   ownerNamingPolicy.partnershipLimit<0||ownerNamingPolicy.partnershipLimit>30000)||
+  ownerNamingPolicy.soleOwnerPercent!==null&&(!Number.isInteger(ownerNamingPolicy.soleOwnerPercent)||
+   ownerNamingPolicy.soleOwnerPercent<0||ownerNamingPolicy.soleOwnerPercent>100)))
+  throw Error('Invalid owner naming policy settings');
  const markets=marketList(input.markets);
  const originWeights=validatedCountryWeights(input.originWeightsByRole);
  const jockeyColonyWeights=validatedJockeyColonyWeights(input.jockeyOriginWeightsByColony);
@@ -233,7 +248,7 @@ export function normalizeFictionalWorldNamingSpec(input={}){
   throw Error('A jockey population requires at least one racing market');
  return frozen({worldId,year,seed,owners,roles:frozen(roles),facilities:frozen(facilities),
   farmCount,staff,protectedNames:frozen([...reservedNames]),markets,originWeights,
-  jockeyColonyWeights});
+  jockeyColonyWeights,ownerNamingPolicy});
 }
 /**
  * Pure deterministic naming factory. Returns an IN-MEMORY identity proposal,
@@ -385,7 +400,9 @@ export function createFictionalWorldNameEngine(input){
   trainerContexts:orgContexts(trainers,'stable'),
   farmContexts:orgContexts(farmNameMarkets,'farm'),
   breakingContexts:orgContexts(breakingNameMarkets,'breaking'),
-  alignPrincipalSurnames:true
+  alignPrincipalSurnames:true,
+  ownerPartnershipLimit:spec.ownerNamingPolicy?.partnershipLimit??null,
+  soleOwnerPercent:spec.ownerNamingPolicy?.soleOwnerPercent??null
  });
  const owningOrganizations=Object.freeze(org.owners.map((name,i)=>{
   const id=makeId(worldId,'OWNER',i),principal=principalPeople[i];
@@ -399,6 +416,7 @@ export function createFictionalWorldNameEngine(input){
    familyName:familyNamed?principalFamily:null,
    namingRegion:organizationNamingRegion(principal.location),
    namingEraStyle:organizationNamingEra(seed,i,'owner'),
+   ownershipArchetype:org.ownerArchetypes[i],
    location:principal.location,source:'FICTIONAL_WORLD_ENGINE'});
  }));
  const stables=Object.freeze(org.barns.map((name,i)=>{
@@ -485,7 +503,7 @@ export function createFictionalWorldNameEngine(input){
   internationalCultureModel:INTERNATIONAL_NAME_CULTURE_MODEL,worldId,year,roles,owners,facilities,
   markets:markets.map(m=>[m.id,m.city,m.region,m.country,m.code,m.weight,m.breeding,m.racing,m.jockeyColony]),
   originWeights:spec.originWeights,colonyWeights:spec.jockeyColonyWeights,
-  reserved:spec.protectedNames})).toString(16).padStart(8,'0');
+  reserved:spec.protectedNames,ownerNamingPolicy:spec.ownerNamingPolicy})).toString(16).padStart(8,'0');
  const manifest=frozen({schema:FICTIONAL_WORLD_NAME_ENGINE,worldId,seed,year,
   fingerprint:specFingerprint,jockeyColonyNameModel:JOCKEY_COLONY_NAME_MODEL,
   usBirthCohortNameModel:US_BIRTH_COHORT_NAME_MODEL,
@@ -493,6 +511,7 @@ export function createFictionalWorldNameEngine(input){
   internationalProfessionalNameModel:INTERNATIONAL_PROFESSIONAL_NAME_MODEL,
   internationalNameCultureModel:INTERNATIONAL_NAME_CULTURE_MODEL,
   organizationStyleModel:ORGANIZATION_STYLE_MODEL,
+  ownershipPartnershipsMinted:org.summary.partnershipGroupsCreated,
   personNameModel:PERSONNEL_NAME_MODEL,
   countryNameModel:GEO_NAME_MODEL,organizationNameModel:ORGANIZATION_NAME_MODEL,
   authoritative:false,sourceCanonIncluded:false,
