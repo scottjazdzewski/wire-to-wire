@@ -5,10 +5,10 @@ import {TRACK_PROGRAM_1999,trackProgram1999,trackMeetOpen1999,trackCardSurface19
  from '../public/next/1999-track-program.mjs';
 import {applyVerifiedStakeDay1999} from '../public/next/1999-verified-stakes-dates.mjs';
 
-test('every one of the 134 canonical track IDs has one 1999 program',()=>{
+test('every one of the 118 domestic/Cuban canonical track IDs has one 1999 program',()=>{
  const ids=openingWorld1999.tracks.map(t=>t.id);
- assert.equal(ids.length,134);
- assert.equal(new Set(ids).size,134);
+ assert.equal(ids.length,118);
+ assert.equal(new Set(ids).size,118);
  assert.deepEqual(Object.keys(TRACK_PROGRAM_1999).sort(),ids.slice().sort());
  for(const t of openingWorld1999.tracks){
   const program=trackProgram1999(t.id);
@@ -76,8 +76,8 @@ test('real state calendars, established game windows and fictitious meets remain
  assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='APPROVED_WTW_1999_GAME_CALENDAR').length,1);
  assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='WTW_FICTIONAL_GAME_MODELED').length,8);
  assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='PUBLISHED_1999_SARATOGA_PROPOSAL').length,1);
- assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='INTERNATIONAL_GAME_MODELED').length,16);
- assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.trackOperating==='ARCHIVE_ONLY_1999').length,16);
+ assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='INTERNATIONAL_GAME_MODELED').length,0);
+ assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.trackOperating==='ARCHIVE_ONLY_1999').length,0);
  for(const p of Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='VERIFIED_1999_CALENDAR'))
   assert.ok(/^https:\/\//.test(p.sourceUrl),'verified calendar has no source '+p.id);
 });
