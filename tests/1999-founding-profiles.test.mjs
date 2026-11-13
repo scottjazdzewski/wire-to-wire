@@ -106,11 +106,11 @@ test('all approved people resolve by exact ownership ID, including investor-only
  }
 });
 
-test('118 North American incl. Cuba and 16 historical closures visible; ZERO international in game site directory',()=>{
+test('118 North American incl. Cuba and 16 domestic historical closures visible; ZERO international in game site directory',()=>{
  const domestic=geography.tracks.filter(t=>t.registry==='NORTH_AMERICA');
  const intl=geography.tracks.filter(t=>t.registry==='INTERNATIONAL');
  assert.equal(domestic.length,118);
- assert.equal(intl.length,16);
+ assert.equal(intl.length,0);
  assert.equal(directory.tracks.length,102);
  assert.equal(domestic.filter(t=>t.opening_state==='CLOSED_PRE_1999').length,16);
  assert.ok(domestic.some(t=>t.name==='Oriental Park'&&t.country==='Cuba'));
