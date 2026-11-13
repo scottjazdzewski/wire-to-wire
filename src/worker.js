@@ -1,7 +1,5 @@
 import {qaPendingInactiveAuthority,qaPendingInactiveEditionIds} from './history-inactive-read-model.js';
-import {readOpeningWorld1999} from './1999/opening-readmodel.mjs';
-import {evaluate1999Entry} from './1999/entry-gate.mjs';
-import {readFull1999TestWorld} from './1999/full-world-readmodel.mjs';
+import {readLocal1999World} from '../public/1999/engine/local-api.mjs';
 // Cloudflare Worker / D1 API. Deliberately separate from all other WTW and non-WTW projects.
 // Privacy: every request requires authenticated Cloudflare Access in deployed environments.
 const jsonHeaders = {
@@ -140,29 +138,13 @@ async function bootstrap(db) {
 }
 async function api(request,env,email) {
   const url = new URL(request.url);
-  // Protected, source-only 1999 handoff. No player decisions or future racing writes here.
-  if(url.pathname.startsWith('/api/1999/sim/')) {
-    if(request.method!=='GET')return response({error:'Full simulated test universe is read-only until STG7 has authoritative transactional persistence.'},405);
-    const result=readFull1999TestWorld(url);
-    return response(result.data,result.status);
-  }
+  // One world only: the approved empty racing roster with founding breeding
+  // stock and all 118 tracks. The old synthetic worker routes are REMOVED.
   if(url.pathname.startsWith('/api/1999/')) {
-    if(url.pathname==='/api/1999/entry/evaluate' && request.method==='POST') {
-      if(request.headers.get('content-type')?.split(';')[0]!=='application/json') return response({error:'JSON required'},415);
-      const origin=request.headers.get('Origin');
-      if(origin&&origin!==url.origin)return response({error:'Origin mismatch'},403);
-      const length=Number(request.headers.get('Content-Length')||0);
-      if(length>12000)return response({error:'Entry scenario exceeds screening limit'},413);
-      const input=await request.json().catch(()=>null);
-      if(!input||typeof input.horseId!=='string'||typeof input.raceId!=='string'||
-        input.horseId.length>140||input.raceId.length>140||
-        (input.observations!==undefined && (!input.observations||typeof input.observations!=='object'||Array.isArray(input.observations))))return response({error:'Invalid entry screening input'},400);
-      const verdict=evaluate1999Entry({horseId:input.horseId,raceId:input.raceId,observations:input.observations||{}});
-      return response({...verdict,mode:'ENTRY_SCREENING_ONLY__CLIENT_OBSERVATIONS_UNVERIFIED__NO_CANON_COMMIT'});
-    }
-    if(request.method!=='GET')return response({error:'1999 historical opening authority is read-only; gameplay writes require a separately certified runtime.'},405);
-    const view=readOpeningWorld1999(url);
-    return response(view.data,view.status);
+    if(request.method!=='GET')
+     return response({error:'No game horses, race entries, or transactions registered in this clean opening'},405);
+    try{return response(readLocal1999World(url.pathname+url.search))}
+    catch(error){return response({error:String(error?.message||error)},400)}
   }
   if(!env.DB) return response({error:'D1 not bound. Preview is available using sample-history.json.'},503);
   if(request.method==='POST' && url.pathname==='/api/names') {
