@@ -1810,7 +1810,17 @@ function profileDetail(route,sourceOverride=null){
   return {attributes,reputation,networkPreview,network,careerContent,careerOverview,horseAssignments,networkOverview,eventRows,roleName,rep};
  };
  const isOrganizationProfile=/^(?:Farm|Stable|Organization|Sales Organization|Ownership Group|Breeding Farm) Profile$/.test(route.kicker);
- const profileMark=isOrganizationProfile?organizationLogoMarkup(source.dataset.organizationId||'',route.title,'organization',true):`<div class="ng-profile-badgeframe"><img src="${badge(route.kicker==='Horse Profile'?'horse':route.kicker==='Track Profile'?'track':route.kicker==='People Profile'?'people':'farm_stable')}" alt="Approved ${safe(route.kicker)} badge"/></div>`;
+ // Reuse already-published exact-ID art in the EXISTING identity frame. Track
+ // and personnel pages keep their approved layout and badge when no art exists.
+ const canonicalProfileArt=isTrack?approvedIdentityAsset('track',source.dataset.trackId||'',route.title):
+  isPerson?approvedIdentityAsset('person',source.dataset.personId||'',route.title):'';
+ const identityArt=canonicalProfileArt||badge(route.kicker==='Horse Profile'?'horse':
+  route.kicker==='Track Profile'?'track':route.kicker==='People Profile'?'people':'farm_stable');
+ const identityAlt=canonicalProfileArt?(isTrack?'Racecourse logo':'Approved person portrait')+' for '+route.title:
+  'Approved '+route.kicker+' badge';
+ const profileMark=isOrganizationProfile?
+  organizationLogoMarkup(source.dataset.organizationId||'',route.title,'organization',true):
+  `<div class="ng-profile-badgeframe"><img src="${safe(identityArt)}" alt="${safe(identityAlt)}"/></div>`;
 
  const horseField=(label)=>fields.find(f=>f.label.toLowerCase()===label.toLowerCase())?.value||'—';
  const horseFoalingCity=isHorse?(source.dataset.foalingCity||'').trim():'';
