@@ -10,7 +10,6 @@ import {createFoundingSourceBase1999} from './founding-source-base-1999.mjs';
 import attributeCatalog from './attribute-catalog.mjs';
 import {buildFoundingAncestry1999} from './founding-ancestry-1999.mjs';
 import {createFoundingLeadership1999,FOUNDING_LEADERSHIP_SCHEMA} from './founding-leadership-1999.mjs';
-import {proposeFoundingYoungstock1999} from './founding-youngstock-candidates-1999.mjs';
 
 export const FOUNDING_WORLD_MODE='FOUNDING_1999';
 export const FOUNDING_WORLD_SCHEMA='WTW_1999_FOUNDING_WORLD_V1';
@@ -279,10 +278,6 @@ export function createFounding1999Universe({seed=19990101}={}) {
  }
  const breedingMares=sourceBroodmares.concat(sampleBoarding);
  validateScenario(sourceOrganizations,sourceHorses,sourceStallions,breedingMares);
- // New-fiction youngstock proposals: ID, sex, year and real source parents;
- // NOT committed foaling transactions, racing horses, owners or registered names.
- const proposedYoungstock=proposeFoundingYoungstock1999({
-  seed,mares:breedingMares,stallions:sourceStallions,organizations:sourceOrganizations});
  // Five-generation SOURCE-only history, never part of the 1999 living herd.
  const foundingAncestry=buildFoundingAncestry1999({
   livingHorses:[...sourceHorses,...sourceStallions,...breedingMares],
@@ -520,7 +515,6 @@ export function createFounding1999Universe({seed=19990101}={}) {
   historicalAnchors:historicalLinks.anchors,
   historicalHorses:historicalLinks.horses,
   foundingAncestry,
-  proposedYoungstock,
   excludedActiveStaffRoles:['groom','exercise_rider'],
   audit:{sourceOpeningHorses:sourceHorses.length,sourceOwnersWithRunners:
    [...ownerHorseMap.values()].filter(a=>a.length).length,
@@ -539,7 +533,6 @@ export function createFounding1999Universe({seed=19990101}={}) {
    currentBreedingMares:breedingMares.length,currentStallions:sourceStallions.length,
    sourceBoardingMaresAvailable:sourceBoarding.length,
    quarantinedOldB01OpeningRunners:0,
-   newYoungstockProposal:proposedYoungstock.audit,
    historyArchiveImmutable:true,provisionalOwnerIdsNotPermanent:true,
    newProfessionalPool:0,professionalSchema:'NOT_ACTIVATED_PENDING_USER_APPROVAL',
    originalGeneratedStaffImported:0}
