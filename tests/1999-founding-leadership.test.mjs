@@ -29,8 +29,8 @@ test('every one of the 37 founding operations has a named, linked principal',()=
   assert.ok(Array.isArray(o.leadershipPeopleIds)&&o.leadershipPeopleIds.length>=1);
   assert.ok(o.leadershipPeopleIds.every(x=>ids.has(x)),o.name+' secondary leadership ID');
  }
- assert.equal(world.sourcePeople.length,52);
- assert.equal(world.counts.people,120); // 52 recorded/proposed identities + 68 unrelated staff prospects.
+ assert.equal(world.sourcePeople.length,46);
+ assert.equal(world.counts.people,114); // 46 source and proposed people + 68 new, uncontracted professionals.
 });
 
 test('known 1999 founders/public people stay in place; proposals do not become historical proof',()=>{
@@ -97,17 +97,17 @@ test('World Registrar and exact-ID API both resolve all designated names',()=>{
   import.meta.url),'utf8'));
  assert.equal(file.counts.organizationsWithDesignatedPrincipal,37);
  assert.equal(file.counts.organizationPrincipalGaps,0);
- assert.equal(file.counts.people,52);
+ assert.equal(file.counts.people,46);
  assert.equal(file.leadershipAssignments.length,30);
  assert.deepEqual(file.organizations.map(x=>[x.id,x.principalOwner,x.principalOwnerId]),
   world.sourceOrganizations.map(x=>[x.id,x.principalOwner,x.principalOwnerId]));
  assert.deepEqual(file.people.map(x=>[x.id,x.name]),
   world.sourcePeople.map(x=>[x.id,x.name]));
- const listing=readLocal1999World('/api/1999/people?offset=22&limit=30');
- assert.equal(listing.total,52);
+ const listing=readLocal1999World('/api/1999/people?offset=16&limit=30');
+ assert.equal(listing.total,46);
  assert.equal(listing.items.length,30);
  assert.equal(listing.items[0].id,'P-FOUNDING-LEADER-001');
- const modeled=readLocal1999World('/api/1999/sim/source-people?offset=22&limit=1');
+ const modeled=readLocal1999World('/api/1999/sim/source-people?offset=16&limit=1');
  assert.equal(modeled.items[0].id,'P-FOUNDING-LEADER-001');
  assert.ok(modeled.items[0].ability?.current>=1);
  assert.equal(modeled.items[0].source,'WTW_1999_FICTIONAL_LEADERSHIP_PROPOSAL_NOT_HISTORICAL_EVIDENCE');
