@@ -1,4 +1,6 @@
-# Wire to Wire — on-demand fictional naming V8
+# Wire to Wire — on-demand fictional naming V8 (legacy)
+
+**For new integrations use [V11 compact indexed naming](fictional-indexed-naming-v11.md).** V8 keeps an expanding in-checkpoint naming history for backwards compatibility; V11 stores names in an external registry and returns only a compact cursor.
 
 ## Purpose
 
