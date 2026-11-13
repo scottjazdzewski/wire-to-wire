@@ -64,7 +64,8 @@ test('the clean Office loads only the founder manifest, without silently revivin
  assert.match(ui,/const approvedOrg=isClean1999\(\)\?/);
  assert.match(ui,/approvedOrg\?\['organization:'\+approvedOrg\.id\]/);
  assert.match(ui,/const allowed=\(world1999Data\?\.organizations\|\|\[\]\)\.some\(o=>o\.id===id\)/);
- assert.match(html,/wtw1999-logo-integration-v8-20261113/);
+ assert.match(html,/\/next\/next\.js\?rev=wtw1999-/);
+ assert.match(html,/\/next\/1999-restored-profiles\.js\?rev=wtw1999-/);
  assert.equal(directory.counts.organizations,37);
  assert.equal(directory.counts.generatedProfessionals,0);
  assert.equal(directory.counts.generatedTrainingCenters,0);
