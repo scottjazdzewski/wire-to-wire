@@ -829,6 +829,33 @@ function openWorld1999Entity(key){
  if(!found)return false;
  return openCustomView('WorldRecord:'+encodeURIComponent(key),'World','Overview');
 }
+function openFounding1999Profile(kind,id){
+ if(!isClean1999()||!['ownership','facility','person'].includes(kind)||!/^(?:O|P)-[A-Za-z0-9-]+$/.test(String(id||'')))return false;
+ APP.detailTab='Overview';
+ const section=kind==='facility'?'Facilities':'Personnel',page=kind==='ownership'?'Owners':'Overview';
+ openCustomView('FoundingProfile:'+kind+':'+encodeURIComponent(id),section,page);
+ return true;
+}
+function renderFounding1999Profile(kind,id){
+ const engine=window.WTW1999FoundingProfiles,source=world1999Base||world1999Data;
+ if(!source||!engine)return '<section class="ng-world-source-profile" role="status"><p>Loading founding profile…</p></section>';
+ const list=kind==='person'?source.people:source.organizations;
+ const record=(list||[]).find(x=>x.id===id);
+ if(!record)return '<section class="ng-world-source-profile"><p>Not in the approved 1999 founding directory.</p></section>';
+ const key=kind+':'+id;
+ if(APP.foundingProfileKey!==key){APP.foundingProfileKey=key;APP.detailTab='Overview'}
+ const options={tab:APP.detailTab,
+  logoMarkup:kind!=='person'?organizationLogoMarkup(record.id,record.name,'organization',true,false):'',
+  personBadge:kind==='person'?'<div class="ng-profile-badgeframe"><img src="'+safe(badge('people'))+'" alt="" /></div>':''};
+ return kind==='person'?engine.person(record,source,options):
+  engine.institution(kind,record,source,options);
+}
+function founding1999Profile(){
+ const pieces=String(APP.custom||'').slice('FoundingProfile:'.length).split(':');
+ const kind=pieces[0],id=decodeURIComponent(pieces.slice(1).join(':'));
+ if(!['ownership','facility','person'].includes(kind))return '<p>Unsupported founding profile.</p>';
+ return renderFounding1999Profile(kind,id);
+}
 function restored1999Profile(kind,record){
  const x=window.WTW1999Profiles?.source(kind,record,window.__WTW_1999_UI_DATA__);
  return x?profileDetail(x.route,x.node):null;
@@ -865,6 +892,8 @@ function world1999Profile(){
    '<p>A year-level historical association alone does not establish race-day ownership, training or breeder credit.</p>'+
    '</section>';
  }
+ if(isClean1999()&&(kind==='farm'||kind==='person'))
+  return renderFounding1999Profile(kind==='person'?'person':'ownership',d.id);
  if(kind==='horse'||kind==='person'||kind==='track')return restored1999Profile(kind,{...d,name:e.name});
  // All Horse, People and Track World records were already routed to the
  // authoritative full FM dossiers above. Only organization records use this view.
@@ -2825,6 +2854,11 @@ function previewRecordRoute(kind,name,row=null){
 }
 function openEntityRecord(name,preferred='',row=null){
  if(entityNotRecorded(name))return false;
+ if(isClean1999()&&['farm','person','connection',''].includes(preferred)){
+  const found=world1999Match(preferred==='connection'?'':preferred,name);
+  if(found?.kind==='farm')return openFounding1999Profile('ownership',found.canonicalId);
+  if(found?.kind==='person')return openFounding1999Profile('person',found.canonicalId);
+ }
  // Generated personnel open their exact ID-backed FM dossier, never an
  // unrelated Office person with the same display name.
  if((preferred==='person'||row?._kind==='person')&&row?._kind==='person'&&row._testGenerated&&row._id)
@@ -3273,6 +3307,7 @@ else if(APP.custom==='Due Actions'){body=dueActionOverview()}
 else if(['Messages','Decisions','Opportunities'].includes(APP.custom)){body=managerDashboard()}
 else if(APP.custom==='Search'){body=searchView()}
 else if(APP.custom.startsWith('WorldRecord:')){body=world1999Profile()}
+else if(APP.custom.startsWith('FoundingProfile:')){body=founding1999Profile()}
 else if(APP.custom.startsWith('RaceFile:')){const id=decodeURIComponent(APP.custom.slice('RaceFile:'.length));const race=APP.raceRouteKey===id?APP.raceDetail:window.__WTW_1999_UI_DATA__?.findRace?.(id);body=window.WTW1999RaceConditions?.render(race,window.__WTW_1999_UI_DATA__)||'<section class="ng-1999-race-file"><h2>Race file loading unavailable</h2></section>'}
 else if(APP.custom.startsWith('Preview:')){body=previewRecordView()}
 else {body=managerDashboard()}
@@ -3470,6 +3505,11 @@ window.addEventListener('click',e=>{
    if(full?._canonId)return openWorld1999Entity('horse:'+full._canonId);
    if(full)return previewRecordRoute('horse',full._name,full);
   }
+  if(isClean1999()&&r._kind==='farm'&&r._id&&
+   (APP.section==='Facilities'||APP.section==='Personnel'&&APP.page==='Owners'))
+   return openFounding1999Profile(APP.section==='Facilities'?'facility':'ownership',r._id);
+  if(isClean1999()&&r._kind==='person'&&r._id)
+   return openFounding1999Profile('person',r._id);
   if(r._testGenerated)return previewRecordRoute(r._kind==='person'?'person':
    r._kind==='farm'?'farm':'horse',r._name,r);
   if(r._worldKey)return openWorld1999Entity(r._worldKey);
@@ -3536,6 +3576,15 @@ window.addEventListener('click',e=>{
  if(key==='world-view'){
   if(val==='Tracks')return openMenu('Tracks');
   APP.section='World';return pageTab(val);
+ }
+ if(key==='founding-open'){
+  const idx=val.indexOf(':'),kind=val.slice(0,idx),id=val.slice(idx+1);
+  if(kind==='horse'){
+   if(world1999Entry('horse:'+id))return openWorld1999Entity('horse:'+id);
+   if(world1999Entry('historical-horse:'+id))return openWorld1999Entity('historical-horse:'+id);
+   return;
+  }
+  return openFounding1999Profile(kind,id);
  }
  if(key==='world-open')return openWorld1999Entity(val);
  if(key==='1999-stake'){
