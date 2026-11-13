@@ -141,6 +141,10 @@ test('invalid requests cannot transfer another owner horse, invent owner, or byp
   request_id:'T-ONE',horse_id:'H-1999-000001',
   to_owner_id:'O-1999-002',transfer_type:'GIFT'
  })).state;
+ assert.throws(()=>send(world,s,cmd('owner:reserved','REQUEST_HORSE_TRANSFER',{
+  request_id:'__proto__',horse_id:'H-1999-000001',
+  to_owner_id:'O-1999-002',transfer_type:'GIFT'
+ })),e=>e.code==='INVALID_REQUEST_ID');
  assert.throws(()=>send(world,s,cmd('owner:req2','REQUEST_HORSE_TRANSFER',{
   request_id:'T-TWO',horse_id:'H-1999-000001',
   to_owner_id:'O-1999-002',transfer_type:'GIFT'
