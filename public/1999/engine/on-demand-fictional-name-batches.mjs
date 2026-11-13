@@ -75,6 +75,7 @@ function assertNonemptyRequest(roles,owners,facilities){
  */
 export function generateOnDemandFictionalNames({
  worldId,seed,year=1999,state=null,roles={},owners=0,facilities={},
+ maxPartnershipGroups=null,soleOwnerPercent=23,
  protectedNames=[],markets,originWeightsByRole,jockeyOriginWeightsByColony
 }={}){
  validWorldId(worldId);validateSeed(seed);
@@ -83,6 +84,11 @@ export function generateOnDemandFictionalNames({
  if(!roles||typeof roles!=='object'||Array.isArray(roles))throw Error('Invalid on-demand roles');
  if(!facilities||typeof facilities!=='object'||Array.isArray(facilities))
   throw Error('Invalid on-demand facilities');
+ if(maxPartnershipGroups!==null&&(!Number.isInteger(maxPartnershipGroups)||
+  maxPartnershipGroups<0||maxPartnershipGroups>30000))
+  throw Error('Invalid maximum partnership groups');
+ if(!Number.isInteger(soleOwnerPercent)||soleOwnerPercent<0||soleOwnerPercent>100)
+  throw Error('Invalid on-demand sole owner percentage');
  const actualFacilities={...noFacilities,...facilities};
  assertNonemptyRequest(roles,owners,actualFacilities);
  const initial=state==null;
@@ -90,19 +96,32 @@ export function generateOnDemandFictionalNames({
   if(!state||typeof state!=='object'||Array.isArray(state)||
    state.model!==ON_DEMAND_NAMING_MODEL||
    state.parentWorldId!==worldId||state.seed!==seed||state.year!==year||
-   !Number.isSafeInteger(state.nextBatch)||state.nextBatch<0||state.nextBatch>999999)
+   !Number.isSafeInteger(state.nextBatch)||state.nextBatch<0||state.nextBatch>999999||
+   !Number.isInteger(state.maxPartnershipGroups)||state.maxPartnershipGroups<0||
+   state.maxPartnershipGroups>30000||
+   !Number.isInteger(state.partnershipsIssued)||state.partnershipsIssued<0||
+   state.partnershipsIssued>state.maxPartnershipGroups||
+   !Array.isArray(state.ownerGroupRecords)||
+   state.ownerGroupRecords.length!==state.partnershipsIssued||
+   (maxPartnershipGroups!==null&&maxPartnershipGroups!==state.maxPartnershipGroups))
    throw Error('Incompatible or malformed on-demand naming state');
   validateStringNames(state.mintedNames,'Minted names');
  }
  const batchIndex=initial?0:state.nextBatch;
  if(batchIndex>999998)throw Error('On-demand naming batch sequence exhausted');
  const previous=initial?[]:state.mintedNames;
+ const partnershipBudget=initial?(maxPartnershipGroups??128):state.maxPartnershipGroups;
+ const alreadyIssued=initial?0:state.partnershipsIssued;
+ const remainingPartnershipSlots=partnershipBudget-alreadyIssued;
  const reserved=uniqueNames([...protectedNames,...previous]);
  const effectiveSeed=(hash(seed,'on-demand-name-batch:'+batchIndex)||1)>>>0;
  const batch=createFictionalWorldNameEngine({
   worldId:childWorldId(worldId,batchIndex),seed:effectiveSeed,year,
   roles,owners,facilities:actualFacilities,
   protectedNames:reserved,
+  ownerNamingPolicy:{
+   partnershipLimit:remainingPartnershipSlots,soleOwnerPercent
+  },
   ...(markets===undefined?{}:{markets}),
   ...(originWeightsByRole===undefined?{}:{originWeightsByRole}),
   ...(jockeyOriginWeightsByColony===undefined?{}:{jockeyOriginWeightsByColony})
@@ -110,9 +129,23 @@ export function generateOnDemandFictionalNames({
  const minted=collectNames(batch),reservedKeys=new Set(reserved.map(normalize));
  for(const name of minted)if(reservedKeys.has(normalize(name)))
   throw Error('Generated name collided with historic or prior batch name: '+name);
+ const newPartnerships=batch.owners.filter(x=>x.ownershipArchetype==='PARTNERSHIP_OR_SYNDICATE')
+  .map(x=>Object.freeze({
+   id:x.id,name:x.name,region:x.namingRegion,
+   archetype:x.ownershipArchetype,batchIndex
+  }));
+ if(newPartnerships.length>remainingPartnershipSlots)
+  throw Error('On-demand partnership budget was exceeded');
+ const ownerGroupRecords=Object.freeze([
+  ...(initial?[]:state.ownerGroupRecords),...newPartnerships
+ ]);
+ const partnershipIssuedAfter=alreadyIssued+newPartnerships.length;
  const nextState=Object.freeze({
   model:ON_DEMAND_NAMING_MODEL,parentWorldId:worldId,seed,year,
   nextBatch:batchIndex+1,
+  maxPartnershipGroups:partnershipBudget,
+  partnershipsIssued:partnershipIssuedAfter,
+  ownerGroupRecords,
   mintedNames:uniqueNames([...previous,...minted])
  });
  const programNames=Object.freeze(batch.people.filter(x=>
@@ -130,6 +163,31 @@ export function generateOnDemandFictionalNames({
   }),
   people:batch.people,owners:batch.owners,stables:batch.stables,
   farms:batch.farms,trainingCenters:batch.trainingCenters,
-  programNames,names:minted,nextState
+  programNames,names:minted,
+  ownership:Object.freeze({
+   newPartnershipGroups:newPartnerships,
+   reusablePartnershipGroups:ownerGroupRecords,
+   maxPartnershipGroups:partnershipBudget,
+   partnershipsIssued:partnershipIssuedAfter,
+   remainingNewPartnershipSlots:partnershipBudget-partnershipIssuedAfter,
+   archetypeCounts:Object.freeze(batch.owners.reduce((a,x)=>{
+    a[x.ownershipArchetype]=(a[x.ownershipArchetype]||0)+1;return a;
+   },{}))
+  }),
+  nextState
  });
+}
+
+
+/**
+ * Reuse a previously minted ownership group by its stable identifier. This
+ * NEVER creates a new group, asserts co-owner relationships, or mutates a save.
+ * The calling game decides whether an existing group enters a new horse.
+ */
+export function listReusableFictionalOwnershipGroups(state,{region=null}={}){
+ if(!state||state.model!==ON_DEMAND_NAMING_MODEL||
+  !Array.isArray(state.ownerGroupRecords))
+  throw Error('Invalid on-demand ownership registry');
+ return Object.freeze(state.ownerGroupRecords.filter(record=>
+  region===null||record.region===region));
 }
