@@ -17,7 +17,7 @@ function hash(seed,key){
  h^=h>>>16;return h>>>0;
 }
 const norm=x=>String(x||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'');
-const LATIN=new Set(['PR','PA','VE','MX','CL','PE','CO','DO']);
+const LATIN=new Set(['PR','PA','VE','MX','CL','PE','CO','DO','AR','BR','UY']);
 const STYLE={
  trainer:{middle:9,compound:3,secondFamily:7,nickname:2},
  jockey:{middle:5,compound:4,secondFamily:17,nickname:4},
