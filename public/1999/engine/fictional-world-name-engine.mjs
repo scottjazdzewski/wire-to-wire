@@ -12,6 +12,9 @@ import {createPersonnelNameRoster,PERSONNEL_NAME_MODEL} from './personnel-name-e
 import {roleOrigin,GEO_NAME_MODEL} from './geographic-names.mjs';
 import {createOrganizationNameRoster,ORGANIZATION_NAME_MODEL} from './organization-name-engine.mjs';
 import {
+ ORGANIZATION_STYLE_MODEL,organizationNamingRegion,organizationNamingEra
+} from './organization-naming-styles.mjs';
+import {
  JOCKEY_COLONIES,JOCKEY_COLONY_NAME_MODEL,
  DEFAULT_JOCKEY_COLONY_ORIGIN_WEIGHTS,inferJockeyColony,chooseJockeyColonyOrigin
 } from './jockey-colony-names.mjs';
@@ -36,7 +39,7 @@ import {
  drawCulturallyConditionedSurname
 } from './international-name-cultures.mjs';
 
-export const FICTIONAL_WORLD_NAME_ENGINE='WTW_FICTIONAL_WORLD_IDENTITIES_V6';
+export const FICTIONAL_WORLD_NAME_ENGINE='WTW_FICTIONAL_WORLD_IDENTITIES_V7';
 export const SUPPORTED_NAME_ERA=1999;
 export const SUPPORTED_ORIGINS=Object.freeze(['US','CA','GB','IE','PR','PA','VE','MX','CL','PE','CO','DO','AR','BR','UY','FR','DE','JP','AU','NZ','AE','HK']);
 export const DEFAULT_WORLD_ROLE_COUNTS=Object.freeze({
@@ -358,6 +361,17 @@ export function createFictionalWorldNameEngine(input){
  }));
  const trainers=Object.freeze(basePeople.slice(indexes.trainer??0,(indexes.trainer??0)+(roles.trainer??0)));
  const principalPeople=basePeople.slice(staff);
+ // Names use the SAME deterministic markets as the preceding V6 factory.
+ const breeders=markets.filter(m=>m.breeding),farmMarkets=breeders.length?breeders:markets;
+ const farmNameMarkets=Array.from({length:farmCount},(_,i)=>
+  weightedPick(seed,'farm-market:'+i,farmMarkets));
+ const breakingNameMarkets=Array.from({length:facilities.breakingTraining},(_,i)=>
+  weightedPick(seed,'breaking-market:'+i,markets));
+ const orgContexts=(items,category)=>items.map((p,i)=>({
+  region:organizationNamingRegion(p.location||p),
+  era:organizationNamingEra(seed,i,category)
+ }));
+ const farmPurposePlan=farmKindOrder(seed,facilities);
  const org=createOrganizationNameRoster({
   seed,ownerCount:owners,barnCount:trainers.length,farmCount,
   breakingCount:facilities.breakingTraining,
@@ -366,7 +380,11 @@ export function createFictionalWorldNameEngine(input){
   trainerNames:trainers.map(p=>p.name),
   principalPrimarySurnames:principalPeople.map(p=>p.primarySurname),
   trainerPrimarySurnames:trainers.map(p=>p.primarySurname),
-  farmKindPlan:farmKindOrder(seed,facilities),
+  farmKindPlan:farmPurposePlan,
+  ownerContexts:orgContexts(principalPeople,'owner'),
+  trainerContexts:orgContexts(trainers,'stable'),
+  farmContexts:orgContexts(farmNameMarkets,'farm'),
+  breakingContexts:orgContexts(breakingNameMarkets,'breaking'),
   alignPrincipalSurnames:true
  });
  const owningOrganizations=Object.freeze(org.owners.map((name,i)=>{
@@ -379,15 +397,18 @@ export function createFictionalWorldNameEngine(input){
    principalId:principal.id,principalName:principal.name,
    principalRelationship:familyNamed?'NAMED_FAMILY_PRINCIPAL':'DESIGNATED_PRINCIPAL',
    familyName:familyNamed?principalFamily:null,
+   namingRegion:organizationNamingRegion(principal.location),
+   namingEraStyle:organizationNamingEra(seed,i,'owner'),
    location:principal.location,source:'FICTIONAL_WORLD_ENGINE'});
  }));
  const stables=Object.freeze(org.barns.map((name,i)=>{
   const trainer=trainers[i];
   return frozen({id:makeId(worldId,'RACING-STABLE',i),worldId,name,
    kind:'RACING_STABLE',trainerId:trainer.id,trainerName:trainer.name,
+   namingRegion:organizationNamingRegion(trainer.location),
+   namingEraStyle:organizationNamingEra(seed,i,'stable'),
    location:trainer.location,source:'FICTIONAL_WORLD_ENGINE'});
  }));
- const breeders=markets.filter(m=>m.breeding),farmMarkets=breeders.length?breeders:markets;
  const farmManagers=basePeople.slice(indexes.farm_manager??0,(indexes.farm_manager??0)+(roles.farm_manager??0));
  const managerIdsByFarm=Array.from({length:org.farms.length},()=>[]);
  const farmByManagerId=new Map();
@@ -401,15 +422,20 @@ export function createFictionalWorldNameEngine(input){
   });
  }
  const farms=Object.freeze(org.farms.map((name,i)=>{
-  const market=weightedPick(seed,'farm-market:'+i,farmMarkets);
+  const market=farmNameMarkets[i];
   return frozen({id:makeId(worldId,'FARM',i),worldId,name,kind:org.farmKinds[i],
+   namingRegion:organizationNamingRegion(market),
+   namingEraStyle:organizationNamingEra(seed,i,'farm'),
    managerIds:Object.freeze(managerIdsByFarm[i]),
    location:loc(market),source:'FICTIONAL_WORLD_ENGINE'});
  }));
  const trainingCenters=Object.freeze(org.breakingCenters.map((name,i)=>{
-  const market=weightedPick(seed,'breaking-market:'+i,markets);
+  const market=breakingNameMarkets[i];
   return frozen({id:makeId(worldId,'TRAINING-CENTER',i),worldId,name,
-   kind:'BREAKING_AND_TRAINING',location:loc(market),source:'FICTIONAL_WORLD_ENGINE'});
+   kind:'BREAKING_AND_TRAINING',
+   namingRegion:organizationNamingRegion(market),
+   namingEraStyle:organizationNamingEra(seed,i,'breaking'),
+   location:loc(market),source:'FICTIONAL_WORLD_ENGINE'});
  }));
  const people=Object.freeze(basePeople.map(person=>{
   if(person.role==='trainer'){
@@ -466,6 +492,7 @@ export function createFictionalWorldNameEngine(input){
   latinCaribbeanNameModel:LATIN_CARIBBEAN_NAME_MODEL,
   internationalProfessionalNameModel:INTERNATIONAL_PROFESSIONAL_NAME_MODEL,
   internationalNameCultureModel:INTERNATIONAL_NAME_CULTURE_MODEL,
+  organizationStyleModel:ORGANIZATION_STYLE_MODEL,
   personNameModel:PERSONNEL_NAME_MODEL,
   countryNameModel:GEO_NAME_MODEL,organizationNameModel:ORGANIZATION_NAME_MODEL,
   authoritative:false,sourceCanonIncluded:false,
