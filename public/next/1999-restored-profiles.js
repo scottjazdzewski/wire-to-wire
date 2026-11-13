@@ -7,7 +7,7 @@ const safe=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt
 const field=(name,value)=>'<div class="profileField"><span>'+safe(name)+'</span><strong>'+safe(value??'—')+'</strong></div>';
 const link=(name,value)=>value?'<div class="profileLine"><b>'+safe(name)+'</b><span>'+safe(value)+'</span></div>':'';
 let registry=null;
-fetch('/data/horse-foaling-registry-projection-v33.json',{credentials:'same-origin',cache:'force-cache'})
+fetch('/data/horse-foaling-registry-projection-v33.json?rev=27-approved-foaling-20261113',{credentials:'same-origin',cache:'force-cache'})
  .then(r=>r.ok?r.json():Promise.reject(Error('Registry foaling projection unavailable')))
  .then(data=>{if(data?.schema==='WTW_1999_HORSE_FOALING_REGISTRY_PROJECTION_V1'&&data.records){
   registry=data.records;window.__WTW_NEXT__?.paint?.();
