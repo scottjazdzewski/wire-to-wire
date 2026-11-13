@@ -112,3 +112,29 @@ test('founding roster is seed-deterministic and rejects out-of-range index acces
  assert.throws(()=>founding.horseAt(39),/Founder horse index/);
  assert.throws(()=>founding.ownerAt(37),/Founder owner index/);
 });
+
+
+test('World Registrar founding JSON matches the active scenario instead of legacy v3.3 owners and horses',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const data=JSON.parse(readFileSync(new URL('../public/data/wtw-1999-founding-directory-v1.json',import.meta.url),'utf8'));
+ assert.equal(data.schema,'WTW_1999_WORLD_DIRECTORY_V1');
+ assert.equal(data.scenario,'FOUNDING_1999');
+ assert.equal(data.counts.organizations,founding.counts.owners);
+ assert.equal(data.counts.openingHorses,founding.counts.horses);
+ assert.equal(data.counts.stallions,founding.counts.breedingStallions);
+ assert.equal(data.counts.broodmares,founding.counts.breedingMares);
+ assert.equal(data.counts.totalHorses,founding.counts.worldHorses);
+ assert.equal(data.historicalAnchors.length,founding.historicalAnchors.length);
+ assert.deepEqual(data.organizations.map(o=>[o.id,o.name]),
+  founding.sourceOrganizations.map(o=>[o.id,o.name]));
+ assert.equal(new Set(data.horses.map(h=>h.id)).size,112);
+ assert.equal(data.horses.filter(h=>h._role==='opening').length,39);
+ assert.equal(data.horses.filter(h=>h._role==='stallion').length,18);
+ assert.equal(data.horses.filter(h=>h._role==='broodmare').length,55);
+ assert.ok(data.organizations.some(o=>o.name==='Ashby Vale Farm'&&o.publicPrincipal==='Miriam Vale'));
+ assert.ok(!data.organizations.some(o=>['Lattice Farm','Marcus Vale','Cobb Syndicate','Barlow Stable'].includes(o.name)));
+ assert.ok(data.horses.filter(h=>h.standingFarm1999?.farmOrganizationId==='O-000002')
+  .every(h=>h.standingFarm1999.farmName==='Harrowgate Farm'));
+ assert.ok(data.horses.filter(h=>h.boardingFarm1999?.farmOrganizationId==='O-000002')
+  .every(h=>h.boardingFarm1999.farmName==='Harrowgate Farm'));
+});
