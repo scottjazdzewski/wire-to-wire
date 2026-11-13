@@ -1399,7 +1399,7 @@ function profileDetail(route,sourceOverride=null){
     'FOUNDING PRINCIPAL':'FOUNDING ORGANIZATION')+'</span>'+
    world1999Linked('farm',o.id,o.name)+'</div>').join('')||
   '<div class="ng-empty-record">No approved organization affiliation recorded.</div>')+'</div>';
- const sourcePanels=$('.profilePanel',source);
+ const sourcePanels=[...source.querySelectorAll('.profilePanel')];
  const sourcePanel=word=>sourcePanels.find(panel=>text('h3',panel).toLowerCase().includes(word.toLowerCase()));
  const connectedPanel=isPerson?sourcePanel('Stable'):isFarm?sourcePanel('Connected Horses'):null;
  const sourceLinks=connectedPanel?$$('.achievementItem',connectedPanel):[];
