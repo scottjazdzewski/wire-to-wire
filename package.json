@@ -10,12 +10,9 @@
     "db:local": "wrangler d1 migrations apply wtw-canon-desk-db --local",
     "db:seed:local": "node scripts/build-seed.mjs && wrangler d1 execute wtw-canon-desk-db --local --file=./data/seed.sql",
     "test": "node scripts/run-current-tests.mjs",
-    "bench:world": "node scripts/bench-1999-world.mjs",
-    "bench:saves": "node scripts/bench-1999-save-size.mjs",
     "deploy": "wrangler deploy",
     "db:build:full": "node scripts/build-full-history.mjs",
     "db:build:geo": "node scripts/build-geography-import.mjs",
-    "test:legacy-ui": "node --test tests/approved-badges-v2.test.mjs tests/fm-management-screen-family.test.mjs tests/manager-v2-independent.test.mjs tests/next-office-v6.test.mjs tests/next-office-v7.test.mjs tests/office-pedigree-existing-tab.test.mjs tests/office-single-visual-layer.test.mjs tests/office-v30-site.test.mjs tests/site-main-promotion.test.mjs tests/ui-canonical-style.test.mjs",
     "bench:names": "node scripts/bench-fictional-naming-v10.mjs",
     "bench:names:indexed": "node scripts/bench-indexed-naming-v11.mjs"
   },
