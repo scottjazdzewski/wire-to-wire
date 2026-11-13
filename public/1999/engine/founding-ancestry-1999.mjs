@@ -76,7 +76,9 @@ export function buildFoundingAncestry1999({
    status:'SOURCE_HAS_NO_FURTHER_NAMED_PARENTS'});
   for(const [role,parentId] of [['SIRE',sireId],['DAM',damId]]){
    if(!parentId)continue;
-   const parent=registry.get(parentId);
+   // Parent may be a connected historic champion represented only in a
+   // founding yearbook source, without its own full pedigree registry row.
+   const parent=registry.get(parentId)||roots.get(parentId);
    if(!parent){
     if(!missingById.has(parentId))missingById.set(parentId,{id:parentId,referredBy:[]});
     missingById.get(parentId).referredBy.push({childId:id,role});
@@ -85,7 +87,8 @@ export function buildFoundingAncestry1999({
    const chronologyOk=!(Number.isInteger(record.foalYear)&&
     Number.isInteger(parent.foalYear)&&parent.foalYear>=record.foalYear);
    edges.push({childId:id,parentId,role,generation:depth+1,
-    source:'EXACT_HISTORICAL_PARENT_ID',chronologyOk});
+    source:registry.has(parentId)?'EXACT_HISTORICAL_PARENT_ID':
+     'EXACT_SOURCE_PARENT_ID_TO_SELECTED_HISTORICAL_ROOT',chronologyOk});
    queue.push({horse:parent,depth:depth+1});
   }
  }
