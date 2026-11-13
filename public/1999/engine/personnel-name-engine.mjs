@@ -79,10 +79,10 @@ function variant(seed,i,record,role,byCountry,base){
   return {name:first+' "'+NICKNAMES[first]+'" '+last,style:'COMMON_NICKNAME'};
  return {name,style:'GIVEN_SURNAME'};
 }
-export function createPersonnelNameRoster(seed,count,roleAt,protectedNames=[]){
+export function createPersonnelNameRoster(seed,count,roleAt,protectedNames=[],options={}){
  if(!Number.isSafeInteger(seed)||seed<1||!Number.isInteger(count)||count<0)
   throw Error('Invalid personnel name seed or count');
- const base=createGeographicNameRoster(seed,count,roleAt,protectedNames);
+ const base=createGeographicNameRoster(seed,count,roleAt,protectedNames,options);
  const reserved=new Set(protectedNames.map(norm));
  // Reserve every base name first so variants cannot accidentally appropriate an
  // identity that belongs to a later person, or to a different professional role.
