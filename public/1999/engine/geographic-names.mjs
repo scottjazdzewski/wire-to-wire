@@ -81,7 +81,7 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
  const records=[];
  for(let i=0;i<count;i++){
   const role=roleAt(i),country=options.countryAt?options.countryAt(i,role):roleOrigin(seed,i,role);
-  if(!['US','CA','GB','IE','PR','PA','VE','MX','CL','PE','CO','DO','AR','BR','UY'].includes(country))
+  if(!['US','CA','GB','IE','PR','PA','VE','MX','CL','PE','CO','DO','AR','BR','UY','FR','DE','AU','NZ','JP','AE','SA'].includes(country))
    throw Error('Unsupported fictional person naming origin: '+country);
   const feminine=hash(seed,'sex:'+i)%100 < (role==='jockey'?7:role==='trainer'?22:role==='owner'?32:35);
   // Optional 1999 fictional-world birth-decade selection. The original
@@ -140,9 +140,9 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
   baseCounts.set(key,(baseCounts.get(key)||0)+1);
   records.push({name,givenName:selectedFirst,primarySurname:selectedSurname,
    birthCountry:country,role,
-   source:birthCohortPool&&country!=='US'?'LATIN_CARIBBEAN_1999_CURATED_COUNTRY_COHORT_NOT_CENSUS':
+   source:options.givenSourceAt?.(i,role,country)??(birthCohortPool&&country!=='US'?'LATIN_CARIBBEAN_1999_CURATED_COUNTRY_COHORT_NOT_CENSUS':
     birthCohortPool?'SSA_US_BIRTH_COHORT_TOP30_RANK_BIASED_EDITORIAL_DRAW':
-    country==='US'?'CENSUS_1990_US_NATIONAL_EXCERPT_PLUS_TEST_DRAW':'CURATED_COUNTRY_TEST_POOL_NOT_CENSUS',
+    country==='US'?'CENSUS_1990_US_NATIONAL_EXCERPT_PLUS_TEST_DRAW':'CURATED_COUNTRY_TEST_POOL_NOT_CENSUS'),
    originModel:'PROVISIONAL_RACING_ROLE_MIX_NOT_MEASURED'});
  }
  return records;
