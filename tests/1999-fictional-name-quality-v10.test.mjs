@@ -72,7 +72,7 @@ test('quality auditing validates 11,202 people and 8,408 organizations across di
 });
 test('audit identifies duplicate names, synthetic facility mismatch and broken relationships',()=>{
  const w=createFictionalWorldNameEngine({
-  worldId:'QA-Corruption',seed:345555,roles:{trainer:4,owner:0},
+  worldId:'QA-Corruption',seed:345555,roles:{trainer:4},
   owners:7,facilities:{studFarms:1,generalFarms:1},protectedNames:['Canon Farm']
  });
  const original=auditFictionalIdentityNaming(w);
