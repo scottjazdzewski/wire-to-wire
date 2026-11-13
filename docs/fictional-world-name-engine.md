@@ -66,3 +66,16 @@ The future atomic world-creation pipeline should combine these proposed identiti
     npm test
 
 Coverage includes full size, small size, exact facility kinds, geography, protected names, deterministic reloads, cross-entity owner/trainer links, role-specific naming origins, and invalid settings.
+
+## Relationship integrity and name quality — V2
+
+The engine now verifies more than the uniqueness of identity keys:
+
+- Named family ownership operations use the declared principal's surname, not a separately sampled family surname. Owners expose `principalRelationship` and (when applicable) `familyName`. These are business-identity links, not fabricated genealogy or legal documents.
+- `owner.principalId` is reciprocated by `person.organizationId`, and `stable.trainerId` by `person.stableId`. Both pairs share a geographic operating market.
+- Every available `farm_manager` is assigned deterministically to one farm when the world contains farms. Farm records carry `managerIds` and linked people carry `farmId`. A manager's operating location is that farm's locality. In a world with zero farms, managers remain unassigned (`farmId:null`) rather than receiving fictitious farms. Multiple managers can serve the same farm in a high-staff/low-farm scenario.
+- The first-and-last-name pairing is limited to two uses in a generated fictional world, regardless of added initials or titles. Exact full-name collisions remain forbidden and identical given/surnames such as Thomas Thomas are rejected. Natural common first names and surnames remain possible.
+- Role counts have canonical ordering, so semantically identical configuration objects with differently ordered JSON properties yield the same identities. Unknown facility purposes fail validation rather than being silently ignored.
+- These safeguards apply to the **standalone fictional-world factory**. The existing January 1999 world remains untouched; its current naming APIs retain backward-compatible defaults.
+
+Tested with full-size 11,202-person and 8,408-organization populations, with reciprocal link checks and zero family-principal mismatches. Horse pedigrees, track dates, owners of horses, player actions and actual world persistence remain responsibilities of the future higher-level atomic world builder.

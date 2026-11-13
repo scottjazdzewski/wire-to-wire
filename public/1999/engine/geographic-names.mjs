@@ -64,6 +64,11 @@ export function roleOrigin(seed,index,role){
 }
 export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],options={}){
  const reserved=new Set(protectedNames.map(n=>String(n).toLocaleLowerCase('en-US')));
+ const limit=options.maxBaseNameUses??Infinity;
+ if(limit!==Infinity&&(!Number.isInteger(limit)||limit<1))
+  throw Error('Invalid maximum repeated given/surname pairing');
+ const baseCounts=new Map();
+ const baseKey=(first,last)=>(first+' '+last).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
  const records=[];
  for(let i=0;i<count;i++){
   const role=roleAt(i),country=options.countryAt?options.countryAt(i,role):roleOrigin(seed,i,role);
@@ -78,7 +83,9 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
   for(let attempt=0;attempt<400;attempt++){
    const first=(country==='US'||country==='CA'?censusPick(given,feminine?F_FREQ:M_FREQ,seed,'given:'+i+':'+attempt):pick(given,seed,'given:'+i+':'+attempt));
    const surname=(country==='US'||country==='CA'?censusPick(family,S_FREQ,seed,'family:'+i+':'+attempt):pick(family,seed,'family:'+i+':'+attempt));
-   const candidate=first+' '+surname;
+   const candidate=first+' '+surname,base=baseKey(first,surname);
+   if(options.avoidIdenticalGivenSurname&&first.toLocaleLowerCase('en-US')===surname.toLocaleLowerCase('en-US'))continue;
+   if((baseCounts.get(base)||0)>=limit)continue;
    if(!reserved.has(candidate.toLocaleLowerCase('en-US'))){name=candidate;break}
   }
   if(!name){
@@ -90,11 +97,16 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
     const last=pick(family,seed,'fallback-family:'+i+':'+attempt);
     const letter=String.fromCharCode(65+hash(seed,'fallback-middle:'+i+':'+attempt)%26);
     const candidate=attempt<1024?first+' '+last:first+' '+letter+'. '+last;
+    const base=baseKey(first,last);
+    if(options.avoidIdenticalGivenSurname&&first.toLocaleLowerCase('en-US')===last.toLocaleLowerCase('en-US'))continue;
+    if((baseCounts.get(base)||0)>=limit)continue;
     if(!reserved.has(candidate.toLocaleLowerCase('en-US'))){name=candidate;break}
    }
    if(!name)throw Error('Country-specific personnel name pool exhausted; expand it instead of adding numbered identities');
   }
   reserved.add(name.toLocaleLowerCase('en-US'));
+  const parts=name.split(/\s+/),first=parts[0],last=parts.at(-1),key=baseKey(first,last);
+  baseCounts.set(key,(baseCounts.get(key)||0)+1);
   records.push({name,birthCountry:country,role,source:country==='US'?'CENSUS_1990_US_NATIONAL_EXCERPT_PLUS_TEST_DRAW':'CURATED_COUNTRY_TEST_POOL_NOT_CENSUS',originModel:'PROVISIONAL_RACING_ROLE_MIX_NOT_MEASURED'});
  }
  return records;
