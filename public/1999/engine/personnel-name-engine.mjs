@@ -55,13 +55,37 @@ function secondSurname(seed,i,country,byCountry,base,primary){
  }
  return null;
 }
-function variant(seed,i,record,role,byCountry,base){
+function variant(seed,i,record,role,byCountry,base,options={}){
  const name=record.name;
  const parts=name.trim().split(/\s+/);
  if(parts.length<2)return {name,style:'GIVEN_SURNAME'};
  const first=parts[0],last=parts.slice(1).join(' ');
  const country=record.birthCountry;
  const rules=STYLE[role]||STYLE.default;
+ if(options.regionalCompoundAt&&LATIN.has(country)){
+  // This branch is opt-in for fictional-world creation only. The person's
+  // primary family name is retained separately (Spanish paternal first;
+  // Portuguese Brazilian paternal normally last in a double-surname form).
+  const given=record.givenName||first,primary=record.primarySurname||last;
+  const score=hash(seed,'regional-person-style:'+role+':'+i)%100;
+  const useSecond=score<34;
+  const useCompound=score<10||(score>=34&&score<58);
+  const compound=useCompound?options.regionalCompoundAt(i,role,country,given):null;
+  let maternal=null;
+  if(useSecond&&options.regionalSecondarySurnameAt){
+   for(let attempt=0;attempt<12;attempt++){
+    const proposal=options.regionalSecondarySurnameAt(i,role,country,primary,attempt);
+    if(proposal&&norm(proposal)!==norm(primary)){maternal=proposal;break}
+   }
+  }
+  let styled=(compound||given)+' '+(maternal?
+   country==='BR'?maternal+' '+primary:primary+' '+maternal:primary);
+  if(role==='veterinarian'&&hash(seed,'regional-veterinary-title:'+i)%100<30)
+   return {name:'Dr. '+styled,style:'PROFESSIONAL_TITLE'};
+  return {name:styled,style:compound&&maternal?'COMPOUND_GIVEN_TWO_SURNAMES':
+   compound?'COMPOUND_GIVEN_NAME':maternal?'TWO_SURNAMES':'GIVEN_SURNAME'};
+ }
+
  const roll=hash(seed,'person-style:'+role+':'+i)%100;
  const middleLetter=String.fromCharCode(65+hash(seed,'middle-letter:'+i)%26);
  const western=country==='US'||country==='CA'||country==='GB'||country==='IE';
@@ -98,7 +122,7 @@ export function createPersonnelNameRoster(seed,count,roleAt,protectedNames=[],op
   byCountry.get(country).push(i);
  }
  return base.map((record,i)=>{
-  const role=roleAt(i),candidate=variant(seed,i,record,role,byCountry,base);
+  const role=roleAt(i),candidate=variant(seed,i,record,role,byCountry,base,options);
   let name=record.name,nameStyle=/\b[A-Z]\.\s/.test(name)?'MIDDLE_INITIAL':'GIVEN_SURNAME';
   if(candidate.name!==name&&!reserved.has(norm(candidate.name))){
    name=candidate.name;nameStyle=candidate.style;reserved.add(norm(name));
