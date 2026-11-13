@@ -128,11 +128,12 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   const simonneIdx=w.__WTW_NEXT__?.app?.departmentVisible?.findIndex(p=>p._canonId==='P-1999-J-000001');
   check('Simonne appears as an independent pilot jockey with his own clickable profile',simonneIdx>=0);
   d.querySelector('#wtwNextgen [data-ng="dept-open"][data-val="'+simonneIdx+'"]').click();await pause(220);
-  check('Male Simonne has Woodbine primary base and selective New York major-day route in approved Horse-style profile',
-   Boolean(d.querySelector('#wtwNextgen .ng-profile-person.ng-profile-horse'))&&
-   /Male/.test(d.querySelector('#wtwNextgen .ng-profile-person').textContent)&&
-   /Woodbine/.test(d.querySelector('#wtwNextgen .ng-profile-person').textContent)&&
-   /New York/.test(d.querySelector('#wtwNextgen .ng-profile-person').textContent));
+  const simonneProfile=d.querySelector('#wtwNextgen .ng-profile-person.ng-profile-horse');
+  check('Male Simonne has Woodbine primary base and selective New York major-day route in approved Horse-style profile '+
+   JSON.stringify({profile:!!simonneProfile,route:w.__WTW_NEXT__?.app?.custom,
+    displayed:simonneProfile?.textContent?.slice(0,1400)}),
+   Boolean(simonneProfile)&&/Male/.test(simonneProfile.textContent)&&
+   /Woodbine/.test(simonneProfile.textContent)&&/New York/.test(simonneProfile.textContent));
   click('Personnel');await pause(230);
   check('Only agreed founders display and phantom facilities are absent',
    ui.departmentRows('Personnel','Owners').length===37&&
