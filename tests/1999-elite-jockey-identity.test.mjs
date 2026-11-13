@@ -10,13 +10,13 @@ const profile=read('public/next/1999-restored-profiles.js');
 
 test('Elite group includes user-confirmed male Paloma and restored male Simonne with distinct identities',()=>{
  assert.equal(pilot.counts.canonicalJockeys,37);
- assert.equal(pilot.counts.totalJockeysWithUserApprovedRestoration,38);
+ assert.equal(pilot.counts.totalJockeysWithUserApprovedRestoration,50);
  assert.equal(pilot.counts.restoredByUser,1);
  assert.equal(pilot.counts.selectedPilot,26);
- assert.equal(pilot.counts.reserve,12);
+ assert.equal(pilot.counts.reserve,24);
  const personIds=new Set([...history.people,...founding.people].map(p=>p.id));
  const saved=new Set(pilot.jockeys.map(p=>p.id));
- assert.equal(saved.size,38);
+ assert.equal(saved.size,50);
  for(const id of ['P-000053','P-000055','P-000057','P-1999-J-000001']){
   const p=pilot.jockeys.find(x=>x.id===id);
   assert.ok(p,id);
@@ -41,12 +41,12 @@ test('Elite group includes user-confirmed male Paloma and restored male Simonne 
  assert.match(simonne.travelBookingPolicy,/NO_AUTOMATIC_MOUNTS/);
  assert.equal(simonne.ageAtOpening,null);
  assert.equal(pilot.jockeys.find(p=>p.id==='P-000065').name,'Nico Valenti');
- assert.equal(pilot.jockeys.find(p=>p.id==='P-900011').pilotStatus,'RESERVE_CANONICAL_IDENTITY');
+ assert.equal(pilot.jockeys.find(p=>p.id==='P-900011').pilotStatus,'SELECTED_IDENTITY_ONLY');
  assert.equal(pilot.jockeys.filter(x=>x.pilotStatus==='SELECTED_IDENTITY_ONLY').length,26);
 });
 test('No new rating engine or page design is created; existing Personnel data and Horse-style profiles show gender and travel',()=>{
  assert.match(office,/pilot\.counts\?\.restoredByUser!==1/);
- assert.match(office,/pilot\.jockeys\.length!==38/);
+ assert.match(office,/pilot\.jockeys\.length!==50/);
  assert.match(office,/p\.id==='P-1999-J-000001'&&p\.gender==='MALE'/);
  assert.match(office,/p\.id==='P-000057'&&p\.gender==='MALE'/);
  assert.match(profile,/field\('Gender',d\.gender==='MALE'\?'Male'/);
