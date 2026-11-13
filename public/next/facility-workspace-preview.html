@@ -101,6 +101,10 @@ function detail(){
  (example?'<div class="concept-stripe">EXAMPLE ONLY — NO BELMONT BARN, STAFF OR HORSES CREATED</div>':'')+
  '<div class="identity"><div class="mark">'+mark+'</div><div><h3>'+esc(o.name)+'</h3><p>'+esc(title)+' · '+esc(o.location)+'</p><code>'+esc(example?'HOST TRACK '+o.trackId+' · FACILITY F-ID PENDING':o.id+' · ORGANIZATION REFERENCE')+'</code></div></div>'+
  '<div class="note">'+(example?'A horse owned by any racing partnership could reside here with its trainer. The track is the location and training host; the horse owner does not automatically own this barn.':'This is an approved founding organization, not a certified physical building. The controls below illustrate future facility effects only; no live metrics are being assigned to '+esc(o.name)+'.')+'</div>'+
+ '<div class="tile"><h4 class="scenario-title"><span>ILLUSTRATIVE HORSE-EFFECT SCENARIO</span><select id="quality" aria-label="Preview facility operating condition"><option value="excellent"'+(scenario==='excellent'?' selected':'')+'>Well maintained</option><option value="standard"'+(scenario==='standard'?' selected':'')+'>Typical / adequate</option><option value="poor"'+(scenario==='poor'?' selected':'')+'>Neglected / crowded</option></select></h4>'+
+ '<div class="grid2">'+impact('Recovery efficiency',q.recovery,'%')+impact(trainLabel,q.training,'%')+
+ impact('Stress change',q.stress,' pts')+impact('Avoidable setbacks · relative',q.risk,'%')+'</div>'+
+ '<div class="intro">Illustrative balancing targets compared with a typical facility, NOT calibrated engine outputs. Scenario assumptions: condition '+q.condition+'/100 · care '+q.care+'/100 · staffing '+q.staff+'% · stall load '+q.occupancy+'%. '+esc(impactNote)+'</div></div>'+
  tile('WHO CONTROLS THE HORSE AND THE PROPERTY',
  pair('Horse owner',example?'Independent O-ID · not assigned':'Horse-specific O-ID · not assigned')+
  pair('Horse trainer',example?'Separate P-ID · not assigned':'Horse-specific P-ID · not assigned')+
@@ -111,10 +115,6 @@ function detail(){
  pair('Physical condition','NOT ASSESSED')+pair('Veterinary / recovery support','NOT ASSESSED')+
  pair('Staff coverage','NOT HIRED / ASSIGNED')+
  pair('Training access',example?'TRACK ACCESS POSSIBLE · NOT BOOKED':o.category==='farm'||o.category==='stud'?'SEPARATE SERVICE / VENUE REQUIRED':'NOT CERTIFIED'))+
- '<div class="tile"><h4 class="scenario-title"><span>ILLUSTRATIVE HORSE-EFFECT SCENARIO</span><select id="quality" aria-label="Preview facility operating condition"><option value="excellent"'+(scenario==='excellent'?' selected':'')+'>Well maintained</option><option value="standard"'+(scenario==='standard'?' selected':'')+'>Typical / adequate</option><option value="poor"'+(scenario==='poor'?' selected':'')+'>Neglected / crowded</option></select></h4>'+
- '<div class="grid2">'+impact('Recovery efficiency',q.recovery,'%')+impact(trainLabel,q.training,'%')+
- impact('Stress change',q.stress,' pts')+impact('Avoidable setbacks · relative',q.risk,'%')+'</div>'+
- '<div class="intro">Illustrative balancing targets compared with a typical facility, NOT calibrated engine outputs. Scenario assumptions: condition '+q.condition+'/100 · care '+q.care+'/100 · staffing '+q.staff+'% · stall load '+q.occupancy+'%. '+esc(impactNote)+'</div></div>'+
  tile('ONE FACILITY · ONE PROFIT CENTER',pair('Revenue','Board / stud / training / service fees')+
  pair('Operating expenses','Staff · feed · upkeep · utilities · rent')+
  pair('Capital investment','Barns, care systems, foaling wings')+
