@@ -752,15 +752,39 @@ function loadWorld1999(){
  if(world1999Data||world1999LoadFailed)return Promise.resolve();
  if(world1999Loading)return world1999Promise||Promise.resolve();
  world1999Loading=true;
- world1999Promise=fetch(window.__WTW_1999_MANAGEMENT__?.worldProfile?.mode==='FOUNDING_1999'?
-   '/data/wtw-1999-founding-directory-v1.json?rev=wtw1999-approved-only-20261113-r1':
-   '/data/wtw-1999-world-directory-v33.json',{credentials:'same-origin',cache:'force-cache'})
-  .then(r=>r.ok?r.json():Promise.reject(Error('1999 directory unavailable')))
-  .then(data=>{
+ const basePath=isClean1999()?
+  '/data/wtw-1999-founding-directory-v1.json?rev=wtw1999-approved-only-20261113-r1':
+  '/data/wtw-1999-world-directory-v33.json';
+ world1999Promise=Promise.all([
+  fetch(basePath,{credentials:'same-origin',cache:'force-cache'}).then(r=>
+   r.ok?r.json():Promise.reject(Error('1999 directory unavailable'))),
+  fetch('/data/track-geography-v33.json',{credentials:'same-origin',cache:'force-cache'}).then(r=>
+   r.ok?r.json():Promise.reject(Error('Canonical track geography unavailable')))
+ ]).then(([data,geo])=>{
    if(data?.schema!=='WTW_1999_WORLD_DIRECTORY_V1'||
      !Array.isArray(data.tracks)||!Array.isArray(data.people)||
      !Array.isArray(data.organizations)||!Array.isArray(data.horses))
     throw Error('Unrecognized 1999 directory schema');
+   if(isClean1999()){
+    if(geo?.counts?.north_america!==118||!Array.isArray(geo.tracks))
+     throw Error('Complete North American track authority unavailable');
+    const canonical=geo.tracks.filter(t=>t.registry==='NORTH_AMERICA');
+    const ids=new Set(data.tracks.map(t=>t.id));
+    const missing=canonical.filter(t=>!ids.has(t.id));
+    if(canonical.length!==118||data.tracks.length+missing.length!==118)
+     throw Error('North American 118-track identity reconciliation failed');
+    // Add source-registered historical racecourses to the SITE DIRECTORY only.
+    // Never create a meet, active condition book, physical facility or horse.
+    data={...data,tracks:[...data.tracks,...missing.map(t=>({
+     id:t.id,name:t.name,location:t.travel_node,
+     region:t.macro_circuit||t.state_province_region||'',
+     circuit:'HISTORICAL NORTH AMERICA',operating:'HISTORICAL_ONLY',
+     registry:t.registry,geographyStatus:t.geography_status,
+     historicalFoundationStatus:t.foundation_status,
+     sourceBasis:t.source_basis,playableIn1999:false,
+     historicalClosure:'CLOSED_PRE_1999',trackOperating:'HISTORICAL_ONLY'
+    }))]};
+   }
    world1999Base=data;world1999Data=worldApplyEdits(data);
    if(APP.ready)schedulePaint(15);
   })
@@ -773,13 +797,8 @@ function world1999Key(kind,item){
 }
 function world1999Entries(){
  if(!world1999Data)return [];
- const domestic=window.__WTW_1999_UI_DATA__?.extraTracks?.()||[];
- const playableIds=new Set(domestic.map(t=>t.id));
- const playableNames=new Set(domestic.map(t=>t.name));
  return [
-  ...world1999Data.tracks.filter(t=>
-   (playableIds.has(t.id)||playableNames.has(t.name))&&
-   (['OPEN','OPEN_1999'].includes(t.operating)||window.__WTW_1999_UI_DATA__?.trackProgramById?.(t.id)?.trackOperating==='OPEN_1999')).map(t=>({
+  ...world1999Data.tracks.map(t=>({
    kind:'track',name:t.name,detail:t.region||t.circuit||'',location:t.location||'',
    canonicalId:t.id,worldKey:world1999Key('track',t),_world:t
   })),
@@ -812,10 +831,7 @@ function world1999Entry(key){
  const source=worldSourceRecord(key,world1999Data);
  if(!source)return null;
  const kind=key.split(':',1)[0];
- if(kind==='track'){
-  const allowed=window.__WTW_1999_UI_DATA__?.extraTracks?.()||[];
-  if(!allowed.some(t=>t.id===source.id||t.name===source.name))return null;
- }
+ if(kind==='track'&&!world1999Data?.tracks?.some(t=>t.id===source.id))return null;
  return {kind,name:source.name,canonicalId:source.id||'',worldKey:key,_world:source};
 }
 function world1999Match(kind,name){
@@ -2399,18 +2415,16 @@ function depTrackCalendar(){
  const office=Array.isArray(raw)?raw.filter(x=>x&&typeof x.name==='string'):[];
  const known=new Set(office.map(x=>x.id||x.name));
  const others=(world1999Data?.tracks||[])
-  .filter(t=>['OPEN','OPEN_1999'].includes(t.operating)&&!known.has(t.id)&&!known.has(t.name))
+  .filter(t=>!known.has(t.id)&&!known.has(t.name))
   .map(t=>({id:t.id,name:t.name,location:t.location,region:t.region,circuit:t.circuit,
-   operating:t.operating,meetWindow:'',raceDays:'',preferredDays:'',stakes:[],_source1999:true}));
+   operating:t.operating,playableIn1999:t.playableIn1999!==false,
+   meetWindow:'',raceDays:'',preferredDays:'',stakes:[],_source1999:true}));
  const extra=window.__WTW_1999_UI_DATA__?.extraTracks?.()||[];
  const byId=new Map(extra.map(t=>[t.id,t]));
  const byName=new Map(extra.map(t=>[t.name,t]));
  const seen=new Set([...office,...others].flatMap(t=>[t.id,t.name]).filter(Boolean));
  const missing=extra.filter(t=>!seen.has(t.id)&&!seen.has(t.name));
- const availableIds=new Set(extra.map(t=>t.id));
- const availableNames=new Set(extra.map(t=>t.name));
- return [...office,...others,...missing]
-  .filter(t=>availableIds.has(t.id)||availableNames.has(t.name)).map(t=>{
+ return [...office,...others,...missing].map(t=>{
   const p=byId.get(t.id)||byName.get(t.name)||null;
   const sourceStakes=(window.__WTW_1999_UI_DATA__?.stakesForTrack?.(t.name)||[])
    .map(r=>({...r,date:r.localDate||r.date||'',class:r.status||r.division||r.grade||'',purse:r.purse1999}));
@@ -2447,7 +2461,7 @@ function depTrackRows(page='Overview',day=depGameDay()){
   const meet=depMeetState(t,day);
   return {_kind:'track',_name:t.name,_canonId:t.id||'',name:t.name,location:t.location||'',surfaces:t.surfaces||'',
    circuit:t.circuit||'',meetWindow:meet.window?.label||t.meetWindow||'',
-   status:t.operating==='HISTORICAL_ONLY'?'HISTORICAL ONLY':t._source1999?'MEET NOT RECORDED':meet.status,raceDays:t.raceDays||'',preferredDays:t.preferredDays||'',
+   status:t.operating==='HISTORICAL_ONLY'?'HISTORICAL · CLOSED BEFORE 1999':t._source1999?'MEET NOT RECORDED':meet.status,raceDays:t.raceDays||'',preferredDays:t.preferredDays||'',
    stakesCount:String(t.stakes?.length||0),_meetState:meet};
  });
  if(page==='Active Meets')return rows.filter(r=>r._meetState.active);
