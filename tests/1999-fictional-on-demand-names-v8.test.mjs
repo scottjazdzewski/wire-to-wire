@@ -149,7 +149,7 @@ test('on-demand model rejects malformed state, cross-world reuse and invalid pol
 });
 test('name issuance is pure, caller-persisted, and does not modify the active game',()=>{
  const source=readFileSync(new URL('../public/1999/engine/on-demand-fictional-name-batches.mjs',import.meta.url),'utf8');
- const game=readFileSync(new URL('../public/1999/engine/full-world-generator.mjs',import.meta.url),'utf8');
+ const game=readFileSync(new URL('../public/1999/engine/founding-world-1999.mjs',import.meta.url),'utf8');
  assert.doesNotMatch(source,/\b(?:fetch|localStorage|indexedDB|writeFile|setItem)\s*\(/);
  assert.doesNotMatch(game,/on-demand-fictional-name-batches|racing-program-name-format/);
  assert.doesNotMatch(game,/ownerPartnershipLimit|listReusableFictionalOwners/);
