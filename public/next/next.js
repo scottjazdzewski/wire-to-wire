@@ -853,18 +853,17 @@ function openFounding1999Profile(kind,id){
  return true;
 }
 function renderFounding1999Profile(kind,id){
- const engine=window.WTW1999FoundingProfiles,source=world1999Base||world1999Data;
- if(!source||!engine)return '<section class="ng-world-source-profile" role="status"><p>Loading founding profile…</p></section>';
+ const source=world1999Data||world1999Base;
+ if(!source)return '<section class="ng-world-source-profile" role="status"><p>Loading founding profile…</p></section>';
  const list=kind==='person'?source.people:source.organizations;
  const record=(list||[]).find(x=>x.id===id);
  if(!record)return '<section class="ng-world-source-profile"><p>Not in the approved 1999 founding directory.</p></section>';
  const key=kind+':'+id;
  if(APP.foundingProfileKey!==key){APP.foundingProfileKey=key;APP.detailTab='Overview'}
- const options={tab:APP.detailTab,
-  logoMarkup:kind!=='person'?organizationLogoMarkup(record.id,record.name,'organization',true,false):'',
-  personBadge:kind==='person'?'<div class="ng-profile-badgeframe"><img src="'+safe(badge('people'))+'" alt="" /></div>':''};
- return kind==='person'?engine.person(record,source,options):
-  engine.institution(kind,record,source,options);
+ // Both page types must invoke the SAME already approved profileDetail()
+ // renderer as Track and Horse. No independent founding profile layout.
+ return restored1999Profile(kind==='person'?'person':'farm',
+  kind==='person'?record:{...record,_foundingContext:kind});
 }
 function founding1999Profile(){
  const pieces=String(APP.custom||'').slice('FoundingProfile:'.length).split(':');
