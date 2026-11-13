@@ -79,3 +79,51 @@ The engine now verifies more than the uniqueness of identity keys:
 - These safeguards apply to the **standalone fictional-world factory**. The existing January 1999 world remains untouched; its current naming APIs retain backward-compatible defaults.
 
 Tested with full-size 11,202-person and 8,408-organization populations, with reciprocal link checks and zero family-principal mismatches. Horse pedigrees, track dates, owners of horses, player actions and actual world persistence remain responsibilities of the future higher-level atomic world builder.
+
+## Jockey-colony authenticity (V3)
+
+The standalone fictional-world naming engine now models **the rider's operating racing colony before selecting the fictional person's naming-origin pool**. This prevents 1,800 riders from drawing from one global country percentage or being assigned indiscriminately to stud-farm towns. Default modeled circuit hubs cover New York, South Florida, Southern California, Kentucky, Mid-Atlantic, Louisiana, and Ontario, with fallback profiles for other U.S., Canadian, and international markets.
+
+### 1999 editorial defaults, not observed historical statistics
+
+The modeled percentages assigned to Latin American/Caribbean birthplace/naming pools in the default jockey profiles are:
+
+- South Florida: 67%
+- Southern California: 61%
+- New York: 60%
+- Kentucky: 54%
+- Mid-Atlantic: 51%
+- Louisiana: 46%
+- Ontario: 34%
+- Other United States: 49%
+
+**These percentages are deliberately selected *fictional population weights*, NOT sourced historical track-colony measurements.** They are informed qualitatively by the strong Latin American jockey pipelines described in:
+- 1990 Associated Press / Los Angeles Times on Chilean jockey José Santos moving from the New York colony to California: https://www.latimes.com/archives/la-xpm-1990-11-07-sp-3941-story.html
+- February 2000 Washington Post reporting on a Panamanian jockey entering the Gulfstream Park colony and Florida's Latin-connected racing workforce: https://www.washingtonpost.com/archive/sports/2000/02/26/looking-for-a-long-shot-jockey-there-is-good-reason-to-take-pitty/21d79be1-8a9b-4e02-aa15-fc528544ebc1/
+- PBS historical account of Caribbean and Latin American jockey schools: https://www.pbs.org/newshour/nation/the-kentucky-derby-has-a-secret-latino-history
+
+The mix supports Puerto Rico, Panama, Venezuela, Mexico, Colombia, the Dominican Republic, Peru, Chile, Argentina, Brazil, Uruguay, and non-Latin pools. There are separate curated Portuguese-language Brazilian naming pools. All origin country codes are geographical modeling inputs, not inferences about anyone's race, ethnicity, legal citizenship, or immigration status. **Puerto Rico is a U.S. territory**, not a foreign nationality.
+
+### Configuration
+
+A market may set `racing:false` to exclude it from jockey bases (e.g. breeding-only Ocala) while still allowing farms, owners, and other people to operate there. For custom markets, `racing` defaults to `true`; an explicit `jockeyColony` may override region/city inference.
+
+Example:
+
+    createFictionalWorldNameEngine({
+      worldId:'florida-world',seed:19990101,year:1999,
+      markets:[
+        {id:'ocala-fl',city:'Ocala',region:'Florida',
+         country:'United States',code:'US',weight:4,breeding:true,racing:false},
+        {id:'hallandale-fl',city:'Hallandale Beach',region:'Florida',
+         country:'United States',code:'US',weight:3,breeding:false,
+         racing:true,jockeyColony:'SOUTH_FLORIDA'}
+      ],
+      jockeyOriginWeightsByColony:{
+        SOUTH_FLORIDA:[['PA',25],['PR',20],['VE',20],['MX',10],['US',25]]
+      }
+    });
+
+Priority is: specific `jockeyOriginWeightsByColony` override, then a caller-provided `originWeightsByRole.jockey` global override, then the default circuit mix. Every rider record includes `jockeyColony` and `riderOriginModel`; the manifest carries `jockeyColonyNameModel`, and all geography/profile configuration affects the deterministic fingerprint. An invalid colony, unsupported country code or world containing jockeys but no racing market fails before a roster is returned.
+
+This change modifies **only the standalone generation engine**, not existing game rosters, canonical 1999 people, racing dates, track identities, horse names, UI layouts or persistence.
