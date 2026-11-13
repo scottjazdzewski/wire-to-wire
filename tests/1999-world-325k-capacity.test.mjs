@@ -2,7 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {create1999Universe,HORSE_POPULATION,WORLD_HORSE_POPULATION,FULL_WORLD_SCHEMA} from '../public/1999/engine/full-world-generator.mjs';
-import {readLocal1999World} from '../public/1999/engine/local-api.mjs';
+import {readLocal1999World as read1999Directory} from '../public/1999/engine/local-api.mjs';
+// Explicit older full-world benchmark, not the clean founding-game default.
+const readLocal1999World=raw=>{
+ const url=new URL(raw,'https://wtw.benchmark');
+ if(!url.searchParams.has('mode'))url.searchParams.set('mode','CANON_ANCHORED_TEST');
+ return read1999Directory(url.pathname+url.search);
+};
 
 const world=create1999Universe({seed:19990101,mode:'CANON_ANCHORED_TEST'});
 const overview=readLocal1999World('/api/1999/sim/overview');
