@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Wire to Wire | Facility Operations Preview</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1215;--side:#141f22;--panel:#172226;--panel2:#202c2d;--ink:#edecdf;--muted:#9db2a8;--stroke:#34463f;--gold:#d8be7b;--green:#74b895;--red:#e38b80;--blue:#86b6c7}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,"Segoe UI",Arial,sans-serif;font-size:12px}button,input,select{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}header.top{display:flex;align-items:center;gap:15px;background:#17231f;border-bottom:2px solid #4e6e59;min-height:70px;padding:10px 18px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:11px;min-width:200px}.brand img{width:42px;height:42px;object-fit:contain}.brand strong{display:block;letter-spacing:.14em;color:#f3e3bb;font-size:13px}.brand span{color:var(--muted);font-size:10px;letter-spacing:.045em}.top-note{margin-left:auto;display:flex;align-items:center;gap:14px}.chip{border:1px solid #7b6c45;color:#ebd49a;background:#2c2b20;padding:5px 8px;border-radius:2px;font-size:10px;font-weight:800;letter-spacing:.04em}.outline{border:1px solid #557063;color:#e5eee5;background:#21352b;border-radius:3px;padding:9px 11px;text-decoration:none;font-size:10px;font-weight:800}.top-note small{font-size:10px;color:var(--muted)}main{max-width:1800px;margin:auto;padding:13px 16px}.titlebar{display:flex;justify-content:space-between;align-items:end;gap:8px;margin-bottom:10px;flex-wrap:wrap}.kicker{font-size:9px;letter-spacing:.15em;color:var(--gold);font-weight:900}.titlebar h1{font-size:21px;letter-spacing:.02em;margin:3px 0 0;font-weight:800}.titlebar p{margin:4px 0 0;color:var(--muted);font-size:11px}.statuspill{border:1px solid #506355;padding:7px 10px;color:#cde0cf;background:#26352e;font-size:10px;letter-spacing:.03em}.metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:10px}.metric{background:var(--panel);border:1px solid var(--stroke);padding:9px 11px;min-width:0}.metric small{color:var(--muted);font-size:9px;display:block;letter-spacing:.055em}.metric strong{display:block;font-size:19px;color:#efd9a5;margin-top:3px;font-variant-numeric:tabular-nums}.metric span{display:block;font-size:9px;color:#9ab0a4;margin-top:2px}.workspace{display:grid;grid-template-columns:minmax(0,1.85fr) minmax(310px,.83fr);gap:9px;height:calc(100vh - 225px);min-height:520px;max-height:1050px}.panel{min-width:0;min-height:0;background:var(--panel);border:1px solid var(--stroke);display:flex;flex-direction:column}.panel-heading{padding:10px 12px;background:#2a3831;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:38px}.panel-heading h2{margin:0;font-size:11px;letter-spacing:.06em;color:#ecd6a7}.panel-heading span{font-size:10px;color:#c1d3c4}.filters{display:flex;gap:4px;padding:9px 9px 5px;flex-wrap:wrap}.filters button{border:1px solid #394e43;background:#1d2b2a;color:#b7c8bc;padding:7px 9px;font-size:10px;font-weight:700}.filters button.active{background:#3b5848;color:#fff0c8;border-color:#85a487}.searchline{display:flex;align-items:center;justify-content:space-between;padding:4px 9px 10px;gap:8px}.searchline input{background:#0e191b;color:#e6efec;border:1px solid #395046;padding:7px 9px;width:min(100%,360px);border-radius:2px}.searchline span{font-size:9px;color:var(--muted);text-align:right}.table-wrap{overflow:auto;min-height:0;flex:1}.table{min-width:760px;width:100%;border-collapse:collapse;table-layout:fixed}.table thead{position:sticky;top:0;z-index:2;background:#34443b}.table th{text-align:left;color:#ddcd9d;font-size:9px;letter-spacing:.055em;font-weight:800;padding:10px 9px;border-right:1px solid #4b5d4d}.table th:nth-child(1){width:30%}.table th:nth-child(2){width:17%}.table th:nth-child(3){width:22%}.table th:nth-child(4){width:15%}.table th:nth-child(5){width:16%}.table td{padding:11px 9px;border-top:1px solid #30413b;color:#c2d3c7;font-size:10px;line-height:1.35;vertical-align:middle}.table tbody tr{cursor:pointer;background:#172226}.table tbody tr:nth-child(even){background:#1c292b}.table tbody tr:hover{background:#2d3f37}.table tbody tr.selected{background:#3b4c39;box-shadow:inset 3px 0 #f1d48d}.facility-name{color:#f2e6c9;font-size:11px;font-weight:800}.sub{color:var(--muted);display:block;font-size:9px;margin-top:3px}.status{color:#dfc98b;font-size:9px;font-weight:750;letter-spacing:.02em}.status.missing{color:#b3c4b6}.badge{display:inline-block;border:1px solid #597067;background:#263731;padding:3px 6px;font-size:9px;letter-spacing:.02em}.badge.test{border-color:#b88946;color:#f9d69b;background:#433326}.right-body{overflow:auto;padding:10px;display:flex;flex-direction:column;gap:9px}.identity{display:flex;gap:10px;align-items:center;min-width:0}.mark{height:63px;width:63px;flex:none;border:1px solid #52634e;background:#172321;display:flex;align-items:center;justify-content:center;font-size:17px;color:#e8d198;font-weight:800}.mark img{width:100%;height:100%;object-fit:contain}.identity h3{font-size:15px;margin:0 0 3px}.identity p{font-size:10px;color:#b9cec1;margin:0 0 4px}.identity code{font-size:9px;color:var(--gold)}.note{font-size:10px;line-height:1.5;color:#b9cbbf;background:#1e2c2b;padding:8px 10px;border-left:2px solid #a38b59}.tile{background:#111b1e;border:1px solid #30443d}.tile h4{margin:0;padding:9px 10px;background:#27352e;color:#e6d3aa;font-size:10px;letter-spacing:.055em}.kv{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.12fr);align-items:center;gap:8px;padding:7px 10px;border-top:1px solid #263a35}.kv span{color:#a7bcb1;font-size:10px}.kv strong{font-size:10px;font-weight:750;color:#f1e4ce;overflow-wrap:anywhere;text-align:right}.scenario-title{display:flex;align-items:center;gap:5px;justify-content:space-between}.scenario-title select{background:#142121;border:1px solid #6b795d;color:#e9e3cb;padding:6px;font-size:10px;max-width:160px}.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:8px}.impact{background:#22302c;border:1px solid #354f3f;padding:9px 7px}.impact small{display:block;font-size:9px;color:#bbd2c0}.impact strong{display:block;margin-top:4px;font-size:17px;font-weight:850}.good{color:#92d6a0}.bad{color:#ed9d8b}.neutral{color:#ebdfbc}.intro{font-size:9px;color:#b7c7bb;padding:3px 9px 9px;line-height:1.5}.footer{margin:8px 0 2px;color:#93a99e;font-size:10px}.empty{padding:26px;color:#bed0bf;font-size:12px}.linkline{color:#a9c7ad;text-decoration:none}.concept-stripe{background:#413421;color:#efd4a0;border-bottom:1px solid #856640;padding:6px 10px;font-size:9px;font-weight:700;letter-spacing:.03em}
+@media(max-width:1100px){.workspace{grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr)}.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.top-note{margin-left:0}}
+@media(max-width:760px){main{padding:8px}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.workspace{grid-template-columns:1fr;height:auto;max-height:none}.table-wrap{max-height:470px}.right-body{max-height:none}.top-note{width:100%;justify-content:space-between}.brand{min-width:0}.titlebar h1{font-size:18px}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><img src="/assets/wtw-office-approved-logo.png" alt=""><div><strong>WIRE TO WIRE</strong><span>THE RACING OFFICE · 1999</span></div></div>
+  <div><span class="kicker">FACILITY OPERATIONS DESK</span><div style="font-size:11px;color:#e6e6d5;margin-top:3px">Compact stable-style workspace preview</div></div>
+  <div class="top-note"><span class="chip">READ-ONLY DESIGN PREVIEW</span><small>No game entities or finances changed</small><a href="/next/?world=1999" class="outline">BACK TO OFFICE</a></div>
+</header>
+<main>
+ <div class="titlebar"><div><div class="kicker">1999 · OPERATIONS AND PHYSICAL HOUSING</div><h1>Facilities & Trainer Barns</h1><p>One list. One right-side inspector. All horse effects, staffing, services and profit information visible together.</p></div><div class="statuspill">NOT A LIVE FACILITY MARKET OR HORSE TRANSACTION</div></div>
+ <div class="metrics">
+   <div class="metric"><small>APPROVED INSTITUTION REFERENCES</small><strong id="allCount">30</strong><span>No new property registrations</span></div>
+   <div class="metric"><small>STUD OPERATIONS</small><strong id="studCount">5</strong><span>Founding organizations</span></div>
+   <div class="metric"><small>FARM OPERATIONS</small><strong id="farmCount">15</strong><span>Founding organizations</span></div>
+   <div class="metric"><small>RACING OPERATIONS</small><strong id="stableCount">10</strong><span>Barn capacity not yet certified</span></div>
+   <div class="metric"><small>TRACK BARN EXAMPLES</small><strong>1</strong><span>Belmont concept, not an entity</span></div>
+ </div>
+ <div class="workspace">
+  <section class="panel" aria-label="Facilities list">
+   <div class="panel-heading"><h2>FACILITY REGISTER</h2><span id="selectionCount">SOURCE-ONLY · 30 OPERATIONS + 1 CONCEPT</span></div>
+   <div class="filters" id="filters">
+    <button data-filter="all" class="active">ALL</button>
+    <button data-filter="farm">FARMS</button>
+    <button data-filter="stud">STUD FARMS</button>
+    <button data-filter="stable">RACING STABLES</button>
+    <button data-filter="track">TRACK BARNS · CONCEPT</button>
+    <button data-filter="development">BREAKING / TRAINING · NONE</button>
+   </div>
+   <div class="searchline"><input id="search" type="search" placeholder="Find an institution, location or track…" aria-label="Find facilities"><span>Click a row. Details stay on this screen.</span></div>
+   <div class="table-wrap"><table class="table"><thead><tr><th>FACILITY / OPERATION</th><th>CLASS</th><th>LOCATION / HOST</th><th>PHYSICAL STATUS</th><th>HORSE IMPACT</th></tr></thead><tbody id="rows"><tr><td class="empty" colspan="5">Loading approved founding institution directory…</td></tr></tbody></table></div>
+  </section>
+  <aside class="panel" aria-label="Selected facility details">
+   <div class="panel-heading"><h2>OPERATIONS INSPECTOR</h2><span>IN-PAGE · NO EXTRA TABS</span></div>
+   <div class="right-body" id="details"><div class="empty">Select an approved institution or the Belmont trainer-barn example.</div></div>
+  </aside>
+ </div>
+ <div class="footer">UI study only. Ownership group (O-ID), physical facility (future F-ID), track (T-ID), trainer, and horse residence are distinct. Existing North American/Cuban tracks and live personnel remain unchanged.</div>
+</main>
+<script>
+(function(){
+'use strict';
+var rows=[],logos={},filter='all',search='',selected='preview-belmont',scenario='standard';
+var demo={
+ id:'preview-belmont',name:'Belmont Park — Trainer Barn Example',category:'track',
+ type:'TRACK-BASED RACING BARN · CONCEPT ONLY',
+ location:'Belmont Park · Elmont, New York',trackId:'T-0002',
+ sourceOnly:false
+};
+var names={farm:'FARM',stud:'STUD FARM',stable:'RACING STABLE',track:'TRAINER BARN'};
+var quality={
+ excellent:{condition:92,care:90,staff:100,occupancy:65,recovery:6,training:5,stress:-4,risk:-10},
+ standard:{condition:72,care:72,staff:85,occupancy:75,recovery:0,training:0,stress:0,risk:0},
+ poor:{condition:40,care:45,staff:55,occupancy:110,recovery:-10,training:-8,stress:7,risk:18}
+};
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;','\'':'&#39;'}[c]})}
+function classify(o){
+ var t=String(o.type||'').toUpperCase(),n=String(o.name||'').toUpperCase();
+ if(/STUD|STALLION|INTEGRATED BREEDING/.test(t)||/\bSTUD\b/.test(n))return 'stud';
+ if(/FARM|NURSERY/.test(t))return 'farm';
+ if(/RACING STABLE|OWNERSHIP STABLE/.test(t))return 'stable';
+ return '';
+}
+function current(){return rows.find(function(o){return o.id===selected})||demo}
+function counts(){
+ document.getElementById('allCount').textContent=rows.length-1;
+ ['farm','stud','stable'].forEach(function(cat){document.getElementById(cat==='farm'?'farmCount':cat==='stud'?'studCount':'stableCount').textContent=rows.filter(function(o){return o.category===cat}).length})
+}
+function renderRows(){
+ var data=rows.filter(function(o){return (filter==='all'||o.category===filter)&&(o.name+' '+o.location+' '+o.type).toLowerCase().includes(search)});
+ document.getElementById('selectionCount').textContent=data.length+' LISTED · CLICK TO INSPECT';
+ var el=document.getElementById('rows');if(!data.length){el.innerHTML='<tr><td colspan="5" class="empty">No registered institution in this category. Training centers and breaking yards are not being invented to fill the screen.</td></tr>';return}
+ el.innerHTML=data.map(function(o){
+ var example=o.category==='track',status=example?'HYPOTHETICAL / NOT CREATED':'INSTITUTION ONLY';
+ return '<tr tabindex="0" role="button" aria-label="Inspect '+esc(o.name)+'" data-id="'+esc(o.id)+'" class="'+(selected===o.id?'selected':'')+'">'+
+ '<td><span class="facility-name">'+esc(o.name)+'</span><span class="sub">'+esc(o.id==='preview-belmont'?'CONCEPT · HOST TRACK '+o.trackId:o.id)+'</span></td>'+
+ '<td><span class="badge '+(example?'test':'')+'">'+esc(names[o.category])+'</span></td>'+
+ '<td>'+esc(o.location)+'</td><td><span class="status '+(!example?'missing':'')+'">'+status+'</span></td>'+
+ '<td>'+(example?'SCENARIO BELOW':'AWAITING FACILITY DATA')+'</td></tr>';
+ }).join('');
+}
+function pair(label,value){return '<div class="kv"><span>'+esc(label)+'</span><strong>'+esc(value)+'</strong></div>'}
+function tile(title,body){return '<div class="tile"><h4>'+title+'</h4>'+body+'</div>'}
+function impact(label,value,unit){var num=Number(value),sign=num>0?'+':'',cls=num===0?'neutral':(label.indexOf('Stress')>=0||label.indexOf('setbacks')>=0?(num<0?'good':'bad'):(num>0?'good':'bad'));return '<div class="impact"><small>'+esc(label)+'</small><strong class="'+cls+'">'+sign+num+esc(unit||'')+'</strong></div>'}
+function detail(){
+ var o=current(),example=o.category==='track',q=quality[scenario],title=names[o.category],markPath=logos['organization:'+o.id],mark=markPath&&/^\/assets\/office\/owner-logos\/[-A-Za-z0-9_/.]+$/.test(markPath)?'<img alt="'+esc(o.name)+' logo" src="'+esc(markPath)+'">':(example?'T / B':esc(o.name.split(' ').map(function(x){return x[0]||''}).slice(0,2).join('').toUpperCase()));
+ var trainLabel=o.category==='stud'?'Foaling-care support':o.category==='farm'?'Young-horse development':o.category==='stable'?'Training gain (if linked)':'Training effectiveness';
+ var impactNote=o.category==='stud'?'Breeding outcomes remain subject to mare, stallion and reproductive history; better services support care and reduce avoidable setbacks.':o.category==='farm'?'Development environment improves welfare and reduces setbacks. It never raises inherited potential.':o.category==='stable'?'Racing stable care affects recovery and stress. Training gains require an actual linked training venue.':'Trainer manages the barn, the racetrack provides training access, and each horse retains its own owner and residence assignment.';
+ document.getElementById('details').innerHTML=
+ (example?'<div class="concept-stripe">EXAMPLE ONLY — NO BELMONT BARN, STAFF OR HORSES CREATED</div>':'')+
+ '<div class="identity"><div class="mark">'+mark+'</div><div><h3>'+esc(o.name)+'</h3><p>'+esc(title)+' · '+esc(o.location)+'</p><code>'+esc(example?'HOST TRACK '+o.trackId+' · FACILITY F-ID PENDING':o.id+' · ORGANIZATION REFERENCE')+'</code></div></div>'+
+ '<div class="note">'+(example?'A horse owned by any racing partnership could reside here with its trainer. The track is the location and training host; the horse owner does not automatically own this barn.':'This is an approved founding organization, not a certified physical building. The controls below illustrate future facility effects only; no live metrics are being assigned to '+esc(o.name)+'.')+'</div>'+
+ tile('WHO CONTROLS THE HORSE AND THE PROPERTY',
+ pair('Horse owner',example?'Independent O-ID · not assigned':'Horse-specific O-ID · not assigned')+
+ pair('Horse trainer',example?'Separate P-ID · not assigned':'Horse-specific P-ID · not assigned')+
+ pair('Actual horse residence',example?'Possible F-ID at T-0002':'Specific F-ID · not yet entered')+
+ pair('Facility operator',example?'Trainer / barn lessee · unassigned':'Separate operator agreement required')+
+ pair('Landowner / host',example?'Belmont Park · T-0002':'Property owner · to be certified'))+
+ tile('CAPACITY, CARE AND STAFF',pair('Certified stall capacity','NOT ENTERED')+pair('Horses actually housed','NONE ASSIGNED')+
+ pair('Physical condition','NOT ASSESSED')+pair('Veterinary / recovery support','NOT ASSESSED')+
+ pair('Staff coverage','NOT HIRED / ASSIGNED')+
+ pair('Training access',example?'TRACK ACCESS POSSIBLE · NOT BOOKED':o.category==='farm'||o.category==='stud'?'SEPARATE SERVICE / VENUE REQUIRED':'NOT CERTIFIED'))+
+ '<div class="tile"><h4 class="scenario-title"><span>ILLUSTRATIVE HORSE-EFFECT SCENARIO</span><select id="quality" aria-label="Preview facility operating condition"><option value="excellent"'+(scenario==='excellent'?' selected':'')+'>Well maintained</option><option value="standard"'+(scenario==='standard'?' selected':'')+'>Typical / adequate</option><option value="poor"'+(scenario==='poor'?' selected':'')+'>Neglected / crowded</option></select></h4>'+
+ '<div class="grid2">'+impact('Recovery efficiency',q.recovery,'%')+impact(trainLabel,q.training,'%')+
+ impact('Stress change',q.stress,' pts')+impact('Avoidable setbacks · relative',q.risk,'%')+'</div>'+
+ '<div class="intro">Illustrative balancing targets compared with a typical facility, NOT calibrated engine outputs. Scenario assumptions: condition '+q.condition+'/100 · care '+q.care+'/100 · staffing '+q.staff+'% · stall load '+q.occupancy+'%. '+esc(impactNote)+'</div></div>'+
+ tile('ONE FACILITY · ONE PROFIT CENTER',pair('Revenue','Board / stud / training / service fees')+
+ pair('Operating expenses','Staff · feed · upkeep · utilities · rent')+
+ pair('Capital investment','Barns, care systems, foaling wings')+
+ pair('Operating profit','REVENUE − OPERATING COSTS')+
+ pair('Current 1999 P&L','NOT ESTABLISHED')+
+ pair('AI competition','Same financial and staffing limits'))+
+ '<div class="note"><strong>Track barns:</strong> keep separate facility F-ID, host track T-ID, physical residence, operator/lessee and site P&L. Owner pays care/boarding as appropriate; trainer barn earns service revenue; track earns rent or host fees. No duplicated costs or boosts.</div>';
+ var control=document.getElementById('quality');control.addEventListener('change',function(){scenario=control.value;detail()});
+}
+function render(){renderRows();detail()}
+function bind(){
+ document.getElementById('rows').addEventListener('click',function(e){var tr=e.target.closest('[data-id]');if(tr){selected=tr.dataset.id;render()}});
+ document.getElementById('rows').addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){var tr=e.target.closest('[data-id]');if(tr){e.preventDefault();selected=tr.dataset.id;render()}}});
+ document.getElementById('filters').addEventListener('click',function(e){var t=e.target.closest('[data-filter]');if(!t)return;filter=t.dataset.filter;document.querySelectorAll('[data-filter]').forEach(function(x){x.classList.toggle('active',x.dataset.filter===filter)});renderRows()});
+ document.getElementById('search').addEventListener('input',function(e){search=e.target.value.toLowerCase().trim();renderRows()});
+}
+bind();
+Promise.all([
+ fetch('/data/wtw-1999-founding-directory-v1.json',{credentials:'same-origin'}).then(function(r){if(!r.ok)throw Error('Missing founding directory');return r.json()}),
+ fetch('/assets/office/founding-organization-logo-index.json?rev=founder-logos-release-v2-20261113',{credentials:'same-origin'}).then(function(r){return r.ok?r.json():{organizations:{}}})
+]).then(function(d){
+ var source=d[0],approved=d[1];
+ if(!Array.isArray(source.organizations)||source.organizations.length!==37)throw Error('Founding roster mismatch');
+ rows=[demo].concat(source.organizations.map(function(o){return {
+  id:o.id,name:o.name,location:o.locationLabel||o.location||'Not recorded',type:o.type||'',category:classify(o),sourceOnly:true
+ }}).filter(function(o){return !!o.category}).sort(function(a,b){return a.name.localeCompare(b.name)}));
+ if(rows.length!==31||rows.filter(function(o){return o.category==='stud'}).length!==5||
+  rows.filter(function(o){return o.category==='farm'}).length!==15||
+  rows.filter(function(o){return o.category==='stable'}).length!==10)
+  throw Error('Approved institution type reconciliation failed');
+ logos=approved.organizations||{};
+ counts();render();
+}).catch(function(e){document.getElementById('rows').innerHTML='<tr><td colspan="5" class="empty">Could not load approved founding institutions: '+esc(e.message)+'. No replacement sample organizations have been fabricated.</td></tr>';rows=[demo];selected=demo.id;detail()});
+})();
+</script>
+</body>
+</html>
