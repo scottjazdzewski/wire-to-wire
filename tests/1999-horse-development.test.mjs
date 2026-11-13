@@ -1,20 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {create1999Universe} from '../src/1999/full-world-generator.mjs';
 import {
  HORSE_DEVELOPMENT_SCHEMA,TRAINING_PLANS,createHorseTrainingRecord,
  advanceHorseTrainingDay,assignHorseTrainingPlan,simulateStableTrainingThrough,
  horseTrainingSnapshot,trainingFinancials,recommendHorseWorkout
 } from '../public/1999/engine/horse-development.mjs';
 
-const universe=create1999Universe({seed:19990101,mode:'CANON_ANCHORED_TEST'});
-const roster=[];
-for(let i=267;i<650&&roster.length<8;i++){
- const h=universe.horseAt(i);
- if(!['RETIRED','BROODMARE','AT_STUD','TOO_YOUNG'].includes(h.racingStatus1999))roster.push(h);
-}
-assert.equal(roster.length,8);
+// Explicit isolated UNIT fixtures: NOT part of the playable 1999 world.
+const roster=Array.from({length:8},(_,i)=>({
+ id:'H-UNIT-TRAINING-'+String(i+1).padStart(3,'0'),
+ name:'Unit Training Horse '+(i+1),trainerId:'P-UNIT-TRAINER-'+i,
+ foalYear:1995,ageAtOpening:4,sex:'GELDING',racingStatus1999:'IN_TRAINING',
+ attributes:{fitness:.43+i*.015,fatigue:.12,gate_composure:.52,confidence:.55,
+  stress:.16,soundness_risk:.3,stamina:.48,raw_speed:.55},
+ ability:{current:53+i,peakCeiling:76+i},
+ finances:{monthlyCareCost:1600},
+ sourceRecordedStakesSeasons:[]
+}));
 const trainerById=Object.fromEntries(roster.map((h,i)=>[h.trainerId,{
  id:h.trainerId,role:'trainer',
  ability:{current:50+i*2},
@@ -23,10 +26,10 @@ const trainerById=Object.fromEntries(roster.map((h,i)=>[h.trainerId,{
  compensation:{dayRate:65+i}
 }]));
 const game0=()=>({
- schema:'WTW_1999_CLEAN_CAREER_V3',
+ schema:'WTW_1999_FOUNDING_CAREER_V1',
  date:'1999-01-01',
  horseState:{},finances:{cash:123456},
- worldAnchor:{schema:'WTW_1999_CLEAN_CAREER_V3',startDate:'1999-01-01',seed:19990101}
+ worldAnchor:{schema:'WTW_1999_FOUNDING_CAREER_V1',startDate:'1999-01-01',seed:19990101}
 });
 const config=date=>({horses:roster,trainerById,seed:19990101,date});
 const iso=n=>new Date(Date.parse('1999-01-01T00:00:00.000Z')+n*86400000).toISOString().slice(0,10);
@@ -148,16 +151,14 @@ test('invalid plans, missing horses, retroactive edits and rewind attempts are r
  assert.equal(on15.horseDevelopment.horses[horse.id].plan,'BALANCED','Previous save must not mutate');
 });
 
-test('opening canonical horse and first-world provenance remain untouched by modeled training',()=>{
- const horse=universe.horseAt(0);
- const original=JSON.stringify(horse);
+test('explicit UNIT horse fixture is never changed by modeled training',()=>{
+ const horse=roster[0],original=JSON.stringify(horse);
  const p=createHorseTrainingRecord(horse);
  assert.equal(p.horseId,horse.id);
  assert.match(p.provenance,/NOT_SOURCED_HEALTH_OR_WORKOUT/);
  const later=advanceHorseTrainingDay(p,horse,trainerById[horse.trainerId]||{},'1999-01-02');
  assert.equal(later.horse.horseId,horse.id);
  assert.equal(JSON.stringify(horse),original);
- assert.deepEqual(horse.sourceRecordedStakesSeasons,universe.horseAt(0).sourceRecordedStakesSeasons);
 });
 
 test('premium Stable interface uses the same dated career save and exposes real plan buttons',()=>{
