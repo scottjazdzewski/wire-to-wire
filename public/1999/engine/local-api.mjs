@@ -24,6 +24,8 @@ const list=(q,data,keys)=>{
  return pager(q,filtered.length,i=>filtered[i],'SOURCE_LOCKED_1999_FOUNDING');
 };
 function approvedWorld(q){
+ if(q.has('pilot')||q.has('worldSize')||q.has('populationSize'))
+  throw Error('Retired world creation options are unavailable');
  const mode=q.get('mode')||FOUNDING_WORLD_MODE;
  if(mode!==FOUNDING_WORLD_MODE)throw Error('Retired synthetic world mode is not available');
  const population=q.get('population');
