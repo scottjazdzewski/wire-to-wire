@@ -111,7 +111,7 @@ test('large 1999 population maintains correct owner/stable links and no accent-f
 });
 test('subculture selector cannot mutate the game or alter existing 1999 population generator',()=>{
  const code=readFileSync(new URL('../public/1999/engine/international-name-cultures.mjs',import.meta.url),'utf8');
- const current=readFileSync(new URL('../public/1999/engine/full-world-generator.mjs',import.meta.url),'utf8');
+ const current=readFileSync(new URL('../public/1999/engine/founding-world-1999.mjs',import.meta.url),'utf8');
  assert.doesNotMatch(code,/\b(?:fetch|localStorage|indexedDB|writeFile|setItem)\s*\(/);
  assert.doesNotMatch(current,/international-name-cultures/);
  assert.doesNotMatch(current,/chooseInternationalNameCulture|culturallyConditionedGivenPool/);
