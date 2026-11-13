@@ -65,3 +65,20 @@ jobs:
           path: visual-audit/1999/
           retention-days: 7
           if-no-files-found: warn
+
+
+  naming-v12-indexeddb-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify V12 fictional naming persistence in real Chromium IndexedDB
+        run: bash scripts/1999-naming-indexeddb-smoke.sh
+      - name: Preserve IndexedDB naming browser probe
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-naming-v12-indexeddb-qa
+          path: visual-audit/1999/naming-v12-indexeddb-dom.txt
+          retention-days: 7
+          if-no-files-found: warn
