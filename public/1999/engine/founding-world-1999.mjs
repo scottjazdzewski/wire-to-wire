@@ -89,8 +89,10 @@ const HISTORICAL_ANCHORS=Object.freeze([
 // connections. Source horse-year associations are NOT proof of exact breeder,
 // race-owner or trainer roles. The historical archive itself remains untouched.
 function buildFoundingHistoricalLinks(selectedOrganizations) {
- const registered=[...canon.historicalHorses,...canon.pedigreeNodes,
+ const registered=[...canon.pedigreeNodes,
    ...canon.activeStallions1999,...canon.foundationalBroodmares1999];
+// A curated historical association is NOT independent pedigree or stud-book
+// evidence. Do not silently promote a yearbook association's provenance tier.
  const byId=new Map(registered.map(h=>[h.id,h]));
  const idsByName=new Map();
  for(const h of registered) {
