@@ -151,6 +151,17 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    Boolean(d.querySelector('#wtwNextgen .ng-profile-track.ng-founding-facility[data-founding-id]'))&&
    Boolean(d.querySelector('#wtwNextgen .ng-track-workspace'))&&
    d.querySelector('#wtwNextgen .ng-founding-profile')?.textContent.includes('NOT REGISTERED'));
+  click('Breeding');await pause(210);
+  const breedingStudSelect=d.querySelector('#wtwNextgen select[data-ng-select="department-tab"]');
+  check('Breeding uses approved Stud Farms picker',Boolean(breedingStudSelect));
+  breedingStudSelect.value='Stud Farms';
+  breedingStudSelect.dispatchEvent(new w.Event('change',{bubbles:true}));await pause(260);
+  const linkedStud=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
+  check('Breeding Stud Farms uses existing institution records',Boolean(linkedStud));
+  linkedStud.click();await pause(220);
+  check('Breeding Stud Farm opens SAME exact-ID facility profile as Facilities',
+   Boolean(d.querySelector('#wtwNextgen .ng-founding-facility[data-founding-id]')));
+
   click('Breeding');await pause(180);
   const stallions=ui.departmentRows('Breeding','Stallions');
   check('18 source stallions appear only once in founder breeding screen',stallions.length===18&&stallions.every(h=>h._canonId&&h.status?.includes('SOURCE')));
