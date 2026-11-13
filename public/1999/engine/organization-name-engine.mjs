@@ -9,7 +9,23 @@ import {
  contextualFarmCandidate,contextualOwnerCandidate,contextualStableCandidate,
  contextualBreakingCandidate,REGIONAL_NAMING_ANCHORS
 } from './organization-naming-styles.mjs';
-export const ORGANIZATION_NAME_MODEL='WTW_1999_ORGANIZATION_NAMING_V4';
+export const ORGANIZATION_NAME_MODEL='WTW_1999_ORGANIZATION_NAMING_V5';
+export const OWNERSHIP_ARCHETYPES=Object.freeze([
+ 'INDIVIDUAL_OWNER','FAMILY_OPERATION','PARTNERSHIP_OR_SYNDICATE',
+ 'CO_OWNERS','FARM_OWNERSHIP','RACING_COMPANY','PRIVATE_RACING_OPERATION'
+]);
+export function classifyFictionalOwnerName(name,principalName=''){
+ if(typeof name!=='string'||!name.trim())throw Error('Owner name is required');
+ const value=name.trim();
+ if(principalName&&norm(value)===norm(principalName))return 'INDIVIDUAL_OWNER';
+ if(/\b(?:partners|partnerships?|syndicates?|club|group)\b/i.test(value))
+  return 'PARTNERSHIP_OR_SYNDICATE';
+ if(/\bFamily\b/i.test(value))return 'FAMILY_OPERATION';
+ if(/\b(?:Farm|Stud)\b/i.test(value))return 'FARM_OWNERSHIP';
+ if(/\b(?:and|&)\b/i.test(value))return 'CO_OWNERS';
+ if(/\b(?:LLC|Inc\.?|Ltd\.?)\b/i.test(value))return 'RACING_COMPANY';
+ return 'PRIVATE_RACING_OPERATION';
+}
 
 const SURNAMES='Abbott|Adler|Ainsworth|Aldridge|Allen|Alston|Anderson|Archer|Armstrong|Ashford|Atkins|Atwood|Baird|Baldwin|Banks|Barlow|Barnes|Barrett|Baxter|Beckett|Bellamy|Bennett|Benton|Berryman|Bishop|Blackwell|Blair|Bledsoe|Bolton|Boone|Bradford|Bradshaw|Brennan|Brooks|Browning|Buchanan|Burke|Burnett|Byrne|Caldwell|Callahan|Calvert|Campbell|Carleton|Carson|Carter|Chambers|Chandler|Chapman|Clark|Clayton|Clements|Clifton|Coleman|Collins|Connelly|Conrad|Cooper|Corbett|Crawford|Cullen|Dalton|Danvers|Davenport|Dawson|Delaney|Dixon|Donovan|Doyle|Draper|Dunbar|Duncan|Ellison|Emerson|Everett|Fairchild|Farrow|Ferguson|Fisher|Fitzgerald|Fleming|Fletcher|Forbes|Foster|Franklin|Frazier|Gaines|Gallagher|Garrison|Gentry|Gibson|Gilbert|Gillespie|Gordon|Graham|Granger|Grant|Graves|Griffin|Guthrie|Hale|Haley|Hamilton|Hancock|Hardin|Harper|Harrington|Harris|Hartley|Hawkins|Hayes|Henderson|Hensley|Hollis|Holmes|Holt|Horton|Howard|Hudson|Hughes|Hunt|Ingram|Irving|Jackson|Jarrett|Jennings|Keller|Kendall|Kennedy|Keene|Kerr|Kincaid|King|Kirkland|Lancaster|Langley|Lawrence|Lawson|Leighton|Lennox|Lloyd|Lowell|Maddox|Manning|Marshall|Mason|McAllister|McBride|McCarthy|McConnell|McDowell|McIntyre|McKay|Mercer|Merritt|Mitchell|Monroe|Montgomery|Morgan|Morrison|Murphy|Nelson|Newman|Nichols|Nolan|Norton|OBrien|OConnor|Odom|Osborne|Owens|Parker|Parrish|Patterson|Payne|Pearson|Pemberton|Perkins|Perry|Phillips|Pierce|Porter|Prescott|Price|Quinn|Ramsey|Randolph|Reed|Reynolds|Rhodes|Riley|Robbins|Roberts|Robertson|Rogers|Rowan|Russell|Rutledge|Sampson|Sawyer|Schneider|Scott|Shaw|Shepherd|Sherman|Simmons|Sinclair|Sloane|Spencer|Stafford|Stanford|Stanton|Stevens|Stewart|Stone|Stratton|Sullivan|Sutton|Talbot|Tanner|Taylor|Thatcher|Thomas|Thompson|Thornton|Turner|Vance|Vaughn|Walker|Wallace|Walsh|Warren|Watson|Weller|Wells|Weston|Whitaker|Whitcomb|White|Whittaker|Wilcox|Williams|Willis|Wilson|Winters|Woodard|Woodward|Wright|Yates|Young'.split('|');
 const LAND='Ashbourne|Briarfield|Bridlewood|Brookhaven|Buckeye|Calder|Camden|Canebrake|Carriage Hill|Cedar Vale|Chapel Hill|Chesapeake|Chestnut Hollow|Claremont|Clear Fork|Clearwater|Cloverleaf|Coldstream|Copper Run|Cottonwood|Crescent Mile|Cypress Bend|Deerfield|Dry Creek|Eastfield|Elk River|Elmwood|Fairhaven|Fairview|Far Hills|Fern Hill|Fieldstone|Flat Rock|Foxcroft|Foxglove|Fox Hollow|Gallant Hill|Glenarden|Glenview|Goldcrest|Grand Oaks|Greenfield|Greenway|Hawthorne|Hazelbrook|Heather Glen|Highfield|Highland|Hillcroft|Hillview|Holly Springs|Horse Creek|Ironwood|Juniper|Kingsmere|Larkspur|Laurel Hill|Laurelwood|Limestone|Little Fork|Longbranch|Longford|Maple Grove|Mapleton|Marshfield|Meadowgate|Mill Creek|Millbrook|Millstone|Monarch Hill|Montclair|Morningside|Northfield|Oak Glen|Oak Hill|Oakleigh|Oakridge|Old Mill|Old Orchard|Oldfield|Overbrook|Overlook|Pinecroft|Pinegrove|Pine Hill|Pinehurst|Prairie Hill|Quail Run|Quarry Hill|Red Bank|Red Clay|Red Fox|Red Gate|Red Oak|Ridgecrest|Ridgefield|Riverbend|Rivergate|Riverton|Rockford|Rock Haven|Rock Ridge|Rosecroft|Rose Hill|Rosewood|Round Hill|Sagebrush|Sandstone|Seven Oaks|Shady Grove|Silverleaf|Southbank|Springbrook|Springfield|Springhill|Stillwater|Stonebrook|Stonefield|Stonegate|Stonehaven|Stoneleigh|Stonewall|Sugar Creek|Sunnyside|Sweetwater|Sycamore|Tall Oaks|Tanglewood|Thornfield|Three Oaks|Timbercrest|Timberlake|Timberline|Twin Rivers|Valley Forge|Valleyview|Walnut Grove|Westfield|Westhaven|Westover|White Fence|Whitehall|White Oak|Wildflower|Willowbend|Willowbrook|Willowfield|Windfield|Windham|Windward|Woodcrest|Woodfield|Woodhaven|Woodland|Woodside'.split('|');
@@ -27,7 +43,7 @@ const LANDMARK='Autumn Grove|Black Walnut|Blue Heron|Cedar Bluff|Cedar Lane|Clov
 const TOPO='Bluff|Branch|Brook|Chase|Crossing|Downs|Fields|Ford|Glen|Grove|Hollow|Knoll|Landing|Meadow|Mill|Oaks|Pasture|Place|Ridge|Run|Spring|Vale|Valley|Wood'.split('|');
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'');
 const trailing=/(?:\s+(?:Bloodstock\s+Holdings|Bloodstock\s+Partners|Racing\s+Holdings|Thoroughbred\s+Ventures|Racing\s+Ventures|Racing\s+Associates|Thoroughbred\s+Stud|Pre-Training\s+Center|Horse\s+Development|Equine\s+Starting|Thoroughbred\s+Nursery|Thoroughbred\s+Farm|Bloodstock\s+Stud|Bloodstock\s+Farm|Bloodstock\s+Operation|Stallion\s+Station|Stallion\s+Farm|Stud\s+Farm|Farm\s+&\s+Nursery|Foaling\s+Nursery|Nursery\s+Farm|Bloodstock\s+&\s+Breeding|Racing\s+&\s+Breeding|Young\s+Horse\s+Development|Equine\s+Training\s+Center|Equine\s+Development|Racing\s+Partnership|Racing\s+Partners|Racing\s+Syndicate|Racing\s+Group|Racing\s+Club|Racing\s+Stables|Racing\s+Stable|Racing\s+Team|Racing\s+Operation|Training\s+Center|Training\s+Grounds|Training\s+Farm|Training\s+Barn|Training\s+Yard|Race\s+Barn|Race\s+Stable|Breaking\s+&\s+Training|Starting\s+&\s+Training|Pre-Training|Colt\s+Starting|Racehorse\s+Partnership|Family\s+Partnership|Family\s+Thoroughbreds|Family\s+Racing|Family\s+Stables|Thoroughbreds|Partnership|Syndicate|Partners|Stables|Stable|Bloodstock|Nursery|Farmstead|Farms|Farm|Acres|Stud|Training|Racing))$/i;
-const rootOf=name=>String(name).replace(trailing,'').replace(/^the\s+/i,'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
+const rootOf=name=>String(name).replace(/,?\s+(?:LLC|Inc\.?|Ltd\.?)$/i,'').replace(trailing,'').replace(/^the\s+/i,'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
 function hash(seed,key){
  let h=(2166136261^(seed>>>0))>>>0;
  for(const c of String(key)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}
@@ -43,7 +59,7 @@ const surname=name=>{
 };
 const rareFamily=(s,frequency)=>frequency.get(norm(s))<=1;
 const stemKey=candidate=>{
- let s=String(candidate).replace(/^the\s+/i,'').trim().replace(trailing,'');
+ let s=String(candidate).replace(/,?\s+(?:LLC|Inc\.?|Ltd\.?)$/i,'').replace(/^the\s+/i,'').trim().replace(trailing,'');
  const words=s.split(/\s+/);
  return norm(words.length>1?words.slice(0,2).join(' '):s);
 };
@@ -177,9 +193,14 @@ export function createOrganizationNameRoster({
  seed,ownerCount,barnCount,farmCount,breakingCount=0,
  protectedNames=[],principalNames=[],trainerNames=[],sourceOwnerNames=[],farmKindPlan=null,
  alignPrincipalSurnames=false,principalPrimarySurnames=[],trainerPrimarySurnames=[],
- ownerContexts=[],farmContexts=[],trainerContexts=[],breakingContexts=[]
+ ownerContexts=[],farmContexts=[],trainerContexts=[],breakingContexts=[],
+ ownerPartnershipLimit=null,soleOwnerPercent=null
 }){
  if(!Number.isSafeInteger(seed)||seed<1)throw Error('Invalid naming seed');
+ if(ownerPartnershipLimit!==null&&(!Number.isInteger(ownerPartnershipLimit)||ownerPartnershipLimit<0||
+  ownerPartnershipLimit>30000))throw Error('Invalid owner partnership limit');
+ if(soleOwnerPercent!==null&&(!Number.isInteger(soleOwnerPercent)||
+  soleOwnerPercent<0||soleOwnerPercent>100))throw Error('Invalid sole owner percentage');
  for(const [items,count,label] of [[ownerContexts,ownerCount,'owner'],[farmContexts,farmCount,'farm'],
   [trainerContexts,barnCount,'trainer'],[breakingContexts,breakingCount,'breaking']]){
   if(!Array.isArray(items)||(items.length&&items.length!==count))
@@ -213,10 +234,10 @@ export function createOrganizationNameRoster({
   if(landmarkRoot)distinctiveRootCounts.set(landmarkRoot,(distinctiveRootCounts.get(landmarkRoot)||0)+1);
   perCategory[kind]++;return true;
  };
- const claim=(make,kind)=>{
+ const claim=(make,kind,allow=null)=>{
   for(let attempt=0;attempt<512;attempt++){
    const candidate=make(attempt).replace(/\s+/g,' ').trim();
-   if(reserve(candidate,kind)){retries+=attempt;return candidate}
+   if((!allow||allow(candidate))&&reserve(candidate,kind)){retries+=attempt;return candidate}
   }
   throw Error('Organization name pool exhausted for '+kind+'; expand the name lexicon');
  };
@@ -232,18 +253,38 @@ export function createOrganizationNameRoster({
    contextualFarmCandidate(seed,i,a,farmKinds[i],context):
    farmName(seed,i,a,farmKinds[i]),'farm');
  });
+ let partnershipGroupsCreated=0;
  const owners=Array.from({length:ownerCount},(_,i)=>{
   if(sourceOwnerNames[i])return sourceOwnerNames[i];
   const principal=String(principalNames[i]||'').trim();
-  // The legal name of a sole-owner operation intentionally equals its
-  // principal's identity, not an independently generated business duplicate.
-  if(i%11===0&&principal){used.add(norm(principal));return principal;}
+  // A sole owner is a person, not a new partnership. Legacy default keeps
+  // the prior one-in-eleven selection for unchanged world-generation calls.
+  const sole=soleOwnerPercent===null?i%11===0:
+   hash(seed,'owner-sole-status:'+i)%100<soleOwnerPercent;
+  if(sole&&principal){used.add(norm(principal));return principal;}
   const preferred=principalPrimarySurnames[i]||surname(principal);
   const context=ownerContexts[i]||{};
-  return claim(attempt=>attempt<48?
-   contextualOwnerCandidate(seed,i,attempt,principal,alignPrincipalSurnames?preferred:'',context):
-   ownerName(seed,i,attempt,principal,alignPrincipalSurnames,preferred),'owner');
+  const name=claim(attempt=>{
+   const candidate=attempt<48?
+    contextualOwnerCandidate(seed,i,attempt,principal,alignPrincipalSurnames?preferred:'',context):
+    ownerName(seed,i,attempt,principal,alignPrincipalSurnames,preferred);
+   // Small 1999 editorial share of corporate forms, not a representation
+   // of actual corporate registration or exact contemporary percentages.
+   const legalForm=hash(seed,'owner-legal-form:'+i)%100;
+   if(attempt<48&&legalForm<12&&
+    /\b(?:Racing|Stables?|Thoroughbreds|Bloodstock)$/i.test(candidate)&&
+    !/^The\s/i.test(candidate))
+    return candidate+(legalForm<10?', LLC':', Inc.');
+   return candidate;
+  },'owner',candidate=>ownerPartnershipLimit===null||
+   partnershipGroupsCreated<ownerPartnershipLimit||
+   classifyFictionalOwnerName(candidate,principal)!=='PARTNERSHIP_OR_SYNDICATE');
+  if(classifyFictionalOwnerName(name,principal)==='PARTNERSHIP_OR_SYNDICATE')
+   partnershipGroupsCreated++;
+  return name;
  });
+ const ownerArchetypes=Object.freeze(owners.map((name,i)=>
+  classifyFictionalOwnerName(name,principalNames[i]||'')));
  const familyFrequency=new Map();
  for(let i=0;i<trainerNames.length;i++){
   const key=norm(trainerPrimarySurnames[i]||surname(trainerNames[i]));
@@ -260,11 +301,12 @@ export function createOrganizationNameRoster({
   breakingName(seed,i,a),'breaking'));
  return {
   model:ORGANIZATION_NAME_MODEL,styleModel:ORGANIZATION_STYLE_MODEL,
-  owners:Object.freeze(owners),barns:Object.freeze(barns),
+  owners:Object.freeze(owners),ownerArchetypes,barns:Object.freeze(barns),
   farms:Object.freeze(farms),farmKinds:Object.freeze(farmKinds),
   breakingCenters:Object.freeze(breakingCenters),
   summary:Object.freeze({owners:ownerCount,barns:barnCount,farms:farmCount,
    breakingTrainingFacilities:breakingCount,generatedNames:{...perCategory},retries,
+   partnershipGroupsCreated,soleOwners:ownerArchetypes.filter(x=>x==='INDIVIDUAL_OWNER').length,
    maxDistinctiveRootUses:MAX_DISTINCTIVE_ROOT_USES,
    highestDistinctiveRootUse:Math.max(0,...distinctiveRootCounts.values())})
  };
