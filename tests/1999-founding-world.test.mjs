@@ -21,7 +21,7 @@ test('Jan 1 founding scenario replaces 325k visible TEST world but preserves his
  assert.equal(canon.horses.length,267);
  assert.equal(canon.organizations.length,108);
  assert.ok(canon.pedigreeNodes.length>2000);
- assert.equal(founding.counts.people,120); // 22 previously linked people + 30 proposed leaders + 68 fresh professionals
+ assert.equal(founding.counts.people,114); // 16 source-linked people + 30 proposed leaders + 68 fresh professionals
 });
 
 test('the old 39 generated B01 horses are archived, never carried into a clean founding world',()=>{
