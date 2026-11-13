@@ -22,7 +22,7 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   check('1999 premium management UI loaded',Boolean(d.querySelector('#wtwNextgen .ng-manager-shell')));
   check('Training adapter module loaded',Boolean(ui?.horseTraining&&ui?.assignTraining&&ui?.trainingCosts));
   const key=w.__WTW_1999_MANAGEMENT__?.saveKey;
-  check('Uses approved career save, not a second namespace',key==='wtw1999ManagementStateV1');
+  check('Training uses isolated founding-world save, not the retired 325k namespace',key==='wtw1999FoundingStateV1');
   if(phase===0){
    check('Clean January 1999 opening',JSON.parse(w.localStorage.getItem(key)).date==='1999-01-01');
    const stable=[...d.querySelectorAll('#wtwNextgen [data-ng="menu"]')].find(n=>n.dataset.val==='Stable');
