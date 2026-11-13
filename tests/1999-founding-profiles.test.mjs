@@ -53,8 +53,8 @@ test('one O-ID image route controls both founder page logos and future horse-own
  assert.equal(manifest.approvedOrganizationIds.length,37);
  assert.equal(Object.keys(manifest.organizations).length,21);
  assert.equal(manifest.remainingWithoutMatchedLogo,16);
- assert.ok(!manifest.organizations['organization:O-000002']);
- assert.ok(!manifest.organizations['organization:O-000056']);
+ assert.equal(manifest.organizations['organization:O-000002'],'/assets/office/founding-organization-logos/O-000002.png');
+ assert.equal(manifest.organizations['organization:O-000056'],'/assets/office/founding-organization-logos/O-000056.png');
 });
 
 test('37 approved ownership organizations, 41 EXACT approved people, no unrelated or generated workforce',()=>{
