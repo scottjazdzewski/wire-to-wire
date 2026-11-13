@@ -82,6 +82,68 @@ const HISTORICAL_ANCHORS=Object.freeze([
  {organizationId:'O-FOUNDING-1999-014',horse:'Dominion Nails',role:'HISTORICAL_BLOODLINE',status:'HISTORICAL_BREEDER_HP-B-01-004-3'},
  {organizationId:'O-000002',horse:'Paper Tiger',role:'FEMALE_FAMILY_ASSOCIATION',status:'WORLD_BIBLE'}
 ]);
+// Turn year-level historical organization evidence into browsable, ID-addressable
+// connections. Source horse-year associations are NOT proof of exact breeder,
+// race-owner or trainer roles. The historical archive itself remains untouched.
+function buildFoundingHistoricalLinks(selectedOrganizations) {
+ const registered=[...canon.pedigreeNodes,...canon.horses,...canon.activeStallions1999,
+   ...canon.foundationalBroodmares1999];
+ const byId=new Map(registered.map(h=>[h.id,h]));
+ const idsByName=new Map();
+ for(const h of registered) {
+  const k=String(h.name||'').trim().toLowerCase();
+  if(!k)continue;
+  if(!idsByName.has(k))idsByName.set(k,new Set());
+  idsByName.get(k).add(h.id);
+ }
+ const uniqueId=name=>{
+  const matches=idsByName.get(String(name||'').trim().toLowerCase());
+  return matches?.size===1?[...matches][0]:null;
+ };
+ const links=HISTORICAL_ANCHORS.map(a=>({
+  ...a,horseId:a.horseId||uniqueId(a.horse)||null,
+  evidenceScope:'HISTORICAL_ASSOCIATION_NOT_A_1999_ACTIVE_HORSE'
+ }));
+ const sourceMatch=/(?:^|\|\s*)([^()|]+?)\s+\((H-\d{4}-\d+);\s*([^()]+)\)/g;
+ for(const org of selectedOrganizations) {
+  const text=String(org.historicalEvidence?.leadingRecordedStakesHorses||'');
+  for(const m of text.matchAll(sourceMatch)) {
+   const name=m[1].trim(),horseId=m[2],years=m[3].split('/').map(Number)
+    .filter(y=>Number.isSafeInteger(y)&&y>=1800&&y<=1998);
+   const matching=links.filter(a=>a.organizationId===org.id&&
+    (a.horseId===horseId||String(a.horse).toLowerCase()===name.toLowerCase()));
+   if(matching.length) {
+    for(const a of matching) {
+     a.horseId=horseId;
+     a.recordedStakesYears=years;
+     a.yearEvidence='SOURCE_HORSE_YEAR_LEVEL_ONLY';
+    }
+    continue;
+   }
+   links.push({organizationId:org.id,horseId,horse:name,
+    role:'HISTORICAL_STAKES_ASSOCIATION_ROLE_UNVERIFIED',
+    status:'ORGANIZATION_YEARBOOK_SOURCE_NOT_RACEDAY_CREDIT',
+    recordedStakesYears:years,yearEvidence:'SOURCE_HORSE_YEAR_LEVEL_ONLY',
+    evidenceScope:'HISTORICAL_ASSOCIATION_NOT_A_1999_ACTIVE_HORSE'});
+  }
+ }
+ const horsesById=new Map();
+ for(const a of links) {
+  if(!a.horseId)continue;
+  const h=byId.get(a.horseId);
+  if(h&&String(h.name).toLowerCase()!==String(a.horse).toLowerCase())
+   throw Error('History horse identity conflict '+a.horseId);
+  if(!horsesById.has(a.horseId))horsesById.set(a.horseId,{
+   id:a.horseId,name:h?.name||a.horse,
+   foalYear:Number.isInteger(h?.foalYear)?h.foalYear:null,
+   sireId:h?.sireId||null,damId:h?.damId||null,
+   identityEvidence:h?'EXACT_ID_IN_FOUNDATION_PEDIGREE_OR_STUD_BOOK':
+    'EXACT_ID_IN_ORGANIZATION_YEARBOOK_NOT_IN_FOUNDATION_PEDIGREE',
+   activeIn1999FoundingWorld:false
+  });
+ }
+ return {anchors:links,horses:[...horsesById.values()]};
+}
 const nameStatus=id=>NAME_OVERRIDES[id]?'USER_APPROVED_PENDING_MASTER_PROPAGATION':'EXISTING_CANON';
 const loc=label=>{
  const first=String(label||'').split(' / ')[0].trim();
@@ -139,6 +201,7 @@ export function createFounding1999Universe({seed=19990101}={}) {
   scenarioScope:'FOUNDING_WORLD',gameRule:'NO_HORSE_TRANSFER_WITHOUT_SOURCE'
  })));
  const canonicalIdSet=new Set(sourceOrganizations.map(o=>o.id));
+ const historicalLinks=buildFoundingHistoricalLinks(sourceOrganizations);
  const sourceHorses=canon.horses.filter(h=>canonicalIdSet.has(h.ownerId));
  const sourceHorseIndex=new Map(canon.horses.map((h,i)=>[h.id,i]));
  const horseIndexes=sourceHorses.map(h=>sourceHorseIndex.get(h.id));
@@ -350,13 +413,15 @@ export function createFounding1999Universe({seed=19990101}={}) {
   attributeCatalog,sourceStakes:base.sourceStakes,
   sourceOrganizations,sourcePeople,sourceHorses,sourceStallions,
   sourceBroodmares:breedingMares,sourceBroodmareBoarding:sampleBoarding,
-  historicalAnchors:HISTORICAL_ANCHORS,
+  historicalAnchors:historicalLinks.anchors,
+  historicalHorses:historicalLinks.horses,
   excludedActiveStaffRoles:['groom','exercise_rider'],
   audit:{sourceOpeningHorses:sourceHorses.length,sourceOwnersWithRunners:
    [...ownerHorseMap.values()].filter(a=>a.length).length,
    canonicalOwnerIds:EXISTING_IDS.length+PUBLIC_FIGURE_OWNERS.length,
    provisionalOrganizations:PROVISIONAL.length,
-   historicalAnchorRecords:HISTORICAL_ANCHORS.length,
+   historicalAnchorRecords:historicalLinks.anchors.length,
+   linkedHistoricalHorses:historicalLinks.horses.length,
    currentBreedingMares:breedingMares.length,currentStallions:sourceStallions.length,
    sourceBoardingMaresAvailable:sourceBoarding.length,
    historyArchiveImmutable:true,provisionalOwnerIdsNotPermanent:true}
