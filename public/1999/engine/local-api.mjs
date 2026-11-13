@@ -73,6 +73,16 @@ export function readLocal1999World(raw){
    source:'1999_WORLD_HORSE_PROFILE_BY_STABLE_ID_OR_INDEX'};
  }
 
+ if(p==='/api/1999/sim/new-youngstock-proposals'){
+  if(w.mode!==FOUNDING_WORLD_MODE)throw Error('Youngstock proposals belong only to founding scenario');
+  const proposal=w.proposedYoungstock;
+  return {...pager(q,proposal.horses.length,i=>proposal.horses[i],
+    'NEW_FICTION_1997_1998_PRESTART_PROPOSALS__NOT_LIVE'),
+   schema:proposal.schema,yearCounts:proposal.yearCounts,
+   registeredNames:proposal.audit.namedCount,
+   playableEntriesCreated:proposal.audit.liveGameEntriesCreated,
+   status:proposal.status};
+ }
  if(p==='/api/1999/sim/founding-ancestry'){
   if(w.mode!==FOUNDING_WORLD_MODE)throw Error('Founding ancestry is only available in clean 1999 world');
   const id=String(q.get('id')||'').trim();
