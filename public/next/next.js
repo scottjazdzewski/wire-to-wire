@@ -289,7 +289,12 @@ function playerOrganization(){
 }
 function organizationLogoMarkup(id,name,kind='organization',large=false,brandFallback=false){
  const refs=organizationLogoIndex?.organizations||{};
- const keys=[id?kind+':'+id:'',kind+':'+name,kind==='stable'?'player':''].filter(Boolean);
+ // The same immutable O-ID controls the Facility page, Ownership page and
+ // horse-owner mark. Never fall back to a lookalike name or unapproved logo.
+ const approvedOrg=isClean1999()?(world1999Data?.organizations||[]).find(o=>o.id===id):null;
+ const keys=isClean1999()?approvedOrg?['organization:'+approvedOrg.id]:[]:
+  [id?'organization:'+id:'',id?kind+':'+id:'',kind+':'+name,
+   kind==='stable'?'player':''].filter(Boolean);
  const entityLogo=keys.map(key=>officeAssetPath(refs[key])).find(Boolean);
  // The real WTW brand logo is a UI icon for the player operation, never a claimed stable crest.
  const brandLogo=brandFallback&&!entityLogo?'/assets/wtw-office-approved-logo.png':'';
@@ -303,9 +308,23 @@ function organizationLogoMarkup(id,name,kind='organization',large=false,brandFal
 // One presentation component across every horse occurrence. Identity comes
 // only from Office horse owner references; training/boarding != ownership.
 function horseOwnership(name){
+ const horse=state().horseState?.[name]||{};
+ if(isClean1999()){
+  // EXACT OWNER ENTITY ONLY, for both starting stock and future test horses.
+  // Breeder/boarding/foaling-farm IDs NEVER substitute for a horse's owner.
+  const registered=(world1999Data?.horses||[]).filter(h=>h.name===name);
+  const source=registered.length===1?registered[0]:null;
+  const link=typeof window.__wtwOfficeHorseOwner==='function'?window.__wtwOfficeHorseOwner(name):null;
+  const ownerId=[horse.owner_id,horse.ownerId,horse.ownerOrganizationId,
+   horse.ownershipOrganizationId,horse.ownership?.organizationId,
+   source?.ownerId,source?.owner_id,source?.ownershipOrganizationId,link?.id]
+   .find(v=>typeof v==='string'&&/^(?:O-[A-Za-z0-9-]+)$/.test(v)&&
+    (world1999Data?.organizations||[]).some(o=>o.id===v));
+  const org=ownerId?(world1999Data?.organizations||[]).find(o=>o.id===ownerId):null;
+  return org?{id:org.id,name:org.name}:null;
+ }
  const linked=typeof window.__wtwOfficeHorseOwner==='function'?window.__wtwOfficeHorseOwner(name):null;
  const fallback=window.__WTW_1999_UI_DATA__?.ownerFor?.(name)||'';
- const horse=state().horseState?.[name]||{};
  const id=linked?.id||(typeof horse.owner_id==='string'?horse.owner_id.trim():'');
  const raw=linked?.name||horse.owner_name||horse.owner||fallback;
  const owner=typeof raw==='string'?raw.trim():'';
@@ -313,7 +332,7 @@ function horseOwnership(name){
 }
 function horseOwnerBadge(name,showName=false){
  const owner=horseOwnership(name);
- const logo=owner?organizationLogoMarkup(owner.id,owner.name,'owner',false,false):
+ const logo=owner?organizationLogoMarkup(owner.id,owner.name,'organization',false,false):
   '<span class="ng-owner-unknown-mark" aria-hidden="true">?</span>';
  const desc=owner?'Owner: '+owner.name:'Owner not recorded';
  return '<span class="ng-horse-owner-badge'+(owner?' is-known':' is-unrecorded')+
@@ -1877,11 +1896,20 @@ function profileDetail(route,sourceOverride=null){
  const worldSourceEntry=worldSourceKind?world1999Match(worldSourceKind,route.title):null;
  const sourceEditButton=worldSourceEntry?'<button type="button" data-ng="world-edit-source" data-kind="'+
   safe(worldSourceKind)+'" data-name="'+safe(route.title)+'" title="Edit this source-backed record">EDIT RECORD</button>':'';
- const sourceImage=worldSourceEntry?worldImageURL(worldSourceEntry.worldKey,worldSourceEntry._world):'';
+ const sourceImage=isFarm?
+  approvedIdentityAsset('organization',source.dataset.organizationId||'',route.title):
+  worldSourceEntry?worldImageURL(worldSourceEntry.worldKey,worldSourceEntry._world):'';
+ const portraitRequired=isHorse||isPerson;
+ const imageSlotRequired=isFarm||portraitRequired;
+ const photoSrc=sourceImage||horseImage;
+ const imageMarkup=photoSrc?'<img src="'+safe(photoSrc)+'" alt="" loading="lazy" decoding="async"/>':
+  '<div class="ng-profile-photo-empty" aria-label="Image not yet assigned">'+
+   '<span>'+safe(isFarm?'FACILITY / OWNER LOGO':isPerson?'PERSONNEL PORTRAIT':'HORSE PORTRAIT')+'</span>'+
+   '<small>IMAGE SLOT RESERVED</small></div>';
  const visualName=worldSourceEntry?.name||route.title;
  const identity=`<div class="ng-profile-intro">
   ${profileMark}
-  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${isHorse?horseOwnerBadge(route.title):''}${safe(visualName)}</h2>${horseIdentityRow}${horseStarRow}${entityIdentityRow}${horseConnectionHeader}${isHorse||isPerson||isFarm||isTrack?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${sourceImage||horseImage?`<div class="ng-profile-source-photo" role="img" aria-label="Image of ${safe(visualName)}"><img src="${safe(sourceImage||horseImage)}" alt="" loading="${isTrack?'eager':'lazy'}" fetchpriority="${isTrack?'high':'auto'}" decoding="async"/></div>`:''}
+  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${isHorse?horseOwnerBadge(route.title):''}${safe(visualName)}</h2>${horseIdentityRow}${horseStarRow}${entityIdentityRow}${horseConnectionHeader}${isHorse||isPerson||isFarm||isTrack?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${photoSrc||imageSlotRequired?`<div class="ng-profile-source-photo ${isFarm?'ng-profile-facility-logo':portraitRequired?'ng-profile-portrait':''}" role="img" aria-label="Image of ${safe(visualName)}">${imageMarkup}</div>`:''}
   <div class="ng-profile-tools"><button data-ng="office" aria-label="Return to Racing Office">← OFFICE</button><button data-ng="menu" data-val="${isTrack?'Racing':isPerson?'Personnel':isFarm?'Personnel':'Stable'}">${isTrack?'RACE CALENDAR':isPerson?'PERSONNEL DIRECTORY':isFarm?'OWNERSHIP DIRECTORY':'STABLE DIRECTORY'} ↗</button>${sourceEditButton}</div>
  </div>`;
  let left='',right='',footer='';
