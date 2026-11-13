@@ -253,3 +253,115 @@ test('equivalent world role-map order does not change its generated people or ID
  assert.deepEqual(a,b);
  assert.throws(()=>normalizeFictionalWorldNamingSpec({...spec,facilities:{generalFarms:1,castleFarms:2}}),/Unsupported facility purpose/);
 });
+
+
+test('1999 colony naming model encodes varied, configurable Latin American rider pipelines',async()=>{
+ const {
+  JOCKEY_COLONIES,DEFAULT_JOCKEY_COLONY_ORIGIN_WEIGHTS,
+  JOCKEY_LATIN_AMERICAN_CARIBBEAN_ORIGINS,inferJockeyColony
+ }=await import('../public/1999/engine/jockey-colony-names.mjs');
+ const latin=new Set(JOCKEY_LATIN_AMERICAN_CARIBBEAN_ORIGINS);
+ for(const profile of JOCKEY_COLONIES){
+  const mix=DEFAULT_JOCKEY_COLONY_ORIGIN_WEIGHTS[profile];
+  assert.ok(mix,'Missing colony '+profile);
+  assert.equal(mix.reduce((n,[,weight])=>n+weight,0),100,profile+' weights not normalized');
+  assert.equal(new Set(mix.map(([code])=>code)).size,mix.length,profile+' duplicate origin');
+ }
+ for(const colony of ['NEW_YORK','SOUTH_FLORIDA','SOUTHERN_CALIFORNIA']){
+  const mix=DEFAULT_JOCKEY_COLONY_ORIGIN_WEIGHTS[colony];
+  assert.ok(mix.filter(([code])=>latin.has(code)).reduce((n,[,weight])=>n+weight,0)>=60);
+ }
+ assert.ok(DEFAULT_JOCKEY_COLONY_ORIGIN_WEIGHTS.ONTARIO
+  .filter(([code])=>latin.has(code)).reduce((n,[,weight])=>n+weight,0)<40);
+ assert.equal(inferJockeyColony({city:'Hallandale Beach',region:'Florida',code:'US'}),'SOUTH_FLORIDA');
+ assert.equal(inferJockeyColony({city:'Saratoga Springs',region:'New York',code:'US'}),'NEW_YORK');
+ assert.equal(inferJockeyColony({city:'Arcadia',region:'California',code:'US'}),'SOUTHERN_CALIFORNIA');
+ assert.equal(inferJockeyColony({city:'Toronto',region:'Ontario',code:'CA'}),'ONTARIO');
+});
+test('default full-scale 1999 jockey colonies prioritize Latin American rider naming pools',()=>{
+ const w=createFictionalWorldNameEngine({worldId:'RiderWorld',seed:19990101});
+ const jockeys=w.people.filter(p=>p.role==='jockey');
+ assert.equal(jockeys.length,1800);
+ assert.match(w.manifest.jockeyColonyNameModel,/JOCKEY_COLONY/);
+ const latin=new Set(['PR','PA','VE','MX','CL','PE','CO','DO','AR','BR','UY']);
+ const groups=new Map();
+ for(const p of jockeys){
+  assert.equal(p.riderOriginModel,'EDITORIAL_1999_JOCKEY_COLONY_DISTRIBUTION_NOT_MEASURED');
+  assert.ok(p.jockeyColony);
+  const group=groups.get(p.jockeyColony)||[];
+  group.push(p);
+  groups.set(p.jockeyColony,group);
+  assert.ok(!['ocala-fl','versailles-ky','paris-ky','santa-ynez-ca','millbrook-ny'].includes(p.location.marketId),
+   'rider assigned to breeding farm rather than a racing circuit');
+ }
+ for(const colony of ['NEW_YORK','SOUTH_FLORIDA','SOUTHERN_CALIFORNIA']){
+  const group=groups.get(colony);
+  assert.ok(group.length>=150,'not enough '+colony+' riders for stable frequency test');
+  const latinShare=group.filter(p=>latin.has(p.birthCountry)).length/group.length;
+  assert.ok(latinShare>.52&&latinShare<.80,colony+' unexpected origin share '+latinShare);
+ }
+ const canada=groups.get('ONTARIO');
+ assert.ok(canada.length>=75);
+ assert.ok(canada.filter(p=>p.birthCountry==='CA').length/canada.length>.30);
+ assert.ok(jockeys.some(p=>p.birthCountry==='BR'));
+ assert.ok(jockeys.some(p=>p.birthCountry==='AR'));
+ assert.ok(jockeys.some(p=>p.birthCountry==='UY'));
+});
+test('custom jockey colony weights and racing-market selection beat broad global editorial defaults',()=>{
+ const zero={generalFarms:0,studFarms:0,nurseries:0,bloodstockFarms:0,breakingTraining:0};
+ const markets=[
+  {id:'ocala-fl',city:'Ocala',region:'Florida',country:'United States',code:'US',
+   weight:50,breeding:true,racing:false},
+  {id:'hallandale-fl',city:'Hallandale Beach',region:'Florida',country:'United States',
+   code:'US',weight:1,racing:true,jockeyColony:'SOUTH_FLORIDA'}
+ ];
+ const config={worldId:'SouthFlorida',seed:45001,roles:{jockey:850,farm_manager:20},
+  owners:15,facilities:zero,markets,jockeyOriginWeightsByColony:{
+   SOUTH_FLORIDA:[['PA',65],['PR',25],['US',10]]
+  }};
+ const w=createFictionalWorldNameEngine(config);
+ const riders=w.people.filter(p=>p.role==='jockey');
+ assert.ok(riders.every(p=>p.location.marketId==='hallandale-fl'));
+ assert.ok(riders.every(p=>p.jockeyColony==='SOUTH_FLORIDA'));
+ assert.ok(riders.every(p=>['PA','PR','US'].includes(p.birthCountry)));
+ assert.ok(riders.every(p=>p.riderOriginModel==='CUSTOM_COLONY_NAMING_DISTRIBUTION'));
+ assert.ok(riders.filter(p=>p.birthCountry==='PA').length>400);
+ assert.ok(w.people.filter(p=>p.role==='farm_manager').some(p=>p.location.marketId==='ocala-fl'));
+ assert.deepEqual(createFictionalWorldNameEngine(config),w);
+ const priorGlobal={...config,originWeightsByRole:{jockey:[['US',100]]}};
+ const overridden=createFictionalWorldNameEngine(priorGlobal);
+ assert.ok(overridden.people.filter(p=>p.role==='jockey').some(p=>p.birthCountry==='PA'),
+  'colony-specific weight should win over global role mix');
+ const roleOnly=createFictionalWorldNameEngine({...config,jockeyOriginWeightsByColony:undefined,
+  originWeightsByRole:{jockey:[['US',100]]}});
+ assert.ok(roleOnly.people.filter(p=>p.role==='jockey').every(p=>p.birthCountry==='US'));
+ assert.ok(roleOnly.people.filter(p=>p.role==='jockey')
+  .every(p=>p.riderOriginModel==='CUSTOM_ROLE_NAMING_DISTRIBUTION'));
+});
+test('jockey-colony spec rejects malformed origins and markets without changing game state',()=>{
+ const zero={generalFarms:0,studFarms:0,nurseries:0,bloodstockFarms:0,breakingTraining:0};
+ const base={worldId:'Protected-1999',seed:78,roles:{jockey:12},owners:0,facilities:zero};
+ const market={id:'one-city',city:'Miami',region:'Florida',country:'United States',
+  code:'US',weight:1};
+ assert.throws(()=>normalizeFictionalWorldNamingSpec({...base,markets:[{
+  ...market,jockeyColony:'ATLANTIS'
+ }]}),/Unknown jockey colony/);
+ assert.throws(()=>normalizeFictionalWorldNamingSpec({...base,markets:[{
+  ...market,racing:'maybe'
+ }]}),/Invalid racing market flag/);
+ assert.throws(()=>normalizeFictionalWorldNamingSpec({...base,markets:[{
+  ...market,racing:false
+ }]}),/requires at least one racing market/);
+ assert.throws(()=>normalizeFictionalWorldNamingSpec({...base,jockeyOriginWeightsByColony:{
+  MYTHICAL:[['US',100]]
+ }}),/Unsupported jockey colony/);
+ assert.throws(()=>normalizeFictionalWorldNamingSpec({...base,jockeyOriginWeightsByColony:{
+  SOUTH_FLORIDA:[['ZZ',100]]
+ }}),/Unsupported country/);
+ assert.throws(()=>normalizeFictionalWorldNamingSpec({...base,jockeyOriginWeightsByColony:{
+  SOUTH_FLORIDA:[['US',90],['US',10]]
+ }}),/Unsupported country/);
+ const noRiders=normalizeFictionalWorldNamingSpec({...base,roles:{trainer:1},
+  markets:[{...market,racing:false}]});
+ assert.equal(noRiders.roles.trainer,1);
+});
