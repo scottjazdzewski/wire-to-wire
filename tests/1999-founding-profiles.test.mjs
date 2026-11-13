@@ -51,8 +51,8 @@ test('one O-ID image route controls both founder page logos and future horse-own
  assert.match(office,/ng-profile-facility-logo/);
  const manifest=JSON.parse(read('public/assets/office/founding-organization-logo-index.json'));
  assert.equal(manifest.approvedOrganizationIds.length,37);
- assert.equal(Object.keys(manifest.organizations).length,17);
- assert.equal(manifest.remainingWithoutMatchedLogo,20);
+ assert.equal(Object.keys(manifest.organizations).length,21);
+ assert.equal(manifest.remainingWithoutMatchedLogo,16);
  assert.ok(!manifest.organizations['organization:O-000002']);
  assert.ok(!manifest.organizations['organization:O-000056']);
 });
