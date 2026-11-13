@@ -224,6 +224,11 @@ export function createFounding1999Universe({seed=19990101}={}) {
     leadershipStatus:primary.leadershipStatus==='USER_APPROVED_1999_LEADERSHIP'?
      'USER_APPROVED_1999_OPERATOR_LINK':'WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW',
     principalPortraitBrief:primary.portraitBrief||null,
+    ...(org.id==='O-000057'?{
+     relatedBloodstockAgencyId:'O-000014',relatedBloodstockStrategistId:'P-000018',
+     relatedBloodstockAgencyName:'Argosy Bloodstock',
+     financingDescription:'Substantial financial backers; quantitative racing portfolio leadership',
+     relationshipBasis:'USER_APPROVED_RELATED_ENTITIES__NO_STAFF_OR_FEE_CONTRACT_IMPLIED'}:{}),
     realWorldOwnershipProof:false};
   }
   const principalOwner=org.principalOwner||org.publicPrincipal||null;
