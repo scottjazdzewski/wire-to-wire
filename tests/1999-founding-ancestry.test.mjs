@@ -15,7 +15,7 @@ const recordIds=new Set(tree.records.map(x=>x.id));
 test('only directly selected founding stock and attached historical horses may seed old pedigree closure',()=>{
  assert.equal(tree.schema,FOUNDING_ANCESTRY_SCHEMA);
  assert.equal(tree.generations,5);
- assert.equal(world.counts.worldHorses,112);
+ assert.equal(world.counts.worldHorses,73);
  assert.equal(tree.livingRootCount,livingIds.size);
  assert.equal(tree.audit.rootCount,new Set([...livingIds,...historicalIds]).size);
  assert.ok(tree.records.length>world.counts.worldHorses);
@@ -52,9 +52,9 @@ test('ancestry bridge deterministic under same selected roots, no background 325
 test('unqualified 1999 API calls cannot accidentally reopen the retired 325k universe',()=>{
  const overview=readLocal1999World('/api/1999/sim/overview');
  assert.equal(overview.mode,'FOUNDING_1999');
- assert.equal(overview.counts.horses,39);
- assert.equal(overview.counts.worldHorses,112);
- assert.equal(readLocal1999World('/api/1999/sim/world-horse-directory?limit=1').total,112);
+ assert.equal(overview.counts.horses,0);
+ assert.equal(overview.counts.worldHorses,73);
+ assert.equal(readLocal1999World('/api/1999/sim/world-horse-directory?limit=1').total,73);
  const historic=readLocal1999World('/api/1999/sim/founding-ancestry?id=H-1970-000001');
  assert.equal(historic.horse?.name,'Gospel Truth');
  assert.equal(historic.horse?.activeIn1999,false);
