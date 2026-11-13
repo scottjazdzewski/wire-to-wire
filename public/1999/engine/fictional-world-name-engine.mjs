@@ -159,7 +159,6 @@ export function normalizeFictionalWorldNamingSpec(input={}){
  const facInput=input.facilities??DEFAULT_WORLD_FACILITY_COUNTS;
  if(!facInput||typeof facInput!=='object'||Array.isArray(facInput))throw Error('Invalid facility counts');
  const facilities={};
- for(const [kind] of FARM_KEYS){void kind}
  for(const key of [...FARM_KEYS.map(x=>x[1]),'breakingTraining'])
   facilities[key]=count(facInput[key]??0,key);
  const farmCount=FARM_KEYS.reduce((n,[,key])=>n+facilities[key],0);
@@ -259,7 +258,7 @@ export function createFictionalWorldNameEngine(input){
   byRole:frozen({...roles,owner:owners}),
   byFarmKind:frozen(Object.fromEntries(FARM_KEYS.map(([kind])=>[kind,farms.filter(f=>f.kind===kind).length])))});
  const specFingerprint=hash(seed,JSON.stringify({worldId,year,roles,owners,facilities,
-  markets:markets.map(m=>[m.id,m.weight,m.breeding]),originWeights:spec.originWeights,
+  markets:markets.map(m=>[m.id,m.city,m.region,m.country,m.code,m.weight,m.breeding]),originWeights:spec.originWeights,
   reserved:spec.protectedNames})).toString(16).padStart(8,'0');
  const manifest=frozen({schema:FICTIONAL_WORLD_NAME_ENGINE,worldId,seed,year,
   fingerprint:specFingerprint,personNameModel:PERSONNEL_NAME_MODEL,
