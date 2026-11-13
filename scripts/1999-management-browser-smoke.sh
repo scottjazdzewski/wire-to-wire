@@ -75,6 +75,9 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    Boolean(d.querySelector('#wtwNextgen .ng-rs-table')?.textContent.includes('Jul 28–Sep 6')));
   check('Browsing races and meets has not advanced January 1 game date',
    d.querySelector('.ng-global-date strong')?.textContent.trim()==='1999-01-01');
+  // Synthetic .click() does not transfer focus like a real pointer event.
+  // Release the previous racing select before switching departments.
+  d.activeElement?.blur?.();
   click('Breeding');await pause(180);
   check('Original Breeding screen shown',Boolean(d.querySelector('.ng-manager-stage')));
   const breedingView=d.querySelector('#wtwNextgen select[data-ng-select="department-tab"]');
