@@ -8,7 +8,6 @@
 import {openingWorld1999 as canon} from './canon-mini.mjs';
 import {create1999Universe} from './full-world-generator.mjs';
 import attributeCatalog from './attribute-catalog.mjs';
-import {createFoundingProfessionals1999,FOUNDING_PERSONNEL_SCHEMA} from './founding-personnel-1999.mjs';
 import {buildFoundingAncestry1999} from './founding-ancestry-1999.mjs';
 import {createFoundingLeadership1999,FOUNDING_LEADERSHIP_SCHEMA} from './founding-leadership-1999.mjs';
 import {proposeFoundingYoungstock1999} from './founding-youngstock-candidates-1999.mjs';
@@ -219,10 +218,16 @@ export function createFounding1999Universe({seed=19990101}={}) {
   if(primary){
    if(org.principalOwner||org.publicPrincipal)
     throw Error('Proposal would overwrite existing principal '+org.id);
+   // Unapproved people remain in the offline proposal ledger, NOT in the game.
+   if(primary.leadershipStatus!=='USER_APPROVED_1999_LEADERSHIP')
+    return {...org,principalOwner:null,principalOwnerId:null,
+     publicPrincipal:null,publicPrincipalId:null,principalRole:null,
+     leadershipPeopleIds:people.filter(p=>p.leadershipStatus==='USER_APPROVED_1999_LEADERSHIP').map(p=>p.id),
+     leadershipStatus:'PENDING_USER_REVIEW_NO_APPROVED_PRINCIPAL',
+     realWorldOwnershipProof:false};
    return {...org,principalOwner:primary.name,principalOwnerId:primary.id,
     principalRole:primary.positionTitle,leadershipPeopleIds:people.map(p=>p.id),
-    leadershipStatus:primary.leadershipStatus==='USER_APPROVED_1999_LEADERSHIP'?
-     'USER_APPROVED_1999_OPERATOR_LINK':'WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW',
+    leadershipStatus:'USER_APPROVED_1999_OPERATOR_LINK',
     principalPortraitBrief:primary.portraitBrief||null,
     ...(org.id==='O-000057'?{
      relatedBloodstockAgencyId:'O-000014',relatedBloodstockStrategistId:'P-000018',
@@ -316,7 +321,11 @@ export function createFounding1999Universe({seed=19990101}={}) {
    operatingOrganizationId:o.id,base:loc(o.locationLabel),
    ...(o.publicInvestorId?{relationshipType:'MAJOR_INVESTOR_NON_OPERATING',
      investorInOrganizationId:o.id,hasCertifiedEquityPercentage:false,hasManagementAuthority:false}:{})
- })),PERSON_PROPOSALS,foundingLeadership);
+ })),PERSON_PROPOSALS,foundingLeadership.filter(p=>p.leadershipStatus==='USER_APPROVED_1999_LEADERSHIP')).filter(p=>{
+   const admitted=new Set(sourceOrganizations.flatMap(o=>[
+    o.principalOwnerId,o.publicPrincipalId,o.publicInvestorId,...(o.leadershipPeopleIds||[])]).filter(Boolean));
+   return admitted.has(p.id);
+  });
  const ownerOriginalIndex=new Map(canon.organizations.map((o,i)=>[o.id,i]));
  const horseById=new Map(sourceHorses.map((h,i)=>[h.id,i]));
  const trainerList=trainingPeople.map(p=>p.id);
@@ -327,13 +336,21 @@ export function createFounding1999Universe({seed=19990101}={}) {
  for(const h of stock)if(allHorseIds.has(h.id))throw Error('Horse appears in active and breeding registry: '+h.id);
  const indexById=new Map(sourceHorses.map((h,i)=>[h.id,i]));
  stock.forEach((h,i)=>indexById.set(h.id,sourceHorses.length+i));
- const facilities=sourceOrganizations.filter(o=>/FARM|STUD|NURSERY|BLOODSTOCK/.test(String(o.type).toUpperCase()));
- // Fresh, regionally named TEST professionals for this founding world only.
- // No old full-population staff, phantom employers, or inherited payroll.
+ // The facilities route is a read-only reference to the founding institution.
+ // No separate building is registered merely because an organization exists.
+ const facilities=sourceOrganizations;
+ const foundingFacilityType=o=>{
+  const t=String(o.type||'').toUpperCase(),name=String(o.name||'').toUpperCase();
+  if(/STUD|STALLION|INTEGRATED BREEDING/.test(t)||/\\bSTUD\\b/.test(name))return 'STUD_FARM';
+  if(/FARM|NURSERY/.test(t))return 'FARM';
+  if(/BLOODSTOCK AGENCY/.test(t))return 'BLOODSTOCK_AGENCY';
+  if(/PARTNERSHIP|PARTNERS/.test(t))return 'OWNERSHIP_GROUP';
+  if(/RACING STABLE|OWNERSHIP STABLE/.test(t))return 'RACING_STABLE_ORGANIZATION';
+  return 'OWNERSHIP_GROUP';
+ };
  const trackCount=base.counts.tracks;
- const professionalPool=createFoundingProfessionals1999({seed,
-  protectedNames:sourcePeople.map(p=>p.name),
-  tracks:Array.from({length:trackCount},(_,i)=>base.trackAt(i))});
+ // No generated professional can enter the opening world without approval.
+ const professionalPool=[];
  function ownerAt(i) {
   if(!Number.isInteger(i)||i<0||i>=sourceOrganizations.length)throw Error('Founder owner index');
   const source=sourceOrganizations[i],idx=ownerOriginalIndex.get(source.id);
@@ -373,7 +390,7 @@ export function createFounding1999Universe({seed=19990101}={}) {
   const t=base.trainerAt(original);
   const actual=sourceHorses.filter(h=>h.trainerId===t.id).length;
   return {...t,generatedRunners:0,sourceRunners:actual,
-   barnCapacity:Math.max(8,Math.ceil(actual*1.3)),authority:'CANON_TRAINER__SMALL_SCENARIO'};
+   barnCapacity:null,barnCapacityBasis:'NOT_APPROVED__NO_BARN_CREATED',authority:'ARCHIVAL_TRAINER_REFERENCE_NOT_EMPLOYED'};
  }
  function horseAt(i) {
   if(!Number.isInteger(i)||i<0||i>=sourceHorses.length)throw Error('Founder horse index');
@@ -427,27 +444,16 @@ export function createFounding1999Universe({seed=19990101}={}) {
   status:'BREEDING_MARE_UNASSESSED',bookings:false,foals:false,
   pregnancyStatus:'UNOBSERVED',source:'1999_FOUNDING_CANON_BROODMARE'};}
  function facilityAt(i){
-  if(!Number.isInteger(i)||i<0||i>=trainerList.length+facilities.length+trackCount)
-   throw Error('Founding facility index');
-  if(i<trainerList.length){
-   const t=trainerAt(i);return {id:'F-FOUNDING-BARN-'+t.id,name:t.name+' Racing Barn',
-    type:'RACE_BARN',facilityClass:'RACING_STABLE',location:t.location,
-    trainerId:t.id,trackId:t.homeTrackId,capacity:t.barnCapacity,occupied:t.sourceRunners,
-    source:'FOUNDING_BARN__CAPACITY_TEST'};
-  }
-  const j=i-trainerList.length;
-  if(j<facilities.length){
-   const f=facilities[j],geo=loc(f.locationLabel);
-   return {id:'F-FOUNDING-FARM-'+f.id,name:f.name,
-    type:'BREEDING_FARM',facilityClass:f.type,organizationId:f.id,location:geo,
-    capacity:0,occupied:breedingMares.filter(h=>
-     (h.standingFarm1999?.farmOrganizationId||h.boardingFarm1999?.farmOrganizationId)===f.id).length,
-    capacityBasis:'NOT_YET_MODELED__DO_NOT_ASSUME_ACREAGE_OR_CAPACITY',source:'CANON_OR_PROVISIONAL_FARM_NODE'};
-  }
-  const t=base.trackAt(j-facilities.length);
-  return {id:'F-FOUNDING-TRACK-'+t.id,name:t.name+' Training Center',
-   type:'TRAINING_CENTER',location:t.location,trackId:t.id,
-   capacity:0,occupied:0,source:'1999_TRACK_PLACEHOLDER'};
+  if(!Number.isInteger(i)||i<0||i>=facilities.length)
+   throw Error('Founding facility reference index');
+  const o=facilities[i],type=foundingFacilityType(o);
+  return {id:o.id,organizationId:o.id,name:o.name,type,facilityClass:type,
+   organizationType:o.type,location:loc(o.locationLabel||''),
+   principalOwner:o.principalOwner||null,principalOwnerId:o.principalOwnerId||null,
+   capacity:null,occupied:null,staffingRequirement:null,annualOperatingCost:null,
+   physicalSiteCertified:false,operationApproved:true,
+   siteStatus:'NO_SEPARATE_FACILITY_CERTIFIED',
+   source:'APPROVED_FOUNDING_ORGANIZATION_REFERENCE__NOT_BUILDING'};
  }
  // The legacy 3,308-owner market is not present in the founding world.
  // Do not display simulated rival bids from owners outside this clean scenario.
@@ -468,11 +474,7 @@ export function createFounding1999Universe({seed=19990101}={}) {
   return p.role==='jockey'?{...p,bookingMarket:jockeyBookingMarket(p)}:p;
  }
  function auctionAt(i){
-  if(!Number.isInteger(i)||i<0||i>=12)throw Error('Founding auction index');
-  const market=base.auctionAt(i);
-  return {...market,catalogLots:0,availableLots:0,
-   status:'PLANNED_NO_FOUNDING_LOTS_ENTERED',
-   outcomes:[],source:'FOUNDING_1999_AUCTION_PREVIEW_NO_PHANTOM_CATALOG'};
+  throw Error('No founding auction authorized; historical auction calendar is not a playable catalog');
  }
  function sourcePersonAt(i) {
   if(!Number.isInteger(i)||i<0||i>=sourcePeople.length)throw Error('Founder source person');
@@ -486,10 +488,10 @@ export function createFounding1999Universe({seed=19990101}={}) {
  const counts={
   horses:sourceHorses.length,worldHorses:sourceHorses.length+stock.length,
   canonicalHorses:sourceHorses.length,generatedHorses:0,owners:sourceOrganizations.length,
-  trainers:trainingPeople.length,people:sourcePeople.length+professionalPool.length,
+  trainers:0,people:sourcePeople.length,
   tracks:trackCount,nonPlayableInternationalTracks:canon.tracks.length-trackCount,
-  facilities:trainerList.length+facilities.length+trackCount,breedingFarms:facilities.length,
-  breedingMares:breedingMares.length,breedingStallions:sourceStallions.length,auctions:12,
+  facilities:facilities.length,breedingFarms:facilities.filter(o=>['FARM','STUD_FARM'].includes(foundingFacilityType(o))).length,
+  breedingMares:breedingMares.length,breedingStallions:sourceStallions.length,auctions:0,
   sourceStallions:sourceStallions.length,sourceBroodmareLocations:sourceBoarding.length,
   populationAdditional:0,populationGroups:{registered:sourceHorses.length,
    broodmares:breedingMares.length,stallions:sourceStallions.length,additional:0}
@@ -541,7 +543,7 @@ export function createFounding1999Universe({seed=19990101}={}) {
    quarantinedOldB01OpeningRunners:retiredB01.length,
    newYoungstockProposal:proposedYoungstock.audit,
    historyArchiveImmutable:true,provisionalOwnerIdsNotPermanent:true,
-   newProfessionalPool:professionalPool.length,professionalSchema:FOUNDING_PERSONNEL_SCHEMA,
+   newProfessionalPool:0,professionalSchema:'NOT_ACTIVATED_PENDING_USER_APPROVAL',
    originalGeneratedStaffImported:0}
  };
 }
