@@ -2344,6 +2344,7 @@ const DEP_COLUMNS={
  SaleCompanies:[['name','SALES COMPANY',19],['city','HEADQUARTERS',15],['saleCount','SALES',8],['nextSale','NEXT UPCOMING AUCTION',33],['months','USUAL SALE MONTHS',25]],
  Sales:[['hip','HIP',4],['horse','HORSE',12],['age','AGE',3],['sex','SEX',3],['sire','SIRE',11],['dam','DAM',11],['consignor','CONSIGNOR',10],['reserve','RESERVE',8],['bid','CURRENT BID',8],['value','EST VALUE',8],['ca','CA',4],['pa','PA',4],['condition','COND',7],['status','SALE STATUS',7]],
  OwnershipGroups:[['name','OWNER / OPERATION',25],['type','OWNER TYPE',19],['location','OPERATING BASE',22],['principal','PRINCIPAL OWNER',18],['status','STATUS',16]],
+ PersonnelPrincipals:[['name','PERSON',22],['age','AGE IN 1999',8],['role','APPROVED ROLE',21],['operation','OWNERSHIP / FACILITY ENTITY',27],['base','BASE',16],['status','RELATIONSHIP',22]],
  Personnel:[['name','PERSON',13],['age','AGE',3],['role','ROLE',10],['ca','CA',4],['pa','PA',4],['reputation','REP',6],['specialty','SPECIALTY',10],['morale','MORALE',6],['workload','LOAD',6],['salary','EST. FEES / PAY',11],['commission','WIN %',5],['demand','DEMAND',7],
  ['competingBarns','RIVAL BARNS',7],['quotedMount','MOUNT QUOTE',8],['relationship','OUR REL',11],['contract','CONTRACT',9],['assignment','ASSIGNED',9],['base','BASE',9],['wins','WINS',4]],
  Facilities:[['name','FACILITY',14],['type','TYPE',9],['location','CITY / STATE',13],['capacity','CAP',5],['occupied','USED',5],['free','FREE',5],['condition','COND',7],['quality','QUALITY',7],['staff','STAFF',5],['cost','MONTHLY COST',10],['owner','OWNER',12],['status','STATUS',8]],
@@ -2494,19 +2495,24 @@ function depRacingCalendar(){
 
 function depTrackCalendar(){
  const raw=typeof window.__wtwOfficeTrackDirectory==='function'?window.__wtwOfficeTrackDirectory():[];
- const office=Array.isArray(raw)?raw.filter(x=>x&&typeof x.name==='string'):[];
+ const permittedTracks=isClean1999()?new Set((world1999Data?.tracks||[]).map(t=>t.id)):null;
+ const permittedNames=isClean1999()?new Set((world1999Data?.tracks||[]).map(t=>t.name)):null;
+ const office=Array.isArray(raw)?raw.filter(x=>x&&typeof x.name==='string'&&
+  (!isClean1999()||!permittedTracks.size||permittedTracks.has(x.id)||permittedNames.has(x.name))):[];
  const known=new Set(office.map(x=>x.id||x.name));
  const others=(world1999Data?.tracks||[])
   .filter(t=>!known.has(t.id)&&!known.has(t.name))
   .map(t=>({id:t.id,name:t.name,location:t.location,region:t.region,circuit:t.circuit,
    operating:t.operating,playableIn1999:t.playableIn1999!==false,
    meetWindow:'',raceDays:'',preferredDays:'',stakes:[],_source1999:true}));
- const extra=window.__WTW_1999_UI_DATA__?.extraTracks?.()||[];
+ const extra=(window.__WTW_1999_UI_DATA__?.extraTracks?.()||[]).filter(t=>
+  !isClean1999()||!permittedTracks.size||permittedTracks.has(t.id)||permittedNames.has(t.name));
  const byId=new Map(extra.map(t=>[t.id,t]));
  const byName=new Map(extra.map(t=>[t.name,t]));
  const seen=new Set([...office,...others].flatMap(t=>[t.id,t.name]).filter(Boolean));
  const missing=extra.filter(t=>!seen.has(t.id)&&!seen.has(t.name));
- return [...office,...others,...missing].map(t=>{
+ return [...office,...others,...missing].filter(t=>!isClean1999()||
+  !permittedTracks.size||permittedTracks.has(t.id)||permittedNames.has(t.name)).map(t=>{
   const p=byId.get(t.id)||byName.get(t.name)||null;
   const sourceStakes=(window.__WTW_1999_UI_DATA__?.stakesForTrack?.(t.name)||[])
    .map(r=>({...r,date:r.localDate||r.date||'',class:r.status||r.division||r.grade||'',purse:r.purse1999}));
@@ -3104,6 +3110,7 @@ function departmentRoster(section,page='Overview'){
  const worldTrait=worldTraits.find(d=>d.key===APP.worldAttributeKey)||null;
  const worldAttributeKey=worldTrait?.key||'';
  const specs=section==='Personnel'&&page==='Owners'?DEP_COLUMNS.OwnershipGroups:
+  section==='Personnel'&&page==='Principals'?DEP_COLUMNS.PersonnelPrincipals:
   section==='World'?(page==='1999 Horses'?
    [...WORLD_1999_COLUMNS.Horses,...(worldTrait?[['attr:'+worldAttributeKey,worldTrait.label+' · TEST',10]]:[])]:
    page==='People'?WORLD_1999_COLUMNS.People:WORLD_1999_COLUMNS.Organizations):
