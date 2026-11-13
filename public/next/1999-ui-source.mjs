@@ -751,7 +751,7 @@ const allStakes1999=[...sourceStakes,...WTW_ALTERNATE_STAKES_1999,...WTW_REGIONA
   for(const index of indices){
    const t=activeRacecourses[index];
    if(!trackMeetOpen1999(t.id,date))continue;
-   const conditions=readLocal1999World('/api/1999/sim/conditions?seed=19990101&mode=CANON_ANCHORED_TEST&date='+
+   const conditions=readLocal1999World('/api/1999/sim/conditions?'+worldQuery+'&date='+
      encodeURIComponent(date)+'&trackIndex='+index);
    for(const race of conditions.races||[]){
    const feature=Boolean(race.stakeId);
