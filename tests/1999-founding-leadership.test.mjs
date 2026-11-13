@@ -127,6 +127,22 @@ test('World Registrar and exact-ID API both resolve all designated names',()=>{
  assert.equal(modeled.items[0].source,'WTW_1999_FICTIONAL_LEADERSHIP_PROPOSAL_NOT_HISTORICAL_EVIDENCE');
 });
 
+test('Argosy financial racing leadership and Voss bloodstock remain separate by exact ID',()=>{
+ const racing=byOrg.get('O-000057'),bloodstock=byOrg.get('O-000014');
+ assert.equal(racing.principalOwner,'Sebastian Pryce');
+ assert.equal(racing.principalOwnerId,'P-FOUNDING-LEADER-008');
+ assert.equal(racing.relatedBloodstockAgencyId,bloodstock.id);
+ assert.equal(racing.relatedBloodstockStrategistId,'P-000018');
+ assert.equal(bloodstock.principalOwner,'Julian Voss');
+ assert.equal(bloodstock.principalOwnerId,'P-000018');
+ const investor=world.sourcePeople.find(p=>p.id==='P-910018');
+ assert.equal(investor.name,'Magic Johnson');
+ assert.equal(investor.role,'MAJOR INVESTOR');
+ assert.equal(investor.relationshipType,'MAJOR_INVESTOR_NON_OPERATING');
+ assert.equal(investor.hasManagementAuthority,false);
+ assert.equal(byOrg.get('O-006905').principalOwnerId,'P-FOUNDING-LEADER-031');
+});
+
 test('personnel creation remains independent from leader selection, all 1999 horses unchanged',()=>{
  assert.deepEqual(createFoundingLeadership1999({seed:19990101}),world.foundingLeadership);
  assert.deepEqual(createFoundingLeadership1999({seed:19990102}).map(p=>p.id),
