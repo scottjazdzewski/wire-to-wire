@@ -119,7 +119,7 @@ export function createIndexedFictionalNameRegistry({
  checkNames(existingProtectedPeople,'protected person');
  checkNames(existingProtectedOrgs,'protected organization');
  const exact=new Set(),personKeys=new Set(),orgKeys=new Set(),
-  roots=makeRootIndex(),ownerIds=new Set();
+  roots=makeRootIndex(),ownerIds=new Set(),entityIds=new Set();
  const addName=(name,keySet)=>{
   const key=nameKey(name);
   if(!key)throw Error('Empty name in index');
@@ -133,22 +133,23 @@ export function createIndexedFictionalNameRegistry({
  for(const item of issuedPeople){
   checkId(item.id,'stored person ID');checkId(item.name,'stored person name');
   const key=nameKey(item.name);
-  if(personKeys.has(key))throw Error('Duplicate stored person');
-  addName(item.name,personKeys);
+  if(personKeys.has(key)||entityIds.has(item.id))throw Error('Duplicate stored person');
+  entityIds.add(item.id);addName(item.name,personKeys);
  }
  for(const item of issuedOrganizations){
   checkId(item.id,'stored organization ID');checkId(item.name,'stored organization name');
   const key=nameKey(item.name);
-  if(orgKeys.has(key))throw Error('Duplicate stored organization');
-  addName(item.name,orgKeys);
+  if(orgKeys.has(key)||entityIds.has(item.id))throw Error('Duplicate stored organization');
+  entityIds.add(item.id);addName(item.name,orgKeys);
   if(isRecognizedOrganizationName(item.name))
    roots.add(organizationRootOfName(item.name));
  }
+ const storedOrgIds=new Set(issuedOrganizations.map(o=>o.id));
  for(const owner of ownerEntities){
   checkId(owner.id,'stored owner ID');checkId(owner.name,'stored owner name');
   if(ownerIds.has(owner.id))throw Error('Duplicate stored owner ID');
   ownerIds.add(owner.id);
-  if(!issuedOrganizations.some(o=>o.id===owner.id))
+  if(!storedOrgIds.has(owner.id))
    throw Error('Stored owner missing parent organization');
  }
  let revision=snapshot?.revision??0;
@@ -185,7 +186,7 @@ export function createIndexedFictionalNameRegistry({
   for(const person of people){
    checkId(person?.id,'new person ID');checkId(person?.name,'new person name');
    const key=nameKey(person.name);
-   if(exact.has(key)||newPeople.has(key)||newIds.has(person.id))
+   if(exact.has(key)||newPeople.has(key)||newIds.has(person.id)||entityIds.has(person.id))
     throw Error('Indexed person name or ID collision: '+person.name);
    newPeople.add(key);newIds.add(person.id);
   }
@@ -193,7 +194,7 @@ export function createIndexedFictionalNameRegistry({
   for(const org of organizations){
    checkId(org?.id,'new organization ID');checkId(org?.name,'new organization name');
    const key=nameKey(org.name);
-   if(exact.has(key)||newOrgs.has(key)||newIds.has(org.id))
+   if(exact.has(key)||newOrgs.has(key)||newIds.has(org.id)||entityIds.has(org.id))
     throw Error('Indexed organization name or ID collision: '+org.name);
    if(newPeople.has(key)){
     const principal=personById.get(org.principalId);
@@ -206,21 +207,27 @@ export function createIndexedFictionalNameRegistry({
     throw Error('Indexed organization root collision: '+org.name);
    newOrgs.add(key);newIds.add(org.id);
   }
-  const orgIds=new Set(organizations.map(o=>o.id));
+  const orgById=new Map(organizations.map(o=>[o.id,o]));
   for(const owner of owners){
    checkId(owner?.id,'new owner ID');
-   if(ownerIds.has(owner.id)||newOwnerIds.has(owner.id)||!orgIds.has(owner.id))
+   if(ownerIds.has(owner.id)||newOwnerIds.has(owner.id)||!orgById.has(owner.id))
     throw Error('Duplicate or missing ownership organization ID');
+   checkId(owner.name,'new owner name');
+   const org=orgById.get(owner.id),person=personById.get(owner.principalId);
+   if(nameKey(owner.name)!==nameKey(org.name)||!person)
+    throw Error('Owner organization or principal identity mismatch');
    newOwnerIds.add(owner.id);
   }
   // The preflight passed. These operations cannot fail on duplicate values.
   for(const person of people){
    issuedPeople.push(Object.freeze({id:person.id,name:person.name}));
    addName(person.name,personKeys);
+   entityIds.add(person.id);
   }
   for(const org of organizations){
    issuedOrganizations.push(Object.freeze({id:org.id,name:org.name}));
    addName(org.name,orgKeys);
+   entityIds.add(org.id);
    if(isRecognizedOrganizationName(org.name))
     roots.add(organizationRootOfName(org.name));
   }
