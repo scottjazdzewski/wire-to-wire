@@ -443,6 +443,12 @@ const WORLD_EDIT_KEY=window.__WTW_1999_MANAGEMENT__?.worldProfile?.mode==='FOUND
 const WORLD_EDIT_EXPORT='WTW_WORLD_USER_EDITS_V1';
 const WORLD_LOCKED_FIELDS=new Set(['id','key','_role','registeredInV33','basis','source','sourceGate','chronologyCheck','population']);
 const WORLD_FORBIDDEN_FIELDS=new Set(['__proto__','prototype','constructor']);
+// Browser-authored display overlays must never supersede the accepted exact-ID
+// founding principals or turn a non-operating investor into the operator.
+const WORLD_FOUNDING_LOCKED_FIELDS=new Set(['publicPrincipal','publicPrincipalId',
+ 'principalOwner','principalOwnerId','leadershipStatus','leadershipPeopleIds',
+ 'publicInvestor','publicInvestorId','investorRole','principalRole']);
+const isFoundingWorld=()=>window.__WTW_1999_MANAGEMENT__?.worldProfile?.mode==='FOUNDING_1999';
 const WORLD_LINK_FIELDS={ownerId:'farm',trainerId:'person',sireId:'horse',damId:'horse',
  trackId:'track',homeTrackId:'track',publicPrincipalId:'person',ownershipOperationId:'farm'};
 let world1999Base=null;
@@ -456,7 +462,8 @@ function worldReadPatches(){
 }
 function worldEditValidField(key){
  return typeof key==='string'&&/^[a-zA-Z][a-zA-Z0-9_]{0,79}$/.test(key)&&
-  !WORLD_LOCKED_FIELDS.has(key)&&!WORLD_FORBIDDEN_FIELDS.has(key);
+  !WORLD_LOCKED_FIELDS.has(key)&&!WORLD_FORBIDDEN_FIELDS.has(key)&&
+  !(isFoundingWorld()&&WORLD_FOUNDING_LOCKED_FIELDS.has(key));
 }
 function worldSanitizedPatch(raw){
  const out=Object.create(null);
@@ -737,7 +744,7 @@ function loadWorld1999(){
  if(world1999Loading)return world1999Promise||Promise.resolve();
  world1999Loading=true;
  world1999Promise=fetch(window.__WTW_1999_MANAGEMENT__?.worldProfile?.mode==='FOUNDING_1999'?
-   '/data/wtw-1999-founding-directory-v1.json?rev=wtw1999-history-bridge-v1':
+   '/data/wtw-1999-founding-directory-v1.json?rev=wtw1999-leadership-v2-20261113':
    '/data/wtw-1999-world-directory-v33.json',{credentials:'same-origin',cache:'force-cache'})
   .then(r=>r.ok?r.json():Promise.reject(Error('1999 directory unavailable')))
   .then(data=>{
