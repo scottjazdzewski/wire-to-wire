@@ -119,7 +119,10 @@
       "originalFoundationDescription": "Tactical, calm and known for pace judgment",
       "reviewSequence": 1,
       "eliteFirstPriority": true,
-      "potentialEliteAssessment": "FOUNDATION_CAST_DESCRIPTIVE_ONLY"
+      "potentialEliteAssessment": "FOUNDATION_CAST_DESCRIPTIVE_ONLY",
+      "gender": "MALE",
+      "pronouns": "he/him",
+      "genderAuthority": "USER_ELITE_FIRST_GROUP_MALE_2026_11_13"
     },
     {
       "id": "P-000054",
@@ -175,7 +178,10 @@
       "originalFoundationDescription": "Polished and adaptable with major-race composure",
       "reviewSequence": 1,
       "eliteFirstPriority": true,
-      "potentialEliteAssessment": "FOUNDATION_CAST_DESCRIPTIVE_ONLY"
+      "potentialEliteAssessment": "FOUNDATION_CAST_DESCRIPTIVE_ONLY",
+      "gender": "MALE",
+      "pronouns": "he/him",
+      "genderAuthority": "USER_ELITE_FIRST_GROUP_MALE_2026_11_13"
     },
     {
       "id": "P-000056",
