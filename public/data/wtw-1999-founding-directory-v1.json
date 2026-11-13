@@ -2612,7 +2612,12 @@
       "leadershipPeopleIds": [],
       "leadershipStatus": "PENDING_USER_REVIEW_NO_APPROVED_PRINCIPAL",
       "historicalPrincipalProof": false,
-      "facilityDisplayCategory": "FARM"
+      "facilityDisplayCategory": "FARM",
+      "principalOwner": null,
+      "principalOwnerId": null,
+      "publicPrincipal": null,
+      "publicPrincipalId": null,
+      "principalRole": null
     },
     {
       "id": "O-000003",
@@ -2981,7 +2986,12 @@
       "relatedBloodstockAgencyName": "Argosy Bloodstock",
       "financingDescription": "Substantial financial backers; quantitative racing portfolio leadership",
       "relationshipBasis": "USER_APPROVED_RELATED_ENTITIES__NO_STAFF_OR_FEE_CONTRACT_IMPLIED",
-      "facilityDisplayCategory": "ORGANIZATION_ONLY"
+      "facilityDisplayCategory": "ORGANIZATION_ONLY",
+      "principalOwner": null,
+      "principalOwnerId": null,
+      "publicPrincipal": null,
+      "publicPrincipalId": null,
+      "principalRole": null
     },
     {
       "id": "O-000059",
@@ -3230,7 +3240,12 @@
       "leadershipPeopleIds": [],
       "leadershipStatus": "PENDING_USER_REVIEW_NO_APPROVED_PRINCIPAL",
       "historicalPrincipalProof": false,
-      "facilityDisplayCategory": "FARM"
+      "facilityDisplayCategory": "FARM",
+      "principalOwner": null,
+      "principalOwnerId": null,
+      "publicPrincipal": null,
+      "publicPrincipalId": null,
+      "principalRole": null
     },
     {
       "id": "O-000066",
@@ -3511,7 +3526,12 @@
       "publicInvestorId": "P-910018",
       "investorRole": "MAJOR_INVESTOR_NON_OPERATING",
       "operatingPrincipalStatus": "USER_DIRECTED_NEW_OPERATOR_PENDING_NAME_REVIEW",
-      "facilityDisplayCategory": "RACING_STABLE_ORGANIZATION"
+      "facilityDisplayCategory": "RACING_STABLE_ORGANIZATION",
+      "principalOwner": null,
+      "principalOwnerId": null,
+      "publicPrincipal": null,
+      "publicPrincipalId": null,
+      "principalRole": null
     },
     {
       "id": "O-FOUNDING-1999-001",
