@@ -433,8 +433,12 @@ function header(){
  // Each entity Overview has its own fully visible profile navigation.
  // Do not waste desktop height on unrelated department subtabs.
  const profileRoute=APP.custom?null:currentRoute();
- const hasOwnNavigation=Boolean(profileRoute&&/Profile$/.test(profileRoute.kicker))||
-  APP.custom==='Search'||APP.custom==='Organization Overview'||APP.section==='Breeding'||Boolean(APP.custom&&APP.custom.includes(' — '));
+ // The full-width department roster already owns section navigation through
+ // its VIEW dropdown. Do not render a second horizontal tab menu above it.
+ // Preserve Office navigation, where no department VIEW dropdown is present.
+ const hasOwnNavigation=APP.section!=='Office'||
+  Boolean(profileRoute&&/Profile$/.test(profileRoute.kicker))||
+  APP.custom==='Search'||APP.custom==='Organization Overview'||Boolean(APP.custom&&APP.custom.includes(' — '));
  return `<header class="ng-global" aria-label="Wire to Wire application navigation">
   <div class="ng-hist"><button data-ng="back" aria-label="Previous page" title="Previous page">${glyph('left',15)}</button><button data-ng="forward" aria-label="Next page" title="Next page">${glyph('right',15)}</button></div>
   <button class="ng-mini-home" data-ng="office" title="Racing Office" aria-label="Go to Racing Office"><img class="ng-logo-mini" src="/assets/wtw-office-approved-logo.png" alt=""/><span class="ng-wordmark"><strong>WIRE TO WIRE</strong><small>RACING MANAGER</small></span></button>
