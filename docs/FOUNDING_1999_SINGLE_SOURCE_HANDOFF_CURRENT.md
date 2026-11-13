@@ -8,6 +8,24 @@
 
 **2026-11-13 strict approved-only update:** The site at `/next/?world=1999` now uses **37 approved founding organizations**, of which **33 have accepted/established principal IDs and four have NULL principals pending user name approval**. **41 approved named people** are exposed, including accepted secondary partners and non-operating Magic Johnson at Ledbetter; the old 68 test-generated workers, 12 auction catalogs and 118 phantom track training centers are NOT present in the opening world. The 30 Facilities directory rows are references to existing institutions ONLY: **5 stud farms, 15 farms, 10 racing-stable organizations**. No separate buildings or capacity/costs were created. The 118 racecourses are unchanged. The 73 source-linked breeding animals remain as protected historical-current breeding references; racing stable has zero registered runners. Logo assignment is restricted to `public/assets/office/founding-organization-logo-index.json`: **37 exact-ID slots, 21 approved logos now published**, 16 awaiting matching new artwork. The 108 old ownership entities are NOT imported. The previous legacy logo index of 108 organizations is not used by the founding UI. Current UI assets use an `approved-only` cache revision. Cloudflare Pages uses Git-linked `main` deployments; authenticated live verification still requires the owner's Access session.
 
+## CURRENT CODE PURGE CLOSEOUT — NOVEMBER 13, 2026 (LATEST MAIN)
+
+**Authoritative clean opening:** exactly **37 founding organizations, 41 leaders, 26 selected jockey identities, 20 trainer identities, 18 stallions + 55 broodmares, and 118 U.S./Canada/Cuba racecourses**. **No registered racing horses, no separately registered physical barns/farms, no race results, no generated sales catalogs, no automatic bankroll or staff ratings.** The 30 Facility list references are founding *organizations*, NOT physical properties.
+
+The user explicitly rejected *all* obsolete synthetic worlds, hidden demo menus, 2014/87.5k/325k populations, old generated owners/people/finances, old saves and international tracks. The following code changes are actual physical removals from `main`, not presentation filters:
+
+- Deleted retired 2014 route `/legacy-2014/`, retired `/1999/` standalone application, both old full-world generators, obsolete index worker, old synthetic-world test programs and 400-horse/28-facility unauthorized pilot.
+- Replaced the old 1.76MB `public/1999/engine/canon-mini.mjs` with approved-only historical source: **zero synthetic B01 horses, only 19 retained precursor institution records, six precursor principal records, 73 living approved breeding animals, 118 track records and read-only pedigrees and 61 approved historical identity links.** The 37/41 current entities are constructed by the locked founding directory. Replaced the separate 1.76MB `src/1999/opening-world.v1.mjs` with a tiny exact re-export.
+- Deleted old `public/data/wtw-1999-world-directory-v33.json` (108 prior organizations) and `public/data/person-geography-ui-v33.json` (1,308 prior people). Current website geography uses `public/data/wtw-1999-approved-person-geography-v1.json`, **37 exact-ID/name matches** among the **87 approved people**; remaining geography is unknown, not fabricated.
+- Pruned `public/data/horse-foaling-registry-projection-v33.json` from **307 to 27** exact-ID linked current/historical horses, preserving original source metadata and excluding 280 unapproved records.
+- Removed the former hard-coded 2014 horse roster, fictional value/ability overlays, 2014 sale catalog demo, fake income/expense ledger, fake facility profile stats and demo toggle from `public/next/next.js`. Missing people or horses display UNREGISTERED, not synthesized dossiers. Verified exact canonical people/horses retain the approved Horse-style profile.
+- Removed all 16 international `IT-*` track records from active geography, programming and alternate stakes. All **118 North American/Cuban track IDs and domestic planned race programs** are intact.
+- Main Office management UI remains **the approved FM/OOTP layout** (dense rosters, sorting and View dropdowns; no new side-panel redesign). New racehorses or physical facilities may enter **only by explicit authorized exact-ID registrations from the other game-engine/name-generation windows**. The 26 jockeys and 20 trainers shown in Personnel are **identity-only** until the authoritative game engine activates their employment.
+
+Historical source pedigree and yearbook associations remain **read-only** and are not additional living 1999 entities. Old Git commits still exist in version-control history; removing files from current `main` cannot retroactively erase prior Git objects. **Never restore earlier commits or old world modes**. No history rewrite was attempted, because that would disrupt other ongoing production windows.
+
+**Verification:** On each change, check GitHub Actions on current `main` for Source Integration, Canon Desk, Horse Development and Desktop Visual Audit. A green older commit is not proof the newest one passed. Current authorized browser path: `https://wire-to-wire.pages.dev/next/?world=1999`. Do not claim the 1999 world can conduct a race while it still has zero registered racing horses.
+
 ## CLEAN-SOURCE CODE PURGE AND TEST-WORLD BOUNDARY — NOVEMBER 13, 2026
 
 This is an **approved-entities-only, source-backed January 1, 1999 opening**. The opening contains **37 organizations, 41 founding leadership people, 26 user-selected identity-only jockeys, 20 identity-only trainers, 18 stallions and 55 broodmares, and 118 retained U.S./Canadian/Cuban racecourses**. **ZERO registered racing horses, ZERO certified physical facilities, ZERO unapproved generated game staff or companies, ZERO auction catalogs and ZERO automatic historical racing results.** Personnel identities have no automatically assigned salaries, ratings, mounts or horses. The 30 facility rows are approved **organization references**, not newly registered property assets.
@@ -34,7 +52,7 @@ Identity-only pilot data at `public/data/wtw-1999-jockey-pilot-v1.json`: **26 ex
 
 ## AVAILABLE LOGOS PUBLISHED TO THE CURRENT WEBSITE — NOVEMBER 13
 
-The user authorized pushing existing available artwork to the existing approved website. The published exact founding logo manifest at `public/assets/office/founding-organization-logo-index.json` now contains **17 source-registered, exact O-ID + exact organization-name matches**. These 17 existing 64-pixel compact marks are reused by **path reference**; no image files were duplicated or new identities constructed. The same O-ID serves Ownership and Facility pages and horse-owner marks. **20 founding entities still need artwork.** Two legacy organization images were intentionally NOT mapped because their old displayed labels conflict with today's founding identities: O-000002 was `Lattice Farm`, not `Harrowgate Farm`; O-000056 was `Marcus Vale`, not `Quickfire Racing`. Never repurpose those marks by ID alone. New user-created crests should replace older matched artwork only by same O-ID and verified source.
+The user authorized pushing existing available artwork to the existing approved website. The published exact founding logo manifest at `public/assets/office/founding-organization-logo-index.json` now contains **21 approved exact-ID ownership-logo matches**. The 21 matched compact marks are reused by **path reference**; no image files were duplicated or new identities constructed. The same O-ID serves Ownership and Facility pages and horse-owner marks. **16 founding entities still need artwork.** Two legacy organization images were intentionally NOT mapped because their old displayed labels conflict with today's founding identities: O-000002 was `Lattice Farm`, not `Harrowgate Farm`; O-000056 was `Marcus Vale`, not `Quickfire Racing`. Never repurpose those marks by ID alone. New user-created crests should replace older matched artwork only by same O-ID and verified source.
 
 Existing **24 canonical track logos** remain in `public/assets/places/track-logos/` and are selected by track T-ID from the existing `public/assets/office/decision-photo-index.json`. Existing **12 approved profile badges** are in `public/assets/profile-badges/v2/`, unchanged. Three current approved people have existing exact-ID image references; all others use the neutral existing badge. Do not restore unrelated portraits by name guess. The 118 US/Canada/Cuba track directory and all actual track logos remain intact; no international tracks become site entities.
 
@@ -86,7 +104,7 @@ This handoff is the current startup document. If another document conflicts with
 | Registered playable racing horses | **0**; stable is deliberately empty |
 | Facility reference rows | **30**; 5 studs, 15 farms, 10 racing operations; zero invented buildings, breaking yards or track training centers |
 | Auction catalog entities | **0**, no legacy test catalogs |
-| Published founding organization logos | **17 exact-ID/name matches**, 20 still awaiting correct artwork; old extra organizations remain excluded |
+| Published founding organization logos | **21 approved exact-ID marks**, 16 still awaiting final artwork; no retired owners reintroduced |
 | Connected living stallions | **18** |
 | Connected living broodmares | **55** |
 | Total living animals in the opening World | **73** |
@@ -95,7 +113,7 @@ This handoff is the current startup document. If another document conflicts with
 | Historic archival pedigree | Read-only five-generation trace from selected roots; NO other deceased winners join the active 1999 World |
 | Tracks | **102 operating geographical references** plus 32 historic; NOT 102 simultaneously running meets |
 | Opening owner cash, contracts, race payouts | **NOT CERTIFIED**, do not invent values |
-| Older B01 generated runners | **39 quarantined**; not playable. Six B01-only trainers also excluded |
+| Older B01 generated runners | **Physically absent from current source code and not playable**; old B01-only trainers excluded |
 | Old 325,000 horses / 3,308 owners | Outside `FOUNDING_1999` (explicit benchmark only) |
 | Old 2014 saves, stories, cases | No import into founding scenario |
 
