@@ -6,7 +6,7 @@
 import {trackProgram1999,trackMeetOpen1999} from '/next/1999-track-program.mjs';
 import {WTW_ALTERNATE_STAKES_1999} from '/next/1999-alternate-stakes.mjs';
 import {WTW_REGIONAL_STAKES_1999} from '/next/1999-regional-stakes.mjs';
-import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-commercial-r1';
+import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-founding-v1';
 import attributeCatalog from '/1999/engine/attribute-catalog.mjs';
 import {TRAINING_PLANS,createHorseTrainingRecord,horseTrainingSnapshot,
  assignHorseTrainingPlan,simulateStableTrainingThrough,trainingFinancials}
@@ -68,13 +68,22 @@ function assignTraining(horseId,plan){
 }
 const gameWorldProfile=window.__WTW_1999_MANAGEMENT__?.worldProfile||
  window.WTW1999CommercialConfig?.current?.()||
- {seed:19990101,mode:'CANON_ANCHORED_TEST',population:325000};
+ {seed:19990101,mode:'FOUNDING_1999',population:112};
 const worldQuery='seed='+encodeURIComponent(gameWorldProfile.seed)+
  '&mode='+encodeURIComponent(gameWorldProfile.mode)+
  '&population='+encodeURIComponent(gameWorldProfile.population);
 const q=(route,extras='')=>readLocal1999World(route+(route.includes('?')?'&':'?')+
  worldQuery+(viewDate==='1999-01-01'?'':'&date='+viewDate)+(extras?'&'+extras:''));
-const allPages=(route,total)=>{const rows=[];for(let offset=0;offset<total;offset+=100){const page=q(route,'offset='+offset+'&limit=100');rows.push(...(page.items||[]));}return rows;};
+const allPages=(route,total)=>{
+ const first=q(route,'offset=0&limit=100');
+ const count=Number.isInteger(first.total)?first.total:total;
+ const rows=[...(first.items||[])];
+ for(let offset=100;offset<count;offset+=100){
+  const page=q(route,'offset='+offset+'&limit=100');
+  rows.push(...(page.items||[]));
+ }
+ return rows;
+};
 const srcHorses=gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?[]:allPages('/api/1999/horses',267);
 const sourceHorseOffset=new Map(srcHorses.map((h,index)=>[h.id,index]));
 const srcOrgs=gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?[]:allPages('/api/1999/organizations',108);
