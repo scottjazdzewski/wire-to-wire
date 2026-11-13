@@ -5,28 +5,17 @@
   "source": {
     "scenarioCode": "public/1999/engine/founding-world-1999.mjs",
     "historicalAuthority": "public/1999/engine/canon-mini.mjs",
-    "oldFullDirectory": "public/data/wtw-1999-world-directory-v33.json",
     "historicalArchivePreserved": true,
     "provisionalIdsNotPermanent": true,
     "approvedWorldBible": "https://docs.google.com/document/d/1zBmtdFenkeP70odONetitXFcruPc0qwt485JAR8lDDs/edit",
     "logoAuraBrief": "https://docs.google.com/document/d/1tA-4NLG7QoZ4qhugnku40QkV_PsvuWP1tAO81jze0z8/edit",
     "historicalLinksProvenance": "YEAR_LEVEL_ORGANIZATION_STAKES_ASSOCIATIONS_WITH_EXACT_HORSE_IDS; ROLES_NOT_INFERRED",
-    "resetRule": "ONLY_SOURCE_CONNECTED_CURRENT_1999_LEGACY_HORSES_MAY_CARRY_OVER",
-    "excludedOpeningCohort": "B01_APPROVED_1999_GENERATED_OPENING__NOT_1998_RACER",
-    "excludedB01Count": 39,
-    "unnamedNewYoungstockAuthority": "public/1999/engine/founding-youngstock-candidates-1999.mjs",
-    "newYoungstockStatus": "READ_ONLY_PARENT_LINKED_PROPOSALS_NOT_PLAYABLE_NOT_REGISTERED",
-    "excludedB01OnlyTrainerIds": [
-      "P-000040",
-      "P-000042",
-      "P-000046",
-      "P-000048",
-      "P-000049",
-      "P-000071"
-    ],
+    "resetRule": "ZERO_ACTIVE_RACING_HORSES_UNTIL_APPROVED_NEW_GAME_REGISTRATION__NO_LEGACY_IMPORT",
     "foundingFacilityPolicy": "APPROVED_INSTITUTION_REFERENCE_ONLY__NO_PHYSICAL_BUILDINGS_CREATED",
     "logoManifest": "/assets/office/founding-organization-logo-index.json",
-    "unapprovedPrincipalProposals": "DOCS_ONLY__NOT_IN_PLAYABLE_DIRECTORY"
+    "unapprovedPrincipalProposals": "DOCS_ONLY__NOT_IN_PLAYABLE_DIRECTORY",
+    "foundingPersonnel": "26_selected_jockey_identities_and_20_trainer_identities_IN_SEPARATE_PILOT_ROSTERS_NOT_EMPLOYMENT",
+    "racingWorldPolicy": "USER_APPROVED_OPENING_SOURCE_ONLY__NO_GENERATED_OPENING_BARN_STAFF_OWNER_HORSE_OR_FINANCE"
   },
   "counts": {
     "operatingTracks": 102,
@@ -42,8 +31,6 @@
     "proposedLeadershipPeople": 0,
     "organizationsWithDesignatedPrincipal": 33,
     "organizationPrincipalGaps": 4,
-    "quarantinedRetiredB01Runners": 39,
-    "quarantinedB01OnlyTrainers": 6,
     "leadershipPeopleTotal": 27,
     "userApprovedNewLeadershipPeople": 27,
     "pendingPrimaryPrincipalReview": 4,
