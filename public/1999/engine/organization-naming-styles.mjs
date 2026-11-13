@@ -63,8 +63,13 @@ export function organizationNamingRegion(location){
  if(code==='GB'||code==='IE')return 'BRITAIN_IRELAND';
  return 'GENERAL_NORTH_AMERICA';
 }
-export function organizationNamingEra(seed,index,category){
- // These are EDITORIAL STYLE allocations, NOT actual founding years.
+export function organizationNamingEra(seed,index,category,establishedYear=null){
+ if(establishedYear!==null&&establishedYear!==undefined){
+  if(!Number.isInteger(establishedYear)||establishedYear<1800||establishedYear>1999)
+   throw Error('Invalid fictional organization established year');
+  return establishedYear<1950?'HERITAGE':establishedYear<1981?'ESTABLISHED':'CONTEMPORARY';
+ }
+ // Default EDITORIAL STYLE allocation — NOT an assertion of founding year.
  const pct=hash(seed,'org-v7-era:'+category+':'+index)%100;
  return pct<25?'HERITAGE':pct<62?'ESTABLISHED':'CONTEMPORARY';
 }
@@ -75,7 +80,7 @@ function regionRoot(seed,key,region,attempt=0){
 export function contextualFarmCandidate(seed,index,attempt,kind,context={}){
  if(!SUFFIXES[kind])throw Error('Unsupported facility purpose '+kind);
  const region=context.region||'GENERAL_NORTH_AMERICA';
- const era=context.era||organizationNamingEra(seed,index,'farm');
+ const era=context.era||organizationNamingEra(seed,index,'farm',context.establishedYear);
  const key='v7-farm:'+kind+':'+index+':'+attempt;
  const root=regionRoot(seed,key,region,attempt);
  const surname=String(context.familyName||'').trim();
@@ -87,18 +92,18 @@ export function contextualFarmCandidate(seed,index,attempt,kind,context={}){
  // A farm's namesake surname is only a proposed business root; it does NOT
  // assign that farm to an existing person.
  if(era==='HERITAGE'){
-  if(surname&&roll<33)stem=surname;
-  else if(roll<88)stem=root;
-  else if(!root.startsWith('Old ')&&roll<95)stem='Old '+root;
-  else stem=root;
+  if(surname&&roll<20)stem=surname;
+  else if(surname&&roll<44)stem=root+' '+surname;
+  else if(roll<92)stem=root;
+  else if(!root.startsWith('Old '))stem='Old '+root;
  }else if(era==='CONTEMPORARY'){
-  if(surname&&roll<24)stem=surname;
-  else if(roll<91)stem=root;
-  else stem=surname?surname+' '+draw(['House','Fields'],seed,key+':modern'):root;
+  if(surname&&roll<13)stem=surname;
+  else if(surname&&roll<47)stem=root+' '+surname;
+  else stem=root;
  }else{
-  if(surname&&roll<26)stem=surname;
-  else if(roll<91)stem=root;
-  else stem=surname?surname+' '+draw(['Place','Meadows'],seed,key+':established'):root;
+  if(surname&&roll<18)stem=surname;
+  else if(surname&&roll<45)stem=root+' '+surname;
+  else stem=root;
  }
  return (stem+' '+suffix).replace(/\b(Farm)\s+Farm\b/g,'$1');
 }
