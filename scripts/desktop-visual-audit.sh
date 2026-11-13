@@ -32,7 +32,9 @@ capture(){
 capture racing-office '' 'ng-board'
 capture global-search '?ui=Search' 'ng-search-roster-page'
 capture horse-profile '?page=horse&name=The+Last+Match' 'ng-horse-dossier'
-capture people-profile '?page=person&name=Gabe+Larkin' 'ng-person-workspace-overview'
+capture people-profile '?ui=WorldRecord%3Aperson%3AP-000018' 'ng-person-horse-dossier'
+capture founder-owner '?ui=FoundingProfile%3Aownership%3AO-000014' 'ng-track-workspace'
+capture founder-facility '?ui=FoundingProfile%3Afacility%3AO-000068' 'ng-track-workspace'
 capture personnel '?ui=Personnel' 'ng-manager-screen|ng-dept-roster'
 capture facilities '?ui=Facilities' 'ng-manager-screen|ng-dept-roster'
 capture finances '?ui=Finances' 'ng-manager-screen|ng-dept-roster'
@@ -68,7 +70,7 @@ frame.onload=()=>setTimeout(()=>{
    page:rect('.ng-board')||rect('.ng-routegrid'),
    horse:rect('.ng-horse-dossier'),
    search:rect('.ng-search-roster-page'),
-   people:rect('.ng-person-workspace-overview')
+   people:rect('.ng-person-horse-dossier')
   };
   const node=document.getElementById('measure');
   node.dataset.check='ready';
@@ -88,7 +90,7 @@ probe(){
 probe office ''
 probe search '%3Fui%3DSearch'
 probe horse '%3Fpage%3Dhorse%26name%3DThe%2BLast%2BMatch'
-probe person '%3Fpage%3Dperson%26name%3DGabe%2BLarkin'
+probe person '%3Fui%3DWorldRecord%253Aperson%253AP-000018'
 python3 - <<'PY'
 import json,html,re
 from pathlib import Path
@@ -105,7 +107,7 @@ for name in ('office','search','horse','person'):
  assert data['page'] and data['page']['width']>=1000,(name,'Route workspace not using the game stage')
  if name=='horse':assert data['horse'] and data['horse']['width']>=990,(name,'Horse dossier not visible')
  if name=='search':assert data['search'] and data['search']['width']>=990,(name,'Search roster not visible')
- if name=='person':assert data['people'] and data['people']['width']>=990,(name,'People dossier not visible')
+ if name=='person':assert data['people'] and data['people']['width']>=990,(name,'People Horse-dossier not visible')
  print('VISUAL GEOMETRY',name,'rail',rail['width'],'stage',stage['width'],'crest',brand['width'])
 PY
 rm -f public/__wtw_visual_probe.html
