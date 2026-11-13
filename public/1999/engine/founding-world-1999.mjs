@@ -11,6 +11,7 @@ import attributeCatalog from './attribute-catalog.mjs';
 import {createFoundingProfessionals1999,FOUNDING_PERSONNEL_SCHEMA} from './founding-personnel-1999.mjs';
 import {buildFoundingAncestry1999} from './founding-ancestry-1999.mjs';
 import {createFoundingLeadership1999,FOUNDING_LEADERSHIP_SCHEMA} from './founding-leadership-1999.mjs';
+import {proposeFoundingYoungstock1999} from './founding-youngstock-candidates-1999.mjs';
 
 export const FOUNDING_WORLD_MODE='FOUNDING_1999';
 export const FOUNDING_WORLD_SCHEMA='WTW_1999_FOUNDING_WORLD_V1';
@@ -232,7 +233,14 @@ export function createFounding1999Universe({seed=19990101}={}) {
  });
  const canonicalIdSet=new Set(sourceOrganizations.map(o=>o.id));
  const historicalLinks=buildFoundingHistoricalLinks(sourceOrganizations);
- const sourceHorses=canon.horses.filter(h=>canonicalIdSet.has(h.ownerId));
+ // CLEAN-RESET RULE: former B01-generated opening runners are archival tests,
+ // not actual legacy horses connected to the newly chosen 1999 organizations.
+ // Only explicitly source-verified current racers may be admitted by exact ID.
+ const VERIFIED_CONNECTED_LEGACY_RACER_IDS=new Set();
+ const retiredB01=canon.horses.filter(h=>canonicalIdSet.has(h.ownerId)&&
+  String(h.sourceBoundary||'').includes('GENERATED_OPENING'));
+ const sourceHorses=canon.horses.filter(h=>canonicalIdSet.has(h.ownerId)&&
+  VERIFIED_CONNECTED_LEGACY_RACER_IDS.has(h.id));
  const sourceHorseIndex=new Map(canon.horses.map((h,i)=>[h.id,i]));
  const horseIndexes=sourceHorses.map(h=>sourceHorseIndex.get(h.id));
  const pedigreeById=new Map(canon.pedigreeNodes.map(h=>[h.id,h]));
@@ -264,6 +272,10 @@ export function createFounding1999Universe({seed=19990101}={}) {
  }
  const breedingMares=sourceBroodmares.concat(sampleBoarding);
  validateScenario(sourceOrganizations,sourceHorses,sourceStallions,breedingMares);
+ // New-fiction youngstock proposals: ID, sex, year and real source parents;
+ // NOT committed foaling transactions, racing horses, owners or registered names.
+ const proposedYoungstock=proposeFoundingYoungstock1999({
+  seed,mares:breedingMares,stallions:sourceStallions,organizations:sourceOrganizations});
  // Five-generation SOURCE-only history, never part of the 1999 living herd.
  const foundingAncestry=buildFoundingAncestry1999({
   livingHorses:[...sourceHorses,...sourceStallions,...breedingMares],
@@ -483,7 +495,7 @@ export function createFounding1999Universe({seed=19990101}={}) {
   projectAtDate:base.projectAtDate,auctionAt,
   facilityAt,conditionBook:base.conditionBook,
   ownedHorseIndexes:id=>(ownerHorseMap.get(id)||[]).slice(),
-  horseNameStatus:'CANON_NAMES_SOURCE_LOCKED__NO_GENERATED_OPENING_HORSES',
+  horseNameStatus:'CLEAN_RESET_OLD_B01_EXCLUDED__NEW_NAMES_DEFERRED_UNTIL_REGISTRATION',
   parentAt,mareDirectoryAt,annualFoalingForecast,
   attributeCatalog,sourceStakes:base.sourceStakes,
   sourceOrganizations,sourcePeople,foundingLeadership,sourceHorses,sourceStallions,
@@ -491,6 +503,7 @@ export function createFounding1999Universe({seed=19990101}={}) {
   historicalAnchors:historicalLinks.anchors,
   historicalHorses:historicalLinks.horses,
   foundingAncestry,
+  proposedYoungstock,
   excludedActiveStaffRoles:['groom','exercise_rider'],
   audit:{sourceOpeningHorses:sourceHorses.length,sourceOwnersWithRunners:
    [...ownerHorseMap.values()].filter(a=>a.length).length,
@@ -505,6 +518,8 @@ export function createFounding1999Universe({seed=19990101}={}) {
    pedigreeClosure:foundingAncestry.audit,
    currentBreedingMares:breedingMares.length,currentStallions:sourceStallions.length,
    sourceBoardingMaresAvailable:sourceBoarding.length,
+   quarantinedOldB01OpeningRunners:retiredB01.length,
+   newYoungstockProposal:proposedYoungstock.audit,
    historyArchiveImmutable:true,provisionalOwnerIdsNotPermanent:true,
    newProfessionalPool:professionalPool.length,professionalSchema:FOUNDING_PERSONNEL_SCHEMA,
    originalGeneratedStaffImported:0}
