@@ -8,8 +8,8 @@
 ## Read these authoritative inputs
 
 - `public/1999/engine/founding-world-1999.mjs` — projected founding organizations, people, connected breeding stock, 1999 locations and read API.
-- `public/data/wtw-1999-founding-directory-v1.json` — flat initial world identity reference: **37 operations; 46 named people; 55 broodmares; 18 stallions; ZERO live racing runners**.
-- `public/1999/engine/founding-leadership-1999.mjs` / `docs/1999-founding-leadership-roster.md` — existing IDs and 24 provisional principals (not approved as historical facts).
+- `public/data/wtw-1999-founding-directory-v1.json` — flat initial world identity reference: **37 operations; 47 named people; 55 broodmares; 18 stallions; ZERO live racing runners**.
+- `public/1999/engine/founding-leadership-1999.mjs` / `docs/1999-founding-leadership-roster.md` — existing IDs and four currently pending name reviews; 33 primary principals approved or established. Game-world approval never means historical ownership proof.
 - `public/1999/engine/founding-ancestry-1999.mjs` — read-only source-connected five-generation parent lookup.
 - `public/1999/engine/founding-youngstock-candidates-1999.mjs` — **84 UNCOMMITTED** parent-linked 1997–98 youngstock *proposals*; no owner, breeder, foaling site, actual birth event, racing registration or name.
 - `docs/1999-founding-population-and-integration-gates.md` — current reset status and pilot requirements.
@@ -42,11 +42,11 @@ Each accepted new-fiction 1999 horse must have:
 | `attributes` | Engine-authored realistic age-based current/potential and all role/horse traits; UI consumes, never re-scores |
 | `game_status` | Precise racing/farm/training/health state. No fictional 1999 race result or forced winner |
 
-Only the gameplay engine may commit these records, contracts, owner-cash postings, breeding fees, sales, race payouts and date progression. The Office UI will read these records using canonical IDs once released.
+Only the gameplay engine may commit these records, contracts, owner-cash postings, breeding fees, sales, race payouts and date progression. The Office UI will read these records using canonical IDs once released. Current leader/person IDs and approved investor roles are preserved by the versioned read-only founding directory. Magic Johnson is a major **non-operating investor** at Ledbetter Calder, not its manager; Julian Voss directs Argosy Bloodstock, distinct from Argosy Racing Partners and its data-first financial partners.
 
 ## Pilot completion requirements
 
-1. Exactly 37 intended founder organizations (until user approves additional entities), one primary principal each; 24 principal candidates remain flagged until user accepts.
+1. Exactly 37 intended founder organizations (until user approves additional entities), one primary principal each; 12 established + 21 newly user-approved + four replacement-name proposals pending explicit user acceptance.
 2. Each of the selected racing organizations has a credible owned runner string, while pure stud/farm operations may be principally breeding/boarding operations.
 3. A small first pilot offers a representative field of eligible horses across real Jan/Feb 1999 meets, with plausible geographic spacing and trainer decisions.
 4. Every playable horse has complete lineage and ownership; every lineage parent lookup is read-only as appropriate for historical animals.
