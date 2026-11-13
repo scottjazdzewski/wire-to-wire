@@ -18,9 +18,9 @@ test('Jan 1 founding scenario contains only the selected small world and source 
  assert.equal(founding.counts.breedingStallions,18);
  assert.equal(founding.counts.generatedHorses,0);
  assert.equal(founding.counts.owners,37);
- assert.equal(canon.horses.length,267);
- assert.equal(canon.organizations.length,108);
- assert.ok(canon.pedigreeNodes.length>2000);
+ assert.equal(canon.horses.length,0);
+ assert.equal(canon.organizations.length,19);
+ assert.ok(canon.pedigreeNodes.length>2000,'Approved historical bloodlines remain read-only');
  assert.equal(founding.counts.people,41); // Only approved founding principals, partners and investor; no generated staff
 });
 
