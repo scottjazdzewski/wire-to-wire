@@ -127,3 +127,16 @@ Example:
 Priority is: specific `jockeyOriginWeightsByColony` override, then a caller-provided `originWeightsByRole.jockey` global override, then the default circuit mix. Every rider record includes `jockeyColony` and `riderOriginModel`; the manifest carries `jockeyColonyNameModel`, and all geography/profile configuration affects the deterministic fingerprint. An invalid colony, unsupported country code or world containing jockeys but no racing market fails before a roster is returned.
 
 This change modifies **only the standalone generation engine**, not existing game rosters, canonical 1999 people, racing dates, track identities, horse names, UI layouts or persistence.
+
+## Birth-generation first names for fictional 1999 US people (V4)
+
+A 70-year-old trainer and a 20-year-old jockey now use **their modeled birth decades**, rather than a common 1990 national name list, when the generated person has U.S. origin. The first name is selected **after** the engine determines the person's age and birth year. Source: [Social Security Administration, U.S. popular birth names by decade](https://www.ssa.gov/oact/babynames/decades/), decade-specific top-30 ranks for the 1910s, 1920s, 1930s, 1940s, 1950s, 1960s, 1970s and 1980s.
+
+- The new `person-birth-cohort-names.mjs` module contains the recorded top-30 *rank ordering* for each decade and the two SSA name-table sexes. Its drawing weights are an **editorial rank-biased approximation**, not recorded real-world first-name probabilities, professional gender distributions or population demographics.
+- Each U.S.-origin fictional person exposes `givenNameDecade` consistent with `birthYear`. Their `nameOrigin` identifies the source/rank-draw method and the world manifest records `usBirthCohortNameModel`.
+- People from outside the U.S. retain their country-specific curated name pools and their distinct `CURATED_COUNTRY_TEST_POOL_NOT_CENSUS` provenance. Do not present SSA names as a British, Canadian or Latin American birth-name source.
+- Jockey-colony origin weights, country/geographic location, role-based age ranges, unique-name safeguards and protected historical names continue to work. The new age-specific selection does **not** assign different ancestry or citizenship based on a name.
+- The feature is opted into by `createFictionalWorldNameEngine` **only**. All prior existing-world call sites to `createGeographicNameRoster` and `createPersonnelNameRoster` behave as before because the new birth-decade callbacks are optional.
+- This feature is still only a name-generation improvement, not a horse, pedigree, racetrack, history or save loader. Support for validated non-U.S. birth-generation statistics is a future independent naming task.
+
+Run `node --test tests/1999-fictional-birth-cohort-names.test.mjs` to validate decade coverage, exact cohort matching, source labeling and absence of current-world writes.

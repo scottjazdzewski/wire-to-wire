@@ -15,8 +15,11 @@ import {
  JOCKEY_COLONIES,JOCKEY_COLONY_NAME_MODEL,
  DEFAULT_JOCKEY_COLONY_ORIGIN_WEIGHTS,inferJockeyColony,chooseJockeyColonyOrigin
 } from './jockey-colony-names.mjs';
+import {
+ US_BIRTH_COHORT_NAME_MODEL,usBirthCohortGivenPool,drawUSBirthCohortName
+} from './person-birth-cohort-names.mjs';
 
-export const FICTIONAL_WORLD_NAME_ENGINE='WTW_FICTIONAL_WORLD_IDENTITIES_V3';
+export const FICTIONAL_WORLD_NAME_ENGINE='WTW_FICTIONAL_WORLD_IDENTITIES_V4';
 export const SUPPORTED_NAME_ERA=1999;
 export const SUPPORTED_ORIGINS=Object.freeze(['US','CA','GB','IE','PR','PA','VE','MX','CL','PE','CO','DO','AR','BR','UY']);
 export const DEFAULT_WORLD_ROLE_COUNTS=Object.freeze({
@@ -233,6 +236,13 @@ export function createFictionalWorldNameEngine(input){
  // Choose operating colonies BEFORE choosing birth-origin naming pools.
  // A South Florida jockey and an Ontario jockey do not draw from the same
  // global nationality mix. Location is not inferred from a person's name.
+ const personBirthYears=Object.freeze(Array.from({length:staff+owners},(_,index)=>{
+  const role=roleAt(index),ordinal=index-indexes[role];
+  // The world's namespace controls IDs, not the random person's cohort.
+  // Same seed + role/index yields the same name regardless of worldId.
+  const cohortKey='FICTIONAL-NAME-COHORT-'+role+'-'+ordinal;
+  return year-ageAtOpening(seed,cohortKey,role);
+ }));
  const racingMarkets=markets.filter(m=>m.racing);
  const assignedMarkets=Array.from({length:staff+owners},(_,i)=>{
   const role=roleAt(i),ordinal=i-indexes[role];
@@ -250,14 +260,21 @@ export function createFictionalWorldNameEngine(input){
   return chooseJockeyColonyOrigin(seed,index,colony);
  };
  const personNames=createPersonnelNameRoster(seed,staff+owners,roleAt,spec.protectedNames,{
-  countryAt,maxBaseNameUses:2,avoidIdenticalGivenSurname:true
+  countryAt,
+  // US fictional people get SSA-ranked names from their actual birth decade.
+  // Other country pools retain their explicit editorial provenance for now.
+  givenPoolAt:(index,role,country,feminine)=>country==='US'?
+   usBirthCohortGivenPool(personBirthYears[index],feminine):null,
+  givenNameAt:(index,role,country,feminine,attempt)=>
+   drawUSBirthCohortName(seed,index,personBirthYears[index],feminine,attempt),
+  maxBaseNameUses:2,avoidIdenticalGivenSurname:true
  });
  const countrySet=new Set(SUPPORTED_ORIGINS);
  const basePeople=Object.freeze(personNames.map((p,i)=>{
   const role=roleAt(i),ordinal=i-indexes[role],id=makeId(worldId,'PERSON-'+role.toUpperCase(),ordinal);
   validateNameRecord(p.name,id);
   if(!countrySet.has(p.birthCountry))throw Error('Unsupported birth country '+p.birthCountry);
-  const market=assignedMarkets[i],age=ageAtOpening(seed,id,role);
+  const market=assignedMarkets[i],age=year-personBirthYears[i];
   const riderFields=role==='jockey'?{
    jockeyColony:inferJockeyColony(market),
    riderOriginModel:spec.jockeyColonyWeights[inferJockeyColony(market)]?
@@ -266,7 +283,8 @@ export function createFictionalWorldNameEngine(input){
     'EDITORIAL_1999_JOCKEY_COLONY_DISTRIBUTION_NOT_MEASURED'
   }:{};
   return frozen({id,worldId,role,name:p.name,nameStyle:p.nameStyle,
-   birthCountry:p.birthCountry,ageAtOpening:age,birthYear:year-age,
+   birthCountry:p.birthCountry,ageAtOpening:age,birthYear:personBirthYears[i],
+   givenNameDecade:p.birthCountry==='US'?Math.floor(personBirthYears[i]/10)*10:null,
    location:loc(market),nameOrigin:p.source,...riderFields,
    source:'FICTIONAL_WORLD_ENGINE'});
  }));
@@ -373,6 +391,7 @@ export function createFictionalWorldNameEngine(input){
   reserved:spec.protectedNames})).toString(16).padStart(8,'0');
  const manifest=frozen({schema:FICTIONAL_WORLD_NAME_ENGINE,worldId,seed,year,
   fingerprint:specFingerprint,jockeyColonyNameModel:JOCKEY_COLONY_NAME_MODEL,
+  usBirthCohortNameModel:US_BIRTH_COHORT_NAME_MODEL,
   personNameModel:PERSONNEL_NAME_MODEL,
   countryNameModel:GEO_NAME_MODEL,organizationNameModel:ORGANIZATION_NAME_MODEL,
   authoritative:false,sourceCanonIncluded:false,
