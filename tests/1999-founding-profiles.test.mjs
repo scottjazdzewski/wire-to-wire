@@ -1,116 +1,106 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import vm from 'node:vm';
 
-const world=JSON.parse(readFileSync(new URL('../public/data/wtw-1999-founding-directory-v1.json',import.meta.url),'utf8'));
-const js=readFileSync(new URL('../public/next/1999-founding-profiles.js',import.meta.url),'utf8');
-const office=readFileSync(new URL('../public/next/next.js',import.meta.url),'utf8');
-const html=readFileSync(new URL('../public/next/index.html',import.meta.url),'utf8');
-const css=readFileSync(new URL('../public/next/next.css',import.meta.url),'utf8');
-const context={window:{}};
-vm.runInNewContext(js,context,{timeout:10000});
-const profiles=context.window.WTW1999FoundingProfiles;
+const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
+const directory=JSON.parse(read('public/data/wtw-1999-founding-directory-v1.json'));
+const geography=JSON.parse(read('public/data/track-geography-v33.json'));
+const office=read('public/next/next.js');
+const adapter=read('public/next/1999-restored-profiles.js');
+const source=read('public/next/1999-ui-source.mjs');
+const html=read('public/next/index.html');
 
-test('both accepted template families are loaded before the immutable Office renderer',()=>{
- assert.ok(profiles);
- assert.equal(typeof profiles.institution,'function');
- assert.equal(typeof profiles.person,'function');
- assert.ok(html.indexOf('/next/1999-founding-profiles.js')>=0);
- assert.ok(html.indexOf('/next/1999-founding-profiles.js')<html.indexOf('/next/next.js'));
- assert.match(office,/function openFounding1999Profile\(kind,id\)/);
- assert.match(office,/FoundingProfile:/);
- assert.match(office,/if\(key==='founding-open'\)/);
- assert.match(js,/data-ng="founding-open"/);
- assert.match(css,/WTW FOUNDING PROFILE TEMPLATES V1/);
+test('one REAL approved renderer serves Track-style facilities and Horse-style founding personnel',()=>{
+ assert.match(office,/return restored1999Profile\(kind==='person'\?'person':'farm'/);
+ assert.match(office,/return x\?profileDetail\(x.route,x.node\):null/);
+ assert.match(office,/function profileDetail\(route,sourceOverride=null\)/);
+ assert.match(office,/isFarm\?'ng-profile-farm ng-profile-track'/);
+ assert.match(office,/isPerson\?'ng-profile-person ng-profile-horse'/);
+ assert.match(office,/ng-track-workspace/);
+ assert.match(office,/ng-horse-dossier ng-person-horse-dossier/);
+ assert.match(office,/founderAffiliationRows\(\)/);
+ assert.match(office,/founderPersonLinks\(\)/);
+ assert.match(office,/founderHistoryRows\(\)/);
+ assert.match(adapter,/kind==='farm'/);
+ assert.match(adapter,/kicker:kind==='horse'\?'Horse Profile':kind==='person'\?'People Profile':kind==='farm'\?'Farm Profile':'Track Profile'/);
+ assert.ok(html.includes('1999-restored-profiles.js'));
+ assert.ok(!html.includes('1999-founding-profiles.js'));
 });
 
-test('37 exact founding organizations share one identity; Track-like ownership/facility lenses do not create any new sites',()=>{
- assert.equal(world.organizations.length,37);
- assert.equal(world.counts.approvedOpeningPhysicalFacilities,0);
- assert.equal(world.counts.generatedTrainingCenters,0);
- const ids=new Set();
- let facilities=0;
- for(const org of world.organizations){
-  assert.ok(!ids.has(org.id),org.name);ids.add(org.id);
-  const owner=profiles.institution('ownership',org,world,{tab:'Overview',logoMarkup:'<span>APPROVED MARK SLOT</span>'});
-  assert.match(owner,/ng-profile-track ng-founding-profile ng-founding-ownership/);
-  assert.match(owner,/ng-track-workspace ng-founding-workspace/);
-  assert.ok(owner.includes('data-founding-id="'+org.id+'"'));
-  assert.ok(owner.includes('EXACT ID · '+org.id));
-  assert.ok(owner.includes('HISTORICAL RACING &amp; BLOODLINES'));
-  assert.ok(!owner.includes('SIMULATED TEST WORLD'));
-  const category=profiles.category(org);
-  if(['STUD_FARM','FARM','RACING_STABLE_ORGANIZATION'].includes(category)){
-   facilities++;
-   const facility=profiles.institution('facility',org,world,{tab:'Overview',logoMarkup:''});
-   assert.match(facility,/ng-profile-track ng-founding-profile ng-founding-facility/);
-   assert.ok(facility.includes('data-founding-id="'+org.id+'"'));
-   assert.ok(facility.includes('FACILITY READINESS'));
-   assert.ok(facility.includes('NOT REGISTERED'));
-   assert.ok(!facility.includes('117 TRAINING CENTERS'));
-  }
+test('37 approved ownership organizations, 41 EXACT approved people, no unrelated or generated workforce',()=>{
+ const orgs=directory.organizations,persons=directory.people;
+ assert.equal(orgs.length,37);
+ assert.equal(persons.length,41);
+ assert.equal(directory.counts.generatedTrainingCenters,0);
+ assert.equal(directory.counts.generatedBarns,0);
+ assert.equal(directory.counts.generatedProfessionals,0);
+ assert.equal(directory.counts.approvedOpeningPhysicalFacilities,0);
+ const orgIds=new Set(orgs.map(o=>o.id)),personIds=new Set(persons.map(p=>p.id));
+ assert.equal(orgIds.size,37);assert.equal(personIds.size,41);
+ for(const p of persons){
+  assert.ok(orgIds.has(p.operatingOrganizationId),p.name+' missing approved institution');
+  assert.ok(!p.id.startsWith('P-FOUNDING-STAFF-'));
  }
- assert.equal(facilities,30);
- assert.equal(world.organizations.filter(o=>profiles.category(o)==='STUD_FARM').length,5);
- assert.equal(world.organizations.filter(o=>profiles.category(o)==='FARM').length,15);
- assert.equal(world.organizations.filter(o=>profiles.category(o)==='RACING_STABLE_ORGANIZATION').length,10);
+ const groups=source.match(/if\(section==='Personnel'&&page==='Principals'\)/g)||[];
+ assert.equal(groups.length,1);
+ assert.match(source,/return srcPeople\.map\(p=>\(/);
+ assert.match(office,/Personnel:\['Overview','Trainers','Jockeys','Owners','Principals','Staff'\]/);
+ assert.match(office,/PersonnelPrincipals:\[\['name','PERSON'/);
+ assert.match(office,/\['operation','OWNERSHIP \/ FACILITY ENTITY'/);
 });
 
-test('four unapproved leaders never appear as principals; investor Magic Johnson is NOT manager',()=>{
- const pending=new Set(['O-000002','O-000064','O-000057','O-006905']);
- const forbidden=['Graham Kincaid','Hugh Radcliffe','Sebastian Pryce','Daniel Calder'];
- for(const id of pending){
-  const org=world.organizations.find(o=>o.id===id);
-  const rendered=profiles.institution('ownership',org,world,{tab:'Leadership'});
-  assert.match(rendered,/PENDING APPROVAL · NO PRINCIPAL ASSIGNED/);
-  assert.ok(forbidden.every(name=>!rendered.includes(name)));
+test('all approved people resolve by exact ownership ID, including investor-only Magic Johnson',()=>{
+ const orgIds=new Set(directory.organizations.map(o=>o.id));
+ const assigned=new Set();
+ for(const p of directory.people){
+  assert.ok(orgIds.has(p.operatingOrganizationId),p.name);
+  const org=directory.organizations.find(o=>o.id===p.operatingOrganizationId);
+  assert.ok(org);
+  assert.ok(org.principalOwnerId===p.id||org.publicPrincipalId===p.id||
+   org.publicInvestorId===p.id||(org.leadershipPeopleIds||[]).includes(p.id),p.name);
+  assigned.add(p.id);
  }
- const led=world.organizations.find(o=>o.id==='O-006905');
- const markup=profiles.institution('ownership',led,world,{tab:'Overview'});
- assert.match(markup,/MAJOR NON-OPERATING INVESTOR/);
- assert.match(markup,/Magic Johnson/);
- assert.match(markup,/founding-open" data-val="person:P-910018"/);
- assert.ok(!markup.includes('Daniel Calder'));
- const argosy=profiles.institution('ownership',
-  world.organizations.find(o=>o.id==='O-000014'),world,{tab:'Overview'});
- assert.match(argosy,/Julian Voss/);
- assert.match(argosy,/person:P-000018/);
-});
-
-test('Horse-style personnel dossiers open for exactly 41 approved people, without synthetic attributes or contracts',()=>{
- assert.equal(world.people.length,41);
- const unique=new Set();
- for(const p of world.people){
-  assert.ok(!unique.has(p.id));unique.add(p.id);
-  const html=profiles.person(p,world,{tab:'Overview',personBadge:''});
-  assert.match(html,/ng-profile-horse ng-profile-person ng-founding-profile ng-founding-person/);
-  assert.ok(html.includes('data-founding-id="'+p.id+'"'));
-  assert.ok(html.includes('EXACT ID · '+p.id));
-  assert.ok(html.includes('PROFESSIONAL EVALUATION'));
-  assert.ok(html.includes('AWAITING CERTIFIED DATA'));
-  assert.ok(!html.includes('SIMULATED TEST VALUES'));
-  assert.ok(!html.includes('1999 TEST PERSON'));
-  assert.ok(!html.includes('CURRENT ABILITY · TEST'));
+ assert.equal(assigned.size,41);
+ const investor=directory.people.find(p=>p.id==='P-910018');
+ const led=directory.organizations.find(o=>o.id==='O-006905');
+ assert.equal(investor.name,'Magic Johnson');
+ assert.equal(investor.relationshipType,'MAJOR_INVESTOR_NON_OPERATING');
+ assert.equal(investor.hasManagementAuthority,false);
+ assert.equal(led.publicInvestorId,investor.id);
+ assert.equal(led.principalOwnerId,null);
+ const bloodstock=directory.organizations.find(o=>o.id==='O-000014');
+ assert.equal(bloodstock.principalOwnerId,'P-000018');
+ assert.equal(bloodstock.name,'Argosy Bloodstock');
+ for(const id of ['O-000002','O-000064','O-000057','O-006905']){
+  assert.equal(directory.organizations.find(o=>o.id===id).principalOwnerId,null);
  }
- assert.equal(unique.size,41);
- const voss=profiles.person(world.people.find(p=>p.id==='P-000018'),world,{tab:'Connections'});
- assert.match(voss,/Argosy Bloodstock/);
- assert.match(voss,/ownership:O-000014/);
- const johnson=profiles.person(world.people.find(p=>p.id==='P-910018'),world,{tab:'History'});
- assert.match(johnson,/No management authority or ownership percentage is implied/);
 });
 
-test('navigation, history and stud-stock links point to canonical IDs; no source data mutated',()=>{
- const before=JSON.stringify(world);
- const bell=world.organizations.find(x=>x.id==='O-000068');
- const stock=profiles.institution('facility',bell,world,{tab:'Breeding Stock'});
- assert.match(stock,/STANDING STALLION/);
- assert.match(stock,/founding-open" data-val="horse:H-/);
- const king=world.organizations.find(x=>x.id==='O-000061');
- const history=profiles.institution('ownership',king,world,{tab:'History'});
- assert.match(history,/documented historical/i);
- assert.match(history,/founding-open" data-val="horse:H-/);
- assert.match(history,/RACING_OWNER|BREEDER/);
- assert.equal(JSON.stringify(world),before);
+test('118 North American incl. Cuba and 16 historical closures visible; ZERO international in game site directory',()=>{
+ const domestic=geography.tracks.filter(t=>t.registry==='NORTH_AMERICA');
+ const intl=geography.tracks.filter(t=>t.registry==='INTERNATIONAL');
+ assert.equal(domestic.length,118);
+ assert.equal(intl.length,16);
+ assert.equal(directory.tracks.length,102);
+ assert.equal(domestic.filter(t=>t.opening_state==='CLOSED_PRE_1999').length,16);
+ assert.ok(domestic.some(t=>t.name==='Oriental Park'&&t.country==='Cuba'));
+ const names=new Set(domestic.map(t=>t.id));
+ assert.ok(directory.tracks.every(t=>names.has(t.id)));
+ assert.match(office,/data\.tracks=\{\.\.\.data,tracks:\[\.\.\.data\.tracks,\.\.\.missing\.map\(t=>\(\{/);
+ assert.match(office,/geo\.tracks\.filter\(t=>t\.registry==='NORTH_AMERICA'\)/);
+ assert.match(office,/permittedTracks\.has\(t\.id\)/);
+ assert.match(office,/HISTORICAL · CLOSED BEFORE 1999/);
+ assert.doesNotMatch(office,/registry==='INTERNATIONAL'/);
+});
+
+test('1999 founder facility references are exactly 30, NOT independent buildings',()=>{
+ assert.equal(directory.counts.institutionalFacilityReferences,30);
+ const types=directory.organizations.map(o=>o.facilityDisplayCategory);
+ assert.equal(types.filter(t=>t==='STUD_FARM').length,5);
+ assert.equal(types.filter(t=>t==='FARM').length,15);
+ assert.equal(types.filter(t=>t==='RACING_STABLE_ORGANIZATION').length,10);
+ assert.equal(types.filter(t=>t==='ORGANIZATION_ONLY').length,7);
+ assert.match(office,/BUILDING CAPACITY/);
+ assert.match(office,/NOT CERTIFIED/);
+ assert.match(office,/founderStockRows\(\)/);
 });
