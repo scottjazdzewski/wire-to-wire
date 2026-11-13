@@ -116,7 +116,9 @@ export function readLocal1999World(raw){
  if(p==='/api/1999/stallions')return {active:w.mode===FOUNDING_WORLD_MODE?w.sourceStallions:canon.activeStallions1999,
   pendingNotBookable:w.mode===FOUNDING_WORLD_MODE?[]:canon.pendingNotBookableStallions,
   source:'JANUARY_1999_SOURCE_STALLION_AND_FARM_RECORDS'};
- if(p==='/api/1999/broodmare-boarding')return canonList(q,w.mode===FOUNDING_WORLD_MODE?w.sourceBroodmareBoarding:canon.productionBroodmareBoarding1999,['name','id']);
+ // In the small founding scenario, every selected boarding mare is already in
+ // the 55-entry source breeding roster. Do not display them a second time.
+ if(p==='/api/1999/broodmare-boarding')return canonList(q,w.mode===FOUNDING_WORLD_MODE?[]:canon.productionBroodmareBoarding1999,['name','id']);
  if(p==='/api/1999/events')return canonList(q,canon.openingEventQueue1999,['id','type','circuit']);
  throw Error('Unknown browser test-world directory: '+p);
 }
