@@ -1,7 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {readLocal1999World} from '../public/1999/engine/local-api.mjs';
+import {readLocal1999World as read1999Directory} from '../public/1999/engine/local-api.mjs';
+// This tests the explicitly requested engineering-only full-scale population,
+// not the clean founding scenario which is now the public default.
+const readLocal1999World=raw=>{
+ const url=new URL(raw,'https://wtw.test');
+ if(!url.searchParams.has('mode'))url.searchParams.set('mode','CANON_ANCHORED_TEST');
+ return read1999Directory(url.pathname+url.search);
+};
 import {create1999Universe} from '../public/1999/engine/full-world-generator.mjs';
 import {openingWorld1999 as canon} from '../public/1999/engine/canon-mini.mjs';
 
