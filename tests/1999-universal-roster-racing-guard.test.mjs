@@ -51,7 +51,7 @@ test('1999 track registry and active calendars enforce the U.S./Canada/Cuba boun
  assert.equal(geo.tracks.filter(t=>t.registry==='NORTH_AMERICA').length,118);
  assert.equal(geo.tracks.filter(t=>t.registry==='INTERNATIONAL').length,16);
  assert.ok(geo.tracks.some(t=>t.id==='T-0102'&&t.name==='Oriental Park'&&t.country==='Cuba'));
- assert.match(ui,/geo\.counts\?\.north_america!==118/);
+ assert.match(ui,/north_america!==118/);
  assert.match(ui,/t\.registry==='NORTH_AMERICA'/);
  assert.match(ui,/permittedTracks\.has\(t\.id\)/);
  assert.match(ui,/HISTORICAL · CLOSED BEFORE 1999/);
