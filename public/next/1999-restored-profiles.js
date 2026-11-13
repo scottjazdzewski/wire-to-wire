@@ -93,8 +93,11 @@ function source(kind,record,ui){
   const birthplace=place(d.birthplace||d.birthPlace);
   const age=d.ageAtDate??d.ageAtOpening??d.age??'';
   const generated=d._testGenerated===true;
-  const sourceModel=personId?ui?.sourcePersonModel?.(personId):null;
-  const modelPersonTraits=d._testAttrs||sourceModel?.attributes||{};
+  const founding=window.__WTW_1999_MANAGEMENT__?.worldProfile?.mode==='FOUNDING_1999';
+  // Clean founding people are APPROVED identities, not approved test ratings.
+  // Preserve the model for later explicit gameplay-test admission only.
+  const sourceModel=!founding&&personId?ui?.sourcePersonModel?.(personId):null;
+  const modelPersonTraits=founding?{}:(d._testAttrs||sourceModel?.attributes||{});
   node.dataset.personId=personId;
   node.dataset.operatingOrganizationId=d.operatingOrganizationId||'';
   node.dataset.investorInOrganizationId=d.investorInOrganizationId||'';
