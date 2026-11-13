@@ -92,6 +92,18 @@ test('no generated staff, jockeys, contracts or trainers enter the approved-only
  assert.equal(ui.counts.people,41);
 });
 
+test('Facilities uses the same FULL-WIDTH sortable roster and VIEW dropdown as Personnel/Sales, with no side inspector',()=>{
+ assert.match(js,/Facilities:\['Overview','Stud Farms','Training Centers','Breaking Facilities','Racing Stables','Farms','Trainer Barns'\]/);
+ assert.match(js,/ng-functional ng-stable-roster-v2 ng-dept-roster/);
+ assert.match(js,/data-ng-select="department-tab"/);
+ assert.match(js,/ng-rs-roster/);
+ assert.match(js,/ng-rs-scroll/);
+ assert.match(js,/DEP_COLUMNS=\{/);
+ assert.match(js,/Facilities:\[\['name','FACILITY'/);
+ assert.match(source,/page==='Trainer Barns'/);
+ assert.equal(ui.departmentRows('Facilities','Trainer Barns').length,0);
+ assert.equal(ui.departmentRows('Facilities','Overview').length,30);
+});
 test('the small founding facility, finance, and sale directories show no phantom catalogs',()=>{
  assert.equal(ui.auctionList().length,0);
  const owners=ui.departmentRows('Personnel','Owners');
