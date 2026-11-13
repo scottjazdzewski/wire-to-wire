@@ -2719,7 +2719,7 @@ function depFacilityRows(page,demo){
  };
  const typeForPage={'Stud Farms':'Stud Farm','Farms':'Farm',
   'Racing Stables':'Racing Stable'};
- if(page==='Training Centers'||page==='Breaking Facilities')return [];
+ if(page==='Training Centers'||page==='Breaking Facilities'||page==='Trainer Barns')return [];
  return organizations.filter(o=>classify(o)&&
   (!typeForPage[page]||classify(o)===typeForPage[page])).map(o=>({
    _kind:'farm',_name:o.name,_id:o.id,_canonId:o.id,
