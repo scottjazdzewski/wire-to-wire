@@ -47,7 +47,7 @@ test('new fictional US identities use the modeled birth decade, never the 1999 n
  const w=createFictionalWorldNameEngine({worldId:'Decade-Authenticity',seed:19990101});
  assert.match(w.manifest.usBirthCohortNameModel,/SSA_US_1910S_1980S_TOP30/);
  const americans=w.people.filter(p=>p.birthCountry==='US');
- assert.ok(americans.length>7000);
+ assert.ok(americans.length>6000,'1999 fictional world should still contain a large US cohort after international expansion');
  for(const person of americans){
   assert.equal(person.givenNameDecade,Math.floor(person.birthYear/10)*10);
   assert.equal(person.birthYear+person.ageAtOpening,1999);
