@@ -9,7 +9,7 @@ const founding=createFounding1999Universe({seed:19990101});
 const api=(path)=>readLocal1999World(path+(path.includes('?')?'&':'?')+
   'mode=FOUNDING_1999&seed=19990101&population=73');
 
-test('Jan 1 founding scenario replaces 325k visible TEST world but preserves historical source archive',()=>{
+test('Jan 1 founding scenario contains only the selected small world and source archive',()=>{
  assert.equal(founding.mode,FOUNDING_WORLD_MODE);
  assert.equal(founding.startDate,'1999-01-01');
  assert.equal(founding.counts.horses,0);
@@ -24,12 +24,10 @@ test('Jan 1 founding scenario replaces 325k visible TEST world but preserves his
  assert.equal(founding.counts.people,41); // Only approved founding principals, partners and investor; no generated staff
 });
 
-test('the old 39 generated B01 horses are archived, never carried into a clean founding world',()=>{
+test('opening racing registry contains only explicitly approved horses: currently zero',()=>{
  assert.equal(founding.sourceHorses.length,0);
  assert.equal(founding.counts.horses,0);
- assert.equal(founding.audit.quarantinedOldB01OpeningRunners,39);
- assert.equal(founding.worldIndexByHorseId('H-1997-030039'),-1);
- assert.ok(canon.horses.some(h=>h.sourceBoundary==='B01_APPROVED_1999_GENERATED_OPENING__NOT_1998_RACER'));
+ assert.equal(founding.audit.quarantinedOldB01OpeningRunners,0);
  assert.ok(founding.sourceStallions.every(h=>founding.worldIndexByHorseId(h.id)>=0));
  assert.ok(founding.sourceBroodmares.every(h=>founding.worldIndexByHorseId(h.id)>=0));
  assert.throws(()=>founding.horseAt(0),/Founder horse index/);
@@ -119,7 +117,7 @@ test('founding roster is seed-deterministic and rejects out-of-range index acces
  const another=createFounding1999Universe({seed:19990101});
  assert.deepEqual(another.counts,founding.counts);
  assert.deepEqual(another.sourceOrganizations,founding.sourceOrganizations);
- assert.equal(another.audit.quarantinedOldB01OpeningRunners,39);
+ assert.equal(another.audit.quarantinedOldB01OpeningRunners,0);
  assert.throws(()=>founding.horseAt(0),/Founder horse index/);
  assert.throws(()=>founding.ownerAt(37),/Founder owner index/);
 });
