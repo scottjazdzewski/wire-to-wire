@@ -744,7 +744,7 @@ function loadWorld1999(){
  if(world1999Loading)return world1999Promise||Promise.resolve();
  world1999Loading=true;
  world1999Promise=fetch(window.__WTW_1999_MANAGEMENT__?.worldProfile?.mode==='FOUNDING_1999'?
-   '/data/wtw-1999-founding-directory-v1.json?rev=wtw1999-leadership-v2-20261113':
+   '/data/wtw-1999-founding-directory-v1.json?rev=wtw1999-leadership-v2-20261113-r2':
    '/data/wtw-1999-world-directory-v33.json',{credentials:'same-origin',cache:'force-cache'})
   .then(r=>r.ok?r.json():Promise.reject(Error('1999 directory unavailable')))
   .then(data=>{
