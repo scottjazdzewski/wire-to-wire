@@ -84,6 +84,32 @@ const isMeaningfullySimilar=(candidate,usedRoots)=>{
 const MAX_DISTINCTIVE_ROOT_USES=6;
 const LANDMARK_ANCHORS=[...new Set([...LAND,...PLACES,...LANDMARK,...CLUB_ROOTS,...REGIONAL_NAMING_ANCHORS].map(rootOf))]
  .sort((a,b)=>b.length-a.length);
+/**
+ * Efficiently index already-registered organization roots. The guard
+ * preserves the old policy: candidate and protected roots conflict if one
+ * prefixes the other and both share at least seven normalized characters.
+ *
+ * Output is read-only and deterministic; a source root is not imported,
+ * renamed or registered by this helper.
+ */
+export function createProtectedOrganizationRootGuard(roots){
+ if(!roots||typeof roots[Symbol.iterator]!=='function')
+  throw Error('Invalid protected organization roots');
+ const values=[...new Set([...roots].filter(x=>typeof x==='string'&&x.length>=7))];
+ const set=new Set(values),sorted=values.sort();
+ return root=>{
+  if(typeof root!=='string'||root.length<7||!sorted.length)return false;
+  for(let length=7;length<=root.length;length++)
+   if(set.has(root.slice(0,length)))return true;
+  let low=0,high=sorted.length;
+  while(low<high){
+   const mid=(low+high)>>>1;
+   if(sorted[mid]<root)low=mid+1;
+   else high=mid;
+  }
+  return low<sorted.length&&sorted[low].startsWith(root);
+ };
+}
 const distinctiveRoot=name=>{
  const root=rootOf(name);
  return LANDMARK_ANCHORS.find(a=>root===a||root.startsWith(a+' '))||null;
@@ -214,28 +240,7 @@ export function createOrganizationNameRoster({
   if(!Number.isInteger(n)||n<0)throw Error('Invalid naming count');
  const used=new Set(protectedNames.map(norm).filter(Boolean));
  const roots=new Set(protectedNames.filter(s=>trailing.test(String(s))).map(rootOf).filter(Boolean));
- // The old .some() scan compared EVERY new organization candidate with EVERY
- // historical protected root. That becomes O(names × historicOrganizations)
- // after years of on-demand generation. Prefix membership + lexicographic
- // lower-bound preserves exactly the same prefix-conflict rule at O(length+
- // log historicOrganizations) per attempt.
- const protectedRoots=[...roots].filter(s=>s.length>=7);
- const protectedRootSet=new Set(protectedRoots);
- const protectedRootsSorted=[...protectedRoots].sort();
- const hasProtectedPrefixConflict=root=>{
-  if(root.length<7||!protectedRoots.length)return false;
-  for(let length=7;length<=root.length;length++)
-   if(protectedRootSet.has(root.slice(0,length)))return true;
-  // Any protected root beginning with this candidate root sits at or after
-  // the lower-bound position in a sorted prefix index.
-  let low=0,high=protectedRootsSorted.length;
-  while(low<high){
-   const mid=(low+high)>>>1;
-   if(protectedRootsSorted[mid]<root)low=mid+1;
-   else high=mid;
-  }
-  return low<protectedRootsSorted.length&&protectedRootsSorted[low].startsWith(root);
- };
+ const hasProtectedPrefixConflict=createProtectedOrganizationRootGuard(roots);
  const stems=new Map(),distinctiveRootCounts=new Map();
  const perCategory={owner:0,barn:0,farm:0,breaking:0};
  let retries=0;
