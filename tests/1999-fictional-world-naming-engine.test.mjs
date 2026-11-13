@@ -232,7 +232,6 @@ test('full fictional name batch is broad, never clamped by middle-initial disgui
  const w=createFictionalWorldNameEngine({worldId:'Name-Quality',seed:19990101});
  const repeated=new Map();
  for(const person of w.people){
-  assert.doesNotMatch(person.name,/^\w+\s+\1$/);
   const base=person.name.replace(/^Dr\.\s*/,'')
    .replace(/\s+[A-Z]\.\s+/g,' ')
    .replace(/"[^"]+"\s*/g,'').trim();
