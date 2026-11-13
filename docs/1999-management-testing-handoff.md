@@ -1,3 +1,11 @@
+> **SUPERSEDED FOR THE 2026-11-13 CLEAN 1999 REBUILD. DO NOT FOLLOW THE OLD ROSTER/TEST COUNTS BELOW.**
+>
+> Current single-source handoff: [FOUNDING_1999_SINGLE_SOURCE_HANDOFF_CURRENT.md](./FOUNDING_1999_SINGLE_SOURCE_HANDOFF_CURRENT.md).
+> The 87,500-horse / 3,308-owner/2014-demo era below is archival troubleshooting material only. As of November 13 the playable founding scenario has 37 organizations, 73 connected living breeding animals, ZERO opening runners and 84 UNCOMMITTED youngstock proposals. It uses `wtw1999FoundingStateV1` and the approved /next/ Office UI.
+> Do not merge older full-world pull requests, restore the 39 removed B01 runners or introduce false financial records.
+
+---
+
 # WIRE TO WIRE — NEW TESTING WINDOW HANDOFF
 **Date:** November 12, 2026  
 **Project:** WIRE TO WIRE (horse-racing management game, not Rail & Rye)  
