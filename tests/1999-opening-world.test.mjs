@@ -1,97 +1,81 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {openingWorld1999 as w} from '../src/1999/opening-world.v1.mjs';
-import {readOpeningWorld1999} from '../src/1999/opening-readmodel.mjs';
-const ids=rows=>new Set(rows.map(x=>x.id));
-const get=url=>readOpeningWorld1999('https://wtw.invalid'+url);
+import {openingWorld1999 as source} from '../src/1999/opening-world.v1.mjs';
+import {createFounding1999Universe} from '../public/1999/engine/founding-world-1999.mjs';
+import {readLocal1999World} from '../public/1999/engine/local-api.mjs';
 
-test('source-verified 1999 featured opening joins are unique and complete',()=>{
- assert.equal(w.schema,'WTW_1999_FOUNDATION_OPENING_READ_MODEL_V1');
- assert.equal(w.effectiveDate,'1999-01-01');
- assert.equal(w.horses.length,267);
- assert.equal(w.organizations.length,108);
- assert.equal(w.people.length,154);
- assert.equal(w.stakes1999.length,93);
- assert.equal(w.openingEventQueue1999.length,38);
- assert.equal(ids(w.openingEventQueue1999).size,38);
- assert.ok(w.openingEventQueue1999.every(e=>e.noHiddenTruth&&e.noPlayerFavoritism&&!e.eventExecutedInThisBundle));
- assert.equal(w.historicalYearbook.length,49);
- assert.equal(ids(w.horses).size,267);
- assert.equal(ids(w.organizations).size,108);
- assert.equal(ids(w.people).size,154);
- const owners=ids(w.organizations),trainers=ids(w.people),tracks=ids(w.tracks),ancestors=ids(w.pedigreeNodes);
- for(const h of w.horses){
-  assert.equal(h.ageAtOpening,1999-h.foalYear,h.id);
-  assert.ok(owners.has(h.ownerId),h.id+' owner');
-  assert.ok(trainers.has(h.trainerId),h.id+' trainer');
-  assert.ok(tracks.has(h.openingStable.trackId),h.id+' track');
-  assert.ok(ancestors.has(h.sireId)&&ancestors.has(h.damId),h.id+' parents');
-  assert.equal(h.no1999Results,true);
-  assert.equal(h.entryGuard,'RUNTIME_CONDITION_ELIGIBILITY_FINANCE_AND_PLAYER_AI_PARITY_REQUIRED');
-  assert.ok(h.sourceRecordedStakesSeasons.every(s=>s.year<=1998));
+const world=createFounding1999Universe({seed:19990101});
+const api=path=>readLocal1999World(path+
+  (path.includes('?')?'&':'?')+'seed=19990101&mode=FOUNDING_1999&population=73');
+const ids=a=>new Set(a.map(x=>x.id));
+
+test('real code has ZERO old synthetic horses, old staff, old organizations or old event queue',()=>{
+ assert.equal(source.schema,'WTW_1999_APPROVED_FOUNDING_READ_MODEL_V2');
+ assert.equal(source.effectiveDate,'1999-01-01');
+ assert.deepEqual(source.horses,[]);
+ assert.deepEqual(source.openingEventQueue1999,[]);
+ assert.deepEqual(source.pendingNotBookableStallions,[]);
+ assert.equal(source.organizations.length,19);
+ assert.equal(source.people.length,6);
+ assert.equal(source.tracks.length,118);
+ assert.equal(source.activeStallions1999.length,18);
+ assert.equal(source.foundationalBroodmares1999.length,11);
+ assert.equal(source.productionBroodmareBoarding1999.length,44);
+ assert.equal(ids(source.organizations).size,19);
+ assert.equal(ids(source.people).size,6);
+ assert.equal(ids(source.tracks).size,118);
+ const serialized=JSON.stringify(source);
+ assert.doesNotMatch(serialized,/GENERATED_OPENING|CANON_ANCHORED_TEST|FULLY_FICTIONAL_TEST|B01/);
+});
+test('only the selected 37 founders, 41 people and 73 breeding horses enter 1999',()=>{
+ assert.equal(world.sourceOrganizations.length,37);
+ assert.equal(world.sourcePeople.length,41);
+ assert.equal(world.sourceHorses.length,0);
+ assert.equal(world.counts.horses,0);
+ assert.equal(world.counts.worldHorses,73);
+ assert.equal(world.counts.breedingStallions,18);
+ assert.equal(world.counts.breedingMares,55);
+ assert.equal(world.counts.auctions,0);
+ assert.equal(world.counts.trainers,0);
+ assert.equal(world.counts.facilities,30);
+ assert.equal(world.counts.tracks,118);
+ const approvedStock=ids([...world.sourceStallions,...world.sourceBroodmares]);
+ assert.equal(approvedStock.size,73);
+});
+test('protected pedigree and 61 linked historical identities survive, with no 1999 race entries',()=>{
+ assert.equal(source.historicalHorses.length,61);
+ assert.ok(source.pedigreeNodes.length>2000);
+ assert.equal(source.stakes1999.length,93);
+ assert.equal(source.historicalYearbook.length,49);
+ assert.equal(ids(source.stakes1999).size,93);
+ const tracks=ids(source.tracks);
+ for(const s of source.stakes1999){
+  assert.ok(tracks.has(s.trackId),s.id);
+  assert.equal(typeof s.winner,'undefined');
  }
+ assert.equal(world.historicalHorses.length,61);
+ assert.equal(world.counts.worldHorses,73);
 });
-test('no 1999 protected future truth or unauthorized farm origins',()=>{
- assert.equal(w.sourceGovernance.protectedFutureTruth,false);
- assert.match(w.gameplayStatus,/NOT_EXECUTABLE/);
- assert.equal(w.organizations.filter(x=>Boolean(x.approvedOrigin)).length,10);
- assert.equal(w.organizations.filter(x=>!x.approvedOrigin).length,98);
- for(const org of w.organizations)if(org.publicationTier==='IDENTITY_AND_RECORD_EVIDENCE_ONLY'){
-  assert.equal(org.approvedOrigin,null,org.id);
-  assert.equal(org.approvedPrincipals,null,org.id);
- }
+test('browser API serves approved foundation only and refuses retired generated world modes',()=>{
+ const overview=api('/api/1999/sim/overview');
+ assert.equal(overview.gameplayReady,false);
+ assert.equal(overview.counts.horses,0);
+ assert.equal(overview.counts.worldHorses,73);
+ assert.equal(api('/api/1999/horses').total,0);
+ assert.equal(api('/api/1999/people').total,41);
+ assert.equal(api('/api/1999/organizations').total,37);
+ assert.equal(api('/api/1999/sim/tracks').total,118);
+ assert.equal(api('/api/1999/sim/auctions').total,0);
+ assert.equal(api('/api/1999/sim/people').total,0);
+ assert.throws(()=>readLocal1999World('/api/1999/sim/overview?mode=CANON_ANCHORED_TEST'));
+ assert.throws(()=>readLocal1999World('/api/1999/sim/overview?mode=FULLY_FICTIONAL_TEST'));
+ assert.throws(()=>readLocal1999World('/api/1999/sim/overview?population=325000'));
+ assert.throws(()=>readLocal1999World('/api/1999/sim/horses?pilot=opening&population=400'));
 });
-test('pedigree is referenced by immutable identity, not display name',()=>{
- const nodes=new Map(w.pedigreeNodes.map(x=>[x.id,x]));
- for(const h of w.horses){
-  const root=nodes.get(h.id);
-  assert.equal(root.name,h.name);
-  assert.equal(root.sireId,h.sireId);
-  assert.equal(root.damId,h.damId);
-  assert.notEqual(h.sireId,h.damId);
-  for(const [id,role] of [[h.sireId,'sire'],[h.damId,'dam']]){
-   const p=nodes.get(id);assert.ok(p,h.id+' missing '+role);
-   assert.ok(h.foalYear-p.foalYear>=2,h.id+' unrealistic '+role);
-  }
- }
-});
-test('active stallions are unique; pending stallion is not bookable',()=>{
- assert.equal(w.activeStallions1999.length,31);
- assert.equal(ids(w.activeStallions1999).size,31);
- assert.equal(w.pendingNotBookableStallions.length,1);
- assert.equal(w.foundationalBroodmares1999.length,20);
- assert.equal(w.productionBroodmareBoarding1999.length,2036);
- assert.equal(ids(w.productionBroodmareBoarding1999).size,2036);
- assert.equal(ids(w.foundationalBroodmares1999).size,20);
- assert.ok(w.activeStallions1999.every(s=>s.standingFarm1999.farmOrganizationId));
- assert.ok(w.foundationalBroodmares1999.every(s=>s.standingFarm1999.farmOrganizationId));
- assert.ok(w.foundationalBroodmares1999.every(m=>m.pregnancyStatus==='UNOBSERVED_DO_NOT_ASSUME'));
- assert.ok(w.productionBroodmareBoarding1999.every(m=>m.pregnancyStatus==='UNOBSERVED'&&m.boardingFarm1999.farmOrganizationId));
- assert.ok(w.productionBroodmareBoarding1999.every(m=>w.pedigreeNodes.some(p=>p.id===m.id)));
- assert.equal(w.counts.pedigreeSourceNodesIncluded,w.pedigreeNodes.length);
- assert.equal(w.activeStallions1999.filter(s=>s.id==='H-1990-000001').length,1);
- assert.equal(w.activeStallions1999.filter(s=>s.id==='H-1990-000002').length,1);
- assert.equal(w.pendingNotBookableStallions[0].status,'NOT_ACTIVE_PENDING_CANON');
- assert.ok(!ids(w.activeStallions1999).has(w.pendingNotBookableStallions[0].id));
-});
-test('no future 1999 racing result is preloaded into the stakes calendar',()=>{
- assert.equal(ids(w.stakes1999).size,93);
- for(const race of w.stakes1999){assert.match(race.localDate,/^1999-\d\d-\d\d$/);assert.ok(ids(w.tracks).has(race.trackId));assert.equal(race.entryGuard,'NO_AUTOMATIC_1999_START_OR_RESULT');assert.equal(typeof race.winner,'undefined');}
-});
-test('source-protected API lists and details answer without mutating state',()=>{
- assert.equal(get('/api/1999/overview').status,200);
- assert.equal(get('/api/1999/overview').data.gameplayReady,false);
- assert.equal(get('/api/1999/horses?limit=10').data.items.length,10);
- assert.equal(get('/api/1999/organizations?limit=5').data.items.length,5);
- assert.equal(get('/api/1999/calendar').data.total,93);
- assert.equal(get('/api/1999/events').data.total,38);
- assert.equal(get('/api/1999/events').data.execution,'NOT_STARTED_FROM_THIS_PROJECTION');
- const h=w.horses[0],detail=get('/api/1999/horses/'+h.id);
- assert.equal(detail.status,200);assert.equal(detail.data.horse.id,h.id);
- assert.equal(detail.data.pedigree.id,h.id);
- assert.equal(get('/api/1999/horses/H-9999-NOPE').status,404);
- assert.equal(get('/api/1999/stallions').data.active.length,31);
- assert.equal(get('/api/1999/broodmares').data.foundation.length,20);
- assert.equal(get('/api/1999/broodmare-boarding?limit=3').data.items.length,3);
- assert.equal(get('/api/1999/broodmare-boarding').data.total,2036);
+test('source-only horse IDs never quietly become owned running stock',()=>{
+ const breeds=api('/api/1999/sim/world-horse-directory?limit=100').items;
+ assert.equal(breeds.length,73);
+ assert.equal(ids(breeds).size,73);
+ assert.equal(api('/api/1999/sim/owner-horses?ownerId=O-000011').total,0);
+ assert.deepEqual(world.ownedHorseIndexes('O-000011'),[]);
 });
