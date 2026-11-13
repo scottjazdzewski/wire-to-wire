@@ -4,12 +4,14 @@ import { worldIdentity, ensure } from './contracts.js';
 import {attributeDefinitions,normalizeObservation} from './attribute-contract.js';
 import {personReputationView,rankProfessionalCandidates} from './reputation.js';
 import {normalizePersonRoles} from './people-generator.js';
+import {currentHorseOwnerId,getOwnerPortfolioView} from './ownership.js';
 
 export function getStableView(state, world) {
   validateGameRun(state, world);
   return state.stable_horse_ids.map(id => {
     const canonical = worldIdentity(world, 'horses', id);
     return { id, name: canonical.name, source_status: canonical.source_status || 'UNSPECIFIED',
+      current_owner_id: currentHorseOwnerId(state,world,id),
       runtime: structuredClone(state.runtime.horse[id] || {}),
       pending_decision_ids: Object.values(state.decisions.pending).filter(d => d.horse_id === id).map(d => d.id) };
   });
@@ -25,6 +27,9 @@ export function getOfficeView(state, world) {
     pending_decisions: structuredClone(Object.values(state.decisions.pending)),
     upcoming_events: structuredClone(state.scheduler.pending),
     last_events: structuredClone(state.event_log.slice(-20)),
+    pending_horse_transfers:Object.values(state.runtime.ownership?.pending_transfers||{}).length,
+    player_owner_horse_count:state.player.role==='owner'&&state.player.operation_id?
+      getOwnerPortfolioView(state,world,state.player.operation_id,{limit:0}).total:null,
     state_revision: state.revision
   };
 }
