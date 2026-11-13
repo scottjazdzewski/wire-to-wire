@@ -311,8 +311,11 @@ function makeDepartmentRows(section,page,context={}){
     entry.total+=ride.chemistry;entry.count++;jockeyRelations.set(h.preferredJockeyId,entry)}
   }
   const roles={Trainers:'trainer',Jockeys:'jockey',Staff:'staff'},wanted=roles[page]||'all';
-  const base=page==='Trainers'?get('trainers','/api/1999/sim/trainers',worldCounts.trainers):
-   page==='Jockeys'||page==='Staff'||page==='Overview'?get('workforce','/api/1999/sim/people',generatedPeopleCount):[];
+  const workforce=get('workforce','/api/1999/sim/people',generatedPeopleCount);
+  const base=page==='Trainers'?
+   [...get('trainers','/api/1999/sim/trainers',worldCounts.trainers),
+    ...workforce.filter(p=>p.role==='trainer')]:
+   page==='Jockeys'||page==='Staff'||page==='Overview'?workforce:[];
   return base.filter(p=>wanted==='all'?p.role!=='owner':
    wanted==='staff'?!['trainer','jockey','owner','groom','exercise_rider'].includes(p.role):p.role===wanted).map(p=>{
    const attrs=p.attributes||p.roleAttributes||{},rating=v=>v==null?'':String(v);
@@ -486,13 +489,18 @@ function breedingMarePage(offset=0,limit=100,filter=''){
   }else{
    const h=model[i-Math.max(sourceCount,start)];
    if(!h)continue;
-   items.push({_kind:'horse',_name:h.name,_id:h.id,_testGenerated:true,
+   const founding=gameWorldProfile.mode==='FOUNDING_1999';
+   items.push({_kind:'horse',_name:h.name,_id:h.id,
+    _canonId:founding?h.id:undefined,_testGenerated:!founding,
     _testAttrs:h.attributes||{},_testAbility:h.ability||{},_testReputation:h.reputation||{},
-    name:h.name,horse:h.name,age:String(h.ageAtOpening),sex:'MARE',sire:'',dam:'',
-    farm:h.farmName,location:city(h.location),status:h.breedingStatus1999.replaceAll('_',' ')+' · TEST',
-    health:'TEST · NOT EXAMINED',pedigree:'',value:'',owner:'',studFee:'',
-    bookings:h.projected1999Covering?'1 PROJECTED':'0',foals:h.projected1999Foal?'1 EXPECTED':'0',
-    winners:'NOT RECORDED'});
+    name:h.name,horse:h.name,age:String(h.ageAtOpening??h.age??(1999-Number(h.foalYear))),
+    sex:'MARE',sire:h.sireId||'',dam:h.damId||'',
+    farm:h.farmName||h.standingFarm1999?.farmName||h.boardingFarm1999?.farmName||'',
+    location:city(h.location||h.boardingFarm1999||h.standingFarm1999),
+    status:String(h.breedingStatus1999||h.status||'BROODMARE_UNASSESSED').replaceAll('_',' ')+
+     (founding?' · SOURCE':' · TEST'),
+    health:'NOT EXAMINED',pedigree:'',value:'',owner:'',studFee:'',
+    bookings:'NOT RECORDED',foals:'NOT RECORDED',winners:'NOT RECORDED'});
   }
  }
  const needle=String(filter||'').trim().toLowerCase();
