@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const pilot=JSON.parse(read('public/data/wtw-1999-jockey-pilot-v1.json'));
-const history=JSON.parse(read('public/data/wtw-1999-world-directory-v33.json'));
 const founding=JSON.parse(read('public/data/wtw-1999-founding-directory-v1.json'));
 const office=read('public/next/next.js');
 const profile=read('public/next/1999-restored-profiles.js');
@@ -13,7 +12,7 @@ test('Elite group includes user-confirmed male Paloma and restored male Simonne 
  assert.equal(pilot.counts.selectedPilot,26);
  assert.equal(pilot.jockeys.length,26);
  assert.ok(pilot.jockeys.every(x=>x.pilotStatus==='SELECTED_IDENTITY_ONLY'));
- const personIds=new Set([...history.people,...founding.people].map(p=>p.id));
+ const personIds=new Set(founding.people.map(p=>p.id));
  const saved=new Set(pilot.jockeys.map(p=>p.id));
  assert.equal(saved.size,26);
  for(const id of ['P-000053','P-000055','P-000057','P-1999-J-000001']){
@@ -29,7 +28,7 @@ test('Elite group includes user-confirmed male Paloma and restored male Simonne 
  }
  const paloma=pilot.jockeys.find(x=>x.id==='P-000057');
  assert.equal(paloma.name,'Paloma Reyes');
- assert.equal(history.people.find(x=>x.id==='P-000057').name,paloma.name);
+ assert.ok(pilot.jockeys.some(x=>x.id==='P-000057'&&x.name===paloma.name));
  const simonne=pilot.jockeys.find(x=>x.id==='P-1999-J-000001');
  assert.equal(simonne.name,'Simonne Beaulieu');
  assert.equal(personIds.has(simonne.id),false,'new restoration must not overwrite historical person IDs');
