@@ -89,8 +89,8 @@ const HISTORICAL_ANCHORS=Object.freeze([
 // connections. Source horse-year associations are NOT proof of exact breeder,
 // race-owner or trainer roles. The historical archive itself remains untouched.
 function buildFoundingHistoricalLinks(selectedOrganizations) {
- const registered=[...canon.pedigreeNodes,...canon.horses,...canon.activeStallions1999,
-   ...canon.foundationalBroodmares1999];
+ const registered=[...canon.historicalHorses,...canon.pedigreeNodes,
+   ...canon.activeStallions1999,...canon.foundationalBroodmares1999];
  const byId=new Map(registered.map(h=>[h.id,h]));
  const idsByName=new Map();
  for(const h of registered) {
