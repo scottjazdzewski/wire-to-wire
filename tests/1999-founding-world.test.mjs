@@ -21,7 +21,7 @@ test('Jan 1 founding scenario replaces 325k visible TEST world but preserves his
  assert.equal(canon.horses.length,267);
  assert.equal(canon.organizations.length,108);
  assert.ok(canon.pedigreeNodes.length>2000);
- assert.equal(founding.counts.people,115); // 16 source-linked people + 31 founding leaders + 68 fresh professionals
+ assert.equal(founding.counts.people,41); // Only approved founding principals, partners and investor; no generated staff
 });
 
 test('the old 39 generated B01 horses are archived, never carried into a clean founding world',()=>{
@@ -41,8 +41,8 @@ test('founding operations carry approved names under existing owner IDs, never d
  assert.equal(new Set(orgs.map(o=>o.name.toLowerCase())).size,orgs.length);
  const look=id=>orgs.find(o=>o.id===id);
  assert.equal(look('O-000002').name,'Harrowgate Farm');
- assert.equal(look('O-000002').principalOwner,'Graham Kincaid');
- assert.equal(look('O-000002').leadershipStatus,'WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW');
+ assert.equal(look('O-000002').principalOwner,null); // Name proposal excluded until approved
+ assert.equal(look('O-000002').leadershipStatus,'PENDING_USER_REVIEW_NO_APPROVED_PRINCIPAL');
  assert.equal(look('O-000056').name,'Quickfire Racing');
  assert.equal(look('O-005910').name,'Midway');
  assert.equal(look('O-005919').name,'Knight’s Way');
@@ -65,7 +65,7 @@ test('Miriam Vale now operates Ashby Vale in Virginia and does not run Harrowgat
  assert.equal(m.name,'Miriam Vale');
  assert.equal(m.base.region,'Virginia');
  assert.equal(m.operatingOrganizationId,'O-FOUNDING-1999-014');
- assert.equal(founding.ownerAt(founding.sourceOrganizations.findIndex(o=>o.id==='O-000002')).principalOwner,'Graham Kincaid');
+ assert.equal(founding.ownerAt(founding.sourceOrganizations.findIndex(o=>o.id==='O-000002')).principalOwner,null);
  assert.notEqual(founding.ownerAt(founding.sourceOrganizations.findIndex(o=>o.id==='O-000002')).principalOwnerId,m.id);
  assert.ok(founding.sourcePeople.some(p=>p.name==='Vince Bellini'));
  assert.ok(founding.sourcePeople.some(p=>p.name==='Dr. Everett Raines'));
@@ -98,6 +98,21 @@ test('browser management API has exactly the founding roster, not 325k synthetic
  const sample=api('/api/1999/sim/owner-horses?ownerId=O-000011');
  assert.equal(sample.total,0);
  assert.ok(sample.items.every(h=>h.ownerId==='O-000011'));
+});
+
+test('only approved institutional references appear; tracks never manufacture facilities',()=>{
+ assert.equal(founding.sourceOrganizations.length,37);
+ assert.equal(founding.counts.facilities,30);
+ const sites=Array.from({length:founding.counts.facilities},(_,i)=>founding.facilityAt(i));
+ assert.equal(new Set(sites.map(x=>x.organizationId)).size,30);
+ assert.equal(sites.filter(x=>x.type==='STUD_FARM').length,5);
+ assert.equal(sites.filter(x=>x.type==='FARM').length,15);
+ assert.equal(sites.filter(x=>x.type==='RACING_STABLE_ORGANIZATION').length,10);
+ assert.ok(sites.every(x=>x.id===x.organizationId&&x.capacity===null&&x.annualOperatingCost===null));
+ assert.ok(!sites.some(x=>x.type==='TRAINING_CENTER'||x.id.startsWith('F-FOUNDING-TRACK-')));
+ assert.throws(()=>founding.facilityAt(30),/Founding facility reference index/);
+ assert.equal(founding.audit.newProfessionalPool,0);
+ assert.equal(founding.counts.auctions,0);
 });
 
 test('founding roster is seed-deterministic and rejects out-of-range index access',()=>{
@@ -171,21 +186,12 @@ test('full founding history bridge links source horse-years without importing de
 });
 
 test('founding ancillary markets do not summon old 3,308-owner rivals or phantom sale lots',()=>{
- const jockeys=Array.from({length:40},(_,i)=>founding.personAt(i)).filter(p=>p.role==='jockey');
- assert.ok(jockeys.length>0);
- for(const j of jockeys){
-  assert.equal(j.employmentStatus,'AVAILABLE_UNCONTRACTED');
-  assert.equal(j.employerOrganizationId,null);
-  assert.equal(j.bookingMarket?.competingBarns?.length,0);
-  assert.equal(j.bookingMarket?.status,'FOUNDING_BOOKING_MARKET_NOT_YET_POPULATED');
- }
- const scenarioBid=founding.jockeyBookingMarket(jockeys[0],'O-005910');
- assert.equal(scenarioBid.competingBarns.length,0);
- assert.throws(()=>founding.jockeyBookingMarket(jockeys[0],'O-TEST-1999-000001'),/outside founding world/);
- const auctions=Array.from({length:founding.counts.auctions},(_,i)=>founding.auctionAt(i));
- assert.equal(auctions.length,12);
- assert.ok(auctions.every(a=>a.catalogLots===0&&a.availableLots===0&&
-  a.status==='PLANNED_NO_FOUNDING_LOTS_ENTERED'&&a.outcomes.length===0));
+ assert.equal(founding.audit.newProfessionalPool,0);
+ assert.equal(founding.counts.auctions,0);
+ assert.equal(founding.counts.trainers,0);
+ assert.throws(()=>founding.personAt(0),/Founding workforce index/);
+ assert.throws(()=>founding.auctionAt(0),/No founding auction authorized/);
+ assert.throws(()=>founding.jockeyBookingMarket({id:'TEST'},'O-TEST-1999-000001'),/outside founding world/);
 });
 test('previously recorded farm principals and Argosy founder retain their exact 1999 person IDs',()=>{
  const look=id=>founding.sourcePeople.find(p=>p.id===id);
@@ -195,7 +201,8 @@ test('previously recorded farm principals and Argosy founder retain their exact 
  assert.equal(look('P-000018').operatingOrganizationId,'O-000014');
  assert.equal(org('O-000014').principalOwnerId,'P-000018');
  assert.equal(org('O-000014').principalOwner,'Julian Voss');
- assert.equal(look('P-000069').professionalAffinities[0],'O-000063');
- assert.notEqual(look('P-000069').operatingOrganizationId,'O-000063',
-  'Ray Sutter is not automatically the Ironweed owner');
+ assert.equal(look('P-000069'),undefined,
+  'An unapproved historic professional is not opened as a 1999 employee');
+ assert.notEqual(org('O-000063').principalOwnerId,'P-000069',
+  'Ray Sutter is not the Ironweed owner');
 });
