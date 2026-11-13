@@ -168,3 +168,89 @@ test('full sized 1999 identity request builds 11,202 people and 8,408 organizati
  assert.ok(w.stables.every(s=>s.location.marketId));
  assert.ok(w.owners.every(o=>o.principalId&&o.location.marketId));
 });
+
+test('fictional family business names agree with the linked owner principal',()=>{
+ for(const seed of [19990101,19990102,23451233]){
+  const w=createFictionalWorldNameEngine({worldId:'Family-Integrity',seed});
+  const principalById=new Map(w.people.map(p=>[p.id,p]));
+  const families=w.owners.filter(x=>x.principalRelationship==='NAMED_FAMILY_PRINCIPAL');
+  assert.ok(families.length>50,'expected meaningful sample of family-named businesses');
+  for(const owner of w.owners){
+   const person=principalById.get(owner.principalId);
+   assert.ok(person,'owner principal missing '+owner.id);
+   assert.equal(person.organizationId,owner.id);
+   assert.equal(person.location.marketId,owner.location.marketId);
+   assert.equal(owner.principalName,person.name);
+  }
+  for(const owner of families){
+   const actualSurname=owner.principalName.trim().split(/\s+/).at(-1);
+   assert.equal(norm(owner.familyName),norm(actualSurname));
+   assert.ok(owner.name.startsWith(owner.familyName+' Family '),owner.name);
+  }
+ }
+});
+test('trainer and racing stable links are reciprocal and geography stays consistent',()=>{
+ const w=createFictionalWorldNameEngine({worldId:'Stable-Integrity',seed:19990101});
+ const byId=new Map(w.people.map(p=>[p.id,p]));
+ const stablesById=new Map(w.stables.map(x=>[x.id,x]));
+ for(const stable of w.stables){
+  const trainer=byId.get(stable.trainerId);
+  assert.equal(trainer?.stableId,stable.id);
+  assert.equal(trainer?.role,'trainer');
+  assert.equal(stable.location.marketId,trainer.location.marketId);
+  assert.equal(stablesById.get(trainer.stableId)?.trainerId,trainer.id);
+ }
+ assert.equal(new Set(w.stables.map(s=>s.trainerId)).size,w.stables.length);
+});
+test('farm managers are assigned to only one farm; farm and manager location agree',()=>{
+ const w=createFictionalWorldNameEngine({worldId:'Farm-Integrity',seed:19990101});
+ const people=new Map(w.people.map(p=>[p.id,p]));
+ const allManagers=w.people.filter(p=>p.role==='farm_manager');
+ const referenced=w.farms.flatMap(f=>f.managerIds.map(id=>({farm:f,id})));
+ assert.equal(referenced.length,550);
+ assert.equal(new Set(referenced.map(x=>x.id)).size,550);
+ assert.equal(w.manifest.counts.assignedFarmManagers,550);
+ assert.equal(w.manifest.counts.unassignedFarmManagers,0);
+ for(const {farm,id} of referenced){
+  const manager=people.get(id);
+  assert.equal(manager?.farmId,farm.id);
+  assert.equal(manager?.role,'farm_manager');
+  assert.equal(manager?.location.marketId,farm.location.marketId);
+ }
+ assert.ok(allManagers.every(m=>referenced.some(x=>x.id===m.id)));
+ const small=createFictionalWorldNameEngine({
+  worldId:'No-Farms',seed:12,owners:0,
+  roles:{farm_manager:12},facilities:{
+   generalFarms:0,studFarms:0,nurseries:0,bloodstockFarms:0,breakingTraining:0
+  }
+ });
+ assert.equal(small.manifest.counts.assignedFarmManagers,0);
+ assert.equal(small.manifest.counts.unassignedFarmManagers,12);
+ assert.ok(small.people.every(p=>p.farmId===null));
+});
+test('full fictional name batch is broad, never clamped by middle-initial disguises',()=>{
+ const w=createFictionalWorldNameEngine({worldId:'Name-Quality',seed:19990101});
+ const repeated=new Map();
+ for(const person of w.people){
+  assert.doesNotMatch(person.name,/^\w+\s+\1$/);
+  const base=person.name.replace(/^Dr\.\s*/,'')
+   .replace(/\s+[A-Z]\.\s+/g,' ')
+   .replace(/"[^"]+"\s*/g,'').trim();
+  repeated.set(norm(base),(repeated.get(norm(base))||0)+1);
+ }
+ assert.ok([...repeated.values()].every(n=>n<=2),'three or more people share the same first and last name');
+ assert.ok(!w.people.some(p=>{
+  const bits=p.name.replace(/^Dr\.\s*/,'').trim().split(/\s+/);
+  return norm(bits[0])===norm(bits.at(-1));
+ }), 'unintentional Thomas Thomas style identities');
+});
+test('equivalent world role-map order does not change its generated people or IDs',()=>{
+ const spec={worldId:'Order-Independent',seed:1000,owners:22,
+  roles:{trainer:40,jockey:20,farm_manager:9},
+  facilities:{generalFarms:8,studFarms:4,nurseries:2,bloodstockFarms:1,breakingTraining:3}
+ };
+ const other={...spec,roles:{farm_manager:9,jockey:20,trainer:40}};
+ const a=createFictionalWorldNameEngine(spec),b=createFictionalWorldNameEngine(other);
+ assert.deepEqual(a,b);
+ assert.throws(()=>normalizeFictionalWorldNamingSpec({...spec,facilities:{generalFarms:1,castleFarms:2}}),/Unsupported facility purpose/);
+});
