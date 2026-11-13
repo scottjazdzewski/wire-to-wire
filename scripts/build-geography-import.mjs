@@ -104,8 +104,8 @@ for(const name of names){
 }
 const trackBytes=fs.readFileSync(trackPath);
 const tr=JSON.parse(trackBytes.toString('utf8'));
-if(tr.schema_version!=='WTW_TRACK_GEOGRAPHY_DIRECTORY_V1'||tr.counts?.total!==134||tr.tracks?.length!==134)
- throw Error('Site track directory not the complete 134-track Drive v3.3 export');
+if(tr.schema_version!=='WTW_TRACK_GEOGRAPHY_DIRECTORY_V1'||tr.counts?.total!==118||tr.tracks?.length!==118)
+ throw Error('Site track directory must contain exactly 118 approved domestic/Cuban tracks, no international tracks');
 files.push({path:'public/data/track-geography-v33.json',sha256:sha(trackBytes),records:tr.tracks.length});
 for(const t of tr.tracks){
  push(record({id:'TRACK-'+t.id,entityId:t.id,entityKind:'track',relation:'TRACK_LOCATION',
@@ -115,13 +115,13 @@ for(const t of tr.tracks){
   metadata:{registry:t.registry,metro_or_subregion:t.metro_or_subregion,opening_state:t.opening_state,
     foundation_status:t.foundation_status,macro_circuit:t.macro_circuit}}),'track_geography');
 }
-const expected={horse_current:2522,horse_foaling:2991,participant_geography:2688,organization_geography:130,track_geography:134};
+const expected={horse_current:2522,horse_foaling:2991,participant_geography:2688,organization_geography:130,track_geography:118};
 for(const [k,n] of Object.entries(expected)){if(counts[k]!==n)throw Error('Wrong '+k+' count: '+counts[k]+' expected '+n);}
-if(records.length!==8465||seen.size!==8465||currentHorseIDs.size!==2488||foalingHorseIDs.size!==2991||orgIDs.size!==108)
+if(records.length!==8449||seen.size!==8449||currentHorseIDs.size!==2488||foalingHorseIDs.size!==2991||orgIDs.size!==108)
  throw Error('Unique Horse_ID, organization or global location join gate failed');
 const nNorth=tr.tracks.filter(t=>t.registry==='NORTH_AMERICA').length;
 const nInternational=tr.tracks.filter(t=>t.registry==='INTERNATIONAL').length;
-if(nNorth!==118||nInternational!==16)throw Error('All track regions must be present');
+if(nNorth!==118||nInternational!==0)throw Error('Only 118 approved North American/Cuban tracks may be in the current game location directory');
 const digest=sha(files.map(f=>f.path+':'+f.sha256).join('\n')+'\n'+records.map(r=>r.record_sha256).join('\n'));
 fs.mkdirSync(outputDir,{recursive:true});
 const chunks=[];
