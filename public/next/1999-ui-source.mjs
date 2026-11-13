@@ -74,8 +74,7 @@ const gameWorldProfile=window.__WTW_1999_MANAGEMENT__?.worldProfile||
  window.WTW1999CommercialConfig?.current?.()||
  {seed:19990101,mode:'FOUNDING_1999',population:73};
 const worldQuery='seed='+encodeURIComponent(gameWorldProfile.seed)+
- '&mode='+encodeURIComponent(gameWorldProfile.mode)+
- '&population='+encodeURIComponent(gameWorldProfile.population);
+ '&mode=FOUNDING_1999&population=73';
 const q=(route,extras='')=>readLocal1999World(route+(route.includes('?')?'&':'?')+
  worldQuery+(viewDate==='1999-01-01'?'':'&date='+viewDate)+(extras?'&'+extras:''));
 const allPages=(route,total)=>{
@@ -88,50 +87,29 @@ const allPages=(route,total)=>{
  }
  return rows;
 };
-const srcHorses=gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?[]:allPages('/api/1999/horses',267);
+const srcHorses=allPages('/api/1999/horses',0);
 const sourceHorseOffset=new Map(srcHorses.map((h,index)=>[h.id,index]));
-const srcOrgs=gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?[]:allPages('/api/1999/organizations',108);
-const srcPeople=gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?[]:allPages('/api/1999/people',154);
+const srcOrgs=allPages('/api/1999/organizations',37);
+const srcPeople=allPages('/api/1999/people',41);
 const worldCounts=q('/api/1999/sim/overview').counts;
 const generatedPeopleCount=worldCounts.people-srcPeople.length;
 const activeStallions=q('/api/1999/stallions').active;
 const ownerNames=new Map(srcOrgs.map(o=>[o.id,o.name]));
 const peopleNames=new Map(srcPeople.map(p=>[p.id,p.name]));
 const ownership=new Map();for(const h of srcHorses){ownership.set(h.ownerId,(ownership.get(h.ownerId)||0)+1);}
-const fictionalOpeningOwners=q('/api/1999/sim/world-horse-directory','offset=0&limit=100').items||[];
-const fictionalOwnerTally=new Map();
-for(const h of fictionalOpeningOwners)if(h.ownerId)
- fictionalOwnerTally.set(h.ownerId,(fictionalOwnerTally.get(h.ownerId)||0)+1);
-const fictionalOwner=[...fictionalOwnerTally].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))[0]?.[0]||null;
-// An empty new-world stable still needs a valid view context. Choosing a
-// displayed founding farm here DOES NOT assign any of the archived horses.
-const activeOwnerId=gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?fictionalOwner:
- [...ownership].filter(([id])=>id).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))[0]?.[0]||
- srcOrgs.find(o=>o.id==='O-000061')?.id||srcOrgs[0]?.id||null;
-const fictionalOwnerIndex=activeOwnerId&&gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?
- Math.max(0,Number(String(activeOwnerId).match(/(\d+)$/)?.[1]||1)-1):0;
-const ownerRecord=activeOwnerId&&gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?
- q('/api/1999/sim/owners','offset='+fictionalOwnerIndex+'&limit=1').items?.[0]:null;
-const selectedOwner=ownerNames.get(activeOwnerId)||
- (ownerRecord?.id===activeOwnerId?ownerRecord.name:'')||activeOwnerId||'1999 Foundation Stable';
+// Exactly one approved owning organization is selected for the empty stable.
+const activeOwnerId=srcOrgs.find(o=>o.id==='O-000061')?.id||srcOrgs[0]?.id||null;
+const selectedOwner=ownerNames.get(activeOwnerId)||'1999 Foundation Stable';
 // The player's entire horse portfolio is resolved from the ONE deterministic world.
 // This does not fabricate additional historical source records or outcomes.
 const portfolioQuery='ownerId='+encodeURIComponent(activeOwnerId||'');
 const ownedHorseCount=q('/api/1999/sim/owner-horses',portfolioQuery+'&offset=0&limit=1').total;
 let stableHorses=allPages('/api/1999/sim/owner-horses?'+portfolioQuery,ownedHorseCount);
-if(gameWorldProfile.population<325000){
- // The old 87.5k scheduling API is not the reduced directory. Never show
- // nonmember horses as if the player owned them in a smaller selected world.
- stableHorses=stableHorses.filter(h=>{
-  try{return q('/api/1999/sim/world-horse-profile','id='+encodeURIComponent(h.id)).index>=0}
-  catch{return false}
- });
-}
 let horseLookup=new Map([...srcHorses,...stableHorses].map(h=>[h.name,h]));
 const sourceHorseIds=new Set(srcHorses.map(h=>h.id));
 
 const ownerIndex=srcOrgs.findIndex(o=>o.id===activeOwnerId);
-const initialOwner=q('/api/1999/sim/owners','offset='+Math.max(0,gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?fictionalOwnerIndex:ownerIndex)+'&limit=1').items?.[0]||null;
+const initialOwner=q('/api/1999/sim/owners','offset='+Math.max(0,ownerIndex)+'&limit=1').items?.[0]||null;
 const openingCash=initialOwner?.finances?.cash??null;
 const messageSpecs=[
  ['opening-stable','Stable Office','1999 opening roster: '+selectedOwner,
@@ -541,62 +519,6 @@ function breedingMarePage(offset=0,limit=100,filter=''){
 // Build one lightweight global index in small browser tasks. Never scan all
 // 87,500 full race files or block user interaction with a giant synchronous load.
 
-/* Keep 325k global index and sort state outside the game-render thread.
- * Worker replies contain one visible page, never the complete population.
- * The original incremental browser index remains as compatibility fallback. */
-let worldBrowseWorker=null,worldBrowseWorkerUnavailable=false;
-let worldBrowseRequest=null,worldBrowseResponse=null,worldBrowseSerial=0;
-let worldBrowseProgress=0,worldBrowseProgressTotal=worldCounts.worldHorses||worldCounts.horses;
-function fallbackWorldBrowse(){
- worldBrowseWorkerUnavailable=true;
- try{worldBrowseWorker?.terminate()}catch{}
- worldBrowseWorker=null;worldBrowseRequest=null;worldBrowseResponse=null;
- window.__WTW_NEXT__?.paint?.();
-}
-function getWorldBrowseWorker(){
- if(worldBrowseWorkerUnavailable||typeof Worker==='undefined')return null;
- if(worldBrowseWorker)return worldBrowseWorker;
- try{
-  const worker=new Worker('/next/1999-world-index.worker.mjs?rev=wtw1999-clean73-20261113-r1&'+worldQuery,
-   {type:'module',name:'wtw1999-world-registry'});
-  worker.onmessage=event=>{
-   const message=event.data||{};
-   if(message.type==='progress'||message.type==='index-ready'){
-    worldBrowseProgress=message.loaded||0;
-    worldBrowseProgressTotal=message.total||worldBrowseProgressTotal;
-    window.__WTW_NEXT__?.paint?.();
-   }
-   if(message.type==='result'&&message.requestId===worldBrowseRequest?.id){
-    worldBrowseResponse={key:worldBrowseRequest.key,data:message.result};
-    window.__WTW_NEXT__?.paint?.();
-   }
-   if(message.type==='error'){
-    // Real error is never presented as a false empty population.
-    console.warn('World roster worker fallback:',message.message||'unavailable');
-    fallbackWorldBrowse();
-   }
-  };
-  worker.onerror=()=>fallbackWorldBrowse();
-  worldBrowseWorker=worker;
-  return worker;
- }catch(error){worldBrowseWorkerUnavailable=true;return null}
-}
-function workerWorldBrowse(query){
- const worker=getWorldBrowseWorker();
- if(!worker)return null;
- const key=JSON.stringify(query);
- if(worldBrowseResponse?.key===key)return worldBrowseResponse.data;
- if(worldBrowseRequest?.key!==key){
-  const id=++worldBrowseSerial;
-  worldBrowseRequest={id,key};worldBrowseResponse=null;
-  try{worker.postMessage({type:'browse',requestId:id,query})}
-  catch{fallbackWorldBrowse();return null}
- }
- return {total:worldCounts.worldHorses||worldCounts.horses,indexing:true,items:[],
-  progress:worldBrowseProgress,loaded:worldBrowseProgress,
-  worldWorker:true,progressTotal:worldBrowseProgressTotal};
-}
-
 const globalHorseSummaries=[];
 let globalHorseComplete=false,globalHorseStarted=false,globalHorseProgress=0;
 let globalHorseCacheKey='',globalHorseCache=[];
@@ -643,8 +565,7 @@ function scanGlobalHorseIndex(){
  setTimeout(scanGlobalHorseIndex,0);
 }
 function worldHorseBrowse({offset=0,limit=160,search='',sort='name',desc=false,filters={},attributeKey=''}={}){
- const worker=workerWorldBrowse({offset,limit,search,sort,desc,filters,attributeKey});
- if(worker)return worker;
+ // Source-only index of 73 approved breeding horses; no synthetic worker.
  if(!globalHorseStarted){
   globalHorseStarted=true;
   setTimeout(scanGlobalHorseIndex,0);
