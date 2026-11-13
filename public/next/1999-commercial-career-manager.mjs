@@ -235,10 +235,6 @@ async function perform(action,element){
   const slot=await storeGame(name,captureCurrent());
   notice='Saved '+slot.name+' · '+kb(slot.bytes)+'.';return;
  }
- if(action==='migrate'){
-  const count=await migrateLegacy();
-  notice=count+' previous saved career(s) copied to compact storage. Originals are preserved.';return;
- }
  if(action==='new-world'){
   const profile=inputProfile();
   if(!window.confirm('Create a new '+fmt(profile.population)+'-horse '+
@@ -294,4 +290,4 @@ async function open(){
  }
 }
 window.WTWCompactCareerManager=Object.freeze({open,listSlots,storeGame,
- restoreGame,exportSlot,importFile,migrateLegacy,dbName:DB_NAME});
+ restoreGame,exportSlot,importFile,dbName:DB_NAME});
