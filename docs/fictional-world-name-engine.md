@@ -159,3 +159,27 @@ The optional fictional-world personnel style now generates a mixture of ordinary
 `tests/1999-fictional-latin-caribbean-names.test.mjs` covers country-specific pools, age bands, Portuguese-specific Brazilian names, accents, 11 forced-country rider populations, full-size 11,202-person 1999 fictional identity generation, double surnames, family-principal names, deterministic seeds, protected names and isolation from current historical game records.
 
 This is **a naming engine only**. It does not populate the early world, create jockey assignments or race outcomes, change the UI, or modify any existing playable name records.
+
+## International racing professionals — V6 (1999 fictional-world naming)
+
+The standalone fictional-world identity generator now has **separate, curated names for British, Irish, French, German, Japanese, Australian, New Zealand, Canadian, United Arab Emirates, and Hong Kong** personnel. Names reflect a coarse older (birth before 1960) / younger (1960–1989) first-name inventory rather than using a small universal English-language name list. The module `public/1999/engine/international-professional-names.mjs` is a **fictional editorial lexicon, not a source-certified national births database**. Canadian name pools cover Anglophone and Francophone usage. Irish surnames retain apostrophes, French/German accents are preserved, and Japanese personal names are displayed in English-language given-name-first order. Gulf names use plausible transliterated family names without automatically granting inherited or religious titles. HK is Hong Kong (a Special Administrative Region in 1999), not a sovereign-country assertion.
+
+### Role-weighted international exposure
+
+The default 1999 North American fictional naming distribution now distinguishes three internationally connected professions:
+
+| Role | U.S.-origin weight | Selected added origin pools |
+| --- | ---: | --- |
+| Trainer | 66% | Canada, Britain, Ireland, France, Germany, Australia, New Zealand, Japan, UAE |
+| Owner principal | 61% | Canada, Britain, Ireland, France, Germany, Japan, Australia, New Zealand, UAE, Hong Kong |
+| Bloodstock agent | 45% | Britain, Ireland, France, Germany, Australia, New Zealand, Japan, Canada, UAE |
+
+**These weights are editorial fiction-generation choices, not measured 1999 workforce statistics.** They reflect the qualitative reality of international breeding and sales activity, supported by contemporary reporting such as [September 1999 Thoroughbred Daily News international sales](https://www.thoroughbreddailynews.com/pdf/tdn/1999/tdn990929.pdf), [December 1999 TDN yearling-sales review](https://www.thoroughbreddailynews.com/pdf/tdn/1999/tdn991221.pdf), and a [1992 U.S. GAO report on international Thoroughbred competition and travel](https://gao.justia.com/department-of-agriculture/1992/10/international-trade-ggd-93-15/). These sources establish international relationships, **not the exact percentages in this model**.
+
+Explicit caller-supplied `originWeightsByRole` override the corresponding editorial profession distribution. All previously supported 1999 jockey-colony rules remain independent, including Latin American rider representation and custom colony mixes. The new country pools are applied whenever that country is selected, including for other professions where the origin already occurs; the three new default international mixes apply only to `trainer`, `owner`, and `bloodstock_agent`.
+
+Each fictional person retains its protected display name, `primarySurname`, stable/organization relationship and country source label. International names expose `internationalNamingCohort` and an explicit `INTERNATIONAL_1999_CURATED_PROFESSIONAL_COHORT_NOT_CENSUS` provenance. The factory manifest records `internationalProfessionalNameModel`, and the versioned V6 model identifier participates in the naming-spec fingerprint. Latin/Caribbean names remain on their distinct V5 model; U.S. birth-decade names retain their SSA source. Location is the *operating market*, not necessarily a person's birth country; V6 changes naming, not world geography.
+
+Run `node --test tests/1999-fictional-international-professional-names.test.mjs` to verify source boundaries, all ten international naming inventories, origin-weight distributions, full-population collision/relationship safety, every country-forced profession, deterministic output and noninterference with the active world.
+
+**Strict scope:** in-memory fictional naming proposals only. The existing 1999 world, live horse ownership, racing stables, history, save files, UI, and site data are not repopulated or edited.
