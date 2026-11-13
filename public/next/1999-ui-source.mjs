@@ -37,6 +37,10 @@ function trainingTrainerMap(){
 function syncDevelopment(date){
  const game=gameCareer();
  if(!game||game.date!==date)return game;
+ // A newly reset founding stable may deliberately contain zero racehorses.
+ // Do not invoke the gameplay trainer on an empty string; the engine correctly
+ // rejects it and the UI must not make unrelated farm pages unrenderable.
+ if(!stableHorses?.length)return game;
  if(game.horseDevelopment?.processedThrough===date)return game;
  const done=simulateStableTrainingThrough(game,{
   horses:stableHorses,trainerById:trainingTrainerMap(),seed:game.worldAnchor.seed,date
