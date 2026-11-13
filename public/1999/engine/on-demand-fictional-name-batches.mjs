@@ -101,6 +101,7 @@ export function generateOnDemandFictionalNames({
    state.maxPartnershipGroups>30000||
    !Number.isInteger(state.partnershipsIssued)||state.partnershipsIssued<0||
    state.partnershipsIssued>state.maxPartnershipGroups||
+   !Array.isArray(state.ownerEntities)||
    !Array.isArray(state.ownerGroupRecords)||
    state.ownerGroupRecords.length!==state.partnershipsIssued||
    (maxPartnershipGroups!==null&&maxPartnershipGroups!==state.maxPartnershipGroups))
@@ -129,6 +130,13 @@ export function generateOnDemandFictionalNames({
  const minted=collectNames(batch),reservedKeys=new Set(reserved.map(normalize));
  for(const name of minted)if(reservedKeys.has(normalize(name)))
   throw Error('Generated name collided with historic or prior batch name: '+name);
+ const newOwnerEntities=Object.freeze(batch.owners.map(x=>Object.freeze({
+  id:x.id,name:x.name,region:x.namingRegion,archetype:x.ownershipArchetype,
+  principalId:x.principalId,batchIndex
+ })));
+ const ownerEntities=Object.freeze([
+  ...(initial?[]:state.ownerEntities),...newOwnerEntities
+ ]);
  const newPartnerships=batch.owners.filter(x=>x.ownershipArchetype==='PARTNERSHIP_OR_SYNDICATE')
   .map(x=>Object.freeze({
    id:x.id,name:x.name,region:x.namingRegion,
@@ -145,7 +153,7 @@ export function generateOnDemandFictionalNames({
   nextBatch:batchIndex+1,
   maxPartnershipGroups:partnershipBudget,
   partnershipsIssued:partnershipIssuedAfter,
-  ownerGroupRecords,
+  ownerGroupRecords,ownerEntities,
   mintedNames:uniqueNames([...previous,...minted])
  });
  const programNames=Object.freeze(batch.people.filter(x=>
@@ -166,6 +174,7 @@ export function generateOnDemandFictionalNames({
   programNames,names:minted,
   ownership:Object.freeze({
    newPartnershipGroups:newPartnerships,
+   reusableOwnerCount:ownerEntities.length,
    reusablePartnershipGroups:ownerGroupRecords,
    maxPartnershipGroups:partnershipBudget,
    partnershipsIssued:partnershipIssuedAfter,
@@ -190,4 +199,22 @@ export function listReusableFictionalOwnershipGroups(state,{region=null}={}){
   throw Error('Invalid on-demand ownership registry');
  return Object.freeze(state.ownerGroupRecords.filter(record=>
   region===null||record.region===region));
+}
+
+
+/**
+ * Retrieve existing persons, private racing firms, family operations and
+ * partnerships for *possible* reuse. This is not a horse assignment or a
+ * new organization generator; the game decides which existing owner to use.
+ */
+export function listReusableFictionalOwners(state,{
+ archetype=null,region=null,limit=50
+}={}){
+ if(!state||state.model!==ON_DEMAND_NAMING_MODEL||
+  !Array.isArray(state.ownerEntities))throw Error('Invalid on-demand owner registry');
+ if(!Number.isInteger(limit)||limit<1||limit>1000)
+  throw Error('Invalid reusable owner result limit');
+ return Object.freeze(state.ownerEntities.filter(record=>
+  (archetype===null||record.archetype===archetype)&&
+  (region===null||record.region===region)).slice(0,limit));
 }
