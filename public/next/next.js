@@ -734,7 +734,7 @@ function loadWorld1999(){
  if(world1999Loading)return world1999Promise||Promise.resolve();
  world1999Loading=true;
  world1999Promise=fetch(window.__WTW_1999_MANAGEMENT__?.worldProfile?.mode==='FOUNDING_1999'?
-   '/data/wtw-1999-founding-directory-v1.json':
+   '/data/wtw-1999-founding-directory-v1.json?rev=wtw1999-history-bridge-v1':
    '/data/wtw-1999-world-directory-v33.json',{credentials:'same-origin',cache:'force-cache'})
   .then(r=>r.ok?r.json():Promise.reject(Error('1999 directory unavailable')))
   .then(data=>{
@@ -783,6 +783,13 @@ function world1999Entries(){
 function world1999Entry(key){
  const listed=world1999Entries().find(e=>e.worldKey===key);
  if(listed)return listed;
+ // Keep historic animals in a separate, non-living identity namespace.
+ if(String(key).startsWith('historical-horse:')){
+  const id=String(key).slice('historical-horse:'.length);
+  const h=(world1999Data?.historicalHorses||[]).find(h=>h.id===id);
+  return h?{kind:'historical-horse',name:h.name,canonicalId:h.id,
+   worldKey:key,_world:h}:null;
+ }
  const source=worldSourceRecord(key,world1999Data);
  if(!source)return null;
  const kind=key.split(':',1)[0];
@@ -814,6 +821,31 @@ function world1999Profile(){
  if(!e)return '<section class="ng-world-source-profile"><header><strong>1999 WORLD REGISTRY</strong></header>'+
   '<p>'+safe(world1999LoadFailed?'World source file is unavailable.':'Loading the 1999 source records…')+'</p></section>';
  const d=e._world||{},kind=e.kind;
+ if(kind==='historical-horse'){
+  const connections=(world1999Data?.historicalAnchors||[]).filter(a=>a.horseId===d.id);
+  const related=connections.map(a=>{
+   const org=(world1999Data?.organizations||[]).find(o=>o.id===a.organizationId);
+   const child=org?world1999Entry('farm:'+org.id):null;
+   const clickable=child?'<button type="button" data-ng="world-open" data-val="'+
+    safe(child.worldKey)+'"><strong>'+safe(org.name)+'</strong></button>':
+    '<strong>'+safe(org?.name||a.organizationId)+'</strong>';
+   const years=Array.isArray(a.recordedStakesYears)&&a.recordedStakesYears.length?
+    ' · horse-years '+a.recordedStakesYears.join(', '):'';
+   return '<p>'+clickable+' · '+safe(String(a.role||'CONNECTION').replaceAll('_',' '))+
+    safe(years)+' · '+safe(String(a.status||'SOURCE').replaceAll('_',' '))+'</p>';
+  }).join('');
+  const pedigree=[d.sireId?'Sire ID: '+d.sireId:'',
+   d.damId?'Dam ID: '+d.damId:''].filter(Boolean).join(' · ');
+  const year=d.foalYear?'Foaled '+d.foalYear:'Foaling year not independently recorded in this index';
+  return '<section class="ng-world-source-profile" data-world-kind="historical-horse" data-world-id="'+safe(d.id)+'">'+
+   '<header><strong>HISTORICAL HORSE · ARCHIVE REFERENCE, NOT A LIVING 1999 HORSE</strong></header>'+
+   '<h2>'+safe(d.name)+'</h2><p>'+safe(d.id)+' · '+safe(year)+'</p>'+
+   (pedigree?'<p>'+safe(pedigree)+'</p>':'')+
+   '<section class="ng-world-related"><header><strong>RECORDED ORGANIZATION CONNECTIONS</strong>'+
+   '<span>'+connections.length+' source links</span></header>'+related+'</section>'+
+   '<p>A year-level historical association alone does not establish race-day ownership, training or breeder credit.</p>'+
+   '</section>';
+ }
  if(kind==='horse'||kind==='person'||kind==='track')return restored1999Profile(kind,{...d,name:e.name});
  // All Horse, People and Track World records were already routed to the
  // authoritative full FM dossiers above. Only organization records use this view.
@@ -861,7 +893,8 @@ function world1999Profile(){
   '<span>'+breedingStock.length+' source-linked</span></header>'+breedingRows+'</section>':'';
  const anchors=(world1999Data?.historicalAnchors||[]).filter(a=>a.organizationId===d.id);
  const anchorRows=anchors.map(a=>{
-  const child=a.horseId?world1999Entry('horse:'+a.horseId):null;
+  const child=a.horseId?(world1999Entry('horse:'+a.horseId)||
+   world1999Entry('historical-horse:'+a.horseId)):null;
   const note=String(a.role||'CONNECTION').replaceAll('_',' ')+' · '+
    String(a.status||'HISTORICAL SOURCE').replaceAll('_',' ');
   return child?'<button type="button" data-ng="world-open" data-val="'+safe(child.worldKey)+
