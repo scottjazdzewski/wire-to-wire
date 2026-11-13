@@ -225,14 +225,25 @@ export async function openDurableFictionalNameService({
  safeNames(protectedPeople,'protected people');safeNames(protectedOrganizations,'protected organizations');
  let data=await storage.read({worldId,seed});
  if(!data){
-  await storage.initialize({
-   model:DURABLE_FICTIONAL_NAMING_MODEL,worldId,seed,revision:0,cursor:null,
-   protectedPeople:clone(protectedPeople),protectedOrganizations:clone(protectedOrganizations)
-  });
-  data=await storage.read({worldId,seed});
- }else if(protectedPeople.length||protectedOrganizations.length)
-  throw Error('Existing naming registry cannot be silently re-primed');
+  try{
+   await storage.initialize({
+    model:DURABLE_FICTIONAL_NAMING_MODEL,worldId,seed,revision:0,cursor:null,
+    protectedPeople:clone(protectedPeople),protectedOrganizations:clone(protectedOrganizations)
+   });
+  }catch(error){
+   // Two tabs may race to open the same empty registry. An atomic IDB
+   // key collision means the other tab probably initialized it. Re-read
+   // and VERIFY the same protected identity foundations before proceeding.
+   data=await storage.read({worldId,seed});
+   if(!data)throw error;
+  }
+  if(!data)data=await storage.read({worldId,seed});
+ }
  ensureStoredData(data,worldId,seed);
+ if((protectedPeople.length||protectedOrganizations.length)&&(
+  JSON.stringify(data.meta.protectedPeople)!==JSON.stringify(protectedPeople)||
+  JSON.stringify(data.meta.protectedOrganizations)!==JSON.stringify(protectedOrganizations)))
+  throw Error('Existing naming registry has different protected identities');
  let {registry,cursor}=hydrate(data);
  let unusable=false;
  async function refresh(){
