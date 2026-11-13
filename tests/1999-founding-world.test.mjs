@@ -173,3 +173,33 @@ test('full founding history bridge links source horse-years without importing de
  assert.deepEqual(live.historicalHorses,names);
  assert.equal(live.horses.length,112);
 });
+
+test('founding ancillary markets do not summon old 3,308-owner rivals or phantom sale lots',()=>{
+ const jockeys=Array.from({length:40},(_,i)=>founding.personAt(i)).filter(p=>p.role==='jockey');
+ assert.ok(jockeys.length>0);
+ for(const j of jockeys){
+  assert.equal(j.employmentStatus,'UNATTACHED_SCENARIO_FREE_AGENT');
+  assert.equal(j.employerOrganizationId,null);
+  assert.equal(j.bookingMarket?.competingBarns?.length,0);
+  assert.equal(j.bookingMarket?.status,'FOUNDING_BOOKING_MARKET_NOT_YET_POPULATED');
+ }
+ const scenarioBid=founding.jockeyBookingMarket(jockeys[0],'O-005910');
+ assert.equal(scenarioBid.competingBarns.length,0);
+ assert.throws(()=>founding.jockeyBookingMarket(jockeys[0],'O-TEST-1999-000001'),/outside founding world/);
+ const auctions=Array.from({length:founding.counts.auctions},(_,i)=>founding.auctionAt(i));
+ assert.equal(auctions.length,12);
+ assert.ok(auctions.every(a=>a.catalogLots===0&&a.availableLots===0&&
+  a.status==='PLANNED_NO_FOUNDING_LOTS_ENTERED'&&a.outcomes.length===0));
+});
+test('previously recorded farm principals and Argosy founder retain their exact 1999 person IDs',()=>{
+ const look=id=>founding.sourcePeople.find(p=>p.id===id);
+ const org=id=>founding.sourceOrganizations.find(o=>o.id===id);
+ assert.equal(look('P-000001').operatingOrganizationId,'O-000001');
+ assert.equal(look('P-000003').operatingOrganizationId,'O-000003');
+ assert.equal(look('P-000018').operatingOrganizationId,'O-000014');
+ assert.equal(org('O-000014').principalOwnerId,'P-000018');
+ assert.equal(org('O-000014').principalOwner,'Julian Voss');
+ assert.equal(look('P-000069').professionalAffinities[0],'O-000063');
+ assert.notEqual(look('P-000069').operatingOrganizationId,'O-000063',
+  'Ray Sutter is not automatically the Ironweed owner');
+});
