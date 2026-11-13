@@ -26,7 +26,8 @@ function fresh(profile=selectedWorld){
 function parse(value){try{const x=JSON.parse(value);return x&&typeof x==='object'&&!Array.isArray(x)?x:null}catch{return null}}
 function valid(x){
  return x?.worldAnchor?.schema===SCHEMA&&x?.worldAnchor?.startDate===START&&
-  x?.worldAnchor?.seed===SEED&&x.currentCase!=='powerline'&&typeof x.date==='string'&&
+  Number.isSafeInteger(x?.worldAnchor?.seed)&&x.worldAnchor.seed>0&&
+  x.worldAnchor.seed<=4294967295&&x.currentCase!=='powerline'&&typeof x.date==='string'&&
   /^\d{4}-\d{2}-\d{2}$/.test(x.date)&&x.date>=START;
 }
 try{
