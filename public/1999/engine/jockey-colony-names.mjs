@@ -10,7 +10,7 @@
 export const JOCKEY_COLONY_NAME_MODEL='WTW_1999_EDITORIAL_JOCKEY_COLONY_V1';
 export const JOCKEY_COLONIES=Object.freeze([
  'NEW_YORK','SOUTH_FLORIDA','SOUTHERN_CALIFORNIA','KENTUCKY',
- 'MID_ATLANTIC','LOUISIANA','ONTARIO','OTHER_US','OTHER_CANADA'
+ 'MID_ATLANTIC','LOUISIANA','ONTARIO','OTHER_US','OTHER_CANADA','OTHER_INTERNATIONAL'
 ]);
 export const JOCKEY_LATIN_AMERICAN_CARIBBEAN_ORIGINS=Object.freeze([
  'PR','PA','VE','MX','CL','PE','CO','DO','AR','BR','UY'
@@ -20,15 +20,16 @@ export const JOCKEY_LATIN_AMERICAN_CARIBBEAN_ORIGINS=Object.freeze([
 // Percentages are modeling choices, NOT track-level historical observations.
 const profile=(...pairs)=>Object.freeze(pairs.map(x=>Object.freeze(x)));
 export const DEFAULT_JOCKEY_COLONY_ORIGIN_WEIGHTS=Object.freeze({
- NEW_YORK:profile(['US',37],['PR',16],['PA',10],['VE',9],['MX',9],['CO',5],['DO',4],['PE',2],['CL',2],['AR',2],['BR',1],['CA',2],['GB',1]),
- SOUTH_FLORIDA:profile(['US',30],['PR',15],['PA',13],['VE',12],['MX',8],['CO',5],['DO',6],['PE',2],['CL',2],['AR',2],['BR',2],['CA',2],['GB',1]),
- SOUTHERN_CALIFORNIA:profile(['US',35],['PR',9],['PA',11],['VE',7],['MX',17],['CO',4],['DO',4],['PE',3],['CL',3],['AR',2],['BR',1],['CA',2],['GB',2]),
- KENTUCKY:profile(['US',43],['PR',13],['PA',10],['VE',8],['MX',10],['CO',4],['DO',3],['PE',2],['CL',2],['AR',1],['BR',1],['CA',2],['GB',1]),
+ NEW_YORK:profile(['US',37],['PR',15],['UY',1],['PA',10],['VE',9],['MX',9],['CO',5],['DO',4],['PE',2],['CL',2],['AR',2],['BR',1],['CA',2],['GB',1]),
+ SOUTH_FLORIDA:profile(['US',30],['PR',15],['PA',13],['VE',11],['UY',1],['MX',8],['CO',5],['DO',6],['PE',2],['CL',2],['AR',2],['BR',2],['CA',2],['GB',1]),
+ SOUTHERN_CALIFORNIA:profile(['US',35],['PR',9],['PA',11],['VE',7],['MX',16],['UY',1],['CO',4],['DO',4],['PE',3],['CL',3],['AR',2],['BR',1],['CA',2],['GB',2]),
+ KENTUCKY:profile(['US',43],['PR',13],['PA',10],['VE',7],['UY',1],['MX',10],['CO',4],['DO',3],['PE',2],['CL',2],['AR',1],['BR',1],['CA',2],['GB',1]),
  MID_ATLANTIC:profile(['US',46],['PR',14],['PA',9],['VE',8],['MX',9],['CO',3],['DO',4],['PE',2],['CL',1],['AR',1],['CA',2],['GB',1]),
  LOUISIANA:profile(['US',51],['PR',10],['PA',7],['VE',6],['MX',14],['CO',3],['DO',3],['PE',2],['CL',1],['CA',2],['GB',1]),
  ONTARIO:profile(['CA',42],['US',22],['PR',9],['PA',5],['VE',4],['MX',7],['CO',4],['DO',2],['PE',1],['CL',1],['AR',1],['GB',2]),
  OTHER_US:profile(['US',49],['PR',11],['PA',8],['VE',7],['MX',11],['CO',4],['DO',3],['PE',2],['CL',1],['AR',1],['BR',1],['CA',1],['GB',1]),
- OTHER_CANADA:profile(['CA',48],['US',24],['PR',7],['PA',4],['VE',3],['MX',5],['CO',3],['DO',2],['PE',1],['CL',1],['AR',1],['GB',1])
+ OTHER_CANADA:profile(['CA',48],['US',24],['PR',7],['PA',4],['VE',3],['MX',5],['CO',3],['DO',2],['PE',1],['CL',1],['AR',1],['GB',1]),
+ OTHER_INTERNATIONAL:profile(['GB',46],['IE',23],['US',13],['CA',3],['PR',3],['PA',2],['VE',2],['MX',3],['AR',2],['BR',2],['UY',1])
 });
 function hash(seed,key){
  let h=(2166136261^(seed>>>0))>>>0;
@@ -54,7 +55,7 @@ export function inferJockeyColony(market){
  if(['maryland','virginia','pennsylvania','new jersey','delaware','west virginia'].includes(region))
   return 'MID_ATLANTIC';
  if(region.includes('louisiana'))return 'LOUISIANA';
- return market.code==='US'?'OTHER_US':'OTHER_CANADA';
+ return market.code==='US'?'OTHER_US':'OTHER_INTERNATIONAL';
 }
 export function chooseJockeyColonyOrigin(seed,index,colony,weights=DEFAULT_JOCKEY_COLONY_ORIGIN_WEIGHTS){
  const mix=weights[colony];
