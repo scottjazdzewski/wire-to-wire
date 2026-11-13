@@ -1,8 +1,8 @@
-/* WIRE TO WIRE: January 1999 325,000-horse registry search worker.
+/* WIRE TO WIRE: January 1999 selected-world registry search worker.
  * Owns the global sortable/searchable index OFF the rendering thread.
  * Only returns one visible page. No full 325k snapshot is persisted by the UI.
  * The existing game authority, IDs, and career-save schema are unchanged. */
-import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-founding-v2';
+import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-founding-history-v3';
 
 const worldOptions=new URLSearchParams(self.location?.search||'');
 const population=worldOptions.get('population')||'325000';
