@@ -63,9 +63,11 @@ const stemKey=candidate=>{
  const words=s.split(/\s+/);
  return norm(words.length>1?words.slice(0,2).join(' '):s);
 };
-const hasArtificialPhrase=candidate=>{
+export const hasArtificialOrganizationPhrase=candidate=>{
  const plain=String(candidate).replace(/[-&]/g,' ').replace(/\s+/g,' ').trim();
- if(/\b([a-z]+)\s+\1\b/i.test(plain))return true;
+ // Word boundaries with [a-z] split names containing accents, wrongly
+ // rejecting natural combinations such as "Raúl López Racing" as "l L".
+ if(/(?:^|[^\p{L}])(\p{L}+)\s+\1(?=$|[^\p{L}])/iu.test(plain))return true;
  if(/\b(?:Equine|Thoroughbreds|Bloodstock)\s+(?:Farmstead|Acres|Stallion|Stud|Nursery)\b/i.test(plain))return true;
  if(/\b(?:Farm|Farms|Stud|Nursery)\s+(?:Farm|Farms|Stud|Nursery)\b/i.test(plain))return true;
  return false;
@@ -84,6 +86,32 @@ const isMeaningfullySimilar=(candidate,usedRoots)=>{
 const MAX_DISTINCTIVE_ROOT_USES=6;
 const LANDMARK_ANCHORS=[...new Set([...LAND,...PLACES,...LANDMARK,...CLUB_ROOTS,...REGIONAL_NAMING_ANCHORS].map(rootOf))]
  .sort((a,b)=>b.length-a.length);
+/**
+ * Efficiently index already-registered organization roots. The guard
+ * preserves the old policy: candidate and protected roots conflict if one
+ * prefixes the other and both share at least seven normalized characters.
+ *
+ * Output is read-only and deterministic; a source root is not imported,
+ * renamed or registered by this helper.
+ */
+export function createProtectedOrganizationRootGuard(roots){
+ if(!roots||typeof roots[Symbol.iterator]!=='function')
+  throw Error('Invalid protected organization roots');
+ const values=[...new Set([...roots].filter(x=>typeof x==='string'&&x.length>=7))];
+ const set=new Set(values),sorted=values.sort();
+ return root=>{
+  if(typeof root!=='string'||root.length<7||!sorted.length)return false;
+  for(let length=7;length<=root.length;length++)
+   if(set.has(root.slice(0,length)))return true;
+  let low=0,high=sorted.length;
+  while(low<high){
+   const mid=(low+high)>>>1;
+   if(sorted[mid]<root)low=mid+1;
+   else high=mid;
+  }
+  return low<sorted.length&&sorted[low].startsWith(root);
+ };
+}
 const distinctiveRoot=name=>{
  const root=rootOf(name);
  return LANDMARK_ANCHORS.find(a=>root===a||root.startsWith(a+' '))||null;
@@ -214,16 +242,16 @@ export function createOrganizationNameRoster({
   if(!Number.isInteger(n)||n<0)throw Error('Invalid naming count');
  const used=new Set(protectedNames.map(norm).filter(Boolean));
  const roots=new Set(protectedNames.filter(s=>trailing.test(String(s))).map(rootOf).filter(Boolean));
- const protectedRoots=[...roots].filter(s=>s.length>=6);
+ const hasProtectedPrefixConflict=createProtectedOrganizationRootGuard(roots);
  const stems=new Map(),distinctiveRootCounts=new Map();
  const perCategory={owner:0,barn:0,farm:0,breaking:0};
  let retries=0;
  const reserve=(candidate,kind)=>{
   const key=norm(candidate),root=rootOf(candidate),stem=stemKey(candidate);
-  if(!key||key.length<5||used.has(key)||!root||hasArtificialPhrase(candidate)||isMeaningfullySimilar(candidate,roots))return false;
+  if(!key||key.length<5||used.has(key)||!root||hasArtificialOrganizationPhrase(candidate)||isMeaningfullySimilar(candidate,roots))return false;
   // Protect distinctive prefixes of existing historic racing organizations;
   // do not mint e.g. "Kingsmere Valley Farm" beside "Kingsmere Farm".
-  if(protectedRoots.some(old=>(root.startsWith(old)||old.startsWith(root))&&Math.min(root.length,old.length)>=7))return false;
+  if(hasProtectedPrefixConflict(root))return false;
   const landmarkRoot=distinctiveRoot(candidate);
   if(landmarkRoot&&(distinctiveRootCounts.get(landmarkRoot)||0)>=MAX_DISTINCTIVE_ROOT_USES)return false;
   // Repeating the same first two content words with a different third word
