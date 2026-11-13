@@ -9,6 +9,7 @@ import {openingWorld1999 as canon} from './canon-mini.mjs';
 import {create1999Universe} from './full-world-generator.mjs';
 import attributeCatalog from './attribute-catalog.mjs';
 import {createFoundingProfessionals1999,FOUNDING_PERSONNEL_SCHEMA} from './founding-personnel-1999.mjs';
+import {buildFoundingAncestry1999} from './founding-ancestry-1999.mjs';
 
 export const FOUNDING_WORLD_MODE='FOUNDING_1999';
 export const FOUNDING_WORLD_SCHEMA='WTW_1999_FOUNDING_WORLD_V1';
@@ -236,6 +237,10 @@ export function createFounding1999Universe({seed=19990101}={}) {
  }
  const breedingMares=sourceBroodmares.concat(sampleBoarding);
  validateScenario(sourceOrganizations,sourceHorses,sourceStallions,breedingMares);
+ // Five-generation SOURCE-only history, never part of the 1999 living herd.
+ const foundingAncestry=buildFoundingAncestry1999({
+  livingHorses:[...sourceHorses,...sourceStallions,...breedingMares],
+  historicalHorses:historicalLinks.horses,generations:5});
  const trainerIds=new Set(sourceHorses.map(h=>h.trainerId).filter(Boolean));
  for(const id of ['P-000069','P-000077'])trainerIds.add(id);
  const canonTrainers=canon.people.filter(p=>String(p.role||'').toLowerCase().includes('trainer'));
@@ -455,6 +460,7 @@ export function createFounding1999Universe({seed=19990101}={}) {
   sourceBroodmares:breedingMares,sourceBroodmareBoarding:sampleBoarding,
   historicalAnchors:historicalLinks.anchors,
   historicalHorses:historicalLinks.horses,
+  foundingAncestry,
   excludedActiveStaffRoles:['groom','exercise_rider'],
   audit:{sourceOpeningHorses:sourceHorses.length,sourceOwnersWithRunners:
    [...ownerHorseMap.values()].filter(a=>a.length).length,
@@ -462,6 +468,7 @@ export function createFounding1999Universe({seed=19990101}={}) {
    provisionalOrganizations:PROVISIONAL.length,
    historicalAnchorRecords:historicalLinks.anchors.length,
    linkedHistoricalHorses:historicalLinks.horses.length,
+   pedigreeClosure:foundingAncestry.audit,
    currentBreedingMares:breedingMares.length,currentStallions:sourceStallions.length,
    sourceBoardingMaresAvailable:sourceBoarding.length,
    historyArchiveImmutable:true,provisionalOwnerIdsNotPermanent:true,
