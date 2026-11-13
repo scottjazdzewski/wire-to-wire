@@ -274,7 +274,7 @@ export function createIndexedFictionalNameRegistry({
  * indexed registry instead of injecting every prior name into protectedNames.
  * State is compact: ONLY cursor/version/counts, not name or owner arrays.
  */
-export function generateIndexedFictionalNames({
+export function prepareIndexedFictionalNameBatch({
  registry,worldId,seed,year=1999,cursor=null,roles={},owners=0,
  facilities={},maxPartnershipGroups=null,soleOwnerPercent=23,
  markets,originWeightsByRole,jockeyOriginWeightsByColony
@@ -325,10 +325,24 @@ export function generateIndexedFictionalNames({
  ];
  const groups=batch.owners.filter(x=>x.ownershipArchetype==='PARTNERSHIP_OR_SYNDICATE');
  if(groups.length>remaining)throw Error('Indexed partnership limit exceeded');
- // Atomic compare-and-swap in the registry. If another caller committed a
- // competing batch, it fails rather than silently issuing duplicate names.
+ // Pure preparation: nothing has been committed to either the detached
+ // naming registry or durable storage. Callers can validate and atomically
+ // persist this specific proposal before updating the read-through indexes.
+ return Object.freeze({
+  registry,batch,organizations,groups,worldId,seed,year,batchIndex,
+  limit,remaining,soleOwnerPercent,expectedRevision:initial?0:cursor.revision
+ });
+}
+
+/** Finalize an ALREADY durable, revision-checked naming proposal in memory. */
+export function commitPreparedIndexedFictionalNameBatch(prepared){
+ if(!prepared||!prepared.registry||!prepared.batch||
+  !Array.isArray(prepared.organizations)||!Array.isArray(prepared.groups))
+  throw Error('Invalid prepared indexed naming batch');
+ const {registry,batch,organizations,groups,worldId,seed,year,batchIndex,
+  limit,remaining,soleOwnerPercent,expectedRevision}=prepared;
  const receipt=registry.commit({
-  expectedRevision:initial?0:cursor.revision,
+  expectedRevision,
   people:batch.people,organizations,owners:batch.owners,batchIndex
  });
  const nextCursor=Object.freeze({
@@ -358,4 +372,16 @@ export function generateIndexedFictionalNames({
    availableExistingOwners:receipt.owners
   })
  });
+}
+
+
+/**
+ * Historical in-memory V11 entrypoint remains fully compatible: prepare,
+ * then commit synchronously. V12 durable storage uses the two steps with a
+ * transaction between them so a failed disk write cannot mint phantom names.
+ */
+export function generateIndexedFictionalNames(options={}){
+ return commitPreparedIndexedFictionalNameBatch(
+  prepareIndexedFictionalNameBatch(options)
+ );
 }
