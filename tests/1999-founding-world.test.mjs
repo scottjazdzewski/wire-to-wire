@@ -178,7 +178,7 @@ test('founding ancillary markets do not summon old 3,308-owner rivals or phantom
  const jockeys=Array.from({length:40},(_,i)=>founding.personAt(i)).filter(p=>p.role==='jockey');
  assert.ok(jockeys.length>0);
  for(const j of jockeys){
-  assert.equal(j.employmentStatus,'UNATTACHED_SCENARIO_FREE_AGENT');
+  assert.equal(j.employmentStatus,'AVAILABLE_UNCONTRACTED');
   assert.equal(j.employerOrganizationId,null);
   assert.equal(j.bookingMarket?.competingBarns?.length,0);
   assert.equal(j.bookingMarket?.status,'FOUNDING_BOOKING_MARKET_NOT_YET_POPULATED');
