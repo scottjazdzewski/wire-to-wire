@@ -6,7 +6,7 @@
 import {trackProgram1999,trackMeetOpen1999} from '/next/1999-track-program.mjs';
 import {WTW_ALTERNATE_STAKES_1999} from '/next/1999-alternate-stakes.mjs';
 import {WTW_REGIONAL_STAKES_1999} from '/next/1999-regional-stakes.mjs';
-import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-founding-leadership-v1';
+import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-clean73-20261113-r1';
 import attributeCatalog from '/1999/engine/attribute-catalog.mjs';
 import {TRAINING_PLANS,createHorseTrainingRecord,horseTrainingSnapshot,
  assignHorseTrainingPlan,simulateStableTrainingThrough,trainingFinancials}
@@ -540,7 +540,7 @@ function getWorldBrowseWorker(){
  if(worldBrowseWorkerUnavailable||typeof Worker==='undefined')return null;
  if(worldBrowseWorker)return worldBrowseWorker;
  try{
-  const worker=new Worker('/next/1999-world-index.worker.mjs?rev=wtw1999-founding-leadership-v1&'+worldQuery,
+  const worker=new Worker('/next/1999-world-index.worker.mjs?rev=wtw1999-clean73-20261113-r1&'+worldQuery,
    {type:'module',name:'wtw1999-world-registry'});
   worker.onmessage=event=>{
    const message=event.data||{};
