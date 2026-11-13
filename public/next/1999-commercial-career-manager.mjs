@@ -8,8 +8,8 @@
 import {encodeCareerSave,decodeCareerSave,packCareerFile,unpackCareerFile}
  from '/1999/engine/compact-career.mjs';
 
-const DB_NAME='WireToWireCompactCareersV1',MAIN='wtw1999ManagementStateV1';
-const LEGACY='wtw1999NamedGameSavesV1';
+const DB_NAME='WireToWireFoundingCareersV1',MAIN='wtw1999FoundingStateV1';
+const LEGACY='wtw1999FoundingNamedSavesV1';
 const MAX_SLOTS=60,MAX_TOTAL_BYTES=512*1024*1024;
 const $=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({
@@ -80,7 +80,7 @@ function config(){
 function currentGame(){
  const raw=localStorage.getItem(MAIN);
  let game;try{game=JSON.parse(raw||'null')}catch{}
- if(game?.worldAnchor?.schema!=='WTW_1999_CLEAN_CAREER_V3')
+ if(game?.worldAnchor?.schema!=='WTW_1999_FOUNDING_CAREER_V1')
   throw Error('No valid 1999 career is currently active');
  return game;
 }
@@ -88,8 +88,8 @@ function profileForGame(game){
  const a=game.worldAnchor||{};
  return config().normalize({
   seed:a.worldProfile?.seed??a.seed??19990101,
-  mode:a.worldProfile?.mode??a.mode??'CANON_ANCHORED_TEST',
-  population:a.worldProfile?.population??a.population??325000
+  mode:a.worldProfile?.mode??a.mode??'FOUNDING_1999',
+  population:a.worldProfile?.population??a.population??112
  });
 }
 function baselineFor(profile){
@@ -134,7 +134,7 @@ async function restoreGame(id){
   throw Error('Save and world profile disagree');
  localStorage.setItem(MAIN,JSON.stringify(game));
  config().pin(profile);
- localStorage.setItem('wtw1999CleanCareerV3','active');
+ localStorage.setItem('wtw1999FoundingSessionV1','active');
  location.reload();
 }
 async function exportSlot(id){
@@ -185,9 +185,9 @@ function modal(){
 function inputProfile(){
  const dom=modal();
  return config().normalize({
-  population:Number(dom.querySelector('[data-cc="population"]')?.value||325000),
+  population:Number(dom.querySelector('[data-cc="population"]')?.value||112),
   seed:Number(dom.querySelector('[data-cc="seed"]')?.value||19990101),
-  mode:dom.querySelector('[data-cc="mode"]')?.value||'CANON_ANCHORED_TEST'
+  mode:dom.querySelector('[data-cc="mode"]')?.value||'FOUNDING_1999'
  });
 }
 let busy=false,notice='';
@@ -196,7 +196,7 @@ async function refresh(){
  const current=config().current(),slots=await listSlots();
  const saved=slots.map(x=>'<div class="wtw-cc-slot"><div><strong>'+esc(x.name)+'</strong>'+
   '<small>'+esc(x.date)+' · '+fmt(x.profile?.population)+' horses · '+
-   esc(x.profile?.mode==='FULLY_FICTIONAL_TEST'?'Fictional':'Historical foundation')+
+   esc(x.profile?.mode==='FOUNDING_1999'?'Founding 1999':x.profile?.mode==='FULLY_FICTIONAL_TEST'?'Fictional':'Expanded historical')+
    ' · '+kb(x.bytes)+' ('+esc(x.encoding)+')</small></div>'+
    '<div class="wtw-cc-actions"><button data-cc-action="load" data-id="'+esc(x.id)+'">LOAD</button>'+
    '<button data-cc-action="export" data-id="'+esc(x.id)+'">EXPORT</button>'+
@@ -211,19 +211,21 @@ async function refresh(){
   '<header><div><small>WIRE TO WIRE / LOCAL-FIRST CAREERS</small><h2>WORLD & CAREER MANAGER</h2></div>'+
   '<button data-cc-action="close">✕ CLOSE</button></header>'+
   '<div class="wtw-cc-current">CURRENT WORLD · '+fmt(current.population)+' HORSES · '+
-   esc(current.mode==='FULLY_FICTIONAL_TEST'?'FICTIONAL':'HISTORICAL FOUNDATION')+
+   esc(current.mode==='FOUNDING_1999'?'FOUNDING 1999':current.mode==='FULLY_FICTIONAL_TEST'?'FICTIONAL':'EXPANDED HISTORICAL')+
    ' · SEED '+esc(current.seed)+'</div>'+
   '<div class="wtw-cc-section"><h3>NEW WORLD</h3>'+
-  '<p>Choose a unique starting world. The population is generated from its seed, not stored as 325,000 profiles.</p>'+
-  '<div class="wtw-cc-grid"><label>HORSE POPULATION<input data-cc="population" type="number" min="10000" max="325000" step="1000" value="'+
+  '<p>Begin with 112 source-linked founding horses. Expand only after testing this small 1999 scenario; historical results stay archived.</p>'+
+  '<div class="wtw-cc-grid"><label>HORSE POPULATION<input data-cc="population" type="number" min="112" max="325000" step="1" value="'+
    current.population+'"/></label>'+
-  '<label>WORLD SOURCE<select data-cc="mode"><option value="CANON_ANCHORED_TEST" '+
+  '<label>WORLD SOURCE<select data-cc="mode"><option value="FOUNDING_1999" '+
+   (current.mode==='FOUNDING_1999'?'selected':'')+'>Founding 1999 (source only)</option>'+ 
+   '<option value="CANON_ANCHORED_TEST" '+
    (current.mode==='CANON_ANCHORED_TEST'?'selected':'')+'>Historical foundation</option>'+
    '<option value="FULLY_FICTIONAL_TEST" '+(current.mode==='FULLY_FICTIONAL_TEST'?'selected':'')+
    '>Fictional horse population (test)</option></select></label>'+
   '<label>WORLD SEED<input data-cc="seed" type="number" min="1" max="4294967295" step="1" value="'+esc(current.seed)+'"/></label></div>'+
-  '<div class="wtw-cc-actions">'+config().presets.map(p=>'<button data-cc-action="preset" data-population="'+p.population+'">'+esc(p.label)+'</button>').join('')+'</div>'+
-  '<p class="wtw-cc-warning">World presets scale the population directory and breeding stock. The existing January 1999 race scheduler still uses its original 87,500-horse gameplay scope until lifecycle integration is completed.</p>'+
+  '<div class="wtw-cc-actions">'+config().presets.map(p=>'<button data-cc-action="preset" data-population="'+p.population+'" data-mode="'+(p.mode||'CANON_ANCHORED_TEST')+'">'+esc(p.label)+'</button>').join('')+'</div>'+
+  '<p class="wtw-cc-warning">Founding mode excludes the synthetic 325,000-horse world. Larger presets remain TEST modes until their history is reconciled.</p>'+
   '<button data-cc-action="new-world" class="primary">CREATE NEW WORLD (BACK UP CURRENT CAREER FIRST)</button></div>'+
   '<div class="wtw-cc-section"><h3>COMPACT SAVES · '+slots.length+' SLOTS</h3>'+
   '<p>Local device only. No account, monthly fee or cloud storage required. Portable .wtwsave files have checksums and gzip compression where supported. Total compact-save budget: 512 MB across slots.</p>'+
@@ -241,7 +243,10 @@ async function perform(action,element){
  if(action==='close'){modal().hidden=true;return}
  if(action==='preset'){
   const input=modal().querySelector('[data-cc="population"]');
-  input.value=String(element.dataset.population);return;
+  input.value=String(element.dataset.population);
+  const mode=modal().querySelector('[data-cc="mode"]');
+  if(mode)mode.value=element.dataset.mode||'CANON_ANCHORED_TEST';
+  return;
  }
  if(action==='import'){modal().querySelector('[data-cc="import-file"]').click();return}
  if(action==='save'){
@@ -257,7 +262,7 @@ async function perform(action,element){
  if(action==='new-world'){
   const profile=inputProfile();
   if(!window.confirm('Create a new '+fmt(profile.population)+'-horse '+
-   (profile.mode==='FULLY_FICTIONAL_TEST'?'fictional':'historical')+
+   (profile.mode==='FOUNDING_1999'?'founding':profile.mode==='FULLY_FICTIONAL_TEST'?'fictional':'expanded historical')+
    ' world? The current career will be backed up before it is replaced.'))return;
   const backup=await storeGame('Pre-new-world backup · '+new Date().toISOString().slice(0,16),
    captureCurrent());
@@ -265,7 +270,7 @@ async function perform(action,element){
   // New settings take effect only after the confirmed, successful backup.
   localStorage.setItem(MAIN,JSON.stringify(fresh));
   config().pin(profile);
-  localStorage.setItem('wtw1999CleanCareerV3','active');
+  localStorage.setItem('wtw1999FoundingSessionV1','active');
   notice='Previous career backed up as '+backup.name+'.';
   location.reload();return;
  }
