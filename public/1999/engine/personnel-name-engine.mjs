@@ -108,11 +108,14 @@ export function createPersonnelNameRoster(seed,count,roleAt,protectedNames=[],op
   throw Error('Invalid personnel name seed or count');
  const base=createGeographicNameRoster(seed,count,roleAt,protectedNames,options);
  const reserved=new Set(protectedNames.map(norm));
+ const externallyReserved=options.isExternalNameReserved??(()=>false);
+ if(typeof externallyReserved!=='function')throw Error('Invalid indexed name lookup');
  // Reserve every base name first so variants cannot accidentally appropriate an
  // identity that belongs to a later person, or to a different professional role.
  for(const record of base){
   const key=norm(record.name);
-  if(!key||reserved.has(key))throw Error('Base personnel name collision');
+  if(!key||reserved.has(key)||externallyReserved(record.name))
+   throw Error('Base personnel name collision');
   reserved.add(key);
  }
  const byCountry=new Map();
@@ -124,7 +127,8 @@ export function createPersonnelNameRoster(seed,count,roleAt,protectedNames=[],op
  return base.map((record,i)=>{
   const role=roleAt(i),candidate=variant(seed,i,record,role,byCountry,base,options);
   let name=record.name,nameStyle=/\b[A-Z]\.\s/.test(name)?'MIDDLE_INITIAL':'GIVEN_SURNAME';
-  if(candidate.name!==name&&!reserved.has(norm(candidate.name))){
+  if(candidate.name!==name&&!reserved.has(norm(candidate.name))&&
+   !externallyReserved(candidate.name)){
    name=candidate.name;nameStyle=candidate.style;reserved.add(norm(name));
   }
   return {...record,name,nameStyle,nameModel:PERSONNEL_NAME_MODEL,
