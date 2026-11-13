@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
 import {
  createIndexedFictionalNameRegistry,generateIndexedFictionalNames,
  INDEXED_FICTIONAL_NAME_REGISTRY_MODEL,COMPACT_FICTIONAL_NAME_CURSOR_MODEL
@@ -175,4 +176,22 @@ test('indexed mechanism remains optional and does not touch playable world or le
  const w=createFictionalWorldNameEngine({worldId:'INDEX-LEGACY-COMPAT',seed:12345,
   roles:{trainer:8},owners:12,facilities:{generalFarms:2}});
  assert.equal(w.owners.length,12);
+});
+
+test('indexed benchmark creates no playable world and keeps cursor size bounded',()=>{
+ const script=new URL('../scripts/bench-indexed-naming-v11.mjs',import.meta.url).pathname;
+ const output=execFileSync(process.execPath,[script,
+  '--batches','6','--owners','20','--trainers','7',
+  '--jockeys','5','--historic','250'
+ ],{encoding:'utf8',timeout:90000});
+ const report=JSON.parse(output);
+ assert.equal(report.benchmark,'WTW-V11-COMPACT-INDEXED-NAME-REGISTRY');
+ assert.equal(report.createsPlayableWorld,false);
+ assert.equal(report.createsHorseEntities,false);
+ assert.equal(report.options.batches,6);
+ assert.equal(report.issuedOwnerEntities,120);
+ assert.equal(report.issuedCounts.owners,120);
+ assert.ok(report.issuedNames>200);
+ assert.ok(report.finalCheckpointBytes<350);
+ assert.ok(report.bytesGrowth<20);
 });
