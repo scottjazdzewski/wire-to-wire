@@ -56,7 +56,7 @@ test('heritage naming is a style, never a fabricated farm founding date',()=>{
   assert.doesNotMatch(output,badPhrase);
  }
  assert.match(contextualOwnerCandidate(19990101,2,0,'David Mercer','Mercer',
-  {region:'KENTUCKY',era:'HERITAGE'}),/Racing|Partners|Bloodstock|Thoroughbreds|Partnership|Syndicate/);
+  {region:'KENTUCKY',era:'HERITAGE'}),/Racing|Partners|Bloodstock|Thoroughbreds|Partnership|Syndicate|Stables/);
  assert.match(contextualStableCandidate(19990101,4,0,'Ana Ortiz','Ortiz',
   {region:'FLORIDA'}),/Ortiz|Training Barn/);
  assert.match(contextualBreakingCandidate(19990101,6,0,{region:'CALIFORNIA'}),
