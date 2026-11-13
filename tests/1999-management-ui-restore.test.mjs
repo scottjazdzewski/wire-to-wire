@@ -7,8 +7,8 @@ const root=readFileSync('public/index.html','utf8');
 const bootstrap=readFileSync('public/next/1999-bootstrap.js','utf8');
 const office=readFileSync('public/office-v30-4.js','utf8');
 const manager=readFileSync('public/next/next.js','utf8');
-const KEY='wtw1999ManagementStateV1';
-const SCHEMA='WTW_1999_CLEAN_CAREER_V3';
+const KEY='wtw1999FoundingStateV1';
+const SCHEMA='WTW_1999_FOUNDING_CAREER_V1';
 function start(preload={}){
  const records=new Map(Object.entries(preload));
  const localStorage={
@@ -35,6 +35,8 @@ test('new session begins with zero old decisions and no race results',()=>{
  assert.equal(state.currentCase,'opening-stable');
  assert.equal(state.worldAnchor.startDate,'1999-01-01');
  assert.equal(state.worldAnchor.seed,19990101);
+ assert.equal(state.worldAnchor.mode,'FOUNDING_1999');
+ assert.equal(state.worldAnchor.population,112);
  assert.equal(state.turn,0);
  assert.deepEqual(Object.keys(state.horseState),[]);
  assert.deepEqual(state.decisionLog,[]);
@@ -42,7 +44,7 @@ test('new session begins with zero old decisions and no race results',()=>{
  assert.equal(state.worldAnchor.lastCommittedRaceResult,null);
  assert.equal(state.worldAnchor.lastCommittedTransaction,null);
  assert.equal(window.__WTW_1999_MANAGEMENT__.saveKey,KEY);
- assert.equal(records.get('wtw1999CleanCareerV3'),'active');
+ assert.equal(records.get('wtw1999FoundingSessionV1'),'active');
 });
 test('old Office case and save state are never imported into a 1999 world',()=>{
  for(const date of ['2014-07-15','1999-04-12']){
@@ -71,8 +73,8 @@ test('true 1999 save persists progress without restoring old cases',()=>{
 test('invalid dated or mislabeled 1999 saves reset to clean Jan 1',()=>{
  const old=JSON.stringify({schema:SCHEMA,date:'2014-07-15',worldAnchor:{schema:SCHEMA,startDate:'1999-01-01',seed:19990101},currentCase:'powerline'});
  const testCases=[
-  {[KEY]:old,wtw1999CleanCareerV3:'active'},
-  {[KEY]:JSON.stringify({schema:'2014_DEMO',date:'1999-01-12',worldAnchor:{startDate:'1999-01-01'}}),wtw1999CleanCareerV3:'active'}
+  {[KEY]:old,wtw1999FoundingSessionV1:'active'},
+  {[KEY]:JSON.stringify({schema:'2014_DEMO',date:'1999-01-12',worldAnchor:{startDate:'1999-01-01'}}),wtw1999FoundingSessionV1:'active'}
  ];
  for(const data of testCases){const x=start(data);assert.equal(x.state.date,'1999-01-01');assert.equal(x.state.currentCase,'opening-stable')}
 });
