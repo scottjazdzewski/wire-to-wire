@@ -140,3 +140,22 @@ A 70-year-old trainer and a 20-year-old jockey now use **their modeled birth dec
 - This feature is still only a name-generation improvement, not a horse, pedigree, racetrack, history or save loader. Support for validated non-U.S. birth-generation statistics is a future independent naming task.
 
 Run `node --test tests/1999-fictional-birth-cohort-names.test.mjs` to validate decade coverage, exact cohort matching, source labeling and absence of current-world writes.
+
+## Latin American and Caribbean fictional personal names (V5)
+
+The standalone naming engine now includes **11 distinct curated geographical name ecologies**: Puerto Rico (U.S. territory), Panama, Venezuela, Mexico, Chile, Peru, Colombia, Dominican Republic, Argentina, Uruguay and Brazil. Jockey-colony location still determines the probabilistic origin mix; the chosen *fictional origin* selects a country-specific given-name and surname inventory. Names are not used to infer a real person's ethnicity, race, nationality or immigration status.
+
+Source/evidence boundaries:
+- The naming customs of two family surnames, the father's first surname followed by the mother's in many Spanish-speaking settings, are described in the [Associated Press explainer](https://apnews.com/article/1f4b916b737717ae8594b3ee22948694) and [U.S. DHS SSA name-documentation guidance](https://risos-apa-production-public.s3.amazonaws.com/DHS/DHS_554_.pdf).
+- The [SSA Puerto Rico territory births table](https://www.ssa.gov/oact/babynames/territories.html) demonstrates that Puerto Rico has a separately published naming population. **The new Latin country pools and their age-band preferences are *fictional editorial approximations*, not extracted historical civil registry rankings or measured 1999 frequencies.** Brazilian given names are Portuguese rather than generic Spanish.
+- All names preserve accents in their display forms while duplicate detection folds accents and punctuation. This avoids separate "José García" and "Jose Garcia" identities that visually refer to the same full name.
+
+The engine's age bands distinguish people born **before 1960** from those born **1960–1989**; this is not a claim about precise decade-by-decade popularity outside the U.S. U.S.-origin persons continue to use their verified SSA top-30 birth-decade first-name corpus. Latin/Caribbean people expose `regionalNamingCohort` and a correctly labeled `nameOrigin`; their `givenNameDecade` remains null because it is reserved for the independently sourced U.S. SSA decade naming tables.
+
+The optional fictional-world personnel style now generates a mixture of ordinary names, compound given names (such as José Luis), two-surname forms and compound-plus-two-surname forms. Spanish-pattern two surnames place the paternal surname first; the Brazilian Portuguese pattern places the primary paternal surname last when both are present. Every record retains `primarySurname` for correct owner-family and trainer-racing-stable naming regardless of the display name's word order. Personal and organization IDs are unchanged by these spelling conventions.
+
+### Quality controls
+
+`tests/1999-fictional-latin-caribbean-names.test.mjs` covers country-specific pools, age bands, Portuguese-specific Brazilian names, accents, 11 forced-country rider populations, full-size 11,202-person 1999 fictional identity generation, double surnames, family-principal names, deterministic seeds, protected names and isolation from current historical game records.
+
+This is **a naming engine only**. It does not populate the early world, create jockey assignments or race outcomes, change the UI, or modify any existing playable name records.

@@ -18,8 +18,13 @@ import {
 import {
  US_BIRTH_COHORT_NAME_MODEL,usBirthCohortGivenPool,drawUSBirthCohortName
 } from './person-birth-cohort-names.mjs';
+import {
+ LATIN_CARIBBEAN_NAME_MODEL,isLatinCaribbeanNamingOrigin,
+ regionalGivenPool,regionalSurnamePool,drawRegionalGiven,
+ drawRegionalSurname,regionalCompoundGiven
+} from './latin-caribbean-person-names.mjs';
 
-export const FICTIONAL_WORLD_NAME_ENGINE='WTW_FICTIONAL_WORLD_IDENTITIES_V4';
+export const FICTIONAL_WORLD_NAME_ENGINE='WTW_FICTIONAL_WORLD_IDENTITIES_V5';
 export const SUPPORTED_NAME_ERA=1999;
 export const SUPPORTED_ORIGINS=Object.freeze(['US','CA','GB','IE','PR','PA','VE','MX','CL','PE','CO','DO','AR','BR','UY']);
 export const DEFAULT_WORLD_ROLE_COUNTS=Object.freeze({
@@ -261,13 +266,25 @@ export function createFictionalWorldNameEngine(input){
  };
  const personNames=createPersonnelNameRoster(seed,staff+owners,roleAt,spec.protectedNames,{
   countryAt,
-  // US fictional people get SSA-ranked names from their actual birth decade.
-  // Other country pools retain their explicit editorial provenance for now.
-  givenPoolAt:(index,role,country,feminine)=>country==='US'?
-   usBirthCohortGivenPool(personBirthYears[index],feminine):null,
+  // U.S. names use SSA ranked birth decades. Latin American/Caribbean
+  // origins use separate, explicitly editorial period-country inventories.
+  // Neither method changes the original existing-game geographic generator.
+  givenPoolAt:(index,role,country,feminine)=>
+   country==='US'?usBirthCohortGivenPool(personBirthYears[index],feminine):
+   isLatinCaribbeanNamingOrigin(country)?
+    regionalGivenPool(country,personBirthYears[index],feminine):null,
   givenNameAt:(index,role,country,feminine,attempt)=>
-   drawUSBirthCohortName(seed,index,personBirthYears[index],feminine,attempt),
-  maxBaseNameUses:2,avoidIdenticalGivenSurname:true
+   country==='US'?drawUSBirthCohortName(seed,index,personBirthYears[index],feminine,attempt):
+   drawRegionalGiven(seed,index,country,personBirthYears[index],feminine,attempt),
+  familyPoolAt:(index,role,country)=>isLatinCaribbeanNamingOrigin(country)?
+   regionalSurnamePool(country):null,
+  familyNameAt:(index,role,country,attempt)=>
+   drawRegionalSurname(seed,index,country,attempt,'primary'),
+  regionalCompoundAt:(index,role,country,given)=>
+   regionalCompoundGiven(seed,index,country,given,personBirthYears[index]),
+  regionalSecondarySurnameAt:(index,role,country,primary,attempt)=>
+   drawRegionalSurname(seed,index,country,attempt,'secondary'),
+  normalizeNamesForAccent:true,maxBaseNameUses:2,avoidIdenticalGivenSurname:true
  });
  const countrySet=new Set(SUPPORTED_ORIGINS);
  const basePeople=Object.freeze(personNames.map((p,i)=>{
@@ -285,6 +302,9 @@ export function createFictionalWorldNameEngine(input){
   return frozen({id,worldId,role,name:p.name,nameStyle:p.nameStyle,
    birthCountry:p.birthCountry,ageAtOpening:age,birthYear:personBirthYears[i],
    givenNameDecade:p.birthCountry==='US'?Math.floor(personBirthYears[i]/10)*10:null,
+   regionalNamingCohort:isLatinCaribbeanNamingOrigin(p.birthCountry)?
+    personBirthYears[i]<1960?'OLDER_BIRTH_COHORT':'YOUNGER_BIRTH_COHORT':null,
+   primarySurname:p.primarySurname,nameStructure:p.nameStyle,
    location:loc(market),nameOrigin:p.source,...riderFields,
    source:'FICTIONAL_WORLD_ENGINE'});
  }));
@@ -296,12 +316,14 @@ export function createFictionalWorldNameEngine(input){
   protectedNames:[...spec.protectedNames,...basePeople.map(p=>p.name)],
   principalNames:principalPeople.map(p=>p.name),
   trainerNames:trainers.map(p=>p.name),
+  principalPrimarySurnames:principalPeople.map(p=>p.primarySurname),
+  trainerPrimarySurnames:trainers.map(p=>p.primarySurname),
   farmKindPlan:farmKindOrder(seed,facilities),
   alignPrincipalSurnames:true
  });
  const owningOrganizations=Object.freeze(org.owners.map((name,i)=>{
   const id=makeId(worldId,'OWNER',i),principal=principalPeople[i];
-  const principalFamily=principal.name.trim().split(/\s+/).at(-1);
+  const principalFamily=principal.primarySurname;
   const familyNamed=name.includes(' Family ');
   if(familyNamed&&norm(name.split(' Family ')[0])!==norm(principalFamily))
    throw Error('Family business has no matching principal family: '+id);
@@ -392,6 +414,7 @@ export function createFictionalWorldNameEngine(input){
  const manifest=frozen({schema:FICTIONAL_WORLD_NAME_ENGINE,worldId,seed,year,
   fingerprint:specFingerprint,jockeyColonyNameModel:JOCKEY_COLONY_NAME_MODEL,
   usBirthCohortNameModel:US_BIRTH_COHORT_NAME_MODEL,
+  latinCaribbeanNameModel:LATIN_CARIBBEAN_NAME_MODEL,
   personNameModel:PERSONNEL_NAME_MODEL,
   countryNameModel:GEO_NAME_MODEL,organizationNameModel:ORGANIZATION_NAME_MODEL,
   authoritative:false,sourceCanonIncluded:false,

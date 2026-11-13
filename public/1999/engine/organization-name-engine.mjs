@@ -85,11 +85,11 @@ function farmName(seed,i,attempt,kind){
  else stem=draw(['Old','New','Lower','Upper','West','East'],seed,k+':direction')+' '+draw(LANDMARK,seed,k+':landmark2');
  return stem+' '+suffix;
 }
-function ownerName(seed,i,attempt,principal,alignPrincipalSurname=false){
+function ownerName(seed,i,attempt,principal,alignPrincipalSurname=false,preferredFamily=''){
  const k='owner:'+i+':'+attempt;
  // In new fictional worlds, a surname-bearing owner business belongs to its
  // declared principal's family, not to an unrelated randomly sampled family.
- const family=alignPrincipalSurname&&principal?surname(principal):draw(SURNAMES,seed,k+':family');
+ const family=alignPrincipalSurname&&principal?(preferredFamily||surname(principal)):draw(SURNAMES,seed,k+':family');
  const second=draw(SURNAMES,seed,k+':family2');
  const land=draw(LAND,seed,k+':land');
  const place=draw(PLACES,seed,k+':place');
@@ -107,10 +107,10 @@ function ownerName(seed,i,attempt,principal,alignPrincipalSurname=false){
  if(roll<95&&principal)return principal+' '+draw(['Racing','Thoroughbreds','Stable'],seed,k+':principal');
  return land+' '+family+' '+draw(['Racing','Partners','Bloodstock'],seed,k+':tail');
 }
-function barnName(seed,i,attempt,trainer,familyIsRare){
+function barnName(seed,i,attempt,trainer,familyIsRare,preferredFamily=''){
  const k='barn:'+i+':'+attempt;
  const full=String(trainer||'').trim()||draw(SURNAMES,seed,k+':fallback');
- const family=surname(full);
+ const family=preferredFamily||surname(full);
  const roll=style(seed,'barn',i,attempt);
  // Sometimes the same full personal name is already an anchored owner or a
  // different named operation. Vary the business root, not just its suffix.
@@ -164,7 +164,7 @@ function breakingName(seed,i,attempt){
 export function createOrganizationNameRoster({
  seed,ownerCount,barnCount,farmCount,breakingCount=0,
  protectedNames=[],principalNames=[],trainerNames=[],sourceOwnerNames=[],farmKindPlan=null,
- alignPrincipalSurnames=false
+ alignPrincipalSurnames=false,principalPrimarySurnames=[],trainerPrimarySurnames=[]
 }){
  if(!Number.isSafeInteger(seed)||seed<1)throw Error('Invalid naming seed');
  for(const n of [ownerCount,barnCount,farmCount,breakingCount])
@@ -204,7 +204,7 @@ export function createOrganizationNameRoster({
   // The legal name of a sole-owner operation intentionally equals its
   // principal's identity, not an independently generated business duplicate.
   if(i%11===0&&principal){used.add(norm(principal));return principal;}
-  return claim(attempt=>ownerName(seed,i,attempt,principal,alignPrincipalSurnames),'owner');
+  return claim(attempt=>ownerName(seed,i,attempt,principal,alignPrincipalSurnames,principalPrimarySurnames[i]),'owner');
  });
  const kindsAllowed=new Set(['FARM','STUD_FARM','THOROUGHBRED_NURSERY','BLOODSTOCK_FARM']);
  if(farmKindPlan!==null&&(!Array.isArray(farmKindPlan)||farmKindPlan.length!==farmCount||
@@ -212,8 +212,14 @@ export function createOrganizationNameRoster({
  const farmKinds=farmKindPlan===null?Array.from({length:farmCount},(_,i)=>classifyFarm(seed,i)):[...farmKindPlan];
  const farms=Array.from({length:farmCount},(_,i)=>claim(a=>farmName(seed,i,a,farmKinds[i]),'farm'));
  const familyFrequency=new Map();
- for(const trainer of trainerNames){const key=norm(surname(trainer));familyFrequency.set(key,(familyFrequency.get(key)||0)+1)}
- const barns=Array.from({length:barnCount},(_,i)=>claim(a=>barnName(seed,i,a,trainerNames[i],rareFamily(surname(trainerNames[i]),familyFrequency)),'barn'));
+ for(let i=0;i<trainerNames.length;i++){
+  const key=norm(trainerPrimarySurnames[i]||surname(trainerNames[i]));
+  familyFrequency.set(key,(familyFrequency.get(key)||0)+1);
+ }
+ const barns=Array.from({length:barnCount},(_,i)=>{
+  const family=trainerPrimarySurnames[i]||surname(trainerNames[i]);
+  return claim(a=>barnName(seed,i,a,trainerNames[i],rareFamily(family,familyFrequency),family),'barn');
+ });
  const breakingCenters=Array.from({length:breakingCount},(_,i)=>claim(a=>breakingName(seed,i,a),'breaking'));
  return {
   model:ORGANIZATION_NAME_MODEL,
