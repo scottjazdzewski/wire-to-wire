@@ -2925,65 +2925,122 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 }
 
 
-/* WTW FOUNDING PROFILE TEMPLATES V1 — existing Track/Horse visual language.
-   Only scoped read-only layout: never affects track geometry or racing model. */
-#wtwNextgen .ng-founding-profile{min-height:0!important;gap:6px!important}
-#wtwNextgen .ng-founding-profile .ng-founding-header{flex:0 0 auto!important}
-#wtwNextgen .ng-founding-header .ng-org-mark{width:66px;min-width:66px;height:66px;display:grid;place-items:center}
-#wtwNextgen .ng-founding-header .ng-org-image{max-width:100%;max-height:100%;object-fit:contain}
-#wtwNextgen .ng-founding-subline{color:#b9cabb;font-size:11px!important;line-height:1.4}
-#wtwNextgen .ng-founding-id{font-size:9.5px;letter-spacing:.055em;margin-top:5px;color:#dbc68d}
-#wtwNextgen .ng-founding-nav{flex:0 0 auto;min-height:30px!important}
-#wtwNextgen .ng-founding-nav .ng-person-dossieractions{display:flex;flex-wrap:wrap;justify-content:flex-end}
-#wtwNextgen .ng-founding-profile .ng-detail-cols{flex:1 1 auto!important;min-height:0!important;overflow:auto!important;padding:0 2px 8px 0!important}
-#wtwNextgen .ng-founding-profile .ng-founding-workspace{height:auto!important;min-height:0!important;overflow:visible!important;align-items:start!important}
-#wtwNextgen .ng-founding-profile .ng-founding-main{min-width:0;min-height:0}
-#wtwNextgen .ng-founding-profile .ng-track-info-stack{display:flex!important;flex-direction:column;gap:7px;min-height:0;height:auto;overflow:visible!important}
-#wtwNextgen .ng-founding-profile .ng-tier1-card{min-height:0;overflow:visible;flex:0 0 auto!important}
-#wtwNextgen .ng-founding-profile .ng-tier1-card>header{flex:0 0 auto!important;line-height:1.25}
-#wtwNextgen .ng-founding-profile .ng-tier1-card>header button{cursor:pointer}
-#wtwNextgen .ng-founding-profile .ng-track-meet-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;padding:7px;background:#182323}
-#wtwNextgen .ng-founding-profile .ng-track-meet-fact{padding:8px;min-width:0;background:#222d2b;border-bottom:1px solid #34443e}
-#wtwNextgen .ng-founding-profile .ng-track-meet-fact small{display:block;font-size:9px;color:#b6c7b8;letter-spacing:.04em}
-#wtwNextgen .ng-founding-profile .ng-track-meet-fact strong{display:block;font-size:11px;color:#f2e5c6;line-height:1.35;overflow-wrap:anywhere}
-#wtwNextgen .ng-founding-table{display:grid;grid-template-columns:1fr;gap:0;padding:4px;background:#171e22}
-#wtwNextgen .ng-founding-table-head,
-#wtwNextgen .ng-founding-table-row{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(75px,.72fr);gap:10px;align-items:center}
-#wtwNextgen .ng-founding-table-head{padding:8px 10px;background:#2c3835;color:#dfc78b;font-size:9px;font-weight:800;letter-spacing:.04em}
-#wtwNextgen .ng-founding-table-row{min-height:38px;padding:7px 10px;border-bottom:1px solid #36433e;background:#1b2525;font-size:10.5px;color:#c9d8ca}
-#wtwNextgen .ng-founding-table-row:nth-child(odd){background:#222c2b}
-#wtwNextgen .ng-founding-table-row .ng-entity-reference{font-size:11px;text-align:left;line-height:1.25;overflow-wrap:anywhere}
-#wtwNextgen .ng-founding-person-row{display:grid;grid-template-columns:minmax(95px,.68fr) minmax(0,1fr);gap:10px;align-items:center;padding:9px 10px;border-bottom:1px solid #33423d}
-#wtwNextgen .ng-founding-person-row small{font-size:9px;color:#aabeb2}
-#wtwNextgen .ng-founding-person-row .ng-entity-reference{font-size:11px;text-align:left}
-#wtwNextgen .ng-founding-people-list{padding:5px 9px 8px;min-height:0}
-#wtwNextgen .ng-founding-empty,#wtwNextgen .ng-founding-note{padding:9px 12px;margin:0;color:#b8c7bd;font-size:10.5px;line-height:1.5}
-#wtwNextgen .ng-founding-note{color:#a9c1ae;font-size:10px;border-top:1px solid #30423a}
-#wtwNextgen .ng-founding-pending{color:#dcc17d;font-weight:750;font-size:10px}
-#wtwNextgen .ng-founding-histline{margin:0 9px 7px;padding:7px;color:#d8c58e;font-size:10px;border-top:1px solid #34433d}
-#wtwNextgen .ng-founding-profile .ng-track-history-blurb{padding:10px 13px;margin:0;color:#cbd9ce;font-size:11px;line-height:1.55}
-#wtwNextgen .ng-founding-footnote{font-size:9px;letter-spacing:.01em;color:#91a99e;padding:5px 9px;border-top:1px solid #304139}
-#wtwNextgen .ng-founding-person .ng-founding-biography{flex:0 0 auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-top:0}
-#wtwNextgen .ng-founding-person .ng-founding-biography>span{min-width:0;padding:7px 12px;border:1px solid #36463d;background:#1d2928}
-#wtwNextgen .ng-founding-person .ng-founding-biography small{display:block;color:#b2c6b4;font-size:9px}
-#wtwNextgen .ng-founding-person .ng-founding-biography strong{display:block;color:#f2e4be;font-size:11px;overflow-wrap:anywhere}
-#wtwNextgen .ng-founding-person .ng-founding-person-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:8px;align-items:start}
-#wtwNextgen .ng-founding-person .ng-founding-person-main,
-#wtwNextgen .ng-founding-person .ng-founding-person-side{display:flex;flex-direction:column;gap:8px;min-width:0}
-#wtwNextgen .ng-founding-person .ng-horse-mgr-panel{min-width:0;border:1px solid #3a4842;background:#192125}
-#wtwNextgen .ng-founding-person .ng-horse-mgr-panel>header{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#29332f;color:#f5e6c7;font-size:10px;font-weight:800}
-#wtwNextgen .ng-founding-person .ng-horse-mgr-panel>header span{font-size:9px;color:#becebd;font-weight:600}
-@media(max-width:1040px){
- #wtwNextgen .ng-founding-profile .ng-founding-workspace{grid-template-columns:minmax(0,1fr)!important}
- #wtwNextgen .ng-founding-person .ng-founding-person-grid{grid-template-columns:minmax(0,1fr)}
- #wtwNextgen .ng-founding-person .ng-founding-biography{grid-template-columns:repeat(2,minmax(0,1fr))}
+/* LOCKED 1999 SOURCE PROFILES · SINGLE ORIGINAL TRACK/HORSE COMPONENT SYSTEM.
+ * The obsolete standalone founding-profile renderer and its CSS are deleted.
+ * Approved source masters: PERSON/HORSE 1600x2000 (4:5),
+ * facilities 1600x1200 (4:3); logos never stretched or cropped.
+ */
+#wtwNextgen .ng-profile-farm.ng-profile-track .ng-track-workspace[data-template="track-overview"]{
+  grid-template-columns:minmax(0,1.23fr) minmax(285px,.77fr)!important;
+  height:100%;min-height:0;overflow:hidden;
 }
-@media(max-width:680px){
- #wtwNextgen .ng-founding-profile .ng-founding-header{flex-wrap:wrap}
- #wtwNextgen .ng-founding-profile .ng-profile-tools{width:100%;justify-content:flex-start;margin:0}
- #wtwNextgen .ng-founding-nav{display:flex;flex-wrap:wrap;justify-content:flex-start}
- #wtwNextgen .ng-founding-nav .ng-person-dossieractions{justify-content:flex-start}
- #wtwNextgen .ng-founding-table-head,
- #wtwNextgen .ng-founding-table-row{grid-template-columns:minmax(0,1fr) minmax(0,.85fr) minmax(65px,.6fr);gap:5px}
- #wtwNextgen .ng-founding-profile .ng-track-meet-facts{grid-template-columns:minmax(0,1fr)}
+#wtwNextgen .ng-profile-farm.ng-profile-track .ng-track-stakes{
+  display:flex;flex-direction:column;height:100%;min-height:0;overflow:hidden;
+}
+#wtwNextgen .ng-profile-farm.ng-profile-track .ng-facility-records{flex:1 1 auto;min-height:0;overflow:auto}
+#wtwNextgen .ng-profile-farm.ng-profile-track .ng-stakes-data.ng-stakes-static{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  align-items:center;gap:7px;padding:5px 8px;min-height:30px;color:#ceddce;
+}
+#wtwNextgen .ng-profile-farm.ng-profile-track .ng-stakes-head button:disabled{
+  opacity:1;cursor:default;color:#e5d4a8;
+}
+#wtwNextgen .ng-profile-farm.ng-profile-track .ng-track-info-stack{
+  display:grid!important;grid-template-columns:1fr!important;
+  grid-template-rows:minmax(0,1fr) minmax(155px,194px)!important;
+  height:100%;min-height:0;overflow:hidden!important;
+}
+#wtwNextgen .ng-profile-farm.ng-profile-track .ng-track-history-card{
+  min-height:155px;max-height:194px;overflow:auto;
+}
+#wtwNextgen .ng-profile-farm.ng-profile-track .ng-track-operating-notes .ng-entity-links{
+  min-width:0;display:flex;flex-direction:column;gap:4px;
+}
+#wtwNextgen .ng-profile-farm.ng-profile-track .ng-track-operating-notes .ng-entity-link-static{
+  padding:4px 6px;display:flex;gap:6px;justify-content:space-between;
+  background:#1e262a;min-width:0;overflow-wrap:anywhere;
+}
+#wtwNextgen .ng-profile-person.ng-profile-horse .ng-person-horse-dossier{
+  width:100%!important;min-width:0!important;display:grid!important;
+  grid-template-rows:auto auto auto auto auto auto!important;gap:5px!important;
+  height:auto!important;align-content:start!important;
+}
+#wtwNextgen .ng-profile-person.ng-profile-horse .ng-person-horse-dossier>.ng-horse-mgr-four{
+  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:5px!important;width:100%;min-width:0;
+}
+#wtwNextgen .ng-profile-person.ng-profile-horse .ng-person-horse-dossier>.ng-horse-mgr-five{
+  display:grid!important;grid-template-columns:1fr 1fr 1fr 1.25fr 1.1fr!important;
+  gap:5px!important;min-width:0;
+}
+#wtwNextgen .ng-profile-person.ng-profile-horse .ng-person-horse-dossier>.ng-horse-mgr-bottom{
+  display:grid!important;grid-template-columns:minmax(0,2.7fr) minmax(0,1fr)!important;
+  min-width:0;gap:5px!important;
+}
+/* Exact locked identity-image proportion: all horse and human portraits
+   render in a 4:5 frame, whether artwork is present or yet to be generated. */
+#wtwNextgen .ng-route-profile .ng-profile-horse .ng-profile-source-photo.ng-profile-portrait{
+  width:72px!important;height:90px!important;flex:0 0 72px!important;
+  aspect-ratio:4 / 5;overflow:hidden!important;border-radius:3px!important;
+  background:#1a2727!important;border:1px solid #69766a!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-horse .ng-profile-source-photo.ng-profile-portrait img{
+  width:100%!important;height:100%!important;object-fit:cover!important;
+  transform:none!important;padding:0!important;
+}
+/* Facility and ownership share the actual Track logo plate (214x108);
+   the approved 4:3 master remains fully visible via contain. */
+#wtwNextgen .ng-route-profile .ng-profile-farm.ng-profile-track .ng-profile-facility-logo{
+  width:214px!important;height:108px!important;flex:0 0 214px!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-farm.ng-profile-track .ng-profile-facility-logo img{
+  width:100%!important;height:100%!important;object-fit:contain!important;
+  transform:none!important;padding:7px!important;box-sizing:border-box!important;
+}
+#wtwNextgen .ng-profile-photo-empty{
+  display:flex;width:100%;height:100%;box-sizing:border-box;
+  align-items:center;justify-content:center;flex-direction:column;
+  gap:4px;padding:6px;text-align:center;min-width:0;
+  background:repeating-linear-gradient(-45deg,rgba(65,86,75,.12) 0 7px,rgba(24,39,35,.14) 7px 14px);
+}
+#wtwNextgen .ng-profile-photo-empty span{
+  font-size:9px;color:#e5d19b;font-weight:800;letter-spacing:.06em;
+  line-height:1.2;overflow-wrap:anywhere;
+}
+#wtwNextgen .ng-profile-photo-empty small{font-size:8px;color:#aec4b3;letter-spacing:.02em}
+#wtwNextgen .ng-profile-farm.ng-profile-track .ng-profile-photo-empty{
+  position:relative;z-index:1;background:transparent;
+}
+@media(max-width:1120px){
+ #wtwNextgen .ng-profile-person.ng-profile-horse .ng-person-horse-dossier>.ng-horse-mgr-five{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ }
+ #wtwNextgen .ng-profile-person.ng-profile-horse .ng-person-horse-dossier>.ng-horse-mgr-five>:nth-child(4){
+  grid-column:1 / span 2;
+ }
+}
+@media(max-width:900px){
+ #wtwNextgen .ng-profile-farm.ng-profile-track .ng-track-workspace[data-template="track-overview"]{
+  grid-template-columns:minmax(0,1fr)!important;overflow:auto;
+ }
+ #wtwNextgen .ng-profile-farm.ng-profile-track .ng-track-info-stack{
+  grid-template-rows:minmax(200px,auto) minmax(170px,auto)!important;
+  height:auto;overflow:visible!important;
+ }
+ #wtwNextgen .ng-profile-person.ng-profile-horse .ng-person-horse-dossier>.ng-horse-mgr-four{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+ #wtwNextgen .ng-profile-person.ng-profile-horse .ng-person-horse-dossier>.ng-horse-mgr-five{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+}
+@media(max-width:600px){
+ #wtwNextgen .ng-profile-person.ng-profile-horse .ng-person-horse-dossier>.ng-horse-mgr-four,
+ #wtwNextgen .ng-profile-person.ng-profile-horse .ng-person-horse-dossier>.ng-horse-mgr-five,
+ #wtwNextgen .ng-profile-person.ng-profile-horse .ng-person-horse-dossier>.ng-horse-mgr-bottom{
+  grid-template-columns:minmax(0,1fr)!important;
+ }
+ #wtwNextgen .ng-route-profile .ng-profile-horse .ng-profile-source-photo.ng-profile-portrait{
+  width:64px!important;height:80px!important;flex:0 0 64px!important;
+ }
 }
