@@ -74,6 +74,10 @@ test('full 11,202-person fictional populations retain global naming variety and 
    assert.ok(new Set(group.map(p=>p.birthCountry)).size>=8);
    const international=group.filter(p=>INTERNATIONAL_NAMING_ORIGINS.includes(p.birthCountry));
    assert.ok(international.length>=group.length*.25,role+' lacks enough global variety');
+   // Global expansion must not crowd established Latin racing communities out
+   // of ownership, training or bloodstock naming.
+   const latin=group.filter(p=>['PR','PA','MX','VE'].includes(p.birthCountry));
+   assert.ok(latin.length>=group.length*.025,role+' lost Latin American representation');
    assert.ok(group.every(p=>p.professionalOriginModel==='EDITORIAL_1999_INTERNATIONAL_PROFESSIONAL_MIX_NOT_MEASURED'));
   }
   const international=w.people.filter(p=>INTERNATIONAL_NAMING_ORIGINS.includes(p.birthCountry));
