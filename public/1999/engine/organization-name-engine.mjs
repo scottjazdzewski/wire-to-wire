@@ -47,6 +47,13 @@ const stemKey=candidate=>{
  const words=s.split(/\s+/);
  return norm(words.length>1?words.slice(0,2).join(' '):s);
 };
+const hasArtificialPhrase=candidate=>{
+ const plain=String(candidate).replace(/[-&]/g,' ').replace(/\s+/g,' ').trim();
+ if(/\b([a-z]+)\s+\1\b/i.test(plain))return true;
+ if(/\b(?:Equine|Thoroughbreds|Bloodstock)\s+(?:Farmstead|Acres|Stallion|Stud|Nursery)\b/i.test(plain))return true;
+ if(/\b(?:Farm|Farms|Stud|Nursery)\s+(?:Farm|Farms|Stud|Nursery)\b/i.test(plain))return true;
+ return false;
+};
 const isMeaningfullySimilar=(candidate,usedRoots)=>{
  // Catch suffix-swaps, accents/punctuation differences and rooted clones.
  const root=rootOf(candidate);
@@ -192,7 +199,7 @@ export function createOrganizationNameRoster({
  let retries=0;
  const reserve=(candidate,kind)=>{
   const key=norm(candidate),root=rootOf(candidate),stem=stemKey(candidate);
-  if(!key||key.length<5||used.has(key)||!root||isMeaningfullySimilar(candidate,roots))return false;
+  if(!key||key.length<5||used.has(key)||!root||hasArtificialPhrase(candidate)||isMeaningfullySimilar(candidate,roots))return false;
   // Protect distinctive prefixes of existing historic racing organizations;
   // do not mint e.g. "Kingsmere Valley Farm" beside "Kingsmere Farm".
   if(protectedRoots.some(old=>(root.startsWith(old)||old.startsWith(root))&&Math.min(root.length,old.length)>=7))return false;
@@ -229,9 +236,14 @@ export function createOrganizationNameRoster({
  if(farmKindPlan!==null&&(!Array.isArray(farmKindPlan)||farmKindPlan.length!==farmCount||
   farmKindPlan.some(k=>!kindsAllowed.has(k))))throw Error('Invalid explicit farm-purpose plan');
  const farmKinds=farmKindPlan===null?Array.from({length:farmCount},(_,i)=>classifyFarm(seed,i)):[...farmKindPlan];
- const farms=Array.from({length:farmCount},(_,i)=>claim(a=>a<48?
-  contextualFarmCandidate(seed,i,a,farmKinds[i],farmContexts[i]||{}):
-  farmName(seed,i,a,farmKinds[i]),'farm'));
+ const farms=Array.from({length:farmCount},(_,i)=>{
+  const context={...farmContexts[i],
+   // A proposed family surname for a farm name does not create a person link.
+   familyName:farmContexts[i]?.familyName||draw(SURNAMES,seed,'v7-farm-family:'+i)};
+  return claim(a=>a<48?
+   contextualFarmCandidate(seed,i,a,farmKinds[i],context):
+   farmName(seed,i,a,farmKinds[i]),'farm');
+ });
  const familyFrequency=new Map();
  for(let i=0;i<trainerNames.length;i++){
   const key=norm(trainerPrimarySurnames[i]||surname(trainerNames[i]));
