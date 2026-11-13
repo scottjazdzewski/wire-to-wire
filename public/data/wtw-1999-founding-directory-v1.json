@@ -3144,7 +3144,12 @@
       ],
       "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
       "historicalPrincipalProof": false,
-      "principalPortraitBrief": "Sharp, extremely intelligent finance and analytics professional; institutional investor temperament"
+      "principalPortraitBrief": "Sharp, extremely intelligent finance and analytics professional; institutional investor temperament",
+      "relatedBloodstockAgencyId": "O-000014",
+      "relatedBloodstockStrategistId": "P-000018",
+      "relatedBloodstockAgencyName": "Argosy Bloodstock",
+      "financingDescription": "Substantial financial backers; quantitative racing portfolio leadership",
+      "relationshipBasis": "USER_APPROVED_RELATED_ENTITIES__NO_STAFF_OR_FEE_CONTRACT_IMPLIED"
     },
     {
       "id": "O-000059",
