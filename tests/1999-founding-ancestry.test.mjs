@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createFounding1999Universe} from '../public/1999/engine/founding-world-1999.mjs';
+import {readLocal1999World} from '../public/1999/engine/local-api.mjs';
 import {buildFoundingAncestry1999,FOUNDING_ANCESTRY_SCHEMA}
  from '../public/1999/engine/founding-ancestry-1999.mjs';
 
@@ -46,4 +47,21 @@ test('ancestry bridge deterministic under same selected roots, no background 325
  assert.ok(tree.records.every(x=>!String(x.id).startsWith('H-TEST-')));
  assert.ok(!world.sourceHorses.some(x=>x.id.startsWith('H-TEST-')));
  assert.throws(()=>buildFoundingAncestry1999({generations:9}),/one to eight/);
+});
+
+test('unqualified 1999 API calls cannot accidentally reopen the retired 325k universe',()=>{
+ const overview=readLocal1999World('/api/1999/sim/overview');
+ assert.equal(overview.mode,'FOUNDING_1999');
+ assert.equal(overview.counts.horses,39);
+ assert.equal(overview.counts.worldHorses,112);
+ assert.equal(readLocal1999World('/api/1999/sim/world-horse-directory?limit=1').total,112);
+ const historic=readLocal1999World('/api/1999/sim/founding-ancestry?id=H-1970-000001');
+ assert.equal(historic.horse?.name,'Gospel Truth');
+ assert.equal(historic.horse?.activeIn1999,false);
+ assert.ok(historic.parents.length>0);
+ assert.equal(historic.historicalResultsUnmodified,true);
+ const outside=readLocal1999World('/api/1999/sim/founding-ancestry?id=H-TEST-999999');
+ assert.equal(outside.horse,null);
+ assert.equal(outside.status,'HORSE_NOT_CONNECTED_TO_FOUNDING_ORGANIZATIONS');
+ assert.throws(()=>readLocal1999World('/api/1999/sim/founding-ancestry?id='),/Exact founding/);
 });
