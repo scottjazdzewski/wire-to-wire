@@ -39,18 +39,21 @@ function patch(base,delta){
 }
 function assertProfile(profile){
  if(!profile||profile.schema!=='WTW_WORLD_PROFILE_V1')throw Error('Invalid world profile');
- if(!Number.isSafeInteger(profile.population)||profile.population<10000||profile.population>325000)
+ if(!Number.isSafeInteger(profile.population)||
+  (profile.mode==='FOUNDING_1999'?profile.population!==112:
+  profile.population<10000||profile.population>325000))
   throw Error('Invalid saved world population');
  if(!Number.isSafeInteger(profile.seed)||profile.seed<1||profile.seed>4294967295)
   throw Error('Invalid saved world seed');
- if(!['CANON_ANCHORED_TEST','FULLY_FICTIONAL_TEST'].includes(profile.mode))
+ if(!['FOUNDING_1999','CANON_ANCHORED_TEST','FULLY_FICTIONAL_TEST'].includes(profile.mode))
   throw Error('Unknown saved world mode');
 }
 function assertGame(game){
  if(!object(game)||!object(game.worldAnchor)||typeof game.date!=='string'||
   !/^\d{4}-\d{2}-\d{2}$/.test(game.date)||game.date<'1999-01-01')
   throw Error('Not a valid January 1999 career');
- if(game.worldAnchor.startDate!=='1999-01-01'||game.worldAnchor.schema!=='WTW_1999_CLEAN_CAREER_V3')
+ if(game.worldAnchor.startDate!=='1999-01-01'||
+  !['WTW_1999_CLEAN_CAREER_V3','WTW_1999_FOUNDING_CAREER_V1'].includes(game.worldAnchor.schema))
   throw Error('Unsupported game-state authority');
 }
 export function createCareerDelta(game,baseline,profile){
