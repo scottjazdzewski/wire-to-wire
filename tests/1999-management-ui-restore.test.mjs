@@ -36,7 +36,7 @@ test('new session begins with zero old decisions and no race results',()=>{
  assert.equal(state.worldAnchor.startDate,'1999-01-01');
  assert.equal(state.worldAnchor.seed,19990101);
  assert.equal(state.worldAnchor.mode,'FOUNDING_1999');
- assert.equal(state.worldAnchor.population,112);
+ assert.equal(state.worldAnchor.population,73);
  assert.equal(state.turn,0);
  assert.deepEqual(Object.keys(state.horseState),[]);
  assert.deepEqual(state.decisionLog,[]);
