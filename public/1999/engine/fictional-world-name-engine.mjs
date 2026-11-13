@@ -11,10 +11,14 @@
 import {createPersonnelNameRoster,PERSONNEL_NAME_MODEL} from './personnel-name-engine.mjs';
 import {roleOrigin,GEO_NAME_MODEL} from './geographic-names.mjs';
 import {createOrganizationNameRoster,ORGANIZATION_NAME_MODEL} from './organization-name-engine.mjs';
+import {
+ JOCKEY_COLONIES,JOCKEY_COLONY_NAME_MODEL,
+ DEFAULT_JOCKEY_COLONY_ORIGIN_WEIGHTS,inferJockeyColony,chooseJockeyColonyOrigin
+} from './jockey-colony-names.mjs';
 
-export const FICTIONAL_WORLD_NAME_ENGINE='WTW_FICTIONAL_WORLD_IDENTITIES_V2';
+export const FICTIONAL_WORLD_NAME_ENGINE='WTW_FICTIONAL_WORLD_IDENTITIES_V3';
 export const SUPPORTED_NAME_ERA=1999;
-export const SUPPORTED_ORIGINS=Object.freeze(['US','CA','GB','IE','PR','PA','VE','MX','CL','PE','CO','DO']);
+export const SUPPORTED_ORIGINS=Object.freeze(['US','CA','GB','IE','PR','PA','VE','MX','CL','PE','CO','DO','AR','BR','UY']);
 export const DEFAULT_WORLD_ROLE_COUNTS=Object.freeze({
  trainer:4200,jockey:1800,farm_manager:550,veterinarian:430,
  farrier:420,bloodstock_agent:360,racing_secretary:134
@@ -27,19 +31,26 @@ export const DEFAULT_WORLD_FACILITY_COUNTS=Object.freeze({
 // assertions that a specific horse/person/business already operates here.
 const DEFAULT_MARKETS=Object.freeze([
  {id:'lexington-ky',city:'Lexington',region:'Kentucky',country:'United States',code:'US',weight:14,breeding:true},
- {id:'versailles-ky',city:'Versailles',region:'Kentucky',country:'United States',code:'US',weight:9,breeding:true},
- {id:'paris-ky',city:'Paris',region:'Kentucky',country:'United States',code:'US',weight:6,breeding:true},
- {id:'ocala-fl',city:'Ocala',region:'Florida',country:'United States',code:'US',weight:11,breeding:true},
+ {id:'versailles-ky',city:'Versailles',region:'Kentucky',country:'United States',code:'US',weight:9,breeding:true,racing:false},
+ {id:'paris-ky',city:'Paris',region:'Kentucky',country:'United States',code:'US',weight:6,breeding:true,racing:false},
+ {id:'ocala-fl',city:'Ocala',region:'Florida',country:'United States',code:'US',weight:11,breeding:true,racing:false},
  {id:'saratoga-ny',city:'Saratoga Springs',region:'New York',country:'United States',code:'US',weight:8,breeding:true},
- {id:'millbrook-ny',city:'Millbrook',region:'New York',country:'United States',code:'US',weight:4,breeding:true},
+ {id:'millbrook-ny',city:'Millbrook',region:'New York',country:'United States',code:'US',weight:4,breeding:true,racing:false},
  {id:'laurel-md',city:'Laurel',region:'Maryland',country:'United States',code:'US',weight:6,breeding:false},
- {id:'middleburg-va',city:'Middleburg',region:'Virginia',country:'United States',code:'US',weight:5,breeding:true},
+ {id:'middleburg-va',city:'Middleburg',region:'Virginia',country:'United States',code:'US',weight:5,breeding:true,racing:false},
  {id:'arcadia-ca',city:'Arcadia',region:'California',country:'United States',code:'US',weight:8,breeding:false},
- {id:'santa-ynez-ca',city:'Santa Ynez',region:'California',country:'United States',code:'US',weight:5,breeding:true},
+ {id:'santa-ynez-ca',city:'Santa Ynez',region:'California',country:'United States',code:'US',weight:5,breeding:true,racing:false},
  {id:'louisville-ky',city:'Louisville',region:'Kentucky',country:'United States',code:'US',weight:8,breeding:false},
  {id:'toronto-on',city:'Toronto',region:'Ontario',country:'Canada',code:'CA',weight:8,breeding:false},
- {id:'georgetown-on',city:'Georgetown',region:'Ontario',country:'Canada',code:'CA',weight:4,breeding:true},
- {id:'new-orleans-la',city:'New Orleans',region:'Louisiana',country:'United States',code:'US',weight:5,breeding:false}
+ {id:'georgetown-on',city:'Georgetown',region:'Ontario',country:'Canada',code:'CA',weight:4,breeding:true,racing:false},
+ {id:'new-orleans-la',city:'New Orleans',region:'Louisiana',country:'United States',code:'US',weight:5,breeding:false},
+ // Explicit 1999 circuit hubs so jockeys do not live in every breeding town.
+ {id:'hallandale-beach-fl',city:'Hallandale Beach',region:'Florida',country:'United States',code:'US',weight:12,breeding:false,racing:true},
+ {id:'miami-fl',city:'Miami',region:'Florida',country:'United States',code:'US',weight:6,breeding:false,racing:true},
+ {id:'elmont-ny',city:'Elmont',region:'New York',country:'United States',code:'US',weight:10,breeding:false,racing:true},
+ {id:'del-mar-ca',city:'Del Mar',region:'California',country:'United States',code:'US',weight:7,breeding:false,racing:true},
+ {id:'oceanport-nj',city:'Oceanport',region:'New Jersey',country:'United States',code:'US',weight:5,breeding:false,racing:true},
+ {id:'chicago-il',city:'Chicago',region:'Illinois',country:'United States',code:'US',weight:5,breeding:false,racing:true}
 ]);
 const ROLE_AGES=Object.freeze({
  trainer:[26,75],jockey:[18,58],owner:[29,83],
@@ -84,8 +95,14 @@ function marketList(input){
   keys.add(m.id);
   const weight=m.weight??1;
   if(!Number.isInteger(weight)||weight<1||weight>1000)throw Error('Invalid market weight '+m.id);
+  if(m.jockeyColony!==undefined&&!JOCKEY_COLONIES.includes(m.jockeyColony))
+   throw Error('Unknown jockey colony for market '+m.id);
+  if(m.racing!==undefined&&typeof m.racing!=='boolean')
+   throw Error('Invalid racing market flag for '+m.id);
   return frozen({id:m.id,city:m.city,region:m.region,country:m.country,
-   code:m.code,weight,breeding:Boolean(m.breeding)});
+   code:m.code,weight,breeding:Boolean(m.breeding),racing:m.racing!==false,
+   jockeyColony:m.jockeyColony??inferJockeyColony(m)});
+
  }));
 }
 function weightedPick(seed,key,options){
