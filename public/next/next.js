@@ -1914,7 +1914,7 @@ function profileDetail(route,sourceOverride=null){
  const photoSrc=sourceImage||horseImage;
  const imageMarkup=photoSrc?'<img src="'+safe(photoSrc)+'" alt="" loading="lazy" decoding="async"/>':
   '<div class="ng-profile-photo-empty" aria-label="Image not yet assigned">'+
-   '<span>'+safe(isFarm?'FACILITY / OWNER LOGO':isPerson?'PERSONNEL PORTRAIT':'HORSE PORTRAIT')+'</span>'+
+   '<span>'+safe(isFarm?'FACILITY / OWNER LOGO':'PORTRAIT')+'</span>'+
    '<small>IMAGE SLOT RESERVED</small></div>';
  const visualName=worldSourceEntry?.name||route.title;
  const identity=`<div class="ng-profile-intro">
