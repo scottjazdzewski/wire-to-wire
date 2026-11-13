@@ -207,6 +207,22 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    Boolean(d.querySelector('#wtwNextgen .ng-profile-person.ng-profile-horse'))&&
    Boolean(d.querySelector('#wtwNextgen .ng-person-horse-dossier')));
   click('Facilities');await pause(250);
+  check('Facilities keeps the original FULL-WIDTH sortable FM / OOTP roster, no right-hand inspector',
+   Boolean(d.querySelector('#wtwNextgen .ng-dept-roster[data-department="Facilities"]'))&&
+   Boolean(d.querySelector('#wtwNextgen .ng-dept-roster .ng-rs-roster'))&&
+   Boolean(d.querySelector('#wtwNextgen .ng-dept-roster .ng-rs-scroll'))&&
+   !d.querySelector('#wtwNextgen .facility-workspace')&&
+   !d.querySelector('#wtwNextgen .ng-facility-inspector'));
+  const facilitySelect=d.querySelector('#wtwNextgen .ng-dept-roster select[data-ng-select="department-tab"]');
+  check('Original Facilities View dropdown contains Trainer Barns',
+   Boolean(facilitySelect)&&[...facilitySelect.options].some(o=>o.value==='Trainer Barns'));
+  facilitySelect.value='Trainer Barns';
+  facilitySelect.dispatchEvent(new w.Event('change',{bubbles:true}));await pause(240);
+  check('Trainer Barns dropdown does not invent tracks, landlords, trainer people or occupied physical barns',
+   ui.departmentRows('Facilities','Trainer Barns').length===0&&
+   Boolean(d.querySelector('#wtwNextgen .ng-dept-roster[data-department="Facilities"]'))&&
+   !d.querySelector('#wtwNextgen [data-ng="dept-open"]'));
+  click('Facilities');await pause(240);
   const studsTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Stud Farms');
   check('Facility navigation retains its existing approved view picker',Boolean(studsTab));
   studsTab.click();await pause(260);
