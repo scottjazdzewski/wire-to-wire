@@ -514,6 +514,9 @@ export function createFounding1999Universe({seed=19990101}={}) {
     {kind:'STALLION',offset:i-sourceHorses.length-breedingMares.length},
   populationCacheStats:()=>({foundingWorldProfiles:sourceHorses.length,
    historicalArchivePreserved:true}),
+  // Test-only candidate projection. Legacy B01 *identities* never enter the
+  // founding roster; the playable pilot assigns entirely new H-PILOT IDs.
+  pilotHorseCandidateAt:i=>base.horseAt(267+i),
   personAt,jockeyBookingMarket,sourcePersonAt,
   projectAtDate:base.projectAtDate,auctionAt,
   facilityAt,conditionBook:base.conditionBook,
