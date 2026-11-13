@@ -103,13 +103,17 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   check('Jockey roster tab remains available',Boolean(jockeyTab));
   jockeyTab.click();await pause(300);
   const openingJockeys=w.__WTW_NEXT__?.app?.departmentVisible||[];
-  check('Exactly 26 EXISTING canonical jockey identities appear with no generated attributes, contracts or mounts',
+  check('Exactly 26 source-backed jockey identities (25 old IDs plus user-restored Simonne) appear with no invented abilities or contracts',
    openingJockeys.length===26&&openingJockeys.every(p=>
     /^P-/.test(p._canonId)&&p._testGenerated===false&&p.role==='JOCKEY'&&
     !p.ca&&!p.pa&&!p.salary&&!p.contract&&!p.wins&&!p.assignment)&&
    openingJockeys.some(p=>p._canonId==='P-000053'&&p.name==='Nico Arroyo')&&
    openingJockeys.some(p=>p._canonId==='P-000055'&&p.name==='Marcel Dubois')&&
    openingJockeys.some(p=>p._canonId==='P-000057'&&p.name==='Paloma Reyes'));
+  check('Paloma remains P-000057 and male, while Simonne has a distinct Woodbine/NY-source person ID',
+   openingJockeys.some(p=>p._canonId==='P-000057'&&p.name==='Paloma Reyes')&&
+   openingJockeys.some(p=>p._canonId==='P-1999-J-000001'&&p.name==='Simonne Beaulieu'&&
+    p.base==='Ontario, Canada'));
   const jockeyProfileButton=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
   check('Jockey identity roster is navigable using original Personnel list',
    Boolean(jockeyProfileButton));
@@ -118,6 +122,17 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    Boolean(d.querySelector('#wtwNextgen .ng-profile-person.ng-profile-horse'))&&
    Boolean(d.querySelector('#wtwNextgen .ng-person-horse-dossier'))&&
    !d.querySelector('#wtwNextgen .ng-profile-person .test-modeled'));
+  click('Personnel');await pause(230);
+  const checkPilotTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Jockeys');
+  checkPilotTab.click();await pause(200);
+  const simonneIdx=w.__WTW_NEXT__?.app?.departmentVisible?.findIndex(p=>p._canonId==='P-1999-J-000001');
+  check('Simonne appears as an independent pilot jockey with his own clickable profile',simonneIdx>=0);
+  d.querySelector('#wtwNextgen [data-ng="dept-open"][data-val="'+simonneIdx+'"]').click();await pause(220);
+  check('Male Simonne has Woodbine primary base and selective New York major-day route in approved Horse-style profile',
+   Boolean(d.querySelector('#wtwNextgen .ng-profile-person.ng-profile-horse'))&&
+   /Male/.test(d.querySelector('#wtwNextgen .ng-profile-person').textContent)&&
+   /Woodbine/.test(d.querySelector('#wtwNextgen .ng-profile-person').textContent)&&
+   /New York/.test(d.querySelector('#wtwNextgen .ng-profile-person').textContent));
   click('Personnel');await pause(230);
   check('Only agreed founders display and phantom facilities are absent',
    ui.departmentRows('Personnel','Owners').length===37&&
