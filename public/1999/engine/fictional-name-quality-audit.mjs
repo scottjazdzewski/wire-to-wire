@@ -11,7 +11,12 @@ const MAX_ISSUES=40;
 const normalize=s=>String(s??'').normalize('NFKD')
  .replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,'and')
  .replace(/[^a-z0-9]+/g,'');
-const disallowedWords=/\b([a-z]+)\s+\1\b|\b(?:Equine|Thoroughbreds|Bloodstock)\s+(?:Farmstead|Acres|Stallion|Stud|Nursery)\b|\b(?:Farm|Farms|Stud|Nursery)\s+(?:Farm|Farms|Stud|Nursery)\b/i;
+// ASCII word boundaries incorrectly flagged accented first names followed by
+// surnames (e.g. the trailing "l" in "Raúl" beside "López") as "l L" clones.
+const repeatedUnicodeWord=/(?:^|[^\p{L}])(\p{L}+)\s+\1(?=$|[^\p{L}])/iu;
+const awkwardIndustryWords=/\b(?:Equine|Thoroughbreds|Bloodstock)\s+(?:Farmstead|Acres|Stallion|Stud|Nursery)\b|\b(?:Farm|Farms|Stud|Nursery)\s+(?:Farm|Farms|Stud|Nursery)\b/i;
+const hasUnnaturalOrganizationPhrase=name=>
+ repeatedUnicodeWord.test(name)||awkwardIndustryWords.test(name);
 const byCount=entries=>Object.freeze(
  Object.fromEntries([...entries].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))
  ));
@@ -30,7 +35,7 @@ function insertName(map,value,type,id,issues,counts){
   if(type==='PERSON'&&issues.length<MAX_ISSUES)
    issues.push({code:'PERSON_NAME_FORMAT',id,name:value});
  }
- if(type==='ORGANIZATION'&&disallowedWords.test(value)){
+ if(type==='ORGANIZATION'&&hasUnnaturalOrganizationPhrase(value)){
   counts.unnaturalOrganizationPhrases++;
   if(issues.length<MAX_ISSUES)issues.push({
    code:'UNNATURAL_ORGANIZATION_PHRASE',id,name:value
