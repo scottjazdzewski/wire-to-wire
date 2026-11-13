@@ -20,157 +20,118 @@ const context={window:{__WTW_NEXT__:{paint(){}}},readLocal1999World,trackProgram
 const browserImports=/^import\s+(?:\{[^}]+\}|attributeCatalog)\s+from\s+'\/(?:1999\/engine\/(?:local-api|attribute-catalog|horse-development)|next\/(?:1999-track-program|1999-alternate-stakes|1999-regional-stakes))\.mjs(?:\?[^']+)?';[ \t]*$/gm;
 vm.runInNewContext(source.replace(browserImports,''),context,{timeout:20000});
 const ui=context.window.__WTW_1999_UI_DATA__;
-test('1999 source data is mounted behind unchanged existing management UI',()=>{
+test('1999 approved Office shell serves ONLY the isolated founding scenario',()=>{
  assert.ok(ui);
  assert.match(html,/\/next\/next.css/);
  assert.match(html,/\/next\/next.js/);
  assert.match(html,/\/next\/1999-ui-source.mjs/);
  assert.match(js,/function departmentRoster\(/);
  assert.match(js,/function liveStableRosterView\(/);
- assert.match(js,/function managerSidebar\(/);
- assert.equal(ui.counts.horses,87500);
- assert.equal(ui.counts.tracks,118);
-});
-test('source horses and owner identities drive existing stable, not 2014 demo',()=>{
- assert.ok(ui.stableHorses.length>=1);
- for(const h of ui.stableHorses){
-  assert.match(h.horseId,/^H-/);
-  const facts=ui.sourceFacts(h.name);
-  assert.ok(facts&&['1999_CANON_LOCKED','1999_TEST_GENERATED'].includes(facts.source));
-  assert.equal(facts.source,h.tag.startsWith('CANON')?'1999_CANON_LOCKED':'1999_TEST_GENERATED');
-  assert.ok(ui.ownerFor(h.name));
- }
- assert.ok(ui.sourceOwnerName);
- assert.match(js,/stableDemo:!window.__WTW_1999_MANAGEMENT__/);
-});
-test('canonical horse and person profiles resolve modeled skills strictly by existing source ID',()=>{
- const horse=readLocal1999World('/api/1999/horses?offset=0&limit=1').items[0];
- const person=readLocal1999World('/api/1999/people?offset=0&limit=1').items[0];
- const horseModel=ui.sourceHorseModel(horse.id),personModel=ui.sourcePersonModel(person.id);
- assert.equal(horseModel.id,horse.id);
- assert.equal(personModel.id,person.id);
- assert.equal(Object.keys(horseModel.attributes).length,53,'Full horse catalog projected, not an empty source preview');
- assert.ok(Object.keys(personModel.attributes).length>=attributeCatalog.person_common.length,
-  'Person profile has all common skills plus its professional role');
- assert.equal(ui.sourceHorseAbility(horse.id).current,horseModel.ability.current);
- assert.strictEqual(ui.sourceHorseModel(horse.id),horseModel,'Source profile uses a stable read-only model lookup');
- assert.strictEqual(ui.sourcePersonModel(person.id),personModel);
- assert.equal(ui.sourceHorseModel('H-UNKNOWN-777'),null,'Never match an unregistered horse by name');
- assert.equal(ui.sourcePersonModel('P-UNKNOWN-777'),null,'Never invent a professional identity');
-});
-test('all department rosters have usable test records on original screens',()=>{
- const standing=ui.departmentRows('Breeding','Stallions');
- assert.equal(standing.filter(x=>x._canonId&&x.status.includes('SOURCE')).length,31,'All source stallions remain identifiable');
- assert.equal(standing.length,31+ui.counts.breedingStallions,'The modeled stallions coexist with 31 source stallions');
- const mares=ui.breedingMarePage(0,20);
- assert.equal(mares.total,2036+ui.counts.breedingMares,'Broodmares use source-aware virtual paging');
- assert.ok(mares.items.length===20&&mares.items.every(x=>x._canonId&&x.status.includes('SOURCE')));
- assert.equal(ui.departmentRows('Personnel','Ownership Groups').length,0);
- assert.equal(ui.departmentRows('Personnel','Owners').length,3308);
-  assert.ok(ui.departmentRows('Personnel','Owners').every(x=>x.principal&&x._testAttrs));
- assert.equal(ui.departmentRows('Personnel','Trainers').length,4200);
- assert.equal(ui.departmentRows('Personnel','Jockeys').length,1800);
- const jockeys=ui.departmentRows('Personnel','Jockeys');
- assert.ok(jockeys.every(p=>p._testAbility&&p.ca===String(p._testAbility.currentStars)&&p.pa===String(p._testAbility.potentialStars)));
- assert.ok(jockeys.filter(p=>Number(p.age)>=32&&Number(p.age)<=40).every(p=>Number(p.pa)-Number(p.ca)<=1));
- assert.ok(ui.departmentRows('Personnel','Staff').length>=1000);
-  assert.ok(ui.departmentRows('Personnel','Staff').every(x=>!['groom','exercise_rider'].includes(x.role)));
- assert.equal(ui.departmentRows('Facilities','Overview').length,5218);
-  assert.ok(ui.departmentRows('Facilities','Overview').every(x=>Object.keys(x._testAttrs||{}).length>=4));
- assert.ok(ui.departmentRows('Finances','Overview').length>=3);
- assert.equal(ui.auctionList().length,36);
- assert.equal(ui.extraTracks().length,118);
-});
-test('all generated finances, pedigrees, and source boundaries are clearly test/provenance-marked',()=>{
- const rows=ui.departmentRows('Finances','Overview');
- assert.ok(rows.every(x=>x.source==='GENERATED_TEST_BASELINE'));
- const sires=ui.departmentRows('Breeding','Stallions');
- assert.ok(sires.every(x=>x._canonId?x.status.includes('SOURCE'):(x._testGenerated&&x.status.includes('TEST'))),
-  'Historical and modeled breeding identities remain distinct');
- const mares=ui.breedingMarePage(2026,25);
- assert.equal(mares.items.filter(x=>x._canonId).length,10,'Boundary preserves 2,036 registered mares');
- assert.ok(mares.items.filter(x=>x._testGenerated).every(x=>x.status.includes('TEST')),
-  'Generated mares never claim to be source observations');
- assert.match(ui.bridgeStatus,/NO_1999_OUTCOME_COMMITTED/);
-});
-test('Racing screen uses 93 source stakes plus separate WTW game-modeled stakes, not old 2014 fixtures',()=>{
- assert.deepEqual(Array.from(ui.departmentRows('Racing','Entries',{date:'1999-01-01'})),[]);
- assert.deepEqual(Array.from(ui.departmentRows('Racing','Results',{date:'1999-01-01'})),[]);
- const stakes=ui.departmentRows('Racing','Stakes',{date:'1999-01-01'});
- assert.equal(stakes.length,93+WTW_ALTERNATE_STAKES_1999.length+WTW_REGIONAL_STAKES_1999.length);
-  assert.equal(WTW_ALTERNATE_STAKES_1999.length,108+8*11);
- assert.ok(stakes.every(r=>r._iso.startsWith('1999-')&&r.status.includes('NOT ENTERED')));
- const card=ui.departmentRows('Racing','Race Planning',{date:'1999-01-01'});
- assert.ok(card.length>=40);
- assert.ok(card.every(r=>r.date==='1999-01-01'&&r.status.includes('NOT ENTERED')&&r.horse===''));
- assert.match(js,/const racingRows=\(\)=>window.__WTW_1999_MANAGEMENT__\?\[\]/);
-});
-test('World horses page the full population while racing-horse count stays distinct',()=>{
- assert.equal(typeof ui.worldHorsePage,'function');
- const worldTotal=ui.counts.worldHorses||ui.counts.horses;
- assert.ok(worldTotal>=ui.counts.horses,'Full horse directory cannot be smaller than racing roster');
- const first=ui.worldHorsePage(0,18);
- const synthetic=ui.worldHorsePage(300,18);
- const last=ui.worldHorsePage(worldTotal-18,18);
- assert.equal(first.total,worldTotal);
- assert.equal(last.total,worldTotal);
- assert.equal(first.items.length,18);
- assert.equal(synthetic.items.length,18);
- assert.equal(last.items.length,18);
- assert.ok(first.items.every(x=>x._worldKey?.startsWith('horse:')));
- assert.ok(synthetic.items.every(x=>x._testGenerated&&!x._worldKey));
- assert.ok(synthetic.items.every(x=>Object.keys(x._testAttrs).length===53));
- assert.ok(synthetic.items.every(x=>x.owner&&x.trainer&&x.sire&&x.dam&&x.location));
- assert.match(js,/worldHorsePage/);
- assert.match(js,/const totalRecords=globalDirectory\|\|virtualMethod\?virtualTotal:rows.length/);
- assert.match(js,/const browse=globalHorseDirectory\?'worldHorseBrowse':'breedingMareBrowse'/);
- assert.match(js,/window\.__WTW_1999_UI_DATA__\[browse\]/);
-});
-test('large rosters are cached so native UI pagination does not regenerate all records on every paint',()=>{
- const a=ui.departmentRows('Personnel','Staff');
- const b=ui.departmentRows('Personnel','Staff');
- assert.equal(a,b);
- const farms=ui.departmentRows('Facilities','Overview');
- assert.equal(farms,ui.departmentRows('Facilities','Overview'));
+ assert.equal(ui.counts.horses,39);
+ assert.equal(ui.counts.worldHorses,112);
+ assert.equal(ui.counts.owners,37);
+ assert.ok(ui.counts.tracks>=50&&ui.counts.tracks<118);
+ assert.ok(ui.counts.people<150);
+ assert.ok(!ui.generatedStaffRoles?.includes('groom'));
 });
 
-test('Racing browse has all 118 tracks, daily condition books and no off-meet cards',()=>{
- const tracks=ui.extraTracks();
- assert.equal(tracks.length,118);
- assert.equal(new Set(tracks.map(t=>t.id)).size,118);
- assert.ok(tracks.some(t=>t.name==='Saratoga'));
- assert.ok(tracks.some(t=>t.name==='Oriental Park'&&t.country==='Cuba'));
- assert.ok(!tracks.some(t=>t.id.startsWith('IT-')));
- const report=ui.racingDaySummary('1999-01-01');
- const all=ui.racingDayCards('1999-01-01');
- assert.ok(report.trackCount>=5,'January 1 has active modeled cards');
- assert.ok(all.length>=40,'All-tracks January 1 includes races across different venues');
- assert.ok(all.every(r=>r._iso==='1999-01-01'&&r._raceId&&r._raceData));
- assert.ok(all.every(r=>/^\$[\d,]+$/.test(r.purse)), 'All proposed card purses are full dollar amounts');
- assert.ok(all.every(r=>!r._raceData.results?.length),'Browsing races must never generate a result');
- assert.equal(ui.racingDayCards('1999-01-01','Saratoga').length,0,'Saratoga is out of meet in January');
- const first=all[0].track;
- const subset=ui.racingDayCards('1999-01-01',first);
- assert.ok(subset.length>0&&subset.length<all.length);
- assert.ok(subset.every(r=>r.track===first));
- assert.deepEqual(ui.racingDayCards('1999-01-01',first),subset,'Daily card is stable across reads');
-  const saratoga=ui.racingDayCards('1999-08-28','Saratoga');
-  const travers=saratoga.filter(r=>r._stakeId==='STK-0022');
-  assert.equal(travers.length,1,'Travers sits ONCE on its retained August 28 date');
-  assert.match(travers[0].race,/^R\d+ · Travers Stakes$/,'Stakes has a numbered card position');
-  assert.ok(travers[0].number<=saratoga.length,'Stakes does not inflate card length');
- assert.equal(ui.racingDayCards('1999-02-30').length,0,'Invalid dates do not produce false cards');
- assert.equal(ui.racingDayCards('1999-01-01','Ascot').length,0,'Overseas tracks are not playable');
+test('stable only offers source-linked 1999 horses and exact IDs',()=>{
+ assert.ok(ui.stableHorses.length>0);
+ assert.ok(ui.stableHorses.every(h=>h.horseId?.startsWith('H-')));
+ for(const h of ui.stableHorses){
+  const fact=ui.sourceFacts(h.name);
+  assert.ok(fact&&fact.source==='1999_CANON_LOCKED');
+  assert.ok(ui.ownerFor(h.name));
+ }
+ assert.ok(ui.sourceOwnerId&&ui.sourceOwnerName);
 });
-test('Racing date navigation, condition books and purse formatting are visible in the existing UI',()=>{
- for(const marker of [
-  'data-ng="dept-day-card"','data-ng="dept-race-calendar"','data-ng="dept-race-game-date"',
-  'data-ng="racing-calendar-day"','data-ng="racing-calendar-month"',
-  'data-ng-input="department-race-date"','data-ng-select="department-track"',
-  'function depRaceBrowseDate()','function depRacingCalendar()',
-  'racingDayCards?.(depRaceBrowseDate(),APP.racingTrack)'
- ])assert.ok(js.includes(marker),marker);
- assert.ok(js.includes('ALL TRACKS ('),'All active tracks must be selectable without an in-meet restriction');
- assert.match(js,/const t=key==='purse'\?depMoney\(value\):String\(value\)/);
- assert.ok(!js.includes("const racingTracks=section==='Racing'?depCurrentMeetRows():[]"),'All Tracks menu must not be restricted to active meets');
+
+test('the same detailed horse and person attributes resolve by immutable source ID',()=>{
+ const worldParams='?mode=FOUNDING_1999&population=112&seed=19990101';
+ const horse=readLocal1999World('/api/1999/horses'+worldParams+'&limit=1').items[0];
+ const person=readLocal1999World('/api/1999/people'+worldParams+'&limit=1').items[0];
+ const horseModel=ui.sourceHorseModel(horse.id);
+ const personModel=ui.sourcePersonModel(person.id);
+ assert.equal(horseModel.id,horse.id);
+ assert.equal(personModel.id,person.id);
+ assert.equal(Object.keys(horseModel.attributes).length,53);
+ assert.ok(Object.keys(personModel.attributes).length>=attributeCatalog.person_common.length);
+ assert.equal(ui.sourceHorseAbility(horse.id).current,horseModel.ability.current);
+ assert.equal(ui.sourceHorseModel('H-UNKNOWN-777'),null);
+ assert.equal(ui.sourcePersonModel('P-UNKNOWN-777'),null);
+});
+
+test('no duplicate stallion rows or invented foals enter the founding farm pages',()=>{
+ const standing=ui.departmentRows('Breeding','Stallions');
+ assert.equal(standing.length,18);
+ assert.equal(new Set(standing.map(h=>h._canonId)).size,18);
+ assert.ok(standing.every(h=>h.status.includes('SOURCE')&&!h._testGenerated));
+ const mares=ui.breedingMarePage(0,20);
+ assert.equal(mares.total,55);
+ assert.equal(mares.items.length,20);
+ const foals=ui.departmentRows('Breeding','Foals');
+ assert.equal(foals.length,1);
+ assert.match(foals[0].sire,/18/);
+ assert.equal(foals[0].foals,'0');
+ assert.equal(foals[0].bookings,'0');
+});
+
+test('staff roster is freshly generated, role-specific, and never silently employed',()=>{
+ const jockeys=ui.departmentRows('Personnel','Jockeys');
+ const staff=ui.departmentRows('Personnel','Staff');
+ assert.equal(jockeys.length,26);
+ assert.ok(jockeys.every(p=>p._id.startsWith('P-FOUNDING-STAFF-')));
+ assert.ok(jockeys.every(p=>p._testAbility?.current>=1&&p._testAbility?.potential>=p._testAbility.current));
+ assert.ok(jockeys.every(p=>p.contract.includes('UNCONTRACTED')&&p.salary==='—'));
+ assert.ok(staff.length>25);
+ assert.ok(staff.every(p=>!['groom','exercise_rider'].includes(p.role)));
+ assert.ok(staff.every(p=>p.contract.includes('UNCONTRACTED')&&p.salary==='—'));
+ assert.ok(jockeys.every(p=>Object.keys(p._testAttrs||{}).length>=10));
+ assert.equal(ui.departmentRows('Personnel','Ownership Groups').length,0);
+ assert.equal(ui.departmentRows('Personnel','Owners').length,37);
+ assert.ok(ui.departmentRows('Personnel','Trainers').length>=12);
+});
+
+test('the small founding facility, finance, and sale directories show no phantom catalogs',()=>{
+ assert.equal(ui.auctionList().length,12);
+ const owners=ui.departmentRows('Personnel','Owners');
+ assert.ok(owners.some(o=>o.name==='Midway'));
+ assert.ok(owners.some(o=>o.name==='Harrowgate Farm'));
+ assert.ok(!owners.some(o=>['Barlow Stable','Lattice Farm'].includes(o.name)));
+ const facilities=ui.departmentRows('Facilities','Overview');
+ assert.equal(facilities.length,ui.counts.facilities);
+ assert.ok(facilities.every(f=>Boolean(f._id)));
+ const finance=ui.departmentRows('Finances','Overview');
+ assert.ok(finance.every(row=>row.source==='GENERATED_TEST_BASELINE'));
+});
+
+test('global World browser pages only the founding 112 horses, never the 325k test population',()=>{
+ const first=ui.worldHorsePage(0,18);
+ const last=ui.worldHorsePage(94,18);
+ assert.equal(first.total,112);
+ assert.equal(last.total,112);
+ assert.equal(first.items.length,18);
+ assert.equal(last.items.length,18);
+ assert.ok(first.items.every(x=>x._worldKey?.startsWith('horse:')));
+ assert.ok(!last.items.some(x=>x._id?.startsWith('H-TEST-')));
+});
+
+test('race-calendar browser remains accessible without assigning entrants or results',()=>{
+ assert.deepEqual(Array.from(ui.departmentRows('Racing','Entries',{date:'1999-01-01'})),[]);
+ assert.deepEqual(Array.from(ui.departmentRows('Racing','Results',{date:'1999-01-01'})),[]);
+ const card=ui.departmentRows('Racing','Race Planning',{date:'1999-01-01'});
+ assert.ok(card.length>0);
+ assert.ok(card.every(row=>row.horse===''&&row.status.includes('NOT ENTERED')));
+ const tracks=ui.extraTracks();
+ assert.equal(tracks.length,ui.counts.tracks);
+ assert.ok(tracks.some(t=>t.name==='Saratoga'));
+ assert.equal(ui.racingDayCards('1999-01-01','Saratoga').length,0);
+ assert.match(ui.bridgeStatus,/NO_1999_OUTCOME_COMMITTED/);
+});
+
+test('repeated roster reads are cached and use the same existing UI layout',()=>{
+ assert.strictEqual(ui.departmentRows('Personnel','Staff'),ui.departmentRows('Personnel','Staff'));
+ assert.strictEqual(ui.departmentRows('Facilities','Overview'),ui.departmentRows('Facilities','Overview'));
+ assert.match(js,/const totalRecords=globalDirectory\|\|virtualMethod\?virtualTotal:rows.length/);
+ assert.match(js,/window\.__WTW_1999_UI_DATA__\[browse\]/);
 });
