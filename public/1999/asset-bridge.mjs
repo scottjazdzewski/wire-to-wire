@@ -2,7 +2,7 @@
    Connect only pre-approved, already published assets by immutable record ID.
    No image is inferred for generated horses, people, or venues. */
 const PHOTO_INDEX='/assets/office/decision-photo-index.json';
-const LOGO_INDEX='/assets/office/organization-logo-index.json';
+const LOGO_INDEX='/assets/office/founding-organization-logo-index.json';
 const BADGE_ROOT='/assets/profile-badges/v2/wtw_badge_';
 const badgeNames=Object.freeze({
  'full-horses':'horse','horses':'horse','owner-economy':'connections',

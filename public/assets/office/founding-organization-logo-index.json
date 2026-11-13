@@ -1,7 +1,7 @@
 {
   "schema": "WTW_FOUNDING_1999_APPROVED_ORGANIZATION_LOGOS_V1",
-  "version": "2026-11-13-approved-only-logo-release-v2",
-  "authority": "User requested publishing available logos November 13, 2026. Only existing canonical O-ID AND exact founding organization-name matches may be shown. This maps UI artwork only; no new organizations, histories or personnel.",
+  "version": "2026-11-13-user-approved-master-originals-v3",
+  "authority": "WTW founding 1999 directory exact ID AND display-name gate. User approved logo originals in official Drive per-O-ID folders; no new runtime entities.",
   "approvedOrganizationIds": [
     "O-000001",
     "O-000002",
@@ -42,7 +42,7 @@
     "O-FOUNDING-1999-014"
   ],
   "organizations": {
-    "organization:O-000001": "/assets/office/owner-logos/owner_O000001_1999_v1_64.png",
+    "organization:O-000001": "/assets/office/founding-organization-logos/O-000001.png",
     "organization:O-000003": "/assets/office/owner-logos/owner_O000003_1999_v1_64.png",
     "organization:O-000011": "/assets/office/owner-logos/owner_O000011_1999_v1_64.png",
     "organization:O-000014": "/assets/office/owner-logos/owner_O000014_1999_v1_64.png",
@@ -51,28 +51,32 @@
     "organization:O-000047": "/assets/office/owner-logos/owner_O000047_1999_v1_64.png",
     "organization:O-000057": "/assets/office/owner-logos/owner_O000057_1999_v1_64.png",
     "organization:O-000059": "/assets/office/owner-logos/owner_O000059_1999_v1_64.png",
-    "organization:O-000061": "/assets/office/owner-logos/owner_O000061_1999_v1_64.png",
-    "organization:O-000062": "/assets/office/owner-logos/owner_O000062_1999_v1_64.png",
-    "organization:O-000063": "/assets/office/owner-logos/owner_O000063_1999_v1_64.png",
-    "organization:O-000064": "/assets/office/owner-logos/owner_O000064_1999_v1_64.png",
-    "organization:O-000066": "/assets/office/owner-logos/owner_O000066_1999_v1_64.png",
+    "organization:O-000061": "/assets/office/founding-organization-logos/O-000061.png",
+    "organization:O-000062": "/assets/office/founding-organization-logos/O-000062.png",
+    "organization:O-000063": "/assets/office/founding-organization-logos/O-000063.png",
+    "organization:O-000064": "/assets/office/founding-organization-logos/O-000064.png",
+    "organization:O-000066": "/assets/office/founding-organization-logos/O-000066.png",
     "organization:O-000067": "/assets/office/owner-logos/owner_O000067_1999_v1_64.png",
     "organization:O-000068": "/assets/office/owner-logos/owner_O000068_1999_v1_64.png",
-    "organization:O-000071": "/assets/office/owner-logos/owner_O000071_1999_v1_64.png"
+    "organization:O-000071": "/assets/office/founding-organization-logos/O-000071.png",
+    "organization:O-000002": "/assets/office/founding-organization-logos/O-000002.png",
+    "organization:O-000056": "/assets/office/founding-organization-logos/O-000056.png",
+    "organization:O-005919": "/assets/office/founding-organization-logos/O-005919.png",
+    "organization:O-005794": "/assets/office/founding-organization-logos/O-005794.png"
   },
   "pending": "Additional founding ownership artwork may be supplied later; do not invent crests or use legacy-only names.",
   "forbiddenFallback": "DO_NOT_USE_UNMATCHED_ORGANIZATIONS_OR_UNAPPROVED_NAME_ALIASES",
-  "publishedCount": 17,
-  "remainingWithoutMatchedLogo": 20,
+  "publishedCount": 21,
+  "remainingWithoutMatchedLogo": 16,
   "audit": {
-    "source": "existing 1999 canonical organization marks /assets/office/owner-logos/",
+    "source": "approved user-selected original artwork, exported transparent 256px, with historical exact-ID entries preserved",
     "matchingRule": "SAME_EXACT_ORGANIZATION_ID_AND_NAME",
     "published": [
       {
         "id": "O-000001",
         "name": "Wetherby Plain",
-        "path": "/assets/office/owner-logos/owner_O000001_1999_v1_64.png",
-        "match": "CANONICAL_ID_AND_EXACT_NAME"
+        "path": "/assets/office/founding-organization-logos/O-000001.png",
+        "match": "USER_APPROVED_CANONICAL_ID_AND_EXACT_NAME"
       },
       {
         "id": "O-000003",
@@ -125,32 +129,32 @@
       {
         "id": "O-000061",
         "name": "Kingsmere Farm",
-        "path": "/assets/office/owner-logos/owner_O000061_1999_v1_64.png",
-        "match": "CANONICAL_ID_AND_EXACT_NAME"
+        "path": "/assets/office/founding-organization-logos/O-000061.png",
+        "match": "USER_APPROVED_CANONICAL_ID_AND_EXACT_NAME"
       },
       {
         "id": "O-000062",
         "name": "Crescent Mile Farm",
-        "path": "/assets/office/owner-logos/owner_O000062_1999_v1_64.png",
-        "match": "CANONICAL_ID_AND_EXACT_NAME"
+        "path": "/assets/office/founding-organization-logos/O-000062.png",
+        "match": "USER_APPROVED_CANONICAL_ID_AND_EXACT_NAME"
       },
       {
         "id": "O-000063",
         "name": "Ironweed Farm",
-        "path": "/assets/office/owner-logos/owner_O000063_1999_v1_64.png",
-        "match": "CANONICAL_ID_AND_EXACT_NAME"
+        "path": "/assets/office/founding-organization-logos/O-000063.png",
+        "match": "USER_APPROVED_CANONICAL_ID_AND_EXACT_NAME"
       },
       {
         "id": "O-000064",
         "name": "Huntcross Farm",
-        "path": "/assets/office/owner-logos/owner_O000064_1999_v1_64.png",
-        "match": "CANONICAL_ID_AND_EXACT_NAME"
+        "path": "/assets/office/founding-organization-logos/O-000064.png",
+        "match": "USER_APPROVED_CANONICAL_ID_AND_EXACT_NAME"
       },
       {
         "id": "O-000066",
         "name": "Aurelian Stud",
-        "path": "/assets/office/owner-logos/owner_O000066_1999_v1_64.png",
-        "match": "CANONICAL_ID_AND_EXACT_NAME"
+        "path": "/assets/office/founding-organization-logos/O-000066.png",
+        "match": "USER_APPROVED_CANONICAL_ID_AND_EXACT_NAME"
       },
       {
         "id": "O-000067",
@@ -167,34 +171,38 @@
       {
         "id": "O-000071",
         "name": "Empire Valley Stud",
-        "path": "/assets/office/owner-logos/owner_O000071_1999_v1_64.png",
-        "match": "CANONICAL_ID_AND_EXACT_NAME"
-      }
-    ],
-    "notPublished": [
+        "path": "/assets/office/founding-organization-logos/O-000071.png",
+        "match": "USER_APPROVED_CANONICAL_ID_AND_EXACT_NAME"
+      },
       {
         "id": "O-000002",
         "name": "Harrowgate Farm",
-        "reason": "OLD ARTWORK LABEL Lattice Farm DOES NOT MATCH"
+        "path": "/assets/office/founding-organization-logos/O-000002.png",
+        "match": "USER_APPROVED_CANONICAL_ID_AND_EXACT_NAME"
       },
       {
         "id": "O-000056",
         "name": "Quickfire Racing",
-        "reason": "OLD ARTWORK LABEL Marcus Vale DOES NOT MATCH"
-      },
-      {
-        "id": "O-005910",
-        "name": "Midway",
-        "reason": "NO MATCHING LOGO FILE"
+        "path": "/assets/office/founding-organization-logos/O-000056.png",
+        "match": "USER_APPROVED_CANONICAL_ID_AND_EXACT_NAME"
       },
       {
         "id": "O-005919",
         "name": "Knight’s Way",
-        "reason": "NO MATCHING LOGO FILE"
+        "path": "/assets/office/founding-organization-logos/O-005919.png",
+        "match": "USER_APPROVED_CANONICAL_ID_AND_EXACT_NAME"
       },
       {
         "id": "O-005794",
         "name": "Potomac Heritage Stable",
+        "path": "/assets/office/founding-organization-logos/O-005794.png",
+        "match": "USER_APPROVED_CANONICAL_ID_AND_EXACT_NAME"
+      }
+    ],
+    "notPublished": [
+      {
+        "id": "O-005910",
+        "name": "Midway",
         "reason": "NO MATCHING LOGO FILE"
       },
       {
@@ -273,5 +281,18 @@
         "reason": "NO MATCHING LOGO FILE"
       }
     ]
-  }
+  },
+  "latestApprovedLogoIds": [
+    "O-000001",
+    "O-000002",
+    "O-000056",
+    "O-000061",
+    "O-000062",
+    "O-000063",
+    "O-000064",
+    "O-000066",
+    "O-000071",
+    "O-005919",
+    "O-005794"
+  ]
 }

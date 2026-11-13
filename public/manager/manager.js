@@ -1024,7 +1024,7 @@ if(!['profile','office','search','stable','racing','breeding','sales','person','
 Promise.allSettled([
  fetch('/assets/game/attribute-catalog.v1.json').then(x=>x.ok?x.json():null).then(x=>{if(x?.horse_categories)ui.catalog=x}),
  fetch('/assets/office/decision-photo-index.json').then(x=>x.ok?x.json():null).then(x=>{ui.photos=x}),
- fetch('/assets/office/organization-logo-index.json').then(x=>x.ok?x.json():null).then(x=>{if(x?.organizations)ui.logos=x}),
+ fetch('/assets/office/founding-organization-logo-index.json').then(x=>x.ok?x.json():null).then(x=>{if(x?.organizations&&Array.isArray(x.approvedOrganizationIds)){const allow=new Set(x.approvedOrganizationIds);const logos={};for(const item of x.audit?.published||[]){const path=x.organizations['organization:'+item.id];if(allow.has(item.id)&&typeof path==='string'&&item.name){logos[item.name]=path;logos[item.id]=path;}}ui.logos={organizations:logos};}}),
  fetch('/data/person-geography-ui-v33.json').then(x=>x.ok?x.json():null).then(x=>{if(x?.schema==='WTW_UI_PERSON_GEOGRAPHY_PROJECTION_V1')ui.personGeo=x}),
  fetch('/data/track-geography-v33.json').then(x=>x.ok?x.json():null).then(x=>{if(x?.tracks&&x?.authority)ui.trackGeo=x})
 ]).then(render);
