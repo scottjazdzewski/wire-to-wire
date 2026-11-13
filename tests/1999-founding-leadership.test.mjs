@@ -12,10 +12,10 @@ const known=new Set(['O-000001','O-000003','O-000014','O-000056','O-000061','O-0
  'O-005910','O-005919','O-005794',
  'O-FOUNDING-1999-011','O-FOUNDING-1999-012','O-FOUNDING-1999-014']);
 
-test('every one of the 37 founding operations has a named, linked principal',()=>{
+test('all 37 founding organizations persist; only 33 approved principals load',()=>{
  assert.equal(world.counts.owners,37);
  assert.equal(world.sourceOrganizations.length,37);
- assert.equal(world.audit.foundingOrganizationsWithoutLeader,0);
+ assert.equal(world.audit.foundingOrganizationsWithoutLeader,4);
  assert.equal(world.audit.newlyAssignedOrganizationPrincipals,25);
  assert.equal(world.audit.proposedLeadershipPeople,4);
  assert.equal(world.audit.newLeadershipPeople,31);
@@ -24,6 +24,11 @@ test('every one of the 37 founding operations has a named, linked principal',()=
  const ids=new Set(world.sourcePeople.map(x=>x.id));
  assert.equal(ids.size,world.sourcePeople.length);
  for(const o of world.sourceOrganizations){
+  if(o.leadershipStatus==='PENDING_USER_REVIEW_NO_APPROVED_PRINCIPAL'){
+   assert.equal(o.principalOwner,null,o.name);
+   assert.equal(o.principalOwnerId,null,o.name);
+   continue;
+  }
   assert.ok(o.principalOwner&&o.principalOwnerId,o.name);
   assert.ok(ids.has(o.principalOwnerId),o.name+' cannot reference unknown person');
   const leader=world.sourcePeople.find(p=>p.id===o.principalOwnerId);
@@ -31,8 +36,8 @@ test('every one of the 37 founding operations has a named, linked principal',()=
   assert.ok(Array.isArray(o.leadershipPeopleIds)&&o.leadershipPeopleIds.length>=1);
   assert.ok(o.leadershipPeopleIds.every(x=>ids.has(x)),o.name+' secondary leadership ID');
  }
- assert.equal(world.sourcePeople.length,47);
- assert.equal(world.counts.people,115); // 47 source and leadership identities + 68 uncontracted professionals.
+ assert.equal(world.sourcePeople.length,41);
+ assert.equal(world.counts.people,41); // No unapproved principals or generated professionals.
 });
 
 test('known 1999 founders/public people stay in place; proposals do not become historical proof',()=>{
@@ -57,10 +62,10 @@ test('known 1999 founders/public people stay in place; proposals do not become h
  }
  const proposed=world.sourceOrganizations.filter(o=>!known.has(o.id));
  assert.equal(proposed.length,25);
- assert.equal(proposed.filter(o=>o.leadershipStatus.includes('PROVISIONAL')).length,4);
+ assert.equal(proposed.filter(o=>o.leadershipStatus==='PENDING_USER_REVIEW_NO_APPROVED_PRINCIPAL').length,4);
  assert.equal(proposed.filter(o=>o.leadershipStatus==='USER_APPROVED_1999_OPERATOR_LINK').length,21);
- assert.ok(proposed.every(o=>o.principalOwnerId.startsWith('P-FOUNDING-LEADER-')));
- assert.equal(byOrg.get('O-006905').principalOwner,'Daniel Calder');
+ assert.ok(proposed.filter(o=>o.principalOwnerId).every(o=>o.principalOwnerId.startsWith('P-FOUNDING-LEADER-')));
+ assert.equal(byOrg.get('O-006905').principalOwner,null);
  assert.equal(byOrg.get('O-006905').publicInvestor,'Magic Johnson');
  assert.equal(byOrg.get('O-006905').publicInvestorId,'P-910018');
  assert.notEqual(byOrg.get('O-006905').principalOwnerId,'P-910018');
@@ -109,30 +114,29 @@ test('all leadership people have unique names/IDs, real geographic bases, age cu
 test('World Registrar and exact-ID API both resolve all designated names',()=>{
  const file=JSON.parse(readFileSync(new URL('../public/data/wtw-1999-founding-directory-v1.json',
   import.meta.url),'utf8'));
- assert.equal(file.counts.organizationsWithDesignatedPrincipal,37);
- assert.equal(file.counts.organizationPrincipalGaps,0);
- assert.equal(file.counts.people,47);
- assert.equal(file.leadershipAssignments.length,31);
+ assert.equal(file.counts.organizationsWithDesignatedPrincipal,33);
+ assert.equal(file.counts.organizationPrincipalGaps,4);
+ assert.equal(file.counts.people,41);
+ assert.equal(file.leadershipAssignments.length,27);
  assert.deepEqual(file.organizations.map(x=>[x.id,x.principalOwner,x.principalOwnerId]),
   world.sourceOrganizations.map(x=>[x.id,x.principalOwner,x.principalOwnerId]));
  assert.deepEqual(file.people.map(x=>[x.id,x.name]),
   world.sourcePeople.map(x=>[x.id,x.name]));
- const listing=readLocal1999World('/api/1999/people?offset=16&limit=30');
- assert.equal(listing.total,47);
- assert.equal(listing.items.length,30);
- assert.equal(listing.items[0].id,'P-FOUNDING-LEADER-001');
- const modeled=readLocal1999World('/api/1999/sim/source-people?offset=16&limit=1');
- assert.equal(modeled.items[0].id,'P-FOUNDING-LEADER-001');
- assert.ok(modeled.items[0].ability?.current>=1);
- assert.equal(modeled.items[0].source,'WTW_1999_FICTIONAL_LEADERSHIP_PROPOSAL_NOT_HISTORICAL_EVIDENCE');
+ const listing=readLocal1999World('/api/1999/people?offset=0&limit=100');
+ assert.equal(listing.total,41);
+ assert.equal(listing.items.length,41);
+ assert.ok(!listing.items.some(p=>['Graham Kincaid','Hugh Radcliffe','Sebastian Pryce','Daniel Calder'].includes(p.name)));
+ assert.ok(listing.items.some(p=>p.name==='Dino Marks'));
+ const modeled=readLocal1999World('/api/1999/sim/source-people?offset=0&limit=100');
+ assert.equal(modeled.total,41);
+ assert.ok(modeled.items.every(p=>p.id));
 });
 
 test('Argosy financial racing leadership and Voss bloodstock remain separate by exact ID',()=>{
  const racing=byOrg.get('O-000057'),bloodstock=byOrg.get('O-000014');
- assert.equal(racing.principalOwner,'Sebastian Pryce');
- assert.equal(racing.principalOwnerId,'P-FOUNDING-LEADER-008');
- assert.equal(racing.relatedBloodstockAgencyId,bloodstock.id);
- assert.equal(racing.relatedBloodstockStrategistId,'P-000018');
+ assert.equal(racing.principalOwner,null);
+ assert.equal(racing.principalOwnerId,null);
+ assert.equal(racing.leadershipStatus,'PENDING_USER_REVIEW_NO_APPROVED_PRINCIPAL');
  assert.equal(bloodstock.principalOwner,'Julian Voss');
  assert.equal(bloodstock.principalOwnerId,'P-000018');
  const investor=world.sourcePeople.find(p=>p.id==='P-910018');
@@ -140,7 +144,7 @@ test('Argosy financial racing leadership and Voss bloodstock remain separate by 
  assert.equal(investor.role,'MAJOR INVESTOR');
  assert.equal(investor.relationshipType,'MAJOR_INVESTOR_NON_OPERATING');
  assert.equal(investor.hasManagementAuthority,false);
- assert.equal(byOrg.get('O-006905').principalOwnerId,'P-FOUNDING-LEADER-031');
+ assert.equal(byOrg.get('O-006905').principalOwnerId,null);
 });
 
 test('personnel creation remains independent from leader selection, all 1999 horses unchanged',()=>{
