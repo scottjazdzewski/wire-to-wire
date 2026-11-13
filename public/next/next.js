@@ -436,7 +436,7 @@ function header(){
  // The full-width department roster already owns section navigation through
  // its VIEW dropdown. Do not render a second horizontal tab menu above it.
  // Preserve Office navigation, where no department VIEW dropdown is present.
- const hasOwnNavigation=APP.section!=='Office'||
+ const hasOwnNavigation=(APP.section!=='Office'&&!(APP.section==='World'&&APP.page==='Overview'))||
   Boolean(profileRoute&&/Profile$/.test(profileRoute.kicker))||
   APP.custom==='Search'||APP.custom==='Organization Overview'||Boolean(APP.custom&&APP.custom.includes(' — '));
  return `<header class="ng-global" aria-label="Wire to Wire application navigation">
