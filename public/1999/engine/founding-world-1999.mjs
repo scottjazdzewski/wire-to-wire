@@ -23,6 +23,7 @@ const INSTITUTION_PROFILES=Object.freeze({
  'O-000002':{approvedPrincipals:'1999 principal unresolved; earlier Miriam Vale assignment superseded',
   principalOwner:null,principalOwnerId:null,approvedOrigin:'Founded 1958 near Paris, Kentucky. Elite commercial nursery and yearling sales business, historically associated with Paper Tiger descendants.'},
  'O-000003':{principalOwner:'Nathaniel “Nate” Quill',principalOwnerId:'P-000003'},
+ 'O-000014':{principalOwner:'Julian Voss',principalOwnerId:'P-000018'},
  'O-000056':{principalOwner:'Vince Bellini',principalOwnerId:'P-FOUNDING-1999-001'},
  'O-000061':{principalOwner:'Carolina Kingsley',principalOwnerId:'P-FOUNDING-1999-004'},
  'O-000062':{approvedOrigin:'Major Kentucky breed-to-race farm. Retained and raced homebreds Who Knows and Saint Nobody per 2026-11-12 user-approved history; older separate-owner credits require reconciliation.'},
@@ -241,11 +242,21 @@ export function createFounding1999Universe({seed=19990101}={}) {
  const trainingPeople=canonTrainers.filter(p=>trainerIds.has(p.id));
  const principalIds=new Set(['P-000001','P-000002','P-000003','P-000018','P-000069','P-000077']);
  for(const h of sourceHorses)if(h.trainerId)principalIds.add(h.trainerId);
- const sourcePeople=canon.people.filter(p=>principalIds.has(p.id)).map(p=>
-  p.id==='P-000002'?{...p,base:{locality:'Virginia',region:'Virginia',country:'USA',
+ const sourcePeople=canon.people.filter(p=>principalIds.has(p.id)).map(p=>{
+  if(p.id==='P-000001')return {...p,operatingOrganizationId:'O-000001',
+   organizationLinkBasis:'EXISTING_1999_FARM_PRINCIPAL'};
+  if(p.id==='P-000003')return {...p,operatingOrganizationId:'O-000003',
+   organizationLinkBasis:'EXISTING_1999_FARM_PRINCIPAL'};
+  if(p.id==='P-000018')return {...p,operatingOrganizationId:'O-000014',
+   organizationLinkBasis:'USER_APPROVED_ARGOSY_BLOODSTOCK_FOUNDER'};
+  if(p.id==='P-000069')return {...p,
+   professionalAffinities:['O-000063'],
+   affinityBasis:'USER_APPROVED_IRONWEED_PROFESSIONAL_CONNECTION_NOT_FARM_OWNERSHIP'};
+  if(p.id==='P-000002')return {...p,base:{locality:'Virginia',region:'Virginia',country:'USA',
    basis:'USER_APPROVED_ASHBY_VALE_1999'},operatingOrganizationId:'O-FOUNDING-1999-014',
-   sourceOriginalBase:p.base,geographyJoinStatus:'APPROVED_PENDING_PERSON_REGISTRY'}:p
- ).concat(PUBLIC_FIGURE_OWNERS.map(o=>({id:o.publicPrincipalId,name:o.publicPrincipal,
+   sourceOriginalBase:p.base,geographyJoinStatus:'APPROVED_PENDING_PERSON_REGISTRY'};
+  return p;
+ }).concat(PUBLIC_FIGURE_OWNERS.map(o=>({id:o.publicPrincipalId,name:o.publicPrincipal,
    role:'RACING OWNER',status:'CANONICAL_1999_PUBLIC_FIGURE_OWNER',
    operatingOrganizationId:o.id,base:loc(o.locationLabel)})),PERSON_PROPOSALS);
  const ownerOriginalIndex=new Map(canon.organizations.map((o,i)=>[o.id,i]));
