@@ -30,6 +30,7 @@
 |---|---|---|
 | Personnel → Owners → organization | Ownership dossier | `O-...` |
 | Facilities → Stud Farms / Farms / Racing Stables → organization | Facility dossier | SAME `O-...` |
+| Breeding → Stud Farms → organization | SAME Facility dossier | SAME `O-...` |
 | World → Organizations → organization | Ownership dossier | SAME `O-...` |
 | World → People → person | Personnel dossier | `P-...` |
 | Linked principal, investor or strategist | Personnel dossier | Exact person ID |
