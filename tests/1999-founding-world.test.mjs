@@ -21,7 +21,7 @@ test('Jan 1 founding scenario replaces 325k visible TEST world but preserves his
  assert.equal(canon.horses.length,267);
  assert.equal(canon.organizations.length,108);
  assert.ok(canon.pedigreeNodes.length>2000);
- assert.equal(founding.counts.people,114); // 16 source-linked people + 30 proposed leaders + 68 fresh professionals
+ assert.equal(founding.counts.people,115); // 16 source-linked people + 31 founding leaders + 68 fresh professionals
 });
 
 test('the old 39 generated B01 horses are archived, never carried into a clean founding world',()=>{
@@ -41,7 +41,7 @@ test('founding operations carry approved names under existing owner IDs, never d
  assert.equal(new Set(orgs.map(o=>o.name.toLowerCase())).size,orgs.length);
  const look=id=>orgs.find(o=>o.id===id);
  assert.equal(look('O-000002').name,'Harrowgate Farm');
- assert.equal(look('O-000002').principalOwner,'Margot Kincaid');
+ assert.equal(look('O-000002').principalOwner,'Graham Kincaid');
  assert.equal(look('O-000002').leadershipStatus,'WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW');
  assert.equal(look('O-000056').name,'Quickfire Racing');
  assert.equal(look('O-005910').name,'Midway');
@@ -65,7 +65,7 @@ test('Miriam Vale now operates Ashby Vale in Virginia and does not run Harrowgat
  assert.equal(m.name,'Miriam Vale');
  assert.equal(m.base.region,'Virginia');
  assert.equal(m.operatingOrganizationId,'O-FOUNDING-1999-014');
- assert.equal(founding.ownerAt(founding.sourceOrganizations.findIndex(o=>o.id==='O-000002')).principalOwner,'Margot Kincaid');
+ assert.equal(founding.ownerAt(founding.sourceOrganizations.findIndex(o=>o.id==='O-000002')).principalOwner,'Graham Kincaid');
  assert.notEqual(founding.ownerAt(founding.sourceOrganizations.findIndex(o=>o.id==='O-000002')).principalOwnerId,m.id);
  assert.ok(founding.sourcePeople.some(p=>p.name==='Vince Bellini'));
  assert.ok(founding.sourcePeople.some(p=>p.name==='Dr. Everett Raines'));
