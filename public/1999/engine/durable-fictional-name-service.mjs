@@ -131,6 +131,87 @@ export async function verifyDurableNamingBundle(bundle){
  return clone(content);
 }
 /**
+ * Restore one explicitly exported naming archive into a NEW registry
+ * namespace. The restore adapter must be all-or-nothing and must REFUSE
+ * replacing any existing world. Never import into the active career state.
+ */
+export async function restoreDurableFictionalNamingBundle({storage,bundle}={}){
+ assertStorage(storage);
+ if(typeof storage.restore!=='function')
+  throw Error('Naming storage cannot atomically restore a backup');
+ const payload=await verifyDurableNamingBundle(bundle);
+ if(payload.worldId!==payload.meta?.worldId||
+  payload.seed!==payload.meta?.seed)
+  throw Error('Portable naming archive identity mismatch');
+ validateWorld(payload.worldId,payload.seed);
+ // Check the entire journal BEFORE touching persistent IndexedDB.
+ hydrate({meta:payload.meta,batches:payload.batches});
+ await storage.restore({meta:payload.meta,batches:payload.batches});
+ return openDurableFictionalNameService({
+  storage,worldId:payload.worldId,seed:payload.seed
+ });
+}
+
+/**
+ * Explicitly turn a complete VERIFIED V11 snapshot into a V12 portable
+ * archive. One historical baseline event keeps its original names/IDs and
+ * continues numbering future batches from the V11 cursor. Source records
+ * must include the V11 person, organization and owner arrays.
+ *
+ * Not a best-effort conversion of V8 mintedNames alone: those names lack
+ * enough relationship records to reconstruct the old world safely.
+ */
+export async function bundleLegacyV11NamingSnapshot({
+ snapshot,cursor,maxPartnershipGroups=null
+}={}){
+ if(!snapshot||snapshot.model!==INDEXED_FICTIONAL_NAME_REGISTRY_MODEL||
+  !cursor||cursor.model!==COMPACT_FICTIONAL_NAME_CURSOR_MODEL||
+  snapshot.worldId!==cursor.worldId||snapshot.seed!==cursor.seed)
+  throw Error('V11 naming migration needs matching full snapshot and cursor');
+ const source=createIndexedFictionalNameRegistry({
+  worldId:snapshot.worldId,seed:snapshot.seed,snapshot
+ });
+ if(source.revision!==cursor.revision||
+  source.namesIssued!==cursor.namesIssued||
+  source.ownerCount!==cursor.ownersIssued||
+  source.formalGroupsIssued!==cursor.partnershipsIssued)
+  throw Error('Legacy V11 naming checkpoint and snapshot disagree');
+ const rev=source.namesIssued?1:0;
+ if(rev===0&&cursor.revision!==0)
+  throw Error('Legacy snapshot has revisions without issued identities');
+ const oldOwnerById=new Map(snapshot.ownerEntities.map(owner=>[owner.id,owner]));
+ const batch=rev===1?{
+  expectedRevision:0,revision:1,batchIndex:cursor.nextBatch-1,
+  people:clone(snapshot.issuedPeople),
+  organizations:snapshot.issuedOrganizations.map(org=>{
+   const owner=oldOwnerById.get(org.id);
+   return {...org,principalId:owner?.principalId??null,
+    ownershipArchetype:owner?.archetype??null};
+  }),
+  owners:snapshot.ownerEntities.map(o=>({
+   id:o.id,name:o.name,namingRegion:o.region,
+   ownershipArchetype:o.archetype,principalId:o.principalId
+  }))
+ }:null;
+ const upgradedCursor=rev===1?{
+  ...cursor,revision:1,nextBatch:cursor.nextBatch,
+  maxPartnershipGroups:maxPartnershipGroups??cursor.maxPartnershipGroups
+ }:null;
+ const meta={
+  model:DURABLE_FICTIONAL_NAMING_MODEL,
+  worldId:snapshot.worldId,seed:snapshot.seed,
+  protectedPeople:clone(snapshot.protectedPeople),
+  protectedOrganizations:clone(snapshot.protectedOrganizations),
+  revision:rev,cursor:upgradedCursor
+ };
+ const batches=batch?[batch]:[];
+ hydrate({meta,batches});
+ return signDurableNamingBundle({
+  schema:DURABLE_NAMING_BUNDLE_MODEL,
+  worldId:meta.worldId,seed:meta.seed,meta,batches
+ });
+}
+/**
  * Opens a detached naming namespace. Storage is supplied by a browser
  * IndexedDB or a deterministic persistence test adapter. A full registry is
  * read ONCE at open/recovery, not recopied for every name request.
