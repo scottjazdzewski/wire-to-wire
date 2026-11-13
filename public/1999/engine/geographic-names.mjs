@@ -73,6 +73,8 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
   String(name).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,''):
   String(name).toLocaleLowerCase('en-US');
  const reserved=new Set(protectedNames.map(canonKey));
+ const externallyReserved=options.isExternalNameReserved??(()=>false);
+ if(typeof externallyReserved!=='function')throw Error('Invalid indexed name lookup');
  const limit=options.maxBaseNameUses??Infinity;
  if(limit!==Infinity&&(!Number.isInteger(limit)||limit<1))
   throw Error('Invalid maximum repeated given/surname pairing');
@@ -117,7 +119,8 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
    const candidate=first+' '+surname,base=baseKey(first,surname);
    if(options.avoidIdenticalGivenSurname&&first.toLocaleLowerCase('en-US')===surname.toLocaleLowerCase('en-US'))continue;
    if((baseCounts.get(base)||0)>=limit)continue;
-   if(!reserved.has(canonKey(candidate))){name=candidate;selectedFirst=first;selectedSurname=surname;break}
+   if(!reserved.has(canonKey(candidate))&&!externallyReserved(candidate)){
+    name=candidate;selectedFirst=first;selectedSurname=surname;break}
   }
   if(!name){
    // Weighted Census names can exhaust high-frequency combinations. Fall
@@ -131,7 +134,8 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
     const base=baseKey(first,last);
     if(options.avoidIdenticalGivenSurname&&first.toLocaleLowerCase('en-US')===last.toLocaleLowerCase('en-US'))continue;
     if((baseCounts.get(base)||0)>=limit)continue;
-    if(!reserved.has(canonKey(candidate))){name=candidate;selectedFirst=first;selectedSurname=last;break}
+    if(!reserved.has(canonKey(candidate))&&!externallyReserved(candidate)){
+     name=candidate;selectedFirst=first;selectedSurname=last;break}
    }
    if(!name)throw Error('Country-specific personnel name pool exhausted; expand it instead of adding numbered identities');
   }
