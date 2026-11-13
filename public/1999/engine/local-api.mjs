@@ -12,7 +12,7 @@ function parse(raw){return new URL(raw,'https://wire-to-wire.invalid');}
 function int(raw,defaultValue,max){const n=Number(raw);return raw!==null&&raw!==''&&Number.isInteger(n)&&n>=0&&n<=max?n:defaultValue;}
 function currentWorld(q){
  const seed=int(q.get('seed'),19990101,4294967295)||19990101;
- const mode=q.get('mode')||'CANON_ANCHORED_TEST';
+ const mode=q.get('mode')||FOUNDING_WORLD_MODE; // Legacy full-world analysis requires explicit opt-in.
  if(mode!==FOUNDING_WORLD_MODE&&!MODES.includes(mode))throw Error('Unknown world generation mode');
  if(mode===FOUNDING_WORLD_MODE){
   const key=seed+'|'+FOUNDING_WORLD_MODE;
@@ -73,6 +73,24 @@ export function readLocal1999World(raw){
    source:'1999_WORLD_HORSE_PROFILE_BY_STABLE_ID_OR_INDEX'};
  }
 
+ if(p==='/api/1999/sim/founding-ancestry'){
+  if(w.mode!==FOUNDING_WORLD_MODE)throw Error('Founding ancestry is only available in clean 1999 world');
+  const id=String(q.get('id')||'').trim();
+  if(!/^H-[A-Za-z0-9-]+$/.test(id))
+   throw Error('Exact founding or connected-history horse ID required');
+  const pedigree=w.foundingAncestry;
+  const horse=pedigree.records.find(x=>x.id===id)||null;
+  if(!horse)return {id,horse:null,parents:[],children:[],
+   status:'HORSE_NOT_CONNECTED_TO_FOUNDING_ORGANIZATIONS'};
+  return {id,horse,
+   parents:pedigree.edges.filter(e=>e.childId===id).map(e=>({
+    ...e,horse:pedigree.records.find(h=>h.id===e.parentId)||null})),
+   children:pedigree.edges.filter(e=>e.parentId===id).map(e=>({
+    ...e,horse:pedigree.records.find(h=>h.id===e.childId)||null})),
+   missingNamedParents:pedigree.missingNamedParents.filter(m=>m.referredBy.some(x=>x.childId===id)),
+   status:'SOURCE_ONLY_FIVE_GENERATIONS_NOT_1999_LIVING_POPULATION',
+   historicalResultsUnmodified:true};
+ }
  if(p==='/api/1999/sim/horse-attribute'){
   const key=String(q.get('key')||'');
   if(!w.attributeCatalog.horse_categories||!Object.values(w.attributeCatalog.horse_categories)
@@ -86,7 +104,7 @@ export function readLocal1999World(raw){
   const horseIndexes=w.ownedHorseIndexes(id);
   return pager(q,horseIndexes.length,i=>atDate(w.horseAt(horseIndexes[i])),'CANON_AND_TEST_OWNERSHIP_ROSTER');
  }
- if(p==='/api/1999/sim/owners')return pager(q,w.counts.owners,i=>atDate(w.ownerAt(i)),'SOURCE_LINKED_PLUS_TEST_ECONOMY');
+ if(p==='/api/1999/sim/owners')return pager(q,w.counts.owners,i=>atDate(w.ownerAt(i)),w.mode===FOUNDING_WORLD_MODE?'SOURCE_OWNERS_FINANCES_NOT_CERTIFIED':'SOURCE_LINKED_PLUS_TEST_ECONOMY');
  if(p==='/api/1999/sim/trainers')return pager(q,w.counts.trainers,i=>atDate(w.trainerAt(i)),'SOURCE_LINKED_PLUS_TEST_HORSEMEN');
  if(p==='/api/1999/sim/people')return pager(q,w.counts.people-w.sourcePeople.length,i=>atDate(w.personAt(i)),'SIMULATED_WORKFORCE');
  if(p==='/api/1999/sim/source-people')return pager(q,w.sourcePeople.length,i=>atDate(w.sourcePersonAt(i)),'CANON_IDS_PLUS_TEST_ONLY_ABILITY');
