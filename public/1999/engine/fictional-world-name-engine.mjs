@@ -11,10 +11,14 @@
 import {createPersonnelNameRoster,PERSONNEL_NAME_MODEL} from './personnel-name-engine.mjs';
 import {roleOrigin,GEO_NAME_MODEL} from './geographic-names.mjs';
 import {createOrganizationNameRoster,ORGANIZATION_NAME_MODEL} from './organization-name-engine.mjs';
+import {
+ JOCKEY_COLONIES,JOCKEY_COLONY_NAME_MODEL,
+ DEFAULT_JOCKEY_COLONY_ORIGIN_WEIGHTS,inferJockeyColony,chooseJockeyColonyOrigin
+} from './jockey-colony-names.mjs';
 
-export const FICTIONAL_WORLD_NAME_ENGINE='WTW_FICTIONAL_WORLD_IDENTITIES_V2';
+export const FICTIONAL_WORLD_NAME_ENGINE='WTW_FICTIONAL_WORLD_IDENTITIES_V3';
 export const SUPPORTED_NAME_ERA=1999;
-export const SUPPORTED_ORIGINS=Object.freeze(['US','CA','GB','IE','PR','PA','VE','MX','CL','PE','CO','DO']);
+export const SUPPORTED_ORIGINS=Object.freeze(['US','CA','GB','IE','PR','PA','VE','MX','CL','PE','CO','DO','AR','BR','UY']);
 export const DEFAULT_WORLD_ROLE_COUNTS=Object.freeze({
  trainer:4200,jockey:1800,farm_manager:550,veterinarian:430,
  farrier:420,bloodstock_agent:360,racing_secretary:134
@@ -27,19 +31,26 @@ export const DEFAULT_WORLD_FACILITY_COUNTS=Object.freeze({
 // assertions that a specific horse/person/business already operates here.
 const DEFAULT_MARKETS=Object.freeze([
  {id:'lexington-ky',city:'Lexington',region:'Kentucky',country:'United States',code:'US',weight:14,breeding:true},
- {id:'versailles-ky',city:'Versailles',region:'Kentucky',country:'United States',code:'US',weight:9,breeding:true},
- {id:'paris-ky',city:'Paris',region:'Kentucky',country:'United States',code:'US',weight:6,breeding:true},
- {id:'ocala-fl',city:'Ocala',region:'Florida',country:'United States',code:'US',weight:11,breeding:true},
+ {id:'versailles-ky',city:'Versailles',region:'Kentucky',country:'United States',code:'US',weight:9,breeding:true,racing:false},
+ {id:'paris-ky',city:'Paris',region:'Kentucky',country:'United States',code:'US',weight:6,breeding:true,racing:false},
+ {id:'ocala-fl',city:'Ocala',region:'Florida',country:'United States',code:'US',weight:11,breeding:true,racing:false},
  {id:'saratoga-ny',city:'Saratoga Springs',region:'New York',country:'United States',code:'US',weight:8,breeding:true},
- {id:'millbrook-ny',city:'Millbrook',region:'New York',country:'United States',code:'US',weight:4,breeding:true},
+ {id:'millbrook-ny',city:'Millbrook',region:'New York',country:'United States',code:'US',weight:4,breeding:true,racing:false},
  {id:'laurel-md',city:'Laurel',region:'Maryland',country:'United States',code:'US',weight:6,breeding:false},
- {id:'middleburg-va',city:'Middleburg',region:'Virginia',country:'United States',code:'US',weight:5,breeding:true},
+ {id:'middleburg-va',city:'Middleburg',region:'Virginia',country:'United States',code:'US',weight:5,breeding:true,racing:false},
  {id:'arcadia-ca',city:'Arcadia',region:'California',country:'United States',code:'US',weight:8,breeding:false},
- {id:'santa-ynez-ca',city:'Santa Ynez',region:'California',country:'United States',code:'US',weight:5,breeding:true},
+ {id:'santa-ynez-ca',city:'Santa Ynez',region:'California',country:'United States',code:'US',weight:5,breeding:true,racing:false},
  {id:'louisville-ky',city:'Louisville',region:'Kentucky',country:'United States',code:'US',weight:8,breeding:false},
  {id:'toronto-on',city:'Toronto',region:'Ontario',country:'Canada',code:'CA',weight:8,breeding:false},
- {id:'georgetown-on',city:'Georgetown',region:'Ontario',country:'Canada',code:'CA',weight:4,breeding:true},
- {id:'new-orleans-la',city:'New Orleans',region:'Louisiana',country:'United States',code:'US',weight:5,breeding:false}
+ {id:'georgetown-on',city:'Georgetown',region:'Ontario',country:'Canada',code:'CA',weight:4,breeding:true,racing:false},
+ {id:'new-orleans-la',city:'New Orleans',region:'Louisiana',country:'United States',code:'US',weight:5,breeding:false},
+ // Explicit 1999 circuit hubs so jockeys do not live in every breeding town.
+ {id:'hallandale-beach-fl',city:'Hallandale Beach',region:'Florida',country:'United States',code:'US',weight:12,breeding:false,racing:true},
+ {id:'miami-fl',city:'Miami',region:'Florida',country:'United States',code:'US',weight:6,breeding:false,racing:true},
+ {id:'elmont-ny',city:'Elmont',region:'New York',country:'United States',code:'US',weight:10,breeding:false,racing:true},
+ {id:'del-mar-ca',city:'Del Mar',region:'California',country:'United States',code:'US',weight:7,breeding:false,racing:true},
+ {id:'oceanport-nj',city:'Oceanport',region:'New Jersey',country:'United States',code:'US',weight:5,breeding:false,racing:true},
+ {id:'chicago-il',city:'Chicago',region:'Illinois',country:'United States',code:'US',weight:5,breeding:false,racing:true}
 ]);
 const ROLE_AGES=Object.freeze({
  trainer:[26,75],jockey:[18,58],owner:[29,83],
@@ -84,8 +95,14 @@ function marketList(input){
   keys.add(m.id);
   const weight=m.weight??1;
   if(!Number.isInteger(weight)||weight<1||weight>1000)throw Error('Invalid market weight '+m.id);
+  if(m.jockeyColony!==undefined&&!JOCKEY_COLONIES.includes(m.jockeyColony))
+   throw Error('Unknown jockey colony for market '+m.id);
+  if(m.racing!==undefined&&typeof m.racing!=='boolean')
+   throw Error('Invalid racing market flag for '+m.id);
   return frozen({id:m.id,city:m.city,region:m.region,country:m.country,
-   code:m.code,weight,breeding:Boolean(m.breeding)});
+   code:m.code,weight,breeding:Boolean(m.breeding),racing:m.racing!==false,
+   jockeyColony:m.jockeyColony??inferJockeyColony(m)});
+
  }));
 }
 function weightedPick(seed,key,options){
@@ -118,6 +135,18 @@ function validatedCountryWeights(input){
   }));
  }
  return frozen(out);
+}
+function validatedJockeyColonyWeights(input){
+ if(input==null)return frozen({});
+ if(!input||typeof input!=='object'||Array.isArray(input))
+  throw Error('Invalid jockey-colony origin mixes');
+ const out={};
+ for(const colony of Object.keys(input)){
+  if(!JOCKEY_COLONIES.includes(colony))throw Error('Unsupported jockey colony '+colony);
+  // Reuse the same validated country-code and positive-weight contract.
+  out[colony]=validatedCountryWeights({jockey:input[colony]}).jockey;
+ }
+ return frozen(Object.fromEntries(JOCKEY_COLONIES.filter(k=>out[k]).map(k=>[k,out[k]])));
 }
 function farmKindOrder(seed,facilities){
  // Exact caller-requested purpose counts, shuffled deterministically so
@@ -176,8 +205,12 @@ export function normalizeFictionalWorldNamingSpec(input={}){
   throw Error('Protected names must be an array of nonempty strings');
  const markets=marketList(input.markets);
  const originWeights=validatedCountryWeights(input.originWeightsByRole);
+ const jockeyColonyWeights=validatedJockeyColonyWeights(input.jockeyOriginWeightsByColony);
+ if((roles.jockey??0)>0&&!markets.some(m=>m.racing))
+  throw Error('A jockey population requires at least one racing market');
  return frozen({worldId,year,seed,owners,roles:frozen(roles),facilities:frozen(facilities),
-  farmCount,staff,protectedNames:frozen([...reservedNames]),markets,originWeights});
+  farmCount,staff,protectedNames:frozen([...reservedNames]),markets,originWeights,
+  jockeyColonyWeights});
 }
 /**
  * Pure deterministic naming factory. Returns an IN-MEMORY identity proposal,
@@ -197,20 +230,45 @@ export function createFictionalWorldNameEngine(input){
   }
   throw Error('Missing role at index '+index);
  };
+ // Choose operating colonies BEFORE choosing birth-origin naming pools.
+ // A South Florida jockey and an Ontario jockey do not draw from the same
+ // global nationality mix. Location is not inferred from a person's name.
+ const racingMarkets=markets.filter(m=>m.racing);
+ const assignedMarkets=Array.from({length:staff+owners},(_,i)=>{
+  const role=roleAt(i),ordinal=i-indexes[role];
+  return weightedPick(seed,'person-market:'+role+':'+ordinal,
+   role==='jockey'?racingMarkets:markets);
+ });
+ const jockeyColonyAt=index=>inferJockeyColony(assignedMarkets[index]);
+ const countryAt=(index,role)=>{
+  if(role!=='jockey')return birthplaceCountry(seed,index,role,spec.originWeights);
+  const colony=jockeyColonyAt(index);
+  const explicitColony=spec.jockeyColonyWeights[colony];
+  if(explicitColony)return chooseJockeyColonyOrigin(seed,index,colony,{[colony]:explicitColony});
+  if(spec.originWeights.jockey)
+   return birthplaceCountry(seed,index,role,spec.originWeights);
+  return chooseJockeyColonyOrigin(seed,index,colony);
+ };
  const personNames=createPersonnelNameRoster(seed,staff+owners,roleAt,spec.protectedNames,{
-  countryAt:(index,role)=>birthplaceCountry(seed,index,role,spec.originWeights),
-  maxBaseNameUses:2,avoidIdenticalGivenSurname:true
+  countryAt,maxBaseNameUses:2,avoidIdenticalGivenSurname:true
  });
  const countrySet=new Set(SUPPORTED_ORIGINS);
  const basePeople=Object.freeze(personNames.map((p,i)=>{
   const role=roleAt(i),ordinal=i-indexes[role],id=makeId(worldId,'PERSON-'+role.toUpperCase(),ordinal);
   validateNameRecord(p.name,id);
   if(!countrySet.has(p.birthCountry))throw Error('Unsupported birth country '+p.birthCountry);
-  const market=weightedPick(seed,'person-market:'+role+':'+ordinal,markets);
-  const age=ageAtOpening(seed,id,role);
+  const market=assignedMarkets[i],age=ageAtOpening(seed,id,role);
+  const riderFields=role==='jockey'?{
+   jockeyColony:inferJockeyColony(market),
+   riderOriginModel:spec.jockeyColonyWeights[inferJockeyColony(market)]?
+    'CUSTOM_COLONY_NAMING_DISTRIBUTION':
+    spec.originWeights.jockey?'CUSTOM_ROLE_NAMING_DISTRIBUTION':
+    'EDITORIAL_1999_JOCKEY_COLONY_DISTRIBUTION_NOT_MEASURED'
+  }:{};
   return frozen({id,worldId,role,name:p.name,nameStyle:p.nameStyle,
    birthCountry:p.birthCountry,ageAtOpening:age,birthYear:year-age,
-   location:loc(market),nameOrigin:p.source,source:'FICTIONAL_WORLD_ENGINE'});
+   location:loc(market),nameOrigin:p.source,...riderFields,
+   source:'FICTIONAL_WORLD_ENGINE'});
  }));
  const trainers=Object.freeze(basePeople.slice(indexes.trainer??0,(indexes.trainer??0)+(roles.trainer??0)));
  const principalPeople=basePeople.slice(staff);
@@ -310,10 +368,12 @@ export function createFictionalWorldNameEngine(input){
   byRole:frozen({...roles,owner:owners}),
   byFarmKind:frozen(Object.fromEntries(FARM_KEYS.map(([kind])=>[kind,farms.filter(f=>f.kind===kind).length])))});
  const specFingerprint=hash(seed,JSON.stringify({worldId,year,roles,owners,facilities,
-  markets:markets.map(m=>[m.id,m.city,m.region,m.country,m.code,m.weight,m.breeding]),originWeights:spec.originWeights,
+  markets:markets.map(m=>[m.id,m.city,m.region,m.country,m.code,m.weight,m.breeding,m.racing,m.jockeyColony]),
+  originWeights:spec.originWeights,colonyWeights:spec.jockeyColonyWeights,
   reserved:spec.protectedNames})).toString(16).padStart(8,'0');
  const manifest=frozen({schema:FICTIONAL_WORLD_NAME_ENGINE,worldId,seed,year,
-  fingerprint:specFingerprint,personNameModel:PERSONNEL_NAME_MODEL,
+  fingerprint:specFingerprint,jockeyColonyNameModel:JOCKEY_COLONY_NAME_MODEL,
+  personNameModel:PERSONNEL_NAME_MODEL,
   countryNameModel:GEO_NAME_MODEL,organizationNameModel:ORGANIZATION_NAME_MODEL,
   authoritative:false,sourceCanonIncluded:false,
   horseNamesIncluded:false,tracksIncluded:false,committedToGame:false,counts});

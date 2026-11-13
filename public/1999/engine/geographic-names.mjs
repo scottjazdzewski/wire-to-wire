@@ -38,8 +38,14 @@ const LOCAL_SURNAME={
  CL:'Santos Herrera Gonzalez Perez Rojas Muñoz Contreras Silva Morales Valenzuela'.split(' '),
  PE:'Prado Flores Quispe Huaman Garcia Rojas Mendoza Ramos Chavez Torres'.split(' '),
  CO:'Martinez Rodriguez Gutierrez Gomez Ramirez Moreno Cardenas Vargas Sanchez'.split(' '),
- DO:'Ortiz Perez Rodriguez Sanchez Garcia Reyes Martinez Cruz Diaz Morales'.split(' ')
+ DO:'Ortiz Perez Rodriguez Sanchez Garcia Reyes Martinez Cruz Diaz Morales'.split(' '),
+ AR:'Fernandez Gonzalez Rodriguez Lopez Martinez Perez Garcia Sanchez Romero Alvarez Acosta Sosa Diaz'.split(' '),
+ UY:'Rodriguez Fernandez Gonzalez Martinez Perez Garcia Silva Pereira Lopez Diaz Olivera'.split(' ')
 };
+// Additional curated non-Census Portuguese-speaking jockey naming pool.
+const BR_M='Joao Jose Antonio Carlos Paulo Luiz Roberto Marcos Pedro Fabio Marcelo Rafael Felipe Fernando Eduardo Alexandre'.split(' ');
+const BR_F='Maria Ana Patricia Fernanda Juliana Cristina Luciana Adriana Carla Renata Beatriz Paula'.split(' ');
+const BR_S='Silva Santos Oliveira Souza Costa Pereira Rodrigues Almeida Carvalho Gomes Ribeiro Martins Ferreira Lima Barbosa Rocha Nascimento Araujo Mendes Correia'.split(' ');
 const NAME_MIX={
  jockey:[['US',45],['PR',12],['PA',8],['VE',8],['MX',8],['CL',4],['PE',4],['CO',4],['DO',3],['CA',3],['GB',1]],
  trainer:[['US',78],['CA',8],['GB',5],['IE',3],['PR',2],['MX',2],['VE',1],['PA',1]],
@@ -72,13 +78,15 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
  const records=[];
  for(let i=0;i<count;i++){
   const role=roleAt(i),country=options.countryAt?options.countryAt(i,role):roleOrigin(seed,i,role);
-  if(!['US','CA','GB','IE','PR','PA','VE','MX','CL','PE','CO','DO'].includes(country))
+  if(!['US','CA','GB','IE','PR','PA','VE','MX','CL','PE','CO','DO','AR','BR','UY'].includes(country))
    throw Error('Unsupported fictional person naming origin: '+country);
   const feminine=hash(seed,'sex:'+i)%100 < (role==='jockey'?7:role==='trainer'?22:role==='owner'?32:35);
   const given=country==='US'||country==='CA'?(feminine?US_F:US_M):
-   country==='GB'||country==='IE'?(feminine?GB_F:GB_M):(feminine?LATIN_F:LATIN_M);
+   country==='GB'||country==='IE'?(feminine?GB_F:GB_M):
+   country==='BR'?(feminine?BR_F:BR_M):(feminine?LATIN_F:LATIN_M);
   const family=country==='US'||country==='CA'?US_S:
-   country==='GB'?GB_S:country==='IE'?IE_S:[...(LOCAL_SURNAME[country]||[]),...LATIN_S];
+   country==='GB'?GB_S:country==='IE'?IE_S:country==='BR'?BR_S:
+   [...(LOCAL_SURNAME[country]||[]),...LATIN_S];
   let name=null;
   for(let attempt=0;attempt<400;attempt++){
    const first=(country==='US'||country==='CA'?censusPick(given,feminine?F_FREQ:M_FREQ,seed,'given:'+i+':'+attempt):pick(given,seed,'given:'+i+':'+attempt));
