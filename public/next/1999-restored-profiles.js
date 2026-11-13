@@ -15,7 +15,9 @@ fetch('/data/horse-foaling-registry-projection-v33.json',{credentials:'same-orig
  .catch(()=>{/* Missing source remains unknown: do not substitute racing base. */});
 const panel=(name,items=[])=>'<section class="profilePanel"><h3>'+safe(name)+'</h3>'+items.map(x=>'<div class="achievementItem">'+safe(x)+'</div>').join('')+'</section>';
 function source(kind,record,ui){
- const base=record||{},d=kind==='track'?{...base,...(ui?.trackProgramById?.(base.id)||{})}:base,name=d.name||d._name||'Unresolved record';
+ const base=record||{},d=kind==='track'&&base.operating!=='HISTORICAL_ONLY'?
+  {...base,...(ui?.trackProgramById?.(base.id)||{})}:base,
+  name=d.name||d._name||'Unresolved record';
  const node=document.createElement('section');node.className='profilePage';
  if(kind==='horse'){
   const year=Number(d.foalYear||d._foalYear||0);
