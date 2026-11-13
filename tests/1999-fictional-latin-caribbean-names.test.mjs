@@ -147,7 +147,7 @@ test('same configuration is reproducible, protected names normalized, original g
  assert.ok(!a.people.some(p=>folded(p.name)==='josegarcia'));
  assert.ok(!a.owners.some(p=>folded(p.name)==='garciaracing'));
  assert.ok(!a.farms.some(p=>folded(p.name)==='kingsmerefarm'));
- const game=readFileSync(new URL('../public/1999/engine/full-world-generator.mjs',import.meta.url),'utf8');
+ const game=readFileSync(new URL('../public/1999/engine/founding-world-1999.mjs',import.meta.url),'utf8');
  assert.doesNotMatch(game,/latin-caribbean-person-names/);
  assert.doesNotMatch(game,/regionalCompoundAt|regionalSecondarySurnameAt|familyPoolAt/);
  const code=readFileSync(new URL('../public/1999/engine/latin-caribbean-person-names.mjs',import.meta.url),'utf8');
