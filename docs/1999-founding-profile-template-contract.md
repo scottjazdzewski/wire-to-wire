@@ -37,15 +37,22 @@
 | Linked living or historical horse | Existing Horse / history dossier | Exact `H-...` |
 | Breeding & history relations | Existing canonical source records | Exact horse and organization IDs |
 
-The Office's approved Track and Horse implementations remain intact. The new profile templates live in `public/next/1999-founding-profiles.js`, are loaded before `public/next/next.js` in `public/next/index.html`, and are scoped visually in `public/next/next.css`. The Office router supplies `FoundingProfile:ownership:O-...`, `FoundingProfile:facility:O-...`, and `FoundingProfile:person:P-...`, while canonical World records resolve to the same templates.
+The Office uses **one existing FM renderer**: `profileDetail()` in `public/next/next.js`. The exact-ID founding source adapter in `public/next/1999-restored-profiles.js` creates only source nodes for the SAME renderer. Ownership and Facilities use its original `ng-profile-track` and `ng-track-workspace` Track chassis; personnel use its original `ng-profile-horse` and `ng-horse-dossier` Horse chassis. `FoundingProfile:ownership:O-...`, `FoundingProfile:facility:O-...`, and `FoundingProfile:person:P-...` route into this single renderer, including canonical World records. The obsolete parallel `1999-founding-profiles.js` renderer was removed; DO NOT restore it. Site-only CSS is scoped in `public/next/next.css` and must not restyle actual Track or Horse pages.
 
 **Logo gate:** `public/assets/office/founding-organization-logo-index.json` contains the 37 permitted exact-ID slots. The 108-record legacy logo manifest is excluded from these profiles. A source-approved logo may be assigned to `organization:O-...` and automatically appear in the corresponding ownership and facility profiles; otherwise the existing initials placeholder is used. Do not silently reuse or regenerate a logo.
 
 ## Acceptance tests
 
-- `tests/1999-founding-profiles.test.mjs`: all 37 organizations, 30 facility reference categories, 41 approved people, zero unapproved names/staff/facilities, source immutability and exact-ID links.
+- `tests/1999-founding-profiles.test.mjs`: verifies the single REAL renderer, all 37 organizations, 30 facility institution references, 41 approved people and their exact ownership IDs, 118 US/Canada/Cuba tracks, no international in the site, zero unapproved ratings/facilities.
 - `scripts/1999-management-browser-smoke.sh`: headless Chromium Office navigation including World person → Horse-style personnel dossier, Personnel Owners → Track-style ownership dossier and Facilities Stud Farms → Track-style facility dossier.
 - Keep existing 1999 source integration, Canon Desk and Desktop Visual Audit checks. No old save or synthetic racing population can be restored to make a browser check pass.
+
+
+## Track and pilot scope lock
+
+The existing geography authority lists **118 North American/Caribbean tracks including Oriental Park, Cuba**, of which 102 are opening-operational 1999 WTW courses and 16 are historic closures. All 118 belong in the site track directory. None of the **16 international tracks** belongs in the 1999 playable website. Historic or temporarily dormant tracks remain visible, never misrepresented as open meets. Never use the track count to generate training centers, barns, employees, or race cards.
+
+This **clean beginning is not the finished simulation world**. The next step is to seed a controlled, separately identified starter population of eligible horses, trainers, jockeys and operative facilities using the established organizations and IDs, then validate ages, race eligibility, entries, scheduling, finances and gameplay. The gameplay-engine authority must explicitly commit that population; UI-only proposals must not silently turn into active people, horses or facilities.
 
 ## Scope of later work
 
