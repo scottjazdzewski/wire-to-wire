@@ -1316,7 +1316,7 @@ function profileDetail(route,sourceOverride=null){
   ['Overview','Connections','History']);
  const rows=(items)=>'<div class="ng-data-rows">'+items.map(i=>`<div class="ng-data-row"><span>${safe(i.label)}</span>${namedProfileValue(i.label,i.value)}</div>`).join('')+'</div>';
  const pills='<div class="ng-status-pills">'+states.slice(0,4).map(x=>`<span>${safe(x)}</span>`).join('')+'</div>';
- const tabbar=isTrack?'':(isPerson||isHorse)?`<nav class="ng-person-dossierbar ng-management-dossierbar" aria-label="Personnel dossier navigation">
+ const tabbar=isTrack||isFarm?'':(isPerson||isHorse)?`<nav class="ng-person-dossierbar ng-management-dossierbar" aria-label="Personnel dossier navigation">
    <span class="ng-person-dossierlabel">${isHorse?'HORSE RACING FILE':'PERSONNEL DOSSIER'} <small>ONE-SCREEN OVERVIEW</small></span>
    <div class="ng-person-dossieractions">
     <button data-ng="detailtab" data-val="Overview" class="${APP.detailTab==='Overview'?'on':''}">OVERVIEW</button>
@@ -1349,7 +1349,57 @@ function profileDetail(route,sourceOverride=null){
   '<div class="ng-data-row"><span>'+safe(f.label)+'</span>'+horseLinkedConnection(f)+'</div>'
  ).join('')+'</div>';
 
- const sourcePanels=$$('.profilePanel',source);
+ // Source-first IDs: do not resolve founder connections by an ambiguous name.
+ const founderOrg=isFarm?(world1999Data?.organizations||[]).find(o=>o.id===source.dataset.organizationId):null;
+ const founderPerson=isPerson?(world1999Data?.people||[]).find(p=>p.id===source.dataset.personId):null;
+ const allApprovedFounders=world1999Data?.people||[];
+ const founderMemberIds=new Set([founderOrg?.publicPrincipalId,founderOrg?.principalOwnerId,
+  founderOrg?.publicInvestorId,...(founderOrg?.leadershipPeopleIds||[])].filter(Boolean));
+ const founderMembers=isFarm?allApprovedFounders.filter(p=>founderMemberIds.has(p.id)||
+  p.operatingOrganizationId===founderOrg?.id||p.investorInOrganizationId===founderOrg?.id):[];
+ const founderAffiliations=isPerson?(world1999Data?.organizations||[]).filter(o=>
+  o.principalOwnerId===founderPerson?.id||o.publicPrincipalId===founderPerson?.id||
+  o.publicInvestorId===founderPerson?.id||(o.leadershipPeopleIds||[]).includes(founderPerson?.id)||
+  o.id===founderPerson?.operatingOrganizationId||o.id===founderPerson?.investorInOrganizationId):[];
+ const founderStock=isFarm?(world1999Data?.horses||[]).filter(h=>
+  h._role==='stallion'&&h.standingFarm1999?.farmOrganizationId===founderOrg?.id||
+  h._role==='broodmare'&&h.boardingFarm1999?.farmOrganizationId===founderOrg?.id):[];
+ const founderHistorical=isFarm?(world1999Data?.historicalAnchors||[]).filter(a=>a.organizationId===founderOrg?.id):[];
+ const founderPersonLinks=()=>'<div class="ng-entity-links">'+
+  (founderMembers.map(p=>'<div class="ng-entity-link-static"><span>'+
+   safe(p.id===founderOrg?.publicInvestorId?'MAJOR NON-OPERATING INVESTOR':
+    p.id===founderOrg?.principalOwnerId?'APPROVED PRINCIPAL':
+    (p.positionTitle||p.role||'APPROVED CONNECTION').replaceAll('_',' '))+
+   '</span>'+world1999Linked('person',p.id,p.name)+'</div>').join('')||
+   '<div class="ng-empty-record">Principal not approved yet; no individual assigned.</div>')+
+  (founderOrg?.relatedBloodstockAgencyId?'<div class="ng-entity-link-static"><span>RELATED BLOODSTOCK AGENCY</span>'+
+   world1999Linked('farm',founderOrg.relatedBloodstockAgencyId,founderOrg.relatedBloodstockAgencyName)+'</div>':'')+
+  (founderOrg?.relatedBloodstockStrategistId?'<div class="ng-entity-link-static"><span>BLOODSTOCK STRATEGIST</span>'+
+   world1999Linked('person',founderOrg.relatedBloodstockStrategistId,'Julian Voss')+'</div>':'')+
+  '</div>';
+ const founderStockRows=()=>'<div class="ng-entity-links">'+(founderStock.map(h=>
+  '<div class="ng-entity-link-static"><span>'+safe(h._role==='stallion'?'STALLION':'BROODMARE')+
+  '</span>'+world1999Linked('horse',h.id,h.name)+'</div>').join('')||
+  '<div class="ng-empty-record">No approved breeding stock linked to this operation.</div>')+'</div>';
+ const founderHistoryRows=()=>'<div class="ng-stakes-table"><div class="ng-stakes-head">'+
+  '<span>HORSE</span><span>RECORDED ROLE</span><span>YEARS</span><span>EVIDENCE</span></div>'+
+  (founderHistorical.map(a=>{
+   const target=world1999Entry('horse:'+a.horseId)||world1999Entry('historical-horse:'+a.horseId);
+   return '<div class="ng-stakes-data"><span>'+(target?
+    '<button type="button" data-ng="world-open" data-val="'+safe(target.worldKey)+'">'+safe(a.horse)+'</button>':
+    safe(a.horse))+'</span><span>'+safe(String(a.role||'').replaceAll('_',' '))+
+    '</span><span>'+safe((a.recordedStakesYears||[]).join(', ')||'—')+
+    '</span><span>'+safe(a.status==='SOURCE_VERIFIED'?'SOURCE':'REVIEW')+'</span></div>';
+  }).join('')||'<div class="ng-empty-record">No source-certified historical horse associations recorded.</div>')+
+  '</div><p class="ng-horse-small-note">Year-level historical links do not prove race-day contracts, ownership, or purse earnings.</p>';
+ const founderAffiliationRows=()=>'<div class="ng-horse-mgr-rows">'+
+  (founderAffiliations.map(o=>'<div class="ng-horse-mgr-row"><span>'+
+   safe(o.publicInvestorId===founderPerson?.id?'MAJOR NON-OPERATING INVESTOR':
+    o.principalOwnerId===founderPerson?.id||o.publicPrincipalId===founderPerson?.id?
+    'FOUNDING PRINCIPAL':'FOUNDING ORGANIZATION')+'</span>'+
+   world1999Linked('farm',o.id,o.name)+'</div>').join('')||
+  '<div class="ng-empty-record">No approved organization affiliation recorded.</div>')+'</div>';
+ const sourcePanels=$('.profilePanel',source);
  const sourcePanel=word=>sourcePanels.find(panel=>text('h3',panel).toLowerCase().includes(word.toLowerCase()));
  const connectedPanel=isPerson?sourcePanel('Stable'):isFarm?sourcePanel('Connected Horses'):null;
  const sourceLinks=connectedPanel?$$('.achievementItem',connectedPanel):[];
@@ -1716,7 +1766,7 @@ function profileDetail(route,sourceOverride=null){
   return {attributes,reputation,networkPreview,network,careerContent,careerOverview,horseAssignments,networkOverview,eventRows,roleName,rep};
  };
  const isOrganizationProfile=/^(?:Farm|Stable|Organization|Sales Organization|Ownership Group|Breeding Farm) Profile$/.test(route.kicker);
- const profileMark=isOrganizationProfile?organizationLogoMarkup('',route.title,route.kicker==='Farm Profile'?'farm':'organization',true):`<div class="ng-profile-badgeframe"><img src="${badge(route.kicker==='Horse Profile'?'horse':route.kicker==='Track Profile'?'track':route.kicker==='People Profile'?'people':'farm_stable')}" alt="Approved ${safe(route.kicker)} badge"/></div>`;
+ const profileMark=isOrganizationProfile?organizationLogoMarkup(source.dataset.organizationId||'',route.title,'organization',true):`<div class="ng-profile-badgeframe"><img src="${badge(route.kicker==='Horse Profile'?'horse':route.kicker==='Track Profile'?'track':route.kicker==='People Profile'?'people':'farm_stable')}" alt="Approved ${safe(route.kicker)} badge"/></div>`;
 
  const horseField=(label)=>fields.find(f=>f.label.toLowerCase()===label.toLowerCase())?.value||'—';
  const horseFoalingCity=isHorse?(source.dataset.foalingCity||'').trim():'';
@@ -1832,7 +1882,7 @@ function profileDetail(route,sourceOverride=null){
  const identity=`<div class="ng-profile-intro">
   ${profileMark}
   <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${isHorse?horseOwnerBadge(route.title):''}${safe(visualName)}</h2>${horseIdentityRow}${horseStarRow}${entityIdentityRow}${horseConnectionHeader}${isHorse||isPerson||isFarm||isTrack?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${sourceImage||horseImage?`<div class="ng-profile-source-photo" role="img" aria-label="Image of ${safe(visualName)}"><img src="${safe(sourceImage||horseImage)}" alt="" loading="${isTrack?'eager':'lazy'}" fetchpriority="${isTrack?'high':'auto'}" decoding="async"/></div>`:''}
-  <div class="ng-profile-tools"><button data-ng="office" aria-label="Return to Racing Office">← OFFICE</button><button data-ng="menu" data-val="${isTrack?'Racing':isPerson||isFarm?'World':'Stable'}">${isTrack?'RACE CALENDAR':isPerson?'PEOPLE DIRECTORY':isFarm?'FARM DIRECTORY':'STABLE DIRECTORY'} ↗</button>${sourceEditButton}</div>
+  <div class="ng-profile-tools"><button data-ng="office" aria-label="Return to Racing Office">← OFFICE</button><button data-ng="menu" data-val="${isTrack?'Racing':isPerson?'Personnel':isFarm?'Personnel':'Stable'}">${isTrack?'RACE CALENDAR':isPerson?'PERSONNEL DIRECTORY':isFarm?'OWNERSHIP DIRECTORY':'STABLE DIRECTORY'} ↗</button>${sourceEditButton}</div>
  </div>`;
  let left='',right='',footer='';
  if(APP.detailTab==='Overview'){
@@ -1841,19 +1891,49 @@ function profileDetail(route,sourceOverride=null){
    right='';footer='';
   }else if(isPerson){
    const person=personWork();
-   left=`<div class="ng-person-workspace ng-person-workspace-overview">
-    <section class="ng-person-work-card ng-person-ov-attributes"><header>PROFESSIONAL RATINGS <span class="ng-person-panel-context">CURRENT & OBSERVED ABILITY</span></header>${person.attributes()}</section>
-    <section class="ng-person-work-card ng-person-ov-reputation"><header>REPUTATION & RELATIONSHIP TRUST</header>${person.reputation()}</section>
-    <section class="ng-person-work-card ng-person-ov-horses"><header>HORSE ASSIGNMENTS <span class="ng-person-panel-context">LIVE BARN STATUS</span></header>${person.horseAssignments()}</section>
-    <section class="ng-person-work-card ng-person-ov-career"><header>CAREER & OPPORTUNITIES</header>${person.careerOverview}</section>
-    <section class="ng-person-work-card ng-person-ov-network"><header>WORKING RELATIONSHIPS</header>${person.networkOverview}</section>
-   </div>`;
+   // THE SAME Horse dossier chassis, with the existing professional scoring
+   // engine inside it. No parallel synthetic person profile or fabricated skill.
+   const panel=(name,body)=>'<section class="ng-horse-mgr-panel"><header><strong>'+name+
+    '</strong></header>'+body+'</section>';
+   left=`<div class="ng-horse-dossier ng-person-horse-dossier">
+     <div class="ng-horse-dossier-caption"><strong>PROFESSIONAL & RACING INTELLIGENCE</strong><span>UNOBSERVED ≠ ZERO</span></div>
+     <div class="ng-horse-mgr-four">${panel('PROFESSIONAL ATTRIBUTES',person.attributes())}</div>
+     <div class="ng-horse-mgr-five">
+      ${panel('REPUTATION & TRUST',person.reputation())}
+      ${panel('HORSE ASSIGNMENTS',person.horseAssignments())}
+      ${panel('CAREER & OPPORTUNITIES',person.careerOverview)}
+      ${panel('WORKING RELATIONSHIPS',person.networkOverview)}
+      ${panel('APPROVED OWNERSHIP & AFFILIATIONS',founderAffiliationRows())}
+     </div>
+     </div>`;
    right='';footer='';
   }else if(isFarm){
-   left=`<div class="ng-tier1-workspace">
-    <section class="ng-tier1-card"><header>FARM AT A GLANCE <button data-ng="detailtab" data-val="Operations">OPERATIONS ${glyph('arrow',11)}</button></header>${rows(fields.filter(f=>!['location','type','owner'].includes(f.label.toLowerCase())))}<div class="ng-tier1-summaryline">Location, ownership and farm type appear beside the name.</div></section>
-    <section class="ng-tier1-card"><header>CONNECTED HORSES <button data-ng="detailtab" data-val="Connected Horses">ALL HORSES ${glyph('arrow',11)}</button></header>${connectedHorseRows(4)}</section>
-    <section class="ng-tier1-card"><header>PEOPLE & CURRENT ACTIVITY <button data-ng="detailtab" data-val="History">HISTORY ${glyph('arrow',11)}</button></header>${connectionRows()}<div class="ng-tier1-subhead">RECORDED ACTIVITY</div><div class="ng-tier1-activity">${farmAchievements.slice(0,2).map(x=>`<div>${safe(x)}</div>`).join('')||'<div>No sourced achievements yet.</div>'}</div></section>
+   const facilityContext=source.dataset.foundingContext==='facility';
+   const heading=facilityContext?'BREEDING STOCK AT INSTITUTION':'HISTORICAL RACING & BLOODLINES';
+   const primary=facilityContext?founderStockRows():founderHistoryRows();
+   const summaryFacts=[
+    ['TYPE',founderOrg?.type||'NOT RECORDED'],
+    ['LOCATION',founderOrg?.location||'NOT RECORDED'],
+    ['1999 PRINCIPAL',founderOrg?.principalOwner||'NOT APPROVED'],
+    ['ACTIVE RACEHORSES','0 REGISTERED'],
+    ['STAFF & CONTRACTS','NOT CERTIFIED'],
+    ['BUILDING CAPACITY','NOT CERTIFIED']
+   ];
+   // THE SAME Track workspace and Track card components, not a similar
+   // independent layout. Only the data modules change by institution type.
+   left=`<div class="ng-track-workspace">
+    <section class="ng-tier1-card ng-tier1-stakes ng-track-stakes"><header>${heading} <span>${facilityContext?founderStock.length:founderHistorical.length} SOURCE LINKS</span></header>${primary}</section>
+    <div class="ng-track-info-stack">
+     <section class="ng-tier1-card ng-track-meet-card"><header>INSTITUTION & CURRENT OPERATIONS</header><div class="ng-track-conditions-body">
+      <div class="ng-track-meet-facts">${summaryFacts.map(([label,value])=>'<div class="ng-track-meet-fact"><small>'+safe(label)+'</small><strong>'+safe(value)+'</strong></div>').join('')}</div>
+      <div class="ng-track-operating-notes">${founderPersonLinks()}</div>
+      <button class="ng-entity-open" data-ng="detailtab" data-val="Operations">FULL OPERATIONS ${glyph('arrow',11)}</button>
+     </div></section>
+     <section class="ng-tier1-card ng-track-history-card"><header>INSTITUTION HISTORY <button data-ng="detailtab" data-val="History">FULL HISTORY ${glyph('arrow',11)}</button></header>
+      <div class="ng-track-history-content"><p class="ng-track-history-blurb">${safe(founderOrg?.approvedOrigin||'No separately approved origin narrative recorded.')}</p>
+      <div class="ng-track-history-facts"><div><small>HISTORICAL LINKS</small><strong>${founderHistorical.length}</strong></div>
+      <div><small>FOUNDED / OPENED</small><strong>NOT CERTIFIED</strong></div></div></div></section>
+    </div>
    </div>`;right='';footer='';
   }else if(isTrack){
    left=`<div class="ng-track-workspace">
@@ -1882,7 +1962,7 @@ function profileDetail(route,sourceOverride=null){
   left=officeFiveGenerationPedigree(route.title);
   right='';footer='';
  }else if((APP.detailTab==='Stable Horses'&&isPerson)||(APP.detailTab==='Connected Horses'&&isFarm)){
-  left=`<section class="ng-detailcard ng-detailwide"><header>CONNECTED HORSE RECORDS</header>${connectedHorseRows()}</section>`;
+  left=`<section class="ng-detailcard ng-detailwide"><header>CONNECTED HORSE RECORDS</header>${isFarm?founderStockRows():connectedHorseRows()}</section>`;
  }else if(APP.detailTab==='Attributes'&&isPerson){
   const person=personWork();
   left=`<section class="ng-detailcard ng-detailwide ng-person-detail-sheet"><header>PROFESSIONAL ATTRIBUTE EVALUATIONS</header>${person.attributes(true)}<div class="ng-person-footnote">Estimates require observer evidence. Hidden professional ability is not shown to the player until observed.</div></section>`;
@@ -1899,10 +1979,10 @@ function profileDetail(route,sourceOverride=null){
   footer=`<section class="ng-detailcard ng-detailwide"><header>CURRENT STABLE CONNECTIONS</header>${connectedHorseRows()}</section>`;
  }else if(APP.detailTab==='Operations'&&isFarm){
   left=`<section class="ng-detailcard"><header>OPERATION & LOCATION</header>${factsBlock}</section>`;
-  right=`<section class="ng-detailcard"><header>OFFICE CONNECTIONS</header>${connectionRows()}</section>`;
-  footer=`<section class="ng-detailcard ng-detailwide"><header>DOCUMENTED FARM ACTIVITY</header><div class="ng-notes">${farmAchievements.map(n=>`<div>${safe(n)}</div>`).join('')||'<div>No additional sourced farm activity recorded.</div>'}</div></section>`;
+  right=`<section class="ng-detailcard"><header>APPROVED PRINCIPALS & INVESTORS</header>${founderPersonLinks()}</section>`;
+  footer=`<section class="ng-detailcard ng-detailwide"><header>CONNECTED BREEDING STOCK</header>${founderStockRows()}</section>`;
  }else if(APP.detailTab==='Connections'){
-  left=`<section class="ng-detailcard"><header>PEOPLE & FARM CONNECTIONS</header>${connectionRows()}</section>`;
+  left=`<section class="ng-detailcard"><header>PEOPLE & ORGANIZATION CONNECTIONS</header>${isPerson?founderAffiliationRows():isFarm?founderPersonLinks():connectionRows()}</section>`;
   right=`<section class="ng-detailcard"><header>OFFICE CONTEXT</header>${factsBlock}</section>`;
  }else if(APP.detailTab==='History'&&isHorse&&source.dataset.testGenerated==='true'){
   let history=[];
@@ -1927,11 +2007,14 @@ function profileDetail(route,sourceOverride=null){
   }
  }else if(isTrack&&APP.detailTab==='History'){
    left=trackHistoryFull();
+ }else if(isFarm&&APP.detailTab==='History'){
+   left=`<section class="ng-detailcard ng-detailwide"><header>HISTORICAL RACING & BLOODLINES</header>${founderHistoryRows()}</section>`;
+   right=`<section class="ng-detailcard"><header>APPROVED ORIGIN</header><p class="ng-track-history-blurb">${safe(founderOrg?.approvedOrigin||'No approved origin narrative recorded.')}</p></section>`;
   }else{
   left=`<section class="ng-detailcard ng-detailwide"><header>HISTORY & RECORDS</header><div class="ng-notes">${(notes.length?notes:details.map(x=>x.lines)).slice(0,8).map(n=>`<div>${safe(n)}</div>`).join('')||'No official history connected yet.'}</div></section>`;
  }
  const actions=`<div class="ng-detailactions"><button data-ng="menu" data-val="Stable">OPEN STABLE ↗</button><button data-ng="menu" data-val="Racing">RACE CALENDAR ↗</button><button data-ng="office">BACK TO OFFICE</button></div>`;
- return `<div class="ng-profile-view ${isHorse?'ng-profile-horse':isPerson?'ng-profile-person':isFarm?'ng-profile-farm':isTrack?'ng-profile-track':'ng-profile-entity'}">${identity}${tabbar}<div class="ng-detail-cols ${isHorse&&APP.detailTab==='Overview'?'ng-detail-cols-horse-overview':isPerson&&APP.detailTab==='Overview'?'ng-detail-cols-person':(isFarm||isTrack)&&APP.detailTab==='Overview'?'ng-detail-cols-tier1':''}">${left}${right}${footer}</div>${isHorse||isPerson||isFarm||isTrack?'':actions}</div>`;
+ return `<div class="ng-profile-view ${isHorse?'ng-profile-horse':isPerson?'ng-profile-person ng-profile-horse':isFarm?'ng-profile-farm ng-profile-track':isTrack?'ng-profile-track':'ng-profile-entity'}">${identity}${tabbar}<div class="ng-detail-cols ${(isHorse||isPerson)&&APP.detailTab==='Overview'?'ng-detail-cols-horse-overview':(isFarm||isTrack)&&APP.detailTab==='Overview'?'ng-detail-cols-tier1':''}">${left}${right}${footer}</div>${isHorse||isPerson||isFarm||isTrack?'':actions}</div>`;
 }
 function calendarTimeline(races,nonraces){
  const iso=$('.dateChip')?.textContent.trim()||'1999-01-01';
