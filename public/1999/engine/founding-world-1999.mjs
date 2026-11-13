@@ -43,18 +43,18 @@ const EXISTING_IDS=Object.freeze([
  'O-000071'
 ]);
 const PUBLIC_FIGURE_OWNERS=Object.freeze([
- {id:'O-005910',name:'Midway',legacyName:'Barlow Stable',type:'RACING STABLE',locationLabel:'Chicago / Arlington Heights, Illinois, USA',publicPrincipal:'Mike Ditka',publicPrincipalId:'P-910023'},
+ {id:'O-005910',name:'Midway',legacyName:'Barlow Stable',type:'RACING STABLE',locationLabel:'Arlington Heights, Illinois, USA',publicPrincipal:'Mike Ditka',publicPrincipalId:'P-910023'},
  {id:'O-005919',name:'Knight’s Way',legacyName:'Avery Morning Racing LLC',type:'SELECTIVE RACING STABLE AND FARM',locationLabel:'Bloomington, Indiana, USA',publicPrincipal:'Bob Knight',publicPrincipalId:'P-910024'},
  {id:'O-005794',name:'Potomac Heritage Stable',legacyName:'Cobb Syndicate',type:'RACING PARTNERSHIP',locationLabel:'Mid-Atlantic, USA',publicPrincipal:'Pat Buchanan',publicPrincipalId:'P-910028'},
- {id:'O-006905',name:'Ledbetter Calder Stables',type:'RACING STABLE',locationLabel:'Southern California, USA',publicPrincipal:'Magic Johnson',publicPrincipalId:'P-910018'}
+ {id:'O-006905',name:'Ledbetter Calder Stables',type:'RACING STABLE',locationLabel:'Los Angeles, California, USA',publicPrincipal:'Magic Johnson',publicPrincipalId:'P-910018'}
 ]);
 // Unassigned names are DESIGN/SCENARIO identities, not historical owner IDs.
 // The numbering intentionally never overlaps O-000xxx or O-00xxxx IDs.
 const PROVISIONAL=Object.freeze([
  ['001','Davenport Hall Farm','Litchfield County, Connecticut, USA','FARM / BREED-TO-RACE'],
- ['002','Takamori Stud — Pacific Division','Japan / Rancho Santa Fe, California, USA','INTERNATIONAL STUD AND RACING'],
- ['003','Buckley Oaks Farm','Louisville / Shelby County, Kentucky, USA','FARM / BREED-TO-RACE'],
- ['004','Split Rail Farm','Louisville / Shelby County, Kentucky, USA','FARM / BREED-TO-RACE'],
+ ['002','Takamori Stud — Pacific Division','Rancho Santa Fe, California, USA / Japan','INTERNATIONAL STUD AND RACING'],
+ ['003','Buckley Oaks Farm','Shelby County, Kentucky, USA','FARM / BREED-TO-RACE'],
+ ['004','Split Rail Farm','Shelby County, Kentucky, USA','FARM / BREED-TO-RACE'],
  ['005','All The Colors','Del Mar, California, USA','RACING PARTNERSHIP'],
  ['006','Samuels Family Racing','Loretto, Kentucky, USA','RACING PARTNERSHIP'],
  ['007','Velvet Key Racing','Miami Beach, Florida, USA','RACING STABLE'],
@@ -63,7 +63,7 @@ const PROVISIONAL=Object.freeze([
  ['010','Caney Fork Farm','Middle Tennessee, USA','FARM / BREED-TO-RACE'],
  ['011','Longleaf Farm','Statesville, North Carolina, USA','FARM / BREED-TO-RACE'],
  ['012','Palma Real Stable','Havana, Cuba','RACING STABLE'],
- ['013','Alderwick International Stud','Newmarket, England / Lexington, Kentucky, USA','INTERNATIONAL STUD'],
+ ['013','Alderwick International Stud','Newmarket, England, UK / Lexington, Kentucky, USA','INTERNATIONAL STUD'],
  ['014','Ashby Vale Farm','Virginia, USA','FARM / BREED-TO-RACE']
 ]);
 const HISTORICAL_ANCHORS=Object.freeze([
@@ -83,7 +83,20 @@ const HISTORICAL_ANCHORS=Object.freeze([
  {organizationId:'O-000002',horse:'Paper Tiger',role:'FEMALE_FAMILY_ASSOCIATION',status:'WORLD_BIBLE'}
 ]);
 const nameStatus=id=>NAME_OVERRIDES[id]?'USER_APPROVED_PENDING_MASTER_PROPAGATION':'EXISTING_CANON';
-const loc=label=>{const parts=String(label).split(',').map(s=>s.trim());return {city:parts[0]||'',state:parts[1]||'',country:parts[2]||'USA'}};
+const loc=label=>{
+ const first=String(label||'').split(' / ')[0].trim();
+ const parts=first.split(',').map(s=>s.trim()).filter(Boolean);
+ if(parts.length>=3)return {city:parts[0],state:parts[1],country:parts.slice(2).join(', ')};
+ if(parts.length===2){
+  const country=/^(USA|US|UK|Cuba|Canada|Japan|England)$/i.test(parts[1]);
+  if(country){
+   const region=/^(Virginia|California|Tennessee|Kentucky|Pennsylvania)$/i.test(parts[0]);
+   return {city:region?'':parts[0],state:region?parts[0]:'',country:parts[1]};
+  }
+  return {city:parts[0],state:parts[1],country:'USA'};
+ }
+ return {city:'',state:'',country:parts[0]||'USA'};
+};
 const sourceOwnerId=id=>EXISTING_IDS.includes(id)||PUBLIC_FIGURE_OWNERS.some(o=>o.id===id);
 function validateScenario(orgs,horses,stallions,mares) {
  const ids=new Set(),names=new Set();
@@ -129,8 +142,16 @@ export function createFounding1999Universe({seed=19990101}={}) {
  const sourceHorses=canon.horses.filter(h=>canonicalIdSet.has(h.ownerId));
  const sourceHorseIndex=new Map(canon.horses.map((h,i)=>[h.id,i]));
  const horseIndexes=sourceHorses.map(h=>sourceHorseIndex.get(h.id));
- const sourceStallions=canon.activeStallions1999.filter(h=>canonicalIdSet.has(h.standingFarm1999?.farmOrganizationId));
- const sourceBroodmares=canon.foundationalBroodmares1999.filter(h=>canonicalIdSet.has(h.standingFarm1999?.farmOrganizationId));
+ const pedigreeById=new Map(canon.pedigreeNodes.map(h=>[h.id,h]));
+ const withPedigree=h=>{
+  const source=pedigreeById.get(h.id);
+  const inferredYear=/^H-(\d{4})-/.exec(h.id)?.[1];
+  return {...h,foalYear:source?.foalYear??(inferredYear?Number(inferredYear):null),
+   foalYearBasis:source?.foalYear?'PEDIGREE_SOURCE':'HORSE_ID_YEAR_UNVERIFIED',
+   sireId:h.sireId||source?.sireId||null,damId:h.damId||source?.damId||null};
+ };
+ const sourceStallions=canon.activeStallions1999.filter(h=>canonicalIdSet.has(h.standingFarm1999?.farmOrganizationId)).map(withPedigree);
+ const sourceBroodmares=canon.foundationalBroodmares1999.filter(h=>canonicalIdSet.has(h.standingFarm1999?.farmOrganizationId)).map(withPedigree);
  const sourceBoarding=canon.productionBroodmareBoarding1999.filter(h=>canonicalIdSet.has(h.boardingFarm1999?.farmOrganizationId));
  // Keep the opening test small: a sourced, deterministic selection of the
  // full broodmare archive (no invented pregnancies or mare transactions).
@@ -138,7 +159,7 @@ export function createFounding1999Universe({seed=19990101}={}) {
  for(const mare of sourceBoarding) {
   const id=mare.boardingFarm1999.farmOrganizationId,n=boardingByFarm.get(id)||0;
   if(n>=4)continue;
-  boardingByFarm.set(id,n+1);sampleBoarding.push(mare);
+  boardingByFarm.set(id,n+1);sampleBoarding.push(withPedigree(mare));
  }
  const breedingMares=sourceBroodmares.concat(sampleBoarding);
  validateScenario(sourceOrganizations,sourceHorses,sourceStallions,breedingMares);
@@ -215,10 +236,15 @@ export function createFounding1999Universe({seed=19990101}={}) {
   if(!Number.isInteger(i)||i<0||i>=sourceHorses.length+stock.length)throw Error('Founder world horse index');
   if(i<sourceHorses.length)return {...horseDirectoryAt(i),index:i,registryGroup:'REGISTERED'};
   const h=stock[i-sourceHorses.length],sire=i-sourceHorses.length>=breedingMares.length;
+  const identifiedCrescentStar=h.id==='H-1985-000003'||h.id==='H-1987-000001';
   return {id:h.id,index:i,name:h.name,foalYear:h.foalYear||null,
+   foalYearBasis:h.foalYearBasis||'SOURCE_RECORD',
    age:h.foalYear?1999-h.foalYear:null,sex:sire?'STALLION':'MARE',
-   status:sire?'AT_STUD':'BROODMARE',ownerId:'',
-   breederId:'',trainerId:'',sireId:h.sireId||'',damId:h.damId||'',
+   status:sire?'AT_STUD':'BROODMARE',
+   ownerId:identifiedCrescentStar?'O-000062':'',
+   breederId:identifiedCrescentStar?'O-000062':'',
+   ownershipBasis:identifiedCrescentStar?'USER_APPROVED_NEEDS_RACING_OWNER_LEDGER_JOINS':'UNVERIFIED',
+   trainerId:'',sireId:h.sireId||'',damId:h.damId||'',
    farmId:h.standingFarm1999?.farmOrganizationId||h.boardingFarm1999?.farmOrganizationId||'',
    canonical:true,registryGroup:sire?'STALLION':'BROODMARE'};
  }
