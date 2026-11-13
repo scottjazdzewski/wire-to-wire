@@ -179,7 +179,8 @@ function validateScenario(orgs,horses,stallions,mares) {
   horseIds.add(h.id);
  }
  for(const h of horses)if(!ids.has(h.ownerId))throw Error('Opening horse has missing founder owner: '+h.id);
- if(!horses.length)throw Error('Founding scenario has no sourced active horses');
+ if(!horses.length&&!stallions.length&&!mares.length)
+  throw Error('Founding scenario has no connected legacy breeding or racing horses');
 }
 export function createFounding1999Universe({seed=19990101}={}) {
  if(!Number.isSafeInteger(seed)||seed<1)throw Error('Invalid world seed');
