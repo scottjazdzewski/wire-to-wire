@@ -1,0 +1,798 @@
+{
+  "schema": "WTW_UI_PERSON_GEOGRAPHY_PROJECTION_V1",
+  "authority": "1999_APPROVED_SMALL_WORLD_EXACT_ID_AND_NAME_ONLY",
+  "as_of": "1999-01-01",
+  "scope": "Only currently user-selected leaders, jockeys, trainers; other birthplace/base fields remain unknown",
+  "person_count": 37,
+  "birthplace_count": 37,
+  "recorded_base_count": 33,
+  "identity_rule": "EXACT_P_ID_AND_DISPLAY_NAME; NO_BROAD_HISTORICAL_PROJECTION_OR_SIMILAR_NAME_JOIN",
+  "people": [
+    {
+      "id": "P-000023",
+      "name": "Gabe Larkin",
+      "role": "TRAINER",
+      "birthplace": {
+        "city": "Jacksonville",
+        "region": "Florida",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0140",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Charles Town",
+        "region": "West Virginia",
+        "country": "USA",
+        "source_record_id": "PG-0139",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000040",
+      "name": "Dr. Elias Venn",
+      "role": "TRAINER",
+      "birthplace": {
+        "city": "Portland",
+        "region": "Oregon",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0142",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "South Ozone Park",
+        "region": "New York",
+        "country": "USA",
+        "source_record_id": "PG-0141",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000041",
+      "name": "Renata Solis",
+      "role": "TRAINER",
+      "birthplace": {
+        "city": "Oakland",
+        "region": "California",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0144",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Elmont",
+        "region": "New York",
+        "country": "USA",
+        "source_record_id": "PG-0143",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000042",
+      "name": "Malcolm Pease",
+      "role": "TRAINER",
+      "birthplace": {
+        "city": "Buffalo",
+        "region": "New York",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0146",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Cincinnati",
+        "region": "Ohio",
+        "country": "USA",
+        "source_record_id": "PG-0145",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000043",
+      "name": "Ike Benton",
+      "role": "TRAINER",
+      "birthplace": {
+        "city": "Pittsburgh",
+        "region": "Pennsylvania",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0148",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Lexington",
+        "region": "Kentucky",
+        "country": "USA",
+        "source_record_id": "PG-0147",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000044",
+      "name": "Nora Keating",
+      "role": "TRAINER",
+      "birthplace": {
+        "city": "Memphis",
+        "region": "Tennessee",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0150",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Miami Gardens",
+        "region": "Florida",
+        "country": "USA",
+        "source_record_id": "PG-0149",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000045",
+      "name": "Tomás Alvarado",
+      "role": "TRAINER",
+      "birthplace": {
+        "city": "Boston",
+        "region": "Massachusetts",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0152",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Oldsmar",
+        "region": "Florida",
+        "country": "USA",
+        "source_record_id": "PG-0151",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000046",
+      "name": "Cassidy Rook",
+      "role": "TRAINER",
+      "birthplace": {
+        "city": "Spokane",
+        "region": "Washington",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0154",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Selma",
+        "region": "Texas",
+        "country": "USA",
+        "source_record_id": "PG-0153",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000047",
+      "name": "Morris \"Mo\" Danvers",
+      "role": "TRAINER",
+      "birthplace": {
+        "city": "St. Louis",
+        "region": "Missouri",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0156",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Cicero",
+        "region": "Illinois",
+        "country": "USA",
+        "source_record_id": "PG-0155",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000048",
+      "name": "Shay Nakamura",
+      "role": "TRAINER",
+      "birthplace": {
+        "city": "Winnipeg",
+        "region": "Manitoba",
+        "country": "Canada",
+        "flag_code": "ca",
+        "source_record_id": "PG-0158",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Arcadia",
+        "region": "California",
+        "country": "USA",
+        "source_record_id": "PG-0157",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000049",
+      "name": "Luis Barragán",
+      "role": "TRAINER",
+      "birthplace": {
+        "city": "Oakland",
+        "region": "California",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0162",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Albany / Berkeley",
+        "region": "California",
+        "country": "USA",
+        "source_record_id": "PG-0161",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000050",
+      "name": "Evelyn \"Ev\" Rourke",
+      "role": "TRAINER",
+      "birthplace": {
+        "city": "San Juan",
+        "region": "Puerto Rico",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0164",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Auburn",
+        "region": "Washington",
+        "country": "USA",
+        "source_record_id": "PG-0163",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000051",
+      "name": "Claude Baptiste",
+      "role": "TRAINER",
+      "birthplace": {
+        "city": "Louisville",
+        "region": "Kentucky",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0160",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Bossier City",
+        "region": "Louisiana",
+        "country": "USA",
+        "source_record_id": "PG-0159",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000052",
+      "name": "Dane Whitlock",
+      "role": "TRAINER",
+      "birthplace": {
+        "city": "Boston",
+        "region": "Massachusetts",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0166",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Toronto",
+        "region": "Ontario",
+        "country": "Canada",
+        "source_record_id": "PG-0165",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000053",
+      "name": "Nico Arroyo",
+      "role": "JOCKEY",
+      "birthplace": {
+        "city": "Detroit",
+        "region": "Michigan",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0218",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Farmington",
+        "region": "New York",
+        "country": "USA",
+        "source_record_id": "PG-0217",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000055",
+      "name": "Marcel Dubois",
+      "role": "JOCKEY",
+      "birthplace": {
+        "city": "Honolulu",
+        "region": "Hawaii",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0204",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Cincinnati",
+        "region": "Ohio",
+        "country": "USA",
+        "source_record_id": "PG-0203",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000057",
+      "name": "Paloma Reyes",
+      "role": "JOCKEY",
+      "birthplace": {
+        "city": "San Juan",
+        "region": "Puerto Rico",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0202",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Hallandale Beach",
+        "region": "Florida",
+        "country": "USA",
+        "source_record_id": "PG-0201",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000060",
+      "name": "Kenji Sato",
+      "role": "JOCKEY",
+      "birthplace": {
+        "city": "Sacramento",
+        "region": "California",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0232",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Inglewood",
+        "region": "California",
+        "country": "USA",
+        "source_record_id": "PG-0231",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000061",
+      "name": "Hector Salas",
+      "role": "JOCKEY",
+      "birthplace": {
+        "city": "San Antonio",
+        "region": "Texas",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0220",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Albany / Berkeley",
+        "region": "California",
+        "country": "USA",
+        "source_record_id": "PG-0219",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000063",
+      "name": "Julian Velez",
+      "role": "JOCKEY",
+      "birthplace": {
+        "city": "Caguas",
+        "region": "Puerto Rico",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0222",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Auburn",
+        "region": "Washington",
+        "country": "USA",
+        "source_record_id": "PG-0221",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000064",
+      "name": "Owen LeBlanc",
+      "role": "JOCKEY",
+      "birthplace": {
+        "city": "",
+        "region": "Louisiana",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "USER-20261113-OWEN-ORIGIN",
+        "geography_status": "USER_CORRECTED_STATE_LOUISIANA_EXACT_CITY_UNSPECIFIED_2026_11_13"
+      },
+      "opening_base": {
+        "city": "Carencro",
+        "region": "Louisiana",
+        "country": "USA",
+        "source_record_id": "PG-0207",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000069",
+      "name": "Ray Sutter",
+      "role": "TRAINER",
+      "birthplace": {
+        "city": "Baltimore",
+        "region": "Maryland",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0172",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Lexington",
+        "region": "Kentucky",
+        "country": "USA",
+        "source_record_id": "PG-0171",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000071",
+      "name": "Josephine Malloy",
+      "role": "TRAINER",
+      "birthplace": {
+        "city": "Des Moines",
+        "region": "Iowa",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0176",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Baltimore",
+        "region": "Maryland",
+        "country": "USA",
+        "source_record_id": "PG-0175",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000083",
+      "name": "Dane Mercer",
+      "role": "JOCKEY",
+      "birthplace": {
+        "city": "San Diego",
+        "region": "California",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0214",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Phoenix",
+        "region": "Arizona",
+        "country": "USA",
+        "source_record_id": "PG-0213",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000084",
+      "name": "Samuel \"Sammy\" Cardenas",
+      "role": "JOCKEY",
+      "birthplace": {
+        "city": "Panama City",
+        "region": null,
+        "country": "Panama",
+        "flag_code": "pa",
+        "source_record_id": "PG-0224",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Altoona",
+        "region": "Iowa",
+        "country": "USA",
+        "source_record_id": "PG-0223",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000085",
+      "name": "Javier Negrón",
+      "role": "JOCKEY",
+      "birthplace": {
+        "city": "Guadalajara",
+        "region": "Jalisco",
+        "country": "Mexico",
+        "flag_code": "mx",
+        "source_record_id": "PG-0226",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Canóvanas",
+        "region": "Puerto Rico",
+        "country": "USA",
+        "source_record_id": "PG-0225",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-000088",
+      "name": "Arturo Meza",
+      "role": "JOCKEY",
+      "birthplace": {
+        "city": "Cleveland",
+        "region": "Ohio",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0234",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Phoenix",
+        "region": "Arizona",
+        "country": "USA",
+        "source_record_id": "PG-0233",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-003134",
+      "name": "Adam Walker",
+      "role": "TRAINER",
+      "birthplace": {
+        "city": "Chicago",
+        "region": "Illinois",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0244",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Hallandale Beach",
+        "region": "Florida",
+        "country": "USA",
+        "source_record_id": "PG-0243",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-003145",
+      "name": "Todd N. Holden",
+      "role": "TRAINER",
+      "birthplace": {
+        "city": "Charlotte",
+        "region": "North Carolina",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0248",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Hallandale Beach",
+        "region": "Florida",
+        "country": "USA",
+        "source_record_id": "PG-0247",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-003395",
+      "name": "Edward Sayer",
+      "role": "TRAINER",
+      "birthplace": {
+        "city": "Providence",
+        "region": "Rhode Island",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0256",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "South Ozone Park",
+        "region": "New York",
+        "country": "USA",
+        "source_record_id": "PG-0255",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-003464",
+      "name": "Graham Ives",
+      "role": "TRAINER",
+      "birthplace": {
+        "city": "Houston",
+        "region": "Texas",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0262",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Arcadia",
+        "region": "California",
+        "country": "USA",
+        "source_record_id": "PG-0261",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-900010",
+      "name": "Damon Grant",
+      "role": "JOCKEY",
+      "birthplace": {
+        "city": "Baltimore",
+        "region": "Maryland",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0282",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Louisville",
+        "region": "Kentucky",
+        "country": "USA",
+        "source_record_id": "PG-0281",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-900011",
+      "name": "Diego Serrano",
+      "role": "JOCKEY",
+      "birthplace": {
+        "city": "Chicago",
+        "region": "Illinois",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0284",
+        "geography_status": "CANON_LOCKED_BIRTHPLACE"
+      },
+      "opening_base": {
+        "city": "Inglewood",
+        "region": "California",
+        "country": "USA",
+        "source_record_id": "PG-0283",
+        "geography_status": "CANON_LOCKED_HOME_BASE",
+        "as_of": "1999"
+      },
+      "career_base": null
+    },
+    {
+      "id": "P-910018",
+      "name": "Magic Johnson",
+      "role": "PUBLIC FIGURE / HORSE OWNER",
+      "birthplace": {
+        "city": "Lansing",
+        "region": "Michigan",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0128",
+        "geography_status": "SOURCE_CITY_EXPLICIT"
+      },
+      "opening_base": null,
+      "career_base": null
+    },
+    {
+      "id": "P-910023",
+      "name": "Mike Ditka",
+      "role": "PUBLIC FIGURE / HORSE OWNER",
+      "birthplace": {
+        "city": "Carnegie",
+        "region": "Pennsylvania",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0133",
+        "geography_status": "SOURCE_CITY_EXPLICIT"
+      },
+      "opening_base": null,
+      "career_base": null
+    },
+    {
+      "id": "P-910024",
+      "name": "Bob Knight",
+      "role": "PUBLIC FIGURE / HORSE OWNER",
+      "birthplace": {
+        "city": "Massillon",
+        "region": "Ohio",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0134",
+        "geography_status": "SOURCE_CITY_EXPLICIT"
+      },
+      "opening_base": null,
+      "career_base": null
+    },
+    {
+      "id": "P-910028",
+      "name": "Pat Buchanan",
+      "role": "PUBLIC FIGURE / HORSE OWNER",
+      "birthplace": {
+        "city": "Washington",
+        "region": "District of Columbia",
+        "country": "USA",
+        "flag_code": "us",
+        "source_record_id": "PG-0138",
+        "geography_status": "SOURCE_CITY_EXPLICIT"
+      },
+      "opening_base": null,
+      "career_base": null
+    }
+  ]
+}
