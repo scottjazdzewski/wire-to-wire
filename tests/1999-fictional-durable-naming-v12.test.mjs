@@ -84,6 +84,26 @@ test('durable V12 naming writes append-only batches, not full previous name arra
  assert.equal(next.nextCursor.revision,61);
  assert.equal(next.ownership.partnershipsIssued,8);
 });
+test('two simultaneous initializations share one protected foundation and reject changes',async()=>{
+ const storage=memoryDurableStore(),worldId='Parallel-First-Open',seed=123456;
+ const config={storage,worldId,seed,
+  protectedPeople:['Raúl García'],protectedOrganizations:['Kingsmere Stud']};
+ const [a,b]=await Promise.all([
+  openDurableFictionalNameService(config),
+  openDurableFictionalNameService(config)
+ ]);
+ assert.equal(a.revision,0);
+ assert.equal(b.revision,0);
+ assert.equal((await storage.read({worldId,seed})).batches.length,0);
+ await assert.rejects(()=>openDurableFictionalNameService({
+  ...config,protectedPeople:['Rewritten Person']
+ }),/different protected identities/);
+ const first=await a.generate(params);
+ assert.equal(first.nextCursor.revision,1);
+ await assert.rejects(()=>b.generate(params),/Stale persisted/);
+ await b.refresh();
+ assert.equal(b.revision,1);
+});
 test('rejected durable append never mutates local registry, and stale tabs must refresh',async()=>{
  const storage=memoryDurableStore(),worldId='Two-Tabs-V12',seed=91001;
  const first=await openDurableFictionalNameService({storage,worldId,seed});
