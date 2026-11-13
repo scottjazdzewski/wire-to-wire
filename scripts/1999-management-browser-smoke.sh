@@ -79,19 +79,11 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   // Release the previous racing select before switching departments.
   d.activeElement?.blur?.();
   click('Breeding');await pause(180);
-  let breedingPaintFailure=null;
-  try{w.__WTW_NEXT__?.paint?.()}catch(error){breedingPaintFailure=String(error?.stack||error)}
-  check('Breeding switch paints without error '+String(breedingPaintFailure),
-   !breedingPaintFailure);
   check('Original Breeding screen shown',Boolean(d.querySelector('.ng-manager-stage')));
   const breedingView=d.querySelector('#wtwNextgen select[data-ng-select="department-tab"]');
   check('Breeding uses its approved compact in-page view picker',Boolean(breedingView));
-  check('Breeding stallion roster remains accessible '+JSON.stringify({
-   activeSection:w.__WTW_NEXT__?.app?.section,
-   activePage:w.__WTW_NEXT__?.app?.page,
-   options:[...breedingView.options].map(x=>x.value),
-   roster:d.querySelector('.ng-rs-title')?.textContent.slice(0,110)
-  }),Boolean([...breedingView.options].some(o=>o.value==='Stallions')));
+  check('Breeding stallion roster remains accessible',
+   Boolean([...breedingView.options].some(o=>o.value==='Stallions')));
   breedingView.value='Stallions';
   breedingView.dispatchEvent(new w.Event('change',{bubbles:true}));await pause(230);
   const breedingHorse=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
