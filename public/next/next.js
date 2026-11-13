@@ -17,7 +17,7 @@ let personGeographyLoading=false;
 function loadPersonGeography(){
  if(personGeographyProjection||personGeographyLoading)return;
  personGeographyLoading=true;
- fetch('/data/person-geography-ui-v33.json',{credentials:'same-origin',cache:'force-cache'})
+ fetch('/data/wtw-1999-approved-person-geography-v1.json?rev=small1999-20261113',{credentials:'same-origin',cache:'force-cache'})
  .then(r=>{if(!r.ok)throw Error('People geography unavailable');return r.json()})
  .then(data=>{
   if(data?.schema==='WTW_UI_PERSON_GEOGRAPHY_PROJECTION_V1'&&Array.isArray(data.people)&&data.person_count===data.people.length){
@@ -30,10 +30,8 @@ function loadPersonGeography(){
 function personGeographyRecord(source,name){
  if(!personGeographyProjection)return null;
  const id=source?.dataset.personId?.trim();
- if(id)return personGeographyProjection.people.find(x=>x.id===id&&x.name===name)||null;
- // Temporary legacy Office bridge; ambiguous names are never joined.
- const matches=personGeographyProjection.people.filter(x=>x.name===name);
- return matches.length===1?matches[0]:null;
+ // Never guess a person by name: all 1999 geography is exact ID and name.
+ return id?personGeographyProjection.people.find(x=>x.id===id&&x.name===name)||null:null;
 }
 
 const genericDeskPhoto='/assets/office/approved-office-photo.jpg';
@@ -785,9 +783,7 @@ function loadWorld1999(){
  if(world1999Data||world1999LoadFailed)return Promise.resolve();
  if(world1999Loading)return world1999Promise||Promise.resolve();
  world1999Loading=true;
- const basePath=isClean1999()?
-  '/data/wtw-1999-founding-directory-v1.json?rev=wtw1999-approved-only-20261113-r1':
-  '/data/wtw-1999-world-directory-v33.json';
+ const basePath='/data/wtw-1999-founding-directory-v1.json?rev=wtw1999-approved-only-20261113-r1';
  world1999Promise=Promise.all([
   fetch(basePath,{credentials:'same-origin',cache:'force-cache'}).then(r=>
    r.ok?r.json():Promise.reject(Error('1999 directory unavailable'))),
