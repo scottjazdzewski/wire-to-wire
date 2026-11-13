@@ -803,12 +803,16 @@ function loadWorld1999(){
    if(isClean1999()){
     if(pilot?.schema!=='WTW_1999_JOCKEY_PILOT_IDENTITY_ROSTER_V1'||
       pilot.counts?.canonicalJockeys!==37||pilot.counts?.selectedPilot!==26||
-      !Array.isArray(pilot.jockeys)||pilot.jockeys.length!==37)
+      pilot.counts?.restoredByUser!==1||pilot.counts?.totalJockeysWithUserApprovedRestoration!==38||
+      !Array.isArray(pilot.jockeys)||pilot.jockeys.length!==38)
      throw Error('Jockey identity pilot schema invalid');
     const pilotIds=new Set(pilot.jockeys.map(p=>p.id));
     const existingIds=new Set(data.people.map(p=>p.id));
     const chosen=pilot.jockeys.filter(p=>p.pilotStatus==='SELECTED_IDENTITY_ONLY');
-    if(pilotIds.size!==37||chosen.length!==26||
+    if(pilotIds.size!==38||chosen.length!==26||
+       !chosen.some(p=>p.id==='P-1999-J-000001'&&p.gender==='MALE'&&
+        p.homeTrackId==='T-0039'&&p.secondaryCircuit==='NEW_YORK_SELECTED_MAJOR_STAKES_DAYS')||
+       !chosen.some(p=>p.id==='P-000057'&&p.gender==='MALE')||
        chosen.some(p=>p.role!=='JOCKEY'||!p.id.startsWith('P-')||
         existingIds.has(p.id)||!p.name||!p.base||p.performanceRatings!==null||
         p.employmentStatus!=='UNASSIGNED'))
