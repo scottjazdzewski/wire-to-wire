@@ -161,7 +161,7 @@ function breakingName(seed,i,attempt){
  */
 export function createOrganizationNameRoster({
  seed,ownerCount,barnCount,farmCount,breakingCount=0,
- protectedNames=[],principalNames=[],trainerNames=[],sourceOwnerNames=[]
+ protectedNames=[],principalNames=[],trainerNames=[],sourceOwnerNames=[],farmKindPlan=null
 }){
  if(!Number.isSafeInteger(seed)||seed<1)throw Error('Invalid naming seed');
  for(const n of [ownerCount,barnCount,farmCount,breakingCount])
@@ -203,7 +203,10 @@ export function createOrganizationNameRoster({
   if(i%11===0&&principal){used.add(norm(principal));return principal;}
   return claim(attempt=>ownerName(seed,i,attempt,principal),'owner');
  });
- const farmKinds=Array.from({length:farmCount},(_,i)=>classifyFarm(seed,i));
+ const kindsAllowed=new Set(['FARM','STUD_FARM','THOROUGHBRED_NURSERY','BLOODSTOCK_FARM']);
+ if(farmKindPlan!==null&&(!Array.isArray(farmKindPlan)||farmKindPlan.length!==farmCount||
+  farmKindPlan.some(k=>!kindsAllowed.has(k))))throw Error('Invalid explicit farm-purpose plan');
+ const farmKinds=farmKindPlan===null?Array.from({length:farmCount},(_,i)=>classifyFarm(seed,i)):[...farmKindPlan];
  const farms=Array.from({length:farmCount},(_,i)=>claim(a=>farmName(seed,i,a,farmKinds[i]),'farm'));
  const familyFrequency=new Map();
  for(const trainer of trainerNames){const key=norm(surname(trainer));familyFrequency.set(key,(familyFrequency.get(key)||0)+1)}
