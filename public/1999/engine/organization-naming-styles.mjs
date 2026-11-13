@@ -82,24 +82,23 @@ export function contextualFarmCandidate(seed,index,attempt,kind,context={}){
  const suffix=draw(SUFFIXES[kind],seed,key+':suffix');
  const roll=hash(seed,key+':pattern')%100;
  let stem=root;
- // Older names tend to use landholding and family traditions; a contemporary
- // name need not be another "color + landmark" compound.
+ // A directory of real horse farms usually favors a short landholding or
+ // family identity over manufactured three-adjective combinations.
+ // A farm's namesake surname is only a proposed business root; it does NOT
+ // assign that farm to an existing person.
  if(era==='HERITAGE'){
-  if(surname&&roll<24)stem=surname;
-  else if(surname&&roll<42)stem=surname+' '+draw(HERITAGE,seed,key+':heritage');
-  else if(roll<65)stem=root;
-  else if(roll<83)stem=root+' '+draw(['House','Estate','Hill','Place'],seed,key+':house');
-  else stem=draw(['Old','Upper','Lower','West'],seed,key+':direction')+' '+root;
+  if(surname&&roll<33)stem=surname;
+  else if(roll<88)stem=root;
+  else if(!root.startsWith('Old ')&&roll<95)stem='Old '+root;
+  else stem=root;
  }else if(era==='CONTEMPORARY'){
   if(surname&&roll<24)stem=surname;
-  else if(roll<56)stem=root;
-  else if(surname&&roll<75)stem=root+' '+surname;
-  else stem=root+' '+draw(['Equine','Bloodstock','Thoroughbreds','Valley'],seed,key+':modern');
+  else if(roll<91)stem=root;
+  else stem=surname?surname+' '+draw(['House','Fields'],seed,key+':modern'):root;
  }else{
-  if(surname&&roll<28)stem=surname;
-  else if(roll<63)stem=root;
-  else if(surname&&roll<82)stem=surname+' '+root;
-  else stem=root+' '+draw(['Grove','Fields','Ridge','Meadow'],seed,key+':estate');
+  if(surname&&roll<26)stem=surname;
+  else if(roll<91)stem=root;
+  else stem=surname?surname+' '+draw(['Place','Meadows'],seed,key+':established'):root;
  }
  return (stem+' '+suffix).replace(/\b(Farm)\s+Farm\b/g,'$1');
 }
