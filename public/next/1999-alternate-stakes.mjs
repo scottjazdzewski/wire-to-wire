@@ -1,6 +1,6 @@
 /** Wire to Wire alternate-universe 1999 stakes program.
  * Noncanonical, ungraded race invitations for active tracks with no source 1999 stakes,
- * plus a second showcase for the 16 revived historical tracks.
+ * plus a second showcase for revived domestic historical racecourses.
  * The 93 original sourced stakes keep their immutable identities and dates.
  */
 import {TRACK_PROGRAM_1999,trackCardSurface1999,trackMeetOpen1999} from './1999-track-program.mjs';
@@ -25,14 +25,6 @@ const featureNames={
  'T-0096':'Queen City Carolina Derby','T-0097':'Front Range Colorado Mile',
  'T-0098':'Silver State Nevada Cup','T-0099':'Wasatch Mountain Classic',
  'T-0100':'Heartland Missouri Derby','T-0101':'Cream City Wisconsin Mile',
- 'IT-0001':'Curragh International Mile','IT-0002':'Newmarket International Cup',
- 'IT-0003':'Ascot Summer Invitational','IT-0004':'Longchamp Autumn Challenge',
- 'IT-0005':'Deauville Summer Invitational','IT-0006':'Iffezheim International Mile',
- 'IT-0007':'San Isidro International Cup','IT-0008':'Palermo Autumn Classic',
- 'IT-0009':'Tokyo International Invitational','IT-0010':'Kyoto International Cup',
- 'IT-0011':'Flemington Spring Invitational','IT-0012':'Randwick Championship Mile',
- 'IT-0013':'Kenilworth Summer Classic','IT-0014':'Turffontein Highveld Cup',
- 'IT-0015':'Cidade Jardim International Mile','IT-0016':'Santiago International Cup'
 };
 const iso=(monthDay)=>'1999-'+monthDay;
 const dayMS=86400000;
@@ -61,9 +53,8 @@ for(const p of Object.values(TRACK_PROGRAM_1999)){
   const title=(revived?p.wtwFeatureNames?.[i]:null)||(i?base+' Autumn Cup':featureNames[p.id]||base+' Invitational');
   const turf=p.surfaces==='Turf'||p.surfaces.includes('Turf')&&i===1;
   const surface=trackCardSurface1999(p.id,turf?5:1);
-  const international=p.id.startsWith('IT-');
   const fair=/FAIR|SHORT_MEET/.test(p.basis)||/fair|timonium|ferndale/i.test(p.name);
-  const purse=international?175000:revived?120000+i*35000:fair?60000:95000+(Number(p.id.slice(-2))%4)*25000;
+  const purse=revived?120000+i*35000:fair?60000:95000+(Number(p.id.slice(-2))%4)*25000;
   out.push(Object.freeze({
    id:'WTW-STK-1999-'+p.id+'-'+String(i+1).padStart(2,'0'),
    name:title,trackId:p.id,trackName:p.name,localDate,date:localDate,
