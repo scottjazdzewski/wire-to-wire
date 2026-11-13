@@ -27,6 +27,33 @@ test('one REAL approved renderer serves Track-style facilities and Horse-style f
  assert.ok(!html.includes('1999-founding-profiles.js'));
 });
 
+test('all person roles use the exact complete Horse layout, with blank role attributes',()=>{
+ assert.match(office,/data-template="horse-overview"/);
+ assert.match(office,/const groupSizes=\[9,15,12,10\]/);
+ assert.match(office,/ng-horse-mgr-four/);
+ assert.match(office,/ng-horse-condition-strip/);
+ assert.match(office,/ng-horse-mgr-five/);
+ assert.match(office,/ng-horse-mgr-bottom/);
+ assert.match(office,/ng-horse-mgr-summary/);
+ assert.match(office,/0 OF 46 ROLE-SPECIFIC SLOTS DEFINED/);
+ assert.match(office,/attribute.*slot/i);
+ assert.doesNotMatch(html,/1999-founding-profiles\.js/);
+});
+
+test('one O-ID image route controls both founder page logos and future horse-owner chips',()=>{
+ assert.match(office,/\['organization:'\+approvedOrg\.id\]/);
+ assert.match(office,/organizationLogoMarkup\(owner\.id,owner\.name,'organization'/);
+ assert.match(office,/ownerOrganizationId/);
+ assert.match(office,/ownershipOrganizationId/);
+ assert.match(office,/isFarm\?\s*approvedIdentityAsset\('organization',source\.dataset\.organizationId\|\|''/);
+ assert.match(office,/imageSlotRequired=isFarm\|\|portraitRequired/);
+ assert.match(office,/ng-profile-portrait/);
+ assert.match(office,/ng-profile-facility-logo/);
+ const manifest=JSON.parse(read('public/assets/office/founding-organization-logo-index.json'));
+ assert.equal(manifest.approvedOrganizationIds.length,37);
+ assert.deepEqual(Object.keys(manifest.organizations),[]);
+});
+
 test('37 approved ownership organizations, 41 EXACT approved people, no unrelated or generated workforce',()=>{
  const orgs=directory.organizations,persons=directory.people;
  assert.equal(orgs.length,37);
@@ -100,7 +127,7 @@ test('1999 founder facility references are exactly 30, NOT independent buildings
  assert.equal(types.filter(t=>t==='FARM').length,15);
  assert.equal(types.filter(t=>t==='RACING_STABLE_ORGANIZATION').length,10);
  assert.equal(types.filter(t=>t==='ORGANIZATION_ONLY').length,7);
- assert.match(office,/BUILDING CAPACITY/);
- assert.match(office,/NOT CERTIFIED/);
+ assert.match(office,/\['CAPACITY','NOT RECORDED'\]/);
+ assert.match(office,/data-template="track-overview"/);
  assert.match(office,/founderStockRows\(\)/);
 });
