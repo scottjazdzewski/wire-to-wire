@@ -110,12 +110,18 @@ function source(kind,record,ui){
   node.dataset.testAttributes=JSON.stringify(modelPersonTraits);
   node.dataset.personRole=role.toLowerCase().replaceAll(' ','_');
   node.innerHTML='<div class="profileSubline">Job: '+safe(role)+'</div>'+
-   field('Role',role)+field('Age',age||'Not recorded')+
+   field('Role',role)+
+   (d.gender?field('Gender',d.gender==='MALE'?'Male':d.gender==='FEMALE'?'Female':d.gender):'')+
+   field('Age',age||'Not recorded')+
    field('Birthplace',birthplace||'Not recorded')+
    field('Location',openingBase||'Not recorded')+
    field('1999 base',openingBase||'Not recorded')+
    field('Person ID',personId||'Not linked')+
    (d.homeTrack?link('Home track',d.homeTrack):'')+
+   (d.secondaryCircuit==='NEW_YORK_SELECTED_MAJOR_STAKES_DAYS'?
+    field('Secondary circuit','New York · selected major stakes days'):'')+
+   (d.availabilityPolicy==='CAN_TRAVEL_TO_NEW_YORK_MAJOR_RACES_WHEN_BOOKED_AND_SPACING_ALLOWS'?
+    field('Travel policy','Travels for selected New York stakes mounts when booked; race-date and distance constraints apply'):'')+
    (d.ownershipOperation?link('Ownership operation',d.ownershipOperation):'')+
    (d.assignment?link('Appointment',d.assignment):'')+
    (d.relationship?link('Stable relationship',d.relationship):'')+
