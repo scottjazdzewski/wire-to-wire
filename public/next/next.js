@@ -1890,22 +1890,50 @@ function profileDetail(route,sourceOverride=null){
    left=athleteOverview();
    right='';footer='';
   }else if(isPerson){
+   // Structural lock: exactly the Horse Overview's four rating columns,
+   // seven-item condition strip, five office panels, two lower panels and
+   // full-width summary. Labels are UNASSIGNED until the user approves
+   // role-specific personnel attributes; never invent ability scores.
    const person=personWork();
-   // THE SAME Horse dossier chassis, with the existing professional scoring
-   // engine inside it. No parallel synthetic person profile or fabricated skill.
-   const panel=(name,body)=>'<section class="ng-horse-mgr-panel"><header><strong>'+name+
-    '</strong></header>'+body+'</section>';
-   left=`<div class="ng-horse-dossier ng-person-horse-dossier">
-     <div class="ng-horse-dossier-caption"><strong>PROFESSIONAL & RACING INTELLIGENCE</strong><span>UNOBSERVED ≠ ZERO</span></div>
-     <div class="ng-horse-mgr-four">${panel('PROFESSIONAL ATTRIBUTES',person.attributes())}</div>
-     <div class="ng-horse-mgr-five">
-      ${panel('REPUTATION & TRUST',person.reputation())}
-      ${panel('HORSE ASSIGNMENTS',person.horseAssignments())}
-      ${panel('CAREER & OPPORTUNITIES',person.careerOverview)}
-      ${panel('WORKING RELATIONSHIPS',person.networkOverview)}
-      ${panel('APPROVED OWNERSHIP & AFFILIATIONS',founderAffiliationRows())}
-     </div>
-     </div>`;
+   const panel=(name,body,more='')=>'<section class="ng-horse-mgr-panel '+more+'"><header><strong>'+
+    name+'</strong></header>'+body+'</section>';
+   const groupSizes=[9,15,12,10];
+   const professionalSlots=groupSizes.map((count,index)=>{
+    const list=Array.from({length:count},(_,n)=>
+     '<div class="ng-horse-rating-row ability-unrated"><span>Attribute slot '+
+     String(n+1).padStart(2,'0')+'</span>'+
+     '<span class="ng-horse-rating-unassessed" aria-hidden="true"></span>'+
+     '<strong class="unknown">—</strong></div>').join('');
+    return '<section class="ng-horse-mgr-panel ng-horse-ratings" data-personnel-attribute-group="'+(index+1)+
+     '"><header><strong>ATTRIBUTE GROUP '+String(index+1).padStart(2,'0')+
+     '</strong><span>0/'+count+' ASSIGNED</span></header>'+
+     '<div class="ng-horse-rating-rows">'+list+'</div></section>';
+   }).join('');
+   const statusSlots='<div class="ng-horse-condition-strip" aria-label="Personnel condition and status slots">'+
+    Array.from({length:7},(_,i)=>'<div class="ng-horse-condition-cell"><span>STATUS SLOT '+
+    (i+1)+'</span><strong class="unknown">—</strong></div>').join('')+'</div>';
+   const approvedLinks=founderAffiliationRows();
+   const approvedConnections=founderAffiliations.length?
+    founderAffiliations.map(o=>o.name).join(' · '):'Organization not yet assigned';
+   left=`<div class="ng-horse-dossier ng-person-horse-dossier" data-template="horse-overview" data-personnel-role="${safe(source.dataset.personRole||'unspecified')}">
+    <div class="ng-horse-dossier-caption"><strong>PROFESSIONAL & RACING INTELLIGENCE</strong><span>0 OF 46 ROLE-SPECIFIC SLOTS DEFINED · NOT SCORED</span></div>
+    <div class="ng-horse-mgr-four">${professionalSlots}</div>
+    ${statusSlots}
+    <div class="ng-horse-mgr-five">
+     ${panel('CAREER & APPOINTMENTS',person.careerOverview)}
+     ${panel('CURRENT ASSIGNMENTS',person.horseAssignments())}
+     ${panel('REPUTATION & TRUST',person.reputation())}
+     ${panel('WORKING RELATIONSHIPS',person.networkOverview)}
+     ${panel('OWNERSHIP & AFFILIATIONS',approvedLinks)}
+    </div>
+    <div class="ng-horse-mgr-bottom">
+     ${panel('CAREER RECORD & HISTORY','<p class="ng-horse-small-note">Role-specific career measures will be set with the personnel model. No figures inferred.</p>','ng-horse-form-card')}
+     ${panel('BACKGROUND & CONNECTIONS',approvedLinks,'ng-horse-pedigree-card')}
+    </div>
+    <div class="ng-horse-mgr-summary"><div><strong>PERSONNEL OFFICE SUMMARY</strong><span>${safe(approvedConnections)}</span></div>
+     <div class="ng-horse-mgr-actions"><button type="button" data-ng="detailtab" data-val="Connections">VIEW CONNECTIONS ↗</button></div>
+    </div>
+   </div>`;
    right='';footer='';
   }else if(isFarm){
    const facilityContext=source.dataset.foundingContext==='facility';
