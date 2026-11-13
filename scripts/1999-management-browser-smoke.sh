@@ -102,7 +102,7 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   const jockeyTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Jockeys');
   check('Jockey roster tab remains available',Boolean(jockeyTab));
   jockeyTab.click();await pause(300);
-  const openingJockeys=ui.departmentRows('Personnel','Jockeys');
+  const openingJockeys=w.__WTW_NEXT__?.app?.departmentVisible||[];
   check('Exactly 26 EXISTING canonical jockey identities appear with no generated attributes, contracts or mounts',
    openingJockeys.length===26&&openingJockeys.every(p=>
     /^P-/.test(p._canonId)&&p._testGenerated===false&&p.role==='JOCKEY'&&
