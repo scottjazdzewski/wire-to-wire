@@ -93,9 +93,9 @@ const mix=(...items)=>Object.freeze(items.map(p=>Object.freeze(p)));
  * Explicit user-provided originWeightsByRole always overrides these.
  */
 export const DEFAULT_GLOBAL_PROFESSIONAL_ORIGIN_WEIGHTS=Object.freeze({
- trainer:mix(['US',66],['CA',8],['GB',8],['IE',7],['FR',4],['DE',2],['AU',2],['NZ',1],['JP',1],['AE',1]),
- owner:mix(['US',61],['CA',7],['GB',7],['IE',5],['FR',4],['DE',2],['JP',5],['AU',3],['NZ',2],['AE',3],['HK',1]),
- bloodstock_agent:mix(['US',45],['CA',6],['GB',12],['IE',14],['FR',7],['DE',3],['AU',5],['NZ',3],['JP',3],['AE',2])
+ trainer:mix(['US',61],['CA',8],['GB',8],['IE',7],['FR',3],['DE',2],['AU',2],['NZ',1],['JP',1],['AE',1],['PR',2],['MX',2],['VE',1],['PA',1]),
+ owner:mix(['US',55],['CA',7],['GB',7],['IE',5],['FR',4],['DE',2],['JP',5],['AU',3],['NZ',2],['AE',3],['HK',1],['PR',2],['MX',2],['VE',1],['PA',1]),
+ bloodstock_agent:mix(['US',40],['CA',6],['GB',12],['IE',14],['FR',7],['DE',3],['AU',5],['NZ',3],['JP',3],['AE',2],['PR',2],['MX',1],['VE',1],['PA',1])
 });
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 function hash(seed,key){
