@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {
  FICTIONAL_PORTFOLIO_MODEL,PORTFOLIO_TIERS,
- assessFictionalOwnerCapacity,planFictionalOwnerPortfolios
+ assessFictionalOwnerCapacity,planFictionalOwnerPortfolios,
+ exportFictionalOwnerPortfolioState,importFictionalOwnerPortfolioState
 } from '../public/1999/engine/fictional-owner-portfolio-planner.mjs';
 import {generateOnDemandFictionalNames}
  from '../public/1999/engine/on-demand-fictional-name-batches.mjs';
@@ -35,6 +36,7 @@ test('100k training horses use a long-tailed distribution with hundreds under a 
  assert.equal(t.ownerHorseOffsets.length,8001);
  assert.equal(t.ownerHorseOffsets.at(-1),100000);
  assert.equal(t.horseCounts.reduce((sum,n)=>sum+n,0),100000);
+ assert.ok(t.summary.ownersWithExactlyOne>500);
  assert.ok(t.summary.ownersWithOneToFive>4000,
   'most names should be small ownership holdings');
  assert.ok(t.summary.ownersWithAtLeastTwoHundred>20,
@@ -95,9 +97,18 @@ test('a 100k-horse world can grow to 130k while preserving every previously assi
   seed:20700101,owners:smallOwners,horseCount:100000
  });
  const enlarged=ownerIds(11000);
+ const serialized=exportFictionalOwnerPortfolioState(initial);
+ assert.equal(serialized.ownerIndexes.length,100000);
+ assert.equal(serialized.ownerIds.length,8000);
+ const restored=importFictionalOwnerPortfolioState(
+  JSON.parse(JSON.stringify(serialized)));
+ assert.deepEqual(restored.ownerIndexForHorse,initial.ownerIndexForHorse);
+ const broken=JSON.parse(JSON.stringify(serialized));
+ broken.ownerIndexes[14]=(broken.ownerIndexes[14]+1)%8000;
+ assert.throws(()=>importFictionalOwnerPortfolioState(broken),/corrupt/);
  const expanded=planFictionalOwnerPortfolios({
   seed:20700101,owners:enlarged,horseCount:130000,
-  existingPlan:initial
+  existingPlan:restored
  });
  assert.equal(expanded.horseCount,130000);
  assert.equal(expanded.ownerIds.length,11000);
