@@ -51,7 +51,7 @@ const PUBLIC_FIGURE_OWNERS=Object.freeze([
  {id:'O-005910',name:'Midway',legacyName:'Barlow Stable',type:'RACING STABLE',locationLabel:'Arlington Heights, Illinois, USA',publicPrincipal:'Mike Ditka',publicPrincipalId:'P-910023'},
  {id:'O-005919',name:'Knight’s Way',legacyName:'Avery Morning Racing LLC',type:'SELECTIVE RACING STABLE AND FARM',locationLabel:'Bloomington, Indiana, USA',publicPrincipal:'Bob Knight',publicPrincipalId:'P-910024'},
  {id:'O-005794',name:'Potomac Heritage Stable',legacyName:'Cobb Syndicate',type:'RACING PARTNERSHIP',locationLabel:'Mid-Atlantic, USA',publicPrincipal:'Pat Buchanan',publicPrincipalId:'P-910028'},
- {id:'O-006905',name:'Ledbetter Calder Stables',type:'RACING STABLE',locationLabel:'Los Angeles, California, USA',publicPrincipal:'Magic Johnson',publicPrincipalId:'P-910018'}
+ {id:'O-006905',name:'Ledbetter Calder Stables',type:'RACING STABLE',locationLabel:'Los Angeles, California, USA',publicInvestor:'Magic Johnson',publicInvestorId:'P-910018',investorRole:'MAJOR_INVESTOR_NON_OPERATING',operatingPrincipalStatus:'USER_DIRECTED_NEW_OPERATOR_PENDING_NAME_REVIEW'}
 ]);
 // Unassigned names are DESIGN/SCENARIO identities, not historical owner IDs.
 // The numbering intentionally never overlaps O-000xxx or O-00xxxx IDs.
@@ -221,7 +221,9 @@ export function createFounding1999Universe({seed=19990101}={}) {
     throw Error('Proposal would overwrite existing principal '+org.id);
    return {...org,principalOwner:primary.name,principalOwnerId:primary.id,
     principalRole:primary.positionTitle,leadershipPeopleIds:people.map(p=>p.id),
-    leadershipStatus:'WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW',
+    leadershipStatus:primary.leadershipStatus==='USER_APPROVED_1999_LEADERSHIP'?
+     'USER_APPROVED_1999_OPERATOR_LINK':'WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW',
+    principalPortraitBrief:primary.portraitBrief||null,
     realWorldOwnershipProof:false};
   }
   const principalOwner=org.principalOwner||org.publicPrincipal||null;
@@ -302,9 +304,14 @@ export function createFounding1999Universe({seed=19990101}={}) {
    basis:'USER_APPROVED_ASHBY_VALE_1999'},operatingOrganizationId:'O-FOUNDING-1999-014',
    sourceOriginalBase:p.base,geographyJoinStatus:'APPROVED_PENDING_PERSON_REGISTRY'};
   return p;
- }).concat(PUBLIC_FIGURE_OWNERS.map(o=>({id:o.publicPrincipalId,name:o.publicPrincipal,
-   role:'RACING OWNER',status:'CANONICAL_1999_PUBLIC_FIGURE_OWNER',
-   operatingOrganizationId:o.id,base:loc(o.locationLabel)})),PERSON_PROPOSALS,foundingLeadership);
+ }).concat(PUBLIC_FIGURE_OWNERS.map(o=>({
+   id:o.publicInvestorId||o.publicPrincipalId,name:o.publicInvestor||o.publicPrincipal,
+   role:o.publicInvestorId?'MAJOR INVESTOR':'RACING OWNER',
+   status:o.publicInvestorId?'USER_APPROVED_1999_NON_OPERATING_INVESTOR':'CANONICAL_1999_PUBLIC_FIGURE_OWNER',
+   operatingOrganizationId:o.id,base:loc(o.locationLabel),
+   ...(o.publicInvestorId?{relationshipType:'MAJOR_INVESTOR_NON_OPERATING',
+     investorInOrganizationId:o.id,hasCertifiedEquityPercentage:false,hasManagementAuthority:false}:{})
+ })),PERSON_PROPOSALS,foundingLeadership);
  const ownerOriginalIndex=new Map(canon.organizations.map((o,i)=>[o.id,i]));
  const horseById=new Map(sourceHorses.map((h,i)=>[h.id,i]));
  const trainerList=trainingPeople.map(p=>p.id);
@@ -337,6 +344,10 @@ export function createFounding1999Universe({seed=19990101}={}) {
    principalOwner:principal?.publicPrincipal||source.principalOwner||null,
    principalOwnerId:principal?.publicPrincipalId||source.principalOwnerId||null,
    principalRole:source.principalRole||null,
+   investorId:source.publicInvestorId||null,
+   investorName:source.publicInvestor||null,
+   investorRole:source.investorRole||null,
+   principalPortraitBrief:source.principalPortraitBrief||null,
    leadershipPeopleIds:source.leadershipPeopleIds||[],
    leadershipStatus:source.leadershipStatus||'SOURCE_APPROVED',
    scenarioProvisional:source.publicationTier==='SCENARIO_PROVISIONAL__NOT_HISTORICAL_ID',
@@ -513,6 +524,8 @@ export function createFounding1999Universe({seed=19990101}={}) {
    leadershipSchema:FOUNDING_LEADERSHIP_SCHEMA,
    newlyAssignedOrganizationPrincipals:leadershipByOrg.size,
    proposedLeadershipPeople:foundingLeadership.length,
+   userApprovedLeadershipPeople:foundingLeadership.filter(p=>p.leadershipStatus==='USER_APPROVED_1999_LEADERSHIP').length,
+   pendingLeadershipPeople:foundingLeadership.filter(p=>p.leadershipStatus.includes('PENDING_USER_REVIEW')).length,
    foundingOrganizationsWithoutLeader:sourceOrganizations.filter(o=>!o.principalOwnerId).length,
    historicalAnchorRecords:historicalLinks.anchors.length,
    linkedHistoricalHorses:historicalLinks.horses.length,
