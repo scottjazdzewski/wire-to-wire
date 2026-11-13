@@ -15,12 +15,20 @@
     "excludedOpeningCohort": "B01_APPROVED_1999_GENERATED_OPENING__NOT_1998_RACER",
     "excludedB01Count": 39,
     "unnamedNewYoungstockAuthority": "public/1999/engine/founding-youngstock-candidates-1999.mjs",
-    "newYoungstockStatus": "READ_ONLY_PARENT_LINKED_PROPOSALS_NOT_PLAYABLE_NOT_REGISTERED"
+    "newYoungstockStatus": "READ_ONLY_PARENT_LINKED_PROPOSALS_NOT_PLAYABLE_NOT_REGISTERED",
+    "excludedB01OnlyTrainerIds": [
+      "P-000040",
+      "P-000042",
+      "P-000046",
+      "P-000048",
+      "P-000049",
+      "P-000071"
+    ]
   },
   "counts": {
     "operatingTracks": 102,
     "historicalTracks": 32,
-    "people": 52,
+    "people": 46,
     "organizations": 37,
     "openingHorses": 0,
     "stallions": 18,
@@ -31,7 +39,8 @@
     "proposedLeadershipPeople": 30,
     "organizationsWithDesignatedPrincipal": 37,
     "organizationPrincipalGaps": 0,
-    "quarantinedRetiredB01Runners": 39
+    "quarantinedRetiredB01Runners": 39,
+    "quarantinedB01OnlyTrainers": 6
   },
   "tracks": [
     {
@@ -1559,106 +1568,6 @@
       "organizationLinkBasis": "USER_APPROVED_ARGOSY_BLOODSTOCK_FOUNDER"
     },
     {
-      "id": "P-000040",
-      "name": "Dr. Elias Venn",
-      "role": "TRAINER",
-      "status": "CANONICAL",
-      "birthplace": {
-        "locality": "Portland",
-        "region": "Oregon",
-        "country": "USA",
-        "basis": "USER_DIRECTED_GEOGRAPHY_CANONIZATION_2026-11-09"
-      },
-      "base": "South Ozone Park, New York, USA",
-      "baseType": "INITIAL_1999_STRING",
-      "baseGeography": {
-        "locality": "South Ozone Park",
-        "region": "New York",
-        "country": "USA",
-        "basis": "Trainer_String_State + Track_Geography"
-      }
-    },
-    {
-      "id": "P-000042",
-      "name": "Malcolm Pease",
-      "role": "TRAINER",
-      "status": "CANONICAL",
-      "birthplace": {
-        "locality": "Buffalo",
-        "region": "New York",
-        "country": "USA",
-        "basis": "USER_DIRECTED_GEOGRAPHY_CANONIZATION_2026-11-09"
-      },
-      "base": "Florence, Kentucky, USA",
-      "baseType": "INITIAL_1999_STRING",
-      "baseGeography": {
-        "locality": "Florence",
-        "region": "Kentucky",
-        "country": "USA",
-        "basis": "Trainer_String_State + Track_Geography"
-      }
-    },
-    {
-      "id": "P-000046",
-      "name": "Cassidy Rook",
-      "role": "TRAINER",
-      "status": "CANONICAL",
-      "birthplace": {
-        "locality": "Spokane",
-        "region": "Washington",
-        "country": "USA",
-        "basis": "USER_DIRECTED_GEOGRAPHY_CANONIZATION_2026-11-09"
-      },
-      "base": "New Orleans, Louisiana, USA",
-      "baseType": "INITIAL_1999_SHIPPER_STRING",
-      "baseGeography": {
-        "locality": "New Orleans",
-        "region": "Louisiana",
-        "country": "USA",
-        "basis": "Trainer_String_State + Track_Geography"
-      }
-    },
-    {
-      "id": "P-000048",
-      "name": "Shay Nakamura",
-      "role": "TRAINER",
-      "status": "CANONICAL",
-      "birthplace": {
-        "locality": "Winnipeg",
-        "region": "Manitoba",
-        "country": "Canada",
-        "basis": "USER_DIRECTED_GEOGRAPHY_CANONIZATION_2026-11-09"
-      },
-      "base": "Arcadia, California, USA",
-      "baseType": "INITIAL_1999_STRING",
-      "baseGeography": {
-        "locality": "Arcadia",
-        "region": "California",
-        "country": "USA",
-        "basis": "Trainer_String_State + Track_Geography"
-      }
-    },
-    {
-      "id": "P-000049",
-      "name": "Luis Barragán",
-      "role": "TRAINER",
-      "status": "CANONICAL",
-      "birthplace": {
-        "locality": "Oakland",
-        "region": "California",
-        "country": "USA",
-        "basis": "USER_DIRECTED_GEOGRAPHY_CANONIZATION_2026-11-09"
-      },
-      "base": "Arcadia, California, USA",
-      "baseType": "INITIAL_1999_SHIPPER_STRING",
-      "baseGeography": {
-        "locality": "Arcadia",
-        "region": "California",
-        "country": "USA",
-        "basis": "Trainer_String_State + Track_Geography"
-      }
-    },
-    {
       "id": "P-000069",
       "name": "Ray Sutter",
       "role": "TRAINER",
@@ -1681,26 +1590,6 @@
         "O-000063"
       ],
       "affinityBasis": "USER_APPROVED_IRONWEED_PROFESSIONAL_CONNECTION_NOT_FARM_OWNERSHIP"
-    },
-    {
-      "id": "P-000071",
-      "name": "Josephine Malloy",
-      "role": "TRAINER",
-      "status": "CANONICAL_PRODUCTION_SCAFFOLD",
-      "birthplace": {
-        "locality": "Des Moines",
-        "region": "Iowa",
-        "country": "USA",
-        "basis": "USER_DIRECTED_GEOGRAPHY_CANONIZATION_2026-11-09"
-      },
-      "base": "Baltimore, Maryland, USA",
-      "baseType": "HOME_BASE_CANON",
-      "baseGeography": {
-        "locality": "Baltimore",
-        "region": "Maryland",
-        "country": "USA",
-        "basis": "USER_DIRECTED_GEOGRAPHY_CANONIZATION_2026-11-09 + Participant_Current_State + Track_Geography"
-      }
     },
     {
       "id": "P-000077",
