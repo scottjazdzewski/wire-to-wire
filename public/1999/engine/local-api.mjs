@@ -2,6 +2,7 @@
 // deterministic generator/canon snapshot WITHOUT Cloudflare Pages Functions,
 // JWT, D1 migrations, or an online API request. Read-only test projection.
 import {create1999Universe,MODES} from './full-world-generator.mjs?rev=wtw1999-20261112-r11';
+import {createFounding1999Universe,FOUNDING_WORLD_MODE} from './founding-world-1999.mjs?rev=wtw1999-founding-v1';
 import {scopeWorldPopulation,normalizeWorldProfile} from './world-profiles.mjs';
 import {openingWorld1999 as canon} from './canon-mini.mjs';
 import {createClean1999Clock} from '../test-clock.mjs';
@@ -12,7 +13,14 @@ function int(raw,defaultValue,max){const n=Number(raw);return raw!==null&&raw!==
 function currentWorld(q){
  const seed=int(q.get('seed'),19990101,4294967295)||19990101;
  const mode=q.get('mode')||'CANON_ANCHORED_TEST';
- if(!MODES.includes(mode))throw Error('Unknown world generation mode');
+ if(mode!==FOUNDING_WORLD_MODE&&!MODES.includes(mode))throw Error('Unknown world generation mode');
+ if(mode===FOUNDING_WORLD_MODE){
+  const key=seed+'|'+FOUNDING_WORLD_MODE;
+  if(CACHE.has(key))return CACHE.get(key);
+  const founded=createFounding1999Universe({seed});
+  CACHE.set(key,founded);if(CACHE.size>2)CACHE.delete(CACHE.keys().next().value);
+  return founded;
+ }
  const population=int(q.get('population'),325000,325000)||325000;
  const profile=normalizeWorldProfile({population,seed,mode});
  const key=seed+'|'+mode+'|'+profile.population;
@@ -42,13 +50,13 @@ export function readLocal1999World(raw){
    source:'BROWSER_DETERMINISTIC_GENERATOR__NO_API_OR_DATABASE_REQUIRED',
    gameplayReady:false,worldProfile:w.worldProfile,counts:w.counts,audit:w.audit,clock:createClean1999Clock(w.seed)};
  }
- if(p==='/api/1999/sim/horses')return pager(q,w.counts.horses,i=>atDate(w.horseAt(i)),'SOURCE_267_PLUS_TEST_GENERATED');
- if(p==='/api/1999/sim/horse-directory')return pager(q,w.counts.horses,i=>w.horseDirectoryAt(i),'FULL_87500_INDEX_SOURCE_AND_TEST');
+ if(p==='/api/1999/sim/horses')return pager(q,w.counts.horses,i=>atDate(w.horseAt(i)),w.mode===FOUNDING_WORLD_MODE?'FOUNDING_SOURCE_ONLY':'SOURCE_267_PLUS_TEST_GENERATED');
+ if(p==='/api/1999/sim/horse-directory')return pager(q,w.counts.horses,i=>w.horseDirectoryAt(i),w.mode===FOUNDING_WORLD_MODE?'FOUNDING_SOURCE_ONLY':'FULL_87500_INDEX_SOURCE_AND_TEST');
  // Complete 325k registry, disjoint from the existing 87.5k racehorse ID index.
  // All endpoints page at <=100 and never serialize the whole population.
  if(p==='/api/1999/sim/world-horse-directory')
   return pager(q,w.counts.worldHorses,i=>w.worldHorseDirectoryAt(i),
-   '325K_DISTINCT_WORLD_HORSE_INDEX_SOURCE_AND_TEST');
+   w.mode===FOUNDING_WORLD_MODE?'FOUNDING_SOURCE_BREEDING_AND_RACERS':'325K_DISTINCT_WORLD_HORSE_INDEX_SOURCE_AND_TEST');
  if(p==='/api/1999/sim/world-horse-attribute'){
   const key=String(q.get('key')||'');
   if(!w.attributeCatalog.horse_categories||!Object.values(w.attributeCatalog.horse_categories)
@@ -97,17 +105,18 @@ export function readLocal1999World(raw){
   const date=q.get('date')||'1999-01-01';
   return {source:'TEST_CONDITION_BOOK_NOT_OFFICIAL_ENTRIES',date,track:w.trackAt(trackIndex),races:w.conditionBook(date,trackIndex)};
  }
- if(p==='/api/1999/horses')return canonList(q,canon.horses,['name','id','ownerId','trainerId']);
- if(p==='/api/1999/organizations')return canonList(q,canon.organizations,['name','id','type','locationLabel']);
- if(p==='/api/1999/people')return canonList(q,canon.people,['name','id','role']);
+ if(p==='/api/1999/horses')return canonList(q,w.mode===FOUNDING_WORLD_MODE?w.sourceHorses:canon.horses,['name','id','ownerId','trainerId']);
+ if(p==='/api/1999/organizations')return canonList(q,w.mode===FOUNDING_WORLD_MODE?w.sourceOrganizations:canon.organizations,['name','id','type','locationLabel']);
+ if(p==='/api/1999/people')return canonList(q,w.mode===FOUNDING_WORLD_MODE?w.sourcePeople:canon.people,['name','id','role']);
  if(p==='/api/1999/tracks'){
   const activeIds=new Set(Array.from({length:w.counts.tracks},(_,i)=>w.trackAt(i).sourceTrackId));
   return canonList(q,canon.tracks.filter(t=>activeIds.has(t.id)),['name','id','locality','region']);
 }
  if(p==='/api/1999/calendar')return canonList(q,w.sourceStakes,['name','id','trackName','division']);
- if(p==='/api/1999/stallions')return {active:canon.activeStallions1999,pendingNotBookable:canon.pendingNotBookableStallions,
+ if(p==='/api/1999/stallions')return {active:w.mode===FOUNDING_WORLD_MODE?w.sourceStallions:canon.activeStallions1999,
+  pendingNotBookable:w.mode===FOUNDING_WORLD_MODE?[]:canon.pendingNotBookableStallions,
   source:'JANUARY_1999_SOURCE_STALLION_AND_FARM_RECORDS'};
- if(p==='/api/1999/broodmare-boarding')return canonList(q,canon.productionBroodmareBoarding1999,['name','id']);
+ if(p==='/api/1999/broodmare-boarding')return canonList(q,w.mode===FOUNDING_WORLD_MODE?w.sourceBroodmareBoarding:canon.productionBroodmareBoarding1999,['name','id']);
  if(p==='/api/1999/events')return canonList(q,canon.openingEventQueue1999,['id','type','circuit']);
  throw Error('Unknown browser test-world directory: '+p);
 }
