@@ -131,13 +131,18 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    errors:browserErrors.slice(-3)
   });
   if(!(Boolean(d.querySelector('#wtwNextgen .ng-profile-person.ng-profile-horse'))&&
-   Boolean(d.querySelector('#wtwNextgen .ng-person-horse-dossier.ng-horse-dossier'))&&
-   Boolean(d.querySelector('#wtwNextgen .ng-person-attribute-block'))))
-   throw Error('Founding Horse-dossier mismatch '+personDiagnostic());
-  steps.push('Founding person uses the same Horse dossier and professional attribute workspace');
-  check('Unapproved modeled ratings and legacy staff do NOT appear in personnel dossier',
+   Boolean(d.querySelector('#wtwNextgen .ng-person-horse-dossier.ng-horse-dossier[data-template="horse-overview"]'))&&
+   d.querySelectorAll('#wtwNextgen .ng-person-horse-dossier .ng-horse-mgr-four>.ng-horse-mgr-panel').length===4&&
+   d.querySelectorAll('#wtwNextgen .ng-person-horse-dossier .ng-horse-rating-row').length===46&&
+   d.querySelectorAll('#wtwNextgen .ng-person-horse-dossier .ng-horse-condition-cell').length===7&&
+   d.querySelectorAll('#wtwNextgen .ng-person-horse-dossier .ng-horse-mgr-five>.ng-horse-mgr-panel').length===5&&
+   d.querySelectorAll('#wtwNextgen .ng-person-horse-dossier .ng-horse-mgr-bottom>.ng-horse-mgr-panel').length===2))
+   throw Error('Full Horse-layout personnel mismatch '+personDiagnostic());
+  steps.push('Founding person uses full Horse structure: four attribute columns, 46 slots, status strip, 5+2 modules');
+  check('Unapproved person abilities remain unassigned, not manufactured',
    !d.querySelector('#wtwNextgen .ng-profile-person .test-modeled')&&
-   d.querySelector('#wtwNextgen .ng-profile-person')?.textContent.includes('UNOBSERVED'));
+   d.querySelectorAll('#wtwNextgen .ng-person-horse-dossier .ng-horse-rating-row strong.unknown').length===46&&
+   d.querySelector('#wtwNextgen .ng-profile-person')?.textContent.includes('0 OF 46 ROLE-SPECIFIC SLOTS DEFINED'));
   click('World');await pause(220);
   const trackTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Tracks');
   check('World still includes the approved North American tracks tab',Boolean(trackTab));
