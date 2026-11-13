@@ -302,7 +302,10 @@ function makeDepartmentRows(section,page,context={}){
   return get('owners','/api/1999/sim/owners',worldCounts.owners).map(o=>({
    _kind:'farm',_name:o.name,_id:o.id,name:o.name,type:o.type,
    location:city(o.location),principal:o.principalOwner||'Not recorded',principalId:o.principalOwnerId||'',
-   status:'1999 · '+o.portfolio?.tier,principalAge:o.principalAgeAtDate??o.principalAge??'',
+   status:gameWorldProfile.mode==='FOUNDING_1999'?
+    (o.leadershipStatus?.includes('PENDING_USER_REVIEW')?'PROPOSED PRINCIPAL · NOT APPROVED':
+     o.leadershipStatus==='ESTABLISHED_1999_PRINCIPAL_LINK'?'ESTABLISHED PRINCIPAL':
+     'LEADERSHIP STATUS UNVERIFIED'):'1999 · '+o.portfolio?.tier,principalAge:o.principalAgeAtDate??o.principalAge??'',
     _testAbility:o.principalAbility||null,_canonId:o.authority?.startsWith('CANON')?o.id:'',
    _testGenerated:!o.authority?.startsWith('CANON'),_testAttrs:o.attributes||{},
    _testFinances:o.finances||{},_testNegotiation:o.negotiation||null,
