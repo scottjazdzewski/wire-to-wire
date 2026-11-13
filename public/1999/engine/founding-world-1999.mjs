@@ -338,7 +338,6 @@ export function createFounding1999Universe({seed=19990101}={}) {
  stock.forEach((h,i)=>indexById.set(h.id,sourceHorses.length+i));
  // The facilities route is a read-only reference to the founding institution.
  // No separate building is registered merely because an organization exists.
- const facilities=sourceOrganizations;
  const foundingFacilityType=o=>{
   const t=String(o.type||'').toUpperCase(),name=String(o.name||'').toUpperCase();
   if(/STUD|STALLION|INTEGRATED BREEDING/.test(t)||/\\bSTUD\\b/.test(name))return 'STUD_FARM';
@@ -348,6 +347,11 @@ export function createFounding1999Universe({seed=19990101}={}) {
   if(/RACING STABLE|OWNERSHIP STABLE/.test(t))return 'RACING_STABLE_ORGANIZATION';
   return 'OWNERSHIP_GROUP';
  };
+ // Only approved farm/stud/racing-stable organizations belong on Facilities.
+ // Ownership syndicates and bloodstock agencies remain in World/Owners, not
+ // as invented physical facilities.
+ const facilities=sourceOrganizations.filter(o=>
+  ['FARM','STUD_FARM','RACING_STABLE_ORGANIZATION'].includes(foundingFacilityType(o)));
  const trackCount=base.counts.tracks;
  // No generated professional can enter the opening world without approval.
  const professionalPool=[];
