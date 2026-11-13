@@ -15,23 +15,29 @@ const html=read('public/next/index.html');
 test('available ownership logos are published only for exact 1999 founding names AND immutable organization IDs',()=>{
  assert.equal(directory.organizations.length,37);
  assert.equal(manifest.approvedOrganizationIds.length,37);
- assert.equal(manifest.publishedCount,17);
- assert.equal(manifest.remainingWithoutMatchedLogo,20);
+ assert.equal(manifest.publishedCount,21);
+ assert.equal(manifest.remainingWithoutMatchedLogo,16);
  const entries=Object.entries(manifest.organizations);
- assert.equal(entries.length,17);
+ assert.equal(entries.length,21);
  const allowed=new Set(directory.organizations.map(o=>o.id));
  for(const [key,path] of entries){
   assert.match(key,/^organization:O-[\w-]+$/);
   const id=key.slice('organization:'.length);
   assert.ok(allowed.has(id),id);
   assert.ok(exists('public'+path),path);
-  assert.equal(path,legacy.organizations['organization:'+id],id);
   const org=directory.organizations.find(o=>o.id===id);
-  assert.ok(Object.keys(legacy.organizations).some(k=>k==='organization:'+org.name&&legacy.organizations[k]===path),
+  // Existing legacy assets need BOTH exact ID/name; newly approved sources have
+  // dedicated canonical-ID filenames and never inherit mislabeled old marks.
+  if(path.startsWith('/assets/office/owner-logos/')){
+   assert.equal(path,legacy.organizations['organization:'+id],id);
+   assert.ok(Object.keys(legacy.organizations).some(k=>k==='organization:'+org.name&&legacy.organizations[k]===path),
     org.name+' does not have the matching archived artwork name');
+  }else{
+   assert.equal(path,'/assets/office/founding-organization-logos/'+id+'.png',id);
+  }
  }
- assert.ok(!manifest.organizations['organization:O-000002'],'Harrowgate must not receive the old Lattice crest');
- assert.ok(!manifest.organizations['organization:O-000056'],'Quickfire must not receive the old Marcus Vale crest');
+ assert.equal(manifest.organizations['organization:O-000002'],'/assets/office/founding-organization-logos/O-000002.png','Harrowgate must use its NEW approved artwork');
+ assert.equal(manifest.organizations['organization:O-000056'],'/assets/office/founding-organization-logos/O-000056.png','Quickfire must use its NEW approved artwork');
  assert.ok(!manifest.organizations['organization:O-FOUNDING-1999-005'],'Do not invent an All The Colors logo');
  assert.equal(Object.keys(manifest.organizations).length+manifest.remainingWithoutMatchedLogo,37);
 });
