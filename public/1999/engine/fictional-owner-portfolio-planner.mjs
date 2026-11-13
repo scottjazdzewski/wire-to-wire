@@ -15,7 +15,7 @@
  */
 export const FICTIONAL_PORTFOLIO_MODEL='WTW_FICTIONAL_OWNER_PORTFOLIOS_V9';
 export const PORTFOLIO_TIERS=Object.freeze([
- Object.freeze({id:'HANDful',weight:57,min:1,max:5}),
+ Object.freeze({id:'HANDFUL',weight:57,min:1,max:5}),
  Object.freeze({id:'SMALL',weight:24,min:6,max:25}),
  Object.freeze({id:'REGIONAL',weight:12,min:26,max:75}),
  Object.freeze({id:'MAJOR',weight:6,min:76,max:200}),
