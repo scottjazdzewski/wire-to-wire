@@ -147,7 +147,11 @@ function buildFoundingHistoricalLinks(selectedOrganizations) {
    activeIn1999FoundingWorld:false
   });
  }
- return {anchors:links,horses:[...horsesById.values()]};
+ // The 61 evidence-graded, identity-linked historical records are already
+ // locked in the approved founding directory. Recomputing them from the old
+ // full-source archive could falsely upgrade a yearbook association into
+ // confirmed pedigree evidence. Use the same approved read-only records.
+ return {anchors:links,horses:canon.historicalHorses.map(h=>({...h}))};
 }
 const nameStatus=id=>NAME_OVERRIDES[id]?'USER_APPROVED_PENDING_MASTER_PROPAGATION':'EXISTING_CANON';
 const loc=label=>{
