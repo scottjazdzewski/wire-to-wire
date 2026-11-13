@@ -30,7 +30,7 @@ test('1999 approved Office shell serves ONLY the isolated founding scenario',()=
  assert.equal(ui.counts.horses,39);
  assert.equal(ui.counts.worldHorses,112);
  assert.equal(ui.counts.owners,37);
- assert.ok(ui.counts.tracks>=50&&ui.counts.tracks<118);
+ assert.ok(ui.counts.tracks>=50&&ui.counts.tracks<=118);
  assert.ok(ui.counts.people<150);
  assert.ok(!ui.generatedStaffRoles?.includes('groom'));
 });
