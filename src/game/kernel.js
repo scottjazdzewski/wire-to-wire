@@ -9,8 +9,9 @@ import {
 import { validateGameRun } from './state.js';
 import {makeReputationBaseline,applyReputationSignal} from './reputation.js';
 import {FACILITY_COMMANDS,facilityAction,advanceFacilities} from './facility-operations.js';
+import {OWNERSHIP_COMMANDS,ownershipAction} from './ownership.js';
 
-const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS]);
+const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS]);
 const MAX_PENDING = 5000;
 function appendLog(state, commandId, kind, details) {
   const event = { seq: state.event_log.length + 1, command_id: commandId,
@@ -95,6 +96,8 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     next.runtime.people[p.person_id].reputation=updated;
     emit('PERSON_REPUTATION_CHANGED',{person_id:p.person_id,signal:p.signal,
       before:current.scores,after:updated.scores,source_refs:p.source_refs});
+  } else if (OWNERSHIP_COMMANDS.includes(c.type)) {
+    ownershipAction({state:next,world,command:c,emit});
   } else if (FACILITY_COMMANDS.includes(c.type)) {
     facilityAction({state:next,world,command:c,emit});
   } else if (c.type === 'ADVANCE_DAY') {
