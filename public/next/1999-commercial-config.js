@@ -4,12 +4,10 @@
 'use strict';
 const PROFILE_KEY='wtwFoundingWorldProfileV1';
 const MAIN='wtw1999FoundingStateV1',SCHEMA='WTW_WORLD_PROFILE_V1';
+// Release gate: one small founding scenario until its opening race, staffing,
+// breeding and ownership economy pass. Larger TEST modes remain engineering-only.
 const PRESETS=Object.freeze([
- {id:'founding',label:'Founding world — 112 source horses',population:112,mode:'FOUNDING_1999'},
- {id:'small',label:'Small — 25,000 horses',population:25000},
- {id:'regional',label:'Regional — 75,000 horses',population:75000},
- {id:'national',label:'National — 150,000 horses',population:150000},
- {id:'full',label:'Full world — 325,000 horses',population:325000}
+ {id:'founding',label:'Founding 1999 — 112 source horses',population:112,mode:'FOUNDING_1999'}
 ]);
 const DEFAULT=Object.freeze({schema:SCHEMA,population:112,seed:19990101,
  mode:'FOUNDING_1999',generator:'WTW_1999_FOUNDING_WORLD_V1'});
