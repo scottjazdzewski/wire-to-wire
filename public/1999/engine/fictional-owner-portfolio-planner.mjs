@@ -75,6 +75,7 @@ function validateOwners(owners){
   throw Error('Portfolio planner requires 1..'+MAX_OWNERS+' owners');
  const seen=new Set();
  return Object.freeze(owners.map((owner,i)=>{
+  if(typeof owner?.id!=='string')throw Error('Owner ID must be a string');
   if(!owner||typeof owner!=='object'||Array.isArray(owner))
    throw Error('Invalid owner record '+i);
   const id=keyOf(owner.id);
@@ -88,6 +89,36 @@ function validateOwners(owners){
   return Object.freeze({id,portfolioTier:tier?.id??null,
    maxHorses:owner.maxHorses??null});
  }));
+}
+/**
+ * Cheap preflight before requesting more names from V8. This does not assign
+ * horses or generate owner IDs; the caller can request additional existing
+ * or new owners until the gap is covered.
+ */
+export function assessFictionalOwnerCapacity({seed=19990101,owners,horseCount}={}){
+ positiveInt(seed,'capacity assessment seed',4294967295);
+ if(!seed)throw Error('Capacity assessment seed must be positive');
+ positiveInt(horseCount,'horseCount');
+ const book=validateOwners(owners);
+ let availableSlots=0,largestCapacity=0;
+ const byTier=Object.fromEntries(TIER_LABELS.map(t=>[t,{owners:0,slots:0}]));
+ for(const owner of book){
+  const tier=owner.portfolioTier||tierFor(seed,owner.id).id;
+  const capacity=owner.maxHorses??suggestedCapacity(
+   seed,owner.id,PORTFOLIO_TIERS.find(t=>t.id===tier));
+  availableSlots+=capacity;
+  if(capacity>largestCapacity)largestCapacity=capacity;
+  byTier[tier].owners++;byTier[tier].slots+=capacity;
+ }
+ return Object.freeze({
+  schema:FICTIONAL_PORTFOLIO_MODEL,horseCount,
+  ownerCount:book.length,availableSlots,
+  capacityShortfall:Math.max(0,horseCount-availableSlots),
+  spareSlots:Math.max(0,availableSlots-horseCount),
+  largestCapacity,
+  byTier:Object.freeze(Object.fromEntries(
+   Object.entries(byTier).map(([k,v])=>[k,Object.freeze(v)])))
+ });
 }
 function allocateCounts(seed,owners,existingCounts,capacity,remaining,horseCount){
  const count=Uint32Array.from(existingCounts);
