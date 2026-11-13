@@ -62,11 +62,13 @@ export function roleOrigin(seed,index,role){
  for(const [code,w] of mix){if(roll<w)return code;roll-=w}
  return 'US';
 }
-export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[]){
+export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],options={}){
  const reserved=new Set(protectedNames.map(n=>String(n).toLocaleLowerCase('en-US')));
  const records=[];
  for(let i=0;i<count;i++){
-  const role=roleAt(i),country=roleOrigin(seed,i,role);
+  const role=roleAt(i),country=options.countryAt?options.countryAt(i,role):roleOrigin(seed,i,role);
+  if(!['US','CA','GB','IE','PR','PA','VE','MX','CL','PE','CO','DO'].includes(country))
+   throw Error('Unsupported fictional person naming origin: '+country);
   const feminine=hash(seed,'sex:'+i)%100 < (role==='jockey'?7:role==='trainer'?22:role==='owner'?32:35);
   const given=country==='US'||country==='CA'?(feminine?US_F:US_M):
    country==='GB'||country==='IE'?(feminine?GB_F:GB_M):(feminine?LATIN_F:LATIN_M);
