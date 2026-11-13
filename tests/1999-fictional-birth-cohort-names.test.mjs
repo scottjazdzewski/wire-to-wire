@@ -90,7 +90,7 @@ test('custom fictional world roles retain ages and country mixes with cohorts en
 });
 test('cohort engine has no writes and game generator does not opt in or import new name model',()=>{
  const cohortSource=readFileSync(new URL('../public/1999/engine/person-birth-cohort-names.mjs',import.meta.url),'utf8');
- const gameSource=readFileSync(new URL('../public/1999/engine/full-world-generator.mjs',import.meta.url),'utf8');
+ const gameSource=readFileSync(new URL('../public/1999/engine/founding-world-1999.mjs',import.meta.url),'utf8');
  assert.doesNotMatch(cohortSource,/\b(?:fetch|localStorage|writeFile|indexedDB|setItem)\s*\(/);
  assert.doesNotMatch(gameSource,/person-birth-cohort-names/);
  assert.doesNotMatch(gameSource,/givenPoolAt|givenNameAt/);
