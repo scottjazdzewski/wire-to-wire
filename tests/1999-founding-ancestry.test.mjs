@@ -63,5 +63,5 @@ test('unqualified 1999 API calls cannot accidentally reopen the retired 325k uni
  const outside=readLocal1999World('/api/1999/sim/founding-ancestry?id=H-TEST-999999');
  assert.equal(outside.horse,null);
  assert.equal(outside.status,'HORSE_NOT_CONNECTED_TO_FOUNDING_ORGANIZATIONS');
- assert.throws(()=>readLocal1999World('/api/1999/sim/founding-ancestry?id='),/Exact founding/);
+ assert.throws(()=>readLocal1999World('/api/1999/sim/founding-ancestry?id='),/Exact approved or connected-history horse ID required/);
 });
