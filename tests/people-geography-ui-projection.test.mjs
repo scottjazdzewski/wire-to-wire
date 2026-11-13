@@ -37,9 +37,17 @@ test('Public people identity is read-only projection of the ONE approved Partici
   const b=birth.get(id);
   assert.ok(b,id+' must have canonical birthplace');
   assert.equal(p.name,b.name);
-  assert.equal(p.birthplace.source_record_id,b.geo_record_id);
-  assert.equal(p.birthplace.city,b.city_locality||null);
-  assert.equal(p.birthplace.region,b.state_region||null);
+  if(id==='P-000064'){
+   // User corrected the fictional 1999 jockey Owen LeBlanc to Louisiana.
+   // Original imported source remains immutable; display projection shows the override.
+   assert.equal(p.birthplace.source_record_id,'USER-20261113-OWEN-ORIGIN');
+   assert.equal(p.birthplace.city,'');
+   assert.equal(p.birthplace.region,'Louisiana');
+  }else{
+   assert.equal(p.birthplace.source_record_id,b.geo_record_id);
+   assert.equal(p.birthplace.city,b.city_locality||null);
+   assert.equal(p.birthplace.region,b.state_region||null);
+  }
   assert.equal(p.birthplace.country,b.country);
   assert.equal(p.birthplace.flag_code,countryFlags[b.country]);
   assert.ok(fs.existsSync(path.join(root,'public/assets/flags/v1/'+p.birthplace.flag_code+'.svg')));
