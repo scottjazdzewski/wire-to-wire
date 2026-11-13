@@ -144,7 +144,7 @@ test('full-sized V7 regional organization world retains unique, distinct purpose
 });
 test('regional V7 naming generator stays independent of active-world and horse generators',()=>{
  const src=readFileSync(new URL('../public/1999/engine/organization-naming-styles.mjs',import.meta.url),'utf8');
- const old=readFileSync(new URL('../public/1999/engine/full-world-generator.mjs',import.meta.url),'utf8');
+ const old=readFileSync(new URL('../public/1999/engine/founding-world-1999.mjs',import.meta.url),'utf8');
  assert.doesNotMatch(src,/\b(?:fetch|localStorage|indexedDB|writeFile|setItem)\s*\(/);
  assert.doesNotMatch(old,/organization-naming-styles/);
  assert.doesNotMatch(old,/organizationNamingEra|contextualFarmCandidate/);
