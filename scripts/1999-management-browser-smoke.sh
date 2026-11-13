@@ -143,11 +143,18 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   check('World still includes the approved North American tracks tab',Boolean(trackTab));
   trackTab.click();await pause(340);
   const worldTracks=w.__WTW_NEXT__?.app?.departmentVisible||[];
-  check('Exactly 118 U.S./Canada/Cuba racecourses are visible with no international tracks',
-   worldTracks.length===118&&worldTracks.every(t=>t._kind==='track')&&
+  if(!(worldTracks.length===118&&worldTracks.every(t=>t._kind==='track')&&
    worldTracks.some(t=>t._canonId==='T-0102'&&t.name==='Oriental Park')&&
    worldTracks.some(t=>t._canonId==='T-0118'&&t.status.includes('HISTORICAL'))&&
-   !worldTracks.some(t=>/Curragh|Newmarket|Ascot/.test(t.name)));
+   !worldTracks.some(t=>/Curragh|Newmarket|Ascot/.test(t.name))))
+   throw Error('Site track registry mismatch '+JSON.stringify({
+    length:worldTracks.length,section:w.__WTW_NEXT__?.app?.section,
+    page:w.__WTW_NEXT__?.app?.page,first:worldTracks.slice(0,2),
+    last:worldTracks.slice(-3),cuba:worldTracks.find(t=>t._canonId==='T-0102'),
+    historic:worldTracks.find(t=>t._canonId==='T-0118'),
+    intl:worldTracks.filter(t=>/Curragh|Newmarket|Ascot/.test(t.name)).map(t=>t.name)
+   }));
+  steps.push('All 118 North American including Cuba displayed; 16 historic closed and zero international');
   click('Personnel');await pause(230);
   const ownersTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Owners');
   check('Ownership roster still uses approved Office navigation',Boolean(ownersTab));
