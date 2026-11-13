@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,worldAttributeKey:'',stableMode:'all',stableSearch:'',racingMode:'meets',racingTrack:'',racingDate:'',racingCalendarOpen:false,departmentDemo:false,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
+const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,worldAttributeKey:'',stableMode:'all',stableSearch:'',racingMode:'meets',racingTrack:'',racingDate:'',racingCalendarOpen:false,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -2874,7 +2874,7 @@ function depSaleDateLabel(a){
  const end=a.endDate&&a.endDate!==a.date?' – '+stableShortDate(a.endDate):'';
  return begin+end;
 }
-function depSaleCatalogRow(row,index,year=2014){
+function depSaleCatalogRow(row,index,year=1999){
  const [id,name,date,endDate,city,category]=row;
  const company=DEP_SALE_HOUSES[id];
  return {id:year+'-'+id+'-'+index,date,endDate,sortKey:date,
@@ -3275,8 +3275,7 @@ function departmentRoster(section,page='Overview'){
   '<div class="ng-rs-title"><strong>'+safe(section.toUpperCase())+' · '+safe(page.toUpperCase())+'</strong><span title="'+safe(purpose)+'">'+safe(purpose)+(demo?' · FICTIONAL PREVIEW':'')+'</span></div>'+
   finance+'<div class="ng-rs-tools">'+racingPicker+salePicker+saleHouseLink+saleCompanyPicker+worldAttributePicker+'<label>VIEW <select data-ng-select="department-tab" aria-label="Choose '+safe(section)+' view">'+viewOptions+'</select></label>'+
   '<input id="ngDepartmentSearch" data-ng-input="department-search" type="search" aria-label="Search '+safe(section)+' roster" value="'+safe(APP.departmentSearch)+'" placeholder="Find records…" autocomplete="off"/>'+
-  (section==='World'||['Personnel','Facilities','Tracks'].includes(section)||section==='Breeding'&&['Stallions','Broodmares'].includes(page)?'':
-   '<button data-ng="dept-demo" class="'+(demo?'on':'')+'" title="Preview-only invented values; no game data changes">'+(demo?'DEMO ON':'DEMO OFF')+'</button>')+
+
   (section==='World'?'<button type="button" data-ng="world-export" title="Download all World edits and images">EXPORT EDITS</button>'+
    '<button type="button" data-ng="world-import-open" title="Import World editing backup">IMPORT EDITS</button>'+
    '<input type="file" id="wtwWorldImportInput" accept="application/json,.json" hidden/>':'')+
@@ -3546,7 +3545,6 @@ window.addEventListener('click',e=>{
   APP.departmentPageIndex=0;APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint();
  }
  // Previous/Next buttons have been retired from the department rosters.
- if(key==='dept-demo')return;
  if(key==='sale-watch'){
   if(APP.section!=='Sales')return;
   const r=APP.departmentVisible[Number(val)];
@@ -3563,7 +3561,7 @@ window.addEventListener('click',e=>{
  }
  if(['sale-prev','sale-next','sale-next-up'].includes(key)){
   if(APP.section!=='Sales')return;
-  const auctions=depAuctionList(APP.departmentDemo);
+  const auctions=depAuctionList(false);
   const selected=auctions.findIndex(a=>a.id===APP.departmentAuction);
   const current=selected>=0?selected:salesUpcomingIndex(auctions);
   const target=key==='sale-next-up'?salesUpcomingIndex(auctions):
@@ -3620,7 +3618,7 @@ window.addEventListener('click',e=>{
   if(APP.section==='Sales'&&field==='company'&&r._companyId){APP.departmentCompany=r._companyId;return pageTab('Sale Calendar')}
   if(!Object.prototype.hasOwnProperty.call(DEPT_ENTITY_COLUMNS,field))return;
   return openEntityRecord(r[field],entityKindForField(field,r),field==='race'?{
-   _track:r._track||r.track||'',_kind:APP.departmentDemo?'demo-race':'race',
+   _track:r._track||r.track||'',_kind:'race',
    type:'Race',location:r.track||'',date:r.date||'',status:r.status||''
   }:null);
  }
