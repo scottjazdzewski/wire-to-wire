@@ -564,10 +564,18 @@ async function worldSetImage(key,image){
 }
 function approvedIdentityAsset(kind,id,name){
  const category=kind==='organization'||kind==='owner'?'farm':kind;
- if(isClean1999()&&category==='farm'){
-  const allowed=(world1999Data?.organizations||[]).some(o=>o.id===id);
-  const path=allowed?organizationLogoIndex?.organizations?.['organization:'+id]:'';
-  return officeAssetPath(path||'');
+ if(isClean1999()){
+  if(category==='farm'){
+   const allowed=(world1999Data?.organizations||[]).some(o=>o.id===id);
+   const path=allowed?organizationLogoIndex?.organizations?.['organization:'+id]:'';
+   return officeAssetPath(path||'');
+  }
+  if(category==='person'||category==='horse'){
+   const registry=category==='person'?world1999Data?.people:world1999Data?.horses;
+   const allowed=(registry||[]).some(o=>o.id===id);
+   // No old name-joined portrait or prior-save IndexedDB image.
+   return allowed?officeAssetPath(officePhotoIndex?.entities?.[category+':'+id]):'';
+  }
  }
  const assets=officePhotoIndex?.entities||{};
  const byId=officeAssetPath(id?assets[category+':'+id]:'');
@@ -583,8 +591,10 @@ function approvedIdentityAsset(kind,id,name){
 }
 function worldImageURL(key,record){
  // Previous-world IndexedDB media is not an approved 1999 identity asset.
- if(isClean1999()&&key.startsWith('farm:'))
-  return approvedIdentityAsset('farm',record?.id||key.slice(5),record?.name);
+ if(isClean1999()&&/^(?:farm|person|horse):/.test(key)){
+  const kind=key.split(':')[0],id=record?.id||key.slice(key.indexOf(':')+1);
+  return approvedIdentityAsset(kind,id,record?.name);
+ }
  const stored=worldImageCache.get(key);
  if(stored)return stored;
  const kind=key.split(':')[0],id=record?.id||key.slice(key.indexOf(':')+1);
