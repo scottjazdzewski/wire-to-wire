@@ -47,8 +47,14 @@ export function buildFoundingAncestry1999({
  for(const horse of [...livingHorses,...historicalHorses]){
   if(!clean(horse?.id))continue;
   const id=horse.id,known=registry.get(id);
-  if(!roots.has(id))roots.set(id,{...known,...horse,
-   sourceKind:known?.sourceKind||'SELECTED_HISTORICAL_ANCHOR'});
+  if(!roots.has(id)){
+   const merged={...(known||{})};
+   // Some yearbook summaries carry null pedigree fields despite a proper
+   // pedigree node existing; never let null erase real parent IDs.
+   for(const [key,value] of Object.entries(horse))
+    if(value!==undefined&&value!==null&&value!=='')merged[key]=value;
+   roots.set(id,{...merged,sourceKind:known?.sourceKind||'SELECTED_HISTORICAL_ANCHOR'});
+  }
  }
  const found=new Map(),edges=[],missingById=new Map(),unrecorded=[];
  const queue=[...roots.values()].map(h=>({horse:h,depth:0}));
