@@ -47,7 +47,15 @@ test('1999 track registry and active calendars enforce the U.S./Canada/Cuba boun
  assert.match(generator,/nonPlayableInternationalTracks:canon\.tracks\.length-trackCount/);
  assert.match(api,/canon\.tracks\.filter\(t=>activeIds\.has\(t\.id\)\)/);
  assert.match(api,/w\.sourceStakes/);
- assert.match(ui,/\.filter\(t=>availableIds\.has\(t\.id\)\|\|availableNames\.has\(t\.name\)\)/);
+ const geo=JSON.parse(read('public/data/track-geography-v33.json'));
+ assert.equal(geo.tracks.filter(t=>t.registry==='NORTH_AMERICA').length,118);
+ assert.equal(geo.tracks.filter(t=>t.registry==='INTERNATIONAL').length,16);
+ assert.ok(geo.tracks.some(t=>t.id==='T-0102'&&t.name==='Oriental Park'&&t.country==='Cuba'));
+ assert.match(ui,/geo\.counts\?\.north_america!==118/);
+ assert.match(ui,/t\.registry==='NORTH_AMERICA'/);
+ assert.match(ui,/permittedTracks\.has\(t\.id\)/);
+ assert.match(ui,/HISTORICAL · CLOSED BEFORE 1999/);
+ assert.doesNotMatch(ui,/data\.tracks\.concat\(geo\.tracks\)/);
  assert.match(source,/activeTrackNames\.has\(r\.trackName\)/);
 });
 
