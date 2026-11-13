@@ -1939,7 +1939,7 @@ function profileDetail(route,sourceOverride=null){
   ['AGE',personAge,''],
   ['HOMETOWN',personHometown,''],
   [baseLabel,personBaseValue,''],
-  ['HOME TRACK',factByName('Home track'),''],
+  ['HOME TRACK',connection.find(f=>f.label.toLowerCase()==='home track')?.value||factByName('Home track'),''],
   ['OTHER CIRCUIT',factByName('Secondary circuit'),'']
  ].filter(([,value])=>knownField(value)):[];
 
