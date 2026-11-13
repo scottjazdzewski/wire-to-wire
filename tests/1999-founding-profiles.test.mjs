@@ -20,7 +20,8 @@ test('both accepted template families are loaded before the immutable Office ren
  assert.ok(html.indexOf('/next/1999-founding-profiles.js')<html.indexOf('/next/next.js'));
  assert.match(office,/function openFounding1999Profile\(kind,id\)/);
  assert.match(office,/FoundingProfile:/);
- assert.match(office,/data-ng="founding-open"/);
+ assert.match(office,/if\(key==='founding-open'\)/);
+ assert.match(js,/data-ng="founding-open"/);
  assert.match(css,/WTW FOUNDING PROFILE TEMPLATES V1/);
 });
 
@@ -37,7 +38,7 @@ test('37 exact founding organizations share one identity; Track-like ownership/f
   assert.match(owner,/ng-track-workspace ng-founding-workspace/);
   assert.ok(owner.includes('data-founding-id="'+org.id+'"'));
   assert.ok(owner.includes('EXACT ID · '+org.id));
-  assert.ok(owner.includes('HISTORICAL RACING & BLOODLINES'));
+  assert.ok(owner.includes('HISTORICAL RACING &amp; BLOODLINES'));
   assert.ok(!owner.includes('SIMULATED TEST WORLD'));
   const category=profiles.category(org);
   if(['STUD_FARM','FARM','RACING_STABLE_ORGANIZATION'].includes(category)){
