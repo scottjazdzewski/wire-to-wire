@@ -26,8 +26,8 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   check('Correct January 1 game date',d.querySelector('.ng-global-date strong')?.textContent.trim()==='1999-01-01');
   const ui=w.__WTW_1999_UI_DATA__;
   check('1999 data adapter initialized',Boolean(ui));
-  check('87,500-horse world available',ui.counts.horses===87500);
-  check('118 US/Canada/Cuba courses available',ui.counts.tracks===118);
+  check('Only 39 founding opening runners available, not the old 87,500',ui.counts.horses===39&&ui.counts.worldHorses===112);
+  check('1999 supported racecourse geography available',ui.counts.tracks>=50&&ui.counts.tracks<118);
   check('Opening stable has source-recorded horses',ui.stableHorses.length>0&&ui.stableHorses.every(h=>h.horseId?.startsWith('H-')));
   check('1999 inbox not 2014 demo',d.querySelector('.ng-msgtitle')?.textContent.includes('1999'));
   check('1999 decision desk not 2014 case',d.querySelector('.ng-casetitle')?.textContent.includes('1999'));
@@ -47,8 +47,8 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   click('Stable');await pause(180);
   click('Racing');await pause(300);
   const fullTrackPicker=d.querySelector('#wtwNextgen select[data-ng-select="department-track"]');
-  check('Racing drop-down includes all 118 playable tracks',
-   Boolean(fullTrackPicker)&&fullTrackPicker.options.length===119&&[...fullTrackPicker.options].some(o=>o.value==='Saratoga'));
+  check('Racing drop-down includes all founding circuit tracks',
+   Boolean(fullTrackPicker)&&fullTrackPicker.options.length===ui.counts.tracks+1&&[...fullTrackPicker.options].some(o=>o.value==='Saratoga'));
   check('Date browser opens on Jan 1 without advancing the game',
    d.querySelector('#ngRacingBrowseDate')?.value==='1999-01-01');
   d.querySelector('#wtwNextgen button[data-ng="dept-day-card"]')?.click();await pause(260);
@@ -137,21 +137,20 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    d.querySelector('#wtwNextgen .ng-person-workspace')?.textContent.includes('SIMULATED TEST VALUES'));
   click('Breeding');await pause(180);
   const stallions=ui.departmentRows('Breeding','Stallions');
-  check('31 source-backed stallions preserved alongside model stallions',stallions.length>=31&&stallions.filter(h=>h.status?.includes('SOURCE')).length===31&&stallions.every(h=>h._canonId||h._testGenerated));
+  check('18 source stallions appear only once in founder breeding screen',stallions.length===18&&stallions.every(h=>h._canonId&&h.status?.includes('SOURCE')));
   const finances=ui.departmentRows('Finances','Overview');
   check('Test finances marked',finances.length>0&&finances.every(x=>x.source==='GENERATED_TEST_BASELINE'));
   const auction=ui.auctionList();
-  check('36 scheduled test sales',auction.length===36);
-  const horses=ui.worldHorsePage(267,20);
-  check('Generated horses paged against the full source world without materializing all records',
-   horses.total===(ui.counts.worldHorses||ui.counts.horses)&&horses.items.length===20&&
-   ui.counts.horses===87500);
+  check('12 proposed founding sales with empty catalogs',auction.length===12&&auction.every(a=>a.lots.length===0));
+  const horses=ui.worldHorsePage(ui.counts.horses,20);
+  check('Founding World pages only the 112 selected 1999 living horses',
+   horses.total===112&&horses.items.length===20&&ui.counts.horses===39);
   const first=horses.items[0];
-  check('Generated horse profile retains required values',first?._testGenerated&&first?._id&&first?.owner&&first?.trainer&&first?._testAttrs);
+  check('Breeding horse profile retains its existing historical identity',Boolean(first?._canonId&&first?._id&&first?._worldKey));
   check('No 1999 future outcomes pre-recorded',ui.bridgeStatus.includes('NO_1999_OUTCOME_COMMITTED'));
   const saveKey=w.__WTW_1999_MANAGEMENT__.saveKey;
   const before=JSON.parse(w.localStorage.getItem(saveKey)||'null');
-  check('1999 session uses dedicated save state',saveKey==='wtw1999ManagementStateV1'&&before?.date==='1999-01-01');
+  check('1999 session uses isolated founding save state',saveKey==='wtw1999FoundingStateV1'&&before?.date==='1999-01-01');
   check('No old 2014 case or follow-ups imported',before?.currentCase==='opening-stable'&&before.decisionLog.length===0&&before.followUps.length===0);
   const continueButton=d.querySelector('#wtwNextgen [data-ng="action"][data-val="Continue"]');
   check('Approved UI Continue control is wired',Boolean(continueButton));
