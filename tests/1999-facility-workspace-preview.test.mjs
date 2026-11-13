@@ -45,7 +45,8 @@ test('Belmont trainer barn is conspicuously a concept; physical location T-0002 
  assert.equal(belmont.name,'Belmont Park');
  assert.equal(belmont.country,'USA');
  assert.match(page,/Belmont Park — Trainer Barn Example/);
- assert.match(page,/HOST TRACK T-0002/);
+ assert.match(page,/trackId:'T-0002'/);
+ assert.match(page,/HOST TRACK '\+o\.trackId/);
  assert.match(page,/NO BELMONT BARN, STAFF OR HORSES CREATED/);
  assert.match(page,/Horse owner/);
  assert.match(page,/Horse trainer/);
@@ -62,7 +63,7 @@ test('Horse-effect examples are bounded and explicitly NOT engine-authoritative'
  assert.match(page,/Neglected \/ crowded/);
  assert.match(page,/ILLUSTRATIVE HORSE-EFFECT SCENARIO/);
  assert.match(page,/NOT calibrated engine outputs/);
- assert.match(page,/TRAINING.*REQUIRED/);
+ assert.match(page,/SEPARATE SERVICE \/ VENUE REQUIRED/);
  assert.match(page,/Operating profit/);
  assert.match(page,/AI competition/);
 });
