@@ -8,8 +8,7 @@
 import {encodeCareerSave,decodeCareerSave,packCareerFile,unpackCareerFile}
  from '/1999/engine/compact-career.mjs';
 
-const DB_NAME='WireToWireFoundingCareersV1',MAIN='wtw1999FoundingStateV1';
-const LEGACY='wtw1999FoundingNamedSavesV1';
+const DB_NAME='WireToWireClean1999CareersV2',MAIN='wtw1999FoundingStateV1';
 const MAX_SLOTS=60,MAX_TOTAL_BYTES=512*1024*1024;
 const $=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({
@@ -89,7 +88,7 @@ function profileForGame(game){
  return config().normalize({
   seed:a.worldProfile?.seed??a.seed??19990101,
   mode:a.worldProfile?.mode??a.mode??'FOUNDING_1999',
-  population:a.worldProfile?.population??a.population??112
+  population:a.worldProfile?.population??a.population??73
  });
 }
 function baselineFor(profile){
@@ -158,19 +157,6 @@ async function importFile(file){
  return storeGame(file.name.replace(/\.wtwsave$/i,'').replace(/_/g,' ').slice(0,80),
   game);
 }
-async function migrateLegacy(){
- let old;try{old=JSON.parse(localStorage.getItem(LEGACY)||'[]')}catch{}
- if(!Array.isArray(old)||!old.length)return 0;
- const slots=await listSlots(),names=new Set(slots.map(x=>x.name.toLowerCase()));
- let migrated=0;
- for(const item of old){
-  if(!item?.game?.worldAnchor||!item?.name||
-   names.has(String(item.name).toLowerCase()))continue;
-  const slot=await storeGame(String(item.name),item.game);
-  names.add(slot.name.toLowerCase());migrated++;
- }
- return migrated;
-}
 function modal(){
  let root=$('wtwCommercialCareerModal');
  if(!root){
@@ -185,7 +171,7 @@ function modal(){
 function inputProfile(){
  const dom=modal();
  return config().normalize({
-  population:Number(dom.querySelector('[data-cc="population"]')?.value||112),
+  population:Number(dom.querySelector('[data-cc="population"]')?.value||73),
   seed:Number(dom.querySelector('[data-cc="seed"]')?.value||19990101),
   mode:dom.querySelector('[data-cc="mode"]')?.value||'FOUNDING_1999'
  });
@@ -196,7 +182,7 @@ async function refresh(){
  const current=config().current(),slots=await listSlots();
  const saved=slots.map(x=>'<div class="wtw-cc-slot"><div><strong>'+esc(x.name)+'</strong>'+
   '<small>'+esc(x.date)+' · '+fmt(x.profile?.population)+' horses · '+
-   esc(x.profile?.mode==='FOUNDING_1999'?'Founding 1999':x.profile?.mode==='FULLY_FICTIONAL_TEST'?'Fictional':'Expanded historical')+
+   esc('Founding 1999')+
    ' · '+kb(x.bytes)+' ('+esc(x.encoding)+')</small></div>'+
    '<div class="wtw-cc-actions"><button data-cc-action="load" data-id="'+esc(x.id)+'">LOAD</button>'+
    '<button data-cc-action="export" data-id="'+esc(x.id)+'">EXPORT</button>'+
@@ -211,15 +197,15 @@ async function refresh(){
   '<header><div><small>WIRE TO WIRE / LOCAL-FIRST CAREERS</small><h2>WORLD & CAREER MANAGER</h2></div>'+
   '<button data-cc-action="close">✕ CLOSE</button></header>'+
   '<div class="wtw-cc-current">CURRENT WORLD · '+fmt(current.population)+' HORSES · '+
-   esc(current.mode==='FOUNDING_1999'?'FOUNDING 1999':current.mode==='FULLY_FICTIONAL_TEST'?'FICTIONAL':'EXPANDED HISTORICAL')+
+   esc('FOUNDING 1999')+
    ' · SEED '+esc(current.seed)+'</div>'+
   '<div class="wtw-cc-section"><h3>NEW WORLD</h3>'+
-  '<p>Begin with 112 source-linked founding horses. Expand only after testing this small 1999 scenario; historical results stay archived.</p>'+
-  '<div class="wtw-cc-grid"><label>HORSE POPULATION<input data-cc="population" type="number" min="112" max="112" step="1" value="112" readonly/></label>'+
+  '<p>Clean January 1999: 73 approved breeding horses, no registered racing horses, no generated personnel or facilities. Future entrants are added only by registration.</p>'+ 
+  '<div class="wtw-cc-grid"><label>APPROVED BREEDING HORSES<input data-cc="population" type="number" min="73" max="73" step="1" value="73" readonly/></label>'+ 
   '<label>WORLD SOURCE<select data-cc="mode"><option value="FOUNDING_1999" selected>Founding 1999 (source only)</option></select></label>'+
   '<label>WORLD SEED<input data-cc="seed" type="number" min="1" max="4294967295" step="1" value="'+esc(current.seed)+'"/></label></div>'+
   '<div class="wtw-cc-actions">'+config().presets.map(p=>'<button data-cc-action="preset" data-population="'+p.population+'" data-mode="'+(p.mode||'CANON_ANCHORED_TEST')+'">'+esc(p.label)+'</button>').join('')+'</div>'+
-  '<p class="wtw-cc-warning">Founding world is the ONLY new playable career during this pilot. The historical archive and full-size engineering models remain saved separately and cannot appear in this opening scenario.</p>'+
+  '<p class="wtw-cc-warning">Approved small 1999 world ONLY. Retired synthetic test modes and legacy career migrations are unavailable.</p>'+ 
   '<button data-cc-action="new-world" class="primary">CREATE NEW WORLD (BACK UP CURRENT CAREER FIRST)</button></div>'+
   '<div class="wtw-cc-section"><h3>COMPACT SAVES · '+slots.length+' SLOTS</h3>'+
   '<p>Local device only. No account, monthly fee or cloud storage required. Portable .wtwsave files have checksums and gzip compression where supported. Total compact-save budget: 512 MB across slots.</p>'+
@@ -227,10 +213,10 @@ async function refresh(){
   '<button data-cc-action="save" class="primary">SAVE CURRENT CAREER</button>'+
   '<button data-cc-action="import">IMPORT .WTWSAVE</button>'+
   '<input type="file" data-cc="import-file" accept=".wtwsave,application/octet-stream" hidden>'+
-  '<button data-cc-action="migrate">COPY LEGACY SAVES</button></div>'+
+  '</div>'+ 
   (notice?'<p class="wtw-cc-notice" role="status">'+esc(notice)+'</p>':'')+
   '<div class="wtw-cc-slots">'+(saved||'<p>No compact careers yet. Saving creates a portable, compressed career delta.</p>')+'</div>'+
-  quota+'</div><footer>Historical source records remain protected. Old browser saves are not deleted or overwritten when imported.</footer></section>';
+  quota+'</div><footer>Only approved founding-era game saves may be loaded. Old generated populations cannot be restored.</footer></section>';
  root.hidden=false;
 }
 async function perform(action,element){
@@ -256,7 +242,7 @@ async function perform(action,element){
  if(action==='new-world'){
   const profile=inputProfile();
   if(!window.confirm('Create a new '+fmt(profile.population)+'-horse '+
-   (profile.mode==='FOUNDING_1999'?'founding':profile.mode==='FULLY_FICTIONAL_TEST'?'fictional':'expanded historical')+
+   'founding'+
    ' world? The current career will be backed up before it is replaced.'))return;
   const backup=await storeGame('Pre-new-world backup · '+new Date().toISOString().slice(0,16),
    captureCurrent());
