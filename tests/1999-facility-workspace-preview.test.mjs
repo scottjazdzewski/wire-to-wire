@@ -63,7 +63,7 @@ test('Belmont trainer barn is conspicuously a concept; physical location T-0002 
  assert.match(page,/Facility operator/);
  assert.match(page,/Landowner \/ host/);
  assert.match(page,/Separate operator agreement required/);
- assert.match(page,/Facility F-ID PENDING/);
+ assert.match(page,/FACILITY F-ID PENDING/);
 });
 test('Horse-effect examples are bounded and explicitly NOT engine-authoritative',()=>{
  assert.match(page,/Recovery efficiency/);
