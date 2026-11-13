@@ -133,7 +133,7 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   const finances=ui.departmentRows('Finances','Overview');
   check('Founding finance panel does not invent inherited owner balances',finances.length>0&&finances.every(x=>x.source==='FOUNDING_FINANCE_NOT_CERTIFIED__NO_SETTLEMENT_AUTHORITY'));
   const auction=ui.auctionList();
-  check('12 proposed founding sales with empty catalogs',auction.length===12&&auction.every(a=>a.lots.length===0));
+  check('No unapproved founding auction catalogs loaded',auction.length===0);
   const horses=ui.worldHorsePage(ui.counts.horses,20);
   check('World directory contains only 73 real, connected breeding animals',
    horses.total===73&&horses.items.length===20&&ui.counts.horses===0);
