@@ -159,3 +159,27 @@ The optional fictional-world personnel style now generates a mixture of ordinary
 `tests/1999-fictional-latin-caribbean-names.test.mjs` covers country-specific pools, age bands, Portuguese-specific Brazilian names, accents, 11 forced-country rider populations, full-size 11,202-person 1999 fictional identity generation, double surnames, family-principal names, deterministic seeds, protected names and isolation from current historical game records.
 
 This is **a naming engine only**. It does not populate the early world, create jockey assignments or race outcomes, change the UI, or modify any existing playable name records.
+
+## International racing professions and naming cultures (V6)
+
+The standalone 1999 fictional-world naming engine now separates the international naming mix for **trainers**, **owner principals**, and **bloodstock agents** from the jockey-colony mixes. This models an international North American thoroughbred economy without applying the same national distributions to every profession. The new `international-racing-person-names.mjs` module adds British (English, Scottish and Welsh), Irish, Canadian (Anglophone and Francophone), French, German, Australian, New Zealand, Japanese, Emirati and Saudi adult names. Each culture has older and younger adult given-name pools and culturally appropriate family-name pools.
+
+**Historical context for international participation, not numerical population measurements:** Contemporary 1997 reporting described strong international bloodstock purchasing by Japanese and Middle Eastern buyers and the role of the UK auction/agent trade ([The Independent, July 7 1997](https://www.the-independent.com/news/business/bloodstock-profits-gallop-ahead-1249655.html)). The Irish industry's transnational importance is also documented in the [Dictionary of Irish Biography, Vincent O'Brien](https://www.dib.ie/index.php/biography/obrien-michael-vincent-m-v-a9732). This supports the design direction but **does not establish 1999 demographic percentages or national naming frequencies**. All V6 geographic/personnel mix numbers are explicitly editorial fictional-population settings.
+
+### Specific behavior
+
+- `trainer`: 68% US as the default editorial birth-origin profile, with Canadian/British/Irish, European, Australasian and smaller Japanese/Latin contributions.
+- `owner`: 69% US as the default, with distinct international buyers including Japanese, Emirati and Saudi fictional principals.
+- `bloodstock_agent`: 54% US as the default, with proportionally higher British (12%) and Irish (12%) presence.
+- The `originWeightsByRole` caller override remains authoritative. No international origin is forced for an explicitly configured US-only world.
+- Canadian fictional names choose an Anglophone or Francophone culture **once per person**; family and given names then share that culture. Britain similarly chooses English, Scottish or Welsh. Culture weighting is editorial and is **not** inferred from a person's observed ethnicity.
+- A 1999 person's modeled birth year selects an older (pre-1960) or younger (1960–1989) name pool. These period choices are not national registry measurements. Non-US names never cite the US SSA 1990 tables.
+- A Japanese-born fictional person uses romanized **given family** order as commonly shown in a North American-facing racing directory. That directory convention is explicitly recorded in `nameDisplayConvention`; it is not an assertion that Japanese native order is given-first. Emirati and Saudi names have separately labeled Arabic transliteration conventions. No fictional royal-family genealogy is implied by names.
+- International persons expose `internationalNameCulture`, `internationalNamingCohort`, and provenance `CURATED_INTERNATIONAL_1999_COUNTRY_CULTURE_PERIOD_NAMES_NOT_CENSUS`. The world manifest records `internationalProfessionNameModel`.
+- Person/owner-stable relationship integrity, accent-folded duplication checks, US birth-decade sources, Latin/Caribbean naming, and all other fictional-world safeguards remain active.
+
+### Integration and tests
+
+`tests/1999-fictional-international-racing-names.test.mjs` tests all country/culture/cohort pools, uniqueness, role weight contracts, complete 11,202-person 1999 populations, individual-country forced populations, owner/stable family relationships, deterministic seeds, override behavior and complete isolation from the existing game's current `full-world-generator.mjs`.
+
+**Scope remains naming only.** No saved world, horse, racecourse, UI or historically locked personnel is changed by this release.
