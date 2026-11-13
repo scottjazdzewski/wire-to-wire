@@ -148,6 +148,18 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    !d.querySelector('#wtwNextgen .ng-profile-person .test-modeled')&&
    d.querySelectorAll('#wtwNextgen .ng-person-horse-dossier .ng-horse-rating-row strong.unknown').length===46&&
    d.querySelector('#wtwNextgen .ng-profile-person')?.textContent.includes('0 OF 46 ROLE-SPECIFIC SLOTS DEFINED'));
+  const moreRecords=d.querySelector('#wtwNextgen select[data-ng-select="profile-record"]');
+  check('Horse-style personnel details selector remains available',Boolean(moreRecords));
+  moreRecords.value='Attributes';
+  moreRecords.dispatchEvent(new w.Event('change',{bubbles:true}));await pause(200);
+  check('Legacy personnel attribute sheet permanently replaced with same 46-slot Horse-style matrix',
+   Boolean(d.querySelector('#wtwNextgen .ng-person-horse-dossier[data-template="horse-attributes"]'))&&
+   d.querySelectorAll('#wtwNextgen .ng-person-horse-dossier .ng-horse-mgr-four>.ng-horse-mgr-panel').length===4&&
+   d.querySelectorAll('#wtwNextgen .ng-person-horse-dossier .ng-horse-rating-row strong.unknown').length===46&&
+   !d.querySelector('#wtwNextgen .ng-person-attribute-block'));
+  const overviewTab=d.querySelector('#wtwNextgen [data-ng="detailtab"][data-val="Overview"]');
+  check('Personnel can return from detail matrix to the shared Horse overview',Boolean(overviewTab));
+  overviewTab.click();await pause(200);
   click('World');await pause(220);
   const trackTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Tracks');
   check('World still includes the approved North American tracks tab',Boolean(trackTab));
