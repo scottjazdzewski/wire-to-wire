@@ -136,6 +136,18 @@ function validatedCountryWeights(input){
  }
  return frozen(out);
 }
+function validatedJockeyColonyWeights(input){
+ if(input==null)return frozen({});
+ if(!input||typeof input!=='object'||Array.isArray(input))
+  throw Error('Invalid jockey-colony origin mixes');
+ const out={};
+ for(const colony of Object.keys(input)){
+  if(!JOCKEY_COLONIES.includes(colony))throw Error('Unsupported jockey colony '+colony);
+  // Reuse the same validated country-code and positive-weight contract.
+  out[colony]=validatedCountryWeights({jockey:input[colony]}).jockey;
+ }
+ return frozen(Object.fromEntries(JOCKEY_COLONIES.filter(k=>out[k]).map(k=>[k,out[k]])));
+}
 function farmKindOrder(seed,facilities){
  // Exact caller-requested purpose counts, shuffled deterministically so
  // farms and studs are interleaved rather than sorted into artificial blocks.
@@ -193,8 +205,12 @@ export function normalizeFictionalWorldNamingSpec(input={}){
   throw Error('Protected names must be an array of nonempty strings');
  const markets=marketList(input.markets);
  const originWeights=validatedCountryWeights(input.originWeightsByRole);
+ const jockeyColonyWeights=validatedJockeyColonyWeights(input.jockeyOriginWeightsByColony);
+ if((roles.jockey??0)>0&&!markets.some(m=>m.racing))
+  throw Error('A jockey population requires at least one racing market');
  return frozen({worldId,year,seed,owners,roles:frozen(roles),facilities:frozen(facilities),
-  farmCount,staff,protectedNames:frozen([...reservedNames]),markets,originWeights});
+  farmCount,staff,protectedNames:frozen([...reservedNames]),markets,originWeights,
+  jockeyColonyWeights});
 }
 /**
  * Pure deterministic naming factory. Returns an IN-MEMORY identity proposal,
@@ -214,20 +230,45 @@ export function createFictionalWorldNameEngine(input){
   }
   throw Error('Missing role at index '+index);
  };
+ // Choose operating colonies BEFORE choosing birth-origin naming pools.
+ // A South Florida jockey and an Ontario jockey do not draw from the same
+ // global nationality mix. Location is not inferred from a person's name.
+ const racingMarkets=markets.filter(m=>m.racing);
+ const assignedMarkets=Array.from({length:staff+owners},(_,i)=>{
+  const role=roleAt(i),ordinal=i-indexes[role];
+  return weightedPick(seed,'person-market:'+role+':'+ordinal,
+   role==='jockey'?racingMarkets:markets);
+ });
+ const jockeyColonyAt=index=>inferJockeyColony(assignedMarkets[index]);
+ const countryAt=(index,role)=>{
+  if(role!=='jockey')return birthplaceCountry(seed,index,role,spec.originWeights);
+  const colony=jockeyColonyAt(index);
+  const explicitColony=spec.jockeyColonyWeights[colony];
+  if(explicitColony)return chooseJockeyColonyOrigin(seed,index,colony,{[colony]:explicitColony});
+  if(spec.originWeights.jockey)
+   return birthplaceCountry(seed,index,role,spec.originWeights);
+  return chooseJockeyColonyOrigin(seed,index,colony);
+ };
  const personNames=createPersonnelNameRoster(seed,staff+owners,roleAt,spec.protectedNames,{
-  countryAt:(index,role)=>birthplaceCountry(seed,index,role,spec.originWeights),
-  maxBaseNameUses:2,avoidIdenticalGivenSurname:true
+  countryAt,maxBaseNameUses:2,avoidIdenticalGivenSurname:true
  });
  const countrySet=new Set(SUPPORTED_ORIGINS);
  const basePeople=Object.freeze(personNames.map((p,i)=>{
   const role=roleAt(i),ordinal=i-indexes[role],id=makeId(worldId,'PERSON-'+role.toUpperCase(),ordinal);
   validateNameRecord(p.name,id);
   if(!countrySet.has(p.birthCountry))throw Error('Unsupported birth country '+p.birthCountry);
-  const market=weightedPick(seed,'person-market:'+role+':'+ordinal,markets);
-  const age=ageAtOpening(seed,id,role);
+  const market=assignedMarkets[i],age=ageAtOpening(seed,id,role);
+  const riderFields=role==='jockey'?{
+   jockeyColony:inferJockeyColony(market),
+   riderOriginModel:spec.jockeyColonyWeights[inferJockeyColony(market)]?
+    'CUSTOM_COLONY_NAMING_DISTRIBUTION':
+    spec.originWeights.jockey?'CUSTOM_ROLE_NAMING_DISTRIBUTION':
+    'EDITORIAL_1999_JOCKEY_COLONY_DISTRIBUTION_NOT_MEASURED'
+  }:{};
   return frozen({id,worldId,role,name:p.name,nameStyle:p.nameStyle,
    birthCountry:p.birthCountry,ageAtOpening:age,birthYear:year-age,
-   location:loc(market),nameOrigin:p.source,source:'FICTIONAL_WORLD_ENGINE'});
+   location:loc(market),nameOrigin:p.source,...riderFields,
+   source:'FICTIONAL_WORLD_ENGINE'});
  }));
  const trainers=Object.freeze(basePeople.slice(indexes.trainer??0,(indexes.trainer??0)+(roles.trainer??0)));
  const principalPeople=basePeople.slice(staff);
@@ -327,10 +368,12 @@ export function createFictionalWorldNameEngine(input){
   byRole:frozen({...roles,owner:owners}),
   byFarmKind:frozen(Object.fromEntries(FARM_KEYS.map(([kind])=>[kind,farms.filter(f=>f.kind===kind).length])))});
  const specFingerprint=hash(seed,JSON.stringify({worldId,year,roles,owners,facilities,
-  markets:markets.map(m=>[m.id,m.city,m.region,m.country,m.code,m.weight,m.breeding]),originWeights:spec.originWeights,
+  markets:markets.map(m=>[m.id,m.city,m.region,m.country,m.code,m.weight,m.breeding,m.racing,m.jockeyColony]),
+  originWeights:spec.originWeights,colonyWeights:spec.jockeyColonyWeights,
   reserved:spec.protectedNames})).toString(16).padStart(8,'0');
  const manifest=frozen({schema:FICTIONAL_WORLD_NAME_ENGINE,worldId,seed,year,
-  fingerprint:specFingerprint,personNameModel:PERSONNEL_NAME_MODEL,
+  fingerprint:specFingerprint,jockeyColonyNameModel:JOCKEY_COLONY_NAME_MODEL,
+  personNameModel:PERSONNEL_NAME_MODEL,
   countryNameModel:GEO_NAME_MODEL,organizationNameModel:ORGANIZATION_NAME_MODEL,
   authoritative:false,sourceCanonIncluded:false,
   horseNamesIncluded:false,tracksIncluded:false,committedToGame:false,counts});
