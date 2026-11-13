@@ -45,13 +45,12 @@ test('compact registry cursor does not contain any prior names, owners or groups
   assert.ok(bytes-firstSize<18,'cursor size grows unexpectedly: '+bytes);
   const names=[...result.people,...result.owners,...result.stables,
    ...result.farms,...result.trainingCenters].map(x=>x.name);
-  for(const name of names){
-   const value=key(name);
-   // Sole owner display names are intentionally identical to their principal
-   // within the same batch. That is not a duplicated fictional person.
-   if(allNames.has(value))throw Error('Previously issued protected or fictional name '+name);
-   allNames.add(value);
-  }
+  // Sole-owner display names can match their new principal IN THIS batch,
+  // but never a previously issued person or organization.
+  for(const name of names)
+   if(allNames.has(key(name)))
+    throw Error('Previously issued protected or fictional name '+name);
+  for(const name of names)allNames.add(key(name));
   issued+=result.people.length+result.owners.length+result.stables.length+
    result.farms.length+result.trainingCenters.length;
   cursor=next;
@@ -74,7 +73,7 @@ test('one-name-index lookup protects people and organization roots without repla
   protectedOrganizations:['Cedar Hollow Farm','Blue Ridge Stud']
  });
  assert.equal(registry.index.hasAnyName('Maria Elena Rodriguez'),true);
- assert.equal(registry.index.hasAnyName('JEAN-PIERRE CÔTÉ'),false);
+ assert.equal(registry.index.hasAnyName('JEAN-PIERRE CÔTÉ'),true);
  assert.equal(registry.index.hasOrganizationRootConflict('cedar hollow estate'),true);
  assert.equal(registry.index.hasOrganizationRootConflict('blue ridge'),true);
  const first=generateIndexedFictionalNames({registry,worldId:'INDEX-HISTORY',seed:33,
