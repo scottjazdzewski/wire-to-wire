@@ -69,6 +69,23 @@ export function readLocal1999World(raw){
   if(index<0||index>=w.counts.worldHorses)throw Error('Unknown approved founding horse');
   return {index,horse:w.worldHorseAt(index),source:'APPROVED_1999_LIVING_HORSE'};
  }
+ if(p==='/api/1999/sim/founding-ancestry'){
+  const id=String(q.get('id')||'').trim();
+  if(!/^H-[A-Za-z0-9-]+$/.test(id))
+   throw Error('Exact approved or connected-history horse ID required');
+  const pedigree=w.foundingAncestry;
+  const horse=pedigree.records.find(x=>x.id===id)||null;
+  if(!horse)return {id,horse:null,parents:[],children:[],
+   status:'HORSE_NOT_CONNECTED_TO_FOUNDING_ORGANIZATIONS'};
+  return {id,horse,
+   parents:pedigree.edges.filter(e=>e.childId===id).map(e=>({
+    ...e,horse:pedigree.records.find(h=>h.id===e.parentId)||null})),
+   children:pedigree.edges.filter(e=>e.parentId===id).map(e=>({
+    ...e,horse:pedigree.records.find(h=>h.id===e.childId)||null})),
+   missingNamedParents:pedigree.missingNamedParents.filter(m=>m.referredBy.some(x=>x.childId===id)),
+   status:'SOURCE_ONLY_FIVE_GENERATIONS_NOT_1999_LIVING_POPULATION',
+   historicalResultsUnmodified:true};
+ }
  if(p==='/api/1999/sim/horse-attribute'){
   const key=String(q.get('key')||'');
   if(!Object.values(w.attributeCatalog.horse_categories).flat().some(x=>x.key===key))
