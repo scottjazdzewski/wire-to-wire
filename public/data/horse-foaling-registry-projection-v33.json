@@ -1,6 +1,15 @@
 {
   "schema": "WTW_1999_HORSE_FOALING_REGISTRY_PROJECTION_V1",
-  "source": "SMALL_1999_APPROVED_BREEDERS_AND_61_SOURCE_HISTORICAL_LINKS",
+  "source": {
+    "spreadsheetId": "1Lhpe6DG1foQ2-zayQBg4bKpTtu4MP_itpM1zo2GRSEA",
+    "sheetName": "Horse_Registry",
+    "idField": "Horse_ID",
+    "countryField": "Foaling_Country",
+    "jurisdictionField": "Breeding_Jurisdiction",
+    "authority": "WTW_CANON_REGISTRIES_1999_START_V3_3",
+    "precision": "country verified; region reflects breeding jurisdiction, not a separately verified foaling municipality",
+    "scope": "27 exact-ID approved opening/bloodline records only; prior 280 unapproved entries excluded"
+  },
   "authority": "EXACT_H_ID_MEMBERSHIP_IN_wtw-1999-founding-directory-v1",
   "records": {
     "H-1979-000001": {
