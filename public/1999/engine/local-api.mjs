@@ -2,7 +2,7 @@
 // deterministic generator/canon snapshot WITHOUT Cloudflare Pages Functions,
 // JWT, D1 migrations, or an online API request. Read-only test projection.
 import {create1999Universe,MODES} from './full-world-generator.mjs?rev=wtw1999-20261112-r11';
-import {createFounding1999Universe,FOUNDING_WORLD_MODE} from './founding-world-1999.mjs?rev=wtw1999-founding-staff-finance-v1';
+import {createFounding1999Universe,FOUNDING_WORLD_MODE} from './founding-world-1999.mjs?rev=wtw1999-founding-linked-ancestry-v1';
 import {scopeWorldPopulation,normalizeWorldProfile} from './world-profiles.mjs';
 import {openingWorld1999 as canon} from './canon-mini.mjs';
 import {createClean1999Clock} from '../test-clock.mjs';
