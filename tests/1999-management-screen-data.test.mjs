@@ -56,14 +56,15 @@ test('founding Office clearly separates the 24 proposed principals from the 13 e
  assert.match(js,/PROPOSED · REVIEW/);
 });
 
-test('existing person profiles still retain attributes while old B01 horse profiles are removed',()=>{
+test('person identity is source-only with NO generated skills, and opening racehorses remain empty',()=>{
  const worldParams='?mode=FOUNDING_1999&population=73&seed=19990101';
  const person=readLocal1999World('/api/1999/people'+worldParams+'&limit=1').items[0];
  const personModel=ui.sourcePersonModel(person.id);
  assert.equal(personModel.id,person.id);
- assert.ok(Object.keys(personModel.attributes).length>=attributeCatalog.person_common.length);
+ assert.equal(personModel.ability,null);
+ assert.equal(personModel.roleAttributes,null);
  assert.equal(readLocal1999World('/api/1999/horses'+worldParams).total,0);
- assert.equal(ui.sourceHorseModel('H-1997-030039'),null);
+ assert.equal(ui.sourceHorseModel('H-NOT-REGISTERED'),null);
  assert.equal(ui.sourcePersonModel('P-UNKNOWN-777'),null);
 });
 
