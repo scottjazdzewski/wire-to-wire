@@ -793,7 +793,7 @@ function loadWorld1999(){
    r.ok?r.json():Promise.reject(Error('1999 directory unavailable'))),
   fetch('/data/track-geography-v33.json',{credentials:'same-origin',cache:'force-cache'}).then(r=>
    r.ok?r.json():Promise.reject(Error('Canonical track geography unavailable'))),
-  isClean1999()?fetch('/data/wtw-1999-jockey-pilot-v1.json?rev=user-selected-26-jockeys-v2-20261113',
+  isClean1999()?fetch('/data/wtw-1999-jockey-pilot-v1.json?rev=clean-26-only-v3-20261113',
    {credentials:'same-origin',cache:'force-cache'}).then(r=>
     r.ok?r.json():Promise.reject(Error('Source jockey pilot unavailable'))):Promise.resolve(null),
   isClean1999()?fetch('/data/wtw-1999-trainer-pilot-v1.json?rev=source-trainer-identities-v1-20261113',
@@ -806,14 +806,14 @@ function loadWorld1999(){
     throw Error('Unrecognized 1999 directory schema');
    if(isClean1999()){
     if(pilot?.schema!=='WTW_1999_JOCKEY_PILOT_IDENTITY_ROSTER_V1'||
-      pilot.counts?.canonicalJockeys!==37||pilot.counts?.selectedPilot!==26||
-      pilot.counts?.restoredByUser!==1||pilot.counts?.totalJockeysWithUserApprovedRestoration!==50||
-      !Array.isArray(pilot.jockeys)||pilot.jockeys.length!==50)
+      pilot.counts?.selectedPilot!==26||
+      pilot.counts?.restoredByUser!==1||
+      !Array.isArray(pilot.jockeys)||pilot.jockeys.length!==26)
      throw Error('Jockey identity pilot schema invalid');
     const pilotIds=new Set(pilot.jockeys.map(p=>p.id));
     const existingIds=new Set(data.people.map(p=>p.id));
     const chosen=pilot.jockeys.filter(p=>p.pilotStatus==='SELECTED_IDENTITY_ONLY');
-    if(pilotIds.size!==50||chosen.length!==26||
+    if(pilotIds.size!==26||chosen.length!==26||
        !chosen.some(p=>p.id==='P-1999-J-000001'&&p.gender==='MALE'&&
         p.homeTrackId==='T-0039'&&p.secondaryCircuit==='NEW_YORK_SELECTED_MAJOR_STAKES_DAYS')||
        !chosen.some(p=>p.id==='P-000057'&&p.gender==='MALE')||
