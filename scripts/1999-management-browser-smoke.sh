@@ -158,8 +158,13 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    ui.departmentRows('Facilities','Training Centers').length===0&&
    ui.departmentRows('Facilities','Breaking Facilities').length===0);
   click('World');await pause(240);
-  noDuplicateTabs('World');
-  pickView('People');await pause(270);
+  // World landing overview is NOT a roster and has no VIEW dropdown.
+  // Its navigation is retained until selecting a sortable department view.
+  const worldPeopleTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')]
+   .find(x=>x.dataset.val==='People');
+  check('World landing overview retains entry to its roster views',Boolean(worldPeopleTab));
+  worldPeopleTab.click();await pause(270);
+  noDuplicateTabs('World People roster');
   const sourcePersonButton=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
   check('1999 world person source row is navigable',Boolean(sourcePersonButton));
   sourcePersonButton.click();await pause(220);
@@ -203,7 +208,11 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   check('Personnel can return from detail matrix to the shared Horse overview',Boolean(overviewTab));
   overviewTab.click();await pause(200);
   click('World');await pause(220);
-  pickView('Tracks');await pause(340);
+  const worldTracksTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')]
+   .find(x=>x.dataset.val==='Tracks');
+  check('World landing can open approved track directory',Boolean(worldTracksTab));
+  worldTracksTab.click();await pause(340);
+  noDuplicateTabs('Tracks');
   const worldTracks=w.__WTW_NEXT__?.app?.departmentVisible||[];
   if(!(worldTracks.length===118&&worldTracks.every(t=>t._kind==='track')&&
    worldTracks.some(t=>t._canonId==='T-0102'&&t.name==='Oriental Park')&&
