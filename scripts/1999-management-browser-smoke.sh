@@ -43,6 +43,18 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   check('1999 decision desk not 2014 case',d.querySelector('.ng-casetitle')?.textContent.includes('1999'));
   check('All original department controls present',['Stable','Racing','Breeding','Sales','Personnel','Facilities','Finances','Tracks','World'].every(x=>[...d.querySelectorAll('#wtwNextgen [data-ng="menu"]')].some(n=>n.dataset.val===x)));
   const click=(section)=>{const button=[...d.querySelectorAll('#wtwNextgen [data-ng="menu"]')].find(n=>n.dataset.val===section);if(!button)throw Error(section+' menu absent');button.click()};
+  const pickView=(page)=>{
+   const select=d.querySelector('#wtwNextgen select[data-ng-select="department-tab"]');
+   if(!select||![...select.options].some(o=>o.value===page))
+    throw Error('Missing '+page+' in department VIEW dropdown');
+   select.value=page;
+   select.dispatchEvent(new w.Event('change',{bubbles:true}));
+  };
+  const noDuplicateTabs=(section)=>{
+   check(section+' has no duplicated horizontal department tabs',
+    !d.querySelector('#wtwNextgen .ng-subbar')&&
+    Boolean(d.querySelector('#wtwNextgen select[data-ng-select="department-tab"]')));
+  };
   click('Stable');await pause(250);
   check('Clean opening stable shows no inherited generated horse rows',
    !d.querySelector('#wtwNextgen .ng-rs-horse')&&ui.stableHorses.length===0);
@@ -50,6 +62,7 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   const fullTrackPicker=d.querySelector('#wtwNextgen select[data-ng-select="department-track"]');
   check('Racing drop-down includes all founding circuit tracks',
    Boolean(fullTrackPicker)&&fullTrackPicker.options.length===ui.counts.tracks+1&&[...fullTrackPicker.options].some(o=>o.value==='Saratoga'));
+  noDuplicateTabs('Racing');
   check('Date browser opens on Jan 1 without advancing the game',
    d.querySelector('#ngRacingBrowseDate')?.value==='1999-01-01');
   d.querySelector('#wtwNextgen button[data-ng="dept-day-card"]')?.click();await pause(260);
@@ -93,9 +106,8 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    Boolean(d.querySelector('#wtwNextgen .ng-profile-horse'))&&
    d.querySelectorAll('#wtwNextgen .ng-horse-rating-row').length===46);
   click('Personnel');await pause(280);
-  const trainerTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Trainers');
-  check('Personnel trainer tab remains available',Boolean(trainerTab));
-  trainerTab.click();await pause(300);
+  noDuplicateTabs('Personnel');
+  pickView('Trainers');await pause(300);
   const openingTrainers=w.__WTW_NEXT__?.app?.departmentVisible||[];
   check('Exactly 20 original-ID trainer identities visible in approved Personnel without invented ratings or contracts',
    openingTrainers.length===20&&openingTrainers.every(p=>p._kind==='person'&&p.role==='TRAINER'&&
@@ -106,9 +118,7 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   check('Trainer roster uses same original clickable OOTP / FM Personnel list',
    Boolean(d.querySelector('#wtwNextgen [data-ng="dept-open"]')));
   click('Personnel');await pause(180);
-  const jockeyTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Jockeys');
-  check('Jockey roster tab remains available',Boolean(jockeyTab));
-  jockeyTab.click();await pause(300);
+  pickView('Jockeys');await pause(300);
   const openingJockeys=w.__WTW_NEXT__?.app?.departmentVisible||[];
   check('Exactly 26 source-backed jockey identities (25 old IDs plus user-restored Simonne) appear with no invented abilities or contracts',
    openingJockeys.length===26&&openingJockeys.every(p=>
@@ -130,8 +140,7 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    Boolean(d.querySelector('#wtwNextgen .ng-person-horse-dossier'))&&
    !d.querySelector('#wtwNextgen .ng-profile-person .test-modeled'));
   click('Personnel');await pause(230);
-  const checkPilotTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Jockeys');
-  checkPilotTab.click();await pause(200);
+  pickView('Jockeys');await pause(200);
   const simonneIdx=w.__WTW_NEXT__?.app?.departmentVisible?.findIndex(p=>p._canonId==='P-1999-J-000001');
   check('Simonne appears as an independent pilot jockey with his own clickable profile',simonneIdx>=0);
   d.querySelector('#wtwNextgen [data-ng="dept-open"][data-val="'+simonneIdx+'"]').click();await pause(220);
@@ -149,13 +158,8 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    ui.departmentRows('Facilities','Training Centers').length===0&&
    ui.departmentRows('Facilities','Breaking Facilities').length===0);
   click('World');await pause(240);
-  const peopleTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='People');
-  if(!peopleTab)throw Error('World People tab missing after Jockey profile: '+JSON.stringify({
-   custom:w.__WTW_NEXT__?.app?.custom,section:w.__WTW_NEXT__?.app?.section,page:w.__WTW_NEXT__?.app?.page,
-   tabs:[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].map(x=>x.dataset.val),
-   screen:d.querySelector('#wtwNextgen .ng-route')?.textContent.slice(0,150),errors:browserErrors.slice(-4)}));
-  steps.push('Existing World people tab is available');
-  peopleTab.click();await pause(270);
+  noDuplicateTabs('World');
+  pickView('People');await pause(270);
   const sourcePersonButton=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
   check('1999 world person source row is navigable',Boolean(sourcePersonButton));
   sourcePersonButton.click();await pause(220);
@@ -199,9 +203,7 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   check('Personnel can return from detail matrix to the shared Horse overview',Boolean(overviewTab));
   overviewTab.click();await pause(200);
   click('World');await pause(220);
-  const trackTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Tracks');
-  check('World still includes the approved North American tracks tab',Boolean(trackTab));
-  trackTab.click();await pause(340);
+  pickView('Tracks');await pause(340);
   const worldTracks=w.__WTW_NEXT__?.app?.departmentVisible||[];
   if(!(worldTracks.length===118&&worldTracks.every(t=>t._kind==='track')&&
    worldTracks.some(t=>t._canonId==='T-0102'&&t.name==='Oriental Park')&&
@@ -220,9 +222,7 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
     t.status.includes('HISTORICAL')&&!t.meetWindow&&!t._meetState.active));
   steps.push('All 118 North American including Cuba displayed; 16 historic closed and zero international');
   click('Personnel');await pause(230);
-  const ownersTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Owners');
-  check('Ownership roster still uses approved Office navigation',Boolean(ownersTab));
-  ownersTab.click();await pause(250);
+  pickView('Owners');await pause(250);
   const firstOwner=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
   check('Founder ownership group has exact-ID roster link',Boolean(firstOwner));
   firstOwner.click();await pause(220);
@@ -232,9 +232,7 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    Boolean(d.querySelector('#wtwNextgen .ng-track-meet-card'))&&
    Boolean(d.querySelector('#wtwNextgen .ng-profile-facility-logo')));
   click('Personnel');await pause(200);
-  const principalTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Principals');
-  check('Personnel contains the approved Principals directory',Boolean(principalTab));
-  principalTab.click();await pause(270);
+  pickView('Principals');await pause(270);
   check('Exactly 41 approved people visible with exact ownership entities',
    ui.departmentRows('Personnel','Principals').length===41&&
    ui.departmentRows('Personnel','Principals').every(p=>p._operationId&&p.operation));
@@ -261,9 +259,8 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    Boolean(d.querySelector('#wtwNextgen .ng-dept-roster[data-department="Facilities"]'))&&
    !d.querySelector('#wtwNextgen [data-ng="dept-open"]'));
   click('Facilities');await pause(240);
-  const studsTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Stud Farms');
-  check('Facility navigation retains its existing approved view picker',Boolean(studsTab));
-  studsTab.click();await pause(260);
+  noDuplicateTabs('Facilities');
+  pickView('Stud Farms');await pause(260);
   const firstStud=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
   check('Approved stud farm is selectable without creating separate buildings',Boolean(firstStud));
   firstStud.click();await pause(220);
