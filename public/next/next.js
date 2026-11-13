@@ -1934,10 +1934,13 @@ function profileDetail(route,sourceOverride=null){
  const personAge=ageAtGameDate||factByName('Age');
  const personIdentityFields=isPerson?[
   ['ROLE',titleCaseUIRole(factByName('Role')),''],
+  ['GENDER',factByName('Gender'),''],
   [personOriginLabel,personOriginValue,personFlagImg],
   ['AGE',personAge,''],
   ['HOMETOWN',personHometown,''],
-  [baseLabel,personBaseValue,'']
+  [baseLabel,personBaseValue,''],
+  ['HOME TRACK',factByName('Home track'),''],
+  ['OTHER CIRCUIT',factByName('Secondary circuit'),'']
  ].filter(([,value])=>knownField(value)):[];
 
  const entityHeaderFields=isPerson?personIdentityFields:
