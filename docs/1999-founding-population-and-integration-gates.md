@@ -24,7 +24,7 @@ The previously selected 39 B01 runners all have the boundary `B01_APPROVED_1999_
 | Founding Facilities organization references | **30** | Five studs, 15 farms, 10 racing-stable institutions. No facility assets, capacities, staff or costs inferred |
 | Training centers / breaking facilities / phantom barns | **0 / 0 / 0** | Track inventory does not spawn facilities |
 | Activated sales catalogs | **0** | Prior 12 placeholder catalogs absent |
-| Approved logos loaded | **0** | 37 ID-specific slots in a new manifest; old 108-logo roster excluded |
+| Published existing founding logos | **17 of 37** | Only exact O-ID and exact name matches, 20 slots still open; all 108 old owners remain outside the founding population |
 | Connected standing stallions | 18 | Existing source IDs and 1999 farms only |
 | Connected broodmares | 55 | Existing source IDs and 1999 farm/boarding references only |
 | Total living animals in active World | **73** | 18 stallions + 55 mares, no other source horses |
