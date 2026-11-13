@@ -368,6 +368,13 @@ function makeDepartmentRows(section,page,context={}){
    status:'1999 TEST FACILITY',_testOrigin:true}));
  }
  if(section==='Finances'){
+  if(gameWorldProfile.mode==='FOUNDING_1999')return [{
+   _kind:'finance',_name:'FOUNDING-ACCOUNTS-NOT-CERTIFIED',
+   date:'1/1/99',_iso:'1999-01-01',category:'OPENING ACCOUNTS',
+   description:'New founding-world finances awaiting gameplay-engine opening balance certification',
+   department:'1999 FOUNDING WORLD',income:'—',expense:'—',balance:'—',
+   source:'FOUNDING_FINANCE_NOT_CERTIFIED__NO_SETTLEMENT_AUTHORITY'
+  }].filter(()=>page!=='Operating Costs');
   const o=get('ownerSample','/api/1999/sim/owners',3308).find(o=>o.id===activeOwnerId)||get('ownerSample2','/api/1999/sim/owners',3308)[0];
   if(!o)return [];
   const rows=[{category:'OPENING CAPITAL',description:o.name+' · Test-world opening cash',income:o.finances.cash,expense:0,balance:o.finances.cash},
