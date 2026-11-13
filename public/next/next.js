@@ -1936,31 +1936,58 @@ function profileDetail(route,sourceOverride=null){
    </div>`;
    right='';footer='';
   }else if(isFarm){
+   // EXACT approved Track workspace: large four-column record table on left,
+   // Meet/Conditions-format operations on right, Track History-format panel
+   // beneath. Blank attributes stay blank until a facility source supplies them.
    const facilityContext=source.dataset.foundingContext==='facility';
-   const heading=facilityContext?'BREEDING STOCK AT INSTITUTION':'HISTORICAL RACING & BLOODLINES';
-   const primary=facilityContext?founderStockRows():founderHistoryRows();
-   const summaryFacts=[
-    ['TYPE',founderOrg?.type||'NOT RECORDED'],
-    ['LOCATION',founderOrg?.location||'NOT RECORDED'],
-    ['1999 PRINCIPAL',founderOrg?.principalOwner||'NOT APPROVED'],
-    ['ACTIVE RACEHORSES','0 REGISTERED'],
-    ['STAFF & CONTRACTS','NOT CERTIFIED'],
-    ['BUILDING CAPACITY','NOT CERTIFIED']
+   const horses=facilityContext?founderStock:founderHistorical;
+   const headers=facilityContext?['HORSE','ROLE','1999 RECORD','LOCATION']:['HORSE','ROLE','YEARS','EVIDENCE'];
+   const head='<div class="ng-stakes-head">'+headers.map(label=>
+    '<button type="button" disabled><span>'+label+'</span></button>').join('')+'</div>';
+   const body=horses.map(h=>{
+    const id=facilityContext?h.id:h.horseId;
+    const target=world1999Entry('horse:'+id)||world1999Entry('historical-horse:'+id);
+    const cols=facilityContext?
+     [h.name,h._role==='stallion'?'STANDING STALLION':'BOARDING BROODMARE',
+      'SOURCE-LINKED 1999',founderOrg?.location||'NOT RECORDED']:
+     [h.horse,String(h.role||'').replaceAll('_',' '),(h.recordedStakesYears||[]).join(', ')||'—',
+      h.status==='SOURCE_VERIFIED'?'SOURCE':'REVIEW'];
+    const cells=cols.map(v=>'<span>'+safe(v||'—')+'</span>').join('');
+    return target?
+     '<button class="ng-stakes-data" data-ng="world-open" data-val="'+safe(target.worldKey)+
+      '" aria-label="Open '+safe(cols[0])+' record">'+cells+'</button>':
+     '<div class="ng-stakes-data ng-stakes-static">'+cells+'</div>';
+   }).join('')||'<div class="ng-empty-record">No source-linked records yet. Facility layout reserved.</div>';
+   const rows='<div class="ng-stakes-table ng-facility-records">'+head+body+'</div>';
+   const stats=[
+    ['INSTITUTION TYPE',founderOrg?.type||'NOT RECORDED'],
+    ['1999 BASE',founderOrg?.location||'NOT RECORDED'],
+    ['PRINCIPAL',founderOrg?.principalOwner||'AWAITING APPROVAL'],
+    ['CAPACITY','NOT RECORDED'],
+    ['STAFFING','NOT RECORDED'],
+    ['MONTHLY COST','NOT RECORDED']
    ];
-   // THE SAME Track workspace and Track card components, not a similar
-   // independent layout. Only the data modules change by institution type.
-   left=`<div class="ng-track-workspace">
-    <section class="ng-tier1-card ng-tier1-stakes ng-track-stakes"><header>${heading} <span>${facilityContext?founderStock.length:founderHistorical.length} SOURCE LINKS</span></header>${primary}</section>
+   const config='<div class="ng-track-course-panel"><div class="ng-track-course-heading">'+
+    '<strong>FACILITY CONFIGURATION</strong><span>AWAITING SOURCE FIELDS</span></div>'+
+    '<div class="ng-track-course-grid">'+
+    [['ACREAGE','—'],['BARNS / SHEDROWS','—'],['TRAINING SURFACES','—'],['HORSE STALLS','—']].map(
+     ([label,value])=>'<div class="ng-track-course-fact"><small>'+label+'</small><b>'+value+'</b></div>'
+    ).join('')+'</div></div>';
+   const sectionTitle=facilityContext?'BREEDING & STABLED HORSES':'HISTORICAL HORSE CONNECTIONS';
+   left=`<div class="ng-track-workspace" data-template="track-overview" data-facility-id="${safe(founderOrg?.id||'')}">
+    <section class="ng-tier1-card ng-tier1-stakes ng-track-stakes"><header>${sectionTitle} <span>${horses.length} SOURCE RECORDS</span></header>${rows}</section>
     <div class="ng-track-info-stack">
-     <section class="ng-tier1-card ng-track-meet-card"><header>INSTITUTION & CURRENT OPERATIONS</header><div class="ng-track-conditions-body">
-      <div class="ng-track-meet-facts">${summaryFacts.map(([label,value])=>'<div class="ng-track-meet-fact"><small>'+safe(label)+'</small><strong>'+safe(value)+'</strong></div>').join('')}</div>
-      <div class="ng-track-operating-notes">${founderPersonLinks()}</div>
-      <button class="ng-entity-open" data-ng="detailtab" data-val="Operations">FULL OPERATIONS ${glyph('arrow',11)}</button>
-     </div></section>
-     <section class="ng-tier1-card ng-track-history-card"><header>INSTITUTION HISTORY <button data-ng="detailtab" data-val="History">FULL HISTORY ${glyph('arrow',11)}</button></header>
-      <div class="ng-track-history-content"><p class="ng-track-history-blurb">${safe(founderOrg?.approvedOrigin||'No separately approved origin narrative recorded.')}</p>
-      <div class="ng-track-history-facts"><div><small>HISTORICAL LINKS</small><strong>${founderHistorical.length}</strong></div>
-      <div><small>FOUNDED / OPENED</small><strong>NOT CERTIFIED</strong></div></div></div></section>
+     <section class="ng-tier1-card ng-track-meet-card"><header>FACILITY & OPERATIONS</header>
+      <div class="ng-track-conditions-body">${config}
+       <div class="ng-track-meet-facts">${stats.map(([label,value])=>'<div class="ng-track-meet-fact"><small>'+safe(label)+'</small><strong>'+safe(value)+'</strong></div>').join('')}</div>
+       <div class="ng-track-operating-notes">${founderPersonLinks()}</div>
+      </div></section>
+     <section class="ng-tier1-card ng-track-history-card"><header>FACILITY HISTORY <button data-ng="detailtab" data-val="History">FULL HISTORY ↗</button></header>
+      <div class="ng-track-history-content"><div class="ng-track-history-facts">
+       <div><small>FOUNDED / OPENED</small><strong>NOT RECORDED</strong></div>
+       <div><small>HISTORICAL LINKS</small><strong>${founderHistorical.length}</strong></div>
+      </div><p class="ng-track-history-blurb">${safe(founderOrg?.approvedOrigin||'Historical description awaiting approved source.')}</p></div>
+     </section>
     </div>
    </div>`;right='';footer='';
   }else if(isTrack){
