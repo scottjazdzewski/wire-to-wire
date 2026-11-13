@@ -3011,6 +3011,12 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 #wtwNextgen .ng-profile-farm.ng-profile-track .ng-profile-photo-empty{
   position:relative;z-index:1;background:transparent;
 }
+#wtwNextgen .ng-profile-farm.ng-profile-track .ng-profile-photo-empty span{
+  color:#655027;font-size:10px;
+}
+#wtwNextgen .ng-profile-farm.ng-profile-track .ng-profile-photo-empty small{
+  color:#685b38;
+}
 @media(max-width:1120px){
  #wtwNextgen .ng-profile-person.ng-profile-horse .ng-person-horse-dossier>.ng-horse-mgr-five{
   grid-template-columns:repeat(3,minmax(0,1fr))!important;
