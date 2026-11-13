@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {TRACK_PROGRAM_1999,trackMeetOpen1999,trackCardSurface1999} from '../public/next/1999-track-program.mjs';
 import {WTW_ALTERNATE_STAKES_1999} from '../public/next/1999-alternate-stakes.mjs';
-test('134 immutable course identities and sourced 1999 meeting corrections',()=>{
- assert.equal(Object.keys(TRACK_PROGRAM_1999).length,134);
+test('118 immutable domestic/Cuban course identities and sourced 1999 meeting corrections',()=>{
+ assert.equal(Object.keys(TRACK_PROGRAM_1999).length,118);
+ assert.ok(Object.keys(TRACK_PROGRAM_1999).every(id=>/^T-\d{4}$/.test(id)));
  assert.deepEqual(TRACK_PROGRAM_1999['T-0003'].meets,[['07-28','09-06']]);
  assert.deepEqual(TRACK_PROGRAM_1999['T-0013'].meets,[['04-24','06-27'],['10-31','11-27']]);
  assert.deepEqual(TRACK_PROGRAM_1999['T-0016'].meets,[['06-28','09-06']]);
