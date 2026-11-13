@@ -37,7 +37,8 @@ function personGeographyRecord(source,name){
 }
 
 const genericDeskPhoto='/assets/office/approved-office-photo.jpg';
-let organizationLogoIndex=null; // UI-only logo asset refs; organization authority stays in the game database.
+let organizationLogoIndex=null; // UI-only logo refs, never organizational authority.
+const isClean1999=()=>window.__WTW_1999_MANAGEMENT__?.worldProfile?.mode==='FOUNDING_1999';
 
 const tabmap={Office:['Overview','Messages','Decisions','Calendar','News','Reports','Career'],History:['Race Results','Horses','People & Farms','Facilities & Tracks','Historical Calendar','Coverage'],Stable:['Overview','Horses','Training','Health','Race Plans','Barns'],Racing:['Overview','Calendar','Entries','Results','Stakes','Race Planning'],Breeding:['Overview','Stallions','Broodmares','Foals','Pedigrees','Stud Farms'],Sales:['Overview','Auctions','Sale Calendar','Sale Companies','Catalogs','Watchlist','Private Offers'],Personnel:['Overview','Trainers','Jockeys','Owners','Staff'],Facilities:['Overview','Stud Farms','Training Centers','Breaking Facilities','Racing Stables','Farms'],Tracks:['Overview','Active Meets','All Tracks','Stakes'],Finances:['Overview','Cash Flow','Operating Costs','Budgets'],World:['Overview','1999 Horses','People','Organizations','Tracks','Meets','Major Races','News']};
 const actions={Office:'Office Overview',Stable:'Stable',Racing:'Race Calendar',Sales:'Sales',World:'World'};
@@ -439,7 +440,7 @@ let world1999Data=null,world1999Loading=false,world1999LoadFailed=false;
 /* World Editor v1: canonical IDs remain immutable. The 1999 source JSON is
    immutable; user's edits are a browser-owned overlay, never a false source
    certification or a mutation to the global simulation save. */
-const WORLD_EDIT_KEY=window.__WTW_1999_MANAGEMENT__?.worldProfile?.mode==='FOUNDING_1999'?'wtwFoundingWorldEditPatchesV1':'wtwWorldEditPatchesV1';
+const WORLD_EDIT_KEY=isClean1999()?'wtwFoundingWorldEditPatchesCleanV2':'wtwWorldEditPatchesV1';
 const WORLD_EDIT_EXPORT='WTW_WORLD_USER_EDITS_V1';
 const WORLD_LOCKED_FIELDS=new Set(['id','key','_role','registeredInV33','basis','source','sourceGate','chronologyCheck','population']);
 const WORLD_FORBIDDEN_FIELDS=new Set(['__proto__','prototype','constructor']);
@@ -544,6 +545,11 @@ async function worldSetImage(key,image){
 }
 function approvedIdentityAsset(kind,id,name){
  const category=kind==='organization'||kind==='owner'?'farm':kind;
+ if(isClean1999()&&category==='farm'){
+  const allowed=(world1999Data?.organizations||[]).some(o=>o.id===id);
+  const path=allowed?organizationLogoIndex?.organizations?.['organization:'+id]:'';
+  return officeAssetPath(path||'');
+ }
  const assets=officePhotoIndex?.entities||{};
  const byId=officeAssetPath(id?assets[category+':'+id]:'');
  if(byId)return byId;
@@ -557,6 +563,9 @@ function approvedIdentityAsset(kind,id,name){
  return '';
 }
 function worldImageURL(key,record){
+ // Previous-world IndexedDB media is not an approved 1999 identity asset.
+ if(isClean1999()&&key.startsWith('farm:'))
+  return approvedIdentityAsset('farm',record?.id||key.slice(5),record?.name);
  const stored=worldImageCache.get(key);
  if(stored)return stored;
  const kind=key.split(':')[0],id=record?.id||key.slice(key.indexOf(':')+1);
@@ -2435,42 +2444,28 @@ function depFacilityType(raw){
  return 'Farm';
 }
 function depFacilityRows(page,demo){
- const all=globalSearchItems();APP.searchIndex=all;
- const farms=all.map((r,i)=>({...r,_index:i})).filter(r=>r.kind==='farm');
- // Ownership groups are organization identities shown under Personnel,
- // not physical facilities or duplicated human-person records.
- let result=farms.map(r=>{
-  const saved=state().facilityState?.[r.name]||{},kind=depFacilityType(r.detail);
-  const canonical=r._world||(world1999Data?.organizations||[]).find(o=>
-   (r.canonicalId&&o.id===r.canonicalId)||o.name===r.name);
-  const n=depHash(r.name),cap=demo?24+n%75:saved.capacity;
-  const used=demo?Math.floor(cap*.6):saved.occupied;
-  return {_kind:'farm',_name:r.name,_canonId:r.canonicalId||'',name:r.name,type:kind,location:r.location||'',
-   capacity:cap??'',occupied:used??'',free:cap!=null&&used!=null?cap-used:'',
-   condition:demo?'Good':saved.condition||'',quality:demo?'80/100':saved.quality||'',
-   staff:demo?String(5+n%11):saved.staff_count||'',
-   cost:demo?depMoney(12000+n%24000):saved.monthly_cost||'',owner:canonical?.publicPrincipal||saved.owner||'',
-   status:demo?'Active':saved.status||''};
- });
- if(demo)result.push(...DEP_FACILITY_PREVIEW.map(([name,type,location],i)=>{
-  const physical=type!=='Ownership Group';
-  return {_kind:'demo-facility',_name:name,name,type,location,
-   capacity:physical?String([75,60,48,42,0,28][i]):'',occupied:physical?String([48,39,26,31,0,20][i]):'',
-   free:physical?String([27,21,22,11,0,8][i]):'',condition:physical?['Excellent','Good','Good','Excellent','', 'Fair'][i]:'',
-   quality:physical?String([94,88,83,90,0,72][i])+'/100':'',staff:physical?String([18,12,9,14,0,6][i]):'',
-   cost:physical?depMoney([37500,28000,19500,31000,0,10500][i]):'',
-   owner:['Kingsmere','Private','Oak Hollow','Crescent Mile','Ashford Partners','Ironweed'][i],
-   status:physical?'Active':'Partnership'};
- }));
- const typeForPage={'Stud Farms':'Stud Farm','Training Centers':'Training Center',
-  'Breaking Facilities':'Breaking Facility','Racing Stables':'Racing Stable',
-  'Ownership Groups':'Ownership Group'};
- if(typeForPage[page])result=result.filter(r=>r.type===typeForPage[page]);
- if(page==='Farms')result=result.filter(r=>r.type==='Farm');
- // Facilities contains physical sites only. Ownership Groups has its own
- // Personnel roster; each underlying organization retains its canonical ID.
- if(page!=='Ownership Groups')result=result.filter(r=>r.type!=='Ownership Group');
- return result;
+ // Only approved founding organizations are surfaced. A racing operation is
+ // NOT evidence of a separate physical barn or a fabricated training center.
+ const organizations=(world1999Data?.organizations||[]);
+ const classify=o=>{
+  const t=String(o.type||'').toUpperCase(),name=String(o.name||'').toUpperCase();
+  if(/STUD|STALLION|INTEGRATED BREEDING/.test(t)||/\bSTUD\b/.test(name))return 'Stud Farm';
+  if(/FARM|NURSERY/.test(t))return 'Farm';
+  if(/RACING STABLE|OWNERSHIP STABLE/.test(t))return 'Racing Stable';
+  return '';
+ };
+ const typeForPage={'Stud Farms':'Stud Farm','Farms':'Farm',
+  'Racing Stables':'Racing Stable'};
+ if(page==='Training Centers'||page==='Breaking Facilities')return [];
+ return organizations.filter(o=>classify(o)&&
+  (!typeForPage[page]||classify(o)===typeForPage[page])).map(o=>({
+   _kind:'farm',_name:o.name,_id:o.id,_canonId:o.id,
+   _worldKey:world1999Key('farm',o),
+   name:o.name,type:classify(o),location:o.location||o.locationLabel||'',
+   capacity:'',occupied:'',free:'',condition:'',quality:'',staff:'',cost:'',
+   owner:o.publicPrincipal||'',status:'APPROVED INSTITUTION · SITE NOT CERTIFIED',
+   _testGenerated:false
+  }));
 }
 
 function depRows(section,page,demo,auction){
@@ -3860,7 +3855,7 @@ const bootJson=path=>fetch(path+'?v='+bootVersion,{credentials:'same-origin',cac
  .then(r=>r.ok?r.json():Promise.reject(Error('UI asset index unavailable')));
 const bootJobs=[
  loadWorld1999(),
- bootJson('/assets/office/organization-logo-index.json')
+ bootJson(isClean1999()?'/assets/office/founding-organization-logo-index.json?rev=clean1999-v1':'/assets/office/organization-logo-index.json')
   .then(index=>{if(index&&typeof index==='object'&&!Array.isArray(index)){organizationLogoIndex=index;if(APP.ready)schedulePaint(20)}})
   .catch(()=>{/* Neutral organization mark is the fallback. */}),
  bootJson('/assets/game/attribute-catalog.v1.json')
