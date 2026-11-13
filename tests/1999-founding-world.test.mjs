@@ -7,13 +7,13 @@ import {readLocal1999World} from '../public/1999/engine/local-api.mjs';
 
 const founding=createFounding1999Universe({seed:19990101});
 const api=(path)=>readLocal1999World(path+(path.includes('?')?'&':'?')+
-  'mode=FOUNDING_1999&seed=19990101&population=112');
+  'mode=FOUNDING_1999&seed=19990101&population=73');
 
 test('Jan 1 founding scenario replaces 325k visible TEST world but preserves historical source archive',()=>{
  assert.equal(founding.mode,FOUNDING_WORLD_MODE);
  assert.equal(founding.startDate,'1999-01-01');
- assert.equal(founding.counts.horses,39);
- assert.equal(founding.counts.worldHorses,112);
+ assert.equal(founding.counts.horses,0);
+ assert.equal(founding.counts.worldHorses,73);
  assert.equal(founding.counts.breedingMares,55);
  assert.equal(founding.counts.breedingStallions,18);
  assert.equal(founding.counts.generatedHorses,0);
@@ -24,21 +24,15 @@ test('Jan 1 founding scenario replaces 325k visible TEST world but preserves his
  assert.equal(founding.counts.people,120); // 22 previously linked people + 30 proposed leaders + 68 fresh professionals
 });
 
-test('every founding racing horse has canonical immutable horse ID and original owner, trainer, and pedigree',()=>{
- const source=new Map(canon.horses.map(h=>[h.id,h]));
- for(let i=0;i<founding.counts.horses;i++){
-  const horse=founding.horseAt(i),old=source.get(horse.id);
-  assert.ok(old,horse.id+' must be source-confirmed');
-  assert.equal(horse.name,old.name);
-  assert.equal(horse.ownerId,old.ownerId);
-  assert.equal(horse.trainerId,old.trainerId);
-  assert.equal(horse.sireId,old.sireId);
-  assert.equal(horse.damId,old.damId);
-  assert.equal(founding.worldIndexByHorseId(horse.id),i);
-  assert.equal(founding.worldHorseDirectoryAt(i).name,old.name);
-  assert.equal(founding.worldHorseDirectoryAt(i).canonical,true);
- }
- assert.equal(founding.worldIndexByHorseId('H-NOT-IN-WORLD'),-1);
+test('the old 39 generated B01 horses are archived, never carried into a clean founding world',()=>{
+ assert.equal(founding.sourceHorses.length,0);
+ assert.equal(founding.counts.horses,0);
+ assert.equal(founding.audit.quarantinedOldB01OpeningRunners,39);
+ assert.equal(founding.worldIndexByHorseId('H-1997-030039'),-1);
+ assert.ok(canon.horses.some(h=>h.sourceBoundary==='B01_APPROVED_1999_GENERATED_OPENING__NOT_1998_RACER'));
+ assert.ok(founding.sourceStallions.every(h=>founding.worldIndexByHorseId(h.id)>=0));
+ assert.ok(founding.sourceBroodmares.every(h=>founding.worldIndexByHorseId(h.id)>=0));
+ assert.throws(()=>founding.horseAt(0),/Founder horse index/);
 });
 
 test('founding operations carry approved names under existing owner IDs, never duplicate their owners',()=>{
@@ -93,16 +87,16 @@ test('breeding source retains standing farms with no simulated pregnancies or in
 
 test('browser management API has exactly the founding roster, not 325k synthetic identities',()=>{
  const overview=api('/api/1999/sim/overview');
- assert.equal(overview.counts.worldHorses,112);
- assert.equal(overview.counts.horses,39);
+ assert.equal(overview.counts.worldHorses,73);
+ assert.equal(overview.counts.horses,0);
  assert.equal(overview.mode,'FOUNDING_1999');
  assert.equal(api('/api/1999/organizations').total,37);
- assert.equal(api('/api/1999/horses').total,39);
+ assert.equal(api('/api/1999/horses').total,0);
  assert.equal(api('/api/1999/sim/owners').total,37);
- assert.equal(api('/api/1999/sim/world-horse-directory?limit=100').total,112);
+ assert.equal(api('/api/1999/sim/world-horse-directory?limit=100').total,73);
  assert.equal(api('/api/1999/stallions').active.length,18);
  const sample=api('/api/1999/sim/owner-horses?ownerId=O-000011');
- assert.equal(sample.total,10);
+ assert.equal(sample.total,0);
  assert.ok(sample.items.every(h=>h.ownerId==='O-000011'));
 });
 
@@ -110,8 +104,8 @@ test('founding roster is seed-deterministic and rejects out-of-range index acces
  const another=createFounding1999Universe({seed:19990101});
  assert.deepEqual(another.counts,founding.counts);
  assert.deepEqual(another.sourceOrganizations,founding.sourceOrganizations);
- assert.equal(another.horseAt(0).name,founding.horseAt(0).name);
- assert.throws(()=>founding.horseAt(39),/Founder horse index/);
+ assert.equal(another.audit.quarantinedOldB01OpeningRunners,39);
+ assert.throws(()=>founding.horseAt(0),/Founder horse index/);
  assert.throws(()=>founding.ownerAt(37),/Founder owner index/);
 });
 
@@ -129,8 +123,8 @@ test('World Registrar founding JSON matches the active scenario instead of legac
  assert.equal(data.historicalAnchors.length,founding.historicalAnchors.length);
  assert.deepEqual(data.organizations.map(o=>[o.id,o.name]),
   founding.sourceOrganizations.map(o=>[o.id,o.name]));
- assert.equal(new Set(data.horses.map(h=>h.id)).size,112);
- assert.equal(data.horses.filter(h=>h._role==='opening').length,39);
+ assert.equal(new Set(data.horses.map(h=>h.id)).size,73);
+ assert.equal(data.horses.filter(h=>h._role==='opening').length,0);
  assert.equal(data.horses.filter(h=>h._role==='stallion').length,18);
  assert.equal(data.horses.filter(h=>h._role==='broodmare').length,55);
  assert.ok(data.organizations.some(o=>o.name==='Ashby Vale Farm'&&o.publicPrincipal==='Miriam Vale'));
@@ -149,7 +143,7 @@ test('full founding history bridge links source horse-years without importing de
  assert.equal(founding.audit.historicalAnchorRecords,archive.length);
  assert.equal(founding.audit.linkedHistoricalHorses,names.length);
  assert.equal(new Set(names.map(h=>h.id)).size,names.length);
- assert.equal(founding.counts.worldHorses,112);
+ assert.equal(founding.counts.worldHorses,73);
  assert.ok(archive.every(a=>founding.sourceOrganizations.some(o=>o.id===a.organizationId)));
  for(const a of archive.filter(a=>a.role==='HISTORICAL_STAKES_ASSOCIATION_ROLE_UNVERIFIED')){
   assert.ok(a.horseId?.startsWith('H-'),a.horse);
@@ -173,7 +167,7 @@ test('full founding history bridge links source horse-years without importing de
  const live=JSON.parse(readFileSync(new URL('../public/data/wtw-1999-founding-directory-v1.json',import.meta.url),'utf8'));
  assert.deepEqual(live.historicalAnchors,archive);
  assert.deepEqual(live.historicalHorses,names);
- assert.equal(live.horses.length,112);
+ assert.equal(live.horses.length,73);
 });
 
 test('founding ancillary markets do not summon old 3,308-owner rivals or phantom sale lots',()=>{
