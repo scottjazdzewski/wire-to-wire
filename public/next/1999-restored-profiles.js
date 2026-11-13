@@ -147,6 +147,9 @@ function source(kind,record,ui){
    panel('Organization context',[d.approvedOrigin||
     'No approved separate institution history provided.']);
  }else if(kind==='track'){
+  // Attach the canonical T-ID to the existing Track profile for its available
+  // source-published logo. Do not alter identity or racing-calendar state.
+  node.dataset.trackId=d.id||d._canonId||d._id||'';
   const stakes=ui?.stakesForTrack?.(name)||[];
   const location=d.location||[d.locality,d.region].filter(Boolean).join(', ')||'—';
   node.innerHTML='<div class="profileSubline">1999 Racecourse · '+safe(d.circuit||d.region||'')+'</div>'+
