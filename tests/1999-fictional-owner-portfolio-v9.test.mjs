@@ -194,7 +194,7 @@ test('V8 names may be reused in the V9 portfolio planner without creating any ad
 });
 test('ownership planner never mutates existing horse-generation, save, or UI files',()=>{
  const planner=readFileSync(new URL('../public/1999/engine/fictional-owner-portfolio-planner.mjs',import.meta.url),'utf8');
- const old=readFileSync(new URL('../public/1999/engine/full-world-generator.mjs',import.meta.url),'utf8');
+ const old=readFileSync(new URL('../public/1999/engine/founding-world-1999.mjs',import.meta.url),'utf8');
  assert.doesNotMatch(planner,/\b(?:fetch|localStorage|indexedDB|writeFile|setItem)\s*\(/);
  assert.doesNotMatch(old,/fictional-owner-portfolio-planner/);
  assert.doesNotMatch(old,/planFictionalOwnerPortfolios/);
