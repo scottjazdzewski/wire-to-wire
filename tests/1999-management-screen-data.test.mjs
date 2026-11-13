@@ -102,7 +102,7 @@ test('the small founding facility, finance, and sale directories show no phantom
  assert.equal(facilities.length,ui.counts.facilities);
  assert.ok(facilities.every(f=>Boolean(f._id)));
  const finance=ui.departmentRows('Finances','Overview');
- assert.ok(finance.every(row=>row.source==='GENERATED_TEST_BASELINE'));
+ assert.ok(finance.every(row=>row.source==='FOUNDING_FINANCE_NOT_CERTIFIED__NO_SETTLEMENT_AUTHORITY'&&row.income==='—'&&row.expense==='—'));
 });
 
 test('global World browser pages only the founding 112 horses, never the 325k test population',()=>{
