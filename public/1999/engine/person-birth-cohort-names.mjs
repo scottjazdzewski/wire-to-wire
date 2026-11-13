@@ -28,7 +28,7 @@ export const US_COHORT_GIVEN_NAMES=Object.freeze({
   'Mary Linda Barbara Patricia Carol Sandra Nancy Sharon Judith Susan Betty Carolyn Margaret Shirley Judy Karen Donna Kathleen Joyce Dorothy Janet Diane Janice Joan Elizabeth Brenda Gloria Virginia Marilyn Martha'),
  1950:ranked(
   'James Michael Robert John David William Richard Thomas Mark Charles Steven Gary Joseph Donald Ronald Kenneth Paul Larry Daniel Stephen Dennis Timothy Edward Jeffrey George Gregory Kevin Douglas Terry Anthony',
-  'Mary Linda Patricia Susan Deborah Barbara Debra Karen Nancy Donna Cynthia Sandra Pamela Sharon Kathleen Carol Diane Brenda Cheryl Janet Elizabeth Margaret Janice Carolyn Denise Judy Rebecca Joyce Teresa'),
+  'Mary Linda Patricia Susan Deborah Barbara Debra Karen Nancy Donna Cynthia Sandra Pamela Sharon Kathleen Carol Diane Brenda Cheryl Janet Elizabeth Kathy Margaret Janice Carolyn Denise Judy Rebecca Joyce Teresa'),
  1960:ranked(
   'Michael David John James Robert Mark William Richard Thomas Jeffrey Steven Joseph Timothy Kevin Scott Brian Charles Paul Daniel Christopher Kenneth Anthony Gregory Ronald Donald Gary Stephen Eric Edward Douglas',
   'Lisa Mary Susan Karen Kimberly Patricia Linda Donna Michelle Cynthia Sandra Deborah Tammy Pamela Lori Laura Elizabeth Julie Brenda Jennifer Barbara Angela Sharon Debra Teresa Nancy Christine Cheryl Denise Kelly'),
