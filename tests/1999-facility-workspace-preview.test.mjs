@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const page=read('public/next/facility-workspace-preview.html');
 const dir=JSON.parse(read('public/data/wtw-1999-founding-directory-v1.json'));
@@ -12,6 +13,14 @@ const classify=o=>{
  if(/RACING STABLE|OWNERSHIP STABLE/.test(type))return 'stable';
  return '';
 };
+test('Preview JavaScript is syntactically valid and the horse impact panel is ABOVE secondary facility details',()=>{
+ const script=page.match(/<script>([\s\S]*?)<\/script>/);
+ assert.ok(script);
+ assert.doesNotThrow(()=>new vm.Script(script[1]));
+ const effect=page.indexOf('ILLUSTRATIVE HORSE-EFFECT SCENARIO');
+ const people=page.indexOf("tile('WHO CONTROLS THE HORSE AND THE PROPERTY'");
+ assert.ok(effect>=0&&people>effect,'Horse outcomes must be visible first in the right inspector');
+});
 test('Facilities PREVIEW is a separate one-screen list + persistent right inspector, not existing Office mutation',()=>{
  assert.match(page,/READ-ONLY DESIGN PREVIEW/);
  assert.match(page,/FACILITY REGISTER/);
