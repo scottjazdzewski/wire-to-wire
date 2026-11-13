@@ -2,7 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createAgeAbility,evaluateAgeAbility,supportedAgeRoles,AGE_ABILITY_SCHEMA} from '../public/1999/engine/age-ability.mjs';
 import {create1999Universe} from '../src/1999/full-world-generator.mjs';
-import {readLocal1999World} from '../public/1999/engine/local-api.mjs';
+import {readLocal1999World as read1999Directory} from '../public/1999/engine/local-api.mjs';
+// Explicit older full-world benchmark, not the clean founding-game default.
+const readLocal1999World=raw=>{
+ const url=new URL(raw,'https://wtw.benchmark');
+ if(!url.searchParams.has('mode'))url.searchParams.set('mode','CANON_ANCHORED_TEST');
+ return read1999Directory(url.pathname+url.search);
+};
 
 const seed=19990101,world=create1999Universe({seed});
 const valid=rating=>Number.isInteger(rating?.current)&&Number.isInteger(rating?.potential)&&
