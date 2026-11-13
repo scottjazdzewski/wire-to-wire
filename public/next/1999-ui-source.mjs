@@ -75,8 +75,7 @@ const gameWorldProfile=window.__WTW_1999_MANAGEMENT__?.worldProfile||
  {seed:19990101,mode:'FOUNDING_1999',population:73};
 const worldQuery='seed='+encodeURIComponent(gameWorldProfile.seed)+
  '&mode='+encodeURIComponent(gameWorldProfile.mode)+
- '&population='+encodeURIComponent(gameWorldProfile.population)+
- (gameWorldProfile.mode==='FOUNDING_1999'?'&pilot=opening':'');
+ '&population='+encodeURIComponent(gameWorldProfile.population);
 const q=(route,extras='')=>readLocal1999World(route+(route.includes('?')?'&':'?')+
  worldQuery+(viewDate==='1999-01-01'?'':'&date='+viewDate)+(extras?'&'+extras:''));
 const allPages=(route,total)=>{
@@ -136,21 +135,21 @@ const initialOwner=q('/api/1999/sim/owners','offset='+Math.max(0,gameWorldProfil
 const openingCash=initialOwner?.finances?.cash??null;
 const messageSpecs=[
  ['opening-stable','Stable Office','1999 opening roster: '+selectedOwner,
-  '400 new-fiction registered pilot runners · historical B01 horses excluded',true,'Stable'],
+  'Old B01 horses excluded · awaiting new racing registrations',true,'Stable'],
  ['opening-stakes','Racing Secretary','1999 domestic stakes program',
-  'Pilot racing begins when the January 1999 game calendar advances',true,'Racing'],
+  'No entries or results recorded',true,'Racing'],
  ['opening-breeding','Breeding Office',String(worldCounts.breedingStallions)+' stallions and '+String(worldCounts.breedingMares)+' broodmares',
-  '73 protected founding breeding records; no declared new matings',false,'Breeding'],
+  'Source records, not declared matings',false,'Breeding'],
  ['opening-market','Sales Desk','12 proposed sale dates · no phantom catalogs',
   'Auction transactions have NOT occurred',false,'Sales'],
  ['opening-finance','Accounting','Opening cash and budgets are not yet engine-certified',
   'No accounting transactions have posted',true,'Finances'],
  ['opening-tracks','Track Operations',worldCounts.tracks+' U.S., Canadian and Cuban tracks available',
   'Operating conditions and meet dates remain test data',false,'Tracks'],
- ['opening-people','Personnel Office',worldCounts.trainers+' trainers and '+generatedPeopleCount+' jockeys in the initial pilot',
-  'Named test personnel; assignments and ratings are subject to gameplay tests',false,'Personnel'],
+ ['opening-people','Personnel Office','4,200 trainers in the test economy',
+  'Only known people identities are source-locked',false,'Personnel'],
  ['opening-universe','World Registrar',(worldCounts.worldHorses||worldCounts.horses).toLocaleString('en-US')+' distinct horses in the 1999 world',
-  'Founding breeding stock preserved; 400 racing horses are explicit simulated TEST fiction',false,'World']
+  'Source-locked horses preserved; other population groups simulated',false,'World']
 ];
 const officeMessages=messageSpecs.map(([caseId,from,title,meta,urgent,section],i)=>({
  case:caseId,from,title,meta,time:'DAY 1',urgent,resolved:false,
