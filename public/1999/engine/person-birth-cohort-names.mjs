@@ -53,7 +53,8 @@ export function drawUSBirthCohortName(seed,index,birthYear,feminine,attempt=0){
  for(const char of 'cohort:'+index+':'+birthYear+':'+attempt+':'+(feminine?'F':'M')){
   h^=char.charCodeAt(0);h=Math.imul(h,16777619);
  }
- h^=h>>>16;
+ h^=h>>>16;h=Math.imul(h,0x7feb352d);h^=h>>>15;
+ h=Math.imul(h,0x846ca68b);h^=h>>>16;
  const rankWeights=pool.map((_,i)=>Math.round(1000/(i+4)));
  const total=rankWeights.reduce((a,b)=>a+b,0);
  let value=(h>>>0)%total;
