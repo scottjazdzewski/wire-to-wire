@@ -121,12 +121,36 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   const sourcePersonButton=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
   check('1999 world person source row is navigable',Boolean(sourcePersonButton));
   sourcePersonButton.click();await pause(220);
-  check('Canonical World person uses the same professional attribute dossier',
-   Boolean(d.querySelector('#wtwNextgen .ng-profile-person'))&&
-   d.querySelectorAll('#wtwNextgen .ng-person-attribute').length>=11);
-  check('Source person identity displays role-specific modeled test skills, not a generic profile',
-   d.querySelectorAll('#wtwNextgen .ng-person-attribute strong.test-modeled').length>=11&&
-   d.querySelector('#wtwNextgen .ng-person-workspace')?.textContent.includes('SIMULATED TEST VALUES'));
+  check('Founding person opens Horse-style detailed dossier by immutable person ID',
+   Boolean(d.querySelector('#wtwNextgen .ng-profile-horse.ng-founding-person[data-founding-id]'))&&
+   Boolean(d.querySelector('#wtwNextgen .ng-founding-biography'))&&
+   d.querySelectorAll('#wtwNextgen .ng-horse-rating-row').length>=5);
+  check('Unapproved modeled ratings and legacy staff do NOT appear in personnel dossier',
+   d.querySelectorAll('#wtwNextgen .ng-founding-person .ng-horse-rating-row strong.unknown').length>=5&&
+   !d.querySelector('#wtwNextgen .ng-founding-person .test-modeled')&&
+   d.querySelector('#wtwNextgen .ng-founding-person')?.textContent.includes('AWAITING CERTIFIED DATA'));
+  click('Personnel');await pause(230);
+  const ownersTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Owners');
+  check('Ownership roster still uses approved Office navigation',Boolean(ownersTab));
+  ownersTab.click();await pause(250);
+  const firstOwner=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
+  check('Founder ownership group has exact-ID roster link',Boolean(firstOwner));
+  firstOwner.click();await pause(220);
+  check('Ownership page reuses Track-style profile with linked people and source history',
+   Boolean(d.querySelector('#wtwNextgen .ng-profile-track.ng-founding-ownership[data-founding-id]'))&&
+   Boolean(d.querySelector('#wtwNextgen .ng-track-workspace'))&&
+   Boolean(d.querySelector('#wtwNextgen .ng-founding-people-list')));
+  click('Facilities');await pause(250);
+  const studsTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Stud Farms');
+  check('Facility navigation retains its existing approved view picker',Boolean(studsTab));
+  studsTab.click();await pause(260);
+  const firstStud=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
+  check('Approved stud farm is selectable without creating separate buildings',Boolean(firstStud));
+  firstStud.click();await pause(220);
+  check('Facility page reuses Track-style profile with exact institution ID',
+   Boolean(d.querySelector('#wtwNextgen .ng-profile-track.ng-founding-facility[data-founding-id]'))&&
+   Boolean(d.querySelector('#wtwNextgen .ng-track-workspace'))&&
+   d.querySelector('#wtwNextgen .ng-founding-profile')?.textContent.includes('NOT REGISTERED'));
   click('Breeding');await pause(180);
   const stallions=ui.departmentRows('Breeding','Stallions');
   check('18 source stallions appear only once in founder breeding screen',stallions.length===18&&stallions.every(h=>h._canonId&&h.status?.includes('SOURCE')));
