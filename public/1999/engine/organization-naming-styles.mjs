@@ -141,7 +141,7 @@ export function contextualStableCandidate(seed,index,attempt,trainer,primarySurn
  if(roll<67)return full+' Race Barn';
  if(roll<79)return root+' '+family+' Racing';
  if(roll<89)return family+' Racing Team';
- if(roll<95)return root+' Training Barn';
+ if(roll<95)return root+' '+family+' Training Barn';
  return full+' Racing Stable';
 }
 export function contextualBreakingCandidate(seed,index,attempt,context={}){
