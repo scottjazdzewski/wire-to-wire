@@ -675,7 +675,7 @@ function worldHorsePage(offset=0,limit=20,filter=''){
   q('/api/1999/sim/world-horse-profile','index='+(start+n)).horse)};
  const sourceIds=new Set(srcHorses.map(h=>h.id));
  const rows=(data.items||[]).map((h,rowOffset)=>{
-  const source=sourceIds.has(h.id);
+  const source=sourceIds.has(h.id)||gameWorldProfile.mode==='FOUNDING_1999';
   const sireName=source?srcHorses.find(p=>p.id===h.sireId)?.name:null;
   const damName=source?srcHorses.find(p=>p.id===h.damId)?.name:null;
   return {_kind:'horse',_name:h.name,_directoryIndex:start+rowOffset,registryGroup:h.registryGroup||'',_canonId:source?h.id:'',
@@ -694,7 +694,7 @@ function worldHorsePage(offset=0,limit=20,filter=''){
    owner:universeLabels.owners.get(h.ownerId)||ownerNames.get(h.ownerId)||h.ownerId||'',
    trainer:universeLabels.trainers.get(h.trainerId)||peopleNames.get(h.trainerId)||h.trainerId||'',
    track:source?h.openingStable?.name||'':h.stableTrackId,
-   status:source?h.racingStatus||'SOURCE OPENING':
+   status:source?String(h.racingStatus1999||h.racingStatus||h.status||'SOURCE STATUS NOT VERIFIED').replaceAll('_',' '):
     String(h.racingStatus1999||h.breedingStatus1999||h.status||'GENERATED TEST · NO ENTRY/RESULT').replaceAll('_',' '),_id:h.id,
    location:city(h.location||h.openingStable)||''};
  });
