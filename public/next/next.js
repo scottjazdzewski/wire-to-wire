@@ -3048,6 +3048,17 @@ function previewRecordView(){
  const kind=fromState?.kind||decodeURIComponent(pieces[1]||'record');
  const id=decodeURIComponent(pieces.slice(2).join(':')||'');
  const name=fromState?.name||id||'Unregistered record';
+ const people=[...(world1999Data?.people||[]),...world1999JockeyRoster,...world1999TrainerRoster];
+ const horses=world1999Data?.horses||[];
+ const person=people.find(p=>p.id===id||p.id===fromState?.row?._canonId&&p.name===name);
+ const horse=horses.find(h=>h.id===id||h.id===fromState?.row?._canonId&&h.name===name);
+ // Reuse the approved Horse-style profile only after exact canonical identity
+ // has been verified; unregistered entities never acquire mock attributes.
+ if(person||horse){
+  const fields=fromState?.row||{};
+  if(kind==='person')return restored1999Profile('person',{...person,...fields,name});
+  if(kind==='horse')return restored1999Profile('horse',{...horse,...fields,name});
+ }
  const message='This record is not registered in the approved January 1999 world. No entity, finances, pedigree or attributes have been invented.';
  return '<section class="ng-entity-preview ng-stable-roster-v2">'+
   '<header><div><small>UNREGISTERED · '+safe(kind.toUpperCase())+'</small><h2>'+
