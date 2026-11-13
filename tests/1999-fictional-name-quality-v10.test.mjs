@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
-import {createOrganizationNameRoster,createProtectedOrganizationRootGuard}
+import {createOrganizationNameRoster,createProtectedOrganizationRootGuard,
+ hasArtificialOrganizationPhrase}
  from '../public/1999/engine/organization-name-engine.mjs';
 import {createFictionalWorldNameEngine}
  from '../public/1999/engine/fictional-world-name-engine.mjs';
@@ -15,6 +16,13 @@ const normalize=s=>String(s).normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
  .toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'');
 const noFacilities={generalFarms:0,studFarms:0,nurseries:0,bloodstockFarms:0,breakingTraining:0};
 
+test('actual generated-business filter accepts Unicode accents but rejects repeated words',()=>{
+ assert.equal(hasArtificialOrganizationPhrase('Raúl López Racing'),false);
+ assert.equal(hasArtificialOrganizationPhrase('Seán Niall Thoroughbreds'),false);
+ assert.equal(hasArtificialOrganizationPhrase('López López Stables'),true);
+ assert.equal(hasArtificialOrganizationPhrase('Silver Silver Stud'),true);
+ assert.equal(hasArtificialOrganizationPhrase('Hill Farm Farm'),true);
+});
 test('indexed historical root guard has exact legacy prefix semantics across 12k roots',()=>{
  const roots=Array.from({length:12000},(_,i)=>
   'name'+String(i).padStart(6,'0')+' meadow');
