@@ -51,7 +51,7 @@
 <script>
 (function(){
 'use strict';
-var rows=[],logos={},filter='all',search='',selected='preview-belmont',scenario='standard';
+var rows=[],logos={},filter='all',search='',selected='preview-belmont',scenario='excellent';
 var demo={
  id:'preview-belmont',name:'Belmont Park — Trainer Barn Example',category:'track',
  type:'TRACK-BASED RACING BARN · CONCEPT ONLY',
@@ -114,6 +114,8 @@ function detail(){
  tile('CAPACITY, CARE AND STAFF',pair('Certified stall capacity','NOT ENTERED')+pair('Horses actually housed','NONE ASSIGNED')+
  pair('Physical condition','NOT ASSESSED')+pair('Veterinary / recovery support','NOT ASSESSED')+
  pair('Staff coverage','NOT HIRED / ASSIGNED')+
+ pair('Staff quality','NOT ASSESSED')+
+ pair('Training environment','NOT ASSESSED')+
  pair('Training access',example?'TRACK ACCESS POSSIBLE · NOT BOOKED':o.category==='farm'||o.category==='stud'?'SEPARATE SERVICE / VENUE REQUIRED':'NOT CERTIFIED'))+
  tile('ONE FACILITY · ONE PROFIT CENTER',pair('Revenue','Board / stud / training / service fees')+
  pair('Operating expenses','Staff · feed · upkeep · utilities · rent')+
