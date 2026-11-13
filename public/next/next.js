@@ -2513,6 +2513,14 @@ function depTrackCalendar(){
  const missing=extra.filter(t=>!seen.has(t.id)&&!seen.has(t.name));
  return [...office,...others,...missing].filter(t=>!isClean1999()||
   !permittedTracks.size||permittedTracks.has(t.id)||permittedNames.has(t.name)).map(t=>{
+  // The 1999 source directory, NOT the old track-program/demo defaults,
+  // decides whether a historical racecourse is closed and remains dormant.
+  const canonical=(world1999Data?.tracks||[]).find(r=>r.id===t.id);
+  if(isClean1999()&&canonical?.operating==='HISTORICAL_ONLY')
+   return {...t,id:canonical.id,name:canonical.name,location:canonical.location,
+    circuit:canonical.circuit||t.circuit,operating:'HISTORICAL_ONLY',
+    meetWindow:'',raceDays:'',preferredDays:'',stakes:[],
+    playableIn1999:false,_source1999:true,_historyOnly:true};
   const p=byId.get(t.id)||byName.get(t.name)||null;
   const sourceStakes=(window.__WTW_1999_UI_DATA__?.stakesForTrack?.(t.name)||[])
    .map(r=>({...r,date:r.localDate||r.date||'',class:r.status||r.division||r.grade||'',purse:r.purse1999}));
