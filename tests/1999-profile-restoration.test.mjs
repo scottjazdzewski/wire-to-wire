@@ -31,7 +31,10 @@ test('source-backed 1999 horse birthplace mapping uses Horse_ID and does not cla
  assert.equal(foaling.schema,'WTW_1999_HORSE_FOALING_REGISTRY_PROJECTION_V1');
  assert.equal(foaling.source.countryField,'Foaling_Country');
  assert.equal(foaling.source.jurisdictionField,'Breeding_Jurisdiction');
- assert.ok(Object.keys(foaling.records).length>=250);
+ assert.equal(Object.keys(foaling.records).length,27);
+ const founding=JSON.parse(get('public/data/wtw-1999-founding-directory-v1.json'));
+ const allowed=new Set([...founding.horses,...founding.historicalHorses].map(x=>x.id));
+ assert.ok(Object.keys(foaling.records).every(id=>allowed.has(id)));
  for(const [id,row] of Object.entries(foaling.records)){
   assert.equal(row.horseId,id);
   assert.match(id,/^H-/);
