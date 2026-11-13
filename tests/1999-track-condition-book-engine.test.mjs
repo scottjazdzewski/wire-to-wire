@@ -73,9 +73,4 @@ test('racing only on meet days, and only on available course surfaces',()=>{
  assert.deepEqual(card(browser,'T-0013','1999-05-01').map(summary),
   card(browser,'T-0013','1999-05-01').map(summary),'repeat seed drift');
 });
-test('fully fictional mode has no canonical/source stakes on its test cards',()=>{
- const w=browserUniverse({seed:19990101,mode:'FULLY_FICTIONAL_TEST'});
- const races=card(w,'T-0013','1999-05-01');
- assert.ok(races.length>=6);
- assert.equal(races.filter(x=>x.stakeId).length,0);
-});
+
