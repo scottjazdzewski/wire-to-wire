@@ -152,8 +152,7 @@ export function createIndexedFictionalNameRegistry({
    throw Error('Stored owner missing parent organization');
  }
  let revision=snapshot?.revision??0;
- const ownerGroups=()=>ownerEntities.filter(
-  x=>x.archetype==='PARTNERSHIP_OR_SYNDICATE');
+ const groupEntities=ownerEntities.filter(x=>x.archetype==='PARTNERSHIP_OR_SYNDICATE');
  const index=Object.freeze({
   get revision(){return revision},
   hasAnyName:name=>exact.has(nameKey(name)),
@@ -173,7 +172,7 @@ export function createIndexedFictionalNameRegistry({
   return Object.freeze(records);
  }
  function listGroups({region=null,offset=0,limit=50}={}){
-  return Object.freeze(ownerGroups().filter(x=>region===null||x.region===region)
+  return Object.freeze(groupEntities.filter(x=>region===null||x.region===region)
    .slice(offset,offset+limit));
  }
  function commit({expectedRevision,people,organizations,owners,batchIndex}={}){
@@ -226,14 +225,16 @@ export function createIndexedFictionalNameRegistry({
     roots.add(organizationRootOfName(org.name));
   }
   for(const owner of owners){
-   ownerEntities.push(redactRecord({...owner,batchIndex}));
+   const row=redactRecord({...owner,batchIndex});
+   ownerEntities.push(row);
+   if(row.archetype==='PARTNERSHIP_OR_SYNDICATE')groupEntities.push(row);
    ownerIds.add(owner.id);
   }
   revision++;
   return Object.freeze({
    revision,issuedPeople:issuedPeople.length,
    issuedOrganizations:issuedOrganizations.length,
-   owners:ownerEntities.length,formalGroups:ownerGroups().length
+   owners:ownerEntities.length,formalGroups:groupEntities.length
   });
  }
  function snapshotNow(){
@@ -256,7 +257,7 @@ export function createIndexedFictionalNameRegistry({
   get revision(){return revision},
   get namesIssued(){return issuedPeople.length+issuedOrganizations.length},
   get ownerCount(){return ownerEntities.length},
-  get formalGroupsIssued(){return ownerGroups().length},
+  get formalGroupsIssued(){return groupEntities.length},
   hasAnyName:index.hasAnyName,
   listOwners,listGroups,commit,snapshot:snapshotNow
  });
