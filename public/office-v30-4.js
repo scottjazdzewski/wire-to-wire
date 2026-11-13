@@ -132,7 +132,9 @@
       const saved=JSON.parse(localStorage.getItem(STATE_KEY)||'null');
       const sameWorld=saved?.worldAnchor?.schema===gameState.worldAnchor?.schema&&
        saved?.worldAnchor?.startDate===gameState.worldAnchor?.startDate&&
-       saved?.worldAnchor?.seed===gameState.worldAnchor?.seed;
+       saved?.worldAnchor?.seed===gameState.worldAnchor?.seed&&
+       saved?.worldAnchor?.mode===gameState.worldAnchor?.mode&&
+       saved?.worldAnchor?.population===gameState.worldAnchor?.population;
       if(sameWorld&&saved.horseDevelopment?.schema==='WTW_1999_HORSE_DEVELOPMENT_V1')
         gameState.horseDevelopment=saved.horseDevelopment;
     }catch{/* A damaged browser cache cannot silently become a source record. */}
@@ -1059,12 +1061,12 @@
         gameState=blankGameState();
         gameState.schema=window.__WTW_1999_MANAGEMENT__.schema;
         gameState.version=window.__WTW_1999_MANAGEMENT__.schema;
-        gameState.worldAnchor={schema:gameState.schema,startDate:'1999-01-01',seed:19990101,mode:'CANON_ANCHORED_TEST',historicalResultsImmutable:true,observationsOnly:true,lastCommittedRaceResult:null,lastCommittedTransaction:null};
+        gameState.worldAnchor={...gameState.worldAnchor,schema:gameState.schema,startDate:'1999-01-01',seed:window.__WTW_1999_MANAGEMENT__.worldProfile.seed,mode:window.__WTW_1999_MANAGEMENT__.worldProfile.mode,population:window.__WTW_1999_MANAGEMENT__.worldProfile.population,worldProfile:window.__WTW_1999_MANAGEMENT__.worldProfile,historicalResultsImmutable:true,observationsOnly:true,lastCommittedRaceResult:null,lastCommittedTransaction:null};
         gameState.date='1999-01-01';
         setDateChipText('1999-01-01');
         persistState(true);
         window.dispatchEvent(new CustomEvent('wtw:1999-reset',{detail:{date:'1999-01-01'}}));
-        showToast('New clean game: January 1, 1999');
+        showToast('Fresh founding game: January 1, 1999');
         return true;
       }
       localStorage.removeItem(STATE_KEY);
