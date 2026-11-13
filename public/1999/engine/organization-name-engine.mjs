@@ -85,9 +85,11 @@ function farmName(seed,i,attempt,kind){
  else stem=draw(['Old','New','Lower','Upper','West','East'],seed,k+':direction')+' '+draw(LANDMARK,seed,k+':landmark2');
  return stem+' '+suffix;
 }
-function ownerName(seed,i,attempt,principal){
+function ownerName(seed,i,attempt,principal,alignPrincipalSurname=false){
  const k='owner:'+i+':'+attempt;
- const family=draw(SURNAMES,seed,k+':family');
+ // In new fictional worlds, a surname-bearing owner business belongs to its
+ // declared principal's family, not to an unrelated randomly sampled family.
+ const family=alignPrincipalSurname&&principal?surname(principal):draw(SURNAMES,seed,k+':family');
  const second=draw(SURNAMES,seed,k+':family2');
  const land=draw(LAND,seed,k+':land');
  const place=draw(PLACES,seed,k+':place');
@@ -161,7 +163,8 @@ function breakingName(seed,i,attempt){
  */
 export function createOrganizationNameRoster({
  seed,ownerCount,barnCount,farmCount,breakingCount=0,
- protectedNames=[],principalNames=[],trainerNames=[],sourceOwnerNames=[],farmKindPlan=null
+ protectedNames=[],principalNames=[],trainerNames=[],sourceOwnerNames=[],farmKindPlan=null,
+ alignPrincipalSurnames=false
 }){
  if(!Number.isSafeInteger(seed)||seed<1)throw Error('Invalid naming seed');
  for(const n of [ownerCount,barnCount,farmCount,breakingCount])
@@ -201,7 +204,7 @@ export function createOrganizationNameRoster({
   // The legal name of a sole-owner operation intentionally equals its
   // principal's identity, not an independently generated business duplicate.
   if(i%11===0&&principal){used.add(norm(principal));return principal;}
-  return claim(attempt=>ownerName(seed,i,attempt,principal),'owner');
+  return claim(attempt=>ownerName(seed,i,attempt,principal,alignPrincipalSurnames),'owner');
  });
  const kindsAllowed=new Set(['FARM','STUD_FARM','THOROUGHBRED_NURSERY','BLOODSTOCK_FARM']);
  if(farmKindPlan!==null&&(!Array.isArray(farmKindPlan)||farmKindPlan.length!==farmCount||
