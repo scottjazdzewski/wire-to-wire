@@ -436,7 +436,7 @@ let world1999Data=null,world1999Loading=false,world1999LoadFailed=false;
 /* World Editor v1: canonical IDs remain immutable. The 1999 source JSON is
    immutable; user's edits are a browser-owned overlay, never a false source
    certification or a mutation to the global simulation save. */
-const WORLD_EDIT_KEY='wtwWorldEditPatchesV1';
+const WORLD_EDIT_KEY=window.__WTW_1999_MANAGEMENT__?.worldProfile?.mode==='FOUNDING_1999'?'wtwFoundingWorldEditPatchesV1':'wtwWorldEditPatchesV1';
 const WORLD_EDIT_EXPORT='WTW_WORLD_USER_EDITS_V1';
 const WORLD_LOCKED_FIELDS=new Set(['id','key','_role','registeredInV33','basis','source','sourceGate','chronologyCheck','population']);
 const WORLD_FORBIDDEN_FIELDS=new Set(['__proto__','prototype','constructor']);
@@ -733,7 +733,9 @@ function loadWorld1999(){
  if(world1999Data||world1999LoadFailed)return Promise.resolve();
  if(world1999Loading)return world1999Promise||Promise.resolve();
  world1999Loading=true;
- world1999Promise=fetch('/data/wtw-1999-world-directory-v33.json',{credentials:'same-origin',cache:'force-cache'})
+ world1999Promise=fetch(window.__WTW_1999_MANAGEMENT__?.worldProfile?.mode==='FOUNDING_1999'?
+   '/data/wtw-1999-founding-directory-v1.json':
+   '/data/wtw-1999-world-directory-v33.json',{credentials:'same-origin',cache:'force-cache'})
   .then(r=>r.ok?r.json():Promise.reject(Error('1999 directory unavailable')))
   .then(data=>{
    if(data?.schema!=='WTW_1999_WORLD_DIRECTORY_V1'||
