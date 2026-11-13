@@ -8,6 +8,12 @@
 
 **2026-11-13 strict approved-only update:** The site at `/next/?world=1999` now uses **37 approved founding organizations**, of which **33 have accepted/established principal IDs and four have NULL principals pending user name approval**. **41 approved named people** are exposed, including accepted secondary partners and non-operating Magic Johnson at Ledbetter; the old 68 test-generated workers, 12 auction catalogs and 118 phantom track training centers are NOT present in the opening world. The 30 Facilities directory rows are references to existing institutions ONLY: **5 stud farms, 15 farms, 10 racing-stable organizations**. No separate buildings or capacity/costs were created. The 118 racecourses are unchanged. The 73 source-linked breeding animals remain as protected historical-current breeding references; racing stable has zero registered runners. Logo assignment is restricted to `public/assets/office/founding-organization-logo-index.json`: **37 exact-ID slots, zero preapproved artwork loaded**, pending user's new logo files. The previous legacy logo index of 108 organizations is not used by the founding UI. Current UI assets use an `approved-only` cache revision. Cloudflare Pages uses Git-linked `main` deployments; authenticated live verification still requires the owner's Access session.
 
+## LOCKED WEBSITE PROFILE TEMPLATES — NOVEMBER 13, 2026
+
+The user approved **Track-style profiles for the 37 founding ownership organizations and 30 facility institution references** (same immutable O-ID; not duplicated entities), and **Horse-style dossiers for the 41 admitted founding people** (immutable P-ID). The live premium Office UI is unchanged; its new source-only profile components are in `public/next/1999-founding-profiles.js`, with thin exact-ID routing in `public/next/next.js` and scoped CSS in `public/next/next.css`. The templates are loaded in `public/next/index.html`. Ownership and Facilities profiles connect exact horse/person/organization IDs, including historical roles. No staff, 1999 registered runners, training centers, barn capacities, finances, synthetic ratings or contract values are fabricated. Four unapproved leadership names remain out of live profiles, and the logo slot stays reserved for approved future artwork only.
+
+**Profile design and route authority:** [1999 founding profile template contract](./1999-founding-profile-template-contract.md). **Do not redesign these templates in later windows without user direction.** Owner and facility pages are distinct views of one organization; people use the detailed horse-style biography + attributes + connections + career panel structure.
+
 ## 1. IMPORTANT: stop using the stale branches and handoffs
 
 As verified, GitHub has 79 branch names and six open PRs. In particular, PR #75 (`founding-world-clean-1999-pilot`) is a WIP branch, while #63/#61/#62 were designed around the old 87,500-horse population. **Do not merge those PRs or cherry-pick their full-world data into `main`.** The old `docs/1999-management-testing-handoff.md` instructs people to run 87,500 horses, 3,308 owners and the older `wtw1999ManagementStateV1`: it is superseded for the clean rebuild.
@@ -72,7 +78,7 @@ At older checkpoints the opening world showed 39 runners / 112 living horses. Th
 6. `public/1999/engine/founding-world-1999.mjs` — game-facing isolated read-model scenario.
 7. `public/1999/engine/founding-leadership-1999.mjs`, `founding-personnel-1999.mjs`, `founding-ancestry-1999.mjs`, `founding-youngstock-candidates-1999.mjs` — distinct leadership, professional, historical parent, and UNCOMMITTED youngstock layers.
 8. `public/1999/engine/local-api.mjs` + `public/next/1999-ui-source.mjs` — existing adapter and UI integration.
-9. `public/next/index.html`, `public/next/next.css`, `public/next/next.js` — **approved FM interface to preserve**, not redesign.
+9. `public/next/index.html`, `public/next/next.css`, `public/next/next.js`, `public/next/1999-founding-profiles.js` — **approved FM interface and locked founding profile templates to preserve**, not redesign.
 10. `tests/1999-founding-world.test.mjs`, `tests/1999-founding-youngstock-candidates.test.mjs`, `tests/1999-founding-leadership.test.mjs`, `scripts/1999-management-browser-smoke.sh` — core regression probes.
 
 Narrative and logo authority:
