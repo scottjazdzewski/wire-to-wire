@@ -31,7 +31,6 @@ jobs:
       - name: Source world and protected entry syntax
         run: |
           node --check src/1999/opening-world.v1.mjs
-          node --check src/1999/opening-readmodel.mjs
           node --check src/1999/entry-gate.mjs
           node --check src/1999/test-clock.mjs
           node --check public/1999/test-clock.mjs
