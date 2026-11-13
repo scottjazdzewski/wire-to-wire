@@ -82,7 +82,7 @@ function source(kind,record,ui){
   // All 1999 World and Personnel people use the EXISTING FM attribute dossier.
   // This node is a source adapter only; it does not invent skills or people.
   const personId=d.id||d._canonId||d._id||'';
-  const role=String(d.role||d.job||d.profession||d.type||'Not recorded').replaceAll('_',' ');
+  const role=String(d.positionTitle||d.role||d.job||d.profession||d.type||'Not recorded').replaceAll('_',' ');
   const place=value=>{
    if(typeof value==='string')return value;
    if(!value||typeof value!=='object')return '';
@@ -96,6 +96,8 @@ function source(kind,record,ui){
   const sourceModel=personId?ui?.sourcePersonModel?.(personId):null;
   const modelPersonTraits=d._testAttrs||sourceModel?.attributes||{};
   node.dataset.personId=personId;
+  node.dataset.operatingOrganizationId=d.operatingOrganizationId||'';
+  node.dataset.investorInOrganizationId=d.investorInOrganizationId||'';
   node.dataset.testGenerated=generated?'true':'false';
   node.dataset.testAttributeModel=Object.keys(modelPersonTraits).length?'true':'false';
   // These values already exist in the site's TEST population. They never
@@ -118,6 +120,27 @@ function source(kind,record,ui){
     '1999 SIMULATED TEST PERSON · modeled attributes must not be represented as certified scouting or historical facts.':
     personId?'Canonical person identity and recorded geography preserved. Displayed modeled skills are clearly identified as TEST estimates, not historical observations; unassessed skills remain unknown.':
     'Unlinked person name; no canonical identity or skill observation has been invented.']);
+ }else if(kind==='farm'){
+  // The actual approved Farm/Track FM dossier renderer consumes this source
+  // node. We do not build a second parallel ownership/facility page.
+  const id=d.id||d._canonId||d._id||'';
+  const location=d.location||d.locationLabel||'';
+  const chief=d.publicPrincipal||d.principalOwner||'';
+  const context=d._foundingContext==='facility'?'FACILITY':'OWNERSHIP';
+  node.dataset.organizationId=id;
+  node.dataset.foundingContext=d._foundingContext||'ownership';
+  node.innerHTML='<div class="profileSubline">1999 '+safe(context)+' · '+safe(d.type||'FOUNDING ORGANIZATION')+'</div>'+
+   field('Location',location||'Not recorded')+
+   field('Type',d.type||'Founding institution')+
+   field('Owner',chief||'Pending leadership approval')+
+   field('Current status',d.leadershipStatus==='PENDING_USER_REVIEW_NO_APPROVED_PRINCIPAL'?
+     'PRINCIPAL NAME NOT APPROVED':'APPROVED FOUNDING INSTITUTION')+
+   field('Organization ID',id)+
+   field('Operating capacity','Not certified')+
+   panel('Achievements')+
+   panel('Connected Horses')+
+   panel('Organization context',[d.approvedOrigin||
+    'No approved separate institution history provided.']);
  }else if(kind==='track'){
   const stakes=ui?.stakesForTrack?.(name)||[];
   const location=d.location||[d.locality,d.region].filter(Boolean).join(', ')||'—';
@@ -138,7 +161,7 @@ function source(kind,record,ui){
     panel('Track context',[d.realAnchor?'Source track geography preserved.':'WTW expanded-universe track.',
       d.basis==='VERIFIED_1999_CALENDAR'?'1999 meet windows verified against source commission calendar.':d.basis==='WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION'?'This track survives and races in the WTW alternate 1999 world. Meet dates and new stakes are modeled, not historical facts.':d.basis==='HISTORICAL_ONLY_NO_1999_MEET'?'Historical course. No 1999 meet; no active races.':d.basis==='APPROVED_WTW_1999_GAME_CALENDAR'?'Meets are locked in game canon, not independently certified as an actual 1999 calendar.':'1999 meets are game models, not historically source-certified.']);
  }
- return {node,route:{kicker:kind==='horse'?'Horse Profile':kind==='person'?'People Profile':'Track Profile',title:name}};
+ return {node,route:{kicker:kind==='horse'?'Horse Profile':kind==='person'?'People Profile':kind==='farm'?'Farm Profile':'Track Profile',title:name}};
 }
 window.WTW1999Profiles=Object.freeze({source});
 })();
