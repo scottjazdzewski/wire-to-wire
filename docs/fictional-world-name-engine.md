@@ -198,3 +198,33 @@ Code: `public/1999/engine/international-name-cultures.mjs`.
 Each Canadian/British fictional person exposes `internationalNameCulture`; the standalone world manifest exposes `internationalNameCultureModel` and includes that model version in the deterministic fingerprint.
 
 Tests: `node --test tests/1999-fictional-international-name-cultures.test.mjs` plus the updated international professional naming integration suite. The standard 11,202-person generation still returns only frozen in-memory names; no historical identity or currently playable game file is modified.
+
+## V7 — Regional organization and facility naming
+
+V7 improves the existing `createOrganizationNameRoster` factory; it does **not** create a parallel identity system, import organizations into the game, rename approved 1999 facilities, or modify any frontend.
+
+**Industry terminology:** Keeneland's [Thoroughbred glossary](https://www.keeneland.com/racing/terms-old/s) defines *stud* as both a breeding stallion and a breeding farm. Historic examples of farm, stud, and stallion-station naming can be found in [Thoroughbred Heritage's grave and breeding-farm directory](https://tbheritage.com/TurfHallmarks/Graves/GraveMattersIndex.html). These sources support the terminology, **not** the generated names or fictional establishment dates.
+
+### Distinct organization types
+
+- **FARM:** General-purpose farm names use geographic landholding vocabulary, family-style roots and conventional `Farm`, `Farms`, `Farmstead`, `Acres` and `Thoroughbreds` endings.
+- **STUD_FARM:** Breeding-focused names use `Stud`, `Stud Farm`, `Stallion Station`, `Stallion Farm`, or `Thoroughbred Stud`, preserving the distinct stud operation.
+- **THOROUGHBRED_NURSERY:** Foaling and nursery terminology is explicit, such as `Nursery`, `Thoroughbred Nursery`, `Foaling Nursery` or `Nursery Farm`.
+- **BLOODSTOCK_FARM:** Bloodstock names emphasize breeding and bloodstock; separately named owner bloodstock companies remain ownership organizations.
+- **RACING_STABLE:** Trainer-linked business names keep their trainer's primary surname, whether presented as a short racing business, training operation or named race barn.
+- **RACING_OWNER:** Owners may have a sole proprietor, family-named operation, syndicate, partnership, international investment name or bloodstock business. Family-named entities must retain the correct principal surname.
+- **BREAKING_AND_TRAINING:** Distinct purpose, without mislabeling a training center as a stud or ordinary race barn.
+
+### Geographic and era-style vocabulary
+
+Facility and business names are conditioned on their **actual assigned markets**, not randomly named independent of location. Lexicons cover Kentucky, Florida, California, New York, the Mid-Atlantic, Ontario, Louisiana, Britain/Ireland, and a general North American fallback. In the standalone fictional world the markets are chosen using the **same deterministic geography draws as before**; only the proposed name and descriptive naming-style metadata change.
+
+`organizationNamingEra(seed,index,category,establishedYear)` accepts an **optional explicitly provided** year for an established organization's naming style: before 1950 is `HERITAGE`, 1950–1980 `ESTABLISHED`, and 1981–1999 `CONTEMPORARY`. Without a known year, seeded era labels are fictional *aesthetic styles only*, and **no historical establishment date is invented**. The generated people and organizations do not claim false relationships or family dynasties based on their style.
+
+`createOrganizationNameRoster` accepts optional aligned context arrays `farmContexts`, `ownerContexts`, `trainerContexts`, `breakingContexts`, each containing a naming `region`, an optional `era`, and optionally an `establishedYear`. The shared registry protects approved canon names, disallows exact and normalized duplicates, limits distinctive-root reuse, and rejects malformed stacked words like "Ridge Ridge" and nonsensical purpose combinations. Source owner names remain unchanged.
+
+### Tests and boundaries
+
+Run `node --test tests/1999-fictional-organization-v7.test.mjs` together with `tests/1999-facility-personnel-names.test.mjs` and `tests/1999-fictional-world-naming-engine.test.mjs`. Validate 11,202 people, 8,408 organizations, exact facility-purpose counts, protected brands, linked principal/trainer surnames, and non-mutation of the existing generator.
+
+The world manifest records `organizationStyleModel` and the new V7 identity-factory schema. Generated organization rows include a `namingRegion` and `namingEraStyle`, both **editorial naming attributes**, not verified founding records. No population insertion, horse generation, active-world rewriting or UI layout changes are made.

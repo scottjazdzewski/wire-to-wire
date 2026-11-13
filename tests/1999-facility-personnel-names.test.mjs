@@ -132,7 +132,7 @@ test('900 distinct farm identities have their own commercial purpose, without cl
   if(k==='STUD_FARM')return /\b(?:Stud|Stallion)\b/i.test(name);
   if(k==='THOROUGHBRED_NURSERY')return /\bNursery\b/i.test(name);
   if(k==='BLOODSTOCK_FARM')return /\b(?:Bloodstock|Thoroughbreds)\b/i.test(name);
-  return /\b(?:Farm|Farms|Farmstead)\b/i.test(name);
+  return /\b(?:Farm|Farms|Farmstead|Acres|Thoroughbreds)\b/i.test(name);
  }));
  assert.ok(!names.some(s=>/Three Chimneys|Farm Farm|Stud Stud|Stud Farm Stud/i.test(s)),'unwanted brand or malformed suffix');
  assert.ok(o.barns.every((name,i)=>name.toLowerCase().includes(staff[i].name.split(/\s+/).at(-1).toLowerCase())),
