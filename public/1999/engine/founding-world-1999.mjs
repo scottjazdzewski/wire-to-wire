@@ -271,7 +271,10 @@ export function createFounding1999Universe({seed=19990101}={}) {
  }
  function mareDirectoryAt(i){const h=parentAt(i,'DAM');return {
   ...h,index:i,foalingDecision:'NOT_COMMITTED',
-  pregnancyStatus:'UNOBSERVED',status:'AVAILABLE_UNVERIFIED'};}
+  sire:h.sireId||'',dam:h.damId||'',
+  farm:h.standingFarm1999?.farmName||h.boardingFarm1999?.farmName||'',
+  status:'BREEDING_MARE_UNASSESSED',bookings:false,foals:false,
+  pregnancyStatus:'UNOBSERVED',source:'1999_FOUNDING_CANON_BROODMARE'};}
  function facilityAt(i){
   if(!Number.isInteger(i)||i<0||i>=trainerList.length+facilities.length+trackCount)
    throw Error('Founding facility index');
