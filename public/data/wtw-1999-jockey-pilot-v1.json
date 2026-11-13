@@ -1,6 +1,6 @@
 {
   "schema": "WTW_1999_JOCKEY_PILOT_IDENTITY_ROSTER_V1",
-  "version": "1999-11-13-initial-jockey-identity",
+  "version": "1999-11-13-elite-first-identity-review-v2",
   "authority": {
     "identity": "public/data/wtw-1999-world-directory-v33.json people where role=JOCKEY",
     "foundationCast": "1999 START SNAPSHOT — 1999 TRAINER & JOCKEY FOUNDATION CAST — v0.1",
@@ -111,7 +111,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": "ELITE CIRCUIT RIDER",
+      "originalFoundationDescription": "Tactical, calm and known for pace judgment",
+      "reviewSequence": 1,
+      "eliteFirstPriority": true,
+      "potentialEliteAssessment": "FOUNDATION_CAST_DESCRIPTIVE_ONLY"
     },
     {
       "id": "P-000054",
@@ -134,7 +139,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 2,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-000055",
@@ -157,7 +167,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": "ESTABLISHED NATIONAL STAKES RIDER",
+      "originalFoundationDescription": "Polished and adaptable with major-race composure",
+      "reviewSequence": 1,
+      "eliteFirstPriority": true,
+      "potentialEliteAssessment": "FOUNDATION_CAST_DESCRIPTIVE_ONLY"
     },
     {
       "id": "P-000056",
@@ -180,7 +195,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 2,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-000057",
@@ -203,7 +223,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": "LEADING FLORIDA RIDER",
+      "originalFoundationDescription": "Strong finishing rider; effective with nervous horses",
+      "reviewSequence": 1,
+      "eliteFirstPriority": true,
+      "potentialEliteAssessment": "FOUNDATION_CAST_DESCRIPTIVE_ONLY"
     },
     {
       "id": "P-000058",
@@ -226,7 +251,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 2,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-000059",
@@ -249,7 +279,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 2,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-000060",
@@ -272,7 +307,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 3,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-000061",
@@ -295,7 +335,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 3,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-000062",
@@ -318,7 +363,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 2,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-000063",
@@ -341,7 +391,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 3,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-000064",
@@ -364,7 +419,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 2,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-000065",
@@ -387,7 +447,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 3,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-000080",
@@ -410,7 +475,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 3,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-000081",
@@ -433,7 +503,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 3,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-000082",
@@ -456,7 +531,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 3,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-000083",
@@ -479,7 +559,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 3,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-000084",
@@ -502,7 +587,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 3,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-000085",
@@ -525,7 +615,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 3,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-000086",
@@ -548,7 +643,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 3,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-000087",
@@ -571,7 +671,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 3,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-000088",
@@ -594,7 +699,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 3,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-900001",
@@ -617,7 +727,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 3,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-900002",
@@ -640,7 +755,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 3,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-900003",
@@ -663,7 +783,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 4,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-900004",
@@ -686,7 +811,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 4,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-900005",
@@ -709,7 +839,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 4,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-900006",
@@ -732,7 +867,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 4,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-900007",
@@ -755,7 +895,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 4,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-900008",
@@ -778,7 +923,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 4,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-900009",
@@ -801,7 +951,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 4,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-900010",
@@ -824,7 +979,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 3,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-900011",
@@ -847,7 +1007,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 3,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "P-900012",
@@ -870,7 +1035,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 4,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "HP-J-A-1996",
@@ -893,7 +1063,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 4,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "HP-J-A-1997",
@@ -916,7 +1091,12 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 4,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     },
     {
       "id": "HP-J-A-1998",
@@ -939,7 +1119,44 @@
       "contract": null,
       "performanceRatings": null,
       "earnings": null,
-      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY"
+      "recordProvenance": "1999_CANON_REGISTRIES_V33_EXISTING_IDENTITY",
+      "originalFoundationProfessionalClass": null,
+      "originalFoundationDescription": null,
+      "reviewSequence": 4,
+      "eliteFirstPriority": false,
+      "potentialEliteAssessment": "NOT_ASSESSED"
     }
-  ]
+  ],
+  "eliteFirstReview": {
+    "status": "SOURCE_PROFILE_PRIORITY_ONLY_NOT_ABILITY_RATINGS",
+    "canonicallyMatchedIds": [
+      "P-000053",
+      "P-000055",
+      "P-000057"
+    ],
+    "count": 3,
+    "priority": "Review established elite jockey IDs first; fill elite cohort from original historical roster only after exact identity reconciliation.",
+    "originalFoundingCastUrl": "https://docs.google.com/document/d/1l2_PXxeMbPBbD1f6ysEPeLhj9cIJjSxopqKJjPmx4V4/edit",
+    "legacyEliteNeedingIdentityReview": [
+      {
+        "name": "Emiko Sato",
+        "originalAgeProposal1999": 30,
+        "sourceDescription": "Elite Southern California turf rider",
+        "note": "Do NOT alias to Kenji Sato or overwrite P-000060"
+      },
+      {
+        "name": "Raymond \"Ray\" Paxton",
+        "originalAgeProposal1999": 39,
+        "sourceDescription": "Veteran major-circuit California rider",
+        "note": "No confirmed canonical v3.3 identity"
+      },
+      {
+        "name": "Simonne Beaulieu",
+        "originalAgeProposal1999": 32,
+        "sourceDescription": "Woodbine-leading Ontario rider",
+        "note": "Do NOT alias to Nico Valenti P-000065"
+      }
+    ],
+    "keepFoundationCastOnlyNamesForReview": true
+  }
 }
