@@ -847,6 +847,31 @@ function world1999Profile(){
    '<p><small>'+safe(field.replace(/([a-z])([A-Z])/g,'$1 $2').toUpperCase())+'</small><strong>'+
    safe(String(value))+'</strong></p>').join('')+'</div></details>':'';
  const toDir='Organizations';
+ const breedingStock=(world1999Data?.horses||[]).filter(h=>
+  h._role!=='opening'&&(h.standingFarm1999?.farmOrganizationId===d.id||
+   h.boardingFarm1999?.farmOrganizationId===d.id));
+ const breedingRows=breedingStock.map(h=>{
+  const child=world1999Entry(world1999Key('horse',h));
+  return '<button type="button" data-ng="world-open" data-val="'+safe(child?.worldKey||'')+
+   '" '+(!child?'disabled':'')+' title="Open '+safe(h.name)+'"><strong>'+safe(h.name)+
+   '</strong><span>'+safe(h._role==='stallion'?'STANDING STALLION':'BROODMARE')+'</span>↗</button>';
+ }).join('');
+ const breedingRelated=breedingStock.length?
+  '<section class="ng-world-related"><header><strong>BREEDING STOCK AT THIS FARM</strong>'+
+  '<span>'+breedingStock.length+' source-linked</span></header>'+breedingRows+'</section>':'';
+ const anchors=(world1999Data?.historicalAnchors||[]).filter(a=>a.organizationId===d.id);
+ const anchorRows=anchors.map(a=>{
+  const child=a.horseId?world1999Entry('horse:'+a.horseId):null;
+  const note=String(a.role||'CONNECTION').replaceAll('_',' ')+' · '+
+   String(a.status||'HISTORICAL SOURCE').replaceAll('_',' ');
+  return child?'<button type="button" data-ng="world-open" data-val="'+safe(child.worldKey)+
+   '"><strong>'+safe(a.horse)+'</strong><span>'+safe(note)+'</span>↗</button>':
+   '<p><strong>'+safe(a.horse)+'</strong> · '+safe(note)+
+   (a.horseId?' · '+safe(a.horseId):'')+'</p>';
+ }).join('');
+ const historicalRelated=anchors.length?
+  '<section class="ng-world-related"><header><strong>HISTORICAL HORSES &amp; BLOODLINES</strong>'+
+  '<span>'+anchors.length+' named source/story links</span></header>'+anchorRows+'</section>':'';
  const related='<section class="ng-world-related"><header><strong>1999 ASSOCIATED HORSES</strong>'+
   '<span>'+matches.length+' source-linked · '+Math.min(12,matches.length)+' shown</span></header>'+
   (relations||'<p>No direct opening-horse owner, trainer or home-track relationship recorded in this directory.</p>')+
@@ -862,7 +887,7 @@ function world1999Profile(){
   safe(d.location||d.base||d.track||'1999 Start')+'</span><span>'+safe(d.id||'DOCUMENT-BASED IDENTITY')+'</span></div>'+
   '<div class="ng-world-profile-facts">'+details.map(x=>
    '<div><small>'+safe(x.label)+'</small><strong>'+(x.html||safe(x.value||'—'))+'</strong></div>').join('')+'</div>'+
-  related+attributes+'<p class="ng-world-profile-footnote">'+safe(sourceNote)+'</p>'+
+  related+breedingRelated+historicalRelated+attributes+'<p class="ng-world-profile-footnote">'+safe(sourceNote)+'</p>'+
   '<div class="ng-world-profile-reference"><small>AUTHORITY: WTW 1999 START v3.3 · SOURCE + USER EDIT OVERLAY · '+safe(APP.worldEditStatus||'SOURCE ID PRESERVED')+'</small></div></section>';
 }
 
