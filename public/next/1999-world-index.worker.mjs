@@ -2,7 +2,7 @@
  * Owns the global sortable/searchable index OFF the rendering thread.
  * Only returns one visible page. No full 325k snapshot is persisted by the UI.
  * The existing game authority, IDs, and career-save schema are unchanged. */
-import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-founding-linked-ancestry-v1';
+import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-founding-leadership-v1';
 
 const worldOptions=new URLSearchParams(self.location?.search||'');
 const population=worldOptions.get('population')||'325000';
