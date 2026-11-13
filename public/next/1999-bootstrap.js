@@ -1,17 +1,18 @@
-/* Jan 1, 1999 is the only gameplay epoch in the approved management UI.
+/* Founding World v1: clean Jan 1, 1999 gameplay epoch in the existing approved UI.
  * The old Office engine is a PRESENTATION COMPATIBILITY SHELL, not game history.
- * Older demo state, decisions, follow-ups and named saves are NOT imported. */
+ * Earlier 325k/2014 saves, decisions and named saves are NOT imported or deleted.
+ * New saved career and named-save namespaces isolate this founding reset. */
 (()=>{
 'use strict';
-const START='1999-01-01', MAIN='wtw1999ManagementStateV1';
-const SCHEMA='WTW_1999_CLEAN_CAREER_V3', SESSION='wtw1999CleanCareerV3';
+const START='1999-01-01', MAIN='wtw1999FoundingStateV1';
+const SCHEMA='WTW_1999_FOUNDING_CAREER_V1', SESSION='wtw1999FoundingSessionV1';
 const SEED=19990101;
-const selectedWorld=window.WTW1999CommercialConfig?.current?.()||{population:325000,mode:'CANON_ANCHORED_TEST',seed:SEED};
+const selectedWorld=window.WTW1999CommercialConfig?.current?.()||{population:112,mode:'FOUNDING_1999',seed:SEED};
 
 function fresh(profile=selectedWorld){
  const world=window.WTW1999CommercialConfig?.normalize?.(profile)||profile;
  return {
-  version:'WTW_1999_CLEAN_CAREER_V3',schema:SCHEMA,date:START,
+  version:SCHEMA,schema:SCHEMA,date:START,
   currentCase:'opening-stable',turn:0,resolvedCases:{},decisionLog:[],
   horseState:{},ownerState:{},staffState:{},calendarState:{},
   finances:{},scoutingState:{},messageState:{},followUps:[],
@@ -43,8 +44,8 @@ try{
 }catch(e){window.__WTW_1999_BOOT_WARNING__=String(e?.message||e)}
 window.__WTW_1999_MANAGEMENT__={
  schema:SCHEMA,startDate:START,seed:selectedWorld.seed,mode:selectedWorld.mode,worldProfile:selectedWorld,
- gameSaveKey:MAIN,saveKey:MAIN,createFreshState:fresh,namedSaveKey:'wtw1999NamedGameSavesV1',
+ gameSaveKey:MAIN,saveKey:MAIN,createFreshState:fresh,namedSaveKey:'wtw1999FoundingNamedSavesV1',
  historyArchive:'/archive/?page=seasons',
- status:'CLEAN_JAN1_1999__APPROVED_UI__NO_2014_DEMO_HISTORY'
+ status:'FOUNDING_WORLD_JAN1_1999__ISOLATED_CAREER__CANON_ARCHIVE_PRESERVED'
 };
 })();
