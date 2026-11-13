@@ -301,8 +301,9 @@ export function createFictionalWorldNameEngine(input){
   }:{};
   return frozen({id,worldId,role,name:p.name,nameStyle:p.nameStyle,
    birthCountry:p.birthCountry,ageAtOpening:age,birthYear:personBirthYears[i],
-   givenNameDecade:(p.birthCountry==='US'||isLatinCaribbeanNamingOrigin(p.birthCountry))?
-    Math.floor(personBirthYears[i]/10)*10:null,
+   givenNameDecade:p.birthCountry==='US'?Math.floor(personBirthYears[i]/10)*10:null,
+   regionalNamingCohort:isLatinCaribbeanNamingOrigin(p.birthCountry)?
+    personBirthYears[i]<1960?'OLDER_BIRTH_COHORT':'YOUNGER_BIRTH_COHORT':null,
    primarySurname:p.primarySurname,nameStructure:p.nameStyle,
    location:loc(market),nameOrigin:p.source,...riderFields,
    source:'FICTIONAL_WORLD_ENGINE'});
