@@ -1,6 +1,6 @@
-# Wire to Wire — Facilities Desk and Horse-Impact Preview V1
+# Wire to Wire — Facilities Roster and Horse-Impact Design V2
 
-**Status: VISUAL / ENGINE DESIGN PROPOSAL, NOT APPROVED LIVE SIMULATION.** User asked to see the one-screen layout first, November 13, 2026. This document DOES NOT create facilities, modify horse fitness, assign staff, establish profits, or change the founding roster. The standalone preview is `public/next/facility-workspace-preview.html`; it does not mount the main Office or write a save. Preview URL: `/next/facility-workspace-preview.html`.
+**Status: FM/OOTP ROSTER LAYOUT LOCKED; HORSE-IMPACT AND PROFITABILITY ENGINE PROPOSED, NOT ACTIVATED.** The user rejected the standalone split-list/right-inspector workbench on November 13, 2026. The only approved Facilities list is the **existing full-width sortable Facilities roster** under `/next/?world=1999`, visually identical in structure to Personnel, Stable and Sales: one `VIEW` dropdown, find-records search, sortable configurable columns, and the existing column/status filter controls. The rejected HTML preview and visual-audit route were deleted. This document **does not create facilities, modify horse fitness, assign staff, establish profits or change the founding roster.**
 
 ## Locked user direction
 
@@ -8,7 +8,7 @@
 2. A horse's **OWNER** (O-ID) can differ from its **TRAINER** (P-ID), **PHYSICAL BARN** (F-ID) and **HOST TRACK** (T-ID). Horses trained at Belmont may live in a trainer-operated barn at Belmont, even if their owning O-ID is a partnership based elsewhere. Do not presume a horse resides at its owner's namesake farm, stable or headquarters.
 3. Add a **track-based trainer barn** as a *location/tenancy subtype* of a racing-stable facility, not as a new racetrack, horse owner or one-to-one default barn at every track. A trainer barn is approved individually with separate stall capacity, condition, care, staff coverage, financial operator, track lease, training access and horses currently housed.
 4. **Every real facility is a distinct profit center**, with its own F-ID, site budget, operating income, costs, maintenance and capital improvements. Track barns may pay track rent. Do not force a new O-ID for every building. Profit center ≠ new legal ownership organization.
-5. The Facilities main page should behave like the **Stable or Sales roster**: a dense, searchable, sortable *list on the left/center* and persistent right inspector. Minimal menu/page hopping. Keep the approved dark FM/OOTP style, top office navigation, logo style, and right-side card stack.
+5. **LOCKED VISUAL AUTHORITY: the current Facilities · Overview screenshot supplied by the user**, which uses the same *full-width* sortable roster system as Stable, Sales and Personnel. **Do NOT add a persistent right inspector, split-screen workspace, tile dashboard, or separate preview URL.** Keep the existing `VIEW` dropdown for category selection, field/contains/status filters, search, sortable headings and scrolling rows. Player sees high-density operational data on the roster itself; opening an individual facility is optional, not required to learn its main status.
 6. **Prestige ≠ physical quality**. Prestige comes from recorded achievements and history; care, training environment, maintenance, staffing, space and condition are separate and can be poor even at famous facilities. The same rules and costs apply to AI and player.
 
 ## Identity and tenancy contract (proposed fields; not authoritative data yet)
@@ -37,14 +37,26 @@ The horse-development engine already tracks fitness, fatigue, readiness, speed/s
 
 **No duplicate benefit:** trainer talent, training venue surface, horse constitution, horse genetics, facility care and track weather each have their own factor and bounded contribution. A horse receives care/residence effects from *one actual barn that day* and training-surface effects only when a recorded workout uses the approved venue. Track status must still gate access. The AI must run the same ledger and training mechanics.
 
-## Preview arithmetic vs implementation
+## Horse-effect model vs implementation
 
-The interactive preview offers Well Maintained / Typical / Neglected scenarios with visible example changes to recovery, training/development environment, stress and avoidable setbacks. Those values are **illustrative balancing targets**, NOT source-proven horse outcomes, calibrated probability distributions, or engine outputs. They do not write to the save. Actual values must be tested against `public/1999/engine/horse-development.mjs` and the facility operating engine, with engine-owned staff, locations, housing moves and daily finances.
+The rejected standalone preview once showed hypothetical Well Maintained / Typical / Neglected coefficients for recovery, training, stress and avoidable setbacks. Those were **illustrative balancing targets, NOT APPROVED OR ENGINE-CALIBRATED VALUES**. Do not display them as live data or activate them. Actual horse effects must be tested against `public/1999/engine/horse-development.mjs` and the facility operating engine with authoritative staff, residence, workout venue, finance, daily timing and care rules.
 
 The existing game facility engine (`src/game/facility-operations.js`) already supports property purchases, stall and staff caps, maintenance, three upgrade types, boarding fees, operating site reports, time-based costs and equivalent AI rules. The **live 1999 Office is not automatically bridged to these commands**, and no current founding F-ID properties may be fabricated from 30 O-ID institution references or from the 118 preserved North American/Cuban tracks.
 
-## Preview acceptance and next step
+## Locked Facilities roster and dropdown architecture
 
-The preview should load the **exact 30 eligible existing founding institution references** from the 37 approved organizations: five studs, 15 farms and ten racing-stable organizations. The additional Belmont Trainer Barn row is visibly labeled **CONCEPT ONLY** and points to the actual host `T-0002`; it creates no F-ID, trainer, horse, active meet or new organization. Training and breaking filters remain empty until approved properties exist.
+The **actual existing Facilities roster** is the approved screenshot. Preserve all current Overview columns: **FACILITY, TYPE, CITY / STATE, CAP, USED, FREE, COND, QUALITY, STAFF, MONTHLY COST, OWNER, STATUS**. Keep the exact same font, column-filter controls, sort indicators, roster scrolling, and full-width grid. Do not add a permanent pane.
 
-After the user approves the look, the next steps are (1) wire a read-only Facilities list projection from the authoritative game state, (2) authorize a small test cohort of genuine F-IDs, including trainer-at-track housing, (3) connect residence/training/staff effects in the engine, (4) reconcile each site P&L and owner consolidated books, then (5) balance day/week outcomes on test horses with age, trainer, travel, injury and AI parity checks.
+The current `VIEW` dropdown contains Overview, Stud Farms, Training Centers, Breaking Facilities, Racing Stables and Farms, plus the newly added **Trainer Barns** subcategory. Overview remains the default with **30 existing O-ID founding institution references** (five stud operations, 15 farms, ten racing-stable organizations). These are **NOT 30 certified physical F-ID properties**. Trainer Barns, Training Centers and Breaking Facilities remain empty until site records are actually authorized; never create demonstration data just to fill the grid.
+
+**Later, once engine data exists**, expose horse care/effects and individual facility financial performance as compact **sortable roster columns or alternate views using the SAME dropdown**. A facility can be filtered by type/track/owner/staff/condition/operating profitability without leaving the roster. A row can still open the existing Track-style facility detail profile for deeper history, but all actionable status should be understandable from the list. Never force the player to click through multiple pages to compare barns.
+
+## Next actual game-engine work
+
+1. Create only the authorized controlled test sample of genuine F-ID facilities, including explicitly located trainer barns at T-ID racecourses (not automatic barns at all 118 tracks); do not change the tracks.
+2. Give each site its own capacity, occupancy, care, staffing, services, rental/lease obligations, operator, and P&L with no duplicated postings. Horses retain separate owner O-ID, trainer P-ID and actual residential F-ID.
+3. Model tangible positive/negative **daily horse** consequences with bounded and testable effects on recovery, fatigue, stress, soreness, schooling and training progress, keeping inherited talent separate.
+4. Feed these actual site values into the existing **sortable Facilities roster** with columns and the View dropdown, maintaining player/AI parity.
+5. Test ages, horse travel, facility admission, staffing, workload, weather/venue effects and financial transactions. No unverified numbers on current 1999 opening roster.
+
+**OOTP / Football Manager is the non-negotiable guiding design principle:** high-density sortable management lists for choosing/comparing entities; individual detail profiles only when requested.
