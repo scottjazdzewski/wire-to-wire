@@ -1943,15 +1943,25 @@ function profileDetail(route,sourceOverride=null){
    const approvedLinks=founderAffiliationRows();
    const approvedConnections=founderAffiliations.length?
     founderAffiliations.map(o=>o.name).join(' · '):'Organization not yet assigned';
+   // Keep the Horse page's complete overview visible at the same desktop
+   // resolution. Full reputation, network and career detail live in deeper
+   // tabs; these are concise record summaries with no inferred statistics.
+   const summaryLines=items=>'<div class="ng-horse-mgr-rows">'+items.map(([label,value])=>
+    '<div class="ng-horse-mgr-row"><span>'+safe(label)+'</span><strong>'+safe(value)+'</strong></div>'
+   ).join('')+'</div>';
+   const careerOverview=summaryLines([['Certified career results','—'],['Current appointment','Not recorded']]);
+   const reputationOverview=summaryLines([['Professional standing','Unrated'],['Trust assessment','—']]);
+   const relationOverview=summaryLines([['Approved institutions',String(founderAffiliations.length)],
+    ['Observed professional contacts','—']]);
    left=`<div class="ng-horse-dossier ng-person-horse-dossier" data-template="horse-overview" data-personnel-role="${safe(source.dataset.personRole||'unspecified')}">
     <div class="ng-horse-dossier-caption"><strong>PROFESSIONAL & RACING INTELLIGENCE</strong><span>0 OF 46 ROLE-SPECIFIC SLOTS DEFINED · NOT SCORED</span></div>
     <div class="ng-horse-mgr-four">${professionalSlots}</div>
     ${statusSlots}
     <div class="ng-horse-mgr-five">
-     ${panel('CAREER & APPOINTMENTS',person.careerOverview)}
+     ${panel('CAREER & APPOINTMENTS',careerOverview)}
      ${panel('CURRENT ASSIGNMENTS',person.horseAssignments())}
-     ${panel('REPUTATION & TRUST',person.reputation())}
-     ${panel('WORKING RELATIONSHIPS',person.networkOverview)}
+     ${panel('REPUTATION & TRUST',reputationOverview)}
+     ${panel('WORKING RELATIONSHIPS',relationOverview)}
      ${panel('OWNERSHIP & AFFILIATIONS',approvedLinks)}
     </div>
     <div class="ng-horse-mgr-bottom">
@@ -4005,6 +4015,12 @@ function restoreNextUIRoute(){
  APP.custom=view;APP.moreOpen=false;
  if(view){
   if(view.startsWith('WorldRecord:')){APP.section='World';APP.page='Overview';return}
+  if(view.startsWith('FoundingProfile:')){
+   const kind=view.split(':')[1];
+   APP.section=kind==='facility'?'Facilities':'Personnel';
+   APP.page=kind==='ownership'?'Owners':kind==='facility'?'Overview':'Principals';
+   return;
+  }
   if(view.startsWith('Preview:')){
    const parts=view.split(':');
    APP.previewEntity={kind:decodeURIComponent(parts[1]||'record'),name:decodeURIComponent(parts.slice(2).join(':')),row:null};
