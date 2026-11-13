@@ -191,6 +191,9 @@ function goOffice(){
  paint();
 }
 function openMenu(section){
+ // Explicit department navigation ends the focused select belonging to the
+ // previous department. Otherwise paint() is deferred and shows stale Racing.
+ if(APP.section!==section)endNativeSelectInteraction(false);
  APP.moreOpen=false;
  APP.departmentPageIndex=0;APP.departmentSearch='';APP.departmentSortKey='';APP.departmentScrollLimit=160;APP.departmentScrollReset=true;
  if(section==='Sales'){APP.departmentAuction='';APP.departmentCompany=''}
