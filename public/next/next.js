@@ -2627,7 +2627,9 @@ function depRows(section,page,demo,auction){
   }));
   if(page==='People')return (world1999Data.people||[]).map(p=>({
    _kind:'person',_name:p.name,_canonId:p.id,_worldKey:world1999Key('person',p),
-   name:p.name,role:p.role||'',base:p.base||'',operation:worldRecordName('farm',p.ownershipOperationId,p.ownershipOperation||''),_operationId:p.ownershipOperationId||''
+   name:p.name,role:p.positionTitle||p.role||'',base:p.base||'',
+   operation:worldRecordName('farm',p.operatingOrganizationId||p.ownershipOperationId,
+    p.ownershipOperation||''),_operationId:p.operatingOrganizationId||p.ownershipOperationId||''
   }));
   return (world1999Data.organizations||[]).map(o=>({
    _kind:'farm',_name:o.name,_canonId:o.id,_worldKey:world1999Key('farm',o),
@@ -2637,6 +2639,7 @@ function depRows(section,page,demo,auction){
     o.leadershipStatus==='ESTABLISHED_1999_PRINCIPAL_LINK'?'ESTABLISHED':o.status||''
   }));
  }
+ if(section==='World'&&page==='Tracks')return depTrackRows('All Tracks');
  if(section==='Tracks')return depTrackRows(page);
  if(section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'){
   const tracks=depTrackRows('Overview',depRaceBrowseDate());
@@ -3111,7 +3114,7 @@ function departmentRoster(section,page='Overview'){
  const worldAttributeKey=worldTrait?.key||'';
  const specs=section==='Personnel'&&page==='Owners'?DEP_COLUMNS.OwnershipGroups:
   section==='Personnel'&&page==='Principals'?DEP_COLUMNS.PersonnelPrincipals:
-  section==='World'?(page==='1999 Horses'?
+  section==='World'&&page==='Tracks'?DEP_COLUMNS.Tracks:section==='World'?(page==='1999 Horses'?
    [...WORLD_1999_COLUMNS.Horses,...(worldTrait?[['attr:'+worldAttributeKey,worldTrait.label+' · TEST',10]]:[])]:
    page==='People'?WORLD_1999_COLUMNS.People:WORLD_1999_COLUMNS.Organizations):
   section==='Sales'&&page==='Watchlist'?DEP_COLUMNS.SalesWatchlist:section==='Sales'&&page==='Sale Calendar'?DEP_COLUMNS.SaleCalendar:section==='Sales'&&page==='Sale Companies'?DEP_COLUMNS.SaleCompanies:section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:section==='Racing'&&(page==='Calendar'||page==='Race Planning'||page==='Overview'&&APP.racingMode==='day')?DEP_COLUMNS.DayCard:section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'?DEP_COLUMNS.Meets:DEP_COLUMNS[section];
