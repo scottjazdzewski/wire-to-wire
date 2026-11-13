@@ -235,7 +235,7 @@ function foundingInstitutionCategory(o){
 }
 function foundingInstitutionRows(page='Overview'){
  const wanted={'Stud Farms':'STUD FARM','Farms':'FARM','Racing Stables':'RACING STABLE'}[page]||'';
- if(page==='Training Centers'||page==='Breaking Facilities')return [];
+ if(page==='Training Centers'||page==='Breaking Facilities'||page==='Trainer Barns')return [];
  return srcOrgs.filter(o=>{
   const category=foundingInstitutionCategory(o);
   return wanted?category===wanted:category!=='ORGANIZATION ONLY';
