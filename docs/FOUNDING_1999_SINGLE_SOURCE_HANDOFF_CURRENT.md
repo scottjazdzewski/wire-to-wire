@@ -1,10 +1,12 @@
 # WIRE TO WIRE — CLEAN JANUARY 1999 WORLD: SINGLE-SOURCE HANDOFF
 
-**Current as verified:** Friday, November 13, 2026, 7:17 AM America/New_York.  
+**Current as verified:** Friday, November 13, 2026; leadership revision V2 now on `main`. Re-check HEAD and CI before editing.  
 **Authoritative repository:** https://github.com/scottjazdzewski/wire-to-wire  
-**Authoritative branch for live integration:** `main` — re-fetch HEAD before **every** edit; inspected HEAD `5354a92f850bda93ed80265bbae4c2efd38e3875`.  
+**Authoritative branch for live integration:** `main` — re-fetch HEAD before **every** edit; `5354a92f...` is an older checked checkpoint, NOT the current edit base.  
 **Game scenario:** `FOUNDING_1999` effective **1999-01-01**.  
 **User's governing order:** START FROM SCRATCH with the approved founding-world people and organizations. Do NOT bring back old generated rosters, owners, simulated racing horses, inherited finances, 2014 cases or old saves. Keep ONLY genuinely connected historical champions, horses, breeding families and pedigree ancestors as read-only history or legitimately living source stallions/mares. **Scale only after a complete small pilot works.**
+
+**2026-11-13 leadership implementation note:** Leadership V2 is in `public/1999/engine/founding-leadership-1999.mjs`, the existing `public/1999/engine/founding-world-1999.mjs` and `public/data/wtw-1999-founding-directory-v1.json`. The approved Office at `/next/?world=1999` now distinguishes established, approved and proposed principal labels and links Magic Johnson as investor only. **Current count:** 37 organizations, 47 named people + 68 uncontracted candidates, 73 living breeding animals, ZERO registered racehorses. The latest UI assets use a leadership-V2 cache revision. A live Cloudflare Access-protected site session has NOT been independently authenticated by this window; GitHub CI is the verified code-level acceptance gate.
 
 ## 1. IMPORTANT: stop using the stale branches and handoffs
 
@@ -25,10 +27,10 @@ This handoff is the current startup document. If another document conflicts with
 | Item | Current state |
 |---|---|
 | Founder-selected organizations | **37** (23 established IDs, 14 founding-scenario provisional IDs) |
-| Identified organization principals | **37 slots**; 13 established/approved, **24 proposed** for user review |
-| Named source/new world people | **46** |
+| Identified organization principals | **37 slots**; **12 established**, **21 new user-approved**, **4 revised names still proposed** |
+| Named source/new world people | **47** |
 | NEW available professional candidates | **68** (26 jockeys, 10 trainers, 8 farm managers, 6 bloodstock agents, 4 vets, 4 farriers, 4 racing secretaries, 6 jockey agents); NOT employed; zero payroll |
-| Total people surfaced | **114** |
+| Total people surfaced | **115** |
 | Registered playable racing horses | **0**; stable is deliberately empty |
 | Connected living stallions | **18** |
 | Connected living broodmares | **55** |
@@ -62,7 +64,7 @@ At older checkpoints the opening world showed 39 runners / 112 living horses. Th
 1. `docs/FOUNDING_1999_SINGLE_SOURCE_HANDOFF_CURRENT.md` — this current handoff.
 2. `docs/1999-founding-population-and-integration-gates.md` — approved hard-reset scope, true inventory and priority order.
 3. `docs/1999-founding-gameplay-integration-contract.md` — exact fields required from the gameplay-engine owner.
-4. `docs/1999-founding-leadership-roster.md` — exact 37 organizations, their principal IDs/status, and 24 provisional principal proposals. **Do not invent 24 different names.**
+4. `docs/1999-founding-leadership-roster.md` — 37 immutable organization IDs, 33 approved/established and four proposed revised principals; V2 roster is authoritative, not the old 24-proposal staging list.
 5. `public/data/wtw-1999-founding-directory-v1.json` — authoritative flat **opening identity/read-directory** reference, NOT a transaction ledger.
 6. `public/1999/engine/founding-world-1999.mjs` — game-facing isolated read-model scenario.
 7. `public/1999/engine/founding-leadership-1999.mjs`, `founding-personnel-1999.mjs`, `founding-ancestry-1999.mjs`, `founding-youngstock-candidates-1999.mjs` — distinct leadership, professional, historical parent, and UNCOMMITTED youngstock layers.
@@ -92,7 +94,7 @@ This list is illustrative, NOT an extra roster: the 37 exact IDs are in the lead
 
 ## 6. The very next actual production work — do this in sequence
 
-**A. Leadership identity lock (UI can prepare; user approval / canon required for promotion):** Use the already prepared 24 principal proposals and six secondary directors; do not regenerate names from scratch. Preserve verified 13 and 37 total organization IDs, stable/farm roles, locations and ownership-group/principal relationships. Mark proposals as such until user acceptance.
+**A. Leadership identity lock (partially accepted, FOUR names pending):** User accepted 21 of the former 24 primary proposals, Dino Marks at All The Colors, and all otherwise unchanged secondary leadership. The proposed replacements Graham Kincaid (Harrowgate), Hugh Radcliffe (Huntcross), Sebastian Pryce (Argosy Racing) and Daniel Calder (Ledbetter Calder) still require individual name approval. The prior Ledbetter link was corrected: Magic Johnson P-910018 is a MAJOR NON-OPERATING INVESTOR, never the manager. Voss P-000018 still runs Argosy Bloodstock O-000014, distinct from well-financed, analytics-led Argosy Racing Partners O-000057. Do not create employment/ownership contracts for these links.
 
 **B. New opening horses — GAMEPLAY OWNER RELEASE REQUIRED:** The 84 `H-FNEW-1997/1998-xxxx` rows are proposals only. Need game-approved founding birth and ownership transactions: immutable Horse_ID, accepted dam/sire, correct foaling dates/locations, actual breeder, 1999 owner/residence, age/sex, trainer and racing barn when applicable, current/potential curves, health/attributes. No registered name until real game registration event through the accepted horse-name release. The independent research name-engine v4.46 is **not yet an approved deployed registrar**. Do not fabricate horse race histories or retroactively assert a historical birth transaction.
 
@@ -112,6 +114,7 @@ This list is illustrative, NOT an extra roster: the 37 exact IDs are in the lead
 - No grooms or exercise riders in the UI staff population.
 - No UI redesign; no generic alternate management dashboard.
 - No unsupported numerical salaries, foaling contracts, purchases, purses or opening cash.
+- No promotion of the four newly suggested names until the user approves them individually.
 - No unauthorized overwrite of another window's canonical gameplay release.
 - No branch merges or mass PR cleanup without reviewing ancestry and user approval.
 - After any code change: re-fetch newest `main`, check CI at the exact new SHA, report completed real work and one next substantive action.
@@ -119,7 +122,7 @@ This list is illustrative, NOT an extra roster: the 37 exact IDs are in the lead
 ## 8. The new window's initial action (not another general audit)
 
 1. Re-fetch `main`, identify any changes newer than the inspected `5354a92f...`, and run exact-commit CI verification.
-2. Compare the 37-organization leadership roster against latest user-approved names/IDs; flag only genuine name conflicts, not all history.
+2. Close the four remaining revised-leadership name approvals. Other 33 founder principal roles are already established or explicitly accepted; don't reopen them absent new user direction.
 3. Ensure the existing premium Office UI has correct empty-state behavior and no old data requests. Fix actual browser defects in narrow commits.
 4. Prepare a versioned, exact-ID **UI intake contract** against the gameplay engine's forthcoming first new 1999 horse cohort. Integrate only once released; avoid simulating or inventing the cohort in the UI.
 5. Return a concise checkpoint: authoritative commit, actual live world counts, verified tests, integrated files, unresolved authority blockers and next concrete commit.
