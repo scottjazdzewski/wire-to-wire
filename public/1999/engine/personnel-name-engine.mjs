@@ -88,7 +88,7 @@ function variant(seed,i,record,role,byCountry,base,options={}){
 
  const roll=hash(seed,'person-style:'+role+':'+i)%100;
  const middleLetter=String.fromCharCode(65+hash(seed,'middle-letter:'+i)%26);
- const western=country==='US'||country==='CA'||country==='GB'||country==='IE';
+ const western=['US','CA','GB','IE','FR','DE','AU','NZ'].includes(country);
  const family=LATIN.has(country);
  if(role==='veterinarian'&&roll<32)return {name:'Dr. '+name,style:'PROFESSIONAL_TITLE'};
  if(family&&roll<rules.secondFamily){
