@@ -183,8 +183,10 @@ test('fictional family business names agree with the linked owner principal',()=
    assert.equal(owner.principalName,person.name);
   }
   for(const owner of families){
-   const actualSurname=owner.principalName.trim().split(/\s+/).at(-1);
-   assert.equal(norm(owner.familyName),norm(actualSurname));
+   const principal=principalById.get(owner.principalId);
+   // Display-name final surname may be maternal (Spanish); compare the
+   // protected primary family surname instead of stripping the last token.
+   assert.equal(norm(owner.familyName),norm(principal.primarySurname));
    assert.ok(owner.name.startsWith(owner.familyName+' Family '),owner.name);
   }
  }
