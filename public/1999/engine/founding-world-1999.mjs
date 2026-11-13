@@ -380,6 +380,34 @@ export function createFounding1999Universe({seed=19990101}={}) {
    type:'TRAINING_CENTER',location:t.location,trackId:t.id,
    capacity:0,occupied:0,source:'1999_TRACK_PLACEHOLDER'};
  }
+ // The legacy 3,308-owner market is not present in the founding world.
+ // Do not display simulated rival bids from owners outside this clean scenario.
+ function jockeyBookingMarket(jockey,ownerId='',racePurse=250000,raceId='1999-MAJOR-RACE'){
+  if(ownerId&&!ownerHorseMap.has(ownerId))throw Error('Owner outside founding world');
+  const projected=base.jockeyBookingMarket(jockey,'',racePurse,raceId);
+  if(!projected)return null;
+  return {...projected,competingBarns:[],
+   status:'FOUNDING_BOOKING_MARKET_NOT_YET_POPULATED',
+   provenance:'1999_FOUNDING_ONLY__NO_PHANTOM_OWNER_BIDS'};
+ }
+ // Existing generated career staff may appear as unattached free agents for
+ // early testing, never as employees of an invented farm or racing stable.
+ function personAt(i){
+  if(!Number.isInteger(i)||i<0||i>=staffIndices.length)
+   throw Error('Founding workforce index');
+  const p=base.personAt(staffIndices[i]);
+  return {...p,employerOrganizationId:null,
+   employmentStatus:'UNATTACHED_SCENARIO_FREE_AGENT',
+   source:'FOUNDING_1999_TEST_STAFF_NOT_HISTORICAL_PERSONNEL',
+   ...(p.role==='jockey'?{bookingMarket:jockeyBookingMarket(p)}:{})};
+ }
+ function auctionAt(i){
+  if(!Number.isInteger(i)||i<0||i>=12)throw Error('Founding auction index');
+  const market=base.auctionAt(i);
+  return {...market,catalogLots:0,availableLots:0,
+   status:'PLANNED_NO_FOUNDING_LOTS_ENTERED',
+   outcomes:[],source:'FOUNDING_1999_AUCTION_PREVIEW_NO_PHANTOM_CATALOG'};
+ }
  function sourcePersonAt(i) {
   if(!Number.isInteger(i)||i<0||i>=sourcePeople.length)throw Error('Founder source person');
   const p=sourcePeople[i],ix=canon.people.findIndex(x=>x.id===p.id);
@@ -414,9 +442,8 @@ export function createFounding1999Universe({seed=19990101}={}) {
     {kind:'STALLION',offset:i-sourceHorses.length-breedingMares.length},
   populationCacheStats:()=>({foundingWorldProfiles:sourceHorses.length,
    historicalArchivePreserved:true}),
-  personAt:i=>base.personAt(staffIndices[i]),
-  jockeyBookingMarket:base.jockeyBookingMarket,sourcePersonAt,
-  projectAtDate:base.projectAtDate,auctionAt:i=>base.auctionAt(i),
+  personAt,jockeyBookingMarket,sourcePersonAt,
+  projectAtDate:base.projectAtDate,auctionAt,
   facilityAt,conditionBook:base.conditionBook,
   ownedHorseIndexes:id=>(ownerHorseMap.get(id)||[]).slice(),
   horseNameStatus:'CANON_NAMES_SOURCE_LOCKED__NO_GENERATED_OPENING_HORSES',
