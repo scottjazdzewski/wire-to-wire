@@ -1917,9 +1917,11 @@ function profileDetail(route,sourceOverride=null){
    '<span>'+safe(isFarm?'FACILITY / OWNER LOGO':'PORTRAIT')+'</span>'+
    '<small>IMAGE SLOT RESERVED</small></div>';
  const visualName=worldSourceEntry?.name||route.title;
+ const profileDisplayType=isFarm?(source.dataset.foundingContext==='facility'?
+  'FACILITY PROFILE':'OWNERSHIP PROFILE'):route.kicker;
  const identity=`<div class="ng-profile-intro">
   ${profileMark}
-  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(route.kicker)} <span> / </span> Current Office</div><h2>${isHorse?horseOwnerBadge(route.title):''}${safe(visualName)}</h2>${horseIdentityRow}${horseStarRow}${entityIdentityRow}${horseConnectionHeader}${isHorse||isPerson||isFarm||isTrack?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${photoSrc||imageSlotRequired?`<div class="ng-profile-source-photo ${isFarm?'ng-profile-facility-logo':portraitRequired?'ng-profile-portrait':''}" role="img" aria-label="Image of ${safe(visualName)}">${imageMarkup}</div>`:''}
+  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(profileDisplayType)} <span> / </span> Current Office</div><h2>${isHorse?horseOwnerBadge(route.title):''}${safe(visualName)}</h2>${horseIdentityRow}${horseStarRow}${entityIdentityRow}${horseConnectionHeader}${isHorse||isPerson||isFarm||isTrack?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${photoSrc||imageSlotRequired?`<div class="ng-profile-source-photo ${isFarm?'ng-profile-facility-logo':portraitRequired?'ng-profile-portrait':''}" role="img" aria-label="Image of ${safe(visualName)}">${imageMarkup}</div>`:''}
   <div class="ng-profile-tools"><button data-ng="office" aria-label="Return to Racing Office">← OFFICE</button><button data-ng="menu" data-val="${isTrack?'Racing':isPerson?'Personnel':isFarm?'Personnel':'Stable'}">${isTrack?'RACE CALENDAR':isPerson?'PERSONNEL DIRECTORY':isFarm?'OWNERSHIP DIRECTORY':'STABLE DIRECTORY'} ↗</button>${sourceEditButton}</div>
  </div>`;
  let left='',right='',footer='';
@@ -2016,7 +2018,7 @@ function profileDetail(route,sourceOverride=null){
     ['MONTHLY COST','NOT RECORDED']
    ];
    const config='<div class="ng-track-course-panel"><div class="ng-track-course-heading">'+
-    '<strong>FACILITY CONFIGURATION</strong><span>AWAITING SOURCE FIELDS</span></div>'+
+    '<strong>'+(facilityContext?'FACILITY CONFIGURATION':'ORGANIZATION STRUCTURE')+'</strong><span>AWAITING SOURCE FIELDS</span></div>'+
     '<div class="ng-track-course-grid">'+
     [['ACREAGE','—'],['BARNS / SHEDROWS','—'],['TRAINING SURFACES','—'],['HORSE STALLS','—']].map(
      ([label,value])=>'<div class="ng-track-course-fact"><small>'+label+'</small><b>'+value+'</b></div>'
@@ -2025,12 +2027,12 @@ function profileDetail(route,sourceOverride=null){
    left=`<div class="ng-track-workspace" data-template="track-overview" data-facility-id="${safe(founderOrg?.id||'')}">
     <section class="ng-tier1-card ng-tier1-stakes ng-track-stakes"><header>${sectionTitle} <span>${horses.length} SOURCE RECORDS</span></header>${rows}</section>
     <div class="ng-track-info-stack">
-     <section class="ng-tier1-card ng-track-meet-card"><header>FACILITY & OPERATIONS</header>
+     <section class="ng-tier1-card ng-track-meet-card"><header>${facilityContext?'FACILITY & OPERATIONS':'OWNERSHIP & OPERATIONS'}</header>
       <div class="ng-track-conditions-body">${config}
        <div class="ng-track-meet-facts">${stats.map(([label,value])=>'<div class="ng-track-meet-fact"><small>'+safe(label)+'</small><strong>'+safe(value)+'</strong></div>').join('')}</div>
        <div class="ng-track-operating-notes">${founderPersonLinks()}</div>
       </div></section>
-     <section class="ng-tier1-card ng-track-history-card"><header>FACILITY HISTORY <button data-ng="detailtab" data-val="History">FULL HISTORY ↗</button></header>
+     <section class="ng-tier1-card ng-track-history-card"><header>${facilityContext?'FACILITY HISTORY':'OWNERSHIP HISTORY'} <button data-ng="detailtab" data-val="History">FULL HISTORY ↗</button></header>
       <div class="ng-track-history-content"><div class="ng-track-history-facts">
        <div><small>FOUNDED / OPENED</small><strong>NOT RECORDED</strong></div>
        <div><small>HISTORICAL LINKS</small><strong>${founderHistorical.length}</strong></div>
