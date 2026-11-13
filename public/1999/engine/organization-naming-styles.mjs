@@ -33,7 +33,7 @@ export const REGIONAL_NAMING_ANCHORS=Object.freeze(
 const SUFFIXES=Object.freeze({
  FARM:words('Farm|Farms|Thoroughbred Farm|Farmstead|Acres|Thoroughbreds'),
  STUD_FARM:words('Stud|Stud Farm|Stallion Station|Stallion Farm|Thoroughbred Stud'),
- THOROUGHBRED_NURSERY:words('Nursery|Thoroughbred Nursery|Foaling Farm|Nursery Farm'),
+ THOROUGHBRED_NURSERY:words('Nursery|Thoroughbred Nursery|Foaling Nursery|Nursery Farm'),
  BLOODSTOCK_FARM:words('Bloodstock|Bloodstock Farm|Bloodstock & Breeding|Thoroughbreds'),
  BREAKING_AND_TRAINING:words('Training Center|Breaking & Training|Pre-Training|Horse Development|Young Horse Training')
 });
