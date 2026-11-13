@@ -26,25 +26,16 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   check('Correct January 1 game date',d.querySelector('.ng-global-date strong')?.textContent.trim()==='1999-01-01');
   const ui=w.__WTW_1999_UI_DATA__;
   check('1999 data adapter initialized',Boolean(ui));
-  check('Only 39 founding opening runners available, not the old 87,500',ui.counts.horses===39&&ui.counts.worldHorses===112);
+  check('Clean founding world excludes old B01 generated racehorses',ui.counts.horses===0&&ui.counts.worldHorses===73);
   check('1999 supported racecourse geography available',ui.counts.tracks>=50&&ui.counts.tracks<=118);
-  check('Opening stable has source-recorded horses',ui.stableHorses.length>0&&ui.stableHorses.every(h=>h.horseId?.startsWith('H-')));
+  check('Old B01 opening horses excluded from the visible stable',ui.stableHorses.length===0);
   check('1999 inbox not 2014 demo',d.querySelector('.ng-msgtitle')?.textContent.includes('1999'));
   check('1999 decision desk not 2014 case',d.querySelector('.ng-casetitle')?.textContent.includes('1999'));
   check('All original department controls present',['Stable','Racing','Breeding','Sales','Personnel','Facilities','Finances','Tracks','World'].every(x=>[...d.querySelectorAll('#wtwNextgen [data-ng="menu"]')].some(n=>n.dataset.val===x)));
   const click=(section)=>{const button=[...d.querySelectorAll('#wtwNextgen [data-ng="menu"]')].find(n=>n.dataset.val===section);if(!button)throw Error(section+' menu absent');button.click()};
   click('Stable');await pause(250);
-  check('Original stable roster displays source horse',Boolean(d.querySelector('.ng-wtw-roster-row'))||Boolean(d.querySelector('.ng-rs-horse')));
-  const firstHorse=d.querySelector('#wtwNextgen .ng-rs-horse');
-  check('Stable horse profile navigation button is present',Boolean(firstHorse?.dataset.val));
-  const openingHorseName=firstHorse.dataset.val;
-  firstHorse.click();await pause(240);
-  check('Stable horse opens a linked 1999 profile',Boolean(d.querySelector('#wtwNextgen .ng-profile-horse'))&&
-   d.querySelector('#wtwNextgen')?.textContent.includes(openingHorseName));
-  check('Original FM horse profile shows all 46 specialized horse ratings',
-   d.querySelectorAll('#wtwNextgen .ng-horse-rating-row').length===46&&
-   d.querySelector('#wtwNextgen .ng-horse-dossier')?.textContent.includes('SPEED & PACE'));
-  click('Stable');await pause(180);
+  check('Clean opening stable shows no inherited generated horse rows',
+   !d.querySelector('#wtwNextgen .ng-rs-horse')&&ui.stableHorses.length===0);
   click('Racing');await pause(300);
   const fullTrackPicker=d.querySelector('#wtwNextgen select[data-ng-select="department-track"]');
   check('Racing drop-down includes all founding circuit tracks',
@@ -143,8 +134,8 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   const auction=ui.auctionList();
   check('12 proposed founding sales with empty catalogs',auction.length===12&&auction.every(a=>a.lots.length===0));
   const horses=ui.worldHorsePage(ui.counts.horses,20);
-  check('Founding World pages only the 112 selected 1999 living horses',
-   horses.total===112&&horses.items.length===20&&ui.counts.horses===39);
+  check('World directory contains only 73 real, connected breeding animals',
+   horses.total===73&&horses.items.length===20&&ui.counts.horses===0);
   const first=horses.items[0];
   check('Breeding horse profile retains its existing historical identity',Boolean(first?._canonId&&first?._id&&first?._worldKey));
   check('No 1999 future outcomes pre-recorded',ui.bridgeStatus.includes('NO_1999_OUTCOME_COMMITTED'));
