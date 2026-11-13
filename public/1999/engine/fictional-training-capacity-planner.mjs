@@ -286,7 +286,7 @@ export function planFictionalTrainingAssignments({
    capacities[i]=counts[i];
  }
  const groups=makeGroups(horseCount,regions,book,assignment);
- const reports={};
+ const reports=Object.create(null);
  for(const [key,group] of groups){
   let spare=0;
   for(const i of group.trainerIndexes)spare+=capacities[i]-counts[i];
