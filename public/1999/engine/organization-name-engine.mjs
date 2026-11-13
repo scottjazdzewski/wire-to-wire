@@ -4,7 +4,12 @@
  * One seeded registry protects names across owners, barns and farms.
  * Entity IDs, locations, ownership, and horse links are outside this module.
  */
-export const ORGANIZATION_NAME_MODEL='WTW_1999_ORGANIZATION_NAMING_V3';
+import {
+ ORGANIZATION_STYLE_MODEL,organizationNamingRegion,organizationNamingEra,
+ contextualFarmCandidate,contextualOwnerCandidate,contextualStableCandidate,
+ contextualBreakingCandidate,REGIONAL_NAMING_ANCHORS
+} from './organization-naming-styles.mjs';
+export const ORGANIZATION_NAME_MODEL='WTW_1999_ORGANIZATION_NAMING_V4';
 
 const SURNAMES='Abbott|Adler|Ainsworth|Aldridge|Allen|Alston|Anderson|Archer|Armstrong|Ashford|Atkins|Atwood|Baird|Baldwin|Banks|Barlow|Barnes|Barrett|Baxter|Beckett|Bellamy|Bennett|Benton|Berryman|Bishop|Blackwell|Blair|Bledsoe|Bolton|Boone|Bradford|Bradshaw|Brennan|Brooks|Browning|Buchanan|Burke|Burnett|Byrne|Caldwell|Callahan|Calvert|Campbell|Carleton|Carson|Carter|Chambers|Chandler|Chapman|Clark|Clayton|Clements|Clifton|Coleman|Collins|Connelly|Conrad|Cooper|Corbett|Crawford|Cullen|Dalton|Danvers|Davenport|Dawson|Delaney|Dixon|Donovan|Doyle|Draper|Dunbar|Duncan|Ellison|Emerson|Everett|Fairchild|Farrow|Ferguson|Fisher|Fitzgerald|Fleming|Fletcher|Forbes|Foster|Franklin|Frazier|Gaines|Gallagher|Garrison|Gentry|Gibson|Gilbert|Gillespie|Gordon|Graham|Granger|Grant|Graves|Griffin|Guthrie|Hale|Haley|Hamilton|Hancock|Hardin|Harper|Harrington|Harris|Hartley|Hawkins|Hayes|Henderson|Hensley|Hollis|Holmes|Holt|Horton|Howard|Hudson|Hughes|Hunt|Ingram|Irving|Jackson|Jarrett|Jennings|Keller|Kendall|Kennedy|Keene|Kerr|Kincaid|King|Kirkland|Lancaster|Langley|Lawrence|Lawson|Leighton|Lennox|Lloyd|Lowell|Maddox|Manning|Marshall|Mason|McAllister|McBride|McCarthy|McConnell|McDowell|McIntyre|McKay|Mercer|Merritt|Mitchell|Monroe|Montgomery|Morgan|Morrison|Murphy|Nelson|Newman|Nichols|Nolan|Norton|OBrien|OConnor|Odom|Osborne|Owens|Parker|Parrish|Patterson|Payne|Pearson|Pemberton|Perkins|Perry|Phillips|Pierce|Porter|Prescott|Price|Quinn|Ramsey|Randolph|Reed|Reynolds|Rhodes|Riley|Robbins|Roberts|Robertson|Rogers|Rowan|Russell|Rutledge|Sampson|Sawyer|Schneider|Scott|Shaw|Shepherd|Sherman|Simmons|Sinclair|Sloane|Spencer|Stafford|Stanford|Stanton|Stevens|Stewart|Stone|Stratton|Sullivan|Sutton|Talbot|Tanner|Taylor|Thatcher|Thomas|Thompson|Thornton|Turner|Vance|Vaughn|Walker|Wallace|Walsh|Warren|Watson|Weller|Wells|Weston|Whitaker|Whitcomb|White|Whittaker|Wilcox|Williams|Willis|Wilson|Winters|Woodard|Woodward|Wright|Yates|Young'.split('|');
 const LAND='Ashbourne|Briarfield|Bridlewood|Brookhaven|Buckeye|Calder|Camden|Canebrake|Carriage Hill|Cedar Vale|Chapel Hill|Chesapeake|Chestnut Hollow|Claremont|Clear Fork|Clearwater|Cloverleaf|Coldstream|Copper Run|Cottonwood|Crescent Mile|Cypress Bend|Deerfield|Dry Creek|Eastfield|Elk River|Elmwood|Fairhaven|Fairview|Far Hills|Fern Hill|Fieldstone|Flat Rock|Foxcroft|Foxglove|Fox Hollow|Gallant Hill|Glenarden|Glenview|Goldcrest|Grand Oaks|Greenfield|Greenway|Hawthorne|Hazelbrook|Heather Glen|Highfield|Highland|Hillcroft|Hillview|Holly Springs|Horse Creek|Ironwood|Juniper|Kingsmere|Larkspur|Laurel Hill|Laurelwood|Limestone|Little Fork|Longbranch|Longford|Maple Grove|Mapleton|Marshfield|Meadowgate|Mill Creek|Millbrook|Millstone|Monarch Hill|Montclair|Morningside|Northfield|Oak Glen|Oak Hill|Oakleigh|Oakridge|Old Mill|Old Orchard|Oldfield|Overbrook|Overlook|Pinecroft|Pinegrove|Pine Hill|Pinehurst|Prairie Hill|Quail Run|Quarry Hill|Red Bank|Red Clay|Red Fox|Red Gate|Red Oak|Ridgecrest|Ridgefield|Riverbend|Rivergate|Riverton|Rockford|Rock Haven|Rock Ridge|Rosecroft|Rose Hill|Rosewood|Round Hill|Sagebrush|Sandstone|Seven Oaks|Shady Grove|Silverleaf|Southbank|Springbrook|Springfield|Springhill|Stillwater|Stonebrook|Stonefield|Stonegate|Stonehaven|Stoneleigh|Stonewall|Sugar Creek|Sunnyside|Sweetwater|Sycamore|Tall Oaks|Tanglewood|Thornfield|Three Oaks|Timbercrest|Timberlake|Timberline|Twin Rivers|Valley Forge|Valleyview|Walnut Grove|Westfield|Westhaven|Westover|White Fence|Whitehall|White Oak|Wildflower|Willowbend|Willowbrook|Willowfield|Windfield|Windham|Windward|Woodcrest|Woodfield|Woodhaven|Woodland|Woodside'.split('|');
@@ -21,7 +26,7 @@ const FAMILY_SUFFIX='Family Racing|Family Stables|Family Thoroughbreds|Family Pa
 const LANDMARK='Autumn Grove|Black Walnut|Blue Heron|Cedar Bluff|Cedar Lane|Clover Hill|Dry Stone|Elm Ridge|Fair Oaks|Fox Den|Golden Valley|High Meadow|Iron Gate|Little River|Long Pasture|Old Bridge|Old Gate|Old School|Red Barn|Red Rock|River Stone|Round Oak|Silver Creek|Stone Fence|Stone House|Sycamore Lane|Three Maples|White Birch|White Post|Willow Lane|Winter Hill|Winding Creek'.split('|');
 const TOPO='Bluff|Branch|Brook|Chase|Crossing|Downs|Fields|Ford|Glen|Grove|Hollow|Knoll|Landing|Meadow|Mill|Oaks|Pasture|Place|Ridge|Run|Spring|Vale|Valley|Wood'.split('|');
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'');
-const trailing=/(?:\s+(?:Bloodstock\s+Holdings|Racing\s+Ventures|Racing\s+Associates|Thoroughbred\s+Stud|Pre-Training\s+Center|Horse\s+Development|Equine\s+Starting|Thoroughbred\s+Nursery|Thoroughbred\s+Farm|Bloodstock\s+Stud|Bloodstock\s+Farm|Bloodstock\s+Operation|Stallion\s+Station|Stallion\s+Farm|Stud\s+Farm|Farm\s+&\s+Nursery|Young\s+Horse\s+Development|Equine\s+Training\s+Center|Equine\s+Development|Racing\s+Partnership|Racing\s+Partners|Racing\s+Syndicate|Racing\s+Group|Racing\s+Club|Racing\s+Stables|Racing\s+Stable|Racing\s+Team|Racing\s+Operation|Training\s+Center|Training\s+Grounds|Training\s+Farm|Training\s+Barn|Training\s+Yard|Race\s+Barn|Race\s+Stable|Breaking\s+&\s+Training|Starting\s+&\s+Training|Pre-Training|Colt\s+Starting|Family\s+Partnership|Family\s+Thoroughbreds|Family\s+Racing|Family\s+Stables|Thoroughbreds|Partnership|Syndicate|Partners|Stables|Stable|Bloodstock|Nursery|Farmstead|Farms|Farm|Stud|Racing))$/i;
+const trailing=/(?:\s+(?:Bloodstock\s+Holdings|Bloodstock\s+Partners|Racing\s+Holdings|Thoroughbred\s+Ventures|Racing\s+Ventures|Racing\s+Associates|Thoroughbred\s+Stud|Pre-Training\s+Center|Horse\s+Development|Equine\s+Starting|Thoroughbred\s+Nursery|Thoroughbred\s+Farm|Bloodstock\s+Stud|Bloodstock\s+Farm|Bloodstock\s+Operation|Stallion\s+Station|Stallion\s+Farm|Stud\s+Farm|Farm\s+&\s+Nursery|Foaling\s+Farm|Nursery\s+Farm|Bloodstock\s+&\s+Breeding|Racing\s+&\s+Breeding|Young\s+Horse\s+Development|Equine\s+Training\s+Center|Equine\s+Development|Racing\s+Partnership|Racing\s+Partners|Racing\s+Syndicate|Racing\s+Group|Racing\s+Club|Racing\s+Stables|Racing\s+Stable|Racing\s+Team|Racing\s+Operation|Training\s+Center|Training\s+Grounds|Training\s+Farm|Training\s+Barn|Training\s+Yard|Race\s+Barn|Race\s+Stable|Breaking\s+&\s+Training|Starting\s+&\s+Training|Pre-Training|Colt\s+Starting|Racehorse\s+Partnership|Family\s+Partnership|Family\s+Thoroughbreds|Family\s+Racing|Family\s+Stables|Thoroughbreds|Partnership|Syndicate|Partners|Stables|Stable|Bloodstock|Nursery|Farmstead|Farms|Farm|Acres|Stud|Training|Racing))$/i;
 const rootOf=name=>String(name).replace(trailing,'').replace(/^the\s+/i,'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
 function hash(seed,key){
  let h=(2166136261^(seed>>>0))>>>0;
@@ -54,7 +59,7 @@ const isMeaningfullySimilar=(candidate,usedRoots)=>{
 // Prefixes are taken from the actual place/land/racing-language lexicons;
 // longer phrases win over single words ("Old Dominion" before "Old").
 const MAX_DISTINCTIVE_ROOT_USES=6;
-const LANDMARK_ANCHORS=[...new Set([...LAND,...PLACES,...LANDMARK,...CLUB_ROOTS].map(rootOf))]
+const LANDMARK_ANCHORS=[...new Set([...LAND,...PLACES,...LANDMARK,...CLUB_ROOTS,...REGIONAL_NAMING_ANCHORS].map(rootOf))]
  .sort((a,b)=>b.length-a.length);
 const distinctiveRoot=name=>{
  const root=rootOf(name);
@@ -164,9 +169,19 @@ function breakingName(seed,i,attempt){
 export function createOrganizationNameRoster({
  seed,ownerCount,barnCount,farmCount,breakingCount=0,
  protectedNames=[],principalNames=[],trainerNames=[],sourceOwnerNames=[],farmKindPlan=null,
- alignPrincipalSurnames=false,principalPrimarySurnames=[],trainerPrimarySurnames=[]
+ alignPrincipalSurnames=false,principalPrimarySurnames=[],trainerPrimarySurnames=[],
+ ownerContexts=[],farmContexts=[],trainerContexts=[],breakingContexts=[]
 }){
  if(!Number.isSafeInteger(seed)||seed<1)throw Error('Invalid naming seed');
+ for(const [items,count,label] of [[ownerContexts,ownerCount,'owner'],[farmContexts,farmCount,'farm'],
+  [trainerContexts,barnCount,'trainer'],[breakingContexts,breakingCount,'breaking']]){
+  if(!Array.isArray(items)||(items.length&&items.length!==count))
+   throw Error('Invalid '+label+' naming contexts');
+  if(items.some(x=>!x||typeof x!=='object'||!['HERITAGE','ESTABLISHED','CONTEMPORARY',undefined].includes(x.era)||
+   x.region!==undefined&&!['KENTUCKY','FLORIDA','CALIFORNIA','NEW_YORK',
+    'MID_ATLANTIC','ONTARIO','LOUISIANA','BRITAIN_IRELAND','GENERAL_NORTH_AMERICA'].includes(x.region)))
+   throw Error('Unsupported '+label+' naming context');
+ }
  for(const n of [ownerCount,barnCount,farmCount,breakingCount])
   if(!Number.isInteger(n)||n<0)throw Error('Invalid naming count');
  const used=new Set(protectedNames.map(norm).filter(Boolean));
@@ -204,13 +219,19 @@ export function createOrganizationNameRoster({
   // The legal name of a sole-owner operation intentionally equals its
   // principal's identity, not an independently generated business duplicate.
   if(i%11===0&&principal){used.add(norm(principal));return principal;}
-  return claim(attempt=>ownerName(seed,i,attempt,principal,alignPrincipalSurnames,principalPrimarySurnames[i]),'owner');
+  const preferred=principalPrimarySurnames[i]||surname(principal);
+  const context=ownerContexts[i]||{};
+  return claim(attempt=>attempt<48?
+   contextualOwnerCandidate(seed,i,attempt,principal,alignPrincipalSurnames?preferred:'',context):
+   ownerName(seed,i,attempt,principal,alignPrincipalSurnames,preferred),'owner');
  });
  const kindsAllowed=new Set(['FARM','STUD_FARM','THOROUGHBRED_NURSERY','BLOODSTOCK_FARM']);
  if(farmKindPlan!==null&&(!Array.isArray(farmKindPlan)||farmKindPlan.length!==farmCount||
   farmKindPlan.some(k=>!kindsAllowed.has(k))))throw Error('Invalid explicit farm-purpose plan');
  const farmKinds=farmKindPlan===null?Array.from({length:farmCount},(_,i)=>classifyFarm(seed,i)):[...farmKindPlan];
- const farms=Array.from({length:farmCount},(_,i)=>claim(a=>farmName(seed,i,a,farmKinds[i]),'farm'));
+ const farms=Array.from({length:farmCount},(_,i)=>claim(a=>a<48?
+  contextualFarmCandidate(seed,i,a,farmKinds[i],farmContexts[i]||{}):
+  farmName(seed,i,a,farmKinds[i]),'farm'));
  const familyFrequency=new Map();
  for(let i=0;i<trainerNames.length;i++){
   const key=norm(trainerPrimarySurnames[i]||surname(trainerNames[i]));
@@ -218,11 +239,15 @@ export function createOrganizationNameRoster({
  }
  const barns=Array.from({length:barnCount},(_,i)=>{
   const family=trainerPrimarySurnames[i]||surname(trainerNames[i]);
-  return claim(a=>barnName(seed,i,a,trainerNames[i],rareFamily(family,familyFrequency),family),'barn');
+  return claim(a=>a<48?
+   contextualStableCandidate(seed,i,a,trainerNames[i],family,trainerContexts[i]||{}):
+   barnName(seed,i,a,trainerNames[i],rareFamily(family,familyFrequency),family),'barn');
  });
- const breakingCenters=Array.from({length:breakingCount},(_,i)=>claim(a=>breakingName(seed,i,a),'breaking'));
+ const breakingCenters=Array.from({length:breakingCount},(_,i)=>claim(a=>a<48?
+  contextualBreakingCandidate(seed,i,a,breakingContexts[i]||{}):
+  breakingName(seed,i,a),'breaking'));
  return {
-  model:ORGANIZATION_NAME_MODEL,
+  model:ORGANIZATION_NAME_MODEL,styleModel:ORGANIZATION_STYLE_MODEL,
   owners:Object.freeze(owners),barns:Object.freeze(barns),
   farms:Object.freeze(farms),farmKinds:Object.freeze(farmKinds),
   breakingCenters:Object.freeze(breakingCenters),
