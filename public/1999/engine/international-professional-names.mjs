@@ -74,14 +74,14 @@ export const INTERNATIONAL_NAME_PROFILES=Object.freeze({
  AE:entry(
   'Mohammed Ahmed Abdullah Saeed Khalid Rashid Salem Hamdan Hassan Ali Ibrahim Omar',
   'Mohammed Ahmed Khalid Saif Abdullah Rashid Sultan Hamad Faisal Omar Majid Tariq',
-  'Fatima Aisha Maryam Khadija Amna Hessa Shamsa',
+  'Fatima Aisha Maryam Khadija Amna Hessa Shamsa Salma'
   'Fatima Maryam Aisha Hind Latifa Noura Shamma Reem Mariam',
-  'AlMansoori AlSuwaidi AlMazrouei AlNuaimi AlDhaheri AlMarri AlKetbi AlFalasi AlKaabi AlShamsi AlRumaithi AlQubaisi AlHashimi'),
+  'Al-Mansoori Al-Suwaidi Al-Mazrouei Al-Nuaimi Al-Dhaheri Al-Marri Al-Ketbi Al-Falasi Al-Kaabi Al-Shamsi Al-Rumaithi Al-Qubaisi Al-Hashimi'),
  HK:entry(
-  'WaiMing ChiKeung KwokLeung WingChun TakWah ManHo MingYiu',
-  'KaMing WaiKit KinFai ChiHo ChunMing HoYin TakLong',
-  'SiuLing MeiLing LaiFong YukLan WaiFong',
-  'KaYan ManYee HoiLam WingYan TszYan MeiYee',
+  'Wai-ming Chi-keung Kwok-leung Wing-chun Tak-wah Man-ho Ming-yiu Chi-fai'
+  'Ka-ming Wai-kit Kin-fai Chi-ho Chun-ming Ho-yin Tak-long Chi-wai'
+  'Siu-ling Mei-ling Lai-fong Yuk-lan Wai-fong Mei-han Yuk-ling Sau-lan'
+  'Ka-yan Man-yee Hoi-lam Wing-yan Tsz-yan Mei-yee Chi-yan Pui-yee'
   'Chan Wong Lee Leung Cheung Lau Ho Ng Lam Yip Tsang Kwok Fong Choi Tong')
 });
 const mix=(...items)=>Object.freeze(items.map(p=>Object.freeze(p)));
