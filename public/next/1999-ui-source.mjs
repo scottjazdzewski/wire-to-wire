@@ -317,7 +317,7 @@ function makeDepartmentRows(section,page,context={}){
    wanted==='staff'?!['trainer','jockey','owner','groom','exercise_rider'].includes(p.role):p.role===wanted).map(p=>{
    const attrs=p.attributes||p.roleAttributes||{},rating=v=>v==null?'':String(v);
    const roleNames={trainer:'Conditioning & placement',jockey:'Riding & tactics',farm_manager:'Farm management',
-    veterinarian:'Veterinary medicine',farrier:'Hoof care',bloodstock_agent:'Bloodstock selection',racing_secretary:'Race conditions'};
+    veterinarian:'Veterinary medicine',farrier:'Hoof care',bloodstock_agent:'Bloodstock selection',jockey_agent:'Jockey representation',racing_secretary:'Race conditions'};
    const link=(p.role==='trainer'?trainerRelations:jockeyRelations).get(p.id);
    const stableRelationship=link?Math.round(link.total/link.count):null;
    return {_kind:'person',_name:p.name,_id:p.id,name:p.name,age:p.age||'',role:p.role||'',reputation:rep(p.reputation),
@@ -325,11 +325,14 @@ function makeDepartmentRows(section,page,context={}){
     ca:rating(p.ability?.currentStars),pa:rating(p.ability?.potentialStars),specialty:roleNames[p.role]||'',
     morale:typeof p.morale==='number'?Math.round(p.morale*100)+'%':'',
     workload:typeof p.workload==='number'?Math.round(p.workload*100)+'%':'',
-    salary:p.role==='jockey'?money(p.compensation?.projectedAnnualGross||0):
+    salary:p.employmentStatus==='AVAILABLE_UNCONTRACTED'?'—':
+     p.role==='jockey'?money(p.compensation?.projectedAnnualGross||0):
      money(p.compensation?.estimatedAnnualFees??p.payrollAnnual??p.annualBaseSalary??0),
-    contract:p.role==='jockey'?'MOUNT + PURSE SHARE · TEST':
+    contract:p.employmentStatus==='AVAILABLE_UNCONTRACTED'?'UNCONTRACTED · AVAILABLE':
+     p.role==='jockey'?'MOUNT + PURSE SHARE · TEST':
      p.role==='trainer'?'DAY FEE + PURSE SHARE · TEST':'1999 test appointment',
-    assignment:p.barnId||p.organizationId||'',base:city(p.location||p.base),birthCountry:p.birthCountry||'',wins:'',
+    assignment:p.employmentStatus==='AVAILABLE_UNCONTRACTED'?'':
+     p.barnId||p.organizationId||'',base:city(p.location||p.base),birthCountry:p.birthCountry||'',wins:'',
     commission:p.compensation?.winShareRate!=null?(Math.round(p.compensation.winShareRate*1000)/10)+'%':'',
     demand:p.bookingMarket?.demandTier||p.bookingDemand?.tier||'',
     competingBarns:p.bookingMarket?.competingBarns?.length!=null?String(p.bookingMarket.competingBarns.length):'',
