@@ -215,17 +215,11 @@ async function refresh(){
    ' · SEED '+esc(current.seed)+'</div>'+
   '<div class="wtw-cc-section"><h3>NEW WORLD</h3>'+
   '<p>Begin with 112 source-linked founding horses. Expand only after testing this small 1999 scenario; historical results stay archived.</p>'+
-  '<div class="wtw-cc-grid"><label>HORSE POPULATION<input data-cc="population" type="number" min="112" max="325000" step="1" value="'+
-   current.population+'"/></label>'+
-  '<label>WORLD SOURCE<select data-cc="mode"><option value="FOUNDING_1999" '+
-   (current.mode==='FOUNDING_1999'?'selected':'')+'>Founding 1999 (source only)</option>'+ 
-   '<option value="CANON_ANCHORED_TEST" '+
-   (current.mode==='CANON_ANCHORED_TEST'?'selected':'')+'>Historical foundation</option>'+
-   '<option value="FULLY_FICTIONAL_TEST" '+(current.mode==='FULLY_FICTIONAL_TEST'?'selected':'')+
-   '>Fictional horse population (test)</option></select></label>'+
+  '<div class="wtw-cc-grid"><label>HORSE POPULATION<input data-cc="population" type="number" min="112" max="112" step="1" value="112" readonly/></label>'+
+  '<label>WORLD SOURCE<select data-cc="mode"><option value="FOUNDING_1999" selected>Founding 1999 (source only)</option></select></label>'+
   '<label>WORLD SEED<input data-cc="seed" type="number" min="1" max="4294967295" step="1" value="'+esc(current.seed)+'"/></label></div>'+
   '<div class="wtw-cc-actions">'+config().presets.map(p=>'<button data-cc-action="preset" data-population="'+p.population+'" data-mode="'+(p.mode||'CANON_ANCHORED_TEST')+'">'+esc(p.label)+'</button>').join('')+'</div>'+
-  '<p class="wtw-cc-warning">Founding mode excludes the synthetic 325,000-horse world. Larger presets remain TEST modes until their history is reconciled.</p>'+
+  '<p class="wtw-cc-warning">Founding world is the ONLY new playable career during this pilot. The historical archive and full-size engineering models remain saved separately and cannot appear in this opening scenario.</p>'+
   '<button data-cc-action="new-world" class="primary">CREATE NEW WORLD (BACK UP CURRENT CAREER FIRST)</button></div>'+
   '<div class="wtw-cc-section"><h3>COMPACT SAVES · '+slots.length+' SLOTS</h3>'+
   '<p>Local device only. No account, monthly fee or cloud storage required. Portable .wtwsave files have checksums and gzip compression where supported. Total compact-save budget: 512 MB across slots.</p>'+
