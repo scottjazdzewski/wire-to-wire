@@ -16,11 +16,15 @@ The previously selected 39 B01 runners all have the boundary `B01_APPROVED_1999_
 | Component | Current clean state | Authority boundary |
 |---|---:|---|
 | Founding organizations | 37 | 23 established IDs, 14 scenario-only provisional |
-| Organization principals | 37 | 12 established, 21 newly user-approved, four revised names still pending review (Harrowgate, Huntcross, Argosy Racing, Ledbetter Calder) |
-| Named source + game-world people | 47 | Includes newly proposed Ledbetter operating principal; six B01-only trainers remain excluded |
-| New professional candidates | 68 | Jockeys 26, trainers 10, farm managers 8, bloodstock agents 6, vets 4, farriers 4, racing secretaries 4, jockey agents 6 |
-| Total people exposed | 115 | 47 named identities + 68 uncontracted professional candidates |
+| Organization principals | 33 accepted/established, four empty | Unapproved replacements live ONLY in offline proposal docs, not playable people or principal displays |
+| Named source + game-world people | 41 | Existing approved principals, secondary directors and Magic Johnson as non-operating investor; no pending identities |
+| Generated professional candidates in playable world | 0 | 68 former unit-test fixtures remain isolated in offline code only; no employment or payroll |
+| Total people exposed | 41 | No generated staff, no nonapproved person identities |
 | Verified playable racing horses | **0** | No B01 racers carried forward; no new registrations certified |
+| Founding Facilities organization references | **30** | Five studs, 15 farms, 10 racing-stable institutions. No facility assets, capacities, staff or costs inferred |
+| Training centers / breaking facilities / phantom barns | **0 / 0 / 0** | Track inventory does not spawn facilities |
+| Activated sales catalogs | **0** | Prior 12 placeholder catalogs absent |
+| Approved logos loaded | **0** | 37 ID-specific slots in a new manifest; old 108-logo roster excluded |
 | Connected standing stallions | 18 | Existing source IDs and 1999 farms only |
 | Connected broodmares | 55 | Existing source IDs and 1999 farm/boarding references only |
 | Total living animals in active World | **73** | 18 stallions + 55 mares, no other source horses |
@@ -44,7 +48,7 @@ The separate `founding-ancestry-1999.mjs` traces up to five generations from the
 
 - The approved Office FM interface remains in `public/next/next.js` and `public/next/1999-ui-source.mjs`; do not redesign it. Leadership profiles now distinguish approved principals, four pending names and non-operating investors.
 - New-game API requests default to `FOUNDING_1999`. Full synthetic population benchmarks require an explicit engineering-only mode.
-- Personnel are individually named and age/role-rated, **uncontracted** with no inherited payroll. Magic Johnson remains at immutable `P-910018` as investor, not operating principal. Grooms and exercise riders are permanently absent from player-facing personnel.
+- Personnel opening list now includes ONLY the 41 selected approved identities. No generated jockeys, trainers, workers, contracts or payroll are available. Magic Johnson remains at immutable `P-910018` as a non-operating investor. Grooms and exercise riders remain absent.
 - Live finances show **NOT CERTIFIED** rather than copying invented balances from the retired 3,308-owner experiment.
 - Stallion profiles and broodmare views show their actual historical source IDs; UI does not duplicate the breeding population.
 - The Office Stable can legitimately be empty during initial world creation. Clicking between departments must work even with zero racehorses.
@@ -53,7 +57,7 @@ The separate `founding-ancestry-1999.mjs` traces up to five generations from the
 
 ## Next implementation steps, strictly in order
 
-1. **Close four revised name proposals**: the user approved 21 of 24 earlier proposed primary leaders and all six unchanged secondary leaders; newly suggested Graham Kincaid, Hugh Radcliffe, Sebastian Pryce and Daniel Calder still require explicit name approval in [the exact-ID leadership roster](./1999-founding-leadership-roster.md). Magic Johnson is a major NON-OPERATING Ledbetter investor.
+1. **Leave four principal slots empty until approval**: proposed Graham Kincaid, Hugh Radcliffe, Sebastian Pryce and Daniel Calder remain documents-only. All other accepted principal and secondary identities are loaded. Magic Johnson is a major NON-OPERATING Ledbetter investor.
 2. **Authorize the new birth and ownership foundation**: for each fictional candidate, decide the correct original breeder, foaling site, retained-owner or sale/transfer path, and later racing stable. No false historic pre-1999 transactions and no aliases; use game-approved new entity IDs.
 3. **Create the new 1999 horse population** using the actual released and screened naming/registration rules. Aim initially for a few hundred properly linked horses across the chosen farms and owner groups; 250–400 racing horses is a useful *planning estimate*, not approved canon or an excuse for arbitrary injection.
 4. **Create verified 1999 barns, staff appointments and jockey bookings**: distinguish farm operations from racing barns; every working horse must have one actual owner and one current barn, trainer, state and travel program. Professional staff contracts remain off until an approved employment transaction occurs.
