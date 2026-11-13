@@ -214,7 +214,28 @@ export function createOrganizationNameRoster({
   if(!Number.isInteger(n)||n<0)throw Error('Invalid naming count');
  const used=new Set(protectedNames.map(norm).filter(Boolean));
  const roots=new Set(protectedNames.filter(s=>trailing.test(String(s))).map(rootOf).filter(Boolean));
- const protectedRoots=[...roots].filter(s=>s.length>=6);
+ // The old .some() scan compared EVERY new organization candidate with EVERY
+ // historical protected root. That becomes O(names × historicOrganizations)
+ // after years of on-demand generation. Prefix membership + lexicographic
+ // lower-bound preserves exactly the same prefix-conflict rule at O(length+
+ // log historicOrganizations) per attempt.
+ const protectedRoots=[...roots].filter(s=>s.length>=7);
+ const protectedRootSet=new Set(protectedRoots);
+ const protectedRootsSorted=[...protectedRoots].sort();
+ const hasProtectedPrefixConflict=root=>{
+  if(root.length<7||!protectedRoots.length)return false;
+  for(let length=7;length<=root.length;length++)
+   if(protectedRootSet.has(root.slice(0,length)))return true;
+  // Any protected root beginning with this candidate root sits at or after
+  // the lower-bound position in a sorted prefix index.
+  let low=0,high=protectedRootsSorted.length;
+  while(low<high){
+   const mid=(low+high)>>>1;
+   if(protectedRootsSorted[mid]<root)low=mid+1;
+   else high=mid;
+  }
+  return low<protectedRootsSorted.length&&protectedRootsSorted[low].startsWith(root);
+ };
  const stems=new Map(),distinctiveRootCounts=new Map();
  const perCategory={owner:0,barn:0,farm:0,breaking:0};
  let retries=0;
@@ -223,7 +244,7 @@ export function createOrganizationNameRoster({
   if(!key||key.length<5||used.has(key)||!root||hasArtificialPhrase(candidate)||isMeaningfullySimilar(candidate,roots))return false;
   // Protect distinctive prefixes of existing historic racing organizations;
   // do not mint e.g. "Kingsmere Valley Farm" beside "Kingsmere Farm".
-  if(protectedRoots.some(old=>(root.startsWith(old)||old.startsWith(root))&&Math.min(root.length,old.length)>=7))return false;
+  if(hasProtectedPrefixConflict(root))return false;
   const landmarkRoot=distinctiveRoot(candidate);
   if(landmarkRoot&&(distinctiveRootCounts.get(landmarkRoot)||0)>=MAX_DISTINCTIVE_ROOT_USES)return false;
   // Repeating the same first two content words with a different third word
