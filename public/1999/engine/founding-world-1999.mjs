@@ -150,8 +150,16 @@ export function createFounding1999Universe({seed=19990101}={}) {
    foalYearBasis:source?.foalYear?'PEDIGREE_SOURCE':'HORSE_ID_YEAR_UNVERIFIED',
    sireId:h.sireId||source?.sireId||null,damId:h.damId||source?.damId||null};
  };
- const sourceStallions=canon.activeStallions1999.filter(h=>canonicalIdSet.has(h.standingFarm1999?.farmOrganizationId)).map(withPedigree);
- const sourceBroodmares=canon.foundationalBroodmares1999.filter(h=>canonicalIdSet.has(h.standingFarm1999?.farmOrganizationId)).map(withPedigree);
+ const withApprovedFarmName=h=>{
+  const standing=h.standingFarm1999,boarding=h.boardingFarm1999;
+  if(standing&&NAME_OVERRIDES[standing.farmOrganizationId])
+   return {...h,standingFarm1999:{...standing,farmName:NAME_OVERRIDES[standing.farmOrganizationId],legacyFarmName:standing.farmName}};
+  if(boarding&&NAME_OVERRIDES[boarding.farmOrganizationId])
+   return {...h,boardingFarm1999:{...boarding,farmName:NAME_OVERRIDES[boarding.farmOrganizationId],legacyFarmName:boarding.farmName}};
+  return h;
+ };
+ const sourceStallions=canon.activeStallions1999.filter(h=>canonicalIdSet.has(h.standingFarm1999?.farmOrganizationId)).map(withPedigree).map(withApprovedFarmName);
+ const sourceBroodmares=canon.foundationalBroodmares1999.filter(h=>canonicalIdSet.has(h.standingFarm1999?.farmOrganizationId)).map(withPedigree).map(withApprovedFarmName);
  const sourceBoarding=canon.productionBroodmareBoarding1999.filter(h=>canonicalIdSet.has(h.boardingFarm1999?.farmOrganizationId));
  // Keep the opening test small: a sourced, deterministic selection of the
  // full broodmare archive (no invented pregnancies or mare transactions).
@@ -159,7 +167,7 @@ export function createFounding1999Universe({seed=19990101}={}) {
  for(const mare of sourceBoarding) {
   const id=mare.boardingFarm1999.farmOrganizationId,n=boardingByFarm.get(id)||0;
   if(n>=4)continue;
-  boardingByFarm.set(id,n+1);sampleBoarding.push(withPedigree(mare));
+  boardingByFarm.set(id,n+1);sampleBoarding.push(withApprovedFarmName(withPedigree(mare)));
  }
  const breedingMares=sourceBroodmares.concat(sampleBoarding);
  validateScenario(sourceOrganizations,sourceHorses,sourceStallions,breedingMares);
