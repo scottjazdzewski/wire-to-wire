@@ -2,7 +2,8 @@
 // deterministic generator/canon snapshot WITHOUT Cloudflare Pages Functions,
 // JWT, D1 migrations, or an online API request. Read-only test projection.
 import {create1999Universe,MODES} from './full-world-generator.mjs?rev=wtw1999-20261112-r11';
-import {createFounding1999Universe,FOUNDING_WORLD_MODE} from './founding-world-1999.mjs?rev=wtw1999-clean73-20261113-r1';
+import {createFounding1999Universe,FOUNDING_WORLD_MODE} from './founding-world-1999.mjs?rev=wtw1999-playable-pilot-20261113-r2';
+import {withPlayable1999Pilot,PLAYABLE_PILOT_SCHEMA} from './founding-playable-pilot-1999.mjs';
 import {scopeWorldPopulation,normalizeWorldProfile} from './world-profiles.mjs';
 import {openingWorld1999 as canon} from './canon-mini.mjs';
 import {createClean1999Clock} from '../test-clock.mjs';
@@ -15,11 +16,13 @@ function currentWorld(q){
  const mode=q.get('mode')||FOUNDING_WORLD_MODE; // Legacy full-world analysis requires explicit opt-in.
  if(mode!==FOUNDING_WORLD_MODE&&!MODES.includes(mode))throw Error('Unknown world generation mode');
  if(mode===FOUNDING_WORLD_MODE){
-  const key=seed+'|'+FOUNDING_WORLD_MODE;
+  const pilot=q.get('pilot')==='opening';
+  const key=seed+'|'+FOUNDING_WORLD_MODE+(pilot?'|PLAYABLE':'|SOURCE');
   if(CACHE.has(key))return CACHE.get(key);
   const founded=createFounding1999Universe({seed});
-  CACHE.set(key,founded);if(CACHE.size>2)CACHE.delete(CACHE.keys().next().value);
-  return founded;
+  const world=pilot?withPlayable1999Pilot(founded,{seed}):founded;
+  CACHE.set(key,world);if(CACHE.size>2)CACHE.delete(CACHE.keys().next().value);
+  return world;
  }
  const population=int(q.get('population'),325000,325000)||325000;
  const profile=normalizeWorldProfile({population,seed,mode});
@@ -48,7 +51,7 @@ export function readLocal1999World(raw){
  if(p==='/api/1999/sim/overview'){
   return {asOf:gameDate||'1999-01-01',careerProjection:gameDate?'READ_ONLY_AGE_AND_ABILITY__NO_OUTCOMES':null,schema:w.schema,mode:w.mode,seed:w.seed,
    source:'BROWSER_DETERMINISTIC_GENERATOR__NO_API_OR_DATABASE_REQUIRED',
-   gameplayReady:false,worldProfile:w.worldProfile,counts:w.counts,audit:w.audit,clock:createClean1999Clock(w.seed)};
+   gameplayReady:w.schema===PLAYABLE_PILOT_SCHEMA,worldProfile:w.worldProfile,counts:w.counts,audit:w.audit,clock:createClean1999Clock(w.seed)};
  }
  if(p==='/api/1999/sim/horses')return pager(q,w.counts.horses,i=>atDate(w.horseAt(i)),w.mode===FOUNDING_WORLD_MODE?'FOUNDING_SOURCE_ONLY':'SOURCE_267_PLUS_TEST_GENERATED');
  if(p==='/api/1999/sim/horse-directory')return pager(q,w.counts.horses,i=>w.horseDirectoryAt(i),w.mode===FOUNDING_WORLD_MODE?'FOUNDING_SOURCE_ONLY':'FULL_87500_INDEX_SOURCE_AND_TEST');
