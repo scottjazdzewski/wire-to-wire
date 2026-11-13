@@ -55,6 +55,51 @@ function suggestedCapacity(seed,id,tier){
  // Skew toward the lower end within each tier, leaving credible outliers.
  return tier.min+Math.floor(Math.pow(u,1.35)*(tier.max-tier.min+1));
 }
+function snapshotChecksum(seed,ownerIds,ownerIndexes){
+ let h=(2166136261^(seed>>>0))>>>0;
+ for(const id of ownerIds){h=hash(h,'owner:'+id)}
+ for(const index of ownerIndexes){h^=index;h=Math.imul(h,16777619)}
+ h^=h>>>16;return (h>>>0).toString(16).padStart(8,'0');
+}
+/**
+ * Portable JSON-safe checkpoint of exactly one owner index per horse.
+ * No duplicate per-horse owner names or horse objects are serialized.
+ * Checksum detects accidental corruption, not malicious modification.
+ */
+export function exportFictionalOwnerPortfolioState(plan){
+ if(!plan||plan.schema!==FICTIONAL_PORTFOLIO_MODEL||
+  !Array.isArray(plan.ownerIds)||
+  !(plan.ownerIndexForHorse instanceof Uint32Array)||
+  plan.ownerIndexForHorse.length!==plan.horseCount)
+  throw Error('Invalid owner portfolio plan for export');
+ const ownerIds=[...plan.ownerIds],
+  ownerIndexes=Array.from(plan.ownerIndexForHorse);
+ return Object.freeze({
+  schema:FICTIONAL_PORTFOLIO_MODEL,seed:plan.seed,horseCount:plan.horseCount,
+  ownerIds,ownerIndexes,checksum:snapshotChecksum(plan.seed,ownerIds,ownerIndexes)
+ });
+}
+export function importFictionalOwnerPortfolioState(snapshot){
+ if(!snapshot||snapshot.schema!==FICTIONAL_PORTFOLIO_MODEL||
+  !Number.isSafeInteger(snapshot.seed)||snapshot.seed<1||
+  !Number.isSafeInteger(snapshot.horseCount)||
+  snapshot.horseCount<0||snapshot.horseCount>MAX_HORSES||
+  !Array.isArray(snapshot.ownerIds)||!snapshot.ownerIds.length||
+  snapshot.ownerIds.length>MAX_OWNERS||
+  new Set(snapshot.ownerIds).size!==snapshot.ownerIds.length||
+  snapshot.ownerIds.some(id=>typeof id!=='string'||!id.trim())||
+  !Array.isArray(snapshot.ownerIndexes)||
+  snapshot.ownerIndexes.length!==snapshot.horseCount||
+  snapshot.ownerIndexes.some(i=>!Number.isSafeInteger(i)||i<0||
+   i>=snapshot.ownerIds.length)||
+  snapshot.checksum!==snapshotChecksum(snapshot.seed,snapshot.ownerIds,snapshot.ownerIndexes))
+  throw Error('Invalid or corrupt owner portfolio checkpoint');
+ return Object.freeze({
+  schema:FICTIONAL_PORTFOLIO_MODEL,seed:snapshot.seed,
+  horseCount:snapshot.horseCount,ownerIds:Object.freeze([...snapshot.ownerIds]),
+  ownerIndexForHorse:Uint32Array.from(snapshot.ownerIndexes)
+ });
+}
 function verifyPrior(existingPlan,seed,horseCount,ownerIds){
  if(!existingPlan)return;
  if(existingPlan.schema!==FICTIONAL_PORTFOLIO_MODEL||
@@ -254,10 +299,11 @@ export function planFictionalOwnerPortfolios({
  }
  const byTier={};
  for(const tier of TIER_LABELS)byTier[tier]={owners:0,horses:0};
- let oneToFive=0,atLeast200=0,empty=0,maxPortfolio=0;
+ let oneToFive=0,exactlyOne=0,atLeast200=0,empty=0,maxPortfolio=0;
  for(let i=0;i<book.length;i++){
   const c=finalCounts[i];byTier[tierLabels[i]].owners++;
   byTier[tierLabels[i]].horses+=c;
+  if(c===1)exactlyOne++;
   if(c>=1&&c<=5)oneToFive++;
   if(c>=200)atLeast200++;
   if(!c)empty++;
@@ -270,7 +316,8 @@ export function planFictionalOwnerPortfolios({
  const summary=Object.freeze({
   horseCount,ownerCount:book.length,lockedHorseCount:seenLocked.size,
   priorHorseCount:past,unownedHorses:0,
-  ownersWithOneToFive:oneToFive,ownersWithAtLeastTwoHundred:atLeast200,
+  ownersWithExactlyOne:exactlyOne,ownersWithOneToFive:oneToFive,
+  ownersWithAtLeastTwoHundred:atLeast200,
   inactiveOwners:empty,largestPortfolio:maxPortfolio,
   topOnePercentHorseShare:horseCount?topHorses/horseCount:0,
   byTier:Object.freeze(Object.fromEntries(
