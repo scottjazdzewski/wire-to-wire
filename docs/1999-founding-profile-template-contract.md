@@ -2,6 +2,39 @@
 
 **Authority:** User-selected page pattern, November 13, 2026. Work only from latest `main` in `scottjazdzewski/wire-to-wire`. This is a **presentation and routing contract**, not a new entity, facility, horse, employment or financial database.
 
+## VISUAL TEMPLATE AND IMAGE SLOT LOCK — NOVEMBER 13, 2026
+
+This is an exact DOM/layout contract, not a loose visual style analogy:
+
+- **EVERY people profile** (owners, trainers, jockeys, breeders, farm managers, stable workers and all future admitted personnel) uses the existing Horse `ng-profile-horse` chassis. One row of **four equal-width ability panels** (46 reserved blank slots: 9 / 15 / 12 / 10), then the **seven-slot condition/status strip**, **five office panels**, **two wider lower panels**, and **full-width summary**. Labels and ability ratings remain UNASSIGNED until the user approves role-specific attributes; zero scores are NOT implied.
+- **EVERY facility and ownership profile** uses the actual Track `ng-profile-track` chassis: large four-column records table on the left, same width ratio as the Track page (1.23 / .77), right-hand **facility/operations**, and bottom-right **history**. Empty data preserve the same fixed panel areas; they do not collapse or produce a new independent layout. No source-free capacities, payroll, acreage or construction claims are introduced.
+- **No old founding mock renderer**: `public/next/1999-founding-profiles.js` was deleted, its `WTW FOUNDING PROFILE TEMPLATES V1` CSS was removed, and both profile types are rendered only through `profileDetail()` and its `1999-restored-profiles.js` exact-ID source adapter. Preserve the shared original Track/Horse components, not a second copied page.
+
+### Image generation dimensions and display presentation
+
+| Asset class | Approved source master | Rendered profile slot | Treatment |
+| --- | --- | --- | --- |
+| Horse portrait | **1600 × 2000 (4:5)** | 72 × 90 desktop (4:5); 64 × 80 narrow mobile | Cover inside matched ratio; no squashing; same frame exists before image |
+| Personnel portrait | **1600 × 2000 (4:5)** | 72 × 90 desktop (4:5); 64 × 80 narrow mobile | Same portrait frame as Horse, by immutable P-ID; no unrelated stock-photo fallback |
+| Facility / farm image | **1600 × 1200 (4:3)** | Standard Track-logo header plate **214 × 108** | Contain entire source master (letterbox if necessary), never stretch/crop |
+| Ownership-group crest/logo | User-supplied approved artwork (do not impose unapproved generation dimensions) | **Same 214 × 108 Track-logo plate** | Transparent/unmodified, `object-fit:contain` and no transform; identical approved source on Ownership and Facility views and next to owned horses |
+
+### One-to-many logo propagation (critical)
+
+The **only authoritative organization logo map** is `public/assets/office/founding-organization-logo-index.json`. Its `organizations` keys MUST be exact `organization:O-...` (e.g. `"organization:O-000014": "/assets/office/founding-organization-logos/O-000014.webp"` after actual approved artwork has been added at that path). No hypothetical files are pre-registered and no 108-organization legacy logo alias is allowed.
+
+`organizationLogoMarkup()`, `approvedIdentityAsset()`, and `horseOwnerBadge()` all use the same approved **O-ID**. Every incoming or newly generated horse must store an exact `owner_id`, `ownerId`, `ownerOrganizationId`, or `ownershipOrganizationId` referencing an approved organization. The UI derives that organization's display name and logo from the approved O-ID; **never** infer ownership from breeder, foaling farm, boarding stable, trainer, name similarity, or historical associations. The same owner crest then appears beside the horse name across Office horse lists and on the Horse profile. If owner ID or image is missing, display an explicit placeholder, not somebody else's artwork. No artwork is claimed uploaded until its bytes and manifest entry are present.
+
+Person and horse imagery use their original exact-ID `person:P-...` / `horse:H-...` entries in `public/assets/office/decision-photo-index.json` (or separately approved world-record photo URL); preserve existing approved portrait assets while accepting new properly indexed assets. No filename/name guessing.
+
+### QA gates
+
+- Browser-check all four Horse-equivalent personnel ability columns, 46 empty scores, seven status slots, five middle panels, two bottom panels and a visible portrait frame before any artwork arrives.
+- Browser-check Track-equivalent full-height facility records, configuration and history together with the owner/facility image plate. Verify a single immutable O-ID across those pages and any horse badge.
+- Image CSS must preserve both exact aspect ratios; empty slots never vanish.
+- Keep **all 118 North American/Cuban racecourses**, zero international venues, and historical-only closure rules unchanged.
+
+
 ## Approved presentation system
 
 **Ownership organization profiles — reuse the Track profile system.**
