@@ -42,6 +42,18 @@ test('new founding stable must not display inherited B01 generated horses as own
  assert.ok(!ui.worldHorsePage(0,73).items.some(x=>x._id==='H-1997-030039'));
 });
 
+test('founding Office clearly separates the 24 proposed principals from the 13 established links',()=>{
+ const owners=ui.departmentRows('Personnel','Owners');
+ assert.equal(owners.length,37);
+ assert.equal(owners.filter(o=>o.status==='PROPOSED PRINCIPAL · NOT APPROVED').length,24);
+ assert.equal(owners.filter(o=>o.status==='ESTABLISHED PRINCIPAL').length,13);
+ assert.equal(owners.find(o=>o._id==='O-000002').status,'PROPOSED PRINCIPAL · NOT APPROVED');
+ assert.equal(owners.find(o=>o._id==='O-000061').status,'ESTABLISHED PRINCIPAL');
+ assert.match(js,/LEADERSHIP APPROVAL/);
+ assert.match(js,/PROPOSED — AWAITING USER APPROVAL/);
+ assert.match(js,/PROPOSED · REVIEW/);
+});
+
 test('existing person profiles still retain attributes while old B01 horse profiles are removed',()=>{
  const worldParams='?mode=FOUNDING_1999&population=73&seed=19990101';
  const person=readLocal1999World('/api/1999/people'+worldParams+'&limit=1').items[0];
