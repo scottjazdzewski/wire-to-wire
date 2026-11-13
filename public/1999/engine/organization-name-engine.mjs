@@ -63,9 +63,11 @@ const stemKey=candidate=>{
  const words=s.split(/\s+/);
  return norm(words.length>1?words.slice(0,2).join(' '):s);
 };
-const hasArtificialPhrase=candidate=>{
+export const hasArtificialOrganizationPhrase=candidate=>{
  const plain=String(candidate).replace(/[-&]/g,' ').replace(/\s+/g,' ').trim();
- if(/\b([a-z]+)\s+\1\b/i.test(plain))return true;
+ // Word boundaries with [a-z] split names containing accents, wrongly
+ // rejecting natural combinations such as "Raúl López Racing" as "l L".
+ if(/(?:^|[^\p{L}])(\p{L}+)\s+\1(?=$|[^\p{L}])/iu.test(plain))return true;
  if(/\b(?:Equine|Thoroughbreds|Bloodstock)\s+(?:Farmstead|Acres|Stallion|Stud|Nursery)\b/i.test(plain))return true;
  if(/\b(?:Farm|Farms|Stud|Nursery)\s+(?:Farm|Farms|Stud|Nursery)\b/i.test(plain))return true;
  return false;
@@ -246,7 +248,7 @@ export function createOrganizationNameRoster({
  let retries=0;
  const reserve=(candidate,kind)=>{
   const key=norm(candidate),root=rootOf(candidate),stem=stemKey(candidate);
-  if(!key||key.length<5||used.has(key)||!root||hasArtificialPhrase(candidate)||isMeaningfullySimilar(candidate,roots))return false;
+  if(!key||key.length<5||used.has(key)||!root||hasArtificialOrganizationPhrase(candidate)||isMeaningfullySimilar(candidate,roots))return false;
   // Protect distinctive prefixes of existing historic racing organizations;
   // do not mint e.g. "Kingsmere Valley Farm" beside "Kingsmere Farm".
   if(hasProtectedPrefixConflict(root))return false;
