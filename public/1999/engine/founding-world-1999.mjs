@@ -294,8 +294,13 @@ export function createFounding1999Universe({seed=19990101}={}) {
    scenarioProvisional:source.publicationTier==='SCENARIO_PROVISIONAL__NOT_HISTORICAL_ID',
    portfolio:{generatedHorseSlots:0,sourceHorseCount:horses.length,
     tier:horses.length>=8?'regional':horses.length>0?'small':'breeding_or_preopening'},
-   finances:baseRecord?.finances||{cash:0,annualHorseOperatingBudget:0,propertyAndEquineAssets:0,
-    debt:0,monthlyFixedOverhead:0,currency:'USD',basis:'FOUNDING_SCENARIO_UNMODELED'},
+   // Opening-world finances are NOT inherited from the retired 3,308-owner
+   // test economy. The gameplay engine must establish and validate balances
+   // before any transaction, payroll, purses, or billing can be committed.
+   finances:{cash:null,annualHorseOperatingBudget:null,propertyAndEquineAssets:null,
+    debt:null,monthlyFixedOverhead:null,currency:'USD',
+    basis:'FOUNDING_FINANCIAL_OPENING_NOT_YET_ENGINE_CERTIFIED',
+    usableForSettlement:false},
    authority:'1999_FOUNDING_SCENARIO__SOURCE_HORSES_ONLY'};
  }
  function trainerAt(i) {
