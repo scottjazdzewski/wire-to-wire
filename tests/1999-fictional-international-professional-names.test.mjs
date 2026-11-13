@@ -10,6 +10,9 @@ import {
 import {
  createFictionalWorldNameEngine,normalizeFictionalWorldNamingSpec
 } from '../public/1999/engine/fictional-world-name-engine.mjs';
+import {
+ supportsInternationalSubculture,culturallyConditionedSurnamePool
+} from '../public/1999/engine/international-name-cultures.mjs';
 const norm=s=>String(s).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'');
 const zero={generalFarms:0,studFarms:0,nurseries:0,bloodstockFarms:0,breakingTraining:0};
 const lex=[{id:'lex-ky',city:'Lexington',region:'Kentucky',country:'United States',code:'US',weight:1,breeding:true}];
@@ -86,7 +89,10 @@ test('full 11,202-person fictional populations retain global naming variety and 
    assert.equal(p.nameOrigin,'INTERNATIONAL_1999_CURATED_PROFESSIONAL_COHORT_NOT_CENSUS');
    assert.equal(p.givenNameDecade,null);
    assert.equal(p.internationalNamingCohort,p.birthYear<1960?'OLDER_BIRTH_COHORT':'YOUNGER_BIRTH_COHORT');
-   assert.ok(internationalSurnamePool(p.birthCountry).includes(p.primarySurname));
+   const familyNames=supportsInternationalSubculture(p.birthCountry)?
+    culturallyConditionedSurnamePool(p.birthCountry,p.internationalNameCulture):
+    internationalSurnamePool(p.birthCountry);
+   assert.ok(familyNames.includes(p.primarySurname));
   }
   for(const owner of w.owners){
    const p=peopleById.get(owner.principalId);

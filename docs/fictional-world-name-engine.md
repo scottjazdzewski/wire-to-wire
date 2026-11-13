@@ -183,3 +183,18 @@ Each fictional person retains its protected display name, `primarySurname`, stab
 Run `node --test tests/1999-fictional-international-professional-names.test.mjs` to verify source boundaries, all ten international naming inventories, origin-weight distributions, full-population collision/relationship safety, every country-forced profession, deterministic output and noninterference with the active world.
 
 **Strict scope:** in-memory fictional naming proposals only. The existing 1999 world, live horse ownership, racing stables, history, save files, UI, and site data are not repopulated or edited.
+
+## Canada and Britain cultural coherence — post-V6 naming refinement
+
+Within the international V6 naming engine, Canadian and British fictional first names and surnames now share a single **per-person culture selection**:
+
+- **Canadian:** Anglophone `CA_EN` or Francophone `CA_FR`. A fictional person's first name and family name both use their chosen culture inventory, rather than sampling independently from one national mixture.
+- **British:** English `GB_EN`, Scottish `GB_SCOT` or Welsh `GB_WALES`. Distinct surnames and older/younger given-name pools are used in each editorial profile.
+- This is a **name-generator choice only**, not a declaration about any person's ethnicity, actual language, nationality or local origin. The editorial weights (27% CA Francophone; 12% Scottish, 6% Welsh among fictional British-origin names) **are not measured historic population proportions**.
+- Country is chosen using the existing 1999 professional role mixes or explicit caller overrides. The person-level culture draw is independent of a person's **current working base**; working in Ontario does not imply that a Canadian-born person must have an English-language name.
+- All other V6 international countries, jockey colonies, Latin American/Caribbean personal names, and 1999 US SSA birth-decade naming behavior remain in their respective models unchanged.
+
+Code: `public/1999/engine/international-name-cultures.mjs`.
+Each Canadian/British fictional person exposes `internationalNameCulture`; the standalone world manifest exposes `internationalNameCultureModel` and includes that model version in the deterministic fingerprint.
+
+Tests: `node --test tests/1999-fictional-international-name-cultures.test.mjs` plus the updated international professional naming integration suite. The standard 11,202-person generation still returns only frozen in-memory names; no historical identity or currently playable game file is modified.
