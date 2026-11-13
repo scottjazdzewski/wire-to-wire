@@ -98,6 +98,7 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   trainerTab.click();await pause(300);
   check('Clean founding world has no unapproved trainer roster',
    ui.departmentRows('Personnel','Trainers').length===0&&!d.querySelector('#wtwNextgen [data-ng="dept-open"]'));
+  click('Personnel');await pause(180);
   const jockeyTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Jockeys');
   check('Jockey roster tab remains available',Boolean(jockeyTab));
   jockeyTab.click();await pause(300);
