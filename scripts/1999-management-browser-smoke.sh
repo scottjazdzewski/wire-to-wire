@@ -96,8 +96,15 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   const trainerTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Trainers');
   check('Personnel trainer tab remains available',Boolean(trainerTab));
   trainerTab.click();await pause(300);
-  check('Clean founding world has no unapproved trainer roster',
-   ui.departmentRows('Personnel','Trainers').length===0&&!d.querySelector('#wtwNextgen [data-ng="dept-open"]'));
+  const openingTrainers=w.__WTW_NEXT__?.app?.departmentVisible||[];
+  check('Exactly 20 original-ID trainer identities visible in approved Personnel without invented ratings or contracts',
+   openingTrainers.length===20&&openingTrainers.every(p=>p._kind==='person'&&p.role==='TRAINER'&&
+    /^P-/.test(p._canonId)&&!p.ca&&!p.pa&&!p.salary&&!p.contract&&!p.assignment)&&
+   openingTrainers.some(p=>p._canonId==='P-000023'&&p.name==='Gabe Larkin')&&
+   openingTrainers.some(p=>p.name==='Renata Solis')&&
+   openingTrainers.some(p=>p.name==='Adam Walker'));
+  check('Trainer roster uses same original clickable OOTP / FM Personnel list',
+   Boolean(d.querySelector('#wtwNextgen [data-ng="dept-open"]')));
   click('Personnel');await pause(180);
   const jockeyTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Jockeys');
   check('Jockey roster tab remains available',Boolean(jockeyTab));
