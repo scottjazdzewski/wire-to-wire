@@ -145,7 +145,7 @@ test('all-zero world allowed; invalid years, categories, locations, seed and mix
  assert.throws(()=>normalizeFictionalWorldNamingSpec({...minimal,facilities:{studFarms:-1}}),/studFarms/);
  assert.throws(()=>normalizeFictionalWorldNamingSpec({...minimal,protectedNames:[false]}),/Protected names/);
  assert.throws(()=>normalizeFictionalWorldNamingSpec({...minimal,originWeightsByRole:{
-  jockey:[['JP',1]]
+  jockey:[['AQ',1]]
  }}),/Unsupported country/);
  assert.throws(()=>normalizeFictionalWorldNamingSpec({...minimal,markets:[]}),/geographic markets/);
  assert.throws(()=>normalizeFictionalWorldNamingSpec({...minimal,markets:[

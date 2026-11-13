@@ -23,10 +23,16 @@ import {
  regionalGivenPool,regionalSurnamePool,drawRegionalGiven,
  drawRegionalSurname,regionalCompoundGiven
 } from './latin-caribbean-person-names.mjs';
+import {
+ INTERNATIONAL_PROFESSIONAL_NAME_MODEL,isInternationalProfessionalNamingOrigin,
+ internationalGivenPool,internationalSurnamePool,drawInternationalGiven,
+ drawInternationalSurname,drawGlobalProfessionalOrigin,
+ DEFAULT_GLOBAL_PROFESSIONAL_ORIGIN_WEIGHTS
+} from './international-professional-names.mjs';
 
-export const FICTIONAL_WORLD_NAME_ENGINE='WTW_FICTIONAL_WORLD_IDENTITIES_V5';
+export const FICTIONAL_WORLD_NAME_ENGINE='WTW_FICTIONAL_WORLD_IDENTITIES_V6';
 export const SUPPORTED_NAME_ERA=1999;
-export const SUPPORTED_ORIGINS=Object.freeze(['US','CA','GB','IE','PR','PA','VE','MX','CL','PE','CO','DO','AR','BR','UY']);
+export const SUPPORTED_ORIGINS=Object.freeze(['US','CA','GB','IE','PR','PA','VE','MX','CL','PE','CO','DO','AR','BR','UY','FR','DE','JP','AU','NZ','AE','HK']);
 export const DEFAULT_WORLD_ROLE_COUNTS=Object.freeze({
  trainer:4200,jockey:1800,farm_manager:550,veterinarian:430,
  farrier:420,bloodstock_agent:360,racing_secretary:134
@@ -256,7 +262,13 @@ export function createFictionalWorldNameEngine(input){
  });
  const jockeyColonyAt=index=>inferJockeyColony(assignedMarkets[index]);
  const countryAt=(index,role)=>{
-  if(role!=='jockey')return birthplaceCountry(seed,index,role,spec.originWeights);
+  if(role!=='jockey'){
+   // Default internationally connected racing roles use a broader editorial
+   // 1999 origin mix. Explicit caller role mixes always win.
+   if(!spec.originWeights[role]&&DEFAULT_GLOBAL_PROFESSIONAL_ORIGIN_WEIGHTS[role])
+    return drawGlobalProfessionalOrigin(seed,index,role);
+   return birthplaceCountry(seed,index,role,spec.originWeights);
+  }
   const colony=jockeyColonyAt(index);
   const explicitColony=spec.jockeyColonyWeights[colony];
   if(explicitColony)return chooseJockeyColonyOrigin(seed,index,colony,{[colony]:explicitColony});
@@ -272,14 +284,23 @@ export function createFictionalWorldNameEngine(input){
   givenPoolAt:(index,role,country,feminine)=>
    country==='US'?usBirthCohortGivenPool(personBirthYears[index],feminine):
    isLatinCaribbeanNamingOrigin(country)?
-    regionalGivenPool(country,personBirthYears[index],feminine):null,
+    regionalGivenPool(country,personBirthYears[index],feminine):
+   isInternationalProfessionalNamingOrigin(country)?
+    internationalGivenPool(country,personBirthYears[index],feminine):null,
   givenNameAt:(index,role,country,feminine,attempt)=>
    country==='US'?drawUSBirthCohortName(seed,index,personBirthYears[index],feminine,attempt):
-   drawRegionalGiven(seed,index,country,personBirthYears[index],feminine,attempt),
+   isLatinCaribbeanNamingOrigin(country)?
+    drawRegionalGiven(seed,index,country,personBirthYears[index],feminine,attempt):
+    drawInternationalGiven(seed,index,country,personBirthYears[index],feminine,attempt),
   familyPoolAt:(index,role,country)=>isLatinCaribbeanNamingOrigin(country)?
-   regionalSurnamePool(country):null,
+   regionalSurnamePool(country):
+   isInternationalProfessionalNamingOrigin(country)?internationalSurnamePool(country):null,
   familyNameAt:(index,role,country,attempt)=>
-   drawRegionalSurname(seed,index,country,attempt,'primary'),
+   isLatinCaribbeanNamingOrigin(country)?
+    drawRegionalSurname(seed,index,country,attempt,'primary'):
+    drawInternationalSurname(seed,index,country,attempt),
+  givenSourceAt:(index,role,country)=>isInternationalProfessionalNamingOrigin(country)?
+   'INTERNATIONAL_1999_CURATED_PROFESSIONAL_COHORT_NOT_CENSUS':null,
   regionalCompoundAt:(index,role,country,given)=>
    regionalCompoundGiven(seed,index,country,given,personBirthYears[index]),
   regionalSecondarySurnameAt:(index,role,country,primary,attempt)=>
@@ -304,6 +325,11 @@ export function createFictionalWorldNameEngine(input){
    givenNameDecade:p.birthCountry==='US'?Math.floor(personBirthYears[i]/10)*10:null,
    regionalNamingCohort:isLatinCaribbeanNamingOrigin(p.birthCountry)?
     personBirthYears[i]<1960?'OLDER_BIRTH_COHORT':'YOUNGER_BIRTH_COHORT':null,
+   internationalNamingCohort:isInternationalProfessionalNamingOrigin(p.birthCountry)?
+    personBirthYears[i]<1960?'OLDER_BIRTH_COHORT':'YOUNGER_BIRTH_COHORT':null,
+   professionalOriginModel:DEFAULT_GLOBAL_PROFESSIONAL_ORIGIN_WEIGHTS[role]?
+    spec.originWeights[role]?'CUSTOM_ROLE_NAMING_DISTRIBUTION':
+    'EDITORIAL_1999_INTERNATIONAL_PROFESSIONAL_MIX_NOT_MEASURED':null,
    primarySurname:p.primarySurname,nameStructure:p.nameStyle,
    location:loc(market),nameOrigin:p.source,...riderFields,
    source:'FICTIONAL_WORLD_ENGINE'});
@@ -407,7 +433,7 @@ export function createFictionalWorldNameEngine(input){
   assignedFarmManagers:farmByManagerId.size,unassignedFarmManagers:farmManagers.length-farmByManagerId.size,
   byRole:frozen({...roles,owner:owners}),
   byFarmKind:frozen(Object.fromEntries(FARM_KEYS.map(([kind])=>[kind,farms.filter(f=>f.kind===kind).length])))});
- const specFingerprint=hash(seed,JSON.stringify({worldId,year,roles,owners,facilities,
+ const specFingerprint=hash(seed,JSON.stringify({namingModel:FICTIONAL_WORLD_NAME_ENGINE,worldId,year,roles,owners,facilities,
   markets:markets.map(m=>[m.id,m.city,m.region,m.country,m.code,m.weight,m.breeding,m.racing,m.jockeyColony]),
   originWeights:spec.originWeights,colonyWeights:spec.jockeyColonyWeights,
   reserved:spec.protectedNames})).toString(16).padStart(8,'0');
@@ -415,6 +441,7 @@ export function createFictionalWorldNameEngine(input){
   fingerprint:specFingerprint,jockeyColonyNameModel:JOCKEY_COLONY_NAME_MODEL,
   usBirthCohortNameModel:US_BIRTH_COHORT_NAME_MODEL,
   latinCaribbeanNameModel:LATIN_CARIBBEAN_NAME_MODEL,
+  internationalProfessionalNameModel:INTERNATIONAL_PROFESSIONAL_NAME_MODEL,
   personNameModel:PERSONNEL_NAME_MODEL,
   countryNameModel:GEO_NAME_MODEL,organizationNameModel:ORGANIZATION_NAME_MODEL,
   authoritative:false,sourceCanonIncluded:false,

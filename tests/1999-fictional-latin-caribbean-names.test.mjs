@@ -64,7 +64,7 @@ test('Portuguese Brazilian first names stay separate from generic Spanish-langua
 });
 test('all new origin-based naming rules survive full 11,202-person generation without cloning identities',()=>{
  const w=createFictionalWorldNameEngine({worldId:'LatinNameAudit',seed:19990101});
- assert.match(w.manifest.schema,/V5$/);
+ assert.match(w.manifest.latinCaribbeanNameModel,/LATIN_CARIBBEAN_1999/);
  assert.equal(w.manifest.latinCaribbeanNameModel,LATIN_CARIBBEAN_NAME_MODEL);
  assert.equal(w.people.length,11202);
  assert.equal(w.owners.length,3308);
