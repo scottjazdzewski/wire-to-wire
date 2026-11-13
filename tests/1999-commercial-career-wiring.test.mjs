@@ -31,7 +31,7 @@ test('founding-world career uses isolated save namespaces and never imports prio
  assert.match(config,/wtwFoundingWorldProfileV1/);
  assert.match(config,/anchor\.worldProfile\?\.population/);
  assert.match(config,/mode:'FOUNDING_1999'/);
- assert.match(config,/population:112/);
+ assert.match(config,/population:73/);
 });
 test('world directory, worker and on-demand horse profiles use the same seed, mode and population',()=>{
  assert.match(source,/const gameWorldProfile=/);
