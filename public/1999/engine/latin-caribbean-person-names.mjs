@@ -89,10 +89,10 @@ export const COUNTRY_NAME_PROFILES=Object.freeze({
   'María Verónica Carolina Andrea Natalia Lucía Valentina Cecilia Paula',
   'Rodríguez Fernández González Martínez Pérez García Silva Pereira López Díaz Olivera Suárez Cabrera Núñez'),
  BR:country(
-  'José João Antônio Carlos Paulo Luiz Francisco Roberto Pedro Marcos',
-  'João Paulo Carlos Rafael Felipe Marcelo Fábio Thiago Rodrigo Alexandre',
-  'Maria Ana Francisca Terezinha Aparecida Fátima Lúcia Helena',
-  'Maria Ana Juliana Fernanda Luciana Camila Renata Carla Patrícia',
+  'José João Antônio Carlos Paulo Luiz Francisco Roberto Pedro Marcos Manuel Sérgio Fernando Augusto',
+  'João Paulo Carlos Rafael Felipe Marcelo Fábio Thiago Rodrigo Alexandre André Bruno Gustavo Vinícius',
+  'Maria Ana Francisca Terezinha Aparecida Fátima Lúcia Helena Sônia Teresa Vera Regina',
+  'Maria Ana Juliana Fernanda Luciana Camila Renata Carla Patrícia Daniela Vanessa Flávia Gabriela',
   'Silva Santos Oliveira Souza Costa Pereira Rodrigues Almeida Carvalho Gomes Ribeiro Martins Ferreira Lima Barbosa Rocha Nascimento Araújo Mendes Correia')
 });
 function hash(seed,key){
