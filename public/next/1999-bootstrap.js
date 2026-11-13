@@ -7,7 +7,7 @@
 const START='1999-01-01', MAIN='wtw1999FoundingStateV1';
 const SCHEMA='WTW_1999_FOUNDING_CAREER_V1', SESSION='wtw1999FoundingSessionV1';
 const SEED=19990101;
-const selectedWorld=window.WTW1999CommercialConfig?.current?.()||{population:112,mode:'FOUNDING_1999',seed:SEED};
+const selectedWorld=window.WTW1999CommercialConfig?.current?.()||{population:73,mode:'FOUNDING_1999',seed:SEED};
 
 function fresh(profile=selectedWorld){
  const world=window.WTW1999CommercialConfig?.normalize?.(profile)||profile;
