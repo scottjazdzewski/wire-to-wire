@@ -138,3 +138,38 @@ test('World Registrar founding JSON matches the active scenario instead of legac
  assert.ok(data.horses.filter(h=>h.boardingFarm1999?.farmOrganizationId==='O-000002')
   .every(h=>h.boardingFarm1999.farmName==='Harrowgate Farm'));
 });
+
+test('full founding history bridge links source horse-years without importing dead horses into 1999',async()=>{
+ const archive=founding.historicalAnchors;
+ const names=founding.historicalHorses;
+ assert.equal(archive.length,67);
+ assert.equal(names.length,61);
+ assert.equal(founding.audit.historicalAnchorRecords,archive.length);
+ assert.equal(founding.audit.linkedHistoricalHorses,names.length);
+ assert.equal(new Set(names.map(h=>h.id)).size,names.length);
+ assert.equal(founding.counts.worldHorses,112);
+ assert.ok(archive.every(a=>founding.sourceOrganizations.some(o=>o.id===a.organizationId)));
+ for(const a of archive.filter(a=>a.role==='HISTORICAL_STAKES_ASSOCIATION_ROLE_UNVERIFIED')){
+  assert.ok(a.horseId?.startsWith('H-'),a.horse);
+  assert.equal(a.status,'ORGANIZATION_YEARBOOK_SOURCE_NOT_RACEDAY_CREDIT');
+  assert.ok(a.recordedStakesYears.every(y=>y>=1800&&y<=1998));
+ }
+ const how=archive.find(a=>a.organizationId==='O-000001'&&a.horse==='Sundown Joe');
+ assert.deepEqual(how.recordedStakesYears,[1939,1940,1941]);
+ const king=archive.find(a=>a.organizationId==='O-000061'&&a.horse==='Heyday');
+ const whit=archive.find(a=>a.organizationId==='O-000037'&&a.horse==='Heyday');
+ assert.equal(king.role,'BREEDER');
+ assert.equal(whit.role,'RACING_OWNER');
+ const cres=archive.filter(a=>a.organizationId==='O-000062'&&a.horse==='Who Knows');
+ assert.ok(cres.some(a=>a.role==='BREEDER'));
+ assert.ok(cres.some(a=>a.role==='RETAINED_RACING_OWNER'&&a.status.includes('NEEDS_OWNER_LEDGER_JOIN')));
+ const historic=names.find(h=>h.name==='Gospel Truth');
+ assert.equal(historic.id,'H-1970-000001');
+ assert.equal(historic.foalYear,1970);
+ assert.equal(founding.worldIndexByHorseId(historic.id),-1);
+ const {readFileSync}=await import('node:fs');
+ const live=JSON.parse(readFileSync(new URL('../public/data/wtw-1999-founding-directory-v1.json',import.meta.url),'utf8'));
+ assert.deepEqual(live.historicalAnchors,archive);
+ assert.deepEqual(live.historicalHorses,names);
+ assert.equal(live.horses.length,112);
+});
