@@ -81,15 +81,26 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
   if(!['US','CA','GB','IE','PR','PA','VE','MX','CL','PE','CO','DO','AR','BR','UY'].includes(country))
    throw Error('Unsupported fictional person naming origin: '+country);
   const feminine=hash(seed,'sex:'+i)%100 < (role==='jockey'?7:role==='trainer'?22:role==='owner'?32:35);
-  const given=country==='US'||country==='CA'?(feminine?US_F:US_M):
+  // Optional 1999 fictional-world birth-decade selection. The original
+  // Census national excerpt remains the default for historical world users.
+  const birthCohortPool=options.givenPoolAt?.(i,role,country,feminine)??null;
+  if(birthCohortPool!==null&&(!Array.isArray(birthCohortPool)||
+   !birthCohortPool.length||birthCohortPool.some(n=>typeof n!=='string'||!n)))
+   throw Error('Invalid birth-cohort given-name pool');
+  const given=birthCohortPool??(country==='US'||country==='CA'?(feminine?US_F:US_M):
    country==='GB'||country==='IE'?(feminine?GB_F:GB_M):
-   country==='BR'?(feminine?BR_F:BR_M):(feminine?LATIN_F:LATIN_M);
+   country==='BR'?(feminine?BR_F:BR_M):(feminine?LATIN_F:LATIN_M));
   const family=country==='US'||country==='CA'?US_S:
    country==='GB'?GB_S:country==='IE'?IE_S:country==='BR'?BR_S:
    [...(LOCAL_SURNAME[country]||[]),...LATIN_S];
   let name=null;
   for(let attempt=0;attempt<400;attempt++){
-   const first=(country==='US'||country==='CA'?censusPick(given,feminine?F_FREQ:M_FREQ,seed,'given:'+i+':'+attempt):pick(given,seed,'given:'+i+':'+attempt));
+   const first=birthCohortPool?
+    (options.givenNameAt?options.givenNameAt(i,role,country,feminine,attempt):pick(given,seed,'given:'+i+':'+attempt)):
+    country==='US'||country==='CA'?censusPick(given,feminine?F_FREQ:M_FREQ,seed,'given:'+i+':'+attempt):
+    pick(given,seed,'given:'+i+':'+attempt);
+   if(birthCohortPool&&!birthCohortPool.includes(first))
+    throw Error('Birth-cohort given name outside selected rank pool');
    const surname=(country==='US'||country==='CA'?censusPick(family,S_FREQ,seed,'family:'+i+':'+attempt):pick(family,seed,'family:'+i+':'+attempt));
    const candidate=first+' '+surname,base=baseKey(first,surname);
    if(options.avoidIdenticalGivenSurname&&first.toLocaleLowerCase('en-US')===surname.toLocaleLowerCase('en-US'))continue;
@@ -115,7 +126,10 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
   reserved.add(name.toLocaleLowerCase('en-US'));
   const parts=name.split(/\s+/),first=parts[0],last=parts.at(-1),key=baseKey(first,last);
   baseCounts.set(key,(baseCounts.get(key)||0)+1);
-  records.push({name,birthCountry:country,role,source:country==='US'?'CENSUS_1990_US_NATIONAL_EXCERPT_PLUS_TEST_DRAW':'CURATED_COUNTRY_TEST_POOL_NOT_CENSUS',originModel:'PROVISIONAL_RACING_ROLE_MIX_NOT_MEASURED'});
+  records.push({name,birthCountry:country,role,
+   source:birthCohortPool?'SSA_US_BIRTH_COHORT_TOP30_RANK_BIASED_EDITORIAL_DRAW':
+    country==='US'?'CENSUS_1990_US_NATIONAL_EXCERPT_PLUS_TEST_DRAW':'CURATED_COUNTRY_TEST_POOL_NOT_CENSUS',
+   originModel:'PROVISIONAL_RACING_ROLE_MIX_NOT_MEASURED'});
  }
  return records;
 }
