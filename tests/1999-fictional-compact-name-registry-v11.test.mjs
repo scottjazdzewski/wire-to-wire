@@ -168,7 +168,7 @@ test('large-simulation registry never embeds historical names in engine protecte
 });
 test('indexed mechanism remains optional and does not touch playable world or legacy V8 caller',()=>{
  const source=readFileSync(new URL('../public/1999/engine/indexed-fictional-name-registry.mjs',import.meta.url),'utf8');
- const world=readFileSync(new URL('../public/1999/engine/full-world-generator.mjs',import.meta.url),'utf8');
+ const world=readFileSync(new URL('../public/1999/engine/founding-world-1999.mjs',import.meta.url),'utf8');
  const legacy=readFileSync(new URL('../public/1999/engine/on-demand-fictional-name-batches.mjs',import.meta.url),'utf8');
  assert.doesNotMatch(source,/\b(?:fetch|localStorage|indexedDB|writeFile|setItem)\s*\(/);
  assert.doesNotMatch(world,/indexed-fictional-name-registry/);
