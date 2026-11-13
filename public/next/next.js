@@ -2317,20 +2317,6 @@ function liveStableHorseData(h,r,game,caseFiles){
   entered,hasTarget:Boolean(r||target),cases:related};
 }
 
-/* Presentation-only fixture values for visual roster density. NO writes to the Office engine. */
-const WTW_STABLE_DEMO=Object.freeze({
- 'Bellarmine':{age:'3',sex:'C',health:['sound','Sound','Demo: clear'],ready:['building','82%','Demo race conditioning'],form:['up','↑','Demo form improving'],ability:4,potential:5,last:'2014-06-21',upcoming:'2014-08-02',target:'SAR · ALW',money:'$128k',owner:'Ashford Racing',trainer:'E. Bennett',breeder:'Blue Lantern',record:'9-3-2-1',activity:'Sharp 5f work'},
- 'Hardtack':{age:'4',sex:'G',health:['watch','Watch','Demo: minor watch'],ready:['building','71%','Demo conditioning'],form:['down','↓','Demo form declining'],ability:3,potential:3,last:'2014-06-29',upcoming:'2014-08-09',target:'MTH · CLM',money:'$76k',owner:'Ironweed St.',trainer:'G. Larkin',breeder:'Ironweed',record:'17-3-4-2',activity:'Breezing evenly'},
- 'Iron Harbor':{age:'3',sex:'C',health:['sound','Sound','Demo: clear'],ready:['ready','95%','Demo ready to race'],form:['up','↑','Demo form improving'],ability:4,potential:4,last:'2014-07-04',upcoming:'2014-07-23',target:'SAR · R8',money:'$205k',owner:'Kingsmere',trainer:'A. Rowe',breeder:'Kingsmere',record:'11-4-2-1',activity:'Race ready'},
- 'Pieta':{age:'2',sex:'F',health:['sound','Sound','Demo: clear'],ready:['building','67%','Demo training build'],form:['up','↑','Demo improving in work'],ability:2,potential:5,last:'2014-06-06',upcoming:'2014-08-16',target:'SAR · MSW',money:'$19k',owner:'Aurelian',trainer:'A. Rowe',breeder:'Aurelian',record:'3-0-1-1',activity:'Gallop-out ↑'},
- 'Powerline':{age:'3',sex:'C',health:['sound','Sound','Demo: clear'],ready:['ready','91%','Demo ready to run'],form:['level','→','Demo steady form'],ability:4,potential:5,last:'2014-06-08',upcoming:'2014-07-19',target:'CD · MSW',money:'$93k',owner:'Blue Lantern',trainer:'G. Larkin',breeder:'Crescent Mile',record:'6-2-1-0',activity:'Final prep work'},
- 'The Last Match':{age:'2',sex:'C',health:['treat','Treatment','Demo: receiving treatment'],ready:['restricted','34%','Demo restricted training'],form:['down','↓','Demo declining form'],ability:3,potential:5,last:'2014-06-17',upcoming:'2014-07-20',target:'KEE · MSW',money:'$42k',owner:'Crescent Mile',trainer:'J. Harrow',breeder:'Crescent Mile',record:'4-1-1-0',activity:'Light jog only'}
-});
-function liveStableDemoApply(x){
- const d=WTW_STABLE_DEMO[x.name];if(!d)return x;
- const stars=n=>({value:n,display:'<span class="ng-rs-stars" title="Fictional preview: '+n+'/5"><b>'+('★'.repeat(n))+'</b>'+('☆'.repeat(5-n))+'</span>'});
- return {...x,...d,ability:stars(d.ability),potential:stars(d.potential),hasTarget:!!d.target};
-}
 function stableShortDate(value){
  const iso=liveStableDate(value);
  if(!iso)return value||'';
@@ -2390,7 +2376,7 @@ function liveStableRosterView(){
   ownerBadge:horseOwnerBadge,safe
  })||'<section class="ng-functional">Attribute table unavailable.</section>';
  const horses=horseRows(),races=racingRows(),game=state(),files=currentMessages(),search=APP.stableSearch.trim().toLowerCase();
- const all=horses.map(h=>{const source=liveStableHorseData(h,races.find(r=>r.name===h.name),game,files);return APP.stableDemo?liveStableDemoApply(source):source;});
+ const all=horses.map(h=>liveStableHorseData(h,races.find(r=>r.name===h.name),game,files));
  const stableCriteria=window.WTW1999RosterFilters?.get(APP,'Stable|Roster')||null;
  const filtered=all.filter(x=>{
   if(stableCriteria&&!window.WTW1999RosterFilters.matches({
@@ -2432,7 +2418,7 @@ function liveStableRosterView(){
  const cell=(value,klass='',title='')=>'<td class="'+klass+'" title="'+safe(title||String(value||''))+'">'+(value||'<span class="ng-rs-missing">—</span>')+'</td>';
  const txt=(value,klass='')=>cell(value?safe(value):'',klass,value);
  const rowHTML=filtered.map(x=>{
-  const ownerMark=APP.stableDemo?'<span class="ng-rs-demo-owner" title="Fictional demo owner: '+safe(x.owner)+'">'+safe((x.owner||'?').charAt(0))+'</span>':horseOwnerBadge(x.name);
+  const ownerMark=horseOwnerBadge(x.name);
   const name='<button type="button" class="ng-rs-horse" data-ng="horse" data-val="'+safe(x.name)+'">'+ownerMark+
    '<span>'+safe(x.name)+'</span></button>';
   const datum=[cell(name,'ng-rs-first'),txt(x.age,'ng-rs-numeric'),txt(x.sex,'ng-rs-numeric'),
@@ -2452,12 +2438,12 @@ function liveStableRosterView(){
   liveStableSignal('up','Form ↑','Recorded form improving')+liveStableSignal('down','Form ↓','Recorded form declining')+
   '<span>— = not recorded · Stars only when sourced · Targets ≠ entries</span></div>';
  return '<section class="ng-functional ng-stable-roster-v2">'+
-  '<div class="ng-rs-title"><strong>STABLE & HORSES</strong><span>'+(APP.stableDemo?'FICTIONAL DEMO VALUES · NO GAME DATA CHANGED · ':'')+all.length+' HORSES · '+all.filter(x=>x.entered).length+
+  '<div class="ng-rs-title"><strong>STABLE & HORSES</strong><span>'+all.length+' HORSES · '+all.filter(x=>x.entered).length+
    ' ENTERED · '+all.filter(x=>x.hasTarget&&!x.entered).length+' TARGETED · '+all.filter(x=>['watch','treat'].includes(x.health[0])).length+
    ' VET WATCH</span><button data-ng="stable-world-edit" title="Open the editable 1999 World horse records">✎ EDIT 1999 RECORDS</button><button data-ng="menu" data-val="Racing">RACE CALENDAR ↗</button></div>'+
   '<div class="ng-rs-tools"><label for="ngStableSearch">SEARCH</label><input id="ngStableSearch" data-ng-input="stable-search" type="search" value="'+safe(APP.stableSearch)+
    '" placeholder="Horse, owner, trainer, status…" autocomplete="off"/><div class="ng-rs-filters">'+filters+'</div>'+
-   '<div class="ng-rs-mode"><button data-ng="stable-demo" data-val="toggle" class="'+(APP.stableDemo?'on':'')+'" title="Show fictional design-preview values; no game data changed">'+(APP.stableDemo?'DEMO ON':'DEMO OFF')+'</button><button data-ng="stable-mode" data-val="all" class="'+(APP.stableMode!=='compact'?'on':'')+'">ALL COLUMNS</button>'+
+   '<div class="ng-rs-mode"><button data-ng="stable-mode" data-val="all" class="'+(APP.stableMode!=='compact'?'on':'')+'">ALL COLUMNS</button>'+
    '<button data-ng="stable-mode" data-val="compact" class="'+(APP.stableMode==='compact'?'on':'')+'">QUICK VIEW</button></div></div>'+
   (window.WTW1999RosterFilters?.render(columns,stableCriteria,safe,'Stable|Roster')||'')+
   '<section class="ng-rs-roster"><header><strong>HORSE MANAGEMENT ROSTER</strong><span class="ng-stable-visible">'+filtered.length+' OF '+all.length+
@@ -2545,35 +2531,6 @@ const DEP_SALE_EVENTS_1999=[
  ['barretts','Fall Sale of Yearlings and Horses of All Ages','1999-10-18','1999-10-19','Pomona, CA','Mixed'],
  ['wtba','Winter Mixed Sale','1999-12-05','1999-12-05','Auburn, WA','Mixed']
 ];
-const DEP_SALE_EVENTS_2014=[
- ['keeneland','January Horses of All Ages Sale','2014-01-06','2014-01-09','Lexington, KY','Mixed'],
- ['obs','Winter Mixed Sale','2014-01-22','2014-01-24','Ocala, FL','Mixed'],
- ['fasigtipton','Kentucky Winter Mixed Sale','2014-02-09','2014-02-10','Lexington, KY','Mixed'],
- ['obs','March Selected Two-Year-Olds in Training Sale','2014-03-10','2014-03-11','Ocala, FL','2YO'],
- ['fasigtipton','The Florida Sale','2014-03-24','2014-03-24','Williston, FL','2YO'],
- ['keeneland','April Two-Year-Olds in Training Sale','2014-04-07','2014-04-07','Lexington, KY','2YO'],
- ['obs','Spring Two-Year-Olds in Training Sale','2014-04-21','2014-04-24','Ocala, FL','2YO'],
- ['fasigtipton','Midlantic Two-Year-Olds in Training Sale','2014-05-19','2014-05-20','Timonium, MD','2YO'],
- ['obs','June Two-Year-Olds & Horses of Racing Age Sale','2014-06-17','2014-06-20','Ocala, FL','2YO / HRA'],
- ['fasigtipton','The July Sale','2014-07-14','2014-07-14','Lexington, KY','Yearlings'],
- ['fasigtipton','Summer Selected Horses of Racing Age Sale','2014-07-14','2014-07-14','Lexington, KY','HRA'],
- ['fasigtipton','The Saratoga Sale','2014-08-04','2014-08-05','Saratoga Springs, NY','Yearlings'],
- ['fasigtipton','New York Bred Yearlings Sale','2014-08-09','2014-08-10','Saratoga Springs, NY','Yearlings'],
- ['obs','August Yearling Sale','2014-08-26','2014-08-28','Ocala, FL','Yearlings'],
- ['keeneland','September Yearling Sale','2014-09-08','2014-09-21','Lexington, KY','Yearlings'],
- ['fasigtipton','Midlantic Fall Yearlings Sale','2014-09-29','2014-09-29','Timonium, MD','Yearlings'],
- ['fasigtipton','Saratoga Fall Sale','2014-10-06','2014-10-07','Saratoga Springs, NY','Mixed'],
- ['fasigtipton','Texas Yearlings & Fall Mixed Sale','2014-10-13','2014-10-13','Grand Prairie, TX','Mixed'],
- ['obs','Fall Mixed Sale','2014-10-14','2014-10-15','Ocala, FL','Mixed'],
- ['fasigtipton','Kentucky October Yearlings Sale','2014-10-20','2014-10-22','Lexington, KY','Yearlings'],
- ['fasigtipton','The November Sale','2014-11-03','2014-11-03','Lexington, KY','Breeding stock'],
- ['keeneland','November Breeding Stock Sale','2014-11-04','2014-11-14','Lexington, KY','Breeding stock'],
- ['barretts','Fall Paddock Sale','2014-11-08','2014-11-08','Del Mar, CA','HRA'],
- ['fasigtipton','Midlantic December Mixed Sale','2014-12-08','2014-12-08','Timonium, MD','Mixed']
-];
-/* Historical month patterns only, not a claim that a particular sale is
-   scheduled on the first day of any future or past year. Keeneland April
-   2YO ran through 2014; OBS' 2014 yearling sale was in AUGUST, not October. */
 const DEP_SALE_SEASONAL=[
  ['keeneland','January Horses of All Ages Sale',1,'Lexington, KY','Mixed',1956,9999],
  ['obs','Winter Mixed Sale',1,'Ocala, FL','Mixed',1999,9999],
@@ -2725,14 +2682,6 @@ function depTrackRows(page='Overview',day=depGameDay()){
  if(page==='Stakes')return rows.filter(r=>Number(r.stakesCount)>0);
  return rows;
 }
-const DEP_FACILITY_PREVIEW=[
- ['Kingsmere Stud Farm','Stud Farm','Versailles, KY'],
- ['Summerfield Training Center','Training Center','Ocala, FL'],
- ['Oak Hollow Breaking Yard','Breaking Facility','Lexington, KY'],
- ['Crescent Mile Racing Stable','Racing Stable','Saratoga Springs, NY'],
- ['Ashford Racing Partnership','Ownership Group','Lexington, KY'],
- ['Ironweed Racing Barn','Racing Stable','Paris, KY']
-];
 function depFacilityType(raw){
  const t=String(raw||'').toLowerCase();
  if(/own|syndicate|partnership|bloodstock group/.test(t))return 'Ownership Group';
@@ -2799,7 +2748,6 @@ function depRows(section,page,demo,auction){
  const source=kind=>all.map((r,i)=>({...r,_index:i})).filter(r=>r.kind===kind);
  const row=(kind,name,values)=>({...values,_kind:kind,_name:name});
  const fixture=name=>races.find(r=>r.name===name);
- const demoYards={'Bellarmine':['Lexington, KY','775'],'Hardtack':['Saratoga, NY','750'],'Iron Harbor':['Ocala, FL','1120'],'Pieta':['Belmont, NY','65'],'Powerline':['Paris, KY','100'],'The Last Match':['Louisville, KY','80']};
  if(section==='World'&&['1999 Horses','People','Organizations'].includes(page)){
   if(!world1999Data)return [];
   if(page==='1999 Horses')return (world1999Data.horses||[]).map(h=>({
@@ -2835,27 +2783,8 @@ function depRows(section,page,demo,auction){
   }));
   return tracks.filter(t=>t._meetState.active);
  }
- if(section==='Racing'){
-  const list=demo?stable:stable.filter(h=>fixture(h.name));
-  let out=list.map((h,i)=>{
-   const f=fixture(h.name),d=WTW_STABLE_DEMO[h.name]||{},saved=game.horseState?.[h.name]||{};
-   const date=demo?(d.upcoming||'2014-08-02'):(f?.date||'');
-   return row('horse',h.name,{date:demo?stableShortDate(date):date,track:f?.track||(demo?['Saratoga','Keeneland','Churchill','Monmouth','Belmont','Del Mar'][i]:''),
-    race:f?.tag||(demo?'R'+(i+3):''),class:demo?['MSW','ALW','G3','CLM','G2','OC'][i]:'',
-    surface:demo?(i%3?'D':'T'):'',distance:demo?['6f','1m','9f','7f','8.5f','10f'][i]:'',
-    purse:demo?depMoney([50000,75000,150000,42000,200000,90000][i]):'',
-    horse:h.name,base:demo?demoYards[h.name]?.[0]||'':(saved.current_barn_location||saved.barn_location||saved.current_base||''),
-    ship:demo?demoYards[h.name]?.[1]||'':'',jockey:demo?['J. Butler','M. Green','R. Dawson','I. Walker','F. Wright','J. Brennan'][i]:'',
-    trainer:demo?d.trainer||'':'',ready:demo?d.ready?.[1]||'':saved.readiness_status||'',
-    status:f?.status||(demo?'Target':''),_iso:depRaceIso(date)});
-  });
-  if(page==='Results')out=demo?out.map((r,i)=>({...r,date:stableShortDate((WTW_STABLE_DEMO[r.horse]||{}).last),status:['1st','4th','2nd','3rd','5th','1st'][i],_iso:(WTW_STABLE_DEMO[r.horse]||{}).last||''})):[];
-  if(page!=='Results')out=out.filter(r=>r._iso&&r._iso>=depGameDay());
-  if(page==='Stakes')out=out.filter(r=>/G[1-3]|stakes/i.test(r.class)||/stakes/i.test(r.race));
-  if(page==='Entries'&&!demo)out=out.filter(r=>/entered/i.test(r.status));
-  if(page==='Race Planning'&&!demo)out=out.filter(r=>!/entered/i.test(r.status));
-  return out.sort((a,b)=>a._iso.localeCompare(b._iso));
- }
+ // Racing entries and results require registered horses; none are auto-generated.
+ if(section==='Racing')return [];
  if(section==='Breeding'){
   if(['Stallions','Broodmares'].includes(page)&&world1999Data){
    const role=page==='Stallions'?'stallion':'broodmare';
@@ -2866,28 +2795,8 @@ function depRows(section,page,demo,auction){
     health:'',pedigree:'',value:'',studFee:'',bookings:'',foals:'',winners:''
    }));
   }
-  let out=stable.map((h,i)=>{
-   const d=WTW_STABLE_DEMO[h.name]||{},saved=game.horseState?.[h.name]||{};
-   const role=demo?['Stallion','Stallion','Broodmare','Broodmare','Stallion','Broodmare'][i]:
-    String(saved.breeding_role||saved.breeding_status||'');
-   return row('horse',h.name,{horse:h.name,age:demo?String([5,7,6,9,4,8][i]):'',sex:demo?(/broodmare/i.test(role)?'M':'H'):'',
-    sire:demo?['Monarch Road','Fleet River','Crown Maker','City Light','Grand Reserve','Violet Sands'][i]:'',
-    dam:demo?['Morning Glory','Wild Azure','Last Dance','Silver Arch','Far Away','Marble Hill'][i]:'',
-    farm:demo?['Kingsmere','Aurelian','Blue Lantern','Crescent Mile','Ironweed','Santa Ventura'][i]:'',
-    status:demo?['Active','Booked','In foal','Open','Active','In foal'][i]:role,health:demo?['Sound','Sound','Sound','Vet watch','Sound','Sound'][i]:saved.health_status||'',
-    pedigree:demo?String([83,78,91,87,72,86][i]):'',value:demo?depMoney([320000,210000,470000,395000,180000,410000][i]):'',
-    owner:demo?d.owner||'':horseOwnership(h.name)?.name||'',
-    studFee:demo&&!/broodmare/i.test(role)?depMoney([12000,8500,0,0,6500,0][i]):'',
-    bookings:demo&&!/broodmare/i.test(role)?String([44,28,0,0,19,0][i]):'',
-    foals:demo?String([18,27,4,6,7,3][i]):'',winners:demo?String([7,11,2,3,2,1][i]):'',_role:role});
-  });
-  if(!demo)out=out.filter(r=>/stallion|broodmare|breeding/i.test(r._role));
-  if(page==='Stallions')out=out.filter(r=>/stallion/i.test(r._role));
-  if(page==='Broodmares')out=out.filter(r=>/broodmare/i.test(r._role));
-  if(page==='Foals')out=demo?out.map(r=>({...r,age:'1',sex:'F',status:'Yearling',studFee:'',bookings:''})):[];
-  if(page==='Stud Farms')return depFacilityRows('Stud Farms',demo);
-  if(page==='Stud Farms')out=out.filter(r=>r.farm);
-  return out;
+  if(page==='Stud Farms')return depFacilityRows('Stud Farms',false);
+  return [];
  }
  if(section==='Sales'&&page==='Sale Calendar'){
   let entries=depAuctionList(demo);
@@ -2915,66 +2824,41 @@ function depRows(section,page,demo,auction){
  }
  if(section==='Sales'){
   if(page==='Watchlist')return Object.values(APP.salesWatched||{});
-  if(!auction)return [];
-  const saleOffset=Math.max(0,auction.previewIndex||0);
-  const lots=demo?stable.map((h,i)=>({horse:stable[(i+saleOffset)%stable.length].name})):Array.isArray(auction.lots)?auction.lots:[];
-  let out=lots.map((lot,i)=>{
-   const name=lot.horse||lot.horse_name;
-   const hip=demo?String(101+saleOffset*100+i*7):String(lot.hip||'');
-   return row('horse',name,{hip,horse:name,auction:auction.name,company:auction.company,
-    _auctionId:auction.id,_watchKey:salesWatchKey(auction.id,hip,name),_demo:demo,age:demo?String([2,3,1,4,2,1][i]):lot.age||'',
-    sex:demo?['C','G','F','M','C','F'][i]:lot.sex||'',sire:demo?['Monarch Road','City Light','Fleet River','Northern Crown','Blue Harbor','Grand Reserve'][i]:lot.sire||'',
-    dam:demo?['Silver Arch','Morning Glory','Fast Night','Wild Azure','Marble Hill','Last Dance'][i]:lot.dam||'',
-    consignor:demo?['Blue Lantern','Kingsmere','Ironweed','Aurelian','Crescent Mile','Marrowfield'][i]:lot.consignor||'',
-    reserve:demo?depMoney([90000,70000,110000,140000,55000,80000][i]+saleOffset*4500):depMoney(lot.reserve),
-    bid:demo?depMoney([82000,64000,119000,0,57000,74000][i]+(i===3?0:saleOffset*3000)):depMoney(lot.bid),
-    value:demo?depMoney([108000,85000,130000,145000,62000,96000][i]+saleOffset*4200):depMoney(lot.estimated_value),
-    ca:demo?String([4,3,2,4,3,2][i]):'',pa:demo?String([5,3,5,4,5,4][i]):'',
-    condition:demo?['Fit','Watch','Sound','Fit','Sound','Vet check'][i]:lot.condition||'',
-    status:demo?['Open','Bidding','Watch','Cataloged','Offer','Inspect'][i]:lot.status||''});
-  });
-  if(page==='Private Offers')out=out.filter(r=>!demo&&/offer/i.test(r.status));
-  return out;
+  if(!auction||!Array.isArray(auction.lots))return [];
+  return auction.lots.map((lot,i)=>{
+   const name=lot.horse||lot.horse_name||'',hip=String(lot.hip||'');
+   return row('horse',name,{hip,horse:name,auction:auction.name,
+    company:auction.company,_auctionId:auction.id,
+    _watchKey:salesWatchKey(auction.id,hip,name),_demo:false,
+    age:String(lot.age||''),sex:lot.sex||'',sire:lot.sire||'',dam:lot.dam||'',
+    consignor:lot.consignor||'',reserve:depMoney(lot.reserve),
+    bid:depMoney(lot.bid),value:depMoney(lot.estimated_value),
+    ca:'',pa:'',condition:lot.condition||'',status:lot.status||''
+   });
+  }).filter(r=>page!=='Private Offers'||/offer/i.test(r.status));
  }
  if(section==='Personnel'){
-  if(page==='Ownership Groups')return depFacilityRows('Ownership Groups',demo).map(r=>({
-   _kind:r._kind,_name:r._name,_canonId:r._canonId||'',
-   name:r.name,type:r.type,location:r.location,principal:r.owner||'',status:r.status||''
+  if(page==='Ownership Groups')return depFacilityRows('Ownership Groups',false).map(r=>({
+   _kind:r._kind,_name:r._name,_canonId:r._canonId||'',name:r.name,
+   type:r.type,location:r.location,principal:r.owner||'',status:r.status||''
   }));
-  let out=source('person').map(r=>{
-   const n=depHash(r.name),role=r.detail||'Unrecorded',owner=/owner|patron/i.test(role),saved=game.staffState?.[r.name]||{};
-   return row('person',r.name,{_canonId:r.canonicalId||'',name:r.name,age:demo?String(27+n%39):saved.age||'',role:role,
-    ca:demo?String(2+n%4):'',pa:demo?String(3+n%3):'',
-    reputation:demo?['Regional','National','Local','International'][n%4]:saved.reputation||'',
-    specialty:demo?(/jockey/i.test(role)?'Turf riding':/trainer/i.test(role)?'2YO development':owner?'Bloodstock':'Stable care'):saved.specialization||'',
-    morale:demo?(owner?'':['High','Good','Neutral'][n%3]):saved.morale||'',
-    workload:demo&&!owner?String(20+n%78)+'%':saved.workload||'',
-    salary:demo&&!owner?depMoney(36000+(n%14)*8500):'',
-    contract:demo&&!owner?String(2015+n%4)+'-12':'',
-    assignment:demo?(owner?'Portfolio':/jockey/i.test(role)?'Race riding':'Main stable'):saved.assignment||'',
-    base:r.location||saved.base||'',
-    wins:demo?String(n%410):'',_sourceIndex:r._index});
-  });
-  const match={Trainers:/trainer/i,Jockeys:/jockey/i,Owners:/owner|patron/i,Staff:/staff|vet|farrier|farm manager|bloodstock agent|racing secretary/i}[page];
-  if(match)out=out.filter(r=>match.test(r.role));
-  return out;
+  const match={Trainers:/trainer/i,Jockeys:/jockey/i,Owners:/owner|patron/i,
+   Staff:/staff|vet|farrier|farm manager|bloodstock agent|racing secretary/i}[page];
+  return source('person').filter(r=>!match||match.test(r.detail||'')).map(r=>
+   row('person',r.name,{_canonId:r.canonicalId||'',name:r.name,
+    age:'',role:r.detail||'',ca:'',pa:'',reputation:'',specialty:'',morale:'',
+    workload:'',salary:'',contract:'',assignment:'',base:r.location||'',wins:''
+   }));
  }
  if(section==='Facilities')return depFacilityRows(page,demo);
 
- const entries=demo?[
-  ['1999-01-01','Purse','Race earnings','Racing',28500,0,2840000],
-  ['2014-07-14','Payroll','Stable employee payroll','Personnel',0,21400,2811500],
-  ['2014-07-13','Facilities','Barn and training upkeep','Facilities',0,8200,2832900],
-  ['2014-07-12','Breeding','Stud service receipt','Breeding',12500,0,2841100],
-  ['2014-07-11','Sales','Yearling sale deposit','Sales',0,18000,2828600],
-  ['2014-07-10','Veterinary','Horse treatment','Stable',0,3400,2846600],
-  ['2014-07-09','Boarding','Monthly board receipts','Facilities',17400,0,2850000],
-  ['2014-07-08','Transport','Horse shipping','Racing',0,2900,2832600]
- ]:(Array.isArray(game.finances?.ledger)?game.finances.ledger.map(t=>[t.date,t.category,t.description,t.department,t.income,t.expense,t.balance]):[]);
+ const entries=Array.isArray(game.finances?.ledger)?
+  game.finances.ledger.map(t=>[t.date,t.category,t.description,t.department,
+   t.income,t.expense,t.balance]):[];
  let out=entries.map((t,i)=>row('finance',String(i),{date:stableShortDate(t[0]),category:t[1]||'',description:t[2]||'',department:t[3]||'',
   income:Number(t[4])>0?depMoney(t[4]):'',expense:Number(t[5])>0?depMoney(t[5]):'',balance:depMoney(t[6]),_iso:liveStableDate(t[0])}));
  if(page==='Operating Costs')out=out.filter(r=>r.expense);
- if(page==='Budgets')out=demo?out.slice(0,4).map(r=>({...r,date:'JUL 2014',category:'Budget / actual'})):[];
+ if(page==='Budgets')return [];
  return out;
 }
 
@@ -3062,32 +2946,9 @@ function salesDesk(page,auction,auctions,visibleTotal){
   go('sale-watchlist','★ WATCHLIST '+watched,'Review all watched lots in this session')+'</div></div>';
 }
 
-function depAuctionList(preview){
- const live1999=window.__WTW_1999_UI_DATA__?.auctionList?.();
- if(Array.isArray(live1999)&&window.__WTW_1999_MANAGEMENT__)return live1999;
- const year=Number(depGameDay().slice(0,4))||2014;
- const result=preview?
-  [...(year===2014?DEP_SALE_EVENTS_2014.map((r,i)=>depSaleCatalogRow(r,i,2014)):
-    year===1999?[
-      ...DEP_SALE_EVENTS_1999.map((r,i)=>depSaleCatalogRow(r,i,1999)),
-      ...depSeasonalSales(1999).filter(a=>!DEP_SALE_EVENTS_1999.some(e=>e[0]===a.companyId&&e[1]===a.name))
-     ]:depSeasonalSales(year)),
-   ...(year===2014?depSeasonalSales(year).filter(a=>!DEP_SALE_EVENTS_2014.some(e=>e[0]===a.companyId&&e[1]===a.name)):[]),
-   ...depSeasonalSales(year+1)]:
-  (Array.isArray(state().salesState?.auctions)?state().salesState.auctions
-   .filter(a=>a&&liveStableDate(a.date)&&typeof a.name==='string')
-   .map((a,i)=>{
-    const normalizedName=a.name.trim(),matched=DEP_SALE_SEASONAL.find(r=>r[1]===normalizedName);
-    const company=String(a.company||a.auction_company||a.auction_house||
-     a.operator||DEP_SALE_HOUSES[matched?.[0]]?.name||'Company not recorded');
-    return {id:String(a.id||i),name:normalizedName,date:a.date,
-     endDate:liveStableDate(a.endDate)||a.date,sortKey:a.date,
-     company,companyId:matched?.[0]||'',city:a.location||a.city||'',
-     category:a.category||'',confirmedDate:true,previewIndex:i,
-     dateLabel:depSaleDateLabel({date:a.date,endDate:liveStableDate(a.endDate)||a.date,confirmedDate:true}),
-     lots:Array.isArray(a.lots)?a.lots:[]};
-   }):[]);
- return result.sort((a,b)=>a.sortKey.localeCompare(b.sortKey)||depSaleLabel(a).localeCompare(depSaleLabel(b)));
+function depAuctionList(_preview){
+ const verified=window.__WTW_1999_UI_DATA__?.auctionList?.();
+ return Array.isArray(verified)?verified:[];
 }
 
 /* One connection router for every management roster and Tier One dossier.
@@ -3289,8 +3150,7 @@ function depNumeric(v){
  return Number(s.replace(/[kKmM]$/,''))*(/[mM]$/.test(s)?1000000:/[kK]$/.test(s)?1000:1);
 }
 function departmentRoster(section,page='Overview'){
- const demo=section==='World'||['Personnel','Facilities','Tracks'].includes(section)||
-  section==='Breeding'&&['Stallions','Broodmares'].includes(page)?false:APP.departmentDemo;
+ const demo=false; // Registered 1999 content only; preview population retired.
  const auctions=section==='Sales'?depAuctionList(demo):[];
  const gameDay=depGameDay();
  const auction=auctions.find(a=>a.id===APP.departmentAuction)||auctions.find(a=>(a.endDate||a.sortKey)>=gameDay)||null;
@@ -3919,7 +3779,6 @@ window.addEventListener('click',e=>{
  }
  if(key==='stable-filter'){APP.stableFilter=val;return paint()}
   if(key==='stable-mode'){APP.stableMode=val;return paint()}
-  if(key==='stable-demo'){APP.stableDemo=!APP.stableDemo;return paint()}
  if(key==='filter'){APP.filter=val;APP.msgPage=0;return paint()}
  if(key==='prev-msg'){APP.msgPage=Math.max(0,APP.msgPage-1);return paint()}
  if(key==='next-msg'){APP.msgPage++;return paint()}
