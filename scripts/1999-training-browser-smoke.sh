@@ -13,61 +13,40 @@ cat > public/__training_1999_probe.html <<'HTML'
 <iframe id="game" width="1450" height="810" style="border:0"></iframe>
 <script>
 const frame=document.getElementById('game'),result=document.getElementById('result');
-const steps=[];let phase=0,targetId=null,initialSpend=null;
+const steps=[];let phase=0;
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const check=(text,condition)=>{if(!condition)throw Error(text);steps.push(text)};
 frame.addEventListener('load',()=>setTimeout(async()=>{
  try{
   const w=frame.contentWindow,d=frame.contentDocument,ui=w.__WTW_1999_UI_DATA__;
-  check('1999 premium management UI loaded',Boolean(d.querySelector('#wtwNextgen .ng-manager-shell')));
-  check('Training adapter module loaded',Boolean(ui?.horseTraining&&ui?.assignTraining&&ui?.trainingCosts));
+  check('Existing premium 1999 FM/OOTP interface loads',Boolean(d.querySelector('#wtwNextgen .ng-manager-shell')));
+  check('Training module remains available for later registration',Boolean(ui?.horseTraining&&ui?.assignTraining&&ui?.trainingCosts));
   const key=w.__WTW_1999_MANAGEMENT__?.saveKey;
-  check('Training uses isolated founding-world save, not the retired 325k namespace',key==='wtw1999FoundingStateV1');
+  check('Clean founding career uses only new approved save namespace',key==='wtw1999FoundingStateV1');
+  const game=JSON.parse(w.localStorage.getItem(key)||'null');
+  check('Opening remains January 1, 1999',game?.worldAnchor?.startDate==='1999-01-01');
+  check('No imported generated owner finances or horse portfolio',(!ui.stableHorses||ui.stableHorses.length===0));
   if(phase===0){
-   check('Clean January 1999 opening',JSON.parse(w.localStorage.getItem(key)).date==='1999-01-01');
    const stable=[...d.querySelectorAll('#wtwNextgen [data-ng="menu"]')].find(n=>n.dataset.val==='Stable');
-   check('Stable menu exists',Boolean(stable));stable.click();await pause(350);
+   check('Stable menu remains available',Boolean(stable));stable.click();await pause(350);
    const filter=d.querySelector('#wtwNextgen [data-ng="stable-filter"][data-val="training"]');
-   check('Training is accessible within Stable',Boolean(filter));filter.click();await pause(350);
-   check('Actual workout table rendered',Boolean(d.querySelector('.ng-training-table')));
-   const h=ui.stableHorses.find(h=>ui.horseTraining(h.horseId)?.status==='ACTIVE');
-   check('Active owned horse available',Boolean(h));targetId=h.horseId;
-   const button=[...d.querySelectorAll('[data-ng="training-set"]')].find(
-    n=>n.dataset.horseId===targetId&&n.dataset.val==='SPEED');
-   check('Horse-specific speed plan control exists',Boolean(button));
-   button.click();await pause(250);
-   const assigned=JSON.parse(w.localStorage.getItem(key));
-   check('Workout program saved under source horse ID',assigned.horseDevelopment?.horses?.[targetId]?.plan==='SPEED');
+   check('Stable retains its original Training view',Boolean(filter));filter.click();await pause(350);
+   check('Existing training table renders without invented horses',Boolean(d.querySelector('.ng-training-table')));
+   check('No fake horse-specific speed-program controls',!d.querySelector('[data-ng="training-set"]'));
+   check('Zero unapproved training expenses in opening save',!(game?.horseDevelopment?.totalSpent>0));
    const go=d.querySelector('#wtwNextgen [data-ng="action"][data-val="Continue"]');
-   check('Continue control exists',Boolean(go));go.click();await pause(900);
-   const advanced=JSON.parse(w.localStorage.getItem(key));
-   check('Continue advances game date',advanced.date==='1999-01-02');
-   check('Daily program processed on Continue',advanced.horseDevelopment?.processedThrough==='1999-01-02');
-   check('Exactly one daily training expense posted',advanced.horseDevelopment.ledger.length===1);
-   check('Trainer chosen program preserved',advanced.horseDevelopment.horses[targetId].plan==='SPEED');
-   check('Expense ledger has nonzero costs',advanced.horseDevelopment.totalSpent>0);
-   initialSpend=advanced.horseDevelopment.totalSpent;
-   // Jump the authoritative career save forward: the same mechanism must
-   // deterministically settle every missed day on the next UI projection.
-   advanced.date='1999-01-31';
-   w.localStorage.setItem(key,JSON.stringify(advanced));
-   ui.setGameDate('1999-01-31');
-   const settled=JSON.parse(w.localStorage.getItem(key));
-   check('Full 30 days settled in one save',settled.horseDevelopment?.ledger?.length===30);
-   check('30-day horse record moved with calendar',settled.horseDevelopment?.horses?.[targetId]?.history?.length===30);
-   check('Costs accrued without pre-posted results',settled.horseDevelopment.totalSpent>initialSpend&&
-    settled.worldAnchor.lastCommittedRaceResult===null);
-   const cost=settled.horseDevelopment.totalSpent;
-   ui.setGameDate('1999-01-31');
-   check('Repeat render never charges a day twice',JSON.parse(w.localStorage.getItem(key)).horseDevelopment.totalSpent===cost);
+   check('Continue action remains available',Boolean(go));go.click();await pause(800);
+   const progressed=JSON.parse(w.localStorage.getItem(key));
+   check('A day can be advanced with no registered racehorses',progressed.date==='1999-01-02');
+   check('Empty horse roster creates no horse-specific training charges',
+    !(progressed.horseDevelopment?.totalSpent>0)&&
+    !(progressed.horseDevelopment?.ledger?.some(e=>e.charges?.length>0)));
    phase=1;frame.src='/next/?world=1999&training-check=reload';
   }else{
    const restored=JSON.parse(w.localStorage.getItem(key));
-   check('Reload retains the 30-day career date',restored.date==='1999-01-31');
-   check('Reload retains exact training expense postings',restored.horseDevelopment.ledger.length===30);
-   check('Reload retains chosen program',restored.horseDevelopment.horses[targetId].plan==='SPEED');
-   check('Reload does not recreate training ledger',ui.trainingCosts().entries===30);
-   check('Source horse ID survived reload',ui.horseTraining(targetId)?.horseId===targetId);
+   check('Reload preserves date and does not resurrect old save',restored.date==='1999-01-02');
+   check('Reload does not import synthetic training costs',!(restored.horseDevelopment?.totalSpent>0));
+   check('Reopened stable remains truly empty',!ui.stableHorses?.length);
    result.dataset.state='passed';result.textContent=JSON.stringify({state:'passed',steps});
   }
  }catch(error){
@@ -91,6 +70,6 @@ assert hit,'Training browser status missing'
 result=json.loads(html.unescape(hit.group(2)))
 print('1999 training browser test:',result)
 assert hit.group(1)=='passed',result
-assert len(result['steps'])>=23,len(result['steps'])
+assert len(result['steps'])>=13,len(result['steps'])
 PY
-echo "PASS: stable training assignment, 30-day settlement, persistence, UI refresh"
+echo "PASS: clean stable remains empty through day advancement and reload; training available for future horses"
