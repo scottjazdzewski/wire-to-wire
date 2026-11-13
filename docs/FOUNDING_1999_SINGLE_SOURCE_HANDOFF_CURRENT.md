@@ -1,12 +1,12 @@
 # WIRE TO WIRE — CLEAN JANUARY 1999 WORLD: SINGLE-SOURCE HANDOFF
 
-**Current as verified:** Friday, November 13, 2026; leadership revision V2 now on `main`. Re-check HEAD and CI before editing.  
+**Current as verified:** Friday, November 13, 2026; approved-only opening v3 now on `main`. Re-check HEAD and CI before editing.  
 **Authoritative repository:** https://github.com/scottjazdzewski/wire-to-wire  
 **Authoritative branch for live integration:** `main` — re-fetch HEAD before **every** edit; `5354a92f...` is an older checked checkpoint, NOT the current edit base.  
 **Game scenario:** `FOUNDING_1999` effective **1999-01-01**.  
 **User's governing order:** START FROM SCRATCH with the approved founding-world people and organizations. Do NOT bring back old generated rosters, owners, simulated racing horses, inherited finances, 2014 cases or old saves. Keep ONLY genuinely connected historical champions, horses, breeding families and pedigree ancestors as read-only history or legitimately living source stallions/mares. **Scale only after a complete small pilot works.**
 
-**2026-11-13 leadership implementation note:** Leadership V2 is in `public/1999/engine/founding-leadership-1999.mjs`, the existing `public/1999/engine/founding-world-1999.mjs` and `public/data/wtw-1999-founding-directory-v1.json`. The approved Office at `/next/?world=1999` now distinguishes established, approved and proposed principal labels and links Magic Johnson as investor only. **Current count:** 37 organizations, 47 named people + 68 uncontracted candidates, 73 living breeding animals, ZERO registered racehorses. The latest UI assets use a leadership-V2 cache revision. A live Cloudflare Access-protected site session has NOT been independently authenticated by this window; GitHub CI is the verified code-level acceptance gate.
+**2026-11-13 strict approved-only update:** The site at `/next/?world=1999` now uses **37 approved founding organizations**, of which **33 have accepted/established principal IDs and four have NULL principals pending user name approval**. **41 approved named people** are exposed, including accepted secondary partners and non-operating Magic Johnson at Ledbetter; the old 68 test-generated workers, 12 auction catalogs and 118 phantom track training centers are NOT present in the opening world. The 30 Facilities directory rows are references to existing institutions ONLY: **5 stud farms, 15 farms, 10 racing-stable organizations**. No separate buildings or capacity/costs were created. The 118 racecourses are unchanged. The 73 source-linked breeding animals remain as protected historical-current breeding references; racing stable has zero registered runners. Logo assignment is restricted to `public/assets/office/founding-organization-logo-index.json`: **37 exact-ID slots, zero preapproved artwork loaded**, pending user's new logo files. The previous legacy logo index of 108 organizations is not used by the founding UI. Current UI assets use an `approved-only` cache revision. Cloudflare Pages uses Git-linked `main` deployments; authenticated live verification still requires the owner's Access session.
 
 ## 1. IMPORTANT: stop using the stale branches and handoffs
 
@@ -27,11 +27,14 @@ This handoff is the current startup document. If another document conflicts with
 | Item | Current state |
 |---|---|
 | Founder-selected organizations | **37** (23 established IDs, 14 founding-scenario provisional IDs) |
-| Identified organization principals | **37 slots**; **12 established**, **21 new user-approved**, **4 revised names still proposed** |
-| Named source/new world people | **47** |
-| NEW available professional candidates | **68** (26 jockeys, 10 trainers, 8 farm managers, 6 bloodstock agents, 4 vets, 4 farriers, 4 racing secretaries, 6 jockey agents); NOT employed; zero payroll |
-| Total people surfaced | **115** |
+| Identified organization principals | **33 approved/established**, **4 slots BLANK pending approval**; proposed names remain in docs, not in live game |
+| Named source/new world people | **41 approved identities** |
+| New staff / jockeys / trainers | **0 activated**; old 68 candidates remain offline test fixtures only |
+| Total people surfaced | **41** |
 | Registered playable racing horses | **0**; stable is deliberately empty |
+| Facility reference rows | **30**; 5 studs, 15 farms, 10 racing operations; zero invented buildings, breaking yards or track training centers |
+| Auction catalog entities | **0**, no legacy test catalogs |
+| Approved ownership logo assets | **0**, 37 exact-ID slots reserved; no legacy 108-logo fallback |
 | Connected living stallions | **18** |
 | Connected living broodmares | **55** |
 | Total living animals in the opening World | **73** |
