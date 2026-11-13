@@ -1,7 +1,7 @@
 {
   "schema": "WTW_FOUNDING_1999_APPROVED_ORGANIZATION_LOGOS_V1",
-  "version": "2026-11-13-clean-opening",
-  "authority": "Only approved artwork may be assigned to an existing founding organization by immutable organization ID.",
+  "version": "2026-11-13-approved-only-logo-release-v2",
+  "authority": "User requested publishing available logos November 13, 2026. Only existing canonical O-ID AND exact founding organization-name matches may be shown. This maps UI artwork only; no new organizations, histories or personnel.",
   "approvedOrganizationIds": [
     "O-000001",
     "O-000002",
@@ -41,7 +41,237 @@
     "O-FOUNDING-1999-013",
     "O-FOUNDING-1999-014"
   ],
-  "organizations": {},
-  "pending": "37 organization logo slots; no unapproved legacy/generated crest is admitted. Attach approved artwork to ID later.",
-  "forbiddenFallback": "DO_NOT_USE_108_LEGACY_ORGANIZATION_LOGOS"
+  "organizations": {
+    "organization:O-000001": "/assets/office/owner-logos/owner_O000001_1999_v1_64.png",
+    "organization:O-000003": "/assets/office/owner-logos/owner_O000003_1999_v1_64.png",
+    "organization:O-000011": "/assets/office/owner-logos/owner_O000011_1999_v1_64.png",
+    "organization:O-000014": "/assets/office/owner-logos/owner_O000014_1999_v1_64.png",
+    "organization:O-000037": "/assets/office/owner-logos/owner_O000037_1999_v1_64.png",
+    "organization:O-000045": "/assets/office/owner-logos/owner_O000045_1999_v1_64.png",
+    "organization:O-000047": "/assets/office/owner-logos/owner_O000047_1999_v1_64.png",
+    "organization:O-000057": "/assets/office/owner-logos/owner_O000057_1999_v1_64.png",
+    "organization:O-000059": "/assets/office/owner-logos/owner_O000059_1999_v1_64.png",
+    "organization:O-000061": "/assets/office/owner-logos/owner_O000061_1999_v1_64.png",
+    "organization:O-000062": "/assets/office/owner-logos/owner_O000062_1999_v1_64.png",
+    "organization:O-000063": "/assets/office/owner-logos/owner_O000063_1999_v1_64.png",
+    "organization:O-000064": "/assets/office/owner-logos/owner_O000064_1999_v1_64.png",
+    "organization:O-000066": "/assets/office/owner-logos/owner_O000066_1999_v1_64.png",
+    "organization:O-000067": "/assets/office/owner-logos/owner_O000067_1999_v1_64.png",
+    "organization:O-000068": "/assets/office/owner-logos/owner_O000068_1999_v1_64.png",
+    "organization:O-000071": "/assets/office/owner-logos/owner_O000071_1999_v1_64.png"
+  },
+  "pending": "Additional founding ownership artwork may be supplied later; do not invent crests or use legacy-only names.",
+  "forbiddenFallback": "DO_NOT_USE_UNMATCHED_ORGANIZATIONS_OR_UNAPPROVED_NAME_ALIASES",
+  "publishedCount": 17,
+  "remainingWithoutMatchedLogo": 20,
+  "audit": {
+    "source": "existing 1999 canonical organization marks /assets/office/owner-logos/",
+    "matchingRule": "SAME_EXACT_ORGANIZATION_ID_AND_NAME",
+    "published": [
+      {
+        "id": "O-000001",
+        "name": "Wetherby Plain",
+        "path": "/assets/office/owner-logos/owner_O000001_1999_v1_64.png",
+        "match": "CANONICAL_ID_AND_EXACT_NAME"
+      },
+      {
+        "id": "O-000003",
+        "name": "Four Corners Farm",
+        "path": "/assets/office/owner-logos/owner_O000003_1999_v1_64.png",
+        "match": "CANONICAL_ID_AND_EXACT_NAME"
+      },
+      {
+        "id": "O-000011",
+        "name": "St. Alloy Partners",
+        "path": "/assets/office/owner-logos/owner_O000011_1999_v1_64.png",
+        "match": "CANONICAL_ID_AND_EXACT_NAME"
+      },
+      {
+        "id": "O-000014",
+        "name": "Argosy Bloodstock",
+        "path": "/assets/office/owner-logos/owner_O000014_1999_v1_64.png",
+        "match": "CANONICAL_ID_AND_EXACT_NAME"
+      },
+      {
+        "id": "O-000037",
+        "name": "Whitcombe Family",
+        "path": "/assets/office/owner-logos/owner_O000037_1999_v1_64.png",
+        "match": "CANONICAL_ID_AND_EXACT_NAME"
+      },
+      {
+        "id": "O-000045",
+        "name": "Northbank Racing",
+        "path": "/assets/office/owner-logos/owner_O000045_1999_v1_64.png",
+        "match": "CANONICAL_ID_AND_EXACT_NAME"
+      },
+      {
+        "id": "O-000047",
+        "name": "Poppy Lane Racing",
+        "path": "/assets/office/owner-logos/owner_O000047_1999_v1_64.png",
+        "match": "CANONICAL_ID_AND_EXACT_NAME"
+      },
+      {
+        "id": "O-000057",
+        "name": "Argosy Racing Partners",
+        "path": "/assets/office/owner-logos/owner_O000057_1999_v1_64.png",
+        "match": "CANONICAL_ID_AND_EXACT_NAME"
+      },
+      {
+        "id": "O-000059",
+        "name": "Circle B Racing",
+        "path": "/assets/office/owner-logos/owner_O000059_1999_v1_64.png",
+        "match": "CANONICAL_ID_AND_EXACT_NAME"
+      },
+      {
+        "id": "O-000061",
+        "name": "Kingsmere Farm",
+        "path": "/assets/office/owner-logos/owner_O000061_1999_v1_64.png",
+        "match": "CANONICAL_ID_AND_EXACT_NAME"
+      },
+      {
+        "id": "O-000062",
+        "name": "Crescent Mile Farm",
+        "path": "/assets/office/owner-logos/owner_O000062_1999_v1_64.png",
+        "match": "CANONICAL_ID_AND_EXACT_NAME"
+      },
+      {
+        "id": "O-000063",
+        "name": "Ironweed Farm",
+        "path": "/assets/office/owner-logos/owner_O000063_1999_v1_64.png",
+        "match": "CANONICAL_ID_AND_EXACT_NAME"
+      },
+      {
+        "id": "O-000064",
+        "name": "Huntcross Farm",
+        "path": "/assets/office/owner-logos/owner_O000064_1999_v1_64.png",
+        "match": "CANONICAL_ID_AND_EXACT_NAME"
+      },
+      {
+        "id": "O-000066",
+        "name": "Aurelian Stud",
+        "path": "/assets/office/owner-logos/owner_O000066_1999_v1_64.png",
+        "match": "CANONICAL_ID_AND_EXACT_NAME"
+      },
+      {
+        "id": "O-000067",
+        "name": "Marrowfield Farm",
+        "path": "/assets/office/owner-logos/owner_O000067_1999_v1_64.png",
+        "match": "CANONICAL_ID_AND_EXACT_NAME"
+      },
+      {
+        "id": "O-000068",
+        "name": "Bellwether Stud",
+        "path": "/assets/office/owner-logos/owner_O000068_1999_v1_64.png",
+        "match": "CANONICAL_ID_AND_EXACT_NAME"
+      },
+      {
+        "id": "O-000071",
+        "name": "Empire Valley Stud",
+        "path": "/assets/office/owner-logos/owner_O000071_1999_v1_64.png",
+        "match": "CANONICAL_ID_AND_EXACT_NAME"
+      }
+    ],
+    "notPublished": [
+      {
+        "id": "O-000002",
+        "name": "Harrowgate Farm",
+        "reason": "OLD ARTWORK LABEL Lattice Farm DOES NOT MATCH"
+      },
+      {
+        "id": "O-000056",
+        "name": "Quickfire Racing",
+        "reason": "OLD ARTWORK LABEL Marcus Vale DOES NOT MATCH"
+      },
+      {
+        "id": "O-005910",
+        "name": "Midway",
+        "reason": "NO MATCHING LOGO FILE"
+      },
+      {
+        "id": "O-005919",
+        "name": "Knight’s Way",
+        "reason": "NO MATCHING LOGO FILE"
+      },
+      {
+        "id": "O-005794",
+        "name": "Potomac Heritage Stable",
+        "reason": "NO MATCHING LOGO FILE"
+      },
+      {
+        "id": "O-006905",
+        "name": "Ledbetter Calder Stables",
+        "reason": "NO MATCHING LOGO FILE"
+      },
+      {
+        "id": "O-FOUNDING-1999-001",
+        "name": "Davenport Hall Farm",
+        "reason": "NO MATCHING LOGO FILE"
+      },
+      {
+        "id": "O-FOUNDING-1999-002",
+        "name": "Takamori Stud — Pacific Division",
+        "reason": "NO MATCHING LOGO FILE"
+      },
+      {
+        "id": "O-FOUNDING-1999-003",
+        "name": "Buckley Oaks Farm",
+        "reason": "NO MATCHING LOGO FILE"
+      },
+      {
+        "id": "O-FOUNDING-1999-004",
+        "name": "Split Rail Farm",
+        "reason": "NO MATCHING LOGO FILE"
+      },
+      {
+        "id": "O-FOUNDING-1999-005",
+        "name": "All The Colors",
+        "reason": "NO MATCHING LOGO FILE"
+      },
+      {
+        "id": "O-FOUNDING-1999-006",
+        "name": "Samuels Family Racing",
+        "reason": "NO MATCHING LOGO FILE"
+      },
+      {
+        "id": "O-FOUNDING-1999-007",
+        "name": "Velvet Key Racing",
+        "reason": "NO MATCHING LOGO FILE"
+      },
+      {
+        "id": "O-FOUNDING-1999-008",
+        "name": "Vesper Brook Racing",
+        "reason": "NO MATCHING LOGO FILE"
+      },
+      {
+        "id": "O-FOUNDING-1999-009",
+        "name": "Mar Azul Racing",
+        "reason": "NO MATCHING LOGO FILE"
+      },
+      {
+        "id": "O-FOUNDING-1999-010",
+        "name": "Caney Fork Farm",
+        "reason": "NO MATCHING LOGO FILE"
+      },
+      {
+        "id": "O-FOUNDING-1999-011",
+        "name": "Longleaf Farm",
+        "reason": "NO MATCHING LOGO FILE"
+      },
+      {
+        "id": "O-FOUNDING-1999-012",
+        "name": "Palma Real Stable",
+        "reason": "NO MATCHING LOGO FILE"
+      },
+      {
+        "id": "O-FOUNDING-1999-013",
+        "name": "Alderwick International Stud",
+        "reason": "NO MATCHING LOGO FILE"
+      },
+      {
+        "id": "O-FOUNDING-1999-014",
+        "name": "Ashby Vale Farm",
+        "reason": "NO MATCHING LOGO FILE"
+      }
+    ]
+  }
 }
