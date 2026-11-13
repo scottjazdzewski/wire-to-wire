@@ -220,18 +220,6 @@ export function createOrganizationNameRoster({
   }
   throw Error('Organization name pool exhausted for '+kind+'; expand the name lexicon');
  };
- const owners=Array.from({length:ownerCount},(_,i)=>{
-  if(sourceOwnerNames[i])return sourceOwnerNames[i];
-  const principal=String(principalNames[i]||'').trim();
-  // The legal name of a sole-owner operation intentionally equals its
-  // principal's identity, not an independently generated business duplicate.
-  if(i%11===0&&principal){used.add(norm(principal));return principal;}
-  const preferred=principalPrimarySurnames[i]||surname(principal);
-  const context=ownerContexts[i]||{};
-  return claim(attempt=>attempt<48?
-   contextualOwnerCandidate(seed,i,attempt,principal,alignPrincipalSurnames?preferred:'',context):
-   ownerName(seed,i,attempt,principal,alignPrincipalSurnames,preferred),'owner');
- });
  const kindsAllowed=new Set(['FARM','STUD_FARM','THOROUGHBRED_NURSERY','BLOODSTOCK_FARM']);
  if(farmKindPlan!==null&&(!Array.isArray(farmKindPlan)||farmKindPlan.length!==farmCount||
   farmKindPlan.some(k=>!kindsAllowed.has(k))))throw Error('Invalid explicit farm-purpose plan');
@@ -243,6 +231,18 @@ export function createOrganizationNameRoster({
   return claim(a=>a<48?
    contextualFarmCandidate(seed,i,a,farmKinds[i],context):
    farmName(seed,i,a,farmKinds[i]),'farm');
+ });
+ const owners=Array.from({length:ownerCount},(_,i)=>{
+  if(sourceOwnerNames[i])return sourceOwnerNames[i];
+  const principal=String(principalNames[i]||'').trim();
+  // The legal name of a sole-owner operation intentionally equals its
+  // principal's identity, not an independently generated business duplicate.
+  if(i%11===0&&principal){used.add(norm(principal));return principal;}
+  const preferred=principalPrimarySurnames[i]||surname(principal);
+  const context=ownerContexts[i]||{};
+  return claim(attempt=>attempt<48?
+   contextualOwnerCandidate(seed,i,attempt,principal,alignPrincipalSurnames?preferred:'',context):
+   ownerName(seed,i,attempt,principal,alignPrincipalSurnames,preferred),'owner');
  });
  const familyFrequency=new Map();
  for(let i=0;i<trainerNames.length;i++){
