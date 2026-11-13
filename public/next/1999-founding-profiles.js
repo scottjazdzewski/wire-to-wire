@@ -98,7 +98,15 @@ function principalBlock(org,world){
  remainder.map(p=>'<div class="ng-founding-person-row"><small>'+esc(String(p.positionTitle||p.role||'SECONDARY LEADERSHIP').replaceAll('_',' '))+'</small>'+
  link('person',p.id,p.name)+'</div>').join('')+
  (investor?'<div class="ng-founding-person-row"><small>MAJOR NON-OPERATING INVESTOR</small>'+
- link('person',investor.id,investor.name)+'</div>':'');
+ link('person',investor.id,investor.name)+'</div>':'')+
+ (org.relatedBloodstockAgencyId&&world.organizations.some(o=>o.id===org.relatedBloodstockAgencyId)?
+ '<div class="ng-founding-person-row"><small>RELATED BLOODSTOCK AGENCY</small>'+
+ link('ownership',org.relatedBloodstockAgencyId,
+ world.organizations.find(o=>o.id===org.relatedBloodstockAgencyId).name)+'</div>':'')+
+ (org.relatedBloodstockStrategistId&&world.people.some(p=>p.id===org.relatedBloodstockStrategistId)?
+ '<div class="ng-founding-person-row"><small>RELATED BLOODSTOCK STRATEGIST</small>'+
+ link('person',org.relatedBloodstockStrategistId,
+ world.people.find(p=>p.id===org.relatedBloodstockStrategistId).name)+'</div>':'');
  return '<div class="ng-founding-people-list">'+rows+'</div>';
 }
 function institution(kind,org,world,options){
@@ -117,7 +125,8 @@ function institution(kind,org,world,options){
   fact('1999 BASE',org.location||org.locationLabel)+
   fact('PRINCIPAL STATUS',org.leadershipStatus==='PENDING_USER_REVIEW_NO_APPROVED_PRINCIPAL'?
    'AWAITING NAME APPROVAL':'APPROVED / ESTABLISHED')+
-  fact('OPENING RACING HORSES','0 REGISTERED')+'</div>'+
+  fact('OPENING RACING HORSES','0 REGISTERED')+
+  (org.financingDescription?fact('FINANCING APPROACH',org.financingDescription):'')+'</div>'+
   '<p class="ng-founding-note">This is an organization, not a newly constructed building. Facilities, cash, contracts and staffing require separate approval.</p>','Operations','FULL RECORD');
  const peopleCard=card('PRINCIPALS & CONNECTIONS',principalBlock(org,world),'Leadership','ALL PEOPLE');
  const historyBlurb=text(org.approvedOrigin)||'No separate approved origin narrative has been recorded.';
