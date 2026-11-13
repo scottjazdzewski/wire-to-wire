@@ -132,7 +132,7 @@ test('explicit role country mixes override all editorial defaults, including for
 test('international naming remains a pure offline factory separate from the active 1999 world generator',()=>{
  const file=readFileSync(new URL('../public/1999/engine/international-professional-names.mjs',import.meta.url),'utf8');
  const factory=readFileSync(new URL('../public/1999/engine/fictional-world-name-engine.mjs',import.meta.url),'utf8');
- const game=readFileSync(new URL('../public/1999/engine/full-world-generator.mjs',import.meta.url),'utf8');
+ const game=readFileSync(new URL('../public/1999/engine/founding-world-1999.mjs',import.meta.url),'utf8');
  assert.doesNotMatch(file,/\b(?:fetch|localStorage|indexedDB|writeFile|setItem)\s*\(/);
  assert.doesNotMatch(factory,/^import.+(?:canon-mini|full-world-generator|local-api|source-principals|cloudflare)/m);
  assert.doesNotMatch(game,/international-professional-names/);
