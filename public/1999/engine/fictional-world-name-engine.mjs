@@ -12,7 +12,7 @@ import {createPersonnelNameRoster,PERSONNEL_NAME_MODEL} from './personnel-name-e
 import {roleOrigin,GEO_NAME_MODEL} from './geographic-names.mjs';
 import {createOrganizationNameRoster,ORGANIZATION_NAME_MODEL} from './organization-name-engine.mjs';
 
-export const FICTIONAL_WORLD_NAME_ENGINE='WTW_FICTIONAL_WORLD_IDENTITIES_V1';
+export const FICTIONAL_WORLD_NAME_ENGINE='WTW_FICTIONAL_WORLD_IDENTITIES_V2';
 export const SUPPORTED_NAME_ERA=1999;
 export const SUPPORTED_ORIGINS=Object.freeze(['US','CA','GB','IE','PR','PA','VE','MX','CL','PE','CO','DO']);
 export const DEFAULT_WORLD_ROLE_COUNTS=Object.freeze({
@@ -53,6 +53,7 @@ const FARM_KEYS=Object.freeze([
  ['THOROUGHBRED_NURSERY','nurseries'],['BLOODSTOCK_FARM','bloodstockFarms']
 ]);
 const MAX_NAME_RECORDS=30000;
+const ROLE_ORDER=Object.freeze(Object.keys(ROLE_AGES).filter(x=>x!=='owner'));
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'');
 const frozen=record=>Object.freeze(record);
 function hash(seed,key){
@@ -151,20 +152,24 @@ export function normalizeFictionalWorldNamingSpec(input={}){
  const roleInput=input.roles??DEFAULT_WORLD_ROLE_COUNTS;
  if(!roleInput||typeof roleInput!=='object'||Array.isArray(roleInput))throw Error('Invalid role counts');
  const roles={};
- for(const [role,n] of Object.entries(roleInput)){
-  if(!ROLE_AGES[role]||role==='owner')throw Error('Unsupported role '+role+'; owner principals use owners');
-  roles[role]=count(n,role);
- }
+ for(const role of Object.keys(roleInput))
+  if(!ROLE_ORDER.includes(role))throw Error('Unsupported role '+role+'; owner principals use owners');
+ // Canonical order: equivalent JSON role maps produce identical identities.
+ for(const role of ROLE_ORDER)if(Object.hasOwn(roleInput,role))
+  roles[role]=count(roleInput[role],role);
  const owners=count(input.owners??3308,'owners');
  const facInput=input.facilities??DEFAULT_WORLD_FACILITY_COUNTS;
  if(!facInput||typeof facInput!=='object'||Array.isArray(facInput))throw Error('Invalid facility counts');
  const facilities={};
- for(const key of [...FARM_KEYS.map(x=>x[1]),'breakingTraining'])
+ const facilityKeys=[...FARM_KEYS.map(x=>x[1]),'breakingTraining'];
+ for(const key of Object.keys(facInput))
+  if(!facilityKeys.includes(key))throw Error('Unsupported facility purpose '+key);
+ for(const key of facilityKeys)
   facilities[key]=count(facInput[key]??0,key);
  const farmCount=FARM_KEYS.reduce((n,[,key])=>n+facilities[key],0);
  const staff=Object.values(roles).reduce((a,b)=>a+b,0);
  if(staff+owners>MAX_NAME_RECORDS)throw Error('Too many people in one naming batch');
- if(owners+roles.trainer+farmCount+facilities.breakingTraining>MAX_NAME_RECORDS)
+ if(owners+(roles.trainer??0)+farmCount+facilities.breakingTraining>MAX_NAME_RECORDS)
   throw Error('Too many organizations in one naming batch');
  const reservedNames=input.protectedNames??[];
  if(!Array.isArray(reservedNames)||reservedNames.some(x=>typeof x!=='string'||!x.trim()))
@@ -193,10 +198,11 @@ export function createFictionalWorldNameEngine(input){
   throw Error('Missing role at index '+index);
  };
  const personNames=createPersonnelNameRoster(seed,staff+owners,roleAt,spec.protectedNames,{
-  countryAt:(index,role)=>birthplaceCountry(seed,index,role,spec.originWeights)
+  countryAt:(index,role)=>birthplaceCountry(seed,index,role,spec.originWeights),
+  maxBaseNameUses:2,avoidIdenticalGivenSurname:true
  });
  const countrySet=new Set(SUPPORTED_ORIGINS);
- const people=Object.freeze(personNames.map((p,i)=>{
+ const basePeople=Object.freeze(personNames.map((p,i)=>{
   const role=roleAt(i),ordinal=i-indexes[role],id=makeId(worldId,'PERSON-'+role.toUpperCase(),ordinal);
   validateNameRecord(p.name,id);
   if(!countrySet.has(p.birthCountry))throw Error('Unsupported birth country '+p.birthCountry);
@@ -206,15 +212,16 @@ export function createFictionalWorldNameEngine(input){
    birthCountry:p.birthCountry,ageAtOpening:age,birthYear:year-age,
    location:loc(market),nameOrigin:p.source,source:'FICTIONAL_WORLD_ENGINE'});
  }));
- const trainers=Object.freeze(people.slice(indexes.trainer??0,(indexes.trainer??0)+(roles.trainer??0)));
- const principalPeople=people.slice(staff);
+ const trainers=Object.freeze(basePeople.slice(indexes.trainer??0,(indexes.trainer??0)+(roles.trainer??0)));
+ const principalPeople=basePeople.slice(staff);
  const org=createOrganizationNameRoster({
   seed,ownerCount:owners,barnCount:trainers.length,farmCount,
   breakingCount:facilities.breakingTraining,
-  protectedNames:[...spec.protectedNames,...people.map(p=>p.name)],
+  protectedNames:[...spec.protectedNames,...basePeople.map(p=>p.name)],
   principalNames:principalPeople.map(p=>p.name),
   trainerNames:trainers.map(p=>p.name),
-  farmKindPlan:farmKindOrder(seed,facilities)
+  farmKindPlan:farmKindOrder(seed,facilities),
+  alignPrincipalSurnames:true
  });
  const owningOrganizations=Object.freeze(org.owners.map((name,i)=>{
   const id=makeId(worldId,'OWNER',i),principal=principalPeople[i];
