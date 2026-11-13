@@ -8,7 +8,7 @@
  * The read index is cached on the world object (WeakMap, outside save data).
  * Changes to ownership are sparse deltas in the existing WTW_GAME_RUN_V1 save.
  */
-import {ensure,isObject,requireString,validDate,worldIdentity} from './contracts.js';
+import {ensure,isObject,requireString,validDate} from './contracts.js';
 export const OWNERSHIP_RUNTIME_SCHEMA='WTW_RUN_HORSE_OWNERSHIP_V1';
 export const OWNERSHIP_COMMANDS=Object.freeze([
  'ASSIGN_HORSE_OWNER','REQUEST_HORSE_TRANSFER',
@@ -16,7 +16,6 @@ export const OWNERSHIP_COMMANDS=Object.freeze([
 ]);
 const WORLD_INDEX=new WeakMap();
 const REQUEST_TYPES=new Set(['GIFT','SALE']);
-const keys=Object.keys;
 function indexWorld(world){
  let found=WORLD_INDEX.get(world);if(found)return found;
  const horseById=new Map(),ownerById=new Map(),baseline=new Map();
@@ -86,7 +85,7 @@ function verifyHorse(world,id){
 function ownership(state){return state.runtime.ownership??(state.runtime.ownership=createOwnershipRuntime())}
 function validRequestId(id){
  requireString(id,'request_id',128);
- ensure(/^[A-Za-z0-9][A-Za-z0-9:_-]{1,127}$/.test(id),
+ ensure(!['__proto__','constructor','prototype'].includes(id)&&/^[A-Za-z0-9][A-Za-z0-9:_-]{1,127}$/.test(id),
   'INVALID_REQUEST_ID','Transfer request ID must be stable and namespaced');
 }
 export function ownershipAction({state,world,command,emit}){
@@ -183,9 +182,10 @@ export function getOwnerPortfolioView(state,world,ownerId,{offset=0,limit=30}={}
   'INVALID_PAGING','Owner portfolio page must be 0..100 horses');
  const index=indexWorld(world),base=index.baseline.get(ownerId)||[],
   overlays=state.runtime.ownership?.owner_overrides||{};
+ const baseSet=new Set(base);
  const ids=base.filter(id=>!Object.hasOwn(overlays,id)||overlays[id].owner_id===ownerId);
  for(const [horseId,change] of Object.entries(overlays)){
-  if(change.owner_id===ownerId&&!base.includes(horseId))ids.push(horseId);
+  if(change.owner_id===ownerId&&!baseSet.has(horseId))ids.push(horseId);
  }
  const items=ids.slice(offset,offset+limit).map(id=>{
   const horse=index.horseById.get(id);
