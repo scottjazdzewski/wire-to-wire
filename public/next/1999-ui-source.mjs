@@ -304,6 +304,7 @@ function makeDepartmentRows(section,page,context={}){
    location:city(o.location),principal:o.principalOwner||'Not recorded',principalId:o.principalOwnerId||'',
    status:gameWorldProfile.mode==='FOUNDING_1999'?
     (o.leadershipStatus?.includes('PENDING_USER_REVIEW')?'PROPOSED PRINCIPAL · NOT APPROVED':
+     o.leadershipStatus==='USER_APPROVED_1999_OPERATOR_LINK'?'APPROVED PRINCIPAL':
      o.leadershipStatus==='ESTABLISHED_1999_PRINCIPAL_LINK'?'ESTABLISHED PRINCIPAL':
      'LEADERSHIP STATUS UNVERIFIED'):'1999 · '+o.portfolio?.tier,principalAge:o.principalAgeAtDate??o.principalAge??'',
     _testAbility:o.principalAbility||null,_canonId:o.authority?.startsWith('CANON')?o.id:'',
