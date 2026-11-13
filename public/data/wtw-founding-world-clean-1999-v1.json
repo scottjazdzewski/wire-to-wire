@@ -7,7 +7,8 @@
     "canon": "public/1999/engine/canon-mini.mjs",
     "directory": "public/data/wtw-1999-world-directory-v33.json",
     "worldBible": "https://docs.google.com/document/d/1zBmtdFenkeP70odONetitXFcruPc0qwt485JAR8lDDs/edit",
-    "historicalHorseMaster": "1hJ7-DGhwo0mDvxQziGGfnyRQlkHG-BZj1yxAnezu8gA"
+    "historicalHorseMaster": "1hJ7-DGhwo0mDvxQziGGfnyRQlkHG-BZj1yxAnezu8gA",
+    "historicalHorseMasterRange": "WTW HISTORICAL HORSE MASTER — THROUGH 1998 v1, columns A:K"
   },
   "rules": {
     "noGeneratedHorses": true,
@@ -5587,40 +5588,2790 @@
       "sireId": "H-1937-008004",
       "damId": "H-1940-008023",
       "authority": "HISTORICAL_V3_3"
+    },
+    {
+      "id": "H-1919-000002",
+      "name": "Turnstile",
+      "foalYear": 1919,
+      "sex": "STALLION",
+      "sireId": "H-1896-000001",
+      "damId": "H-1908-000001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1896-000001",
+      "name": "Little Business",
+      "foalYear": 1896,
+      "sex": "STALLION",
+      "sireId": "H-1876-008010",
+      "damId": "H-1887-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1876-008010",
+      "name": "Signal Box",
+      "foalYear": 1876,
+      "sex": "STALLION",
+      "sireId": "H-1866-008003",
+      "damId": "H-1859-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1866-008003",
+      "name": "Suppose Maybe",
+      "foalYear": 1866,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1852-007002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1851-007001",
+      "name": "Storm Window",
+      "foalYear": 1851,
+      "sex": "STALLION",
+      "sireId": null,
+      "damId": null,
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1852-007002",
+      "name": "Solis Apron",
+      "foalYear": 1852,
+      "sex": "MARE",
+      "sireId": null,
+      "damId": null,
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1859-007001",
+      "name": "Meet Later",
+      "foalYear": 1859,
+      "sex": "MARE",
+      "sireId": null,
+      "damId": null,
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1887-008008",
+      "name": "Window Outside",
+      "foalYear": 1887,
+      "sex": "MARE",
+      "sireId": "H-1876-008004",
+      "damId": "H-1880-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1876-008004",
+      "name": "Edith's Kettle",
+      "foalYear": 1876,
+      "sex": "STALLION",
+      "sireId": "H-1867-008002",
+      "damId": "H-1865-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1867-008002",
+      "name": "Drayman",
+      "foalYear": 1867,
+      "sex": "STALLION",
+      "sireId": "H-1861-008002",
+      "damId": "H-1854-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1861-008002",
+      "name": "Willow Cut",
+      "foalYear": 1861,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1852-007002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1854-007001",
+      "name": "Vale Cup",
+      "foalYear": 1854,
+      "sex": "MARE",
+      "sireId": null,
+      "damId": null,
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1865-008008",
+      "name": "Tin Maybe",
+      "foalYear": 1865,
+      "sex": "MARE",
+      "sireId": "H-1851-007001",
+      "damId": "H-1859-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1880-008009",
+      "name": "Solis String",
+      "foalYear": 1880,
+      "sex": "MARE",
+      "sireId": "H-1873-008003",
+      "damId": "H-1872-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1873-008003",
+      "name": "Carry Mabel",
+      "foalYear": 1873,
+      "sex": "STALLION",
+      "sireId": "H-1863-008004",
+      "damId": "H-1855-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1863-008004",
+      "name": "Pas Encore",
+      "foalYear": 1863,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1852-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1852-007001",
+      "name": "Rain Check",
+      "foalYear": 1852,
+      "sex": "MARE",
+      "sireId": null,
+      "damId": null,
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1855-007001",
+      "name": "Larkin Ticket",
+      "foalYear": 1855,
+      "sex": "MARE",
+      "sireId": null,
+      "damId": null,
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1872-008007",
+      "name": "Pay the Milkman",
+      "foalYear": 1872,
+      "sex": "MARE",
+      "sireId": "H-1865-008004",
+      "damId": "H-1865-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1865-008004",
+      "name": "Drawer Inside",
+      "foalYear": 1865,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1852-007002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1908-000001",
+      "name": "Bessie's Room",
+      "foalYear": 1908,
+      "sex": "MARE",
+      "sireId": "H-1897-008010",
+      "damId": "H-1895-008014",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1897-008010",
+      "name": "Try Bessie",
+      "foalYear": 1897,
+      "sex": "STALLION",
+      "sireId": "H-1874-008001",
+      "damId": "H-1880-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1874-008001",
+      "name": "Keene Bottle",
+      "foalYear": 1874,
+      "sex": "STALLION",
+      "sireId": "H-1866-008003",
+      "damId": "H-1865-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1865-008010",
+      "name": "Via del Porto",
+      "foalYear": 1865,
+      "sex": "MARE",
+      "sireId": "H-1851-007001",
+      "damId": "H-1851-007002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1851-007002",
+      "name": "Rosalie's Pencil",
+      "foalYear": 1851,
+      "sex": "MARE",
+      "sireId": null,
+      "damId": null,
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1880-008008",
+      "name": "Come At Six",
+      "foalYear": 1880,
+      "sex": "MARE",
+      "sireId": "H-1873-008003",
+      "damId": "H-1864-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1864-008007",
+      "name": "Havelock Basket",
+      "foalYear": 1864,
+      "sex": "MARE",
+      "sireId": "H-1851-007001",
+      "damId": "H-1858-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1858-007001",
+      "name": "Mercer Drawer",
+      "foalYear": 1858,
+      "sex": "MARE",
+      "sireId": null,
+      "damId": null,
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1895-008014",
+      "name": "New York Row",
+      "foalYear": 1895,
+      "sex": "MARE",
+      "sireId": "H-1881-008010",
+      "damId": "H-1883-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1881-008010",
+      "name": "Ticket North",
+      "foalYear": 1881,
+      "sex": "STALLION",
+      "sireId": "H-1865-008002",
+      "damId": "H-1874-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1865-008002",
+      "name": "Edith's Pencil",
+      "foalYear": 1865,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1850-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1850-007001",
+      "name": "Carry Edith",
+      "foalYear": 1850,
+      "sex": "MARE",
+      "sireId": null,
+      "damId": null,
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1874-008008",
+      "name": "Mind Elly",
+      "foalYear": 1874,
+      "sex": "MARE",
+      "sireId": "H-1869-008006",
+      "damId": "H-1865-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1869-008006",
+      "name": "Foster Button",
+      "foalYear": 1869,
+      "sex": "STALLION",
+      "sireId": "H-1861-008003",
+      "damId": "H-1855-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1861-008003",
+      "name": "Cloudbreak",
+      "foalYear": 1861,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1850-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1883-008008",
+      "name": "Wayfarer",
+      "foalYear": 1883,
+      "sex": "MARE",
+      "sireId": "H-1872-008009",
+      "damId": "H-1874-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1872-008009",
+      "name": "Market Street",
+      "foalYear": 1872,
+      "sex": "STALLION",
+      "sireId": "H-1865-008007",
+      "damId": "H-1864-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1865-008007",
+      "name": "Sparrow",
+      "foalYear": 1865,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1858-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1874-008010",
+      "name": "Spoon Maybe",
+      "foalYear": 1874,
+      "sex": "MARE",
+      "sireId": "H-1862-008004",
+      "damId": "H-1859-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1862-008004",
+      "name": "Maple Gate",
+      "foalYear": 1862,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1850-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1917-000001",
+      "name": "Spare Key",
+      "foalYear": 1917,
+      "sex": "MARE",
+      "sireId": "H-1902-008005",
+      "damId": "H-1908-000001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1902-008005",
+      "name": "Send Home",
+      "foalYear": 1902,
+      "sex": "STALLION",
+      "sireId": "H-1889-008003",
+      "damId": "H-1887-008006",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1889-008003",
+      "name": "Carry Today",
+      "foalYear": 1889,
+      "sex": "STALLION",
+      "sireId": "H-1882-008002",
+      "damId": "H-1880-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1882-008002",
+      "name": "Suppose Once More",
+      "foalYear": 1882,
+      "sex": "STALLION",
+      "sireId": "H-1867-008002",
+      "damId": "H-1872-008002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1872-008002",
+      "name": "Ruth's Tin",
+      "foalYear": 1872,
+      "sex": "MARE",
+      "sireId": "H-1862-008001",
+      "damId": "H-1865-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1862-008001",
+      "name": "Doreen's Lantern",
+      "foalYear": 1862,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1852-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1865-008009",
+      "name": "Save Lola",
+      "foalYear": 1865,
+      "sex": "MARE",
+      "sireId": "H-1851-007001",
+      "damId": "H-1859-007002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1859-007002",
+      "name": "Turnkey",
+      "foalYear": 1859,
+      "sex": "MARE",
+      "sireId": null,
+      "damId": null,
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1887-008006",
+      "name": "Bellamy Curtain",
+      "foalYear": 1887,
+      "sex": "MARE",
+      "sireId": "H-1878-008004",
+      "damId": "H-1879-008006",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1878-008004",
+      "name": "Hard Reset",
+      "foalYear": 1878,
+      "sex": "STALLION",
+      "sireId": "H-1864-008002",
+      "damId": "H-1869-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1864-008002",
+      "name": "Call For Now",
+      "foalYear": 1864,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1852-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1869-008010",
+      "name": "Harbor Row",
+      "foalYear": 1869,
+      "sex": "MARE",
+      "sireId": "H-1862-008003",
+      "damId": "H-1859-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1862-008003",
+      "name": "Fitch Basket",
+      "foalYear": 1862,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1852-007002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1879-008006",
+      "name": "Rue Tordue",
+      "foalYear": 1879,
+      "sex": "MARE",
+      "sireId": "H-1863-008001",
+      "damId": "H-1869-008011",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1863-008001",
+      "name": "Bella Cosa",
+      "foalYear": 1863,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1852-007002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1869-008011",
+      "name": "Barragan Receipt",
+      "foalYear": 1869,
+      "sex": "MARE",
+      "sireId": "H-1862-008004",
+      "damId": "H-1853-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1853-007001",
+      "name": "Rosalie's Parcel",
+      "foalYear": 1853,
+      "sex": "MARE",
+      "sireId": null,
+      "damId": null,
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1939-000001",
+      "name": "Postcard Home",
+      "foalYear": 1939,
+      "sex": "MARE",
+      "sireId": "H-1930-000001",
+      "damId": "H-1920-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1930-000001",
+      "name": "Third Rail",
+      "foalYear": 1930,
+      "sex": "STALLION",
+      "sireId": "H-1912-000001",
+      "damId": "H-1921-000001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1920-008008",
+      "name": "Vera's Kettle",
+      "foalYear": 1920,
+      "sex": "MARE",
+      "sireId": "H-1898-008002",
+      "damId": "H-1903-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1898-008002",
+      "name": "Spindrift",
+      "foalYear": 1898,
+      "sex": "STALLION",
+      "sireId": "H-1874-008003",
+      "damId": "H-1885-008006",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1874-008003",
+      "name": "River Bend",
+      "foalYear": 1874,
+      "sex": "STALLION",
+      "sireId": "H-1865-008002",
+      "damId": "H-1864-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1885-008006",
+      "name": "Telltale",
+      "foalYear": 1885,
+      "sex": "MARE",
+      "sireId": "H-1861-008004",
+      "damId": "H-1871-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1861-008004",
+      "name": "Calle Ocho",
+      "foalYear": 1861,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1854-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1871-008007",
+      "name": "Candle Today",
+      "foalYear": 1871,
+      "sex": "MARE",
+      "sireId": "H-1864-008005",
+      "damId": "H-1854-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1864-008005",
+      "name": "Hattie's Kettle",
+      "foalYear": 1864,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1853-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1903-008009",
+      "name": "Marta's Pencil",
+      "foalYear": 1903,
+      "sex": "MARE",
+      "sireId": "H-1894-008006",
+      "damId": "H-1893-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1894-008006",
+      "name": "Lamplight",
+      "foalYear": 1894,
+      "sex": "STALLION",
+      "sireId": "H-1871-008001",
+      "damId": "H-1874-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1871-008001",
+      "name": "Pay Lucille",
+      "foalYear": 1871,
+      "sex": "STALLION",
+      "sireId": "H-1861-008004",
+      "damId": "H-1852-007002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1874-008007",
+      "name": "Pay Maybe",
+      "foalYear": 1874,
+      "sex": "MARE",
+      "sireId": "H-1866-008003",
+      "damId": "H-1865-008011",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1865-008011",
+      "name": "Cross Ticket",
+      "foalYear": 1865,
+      "sex": "MARE",
+      "sireId": "H-1851-007001",
+      "damId": "H-1855-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1893-008008",
+      "name": "Meet Rosalie",
+      "foalYear": 1893,
+      "sex": "MARE",
+      "sireId": "H-1879-008001",
+      "damId": "H-1887-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1879-008001",
+      "name": "Pass Nell",
+      "foalYear": 1879,
+      "sex": "STALLION",
+      "sireId": "H-1864-008004",
+      "damId": "H-1873-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1864-008004",
+      "name": "Cedar Fork",
+      "foalYear": 1864,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1852-007002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1873-008008",
+      "name": "Move Agnes",
+      "foalYear": 1873,
+      "sex": "MARE",
+      "sireId": "H-1862-008003",
+      "damId": "H-1853-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1992-000002",
+      "name": "Bossa Nova",
+      "foalYear": 1992,
+      "sex": "STALLION",
+      "sireId": "H-1980-000002",
+      "damId": "H-1978-000003",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1991-000006",
+      "name": "Heyday",
+      "foalYear": 1991,
+      "sex": "STALLION",
+      "sireId": "H-1972-000001",
+      "damId": "H-1983-000001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1983-000001",
+      "name": "Foreign Film",
+      "foalYear": 1983,
+      "sex": "MARE",
+      "sireId": "H-1974-000002",
+      "damId": "H-1971-000002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1992-000003",
+      "name": "Pishposh",
+      "foalYear": 1992,
+      "sex": "STALLION",
+      "sireId": "H-1980-000001",
+      "damId": "H-1987-000005",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1990-000001",
+      "name": "Proviso",
+      "foalYear": 1990,
+      "sex": "STALLION",
+      "sireId": "H-1980-000002",
+      "damId": "H-1982-000003",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1991-000003",
+      "name": "Taffeta",
+      "foalYear": 1991,
+      "sex": "STALLION",
+      "sireId": "H-1980-000001",
+      "damId": "H-1982-000003",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1992-000001",
+      "name": "The Whole Point",
+      "foalYear": 1992,
+      "sex": "STALLION",
+      "sireId": "H-1985-000003",
+      "damId": "H-1982-000002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1985-000003",
+      "name": "Who Knows",
+      "foalYear": 1985,
+      "sex": "STALLION",
+      "sireId": "H-1978-000002",
+      "damId": "H-1979-000001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1993-000003",
+      "name": "Well, Actually",
+      "foalYear": 1993,
+      "sex": "STALLION",
+      "sireId": "H-1985-000001",
+      "damId": "H-1988-000005",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1900-008011",
+      "name": "Come Inside",
+      "foalYear": 1900,
+      "sex": "STALLION",
+      "sireId": "H-1895-008003",
+      "damId": "H-1891-008002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1895-008003",
+      "name": "Pass By Noon",
+      "foalYear": 1895,
+      "sex": "STALLION",
+      "sireId": "H-1889-008013",
+      "damId": "H-1885-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1889-008013",
+      "name": "Hattie's Bell",
+      "foalYear": 1889,
+      "sex": "STALLION",
+      "sireId": "H-1880-008004",
+      "damId": "H-1881-008011",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1880-008004",
+      "name": "Mind For Now",
+      "foalYear": 1880,
+      "sex": "STALLION",
+      "sireId": "H-1865-008003",
+      "damId": "H-1872-008006",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1865-008003",
+      "name": "Marta's Saw",
+      "foalYear": 1865,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1857-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1857-007001",
+      "name": "Drawer Once More",
+      "foalYear": 1857,
+      "sex": "MARE",
+      "sireId": null,
+      "damId": null,
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1872-008006",
+      "name": "Nadine's Pencil",
+      "foalYear": 1872,
+      "sex": "MARE",
+      "sireId": "H-1862-008003",
+      "damId": "H-1865-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1881-008011",
+      "name": "Lucille's Spoon",
+      "foalYear": 1881,
+      "sex": "MARE",
+      "sireId": "H-1862-008003",
+      "damId": "H-1872-008006",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1885-008008",
+      "name": "Spoon At Six",
+      "foalYear": 1885,
+      "sex": "MARE",
+      "sireId": "H-1871-008004",
+      "damId": "H-1871-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1871-008004",
+      "name": "Button Maybe",
+      "foalYear": 1871,
+      "sex": "STALLION",
+      "sireId": "H-1864-008006",
+      "damId": "H-1859-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1864-008006",
+      "name": "Coda",
+      "foalYear": 1864,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1857-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1871-008009",
+      "name": "Keep Nell",
+      "foalYear": 1871,
+      "sex": "MARE",
+      "sireId": "H-1862-008001",
+      "damId": "H-1857-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1891-008002",
+      "name": "Danvers Ticket",
+      "foalYear": 1891,
+      "sex": "MARE",
+      "sireId": "H-1871-008006",
+      "damId": "H-1881-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1871-008006",
+      "name": "Booker Bell",
+      "foalYear": 1871,
+      "sex": "STALLION",
+      "sireId": "H-1862-008004",
+      "damId": "H-1864-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1881-008007",
+      "name": "McRae Cup",
+      "foalYear": 1881,
+      "sex": "MARE",
+      "sireId": "H-1876-008001",
+      "damId": "H-1868-008004",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1876-008001",
+      "name": "Hornpipe",
+      "foalYear": 1876,
+      "sex": "STALLION",
+      "sireId": "H-1867-008002",
+      "damId": "H-1870-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1870-008007",
+      "name": "Tally",
+      "foalYear": 1870,
+      "sex": "MARE",
+      "sireId": "H-1851-007001",
+      "damId": "H-1857-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1868-008004",
+      "name": "Second Verse",
+      "foalYear": 1868,
+      "sex": "MARE",
+      "sireId": "H-1862-008001",
+      "damId": "H-1850-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1913-008005",
+      "name": "Elly's Ledger",
+      "foalYear": 1913,
+      "sex": "MARE",
+      "sireId": "H-1898-008002",
+      "damId": "H-1903-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1903-008010",
+      "name": "Bessie's Nail",
+      "foalYear": 1903,
+      "sex": "MARE",
+      "sireId": "H-1884-008011",
+      "damId": "H-1894-008011",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1884-008011",
+      "name": "Topstitch",
+      "foalYear": 1884,
+      "sex": "STALLION",
+      "sireId": "H-1864-008002",
+      "damId": "H-1875-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1875-008007",
+      "name": "Agnes's Window",
+      "foalYear": 1875,
+      "sex": "MARE",
+      "sireId": "H-1867-008005",
+      "damId": "H-1869-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1867-008005",
+      "name": "Basket Tomorrow",
+      "foalYear": 1867,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1857-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1869-008008",
+      "name": "Crossfeed",
+      "foalYear": 1869,
+      "sex": "MARE",
+      "sireId": "H-1862-008001",
+      "damId": "H-1854-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1894-008011",
+      "name": "Try This Time",
+      "foalYear": 1894,
+      "sex": "MARE",
+      "sireId": "H-1872-008003",
+      "damId": "H-1887-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1872-008003",
+      "name": "Come Again",
+      "foalYear": 1872,
+      "sex": "STALLION",
+      "sireId": "H-1862-008001",
+      "damId": "H-1852-007002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1887-008007",
+      "name": "Rivet",
+      "foalYear": 1887,
+      "sex": "MARE",
+      "sireId": "H-1872-008001",
+      "damId": "H-1881-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1872-008001",
+      "name": "Call Inez",
+      "foalYear": 1872,
+      "sex": "STALLION",
+      "sireId": "H-1867-008001",
+      "damId": "H-1854-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1867-008001",
+      "name": "Buona Sera",
+      "foalYear": 1867,
+      "sex": "STALLION",
+      "sireId": "H-1861-008002",
+      "damId": "H-1852-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1881-008008",
+      "name": "Keene Teacup",
+      "foalYear": 1881,
+      "sex": "MARE",
+      "sireId": "H-1873-008002",
+      "damId": "H-1874-008006",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1873-008002",
+      "name": "Button North",
+      "foalYear": 1873,
+      "sex": "STALLION",
+      "sireId": "H-1865-008007",
+      "damId": "H-1857-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1874-008006",
+      "name": "Lanyard",
+      "foalYear": 1874,
+      "sex": "MARE",
+      "sireId": "H-1866-008002",
+      "damId": "H-1857-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1866-008002",
+      "name": "Alma's Nail",
+      "foalYear": 1866,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1859-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1907-008002",
+      "name": "Big Apple",
+      "foalYear": 1907,
+      "sex": "STALLION",
+      "sireId": "H-1898-008011",
+      "damId": "H-1897-008006",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1898-008011",
+      "name": "Bell Before Rain",
+      "foalYear": 1898,
+      "sex": "STALLION",
+      "sireId": "H-1885-008002",
+      "damId": "H-1888-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1885-008002",
+      "name": "Lola's Apron",
+      "foalYear": 1885,
+      "sex": "STALLION",
+      "sireId": "H-1873-008002",
+      "damId": "H-1876-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1876-008009",
+      "name": "Ledger",
+      "foalYear": 1876,
+      "sex": "MARE",
+      "sireId": "H-1865-008002",
+      "damId": "H-1865-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1888-008008",
+      "name": "La Caprice",
+      "foalYear": 1888,
+      "sex": "MARE",
+      "sireId": "H-1873-008002",
+      "damId": "H-1877-008005",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1877-008005",
+      "name": "Keep Quietly",
+      "foalYear": 1877,
+      "sex": "MARE",
+      "sireId": "H-1871-008006",
+      "damId": "H-1865-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1897-008006",
+      "name": "Booker Kettle",
+      "foalYear": 1897,
+      "sex": "MARE",
+      "sireId": "H-1881-008010",
+      "damId": "H-1888-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1888-008010",
+      "name": "Turn Before Rain",
+      "foalYear": 1888,
+      "sex": "MARE",
+      "sireId": "H-1865-008001",
+      "damId": "H-1871-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1865-008001",
+      "name": "Hobnail",
+      "foalYear": 1865,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1854-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1914-008007",
+      "name": "Nora's Lace",
+      "foalYear": 1914,
+      "sex": "MARE",
+      "sireId": "H-1896-008011",
+      "damId": "H-1897-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1896-008011",
+      "name": "Hell Gate",
+      "foalYear": 1896,
+      "sex": "STALLION",
+      "sireId": "H-1889-008012",
+      "damId": "H-1886-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1889-008012",
+      "name": "Tell Once More",
+      "foalYear": 1889,
+      "sex": "STALLION",
+      "sireId": "H-1873-008001",
+      "damId": "H-1874-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1873-008001",
+      "name": "Pell Bell",
+      "foalYear": 1873,
+      "sex": "STALLION",
+      "sireId": "H-1866-008001",
+      "damId": "H-1865-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1866-008001",
+      "name": "Bring Once More",
+      "foalYear": 1866,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1851-007002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1886-008010",
+      "name": "Listen Ruby",
+      "foalYear": 1886,
+      "sex": "MARE",
+      "sireId": "H-1865-008004",
+      "damId": "H-1879-008006",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1897-008007",
+      "name": "Pay Home",
+      "foalYear": 1897,
+      "sex": "MARE",
+      "sireId": "H-1884-008001",
+      "damId": "H-1883-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1884-008001",
+      "name": "Static",
+      "foalYear": 1884,
+      "sex": "STALLION",
+      "sireId": "H-1875-008002",
+      "damId": "H-1865-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1875-008002",
+      "name": "Biscuit This Time",
+      "foalYear": 1875,
+      "sex": "STALLION",
+      "sireId": "H-1861-008004",
+      "damId": "H-1865-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1883-008007",
+      "name": "Alma's Biscuit",
+      "foalYear": 1883,
+      "sex": "MARE",
+      "sireId": "H-1877-008001",
+      "damId": "H-1871-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1877-008001",
+      "name": "Jarrett Kettle",
+      "foalYear": 1877,
+      "sex": "STALLION",
+      "sireId": "H-1868-008003",
+      "damId": "H-1872-008006",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1868-008003",
+      "name": "Ravelin",
+      "foalYear": 1868,
+      "sex": "STALLION",
+      "sireId": "H-1862-008001",
+      "damId": "H-1858-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1871-008010",
+      "name": "Alma's Bottle",
+      "foalYear": 1871,
+      "sex": "MARE",
+      "sireId": "H-1862-008003",
+      "damId": "H-1851-007002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1913-008001",
+      "name": "Mae's Nail",
+      "foalYear": 1913,
+      "sex": "STALLION",
+      "sireId": "H-1889-008012",
+      "damId": "H-1892-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1892-008010",
+      "name": "Meet Nora",
+      "foalYear": 1892,
+      "sex": "MARE",
+      "sireId": "H-1879-008010",
+      "damId": "H-1872-008002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1879-008010",
+      "name": "Apron Maybe",
+      "foalYear": 1879,
+      "sex": "STALLION",
+      "sireId": "H-1871-008003",
+      "damId": "H-1873-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1871-008003",
+      "name": "Hammer By Noon",
+      "foalYear": 1871,
+      "sex": "STALLION",
+      "sireId": "H-1862-008001",
+      "damId": "H-1855-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1873-008007",
+      "name": "Havelock Curtain",
+      "foalYear": 1873,
+      "sex": "MARE",
+      "sireId": "H-1866-008004",
+      "damId": "H-1859-007002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1866-008004",
+      "name": "Fitch Parcel",
+      "foalYear": 1866,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1850-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1907-008012",
+      "name": "Voss Tin",
+      "foalYear": 1907,
+      "sex": "MARE",
+      "sireId": "H-1883-008002",
+      "damId": "H-1894-008011",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1883-008002",
+      "name": "Nadine's Candle",
+      "foalYear": 1883,
+      "sex": "STALLION",
+      "sireId": "H-1873-008001",
+      "damId": "H-1876-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1876-008008",
+      "name": "Switchboard",
+      "foalYear": 1876,
+      "sex": "MARE",
+      "sireId": "H-1865-008001",
+      "damId": "H-1857-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1910-008010",
+      "name": "Vera's Nail",
+      "foalYear": 1910,
+      "sex": "STALLION",
+      "sireId": "H-1895-008005",
+      "damId": "H-1898-008013",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1895-008005",
+      "name": "Inkblot",
+      "foalYear": 1895,
+      "sex": "STALLION",
+      "sireId": "H-1881-008010",
+      "damId": "H-1886-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1886-008007",
+      "name": "Wireline",
+      "foalYear": 1886,
+      "sex": "MARE",
+      "sireId": "H-1877-008003",
+      "damId": "H-1875-008006",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1877-008003",
+      "name": "Barragan Cup",
+      "foalYear": 1877,
+      "sex": "STALLION",
+      "sireId": "H-1869-008005",
+      "damId": "H-1865-008011",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1869-008005",
+      "name": "Biscuit Again",
+      "foalYear": 1869,
+      "sex": "STALLION",
+      "sireId": "H-1861-008004",
+      "damId": "H-1859-007002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1875-008006",
+      "name": "Keep Rita",
+      "foalYear": 1875,
+      "sex": "MARE",
+      "sireId": "H-1870-008004",
+      "damId": "H-1870-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1870-008004",
+      "name": "Ortega Apron",
+      "foalYear": 1870,
+      "sex": "STALLION",
+      "sireId": "H-1861-008003",
+      "damId": "H-1864-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1898-008013",
+      "name": "Bellwether",
+      "foalYear": 1898,
+      "sex": "MARE",
+      "sireId": "H-1880-008004",
+      "damId": "H-1892-008014",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1892-008014",
+      "name": "Wharfinger",
+      "foalYear": 1892,
+      "sex": "MARE",
+      "sireId": "H-1882-008009",
+      "damId": "H-1874-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1882-008009",
+      "name": "Gingersnap",
+      "foalYear": 1882,
+      "sex": "STALLION",
+      "sireId": "H-1862-008002",
+      "damId": "H-1869-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1862-008002",
+      "name": "Bring Inside",
+      "foalYear": 1862,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1854-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1874-008009",
+      "name": "Ledger Outside",
+      "foalYear": 1874,
+      "sex": "MARE",
+      "sireId": "H-1867-008002",
+      "damId": "H-1868-008004",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1906-008005",
+      "name": "Radio Hour",
+      "foalYear": 1906,
+      "sex": "MARE",
+      "sireId": "H-1897-008012",
+      "damId": "H-1888-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1897-008012",
+      "name": "Pearl's Parcel",
+      "foalYear": 1897,
+      "sex": "STALLION",
+      "sireId": "H-1885-008004",
+      "damId": "H-1884-008005",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1885-008004",
+      "name": "June's Window",
+      "foalYear": 1885,
+      "sex": "STALLION",
+      "sireId": "H-1872-008003",
+      "damId": "H-1877-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1877-008007",
+      "name": "Mind Quietly",
+      "foalYear": 1877,
+      "sex": "MARE",
+      "sireId": "H-1865-008004",
+      "damId": "H-1869-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1884-008005",
+      "name": "Ripsaw",
+      "foalYear": 1884,
+      "sex": "MARE",
+      "sireId": "H-1873-008009",
+      "damId": "H-1876-008006",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1873-008009",
+      "name": "Jarrett Cup",
+      "foalYear": 1873,
+      "sex": "STALLION",
+      "sireId": "H-1866-008003",
+      "damId": "H-1864-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1876-008006",
+      "name": "Nail On Tuesday",
+      "foalYear": 1876,
+      "sex": "MARE",
+      "sireId": "H-1865-008004",
+      "damId": "H-1870-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1870-008009",
+      "name": "Tin Whistle",
+      "foalYear": 1870,
+      "sex": "MARE",
+      "sireId": "H-1864-008002",
+      "damId": "H-1852-007002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1888-008007",
+      "name": "Hold Joan",
+      "foalYear": 1888,
+      "sex": "MARE",
+      "sireId": "H-1867-008001",
+      "damId": "H-1877-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1904-008010",
+      "name": "Pass Soon",
+      "foalYear": 1904,
+      "sex": "STALLION",
+      "sireId": "H-1892-008005",
+      "damId": "H-1893-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1892-008005",
+      "name": "Basket Today",
+      "foalYear": 1892,
+      "sex": "STALLION",
+      "sireId": "H-1872-008009",
+      "damId": "H-1883-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1893-008009",
+      "name": "Mavis's Lace",
+      "foalYear": 1893,
+      "sex": "MARE",
+      "sireId": "H-1883-008002",
+      "damId": "H-1884-008012",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1884-008012",
+      "name": "Look Vera",
+      "foalYear": 1884,
+      "sex": "MARE",
+      "sireId": "H-1867-008005",
+      "damId": "H-1870-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1921-008005",
+      "name": "Call At Six",
+      "foalYear": 1921,
+      "sex": "MARE",
+      "sireId": "H-1907-008001",
+      "damId": "H-1906-008012",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1907-008001",
+      "name": "Pike Spoon",
+      "foalYear": 1907,
+      "sex": "STALLION",
+      "sireId": "H-1887-008005",
+      "damId": "H-1899-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1887-008005",
+      "name": "Curtain For Now",
+      "foalYear": 1887,
+      "sex": "STALLION",
+      "sireId": "H-1875-008005",
+      "damId": "H-1878-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1875-008005",
+      "name": "Lunch Is Ready",
+      "foalYear": 1875,
+      "sex": "STALLION",
+      "sireId": "H-1869-008007",
+      "damId": "H-1855-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1869-008007",
+      "name": "Mercer Lace",
+      "foalYear": 1869,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1858-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1878-008008",
+      "name": "Bobbin",
+      "foalYear": 1878,
+      "sex": "MARE",
+      "sireId": "H-1873-008004",
+      "damId": "H-1865-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1873-008004",
+      "name": "Red Clay",
+      "foalYear": 1873,
+      "sex": "STALLION",
+      "sireId": "H-1864-008001",
+      "damId": "H-1858-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1864-008001",
+      "name": "Heat Haze",
+      "foalYear": 1864,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1850-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1899-008007",
+      "name": "Count After Dinner",
+      "foalYear": 1899,
+      "sex": "MARE",
+      "sireId": "H-1882-008002",
+      "damId": "H-1885-008006",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1906-008012",
+      "name": "Meet Nell",
+      "foalYear": 1906,
+      "sex": "MARE",
+      "sireId": "H-1898-008004",
+      "damId": "H-1895-008015",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1898-008004",
+      "name": "Minnie's Ledger",
+      "foalYear": 1898,
+      "sex": "STALLION",
+      "sireId": "H-1885-008001",
+      "damId": "H-1887-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1885-008001",
+      "name": "Biscuit Before Rai",
+      "foalYear": 1885,
+      "sex": "STALLION",
+      "sireId": "H-1877-008002",
+      "damId": "H-1877-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1877-008002",
+      "name": "Hold Sadie",
+      "foalYear": 1877,
+      "sex": "STALLION",
+      "sireId": "H-1872-008004",
+      "damId": "H-1868-008004",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1872-008004",
+      "name": "Pike Drawer",
+      "foalYear": 1872,
+      "sex": "STALLION",
+      "sireId": "H-1865-008003",
+      "damId": "H-1859-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1877-008008",
+      "name": "Whetstone",
+      "foalYear": 1877,
+      "sex": "MARE",
+      "sireId": "H-1865-008004",
+      "damId": "H-1859-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1887-008009",
+      "name": "Watch Rosalie",
+      "foalYear": 1887,
+      "sex": "MARE",
+      "sireId": "H-1872-008004",
+      "damId": "H-1879-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1879-008009",
+      "name": "Move By Noon",
+      "foalYear": 1879,
+      "sex": "MARE",
+      "sireId": "H-1866-008001",
+      "damId": "H-1870-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1895-008015",
+      "name": "Mavis's Envelope",
+      "foalYear": 1895,
+      "sex": "MARE",
+      "sireId": "H-1876-008004",
+      "damId": "H-1882-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1882-008008",
+      "name": "Sidelong",
+      "foalYear": 1882,
+      "sex": "MARE",
+      "sireId": "H-1865-008004",
+      "damId": "H-1871-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1937-008004",
+      "name": "Think Once More",
+      "foalYear": 1937,
+      "sex": "STALLION",
+      "sireId": "H-1931-008003",
+      "damId": "H-1916-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1931-008003",
+      "name": "Try June",
+      "foalYear": 1931,
+      "sex": "STALLION",
+      "sireId": "H-1919-008002",
+      "damId": "H-1913-008018",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1919-008002",
+      "name": "Ledger Inside",
+      "foalYear": 1919,
+      "sex": "STALLION",
+      "sireId": "H-1904-008004",
+      "damId": "H-1903-008016",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1904-008004",
+      "name": "Danvers Postcard",
+      "foalYear": 1904,
+      "sex": "STALLION",
+      "sireId": "H-1881-008009",
+      "damId": "H-1891-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1881-008009",
+      "name": "Index Card",
+      "foalYear": 1881,
+      "sex": "STALLION",
+      "sireId": "H-1868-008002",
+      "damId": "H-1869-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1868-008002",
+      "name": "Mae's Bell",
+      "foalYear": 1868,
+      "sex": "STALLION",
+      "sireId": "H-1862-008001",
+      "damId": "H-1851-007002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1869-008009",
+      "name": "Rationbook",
+      "foalYear": 1869,
+      "sex": "MARE",
+      "sireId": "H-1862-008001",
+      "damId": "H-1857-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1891-008007",
+      "name": "Ruth's Button",
+      "foalYear": 1891,
+      "sex": "MARE",
+      "sireId": "H-1885-008009",
+      "damId": "H-1884-008006",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1885-008009",
+      "name": "Vera's Ledger",
+      "foalYear": 1885,
+      "sex": "STALLION",
+      "sireId": "H-1875-008005",
+      "damId": "H-1865-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1884-008006",
+      "name": "Teacup Early",
+      "foalYear": 1884,
+      "sex": "MARE",
+      "sireId": "H-1863-008004",
+      "damId": "H-1874-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1903-008016",
+      "name": "Havelock Window",
+      "foalYear": 1903,
+      "sex": "MARE",
+      "sireId": "H-1898-008004",
+      "damId": "H-1883-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1883-008009",
+      "name": "Bellamy Receipt",
+      "foalYear": 1883,
+      "sex": "MARE",
+      "sireId": "H-1872-008004",
+      "damId": "H-1876-008006",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1913-008018",
+      "name": "Nora's Drawer",
+      "foalYear": 1913,
+      "sex": "MARE",
+      "sireId": "H-1903-008012",
+      "damId": "H-1908-008013",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1903-008012",
+      "name": "Faded",
+      "foalYear": 1903,
+      "sex": "STALLION",
+      "sireId": "H-1898-008002",
+      "damId": "H-1898-008006",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1898-008006",
+      "name": "Snow Line",
+      "foalYear": 1898,
+      "sex": "MARE",
+      "sireId": "H-1885-008003",
+      "damId": "H-1877-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1885-008003",
+      "name": "Hold Faye",
+      "foalYear": 1885,
+      "sex": "STALLION",
+      "sireId": "H-1875-008003",
+      "damId": "H-1868-008004",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1875-008003",
+      "name": "Tinplate",
+      "foalYear": 1875,
+      "sex": "STALLION",
+      "sireId": "H-1861-008002",
+      "damId": "H-1865-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1908-008013",
+      "name": "Faye's Hammer",
+      "foalYear": 1908,
+      "sex": "MARE",
+      "sireId": "H-1896-008011",
+      "damId": "H-1895-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1895-008009",
+      "name": "Count Vera",
+      "foalYear": 1895,
+      "sex": "MARE",
+      "sireId": "H-1874-008003",
+      "damId": "H-1884-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1884-008007",
+      "name": "Jar Later",
+      "foalYear": 1884,
+      "sex": "MARE",
+      "sireId": "H-1876-008001",
+      "damId": "H-1872-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1916-008007",
+      "name": "Mind Nadine",
+      "foalYear": 1916,
+      "sex": "MARE",
+      "sireId": "H-1908-008002",
+      "damId": "H-1907-008016",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1908-008002",
+      "name": "Rook Bell",
+      "foalYear": 1908,
+      "sex": "STALLION",
+      "sireId": "H-1887-008001",
+      "damId": "H-1891-008002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1887-008001",
+      "name": "By Thunder",
+      "foalYear": 1887,
+      "sex": "STALLION",
+      "sireId": "H-1866-008003",
+      "damId": "H-1875-008011",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1875-008011",
+      "name": "Move Inez",
+      "foalYear": 1875,
+      "sex": "MARE",
+      "sireId": "H-1865-008003",
+      "damId": "H-1858-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1907-008016",
+      "name": "Listen June",
+      "foalYear": 1907,
+      "sex": "MARE",
+      "sireId": "H-1898-008005",
+      "damId": "H-1895-008014",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1898-008005",
+      "name": "Marta's Bucket",
+      "foalYear": 1898,
+      "sex": "STALLION",
+      "sireId": "H-1885-008004",
+      "damId": "H-1878-008006",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1878-008006",
+      "name": "Basket Home",
+      "foalYear": 1878,
+      "sex": "MARE",
+      "sireId": "H-1866-008004",
+      "damId": "H-1872-008002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1939-008019",
+      "name": "Havelock Parcel",
+      "foalYear": 1939,
+      "sex": "MARE",
+      "sireId": "H-1933-008003",
+      "damId": "H-1924-008011",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1933-008003",
+      "name": "Carry Minnie",
+      "foalYear": 1933,
+      "sex": "STALLION",
+      "sireId": "H-1913-008003",
+      "damId": "H-1913-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1913-008003",
+      "name": "Nail Maybe",
+      "foalYear": 1913,
+      "sex": "STALLION",
+      "sireId": "H-1901-008013",
+      "damId": "H-1905-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1901-008013",
+      "name": "Bellamy Postcard",
+      "foalYear": 1901,
+      "sex": "STALLION",
+      "sireId": "H-1880-008005",
+      "damId": "H-1886-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1880-008005",
+      "name": "Biscuit Early",
+      "foalYear": 1880,
+      "sex": "STALLION",
+      "sireId": "H-1871-008003",
+      "damId": "H-1870-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1905-008009",
+      "name": "Classical",
+      "foalYear": 1905,
+      "sex": "MARE",
+      "sireId": "H-1890-008005",
+      "damId": "H-1889-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1890-008005",
+      "name": "Foster String",
+      "foalYear": 1890,
+      "sex": "STALLION",
+      "sireId": "H-1869-008007",
+      "damId": "H-1878-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1878-008009",
+      "name": "Bring Maybe",
+      "foalYear": 1878,
+      "sex": "MARE",
+      "sireId": "H-1872-008009",
+      "damId": "H-1870-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1870-008008",
+      "name": "Try After Dinner",
+      "foalYear": 1870,
+      "sex": "MARE",
+      "sireId": "H-1861-008004",
+      "damId": "H-1859-007002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1889-008007",
+      "name": "Ledger Today",
+      "foalYear": 1889,
+      "sex": "MARE",
+      "sireId": "H-1881-008010",
+      "damId": "H-1878-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1913-008008",
+      "name": "Meet Inside",
+      "foalYear": 1913,
+      "sex": "MARE",
+      "sireId": "H-1907-008010",
+      "damId": "H-1897-008002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1907-008010",
+      "name": "Parcel Once More",
+      "foalYear": 1907,
+      "sex": "STALLION",
+      "sireId": "H-1894-008012",
+      "damId": "H-1898-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1894-008012",
+      "name": "Try Again",
+      "foalYear": 1894,
+      "sex": "STALLION",
+      "sireId": "H-1881-008005",
+      "damId": "H-1874-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1881-008005",
+      "name": "Petticoat",
+      "foalYear": 1881,
+      "sex": "STALLION",
+      "sireId": "H-1872-008003",
+      "damId": "H-1865-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1898-008008",
+      "name": "Take Edith",
+      "foalYear": 1898,
+      "sex": "MARE",
+      "sireId": "H-1880-008004",
+      "damId": "H-1886-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1897-008002",
+      "name": "Turn Nadine",
+      "foalYear": 1897,
+      "sex": "MARE",
+      "sireId": "H-1876-008010",
+      "damId": "H-1877-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1924-008011",
+      "name": "Larkin Candle",
+      "foalYear": 1924,
+      "sex": "MARE",
+      "sireId": "H-1907-008002",
+      "damId": "H-1915-008013",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1915-008013",
+      "name": "Button Box",
+      "foalYear": 1915,
+      "sex": "MARE",
+      "sireId": "H-1905-008003",
+      "damId": "H-1909-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1905-008003",
+      "name": "Hammer Again",
+      "foalYear": 1905,
+      "sex": "STALLION",
+      "sireId": "H-1891-008010",
+      "damId": "H-1894-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1891-008010",
+      "name": "Mercer Biscuit",
+      "foalYear": 1891,
+      "sex": "STALLION",
+      "sireId": "H-1875-008001",
+      "damId": "H-1877-008005",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1875-008001",
+      "name": "Remember Nadine",
+      "foalYear": 1875,
+      "sex": "STALLION",
+      "sireId": "H-1867-008003",
+      "damId": "H-1868-008004",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1867-008003",
+      "name": "Inkwell",
+      "foalYear": 1867,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1859-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1894-008009",
+      "name": "Find Inez",
+      "foalYear": 1894,
+      "sex": "MARE",
+      "sireId": "H-1881-008003",
+      "damId": "H-1888-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1881-008003",
+      "name": "Curtain Quietly",
+      "foalYear": 1881,
+      "sex": "STALLION",
+      "sireId": "H-1862-008003",
+      "damId": "H-1872-008005",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1872-008005",
+      "name": "Wrong Pocket",
+      "foalYear": 1872,
+      "sex": "MARE",
+      "sireId": "H-1863-008004",
+      "damId": "H-1858-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1909-008007",
+      "name": "Lucille's String",
+      "foalYear": 1909,
+      "sex": "MARE",
+      "sireId": "H-1896-000001",
+      "damId": "H-1891-008012",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1891-008012",
+      "name": "Save Inside",
+      "foalYear": 1891,
+      "sex": "MARE",
+      "sireId": "H-1870-008005",
+      "damId": "H-1886-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1870-008005",
+      "name": "Postscript",
+      "foalYear": 1870,
+      "sex": "STALLION",
+      "sireId": "H-1862-008002",
+      "damId": "H-1850-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1928-008011",
+      "name": "Send Bessie",
+      "foalYear": 1928,
+      "sex": "STALLION",
+      "sireId": "H-1910-008009",
+      "damId": "H-1914-008020",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1910-008009",
+      "name": "Quicksilver",
+      "foalYear": 1910,
+      "sex": "STALLION",
+      "sireId": "H-1890-008006",
+      "damId": "H-1905-008012",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1890-008006",
+      "name": "Hold Outside",
+      "foalYear": 1890,
+      "sex": "STALLION",
+      "sireId": "H-1879-008004",
+      "damId": "H-1873-008006",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1879-008004",
+      "name": "Write Early",
+      "foalYear": 1879,
+      "sex": "STALLION",
+      "sireId": "H-1872-008001",
+      "damId": "H-1859-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1873-008006",
+      "name": "Find Joan",
+      "foalYear": 1873,
+      "sex": "MARE",
+      "sireId": "H-1863-008001",
+      "damId": "H-1865-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1905-008012",
+      "name": "Stay June",
+      "foalYear": 1905,
+      "sex": "MARE",
+      "sireId": "H-1894-008007",
+      "damId": "H-1888-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1894-008007",
+      "name": "Come Rosalie",
+      "foalYear": 1894,
+      "sex": "STALLION",
+      "sireId": "H-1885-008004",
+      "damId": "H-1878-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1888-008009",
+      "name": "Cora's Hammer",
+      "foalYear": 1888,
+      "sex": "MARE",
+      "sireId": "H-1875-008001",
+      "damId": "H-1882-008012",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1882-008012",
+      "name": "Rita's Curtain",
+      "foalYear": 1882,
+      "sex": "MARE",
+      "sireId": "H-1870-008005",
+      "damId": "H-1872-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1914-008020",
+      "name": "Nocturne",
+      "foalYear": 1914,
+      "sex": "MARE",
+      "sireId": "H-1906-008014",
+      "damId": "H-1906-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1906-008014",
+      "name": "Doyle Spoon",
+      "foalYear": 1906,
+      "sex": "STALLION",
+      "sireId": "H-1898-008012",
+      "damId": "H-1898-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1898-008012",
+      "name": "Write Ruth",
+      "foalYear": 1898,
+      "sex": "STALLION",
+      "sireId": "H-1874-008001",
+      "damId": "H-1888-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1898-008007",
+      "name": "Receipt For Now",
+      "foalYear": 1898,
+      "sex": "MARE",
+      "sireId": "H-1889-008004",
+      "damId": "H-1884-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1889-008004",
+      "name": "Curtain Early",
+      "foalYear": 1889,
+      "sex": "STALLION",
+      "sireId": "H-1875-008003",
+      "damId": "H-1870-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1884-008008",
+      "name": "Dry Season",
+      "foalYear": 1884,
+      "sex": "MARE",
+      "sireId": "H-1869-008007",
+      "damId": "H-1865-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1906-008008",
+      "name": "Tallow Jar",
+      "foalYear": 1906,
+      "sex": "MARE",
+      "sireId": "H-1896-008009",
+      "damId": "H-1896-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1896-008009",
+      "name": "Tell Maybe",
+      "foalYear": 1896,
+      "sex": "STALLION",
+      "sireId": "H-1874-008002",
+      "damId": "H-1877-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1874-008002",
+      "name": "Count Clara",
+      "foalYear": 1874,
+      "sex": "STALLION",
+      "sireId": "H-1866-008003",
+      "damId": "H-1855-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1896-008008",
+      "name": "Tin On Tuesday",
+      "foalYear": 1896,
+      "sex": "MARE",
+      "sireId": "H-1878-008003",
+      "damId": "H-1887-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1878-008003",
+      "name": "Joan's Window",
+      "foalYear": 1878,
+      "sex": "STALLION",
+      "sireId": "H-1861-008001",
+      "damId": "H-1865-008011",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1861-008001",
+      "name": "Bylaw",
+      "foalYear": 1861,
+      "sex": "STALLION",
+      "sireId": "H-1851-007001",
+      "damId": "H-1852-007001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1938-008015",
+      "name": "Wait After Dinner",
+      "foalYear": 1938,
+      "sex": "MARE",
+      "sireId": "H-1916-008011",
+      "damId": "H-1927-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1916-008011",
+      "name": "Doreen's Receipt",
+      "foalYear": 1916,
+      "sex": "STALLION",
+      "sireId": "H-1902-008003",
+      "damId": "H-1902-008011",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1902-008003",
+      "name": "Faye's Postcard",
+      "foalYear": 1902,
+      "sex": "STALLION",
+      "sireId": "H-1878-008004",
+      "damId": "H-1881-008002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1881-008002",
+      "name": "Take Vera",
+      "foalYear": 1881,
+      "sex": "MARE",
+      "sireId": "H-1875-008001",
+      "damId": "H-1873-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1902-008011",
+      "name": "Come Maybe",
+      "foalYear": 1902,
+      "sex": "MARE",
+      "sireId": "H-1891-008011",
+      "damId": "H-1891-008006",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1891-008011",
+      "name": "Ask Marta",
+      "foalYear": 1891,
+      "sex": "STALLION",
+      "sireId": "H-1884-008001",
+      "damId": "H-1871-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1891-008006",
+      "name": "McRae Bell",
+      "foalYear": 1891,
+      "sex": "MARE",
+      "sireId": "H-1879-008003",
+      "damId": "H-1886-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1879-008003",
+      "name": "Caldera",
+      "foalYear": 1879,
+      "sex": "STALLION",
+      "sireId": "H-1868-008002",
+      "damId": "H-1869-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1927-008008",
+      "name": "Laurent Postcard",
+      "foalYear": 1927,
+      "sex": "MARE",
+      "sireId": "H-1918-008002",
+      "damId": "H-1914-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1918-008002",
+      "name": "Agnes's Pencil",
+      "foalYear": 1918,
+      "sex": "STALLION",
+      "sireId": "H-1910-008009",
+      "damId": "H-1902-008011",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1914-008008",
+      "name": "Doyle Postcard",
+      "foalYear": 1914,
+      "sex": "MARE",
+      "sireId": "H-1897-008010",
+      "damId": "H-1908-008013",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1927-008002",
+      "name": "Nora's Basket",
+      "foalYear": 1927,
+      "sex": "STALLION",
+      "sireId": "H-1920-008004",
+      "damId": "H-1907-008006",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1920-008004",
+      "name": "Apron At Six",
+      "foalYear": 1920,
+      "sex": "STALLION",
+      "sireId": "H-1913-008010",
+      "damId": "H-1914-008014",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1913-008010",
+      "name": "Count North",
+      "foalYear": 1913,
+      "sex": "STALLION",
+      "sireId": "H-1901-008013",
+      "damId": "H-1901-008015",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1901-008015",
+      "name": "Sundays Best",
+      "foalYear": 1901,
+      "sex": "MARE",
+      "sireId": "H-1880-008004",
+      "damId": "H-1880-008006",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1880-008006",
+      "name": "Pell Ticket",
+      "foalYear": 1880,
+      "sex": "MARE",
+      "sireId": "H-1871-008006",
+      "damId": "H-1865-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1914-008014",
+      "name": "Mind North",
+      "foalYear": 1914,
+      "sex": "MARE",
+      "sireId": "H-1904-008010",
+      "damId": "H-1893-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1893-008010",
+      "name": "Spoon By Noon",
+      "foalYear": 1893,
+      "sex": "MARE",
+      "sireId": "H-1884-008011",
+      "damId": "H-1880-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1907-008006",
+      "name": "Mercer Hammer",
+      "foalYear": 1907,
+      "sex": "MARE",
+      "sireId": "H-1887-008001",
+      "damId": "H-1886-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1929-008007",
+      "name": "Ginny",
+      "foalYear": 1929,
+      "sex": "MARE",
+      "sireId": "H-1907-008002",
+      "damId": "H-1910-008008",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1910-008008",
+      "name": "Seaswell",
+      "foalYear": 1910,
+      "sex": "MARE",
+      "sireId": "H-1898-008002",
+      "damId": "H-1895-008014",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1911-008018",
+      "name": "Postcard Before Ra",
+      "foalYear": 1911,
+      "sex": "STALLION",
+      "sireId": "H-1896-000001",
+      "damId": "H-1904-008011",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1904-008011",
+      "name": "Calicove",
+      "foalYear": 1904,
+      "sex": "MARE",
+      "sireId": "H-1893-008003",
+      "damId": "H-1897-008002",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1893-008003",
+      "name": "Cora's Lantern",
+      "foalYear": 1893,
+      "sex": "STALLION",
+      "sireId": "H-1882-008002",
+      "damId": "H-1883-008001",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1883-008001",
+      "name": "Tin Once More",
+      "foalYear": 1883,
+      "sex": "MARE",
+      "sireId": "H-1873-008009",
+      "damId": "H-1876-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1876-008007",
+      "name": "Backspace",
+      "foalYear": 1876,
+      "sex": "MARE",
+      "sireId": "H-1867-008002",
+      "damId": "H-1868-008004",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1902-008014",
+      "name": "Jar On Tuesday",
+      "foalYear": 1902,
+      "sex": "MARE",
+      "sireId": "H-1894-008012",
+      "damId": "H-1892-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1940-008023",
+      "name": "Pay Tomorrow",
+      "foalYear": 1940,
+      "sex": "MARE",
+      "sireId": "H-1917-008008",
+      "damId": "H-1927-008013",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1917-008008",
+      "name": "Blue Book",
+      "foalYear": 1917,
+      "sex": "STALLION",
+      "sireId": "H-1896-008002",
+      "damId": "H-1911-008012",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1896-008002",
+      "name": "Ketter Apron",
+      "foalYear": 1896,
+      "sex": "STALLION",
+      "sireId": "H-1889-008001",
+      "damId": "H-1889-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1889-008001",
+      "name": "Doorstop",
+      "foalYear": 1889,
+      "sex": "STALLION",
+      "sireId": "H-1873-008003",
+      "damId": "H-1878-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1889-008009",
+      "name": "Rook Nail",
+      "foalYear": 1889,
+      "sex": "MARE",
+      "sireId": "H-1877-008002",
+      "damId": "H-1869-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1911-008012",
+      "name": "Think Cora",
+      "foalYear": 1911,
+      "sex": "MARE",
+      "sireId": "H-1894-008013",
+      "damId": "H-1893-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1894-008013",
+      "name": "Wait Awhile",
+      "foalYear": 1894,
+      "sex": "STALLION",
+      "sireId": "H-1883-008003",
+      "damId": "H-1884-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1883-008003",
+      "name": "Bring Agnes",
+      "foalYear": 1883,
+      "sex": "STALLION",
+      "sireId": "H-1874-008001",
+      "damId": "H-1876-008009",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1893-008007",
+      "name": "Pay Again",
+      "foalYear": 1893,
+      "sex": "MARE",
+      "sireId": "H-1873-008002",
+      "damId": "H-1883-008006",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1883-008006",
+      "name": "Faye's Lace",
+      "foalYear": 1883,
+      "sex": "MARE",
+      "sireId": "H-1872-008004",
+      "damId": "H-1873-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1927-008013",
+      "name": "Listen Sadie",
+      "foalYear": 1927,
+      "sex": "MARE",
+      "sireId": "H-1905-008007",
+      "damId": "H-1919-008010",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1905-008007",
+      "name": "Danvers Window",
+      "foalYear": 1905,
+      "sex": "STALLION",
+      "sireId": "H-1894-008013",
+      "damId": "H-1894-008011",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1919-008010",
+      "name": "Come Inez",
+      "foalYear": 1919,
+      "sex": "MARE",
+      "sireId": "H-1902-008007",
+      "damId": "H-1899-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
+    },
+    {
+      "id": "H-1902-008007",
+      "name": "Jarrett Bottle",
+      "foalYear": 1902,
+      "sex": "STALLION",
+      "sireId": "H-1891-008010",
+      "damId": "H-1886-008007",
+      "authority": "WTW_HISTORICAL_HORSE_MASTER_V3_3"
     }
   ],
-  "missingPedigreeNodeIds": [
-    "H-1919-000002",
-    "H-1917-000001",
-    "H-1939-000001",
-    "H-1992-000002",
-    "H-1991-000006",
-    "H-1992-000003",
-    "H-1990-000001",
-    "H-1991-000003",
-    "H-1992-000001",
-    "H-1993-000003",
-    "H-1985-000003",
-    "H-1900-008011",
-    "H-1913-008005",
-    "H-1907-008002",
-    "H-1914-008007",
-    "H-1913-008001",
-    "H-1907-008012",
-    "H-1910-008010",
-    "H-1906-008005",
-    "H-1904-008010",
-    "H-1921-008005",
-    "H-1937-008004",
-    "H-1939-008019",
-    "H-1928-008011",
-    "H-1938-008015",
-    "H-1927-008002",
-    "H-1929-008007",
-    "H-1911-008018",
-    "H-1902-008014",
-    "H-1940-008023"
-  ],
+  "missingPedigreeNodeIds": [],
   "racecourses": [
     {
       "id": "T-0001",
@@ -6556,8 +9307,8 @@
     "foundationalMares": 11,
     "sampledBoardingMares": 66,
     "historyAnchors": 14,
-    "pedigreeNodes": 192,
-    "missingPedigreeIds": 30,
+    "pedigreeNodes": 501,
+    "missingPedigreeIds": 0,
     "tracks": 25,
     "yearbookYears": 49
   }
