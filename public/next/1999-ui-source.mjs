@@ -68,7 +68,7 @@ function assignTraining(horseId,plan){
 }
 const gameWorldProfile=window.__WTW_1999_MANAGEMENT__?.worldProfile||
  window.WTW1999CommercialConfig?.current?.()||
- {seed:19990101,mode:'FOUNDING_1999',population:112};
+ {seed:19990101,mode:'FOUNDING_1999',population:73};
 const worldQuery='seed='+encodeURIComponent(gameWorldProfile.seed)+
  '&mode='+encodeURIComponent(gameWorldProfile.mode)+
  '&population='+encodeURIComponent(gameWorldProfile.population);
@@ -99,8 +99,11 @@ const fictionalOwnerTally=new Map();
 for(const h of fictionalOpeningOwners)if(h.ownerId)
  fictionalOwnerTally.set(h.ownerId,(fictionalOwnerTally.get(h.ownerId)||0)+1);
 const fictionalOwner=[...fictionalOwnerTally].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))[0]?.[0]||null;
+// An empty new-world stable still needs a valid view context. Choosing a
+// displayed founding farm here DOES NOT assign any of the archived horses.
 const activeOwnerId=gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?fictionalOwner:
- [...ownership].filter(([id])=>id).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))[0]?.[0]||null;
+ [...ownership].filter(([id])=>id).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))[0]?.[0]||
+ srcOrgs.find(o=>o.id==='O-000061')?.id||srcOrgs[0]?.id||null;
 const fictionalOwnerIndex=activeOwnerId&&gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?
  Math.max(0,Number(String(activeOwnerId).match(/(\d+)$/)?.[1]||1)-1):0;
 const ownerRecord=activeOwnerId&&gameWorldProfile.mode==='FULLY_FICTIONAL_TEST'?
@@ -128,14 +131,14 @@ const initialOwner=q('/api/1999/sim/owners','offset='+Math.max(0,gameWorldProfil
 const openingCash=initialOwner?.finances?.cash??null;
 const messageSpecs=[
  ['opening-stable','Stable Office','1999 opening roster: '+selectedOwner,
-  'Source-locked horses · ownership and barns',true,'Stable'],
+  'Old B01 horses excluded · awaiting new racing registrations',true,'Stable'],
  ['opening-stakes','Racing Secretary','1999 domestic stakes program',
   'No entries or results recorded',true,'Racing'],
- ['opening-breeding','Breeding Office','31 stallions and 2,036 mare boarding files',
+ ['opening-breeding','Breeding Office',String(worldCounts.breedingStallions)+' stallions and '+String(worldCounts.breedingMares)+' broodmares',
   'Source records, not declared matings',false,'Breeding'],
- ['opening-market','Sales Desk','36 generated sale dates to test',
+ ['opening-market','Sales Desk','12 proposed sale dates · no phantom catalogs',
   'Auction transactions have NOT occurred',false,'Sales'],
- ['opening-finance','Accounting','Opening cash and budgets are TEST valuations',
+ ['opening-finance','Accounting','Opening cash and budgets are not yet engine-certified',
   'No accounting transactions have posted',true,'Finances'],
  ['opening-tracks','Track Operations',worldCounts.tracks+' U.S., Canadian and Cuban tracks available',
   'Operating conditions and meet dates remain test data',false,'Tracks'],
