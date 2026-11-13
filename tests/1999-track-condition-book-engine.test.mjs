@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {create1999Universe as serverUniverse} from '../src/1999/full-world-generator.mjs';
-import {create1999Universe as browserUniverse} from '../public/1999/engine/full-world-generator.mjs';
+import {createFoundingSourceBase1999} from '../public/1999/engine/founding-source-base-1999.mjs';
+import {createFounding1999Universe} from '../public/1999/engine/founding-world-1999.mjs';
 import {trackConditionProfile1999} from '../public/next/1999-condition-book-engine.mjs';
 import {openingWorld1999 as source} from '../src/1999/opening-world.v1.mjs';
 
-const browser=browserUniverse({seed:19990101});
-const server=serverUniverse({seed:19990101});
+const browser=createFounding1999Universe({seed:19990101});
+const server=createFoundingSourceBase1999({seed:19990101});
 function card(world,sourceId,date){
  const index=Array.from({length:world.counts.tracks},(_,i)=>world.trackAt(i)).findIndex(t=>t.sourceTrackId===sourceId);
  assert.ok(index>=0,'track missing: '+sourceId);
