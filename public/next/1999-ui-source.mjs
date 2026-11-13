@@ -315,6 +315,21 @@ function makeDepartmentRows(section,page,context={}){
    value:'',owner:'',studFee:'',bookings:forecast.projectedCoverings.toLocaleString('en-US'),
    foals:forecast.projectedLiveFoals.toLocaleString('en-US'),winners:'—'}];
  }
+ if(section==='Personnel'&&page==='Principals'){
+  // All and ONLY the 41 already approved named people, each retaining the
+  // exact operating organization link. These are people, NOT new employees.
+  return srcPeople.map(p=>({
+   _kind:'person',_name:p.name,_id:p.id,_canonId:p.id,
+   _worldKey:'person:'+p.id,name:p.name,role:p.positionTitle||p.role||'',
+   age:p.ageAtOpening??p.age??'',base:p.base||'',
+   operation:ownerNames.get(p.operatingOrganizationId)||'',
+   _operationId:p.operatingOrganizationId||'',
+   status:p.relationshipType==='MAJOR_INVESTOR_NON_OPERATING'?
+    'MAJOR NON-OPERATING INVESTOR':'APPROVED 1999 AFFILIATION',
+   ca:'',pa:'',salary:'',contract:'',assignment:'',wins:'',
+   _testGenerated:false
+  }));
+ }
  if(section==='Personnel'&&page==='Ownership Groups')return [];
  if(section==='Personnel'&&page==='Owners'){
   return get('owners','/api/1999/sim/owners',worldCounts.owners).map(o=>({
