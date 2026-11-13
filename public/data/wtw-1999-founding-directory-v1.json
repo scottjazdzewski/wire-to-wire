@@ -28,7 +28,7 @@
   "counts": {
     "operatingTracks": 102,
     "historicalTracks": 32,
-    "people": 46,
+    "people": 47,
     "organizations": 37,
     "openingHorses": 0,
     "stallions": 18,
@@ -36,11 +36,14 @@
     "totalHorses": 73,
     "historicalAnchorRecords": 67,
     "linkedHistoricalHorses": 61,
-    "proposedLeadershipPeople": 30,
+    "proposedLeadershipPeople": 4,
     "organizationsWithDesignatedPrincipal": 37,
     "organizationPrincipalGaps": 0,
     "quarantinedRetiredB01Runners": 39,
-    "quarantinedB01OnlyTrainers": 6
+    "quarantinedB01OnlyTrainers": 6,
+    "leadershipPeopleTotal": 31,
+    "userApprovedNewLeadershipPeople": 27,
+    "pendingPrimaryPrincipalReview": 4
   },
   "tracks": [
     {
@@ -1653,15 +1656,19 @@
     {
       "id": "P-910018",
       "name": "Magic Johnson",
-      "role": "RACING OWNER",
-      "status": "CANONICAL_1999_PUBLIC_FIGURE_OWNER",
+      "role": "MAJOR INVESTOR",
+      "status": "USER_APPROVED_1999_NON_OPERATING_INVESTOR",
       "operatingOrganizationId": "O-006905",
       "base": "Los Angeles, California, USA",
       "baseGeography": {
         "city": "Los Angeles",
         "state": "California",
         "country": "USA"
-      }
+      },
+      "relationshipType": "MAJOR_INVESTOR_NON_OPERATING",
+      "investorInOrganizationId": "O-006905",
+      "hasCertifiedEquityPercentage": false,
+      "hasManagementAuthority": false
     },
     {
       "id": "P-FOUNDING-1999-001",
@@ -1707,10 +1714,10 @@
     },
     {
       "id": "P-FOUNDING-LEADER-001",
-      "name": "Margot Kincaid",
+      "name": "Graham Kincaid",
       "role": "breeder",
       "positionTitle": "MANAGING_PRINCIPAL",
-      "ageAtOpening": 57,
+      "ageAtOpening": 59,
       "ageBasis": "PROPOSED_1999_WTW_GAME_CHARACTER",
       "birthplace": {
         "locality": "Paris",
@@ -1730,11 +1737,12 @@
       "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
       "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
       "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
-      "proposalSource": "NEW_PROPOSAL",
+      "proposalSource": "USER_DIRECTED_MALE_LEADER_NAME_PROPOSAL",
       "isPrimary": true,
-      "safeguards": "1999 operator only; Harrowgate founder remains unidentified",
+      "safeguards": "Athletic, impeccably sharp 59-year-old with short spiky gray hair; precise commercial breeder; 1958 founder remains unidentified",
       "hasCertifiedContracts": false,
-      "noHistoricalHorseOwnershipClaim": true
+      "noHistoricalHorseOwnershipClaim": true,
+      "portraitBrief": "In shape, sharply dressed 59-year-old male with short spiky gray hair; alert and commercially ruthless"
     },
     {
       "id": "P-FOUNDING-LEADER-002",
@@ -1758,9 +1766,9 @@
       "base": "Pittsburgh, Pennsylvania, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-000011",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "NEW_PROPOSAL",
       "isPrimary": true,
       "safeguards": "Partnership representative, not sole beneficial owner",
@@ -1789,9 +1797,9 @@
       "base": "Baltimore, Maryland, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-000037",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "NEW_PROPOSAL",
       "isPrimary": true,
       "safeguards": "Family racing owner; Kingsmere is separately Heydays breeder",
@@ -1820,9 +1828,9 @@
       "base": "South Ozone Park, New York, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-000045",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "NEW_PROPOSAL",
       "isPrimary": true,
       "safeguards": "Racing owner, not automatically the barn trainer",
@@ -1851,9 +1859,9 @@
       "base": "Berkeley, California, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-000047",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "WORLD_BIBLE_PROPOSAL",
       "isPrimary": true,
       "safeguards": "Later recapitalization proposal; earlier Poppy Lane stakes history remains unchanged",
@@ -1882,9 +1890,9 @@
       "base": "Berkeley, California, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-000047",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "WORLD_BIBLE_PROPOSAL",
       "isPrimary": false,
       "safeguards": "Proposed new consortium partner, not retroactive owner of 1990 results",
@@ -1913,9 +1921,9 @@
       "base": "Berkeley, California, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-000047",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "WORLD_BIBLE_PROPOSAL",
       "isPrimary": false,
       "safeguards": "No asserted relationship to Miriam Vale or Ashby Vale",
@@ -1924,14 +1932,14 @@
     },
     {
       "id": "P-FOUNDING-LEADER-008",
-      "name": "Helena Roche",
+      "name": "Sebastian Pryce",
       "role": "owner",
-      "positionTitle": "MANAGING_INVESTMENT_PARTNER",
+      "positionTitle": "MANAGING_QUANTITATIVE_PARTNER",
       "ageAtOpening": 48,
       "ageBasis": "PROPOSED_1999_WTW_GAME_CHARACTER",
       "birthplace": {
-        "locality": "San Diego",
-        "region": "California",
+        "locality": "Chicago",
+        "region": "Illinois",
         "country": "USA",
         "basis": "WTW_GAME_BIOGRAPHY_PROPOSED_NOT_HISTORICAL"
       },
@@ -1947,11 +1955,12 @@
       "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
       "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
       "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
-      "proposalSource": "NEW_PROPOSAL",
+      "proposalSource": "USER_DIRECTED_ANALYTICS_LEADER_NAME_PROPOSAL",
       "isPrimary": true,
-      "safeguards": "Argosy Racing distinct from Julian Voss owned bloodstock agency",
+      "safeguards": "Data-first financing and racing portfolio architect; backed by sophisticated investors; Julian Voss independently directs Argosy Bloodstock",
       "hasCertifiedContracts": false,
-      "noHistoricalHorseOwnershipClaim": true
+      "noHistoricalHorseOwnershipClaim": true,
+      "portraitBrief": "Sharp, extremely intelligent finance and analytics professional; institutional investor temperament"
     },
     {
       "id": "P-FOUNDING-LEADER-009",
@@ -1975,9 +1984,9 @@
       "base": "Fort Worth, Texas, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-000059",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "WORLD_BIBLE_PROPOSAL",
       "isPrimary": true,
       "safeguards": "Circle B distinct from Ironweed Farm; Brazos Reach is only a proposed property",
@@ -2006,9 +2015,9 @@
       "base": "Paris, Kentucky, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-000062",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "NEW_PROPOSAL",
       "isPrimary": true,
       "safeguards": "No edits to Who Knows/Saint Nobody owner-event reconciliation",
@@ -2037,9 +2046,9 @@
       "base": "Henderson, Kentucky, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-000063",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "NEW_PROPOSAL",
       "isPrimary": true,
       "safeguards": "Ray Sutter is a trainer affinity, not the farm owner",
@@ -2048,10 +2057,10 @@
     },
     {
       "id": "P-FOUNDING-LEADER-012",
-      "name": "Beatrice Radcliffe",
+      "name": "Hugh Radcliffe",
       "role": "breeder",
       "positionTitle": "FAMILY_FARM_PRINCIPAL",
-      "ageAtOpening": 54,
+      "ageAtOpening": 56,
       "ageBasis": "PROPOSED_1999_WTW_GAME_CHARACTER",
       "birthplace": {
         "locality": "Middleburg",
@@ -2071,11 +2080,12 @@
       "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
       "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
       "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
-      "proposalSource": "NEW_PROPOSAL",
+      "proposalSource": "USER_DIRECTED_MALE_LEADER_NAME_PROPOSAL",
       "isPrimary": true,
-      "safeguards": "Huntcross remains independent and friendly to Ashby Vale",
+      "safeguards": "Experienced Virginia gentleman horseman; Huntcross remains independent and friendly to Ashby Vale",
       "hasCertifiedContracts": false,
-      "noHistoricalHorseOwnershipClaim": true
+      "noHistoricalHorseOwnershipClaim": true,
+      "portraitBrief": "Established male Virginia horseman, traditionally dressed, understated and knowledgeable"
     },
     {
       "id": "P-FOUNDING-LEADER-013",
@@ -2099,9 +2109,9 @@
       "base": "Midway, Kentucky, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-000067",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "NEW_PROPOSAL",
       "isPrimary": true,
       "safeguards": "Gospel Truth trainer and exact historic credits unchanged",
@@ -2130,9 +2140,9 @@
       "base": "Versailles, Kentucky, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-000068",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "NEW_PROPOSAL",
       "isPrimary": true,
       "safeguards": "Active stud manager; historic founder unspecified",
@@ -2161,9 +2171,9 @@
       "base": "Saratoga Springs, New York, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-000071",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "NEW_PROPOSAL",
       "isPrimary": true,
       "safeguards": "No fabricated 1960s winners or former owner transactions",
@@ -2192,9 +2202,9 @@
       "base": "Litchfield, Connecticut, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-FOUNDING-1999-001",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "WORLD_BIBLE_PROPOSAL",
       "isPrimary": true,
       "safeguards": "Modern farm is not asserted to date to colonial era",
@@ -2223,9 +2233,9 @@
       "base": "Rancho Santa Fe, California, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-FOUNDING-1999-002",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "WORLD_BIBLE_PROPOSAL",
       "isPrimary": true,
       "safeguards": "Kenjiro Takamori remains historic founder, not duplicated as live principal",
@@ -2254,9 +2264,9 @@
       "base": "Tokyo, Tokyo, Japan",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-FOUNDING-1999-002",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "WORLD_BIBLE_PROPOSAL",
       "isPrimary": false,
       "safeguards": "Sibling and Japan-side partner; Pacific division led by Hiroshi",
@@ -2285,9 +2295,9 @@
       "base": "Shelbyville, Kentucky, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-FOUNDING-1999-003",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "WORLD_BIBLE_PROPOSAL",
       "isPrimary": true,
       "safeguards": "Walter Buckley father and 1982 death are working lore not certified history",
@@ -2316,9 +2326,9 @@
       "base": "Shelbyville, Kentucky, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-FOUNDING-1999-004",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "WORLD_BIBLE_PROPOSAL",
       "isPrimary": true,
       "safeguards": "Rival brother owns separate farm; no horse or property transfers inferred",
@@ -2327,7 +2337,7 @@
     },
     {
       "id": "P-FOUNDING-LEADER-021",
-      "name": "Marty Sosa",
+      "name": "Dino Marks",
       "role": "owner",
       "positionTitle": "MANAGING_SYNDICATE_PARTNER",
       "ageAtOpening": 42,
@@ -2347,14 +2357,15 @@
       "base": "Del Mar, California, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-FOUNDING-1999-005",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
-      "proposalSource": "WORLD_BIBLE_PROPOSAL",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
+      "proposalSource": "USER_APPROVED",
       "isPrimary": true,
-      "safeguards": "Syndicate representative; no personal claim to every member share",
+      "safeguards": "Leads All The Colors; syndicate alludes to the Winning Colors betting story; no personal claim to every member share",
       "hasCertifiedContracts": false,
-      "noHistoricalHorseOwnershipClaim": true
+      "noHistoricalHorseOwnershipClaim": true,
+      "portraitBrief": "Dino Marks leads a colorful, betting-rooted racing syndicate with a taste for overlooked yearlings"
     },
     {
       "id": "P-FOUNDING-LEADER-022",
@@ -2378,9 +2389,9 @@
       "base": "Del Mar, California, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-FOUNDING-1999-005",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "WORLD_BIBLE_PROPOSAL",
       "isPrimary": false,
       "safeguards": "Distinct founding syndicate member",
@@ -2409,9 +2420,9 @@
       "base": "Loretto, Kentucky, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-FOUNDING-1999-006",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "NEW_PROPOSAL",
       "isPrimary": true,
       "safeguards": "Entire character/horse racing activity is WTW fiction; not a real Samuels biography",
@@ -2440,9 +2451,9 @@
       "base": "Miami Beach, Florida, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-FOUNDING-1999-007",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "WORLD_BIBLE_PROPOSAL",
       "isPrimary": true,
       "safeguards": "Resort owner lore remains provisional; no fabricated proven racing results",
@@ -2471,9 +2482,9 @@
       "base": "Saratoga Springs, New York, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-FOUNDING-1999-008",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "WORLD_BIBLE_PROPOSAL",
       "isPrimary": true,
       "safeguards": "Joint siblings, no prior breeding awards invented",
@@ -2502,9 +2513,9 @@
       "base": "Saratoga Springs, New York, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-FOUNDING-1999-008",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "WORLD_BIBLE_PROPOSAL",
       "isPrimary": false,
       "safeguards": "Separate cofounder Person ID",
@@ -2533,9 +2544,9 @@
       "base": "Havana, Havana, Cuba",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-FOUNDING-1999-009",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "WORLD_BIBLE_PROPOSAL",
       "isPrimary": true,
       "safeguards": "No criminal activity or evidence asserted from rumor",
@@ -2564,9 +2575,9 @@
       "base": "Cookeville, Tennessee, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-FOUNDING-1999-010",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "NEW_PROPOSAL",
       "isPrimary": true,
       "safeguards": "1910s Caney Fork to 1999 ownership succession NOT authenticated",
@@ -2595,9 +2606,9 @@
       "base": "Newmarket, Suffolk, UK",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-FOUNDING-1999-013",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "NEW_PROPOSAL",
       "isPrimary": true,
       "safeguards": "Do not invent hereditary aristocratic title, foreign horse transfers or results",
@@ -2626,12 +2637,43 @@
       "base": "Lexington, Kentucky, USA",
       "baseType": "1999_PROPOSED_OPERATING_BASE",
       "operatingOrganizationId": "O-FOUNDING-1999-013",
-      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
-      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
-      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "organizationLinkBasis": "USER_APPROVED_1999_GAME_LEADERSHIP__NOT_HISTORICAL_OWNERSHIP_PROOF",
+      "status": "WTW_FICTIONAL_LEADERSHIP_USER_APPROVED",
+      "leadershipStatus": "USER_APPROVED_1999_LEADERSHIP",
       "proposalSource": "NEW_PROPOSAL",
       "isPrimary": false,
       "safeguards": "Satellite farm manager only, not the international owner",
+      "hasCertifiedContracts": false,
+      "noHistoricalHorseOwnershipClaim": true
+    },
+    {
+      "id": "P-FOUNDING-LEADER-031",
+      "name": "Daniel Calder",
+      "role": "owner",
+      "positionTitle": "MANAGING_RACING_PRINCIPAL",
+      "ageAtOpening": 53,
+      "ageBasis": "PROPOSED_1999_WTW_GAME_CHARACTER",
+      "birthplace": {
+        "locality": "Los Angeles",
+        "region": "California",
+        "country": "USA",
+        "basis": "WTW_GAME_BIOGRAPHY_PROPOSED_NOT_HISTORICAL"
+      },
+      "baseGeography": {
+        "locality": "Los Angeles",
+        "region": "California",
+        "country": "USA",
+        "basis": "WTW_GAME_BIOGRAPHY_PROPOSED_NOT_HISTORICAL"
+      },
+      "base": "Los Angeles, California, USA",
+      "baseType": "1999_PROPOSED_OPERATING_BASE",
+      "operatingOrganizationId": "O-006905",
+      "organizationLinkBasis": "PROVISIONAL_WTW_LEADERSHIP_ASSIGNMENT_NOT_HISTORICAL_PROOF",
+      "status": "WTW_FICTIONAL_PROPOSAL_PENDING_USER_REVIEW",
+      "leadershipStatus": "PROVISIONAL_1999_ASSIGNMENT_PENDING_USER_REVIEW",
+      "proposalSource": "USER_DIRECTED_NON_OPERATING_INVESTOR_CORRECTION__NAME_PROPOSAL",
+      "isPrimary": true,
+      "safeguards": "New proposed operational leader, subject to review; Magic Johnson is a major investor only, without implied equity share or day-to-day management",
       "hasCertifiedContracts": false,
       "noHistoricalHorseOwnershipClaim": true
     }
@@ -2723,21 +2765,22 @@
         "limits": "SOURCE_HORSE_YEARS_NOT_RACEDAY_CONTRACTS_OR_VERIFIED_CASH"
       },
       "gameRule": "NO_UNAPPROVED_ORIGIN_OR_FOUNDER_TRANSACTION; NO_INVENTED_1999_BALANCE",
-      "principalOwner": "Margot Kincaid",
+      "principalOwner": "Graham Kincaid",
       "principalOwnerId": "P-FOUNDING-LEADER-001",
       "legacyName": "Lattice Farm",
       "displayNameStatus": "USER_APPROVED_PENDING_MASTER_PROPAGATION",
       "scenarioScope": "FOUNDING_WORLD",
       "location": "Paris, Kentucky, USA",
       "locationGranularity": "CITY",
-      "publicPrincipal": "Margot Kincaid",
+      "publicPrincipal": "Graham Kincaid",
       "publicPrincipalId": "P-FOUNDING-LEADER-001",
       "principalRole": "MANAGING_PRINCIPAL",
       "leadershipPeopleIds": [
         "P-FOUNDING-LEADER-001"
       ],
       "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "principalPortraitBrief": "In shape, sharply dressed 59-year-old male with short spiky gray hair; alert and commercially ruthless"
     },
     {
       "id": "O-000003",
@@ -2831,7 +2874,7 @@
       "leadershipPeopleIds": [
         "P-FOUNDING-LEADER-002"
       ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
       "historicalPrincipalProof": false
     },
     {
@@ -2919,7 +2962,7 @@
       "leadershipPeopleIds": [
         "P-FOUNDING-LEADER-003"
       ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
       "historicalPrincipalProof": false
     },
     {
@@ -2964,7 +3007,7 @@
       "leadershipPeopleIds": [
         "P-FOUNDING-LEADER-004"
       ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
       "historicalPrincipalProof": false
     },
     {
@@ -3011,7 +3054,7 @@
         "P-FOUNDING-LEADER-006",
         "P-FOUNDING-LEADER-007"
       ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
       "historicalPrincipalProof": false
     },
     {
@@ -3091,16 +3134,17 @@
       "scenarioScope": "FOUNDING_WORLD",
       "location": "Southern California, USA",
       "locationGranularity": "SCENARIO_REGIONAL",
-      "publicPrincipal": "Helena Roche",
+      "publicPrincipal": "Sebastian Pryce",
       "publicPrincipalId": "P-FOUNDING-LEADER-008",
-      "principalOwner": "Helena Roche",
+      "principalOwner": "Sebastian Pryce",
       "principalOwnerId": "P-FOUNDING-LEADER-008",
-      "principalRole": "MANAGING_INVESTMENT_PARTNER",
+      "principalRole": "MANAGING_QUANTITATIVE_PARTNER",
       "leadershipPeopleIds": [
         "P-FOUNDING-LEADER-008"
       ],
       "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "principalPortraitBrief": "Sharp, extremely intelligent finance and analytics professional; institutional investor temperament"
     },
     {
       "id": "O-000059",
@@ -3144,7 +3188,7 @@
       "leadershipPeopleIds": [
         "P-FOUNDING-LEADER-009"
       ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
       "historicalPrincipalProof": false
     },
     {
@@ -3246,7 +3290,7 @@
       "leadershipPeopleIds": [
         "P-FOUNDING-LEADER-010"
       ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
       "historicalPrincipalProof": false
     },
     {
@@ -3298,7 +3342,7 @@
       "leadershipPeopleIds": [
         "P-FOUNDING-LEADER-011"
       ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
       "historicalPrincipalProof": false
     },
     {
@@ -3342,16 +3386,17 @@
       "scenarioScope": "FOUNDING_WORLD",
       "location": "Middleburg, Virginia, USA",
       "locationGranularity": "CITY",
-      "publicPrincipal": "Beatrice Radcliffe",
+      "publicPrincipal": "Hugh Radcliffe",
       "publicPrincipalId": "P-FOUNDING-LEADER-012",
-      "principalOwner": "Beatrice Radcliffe",
+      "principalOwner": "Hugh Radcliffe",
       "principalOwnerId": "P-FOUNDING-LEADER-012",
       "principalRole": "FAMILY_FARM_PRINCIPAL",
       "leadershipPeopleIds": [
         "P-FOUNDING-LEADER-012"
       ],
       "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
-      "historicalPrincipalProof": false
+      "historicalPrincipalProof": false,
+      "principalPortraitBrief": "Established male Virginia horseman, traditionally dressed, understated and knowledgeable"
     },
     {
       "id": "O-000066",
@@ -3453,7 +3498,7 @@
       "leadershipPeopleIds": [
         "P-FOUNDING-LEADER-013"
       ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
       "historicalPrincipalProof": false
     },
     {
@@ -3505,7 +3550,7 @@
       "leadershipPeopleIds": [
         "P-FOUNDING-LEADER-014"
       ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
       "historicalPrincipalProof": false
     },
     {
@@ -3550,7 +3595,7 @@
       "leadershipPeopleIds": [
         "P-FOUNDING-LEADER-015"
       ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
       "historicalPrincipalProof": false
     },
     {
@@ -3615,18 +3660,23 @@
       "name": "Ledbetter Calder Stables",
       "type": "RACING STABLE",
       "locationLabel": "Los Angeles, California, USA",
-      "publicPrincipal": "Magic Johnson",
-      "publicPrincipalId": "P-910018",
+      "publicPrincipal": "Daniel Calder",
+      "publicPrincipalId": "P-FOUNDING-LEADER-031",
       "displayNameStatus": "EXISTING_1999_PUBLIC_FIGURE_LINK",
       "scenarioScope": "FOUNDING_WORLD",
       "location": "Los Angeles, California, USA",
       "locationGranularity": "SCENARIO_REGIONAL",
-      "principalOwner": "Magic Johnson",
-      "principalOwnerId": "P-910018",
+      "principalOwner": "Daniel Calder",
+      "principalOwnerId": "P-FOUNDING-LEADER-031",
       "leadershipPeopleIds": [
-        "P-910018"
+        "P-FOUNDING-LEADER-031"
       ],
-      "leadershipStatus": "ESTABLISHED_1999_PRINCIPAL_LINK"
+      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "principalRole": "MANAGING_RACING_PRINCIPAL",
+      "publicInvestor": "Magic Johnson",
+      "publicInvestorId": "P-910018",
+      "investorRole": "MAJOR_INVESTOR_NON_OPERATING",
+      "operatingPrincipalStatus": "USER_DIRECTED_NEW_OPERATOR_PENDING_NAME_REVIEW"
     },
     {
       "id": "O-FOUNDING-1999-001",
@@ -3647,7 +3697,7 @@
       "leadershipPeopleIds": [
         "P-FOUNDING-LEADER-016"
       ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
       "historicalPrincipalProof": false
     },
     {
@@ -3670,7 +3720,7 @@
         "P-FOUNDING-LEADER-017",
         "P-FOUNDING-LEADER-018"
       ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
       "historicalPrincipalProof": false
     },
     {
@@ -3692,7 +3742,7 @@
       "leadershipPeopleIds": [
         "P-FOUNDING-LEADER-019"
       ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
       "historicalPrincipalProof": false
     },
     {
@@ -3714,7 +3764,7 @@
       "leadershipPeopleIds": [
         "P-FOUNDING-LEADER-020"
       ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
       "historicalPrincipalProof": false
     },
     {
@@ -3728,17 +3778,18 @@
       "gameRule": "NO_HORSE_TRANSFER_WITHOUT_SOURCE",
       "location": "Del Mar, California, USA",
       "locationGranularity": "SCENARIO_REGIONAL",
-      "publicPrincipal": "Marty Sosa",
+      "publicPrincipal": "Dino Marks",
       "publicPrincipalId": "P-FOUNDING-LEADER-021",
-      "principalOwner": "Marty Sosa",
+      "principalOwner": "Dino Marks",
       "principalOwnerId": "P-FOUNDING-LEADER-021",
       "principalRole": "MANAGING_SYNDICATE_PARTNER",
       "leadershipPeopleIds": [
         "P-FOUNDING-LEADER-021",
         "P-FOUNDING-LEADER-022"
       ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
-      "historicalPrincipalProof": false
+      "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
+      "historicalPrincipalProof": false,
+      "principalPortraitBrief": "Dino Marks leads a colorful, betting-rooted racing syndicate with a taste for overlooked yearlings"
     },
     {
       "id": "O-FOUNDING-1999-006",
@@ -3759,7 +3810,7 @@
       "leadershipPeopleIds": [
         "P-FOUNDING-LEADER-023"
       ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
       "historicalPrincipalProof": false
     },
     {
@@ -3781,7 +3832,7 @@
       "leadershipPeopleIds": [
         "P-FOUNDING-LEADER-024"
       ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
       "historicalPrincipalProof": false
     },
     {
@@ -3804,7 +3855,7 @@
         "P-FOUNDING-LEADER-025",
         "P-FOUNDING-LEADER-026"
       ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
       "historicalPrincipalProof": false
     },
     {
@@ -3826,7 +3877,7 @@
       "leadershipPeopleIds": [
         "P-FOUNDING-LEADER-027"
       ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
       "historicalPrincipalProof": false
     },
     {
@@ -3848,7 +3899,7 @@
       "leadershipPeopleIds": [
         "P-FOUNDING-LEADER-028"
       ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
       "historicalPrincipalProof": false
     },
     {
@@ -3911,7 +3962,7 @@
         "P-FOUNDING-LEADER-029",
         "P-FOUNDING-LEADER-030"
       ],
-      "leadershipStatus": "WTW_PROVISIONAL_1999_OPERATOR_PENDING_USER_REVIEW",
+      "leadershipStatus": "USER_APPROVED_1999_OPERATOR_LINK",
       "historicalPrincipalProof": false
     },
     {
@@ -7268,7 +7319,7 @@
       "activeIn1999FoundingWorld": false
     }
   ],
-  "leadershipRevision": "WTW_FOUNDING_1999_LEADERSHIP_V1",
+  "leadershipRevision": "WTW_FOUNDING_1999_LEADERSHIP_V2",
   "leadershipAssignments": [
     {
       "organizationId": "O-000002",
@@ -7276,14 +7327,14 @@
       "role": "MANAGING_PRINCIPAL",
       "isPrimary": true,
       "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
-      "basis": "NEW_PROPOSAL"
+      "basis": "USER_DIRECTED_MALE_LEADER_NAME_PROPOSAL"
     },
     {
       "organizationId": "O-000011",
       "personId": "P-FOUNDING-LEADER-002",
       "role": "MANAGING_PARTNER",
       "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "NEW_PROPOSAL"
     },
     {
@@ -7291,7 +7342,7 @@
       "personId": "P-FOUNDING-LEADER-003",
       "role": "FAMILY_RACING_PRINCIPAL",
       "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "NEW_PROPOSAL"
     },
     {
@@ -7299,7 +7350,7 @@
       "personId": "P-FOUNDING-LEADER-004",
       "role": "MANAGING_OWNER",
       "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "NEW_PROPOSAL"
     },
     {
@@ -7307,7 +7358,7 @@
       "personId": "P-FOUNDING-LEADER-005",
       "role": "MANAGING_PARTNER",
       "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "WORLD_BIBLE_PROPOSAL"
     },
     {
@@ -7315,7 +7366,7 @@
       "personId": "P-FOUNDING-LEADER-006",
       "role": "COFOUNDING_PARTNER",
       "isPrimary": false,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "WORLD_BIBLE_PROPOSAL"
     },
     {
@@ -7323,23 +7374,23 @@
       "personId": "P-FOUNDING-LEADER-007",
       "role": "COFOUNDING_PARTNER",
       "isPrimary": false,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "WORLD_BIBLE_PROPOSAL"
     },
     {
       "organizationId": "O-000057",
       "personId": "P-FOUNDING-LEADER-008",
-      "role": "MANAGING_INVESTMENT_PARTNER",
+      "role": "MANAGING_QUANTITATIVE_PARTNER",
       "isPrimary": true,
       "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
-      "basis": "NEW_PROPOSAL"
+      "basis": "USER_DIRECTED_ANALYTICS_LEADER_NAME_PROPOSAL"
     },
     {
       "organizationId": "O-000059",
       "personId": "P-FOUNDING-LEADER-009",
       "role": "RACING_OWNER_PRINCIPAL",
       "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "WORLD_BIBLE_PROPOSAL"
     },
     {
@@ -7347,7 +7398,7 @@
       "personId": "P-FOUNDING-LEADER-010",
       "role": "FARM_PRINCIPAL",
       "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "NEW_PROPOSAL"
     },
     {
@@ -7355,7 +7406,7 @@
       "personId": "P-FOUNDING-LEADER-011",
       "role": "FAMILY_FARM_PRINCIPAL",
       "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "NEW_PROPOSAL"
     },
     {
@@ -7364,14 +7415,14 @@
       "role": "FAMILY_FARM_PRINCIPAL",
       "isPrimary": true,
       "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
-      "basis": "NEW_PROPOSAL"
+      "basis": "USER_DIRECTED_MALE_LEADER_NAME_PROPOSAL"
     },
     {
       "organizationId": "O-000067",
       "personId": "P-FOUNDING-LEADER-013",
       "role": "FARM_PRINCIPAL",
       "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "NEW_PROPOSAL"
     },
     {
@@ -7379,7 +7430,7 @@
       "personId": "P-FOUNDING-LEADER-014",
       "role": "STUD_DIRECTOR",
       "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "NEW_PROPOSAL"
     },
     {
@@ -7387,7 +7438,7 @@
       "personId": "P-FOUNDING-LEADER-015",
       "role": "MANAGING_STUD_PRINCIPAL",
       "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "NEW_PROPOSAL"
     },
     {
@@ -7395,7 +7446,7 @@
       "personId": "P-FOUNDING-LEADER-016",
       "role": "FAMILY_MATRIARCH",
       "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "WORLD_BIBLE_PROPOSAL"
     },
     {
@@ -7403,7 +7454,7 @@
       "personId": "P-FOUNDING-LEADER-017",
       "role": "PACIFIC_DIVISION_PRESIDENT",
       "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "WORLD_BIBLE_PROPOSAL"
     },
     {
@@ -7411,7 +7462,7 @@
       "personId": "P-FOUNDING-LEADER-018",
       "role": "JAPAN_DIVISION_DIRECTOR",
       "isPrimary": false,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "WORLD_BIBLE_PROPOSAL"
     },
     {
@@ -7419,7 +7470,7 @@
       "personId": "P-FOUNDING-LEADER-019",
       "role": "FARM_OWNER_PRINCIPAL",
       "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "WORLD_BIBLE_PROPOSAL"
     },
     {
@@ -7427,7 +7478,7 @@
       "personId": "P-FOUNDING-LEADER-020",
       "role": "FARM_OWNER_PRINCIPAL",
       "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "WORLD_BIBLE_PROPOSAL"
     },
     {
@@ -7435,15 +7486,15 @@
       "personId": "P-FOUNDING-LEADER-021",
       "role": "MANAGING_SYNDICATE_PARTNER",
       "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
-      "basis": "WORLD_BIBLE_PROPOSAL"
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
+      "basis": "USER_APPROVED"
     },
     {
       "organizationId": "O-FOUNDING-1999-005",
       "personId": "P-FOUNDING-LEADER-022",
       "role": "COFOUNDING_PARTNER",
       "isPrimary": false,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "WORLD_BIBLE_PROPOSAL"
     },
     {
@@ -7451,7 +7502,7 @@
       "personId": "P-FOUNDING-LEADER-023",
       "role": "FAMILY_RACING_REPRESENTATIVE",
       "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "NEW_PROPOSAL"
     },
     {
@@ -7459,7 +7510,7 @@
       "personId": "P-FOUNDING-LEADER-024",
       "role": "FOUNDER_AND_RACING_OWNER",
       "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "WORLD_BIBLE_PROPOSAL"
     },
     {
@@ -7467,7 +7518,7 @@
       "personId": "P-FOUNDING-LEADER-025",
       "role": "MANAGING_RACING_PARTNER",
       "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "WORLD_BIBLE_PROPOSAL"
     },
     {
@@ -7475,7 +7526,7 @@
       "personId": "P-FOUNDING-LEADER-026",
       "role": "COFOUNDING_RACING_PARTNER",
       "isPrimary": false,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "WORLD_BIBLE_PROPOSAL"
     },
     {
@@ -7483,7 +7534,7 @@
       "personId": "P-FOUNDING-LEADER-027",
       "role": "FOUNDER_AND_RACING_OWNER",
       "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "WORLD_BIBLE_PROPOSAL"
     },
     {
@@ -7491,7 +7542,7 @@
       "personId": "P-FOUNDING-LEADER-028",
       "role": "CURRENT_FARM_PRINCIPAL",
       "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "NEW_PROPOSAL"
     },
     {
@@ -7499,7 +7550,7 @@
       "personId": "P-FOUNDING-LEADER-029",
       "role": "INTERNATIONAL_STUD_DIRECTOR",
       "isPrimary": true,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "NEW_PROPOSAL"
     },
     {
@@ -7507,8 +7558,16 @@
       "personId": "P-FOUNDING-LEADER-030",
       "role": "KENTUCKY_DIVISION_DIRECTOR",
       "isPrimary": false,
-      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "approvalStatus": "USER_APPROVED_1999_LEADERSHIP",
       "basis": "NEW_PROPOSAL"
+    },
+    {
+      "organizationId": "O-006905",
+      "personId": "P-FOUNDING-LEADER-031",
+      "role": "MANAGING_RACING_PRINCIPAL",
+      "isPrimary": true,
+      "approvalStatus": "PROPOSED_NOT_USER_APPROVED",
+      "basis": "USER_DIRECTED_NON_OPERATING_INVESTOR_CORRECTION__NAME_PROPOSAL"
     }
   ]
 }
