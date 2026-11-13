@@ -43,7 +43,7 @@ The Office's approved Track and Horse implementations remain intact. The new pro
 ## Acceptance tests
 
 - `tests/1999-founding-profiles.test.mjs`: all 37 organizations, 30 facility reference categories, 41 approved people, zero unapproved names/staff/facilities, source immutability and exact-ID links.
-- `scripts/1999-management-browser-smoke.sh`: Selenium/Chromium Office navigation including World person → Horse-style personnel dossier, Personnel Owners → Track-style ownership dossier and Facilities Stud Farms → Track-style facility dossier.
+- `scripts/1999-management-browser-smoke.sh`: headless Chromium Office navigation including World person → Horse-style personnel dossier, Personnel Owners → Track-style ownership dossier and Facilities Stud Farms → Track-style facility dossier.
 - Keep existing 1999 source integration, Canon Desk and Desktop Visual Audit checks. No old save or synthetic racing population can be restored to make a browser check pass.
 
 ## Scope of later work
