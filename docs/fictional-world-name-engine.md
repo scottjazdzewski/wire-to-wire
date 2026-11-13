@@ -170,11 +170,11 @@ The default 1999 North American fictional naming distribution now distinguishes 
 
 | Role | U.S.-origin weight | Selected added origin pools |
 | --- | ---: | --- |
-| Trainer | 66% | Canada, Britain, Ireland, France, Germany, Australia, New Zealand, Japan, UAE |
-| Owner principal | 61% | Canada, Britain, Ireland, France, Germany, Japan, Australia, New Zealand, UAE, Hong Kong |
-| Bloodstock agent | 45% | Britain, Ireland, France, Germany, Australia, New Zealand, Japan, Canada, UAE |
+| Trainer | 61% | Canada, Britain, Ireland, France, Germany, Australia, New Zealand, Japan, UAE |
+| Owner principal | 55% | Canada, Britain, Ireland, France, Germany, Japan, Australia, New Zealand, UAE, Hong Kong |
+| Bloodstock agent | 40% | Britain, Ireland, France, Germany, Australia, New Zealand, Japan, Canada, UAE |
 
-**These weights are editorial fiction-generation choices, not measured 1999 workforce statistics.** They reflect the qualitative reality of international breeding and sales activity, supported by contemporary reporting such as [September 1999 Thoroughbred Daily News international sales](https://www.thoroughbreddailynews.com/pdf/tdn/1999/tdn990929.pdf), [December 1999 TDN yearling-sales review](https://www.thoroughbreddailynews.com/pdf/tdn/1999/tdn991221.pdf), and a [1992 U.S. GAO report on international Thoroughbred competition and travel](https://gao.justia.com/department-of-agriculture/1992/10/international-trade-ggd-93-15/). These sources establish international relationships, **not the exact percentages in this model**.
+**These weights are editorial fiction-generation choices, not measured 1999 workforce statistics.** All three profession mixes preserve Puerto Rican, Mexican, Venezuelan and Panamanian naming representation alongside the added international pools; Latin American coverage is not restricted to jockeys. They reflect the qualitative reality of international breeding and sales activity, supported by contemporary reporting such as [September 1999 Thoroughbred Daily News international sales](https://www.thoroughbreddailynews.com/pdf/tdn/1999/tdn990929.pdf), [December 1999 TDN yearling-sales review](https://www.thoroughbreddailynews.com/pdf/tdn/1999/tdn991221.pdf), and a [1992 U.S. GAO report on international Thoroughbred competition and travel](https://gao.justia.com/department-of-agriculture/1992/10/international-trade-ggd-93-15/). These sources establish international relationships, **not the exact percentages in this model**.
 
 Explicit caller-supplied `originWeightsByRole` override the corresponding editorial profession distribution. All previously supported 1999 jockey-colony rules remain independent, including Latin American rider representation and custom colony mixes. The new country pools are applied whenever that country is selected, including for other professions where the origin already occurs; the three new default international mixes apply only to `trainer`, `owner`, and `bloodstock_agent`.
 
