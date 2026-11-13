@@ -27,37 +27,29 @@ test('1999 approved Office shell serves ONLY the isolated founding scenario',()=
  assert.match(html,/\/next\/1999-ui-source.mjs/);
  assert.match(js,/function departmentRoster\(/);
  assert.match(js,/function liveStableRosterView\(/);
- assert.equal(ui.counts.horses,39);
- assert.equal(ui.counts.worldHorses,112);
+ assert.equal(ui.counts.horses,0);
+ assert.equal(ui.counts.worldHorses,73);
  assert.equal(ui.counts.owners,37);
  assert.ok(ui.counts.tracks>=50&&ui.counts.tracks<=118);
  assert.ok(ui.counts.people<150);
  assert.ok(!ui.generatedStaffRoles?.includes('groom'));
 });
 
-test('stable only offers source-linked 1999 horses and exact IDs',()=>{
- assert.ok(ui.stableHorses.length>0);
- assert.ok(ui.stableHorses.every(h=>h.horseId?.startsWith('H-')));
- for(const h of ui.stableHorses){
-  const fact=ui.sourceFacts(h.name);
-  assert.ok(fact&&fact.source==='1999_CANON_LOCKED');
-  assert.ok(ui.ownerFor(h.name));
- }
- assert.ok(ui.sourceOwnerId&&ui.sourceOwnerName);
+test('new founding stable must not display inherited B01 generated horses as owned entries',()=>{
+ assert.equal(ui.stableHorses.length,0);
+ assert.equal(ui.counts.horses,0);
+ assert.ok(ui.departmentRows('Personnel','Owners').length===37);
+ assert.ok(!ui.worldHorsePage(0,73).items.some(x=>x._id==='H-1997-030039'));
 });
 
-test('the same detailed horse and person attributes resolve by immutable source ID',()=>{
- const worldParams='?mode=FOUNDING_1999&population=112&seed=19990101';
- const horse=readLocal1999World('/api/1999/horses'+worldParams+'&limit=1').items[0];
+test('existing person profiles still retain attributes while old B01 horse profiles are removed',()=>{
+ const worldParams='?mode=FOUNDING_1999&population=73&seed=19990101';
  const person=readLocal1999World('/api/1999/people'+worldParams+'&limit=1').items[0];
- const horseModel=ui.sourceHorseModel(horse.id);
  const personModel=ui.sourcePersonModel(person.id);
- assert.equal(horseModel.id,horse.id);
  assert.equal(personModel.id,person.id);
- assert.equal(Object.keys(horseModel.attributes).length,53);
  assert.ok(Object.keys(personModel.attributes).length>=attributeCatalog.person_common.length);
- assert.equal(ui.sourceHorseAbility(horse.id).current,horseModel.ability.current);
- assert.equal(ui.sourceHorseModel('H-UNKNOWN-777'),null);
+ assert.equal(readLocal1999World('/api/1999/horses'+worldParams).total,0);
+ assert.equal(ui.sourceHorseModel('H-1997-030039'),null);
  assert.equal(ui.sourcePersonModel('P-UNKNOWN-777'),null);
 });
 
@@ -105,11 +97,11 @@ test('the small founding facility, finance, and sale directories show no phantom
  assert.ok(finance.every(row=>row.source==='FOUNDING_FINANCE_NOT_CERTIFIED__NO_SETTLEMENT_AUTHORITY'&&row.income==='—'&&row.expense==='—'));
 });
 
-test('global World browser pages only the founding 112 horses, never the 325k test population',()=>{
+test('global World browser pages only the 73 connected breeding animals, never B01 or the 325k world',()=>{
  const first=ui.worldHorsePage(0,18);
- const last=ui.worldHorsePage(94,18);
- assert.equal(first.total,112);
- assert.equal(last.total,112);
+ const last=ui.worldHorsePage(55,18);
+ assert.equal(first.total,73);
+ assert.equal(last.total,73);
  assert.equal(first.items.length,18);
  assert.equal(last.items.length,18);
  assert.ok(first.items.every(x=>x._worldKey?.startsWith('horse:')));
