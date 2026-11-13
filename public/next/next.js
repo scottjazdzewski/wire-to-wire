@@ -3506,8 +3506,10 @@ window.addEventListener('click',e=>{
    if(full)return previewRecordRoute('horse',full._name,full);
   }
   if(isClean1999()&&r._kind==='farm'&&r._id&&
-   (APP.section==='Facilities'||APP.section==='Personnel'&&APP.page==='Owners'))
-   return openFounding1999Profile(APP.section==='Facilities'?'facility':'ownership',r._id);
+   (APP.section==='Facilities'||APP.section==='Breeding'&&APP.page==='Stud Farms'||
+    APP.section==='Personnel'&&APP.page==='Owners'))
+   return openFounding1999Profile(APP.section==='Facilities'||APP.section==='Breeding'?
+    'facility':'ownership',r._id);
   if(isClean1999()&&r._kind==='person'&&r._id)
    return openFounding1999Profile('person',r._id);
   if(r._testGenerated)return previewRecordRoute(r._kind==='person'?'person':
