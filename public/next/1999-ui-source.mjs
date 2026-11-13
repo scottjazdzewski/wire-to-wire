@@ -249,16 +249,23 @@ function makeDepartmentRows(section,page,context={}){
   }
  }
  if(section==='Breeding'&&page==='Stallions'){
-  const modeled=get('breeding-sires','/api/1999/sim/breeding-stock?sex=SIRE',worldCounts.breedingStallions);
-  const source=activeStallions.map(h=>({_kind:'horse',_name:h.name,_canonId:h.id,name:h.name,horse:h.name,
-   age:'',sex:'STALLION',sire:'',dam:'',farm:h.standingFarm1999?.farmName||'',
+  // In FOUNDING_1999, the sourced stallions are the entire small roster.
+  // They are NOT an extra 18 to append to the same 18 modeled parents.
+  const source=activeStallions.map(h=>({_kind:'horse',_name:h.name,_canonId:h.id,_id:h.id,
+   name:h.name,horse:h.name,age:h.foalYear?String(1999-h.foalYear):'',
+   sex:'STALLION',sire:h.sireId||'',dam:h.damId||'',farm:h.standingFarm1999?.farmName||'',
    status:'STANDING 1999 · SOURCE',health:'UNASSESSED',pedigree:'',
-   value:'',owner:'',studFee:'NOT ESTABLISHED',bookings:'',foals:'',winners:''}));
+   value:'',owner:'',studFee:'NOT ESTABLISHED',bookings:'NOT RECORDED',
+   foals:'NOT RECORDED',winners:'NOT RECORDED'}));
+  if(gameWorldProfile.mode==='FOUNDING_1999')return source;
+  const modeled=get('breeding-sires','/api/1999/sim/breeding-stock?sex=SIRE',
+   worldCounts.breedingStallions);
   return [...source,...modeled.map(h=>({_kind:'horse',_name:h.name,_id:h.id,_testGenerated:true,
-   name:h.name,horse:h.name,age:String(h.ageAtOpening),sex:'STALLION',sire:'',dam:'',
-   farm:h.farmName,status:h.breedingStatus1999.replaceAll('_',' ')+' · TEST',
+   name:h.name,horse:h.name,age:String(h.ageAtOpening??h.age??''),sex:'STALLION',
+   sire:h.sireId||'',dam:h.damId||'',farm:h.farmName||'',
+   status:String(h.breedingStatus1999||h.status||'UNASSESSED').replaceAll('_',' ')+' · TEST',
    health:'TEST · NOT EXAMINED',pedigree:'',value:'',owner:'',
-   studFee:h.studFee1999?'$'+Number(h.studFee1999).toLocaleString('en-US'):'NOT STANDING',
+   studFee:h.studFee1999?'$'+Number(h.studFee1999).toLocaleString('en-US'):'NOT ESTABLISHED',
    bookings:String(h.projected1999BookSize||0),foals:'NOT RECORDED',winners:'NOT RECORDED'}))];
  }
  if(section==='Breeding'&&page==='Broodmares'){
@@ -277,8 +284,9 @@ function makeDepartmentRows(section,page,context={}){
  if(section==='Breeding'&&page==='Foals'){
   const forecast=q('/api/1999/sim/foaling-forecast');
   return [{_kind:'foal-forecast',_name:'1999 test foaling pipeline',horse:'1999 PROJECTED FOAL CROP',
-   age:'0',sex:'—',sire:'1,400 modeled sire records',dam:forecast.mares.toLocaleString('en-US')+' MARES',
-   farm:forecast.farmCount+' FARMS',status:'FORECAST · NOT BORN',health:'NOT APPLICABLE',pedigree:'',
+   age:'0',sex:'—',sire:String(forecast.stallionPopulation??worldCounts.breedingStallions)+' SOURCE STALLIONS',
+   dam:Number(forecast.mares||0).toLocaleString('en-US')+' MARES',
+   farm:forecast.farmCount==null?'FARM COUNT UNASSESSED':String(forecast.farmCount)+' FARMS',status:'FORECAST · NOT BORN',health:'NOT APPLICABLE',pedigree:'',
    value:'',owner:'',studFee:'',bookings:forecast.projectedCoverings.toLocaleString('en-US'),
    foals:forecast.projectedLiveFoals.toLocaleString('en-US'),winners:'—'}];
  }
