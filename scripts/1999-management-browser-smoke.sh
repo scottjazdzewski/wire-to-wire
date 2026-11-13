@@ -102,8 +102,23 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   const jockeyTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')].find(b=>b.dataset.val==='Jockeys');
   check('Jockey roster tab remains available',Boolean(jockeyTab));
   jockeyTab.click();await pause(300);
-  check('Clean founding world has no unapproved jockey roster',
-   ui.departmentRows('Personnel','Jockeys').length===0&&!d.querySelector('#wtwNextgen [data-ng="dept-open"]'));
+  const openingJockeys=ui.departmentRows('Personnel','Jockeys');
+  check('Exactly 26 EXISTING canonical jockey identities appear with no generated attributes, contracts or mounts',
+   openingJockeys.length===26&&openingJockeys.every(p=>
+    /^P-/.test(p._canonId)&&p._testGenerated===false&&p.role==='JOCKEY'&&
+    !p.ca&&!p.pa&&!p.salary&&!p.contract&&!p.wins&&!p.assignment)&&
+   openingJockeys.some(p=>p._canonId==='P-000053'&&p.name==='Nico Arroyo')&&
+   openingJockeys.some(p=>p._canonId==='P-000055'&&p.name==='Marcel Dubois')&&
+   openingJockeys.some(p=>p._canonId==='P-000057'&&p.name==='Paloma Reyes'));
+  const jockeyProfileButton=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
+  check('Jockey identity roster is navigable using original Personnel list',
+   Boolean(jockeyProfileButton));
+  jockeyProfileButton.click();await pause(230);
+  check('Source jockey opens SAME detailed Horse-style person dossier, no invented ratings',
+   Boolean(d.querySelector('#wtwNextgen .ng-profile-person.ng-profile-horse'))&&
+   Boolean(d.querySelector('#wtwNextgen .ng-person-horse-dossier'))&&
+   !d.querySelector('#wtwNextgen .ng-profile-person .test-modeled'));
+  click('Personnel');await pause(230);
   check('Only agreed founders display and phantom facilities are absent',
    ui.departmentRows('Personnel','Owners').length===37&&
    ui.departmentRows('Facilities','Stud Farms').length===5&&
