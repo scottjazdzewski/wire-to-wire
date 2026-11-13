@@ -208,7 +208,7 @@ test('325,000-horse training population keeps typed-array storage linear',()=>{
 });
 test('planning cannot change the existing horse identity, horse ownership, world or UI engine',()=>{
  const source=readFileSync(new URL('../public/1999/engine/fictional-training-capacity-planner.mjs',import.meta.url),'utf8');
- const world=readFileSync(new URL('../public/1999/engine/full-world-generator.mjs',import.meta.url),'utf8');
+ const world=readFileSync(new URL('../public/1999/engine/founding-world-1999.mjs',import.meta.url),'utf8');
  assert.doesNotMatch(source,/\b(?:fetch|localStorage|indexedDB|writeFile|setItem)\s*\(/);
  assert.doesNotMatch(world,/fictional-training-capacity-planner/);
  assert.doesNotMatch(world,/planFictionalTrainingAssignments/);
