@@ -139,7 +139,7 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   const stallions=ui.departmentRows('Breeding','Stallions');
   check('18 source stallions appear only once in founder breeding screen',stallions.length===18&&stallions.every(h=>h._canonId&&h.status?.includes('SOURCE')));
   const finances=ui.departmentRows('Finances','Overview');
-  check('Test finances marked',finances.length>0&&finances.every(x=>x.source==='GENERATED_TEST_BASELINE'));
+  check('Founding finance panel does not invent inherited owner balances',finances.length>0&&finances.every(x=>x.source==='FOUNDING_FINANCE_NOT_CERTIFIED__NO_SETTLEMENT_AUTHORITY'));
   const auction=ui.auctionList();
   check('12 proposed founding sales with empty catalogs',auction.length===12&&auction.every(a=>a.lots.length===0));
   const horses=ui.worldHorsePage(ui.counts.horses,20);
