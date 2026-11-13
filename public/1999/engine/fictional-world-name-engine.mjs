@@ -238,8 +238,10 @@ export function createFictionalWorldNameEngine(input){
  // global nationality mix. Location is not inferred from a person's name.
  const personBirthYears=Object.freeze(Array.from({length:staff+owners},(_,index)=>{
   const role=roleAt(index),ordinal=index-indexes[role];
-  const id=makeId(worldId,'PERSON-'+role.toUpperCase(),ordinal);
-  return year-ageAtOpening(seed,id,role);
+  // The world's namespace controls IDs, not the random person's cohort.
+  // Same seed + role/index yields the same name regardless of worldId.
+  const cohortKey='FICTIONAL-NAME-COHORT-'+role+'-'+ordinal;
+  return year-ageAtOpening(seed,cohortKey,role);
  }));
  const racingMarkets=markets.filter(m=>m.racing);
  const assignedMarkets=Array.from({length:staff+owners},(_,i)=>{
