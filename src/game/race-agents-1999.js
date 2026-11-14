@@ -196,7 +196,8 @@ export function run1999RacingAgents({state,world,emit}){
   for(const id of [...race.field]){
    const e=state.runtime.entries[id],h=state.runtime.registered_horses.by_id[e.horse_id],
     care=state.runtime.horse[h.horse_id];
-   if(e.status!=='BOOKED'||!care||care.training.sorenessDays>0||
+   if(e.status!=='BOOKED'||effectiveHorseTrack(state,h)!==race.track_id||
+    !care||care.training.sorenessDays>0||
     care.training.currentRisk>=.78||care.training.readiness<.38||
     care.history.at(-1)?.unfunded===true){
     e.status='SCRATCHED';e.scratch_reason='RACE_DAY_WELFARE_OR_BOOKING';

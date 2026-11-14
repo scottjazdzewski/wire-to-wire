@@ -31,4 +31,4 @@ export {GAME_RACING_SCHEMA,RACING_COMMANDS,createRacingRuntime,gameRaceProgram,
 
 export {HORSE_SHIPPING_SCHEMA,HORSE_SHIPPING_COMMANDS,modeledShippingRoute,
  shippingAssessment,horseTravelStatus,effectiveHorseTrack,
- effectiveHorseCareSite,receivingBarnCapacity} from './shipping-1999.js';
+ effectiveHorseCareSite,physicalHorseSiteId,receivingBarnCapacity} from './shipping-1999.js';

@@ -10,6 +10,7 @@ import {ensure,isObject,validDate,worldIdentity} from './contracts.js';
 import {FEED_PROGRAMS,CARE_PROGRAMS,modeledTrainerSkills,setHorseCarePolicy} from './horse-care.js';
 import {TRAINING_PLANS,recommendHorseWorkout} from '../engine/horse-development.mjs';
 import {facilityAction} from './facility-operations.js';
+import {horseTravelStatus,physicalHorseSiteId,effectiveHorseCareSite} from './shipping-1999.js';
 
 export const DAILY_AGENT_SCHEMA='WTW_DAILY_AGENT_DECISIONS_V1';
 const cap=(x,min=0,max=1)=>Math.max(min,Math.min(max,x));
@@ -100,7 +101,7 @@ function ownerDecision(state,h,site,profile,related,ownerHerd,day){
   modeledTrainerSkills(h.trainer_id,state.rng.seed);
  const baseline=monthlyBaseline(h,site,skills);
  const totalNeed=ownerHerd.reduce((sum,x)=>{
-  const barn=state.runtime.facilities.sites[x.current_residence_id];
+  const barn=effectiveHorseCareSite(state,x)||state.runtime.facilities.sites[x.current_residence_id];
   return sum+monthlyBaseline(x,barn,
    state.runtime.people[x.trainer_id]?.game_training_skills||
     modeledTrainerSkills(x.trainer_id,state.rng.seed));
@@ -131,6 +132,12 @@ function ownerDecision(state,h,site,profile,related,ownerHerd,day){
 }
 function chooseWorkout(state,h,related){
  const care=state.runtime.horse[h.horse_id],r=care.training,p=care.policy;
+ const trip=horseTravelStatus(state,h.horse_id);
+ if(['OUTBOUND','RETURNING'].includes(trip?.status))
+  return {workout:'REST',reason:'HORSE_IN_TRANSIT'};
+ if(trip?.history?.at(-1)?.date===state.clock.date&&
+  ['ARRIVED_AT_TRACK','RETURNED_HOME'].includes(trip.history.at(-1).event))
+  return {workout:'REST',reason:'ARRIVAL_RECOVERY'};
  const t=state.runtime.people[h.trainer_id]?.game_training_skills||
   modeledTrainerSkills(h.trainer_id,state.rng.seed);
  const q=t.roleAttributes,age=h.racing_age_1999;
@@ -181,7 +188,7 @@ export function runAutonomousDay({state,world,emit}){
   sort((x,y)=>x.id.localeCompare(y.id))){
   if(site.type!=='RACING_STABLE')continue;
   a.totals.barn_reviews++;
-  const operator=site.owner_id,occupants=horses.filter(h=>h.current_residence_id===site.id).length;
+  const operator=site.owner_id,occupants=horses.filter(h=>physicalHorseSiteId(state,h)===site.id).length;
   if(operator===state.player.operation_id)continue;
   const cash=account(state,operator)??0;
   const dailyCost=site.daily_upkeep_minor+site.staff_required*site.staff_wage_daily_minor+
@@ -220,7 +227,7 @@ export function runAutonomousDay({state,world,emit}){
   for(const h of herd){
    const r=state.runtime.horse[h.horse_id];
    if(!r||r.policy.source==='PLAYER_DECISION')continue;
-   const site=state.runtime.facilities.sites[h.current_residence_id];
+   const site=effectiveHorseCareSite(state,h)||state.runtime.facilities.sites[h.current_residence_id];
    const proposal=ownerDecision(state,h,site,personality,relation(state,h),herd,day);
    const crisis=r.training.sorenessDays>0||r.finance.unfunded_days>0;
    if(!crisis&&state.clock.days_elapsed%7!==1)continue;
@@ -251,12 +258,13 @@ export function runAutonomousDay({state,world,emit}){
    let {workout,reason}=chooseWorkout(state,h,rel);
    const playerOrder=h.owner_organization_id===state.player.operation_id&&
     r.policy.source==='PLAYER_DECISION'&&r.policy.training_plan!=='AUTO';
-   if(playerOrder&&!['SORENESS_RECOVERY','WELFARE_RISK_LIMIT'].includes(reason)){
+   if(playerOrder&&!['SORENESS_RECOVERY','WELFARE_RISK_LIMIT',
+    'HORSE_IN_TRANSIT','ARRIVAL_RECOVERY'].includes(reason)){
     workout=null;reason='PLAYER_TRAINING_ORDER_RESPECTED';
    }
    // Null means "the player's plan remains the authority".
    r.agent={date:day,trainer_id:trainer,workout,reason,
-    owner_id:h.owner_organization_id,site_id:h.current_residence_id};
+    owner_id:h.owner_organization_id,site_id:physicalHorseSiteId(state,h)};
    counts[reason]=(counts[reason]||0)+1;
    if(workout!==null)a.totals.workout_directives++;
    decisions.push({horse_id:h.horse_id,workout,reason});
