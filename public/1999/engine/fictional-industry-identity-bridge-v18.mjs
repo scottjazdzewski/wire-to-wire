@@ -96,10 +96,14 @@ export async function openFictionalIndustryIdentityBridge({
   checkId(personId,'approved person ID');
   checkId(eventId,'registration event ID');
   checkId(sourceId,'registration source ID');
-  // Refresh the authoritative naming journal to see approvals from other tabs
-  // and to reject failed/uncommitted naming proposals.
-  await naming.refresh();
-  const approved=naming.getApprovedPerson(personId);
+  // Locally accepted V12 IDs are immutable and were durable before entering
+  // the name index. Refresh only on a miss (including cross-tab approvals or
+  // ambiguous naming writes), avoiding repeated full journal replay per hire.
+  let approved=naming.getApprovedPerson(personId);
+  if(!approved){
+   await naming.refresh();
+   approved=naming.getApprovedPerson(personId);
+  }
   if(!approved)throw Error('Person has not been durably approved by V12 naming');
   if(IDENTITY_FIELDS.some(k=>approved[k]===undefined||approved[k]===null))
    throw Error('Approved person has incomplete identity fields');
