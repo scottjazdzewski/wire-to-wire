@@ -71,23 +71,24 @@ test('entity visual-depth v2 remains strictly scoped to the current shared profi
 test('new themes are cache-busted coherently without a second stylesheet',()=>{
  const page=readFileSync(new URL('../public/next/index.html',import.meta.url),'utf8');
  const module=readFileSync(new URL('../public/next/identity-themes.mjs',import.meta.url),'utf8');
- assert.match(page,/identity-themes\.mjs\?rev=wtw-identity-depth-v2-20261114/);
- assert.match(module,/visual-themes-v1\.json\?v=20261114b/);
- assert.match(page,/next\.css\?rev=wtw-identity-atmosphere-v2-20261114/);
+ assert.match(page,/identity-themes\.mjs\?rev=wtw-track-identity-locked-20261114/);
+ assert.match(module,/visual-themes-v1\.json\?v=20261114c-track-restore/);
+ assert.match(page,/next\.css\?rev=wtw-track-profile-permanent-20261114/);
  assert.equal((page.match(/rel="stylesheet"/g)||[]).length,1);
 });
 
-test('expanded record menus, tables and selected view modes follow the same entity palette',()=>{
+test('approved source-backed stakes table and meet/history panels share the canonical track palette',()=>{
  const css=readFileSync(new URL('../public/next/next.css',import.meta.url),'utf8');
  const start=css.indexOf('/* WTW ENTITY ATMOSPHERE v2');
  const end=css.indexOf('/* ===== END folded source: public/next/identity-themes.css ===== */',start);
  const own=css.slice(start,end);
- for(const rule of [
-  '.ng-route-profile .ng-connected-drop>summary',
-  '.ng-route-profile .ng-connected-tools',
-  '.ng-route-profile .ng-connected-view button.on',
-  '.ng-route-profile .ng-connected-table thead th'
- ])assert.ok(own.includes(rule),rule+' must inherit the ID palette');
- assert.match(own,/\.ng-connected-view button\.on\{\s*background:color-mix\(/);
- assert.doesNotMatch(own,/\.ng-global-continue|\.ng-msgtag\.urgent|\.ng-status-pills/);
+ for(const selector of [
+  '.ng-profile-view.ng-profile-track > .ng-profile-intro',
+  '.ng-track-workspace .ng-track-stakes > header',
+  '.ng-track-workspace .ng-track-history-card > header',
+  '.ng-track-stakes .ng-stakes-head',
+  '.ng-track-stakes .ng-stakes-data:hover'
+ ])assert.ok(own.includes(selector),selector+' must inherit the canonical palette');
+ assert.equal(registry.tracks['T-0002'].base.toUpperCase(),'#0C603C');
+ assert.doesNotMatch(own,/ng-connected|\.ng-global-continue|\.ng-msgtag\.urgent|\.ng-status-pills/);
 });
