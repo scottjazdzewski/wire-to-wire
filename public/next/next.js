@@ -2695,6 +2695,12 @@ function liveStableRosterView(directory=false){
  const filters=[['all','ALL'],['vet','VET WATCH'],['ready','READY'],['attributes','ATTRIBUTES'],['training','TRAINING'],['targets','WITH TARGET'],['entered','ENTERED'],['unassigned','NO TARGET']]
  .filter(([value])=>!directory||!['attributes','training'].includes(value))
  .map(([value,label])=>'<button data-ng="'+(directory?'directory-filter':'stable-filter')+'" data-val="'+value+'" class="'+(activeFilter===value?'on':'')+'" aria-pressed="'+(activeFilter===value?'true':'false')+'">'+label+'</button>').join('');
+  // Distinguish an empty career roster from zero filtered results. Neither
+  // state should suggest missing records were accidentally hidden.
+  const emptyRosterMessage=!all.length?
+   (directory?'No horse records are currently available in this directory view.':
+    'No horses are currently listed for this stable.'):
+   'No horses match the current search or filters.';
   const legend='<div class="ng-rs-legend">'+liveStableSignal('watch','Vet watch','Caution without assumed treatment')+
   liveStableSignal('treat','Treatment','Only documented active treatment')+liveStableSignal('building','Building','Training toward a race')+
   liveStableSignal('up','Form ↑','Recorded form improving')+liveStableSignal('down','Form ↓','Recorded form declining')+
@@ -2711,7 +2717,7 @@ function liveStableRosterView(directory=false){
   '<section class="ng-rs-roster"><header><strong>HORSE MANAGEMENT ROSTER</strong><span class="ng-stable-visible">'+filtered.length+' OF '+all.length+
    ' HORSES · CLICK HEADINGS TO SORT</span></header>'+
    '<div class="ng-rs-scroll" tabindex="0" role="region" aria-label="Sortable horse roster; horizontally scroll for every column"><table class="ng-rs-table '+(mode==='compact'?'compact':'all')+
-   '"><thead><tr>'+th+'</tr></thead><tbody>'+ (rowHTML||'<tr><td colspan="17" class="ng-rs-no-results">No horses match these filters.</td></tr>')+
+   '"><thead><tr>'+th+'</tr></thead><tbody>'+ (rowHTML||'<tr><td colspan="17" class="ng-rs-no-results">'+safe(emptyRosterMessage)+'</td></tr>')+
    '</tbody></table></div>'+legend+'</section></section>';
 }
 
