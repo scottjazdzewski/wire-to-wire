@@ -390,14 +390,14 @@ function renderHistoryYearReview(){
   [summary.uniqueVenues,'RACECOURSES','Distinct recorded host venues'],
   [summary.exactDates,'EXACT DATES','Documented as historical exact dates']
  ].map(([n,label,description],i)=>
-  '<div class="history-review-stat history-review-stat-'+(i+1)+'"><small>SEASON 0'+(i+1)+'</small>'+
+  '<div class="history-review-stat history-review-stat-'+(i+1)+'"><small>ANNUAL DATA / 0'+(i+1)+'</small>'+
    '<strong>'+h(n)+'</strong><span>'+label+'</span><em>'+description+'</em></div>').join('');
  const options=years().map(y=>'<option value="'+y+'"'+(y===year?' selected':'')+'>'+y+'</option>').join('');
  return '<div class="history-ledger-page history-year-review">'+
   '<header class="history-review-hero" data-season="'+h(year)+'">'+
    '<div class="history-review-masthead"><span class="history-review-edition">WIRE TO WIRE <b> / </b> THE RACING ANNUAL</span>'+
     '<span class="history-review-overline">THE RECORD OF THE SEASON · '+h(year)+'</span>'+
-    '<h2><span>'+h(year)+'</span><strong>Year in Review</strong></h2>'+
+    '<h2><span>'+h(year)+'</span> <strong>Year in Review</strong></h2>'+
     '<p>The recorded races. The classic winners. The horses that shaped the season. Every result linked to its source.</p></div>'+
    '<div class="history-review-side"><div class="history-review-seal" aria-hidden="true">'+
     '<span>WTW</span><strong>'+h(year)+'</strong><small>THE RACING ANNUAL</small></div>'+
