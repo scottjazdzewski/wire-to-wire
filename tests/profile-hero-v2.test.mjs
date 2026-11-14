@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {readFileSync} from "node:fs";
+import {readFileSync,existsSync} from "node:fs";
 import {removeWhiteEdgeMatte,heroContext,profileTitle,heroCandidate,heroInitials} from "../public/next/profile-hero-v2.mjs";
 
 const css=readFileSync(new URL("../public/next/profile-hero-v2.css",import.meta.url),"utf8");
@@ -90,4 +90,14 @@ test("profiles without a preexisting img still activate newly produced exact-ID 
  assert.match(source,/temporaryIdentity\(mark,kind,name\)/);
  assert.match(source,/ensureHeroStage\(profile,kind,name\)/);
  assert.match(css,/\.wtw-hero-fallback-monogram/);
+});
+
+test("organization profile uses approved small category badge, not duplicate hero logo",()=>{
+ const badge=new URL("../public/assets/profile-badges/v2/wtw_badge_farm_stable.png",import.meta.url);
+ assert.equal(existsSync(badge),true);
+ assert.match(css,/ng-profile-view\.ng-profile-farm > \.ng-profile-intro > \.ng-org-mark\{/);
+ assert.match(css,/wtw_badge_farm_stable\.png/);
+ assert.match(css,/ng-profile-view\.ng-profile-farm > \.ng-profile-intro > \.ng-org-mark > \.ng-org-image/);
+ const js=readFileSync(new URL("../public/next/profile-hero-v2.mjs",import.meta.url),"utf8");
+ assert.match(js,/categoryBadge\.setAttribute\("aria-label","Farm, stable and ownership profile badge"\)/);
 });

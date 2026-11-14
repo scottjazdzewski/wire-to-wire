@@ -224,6 +224,13 @@ function init(){
   if(strong&&strong.textContent!==label)strong.textContent=label;
   if(span&&span.textContent!==name){span.textContent=name;span.title=name;}
   if(breadcrumb&&breadcrumb.textContent!==label)breadcrumb.textContent=label;
+  if(farm){
+   const categoryBadge=profile.querySelector(".ng-profile-intro > .ng-org-mark");
+   if(categoryBadge){
+    categoryBadge.setAttribute("role","img");
+    categoryBadge.setAttribute("aria-label","Farm, stable and ownership profile badge");
+   }
+  }
   const mark=ensureHeroStage(profile,kind,name);
   if(!mark)return;
   const entity=heroContext(window.__WTW_NEXT__?.app?.custom,
