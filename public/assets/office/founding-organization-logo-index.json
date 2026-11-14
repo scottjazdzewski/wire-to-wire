@@ -1,6 +1,6 @@
 {
   "schema": "WTW_FOUNDING_1999_APPROVED_ORGANIZATION_LOGOS_V1",
-  "version": "2026-11-14-approved-33-logos-verified-256px-v6",
+  "version": "2026-11-14-approved-35-logos-verified-256px-v7",
   "authority": "37 canonical January 1999 founding organizations, exact O-ID and display name. User-approved Drive master originals; no legacy identity/name alias substitutions.",
   "approvedOrganizationIds": [
     "O-000001",
@@ -74,12 +74,14 @@
     "organization:O-FOUNDING-1999-012": "/assets/office/founding-organization-logos/O-FOUNDING-1999-012.png",
     "organization:O-FOUNDING-1999-014": "/assets/office/founding-organization-logos/O-FOUNDING-1999-014.png",
     "organization:O-FOUNDING-1999-001": "/assets/office/founding-organization-logos/O-FOUNDING-1999-001.png",
-    "organization:O-FOUNDING-1999-002": "/assets/office/founding-organization-logos/O-FOUNDING-1999-002.png"
+    "organization:O-FOUNDING-1999-002": "/assets/office/founding-organization-logos/O-FOUNDING-1999-002.png",
+    "organization:O-005910": "/assets/office/founding-organization-logos/O-005910.png",
+    "organization:O-FOUNDING-1999-013": "/assets/office/founding-organization-logos/O-FOUNDING-1999-013.png"
   },
   "pending": "The six founding organizations without approved assets retain neutral initials marks; no artwork is inferred from similar names, state flags, legacy 108-owner generated logo index, or other entities.",
   "forbiddenFallback": "DO_NOT_USE_LEGACY_OR_UNMATCHED_ORGANIZATIONS_OR_UNAPPROVED_NAME_ALIASES",
-  "publishedCount": 33,
-  "remainingWithoutMatchedLogo": 4,
+  "publishedCount": 35,
+  "remainingWithoutMatchedLogo": 2,
   "audit": {
     "source": "Approved original artwork in official per-O-ID Drive collection; canonical 256px PNG deploy copy; verified 1999 IDs/names",
     "matchingRule": "SAME_EXACT_ORGANIZATION_ID_AND_NAME",
@@ -281,14 +283,21 @@
         "name": "Takimori Stud",
         "path": "/assets/office/founding-organization-logos/O-FOUNDING-1999-002.png",
         "match": "USER_APPROVED_CANONICAL_ID_AND_EXACT_NAME"
-      }
-    ],
-    "notPublished": [
+      },
       {
         "id": "O-005910",
         "name": "Midway",
-        "reason": "NO_MATCHING_USER_APPROVED_LOGO_FILE"
+        "path": "/assets/office/founding-organization-logos/O-005910.png",
+        "match": "USER_APPROVED_CANONICAL_ID_AND_EXACT_NAME"
       },
+      {
+        "id": "O-FOUNDING-1999-013",
+        "name": "Alderwick International Stud",
+        "path": "/assets/office/founding-organization-logos/O-FOUNDING-1999-013.png",
+        "match": "USER_APPROVED_CANONICAL_ID_AND_EXACT_NAME"
+      }
+    ],
+    "notPublished": [
       {
         "id": "O-006905",
         "name": "Ledbetter Calder Stables",
@@ -297,11 +306,6 @@
       {
         "id": "O-FOUNDING-1999-009",
         "name": "Mar Azul Racing",
-        "reason": "NO_MATCHING_USER_APPROVED_LOGO_FILE"
-      },
-      {
-        "id": "O-FOUNDING-1999-013",
-        "name": "Alderwick International Stud",
         "reason": "NO_MATCHING_USER_APPROVED_LOGO_FILE"
       }
     ]
@@ -333,6 +337,8 @@
     "O-FOUNDING-1999-012",
     "O-FOUNDING-1999-014",
     "O-FOUNDING-1999-001",
-    "O-FOUNDING-1999-002"
+    "O-FOUNDING-1999-002",
+    "O-005910",
+    "O-FOUNDING-1999-013"
   ]
 }
