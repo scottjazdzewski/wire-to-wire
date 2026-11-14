@@ -105,7 +105,7 @@ function startThemes(){
   // Observe only direct child replacement; theme attribute writes do not retrigger.
   new MutationObserver(apply).observe(shell,{childList:true});
   apply();
-  fetch("/assets/identity/visual-themes-v1.json?v=20261114b",{credentials:"same-origin"})
+  fetch("/assets/identity/visual-themes-v1.json?v=20261114c-track-restore",{credentials:"same-origin"})
     .then(r=>r.ok?r.json():Promise.reject(Error("Identity palette file unavailable")))
     .then(json=>{
       if(json?.schema!=="WTW_IDENTITY_THEMES_V1")return;
