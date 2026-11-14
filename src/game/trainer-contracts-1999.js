@@ -95,9 +95,10 @@ export function offerTrainerServiceTerms({state,world,command,emit}){
   'TRAINER_OFFER','Proposed modeled trainer daily fee must be between $30 and $250');
  const owner=p.owner_id,trainer=p.trainer_id;
  const quote=trainerContractQuote(state,world,owner,trainer);
- ensure(command.actor==='system'||(command.actor==='player'&&
-  state.player.role==='owner'&&state.player.operation_id===owner),
-  'TRAINER_PERMISSION','Only the owner of these game horses may offer a trainer contract');
+ ensure((command.actor==='system'&&owner!==state.player.operation_id)||
+  (command.actor==='player'&&state.player.role==='owner'&&
+   state.player.operation_id===owner),
+  'TRAINER_PERMISSION','Player-controlled service terms require the player's own authorized command');
  const account=quote.owner_cash_minor;
  ensure(account!==null&&account>=p.daily_fee_minor*quote.horse_count*7,
   'TRAINER_FUNDS','Owner needs seven days of proposed trainer fees in available cash');
