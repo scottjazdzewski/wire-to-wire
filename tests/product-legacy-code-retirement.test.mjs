@@ -47,7 +47,7 @@ test('The old Office remains only a live hidden gameplay compatibility bridge, n
 
 test('Every window must delete superseded implementations, track live compatibility and keep the governing UI standard current',()=>{
  assert.match(policy,/Mandatory physical removal of superseded code/);
- assert.match(policy,/same verified PR/);
+ assert.match(policy,/in that PR/);
  assert.match(policy,/Physically delete/i);
  assert.match(policy,/save compatibility/i);
  assert.match(ledger,/Live transitional dependencies/);
