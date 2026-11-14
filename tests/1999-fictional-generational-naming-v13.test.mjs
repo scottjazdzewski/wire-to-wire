@@ -146,7 +146,7 @@ test('later worlds derive birth-year cohorts, honest source labels, and cultural
     assert.ok(internationalSurnamePool(person.birthCountry).includes(person.primarySurname),
      person.name);
    }
-   const firstName=person.givenName;
+   const firstName=person.name.replace(/^Dr\.\s+/,'').split(/\s+/)[0];
    const pool=generationalGivenPool(person.birthCountry,
     person.internationalNameCulture,person.birthYear,true);
    const poolM=generationalGivenPool(person.birthCountry,
