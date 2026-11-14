@@ -16,8 +16,9 @@ import {HORSE_CARE_COMMANDS,setHorseCarePolicy,initializeGameHorseCare,advanceGa
 import {runAutonomousDay,settleDailyAgentFeedback} from './daily-agents.js';
 import {RACING_COMMANDS,racingAction} from './racing-1999.js';
 import {run1999RacingAgents} from './race-agents-1999.js';
+import {HORSE_SHIPPING_COMMANDS,shippingAction,advance1999HorseShipping} from './shipping-1999.js';
 
-const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_CARE_COMMANDS,...RACING_COMMANDS]);
+const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_CARE_COMMANDS,...RACING_COMMANDS,...HORSE_SHIPPING_COMMANDS]);
 const MAX_PENDING = 5000;
 function appendLog(state, commandId, kind, details) {
   const event = { seq: state.event_log.length + 1, command_id: commandId,
@@ -106,6 +107,8 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     registerHorseAction({state:next,world,command:c,emit});
     const horse=next.runtime.registered_horses?.by_id?.[c.payload?.horse?.horse_id];
     if(horse)initializeGameHorseCare(next,horse);
+  } else if (HORSE_SHIPPING_COMMANDS.includes(c.type)) {
+    shippingAction({state:next,world,command:c,emit});
   } else if (RACING_COMMANDS.includes(c.type)) {
     racingAction({state:next,world,command:c,emit});
   } else if (HORSE_CARE_COMMANDS.includes(c.type)) {
@@ -121,6 +124,7 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     emit('DAY_ADVANCED', { date: next.clock.date });
     runAutonomousDay({state:next,world,emit});
     advanceFacilities({state:next,world,emit});
+    advance1999HorseShipping({state:next,world,emit});
     advanceGameHorseCare({state:next,world,emit});
     settleDailyAgentFeedback({state:next,emit});
     run1999RacingAgents({state:next,world,emit});
