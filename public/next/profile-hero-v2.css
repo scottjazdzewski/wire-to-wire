@@ -363,3 +363,19 @@
  #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .wtw-hero-fallback{min-height:90px;}
  #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .wtw-hero-fallback-monogram{font-size:56px;}
 }
+
+
+/* Every large organization portrait uses the same approved category badge on
+   the LEFT, not a second rendering of the farm/stable's hero logo. The actual
+   identity image (or temporary typographic identifier) lives on the RIGHT. */
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-farm > .ng-profile-intro > .ng-org-mark{
+ background:#152420 url("/assets/profile-badges/v2/wtw_badge_farm_stable.png")
+   center / contain no-repeat!important;
+ border:0!important;
+ border-radius:0!important;
+ box-shadow:drop-shadow(0 3px 4px #0006)!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-farm > .ng-profile-intro > .ng-org-mark > .ng-org-image,
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-farm > .ng-profile-intro > .ng-org-mark > .ng-org-initials{
+ visibility:hidden!important;
+}
