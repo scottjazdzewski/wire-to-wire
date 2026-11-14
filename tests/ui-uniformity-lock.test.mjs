@@ -7,7 +7,7 @@ const js=read('public/next/next.js');
 const css=read('public/next/next.css');
 const html=read('public/next/index.html');
 const profile=read('public/next/profile-hero-v2.mjs');
-const profileCSS=read('public/next/profile-hero-v2.css');
+const profileCSS=css; // The one canonical design system includes profile rules.
 const themes=read('public/next/identity-themes.mjs');
 const audit=read('scripts/desktop-visual-audit.sh');
 const standard=read('docs/design/WTW_UNIFIED_SCREEN_INTERACTION_LOCK_2026-11-13.md');
@@ -66,17 +66,12 @@ test('entity colors and logos can change, but never create another navigation im
 test('do not add page-specific CSS layers or new style patch stacks',()=>{
  const assets=[...html.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/g)]
   .map(m=>m[1].split('?')[0]);
- const allowed=[
-  '/next/next.css',
-  '/next/1999-commercial-career.css',
-  '/next/identity-themes.css',
-  '/next/profile-hero-v2.css'
- ];
+ const allowed=['/next/next.css'];
  assert.deepEqual(assets,allowed,'Unexpected stylesheet: consolidate shared rules instead of adding a fifth override');
  assert.equal(new Set(assets).size,assets.length);
  for(const asset of assets)assert.ok(existsSync(new URL('../public'+asset,import.meta.url)),asset);
  assert.ok(!/\.ng-profile-track-\d+/.test(profileCSS),'Never style individual tracks as bespoke pages');
- assert.match(standard,/technical debt/,'Existing transitional layers must not become the new design authority');
+ assert.match(standard,/one canonical management stylesheet/i,'No new CSS override layers are allowed');
 });
 
 test('a screenshot smoke test does not mean FM/OOTP visual approval',()=>{
@@ -86,5 +81,5 @@ test('a screenshot smoke test does not mean FM/OOTP visual approval',()=>{
  }
  assert.match(standard,/mark \*\*REJECTED\*\*/,'Weak interfaces must be explicitly rejected');
  assert.match(standard,/A \*\*person\*\* compares screenshots/,'Visual acceptance needs an actual reviewer');
- assert.match(standard,/No CSS patch stacks|No CSS patch stack|do not add a fifth/i);
+ assert.match(standard,/No CSS patch stacks|No CSS patch stack|one canonical management stylesheet/i);
 });
