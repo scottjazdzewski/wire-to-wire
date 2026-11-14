@@ -48,7 +48,7 @@ const ADJACENT=new Set([
  'NORTHEAST|MIDATLANTIC','MIDATLANTIC|SOUTHEAST','MIDATLANTIC|MIDWEST',
  'SOUTHEAST|MIDWEST','SOUTHEAST|SOUTH_CENTRAL','MIDWEST|SOUTH_CENTRAL',
  'MIDWEST|MOUNTAIN','SOUTH_CENTRAL|MOUNTAIN','MOUNTAIN|PACIFIC'
-]);
+].map(pair=>pair.split('|').sort().join('|')));
 function stateOf(site){
  const code=String(site?.location?.state||'').trim();
  const id=STATE_CODES[code]||code.toUpperCase();
