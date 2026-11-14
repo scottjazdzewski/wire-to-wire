@@ -41,3 +41,7 @@ export {TRAINER_CONTRACT_SCHEMA,TRAINER_CONTRACT_COMMANDS,createTrainerContractR
 
 export {PLAYER_RACE_PLAN_COMMANDS,PLAYER_RACE_PLAN_QUOTE_SCHEMA,
  quote1999PlayerRacePlan} from './player-race-plan-1999.js';
+
+export {POST_RACE_CAMPAIGN_SCHEMA,createPostRaceCampaignRuntime,
+ getGamePostRaceCampaign,postRaceWorkoutGuidance,
+ postRaceCarePriority,postRaceAIPlacement} from './post-race-campaign-1999.js';
