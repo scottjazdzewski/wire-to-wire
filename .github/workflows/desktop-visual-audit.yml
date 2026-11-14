@@ -11,6 +11,7 @@ on:
     paths:
       - 'public/next/**'
       - 'scripts/desktop-visual-audit.sh'
+      - 'scripts/1999-full-screen-controls-cdp.mjs'
       - 'tests/ui-uniformity-lock.test.mjs'
       - 'tests/ui-core-information-controls-contract.test.mjs'
       - '.github/workflows/desktop-visual-audit.yml'
