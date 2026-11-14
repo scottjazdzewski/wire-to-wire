@@ -11,6 +11,37 @@ const SAFE_ID=/^H-GAME-1999-[A-Za-z0-9-]{1,64}$/;
 const SAFE_REF=/^[A-Za-z0-9][A-Za-z0-9_:-]{1,127}$/;
 const SEXES=new Set(['COLT','FILLY','HORSE','MARE','GELDING']);
 const PROVENANCE='NEW_1999_GAME_FICTION';
+
+export const HORSE_STARTING_ATTRIBUTES_SCHEMA='WTW_1999_GAME_HORSE_ATTRIBUTES_V1';
+const HORSE_RATE_KEYS=Object.freeze([
+ 'raw_speed','stamina','acceleration','early_pace','finishing_kick',
+ 'dirt_aptitude','turf_aptitude','wet_track_aptitude',
+ 'sprint_aptitude','route_aptitude','consistency',
+ 'gate_composure','temperament','training_focus',
+ 'fitness','fatigue','confidence','stress','soundness_risk'
+]);
+export function validateHorseStartingAttributes(attributes){
+ ensure(isObject(attributes)&&attributes.schema===HORSE_STARTING_ATTRIBUTES_SCHEMA,
+  'HORSE_ATTRIBUTES','1999 game attributes need a versioned schema');
+ ensure(attributes.provenance==='MODELED_1999_GAMEPLAY_NOT_HISTORICAL',
+  'HORSE_ATTRIBUTES','Attributes must be explicitly modeled gameplay values');
+ ensure(Number.isInteger(attributes.current_ability)&&
+  Number.isInteger(attributes.potential_ability)&&
+  attributes.current_ability>=1&&attributes.current_ability<=99&&
+  attributes.potential_ability>=attributes.current_ability&&attributes.potential_ability<=99,
+  'HORSE_ATTRIBUTES','Invalid current or potential ability');
+ ensure(['DIRT','TURF','DUAL'].includes(attributes.preferred_surface)&&
+  ['SPRINT','MIDDLE','ROUTE'].includes(attributes.preferred_distance),
+  'HORSE_ATTRIBUTES','Invalid racing specialties');
+ for(const key of HORSE_RATE_KEYS)
+  ensure(typeof attributes[key]==='number'&&Number.isFinite(attributes[key])&&
+   attributes[key]>=0&&attributes[key]<=1,'HORSE_ATTRIBUTES','Invalid rating '+key);
+ ensure(Object.keys(attributes).every(key=>['schema','provenance','current_ability',
+  'potential_ability','preferred_surface','preferred_distance',...HORSE_RATE_KEYS].includes(key)),
+  'HORSE_ATTRIBUTES','Unknown or unsupported starting rating');
+ return attributes;
+}
+
 const norm=x=>String(x||'').normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-US');
 const nonempty=(x,key)=>{requireString(x,key,128);ensure(SAFE_REF.test(x),'HORSE_REGISTRATION','Invalid '+key);return x};
 export function createHorseRegistrationRuntime(){
@@ -61,6 +92,8 @@ export function validateHorseRegistrationRuntime(state,world){
    site.stalls>0&&
    (!site.residence_kind||['ORGANIZATION_HOME_SITE','TRACK_TRAINER_BARN'].includes(site.residence_kind)),
    'HORSE_REGISTRY','Registered horse home is not operational');
+  if(h.starting_attributes!==undefined&&h.starting_attributes!==null)
+   validateHorseStartingAttributes(h.starting_attributes);
   ensure(isObject(h.career)&&Number.isSafeInteger(h.career.starts)&&h.career.starts>=0&&
    Number.isSafeInteger(h.career.wins)&&h.career.wins>=0&&h.career.wins<=h.career.starts&&
    Number.isSafeInteger(h.career.earnings_minor)&&h.career.earnings_minor>=0,
@@ -121,6 +154,7 @@ export function registerHorseAction({state,world,command,emit}){
  if(site.residence_kind==='TRACK_TRAINER_BARN')ensure(site.head_trainer_person_id===h.trainer_id,
    'TRAINER_BARN_MISMATCH','Track-housed horse must use the registered barn trainer');
  ensure(h.status==='IN_TRAINING','HORSE_STATUS','Racehorses must register as in training');
+ if(h.starting_attributes!==undefined)validateHorseStartingAttributes(h.starting_attributes);
  const horse={
   horse_id:h.horse_id,id:h.horse_id,name:h.registered_name,registered_name:h.registered_name,
   sex:h.sex,foaling_year:h.foaling_year,birth_date:h.birth_date,racing_age_1999:1999-h.foaling_year,
@@ -133,6 +167,7 @@ export function registerHorseAction({state,world,command,emit}){
   provenance:PROVENANCE,registration_date:state.clock.date,registration_receipt_id:h.registration_receipt_id,
   naming:{status:'ACCEPTED',release_id:release.release_id,candidate_id:candidate.candidate_id,
    reserved_names_version:release.reserved_names.version},
+  ...(h.starting_attributes===undefined?{}:{starting_attributes:structuredClone(h.starting_attributes)}),
   career:{starts:0,wins:0,earnings_minor:0}
  };
  rt.by_id[horse.horse_id]=horse;rt.by_receipt[horse.registration_receipt_id]=horse.horse_id;
