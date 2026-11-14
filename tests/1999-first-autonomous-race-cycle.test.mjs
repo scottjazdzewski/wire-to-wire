@@ -91,18 +91,25 @@ test('first 1999 race completes with full deterministic placings, purse ledger a
    x.kind==='RACE_PURSE_OWNER_CREDIT');
   const jockeyCredits=state.runtime.finances.ledger.filter(x=>x.race_id===r.id&&
    x.kind==='RACE_PURSE_JOCKEY_CREDIT');
+  const trainerCredits=state.runtime.finances.ledger.filter(x=>x.race_id===r.id&&
+   x.kind==='RACE_PURSE_TRAINER_CREDIT');
+  assert.equal(trainerCredits.length,r.results.length);
   const sponsor=state.runtime.finances.ledger.find(x=>x.race_id===r.id&&
    x.kind==='RACE_MODELED_SPONSOR_ESCROW_RELEASE');
   assert.equal(ownerCredits.length,r.results.length);
   assert.equal(jockeyCredits.length,r.results.length);
+  assert.ok(r.results.slice(5).every(row=>row.earnings_minor===0),
+   'Only five paid places, never an accidental payout to the last finisher');
   assert.equal(sponsor.amount_minor+
    ownerCredits.reduce((n,x)=>n+x.amount_minor,0)+
-   jockeyCredits.reduce((n,x)=>n+x.amount_minor,0),0);
+   jockeyCredits.reduce((n,x)=>n+x.amount_minor,0)+
+   trainerCredits.reduce((n,x)=>n+x.amount_minor,0),0);
   for(const row of r.results){
    const h=state.runtime.registered_horses.by_id[row.horse_id];
    assert.ok(h.career.starts>=1);
    assert.ok(h.career.earnings_minor>=row.earnings_minor);
    assert.ok(state.runtime.horse[h.horse_id].history.some(e=>e.kind==='RACE_RECOVERY_PROJECTION'&&e.race_id===r.id));
+   assert.equal(row.owner_share_minor+row.trainer_share_minor+row.jockey_share_minor,row.earnings_minor);
   }
  }
  assert.deepEqual(importGameSave(exportGameSave(state,world),world),state);
