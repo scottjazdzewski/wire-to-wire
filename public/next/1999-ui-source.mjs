@@ -446,22 +446,28 @@ function setGameDate(date){
 function departmentRows(section,page,context={}){
  if(context.date)setGameDate(context.date);
  if(activePlaytest&&playtestSnapshot&&section==='Racing'&&
-  (page==='Entries'||page==='Results')){
-  const races=new Map(playtestSnapshot.races.map(r=>[r.id,r]));
-  const entries=playtestSnapshot.entries.filter(e=>
-   page==='Entries'?e.status==='ENTERED'||e.status==='BOOKED':
-   e.status==='RESULTED');
-  const owners=new Map(playtestSnapshot.all_horses.map(h=>[h.id,h]));
-  const racers=entries.map(e=>{
-   const race=races.get(e.race_id),horse=owners.get(e.horse_id),
-    result=race?.results?.find(x=>x.horse_id===e.horse_id);
-   const rider=playtestSnapshot.people.find(p=>p.id===e.jockey_id);
-   return {_kind:'race',_name:race?.name||e.race_id,_raceId:e.race_id,
-    _track:horse?.track_name||'',_iso:race?.date||'',
-    _raceData:race||null,date:race?.date||'',track:horse?.track_name||'',
-    race:race?.name||('Race '+(race?.number||'')),class:race?.conditions||'',
-    surface:race?.surface||'',distance:race?.distance_furlongs+'f',
-    purse:race?.purse_minor?'
+   (page==='Entries'||page==='Results')){
+  const byRace=new Map(playtestSnapshot.races.map(r=>[r.id,r]));
+  const byHorse=new Map(playtestSnapshot.all_horses.map(h=>[h.id,h]));
+  return playtestSnapshot.entries.filter(e=>page==='Entries'?
+   ['ENTERED','BOOKED'].includes(e.status):e.status==='RESULTED').map(e=>{
+    const race=byRace.get(e.race_id),horse=byHorse.get(e.horse_id);
+    const finishing=race?.results?.find(x=>x.horse_id===e.horse_id);
+    const jockey=playtestSnapshot.people.find(p=>p.id===e.jockey_id);
+    return {_kind:'race',_name:race?.name||e.race_id,_raceId:e.race_id,
+     _track:horse?.track_name||'',_iso:race?.date||'',_raceData:race||null,
+     date:race?.date||'',track:horse?.track_name||'',
+     race:race?.name||('Race '+(race?.number||'')),class:race?.conditions||'',
+     surface:race?.surface||'',distance:race?race.distance_furlongs+'f':'',
+     purse:race?money(race.purse_minor/100):'',
+     horse:horse?.name||e.horse_id,base:horse?.site_name||'',
+     ship:'STABLED AT TRACK',jockey:jockey?.name||e.jockey_id||'',
+     trainer:horse?.trainer_name||'',ready:horse?.condition?.readiness==null?'—':
+      Math.round(horse.condition.readiness*100)+'%',
+     status:page==='Results'?'FINISHED '+(finishing?.finish||'—'):
+      e.status+' · MODELED 1999 TEST'};
+   });
+ }
  const key=section+'|'+page+(section==='Racing'?'|'+(context.date||'1999-01-01')+'|'+(context.racingMode||'meets'):'');
  if(departmentCache.has(key))return departmentCache.get(key);
  const rows=makeDepartmentRows(section,page,context);
