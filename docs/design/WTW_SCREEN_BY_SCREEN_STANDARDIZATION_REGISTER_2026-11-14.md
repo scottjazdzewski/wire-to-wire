@@ -11,7 +11,7 @@
 1. Global header/department rail and Save/Load/Continue work without changing the game behind the player's back.
 2. Select a department from the one left rail; use the shared **VIEW** dropdown to navigate its available views. On a profile, use Overview / History / **MORE RECORDS** from its permanent local control area.
 3. Search/filter the **complete underlying directory** (not a clipped preview), adjust ALL COLUMNS / QUICK VIEW, sort by a meaningful column (repeat for reverse order), then open a record by its source ID.
-4. Long lists scroll **inside their own keyboard-focusable region**, with visible headings and usable scrollbars. No hidden extra full-screen page or redundant navigation. Keep global rail and primary tools visible where layout permits.
+4. Long lists **independently scroll** inside their own keyboard-focusable region, with visible headings and usable scrollbars. No hidden extra full-screen page or redundant navigation. Keep global rail and primary tools visible where layout permits.
 5. Back/Forward returns to the correct former view. Logo, category badge, status, data and profile records remain matched to the same immutable entity ID.
 6. Information-rich workspace: surface genuine current activity, schedules, risk, entries, work, costs, history and actionable decisions when available; no filler, sprawling blank cards or flat-looking generic website widgets. Preserve readable typography and selected accents.
 7. Saving, exiting and restarting must reopen the same career with unchanged time, horses, people, money, decisions and visuals; malformed saves fail closed.
