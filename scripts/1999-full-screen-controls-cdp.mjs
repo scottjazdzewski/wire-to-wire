@@ -236,6 +236,7 @@ try {
   const overview=nav?.querySelector('[data-ng="detailtab"][data-val="Overview"]');
   return {ready:!!nav&&!!name&&!!select&&!!history&&!!overview,
    name,identity:root?.getAttribute('data-wtw-identity')||'',
+   sourceRecord:new URLSearchParams(location.search).get('ui')||'',
    date:root?.querySelector('.ng-global-date strong')?.textContent?.trim()||'',
    record:nav?.querySelector('.ng-person-dossierlabel small')?.textContent?.trim()||'',
    overview:overview?.getAttribute('aria-current')||'',
@@ -268,7 +269,12 @@ try {
   assert.equal(original.roots,1,'A second game UI opened in '+item.family);
   assert.equal(original.legacy,0,'Old pilot profiles came back in '+item.family);
   assert.equal(original.oldOfficeHidden,true);
-  if(item.id)assert.equal(original.identity,item.id,'The wrong '+item.family+' identity/brand was opened');
+  if(item.id)assert.ok(original.sourceRecord.endsWith(':'+item.id),
+   'Opened the wrong canonical '+item.family+' source ID: '+original.sourceRecord);
+  // A profile without approved person art has no theme key, by design.
+  // If a theme exists, it must never belong to a different entity.
+  if(item.family==='TRACK')assert.equal(original.identity,item.id,'Wrong approved track logo/theme');
+  else if(item.id&&original.identity)assert.equal(original.identity,item.id,'Wrong '+item.family+' logo/theme');
   const deeper=original.options.find(x=>x&&x!=='Overview'&&x!=='History');
   assert.ok(deeper,item.family+' has no deeper record view');
   if(item.family==='TRACK'){
@@ -284,6 +290,7 @@ try {
   assert.equal(history.history,'page',item.family+' history is not active after clicking');
   assert.equal(history.name,original.name,'Identity changed when opening '+item.family+' history');
   assert.equal(history.identity,original.identity);
+  assert.equal(history.sourceRecord,original.sourceRecord);
   assert.equal(history.date,baseline.date);
 
   const choose=await evaluate(`(()=>{
@@ -298,6 +305,7 @@ try {
   assert.equal(record.selected,deeper,'MORE RECORDS selected the wrong view in '+item.family);
   assert.equal(record.name,original.name);
   assert.equal(record.identity,original.identity);
+  assert.equal(record.sourceRecord,original.sourceRecord);
   assert.equal(record.date,baseline.date);
   const returnHome=await evaluate(`(()=>{
    const button=document.querySelector('#wtwNextgen .ng-person-dossierbar [data-ng="detailtab"][data-val="Overview"]');
@@ -307,6 +315,7 @@ try {
   const restored=await profileReady(item.family+' restored overview','OVERVIEW');
   assert.equal(restored.overview,'page');
   assert.equal(restored.identity,original.identity);
+  assert.equal(restored.sourceRecord,original.sourceRecord);
   assert.equal(restored.name,original.name);
   assert.equal(restored.date,baseline.date);
   if(item.family==='TRACK')assert.ok(restored.hasStakes&&restored.hasMeet&&restored.hasTrackHistory,
