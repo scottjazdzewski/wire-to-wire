@@ -10,7 +10,7 @@ import {ensure,isObject,requireString,validDate,worldIdentity} from './contracts
 export const FUTURE_GAME_INDUSTRY_SCHEMA_V23='WTW_GAME_APPROVED_FUTURE_INDUSTRY_V23';
 export const FUTURE_INDUSTRY_COMMANDS_V23=Object.freeze([
  'ACTIVATE_APPROVED_FUTURE_PERSON','ACTIVATE_APPROVED_FUTURE_ORGANIZATION',
- 'SYNC_APPROVED_FUTURE_ORGANIZATION'
+ 'SYNC_APPROVED_FUTURE_PERSON','SYNC_APPROVED_FUTURE_ORGANIZATION'
 ]);
 const KINDS=new Set(['OWNER','STABLE','FARM','TRAINING_CENTER']);
 const ROLES=Object.freeze({
@@ -171,6 +171,22 @@ export function applyFutureIndustryGameAction({state,world,command,emit}){
   root.people[person.id]=person;
   emit('FUTURE_PERSON_ACTIVATED',{person_id:person.id,
    industry_world_id:root.industry_world_id,source:'V12_V17_APPROVED_FUTURE_PERSON'});
+ }else if(type==='SYNC_APPROVED_FUTURE_PERSON'){
+  id(record.id,'person');
+  const person=root.people[record.id];
+  ensure(person&&record.name===person.name&&record.role===person.role&&
+   typeof record.retired==='boolean'&&
+   ['AVAILABLE','ON_LEAVE'].includes(record.availability)&&
+   Number.isSafeInteger(record.continuityRevision)&&
+   record.continuityRevision>person.continuity_revision,
+   'FUTURE_PERSON_SYNC','Personnel sync must match immutable approved ID and advance revision');
+  person.retired=record.retired;
+  person.availability=record.availability;
+  person.continuity_revision=record.continuityRevision;
+  emit('FUTURE_PERSON_SYNCED',{person_id:person.id,
+   retired:person.retired,availability:person.availability,
+   continuity_revision:person.continuity_revision,
+   source:'CURRENT_V17_CONTINUITY'});
  }else if(type==='ACTIVATE_APPROVED_FUTURE_ORGANIZATION'){
   ensure(!root.organizations[record.id]&&!root.people[record.id],
    'FUTURE_ORGANIZATION_DUPLICATE','Business already activated in this game run');
@@ -230,6 +246,8 @@ export function validateFutureIndustryGameRuntime(state,world){
    typeof p.name==='string'&&p.name.trim()&&
    typeof p.primarySurname==='string'&&p.primarySurname.trim()&&
    typeof p.role==='string'&&Number.isInteger(p.birthYear)&&
+   typeof p.retired==='boolean'&&
+   ['AVAILABLE','ON_LEAVE'].includes(p.availability)&&
    p.origin==='V12_V17_APPROVED_FUTURE_GAME_PERSON'&&
    Number.isSafeInteger(p.naming_revision)&&p.naming_revision>0&&
    Number.isSafeInteger(p.continuity_revision)&&p.continuity_revision>0&&
