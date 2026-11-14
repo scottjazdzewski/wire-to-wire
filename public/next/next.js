@@ -2493,12 +2493,12 @@ function liveStableRosterView(directory=false){
  return '<section class="ng-functional ng-stable-roster-v2 '+(directory?'ng-directory-roster':'')+'">'+
   '<div class="ng-rs-title"><strong>'+(directory?'HORSE DIRECTORY':'STABLE & HORSES')+'</strong><span>'+(directory?universe.total:all.length)+' HORSES · '+all.filter(x=>x.entered).length+
    ' ENTERED · '+all.filter(x=>x.hasTarget&&!x.entered).length+' TARGETED · '+all.filter(x=>['watch','treat'].includes(x.health[0])).length+
-   ' VET WATCH</span>'+(directory?'':'<button data-ng="stable-world-edit"' title="Open the editable 1999 World horse records">✎ EDIT 1999 RECORDS</button>')+'<button data-ng="menu" data-val="Racing">RACE CALENDAR ↗</button></div>'+
+   ' VET WATCH</span>'+(directory?'':'<button data-ng="stable-world-edit" title="Open the editable 1999 World horse records">✎ EDIT 1999 RECORDS</button>')+'<button data-ng="menu" data-val="Racing">RACE CALENDAR ↗</button></div>'+
   (directory&&universe.indexing?'<div role="status" class="ng-dpt-disclosure">Indexing the registered world horse directory; source records remain unchanged.</div>':'')+
   '<div class="ng-rs-tools"><label for="'+(directory?'ngDirectorySearch':'ngStableSearch')+'">SEARCH</label><input id="'+(directory?'ngDirectorySearch':'ngStableSearch')+'" data-ng-input="'+(directory?'directory-search':'stable-search')+'" type="search" value="'+safe(directory?APP.directorySearch:APP.stableSearch)+
    '" placeholder="Horse, owner, trainer, status…" autocomplete="off"/><div class="ng-rs-filters">'+filters+'</div>'+
    '<div class="ng-rs-mode"><button data-ng="'+(directory?'directory-mode':'stable-mode')+'" data-val="all" class="'+(mode!=='compact'?'on':'')+'">ALL COLUMNS</button>'+
-   '<button data-ng="stable-mode" data-val="compact" class="'+(mode==='compact'?'on':'')+'">QUICK VIEW</button></div></div>'+
+   '<button data-ng="'+(directory?'directory-mode':'stable-mode')+'" data-val="compact" class="'+(mode==='compact'?'on':'')+'">QUICK VIEW</button></div></div>'+
   (window.WTW1999RosterFilters?.render(columns,stableCriteria,safe,scope)||'')+
   '<section class="ng-rs-roster"><header><strong>HORSE MANAGEMENT ROSTER</strong><span class="ng-stable-visible">'+filtered.length+' OF '+all.length+
    ' HORSES · CLICK HEADINGS TO SORT</span></header>'+
