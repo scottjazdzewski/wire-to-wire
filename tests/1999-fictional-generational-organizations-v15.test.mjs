@@ -92,8 +92,9 @@ test('later organization styles reflect decades, with correct regional roots and
   });
   assert.deepEqual(w,createFictionalWorldNameEngine({...spec,year}));
  }
- assert.deepEqual(namesByYear.get(2005).stables,
-  namesByYear.get(2019).stables.map((_,i)=>namesByYear.get(2005).stables[i]));
+ // Site names are tied to long editorial periods, not regenerated simply
+ // because the calendar advances by a single year within the same period.
+ assert.deepEqual(namesByYear.get(2005).farms,namesByYear.get(2019).farms);
  assert.notDeepEqual(namesByYear.get(2019).owners,namesByYear.get(2020).owners);
  assert.notDeepEqual(namesByYear.get(2035).farms,namesByYear.get(2050).farms);
  assert.equal(generationalOrganizationNamingPeriod(1999),'FROZEN_1999');
