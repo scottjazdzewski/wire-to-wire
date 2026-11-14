@@ -12,8 +12,9 @@ test('every department menu uses exactly one uniform roster with full/quick togg
  for(const section of ['Racing','Breeding','Sales','Personnel','Facilities','Finances','World'])
   assert.ok(js.includes(section),section);
  assert.match(dept,/const departmentMode=APP\.departmentModes\[rosterScope\]/);
- assert.match(dept,/data-ng="dept-mode" data-val="all"/);
- assert.match(dept,/data-ng="dept-mode" data-val="compact"/);
+ assert.match(dept,/rosterDensityControls\('department',departmentMode\)/);
+ assert.match(js,/function rosterDensityControls\(scope,activeMode\)/);
+ assert.match(js,/data-ng="'\+action\+'" data-val="'\+value/);
  assert.match(dept,/data-ng="dept-sort"/);
  assert.match(dept,/data-ng-input="department-search"/);
  assert.match(dept,/WTW1999RosterFilters\?\.render\(specs,rosterFilter/);
@@ -34,7 +35,7 @@ test('track major stakes and every detailed profile table use the same interacti
  assert.match(css,/max-height:340px/);
 });
 test('web app loads fresh bundled CSS and JavaScript rather than stale browser cache',()=>{
- assert.match(html,/\/next\/next\.js\?rev=wtw1999-direct-commands-20261114/);
- assert.match(html,/\/next\/next\.css\?rev=wtw-unified-design-20261113/);
+ assert.match(html,/\/next\/next\.js\?rev=wtw-fm-ootp-uniform-controls-20261114/);
+ assert.match(html,/\/next\/next\.css\?rev=wtw-fm-ootp-uniform-controls-20261114/);
  assert.equal((html.match(/rel="stylesheet"/g)||[]).length,1,'One authoritative management CSS');
 });
