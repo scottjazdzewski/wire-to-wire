@@ -258,7 +258,7 @@ test('V12 durable registry survives time advancement and restart with no 1999 re
 test('V13 naming module is isolated from game population, horses, pedigrees and UI',()=>{
  const v13=readFileSync(new URL('../public/1999/engine/generational-person-names-v13.mjs',
   import.meta.url),'utf8');
- const live=readFileSync(new URL('../public/1999/engine/full-world-generator.mjs',
+ const live=readFileSync(new URL('../public/1999/engine/founding-world-1999.mjs',
   import.meta.url),'utf8');
  assert.doesNotMatch(v13,/\b(?:fetch|localStorage|indexedDB|writeFile|setItem)\s*\(/);
  assert.doesNotMatch(live,/generational-person-names-v13/);
