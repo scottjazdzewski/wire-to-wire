@@ -104,3 +104,12 @@ The `goOffice()` player control no longer clicks an invisible Office Overview bu
 
 `tests/fm-direct-office-navigation.test.mjs` requires the direct Office command, single source-backed department navigation, and rejects missing native services. These changes do **not** authorize deleting the hidden profile source DOM yet.
 
+
+## World & News Hidden Route Retirement (2026-11-14)
+
+The playable founding career no longer navigates through `originalAct('World')` or `originalAct('News')`. The former hidden Office World directory contained six hard-coded demo horses and older connections, and the former News screen contained two prototype reports. They are retained only as inaccessible compatibility source code until other remaining bridge functions can be safely removed. **They must never become a playable fallback.**
+
+The active World Overview and News views now use the shared FM/OOTP management component family and source-backed 1999 registry, race, people and Office message records. No new racing result, publication, farm, owner, name, horse or date is invented. World source records remain linkable through the full directory views, while World Overview is deliberately bounded for a dense one-screen experience.
+
+Next extraction target: source-only profile and Office action routing. Do not alter this workstream's shared profile structures while another profile-navigation PR is active.
+
