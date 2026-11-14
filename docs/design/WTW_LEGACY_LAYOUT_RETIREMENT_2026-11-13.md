@@ -47,3 +47,20 @@ Remaining adapter-dependent scripts include `office-v30-1.js`, `office-v30-4.js`
 - `tests/no-legacy-screen-regression.test.mjs`: confirms no retired Manager V2 files, alternate entrypoint or obsolete Office pager scripts; checks the old bridge is hidden and required game actions remain connected.
 - `tests/ui-uniformity-lock.test.mjs`: prevents competing live renderers, extra CSS layers and non-uniform navigation.
 - `scripts/desktop-visual-audit.sh`: captures the single current Office and actual profile/department screens; there is no alternate Manager V2 screenshot workflow.
+
+
+### Retired unused legacy Office CSS generations — 2026-11-13
+The only current playable stylesheets are `public/next/next.css`, `1999-commercial-career.css`, `identity-themes.css` and `profile-hero-v2.css`. The History Vault uses its separate `public/style.css`.
+
+These **nine entirely unreferenced historical theme files were physically removed** from production:
+- `public/office-compact-v31.css`
+- `public/office-fm-v32.css`
+- `public/office-fm-v33.css`
+- `public/office-fm-v34.css`
+- `public/office-fm-v35.css`
+- `public/office-fm-v36.css`
+- `public/office-fm-v37.css`
+- `public/office-v30.css`
+- `public/office-visual-system-v38.css`
+
+**Retired visual CSS is not a fallback.** Do not add a reference to these files when a current page looks wrong: fix the shared, approved stylesheet. `tests/no-legacy-screen-regression.test.mjs` enforces their absence. The older `office-fm-v32.js` to `v37.js` scripts are a **separate, still-active hidden source/data compatibility chain** and are not deleted by this CSS-only change.
