@@ -3618,6 +3618,7 @@ function sourceNewsDesk(){
     '<button type="button" data-ng="custom" data-val="Messages">'+glyph('mail',13)+' OFFICE INBOX</button></div></header>'+
   '<div class="ng-manager-metrics">'+
    '<div class="ng-manager-metric"><small>OFFICE BRIEFINGS</small><strong>'+notes.length+'</strong></div>'+
+   '<div class="ng-manager-metric"><small>PRIORITY BRIEFINGS</small><strong>'+notes.filter(m=>m.urgent&&!m.resolved).length+'</strong></div>'+
    '<div class="ng-manager-metric"><small>VERIFIED EXTERNAL NEWS</small><strong>NOT CONNECTED</strong></div>'+
    '<div class="ng-manager-metric"><small>GAME DATE</small><strong>'+safe(depGameDay())+'</strong></div>'+
   '</div><div class="ng-manager-workspace">'+
@@ -3628,7 +3629,7 @@ function sourceNewsDesk(){
      '<p class="ng-manager-empty">No Office briefings are currently recorded for this career.</p>')+
     '</div></section>'+
    '<aside class="ng-manager-sidebar"><section class="ng-manager-secondary"><header>'+
-    '<strong>RACING NEWS STATUS</strong><span>AWAITING VERIFIED SOURCE</span></header>'+
+    '<strong>RACING NEWS STATUS</strong><span>NOT CONNECTED</span></header>'+
     '<p class="ng-manager-empty">No verified external racing-news feed is connected to this 1999 career. Office briefings are internal game correspondence, not published news articles.</p>'+
     '</section><section class="ng-manager-secondary"><header><strong>HISTORICAL REFERENCE</strong></header>'+
     '<button class="ng-manager-case" type="button" data-ng="search-history">'+
@@ -3747,7 +3748,7 @@ else if(APP.custom.startsWith('PilotHorse:')){body=pilotHorseDetail(decodeURICom
 else if(APP.custom.startsWith('RaceFile:')){const id=decodeURIComponent(APP.custom.slice('RaceFile:'.length));const race=APP.raceRouteKey===id?APP.raceDetail:window.__WTW_1999_UI_DATA__?.findRace?.(id);body=window.WTW1999RaceConditions?.render(race,window.__WTW_1999_UI_DATA__)||'<section class="ng-1999-race-file"><h2>Race file loading unavailable</h2></section>'}
 else if(APP.custom.startsWith('Preview:')){body=previewRecordView()}
 else {body=managerDashboard()}
-const isProfile=Boolean(profile)||body.startsWith('<div class="ng-profile-view '),isOrganization=APP.custom==='Organization Overview',isSearch=APP.custom==='Search',isManager=body.startsWith('<section class="ng-manager-screen">');
+const isProfile=Boolean(profile)||body.startsWith('<div class="ng-profile-view '),isOrganization=APP.custom==='Organization Overview',isSearch=APP.custom==='Search',isManager=body.startsWith('<section class="ng-manager-screen');
 return `<main class="ng-route ${isProfile?'ng-route-profile':isOrganization?'ng-route-organization':isSearch?'ng-route-search':isManager?'ng-route-manager':''}">${isProfile||isOrganization||isManager?'':`<header class="ng-routeheading"><span class="ng-route-badge-slot" aria-hidden="true">${APP.custom==='Organization Overview'?organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',true,true):`<img class="ng-routebadge" src="${safe(bdg)}" alt=""/>`}</span><div class="ng-routetext"><small>${safe(kicker)}</small><h1>${safe(title)}</h1></div><button class="ng-back" data-ng="office">← RACING OFFICE</button></header>`}<div class="ng-routegrid" data-route-key="${safe((route?.kicker||APP.custom||APP.section)+'|'+(route?.title||APP.custom||APP.page))}"><div class="ng-routeinner">${body}</div></div></main>`;}
 // Keep browser-native select menus mounted while the user chooses an option.
 // Hidden Office mutations repaint this interface frequently; a full re-render
