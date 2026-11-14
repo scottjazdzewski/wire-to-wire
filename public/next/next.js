@@ -238,7 +238,20 @@ function pageTab(name){if(APP.section==='History'){const pages={'Race Results':'
  if(s==='World'&&(name==='Overview'||name==='Major Races'))return bridgeNode(originalAct('World'));
  openCustomView(`${s} — ${name}`,s,name);
 }
-const currentMessages=()=>window.__WTW_1999_UI_DATA__?.officeMessages||$('.left .msg[data-case]').map(n=>({case:n.dataset.case,from:$('.from',n)?.textContent.trim()||'Stable Office',title:$('.title',n)?.textContent.trim()||'',meta:$('.meta',n)?.textContent.trim()||'',time:$('.time',n)?.textContent.trim()||'',urgent:n.classList.contains('urgent'),resolved:n.classList.contains('resolved'),initials:$('.avatar',n)?.textContent.trim()||'WT'}));
+// 1999 inbox rows come directly from the canonical source adapter, never from
+// hidden legacy Office messages. Non-founding compatibility is isolated below.
+const currentMessages=()=>{
+ const sourceMessages=window.__WTW_1999_UI_DATA__?.officeMessages;
+ const cleanMode=isClean1999();
+ const legacyMessages=cleanMode?null:$('.left .msg[data-case]').map(n=>({
+  case:n.dataset.case,from:$('.from',n)?.textContent.trim()||'Stable Office',
+  title:$('.title',n)?.textContent.trim()||'',meta:$('.meta',n)?.textContent.trim()||'',
+  time:$('.time',n)?.textContent.trim()||'',urgent:n.classList.contains('urgent'),
+  resolved:n.classList.contains('resolved'),initials:$('.avatar',n)?.textContent.trim()||'WT'
+ }));
+ return window.__WTW_OFFICE_DIRECT_READ__?.messages({sourceMessages,legacyMessages,cleanMode})||
+  (Array.isArray(sourceMessages)?sourceMessages:(legacyMessages||[]));
+};
 const selectMessage=id=>{APP.activeCase=id;const m=$(`.left .msg[data-case="${CSS.escape(id)}"]`);
  if(m){const all=filteredMessages();let pos=all.findIndex(x=>x.case===id);
  if(pos<0){APP.filter='All';pos=currentMessages().findIndex(x=>x.case===id)}
@@ -2808,7 +2821,18 @@ function depRaceIso(value){
 
 /* Canonical track meet windows are read from Office; the game date governs active meets. */
 const DEP_MONTH={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
-function depGameDay(){return liveStableDate($('.dateChip')?.textContent.trim())||liveStableDate(state().date)||'1999-01-01'}
+// The active engine owns the date. A legacy date chip is not authoritative
+// and must not rewind the 1999 playtest or drive its calendar.
+function depGameDay(){
+ const cleanMode=isClean1999();
+ const engineDate=window.__WTW_1999_UI_DATA__?.gameplayService?.state?.clock?.date;
+ const careerDate=state().date;
+ const legacyDate=cleanMode?null:$('.dateChip')?.textContent.trim();
+ return window.__WTW_OFFICE_DIRECT_READ__?.gameDate({
+  engineDate,careerDate,legacyDate,cleanMode
+ })||(cleanMode?(liveStableDate(engineDate)||liveStableDate(careerDate)||'1999-01-01'):
+   (liveStableDate(legacyDate)||liveStableDate(careerDate)||'1999-01-01'));
+}
 function depRaceBrowseDate(){
  const chosen=APP.racingDate;
  return /^1999-\d{2}-\d{2}$/.test(String(chosen||''))&&liveStableDate(chosen)?chosen:depGameDay();
