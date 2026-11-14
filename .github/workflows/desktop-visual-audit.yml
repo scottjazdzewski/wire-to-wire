@@ -6,6 +6,12 @@ on:
       - 'public/**'
       - 'scripts/desktop-visual-audit.sh'
       - '.github/workflows/desktop-visual-audit.yml'
+  pull_request:
+    paths:
+      - 'public/next/**'
+      - 'scripts/desktop-visual-audit.sh'
+      - 'tests/ui-uniformity-lock.test.mjs'
+      - '.github/workflows/desktop-visual-audit.yml'
   workflow_dispatch:
 
 permissions:
