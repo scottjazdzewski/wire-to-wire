@@ -141,7 +141,7 @@ test('CLI stress runner produces only synthetic statistics and maintains bounded
 });
 test('generation quality gate is read only and does not touch history, game world, horses or UI',()=>{
  const file=readFileSync(new URL('../public/1999/engine/generational-name-quality-v14.mjs',import.meta.url),'utf8');
- const source=readFileSync(new URL('../public/1999/engine/full-world-generator.mjs',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../public/1999/engine/founding-world-1999.mjs',import.meta.url),'utf8');
  assert.doesNotMatch(file,/\b(?:fetch|indexedDB|writeFile|setItem|localStorage)\s*\(/);
  assert.doesNotMatch(source,/generational-name-quality-v14/);
 });
