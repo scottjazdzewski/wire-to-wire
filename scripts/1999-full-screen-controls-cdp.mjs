@@ -1,0 +1,157 @@
+#!/usr/bin/env node
+/** Wire to Wire interactive screen-family audit.
+ * Walks the ACTUAL navigation rail and VIEW dropdowns for every 1999
+ * department page in one Chromium process. Unlike static HTML inspection,
+ * this confirms operating behavior and preserves the in-world game date.
+ * History Archive is independently audited by desktop-visual-audit.sh.
+ */
+import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import {readFileSync,mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {spawn} from 'node:child_process';
+
+const source=readFileSync(new URL('../public/next/next.js',import.meta.url),'utf8');
+const start=source.indexOf('const tabmap='),end=source.indexOf('\nconst actions=',start);
+assert.ok(start>=0&&end>start);
+const tabmap=vm.runInNewContext(source.slice(start,end)+'\ntabmap;');
+const delay=ms=>new Promise(ok=>setTimeout(ok,ms));
+const chrome=process.env.CHROME||'google-chrome';
+const port=9363,url='http://127.0.0.1:8891/next/';
+const profile=mkdtempSync(join(tmpdir(),'wtw-screen-matrix-'));
+const server=spawn('python3',['-m','http.server','8891','--bind','127.0.0.1','--directory','public'],{stdio:'ignore'});
+let proc=null,ws=null;
+try {
+ let serverUp=false;
+ for(let i=0;i<75;i++){
+  try{const r=await fetch(url);if(r.ok){serverUp=true;break}}catch{}
+  await delay(150);
+ }
+ assert.ok(serverUp,'Source server did not start');
+ proc=spawn(chrome,[
+  '--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage',
+  '--disable-background-networking','--disable-extensions','--no-first-run',
+  '--no-default-browser-check','--remote-allow-origins=*',
+  '--window-size=1536,864','--remote-debugging-port='+port,
+  '--user-data-dir='+profile,url
+ ],{stdio:'ignore'});
+ let tab=null;
+ for(let i=0;i<110;i++){
+  try {
+   const pages=await fetch('http://127.0.0.1:'+port+'/json/list').then(r=>r.json());
+   tab=pages.find(t=>t.type==='page'&&t.url.startsWith(url));
+   if(tab)break;
+  }catch{}
+  if(proc.exitCode!==null)throw Error('Chromium stopped during screen audit startup');
+  await delay(150);
+ }
+ assert.ok(tab,'Could not find game browser tab');
+ ws=new WebSocket(tab.webSocketDebuggerUrl);
+ await new Promise((ok,fail)=>{
+  ws.addEventListener('open',ok,{once:true});
+  ws.addEventListener('error',fail,{once:true});
+ });
+ let seq=0;
+ const pending=new Map();
+ ws.addEventListener('message',event=>{
+  let packet;try{packet=JSON.parse(event.data)}catch{return}
+  if(!pending.has(packet.id))return;
+  const {ok,fail}=pending.get(packet.id);pending.delete(packet.id);
+  if(packet.error)fail(Error(packet.error.message));else ok(packet.result);
+ });
+ const command=(method,params={})=>new Promise((ok,fail)=>{
+  const id=++seq;pending.set(id,{ok,fail});ws.send(JSON.stringify({id,method,params}));
+ });
+ await command('Runtime.enable');
+ const evaluate=async expression=>{
+  const r=await command('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});
+  if(r.exceptionDetails)throw Error('Browser runtime error: '+JSON.stringify(r.exceptionDetails));
+  return r.result.value;
+ };
+ const details=`(()=>{
+  const app=window.__WTW_NEXT__?.app,root=document.getElementById('wtwNextgen');
+  if(!app||!root?.querySelector('.ng-manager-shell'))return {ready:false};
+  const selector=root.querySelector('select[data-ng-select="department-tab"],select[data-ng-select="manager-screen"]');
+  const table=root.querySelector('.ng-rs-table');
+  const scroller=root.querySelector('.ng-rs-scroll');
+  return {ready:true,section:app.section,page:app.page,
+   date:root.querySelector('.ng-global-date strong')?.textContent?.trim()||'',
+   rail:!!root.querySelector('.ng-game-rail'),header:!!root.querySelector('.ng-global'),
+   menu:selector?.dataset.ngSelect||null,
+   selected:selector?.value||null,
+   options:selector?[...selector.options].map(o=>o.value):[],
+   roster:!!table,sortable:table?.querySelectorAll('thead button[data-ng]')?.length||0,
+   scrollable:!!scroller&&scroller.tabIndex===0&&scroller.getAttribute('role')==='region',
+   legacy:root.querySelectorAll('.ng-connected-profile,.ng-connected-drop,.ng-connected-table').length,
+   numberOfRoots:document.querySelectorAll('#wtwNextgen').length,
+   hiddenOffice:!!document.querySelector('.app[data-wtw-layout="legacy-data-bridge"][hidden]'),
+   errors:window.__WTW_1999_PLAYTEST_ERROR__||null
+  };
+ })()`;
+ const view=()=>evaluate(details);
+ async function ready(section,page,where){
+  let latest=null;
+  for(let i=0;i<90;i++){
+   latest=await view();
+   if(latest?.ready&&(!section||latest.section===section)&&(!page||latest.page===page))
+    return latest;
+   await delay(80);
+  }
+  throw Error(where+': game screen did not open; '+JSON.stringify(latest));
+ }
+ const baseline=await ready(null,null,'Initial Office');
+ assert.ok(baseline.rail&&baseline.header&&baseline.hiddenOffice);
+ assert.equal(baseline.numberOfRoots,1);
+ let pageCount=0,tableCount=0;
+ for(const [section,pages] of Object.entries(tabmap)){
+  if(section==='History'||section==='Office')continue;
+  const opened=await evaluate(`(()=>{
+   const node=document.querySelector('#wtwNextgen .ng-game-rail [data-ng="menu"][data-val="${section}"]');
+   if(!node)return false;node.click();return true;
+  })()`);
+  assert.ok(opened,'Department rail missing '+section);
+  await ready(section,'Overview',section+' rail');
+  for(const page of pages){
+   let status=await ready(section,null,section+' screen');
+   assert.ok(status.menu,'No usable VIEW dropdown on '+section+' / '+page);
+   if(status.selected!==page){
+    const changed=await evaluate(`(()=>{
+     const selector=document.querySelector('#wtwNextgen select[data-ng-select="department-tab"],#wtwNextgen select[data-ng-select="manager-screen"]');
+     if(!selector||![...selector.options].some(o=>o.value===${JSON.stringify(page)}))return false;
+     selector.value=${JSON.stringify(page)};
+     selector.dispatchEvent(new Event('change',{bubbles:true}));
+     return true;
+    })()`);
+    assert.ok(changed,'VIEW dropdown could not select '+section+' / '+page);
+   }
+   status=await ready(section,page,section+' / '+page);
+   assert.ok(status.rail&&status.header&&status.hiddenOffice);
+   assert.equal(status.numberOfRoots,1);
+   assert.equal(status.legacy,0);
+   assert.equal(status.errors,null,'Game reported a command error on '+section+' / '+page);
+   assert.equal(status.selected,page,'Wrong active VIEW state: '+section+' / '+page);
+   assert.deepEqual(status.options,Array.from(pages),'VIEW options inconsistent on '+section+' / '+page);
+   assert.equal(status.date,baseline.date,'Browsing a screen advanced the game clock');
+   if(status.roster){
+    assert.ok(status.sortable>=2,'Unsortable roster: '+section+' / '+page);
+    assert.ok(status.scrollable,'Unreachable roster scroll: '+section+' / '+page);
+    tableCount++;
+   }
+   pageCount++;
+  }
+  console.log('WTW_SCREEN_FAMILY_PASS '+section+' '+pages.length+' views');
+ }
+ assert.ok(pageCount>=50,'Most of the approved screen inventory was lost');
+ assert.ok(tableCount>=18,'Full sortable roster family coverage unexpectedly missing');
+ console.log('WTW_SCREEN_MATRIX_PASS '+JSON.stringify({
+  individualViews:pageCount,sortableScrollableTableViews:tableCount,
+  date:baseline.date,oneUI:true,menuConsistency:true,sections:Object.keys(tabmap).length-2
+ }));
+}finally {
+ try{ws?.close()}catch{}
+ try{proc?.kill('SIGTERM')}catch{}
+ try{server.kill('SIGTERM')}catch{}
+ await delay(300);
+ rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150});
+}
