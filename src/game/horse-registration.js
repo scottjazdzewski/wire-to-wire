@@ -62,8 +62,10 @@ export function validateHorseRegistrationRuntime(state,world){
    Object.values(rt.by_id).filter(x=>x.current_residence_id===h.current_residence_id).length+
    (site.contracts||[]).filter(c=>c.start<=state.clock.date&&c.end>=state.clock.date).reduce((n,c)=>n+c.stalls,0)<=site.stalls,
    'HORSE_REGISTRY','Registered horse home is not operational');
-  ensure(isObject(h.career)&&h.career.starts===0&&h.career.wins===0&&h.career.earnings_minor===0,
-   'HORSE_REGISTRY','Cannot import historical starts or winnings');
+  ensure(isObject(h.career)&&Number.isSafeInteger(h.career.starts)&&h.career.starts>=0&&
+   Number.isSafeInteger(h.career.wins)&&h.career.wins>=0&&h.career.wins<=h.career.starts&&
+   Number.isSafeInteger(h.career.earnings_minor)&&h.career.earnings_minor>=0,
+   'HORSE_REGISTRY','Invalid career statistics');
   ensure(rt.by_receipt[h.registration_receipt_id]===id,
    'HORSE_REGISTRY','Missing receipt-to-horse relation');
  }
