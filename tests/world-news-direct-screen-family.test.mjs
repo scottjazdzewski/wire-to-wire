@@ -43,7 +43,7 @@ test('world directory preview includes every source category without rendering u
  assert.match(body,/visibleItems=section==='World'&&page==='Overview'\?/);
  assert.match(body,/items\.filter\(row=>row\.kind===kind\)\.slice\(0,20\)/);
  assert.match(body,/visibleItems\.length\+' OF '\+items\.length\+' SOURCE RECORDS/);
- assert.match(body,/const records=visibleItems\.map/);
+ assert.match(body,/managerSortRecords\(overviewScope,visibleItems\.map/);
  assert.match(body,/managerRecordViewControl\(section,page\)/);
 });
 
