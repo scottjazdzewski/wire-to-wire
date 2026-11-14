@@ -154,8 +154,9 @@ export function advanceGameHorseCare({state,world,emit}){
   initializeGameHorseCare(state,h);
   const r=state.runtime.horse[h.horse_id];
   if(r.last_day===day)continue;
-  const site=effectiveHorseCareSite(state,h);
-  ensure(Boolean(site),'HORSE_CARE_SITE','Registered horse lost its physical barn');
+  const site=effectiveHorseCareSite(state,h),trip=horseTravelStatus(state,h.horse_id);
+  const inTransit=trip&&['OUTBOUND','RETURNING'].includes(trip.status);
+  ensure(Boolean(site)||inTransit,'HORSE_CARE_SITE','Registered horse lost its physical barn');
   if(r.finance.month!==day.slice(0,7)){
    r.finance.month=day.slice(0,7);r.finance.spent_minor=0;
   }
@@ -163,14 +164,39 @@ export function advanceGameHorseCare({state,world,emit}){
    modeledTrainerSkills(h.trainer_id,state.rng.seed);
   state.runtime.people[h.trainer_id]={
    ...(state.runtime.people[h.trainer_id]||{}),game_training_skills:skills};
-  const p=r.policy,info=descriptor(h,site,skills,p);
-  const context=estimateContext(p,site,occupancy[h.current_residence_id]);
+  const p=r.policy;
+  if(inTransit){
+   // Transport payment was posted once when the carrier was booked. While
+   // physically between barns a horse cannot perform track workouts and
+   // neither barn earns fictitious board or trainer fees for that day.
+   const home=state.runtime.facilities.sites[h.current_residence_id];
+   const model=descriptor(h,home,skills,p);
+   const carrierCare={nutrition:.62,supervision:.6,barnQuality:.60,
+    crowding:.35,workout:'REST'};
+   const work=advanceHorseTrainingDay({...r.training,plan:'REST'},
+    model.horse,model.trainer,day,state.rng.seed,carrierCare);
+   work.horse.trainingSpent=r.training.trainingSpent;
+   r.training=work.horse;r.last_day=day;
+   r.history.push({date:day,work:'REST',agent_reason:'IN_TRANSIT_RECOVERY',
+    paid_minor:0,nutrition:'CARRIER_INCLUDED_IN_SHIPPING',
+    care:'CARRIER_INCLUDED_IN_SHIPPING',facility_id:null,
+    travel_status:trip.status,crowding:null,barn_quality:null,
+    fitness:r.training.fitness,readiness:r.training.readiness,
+    risk:r.training.currentRisk,unfunded:false});
+   if(r.history.length>45)r.history.splice(0,r.history.length-45);
+   emit('HORSE_TRANSIT_CARE_DAY',{horse_id:h.horse_id,owner_id:h.owner_organization_id,
+    trainer_id:h.trainer_id,status:trip.status,site_id:null,paid_minor:0,
+    workout:'REST',reason:'PHYSICAL_TRANSPORT_NO_BARN_BOARDING',
+    readiness:r.training.readiness,stress:r.training.stress});
+   continue;
+  }
+  const info=descriptor(h,site,skills,p);
+  const context=estimateContext(p,site,occupancy[site.id]??0);
   const train={...r.training,plan:p.training_plan};
   const allowed=site.status==='ACTIVE'&&site.staff_count>=site.staff_required;
-  const trip=horseTravelStatus(state,h.horse_id),
-   arrivalToday=trip?.history?.at(-1)?.date===day&&
+  const arrivalToday=trip?.history?.at(-1)?.date===day&&
     ['ARRIVED_AT_TRACK','RETURNED_HOME'].includes(trip.history.at(-1).event);
-  const forcedRest=trip&&['OUTBOUND','RETURNING'].includes(trip.status)||arrivalToday;
+  const forcedRest=arrivalToday;
   const workout=forcedRest?'REST':r.agent?.date===day?r.agent.workout:null;
   const work=advanceHorseTrainingDay(train,info.horse,info.trainer,day,
    state.rng.seed,{...context,workout});
@@ -237,17 +263,18 @@ export function getGameHorsePerformance(state,world,id){
   (t.speedCondition+t.staminaCondition)/2*.09+skills.roleAttributes.race_placement*.09-
   t.currentRisk*.07);
  return {horse_id:id,as_of:state.clock.date,owner_id:horse.owner_organization_id,
-  trainer_id:horse.trainer_id,site_id:site.id,base_ability:a.current_ability,
+  trainer_id:horse.trainer_id,site_id:site?.id??null,base_ability:a.current_ability,
   potential_ability:a.potential_ability,readiness:t.readiness,fitness:t.fitness,
   fatigue:t.fatigue,confidence:t.confidence,stress:t.stress,
   soundness_risk:t.currentRisk,soreness_days:t.sorenessDays,
   conditioning:t.staminaCondition,speed_condition:t.speedCondition,
-  feed:care.policy.feed,care:care.policy.care,barn_quality:site.quality,
+  feed:care.policy.feed,care:care.policy.care,barn_quality:site?.quality??null,
   monthly_budget_minor:care.policy.monthly_budget_minor,
   month_spent_minor:care.finance.spent_minor,
   trainer_gameplay_skills:structuredClone(skills.roleAttributes),
   race_performance_index:round4(score),
-  eligible_on_condition:t.sorenessDays===0&&t.readiness>=.45&&t.currentRisk<.78&&
+  eligible_on_condition:Boolean(site)&&t.sorenessDays===0&&
+   t.readiness>=.45&&t.currentRisk<.78&&
    care.history.at(-1)?.unfunded!==true,
   provenance:'MODELED_GAME_RACE_PREPARATION_NOT_PROBABILITY_OR_HISTORICAL_FACT'};
 }
