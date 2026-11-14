@@ -962,41 +962,89 @@ function pilotHorseLinksFor(kind,id){
  if(kind==='track')return horses.filter(h=>h.track_id===id);
  return [];
 }
+/* Same compact expandable record family on track and trainer dossiers.
+ * Data are exact-ID pilot relations; race outcomes never fabricated. */
+function profileRecordSection(label,columns,items,empty='No recorded items for this section.',expanded=false){
+ const header=columns.map(([key,text])=>'<th scope="col">'+safe(text)+'</th>').join('');
+ const rows=items.map(item=>'<tr>'+columns.map(([key])=>
+  '<td title="'+safe(item[key]?.text??item[key]??'')+'">'+
+  (item[key]?.html||safe(item[key]?.text??item[key]??'—'))+'</td>').join('')+'</tr>').join('');
+ return '<details class="ng-connected-drop"'+(expanded?' open':'')+'><summary><span>'+safe(label)+
+  '</span><span class="ng-connected-count">'+items.length+' RECORDS</span></summary>'+
+  '<div class="ng-connected-content">'+(rows?'<div class="ng-connected-scroll"><table class="ng-connected-table">'+
+  '<thead><tr>'+header+'</tr></thead><tbody>'+rows+'</tbody></table></div>':
+  '<p class="ng-connected-empty">'+safe(empty)+'</p>')+'</div></details>';
+}
 function pilotHorseConnectionsPanel(kind,id){
  if(!['person','farm','track'].includes(kind)||!id)return '';
  loadPilotRelationships();
- if(!pilotRelationships)return '<section class="ng-world-related ng-pilot-horse-connections" data-pilot-scope="'+
-  safe(kind)+'" role="status"><header><strong>1999 TEST COHORT HORSES</strong></header>'+
-  '<p>Loading modeled test-cohort assignments. Live career horses are separate.</p></section>';
- const matching=pilotHorseLinksFor(kind,id);
- const siteIndex=new Map(pilotRelationships.sites.map(s=>[s.id,s]));
- const ownerIndex=new Map((world1999Data?.organizations||[]).map(o=>[o.id,o]));
- const personIndex=new Map([...world1999Data?.people||[],...world1999TrainerRoster].map(p=>[p.id,p]));
- const trackIndex=new Map((world1999Data?.tracks||[]).map(t=>[t.id,t]));
- const rows=matching.map(h=>{
-  const site=siteIndex.get(h.site_id),owner=ownerIndex.get(h.owner_organization_id),
-   trainer=personIndex.get(h.trainer_id),track=trackIndex.get(h.track_id);
-  const related=kind==='person'?owner?.name||h.owner_organization_id:
-   kind==='farm'?trainer?.name||h.trainer_id:trainer?.name||h.trainer_id;
-  const label=kind==='person'?'OWNER':kind==='farm'?'TRAINER':'TRAINER';
-  return '<tr><td><button class="ng-rs-horse" type="button" data-ng="pilot-horse" data-val="'+safe(h.id)+
-   '" title="Open modeled test horse '+safe(h.name)+'">'+safe(h.name)+'</button></td>'+
-   '<td>'+safe(h.sex)+' · '+safe(String(1999-h.foaling_year))+'YO</td>'+
-   '<td>'+safe(site?.name||h.site_id)+'</td>'+
-   '<td><button class="ng-entity-reference" data-ng="pilot-connection" data-kind="'+
-    (kind==='person'?'farm':'person')+'" data-val="'+safe(kind==='person'?h.owner_organization_id:h.trainer_id)+'">'+safe(related)+'</button></td>'+
-   '<td>'+safe(track?.name||(h.track_id?'Track not recorded':'Home site'))+'</td>'+
-   '<td>'+safe(h.ability)+' / '+safe(h.potential)+'</td></tr>';
- }).join('');
- return '<section class="ng-rs-roster ng-pilot-horse-connections" data-pilot-scope="'+safe(kind)+
-  '" data-profile-id="'+safe(id)+'"><header><strong>'+
-   (kind==='person'?'TRAINER · HORSES IN CARE':kind==='track'?'TRACK · HORSES CURRENTLY STABLED HERE':'OWNERSHIP · HORSE ROSTER')+
-   '</strong><span>'+matching.length+' HORSES · ISOLATED 1999 TEST COHORT</span></header>'+
-  (rows?'<div class="ng-rs-scroll" role="region" aria-label="Horses connected to this profile">'+
-   '<table class="ng-rs-table ng-dpt-table"><thead><tr><th>HORSE</th><th>AGE / SEX</th><th>PHYSICAL BARN</th>'+
-   '<th>'+(kind==='person'?'OWNER':'TRAINER')+'</th><th>HOST TRACK</th><th>CA / PA</th></tr></thead><tbody>'+rows+
-   '</tbody></table></div>':'<p class="ng-rs-no-results">No horses assigned to this ID in the 38-horse test cohort.</p>')+
-  '<p class="ng-dpt-disclosure">MODELED TEST ASSIGNMENTS ONLY · Names provisional · Not registered in the live January 1999 career</p></section>';
+ if(!pilotRelationships)return '<section class="ng-connected-profile" role="status">'+
+  '<p class="ng-connected-empty">Loading 1999 test-cohort connections…</p></section>';
+ const matching=pilotHorseLinksFor(kind,id),sites=pilotRelationships.sites,
+  orgs=new Map((world1999Data?.organizations||[]).map(o=>[o.id,o.name])),
+  persons=new Map([...world1999Data?.people||[],...world1999TrainerRoster].map(p=>[p.id,p.name])),
+  tracks=new Map((world1999Data?.tracks||[]).map(t=>[t.id,t.name]));
+ const horseLink=h=>'<button class="ng-entity-reference" type="button" data-ng="pilot-horse" data-val="'+safe(h.id)+'">'+safe(h.name)+'</button>';
+ const entityLink=(kind,id,label)=>'<button type="button" class="ng-entity-reference" data-ng="pilot-connection" data-kind="'+safe(kind)+
+  '" data-val="'+safe(id)+'">'+safe(label||id)+'</button>';
+ const horseRows=matching.map(h=>{
+  const site=sites.find(s=>s.id===h.site_id);
+  return {horse:{html:horseLink(h),text:h.name},age:1999-h.foaling_year,
+   sex:h.sex,barn:site?.name||'—',
+   trainer:{html:entityLink('person',h.trainer_id,persons.get(h.trainer_id)),text:persons.get(h.trainer_id)},
+   owner:{html:entityLink('farm',h.owner_organization_id,orgs.get(h.owner_organization_id)),text:orgs.get(h.owner_organization_id)},
+   ability:h.ability+' / '+h.potential,
+   surface:h.surface,distance:h.distance};
+ });
+ const base='<section class="ng-connected-profile" data-pilot-scope="'+safe(kind)+'" data-profile-id="'+safe(id)+'">'+
+  '<header><strong>RACING OPERATIONS · PROFILE RECORDS</strong><span>1999 TEST COHORT · NOT LIVE CAREER</span></header>';
+ const horseColumns=[['horse','HORSE'],['age','AGE'],['sex','SEX'],['barn','BARN'],
+  [kind==='person'?'owner':'trainer',kind==='person'?'OWNER':'TRAINER'],['ability','CA / PA'],['surface','SURFACE'],['distance','DISTANCE']];
+ let sections='';
+ if(kind==='track'){
+  const track=(world1999Data?.tracks||[]).find(t=>t.id===id);
+  const program=window.__WTW_1999_UI_DATA__?.trackProgramById?.(id);
+  const dates=String(program?.meetWindow||'').split(';').map(x=>x.trim()).filter(Boolean);
+  sections+=profileRecordSection('MEETS',[['name','MEET'],['dates','DATES'],['status','STATUS']],
+   dates.map((d,i)=>({name:track?.name||tracks.get(id)||'Meet '+(i+1),dates:d,status:'1999 scheduled window'})),
+   'No authenticated 1999 meet window is available for this track.',true);
+  const stakes=(window.__WTW_1999_UI_DATA__?.stakesForTrack?.(track?.name||'')||[]);
+  sections+=profileRecordSection('STAKES RACES',[['name','RACE'],['date','DATE'],['grade','GRADE'],['purse','PURSE']],
+   stakes.map(r=>({name:{text:r.name,html:'<button type="button" class="ng-entity-reference" data-ng="1999-stake" data-val="'+safe(r.id||'')+
+    '" data-name="'+safe(r.name)+'" data-track="'+safe(track?.name||'')+'">'+safe(r.name)+'</button>'},
+    date:r.localDate||r.date||'—',grade:r.grade||r.status||'—',
+    purse:Number.isFinite(r.purse1999)?'$'+r.purse1999.toLocaleString('en-US'):'—'})),
+   'No source-linked stakes races are currently available for this track.');
+  const barns=sites.filter(s=>s.host_track_id===id);
+  sections+=profileRecordSection('TRAINERS & BARNS',[['trainer','TRAINER'],['barn','BARN'],['horses','HORSES'],['capacity','STALLS'],['location','BASE']],
+   barns.map(site=>({trainer:{text:persons.get(site.trainer_id),html:entityLink('person',site.trainer_id,persons.get(site.trainer_id))},
+    barn:site.name,horses:pilotRelationships.horses.filter(h=>h.site_id===site.id).length,
+    capacity:site.capacity,location:[site.city,site.state].filter(Boolean).join(', ')})),
+   'No modeled trainer barns are assigned to this track.');
+  sections+=profileRecordSection('HORSES CURRENTLY ON SITE',horseColumns,horseRows,
+   'No test-cohort horses currently housed at this track.');
+ }else if(kind==='person'){
+  sections+=profileRecordSection('TRAINER ATTRIBUTES',[['record','RECORD'],['value','STATUS']],
+   [{record:{text:'Trainer skill and reputation',html:'<button type="button" class="ng-entity-reference" data-ng="detailtab" data-val="Attributes">OPEN ATTRIBUTES ↗</button>'},
+    value:'Use the existing source-linked Attributes dossier'}],
+   'Trainer attribute dossier has no source-backed ratings.',true);
+  const assigned=sites.filter(site=>site.trainer_id===id);
+  sections+=profileRecordSection('BARNS & FACILITIES',[['barn','BARN'],['track','HOST TRACK'],['horses','HORSES'],['capacity','STALLS'],['location','LOCATION']],
+   assigned.map(site=>({barn:site.name,track:site.host_track_id?{text:tracks.get(site.host_track_id),
+     html:entityLink('track',site.host_track_id,tracks.get(site.host_track_id))}:'Home racing site',
+    horses:pilotRelationships.horses.filter(h=>h.site_id===site.id).length,capacity:site.capacity,
+    location:[site.city,site.state].filter(Boolean).join(', ')})),
+   'No test-cohort facility assigned to this trainer.');
+  sections+=profileRecordSection('HORSES IN TRAINING',horseColumns,horseRows,'No modeled horses assigned.',true);
+  sections+=profileRecordSection('UPCOMING ENTRIES',[['date','DATE'],['horse','HORSE'],['race','RACE'],['track','TRACK'],['status','STATUS']],
+   [],'No confirmed entries have been recorded for these test horses.');
+  sections+=profileRecordSection('RACE RESULTS',[['date','DATE'],['horse','HORSE'],['race','RACE'],['finish','FINISH'],['earnings','EARNINGS']],
+   [],'No completed race results have been recorded for this test cohort.');
+ }else{
+  sections+=profileRecordSection('OWNED HORSES',horseColumns,horseRows,'No test-cohort ownership assigned.',true);
+ }
+ return base+sections+
+  '<p class="ng-connected-disclosure">MODELED TEST ASSIGNMENTS ONLY · NAMES PROVISIONAL · NOT REGISTERED IN THE LIVE JANUARY 1999 CAREER</p></section>';
 }
 function pilotHorseDetail(id){
  loadPilotRelationships();
