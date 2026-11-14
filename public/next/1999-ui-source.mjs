@@ -421,11 +421,10 @@ const departmentCache=new Map();
 function setGameDate(date){
  if(typeof date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(date)||date<'1999-01-01'||date>'2080-12-31')return;
  if(activePlaytest){
-  if(date===activePlaytest.state.clock.date)return;
-  if(date<activePlaytest.state.clock.date)throw Error('Game clock cannot rewind');
-  activePlaytest.advanceTo(date).catch(error=>{
-   window.__WTW_1999_PLAYTEST_ERROR__=String(error?.message||error);
-  });
+  // Paint/calendar browsing is observational. Only the explicit Continue
+  // command advances the single engine clock; a stale native date chip may
+  // never rewind it or trigger a second automated advance.
+  viewDate=activePlaytest.state.clock.date;
   return;
  }
  if(date===viewDate)return;
@@ -887,6 +886,15 @@ if(/[?&]playtest=38(?:&|$)/.test(window.location?.search||'')){
   activePlaytest=service;
   const apply=view=>{
    playtestSnapshot=view;viewDate=view.date;
+   const chip=document.querySelector('.dateChip');
+   if(chip){
+    const textNode=[...chip.childNodes].find(n=>n.nodeType===3);
+    if(textNode)textNode.nodeValue=view.date;
+    else chip.append(view.date);
+   }
+   const mgr=window.__WTW_1999_MANAGEMENT__;
+   if(mgr)mgr.advanceOneDay=()=>service.submit('ADVANCE_DAY',{},'system').
+    catch(error=>{window.__WTW_1999_PLAYTEST_ERROR__=String(error?.message||error)});
    stableHorses=view.stable;
    horseLookup=new Map([...srcHorses,...view.all_horses].map(h=>[h.name,h]));
    for(const p of view.people)peopleNames.set(p.id,p.name);
