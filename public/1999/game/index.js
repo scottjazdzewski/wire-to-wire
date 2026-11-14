@@ -50,3 +50,6 @@ export {OWNER_TRAINER_REVIEW_SCHEMA,OWNER_TRAINER_REVIEW_COMMANDS,
  OWNER_TRAINER_MANDATES,createOwnerTrainerReviewRuntime,
  ownerTrainerEvidence,selectOwnerTrainerMandate,getOwnerTrainerMandate,getOwnerTrainerCareerReview,
  getTrainerCareerForm} from './owner-trainer-career-1999.js';
+
+export { GAME_INDUSTRY_GATEWAY_MODEL_V22,createFutureIndustryGameGatewayV22 }
+ from './future-industry-v22.js';
