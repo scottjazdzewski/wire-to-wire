@@ -95,9 +95,9 @@ test('player conversation changes real trust input and trainer quote; save/repla
  assert.equal(replay.duplicate,true);
  assert.strictEqual(replay.state,now);
  assert.throws(()=>reply(now,owner,trainerId,request,'HOLD_CURRENT_COURSE'),
-  /COMMAND_CONFLICT|different contents/);
+  e=>e.code==='COMMAND_CONFLICT');
  assert.throws(()=>reply(now,owner,trainerId,request,'HEAR_AND_REVIEW',
-  'concern:reply:2'),/TRAINER_CONCERN_CLOSED/);
+  'concern:reply:2'),e=>e.code==='TRAINER_CONCERN_CLOSED');
 });
 test('declining a concern is a real negative trainer signal, not an automatic firing',()=>{
  const {s,owner,trainerId,record}=strainedPair();
@@ -117,13 +117,13 @@ test('only the player owning the real pair can respond with the exact request',(
  const {s,owner,trainerId,record}=strainedPair();
  const request=record.concern.request_id,initial=structuredClone(s);
  assert.throws(()=>reply(s,owner,trainerId,request,'HEAR_AND_REVIEW',
-  'concern:wrongactor','system'),/TRAINER_CONCERN_PERMISSION/);
+  'concern:wrongactor','system'),e=>e.code==='TRAINER_CONCERN_PERMISSION');
  assert.throws(()=>reply(s,'O-UNKNOWN',trainerId,request,'HEAR_AND_REVIEW',
-  'concern:wrongowner'),/TRAINER_REVIEW_PAIR/);
+  'concern:wrongowner'),e=>e.code==='TRAINER_REVIEW_PAIR');
  assert.throws(()=>reply(s,owner,trainerId,'WRONG','HEAR_AND_REVIEW',
-  'concern:wrongrequest'),/TRAINER_CONCERN_UNKNOWN/);
+  'concern:wrongrequest'),e=>e.code==='TRAINER_CONCERN_UNKNOWN');
  assert.throws(()=>reply(s,owner,trainerId,request,'GIVE_BONUS',
-  'concern:wrongchoice'),/TRAINER_CONCERN_RESPONSE/);
+  'concern:wrongchoice'),e=>e.code==='TRAINER_CONCERN_RESPONSE');
  assert.deepEqual(s,initial,'All rejected commands must be atomic');
 });
 test('unanswered player concern expires after 14 days with a saved trust consequence',()=>{
@@ -139,7 +139,7 @@ test('unanswered player concern expires after 14 days with a saved trust consequ
   e.details.request_id===request));
  assert.equal(s.runtime.owner_trainer_reviews.totals.unanswered_concerns,1);
  assert.throws(()=>reply(s,owner,trainerId,request,'HEAR_AND_REVIEW',
-  'concern:late'),/TRAINER_CONCERN_CLOSED/);
+  'concern:late'),e=>e.code==='TRAINER_CONCERN_CLOSED');
  assert.deepEqual(importGameSave(exportGameSave(s,world),world),s);
  assert.ok(before>=0);
 });
@@ -153,5 +153,5 @@ test('AI owners answer their own concerns without overwriting the player owner d
   e.details.owner_id===owner&&e.details.trainer_id===trainerId&&
   e.details.by==='system'));
  assert.throws(()=>reply(s,owner,trainerId,record.concern.request_id,
-  'HEAR_AND_REVIEW','concern:playeroverreach'),/TRAINER_CONCERN_PERMISSION/);
+  'HEAR_AND_REVIEW','concern:playeroverreach'),e=>e.code==='TRAINER_CONCERN_PERMISSION');
 });
