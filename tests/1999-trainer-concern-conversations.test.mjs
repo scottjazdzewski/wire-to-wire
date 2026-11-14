@@ -137,7 +137,11 @@ test('unanswered player concern expires after 14 days with a saved trust consequ
  assert.equal(latest.concern_history.at(-1).reason,'OWNER_DID_NOT_RESPOND');
  assert.ok(s.event_log.some(e=>e.kind==='TRAINER_CONCERN_EXPIRED'&&
   e.details.request_id===request));
- assert.equal(s.runtime.owner_trainer_reviews.totals.unanswered_concerns,1);
+ assert.ok(s.runtime.owner_trainer_reviews.totals.unanswered_concerns>=1,
+  'Other player trainer relationships can independently generate expired concerns');
+ assert.equal(s.event_log.filter(e=>e.kind==='TRAINER_CONCERN_EXPIRED'&&
+  e.details.request_id===request).length,1,
+  'One unacknowledged request expires once, even after repeated days');
  assert.throws(()=>reply(s,owner,trainerId,request,'HEAR_AND_REVIEW',
   'concern:late'),e=>e.code==='TRAINER_CONCERN_CLOSED');
  assert.deepEqual(importGameSave(exportGameSave(s,world),world),s);
