@@ -140,6 +140,24 @@ async function bootstrap(db) {
 }
 async function api(request,env,email) {
   const url = new URL(request.url);
+  // This status route is read-only and spends zero AI tokens. Cloudflare Access
+  // has already authenticated the caller; report binding readiness truthfully.
+  if(request.method==='GET'&&url.pathname==='/api/naming/status'){
+    let ledgerReady=false;
+    if(typeof env?.DB?.prepare==='function'){
+      try{await env.DB.prepare('SELECT job_id FROM wtw_naming_population_jobs LIMIT 1').first();ledgerReady=true}
+      catch{/* D1 migration has not been applied to the live WTW database. */}
+    }
+    return response({schema:'WTW_PRIVATE_NAMING_STATUS_V484',
+      previewEnabled:env?.NAMING_AI_PREVIEW_ENABLED!=='false',
+      populationEnabled:env?.NAMING_AI_POPULATION_ENABLED!=='false',
+      aiBound:typeof env?.AI?.run==='function',
+      dbBound:typeof env?.DB?.prepare==='function',ledgerReady,
+      batchSize:16,populationTargetPerYear:55000,
+      defaultDailyCap:128,configuredDailyCap:Number(env?.NAMING_AI_POPULATION_DAILY_CAP)||128,
+      nameRegistrationEnabled:false,
+      aiRequestsMadeByStatusCheck:0,gameWrites:0});
+  }
   // Source-bound asynchronous population naming. Access authentication occurs
   // before api(); D1 checkpoints protect AI spend and retries. NO horse writes.
   if(url.pathname.startsWith('/api/naming/population/')) {
