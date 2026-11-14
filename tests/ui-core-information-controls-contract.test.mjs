@@ -23,7 +23,7 @@ test('Every current department and its listed screens uses the same VIEW menu op
  let views=0;
  for(const [section,pages] of Object.entries(tabmap)){
   assert.ok(pages.length>=4,section+' must have its established views');
-  assert.equal(pages[0],'Overview','Only History is permitted a different start view: '+section);
+  assert.equal(pages[0],section==='History'?'Race Results':'Overview',section+' opening view must not change');
   for(const page of pages){
    const options=renderer.options(section,page),manager=renderer.control(section,page);
    assert.equal((options.match(/<option /g)||[]).length,pages.length,section+':'+page);
