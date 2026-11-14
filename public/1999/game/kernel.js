@@ -12,6 +12,7 @@ import {makeReputationBaseline,applyReputationSignal} from './reputation.js';
 import {FACILITY_COMMANDS,facilityAction,advanceFacilities} from './facility-operations.js';
 import {OWNERSHIP_COMMANDS,ownershipAction} from './ownership.js';
 import {HORSE_REGISTRATION_COMMANDS,registerHorseAction} from './horse-registration.js';
+import {HORSE_NAMING_COMMANDS,recordHorseNamingStoryAction} from './horse-naming-bridge.js';
 import {HORSE_CARE_COMMANDS,setHorseCarePolicy,initializeGameHorseCare,advanceGameHorseCare} from './horse-care.js';
 import {runAutonomousDay,settleDailyAgentFeedback} from './daily-agents.js';
 import {RACING_COMMANDS,racingAction} from './racing-1999.js';
@@ -21,7 +22,7 @@ import {TRAINER_CONTRACT_COMMANDS,offerTrainerServiceTerms,advanceTrainerContrac
 import {OWNER_TRAINER_REVIEW_COMMANDS,setOwnerTrainerMandate,advanceOwnerTrainerReviews} from './owner-trainer-career-1999.js';
 import {PLAYER_RACE_PLAN_COMMANDS,confirm1999PlayerRacePlan} from './player-race-plan-1999.js';
 
-const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_CARE_COMMANDS,...RACING_COMMANDS,...HORSE_SHIPPING_COMMANDS,...TRAINER_CONTRACT_COMMANDS,...OWNER_TRAINER_REVIEW_COMMANDS,...PLAYER_RACE_PLAN_COMMANDS]);
+const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_NAMING_COMMANDS,...HORSE_CARE_COMMANDS,...RACING_COMMANDS,...HORSE_SHIPPING_COMMANDS,...TRAINER_CONTRACT_COMMANDS,...OWNER_TRAINER_REVIEW_COMMANDS,...PLAYER_RACE_PLAN_COMMANDS]);
 const MAX_PENDING = 5000;
 function appendLog(state, commandId, kind, details) {
   const event = { seq: state.event_log.length + 1, command_id: commandId,
@@ -106,6 +107,8 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     next.runtime.people[p.person_id].reputation=updated;
     emit('PERSON_REPUTATION_CHANGED',{person_id:p.person_id,signal:p.signal,
       before:current.scores,after:updated.scores,source_refs:p.source_refs});
+  } else if (HORSE_NAMING_COMMANDS.includes(c.type)) {
+    recordHorseNamingStoryAction({state:next,world,command:c,emit});
   } else if (HORSE_REGISTRATION_COMMANDS.includes(c.type)) {
     registerHorseAction({state:next,world,command:c,emit});
     const horse=next.runtime.registered_horses?.by_id?.[c.payload?.horse?.horse_id];
