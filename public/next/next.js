@@ -3393,7 +3393,7 @@ function departmentRoster(section,page='Overview'){
   (globalHorseDirectory?' · SORT/FILTER ALL '+(Number(window.__WTW_1999_UI_DATA__?.counts?.worldHorses||0).toLocaleString('en-US'))+' HORSES':
    globalMareDirectory?' · SORT/FILTER ALL BROODMARES':
    virtualMethod?' · SCROLL FOR MORE':'')+'</span>';
- const viewOptions=(tabmap[section]||[]).map(t=>'<option value="'+safe(t)+'" '+(t===page?'selected':'')+'>'+safe(t)+'</option>').join('');
+ const viewOptions=managementViewOptions(section,page);
  const racingTracks=section==='Racing'?depTrackCalendar().slice().sort((a,b)=>a.name.localeCompare(b.name)):[];
  if(section==='Racing'&&APP.racingTrack&&!racingTracks.some(x=>x.name===APP.racingTrack)){
   APP.racingTrack='';if(APP.racingMode==='track')APP.racingMode='meets';
@@ -3464,14 +3464,15 @@ function departmentRoster(section,page='Overview'){
   '</div></section></section>';
 }
 
-/* Shared FM/OOTP record-view picker. World and News use the same control as
- * all department dashboards; this is not an alternate menu or screen family. */
+/* One authoritative VIEW menu content for both the full department roster
+ * and compact management overview. The select dispatch adapters differ because
+ * their destination screens differ; their options, order, label and state do not. */
+function managementViewOptions(section,page){
+ return (tabmap[section]||[]).map(t=>'<option value="'+safe(t)+'" '+(t===page?'selected':'')+'>'+safe(t)+'</option>').join('');
+}
 function managerRecordViewControl(section,page){
- const screens=(tabmap[section]||[]).filter(x=>x!=='Overview');
- return '<label>RECORD VIEW <select data-ng-select="manager-screen" aria-label="Open department screen">'+
-  '<option value="Overview" '+(page==='Overview'?'selected':'')+'>Overview</option>'+
-  screens.map(x=>'<option value="'+safe(x)+'" '+(page===x?'selected':'')+'>'+safe(x)+'</option>').join('')+
-  '</select></label>';
+ return '<label>VIEW <select data-ng-select="manager-screen" aria-label="Choose '+safe(section)+' view">'+
+  managementViewOptions(section,page)+'</select></label>';
 }
 /* News is a source-backed Office bulletin board, not a fictional 2014
  * racing feed. Never imply these internal reports are press articles. */
