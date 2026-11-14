@@ -55,7 +55,7 @@ const PUBLIC_FIGURE_OWNERS=Object.freeze([
 // The numbering intentionally never overlaps O-000xxx or O-00xxxx IDs.
 const PROVISIONAL=Object.freeze([
  ['001','Davenport Hall Farm','Litchfield County, Connecticut, USA','FARM / BREED-TO-RACE'],
- ['002','Takamori Stud — Pacific Division','Rancho Santa Fe, California, USA / Japan','INTERNATIONAL STUD AND RACING'],
+ ['002','Takimori Stud','Rancho Santa Fe, California, USA / Japan','INTERNATIONAL STUD AND RACING'],
  ['003','Buckley Oaks Farm','Shelby County, Kentucky, USA','FARM / BREED-TO-RACE'],
  ['004','Split Rail Farm','Shelby County, Kentucky, USA','FARM / BREED-TO-RACE'],
  ['005','All The Colors','Del Mar, California, USA','RACING PARTNERSHIP'],

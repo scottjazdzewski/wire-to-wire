@@ -812,7 +812,7 @@ function loadWorld1999(){
  if(world1999Data||world1999LoadFailed)return Promise.resolve();
  if(world1999Loading)return world1999Promise||Promise.resolve();
  world1999Loading=true;
- const basePath='/data/wtw-1999-founding-directory-v1.json?rev=wtw1999-approved-only-20261113-r1';
+ const basePath='/data/wtw-1999-founding-directory-v1.json?rev=wtw1999-takimori-name-20261114-r2';
  world1999Promise=Promise.all([
   fetch(basePath,{credentials:'same-origin',cache:'force-cache'}).then(r=>
    r.ok?r.json():Promise.reject(Error('1999 directory unavailable'))),
