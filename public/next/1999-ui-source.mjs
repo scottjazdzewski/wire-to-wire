@@ -877,7 +877,12 @@ window.__WTW_1999_UI_DATA__={
 // Bind the EXISTING menus to the same engine run, only when the user
 // explicitly selects ?playtest=38. Default historical opening remains empty.
 if(/[?&]playtest=38(?:&|$)/.test(window.location?.search||'')){
- import('/1999/game/playtest-service.mjs').then(m=>m.bootBrowserPlaytest1999()).then(service=>{
+ window.__WTW_1999_PLAYTEST_LOADING__='MODULE_IMPORT_STARTED';
+ import('/1999/game/playtest-service.mjs').then(m=>{
+  window.__WTW_1999_PLAYTEST_LOADING__='MODULE_IMPORT_COMPLETE';
+  return m.bootBrowserPlaytest1999();
+ }).then(service=>{
+  window.__WTW_1999_PLAYTEST_LOADING__='GAME_RUN_READY';
   if(!service)return;
   activePlaytest=service;
   const apply=view=>{
@@ -902,6 +907,7 @@ if(/[?&]playtest=38(?:&|$)/.test(window.location?.search||'')){
   service.onChange(apply);
   apply(service.view());
  }).catch(error=>{
+  window.__WTW_1999_PLAYTEST_LOADING__='STARTUP_FAILED';
   window.__WTW_1999_PLAYTEST_ERROR__=String(error?.stack||error);
   console.error('WTW 1999 isolated gameplay startup rejected',error);
  });
