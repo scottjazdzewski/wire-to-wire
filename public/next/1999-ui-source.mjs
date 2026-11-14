@@ -876,7 +876,7 @@ window.__WTW_1999_UI_DATA__={
 };
 // Bind the EXISTING menus to the same engine run, only when the user
 // explicitly selects ?playtest=38. Default historical opening remains empty.
-if(/(?:\\?|&)playtest=38(?:&|$)/.test(window.location?.search||'')){
+if(/[?&]playtest=38(?:&|$)/.test(window.location?.search||'')){
  import('/1999/game/playtest-service.mjs').then(m=>m.bootBrowserPlaytest1999()).then(service=>{
   if(!service)return;
   activePlaytest=service;
