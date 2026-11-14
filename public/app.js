@@ -789,7 +789,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-page],[dat
 });
 window.addEventListener('popstate',()=>{
  const query=new URLSearchParams(window.location.search);
- if(query.get('page')!=='races'&&query.get('review')===null)return;
+ if(query.get('page')!=='races'&&!query.has('review')&&state.page!=='races')return;
  state.page='races';const year=Number(query.get('review'));
  if(query.has('review')&&years().includes(year)){state.year=year;state.history.view='review'}
  else state.history.view='ledger';
