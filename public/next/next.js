@@ -3858,8 +3858,14 @@ window.addEventListener('click',e=>{
   return paint();
  }
  if(key==='dept-sort'){
-  if(APP.departmentSortKey===val)APP.departmentSortDesc=!APP.departmentSortDesc;
-  else{APP.departmentSortKey=val;APP.departmentSortDesc=false}
+  // The default sort is already active even before the player picks a column.
+  // Use the currently rendered header direction as authority. The FIRST click
+  // on an already-active default header must reverse it, not repeat ascending.
+  const activeHeading=[...root.querySelectorAll('.ng-dept-roster .ng-rs-table thead th')]
+   .find(th=>th.querySelector('button[data-ng="dept-sort"]')?.dataset.val===val);
+  const displayedDirection=activeHeading?.getAttribute('aria-sort')||'none';
+  APP.departmentSortKey=val;
+  APP.departmentSortDesc=displayedDirection==='ascending';
   APP.departmentPageIndex=0;APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint();
  }
  // Previous/Next buttons have been retired from the department rosters.
