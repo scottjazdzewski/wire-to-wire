@@ -71,7 +71,7 @@
     const closed=r.status!=='OPEN';
     if(closed&&r.status!=='RESOLVED'&&r.status!=='EXPIRED')continue;
     if(!closed&&r.deadline<state.clock.date)continue;
-    const name=text(horse.registered_name)||horse.horse_id;
+    const name=typeof horse.registered_name==='string'&&horse.registered_name.trim()?horse.registered_name:horse.horse_id;
     const choices=['ACCEPT','COUNTER','DECLINE'];
     const chosen=permitted.has(r.response)?r.response:null;
     const description=r.kind==='CARE_FUNDING'&&Number.isSafeInteger(r.needed_minor)?
