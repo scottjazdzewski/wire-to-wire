@@ -86,8 +86,13 @@ export function createHorseCareRecord(horse,asOf='1999-01-01'){
   provenance:'1999_MODELED_CARE_GAMEPLAY_ONLY'};
 }
 export function initializeGameHorseCare(state,horse){
- if(horse.starting_attributes&&!state.runtime.horse[horse.horse_id])
+ if(!horse.starting_attributes)return;
+ if(!state.runtime.horse[horse.horse_id])
   state.runtime.horse[horse.horse_id]=createHorseCareRecord(horse,state.clock.date);
+ const person=state.runtime.people[horse.trainer_id]||{};
+ if(!person.game_training_skills)
+  state.runtime.people[horse.trainer_id]={...person,
+   game_training_skills:modeledTrainerSkills(horse.trainer_id,state.rng.seed)};
 }
 export function setHorseCarePolicy({state,world,command,emit}){
  const p=command.payload,horse=state.runtime.registered_horses?.by_id?.[p.horse_id];
@@ -177,6 +182,7 @@ export function advanceGameHorseCare({state,world,emit}){
    result.horse.currentRisk=round4(result.horse.currentRisk+.02);
    result.horse.readiness=round4(result.horse.readiness-.027);
    result.horse.plan=p.training_plan;
+   result.horse.trainingSpent=r.training.trainingSpent; // unpaid model work is not booked as spent cash
    used=0;r.finance.unfunded_days++;
    emit('HORSE_CARE_UNFUNDED',{horse_id:h.horse_id,owner_id:h.owner_organization_id,
     needed_minor:charge_minor,balance_minor:accounts[h.owner_organization_id]??null,
