@@ -183,7 +183,8 @@ test('an evidence-backed improvement plan changes REAL AI wage renewal without m
  review.mandate='IMPROVEMENT_PLAN';review.authority='AI_OWNER_CAREER_REVIEW';
  review.next_review_date='1999-02-20'; // Keep current 28-day evidence available during next contract review.
  review.evidence={...ownerTrainerEvidence(s,world,owner,trainer),
-  starts:5,average_relative_form:-.30};
+  starts:5,average_relative_form:-.30,
+  decision_sample_starts:5,decision_form:-.30,decision_sample_basis:'OWNER_RESULTS'};
  s.runtime.finances.operation_balances_minor[owner]=90000000;
  s.runtime.people[trainer].game_race_record={starts:5,wins:0,managed_purse_minor:0,
   professional_standing:.5};
