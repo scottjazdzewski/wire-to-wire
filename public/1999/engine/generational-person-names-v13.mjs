@@ -130,7 +130,9 @@ export function generationalGivenPool(country,culture,birthYear,feminine){
   throw Error('Unsupported generational birth year');
  if(birthYear<1990)return establishedPool(country,culture,birthYear,feminine);
  if(country==='US'){
-  const decades=birthYear>=2030?[2010,2020]:[modernDecade(birthYear)];
+  // A speculative future pool starts with the MOST RECENT observed names,
+  // then includes 2010s continuity. Not a forecast of future rankings.
+  const decades=birthYear>=2030?[2020,2010]:[modernDecade(birthYear)];
   return unique(decades.flatMap(d=>
    US_MODERN_SSA_GIVEN_NAMES[d][feminine?'feminine':'masculine']));
  }
