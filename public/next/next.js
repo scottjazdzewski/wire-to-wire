@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,worldAttributeKey:'',stableMode:'all',stableSearch:'',directorySort:'name',directorySortDesc:false,directoryFilter:'all',directoryMode:'all',directorySearch:'',directoryHorseItems:[],racingMode:'meets',racingTrack:'',racingDate:'',racingCalendarOpen:false,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
+const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',outTab:0,detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,worldAttributeKey:'',stableMode:'all',stableSearch:'',directorySort:'name',directorySortDesc:false,directoryFilter:'all',directoryMode:'all',directorySearch:'',directoryHorseItems:[],connectedTables:{},racingMode:'meets',racingTrack:'',racingDate:'',racingCalendarOpen:false,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -967,15 +967,66 @@ function pilotHorseLinksFor(kind,id){
 }
 /* Same compact expandable record family on track and trainer dossiers.
  * Data are exact-ID pilot relations; race outcomes never fabricated. */
+/* Shared compact table behavior — same roster principles as Horse Directory.
+ * Every profile section retains its own sort, column filter, search and view.
+ * Only source-linked values are displayed, never guessed. */
+function connectedTableState(key){
+ if(!APP.connectedTables[key])APP.connectedTables[key]={
+  sort:'',desc:false,search:'',column:'',contains:'',mode:'all',open:false};
+ return APP.connectedTables[key];
+}
 function profileRecordSection(label,columns,items,empty='No recorded items for this section.',expanded=false){
- const header=columns.map(([key,text])=>'<th scope="col">'+safe(text)+'</th>').join('');
- const rows=items.map(item=>'<tr>'+columns.map(([key])=>
-  '<td title="'+safe(item[key]?.text??item[key]??'')+'">'+
-  (item[key]?.html||safe(item[key]?.text??item[key]??'—'))+'</td>').join('')+'</tr>').join('');
- return '<details class="ng-connected-drop"'+(expanded?' open':'')+'><summary><span>'+safe(label)+
-  '</span><span class="ng-connected-count">'+items.length+' RECORDS</span></summary>'+
-  '<div class="ng-connected-content">'+(rows?'<div class="ng-connected-scroll"><table class="ng-connected-table">'+
-  '<thead><tr>'+header+'</tr></thead><tbody>'+rows+'</tbody></table></div>':
+ const scope=APP.custom||APP.routeId||'Profile',key=scope+'|'+label,ctrl=connectedTableState(key);
+ if(!Object.hasOwn(ctrl,'initialized')){ctrl.open=expanded;ctrl.initialized=true}
+ const columnsAllowed=new Set(columns.map(([id])=>id));
+ if(!columnsAllowed.has(ctrl.column))ctrl.column='';
+ if(!columnsAllowed.has(ctrl.sort))ctrl.sort='';
+ const value=item=>item?.text??item??'';
+ const comparable=v=>{
+  const x=String(v??'').trim(),numeric=x.replace(/[$,]/g,'');
+  if(x!==''&&/^[-+]?\\d+(?:\\.\\d+)?$/.test(numeric))return Number(numeric);
+  return x.toLocaleLowerCase('en-US');
+ };
+ const compare=(a,b)=>{
+  const x=comparable(value(a?.[ctrl.sort])),y=comparable(value(b?.[ctrl.sort]));
+  if(x===''&&y!=='')return 1;
+  if(y===''&&x!=='')return -1;
+  const res=typeof x==='number'&&typeof y==='number'?x-y:String(x).localeCompare(String(y),undefined,{numeric:true,sensitivity:'base'});
+  return ctrl.desc?-res:res;
+ };
+ const find=ctrl.search.trim().toLowerCase(),contains=ctrl.contains.trim().toLowerCase();
+ const filtered=items.filter(item=>{
+  if(find&&!columns.some(([k])=>String(value(item[k])).toLowerCase().includes(find)))return false;
+  if(contains){
+   const keys=ctrl.column?[ctrl.column]:columns.map(([id])=>id);
+   if(!keys.some(k=>String(value(item[k])).toLowerCase().includes(contains)))return false;
+  }
+  return true;
+ }).slice();
+ if(ctrl.sort)filtered.sort(compare);
+ const header=columns.map(([id,text],n)=>'<th scope="col" aria-sort="'+
+  (ctrl.sort===id?(ctrl.desc?'descending':'ascending'):'none')+'" class="'+(n>=4?'ng-connected-optional':'')+'">'+
+  '<button type="button" data-ng="connected-sort" data-val="'+safe(key)+'" data-col="'+safe(id)+'" title="Sort by '+safe(text)+'">'+
+  safe(text)+' <span class="ng-rs-sort" aria-hidden="true">'+(ctrl.sort===id?(ctrl.desc?'▼':'▲'):'↕')+'</span></button></th>').join('');
+ const rows=filtered.map(item=>'<tr>'+columns.map(([col],index)=>
+  '<td class="'+(index>=4?'ng-connected-optional':'')+'" title="'+safe(value(item[col]))+'">'+
+  (item[col]?.html||safe(value(item[col])||'—'))+'</td>').join('')+'</tr>').join('');
+ const options='<option value="">ALL COLUMNS</option>'+columns.map(([id,title])=>
+  '<option value="'+safe(id)+'"'+(ctrl.column===id?' selected':'')+'>'+safe(title)+'</option>').join('');
+ const control='<div class="ng-connected-tools" data-connected-key="'+safe(key)+'">'+
+  '<label>SEARCH <input data-ng-input="connected-search" data-val="'+safe(key)+'" type="search" value="'+safe(ctrl.search)+'" placeholder="Search records…" autocomplete="off"></label>'+
+  '<label>COLUMN <select data-ng-select="connected-column" data-val="'+safe(key)+'">'+options+'</select></label>'+
+  '<label>CONTAINS <input data-ng-input="connected-contains" data-val="'+safe(key)+'" type="search" value="'+safe(ctrl.contains)+'" placeholder="Text or number" autocomplete="off"></label>'+
+  '<button type="button" data-ng="connected-clear" data-val="'+safe(key)+'">CLEAR FILTERS</button>'+
+  '<span class="ng-connected-view"><button type="button" data-ng="connected-mode" data-val="'+safe(key)+'" data-mode="all" class="'+(ctrl.mode==='all'?'on':'')+'">ALL COLUMNS</button>'+
+  '<button type="button" data-ng="connected-mode" data-val="'+safe(key)+'" data-mode="compact" class="'+(ctrl.mode==='compact'?'on':'')+'">QUICK VIEW</button></span></div>';
+ return '<details class="ng-connected-drop" data-connected-key="'+safe(key)+'"'+(ctrl.open?' open':'')+'><summary><span>'+safe(label)+
+  '</span><span class="ng-connected-count">'+filtered.length+' OF '+items.length+' RECORDS</span></summary>'+
+  '<div class="ng-connected-content">'+control+
+  (items.length?'<div class="ng-connected-scroll" role="region" tabindex="0" aria-label="'+safe(label)+' sortable and scrollable records">'+
+  '<table class="ng-connected-table '+(ctrl.mode==='compact'?'compact':'all')+'">'+
+  '<thead><tr>'+header+'</tr></thead><tbody>'+ (rows||'<tr><td colspan="'+columns.length+'" class="ng-connected-empty">No records match these filters.</td></tr>')+
+  '</tbody></table></div>':
   '<p class="ng-connected-empty">'+safe(empty)+'</p>')+'</div></details>';
 }
 function pilotHorseConnectionsPanel(kind,id){
@@ -3710,6 +3761,21 @@ window.addEventListener('click',e=>{
  }
  if(key==='more'){APP.moreOpen=!APP.moreOpen;return paint()}
  if(key==='menu')return openMenu(val);
+ if(key==='connected-sort'){
+  const control=APP.connectedTables[val],column=btn.dataset.col;
+  if(!control)return;
+  if(control.sort===column)control.desc=!control.desc;
+  else{control.sort=column;control.desc=false}
+  return paint();
+ }
+ if(key==='connected-clear'){
+  const ctrl=APP.connectedTables[val];if(!ctrl)return;
+  ctrl.search='';ctrl.contains='';ctrl.column='';return paint();
+ }
+ if(key==='connected-mode'){
+  const ctrl=APP.connectedTables[val];if(!ctrl)return;
+  ctrl.mode=btn.dataset.mode==='compact'?'compact':'all';return paint();
+ }
  if(key==='pilot-horse'){
   const row=pilotRelationships?.horses.find(x=>x.id===val);
   if(row)return openCustomView('PilotHorse:'+encodeURIComponent(row.id),'World','1999 Horses');
@@ -3971,10 +4037,21 @@ window.addEventListener('click',e=>{
  if(key==='back')return window.history.back()
  if(key==='forward')return window.history.forward()
 },true);
+root.addEventListener('toggle',event=>{
+ const target=event.target;
+ if(!target?.matches?.('details.ng-connected-drop'))return;
+ const ctrl=APP.connectedTables[target.dataset.connectedKey];
+ if(ctrl)ctrl.open=target.open;
+},true);
 root.addEventListener('change',event=>{
   const field=event.target;
   if(field.id==='ngNamedSavesImport')return namedSaveImport(field.files?.[0]);
   if(field?.tagName==='SELECT')endNativeSelectInteraction(false);
+  if(field.matches('select[data-ng-select="connected-column"]')){
+   const ctrl=APP.connectedTables[field.dataset.val];
+   if(ctrl)ctrl.column=field.value;
+   return paint();
+  }
   if(field.matches('select[data-ng-select^="roster-filter-"]')){
    const k=field.dataset.ngSelect.slice('roster-filter-'.length);
    const scope=field.closest('.ng-list-filters')?.dataset.filterScope;
@@ -4064,6 +4141,19 @@ root.addEventListener('scroll',event=>{
 },true);
 root.addEventListener('input',event=>{
  const input=event.target;
+ if(input.matches('input[data-ng-input="connected-search"], input[data-ng-input="connected-contains"]')){
+  const key=input.dataset.val,ctrl=APP.connectedTables[key];
+  if(!ctrl)return;
+  const mode=input.dataset.ngInput;
+  const prop=mode==='connected-search'?'search':'contains';
+  ctrl[prop]=input.value;
+  const caret=input.selectionStart;
+  paint();
+  const refreshed=[...root.querySelectorAll('input[data-ng-input="'+mode+'"]')]
+   .find(x=>x.dataset.val===key);
+  if(refreshed){refreshed.focus();refreshed.setSelectionRange(caret,caret)}
+  return;
+ }
  if(input.matches('input[data-ng-input="directory-search"]')){
   APP.directorySearch=input.value;const cursor=input.selectionStart;
   paint();const found=root.querySelector('input[data-ng-input="directory-search"]');

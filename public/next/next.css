@@ -3108,3 +3108,63 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  color:#b4cdbb;line-height:1.35
 }
 #wtwNextgen .ng-connected-disclosure{font-size:var(--wtw-ui-profile-status,9px)!important;background:#20292b}
+
+
+/* All trainer, track and ownership dropdown tables share Horse Directory controls.
+   Keep the existing typography tokens, compact rows and both scroll axes. */
+#wtwNextgen .ng-connected-tools{
+ display:flex;align-items:end;gap:6px;flex-wrap:wrap;min-height:30px;
+ padding:5px 7px;background:#161e22;border-bottom:1px solid #384840;
+ font-size:var(--wtw-roster-label,9px)!important
+}
+#wtwNextgen .ng-connected-tools label{
+ display:flex;flex-direction:column;gap:3px;color:#b4cabc;
+ font-size:var(--wtw-roster-label,9px)!important;font-weight:800!important;
+ letter-spacing:.02em
+}
+#wtwNextgen .ng-connected-tools input,
+#wtwNextgen .ng-connected-tools select{
+ box-sizing:border-box;height:25px!important;max-width:200px;min-width:110px;
+ background:#0c1417;border:1px solid #3d5246;border-radius:2px;
+ color:#e3ebdf;padding:3px 7px!important;
+ font-size:var(--wtw-roster-input,9.5px)!important
+}
+#wtwNextgen .ng-connected-tools label:first-child input{width:clamp(120px,13vw,195px)}
+#wtwNextgen .ng-connected-tools button{
+ box-sizing:border-box;height:25px!important;min-width:0!important;
+ padding:3px 8px!important;border:1px solid #445b4c!important;
+ border-radius:2px!important;background:#1f2a2c!important;
+ color:#b6c8b9!important;white-space:nowrap!important;
+ font-size:var(--wtw-roster-control,8.5px)!important;font-weight:760!important
+}
+#wtwNextgen .ng-connected-tools button:hover,
+#wtwNextgen .ng-connected-tools button.on{
+ background:#315a43!important;color:#f9df9d!important;border-color:#668d6a!important
+}
+#wtwNextgen .ng-connected-view{display:flex;gap:3px;margin-left:auto}
+#wtwNextgen .ng-connected-scroll{
+ display:block;max-height:280px;max-width:100%;overflow:auto!important;
+ overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#5b7d69 #12231e
+}
+#wtwNextgen .ng-connected-table{
+ width:100%;min-width:max-content;table-layout:auto;border-collapse:collapse
+}
+#wtwNextgen .ng-connected-table th{position:sticky;top:0;z-index:2;padding:0!important}
+#wtwNextgen .ng-connected-table th button{
+ display:flex;align-items:center;justify-content:space-between;gap:8px;
+ width:100%;height:25px!important;padding:4px 9px!important;
+ background:transparent!important;border:0!important;cursor:pointer;
+ color:inherit!important;font-size:var(--wtw-roster-head,8.3px)!important;
+ font-weight:820!important;text-align:left!important;white-space:nowrap
+}
+#wtwNextgen .ng-connected-table th button:hover,
+#wtwNextgen .ng-connected-table th[aria-sort="ascending"] button,
+#wtwNextgen .ng-connected-table th[aria-sort="descending"] button{color:#eecf8e!important}
+#wtwNextgen .ng-connected-table td{height:28px!important;max-height:28px}
+#wtwNextgen .ng-connected-table.compact .ng-connected-optional{display:none!important}
+#wtwNextgen .ng-connected-content{min-width:0;max-width:100%}
+@media(max-width:860px){
+ #wtwNextgen .ng-connected-view{margin-left:0}
+ #wtwNextgen .ng-connected-tools label{flex:1 1 120px}
+ #wtwNextgen .ng-connected-tools input,#wtwNextgen .ng-connected-tools select{width:100%;max-width:none}
+}
