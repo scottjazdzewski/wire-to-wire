@@ -171,6 +171,7 @@ export function shippingAssessment(state,world,horseId,destinationSiteId,{target
   target_race_id:targetRaceId};
 }
 export function shippingAction({state,world,command,emit}){
+ state.runtime.racing.horse_travel??={}; // migrate valid pre-shipping careers when first action occurs
  const type=command.type,p=command.payload,
   horse=state.runtime.registered_horses?.by_id?.[p.horse_id];
  ensure(Boolean(horse)&&canManage(state,command,horse),
