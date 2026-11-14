@@ -309,6 +309,9 @@ function openDynamicConcern({state,world,item,owner,trainer,live,emit}){
  */
 export function updateOwnerTrainerLiveReviews({state,world,emit,events=[],
  trigger='DAILY'}){
+ // Career creation and opening-day setup commands must never bring forward
+ // the first 28-day formal review. Day 1 owns initial relationship dating.
+ if(state.clock.days_elapsed===0)return;
  const rt=root(state);
  const actualEvents=[...events];
  const rowByHorse=new Map(registered(state).map(h=>[h.horse_id,h]));
