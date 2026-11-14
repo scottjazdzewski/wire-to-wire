@@ -77,7 +77,11 @@ test('28-day owner/trainer career reviews use only official race results, paid c
     row.date<'1999-01-30').reduce((n,row)=>n+row.amount_minor,0),
    'The Jan 30 review occurs before Jan 30 care settlement, so it must not include future same-day invoices');
   assert.equal(item.history[0].starts,item.evidence.starts);
-  if(expected<3)assert.equal(item.history[0].reason,'WAIT_FOR_SUSTAINED_RACE_SAMPLE');
+  if(item.owner_id===completed.player.operation_id)
+   assert.equal(item.history[0].reason,'PLAYER_OWNER_RETAINS_DIRECTION',
+    'The player owns this manager decision even with limited race evidence');
+  else if(expected<3)
+   assert.equal(item.history[0].reason,'WAIT_FOR_SUSTAINED_RACE_SAMPLE');
  }
  const trainersSeen=[...new Set(all(completed).map(h=>h.trainer_id))];
  for(const t of trainersSeen){
