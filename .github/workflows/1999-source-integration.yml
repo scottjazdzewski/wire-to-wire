@@ -106,3 +106,20 @@ jobs:
           path: visual-audit/1999/naming-v12-indexeddb-dom.txt
           retention-days: 7
           if-no-files-found: warn
+
+
+  continuity-v17-indexeddb-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify V17 organizational continuity journal in Chromium IndexedDB
+        run: bash scripts/1999-organization-continuity-indexeddb-smoke.sh
+      - name: Preserve V17 continuity transaction QA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-continuity-v17-indexeddb-qa
+          path: visual-audit/1999/continuity-v17-indexeddb-dom.txt
+          retention-days: 7
+          if-no-files-found: warn

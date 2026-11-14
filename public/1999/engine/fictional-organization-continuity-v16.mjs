@@ -37,6 +37,17 @@ function hash(data){
  for(const ch of JSON.stringify(data)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}
  return 'fnv32-'+(h>>>0).toString(16).padStart(8,'0');
 }
+/**
+ * Seal an explicit founding-directory + append-only event archive.
+ * Called at backup/recovery boundaries, not on normal event writes.
+ */
+export function sealFictionalOrganizationContinuitySnapshot({original,events}={}){
+ if(!original||!Array.isArray(events))
+  throw Error('Continuity archive requires founding directory and events');
+ const data={schema:FICTIONAL_ORGANIZATION_CONTINUITY_SNAPSHOT,
+  original:clone(original),events:clone(events)};
+ return Object.freeze({...data,checksum:hash(data)});
+}
 function canonicalSeed(input){
  if(!input||typeof input!=='object'||
   !Array.isArray(input.people)||!Array.isArray(input.owners)||
@@ -176,7 +187,8 @@ export function createFictionalOrganizationContinuityRegistry({
    throw Error('Relocation needs an explicit city, region and two-letter country code');
   return clone(location);
  };
- function apply({expectedRevision,event}={}){
+ function apply({expectedRevision,event,dryRun=false}={}){
+  if(typeof dryRun!=='boolean')throw Error('Invalid continuity validation mode');
   if(expectedRevision!==revision)throw Error('Stale organizational continuity cursor');
   if(!event||typeof event!=='object')throw Error('Explicit continuity event required');
   checkId(event.eventId,'continuity event ID');
@@ -187,8 +199,12 @@ export function createFictionalOrganizationContinuityRegistry({
   if(eventIds.has(event.eventId))throw Error('Repeated continuity event ID');
   if(!CONTINUITY_EVENT_TYPES.includes(event.type))
    throw Error('Unsupported organizational continuity event');
+  // Validate event serialization before any operation mutates the projection.
+  const recorded=immutable({...event,revision:revision+1});
   const op=firms.get(event.organizationId);
   const person=people.get(event.personId);
+  let commit=()=>{};
+  let addedPerson=false;
   if(event.type==='REGISTER_APPROVED_PERSON'){
    const candidate=event.person;
    checkId(candidate?.id,'new approved person ID');
@@ -208,12 +224,15 @@ export function createFictionalOrganizationContinuityRegistry({
      existing[k]!==candidate[k]))
      throw Error('New person does not match the approved naming registry');
    }
-   people.set(candidate.id,{
-    id:candidate.id,name:candidate.name,role:candidate.role,
-    primarySurname:candidate.primarySurname,birthYear:candidate.birthYear,
-    retired:false
-   });
-   peopleNameKeys.add(key(candidate.name));
+   addedPerson=true;
+   commit=()=>{
+    people.set(candidate.id,{
+     id:candidate.id,name:candidate.name,role:candidate.role,
+     primarySurname:candidate.primarySurname,birthYear:candidate.birthYear,
+     retired:false
+    });
+    peopleNameKeys.add(key(candidate.name));
+   };
   }else if(event.type==='REGISTER_DOCUMENTED_FAMILY_LINK'){
    const a=event.personAId,b=event.personBId;
    if(!people.has(a)||!people.has(b)||a===b||
@@ -225,12 +244,12 @@ export function createFictionalOrganizationContinuityRegistry({
     familyLinkLookup({personAId:a,personBId:b,kind:event.relationshipKind,
      sourceId:event.sourceId})!==true))
     throw Error('Family relationship has not been approved by family history');
-   familyPairs.add(pair);
+   commit=()=>familyPairs.add(pair);
   }else if(event.type==='RETIRE_PERSON'){
    if(!person||person.retired)throw Error('Cannot retire an unknown or retired person');
    if(hasDuties(person.id))
     throw Error('Transfer all active organization responsibilities before retirement');
-   people.set(person.id,{...person,retired:true});
+   commit=()=>people.set(person.id,{...person,retired:true});
   }else{
    if(!op)throw Error('Unknown organization ID; V16 never invents businesses');
    if(op.status==='CLOSED'&&event.type!=='REOPEN_ORGANIZATION')
@@ -282,9 +301,15 @@ export function createFictionalOrganizationContinuityRegistry({
      next.status='ACTIVE';
      break;
    }
-   firms.set(op.id,next);
+   commit=()=>firms.set(op.id,next);
   }
-  const recorded=immutable({...event,revision:revision+1});
+  if(dryRun)return Object.freeze({
+   model:FICTIONAL_ORGANIZATION_CONTINUITY_MODEL,
+   worldId:seed.worldId,revision:revision+1,year:event.year,
+   organizationCount:firms.size,knownPeople:people.size+(addedPerson?1:0),
+   eventCount:events.length+1
+  });
+  commit();
   events.push(recorded);eventIds.add(event.eventId);
   if(event.organizationId){
    if(!byFirm.has(event.organizationId))byFirm.set(event.organizationId,[]);
@@ -329,9 +354,9 @@ export function createFictionalOrganizationContinuityRegistry({
   return Object.freeze(list);
  }
  function exportSnapshot(){
-  const data={schema:FICTIONAL_ORGANIZATION_CONTINUITY_SNAPSHOT,
-   original:clone(seed.original),events:clone(events)};
-  return Object.freeze({...data,checksum:hash(data)});
+  return sealFictionalOrganizationContinuitySnapshot({
+   original:seed.original,events
+  });
  }
  return Object.freeze({
   model:FICTIONAL_ORGANIZATION_CONTINUITY_MODEL,
@@ -341,6 +366,8 @@ export function createFictionalOrganizationContinuityRegistry({
   get organizationCount(){return firms.size},
   get eventCount(){return events.length},
   get cursor(){return cursor()},
-  apply,getOrganization,getPerson,getHistory,listOrganizations,exportSnapshot
+  apply,
+  preview:({expectedRevision,event}={})=>apply({expectedRevision,event,dryRun:true}),
+  getOrganization,getPerson,getHistory,listOrganizations,exportSnapshot
  });
 }
