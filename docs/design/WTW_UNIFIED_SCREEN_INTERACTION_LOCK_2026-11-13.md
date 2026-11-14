@@ -122,15 +122,19 @@ Acceptance combines structural tests, real Chromium interaction/scroll probes, a
 
 
 
-## Locked local previous/next dossier controls — November 14, 2026
+## Locked previous/next ENTITY controls — corrected November 14, 2026
 
-**All horse, person, owner, farm/facility and track information profiles must show compact local Previous ‹ and Next › controls immediately beside OVERVIEW**, followed by HISTORY and MORE RECORDS. These controls were missing from the previously approved shared dossier navigation, as observed on the Alderwick International Stud facility profile.
+**The arrows immediately beside OVERVIEW advance to a different entity, NOT another section of the current entity.** This user requirement supersedes the erroneous earlier design and implementation in PR #173.
 
-- This is **in-profile information navigation**, not a duplicate of the global browser Back/Forward buttons at the upper left. The arrows cycle through the one existing canonical section list: Overview, the displayed More Records entries in their original order, then History, wrapping at either end. Every click changes the actual content panel, not just the highlighted arrow.
-- Never build a second navigation list, alternate screen, special-case facility pager or standalone CSS layer. Use the one `profileDetail()` shared dossier bar, `APP.detailTab` and the existing `profile-record` options. All profile types must behave consistently.
-- Arrows remain visible, compact, keyboard-accessible, labeled and focus-highlighted at desktop and laptop sizes. Neither page movement nor the existing Overview/History/More Records buttons advance the game date, change record identities, alter asset artwork or mutate saved careers.
-- Source-backed browser certification is required on all five families (track, horse, person, owner, facility), including forward, backward, wrap, stable identity, January 1999 game date and the locked Track Stakes / Meet / History arrangement.
-- Permanent regression guards: `tests/dossier-local-navigation.test.mjs` and `scripts/1999-full-screen-controls-cdp.mjs`. A missing local pager is a regression even if global browser navigation still works.
+- On a **track** profile, ‹ / › opens the preceding / following **track**. On a **trainer**, it opens another **trainer**; **jockeys stay with jockeys**. Horses, owners, facilities/stud farms, racing stables, breeders and other genuine source-defined categories likewise remain in their proper peer roster. Never cycle from trainer to jockey or from a stud to an ownership partnership.
+- Entity traversal uses the current canonical 1999 world directory and exact IDs, with a deterministic alphabetical order (then ID for ties). It wraps at either end. Use the existing profile-opening routes and reset the selected entity to its Overview. **No fabricated entities, unrelated categories, source-ID guesses, or new simulated data.** Legacy Office dossiers may use their actual linked Office directory, only with an unambiguous identity.
+- **OVERVIEW, HISTORY and MORE RECORDS remain independent same-entity section controls**. Their behavior is not affected by the arrows; a section change must never change the horse, trainer, track, owner or facility being viewed.
+- The global Back/Forward buttons in the upper header are still the browser/history navigation controls; they are separate from these record arrows.
+- One shared renderer `profileDetail()` owns the pager for all profile families. The dead tab-stepping `profile-step` implementation and CSS from PR #173 must be physically replaced rather than hidden.
+- If fewer than two matching, properly identified records are available, the arrows remain visible but disabled, with an honest label. No cross-category substitution to make controls appear active.
+- Preserve names, logos, canonical IDs, styles, approved layout, history, game date and saved-career state. Test actual **record identity changes** and role grouping in Chromium; a glowing arrow or different detail tab is not acceptance.
+
+Permanent guards: `tests/dossier-local-navigation.test.mjs` and `scripts/1999-full-screen-controls-cdp.mjs`; these test entity identity, grouping, wraparound and January 1999 career preservation.
 
 **Year in Review future visual direction:** the user approved the premium annual style for now and wants a vintage newspaper/editorial character when returning later. Do not begin another annual redesign while restoring the shared profile navigation.
 
