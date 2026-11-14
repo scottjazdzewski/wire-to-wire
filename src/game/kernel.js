@@ -18,8 +18,9 @@ import {RACING_COMMANDS,racingAction} from './racing-1999.js';
 import {run1999RacingAgents} from './race-agents-1999.js';
 import {HORSE_SHIPPING_COMMANDS,shippingAction,advance1999HorseShipping} from './shipping-1999.js';
 import {TRAINER_CONTRACT_COMMANDS,offerTrainerServiceTerms,advanceTrainerContracts} from './trainer-contracts-1999.js';
+import {PLAYER_RACE_PLAN_COMMANDS,confirm1999PlayerRacePlan} from './player-race-plan-1999.js';
 
-const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_CARE_COMMANDS,...RACING_COMMANDS,...HORSE_SHIPPING_COMMANDS,...TRAINER_CONTRACT_COMMANDS]);
+const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_CARE_COMMANDS,...RACING_COMMANDS,...HORSE_SHIPPING_COMMANDS,...TRAINER_CONTRACT_COMMANDS,...PLAYER_RACE_PLAN_COMMANDS]);
 const MAX_PENDING = 5000;
 function appendLog(state, commandId, kind, details) {
   const event = { seq: state.event_log.length + 1, command_id: commandId,
@@ -108,6 +109,8 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     registerHorseAction({state:next,world,command:c,emit});
     const horse=next.runtime.registered_horses?.by_id?.[c.payload?.horse?.horse_id];
     if(horse)initializeGameHorseCare(next,horse);
+  } else if (PLAYER_RACE_PLAN_COMMANDS.includes(c.type)) {
+    confirm1999PlayerRacePlan({state:next,world,command:c,emit});
   } else if (HORSE_SHIPPING_COMMANDS.includes(c.type)) {
     shippingAction({state:next,world,command:c,emit});
   } else if (RACING_COMMANDS.includes(c.type)) {
