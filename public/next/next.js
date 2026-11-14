@@ -2145,7 +2145,7 @@ function profileDetail(route,sourceOverride=null){
  const photoSrc=sourceImage||horseImage;
  const visualName=worldSourceEntry?.name||route.title;
  // Until source media exists, present a name-derived monogram rather than
- // exposing production scaffolding ("IMAGE SLOT RESERVED") to game players.
+ // exposing unfinished production labels to game players.
  // It is not a claimed portrait, horse photograph or organization logo.
  const nameTokens=String(visualName).normalize('NFKC').match(/[\p{L}\p{N}]+/gu)||[];
  const sourceInitials=(nameTokens.length>=2?
