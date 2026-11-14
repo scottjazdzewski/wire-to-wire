@@ -112,6 +112,10 @@ test('first 1999 race completes with full deterministic placings, purse ledger a
    assert.equal(row.owner_share_minor+row.trainer_share_minor+row.jockey_share_minor,row.earnings_minor);
   }
  }
+ console.info('WTW_1999_RACE_CYCLE_QA',JSON.stringify(complete.map(r=>({
+  race_id:r.id,date:r.date,track_id:r.track_id,starters:r.results.length,
+  winner_horse_id:r.results[0].horse_id,purse_minor:r.purse_minor
+ }))));
  assert.deepEqual(importGameSave(exportGameSave(state,world),world),state);
  const second=fresh();let replay=second;for(let d=0;d<15;d++)replay=day(replay);
  assert.deepEqual(replay,state,'Same seed and actor state yield identical 15-day career');
