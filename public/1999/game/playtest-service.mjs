@@ -9,7 +9,7 @@
  */
 import {WORLD_SCHEMA,dispatchGameCommand,exportGameSave,importGameSave,nextDate,
  getGameHorsePerformance,getGameRacingRoster,getAgentRelationships,
- getOwnerPortfolioView,getCareerHorseConnections,get1999HorseRaceOpportunities,getTrainerContract,quote1999PlayerRacePlan,getGamePostRaceCampaign,
+ getOwnerPortfolioView,getCareerHorseConnections,get1999HorseRaceOpportunities,getTrainerContract,quote1999PlayerRacePlan,getOwnerTrainerCareerReview,getTrainerCareerForm,getGamePostRaceCampaign,
  horseTravelStatus,effectiveHorseTrack,
  effectiveHorseCareSite}
  from './index.js';
@@ -152,6 +152,8 @@ export async function createPlaytestCareer({directory,trainers,jockeys,cohort,sa
   getRacePlanQuote(payload){return quote1999PlayerRacePlan(state,world,payload)},
   getPostRaceCampaign(horseId){return getGamePostRaceCampaign(state,horseId)},
   getTrainerAgreement(ownerId,trainerId){return getTrainerContract(state,world,ownerId,trainerId)},
+  getOwnerTrainerReview(ownerId,trainerId){return getOwnerTrainerCareerReview(state,world,ownerId,trainerId)},
+  getTrainerCareerForm(trainerId){return getTrainerCareerForm(state,trainerId)},
   command(type,payload,{actor='player',id=null}={}){
    const cmd={id:id||'pilot:browser:'+String(state.revision+1)+':'+type,
     type,actor,payload};
@@ -235,6 +237,8 @@ export async function bootBrowserPlaytest1999(){
   getRacePlanQuote(payload){return engine.getRacePlanQuote(payload)},
   getPostRaceCampaign(horseId){return engine.getPostRaceCampaign(horseId)},
   getTrainerAgreement(ownerId,trainerId){return engine.getTrainerAgreement(ownerId,trainerId)},
+  getOwnerTrainerReview(ownerId,trainerId){return engine.getOwnerTrainerReview(ownerId,trainerId)},
+  getTrainerCareerForm(trainerId){return engine.getTrainerCareerForm(trainerId)},
   onChange(fn){listeners.add(fn);return()=>listeners.delete(fn)},
   submit(type,payload,actor='player'){
    const operation=busy.then(async()=>{
