@@ -56,7 +56,7 @@ function validEvent(s,event,horse){
  }
  return false;
 }
-function candidate(s,event,horse){
+function candidate(s,world,event,horse){
  const d=event.details;
  if(event.kind==='HORSE_CARE_UNFUNDED')
   return {kind:'CARE_FUNDING',reason:'DOCUMENTED_UNFUNDED_BARN_CARE',
@@ -67,14 +67,14 @@ function candidate(s,event,horse){
  if(d.reason==='EXCEEDED_FORM_EXPECTATIONS'){
   const trainer=s.runtime.people?.[horse.trainer_id]?.game_race_record;
   if((trainer?.starts??0)<3)return null;
-  const quote=trainerContractQuote(s,null,horse.owner_organization_id,horse.trainer_id);
+  const quote=trainerContractQuote(s,world,horse.owner_organization_id,horse.trainer_id);
   if(quote.next_terms||quote.minimum_acceptable_minor<=quote.current_daily_fee_minor)return null;
   return {kind:'CONTRACT_TERMS',reason:'TRAINER_RESULTS_AND_MARKET_FEE_LEVERAGE',
    needed_minor:null,race_id:d.race_id};
  }
  return null;
 }
-function offer(s,horse,info,event,emit){
+function offer(s,world,horse,info,event,emit){
  const o=horse.owner_organization_id,t=horse.trainer_id;
  const row=record(s,o,t),now=s.clock.date,rt=root(s);
  // A single pending request per genuine partnership and a 14-day cooldown
@@ -106,18 +106,18 @@ function offer(s,horse,info,event,emit){
   choice=(s.runtime.horse?.[horse.horse_id]?.training?.currentRisk??0)>.62?
    'ACCEPT':'COUNTER';
  }else{
-  const quote=trainerContractQuote(s,null,o,t);
+  const quote=trainerContractQuote(s,world,o,t);
   if(cash(s,o)>=quote.minimum_acceptable_minor*quote.horse_count*7)
    choice=strength.owner_patience>.5?'ACCEPT':'COUNTER';
  }
- resolve({state:s,request,choice,actor:'system',emit});
+ resolve({state:s,world,request,choice,actor:'system',emit});
 }
 function changeCare(s,h,policy,actor,emit){
  setHorseCarePolicy({state:s,world:null,command:{
   type:'SET_HORSE_CARE_POLICY',actor,payload:{horse_id:h.horse_id,policy}
  },emit});
 }
-function resolve({state:s,request:r,choice,actor,emit}){
+function resolve({state:s,world,request:r,choice,actor,emit}){
  ensure(r.status==='OPEN'&&r.deadline>=s.clock.date,
   'MANAGEMENT_REQUEST_CLOSED','Management request has closed');
  const h=s.runtime.registered_horses?.by_id?.[r.horse_id];
@@ -161,14 +161,14 @@ function resolve({state:s,request:r,choice,actor,emit}){
    outcome=choice==='ACCEPT'?'TEMPORARY_REST_ACCEPTED':
     'LIGHT_REBUILD_COMPROMISE';
   }else{
-   const q=trainerContractQuote(s,null,r.owner_id,r.trainer_id);
+   const q=trainerContractQuote(s,world,r.owner_id,r.trainer_id);
    ensure(!q.next_terms,'MANAGEMENT_CONTRACT_PENDING','Trainer already has pending signed terms');
    const amount=choice==='ACCEPT'?Math.min(25000,
     Math.max(q.minimum_acceptable_minor,Math.round(q.minimum_acceptable_minor*1.03))):
     q.minimum_acceptable_minor;
    ensure(amount>=3000&&amount<=25000,
     'MANAGEMENT_CONTRACT_LIMIT','Trainer quote exceeds supported modeled agreement limits');
-   const result=offerTrainerServiceTerms({state:s,world:null,command:{
+   const result=offerTrainerServiceTerms({state:s,world,command:{
     type:'OFFER_TRAINER_SERVICE_TERMS',actor,
     payload:{owner_id:r.owner_id,trainer_id:r.trainer_id,daily_fee_minor:amount}
    },emit});
@@ -213,7 +213,7 @@ export function answerTrainerManagementRequest({state,world,command,emit}){
   'MANAGEMENT_PAIR','Request must refer to an active real owner/trainer partnership');
  const r=root(state).by_pair[pair(p.owner_id,p.trainer_id)]?.active;
  ensure(r?.id===p.request_id,'MANAGEMENT_REQUEST_UNKNOWN','Exact open request ID is required');
- resolve({state,request:r,choice:p.choice,actor:'player',emit});
+ resolve({state,world,request:r,choice:p.choice,actor:'player',emit});
 }
 /** Pending requests expire only on real game days; a valid earlier response
  * cannot be replayed as a second expenditure or another policy change. */
@@ -275,10 +275,10 @@ export function reactToTrainerEvents({state:s,world,events,emit}){
   if(!validEvent(s,e,h))continue;
   const k=pair(h.owner_organization_id,h.trainer_id);
   if(selected.has(k))continue;
-  const info=candidate(s,e,h);
+  const info=candidate(s,world,e,h);
   if(!info)continue;
   selected.add(k);
-  offer(s,h,info,e,emit);
+  offer(s,world,h,info,e,emit);
  }
 }
 /** Exact read-only requests for the owner/management surface; no game action. */
