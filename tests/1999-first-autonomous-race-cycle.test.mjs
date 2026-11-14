@@ -57,6 +57,8 @@ test('autonomous trainer + jockey pool books eligible real runner IDs without co
   jockeyByDate.set(key,race.track_id);
  }
  const bookings=state.event_log.filter(e=>e.kind==='JOCKEY_MOUNT_BOOKED');
+ assert.ok(bookings.every(x=>/JOCKEY_ACCEPTS/.test(x.details.reason)&&
+  Number.isFinite(x.details.acceptance)));
  assert.equal(bookings.length,all.length);
  const debits=state.runtime.finances.ledger.filter(x=>x.kind==='JOCKEY_MOUNT_AND_TRAVEL_FEE');
  const credits=state.runtime.finances.ledger.filter(x=>x.kind==='JOCKEY_FEE_RECEIVED');
@@ -75,6 +77,14 @@ test('first 1999 race completes with full deterministic placings, purse ledger a
   assert.equal(r.results.reduce((n,x)=>n+x.earnings_minor,0),r.purse_minor);
   assert.equal(r.escrow_minor,0);
   assert.deepEqual(r.results.map(x=>x.finish),Array.from({length:r.results.length},(_,i)=>i+1));
+  const feedback=state.event_log.filter(x=>x.kind==='POST_RACE_PROFESSIONAL_FEEDBACK'&&x.details.race_id===r.id);
+  assert.equal(feedback.length,r.results.length);
+  assert.ok(feedback.every(x=>x.details.owner_trust>=0&&x.details.owner_trust<=1));
+  const professional=state.runtime.people[r.results[0].trainer_id].game_race_record;
+  assert.ok(professional.starts>=1);
+  assert.ok(professional.professional_standing>=0&&professional.professional_standing<=1);
+  const rider=state.runtime.racing.jockeys[r.results[0].jockey_id];
+  assert.ok(rider.game_reputation>=0&&rider.game_reputation<=1);
   const event=state.event_log.find(x=>x.kind==='RACE_SETTLED'&&x.details.race_id===r.id);
   assert.ok(event);
   const ownerCredits=state.runtime.finances.ledger.filter(x=>x.race_id===r.id&&
