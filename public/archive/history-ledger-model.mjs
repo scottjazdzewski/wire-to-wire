@@ -4,7 +4,7 @@
  * Site data is already filtered by the canonical D1 quarantine read model.
  */
 const collator=new Intl.Collator(undefined,{numeric:true,sensitivity:'base'});
-const fields=new Set(['year','date','race','track','winner','status']);
+const fields=new Set(['year','date','race','track','winner','evidence']);
 const string=value=>String(value??'').trim();
 const compare=(a,b)=>collator.compare(string(a),string(b));
 
@@ -23,7 +23,7 @@ export function historyLedgerRows(races,winners={},options={}){
   return {
    id:string(race.id),year:Number(race.year),date:string(race.date),race:string(race.name),
    track:string(race.track_name),winner:string(winner?.name),winnerId:string(winner?.horse_id),
-   status:string(race.status),dateBasis:string(race.date_basis),source:race,index,won:!!winner?.horse_id
+   status:string(race.status),dateBasis:string(race.date_basis),evidence:typeof options.evidenceFor==='function'?string(options.evidenceFor(race)):string(race.date_basis||race.status),source:race,index,won:!!winner?.horse_id
   };
  }).filter(r=>(year==='all'||String(r.year)===year)&&
   (track==='all'||r.track===track)&&
