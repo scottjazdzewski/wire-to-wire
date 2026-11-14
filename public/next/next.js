@@ -1574,8 +1574,8 @@ function profileDetail(route,sourceOverride=null){
   ['Overview','Connections','History']);
  const rows=(items)=>'<div class="ng-data-rows">'+items.map(i=>`<div class="ng-data-row"><span>${safe(i.label)}</span>${namedProfileValue(i.label,i.value)}</div>`).join('')+'</div>';
  const pills='<div class="ng-status-pills">'+states.slice(0,4).map(x=>`<span>${safe(x)}</span>`).join('')+'</div>';
- const tabbar=isTrack||isFarm?'':(isPerson||isHorse)?`<nav class="ng-person-dossierbar ng-management-dossierbar" aria-label="Personnel dossier navigation">
-   <span class="ng-person-dossierlabel">${isHorse?'HORSE RACING FILE':'PERSONNEL DOSSIER'} <small>ONE-SCREEN OVERVIEW</small></span>
+ const tabbar=(isTrack||isFarm||isPerson||isHorse)?`<nav class="ng-person-dossierbar ng-management-dossierbar" aria-label="Profile records navigation">
+   <span class="ng-person-dossierlabel">${isHorse?'HORSE RACING FILE':isPerson?'PERSONNEL DOSSIER':isTrack?'TRACK DOSSIER':source.dataset.foundingContext==='facility'?'FACILITY DOSSIER':'OWNERSHIP DOSSIER'} <small>ONE-SCREEN OVERVIEW</small></span>
    <div class="ng-person-dossieractions">
     <button data-ng="detailtab" data-val="Overview" class="${APP.detailTab==='Overview'?'on':''}">OVERVIEW</button>
     <button data-ng="detailtab" data-val="History" class="${APP.detailTab==='History'?'on':''}">HISTORY</button>
