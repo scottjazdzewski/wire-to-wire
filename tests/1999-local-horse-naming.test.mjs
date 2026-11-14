@@ -2,9 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {buildNamingLabScenario,createNamingDeskController} from '../public/next/1999-naming-desk.mjs';
-import {generateLocalStoryFirstHorseNames,LOCAL_HORSE_NAMING_SCHEMA}
+import {generateLocalStoryFirstHorseNames,generateLocalPopulationNamingBatch,LOCAL_HORSE_NAMING_SCHEMA}
  from '../public/1999/game/horse-naming-local-v485.js';
 import {auditHorseNamingCohort} from '../public/1999/game/horse-naming-cohort-audit-v482.js';
+import {foalingEventNamingBrief,planPopulationNamingCohorts} from '../public/1999/game/horse-naming-population-planner.js';
 
 const story='During a fierce thunderstorm the electricity failed. In the dark barn, the owner found the mare by hearing her calm, steady breathing. The old bell rang when the night groom reached the gate.';
 const fields={ownerName:'Test Farm Owner',breederName:'Foaling Farm',foalingYear:1996,story};
@@ -89,4 +90,31 @@ test('Wrangler has no AI binding and the Worker closes all old remote naming rou
  assert.doesNotMatch(w,/256/);
  assert.match(worker,/Remote AI naming retired/);
  assert.doesNotMatch(ui,/fetch\(|\/api\/naming\/preview|Cloudflare AI preview/);
+});
+
+test('future game foaling event cohorts are named entirely on-device with no credit budget',()=>{
+ const foals=Array.from({length:32},(_,i)=>foalingEventNamingBrief({
+  horseId:'H-FUTURE-2041-'+String(i).padStart(4,'0'),foalingYear:2041,
+  owner:{id:'OWNER-1',name:'A Foaling Owner'},breeder:{id:'BREEDER-1',name:'Foaling Barn'},
+  event:{kind:'FOALING_EVENT',eventId:'FOALING-2041-'+String(i).padStart(4,'0'),
+   horseId:'H-FUTURE-2041-'+String(i).padStart(4,'0'),naming_narrative:story}
+ }));
+ const batches=[...planPopulationNamingCohorts(foals,{runId:'RUN-2041-TEST',year:2041})];
+ assert.equal(batches.length,2);
+ const first=generateLocalPopulationNamingBatch({batch:batches[0],existingNames:[]});
+ const second=generateLocalPopulationNamingBatch({batch:batches[1],existingNames:first.nextRecentNames});
+ assert.equal(first.requested,16);assert.equal(second.requested,16);
+ assert.equal(first.remoteRequests,0);assert.equal(second.creditsUsed,0);
+ assert.equal(first.writesToGame,false);assert.equal(second.approvedForRegistration,false);
+ assert.ok(first.readyForIndependentEditor>0);
+ assert.equal(first.screened.length,16);
+});
+
+test('future cohort does not accept forged foaling event identity',()=>{
+ const foal=foalingEventNamingBrief({horseId:'H-FUTURE-2041-FORGED',foalingYear:2041,
+  owner:{id:'O-1',name:'Owner'},breeder:{id:'B-1',name:'Breeder'},
+  event:{kind:'FOALING_EVENT',eventId:'FOAL-EVENT-001',horseId:'H-FUTURE-2041-FORGED',naming_narrative:story}});
+ const [batch]=[...planPopulationNamingCohorts([foal],{runId:'RUN-FORGE-TEST',year:2041})];
+ batch.items[0].brief.evidence[0].id='GAME_EVENT:DIFFERENT-FOALING-EVENT';
+ assert.throws(()=>generateLocalPopulationNamingBatch({batch}),/match actual game-event brief|requires real foaling record/);
 });
