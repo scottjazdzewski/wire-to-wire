@@ -14,10 +14,21 @@ export const CONTINUITY_EVENT_TYPES=Object.freeze([
  'REPLACE_CENTER_MANAGERS','RELOCATE_ORGANIZATION','CLOSE_ORGANIZATION',
  'REOPEN_ORGANIZATION','RETIRE_PERSON',
  'REGISTER_APPROVED_PERSON','REGISTER_DOCUMENTED_FAMILY_LINK',
- 'REGISTER_APPROVED_ORGANIZATION'
+ 'REGISTER_APPROVED_ORGANIZATION',
+ 'SET_OPERATING_CAPACITY','SET_PERSON_AVAILABILITY','RECORD_PERSON_CAREER'
 ]);
 const KINSHIP=new Set(['PARENT_CHILD','SIBLING','SPOUSE','DOCUMENTED_RELATIVE']);
 const OPERATIONS=new Set(['OWNER','STABLE','FARM','TRAINING_CENTER']);
+// Configurable fictional safety envelopes, not historical legal or economic facts.
+export const FICTIONAL_INDUSTRY_SLOT_LIMITS_V20=Object.freeze({
+ OWNER:Object.freeze({slotType:'OWNED_HORSES',max:5000}),
+ STABLE:Object.freeze({slotType:'HORSES_IN_TRAINING',max:350}),
+ FARM:Object.freeze({slotType:'RESIDENT_HORSES',max:2000}),
+ TRAINING_CENTER:Object.freeze({slotType:'HORSES_IN_DEVELOPMENT',max:1000})
+});
+export const FICTIONAL_PERSON_CAREER_STAGES_V20=Object.freeze([
+ 'EMERGING','ESTABLISHED','VETERAN'
+]);
 const key=x=>String(x??'').normalize('NFKD')
  .replace(/[\u0300-\u036f]/g,'').toLowerCase()
  .replace(/&/g,'and').replace(/[^a-z0-9]+/g,'');
@@ -174,7 +185,8 @@ export function createFictionalOrganizationContinuityRegistry({
  const activePerson=(id,role=null,atYear=year)=>{
   checkId(id,'explicit successor ID');
   const person=people.get(id);
-  if(!person||person.retired)throw Error('Successor must be an existing active person');
+  if(!person||person.retired||person.availability==='ON_LEAVE')
+   throw Error('Successor must be an existing active person');
   if(role!==null&&person.role!==role)
    throw Error('Successor has an incompatible professional role');
   if(Number.isInteger(person.birthYear)&&
@@ -310,6 +322,42 @@ export function createFictionalOrganizationContinuityRegistry({
      sourceId:event.sourceId})!==true))
     throw Error('Family relationship has not been approved by family history');
    commit=()=>familyPairs.add(pair);
+  }else if(event.type==='SET_PERSON_AVAILABILITY'){
+   // People on leave must first relinquish active management appointments.
+   // Retirement remains a separate irreversible established event.
+   if(!person||person.retired)
+    throw Error('Availability change requires a non-retired existing person');
+   if(event.availability==='ON_LEAVE'){
+    activePerson(person.id,null,event.year);
+    if(hasDuties(person.id))
+     throw Error('Transfer active duties before personnel leave');
+   }else if(event.availability==='AVAILABLE'){
+    if(Number.isInteger(person.birthYear)&&
+     (event.year-person.birthYear<18||event.year-person.birthYear>100))
+     throw Error('Availability change requires an age-plausible career');
+   }else throw Error('Unsupported personnel availability');
+   if((person.availability??'AVAILABLE')===event.availability)
+    throw Error('Personnel availability is unchanged');
+   commit=()=>people.set(person.id,{...person,availability:event.availability});
+  }else if(event.type==='RECORD_PERSON_CAREER'){
+   if(!person||person.retired||person.availability==='ON_LEAVE')
+    throw Error('Career record requires an active existing person');
+   activePerson(person.id,null,event.year);
+   const stages=FICTIONAL_PERSON_CAREER_STAGES_V20;
+   const stage=event.stage,ordinal=stages.indexOf(stage);
+   if(ordinal<0)throw Error('Unsupported personnel career stage');
+   const start=event.careerStartYear,existing=person.career??null;
+   if(!Number.isInteger(start)||start<1900||start>event.year||
+    (Number.isInteger(person.birthYear)&&start<person.birthYear+18))
+    throw Error('Career start year must be explicit and age-plausible');
+   if(existing&&(start!==existing.careerStartYear||
+    ordinal<=stages.indexOf(existing.stage)||
+    ordinal>stages.indexOf(existing.stage)+1))
+    throw Error('Career stage cannot regress, skip or alter the original start');
+   if(event.year-start<[0,5,15][ordinal])
+    throw Error('Career stage requires sufficient documented experience');
+   commit=()=>people.set(person.id,{...person,
+    career:{stage,careerStartYear:start,updatedYear:event.year}});
   }else if(event.type==='RETIRE_PERSON'){
    if(!person||person.retired)throw Error('Cannot retire an unknown or retired person');
    if(hasDuties(person.id))
@@ -321,6 +369,21 @@ export function createFictionalOrganizationContinuityRegistry({
     throw Error('A closed operation cannot change leadership or premises');
    const next={...op,revision:op.revision+1};
    switch(event.type){
+    case 'SET_OPERATING_CAPACITY':{
+     // A capacity is a planning ceiling, not an ownership assignment or
+     // evidence that the operation currently holds any horses.
+     const policy=FICTIONAL_INDUSTRY_SLOT_LIMITS_V20[op.kind];
+     if(!Number.isSafeInteger(event.horseSlots)||event.horseSlots<1||
+      event.horseSlots>policy.max)
+      throw Error('Operating horse-slot capacity outside type-specific limits');
+     if(op.operatingCapacity?.horseSlots===event.horseSlots)
+      throw Error('Operating horse-slot capacity is unchanged');
+     next.operatingCapacity={
+      horseSlots:event.horseSlots,slotType:policy.slotType,
+      updatedYear:event.year
+     };
+     break;
+    }
     case 'CHANGE_OWNER_PRINCIPAL':
      if(op.kind!=='OWNER')throw Error('Only an ownership business has a principal');
      if(op.archetype==='INDIVIDUAL_OWNER')
@@ -421,6 +484,18 @@ export function createFictionalOrganizationContinuityRegistry({
   }
   return Object.freeze(list);
  }
+ // Streaming one-pass access for opt-in capacity planning; legacy directory
+ // pages and historical projection output remain unchanged.
+ function* iterateOrganizations({kind=null,status=null}={}){
+  if(kind!==null&&!OPERATIONS.has(kind))throw Error('Invalid operation type');
+  if(status!==null&&!['ACTIVE','CLOSED'].includes(status))
+   throw Error('Invalid operation status');
+  for(const op of firms.values()){
+   if(kind!==null&&op.kind!==kind)continue;
+   if(status!==null&&op.status!==status)continue;
+   yield immutable(op);
+  }
+ }
  function exportSnapshot(){
   return sealFictionalOrganizationContinuitySnapshot({
    original:seed.original,events
@@ -436,6 +511,6 @@ export function createFictionalOrganizationContinuityRegistry({
   get cursor(){return cursor()},
   apply,
   preview:({expectedRevision,event}={})=>apply({expectedRevision,event,dryRun:true}),
-  getOrganization,getPerson,getHistory,listOrganizations,exportSnapshot
+  getOrganization,getPerson,getHistory,listOrganizations,iterateOrganizations,exportSnapshot
  });
 }
