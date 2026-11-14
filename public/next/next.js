@@ -1243,7 +1243,7 @@ function updateSearchRoster(){
  $$('.ng-search-type',root).forEach(btn=>{
   const active=btn.dataset.val===APP.searchType;btn.classList.toggle('on',active);btn.setAttribute('aria-pressed',String(active));
  });
- $('.ng-search-sort',root).forEach(btn=>{
+ $$('.ng-search-sort',root).forEach(btn=>{
   const active=btn.dataset.val===APP.searchSort;
   btn.classList.toggle('on',active);
   btn.setAttribute('aria-pressed',String(active));
