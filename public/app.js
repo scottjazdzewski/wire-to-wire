@@ -466,7 +466,16 @@ function render(){
  $('app').innerHTML=(state.mode==='DEMO'&&state.apiIssue?`<div class="callout"><strong>Private historical database not connected to this session.</strong> The records shown here are only the small demonstration set, not the imported history. API: ${h(state.apiIssue)}. Confirm the three Production Access variables and redeploy before making saved edits.</div>`:'')+(map[state.page]||renderOverview)();
 }
 function setPage(page){state.page=page;if(page==='races')state.history.view='ledger';document.body.classList.remove('menu-open');$('sidebar').classList.remove('mobile-open');render();window.scrollTo({top:0,behavior:'smooth'})}
-function setYear(year){state.year=Number(year);$('year-select').value=String(year);if(state.page==='races')state.history.view='review';render()}
+function setYear(year){
+ state.year=Number(year);$('year-select').value=String(year);
+ if(state.page==='races'){
+  state.history.view='review';
+  const route=new URL(window.location.href);
+  route.searchParams.set('page','races');route.searchParams.set('review',String(state.year));
+  window.history.pushState({wtwHistoryYear:state.year},'',route);
+ }
+ render();
+}
 function toast(message){let node=$('toast');node.textContent=message;node.hidden=false;clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>node.hidden=true,4500)}
 function renderNetworkEntityProfile(e,cn){
  const isPerson=e.kind==='person';
@@ -743,7 +752,12 @@ async function initialize(){
   const record=(state.data?.entities||[]).find(x=>x.id===requestedHorse&&x.kind==='horse');
   if(record?.foal_year)state.year=Number(record.foal_year)+3;
  }
- const yrs=years();if(yrs.length&&!yrs.includes(state.year))state.year=yrs.at(-1);$('year-select').innerHTML=yrs.map(y=>`<option value="${y}">${y}</option>`).join('');$('year-select').value=String(state.year);if($('global-search'))$('global-search').value=state.search;render();
+ const yrs=years();if(yrs.length&&!yrs.includes(state.year))state.year=yrs.at(-1);
+ const requestedReview=Number(new URLSearchParams(window.location.search).get('review'));
+ if(state.page==='races'&&yrs.includes(requestedReview)){
+  state.year=requestedReview;state.history.view='review';
+ }
+ $('year-select').innerHTML=yrs.map(y=>`<option value="${y}">${y}</option>`).join('');$('year-select').value=String(state.year);if($('global-search'))$('global-search').value=state.search;render();
  if(requestedHorse&&/^H-[A-Za-z0-9-]+$/.test(requestedHorse))openDetail('entity',requestedHorse);
 }
 async function saveProposal(e){e.preventDefault();if(!state.edit)return;
@@ -764,9 +778,22 @@ async function decideChange(id,decision){const item=state.changes.find(v=>v.id==
 document.addEventListener('click',e=>{const t=e.target.closest('[data-page],[data-year],[data-calendar-step],[data-calendar-agenda],[data-open-type],[data-edit-type],[data-rename-type],[data-close-drawer],[data-review-action],[data-history-org],[data-history-sort],[data-history-year],[data-history-back],[data-history-page]');if(!t)return;
  if(t.dataset.historySort){const field=t.dataset.historySort;if(!['year','date','race','track','winner','evidence'].includes(field))return;if(state.history.sort===field)state.history.desc=!state.history.desc;else{state.history.sort=field;state.history.desc=field==='year'}state.history.page=0;render();return}
  if(t.dataset.historyYear){const y=Number(t.dataset.historyYear);if(!years().includes(y))return;setYear(y);return}
- if(t.dataset.historyBack){state.history.view='ledger';render();return}
+ if(t.dataset.historyBack){
+  state.history.view='ledger';
+  const route=new URL(window.location.href);route.searchParams.set('page','races');
+  route.searchParams.delete('review');window.history.pushState({wtwHistoryLedger:true},'',route);
+  render();return
+ }
  if(t.dataset.historyPage){const direction=t.dataset.historyPage==='next'?1:-1;state.history.page=Math.max(0,state.history.page+direction);render();return}
  if(t.dataset.page){setPage(t.dataset.page);return}if(t.dataset.year){setYear(t.dataset.year);return}if(t.dataset.calendarStep){const next=Number(state.calendarMonth)+Number(t.dataset.calendarStep);if(next>=0&&next<=11){state.calendarMonth=next;render()}return}if(t.dataset.calendarAgenda){const agenda=document.getElementById('calendar-agenda');agenda?.scrollIntoView({behavior:'smooth',block:'center'});agenda?.focus({preventScroll:true});return}if(t.dataset.closeDrawer){closeDrawer();return}if(t.dataset.historyOrg){openDetail('history-org',t.dataset.historyOrg);return}if(t.dataset.renameType){showRename(t.dataset.renameType,t.dataset.id,t.dataset.currentName);return}if(t.dataset.openType){openDetail(t.dataset.openType,t.dataset.id);return}if(t.dataset.editType){showEdit(t.dataset.editType,t.dataset.id);return}if(t.dataset.reviewAction){decideChange(t.dataset.reviewId,t.dataset.reviewAction)}
+});
+window.addEventListener('popstate',()=>{
+ const query=new URLSearchParams(window.location.search);
+ if(query.get('page')!=='races'&&query.get('review')===null)return;
+ state.page='races';const year=Number(query.get('review'));
+ if(query.has('review')&&years().includes(year)){state.year=year;state.history.view='review'}
+ else state.history.view='ledger';
+ $('year-select').value=String(state.year);render();
 });
 $('year-select').addEventListener('change',e=>setYear(e.target.value));
 document.addEventListener('change',e=>{
