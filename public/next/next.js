@@ -56,10 +56,14 @@ function namedSaves(){
 function namedSaveWrite(rows){localStorage.setItem(NAMED_SAVE_KEY,JSON.stringify(rows))}
 function namedSaveError(message){APP.saveError=message;paint()}
 function namedSaveCapture(){
- const native=$('.app [data-act]').find(n=>n.dataset.act==='Save');
- if(!native)throw Error('The original game save control is unavailable.');
- native.click(); // Canonical Office writes its current simulation state synchronously.
- const payload=JSON.parse(localStorage.getItem((window.__WTW_1999_MANAGEMENT__?.saveKey||'wtw1999ManagementStateV1'))||'null');
+ // Use the canonical game's synchronous save endpoint, never a hidden
+ // "Save" button. The native persistence handler still owns the data format,
+ // source identity and training-state preservation.
+ const commands=window.__WTW_OFFICE_COMMANDS__;
+ if(!commands)throw Error('Game save commands have not finished loading.');
+ const payload=commands.dispatch('SAVE_CURRENT');
+ if(payload&&typeof payload.then==='function')
+  throw Error('Current game save must complete synchronously.');
  if(!payload||typeof payload!=='object'||!payload.version||!payload.date||!valid1999Save(payload))
   throw Error('Only a clean Jan 1, 1999 world career can be saved here.');
  return payload;
@@ -4045,8 +4049,22 @@ window.addEventListener('click',e=>{
  if(key==='action'){
   if(window.__WTW_1999_MANAGEMENT__&&/^(?:Open )?Race Calendar$/.test(val))return openMenu('Racing');
   if(window.__WTW_1999_MANAGEMENT__&&val==='Continue'){
-    window.__WTW_1999_MANAGEMENT__.advanceOneDay?.();
-    return paint();
+    try{
+      const commands=window.__WTW_OFFICE_COMMANDS__;
+      if(!commands)throw Error('Game commands have not finished loading.');
+      const result=commands.dispatch('ADVANCE_DAY');
+      if(result&&typeof result.then==='function'){
+        result.then(()=>paint(),error=>{
+          window.__WTW_1999_PLAYTEST_ERROR__=String(error?.message||error);
+          paint();
+        });
+        return;
+      }
+      return paint();
+    }catch(error){
+      window.__WTW_1999_PLAYTEST_ERROR__=String(error?.message||error);
+      return paint();
+    }
   }
   if(window.__WTW_1999_MANAGEMENT__&&['Open file','Open current source'].includes(val))
    return openMenu(window.__WTW_1999_UI_DATA__?.officeDesks?.[APP.activeCase]?.moves?.[0]?.menu||'World');
