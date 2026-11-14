@@ -30,7 +30,7 @@ const root=state=>state.runtime.trainer_contracts??
 export function baselineTrainerDailyFee(skills){
  const ability=skills?.roleAttributes?.conditioning;
  ensure(typeof ability==='number'&&Number.isFinite(ability)&&ability>=0&&ability<=1,
-  'TRAINER_CONTRACT','A trainer's modeled conditioning ability is needed for fair baseline compensation');
+  'TRAINER_CONTRACT','Modeled trainer conditioning ability is required for baseline compensation');
  return Math.round(4000+4500*ability);
 }
 function trainerLoad(state,trainerId){
