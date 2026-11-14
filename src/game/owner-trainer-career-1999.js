@@ -100,9 +100,6 @@ export function ownerTrainerEvidence(state,world,owner,trainer,{days=56}={}){
   owner_cash_minor:Number.isSafeInteger(cash)?cash:null,
   provenance:'ACTUAL_SAVED_GAME_RESULTS_AND_FINANCE_NOT_HISTORICAL_ASSESSMENT'};
 }
-function signed(state,owner,trainer){
- return root(state).by_pair[pair(owner,trainer)]||null;
-}
 function initialize(state,owner,trainer){
  const rt=root(state),k=pair(owner,trainer);
  if(!rt.by_pair[k])rt.by_pair[k]={
@@ -130,7 +127,7 @@ export function setOwnerTrainerMandate({state,world,command,emit}){
   reason:a.reason,financial_terms_unchanged:true,
   existing_horse_orders_unchanged:true});
 }
-function aiMandate(e,previous,ownerCash){
+export function selectOwnerTrainerMandate(e,previous,ownerCash){
  const sufficient=e.starts>=3;
  if(!sufficient)return {mandate:previous,reason:'WAIT_FOR_SUSTAINED_RACE_SAMPLE'};
  if(e.unfunded_horse_days>0||ownerCash===null||ownerCash<=0)
@@ -158,7 +155,7 @@ export function advanceOwnerTrainerReviews({state,world,emit}){
   const playerControlled=state.player.role==='owner'&&owner===state.player.operation_id;
   const choice=playerControlled?
    {mandate:old,reason:'PLAYER_OWNER_RETAINS_DIRECTION'}:
-   aiMandate(evidence,old,evidence.owner_cash_minor);
+   selectOwnerTrainerMandate(evidence,old,evidence.owner_cash_minor);
   if(!playerControlled&&choice.mandate!==old){
    item.mandate=choice.mandate;item.authority='AI_OWNER_CAREER_REVIEW';
    rt.totals.ai_mandate_changes++;
