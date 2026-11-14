@@ -13,7 +13,8 @@ export const CONTINUITY_EVENT_TYPES=Object.freeze([
  'CHANGE_OWNER_PRINCIPAL','CHANGE_STABLE_TRAINER','REPLACE_FARM_MANAGERS',
  'REPLACE_CENTER_MANAGERS','RELOCATE_ORGANIZATION','CLOSE_ORGANIZATION',
  'REOPEN_ORGANIZATION','RETIRE_PERSON',
- 'REGISTER_APPROVED_PERSON','REGISTER_DOCUMENTED_FAMILY_LINK'
+ 'REGISTER_APPROVED_PERSON','REGISTER_DOCUMENTED_FAMILY_LINK',
+ 'REGISTER_APPROVED_ORGANIZATION'
 ]);
 const KINSHIP=new Set(['PARENT_CHILD','SIBLING','SPOUSE','DOCUMENTED_RELATIVE']);
 const OPERATIONS=new Set(['OWNER','STABLE','FARM','TRAINING_CENTER']);
@@ -140,12 +141,15 @@ function canonicalSeed(input){
  return {worldId,foundingYear,people,organizations,familyKeys,original};
 }
 export function createFictionalOrganizationContinuityRegistry({
- source,snapshot=null,approvedPersonLookup=null,familyLinkLookup=null
+ source,snapshot=null,approvedPersonLookup=null,familyLinkLookup=null,
+ approvedOrganizationLookup=null
 }={}){
  if(approvedPersonLookup!==null&&typeof approvedPersonLookup!=='function')
   throw Error('Invalid approved person index lookup');
  if(familyLinkLookup!==null&&typeof familyLinkLookup!=='function')
   throw Error('Invalid documented family relationship lookup');
+ if(approvedOrganizationLookup!==null&&typeof approvedOrganizationLookup!=='function')
+  throw Error('Invalid approved organization index lookup');
  if(snapshot!==null){
   if(source!==undefined&&source!==null)
    throw Error('Do not overwrite a restored continuity snapshot');
@@ -160,6 +164,7 @@ export function createFictionalOrganizationContinuityRegistry({
  const firms=new Map([...seed.organizations].map(([id,o])=>[id,{...o}]));
  const familyPairs=seed.familyKeys,events=[],eventIds=new Set(),byFirm=new Map();
  const peopleNameKeys=new Set([...people.values()].map(p=>key(p.name)));
+ const organizationNameKeys=new Set([...firms.values()].map(o=>key(o.name)));
  let revision=0,year=seed.foundingYear,replaying=false;
  const cursor=()=>Object.freeze({
   model:FICTIONAL_ORGANIZATION_CONTINUITY_MODEL,
@@ -194,7 +199,7 @@ export function createFictionalOrganizationContinuityRegistry({
   checkId(event.eventId,'continuity event ID');
   checkId(event.sourceId,'continuity evidence source ID');
   checkId(event.organizationId??event.personId??event.person?.id??
-   event.personAId,'continuity subject ID');
+   event.personAId??event.organization?.id,'continuity subject ID');
   checkYear(event.year,year);
   if(eventIds.has(event.eventId))throw Error('Repeated continuity event ID');
   if(!CONTINUITY_EVENT_TYPES.includes(event.type))
@@ -204,7 +209,7 @@ export function createFictionalOrganizationContinuityRegistry({
   const op=firms.get(event.organizationId);
   const person=people.get(event.personId);
   let commit=()=>{};
-  let addedPerson=false;
+  let addedPerson=false,addedOrganization=false;
   if(event.type==='REGISTER_APPROVED_PERSON'){
    const candidate=event.person;
    checkId(candidate?.id,'new approved person ID');
@@ -232,6 +237,66 @@ export function createFictionalOrganizationContinuityRegistry({
      retired:false
     });
     peopleNameKeys.add(key(candidate.name));
+   };
+  }else if(event.type==='REGISTER_APPROVED_ORGANIZATION'){
+   // The actual business ID/name and initial operational roles must originate
+   // in one committed V12 approval, NOT an invented gameplay relationship.
+   const candidate=event.organization,registration=candidate?.registration;
+   checkId(candidate?.id,'approved new organization ID');
+   checkId(candidate?.name,'approved new organization name');
+   if(event.organizationId!==undefined&&event.organizationId!==candidate.id)
+    throw Error('Organization registration history subject ID mismatch');
+   if(!registration||!['OWNER','STABLE','FARM','TRAINING_CENTER'].includes(
+    registration.kind)||!Number.isInteger(registration.approvedYear)||
+    registration.approvedYear<1999||registration.approvedYear>event.year||
+    typeof registration.namingRegion!=='string'||!registration.namingRegion.trim()||
+    !registration.location||typeof registration.location!=='object'||
+    Array.isArray(registration.location)||
+    firms.has(candidate.id)||people.has(candidate.id)||
+    organizationNameKeys.has(key(candidate.name)))
+    throw Error('Invalid, duplicate or prematurely registered approved organization');
+   if(!replaying){
+    if(!approvedOrganizationLookup)
+     throw Error('New businesses require durable naming-registry approval');
+    const approved=approvedOrganizationLookup(candidate.id);
+    if(!approved||JSON.stringify(approved)!==JSON.stringify(candidate))
+     throw Error('Organization does not match the approved naming registry');
+   }
+   const kind=registration.kind;
+   const principalId=kind==='OWNER'?registration.principalId:null;
+   const trainerId=kind==='STABLE'?registration.trainerId:null;
+   const managerIds=['FARM','TRAINING_CENTER'].includes(kind)?
+    registration.managerIds:null;
+   if(kind==='OWNER'){
+    if(typeof registration.ownershipArchetype!=='string'||
+     !registration.ownershipArchetype.trim())
+     throw Error('Approved owner archetype missing');
+    const principal=activePerson(principalId,'owner',event.year);
+    if(registration.ownershipArchetype==='FAMILY_OPERATION'&&
+     (!registration.familyName||
+      key(registration.familyName)!==key(principal.primarySurname)))
+     throw Error('Named family principal does not match approved surname');
+   }
+   if(kind==='STABLE')activePerson(trainerId,'trainer',event.year);
+   if(['FARM','TRAINING_CENTER'].includes(kind)){
+    if(!Array.isArray(managerIds)||new Set(managerIds).size!==managerIds.length)
+     throw Error('Approved organization has invalid manager list');
+    for(const id of managerIds)activePerson(id,'farm_manager',event.year);
+   }
+   const next={
+    id:candidate.id,name:candidate.name,originalName:candidate.name,kind,
+    archetype:kind==='OWNER'?registration.ownershipArchetype:null,
+    familyName:kind==='OWNER'?registration.familyName??null:null,
+    principalId,trainerId,managerIds:managerIds?[...managerIds]:[],
+    location:clone(registration.location),
+    namingRegion:registration.namingRegion,
+    ...(registration.facilityKind?{facilityKind:registration.facilityKind}:{}),
+    status:'ACTIVE',foundedInRegistryYear:event.year,revision:0
+   };
+   addedOrganization=true;
+   commit=()=>{
+    firms.set(candidate.id,next);
+    organizationNameKeys.add(key(candidate.name));
    };
   }else if(event.type==='REGISTER_DOCUMENTED_FAMILY_LINK'){
    const a=event.personAId,b=event.personBId;
@@ -306,14 +371,17 @@ export function createFictionalOrganizationContinuityRegistry({
   if(dryRun)return Object.freeze({
    model:FICTIONAL_ORGANIZATION_CONTINUITY_MODEL,
    worldId:seed.worldId,revision:revision+1,year:event.year,
-   organizationCount:firms.size,knownPeople:people.size+(addedPerson?1:0),
+   organizationCount:firms.size+(addedOrganization?1:0),
+   knownPeople:people.size+(addedPerson?1:0),
    eventCount:events.length+1
   });
   commit();
   events.push(recorded);eventIds.add(event.eventId);
-  if(event.organizationId){
-   if(!byFirm.has(event.organizationId))byFirm.set(event.organizationId,[]);
-   byFirm.get(event.organizationId).push(recorded);
+  const historyFirmId=event.organizationId??(
+   event.type==='REGISTER_APPROVED_ORGANIZATION'?event.organization?.id:null);
+  if(historyFirmId){
+   if(!byFirm.has(historyFirmId))byFirm.set(historyFirmId,[]);
+   byFirm.get(historyFirmId).push(recorded);
   }
   revision++;year=event.year;
   return cursor();

@@ -44,12 +44,13 @@ function hydrate(data,options={}){
  return registry;
 }
 export async function openDurableOrganizationContinuityService({
- storage,worldId,source=null,approvedPersonLookup=null,familyLinkLookup=null
+ storage,worldId,source=null,approvedPersonLookup=null,familyLinkLookup=null,
+ approvedOrganizationLookup=null
 }={}){
  validateStorage(storage);
  if(typeof worldId!=='string'||!worldId.trim())
   throw Error('Explicit continuity world ID required');
- const validators={approvedPersonLookup,familyLinkLookup};
+ const validators={approvedPersonLookup,familyLinkLookup,approvedOrganizationLookup};
  let data=await storage.read({worldId});
  if(!data){
   if(!source)throw Error('Opening a new continuity journal needs an approved founding directory');

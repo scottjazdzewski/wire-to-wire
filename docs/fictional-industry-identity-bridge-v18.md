@@ -50,7 +50,7 @@ const identity=bridge.getPersonIdentity('V12-PERMANENT-PERSON-ID');
 const stable=bridge.getOrganization('EXISTING-PERMANENT-STABLE-ID');
 ```
 
-On restart omit `source` and reopen the same two namespaces. The facade calls `naming.refresh()` before registering a new person, so a successful approval from another tab is visible and a failed/uncommitted proposal is not. V17 revision compare-and-swap rejects stale concurrent appointments. After an ambiguous V17 commit error, call `bridge.refresh()` before retrying: the event may already be durable, in which case reuse is rejected and the first result remains the authority.
+On restart omit `source` and reopen the same two namespaces. For a previously known, immutable V12-approved person, the facade reuses its indexed identity without replaying the naming journal. On an unknown ID it calls `naming.refresh()` before registration, so a successful approval from another tab is visible while a failed/uncommitted proposal remains unavailable. V17 revision compare-and-swap rejects stale concurrent appointments. After an ambiguous V17 commit error, call `bridge.refresh()` before retrying: the event may already be durable, in which case reuse is rejected and the first result remains the authority.
 
 V18 `applyTransition` rejects direct `REGISTER_APPROVED_PERSON` events. Only `registerApprovedPerson` may submit those records, and it constructs the entire person payload from V12—not the caller. V16 then checks the exact approved identity, professional role, age, documented family relationship, closed status and existing organization. Existing V16/V17 direct APIs are retained for backward compatibility, not automatically rewritten or hidden.
 
