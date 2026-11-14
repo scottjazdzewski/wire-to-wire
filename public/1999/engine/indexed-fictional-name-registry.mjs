@@ -145,6 +145,7 @@ export function createIndexedFictionalNameRegistry({
    roots.add(organizationRootOfName(item.name));
  }
  const approvedPeopleById=new Map(issuedPeople.map(person=>[person.id,person]));
+ const approvedOrganizationsById=new Map(issuedOrganizations.map(o=>[o.id,o]));
  const storedOrgIds=new Set(issuedOrganizations.map(o=>o.id));
  for(const owner of ownerEntities){
   checkId(owner.id,'stored owner ID');checkId(owner.name,'stored owner name');
@@ -232,7 +233,9 @@ export function createIndexedFictionalNameRegistry({
    entityIds.add(person.id);
   }
   for(const org of organizations){
-   issuedOrganizations.push(Object.freeze({id:org.id,name:org.name}));
+   const accepted=Object.freeze({id:org.id,name:org.name});
+   issuedOrganizations.push(accepted);
+   approvedOrganizationsById.set(accepted.id,accepted);
    addName(org.name,orgKeys);
    entityIds.add(org.id);
    if(isRecognizedOrganizationName(org.name))
@@ -274,6 +277,7 @@ export function createIndexedFictionalNameRegistry({
   get formalGroupsIssued(){return groupEntities.length},
   hasAnyName:index.hasAnyName,
   getApprovedPerson:id=>approvedPeopleById.has(id)?Object.freeze({...approvedPeopleById.get(id)}):null,
+  getApprovedOrganization:id=>approvedOrganizationsById.has(id)?Object.freeze({...approvedOrganizationsById.get(id)}):null,
   listOwners,listGroups,commit,snapshot:snapshotNow
  });
 }
