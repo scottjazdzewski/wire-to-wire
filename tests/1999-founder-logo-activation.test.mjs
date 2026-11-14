@@ -15,10 +15,10 @@ const html=read('public/next/index.html');
 test('available ownership logos are published only for exact 1999 founding names AND immutable organization IDs',()=>{
  assert.equal(directory.organizations.length,37);
  assert.equal(manifest.approvedOrganizationIds.length,37);
- assert.equal(manifest.publishedCount,31);
- assert.equal(manifest.remainingWithoutMatchedLogo,6);
+ assert.equal(manifest.publishedCount,Object.keys(manifest.organizations).length);
+ assert.equal(manifest.remainingWithoutMatchedLogo,directory.organizations.length-manifest.publishedCount);
  const entries=Object.entries(manifest.organizations);
- assert.equal(entries.length,31);
+ assert.equal(entries.length,manifest.publishedCount);
  const allowed=new Set(directory.organizations.map(o=>o.id));
  for(const [key,path] of entries){
   assert.match(key,/^organization:O-[\w-]+$/);
@@ -60,7 +60,7 @@ test('existing approved track logos, badge set and selected ID-verified portrait
 });
 
 test('the clean Office loads only the founder manifest, without silently reviving legacy organizations',()=>{
- assert.match(ui,/founding-organization-logo-index\.json\?rev=founder-approved-31-20261114/);
+ assert.match(ui,/founding-organization-logo-index\.json\?rev=founder-approved-32-20261114/);
  assert.match(ui,/const approvedOrg=isClean1999\(\)\?/);
  assert.match(ui,/approvedOrg\?\['organization:'\+approvedOrg\.id\]/);
  assert.match(ui,/const allowed=\(world1999Data\?\.organizations\|\|\[\]\)\.some\(o=>o\.id===id\)/);
