@@ -47,7 +47,7 @@ test('Racing department and Stable/World horse rosters use the same actual contr
 });
 
 test('empty Stable roster is not misrepresented as a search or filtering failure',()=>{
- const stable=ui.slice(ui.indexOf('function liveStableRosterView('),ui.indexOf('\\nfunction functionalRoute('));
+ const stable=ui.slice(ui.indexOf('function liveStableRosterView('),ui.indexOf('\nfunction functionalRoute('));
  assert.match(stable,/const emptyRosterMessage=!all.length\?/);
  assert.match(stable,/No horses are currently listed for this stable/);
  assert.match(stable,/No horses match the current search or filters/);
