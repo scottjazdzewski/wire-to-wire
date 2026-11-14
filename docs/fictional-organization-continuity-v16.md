@@ -44,8 +44,10 @@ const restored=createFictionalOrganizationContinuityRegistry({snapshot:backup});
 - RELOCATE_ORGANIZATION — records a specific new city, region, two-letter country code and naming-market region without moving any horse or assuming shipping has occurred.
 - CLOSE_ORGANIZATION and REOPEN_ORGANIZATION — changes operational status while retaining the same company ID, name and historic events.
 - RETIRE_PERSON — retires an existing person only after active organizational positions have been reassigned or closed.
+- REGISTER_APPROVED_PERSON — records a later-generation person in the continuity directory, but only when an external approved-name lookup verifies the person's exact stable ID, name, role, surname and birth year. V16 itself never generates that person.
+- REGISTER_DOCUMENTED_FAMILY_LINK — records a newly supported relationship between existing people only when an explicit family-history validator approves its source record. A matching surname is not accepted as proof.
 
-Each event has its own unique ID, monotonic game year, source/provenance ID and expected journal revision. Duplicate IDs, stale revisions, earlier dates, missing successors, incompatible roles and category errors fail without changing the registry.
+Each event has its own unique ID, monotonic game year, source/provenance ID and expected journal revision. Active successors with known birth years must also be at plausible professional ages (18–100) at the event year. Duplicate IDs, stale revisions, earlier dates, missing successors, incompatible roles and category errors fail without changing the registry.
 
 ## Family succession is earned, never invented
 
@@ -55,7 +57,7 @@ V16 never invents parents, spouses, children, co-owners, syndicate members, owne
 
 ## Records and persistence
 
-The existing V11 name index and V12 durable name registry remain authoritative for creating new **approved** fictional people and businesses. V16 reads an already-approved person and organization directory. It deliberately does not mint names, register real legal businesses, or assign any horses.
+The existing V11 name index and V12 durable name registry remain authoritative for creating new **approved** fictional people and businesses. V16 reads an already-approved person and organization directory. V11/V12 now expose `getApprovedPerson(id)` with the person's precise name, role, surname and birth year where the approved naming record contains that metadata; pre-existing sparse records without verified role/birth-year metadata are not silently promoted into successors. It deliberately does not mint names, register real legal businesses, or assign any horses.
 
 `registry.exportSnapshot()` is explicit and contains the founding directory plus an append-only event journal and a checksum against accidental corruption. Restoring a snapshot reconstructs the exact same permanent IDs, names, current responsible people, statuses and event histories. Only the compact cursor needs to travel with regular continuity updates.
 
@@ -63,6 +65,6 @@ The existing V11 name index and V12 durable name registry remain authoritative f
 
 ## Verification
 
-Run `node --test tests/1999-fictional-organization-continuity-v16.test.mjs` to check identity and 1999-name preservation, family evidence, retirement, principal/trainer/manager handovers, relocation, closures, stale/invalid events, snapshot replay and 1,000-event continuity scaling.
+Run `node --test tests/1999-fictional-organization-continuity-v16.test.mjs` to check identity and 1999-name preservation, future-generation approved person registration, family evidence, retirement, principal/trainer/manager handovers, relocation, closures, stale/invalid events, snapshot replay and 1,000-event continuity scaling.
 
 The core naming windows remain separate from active world generation. No source engine, UI, canonical history file, live horse database or career save is modified by V16.
