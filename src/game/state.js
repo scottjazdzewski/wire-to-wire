@@ -1,5 +1,5 @@
 import {
-  RUN_SCHEMA, PLAYER_ROLES, INVOLVEMENT_LEVELS, ensure, validDate,
+  RUN_SCHEMA, PLAYER_ROLES, INVOLVEMENT_LEVELS, MAX_GAME_SAVE_CHARS, ensure, validDate,
   requireString, isObject, strictJSON, validateWorld, validateWorldRef, worldIdentity
 } from './contracts.js';
 import { validateSeed } from './rng.js';
@@ -95,6 +95,6 @@ export function validateGameRun(state, world) {
   validateHorseCareRuntime(state,world);
   validateDailyAgentRuntime(state,world);
   validateRacingRuntime(state,world);
-  strictJSON(state);
+  strictJSON(state,MAX_GAME_SAVE_CHARS);
   return state;
 }
