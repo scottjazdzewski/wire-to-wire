@@ -98,6 +98,9 @@ test('signed player terms become actual next-day owner care cost, with zero-sum 
 });
 test('system and other owners cannot renegotiate player terms without player authorization',()=>{
  let s=fresh(),p=ownPair(s);
+ assert.throws(()=>command(s,'contract:test:system-forbidden','OFFER_TRAINER_SERVICE_TERMS',{
+  owner_id:p.owner,trainer_id:p.trainer,daily_fee_minor:9500},'system'),e=>
+   e.code==='TRAINER_PERMISSION');
  assert.throws(()=>command(s,'contract:test:forbidden','OFFER_TRAINER_SERVICE_TERMS',{
   owner_id:manifest.assignments.find(x=>x.owner_organization_id!==p.owner).owner_organization_id,
   trainer_id:p.trainer,daily_fee_minor:9500},'player'),e=>
