@@ -38,3 +38,28 @@ test('all track, trainer, and owner panels still call the same dropdown renderer
  assert.match(css,/\.ng-connected-table\.compact \.ng-connected-optional/);
  assert.match(css,/font-size:var\(--wtw-roster-head/);
 });
+
+test('shared renderer sorts numeric columns, filters by selected column and switches compact mode',()=>{
+ const script=js.slice(js.indexOf('function connectedTableState('),js.indexOf('function pilotHorseConnectionsPanel('));
+ const APP={custom:'WorldRecord:track:T-0017',routeId:'Track Profile|Gulfstream Park',connectedTables:{}};
+ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const render=new Function('APP','safe',script+';return {profileRecordSection,connectedTableState};')(APP,safe);
+ const cols=[['horse','HORSE'],['age','AGE'],['barn','BARN'],['trainer','TRAINER'],['ability','CA / PA']];
+ const data=[{horse:'A',age:4,barn:'Gate 1',trainer:'Walker',ability:'62 / 88'},
+  {horse:'B',age:3,barn:'Gate 2',trainer:'Holden',ability:'45 / 59'},
+  {horse:'C',age:5,barn:'Gate 3',trainer:'Walker',ability:'75 / 94'}];
+ const k=APP.custom+'|HORSES';
+ let html=render.profileRecordSection('HORSES',cols,data);
+ assert.ok(html.indexOf('>A</td>')<html.indexOf('>B</td>'));
+ const control=render.connectedTableState(k);
+ control.sort='age';control.desc=true;
+ html=render.profileRecordSection('HORSES',cols,data);
+ assert.ok(html.indexOf('>C</td>')<html.indexOf('>A</td>'));
+ control.column='trainer';control.contains='Walker';control.mode='compact';
+ html=render.profileRecordSection('HORSES',cols,data);
+ assert.match(html,/2 OF 3 RECORDS/);
+ assert.ok(!html.includes('>B</td>'));
+ assert.match(html,/ng-connected-table compact/);
+ assert.match(html,/ng-connected-optional/);
+ assert.ok(html.includes('data-ng="connected-sort"'));
+});
