@@ -20,6 +20,12 @@ function foundation(worldId='V17-QUALITY-NAMESPACE'){
  });
  return {...world,worldId};
 }
+const youngTrainer=(world,excludeId=null)=>world.people.find(p=>
+ p.role==='trainer'&&p.id!==excludeId&&p.ageAtOpening<=50);
+const youngOwner=(world,excludeId=null)=>world.people.find(p=>
+ p.role==='owner'&&p.id!==excludeId&&p.ageAtOpening<=50);
+const youngStable=world=>world.stables.find(stable=>
+ world.people.some(p=>p.id===stable.trainerId&&p.ageAtOpening<=50));
 function memoryStore(){
  const journals=new Map();
  let failBefore=false,failAfter=false;
@@ -60,8 +66,8 @@ const event=(id,type,organizationId,year,other={})=>({
 test('V16 dry-run validates a real transition without committing an event or altering any identity',()=>{
  const world=foundation('V17-PREVIEW-PURITY');
  const reg=createFictionalOrganizationContinuityRegistry({source:world});
- const stable=world.stables[0];
- const newTrainer=world.people.find(x=>x.role==='trainer'&&x.id!==stable.trainerId);
+ const stable=youngStable(world);
+ const newTrainer=youngTrainer(world,stable.trainerId);
  const before=JSON.stringify(reg.exportSnapshot());
  const submitted=event('PREVIEW-ONLY','CHANGE_STABLE_TRAINER',stable.id,2022,{
   toPersonId:newTrainer.id
@@ -86,8 +92,8 @@ test('durable journal rejects a failed append without minting phantom transition
  const service=await openDurableOrganizationContinuityService({
   storage,worldId:world.worldId,source:world
  });
- const stable=world.stables[0];
- const alternate=world.people.find(p=>p.role==='trainer'&&p.id!==stable.trainerId);
+ const stable=youngStable(world);
+ const alternate=youngTrainer(world,stable.trainerId);
  const entry=event('WRITE-FAIL','CHANGE_STABLE_TRAINER',stable.id,2020,{
   toPersonId:alternate.id
  });
@@ -112,8 +118,8 @@ test('ambiguous post-commit failure requires refresh, never retries a committed 
  const service=await openDurableOrganizationContinuityService({
   storage,worldId:world.worldId,source:world
  });
- const stable=world.stables[0],original=stable.trainerId;
- const alt=world.people.find(x=>x.role==='trainer'&&x.id!==original).id;
+ const stable=youngStable(world),original=stable.trainerId;
+ const alt=youngTrainer(world,original).id;
  const transition=event('COMMITTED-THEN-ERROR','CHANGE_STABLE_TRAINER',
   stable.id,2020,{toPersonId:alt});
  storage.failAfterNext();
@@ -140,9 +146,7 @@ test('two independently opened naming-continuity clients cannot overwrite a newe
  const b=await openDurableOrganizationContinuityService({
   storage,worldId:world.worldId
  });
- const stable=world.stables[0],alt=world.people.find(
-  x=>x.role==='trainer'&&x.id!==stable.trainerId
- );
+ const stable=youngStable(world),alt=youngTrainer(world,stable.trainerId);
  await a.apply({expectedRevision:0,event:event(
   'TAB-A','CHANGE_STABLE_TRAINER',stable.id,2030,{toPersonId:alt.id}
  )});
@@ -167,11 +171,11 @@ test('portable event backup restores the same owners and stables without renamin
  const original=await openDurableOrganizationContinuityService({
   storage,worldId:world.worldId,source:world
  });
- const stable=world.stables[1],owner=world.owners.find(
+ const stable=youngStable(world),owner=world.owners.find(
   o=>o.ownershipArchetype==='PRIVATE_RACING_OPERATION'
  );
- const trainer=world.people.find(p=>p.role==='trainer'&&p.id!==stable.trainerId);
- const nextOwner=world.people.find(p=>p.role==='owner'&&p.id!==owner.principalId);
+ const trainer=youngTrainer(world,stable.trainerId);
+ const nextOwner=youngOwner(world,owner.principalId);
  await original.apply({expectedRevision:0,event:event(
   'HANDOVER','CHANGE_OWNER_PRINCIPAL',owner.id,2025,{toPersonId:nextOwner.id}
  )});
@@ -209,8 +213,8 @@ test('long event journal checkpoints stay bounded while original organization an
  const reg=await openDurableOrganizationContinuityService({
   storage,worldId:world.worldId,source:world
  });
- const stable=world.stables[0];
- const alt=world.people.find(p=>p.role==='trainer'&&p.id!==stable.trainerId).id;
+ const stable=youngStable(world);
+ const alt=youngTrainer(world,stable.trainerId).id;
  let firstBytes=0;
  for(let i=0;i<400;i++){
   const change=event('V17-'+i,'CHANGE_STABLE_TRAINER',stable.id,
