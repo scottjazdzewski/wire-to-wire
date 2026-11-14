@@ -1,0 +1,273 @@
+/* WTW Profile Hero v2 — identity layout, not gameplay.
+   Source: 1999 management profile HTML. Loaded AFTER next.css & identity-themes.css.
+   No background photographs: that work is owned by the separate art window.
+   Never hide source metadata; logo and actions have independent layout space. */
+
+/* Redundant horizontal section strips are superseded by the sidebar and the
+   department VIEW selector. Hide on EVERY route, including Office and World. */
+#wtwNextgen > .ng-subbar{display:none!important;flex:0 0 0!important;height:0!important;min-height:0!important;padding:0!important;border:0!important}
+
+/* One template shared by track, stud farm, racing stable and owner profiles.
+   The floating logo owns the right grid column; names/metadata cannot be
+   squeezed by it or by the route action buttons. */
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro{
+  display:grid!important;
+  grid-template-columns:70px minmax(0,1fr) clamp(205px,22vw,292px)!important;
+  grid-template-areas:"badge identity mark" "badge tools mark"!important;
+  grid-template-rows:minmax(100px,auto) minmax(32px,auto)!important;
+  align-items:center!important;
+  column-gap:clamp(12px,1.45vw,24px)!important;
+  row-gap:3px!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:164px!important;
+  height:auto!important;
+  padding:12px clamp(13px,1.35vw,23px)!important;
+  overflow:hidden!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-badgeframe{
+  grid-area:badge!important;
+  align-self:center!important;
+  justify-self:center!important;
+  max-width:70px!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-identity{
+  grid-area:identity!important;
+  min-width:0!important;
+  width:100%!important;
+  max-width:100%!important;
+  align-self:center!important;
+  overflow:visible!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .ng-profile-identity h2{
+  margin:2px 0 5px!important;
+  max-width:100%!important;
+  overflow-wrap:break-word!important;
+  white-space:normal!important;
+  line-height:1.12!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .ng-profile-breadcrumb{
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  font-size:9.5px!important;
+  letter-spacing:.09em!important;
+}
+/* A TWO-COLUMN information grid replaces the original no-wrap ticker.
+   Long track localities, circuit names and operating status are ALL legible. */
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .ng-tier1-biography{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:4px clamp(8px,1.5vw,19px)!important;
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  margin:5px 0 0!important;
+  padding:0!important;
+  align-items:stretch!important;
+  flex-wrap:wrap!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .ng-tier1-biography > span{
+  box-sizing:border-box!important;
+  display:flex!important;
+  align-items:flex-start!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  min-width:0!important;
+  max-width:100%!important;
+  margin:0!important;
+  padding:2px 7px!important;
+  gap:1px!important;
+  border-right:0!important;
+  border-left:2px solid color-mix(in srgb,var(--wtw-id-bright,#c3aa74) 62%,#495a57)!important;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--wtw-id-base,#536054) 10%,transparent),transparent)!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .ng-tier1-biography small{
+  display:block!important;
+  margin:0!important;
+  color:#b7d7cb!important;
+  font-size:9px!important;
+  line-height:1.2!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .ng-tier1-biography strong{
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  color:#fff0d5!important;
+  font-size:10.4px!important;
+  line-height:1.25!important;
+  overflow:visible!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+  text-overflow:clip!important;
+}
+/* Controls sit UNDER the text, not to its right. They never obscure details. */
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-tools{
+  grid-area:tools!important;
+  align-self:center!important;
+  justify-self:start!important;
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  margin:0!important;
+  padding:2px 0 0!important;
+  width:100%!important;
+  min-width:0!important;
+  gap:5px!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .ng-profile-tools button{
+  padding:6px 10px!important;
+  min-height:28px!important;
+  font-size:10px!important;
+  line-height:1.1!important;
+  white-space:nowrap!important;
+  background:color-mix(in srgb,var(--wtw-id-deep,#23302b) 62%,#0d1419)!important;
+  border-color:color-mix(in srgb,var(--wtw-id-bright,#b7a268) 28%,#3c4b47)!important;
+  color:#f7f2e8!important;
+  border-radius:3px!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .ng-profile-tools button:hover,
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .ng-profile-tools button:focus-visible{
+  background:color-mix(in srgb,var(--wtw-id-base,#506052) 56%,#1e262a)!important;
+  border-color:var(--wtw-id-bright,#d7c48d)!important;
+}
+/* A genuine hero MARK stage, not a white/cream signboard.
+   Existing art stays legible; transparent assets show off the full silhouette.
+   The generator can replace legacy logos without further layout changes. */
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo{
+  grid-area:mark!important;
+  position:relative!important;
+  isolation:isolate!important;
+  justify-self:center!important;
+  align-self:center!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  max-width:292px!important;
+  height:140px!important;
+  min-height:0!important;
+  flex:0 0 auto!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  overflow:visible!important;
+  box-shadow:none!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo::before{
+  content:""!important;
+  position:absolute!important;
+  inset:5% 0!important;
+  z-index:0!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:radial-gradient(ellipse at center,
+    color-mix(in srgb,var(--wtw-id-bright,#b3d2c5) 23%,transparent),
+    color-mix(in srgb,var(--wtw-id-base,#56726b) 11%,transparent) 40%,
+    transparent 72%)!important;
+  filter:blur(9px)!important;
+  pointer-events:none!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo img{
+  position:relative!important;
+  z-index:1!important;
+  display:block!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:100%!important;
+  max-height:140px!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  transform:none!important;
+  margin:0!important;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  filter:drop-shadow(0 3px 2px #0206088f)
+    drop-shadow(0 6px 9px #02060872)!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .ng-profile-source-photo.wtw-hero-transparent img{
+  filter:drop-shadow(0 1px 1px #10191fe8)
+    drop-shadow(0 5px 7px #01090991)
+    drop-shadow(0 0 12px color-mix(in srgb,var(--wtw-id-bright,#e5deba) 25%,transparent))!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .ng-profile-source-photo.wtw-hero-legacy img{
+  /* Unconverted images remain fully visible, never cropped or stretched. */
+  filter:drop-shadow(0 6px 9px #0008)!important;
+}
+/* Keep non-track organization images under the same branding system. */
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-farm > .ng-profile-intro .ng-profile-photo-empty{
+  border-radius:4px!important;
+  background:color-mix(in srgb,var(--wtw-id-deep,#25342b) 76%,transparent)!important;
+}
+@media (prefers-reduced-motion:no-preference){
+  #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo{
+    transition:transform .18s ease!important;
+  }
+  #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo:hover{
+    transform:translateY(-2px)!important;
+  }
+}
+@media(max-width:1080px){
+  #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro{
+    grid-template-columns:62px minmax(0,1fr) minmax(180px,27%)!important;
+    column-gap:11px!important;
+    padding:10px 12px!important;
+  }
+  #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo{
+    height:125px!important;
+  }
+  #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo img{
+    max-height:125px!important;
+  }
+}
+@media(max-width:740px){
+  #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro{
+    grid-template-columns:58px minmax(0,1fr)!important;
+    grid-template-areas:"badge identity" "mark mark" "tools tools"!important;
+    grid-template-rows:auto 108px auto!important;
+    column-gap:12px!important;
+    row-gap:8px!important;
+    min-height:0!important;
+    overflow:visible!important;
+  }
+  #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo{
+    justify-self:center!important;
+    width:min(100%,300px)!important;
+    height:108px!important;
+  }
+  #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo img{
+    max-height:108px!important;
+  }
+  #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .ng-tier1-biography{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+}
+@media(max-width:440px){
+  #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .ng-tier1-biography{
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+  #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .ng-profile-tools button{
+    font-size:9px!important;padding:6px!important;
+  }
+}
+
+/* Dark navy/ink wordmarks become readable after removing white matte:
+   a diffuse ivory spotlight supplies contrast, never a rectangular plaque. */
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo.wtw-hero-dark-ink::before{
+ background:radial-gradient(ellipse at 50% 50%,
+   rgba(248,248,237,.78) 0%,
+   rgba(238,242,233,.38) 37%,
+   rgba(236,240,236,.08) 61%,transparent 77%)!important;
+ filter:blur(9px)!important;
+}
