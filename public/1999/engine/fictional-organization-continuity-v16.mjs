@@ -12,7 +12,8 @@ export const FICTIONAL_ORGANIZATION_CONTINUITY_SNAPSHOT='WTW_ORGANIZATION_CONTIN
 export const CONTINUITY_EVENT_TYPES=Object.freeze([
  'CHANGE_OWNER_PRINCIPAL','CHANGE_STABLE_TRAINER','REPLACE_FARM_MANAGERS',
  'REPLACE_CENTER_MANAGERS','RELOCATE_ORGANIZATION','CLOSE_ORGANIZATION',
- 'REOPEN_ORGANIZATION','RETIRE_PERSON'
+ 'REOPEN_ORGANIZATION','RETIRE_PERSON',
+ 'REGISTER_APPROVED_PERSON','REGISTER_DOCUMENTED_FAMILY_LINK'
 ]);
 const KINSHIP=new Set(['PARENT_CHILD','SIBLING','SPOUSE','DOCUMENTED_RELATIVE']);
 const OPERATIONS=new Set(['OWNER','STABLE','FARM','TRAINING_CENTER']);
@@ -52,6 +53,7 @@ function canonicalSeed(input){
   if(people.has(person.id))throw Error('Duplicate existing person ID');
   people.set(person.id,{id:person.id,name:person.name,
    role:person.role??null,primarySurname:person.primarySurname??null,
+   birthYear:Number.isInteger(person.birthYear)?person.birthYear:null,
    retired:false});
  }
  for(const [kind,rows] of [['OWNER',input.owners],['STABLE',input.stables],
@@ -106,7 +108,8 @@ function canonicalSeed(input){
  }
  const original={worldId,foundingYear,
   people:[...people.values()].map(p=>({
-   id:p.id,name:p.name,role:p.role,primarySurname:p.primarySurname
+   id:p.id,name:p.name,role:p.role,primarySurname:p.primarySurname,
+   birthYear:p.birthYear
   })),
   owners:[],stables:[],farms:[],trainingCenters:[],
   familyLinks};
@@ -126,8 +129,12 @@ function canonicalSeed(input){
  return {worldId,foundingYear,people,organizations,familyKeys,original};
 }
 export function createFictionalOrganizationContinuityRegistry({
- source,snapshot=null
+ source,snapshot=null,approvedPersonLookup=null,familyLinkLookup=null
 }={}){
+ if(approvedPersonLookup!==null&&typeof approvedPersonLookup!=='function')
+  throw Error('Invalid approved person index lookup');
+ if(familyLinkLookup!==null&&typeof familyLinkLookup!=='function')
+  throw Error('Invalid documented family relationship lookup');
  if(snapshot!==null){
   if(source!==undefined&&source!==null)
    throw Error('Do not overwrite a restored continuity snapshot');
@@ -141,11 +148,11 @@ export function createFictionalOrganizationContinuityRegistry({
  const people=new Map([...seed.people].map(([id,p])=>[id,{...p}]));
  const firms=new Map([...seed.organizations].map(([id,o])=>[id,{...o}]));
  const familyPairs=seed.familyKeys,events=[],eventIds=new Set(),byFirm=new Map();
- let revision=0,year=seed.foundingYear;
+ let revision=0,year=seed.foundingYear,replaying=false;
  const cursor=()=>Object.freeze({
   model:FICTIONAL_ORGANIZATION_CONTINUITY_MODEL,
   worldId:seed.worldId,revision,year,organizationCount:firms.size,
-  eventCount:events.length
+  knownPeople:people.size,eventCount:events.length
  });
  const activePerson=(id,role=null)=>{
   checkId(id,'explicit successor ID');
@@ -153,6 +160,9 @@ export function createFictionalOrganizationContinuityRegistry({
   if(!person||person.retired)throw Error('Successor must be an existing active person');
   if(role!==null&&person.role!==role)
    throw Error('Successor has an incompatible professional role');
+  if(Number.isInteger(person.birthYear)&&
+   (year-person.birthYear<18||year-person.birthYear>100))
+   throw Error('Successor has an implausible active-career age');
   return person;
  };
  const hasDuties=id=>[...firms.values()].some(op=>op.status==='ACTIVE'&&
@@ -170,14 +180,51 @@ export function createFictionalOrganizationContinuityRegistry({
   if(!event||typeof event!=='object')throw Error('Explicit continuity event required');
   checkId(event.eventId,'continuity event ID');
   checkId(event.sourceId,'continuity evidence source ID');
-  checkId(event.organizationId??event.personId,'continuity subject ID');
+  checkId(event.organizationId??event.personId??event.person?.id??
+   event.personAId,'continuity subject ID');
   checkYear(event.year,year);
   if(eventIds.has(event.eventId))throw Error('Repeated continuity event ID');
   if(!CONTINUITY_EVENT_TYPES.includes(event.type))
    throw Error('Unsupported organizational continuity event');
   const op=firms.get(event.organizationId);
   const person=people.get(event.personId);
-  if(event.type==='RETIRE_PERSON'){
+  if(event.type==='REGISTER_APPROVED_PERSON'){
+   const candidate=event.person;
+   checkId(candidate?.id,'new approved person ID');
+   checkId(candidate?.name,'new approved person name');
+   checkId(candidate?.primarySurname,'new approved person surname');
+   if(typeof candidate.role!=='string'||!candidate.role||
+    !Number.isInteger(candidate.birthYear)||candidate.birthYear<1910||
+    candidate.birthYear>2089||event.year-candidate.birthYear<18||
+    event.year-candidate.birthYear>100||
+    people.has(candidate.id)||firms.has(candidate.id)||
+    [...people.values()].some(p=>key(p.name)===key(candidate.name)))
+    throw Error('Invalid or duplicated accepted new person identity');
+   if(!replaying){
+    if(!approvedPersonLookup)throw Error('New people require existing naming-registry identity approval');
+    const existing=approvedPersonLookup(candidate.id);
+    if(!existing||['id','name','role','primarySurname','birthYear'].some(k=>
+     existing[k]!==candidate[k]))
+     throw Error('New person does not match the approved naming registry');
+   }
+   people.set(candidate.id,{
+    id:candidate.id,name:candidate.name,role:candidate.role,
+    primarySurname:candidate.primarySurname,birthYear:candidate.birthYear,
+    retired:false
+   });
+  }else if(event.type==='REGISTER_DOCUMENTED_FAMILY_LINK'){
+   const a=event.personAId,b=event.personBId;
+   if(!people.has(a)||!people.has(b)||a===b||
+    !KINSHIP.has(event.relationshipKind))
+    throw Error('Explicit documented family link needs known people');
+   const pair=[a,b].sort().join('|');
+   if(familyPairs.has(pair))throw Error('Family relationship already recorded');
+   if(!replaying&&(!familyLinkLookup||
+    familyLinkLookup({personAId:a,personBId:b,kind:event.relationshipKind,
+     sourceId:event.sourceId})!==true))
+    throw Error('Family relationship has not been approved by family history');
+   familyPairs.add(pair);
+  }else if(event.type==='RETIRE_PERSON'){
    if(!person||person.retired)throw Error('Cannot retire an unknown or retired person');
    if(hasDuties(person.id))
     throw Error('Transfer all active organization responsibilities before retirement');
@@ -245,12 +292,14 @@ export function createFictionalOrganizationContinuityRegistry({
   return cursor();
  }
  if(snapshot){
+  replaying=true;
   for(const recorded of snapshot.events){
    const event={...recorded};
    delete event.revision;
    if(apply({expectedRevision:revision,event}).revision!==recorded.revision)
     throw Error('Continuity event replay revision mismatch');
   }
+  replaying=false;
  }
  function getOrganization(id,{withHistory=false}={}){
   const op=firms.get(id);
