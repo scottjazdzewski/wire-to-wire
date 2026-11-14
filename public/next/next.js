@@ -938,9 +938,90 @@ function founding1999Profile(){
  if(!['ownership','facility','person'].includes(kind))return '<p>Unsupported founding profile.</p>';
  return renderFounding1999Profile(kind,id);
 }
+/* Read-only connection projection of isolated GAME TEST horses.
+ * This is NOT the founding live-career horse population. */
+let pilotRelationships=null,pilotRelationshipsLoading=false;
+function loadPilotRelationships(){
+ if(pilotRelationships||pilotRelationshipsLoading)return;
+ pilotRelationshipsLoading=true;
+ fetch('/data/wtw-1999-pilot-horse-relationships-v1.json',{credentials:'same-origin',cache:'force-cache'})
+  .then(r=>{if(!r.ok)throw Error('Test cohort unavailable');return r.json()})
+  .then(x=>{
+   if(x?.schema==='WTW_1999_UI_PILOT_HORSE_RELATIONSHIPS_V1'&&
+    x.status==='ISOLATED_GAME_TEST_COHORT_NOT_LIVE_CAREER'&&
+    Array.isArray(x.horses)&&x.total_horses===x.horses.length&&Array.isArray(x.sites)&&
+    x.total_sites===x.sites.length){pilotRelationships=x;schedulePaint(15);}
+  }).catch(()=>{/* No speculative identities when cohort projection unavailable. */})
+  .finally(()=>{pilotRelationshipsLoading=false});
+}
+function pilotHorseLinksFor(kind,id){
+ if(!pilotRelationships)return [];
+ const horses=pilotRelationships.horses;
+ if(kind==='person')return horses.filter(h=>h.trainer_id===id);
+ if(kind==='farm')return horses.filter(h=>h.owner_organization_id===id);
+ if(kind==='track')return horses.filter(h=>h.track_id===id);
+ return [];
+}
+function pilotHorseConnectionsPanel(kind,id){
+ if(!['person','farm','track'].includes(kind)||!id)return '';
+ loadPilotRelationships();
+ if(!pilotRelationships)return '<section class="ng-world-related ng-pilot-horse-connections" data-pilot-scope="'+
+  safe(kind)+'" role="status"><header><strong>1999 TEST COHORT HORSES</strong></header>'+
+  '<p>Loading modeled test-cohort assignments. Live career horses are separate.</p></section>';
+ const matching=pilotHorseLinksFor(kind,id);
+ const siteIndex=new Map(pilotRelationships.sites.map(s=>[s.id,s]));
+ const ownerIndex=new Map((world1999Data?.organizations||[]).map(o=>[o.id,o]));
+ const personIndex=new Map([...world1999Data?.people||[],...world1999TrainerRoster].map(p=>[p.id,p]));
+ const trackIndex=new Map((world1999Data?.tracks||[]).map(t=>[t.id,t]));
+ const rows=matching.map(h=>{
+  const site=siteIndex.get(h.site_id),owner=ownerIndex.get(h.owner_organization_id),
+   trainer=personIndex.get(h.trainer_id),track=trackIndex.get(h.track_id);
+  const related=kind==='person'?owner?.name||h.owner_organization_id:
+   kind==='farm'?trainer?.name||h.trainer_id:trainer?.name||h.trainer_id;
+  const label=kind==='person'?'OWNER':kind==='farm'?'TRAINER':'TRAINER';
+  return '<tr><td><button class="ng-rs-horse" type="button" data-ng="pilot-horse" data-val="'+safe(h.id)+
+   '" title="Open modeled test horse '+safe(h.name)+'">'+safe(h.name)+'</button></td>'+
+   '<td>'+safe(h.sex)+' · '+safe(String(1999-h.foaling_year))+'YO</td>'+
+   '<td>'+safe(site?.name||h.site_id)+'</td>'+
+   '<td><button class="ng-entity-reference" data-ng="pilot-connection" data-kind="'+
+    (kind==='person'?'farm':'person')+'" data-val="'+safe(kind==='person'?h.owner_organization_id:h.trainer_id)+'">'+safe(related)+'</button></td>'+
+   '<td>'+safe(track?.name||(h.track_id?'Track not recorded':'Home site'))+'</td>'+
+   '<td>'+safe(h.ability)+' / '+safe(h.potential)+'</td></tr>';
+ }).join('');
+ return '<section class="ng-rs-roster ng-pilot-horse-connections" data-pilot-scope="'+safe(kind)+
+  '" data-profile-id="'+safe(id)+'"><header><strong>'+
+   (kind==='person'?'TRAINER · HORSES IN CARE':kind==='track'?'TRACK · HORSES CURRENTLY STABLED HERE':'OWNERSHIP · HORSE ROSTER')+
+   '</strong><span>'+matching.length+' HORSES · ISOLATED 1999 TEST COHORT</span></header>'+
+  (rows?'<div class="ng-rs-scroll" role="region" aria-label="Horses connected to this profile">'+
+   '<table class="ng-rs-table ng-dpt-table"><thead><tr><th>HORSE</th><th>AGE / SEX</th><th>PHYSICAL BARN</th>'+
+   '<th>'+(kind==='person'?'OWNER':'TRAINER')+'</th><th>HOST TRACK</th><th>CA / PA</th></tr></thead><tbody>'+rows+
+   '</tbody></table></div>':'<p class="ng-rs-no-results">No horses assigned to this ID in the 38-horse test cohort.</p>')+
+  '<p class="ng-dpt-disclosure">MODELED TEST ASSIGNMENTS ONLY · Names provisional · Not registered in the live January 1999 career</p></section>';
+}
+function pilotHorseDetail(id){
+ loadPilotRelationships();
+ const h=pilotRelationships?.horses.find(x=>x.id===id);
+ if(!h)return '<section class="ng-world-source-profile"><p>Loading 1999 test horse record…</p></section>';
+ const site=pilotRelationships.sites.find(s=>s.id===h.site_id);
+ const find=(kind,id)=>kind==='person'?[...world1999Data?.people||[],...world1999TrainerRoster].find(x=>x.id===id):
+  kind==='track'?world1999Data?.tracks.find(x=>x.id===id):world1999Data?.organizations.find(x=>x.id===id);
+ const linked=(kind,id)=>'<button class="ng-entity-reference" data-ng="pilot-connection" data-kind="'+safe(kind)+
+  '" data-val="'+safe(id)+'">'+safe(find(kind,id)?.name||id)+' ↗</button>';
+ return '<section class="ng-world-source-profile" data-pilot-horse-id="'+safe(h.id)+'">'+
+  '<header><strong>1999 GAMEPLAY TEST HORSE · PROVISIONAL NAME</strong></header>'+
+  '<h2>'+safe(h.name)+'</h2><p>'+safe(h.id)+' · '+safe(h.sex)+' · FOALED '+safe(h.foaling_year)+'</p>'+
+  '<div class="ng-world-profile-facts"><div><small>OWNER</small>'+linked('farm',h.owner_organization_id)+'</div>'+
+  '<div><small>TRAINER</small>'+linked('person',h.trainer_id)+'</div>'+
+  '<div><small>PHYSICAL BARN</small><strong>'+safe(site?.name||h.site_id)+'</strong></div>'+
+  '<div><small>HOST TRACK</small>'+(h.track_id?linked('track',h.track_id):'<strong>Organization home racing site</strong>')+'</div>'+
+  '<div><small>CURRENT / POTENTIAL</small><strong>'+safe(h.ability)+' / '+safe(h.potential)+'</strong></div>'+
+  '<div><small>RACING PROFILE</small><strong>'+safe(h.surface)+' · '+safe(h.distance)+'</strong></div></div>'+
+  '<p class="ng-dpt-disclosure">This horse exists in the isolated 38-horse simulation fixture, not the live career or historical archive.</p></section>';
+}
+
 function restored1999Profile(kind,record){
  const x=window.WTW1999Profiles?.source(kind,record,window.__WTW_1999_UI_DATA__);
- return x?profileDetail(x.route,x.node):null;
+ return x?profileDetail(x.route,x.node)+pilotHorseConnectionsPanel(kind,record.id):null;
 }
 function world1999Profile(){
  const key=decodeURIComponent(String(APP.custom||'').slice('WorldRecord:'.length));
@@ -3449,6 +3530,7 @@ else if(['Messages','Decisions','Opportunities'].includes(APP.custom)){body=mana
 else if(APP.custom==='Search'){body=searchView()}
 else if(APP.custom.startsWith('WorldRecord:')){body=world1999Profile()}
 else if(APP.custom.startsWith('FoundingProfile:')){body=founding1999Profile()}
+else if(APP.custom.startsWith('PilotHorse:')){body=pilotHorseDetail(decodeURIComponent(APP.custom.slice('PilotHorse:'.length)))}
 else if(APP.custom.startsWith('RaceFile:')){const id=decodeURIComponent(APP.custom.slice('RaceFile:'.length));const race=APP.raceRouteKey===id?APP.raceDetail:window.__WTW_1999_UI_DATA__?.findRace?.(id);body=window.WTW1999RaceConditions?.render(race,window.__WTW_1999_UI_DATA__)||'<section class="ng-1999-race-file"><h2>Race file loading unavailable</h2></section>'}
 else if(APP.custom.startsWith('Preview:')){body=previewRecordView()}
 else {body=managerDashboard()}
@@ -3574,6 +3656,17 @@ window.addEventListener('click',e=>{
  }
  if(key==='more'){APP.moreOpen=!APP.moreOpen;return paint()}
  if(key==='menu')return openMenu(val);
+ if(key==='pilot-horse'){
+  const row=pilotRelationships?.horses.find(x=>x.id===val);
+  if(row)return openCustomView('PilotHorse:'+encodeURIComponent(row.id),'World','1999 Horses');
+  return;
+ }
+ if(key==='pilot-connection'){
+  const kind=btn.dataset.kind,id=val;
+  if(kind==='track')return openWorld1999Entity('track:'+id);
+  if(kind==='person'||kind==='farm')return openFounding1999Profile(kind==='person'?'person':'ownership',id);
+  return;
+ }
  if(key==='world-directory'){APP.section='World';return pageTab('1999 Horses')}
  if(key==='tab')return pageTab(val);
  if(key==='office')return goOffice();
