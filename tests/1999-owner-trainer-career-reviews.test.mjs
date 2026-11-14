@@ -44,7 +44,13 @@ test('28-day owner/trainer career reviews use only official race results, paid c
  const before=structuredClone(first);
  const preview=ownerTrainerEvidence(first,world,h.owner_organization_id,h.trainer_id);
  assert.equal(preview.starts,0);
- assert.equal(preview.care_expense_minor,0);
+ assert.equal(preview.care_expense_minor,
+  -first.runtime.finances.ledger.filter(row=>
+   row.date==='1999-01-02'&&row.operation_id===h.owner_organization_id&&
+   row.kind==='HORSE_CARE_OWNER_PAYMENT'&&
+   all(first).some(x=>x.horse_id===row.horse_id&&x.trainer_id===h.trainer_id)).
+  reduce((n,row)=>n+row.amount_minor,0),
+  'Owner evaluation includes care actually paid on the first training day');
  assert.equal(preview.provenance,'ACTUAL_SAVED_GAME_RESULTS_AND_FINANCE_NOT_HISTORICAL_ASSESSMENT');
  assert.deepEqual(first,before,'Career evaluation preview must not change the save');
  const completed=through('1999-01-31',first);
