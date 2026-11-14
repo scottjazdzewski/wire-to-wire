@@ -163,8 +163,9 @@ export function advanceGameHorseCare({state,world,emit}){
   const context=estimateContext(p,site,occupancy[h.current_residence_id]);
   const train={...r.training,plan:p.training_plan};
   const allowed=site.status==='ACTIVE'&&site.staff_count>=site.staff_required;
+  const workout=r.agent?.date===day?r.agent.workout:null;
   const work=advanceHorseTrainingDay(train,info.horse,info.trainer,day,
-   state.rng.seed,context);
+   state.rng.seed,{...context,workout});
   const charge_minor=Math.round(work.charge*100);
   const canPay=allowed&&money(accounts[h.owner_organization_id])&&
    accounts[h.owner_organization_id]>=charge_minor&&
@@ -204,7 +205,7 @@ export function advanceGameHorseCare({state,world,emit}){
    r.finance.spent_minor+=used;r.finance.lifetime_minor+=used;
   }
   r.training=result.horse;r.last_day=day;
-  r.history.push({date:day,work:result.work,paid_minor:used,
+  r.history.push({date:day,work:result.work,agent_reason:r.agent?.date===day?r.agent.reason:null,paid_minor:used,
    nutrition:p.feed,care:p.care,facility_id:site.id,
    crowding:round4(context.crowding),barn_quality:site.quality,
    fitness:r.training.fitness,readiness:r.training.readiness,
