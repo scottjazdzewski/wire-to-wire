@@ -58,8 +58,7 @@ export function validateHorseRegistrationRuntime(state,world){
   const site=state.runtime.facilities?.sites?.[h.current_residence_id];
   ensure(site&&site.id===h.current_residence_id&&
    ['RACING_STABLE','TRAINING_CENTER'].includes(site.type)&&
-   site.stalls>0&&
-   Object.values(rt.by_id).filter(x=>x.current_residence_id===h.current_residence_id).length<=site.stalls,
+   site.stalls>0,
    'HORSE_REGISTRY','Registered horse home is not operational');
   ensure(isObject(h.career)&&Number.isSafeInteger(h.career.starts)&&h.career.starts>=0&&
    Number.isSafeInteger(h.career.wins)&&h.career.wins>=0&&h.career.wins<=h.career.starts&&
