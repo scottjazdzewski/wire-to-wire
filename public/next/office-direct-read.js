@@ -73,11 +73,7 @@
     const choices=['ACCEPT','COUNTER','DECLINE'];
     const chosen=permitted.has(r.response)?r.response:null;
     const description=r.kind==='CARE_FUNDING'&&Number.isSafeInteger(r.needed_minor)?
-     'Actual recorded care requirement: 
- if(global)global.__WTW_OFFICE_DIRECT_READ__=api;
- if(typeof module!=='undefined'&&module.exports)module.exports=api;
-})(typeof window!=='undefined'?window:null);
-+(r.needed_minor/100).toFixed(2)+'.':
+     'Actual recorded care requirement (USD): '+(r.needed_minor/100).toFixed(2)+'.':
      r.race_id?'Recorded race: '+r.race_id+'.':'';
     const title=kind.title+' · '+name;
     const summary=kind.summary+' '+description;
