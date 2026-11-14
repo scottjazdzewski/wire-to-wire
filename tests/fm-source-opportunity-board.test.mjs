@@ -53,7 +53,7 @@ test('the queue contains only current priority Office messages and real due foll
  assert.equal((out.match(/class="ng-manager-row"/g)||[]).length,2);
  assert.match(out,/data-ng="case" data-val="opening-stakes"/);
  assert.match(out,/data-ng="followup" data-val="FU-01"/);
- assert.match(out,/1 CURRENT ACTIONS|2 CURRENT ACTIONS/); // one urgent plus one due
+ assert.match(out,/2 CURRENT ACTIONS/); // one urgent briefing and one due follow-up
  assert.doesNotMatch(out,/data-val="opening-tracks"|data-val="reviewed"/);
  assert.match(out,/3<\/strong><\/div>/);
  assert.doesNotMatch(out,/Argosy colt buzz building|Pieta gallop-out report|Powerline inquiry/);
