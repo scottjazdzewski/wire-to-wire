@@ -60,8 +60,10 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    !d.querySelector('#wtwNextgen .ng-rs-horse')&&ui.stableHorses.length===0);
   click('Racing');await pause(300);
   const fullTrackPicker=d.querySelector('#wtwNextgen select[data-ng-select="department-track"]');
-  check('Racing drop-down includes all founding circuit tracks',
-   Boolean(fullTrackPicker)&&fullTrackPicker.options.length===ui.counts.tracks+1&&[...fullTrackPicker.options].some(o=>o.value==='Saratoga'));
+  check('Racing drop-down includes exactly the 115 playable founding circuits',
+   Boolean(fullTrackPicker)&&ui.counts.tracks===118&&fullTrackPicker.options.length===116&&
+   [...fullTrackPicker.options].some(o=>o.value==='Saratoga')&&
+   ![...fullTrackPicker.options].some(o=>['Atlantic City Race Course','Aurora Downs','Bainbridge Park'].includes(o.value)));
   noDuplicateTabs('Racing');
   check('Date browser opens on Jan 1 without advancing the game',
    d.querySelector('#ngRacingBrowseDate')?.value==='1999-01-01');
