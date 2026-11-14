@@ -275,14 +275,15 @@ export function createIndexedFictionalNameRegistry({
  * State is compact: ONLY cursor/version/counts, not name or owner arrays.
  */
 export function prepareIndexedFictionalNameBatch({
- registry,worldId,seed,year=1999,cursor=null,roles={},owners=0,
+ registry,worldId,seed,cursor=null,year=cursor?.year??1999,roles={},owners=0,
  facilities={},maxPartnershipGroups=null,soleOwnerPercent=23,
  markets,originWeightsByRole,jockeyOriginWeightsByColony
 }={}){
  if(!registry||registry.model!==INDEXED_FICTIONAL_NAME_REGISTRY_MODEL||
   registry.worldId!==worldId||registry.seed!==seed)
   throw Error('Incompatible indexed naming registry');
- if(year!==1999)throw Error('Indexed fictional naming currently supports 1999 only');
+ if(!Number.isInteger(year)||year<1999||year>2099)
+  throw Error('Indexed fictional naming supports years 1999–2099');
  if(!Number.isInteger(soleOwnerPercent)||soleOwnerPercent<0||soleOwnerPercent>100)
   throw Error('Invalid indexed sole-owner percentage');
  const initial=cursor===null;
@@ -290,7 +291,7 @@ export function prepareIndexedFictionalNameBatch({
   throw Error('Non-empty registry requires a compact cursor; refusing to restart');
  if(!initial&&(
   !cursor||cursor.model!==COMPACT_FICTIONAL_NAME_CURSOR_MODEL||
-  cursor.worldId!==worldId||cursor.seed!==seed||cursor.year!==year||
+  cursor.worldId!==worldId||cursor.seed!==seed||cursor.year>year||
   !Number.isSafeInteger(cursor.nextBatch)||cursor.nextBatch<1||cursor.nextBatch>999999||
   cursor.revision!==registry.revision||
   !Number.isInteger(cursor.maxPartnershipGroups)||
