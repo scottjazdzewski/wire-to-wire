@@ -119,10 +119,13 @@ export function raceEligibility(state,horse,race){
   filter(r=>r.status==='OFFICIAL_SIM_RESULT'&&r.results?.some(row=>row.horse_id===horse.horse_id))
   .sort((a,b)=>b.date.localeCompare(a.date));
  if(history.length&&dayGap(history[0].date,race.date)<12)reasons.push('INSUFFICIENT_RECOVERY_SPACING');
- const other=Object.values(state.runtime.entries||{}).some(e=>e.horse_id===horse.horse_id&&
-  e.race_id!==race.id&&state.runtime.races?.[e.race_id]?.date===race.date&&
-  e.status!=='SCRATCHED');
- if(other)reasons.push('CONFLICTING_ENTRY');
+ const planned=Object.values(state.runtime.entries||{}).filter(e=>
+  e.horse_id===horse.horse_id&&e.race_id!==race.id&&
+  ['ENTERED','BOOKED'].includes(e.status)).map(e=>state.runtime.races?.[e.race_id]).
+  filter(r=>r?.status==='ENTRIES_OPEN');
+ if(planned.some(r=>r.date===race.date))reasons.push('CONFLICTING_ENTRY');
+ else if(planned.some(r=>Math.abs(dayGap(r.date,race.date))<12))
+  reasons.push('CONFLICTING_CAMPAIGN_SPACING');
  return {eligible:reasons.length===0,reasons};
 }
 function charge(state,owner,amount,kind,race,h,jockeyId){
