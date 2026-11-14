@@ -33,10 +33,10 @@
     },
     "T-0002": {
       "name": "Belmont Park",
-      "deep": "#102E29",
-      "base": "#006B4E",
-      "bright": "#33C18D",
-      "highlight": "#E2D39A"
+      "deep": "#00351D",
+      "base": "#0C603C",
+      "bright": "#36B17A",
+      "highlight": "#F0FFF5"
     },
     "T-0013": {
       "name": "Churchill Downs",

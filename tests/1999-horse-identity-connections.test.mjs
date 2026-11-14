@@ -50,14 +50,12 @@ test('live selector resolves owner, trainer, track and site by permanent ID, wit
  assert.throws(()=>getCareerHorseConnections(state,world,{kind:'track',id:'T-MISSING'}),
   e=>e.code==='HORSE_CONNECTIONS');
 });
-test('trainer, track and owner profiles display exact-ID horse connections and preserve live-career distinction',()=>{
- assert.match(js,/function pilotHorseConnectionsPanel\(kind,id\)/);
+test('test-cohort connections remain in the actual pilot engine, never injected into canonical trainer, track and owner pages',()=>{
  assert.match(js,/function pilotHorseDetail\(id\)/);
- assert.match(js,/const pilotID=pilotKind\?world1999Match\(pilotKind,route.title\)\?\.canonicalId:null/);
- assert.match(js,/if\(key==='pilot-horse'\)/);
+ assert.match(js,/APP\.custom\.startsWith\('PilotHorse:'\)/);
  assert.match(js,/if\(key==='pilot-connection'\)/);
- assert.match(js,/MODELED TEST ASSIGNMENTS ONLY/);
- assert.match(js,/profileRecordSection\('HORSES IN TRAINING'/);
- assert.match(js,/profileRecordSection\('HORSES CURRENTLY ON SITE'/);
- assert.match(js,/profileRecordSection\('OWNED HORSES'/);
+ assert.doesNotMatch(js,/function pilotHorseConnectionsPanel\(|const pilotID=pilotKind|profileRecordSection\(/);
+ assert.match(js,/ng-track-workspace/);
+ assert.match(js,/const stakesTable=\(limit=100\)=>\{/);
+ assert.match(js,/return '<div class="ng-stakes-table">/);
 });
