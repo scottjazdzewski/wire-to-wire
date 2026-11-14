@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {readFileSync,existsSync} from "node:fs";
 import {removeWhiteEdgeMatte,heroContext,profileTitle,heroCandidate,heroInitials,dossierLabel,visibleAlphaBounds} from "../public/next/profile-hero-v2.mjs";
 
-const css=readFileSync(new URL("../public/next/profile-hero-v2.css",import.meta.url),"utf8");
+const css=readFileSync(new URL("../public/next/next.css",import.meta.url),"utf8");
 const index=readFileSync(new URL("../public/next/index.html",import.meta.url),"utf8");
 
 test("track and farm titles never expose raw route identifiers",()=>{
@@ -44,10 +44,13 @@ test("hero grid explicitly separates metadata, actions and logo",()=>{
  assert.match(css,/\.ng-subbar\{display:none!important/);
  assert.match(css,/ng-profile-source-photo\.wtw-hero-dark-ink/);
 });
-test("hero resources are loaded after existing management assets",()=>{
- assert.ok(index.includes("/next/profile-hero-v2.css"));
+test("profile hero styles are part of the ONE canonical stylesheet, without changing art handling",()=>{
+ const links=[...index.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/g)].map(m=>m[1].split("?")[0]);
+ assert.deepEqual(links,["/next/next.css"]);
+ assert.match(css,/BEGIN folded source: public\/next\/identity-themes\.css/);
+ assert.match(css,/BEGIN folded source: public\/next\/profile-hero-v2\.css/);
+ assert.ok(css.indexOf("BEGIN folded source: public/next/profile-hero-v2.css")>css.indexOf("BEGIN folded source: public/next/identity-themes.css"));
  assert.ok(index.includes("/next/profile-hero-v2.mjs"));
- assert.ok(index.indexOf("profile-hero-v2.css")>index.indexOf("identity-themes.css"));
 });
 
 test("transparent hero uploads auto-discover by exact canonical ID",()=>{
@@ -115,7 +118,7 @@ test("horse and personnel dossier top labels are profile-specific, never route c
  assert.match(src,/if\(value&&value\.textContent!==name\)/);
 });
 test("profile dossier subnavigation keeps buttons and more records on narrow screens",()=>{
- assert.match(css,/ng-profile-view\.ng-profile-horse \.ng-person-dossieractions/);
+ assert.match(css,/ng-profile-view \.ng-person-dossieractions/);
  assert.match(css,/grid-template-columns:minmax\(64px,1fr\) minmax\(64px,1fr\) minmax\(110px,1\.5fr\)/);
  assert.match(css,/height:auto!important/);
 });

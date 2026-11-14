@@ -7,7 +7,7 @@ const js=read('public/next/next.js');
 const css=read('public/next/next.css');
 const html=read('public/next/index.html');
 const profile=read('public/next/profile-hero-v2.mjs');
-const profileCSS=read('public/next/profile-hero-v2.css');
+const profileCSS=css; // The one canonical design system includes profile rules.
 const themes=read('public/next/identity-themes.mjs');
 const audit=read('scripts/desktop-visual-audit.sh');
 const standard=read('docs/design/WTW_UNIFIED_SCREEN_INTERACTION_LOCK_2026-11-13.md');
@@ -31,11 +31,19 @@ test('horse, people, track, stable and farm profiles share one renderer family',
  assert.match(js,/return restored1999Profile\(kind==='person'\?'person':'farm'/);
  assert.match(js,/ng-profile-intro/,'Shared identity row must stay');
  assert.match(js,/ng-profile-identity/,'Shared name and metadata area must stay');
- assert.match(js,/ng-person-dossierbar/,'Horse and people retain local dossier controls');
+ assert.match(js,/tabbar=\(isTrack\|\|isFarm\|\|isPerson\|\|isHorse\)\?/,
+  'Horse, people, track and organization profiles must share one local navigation renderer');
+ assert.match(js,/ng-person-dossierbar/,'Shared profile navigation is present');
+ for(const family of ['HORSE RACING FILE','PERSONNEL DOSSIER','TRACK DOSSIER','FACILITY DOSSIER','OWNERSHIP DOSSIER']){
+  assert.ok(js.includes(family),'Missing profile family category: '+family);
+ }
  assert.match(js,/ng-profiletabs/,'Track and farm retain their local profile records');
  assert.match(js,/data-ng="detailtab"/,'Local sections must remain real navigation actions');
  assert.match(profile,/polishDossierContext\(root\)/,'Dossier header names must not regress to raw routes');
  assert.match(profile,/ensureHeroStage\(profile,kind,name\)/,'Track and farm use one hero stage');
+ assert.match(js,/wtw-unassigned-media/,'Horse and personnel missing-image states must share a real component');
+ assert.match(css,/\.wtw-unassigned-media strong/,'Missing-image monograms must use the one style authority');
+ assert.ok(!js.includes('IMAGE SLOT RESERVED'),'No unfinished placeholder labels on game profiles');
 });
 
 test('all profile record lists keep the same sorting/filtering/quick view behavior',()=>{
@@ -66,17 +74,12 @@ test('entity colors and logos can change, but never create another navigation im
 test('do not add page-specific CSS layers or new style patch stacks',()=>{
  const assets=[...html.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/g)]
   .map(m=>m[1].split('?')[0]);
- const allowed=[
-  '/next/next.css',
-  '/next/1999-commercial-career.css',
-  '/next/identity-themes.css',
-  '/next/profile-hero-v2.css'
- ];
+ const allowed=['/next/next.css'];
  assert.deepEqual(assets,allowed,'Unexpected stylesheet: consolidate shared rules instead of adding a fifth override');
  assert.equal(new Set(assets).size,assets.length);
  for(const asset of assets)assert.ok(existsSync(new URL('../public'+asset,import.meta.url)),asset);
  assert.ok(!/\.ng-profile-track-\d+/.test(profileCSS),'Never style individual tracks as bespoke pages');
- assert.match(standard,/technical debt/,'Existing transitional layers must not become the new design authority');
+ assert.match(standard,/one canonical management stylesheet/i,'No new CSS override layers are allowed');
 });
 
 test('a screenshot smoke test does not mean FM/OOTP visual approval',()=>{
@@ -85,6 +88,13 @@ test('a screenshot smoke test does not mean FM/OOTP visual approval',()=>{
   assert.ok(audit.includes('capture '+view+' '),'Visual route missing: '+view);
  }
  assert.match(standard,/mark \*\*REJECTED\*\*/,'Weak interfaces must be explicitly rejected');
+ for(const view of ['aqueduct-track','gulfstream-track','kingsmere-farm','northbank-stable']){
+  assert.ok(audit.includes('capture '+view+' '),'Missing cross-screen comparison screenshot: '+view);
+ }
+ for(const name of ['laptop-horse','laptop-person','laptop-aqueduct','laptop-farm','laptop-owner']){
+  assert.ok(audit.includes('probe '+name+' '),'Missing laptop geometry check: '+name);
+ }
+ assert.match(audit,/UNIFIED PROFILE GEOMETRY VERIFIED/);
  assert.match(standard,/A \*\*person\*\* compares screenshots/,'Visual acceptance needs an actual reviewer');
- assert.match(standard,/No CSS patch stacks|No CSS patch stack|do not add a fifth/i);
+ assert.match(standard,/No CSS patch stacks|No CSS patch stack|one canonical management stylesheet/i);
 });

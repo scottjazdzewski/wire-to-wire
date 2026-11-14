@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {resolveIdentity,housePalette,paletteFor} from '../public/next/identity-themes.mjs';
 
 const registry=JSON.parse(readFileSync(new URL('../public/assets/identity/visual-themes-v1.json',import.meta.url),'utf8'));
-const styles=readFileSync(new URL('../public/next/identity-themes.css',import.meta.url),'utf8');
+const styles=readFileSync(new URL('../public/next/next.css',import.meta.url),'utf8').split('/* ===== BEGIN folded source: public/next/identity-themes.css ===== */')[1].split('/* ===== END folded source: public/next/identity-themes.css ===== */')[0];
 
 test('three official-track test pages resolve by stable canonical ID',()=>{
   for(const id of ['T-0002','T-0013','T-0017']){

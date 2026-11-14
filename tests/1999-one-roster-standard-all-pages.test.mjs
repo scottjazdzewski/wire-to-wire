@@ -35,5 +35,6 @@ test('track major stakes and every detailed profile table use the same interacti
 });
 test('web app loads fresh bundled CSS and JavaScript rather than stale browser cache',()=>{
  assert.match(html,/\/next\/next\.js\?rev=wtw1999-unified-rosters-all-sections-20261113/);
- assert.match(html,/\/next\/next\.css\?rev=wtw1999-unified-rosters-all-sections-20261113/);
+ assert.match(html,/\/next\/next\.css\?rev=wtw-unified-design-20261113/);
+ assert.equal((html.match(/rel="stylesheet"/g)||[]).length,1,'One authoritative management CSS');
 });

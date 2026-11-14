@@ -70,9 +70,9 @@ The UI's `profile-hero-v2.mjs` has a conservative, browser-only white-matte clea
 9. Layout and art pass mobile and signed-in Cloudflare preview. Automated checks alone do not certify visual polish.
 
 ## Files and architecture
-- New `public/next/profile-hero-v2.css`: source-specific grid + identity hero stage + global redundant menu removal.
+- The shared profile hero grid, identity stage, and redundant menu removal are consolidated within **`public/next/next.css`** (single styling authority).
 - New `public/next/profile-hero-v2.mjs`: route display cleanup + image manifest integration + conservative legacy white matte.
 - `public/assets/identity/hero-art-index-v1.json`: optional exact-ID inventory, initially empty. Automatic ID-based file discovery works without entries.
-- Updated `public/next/index.html`: loads CSS after the existing identity theme and JS after existing UI modules.
+- Updated `public/next/index.html`: loads **one** canonical management CSS file; the existing `profile-hero-v2.mjs` remains active for independent transparent-logo processing.
 - `tests/profile-hero-v2.test.mjs`: layout and matte regression suite.
 - Unchanged: `public/next/next.js`, `public/next/next.css`, game logic, source data, UI records, original asset files.

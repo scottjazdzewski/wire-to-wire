@@ -1574,8 +1574,8 @@ function profileDetail(route,sourceOverride=null){
   ['Overview','Connections','History']);
  const rows=(items)=>'<div class="ng-data-rows">'+items.map(i=>`<div class="ng-data-row"><span>${safe(i.label)}</span>${namedProfileValue(i.label,i.value)}</div>`).join('')+'</div>';
  const pills='<div class="ng-status-pills">'+states.slice(0,4).map(x=>`<span>${safe(x)}</span>`).join('')+'</div>';
- const tabbar=isTrack||isFarm?'':(isPerson||isHorse)?`<nav class="ng-person-dossierbar ng-management-dossierbar" aria-label="Personnel dossier navigation">
-   <span class="ng-person-dossierlabel">${isHorse?'HORSE RACING FILE':'PERSONNEL DOSSIER'} <small>ONE-SCREEN OVERVIEW</small></span>
+ const tabbar=(isTrack||isFarm||isPerson||isHorse)?`<nav class="ng-person-dossierbar ng-management-dossierbar" aria-label="Profile records navigation">
+   <span class="ng-person-dossierlabel">${isHorse?'HORSE RACING FILE':isPerson?'PERSONNEL DOSSIER':isTrack?'TRACK DOSSIER':source.dataset.foundingContext==='facility'?'FACILITY DOSSIER':'OWNERSHIP DOSSIER'} <small>ONE-SCREEN OVERVIEW</small></span>
    <div class="ng-person-dossieractions">
     <button data-ng="detailtab" data-val="Overview" class="${APP.detailTab==='Overview'?'on':''}">OVERVIEW</button>
     <button data-ng="detailtab" data-val="History" class="${APP.detailTab==='History'?'on':''}">HISTORY</button>
@@ -2143,16 +2143,24 @@ function profileDetail(route,sourceOverride=null){
  const portraitRequired=isHorse||isPerson;
  const imageSlotRequired=isFarm||portraitRequired;
  const photoSrc=sourceImage||horseImage;
- const imageMarkup=photoSrc?'<img src="'+safe(photoSrc)+'" alt="" loading="lazy" decoding="async"/>':
-  '<div class="ng-profile-photo-empty" aria-label="Image not yet assigned">'+
-   '<span>'+safe(isFarm?'FACILITY / OWNER LOGO':'PORTRAIT')+'</span>'+
-   '<small>IMAGE SLOT RESERVED</small></div>';
  const visualName=worldSourceEntry?.name||route.title;
+ // Until source media exists, present a name-derived monogram rather than
+ // exposing unfinished production labels to game players.
+ // It is not a claimed portrait, horse photograph or organization logo.
+ const nameTokens=String(visualName).normalize('NFKC').match(/[\p{L}\p{N}]+/gu)||[];
+ const sourceInitials=(nameTokens.length>=2?
+  nameTokens[0].slice(0,1)+nameTokens.at(-1).slice(0,1):
+  (nameTokens[0]||'WT').slice(0,2)).toUpperCase();
+ const fallbackType=isHorse?'HORSE':isPerson?'PERSON':'ORGANIZATION';
+ const imageMarkup=photoSrc?'<img src="'+safe(photoSrc)+'" alt="" loading="lazy" decoding="async"/>':
+  '<div class="ng-profile-photo-empty wtw-unassigned-media" aria-label="No source image assigned">'+
+   '<strong aria-hidden="true">'+safe(sourceInitials)+'</strong>'+
+   '<small>'+fallbackType+'</small></div>';
  const profileDisplayType=isFarm?(source.dataset.foundingContext==='facility'?
   'FACILITY PROFILE':'OWNERSHIP PROFILE'):route.kicker;
  const identity=`<div class="ng-profile-intro">
   ${profileMark}
-  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(profileDisplayType)} <span> / </span> Current Office</div><h2>${isHorse?horseOwnerBadge(route.title):''}${safe(visualName)}</h2>${horseIdentityRow}${horseStarRow}${entityIdentityRow}${horseConnectionHeader}${isHorse||isPerson||isFarm||isTrack?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${photoSrc||imageSlotRequired?`<div class="ng-profile-source-photo ${isFarm?'ng-profile-facility-logo':portraitRequired?'ng-profile-portrait':''}" role="img" aria-label="Image of ${safe(visualName)}">${imageMarkup}</div>`:''}
+  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(profileDisplayType)} <span> / </span> Current Office</div><h2>${isHorse?horseOwnerBadge(route.title):''}${safe(visualName)}</h2>${horseIdentityRow}${horseStarRow}${entityIdentityRow}${horseConnectionHeader}${isHorse||isPerson||isFarm||isTrack?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${photoSrc||imageSlotRequired?`<div class="ng-profile-source-photo ${isFarm?'ng-profile-facility-logo':portraitRequired?'ng-profile-portrait':''}" role="img" aria-label="${photoSrc?'Image of ':'Temporary identifier for '}${safe(visualName)}">${imageMarkup}</div>`:''}
   <div class="ng-profile-tools"><button data-ng="office" aria-label="Return to Racing Office">← OFFICE</button><button data-ng="menu" data-val="${isTrack?'Racing':isPerson?'Personnel':isFarm?'Personnel':'Stable'}">${isTrack?'RACE CALENDAR':isPerson?'PERSONNEL DIRECTORY':isFarm?'OWNERSHIP DIRECTORY':'STABLE DIRECTORY'} ↗</button>${sourceEditButton}</div>
  </div>`;
  let left='',right='',footer='';

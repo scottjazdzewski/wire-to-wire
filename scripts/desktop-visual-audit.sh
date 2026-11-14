@@ -35,6 +35,10 @@ capture horse-profile '?page=horse&name=The+Last+Match' 'ng-horse-dossier'
 capture people-profile '?ui=WorldRecord%3Aperson%3AP-000018' 'ng-person-horse-dossier'
 capture founder-owner '?ui=FoundingProfile%3Aownership%3AO-000014' 'ng-track-workspace'
 capture founder-facility '?ui=FoundingProfile%3Afacility%3AO-000068' 'ng-track-workspace'
+capture aqueduct-track '?ui=WorldRecord%3Atrack%3AT-0001' 'ng-profile-track'
+capture gulfstream-track '?ui=WorldRecord%3Atrack%3AT-0017' 'ng-profile-track'
+capture kingsmere-farm '?ui=FoundingProfile%3Afacility%3AO-000061' 'ng-profile-farm'
+capture northbank-stable '?ui=FoundingProfile%3Aownership%3AO-000045' 'ng-profile-farm'
 capture personnel '?ui=Personnel' 'ng-manager-screen|ng-dept-roster'
 capture facilities '?ui=Facilities' 'ng-manager-screen|ng-dept-roster'
 capture finances '?ui=Finances' 'ng-manager-screen|ng-dept-roster'
@@ -59,6 +63,8 @@ frame.onload=()=>setTimeout(()=>{
    const b=element.getBoundingClientRect();
    return {width:Math.round(b.width),height:Math.round(b.height),
     left:Math.round(b.left),top:Math.round(b.top),
+    right:Math.round(b.right),bottom:Math.round(b.bottom),
+    clientWidth:element.clientWidth,scrollWidth:element.scrollWidth,
     display:win.getComputedStyle(element).display};
   };
   const result={
@@ -70,7 +76,19 @@ frame.onload=()=>setTimeout(()=>{
    page:rect('.ng-board')||rect('.ng-routegrid'),
    horse:rect('.ng-horse-dossier'),
    search:rect('.ng-search-roster-page'),
-   people:rect('.ng-person-horse-dossier')
+   people:rect('.ng-person-horse-dossier'),
+   profile:rect('.ng-route-profile .ng-profile-view'),
+   intro:rect('.ng-route-profile .ng-profile-intro'),
+   identity:rect('.ng-route-profile .ng-profile-identity'),
+   heroMark:rect('.ng-route-profile .ng-profile-source-photo'),
+   localNavigation:rect('.ng-route-profile .ng-profiletabs')||rect('.ng-route-profile .ng-person-dossierbar'),
+   profileName:d.querySelector('.ng-route-profile .ng-profile-identity h2')?.textContent?.trim()||'',
+   sourceBridgeVisible:win.getComputedStyle(d.querySelector('.app')).display!=='none',
+   duplicateGlobalMenuVisible:[...d.querySelectorAll('#wtwNextgen > .ng-subbar')]
+    .some(n=>win.getComputedStyle(n).display!=='none'),
+   metadataClipped:[...d.querySelectorAll('.ng-route-profile .ng-tier1-biography strong')]
+    .filter(n=>n.clientWidth>0&&n.scrollWidth>n.clientWidth+4)
+    .map(n=>n.textContent.trim().slice(0,60))
   };
   const node=document.getElementById('measure');
   node.dataset.check='ready';
@@ -81,9 +99,9 @@ frame.src='/next/'+route;
 </script></body></html>
 HTML
 probe(){
-  local key="$1" route="$2"
+  local key="$1" route="$2" viewport="${3:-1536,864}"
   "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
-    --force-device-scale-factor=1 --window-size=1536,864 --virtual-time-budget=5000 \
+    --force-device-scale-factor=1 --window-size="$viewport" --virtual-time-budget=5000 \
     --dump-dom "http://127.0.0.1:8765/__wtw_visual_probe.html?route=$route" \
     >"visual-audit/dom/probe-$key.html" 2>"/tmp/wtw-probe-$key.log"
 }
@@ -91,6 +109,16 @@ probe office ''
 probe search '%3Fui%3DSearch'
 probe horse '%3Fpage%3Dhorse%26name%3DThe%2BLast%2BMatch'
 probe person '%3Fui%3DWorldRecord%253Aperson%253AP-000018'
+probe aqueduct '%3Fui%3DWorldRecord%253Atrack%253AT-0001'
+probe gulfstream '%3Fui%3DWorldRecord%253Atrack%253AT-0017'
+probe farm '%3Fui%3DFoundingProfile%253Afacility%253AO-000061'
+probe stable '%3Fui%3DFoundingProfile%253Aownership%253AO-000045'
+probe owner '%3Fui%3DFoundingProfile%253Aownership%253AO-000014'
+probe laptop-horse '%3Fpage%3Dhorse%26name%3DThe%2BLast%2BMatch' '1280,800'
+probe laptop-person '%3Fui%3DWorldRecord%253Aperson%253AP-000018' '1280,800'
+probe laptop-aqueduct '%3Fui%3DWorldRecord%253Atrack%253AT-0001' '1280,800'
+probe laptop-farm '%3Fui%3DFoundingProfile%253Afacility%253AO-000061' '1280,800'
+probe laptop-owner '%3Fui%3DFoundingProfile%253Aownership%253AO-000014' '1280,800'
 python3 - <<'PY'
 import json,html,re
 from pathlib import Path
@@ -109,6 +137,39 @@ for name in ('office','search','horse','person'):
  if name=='search':assert data['search'] and data['search']['width']>=990,(name,'Search roster not visible')
  if name=='person':assert data['people'] and data['people']['width']>=990,(name,'People Horse-dossier not visible')
  print('VISUAL GEOMETRY',name,'rail',rail['width'],'stage',stage['width'],'crest',brand['width'])
+# Same core chrome, record controls and protected identity space across profiles.
+profiles=('horse','person','aqueduct','gulfstream','farm','stable','owner',
+          'laptop-horse','laptop-person','laptop-aqueduct','laptop-farm','laptop-owner')
+rows=[]
+for name in profiles:
+ source=Path(f'visual-audit/dom/probe-{name}.html').read_text()
+ assert 'data-check="ready"' in source,(name,'Profile geometry inspection failed')
+ match=re.search(r'<pre id="measure"[^>]*>(.*?)</pre>',source,re.S)
+ assert match,(name,'Missing profile geometry')
+ d=json.loads(html.unescape(match.group(1)))
+ assert d['rail'] and d['header'] and d['stage'],(name,'Shared management shell missing')
+ assert d['profile'] and d['intro'],(name,'Profile does not use the shared identity shell')
+ assert d['profileName'] and not any(x in d['profileName'] for x in ('WorldRecord:','FoundingProfile:')),(name,'Raw route shown as profile identity')
+ assert d['localNavigation'],(name,'Profile local navigation absent')
+ assert not d['sourceBridgeVisible'],(name,'Obsolete Office screen returned')
+ assert not d['duplicateGlobalMenuVisible'],(name,'Redundant top menu returned')
+ assert not d['metadataClipped'],(name,'Track/farm metadata clipped',d['metadataClipped'])
+ assert d['intro']['width']>=min(850,d['stage']['width']*.7),(name,'Identity band too narrow')
+ if name in ('aqueduct','gulfstream','farm','stable','owner','laptop-aqueduct','laptop-farm','laptop-owner'):
+  if d['heroMark'] and d['identity']:
+   assert d['identity']['right']<=d['heroMark']['left']+6,(name,'Logo occupies metadata space')
+ rows.append({'name':name,**d})
+for family in ('desktop','laptop'):
+ sample=[r for r in rows if r['name'].startswith('laptop-')==(family=='laptop')]
+ widths=[r['rail']['width'] for r in sample]
+ assert max(widths)-min(widths)<=5,(family,'Department rail changes across profiles',widths)
+ starts=[r['rail']['left'] for r in sample]
+ assert max(starts)-min(starts)<=5,(family,'Department rail position changes across profiles')
+print('UNIFIED PROFILE GEOMETRY VERIFIED:',len(rows),'rendered views')
+for d in rows:
+ print('PROFILE',d['name'],d['profileName'][:35], 'stage',d['stage']['width'],
+       'identity',d['intro']['width'],'local nav',d['localNavigation']['width'])
+Path('visual-audit/dom/profile-uniformity-metrics.json').write_text(json.dumps(rows,indent=2))
 PY
 rm -f public/__wtw_visual_probe.html
 

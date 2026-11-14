@@ -36,7 +36,12 @@ test('retired page styles are gone while approved FM attributes and rosters rema
   '.ng-person-workspace','.ng-dept-roster','.ng-profile-view','.ng-racing-day-summary']){
   assert.ok(css.includes(essential),'Live screen styling must remain: '+essential);
  }
- assert.ok(Buffer.byteLength(css,'utf8')<275000,'Unrendered styles must not re-bloat the single live stylesheet');
+ // The former career, entity-theme, and hero CSS are now physically folded
+ // into this one file. Compare against the complete former FOUR-file budget,
+ // not the old next.css-only byte limit.
+ assert.ok(Buffer.byteLength(css,'utf8')<315000,'Consolidated design CSS unexpectedly exceeds the former combined budget');
+ for(const source of ['1999-commercial-career.css','identity-themes.css','profile-hero-v2.css'])
+  assert.ok(css.includes('BEGIN folded source: public/next/'+source),'Approved UI declarations must stay in the one live stylesheet');
 });
 
 test('one detailed attribute dossier remains reachable from Stable, Personnel and the World directory',()=>{

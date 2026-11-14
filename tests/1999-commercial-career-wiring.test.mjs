@@ -10,6 +10,7 @@ const config=read('public/next/1999-commercial-config.js');
 const source=read('public/next/1999-ui-source.mjs');
 const api=read('public/1999/engine/local-api.mjs');
 const manager=read('public/next/1999-commercial-career-manager.mjs');
+const css=read('public/next/next.css');
 
 test('approved UI loads small 1999 commercial config before bootstrap and career manager after UI',()=>{
  const a=html.indexOf('/next/1999-commercial-config.js');
@@ -17,7 +18,8 @@ test('approved UI loads small 1999 commercial config before bootstrap and career
  const c=html.indexOf('/next/next.js?rev=');
  const d=html.indexOf('/next/1999-commercial-career-manager.mjs');
  assert.ok(a>=0&&b>a&&c>b&&d>c);
- assert.match(html,/1999-commercial-career\.css/);
+ assert.match(html,/href="\/next\/next\.css\?rev=/);
+ assert.match(css,/\.wtw-cc-backdrop\[hidden\]\{display:none!important\}/);
  assert.match(ui,/if\(key==='save-open'\)/);
  assert.match(ui,/window\.WTWCompactCareerManager\?\.open/);
 });
