@@ -11,10 +11,13 @@ import {applyVerifiedStakeDay1999} from '../../next/1999-verified-stakes-dates.m
 import {validateCareerGameDate} from './age-ability.mjs';
 const location=o=>({city:o?.locality||o?.city||'',state:o?.region||o?.state||'',
  country:o?.country||'USA'});
-const tracks=canon.tracks.filter(t=>trackProgram1999(t.id)?.trackOperating==='OPEN_1999');
+// The source directory retains all 118 established track identities.
+// A track's OPEN_1999 status governs racing eligibility separately.
+const tracks=canon.tracks;
 if(tracks.length!==118||new Set(tracks.map(t=>t.id)).size!==118)
  throw Error('Approved 1999 track directory unexpectedly changed');
-const stakes=canon.stakes1999.filter(r=>tracks.some(t=>t.id===r.trackId))
+const stakes=canon.stakes1999.filter(r=>tracks.some(t=>t.id===r.trackId)&&
+ trackProgram1999(r.trackId)?.trackOperating==='OPEN_1999')
  .map(applyVerifiedStakeDay1999);
 const trainers=canon.people.filter(p=>String(p.role||'').toLowerCase().includes('trainer'));
 export function createFoundingSourceBase1999({seed=19990101}={}){
@@ -22,11 +25,15 @@ export function createFoundingSourceBase1999({seed=19990101}={}){
   throw Error('Invalid founding source seed');
  const trackAt=i=>{
   if(!Number.isInteger(i)||i<0||i>=tracks.length)throw Error('Track index');
-  const t=tracks[i],program=trackProgram1999(t.id),profile=trackConditionProfile1999(t.id,seed);
+  const t=tracks[i],program=trackProgram1999(t.id),
+   active=program?.trackOperating==='OPEN_1999',
+   profile=active?trackConditionProfile1999(t.id,seed):null;
   return {id:t.id,sourceTrackId:t.id,name:t.name,location:location(t),
    surface:trackCardSurface1999(t.id,1)||'HISTORICAL',
    surfaces:program?.surfaces||'Not recorded',
-   racing:{racesPerCard:profile?.typicalRaces??0,programTier:profile?.tier||'',
+   operating:active?'OPEN_1999':'HISTORICAL_ONLY',playableIn1999:active,
+   racing:{racesPerCard:active?(profile?.typicalRaces??0):0,
+    programTier:active?(profile?.tier||''):'',
     firstPostHour:null},authority:'APPROVED_TRACK_ID__1999_MODELED_MEET_PROGRAM'};
  };
  const ownerAt=i=>{
