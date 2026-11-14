@@ -1826,42 +1826,186 @@ body{margin:0;background:var(--cream);color:var(--ink);font-size:12px;line-heigh
 .history-no-rows{text-align:center!important;padding:22px!important}
 .history-ledger-pagination{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#25352f;padding:6px 10px;border:1px solid #526a59;color:#c9d7c9;font-size:10px}
 .history-ledger-pagination>div{display:flex;align-items:center;gap:9px}
-.history-ledger-pagination button,.history-review-navigation button{background:#3c513f;color:#f0daab;border:1px solid #8e7a56;padding:5px 10px;border-radius:3px;font-size:10px;font-weight:800;cursor:pointer}
+.history-ledger-pagination button{background:#3c513f;color:#f0daab;border:1px solid #8e7a56;padding:5px 10px;border-radius:3px;font-size:10px;font-weight:800;cursor:pointer}
 .history-ledger-pagination button:disabled{opacity:.4;cursor:default}
-.history-review-navigation{display:flex;align-items:center;gap:12px}
-.history-review-navigation label{min-width:120px}
-.history-review-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
-.history-review-metrics>div{display:grid;gap:3px;background:linear-gradient(140deg,#344d3b,#26352d);padding:10px 12px;border:1px solid #6e805f}
-.history-review-metrics strong{font:700 25px Georgia,serif;color:#f0d396}
-.history-review-metrics span{font-size:9px;letter-spacing:.04em;text-transform:uppercase;color:#d0dfd0}
-.history-review-section{min-width:0;background:#202d2c;border:1px solid #5b6c5a}
-.history-review-section>header{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:9px 11px;border-bottom:1px solid #667760;background:#334739}
-.history-review-section>header h3{font:700 16px Georgia,serif;color:#eed8a0;margin:0}
-.history-review-section>header small{font-size:9px;color:#cedacb}
-.history-classics-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:9px}
-.history-classic{display:grid;align-content:start;gap:6px;padding:11px;min-width:0;background:linear-gradient(135deg,#3b503d,#25332d);border-left:3px solid #d5ae62}
-.history-classic>span{font-size:8px;color:#d9c691;letter-spacing:.08em}
-.history-classic h3{font:700 16px Georgia,serif;color:#f4e8ca;margin:0}
-.history-classic .name-cell{border:0;background:none;color:#f0d48b;font-weight:850;text-align:left;padding:0}
-.history-classic p,.history-classic small{font-size:10px;color:#cbd6c9;margin:0}
-.history-no-awards{font-size:11px;color:#ccd9ca;margin:0;padding:13px}
-.history-awards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:8px}
-.history-awards>div{display:grid;gap:4px;border-left:3px solid #c6a365;background:#2b3b31;padding:8px;font-size:10px}
-.history-season-leaders{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:8px}
-.history-season-leaders>div{display:flex;align-items:center;gap:6px;min-width:0;background:#304136;padding:7px}
-.history-season-leaders>div>span{color:#dfc07d;font-weight:850}
-.history-season-leaders .name-edit-pair{flex:1;min-width:0}
-.history-season-leaders strong{font-size:9px;white-space:nowrap;color:#d4e1d1}
-.history-review-table{min-height:140px;max-height:400px;border:0}
+
+/* THE RACING ANNUAL — Year in Review editorial identity.
+ * Existing source/read model and History table stay unchanged.  One definitive
+ * component layer; no legacy olive annual-card styles or parallel UI layouts. */
+.history-year-review{
+ --annual-ink:#111a29;--annual-wine:#67263f;--annual-red:#c84b5d;
+ --annual-gold:#e4bc74;--annual-cream:#f5e8ce;--annual-muted:#b5c2d3;
+ --annual-blue:#2d5387;--annual-line:#657083;
+ color:var(--annual-cream);gap:10px
+}
+.history-review-hero{
+ position:relative;isolation:isolate;overflow:hidden;display:grid;
+ grid-template-columns:minmax(0,1fr) 280px;align-items:stretch;min-height:168px;
+ border:1px solid #c09a60;border-top:3px solid #e0b36a;
+ background:radial-gradient(ellipse at 78% 18%,rgba(182,66,83,.30),transparent 44%),
+  radial-gradient(ellipse at 20% 80%,rgba(47,90,156,.24),transparent 45%),
+  linear-gradient(117deg,#111b2a 3%,#231d31 43%,#52223b 76%,#181f30 100%);
+ box-shadow:0 9px 24px rgba(0,0,0,.28),inset 0 1px rgba(255,238,201,.13)
+}
+.history-review-hero::before{
+ content:attr(data-season);position:absolute;right:280px;top:-68px;z-index:-1;
+ color:rgba(255,232,193,.075);font:900 clamp(130px,18vw,242px)/1 Georgia,serif;
+ letter-spacing:-.09em;white-space:nowrap;pointer-events:none;transform:skew(-10deg)
+}
+.history-review-hero::after{
+ content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:.28;
+ background:repeating-linear-gradient(122deg,transparent 0,transparent 43px,
+  rgba(249,210,147,.12) 44px,transparent 45px)
+}
+.history-review-masthead{min-width:0;display:flex;flex-direction:column;justify-content:center;padding:18px 24px 19px}
+.history-review-edition{display:block;max-width:max-content;margin-bottom:12px;
+ padding:4px 8px;border:1px solid rgba(224,187,120,.65);background:rgba(13,22,33,.62);
+ color:var(--annual-gold);font:850 10px/1.2 system-ui,sans-serif;letter-spacing:.16em}
+.history-review-edition b{color:#f5ded1;padding:0 5px}
+.history-review-overline{color:#f4abb1;font:850 10px/1.1 system-ui,sans-serif;letter-spacing:.17em}
+.history-review-hero h2{display:flex;align-items:baseline;flex-wrap:wrap;gap:9px 14px;
+ margin:5px 0 7px;line-height:.98;letter-spacing:-.025em}
+.history-review-hero h2 span{font:800 clamp(42px,4.2vw,65px)/.93 Georgia,serif;color:#fff0cf;
+ text-shadow:0 3px 14px rgba(0,0,0,.28)}
+.history-review-hero h2 strong{font:italic 700 clamp(22px,2.4vw,35px)/1.05 Georgia,serif;
+ color:#e6bc75}
+.history-review-masthead p{color:#cdd5e3;max-width:630px;font-size:11px;line-height:1.45;margin:0}
+.history-review-side{position:relative;display:flex;flex-direction:column;align-items:stretch;
+ justify-content:space-around;gap:10px;padding:9px 13px 11px;
+ background:linear-gradient(155deg,rgba(15,24,39,.82),rgba(24,23,43,.52));
+ border-left:1px solid rgba(234,192,125,.38)}
+.history-review-seal{
+ width:100px;height:100px;flex:0 0 auto;align-self:center;border-radius:50%;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ background:radial-gradient(circle,#30314a 0,#171d30 64%,#151a29 65%);
+ border:3px double #d8ae6b;outline:1px solid rgba(245,211,159,.35);outline-offset:3px;
+ box-shadow:0 5px 14px rgba(0,0,0,.3),inset 0 0 0 6px rgba(214,165,99,.12)}
+.history-review-seal span{font:850 9px system-ui,sans-serif;letter-spacing:.26em;color:#d6b984}
+.history-review-seal strong{font:800 26px Georgia,serif;color:#fff0c8;line-height:1.05}
+.history-review-seal small{font:800 6px system-ui,sans-serif;letter-spacing:.12em;color:#d9c6a5}
+.history-review-navigation{display:grid;grid-template-columns:minmax(0,1fr) 108px;align-items:end;gap:6px}
+.history-review-navigation button{
+ display:block;min-height:33px;width:100%;padding:6px 8px;
+ color:#f4e0b6;background:linear-gradient(180deg,#56334a,#322c43);
+ border:1px solid #b49a73;border-radius:3px;font:850 9px system-ui,sans-serif;
+ letter-spacing:.015em;text-align:center;cursor:pointer}
+.history-review-navigation button:hover,.history-review-navigation button:focus-visible{
+ background:#794158;outline:2px solid #e9c47c;outline-offset:1px}
+.history-review-navigation label{display:grid;gap:3px;min-width:0;
+ font:850 8px system-ui,sans-serif;color:#dbcda9;letter-spacing:.08em}
+.history-review-navigation select{
+ width:100%;min-width:0;height:33px;padding:4px 7px;
+ background:#121e30;color:#f6e6bf;border:1px solid #c1a06c;border-radius:3px;font:750 11px system-ui,sans-serif}
+.history-review-navigation select:focus-visible{outline:2px solid #ebc98b;outline-offset:2px}
+.history-review-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.history-review-stat{position:relative;overflow:hidden;display:flex;flex-direction:column;
+ min-height:92px;justify-content:center;padding:9px 13px 10px;
+ background:linear-gradient(125deg,#232e45,#111e32);border:1px solid #536682;
+ border-top:3px solid #689ed3;box-shadow:inset 0 1px rgba(255,255,255,.07)}
+.history-review-stat::after{content:"";position:absolute;right:-28px;bottom:-43px;width:116px;height:116px;
+ border-radius:50%;border:16px solid rgba(255,255,255,.035);pointer-events:none}
+.history-review-stat-2{background:linear-gradient(120deg,#5d283a,#2b1d30);border-color:#8f5865;border-top-color:#df6c7b}
+.history-review-stat-3{background:linear-gradient(122deg,#3b3d54,#1d233b);border-color:#6c728f;border-top-color:#b7a6d9}
+.history-review-stat-4{background:linear-gradient(120deg,#65432d,#352b2c);border-color:#947254;border-top-color:#e3b472}
+.history-review-stat small{color:#bdcbdc;font:850 8px system-ui,sans-serif;letter-spacing:.14em}
+.history-review-stat strong{color:#fcebd2;font:800 30px/.99 Georgia,serif;margin:3px 0}
+.history-review-stat span{color:#f5d9a0;font:850 9px system-ui,sans-serif;letter-spacing:.075em}
+.history-review-stat em{color:#b9c6d6;font:400 9px/1.2 system-ui,sans-serif;margin-top:3px}
+.history-review-section{min-width:0;background:#172231;border:1px solid #455b74;
+ box-shadow:0 3px 12px rgba(0,0,0,.13)}
+.history-review-section>header{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 13px;
+ background:linear-gradient(95deg,#2b374f,#1c2c40);
+ border-bottom:1px solid #647c9a}
+.history-review-section>header>div{display:grid;gap:2px}
+.history-review-section-kicker{color:#e4b971;font:850 8px system-ui,sans-serif;letter-spacing:.14em}
+.history-review-section>header h3{font:700 18px/1.1 Georgia,serif;color:#fff0d0;margin:0}
+.history-review-section>header small{font:650 9px/1.35 system-ui,sans-serif;color:#bbcbde;text-align:right}
+.history-classics-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;padding:10px}
+.history-classic{--classic-accent:#7aacf0;position:relative;overflow:hidden;
+ display:flex;flex-direction:column;gap:7px;min-height:142px;min-width:0;padding:11px 13px;
+ background:radial-gradient(circle at 92% 8%,rgba(99,143,223,.20),transparent 49%),
+ linear-gradient(135deg,#1c2c4a,#131e32);border:1px solid #54719f;border-top:3px solid var(--classic-accent)}
+.history-classic::after{content:"";position:absolute;right:-22px;bottom:-38px;pointer-events:none;
+ width:125px;height:125px;border:2px solid rgba(240,220,173,.11);transform:rotate(35deg)}
+.history-classic-2{--classic-accent:#ed8b9a;
+ background:radial-gradient(circle at 92% 8%,rgba(210,74,105,.23),transparent 51%),
+ linear-gradient(130deg,#51243b,#261c32);border-color:#9e6278}
+.history-classic-3{--classic-accent:#e6c37e;
+ background:radial-gradient(circle at 92% 8%,rgba(214,151,77,.24),transparent 52%),
+ linear-gradient(130deg,#5b4236,#272633);border-color:#9e795a}
+.history-classic-strap{display:flex;align-items:center;gap:8px;color:var(--classic-accent);
+ font:850 9px system-ui,sans-serif;letter-spacing:.13em}
+.history-classic-number{width:25px;height:25px;border:1px solid currentColor;border-radius:50%;
+ display:grid;place-items:center;font:850 10px Georgia,serif}
+.history-classic h3{margin:0;color:#fff0d4;font:700 20px/1.08 Georgia,serif}
+.history-classic-winner{display:grid;gap:4px;min-width:0}
+.history-classic-winner>small{font:850 8px system-ui,sans-serif;letter-spacing:.09em;color:#d6bb96}
+.history-classic .name-edit-pair{min-width:0}
+.history-classic .name-cell{border:0;background:none;color:#fff8e8;font:800 15px/1.15 Georgia,serif;text-align:left;padding:0}
+.history-classic .name-cell:hover,.history-classic .name-cell:focus-visible{color:#ffd38b;text-decoration:underline}
+.history-classic-unrecorded{color:#c2c9d5;font-size:10px}
+.history-classic-footer{margin-top:auto;border-top:1px solid rgba(236,216,190,.22);padding-top:6px;
+ font:650 9px/1.35 system-ui,sans-serif;color:#c4cad7}
+.history-review-awards-section{background:linear-gradient(110deg,#1f2539,#281c35);border-color:#805c82}
+.history-review-awards-section>header{background:linear-gradient(90deg,#4b2d4f,#25273b);border-color:#93698f}
+.history-review-awards-section .history-review-section-kicker{color:#f3b1d4}
+.history-no-awards{display:flex;align-items:center;gap:12px;padding:12px 14px;color:#d2d3df}
+.history-awards-emblem{display:grid;place-items:center;flex:0 0 44px;height:44px;width:44px;
+ border:1px solid #a57f9e;border-radius:50%;background:rgba(133,79,124,.25);
+ color:#eec4dc;font-size:23px}
+.history-no-awards strong{display:block;color:#f4e1ed;font:750 13px Georgia,serif}
+.history-no-awards p{margin:3px 0 0;font:400 10px/1.4 system-ui,sans-serif;color:#c1bfce}
+.history-awards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:9px}
+.history-award-record{display:grid;gap:3px;padding:10px 12px;border:1px solid #a67b96;
+ border-left:3px solid #f0c2df;background:linear-gradient(125deg,#48304b,#28283a)}
+.history-award-star{color:#f4c4de;font-size:19px}
+.history-award-record strong{color:#f6e5ed;font:750 12px Georgia,serif}
+.history-award-record span:not(.history-award-star){color:#f8ebd1;font-size:11px;font-weight:800}
+.history-award-record small{color:#b8a6c4;font-size:9px}
+.history-review-leaders-section{border-color:#625e80}
+.history-review-leaders-section>header{background:linear-gradient(90deg,#2e3b59,#282640)}
+.history-season-leaders{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;padding:9px}
+.history-season-leaders>div{display:flex;align-items:center;gap:7px;min-width:0;
+ padding:8px 9px;background:linear-gradient(130deg,#263752,#192338);border-left:2px solid #ceaa79}
+.history-leader-rank{flex:0 0 auto;color:#f5cf91;font:800 14px Georgia,serif}
+.history-season-leaders .name-edit-pair{min-width:0;flex:1}
+.history-season-leaders .name-cell{color:#f2e6cb;font:750 11px/1.2 Georgia,serif}
+.history-season-leaders strong{display:grid;justify-items:end;white-space:nowrap;
+ color:#f8d9a1;font:800 12px Georgia,serif}
+.history-season-leaders strong small{color:#b8c5d5;font:600 8px system-ui,sans-serif}
+.history-review-results-section>header{background:linear-gradient(90deg,#2b3d53,#192a40)}
+.history-year-review .history-review-table{min-height:140px;max-height:390px;border:0;background:#141f30}
+.history-year-review .history-ledger-table th{background:#283c55;border-bottom-color:#be9563;color:#e9d8b6}
+.history-year-review .history-ledger-table tbody tr{border-bottom-color:#35475f}
+.history-year-review .history-ledger-table tbody tr:nth-child(even){background:#1d2b40}
+.history-year-review .history-ledger-table tbody tr:hover{background:#334664}
+.history-year-review .history-ledger-table td{color:#dfebf4}
+.history-year-review .history-ledger-table .name-cell{color:#f5d49a}
+.history-year-review .history-ledger-table .history-date-cell{color:#b7cadd!important}
 @media(max-width:1150px){
-.history-ledger-tools{grid-template-columns:130px minmax(130px,1fr) minmax(180px,1.2fr)}
-.history-ledger-tools>.button{grid-column:1/-1;justify-self:start}
-.history-season-leaders{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .history-ledger-tools{grid-template-columns:130px minmax(130px,1fr) minmax(180px,1.2fr)}
+ .history-ledger-tools>.button{grid-column:1/-1;justify-self:start}
+ .history-review-hero{grid-template-columns:minmax(0,1fr) 240px}
+ .history-review-hero::before{right:240px}
+ .history-review-side{padding:9px}
+ .history-classic h3{font-size:18px}
+ .history-season-leaders{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:720px){
-.history-ledger-title{display:grid}.history-ledger-title h2{font-size:20px}.history-ledger-count{justify-items:start}
-.history-ledger-tools{grid-template-columns:repeat(2,minmax(0,1fr))}.history-ledger-search{grid-column:1/-1}
-.history-classics-grid,.history-awards{grid-template-columns:1fr}
-.history-review-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.history-review-navigation{flex-wrap:wrap}
-.history-ledger-table-region{max-height:calc(100dvh - 350px)}
+ .history-ledger-title{display:grid}.history-ledger-title h2{font-size:20px}.history-ledger-count{justify-items:start}
+ .history-ledger-tools{grid-template-columns:repeat(2,minmax(0,1fr))}.history-ledger-search{grid-column:1/-1}
+ .history-ledger-table-region{max-height:calc(100dvh - 350px)}
+ .history-review-hero{grid-template-columns:1fr}
+ .history-review-hero::before{right:10px;top:-20px;font-size:145px}
+ .history-review-side{flex-direction:row;align-items:center;border-left:0;
+  border-top:1px solid rgba(234,192,125,.36)}
+ .history-review-seal{width:74px;height:74px}
+ .history-review-seal strong{font-size:20px}
+ .history-review-navigation{flex:1;grid-template-columns:minmax(0,1fr) 112px}
+ .history-review-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .history-classics-grid,.history-awards{grid-template-columns:1fr}
+ .history-review-section>header{align-items:start}
+ .history-review-section>header small{max-width:45%}
+ .history-season-leaders{grid-template-columns:1fr}
 }
