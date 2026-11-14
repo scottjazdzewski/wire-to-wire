@@ -78,3 +78,27 @@ test('15-day browser playtest reproduces actual race results, condition, finance
  assert.deepEqual(e2.getSave(),e.getSave());
  assert.equal(JSON.stringify(directory),JSON.stringify(source('../public/data/wtw-1999-founding-directory-v1.json')));
 });
+
+test('browser directory physical location follows a funded shipment, not the permanent racing home',async()=>{
+ const e=await createPlaytestCareer(context),before=e.view();
+ const h=before.stable.find(x=>x.home_track_id==='T-0017');
+ assert.ok(h,'Selected player owner should hold a Gulfstream test runner');
+ const home=h.home_site_id;
+ e.command('SHIP_1999_HORSE',{horse_id:h.horse_id,
+  destination_site_id:'F-1999-AQ-VENN'},{actor:'player'});
+ const departing=e.view().all_horses.find(x=>x.horse_id===h.horse_id);
+ assert.equal(departing.track_name,'IN TRANSIT');
+ assert.equal(departing.host_track_id,null);
+ assert.equal(departing.home_site_id,home);
+ assert.equal(departing.shipping_status,'OUTBOUND');
+ assert.ok(departing.shipping_arrival_date);
+ e.advanceTo('1999-01-04');
+ const arrived=e.view().all_horses.find(x=>x.horse_id===h.horse_id);
+ assert.equal(arrived.track_name,'Aqueduct');
+ assert.equal(arrived.host_track_id,'T-0001');
+ assert.equal(arrived.shipping_status,'AT_DESTINATION');
+ assert.equal(arrived.home_site_id,home);
+ assert.equal(arrived.site_id,'F-1999-AQ-VENN');
+ const restored=await createPlaytestCareer({...context,save:e.getSave()});
+ assert.deepEqual(restored.view(),e.view());
+});
