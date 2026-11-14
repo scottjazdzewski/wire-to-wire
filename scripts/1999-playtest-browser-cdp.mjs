@@ -118,5 +118,5 @@ try{
 }finally{
  try{ws?.close()}catch{}
  try{proc.kill('SIGTERM')}catch{}
- rmSync(folder,{recursive:true,force:true});
+ try{rmSync(folder,{recursive:true,force:true,maxRetries:10,retryDelay:150})}catch{}
 }
