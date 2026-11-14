@@ -44,3 +44,26 @@ test('theme styling stays under the identified UI and does not recolor warnings'
   assert.doesNotMatch(styles,/\.ng-global-continue\s*\{/);
   assert.doesNotMatch(styles,/\.ng-msgtag\.urgent\s*\{/);
 });
+
+test('Aqueduct, Keeneland, Santa Anita and Del Mar have distinct approved-for-UI art-direction palettes',()=>{
+ const ids=['T-0001','T-0014','T-0028','T-0030'];
+ const choices=ids.map(id=>paletteFor({kind:'track',id},registry));
+ assert.ok(choices.every(p=>p?.source==='curated'));
+ assert.equal(new Set(choices.map(p=>p.base)).size,ids.length);
+ assert.equal(registry.tracks['T-0001'].name,'Aqueduct');
+ // These are UI color directions, not a representation of official brand guides.
+ assert.match(registry.palette_status,/not verified official/);
+});
+test('entity visual-depth v2 remains strictly scoped to the current shared profile',()=>{
+ const css=readFileSync(new URL('../public/next/next.css',import.meta.url),'utf8');
+ const start=css.indexOf('/* WTW ENTITY ATMOSPHERE v2');
+ const end=css.indexOf('/* ===== END folded source: public/next/identity-themes.css ===== */',start);
+ assert.ok(start>0&&end>start);
+ const own=css.slice(start,end);
+ assert.match(own,/#wtwNextgen\[data-wtw-identity\] \.ng-route-profile \.ng-profile-intro/);
+ assert.match(own,/#wtwNextgen\[data-wtw-identity\] \.ng-route-profile \.ng-profile-tools button/);
+ assert.match(own,/#wtwNextgen\[data-wtw-identity\] \.ng-route-profile \.ng-detailcard/);
+ assert.match(own,/#wtwNextgen\[data-wtw-identity\] \.ng-route-profile \.ng-person-dossierbar/);
+ assert.doesNotMatch(own,/\.ng-global-continue|\.ng-msgtag\.urgent|\.ng-status-pills|\.ng-injury|\.ng-eligibility/);
+ assert.doesNotMatch(own,/grid-template|position\s*:|width\s*:|height\s*:|display\s*:none/);
+});
