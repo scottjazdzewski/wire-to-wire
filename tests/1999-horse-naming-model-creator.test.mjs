@@ -73,7 +73,7 @@ test('all 520 previously owner-rated names are reserved from new rounds',()=>{
  for(const name of ['midnightrambler','wildgeese','mulligan','chapelroad'])assert.ok(OWNER_REVIEWED_NAME_KEYS_V478.includes(name));
 });
 test('AI preview requires explicit authorization and bound model',async()=>{
- let calls=0;const env={AI:{run:async()=>{calls++;return call([good])}}};
+ let calls=0;const env={NAMING_AI_PREVIEW_ENABLED:'false',AI:{run:async()=>{calls++;return call([good])}}};
  const body={brief,writtenSpec:HORSE_NAME_CREATOR_SCHEMA,recentNames:[]};
  const disabled=await makePrivateHorseNamePreview({env,body});
  assert.equal(disabled.status,503);assert.equal(calls,0);
