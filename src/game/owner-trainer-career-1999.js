@@ -360,8 +360,23 @@ export function updateOwnerTrainerLiveReviews({state,world,emit,events=[],
     prior.trainer_position)&&
    ['PRESSING_FOR_CHANGE','CONSIDERING_DEPARTURE'].includes(
     live.trainer_position);
-  if(newlyEscalated)openDynamicConcern({
-   state,world,item,owner,trainer,live,emit});
+  if(newlyEscalated){
+   openDynamicConcern({state,world,item,owner,trainer,live,emit});
+   // An AI response may change real trainer support immediately; do not
+   // leave the same-date saved pulse stale until the following morning.
+   const finalLive=ownerTrainerLiveAssessment(state,world,owner,trainer);
+   if(finalLive.trainer_support!==live.trainer_support||
+    finalLive.owner_confidence!==live.owner_confidence){
+    item.live_assessment={...finalLive,trigger:'AFTER_AI_CONVERSATION'};
+    item.live_history[item.live_history.length-1]={
+     ...trend,trigger:'AFTER_AI_CONVERSATION',
+     owner_confidence:finalLive.owner_confidence,
+     owner_outlook:finalLive.owner_outlook,
+     trainer_position:finalLive.trainer_position,
+     trainer_support:finalLive.trainer_support,
+     owner_trust:finalLive.owner_trust};
+   }
+  }
  }
 }
 
