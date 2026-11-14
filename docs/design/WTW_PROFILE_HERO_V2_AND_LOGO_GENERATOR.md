@@ -1,6 +1,6 @@
 # WIRE TO WIRE — PROFILE HERO V2 / IMAGE PRODUCTION HANDOFF
 Date: 2026-11-13
-Status: UI implementation on `feature/profile-hero-revamp-20261113`; media follow-up in separate logo window.
+Status: Production UI; new transparent hero marks auto-discover from their exact-ID paths on page refresh. Media generation is handled in a separate window.
 
 ## Scope
 - Profile heroes for tracks, owners, racing stables, farms and stud farms share one layout.
@@ -23,7 +23,7 @@ Create ONE high-quality hero mark for each track/organization. Real racecourses 
 - **Color:** preserve each existing real mark's authentic colors; don't recolor every track green/gold. For fictional venues use a distinct credible 2–4-color racing identity.
 - **File name:** canonical Track_ID, e.g. `T-0001.webp`, `T-0017.webp`. For organizations, exact `O-000061.webp`.
 - **Upload folder:** `public/assets/places/track-hero/` for track logos or `public/assets/places/organization-hero/` for organizations.
-- **Activation:** after uploading the exact file, add `"T-0001":"/assets/places/track-hero/T-0001.webp"` under `tracks` in `public/assets/identity/hero-art-index-v1.json`. For organizations use `organizations`. Do not put a path in the manifest before the asset exists.
+- **Activation:** upload a real **transparent lossless WebP** to the exact-ID path above, then refresh the site. The UI automatically detects and uses it; **no manifest edit is required**. The optional `public/assets/identity/hero-art-index-v1.json` is maintained for asset inventory only and must never connect the wrong ID to a logo.
 - **Do not overwrite** `public/assets/places/track-logos/` originals, the Track Profile badge, frozen racing/source IDs, or unrelated art windows' files.
 
 ## Priority first batch
@@ -40,7 +40,7 @@ Create ONE high-quality hero mark for each track/organization. Real racecourses 
 | T-0094 | Sweetwater Park | Fictional WTW expansion; high-quality new game brand |
 
 ## Existing logo fallback
-The UI's `profile-hero-v2.mjs` has a conservative, browser-only white-matte cleanup for **edge-connected white backgrounds** on legacy logo files, plus adaptive contrast for dark navy lettering. Original repository files are unchanged. Approved new transparent artwork from the index always takes precedence. This is not a replacement for real logo production.
+The UI's `profile-hero-v2.mjs` has a conservative, browser-only white-matte cleanup for **edge-connected white backgrounds** on legacy logo files, plus adaptive contrast for dark navy lettering. Original repository files are unchanged. New transparent artwork automatically takes precedence by the exact canonical-ID file path; its pixels are never altered. This is not a replacement for real logo production.
 
 ## QA acceptance gates
 1. At 1440×900, 1280×720, and 1024×768, full **Location, Surfaces, Operating, Circuit** values are visible; allow natural wrapping, never ellipses.
@@ -56,7 +56,7 @@ The UI's `profile-hero-v2.mjs` has a conservative, browser-only white-matte clea
 ## Files and architecture
 - New `public/next/profile-hero-v2.css`: source-specific grid + identity hero stage + global redundant menu removal.
 - New `public/next/profile-hero-v2.mjs`: route display cleanup + image manifest integration + conservative legacy white matte.
-- New `public/assets/identity/hero-art-index-v1.json`: exact-ID hero asset activation, initially empty.
+- `public/assets/identity/hero-art-index-v1.json`: optional exact-ID inventory, initially empty. Automatic ID-based file discovery works without entries.
 - Updated `public/next/index.html`: loads CSS after the existing identity theme and JS after existing UI modules.
 - `tests/profile-hero-v2.test.mjs`: layout and matte regression suite.
 - Unchanged: `public/next/next.js`, `public/next/next.css`, game logic, source data, UI records, original asset files.

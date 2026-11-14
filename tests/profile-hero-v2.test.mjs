@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {removeWhiteEdgeMatte,heroContext,profileTitle} from "../public/next/profile-hero-v2.mjs";
+import {removeWhiteEdgeMatte,heroContext,profileTitle,heroCandidate} from "../public/next/profile-hero-v2.mjs";
 
 const css=readFileSync(new URL("../public/next/profile-hero-v2.css",import.meta.url),"utf8");
 const index=readFileSync(new URL("../public/next/index.html",import.meta.url),"utf8");
@@ -48,4 +48,28 @@ test("hero resources are loaded after existing management assets",()=>{
  assert.ok(index.includes("/next/profile-hero-v2.css"));
  assert.ok(index.includes("/next/profile-hero-v2.mjs"));
  assert.ok(index.indexOf("profile-hero-v2.css")>index.indexOf("identity-themes.css"));
+});
+
+test("transparent hero uploads auto-discover by exact canonical ID",()=>{
+ assert.equal(heroCandidate("track","T-0001"),"/assets/places/track-hero/T-0001.webp");
+ assert.equal(heroCandidate("track","T-0017"),"/assets/places/track-hero/T-0017.webp");
+ assert.equal(heroCandidate("organization","O-000061"),"/assets/places/organization-hero/O-000061.webp");
+ assert.equal(heroCandidate("track","T-0001","/assets/places/track-hero/T-0002.webp"),"/assets/places/track-hero/T-0001.webp");
+ assert.equal(heroCandidate("person","P-000061"),"");
+});
+test("transparent brand pixels are never altered by white-background fallback",()=>{
+ const w=18,h=18,arr=new Uint8ClampedArray(w*h*4);
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+  const p=(y*w+x)*4;
+  arr[p]=x>=4&&x<14?25:255;
+  arr[p+1]=x>=4&&x<14?130:255;
+  arr[p+2]=x>=4&&x<14?170:255;
+  arr[p+3]=x>=4&&x<14&&y>=4&&y<14?255:0;
+ }
+ const before=arr.slice();
+ assert.equal(removeWhiteEdgeMatte({width:w,height:h,data:arr}).changed,false);
+ assert.deepEqual(arr,before);
+});
+test("farm/ownership logo badges are inside the protected hero grid",()=>{
+ assert.match(css,/ng-profile-view\.ng-profile-farm > \.ng-profile-intro > \.ng-org-mark/);
 });
