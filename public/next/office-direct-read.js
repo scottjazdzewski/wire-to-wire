@@ -41,10 +41,11 @@
 
  /** Projects only actual canonical player-owner trainer requests.
   * No DOM, fake management data, local save, or mutable UI-side decision state. */
- function trainerRequests(state){
+ function trainerRequests(state,projection){
   const owner=state?.player?.role==='owner'?state.player.operation_id:null;
   if(!owner)return [];
-  const source=state.runtime?.trainer_management_requests?.by_pair||{};
+  if(!Array.isArray(projection?.pending)||!Array.isArray(projection?.recent))return [];
+  const candidates=[...projection.pending,...projection.recent];
   const horses=state.runtime?.registered_horses?.by_id||{};
   const kinds={
    CARE_FUNDING:{title:'Trainer requests funded care',summary:'The barn recorded an unfunded care day.',
@@ -61,12 +62,9 @@
   };
   const permitted=new Set(['ACCEPT','COUNTER','DECLINE']);
   const rows=[];
-  for(const group of Object.values(source)){
-   if(!group||group.owner_id!==owner)continue;
-   for(const r of [...(group.active?.status==='OPEN'?[group.active]:[]),
-    ...(Array.isArray(group.history)?group.history:[])]){
+  for(const r of candidates){
     const kind=kinds[r?.kind],horse=horses[r?.horse_id];
-    if(!kind||!horse||horse.owner_organization_id!==owner||
+    if(!kind||!horse||r.owner_id!==owner||horse.owner_organization_id!==owner||
      horse.trainer_id!==r.trainer_id||typeof r.id!=='string')continue;
     const closed=r.status!=='OPEN';
     if(closed&&r.status!=='RESOLVED'&&r.status!=='EXPIRED')continue;
@@ -98,7 +96,6 @@
         kind.choices[choices.indexOf(chosen)]||'Recorded trainer decision',
        date:r.resolved_on||r.deadline}:null}
     });
-   }
   }
   return rows.sort((a,b)=>Number(a.message.resolved)-Number(b.message.resolved)||
    b.message.time.localeCompare(a.message.time)||a.message.case.localeCompare(b.message.case));
