@@ -29,7 +29,7 @@ test('World overview and World race files no longer click the hidden 2014 Office
  assert.match(nav,/openCustomView\(section\+' — Overview',section,'Overview'\)/);
  assert.match(nav,/if\(s==='World'&&\(name==='Overview'\|\|name==='Major Races'\|\|name==='News'\)\)/);
  assert.match(nav,/openCustomView\('World — '\+name,'World',name\)/);
- assert.match(nav,/if\(name==='News'\)return openCustomView\('News','Office','News'\)/);
+ assert.match(nav,/if\(name==='News'\)return openCustomView\('Office — News','Office','News'\)/);
  assert.doesNotMatch(nav,/bridgeNode\(originalAct\('News'\)\)/);
  assert.doesNotMatch(nav,/bridgeNode\(originalAct\('World'\)\)/);
 });
@@ -95,7 +95,7 @@ test('News remains empty rather than making up a racing feed when source briefin
 
 test('one 1999 UI asset and canonical News renderer, no additional stylesheet or application',()=>{
  assert.match(html,/\/next\/next\.js\?rev=wtw1999-world-news-direct-source-20261114/);
- assert.match(ui,/else if\(APP\.custom==='News'\|\|APP\.custom==='World — News'\)\{body=sourceNewsDesk\(\)\}/);
+ assert.match(ui,/else if\(APP\.custom==='Office — News'\|\|APP\.custom==='World — News'\)\{body=sourceNewsDesk\(\)\}/);
  assert.equal((html.match(/rel="stylesheet"/g)||[]).length,1);
  assert.doesNotMatch(functions,/querySelector|\.app \[data-act\]|document\.createElement/);
  assert.match(office,/function openWorldDirectory\(\)/); // old data bridge intact but never used for 1999 World navigation
