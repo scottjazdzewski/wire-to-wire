@@ -78,12 +78,13 @@ function assertNonemptyRequest(roles,owners,facilities){
  * names. They are never treated as a source of fictional identities.
  */
 export function generateOnDemandFictionalNames({
- worldId,seed,year=1999,state=null,roles={},owners=0,facilities={},
+ worldId,seed,state=null,year=state?.year??1999,roles={},owners=0,facilities={},
  maxPartnershipGroups=null,soleOwnerPercent=23,
  protectedNames=[],markets,originWeightsByRole,jockeyOriginWeightsByColony
 }={}){
  validWorldId(worldId);validateSeed(seed);
- if(year!==1999)throw Error('On-demand naming currently supports the 1999 opening era only');
+ if(!Number.isInteger(year)||year<1999||year>2099)
+  throw Error('On-demand naming supports years 1999–2099');
  validateStringNames(protectedNames,'Protected names');
  if(!roles||typeof roles!=='object'||Array.isArray(roles))throw Error('Invalid on-demand roles');
  if(!facilities||typeof facilities!=='object'||Array.isArray(facilities))
@@ -99,7 +100,7 @@ export function generateOnDemandFictionalNames({
  if(!initial){
   if(!state||typeof state!=='object'||Array.isArray(state)||
    state.model!==ON_DEMAND_NAMING_MODEL||
-   state.parentWorldId!==worldId||state.seed!==seed||state.year!==year||
+   state.parentWorldId!==worldId||state.seed!==seed||state.year>year||
    !Number.isSafeInteger(state.nextBatch)||state.nextBatch<0||state.nextBatch>999999||
    !Number.isInteger(state.maxPartnershipGroups)||state.maxPartnershipGroups<0||
    state.maxPartnershipGroups>30000||
