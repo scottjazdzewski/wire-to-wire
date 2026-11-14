@@ -48,7 +48,7 @@ jobs:
           node --check public/next/1999-commercial-career-manager.mjs
           node --check public/next/1999-commercial-config.js
       - name: Gameplay registration and barn-residence regression
-        run: node --test tests/1999-game-horse-registration.test.mjs tests/1999-racing-site-residence.test.mjs
+        run: node --test tests/1999-game-horse-registration.test.mjs tests/1999-racing-site-residence.test.mjs tests/1999-38-horse-attributes-and-barns.test.mjs
       - name: Shared Stable and Horse Directory presentation contract
         run: node --test tests/1999-mirrored-horse-rosters.test.mjs
       - name: Jan 1 source and OFFLINE browser population verification
