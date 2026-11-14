@@ -201,6 +201,72 @@ for d in rows:
        'identity',d['intro']['width'],'local nav',d['localNavigation']['width'])
 Path('visual-audit/dom/profile-uniformity-metrics.json').write_text(json.dumps(rows,indent=2))
 PY
+# Interact with the actual unified application, not static HTML snapshots.
+# Every major screen must use the same rail, single route, and browser history.
+cat > public/__wtw_nav_probe.html <<'HTML'
+<!doctype html><html><head><meta charset="utf-8"><title>WTW direct nav probe</title></head>
+<body style="margin:0"><iframe id="game" style="width:100vw;height:100vh;border:0"></iframe>
+<pre id="result">pending</pre><script>
+const frame=document.getElementById('game'),out=document.getElementById('result');
+const tick=(ms=160)=>new Promise(resolve=>setTimeout(resolve,ms));
+const records=[];
+frame.onload=()=>setTimeout(async()=>{
+ try{
+  const d=frame.contentDocument,w=frame.contentWindow;
+  const press=(key,value)=>{
+   const selector='#wtwNextgen [data-ng="'+key+'"]'+(value?'[data-val="'+value+'"]':'');
+   const button=d.querySelector(selector);
+   if(!button)throw Error('Missing shared navigation: '+selector);
+   button.click();
+  };
+  const check=(name,selector,selected)=>{
+   const node=d.querySelector(selector);
+   const active=d.querySelector('#wtwNextgen .ng-manager-rail-link.on');
+   const hidden=d.querySelector('.app');
+   const bridge=w.getComputedStyle(hidden).display==='none';
+   const valid=!!node&&node.getBoundingClientRect().width>500&&bridge&&
+    (!selected||active?.dataset.val===selected);
+   records.push({name,valid,selected:active?.dataset.val||'Office',url:w.location.search});
+   if(!valid)throw Error('Navigation mismatch for '+name);
+  };
+  await tick(550);
+  check('Office opening','.ng-board');
+  for(const section of ['Personnel','Facilities','Stable','Racing']){
+   press('menu',section);await tick();
+   check(section,section==='Stable'?'.ng-stable-roster-v2':
+    '.ng-dept-roster[data-department="'+section+'"]',section);
+  }
+  press('office');await tick();
+  check('Office return','.ng-board');
+  w.history.back();await tick(250);
+  check('Browser Back to Racing','.ng-dept-roster[data-department="Racing"]','Racing');
+  w.history.forward();await tick(250);
+  check('Browser Forward to Office','.ng-board');
+  out.dataset.check='ready';out.textContent=JSON.stringify(records);
+ }catch(err){out.dataset.check='error';out.textContent=String(err?.stack||err)}
+},500);
+frame.src='/next/?world=1999';
+</script></body></html>
+HTML
+"$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+  --force-device-scale-factor=1 --window-size=1536,864 --virtual-time-budget=8000 \
+  --dump-dom 'http://127.0.0.1:8765/__wtw_nav_probe.html' \
+  > visual-audit/dom/probe-navigation.html 2>/tmp/wtw-nav-probe.log
+python3 - <<'PY'
+import json,html,re
+from pathlib import Path
+source=Path('visual-audit/dom/probe-navigation.html').read_text()
+assert 'data-check="ready"' in source,('Shared navigation interactions failed',source[-1400:])
+match=re.search(r'<pre id="result"[^>]*>(.*?)</pre>',source,re.S)
+assert match, 'Missing browser navigation results'
+rows=json.loads(html.unescape(match.group(1)))
+assert len(rows)==8 and all(r['valid'] for r in rows),rows
+assert [r['name'] for r in rows]==['Office opening','Personnel','Facilities','Stable',
+ 'Racing','Office return','Browser Back to Racing','Browser Forward to Office'],rows
+print('DIRECT FM/OOTP NAVIGATION VERIFIED:',[r['name'] for r in rows])
+PY
+rm -f public/__wtw_nav_probe.html
+
 rm -f public/__wtw_visual_probe.html
 
 python3 - <<'PY'
