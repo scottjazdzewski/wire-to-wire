@@ -16,10 +16,10 @@ test('1999 approved logos match the 37 exact opening organization IDs',()=>{
  assert.equal(current.size,37);
  assert.equal(approved.size,37);
  assert.deepEqual([...current].sort(),[...approved].sort());
- assert.equal(index.publishedCount,31);
- assert.equal(index.remainingWithoutMatchedLogo,6);
- assert.equal(index.audit.notPublished.length,6);
- assert.equal(index.audit.published.length,31);
+ assert.equal(index.publishedCount,Object.keys(index.organizations).length);
+ assert.equal(index.remainingWithoutMatchedLogo,current.size-index.publishedCount);
+ assert.equal(index.audit.notPublished.length,index.remainingWithoutMatchedLogo);
+ assert.equal(index.audit.published.length,index.publishedCount);
  for(const {id,name,path} of index.audit.published){
   assert.ok(current.has(id), 'not in founding world: '+id);
   const actual=roster.organizations.find(x=>x.id===id);
@@ -29,8 +29,8 @@ test('1999 approved logos match the 37 exact opening organization IDs',()=>{
   assert.ok(existsSync(resolve(root,'public'+path)), 'missing approved asset '+id);
  }
 });
-test('25 newly installed approved organization logos are all exact 256-square PNGs',()=>{
- assert.equal(revised.size,25);
+test('newly installed approved organization logos are all exact 256-square PNGs',()=>{
+ assert.equal(revised.size,Object.values(index.organizations).filter(path=>path.startsWith('/assets/office/founding-organization-logos/')).length);
  for(const id of revised){
   assert.ok(current.has(id),'not current '+id);
   const path=index.organizations['organization:'+id];

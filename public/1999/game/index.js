@@ -48,8 +48,14 @@ export {POST_RACE_CAMPAIGN_SCHEMA,createPostRaceCampaignRuntime,
 
 export {OWNER_TRAINER_REVIEW_SCHEMA,OWNER_TRAINER_REVIEW_COMMANDS,
  OWNER_TRAINER_MANDATES,createOwnerTrainerReviewRuntime,
- ownerTrainerEvidence,selectOwnerTrainerMandate,getOwnerTrainerMandate,getOwnerTrainerCareerReview,
+ ownerTrainerEvidence,selectOwnerTrainerMandate,assessTrainerRelationshipPosition,
+ getOwnerTrainerMandate,getOwnerTrainerCareerReview,
  getTrainerCareerForm} from './owner-trainer-career-1999.js';
+
+export { GAME_INDUSTRY_GATEWAY_MODEL_V22,createFutureIndustryGameGatewayV22 }
+ from './future-industry-v22.js';
+
+export {workingRelationshipProfile} from './working-relationship-1999.js';
 
 export {GAME_NAMING_BRIDGE_SCHEMA,HORSE_NAMING_COMMANDS,createHorseNamingRuntime,validateHorseNamingRuntime,recordHorseNamingStoryAction,buildGameHorseNamingBrief,screenGameHorseName,recordGameNameEditorialDecision} from './horse-naming-bridge.js';
 

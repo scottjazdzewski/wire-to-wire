@@ -8,6 +8,7 @@
  * Source trainer P-IDs and owner O-IDs are never mutated.
  */
 import {ensure,isObject,validDate,worldIdentity,nextDate} from './contracts.js';
+import {workingRelationshipProfile} from './working-relationship-1999.js';
 import {getOwnerTrainerMandate} from './owner-trainer-career-1999.js';
 
 export const TRAINER_CONTRACT_SCHEMA='WTW_1999_TRAINER_SERVICE_AGREEMENTS_V1';
@@ -52,8 +53,14 @@ export function trainerContractQuote(state,world,ownerId,trainerId){
  const load=trainerLoad(state,trainerId);
  const relation=state.runtime.agents?.relationships?.[pair(ownerId,trainerId)];
  const trust=relation?.trainer_support??.5;
+ const working=workingRelationshipProfile(state,ownerId,trainerId);
  const gameStanding=state.runtime.people[trainerId]?.game_race_record?.professional_standing??.5;
- const threshold=.74+load.pressure*.16+(1-trust)*.16+gameStanding*.10;
+ // An impatient trainer in a strained partnership demands more for scarce
+ // oversight; patient trainers with strong relationships can tolerate less.
+ // Avoid changing source salary facts: these are modeled contract quotes.
+ const threshold=.74+load.pressure*.16+(1-trust)*.16+gameStanding*.10+
+  (.5-working.trainer_patience)*.10+
+  (.5-working.working_relationship_strength)*.07;
  const min= Math.round(base*threshold);
  const contract=state.runtime.trainer_contracts?.by_pair?.[pair(ownerId,trainerId)]??null;
  const balance=state.runtime.finances?.operation_balances_minor?.[ownerId];
@@ -62,6 +69,8 @@ export function trainerContractQuote(state,world,ownerId,trainerId){
   modeled_base_fee_minor:base,minimum_acceptable_minor:min,
   trainer_horses:load.horses,trainer_capacity:load.capacity,
   trainer_load_ratio:load.pressure,owner_trust:trust,professional_standing:gameStanding,
+  trainer_patience:working.trainer_patience,
+  working_relationship_strength:working.working_relationship_strength,
   owner_cash_minor:integer(balance)&&balance>=0?balance:null,
   current_daily_fee_minor:contract?.daily_fee_minor??base,
   next_terms:contract?.pending??null,
