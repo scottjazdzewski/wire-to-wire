@@ -38,7 +38,7 @@ Football Manager and Out of the Park Baseball are the reference **level of quali
 ## Code ownership (current transitional architecture)
 - Playable management shell: `public/next/next.js` and `public/next/next.css`.
 - Shared profile composition: **one** `profileDetail()` renderer, `restored1999Profile()` adapter; profile visual companion is `public/next/profile-hero-v2.mjs`. No per-entity renderer forks.
-- Shared connected-record controls: **one** `connectedTableState()` + **one** `profileRecordSection()`; no custom table for each track/owner/trainer.
+- Shared profile and record controls: one current `profileDetail()` / `restored1999Profile()` family, with the approved per-entity record navigation. The old `connectedTableState()`, `profileRecordSection()` and `ng-connected-*` overlays were **physically retired** in PR #145; they must not be restored or used as an implementation template.
 - Entity palette companion: `public/next/identity-themes.mjs`; unique colors are an identity layer, not an alternate UX.
 - **One canonical management stylesheet:** `public/next/next.css` now contains all active shared layout, career dialog, entity themes and profile hero rules in the same tested cascade order. The prior three CSS companion files were physically retired. **Do not re-add them or create page-specific stylesheets.** Change shared rules in `next.css` and keep one profile/table/nav interaction system across all relevant pages.
 - Existing original assets and canonical data stay in their current authority; UI changes may read but not mutate them.
@@ -90,9 +90,9 @@ Office Home uses the native `RETURN_OFFICE` game command in the 1999 career inst
 
 ## World & News — One Manager Screen Family (2026-11-14)
 
-The World entry and its Overview/Major Races/News views now navigate directly through `openCustomView()`; the Office News view does the same. All use the current `#wtwNextgen` header, history and shared manager RECORD VIEW selector. No old World/News Office buttons are clicked.
+The World entry and its Overview/Major Races/News views now navigate directly through `openCustomView()`; the Office News view does the same. All use the current `#wtwNextgen` header, history and shared VIEW selector. No old World/News Office buttons are clicked.
 
-World Overview shows a capped, balanced preview (up to 20 each of canonical horse, person, farm, track and race records), **without truncating or changing the underlying source directories**. Its count identifies displayed records versus linked records. Dedicated directory screens remain available through the same RECORD VIEW menu.
+World Overview shows a capped, balanced preview (up to 20 each of canonical horse, person, farm, track and race records), **without truncating or changing the underlying source directories**. Its count identifies displayed records versus linked records. Dedicated directory screens remain available through the same VIEW menu.
 
 The News screen uses `ng-manager-screen`, existing manager classes, and only messages in the current game source or engine. It calls these **Office briefings** and never claims they are external published reports. An explicit 'verified external feed not connected' status remains visible; the old 2014 demo articles never appear as active 1999 news. News and World navigation use the uniform `Section — Page` URL format so browser Back/Forward restores the right screen.
 
@@ -104,7 +104,7 @@ The News screen uses `ng-manager-screen`, existing manager classes, and only mes
 
 The visible organization and Office `OPPORTUNITIES` commands now open `openCustomView('Opportunities','Office','Overview')` directly. They never click the retired `Open opportunity board` control in the hidden Office. The old prototype had hard-coded offers and unrelated 2014 demo content.
 
-The approved screen now uses `ng-manager-screen` with the same global manager rail, record-view dropdown, metrics, dense record rows, sidebar and keyboard-operated game controls as World and News. Its primary records are **only** open, urgent source-backed Office messages and actual due follow-ups from the career. Racing and Sales links go through the normal direct department routes. A genuine empty queue remains empty; no races, offers or settlements are fabricated.
+The approved screen now uses `ng-manager-screen` with the same global manager rail, VIEW dropdown, metrics, dense record rows, sidebar and keyboard-operated game controls as World and News. Its primary records are **only** open, urgent source-backed Office messages and actual due follow-ups from the career. Racing and Sales links go through the normal direct department routes. A genuine empty queue remains empty; no races, offers or settlements are fabricated.
 
 `tests/fm-source-opportunity-board.test.mjs` and desktop/laptop screenshots are release gates. The 1999 engine's race-entry opportunities continue to be authorized in the existing Racing desk; this UI work neither duplicates nor changes racing calculations, save state or ownership decisions. This is a presentation-layer retirement, not deletion of the still-required hidden gameplay adapter.
 
