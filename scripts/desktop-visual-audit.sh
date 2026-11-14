@@ -42,6 +42,7 @@ capture people-profile '?ui=WorldRecord%3Aperson%3AP-000018' 'ng-person-horse-do
 capture founder-owner '?ui=FoundingProfile%3Aownership%3AO-000014' 'ng-track-workspace'
 capture founder-facility '?ui=FoundingProfile%3Afacility%3AO-000068' 'ng-track-workspace'
 capture aqueduct-track '?ui=WorldRecord%3Atrack%3AT-0001' 'ng-profile-track'
+capture belmont-track '?ui=WorldRecord%3Atrack%3AT-0002' 'ng-profile-track'
 capture gulfstream-track '?ui=WorldRecord%3Atrack%3AT-0017' 'ng-profile-track'
 capture kingsmere-farm '?ui=FoundingProfile%3Afacility%3AO-000061' 'ng-profile-farm'
 capture northbank-stable '?ui=FoundingProfile%3Aownership%3AO-000045' 'ng-profile-farm'
@@ -115,6 +116,14 @@ frame.onload=()=>setTimeout(()=>{
     getPropertyValue('--wtw-id-base').trim(),
    profileBackdrop:d.querySelector('.ng-route-profile .ng-profile-intro')?
     win.getComputedStyle(d.querySelector('.ng-route-profile .ng-profile-intro')).backgroundImage:'',
+   trackWorkspace:rect('.ng-route-profile .ng-track-workspace'),
+   trackStakes:rect('.ng-route-profile .ng-track-stakes'),
+   trackMeet:rect('.ng-route-profile .ng-track-meet-card'),
+   trackHistory:rect('.ng-route-profile .ng-track-history-card'),
+   stakeRows:d.querySelectorAll('.ng-route-profile .ng-track-stakes .ng-stakes-data').length,
+   stakeSortButtons:d.querySelectorAll('.ng-route-profile .ng-stakes-head [data-ng="stake-sort"]').length,
+   approvedTrackBadge:win.getComputedStyle(d.querySelector('.ng-route-profile .ng-profile-badgeframe')||d.body).backgroundImage.includes('wtw_badge_track.png'),
+   legacyPilotPanels:d.querySelectorAll('.ng-connected-profile,.ng-connected-drop,.ng-connected-table').length,
    sourceBridgeVisible:win.getComputedStyle(d.querySelector('.app')).display!=='none',
    duplicateGlobalMenuVisible:[...d.querySelectorAll('#wtwNextgen > .ng-subbar')]
     .some(n=>win.getComputedStyle(n).display!=='none'),
@@ -152,6 +161,7 @@ probe search '%3Fui%3DSearch'
 probe horse '%3Fpage%3Dhorse%26name%3DThe%2BLast%2BMatch'
 probe person '%3Fui%3DWorldRecord%253Aperson%253AP-000018'
 probe aqueduct '%3Fui%3DWorldRecord%253Atrack%253AT-0001'
+probe belmont '%3Fui%3DWorldRecord%253Atrack%253AT-0002'
 probe gulfstream '%3Fui%3DWorldRecord%253Atrack%253AT-0017'
 probe farm '%3Fui%3DFoundingProfile%253Afacility%253AO-000061'
 probe stable '%3Fui%3DFoundingProfile%253Aownership%253AO-000045'
@@ -159,6 +169,7 @@ probe owner '%3Fui%3DFoundingProfile%253Aownership%253AO-000014'
 probe laptop-horse '%3Fpage%3Dhorse%26name%3DThe%2BLast%2BMatch' '1280,800'
 probe laptop-person '%3Fui%3DWorldRecord%253Aperson%253AP-000018' '1280,800'
 probe laptop-aqueduct '%3Fui%3DWorldRecord%253Atrack%253AT-0001' '1280,800'
+probe laptop-belmont '%3Fui%3DWorldRecord%253Atrack%253AT-0002' '1280,800'
 probe laptop-farm '%3Fui%3DFoundingProfile%253Afacility%253AO-000061' '1280,800'
 probe laptop-owner '%3Fui%3DFoundingProfile%253Aownership%253AO-000014' '1280,800'
 python3 - <<'PY'
@@ -167,6 +178,7 @@ from pathlib import Path
 # Verify real rendered identity coloring and no leaked identity in the Office.
 expected={
  'aqueduct':('T-0001','#1C6283'),
+ 'belmont':('T-0002','#0C603C'),
  'gulfstream':('T-0017','#214784'),
  'farm':('O-000061','#745681')
 }
@@ -222,9 +234,30 @@ for name in ('stable-roster','racing-roster','laptop-stable-roster','laptop-raci
  assert not data['sourceBridgeVisible'],(name,'Legacy Office became visible')
  assert not data['duplicateGlobalMenuVisible'],(name,'Redundant navigation appeared')
  print('ROSTER PARITY',name,'width',data['roster']['width'],'toolbar',data['rosterToolbar']['width'])
+# The approved track presentation is a two-column stadium dossier. Test
+# actual rendered Belmont desktop/laptop geometry; never permit pilot cohort
+# tables to displace the Stakes, Meet or History sections.
+for name in ('belmont','laptop-belmont','aqueduct','gulfstream'):
+ source=Path(f'visual-audit/dom/probe-{name}.html').read_text()
+ assert 'data-check="ready"' in source,(name,'Track layout not rendered')
+ match=re.search(r'<pre id="measure"[^>]*>(.*?)</pre>',source,re.S)
+ assert match,(name,'Missing track measurements')
+ d=json.loads(html.unescape(match.group(1)))
+ assert d['trackWorkspace'] and d['trackWorkspace']['width']>=850,(name,'Approved workspace missing')
+ assert d['trackStakes'] and d['trackStakes']['width']>=400,(name,'Major Stakes column absent')
+ assert d['trackMeet'] and d['trackHistory'],(name,'Meet or Track History missing')
+ assert d['trackMeet']['top']<d['trackHistory']['top'],(name,'Meet must be above History')
+ assert d['trackStakes']['left']<d['trackHistory']['left'],(name,'Stakes must be left; History right')
+ assert d['stakeSortButtons']==4,(name,'Full sortable stakes table replaced by dropdown')
+ assert d['stakeRows']>=1,(name,'Approved source-linked stakes absent')
+ assert d['legacyPilotPanels']==0,(name,'Obsolete 38-horse cohort overlay returned')
+ assert d['approvedTrackBadge'],(name,'Left category badge replaced with duplicate venue logo')
+ assert not d['metadataClipped'],(name,'Track identity metadata clipped')
+ print('TRACK CHASSIS RESTORED',name,'stakes',d['stakeRows'],'workspace',d['trackWorkspace']['width'])
+
 # Same core chrome, record controls and protected identity space across profiles.
-profiles=('horse','person','aqueduct','gulfstream','farm','stable','owner',
-          'laptop-horse','laptop-person','laptop-aqueduct','laptop-farm','laptop-owner')
+profiles=('horse','person','aqueduct','belmont','gulfstream','farm','stable','owner',
+          'laptop-horse','laptop-person','laptop-aqueduct','laptop-belmont','laptop-farm','laptop-owner')
 rows=[]
 for name in profiles:
  source=Path(f'visual-audit/dom/probe-{name}.html').read_text()
@@ -240,7 +273,7 @@ for name in profiles:
  assert not d['duplicateGlobalMenuVisible'],(name,'Redundant top menu returned')
  assert not d['metadataClipped'],(name,'Track/farm metadata clipped',d['metadataClipped'])
  assert d['intro']['width']>=min(850,d['stage']['width']*.7),(name,'Identity band too narrow')
- if name in ('aqueduct','gulfstream','farm','stable','owner','laptop-aqueduct','laptop-farm','laptop-owner'):
+ if name in ('aqueduct','belmont','gulfstream','farm','stable','owner','laptop-aqueduct','laptop-belmont','laptop-farm','laptop-owner'):
   if d['heroMark'] and d['identity']:
    assert d['identity']['right']<=d['heroMark']['left']+6,(name,'Logo occupies metadata space')
  rows.append({'name':name,**d})
