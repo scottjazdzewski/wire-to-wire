@@ -183,11 +183,12 @@ export function browserPlaytestRequested(location=globalThis.location){
  * No second localStorage gameplay finance/horse data is written. */
 export async function bootBrowserPlaytest1999(){
  if(!browserPlaytestRequested())return null;
- globalThis.__WTW_1999_PLAYTEST_LOADING__='SOURCES_FETCH_STARTED';
+ globalThis.__WTW_1999_PLAYTEST_LOADING__='SOURCES_AND_INDEXEDDB_STARTED';
+ const dbPromise=openDB(); // begin storage I/O before async source fetches
  const data=await Promise.all(Object.values(paths).map(path=>
   fetch(path,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Missing 1999 scenario source '+path);return r.json()})));
  globalThis.__WTW_1999_PLAYTEST_LOADING__='SOURCES_FETCH_COMPLETE';
- const [directory,trainers,jockeys,cohort]=data,db=await openDB();
+ const [directory,trainers,jockeys,cohort]=data,db=await dbPromise;
  globalThis.__WTW_1999_PLAYTEST_LOADING__='INDEXEDDB_OPEN';
  const prior=await transact(db,'readonly');
  globalThis.__WTW_1999_PLAYTEST_LOADING__='INDEXEDDB_READ';
