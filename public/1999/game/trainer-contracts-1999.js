@@ -164,10 +164,12 @@ export function advanceTrainerContracts({state,world,emit}){
   const cash=quote.owner_cash_minor??0;
   const mandate=getOwnerTrainerMandate(state,owner,trainer);
   const record=state.runtime.owner_trainer_reviews?.by_pair?.[id]?.evidence;
+  const observedStarts=record?.decision_sample_starts??record?.starts??0;
+  const observedForm=record?.decision_form??record?.average_relative_form??0;
   const strongSupport=mandate==='SUPPORT'&&
-   (record?.starts??0)>=5&&(record?.average_relative_form??0)>.20;
+   observedStarts>=5&&observedForm>.20;
   const improvementHold=mandate==='IMPROVEMENT_PLAN'&&
-   (record?.starts??0)>=4&&(record?.average_relative_form??0)<-.20&&
+   observedStarts>=4&&observedForm<-.20&&
    quote.professional_standing<.8;
   const target=strongSupport?
    Math.round(quote.minimum_acceptable_minor*1.03):quote.minimum_acceptable_minor;
