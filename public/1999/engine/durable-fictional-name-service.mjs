@@ -254,13 +254,14 @@ export async function openDurableFictionalNameService({
   return cursor;
  }
  async function generate({
+  year=cursor?.year??1999,
   roles={},owners=0,facilities={},maxPartnershipGroups=null,
   soleOwnerPercent=cursor?.soleOwnerPercent??23,
   markets,originWeightsByRole,jockeyOriginWeightsByColony
  }={}){
   if(unusable)throw Error('Naming service requires refresh after a failed commit');
   const prepared=prepareIndexedFictionalNameBatch({
-   registry,worldId,seed,cursor,roles,owners,facilities,
+   registry,worldId,seed,cursor,year,roles,owners,facilities,
    maxPartnershipGroups,soleOwnerPercent,markets,
    originWeightsByRole,jockeyOriginWeightsByColony
   });
