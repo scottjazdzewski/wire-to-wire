@@ -38,6 +38,8 @@ test('World overview and World race files no longer click the hidden 2014 Office
 test('world directory preview includes every source category without rendering unbounded full population',()=>{
  const body=ui.slice(ui.indexOf('function managerDashboard(){'),ui.indexOf('\nfunction open1999Race('));
  assert.match(body,/World:\{kinds:\['horse','person','farm','track','race'\]/);
+ assert.match(body,/const all=section==='World'&&page==='Overview'&&isClean1999\(\)\?/);
+ assert.match(body,/world1999Entries\(\):globalSearchItems\(\)/);
  assert.match(body,/visibleItems=section==='World'&&page==='Overview'\?/);
  assert.match(body,/items\.filter\(row=>row\.kind===kind\)\.slice\(0,20\)/);
  assert.match(body,/visibleItems\.length\+' OF '\+items\.length\+' SOURCE RECORDS/);
@@ -106,6 +108,7 @@ test('one 1999 UI asset and canonical News renderer, no additional stylesheet or
 test('real 1999 browser smoke keeps complete People/Tracks checks with the shared World selector',()=>{
  assert.match(browser,/select\[data-ng-select="manager-screen"\]/);
  assert.match(browser,/worldPeopleView\.value='People'/);
+ assert.match(read('scripts/desktop-visual-audit.sh'),/worldPreviewSourceOnly/);
  assert.match(browser,/worldTracksView\.value='Tracks'/);
  assert.match(browser,/worldView\.value='News'/);
  assert.match(browser,/World News uses current source-backed Office briefings/);
