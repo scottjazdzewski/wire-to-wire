@@ -40,7 +40,7 @@ const WTW_RETIRED_TRACK_IDS=new Set(['T-0042','T-0112','T-0115']); // Historical
 let organizationLogoIndex=null; // UI-only logo refs, never organizational authority.
 const isClean1999=()=>window.__WTW_1999_MANAGEMENT__?.worldProfile?.mode==='FOUNDING_1999';
 
-const tabmap={Office:['Overview','Messages','Decisions','Calendar','News','Reports','Career'],History:['Race Results','Horses','People & Farms','Facilities & Tracks','Historical Calendar','Coverage'],Stable:['Overview','Horses','Training','Health','Race Plans','Barns'],Racing:['Overview','Calendar','Entries','Results','Stakes','Race Planning'],Breeding:['Overview','Stallions','Broodmares','Foals','Pedigrees','Stud Farms'],Sales:['Overview','Auctions','Sale Calendar','Sale Companies','Catalogs','Watchlist','Private Offers'],Personnel:['Overview','Trainers','Jockeys','Owners','Principals','Staff'],Facilities:['Overview','Stud Farms','Training Centers','Breaking Facilities','Racing Stables','Farms','Trainer Barns'],Tracks:['Overview','Active Meets','All Tracks','Stakes'],Finances:['Overview','Cash Flow','Operating Costs','Budgets'],World:['Overview','1999 Horses','People','Organizations','Tracks','Meets','Major Races','News']};
+const tabmap={Office:['Overview','Messages','Decisions','Calendar','News','Reports','Career'],History:['Race Results','Horses','People & Farms','Facilities & Tracks','Historical Calendar','Coverage'],Stable:['Overview','Horses','Training','Health','Race Plans','Barns','Naming Desk'],Racing:['Overview','Calendar','Entries','Results','Stakes','Race Planning'],Breeding:['Overview','Stallions','Broodmares','Foals','Pedigrees','Stud Farms'],Sales:['Overview','Auctions','Sale Calendar','Sale Companies','Catalogs','Watchlist','Private Offers'],Personnel:['Overview','Trainers','Jockeys','Owners','Principals','Staff'],Facilities:['Overview','Stud Farms','Training Centers','Breaking Facilities','Racing Stables','Farms','Trainer Barns'],Tracks:['Overview','Active Meets','All Tracks','Stakes'],Finances:['Overview','Cash Flow','Operating Costs','Budgets'],World:['Overview','1999 Horses','People','Organizations','Tracks','Meets','Major Races','News']};
 const actions={Office:'Office Overview',Stable:'Stable',Racing:'Race Calendar',Sales:'Sales',World:'World'};
 const state=()=>{try{return JSON.parse(localStorage.getItem((window.__WTW_1999_MANAGEMENT__?.saveKey||'wtw1999ManagementStateV1'))||'{}')}catch{return {}}};
 /* Named saves are snapshots of the canonical Office game state, never a new
@@ -425,7 +425,7 @@ function managerSidebar(){
    ['Today','office','', 'grid'],['Inbox','custom','Messages','mail'],['Search','custom','Search','search']
   ]],
   ['RACING OPERATIONS',[
-   ['Stable','menu','Stable','grid'],['Racing','menu','Racing','calendar'],
+   ['Stable','menu','Stable','grid'],['Naming Desk','naming-desk','', 'grid'],['Racing','menu','Racing','calendar'],
    ['Breeding','menu','Breeding','grid'],['Sales','menu','Sales','grid']
   ]],
   ['ORGANIZATION',[
@@ -437,7 +437,7 @@ function managerSidebar(){
   ]]
  ];
  const on=(label,key,value)=>key==='office'&&!APP.custom&&APP.section==='Office'&&!currentRoute()||
-  key==='custom'&&APP.custom===value||key==='world-directory'&&APP.section==='World'&&APP.page==='1999 Horses'||key==='menu'&&APP.section===value&&
+  key==='custom'&&APP.custom===value||key==='naming-desk'&&APP.custom==='Stable — Naming Desk'||key==='world-directory'&&APP.section==='World'&&APP.page==='1999 Horses'||key==='menu'&&APP.section===value&&
   (!APP.custom||APP.custom===value||APP.custom.startsWith(value+' — '));
  const btn=([label,key,value,icon])=>'<button type="button" data-ng="'+key+'"'+
   (value?' data-val="'+safe(value)+'"':'')+' class="ng-manager-rail-link'+(on(label,key,value)?' on':'')+'"'+
@@ -3725,6 +3725,10 @@ function open1999Race(record){
 function renderRoute(){const route=APP.custom?null:currentRoute();const previewMode=APP.custom.startsWith('Preview:');const title=previewMode?(APP.previewEntity?.name||decodeURIComponent(APP.custom.split(':').slice(2).join(':'))):route?.title||APP.custom||'Page';const kicker=previewMode?'RECORD PREVIEW':route?.kicker||APP.section;const bdg=route?badge(({'Horse Profile':'horse','People Profile':'people','Farm Profile':'farm_stable','Track Profile':'track','Race Calendar':'meet_schedule','Stable':'farm_stable','Sales':'connections','News':'history','World':'track','Opportunity Board':'reputation'}[route.kicker])||'history'):pageBadge();
 let body='';const profile=route&&/Profile$/.test(route.kicker)?profileDetail(route):null;const functional=route?functionalRoute(route):null;if(profile)body=profile;else if(functional)body=functional;else if(route)body=route.body;else if(APP.custom==='Organization Overview'){body=organizationOverview()}
 else if(APP.custom==='Due Actions'){body=dueActionOverview()}
+else if(APP.custom==='Stable — Naming Desk'){
+ window.WTW1999NamingDesk?.defaultOwner?.(window.__WTW_1999_UI_DATA__?.sourceOwnerName);
+ body=window.WTW1999NamingDesk?.render?.()||'<section class="ng-manager-screen"><p role="status">Preparing Naming Desk…</p></section>';
+}
 else if(APP.custom==='Office — News'||APP.custom==='World — News'){body=sourceNewsDesk()}
 else if(APP.custom==='Opportunities'){body=sourceOpportunityBoard()}
 else if(['Messages','Decisions'].includes(APP.custom)){body=managerDashboard()}
@@ -3823,6 +3827,8 @@ window.addEventListener('click',e=>{
  const btn=e.target.closest('#wtwNextgen [data-ng],#wtwNextgen [data-act]');if(!btn)return;
  e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();
  const key=btn.dataset.ng, val=btn.dataset.val||'';
+ if(key==='naming-desk')return openCustomView('Stable — Naming Desk','Stable','Naming Desk');
+ if(key&&key.startsWith('naming-'))return window.WTW1999NamingDesk?.action?.(key,val);
  if(!key && btn.dataset.act){syntheticAction(btn);return}
  if(key==='race-plan-confirm')return window.WTW1999PlayerRacePlans?.confirm?.();
  if(key==='race-plan-open-horse'){
@@ -4258,6 +4264,9 @@ root.addEventListener('scroll',event=>{
 },true);
 root.addEventListener('input',event=>{
  const input=event.target;
+ if(input.matches('[data-naming-field]')){
+  window.WTW1999NamingDesk?.setField?.(input.dataset.namingField,input.value);return;
+ }
  if(input.matches('input[data-ng-input="directory-search"]')){
   APP.directorySearch=input.value;const cursor=input.selectionStart;
   paint();const found=root.querySelector('input[data-ng-input="directory-search"]');
