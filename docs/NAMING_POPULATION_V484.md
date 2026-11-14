@@ -24,6 +24,7 @@ The default maximum is **256 individual model inference requests per UTC day**, 
 
 ## Private endpoints (all behind existing Cloudflare Access)
 
+* `GET /api/naming/status` — **zero-AI-cost**, Access-protected live readiness diagnostic: AI binding, preview enablement, D1 migration and population daily quota. Check this before paid inference.
 * `POST /api/naming/preview` — generate up to eight preview candidates for one test-only origin; output not approved.
 * `POST /api/naming/population/submit` — JSON `{schema:'WTW_POPULATION_NAMING_BATCH_V1', jobId, year, items:[{brief}], recentNames:[]}`; returns a durable job checkpoint and Cloudflare request ID. Exact `jobId`+payload idempotency prevents duplicate charges.
 * `GET /api/naming/population/job?jobId=...` — read-only checkpoint and proposals when ready.
