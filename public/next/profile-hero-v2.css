@@ -380,3 +380,58 @@
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-farm > .ng-profile-intro > .ng-org-mark > .ng-org-initials{
  visibility:hidden!important;
 }
+
+
+/* Source dossiers have two tabs and a real MORE RECORDS selector, not the
+ * removed redundant department bar. Keep those controls visible and usable
+ * on narrow displays instead of letting the old fixed-height strip clip them. */
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-horse .ng-person-dossierbar{
+ min-width:0!important;
+ max-width:100%!important;
+ box-sizing:border-box!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-horse .ng-person-dossieractions{
+ min-width:0!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-horse .ng-person-dossieractions button,
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-horse .ng-person-dossieractions select{
+ flex:0 0 auto;
+ white-space:nowrap!important;
+}
+@media(max-width:920px){
+ #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-horse .ng-person-dossierbar{
+  height:auto!important;
+  min-height:32px!important;
+  flex-wrap:wrap!important;
+  gap:5px!important;
+  padding:5px 8px!important;
+ }
+ #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-horse .ng-person-dossierlabel{
+  flex:1 1 auto!important;
+  min-width:0!important;
+ }
+ #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-horse .ng-person-dossieractions{
+  flex:0 1 auto!important;
+  max-width:100%!important;
+  flex-wrap:wrap!important;
+ }
+}
+@media(max-width:580px){
+ #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-horse .ng-person-dossieractions{
+  width:100%!important;
+  display:grid!important;
+  grid-template-columns:minmax(64px,1fr) minmax(64px,1fr) minmax(110px,1.5fr)!important;
+  gap:4px!important;
+ }
+ #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-horse .ng-person-dossieractions button,
+ #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-horse .ng-person-dossieractions select{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  padding-left:6px!important;
+  padding-right:5px!important;
+ }
+ #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-horse .ng-person-dossierlabel small{
+  display:none!important;
+ }
+}
