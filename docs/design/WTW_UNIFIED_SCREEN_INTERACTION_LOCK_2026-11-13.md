@@ -120,3 +120,17 @@ User-locked nonnegotiable direction for **every current and future applicable sc
 
 Acceptance combines structural tests, real Chromium interaction/scroll probes, actual rendered screen review and product-wide release certification. The permanent structural guard is `tests/ui-core-information-controls-contract.test.mjs`. User's visual standard is FM/OOTP-quality density and feeling, not a claim to replicate their copyrighted layouts.
 
+
+
+## Locked local previous/next dossier controls — November 14, 2026
+
+**All horse, person, owner, farm/facility and track information profiles must show compact local Previous ‹ and Next › controls immediately beside OVERVIEW**, followed by HISTORY and MORE RECORDS. These controls were missing from the previously approved shared dossier navigation, as observed on the Alderwick International Stud facility profile.
+
+- This is **in-profile information navigation**, not a duplicate of the global browser Back/Forward buttons at the upper left. The arrows cycle through the one existing canonical section list: Overview, the displayed More Records entries in their original order, then History, wrapping at either end. Every click changes the actual content panel, not just the highlighted arrow.
+- Never build a second navigation list, alternate screen, special-case facility pager or standalone CSS layer. Use the one `profileDetail()` shared dossier bar, `APP.detailTab` and the existing `profile-record` options. All profile types must behave consistently.
+- Arrows remain visible, compact, keyboard-accessible, labeled and focus-highlighted at desktop and laptop sizes. Neither page movement nor the existing Overview/History/More Records buttons advance the game date, change record identities, alter asset artwork or mutate saved careers.
+- Source-backed browser certification is required on all five families (track, horse, person, owner, facility), including forward, backward, wrap, stable identity, January 1999 game date and the locked Track Stakes / Meet / History arrangement.
+- Permanent regression guards: `tests/dossier-local-navigation.test.mjs` and `scripts/1999-full-screen-controls-cdp.mjs`. A missing local pager is a regression even if global browser navigation still works.
+
+**Year in Review future visual direction:** the user approved the premium annual style for now and wants a vintage newspaper/editorial character when returning later. Do not begin another annual redesign while restoring the shared profile navigation.
+

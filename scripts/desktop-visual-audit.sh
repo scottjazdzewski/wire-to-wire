@@ -43,6 +43,12 @@ capture horse-profile '?page=horse&name=The+Last+Match' 'ng-horse-dossier'
 capture people-profile '?ui=WorldRecord%3Aperson%3AP-000018' 'ng-person-horse-dossier'
 capture founder-owner '?ui=FoundingProfile%3Aownership%3AO-000014' 'ng-track-workspace'
 capture founder-facility '?ui=FoundingProfile%3Afacility%3AO-000068' 'ng-track-workspace'
+# Narrow desktop acceptance for the restored local dossier arrows beside Overview.
+"$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+  --force-device-scale-factor=1 --window-size=1280,800 --virtual-time-budget=4000 \
+  --screenshot="visual-audit/screenshots/founder-facility-1280.png" \
+  'http://127.0.0.1:8765/next/?ui=FoundingProfile%3Afacility%3AO-000068' \
+  >/tmp/wtw-chrome-facility1280.log 2>&1
 capture aqueduct-track '?ui=WorldRecord%3Atrack%3AT-0001' 'ng-profile-track'
 capture belmont-track '?ui=WorldRecord%3Atrack%3AT-0002' 'ng-profile-track'
 capture gulfstream-track '?ui=WorldRecord%3Atrack%3AT-0017' 'ng-profile-track'
