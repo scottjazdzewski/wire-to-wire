@@ -39,7 +39,7 @@ export function buildNamingLabScenario({ownerName,breederName,story,foalingYear=
 export function createNamingDeskController({fetchImpl=globalThis.fetch,notify=()=>{}}={}){
  const model={fields:{ownerName:'Naming Lab Owner',breederName:'Naming Lab Breeder',
   foalingYear:'1996',story:''},busy:false,error:'',notice:'',results:[],
-  recentNames:[],shortlist:[],hasGenerated:false};
+  recentNames:[],shortlist:[],rejected:[],hasGenerated:false};
  function refresh(){notify()}
  function setField(name,value){
   if(model.busy||!Object.hasOwn(model.fields,name))return false;
@@ -78,14 +78,22 @@ export function createNamingDeskController({fetchImpl=globalThis.fetch,notify=()
  }
  function mark(name){
   const candidate=model.results.find(r=>r.name===name&&r.status==='AWAITING_INDEPENDENT_EDITOR');
-  if(!candidate)return false;
+  if(!candidate||model.rejected.includes(name))return false;
   if(!model.shortlist.includes(name))model.shortlist.push(name);
   model.notice='Marked as interesting for this browser session. NOT owner-approved or registered.';
   refresh();return true;
  }
+ function reject(name){
+  const candidate=model.results.find(r=>r.name===name);
+  if(!candidate||model.rejected.includes(name))return false;
+  model.rejected.push(name);
+  model.shortlist=model.shortlist.filter(x=>x!==name);
+  model.notice='Rejected this proposal in the temporary lab. No permanent owner rating or career record was changed.';
+  refresh();return true;
+ }
  function clear(){
   if(model.busy)return false;
-  model.results=[];model.shortlist=[];model.recentNames=[];model.error='';
+  model.results=[];model.shortlist=[];model.rejected=[];model.recentNames=[];model.error='';
   model.notice='Lab results cleared. Your actual game save is unchanged.';
   refresh();return true;
  }
@@ -93,6 +101,7 @@ export function createNamingDeskController({fetchImpl=globalThis.fetch,notify=()
  function action(key,val){
   if(key==='naming-generate')return generate();
   if(key==='naming-keep')return mark(val);
+  if(key==='naming-reject')return reject(val);
   if(key==='naming-clear')return clear();
   return false;
  }
@@ -100,14 +109,17 @@ export function createNamingDeskController({fetchImpl=globalThis.fetch,notify=()
   const f=model.fields;
   const candidates=model.results.map((r,i)=>{
    const pass=r.status==='AWAITING_INDEPENDENT_EDITOR';
+   const rejected=model.rejected.includes(r.name);
    return '<article class="ng-naming-candidate"><div class="ng-naming-candidate-head"><strong>'+
-    esc(r.name)+'</strong><small>'+(pass?'SCREENED · EDITOR NEEDED':'HELD')+'</small></div>'+
+    esc(r.name)+'</strong><small>'+(rejected?'REJECTED IN LAB':pass?'SCREENED · EDITOR NEEDED':'HELD')+'</small></div>'+
     '<p>'+esc(r.explanation||'No meaningful explanation')+'</p>'+
     '<small class="ng-naming-provenance">ORIGIN: '+esc(r.evidenceQuote||'Not supplied')+'</small>'+
     (r.reasons?.length?'<small class="ng-naming-issues">CHECK: '+esc(r.reasons.join(' · '))+'</small>':'')+
     '<div class="ng-naming-actions"><button type="button" data-ng="naming-keep" data-val="'+esc(r.name)+'"'+
-     (!pass||model.shortlist.includes(r.name)?' disabled':'')+'>'+
-     (model.shortlist.includes(r.name)?'MARKED':'MARK INTERESTING')+'</button><span>NOT RELEASED</span></div></article>';
+     (!pass||rejected||model.shortlist.includes(r.name)?' disabled':'')+'>'+
+     (model.shortlist.includes(r.name)?'MARKED':'MARK INTERESTING')+'</button>'+ 
+     '<button type="button" data-ng="naming-reject" data-val="'+esc(r.name)+'"'+(rejected?' disabled':'')+'>'+
+     (rejected?'REJECTED':'REJECT IN LAB')+'</button><span>NOT RELEASED</span></div></article>';
   }).join('');
   const metric=(label,value)=>'<div class="ng-manager-metric"><small>'+esc(label)+'</small><strong>'+esc(value)+'</strong></div>';
   return '<section class="ng-manager-screen ng-naming-desk" aria-label="Horse Naming Desk research preview">'+
@@ -139,7 +151,7 @@ export function createNamingDeskController({fetchImpl=globalThis.fetch,notify=()
    '<div class="ng-manager-secondary-list ng-naming-guidance"><p>The live 1999 roster, foaling records, horse identities, history, IndexedDB careers and registration gate are never modified by this desk.</p>'+ 
    '<p>When breeding is ready, actual saved horse and owner IDs can enter the separate owner-review workflow.</p></div></section></aside></div></section>';
  }
- return {mode:NAMING_DESK_MODE,setField,defaultOwner,generate,mark,clear,action,snapshot,render};
+ return {mode:NAMING_DESK_MODE,setField,defaultOwner,generate,mark,reject,clear,action,snapshot,render};
 }
 
 if(typeof window!=='undefined'){
