@@ -267,6 +267,14 @@ export function validateFutureIndustryGameRuntime(state,world){
    source.primary_surname===p.primarySurname&&
    source.birth_year===p.birthYear&&source.naming_revision===p.naming_revision,
    'FUTURE_IDENTITY_AUDIT','Personnel identity differs from its game admission journal');
+  const syncEvents=state.event_log.filter(e=>
+   e.kind==='FUTURE_PERSON_SYNCED'&&e.details?.person_id===personId);
+  if(syncEvents.length){
+   const last=syncEvents[syncEvents.length-1].details;
+   ensure(last.retired===p.retired&&last.availability===p.availability&&
+    last.continuity_revision===p.continuity_revision,
+    'FUTURE_IDENTITY_AUDIT','Personnel status differs from its latest game sync event');
+  }
  }
  for(const [opId,op] of Object.entries(root.organizations)){
   ensure(isObject(op)&&op.id===opId&&ID.test(opId)&&
