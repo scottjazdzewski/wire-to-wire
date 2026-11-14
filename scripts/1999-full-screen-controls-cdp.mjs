@@ -309,6 +309,10 @@ try {
    record:nav?.querySelector('.ng-person-dossierlabel small')?.textContent?.trim()||'',
    overview:overview?.getAttribute('aria-current')||'',
    history:history?.getAttribute('aria-current')||'',
+   pager: [...(nav?.querySelectorAll('button[data-ng="profile-step"]')||[])].map(b=>({
+    step:b.dataset.val,label:b.getAttribute('aria-label')||'',enabled:!b.disabled,
+    title:b.title||''
+   })),
    options:select?[...select.options].map(x=>x.value):[],
    selected:select?.value||'',hasStakes:!!root?.querySelector('.ng-track-stakes .ng-stakes-table'),
    hasMeet:!!root?.querySelector('.ng-track-info-stack .ng-track-meet-card'),
@@ -345,6 +349,37 @@ try {
   else if(item.id&&original.identity)assert.equal(original.identity,item.id,'Wrong '+item.family+' logo/theme');
   const deeper=original.options.find(x=>x&&x!=='Overview'&&x!=='History');
   assert.ok(deeper,item.family+' has no deeper record view');
+  assert.deepEqual(original.pager.map(x=>x.step),['-1','1'],
+   'Both adjacent dossier arrows must exist on '+item.family);
+  assert.ok(original.pager.every(x=>x.enabled&&x.label&&x.title),
+   'Local arrows require active keyboard-accessible labels and tooltips');
+  // The shared arrow pair cycles canonical dossier views. NEXT from Overview
+  // must open the first deeper record; PREVIOUS returns to Overview. PREVIOUS
+  // from Overview wraps to History, and NEXT returns to Overview.
+  async function stepProfile(direction){
+   const found=await evaluate(`(()=>{
+    const button=document.querySelector('#wtwNextgen .ng-person-dossierbar [data-ng="profile-step"][data-val="${direction}"]');
+    if(!button||button.disabled)return false;button.click();return true;
+   })()`);
+   assert.ok(found,item.family+' local '+direction+' arrow missing or nonfunctional');
+  }
+  await stepProfile('1');
+  const arrowNext=await profileReady(item.family+' next arrow',deeper.toUpperCase());
+  assert.equal(arrowNext.selected,deeper,'NEXT did not actually open the first deeper '+item.family+' view');
+  assert.equal(arrowNext.identity,original.identity);
+  assert.equal(arrowNext.date,baseline.date);
+  await stepProfile('-1');
+  const arrowBack=await profileReady(item.family+' previous arrow','OVERVIEW');
+  assert.equal(arrowBack.overview,'page');
+  assert.equal(arrowBack.name,original.name);
+  await stepProfile('-1');
+  const arrowWrapped=await profileReady(item.family+' wrap to History','HISTORY');
+  assert.equal(arrowWrapped.history,'page');
+  await stepProfile('1');
+  const arrowRestored=await profileReady(item.family+' wrap to Overview','OVERVIEW');
+  assert.equal(arrowRestored.name,original.name);
+  assert.equal(arrowRestored.sourceRecord,original.sourceRecord);
+  assert.equal(arrowRestored.date,baseline.date);
   if(item.family==='TRACK'){
    assert.ok(original.hasStakes&&original.hasMeet&&original.hasTrackHistory,
     'The approved left stakes / right Meet and History track layout was replaced');
@@ -388,7 +423,7 @@ try {
   assert.equal(restored.date,baseline.date);
   if(item.family==='TRACK')assert.ok(restored.hasStakes&&restored.hasMeet&&restored.hasTrackHistory,
    'Returning to track overview lost its approved full stadium layout');
-  console.log('WTW_PROFILE_CONTROLS_PASS '+item.family+' '+original.name+' '+deeper);
+  console.log('WTW_PROFILE_CONTROLS_PASS '+item.family+' '+original.name+' '+deeper+' local-arrows:forward/back/wrap');
  }
 
  // Global Search is a full-height source-linked directory. Verify the actual
