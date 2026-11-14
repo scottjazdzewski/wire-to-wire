@@ -168,9 +168,12 @@ async function openDB(){
 function transact(db,mode,record=null){
  return new Promise((resolve,reject)=>{
   const tx=db.transaction('careers',mode),store=tx.objectStore('careers');
+  let response=null;
   const req=mode==='readonly'?store.get(PLAYTEST_KEY):store.put({key:PLAYTEST_KEY,save:record});
-  req.onsuccess=()=>resolve(req.result);
-  req.onerror=()=>reject(req.error||Error('Playtest save could not be read or written'));
+  req.onsuccess=()=>{response=req.result};
+  tx.oncomplete=()=>resolve(response); // only acknowledge after durable transaction commit
+  tx.onerror=()=>reject(tx.error||Error('Playtest save transaction failed'));
+  tx.onabort=()=>reject(tx.error||Error('Playtest save transaction aborted'));
  });
 }
 export function browserPlaytestRequested(location=globalThis.location){
