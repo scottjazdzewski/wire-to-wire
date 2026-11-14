@@ -10,13 +10,17 @@ const start=ui.indexOf('function sourceOpportunityBoard(){');
 const end=ui.indexOf('\nfunction managerDashboard(){',start);
 assert.ok(start>0&&end>start,'Headless opportunity board must use one current manager screen');
 const snippet=ui.slice(start,end);
+const helpers=ui.slice(ui.indexOf('function managerRecordSortState('),
+ ui.indexOf('function sourceNewsDesk()'));
+assert.ok(helpers.includes('function managerSortRecords(')&&helpers.includes('function managerSortableColumns('),
+ 'All management screens must reuse the same actual sorter and header controls');
 const escape=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 function render(notes=[],due=[]){
- return new Function('safe','glyph','managerRecordViewControl','currentMessages','dueActions','depGameDay',
-  snippet+'\nreturn sourceOpportunityBoard;')(
+ return new Function('safe','glyph','managerRecordViewControl','currentMessages','dueActions','depGameDay','APP',
+  helpers+'\n'+snippet+'\nreturn sourceOpportunityBoard;')(
   escape,()=>'<svg aria-hidden="true"></svg>',
   ()=>' <label>RECORD VIEW <select data-ng-select="manager-screen"></select></label> ',
-  ()=>notes,()=>due,()=>'1999-01-01')();
+  ()=>notes,()=>due,()=>'1999-01-01',{managerSortScope:'',managerSortKey:'',managerSortDesc:false})();
 }
 
 test('opening Opportunity Board uses the one approved route, never clicks an obsolete Office button',()=>{
