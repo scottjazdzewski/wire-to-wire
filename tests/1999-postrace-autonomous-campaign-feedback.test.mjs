@@ -119,7 +119,16 @@ test('autonomous owner funds postrace care, while cash and actual horse-care inv
  assert.ok(invested.runtime.finances.ledger.some(e=>
   e.horse_id===h.horse_id&&e.date==='1999-01-08'&&
   e.kind==='HORSE_CARE_OWNER_PAYMENT'));
- assert.ok(invested.runtime.finances.operation_balances_minor[owner]<90000000);
+ const ownerDayFlow=invested.runtime.finances.ledger.filter(e=>
+  e.date==='1999-01-08'&&e.operation_id===owner).
+  reduce((total,e)=>total+e.amount_minor,0);
+ assert.equal(invested.runtime.finances.operation_balances_minor[owner],
+  90000000+ownerDayFlow,
+  'Owner cash must reconcile to both care expenses AND legitimate racing/barn income');
+ assert.ok(invested.runtime.finances.ledger.some(e=>
+  e.date==='1999-01-08'&&e.horse_id===h.horse_id&&
+  e.kind==='HORSE_CARE_OWNER_PAYMENT'&&e.amount_minor<0),
+  'Recovery care must charge a real negative owner invoice');
  const unfunded=structuredClone(scenario);
  unfunded.runtime.finances.operation_balances_minor[owner]=0;
  const blocked=day(unfunded);
