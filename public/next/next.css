@@ -1684,7 +1684,7 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-tier1-biography>span{display:inline-flex;align-items:center;gap:6px;min-width:0;border-right:1px solid #3c4b47;padding-right:12px}
 .ng-tier1-biography>span:last-child{border-right:0}
 .ng-tier1-biography small{color:#b4cdbb!important;font-size:var(--wtw-ui-profile-status)!important;font-weight:790;white-space:nowrap;letter-spacing:.035em}
-.ng-tier1-biography strong{color:#f1dfac!important;font-size:var(--wtw-ui-profile-value)!important;line-height:1.2;font-weight:740;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ng-tier1-biography strong{color:#f1dfac!important;font-size:var(--wtw-ui-profile-value)!important;line-height:1.25;font-weight:740;overflow:visible;text-overflow:clip;white-space:normal;overflow-wrap:anywhere}
 .ng-tier1-workspace{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.08fr) minmax(0,1.17fr);gap:7px;height:100%;min-height:0;min-width:0;width:100%;align-items:stretch}
 .ng-tier1-card{display:flex;flex-direction:column;min-width:0;min-height:0;border:1px solid #3a4842;background:#192125;border-radius:3px;overflow:hidden}
 .ng-tier1-card>header{box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:6px;flex:0 0 35px;min-height:35px;padding:6px 9px;background:#29332f;color:#f5e6c7;border-bottom:1px solid #4a5d4f;font-size:var(--wtw-ui-section-title);font-weight:800;letter-spacing:.025em}
@@ -1788,7 +1788,7 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-profile-person .ng-tier1-biography{display:flex;flex-wrap:wrap;align-items:center;gap:5px 10px;min-width:0}
 .ng-profile-person .ng-tier1-biography>span{display:inline-flex;align-items:center;min-width:0;gap:5px;padding-right:11px;flex:0 1 auto}
 .ng-profile-person .ng-tier1-biography small{font-size:var(--wtw-ui-profile-status)!important;letter-spacing:.035em;white-space:nowrap}
-.ng-profile-person .ng-tier1-biography strong{display:inline-flex;align-items:center;gap:5px;min-width:0;max-width:240px;font-size:var(--wtw-ui-profile-value)!important;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}
+.ng-profile-person .ng-tier1-biography strong{display:inline-flex;align-items:center;gap:5px;min-width:0;max-width:100%;font-size:var(--wtw-ui-profile-value)!important;text-overflow:clip;overflow:visible;white-space:normal;overflow-wrap:anywhere;line-height:1.25}
 .ng-profile-person .ng-person-national-flag{box-sizing:border-box;width:22px;height:16px;flex:0 0 22px;max-width:22px;max-height:16px;border:1px solid #3c4b4791;border-radius:2px;object-fit:cover;box-shadow:0 1px 2px #0006}
 @media(min-width:1081px){
 .ng-route-profile .ng-profile-person .ng-tier1-biography{flex-wrap:wrap!important;row-gap:4px!important;column-gap:11px!important;margin:3px 0 2px!important}
@@ -1798,7 +1798,7 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-profile-person .ng-tier1-biography{flex-wrap:wrap!important;gap:5px 8px!important}
 .ng-profile-person .ng-tier1-biography>span{border-right:0!important;border-bottom:1px solid #3c4b47;padding:3px 6px 4px 0!important;max-width:100%}
 .ng-profile-person .ng-tier1-biography small{font-size:var(--wtw-ui-profile-status)!important}
-.ng-profile-person .ng-tier1-biography strong{font-size:var(--wtw-ui-profile-value)!important;max-width:200px}
+.ng-profile-person .ng-tier1-biography strong{font-size:var(--wtw-ui-profile-value)!important;max-width:100%;white-space:normal;overflow-wrap:anywhere;text-overflow:clip;overflow:visible}
 }
 .ng-profile-person .ng-person-network-preview{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:auto;min-height:31px;padding:5px 9px;box-sizing:border-box;background:#1e262a;border-top:1px solid #3c4b47}
 .ng-profile-person .ng-person-network-preview>span{font-size:9px;color:#b4cdbb;letter-spacing:.02em;font-weight:700}
