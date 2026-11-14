@@ -8,6 +8,7 @@ const commandsSource=read('public/next/office-direct-command.js');
 const officeSource=read('public/office-v30-4.js');
 const ui=read('public/next/next.js');
 const html=read('public/next/index.html');
+const visualAudit=read('scripts/desktop-visual-audit.sh');
 const boot=(manager,other={})=>{
  const window={__WTW_1999_MANAGEMENT__:manager,...other};
  const module={exports:{}};
@@ -60,4 +61,14 @@ test('the navigation upgrade loads the original Office provider before the direc
  assert.ok(i>0&&c>i&&n>c);
  assert.equal((html.match(/rel="stylesheet"/g)||[]).length,1);
  assert.match(html,/data-wtw-layout="legacy-data-bridge" aria-hidden="true" hidden/);
+});
+
+
+test('desktop release gate exercises real department clicks, Office Home, Back and Forward',()=>{
+ assert.match(visualAudit,/__wtw_nav_probe\.html/);
+ assert.match(visualAudit,/press\('menu',section\)/);
+ assert.match(visualAudit,/press\('office'\)/);
+ assert.match(visualAudit,/w\.history\.back\(\)/);
+ assert.match(visualAudit,/w\.history\.forward\(\)/);
+ assert.match(visualAudit,/DIRECT FM\/OOTP NAVIGATION VERIFIED/);
 });
