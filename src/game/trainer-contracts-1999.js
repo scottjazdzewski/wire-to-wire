@@ -8,6 +8,7 @@
  * Source trainer P-IDs and owner O-IDs are never mutated.
  */
 import {ensure,isObject,validDate,worldIdentity,nextDate} from './contracts.js';
+import {getOwnerTrainerMandate} from './owner-trainer-career-1999.js';
 
 export const TRAINER_CONTRACT_SCHEMA='WTW_1999_TRAINER_SERVICE_AGREEMENTS_V1';
 export const TRAINER_CONTRACT_COMMANDS=Object.freeze(['OFFER_TRAINER_SERVICE_TERMS']);
@@ -161,18 +162,33 @@ export function advanceTrainerContracts({state,world,emit}){
    continue;
   }
   const cash=quote.owner_cash_minor??0;
-  const canPay=cash>=quote.minimum_acceptable_minor*quote.horse_count*14;
-  const shouldRaise=a.daily_fee_minor<quote.minimum_acceptable_minor&&canPay;
+  const mandate=getOwnerTrainerMandate(state,owner,trainer);
+  const record=state.runtime.owner_trainer_reviews?.by_pair?.[id]?.evidence;
+  const observedStarts=record?.decision_sample_starts??record?.starts??0;
+  const observedForm=record?.decision_form??record?.average_relative_form??0;
+  const strongSupport=mandate==='SUPPORT'&&
+   observedStarts>=5&&observedForm>.20;
+  const improvementHold=mandate==='IMPROVEMENT_PLAN'&&
+   observedStarts>=4&&observedForm<-.20&&
+   quote.professional_standing<.8;
+  const target=strongSupport?
+   Math.round(quote.minimum_acceptable_minor*1.03):quote.minimum_acceptable_minor;
+  const canPay=cash>=target*quote.horse_count*14;
+  const shouldRaise=!improvementHold&&a.daily_fee_minor<target&&canPay;
   if(shouldRaise){
-   a.pending={daily_fee_minor:quote.minimum_acceptable_minor,
-    effective_on:nextDate(day),provenance:'AI_TRAINER_MARKET_RENEGOTIATION'};
+   a.pending={daily_fee_minor:target,
+    effective_on:nextDate(day),provenance:strongSupport?
+     'AI_OWNER_SUSTAINED_FORM_CONTRACT_BACKING':'AI_TRAINER_MARKET_RENEGOTIATION'};
    rt.totals.offers++;rt.totals.accepted++;
    emit('AI_TRAINER_SERVICE_RENEGOTIATED',{owner_id:owner,trainer_id:trainer,
-    old_daily_fee_minor:a.daily_fee_minor,new_daily_fee_minor:quote.minimum_acceptable_minor,
+    old_daily_fee_minor:a.daily_fee_minor,new_daily_fee_minor:target,
     effective_on:a.pending.effective_on,
-    reason:'TRAINER_MARKET_FEE_AND_OWNER_LIQUIDITY'});
+    reason:strongSupport?'SUSTAINED_FORM_EARNED_COMPENSATION_PREMIUM':
+     'TRAINER_MARKET_FEE_AND_OWNER_LIQUIDITY'});
   }else{
-   a.last_review_reason=canPay?'CURRENT_TERMS_COMPETITIVE':'OWNER_CASH_RUNWAY_CONSTRAINT';
+   a.last_review_reason=improvementHold?
+    'OWNER_IMPROVEMENT_PLAN_DEFERS_OPTIONAL_RAISE':
+    canPay?'CURRENT_TERMS_COMPETITIVE':'OWNER_CASH_RUNWAY_CONSTRAINT';
    emit('TRAINER_SERVICE_REVIEWED',{owner_id:owner,trainer_id:trainer,
     daily_fee_minor:a.daily_fee_minor,reason:a.last_review_reason});
   }

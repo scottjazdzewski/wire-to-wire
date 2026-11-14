@@ -18,9 +18,10 @@ import {RACING_COMMANDS,racingAction} from './racing-1999.js';
 import {run1999RacingAgents} from './race-agents-1999.js';
 import {HORSE_SHIPPING_COMMANDS,shippingAction,advance1999HorseShipping} from './shipping-1999.js';
 import {TRAINER_CONTRACT_COMMANDS,offerTrainerServiceTerms,advanceTrainerContracts} from './trainer-contracts-1999.js';
+import {OWNER_TRAINER_REVIEW_COMMANDS,setOwnerTrainerMandate,advanceOwnerTrainerReviews} from './owner-trainer-career-1999.js';
 import {PLAYER_RACE_PLAN_COMMANDS,confirm1999PlayerRacePlan} from './player-race-plan-1999.js';
 
-const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_CARE_COMMANDS,...RACING_COMMANDS,...HORSE_SHIPPING_COMMANDS,...TRAINER_CONTRACT_COMMANDS,...PLAYER_RACE_PLAN_COMMANDS]);
+const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_CARE_COMMANDS,...RACING_COMMANDS,...HORSE_SHIPPING_COMMANDS,...TRAINER_CONTRACT_COMMANDS,...OWNER_TRAINER_REVIEW_COMMANDS,...PLAYER_RACE_PLAN_COMMANDS]);
 const MAX_PENDING = 5000;
 function appendLog(state, commandId, kind, details) {
   const event = { seq: state.event_log.length + 1, command_id: commandId,
@@ -115,6 +116,8 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     shippingAction({state:next,world,command:c,emit});
   } else if (RACING_COMMANDS.includes(c.type)) {
     racingAction({state:next,world,command:c,emit});
+  } else if (OWNER_TRAINER_REVIEW_COMMANDS.includes(c.type)) {
+    setOwnerTrainerMandate({state:next,world,command:c,emit});
   } else if (TRAINER_CONTRACT_COMMANDS.includes(c.type)) {
     offerTrainerServiceTerms({state:next,world,command:c,emit});
   } else if (HORSE_CARE_COMMANDS.includes(c.type)) {
@@ -131,6 +134,7 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     // Physical arrivals must resolve before trainers choose the day's work,
     // owners price care, and barn operators assess actual stall occupancy.
     advance1999HorseShipping({state:next,world,emit});
+    advanceOwnerTrainerReviews({state:next,world,emit});
     advanceTrainerContracts({state:next,world,emit});
     runAutonomousDay({state:next,world,emit});
     advanceFacilities({state:next,world,emit});

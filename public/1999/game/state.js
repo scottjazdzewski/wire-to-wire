@@ -11,6 +11,7 @@ import {validateHorseCareRuntime} from './horse-care.js';
 import {createDailyAgentRuntime,validateDailyAgentRuntime} from './daily-agents.js';
 import {createRacingRuntime,validateRacingRuntime} from './racing-1999.js';
 import {createTrainerContractRuntime,validateTrainerContracts} from './trainer-contracts-1999.js';
+import {createOwnerTrainerReviewRuntime,validateOwnerTrainerReviews} from './owner-trainer-career-1999.js';
 import {createPostRaceCampaignRuntime,validatePostRaceCampaigns} from './post-race-campaign-1999.js';
 
 export function createGameRun({ world, runId, seed, player, stableHorseIds = [], startDate, personGenerationCatalog = null } = {}) {
@@ -36,7 +37,7 @@ export function createGameRun({ world, runId, seed, player, stableHorseIds = [],
     rng: { seed: seed >>> 0 },
     player: { role: player.role, involvement: player.involvement, operation_id: operationId },
     stable_horse_ids: [...stableHorseIds],
-    runtime: { horse: {}, races: {}, entries: {}, people: personGenerationCatalog?generatePeopleRuntime({world,catalog:personGenerationCatalog}):{}, finances: { balance_minor: null, ledger: [], operation_balances_minor: {} }, facilities:createFacilityState(), ownership:createOwnershipRuntime(), registered_horses:createHorseRegistrationRuntime(), agents:createDailyAgentRuntime(),racing:createRacingRuntime(),trainer_contracts:createTrainerContractRuntime(),post_race_campaigns:createPostRaceCampaignRuntime() },
+    runtime: { horse: {}, races: {}, entries: {}, people: personGenerationCatalog?generatePeopleRuntime({world,catalog:personGenerationCatalog}):{}, finances: { balance_minor: null, ledger: [], operation_balances_minor: {} }, facilities:createFacilityState(), ownership:createOwnershipRuntime(), registered_horses:createHorseRegistrationRuntime(), agents:createDailyAgentRuntime(),racing:createRacingRuntime(),trainer_contracts:createTrainerContractRuntime(),post_race_campaigns:createPostRaceCampaignRuntime(),owner_trainer_reviews:createOwnerTrainerReviewRuntime() },
     decisions: { pending: {}, resolved: {} },
     scheduler: { pending: [], delivered_ids: [] },
     command_receipts: {},
@@ -99,6 +100,7 @@ export function validateGameRun(state, world) {
   validateRacingRuntime(state,world);
   validateTrainerContracts(state,world);
   validatePostRaceCampaigns(state,world);
+  validateOwnerTrainerReviews(state,world);
   strictJSON(state,MAX_GAME_SAVE_CHARS);
   return state;
 }
