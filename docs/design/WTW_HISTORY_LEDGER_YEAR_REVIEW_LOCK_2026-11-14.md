@@ -20,6 +20,20 @@
 - **Complete Year Results:** compact source-linked race table, real dates only, and the same date-evidence treatment as the all-years ledger.
 - Source-based year-only dating and schedule uncertainty remain explicit, especially before 1973. Don't assign exact race days where the source only supports a year.
 
+## Permanent Year in Review visual identity — racing annual, NOT flat olive green
+
+The main History Records screen remains a sober, dense sortable database; **the individual Year in Review is intentionally a premium illustrated-editorial racing annual** with the information hierarchy and visual character of a professional FM/OOTP annual season report.
+
+- **Masthead:** deep racing ink/navy, burgundy/wine-red, cream and brass-gold layered gradients, an oversized ghost year and subtle racing-line texture; prominent serif annual title, compact functional year dropdown and return control. No filler hero larger than needed.
+- **Genuine metrics:** four compact but visibly distinct annual-stat tiles, each sourced from the active season edition ledger. No invented winners, awards or fake live events.
+- **Three Classics:** Blue-riband winner cards with distinctive navy/blue, racing burgundy/red and bronze/gold treatments, ordinal marks, prominent horse-record links, source venue/date footer. Missing winner data must stay plainly missing; a decorative card cannot imply a result.
+- **Awards and season leaders:** plum/medal-toned awards treatment with source-gap wording until approved awards are supplied; steel-blue season leaderboard with linked horses; results table in compact ink blue with real scrolling and source-date evidence.
+- **Never regress to monotonous flat olive-green panels.** Visual depth is earned through hierarchy, rich contrasting surfaces, distinct accent families, deliberate typography and approved imagery only when actually associated with the recorded entity; no false historical photographs or invented badges.
+- Use one definitive set of annual CSS rules in `public/style.css`, scoped under `history-year-review` or the page's unique annual classes. Physical retirement is mandatory: do not append competing override stacks or resurrect old month-card styling.
+- Retain the same semantic controls, URL/back behavior, horse links, source gating, readable focus indicators and independently scrollable results. Desktop screenshot acceptance at 1536×864 and 1280×800 must check contrast, clipping and density.
+
+This is the approved permanent annual editorial design baseline. Future UX work may enrich verified season information inside this architecture but may not quietly replace it with generic olive dashboards.
+
 ## Existing application, not another game
 
 This changes the existing `public/app.js`, `public/archive/index.html`, and `public/style.css` rather than adding a competing shell or historical master. The retired `vault-race-card` monthly presentation and its CSS are physically removed. The pure read-only model `public/archive/history-ledger-model.mjs` is the one new history view model; it owns neither source data nor gameplay commands.
