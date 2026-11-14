@@ -123,6 +123,7 @@ export async function openDurableOrganizationContinuityService({
   getPerson:(...a)=>registry.getPerson(...a),
   getHistory:(...a)=>registry.getHistory(...a),
   listOrganizations:(...a)=>registry.listOrganizations(...a),
+  iterateOrganizations:(...a)=>registry.iterateOrganizations(...a),
   apply,refresh,exportArchive
  });
 }
