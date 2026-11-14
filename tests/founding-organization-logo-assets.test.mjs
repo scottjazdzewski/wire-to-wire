@@ -50,3 +50,16 @@ test('No stale legacy identity substitutions in active 1999 logo index',()=>{
  }
  for(const p of index.audit.notPublished)assert.ok(!index.organizations['organization:'+p.id],'unapproved replacement '+p.id);
 });
+
+test('Mar Azul uses an opaque 256x256 exact-ID badge rather than an old horse or state flag',()=>{
+ const id='O-FOUNDING-1999-009';
+ const org=roster.organizations.find(x=>x.id===id);
+ assert.equal(org.name,'Mar Azul Racing');
+ const path=index.organizations['organization:'+id];
+ assert.equal(path,'/assets/office/founding-organization-logos/'+id+'.png');
+ const bytes=readFileSync(resolve(root,'public'+path));
+ assert.equal(bytes.readUInt32BE(16),256);
+ assert.equal(bytes.readUInt32BE(20),256);
+ assert.equal(bytes[25],2,'Approved Mar Azul file must be opaque truecolor RGB');
+ assert.ok(index.audit.published.some(x=>x.id===id&&x.name==='Mar Azul Racing'));
+});
