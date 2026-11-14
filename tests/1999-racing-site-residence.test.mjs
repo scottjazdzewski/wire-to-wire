@@ -50,6 +50,11 @@ test('existing racing organizations can operate distinct on-site or trainer trac
  assert.equal(s.runtime.facilities.sites['F-1999-TRACK'].host_track_id,'T-GP');
  assert.equal(s.runtime.facilities.sites['F-1999-TRACK'].operator_organization_id,'O-OPERATOR');
  assert.deepEqual(importGameSave(exportGameSave(s,world),world),s);
+ const following=execute(s,'clock:day2','ADVANCE_DAY',{});
+ const rent=following.runtime.finances.ledger.filter(x=>x.kind==='FACILITY_TRACK_RENT');
+ assert.equal(rent.length,1);
+ assert.equal(rent[0].amount_minor,-3000);
+ assert.equal(rent[0].operation_id,'O-OPERATOR');
 });
 test('owner may board at an unrelated trainer track barn using actual trainer and F-ID',()=>{
  let s=funds(newRun(),'O-OPERATOR');
