@@ -1,7 +1,8 @@
 /**
  * WTW simulation FOUNDATION: canonical game clock, validated decision choices,
  * scheduled event delivery and append-only event journal.
- * Intentionally no training, entry, race-result or money gameplay effects.
+ * Registered-horse care now uses the existing training simulator, funded by
+ * the single operation ledger. Race entry and actual result settlement remain future.
  */
 import {
   ensure, isObject, requireString, jsonClone, strictJSON, validDate, nextDate
@@ -11,8 +12,9 @@ import {makeReputationBaseline,applyReputationSignal} from './reputation.js';
 import {FACILITY_COMMANDS,facilityAction,advanceFacilities} from './facility-operations.js';
 import {OWNERSHIP_COMMANDS,ownershipAction} from './ownership.js';
 import {HORSE_REGISTRATION_COMMANDS,registerHorseAction} from './horse-registration.js';
+import {HORSE_CARE_COMMANDS,setHorseCarePolicy,initializeGameHorseCare,advanceGameHorseCare} from './horse-care.js';
 
-const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS]);
+const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_CARE_COMMANDS]);
 const MAX_PENDING = 5000;
 function appendLog(state, commandId, kind, details) {
   const event = { seq: state.event_log.length + 1, command_id: commandId,
@@ -99,6 +101,10 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
       before:current.scores,after:updated.scores,source_refs:p.source_refs});
   } else if (HORSE_REGISTRATION_COMMANDS.includes(c.type)) {
     registerHorseAction({state:next,world,command:c,emit});
+    const horse=next.runtime.registered_horses?.by_id?.[c.payload?.horse?.horse_id];
+    if(horse)initializeGameHorseCare(next,horse);
+  } else if (HORSE_CARE_COMMANDS.includes(c.type)) {
+    setHorseCarePolicy({state:next,world,command:c,emit});
   } else if (OWNERSHIP_COMMANDS.includes(c.type)) {
     ownershipAction({state:next,world,command:c,emit});
   } else if (FACILITY_COMMANDS.includes(c.type)) {
@@ -109,6 +115,7 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     next.clock.days_elapsed += 1;
     emit('DAY_ADVANCED', { date: next.clock.date });
     advanceFacilities({state:next,world,emit});
+    advanceGameHorseCare({state:next,world,emit});
     const ready = next.scheduler.pending.filter(x => x.due_date <= next.clock.date);
     next.scheduler.pending = next.scheduler.pending.filter(x => x.due_date > next.clock.date);
     for (const event of ready) {

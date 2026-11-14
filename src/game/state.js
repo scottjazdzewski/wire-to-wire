@@ -7,6 +7,7 @@ import {generatePeopleRuntime} from './people-generator.js';
 import {createFacilityState,validateFacilityState} from './facility-operations.js';
 import {createOwnershipRuntime,validateOwnershipRuntime} from './ownership.js';
 import {createHorseRegistrationRuntime,validateHorseRegistrationRuntime,careerHorse} from './horse-registration.js';
+import {validateHorseCareRuntime} from './horse-care.js';
 
 export function createGameRun({ world, runId, seed, player, stableHorseIds = [], startDate, personGenerationCatalog = null } = {}) {
   validateWorld(world);
@@ -89,6 +90,7 @@ export function validateGameRun(state, world) {
   validateFacilityState(state,world);
   validateOwnershipRuntime(state,world);
   validateHorseRegistrationRuntime(state,world);
+  validateHorseCareRuntime(state,world);
   strictJSON(state);
   return state;
 }

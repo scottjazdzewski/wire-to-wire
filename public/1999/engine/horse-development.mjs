@@ -172,32 +172,40 @@ function dayCharges(horse,trainer,plan,work){
  * The plan describes management intent; the weekly microcycle supplies rest days.
  * No sourced race results, genetic traits, career ability or medical diagnosis change.
  */
-export function advanceHorseTrainingDay(record,horse,trainer,date,seed=19990101){
+export function advanceHorseTrainingDay(record,horse,trainer,date,seed=19990101,careContext={}){
  assertHorse(horse);validateRecord(record,horse);const now=serial(date),prev=serial(record.asOf);
  if(now!==prev+1)throw Error('Training progression must advance exactly one day');
  if(!Number.isSafeInteger(seed)||seed<1)throw Error('Invalid training seed');
  const next={...record,history:[...record.history],alerts:[...record.alerts]};
  const t=trainerQuality(trainer),dayOrdinal=now;
+ // Physical care is part of the same causal model, not a parallel fitness score.
+ // Nutrition, owner-funded support, barn quality and congestion all matter.
+ const nutrition=attr(careContext,'nutrition',.62);
+ const supervision=attr(careContext,'supervision',.55);
+ const barn=attr(careContext,'barnQuality',.7);
+ const crowding=attr(careContext,'crowding',.65);
+ const welfare=(nutrition-.62)*.17+(supervision-.55)*.16+(barn-.7)*.12-
+  Math.max(0,crowding-.8)*.13;
  let work=next.status==='INACTIVE'?'REST':next.plan==='AUTO'?recommendHorseWorkout(next,horse,trainer,date):workFor(next.plan,dayOrdinal);
  if(next.sorenessDays>0)work='REST';
  const intensity=TRAINING_PLANS[work].load;
  const geneticallyTough=1-attr(horse.attributes,'soundness_risk',.48);
- const recovery=cap(.36+geneticallyTough*.34+t.health*.2);
- const response=.74+attr(horse.attributes,'training_focus',.5)*.27+t.conditioning*.32;
+ const recovery=cap(.36+geneticallyTough*.34+t.health*.2+welfare);
+ const response=cap(.74+attr(horse.attributes,'training_focus',.5)*.27+t.conditioning*.32+welfare,0,1.7);
  const young=Number(horse.ageAtDate??horse.ageAtOpening)<4;
  const maturity=young?(.80+t.young*.25):1;
  const variability=.91+random01(seed,horse.id+':'+date+':response')*.18;
  const priorFatigue=next.fatigue;
  if(work==='REST'){
   next.fatigue=cap(next.fatigue-(.045+recovery*.055));
-  next.stress=cap(next.stress-.034-recovery*.018);
+  next.stress=cap(next.stress-.034-recovery*.018-Math.max(-.025,welfare*.09));
   next.fitness=cap(next.fitness-.0018-(next.sorenessDays>0?.0015:0));
   next.restDays++;
   next.streak=0;next.consecutiveHard=0;
  }else{
   const load=intensity*(.90+random01(seed,horse.id+':'+date+':load')*.2);
   next.fatigue=cap(next.fatigue+load*(.085+.012*intensity)-recovery*.024);
-  next.stress=cap(next.stress+load*.038-recovery*.013);
+  next.stress=cap(next.stress+load*.038-recovery*.013-welfare*.08);
   next.fitness=cap(next.fitness+(load*.014*response*maturity*variability)*(1-priorFatigue*.72)-.0018);
   next.workDays++;next.streak++;
   next.consecutiveHard=intensity>=.65?next.consecutiveHard+1:0;
@@ -214,7 +222,7 @@ export function advanceHorseTrainingDay(record,horse,trainer,date,seed=19990101)
    note:'Soreness watch period completed; use a graded return to normal work'});
  }
  next.currentRisk=cap(next.innateRisk*.43+next.fatigue*.41+next.stress*.16+
-  (next.consecutiveHard>=3?.13:0));
+  (next.consecutiveHard>=3?.13:0)-Math.max(-.07,welfare*.16));
  // A modeled soreness interruption—not a diagnosis. A horse can become a
  // welfare caution while the historical identity remains untouched.
  const stressRisk=work==='SPEED'||work==='STAMINA'?1:.6;
@@ -237,7 +245,7 @@ export function advanceHorseTrainingDay(record,horse,trainer,date,seed=19990101)
  const recoveryPenalty=next.sorenessDays>0?.23:0;
  const sharpness=cap((next.speedCondition+next.staminaCondition)/2);
  next.readiness=cap(.48*next.fitness+.18*freshness+.12*next.gateSchooling+
-  .12*next.confidence+.10*sharpness-.2*next.stress-recoveryPenalty);
+  .12*next.confidence+.10*sharpness-.2*next.stress-recoveryPenalty+welfare*.08);
  next.lastWork={date,work,planned:next.plan,load:rnd(intensity),sorenessWatch:next.sorenessDays>0};
  next.asOf=date;
  for(const key of ['fitness','fatigue','readiness','staminaCondition','speedCondition',

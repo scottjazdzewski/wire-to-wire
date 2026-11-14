@@ -19,3 +19,7 @@ export {facilityFinancialReport as getFacilityFinancialReport} from './facility-
 export {HORSE_REGISTRATION_SCHEMA,HORSE_REGISTRATION_COMMANDS,createHorseRegistrationRuntime,validateHorseRegistrationRuntime,careerHorse,getRegisteredHorseDirectory} from './horse-registration.js';
 
 export {getCareerHorseConnections} from './horse-connections.js';
+
+export {HORSE_CARE_SCHEMA,TRAINER_SKILLS_SCHEMA,HORSE_CARE_COMMANDS,FEED_PROGRAMS,CARE_PROGRAMS,
+ modeledTrainerSkills,createHorseCareRecord,getGameHorsePerformance,modelHorsePostRaceResponse}
+ from './horse-care.js';
