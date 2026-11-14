@@ -20,7 +20,7 @@ import {RACING_COMMANDS,racingAction} from './racing-1999.js';
 import {run1999RacingAgents} from './race-agents-1999.js';
 import {HORSE_SHIPPING_COMMANDS,shippingAction,advance1999HorseShipping} from './shipping-1999.js';
 import {TRAINER_CONTRACT_COMMANDS,offerTrainerServiceTerms,advanceTrainerContracts} from './trainer-contracts-1999.js';
-import {OWNER_TRAINER_REVIEW_COMMANDS,setOwnerTrainerMandate,respondToTrainerConcern,advanceOwnerTrainerReviews} from './owner-trainer-career-1999.js';
+import {OWNER_TRAINER_REVIEW_COMMANDS,setOwnerTrainerMandate,respondToTrainerConcern,advanceOwnerTrainerReviews,updateOwnerTrainerLiveReviews} from './owner-trainer-career-1999.js';
 import {PLAYER_RACE_PLAN_COMMANDS,confirm1999PlayerRacePlan} from './player-race-plan-1999.js';
 
 const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_NAMING_COMMANDS,...HORSE_NAME_OWNER_COMMANDS,...HORSE_CARE_COMMANDS,...RACING_COMMANDS,...HORSE_SHIPPING_COMMANDS,...TRAINER_CONTRACT_COMMANDS,...OWNER_TRAINER_REVIEW_COMMANDS,...PLAYER_RACE_PLAN_COMMANDS]);
@@ -150,6 +150,8 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     advanceGameHorseCare({state:next,world,emit});
     settleDailyAgentFeedback({state:next,emit});
     run1999RacingAgents({state:next,world,emit});
+    // The current review must see today's actual races, paid care and outcomes.
+    updateOwnerTrainerLiveReviews({state:next,world,emit,events:output,trigger:'DAILY'});
     const ready = next.scheduler.pending.filter(x => x.due_date <= next.clock.date);
     next.scheduler.pending = next.scheduler.pending.filter(x => x.due_date > next.clock.date);
     for (const event of ready) {
@@ -157,6 +159,16 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
       emit('SCHEDULED_EVENT_DUE', { event_id: event.id, kind: event.kind, data: event.payload });
     }
   }
+  // Non-clock owner actions can also change the relationship immediately.
+  // This is a live projection of the existing run, never an alternate clock.
+  if(c.type!=='ADVANCE_DAY'&&[
+   'RESPOND_TO_TRAINER_CONCERN','SET_OWNER_TRAINER_MANDATE',
+   'OFFER_TRAINER_SERVICE_TERMS','SET_HORSE_CARE_POLICY',
+   'CONFIRM_1999_PLAYER_RACE_PLAN','ENTER_1999_RACE',
+   'SHIP_1999_HORSE','RETURN_1999_HORSE'
+  ].includes(c.type))
+   updateOwnerTrainerLiveReviews({state:next,world,emit,events:output,
+    trigger:'OWNER_OR_TRAINER_DECISION'});
   next.command_receipts[c.id] = fingerprint;
   next.revision += 1;
   validateGameRun(next, world);
