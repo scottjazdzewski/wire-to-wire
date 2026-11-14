@@ -219,12 +219,16 @@ test('1000 append-only lifecycle events keep cursor compact and histories in sep
  const svc=await openDurableOrganizationContinuityService({
   storage,worldId,source:founding(world)
  });
- const farm=world.farms[0];
+ // Journal-volume testing should not imply founding managers work into
+ // their 120s. Use a younger staffed farm and a twenty-year window.
+ const farm=world.farms.find(f=>f.managerIds.every(id=>
+  world.people.find(p=>p.id===id)?.ageAtOpening<=60));
+ assert.ok(farm,'A farm with age-eligible managers is required');
  for(let i=0;i<1000;i++){
   const rev=svc.revision;
   await svc.apply({expectedRevision:rev,event:evt(
    'LOAD-'+i,i%2===0?'CLOSE_ORGANIZATION':'REOPEN_ORGANIZATION',
-   farm.id,1999+Math.floor(i/11)
+   farm.id,1999+Math.floor(i/50)
   )});
  }
  const data=await storage.read({worldId});
