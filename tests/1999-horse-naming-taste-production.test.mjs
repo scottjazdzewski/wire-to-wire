@@ -35,7 +35,7 @@ test('writing prompt actually consumes real owner scores without recycling them 
  assert.ok(CREATIVE_PERSPECTIVES_V482.some(p=>p.id===lens.id));
  assert.ok(lens.priorExcellent.every(n=>ownerRatedNameScore(n)===1));
  assert.ok(lens.priorRejected.every(n=>ownerRatedNameScore(n)===4));
- assert.match(spec.system,/owner.*rating/i);
+ assert.match(spec.system,/owner has rated 520/i);
  assert.match(spec.system,/not.*copy/i);
  assert.equal(input.ratingHistoryReviewed,520);
 });
