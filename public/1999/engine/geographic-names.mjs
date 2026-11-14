@@ -144,11 +144,11 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
   baseCounts.set(key,(baseCounts.get(key)||0)+1);
   records.push({name,givenName:selectedFirst,primarySurname:selectedSurname,
    birthCountry:country,role,
-   source:birthCohortPool&&country!=='US'?(
+   source:options.givenSourceAt?.(i,role,country)??(birthCohortPool&&country!=='US'?(
      options.givenSourceAt?.(i,role,country)??
      'LATIN_CARIBBEAN_1999_CURATED_COUNTRY_COHORT_NOT_CENSUS'):
     birthCohortPool?'SSA_US_BIRTH_COHORT_TOP30_RANK_BIASED_EDITORIAL_DRAW':
-    country==='US'?'CENSUS_1990_US_NATIONAL_EXCERPT_PLUS_TEST_DRAW':'CURATED_COUNTRY_TEST_POOL_NOT_CENSUS',
+    country==='US'?'CENSUS_1990_US_NATIONAL_EXCERPT_PLUS_TEST_DRAW':'CURATED_COUNTRY_TEST_POOL_NOT_CENSUS'),
    originModel:'PROVISIONAL_RACING_ROLE_MIX_NOT_MEASURED'});
  }
  return records;
