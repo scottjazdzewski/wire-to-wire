@@ -52,6 +52,10 @@ test('Dense rosters: Stable, World Horses, Racing and every department preserve 
   assert.match(body,/class="ng-rs-tools"/);
   assert.match(body,/rosterDensityControls\(/);
  }
+ assert.match(stable,/managerRecordViewControl\(directory\?'World':'Stable',directory\?'1999 Horses':APP\.page\|\|'Overview'\)/,
+  'Stable and World Horse Directory must display the same functional VIEW dropdown');
+ assert.match(css,/#wtwNextgen \.ng-rs-tools select\{[^}]*min-width:120px/,
+  'Shared roster menu must fit the compact full-height table toolbar');
  assert.match(stable,/directory\?'directory-sort':'stable-sort'/);
  assert.match(department,/data-ng="dept-sort"/);
  assert.match(department,/aria-sort=/);
