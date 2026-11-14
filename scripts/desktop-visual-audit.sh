@@ -213,6 +213,9 @@ for d in rows:
        'identity',d['intro']['width'],'local nav',d['localNavigation']['width'])
 Path('visual-audit/dom/profile-uniformity-metrics.json').write_text(json.dumps(rows,indent=2))
 PY
+python3 - <<'PY'
+import json,html,re
+from pathlib import Path
 # World and News must use the same FM/OOTP shell on desktop/laptop.
 for name in ('world-directory','world-news','office-news','laptop-world-news'):
  source=Path(f'visual-audit/dom/probe-{name}.html').read_text()
@@ -229,6 +232,7 @@ for name in ('world-directory','world-news','office-news','laptop-world-news'):
   assert data['newsDashboard'] and data['newsDashboard']['width']>=800,(name,'News screen not visible')
   assert data['newsSourceStatus'],(name,'Unverified news misrepresented as connected')
  print('WORLD/NEWS UNIFORMITY',name,data['stage']['width'])
+PY
 
 # Interact with the actual unified application, not static HTML snapshots.
 # Every major screen must use the same rail, single route, and browser history.
