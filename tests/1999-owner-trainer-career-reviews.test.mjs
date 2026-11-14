@@ -74,7 +74,8 @@ test('28-day owner/trainer career reviews use only official race results, paid c
    -completed.runtime.finances.ledger.filter(row=>row.kind==='HORSE_CARE_OWNER_PAYMENT'&&
     row.operation_id===item.owner_id&&
     all(completed).some(x=>x.horse_id===row.horse_id&&x.trainer_id===item.trainer_id)&&
-    row.date<='1999-01-30').reduce((n,row)=>n+row.amount_minor,0));
+    row.date<'1999-01-30').reduce((n,row)=>n+row.amount_minor,0),
+   'The Jan 30 review occurs before Jan 30 care settlement, so it must not include future same-day invoices');
   assert.equal(item.history[0].starts,item.evidence.starts);
   if(expected<3)assert.equal(item.history[0].reason,'WAIT_FOR_SUSTAINED_RACE_SAMPLE');
  }
