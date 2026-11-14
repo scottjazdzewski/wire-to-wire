@@ -122,6 +122,28 @@ export function profileTitle(kind,sourceLabel){
  const s=String(sourceLabel||"").split("/")[0].trim().toUpperCase();
  return /^(FACILITY|OWNERSHIP|STABLE|FARM|ORGANIZATION) PROFILE$/.test(s)?s:"ORGANIZATION PROFILE";
 }
+/* Automatic upload recognition: assets placed at the canonical path
+ * become active on refresh, with no required manifest edit. Named/approved
+ * manifest entries still take precedence. We probe before swapping images. */
+const heroProbes=new Map();
+export function heroCandidate(kind,id,approved=""){
+ const match=/^\/assets\/places\/(?:track-hero|organization-hero)\/[A-Za-z0-9-]+\.webp$/;
+ if(typeof approved==="string"&&match.test(approved))return approved;
+ if(kind==="track"&&ID_TRACK.test(id||""))
+  return "/assets/places/track-hero/"+id+".webp";
+ if(kind==="organization"&&ID_ORG.test(id||""))
+  return "/assets/places/organization-hero/"+id+".webp";
+ return "";
+}
+function heroAvailable(src){
+ if(!heroProbes.has(src)){
+  const img=new Image();
+  img.src=src;
+  heroProbes.set(src,img.decode().then(()=>true).catch(()=>false));
+ }
+ return heroProbes.get(src);
+}
+
 function init(){
  const root=document.getElementById(ROOT_ID);
  if(!root)return;
@@ -148,39 +170,67 @@ function init(){
   const entity=heroContext(window.__WTW_NEXT__?.app?.custom,
     root.getAttribute("data-wtw-identity"));
   const id=entity?.kind===kind?entity.id:null;
-  const approved=id?(art?.[kind==="track"?"tracks":"organizations"]?.[id]):null;
-  if(approved&&/^\/assets\/places\/(?:track-hero|organization-hero)\/[A-Za-z0-9-]+\.webp$/.test(approved)){
-   if(img.getAttribute("src")!==approved){
-    const old=img.getAttribute("src");
+  const approved=id?art?.[kind==="track"?"tracks":"organizations"]?.[id]:"";
+  const candidate=heroCandidate(kind,id,approved);
+  const legacy=()=>{
+   const src=img.getAttribute("src")||"";
+   if(img.dataset.wtwMatteSource===src)return;
+   mark.classList.add("wtw-hero-legacy");
+   if(kind!=="track"||!LEGACY_TRACK.test(src))return;
+   // This is ONLY a temporary presentation fallback. Genuine uploaded
+   // transparent assets are used unmodified, including their letter counters.
+   img.dataset.wtwMatteSource=src;
+   const absolute=new URL(src,location.href).href;
+   cachedLegacyHero(absolute).then(asset=>{
+    if(!asset||!img.isConnected||img.dataset.wtwMatteSource!==src)return;
     img.addEventListener("error",()=>{
-     if(old&&img.isConnected){img.src=old;mark.classList.remove("wtw-hero-transparent");mark.classList.add("wtw-hero-legacy");}
+     if(!img.isConnected||img.getAttribute("src")!==asset.url)return;
+     img.src=src;img.dataset.wtwMatteSource=src;
+     mark.classList.remove("wtw-hero-transparent","wtw-hero-dark-ink");
+     mark.classList.add("wtw-hero-legacy");
     },{once:true});
-    img.src=approved;
+    img.src=asset.url;img.dataset.wtwMatteSource=asset.url;
+    mark.classList.remove("wtw-hero-legacy");
+    mark.classList.add("wtw-hero-transparent");
+    if(asset.darkInk)mark.classList.add("wtw-hero-dark-ink");
+   });
+  };
+  if(candidate){
+   if(img.getAttribute("src")===candidate){
+    img.dataset.wtwHeroProbePath=candidate;
+    img.dataset.wtwHeroState="active";
+    mark.classList.remove("wtw-hero-legacy","wtw-hero-dark-ink");
+    mark.classList.add("wtw-hero-transparent");
+    return;
    }
-   mark.classList.remove("wtw-hero-legacy");
-   mark.classList.add("wtw-hero-transparent");
-   return;
+   const matching=img.dataset.wtwHeroProbePath===candidate;
+   const state=matching?img.dataset.wtwHeroState:"";
+   if(state==="active"||state==="pending")return;
+   if(!matching){
+    img.dataset.wtwHeroProbePath=candidate;
+    img.dataset.wtwHeroState="pending";
+    heroAvailable(candidate).then(ok=>{
+     if(!img.isConnected||img.dataset.wtwHeroProbePath!==candidate)return;
+     img.dataset.wtwHeroState=ok?"active":"missing";
+     if(!ok){legacy();return;}
+     const before=img.getAttribute("src");
+     img.addEventListener("error",()=>{
+      if(img.isConnected&&img.getAttribute("src")===candidate){
+       if(before)img.src=before;
+       img.dataset.wtwHeroState="missing";
+       mark.classList.remove("wtw-hero-transparent","wtw-hero-dark-ink");
+       mark.classList.add("wtw-hero-legacy");
+      }
+     },{once:true});
+     img.src=candidate;
+     img.dataset.wtwMatteSource=candidate;
+     mark.classList.remove("wtw-hero-legacy","wtw-hero-dark-ink");
+     mark.classList.add("wtw-hero-transparent");
+    });
+    return;
+   }
   }
-  const src=img.getAttribute("src")||"";
-  if(img.dataset.wtwMatteSource===src)return;
-  mark.classList.add("wtw-hero-legacy");
-  if(kind!=="track"||!LEGACY_TRACK.test(src))return;
-  // All ordinary source photos remain untouched. We only key known track logos.
-  img.dataset.wtwMatteSource=src;
-  const absolute=new URL(src,location.href).href;
-  cachedLegacyHero(absolute).then(asset=>{
-   if(!asset||!img.isConnected||img.dataset.wtwMatteSource!==src)return;
-   img.addEventListener("error",()=>{
-    if(!img.isConnected||img.getAttribute("src")!==asset.url)return;
-    img.src=src;img.dataset.wtwMatteSource=src;
-    mark.classList.remove("wtw-hero-transparent","wtw-hero-dark-ink");
-    mark.classList.add("wtw-hero-legacy");
-   },{once:true});
-   img.src=asset.url;img.dataset.wtwMatteSource=asset.url;
-   mark.classList.remove("wtw-hero-legacy");
-   mark.classList.add("wtw-hero-transparent");
-   if(asset.darkInk)mark.classList.add("wtw-hero-dark-ink");
-  });
+  legacy();
  };
  new MutationObserver(run).observe(root,{childList:true});
  run();
