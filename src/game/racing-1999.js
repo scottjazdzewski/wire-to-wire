@@ -70,11 +70,12 @@ export function gameRaceProgram(state,world,trackId,date){
  * Claiming transfers, starter qualification, weights and stakes nominations
  * remain proposals, not quietly accepted as ordinary allowance races. */
 export function supported1999RaceClass(race){
+ const maiden=typeof race?.maiden==='boolean'?race.maiden:race?.maidenOnly;
+ const maxWins=race?.max_wins??race?.maxCareerWins;
  if(race?.conditions==='Maiden Special Weight')
-  return race.maiden===true&&(race.max_wins==null);
+  return maiden===true&&maxWins==null;
  if(race?.conditions==='Allowance')
-  return race.maiden===false&&
-   [1,2].includes(race.max_wins??race.maxCareerWins);
+  return maiden===false&&[1,2].includes(maxWins);
  return false;
 }
 function raceShape(book){
