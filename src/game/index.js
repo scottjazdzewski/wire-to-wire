@@ -45,3 +45,8 @@ export {PLAYER_RACE_PLAN_COMMANDS,PLAYER_RACE_PLAN_QUOTE_SCHEMA,
 export {POST_RACE_CAMPAIGN_SCHEMA,createPostRaceCampaignRuntime,
  getGamePostRaceCampaign,postRaceWorkoutGuidance,
  postRaceCarePriority,postRaceAIPlacement} from './post-race-campaign-1999.js';
+
+export {OWNER_TRAINER_REVIEW_SCHEMA,OWNER_TRAINER_REVIEW_COMMANDS,
+ OWNER_TRAINER_MANDATES,createOwnerTrainerReviewRuntime,
+ ownerTrainerEvidence,getOwnerTrainerMandate,getOwnerTrainerCareerReview,
+ getTrainerCareerForm} from './owner-trainer-career-1999.js';
