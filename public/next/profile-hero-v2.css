@@ -373,7 +373,8 @@
    center / contain no-repeat!important;
  border:0!important;
  border-radius:0!important;
- box-shadow:drop-shadow(0 3px 4px #0006)!important;
+ box-shadow:none!important;
+ filter:drop-shadow(0 3px 4px #0006)!important;
 }
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-farm > .ng-profile-intro > .ng-org-mark > .ng-org-image,
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-farm > .ng-profile-intro > .ng-org-mark > .ng-org-initials{
