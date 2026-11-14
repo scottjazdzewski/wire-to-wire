@@ -5,6 +5,7 @@ Status: Production UI; new transparent hero marks auto-discover from their exact
 ## Scope
 - Profile heroes for tracks, owners, racing stables, farms and stud farms share one layout.
 - The existing approved Track Profile BADGE is the small left icon.
+- The approved **farm/stable category badge** is the small left icon on stable, farm and ownership profiles; the actual unique organization mark is reserved for the right hero, preventing duplicate logos.
 - The HERO logo is the distinctive right mark. No cream plaque or forced rectangle.
 - The title and four identity facts must remain readable, with action buttons below them.
 - The redundant horizontal menu strip is hidden globally; the department navigation and local VIEW selector continue to work.
