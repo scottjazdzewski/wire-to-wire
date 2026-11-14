@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,worldAttributeKey:'',stableMode:'all',stableSearch:'',directorySort:'name',directorySortDesc:false,directoryFilter:'all',directoryMode:'all',directorySearch:'',directoryHorseItems:[],connectedTables:{},departmentModes:{},racingMode:'meets',racingTrack:'',racingDate:'',racingCalendarOpen:false,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
+const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,worldAttributeKey:'',stableMode:'all',stableSearch:'',directorySort:'name',directorySortDesc:false,directoryFilter:'all',directoryMode:'all',directorySearch:'',directoryHorseItems:[],departmentModes:{},racingMode:'meets',racingTrack:'',racingDate:'',racingCalendarOpen:false,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -981,142 +981,9 @@ function loadPilotRelationships(){
   }).catch(()=>{/* No speculative identities when cohort projection unavailable. */})
   .finally(()=>{pilotRelationshipsLoading=false});
 }
-function pilotHorseLinksFor(kind,id){
- if(!pilotRelationships)return [];
- const horses=pilotRelationships.horses;
- if(kind==='person')return horses.filter(h=>h.trainer_id===id);
- if(kind==='farm')return horses.filter(h=>h.owner_organization_id===id);
- if(kind==='track')return horses.filter(h=>h.track_id===id);
- return [];
-}
-/* Same compact expandable record family on track and trainer dossiers.
- * Data are exact-ID pilot relations; race outcomes never fabricated. */
-/* Shared compact table behavior — same roster principles as Horse Directory.
- * Every profile section retains its own sort, column filter, search and view.
- * Only source-linked values are displayed, never guessed. */
-function connectedTableState(key){
- if(!APP.connectedTables[key])APP.connectedTables[key]={
-  sort:'',desc:false,search:'',column:'',contains:'',mode:'all',open:false};
- return APP.connectedTables[key];
-}
-function profileRecordSection(label,columns,items,empty='No recorded items for this section.',expanded=false){
- const scope=APP.custom||APP.routeId||'Profile',key=scope+'|'+label,ctrl=connectedTableState(key);
- if(!Object.hasOwn(ctrl,'initialized')){ctrl.open=expanded;ctrl.initialized=true}
- const columnsAllowed=new Set(columns.map(([id])=>id));
- if(!columnsAllowed.has(ctrl.column))ctrl.column='';
- if(!columnsAllowed.has(ctrl.sort))ctrl.sort='';
- const value=item=>item?.text??item??'';
- const comparable=v=>{
-  const x=String(v??'').trim(),numeric=x.replace(/[$,]/g,'');
-  if(x!==''&&/^[-+]?\\d+(?:\\.\\d+)?$/.test(numeric))return Number(numeric);
-  return x.toLocaleLowerCase('en-US');
- };
- const compare=(a,b)=>{
-  const x=comparable(value(a?.[ctrl.sort])),y=comparable(value(b?.[ctrl.sort]));
-  if(x===''&&y!=='')return 1;
-  if(y===''&&x!=='')return -1;
-  const res=typeof x==='number'&&typeof y==='number'?x-y:String(x).localeCompare(String(y),undefined,{numeric:true,sensitivity:'base'});
-  return ctrl.desc?-res:res;
- };
- const find=ctrl.search.trim().toLowerCase(),contains=ctrl.contains.trim().toLowerCase();
- const filtered=items.filter(item=>{
-  if(find&&!columns.some(([k])=>String(value(item[k])).toLowerCase().includes(find)))return false;
-  if(contains){
-   const keys=ctrl.column?[ctrl.column]:columns.map(([id])=>id);
-   if(!keys.some(k=>String(value(item[k])).toLowerCase().includes(contains)))return false;
-  }
-  return true;
- }).slice();
- if(ctrl.sort)filtered.sort(compare);
- const header=columns.map(([id,text],n)=>'<th scope="col" aria-sort="'+
-  (ctrl.sort===id?(ctrl.desc?'descending':'ascending'):'none')+'" class="'+(n>=4?'ng-connected-optional':'')+'">'+
-  '<button type="button" data-ng="connected-sort" data-val="'+safe(key)+'" data-col="'+safe(id)+'" title="Sort by '+safe(text)+'">'+
-  safe(text)+' <span class="ng-rs-sort" aria-hidden="true">'+(ctrl.sort===id?(ctrl.desc?'▼':'▲'):'↕')+'</span></button></th>').join('');
- const rows=filtered.map(item=>'<tr>'+columns.map(([col],index)=>
-  '<td class="'+(index>=4?'ng-connected-optional':'')+'" title="'+safe(value(item[col]))+'">'+
-  (item[col]?.html||safe(value(item[col])||'—'))+'</td>').join('')+'</tr>').join('');
- const options='<option value="">ALL COLUMNS</option>'+columns.map(([id,title])=>
-  '<option value="'+safe(id)+'"'+(ctrl.column===id?' selected':'')+'>'+safe(title)+'</option>').join('');
- const control='<div class="ng-connected-tools" data-connected-key="'+safe(key)+'">'+
-  '<label>SEARCH <input data-ng-input="connected-search" data-val="'+safe(key)+'" type="search" value="'+safe(ctrl.search)+'" placeholder="Search records…" autocomplete="off"></label>'+
-  '<label>COLUMN <select data-ng-select="connected-column" data-val="'+safe(key)+'">'+options+'</select></label>'+
-  '<label>CONTAINS <input data-ng-input="connected-contains" data-val="'+safe(key)+'" type="search" value="'+safe(ctrl.contains)+'" placeholder="Text or number" autocomplete="off"></label>'+
-  '<button type="button" data-ng="connected-clear" data-val="'+safe(key)+'">CLEAR FILTERS</button>'+
-  '<span class="ng-connected-view"><button type="button" data-ng="connected-mode" data-val="'+safe(key)+'" data-mode="all" class="'+(ctrl.mode==='all'?'on':'')+'">ALL COLUMNS</button>'+
-  '<button type="button" data-ng="connected-mode" data-val="'+safe(key)+'" data-mode="compact" class="'+(ctrl.mode==='compact'?'on':'')+'">QUICK VIEW</button></span></div>';
- return '<details class="ng-connected-drop" data-connected-key="'+safe(key)+'"'+(ctrl.open?' open':'')+'><summary><span>'+safe(label)+
-  '</span><span class="ng-connected-count">'+filtered.length+' OF '+items.length+' RECORDS</span></summary>'+
-  '<div class="ng-connected-content">'+control+
-  (items.length?'<div class="ng-connected-scroll" role="region" tabindex="0" aria-label="'+safe(label)+' sortable and scrollable records">'+
-  '<table class="ng-connected-table '+(ctrl.mode==='compact'?'compact':'all')+'">'+
-  '<thead><tr>'+header+'</tr></thead><tbody>'+ (rows||'<tr><td colspan="'+columns.length+'" class="ng-connected-empty">No records match these filters.</td></tr>')+
-  '</tbody></table></div>':
-  '<p class="ng-connected-empty">'+safe(empty)+'</p>')+'</div></details>';
-}
-function pilotHorseConnectionsPanel(kind,id){
- if(!['person','farm','track'].includes(kind)||!id)return '';
- loadPilotRelationships();
- if(!pilotRelationships)return '<section class="ng-connected-profile" role="status">'+
-  '<p class="ng-connected-empty">Loading 1999 test-cohort connections…</p></section>';
- const matching=pilotHorseLinksFor(kind,id),sites=pilotRelationships.sites,
-  orgs=new Map((world1999Data?.organizations||[]).map(o=>[o.id,o.name])),
-  persons=new Map([...world1999Data?.people||[],...world1999TrainerRoster].map(p=>[p.id,p.name])),
-  tracks=new Map((world1999Data?.tracks||[]).map(t=>[t.id,t.name]));
- const horseLink=h=>'<button class="ng-entity-reference" type="button" data-ng="pilot-horse" data-val="'+safe(h.id)+'">'+safe(h.name)+'</button>';
- const entityLink=(kind,id,label)=>'<button type="button" class="ng-entity-reference" data-ng="pilot-connection" data-kind="'+safe(kind)+
-  '" data-val="'+safe(id)+'">'+safe(label||id)+'</button>';
- const horseRows=matching.map(h=>{
-  const site=sites.find(s=>s.id===h.site_id);
-  return {horse:{html:horseLink(h),text:h.name},age:1999-h.foaling_year,
-   sex:h.sex,barn:site?.name||'—',
-   trainer:{html:entityLink('person',h.trainer_id,persons.get(h.trainer_id)),text:persons.get(h.trainer_id)},
-   owner:{html:entityLink('farm',h.owner_organization_id,orgs.get(h.owner_organization_id)),text:orgs.get(h.owner_organization_id)},
-   ability:h.ability+' / '+h.potential,
-   surface:h.surface,distance:h.distance};
- });
- const base='<section class="ng-connected-profile" data-pilot-scope="'+safe(kind)+'" data-profile-id="'+safe(id)+'">'+
-  '<header><strong>RACING OPERATIONS · PROFILE RECORDS</strong><span>1999 TEST COHORT · NOT LIVE CAREER</span></header>';
- const horseColumns=[['horse','HORSE'],['age','AGE'],['sex','SEX'],['barn','BARN'],
-  [kind==='person'?'owner':'trainer',kind==='person'?'OWNER':'TRAINER'],['ability','CA / PA'],['surface','SURFACE'],['distance','DISTANCE']];
- let sections='';
- if(kind==='track'){
-  const track=(world1999Data?.tracks||[]).find(t=>t.id===id);
-  const program=window.__WTW_1999_UI_DATA__?.trackProgramById?.(id);
-  const dates=String(program?.meetWindow||'').split(';').map(x=>x.trim()).filter(Boolean);
-  sections+=profileRecordSection('MEETS',[['name','MEET'],['dates','DATES'],['status','STATUS']],
-   dates.map((d,i)=>({name:track?.name||tracks.get(id)||'Meet '+(i+1),dates:d,status:'1999 scheduled window'})),
-   'No authenticated 1999 meet window is available for this track.',true);
-  const barns=sites.filter(s=>s.host_track_id===id);
-  sections+=profileRecordSection('TRAINERS & BARNS',[['trainer','TRAINER'],['barn','BARN'],['horses','HORSES'],['capacity','STALLS'],['location','BASE']],
-   barns.map(site=>({trainer:{text:persons.get(site.trainer_id),html:entityLink('person',site.trainer_id,persons.get(site.trainer_id))},
-    barn:site.name,horses:pilotRelationships.horses.filter(h=>h.site_id===site.id).length,
-    capacity:site.capacity,location:[site.city,site.state].filter(Boolean).join(', ')})),
-   'No modeled trainer barns are assigned to this track.');
-  sections+=profileRecordSection('HORSES CURRENTLY ON SITE',horseColumns,horseRows,
-   'No test-cohort horses currently housed at this track.');
- }else if(kind==='person'){
-  sections+=profileRecordSection('TRAINER ATTRIBUTES',[['record','RECORD'],['value','STATUS']],
-   [{record:{text:'Trainer skill and reputation',html:'<button type="button" class="ng-entity-reference" data-ng="detailtab" data-val="Attributes">OPEN ATTRIBUTES ↗</button>'},
-    value:'Use the existing source-linked Attributes dossier'}],
-   'Trainer attribute dossier has no source-backed ratings.',true);
-  const assigned=sites.filter(site=>site.trainer_id===id);
-  sections+=profileRecordSection('BARNS & FACILITIES',[['barn','BARN'],['track','HOST TRACK'],['horses','HORSES'],['capacity','STALLS'],['location','LOCATION']],
-   assigned.map(site=>({barn:site.name,track:site.host_track_id?{text:tracks.get(site.host_track_id),
-     html:entityLink('track',site.host_track_id,tracks.get(site.host_track_id))}:'Home racing site',
-    horses:pilotRelationships.horses.filter(h=>h.site_id===site.id).length,capacity:site.capacity,
-    location:[site.city,site.state].filter(Boolean).join(', ')})),
-   'No test-cohort facility assigned to this trainer.');
-  sections+=profileRecordSection('HORSES IN TRAINING',horseColumns,horseRows,'No modeled horses assigned.',true);
-  sections+=profileRecordSection('UPCOMING ENTRIES',[['date','DATE'],['horse','HORSE'],['race','RACE'],['track','TRACK'],['status','STATUS']],
-   [],'No confirmed entries have been recorded for these test horses.');
-  sections+=profileRecordSection('RACE RESULTS',[['date','DATE'],['horse','HORSE'],['race','RACE'],['finish','FINISH'],['earnings','EARNINGS']],
-   [],'No completed race results have been recorded for this test cohort.');
- }else{
-  sections+=profileRecordSection('OWNED HORSES',horseColumns,horseRows,'No test-cohort ownership assigned.',true);
- }
- return base+sections+
-  '<p class="ng-connected-disclosure">MODELED TEST ASSIGNMENTS ONLY · NAMES PROVISIONAL · NOT REGISTERED IN THE LIVE JANUARY 1999 CAREER</p></section>';
-}
+/* 1999 pilot horse relationships remain in the isolated PilotHorse detail route.
+ * Never inject the 38-horse test cohort into permanent track, person or
+ * organization profiles: the approved FM/OOTP track workspace owns that view. */
 function pilotHorseDetail(id){
  loadPilotRelationships();
  const h=pilotRelationships?.horses.find(x=>x.id===id);
@@ -1774,21 +1641,34 @@ function profileDetail(route,sourceOverride=null){
  // Same sorting/filter/view/scroll renderer as every other roster. The
  // public stakes list is sourced from the existing approved track dossier.
  const stakesTable=(limit=100)=>{
-  const records=trackRaces.slice(0,limit).map(row=>{
-   const cells=[...row.node.children].map(item=>item.textContent.trim()).slice(0,4);
-   while(cells.length<4)cells.push('—');
-   const raceId=row.node.dataset.stakeId||'';
-   const link='<button type="button" class="ng-entity-reference" data-ng="1999-stake" data-val="'+safe(raceId)+
-    '" data-name="'+safe(cells[0])+'" data-track="'+safe(route.title)+'" data-date="'+safe(cells[1])+'">'+safe(cells[0])+'</button>';
-   const grade=(cells[2].match(/\\bG([123])\\b/i)||[])[1];
-   const gradeValue=grade?'G'+grade:cells[2];
-   const trophy=grade?'<span class="ng-stakes-grade" title="Grade '+grade+'"><img class="ng-stakes-trophy" src="/assets/trophies/approved-grade-'+grade+'-64.png" alt="" width="16" height="16" decoding="async"/><small class="ng-stakes-grade-text">G'+grade+'</small></span>':null;
-   return {name:{text:cells[0],html:link},date:cells[1],
-    grade:trophy?{text:gradeValue,html:trophy}:gradeValue,purse:cells[3]};
-  });
-  return profileRecordSection('STAKES RACES',
-   [['name','RACE'],['date','DATE'],['grade','GRADE'],['purse','PURSE']],
-   records,'No source-linked stakes races are recorded for this track.',true);
+  const values={name:0,date:1,grade:2,purse:3};
+  const gradeRank=value=>{const g=(String(value||'').match(/\bG([123])\b/i)||[])[1];return g?Number(g):/major/i.test(value)?4:5};
+  const purseRank=value=>{const n=Number(String(value||'').replace(/[^\d.]/g,''));return Number.isFinite(n)?n:-1};
+  const rank=(key,row)=>key==='date'?stakeDateRank(row.cols[1]):key==='grade'?gradeRank(row.cols[2]):key==='purse'?purseRank(row.cols[3]):row.cols[0].toLocaleLowerCase();
+  const compare=(a,b)=>{
+   const av=rank(APP.stakeSort,a),bv=rank(APP.stakeSort,b);
+   const result=typeof av==='number'&&typeof bv==='number'?av-bv:String(av).localeCompare(String(bv),undefined,{numeric:true,sensitivity:'base'});
+   return (APP.stakeSortDesc?-1:1)*result || a.cols[0].localeCompare(b.cols[0]);
+  };
+  const ordered=trackRaces.map(row=>({row,cols:[...row.node.children].map(item=>item.textContent.trim()).slice(0,4)}))
+   .sort(compare);
+  const labels=[['name','RACE'],['date','DATE'],['grade','GRADE'],['purse','PURSE']];
+  const header=labels.map(([key,label])=>{
+   const active=APP.stakeSort===key,mark=active?(APP.stakeSortDesc?'↓':'↑'):'↕';
+   return '<button type="button" data-ng="stake-sort" data-val="'+key+'" aria-sort="'+(active?(APP.stakeSortDesc?'descending':'ascending'):'none')+'"><span>'+label+'</span><i aria-hidden="true">'+mark+'</i></button>';
+  }).join('');
+  return '<div class="ng-stakes-table"><div class="ng-stakes-head">'+header+'</div>'+
+   (ordered.slice(0,limit).map(({row,cols})=>{
+    while(cols.length<4)cols.push('—');
+    const index=$$('#routeBody [data-act]').indexOf(row.node);
+    const grade=(cols[2].match(/\bG([123])\b/i)||[])[1];
+    const gradeCell=grade?'<span class="ng-stakes-grade" aria-label="Grade '+grade+'" title="Grade '+grade+'"><img class="ng-stakes-trophy" src="/assets/trophies/approved-grade-'+grade+'-64.png" alt="" width="16" height="16" decoding="async"/><small class="ng-stakes-grade-text" aria-hidden="true">G'+grade+'</small></span>':'<span>'+safe(cols[2])+'</span>';
+    const stakeId=row.node.dataset.stakeId||'';
+    // Detached source rows have no legacy Office index: keep a live 1999 race-file click target.
+    return '<button class="ng-stakes-data" data-ng="1999-stake" data-val="'+safe(stakeId)+
+      '" data-name="'+safe(cols[0])+'" data-track="'+safe(route.title)+'" data-date="'+safe(cols[1])+'">'+
+     '<span>'+safe(cols[0])+'</span><span>'+safe(cols[1])+'</span>'+gradeCell+'<span>'+safe(cols[3])+'</span></button>';
+   }).join('')||'<div class="ng-empty-record">No verified stakes rows connected.</div>')+'</div>';
  };
  const entityPhotoKind=isHorse?'horse':isPerson?'person':isFarm?'farm':isTrack?'track':'';
  const profileSource=entityPhotoKind?world1999Match(entityPhotoKind,route.title):null;
@@ -2391,10 +2271,7 @@ function profileDetail(route,sourceOverride=null){
   left=`<section class="ng-detailcard ng-detailwide"><header>HISTORY & RECORDS</header><div class="ng-notes">${(notes.length?notes:details.map(x=>x.lines)).slice(0,8).map(n=>`<div>${safe(n)}</div>`).join('')||'No official history connected yet.'}</div></section>`;
  }
  const actions=`<div class="ng-detailactions"><button data-ng="menu" data-val="Stable">OPEN STABLE ↗</button><button data-ng="menu" data-val="Racing">RACE CALENDAR ↗</button><button data-ng="office">BACK TO OFFICE</button></div>`;
- const pilotKind=isPerson?'person':isTrack?'track':isFarm?'farm':null;
- const pilotID=pilotKind?world1999Match(pilotKind,route.title)?.canonicalId:null;
- const pilotPanel=pilotID?pilotHorseConnectionsPanel(pilotKind,pilotID):'';
- return `<div class="ng-profile-view ${isHorse?'ng-profile-horse':isPerson?'ng-profile-person ng-profile-horse':isFarm?'ng-profile-farm ng-profile-track':isTrack?'ng-profile-track':'ng-profile-entity'}">${identity}${tabbar}<div class="ng-detail-cols ${(isHorse||isPerson)&&('Overview'===APP.detailTab||isPerson&&APP.detailTab==='Attributes')?'ng-detail-cols-horse-overview':(isFarm||isTrack)&&APP.detailTab==='Overview'?'ng-detail-cols-tier1':''}">${left}${right}${footer}</div>${pilotPanel}${isHorse||isPerson||isFarm||isTrack?'':actions}</div>`;
+ return `<div class="ng-profile-view ${isHorse?'ng-profile-horse':isPerson?'ng-profile-person ng-profile-horse':isFarm?'ng-profile-farm ng-profile-track':isTrack?'ng-profile-track':'ng-profile-entity'}">${identity}${tabbar}<div class="ng-detail-cols ${(isHorse||isPerson)&&('Overview'===APP.detailTab||isPerson&&APP.detailTab==='Attributes')?'ng-detail-cols-horse-overview':(isFarm||isTrack)&&APP.detailTab==='Overview'?'ng-detail-cols-tier1':''}">${left}${right}${footer}</div>${isHorse||isPerson||isFarm||isTrack?'':actions}</div>`;
 }
 function calendarTimeline(races,nonraces){
  const iso=depGameDay();
@@ -3936,21 +3813,6 @@ window.addEventListener('click',e=>{
  }
  if(key==='more'){APP.moreOpen=!APP.moreOpen;return paint()}
  if(key==='menu')return openMenu(val);
- if(key==='connected-sort'){
-  const control=APP.connectedTables[val],column=btn.dataset.col;
-  if(!control)return;
-  if(control.sort===column)control.desc=!control.desc;
-  else{control.sort=column;control.desc=false}
-  return paint();
- }
- if(key==='connected-clear'){
-  const ctrl=APP.connectedTables[val];if(!ctrl)return;
-  ctrl.search='';ctrl.contains='';ctrl.column='';return paint();
- }
- if(key==='connected-mode'){
-  const ctrl=APP.connectedTables[val];if(!ctrl)return;
-  ctrl.mode=btn.dataset.mode==='compact'?'compact':'all';return paint();
- }
  if(key==='pilot-horse'){
   const row=pilotRelationships?.horses.find(x=>x.id===val);
   if(row)return openCustomView('PilotHorse:'+encodeURIComponent(row.id),'World','1999 Horses');
@@ -4229,12 +4091,6 @@ window.addEventListener('click',e=>{
  if(key==='back')return window.history.back()
  if(key==='forward')return window.history.forward()
 },true);
-root.addEventListener('toggle',event=>{
- const target=event.target;
- if(!target?.matches?.('details.ng-connected-drop'))return;
- const ctrl=APP.connectedTables[target.dataset.connectedKey];
- if(ctrl)ctrl.open=target.open;
-},true);
 root.addEventListener('change',event=>{
   const field=event.target;
   if(field.id==='ngNamedSavesImport')return namedSaveImport(field.files?.[0]);
@@ -4243,11 +4099,6 @@ root.addEventListener('change',event=>{
    return window.WTW1999PlayerRacePlans?.select?.(field.dataset.ngSelect,field.value);
   }
   if(field?.tagName==='SELECT')endNativeSelectInteraction(false);
-  if(field.matches('select[data-ng-select="connected-column"]')){
-   const ctrl=APP.connectedTables[field.dataset.val];
-   if(ctrl)ctrl.column=field.value;
-   return paint();
-  }
   if(field.matches('select[data-ng-select^="roster-filter-"]')){
    const k=field.dataset.ngSelect.slice('roster-filter-'.length);
    const scope=field.closest('.ng-list-filters')?.dataset.filterScope;
@@ -4337,19 +4188,6 @@ root.addEventListener('scroll',event=>{
 },true);
 root.addEventListener('input',event=>{
  const input=event.target;
- if(input.matches('input[data-ng-input="connected-search"], input[data-ng-input="connected-contains"]')){
-  const key=input.dataset.val,ctrl=APP.connectedTables[key];
-  if(!ctrl)return;
-  const mode=input.dataset.ngInput;
-  const prop=mode==='connected-search'?'search':'contains';
-  ctrl[prop]=input.value;
-  const caret=input.selectionStart;
-  paint();
-  const refreshed=[...root.querySelectorAll('input[data-ng-input="'+mode+'"]')]
-   .find(x=>x.dataset.val===key);
-  if(refreshed){refreshed.focus();refreshed.setSelectionRange(caret,caret)}
-  return;
- }
  if(input.matches('input[data-ng-input="directory-search"]')){
   APP.directorySearch=input.value;const cursor=input.selectionStart;
   paint();const found=root.querySelector('input[data-ng-input="directory-search"]');
