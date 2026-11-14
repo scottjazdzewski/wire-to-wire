@@ -70,3 +70,7 @@ export {OWNER_RATED_TOTAL_V482,OWNER_RATING_COUNTS_V482,ownerRatedNameScore,buil
 export {NAMING_COHORT_AUDIT_SCHEMA_V482,auditHorseNamingCohort} from './horse-naming-cohort-audit-v482.js';
 
 export {foalingEventNamingBrief,planPopulationNamingCohorts,auditPopulationNamingResults,POPULATION_NAMING_BATCH_SIZE,POPULATION_NAMING_SCHEMA} from './horse-naming-population-planner.js';
+
+export {TRAINER_MANAGEMENT_SCHEMA,TRAINER_MANAGEMENT_COMMANDS,TRAINER_MANAGEMENT_CHOICES,
+ TRAINER_MANAGEMENT_KINDS,createTrainerManagementRuntime,getTrainerManagementRequests}
+ from './trainer-management-requests-1999.js';
