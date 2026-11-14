@@ -77,17 +77,18 @@ test('new themes are cache-busted coherently without a second stylesheet',()=>{
  assert.equal((page.match(/rel="stylesheet"/g)||[]).length,1);
 });
 
-test('expanded record menus, tables and selected view modes follow the same entity palette',()=>{
+test('approved source-backed stakes table and meet/history panels share the canonical track palette',()=>{
  const css=readFileSync(new URL('../public/next/next.css',import.meta.url),'utf8');
  const start=css.indexOf('/* WTW ENTITY ATMOSPHERE v2');
  const end=css.indexOf('/* ===== END folded source: public/next/identity-themes.css ===== */',start);
  const own=css.slice(start,end);
- for(const rule of [
-  '.ng-route-profile .ng-connected-drop>summary',
-  '.ng-route-profile .ng-connected-tools',
-  '.ng-route-profile .ng-connected-view button.on',
-  '.ng-route-profile .ng-connected-table thead th'
- ])assert.ok(own.includes(rule),rule+' must inherit the ID palette');
- assert.match(own,/\.ng-connected-view button\.on\{\s*background:color-mix\(/);
- assert.doesNotMatch(own,/\.ng-global-continue|\.ng-msgtag\.urgent|\.ng-status-pills/);
+ for(const selector of [
+  '.ng-profile-view.ng-profile-track > .ng-profile-intro',
+  '.ng-track-workspace .ng-track-stakes > header',
+  '.ng-track-workspace .ng-track-history-card > header',
+  '.ng-track-stakes .ng-stakes-head',
+  '.ng-track-stakes .ng-stakes-data:hover'
+ ])assert.ok(own.includes(selector),selector+' must inherit the canonical palette');
+ assert.equal(registry.tracks['T-0002'].base.toUpperCase(),'#0C603C');
+ assert.doesNotMatch(own,/ng-connected|\.ng-global-continue|\.ng-msgtag\.urgent|\.ng-status-pills/);
 });
