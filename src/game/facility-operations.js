@@ -87,6 +87,8 @@ function registerRacingSite(state,world,p,command,emit){
   'FACILITY_SITE','Unique permanent F-1999 site ID required');
  const org=organization(world,p.operator_organization_id);
  const owner=organization(world,p.facility_owner_organization_id);
+ ensure(Number.isSafeInteger(funds(state,org)),'FACILITY_NO_FUNDS',
+  'Register operational site only after its operator has an established finance account');
  ensure(p.site_type==='RACING_STABLE','FACILITY_TYPE','Racing sites use the existing RACING_STABLE class');
  ensure(['ORGANIZATION_HOME_SITE','TRACK_TRAINER_BARN'].includes(p.residence_kind),
   'FACILITY_RESIDENCE','Unknown racing residence kind');
