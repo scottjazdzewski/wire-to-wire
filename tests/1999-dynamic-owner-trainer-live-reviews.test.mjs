@@ -89,9 +89,9 @@ test('a new deterioration can prompt the player before 28 days; response refresh
  const key=p.owner+'|'+p.trainer;
  const rel=s.runtime.agents.relationships[key];
  assert.ok(rel);
+ const prior=get(s,p);
  Object.assign(rel,{owner_trust:.05,trainer_support:.01,days:70,
   unfunded_days:12});
- const prior=get(s,p);
  const afterDay=day(s);
  const view=get(afterDay,p);
  assert.equal(view.last_review_date,null);
