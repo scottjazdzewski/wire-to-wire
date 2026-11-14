@@ -15,7 +15,7 @@ const modules=[
  'racing-1999.js','race-opportunities-1999.js','player-race-plan-1999.js','race-agents-1999.js','shipping-1999.js','people-generator.js',
  'facility-market-1999.js','state.js','kernel.js','persistence.js',
  'selectors.js','horse-connections.js','1999-pilot-fixture.js',
- 'future-industry-v22.js','index.js'
+ 'future-industry-v22.js','future-industry-activation-v23.js','index.js'
 ];
 const check=process.argv.includes('--check');
 let mismatched=0;
