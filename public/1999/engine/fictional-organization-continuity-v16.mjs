@@ -244,6 +244,8 @@ export function createFictionalOrganizationContinuityRegistry({
    const candidate=event.organization,registration=candidate?.registration;
    checkId(candidate?.id,'approved new organization ID');
    checkId(candidate?.name,'approved new organization name');
+   if(event.organizationId!==undefined&&event.organizationId!==candidate.id)
+    throw Error('Organization registration history subject ID mismatch');
    if(!registration||!['OWNER','STABLE','FARM','TRAINING_CENTER'].includes(
     registration.kind)||!Number.isInteger(registration.approvedYear)||
     registration.approvedYear<1999||registration.approvedYear>event.year||
