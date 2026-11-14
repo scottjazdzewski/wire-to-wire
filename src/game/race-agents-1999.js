@@ -2,7 +2,7 @@
  * Daily trainer/jockey/race-secretary agents. Game program is sourced from
  * approved 1999 modeled meet/calendar; no ghost results or artificial jockeys.
  */
-import {gameRaceProgram,raceEligibility,racingAction} from './racing-1999.js';
+import {gameRaceProgram,raceEligibility,racingAction,jockeyBookingDecision} from './racing-1999.js';
 const diff=(a,b)=>(Date.parse(b+'T12:00:00Z')-Date.parse(a+'T12:00:00Z'))/86400000;
 const plus=(date,n)=>new Date(Date.parse(date+'T12:00:00Z')+n*86400000).toISOString().slice(0,10);
 const horses=state=>Object.values(state.runtime.registered_horses?.by_id||{}).
@@ -57,7 +57,8 @@ export function run1999RacingAgents({state,world,emit}){
     if(h.owner_organization_id===state.player.operation_id)continue;
     const jockeys=Object.values(rt.jockeys).filter(j=>!ridden(state,j.id,confirmed)&&
      (j.home_track_id===trackId||diff(day,r.date)>=4)&&
-     money(state,h.owner_organization_id)>=(j.home_track_id===trackId?6000:24000)).
+     money(state,h.owner_organization_id)>=(j.home_track_id===trackId?6000:24000)&&
+     jockeyBookingDecision(state,world,confirmed,h,j).accept).
      sort((a,b)=>(a.home_track_id===trackId?-1:1)-(b.home_track_id===trackId?-1:1)||
       b.skills.horse_handling+b.skills.judgment-a.skills.horse_handling-a.skills.judgment||
       a.id.localeCompare(b.id));
