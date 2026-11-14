@@ -22,8 +22,9 @@ import {HORSE_SHIPPING_COMMANDS,shippingAction,advance1999HorseShipping} from '.
 import {TRAINER_CONTRACT_COMMANDS,offerTrainerServiceTerms,advanceTrainerContracts} from './trainer-contracts-1999.js';
 import {OWNER_TRAINER_REVIEW_COMMANDS,setOwnerTrainerMandate,respondToTrainerConcern,advanceOwnerTrainerReviews,updateOwnerTrainerLiveReviews} from './owner-trainer-career-1999.js';
 import {PLAYER_RACE_PLAN_COMMANDS,confirm1999PlayerRacePlan} from './player-race-plan-1999.js';
+import {TRAINER_MANAGEMENT_COMMANDS,answerTrainerManagementRequest,prepareTrainerManagementDay,reactToTrainerEvents} from './trainer-management-requests-1999.js';
 
-const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_NAMING_COMMANDS,...HORSE_NAME_OWNER_COMMANDS,...HORSE_CARE_COMMANDS,...RACING_COMMANDS,...HORSE_SHIPPING_COMMANDS,...TRAINER_CONTRACT_COMMANDS,...OWNER_TRAINER_REVIEW_COMMANDS,...PLAYER_RACE_PLAN_COMMANDS]);
+const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_NAMING_COMMANDS,...HORSE_NAME_OWNER_COMMANDS,...HORSE_CARE_COMMANDS,...RACING_COMMANDS,...HORSE_SHIPPING_COMMANDS,...TRAINER_CONTRACT_COMMANDS,...OWNER_TRAINER_REVIEW_COMMANDS,...TRAINER_MANAGEMENT_COMMANDS,...PLAYER_RACE_PLAN_COMMANDS]);
 const MAX_PENDING = 5000;
 function appendLog(state, commandId, kind, details) {
   const event = { seq: state.event_log.length + 1, command_id: commandId,
@@ -123,6 +124,8 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     shippingAction({state:next,world,command:c,emit});
   } else if (RACING_COMMANDS.includes(c.type)) {
     racingAction({state:next,world,command:c,emit});
+  } else if (TRAINER_MANAGEMENT_COMMANDS.includes(c.type)) {
+    answerTrainerManagementRequest({state:next,world,command:c,emit});
   } else if (OWNER_TRAINER_REVIEW_COMMANDS.includes(c.type)) {
     if(c.type==='RESPOND_TO_TRAINER_CONCERN')
       respondToTrainerConcern({state:next,world,command:c,emit});
@@ -143,6 +146,7 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     // Physical arrivals must resolve before trainers choose the day's work,
     // owners price care, and barn operators assess actual stall occupancy.
     advance1999HorseShipping({state:next,world,emit});
+    prepareTrainerManagementDay({state:next,emit});
     advanceOwnerTrainerReviews({state:next,world,emit});
     advanceTrainerContracts({state:next,world,emit});
     runAutonomousDay({state:next,world,emit});
@@ -152,6 +156,7 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     run1999RacingAgents({state:next,world,emit});
     // The current review must see today's actual races, paid care and outcomes.
     updateOwnerTrainerLiveReviews({state:next,world,emit,events:output,trigger:'DAILY'});
+    reactToTrainerEvents({state:next,world,events:output,emit});
     const ready = next.scheduler.pending.filter(x => x.due_date <= next.clock.date);
     next.scheduler.pending = next.scheduler.pending.filter(x => x.due_date > next.clock.date);
     for (const event of ready) {
@@ -162,7 +167,8 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
   // Non-clock owner actions can also change the relationship immediately.
   // This is a live projection of the existing run, never an alternate clock.
   if(c.type!=='ADVANCE_DAY'&&[
-   'RESPOND_TO_TRAINER_CONCERN','SET_OWNER_TRAINER_MANDATE',
+   'RESPOND_TO_TRAINER_CONCERN','ANSWER_TRAINER_MANAGEMENT_REQUEST',
+   'SET_OWNER_TRAINER_MANDATE',
    'OFFER_TRAINER_SERVICE_TERMS','SET_HORSE_CARE_POLICY',
    'CONFIRM_1999_RACE_PLAN','ENTER_1999_RACE',
    'SETTLE_1999_RACE','BOOK_1999_JOCKEY',
@@ -170,6 +176,8 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
   ].includes(c.type))
    updateOwnerTrainerLiveReviews({state:next,world,emit,events:output,
     trigger:'OWNER_OR_TRAINER_DECISION'});
+  if(c.type==='SETTLE_1999_RACE')
+   reactToTrainerEvents({state:next,world,events:output,emit});
   next.command_receipts[c.id] = fingerprint;
   next.revision += 1;
   validateGameRun(next, world);
