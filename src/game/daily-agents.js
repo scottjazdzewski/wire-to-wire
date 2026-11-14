@@ -303,6 +303,45 @@ export function settleDailyAgentFeedback({state,emit}){
    reason:'OWNER_CARE_FINANCING_AFFECTED_STABLE_OPERATION'});
  }
 }
+/**
+ * Actual race results change professional relationships and credibility.
+ * Outcome is compared with entry-era innate ability, NOT expected to always
+ * follow model odds. Poor finishes do not erase a trainer's skill overnight.
+ */
+export function applyRaceAgentFeedback({state,world,race,results,emit}){
+ const a=root(state),day=state.clock.date,field=results.length;
+ for(const result of results){
+  const horse=state.runtime.registered_horses?.by_id?.[result.horse_id];
+  if(!horse)continue;
+  const rel=relation(state,horse);
+  const trainer=state.runtime.people[horse.trainer_id]||{};
+  const record=trainer.game_race_record||{starts:0,wins:0,
+   managed_purse_minor:0,professional_standing:.5};
+  const achievement=1-(result.finish-1)/Math.max(1,field-1);
+  const expectation=.2+.6*(horse.starting_attributes.current_ability/99);
+  const relative=achievement-expectation;
+  const welfare=state.runtime.horse[horse.horse_id].training.currentRisk;
+  const trustDelta=relative*.012-(welfare>.65?.006:0);
+  rel.owner_trust=round4(rel.owner_trust+trustDelta);
+  rel.trainer_support=round4(rel.trainer_support+(result.earnings_minor>0?.003:.001)-
+   (welfare>.72?.004:0));
+  record.starts++;if(result.finish===1)record.wins++;
+  record.managed_purse_minor+=result.earnings_minor;
+  record.professional_standing=round4(record.professional_standing+relative*.009);
+  state.runtime.people[horse.trainer_id]={...trainer,game_race_record:record};
+  const reason=relative>.2?'EXCEEDED_FORM_EXPECTATIONS':
+   relative<-.2?'BELOW_FORM_EXPECTATIONS':'CONSISTENT_WITH_KNOWN_FORM';
+  emit('POST_RACE_PROFESSIONAL_FEEDBACK',{race_id:race.id,
+   horse_id:horse.horse_id,owner_id:horse.owner_organization_id,
+   trainer_id:horse.trainer_id,jockey_id:result.jockey_id,
+   finish:result.finish,field_size:field,reason,
+   comparison:'MODELED_STARTING_ABILITY_NOT_MARKET_ODDS',
+   owner_trust:rel.owner_trust,trainer_standing:record.professional_standing,
+   purse_earnings_minor:result.earnings_minor});
+  note(a,{date:day,agent_id:horse.trainer_id,role:'TRAINER',horse_id:horse.horse_id,
+   race_id:race.id,reason,finish:result.finish,field_size:field});
+ }
+}
 export function getAgentRelationships(state,ownerId,trainerId){
  const r=root(state).relationships[key(ownerId,trainerId)];
  return r?structuredClone(r):null;
