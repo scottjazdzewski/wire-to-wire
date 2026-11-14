@@ -58,7 +58,8 @@ export function validateHorseRegistrationRuntime(state,world){
   const site=state.runtime.facilities?.sites?.[h.current_residence_id];
   ensure(site&&site.id===h.current_residence_id&&
    ['RACING_STABLE','TRAINING_CENTER'].includes(site.type)&&
-   site.stalls>0,
+   site.stalls>0&&
+   (!site.residence_kind||['ORGANIZATION_HOME_SITE','TRACK_TRAINER_BARN'].includes(site.residence_kind)),
    'HORSE_REGISTRY','Registered horse home is not operational');
   ensure(isObject(h.career)&&Number.isSafeInteger(h.career.starts)&&h.career.starts>=0&&
    Number.isSafeInteger(h.career.wins)&&h.career.wins>=0&&h.career.wins<=h.career.starts&&
@@ -117,6 +118,8 @@ export function registerHorseAction({state,world,command,emit}){
    .reduce((sum,c)=>sum+c.stalls,0);
  ensure(effectiveCapacity>occupied+reserved,'BARN_FULL','No available operational stall capacity');
  ensure(worldIdentity(world,'people',h.trainer_id),'UNKNOWN_TRAINER','Trainer must resolve to approved person identity');
+ if(site.residence_kind==='TRACK_TRAINER_BARN')ensure(site.head_trainer_person_id===h.trainer_id,
+   'TRAINER_BARN_MISMATCH','Track-housed horse must use the registered barn trainer');
  ensure(h.status==='IN_TRAINING','HORSE_STATUS','Racehorses must register as in training');
  const horse={
   horse_id:h.horse_id,id:h.horse_id,name:h.registered_name,registered_name:h.registered_name,
@@ -124,7 +127,9 @@ export function registerHorseAction({state,world,command,emit}){
   sire_id:null,dam_id:null,
   breeder_organization_id:h.breeder_organization_id,owner_organization_id:h.owner_organization_id,
   foaling_location_id:h.foaling_location_id,current_residence_id:h.current_residence_id,
-  racing_barn_id:h.racing_barn_id,trainer_id:h.trainer_id,status:'IN_TRAINING',
+  racing_barn_id:h.racing_barn_id,trainer_id:h.trainer_id,
+  residence_kind:site.residence_kind??'ORGANIZATION_HOME_SITE',
+  host_track_id:site.host_track_id??null,status:'IN_TRAINING',
   provenance:PROVENANCE,registration_date:state.clock.date,registration_receipt_id:h.registration_receipt_id,
   naming:{status:'ACCEPTED',release_id:release.release_id,candidate_id:candidate.candidate_id,
    reserved_names_version:release.reserved_names.version},
