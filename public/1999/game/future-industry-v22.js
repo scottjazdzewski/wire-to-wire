@@ -82,9 +82,19 @@ function realOwnerUsage(state,world){
  * Construct a real-game anchored gateway. It holds one immutable run revision;
  * opening a new quote after advancing a day requires creating a new gateway.
  */
-export function createFutureIndustryGameGatewayV22({state,world,industry}={}){
+export function createFutureIndustryGameGatewayV22({
+ state,world,industry,authorityBinding
+}={}){
  validateGameRun(state,world);
  validIndustry(industry);
+ // This mapping must be explicitly authorized by the game service. Source
+ // snapshot identities and detached fictional registry namespaces have
+ // different key spaces: never infer a relationship from similar names.
+ if(!authorityBinding||
+  authorityBinding.worldSnapshotId!==world.authority.snapshot_id||
+  authorityBinding.worldSha256!==world.authority.sha256||
+  authorityBinding.industryWorldId!==industry.worldId)
+  throw Error('Future industry registry is not explicitly bound to game world authority');
  const runId=state.run_id,revision=state.revision,date=state.clock.date;
  function checkCurrent(){
   validateGameRun(state,world);
