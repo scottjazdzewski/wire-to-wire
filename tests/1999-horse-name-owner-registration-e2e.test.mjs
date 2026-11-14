@@ -82,7 +82,7 @@ test('approved name cannot be registered with a forged release or substituted ca
   horse:horseRegistration,naming_release:{...release,candidates:release.candidates.map(x=>({...x,approval_proof:{...x.approval_proof,owner_organization_id:'O-OTHER'}}))}}),
   e=>e.code==='NAME_RELEASE_PROOF');
  assert.throws(()=>send(s,'naming:legacy-bypass','REGISTER_GAME_HORSE',{
-  horse:horseRegistration,naming_release:{...release,schema:undefined}}),
+  horse:horseRegistration,naming_release:Object.fromEntries(Object.entries(release).filter(([k])=>k!=='schema'))}),
   e=>e.code==='NAME_OWNER_RELEASE_REQUIRED');
 });
 test('owner rejection cannot enter the horse registry',()=>{
