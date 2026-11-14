@@ -44,10 +44,10 @@ test('the current Office home button does not click the invisible Office app',()
 test('Stable and all canonical departments open through one identical renderer and route history',()=>{
  const snippet=ui.slice(ui.indexOf('function openMenu('),ui.indexOf('\nfunction pageTab('));
  assert.match(snippet,/if\(section==='Office'\)return goOffice\(\)/);
- assert.match(snippet,/if\(section==='Stable'\|\|DEP_NAMES\.has\(section\)\)/);
+ assert.match(snippet,/if\(section==='Stable'\|\|section==='World'\|\|DEP_NAMES\.has\(section\)\)/);
  assert.match(snippet,/openCustomView\(section\+' — Overview',section,'Overview'\)/);
  assert.match(snippet,/if\(section==='History'\)\{window\.location\.assign/);
- assert.ok(snippet.indexOf("if(section==='Stable'||DEP_NAMES.has(section))")<snippet.indexOf('bridgeNode(originalAct(actions[section]))'));
+ assert.ok(snippet.indexOf("if(section==='Stable'||section==='World'||DEP_NAMES.has(section))")<snippet.indexOf('bridgeNode(originalAct(actions[section]))'));
  for(const section of ['Racing','Sales','Breeding','Personnel','Facilities','Finances','Tracks'])
   assert.ok(ui.includes("'"+section+"'"),section+' source-backed department missing');
  assert.match(ui,/if\(typeof DEP_NAMES!=='undefined'&&DEP_NAMES\.has\(section\)\)return departmentRoster\(section,page\)/);
