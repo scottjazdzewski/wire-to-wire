@@ -153,3 +153,38 @@ test('ignored player requests expire once and preserve contracts and horse owner
   e.details.request_id===request.id));
  assert.deepEqual(importGameSave(exportGameSave(s,world),world),s);
 });
+
+test('temporary postrace workouts act on actual training then expire or yield to newer direction',()=>{
+ let s=fresh(),choiceEvent=null;
+ for(let i=0;i<20;i++){
+  s=day(s);
+  choiceEvent=s.event_log.find(e=>e.date===s.clock.date&&
+   e.kind==='TRAINER_MANAGEMENT_REQUEST_RESOLVED'&&
+   e.details.kind==='POST_RACE_RECOVERY');
+  if(choiceEvent)break;
+ }
+ assert.ok(choiceEvent,'Actual below-form racing must create a trainer strategy choice');
+ const horseId=choiceEvent.details.horse_id;
+ const order=s.runtime.trainer_management_requests.training_orders[horseId];
+ assert.ok(order,'AI trainer recovery request is an actual temporary training order');
+ assert.equal(s.runtime.horse[horseId].policy.training_plan,order.training_plan);
+ assert.ok(['REST','LIGHT'].includes(order.training_plan));
+ assert.ok(s.event_log.some(e=>e.seq===order.applied_event_seq&&
+  e.kind==='HORSE_CARE_POLICY_CHANGED'&&e.details.horse_id===horseId));
+ const current=order.expires_on;
+ while(s.clock.date<=current)s=day(s);
+ assert.equal(s.runtime.trainer_management_requests.training_orders[horseId],undefined);
+ assert.ok(s.event_log.some(e=>e.details?.request_id===order.request_id&&
+  ['TRAINER_TEMPORARY_WORKOUT_RESTORED',
+   'TRAINER_TEMPORARY_WORKOUT_SUPERSEDED'].includes(e.kind)),
+  'No temporary workout can become permanent by accident');
+ assert.deepEqual(importGameSave(exportGameSave(s,world),world),s);
+});
+test('tampered request provenance is rejected on save import',()=>{
+ const {s,request}=fundablePlayerRequest();
+ const altered=structuredClone(s);
+ altered.runtime.trainer_management_requests.by_pair[
+  request.owner_id+'|'+request.trainer_id].active.source_event_seq=999999;
+ assert.throws(()=>importGameSave(exportGameSave(altered,world),world),
+  e=>e.code==='MANAGEMENT_SAVE'||e.code==='SAVE_INVALID');
+});
