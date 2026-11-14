@@ -6,6 +6,7 @@ import { validateSeed } from './rng.js';
 import {generatePeopleRuntime} from './people-generator.js';
 import {createFacilityState,validateFacilityState} from './facility-operations.js';
 import {createOwnershipRuntime,validateOwnershipRuntime} from './ownership.js';
+import {createHorseRegistrationRuntime,validateHorseRegistrationRuntime,careerHorse} from './horse-registration.js';
 
 export function createGameRun({ world, runId, seed, player, stableHorseIds = [], startDate, personGenerationCatalog = null } = {}) {
   validateWorld(world);
@@ -30,7 +31,7 @@ export function createGameRun({ world, runId, seed, player, stableHorseIds = [],
     rng: { seed: seed >>> 0 },
     player: { role: player.role, involvement: player.involvement, operation_id: operationId },
     stable_horse_ids: [...stableHorseIds],
-    runtime: { horse: {}, races: {}, entries: {}, people: personGenerationCatalog?generatePeopleRuntime({world,catalog:personGenerationCatalog}):{}, finances: { balance_minor: null, ledger: [], operation_balances_minor: {} }, facilities:createFacilityState(), ownership:createOwnershipRuntime() },
+    runtime: { horse: {}, races: {}, entries: {}, people: personGenerationCatalog?generatePeopleRuntime({world,catalog:personGenerationCatalog}):{}, finances: { balance_minor: null, ledger: [], operation_balances_minor: {} }, facilities:createFacilityState(), ownership:createOwnershipRuntime(), registered_horses:createHorseRegistrationRuntime() },
     decisions: { pending: {}, resolved: {} },
     scheduler: { pending: [], delivered_ids: [] },
     command_receipts: {},
@@ -51,7 +52,7 @@ export function validateGameRun(state, world) {
   ensure(isObject(state.player) && PLAYER_ROLES.includes(state.player.role) && INVOLVEMENT_LEVELS.includes(state.player.involvement), 'RUN_PLAYER', 'Invalid player role');
   ensure(!state.player.operation_id || Boolean(worldIdentity(world, 'organizations', state.player.operation_id)), 'UNKNOWN_OPERATION', 'Player operation ID not found');
   ensure(Array.isArray(state.stable_horse_ids) && new Set(state.stable_horse_ids).size === state.stable_horse_ids.length, 'INVALID_STABLE', 'Invalid stable roster');
-  for (const id of state.stable_horse_ids) ensure(Boolean(worldIdentity(world, 'horses', id)), 'UNKNOWN_HORSE', 'Unknown stable horse '+id);
+  for (const id of state.stable_horse_ids) ensure(Boolean(careerHorse(state, world, id)), 'UNKNOWN_HORSE', 'Unknown stable horse '+id);
   ensure(isObject(state.runtime) && isObject(state.runtime.horse) && isObject(state.runtime.races) && isObject(state.runtime.entries) && isObject(state.runtime.people)
     && isObject(state.runtime.finances) && Array.isArray(state.runtime.finances.ledger), 'RUN_RUNTIME', 'Invalid runtime shell');
   // Runtime person development is keyed only by canonical person IDs. The
@@ -87,6 +88,7 @@ export function validateGameRun(state, world) {
   }
   validateFacilityState(state,world);
   validateOwnershipRuntime(state,world);
+  validateHorseRegistrationRuntime(state,world);
   strictJSON(state);
   return state;
 }
