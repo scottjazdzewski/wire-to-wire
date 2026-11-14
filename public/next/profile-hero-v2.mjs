@@ -135,27 +135,80 @@ export function heroCandidate(kind,id,approved=""){
   "/assets/places/organization-hero/"+id+".webp":"";
  return path;
 }
+/* Visually fit genuine transparent marks by their ALPHA CONTENT, not by the
+ * larger 1600x1200 export canvas. This is an in-memory display derivative:
+ * actual logo pixels and the canonical source WebP are never overwritten.
+ * The optical bounds include all pixels with meaningful alpha and a 6% halo.
+ */
+export function visibleAlphaBounds(imageData){
+ const {width,height,data}=imageData||{};
+ if(!Number.isInteger(width)||!Number.isInteger(height)||width<2||height<2||
+    !data||data.length!==width*height*4)return null;
+ let minX=width,minY=height,maxX=-1,maxY=-1,inkCount=0;
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+  const a=data[(y*width+x)*4+3];
+  if(a<12)continue;
+  inkCount++;
+  minX=Math.min(minX,x);maxX=Math.max(maxX,x);
+  minY=Math.min(minY,y);maxY=Math.max(maxY,y);
+ }
+ if(inkCount<12||maxX<minX)return null;
+ const inkW=maxX-minX+1,inkH=maxY-minY+1;
+ const haloX=Math.max(2,Math.round(inkW*.06));
+ const haloY=Math.max(2,Math.round(inkH*.06));
+ const x=Math.max(0,minX-haloX),y=Math.max(0,minY-haloY);
+ const right=Math.min(width,maxX+1+haloX),bottom=Math.min(height,maxY+1+haloY);
+ const box={x,y,width:right-x,height:bottom-y};
+ if(box.width>=width*.94&&box.height>=height*.94)return null;
+ return box;
+}
+async function makeOpticalHero(img,sourceURL){
+ const width=img.naturalWidth,height=img.naturalHeight;
+ if(!width||!height||width*height>6_000_000)return sourceURL;
+ const source=document.createElement("canvas");
+ source.width=width;source.height=height;
+ const ctx=source.getContext("2d",{willReadFrequently:true});
+ if(!ctx)return sourceURL;
+ ctx.drawImage(img,0,0,width,height);
+ const bounds=visibleAlphaBounds(ctx.getImageData(0,0,width,height));
+ if(!bounds)return sourceURL;
+ const cropped=document.createElement("canvas");
+ cropped.width=bounds.width;cropped.height=bounds.height;
+ const cropCtx=cropped.getContext("2d");
+ if(!cropCtx)return sourceURL;
+ cropCtx.drawImage(source,bounds.x,bounds.y,bounds.width,bounds.height,
+  0,0,bounds.width,bounds.height);
+ const blob=await new Promise(resolve=>cropped.toBlob(resolve,"image/png"));
+ return blob?URL.createObjectURL(blob):sourceURL;
+}
+
 function heroAvailable(src){
  if(!heroProbes.has(src)){
   const img=new Image();
   img.src=src;
-  heroProbes.set(src,img.decode().then(()=>{
-   // Non-destructive color sampling: a navy/black transparent wordmark needs a
-   // pale diffuse spotlight to remain legible on a dark team-colored header.
+  heroProbes.set(src,img.decode().then(async()=>{
+   // A dark wordmark needs extra contrast on a themed dark header. Sample
+   // without changing the logo's source colors, even when optical crop fails.
+   let darkInk=false;
    try{
     const sample=document.createElement("canvas");
     sample.width=64;sample.height=48;
     const ctx=sample.getContext("2d",{willReadFrequently:true});
-    if(!ctx)return {ok:true,darkInk:false};
-    ctx.drawImage(img,0,0,sample.width,sample.height);
-    const data=ctx.getImageData(0,0,sample.width,sample.height).data;
-    let luminosity=0,pixels=0;
-    for(let i=0;i<data.length;i+=4)if(data[i+3]>=105){
-     luminosity+=.2126*data[i]+.7152*data[i+1]+.0722*data[i+2];pixels++;
+    if(ctx){
+     ctx.drawImage(img,0,0,sample.width,sample.height);
+     const data=ctx.getImageData(0,0,sample.width,sample.height).data;
+     let luminosity=0,pixels=0;
+     for(let i=0;i<data.length;i+=4)if(data[i+3]>=105){
+      luminosity+=.2126*data[i]+.7152*data[i+1]+.0722*data[i+2];pixels++;
+     }
+     darkInk=pixels>20&&luminosity/pixels<112;
     }
-    return {ok:true,darkInk:pixels>20&&luminosity/pixels<112};
-   }catch{return {ok:true,darkInk:false};}
-  }).catch(()=>({ok:false,darkInk:false})));
+   }catch{/* Do not block a real logo if color sampling is unsupported. */}
+   let displayUrl=src;
+   try{displayUrl=await makeOpticalHero(img,src);}
+   catch{/* The original transparent image remains a safe fallback. */}
+   return {ok:true,darkInk,displayUrl};
+  }).catch(()=>({ok:false,darkInk:false,displayUrl:src})));
  }
  return heroProbes.get(src);
 }
@@ -285,7 +338,9 @@ function init(){
       temporaryIdentity(mark,kind,name);
       mark.dataset.wtwHeroProbePath=candidate;
      },{once:true});
-     logo.src=candidate;
+     logo.dataset.wtwHeroProbePath=candidate;
+     logo.dataset.wtwHeroState="active";
+     logo.src=visual.displayUrl||candidate;
      mark.replaceChildren(logo);
      mark.classList.remove("wtw-hero-typographic","wtw-hero-legacy","wtw-hero-dark-ink");
      mark.classList.add("wtw-hero-transparent");
@@ -319,13 +374,6 @@ function init(){
    });
   };
   if(candidate){
-   if(img.getAttribute("src")===candidate){
-    img.dataset.wtwHeroProbePath=candidate;
-    img.dataset.wtwHeroState="active";
-    mark.classList.remove("wtw-hero-legacy","wtw-hero-dark-ink");
-    mark.classList.add("wtw-hero-transparent");
-    return;
-   }
    const matching=img.dataset.wtwHeroProbePath===candidate;
    const state=matching?img.dataset.wtwHeroState:"";
    if(state==="active"||state==="pending")return;
@@ -337,16 +385,18 @@ function init(){
      img.dataset.wtwHeroState=visual.ok?"active":"missing";
      if(!visual.ok){legacy();return;}
      const before=img.getAttribute("src");
+     const display=visual.displayUrl||candidate;
      img.addEventListener("error",()=>{
-      if(img.isConnected&&img.getAttribute("src")===candidate){
-       if(before)img.src=before;
+      if(img.isConnected&&img.getAttribute("src")===display){
+       if(before&&before!==display)img.src=before;
+       else img.src=candidate;
        img.dataset.wtwHeroState="missing";
        mark.classList.remove("wtw-hero-transparent","wtw-hero-dark-ink");
        mark.classList.add("wtw-hero-legacy");
       }
      },{once:true});
-     img.src=candidate;
-     img.dataset.wtwMatteSource=candidate;
+     img.src=display;
+     img.dataset.wtwMatteSource=display;
      mark.classList.remove("wtw-hero-legacy","wtw-hero-dark-ink");
      mark.classList.add("wtw-hero-transparent");
      if(visual.darkInk)mark.classList.add("wtw-hero-dark-ink");
