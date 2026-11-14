@@ -19,6 +19,7 @@ Create ONE high-quality hero mark for each track/organization. Real racecourses 
 
 - **Master:** 1600 × 1200 px, 4:3, RGBA transparent PNG, sRGB.
 - **Logo safety:** logo content centered inside x=120–1480, y=180–1020 (1360×840 safe area). No content touching canvas edges.
+- **Optical fit handled by UI:** you do not need to manually crop the 1600×1200 master. On display, the UI measures the visible alpha pixels, retains an additional 6% safety halo, and uses a lossless temporary in-memory image so the logo looks large. Original PNG/WebP files are never modified.
 - **Export:** **lossless alpha WebP** (transparent), same 1600×1200 canvas where feasible.
 - **No baked-in white rectangle, colored square, plaque, gold frame, photographic backdrop, gradient, faux 3D wall, or drop shadow.** The UI supplies backdrop/lighting/glow.
 - **Styling:** bold and legible from 280×140 down to roughly 190×95. Horizontal wordmarks must not include tiny letters. Vertical/crest marks must not be stretched.
@@ -47,6 +48,12 @@ Create ONE high-quality hero mark for each track/organization. Real racecourses 
 - As soon as the generator uploads the correct transparent file under `track-hero/T-####.webp` or `organization-hero/O-....webp`, the asset is automatically recognized on a refreshed page and the placeholder disappears.
 - Images that fail decoding do not erase their existing logo or the source record.
 - No duplicate or invented horse ownership, barn address, racing status, or brand colors are added by this treatment.
+
+## Transparent logo optical fitting
+- Transparent PNG/WebP artwork is display-cropped by its visible alpha bounds **only in the browser**. This corrects the mismatch between the 4:3 export canvas and the wider hero slot without stretching, distorting, or overwriting artwork.
+- Bounding includes a small safety margin to keep every letter, silhouette and crest edge intact. Full-bleed or insufficiently visible images are left unchanged.
+- Very dark wordmarks retain an independent soft contrast backlight. This is part of the UI, not baked into generated logos.
+- Files are activated by canonical ID exactly as before; logo generation and photography remain in separate windows.
 
 ## Existing logo fallback
 The UI's `profile-hero-v2.mjs` has a conservative, browser-only white-matte cleanup for **edge-connected white backgrounds** on legacy logo files, plus adaptive contrast for dark navy lettering. Original repository files are unchanged. New transparent artwork automatically takes precedence by the exact canonical-ID file path; its pixels are never altered. This is not a replacement for real logo production.
