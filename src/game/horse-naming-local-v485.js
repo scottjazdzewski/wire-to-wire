@@ -6,6 +6,7 @@
  * A source-less foal receives a hold, not a fabricated name.
  */
 import {verifyNamingBriefAgainstGame,screenStoryFirstIdeas} from './horse-naming-model-creator.js';
+import {foalingEventNamingBrief,auditPopulationNamingResults,POPULATION_NAMING_SCHEMA,POPULATION_NAMING_BATCH_SIZE} from './horse-naming-population-planner.js';
 
 export const LOCAL_HORSE_NAMING_SCHEMA='WTW_LOCAL_HORSE_NAMING_V485';
 const norm=x=>String(x||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('en-US').replace(/[^a-z0-9]/g,'');
@@ -65,25 +66,22 @@ function quoteNear(narrative,regex){
 }
 function shapes(name){const n=name.trim().split(/\s+/).length;return n===1?'single':n===2?'two':'phrase'}
 
-/** Entirely local generation. Repeated calls with same horse/seed are identical. */
-export function generateLocalStoryFirstHorseNames({world,state,horse,brief,count=8,attempt=0,recentNames=[],reservedNames=[],issuedNames=[],additionalReviewedNames=[]}={}){
- if(!Number.isInteger(count)||count<1||count>16||!Number.isInteger(attempt)||attempt<0||attempt>1_000_000)
-  throw Error('Invalid local naming generation controls');
- const verified=verifyNamingBriefAgainstGame({world,state,horse,brief});
- const source=getEvidence(verified);
- if(source.length===0)return {schema:LOCAL_HORSE_NAMING_SCHEMA,horseId:brief.horseId,
-  status:'HOLD_NEEDS_HORSE_CONTEXT',screened:[],readyForIndependentEditor:0,held:0,
-  requestCount:0,creditsUsed:0,gameWrites:0,registrationStatus:'NOT_RELEASED'};
- const seed=fnv(verified.horseId+'|'+verified.owner?.id+'|'+source.map(x=>x.narrative).join('|')+'|'+attempt);
+/** Reusable pure creative proposals for a TRUSTED game brief. Does not approve. */
+export function createLocalStoryIdeas(brief,{count=8,attempt=0}={}){
+ if(brief?.status!=='READY_FOR_ORIGINAL_NAME_WRITING'||
+  !Number.isInteger(count)||count<1||count>16||
+  !Number.isInteger(attempt)||attempt<0||attempt>1000000)
+  throw Error('Invalid trusted local foal naming brief');
+ const source=getEvidence(brief);
+ if(!source.length)return {suggestions:[],hits:[]};
+ const seed=fnv(brief.horseId+'|'+brief.owner?.id+'|'+source.map(x=>x.narrative).join('|')+'|'+attempt);
  const random=rng(seed);
  let hits=[];
  for(const e of source)for(const voice of VOICES){
   if(!voice.cue.test(e.narrative))continue;
   hits.push({voice,evidenceId:e.evidenceId,narrative:e.narrative});
  }
- if(!hits.length)return {schema:LOCAL_HORSE_NAMING_SCHEMA,horseId:brief.horseId,
-  status:'HOLD_NO_VERIFIED_NAMING_MOTIF',screened:[],readyForIndependentEditor:0,held:0,
-  requestCount:0,creditsUsed:0,gameWrites:0,registrationStatus:'NOT_RELEASED'};
+ if(!hits.length)return {suggestions:[],hits:[]};
  // Randomized across *motifs* but no word-grid joins. Each name is a fully
  // written candidate. Cap one proposal per motif on a first pass to fight fatigue.
  hits=hits.map(x=>({...x,sort:random()})).sort((a,b)=>a.sort-b.sort);
@@ -104,6 +102,22 @@ export function generateLocalStoryFirstHorseNames({world,state,horse,brief,count
    motifId:hit.voice.id});
   if(trials%hits.length===0)pass++;
  }
+ return {suggestions,hits};
+}
+
+/** Entirely local generation. Repeated calls with same horse/seed are identical. */
+export function generateLocalStoryFirstHorseNames({world,state,horse,brief,count=8,attempt=0,recentNames=[],reservedNames=[],issuedNames=[],additionalReviewedNames=[]}={}){
+ if(!Number.isInteger(count)||count<1||count>16||!Number.isInteger(attempt)||attempt<0||attempt>1_000_000)
+  throw Error('Invalid local naming generation controls');
+ const verified=verifyNamingBriefAgainstGame({world,state,horse,brief});
+ const source=getEvidence(verified);
+ if(source.length===0)return {schema:LOCAL_HORSE_NAMING_SCHEMA,horseId:brief.horseId,
+  status:'HOLD_NEEDS_HORSE_CONTEXT',screened:[],readyForIndependentEditor:0,held:0,
+  requestCount:0,creditsUsed:0,gameWrites:0,registrationStatus:'NOT_RELEASED'};
+ const {suggestions,hits}=createLocalStoryIdeas(verified,{count,attempt});
+ if(!hits.length)return {schema:LOCAL_HORSE_NAMING_SCHEMA,horseId:verified.horseId,
+  status:'HOLD_NO_VERIFIED_NAMING_MOTIF',screened:[],readyForIndependentEditor:0,held:0,
+  requestCount:0,creditsUsed:0,gameWrites:0,registrationStatus:'NOT_RELEASED'};
  const reviewed=new Set([...recentNames,...reservedNames,...issuedNames,...additionalReviewedNames].map(norm));
  const screen=screenStoryFirstIdeas({world,state,brief:verified,rawIdeas:suggestions.slice(0,8),
   recentNames,reservedNames,issuedNames,additionalReviewedNames});
@@ -127,4 +141,48 @@ export function generateLocalStoryFirstHorseNames({world,state,horse,brief,count
   held:screen.held,sourceMotifs:[...new Set(hits.map(h=>h.voice.id))],
   requestCount:0,creditsUsed:0,gameWrites:0,registrationStatus:'NOT_RELEASED',
   caveat:'Context-based whole names, not independently proven creative quality. Name availability is not certified.'};
+}
+
+/**
+ * Future foals: process a planned (<=16) naming cohort entirely on-device.
+ * Source must be an exact signed-in-world FOALING_EVENT brief made by the game
+ * planner. This NEVER adds horses or names and uses no Worker/D1/API requests.
+ */
+export function generateLocalPopulationNamingBatch({batch,existingNames=[],attempt=0}={}){
+ if(batch?.schema!==POPULATION_NAMING_SCHEMA||!Array.isArray(batch.items)||
+  !batch.items.length||batch.items.length>POPULATION_NAMING_BATCH_SIZE||
+  !Array.isArray(existingNames))throw Error('Invalid local population naming batch');
+ const results=[],briefs=[],known=[...existingNames,...(batch.recentNames||[])];
+ for(const item of batch.items){
+  const brief=item?.brief;
+  const ev=brief?.evidence?.[0];
+  if(ev?.kind!=='GAME_EVENT'||typeof ev.sourceRef!=='string'||
+   !ev.sourceRef.startsWith('foaling_event:'))throw Error('Missing game foaling event source');
+  const sourceId=ev.sourceRef.slice('foaling_event:'.length);
+  const event={kind:'FOALING_EVENT',eventId:sourceId,horseId:brief.horseId,
+   naming_narrative:ev.sourceDetails?.naming_narrative,
+   foalingLocationId:brief.foalingLocationId};
+  const trusted=foalingEventNamingBrief({horseId:brief.horseId,foalingYear:brief.foalingYear,
+   owner:brief.owner,breeder:brief.breeder,event});
+  if(JSON.stringify(trusted)!==JSON.stringify(brief)||brief.foalingYear!==batch.year)
+   throw Error('Foal naming record did not match actual game-event brief');
+  const {suggestions}=createLocalStoryIdeas(trusted,{count:8,attempt});
+  const seen=new Set(known.map(norm)),candidates=[];
+  for(const item of suggestions){
+   if(seen.has(norm(item.name)))continue;
+   candidates.push({...item,origin:'ON_DEVICE_FOALING_EVENT',status:'NEEDS_INDEPENDENT_EDITOR'});
+   seen.add(norm(item.name));
+   if(candidates.length>=2)break;
+  }
+  known.push(...candidates.map(x=>x.name));
+  briefs.push(trusted);results.push({horseId:trusted.horseId,candidates,
+   approvedForRegistration:false,gameWrites:0});
+ }
+ const audit=auditPopulationNamingResults({results,briefs,existingNames:[...existingNames,...(batch.recentNames||[])]});
+ return {schema:LOCAL_HORSE_NAMING_SCHEMA,jobId:batch.jobId,year:batch.year,
+  requested:batch.items.length,screened:audit.screened,
+  readyForIndependentEditor:audit.readyForIndependentEditor,
+  held:audit.held,status:'LOCAL_BATCH_COMPLETE_NEEDS_EDITOR',
+  nextRecentNames:known.slice(-60),remoteRequests:0,creditsUsed:0,
+  writesToGame:false,approvedForRegistration:false};
 }
