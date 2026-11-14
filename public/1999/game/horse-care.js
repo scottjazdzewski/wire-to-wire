@@ -8,6 +8,7 @@ import {ensure,isObject,worldIdentity} from './contracts.js';
 import {TRAINING_PLANS,createHorseTrainingRecord,advanceHorseTrainingDay}
  from '../engine/horse-development.mjs';
 import {horseTravelStatus,effectiveHorseCareSite} from './shipping-1999.js';
+import {trainerDailyFee} from './trainer-contracts-1999.js';
 
 export const HORSE_CARE_SCHEMA='WTW_1999_CONNECTED_HORSE_CARE_V1';
 export const TRAINER_SKILLS_SCHEMA='WTW_1999_TRAINER_SKILLS_GAME_V1';
@@ -46,9 +47,9 @@ export function defaultHorseCarePolicy(){
  return {feed:'STANDARD',care:'BASIC',training_plan:'AUTO',
   monthly_budget_minor:500000,source:'MODELED_GAMEPLAY_DEFAULT'};
 }
-function descriptor(horse,site,skills,policy){
+function descriptor(state,horse,site,skills,policy){
  const feed=FEED_PROGRAMS[policy.feed],care=CARE_PROGRAMS[policy.care];
- const fee=Math.round(4000+4500*skills.roleAttributes.conditioning);
+ const fee=trainerDailyFee(state,horse,skills);
  const board=site.daily_boarding_minor??0;
  const monthlyCareCost=(board+feed.daily_minor+care.daily_minor)*30.4375/100;
  return {
@@ -170,7 +171,7 @@ export function advanceGameHorseCare({state,world,emit}){
    // physically between barns a horse cannot perform track workouts and
    // neither barn earns fictitious board or trainer fees for that day.
    const home=state.runtime.facilities.sites[h.current_residence_id];
-   const model=descriptor(h,home,skills,p);
+   const model=descriptor(state,h,home,skills,p);
    const carrierCare={nutrition:.62,supervision:.6,barnQuality:.60,
     crowding:.35,workout:'REST'};
    const work=advanceHorseTrainingDay({...r.training,plan:'REST'},
@@ -190,7 +191,7 @@ export function advanceGameHorseCare({state,world,emit}){
     readiness:r.training.readiness,stress:r.training.stress});
    continue;
   }
-  const info=descriptor(h,site,skills,p);
+  const info=descriptor(state,h,site,skills,p);
   const context=estimateContext(p,site,occupancy[site.id]??0);
   const train={...r.training,plan:p.training_plan};
   const allowed=site.status==='ACTIVE'&&site.staff_count>=site.staff_required;
