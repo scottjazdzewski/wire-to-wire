@@ -15,10 +15,10 @@ const html=read('public/next/index.html');
 test('available ownership logos are published only for exact 1999 founding names AND immutable organization IDs',()=>{
  assert.equal(directory.organizations.length,37);
  assert.equal(manifest.approvedOrganizationIds.length,37);
- assert.equal(manifest.publishedCount,21);
- assert.equal(manifest.remainingWithoutMatchedLogo,16);
+ assert.equal(manifest.publishedCount,31);
+ assert.equal(manifest.remainingWithoutMatchedLogo,6);
  const entries=Object.entries(manifest.organizations);
- assert.equal(entries.length,21);
+ assert.equal(entries.length,31);
  const allowed=new Set(directory.organizations.map(o=>o.id));
  for(const [key,path] of entries){
   assert.match(key,/^organization:O-[\w-]+$/);
@@ -38,7 +38,7 @@ test('available ownership logos are published only for exact 1999 founding names
  }
  assert.equal(manifest.organizations['organization:O-000002'],'/assets/office/founding-organization-logos/O-000002.png','Harrowgate must use its NEW approved artwork');
  assert.equal(manifest.organizations['organization:O-000056'],'/assets/office/founding-organization-logos/O-000056.png','Quickfire must use its NEW approved artwork');
- assert.ok(!manifest.organizations['organization:O-FOUNDING-1999-005'],'Do not invent an All The Colors logo');
+ assert.equal(manifest.organizations['organization:O-FOUNDING-1999-005'],'/assets/office/founding-organization-logos/O-FOUNDING-1999-005.png','Use the approved All The Colors logo');
  assert.equal(Object.keys(manifest.organizations).length+manifest.remainingWithoutMatchedLogo,37);
 });
 
@@ -60,7 +60,7 @@ test('existing approved track logos, badge set and selected ID-verified portrait
 });
 
 test('the clean Office loads only the founder manifest, without silently reviving legacy organizations',()=>{
- assert.match(ui,/founding-organization-logo-index\.json\?rev=founder-logos-release-v2-20261113/);
+ assert.match(ui,/founding-organization-logo-index\.json\?rev=founder-approved-31-20261114/);
  assert.match(ui,/const approvedOrg=isClean1999\(\)\?/);
  assert.match(ui,/approvedOrg\?\['organization:'\+approvedOrg\.id\]/);
  assert.match(ui,/const allowed=\(world1999Data\?\.organizations\|\|\[\]\)\.some\(o=>o\.id===id\)/);

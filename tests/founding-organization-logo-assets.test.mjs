@@ -1,0 +1,51 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync, existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { resolve, dirname } from 'node:path';
+
+const root=resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const readJson=path=>JSON.parse(readFileSync(resolve(root,path),'utf8'));
+const index=readJson('public/assets/office/founding-organization-logo-index.json');
+const roster=readJson('public/data/wtw-1999-founding-directory-v1.json');
+const current=new Set(roster.organizations.map(row=>row.id));
+const approved=new Set(index.approvedOrganizationIds);
+const revised=new Set(index.latestApprovedLogoIds);
+
+test('1999 approved logos match the 37 exact opening organization IDs',()=>{
+ assert.equal(current.size,37);
+ assert.equal(approved.size,37);
+ assert.deepEqual([...current].sort(),[...approved].sort());
+ assert.equal(index.publishedCount,31);
+ assert.equal(index.remainingWithoutMatchedLogo,6);
+ assert.equal(index.audit.notPublished.length,6);
+ assert.equal(index.audit.published.length,31);
+ for(const {id,name,path} of index.audit.published){
+  assert.ok(current.has(id), 'not in founding world: '+id);
+  const actual=roster.organizations.find(x=>x.id===id);
+  assert.equal(name,actual.name,'name mismatch '+id);
+  assert.equal(index.organizations['organization:'+id],path);
+  assert.ok(path.startsWith('/assets/office/'));
+  assert.ok(existsSync(resolve(root,'public'+path)), 'missing approved asset '+id);
+ }
+});
+test('25 newly installed approved organization logos are all exact 256-square PNGs',()=>{
+ assert.equal(revised.size,25);
+ for(const id of revised){
+  assert.ok(current.has(id),'not current '+id);
+  const path=index.organizations['organization:'+id];
+  assert.equal(path,'/assets/office/founding-organization-logos/'+id+'.png');
+  const bytes=readFileSync(resolve(root,'public'+path));
+  assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a','bad PNG '+id);
+  assert.equal(bytes.readUInt32BE(16),256,'wrong width '+id);
+  assert.equal(bytes.readUInt32BE(20),256,'wrong height '+id);
+ }
+});
+test('No stale legacy identity substitutions in active 1999 logo index',()=>{
+ for(const [key,path] of Object.entries(index.organizations)){
+  assert.match(key,/^organization:O-(?:\d{6}|FOUNDING-1999-\d{3})$/);
+  assert.ok(current.has(key.slice('organization:'.length)),'unknown organization '+key);
+  assert.ok(!/state[-_]?flag|states\//i.test(path),'state/flag logo substituted for owner '+key);
+ }
+ for(const p of index.audit.notPublished)assert.ok(!index.organizations['organization:'+p.id],'unapproved replacement '+p.id);
+});
