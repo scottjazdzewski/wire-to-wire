@@ -156,6 +156,15 @@ export function postRaceWorkoutGuidance(state,horse,date=state.clock.date){
   return {workout:'LIGHT',reason:'POST_RACE_LIGHT_REBUILD',mandatory:false,phase};
  return {workout:null,reason:'RESUME_TRAINER_PROGRAM',mandatory:false,phase};
 }
+/** Postrace owner review sees a dated horse-specific recovery obligation,
+ * not a generic owner personality or an invented treatment bill. */
+export function postRaceCarePriority(state,horse){
+ const plan=state.runtime.post_race_campaigns?.by_horse?.[horse.horse_id];
+ if(!plan)return {active:false,first_day:false,days_since: null};
+ const days=gap(plan.last_race_date,state.clock.date);
+ return {active:days>=1&&days<=6,first_day:days===1,days_since:days,
+  phase:plan.phase,last_race_id:plan.last_race_id};
+}
 /** Race-secretary/trainer AI may not override a recorded recovery campaign.
  * Player entry rights remain with the existing raceEligibility engine. */
 export function postRaceAIPlacement(state,horse,race){
