@@ -6,6 +6,7 @@ import {WORLD_SCHEMA,dispatchGameCommand,exportGameSave,importGameSave,
  getLocalTrainerHiringMarket,getCareerHorseConnections,getTrainerContract}
  from '../src/game/index.js';
 import {build1999PilotGameRun} from '../src/game/1999-pilot-fixture.js';
+import {trainerEmploymentAction} from '../src/game/trainer-employment-1999.js';
 const read=p=>JSON.parse(readFileSync(new URL(p,import.meta.url),'utf8'));
 const directory=read('../public/data/wtw-1999-founding-directory-v1.json');
 const trainers=read('../public/data/wtw-1999-trainer-pilot-v1.json');
@@ -113,8 +114,12 @@ test('withdrawal, under-market quote, owner permission and insufficient funds ca
  poor.runtime.finances.operation_balances_minor[x.row.owner_id]=0;
  if(poor.player.operation_id===x.row.owner_id)
   poor.runtime.finances.balance_minor=0;
- assert.throws(()=>command(poor,'hire:no-cash','OFFER_LOCAL_TRAINER_ASSIGNMENT',p,'player'),
-  e=>e.code==='TRAINER_HIRE_FUNDS');
+ // Exercise the inner affordability gate directly. A fabricated change
+ // to a complete game ledger is deliberately rejected by save validation
+ // before a command is dispatched, so this is an isolated policy unit test.
+ assert.throws(()=>trainerEmploymentAction({state:poor,world,
+  command:{type:'OFFER_LOCAL_TRAINER_ASSIGNMENT',payload:p,actor:'player'},
+  emit:()=>{}}),e=>e.code==='TRAINER_HIRE_FUNDS');
  assert.equal(JSON.stringify(s),original);
  const signed=apply(s,x);
  const offer=signed.state.runtime.trainer_employment.by_horse[p.horse_id];
