@@ -216,6 +216,74 @@ try {
  }
  console.log('WTW_SCREEN_FAMILY_PASS Office '+tabmap.Office.length+' views');
 
+ // Check REAL information-panel sorting on all three shared manager families.
+ // These are dense, source-linked record lists, not ornamental unclickable headers.
+ const managerPanels=[
+  {title:'World Overview',route:'?ui=World%20%E2%80%94%20Overview',cls:'ng-manager-screen'},
+  {title:'World News',route:'?ui=World%20%E2%80%94%20News',cls:'ng-news-screen'},
+  {title:'Opportunities',route:'?ui=Opportunities',cls:'ng-opportunity-screen'}
+ ];
+ const managerStatus=()=>evaluate(`(()=>{
+  const root=document.getElementById('wtwNextgen');
+  const screen=root?.querySelector('.ng-manager-screen');
+  const scroller=screen?.querySelector('.ng-manager-rows');
+  const nameHeader=screen?.querySelector('.ng-manager-columns [data-ng="manager-sort"][data-val="name"]');
+  return {
+   ready:!!screen&&!!scroller&&!!nameHeader,
+   screen:screen?.className||'',
+   date:root?.querySelector('.ng-global-date strong')?.textContent?.trim()||'',
+   region:scroller?.getAttribute('role')||null,tabIndex:scroller?.tabIndex,
+   order:nameHeader?.closest('[role="columnheader"]')?.getAttribute('aria-sort')||null,
+   names:[...screen.querySelectorAll('.ng-manager-rows .ng-manager-row-name strong')]
+    .map(x=>x.textContent.trim()),sourceLinks:[...screen.querySelectorAll('.ng-manager-rows .ng-manager-row')]
+    .map(x=>x.dataset.val),
+   legacy:screen?.querySelectorAll('.ng-connected-profile,.ng-connected-drop').length||0
+  };
+ })()`);
+ const sortManagerName=()=>evaluate(`(()=>{
+  const button=document.querySelector('#wtwNextgen .ng-manager-screen .ng-manager-columns [data-ng="manager-sort"][data-val="name"]');
+  if(!button)return false;
+  button.click();return true;
+ })()`);
+ async function managerReady(where,klass,direction){
+  let last=null;
+  for(let n=0;n<90;n++){
+   try{
+    last=await managerStatus();
+    if(last?.ready&&last.screen.includes(klass)&&last.date===baseline.date&&
+      (!direction||last.order===direction))return last;
+   }catch{}
+   await delay(100);
+  }
+  throw Error(where+' manager records unavailable: '+JSON.stringify(last));
+ }
+ for(const item of managerPanels){
+  await command('Page.navigate',{url:'http://127.0.0.1:8891/next/'+item.route});
+  const original=await managerReady(item.title,item.cls);
+  assert.equal(original.region,'region','List not independently navigable in '+item.title);
+  assert.equal(original.tabIndex,0,'Scroll needs keyboard focus in '+item.title);
+  assert.equal(original.legacy,0);
+  assert.equal(original.order,'none','The previously approved row order changed by default in '+item.title);
+  assert.ok(await sortManagerName(),'NAME is not a working sort header in '+item.title);
+  const ascending=await managerReady(item.title+' ascending',item.cls,'ascending');
+  assert.ok(await sortManagerName(),'NAME cannot reverse its sort in '+item.title);
+  const descending=await managerReady(item.title+' descending',item.cls,'descending');
+  assert.equal(ascending.names.length,original.names.length);
+  assert.equal(descending.names.length,original.names.length);
+  assert.deepEqual(ascending.sourceLinks.slice().sort(),original.sourceLinks.slice().sort(),
+   'Sorting changed the source-linked record identities in '+item.title);
+  assert.deepEqual(descending.sourceLinks.slice().sort(),original.sourceLinks.slice().sort(),
+   'Reverse sorting changed the source-linked record identities in '+item.title);
+  const cmp=(a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'});
+  if(original.names.length>=2){
+   assert.deepEqual(ascending.names,ascending.names.slice().sort(cmp),
+    'NAME claims ascending but visible data is unsorted in '+item.title);
+   assert.deepEqual(descending.names,descending.names.slice().sort((a,b)=>-cmp(a,b)),
+    'NAME claims descending but visible data is unsorted in '+item.title);
+  }
+  console.log('WTW_MANAGER_INFO_SORT_PASS '+item.title+' '+original.names.length+' source records');
+ }
+
  // Exercise actual in-game profile navigation, not merely the presence
  // of Overview / History / MORE RECORDS. Every family must retain one identity
  // and date while its record selector changes the visible content.
@@ -350,6 +418,7 @@ try {
  console.log('WTW_SCREEN_MATRIX_PASS '+JSON.stringify({
   individualViews:pageCount,sortableScrollableTableViews:tableCount,
   profileFamiliesWithWorkingControls:profiles.length,
+  sortableManagerInformationScreens:managerPanels.length,
   date:baseline.date,oneUI:true,menuConsistency:true,sections:Object.keys(tabmap).length
  }));
 }finally {
