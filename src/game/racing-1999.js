@@ -6,6 +6,7 @@
 import {ensure,isObject,worldIdentity,nextDate,validDate} from './contracts.js';
 import {buildConditionBook1999} from '../../public/next/1999-condition-book-engine.mjs';
 import {getGameHorsePerformance,modelHorsePostRaceResponse} from './horse-care.js';
+import {applyRaceAgentFeedback} from './daily-agents.js';
 
 export const GAME_RACING_SCHEMA='WTW_1999_CAREER_RACING_V1';
 export const RACING_COMMANDS=Object.freeze(['ACTIVATE_JOCKEY_COLONY','OPEN_1999_RACE','ENTER_1999_RACE',
@@ -27,6 +28,27 @@ const candidate=state=>Object.values(state.runtime.registered_horses?.by_id||{})
  filter(h=>!!h.starting_attributes).sort((a,b)=>a.horse_id.localeCompare(b.horse_id));
 const trackFor=(world,id)=>world.entities.tracks.find(x=>x.id===id)||null;
 const person=(world,id)=>Boolean(worldIdentity(world,'people',id));
+/** Jockey choice is bilateral: a system booking must be accepted by the
+ * actual rider agent. Reputation, suitability, expenses and travel matter.
+ * Seeded tie-breaking is fixed by J/P/H/R IDs, never the hidden race result.
+ */
+export function jockeyBookingDecision(state,world,race,horse,jockey){
+ const rt=root(state),j=typeof jockey==='string'?rt.jockeys[jockey]:jockey;
+ if(!j||!race||!horse)return {accept:false,reason:'UNKNOWN_BOOKING_PARTIES'};
+ const away=j.home_track_id!==race.track_id,lead=dayGap(state.clock.date,race.date);
+ if(lead<1||away&&lead<4)return {accept:false,reason:'INSUFFICIENT_TRAVEL_LEAD'};
+ const personal=j.skills,horseState=getGameHorsePerformance(state,world,horse.horse_id);
+ const h=horse.starting_attributes,standing=j.game_reputation??.5;
+ const suited=rating(personal.horse_handling*.38+personal.composure*.17+
+  h.temperament*.18+horseState.race_performance_index*.27);
+ const required=away?.37+standing*.13:.26+standing*.08;
+ const favor=(frac(state.rng.seed,j.id+':'+race.id+':'+horse.horse_id+':mount')-.5)*.09;
+ const accept=suited+favor>=required;
+ return {accept,reason:accept?(away?'JOCKEY_ACCEPTS_PAID_TRAVEL':'JOCKEY_ACCEPTS_LOCAL_MOUNT'):
+   'JOCKEY_DECLINES_UNSUITABLE_MOUNT',suited_index:suited,
+   threshold:rating(required),away,lead_days:lead,
+   jockey_reputation:standing};
+}
 export function modeledJockeySkills(id,seed){
  ensure(/^P-[A-Za-z0-9-]+$/.test(id),'JOCKEY_ID','Permanent selected jockey ID required');
  return {rating_source:'1999_MODELED_GAME_SCORING_NOT_CANONICAL',
@@ -97,7 +119,7 @@ export function racingAction({state,world,command,emit}){
     'JOCKEY_COLONY','Selected jockey needs an approved P-ID and home-track T-ID');
    unique.add(j.id);
    rt.jockeys[j.id]={id:j.id,home_track_id:j.home_track_id,skills:modeledJockeySkills(j.id,state.rng.seed),
-    source:'SELECTED_1999_JOCKEY_IDENTITY_GAME_MODEL',starts:0,wins:0,last_track_id:j.home_track_id};
+    source:'SELECTED_1999_JOCKEY_IDENTITY_GAME_MODEL',starts:0,wins:0,game_reputation:.5,last_track_id:j.home_track_id};
    rt.jockey_finances_minor[j.id]=0;
   }
   emit('JOCKEY_COLONY_ACTIVATED',{jockeys:unique.size,ratings:'MODELED_NOT_SOURCE_CERTIFIED'});
@@ -145,6 +167,8 @@ export function racingAction({state,world,command,emit}){
   ensure(!conflicts.some(e=>e.race_id===race.id),'JOCKEY_DOUBLE_BOOK','One jockey cannot ride two horses in a race');
   ensure(conflicts.every(e=>state.runtime.races[e.race_id].track_id===race.track_id),
    'JOCKEY_LOCATION','One jockey cannot ride at separate tracks on the same date');
+  const decision=jockeyBookingDecision(state,world,race,horse,j);
+  ensure(decision.accept,'JOCKEY_DECLINED',decision.reason);
   const base=6000,travelMinor=travel?18000:0,fee=base+travelMinor;
   charge(state,horse.owner_organization_id,fee,'JOCKEY_MOUNT_AND_TRAVEL_FEE',race,horse,j.id);
   rt.jockey_finances_minor[j.id]+=fee;
@@ -153,7 +177,7 @@ export function racingAction({state,world,command,emit}){
   entry.jockey_id=j.id;entry.status='BOOKED';entry.fee_minor=fee;entry.travel=travel;
   emit('JOCKEY_MOUNT_BOOKED',{race_id:race.id,horse_id:horse.horse_id,jockey_id:j.id,
    booked_track_id:race.track_id,home_track_id:j.home_track_id,away_travel:travel,
-   fee_minor:fee,reason:travel?'ADVANCE_TRAVEL_BOOKING':'HOME_COLONY_AVAILABLE'});
+   fee_minor:fee,reason:decision.reason,acceptance:decision.suited_index,threshold:decision.threshold});
  }else if(type==='SETTLE_1999_RACE'){
   ensure(command.actor==='system','RACE_PERMISSION','Only game race controller settles races');
   settle1999Race({state,world,race_id:p.race_id,emit});
@@ -209,6 +233,8 @@ function settle1999Race({state,world,race_id,emit}){
   horse.career.starts++;if(i===0)horse.career.wins++;
   horse.career.earnings_minor+=awarded;
   const j=rt.jockeys[jockey];j.starts++;if(i===0)j.wins++;
+  const outcome=1-i/Math.max(1,scored.length-1);
+  j.game_reputation=rating((j.game_reputation??.5)+(outcome-.5)*.014);
   state.runtime.horse[horse.horse_id]=modelHorsePostRaceResponse(
    state.runtime.horse[horse.horse_id],horse,{
     race_id:race.id,finish:i+1,field_size:scored.length,
@@ -219,6 +245,7 @@ function settle1999Race({state,world,race_id,emit}){
    owner_share_minor:ownerShare,jockey_share_minor:jockeyShare,
    performance_index:composite,rider_index:rider};
  });
+ applyRaceAgentFeedback({state,world,race,results,emit});
  race.results=results;race.status='OFFICIAL_SIM_RESULT';race.settled_date=state.clock.date;
  race.escrow_minor=0;race.result_provenance='DETERMINISTIC_1999_GAME_SIMULATION';
  // Sponsor escrow is a modeled external event budget, not new owner or jockey
