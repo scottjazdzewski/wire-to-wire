@@ -10,11 +10,13 @@ test('track records are compact expandable sections using source meet/stakes and
  assert.ok(start>0&&end>start);
  assert.match(panel,/<details class="ng-connected-drop"/);
  assert.match(panel,/profileRecordSection\('MEETS'/);
- assert.match(panel,/profileRecordSection\('STAKES RACES'/);
  assert.match(panel,/profileRecordSection\('TRAINERS & BARNS'/);
  assert.match(panel,/profileRecordSection\('HORSES CURRENTLY ON SITE'/);
  assert.match(panel,/trackProgramById\?\.\(id\)/);
- assert.match(panel,/stakesForTrack\?\.\(track\?\.name\|\|''\)/);
+ assert.match(js,/const stakesTable=\(limit=100\)=>\{/);
+ assert.match(js,/return profileRecordSection\('STAKES RACES'/);
+ assert.equal((panel.match(/profileRecordSection\('STAKES RACES'/g)||[]).length,0,
+  'Track pilot panels must not duplicate the main stakes roster');
  assert.match(panel,/sites\.filter\(s=>s\.host_track_id===id\)/);
  assert.match(panel,/pilotHorseLinksFor\(kind,id\)/);
 });

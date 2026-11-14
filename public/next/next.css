@@ -3168,3 +3168,21 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  #wtwNextgen .ng-connected-tools label{flex:1 1 120px}
  #wtwNextgen .ng-connected-tools input,#wtwNextgen .ng-connected-tools select{width:100%;max-width:none}
 }
+
+/* Universal table view: Horse Directory / Stable / Racing / Breeding /
+   Sales / Personnel / Facilities / Finances / World and profile records. */
+#wtwNextgen .ng-dept-roster .ng-rs-table.compact th.ng-dpt-optional,
+#wtwNextgen .ng-dept-roster .ng-rs-table.compact td.ng-dpt-optional{display:none!important}
+#wtwNextgen .ng-dept-roster .ng-rs-table.compact{min-width:0!important;width:100%!important}
+#wtwNextgen .ng-dept-roster .ng-rs-table.compact th:not(.ng-dpt-optional){width:auto!important}
+#wtwNextgen .ng-dept-view{margin-left:auto;display:flex;align-items:center;gap:3px}
+#wtwNextgen .ng-track-stakes .ng-connected-drop{border:0!important;background:transparent}
+#wtwNextgen .ng-track-stakes .ng-connected-drop>summary{
+ font-size:var(--wtw-ui-profile-tab,10px)!important;
+ padding:5px 8px!important;border-bottom:1px solid #3c4b47
+}
+#wtwNextgen .ng-track-stakes .ng-connected-scroll{max-height:340px}
+#wtwNextgen .ng-connected-table th,
+#wtwNextgen .ng-connected-table td{
+ font-size:var(--wtw-ui-list-text,11px)!important
+}
