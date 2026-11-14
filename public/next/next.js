@@ -212,7 +212,7 @@ function openMenu(section){
  // Source-backed departments share one navigation grammar. Every category
  // is routed by the approved /next/ renderer, never an old Office button.
  if(section==='Office')return goOffice();
- if(section==='Stable'||DEP_NAMES.has(section))
+ if(section==='Stable'||section==='World'||DEP_NAMES.has(section))
   return openCustomView(section+' — Overview',section,'Overview');
  APP.section=section;APP.page='Overview';APP.custom='';
  if(actions[section])bridgeNode(originalAct(actions[section]));
@@ -224,7 +224,7 @@ function pageTab(name){if(APP.section==='History'){const pages={'Race Results':'
    if(name==='Messages')return openCustomView('Messages','Office',name)
    if(name==='Decisions')return openCustomView('Decisions','Office',name)
    if(name==='Calendar')return openMenu('Racing');
-   if(name==='News')return bridgeNode(originalAct('News'));
+   if(name==='News')return openCustomView('News','Office','News');
    if(name==='Reports'||name==='Career')return openCustomView(name,'Office',name)
  }
  if(DEP_NAMES.has(s)){
@@ -242,7 +242,7 @@ function pageTab(name){if(APP.section==='History'){const pages={'Race Results':'
   return openCustomView('World — '+name,'World',name);
  }
  if(s==='World'&&(name==='Tracks'||name==='Meets'))return openMenu('Tracks');
- if(s==='World'&&(name==='Overview'||name==='Major Races'))return bridgeNode(originalAct('World'));
+ if(s==='World'&&(name==='Overview'||name==='Major Races'||name==='News'))return openCustomView('World — '+name,'World',name);
  openCustomView(`${s} — ${name}`,s,name);
 }
 let engineDecisions=null,officeDecisionFiles=[];
