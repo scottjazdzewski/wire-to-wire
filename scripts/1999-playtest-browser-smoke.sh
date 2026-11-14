@@ -19,7 +19,14 @@ async function until(fn,description){
   const result=fn();if(result)return result;
   await pause(200);
  }
- throw Error('Browser playtest did not initialize: '+description);
+ throw Error('Browser playtest did not initialize: '+description+'; context='+
+ JSON.stringify({url:frame.contentWindow?.location?.href,
+  docReady:frame.contentDocument?.readyState,
+  uiReady:!!frame.contentWindow?.__WTW_1999_UI_DATA__,
+  engineError:frame.contentWindow?.__WTW_1999_PLAYTEST_ERROR__||null,
+  globalReady:!!frame.contentWindow?.__WTW_1999_MANAGEMENT__,
+  loading:frame.contentWindow?.__WTW_1999_PLAYTEST_LOADING__||null}));
+
 }
 frame.onload=async()=>{
  try{
