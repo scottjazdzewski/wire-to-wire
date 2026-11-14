@@ -16,7 +16,8 @@ const isObj=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 
 /** The calling game must re-screen every generated idea against its actual save. */
 export async function makePrivateHorseNamePreview({env,body}={}){
- if(env?.NAMING_AI_PREVIEW_ENABLED!=='true')return fail(503,'Naming model preview not enabled');
+ // Authenticated on-demand previews are enabled unless the operator uses the kill switch.
+ if(env?.NAMING_AI_PREVIEW_ENABLED==='false')return fail(503,'Naming model preview disabled by administrator');
  if(typeof env?.AI?.run!=='function')return fail(503,'Workers AI binding missing');
  if(!isObj(body)||!isObj(body.brief)||body.writtenSpec!==HORSE_NAME_CREATOR_SCHEMA)
   return fail(400,'Invalid name-writing request');

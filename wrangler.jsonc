@@ -3,7 +3,9 @@
   "name": "wtw-canon-desk",
   "main": "src/worker.js",
   "compatibility_date": "2026-11-07",
-  "ai": { "binding": "AI" },
+  "ai": {
+    "binding": "AI"
+  },
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
@@ -16,5 +18,10 @@
       "database_id": "REPLACE_WITH_WTW_ONLY_D1_UUID",
       "migrations_dir": "migrations"
     }
-  ]
+  ],
+  "vars": {
+    "NAMING_AI_PREVIEW_ENABLED": "true",
+    "NAMING_AI_POPULATION_ENABLED": "true",
+    "NAMING_AI_POPULATION_DAILY_CAP": "256"
+  }
 }

@@ -1,6 +1,7 @@
 import {qaPendingInactiveAuthority,qaPendingInactiveEditionIds} from './history-inactive-read-model.js';
 import {readLocal1999World} from '../public/1999/engine/local-api.mjs';
 import {makePrivateHorseNamePreview} from './horse-naming-ai-service.js';
+import {submitPopulationNamingBatch,getPopulationNamingBatch,pollPopulationNamingBatch} from './horse-naming-population-service.js';
 // Cloudflare Worker / D1 API. Deliberately separate from all other WTW and non-WTW projects.
 // Privacy: every request requires authenticated Cloudflare Access in deployed environments.
 const jsonHeaders = {
@@ -139,6 +140,47 @@ async function bootstrap(db) {
 }
 async function api(request,env,email) {
   const url = new URL(request.url);
+  // This status route is read-only and spends zero AI tokens. Cloudflare Access
+  // has already authenticated the caller; report binding readiness truthfully.
+  if(request.method==='GET'&&url.pathname==='/api/naming/status'){
+    let ledgerReady=false;
+    if(typeof env?.DB?.prepare==='function'){
+      try{await env.DB.prepare('SELECT job_id FROM wtw_naming_population_jobs LIMIT 1').first();ledgerReady=true}
+      catch{/* D1 migration has not been applied to the live WTW database. */}
+    }
+    return response({schema:'WTW_PRIVATE_NAMING_STATUS_V484',
+      previewEnabled:env?.NAMING_AI_PREVIEW_ENABLED!=='false',
+      populationEnabled:env?.NAMING_AI_POPULATION_ENABLED!=='false',
+      aiBound:typeof env?.AI?.run==='function',
+      dbBound:typeof env?.DB?.prepare==='function',ledgerReady,
+      batchSize:16,populationTargetPerYear:55000,
+      defaultDailyCap:128,configuredDailyCap:Number(env?.NAMING_AI_POPULATION_DAILY_CAP)||128,
+      nameRegistrationEnabled:false,
+      aiRequestsMadeByStatusCheck:0,gameWrites:0});
+  }
+  // Source-bound asynchronous population naming. Access authentication occurs
+  // before api(); D1 checkpoints protect AI spend and retries. NO horse writes.
+  if(url.pathname.startsWith('/api/naming/population/')) {
+    if(request.method==='GET'&&url.pathname==='/api/naming/population/job'){
+      const result=await getPopulationNamingBatch({env,jobId:url.searchParams.get('jobId')});
+      return response(result.payload,result.status);
+    }
+    if(!['/api/naming/population/submit','/api/naming/population/poll'].includes(url.pathname))
+      return response({error:'Unknown population naming endpoint'},404);
+    if(request.method!=='POST')return response({error:'Use POST'},405);
+    if(request.headers.get('content-type')?.split(';')[0]!=='application/json')
+      return response({error:'JSON required'},415);
+    const origin=request.headers.get('Origin');
+    if(origin&&origin!==url.origin)return response({error:'Origin mismatch'},403);
+    const raw=await request.text();
+    if(raw.length>180000)return response({error:'Population naming request too large'},413);
+    let body;
+    try{body=JSON.parse(raw)}catch{return response({error:'Malformed JSON'},400)}
+    const result=url.pathname==='/api/naming/population/submit'?
+      await submitPopulationNamingBatch({env,body}):
+      await pollPopulationNamingBatch({env,jobId:body?.jobId});
+    return response(result.payload,result.status);
+  }
   // Private opt-in CREATIVE PREVIEW ONLY: model output never edits game saves,
   // D1, historic canon, nor the 1999 registration release gate.
   if(url.pathname==='/api/naming/preview') {

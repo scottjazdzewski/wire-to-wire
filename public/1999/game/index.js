@@ -68,3 +68,5 @@ export {HORSE_NAME_OWNER_RELEASE_SCHEMA,HORSE_NAME_OWNER_COMMANDS,ensureHorseNam
 
 export {OWNER_RATED_TOTAL_V482,OWNER_RATING_COUNTS_V482,ownerRatedNameScore,buildTasteDirectedWritingLens,ownerTasteResearchSummary} from './horse-naming-taste-v482.js';
 export {NAMING_COHORT_AUDIT_SCHEMA_V482,auditHorseNamingCohort} from './horse-naming-cohort-audit-v482.js';
+
+export {foalingEventNamingBrief,planPopulationNamingCohorts,auditPopulationNamingResults,POPULATION_NAMING_BATCH_SIZE,POPULATION_NAMING_SCHEMA} from './horse-naming-population-planner.js';

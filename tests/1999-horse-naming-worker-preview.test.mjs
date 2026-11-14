@@ -17,8 +17,8 @@ const model={run:async()=>({response:JSON.stringify({ideas:[{
  explanation:'The barn owner remembers the small star on the foal during his first night.'}]})})};
 const base={ADMIN_EMAIL:'admin@example.com',AI:model};
 
-test('authenticated Worker route is off by default and does not call AI',async()=>{
- let count=0;const env={...base,AI:{run:async()=>{count++;return null}}};
+test('authenticated Worker kill switch disables AI preview without a model call',async()=>{
+ let count=0;const env={...base,NAMING_AI_PREVIEW_ENABLED:'false',AI:{run:async()=>{count++;return null}}};
  const r=await worker.fetch(request(),env,ctx);
  assert.equal(r.status,503);assert.equal(count,0);
 });
