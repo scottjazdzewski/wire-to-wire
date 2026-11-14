@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const ui=read('public/next/next.js');
 const css=read('public/next/next.css');
+const visualAudit=read('scripts/desktop-visual-audit.sh');
 const fnStart=ui.indexOf('function rosterDensityControls(');
 const fnEnd=ui.indexOf('\nfunction liveStableRosterView(',fnStart);
 assert.ok(fnStart>0&&fnEnd>fnStart,'The canonical shared roster mode renderer must exist');
@@ -69,4 +70,15 @@ test('shared compact roster and dossier controls display keyboard focus without 
  ])assert.ok(css.includes(selector),selector+' missing');
  assert.match(css,/outline:2px solid #ecd99f!important/);
  assert.equal((ui.match(/function rosterDensityControls\(/g)||[]).length,1);
+});
+
+
+test('desktop visual release audit captures actual Stable and Racing rosters, not only profiles',()=>{
+ assert.match(visualAudit,/capture stable-roster .*ng-stable-roster-v2/);
+ assert.match(visualAudit,/capture racing-roster .*ng-dept-roster/);
+ for(const view of ['stable-roster','racing-roster','laptop-stable-roster','laptop-racing-roster']){
+  assert.ok(visualAudit.includes('probe '+view+' '),'Missing direct rendering geometry probe: '+view);
+ }
+ assert.match(visualAudit,/ROSTER PARITY/);
+ assert.match(visualAudit,/sum\(b\['active'\] and b\['pressed'\]=='true'/);
 });
