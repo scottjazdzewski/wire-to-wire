@@ -137,6 +137,39 @@ for name in ('office','search','horse','person'):
  if name=='search':assert data['search'] and data['search']['width']>=990,(name,'Search roster not visible')
  if name=='person':assert data['people'] and data['people']['width']>=990,(name,'People Horse-dossier not visible')
  print('VISUAL GEOMETRY',name,'rail',rail['width'],'stage',stage['width'],'crest',brand['width'])
+# Same core chrome, record controls and protected identity space across profiles.
+profiles=('horse','person','aqueduct','gulfstream','farm','stable','owner',
+          'laptop-horse','laptop-person','laptop-aqueduct','laptop-farm','laptop-owner')
+rows=[]
+for name in profiles:
+ source=Path(f'visual-audit/dom/probe-{name}.html').read_text()
+ assert 'data-check="ready"' in source,(name,'Profile geometry inspection failed')
+ match=re.search(r'<pre id="measure"[^>]*>(.*?)</pre>',source,re.S)
+ assert match,(name,'Missing profile geometry')
+ d=json.loads(html.unescape(match.group(1)))
+ assert d['rail'] and d['header'] and d['stage'],(name,'Shared management shell missing')
+ assert d['profile'] and d['intro'],(name,'Profile does not use the shared identity shell')
+ assert d['profileName'] and not any(x in d['profileName'] for x in ('WorldRecord:','FoundingProfile:')),(name,'Raw route shown as profile identity')
+ assert d['localNavigation'],(name,'Profile local navigation absent')
+ assert not d['sourceBridgeVisible'],(name,'Obsolete Office screen returned')
+ assert not d['duplicateGlobalMenuVisible'],(name,'Redundant top menu returned')
+ assert not d['metadataClipped'],(name,'Track/farm metadata clipped',d['metadataClipped'])
+ assert d['intro']['width']>=min(850,d['stage']['width']*.7),(name,'Identity band too narrow')
+ if name in ('aqueduct','gulfstream','farm','stable','owner','laptop-aqueduct','laptop-farm','laptop-owner'):
+  if d['heroMark'] and d['identity']:
+   assert d['identity']['right']<=d['heroMark']['left']+6,(name,'Logo occupies metadata space')
+ rows.append({'name':name,**d})
+for family in ('desktop','laptop'):
+ sample=[r for r in rows if r['name'].startswith('laptop-')==(family=='laptop')]
+ widths=[r['rail']['width'] for r in sample]
+ assert max(widths)-min(widths)<=5,(family,'Department rail changes across profiles',widths)
+ starts=[r['rail']['left'] for r in sample]
+ assert max(starts)-min(starts)<=5,(family,'Department rail position changes across profiles')
+print('UNIFIED PROFILE GEOMETRY VERIFIED:',len(rows),'rendered views')
+for d in rows:
+ print('PROFILE',d['name'],d['profileName'][:35], 'stage',d['stage']['width'],
+       'identity',d['intro']['width'],'local nav',d['localNavigation']['width'])
+Path('visual-audit/dom/profile-uniformity-metrics.json').write_text(json.dumps(rows,indent=2))
 PY
 rm -f public/__wtw_visual_probe.html
 
