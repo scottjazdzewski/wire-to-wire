@@ -52,3 +52,6 @@ export {OWNER_TRAINER_REVIEW_SCHEMA,OWNER_TRAINER_REVIEW_COMMANDS,
  getTrainerCareerForm} from './owner-trainer-career-1999.js';
 
 export {GAME_NAMING_BRIDGE_SCHEMA,HORSE_NAMING_COMMANDS,createHorseNamingRuntime,validateHorseNamingRuntime,recordHorseNamingStoryAction,buildGameHorseNamingBrief,screenGameHorseName,recordGameNameEditorialDecision} from './horse-naming-bridge.js';
+
+export {HORSE_NAME_CREATOR_SCHEMA,GAME_NAME_WRITER_ID,authoringEvidence,buildStoryFirstWritingRequest,parseCreativeModelOutput,verifyNamingBriefAgainstGame,screenStoryFirstIdeas,writeStoryFirstHorseNames,previewStoryFirstHorseNames} from './horse-naming-model-creator.js';
+export {OWNER_REVIEWED_COUNT_V478} from './horse-naming-owner-review-v478.js';
