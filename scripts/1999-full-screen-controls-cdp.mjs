@@ -216,10 +216,107 @@ try {
  }
  console.log('WTW_SCREEN_FAMILY_PASS Office '+tabmap.Office.length+' views');
 
+ // Exercise actual in-game profile navigation, not merely the presence
+ // of Overview / History / MORE RECORDS. Every family must retain one identity
+ // and date while its record selector changes the visible content.
+ await command('Page.enable');
+ const profiles=[
+  {family:'TRACK',route:'?ui=WorldRecord%3Atrack%3AT-0002',id:'T-0002'},
+  {family:'PERSON',route:'?ui=WorldRecord%3Aperson%3AP-000018',id:'P-000018'},
+  {family:'OWNER',route:'?ui=FoundingProfile%3Aownership%3AO-000014',id:'O-000014'},
+  {family:'FARM',route:'?ui=FoundingProfile%3Afacility%3AO-000061',id:'O-000061'},
+  {family:'HORSE',route:'?page=horse&name=The+Last+Match',id:null}
+ ];
+ const profileStatus=()=>evaluate(`(()=>{
+  const root=document.getElementById('wtwNextgen');
+  const nav=root?.querySelector('.ng-route-profile .ng-person-dossierbar');
+  const name=root?.querySelector('.ng-route-profile .ng-profile-identity h2')?.textContent?.trim()||'';
+  const select=nav?.querySelector('select[data-ng-select="profile-record"]');
+  const history=nav?.querySelector('[data-ng="detailtab"][data-val="History"]');
+  const overview=nav?.querySelector('[data-ng="detailtab"][data-val="Overview"]');
+  return {ready:!!nav&&!!name&&!!select&&!!history&&!!overview,
+   name,identity:root?.getAttribute('data-wtw-identity')||'',
+   date:root?.querySelector('.ng-global-date strong')?.textContent?.trim()||'',
+   record:nav?.querySelector('.ng-person-dossierlabel small')?.textContent?.trim()||'',
+   overview:overview?.getAttribute('aria-current')||'',
+   history:history?.getAttribute('aria-current')||'',
+   options:select?[...select.options].map(x=>x.value):[],
+   selected:select?.value||'',hasStakes:!!root?.querySelector('.ng-track-stakes .ng-stakes-table'),
+   hasMeet:!!root?.querySelector('.ng-track-info-stack .ng-track-meet-card'),
+   hasTrackHistory:!!root?.querySelector('.ng-track-info-stack .ng-track-history-card'),
+   legacy:root?.querySelectorAll('.ng-connected-profile,.ng-connected-drop,.ng-connected-table').length||0,
+   roots:document.querySelectorAll('#wtwNextgen').length,
+   oldOfficeHidden:!!document.querySelector('.app[data-wtw-layout="legacy-data-bridge"][hidden]')
+  };
+ })()`);
+ async function profileReady(where,expectedRecord=null){
+  let found=null;
+  for(let n=0;n<120;n++){
+   try{
+    found=await profileStatus();
+    if(found?.ready&&(!expectedRecord||found.record===expectedRecord))return found;
+   }catch{}
+   await delay(100);
+  }
+  throw Error('Profile did not open in '+where+': '+JSON.stringify(found));
+ }
+ for(const item of profiles){
+  await command('Page.navigate',{url:'http://127.0.0.1:8891/next/'+item.route});
+  const original=await profileReady(item.family+' overview','OVERVIEW');
+  assert.equal(original.date,baseline.date,'Opening '+item.family+' changed career date');
+  assert.equal(original.overview,'page',item.family+' overview is not selected');
+  assert.equal(original.roots,1,'A second game UI opened in '+item.family);
+  assert.equal(original.legacy,0,'Old pilot profiles came back in '+item.family);
+  assert.equal(original.oldOfficeHidden,true);
+  if(item.id)assert.equal(original.identity,item.id,'The wrong '+item.family+' identity/brand was opened');
+  const deeper=original.options.find(x=>x&&x!=='Overview'&&x!=='History');
+  assert.ok(deeper,item.family+' has no deeper record view');
+  if(item.family==='TRACK'){
+   assert.ok(original.hasStakes&&original.hasMeet&&original.hasTrackHistory,
+    'The approved left stakes / right Meet and History track layout was replaced');
+  }
+  const openedHistory=await evaluate(`(()=>{
+   const button=document.querySelector('#wtwNextgen .ng-person-dossierbar [data-ng="detailtab"][data-val="History"]');
+   if(!button)return false;button.click();return true;
+  })()`);
+  assert.equal(openedHistory,true,'HISTORY control missing in '+item.family);
+  const history=await profileReady(item.family+' history','HISTORY');
+  assert.equal(history.history,'page',item.family+' history is not active after clicking');
+  assert.equal(history.name,original.name,'Identity changed when opening '+item.family+' history');
+  assert.equal(history.identity,original.identity);
+  assert.equal(history.date,baseline.date);
+
+  const choose=await evaluate(`(()=>{
+   const select=document.querySelector('#wtwNextgen .ng-person-dossierbar select[data-ng-select="profile-record"]');
+   if(!select||![...select.options].some(x=>x.value===${JSON.stringify(deeper)}))return false;
+   select.value=${JSON.stringify(deeper)};
+   select.dispatchEvent(new Event('change',{bubbles:true}));
+   return true;
+  })()`);
+  assert.equal(choose,true,'MORE RECORDS did not accept '+deeper+' in '+item.family);
+  const record=await profileReady(item.family+' '+deeper,deeper.toUpperCase());
+  assert.equal(record.selected,deeper,'MORE RECORDS selected the wrong view in '+item.family);
+  assert.equal(record.name,original.name);
+  assert.equal(record.identity,original.identity);
+  assert.equal(record.date,baseline.date);
+  const returnHome=await evaluate(`(()=>{
+   const button=document.querySelector('#wtwNextgen .ng-person-dossierbar [data-ng="detailtab"][data-val="Overview"]');
+   if(!button)return false;button.click();return true;
+  })()`);
+  assert.equal(returnHome,true,'OVERVIEW control missing after '+deeper+' in '+item.family);
+  const restored=await profileReady(item.family+' restored overview','OVERVIEW');
+  assert.equal(restored.overview,'page');
+  assert.equal(restored.identity,original.identity);
+  assert.equal(restored.name,original.name);
+  assert.equal(restored.date,baseline.date);
+  if(item.family==='TRACK')assert.ok(restored.hasStakes&&restored.hasMeet&&restored.hasTrackHistory,
+   'Returning to track overview lost its approved full stadium layout');
+  console.log('WTW_PROFILE_CONTROLS_PASS '+item.family+' '+original.name+' '+deeper);
+ }
+
  // History is an independently routed Archive but remains part of the product.
  // Verify every canonical History category without moving it into /next/ or
  // reviving obsolete Office/Manager windows.
- await command('Page.enable');
  const archiveCodes=['races','horses','people','tracks','seasons','sources'];
  assert.equal(archiveCodes.length,tabmap.History.length);
  for(const code of archiveCodes){
@@ -243,6 +340,7 @@ try {
  assert.ok(tableCount>=18,'Full sortable roster family coverage unexpectedly missing');
  console.log('WTW_SCREEN_MATRIX_PASS '+JSON.stringify({
   individualViews:pageCount,sortableScrollableTableViews:tableCount,
+  profileFamiliesWithWorkingControls:profiles.length,
   date:baseline.date,oneUI:true,menuConsistency:true,sections:Object.keys(tabmap).length
  }));
 }finally {
