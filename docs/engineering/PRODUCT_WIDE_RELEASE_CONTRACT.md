@@ -31,6 +31,22 @@ Effective: November 14, 2026. Applies to EVERY engineering window, every file, b
 
 Permanent guard: `tests/ui-core-information-controls-contract.test.mjs`, alongside existing `tests/ui-fm-ootp-screen-family-controls.test.mjs`, `tests/ui-uniformity-lock.test.mjs`, and real Chromium desktop audits.
 
+## Mandatory physical removal of superseded code — applies to every workstream
+
+**A completed replacement must delete its obsolete implementation.** The rule covers UI, navigation, stylesheets, data adapters, game commands, simulation logic, naming, history import, asset lookup, parsers, scripts, test fixtures and production configuration. We do not maintain alternative "old" and "new" games or carry a graveyard of commented-out functions, dormant CSS, toggles, duplicated renderers and compatibility shims indefinitely.
+
+Every replacement PR must:
+1. Identify the **one live owner** of the behavior and the entrypoints/consumers it supersedes.
+2. Trace actual imports, `<script>` references, dynamic loaders, command callers, IndexedDB/save migrations, Cloudflare worker routes, build scripts and tests. A filename's age does not prove that it is dead.
+3. **Physically delete** the obsolete source files/functions/selectors/configuration and stale tests or instructions **in that PR** after the replacement passes functional parity. Do not hide an obsolete screen with CSS, leave an unused fallback or add a second parallel module.
+4. Add regression checks proving that retired source paths and deleted symbols do not return; check that the live entrypoints reference the approved replacement and that browser navigation and save/reopen still work.
+5. Update the retirement ledger with the removed symbols/files, the replacing authority, dependency evidence, parity tests and commit/PR link. Every still-live temporary adapter needs a named owner, explicit consumer and measurable retirement prerequisite.
+6. Never remove canonical history or game state, approved images or IDs, migration/rollback code still required for existing customer saves, or live code merely to satisfy a "clean code" metric. Old saves must remain loadable by validated migration or remain safely recoverable. Do not break a working game to remove an age-related filename.
+
+The **currently mounted hidden Office gameplay/data bridge** is a documented temporary dependency, not permission to revive the old UI. The existing `office-v30-1.js`, `office-v30-4.js`, `office-fm-v32.js`, `office-fm-v34.js` through `office-fm-v37.js` must be retired **only when their remaining live actions and data projections are migrated**, with tests proving parity and save compatibility. In contrast, physically retired Manager V2, `office-v30-2.js`, `office-v30-3.js` and `connectedTableState()/profileRecordSection()` are permanently forbidden.
+
+The product-wide guard includes `tests/product-legacy-code-retirement.test.mjs`. No future window may silently add an old implementation or retain an unused second version after completing a migration.
+
 ## New automatic release gate
 
 `.github/workflows/product-release-integrity.yml` runs on EVERY PR (no changed-path filter), on every main push, by manual dispatch and weekly. It verifies:
