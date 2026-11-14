@@ -125,8 +125,14 @@ export async function openFictionalIndustryIdentityBridge({
   checkId(organizationId,'approved organization ID');
   checkId(eventId,'organization registration event ID');
   checkId(sourceId,'organization registration source ID');
-  await naming.refresh();
-  const approved=naming.getApprovedOrganizationIdentity(organizationId);
+  // Issued names are immutable, so a locally committed approval is safe to
+  // reuse without replaying every naming batch per organization. Refresh only
+  // when another session may have approved this ID, or metadata is absent.
+  let approved=naming.getApprovedOrganizationIdentity(organizationId);
+  if(!approved?.registration){
+   await naming.refresh();
+   approved=naming.getApprovedOrganizationIdentity(organizationId);
+  }
   if(!approved?.registration)
    throw Error('Organization has no durable V19 typed naming approval');
   return continuity.apply({expectedRevision,event:{
