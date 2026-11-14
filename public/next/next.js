@@ -224,7 +224,7 @@ function pageTab(name){if(APP.section==='History'){const pages={'Race Results':'
    if(name==='Messages')return openCustomView('Messages','Office',name)
    if(name==='Decisions')return openCustomView('Decisions','Office',name)
    if(name==='Calendar')return openMenu('Racing');
-   if(name==='News')return openCustomView('News','Office','News');
+   if(name==='News')return openCustomView('Office — News','Office','News');
    if(name==='Reports'||name==='Career')return openCustomView(name,'Office',name)
  }
  if(DEP_NAMES.has(s)){
@@ -3738,7 +3738,7 @@ function open1999Race(record){
 function renderRoute(){const route=APP.custom?null:currentRoute();const previewMode=APP.custom.startsWith('Preview:');const title=previewMode?(APP.previewEntity?.name||decodeURIComponent(APP.custom.split(':').slice(2).join(':'))):route?.title||APP.custom||'Page';const kicker=previewMode?'RECORD PREVIEW':route?.kicker||APP.section;const bdg=route?badge(({'Horse Profile':'horse','People Profile':'people','Farm Profile':'farm_stable','Track Profile':'track','Race Calendar':'meet_schedule','Stable':'farm_stable','Sales':'connections','News':'history','World':'track','Opportunity Board':'reputation'}[route.kicker])||'history'):pageBadge();
 let body='';const profile=route&&/Profile$/.test(route.kicker)?profileDetail(route):null;const functional=route?functionalRoute(route):null;if(profile)body=profile;else if(functional)body=functional;else if(route)body=route.body;else if(APP.custom==='Organization Overview'){body=organizationOverview()}
 else if(APP.custom==='Due Actions'){body=dueActionOverview()}
-else if(APP.custom==='News'||APP.custom==='World — News'){body=sourceNewsDesk()}
+else if(APP.custom==='Office — News'||APP.custom==='World — News'){body=sourceNewsDesk()}
 else if(['Messages','Decisions','Opportunities'].includes(APP.custom)){body=managerDashboard()}
 else if(APP.custom==='Search'){body=searchView()}
 else if(APP.custom.startsWith('WorldRecord:')){body=world1999Profile()}
