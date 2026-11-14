@@ -9,7 +9,8 @@
  */
 import {WORLD_SCHEMA,dispatchGameCommand,exportGameSave,importGameSave,nextDate,
  getGameHorsePerformance,getGameRacingRoster,getAgentRelationships,
- getOwnerPortfolioView,getCareerHorseConnections}
+ getOwnerPortfolioView,getCareerHorseConnections,horseTravelStatus,effectiveHorseTrack,
+ effectiveHorseCareSite}
  from './index.js';
 import {build1999PilotGameRun} from './1999-pilot-fixture.js';
 
@@ -82,7 +83,13 @@ export async function createPlaytestCareer({directory,trainers,jockeys,cohort,sa
    race_date:state.runtime.races[e.race_id]?.date||null,
    track_id:state.runtime.races[e.race_id]?.track_id||null}));
   const runners=horses.map(h=>{
-   const site=sites[h.current_residence_id],condition=getGameHorsePerformance(state,world,h.horse_id);
+   const homeSite=sites[h.current_residence_id],trip=horseTravelStatus(state,h.horse_id),
+    currentSite=effectiveHorseCareSite(state,h),
+    currentTrackId=effectiveHorseTrack(state,h),
+    inTransit=trip&&['OUTBOUND','RETURNING'].includes(trip.status),
+    physicalSite=inTransit?null:currentSite,
+    site=physicalSite||homeSite,
+    condition=getGameHorsePerformance(state,world,h.horse_id);
    const finishHistory=racing.filter(r=>r.results?.some(x=>x.horse_id===h.horse_id)).
     map(r=>({race_id:r.id,date:r.date,track_id:r.track_id,
      finish:r.results.find(x=>x.horse_id===h.horse_id).finish,
@@ -93,13 +100,20 @@ export async function createPlaytestCareer({directory,trainers,jockeys,cohort,sa
     trainer_id:h.trainer_id,trainer_name:persons.get(h.trainer_id),
     trainerId:h.trainer_id,ownerId:h.owner_organization_id,
     breederId:h.breeder_organization_id,
-    site_id:site.id,site_name:site.name,
-    host_track_id:h.host_track_id,track_name:tracks.get(h.host_track_id),
+    site_id:physicalSite?.id||null,site_name:physicalSite?.name||'IN TRANSIT',
+    current_site_id:physicalSite?.id||null,home_site_id:homeSite.id,
+    home_site_name:homeSite.name,home_track_id:h.host_track_id,
+    host_track_id:currentTrackId,track_name:currentTrackId?tracks.get(currentTrackId):'IN TRANSIT',
+    shipping_status:trip?.status||'HOME',shipping_arrival_date:trip?.arrival_date||null,
+    shipping_destination_site_id:trip?.destination_site_id||null,
+    shipping_destination_track_id:trip?.destination_track_id||null,
     sex:h.sex,foaling_year:h.foaling_year,birth_date:h.birth_date,
     ageAtOpening:h.racing_age_1999,foalYear:h.foaling_year,dateOfBirth:h.birth_date,
     racingStatus1999:'MODELED_1999_GAME_IN_TRAINING',
-    openingStable:{name:site.name,trackId:h.host_track_id,locality:
-     [site.location?.city,site.location?.state].filter(Boolean).join(', ')},
+    openingStable:{name:physicalSite?.name||'IN TRANSIT',
+     trackId:currentTrackId,locality:inTransit?
+      'En route to '+(trip.status==='RETURNING'?homeSite.name:sites[trip.destination_site_id]?.name||'host barn'):
+      [site.location?.city,site.location?.state].filter(Boolean).join(', ')},
     attributes:h.starting_attributes,
     ability:{currentStars:Math.round(h.starting_attributes.current_ability/99*10)/2,
      potentialStars:Math.round(h.starting_attributes.potential_ability/99*10)/2},
@@ -114,6 +128,11 @@ export async function createPlaytestCareer({directory,trainers,jockeys,cohort,sa
    as_of:state.clock.date,horse_count:runners.length,source_history_modified:false,
    all_horses:runners,stable:runners.filter(x=>x.owner_id===state.player.operation_id),
    races:racing,entries,people:world.entities.people,
+   physical_locations:runners.map(h=>({horse_id:h.horse_id,
+    owner_id:h.owner_id,trainer_id:h.trainer_id,
+    site_id:h.current_site_id,home_site_id:h.home_site_id,
+    track_id:h.host_track_id,status:h.shipping_status,
+    arrival_date:h.shipping_arrival_date})),
    finance:{...state.runtime.finances,owner_cash_minor:
     state.runtime.finances.operation_balances_minor[state.player.operation_id]},
    agents:state.runtime.agents,notes:'ISOLATED PROVISIONAL PLAYTEST; NOT APPROVED LIVE HISTORICAL POPULATION'};
