@@ -1256,7 +1256,15 @@
   // One authoritative clock action for the existing 1999 management UI.
   // Calls the native Office time progression, never a parallel UI-only date.
   if(window.__WTW_1999_MANAGEMENT__){
-    window.__WTW_1999_MANAGEMENT__.advanceOneDay=()=>setDate('day');
+    // Direct gameplay command endpoints for the ONE FM/OOTP-style /next/ UI.
+    // This is the same persistence and clock logic used by old Office handlers,
+    // without making the current screen click a dormant Office button.
+    const game=window.__WTW_1999_MANAGEMENT__;
+    game.advanceOneDay=()=>setDate('day');
+    game.saveCurrentCareer=()=>{
+      saveState();
+      return JSON.parse(localStorage.getItem(STATE_KEY)||'null');
+    };
   }
   window.addEventListener('popstate',restoreLocationPage);
   // Office has its own daily decision desk; Escape is not a substitute for normal
