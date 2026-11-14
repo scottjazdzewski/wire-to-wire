@@ -1,0 +1,79 @@
+{
+  "schema": "WTW_IDENTITY_THEMES_V1",
+  "purpose": "UI-only visual identity palettes, keyed by established entity IDs. These do not alter registries, histories, owner colors, or ratings.",
+  "palette_status": "WTW art-direction candidates; not verified official color specifications.",
+  "tracks": {
+    "T-0002": {
+      "name": "Belmont Park",
+      "deep": "#102E29",
+      "base": "#006B4E",
+      "bright": "#33C18D",
+      "highlight": "#E2D39A"
+    },
+    "T-0013": {
+      "name": "Churchill Downs",
+      "deep": "#123632",
+      "base": "#007F73",
+      "bright": "#31C6B4",
+      "highlight": "#E8D8B2"
+    },
+    "T-0017": {
+      "name": "Gulfstream Park",
+      "deep": "#172744",
+      "base": "#214784",
+      "bright": "#7AA8E5",
+      "highlight": "#D6DDEA"
+    },
+    "T-0003": {
+      "name": "Saratoga",
+      "deep": "#371E2B",
+      "base": "#82354D",
+      "bright": "#D789A2",
+      "highlight": "#E9CEB4"
+    },
+    "T-0094": {
+      "name": "Sweetwater Park",
+      "deep": "#312B1E",
+      "base": "#715A32",
+      "bright": "#D0AA63",
+      "highlight": "#F0DCA8"
+    }
+  },
+  "organizations": {
+    "O-000001": {
+      "name": "Wetherby Plain",
+      "deep": "#242C3A",
+      "base": "#455F7F",
+      "bright": "#9CC4DE",
+      "highlight": "#E8D1A1"
+    },
+    "O-000002": {
+      "name": "Harrowgate Farm",
+      "deep": "#213126",
+      "base": "#447F58",
+      "bright": "#9DD9A8",
+      "highlight": "#EADBA9"
+    },
+    "O-000011": {
+      "name": "St. Alloy Partners",
+      "deep": "#282A35",
+      "base": "#656886",
+      "bright": "#AAAEDB",
+      "highlight": "#E5CCA2"
+    },
+    "O-000061": {
+      "name": "Kingsmere Farm",
+      "deep": "#302737",
+      "base": "#745681",
+      "bright": "#C5A1D8",
+      "highlight": "#EBD6AB"
+    },
+    "O-000062": {
+      "name": "Crescent Mile Farm",
+      "deep": "#26313C",
+      "base": "#4E7892",
+      "bright": "#9CD2E6",
+      "highlight": "#EBDEB9"
+    }
+  }
+}
