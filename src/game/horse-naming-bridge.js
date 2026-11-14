@@ -36,8 +36,15 @@ function eventMentionsHorse(event,horse){
 export function buildGameHorseNamingBrief({world,state,horse,ownerStories=null}={}){
  const {owner,breeder}=checkHorse(world,horse);
  ensure(plain(state)&&Array.isArray(state.event_log),'NAMING_JOURNAL','Current game journal required');
- const stories=ownerStories??Object.values(state.runtime?.horse_naming?.stories_by_id||{});
+ const savedStories=state.runtime?.horse_naming?.stories_by_id||{};
+ const stories=ownerStories??Object.values(savedStories);
  ensure(Array.isArray(stories),'NAMING_STORIES','Owner stories must be a list');
+ // A caller cannot impersonate the owner by passing an unattested narrative.
+ ensure(stories.every(s=>plain(s)&&savedStories[s.story_id]&&
+  savedStories[s.story_id].story===s.story&&
+  savedStories[s.story_id].horse_id===s.horse_id&&
+  savedStories[s.story_id].owner_id===s.owner_id),
+  'NAMING_STORY_UNVERIFIED','Every owner naming story must come from the actual game save');
  const evidence=[];
  for(const e of state.event_log){
   if(!eventMentionsHorse(e,horse))continue;
@@ -62,7 +69,8 @@ export function buildGameHorseNamingBrief({world,state,horse,ownerStories=null}=
  const directStory=evidence.some(e=>e.kind==='OWNER_ATTESTED');
  // A plain registration event is not enough to supply a meaningful naming story.
  const meaningfulEvent=evidence.some(e=>e.kind==='GAME_EVENT'&&
-  !['GAME_HORSE_REGISTERED','HORSE_CARE_POLICY_SET','EVENT_SCHEDULED'].includes(e.detail));
+  typeof e.sourceDetails?.naming_narrative==='string'&&
+  e.sourceDetails.naming_narrative.trim().length>=24); 
  return {
   schema:GAME_NAMING_BRIDGE_SCHEMA,horseId:horse.horse_id,foalingYear:horse.foaling_year,
   owner:{id:horse.owner_organization_id,name:owner.name},
