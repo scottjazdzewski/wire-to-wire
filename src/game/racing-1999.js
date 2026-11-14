@@ -81,6 +81,8 @@ export function raceEligibility(state,horse,race){
    race.age==='3YO+'&&age<3)reasons.push('AGE_RESTRICTION');
  if(race.sex==='FILLIES_AND_MARES'&&!['FILLY','MARE'].includes(horse.sex))
   reasons.push('SEX_RESTRICTION');
+ if(race.conditions!=='Maiden Special Weight')
+  reasons.push('CLASS_CONDITIONS_NOT_YET_MODELED');
  if(race.maiden&&horse.career.wins>0)reasons.push('MAIDEN_RESTRICTION');
  if(race.max_wins!==null&&race.max_wins!==undefined&&horse.career.wins>race.max_wins)
   reasons.push('CAREER_WIN_LIMIT');
@@ -211,13 +213,15 @@ function settle1999Race({state,world,race_id,emit}){
  ensure(horseSet.size===entries.length,'RACE_FIELD','Duplicate horse in race field');
  const scored=entries.map(e=>performance(state,world,race,e)).
   sort((a,b)=>b.composite-a.composite||a.horse.horse_id.localeCompare(b.horse.horse_id));
- const shares=scored.length<5?SHARES.slice(0,scored.length):SHARES;
- const weight=shares.reduce((a,b)=>a+b,0);
+ const paidPlaces=Math.min(scored.length,5),shares=SHARES.slice(0,paidPlaces);
+ const weight=shares.reduce((a,b)=>a+b,0),awards=scored.map(()=>0);
  let remainder=race.purse_minor;
+ for(let i=0;i<paidPlaces-1;i++){
+  awards[i]=Math.floor(race.purse_minor*shares[i]/weight);remainder-=awards[i];
+ }
+ awards[paidPlaces-1]=remainder;
  const results=scored.map(({horse,entry,composite,rider},i)=>{
-  const gross=i===scored.length-1?0:Math.floor(race.purse_minor*(shares[i]||0)/weight);
-  if(i<scored.length-1)remainder-=gross;
-  const awarded=i===scored.length-1?remainder:gross;
+  const awarded=awards[i];
   const jockeyShare=Math.round(awarded*.1),ownerShare=awarded-jockeyShare;
   const owner=horse.owner_organization_id,jockey=entry.jockey_id;
   const money=state.runtime.finances.operation_balances_minor;
