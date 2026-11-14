@@ -208,7 +208,7 @@ function heroAvailable(src){
    try{displayUrl=await makeOpticalHero(img,src);}
    catch{/* The original transparent image remains a safe fallback. */}
    return {ok:true,darkInk,displayUrl};
-  }).catch(()=>({ok:false,darkInk:false,displayUrl:src}))));
+  }).catch(()=>({ok:false,darkInk:false,displayUrl:src})));
  }
  return heroProbes.get(src);
 }
