@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,worldAttributeKey:'',stableMode:'all',stableSearch:'',directorySort:'name',directorySortDesc:false,directoryFilter:'all',directoryMode:'all',directorySearch:'',directoryHorseItems:[],departmentModes:{},racingMode:'meets',racingTrack:'',racingDate:'',racingCalendarOpen:false,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0};
+const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,worldAttributeKey:'',stableMode:'all',stableSearch:'',directorySort:'name',directorySortDesc:false,directoryFilter:'all',directoryMode:'all',directorySearch:'',directoryHorseItems:[],departmentModes:{},racingMode:'meets',racingTrack:'',racingDate:'',racingCalendarOpen:false,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchPage:0,managerSortScope:'',managerSortKey:'',managerSortDesc:false};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -3485,10 +3485,37 @@ function managerRecordViewControl(section,page){
 }
 /* News is a source-backed Office bulletin board, not a fictional 2014
  * racing feed. Never imply these internal reports are press articles. */
+/* One read-only column sorter shared by World, News and Opportunities. */
+function managerRecordSortState(scope){
+ return APP.managerSortScope===scope?
+  {key:APP.managerSortKey,desc:APP.managerSortDesc}:{key:'',desc:false};
+}
+function managerSortRecords(scope,records){
+ const {key,desc}=managerRecordSortState(scope);
+ if(!key)return records;
+ const cmp=(a,b)=>String(a??'').localeCompare(String(b??''),undefined,{numeric:true,sensitivity:'base'});
+ return records.map((record,index)=>({record,index})).sort((a,b)=>{
+  const order=cmp(a.record[key],b.record[key]);
+  return (desc?-order:order)||cmp(a.record.name,b.record.name)||a.index-b.index;
+ }).map(row=>row.record);
+}
+function managerSortableColumns(scope,columns){
+ const {key,desc}=managerRecordSortState(scope);
+ return '<div class="ng-manager-columns" role="row" aria-label="Sortable record columns">'+
+  columns.map(([field,label])=>{
+   const active=key===field,direction=active?(desc?'descending':'ascending'):'none';
+   return '<span role="columnheader" aria-sort="'+direction+'">'+
+    '<button type="button" data-ng="manager-sort" data-scope="'+safe(scope)+
+    '" data-val="'+field+'" aria-label="Sort by '+safe(label)+
+    '" title="Sort by '+safe(label)+'">'+safe(label)+
+    '<i aria-hidden="true">'+(active?(desc?'▼':'▲'):'↕')+'</i></button></span>';
+  }).join('')+'<span aria-hidden="true"></span></div>';
+}
 function sourceNewsDesk(){
  const section=APP.section==='World'?'World':'Office';
  const notes=currentMessages().filter(m=>m&&typeof m.case==='string');
- const list=notes.map(m=>
+ const newsScope=section+':News';
+ const list=managerSortRecords(newsScope,notes.map(m=>({kind:'OFFICE',name:m.title,detail:m.from||'Office',context:m.meta||'Source-backed report',record:m}))).map(({record:m})=>
   '<button class="ng-manager-row" type="button" data-ng="case" data-val="'+safe(m.case)+'" aria-label="Open Office briefing: '+safe(m.title)+'">'+
    '<span class="ng-manager-row-type">OFFICE</span>'+
    '<span class="ng-manager-row-name"><strong>'+safe(m.title)+'</strong></span>'+
@@ -3509,8 +3536,8 @@ function sourceNewsDesk(){
   '</div><div class="ng-manager-workspace">'+
    '<section class="ng-manager-primary"><header><strong>IN-GAME OFFICE BRIEFINGS</strong><span>'+
     notes.length+' SOURCE-LINKED MESSAGES</span></header>'+
-    '<div class="ng-manager-columns"><span>TYPE</span><span>REPORT</span><span>SENDER</span><span>CONTEXT</span><span></span></div>'+
-    '<div class="ng-manager-rows">'+(list||
+    managerSortableColumns(newsScope,[['kind','TYPE'],['name','REPORT'],['detail','SENDER'],['context','CONTEXT']])+
+    '<div class="ng-manager-rows" tabindex="0" role="region" aria-label="Scrollable sortable management records">'+(list||
      '<p class="ng-manager-empty">No Office briefings are currently recorded for this career.</p>')+
     '</div></section>'+
    '<aside class="ng-manager-sidebar"><section class="ng-manager-secondary"><header>'+
@@ -3529,19 +3556,17 @@ function sourceOpportunityBoard(){
  const notes=currentMessages().filter(m=>m&&typeof m.case==='string');
  const priority=notes.filter(m=>m.urgent&&!m.resolved);
  const due=dueActions();
- const briefingRows=priority.map(m=>
-  '<button type="button" class="ng-manager-row" data-ng="case" data-val="'+safe(m.case)+'" aria-label="Review manager briefing: '+safe(m.title)+'">'+
-  '<span class="ng-manager-row-type">OFFICE</span>'+
-  '<span class="ng-manager-row-name"><strong>'+safe(m.title)+'</strong></span>'+
-  '<span class="ng-manager-row-detail">'+safe(m.from||'Office')+'</span>'+
-  '<span class="ng-manager-row-context">'+safe(m.meta||'Priority briefing')+'</span>'+
-  '<span class="ng-manager-row-open">'+glyph('right',12)+'</span></button>').join('');
- const followRows=due.map(f=>
-  '<button type="button" class="ng-manager-row" data-ng="followup" data-val="'+safe(f.id)+'" aria-label="Open due follow-up: '+safe(f.caseTitle||f.caseId||'Follow-up')+'">'+
-  '<span class="ng-manager-row-type">DUE</span>'+
-  '<span class="ng-manager-row-name"><strong>'+safe(f.caseTitle||f.caseId||'Follow-up')+'</strong></span>'+
-  '<span class="ng-manager-row-detail">OFFICE FOLLOW-UP</span>'+
-  '<span class="ng-manager-row-context">'+safe(f.dueDate||'Awaiting date')+'</span>'+
+ const opportunityScope='Office:Opportunities';
+ const attentionRows=managerSortRecords(opportunityScope,[
+  ...priority.map(m=>({kind:'OFFICE',name:m.title,detail:m.from||'Office',context:m.meta||'Priority briefing',case:m.case,rowAction:'case'})),
+  ...due.map(f=>({kind:'DUE',name:f.caseTitle||f.caseId||'Follow-up',detail:'OFFICE FOLLOW-UP',context:f.dueDate||'Awaiting date',id:f.id,rowAction:'followup'}))
+ ]).map(r=>
+  '<button type="button" class="ng-manager-row" data-ng="'+r.rowAction+'" data-val="'+safe(r.rowAction==='case'?r.case:r.id)+
+  '" aria-label="'+(r.rowAction==='case'?'Review manager briefing: ':'Open due follow-up: ')+safe(r.name)+'">'+
+  '<span class="ng-manager-row-type">'+safe(r.kind)+'</span>'+
+  '<span class="ng-manager-row-name"><strong>'+safe(r.name)+'</strong></span>'+
+  '<span class="ng-manager-row-detail">'+safe(r.detail)+'</span>'+
+  '<span class="ng-manager-row-context">'+safe(r.context)+'</span>'+
   '<span class="ng-manager-row-open">'+glyph('right',12)+'</span></button>').join('');
  const rowCount=priority.length+due.length;
  const side=(label,section,description)=>
@@ -3561,8 +3586,8 @@ function sourceOpportunityBoard(){
   '</div>'+
   '<div class="ng-manager-workspace"><section class="ng-manager-primary">'+
    '<header><strong>NEEDS MANAGER ATTENTION</strong><span>'+rowCount+' CURRENT ACTIONS</span></header>'+
-   '<div class="ng-manager-columns"><span>TYPE</span><span>FILE</span><span>DEPARTMENT</span><span>STATUS / DUE</span><span></span></div>'+
-   '<div class="ng-manager-rows">'+(briefingRows+followRows||
+   managerSortableColumns(opportunityScope,[['kind','TYPE'],['name','FILE'],['detail','DEPARTMENT'],['context','STATUS / DUE']])+
+   '<div class="ng-manager-rows" tabindex="0" role="region" aria-label="Scrollable sortable management records">'+(attentionRows||
      '<p class="ng-manager-empty">No priority briefings or due follow-ups are recorded. New racing opportunities must be evaluated through the Racing desk.</p>')+
    '</div></section>'+
    '<aside class="ng-manager-sidebar">'+
@@ -3624,17 +3649,20 @@ function managerDashboard(){
  const visibleItems=section==='World'&&page==='Overview'?
   ['horse','person','farm','track','race'].flatMap(kind=>
    items.filter(row=>row.kind===kind).slice(0,20)):items;
- const records=visibleItems.map(r=>{
+ const overviewScope=section+':'+page;
+ const records=managerSortRecords(overviewScope,visibleItems.map(r=>{
   const owner=r.kind==='horse'?horseOwnership(r.name):null;
-  const secondary=r.kind==='horse'?(owner?.name||'Not recorded'):r.kind==='race'?(r.track||'—'):(r.detail||'—');
+  const context=r.kind==='horse'?(owner?.name||'Not recorded'):r.kind==='race'?(r.track||'—'):(r.detail||'—');
   const detail=r.kind==='horse'?(horseRows().find(h=>h.name===r.name)?.activity||'Horse file'):r.detail||'Connected record';
-  return '<button class="ng-manager-row" type="button" data-ng="search-go" data-val="'+r.sourceIndex+'" aria-label="Open '+safe(r.name)+'">'+
+  return {record:r,kind:r.kind,name:r.name,detail,context};
+ })).map(({record:r,detail,context})=>
+  '<button class="ng-manager-row" type="button" data-ng="search-go" data-val="'+r.sourceIndex+'" aria-label="Open '+safe(r.name)+'">'+
    '<span class="ng-manager-row-type">'+safe(r.kind.toUpperCase())+'</span>'+
    '<span class="ng-manager-row-name">'+(r.kind==='horse'?horseOwnerBadge(r.name):'')+'<strong>'+safe(r.name)+'</strong></span>'+
    '<span class="ng-manager-row-detail">'+safe(detail)+'</span>'+
-   '<span class="ng-manager-row-context" title="'+safe(secondary)+'">'+safe(secondary)+'</span>'+
-   '<span class="ng-manager-row-open">'+glyph('right',12)+'</span></button>';
- }).join('');
+   '<span class="ng-manager-row-context" title="'+safe(context)+'">'+safe(context)+'</span>'+
+   '<span class="ng-manager-row-open">'+glyph('right',12)+'</span></button>'
+ ).join('');
  const caseList=messages.slice(0,7).map(m=>'<button class="ng-manager-case" data-ng="case" data-val="'+safe(m.case)+'">'+
   '<span class="ng-manager-case-indicator '+(m.resolved?'resolved':m.urgent?'urgent':'')+'"></span>'+
   '<span><strong>'+safe(m.title)+'</strong><small>'+safe(m.from)+'</small></span>'+
@@ -3660,12 +3688,12 @@ function managerDashboard(){
    '<span>'+(visibleItems.length<items.length?
     visibleItems.length+' OF '+items.length+' SOURCE RECORDS — SELECT A FULL DIRECTORY':
     items.length+' SOURCE-LINKED RECORDS')+'</span></header>'+
-   '<div class="ng-manager-columns"><span>TYPE</span><span>NAME</span><span>ROLE / ACTIVITY</span><span>OWNER / LOCATION</span><span></span></div>'+
-   '<div class="ng-manager-rows">'+(records||'<p class="ng-manager-empty">No source-linked records for this screen yet. Nothing has been invented to fill the table.</p>')+'</div></section>'+
+   managerSortableColumns(overviewScope,[['kind','TYPE'],['name','NAME'],['detail','ROLE / ACTIVITY'],['context','OWNER / LOCATION']])+
+   '<div class="ng-manager-rows" tabindex="0" role="region" aria-label="Scrollable sortable management records">'+(records||'<p class="ng-manager-empty">No source-linked records for this screen yet. Nothing has been invented to fill the table.</p>')+'</div></section>'+
    '<aside class="ng-manager-sidebar"><section class="ng-manager-secondary"><header><strong>DECISION INBOX</strong><span>'+open.length+' OPEN</span></header>'+
-     '<div class="ng-manager-secondary-list">'+caseList+'</div></section>'+
+     '<div class="ng-manager-secondary-list" tabindex="0" role="region" aria-label="Scrollable management details">'+caseList+'</div></section>'+
     '<section class="ng-manager-secondary"><header><strong>RACING CALENDAR</strong><span>'+upcoming.length+' TARGETS</span></header>'+
-     '<div class="ng-manager-secondary-list">'+(schedule||'<p class="ng-manager-empty">No recorded race targets.</p>')+'</div></section>'+
+     '<div class="ng-manager-secondary-list" tabindex="0" role="region" aria-label="Scrollable management details">'+(schedule||'<p class="ng-manager-empty">No recorded race targets.</p>')+'</div></section>'+
    '</aside></div></section>';
 }
 function open1999Race(record){
@@ -3809,6 +3837,13 @@ window.addEventListener('click',e=>{
  if(key==='organization')return openOrganization();
  if(key==='search-go')return openSearchItem(APP.searchIndex[Number(val)]);
  if(key==='search-type'){APP.searchType=val;APP.searchPage=0;return updateSearchRoster()}
+ if(key==='manager-sort'){
+  const scope=btn.dataset.scope||'';
+  if(!['kind','name','detail','context'].includes(val)||!scope)return;
+  if(APP.managerSortScope===scope&&APP.managerSortKey===val)APP.managerSortDesc=!APP.managerSortDesc;
+  else{APP.managerSortScope=scope;APP.managerSortKey=val;APP.managerSortDesc=false}
+  return paint();
+ }
  if(key==='search-sort'){APP.searchSort=val;APP.searchPage=0;return updateSearchRoster()}
  if(key==='search-page'){APP.searchPage=Math.max(0,APP.searchPage+Number(val));return updateSearchRoster()}
  if(key==='search-history')return window.location.assign('/archive/?page=races');

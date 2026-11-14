@@ -188,6 +188,25 @@ body.wtw-next-active{overflow:auto}
 .ng-manager-primary>header span,.ng-manager-secondary>header span{font-size:9px;color:#aac0ad;white-space:nowrap}
 .ng-manager-columns,.ng-manager-row{display:grid;grid-template-columns:65px minmax(120px,1.25fr) minmax(125px,1.1fr) minmax(115px,.9fr) 20px;gap:7px;align-items:center;min-width:0}
 .ng-manager-columns{flex:0 0 26px;padding:4px 8px;background:#2b3535;color:#b6c7b7;font-size:var(--wtw-ui-list-meta);font-weight:810;letter-spacing:.025em}
+/* Same compact, interactive columns on World, News and Opportunities.
+ * Scroll regions remain inside the existing manager workspace. */
+.ng-manager-columns>span{display:flex;align-items:center;min-width:0;overflow:hidden}
+.ng-manager-columns>span[role="columnheader"]>button{
+ display:flex;align-items:center;justify-content:space-between;gap:4px;width:100%;min-width:0;
+ padding:2px 0;border:0;background:transparent;color:inherit;font:inherit;
+ font-weight:inherit;letter-spacing:inherit;text-align:left;white-space:nowrap;cursor:pointer
+}
+.ng-manager-columns>span[role="columnheader"]>button i{font-style:normal;font-size:9px;font-weight:700;color:#8fab9b}
+.ng-manager-columns>span[aria-sort="ascending"]>button,
+.ng-manager-columns>span[aria-sort="descending"]>button{color:#f2dea4}
+.ng-manager-columns>span[aria-sort="ascending"]>button i,
+.ng-manager-columns>span[aria-sort="descending"]>button i{color:#f2dea4}
+.ng-manager-columns>span[role="columnheader"]>button:hover{color:#fff2c6}
+.ng-manager-columns>span[role="columnheader"]>button:focus-visible,
+.ng-manager-rows:focus-visible,.ng-manager-secondary-list:focus-visible{
+ outline:2px solid #eddaa0;outline-offset:-2px
+}
+
 .ng-manager-rows{display:flex;flex-direction:column;flex:1 1 0;min-height:0;overflow:auto;scrollbar-width:thin;scrollbar-color:#567562 #151b20}
 .ng-routeinner .ng-manager-row{display:grid;align-items:center;flex:0 0 28px;width:100%;min-height:28px;max-width:none;box-sizing:border-box;padding:3px 8px;gap:7px;border:0;border-bottom:1px solid #303e39;border-radius:0;background:#1c2529;color:#dfe9e2;text-align:left;font-size:var(--wtw-ui-list-text)!important;cursor:pointer}
 .ng-routeinner .ng-manager-row:nth-child(even){background:#222c30}

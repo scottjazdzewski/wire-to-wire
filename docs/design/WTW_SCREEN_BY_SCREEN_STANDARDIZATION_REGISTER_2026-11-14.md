@@ -39,6 +39,16 @@
 | History / Archive | One chronological canon and stable immutable identities, era-accurate locations and dates, meaningful race/horse/people/farm/track linking; same recognizable operating patterns | **VERIFY / SOURCE GAP**. Current `/archive/` is an explicit exception to `/next/` routing; do not claim the whole archive has passed shared UI parity |
 | Save / Load / Continue | Single game state authority, named career saves, durable process restart, fail-closed errors, no separate demonstration data shown as the customer's saved world | **LOCKED behavior / VERIFY** cross-version migrations, crash safety, extended real session tests |
 
+## Current verified operating milestone — management information panels
+
+The compact source-backed management record surfaces are now the same interactive family: **World Overview**, **Office/World News**, and the **Opportunities action board** use one shared `managerSortRecords()` and `managerSortableColumns()` implementation.
+
+- Four compact column headings (type, name, detail and context) sort read-only record projections in either direction; the active heading exposes its ascending/descending state with accessible controls. The previously approved opening order remains unchanged until a player sorts.
+- Source-linked record IDs, source array order, game clock, outcome data and player decisions do not change when table order changes.
+- Main information lists and supplemental record regions are focusable independent scrolling areas. Their headings and the original left/right workspace remain visible.
+- Real Chromium tests exercise actual sort clicks and source IDs on all three screen families, in addition to the existing 67-view and five-profile operating matrix. Browser evidence is required before changing statuses from VERIFY to release-approved.
+- Still outstanding: human review of actual rendered density/atmosphere, full Archive parity, and long-run game-state acceptance. No fabricated messages or race activity may be used to fill empty pages.
+
 ## Screen approval checklist (apply to EACH row and each view)
 - Correct roster/profile structure; layout matches previously accepted screenshot, no retired components.
 - All navigation, dropdown, sorting, filtering, record opening and Back/Forward functions actually work.
