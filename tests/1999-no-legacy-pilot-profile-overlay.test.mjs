@@ -22,7 +22,7 @@ test('retired 38-horse pilot overlay and all its duplicate profile controls are 
 });
 
 test('real 1999 track/owner/trainer screens render one dossier and no appended pilot panel',()=>{
- const start=ui.indexOf('const actions=');
+ const start=ui.lastIndexOf(' const actions=',ui.indexOf('\nfunction calendarTimeline('));
  const end=ui.indexOf('\nfunction calendarTimeline(',start);
  assert.ok(start>0&&end>start);
  const final=ui.slice(start,end);
@@ -43,7 +43,7 @@ test('the isolated PilotHorse tester is preserved without appearing on canonical
 
 test('source-backed history, meets and stakes belong to the approved track workspace',()=>{
  const start=ui.indexOf("}else if(isTrack){\n   left=");
- const end=ui.indexOf("\n  }else if(APP.detailTab==='Career Record')",start);
+ const end=ui.indexOf("}else if(APP.detailTab==='Career Record')",start);
  assert.ok(start>0&&end>start);
  const track=ui.slice(start,end);
  assert.match(track,/ng-track-workspace/);
