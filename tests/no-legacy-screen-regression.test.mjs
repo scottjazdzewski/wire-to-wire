@@ -26,7 +26,16 @@ test('retired manager screen has no runtime or stylesheet left to serve',()=>{
   'public/office/office-nav.js',
   'public/office/office-pager.js',
   'public/office/office-routes.js',
-  'public/office/office.css'
+  'public/office/office.css',
+  'public/office-compact-v31.css',
+  'public/office-fm-v32.css',
+  'public/office-fm-v33.css',
+  'public/office-fm-v34.css',
+  'public/office-fm-v35.css',
+  'public/office-fm-v36.css',
+  'public/office-fm-v37.css',
+  'public/office-v30.css',
+  'public/office-visual-system-v38.css'
  ])assert.equal(exists(path),false,'Obsolete screen file reappeared: '+path);
  assert.match(manager,/http-equiv="refresh" content="0;url=\/next\/\?world=1999"/);
  assert.match(manager,/location\.replace\('\/next\/\?world=1999'\)/);
