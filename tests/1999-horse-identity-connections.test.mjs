@@ -57,7 +57,7 @@ test('trainer, track and owner profiles display exact-ID horse connections and p
  assert.match(js,/if\(key==='pilot-horse'\)/);
  assert.match(js,/if\(key==='pilot-connection'\)/);
  assert.match(js,/MODELED TEST ASSIGNMENTS ONLY/);
- assert.match(js,/TRAINER · HORSES IN CARE/);
- assert.match(js,/TRACK · HORSES CURRENTLY STABLED HERE/);
- assert.match(js,/OWNERSHIP · HORSE ROSTER/);
+ assert.match(js,/profileRecordSection\('HORSES IN TRAINING'/);
+ assert.match(js,/profileRecordSection\('HORSES CURRENTLY ON SITE'/);
+ assert.match(js,/profileRecordSection\('OWNED HORSES'/);
 });
