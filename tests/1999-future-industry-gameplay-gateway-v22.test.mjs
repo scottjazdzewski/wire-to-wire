@@ -85,6 +85,10 @@ const memoryContinuity=()=>{
     throw Error('Stale continuity CAS');
    x.events.push(clone(event));x.meta.revision=cursor.revision;
    x.meta.cursor=clone(cursor);
+  },
+  async restore({meta,events}){
+   if(rows.has(meta.worldId))throw Error('Refusing continuity archive overwrite');
+   rows.set(meta.worldId,clone({meta,events}));
   }
  };
 };
