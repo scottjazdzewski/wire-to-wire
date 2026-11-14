@@ -261,3 +261,13 @@
     font-size:9px!important;padding:6px!important;
   }
 }
+
+/* Dark navy/ink wordmarks become readable after removing white matte:
+   a diffuse ivory spotlight supplies contrast, never a rectangular plaque. */
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo.wtw-hero-dark-ink::before{
+ background:radial-gradient(ellipse at 50% 50%,
+   rgba(248,248,237,.78) 0%,
+   rgba(238,242,233,.38) 37%,
+   rgba(236,240,236,.08) 61%,transparent 77%)!important;
+ filter:blur(9px)!important;
+}
