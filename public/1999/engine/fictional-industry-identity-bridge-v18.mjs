@@ -42,11 +42,31 @@ export async function openFictionalIndustryIdentityBridge({
  const continuity=await openDurableOrganizationContinuityService({
   storage:continuityStorage,worldId,source,
   approvedPersonLookup:id=>naming.getApprovedPerson(id),
+  approvedOrganizationLookup:id=>naming.getApprovedOrganizationIdentity(id),
   familyLinkLookup
  });
  function getApprovedIdentity(personId){
   checkId(personId,'person identity ID');
   return naming.getApprovedPersonIdentity(personId);
+ }
+ function getApprovedOrganizationIdentity(organizationId){
+  checkId(organizationId,'approved business ID');
+  return naming.getApprovedOrganizationIdentity(organizationId);
+ }
+ function getOrganizationIdentity(organizationId){
+  checkId(organizationId,'organization ID');
+  const current=continuity.getOrganization(organizationId);
+  const approved=getApprovedOrganizationIdentity(organizationId);
+  if(current&&approved&&(current.name!==approved.name||
+   (approved.registration&&current.kind!==approved.registration.kind)))
+   throw Error('Continuity organization differs from approved naming identity');
+  if(!current&&!approved)return null;
+  return Object.freeze({
+   ...(current??approved),
+   registrationMetadata:approved?.registration??null,
+   approvedByNamingRegistry:!!approved,
+   registeredInContinuity:!!current
+  });
  }
  function getPersonIdentity(personId){
   checkId(personId,'person identity ID');
@@ -93,11 +113,34 @@ export async function openFictionalIndustryIdentityBridge({
   * closure checks are enforced by the existing V16 validator BEFORE V17 writes.
   * Registration is deliberately not accepted through this general event path.
   */
+ /**
+  * V19: admitting an organization is NOT a name-generation request.
+  * A name and typed purpose must already exist in the durable V12 registry.
+  * All proposed principal/trainer/manager IDs must already be valid people
+  * in the continuity registry. A V17 event is the only organizational write.
+  */
+ async function registerApprovedOrganization({
+  organizationId,eventId,sourceId,year,expectedRevision=continuity.revision
+ }={}){
+  checkId(organizationId,'approved organization ID');
+  checkId(eventId,'organization registration event ID');
+  checkId(sourceId,'organization registration source ID');
+  await naming.refresh();
+  const approved=naming.getApprovedOrganizationIdentity(organizationId);
+  if(!approved?.registration)
+   throw Error('Organization has no durable V19 typed naming approval');
+  return continuity.apply({expectedRevision,event:{
+   type:'REGISTER_APPROVED_ORGANIZATION',eventId,sourceId,year,
+   organization:approved
+  }});
+ }
  async function applyTransition({expectedRevision=continuity.revision,event}={}){
   if(!event||typeof event!=='object')
    throw Error('Explicit organizational continuity event required');
   if(event.type==='REGISTER_APPROVED_PERSON')
    throw Error('Use registerApprovedPerson to bind a V12-approved identity');
+  if(event.type==='REGISTER_APPROVED_ORGANIZATION')
+   throw Error('Use registerApprovedOrganization for V12-approved businesses');
   return continuity.apply({expectedRevision,event});
  }
  async function refresh(){
@@ -114,10 +157,11 @@ export async function openFictionalIndustryIdentityBridge({
   get namingCursor(){return naming.cursor},
   get continuityCursor(){return continuity.cursor},
   getApprovedIdentity,getPersonIdentity,
+  getApprovedOrganizationIdentity,getOrganizationIdentity,
   getOrganization:(...args)=>continuity.getOrganization(...args),
   getHistory:(...args)=>continuity.getHistory(...args),
   listOrganizations:(...args)=>continuity.listOrganizations(...args),
-  registerApprovedPerson,applyTransition,refresh,
+  registerApprovedPerson,registerApprovedOrganization,applyTransition,refresh,
   exportNamingBundle:()=>naming.exportBundle(),
   exportContinuityArchive:()=>continuity.exportArchive()
  });
