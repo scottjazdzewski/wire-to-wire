@@ -79,10 +79,10 @@ test('actual player care request is a live Inbox/Desk case with exact owner, hor
   [['ACCEPT',request.id],['COUNTER',request.id],['DECLINE',request.id]]);
  assert.match(file.desk.summary,/unfunded care/i);
  assert.equal(JSON.stringify(s),saved,'UI projection must not mutate the real engine state');
- assert.deepEqual(readAPI.trainerRequests(undefined,undefined),[]);
+ assert.equal(readAPI.trainerRequests(undefined,undefined).length,0);
  const opponent=getTrainerManagementRequests(s,'O-FAKE');
- assert.deepEqual(readAPI.trainerRequests(s,opponent),[],
-  'No non-player-owner request can leak into the player's Desk');
+ assert.equal(readAPI.trainerRequests(s,opponent).length,0,
+  'No non-player-owner request can leak into the player\'s Desk');
 });
 test('a valid owner action runs the canonical command, updates the Desk and round-trips the career save',async()=>{
  const {s,request}=careRequest(),{window,readAPI,commands}=ui();
