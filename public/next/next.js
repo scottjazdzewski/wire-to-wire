@@ -932,11 +932,11 @@ function world1999Match(kind,name){
 function openWorld1999Entity(key){
  const found=world1999Entry(key);
  if(!found)return false;
- return openCustomView('WorldRecord:'+encodeURIComponent(key),'World','Overview');
+ openCustomView('WorldRecord:'+encodeURIComponent(key),'World','Overview');
+ return true;
 }
 function openFounding1999Profile(kind,id){
  if(!isClean1999()||!['ownership','facility','person'].includes(kind)||!/^(?:O|P)-[A-Za-z0-9-]+$/.test(String(id||'')))return false;
- APP.detailTab='Overview';
  const section=kind==='facility'?'Facilities':'Personnel',page=kind==='ownership'?'Owners':'Overview';
  openCustomView('FoundingProfile:'+kind+':'+encodeURIComponent(id),section,page);
  return true;
@@ -947,8 +947,6 @@ function renderFounding1999Profile(kind,id){
  const list=kind==='person'?[...source.people,...world1999JockeyRoster,...world1999TrainerRoster]:source.organizations;
  const record=(list||[]).find(x=>x.id===id);
  if(!record)return '<section class="ng-world-source-profile"><p>Not in the approved 1999 people or organization roster.</p></section>';
- const key=kind+':'+id;
- if(APP.foundingProfileKey!==key){APP.foundingProfileKey=key;APP.detailTab='Overview'}
  // Both page types must invoke the SAME already approved profileDetail()
  // renderer as Track and Horse. No independent founding profile layout.
  return restored1999Profile(kind==='person'?'person':'farm',
@@ -1572,10 +1570,32 @@ const trackCourseFacts={
   ['INNER TURF','7 furlongs + 304 ft'],['HOME STRETCH','1,144 feet']]}
 };
 
+function profileRecordsNavigation(label,tabs,selected){
+ const button=tab=>`<button type="button" data-ng="detailtab" data-val="${tab}" class="${selected===tab?'on':''}" aria-current="${selected===tab?'page':'false'}">${tab.toUpperCase()}</button>`;
+ return `<nav class="ng-person-dossierbar ng-management-dossierbar" aria-label="Profile records navigation">
+   <span class="ng-person-dossierlabel">${label} <small>ONE-SCREEN OVERVIEW</small></span>
+   <div class="ng-person-dossieractions">
+    ${button('Overview')}
+    ${button('History')}
+    <select data-ng-select="profile-record" aria-label="Open deeper profile records">
+     <option value="">MORE RECORDS</option>
+     ${tabs.filter(t=>t!=='Overview'&&t!=='History').map(t=>`<option value="${safe(t)}" ${selected===t?'selected':''}>${safe(t)}</option>`).join('')}
+    </select>
+   </div>
+  </nav>`;
+}
+function selectProfileRecord(tab,selector){
+ endNativeSelectInteraction(false);
+ const saved=window.history.state;
+ window.history.replaceState({...saved,profileRecord:{routeId:APP.routeId,tab}},'');
+ paint();
+ $(selector,root)?.focus();
+ if(activeNativeSelect)endNativeSelectInteraction(false);
+}
 function profileDetail(route,sourceOverride=null){
  const source=$('#routeBody .profilePage')&&!sourceOverride?$('#routeBody .profilePage'):sourceOverride;if(!source)return null;
- const id=route.kicker+'|'+route.title;
- if(APP.routeId!==id){APP.routeId=id;APP.detailTab='Overview';APP.networkPage=0;APP.networkRole='all';APP.networkFocus='';APP.stakeSort='date';APP.stakeSortDesc=false}
+ const id=APP.custom||route.kicker+'|'+route.title;
+ if(APP.routeId!==id){APP.routeId=id;APP.networkPage=0;APP.networkRole='all';APP.networkFocus='';APP.stakeSort='date';APP.stakeSortDesc=false}
  const text=(query,scope=source)=>$(query,scope)?.textContent.trim()||'';
  const fields=$$('.profileField',source).map(n=>({label:text('span',n),value:text('strong',n)||'—'}));
  const connection=$$('.profileLine',source).map(n=>({label:text('b',n),value:n.querySelector('button')?.textContent.trim()||n.querySelector('span')?.textContent.trim()||n.textContent.trim().replace(text('b',n),'').trim()||'—',button:n.querySelector('button')}));
@@ -1606,20 +1626,13 @@ function profileDetail(route,sourceOverride=null){
   isFarm?['Overview','Connected Horses','Operations','Connections','History']:
   isTrack?['Overview','Meet Schedule','Major Races','Connections','History']:
   ['Overview','Connections','History']);
+ const saved=window.history.state?.profileRecord;
+ APP.detailTab=saved?.routeId===id&&tabs.includes(saved.tab)?saved.tab:'Overview';
  const rows=(items)=>'<div class="ng-data-rows">'+items.map(i=>`<div class="ng-data-row"><span>${safe(i.label)}</span>${namedProfileValue(i.label,i.value)}</div>`).join('')+'</div>';
  const pills='<div class="ng-status-pills">'+states.slice(0,4).map(x=>`<span>${safe(x)}</span>`).join('')+'</div>';
- const tabbar=(isTrack||isFarm||isPerson||isHorse)?`<nav class="ng-person-dossierbar ng-management-dossierbar" aria-label="Profile records navigation">
-   <span class="ng-person-dossierlabel">${isHorse?'HORSE RACING FILE':isPerson?'PERSONNEL DOSSIER':isTrack?'TRACK DOSSIER':source.dataset.foundingContext==='facility'?'FACILITY DOSSIER':'OWNERSHIP DOSSIER'} <small>ONE-SCREEN OVERVIEW</small></span>
-   <div class="ng-person-dossieractions">
-    <button data-ng="detailtab" data-val="Overview" class="${APP.detailTab==='Overview'?'on':''}">OVERVIEW</button>
-    <button data-ng="detailtab" data-val="History" class="${APP.detailTab==='History'?'on':''}">HISTORY</button>
-    <select data-ng-select="profile-record" aria-label="Open deeper profile records">
-     <option value="">MORE RECORDS</option>
-     ${tabs.filter(t=>!['Overview','History'].includes(t)).map(t=>`<option value="${safe(t)}" ${APP.detailTab===t?'selected':''}>${safe(t)}</option>`).join('')}
-    </select>
-   </div>
-  </nav>`:
-  '<nav class="ng-profiletabs" aria-label="'+safe(route.kicker)+' sections">'+tabs.map(t=>`<button data-ng="detailtab" data-val="${safe(t)}" class="${APP.detailTab===t?'on':''}" aria-current="${APP.detailTab===t?'page':'false'}">${safe(t)}</button>`).join('')+'</nav>';
+ const label=isHorse?'HORSE RACING FILE':isPerson?'PERSONNEL DOSSIER':isTrack?'TRACK DOSSIER':
+  isFarm?(source.dataset.foundingContext==='facility'?'FACILITY DOSSIER':'OWNERSHIP DOSSIER'):'PROFILE RECORDS';
+ const tabbar=profileRecordsNavigation(label,tabs,APP.detailTab);
  const factsBlock=`<div class="ng-profile-facts">${fields.map(f=>`<div><small>${safe(f.label)}</small>${namedProfileValue(f.label,f.value)}</div>`).join('')}</div>`;
 
  const horseAchievementPanel=isHorse?$$('.profilePanel',source).find(panel=>text('h3',panel).includes('Achievements')):null;
@@ -1633,7 +1646,7 @@ function profileDetail(route,sourceOverride=null){
    return '<button type="button" class="ng-entity-reference" data-ng="'+action+
     '" data-val="'+safe(id)+'" title="Open linked '+safe(f.label)+' record">'+safe(f.value)+' ↗</button>';
   }
-  if(f.button)return '<button data-ng="sourcebutton" data-val="'+$('#routeBody [data-act]').indexOf(f.button)+
+  if(f.button)return '<button data-ng="sourcebutton" data-val="'+$$('#routeBody [data-act]').indexOf(f.button)+
    '" aria-label="Open '+safe(f.label)+' profile: '+safe(f.value)+'">'+safe(f.value)+' ↗</button>';
   return namedProfileValue(f.label,f.value);
  };
@@ -2389,7 +2402,7 @@ function profileDetail(route,sourceOverride=null){
  const pilotKind=isPerson?'person':isTrack?'track':isFarm?'farm':null;
  const pilotID=pilotKind?world1999Match(pilotKind,route.title)?.canonicalId:null;
  const pilotPanel=pilotID?pilotHorseConnectionsPanel(pilotKind,pilotID):'';
- return `<div class="ng-profile-view ${isHorse?'ng-profile-horse':isPerson?'ng-profile-person ng-profile-horse':isFarm?'ng-profile-farm ng-profile-track':isTrack?'ng-profile-track':'ng-profile-entity'}">${identity}${tabbar}<div class="ng-detail-cols ${(isHorse||isPerson)&&('Overview'===APP.detailTab||isPerson&&APP.detailTab==='Attributes')?'ng-detail-cols-horse-overview':(isFarm||isTrack)&&APP.detailTab==='Overview'?'ng-detail-cols-tier1':''}">${left}${right}${footer}</div>${pilotPanel}${isHorse||isPerson||isFarm||isTrack?'':actions}</div>`;
+ return `<div class="ng-profile-view ${isHorse?'ng-profile-horse':isPerson?'ng-profile-person ng-profile-horse':isFarm?'ng-profile-farm ng-profile-track':isTrack?'ng-profile-track':'ng-profile-entity'}" data-profile-record="${safe(APP.detailTab)}">${identity}${tabbar}<div class="ng-detail-cols ${(isHorse||isPerson)&&('Overview'===APP.detailTab||isPerson&&APP.detailTab==='Attributes')?'ng-detail-cols-horse-overview':(isFarm||isTrack)&&APP.detailTab==='Overview'?'ng-detail-cols-tier1':''}">${left}${right}${footer}</div>${pilotPanel}${isHorse||isPerson||isFarm||isTrack?'':actions}</div>`;
 }
 function calendarTimeline(races,nonraces){
  const iso=depGameDay();
@@ -3717,7 +3730,7 @@ function paint(){
  loadWorld1999();
  if(activeNativeSelect&&activeNativeSelect.isConnected){deferredNativeSelectPaint=true;return}
  if(activeNativeSelect&&!activeNativeSelect.isConnected)endNativeSelectInteraction(false);
- const oldRoute=$('.ng-routegrid',root),oldTab=$('.ng-profiletabs .on',root)?.dataset.val||'';
+ const oldRoute=$('.ng-routegrid',root),oldTab=$('[data-profile-record]',root)?.dataset.profileRecord;
  const previousRouteKey=oldRoute?.dataset.routeKey||'';
  const previousRouteScroll=oldRoute?.scrollTop||0;
  const previousRoster=$('.ng-dept-roster .ng-rs-scroll',root);
@@ -3733,7 +3746,7 @@ function paint(){
  const stage=(route||APP.custom)?renderRoute():`<main class="ng-board">${inbox()}${center()}${right()}</main>`;
  root.innerHTML=header()+'<div class="ng-manager-shell">'+managerSidebar()+
    '<div class="ng-manager-stage">'+stage+'</div></div>'+(APP.savePanelOpen?namedSavePanel():'');
- const nextRoute=$('.ng-routegrid',root),nextTab=$('.ng-profiletabs .on',root)?.dataset.val||'';
+ const nextRoute=$('.ng-routegrid',root),nextTab=$('[data-profile-record]',root)?.dataset.profileRecord;
  const nextRoster=$('.ng-dept-roster .ng-rs-scroll',root);
  if(nextRoster){
   const nextRosterKey=nextRoster.closest('.ng-dept-roster')?.getAttribute('data-department')+'|'+
@@ -3909,6 +3922,7 @@ window.addEventListener('click',e=>{
   if(r._testGenerated)return previewRecordRoute(r._kind==='person'?'person':
    r._kind==='farm'?'farm':'horse',r._name,r);
   if(r._worldKey)return openWorld1999Entity(r._worldKey);
+  if(r._kind==='track'&&r._canonId&&openWorld1999Entity('track:'+r._canonId))return;
   if(r._canonId){const match=world1999Entries().find(x=>x.canonicalId===r._canonId);
    if(match&&!window.__wtwOfficeSearchRecords?.().some(x=>x.kind===match.kind&&x.name===match.name))return openWorld1999Entity(match.worldKey);
   }
@@ -4053,7 +4067,8 @@ window.addEventListener('click',e=>{
  if(key==='network-role'){APP.networkRole=val;APP.networkPage=0;APP.networkFocus='';return paint()}
  if(key==='network-page'){APP.networkPage=Math.max(0,APP.networkPage+Number(val));return paint()}
  if(key==='network-select'){APP.networkFocus=val;return paint()}
- if(key==='detailtab'){APP.detailTab=val;return paint()}
+ if(key==='detailtab')return selectProfileRecord(val,val==='Overview'||val==='History'
+  ?'.ng-management-dossierbar [data-val="'+val+'"]':'.ng-management-dossierbar select');
  if(key==='stake-sort'){if(APP.stakeSort===val)APP.stakeSortDesc=!APP.stakeSortDesc;else{APP.stakeSort=val;APP.stakeSortDesc=false}return paint()}
  if(key==='sourcebutton'){const n=$('#routeBody [data-act]')[Number(val)];
   if(n?.classList.contains('stakesRow')){const track=currentRoute()?.title||'';const title=n.querySelector('strong')?.textContent.trim()||n.children[0]?.textContent.trim()||'';const match=window.__WTW_1999_UI_DATA__?.stakesForTrack?.(track)?.find(r=>r.name===title);if(match)return open1999Race(match)}
@@ -4158,8 +4173,7 @@ root.addEventListener('change',event=>{
   return;
  }
  if(field.matches('select[data-ng-select="profile-record"]')&&field.value){
-   APP.detailTab=field.value;
-   paint();
+   selectProfileRecord(field.value,'select[data-ng-select="profile-record"]');
   }
 });
 root.addEventListener('input',event=>{

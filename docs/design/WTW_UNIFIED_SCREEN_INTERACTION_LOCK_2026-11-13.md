@@ -72,3 +72,7 @@ Football Manager and Out of the Park Baseball are the reference **level of quali
 6. Merge only verified changes. Do not describe a screen as **finished** until screenshots and interaction have been reviewed.
 
 This document formalizes the user's product direction and complements the existing `WTW_FM_OOTP_CANONICAL_DESKTOP_STYLE_2026-11-10.md`, `WTW_DESKTOP_SUBPAGE_DESIGN_SYSTEM_2026-11-10.md` and `MANAGEMENT_STUDIO_VISUAL_RELEASE_GATE.md`. Where older phase notes conflict, choose the **shared-function, no-UI-drift** rule above rather than resurrecting a previous iteration.
+
+### Profile navigation implementation
+
+Horse, person, track, facility and ownership profiles share Overview, History and More Records through one renderer. Selecting a record keeps focus in that control bar. The selected record belongs to the current browser history entry, so Back returns to the originating directory and Forward restores the same profile record. The browser gate exercises this sequence for all five profile families. The desktop audit uses a source-backed 1999 stallion and captures profiles and directories at 1536×864, 1366×768 and 1280×800.

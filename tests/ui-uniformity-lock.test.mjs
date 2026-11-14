@@ -31,13 +31,13 @@ test('horse, people, track, stable and farm profiles share one renderer family',
  assert.match(js,/return restored1999Profile\(kind==='person'\?'person':'farm'/);
  assert.match(js,/ng-profile-intro/,'Shared identity row must stay');
  assert.match(js,/ng-profile-identity/,'Shared name and metadata area must stay');
- assert.match(js,/tabbar=\(isTrack\|\|isFarm\|\|isPerson\|\|isHorse\)\?/,
-  'Horse, people, track and organization profiles must share one local navigation renderer');
+ assert.equal(count(js,/function profileRecordsNavigation\(/g),1);
+ assert.match(js,/const tabbar=profileRecordsNavigation\(label,tabs,APP.detailTab\)/);
  assert.match(js,/ng-person-dossierbar/,'Shared profile navigation is present');
  for(const family of ['HORSE RACING FILE','PERSONNEL DOSSIER','TRACK DOSSIER','FACILITY DOSSIER','OWNERSHIP DOSSIER']){
   assert.ok(js.includes(family),'Missing profile family category: '+family);
  }
- assert.match(js,/ng-profiletabs/,'Track and farm retain their local profile records');
+ assert.doesNotMatch(js+css,/ng-profiletabs/,'Superseded profile navigation must stay removed');
  assert.match(js,/data-ng="detailtab"/,'Local sections must remain real navigation actions');
  assert.match(profile,/polishDossierContext\(root\)/,'Dossier header names must not regress to raw routes');
  assert.match(profile,/ensureHeroStage\(profile,kind,name\)/,'Track and farm use one hero stage');
