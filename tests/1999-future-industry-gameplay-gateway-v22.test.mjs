@@ -95,6 +95,14 @@ const makeRun=(w,date='2000-04-06')=>createGameRun({
  stableHorseIds:['H-TEST-001','H-TEST-002'],
  startDate:date
 });
+const gateway=(state,gameWorld,industry)=>createFutureIndustryGameGatewayV22({
+ state,world:gameWorld,industry,
+ authorityBinding:{
+  worldSnapshotId:gameWorld.authority.snapshot_id,
+  worldSha256:gameWorld.authority.sha256,
+  industryWorldId:industry.worldId
+ }
+});
 const event=(id,type,year,fields={})=>({
  eventId:id,sourceId:'SYNTHETIC_V22_EVIDENCE',type,year,...fields
 });
@@ -113,7 +121,7 @@ async function setup(){
 test('V22 game owner reuse reads REAL approved world and game save occupancy rather than creating new owner per horse',async()=>{
  const {bridge}=await setup(),w=world(),state=makeRun(w);
  const beforeWorld=JSON.stringify(w),beforeSave=exportGameSave(state,w);
- const gateway=createFutureIndustryGameGatewayV22({state,world:w,industry:bridge});
+ const gateway=gateway(state,w,bridge);
  const quote=gateway.quoteOwnerReuse({
   region:'KENTUCKY',slots:5
  });
@@ -145,14 +153,14 @@ test('V22 game owner reuse reads REAL approved world and game save occupancy rat
 test('V22 cannot activate future industry on Jan 1999 or after the supported 2099 identity horizon',async()=>{
  const {bridge}=await setup(),w=world();
  const opening=makeRun(w,'1999-01-01');
- const gw=createFutureIndustryGameGatewayV22({state:opening,world:w,industry:bridge});
+ const gw=gateway(opening,w,bridge);
  assert.throws(()=>gw.quoteOwnerReuse({region:'KENTUCKY'}),
   /disabled in the founding 1999 career/);
  await assert.rejects(()=>gw.registerApprovedOrganization({
   organizationId:'NOT-APPROVED',eventId:'EVENT',sourceId:'SIM'
  }),/disabled in the founding 1999 career/);
  const far=makeRun(w,'2100-01-01');
- const later=createFutureIndustryGameGatewayV22({state:far,world:w,industry:bridge});
+ const later=gateway(far,w,bridge);
  assert.throws(()=>later.quoteOwnerReuse({region:'KENTUCKY'}),
   /disabled in the founding 1999 career/);
  assert.equal(opening.revision,0);
@@ -173,7 +181,7 @@ test('V22 real game transfer changes owner occupancy while preserving historical
   'V22:COMMIT','COMMIT_HORSE_TRANSFER',{
    request_id:'V22-TRANSFER'
   },'system')}).state;
- const gw=createFutureIndustryGameGatewayV22({state,world:w,industry:bridge});
+ const gw=gateway(state,w,bridge);
  const local=gw.quoteOwnerReuse({region:'KENTUCKY',slots:1});
  const florida=gw.quoteOwnerReuse({region:'FLORIDA',slots:1});
  assert.equal(local.candidates[0].occupied,1);
@@ -192,7 +200,7 @@ test('V22 explicitly approved FUTURE person and business events enter V17, not a
   year:2001,roles:{trainer:1,farm_manager:1},owners:1,
   facilities:{generalFarms:1},maxPartnershipGroups:5
  });
- const gw=createFutureIndustryGameGatewayV22({state,world:w,industry:bridge});
+ const gw=gateway(state,w,bridge);
  await assert.rejects(()=>gw.registerApprovedPerson({
   personId:'INVENTED-PERSON',eventId:'UNAUTH',sourceId:'SIM'
  }),/durably approved/);
@@ -229,7 +237,7 @@ test('V22 explicitly approved FUTURE person and business events enter V17, not a
 });
 test('V22 game-clock approved personnel events obey V17 succession and retirement guards',async()=>{
  const {bridge}=await setup(),w=world(),state=makeRun(w,'2001-09-13');
- const gw=createFutureIndustryGameGatewayV22({state,world:w,industry:bridge});
+ const gw=gateway(state,w,bridge);
  await gw.applyPersonnelDecision({eventId:'CAREER-A',
   sourceId:'SIM_CAREER_EVIDENCE',personId:'P-TEST-A',
   type:'RECORD_PERSON_CAREER',careerStartYear:1995,stage:'EMERGING'});
@@ -243,6 +251,27 @@ test('V22 game-clock approved personnel events obey V17 succession and retiremen
  /Transfer all active/);
  assert.equal(bridge.getOrganization('O-TEST-A').principalId,'P-TEST-A');
  assert.equal(state.revision,0);
+});
+test('V22 rejects missing or mismatched canonical-to-industry world authority bindings',async()=>{
+ const {bridge}=await setup(),w=world(),state=makeRun(w);
+ assert.throws(()=>createFutureIndustryGameGatewayV22({
+  state,world:w,industry:bridge
+ }),/not explicitly bound/);
+ assert.throws(()=>createFutureIndustryGameGatewayV22({
+  state,world:w,industry:bridge,authorityBinding:{
+   worldSnapshotId:w.authority.snapshot_id,
+   worldSha256:'a'.repeat(64),
+   industryWorldId:bridge.worldId
+  }
+ }),/not explicitly bound/);
+ assert.throws(()=>createFutureIndustryGameGatewayV22({
+  state,world:w,industry:bridge,authorityBinding:{
+   worldSnapshotId:w.authority.snapshot_id,
+   worldSha256:w.authority.sha256,
+   industryWorldId:'WRONG-NAMESPACE'
+  }
+ }),/not explicitly bound/);
+ assert.equal(gateway(state,w,bridge).runId,state.run_id);
 });
 test('V22 source mirror and existing 1999 gameplay API remain exact, no second game or dynamic world mutation',()=>{
  const node=readFileSync(new URL(
