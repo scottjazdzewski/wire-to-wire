@@ -12,6 +12,7 @@ import {TRAINING_PLANS,recommendHorseWorkout} from '../engine/horse-development.
 import {facilityAction} from './facility-operations.js';
 import {horseTravelStatus,physicalHorseSiteId,effectiveHorseCareSite} from './shipping-1999.js';
 import {trainerDailyFee} from './trainer-contracts-1999.js';
+import {advancePostRaceCampaigns,postRaceWorkoutGuidance,postRaceCarePriority} from './post-race-campaign-1999.js';
 
 export const DAILY_AGENT_SCHEMA='WTW_DAILY_AGENT_DECISIONS_V1';
 const cap=(x,min=0,max=1)=>Math.max(min,Math.min(max,x));
@@ -112,11 +113,16 @@ function ownerDecision(state,h,site,profile,related,ownerHerd,day){
  const risk=record.training.currentRisk,fitness=record.training.fitness,
   aptitude=h.starting_attributes.potential_ability/99;
  const severity=record.training.sorenessDays>0||risk>.53;
+ const raceCare=postRaceCarePriority(state,h);
  const canInvest=runway>2.5&&(profile.investment_appetite>.6||aptitude>.75)&&
   related.owner_trust>=.38;
  const conserve=runway<1.3;
- const feed=conserve?'ECONOMY':canInvest?'PREMIUM':'STANDARD';
- const care=severity||(!conserve&&profile.welfare_priority>.73)?'PROACTIVE':'BASIC';
+ const feed=conserve?'ECONOMY':canInvest||
+  raceCare.active&&runway>3&&profile.investment_appetite>.49?
+  'PREMIUM':'STANDARD';
+ const care=severity||(!conserve&&
+  (profile.welfare_priority>.73||
+   raceCare.active&&profile.welfare_priority>.44))?'PROACTIVE':'BASIC';
  const mult=conserve?1.04:canInvest?1.22:1.13;
  const monthly_budget_minor=Math.max(0,Math.min(100000000,
   Math.round((baseline+
@@ -124,12 +130,15 @@ function ownerDecision(state,h,site,profile,related,ownerHerd,day){
     CARE_PROGRAMS[care].daily_minor-CARE_PROGRAMS.BASIC.daily_minor)*30.5)*mult/1000)*1000));
  return {feed,care,training_plan:record.policy.training_plan,monthly_budget_minor,
   reason:severity?'HORSE_WELFARE_RECOVERY':conserve?'OWNER_LIQUIDITY_PRESSURE':
+   raceCare.active?'POST_RACE_CARE_INVESTMENT':
    canInvest?'BACKING_PROMISING_HORSE':'BALANCED_CARE_INVESTMENT',
   evidence:{owner_cash_minor:cash??null,approx_runway_months:Math.round(runway*10)/10,
    expected_monthly_need_minor:totalNeed,
    horse_potential:h.starting_attributes.potential_ability,
    owner_welfare_priority:profile.welfare_priority,
-   trainer_trust:related.owner_trust,fitness,risk}};
+   trainer_trust:related.owner_trust,fitness,risk,
+   postrace_priority:raceCare.active,
+   previous_race_id:raceCare.last_race_id??null}};
 }
 function chooseWorkout(state,h,related){
  const care=state.runtime.horse[h.horse_id],r=care.training,p=care.policy;
@@ -139,6 +148,8 @@ function chooseWorkout(state,h,related){
  if(trip?.history?.at(-1)?.date===state.clock.date&&
   ['ARRIVED_AT_TRACK','RETURNED_HOME'].includes(trip.history.at(-1).event))
   return {workout:'REST',reason:'ARRIVAL_RECOVERY'};
+ const postrace=postRaceWorkoutGuidance(state,h);
+ if(postrace?.workout)return {workout:postrace.workout,reason:postrace.reason};
  const t=state.runtime.people[h.trainer_id]?.game_training_skills||
   modeledTrainerSkills(h.trainer_id,state.rng.seed);
  const q=t.roleAttributes,age=h.racing_age_1999;
@@ -175,6 +186,7 @@ export function runAutonomousDay({state,world,emit}){
  const a=root(state),day=state.clock.date;
  if(a.last_day===day)return;
  ensure(!a.last_day||a.last_day<day,'AGENT_DATE','Agents cannot run out of clock order');
+ advancePostRaceCampaigns({state,world,emit});
  const horses=stable(state),byOwner=new Map(),byTrainer=new Map();
  for(const h of horses){
   const owner=h.owner_organization_id;
@@ -230,7 +242,8 @@ export function runAutonomousDay({state,world,emit}){
    if(!r||r.policy.source==='PLAYER_DECISION')continue;
    const site=effectiveHorseCareSite(state,h)||state.runtime.facilities.sites[h.current_residence_id];
    const proposal=ownerDecision(state,h,site,personality,relation(state,h),herd,day);
-   const crisis=r.training.sorenessDays>0||r.finance.unfunded_days>0;
+   const crisis=r.training.sorenessDays>0||r.finance.unfunded_days>0||
+    postRaceCarePriority(state,h).first_day;
    if(!crisis&&state.clock.days_elapsed%7!==1)continue;
    const {reason,evidence,...policy}=proposal;
    if(['feed','care','training_plan','monthly_budget_minor'].
@@ -260,7 +273,8 @@ export function runAutonomousDay({state,world,emit}){
    const playerOrder=h.owner_organization_id===state.player.operation_id&&
     r.policy.source==='PLAYER_DECISION'&&r.policy.training_plan!=='AUTO';
    if(playerOrder&&!['SORENESS_RECOVERY','WELFARE_RISK_LIMIT',
-    'HORSE_IN_TRANSIT','ARRIVAL_RECOVERY'].includes(reason)){
+    'HORSE_IN_TRANSIT','ARRIVAL_RECOVERY','POST_RACE_MANDATORY_REST',
+    'POST_RACE_WELFARE_HOLD'].includes(reason)){
     workout=null;reason='PLAYER_TRAINING_ORDER_RESPECTED';
    }
    // Null means "the player's plan remains the authority".

@@ -7,6 +7,7 @@ import {ensure,isObject,worldIdentity,nextDate,validDate} from './contracts.js';
 import {buildConditionBook1999} from '../../next/1999-condition-book-engine.mjs';
 import {getGameHorsePerformance,modelHorsePostRaceResponse} from './horse-care.js';
 import {applyRaceAgentFeedback} from './daily-agents.js';
+import {registerPostRaceCampaigns} from './post-race-campaign-1999.js';
 import {horseTravelStatus,effectiveHorseTrack,validate1999HorseShipping} from './shipping-1999.js';
 
 export const GAME_RACING_SCHEMA='WTW_1999_CAREER_RACING_V1';
@@ -293,6 +294,7 @@ function settle1999Race({state,world,race_id,emit}){
    performance_index:composite,rider_index:rider};
  });
  applyRaceAgentFeedback({state,world,race,results,emit});
+ registerPostRaceCampaigns({state,world,race,results,emit});
  race.results=results;race.status='OFFICIAL_SIM_RESULT';race.settled_date=state.clock.date;
  race.escrow_minor=0;race.result_provenance='DETERMINISTIC_1999_GAME_SIMULATION';
  // Sponsor escrow is a modeled external event budget, not new owner or jockey

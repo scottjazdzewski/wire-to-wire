@@ -3,6 +3,7 @@
  * approved 1999 modeled meet/calendar; no ghost results or artificial jockeys.
  */
 import {gameRaceProgram,raceEligibility,racingAction,jockeyBookingDecision,supported1999RaceClass} from './racing-1999.js';
+import {postRaceAIPlacement} from './post-race-campaign-1999.js';
 import {shippingAssessment,shippingAction,horseTravelStatus,effectiveHorseTrack} from './shipping-1999.js';
 const diff=(a,b)=>(Date.parse(b+'T12:00:00Z')-Date.parse(a+'T12:00:00Z'))/86400000;
 const plus=(date,n)=>new Date(Date.parse(date+'T12:00:00Z')+n*86400000).toISOString().slice(0,10);
@@ -164,9 +165,11 @@ export function run1999RacingAgents({state,world,emit}){
        surface:race.surface,distance_furlongs:race.distanceFurlongs,
        field_capacity:race.fieldCapacity};
       const eligible=eligibleAtHome.filter(h=>
-       !hasFutureEntry(state,h)&&raceEligibility(state,h,record).eligible);
+       !hasFutureEntry(state,h)&&raceEligibility(state,h,record).eligible&&
+       postRaceAIPlacement(state,h,record).eligible);
       if(eligible.length<2)continue;
-      const averageFit=eligible.reduce((n,h)=>n+raceFit(h,record),0)/eligible.length;
+      const averageFit=eligible.reduce((n,h)=>
+       n+raceFit(h,record)+postRaceAIPlacement(state,h,record).bonus,0)/eligible.length;
       const condition=eligible.reduce((n,h)=>
        n+state.runtime.horse[h.horse_id].training.readiness,0)/eligible.length;
       // Entries and talent matter, but do not override medical eligibility,

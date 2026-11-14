@@ -63,6 +63,8 @@ jobs:
         run: node --test tests/1999-connected-horse-care-economy.test.mjs
       - name: Autonomous owner trainer and barn decisions with causal replay
         run: node --test tests/1999-autonomous-owner-trainer-barn-agents.test.mjs
+      - name: Postrace trainer recovery, owner investment and next campaign consequences
+        run: node --test tests/1999-postrace-autonomous-campaign-feedback.test.mjs
       - name: Owner and AI trainer service terms, earnings and multi-day replay
         run: node --test tests/1999-trainer-service-contracts-and-agent-reviews.test.mjs
       - name: Owner barn trainer and outside care payments reconcile in saved career
