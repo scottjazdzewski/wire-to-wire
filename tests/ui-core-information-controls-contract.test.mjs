@@ -61,6 +61,12 @@ test('Dense rosters: Stable, World Horses, Racing and every department preserve 
  assert.match(department,/aria-sort=/);
  assert.match(department,/data-ng-input="department-search"/);
  assert.match(department,/WTW1999RosterFilters/);
+ assert.match(ui,/if\(section==='World'&&\['People','Organizations','Tracks','Meets'\]\.includes\(page\)\)return departmentRoster\('World',page\)/,
+  'World directories must not fall back to generic unsortable cards');
+ assert.match(department,/section==='World'&&page==='Tracks'\?DEP_COLUMNS\.Tracks/);
+ assert.match(department,/section==='World'&&page==='Meets'\?DEP_COLUMNS\.Meets/);
+ assert.match(ui,/if\(s==='World'&&\(name==='Tracks'\|\|name==='Meets'\)\)return openCustomView\('World — '\+name,'World',name\)/);
+
  assert.match(ui,/data-ng="stake-sort"/);
  assert.match(ui,/data-ng="search-sort"/);
  assert.match(ui,/if\(key==='stake-sort'\)/);
