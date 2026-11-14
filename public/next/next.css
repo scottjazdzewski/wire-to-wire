@@ -3697,3 +3697,25 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  }
 }
 /* ===== END folded source: public/next/profile-hero-v2.css ===== */
+
+
+/* Shared missing-media treatment for HORSE and PERSON dossiers.
+   Artwork is optional; production placeholders must never be visible.
+   Name-derived monograms are typography, not invented portraits. */
+#wtwNextgen .ng-route-profile .ng-profile-source-photo.ng-profile-portrait .ng-profile-photo-empty.wtw-unassigned-media{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ flex-direction:column!important;gap:3px!important;padding:5px!important;
+ box-sizing:border-box!important;width:100%!important;height:100%!important;
+ background:radial-gradient(ellipse at 50% 36%,rgba(217,191,125,.16),transparent 72%),
+  linear-gradient(140deg,#253630,#131c20)!important;
+ border:0!important;border-radius:3px!important;text-align:center!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-source-photo.ng-profile-portrait .wtw-unassigned-media strong{
+ display:block!important;color:#e5d39b!important;font:800 clamp(22px,2.4vw,39px)/1 Georgia,serif!important;
+ letter-spacing:-.045em!important;white-space:nowrap!important;
+ text-shadow:0 2px 4px rgba(0,0,0,.7)!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-source-photo.ng-profile-portrait .wtw-unassigned-media small{
+ color:#b9c8b8!important;font-size:8px!important;line-height:1.1!important;
+ font-weight:750!important;letter-spacing:.11em!important;text-transform:uppercase!important;
+}
