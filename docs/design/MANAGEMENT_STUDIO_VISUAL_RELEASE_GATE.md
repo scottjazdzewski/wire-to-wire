@@ -1,5 +1,8 @@
 # WIRE TO WIRE — VISUAL RELEASE GATE
 
+**Cross-screen interaction authority (2026-11-13):** [WTW Unified Screen Interaction Lock](WTW_UNIFIED_SCREEN_INTERACTION_LOCK_2026-11-13.md). All game screens must share one predictable navigation, profile, table, control, and identity behavior. Distinct entity colors/images may not change how screens operate. UI changes that drift from the same FM/OOTP-level experience are **REJECTED** even if they render or pass CI. This is a release gate, not blanket approval of the current design.
+
+
 Status: **NOT APPROVED / DO NOT PRESENT AS FINISHED**
 Established: 2026-11-10
 Design references: user-provided Football Manager, Out of the Park Baseball, and hockey-management screenshots.
