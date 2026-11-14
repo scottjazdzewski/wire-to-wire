@@ -289,11 +289,13 @@ try {
  // and date while its record selector changes the visible content.
  await command('Page.enable');
  const profiles=[
-  {family:'TRACK',route:'?ui=WorldRecord%3Atrack%3AT-0002',id:'T-0002'},
-  {family:'PERSON',route:'?ui=WorldRecord%3Aperson%3AP-000018',id:'P-000018'},
-  {family:'OWNER',route:'?ui=FoundingProfile%3Aownership%3AO-000014',id:'O-000014'},
-  {family:'FARM',route:'?ui=FoundingProfile%3Afacility%3AO-000061',id:'O-000061'},
-  {family:'HORSE',route:'?page=horse&name=The+Last+Match',id:null}
+  {family:'TRACK',group:'track',route:'?ui=WorldRecord%3Atrack%3AT-0002',id:'T-0002'},
+  {family:'TRAINER',group:'trainer',route:'?ui=FoundingProfile%3Aperson%3AP-000023',id:'P-000023'},
+  {family:'JOCKEY',group:'jockey',route:'?ui=FoundingProfile%3Aperson%3AP-000053',id:'P-000053'},
+  {family:'OWNER',group:'owner',route:'?ui=FoundingProfile%3Aownership%3AO-000014',id:'O-000014'},
+  {family:'FACILITY',group:'facility',route:'?ui=FoundingProfile%3Afacility%3AO-FOUNDING-1999-013',id:'O-FOUNDING-1999-013'},
+  {family:'FARM',group:'facility',route:'?ui=FoundingProfile%3Afacility%3AO-000061',id:'O-000061'},
+  {family:'HORSE',group:'horse',route:'?ui=WorldRecord%3Ahorse%3AH-1992-000002',id:'H-1992-000002'}
  ];
  const profileStatus=()=>evaluate(`(()=>{
   const root=document.getElementById('wtwNextgen');
@@ -304,12 +306,12 @@ try {
   const overview=nav?.querySelector('[data-ng="detailtab"][data-val="Overview"]');
   return {ready:!!nav&&!!name&&!!select&&!!history&&!!overview,
    name,identity:root?.getAttribute('data-wtw-identity')||'',
-   sourceRecord:new URLSearchParams(location.search).get('ui')||'',
+   sourceRecord:decodeURIComponent(new URLSearchParams(location.search).get('ui')||''),
    date:root?.querySelector('.ng-global-date strong')?.textContent?.trim()||'',
    record:nav?.querySelector('.ng-person-dossierlabel small')?.textContent?.trim()||'',
    overview:overview?.getAttribute('aria-current')||'',
    history:history?.getAttribute('aria-current')||'',
-   pager: [...(nav?.querySelectorAll('button[data-ng="profile-step"]')||[])].map(b=>({
+   pager: [...(nav?.querySelectorAll('button[data-ng="dossier-entity-step"]')||[])].map(b=>({
     step:b.dataset.val,label:b.getAttribute('aria-label')||'',enabled:!b.disabled,
     title:b.title||''
    })),
@@ -350,34 +352,58 @@ try {
   const deeper=original.options.find(x=>x&&x!=='Overview'&&x!=='History');
   assert.ok(deeper,item.family+' has no deeper record view');
   assert.deepEqual(original.pager.map(x=>x.step),['-1','1'],
-   'Both adjacent dossier arrows must exist on '+item.family);
+   'Both shared previous/next ENTITY arrows must exist on '+item.family);
   assert.ok(original.pager.every(x=>x.enabled&&x.label&&x.title),
-   'Local arrows require active keyboard-accessible labels and tooltips');
-  // The shared arrow pair cycles canonical dossier views. NEXT from Overview
-  // must open the first deeper record; PREVIOUS returns to Overview. PREVIOUS
-  // from Overview wraps to History, and NEXT returns to Overview.
+   'Both role-matched record arrows must be operable and accessible for '+item.family);
+  assert.ok(original.pager[0].label.startsWith('Previous '+item.group+': '));
+  assert.ok(original.pager[1].label.startsWith('Next '+item.group+': '));
+  const firstNeighbor=original.pager[1].label.slice(('Next '+item.group+': ').length);
+  // It must change the selected ENTITY, never cycle Overview into a detail
+  // section of the same track/trainer/jockey/owner/facility/horse.
   async function stepProfile(direction){
-   const found=await evaluate(`(()=>{
-    const button=document.querySelector('#wtwNextgen .ng-person-dossierbar [data-ng="profile-step"][data-val="${direction}"]');
+   const activated=await evaluate(`(()=>{
+    const button=document.querySelector('#wtwNextgen .ng-person-dossierbar [data-ng="dossier-entity-step"][data-val="${direction}"]');
     if(!button||button.disabled)return false;button.click();return true;
    })()`);
-   assert.ok(found,item.family+' local '+direction+' arrow missing or nonfunctional');
+   assert.ok(activated,item.family+' entity arrow '+direction+' missing or disabled');
+  }
+  async function changedProfile(old,label){
+   let candidate=null;
+   for(let n=0;n<120;n++){
+    candidate=await profileStatus();
+    if(candidate?.ready&&candidate.record==='OVERVIEW'&&
+      candidate.sourceRecord!==old.sourceRecord&&candidate.name!==old.name)return candidate;
+    await delay(100);
+   }
+   throw Error('Entity arrow did not open a different '+label+': '+JSON.stringify(candidate));
+  }
+  async function sameProfile(old,label){
+   let candidate=null;
+   for(let n=0;n<120;n++){
+    candidate=await profileStatus();
+    if(candidate?.ready&&candidate.record==='OVERVIEW'&&
+      candidate.sourceRecord===old.sourceRecord&&candidate.name===old.name)return candidate;
+    await delay(100);
+   }
+   throw Error('Entity arrow did not return to same '+label+': '+JSON.stringify(candidate));
   }
   await stepProfile('1');
-  const arrowNext=await profileReady(item.family+' next arrow',deeper.toUpperCase());
-  assert.equal(arrowNext.selected,deeper,'NEXT did not actually open the first deeper '+item.family+' view');
-  assert.equal(arrowNext.identity,original.identity);
+  const arrowNext=await changedProfile(original,item.family+' next record');
+  assert.equal(item.family==='HORSE'?arrowNext.name.replace(/^\?/,''):arrowNext.name,firstNeighbor,
+   'NEXT did not open the role-matched linked '+item.group+' promised in its label');
+  assert.notEqual(arrowNext.sourceRecord,original.sourceRecord,
+   'NEXT only changed the same entity tab on '+item.family);
   assert.equal(arrowNext.date,baseline.date);
+  assert.equal(arrowNext.overview,'page');
   await stepProfile('-1');
-  const arrowBack=await profileReady(item.family+' previous arrow','OVERVIEW');
-  assert.equal(arrowBack.overview,'page');
+  const arrowBack=await sameProfile(original,item.family+' previous record');
   assert.equal(arrowBack.name,original.name);
   await stepProfile('-1');
-  const arrowWrapped=await profileReady(item.family+' wrap to History','HISTORY');
-  assert.equal(arrowWrapped.history,'page');
+  const arrowPrev=await changedProfile(original,item.family+' wrap to previous record');
+  assert.ok(arrowPrev.pager[1].label.startsWith('Next '+item.group+': '),
+   'PREVIOUS crossed from '+item.group+' into another entity type');
   await stepProfile('1');
-  const arrowRestored=await profileReady(item.family+' wrap to Overview','OVERVIEW');
-  assert.equal(arrowRestored.name,original.name);
+  const arrowRestored=await sameProfile(original,item.family+' wrap to original');
   assert.equal(arrowRestored.sourceRecord,original.sourceRecord);
   assert.equal(arrowRestored.date,baseline.date);
   if(item.family==='TRACK'){
@@ -423,7 +449,7 @@ try {
   assert.equal(restored.date,baseline.date);
   if(item.family==='TRACK')assert.ok(restored.hasStakes&&restored.hasMeet&&restored.hasTrackHistory,
    'Returning to track overview lost its approved full stadium layout');
-  console.log('WTW_PROFILE_CONTROLS_PASS '+item.family+' '+original.name+' '+deeper+' local-arrows:forward/back/wrap');
+  console.log('WTW_PROFILE_CONTROLS_PASS '+item.family+' '+original.name+' '+deeper+' entity-arrows:'+firstNeighbor);
  }
 
  // Global Search is a full-height source-linked directory. Verify the actual

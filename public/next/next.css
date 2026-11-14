@@ -2019,10 +2019,11 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 .ng-person-dossieractions{display:inline-flex;align-items:center;gap:3px;min-width:0}
 .ng-person-dossieractions button,.ng-person-dossieractions select{height:23px;box-sizing:border-box;border:1px solid #44584b;background:#1c2828;border-radius:2px;padding:3px 9px;color:#d7e0d7;font-size:10px;font-weight:740;cursor:pointer}
 .ng-person-dossieractions button.on{background:#2b5540;border-color:#c9ad6f;color:#fff0c7}
-.ng-person-dossieractions .ng-profile-stepper{display:inline-flex;align-items:center;gap:2px;margin:0 3px;vertical-align:middle}
-.ng-person-dossieractions button.ng-profile-step{display:grid;place-items:center;width:25px;min-width:25px;height:23px;padding:0;border:1px solid #8c7651;background:linear-gradient(180deg,#354037,#222b2b);color:#e7d2a4;border-radius:2px;font:800 18px/1 Georgia,serif;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
-.ng-person-dossieractions button.ng-profile-step:hover{background:#50634e;border-color:#dabd80;color:#fff3d7}
-.ng-person-dossieractions button.ng-profile-step:focus-visible{outline:2px solid #f0cf8a;outline-offset:2px}
+.ng-person-dossieractions .ng-profile-entity-pager{display:inline-flex;align-items:center;gap:2px;margin:0 3px;vertical-align:middle}
+.ng-person-dossieractions button.ng-profile-entity-step{display:grid;place-items:center;width:25px;min-width:25px;height:23px;padding:0;border:1px solid #8c7651;background:linear-gradient(180deg,#354037,#222b2b);color:#e7d2a4;border-radius:2px;font:800 18px/1 Georgia,serif;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.ng-person-dossieractions button.ng-profile-entity-step:hover{background:#50634e;border-color:#dabd80;color:#fff3d7}
+.ng-person-dossieractions button.ng-profile-entity-step:focus-visible{outline:2px solid #f0cf8a;outline-offset:2px}
+.ng-person-dossieractions button.ng-profile-entity-step:disabled{opacity:.42;cursor:default;border-color:#495a4b;color:#9aa799;background:#202b29}
 
 .ng-person-dossieractions select{padding-right:19px;color:#e0cf9b;min-width:123px}
 .ng-person-panel-context{font-size:8.5px;font-weight:600;color:#a6bdb0;letter-spacing:.01em;white-space:nowrap}
