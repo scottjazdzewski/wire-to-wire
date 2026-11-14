@@ -14,7 +14,8 @@
     "db:build:full": "node scripts/build-full-history.mjs",
     "db:build:geo": "node scripts/build-geography-import.mjs",
     "bench:names": "node scripts/bench-fictional-naming-v10.mjs",
-    "bench:names:indexed": "node scripts/bench-indexed-naming-v11.mjs"
+    "bench:names:indexed": "node scripts/bench-indexed-naming-v11.mjs",
+    "bench:names:generations": "node scripts/bench-generational-naming-v14.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"
