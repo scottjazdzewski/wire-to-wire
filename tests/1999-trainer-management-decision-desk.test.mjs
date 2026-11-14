@@ -91,7 +91,10 @@ test('a valid owner action runs the canonical command, updates the Desk and roun
   get state(){return state},
   submit(type,payload,actor){
    calls++;
-   const out=command(state,'desk:owner:'+calls,type,payload,actor);
+   // The Node harness and its VM script have distinct object realms;
+   // browser JavaScript and its canonical engine share one realm.
+   const out=command(state,'desk:owner:'+calls,type,
+    JSON.parse(JSON.stringify(payload)),actor);
    state=out.state;return Promise.resolve(out);
   }
  }};
