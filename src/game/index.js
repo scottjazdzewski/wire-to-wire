@@ -47,7 +47,8 @@ export {POST_RACE_CAMPAIGN_SCHEMA,createPostRaceCampaignRuntime,
  postRaceCarePriority,postRaceAIPlacement} from './post-race-campaign-1999.js';
 
 export {OWNER_TRAINER_REVIEW_SCHEMA,OWNER_TRAINER_REVIEW_COMMANDS,
- OWNER_TRAINER_MANDATES,createOwnerTrainerReviewRuntime,
+ OWNER_TRAINER_MANDATES,TRAINER_CONCERN_RESPONSES,
+ createOwnerTrainerReviewRuntime,
  ownerTrainerEvidence,selectOwnerTrainerMandate,assessTrainerRelationshipPosition,
  getOwnerTrainerMandate,getOwnerTrainerCareerReview,
  getTrainerCareerForm} from './owner-trainer-career-1999.js';
