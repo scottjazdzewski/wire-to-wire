@@ -3637,6 +3637,60 @@ function sourceNewsDesk(){
      '<span class="ng-manager-case-state">OPEN</span></button>'+
     '</section></aside></div></section>';
 }
+/* Manager attention queue. The old Office opportunity prototype listed
+ * hard-coded demo offers. The 1999 view reads ONLY current briefing/follow-up
+ * state and links into existing Racing and Sales desks. */
+function sourceOpportunityBoard(){
+ const notes=currentMessages().filter(m=>m&&typeof m.case==='string');
+ const priority=notes.filter(m=>m.urgent&&!m.resolved);
+ const due=dueActions();
+ const briefingRows=priority.map(m=>
+  '<button type="button" class="ng-manager-row" data-ng="case" data-val="'+safe(m.case)+'" aria-label="Review manager briefing: '+safe(m.title)+'">'+
+  '<span class="ng-manager-row-type">OFFICE</span>'+
+  '<span class="ng-manager-row-name"><strong>'+safe(m.title)+'</strong></span>'+
+  '<span class="ng-manager-row-detail">'+safe(m.from||'Office')+'</span>'+
+  '<span class="ng-manager-row-context">'+safe(m.meta||'Priority briefing')+'</span>'+
+  '<span class="ng-manager-row-open">'+glyph('right',12)+'</span></button>').join('');
+ const followRows=due.map(f=>
+  '<button type="button" class="ng-manager-row" data-ng="followup" data-val="'+safe(f.id)+'" aria-label="Open due follow-up: '+safe(f.caseTitle||f.caseId||'Follow-up')+'">'+
+  '<span class="ng-manager-row-type">DUE</span>'+
+  '<span class="ng-manager-row-name"><strong>'+safe(f.caseTitle||f.caseId||'Follow-up')+'</strong></span>'+
+  '<span class="ng-manager-row-detail">OFFICE FOLLOW-UP</span>'+
+  '<span class="ng-manager-row-context">'+safe(f.dueDate||'Awaiting date')+'</span>'+
+  '<span class="ng-manager-row-open">'+glyph('right',12)+'</span></button>').join('');
+ const rowCount=priority.length+due.length;
+ const side=(label,section,description)=>
+  '<button type="button" class="ng-manager-case" data-ng="menu" data-val="'+section+'">'+
+  '<span class="ng-manager-case-indicator"></span><span><strong>'+label+'</strong>'+
+  '<small>'+description+'</small></span><span class="ng-manager-case-state">OPEN</span></button>';
+ return '<section class="ng-manager-screen ng-opportunity-screen">'+
+  '<header class="ng-manager-head"><div class="ng-manager-identity">'+
+   '<span>OFFICE / OPPORTUNITIES</span><h2>MANAGEMENT ACTION BOARD</h2></div>'+
+   '<div class="ng-manager-controls">'+managerRecordViewControl('Office','Overview')+
+   '<button type="button" data-ng="menu" data-val="Racing">'+glyph('calendar',13)+' RACING DESK</button></div></header>'+
+  '<div class="ng-manager-metrics">'+
+   '<div class="ng-manager-metric"><small>PRIORITY BRIEFINGS</small><strong>'+priority.length+'</strong></div>'+
+   '<div class="ng-manager-metric"><small>DUE FOLLOW-UPS</small><strong>'+due.length+'</strong></div>'+
+   '<div class="ng-manager-metric"><small>OFFICE BRIEFINGS</small><strong>'+notes.length+'</strong></div>'+
+   '<div class="ng-manager-metric"><small>GAME DATE</small><strong>'+safe(depGameDay())+'</strong></div>'+
+  '</div>'+
+  '<div class="ng-manager-workspace"><section class="ng-manager-primary">'+
+   '<header><strong>NEEDS MANAGER ATTENTION</strong><span>'+rowCount+' CURRENT ACTIONS</span></header>'+
+   '<div class="ng-manager-columns"><span>TYPE</span><span>FILE</span><span>DEPARTMENT</span><span>STATUS / DUE</span><span></span></div>'+
+   '<div class="ng-manager-rows">'+(briefingRows+followRows||
+     '<p class="ng-manager-empty">No priority briefings or due follow-ups are recorded. New racing opportunities must be evaluated through the Racing desk.</p>')+
+   '</div></section>'+
+   '<aside class="ng-manager-sidebar">'+
+    '<section class="ng-manager-secondary"><header><strong>OPERATING DESKS</strong>'+
+     '<span>DIRECT GAME ROUTES</span></header><div class="ng-manager-secondary-list">'+
+     side('RACING','Racing','Entries, campaigns and race planning')+
+     side('SALES','Sales','Auctions, inquiries and market files')+
+     '</div></section>'+
+    '<section class="ng-manager-secondary"><header><strong>RECORD INTEGRITY</strong>'+
+     '<span>LIVE SOURCES ONLY</span></header>'+
+     '<p class="ng-manager-empty">This queue shows current Office priorities and due follow-ups. It does not reuse the retired demo opportunity list or invent available races, sale offers or transactions.</p>'+
+    '</section></aside></div></section>';
+}
 function managerDashboard(){
  const section=APP.section||'Office',page=APP.page||'Overview';
  // The live Stable roster is routed directly, even without a legacy Office route.
@@ -3713,7 +3767,7 @@ function managerDashboard(){
    '<span>'+safe(section.toUpperCase())+' / '+safe(page.toUpperCase())+'</span>'+
    '<h2>'+safe(config.label)+'</h2></div>'+
    '<div class="ng-manager-controls">'+
-    (APP.custom==='Opportunities'?'<button data-ng="action" data-val="Open opportunity board">OPEN LIVE OPPORTUNITY BOARD</button>':'')+
+
     managerRecordViewControl(section,page)+'<button data-ng="custom" data-val="Search">'+glyph('search',13)+' SEARCH ALL</button></div></header>'+
   '<div class="ng-manager-metrics">'+metrics+'</div>'+
   '<div class="ng-manager-workspace"><section class="ng-manager-primary"><header>'+
@@ -3744,7 +3798,8 @@ function renderRoute(){const route=APP.custom?null:currentRoute();const previewM
 let body='';const profile=route&&/Profile$/.test(route.kicker)?profileDetail(route):null;const functional=route?functionalRoute(route):null;if(profile)body=profile;else if(functional)body=functional;else if(route)body=route.body;else if(APP.custom==='Organization Overview'){body=organizationOverview()}
 else if(APP.custom==='Due Actions'){body=dueActionOverview()}
 else if(APP.custom==='Office — News'||APP.custom==='World — News'){body=sourceNewsDesk()}
-else if(['Messages','Decisions','Opportunities'].includes(APP.custom)){body=managerDashboard()}
+else if(APP.custom==='Opportunities'){body=sourceOpportunityBoard()}
+else if(['Messages','Decisions'].includes(APP.custom)){body=managerDashboard()}
 else if(APP.custom==='Search'){body=searchView()}
 else if(APP.custom.startsWith('WorldRecord:')){body=world1999Profile()}
 else if(APP.custom.startsWith('FoundingProfile:')){body=founding1999Profile()}
@@ -4166,7 +4221,7 @@ window.addEventListener('click',e=>{
    return openMenu(window.__WTW_1999_UI_DATA__?.officeDesks?.[APP.activeCase]?.moves?.[0]?.menu||'World');
   const x=originalAct(val); if(x)return bridgeNode(x);if(val==='Open file')return bridgeNode(originalAct('Open file'));return}
  if(key==='custom'){
-  if(val==='Opportunities')return bridgeNode(originalAct('Open opportunity board'));
+  if(val==='Opportunities')return openCustomView('Opportunities','Office','Overview');
   openCustomView(val);
   if(val==='Search')$('#ngGlobalSearch',root)?.focus();
   return;

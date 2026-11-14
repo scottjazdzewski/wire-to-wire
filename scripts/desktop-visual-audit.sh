@@ -34,6 +34,7 @@ capture stable-roster '?ui=Stable%20%E2%80%94%20Overview' 'ng-stable-roster-v2'
 capture world-directory '?ui=World%20%E2%80%94%20Overview' 'ng-manager-screen'
 capture world-news '?ui=World%20%E2%80%94%20News' 'ng-news-screen'
 capture office-news '?ui=Office%20%E2%80%94%20News' 'ng-news-screen'
+capture opportunity-board '?ui=Opportunities' 'ng-opportunity-screen'
 capture racing-roster '?ui=Racing%20%E2%80%94%20Overview' 'ng-dept-roster'
 capture global-search '?ui=Search' 'ng-search-roster-page'
 capture horse-profile '?page=horse&name=The+Last+Match' 'ng-horse-dossier'
@@ -90,6 +91,9 @@ frame.onload=()=>setTimeout(()=>{
    search:rect('.ng-search-roster-page'),
    worldDashboard:rect('.ng-manager-screen'),
    newsDashboard:rect('.ng-news-screen'),
+   opportunityDashboard:rect('.ng-opportunity-screen'),
+   opportunityDeskLinks:[...d.querySelectorAll('.ng-opportunity-screen [data-ng="menu"]')].map(n=>n.dataset.val),
+   opportunityIntegrity:d.querySelector('.ng-opportunity-screen .ng-manager-sidebar')?.textContent?.includes('LIVE SOURCES ONLY')||false,
    newsOfficeLinks:[...d.querySelectorAll('.ng-news-screen [data-ng="case"]')].length,
    newsSourceStatus:d.querySelector('.ng-news-screen .ng-manager-sidebar')?.textContent?.includes('NOT CONNECTED')||false,
    worldPreviewRows:[...d.querySelectorAll('.ng-manager-screen:not(.ng-news-screen) .ng-manager-row')].length,
@@ -133,6 +137,8 @@ probe racing-roster '%3Fui%3DRacing%2520%25E2%2580%2594%2520Overview'
 probe world-directory '%3Fui%3DWorld%2520%25E2%2580%2594%2520Overview'
 probe world-news '%3Fui%3DWorld%2520%25E2%2580%2594%2520News'
 probe office-news '%3Fui%3DOffice%2520%25E2%2580%2594%2520News'
+probe opportunity-board '%3Fui%3DOpportunities'
+probe laptop-opportunity-board '%3Fui%3DOpportunities' '1280,800'
 probe laptop-world-news '%3Fui%3DWorld%2520%25E2%2580%2594%2520News' '1280,800'
 probe laptop-stable-roster '%3Fui%3DStable%2520%25E2%2580%2594%2520Overview' '1280,800'
 probe laptop-racing-roster '%3Fui%3DRacing%2520%25E2%2580%2594%2520Overview' '1280,800'
@@ -240,6 +246,22 @@ for name in ('world-directory','world-news','office-news','laptop-world-news'):
  print('WORLD/NEWS UNIFORMITY',name,data['stage']['width'])
 PY
 
+python3 - <<'PY'
+import json,html,re
+from pathlib import Path
+for name in ('opportunity-board','laptop-opportunity-board'):
+ source=Path(f'visual-audit/dom/probe-{name}.html').read_text()
+ assert 'data-check="ready"' in source,(name,'Opportunity Board failed to render')
+ match=re.search(r'<pre id="measure"[^>]*>(.*?)</pre>',source,re.S)
+ assert match,(name,'Missing Opportunity Board geometry')
+ d=json.loads(html.unescape(match.group(1)))
+ assert d['rail'] and d['stage'] and d['opportunityDashboard'],(name,'Shared manager workspace missing')
+ assert d['opportunityDashboard']['width']>=800,(name,'Manager workspace clipped')
+ assert all(x in d['opportunityDeskLinks'] for x in ('Racing','Sales')),(name,'Direct operating desk links missing')
+ assert d['opportunityIntegrity'],(name,'Source boundary not disclosed')
+ assert not d['sourceBridgeVisible'],(name,'Legacy Office visible')
+ print('FM/OOTP OPPORTUNITY BOARD',name,'width',d['opportunityDashboard']['width'])
+PY
 # Interact with the actual unified application, not static HTML snapshots.
 # Every major screen must use the same rail, single route, and browser history.
 cat > public/__wtw_nav_probe.html <<'HTML'

@@ -98,3 +98,12 @@ The News screen uses `ng-manager-screen`, existing manager classes, and only mes
 
 `tests/world-news-direct-screen-family.test.mjs` locks this behavior. The desktop audit captures actual World Overview, World News and Office News, including laptop News geometry. This is an operational/structural gate; continue visual editorial QA against FM/OOTP references.
 
+
+
+## Direct 1999 Opportunity Board — 2026-11-14
+
+The visible organization and Office `OPPORTUNITIES` commands now open `openCustomView('Opportunities','Office','Overview')` directly. They never click the retired `Open opportunity board` control in the hidden Office. The old prototype had hard-coded offers and unrelated 2014 demo content.
+
+The approved screen now uses `ng-manager-screen` with the same global manager rail, record-view dropdown, metrics, dense record rows, sidebar and keyboard-operated game controls as World and News. Its primary records are **only** open, urgent source-backed Office messages and actual due follow-ups from the career. Racing and Sales links go through the normal direct department routes. A genuine empty queue remains empty; no races, offers or settlements are fabricated.
+
+`tests/fm-source-opportunity-board.test.mjs` and desktop/laptop screenshots are release gates. The 1999 engine's race-entry opportunities continue to be authorized in the existing Racing desk; this UI work neither duplicates nor changes racing calculations, save state or ownership decisions. This is a presentation-layer retirement, not deletion of the still-required hidden gameplay adapter.
