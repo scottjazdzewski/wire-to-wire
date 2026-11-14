@@ -1246,6 +1246,16 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 #wtwNextgen .ng-rs-tools label{font-size:var(--wtw-roster-label);font-weight:800;color:#b4cabc;letter-spacing:.03em;white-space:nowrap}
 #wtwNextgen .ng-rs-tools input{box-sizing:border-box;height:22px;width:clamp(112px,14vw,210px);min-width:100px;max-width:210px;background:#0c1417;border:1px solid #3d5246;border-radius:2px;padding:2px 6px;color:#e3ebdf;font-size:var(--wtw-roster-input);outline-offset:2px}
 #wtwNextgen .ng-rs-tools input:focus{outline:1px solid #d5bb7d}
+/* One visible keyboard focus treatment for the shared Stable/Racing roster
+ * controls and every Horse/Person/Track/Farm dossier. Never hide focus. */
+#wtwNextgen .ng-rs-tools button:focus-visible,
+#wtwNextgen .ng-rs-tools select:focus-visible,
+#wtwNextgen .ng-person-dossieractions button:focus-visible,
+#wtwNextgen .ng-person-dossieractions select:focus-visible{
+ outline:2px solid #ecd99f!important;
+ outline-offset:2px;
+}
+
 #wtwNextgen .ng-rs-filters,#wtwNextgen .ng-rs-mode{display:flex;align-items:center;gap:2px;white-space:nowrap}
 #wtwNextgen .ng-rs-mode{margin-left:auto;border-left:1px solid #42594b;padding-left:5px}
 #wtwNextgen .ng-rs-tools button{height:22px!important;min-width:0;padding:2px 5px!important;background:#1f2a2c!important;color:#b6c8b9!important;border:1px solid #445b4c!important;border-radius:2px!important;font-size:var(--wtw-roster-control)!important;font-weight:750!important;white-space:nowrap!important}

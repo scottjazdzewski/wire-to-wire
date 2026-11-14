@@ -1609,10 +1609,10 @@ function profileDetail(route,sourceOverride=null){
  const rows=(items)=>'<div class="ng-data-rows">'+items.map(i=>`<div class="ng-data-row"><span>${safe(i.label)}</span>${namedProfileValue(i.label,i.value)}</div>`).join('')+'</div>';
  const pills='<div class="ng-status-pills">'+states.slice(0,4).map(x=>`<span>${safe(x)}</span>`).join('')+'</div>';
  const tabbar=(isTrack||isFarm||isPerson||isHorse)?`<nav class="ng-person-dossierbar ng-management-dossierbar" aria-label="Profile records navigation">
-   <span class="ng-person-dossierlabel">${isHorse?'HORSE RACING FILE':isPerson?'PERSONNEL DOSSIER':isTrack?'TRACK DOSSIER':source.dataset.foundingContext==='facility'?'FACILITY DOSSIER':'OWNERSHIP DOSSIER'} <small>ONE-SCREEN OVERVIEW</small></span>
+   <span class="ng-person-dossierlabel">${isHorse?'HORSE RACING FILE':isPerson?'PERSONNEL DOSSIER':isTrack?'TRACK DOSSIER':source.dataset.foundingContext==='facility'?'FACILITY DOSSIER':'OWNERSHIP DOSSIER'} <small>${safe(APP.detailTab.toUpperCase())}</small></span>
    <div class="ng-person-dossieractions">
-    <button data-ng="detailtab" data-val="Overview" class="${APP.detailTab==='Overview'?'on':''}">OVERVIEW</button>
-    <button data-ng="detailtab" data-val="History" class="${APP.detailTab==='History'?'on':''}">HISTORY</button>
+    <button type="button" data-ng="detailtab" data-val="Overview" class="${APP.detailTab==='Overview'?'on':''}" aria-current="${APP.detailTab==='Overview'?'page':'false'}">OVERVIEW</button>
+    <button type="button" data-ng="detailtab" data-val="History" class="${APP.detailTab==='History'?'on':''}" aria-current="${APP.detailTab==='History'?'page':'false'}">HISTORY</button>
     <select data-ng-select="profile-record" aria-label="Open deeper profile records">
      <option value="">MORE RECORDS</option>
      ${tabs.filter(t=>!['Overview','History'].includes(t)).map(t=>`<option value="${safe(t)}" ${APP.detailTab===t?'selected':''}>${safe(t)}</option>`).join('')}
@@ -2622,6 +2622,22 @@ function liveDirectoryHorseData(h,game,files,races){
  };
 }
 
+/* One Football Manager / OOTP-style column density control for every
+ * roster family. Stable, World horse directory and Racing/department tables
+ * differ in data but never in button order, selected state or keyboard use. */
+function rosterDensityControls(scope,activeMode){
+ const action=scope==='department'?'dept-mode':
+  scope==='directory'?'directory-mode':'stable-mode';
+ const mode=activeMode==='compact'?'compact':'all';
+ const button=(value,label)=>
+  '<button type="button" data-ng="'+action+'" data-val="'+value+
+  '" class="'+(mode===value?'on':'')+'" aria-pressed="'+
+  (mode===value?'true':'false')+'">'+label+'</button>';
+ return '<div class="ng-rs-mode'+(scope==='department'?' ng-dept-view':'')+
+  '" role="group" aria-label="Roster column display">'+
+  button('all','ALL COLUMNS')+button('compact','QUICK VIEW')+'</div>';
+}
+
 function liveStableRosterView(directory=false){
  if(!directory&&APP.stableFilter==='training')return liveStableTrainingView();
  if(!directory&&APP.stableFilter==='attributes')return window.WTW1999AttributeRanking?.render({
@@ -2696,6 +2712,11 @@ function liveStableRosterView(directory=false){
  const filters=[['all','ALL'],['vet','VET WATCH'],['ready','READY'],['attributes','ATTRIBUTES'],['training','TRAINING'],['targets','WITH TARGET'],['entered','ENTERED'],['unassigned','NO TARGET']]
  .filter(([value])=>!directory||!['attributes','training'].includes(value))
  .map(([value,label])=>'<button data-ng="'+(directory?'directory-filter':'stable-filter')+'" data-val="'+value+'" class="'+(activeFilter===value?'on':'')+'" aria-pressed="'+(activeFilter===value?'true':'false')+'">'+label+'</button>').join('');
+  // Distinguish a genuinely empty stable from zero filtered results.
+  const emptyRosterMessage=!all.length?
+   (directory?'No horse records are currently available in this directory view.':
+    'No horses are currently listed for this stable.'):
+   'No horses match the current search or filters.';
   const legend='<div class="ng-rs-legend">'+liveStableSignal('watch','Vet watch','Caution without assumed treatment')+
   liveStableSignal('treat','Treatment','Only documented active treatment')+liveStableSignal('building','Building','Training toward a race')+
   liveStableSignal('up','Form ↑','Recorded form improving')+liveStableSignal('down','Form ↓','Recorded form declining')+
@@ -2707,13 +2728,12 @@ function liveStableRosterView(directory=false){
   (directory&&universe.indexing?'<div role="status" class="ng-dpt-disclosure">Indexing the registered world horse directory; source records remain unchanged.</div>':'')+
   '<div class="ng-rs-tools"><label for="'+(directory?'ngDirectorySearch':'ngStableSearch')+'">SEARCH</label><input id="'+(directory?'ngDirectorySearch':'ngStableSearch')+'" data-ng-input="'+(directory?'directory-search':'stable-search')+'" type="search" value="'+safe(directory?APP.directorySearch:APP.stableSearch)+
    '" placeholder="Horse, owner, trainer, status…" autocomplete="off"/><div class="ng-rs-filters">'+filters+'</div>'+
-   '<div class="ng-rs-mode"><button data-ng="'+(directory?'directory-mode':'stable-mode')+'" data-val="all" class="'+(mode!=='compact'?'on':'')+'">ALL COLUMNS</button>'+
-   '<button data-ng="'+(directory?'directory-mode':'stable-mode')+'" data-val="compact" class="'+(mode==='compact'?'on':'')+'">QUICK VIEW</button></div></div>'+
+   rosterDensityControls(directory?'directory':'stable',mode)+'</div>'+
   (window.WTW1999RosterFilters?.render(columns,stableCriteria,safe,scope)||'')+
   '<section class="ng-rs-roster"><header><strong>HORSE MANAGEMENT ROSTER</strong><span class="ng-stable-visible">'+filtered.length+' OF '+all.length+
    ' HORSES · CLICK HEADINGS TO SORT</span></header>'+
-   '<div class="ng-rs-scroll" tabindex="0" aria-label="Sortable horse roster; horizontally scroll for every column"><table class="ng-rs-table '+(mode==='compact'?'compact':'all')+
-   '"><thead><tr>'+th+'</tr></thead><tbody>'+ (rowHTML||'<tr><td colspan="17" class="ng-rs-no-results">No horses match these filters.</td></tr>')+
+   '<div class="ng-rs-scroll" tabindex="0" role="region" aria-label="Sortable horse roster; horizontally scroll for every column"><table class="ng-rs-table '+(mode==='compact'?'compact':'all')+
+   '"><thead><tr>'+th+'</tr></thead><tbody>'+ (rowHTML||'<tr><td colspan="17" class="ng-rs-no-results">'+safe(emptyRosterMessage)+'</td></tr>')+
    '</tbody></table></div>'+legend+'</section></section>';
 }
 
@@ -3550,10 +3570,7 @@ function departmentRoster(section,page='Overview'){
   (section==='World'?'<button type="button" data-ng="world-export" title="Download all World edits and images">EXPORT EDITS</button>'+
    '<button type="button" data-ng="world-import-open" title="Import World editing backup">IMPORT EDITS</button>'+
    '<input type="file" id="wtwWorldImportInput" accept="application/json,.json" hidden/>':'')+
-  '<div class="ng-rs-mode ng-dept-view"><button type="button" data-ng="dept-mode" data-val="all" class="'+
-   (departmentMode==='all'?'on':'')+'">ALL COLUMNS</button>'+
-  '<button type="button" data-ng="dept-mode" data-val="compact" class="'+
-   (departmentMode==='compact'?'on':'')+'">QUICK VIEW</button></div></div>'+
+  rosterDensityControls('department',departmentMode)+'</div>'+
   (window.WTW1999RosterFilters?.render(specs,rosterFilter,safe,rosterScope)||'')+
   (section==='Racing'&&(APP.racingCalendarOpen||page==='Calendar')?depRacingCalendar():'')+racingSummary+salesDeskView+
   '<section class="ng-rs-roster"><header><strong>'+safe(section.toUpperCase())+' · SORTABLE ROSTER</strong><div class="ng-dpt-pager">'+pager+'</div></header>'+

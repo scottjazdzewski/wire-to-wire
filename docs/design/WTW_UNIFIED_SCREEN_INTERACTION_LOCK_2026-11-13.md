@@ -49,6 +49,16 @@ Football Manager and Out of the Park Baseball are the reference **level of quali
 - `public/next/index.html` must contain one visible manager `#wtwNextgen`; retained old Office source nodes are permanently hidden and **never** valid screen templates. Any move off that compatibility bridge must replace its game actions with a tested headless API before deleting its supporting DOM.
 - `tests/no-legacy-screen-regression.test.mjs` is a required non-regression gate alongside this unified interaction lock. No previously retired screen may reappear after an unrelated UI change.
 
+## Initial cross-screen interaction parity — 2026-11-14
+
+The Racing Office, Horse Profile and Stable screen family comparison has established a single operating rule for compact roster density and profile tabs:
+
+- **Stable horse roster**, **World horse directory** and **Racing/department roster** call the same `rosterDensityControls()` renderer; ALL COLUMNS and QUICK VIEW retain the same order, keyboard activation, visible selected style and `aria-pressed` state.
+- Stable and Racing rosters are both explicitly named, keyboard-focusable scroll regions.
+- Horse, Person, Track and Farm dossiers expose the actual active record view in the dossier bar, and Overview/History announce active navigation with `aria-current`. A History page must not still claim to be an overview.
+- One focus-visible treatment applies to roster and dossier controls inside the existing unified stylesheet. No new stylesheet, navigation system or per-screen override is permitted.
+- `tests/ui-fm-ootp-screen-family-controls.test.mjs` prevents these equivalent screen families from forking again. This is **structural/operational parity**, not visual signoff; screenshots and FM/OOTP quality review remain mandatory.
+
 ## Required QA matrix before any screen is promoted
 1. Compare actual rendered screens side by side for **Horse / Person / Track / Farm / Owner** profiles and at least two directories; verify shared top context, control locations, row density, hover/focus, and back/forward behavior.
 2. Check 1536×864, **1366×768**, 1280×800, and small/narrow viewports where supported. Long names, wordmarks, toolbars, sourced facts and tables must remain usable.
