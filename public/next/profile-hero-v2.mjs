@@ -127,19 +127,35 @@ export function profileTitle(kind,sourceLabel){
  * manifest entries still take precedence. We probe before swapping images. */
 const heroProbes=new Map();
 export function heroCandidate(kind,id,approved=""){
- const match=/^\/assets\/places\/(?:track-hero|organization-hero)\/[A-Za-z0-9-]+\.webp$/;
- if(typeof approved==="string"&&match.test(approved))return approved;
- if(kind==="track"&&ID_TRACK.test(id||""))
-  return "/assets/places/track-hero/"+id+".webp";
- if(kind==="organization"&&ID_ORG.test(id||""))
-  return "/assets/places/organization-hero/"+id+".webp";
- return "";
+ // Ignore even a valid-looking manifest URL if its exact immutable ID differs.
+ // The one deterministic path keeps image identity consistent across routes.
+ const path=kind==="track"&&ID_TRACK.test(id||"")?
+  "/assets/places/track-hero/"+id+".webp":
+  kind==="organization"&&ID_ORG.test(id||"")?
+  "/assets/places/organization-hero/"+id+".webp":"";
+ return path;
 }
 function heroAvailable(src){
  if(!heroProbes.has(src)){
   const img=new Image();
   img.src=src;
-  heroProbes.set(src,img.decode().then(()=>true).catch(()=>false));
+  heroProbes.set(src,img.decode().then(()=>{
+   // Non-destructive color sampling: a navy/black transparent wordmark needs a
+   // pale diffuse spotlight to remain legible on a dark team-colored header.
+   try{
+    const sample=document.createElement("canvas");
+    sample.width=64;sample.height=48;
+    const ctx=sample.getContext("2d",{willReadFrequently:true});
+    if(!ctx)return {ok:true,darkInk:false};
+    ctx.drawImage(img,0,0,sample.width,sample.height);
+    const data=ctx.getImageData(0,0,sample.width,sample.height).data;
+    let luminosity=0,pixels=0;
+    for(let i=0;i<data.length;i+=4)if(data[i+3]>=105){
+     luminosity+=.2126*data[i]+.7152*data[i+1]+.0722*data[i+2];pixels++;
+    }
+    return {ok:true,darkInk:pixels>20&&luminosity/pixels<112};
+   }catch{return {ok:true,darkInk:false};}
+  }).catch(()=>({ok:false,darkInk:false}))));
  }
  return heroProbes.get(src);
 }
@@ -209,10 +225,10 @@ function init(){
    if(!matching){
     img.dataset.wtwHeroProbePath=candidate;
     img.dataset.wtwHeroState="pending";
-    heroAvailable(candidate).then(ok=>{
+    heroAvailable(candidate).then(visual=>{
      if(!img.isConnected||img.dataset.wtwHeroProbePath!==candidate)return;
-     img.dataset.wtwHeroState=ok?"active":"missing";
-     if(!ok){legacy();return;}
+     img.dataset.wtwHeroState=visual.ok?"active":"missing";
+     if(!visual.ok){legacy();return;}
      const before=img.getAttribute("src");
      img.addEventListener("error",()=>{
       if(img.isConnected&&img.getAttribute("src")===candidate){
@@ -226,6 +242,7 @@ function init(){
      img.dataset.wtwMatteSource=candidate;
      mark.classList.remove("wtw-hero-legacy","wtw-hero-dark-ink");
      mark.classList.add("wtw-hero-transparent");
+     if(visual.darkInk)mark.classList.add("wtw-hero-dark-ink");
     });
     return;
    }
