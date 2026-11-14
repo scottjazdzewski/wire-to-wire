@@ -306,7 +306,7 @@ try {
   const overview=nav?.querySelector('[data-ng="detailtab"][data-val="Overview"]');
   return {ready:!!nav&&!!name&&!!select&&!!history&&!!overview,
    name,identity:root?.getAttribute('data-wtw-identity')||'',
-   sourceRecord:new URLSearchParams(location.search).get('ui')||'',
+   sourceRecord:decodeURIComponent(new URLSearchParams(location.search).get('ui')||''),
    date:root?.querySelector('.ng-global-date strong')?.textContent?.trim()||'',
    record:nav?.querySelector('.ng-person-dossierlabel small')?.textContent?.trim()||'',
    overview:overview?.getAttribute('aria-current')||'',
