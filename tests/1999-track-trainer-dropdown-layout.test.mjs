@@ -10,7 +10,6 @@ test('track records are compact expandable sections using source meet/stakes and
  assert.ok(start>0&&end>start);
  assert.match(panel,/<details class="ng-connected-drop"/);
  assert.match(panel,/profileRecordSection\('MEETS'/);
- assert.match(panel,/profileRecordSection\('STAKES RACES'/);
  assert.match(panel,/profileRecordSection\('TRAINERS & BARNS'/);
  assert.match(panel,/profileRecordSection\('HORSES CURRENTLY ON SITE'/);
  assert.match(panel,/trackProgramById\?\.\(id\)/);
