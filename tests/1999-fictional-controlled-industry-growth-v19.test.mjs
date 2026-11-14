@@ -196,6 +196,10 @@ test('V19 cannot register unknown, legacy untyped, forged, duplicate or prematur
   eventId:'FORGERY',sourceId:'SIM',type:'REGISTER_APPROVED_ORGANIZATION',
   organization:{...approved,name:'Invented Owner Company'},year:2025
  }}),/does not match the approved naming registry/);
+ await assert.rejects(()=>guarded.apply({expectedRevision:0,event:{
+  eventId:'WRONG-HISTORY',sourceId:'SIM',type:'REGISTER_APPROVED_ORGANIZATION',
+  organizationId:'FOUNDER-STABLE',organization:approved,year:2025
+ }}),/history subject ID mismatch/);
  await assert.rejects(()=>bridge.applyTransition({event:{
   eventId:'BYPASS',sourceId:'SIM',type:'REGISTER_APPROVED_ORGANIZATION',
   organization:approved,year:2025
