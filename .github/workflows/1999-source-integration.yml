@@ -51,6 +51,8 @@ jobs:
         run: node --test tests/1999-game-horse-registration.test.mjs tests/1999-racing-site-residence.test.mjs tests/1999-38-horse-attributes-and-barns.test.mjs tests/1999-horse-identity-connections.test.mjs
       - name: Shared Stable and Horse Directory presentation contract
         run: node --test tests/1999-mirrored-horse-rosters.test.mjs
+      - name: Compact track and trainer dropdown regression
+        run: node --test tests/1999-track-trainer-dropdown-layout.test.mjs
       - name: Jan 1 source and OFFLINE browser population verification
         run: node --test tests/1999-opening-world.test.mjs tests/1999-entry-gate.test.mjs tests/1999-test-clock.test.mjs tests/1999-management-ui-restore.test.mjs tests/1999-management-screen-data.test.mjs tests/1999-founding-world.test.mjs tests/1999-approved-only-world.test.mjs
 
