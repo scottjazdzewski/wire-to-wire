@@ -2,7 +2,7 @@
  * Daily trainer/jockey/race-secretary agents. Game program is sourced from
  * approved 1999 modeled meet/calendar; no ghost results or artificial jockeys.
  */
-import {gameRaceProgram,raceEligibility,racingAction,jockeyBookingDecision} from './racing-1999.js';
+import {gameRaceProgram,raceEligibility,racingAction,jockeyBookingDecision,supported1999RaceClass} from './racing-1999.js';
 import {shippingAssessment,shippingAction,horseTravelStatus,effectiveHorseTrack} from './shipping-1999.js';
 const diff=(a,b)=>(Date.parse(b+'T12:00:00Z')-Date.parse(a+'T12:00:00Z'))/86400000;
 const plus=(date,n)=>new Date(Date.parse(date+'T12:00:00Z')+n*86400000).toISOString().slice(0,10);
@@ -38,13 +38,13 @@ function autonomousAwayTravel({state,world,emit}){
  let shipped=0,evaluated=0,declined=0;
  const cards=Object.values(state.runtime.races||{}).
   filter(r=>r.status==='ENTRIES_OPEN'&&r.field.length>=2&&
-   r.field.length<r.field_capacity&&r.conditions==='Maiden Special Weight'&&
+   r.field.length<r.field_capacity&&supported1999RaceClass(r)&&
    r.age==='3YO+'&&r.sex==='OPEN'&&diff(day,r.date)>=6).
   sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id));
  for(const h of horses(state).filter(h=>h.owner_organization_id!==state.player.operation_id)){
   if(shipped>=2)break;
   if(!h.host_track_id||horseTravelStatus(state,h.horse_id)?.status!=='HOME'&&
-   horseTravelStatus(state,h.horse_id)||hasFutureEntry(state,h)||h.career.wins>0)continue;
+   horseTravelStatus(state,h.horse_id)||hasFutureEntry(state,h))continue;
   const care=state.runtime.horse[h.horse_id];
   if(!care||care.training.readiness<.56||care.training.currentRisk>=.64||
    care.training.sorenessDays>0)continue;
@@ -132,58 +132,90 @@ export function run1999RacingAgents({state,world,emit}){
  if(state.clock.days_elapsed%7===1&&rt.last_selection_date!==day){
   const tracks=[...new Set(horses(state).map(h=>h.host_track_id))].sort();
   for(const trackId of tracks){
-   if(Object.values(state.runtime.races).some(r=>r.track_id===trackId&&
-    r.status==='ENTRIES_OPEN'&&r.date>=day))continue;
-   const local=stable(state,trackId).filter(h=>h.owner_organization_id!==state.player.operation_id);
+   const local=stable(state,trackId).filter(h=>
+    h.owner_organization_id!==state.player.operation_id);
    if(local.length<2)continue;
-   const plans=[];
-   for(let offset=5;offset<=12;offset++){
-    const raceDay=plus(day,offset);
-    for(const race of gameRaceProgram(state,world,trackId,raceDay)){
-     // Reserve stakes for real qualification/nomination work; source-driven
-     // modeled maiden/class races have testable entry conditions today.
-     if(race.stakeId||race.conditions!=='Maiden Special Weight'||
-      race.sexRestriction!=='OPEN'||race.ageRequirement!=='3YO+')continue;
-     const record={id:race.id,track_id:race.trackId,date:race.date,age:race.ageRequirement,
-      sex:race.sexRestriction,conditions:race.conditions,maiden:race.maidenOnly,max_wins:race.maxCareerWins,
-      surface:race.surface,field_capacity:race.fieldCapacity};
-     const eligible=local.filter(h=>raceEligibility(state,h,record).eligible);
-     if(eligible.length<2)continue;
-     const compatible=eligible.filter(h=>h.starting_attributes.preferred_surface===
-      race.surface||h.starting_attributes.preferred_surface==='DUAL').length;
-     const score=eligible.length*100+compatible*4+(race.maidenOnly?25:0)-
-      offset*2-Math.abs(race.distanceFurlongs-8)*3;
-     plans.push({race,eligible,score});
+   // One open race per modeled class per circuit. Allowance fields should
+   // never replace maiden races, and maiden winners cannot enter both.
+   for(const racingClass of ['Maiden Special Weight','Allowance']){
+    if(Object.values(state.runtime.races).some(r=>r.track_id===trackId&&
+     r.status==='ENTRIES_OPEN'&&r.date>=day&&r.conditions===racingClass))continue;
+    const eligibleAtHome=local.filter(h=>
+     racingClass==='Allowance'?h.career.wins>=1:h.career.wins===0);
+    if(eligibleAtHome.length<2){
+     if(racingClass==='Allowance'&&eligibleAtHome.length){
+      emit('TRAINER_ALLOWANCE_CAMPAIGN_REVIEW',{date:day,track_id:trackId,
+       qualified_horses:eligibleAtHome.length,
+       decision:'AWAIT_SECOND_ELIGIBLE_RUNNER',
+       source:'MODELED_GAME_TRAINER_RACE_PLACEMENT'});
+     }
+     continue;
     }
+    const plans=[];
+    for(let offset=5;offset<=12;offset++){
+     const raceDay=plus(day,offset);
+     for(const race of gameRaceProgram(state,world,trackId,raceDay)){
+      if(race.stakeId||race.conditions!==racingClass||
+       race.sexRestriction!=='OPEN'||race.ageRequirement!=='3YO+'||
+       !supported1999RaceClass(race))continue;
+      const record={id:race.id,track_id:race.trackId,date:race.date,
+       age:race.ageRequirement,sex:race.sexRestriction,
+       conditions:race.conditions,maiden:race.maidenOnly,max_wins:race.maxCareerWins,
+       surface:race.surface,distance_furlongs:race.distanceFurlongs,
+       field_capacity:race.fieldCapacity};
+      const eligible=eligibleAtHome.filter(h=>
+       !hasFutureEntry(state,h)&&raceEligibility(state,h,record).eligible);
+      if(eligible.length<2)continue;
+      const averageFit=eligible.reduce((n,h)=>n+raceFit(h,record),0)/eligible.length;
+      const condition=eligible.reduce((n,h)=>
+       n+state.runtime.horse[h.horse_id].training.readiness,0)/eligible.length;
+      // Entries and talent matter, but do not override medical eligibility,
+      // known class rules, or the horse's required race spacing.
+      const score=eligible.length*100+averageFit*26+condition*14-
+       offset*2-Math.abs(race.distanceFurlongs-8)*3;
+      plans.push({race,eligible,score,averageFit});
+     }
+    }
+    plans.sort((a,b)=>b.score-a.score||a.race.id.localeCompare(b.race.id));
+    const chosen=plans[0];
+    if(!chosen){
+     if(racingClass==='Allowance')emit('TRAINER_ALLOWANCE_CAMPAIGN_REVIEW',{
+      date:day,track_id:trackId,qualified_horses:eligibleAtHome.length,
+      decision:'NO_SUITABLE_DATE_FIT_OR_RECOVERY',
+      source:'MODELED_GAME_TRAINER_RACE_PLACEMENT'});
+     continue;
+    }
+    const r=chosen.race;
+    racingAction({state,world,command:{actor:'system',type:'OPEN_1999_RACE',
+     payload:{track_id:trackId,date:r.date,race_id:r.id}},emit});
+    const confirmed=state.runtime.races[r.id];
+    let accepted=0;
+    for(const h of chosen.eligible.slice(0,confirmed.field_capacity)){
+     const jockeys=Object.values(rt.jockeys).filter(j=>!ridden(state,j.id,confirmed)&&
+      (j.home_track_id===trackId||diff(day,r.date)>=4)&&
+      money(state,h.owner_organization_id)>=(j.home_track_id===trackId?6000:24000)&&
+      jockeyBookingDecision(state,world,confirmed,h,j).accept).
+      sort((a,b)=>(a.home_track_id===trackId?-1:1)-(b.home_track_id===trackId?-1:1)||
+       b.skills.horse_handling+b.skills.judgment-
+       a.skills.horse_handling-a.skills.judgment||a.id.localeCompare(b.id));
+     if(!jockeys.length)continue;
+     racingAction({state,world,command:{actor:'system',type:'ENTER_1999_RACE',
+      payload:{race_id:r.id,horse_id:h.horse_id}},emit});
+     racingAction({state,world,command:{actor:'system',type:'BOOK_1999_JOCKEY',
+      payload:{race_id:r.id,horse_id:h.horse_id,jockey_id:jockeys[0].id}},emit});
+     accepted++;
+    }
+    rt.selection_count++;
+    emit('RACE_SECRETARY_AND_TRAINER_PLAN',{track_id:trackId,race_id:r.id,
+     date:r.date,conditions:racingClass,
+     max_career_wins:r.maxCareerWins??null,
+     eligible_horses:chosen.eligible.length,accepted_starters:accepted,
+     jockey_bookings:accepted,average_surface_distance_fit:Math.round(chosen.averageFit*1000)/1000,
+     reason:racingClass==='Allowance'?
+      'MAIDEN_GRADUATES_ENTER_SOURCE_CONDITIONED_NW_ALLOWANCE':
+      'MAIDEN_FIELD_SURFACE_DISTANCE_AND_JOCKEY_AVAILABILITY',
+     player_horses_entered_automatically:false});
    }
-   plans.sort((a,b)=>b.score-a.score||a.race.id.localeCompare(b.race.id));
-   const chosen=plans[0];if(!chosen)continue;
-   const r=chosen.race;
-   racingAction({state,world,command:{actor:'system',type:'OPEN_1999_RACE',
-    payload:{track_id:trackId,date:r.date,race_id:r.id}},emit});
-   const confirmed=state.runtime.races[r.id];
-   let accepted=0;
-   for(const h of chosen.eligible.slice(0,confirmed.field_capacity)){
-    if(h.owner_organization_id===state.player.operation_id)continue;
-    const jockeys=Object.values(rt.jockeys).filter(j=>!ridden(state,j.id,confirmed)&&
-     (j.home_track_id===trackId||diff(day,r.date)>=4)&&
-     money(state,h.owner_organization_id)>=(j.home_track_id===trackId?6000:24000)&&
-     jockeyBookingDecision(state,world,confirmed,h,j).accept).
-     sort((a,b)=>(a.home_track_id===trackId?-1:1)-(b.home_track_id===trackId?-1:1)||
-      b.skills.horse_handling+b.skills.judgment-a.skills.horse_handling-a.skills.judgment||
-      a.id.localeCompare(b.id));
-    if(!jockeys.length)continue;
-    racingAction({state,world,command:{actor:'system',type:'ENTER_1999_RACE',
-     payload:{race_id:r.id,horse_id:h.horse_id}},emit});
-    racingAction({state,world,command:{actor:'system',type:'BOOK_1999_JOCKEY',
-     payload:{race_id:r.id,horse_id:h.horse_id,jockey_id:jockeys[0].id}},emit});
-    accepted++;
-   }
-   rt.selection_count++;
-   emit('RACE_SECRETARY_AND_TRAINER_PLAN',{track_id:trackId,race_id:r.id,
-    date:r.date,eligible_horses:chosen.eligible.length,accepted_starters:accepted,
-    jockey_bookings:accepted,reason:'CONDITION_FIT_AND_JOCKEY_AVAILABILITY',
-    player_horses_entered_automatically:false});
   }
   rt.last_selection_date=day;
  }
