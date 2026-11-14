@@ -94,3 +94,13 @@
       0 0 25px color-mix(in srgb,var(--wtw-id-bright) 24%,transparent)!important;
   }
 }
+
+/* Track badge is the small left navigation identity; the existing track
+ * logo remains the large right-hand hero artwork. */
+#wtwNextgen[data-wtw-identity-kind="track"] .ng-route-profile .ng-profile-badgeframe{
+  background:#16221f url("/assets/profile-badges/v2/wtw_badge_track.png") center / contain no-repeat!important;
+  border-color:color-mix(in srgb,var(--wtw-id-bright) 48%,#4d6158)!important;
+}
+#wtwNextgen[data-wtw-identity-kind="track"] .ng-route-profile .ng-profile-badgeframe img{
+  visibility:hidden!important;
+}
