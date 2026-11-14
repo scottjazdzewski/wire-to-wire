@@ -96,7 +96,8 @@ export function getLocalTrainerHiringMarket(state,world,horseId=null){
  const rows=active(state).filter(h=>h.owner_organization_id===owner&&
   (horseId===null||h.horse_id===horseId));
  return structuredClone({schema:TRAINER_EMPLOYMENT_SCHEMA,date:state.clock.date,
-  offers:rows.map(h=>({horse_id:h.horse_id,horse_name:h.registered_name,
+  offers:rows.map(h=>({horse_id:h.horse_id,owner_id:h.owner_organization_id,
+   horse_name:h.registered_name,
    current_trainer_id:h.trainer_id,host_track_id:h.host_track_id,
    location_blocker:blocking(state,h),
    pending_offer:rt?.by_horse?.[h.horse_id]??null,
