@@ -65,6 +65,8 @@ jobs:
         run: node --test tests/1999-autonomous-owner-trainer-barn-agents.test.mjs
       - name: Postrace trainer recovery, owner investment and next campaign consequences
         run: node --test tests/1999-postrace-autonomous-campaign-feedback.test.mjs
+      - name: Independent owner and trainer patience with real working relationship and employment pressure
+        run: node --test tests/1999-owner-trainer-working-relationship-patience.test.mjs
       - name: Long-term owner/trainer career reviews, funded investment, salary renewal and browser replay
         run: node --test tests/1999-owner-trainer-career-reviews.test.mjs
       - name: Owner and AI trainer service terms, earnings and multi-day replay
