@@ -13,6 +13,7 @@ on:
       - "scripts/1999-management-browser-smoke.sh"
       - "src/worker.js"
       - "tests/1999-*.test.mjs"
+      - "src/game/**"
       - ".github/workflows/1999-source-integration.yml"
   push:
     branches:
@@ -46,6 +47,8 @@ jobs:
           node --check public/1999/engine/founding-world-1999.mjs
           node --check public/next/1999-commercial-career-manager.mjs
           node --check public/next/1999-commercial-config.js
+      - name: Gameplay registration and barn-residence regression
+        run: node --test tests/1999-game-horse-registration.test.mjs tests/1999-racing-site-residence.test.mjs
       - name: Jan 1 source and OFFLINE browser population verification
         run: node --test tests/1999-opening-world.test.mjs tests/1999-entry-gate.test.mjs tests/1999-test-clock.test.mjs tests/1999-management-ui-restore.test.mjs tests/1999-management-screen-data.test.mjs tests/1999-founding-world.test.mjs tests/1999-approved-only-world.test.mjs
 

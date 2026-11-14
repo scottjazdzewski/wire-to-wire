@@ -1,0 +1,489 @@
+{
+  "schema": "WTW_1999_GAME_HORSE_CANDIDATE_INTAKE_V1",
+  "status": "STAGED_NOT_REGISTERED",
+  "baseline": "FOUNDING_1999",
+  "naming_source": {
+    "path": "data/fictional-name-lab/batch-001.json",
+    "batch_id": "WTW-FICTIONAL-NAMES-001",
+    "status": "PROVISIONAL_OWNER_REVIEW",
+    "source_blob_sha": "a0e251b0dc0546e2d0245064b0cf7b617dfedc5c",
+    "external_registry_checked": false
+  },
+  "proposed_first_cohort_count": 38,
+  "accepted_count": 0,
+  "registered_count": 0,
+  "physical_barn_count": 0,
+  "reason": "38 names are pending review; institutional racing stables are not registered physical sites.",
+  "existing_racing_stable_operator_options": [
+    {
+      "organization_id": "O-005910",
+      "name": "Midway",
+      "organization_type": "RACING STABLE",
+      "physical_barn_id": null
+    },
+    {
+      "organization_id": "O-005919",
+      "name": "Knight’s Way",
+      "organization_type": "SELECTIVE RACING STABLE AND FARM",
+      "physical_barn_id": null
+    },
+    {
+      "organization_id": "O-006905",
+      "name": "Ledbetter Calder Stables",
+      "organization_type": "RACING STABLE",
+      "physical_barn_id": null
+    },
+    {
+      "organization_id": "O-FOUNDING-1999-007",
+      "name": "Velvet Key Racing",
+      "organization_type": "RACING STABLE",
+      "physical_barn_id": null
+    },
+    {
+      "organization_id": "O-FOUNDING-1999-008",
+      "name": "Vesper Brook Racing",
+      "organization_type": "RACING STABLE",
+      "physical_barn_id": null
+    },
+    {
+      "organization_id": "O-FOUNDING-1999-009",
+      "name": "Mar Azul Racing",
+      "organization_type": "RACING STABLE",
+      "physical_barn_id": null
+    },
+    {
+      "organization_id": "O-FOUNDING-1999-012",
+      "name": "Palma Real Stable",
+      "organization_type": "RACING STABLE",
+      "physical_barn_id": null
+    }
+  ],
+  "candidates": [
+    {
+      "candidate_id": "FN-001-001",
+      "name": "Borrowed Weather",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-002",
+      "name": "West of Wabash",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-003",
+      "name": "Tin Ceiling",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-004",
+      "name": "Once in a While",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-005",
+      "name": "Copper County",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-006",
+      "name": "November Guest",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-007",
+      "name": "Plain Clothes",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-008",
+      "name": "Pocket Change",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-009",
+      "name": "Days Between",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-010",
+      "name": "Moon Over Macon",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-011",
+      "name": "Rural Delivery",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-012",
+      "name": "Hard to Place",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-013",
+      "name": "False Start",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-014",
+      "name": "A Quiet Argument",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-015",
+      "name": "Thicket Road",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-016",
+      "name": "Old Money Road",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-017",
+      "name": "Got a Minute",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-018",
+      "name": "The Local",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-019",
+      "name": "Rain on Tin",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-020",
+      "name": "Stolen Harvest",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-021",
+      "name": "Easy to Remember",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-022",
+      "name": "Turnaround Time",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-023",
+      "name": "Eight Bells",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-024",
+      "name": "Lonesome Treaty",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-025",
+      "name": "Cinderblock Moon",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-026",
+      "name": "Belle’s Arithmetic",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-027",
+      "name": "Noonday Bell",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-028",
+      "name": "Under New Management",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-029",
+      "name": "Somewhere in Clover",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-030",
+      "name": "Another Opinion",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-031",
+      "name": "Last Call June",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-032",
+      "name": "Field Note",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-033",
+      "name": "A Fine Detour",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-034",
+      "name": "Fifth Street",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-035",
+      "name": "Good on Paper",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-036",
+      "name": "Lighthouse Keeper",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-037",
+      "name": "Evening Receipt",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    },
+    {
+      "candidate_id": "FN-001-038",
+      "name": "Lucky Static",
+      "source_status": "PENDING_REVIEW",
+      "proposed_1999_age_group": "3YO_OR_OLDER_TO_ASSIGN",
+      "horse_id": null,
+      "owner_organization_id": null,
+      "trainer_id": null,
+      "physical_barn_id": null,
+      "registration_status": "NOT_REGISTERED"
+    }
+  ],
+  "gates": [
+    "Name release ACCEPTED with collisions resolved",
+    "Horse age/sex/foaling record approved",
+    "Valid owner and breeder organization",
+    "Approved trainer identity/contract",
+    "Physical active racing stable site with stall capacity",
+    "Game registration receipt with immutable horse ID"
+  ]
+}

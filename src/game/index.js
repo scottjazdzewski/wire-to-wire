@@ -15,3 +15,5 @@ export {make1999FacilityOffers,make1999FacilityMarketCommands,FACILITY_1999_MARK
 export {OWNERSHIP_RUNTIME_SCHEMA,OWNERSHIP_COMMANDS,
  createOwnershipRuntime,currentHorseOwnerId,getOwnerPortfolioView} from './ownership.js';
 export {facilityFinancialReport as getFacilityFinancialReport} from './facility-operations.js';
+
+export {HORSE_REGISTRATION_SCHEMA,HORSE_REGISTRATION_COMMANDS,createHorseRegistrationRuntime,validateHorseRegistrationRuntime,careerHorse,getRegisteredHorseDirectory} from './horse-registration.js';
