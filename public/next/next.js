@@ -1641,7 +1641,6 @@ function profileDetail(route,sourceOverride=null){
  // Same sorting/filter/view/scroll renderer as every other roster. The
  // public stakes list is sourced from the existing approved track dossier.
  const stakesTable=(limit=100)=>{
-  const values={name:0,date:1,grade:2,purse:3};
   const gradeRank=value=>{const g=(String(value||'').match(/\bG([123])\b/i)||[])[1];return g?Number(g):/major/i.test(value)?4:5};
   const purseRank=value=>{const n=Number(String(value||'').replace(/[^\d.]/g,''));return Number.isFinite(n)?n:-1};
   const rank=(key,row)=>key==='date'?stakeDateRank(row.cols[1]):key==='grade'?gradeRank(row.cols[2]):key==='purse'?purseRank(row.cols[3]):row.cols[0].toLocaleLowerCase();
@@ -1660,7 +1659,6 @@ function profileDetail(route,sourceOverride=null){
   return '<div class="ng-stakes-table"><div class="ng-stakes-head">'+header+'</div>'+
    (ordered.slice(0,limit).map(({row,cols})=>{
     while(cols.length<4)cols.push('—');
-    const index=$$('#routeBody [data-act]').indexOf(row.node);
     const grade=(cols[2].match(/\bG([123])\b/i)||[])[1];
     const gradeCell=grade?'<span class="ng-stakes-grade" aria-label="Grade '+grade+'" title="Grade '+grade+'"><img class="ng-stakes-trophy" src="/assets/trophies/approved-grade-'+grade+'-64.png" alt="" width="16" height="16" decoding="async"/><small class="ng-stakes-grade-text" aria-hidden="true">G'+grade+'</small></span>':'<span>'+safe(cols[2])+'</span>';
     const stakeId=row.node.dataset.stakeId||'';
