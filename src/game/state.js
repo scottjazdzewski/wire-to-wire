@@ -8,6 +8,7 @@ import {createFacilityState,validateFacilityState} from './facility-operations.j
 import {createOwnershipRuntime,validateOwnershipRuntime} from './ownership.js';
 import {createHorseRegistrationRuntime,validateHorseRegistrationRuntime,careerHorse} from './horse-registration.js';
 import {createHorseNamingRuntime,validateHorseNamingRuntime} from './horse-naming-bridge.js';
+import {validateHorseNameCandidates} from './horse-name-owner-release.js';
 import {validateHorseCareRuntime} from './horse-care.js';
 import {createDailyAgentRuntime,validateDailyAgentRuntime} from './daily-agents.js';
 import {createRacingRuntime,validateRacingRuntime} from './racing-1999.js';
@@ -97,6 +98,7 @@ export function validateGameRun(state, world) {
   validateOwnershipRuntime(state,world);
   validateHorseRegistrationRuntime(state,world);
   validateHorseNamingRuntime(state,world);
+  validateHorseNameCandidates(state,world);
   validateHorseCareRuntime(state,world);
   validateDailyAgentRuntime(state,world);
   validateRacingRuntime(state,world);

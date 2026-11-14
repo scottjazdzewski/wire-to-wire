@@ -4,6 +4,7 @@
  * physical residence; merely having a farm/institution in canon is insufficient.
  */
 import {ensure,isObject,requireString,validDate,worldIdentity} from './contracts.js';
+import {HORSE_NAME_OWNER_RELEASE_SCHEMA,validateOwnerApprovalInRelease} from './horse-name-owner-release.js';
 
 export const HORSE_REGISTRATION_SCHEMA='WTW_CAREER_HORSES_V1';
 export const HORSE_REGISTRATION_COMMANDS=Object.freeze(['REGISTER_GAME_HORSE']);
@@ -123,6 +124,11 @@ export function registerHorseAction({state,world,command,emit}){
  ensure(!rt.by_receipt[h.registration_receipt_id],'DUPLICATE_HORSE_RECEIPT','Registration receipt already used');
  const candidate=release.candidates.find(c=>c.candidate_id===h.name_candidate_id&&c.name===h.registered_name&&c.status==='ACCEPTED');
  ensure(Boolean(candidate),'UNACCEPTED_HORSE_NAME','Horse name must exactly match accepted named candidate');
+ // A name already put through the new owner-review workflow cannot bypass that approval via a legacy manifest.
+ const staged=Object.values(state.runtime.horse_naming?.candidates_by_id||{}).some(c=>c.horse_id===h.horse_id&&norm(c.name)===norm(h.registered_name));
+ ensure(!staged||release.schema===HORSE_NAME_OWNER_RELEASE_SCHEMA,
+   'NAME_OWNER_RELEASE_REQUIRED','Story-first horse names require a saved owner-approved release');
+ validateOwnerApprovalInRelease({state,horse:h,release,candidate});
  ensure(![...world.entities.horses.map(x=>x.name),...Object.values(rt.by_id).map(x=>x.registered_name),...release.reserved_names.names]
    .some(x=>norm(x)===norm(h.registered_name)),'DUPLICATE_HORSE_NAME','Name collides with accepted world or reservations');
  ensure(typeof h.registered_name==='string'&&h.registered_name.trim()===h.registered_name&&h.registered_name.length<=100,

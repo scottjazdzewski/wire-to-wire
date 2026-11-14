@@ -55,3 +55,5 @@ export {GAME_NAMING_BRIDGE_SCHEMA,HORSE_NAMING_COMMANDS,createHorseNamingRuntime
 
 export {HORSE_NAME_CREATOR_SCHEMA,GAME_NAME_WRITER_ID,authoringEvidence,buildStoryFirstWritingRequest,parseCreativeModelOutput,verifyNamingBriefAgainstGame,screenStoryFirstIdeas,writeStoryFirstHorseNames,previewStoryFirstHorseNames} from './horse-naming-model-creator.js';
 export {OWNER_REVIEWED_COUNT_V478} from './horse-naming-owner-review-v478.js';
+
+export {HORSE_NAME_OWNER_RELEASE_SCHEMA,HORSE_NAME_OWNER_COMMANDS,ensureHorseNameCandidateDirectory,validateHorseNameCandidates,stageStoryHorseNameAction,ownerDecidesHorseNameAction,makeOwnerApprovedHorseNamingRelease,validateOwnerApprovalInRelease} from './horse-name-owner-release.js';

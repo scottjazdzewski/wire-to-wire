@@ -119,7 +119,7 @@ export function recordGameNameEditorialDecision(screened,{editorId,verdict,notes
 
 /** Actual save-backed player-authored stories. No generated name and no accepted release. */
 export function createHorseNamingRuntime(){
- return {schema:GAME_NAMING_BRIDGE_SCHEMA,stories_by_id:{}};
+ return {schema:GAME_NAMING_BRIDGE_SCHEMA,stories_by_id:{},candidates_by_id:{}};
 }
 export function validateHorseNamingRuntime(state,world){
  const rt=state.runtime?.horse_naming;
