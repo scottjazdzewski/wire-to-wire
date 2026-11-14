@@ -1535,10 +1535,10 @@ export const TRACK_PROGRAM_1999=Object.freeze({
     "sourceUrl": "https://www.nj.gov/oag/racing/downloads/ar1999.pdf",
     "stakesIds": [],
     "stakesDates": [],
-    "trackOperating": "OPEN_1999",
+    "trackOperating": "HISTORICAL_ONLY",
     "surfaceStatus": "HISTORICALLY_KNOWN_GENERAL",
     "calendarExceptions": null,
-    "playableIn1999": true
+    "playableIn1999": false
   },
   "T-0043": {
     "id": "T-0043",
@@ -3707,7 +3707,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
     "sourceUrl": null,
     "stakesIds": [],
     "stakesDates": [],
-    "trackOperating": "OPEN_1999",
+    "trackOperating": "HISTORICAL_ONLY",
     "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
     "calendarExceptions": null,
     "realWorldClosure": "CLOSED_BEFORE_1999",
@@ -3715,7 +3715,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
       "Bainbridge Park Spring Cup",
       "Bainbridge Park Autumn Mile"
     ],
-    "playableIn1999": true
+    "playableIn1999": false
   },
   "T-0113": {
     "id": "T-0113",
@@ -3819,7 +3819,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
     "sourceUrl": null,
     "stakesIds": [],
     "stakesDates": [],
-    "trackOperating": "OPEN_1999",
+    "trackOperating": "HISTORICAL_ONLY",
     "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
     "calendarExceptions": null,
     "realWorldClosure": "CLOSED_BEFORE_1999",
@@ -3827,7 +3827,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
       "Aurora Downs Spring Handicap",
       "Aurora Downs Fall Classic"
     ],
-    "playableIn1999": true
+    "playableIn1999": false
   },
   "T-0116": {
     "id": "T-0116",

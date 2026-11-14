@@ -35,6 +35,8 @@ function personGeographyRecord(source,name){
 }
 
 const genericDeskPhoto='/assets/office/approved-office-photo.jpg';
+const WTW_RETIRED_TRACK_IDS=new Set(['T-0042','T-0112','T-0115']); // Historical IDs retained; excluded from game menus.
+
 let organizationLogoIndex=null; // UI-only logo refs, never organizational authority.
 const isClean1999=()=>window.__WTW_1999_MANAGEMENT__?.worldProfile?.mode==='FOUNDING_1999';
 
@@ -865,7 +867,7 @@ function world1999Key(kind,item){
 function world1999Entries(){
  if(!world1999Data)return [];
  return [
-  ...world1999Data.tracks.map(t=>({
+  ...world1999Data.tracks.filter(t=>!WTW_RETIRED_TRACK_IDS.has(t.id)).map(t=>({
    kind:'track',name:t.name,detail:t.region||t.circuit||'',location:t.location||'',
    canonicalId:t.id,worldKey:world1999Key('track',t),_world:t
   })),
@@ -898,6 +900,7 @@ function world1999Entry(key){
  const source=worldSourceRecord(key,world1999Data);
  if(!source)return null;
  const kind=key.split(':',1)[0];
+ if(kind==='track'&&WTW_RETIRED_TRACK_IDS.has(source.id))return null;
  if(kind==='track'&&!world1999Data?.tracks?.some(t=>t.id===source.id))return null;
  return {kind,name:source.name,canonicalId:source.id||'',worldKey:key,_world:source};
 }
@@ -2815,8 +2818,8 @@ function depTrackCalendar(){
  const byName=new Map(extra.map(t=>[t.name,t]));
  const seen=new Set([...office,...others].flatMap(t=>[t.id,t.name]).filter(Boolean));
  const missing=extra.filter(t=>!seen.has(t.id)&&!seen.has(t.name));
- return [...office,...others,...missing].filter(t=>!isClean1999()||
-  !permittedTracks.size||permittedTracks.has(t.id)||permittedNames.has(t.name)).map(t=>{
+ return [...office,...others,...missing].filter(t=>!WTW_RETIRED_TRACK_IDS.has(t.id)&&(
+  !isClean1999()||!permittedTracks.size||permittedTracks.has(t.id)||permittedNames.has(t.name))).map(t=>{
   // The 1999 source directory, NOT the old track-program/demo defaults,
   // decides whether a historical racecourse is closed and remains dormant.
   const canonical=(world1999Data?.tracks||[]).find(r=>r.id===t.id);

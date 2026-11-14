@@ -36,12 +36,19 @@ test('all 93 canonical stakes remain ID-linked inside their host 1999 meet windo
  assert.equal(Object.values(TRACK_PROGRAM_1999).reduce((a,p)=>a+p.stakesIds.length,0),93);
 });
 
-test('every North American course operates in the WTW 1999 alternative universe',()=>{
+test('115 North American tracks remain playable; three user-retired sites retain history',()=>{
  const northAmerican=Object.values(TRACK_PROGRAM_1999).filter(x=>x.id.startsWith('T-'));
  assert.equal(northAmerican.length,118);
- assert.equal(northAmerican.filter(x=>x.trackOperating==='OPEN_1999').length,118);
- const revived=northAmerican.filter(x=>x.basis==='WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION');
- assert.equal(revived.length,16);
+ assert.equal(northAmerican.filter(x=>x.trackOperating==='OPEN_1999').length,115);
+ for(const id of ['T-0042','T-0112','T-0115']){
+  const retired=trackProgram1999(id);
+  assert.equal(retired.trackOperating,'HISTORICAL_ONLY');
+  assert.equal(retired.playableIn1999,false);
+  assert.equal(trackMeetOpen1999(id,'1999-05-25'),false);
+  assert.equal(trackCardSurface1999(id,0),null);
+ }
+ const revived=northAmerican.filter(x=>x.basis==='WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION'&&x.playableIn1999!==false);
+ assert.equal(revived.length,14);
  for(const p of revived){
   assert.ok(p.meets.length>=2,p.name+' missing revived meet');
   assert.ok(p.dayPattern.length>=4,p.name+' missing race-day pattern');
@@ -57,7 +64,7 @@ test('authenticated 1999 state racing calendar windows block off-meet cards',()=
  assert.equal(trackMeetOpen1999('T-0030','1999-08-29'),true);
  assert.equal(trackMeetOpen1999('T-0004','1999-06-02'),false); // New Jersey racing dark
  assert.equal(trackMeetOpen1999('T-0004','1999-05-31'),true); // Holiday racing
- assert.equal(trackMeetOpen1999('T-0042','1999-05-25'),true);
+ assert.equal(trackMeetOpen1999('T-0042','1999-05-25'),false); // Game exclusion, without erasing source history.
  assert.equal(trackMeetOpen1999('T-0042','1999-06-01'),false);
 });
 
