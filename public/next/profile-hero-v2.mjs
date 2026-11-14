@@ -155,7 +155,7 @@ function heroAvailable(src){
     }
     return {ok:true,darkInk:pixels>20&&luminosity/pixels<112};
    }catch{return {ok:true,darkInk:false};}
-  }).catch(()=>({ok:false,darkInk:false}))));
+  }).catch(()=>({ok:false,darkInk:false})));
  }
  return heroProbes.get(src);
 }
