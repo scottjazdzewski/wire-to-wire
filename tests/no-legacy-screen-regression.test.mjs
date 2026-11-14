@@ -55,7 +55,7 @@ test('legacy DOM remains a quarantined GAMEPLAY ADAPTER, not a second player scr
  assert.match(core,/const originalAct=\(act\)=>/);
  assert.match(core,/function bridgeNode\(node\)/);
  assert.match(core,/function profileDetail\(route,sourceOverride=null\)/);
- assert.match(core,/function currentRoute\(\)/);
+ assert.match(core,/const currentRoute=\(\)=>/);
 });
 
 test('release checks cannot revive an obsolete screen or archived UI tests',()=>{
