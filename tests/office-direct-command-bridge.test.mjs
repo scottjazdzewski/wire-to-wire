@@ -40,6 +40,16 @@ test('Save directly calls existing canonical save handler exactly once',()=>{
  assert.match(snippet,/valid1999Save\(payload\)/);
 });
 
+test('1999 Save timestamps come from the career state, never the old hidden date chip',()=>{
+ const dateBody=office.slice(office.indexOf('function currentGameDate()'),
+  office.indexOf('function dueDate(days)'));
+ assert.match(dateBody,/if\(window\.__WTW_1999_MANAGEMENT__\)/);
+ assert.match(dateBody,/const date=String\(gameState\.date\|\|''\)/);
+ assert.match(dateBody,/return date;/);
+ assert.ok(dateBody.indexOf('return date;')<dateBody.indexOf('dateChip ? dateChip.textContent'),
+  'Founding game date must return before legacy chip fallback');
+});
+
 test('Continue uses exactly one canonical game clock command',()=>{
  let advanced=0;
  const {api}=boot({mode:'FOUNDING_1999',advanceOneDay:()=>{advanced++;return '1999-01-02'}});
