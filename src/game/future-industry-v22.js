@@ -292,6 +292,34 @@ export function createFutureIndustryGameGatewayV22({
   return Object.freeze({...result,model:GAME_INDUSTRY_GATEWAY_MODEL_V22,
    gameSaveChanged:true,gameWorldChanged:false});
  }
+ function synchronizeApprovedPerson({personId,commandId}={}){
+  checkCurrent();
+  requireId(personId,'approved future person ID');
+  requireId(commandId,'game personnel sync command ID');
+  const existing=state.runtime.future_industry?.people?.[personId],
+   linked=industry.getPersonIdentity(personId);
+  if(!existing||!linked?.registeredInContinuity||
+   !linked?.approvedByNamingRegistry||existing.name!==linked.name||
+   existing.role!==linked.role)
+   throw Error('Personnel synchronization requires a registered matching permanent identity');
+  const result=dispatchGameCommand({state,world,command:{
+   id:commandId,actor:'system',type:'SYNC_APPROVED_FUTURE_PERSON',
+   payload:{
+    world_snapshot_id:world.authority.snapshot_id,
+    world_sha256:world.authority.sha256,
+    industry_world_id:industry.worldId,
+    identity:{
+     id:personId,name:linked.name,role:linked.role,
+     retired:Boolean(linked.retired),
+     availability:linked.availability??'AVAILABLE',
+     continuityRevision:industry.continuityRevision
+    }
+   }
+  }});
+  activationUsed=true;
+  return Object.freeze({...result,model:GAME_INDUSTRY_GATEWAY_MODEL_V22,
+   gameSaveChanged:true,gameWorldChanged:false});
+ }
  function synchronizeApprovedOrganization({organizationId,commandId}={}){
   checkCurrent();
   requireId(organizationId,'approved future business ID');
@@ -325,6 +353,6 @@ export function createFutureIndustryGameGatewayV22({
   quoteOwnerReuse,registerApprovedPerson,
   registerApprovedOrganization,applyPersonnelDecision,
   activateApprovedPerson,activateApprovedOrganization,
-  synchronizeApprovedOrganization
+  synchronizeApprovedPerson,synchronizeApprovedOrganization
  });
 }
