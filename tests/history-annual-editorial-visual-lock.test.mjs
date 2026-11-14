@@ -29,6 +29,10 @@ test('Year in Review is a premium branded racing annual, never a flat olive page
  assert.match(annualCSS,/\.history-classic-2\{/);
  assert.match(annualCSS,/\.history-classic-3\{/);
  assert.match(annualCSS,/\.history-year-review \.history-ledger-table th\{/);
+ assert.match(css,/\.main:has\(\.history-year-review\) > \.callout\{[^}]*color:#f7e7cf/);
+ assert.match(css,/\.env-pill\{background:#e2c784;color:#241e2c/);
+ assert.doesNotMatch(css,/\.env-pill\{background:#e2c784;color:#dcc487/,
+  'Preview provenance label must never be gold text on gold');
  assert.doesNotMatch(annualCSS,/background:linear-gradient\(135deg,#3b503d,#25332d\)/,
   'Retired flat olive annual cards must not return');
  assert.match(contract,/Permanent Year in Review visual identity/);
