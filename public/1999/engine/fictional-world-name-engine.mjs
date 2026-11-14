@@ -379,11 +379,14 @@ export function createFictionalWorldNameEngine(input){
    riderOriginModel:spec.jockeyColonyWeights[inferJockeyColony(market)]?
     'CUSTOM_COLONY_NAMING_DISTRIBUTION':
     spec.originWeights.jockey?'CUSTOM_ROLE_NAMING_DISTRIBUTION':
+    year>SUPPORTED_NAME_ERA?'EDITORIAL_LATER_JOCKEY_COLONY_MIX_NOT_MEASURED':
     'EDITORIAL_1999_JOCKEY_COLONY_DISTRIBUTION_NOT_MEASURED'
   }:{};
   return frozen({id,worldId,role,name:p.name,nameStyle:p.nameStyle,
    birthCountry:p.birthCountry,ageAtOpening:age,birthYear:personBirthYears[i],
    givenNameDecade:p.birthCountry==='US'?Math.floor(personBirthYears[i]/10)*10:null,
+   ...(year>SUPPORTED_NAME_ERA?{generationalNameEvidence:generationalGivenNameEvidence(
+    p.birthCountry,personBirthYears[i])}:{}),
    regionalNamingCohort:isLatinCaribbeanNamingOrigin(p.birthCountry)?
     personBirthYears[i]<1960?'OLDER_BIRTH_COHORT':'YOUNGER_BIRTH_COHORT':null,
    internationalNamingCohort:isInternationalProfessionalNamingOrigin(p.birthCountry)?
@@ -391,7 +394,8 @@ export function createFictionalWorldNameEngine(input){
    internationalNameCulture:namingCultures[i],
    professionalOriginModel:DEFAULT_GLOBAL_PROFESSIONAL_ORIGIN_WEIGHTS[role]?
     spec.originWeights[role]?'CUSTOM_ROLE_NAMING_DISTRIBUTION':
-    'EDITORIAL_1999_INTERNATIONAL_PROFESSIONAL_MIX_NOT_MEASURED':null,
+    year>SUPPORTED_NAME_ERA?'EDITORIAL_LATER_PROFESSIONAL_MIX_NOT_MEASURED':
+     'EDITORIAL_1999_INTERNATIONAL_PROFESSIONAL_MIX_NOT_MEASURED':null,
    primarySurname:p.primarySurname,nameStructure:p.nameStyle,
    location:loc(market),nameOrigin:p.source,...riderFields,
    source:'FICTIONAL_WORLD_ENGINE'});
@@ -522,13 +526,16 @@ export function createFictionalWorldNameEngine(input){
   assignedFarmManagers:farmByManagerId.size,unassignedFarmManagers:farmManagers.length-farmByManagerId.size,
   byRole:frozen({...roles,owner:owners}),
   byFarmKind:frozen(Object.fromEntries(FARM_KEYS.map(([kind])=>[kind,farms.filter(f=>f.kind===kind).length])))});
- const specFingerprint=hash(seed,JSON.stringify({namingModel:FICTIONAL_WORLD_NAME_ENGINE,
+ const specFingerprint=hash(seed,JSON.stringify({namingModel:year===SUPPORTED_NAME_ERA?
+  FICTIONAL_WORLD_NAME_ENGINE:LATER_GENERATION_NAME_ENGINE,
   internationalCultureModel:INTERNATIONAL_NAME_CULTURE_MODEL,worldId,year,roles,owners,facilities,
   markets:markets.map(m=>[m.id,m.city,m.region,m.country,m.code,m.weight,m.breeding,m.racing,m.jockeyColony]),
   originWeights:spec.originWeights,colonyWeights:spec.jockeyColonyWeights,
   reserved:spec.protectedNames,ownerNamingPolicy:spec.ownerNamingPolicy,
   indexRevision:spec.externalNameIndex?.revision??null})).toString(16).padStart(8,'0');
- const manifest=frozen({schema:FICTIONAL_WORLD_NAME_ENGINE,worldId,seed,year,
+ const manifest=frozen({schema:year===SUPPORTED_NAME_ERA?
+  FICTIONAL_WORLD_NAME_ENGINE:LATER_GENERATION_NAME_ENGINE,worldId,seed,year,
+  ...(year>SUPPORTED_NAME_ERA?{generationalNameModel:GENERATIONAL_PERSON_NAME_MODEL}:{}),
   fingerprint:specFingerprint,jockeyColonyNameModel:JOCKEY_COLONY_NAME_MODEL,
   usBirthCohortNameModel:US_BIRTH_COHORT_NAME_MODEL,
   latinCaribbeanNameModel:LATIN_CARIBBEAN_NAME_MODEL,
