@@ -3656,7 +3656,11 @@ function managerDashboard(){
   World:{kinds:['horse','person','farm','track','race'],label:'RACING WORLD DIRECTORY'}
  };
  const config=configs[section]||configs.Office;
- const all=globalSearchItems();APP.searchIndex=all;
+ // World Overview must only display the 1999 registry. The hidden Office
+ // search index contains obsolete B01 demo horses and is not an authority.
+ const all=section==='World'&&page==='Overview'&&isClean1999()?
+  world1999Entries():globalSearchItems();
+ APP.searchIndex=all;
  const kindFilter=({kind,detail,name})=>{
   if(!config.kinds.includes(kind))return false;
   if(section==='Office'&&['Messages','Decisions'].includes(page))return kind==='decision';
