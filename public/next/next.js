@@ -2832,7 +2832,7 @@ function depRacingCalendar(){
   '</section>';
 }
 
-function depTrackCalendar(){
+function depTrackCalendar(includeRetired=false){
  const raw=typeof window.__wtwOfficeTrackDirectory==='function'?window.__wtwOfficeTrackDirectory():[];
  const permittedTracks=isClean1999()?new Set((world1999Data?.tracks||[]).map(t=>t.id)):null;
  const permittedNames=isClean1999()?new Set((world1999Data?.tracks||[]).map(t=>t.name)):null;
@@ -2850,7 +2850,7 @@ function depTrackCalendar(){
  const byName=new Map(extra.map(t=>[t.name,t]));
  const seen=new Set([...office,...others].flatMap(t=>[t.id,t.name]).filter(Boolean));
  const missing=extra.filter(t=>!seen.has(t.id)&&!seen.has(t.name));
- return [...office,...others,...missing].filter(t=>!WTW_RETIRED_TRACK_IDS.has(t.id)&&(
+ return [...office,...others,...missing].filter(t=>(includeRetired||!WTW_RETIRED_TRACK_IDS.has(t.id))&&(
   !isClean1999()||!permittedTracks.size||permittedTracks.has(t.id)||permittedNames.has(t.name))).map(t=>{
   // The 1999 source directory, NOT the old track-program/demo defaults,
   // decides whether a historical racecourse is closed and remains dormant.
@@ -2891,8 +2891,8 @@ function depMeetState(track,date=depGameDay()){
  return {active:Boolean(active),next:Boolean(next),window:active||next||null,
   status:active?'IN MEET':next?'UPCOMING':'OUT OF MEET'};
 }
-function depTrackRows(page='Overview',day=depGameDay()){
- const rows=depTrackCalendar().map(t=>{
+function depTrackRows(page='Overview',day=depGameDay(),includeRetired=false){
+ const rows=depTrackCalendar(includeRetired).map(t=>{
   const meet=depMeetState(t,day);
   return {_kind:'track',_name:t.name,_canonId:t.id||'',name:t.name,location:t.location||'',surfaces:t.surfaces||'',
    circuit:t.circuit||'',meetWindow:meet.window?.label||t.meetWindow||'',
@@ -2995,8 +2995,8 @@ function depRows(section,page,demo,auction){
     o.leadershipStatus==='ESTABLISHED_1999_PRINCIPAL_LINK'?'ESTABLISHED':o.status||''
   }));
  }
- if(section==='World'&&page==='Tracks')return depTrackRows('All Tracks');
- if(section==='Tracks')return depTrackRows(page);
+ if(section==='World'&&page==='Tracks')return depTrackRows('All Tracks',depGameDay(),true);
+ if(section==='Tracks')return depTrackRows(page,depGameDay(),true);
  if(section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'){
   const tracks=depTrackRows('Overview',depRaceBrowseDate());
   if(APP.racingTrack)return tracks.filter(t=>t.name===APP.racingTrack).map(t=>({
