@@ -229,10 +229,28 @@ export function applyFutureIndustryGameAction({state,world,command,emit}){
    source:'CURRENT_V17_CONTINUITY'});
  }
 }
-function ensureReceipt(state,record,kind,key){
- const logged=state.event_log.find(e=>e.command_id===record.activation_command_id&&
-  e.kind===kind&&e.details?.[key]===record.id);
- ensure(logged&&typeof state.command_receipts[record.activation_command_id]==='string',
+function auditIndex(state){
+ const personActivations=new Map(),organizationActivations=new Map(),
+  personSyncs=new Map(),organizationSyncs=new Map();
+ // One journal pass per save validation even with thousands of people/firms.
+ for(const e of state.event_log){
+  if(e.kind==='FUTURE_PERSON_ACTIVATED'){
+   const k=e.details?.person_id;
+   if(!personActivations.has(k))personActivations.set(k,e);
+  }else if(e.kind==='FUTURE_ORGANIZATION_ACTIVATED'){
+   const k=e.details?.organization_id;
+   if(!organizationActivations.has(k))organizationActivations.set(k,e);
+  }else if(e.kind==='FUTURE_PERSON_SYNCED')
+   personSyncs.set(e.details?.person_id,e.details);
+  else if(e.kind==='FUTURE_ORGANIZATION_SYNCED')
+   organizationSyncs.set(e.details?.organization_id,e.details);
+ }
+ return {personActivations,organizationActivations,personSyncs,organizationSyncs};
+}
+function ensureReceipt(state,record,journal){
+ const logged=journal.get(record.id);
+ ensure(logged&&logged.command_id===record.activation_command_id&&
+  typeof state.command_receipts[record.activation_command_id]==='string',
   'FUTURE_IDENTITY_AUDIT','Activated identity must have a recorded game command receipt');
  return logged.details;
 }
@@ -248,6 +266,7 @@ export function validateFutureIndustryGameRuntime(state,world){
  ensure(Number(state.clock.date.slice(0,4))>=2000,
   'FUTURE_IDENTITY_SAVE','1999 cannot carry future industry activations');
  const names=new Set(world.entities.organizations.map(o=>norm(o.name)));
+ const audit=auditIndex(state);
  for(const [personId,p] of Object.entries(root.people)){
   ensure(isObject(p)&&p.id===personId&&!worldIdentity(world,'people',personId)&&
    !worldIdentity(world,'organizations',personId)&&ID.test(personId)&&
@@ -262,15 +281,13 @@ export function validateFutureIndustryGameRuntime(state,world){
    validDate(p.activated_on)&&p.activated_on>=world.start_date&&
    p.activated_on<=state.clock.date,
    'FUTURE_IDENTITY_SAVE','Invalid or colliding future personnel save record');
-  const source=ensureReceipt(state,p,'FUTURE_PERSON_ACTIVATED','person_id');
+  const source=ensureReceipt(state,p,audit.personActivations);
   ensure(source.name===p.name&&source.role===p.role&&
    source.primary_surname===p.primarySurname&&
    source.birth_year===p.birthYear&&source.naming_revision===p.naming_revision,
    'FUTURE_IDENTITY_AUDIT','Personnel identity differs from its game admission journal');
-  const syncEvents=state.event_log.filter(e=>
-   e.kind==='FUTURE_PERSON_SYNCED'&&e.details?.person_id===personId);
-  if(syncEvents.length){
-   const last=syncEvents[syncEvents.length-1].details;
+  const last=audit.personSyncs.get(personId);
+  if(last){
    ensure(last.retired===p.retired&&last.availability===p.availability&&
     last.continuity_revision===p.continuity_revision,
     'FUTURE_IDENTITY_AUDIT','Personnel status differs from its latest game sync event');
@@ -292,18 +309,15 @@ export function validateFutureIndustryGameRuntime(state,world){
    !names.has(norm(op.name)),
    'FUTURE_IDENTITY_SAVE','Invalid, renamed or colliding future business record');
   names.add(norm(op.name));
-  const source=ensureReceipt(state,op,'FUTURE_ORGANIZATION_ACTIVATED','organization_id');
+  const source=ensureReceipt(state,op,audit.organizationActivations);
   ensure(source.name===op.name&&source.kind===op.kind&&
    source.registered_year===op.registered_year&&
    source.naming_region===op.namingRegion&&
    source.naming_revision===op.naming_revision&&
    JSON.stringify(source.location)===JSON.stringify(op.location),
    'FUTURE_IDENTITY_AUDIT','Business identity differs from its original game admission');
-  const syncEvents=state.event_log.filter(e=>
-   e.kind==='FUTURE_ORGANIZATION_SYNCED'&&
-   e.details?.organization_id===opId);
-  if(syncEvents.length){
-   const last=syncEvents[syncEvents.length-1].details;
+  const last=audit.organizationSyncs.get(opId);
+  if(last){
    ensure(last.status===op.status&&last.principal_id===op.principalId&&
     last.trainer_id===op.trainerId&&
     JSON.stringify(last.manager_ids)===JSON.stringify(op.managerIds)&&
