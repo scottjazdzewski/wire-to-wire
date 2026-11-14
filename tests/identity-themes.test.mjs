@@ -76,3 +76,18 @@ test('new themes are cache-busted coherently without a second stylesheet',()=>{
  assert.match(page,/next\.css\?rev=wtw-identity-atmosphere-v2-20261114/);
  assert.equal((page.match(/rel="stylesheet"/g)||[]).length,1);
 });
+
+test('expanded record menus, tables and selected view modes follow the same entity palette',()=>{
+ const css=readFileSync(new URL('../public/next/next.css',import.meta.url),'utf8');
+ const start=css.indexOf('/* WTW ENTITY ATMOSPHERE v2');
+ const end=css.indexOf('/* ===== END folded source: public/next/identity-themes.css ===== */',start);
+ const own=css.slice(start,end);
+ for(const rule of [
+  '.ng-route-profile .ng-connected-drop>summary',
+  '.ng-route-profile .ng-connected-tools',
+  '.ng-route-profile .ng-connected-view button.on',
+  '.ng-route-profile .ng-connected-table thead th'
+ ])assert.ok(own.includes(rule),rule+' must inherit the ID palette');
+ assert.match(own,/\.ng-connected-view button\.on\{\s*background:color-mix\(/);
+ assert.doesNotMatch(own,/\.ng-global-continue|\.ng-msgtag\.urgent|\.ng-status-pills/);
+});
