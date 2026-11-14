@@ -1,5 +1,5 @@
-# WTW 1999 organization logos
+# WTW legacy generated owner logos (retired)
 
-108 source-registered organizations, each a unique mark. PNG files are 64x64 optimized for the compact horse-owner slot. Larger 256x256 PNG and original SVG design sources are held in the WTW_PROFILE_BADGES/WTW_OWNER_LOGOS_1999 Drive asset library.
+The 108 generated 64×64 owner marks from the original 1999 experiment were removed from website delivery on November 14, 2026 at the user's direction because enlarging them produces pixelated logos. The Git history retains the original blobs for provenance. This folder contains no active 64px images. Do not use these retired marks as owner/farm/stable fallbacks.
 
-Assignment is by canonical organization ID O-XXXXXX; name aliases are fallback only. Kingsmere Farm uses royal purple and gold. Cobalt Key Stable uses a redesigned navy/gold key design. No horse ownership ledger or other simulation data was changed.
+The only playable January 1999 identity assets are exact organization-ID approved copies in `public/assets/office/founding-organization-logos/`, indexed by `public/assets/office/founding-organization-logo-index.json`. Missing approved marks are neutral placeholders. Do not modify game organization IDs, saves or ownership history for presentation cleanup.
