@@ -939,6 +939,114 @@ function world1999Match(kind,name){
   e.name.toLocaleLowerCase('en-US').trim()===target);
  return matches.length===1?matches[0]:null;
 }
+/* Shared FM/OOTP profile-entity carousel. Arrows beside Overview move between
+ * different source records of the SAME role/category, never between tabs.
+ * One canonical 1999 roster, one identity-matched navigation route. */
+function dossierEntityCategory(entry){
+ if(!entry)return '';
+ if(entry.kind==='track')return 'track';
+ if(entry.kind==='horse')return 'horse';
+ if(entry.kind==='person'){
+  const role=String(entry._world?.role||entry.detail||'').toUpperCase().replace(/[_-]/g,' ');
+  if(/\bTRAINER\b/.test(role))return 'trainer';
+  if(/\bJOCKEY\b/.test(role))return 'jockey';
+  if(/\bOWNER\b/.test(role))return 'owner';
+  if(/\bBREEDER\b/.test(role))return 'breeder';
+  if(/\bFARM MANAGER\b/.test(role))return 'farm manager';
+  return 'person:'+role.trim();
+ }
+ if(entry.kind==='farm'){
+  const type=String(entry._world?.type||entry.detail||'').toUpperCase();
+  if(/\bFARM\b|\bSTUD\b|\bBREEDING\b|\bNURSERY\b/.test(type))return 'facility';
+  if(/\bRACING STABLE\b/.test(type))return 'racing stable';
+  if(/\bOWNERSHIP\b|\bPARTNERSHIP\b|\bAGENCY\b|\bINVESTMENT\b/.test(type))return 'owner';
+  return 'organization:'+type.trim();
+ }
+ return entry.kind;
+}
+function dossierEntityOrder(a,b){
+ return String(a.name||'').localeCompare(String(b.name||''),undefined,
+  {numeric:true,sensitivity:'base'})||
+  String(a.canonicalId||a.worldKey||'').localeCompare(String(b.canonicalId||b.worldKey||''));
+}
+function dossierAdjacentRecords(entry,records){
+ const family=dossierEntityCategory(entry);
+ const eligible=(records||[]).filter(item=>dossierEntityCategory(item)===family)
+  .slice().sort(dossierEntityOrder);
+ const i=eligible.findIndex(item=>item.worldKey===entry.worldKey);
+ if(i<0||eligible.length<2)return {family,previous:null,next:null};
+ return {family,
+  previous:eligible[(i-1+eligible.length)%eligible.length],
+  next:eligible[(i+1)%eligible.length]};
+}
+function dossierCurrentEntity(route){
+ const custom=String(APP.custom||'');
+ const entries=world1999Entries();
+ if(custom.startsWith('WorldRecord:')){
+  const key=decodeURIComponent(custom.slice('WorldRecord:'.length));
+  return world1999Entry(key);
+ }
+ if(custom.startsWith('FoundingProfile:')){
+  const [kind,...segments]=custom.slice('FoundingProfile:'.length).split(':');
+  const id=decodeURIComponent(segments.join(':'));
+  return entries.find(e=>e.canonicalId===id&&
+   e.kind===(kind==='person'?'person':'farm'))||null;
+ }
+ // Legacy Office dossiers have no WorldRecord URL. Resolve only an exact,
+ // unique name in the source roster; never guess between homonyms.
+ const kind=({'Horse Profile':'horse','People Profile':'person',
+   'Track Profile':'track','Farm Profile':'farm'})[route?.kicker];
+ if(!kind||!route?.title)return null;
+ const same=entries.filter(e=>e.kind===kind&&e.name===route.title);
+ return same.length===1?same[0]:null;
+}
+function dossierOfficeAdjacent(route){
+ if(APP.custom||!route?.title)return null;
+ const kind=({'Horse Profile':'horse','People Profile':'person',
+   'Track Profile':'track','Farm Profile':'farm'})[route.kicker];
+ const officeRecords=typeof window.__wtwOfficeSearchRecords==='function'?
+  window.__wtwOfficeSearchRecords():[];
+ if(!kind||!Array.isArray(officeRecords))return null;
+ const seen=new Set();
+ const records=officeRecords.filter(row=>{
+  if(row?.kind!==kind||!row.name)return false;
+  const id=kind+'|'+row.name+'|'+String(row.track||'');
+  if(seen.has(id))return false;
+  seen.add(id);return true;
+ }).map(row=>({
+  kind:row.kind,name:row.name,canonicalId:row.id||'',worldKey:
+   'office:'+row.kind+':'+row.name+':'+String(row.track||''),
+  detail:row.detail||'',_world:{role:row.role||row.detail||'',type:row.type||row.detail||''},
+  officeTrack:row.track||'',office:true
+ }));
+ const same=records.filter(row=>row.name===route.title);
+ if(same.length!==1)return null;
+ return dossierAdjacentRecords(same[0],records);
+}
+function dossierNavigationContext(route){
+ const source=dossierCurrentEntity(route);
+ if(source)return {...dossierAdjacentRecords(source,world1999Entries()),source:'world'};
+ const fallback=dossierOfficeAdjacent(route);
+ return fallback?{...fallback,source:'office'}:
+  {family:'record',previous:null,next:null,source:null};
+}
+function dossierOpenAdjacent(direction,route){
+ if(direction!==-1&&direction!==1)return false;
+ const choices=dossierNavigationContext(route);
+ const next=direction<0?choices.previous:choices.next;
+ if(!next)return false;
+ if(choices.source==='office'){
+  if(!window.__wtwOfficeOpenSearchRecord?.(next.kind,next.name,next.officeTrack))return false;
+  APP.custom='';APP.detailTab='Overview';APP.moreOpen=false;
+  schedulePaint(20);return true;
+ }
+ if(APP.custom.startsWith('FoundingProfile:')&&next.kind!=='track'&&next.kind!=='horse'){
+  const kind=next.kind==='person'?'person':
+   choices.family==='facility'?'facility':'ownership';
+  return openFounding1999Profile(kind,next.canonicalId);
+ }
+ return openWorld1999Entity(next.worldKey);
+}
 function openWorld1999Entity(key){
  const found=world1999Entry(key);
  if(!found)return false;
@@ -1512,21 +1620,20 @@ function profileDetail(route,sourceOverride=null){
   isFarm?['Overview','Connected Horses','Operations','Connections','History']:
   isTrack?['Overview','Meet Schedule','Major Races','Connections','History']:
   ['Overview','Connections','History']);
- // One canonical dossier view sequence for horse/person/track/farm/owner.
- // Local arrows visit the existing Overview, deeper records and History in that
- // order, cycling at the ends. They never change the global browser history.
- const dossierPageIndex=Math.max(0,tabs.indexOf(APP.detailTab));
- const dossierPrev=tabs[(dossierPageIndex-1+tabs.length)%tabs.length];
- const dossierNext=tabs[(dossierPageIndex+1)%tabs.length];
+ // These arrows browse neighboring canonical entities of the same type, not
+ // sub-tabs; Overview/History/More Records continue to control THIS entity.
+ const adjacent=dossierNavigationContext(route);
+ const dossierPrev=adjacent.previous;
+ const dossierNext=adjacent.next;
  const rows=(items)=>'<div class="ng-data-rows">'+items.map(i=>`<div class="ng-data-row"><span>${safe(i.label)}</span>${namedProfileValue(i.label,i.value)}</div>`).join('')+'</div>';
  const pills='<div class="ng-status-pills">'+states.slice(0,4).map(x=>`<span>${safe(x)}</span>`).join('')+'</div>';
  const tabbar=(isTrack||isFarm||isPerson||isHorse)?`<nav class="ng-person-dossierbar ng-management-dossierbar" aria-label="Profile records navigation">
    <span class="ng-person-dossierlabel">${isHorse?'HORSE RACING FILE':isPerson?'PERSONNEL DOSSIER':isTrack?'TRACK DOSSIER':source.dataset.foundingContext==='facility'?'FACILITY DOSSIER':'OWNERSHIP DOSSIER'} <small>${safe(APP.detailTab.toUpperCase())}</small></span>
    <div class="ng-person-dossieractions">
     <button type="button" data-ng="detailtab" data-val="Overview" class="${APP.detailTab==='Overview'?'on':''}" aria-current="${APP.detailTab==='Overview'?'page':'false'}">OVERVIEW</button>
-    <span class="ng-profile-stepper" role="group" aria-label="Previous and next dossier views">
-     <button type="button" class="ng-profile-step" data-ng="profile-step" data-val="-1" aria-label="Previous dossier view: ${safe(dossierPrev)}" title="Previous: ${safe(dossierPrev)}"><span aria-hidden="true">‹</span></button>
-     <button type="button" class="ng-profile-step" data-ng="profile-step" data-val="1" aria-label="Next dossier view: ${safe(dossierNext)}" title="Next: ${safe(dossierNext)}"><span aria-hidden="true">›</span></button>
+    <span class="ng-profile-entity-pager" role="group" aria-label="Previous and next ${safe(adjacent.family)} records">
+     <button type="button" class="ng-profile-entity-step" data-ng="dossier-entity-step" data-val="-1" ${dossierPrev?'':'disabled'} aria-label="${dossierPrev?'Previous '+adjacent.family+': '+safe(dossierPrev.name):'No previous '+adjacent.family+' record'}" title="${dossierPrev?'Previous '+adjacent.family+': '+safe(dossierPrev.name):'No previous linked '+adjacent.family+' record'}"><span aria-hidden="true">‹</span></button>
+     <button type="button" class="ng-profile-entity-step" data-ng="dossier-entity-step" data-val="1" ${dossierNext?'':'disabled'} aria-label="${dossierNext?'Next '+adjacent.family+': '+safe(dossierNext.name):'No next '+adjacent.family+' record'}" title="${dossierNext?'Next '+adjacent.family+': '+safe(dossierNext.name):'No next linked '+adjacent.family+' record'}"><span aria-hidden="true">›</span></button>
     </span>
     <button type="button" data-ng="detailtab" data-val="History" class="${APP.detailTab==='History'?'on':''}" aria-current="${APP.detailTab==='History'?'page':'false'}">HISTORY</button>
     <select data-ng-select="profile-record" aria-label="Open deeper profile records">
@@ -4161,18 +4268,10 @@ window.addEventListener('click',e=>{
  if(key==='network-role'){APP.networkRole=val;APP.networkPage=0;APP.networkFocus='';return paint()}
  if(key==='network-page'){APP.networkPage=Math.max(0,APP.networkPage+Number(val));return paint()}
  if(key==='network-select'){APP.networkFocus=val;return paint()}
- if(key==='profile-step'){
-  // Read the existing tab buttons and deeper-record dropdown, not a second
-  // navigation inventory. The canonical source tabs use Overview -> record
-  // sections -> History; both arrows wrap at the ends.
-  const nav=btn.closest('.ng-person-dossierbar');
-  const select=nav?.querySelector('select[data-ng-select="profile-record"]');
-  const pages=['Overview',...[...(select?.options||[])].map(option=>option.value).filter(Boolean),'History'];
-  const step=Number(val);
-  if(!nav||!Number.isInteger(step)||Math.abs(step)!==1)return;
-  const at=pages.indexOf(APP.detailTab);
-  APP.detailTab=pages[((at<0?0:at)+step+pages.length)%pages.length];
-  return paint();
+ if(key==='dossier-entity-step'){
+  // Switch to the neighboring track/trainer/jockey/facility/owner/horse.
+  // The Overview/History/MORE RECORDS controls remain local section tabs.
+  return dossierOpenAdjacent(Number(val),currentRoute());
  }
  if(key==='detailtab'){APP.detailTab=val;return paint()}
  if(key==='stake-sort'){if(APP.stakeSort===val)APP.stakeSortDesc=!APP.stakeSortDesc;else{APP.stakeSort=val;APP.stakeSortDesc=false}return paint()}
