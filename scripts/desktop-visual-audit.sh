@@ -31,6 +31,9 @@ capture(){
 }
 capture racing-office '' 'ng-board'
 capture stable-roster '?ui=Stable%20%E2%80%94%20Overview' 'ng-stable-roster-v2'
+capture world-directory '?ui=World%20%E2%80%94%20Overview' 'ng-manager-screen'
+capture world-news '?ui=World%20%E2%80%94%20News' 'ng-news-screen'
+capture office-news '?ui=Office%20%E2%80%94%20News' 'ng-news-screen'
 capture racing-roster '?ui=Racing%20%E2%80%94%20Overview' 'ng-dept-roster'
 capture global-search '?ui=Search' 'ng-search-roster-page'
 capture horse-profile '?page=horse&name=The+Last+Match' 'ng-horse-dossier'
@@ -85,6 +88,16 @@ frame.onload=()=>setTimeout(()=>{
    })),
    horse:rect('.ng-horse-dossier'),
    search:rect('.ng-search-roster-page'),
+   worldDashboard:rect('.ng-manager-screen'),
+   newsDashboard:rect('.ng-news-screen'),
+   newsOfficeLinks:[...d.querySelectorAll('.ng-news-screen [data-ng="case"]')].length,
+   newsSourceStatus:d.querySelector('.ng-news-screen .ng-manager-sidebar')?.textContent?.includes('NOT CONNECTED')||false,
+   worldPreviewRows:[...d.querySelectorAll('.ng-manager-screen:not(.ng-news-screen) .ng-manager-row')].length,
+   worldPreviewSourceOnly:[...d.querySelectorAll('.ng-manager-screen:not(.ng-news-screen) [data-ng="search-go"]')]
+    .every(button=>{
+     const item=win.__WTW_NEXT__?.app?.searchIndex?.[Number(button.dataset.val)];
+     return Boolean(item?.worldKey&&item?.canonicalId);
+    }),
    people:rect('.ng-person-horse-dossier'),
    profile:rect('.ng-route-profile .ng-profile-view'),
    intro:rect('.ng-route-profile .ng-profile-intro'),
@@ -117,6 +130,10 @@ probe(){
 probe office ''
 probe stable-roster '%3Fui%3DStable%2520%25E2%2580%2594%2520Overview'
 probe racing-roster '%3Fui%3DRacing%2520%25E2%2580%2594%2520Overview'
+probe world-directory '%3Fui%3DWorld%2520%25E2%2580%2594%2520Overview'
+probe world-news '%3Fui%3DWorld%2520%25E2%2580%2594%2520News'
+probe office-news '%3Fui%3DOffice%2520%25E2%2580%2594%2520News'
+probe laptop-world-news '%3Fui%3DWorld%2520%25E2%2580%2594%2520News' '1280,800'
 probe laptop-stable-roster '%3Fui%3DStable%2520%25E2%2580%2594%2520Overview' '1280,800'
 probe laptop-racing-roster '%3Fui%3DRacing%2520%25E2%2580%2594%2520Overview' '1280,800'
 probe search '%3Fui%3DSearch'
@@ -201,6 +218,28 @@ for d in rows:
        'identity',d['intro']['width'],'local nav',d['localNavigation']['width'])
 Path('visual-audit/dom/profile-uniformity-metrics.json').write_text(json.dumps(rows,indent=2))
 PY
+python3 - <<'PY'
+import json,html,re
+from pathlib import Path
+# World and News must use the same FM/OOTP shell on desktop/laptop.
+for name in ('world-directory','world-news','office-news','laptop-world-news'):
+ source=Path(f'visual-audit/dom/probe-{name}.html').read_text()
+ assert 'data-check="ready"' in source,(name,'World/News render probe incomplete')
+ match=re.search(r'<pre id="measure"[^>]*>(.*?)</pre>',source,re.S)
+ assert match,(name,'Missing World/News visual metrics')
+ data=json.loads(html.unescape(match.group(1)))
+ assert data['rail'] and data['stage'] and data['worldDashboard'],(name,'Unified management layout missing')
+ assert not data['sourceBridgeVisible'],(name,'Old Office screen reappeared')
+ assert not data['duplicateGlobalMenuVisible'],(name,'Duplicate global navigation')
+ if name=='world-directory':
+  assert 0<=data['worldPreviewRows']<=100,(name,'World preview is unbounded')
+  assert data['worldPreviewSourceOnly'],(name,'Legacy Office demo record leaked into World preview')
+ else:
+  assert data['newsDashboard'] and data['newsDashboard']['width']>=800,(name,'News screen not visible')
+  assert data['newsSourceStatus'],(name,'Unverified news misrepresented as connected')
+ print('WORLD/NEWS UNIFORMITY',name,data['stage']['width'])
+PY
+
 # Interact with the actual unified application, not static HTML snapshots.
 # Every major screen must use the same rail, single route, and browser history.
 cat > public/__wtw_nav_probe.html <<'HTML'

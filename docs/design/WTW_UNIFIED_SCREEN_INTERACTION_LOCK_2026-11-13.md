@@ -87,3 +87,14 @@ This document formalizes the user's product direction and complements the existi
 
 Office Home uses the native `RETURN_OFFICE` game command in the 1999 career instead of an invisible click. All first-class data-roster departments and Stable use the same `openCustomView(section+' — Overview')` route and shared view-state grammar. Navigation stays inside `#wtwNextgen`, with one browser-history system; no competing Office screen is revived. Special historical and person/horse profile routes retain source-compatible adapters until they pass equivalent direct-projection tests. `tests/fm-direct-office-navigation.test.mjs` is a permanent regression gate.
 
+
+## World & News — One Manager Screen Family (2026-11-14)
+
+The World entry and its Overview/Major Races/News views now navigate directly through `openCustomView()`; the Office News view does the same. All use the current `#wtwNextgen` header, history and shared manager RECORD VIEW selector. No old World/News Office buttons are clicked.
+
+World Overview shows a capped, balanced preview (up to 20 each of canonical horse, person, farm, track and race records), **without truncating or changing the underlying source directories**. Its count identifies displayed records versus linked records. Dedicated directory screens remain available through the same RECORD VIEW menu.
+
+The News screen uses `ng-manager-screen`, existing manager classes, and only messages in the current game source or engine. It calls these **Office briefings** and never claims they are external published reports. An explicit 'verified external feed not connected' status remains visible; the old 2014 demo articles never appear as active 1999 news. News and World navigation use the uniform `Section — Page` URL format so browser Back/Forward restores the right screen.
+
+`tests/world-news-direct-screen-family.test.mjs` locks this behavior. The desktop audit captures actual World Overview, World News and Office News, including laptop News geometry. This is an operational/structural gate; continue visual editorial QA against FM/OOTP references.
+

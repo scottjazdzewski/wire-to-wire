@@ -160,12 +160,28 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    ui.departmentRows('Facilities','Training Centers').length===0&&
    ui.departmentRows('Facilities','Breaking Facilities').length===0);
   click('World');await pause(240);
-  // World landing overview is NOT a roster and has no VIEW dropdown.
-  // Its navigation is retained until selecting a sortable department view.
-  const worldPeopleTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')]
-   .find(x=>x.dataset.val==='People');
-  check('World landing overview retains entry to its roster views',Boolean(worldPeopleTab));
-  worldPeopleTab.click();await pause(270);
+  // World is now a first-class FM/OOTP manager page with the SAME record
+  // view picker used by all other management screens. No legacy tab strip.
+  const worldView=d.querySelector('#wtwNextgen select[data-ng-select="manager-screen"]');
+  check('World landing uses the common record-view selector, not old Office tabs',
+   Boolean(worldView)&&!d.querySelector('#wtwNextgen .ng-subbar')&&
+   ['People','1999 Horses','Organizations','News'].every(page=>
+    [...worldView.options].some(o=>o.value===page)));
+  worldView.value='News';
+  worldView.dispatchEvent(new w.Event('change',{bubbles:true}));
+  await pause(260);
+  check('World News uses current source-backed Office briefings and discloses missing verified news feed',
+   Boolean(d.querySelector('#wtwNextgen .ng-news-screen.ng-manager-screen'))&&
+   /NOT CONNECTED/.test(d.querySelector('#wtwNextgen .ng-news-screen')?.textContent||'')&&
+   !/Argosy colt buzz building|Pieta gallop-out report/.test(
+     d.querySelector('#wtwNextgen .ng-news-screen')?.textContent||''));
+  click('World');await pause(220);
+  const worldPeopleView=d.querySelector('#wtwNextgen select[data-ng-select="manager-screen"]');
+  check('World landing overview retains the complete People directory navigation',
+   Boolean(worldPeopleView)&&[...worldPeopleView.options].some(o=>o.value==='People'));
+  worldPeopleView.value='People';
+  worldPeopleView.dispatchEvent(new w.Event('change',{bubbles:true}));
+  await pause(270);
   noDuplicateTabs('World People roster');
   const sourcePersonButton=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
   check('1999 world person source row is navigable',Boolean(sourcePersonButton));
@@ -210,10 +226,12 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   check('Personnel can return from detail matrix to the shared Horse overview',Boolean(overviewTab));
   overviewTab.click();await pause(200);
   click('World');await pause(220);
-  const worldTracksTab=[...d.querySelectorAll('#wtwNextgen [data-ng="tab"]')]
-   .find(x=>x.dataset.val==='Tracks');
-  check('World landing can open approved track directory',Boolean(worldTracksTab));
-  worldTracksTab.click();await pause(340);
+  const worldTracksView=d.querySelector('#wtwNextgen select[data-ng-select="manager-screen"]');
+  check('World landing can open approved track directory through shared record selector',
+   Boolean(worldTracksView)&&[...worldTracksView.options].some(o=>o.value==='Tracks'));
+  worldTracksView.value='Tracks';
+  worldTracksView.dispatchEvent(new w.Event('change',{bubbles:true}));
+  await pause(340);
   noDuplicateTabs('Tracks');
   const worldTracks=w.__WTW_NEXT__?.app?.departmentVisible||[];
   if(!(worldTracks.length===118&&worldTracks.every(t=>t._kind==='track')&&
