@@ -170,6 +170,12 @@ function init(){
   const absolute=new URL(src,location.href).href;
   cachedLegacyHero(absolute).then(asset=>{
    if(!asset||!img.isConnected||img.dataset.wtwMatteSource!==src)return;
+   img.addEventListener("error",()=>{
+    if(!img.isConnected||img.getAttribute("src")!==asset.url)return;
+    img.src=src;img.dataset.wtwMatteSource=src;
+    mark.classList.remove("wtw-hero-transparent","wtw-hero-dark-ink");
+    mark.classList.add("wtw-hero-legacy");
+   },{once:true});
    img.src=asset.url;img.dataset.wtwMatteSource=asset.url;
    mark.classList.remove("wtw-hero-legacy");
    mark.classList.add("wtw-hero-transparent");
