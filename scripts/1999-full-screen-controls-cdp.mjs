@@ -361,10 +361,10 @@ try {
   // It must change the selected ENTITY, never cycle Overview into a detail
   // section of the same track/trainer/jockey/owner/facility/horse.
   async function stepProfile(direction){
-   const activated=await evaluate(\`(()=>{
-    const button=document.querySelector('#wtwNextgen .ng-person-dossierbar [data-ng="dossier-entity-step"][data-val="\${direction}"]');
+   const activated=await evaluate(`(()=>{
+    const button=document.querySelector('#wtwNextgen .ng-person-dossierbar [data-ng="dossier-entity-step"][data-val="${direction}"]');
     if(!button||button.disabled)return false;button.click();return true;
-   })()\`);
+   })()`);
    assert.ok(activated,item.family+' entity arrow '+direction+' missing or disabled');
   }
   async function changedProfile(old,label){
