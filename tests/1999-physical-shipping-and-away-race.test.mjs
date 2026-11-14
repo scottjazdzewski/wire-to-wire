@@ -120,3 +120,34 @@ test('return transport charges owner again, restores actual home, keeps trip rec
  assert.ok(horseTravelStatus(s,h.horse_id).history.some(x=>x.event==='RETURNED_HOME'));
  assert.deepEqual(importGameSave(exportGameSave(s,world),world),s);
 });
+
+test('AI trainers review away opportunities after opening campaigns, with welfare, cash and race-travel custody',()=>{
+ let s=fresh();
+ for(let i=0;i<31;i++)s=day(s);
+ const reviews=s.event_log.filter(e=>e.kind==='AI_TRAINER_SHIPPING_REVIEW');
+ const departures=s.event_log.filter(e=>e.kind==='HORSE_SHIPPING_DEPARTED');
+ const decisions=s.event_log.filter(e=>e.kind==='AI_TRAINER_AWAY_CAMPAIGN');
+ assert.ok(reviews.length>=1,'Weekly away-race opportunity review must actually occur');
+ assert.equal(departures.length,decisions.length);
+ assert.ok(decisions.every(e=>e.details.owner_id!==s.player.operation_id),
+  'No player horse ships automatically');
+ assert.ok(decisions.every(e=>e.details.net_opportunity_minor>0&&
+  e.details.return_haul_budget_minor>0));
+ for(const e of decisions){
+  const t=horseTravelStatus(s,e.details.horse_id);
+  assert.ok(t);
+  assert.ok(t.history.some(x=>x.event==='SHIPPED_OUT'));
+  const horse=s.runtime.registered_horses.by_id[e.details.horse_id];
+  assert.equal(t.home_site_id,horse.current_residence_id);
+ }
+ const shippingMoney=s.runtime.finances.ledger.filter(x=>
+  ['HORSE_OUTBOUND_SHIPPING_CHARGE','HORSE_RETURN_SHIPPING_CHARGE',
+   'MODELED_HORSE_CARRIER_RECEIPT'].includes(x.kind));
+ assert.equal(shippingMoney.reduce((n,x)=>n+x.amount_minor,0),0);
+ assert.deepEqual(importGameSave(exportGameSave(s,world),world),s);
+ console.info('WTW_1999_AUTONOMOUS_SHIPPING_QA',JSON.stringify({
+  day:s.clock.date,reviews:reviews.length,shipped:departures.length,
+  away_targets:decisions.map(d=>d.details.target_race_id),
+  returns:s.event_log.filter(e=>e.kind==='HORSE_SHIPPING_RETURNED').length
+ }));
+});
