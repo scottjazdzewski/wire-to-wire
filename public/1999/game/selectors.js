@@ -6,6 +6,7 @@ import {personReputationView,rankProfessionalCandidates} from './reputation.js';
 import {normalizePersonRoles} from './people-generator.js';
 import {currentHorseOwnerId,getOwnerPortfolioView} from './ownership.js';
 import {careerHorse,getRegisteredHorseDirectory} from './horse-registration.js';
+import {gameFuturePerson,gameFutureOrganization,gameFutureIndustry} from './future-industry-activation-v23.js';
 
 export function getStableView(state, world) {
   validateGameRun(state, world);
@@ -32,6 +33,8 @@ export function getOfficeView(state, world) {
     player_owner_horse_count:state.player.role==='owner'&&state.player.operation_id?
       getOwnerPortfolioView(state,world,state.player.operation_id,{limit:0}).total:null,
     registered_horse_count:getRegisteredHorseDirectory(state,world).length,
+    future_approved_person_count:Object.keys(gameFutureIndustry(state)?.people??{}).length,
+    future_approved_organization_count:Object.keys(gameFutureIndustry(state)?.organizations??{}).length,
     state_revision: state.revision
   };
 }
@@ -49,8 +52,21 @@ export function getCanonicalProfile(world, group, entityId) {
  */
 export function getPersonView(state,world,personId,catalog){
   validateGameRun(state,world);
-  const person=worldIdentity(world,'people',personId);
+  const canonical=worldIdentity(world,'people',personId);
+  const person=canonical??gameFuturePerson(state,world,personId);
   ensure(Boolean(person),'UNKNOWN_PERSON','Unknown person '+personId);
+  if(!canonical){
+    // A V23 future person is a real saved-game identity, but has no source
+    // historical reputation or magically observed abilities. Never invent
+    // game-model assessments or infer a full biographical career.
+    return {
+      id:person.id,name:person.name,roles:[person.role],
+      source_status:'APPROVED_FUTURE_V12_V17_GAME_IDENTITY',
+      reputation:null,attributes:[],relationships:{},career:{},
+      birth_year:person.birthYear,
+      future_identity:true,game_date:state.clock.date
+    };
+  }
   const roles=normalizePersonRoles(person,catalog);
   const definitions=attributeDefinitions(catalog,'people',roles);
   const runtime=state.runtime.people[personId]||{};
@@ -79,9 +95,32 @@ export function getPersonView(state,world,personId,catalog){
 }
 export function getPeopleDirectory(state,world,catalog){
   validateGameRun(state,world);
-  return world.entities.people.map(person=>getPersonView(state,world,person.id,catalog));
+  return [...world.entities.people,...Object.values(gameFutureIndustry(state)?.people??{})]
+   .map(person=>getPersonView(state,world,person.id,catalog));
 }
 export function getProfessionalOpportunityRanking(state,world,catalog,opportunity,candidates){
   validateGameRun(state,world);
   return rankProfessionalCandidates({catalog,state,world,opportunity,candidates});
+}
+
+/** Real game-run business profile; canonical founding firms remain in world. */
+export function getGameIndustryOrganizationView(state,world,organizationId){
+  validateGameRun(state,world);
+  const company=gameFutureOrganization(state,world,organizationId);
+  ensure(Boolean(company),'UNKNOWN_OPERATION','Unknown organization '+organizationId);
+  const future=!worldIdentity(world,'organizations',organizationId);
+  return future?{
+    id:company.id,name:company.name,kind:company.kind,
+    status:company.status,principal_id:company.principalId,
+    trainer_id:company.trainerId,manager_ids:[...company.managerIds],
+    location:structuredClone(company.location),naming_region:company.namingRegion,
+    source_status:'APPROVED_FUTURE_V12_V17_GAME_IDENTITY',
+    activated_on:company.activated_on,
+    provenance:'V12_V17_PERMANENT_IDENTITIES_IN_SAVED_GAME',
+    game_date:state.clock.date
+  }:{
+    ...structuredClone(company),
+    source_status:company.source_status??'APPROVED_WORLD_SNAPSHOT',
+    game_date:state.clock.date
+  };
 }
