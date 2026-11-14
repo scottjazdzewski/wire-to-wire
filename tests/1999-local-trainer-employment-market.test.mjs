@@ -132,12 +132,14 @@ test('an offer cannot be applied while a horse has a live racing entry or is phy
  const entryBlocked=structuredClone(s);
  entryBlocked.runtime.entries['test:active']={horse_id:h.horse_id,race_id:'R-TEST',status:'BOOKED'};
  entryBlocked.runtime.races['R-TEST']={status:'ENTRIES_OPEN'};
- assert.throws(()=>command(entryBlocked,'hire:entry','OFFER_LOCAL_TRAINER_ASSIGNMENT',p,'player'),
-  e=>e.code==='TRAINER_HIRE_BLOCKED');
+ assert.equal(getLocalTrainerHiringMarket(entryBlocked,world,h.horse_id).
+  offers[0].location_blocker,'LIVE_RACE_ENTRY');
  const travelBlocked=structuredClone(s);
  travelBlocked.runtime.racing.horse_travel[h.horse_id]={status:'OUTBOUND'};
- assert.throws(()=>command(travelBlocked,'hire:away','OFFER_LOCAL_TRAINER_ASSIGNMENT',p,'player'),
-  e=>e.code==='TRAINER_HIRE_BLOCKED');
+ assert.equal(getLocalTrainerHiringMarket(travelBlocked,world,h.horse_id).
+  offers[0].location_blocker,'HORSE_SHIPPING_OR_AWAY');
+ // Command validation separately requires a real booking/shipping record;
+ // never place a forged travel record into an otherwise valid game save.
 });
 
 test('sustained trainer frustration issues a warning but never fires a player trainer or teleports a horse',()=>{
