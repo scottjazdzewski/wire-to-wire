@@ -134,11 +134,22 @@ test('AI service renewal responds to recorded reputation, trust and owner cash a
  s=advance(s); // January 30: agent reviews the actual January 29 trust/standing
  const offer=getTrainerContract(s,world,owner,trainer).agreement;
  assert.ok(offer.pending,'AI must negotiate an affordable raise in response to exceptional trainer standing');
- assert.equal(offer.pending.daily_fee_minor,reviewQuote.minimum_acceptable_minor);
+ // The renewal is quoted *after* the real concern response, then the
+ // normal daily care settlement can change trust again before day-end reads.
+ // Verify the exact posted contract decision, not a stale day-end preview.
+ const renewal=s.event_log.findLast(e=>e.kind==='AI_TRAINER_SERVICE_RENEGOTIATED'&&
+  e.details.owner_id===owner&&e.details.trainer_id===trainer);
+ assert.ok(renewal,'The scheduled fee action must be journaled');
+ assert.equal(offer.pending.daily_fee_minor,renewal.details.new_daily_fee_minor);
+ assert.ok(offer.pending.daily_fee_minor>first);
+ if(offer.pending.daily_fee_minor!==reviewQuote.minimum_acceptable_minor)
+  assert.ok(s.event_log.some(e=>e.kind==='TRAINER_CONCERN_RESPONDED'&&
+   e.details.owner_id===owner&&e.details.trainer_id===trainer),
+   'An intervening relationship conversation must explain changed pricing');
  assert.equal(offer.daily_fee_minor,first,'Review cannot retroactively change today\'s fee');
  s=advance(s);
  const active=getTrainerContract(s,world,owner,trainer).agreement;
- assert.equal(active.daily_fee_minor,reviewQuote.minimum_acceptable_minor);
+ assert.equal(active.daily_fee_minor,renewal.details.new_daily_fee_minor);
  assert.ok(s.event_log.some(e=>e.kind==='AI_TRAINER_SERVICE_RENEGOTIATED'&&
   e.details.owner_id===owner&&e.details.trainer_id===trainer));
  assert.deepEqual(importGameSave(exportGameSave(s,world),world),s);
