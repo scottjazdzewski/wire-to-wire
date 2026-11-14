@@ -55,6 +55,10 @@ test('the on-screen desk makes a real preview protocol call and locally screens 
  assert.ok(desk.render().includes('NOT RELEASED'));
  assert.equal(desk.mark(IDEA.name),true);
  assert.equal(desk.snapshot().shortlist.length,1);
+ assert.equal(desk.reject(IDEA.name),true);
+ assert.equal(desk.snapshot().shortlist.length,0);
+ assert.deepEqual(desk.snapshot().rejected,[IDEA.name]);
+ assert.equal(desk.mark(IDEA.name),false);
  assert.equal(desk.clear(),true);
  assert.equal(desk.snapshot().results.length,0);
 });
