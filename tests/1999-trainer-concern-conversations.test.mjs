@@ -151,7 +151,11 @@ test('AI owners answer their own concerns without overwriting the player owner d
  const {s,owner,trainerId,record}=strainedPair({player:false});
  assert.equal(record.concern?.status,'RESOLVED');
  assert.equal(record.concern.responder,'system');
- assert.equal(record.conversation_history.length,1);
+ assert.ok(record.conversation_history.length>=1,
+  'A trainer may raise an initial concern mid-cycle and another at a later review');
+ assert.equal(new Set(record.conversation_history.map(x=>x.request_id)).size,
+  record.conversation_history.length,'No request may be answered twice');
+ assert.ok(record.conversation_history.every(x=>x.status==='RESOLVED'));
  assert.equal(s.runtime.owner_trainer_reviews.totals.ai_concern_responses>=1,true);
  assert.ok(s.event_log.some(e=>e.kind==='TRAINER_CONCERN_RESPONDED'&&
   e.details.owner_id===owner&&e.details.trainer_id===trainerId&&
