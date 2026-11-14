@@ -1,3 +1,8 @@
+> **SUPERSEDED — DO NOT USE AS THE CURRENT GAMEPLAY BUILD PLAN (November 13, 2026).**
+>
+> Current, authoritative horse-generation → first-playable-race handoff: [FOUNDING_1999_SINGLE_SOURCE_HANDOFF_CURRENT.md](./FOUNDING_1999_SINGLE_SOURCE_HANDOFF_CURRENT.md).
+> This older file contains obsolete 84-youngstock references and/or retired 2014/B01/bulk-world instructions. The live clean foundation contains **zero racing horses, 26 selected jockey identities, 20 trainer identities, 73 protected breeding horses, 37 organizations and 118 North American/Cuban tracks**. Do not reactivate old generated entities.
+>
 # WIRE TO WIRE — Founding 1999 world to gameplay-engine handoff
 
 **Date:** November 13, 2026  
