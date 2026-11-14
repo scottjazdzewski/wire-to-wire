@@ -9,6 +9,7 @@ import {ensure} from './contracts.js';
 import {GAME_NAMING_BRIDGE_SCHEMA,screenGameHorseName,buildGameHorseNamingBrief}
  from './horse-naming-bridge.js';
 import {OWNER_REVIEWED_NAME_KEYS_V478} from './horse-naming-owner-review-v478.js';
+import {buildTasteDirectedWritingLens,OWNER_RATED_TOTAL_V482} from './horse-naming-taste-v482.js';
 
 export const HORSE_NAME_CREATOR_SCHEMA='WTW_GAME_STORY_FIRST_NAME_CREATOR_V1';
 export const GAME_NAME_WRITER_ID='CLOUDFLARE_WORKERS_AI_CREATOR_V1';
@@ -38,7 +39,9 @@ export function authoringEvidence(brief){
 export function buildStoryFirstWritingRequest(brief,{recentNames=[]}={}){
  const anchors=authoringEvidence(brief);
  ensure(Array.isArray(recentNames),'NAMING_COHORT','Invalid recent-name history');
+ const direction=buildTasteDirectedWritingLens({horseId:brief.horseId,ownerId:brief.owner?.id});
  const input={
+  ratingHistoryReviewed:OWNER_RATED_TOTAL_V482,creativeDirection:direction,
   horseId:brief.horseId,foalingYear:brief.foalingYear,
   owner:brief.owner,breeder:brief.breeder,
   birthplace:brief.foalingLocationId||null,
@@ -47,6 +50,9 @@ export function buildStoryFirstWritingRequest(brief,{recentNames=[]}={}){
  };
  const system=[
   'You are a human-quality thoroughbred naming writer. Create actual individual names, not lists of word pairings.',
+  'The owner has rated 520 past examples (1 excellent, 4 reject). The creativeDirection shows exact examples of those judgments, NOT any causal explanation for them.',
+  'Use the creativeDirection as one possible human perspective. Do not copy, permute or imitate any rated name; it is in the forbidden name set.',
+  'Your goal is a living, memorable, specific name, not a technically valid phrase. Distinct names should feel as if different owners chose them.',
   'The game is an alternate horse-racing universe beginning in 1999. Use only the supplied horse-specific, attested origin evidence.',
   'Make names that different real owners might plausibly choose: an odd memory, an intimate joke, a musical or cultural allusion, a meaningful place, a remembered phrase, a striking one-word identity.',
   'Not every name has to expose the origin literally. An indirect metaphor is welcome IF explainable from the supplied story.',

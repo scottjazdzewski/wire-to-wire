@@ -63,3 +63,6 @@ export {HORSE_NAME_CREATOR_SCHEMA,GAME_NAME_WRITER_ID,authoringEvidence,buildSto
 export {OWNER_REVIEWED_COUNT_V478} from './horse-naming-owner-review-v478.js';
 
 export {HORSE_NAME_OWNER_RELEASE_SCHEMA,HORSE_NAME_OWNER_COMMANDS,ensureHorseNameCandidateDirectory,validateHorseNameCandidates,stageStoryHorseNameAction,ownerDecidesHorseNameAction,makeOwnerApprovedHorseNamingRelease,validateOwnerApprovalInRelease} from './horse-name-owner-release.js';
+
+export {OWNER_RATED_TOTAL_V482,OWNER_RATING_COUNTS_V482,ownerRatedNameScore,buildTasteDirectedWritingLens,ownerTasteResearchSummary} from './horse-naming-taste-v482.js';
+export {NAMING_COHORT_AUDIT_SCHEMA_V482,auditHorseNamingCohort} from './horse-naming-cohort-audit-v482.js';
