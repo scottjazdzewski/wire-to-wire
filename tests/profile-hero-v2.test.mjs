@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync,existsSync} from "node:fs";
-import {removeWhiteEdgeMatte,heroContext,profileTitle,heroCandidate,heroInitials,dossierLabel} from "../public/next/profile-hero-v2.mjs";
+import {removeWhiteEdgeMatte,heroContext,profileTitle,heroCandidate,heroInitials,dossierLabel,visibleAlphaBounds} from "../public/next/profile-hero-v2.mjs";
 
 const css=readFileSync(new URL("../public/next/profile-hero-v2.css",import.meta.url),"utf8");
 const index=readFileSync(new URL("../public/next/index.html",import.meta.url),"utf8");
@@ -118,4 +118,38 @@ test("profile dossier subnavigation keeps buttons and more records on narrow scr
  assert.match(css,/ng-profile-view\.ng-profile-horse \.ng-person-dossieractions/);
  assert.match(css,/grid-template-columns:minmax\(64px,1fr\) minmax\(64px,1fr\) minmax\(110px,1\.5fr\)/);
  assert.match(css,/height:auto!important/);
+});
+
+
+test("transparent logo safe margins are optically fitted without changing source pixels",()=>{
+ const w=160,h=120,rgba=new Uint8ClampedArray(w*h*4);
+ // A transparent horizontal mark with its own large 4:3 export canvas.
+ for(let y=42;y<=67;y++)for(let x=21;x<=137;x++){
+  const p=(y*w+x)*4;
+  rgba[p]=0;rgba[p+1]=167;rgba[p+2]=204;rgba[p+3]=255;
+ }
+ const before=rgba.slice();
+ const crop=visibleAlphaBounds({width:w,height:h,data:rgba});
+ assert.ok(crop);
+ assert.ok(crop.x<21&&crop.y<42);
+ assert.ok(crop.width<160&&crop.height<120);
+ assert.ok(crop.x+crop.width>137&&crop.y+crop.height>67);
+ assert.deepEqual(rgba,before,"optical geometry must never alter source pixels");
+});
+test("full-bleed, invalid, and nearly invisible images skip optical cropping",()=>{
+ const w=20,h=20,opaque=new Uint8ClampedArray(w*h*4);
+ for(let i=0;i<w*h;i++)opaque[i*4+3]=255;
+ assert.equal(visibleAlphaBounds({width:w,height:h,data:opaque}),null);
+ assert.equal(visibleAlphaBounds({width:0,height:0,data:new Uint8ClampedArray(0)}),null);
+ const invisible=new Uint8ClampedArray(opaque.length);
+ invisible[3]=255;
+ assert.equal(visibleAlphaBounds({width:w,height:h,data:invisible}),null);
+});
+test("optical-fit derivatives only change display URLs, never canonical exact-ID file paths",()=>{
+ const source=readFileSync(new URL("../public/next/profile-hero-v2.mjs",import.meta.url),"utf8");
+ assert.match(source,/makeOpticalHero\(img,src\)/);
+ assert.match(source,/cropped\.toBlob\(resolve,"image\/png"\)/);
+ assert.match(source,/img\.src=display/);
+ assert.match(source,/logo\.src=visual\.displayUrl\|\|candidate/);
+ assert.equal(heroCandidate("track","T-0017"),"/assets/places/track-hero/T-0017.webp");
 });
