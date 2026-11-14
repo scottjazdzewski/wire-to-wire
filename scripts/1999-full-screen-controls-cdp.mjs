@@ -136,6 +136,23 @@ try {
    if(status.roster){
     assert.ok(status.sortable>=2,'Unsortable roster: '+section+' / '+page);
     assert.ok(status.scrollable,'Unreachable roster scroll: '+section+' / '+page);
+    // Exercise a real header click, not merely the presence of a sort icon.
+    // This toggles only the table projection; game time and source stay intact.
+    const before=await evaluate(`(()=>{
+     const b=document.querySelector('#wtwNextgen .ng-rs-table thead th button[data-ng]');
+     if(!b)return null;const th=b.closest('th');
+     const value={key:b.dataset.val,direction:th.getAttribute('aria-sort')};
+     b.click();return value;
+    })()`);
+    assert.ok(before?.key,'Sortable header is not clickable: '+section+' / '+page);
+    await ready(section,page,'Re-sort '+section+' / '+page);
+    const after=await evaluate(`(()=>{
+     const buttons=[...document.querySelectorAll('#wtwNextgen .ng-rs-table thead th button[data-ng]')];
+     const b=buttons.find(x=>x.dataset.val===${JSON.stringify(before?.key)});
+     return b?.closest('th')?.getAttribute('aria-sort')||null;
+    })()`);
+    assert.equal(after,before.direction==='ascending'?'descending':'ascending',
+     'Sortable table failed to reverse its header direction: '+section+' / '+page);
     tableCount++;
    }
    pageCount++;
