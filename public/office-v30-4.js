@@ -99,6 +99,14 @@
   let gameState = blankGameState();
 
   function currentGameDate(){
+    if(window.__WTW_1999_MANAGEMENT__){
+      // The hidden legacy date chip is NOT the source of truth for a game
+      // save, decision timestamp, or calendar. The canonical career owns it.
+      const date=String(gameState.date||'');
+      if(/^\d{4}-\d{2}-\d{2}$/.test(date)&&
+         !Number.isNaN(Date.parse(date+'T12:00:00Z')))return date;
+      return '1999-01-01';
+    }
     const raw = dateChip ? dateChip.textContent.trim() : gameState.date;
     const m = raw.match(/\d{4}-\d{2}-\d{2}/);
     return m ? m[0] : (gameState.date || '1999-01-01');
