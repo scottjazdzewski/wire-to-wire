@@ -187,6 +187,10 @@ export function advanceHorseTrainingDay(record,horse,trainer,date,seed=19990101,
  const welfare=(nutrition-.62)*.17+(supervision-.55)*.16+(barn-.7)*.12-
   Math.max(0,crowding-.8)*.13;
  let work=next.status==='INACTIVE'?'REST':next.plan==='AUTO'?recommendHorseWorkout(next,horse,trainer,date):workFor(next.plan,dayOrdinal);
+ // Registered daily trainer agent may choose a specific workout instead of
+ // relying only on the weekly plan. Safe rest always overrides.
+ if(typeof careContext.workout==='string'&&TRAINING_PLANS[careContext.workout]&&
+  careContext.workout!=='AUTO'&&next.status==='ACTIVE')work=careContext.workout;
  if(next.sorenessDays>0)work='REST';
  const intensity=TRAINING_PLANS[work].load;
  const geneticallyTough=1-attr(horse.attributes,'soundness_risk',.48);
