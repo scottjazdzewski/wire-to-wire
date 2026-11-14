@@ -10,6 +10,11 @@ on:
   pull_request:
     paths:
       - 'public/next/**'
+      - 'public/archive/**'
+      - 'public/app.js'
+      - 'public/style.css'
+      - 'scripts/history-ledger-browser-cdp.mjs'
+      - 'tests/history-ledger-year-review.test.mjs'
       - 'scripts/desktop-visual-audit.sh'
       - 'scripts/1999-full-screen-controls-cdp.mjs'
       - 'tests/ui-uniformity-lock.test.mjs'
@@ -62,5 +67,30 @@ jobs:
         with:
           name: wtw-full-screen-control-matrix
           path: full-screen-qa.log
+          retention-days: 14
+          if-no-files-found: warn
+
+  history-ledger-interactions:
+    name: Historical Ledger and Year in Review in Chromium
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check real historical ledger sorting, filtering, season opening and Back navigation
+        shell: bash
+        run: |
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME"
+          CHROME="$CHROME" node scripts/history-ledger-browser-cdp.mjs | tee history-ledger-browser.log
+          grep -q 'WTW_HISTORY_LEDGER_BROWSER_PASS' history-ledger-browser.log
+      - name: Retain historical UI browser acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-history-ledger-browser
+          path: history-ledger-browser.log
           retention-days: 14
           if-no-files-found: warn

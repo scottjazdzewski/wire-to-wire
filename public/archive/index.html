@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0b1014" />
   <meta name="description" content="A source-backed Thoroughbred racing manager with a compact historical archive." />
-  <title>WIRE TO WIRE · History Vault</title>
+  <title>WIRE TO WIRE · Racing History</title>
   <link rel="icon" type="image/png" href="/assets/wtw-logo.png" />
   <link rel="stylesheet" href="/style.css" />
   <script type="module" src="/app.js"></script>
@@ -22,12 +22,12 @@
       <div class="side-divider"></div>
       <div class="side-label">RACING OPERATIONS</div>
       <nav class="side-nav" aria-label="Main navigation">
-        <button data-page="overview" class="nav-link active"><span class="nav-icon">▦</span> Command Center</button>
+        <button data-page="races" class="nav-link active"><span class="nav-icon">⚑</span> History Records</button>
+        <button data-page="overview" class="nav-link"><span class="nav-icon">▦</span> Historical Overview</button>
         <button data-page="seasons" class="nav-link"><span class="nav-icon">◷</span> Race Calendar</button>
-        <button data-page="horses" class="nav-link"><span class="nav-icon">♞</span> My Stable</button>
+        <button data-page="horses" class="nav-link"><span class="nav-icon">♞</span> Horse Registry</button>
         <button data-page="people" class="nav-link"><span class="nav-icon">♙</span> People & Farms</button>
         <button data-page="tracks" class="nav-link"><span class="nav-icon">⌖</span> Racecourses</button>
-        <button data-page="races" class="nav-link"><span class="nav-icon">⚑</span> History Vault</button>
       </nav>
       <div class="side-label side-label-second">ARCHIVE TOOLS</div>
       <nav class="side-nav" aria-label="Governance navigation">
@@ -40,8 +40,8 @@
       <header class="topbar">
         <div class="header-left">
           <button id="mobile-menu" class="icon-button mobile-only" aria-label="Toggle menu">☰</button>
-          <span class="eyebrow">YOUR THOROUGHBRED OPERATION</span>
-          <h1 id="page-title">Command Center</h1>
+          <span class="eyebrow">RACING HISTORY · VERIFIED READ MODEL</span>
+          <h1 id="page-title">History Records</h1>
         </div>
         <div class="header-right">
           <span class="env-pill" id="data-mode">Checking source…</span>
@@ -50,10 +50,10 @@
       </header>
       <div class="workspace-tools">
         <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="global-search" type="search" placeholder="Search horses, horsemen, farms, races or record IDs…" autocomplete="off" aria-label="Search the historical archive" /></label>
-        <label class="year-wrap">SEASON <select id="year-select" aria-label="Select racing season"><option value="1953">1953</option></select></label>
+        <label class="year-wrap">SEASON <select id="year-select" aria-label="Select racing season"><option value="1998">1998</option></select></label>
       </div>
-      <main class="main" id="app" tabindex="-1"><div class="loading">Opening the historical ledger…</div></main>
-      <footer class="footer"><span>WIRE TO WIRE · ARCHIVE BUILD</span><span>Simulation unlocks after history and layout review</span></footer>
+      <main class="main" id="app" tabindex="-1"><div class="loading">Loading historical race records…</div></main>
+      <footer class="footer"><span>WIRE TO WIRE · ARCHIVE BUILD</span><span>Read-only historical records · the playable career remains in Racing Office</span></footer>
     </div>
   </div>
   <div id="drawer-backdrop" class="backdrop" hidden></div>

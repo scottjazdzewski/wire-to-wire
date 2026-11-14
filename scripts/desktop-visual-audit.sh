@@ -52,7 +52,8 @@ capture personnel '?ui=Personnel' 'ng-manager-screen|ng-dept-roster'
 capture facilities '?ui=Facilities' 'ng-manager-screen|ng-dept-roster'
 capture finances '?ui=Finances' 'ng-manager-screen|ng-dept-roster'
 capture breeding '?ui=Breeding' 'ng-manager-screen|ng-dept-roster'
-capture history-vault 'archive/' 'History Vault'
+capture history-vault 'archive/' 'Historical Racing Records'
+capture history-year-review 'archive/?page=races&review=1953' 'history-year-review'
 # Browser geometry probe: screenshot files alone cannot detect a collapsed
 # CSS media scope. Measure the *rendered* game viewport at desktop resolution.
 cat > public/__wtw_visual_probe.html <<'HTML'

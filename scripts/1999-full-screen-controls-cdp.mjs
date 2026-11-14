@@ -480,9 +480,13 @@ try {
    try{
     last=await evaluate(`({
       path:location.pathname,category:new URLSearchParams(location.search).get('page'),
-      vault:document.body?.textContent?.includes('History Vault')||false
+      currentNav:document.querySelector('.side-nav [aria-current="page"]')?.dataset.page||null,
+      loaded:!!document.querySelector('#app')&&
+        !document.querySelector('#app .loading')&&!!document.querySelector('#app').textContent.trim(),
+      recordLedger:!!document.querySelector('#app .history-ledger-table')
     })`);
-    if(last?.path==='/archive/'&&last.category===code&&last.vault){passed=true;break}
+    if(last?.path==='/archive/'&&last.category===code&&last.currentNav===code&&
+      last.loaded&&(code!=='races'||last.recordLedger)){passed=true;break}
    }catch{}
    await delay(80);
   }
