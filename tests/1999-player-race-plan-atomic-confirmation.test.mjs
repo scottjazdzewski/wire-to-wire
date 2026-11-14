@@ -147,3 +147,37 @@ test('the existing browser game service exposes the same quote, and a one-step s
  assert.deepEqual(restored.view(),engine.view());
  assert.deepEqual(restored.getRacePlanQuote(c.payload).can_confirm,false);
 });
+
+test('confirmed player booking advances into a real race with settled career and post-race feedback',async()=>{
+ const {state,world}=await started();
+ const c=selection(state,world,false);assert.ok(c);
+ let active=command(state,world,'player:race-plan:full-race',{
+  ...c.payload,expected_revision:c.quote.expected_revision,
+  maximum_total_minor:c.quote.immediate_total_minor}).state;
+ const originalHorse=structuredClone(active.runtime.registered_horses.by_id[c.horse.horse_id]);
+ const entryId=c.race.race_id+':'+c.horse.horse_id;
+ let days=0;
+ while(active.clock.date<=c.race.date&&days<16){
+  active=dispatchGameCommand({state:active,world,command:{
+   id:'player:race-plan:race-day:'+active.clock.date,
+   type:'ADVANCE_DAY',payload:{},actor:'system'}}).state;
+  days++;
+ }
+ const completed=active.runtime.races[c.race.race_id];
+ assert.equal(completed.status,'OFFICIAL_SIM_RESULT');
+ const entry=active.runtime.entries[entryId];
+ assert.ok(entry&&['RESULTED','SCRATCHED'].includes(entry.status));
+ const horse=active.runtime.registered_horses.by_id[c.horse.horse_id];
+ if(entry.status==='RESULTED'){
+  assert.equal(horse.career.starts,originalHorse.career.starts+1);
+  assert.ok(completed.results.some(r=>r.horse_id===horse.horse_id));
+  assert.ok(active.event_log.some(x=>x.kind==='POST_RACE_PROFESSIONAL_FEEDBACK'&&
+   x.details.horse_id===horse.horse_id));
+ }else{
+  assert.equal(horse.career.starts,originalHorse.career.starts);
+  assert.ok(active.event_log.some(x=>x.kind.includes('SCRATCH')&&
+   x.details?.horse_id===horse.horse_id));
+ }
+ assert.ok(active.runtime.horse[horse.horse_id].training.asOf>=c.race.date);
+ assert.deepEqual(importGameSave(exportGameSave(active,world),world),active);
+});
