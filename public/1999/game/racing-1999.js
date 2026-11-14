@@ -287,6 +287,9 @@ export function validateRacingRuntime(state,world){
   ensure(person(world,j.id)&&Boolean(trackFor(world,j.home_track_id))&&
    cents(rt.jockey_finances_minor[j.id])&&cents(j.starts)&&cents(j.wins)&&j.wins<=j.starts,
    'RACE_SAVE','Unknown or invalid jockey agent');
+ for(const [trainerId,earnedMinor] of Object.entries(rt.trainer_finances_minor))
+  ensure(person(world,trainerId)&&cents(earnedMinor),
+   'RACE_SAVE','Trainer earned fees and purses must resolve to an approved person and integer cents');
  for(const [id,r] of Object.entries(state.runtime.races||{})){
   if(!r.source||r.source!=='WTW_1999_TRACK_SPECIFIC_MEET_PROGRESSION')continue;
   ensure(r.id===id&&trackFor(world,r.track_id)&&validDate(r.date)&&
