@@ -446,7 +446,7 @@ export function facilityFinancialReport(state,world,operationId,{from,to}={}){
  const rows=state.runtime.finances.ledger.filter(e=>e.operation_id===operationId&&
   typeof e.site_id==='string'&&e.date>=start&&e.date<=end);
  const amounts={FACILITY_BOARDING_REVENUE:0,FACILITY_DAILY_OPERATIONS:0,
-  FACILITY_STAFF_PAYROLL:0,FACILITY_MAINTENANCE:0,FACILITY_PURCHASE:0,FACILITY_UPGRADE:0};
+  FACILITY_TRACK_RENT:0,FACILITY_STAFF_PAYROLL:0,FACILITY_MAINTENANCE:0,FACILITY_PURCHASE:0,FACILITY_UPGRADE:0};
  const siteMap={};
  for(const e of rows){
   ensure(integer(e.amount_minor)&&Object.hasOwn(amounts,e.kind),
@@ -467,7 +467,7 @@ export function facilityFinancialReport(state,world,operationId,{from,to}={}){
  }
  const revenue=amounts.FACILITY_BOARDING_REVENUE;
  const costs=-(amounts.FACILITY_DAILY_OPERATIONS+amounts.FACILITY_STAFF_PAYROLL+
-  amounts.FACILITY_MAINTENANCE);
+  amounts.FACILITY_MAINTENANCE+amounts.FACILITY_TRACK_RENT);
  const capex=-(amounts.FACILITY_PURCHASE+amounts.FACILITY_UPGRADE);
  return {operation_id:operationId,from:start,to:end,
   revenue_minor:revenue,operating_cost_minor:costs,
