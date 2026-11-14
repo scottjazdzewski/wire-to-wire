@@ -16,6 +16,21 @@ Effective: November 14, 2026. Applies to EVERY engineering window, every file, b
 9. Preserve saved careers and source IDs across updates. New schemas require explicit tested migrations, backup/recovery and old-version reopen tests before release. Never silently coerce a damaged or incompatible save.
 10. Record actual checks, evidence, commit, approval, failures and rollback point. Never merge on pending tests or claim a test cohort is production-certified.
 
+## Universal interface requirement: dense, scrollable, sortable, selectable
+
+**Mandatory on every applicable Wire to Wire screen** (Office, Stable, Horses, People, Racing, Track, Farm, Owner, Breeding, Sales, Finances, World, Archive/History and future screens). Keep the information density and interactive predictability of professional OOTP/FM-style management software without copying their specific artwork or UI.
+
+- **Dropdown/selection controls:** Every multi-view screen offers the shared VIEW/RECORD VIEW selector, and relevant screens expose appropriate compact dropdowns for filters, columns, date/race selection and record categories. Changing a selection updates the real data shown and respects keyboard input. Do not add redundant menus or bury primary overview facts merely to make a page smaller.
+- **Scrollable information:** Rosters, records, schedules, history and long detail panels remain usable through bounded, independently scrollable, keyboard-focusable regions where appropriate. The header/global navigation remain stable; no important data may be clipped, unreachable or replaced by a three-row preview when the full list belongs in a sortable region. Long names, badges and adjacent panels may not cause destructive overflow.
+- **Sortable tables:** Data-heavy roster, stakes, directory, rankings, schedule and transaction tables offer meaningful column sorting with correct numeric/date/text semantics, ascending/descending toggles, visible direction/active state and keyboard access. Sorting and filtering act on display projections without mutating the simulation, race outcomes, identities, source data or saves.
+- **Information density and life:** Use the viewport deliberately; core status and sourced activity are visible without extra clicks. Genuine race results, works, entries, schedules, finance, people and historical links create an active feel. No huge empty cards, decorative fillers, microscopic type or monotonous flat visual treatment. Preserve approved art, contrast, hierarchy and small icons, without inventing live events.
+- **Shared behavior:** All comparable screens use the same selectors, scroll and table interaction conventions. A locally invented control, dead dropdown or nonfunctional sort button is a regression. Prefer reuse of existing shared family components; do not add an alternate UI or custom CSS patch stack.
+- **Release acceptance:** Every relevant screen must be tested at 1536×864 and 1280×800, with long datasets and keyboard interactions. Automated structural checks are a guard, not a substitute for real rendered/browser checks and visual review. A feature is incomplete if controls exist but cannot be used.
+
+**Exception is functional, not aesthetic:** A screen without a table need not invent one. Non-tabular content must still be navigable and make efficient use of available space. A dropdown is not an excuse to hide the entire page's important information.
+
+Permanent guard: `tests/ui-core-information-controls-contract.test.mjs`, alongside existing `tests/ui-fm-ootp-screen-family-controls.test.mjs`, `tests/ui-uniformity-lock.test.mjs`, and real Chromium desktop audits.
+
 ## New automatic release gate
 
 `.github/workflows/product-release-integrity.yml` runs on EVERY PR (no changed-path filter), on every main push, by manual dispatch and weekly. It verifies:
