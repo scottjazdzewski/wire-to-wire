@@ -3,6 +3,7 @@ import {
   requireString, isObject, strictJSON, validateWorld, validateWorldRef, worldIdentity
 } from './contracts.js';
 import { validateSeed } from './rng.js';
+import {validateFutureIndustryGameRuntime} from './future-industry-activation-v23.js';
 import {generatePeopleRuntime} from './people-generator.js';
 import {createFacilityState,validateFacilityState} from './facility-operations.js';
 import {createOwnershipRuntime,validateOwnershipRuntime} from './ownership.js';
@@ -95,6 +96,7 @@ export function validateGameRun(state, world) {
       'RUN_JOURNAL', 'Broken event journal sequence');
   }
   validateFacilityState(state,world);
+  validateFutureIndustryGameRuntime(state,world);
   validateOwnershipRuntime(state,world);
   validateHorseRegistrationRuntime(state,world);
   validateHorseNamingRuntime(state,world);
