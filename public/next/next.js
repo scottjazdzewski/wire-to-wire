@@ -3588,6 +3588,53 @@ function departmentRoster(section,page='Overview'){
   '</div></section></section>';
 }
 
+/* Shared FM/OOTP record-view picker. World and News use the same control as
+ * all department dashboards; this is not an alternate menu or screen family. */
+function managerRecordViewControl(section,page){
+ const screens=(tabmap[section]||[]).filter(x=>x!=='Overview');
+ return '<label>RECORD VIEW <select data-ng-select="manager-screen" aria-label="Open department screen">'+
+  '<option value="Overview" '+(page==='Overview'?'selected':'')+'>Overview</option>'+
+  screens.map(x=>'<option value="'+safe(x)+'" '+(page===x?'selected':'')+'>'+safe(x)+'</option>').join('')+
+  '</select></label>';
+}
+/* News is a source-backed Office bulletin board, not a fictional 2014
+ * racing feed. Never imply these internal reports are press articles. */
+function sourceNewsDesk(){
+ const section=APP.section==='World'?'World':'Office';
+ const notes=currentMessages().filter(m=>m&&typeof m.case==='string');
+ const list=notes.map(m=>
+  '<button class="ng-manager-row" type="button" data-ng="case" data-val="'+safe(m.case)+'" aria-label="Open Office briefing: '+safe(m.title)+'">'+
+   '<span class="ng-manager-row-type">OFFICE</span>'+
+   '<span class="ng-manager-row-name"><strong>'+safe(m.title)+'</strong></span>'+
+   '<span class="ng-manager-row-detail">'+safe(m.from||'Office')+'</span>'+
+   '<span class="ng-manager-row-context">'+safe(m.meta||'Source-backed report')+'</span>'+
+   '<span class="ng-manager-row-open">'+glyph('right',12)+'</span></button>'
+ ).join('');
+ return '<section class="ng-manager-screen ng-news-screen">'+
+  '<header class="ng-manager-head"><div class="ng-manager-identity">'+
+   '<span>'+safe(section.toUpperCase())+' / NEWS</span><h2>RACING NEWS & OFFICE REPORTS</h2></div>'+
+   '<div class="ng-manager-controls">'+managerRecordViewControl(section,'News')+
+    '<button type="button" data-ng="custom" data-val="Messages">'+glyph('mail',13)+' OFFICE INBOX</button></div></header>'+
+  '<div class="ng-manager-metrics">'+
+   '<div class="ng-manager-metric"><small>OFFICE BRIEFINGS</small><strong>'+notes.length+'</strong></div>'+
+   '<div class="ng-manager-metric"><small>VERIFIED EXTERNAL NEWS</small><strong>NOT CONNECTED</strong></div>'+
+   '<div class="ng-manager-metric"><small>GAME DATE</small><strong>'+safe(depGameDay())+'</strong></div>'+
+  '</div><div class="ng-manager-workspace">'+
+   '<section class="ng-manager-primary"><header><strong>IN-GAME OFFICE BRIEFINGS</strong><span>'+
+    notes.length+' SOURCE-LINKED MESSAGES</span></header>'+
+    '<div class="ng-manager-columns"><span>TYPE</span><span>REPORT</span><span>SENDER</span><span>CONTEXT</span><span></span></div>'+
+    '<div class="ng-manager-rows">'+(list||
+     '<p class="ng-manager-empty">No Office briefings are currently recorded for this career.</p>')+
+    '</div></section>'+
+   '<aside class="ng-manager-sidebar"><section class="ng-manager-secondary"><header>'+
+    '<strong>RACING NEWS STATUS</strong><span>AWAITING VERIFIED SOURCE</span></header>'+
+    '<p class="ng-manager-empty">No verified external racing-news feed is connected to this 1999 career. Office briefings are internal game correspondence, not published news articles.</p>'+
+    '</section><section class="ng-manager-secondary"><header><strong>HISTORICAL REFERENCE</strong></header>'+
+    '<button class="ng-manager-case" type="button" data-ng="search-history">'+
+     '<span><strong>HISTORY VAULT</strong><small>Review recorded racing history</small></span>'+
+     '<span class="ng-manager-case-state">OPEN</span></button>'+
+    '</section></aside></div></section>';
+}
 function managerDashboard(){
  const section=APP.section||'Office',page=APP.page||'Overview';
  // The live Stable roster is routed directly, even without a legacy Office route.
@@ -3604,7 +3651,7 @@ function managerDashboard(){
   Personnel:{kinds:['person','horse'],label:'PEOPLE & ASSIGNMENTS'},
   Facilities:{kinds:['farm','track'],label:'FARMS & RACING FACILITIES'},
   Finances:{kinds:['decision','horse'],label:'FINANCIAL CONTEXT'},
-  World:{kinds:['track','race','person','farm'],label:'RACING WORLD DIRECTORY'}
+  World:{kinds:['horse','person','farm','track','race'],label:'RACING WORLD DIRECTORY'}
  };
  const config=configs[section]||configs.Office;
  const all=globalSearchItems();APP.searchIndex=all;
@@ -3627,7 +3674,13 @@ function managerDashboard(){
  const items=found.filter(r=>r.kind==='horse'||r.kind==='person'||r.kind==='farm'||r.kind==='track'||r.kind==='race'||r.kind==='decision');
  const messages=currentMessages(),open=messages.filter(m=>!m.resolved);
  const upcoming=racingRows();
- const records=items.map(r=>{
+ // World Overview is a directory landing page, not an unbounded 90,000-row
+ // render. Show a small, balanced preview; every full directory remains one
+ // record-view selection away. No source records are deleted or filtered away.
+ const visibleItems=section==='World'&&page==='Overview'?
+  ['horse','person','farm','track','race'].flatMap(kind=>
+   items.filter(row=>row.kind===kind).slice(0,20)):items;
+ const records=visibleItems.map(r=>{
   const owner=r.kind==='horse'?horseOwnership(r.name):null;
   const secondary=r.kind==='horse'?(owner?.name||'Not recorded'):r.kind==='race'?(r.track||'—'):(r.detail||'—');
   const detail=r.kind==='horse'?(horseRows().find(h=>h.name===r.name)?.activity||'Horse file'):r.detail||'Connected record';
@@ -3650,21 +3703,19 @@ function managerDashboard(){
   ['RACE TARGETS',String(upcoming.length)],
   ['AVAILABLE CASH',cashDisplay()]
  ].map(([label,value])=>'<div class="ng-manager-metric"><small>'+label+'</small><strong>'+safe(value)+'</strong></div>').join('');
- const sections=(tabmap[section]||[]).filter(x=>x!=='Overview');
  return '<section class="ng-manager-screen">'+
   '<header class="ng-manager-head"><div class="ng-manager-identity">'+
    '<span>'+safe(section.toUpperCase())+' / '+safe(page.toUpperCase())+'</span>'+
    '<h2>'+safe(config.label)+'</h2></div>'+
    '<div class="ng-manager-controls">'+
     (APP.custom==='Opportunities'?'<button data-ng="action" data-val="Open opportunity board">OPEN LIVE OPPORTUNITY BOARD</button>':'')+
-    '<label>RECORD VIEW <select data-ng-select="manager-screen" aria-label="Open department screen">'+
-    '<option value="Overview" '+(page==='Overview'?'selected':'')+'>Overview</option>'+
-    sections.map(x=>'<option value="'+safe(x)+'" '+(page===x?'selected':'')+'>'+safe(x)+'</option>').join('')+
-    '</select></label><button data-ng="custom" data-val="Search">'+glyph('search',13)+' SEARCH ALL</button></div></header>'+
+    managerRecordViewControl(section,page)+'<button data-ng="custom" data-val="Search">'+glyph('search',13)+' SEARCH ALL</button></div></header>'+
   '<div class="ng-manager-metrics">'+metrics+'</div>'+
   '<div class="ng-manager-workspace"><section class="ng-manager-primary"><header>'+
    '<strong>'+safe(page==='Overview'?'CONNECTED WORLD RECORDS':page.toUpperCase()+' · CONNECTED RECORDS')+'</strong>'+
-   '<span>'+items.length+' VERIFIED LINKS TO EXISTING PAGES</span></header>'+
+   '<span>'+(visibleItems.length<items.length?
+    visibleItems.length+' OF '+items.length+' SOURCE RECORDS — SELECT A FULL DIRECTORY':
+    items.length+' SOURCE-LINKED RECORDS')+'</span></header>'+
    '<div class="ng-manager-columns"><span>TYPE</span><span>NAME</span><span>ROLE / ACTIVITY</span><span>OWNER / LOCATION</span><span></span></div>'+
    '<div class="ng-manager-rows">'+(records||'<p class="ng-manager-empty">No source-linked records for this screen yet. Nothing has been invented to fill the table.</p>')+'</div></section>'+
    '<aside class="ng-manager-sidebar"><section class="ng-manager-secondary"><header><strong>DECISION INBOX</strong><span>'+open.length+' OPEN</span></header>'+
@@ -3687,6 +3738,7 @@ function open1999Race(record){
 function renderRoute(){const route=APP.custom?null:currentRoute();const previewMode=APP.custom.startsWith('Preview:');const title=previewMode?(APP.previewEntity?.name||decodeURIComponent(APP.custom.split(':').slice(2).join(':'))):route?.title||APP.custom||'Page';const kicker=previewMode?'RECORD PREVIEW':route?.kicker||APP.section;const bdg=route?badge(({'Horse Profile':'horse','People Profile':'people','Farm Profile':'farm_stable','Track Profile':'track','Race Calendar':'meet_schedule','Stable':'farm_stable','Sales':'connections','News':'history','World':'track','Opportunity Board':'reputation'}[route.kicker])||'history'):pageBadge();
 let body='';const profile=route&&/Profile$/.test(route.kicker)?profileDetail(route):null;const functional=route?functionalRoute(route):null;if(profile)body=profile;else if(functional)body=functional;else if(route)body=route.body;else if(APP.custom==='Organization Overview'){body=organizationOverview()}
 else if(APP.custom==='Due Actions'){body=dueActionOverview()}
+else if(APP.custom==='News'||APP.custom==='World — News'){body=sourceNewsDesk()}
 else if(['Messages','Decisions','Opportunities'].includes(APP.custom)){body=managerDashboard()}
 else if(APP.custom==='Search'){body=searchView()}
 else if(APP.custom.startsWith('WorldRecord:')){body=world1999Profile()}
