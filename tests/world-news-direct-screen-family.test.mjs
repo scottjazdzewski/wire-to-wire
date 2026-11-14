@@ -6,6 +6,7 @@ const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const ui=read('public/next/next.js');
 const html=read('public/next/index.html');
 const office=read('public/office-v30-4.js');
+const browser=read('scripts/1999-management-browser-smoke.sh');
 const start=ui.indexOf('function managerRecordViewControl(');
 const end=ui.indexOf('\nfunction managerDashboard(){',start);
 assert.ok(start>0&&end>start,'News and World must reuse canonical manager controls');
@@ -99,4 +100,17 @@ test('one 1999 UI asset and canonical News renderer, no additional stylesheet or
  assert.equal((html.match(/rel="stylesheet"/g)||[]).length,1);
  assert.doesNotMatch(functions,/querySelector|\.app \[data-act\]|document\.createElement/);
  assert.match(office,/function openWorldDirectory\(\)/); // old data bridge intact but never used for 1999 World navigation
+});
+
+
+test('real 1999 browser smoke keeps complete People/Tracks checks with the shared World selector',()=>{
+ assert.match(browser,/select\[data-ng-select="manager-screen"\]/);
+ assert.match(browser,/worldPeopleView\.value='People'/);
+ assert.match(browser,/worldTracksView\.value='Tracks'/);
+ assert.match(browser,/worldView\.value='News'/);
+ assert.match(browser,/World News uses current source-backed Office briefings/);
+ assert.match(browser,/Site track registry mismatch/);
+ assert.match(browser,/1999 world person source row is navigable/);
+ assert.doesNotMatch(browser,/const worldPeopleTab=\[/);
+ assert.doesNotMatch(browser,/const worldTracksTab=\[/);
 });
