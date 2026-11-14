@@ -2047,9 +2047,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 .ng-track-stakes .ng-stakes-head{min-height:26px!important;padding:3px 7px!important}
 .ng-track-stakes .ng-stakes-data span{font-size:10.5px!important}
 .ng-track-stakes>header span{display:block;max-width:58%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px!important;font-weight:800;letter-spacing:.02em;color:#dfcfab}
-/* Gold/silver/bronze G1/G2/G3 are resized copies of the exact
-   SHA-verified approved Rail & Rye artwork, not substitute vector cups.
-   Keep original 64px alpha PNGs sharp in the 16px track-list slots. */
+
 .ng-track-stakes .ng-stakes-grade{display:inline-flex;align-items:center;justify-content:flex-end;gap:3px;min-width:0;min-height:18px;overflow:visible}
 .ng-track-stakes .ng-stakes-trophy{display:block!important;box-sizing:content-box;width:16px!important;height:16px!important;min-width:16px!important;min-height:16px!important;max-width:16px!important;max-height:16px!important;flex:0 0 16px!important;object-fit:contain!important;vertical-align:middle;image-rendering:auto;filter:drop-shadow(0 1px 1px rgba(0,0,0,.55))}
 .ng-track-stakes .ng-stakes-grade-text{display:block;flex:0 0 auto;color:#d9d3b8;font-size:9px!important;line-height:1;font-weight:800;letter-spacing:.02em;white-space:nowrap}
@@ -2110,8 +2108,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
   width:100%!important;height:100%!important;object-fit:contain!important
 }
 
-/* Keep Decision Desk copy anchored between cases. Variable-length content clips
-   at fixed line counts, so the title, facts and choice copy retain their rows. */
+
 @media (min-width:781px){
   .ng-main>.ng-feature .ng-case{
     display:grid!important;
@@ -2227,8 +2224,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 }
 
 
-/* Shared entity-link behavior for every department table and Tier One profile.
-   Link styling deliberately inherits the exact small roster font size. */
+
 #wtwNextgen .ng-entity-reference,
 #wtwNextgen .ng-route-profile .ng-entity-reference,
 #wtwNextgen .ng-dept-roster .ng-rs-table .ng-entity-reference{
@@ -2315,8 +2311,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 }
 
 
-/* Sales desk ribbon: dedicated UI-only auction navigation, same FM type system.
-   No effect on Stable, Racing, Facilities, Track profiles, engine or save state. */
+
 #wtwNextgen .ng-dept-roster[data-department="Sales"] .ng-sales-desk{
  box-sizing:border-box;display:flex;align-items:stretch;gap:0;flex:0 0 43px;
  min-width:0;min-height:43px;height:43px;overflow:hidden;
@@ -2402,8 +2397,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  #wtwNextgen .ng-dept-roster[data-department="Sales"] .ng-sales-desk-caption{flex-basis:30%}
 }
 
-/* Horse Profile / existing Pedigree record: single source-backed five-generation chart.
-   This is not a second page, not a new visual stylesheet, and does not modify Office Overview. */
+
 .ng-route-profile .ng-profile-horse .ng-ped5-card{grid-column:1/-1!important;max-height:none!important;overflow:hidden!important;display:flex;flex-direction:column;min-width:0;background:#171e22!important}
 .ng-route-profile .ng-profile-horse .ng-ped5-card>header{position:static!important;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px!important;background:#1e262a!important;border-bottom:1px solid #465451}
 .ng-ped5-card>header small{color:#cfb976;font-size:10px;font-weight:780;letter-spacing:.025em}
@@ -2556,8 +2550,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 }
 
 
-/* World Editor - one purposeful profile-level Edit action, not scattered pencils.
-   Local user edit overlay; same charcoal/green/gold FM desktop scale. */
+
 .ng-world-profile-photo{flex:0 0 78px;width:78px;height:68px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#25312f;border:1px solid #58705c;border-radius:3px}
 .ng-world-profile-photo .ng-world-edit-photo{width:100%;height:100%;object-fit:contain}
 .ng-world-profile-photo .ng-world-edit-photo-placeholder{font-size:8px;color:#86978b;text-align:center;padding:4px}
@@ -2625,8 +2618,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 #wtwNextgen .ng-boot-shell span{font:400 11px Inter,"Segoe UI",sans-serif;letter-spacing:.06em;color:#8caaa0}
 
 
-/* WTW compact-roster polish: free-standing health / readiness / form symbols.
-   Retain status colors, status labels, cell widths and full table density. */
+
 #wtwNextgen .ng-rs-signal i,
 #wtwNextgen .ng-rs-legend .ng-rs-signal i{
  border:0!important;background:transparent!important;box-shadow:none!important;
@@ -2747,9 +2739,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  #wtwNextgen .ng-save-slot-actions{justify-content:flex-start}
 }
 
-/* WTW 1999: all roster views — stable, racing, sales, facilities, breeding,
-   tracks, finance, personnel and World — have the same internal scroll.
-   The column header remains visible and sortable, without pager controls. */
+
 #wtwNextgen .ng-stable-roster-v2 .ng-rs-scroll{
  overflow-y:auto!important;overflow-x:auto!important;overscroll-behavior:contain!important;
  scrollbar-width:thin;scrollbar-color:#718b76 #172125;
@@ -2909,8 +2899,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  #wtwNextgen .ng-racing-cal-grid button small{font-size:8px;}
 }
 
-/* Racing selector: all playable courses remain in the native dropdown; an adjacent
-   datalist finds a specific course by name without limiting the original roster. */
+
 #wtwNextgen .ng-dept-roster[data-department="Racing"] .ng-racing-track-find{
  display:flex;align-items:center;gap:5px;white-space:nowrap;flex:0 1 195px;max-width:195px;min-width:120px;
  font-size:10px;
@@ -2925,11 +2914,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 }
 
 
-/* LOCKED 1999 SOURCE PROFILES · SINGLE ORIGINAL TRACK/HORSE COMPONENT SYSTEM.
- * The obsolete standalone founding-profile renderer and its CSS are deleted.
- * Approved source masters: PERSON/HORSE 1600x2000 (4:5),
- * facilities 1600x1200 (4:3); logos never stretched or cropped.
- */
+
 #wtwNextgen .ng-profile-farm.ng-profile-track .ng-track-workspace[data-template="track-overview"]{
   grid-template-columns:minmax(0,1.23fr) minmax(285px,.77fr)!important;
   height:100%;min-height:0;overflow:hidden;
@@ -2977,8 +2962,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
   display:grid!important;grid-template-columns:minmax(0,2.7fr) minmax(0,1fr)!important;
   min-width:0;gap:5px!important;
 }
-/* Exact locked identity-image proportion: all horse and human portraits
-   render in a 4:5 frame, whether artwork is present or yet to be generated. */
+
 #wtwNextgen .ng-route-profile .ng-profile-horse .ng-profile-source-photo.ng-profile-portrait{
   width:72px!important;height:90px!important;flex:0 0 72px!important;
   aspect-ratio:4 / 5;overflow:hidden!important;border-radius:3px!important;
