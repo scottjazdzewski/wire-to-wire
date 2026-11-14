@@ -9,7 +9,7 @@
  */
 import {WORLD_SCHEMA,dispatchGameCommand,exportGameSave,importGameSave,nextDate,
  getGameHorsePerformance,getGameRacingRoster,getAgentRelationships,
- getOwnerPortfolioView,getCareerHorseConnections,get1999HorseRaceOpportunities,
+ getOwnerPortfolioView,getCareerHorseConnections,get1999HorseRaceOpportunities,getTrainerContract,
  horseTravelStatus,effectiveHorseTrack,
  effectiveHorseCareSite}
  from './index.js';
@@ -149,6 +149,7 @@ export async function createPlaytestCareer({directory,trainers,jockeys,cohort,sa
   getRelationship(ownerId,trainerId){return getAgentRelationships(state,ownerId,trainerId)},
   getOwnerPortfolio(ownerId){return getOwnerPortfolioView(state,world,ownerId)},
   getRaceOpportunities(horseId,opts={}){return get1999HorseRaceOpportunities(state,world,horseId,opts)},
+  getTrainerAgreement(ownerId,trainerId){return getTrainerContract(state,world,ownerId,trainerId)},
   command(type,payload,{actor='player',id=null}={}){
    const cmd={id:id||'pilot:browser:'+String(state.revision+1)+':'+type,
     type,actor,payload};
@@ -229,6 +230,7 @@ export async function bootBrowserPlaytest1999(){
   get state(){return engine.state},view:()=>engine.view(),getSave:()=>engine.getSave(),
   get world(){return engine.world},
   getRaceOpportunities(horseId,opts={}){return engine.getRaceOpportunities(horseId,opts)},
+  getTrainerAgreement(ownerId,trainerId){return engine.getTrainerAgreement(ownerId,trainerId)},
   onChange(fn){listeners.add(fn);return()=>listeners.delete(fn)},
   submit(type,payload,actor='player'){
    const operation=busy.then(async()=>{

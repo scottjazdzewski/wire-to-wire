@@ -11,6 +11,7 @@ import {FEED_PROGRAMS,CARE_PROGRAMS,modeledTrainerSkills,setHorseCarePolicy} fro
 import {TRAINING_PLANS,recommendHorseWorkout} from '../../public/1999/engine/horse-development.mjs';
 import {facilityAction} from './facility-operations.js';
 import {horseTravelStatus,physicalHorseSiteId,effectiveHorseCareSite} from './shipping-1999.js';
+import {trainerDailyFee} from './trainer-contracts-1999.js';
 
 export const DAILY_AGENT_SCHEMA='WTW_DAILY_AGENT_DECISIONS_V1';
 const cap=(x,min=0,max=1)=>Math.max(min,Math.min(max,x));
@@ -86,10 +87,10 @@ function note(a,record){
  a.recent.push(record);
  if(a.recent.length>120)a.recent.splice(0,a.recent.length-120);
 }
-function monthlyBaseline(h,site,skills){
+function monthlyBaseline(state,h,site,skills){
  // Estimate the same money units as daily charge: board, feed, care,
  // trainer compensation and typical workout supplies.
- const trainerFee=Math.round(4000+4500*skills.roleAttributes.conditioning);
+ const trainerFee=trainerDailyFee(state,h,skills);
  const basic=site.daily_boarding_minor+FEED_PROGRAMS.STANDARD.daily_minor+
   CARE_PROGRAMS.BASIC.daily_minor+trainerFee+3000;
  return Math.round(basic*30.5);
@@ -99,10 +100,10 @@ function ownerDecision(state,h,site,profile,related,ownerHerd,day){
  const cash=accounts[h.owner_organization_id];
  const skills=state.runtime.people[h.trainer_id]?.game_training_skills||
   modeledTrainerSkills(h.trainer_id,state.rng.seed);
- const baseline=monthlyBaseline(h,site,skills);
+ const baseline=monthlyBaseline(state,h,site,skills);
  const totalNeed=ownerHerd.reduce((sum,x)=>{
   const barn=effectiveHorseCareSite(state,x)||state.runtime.facilities.sites[x.current_residence_id];
-  return sum+monthlyBaseline(x,barn,
+  return sum+monthlyBaseline(state,x,barn,
    state.runtime.people[x.trainer_id]?.game_training_skills||
     modeledTrainerSkills(x.trainer_id,state.rng.seed));
  },0);
