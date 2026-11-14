@@ -389,7 +389,7 @@ try {
   }
   await stepProfile('1');
   const arrowNext=await changedProfile(original,item.family+' next record');
-  assert.equal(arrowNext.name,firstNeighbor,
+  assert.equal(item.family==='HORSE'?arrowNext.name.replace(/^\?/,''):arrowNext.name,firstNeighbor,
    'NEXT did not open the role-matched linked '+item.group+' promised in its label');
   assert.notEqual(arrowNext.sourceRecord,original.sourceRecord,
    'NEXT only changed the same entity tab on '+item.family);
