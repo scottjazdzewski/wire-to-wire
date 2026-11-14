@@ -10,6 +10,8 @@
  */
 import {FICTIONAL_INDUSTRY_SLOT_LIMITS_V20}
  from './fictional-organization-continuity-v16.mjs';
+import {assessFictionalOrganizationReadinessV21}
+ from './fictional-industry-readiness-v21.mjs';
 
 export const FICTIONAL_INDUSTRY_OPERATIONS_MODEL_V20='WTW_FICTIONAL_INDUSTRY_OPERATIONS_V20';
 export const FICTIONAL_INDUSTRY_REUSE_POLICIES_V20=Object.freeze([
@@ -92,15 +94,25 @@ export function createFictionalIndustryReuseIndexV20({
  const rowsByKind=new Map([...KINDS].map(k=>[k,[]]));
  const countsByKind=new Map([...KINDS].map(k=>[k,{
   activeOrganizations:0,configuredOrganizations:0,unconfiguredOrganizations:0,
+  notReadyOrganizations:0,blockedCapacitySlots:0,
   capacitySlots:0,occupiedSlots:0,freeSlots:0,overCapacityOrganizations:0
  }]));
  const seen=new Set();
+ const atYear=continuity.continuityCursor?.year??
+  continuity.cursor?.year??continuity.year;
+ const personLookup=continuity.getPerson??continuity.getPersonIdentity;
+ if(typeof personLookup!=='function')
+  throw Error('Read-only reuse requires existing continuity person directory');
  for(const op of continuity.iterateOrganizations({status:'ACTIVE'})){
   checkKind(op.kind);
   if(seen.has(op.id))throw Error('Duplicate permanent organization ID in continuity scan');
   seen.add(op.id);
   const stats=countsByKind.get(op.kind);
   stats.activeOrganizations++;
+  const readiness=assessFictionalOrganizationReadinessV21({
+   organization:op,getPerson:id=>personLookup.call(continuity,id),year:atYear
+  });
+  if(!readiness.ready)stats.notReadyOrganizations++;
   const config=op.operatingCapacity;
   if(config===undefined||config===null){
    stats.unconfiguredOrganizations++;
@@ -115,8 +127,15 @@ export function createFictionalIndustryReuseIndexV20({
   stats.configuredOrganizations++;
   stats.capacitySlots+=config.horseSlots;
   stats.occupiedSlots+=used;
-  stats.freeSlots+=available;
   if(used>config.horseSlots)stats.overCapacityOrganizations++;
+  // Old or unavailable managers never become phantom operational capacity.
+  // The business retains its identity and history; a genuine succession is
+  // required before this planner can recommend using its empty slots.
+  if(!readiness.ready){
+   stats.blockedCapacitySlots+=available;
+   continue;
+  }
+  stats.freeSlots+=available;
   rowsByKind.get(op.kind).push(freezeRow({
    id:op.id,name:op.name,kind:op.kind,namingRegion:op.namingRegion,
    capacity:config.horseSlots,slotType:config.slotType,
