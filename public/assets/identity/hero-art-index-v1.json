@@ -7,6 +7,8 @@
     "Populate tracks/organizations with exact canonical IDs only after the respective file exists. No name-based guessing.",
     "Do not overwrite original published logos or the approved Track Profile badge."
   ],
-  "tracks": {},
+  "tracks": {
+    "T-0003": "/assets/places/track-hero/T-0003.webp"
+  },
   "organizations": {}
 }
