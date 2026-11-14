@@ -53,10 +53,10 @@ jobs:
         run: node --test tests/1999-mirrored-horse-rosters.test.mjs
       - name: One roster standard across all screens
         run: node --test tests/1999-one-roster-standard-all-pages.test.mjs
-      - name: Unified roster controls across profile dropdowns
-        run: node --test tests/1999-unified-profile-roster-controls.test.mjs
-      - name: Compact track and trainer dropdown regression
-        run: node --test tests/1999-track-trainer-dropdown-layout.test.mjs
+      - name: Permanently approved 1999 track stadium layout
+        run: node --test tests/1999-track-profile-layout-lock.test.mjs
+      - name: Forbidden pilot overlays cannot return to real profiles
+        run: node --test tests/1999-no-legacy-pilot-profile-overlay.test.mjs
       - name: Non-operating tracks remain in source directory but not racing
         run: node --test tests/1999-retired-track-source-guard.test.mjs
       - name: Integrated horse care owner money trainer barn and postrace response
