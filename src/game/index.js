@@ -28,3 +28,7 @@ export {DAILY_AGENT_SCHEMA,createDailyAgentRuntime,getAgentRelationships} from '
 
 export {GAME_RACING_SCHEMA,RACING_COMMANDS,createRacingRuntime,gameRaceProgram,
  raceEligibility,modeledJockeySkills,getGameRacingRoster} from './racing-1999.js';
+
+export {HORSE_SHIPPING_SCHEMA,HORSE_SHIPPING_COMMANDS,modeledShippingRoute,
+ shippingAssessment,horseTravelStatus,effectiveHorseTrack,
+ effectiveHorseCareSite,receivingBarnCapacity} from './shipping-1999.js';
