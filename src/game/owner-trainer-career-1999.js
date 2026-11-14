@@ -10,7 +10,10 @@ import {ensure,isObject,validDate,worldIdentity} from './contracts.js';
 import {workingRelationshipProfile} from './working-relationship-1999.js';
 
 export const OWNER_TRAINER_REVIEW_SCHEMA='WTW_1999_OWNER_TRAINER_CAREER_REVIEWS_V1';
-export const OWNER_TRAINER_REVIEW_COMMANDS=Object.freeze(['SET_OWNER_TRAINER_MANDATE']);
+export const OWNER_TRAINER_REVIEW_COMMANDS=Object.freeze([
+ 'SET_OWNER_TRAINER_MANDATE','RESPOND_TO_TRAINER_CONCERN']);
+export const TRAINER_CONCERN_RESPONSES=Object.freeze([
+ 'HEAR_AND_REVIEW','HOLD_CURRENT_COURSE']);
 export const OWNER_TRAINER_MANDATES=Object.freeze([
  'NORMAL','SUPPORT','WATCH','IMPROVEMENT_PLAN']);
 const pair=(owner,trainer)=>owner+'|'+trainer;
@@ -32,7 +35,9 @@ const pairs=state=>{
 export const createOwnerTrainerReviewRuntime=()=>({
  schema:OWNER_TRAINER_REVIEW_SCHEMA,by_pair:{},last_day:null,
  totals:{scheduled_reviews:0,ai_mandate_changes:0,player_mandate_changes:0,
-  evidence_insufficient:0,trainer_form_updates:0}
+  evidence_insufficient:0,trainer_form_updates:0,
+  concerns_opened:0,player_concern_responses:0,ai_concern_responses:0,
+  unanswered_concerns:0}
 });
 const root=state=>state.runtime.owner_trainer_reviews??=
  createOwnerTrainerReviewRuntime();
@@ -221,6 +226,82 @@ export function assessTrainerRelationshipPosition(e,previous='COMMITTED'){
   reason:'TRAINER_PATIENCE_AND_WORKING_ALIGNMENT_UNDER_STRAIN'};
  return {position:'COMMITTED',reason:'TRAINER_ACCEPTS_CURRENT_PARTNERSHIP'};
 }
+
+const concernKey=(owner,trainer,date)=>owner+'|'+trainer+'|'+date;
+const concernHistory=(item,row)=>{
+ item.conversation_history??=[];
+ item.conversation_history.push(row);
+ if(item.conversation_history.length>8)item.conversation_history.shift();
+};
+function resolveConcern({state,item,owner,trainer,choice,actor,evidence,emit}){
+ const c=item.concern,rt=root(state);
+ ensure(c?.status==='OPEN'&&c.deadline>=state.clock.date,
+  'TRAINER_CONCERN_CLOSED','Trainer concern is already resolved or expired');
+ const relation=state.runtime.agents?.relationships?.[pair(owner,trainer)];
+ ensure(Boolean(relation),'TRAINER_CONCERN_RELATIONSHIP',
+  'Trainer concern requires an actual saved working relationship');
+ // Conversation alone never pays invoices, raises wages, changes horses or
+ // overrides an explicit player instruction. Unfunded care defeats reassurance.
+ const supported=evidence.unfunded_horse_days===0&&
+  Number.isSafeInteger(evidence.owner_cash_minor)&&evidence.owner_cash_minor>0;
+ const change=choice==='HEAR_AND_REVIEW'?(supported?.028:0):-.025;
+ const before=relation.trainer_support;
+ relation.trainer_support=round(cap(before+change));
+ const reason=choice==='HOLD_CURRENT_COURSE'?'OWNER_MAINTAINS_CURRENT_DIRECTION':
+  supported?'FUNDED_CARE_AND_DIALOGUE_REBUILD_CONFIDENCE':
+  'DISCUSSION_CANNOT_REPLACE_UNFUNDED_HORSE_CARE';
+ c.status='RESOLVED';c.resolved_on=state.clock.date;
+ c.response=choice;c.responder=actor;c.outcome_reason=reason;
+ concernHistory(item,{request_id:c.request_id,opened_on:c.opened_on,
+  closed_on:state.clock.date,status:c.status,response:choice,
+  responder:actor,reason,trainer_support_before:before,
+  trainer_support_after:relation.trainer_support});
+ const metric=actor==='player'?'player_concern_responses':'ai_concern_responses';
+ rt.totals[metric]=(rt.totals[metric]??0)+1;
+ emit('TRAINER_CONCERN_RESPONDED',{owner_id:owner,trainer_id:trainer,
+  request_id:c.request_id,response:choice,by:actor,reason,
+  trainer_support_before:before,trainer_support_after:relation.trainer_support,
+  money_posted:false,contract_changed:false,employment_changed:false});
+}
+function expireConcern({state,item,owner,trainer,emit}){
+ const c=item.concern;
+ if(c?.status!=='OPEN'||c.deadline>=state.clock.date)return;
+ const relation=state.runtime.agents?.relationships?.[pair(owner,trainer)];
+ ensure(Boolean(relation),'TRAINER_CONCERN_RELATIONSHIP',
+  'Pending trainer concern has no saved working relationship');
+ const before=relation.trainer_support;
+ relation.trainer_support=round(cap(before-.030));
+ c.status='EXPIRED';c.resolved_on=state.clock.date;
+ c.response=null;c.responder=null;c.outcome_reason='OWNER_DID_NOT_RESPOND';
+ concernHistory(item,{request_id:c.request_id,opened_on:c.opened_on,
+  closed_on:state.clock.date,status:'EXPIRED',response:null,responder:null,
+  reason:c.outcome_reason,trainer_support_before:before,
+  trainer_support_after:relation.trainer_support});
+ const rt=root(state);
+ rt.totals.unanswered_concerns=(rt.totals.unanswered_concerns??0)+1;
+ emit('TRAINER_CONCERN_EXPIRED',{owner_id:owner,trainer_id:trainer,
+  request_id:c.request_id,reason:c.outcome_reason,
+  trainer_support_before:before,trainer_support_after:relation.trainer_support,
+  employment_changed:false});
+}
+/** The player must answer their own trainer; AI owners cannot claim that
+ * authority. An existing relationship, open request and exact ID are required. */
+export function respondToTrainerConcern({state,world,command,emit}){
+ const p=command.payload;
+ ensure(isObject(p)&&TRAINER_CONCERN_RESPONSES.includes(p.response),
+  'TRAINER_CONCERN_RESPONSE','Choose a valid management response');
+ authorizedPair(state,world,p.owner_id,p.trainer_id);
+ ensure(command.actor==='player'&&state.player.role==='owner'&&
+  state.player.operation_id===p.owner_id,
+  'TRAINER_CONCERN_PERMISSION','Only the owning player may answer this concern');
+ const item=root(state).by_pair[pair(p.owner_id,p.trainer_id)];
+ ensure(item?.concern?.request_id===p.request_id,
+  'TRAINER_CONCERN_UNKNOWN','No matching current trainer request');
+ resolveConcern({state,item,owner:p.owner_id,trainer:p.trainer_id,
+  choice:p.response,actor:'player',
+  evidence:ownerTrainerEvidence(state,world,p.owner_id,p.trainer_id),emit});
+}
+
 /** Called every real game day, BEFORE owner funding and contract renewal.
  * One 28-day decision per pair, persisted with evidence and exact reasons. */
 export function advanceOwnerTrainerReviews({state,world,emit}){
@@ -229,6 +310,7 @@ export function advanceOwnerTrainerReviews({state,world,emit}){
  for(const [id,{owner,trainer}] of pairs(state)){
   authorizedPair(state,world,owner,trainer);
   const item=initialize(state,owner,trainer);
+  expireConcern({state,item,owner,trainer,emit});
   if(item.next_review_date>today)continue;
   const evidence=ownerTrainerEvidence(state,world,owner,trainer);
   const old=item.mandate;
@@ -284,6 +366,29 @@ export function advanceOwnerTrainerReviews({state,world,emit}){
    owner_purse_minor:evidence.owner_purse_minor,
    funding_days_missing:evidence.unfunded_horse_days,
    player_terms_auto_changed:false});
+  // Only a newly reviewed, materially strained partnership generates an
+  // actionable conversation. One pending request per real owner/trainer pair.
+  if(['PRESSING_FOR_CHANGE','CONSIDERING_DEPARTURE'].includes(trainerMood.position)&&
+   item.concern?.status!=='OPEN'){
+   const request_id=concernKey(owner,trainer,today);
+   item.concern={request_id,opened_on:today,deadline:plus(today,14),
+    status:'OPEN',reason:trainerMood.reason,
+    trainer_position:trainerMood.position,resolved_on:null,
+    response:null,responder:null,outcome_reason:null};
+   rt.totals.concerns_opened=(rt.totals.concerns_opened??0)+1;
+   emit('TRAINER_CONCERN_OPENED',{owner_id:owner,trainer_id:trainer,
+    request_id,deadline:item.concern.deadline,
+    trainer_position:trainerMood.position,reason:trainerMood.reason,
+    player_response_required:playerControlled});
+   if(!playerControlled){
+    const cooperative=evidence.owner_cash_minor>0&&
+     evidence.unfunded_horse_days===0&&
+     (evidence.owner_patience>=.45||evidence.working_relationship_strength>=.48);
+    resolveConcern({state,item,owner,trainer,
+     choice:cooperative?'HEAR_AND_REVIEW':'HOLD_CURRENT_COURSE',
+     actor:'system',evidence,emit});
+   }
+  }
  }
  // A career-form snapshot is calculated from the trainer's ENTIRE actual
  // stable, across owners, not a single wealthy client's favorable record.
@@ -324,6 +429,9 @@ export function getOwnerTrainerCareerReview(state,world,owner,trainer){
   reviews:saved?.history||[],
   trainer_position:saved?.trainer_position||'COMMITTED',
   trainer_position_reason:saved?.trainer_position_reason||'INITIAL_RELATIONSHIP',
+  pending_concern:saved?.concern?.status==='OPEN'?saved.concern:null,
+  latest_concern:saved?.concern||null,
+  concern_history:saved?.conversation_history||[],
   current_evidence:ownerTrainerEvidence(state,world,owner,trainer),
   last_evaluation:saved?.evidence||null});
 }
@@ -356,6 +464,27 @@ export function validateOwnerTrainerReviews(state,world){
     ['COMMITTED','FRUSTRATED','PRESSING_FOR_CHANGE','CONSIDERING_DEPARTURE'].
     includes(p.trainer_position))&&
    (p.trainer_position_reason===undefined||typeof p.trainer_position_reason==='string')&&
+   (p.concern===undefined||isObject(p.concern)&&
+    p.concern.request_id===concernKey(p.owner_id,p.trainer_id,p.concern.opened_on)&&
+    validDate(p.concern.opened_on)&&p.concern.opened_on<=state.clock.date&&
+    validDate(p.concern.deadline)&&p.concern.deadline>=p.concern.opened_on&&
+    ['OPEN','RESOLVED','EXPIRED'].includes(p.concern.status)&&
+    typeof p.concern.reason==='string'&&
+    ['PRESSING_FOR_CHANGE','CONSIDERING_DEPARTURE'].includes(p.concern.trainer_position)&&
+    (p.concern.status==='OPEN'?
+     p.concern.resolved_on===null&&p.concern.response===null:
+     validDate(p.concern.resolved_on)&&p.concern.resolved_on<=state.clock.date&&
+     (p.concern.status==='EXPIRED'||TRAINER_CONCERN_RESPONSES.includes(p.concern.response))))&&
+   (p.conversation_history===undefined||Array.isArray(p.conversation_history)&&
+    p.conversation_history.length<=8&&p.conversation_history.every(h=>
+     isObject(h)&&typeof h.request_id==='string'&&
+     validDate(h.opened_on)&&validDate(h.closed_on)&&
+     h.closed_on<=state.clock.date&&
+     ['RESOLVED','EXPIRED'].includes(h.status)&&
+     Number.isFinite(h.trainer_support_before)&&
+     h.trainer_support_before>=0&&h.trainer_support_before<=1&&
+     Number.isFinite(h.trainer_support_after)&&
+     h.trainer_support_after>=0&&h.trainer_support_after<=1))&&
    Array.isArray(p.history)&&p.history.length<=8&&
    p.history.every(h=>isObject(h)&&validDate(h.date)&&h.date<=state.clock.date&&
     OWNER_TRAINER_MANDATES.includes(h.mandate)&&
