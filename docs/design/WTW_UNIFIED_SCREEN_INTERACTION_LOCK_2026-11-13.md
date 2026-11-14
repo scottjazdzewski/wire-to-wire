@@ -43,6 +43,12 @@ Football Manager and Out of the Park Baseball are the reference **level of quali
 - Current **temporary existing** stylesheets in /next/: `next.css`, `1999-commercial-career.css`, `identity-themes.css`, `profile-hero-v2.css`. This four-file baseline is acknowledged as technical debt relative to the earlier single-CSS authority. **Do not add a fifth or a screen-specific override file.** Consolidate into existing shared rules in a controlled refactor with visual proof; do not cause a blind all-at-once CSS rewrite while parallel windows are active.
 - Existing original assets and canonical data stay in their current authority; UI changes may read but not mutate them.
 
+## Old layout retirement — permanent authority
+- [Legacy Layout Retirement Register](WTW_LEGACY_LAYOUT_RETIREMENT_2026-11-13.md) identifies the physically deleted Manager V2 and obsolete Office pager files, and the only unavoidable **hidden gameplay/data compatibility adapter**.
+- Never revive `public/manager/manager.js`, `manager.css`, `office-v30-2.js`, `office-v30-3.js`, or the retired screenshot/test suite. `/manager/` must remain a redirect to the current `/next/?world=1999` game.
+- `public/next/index.html` must contain one visible manager `#wtwNextgen`; retained old Office source nodes are permanently hidden and **never** valid screen templates. Any move off that compatibility bridge must replace its game actions with a tested headless API before deleting its supporting DOM.
+- `tests/no-legacy-screen-regression.test.mjs` is a required non-regression gate alongside this unified interaction lock. No previously retired screen may reappear after an unrelated UI change.
+
 ## Required QA matrix before any screen is promoted
 1. Compare actual rendered screens side by side for **Horse / Person / Track / Farm / Owner** profiles and at least two directories; verify shared top context, control locations, row density, hover/focus, and back/forward behavior.
 2. Check 1536×864, **1366×768**, 1280×800, and small/narrow viewports where supported. Long names, wordmarks, toolbars, sourced facts and tables must remain usable.
