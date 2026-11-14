@@ -42,7 +42,6 @@ const isClean1999=()=>window.__WTW_1999_MANAGEMENT__?.worldProfile?.mode==='FOUN
 
 const tabmap={Office:['Overview','Messages','Decisions','Calendar','News','Reports','Career'],History:['Race Results','Horses','People & Farms','Facilities & Tracks','Historical Calendar','Coverage'],Stable:['Overview','Horses','Training','Health','Race Plans','Barns'],Racing:['Overview','Calendar','Entries','Results','Stakes','Race Planning'],Breeding:['Overview','Stallions','Broodmares','Foals','Pedigrees','Stud Farms'],Sales:['Overview','Auctions','Sale Calendar','Sale Companies','Catalogs','Watchlist','Private Offers'],Personnel:['Overview','Trainers','Jockeys','Owners','Principals','Staff'],Facilities:['Overview','Stud Farms','Training Centers','Breaking Facilities','Racing Stables','Farms','Trainer Barns'],Tracks:['Overview','Active Meets','All Tracks','Stakes'],Finances:['Overview','Cash Flow','Operating Costs','Budgets'],World:['Overview','1999 Horses','People','Organizations','Tracks','Meets','Major Races','News']};
 const actions={Office:'Office Overview',Stable:'Stable',Racing:'Race Calendar',Sales:'Sales',World:'World'};
-const officeMenu={Overview:'Office Overview',Messages:'Filter All',Decisions:'Open move history',Calendar:'Open Race Calendar',News:'News',Reports:'Open move history',Career:'Open move history'};
 const state=()=>{try{return JSON.parse(localStorage.getItem((window.__WTW_1999_MANAGEMENT__?.saveKey||'wtw1999ManagementStateV1'))||'{}')}catch{return {}}};
 /* Named saves are snapshots of the canonical Office game state, never a new
    simulation ledger. World Editor patches and media remain independently stored. */
@@ -241,7 +240,7 @@ function pageTab(name){if(APP.section==='History'){const pages={'Race Results':'
   APP.departmentScrollLimit=160;APP.departmentScrollReset=true;
   return openCustomView('World — '+name,'World',name);
  }
- if(s==='World'&&(name==='Tracks'||name==='Meets'))return openMenu('Tracks');
+ if(s==='World'&&(name==='Tracks'||name==='Meets'))return openCustomView('World — '+name,'World',name);
  if(s==='World'&&(name==='Overview'||name==='Major Races'||name==='News'))return openCustomView('World — '+name,'World',name);
  openCustomView(`${s} — ${name}`,s,name);
 }
@@ -2606,7 +2605,8 @@ function liveStableRosterView(directory=false){
    ' ENTERED · '+all.filter(x=>x.hasTarget&&!x.entered).length+' TARGETED · '+all.filter(x=>['watch','treat'].includes(x.health[0])).length+
    ' VET WATCH</span>'+(directory?'':'<button data-ng="stable-world-edit" title="Open the editable 1999 World horse records">✎ EDIT 1999 RECORDS</button>')+'<button data-ng="menu" data-val="Racing">RACE CALENDAR ↗</button></div>'+
   (directory&&universe.indexing?'<div role="status" class="ng-dpt-disclosure">Indexing the registered world horse directory; source records remain unchanged.</div>':'')+
-  '<div class="ng-rs-tools"><label for="'+(directory?'ngDirectorySearch':'ngStableSearch')+'">SEARCH</label><input id="'+(directory?'ngDirectorySearch':'ngStableSearch')+'" data-ng-input="'+(directory?'directory-search':'stable-search')+'" type="search" value="'+safe(directory?APP.directorySearch:APP.stableSearch)+
+  '<div class="ng-rs-tools">'+managerRecordViewControl(directory?'World':'Stable',directory?'1999 Horses':APP.page||'Overview')+
+  '<label for="'+(directory?'ngDirectorySearch':'ngStableSearch')+'">SEARCH</label><input id="'+(directory?'ngDirectorySearch':'ngStableSearch')+'" data-ng-input="'+(directory?'directory-search':'stable-search')+'" type="search" value="'+safe(directory?APP.directorySearch:APP.stableSearch)+
    '" placeholder="Horse, owner, trainer, status…" autocomplete="off"/><div class="ng-rs-filters">'+filters+'</div>'+
    rosterDensityControls(directory?'directory':'stable',mode)+'</div>'+
   (window.WTW1999RosterFilters?.render(columns,stableCriteria,safe,scope)||'')+
@@ -2945,6 +2945,7 @@ function depRows(section,page,demo,auction){
   }));
  }
  if(section==='World'&&page==='Tracks')return depTrackRows('All Tracks',depGameDay(),true);
+ if(section==='World'&&page==='Meets')return depTrackRows('Active Meets',depGameDay(),true);
  if(section==='Tracks')return depTrackRows(page,depGameDay(),true);
  if(section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'){
   const tracks=depTrackRows('Overview',depRaceBrowseDate());
@@ -3265,7 +3266,8 @@ function departmentRoster(section,page='Overview'){
  const worldAttributeKey=worldTrait?.key||'';
  const specs=section==='Personnel'&&page==='Owners'?DEP_COLUMNS.OwnershipGroups:
   section==='Personnel'&&page==='Principals'?DEP_COLUMNS.PersonnelPrincipals:
-  section==='World'&&page==='Tracks'?DEP_COLUMNS.Tracks:section==='World'?(page==='1999 Horses'?
+  section==='World'&&page==='Tracks'?DEP_COLUMNS.Tracks:
+  section==='World'&&page==='Meets'?DEP_COLUMNS.Meets:section==='World'?(page==='1999 Horses'?
    [...WORLD_1999_COLUMNS.Horses,...(worldTrait?[['attr:'+worldAttributeKey,worldTrait.label+' · TEST',10]]:[])]:
    page==='People'?WORLD_1999_COLUMNS.People:WORLD_1999_COLUMNS.Organizations):
   section==='Sales'&&page==='Watchlist'?DEP_COLUMNS.SalesWatchlist:section==='Sales'&&page==='Sale Calendar'?DEP_COLUMNS.SaleCalendar:section==='Sales'&&page==='Sale Companies'?DEP_COLUMNS.SaleCompanies:section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:section==='Racing'&&(page==='Calendar'||page==='Race Planning'||page==='Overview'&&APP.racingMode==='day')?DEP_COLUMNS.DayCard:section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'?DEP_COLUMNS.Meets:DEP_COLUMNS[section];
@@ -3315,10 +3317,17 @@ function departmentRoster(section,page='Overview'){
  }
  if(!globalDirectory)rows.sort((a,b)=>{
   if(section==='Racing'&&(page==='Calendar'||page==='Race Planning'||page==='Overview'&&APP.racingMode==='day')&&
-     (!APP.departmentSortKey||APP.departmentSortKey==='track'||APP.departmentSortKey==='date'))
-   return String(a.track).localeCompare(String(b.track))||
-    Number(a._cardOrder??999)-Number(b._cardOrder??999)||
+     (!APP.departmentSortKey||APP.departmentSortKey==='track'||APP.departmentSortKey==='date')){
+   // Chronological race-card order is preserved within a track, but clicking
+   // the TRACK / DATE column must actually reverse the primary sort.
+   const dateOrder=String(a._iso||a.date||'').localeCompare(String(b._iso||b.date||''));
+   const trackOrder=String(a.track).localeCompare(String(b.track));
+   const raceOrder=Number(a._cardOrder??999)-Number(b._cardOrder??999)||
     String(a.race).localeCompare(String(b.race),undefined,{numeric:true});
+   return APP.departmentSortKey==='date'?
+    dateOrder*sign||trackOrder||raceOrder:
+    trackOrder*sign||dateOrder||raceOrder;
+  }
   let av=selectedSort==='date'&&a._iso?a._iso:a[selectedSort],bv=selectedSort==='date'&&b._iso?b._iso:b[selectedSort];
   const am=av===null||av===undefined||av==='',bm=bv===null||bv===undefined||bv==='';
   if(am!==bm)return am?1:-1;
@@ -3393,7 +3402,7 @@ function departmentRoster(section,page='Overview'){
   (globalHorseDirectory?' · SORT/FILTER ALL '+(Number(window.__WTW_1999_UI_DATA__?.counts?.worldHorses||0).toLocaleString('en-US'))+' HORSES':
    globalMareDirectory?' · SORT/FILTER ALL BROODMARES':
    virtualMethod?' · SCROLL FOR MORE':'')+'</span>';
- const viewOptions=(tabmap[section]||[]).map(t=>'<option value="'+safe(t)+'" '+(t===page?'selected':'')+'>'+safe(t)+'</option>').join('');
+ const viewOptions=managementViewOptions(section,page);
  const racingTracks=section==='Racing'?depTrackCalendar().slice().sort((a,b)=>a.name.localeCompare(b.name)):[];
  if(section==='Racing'&&APP.racingTrack&&!racingTracks.some(x=>x.name===APP.racingTrack)){
   APP.racingTrack='';if(APP.racingMode==='track')APP.racingMode='meets';
@@ -3464,14 +3473,15 @@ function departmentRoster(section,page='Overview'){
   '</div></section></section>';
 }
 
-/* Shared FM/OOTP record-view picker. World and News use the same control as
- * all department dashboards; this is not an alternate menu or screen family. */
+/* One authoritative VIEW menu content for both the full department roster
+ * and compact management overview. The select dispatch adapters differ because
+ * their destination screens differ; their options, order, label and state do not. */
+function managementViewOptions(section,page){
+ return (tabmap[section]||[]).map(t=>'<option value="'+safe(t)+'" '+(t===page?'selected':'')+'>'+safe(t)+'</option>').join('');
+}
 function managerRecordViewControl(section,page){
- const screens=(tabmap[section]||[]).filter(x=>x!=='Overview');
- return '<label>RECORD VIEW <select data-ng-select="manager-screen" aria-label="Open department screen">'+
-  '<option value="Overview" '+(page==='Overview'?'selected':'')+'>Overview</option>'+
-  screens.map(x=>'<option value="'+safe(x)+'" '+(page===x?'selected':'')+'>'+safe(x)+'</option>').join('')+
-  '</select></label>';
+ return '<label>VIEW <select data-ng-select="manager-screen" aria-label="Choose '+safe(section)+' view">'+
+  managementViewOptions(section,page)+'</select></label>';
 }
 /* News is a source-backed Office bulletin board, not a fictional 2014
  * racing feed. Never imply these internal reports are press articles. */
@@ -3572,7 +3582,7 @@ function managerDashboard(){
  if(section==='Stable'&&(page==='Overview'||page==='Horses'))return liveStableRosterView();
  if(typeof DEP_NAMES!=='undefined'&&DEP_NAMES.has(section))return departmentRoster(section,page);
  if(section==='World'&&page==='1999 Horses')return liveStableRosterView(true);
- if(section==='World'&&['People','Organizations'].includes(page))return departmentRoster('World',page);
+ if(section==='World'&&['People','Organizations','Tracks','Meets'].includes(page))return departmentRoster('World',page);
  const configs={
   Office:{kinds:['decision','horse','person'],label:'RACING OPERATIONS'},
   Stable:{kinds:['horse','person','farm'],label:'HORSES & STABLE OPERATIONS'},
@@ -3848,8 +3858,14 @@ window.addEventListener('click',e=>{
   return paint();
  }
  if(key==='dept-sort'){
-  if(APP.departmentSortKey===val)APP.departmentSortDesc=!APP.departmentSortDesc;
-  else{APP.departmentSortKey=val;APP.departmentSortDesc=false}
+  // The default sort is already active even before the player picks a column.
+  // Use the currently rendered header direction as authority. The FIRST click
+  // on an already-active default header must reverse it, not repeat ascending.
+  const activeHeading=[...root.querySelectorAll('.ng-dept-roster .ng-rs-table thead th')]
+   .find(th=>th.querySelector('button[data-ng="dept-sort"]')?.dataset.val===val);
+  const displayedDirection=activeHeading?.getAttribute('aria-sort')||'none';
+  APP.departmentSortKey=val;
+  APP.departmentSortDesc=displayedDirection==='ascending';
   APP.departmentPageIndex=0;APP.departmentScrollLimit=160;APP.departmentScrollReset=true;return paint();
  }
  // Previous/Next buttons have been retired from the department rosters.

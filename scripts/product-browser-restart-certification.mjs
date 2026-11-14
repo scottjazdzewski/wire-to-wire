@@ -134,5 +134,9 @@ try{
 }finally{
  await stop(browser);
  server.kill('SIGTERM');
- rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150});
+ // Chromium child cache writers can outlive the browser parent for a moment.
+ // A late filesystem cleanup must not turn a proven identical career reopen
+ // into a false gameplay failure; keep cleanup strict with a generous retry.
+ await pause(450);
+ rmSync(profile,{recursive:true,force:true,maxRetries:80,retryDelay:200});
 }

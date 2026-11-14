@@ -16,6 +16,37 @@ Effective: November 14, 2026. Applies to EVERY engineering window, every file, b
 9. Preserve saved careers and source IDs across updates. New schemas require explicit tested migrations, backup/recovery and old-version reopen tests before release. Never silently coerce a damaged or incompatible save.
 10. Record actual checks, evidence, commit, approval, failures and rollback point. Never merge on pending tests or claim a test cohort is production-certified.
 
+## Universal interface requirement: dense, scrollable, sortable, selectable
+
+**Mandatory on every applicable Wire to Wire screen** (Office, Stable, Horses, People, Racing, Track, Farm, Owner, Breeding, Sales, Finances, World, Archive/History and future screens). Keep the information density and interactive predictability of professional OOTP/FM-style management software without copying their specific artwork or UI.
+
+- **Dropdown/selection controls:** Every multi-view screen offers the shared VIEW/RECORD VIEW selector, and relevant screens expose appropriate compact dropdowns for filters, columns, date/race selection and record categories. Changing a selection updates the real data shown and respects keyboard input. Do not add redundant menus or bury primary overview facts merely to make a page smaller.
+- **Scrollable information:** Rosters, records, schedules, history and long detail panels remain usable through bounded, independently scrollable, keyboard-focusable regions where appropriate. The header/global navigation remain stable; no important data may be clipped, unreachable or replaced by a three-row preview when the full list belongs in a sortable region. Long names, badges and adjacent panels may not cause destructive overflow.
+- **Sortable tables:** Data-heavy roster, stakes, directory, rankings, schedule and transaction tables offer meaningful column sorting with correct numeric/date/text semantics, ascending/descending toggles, visible direction/active state and keyboard access. Sorting and filtering act on display projections without mutating the simulation, race outcomes, identities, source data or saves.
+- **Information density and life:** Use the viewport deliberately; core status and sourced activity are visible without extra clicks. Genuine race results, works, entries, schedules, finance, people and historical links create an active feel. No huge empty cards, decorative fillers, microscopic type or monotonous flat visual treatment. Preserve approved art, contrast, hierarchy and small icons, without inventing live events.
+- **Shared behavior:** All comparable screens use the same selectors, scroll and table interaction conventions. A locally invented control, dead dropdown or nonfunctional sort button is a regression. Prefer reuse of existing shared family components; do not add an alternate UI or custom CSS patch stack.
+- **Release acceptance:** Every relevant screen must be tested at 1536×864 and 1280×800, with long datasets and keyboard interactions. Automated structural checks are a guard, not a substitute for real rendered/browser checks and visual review. A feature is incomplete if controls exist but cannot be used.
+
+**Exception is functional, not aesthetic:** A screen without a table need not invent one. Non-tabular content must still be navigable and make efficient use of available space. A dropdown is not an excuse to hide the entire page's important information.
+
+Permanent guard: `tests/ui-core-information-controls-contract.test.mjs`, alongside existing `tests/ui-fm-ootp-screen-family-controls.test.mjs`, `tests/ui-uniformity-lock.test.mjs`, and real Chromium desktop audits.
+
+## Mandatory physical removal of superseded code — applies to every workstream
+
+**A completed replacement must delete its obsolete implementation.** The rule covers UI, navigation, stylesheets, data adapters, game commands, simulation logic, naming, history import, asset lookup, parsers, scripts, test fixtures and production configuration. We do not maintain alternative "old" and "new" games or carry a graveyard of commented-out functions, dormant CSS, toggles, duplicated renderers and compatibility shims indefinitely.
+
+Every replacement PR must:
+1. Identify the **one live owner** of the behavior and the entrypoints/consumers it supersedes.
+2. Trace actual imports, `<script>` references, dynamic loaders, command callers, IndexedDB/save migrations, Cloudflare worker routes, build scripts and tests. A filename's age does not prove that it is dead.
+3. **Physically delete** the obsolete source files/functions/selectors/configuration and stale tests or instructions **in that PR** after the replacement passes functional parity. Do not hide an obsolete screen with CSS, leave an unused fallback or add a second parallel module.
+4. Add regression checks proving that retired source paths and deleted symbols do not return; check that the live entrypoints reference the approved replacement and that browser navigation and save/reopen still work.
+5. Update the retirement ledger with the removed symbols/files, the replacing authority, dependency evidence, parity tests and commit/PR link. Every still-live temporary adapter needs a named owner, explicit consumer and measurable retirement prerequisite.
+6. Never remove canonical history or game state, approved images or IDs, migration/rollback code still required for existing customer saves, or live code merely to satisfy a "clean code" metric. Old saves must remain loadable by validated migration or remain safely recoverable. Do not break a working game to remove an age-related filename.
+
+The **currently mounted hidden Office gameplay/data bridge** is a documented temporary dependency, not permission to revive the old UI. The existing `office-v30-1.js`, `office-v30-4.js`, `office-fm-v32.js`, `office-fm-v34.js` through `office-fm-v37.js` must be retired **only when their remaining live actions and data projections are migrated**, with tests proving parity and save compatibility. In contrast, physically retired Manager V2, `office-v30-2.js`, `office-v30-3.js` and `connectedTableState()/profileRecordSection()` are permanently forbidden.
+
+The product-wide guard includes `tests/product-legacy-code-retirement.test.mjs`. No future window may silently add an old implementation or retain an unused second version after completing a migration.
+
 ## New automatic release gate
 
 `.github/workflows/product-release-integrity.yml` runs on EVERY PR (no changed-path filter), on every main push, by manual dispatch and weekly. It verifies:
@@ -26,6 +57,10 @@ Effective: November 14, 2026. Applies to EVERY engineering window, every file, b
 - Existing UI, art, source and gameplay tests and browser module parity. Existing `npm test`, management-browser smoke and screenshot workflows remain mandatory.
 
 **Do not describe kernel roundtrips as 10,000 real app launches.** Neither test proves zero future bugs. Before public sale, extend the matrix to long-session and 10,000 actual launch endurance, interrupted writes, OS crashes, backup/restore, disk quota, version migrations, platform combinations, network loss and recovery drills. Confirm real release builds, not just a test fixture.
+
+## Mandatory physical removal of superseded code
+
+When an established implementation is replaced, **Physically delete** the obsolete renderer, duplicate control, CSS, dead handlers and parallel menu code **in that PR**. Do not leave inaccessible but executable prototypes or dormant alternate pages that another change could accidentally reactivate. A required hidden engine compatibility adapter may remain only with documented active call sites and a tracked exit plan. Removal must preserve career saves, **save compatibility**, canonical identities, imported history, active simulation contracts and any current browser integration. Add tests that reject resurrection of the removed implementation.
 
 ## Authority and safeguards
 

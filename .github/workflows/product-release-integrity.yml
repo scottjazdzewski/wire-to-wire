@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: '22'
       - name: Every visual asset, one UI, one save authority and 10,000 serialization cycles
-        run: node --test tests/product-release-protections.test.mjs tests/product-lifecycle-10000.test.mjs
+        run: node --test tests/product-release-protections.test.mjs tests/product-lifecycle-10000.test.mjs tests/product-legacy-code-retirement.test.mjs tests/ui-core-information-controls-contract.test.mjs
       - name: Authoritative engine matches real browser modules
         run: node scripts/sync-1999-browser-gameplay.mjs --check
       - name: Protect earlier approved screens and commands from resurrection
