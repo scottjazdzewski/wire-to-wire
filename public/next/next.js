@@ -244,12 +244,12 @@ function pageTab(name){if(APP.section==='History'){const pages={'Race Results':'
  if(s==='World'&&(name==='Overview'||name==='Major Races'||name==='News'))return openCustomView('World — '+name,'World',name);
  openCustomView(`${s} — ${name}`,s,name);
 }
-let engineDecisionState=null,officeDecisionFiles=[];
+let engineDecisions=null,officeDecisionFiles=[];
 function decisionFiles(){
  const service=window.__WTW_1999_UI_DATA__?.gameplayService;
  const game=service?.state;
- if(game!==engineDecisionState){
-  engineDecisionState=game;
+ if(game!==engineDecisions){
+  engineDecisions=game;
   const requests=game&&typeof service.getTrainerManagementRequests==='function'?
    service.getTrainerManagementRequests():null;
   officeDecisionFiles=[
