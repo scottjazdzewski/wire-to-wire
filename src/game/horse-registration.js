@@ -58,7 +58,9 @@ export function validateHorseRegistrationRuntime(state,world){
   const site=state.runtime.facilities?.sites?.[h.current_residence_id];
   ensure(site&&site.id===h.current_residence_id&&site.status==='ACTIVE'&&
    ['RACING_STABLE','TRAINING_CENTER'].includes(site.type)&&
-   site.stalls>0&&site.staff_count>=site.staff_required,
+   site.stalls>0&&site.staff_count>=site.staff_required&&
+   Object.values(rt.by_id).filter(x=>x.current_residence_id===h.current_residence_id).length+
+   (site.contracts||[]).filter(c=>c.start<=state.clock.date&&c.end>=state.clock.date).reduce((n,c)=>n+c.stalls,0)<=site.stalls,
    'HORSE_REGISTRY','Registered horse home is not operational');
   ensure(isObject(h.career)&&h.career.starts===0&&h.career.wins===0&&h.career.earnings_minor===0,
    'HORSE_REGISTRY','Cannot import historical starts or winnings');
