@@ -48,3 +48,16 @@ test('preview opt-in is ON for an authenticated bound AI, with explicit kill-swi
   {...env,AI:model,NAMING_AI_PREVIEW_ENABLED:'false'},ctx);
  assert.equal(off.status,503);assert.equal(calls,1);
 });
+
+test('zero-cost authenticated status reports actual AI and migration readiness',async()=>{
+ const r=await worker.fetch(new Request('https://wtw.example/api/naming/status'),env,ctx);
+ assert.equal(r.status,200);
+ const j=await r.json();
+ assert.equal(j.schema,'WTW_PRIVATE_NAMING_STATUS_V484');
+ assert.equal(j.aiBound,true);
+ assert.equal(j.dbBound,false);
+ assert.equal(j.ledgerReady,false);
+ assert.equal(j.previewEnabled,true);
+ assert.equal(j.populationTargetPerYear,55000);
+ assert.equal(j.gameWrites,0);
+});
