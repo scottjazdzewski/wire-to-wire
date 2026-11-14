@@ -57,15 +57,17 @@ test('only #wtwNextgen presents a playable Office layout',()=>{
 });
 
 test('legacy DOM remains a quarantined GAMEPLAY ADAPTER, not a second player screen',()=>{
- // These selectors still power existing decision actions, save/load and
+ // These selectors still power existing route actions and
  // source-backed profile data. Do not drop them until a tested direct adapter
  // replaces the DOM bridge.
- for(const id of ['routeShell','routeBody','routeTitle','routeKicker','loadStateInput']){
+ for(const id of ['routeShell','routeBody','routeTitle','routeKicker']){
   assert.match(current,new RegExp('id="'+id+'"'),'Required source bridge node missing '+id);
  }
  for(const ref of ['/office-v30-1.js','/office-v30-4.js','/office-fm-v37.js']){
   assert.ok(current.includes('src="'+ref),'Required source adapter missing '+ref);
  }
+ assert.doesNotMatch(current,/loadStateInput|data-act="Load"/);
+ assert.doesNotMatch(core,/#moveGrid|#deskTitle|\.dateChip/);
  assert.match(core,/const originalAct=\(act\)=>/);
  assert.match(core,/function bridgeNode\(node\)/);
  assert.match(core,/function profileDetail\(route,sourceOverride=null\)/);

@@ -8,7 +8,7 @@
 import {encodeCareerSave,decodeCareerSave,packCareerFile,unpackCareerFile}
  from '/1999/engine/compact-career.mjs';
 
-const DB_NAME='WireToWireClean1999CareersV2',MAIN='wtw1999FoundingStateV1';
+const DB_NAME='WireToWireClean1999CareersV2';
 const MAX_SLOTS=60,MAX_TOTAL_BYTES=512*1024*1024;
 const $=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({
@@ -76,13 +76,6 @@ function config(){
  if(!api)throw Error('Commercial world configuration is not loaded');
  return api;
 }
-function currentGame(){
- const raw=localStorage.getItem(MAIN);
- let game;try{game=JSON.parse(raw||'null')}catch{}
- if(game?.worldAnchor?.schema!=='WTW_1999_FOUNDING_CAREER_V1')
-  throw Error('No valid 1999 career is currently active');
- return game;
-}
 function profileForGame(game){
  const a=game.worldAnchor||{};
  return config().normalize({
@@ -97,11 +90,7 @@ function baselineFor(profile){
  return create(profile);
 }
 function captureCurrent(){
- // Existing game engine remains the sole authority for actual game changes.
- const save=[...document.querySelectorAll('.app [data-act]')]
-  .find(element=>element.dataset.act==='Save');
- if(save)save.click();
- return currentGame();
+ return window.__WTW_OFFICE_COMMANDS__.dispatch('SAVE_CURRENT');
 }
 function nextID(){
  return 'career-'+(globalThis.crypto?.randomUUID?.()||
@@ -131,9 +120,7 @@ async function restoreGame(id){
  const game=await decodeCareerSave(record,baselineFor(profile));
  if(game.worldAnchor.seed!==profile.seed||game.worldAnchor.mode!==profile.mode)
   throw Error('Save and world profile disagree');
- localStorage.setItem(MAIN,JSON.stringify(game));
- config().pin(profile);
- localStorage.setItem('wtw1999FoundingSessionV1','active');
+ window.__WTW_OFFICE_COMMANDS__.dispatch('LOAD_CAREER',game);
  location.reload();
 }
 async function exportSlot(id){
@@ -149,12 +136,20 @@ async function exportSlot(id){
  setTimeout(()=>URL.revokeObjectURL(url),1500);
 }
 async function importFile(file){
- if(!file||file.size>64*1024*1024+32780)
+ if(!file)throw Error('Choose a career save file');
+ if(file.size>64*1024*1024+32780)
   throw Error('This save is larger than the supported 64 MB file limit');
- const data=unpackCareerFile(await file.arrayBuffer());
- const profile=config().normalize(data.header.world);
- const game=await decodeCareerSave(data,baselineFor(profile));
- return storeGame(file.name.replace(/\.wtwsave$/i,'').replace(/_/g,' ').slice(0,80),
+ let game;
+ if(/\.json$/i.test(file.name)){
+  game=JSON.parse(await file.text());
+ }else{
+  const data=unpackCareerFile(await file.arrayBuffer());
+  const profile=config().normalize(data.header.world);
+  game=await decodeCareerSave(data,baselineFor(profile));
+ }
+ if(!window.__WTW_1999_MANAGEMENT__?.validateCareer(game))
+  throw Error('Only a valid founding 1999 career can be imported.');
+ return storeGame(file.name.replace(/\.(wtwsave|json)$/i,'').replace(/_/g,' ').slice(0,80),
   game);
 }
 function modal(){
@@ -211,8 +206,8 @@ async function refresh(){
   '<p>Local device only. No account, monthly fee or cloud storage required. Portable .wtwsave files have checksums and gzip compression where supported. Total compact-save budget: 512 MB across slots.</p>'+
   '<div class="wtw-cc-actions"><input data-cc="save-name" maxlength="80" placeholder="Name current career" value="1999 Career"/>'+
   '<button data-cc-action="save" class="primary">SAVE CURRENT CAREER</button>'+
-  '<button data-cc-action="import">IMPORT .WTWSAVE</button>'+
-  '<input type="file" data-cc="import-file" accept=".wtwsave,application/octet-stream" hidden>'+
+  '<button data-cc-action="import">IMPORT CAREER</button>'+
+  '<input type="file" data-cc="import-file" accept=".wtwsave,.json,application/octet-stream,application/json" hidden>'+
   '</div>'+ 
   (notice?'<p class="wtw-cc-notice" role="status">'+esc(notice)+'</p>':'')+
   '<div class="wtw-cc-slots">'+(saved||'<p>No compact careers yet. Saving creates a portable, compressed career delta.</p>')+'</div>'+
@@ -244,9 +239,7 @@ async function perform(action,element){
    captureCurrent());
   const fresh=baselineFor(profile);
   // New settings take effect only after the confirmed, successful backup.
-  localStorage.setItem(MAIN,JSON.stringify(fresh));
-  config().pin(profile);
-  localStorage.setItem('wtw1999FoundingSessionV1','active');
+  window.__WTW_OFFICE_COMMANDS__.dispatch('LOAD_CAREER',fresh);
   notice='Previous career backed up as '+backup.name+'.';
   location.reload();return;
  }

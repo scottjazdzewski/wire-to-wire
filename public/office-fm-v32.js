@@ -11,8 +11,7 @@
   const subnav = header.querySelector('.subnav');
   const brand = header.querySelector('.brand');
   const actions = header.querySelector('.actions');
-  const loadFile = header.querySelector('#loadStateInput');
-  if (!nav || !subnav || !brand || !loadFile) return;
+  if (!nav || !subnav || !brand) return;
 
   const primary = document.createElement('div');
   primary.className = 'wtwPrimaryBar';
@@ -21,7 +20,7 @@
   const utilityActions = document.createElement('div');
   utilityActions.className = 'wtwUtilityActions';
   const primaryActions = ['Back', 'Forward', 'Continue'];
-  const utilityNames = ['Save', 'Load', 'Export', 'Reset'];
+  const utilityNames = ['Save', 'Export', 'Reset'];
   for (const key of primaryActions) {
     const btn = actions.querySelector(`button[data-act="${key}"]`);
     if (btn) mainActions.appendChild(btn);
@@ -34,7 +33,7 @@
   secondary.className = 'wtwSecondaryBar';
   primary.append(brand, nav, mainActions);
   secondary.append(subnav, utilityActions);
-  header.replaceChildren(primary, secondary, loadFile);
+  header.replaceChildren(primary, secondary);
 
   const identity = document.createElement('section');
   identity.className = 'wtwOfficeIdentity panel';

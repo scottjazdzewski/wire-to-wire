@@ -989,7 +989,7 @@
   }
   function applyImportedState(payload, persist=true){
     if(!payload || typeof payload !== 'object') { showToast('Load failed: bad JSON'); return; }
-    if(window.__WTW_1999_MANAGEMENT__&&(payload.schema!==window.__WTW_1999_MANAGEMENT__.schema || payload.worldAnchor?.startDate!=='1999-01-01' || String(payload.date||'')<'1999-01-01')){
+    if(window.__WTW_1999_MANAGEMENT__&&!window.__WTW_1999_MANAGEMENT__.validateCareer(payload)){
       showToast('Only a clean 1999 career save can be loaded');
       return;
     }
@@ -1016,20 +1016,6 @@
     propagateOfficeState();
     if(persist) persistState(true);
     showToast('Loaded Office state');
-  }
-  function importStateFile(file){
-    if(!file){ showToast('No file selected'); return; }
-    const reader = new FileReader();
-    reader.onload = function(){
-      try {
-        const payload = JSON.parse(String(reader.result || '{}'));
-        applyImportedState(payload, true);
-      } catch(err) {
-        showToast('Load failed: invalid JSON');
-      }
-    };
-    reader.onerror = function(){ showToast('Load failed'); };
-    reader.readAsText(file);
   }
   function exportState(){
     gameState.date = currentGameDate();
@@ -1060,7 +1046,6 @@
     if(act==='+ Month'){ setDate('month'); return true; }
     if(act==='+ Year'){ setDate('year'); return true; }
     if(act==='Save'){ saveState(); return true; }
-    if(act==='Load'){ const inp=document.getElementById('loadStateInput'); if(inp) inp.click(); return true; }
     if(act==='Export'){ exportState(); return true; }
     if(act==='Reset'){
       if(window.__WTW_1999_MANAGEMENT__){
@@ -1158,13 +1143,6 @@
     }
   });
 
-  const loadInput = document.getElementById('loadStateInput');
-  if(loadInput){
-    loadInput.addEventListener('change', function(){
-      importStateFile(this.files && this.files[0]);
-      this.value = '';
-    });
-  }
   try{
     const saved = localStorage.getItem(STATE_KEY); // Historical and old demo saves are NEVER migrated into 1999.
     if(saved){
