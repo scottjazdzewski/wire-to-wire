@@ -6,11 +6,12 @@
 import {ensure, worldIdentity} from './contracts.js';
 
 export const GAME_NAMING_BRIDGE_SCHEMA='WTW_GAME_NAME_ORIGIN_BRIDGE_V1';
+export const HORSE_NAMING_COMMANDS=Object.freeze(['RECORD_HORSE_NAMING_STORY']);
 const nameKey=v=>String(v??'').normalize('NFKC').toLocaleLowerCase('en-US')
  .replace(/[\u2018\u2019]/g,"'").replace(/[^a-z0-9]+/g,'');
 const safeId=/^H-GAME-1999-[A-Za-z0-9-]{1,64}$/;
 const allowedName=/^[\p{L}\p{N} '&\u2019-]+$/u;
-const plain=x=>x&&typeof x==='object'&&!Array.isArray(x);
+const plain=x=>Boolean(x)&&typeof x==='object'&&!Array.isArray(x);
 const text=x=>typeof x==='string'?x.trim():'';
 
 function checkHorse(world,horse){
@@ -32,10 +33,11 @@ function eventMentionsHorse(event,horse){
 }
 
 /** Bind a proposed game horse to ACTUAL owner/breeder and source journal events. */
-export function buildGameHorseNamingBrief({world,state,horse,ownerStories=[]}={}){
+export function buildGameHorseNamingBrief({world,state,horse,ownerStories=null}={}){
  const {owner,breeder}=checkHorse(world,horse);
  ensure(plain(state)&&Array.isArray(state.event_log),'NAMING_JOURNAL','Current game journal required');
- ensure(Array.isArray(ownerStories),'NAMING_STORIES','Owner stories must be a list');
+ const stories=ownerStories??Object.values(state.runtime?.horse_naming?.stories_by_id||{});
+ ensure(Array.isArray(stories),'NAMING_STORIES','Owner stories must be a list');
  const evidence=[];
  for(const e of state.event_log){
   if(!eventMentionsHorse(e,horse))continue;
@@ -45,7 +47,8 @@ export function buildGameHorseNamingBrief({world,state,horse,ownerStories=[]}={}
    // Event details are included exactly, not paraphrased into invented stories.
    sourceDetails:JSON.parse(JSON.stringify(e.details))});
  }
- for(const s of ownerStories){
+ for(const s of stories){
+  if(s.horse_id!==horse.horse_id)continue;
   ensure(plain(s)&&text(s.story_id)&&text(s.story).length>=24&&text(s.story).length<=1000,
    'NAMING_STORY','Owner story needs stable ID and useful narrative');
   ensure(s.owner_id===horse.owner_organization_id&&s.horse_id===horse.horse_id&&
@@ -103,4 +106,47 @@ export function recordGameNameEditorialDecision(screened,{editorId,verdict,notes
  return {...screened,editorId,editorNotes:text(notes),
   status:verdict==='SEND_TO_OWNER'?'PENDING_OWNER_REVIEW':'HELD_BY_EDITOR',
   registrationStatus:'NOT_RELEASED',gameWrites:0};
+}
+
+
+/** Actual save-backed player-authored stories. No generated name and no accepted release. */
+export function createHorseNamingRuntime(){
+ return {schema:GAME_NAMING_BRIDGE_SCHEMA,stories_by_id:{}};
+}
+export function validateHorseNamingRuntime(state,world){
+ const rt=state.runtime?.horse_naming;
+ if(rt===undefined)return; // Old saved careers remain importable.
+ ensure(plain(rt)&&rt.schema===GAME_NAMING_BRIDGE_SCHEMA&&plain(rt.stories_by_id),
+  'NAMING_RUNTIME','Invalid persisted naming story directory');
+ for(const [id,s] of Object.entries(rt.stories_by_id)){
+  ensure(plain(s)&&s.story_id===id&&/^[A-Za-z0-9_-]{4,64}$/.test(id),
+   'NAMING_STORY_ID','Invalid saved story identity');
+  ensure(s.attested_by==='OWNER'&&safeId.test(s.horse_id)&&
+   text(s.story).length>=24&&text(s.story).length<=1000&&
+   worldIdentity(world,'organizations',s.owner_id)&&
+   worldIdentity(world,'organizations',s.breeder_id)&&
+   s.date<=state.clock.date,
+   'NAMING_STORY','Invalid persisted naming story');
+ }
+}
+export function recordHorseNamingStoryAction({state,world,command,emit}){
+ ensure(command.type==='RECORD_HORSE_NAMING_STORY'&&command.actor==='player'&&
+  state.player?.role==='owner','NAMING_AUTH','Only the horse owner can attest naming stories');
+ const p=command.payload;
+ ensure(plain(p)&&plain(p.horse),'NAMING_STORY','Expected horse proposal and story');
+ const {owner,breeder}=checkHorse(world,p.horse);
+ ensure(state.player.operation_id===p.horse.owner_organization_id,
+  'NAMING_OWNER','Cannot attest another owner’s horse story');
+ const id=text(p.story_id),story=text(p.story);
+ ensure(/^[A-Za-z0-9_-]{4,64}$/.test(id)&&story.length>=24&&story.length<=1000,
+  'NAMING_STORY','Invalid ID or story text');
+ const rt=state.runtime.horse_naming??(state.runtime.horse_naming=createHorseNamingRuntime());
+ ensure(!rt.stories_by_id[id],'NAMING_DUPLICATE_STORY','A story with this ID already exists');
+ const record={story_id:id,owner_id:p.horse.owner_organization_id,
+  breeder_id:p.horse.breeder_organization_id,horse_id:p.horse.horse_id,
+  foaling_year:p.horse.foaling_year,story,attested_by:'OWNER',date:state.clock.date,
+  owner_name:owner.name,breeder_name:breeder.name};
+ rt.stories_by_id[id]=record;
+ emit('HORSE_NAMING_STORY_RECORDED',{
+  story_id:id,horse_id:record.horse_id,owner_id:record.owner_id});
 }
