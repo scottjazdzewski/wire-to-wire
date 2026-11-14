@@ -140,6 +140,17 @@ async function bootstrap(db) {
 }
 async function api(request,env,email) {
   const url = new URL(request.url);
+  // V485: horse names are generated in the game, NEVER in Cloudflare Workers AI.
+  // Keep this guard ahead of every historical naming endpoint to prevent all
+  // remote inference, including if old feature flags are accidentally reenabled.
+  if(request.method==='GET'&&url.pathname==='/api/naming/status')
+    return response({schema:'WTW_LOCAL_NAMING_STATUS_V485',mode:'ON_DEVICE_ONLY',
+      previewEnabled:false,populationEnabled:false,aiBound:false,
+      creditsUsed:0,requestsPerName:0,dailyNamingQuota:null,
+      gameWrites:0,nameRegistrationEnabled:false});
+  if(url.pathname.startsWith('/api/naming/'))
+    return response({error:'Remote AI naming retired. Use the in-game local naming engine.',
+      mode:'ON_DEVICE_ONLY',aiRequestsMade:0},410);
   // This status route is read-only and spends zero AI tokens. Cloudflare Access
   // has already authenticated the caller; report binding readiness truthfully.
   if(request.method==='GET'&&url.pathname==='/api/naming/status'){
