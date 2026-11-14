@@ -68,6 +68,23 @@ export function ownerTrainerEvidence(state,world,owner,trainer,{days=56}={}){
   return achieved-expected;
  });
  const form=results.length?round(relative.reduce((n,v)=>n+v,0)/results.length):null;
+ // Owners of a one-horse stable cannot rationally judge a trainer from one
+ // start. With at least one direct observation, they can also consider five
+ // or more settled starts by the same trainer across all current clients.
+ const trainerResults=sampleResults(state,null,trainer,date,days);
+ const trainerRelative=trainerResults.map(x=>{
+  const horse=state.runtime.registered_horses.by_id[x.horse_id];
+  return 1-(x.finish-1)/Math.max(1,x.field_size-1)-
+   (.2+.6*(horse?.starting_attributes?.current_ability??55)/99);
+ });
+ const trainerForm=trainerRelative.length?round(trainerRelative.reduce(
+  (n,v)=>n+v,0)/trainerRelative.length):null;
+ const ownSample=results.length>=3,peerSample=results.length>=1&&trainerResults.length>=5;
+ const basis=ownSample?(peerSample?'OWNER_AND_TRAINER_CLIENTS':'OWNER_RESULTS'):
+  peerSample?'TRAINER_MULTI_CLIENT_FORM':'INSUFFICIENT';
+ const usedForm=ownSample?(peerSample?round(.60*form+.40*trainerForm):form):
+  peerSample?trainerForm:null;
+ const observedStarts=peerSample?trainerResults.length:results.length;
  const history=horses.flatMap(h=>(state.runtime.horse?.[h.horse_id]?.history||[]).
   filter(x=>x.date>=ago(date,Math.min(45,days)-1)&&x.date<=date));
  const unpaid=history.filter(x=>x.unfunded===true).length;
@@ -89,6 +106,11 @@ export function ownerTrainerEvidence(state,world,owner,trainer,{days=56}={}){
   places:results.filter(x=>x.finish<=3).length,
   win_rate:results.length?round(results.filter(x=>x.finish===1).length/results.length):null,
   average_relative_form:form,
+  trainer_multi_client_starts:trainerResults.length,
+  trainer_multi_client_wins:trainerResults.filter(x=>x.finish===1).length,
+  trainer_multi_client_relative_form:trainerForm,
+  decision_form:usedForm,decision_sample_starts:observedStarts,
+  decision_sample_basis:basis,
   owner_purse_minor:results.reduce((n,x)=>n+x.owner_share_minor,0),
   care_expense_minor:spent,jockey_expense_minor:jockeyCost,
   shipping_expense_minor:transport,
@@ -128,16 +150,19 @@ export function setOwnerTrainerMandate({state,world,command,emit}){
   existing_horse_orders_unchanged:true});
 }
 export function selectOwnerTrainerMandate(e,previous,ownerCash){
- const sufficient=e.starts>=3;
+ const sufficient=e.decision_sample_basis?
+  e.decision_sample_basis!=='INSUFFICIENT':e.starts>=3;
+ const form=e.decision_form??e.average_relative_form;
+ const effectiveStarts=e.decision_sample_starts??e.starts;
  if(!sufficient)return {mandate:previous,reason:'WAIT_FOR_SUSTAINED_RACE_SAMPLE'};
  if(e.unfunded_horse_days>0||ownerCash===null||ownerCash<=0)
   return {mandate:previous,reason:'OWNER_FINANCING_PRESSURE_NOT_TRAINER_FAULT'};
- const poor=e.average_relative_form<-.16&&e.owner_trust<.53;
- if(previous==='WATCH'&&e.starts>=4&&e.average_relative_form<-.23&&
-  e.owner_trust<.45)return {mandate:'IMPROVEMENT_PLAN',
+ const poor=form<-.085&&e.owner_trust<.59;
+ if(previous==='WATCH'&&effectiveStarts>=4&&form<-.20&&
+  e.owner_trust<.48)return {mandate:'IMPROVEMENT_PLAN',
    reason:'REPEATED_UNDERPERFORMANCE_WITH_ADEQUATE_FUNDS'};
  if(poor)return {mandate:'WATCH',reason:'SUSTAINED_RESULTS_BELOW_ABILITY_EXPECTATION'};
- if(e.average_relative_form>.10&&e.owner_trust>.46)
+ if(form>.065&&e.owner_trust>.44)
   return {mandate:'SUPPORT',reason:'SUSTAINED_OVERPERFORMANCE_EARNS_BACKING'};
  return {mandate:'NORMAL',reason:'STABLE_PERFORMANCE_AND_SUSTAINED_REVIEW'};
 }
@@ -167,6 +192,8 @@ export function advanceOwnerTrainerReviews({state,world,emit}){
   item.history.push({date:today,mandate:item.mandate,previous:old,
    reason:choice.reason,starts:evidence.starts,
    win_rate:evidence.win_rate,average_relative_form:evidence.average_relative_form,
+   trainer_starts:evidence.trainer_multi_client_starts,
+   decision_form:evidence.decision_form,decision_sample_basis:evidence.decision_sample_basis,
    unfunded_horse_days:evidence.unfunded_horse_days});
   if(item.history.length>8)item.history.splice(0,item.history.length-8);
   rt.totals.scheduled_reviews++;
@@ -174,6 +201,9 @@ export function advanceOwnerTrainerReviews({state,world,emit}){
    reviewed_date:today,previous:old,mandate:item.mandate,
    reason:choice.reason,starts:evidence.starts,wins:evidence.wins,
    average_relative_form:evidence.average_relative_form,
+   trainer_multi_client_starts:evidence.trainer_multi_client_starts,
+   decision_form:evidence.decision_form,
+   sample_basis:evidence.decision_sample_basis,
    owner_trust:evidence.owner_trust,
    care_spend_minor:evidence.care_expense_minor,
    owner_purse_minor:evidence.owner_purse_minor,
