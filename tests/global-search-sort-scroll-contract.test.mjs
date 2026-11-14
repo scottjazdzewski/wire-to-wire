@@ -86,9 +86,9 @@ test('Search filters and scrollable paging see the entire index rather than a cl
  assert.equal(driver.data().page.length,20);
  state.searchQuery='Horse 01';state.searchPage=1;
  const filtered=driver.data();
- assert.equal(filtered.count,10);
+ assert.equal(filtered.count,12,'Keep existing substring search: 001/101 also match 01');
  assert.equal(state.searchPage,0);
- assert.equal(filtered.page.length,10);
+ assert.equal(filtered.page.length,12);
 });
 
 test('Global Search has a real focused scroll region and both directions of sorting in the existing UI',()=>{
@@ -96,7 +96,7 @@ test('Global Search has a real focused scroll region and both directions of sort
  assert.match(js,/if\(key==='search-sort'\)\{[\s\S]*?APP\.searchSortDesc=!APP\.searchSortDesc/);
  assert.match(js,/aria-pressed="\$\{APP\.searchSort===value\}"/);
  assert.match(js,/class="ng-search-sort-arrow"/);
- assert.ok(js.includes(" $('.ng-search-sort',root).forEach(btn=>{"),
+ assert.ok(js.includes(" $$('.ng-search-sort',root).forEach(btn=>{"),
   'Refreshing search sort must update every control, not call forEach on one selected element');
  assert.match(js,/id="ngSearchResults" class="ng-search-table-body" tabindex="0" role="region"/);
  assert.match(css,/\.ng-search-roster-page \.ng-search-table-body\{[^}]*overflow-y:auto!important/);
