@@ -249,7 +249,7 @@ function init(){
   }
   legacy();
  };
- new MutationObserver(run).observe(root,{childList:true});
+ new MutationObserver(run).observe(root,{childList:true,attributes:true,attributeFilter:["data-wtw-identity"]});
  run();
  fetch(HERO_INDEX+"?v=20261113b",{credentials:"same-origin"})
  .then(res=>res.ok?res.json():Promise.reject(Error("Hero art index unavailable")))
