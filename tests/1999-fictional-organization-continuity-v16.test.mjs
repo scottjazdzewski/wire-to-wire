@@ -224,7 +224,7 @@ test('portable continuity archive fully restores and rejects any modified event 
  assert.equal(fromDisk.getOrganization(stable.id).name,stable.name);
  const original=JSON.stringify(snapshot);
  const bad=JSON.parse(original);
- bad.events[0].toPersonId=world.people[0].id;
+ bad.events[0].toPersonId='TAMPERED_NONEXISTENT_PERSON_ID';
  assert.throws(()=>createFictionalOrganizationContinuityRegistry({snapshot:bad}),
   /damaged/);
  const rewritten=JSON.parse(original);
