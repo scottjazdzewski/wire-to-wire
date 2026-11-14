@@ -11,7 +11,9 @@
 <link rel="stylesheet" href="/next/profile-hero-v2.css?rev=wtw-profile-hero-v2-20261113" />
 </head>
 <body class="wtw-next-active">
-<div class="app">
+<!-- Legacy Office DATA/ACTION BRIDGE ONLY. All visible screens render in #wtwNextgen.
+     These old panels are explicitly dormant; do not reactivate their layouts. -->
+<div class="app" data-wtw-layout="legacy-data-bridge" aria-hidden="true">
   <header class="top">
     <div class="brand" data-act="Office Overview"><img class="logo" src="/assets/wtw-office-approved-logo.png" alt="Wire to Wire"><div><h1>Wire to Wire</h1></div></div>
     <div class="navBlock">
@@ -99,7 +101,7 @@
   </main>
 </div>
 
-<div id="routeShell" class="routeShell" hidden>
+<div id="routeShell" class="routeShell" data-wtw-layout="legacy-data-bridge" aria-hidden="true" hidden>
   <section class="routePanel">
     <div class="routeHead">
       <div><span class="routeKicker" id="routeKicker">Destination</span><h2 id="routeTitle">Page</h2></div>
@@ -109,7 +111,7 @@
   </section>
 </div>
 
-<div id="toast" class="toast">Action</div>
+<div id="toast" class="toast" data-wtw-layout="legacy-data-bridge" aria-hidden="true">Action</div>
 
 <script src="/next/1999-commercial-config.js?rev=wtw1999-founding-v1"></script>
 <script src="/next/1999-bootstrap.js?rev=wtw1999-founding-v1"></script>
