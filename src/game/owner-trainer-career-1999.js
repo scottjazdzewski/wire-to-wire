@@ -507,7 +507,7 @@ export function advanceOwnerTrainerReviews({state,world,emit}){
   // Only a newly reviewed, materially strained partnership generates an
   // actionable conversation. One pending request per real owner/trainer pair.
   if(['PRESSING_FOR_CHANGE','CONSIDERING_DEPARTURE'].includes(trainerMood.position)&&
-   item.concern?.status!=='OPEN'){
+   item.concern?.status!=='OPEN'&&!recentConcern(item,today)){
    const request_id=concernKey(owner,trainer,today);
    item.concern={request_id,opened_on:today,deadline:plus(today,14),
     status:'OPEN',reason:trainerMood.reason,
@@ -560,14 +560,16 @@ export function getOwnerTrainerMandate(state,owner,trainer){
 export function getOwnerTrainerCareerReview(state,world,owner,trainer){
  authorizedPair(state,world,owner,trainer);
  const saved=state.runtime.owner_trainer_reviews?.by_pair?.[pair(owner,trainer)]||null;
+ const live=ownerTrainerLiveAssessment(state,world,owner,trainer);
  return structuredClone({schema:OWNER_TRAINER_REVIEW_SCHEMA,
   mandate:saved?.mandate||'NORMAL',authority:saved?.authority||'INITIAL_PENDING',
   next_review_date:saved?.next_review_date||null,
   last_review_date:saved?.last_review_date||null,reason:saved?.reason||null,
   reviews:saved?.history||[],
-  trainer_position:saved?.trainer_position||'COMMITTED',
-  trainer_position_reason:saved?.trainer_position_reason||'INITIAL_RELATIONSHIP',
-  live_assessment:ownerTrainerLiveAssessment(state,world,owner,trainer),
+  trainer_position:live.trainer_position,
+  trainer_position_reason:live.trainer_position_reason,
+  last_formal_trainer_position:saved?.trainer_position||'COMMITTED',
+  live_assessment:live,
   live_history:saved?.live_history||[],
   pending_concern:saved?.concern?.status==='OPEN'?saved.concern:null,
   latest_concern:saved?.concern||null,
