@@ -63,7 +63,7 @@ jobs:
         run: node --test tests/1999-connected-horse-care-economy.test.mjs
       - name: Autonomous owner trainer and barn decisions with causal replay
         run: node --test tests/1999-autonomous-owner-trainer-barn-agents.test.mjs
-      - name: Physical horse shipping, financed hauling, eligibility and return
+      - name: Physical shipping and 31-day autonomous trainer campaign replay
         run: node --test tests/1999-physical-shipping-and-away-race.test.mjs
       - name: First autonomous 1999 race entry booking and result settlement
         run: node --test tests/1999-first-autonomous-race-cycle.test.mjs
