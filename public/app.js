@@ -1,3 +1,4 @@
+import {historyLedgerRows,historyYearSummary} from './archive/history-ledger-model.mjs';
 /* WIRE TO WIRE historical source-view prototype: no source mutations. */
 const $ = id => document.getElementById(id);
 const escapeHTML = value => String(value??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -8,14 +9,14 @@ const fields = {
   connection: {party_id:'Connected owner / trainer / person ID',year:'Season',role:'Connection role',basis:'Evidence basis'},
   result: {horse_id:'Placed horse ID',position:'Finishing position'}
 };
-const state = {page:'overview',year:1953,calendarMonth:null,role:'trainer',involvement:'balanced',search:'',trackDirectory:null,data:null,mode:'LOADING',changes:[],nameEdits:[],availableYears:[],edit:null,rename:null,apiIssue:'',orgHistory:[],orgHistoryStatus:'NOT_LOADED'};
+const state = {page:'overview',year:1953,calendarMonth:null,role:'trainer',involvement:'balanced',search:'',trackDirectory:null,data:null,mode:'LOADING',changes:[],nameEdits:[],availableYears:[],edit:null,rename:null,apiIssue:'',orgHistory:[],orgHistoryStatus:'NOT_LOADED',history:{view:'ledger',year:'all',track:'all',sort:'year',desc:true,query:'',page:0}};
 const GAME_PREF_KEY = 'wtw_game_manager_preferences_v1';
 try { const saved=JSON.parse(localStorage.getItem(GAME_PREF_KEY)||'{}'); if(['owner','trainer','farm','breeder','jockey'].includes(saved.role))state.role=saved.role; if(['hands-on','balanced','executive'].includes(saved.involvement))state.involvement=saved.involvement; } catch {}
 // Deep links from the main Racing Office open the existing protected historical archive.
 const archivePage = new URLSearchParams(window.location.search).get('page');
 if (['overview','seasons','horses','people','tracks','races','search','changes','sources'].includes(archivePage)) state.page=archivePage;
 const archiveQuery = new URLSearchParams(window.location.search).get('q');
-if(archiveQuery)state.search=archiveQuery.slice(0,100);
+if(archiveQuery){state.search=archiveQuery.slice(0,100);state.history.query=state.search;}
 const SAMPLE_KEY = 'wtw_canon_desk_local_proposals_v1';
 let toastTimeout;
 function storedChanges(){try{return JSON.parse(localStorage.getItem(SAMPLE_KEY)||'[]')}catch{return []}}
@@ -286,29 +287,123 @@ function renderTracks(){
   '<section class="racecourse-atlas-section"><header><div><span class="smallcaps">TRACK ATLAS</span><h3>'+(state.search?'Matching venues':'Core racing venues')+'</h3></div><small>Showing '+featured.length+' visual cards · full directory below</small></header><div class="racecourse-atlas-grid">'+(trackCards||'<p class="empty-note">No tracks match this search.</p>')+'</div></section>'+
   section('Complete track directory','All canonical WTW geography remains available in a precise registry view. Provisional and fictional localities stay labeled.',table);
 }
-function renderRaces(){
- const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
- const validDate=(value)=>{const m=String(value||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return m&&Number(m[2])>=1&&Number(m[2])<=12&&Number(m[3])>=1&&Number(m[3])<=31?m:null};
- const dateKey=(r)=>validDate(r.date)?String(r.date):'9999-99-99';
- const list=(state.data?.races||[]).filter(r=>(+r.year===+state.year||state.search)&&recordMatches(r)).sort((a,b)=>Number(a.year)-Number(b.year)||dateKey(a).localeCompare(dateKey(b))||a.name.localeCompare(b.name));
- const multiYear=new Set(list.map(r=>String(r.year))).size>1;
- const winnersLoaded=list.filter(r=>winnerOf(r)).length;
- const exactDates=list.filter(r=>dateEvidence(r).kind==='exact').length;
- const venues=new Set(list.map(r=>r.track_name).filter(Boolean)).size;
- const groups=new Map();
- for(const r of list){
-  const match=validDate(r.date),month=match?monthNames[Number(match[2])-1]:'Day not recorded',label=(multiYear?String(r.year)+' · ':'')+month;
-  if(!groups.has(label))groups.set(label,[]);
-  groups.get(label).push(r);
- }
- const cards=(items)=>items.map(r=>{const evidence=dateEvidence(r);return '<article class="vault-race-card"><div class="vault-race-date"><small>'+h(r.year)+'</small><strong>'+(validDate(r.date)?Number(validDate(r.date)[3]):'—')+'</strong><span>'+(validDate(r.date)?monthNames[Number(validDate(r.date)[2])-1].slice(0,3).toUpperCase():'DATE')+'</span></div><div class="vault-race-main"><div class="vault-race-kicker">'+venueName(r)+' <span class="date-evidence-tag '+h(evidence.kind)+'">'+h(evidence.label)+'</span></div><h4>'+openButton('race',r.id,r.name)+'</h4><div class="vault-race-winner">'+(winnerOf(r)?'<span>WINNER</span>'+openButton('entity',winnerOf(r).horse_id,nameFor(winnerOf(r).horse_id)):'<span>FINISH ORDER</span><strong>Not imported</strong>')+'</div></div><div class="vault-race-actions">'+editButton('race',r.id,'Review','button button-quiet')+'</div></article>'}).join('');
- const grouped=[...groups].map(([label,items])=>'<section class="vault-month-group"><header><div><span class="smallcaps">RACE BOOK</span><h3>'+h(label)+'</h3></div><span>'+items.length+' editions</span></header><div class="vault-race-list">'+cards(items)+'</div></section>').join('');
- return '<div class="vault-page">'+
-  intro('HISTORY VAULT','Stakes Archive','Chronological source records from the WTW racing universe. Each edition preserves its date-evidence status and links back to horses and venues.', '<div class="record-count">'+list.length.toLocaleString()+' race editions</div>')+
-  '<section class="vault-hero"><div><span class="smallcaps">ARCHIVE LEDGER</span><h2>'+h(state.search?'Search results':state.year+' racing year')+'</h2><p>Open any race as a permanent historical file. Exact dates, unresolved chronology and missing finish orders remain explicit instead of being smoothed over.</p></div><div class="vault-hero-stats"><span><b>'+list.length.toLocaleString()+'</b> editions</span><span><b>'+winnersLoaded.toLocaleString()+'</b> winners loaded</span><span><b>'+exactDates.toLocaleString()+'</b> exact dates</span><span><b>'+venues.toLocaleString()+'</b> venues</span></div></section>'+
-  yearTabs()+
-  (grouped||noRecords('No matching race editions.'))+
+
+/* The ONE historical record browser: dense sortable editions first,
+ * optional read-only year dossier second. No month-card alternative UI. */
+function historyWinners(){
+ return new Map((state.data?.races||[]).map(r=>{
+  const winner=winnerOf(r);
+  return [r.id,winner?{horse_id:winner.horse_id,name:nameFor(winner.horse_id)}:null];
+ }));
+}
+function historySortHeader(field,label){
+ const current=state.history,active=current.sort===field;
+ const direction=active?(current.desc?'descending':'ascending'):'none';
+ return '<th scope="col" aria-sort="'+direction+'"><button type="button" data-history-sort="'+field+
+  '" aria-label="Sort history by '+h(label)+'" title="Sort by '+h(label)+'">'+h(label)+
+  '<span aria-hidden="true">'+(active?(current.desc?' ▼':' ▲'):' ↕')+'</span></button></th>';
+}
+function historyRaceRow(row,yearLink=true){
+ const recordedDate=row.date||'—';
+ return '<tr>'+
+  '<td class="history-year-cell">'+(yearLink?'<button type="button" data-history-year="'+row.year+
+   '" title="Open '+row.year+' Year in Review">'+h(row.year)+'</button>':h(row.year))+'</td>'+
+  '<td class="history-date-cell">'+h(recordedDate)+'</td>'+
+  '<td class="history-race-cell">'+openButton('race',row.id,row.race||row.id)+'</td>'+
+  '<td>'+h(row.track||'Venue not recorded')+'</td>'+
+  '<td>'+(row.won?openButton('entity',row.winnerId,row.winner||row.winnerId):
+   '<span class="muted">Winner not recorded</span>')+'</td>'+
+  '<td>'+evidencePill(row.source)+'</td>'+
+  '</tr>';
+}
+function renderHistoryLedger(){
+ const scope=state.history,wins=historyWinners(),all=state.data?.races||[];
+ const rows=historyLedgerRows(all,wins,{year:scope.year,track:scope.track,query:scope.query,
+   sort:scope.sort,desc:scope.desc});
+ const allYears=years(),tracks=[...new Set(all.map(r=>r.track_name).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+ const pageSize=75,totalPages=Math.max(1,Math.ceil(rows.length/pageSize));
+ scope.page=Math.min(Math.max(0,scope.page),totalPages-1);
+ const shown=rows.slice(scope.page*pageSize,(scope.page+1)*pageSize);
+ const yearOptions='<option value="all">All years</option>'+allYears.map(y=>
+  '<option value="'+y+'"'+(String(scope.year)===String(y)?' selected':'')+'>'+y+'</option>').join('');
+ const trackOptions='<option value="all">All tracks</option>'+tracks.map(name=>
+  '<option value="'+h(name)+'"'+(scope.track===name?' selected':'')+'>'+h(name)+'</option>').join('');
+ const loaded=all.length,winners=rows.filter(r=>r.won).length;
+ const visibleCount=shown.length;
+ const note=state.data?.meta?.partial?
+  '<div class="history-source-note">Partial History read model: only loaded rows are sortable here; missing editions and awards are not inferred.</div>':
+  '<div class="history-source-note">Recorded editions only · source/date evidence preserved · annual awards require a separately verified ledger.</div>';
+ return '<div class="history-ledger-page">'+
+  '<header class="history-ledger-title"><div><span class="smallcaps">RACING HISTORY · SOURCE-KEYED EDITIONS</span>'+
+  '<h2>Historical Racing Records</h2>'+
+  '<p>One sortable ledger of race editions, dates, tracks and recorded winners. Open a year for its season review.</p></div>'+
+  '<div class="history-ledger-count"><strong>'+rows.length.toLocaleString()+'</strong><span>matching editions</span><small>'+
+   winners.toLocaleString()+' winners recorded · '+loaded.toLocaleString()+' active editions loaded</small></div></header>'+
+  '<div class="history-ledger-tools">'+
+  '<label>YEAR <select data-history-filter="year" aria-label="Filter historical editions by year">'+yearOptions+'</select></label>'+
+  '<label>TRACK <select data-history-filter="track" aria-label="Filter historical editions by track">'+trackOptions+'</select></label>'+
+  '<label class="history-ledger-search">FIND IN HISTORY <input type="search" data-history-query="1" aria-label="Search history race, track, winner or record ID" autocomplete="off" placeholder="Race / winner / horse ID…" value="'+h(scope.query)+'"></label>'+
+  '<button class="button button-primary" type="button" data-history-year="'+h(state.year)+'">YEAR IN REVIEW · '+h(state.year)+'</button>'+
+  '</div>'+note+
+  '<section class="history-ledger-table-region" tabindex="0" role="region" aria-label="Scrollable historical race results">'+
+  '<table class="history-ledger-table"><thead><tr>'+
+   historySortHeader('year','YEAR')+historySortHeader('date','DATE')+
+   historySortHeader('race','RACE')+historySortHeader('track','RACECOURSE')+
+   historySortHeader('winner','WINNER')+historySortHeader('status','DATE EVIDENCE')+
+  '</tr></thead><tbody>'+
+  (shown.map(row=>historyRaceRow(row)).join('')||'<tr><td colspan="6" class="history-no-rows">No matching source records. Try another year, track or search.</td></tr>')+
+  '</tbody></table></section>'+
+  '<div class="history-ledger-pagination"><span>Showing '+(visibleCount?scope.page*pageSize+1:0)+'–'+
+   (scope.page*pageSize+visibleCount)+' of '+rows.length.toLocaleString()+'</span>'+
+   '<div><button type="button" data-history-page="prev"'+(scope.page===0?' disabled':'')+'>Previous</button>'+
+   '<span>Page '+(scope.page+1)+' / '+totalPages+'</span>'+
+   '<button type="button" data-history-page="next"'+(scope.page>=totalPages-1?' disabled':'')+'>Next</button></div></div>'+
   '</div>';
+}
+function renderHistoryYearReview(){
+ const year=state.year,winners=historyWinners();
+ const summary=historyYearSummary(year,state.data?.races||[],winners,state.data?.awards||[]);
+ const classic=summary.classics.map(item=>{
+  const r=item.row;
+  return '<article class="history-classic"><span>THE CLASSICS</span><h3>'+h(item.name)+'</h3>'+
+   (r?(r.won?openButton('entity',r.winnerId,r.winner):
+    '<p>Winner not recorded in the active source.</p>')+
+    '<small>'+h(r.track||'Venue unknown')+' · '+h(r.date||'Day not recorded')+'</small>':
+    '<p>No active edition for this race is loaded for '+year+'.</p>')+'</article>';
+ }).join('');
+ const awards=summary.verifiedAwards.length?
+  '<div class="history-awards">'+summary.verifiedAwards.map(r=>
+   '<div><strong>'+h(r.category)+'</strong><span>'+h(r.name)+'</span><small>'+h(r.sourceId)+'</small></div>').join('')+'</div>':
+  '<p class="history-no-awards">No source-verified annual awards are available in this History read model. Championship titles are never inferred from race wins or backfilled as facts.</p>';
+ return '<div class="history-ledger-page history-year-review">'+
+  '<header class="history-ledger-title"><div><span class="smallcaps">RACING HISTORY · SEASON DOSSIER</span><h2>'+
+   h(year)+' Year in Review</h2><p>Documented winners and major race results. Award records appear only when source-approved.</p></div>'+
+   '<div class="history-review-navigation"><button type="button" data-history-back="1">← ALL HISTORICAL RECORDS</button>'+
+   '<label>YEAR <select data-history-review-year aria-label="Year in Review season">'+years().map(y=>
+    '<option value="'+y+'"'+(y===year?' selected':'')+'>'+y+'</option>').join('')+'</select></label></div></header>'+
+  '<div class="history-review-metrics">'+
+   '<div><strong>'+summary.rows.length+'</strong><span>active race editions</span></div>'+
+   '<div><strong>'+summary.recordedWinners+'</strong><span>recorded winners</span></div>'+
+   '<div><strong>'+summary.uniqueVenues+'</strong><span>racecourses</span></div>'+
+   '<div><strong>'+summary.exactDates+'</strong><span>sourced exact dates</span></div></div>'+
+  '<section class="history-review-section"><header><h3>Classic Winners</h3><small>Race records only · original winner IDs retained</small></header>'+
+   '<div class="history-classics-grid">'+classic+'</div></section>'+
+  '<section class="history-review-section"><header><h3>Championships & Awards</h3><small>Strict source-approval gate</small></header>'+awards+'</section>'+
+  '<section class="history-review-section"><header><h3>Recorded Season Leaders</h3><small>Stakes wins in the active edition ledger; not an award or championship ranking</small></header>'+
+   (summary.mostRecordedWins.length?'<div class="history-season-leaders">'+summary.mostRecordedWins.map((r,i)=>
+    '<div><span>'+(i+1)+'</span>'+openButton('entity',r.horse_id,r.name||r.horse_id)+
+    '<strong>'+r.wins+' recorded wins</strong></div>').join('')+'</div>':
+    '<p class="history-no-awards">No race winners recorded for this season.</p>')+'</section>'+
+  '<section class="history-review-section"><header><h3>Complete '+h(year)+' Race Results</h3><small>'+
+    summary.rows.length+' active editions · independently scrollable</small></header>'+
+   '<div class="history-ledger-table-region history-review-table" tabindex="0" role="region" aria-label="Scrollable year in review race results">'+
+   '<table class="history-ledger-table"><thead><tr><th>YEAR</th><th>DATE</th><th>RACE</th><th>RACECOURSE</th><th>WINNER</th><th>DATE EVIDENCE</th></tr></thead>'+
+   '<tbody>'+(summary.rows.map(r=>historyRaceRow(r,false)).join('')||
+    '<tr><td colspan="6" class="history-no-rows">No active source editions are loaded.</td></tr>')+'</tbody></table></div></section>'+
+  '</div>';
+}
+function renderRaces(){
+ return state.history.view==='review'?renderHistoryYearReview():renderHistoryLedger();
 }
 function nameHistory(){
  const edits=[...state.nameEdits].slice(0,100);
@@ -370,8 +465,8 @@ function render(){
  const map={overview:renderOverview,seasons:renderSeasons,horses:renderHorses,people:renderPeople,tracks:renderTracks,races:renderRaces,search:renderSearch,changes:renderChanges,sources:renderSources};
  $('app').innerHTML=(state.mode==='DEMO'&&state.apiIssue?`<div class="callout"><strong>Private historical database not connected to this session.</strong> The records shown here are only the small demonstration set, not the imported history. API: ${h(state.apiIssue)}. Confirm the three Production Access variables and redeploy before making saved edits.</div>`:'')+(map[state.page]||renderOverview)();
 }
-function setPage(page){state.page=page;document.body.classList.remove('menu-open');$('sidebar').classList.remove('mobile-open');render();window.scrollTo({top:0,behavior:'smooth'})}
-function setYear(year){state.year=Number(year);$('year-select').value=String(year);render()}
+function setPage(page){state.page=page;if(page==='races')state.history.view='ledger';document.body.classList.remove('menu-open');$('sidebar').classList.remove('mobile-open');render();window.scrollTo({top:0,behavior:'smooth'})}
+function setYear(year){state.year=Number(year);$('year-select').value=String(year);if(state.page==='races')state.history.view='review';render()}
 function toast(message){let node=$('toast');node.textContent=message;node.hidden=false;clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>node.hidden=true,4500)}
 function renderNetworkEntityProfile(e,cn){
  const isPerson=e.kind==='person';
@@ -666,12 +761,32 @@ async function decideChange(id,decision){const item=state.changes.find(v=>v.id==
  } else {item.status=decision;item.decided_at=new Date().toISOString();storeChanges()}
  toast(decision==='REJECTED'?'Proposal rejected.':'Approved for future promotion; source record remains untouched.');render();
 }
-document.addEventListener('click',e=>{const t=e.target.closest('[data-page],[data-year],[data-calendar-step],[data-calendar-agenda],[data-open-type],[data-edit-type],[data-rename-type],[data-close-drawer],[data-review-action],[data-history-org]');if(!t)return;
+document.addEventListener('click',e=>{const t=e.target.closest('[data-page],[data-year],[data-calendar-step],[data-calendar-agenda],[data-open-type],[data-edit-type],[data-rename-type],[data-close-drawer],[data-review-action],[data-history-org],[data-history-sort],[data-history-year],[data-history-back],[data-history-page]');if(!t)return;
+ if(t.dataset.historySort){const field=t.dataset.historySort;if(!['year','date','race','track','winner','status'].includes(field))return;if(state.history.sort===field)state.history.desc=!state.history.desc;else{state.history.sort=field;state.history.desc=field==='year'}state.history.page=0;render();return}
+ if(t.dataset.historyYear){const y=Number(t.dataset.historyYear);if(!years().includes(y))return;setYear(y);return}
+ if(t.dataset.historyBack){state.history.view='ledger';render();return}
+ if(t.dataset.historyPage){const direction=t.dataset.historyPage==='next'?1:-1;state.history.page=Math.max(0,state.history.page+direction);render();return}
  if(t.dataset.page){setPage(t.dataset.page);return}if(t.dataset.year){setYear(t.dataset.year);return}if(t.dataset.calendarStep){const next=Number(state.calendarMonth)+Number(t.dataset.calendarStep);if(next>=0&&next<=11){state.calendarMonth=next;render()}return}if(t.dataset.calendarAgenda){const agenda=document.getElementById('calendar-agenda');agenda?.scrollIntoView({behavior:'smooth',block:'center'});agenda?.focus({preventScroll:true});return}if(t.dataset.closeDrawer){closeDrawer();return}if(t.dataset.historyOrg){openDetail('history-org',t.dataset.historyOrg);return}if(t.dataset.renameType){showRename(t.dataset.renameType,t.dataset.id,t.dataset.currentName);return}if(t.dataset.openType){openDetail(t.dataset.openType,t.dataset.id);return}if(t.dataset.editType){showEdit(t.dataset.editType,t.dataset.id);return}if(t.dataset.reviewAction){decideChange(t.dataset.reviewId,t.dataset.reviewAction)}
 });
 $('year-select').addEventListener('change',e=>setYear(e.target.value));
-document.addEventListener('change',e=>{const monthControl=e.target.closest('#calendar-month-select');if(monthControl){state.calendarMonth=Number(monthControl.value);render();return}const control=e.target.closest('[data-game-pref]');if(!control)return;const key=control.dataset.gamePref;if(!['role','involvement'].includes(key))return;state[key]=control.value;try{localStorage.setItem(GAME_PREF_KEY,JSON.stringify({role:state.role,involvement:state.involvement}));}catch{}render();});
-$('global-search').addEventListener('input',e=>{state.search=e.target.value.trim();if(state.search)state.page='search';else if(state.page==='search')state.page='overview';render()});
+document.addEventListener('change',e=>{
+ const filter=e.target.closest('[data-history-filter]');
+ if(filter){const key=filter.dataset.historyFilter;if(key==='year'||key==='track'){state.history[key]=filter.value;state.history.page=0;render()}return}
+ if(e.target.matches('[data-history-review-year]')){setYear(e.target.value);return}
+ const monthControl=e.target.closest('#calendar-month-select');if(monthControl){state.calendarMonth=Number(monthControl.value);render();return}const control=e.target.closest('[data-game-pref]');if(!control)return;const key=control.dataset.gamePref;if(!['role','involvement'].includes(key))return;state[key]=control.value;try{localStorage.setItem(GAME_PREF_KEY,JSON.stringify({role:state.role,involvement:state.involvement}));}catch{}render();});
+$('global-search').addEventListener('input',e=>{
+ state.search=e.target.value.trim();
+ if(state.page==='races'){state.history.query=state.search;state.history.view='ledger';state.history.page=0;render();return}
+ if(state.search)state.page='search';else if(state.page==='search')state.page='overview';render()
+});
+document.addEventListener('input',e=>{
+ if(!e.target.matches('[data-history-query]'))return;
+ state.history.query=e.target.value.slice(0,120);state.history.page=0;
+ const at=e.target.selectionStart;
+ render();
+ const restored=document.querySelector('[data-history-query]');
+ if(restored){restored.focus();try{restored.setSelectionRange(at,at)}catch{}}
+});
 $('edit-field').addEventListener('change',fillOld);
 $('edit-form').addEventListener('submit',saveProposal);
 $('name-form').addEventListener('submit',saveName);
