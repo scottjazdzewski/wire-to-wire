@@ -83,10 +83,16 @@ export function effectiveHorseTrack(state,horse){
  if(trip?.status==='OUTBOUND'||trip?.status==='RETURNING')return null;
  return horse.host_track_id??null;
 }
-export function effectiveHorseCareSite(state,horse){
+/** Where the horse physically receives barn care today; no barn while
+ * in a carrier. A reserved receiving stall is not an occupied stall. */
+export function physicalHorseSiteId(state,horse){
  const trip=horseTravelStatus(state,horse.horse_id);
- const id=trip?.status==='AT_DESTINATION'?trip.destination_site_id:horse.current_residence_id;
- return state.runtime.facilities?.sites?.[id]||null;
+ if(trip?.status==='OUTBOUND'||trip?.status==='RETURNING')return null;
+ return trip?.status==='AT_DESTINATION'?trip.destination_site_id:horse.current_residence_id;
+}
+export function effectiveHorseCareSite(state,horse){
+ const id=physicalHorseSiteId(state,horse);
+ return id?state.runtime.facilities?.sites?.[id]||null:null;
 }
 export function visitingHorseCount(state,siteId,exceptHorseId=null){
  return Object.values(travels(state)).filter(x=>x.horse_id!==exceptHorseId&&
