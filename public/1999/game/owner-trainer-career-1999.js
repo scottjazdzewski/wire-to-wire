@@ -37,7 +37,8 @@ export const createOwnerTrainerReviewRuntime=()=>({
  totals:{scheduled_reviews:0,ai_mandate_changes:0,player_mandate_changes:0,
   evidence_insufficient:0,trainer_form_updates:0,
   concerns_opened:0,player_concern_responses:0,ai_concern_responses:0,
-  unanswered_concerns:0}
+  unanswered_concerns:0,live_pulses:0,live_status_changes:0,
+  live_concerns_opened:0}
 });
 const root=state=>state.runtime.owner_trainer_reviews??=
  createOwnerTrainerReviewRuntime();
@@ -116,6 +117,9 @@ export function ownerTrainerEvidence(state,world,owner,trainer,{days=56}={}){
   trainer_multi_client_starts:trainerResults.length,
   trainer_multi_client_wins:trainerResults.filter(x=>x.finish===1).length,
   trainer_multi_client_relative_form:trainerForm,
+  last_race:results.length?{race_id:results.at(-1).race_id,
+   date:results.at(-1).date,finish:results.at(-1).finish,
+   field_size:results.at(-1).field_size}:null,
   decision_form:usedForm,decision_sample_starts:observedStarts,
   decision_sample_basis:basis,
   owner_purse_minor:results.reduce((n,x)=>n+x.owner_share_minor,0),
@@ -225,6 +229,158 @@ export function assessTrainerRelationshipPosition(e,previous='COMMITTED'){
  if(pressure>.43)return {position:'FRUSTRATED',
   reason:'TRAINER_PATIENCE_AND_WORKING_ALIGNMENT_UNDER_STRAIN'};
  return {position:'COMMITTED',reason:'TRAINER_ACCEPTS_CURRENT_PARTNERSHIP'};
+}
+
+
+/**
+ * LIVE assessment: computed from the game at READ TIME, so a settled race,
+ * care payment, changed workout, contract negotiation, or owner response is
+ * immediately reflected even before the next formal 28-day review.
+ * Never changes a mandate or silently terminates a working relationship.
+ */
+export function ownerTrainerLiveAssessment(state,world,owner,trainer){
+ const evidence=ownerTrainerEvidence(state,world,owner,trainer);
+ const formal=state.runtime.owner_trainer_reviews?.by_pair?.[pair(owner,trainer)];
+ const trainerMood=assessTrainerRelationshipPosition(evidence,
+  formal?.trainer_position??'COMMITTED');
+ const observedForm=evidence.average_relative_form;
+ // One race can change sentiment without becoming a premature personnel
+ // verdict. Stronger decisions still require the existing sample-aware gate.
+ const formSignal=observedForm===null?.5:cap(.5+observedForm);
+ const confidence=round(cap(.51*evidence.owner_trust+
+  .23*evidence.working_relationship_strength+
+  .16*evidence.owner_patience+.10*formSignal));
+ const ownerOutlook=confidence>=.65?'CONFIDENT':
+  confidence>=.51?'STEADY':confidence>=.35?'WATCHFUL':'ALARMED';
+ const preview=selectOwnerTrainerMandate(evidence,
+  formal?.mandate??'NORMAL',evidence.owner_cash_minor);
+ return {
+  date:state.clock.date,owner_id:owner,trainer_id:trainer,
+  owner_confidence:confidence,owner_outlook:ownerOutlook,
+  trainer_position:trainerMood.position,
+  trainer_position_reason:trainerMood.reason,
+  trainer_support:evidence.trainer_support,owner_trust:evidence.owner_trust,
+  working_relationship_strength:evidence.working_relationship_strength,
+  race_starts_56d:evidence.starts,last_race:evidence.last_race,
+  last_form:evidence.average_relative_form,
+  owner_recommendation:preview.mandate,
+  owner_recommendation_reason:preview.reason,
+  formal_mandate:formal?.mandate??'NORMAL',
+  provenance:'LIVE_ACTUAL_GAME_FACTS_NOT_HISTORICAL_PERSONNEL_ASSESSMENT'
+ };
+}
+const recentConcern=(item,today)=>item.concern&&
+ item.concern.opened_on>ago(today,14);
+function openDynamicConcern({state,world,item,owner,trainer,live,emit}){
+ const c=item.concern;
+ // A reaction is allowed after an actual NEW escalation only, never from a
+ // perpetual bad relationship on each successive day.
+ if(c?.status==='OPEN'||recentConcern(item,state.clock.date))return;
+ const reason=live.trainer_position_reason;
+ const request_id=concernKey(owner,trainer,state.clock.date);
+ item.concern={request_id,opened_on:state.clock.date,
+  deadline:plus(state.clock.date,14),status:'OPEN',reason,
+  trainer_position:live.trainer_position,resolved_on:null,
+  response:null,responder:null,outcome_reason:null};
+ const rt=root(state);
+ rt.totals.concerns_opened=(rt.totals.concerns_opened??0)+1;
+ rt.totals.live_concerns_opened=(rt.totals.live_concerns_opened??0)+1;
+ const playerControlled=state.player.role==='owner'&&
+  owner===state.player.operation_id;
+ emit('TRAINER_CONCERN_OPENED',{owner_id:owner,trainer_id:trainer,
+  request_id,deadline:item.concern.deadline,reason,
+  trainer_position:live.trainer_position,
+  source:'LIVE_RELATIONSHIP_ESCALATION',player_response_required:playerControlled});
+ if(!playerControlled){
+  const evidence=ownerTrainerEvidence(state,world,owner,trainer);
+  const cooperative=evidence.owner_cash_minor>0&&
+   evidence.unfunded_horse_days===0&&
+   (evidence.owner_patience>=.45||
+    evidence.working_relationship_strength>=.48);
+  resolveConcern({state,item,owner,trainer,
+   choice:cooperative?'HEAR_AND_REVIEW':'HOLD_CURRENT_COURSE',
+   actor:'system',evidence,emit});
+ }
+}
+/**
+ * Runs after ALL real daily work and race settlements (never before them).
+ * Also runs after material player commands. Saves a bounded trend and emits
+ * distinct events for actual status changes and races, without faking money.
+ */
+export function updateOwnerTrainerLiveReviews({state,world,emit,events=[],
+ trigger='DAILY'}){
+ // Career creation and opening-day setup commands must never bring forward
+ // the first 28-day formal review. Day 1 owns initial relationship dating.
+ if(state.clock.days_elapsed===0)return;
+ const rt=root(state);
+ const actualEvents=[...events];
+ const rowByHorse=new Map(registered(state).map(h=>[h.horse_id,h]));
+ for(const [,ids] of pairs(state)){
+  const {owner,trainer}=ids;
+  const item=initialize(state,owner,trainer);
+  const prior=item.live_assessment??null;
+  const live=ownerTrainerLiveAssessment(state,world,owner,trainer);
+  const relevant=actualEvents.filter(e=>{
+   const d=e.details??{},h=d.horse_id?rowByHorse.get(d.horse_id):null;
+   return (d.owner_id===owner&&d.trainer_id===trainer)||
+    (h?.owner_organization_id===owner&&h?.trainer_id===trainer);
+  });
+  const race=relevant.some(e=>e.kind==='POST_RACE_PROFESSIONAL_FEEDBACK');
+  const cause=race?'AFTER_RACE':
+   relevant.some(e=>e.kind==='TRAINER_CONCERN_RESPONDED')?'AFTER_CONVERSATION':
+   relevant.some(e=>e.kind==='TRAINER_SERVICE_OFFER_ACCEPTED'||
+    e.kind==='TRAINER_SERVICE_OFFER_DECLINED')?'CONTRACT_DECISION':
+   trigger;
+  item.live_assessment={...live,trigger:cause};
+  item.live_history??=[];
+  const sameDate=item.live_history.at(-1)?.date===state.clock.date;
+  const trend={date:state.clock.date,trigger:cause,
+   owner_confidence:live.owner_confidence,
+   owner_outlook:live.owner_outlook,trainer_position:live.trainer_position,
+   trainer_support:live.trainer_support,owner_trust:live.owner_trust,
+   last_race_id:live.last_race?.race_id??null};
+  if(sameDate)item.live_history[item.live_history.length-1]=trend;
+  else item.live_history.push(trend);
+  if(item.live_history.length>14)item.live_history.shift();
+  rt.totals.live_pulses=(rt.totals.live_pulses??0)+1;
+  const statusChanged=Boolean(prior)&&(
+   prior.owner_outlook!==live.owner_outlook||
+   prior.trainer_position!==live.trainer_position);
+  if(statusChanged||race){
+   rt.totals.live_status_changes=(rt.totals.live_status_changes??0)+1;
+   emit('OWNER_TRAINER_LIVE_STATUS',{owner_id:owner,trainer_id:trainer,
+    date:state.clock.date,trigger:cause,
+    owner_confidence:live.owner_confidence,
+    owner_outlook:live.owner_outlook,
+    trainer_position:live.trainer_position,
+    previous_owner_outlook:prior?.owner_outlook??null,
+    previous_trainer_position:prior?.trainer_position??null,
+    last_race_id:live.last_race?.race_id??null,
+    formal_mandate_unchanged:true});
+  }
+  const newlyEscalated=prior&&
+   !['PRESSING_FOR_CHANGE','CONSIDERING_DEPARTURE'].includes(
+    prior.trainer_position)&&
+   ['PRESSING_FOR_CHANGE','CONSIDERING_DEPARTURE'].includes(
+    live.trainer_position);
+  if(newlyEscalated){
+   openDynamicConcern({state,world,item,owner,trainer,live,emit});
+   // An AI response may change real trainer support immediately; do not
+   // leave the same-date saved pulse stale until the following morning.
+   const finalLive=ownerTrainerLiveAssessment(state,world,owner,trainer);
+   if(finalLive.trainer_support!==live.trainer_support||
+    finalLive.owner_confidence!==live.owner_confidence){
+    item.live_assessment={...finalLive,trigger:'AFTER_AI_CONVERSATION'};
+    item.live_history[item.live_history.length-1]={
+     ...trend,trigger:'AFTER_AI_CONVERSATION',
+     owner_confidence:finalLive.owner_confidence,
+     owner_outlook:finalLive.owner_outlook,
+     trainer_position:finalLive.trainer_position,
+     trainer_support:finalLive.trainer_support,
+     owner_trust:finalLive.owner_trust};
+   }
+  }
+ }
 }
 
 const concernKey=(owner,trainer,date)=>owner+'|'+trainer+'|'+date;
@@ -369,7 +525,7 @@ export function advanceOwnerTrainerReviews({state,world,emit}){
   // Only a newly reviewed, materially strained partnership generates an
   // actionable conversation. One pending request per real owner/trainer pair.
   if(['PRESSING_FOR_CHANGE','CONSIDERING_DEPARTURE'].includes(trainerMood.position)&&
-   item.concern?.status!=='OPEN'){
+   item.concern?.status!=='OPEN'&&!recentConcern(item,today)){
    const request_id=concernKey(owner,trainer,today);
    item.concern={request_id,opened_on:today,deadline:plus(today,14),
     status:'OPEN',reason:trainerMood.reason,
@@ -422,13 +578,17 @@ export function getOwnerTrainerMandate(state,owner,trainer){
 export function getOwnerTrainerCareerReview(state,world,owner,trainer){
  authorizedPair(state,world,owner,trainer);
  const saved=state.runtime.owner_trainer_reviews?.by_pair?.[pair(owner,trainer)]||null;
+ const live=ownerTrainerLiveAssessment(state,world,owner,trainer);
  return structuredClone({schema:OWNER_TRAINER_REVIEW_SCHEMA,
   mandate:saved?.mandate||'NORMAL',authority:saved?.authority||'INITIAL_PENDING',
   next_review_date:saved?.next_review_date||null,
   last_review_date:saved?.last_review_date||null,reason:saved?.reason||null,
   reviews:saved?.history||[],
-  trainer_position:saved?.trainer_position||'COMMITTED',
-  trainer_position_reason:saved?.trainer_position_reason||'INITIAL_RELATIONSHIP',
+  trainer_position:live.trainer_position,
+  trainer_position_reason:live.trainer_position_reason,
+  last_formal_trainer_position:saved?.trainer_position||'COMMITTED',
+  live_assessment:live,
+  live_history:saved?.live_history||[],
   pending_concern:saved?.concern?.status==='OPEN'?saved.concern:null,
   latest_concern:saved?.concern||null,
   concern_history:saved?.conversation_history||[],
@@ -464,6 +624,20 @@ export function validateOwnerTrainerReviews(state,world){
     ['COMMITTED','FRUSTRATED','PRESSING_FOR_CHANGE','CONSIDERING_DEPARTURE'].
     includes(p.trainer_position))&&
    (p.trainer_position_reason===undefined||typeof p.trainer_position_reason==='string')&&
+   (p.live_assessment===undefined||isObject(p.live_assessment)&&
+    p.live_assessment.date===state.clock.date&&
+    p.live_assessment.owner_id===p.owner_id&&
+    p.live_assessment.trainer_id===p.trainer_id&&
+    Number.isFinite(p.live_assessment.owner_confidence)&&
+    p.live_assessment.owner_confidence>=0&&p.live_assessment.owner_confidence<=1&&
+    ['CONFIDENT','STEADY','WATCHFUL','ALARMED'].includes(p.live_assessment.owner_outlook)&&
+    ['COMMITTED','FRUSTRATED','PRESSING_FOR_CHANGE','CONSIDERING_DEPARTURE'].
+     includes(p.live_assessment.trainer_position))&&
+   (p.live_history===undefined||Array.isArray(p.live_history)&&
+    p.live_history.length<=14&&p.live_history.every(x=>
+     isObject(x)&&validDate(x.date)&&x.date<=state.clock.date&&
+     Number.isFinite(x.owner_confidence)&&
+     x.owner_confidence>=0&&x.owner_confidence<=1))&&
    (p.concern===undefined||isObject(p.concern)&&
     p.concern.request_id===concernKey(p.owner_id,p.trainer_id,p.concern.opened_on)&&
     validDate(p.concern.opened_on)&&p.concern.opened_on<=state.clock.date&&

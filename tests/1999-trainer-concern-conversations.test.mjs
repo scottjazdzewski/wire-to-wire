@@ -53,7 +53,9 @@ test('strained player partnership opens one true dated concern without ending em
  assert.equal(record.concern.deadline,'1999-02-13');
  const view=getOwnerTrainerCareerReview(s,world,owner,trainerId);
  assert.deepEqual(view.pending_concern,record.concern);
- assert.equal(view.concern_history.length,0);
+ assert.ok(view.concern_history.every(x=>
+  x.request_id!==record.concern.request_id),
+  'Earlier dated concerns may exist, but the current request must be open only once');
  const opened=s.event_log.filter(e=>e.kind==='TRAINER_CONCERN_OPENED'&&
   e.details.request_id===record.concern.request_id);
  assert.equal(opened.length,1);
@@ -74,8 +76,10 @@ test('player conversation changes real trust input and trainer quote; save/repla
  const updated=getOwnerTrainerCareerReview(now,world,owner,trainerId);
  assert.equal(updated.pending_concern,null);
  assert.equal(updated.latest_concern.status,'RESOLVED');
- assert.equal(updated.concern_history.length,1);
- assert.equal(updated.concern_history[0].response,'HEAR_AND_REVIEW');
+ assert.equal(updated.concern_history.length,
+  (record.conversation_history?.length??0)+1);
+ assert.equal(updated.concern_history.at(-1).request_id,request);
+ assert.equal(updated.concern_history.at(-1).response,'HEAR_AND_REVIEW');
  assert.equal(now.runtime.finances.ledger.length,historyCount,
   'Words cannot mint money or post imaginary care invoices');
  assert.equal(now.runtime.trainer_contracts.by_pair[owner+'|'+trainerId].
@@ -101,6 +105,9 @@ test('player conversation changes real trust input and trainer quote; save/repla
 });
 test('declining a concern is a real negative trainer signal, not an automatic firing',()=>{
  const {s,owner,trainerId,record}=strainedPair();
+ // The earlier unresolved live concern may already have depleted support;
+ // verify response pressure away from the legitimate zero-value floor.
+ s.runtime.agents.relationships[owner+'|'+trainerId].trainer_support=.35;
  const before=workingRelationshipProfile(s,owner,trainerId);
  const quote=trainerContractQuote(s,world,owner,trainerId);
  const out=reply(s,owner,trainerId,record.concern.request_id,'HOLD_CURRENT_COURSE');
@@ -151,7 +158,11 @@ test('AI owners answer their own concerns without overwriting the player owner d
  const {s,owner,trainerId,record}=strainedPair({player:false});
  assert.equal(record.concern?.status,'RESOLVED');
  assert.equal(record.concern.responder,'system');
- assert.equal(record.conversation_history.length,1);
+ assert.ok(record.conversation_history.length>=1,
+  'A trainer may raise an initial concern mid-cycle and another at a later review');
+ assert.equal(new Set(record.conversation_history.map(x=>x.request_id)).size,
+  record.conversation_history.length,'No request may be answered twice');
+ assert.ok(record.conversation_history.every(x=>x.status==='RESOLVED'));
  assert.equal(s.runtime.owner_trainer_reviews.totals.ai_concern_responses>=1,true);
  assert.ok(s.event_log.some(e=>e.kind==='TRAINER_CONCERN_RESPONDED'&&
   e.details.owner_id===owner&&e.details.trainer_id===trainerId&&
