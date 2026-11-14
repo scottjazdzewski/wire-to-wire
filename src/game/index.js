@@ -23,3 +23,5 @@ export {getCareerHorseConnections} from './horse-connections.js';
 export {HORSE_CARE_SCHEMA,TRAINER_SKILLS_SCHEMA,HORSE_CARE_COMMANDS,FEED_PROGRAMS,CARE_PROGRAMS,
  modeledTrainerSkills,createHorseCareRecord,getGameHorsePerformance,modelHorsePostRaceResponse}
  from './horse-care.js';
+
+export {DAILY_AGENT_SCHEMA,createDailyAgentRuntime,getAgentRelationships} from './daily-agents.js';

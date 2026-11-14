@@ -61,6 +61,8 @@ jobs:
         run: node --test tests/1999-retired-track-source-guard.test.mjs
       - name: Integrated horse care owner money trainer barn and postrace response
         run: node --test tests/1999-connected-horse-care-economy.test.mjs
+      - name: Autonomous owner trainer and barn decisions with causal replay
+        run: node --test tests/1999-autonomous-owner-trainer-barn-agents.test.mjs
       - name: Jan 1 source and OFFLINE browser population verification
         run: node --test tests/1999-opening-world.test.mjs tests/1999-entry-gate.test.mjs tests/1999-test-clock.test.mjs tests/1999-management-ui-restore.test.mjs tests/1999-management-screen-data.test.mjs tests/1999-founding-world.test.mjs tests/1999-approved-only-world.test.mjs
 

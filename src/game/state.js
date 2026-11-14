@@ -8,6 +8,7 @@ import {createFacilityState,validateFacilityState} from './facility-operations.j
 import {createOwnershipRuntime,validateOwnershipRuntime} from './ownership.js';
 import {createHorseRegistrationRuntime,validateHorseRegistrationRuntime,careerHorse} from './horse-registration.js';
 import {validateHorseCareRuntime} from './horse-care.js';
+import {createDailyAgentRuntime,validateDailyAgentRuntime} from './daily-agents.js';
 
 export function createGameRun({ world, runId, seed, player, stableHorseIds = [], startDate, personGenerationCatalog = null } = {}) {
   validateWorld(world);
@@ -32,7 +33,7 @@ export function createGameRun({ world, runId, seed, player, stableHorseIds = [],
     rng: { seed: seed >>> 0 },
     player: { role: player.role, involvement: player.involvement, operation_id: operationId },
     stable_horse_ids: [...stableHorseIds],
-    runtime: { horse: {}, races: {}, entries: {}, people: personGenerationCatalog?generatePeopleRuntime({world,catalog:personGenerationCatalog}):{}, finances: { balance_minor: null, ledger: [], operation_balances_minor: {} }, facilities:createFacilityState(), ownership:createOwnershipRuntime(), registered_horses:createHorseRegistrationRuntime() },
+    runtime: { horse: {}, races: {}, entries: {}, people: personGenerationCatalog?generatePeopleRuntime({world,catalog:personGenerationCatalog}):{}, finances: { balance_minor: null, ledger: [], operation_balances_minor: {} }, facilities:createFacilityState(), ownership:createOwnershipRuntime(), registered_horses:createHorseRegistrationRuntime(), agents:createDailyAgentRuntime() },
     decisions: { pending: {}, resolved: {} },
     scheduler: { pending: [], delivered_ids: [] },
     command_receipts: {},
@@ -91,6 +92,7 @@ export function validateGameRun(state, world) {
   validateOwnershipRuntime(state,world);
   validateHorseRegistrationRuntime(state,world);
   validateHorseCareRuntime(state,world);
+  validateDailyAgentRuntime(state,world);
   strictJSON(state);
   return state;
 }
