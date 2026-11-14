@@ -12,6 +12,9 @@
  */
 import {validateGameRun} from './state.js';
 import {currentHorseOwnerId} from './ownership.js';
+import {dispatchGameCommand} from './kernel.js';
+import {gameFutureOrganization,gameFuturePerson,eligibleFutureOwner}
+ from './future-industry-activation-v23.js';
 import {createFictionalIndustryReuseIndexV20}
  from '../engine/fictional-industry-operations-v20.mjs';
 import {assessFictionalOrganizationReadinessV21}
@@ -55,7 +58,11 @@ function validIndustry(industry){
  * approved businesses are NOT yet allowed to own horses in the game kernel.
  */
 function realOwnerUsage(state,world){
- const worldOwnerIds=new Set(world.entities.organizations.map(o=>o.id));
+ const worldOwnerIds=new Set([
+  ...world.entities.organizations.map(o=>o.id),
+  ...Object.values(state.runtime.future_industry?.organizations??{}).
+   filter(o=>o.kind==='OWNER').map(o=>o.id)
+ ]);
  const counts=new Map();
  const seen=new Set();
  let unsupportedOwnerRefs=0,unowned=0;
@@ -96,7 +103,10 @@ export function createFutureIndustryGameGatewayV22({
   authorityBinding.industryWorldId!==industry.worldId)
   throw Error('Future industry registry is not explicitly bound to game world authority');
  const runId=state.run_id,revision=state.revision,date=state.clock.date;
+ let activationUsed=false;
  function checkCurrent(){
+  if(activationUsed)
+   throw Error('Game state changed by future-industry activation; reopen gateway');
   validateGameRun(state,world);
   if(state.run_id!==runId||state.revision!==revision||
    state.clock.date!==date)
@@ -139,6 +149,9 @@ export function createFutureIndustryGameGatewayV22({
   // older firms that have not had fresh personnel/succession events.
   const candidates=raw.candidates.filter(candidate=>{
    if(!usable.has(candidate.id))return false;
+   if(gameFutureOrganization(state,world,candidate.id)&&
+    !world.entities.organizations.some(o=>o.id===candidate.id)&&
+    !eligibleFutureOwner(state,world,candidate.id))return false;
    const op=industry.getOrganization(candidate.id);
    if(!op)return false;
    return assessFictionalOrganizationReadinessV21({
@@ -206,10 +219,140 @@ export function createFutureIndustryGameGatewayV22({
   return Object.freeze({model:GAME_INDUSTRY_GATEWAY_MODEL_V22,
    personId,type,year,continuityRecorded:true,gameSaveChanged:false});
  }
+ /**
+  * V23: Source-bound activation of an already V12+V17-approved person.
+  * One command through the EXISTING kernel, and thus one WTW_GAME_RUN_V1 save
+  * revision. Never update the external journals inside the kernel transaction.
+  */
+ function activateApprovedPerson({personId,commandId}={}){
+  checkCurrent();
+  requireId(personId,'approved future person ID');
+  requireId(commandId,'game activation command ID');
+  const linked=industry.getPersonIdentity(personId);
+  if(!linked?.approvedByNamingRegistry||!linked?.registeredInContinuity)
+   throw Error('Future person requires V12 approval and V17 continuity registration');
+  if(linked.retired||linked.availability==='ON_LEAVE')
+   throw Error('Unavailable or retired future person cannot activate as game personnel');
+  const result=dispatchGameCommand({state,world,command:{
+   id:commandId,actor:'system',type:'ACTIVATE_APPROVED_FUTURE_PERSON',
+   payload:{
+    world_snapshot_id:world.authority.snapshot_id,
+    world_sha256:world.authority.sha256,
+    industry_world_id:industry.worldId,
+    identity:{
+     id:linked.id,name:linked.name,role:linked.role,
+     primarySurname:linked.primarySurname,birthYear:linked.birthYear,
+     namingRevision:industry.namingRevision,
+     continuityRevision:industry.continuityRevision,
+     registrationStatus:'APPROVED_V12_REGISTERED_V17'
+    }
+   }
+  }});
+  activationUsed=true;
+  return Object.freeze({...result,model:GAME_INDUSTRY_GATEWAY_MODEL_V22,
+   gameSaveChanged:true,gameWorldChanged:false});
+ }
+ function activateApprovedOrganization({organizationId,commandId}={}){
+  const year=checkCurrent();
+  requireId(organizationId,'approved future business ID');
+  requireId(commandId,'game activation command ID');
+  const approved=industry.getApprovedOrganizationIdentity(organizationId);
+  const linked=industry.getOrganizationIdentity(organizationId);
+  const org=industry.getOrganization(organizationId);
+  if(!approved?.registration||!linked?.approvedByNamingRegistry||
+   !linked?.registeredInContinuity||!org||
+   approved.name!==org.name||approved.registration.kind!==org.kind)
+   throw Error('Future business must match V12 typed approval and V17 current identity');
+  if(org.status!=='ACTIVE')
+   throw Error('Closed future business cannot activate in the career');
+  const ready=assessFictionalOrganizationReadinessV21({
+   organization:org,getPerson:id=>industry.getPersonIdentity(id),year
+  });
+  if(!ready.ready)throw Error('Future business has missing, unavailable or age-ineligible leaders');
+  const result=dispatchGameCommand({state,world,command:{
+   id:commandId,actor:'system',
+   type:'ACTIVATE_APPROVED_FUTURE_ORGANIZATION',
+   payload:{
+    world_snapshot_id:world.authority.snapshot_id,
+    world_sha256:world.authority.sha256,
+    industry_world_id:industry.worldId,
+    identity:{
+     id:org.id,name:org.name,kind:org.kind,status:org.status,
+     principalId:org.principalId,trainerId:org.trainerId,
+     managerIds:org.managerIds,
+     location:org.location,namingRegion:org.namingRegion,
+     registeredYear:org.foundedInRegistryYear,
+     namingRevision:industry.namingRevision,
+     continuityRevision:industry.continuityRevision,
+     registrationStatus:'APPROVED_V12_REGISTERED_V17'
+    }
+   }
+  }});
+  activationUsed=true;
+  return Object.freeze({...result,model:GAME_INDUSTRY_GATEWAY_MODEL_V22,
+   gameSaveChanged:true,gameWorldChanged:false});
+ }
+ function synchronizeApprovedPerson({personId,commandId}={}){
+  checkCurrent();
+  requireId(personId,'approved future person ID');
+  requireId(commandId,'game personnel sync command ID');
+  const existing=state.runtime.future_industry?.people?.[personId],
+   linked=industry.getPersonIdentity(personId);
+  if(!existing||!linked?.registeredInContinuity||
+   !linked?.approvedByNamingRegistry||existing.name!==linked.name||
+   existing.role!==linked.role)
+   throw Error('Personnel synchronization requires a registered matching permanent identity');
+  const result=dispatchGameCommand({state,world,command:{
+   id:commandId,actor:'system',type:'SYNC_APPROVED_FUTURE_PERSON',
+   payload:{
+    world_snapshot_id:world.authority.snapshot_id,
+    world_sha256:world.authority.sha256,
+    industry_world_id:industry.worldId,
+    identity:{
+     id:personId,name:linked.name,role:linked.role,
+     retired:Boolean(linked.retired),
+     availability:linked.availability??'AVAILABLE',
+     continuityRevision:industry.continuityRevision
+    }
+   }
+  }});
+  activationUsed=true;
+  return Object.freeze({...result,model:GAME_INDUSTRY_GATEWAY_MODEL_V22,
+   gameSaveChanged:true,gameWorldChanged:false});
+ }
+ function synchronizeApprovedOrganization({organizationId,commandId}={}){
+  checkCurrent();
+  requireId(organizationId,'approved future business ID');
+  requireId(commandId,'game synchronization command ID');
+  const existing=state.runtime.future_industry?.organizations?.[organizationId],
+   current=industry.getOrganization(organizationId);
+  if(!existing||!current||existing.name!==current.name||
+   existing.kind!==current.kind)
+   throw Error('Synchronization requires the existing approved permanent organization');
+  const result=dispatchGameCommand({state,world,command:{
+   id:commandId,actor:'system',type:'SYNC_APPROVED_FUTURE_ORGANIZATION',
+   payload:{
+    world_snapshot_id:world.authority.snapshot_id,
+    world_sha256:world.authority.sha256,
+    industry_world_id:industry.worldId,
+    identity:{
+     id:organizationId,name:current.name,kind:current.kind,
+     status:current.status,principalId:current.principalId,
+     trainerId:current.trainerId,managerIds:current.managerIds,
+     continuityRevision:industry.continuityRevision
+    }
+   }
+  }});
+  activationUsed=true;
+  return Object.freeze({...result,model:GAME_INDUSTRY_GATEWAY_MODEL_V22,
+   gameSaveChanged:true,gameWorldChanged:false});
+ }
  return Object.freeze({
   model:GAME_INDUSTRY_GATEWAY_MODEL_V22,
   runId,gameDate:date,runRevision:revision,
   quoteOwnerReuse,registerApprovedPerson,
-  registerApprovedOrganization,applyPersonnelDecision
+  registerApprovedOrganization,applyPersonnelDecision,
+  activateApprovedPerson,activateApprovedOrganization,
+  synchronizeApprovedPerson,synchronizeApprovedOrganization
  });
 }
