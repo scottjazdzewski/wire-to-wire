@@ -3729,3 +3729,37 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  color:#b9c8b8!important;font-size:8px!important;line-height:1.1!important;
  font-weight:750!important;letter-spacing:.11em!important;text-transform:uppercase!important;
 }
+
+/* 1999 owner race confirmation: inherits the one approved Racing screen.
+   Only local field legibility; no global roster, profile or navigation changes. */
+#wtwNextgen .ng-race-plan-workspace{margin:8px 0 12px;padding:12px 14px;
+ background:var(--panel,#161e21);border:1px solid rgba(222,211,184,.23);
+ border-radius:5px;display:flex;flex-direction:column;gap:9px}
+#wtwNextgen .ng-race-plan-workspace .ng-cardhead{display:flex;align-items:center;
+ justify-content:space-between;gap:12px;padding:0 0 8px;border-bottom:1px solid rgba(220,213,190,.17)}
+#wtwNextgen .ng-race-plan-workspace .ng-rp-count{font-size:10px;letter-spacing:.09em;
+ color:#b7c6bf;font-weight:700;white-space:nowrap}
+#wtwNextgen .ng-rp-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;padding:2px 0}
+#wtwNextgen .ng-rp-tools label{display:flex;flex-direction:column;gap:4px;
+ flex:1 1 205px;min-width:0;font-size:10px;font-weight:750;letter-spacing:.06em}
+#wtwNextgen .ng-rp-tools select{width:100%;min-width:0;max-width:100%;font-size:12px;
+ color:inherit;background:#202c2f;border:1px solid rgba(215,206,185,.32);
+ padding:7px 8px;border-radius:3px}
+#wtwNextgen .ng-rp-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:6px}
+#wtwNextgen .ng-rp-summary>span{padding:7px 9px;background:rgba(255,255,255,.035);
+ border:1px solid rgba(214,209,196,.11);min-width:0}
+#wtwNextgen .ng-rp-summary small{display:block;font-size:9px;letter-spacing:.07em;
+ color:#adb9b1;margin:0 0 3px}
+#wtwNextgen .ng-rp-summary b{display:block;font-size:12px;color:#e7e9dc;
+ overflow-wrap:anywhere}
+#wtwNextgen .ng-rp-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#wtwNextgen .ng-rp-actions button{font-size:11px;padding:8px 13px;max-width:100%}
+#wtwNextgen .ng-rp-actions button:disabled{opacity:.5;cursor:not-allowed}
+#wtwNextgen .ng-rp-actions small{font-size:10px;color:#adb9b1;flex:1 1 230px}
+#wtwNextgen .ng-rp-error{color:#ffbf9f;font-size:11px;overflow-wrap:anywhere}
+#wtwNextgen .ng-rp-success{color:#bedebd;font-size:11px;overflow-wrap:anywhere}
+@media(max-width:740px){
+ #wtwNextgen .ng-rp-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #wtwNextgen .ng-rp-tools label{flex-basis:100%}
+}

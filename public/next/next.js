@@ -3578,6 +3578,7 @@ function departmentRoster(section,page='Overview'){
   rosterDensityControls('department',departmentMode)+'</div>'+
   (window.WTW1999RosterFilters?.render(specs,rosterFilter,safe,rosterScope)||'')+
   (section==='Racing'&&(APP.racingCalendarOpen||page==='Calendar')?depRacingCalendar():'')+racingSummary+salesDeskView+
+  (section==='Racing'&&page==='Race Planning'?(window.WTW1999PlayerRacePlans?.render?.()||''):'')+
   '<section class="ng-rs-roster"><header><strong>'+safe(section.toUpperCase())+' · SORTABLE ROSTER</strong><div class="ng-dpt-pager">'+pager+'</div></header>'+
   '<div class="ng-rs-scroll" tabindex="0" role="region" aria-label="'+safe(section)+' roster — scroll vertically and click column headings to sort"><table class="ng-rs-table ng-dpt-table '+(departmentMode==='compact'?'compact':'all')+'"><thead><tr>'+heads+'</tr></thead><tbody>'+
   (body||'<tr><td colspan="'+specs.length+'" class="ng-rs-no-results">'+safe(globalIndexing?
@@ -3784,6 +3785,11 @@ window.addEventListener('click',e=>{
  e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();
  const key=btn.dataset.ng, val=btn.dataset.val||'';
  if(!key && btn.dataset.act){syntheticAction(btn);return}
+ if(key==='race-plan-confirm')return window.WTW1999PlayerRacePlans?.confirm?.();
+ if(key==='race-plan-open-horse'){
+  window.WTW1999PlayerRacePlans?.pickHorse?.(val);
+  return pageTab('Race Planning');
+ }
  if(key==='save-open'){
   // Compact IndexedDB careers are the default commercial path.
   // The old named-save dialog remains accessible as a compatibility fallback.
@@ -4121,6 +4127,10 @@ root.addEventListener('toggle',event=>{
 root.addEventListener('change',event=>{
   const field=event.target;
   if(field.id==='ngNamedSavesImport')return namedSaveImport(field.files?.[0]);
+  if(field.matches('select[data-ng-select^="race-plan-"]')){
+   endNativeSelectInteraction(false);
+   return window.WTW1999PlayerRacePlans?.select?.(field.dataset.ngSelect,field.value);
+  }
   if(field?.tagName==='SELECT')endNativeSelectInteraction(false);
   if(field.matches('select[data-ng-select="connected-column"]')){
    const ctrl=APP.connectedTables[field.dataset.val];

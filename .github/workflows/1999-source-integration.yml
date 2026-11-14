@@ -71,6 +71,8 @@ jobs:
         run: node --test tests/1999-real-away-barn-care-and-transit.test.mjs
       - name: Physical shipping and 31-day autonomous trainer campaign replay
         run: node --test tests/1999-physical-shipping-and-away-race.test.mjs
+      - name: Player atomic race confirmation, real shipment, funds, booked jockey and save replay
+        run: node --test tests/1999-player-race-plan-atomic-confirmation.test.mjs
       - name: Owner race opportunity advice uses actual game entries, real jockeys, money, shipping and proposals
         run: node --test tests/1999-owner-race-entry-opportunities.test.mjs
       - name: Maiden graduation and source-conditioned NW2/NW3 allowance campaign replay

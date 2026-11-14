@@ -38,3 +38,6 @@ export {RACE_OPPORTUNITY_SCHEMA,get1999HorseRaceOpportunities}
 
 export {TRAINER_CONTRACT_SCHEMA,TRAINER_CONTRACT_COMMANDS,createTrainerContractRuntime,
  trainerContractQuote,baselineTrainerDailyFee,trainerDailyFee,getTrainerContract} from './trainer-contracts-1999.js';
+
+export {PLAYER_RACE_PLAN_COMMANDS,PLAYER_RACE_PLAN_QUOTE_SCHEMA,
+ quote1999PlayerRacePlan} from './player-race-plan-1999.js';
