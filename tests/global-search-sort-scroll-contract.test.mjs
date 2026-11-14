@@ -96,6 +96,8 @@ test('Global Search has a real focused scroll region and both directions of sort
  assert.match(js,/if\(key==='search-sort'\)\{[\s\S]*?APP\.searchSortDesc=!APP\.searchSortDesc/);
  assert.match(js,/aria-pressed="\$\{APP\.searchSort===value\}"/);
  assert.match(js,/class="ng-search-sort-arrow"/);
+ assert.ok(js.includes(" $('.ng-search-sort',root).forEach(btn=>{"),
+  'Refreshing search sort must update every control, not call forEach on one selected element');
  assert.match(js,/id="ngSearchResults" class="ng-search-table-body" tabindex="0" role="region"/);
  assert.match(css,/\.ng-search-roster-page \.ng-search-table-body\{[^}]*overflow-y:auto!important/);
  assert.match(css,/\.ng-search-sortbar \.ng-search-sort-arrow\{/);
