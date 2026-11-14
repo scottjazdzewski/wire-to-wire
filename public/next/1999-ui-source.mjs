@@ -8,7 +8,7 @@ import {WTW_ALTERNATE_STAKES_1999} from '/next/1999-alternate-stakes.mjs';
 import {WTW_REGIONAL_STAKES_1999} from '/next/1999-regional-stakes.mjs';
 import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-approved-only-20261113-r1';
 import attributeCatalog from '/1999/engine/attribute-catalog.mjs';
-import {browserPlaytestRequested,bootBrowserPlaytest1999} from '/1999/game/playtest-service.mjs';
+
 import {TRAINING_PLANS,createHorseTrainingRecord,horseTrainingSnapshot,
  assignHorseTrainingPlan,simulateStableTrainingThrough,trainingFinancials}
  from '/1999/engine/horse-development.mjs';
@@ -876,8 +876,8 @@ window.__WTW_1999_UI_DATA__={
 };
 // Bind the EXISTING menus to the same engine run, only when the user
 // explicitly selects ?playtest=38. Default historical opening remains empty.
-if(browserPlaytestRequested()){
- bootBrowserPlaytest1999().then(service=>{
+if(/(?:\\?|&)playtest=38(?:&|$)/.test(window.location?.search||'')){
+ import('/1999/game/playtest-service.mjs').then(m=>m.bootBrowserPlaytest1999()).then(service=>{
   if(!service)return;
   activePlaytest=service;
   const apply=view=>{
