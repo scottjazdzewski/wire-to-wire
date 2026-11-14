@@ -93,12 +93,12 @@ test('validates individual source meaning and bounded, duplicate-free batch prom
 test('Cloudflare batch result mapping rejects owner-rated and duplicate names',()=>{
  const v={responses:[
   {id:0,success:true,result:{response:JSON.stringify({ideas:[idea('Quiet Breathing'),idea('Mulligan')]})}},
-  {id:1,success:true,result:{response:JSON.stringify({ideas:[idea('Quiet Breathing'),idea('Night Watchman')]})}}
+  {id:1,success:true,result:{response:JSON.stringify({ideas:[idea('Quiet Breathing'),idea('Breath by Candle')]})}}
  ]};
  const out=unpackPopulationResponses(v,['H-ONE','H-TWO']);
  assert.equal(out.length,2);assert.deepEqual(out.map(x=>x.candidateCount),[1,1]);
  assert.equal(out[0].candidates[0].name,'Quiet Breathing');
- assert.equal(out[1].candidates[0].name,'Night Watchman');
+ assert.equal(out[1].candidates[0].name,'Breath by Candle');
  assert.equal(out[0].approvedForRegistration,false);
 });
 test('durable idempotency ensures duplicate submit never pays for second model call',async()=>{
