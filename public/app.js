@@ -9,7 +9,7 @@ const fields = {
   connection: {party_id:'Connected owner / trainer / person ID',year:'Season',role:'Connection role',basis:'Evidence basis'},
   result: {horse_id:'Placed horse ID',position:'Finishing position'}
 };
-const state = {page:'overview',year:1953,calendarMonth:null,role:'trainer',involvement:'balanced',search:'',trackDirectory:null,data:null,mode:'LOADING',changes:[],nameEdits:[],availableYears:[],edit:null,rename:null,apiIssue:'',orgHistory:[],orgHistoryStatus:'NOT_LOADED',history:{view:'ledger',year:'all',track:'all',sort:'year',desc:true,query:'',page:0}};
+const state = {page:'races',year:1998,calendarMonth:null,role:'trainer',involvement:'balanced',search:'',trackDirectory:null,data:null,mode:'LOADING',changes:[],nameEdits:[],availableYears:[],edit:null,rename:null,apiIssue:'',orgHistory:[],orgHistoryStatus:'NOT_LOADED',history:{view:'ledger',year:'all',track:'all',sort:'year',desc:true,query:'',page:0}};
 const GAME_PREF_KEY = 'wtw_game_manager_preferences_v1';
 try { const saved=JSON.parse(localStorage.getItem(GAME_PREF_KEY)||'{}'); if(['owner','trainer','farm','breeder','jockey'].includes(saved.role))state.role=saved.role; if(['hands-on','balanced','executive'].includes(saved.involvement))state.involvement=saved.involvement; } catch {}
 // Deep links from the main Racing Office open the existing protected historical archive.
@@ -48,7 +48,7 @@ function renameButton(type,id,name){return `<button type="button" class="inline-
 function openButton(type,id,label){return `<span class="name-edit-pair"><button type="button" class="name-cell" data-open-type="${h(type)}" data-id="${h(id)}">${h(label)}</button>${renameButton(type,id,label)}</span>`}
 function venueName(record){if(!record?.track_name)return 'Track unrecorded';return `<span class="name-edit-pair"><span>${h(record.track_name)}</span>${renameButton('venue',record.id,record.track_name)}</span>`}
 function editButton(type,id,label='Propose correction',className='button button-quiet'){return `<button class="${className}" data-edit-type="${h(type)}" data-id="${h(id)}">${h(label)}</button>`}
-function pageTitle(){return ({overview:'Command Center',seasons:'Race Calendar',horses:'My Stable',people:'People & Farms',tracks:'Racecourses',races:'History Vault',search:'Archive Search',changes:'Record Review',sources:'History Coverage'})[state.page]||'Command Center'}
+function pageTitle(){return ({overview:'Command Center',seasons:'Race Calendar',horses:'My Stable',people:'People & Farms',tracks:'Racecourses',races:'History Records',search:'Archive Search',changes:'Record Review',sources:'History Coverage'})[state.page]||'Command Center'}
 function intro(label,title,desc,more=''){return `<div class="page-intro"><div><div class="smallcaps">${h(label)}</div><h2>${h(title)}</h2><p>${h(desc)}</p></div>${more}</div>`}
 function metric(value,label,foot){return `<div class="metric"><div class="metric-label">${h(label)}</div><div class="metric-value">${h(value)}</div><div class="metric-foot">${h(foot)}</div></div>`}
 function section(title,subtitle='',content='',action=''){return `<section class="panel"><div class="panel-head"><div><h3>${h(title)}</h3><p>${h(subtitle)}</p></div>${action}</div>${content}</section>`}
@@ -743,7 +743,7 @@ async function initialize(){
   const record=(state.data?.entities||[]).find(x=>x.id===requestedHorse&&x.kind==='horse');
   if(record?.foal_year)state.year=Number(record.foal_year)+3;
  }
- const yrs=years();if(yrs.length&&!yrs.includes(state.year))state.year=yrs[0];$('year-select').innerHTML=yrs.map(y=>`<option value="${y}">${y}</option>`).join('');$('year-select').value=String(state.year);if($('global-search'))$('global-search').value=state.search;render();
+ const yrs=years();if(yrs.length&&!yrs.includes(state.year))state.year=yrs.at(-1);$('year-select').innerHTML=yrs.map(y=>`<option value="${y}">${y}</option>`).join('');$('year-select').value=String(state.year);if($('global-search'))$('global-search').value=state.search;render();
  if(requestedHorse&&/^H-[A-Za-z0-9-]+$/.test(requestedHorse))openDetail('entity',requestedHorse);
 }
 async function saveProposal(e){e.preventDefault();if(!state.edit)return;
