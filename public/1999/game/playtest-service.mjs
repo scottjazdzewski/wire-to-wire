@@ -9,7 +9,8 @@
  */
 import {WORLD_SCHEMA,dispatchGameCommand,exportGameSave,importGameSave,nextDate,
  getGameHorsePerformance,getGameRacingRoster,getAgentRelationships,
- getOwnerPortfolioView,getCareerHorseConnections,horseTravelStatus,effectiveHorseTrack,
+ getOwnerPortfolioView,getCareerHorseConnections,get1999HorseRaceOpportunities,
+ horseTravelStatus,effectiveHorseTrack,
  effectiveHorseCareSite}
  from './index.js';
 import {build1999PilotGameRun} from './1999-pilot-fixture.js';
@@ -147,6 +148,7 @@ export async function createPlaytestCareer({directory,trainers,jockeys,cohort,sa
   getConnections(kind,id){return getCareerHorseConnections(state,world,{kind,id})},
   getRelationship(ownerId,trainerId){return getAgentRelationships(state,ownerId,trainerId)},
   getOwnerPortfolio(ownerId){return getOwnerPortfolioView(state,world,ownerId)},
+  getRaceOpportunities(horseId,opts={}){return get1999HorseRaceOpportunities(state,world,horseId,opts)},
   command(type,payload,{actor='player',id=null}={}){
    const cmd={id:id||'pilot:browser:'+String(state.revision+1)+':'+type,
     type,actor,payload};
@@ -238,6 +240,7 @@ export async function bootBrowserPlaytest1999(){
  const api={
   get state(){return engine.state},view:()=>engine.view(),getSave:()=>engine.getSave(),
   get world(){return engine.world},
+  getRaceOpportunities(horseId,opts={}){return engine.getRaceOpportunities(horseId,opts)},
   onChange(fn){listeners.add(fn);return()=>listeners.delete(fn)},
   submit(type,payload,actor='player'){
    busy=busy.then(async()=>{
