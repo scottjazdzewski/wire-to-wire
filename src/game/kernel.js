@@ -13,6 +13,7 @@ import {FACILITY_COMMANDS,facilityAction,advanceFacilities} from './facility-ope
 import {OWNERSHIP_COMMANDS,ownershipAction} from './ownership.js';
 import {HORSE_REGISTRATION_COMMANDS,registerHorseAction} from './horse-registration.js';
 import {HORSE_CARE_COMMANDS,setHorseCarePolicy,initializeGameHorseCare,advanceGameHorseCare} from './horse-care.js';
+import {runAutonomousDay,settleDailyAgentFeedback} from './daily-agents.js';
 
 const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_CARE_COMMANDS]);
 const MAX_PENDING = 5000;
@@ -114,8 +115,10 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     next.clock.date = nextDate(next.clock.date);
     next.clock.days_elapsed += 1;
     emit('DAY_ADVANCED', { date: next.clock.date });
+    runAutonomousDay({state:next,world,emit});
     advanceFacilities({state:next,world,emit});
     advanceGameHorseCare({state:next,world,emit});
+    settleDailyAgentFeedback({state:next,emit});
     const ready = next.scheduler.pending.filter(x => x.due_date <= next.clock.date);
     next.scheduler.pending = next.scheduler.pending.filter(x => x.due_date > next.clock.date);
     for (const event of ready) {
