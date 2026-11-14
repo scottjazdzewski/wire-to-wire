@@ -148,20 +148,21 @@ export function createFictionalOrganizationContinuityRegistry({
  const people=new Map([...seed.people].map(([id,p])=>[id,{...p}]));
  const firms=new Map([...seed.organizations].map(([id,o])=>[id,{...o}]));
  const familyPairs=seed.familyKeys,events=[],eventIds=new Set(),byFirm=new Map();
+ const peopleNameKeys=new Set([...people.values()].map(p=>key(p.name)));
  let revision=0,year=seed.foundingYear,replaying=false;
  const cursor=()=>Object.freeze({
   model:FICTIONAL_ORGANIZATION_CONTINUITY_MODEL,
   worldId:seed.worldId,revision,year,organizationCount:firms.size,
   knownPeople:people.size,eventCount:events.length
  });
- const activePerson=(id,role=null)=>{
+ const activePerson=(id,role=null,atYear=year)=>{
   checkId(id,'explicit successor ID');
   const person=people.get(id);
   if(!person||person.retired)throw Error('Successor must be an existing active person');
   if(role!==null&&person.role!==role)
    throw Error('Successor has an incompatible professional role');
   if(Number.isInteger(person.birthYear)&&
-   (year-person.birthYear<18||year-person.birthYear>100))
+   (atYear-person.birthYear<18||atYear-person.birthYear>100))
    throw Error('Successor has an implausible active-career age');
   return person;
  };
@@ -198,7 +199,7 @@ export function createFictionalOrganizationContinuityRegistry({
     candidate.birthYear>2089||event.year-candidate.birthYear<18||
     event.year-candidate.birthYear>100||
     people.has(candidate.id)||firms.has(candidate.id)||
-    [...people.values()].some(p=>key(p.name)===key(candidate.name)))
+    peopleNameKeys.has(key(candidate.name)))
     throw Error('Invalid or duplicated accepted new person identity');
    if(!replaying){
     if(!approvedPersonLookup)throw Error('New people require existing naming-registry identity approval');
@@ -212,6 +213,7 @@ export function createFictionalOrganizationContinuityRegistry({
     primarySurname:candidate.primarySurname,birthYear:candidate.birthYear,
     retired:false
    });
+   peopleNameKeys.add(key(candidate.name));
   }else if(event.type==='REGISTER_DOCUMENTED_FAMILY_LINK'){
    const a=event.personAId,b=event.personBId;
    if(!people.has(a)||!people.has(b)||a===b||
@@ -239,7 +241,7 @@ export function createFictionalOrganizationContinuityRegistry({
      if(op.kind!=='OWNER')throw Error('Only an ownership business has a principal');
      if(op.archetype==='INDIVIDUAL_OWNER')
       throw Error('A sole person is not a transferable business identity');
-     activePerson(event.toPersonId);
+     activePerson(event.toPersonId,null,event.year);
      if(op.principalId===event.toPersonId)
       throw Error('Existing owner principal is unchanged');
      if(op.archetype==='FAMILY_OPERATION'&&
@@ -249,7 +251,7 @@ export function createFictionalOrganizationContinuityRegistry({
      break;
     case 'CHANGE_STABLE_TRAINER':
      if(op.kind!=='STABLE')throw Error('Only a racing stable can change trainers');
-     activePerson(event.toPersonId,'trainer');
+     activePerson(event.toPersonId,'trainer',event.year);
      if(op.trainerId===event.toPersonId)
       throw Error('Existing stable trainer is unchanged');
      next.trainerId=event.toPersonId;
@@ -261,7 +263,7 @@ export function createFictionalOrganizationContinuityRegistry({
      if(!Array.isArray(event.toPersonIds)||
       new Set(event.toPersonIds).size!==event.toPersonIds.length)
       throw Error('Manager list must contain unique explicit people');
-     for(const id of event.toPersonIds)activePerson(id,'farm_manager');
+     for(const id of event.toPersonIds)activePerson(id,'farm_manager',event.year);
      next.managerIds=[...event.toPersonIds];
      break;
     }
@@ -276,7 +278,7 @@ export function createFictionalOrganizationContinuityRegistry({
     case 'REOPEN_ORGANIZATION':
      if(op.status!=='CLOSED')throw Error('Only closed operations can reopen');
      for(const id of [op.principalId,op.trainerId,...op.managerIds].filter(Boolean))
-      activePerson(id);
+      activePerson(id,null,event.year);
      next.status='ACTIVE';
      break;
    }
