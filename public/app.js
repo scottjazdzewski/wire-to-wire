@@ -319,7 +319,7 @@ function historyRaceRow(row,yearLink=true){
 function renderHistoryLedger(){
  const scope=state.history,wins=historyWinners(),all=state.data?.races||[];
  const rows=historyLedgerRows(all,wins,{year:scope.year,track:scope.track,query:scope.query,
-   sort:scope.sort,desc:scope.desc});
+   sort:scope.sort,desc:scope.desc,evidenceFor:r=>dateEvidence(r).label});
  const allYears=years(),tracks=[...new Set(all.map(r=>r.track_name).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
  const pageSize=75,totalPages=Math.max(1,Math.ceil(rows.length/pageSize));
  scope.page=Math.min(Math.max(0,scope.page),totalPages-1);
@@ -349,7 +349,7 @@ function renderHistoryLedger(){
   '<table class="history-ledger-table"><thead><tr>'+
    historySortHeader('year','YEAR')+historySortHeader('date','DATE')+
    historySortHeader('race','RACE')+historySortHeader('track','RACECOURSE')+
-   historySortHeader('winner','WINNER')+historySortHeader('status','DATE EVIDENCE')+
+   historySortHeader('winner','WINNER')+historySortHeader('evidence','DATE EVIDENCE')+
   '</tr></thead><tbody>'+
   (shown.map(row=>historyRaceRow(row)).join('')||'<tr><td colspan="6" class="history-no-rows">No matching source records. Try another year, track or search.</td></tr>')+
   '</tbody></table></section>'+
@@ -762,7 +762,7 @@ async function decideChange(id,decision){const item=state.changes.find(v=>v.id==
  toast(decision==='REJECTED'?'Proposal rejected.':'Approved for future promotion; source record remains untouched.');render();
 }
 document.addEventListener('click',e=>{const t=e.target.closest('[data-page],[data-year],[data-calendar-step],[data-calendar-agenda],[data-open-type],[data-edit-type],[data-rename-type],[data-close-drawer],[data-review-action],[data-history-org],[data-history-sort],[data-history-year],[data-history-back],[data-history-page]');if(!t)return;
- if(t.dataset.historySort){const field=t.dataset.historySort;if(!['year','date','race','track','winner','status'].includes(field))return;if(state.history.sort===field)state.history.desc=!state.history.desc;else{state.history.sort=field;state.history.desc=field==='year'}state.history.page=0;render();return}
+ if(t.dataset.historySort){const field=t.dataset.historySort;if(!['year','date','race','track','winner','evidence'].includes(field))return;if(state.history.sort===field)state.history.desc=!state.history.desc;else{state.history.sort=field;state.history.desc=field==='year'}state.history.page=0;render();return}
  if(t.dataset.historyYear){const y=Number(t.dataset.historyYear);if(!years().includes(y))return;setYear(y);return}
  if(t.dataset.historyBack){state.history.view='ledger';render();return}
  if(t.dataset.historyPage){const direction=t.dataset.historyPage==='next'?1:-1;state.history.page=Math.max(0,state.history.page+direction);render();return}
