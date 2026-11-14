@@ -114,7 +114,6 @@ function autonomousReturnTravel({state,world,emit}){
   if(!care||care.training.sorenessDays>0||care.training.currentRisk>.7)continue;
   const from=state.runtime.facilities.sites[t.destination_site_id],
    home=state.runtime.facilities.sites[t.home_site_id];
-  const quote=shippingAssessment; // Returning is already authorized by its original dated trip.
   const available=money(state,h.owner_organization_id);
   if(available<t.outbound_cost_minor+Math.ceil(care.policy.monthly_budget_minor/30*7))continue;
   shippingAction({state,world,command:{actor:'system',type:'RETURN_1999_HORSE',
