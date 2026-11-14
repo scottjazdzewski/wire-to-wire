@@ -19,6 +19,11 @@
 
 All removed content is recoverable from Git history if a **gameplay dependency** is discovered; an old layout must never be restored as the fix.
 
+### Standalone 2014/Office prototype presentation removed
+- `public/office/office-core.js`, `office-nav.js`, `office-pager.js`, `office-routes.js`, `office.css` were a separate old screen family. The live `/next/` page, current `office-v30-4.js` engine and 1999 adapters do not import or load these files. They are physically deleted, not dormant.
+- The old screen family is preserved only in Git history; do not re-add any `/office/office-*` script or CSS link to playable pages.
+
+
 ## Quarantined compatibility adapter — **not another screen**
 The original `public/next/index.html` still contains the older Office `.app`, `#routeShell`, `#routeBody`, source controls and route detail markup because current `public/next/next.js` still:
 - Reads original Office decisions, messages, fixture/horse source rows and profile fields.
