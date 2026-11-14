@@ -170,6 +170,9 @@ export function applyFutureIndustryGameAction({state,world,command,emit}){
   const person=personRecord(record,state,world,command);
   root.people[person.id]=person;
   emit('FUTURE_PERSON_ACTIVATED',{person_id:person.id,
+   name:person.name,role:person.role,
+   primary_surname:person.primarySurname,birth_year:person.birthYear,
+   naming_revision:person.naming_revision,
    industry_world_id:root.industry_world_id,source:'V12_V17_APPROVED_FUTURE_PERSON'});
  }else if(type==='SYNC_APPROVED_FUTURE_PERSON'){
   id(record.id,'person');
@@ -193,6 +196,9 @@ export function applyFutureIndustryGameAction({state,world,command,emit}){
   const op=organizationRecord(record,state,world,command,root);
   root.organizations[op.id]=op;
   emit('FUTURE_ORGANIZATION_ACTIVATED',{organization_id:op.id,kind:op.kind,
+   name:op.name,registered_year:op.registered_year,
+   naming_region:op.namingRegion,location:op.location,
+   naming_revision:op.naming_revision,
    industry_world_id:root.industry_world_id,source:'V12_V17_APPROVED_FUTURE_ORGANIZATION'});
  }else{
   id(record.id,'organization');
@@ -218,15 +224,17 @@ export function applyFutureIndustryGameAction({state,world,command,emit}){
    trainerId:newTrainer,managerIds:[...newManagers],
    continuity_revision:record.continuityRevision});
   emit('FUTURE_ORGANIZATION_SYNCED',{organization_id:op.id,status:op.status,
-   continuity_revision:op.continuity_revision,
+   principal_id:op.principalId,trainer_id:op.trainerId,
+   manager_ids:op.managerIds,continuity_revision:op.continuity_revision,
    source:'CURRENT_V17_CONTINUITY'});
  }
 }
 function ensureReceipt(state,record,kind,key){
- const logged=state.event_log.some(e=>e.command_id===record.activation_command_id&&
+ const logged=state.event_log.find(e=>e.command_id===record.activation_command_id&&
   e.kind===kind&&e.details?.[key]===record.id);
  ensure(logged&&typeof state.command_receipts[record.activation_command_id]==='string',
   'FUTURE_IDENTITY_AUDIT','Activated identity must have a recorded game command receipt');
+ return logged.details;
 }
 export function validateFutureIndustryGameRuntime(state,world){
  const root=gameFutureIndustry(state);
@@ -254,7 +262,11 @@ export function validateFutureIndustryGameRuntime(state,world){
    validDate(p.activated_on)&&p.activated_on>=world.start_date&&
    p.activated_on<=state.clock.date,
    'FUTURE_IDENTITY_SAVE','Invalid or colliding future personnel save record');
-  ensureReceipt(state,p,'FUTURE_PERSON_ACTIVATED','person_id');
+  const source=ensureReceipt(state,p,'FUTURE_PERSON_ACTIVATED','person_id');
+  ensure(source.name===p.name&&source.role===p.role&&
+   source.primary_surname===p.primarySurname&&
+   source.birth_year===p.birthYear&&source.naming_revision===p.naming_revision,
+   'FUTURE_IDENTITY_AUDIT','Personnel identity differs from its game admission journal');
  }
  for(const [opId,op] of Object.entries(root.organizations)){
   ensure(isObject(op)&&op.id===opId&&ID.test(opId)&&
@@ -272,7 +284,24 @@ export function validateFutureIndustryGameRuntime(state,world){
    !names.has(norm(op.name)),
    'FUTURE_IDENTITY_SAVE','Invalid, renamed or colliding future business record');
   names.add(norm(op.name));
-  ensureReceipt(state,op,'FUTURE_ORGANIZATION_ACTIVATED','organization_id');
+  const source=ensureReceipt(state,op,'FUTURE_ORGANIZATION_ACTIVATED','organization_id');
+  ensure(source.name===op.name&&source.kind===op.kind&&
+   source.registered_year===op.registered_year&&
+   source.naming_region===op.namingRegion&&
+   source.naming_revision===op.naming_revision&&
+   JSON.stringify(source.location)===JSON.stringify(op.location),
+   'FUTURE_IDENTITY_AUDIT','Business identity differs from its original game admission');
+  const syncEvents=state.event_log.filter(e=>
+   e.kind==='FUTURE_ORGANIZATION_SYNCED'&&
+   e.details?.organization_id===opId);
+  if(syncEvents.length){
+   const last=syncEvents[syncEvents.length-1].details;
+   ensure(last.status===op.status&&last.principal_id===op.principalId&&
+    last.trainer_id===op.trainerId&&
+    JSON.stringify(last.manager_ids)===JSON.stringify(op.managerIds)&&
+    last.continuity_revision===op.continuity_revision,
+    'FUTURE_IDENTITY_AUDIT','Business status must match its latest game sync event');
+  }
   const leaders=op.kind==='OWNER'?[op.principalId]:
    op.kind==='STABLE'?[op.trainerId]:op.managerIds;
   for(const personId of leaders)
