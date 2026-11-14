@@ -55,8 +55,8 @@ function careRequest(){
 }
 test('playtest service exposes the canonical read-only request selector with durable submit',()=>{
  assert.match(sourcePlaytest,/getTrainerManagementRequests/);
- assert.match(sourcePlaytest,/getTrainerManagementRequests\(state,ownerId\)/);
- assert.match(sourcePlaytest,/getTrainerManagementRequests\(ownerId=engine\.state\.player\.operation_id\)/);
+ assert.match(sourcePlaytest,/getTrainerManagementRequests\(state,/);
+ assert.match(sourcePlaytest,/getTrainerManagementRequests\(\)\{return engine\.getTrainerManagementRequests\(\)\}/);
  assert.match(sourcePlaytest,/await transact\(db,'readwrite',engine\.getSave\(\)\)/);
  assert.match(sourceUI,/__WTW_OFFICE_DIRECT_READ__\.trainerRequests\(game,requests\)/);
  assert.match(sourceUI,/data-ng="answer-trainer-request"/);
@@ -136,4 +136,19 @@ test('trainer management command rejects forged authority, stale requests and co
  wrong.window.__WTW_1999_UI_DATA__={gameplayService:{state:fake}};
  assert.throws(()=>wrong.commands.dispatch('ANSWER_TRAINER_MANAGEMENT_REQUEST',{
   request_id:request.id,choice:'ACCEPT'}),/no longer available/i);
+});
+
+test('failed persistence unlocks the trainer request for a safe retry',async()=>{
+ const {s,request}=careRequest(),{window,commands}=ui();
+ let attempts=0;
+ window.__WTW_1999_UI_DATA__={gameplayService:{state:s,submit:()=>{
+  attempts++;
+  return attempts===1?Promise.reject(Error('IndexedDB transaction failed')):
+   Promise.resolve('saved');
+ }}};
+ await assert.rejects(commands.dispatch('ANSWER_TRAINER_MANAGEMENT_REQUEST',{
+  request_id:request.id,choice:'ACCEPT'}),/IndexedDB transaction failed/);
+ assert.equal(await commands.dispatch('ANSWER_TRAINER_MANAGEMENT_REQUEST',{
+  request_id:request.id,choice:'ACCEPT'}),'saved');
+ assert.equal(attempts,2);
 });
