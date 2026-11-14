@@ -154,6 +154,29 @@ try {
     assert.equal(after,before.direction==='ascending'?'descending':'ascending',
      'Sortable table failed to reverse its header direction: '+section+' / '+page);
     tableCount++;
+    if(section==='Racing'&&page==='Calendar'){
+     // Program-day cards have many tracks on the same date. The TRACK sort
+     // must reverse the ACTUAL visible row order, not just its arrow.
+     for(let press=0;press<2;press++){
+      const toggled=await evaluate(`(()=>{
+       const b=document.querySelector('#wtwNextgen .ng-rs-table thead button[data-ng="dept-sort"][data-val="track"]');
+       if(!b)return false;b.click();return true;
+      })()`);
+      assert.ok(toggled,'Racing Calendar lost its TRACK sorting action');
+      await ready(section,page,'Racing Track reverse sort');
+     }
+     const audit=await evaluate(`(()=>{
+      const th=document.querySelector('#wtwNextgen .ng-rs-table thead button[data-val="track"]')?.closest('th');
+      return {direction:th?.getAttribute('aria-sort')||null,
+       tracks:[...document.querySelectorAll('#wtwNextgen .ng-rs-table tbody tr')]
+        .map(row=>row.children[1]?.textContent?.trim()).filter(Boolean)};
+     })()`);
+     assert.equal(audit.direction,'descending','Racing track sort did not reverse');
+     assert.ok(audit.tracks.length>=3,'Race day has too few source rows to verify track sorting');
+     for(let i=1;i<audit.tracks.length;i++)
+      assert.ok(audit.tracks[i-1].localeCompare(audit.tracks[i])>=0,
+       'Track column claims descending while displayed races are not: '+audit.tracks[i-1]+' / '+audit.tracks[i]);
+    }
    }
    pageCount++;
   }
