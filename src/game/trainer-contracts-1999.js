@@ -54,7 +54,7 @@ export function trainerContractQuote(state,world,ownerId,trainerId){
  const gameStanding=state.runtime.people[trainerId]?.game_race_record?.professional_standing??.5;
  const threshold=.74+load.pressure*.16+(1-trust)*.16+gameStanding*.10;
  const min= Math.round(base*threshold);
- const contract=root(state).by_pair[pair(ownerId,trainerId)]??null;
+ const contract=state.runtime.trainer_contracts?.by_pair?.[pair(ownerId,trainerId)]??null;
  const balance=state.runtime.finances?.operation_balances_minor?.[ownerId];
  const horses=ownersHorses(state,ownerId,trainerId).length;
  return {owner_id:ownerId,trainer_id:trainerId,horse_count:horses,
