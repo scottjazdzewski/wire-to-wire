@@ -160,6 +160,50 @@ function heroAvailable(src){
  return heroProbes.get(src);
 }
 
+/* When an entity has no source logo at all, render a distinctive temporary
+ * TYPOGRAPHIC identity. This never claims to be a historical or official logo.
+ * Source-backed transparent artwork replaces it automatically by canonical ID. */
+export function heroInitials(name){
+ const words=String(name||"").normalize("NFKC")
+  .replace(/[^\p{L}\p{N}\s'-]/gu," ")
+  .split(/[\s'-]+/).filter(Boolean);
+ const ignore=new Set(["farm","farms","stable","stables","stud","racing","park","racecourse",
+  "raceway","downs","partners","partnership","group","inc","llc","the"]);
+ const significant=words.filter(w=>!ignore.has(w.toLowerCase()));
+ const parts=significant.length?significant:words;
+ if(parts.length>=2)return (parts[0].slice(0,1)+parts[1].slice(0,1)).toUpperCase();
+ return (parts[0]||"WT").slice(0,2).toUpperCase();
+}
+function temporaryIdentity(mark,kind,name){
+ if(mark.querySelector(".wtw-hero-fallback"))return;
+ const holder=document.createElement("div");
+ holder.className="wtw-hero-fallback";
+ const monogram=document.createElement("strong");
+ monogram.className="wtw-hero-fallback-monogram";
+ monogram.textContent=heroInitials(name);
+ const descriptor=document.createElement("span");
+ descriptor.className="wtw-hero-fallback-descriptor";
+ descriptor.textContent=kind==="track"?"RACECOURSE":"RACING ORGANIZATION";
+ holder.append(monogram,descriptor);
+ mark.replaceChildren(holder);
+ mark.classList.add("wtw-hero-typographic");
+ mark.classList.remove("wtw-hero-legacy","wtw-hero-transparent","wtw-hero-dark-ink");
+ mark.setAttribute("role","img");
+ mark.setAttribute("aria-label","Temporary typographic identifier for "+name+"; logo not yet assigned");
+}
+function ensureHeroStage(profile,kind,name){
+ const intro=profile.querySelector(".ng-profile-intro");
+ if(!intro)return null;
+ let mark=intro.querySelector(":scope > .ng-profile-source-photo");
+ if(!mark){
+  mark=document.createElement("div");
+  mark.className="ng-profile-source-photo wtw-hero-generated";
+  intro.insertBefore(mark,intro.querySelector(":scope > .ng-profile-tools"));
+ }
+ if(!mark.querySelector("img"))temporaryIdentity(mark,kind,name);
+ return mark;
+}
+
 function init(){
  const root=document.getElementById(ROOT_ID);
  if(!root)return;
@@ -180,14 +224,38 @@ function init(){
   if(strong&&strong.textContent!==label)strong.textContent=label;
   if(span&&span.textContent!==name){span.textContent=name;span.title=name;}
   if(breadcrumb&&breadcrumb.textContent!==label)breadcrumb.textContent=label;
-  const mark=profile.querySelector(".ng-profile-intro > .ng-profile-source-photo");
-  const img=mark?.querySelector("img");
-  if(!mark||!img)return;
+  const mark=ensureHeroStage(profile,kind,name);
+  if(!mark)return;
   const entity=heroContext(window.__WTW_NEXT__?.app?.custom,
     root.getAttribute("data-wtw-identity"));
   const id=entity?.kind===kind?entity.id:null;
   const approved=id?art?.[kind==="track"?"tracks":"organizations"]?.[id]:"";
   const candidate=heroCandidate(kind,id,approved);
+  const img=mark.querySelector("img");
+  if(!img){
+   // Missing photo/organization logo previously exited before asset lookup.
+   // Check the exact-ID upload location even when the source had no image.
+   if(candidate&&mark.dataset.wtwHeroProbePath!==candidate){
+    mark.dataset.wtwHeroProbePath=candidate;
+    heroAvailable(candidate).then(visual=>{
+     if(!mark.isConnected||mark.dataset.wtwHeroProbePath!==candidate||!visual.ok)return;
+     const logo=document.createElement("img");
+     logo.decoding="async";logo.loading="eager";logo.alt=name+" logo";
+     logo.addEventListener("error",()=>{
+      if(!mark.isConnected)return;
+      temporaryIdentity(mark,kind,name);
+      mark.dataset.wtwHeroProbePath=candidate;
+     },{once:true});
+     logo.src=candidate;
+     mark.replaceChildren(logo);
+     mark.classList.remove("wtw-hero-typographic","wtw-hero-legacy","wtw-hero-dark-ink");
+     mark.classList.add("wtw-hero-transparent");
+     mark.setAttribute("aria-label",name+" logo");
+     if(visual.darkInk)mark.classList.add("wtw-hero-dark-ink");
+    });
+   }
+   return;
+  }
   const legacy=()=>{
    const src=img.getAttribute("src")||"";
    if(img.dataset.wtwMatteSource===src)return;

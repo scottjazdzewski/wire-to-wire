@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {removeWhiteEdgeMatte,heroContext,profileTitle,heroCandidate} from "../public/next/profile-hero-v2.mjs";
+import {removeWhiteEdgeMatte,heroContext,profileTitle,heroCandidate,heroInitials} from "../public/next/profile-hero-v2.mjs";
 
 const css=readFileSync(new URL("../public/next/profile-hero-v2.css",import.meta.url),"utf8");
 const index=readFileSync(new URL("../public/next/index.html",import.meta.url),"utf8");
@@ -72,4 +72,22 @@ test("transparent brand pixels are never altered by white-background fallback",(
 });
 test("farm/ownership logo badges are inside the protected hero grid",()=>{
  assert.match(css,/ng-profile-view\.ng-profile-farm > \.ng-profile-intro > \.ng-org-mark/);
+});
+
+
+test("temporary racecourse and organization marks derive only from visible entity names",()=>{
+ assert.equal(heroInitials("Aqueduct"),"AQ");
+ assert.equal(heroInitials("Kingsmere Farm"),"KI");
+ assert.equal(heroInitials("St. Alloy Partners"),"SA");
+ assert.equal(heroInitials("Four Corners Farm"),"FC");
+ assert.equal(heroInitials(""),"WT");
+});
+test("profiles without a preexisting img still activate newly produced exact-ID logos",()=>{
+ const source=readFileSync(new URL("../public/next/profile-hero-v2.mjs",import.meta.url),"utf8");
+ assert.match(source,/if\(!img\)\{\s*\/\/ Missing photo\/organization logo previously exited/);
+ assert.match(source,/heroAvailable\(candidate\)\.then\(visual=>/);
+ assert.match(source,/mark\.replaceChildren\(logo\)/);
+ assert.match(source,/temporaryIdentity\(mark,kind,name\)/);
+ assert.match(source,/ensureHeroStage\(profile,kind,name\)/);
+ assert.match(css,/\.wtw-hero-fallback-monogram/);
 });
