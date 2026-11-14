@@ -63,6 +63,8 @@ frame.onload=()=>setTimeout(()=>{
    const b=element.getBoundingClientRect();
    return {width:Math.round(b.width),height:Math.round(b.height),
     left:Math.round(b.left),top:Math.round(b.top),
+    right:Math.round(b.right),bottom:Math.round(b.bottom),
+    clientWidth:element.clientWidth,scrollWidth:element.scrollWidth,
     display:win.getComputedStyle(element).display};
   };
   const result={
@@ -74,7 +76,19 @@ frame.onload=()=>setTimeout(()=>{
    page:rect('.ng-board')||rect('.ng-routegrid'),
    horse:rect('.ng-horse-dossier'),
    search:rect('.ng-search-roster-page'),
-   people:rect('.ng-person-horse-dossier')
+   people:rect('.ng-person-horse-dossier'),
+   profile:rect('.ng-route-profile .ng-profile-view'),
+   intro:rect('.ng-route-profile .ng-profile-intro'),
+   identity:rect('.ng-route-profile .ng-profile-identity'),
+   heroMark:rect('.ng-route-profile .ng-profile-source-photo'),
+   localNavigation:rect('.ng-route-profile .ng-profiletabs')||rect('.ng-route-profile .ng-person-dossierbar'),
+   profileName:d.querySelector('.ng-route-profile .ng-profile-identity h2')?.textContent?.trim()||'',
+   sourceBridgeVisible:win.getComputedStyle(d.querySelector('.app')).display!=='none',
+   duplicateGlobalMenuVisible:[...d.querySelectorAll('#wtwNextgen > .ng-subbar')]
+    .some(n=>win.getComputedStyle(n).display!=='none'),
+   metadataClipped:[...d.querySelectorAll('.ng-route-profile .ng-tier1-biography strong')]
+    .filter(n=>n.clientWidth>0&&n.scrollWidth>n.clientWidth+4)
+    .map(n=>n.textContent.trim().slice(0,60))
   };
   const node=document.getElementById('measure');
   node.dataset.check='ready';
@@ -85,9 +99,9 @@ frame.src='/next/'+route;
 </script></body></html>
 HTML
 probe(){
-  local key="$1" route="$2"
+  local key="$1" route="$2" viewport="${3:-1536,864}"
   "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
-    --force-device-scale-factor=1 --window-size=1536,864 --virtual-time-budget=5000 \
+    --force-device-scale-factor=1 --window-size="$viewport" --virtual-time-budget=5000 \
     --dump-dom "http://127.0.0.1:8765/__wtw_visual_probe.html?route=$route" \
     >"visual-audit/dom/probe-$key.html" 2>"/tmp/wtw-probe-$key.log"
 }
@@ -100,6 +114,11 @@ probe gulfstream '%3Fui%3DWorldRecord%253Atrack%253AT-0017'
 probe farm '%3Fui%3DFoundingProfile%253Afacility%253AO-000061'
 probe stable '%3Fui%3DFoundingProfile%253Aownership%253AO-000045'
 probe owner '%3Fui%3DFoundingProfile%253Aownership%253AO-000014'
+probe laptop-horse '%3Fpage%3Dhorse%26name%3DThe%2BLast%2BMatch' '1280,800'
+probe laptop-person '%3Fui%3DWorldRecord%253Aperson%253AP-000018' '1280,800'
+probe laptop-aqueduct '%3Fui%3DWorldRecord%253Atrack%253AT-0001' '1280,800'
+probe laptop-farm '%3Fui%3DFoundingProfile%253Afacility%253AO-000061' '1280,800'
+probe laptop-owner '%3Fui%3DFoundingProfile%253Aownership%253AO-000014' '1280,800'
 python3 - <<'PY'
 import json,html,re
 from pathlib import Path
