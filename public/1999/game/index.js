@@ -74,3 +74,7 @@ export {foalingEventNamingBrief,planPopulationNamingCohorts,auditPopulationNamin
 export {TRAINER_MANAGEMENT_SCHEMA,TRAINER_MANAGEMENT_COMMANDS,TRAINER_MANAGEMENT_CHOICES,
  TRAINER_MANAGEMENT_KINDS,createTrainerManagementRuntime,getTrainerManagementRequests}
  from './trainer-management-requests-1999.js';
+
+export {TRAINER_EMPLOYMENT_SCHEMA,TRAINER_EMPLOYMENT_COMMANDS,
+ createTrainerEmploymentRuntime,getLocalTrainerHiringMarket}
+ from './trainer-employment-1999.js';
