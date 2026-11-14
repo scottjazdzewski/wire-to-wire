@@ -15,7 +15,7 @@ test('direct read adapter contains no DOM, mutation or network behavior',()=>{
  assert.equal(api.schema,'WTW_OFFICE_DIRECT_READ_V2');
  assert.equal(Object.isFrozen(api),true);
  assert.doesNotMatch(script,/\bdocument\b|\blocalStorage\b|\bfetch\s*\(|\.click\s*\(|\.innerHTML\b/);
- assert.deepEqual(Object.keys(api).sort(),['decisions','gameDate','schema','validDate']);
+ assert.deepEqual(Object.keys(api).sort(),['decisions','gameDate','schema','trainerRequests','validDate']);
 });
 
 test('game date prioritizes authoritative playtest clock over stale save or legacy chip',()=>{

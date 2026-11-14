@@ -6,6 +6,7 @@
  'use strict';
  let pendingAdvance=null;
  let pendingDecision=null;
+ let pendingTrainerRequest=null;
  function dispatch(command,payload){
   const manager=global?.__WTW_1999_MANAGEMENT__;
   if(!manager||manager.mode!=='FOUNDING_1999')
@@ -26,6 +27,27 @@
    if(typeof manager.returnToOffice!=='function')
     throw Error('Current game navigation service unavailable');
    return manager.returnToOffice();
+  }
+  if(command==='ANSWER_TRAINER_MANAGEMENT_REQUEST'){
+   if(!pilot)throw Error('Trainer management requests require an active playable 1999 career');
+   if(pendingTrainerRequest)throw Error('A trainer management response is already being saved');
+   const {request_id,choice}=payload||{};
+   const state=pilot.state,owner=state?.player?.operation_id;
+   if(state?.player?.role!=='owner'||!owner)
+    throw Error('Only the player owner can answer trainer management requests');
+   if(!['ACCEPT','COUNTER','DECLINE'].includes(choice))
+    throw Error('Invalid trainer management decision');
+   const rows=Object.values(state.runtime?.trainer_management_requests?.by_pair||{});
+   const request=rows.map(row=>row?.active).find(row=>
+    row?.status==='OPEN'&&row.id===request_id&&
+    row.owner_id===owner&&row.deadline>=state.clock.date);
+   if(!request)throw Error('Trainer request is no longer available to this owner');
+   const exact={request_id:request.id,owner_id:request.owner_id,
+    trainer_id:request.trainer_id,choice};
+   pendingTrainerRequest=Promise.resolve(
+    pilot.submit('ANSWER_TRAINER_MANAGEMENT_REQUEST',exact,'player'))
+    .finally(()=>{pendingTrainerRequest=null});
+   return pendingTrainerRequest;
   }
   if(command==='ANSWER_DECISION'){
    if(!pilot)throw Error('Game decision service unavailable');
