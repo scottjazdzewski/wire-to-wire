@@ -122,9 +122,11 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     next.clock.date = nextDate(next.clock.date);
     next.clock.days_elapsed += 1;
     emit('DAY_ADVANCED', { date: next.clock.date });
+    // Physical arrivals must resolve before trainers choose the day's work,
+    // owners price care, and barn operators assess actual stall occupancy.
+    advance1999HorseShipping({state:next,world,emit});
     runAutonomousDay({state:next,world,emit});
     advanceFacilities({state:next,world,emit});
-    advance1999HorseShipping({state:next,world,emit});
     advanceGameHorseCare({state:next,world,emit});
     settleDailyAgentFeedback({state:next,emit});
     run1999RacingAgents({state:next,world,emit});
