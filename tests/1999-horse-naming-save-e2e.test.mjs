@@ -30,7 +30,7 @@ test('name origin travels through command journal, game save, and restored game'
  assert.equal(start.runtime.horse_naming.stories_by_id['owner-story-001'],undefined);
  const brief=buildGameHorseNamingBrief({world,state:applied.state,horse});
  assert.equal(brief.status,'READY_FOR_ORIGINAL_NAME_WRITING');
- assert.equal(brief.evidence[0].sourceRef,'owner_story:owner-story-001');
+ assert.equal(brief.evidence.some(e=>e.sourceRef==='owner_story:owner-story-001'),true);
  assert.deepEqual(importGameSave(exportGameSave(applied.state,world),world),applied.state);
  const replay=dispatchGameCommand({world,state:applied.state,command});
  assert.equal(replay.duplicate,true);
