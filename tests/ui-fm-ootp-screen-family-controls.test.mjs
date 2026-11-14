@@ -46,6 +46,15 @@ test('Racing department and Stable/World horse rosters use the same actual contr
  }
 });
 
+test('empty Stable roster is not misrepresented as a search or filtering failure',()=>{
+ const stable=ui.slice(ui.indexOf('function liveStableRosterView('),ui.indexOf('\\nfunction functionalRoute('));
+ assert.match(stable,/const emptyRosterMessage=!all.length\?/);
+ assert.match(stable,/No horses are currently listed for this stable/);
+ assert.match(stable,/No horses match the current search or filters/);
+ assert.match(stable,/safe\(emptyRosterMessage\)/);
+ assert.doesNotMatch(stable,/No horses match these filters\./);
+});
+
 test('Horse, Person, Track and Farm share real tab states and honest record context',()=>{
  const start=ui.indexOf('const tabbar=(isTrack||isFarm||isPerson||isHorse)');
  const end=ui.indexOf('const factsBlock=',start);
