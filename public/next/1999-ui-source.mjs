@@ -8,10 +8,12 @@ import {WTW_ALTERNATE_STAKES_1999} from '/next/1999-alternate-stakes.mjs';
 import {WTW_REGIONAL_STAKES_1999} from '/next/1999-regional-stakes.mjs';
 import {readLocal1999World} from '/1999/engine/local-api.mjs?rev=wtw1999-approved-only-20261113-r1';
 import attributeCatalog from '/1999/engine/attribute-catalog.mjs';
+
 import {TRAINING_PLANS,createHorseTrainingRecord,horseTrainingSnapshot,
  assignHorseTrainingPlan,simulateStableTrainingThrough,trainingFinancials}
  from '/1999/engine/horse-development.mjs';
 let viewDate='1999-01-01';
+let activePlaytest=null,playtestSnapshot=null;
 const saveKey=()=>window.__WTW_1999_MANAGEMENT__?.saveKey||'wtw1999ManagementStateV1';
 let cachedCareerRaw=null,cachedCareer=null,trainerYear='',trainerModels=null;
 function gameCareer(){
@@ -35,6 +37,7 @@ function trainingTrainerMap(){
  return trainerModels;
 }
 function syncDevelopment(date){
+ if(activePlaytest)return gameCareer(); // Real gameplay engine owns training and money.
  const game=gameCareer();
  if(!game||game.date!==date)return game;
  // A newly reset founding stable may deliberately contain zero racehorses.
@@ -52,13 +55,37 @@ function syncDevelopment(date){
  return game;
 }
 function horseTraining(nameOrId){
+ if(activePlaytest){
+  const h=playtestSnapshot?.all_horses.find(x=>x.id===nameOrId||x.name===nameOrId);
+  return h?.training||null;
+ }
  const h=stableHorses.find(x=>x.id===nameOrId||x.name===nameOrId);
  if(!h)return null;
  const game=gameCareer();
  return horseTrainingSnapshot(game,h);
 }
-function trainingCosts(){return trainingFinancials(gameCareer())}
+function trainingCosts(){
+ if(activePlaytest){
+  const ledger=activePlaytest.state.runtime.finances.ledger.filter(x=>
+   x.kind==='HORSE_CARE_OWNER_PAYMENT'&&
+   x.operation_id===activePlaytest.state.player.operation_id);
+  return {processedThrough:activePlaytest.state.clock.date,
+   totalSpent:-ledger.reduce((n,x)=>n+x.amount_minor,0)/100,entries:ledger.length,
+   recordedHealthAlerts:activePlaytest.state.event_log.filter(x=>
+    x.kind==='HORSE_CARE_UNFUNDED').length,
+   provenance:'ISOLATED_1999_GAME_ENGINE_CARE_LEDGER'};
+ }
+ return trainingFinancials(gameCareer());
+}
 function assignTraining(horseId,plan){
+ if(activePlaytest){
+  const h=playtestSnapshot?.stable.find(x=>x.id===horseId);
+  if(!h)throw Error('Horse not owned by player in the 1999 playtest');
+  activePlaytest.setTrainingPlan(horseId,plan).catch(error=>{
+   window.__WTW_1999_PLAYTEST_ERROR__=String(error?.message||error);
+  });
+  return h.training; // async command updates the shared adapter after durable save
+ }
  const game=gameCareer();if(!game)throw Error('Active 1999 career save unavailable');
  if(game.date!==viewDate)throw Error('Game date and training date are not synchronized');
  const h=stableHorses.find(x=>x.id===horseId);
@@ -393,6 +420,13 @@ function makeDepartmentRows(section,page,context={}){
 const departmentCache=new Map();
 function setGameDate(date){
  if(typeof date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(date)||date<'1999-01-01'||date>'2080-12-31')return;
+ if(activePlaytest){
+  // Paint/calendar browsing is observational. Only the explicit Continue
+  // command advances the single engine clock; a stale native date chip may
+  // never rewind it or trigger a second automated advance.
+  viewDate=activePlaytest.state.clock.date;
+  return;
+ }
  if(date===viewDate)return;
  // Model reads validate the date and return deterministic as-of ability.
  const previous=viewDate;viewDate=date;
@@ -410,6 +444,29 @@ function setGameDate(date){
 }
 function departmentRows(section,page,context={}){
  if(context.date)setGameDate(context.date);
+ if(activePlaytest&&playtestSnapshot&&section==='Racing'&&
+   (page==='Entries'||page==='Results')){
+  const byRace=new Map(playtestSnapshot.races.map(r=>[r.id,r]));
+  const byHorse=new Map(playtestSnapshot.all_horses.map(h=>[h.id,h]));
+  return playtestSnapshot.entries.filter(e=>page==='Entries'?
+   ['ENTERED','BOOKED'].includes(e.status):e.status==='RESULTED').map(e=>{
+    const race=byRace.get(e.race_id),horse=byHorse.get(e.horse_id);
+    const finishing=race?.results?.find(x=>x.horse_id===e.horse_id);
+    const jockey=playtestSnapshot.people.find(p=>p.id===e.jockey_id);
+    return {_kind:'race',_name:race?.name||e.race_id,_raceId:e.race_id,
+     _track:horse?.track_name||'',_iso:race?.date||'',_raceData:race||null,
+     date:race?.date||'',track:horse?.track_name||'',
+     race:race?.name||('Race '+(race?.number||'')),class:race?.conditions||'',
+     surface:race?.surface||'',distance:race?race.distance_furlongs+'f':'',
+     purse:race?money(race.purse_minor/100):'',
+     horse:horse?.name||e.horse_id,base:horse?.site_name||'',
+     ship:'STABLED AT TRACK',jockey:jockey?.name||e.jockey_id||'',
+     trainer:horse?.trainer_name||'',ready:horse?.condition?.readiness==null?'—':
+      Math.round(horse.condition.readiness*100)+'%',
+     status:page==='Results'?'FINISHED '+(finishing?.finish||'—'):
+      e.status+' · MODELED 1999 TEST'};
+   });
+ }
  const key=section+'|'+page+(section==='Racing'?'|'+(context.date||'1999-01-01')+'|'+(context.racingMode||'meets'):'');
  if(departmentCache.has(key))return departmentCache.get(key);
  const rows=makeDepartmentRows(section,page,context);
@@ -816,5 +873,52 @@ window.__WTW_1999_UI_DATA__={
  counts:q('/api/1999/sim/overview').counts,
  bridgeStatus:'SOURCE_IDS_LOCKED; OTHER VALUES_MARKED_TEST; NO_1999_OUTCOME_COMMITTED'
 };
+// Bind the EXISTING menus to the same engine run, only when the user
+// explicitly selects ?playtest=38. Default historical opening remains empty.
+if(/[?&]playtest=38(?:&|$)/.test(window.location?.search||'')){
+ window.__WTW_1999_PLAYTEST_LOADING__='MODULE_IMPORT_STARTED';
+ import('/1999/game/playtest-service.mjs').then(m=>{
+  window.__WTW_1999_PLAYTEST_LOADING__='MODULE_IMPORT_COMPLETE';
+  return m.bootBrowserPlaytest1999();
+ }).then(service=>{
+  window.__WTW_1999_PLAYTEST_LOADING__='GAME_RUN_READY';
+  if(!service)return;
+  activePlaytest=service;
+  const apply=view=>{
+   playtestSnapshot=view;viewDate=view.date;
+   const chip=document.querySelector('.dateChip');
+   if(chip){
+    const textNode=[...chip.childNodes].find(n=>n.nodeType===3);
+    if(textNode)textNode.nodeValue=view.date;
+    else chip.append(view.date);
+   }
+   const mgr=window.__WTW_1999_MANAGEMENT__;
+   if(mgr)mgr.advanceOneDay=()=>service.submit('ADVANCE_DAY',{},'system').
+    catch(error=>{window.__WTW_1999_PLAYTEST_ERROR__=String(error?.message||error)});
+   stableHorses=view.stable;
+   horseLookup=new Map([...srcHorses,...view.all_horses].map(h=>[h.name,h]));
+   for(const p of view.people)peopleNames.set(p.id,p.name);
+   records.clear();departmentCache.clear();
+   const adapter=window.__WTW_1999_UI_DATA__;
+   if(adapter){
+    adapter.stableHorses=roster();
+    adapter.ownedHorseCount=view.stable.length;
+    adapter.openingCash=view.finance.owner_cash_minor/100;
+    adapter.playtestRaces=view.races;
+    adapter.playtestEntries=view.entries;
+    adapter.playtestStatus=view.notes;
+    adapter.gameplayService=service;
+    adapter.bridgeStatus='ISOLATED_PILOT_GAME_RUN_ACTIVE__NOT_HISTORICAL_SOURCE';
+   }
+   window.__WTW_NEXT__?.paint?.();
+  };
+  service.onChange(apply);
+  apply(service.view());
+ }).catch(error=>{
+  window.__WTW_1999_PLAYTEST_LOADING__='STARTUP_FAILED';
+  window.__WTW_1999_PLAYTEST_ERROR__=String(error?.stack||error);
+  console.error('WTW 1999 isolated gameplay startup rejected',error);
+ });
+}
 if(window.__WTW_NEXT__?.app)window.__WTW_NEXT__.app.activeCase='opening-stable';
 window.__WTW_NEXT__?.paint?.();

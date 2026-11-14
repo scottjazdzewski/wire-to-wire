@@ -65,6 +65,10 @@ jobs:
         run: node --test tests/1999-autonomous-owner-trainer-barn-agents.test.mjs
       - name: First autonomous 1999 race entry booking and result settlement
         run: node --test tests/1999-first-autonomous-race-cycle.test.mjs
+      - name: Browser gameplay modules match authoritative single engine
+        run: node scripts/sync-1999-browser-gameplay.mjs --check
+      - name: Browser 1999 playtest career, agents, race results, saves and source isolation
+        run: node --test tests/1999-browser-playtest-career.test.mjs
       - name: Jan 1 source and OFFLINE browser population verification
         run: node --test tests/1999-opening-world.test.mjs tests/1999-entry-gate.test.mjs tests/1999-test-clock.test.mjs tests/1999-management-ui-restore.test.mjs tests/1999-management-screen-data.test.mjs tests/1999-founding-world.test.mjs tests/1999-approved-only-world.test.mjs
 
@@ -75,6 +79,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify approved management UI boots with 1999 data in Chromium
         run: bash scripts/1999-management-browser-smoke.sh
+      - name: Verify actual opt-in 38-horse playable career in Chromium
+        run: bash scripts/1999-playtest-browser-smoke.sh
       - name: Save browser probe output
         if: always()
         uses: actions/upload-artifact@v4
