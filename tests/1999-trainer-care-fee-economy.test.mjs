@@ -98,7 +98,7 @@ test('replay across a 15-day racing career preserves distinct care earnings and 
  const recovered=importGameSave(exportGameSave(state,world),world);
  assert.deepEqual(recovered,state);
  const dupe=dispatchGameCommand({state,world,command:{
-  id:'fees:next:1999-01-15',type:'ADVANCE_DAY',actor:'system',payload:{}}});
+  id:'fees:next:1999-01-15',type:'ADVANCE_DAY',payload:{},actor:'system'}});
  assert.equal(dupe.duplicate,true);
  assert.deepEqual(dupe.state,state);
 });
