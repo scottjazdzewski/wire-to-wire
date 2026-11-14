@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync,existsSync} from "node:fs";
-import {removeWhiteEdgeMatte,heroContext,profileTitle,heroCandidate,heroInitials} from "../public/next/profile-hero-v2.mjs";
+import {removeWhiteEdgeMatte,heroContext,profileTitle,heroCandidate,heroInitials,dossierLabel} from "../public/next/profile-hero-v2.mjs";
 
 const css=readFileSync(new URL("../public/next/profile-hero-v2.css",import.meta.url),"utf8");
 const index=readFileSync(new URL("../public/next/index.html",import.meta.url),"utf8");
@@ -100,4 +100,22 @@ test("organization profile uses approved small category badge, not duplicate her
  assert.match(css,/ng-profile-view\.ng-profile-farm > \.ng-profile-intro > \.ng-org-mark > \.ng-org-image/);
  const js=readFileSync(new URL("../public/next/profile-hero-v2.mjs",import.meta.url),"utf8");
  assert.match(js,/categoryBadge\.setAttribute\("aria-label","Farm, stable and ownership profile badge"\)/);
+});
+
+
+test("horse and personnel dossier top labels are profile-specific, never route codes",()=>{
+ assert.equal(dossierLabel("ng-profile-view ng-profile-horse"),"HORSE PROFILE");
+ assert.equal(dossierLabel("ng-profile-view ng-profile-person ng-profile-horse"),"PERSONNEL PROFILE");
+ assert.equal(dossierLabel("ng-profile-view ng-profile-track"),"");
+ assert.equal(dossierLabel("ng-route-manager"),"");
+ const src=readFileSync(new URL("../public/next/profile-hero-v2.mjs",import.meta.url),"utf8");
+ assert.match(src,/polishDossierContext\(root\)/);
+ assert.match(src,/filter\(node=>node\.nodeType===3\)/);
+ assert.match(src,/direct\.at\(-1\)/);
+ assert.match(src,/if\(value&&value\.textContent!==name\)/);
+});
+test("profile dossier subnavigation keeps buttons and more records on narrow screens",()=>{
+ assert.match(css,/ng-profile-view\.ng-profile-horse \.ng-person-dossieractions/);
+ assert.match(css,/grid-template-columns:minmax\(64px,1fr\) minmax\(64px,1fr\) minmax\(110px,1\.5fr\)/);
+ assert.match(css,/height:auto!important/);
 });

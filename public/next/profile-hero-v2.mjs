@@ -204,11 +204,43 @@ function ensureHeroStage(profile,kind,name){
  return mark;
 }
 
+/* Shared top-context presentation for the two original dossiers.
+ * The Profile view's published name, not the URL/route token, is the label.
+ * Horse owner badges may precede the literal name inside h2; read the
+ * direct name text, not the badge's combined textContent. */
+export function dossierLabel(classNames){
+ const classes=" "+String(classNames||"")+" ";
+ if(classes.includes(" ng-profile-person "))return "PERSONNEL PROFILE";
+ if(classes.includes(" ng-profile-horse "))return "HORSE PROFILE";
+ return "";
+}
+function polishDossierContext(root){
+ const profile=root.querySelector(".ng-route-profile .ng-profile-view");
+ if(!profile||profile.classList.contains("ng-profile-track"))return;
+ const label=dossierLabel(profile.className);
+ if(!label)return;
+ const identity=profile.querySelector(".ng-profile-intro > .ng-profile-identity");
+ const heading=identity?.querySelector("h2");
+ if(!heading)return;
+ const direct=Array.from(heading.childNodes)
+  .filter(node=>node.nodeType===3)
+  .map(node=>node.textContent.trim()).filter(Boolean);
+ const name=(direct.at(-1)||heading.textContent||"").replace(/\s+/g," ").trim();
+ if(!name)return;
+ const top=root.querySelector(".ng-manager-top-context");
+ const strong=top?.querySelector("strong"),value=top?.querySelector("span");
+ if(strong&&strong.textContent!==label)strong.textContent=label;
+ if(value&&value.textContent!==name){value.textContent=name;value.title=name;}
+ const breadcrumb=identity.querySelector(".ng-profile-breadcrumb");
+ if(breadcrumb&&breadcrumb.textContent!==label)breadcrumb.textContent=label;
+}
+
 function init(){
  const root=document.getElementById(ROOT_ID);
  if(!root)return;
  let art=null;
  const run=()=>{
+  polishDossierContext(root);
   const profile=root.querySelector(".ng-route-profile .ng-profile-view.ng-profile-track");
   if(!profile)return;
   const farm=profile.classList.contains("ng-profile-farm");
