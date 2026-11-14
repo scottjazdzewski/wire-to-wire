@@ -1743,8 +1743,9 @@ function profileDetail(route,sourceOverride=null){
     '" data-name="'+safe(cells[0])+'" data-track="'+safe(route.title)+'" data-date="'+safe(cells[1])+'">'+safe(cells[0])+'</button>';
    const grade=(cells[2].match(/\\bG([123])\\b/i)||[])[1];
    const gradeValue=grade?'G'+grade:cells[2];
+   const trophy=grade?'<span class="ng-stakes-grade" title="Grade '+grade+'"><img class="ng-stakes-trophy" src="/assets/trophies/approved-grade-'+grade+'-64.png" alt="" width="16" height="16" decoding="async"/><small class="ng-stakes-grade-text">G'+grade+'</small></span>':null;
    return {name:{text:cells[0],html:link},date:cells[1],
-    grade:gradeValue,purse:cells[3]};
+    grade:trophy?{text:gradeValue,html:trophy}:gradeValue,purse:cells[3]};
   });
   return profileRecordSection('STAKES RACES',
    [['name','RACE'],['date','DATE'],['grade','GRADE'],['purse','PURSE']],
