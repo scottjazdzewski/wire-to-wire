@@ -171,6 +171,7 @@ export async function openFictionalIndustryIdentityBridge({
   getOrganization:(...args)=>continuity.getOrganization(...args),
   getHistory:(...args)=>continuity.getHistory(...args),
   listOrganizations:(...args)=>continuity.listOrganizations(...args),
+  iterateOrganizations:(...args)=>continuity.iterateOrganizations(...args),
   registerApprovedPerson,registerApprovedOrganization,applyTransition,refresh,
   exportNamingBundle:()=>naming.exportBundle(),
   exportContinuityArchive:()=>continuity.exportArchive()
