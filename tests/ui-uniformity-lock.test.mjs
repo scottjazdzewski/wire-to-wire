@@ -84,7 +84,7 @@ test('a screenshot smoke test does not mean FM/OOTP visual approval',()=>{
   'founder-owner','founder-facility','personnel','facilities','finances','breeding']){
   assert.ok(audit.includes('capture '+view+' '),'Visual route missing: '+view);
  }
- assert.match(standard,/marked \*\*REJECTED\*\*/,'Weak interfaces must be explicitly rejected');
+ assert.match(standard,/mark \*\*REJECTED\*\*/,'Weak interfaces must be explicitly rejected');
  assert.match(standard,/A \*\*person\*\* compares screenshots/,'Visual acceptance needs an actual reviewer');
  assert.match(standard,/No CSS patch stacks|No CSS patch stack|do not add a fifth/i);
 });
