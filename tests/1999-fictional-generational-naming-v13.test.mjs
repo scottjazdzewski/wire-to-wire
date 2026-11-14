@@ -58,6 +58,8 @@ test('US historical 1990-2019 top-30 lists and partial 2020-2025 official rankin
   'SSA_US_DECADE_TOP30_RANK_EDITORIAL_DRAW');
  assert.equal(generationalGivenNameEvidence('US',2023),
   'SSA_US_PARTIAL_2020_2025_TOP30_EDITORIAL_DRAW');
+ assert.equal(generationalGivenPool('US',null,2045,false)[0],'Liam');
+ assert.equal(generationalGivenPool('US',null,2045,true)[0],'Olivia');
  assert.equal(generationalGivenNameEvidence('US',2028),
   'EDITORIAL_FUTURE_US_NOT_OBSERVED');
  assert.equal(generationalGivenNameEvidence('JP',2036),
