@@ -106,10 +106,10 @@ export function generationalGivenNameEvidence(country,birthYear){
  if(birthYear<1990)return 'LEGACY_1910_1989_COHORT';
  if(country==='US'){
   if(birthYear<2020)return 'SSA_US_DECADE_TOP30_RANK_EDITORIAL_DRAW';
-  if(birthYear<2030)return 'SSA_US_PARTIAL_2020_2025_TOP30_EDITORIAL_DRAW';
+  if(birthYear<=2025)return 'SSA_US_PARTIAL_2020_2025_TOP30_EDITORIAL_DRAW';
   return 'EDITORIAL_FUTURE_US_NOT_OBSERVED';
  }
- return birthYear<2030?'EDITORIAL_MODERN_COUNTRY_CULTURE_NOT_CENSUS':
+ return birthYear<=2025?'EDITORIAL_MODERN_COUNTRY_CULTURE_NOT_CENSUS':
   'EDITORIAL_FUTURE_COUNTRY_CULTURE_NOT_OBSERVED';
 }
 function establishedPool(country,culture,birthYear,feminine){
