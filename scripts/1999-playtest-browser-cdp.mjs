@@ -145,7 +145,8 @@ try{
   if(await evaluate("Boolean(document.querySelector('[data-cc-action=load]'))"))break;
   await delay(100);
  }
- assert.equal(await evaluate("document.querySelector('.wtw-cc-slot strong')?.textContent"),'Browser return point');
+ assert.equal(await evaluate("document.querySelector('.wtw-cc-slot strong')?.textContent"),
+  'Browser return point',await evaluate("document.querySelector('.wtw-cc-notice')?.textContent||'Compact Save did not respond'"));
  assert.equal(await evaluate(`(()=>{
   document.querySelector('[data-cc-action="close"]').click();
   document.querySelector('[data-ng="action"][data-val="Continue"]').click();
