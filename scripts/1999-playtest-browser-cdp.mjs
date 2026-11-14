@@ -86,6 +86,25 @@ try{
  assert.equal(before.jockeys,26);
  assert.equal(before.barns,8);
  assert.equal(before.uiOwned,before.owned);
+ const foundingBefore=await evaluate("localStorage.getItem('wtw1999FoundingStateV1')");
+ await evaluate(`window.__WTW_1999_PLAYTEST__.submit('QUEUE_DECISION',{
+  decision_id:'browser-training-review',option_ids:['rest','work'],
+  context:{title:'Training review',option_labels:{rest:'Rest the horse',work:'Work the horse'}}
+ },'system').then(()=>true)`);
+ assert.equal(await evaluate(`(()=>{
+  const root=document.getElementById('wtwNextgen');
+  root.querySelector('[data-ng="case"][data-val="browser-training-review"]').click();
+  const button=root.querySelector('[data-ng="answer-decision"][data-val="rest"]');
+  if(!button?.textContent.includes('Rest the horse'))return false;
+  button.click();
+  return true;
+ })()`),true);
+ for(let i=0;i<100;i++){
+  if(await evaluate("document.querySelector('.ng-resolution-title')?.textContent.includes('Rest the horse')"))break;
+  await delay(100);
+ }
+ assert.equal(await evaluate("document.querySelector('.ng-resolution-title')?.textContent.trim()"),'Rest the horse');
+ assert.equal(await evaluate("window.__WTW_1999_PLAYTEST__.state.decisions.resolved['browser-training-review']?.option_id"),'rest');
  await evaluate("window.__WTW_1999_PLAYTEST__.advanceTo('1999-01-16').then(()=>true)");
  const progressed=await untilReady('Game progression');
  assert.equal(progressed.date,'1999-01-16');
@@ -96,6 +115,8 @@ try{
  await command('Page.reload',{ignoreCache:true});
  const reloaded=await untilReady('IndexedDB reload');
  assert.deepEqual(reloaded,progressed);
+ assert.equal(await evaluate("window.__WTW_1999_PLAYTEST__.state.decisions.resolved['browser-training-review'].option_id"),'rest');
+ assert.equal(await evaluate("localStorage.getItem('wtw1999FoundingStateV1')"),foundingBefore);
  await command('Page.navigate',{url:'http://127.0.0.1:8869/next/'});
  let clean=null;
  for(let i=0;i<100;i++){
@@ -111,10 +132,44 @@ try{
   await delay(250);
  }
  assert.deepEqual(clean,{url:'/next/',stable:0,sourceHorses:0,playtest:false});
+ // The visible compact save dialog writes to IndexedDB and can reload its
+ // original founding date after a later Continue action.
+ await evaluate(`document.querySelector('[data-ng="save-open"]').click()`);
+ for(let i=0;i<100;i++){
+  if(await evaluate("Boolean(document.querySelector('[data-cc-action=save]'))"))break;
+  await delay(100);
+ }
+ await evaluate(`document.querySelector('[data-cc="save-name"]').value='Browser return point';
+  document.querySelector('[data-cc-action="save"]').click()`);
+ for(let i=0;i<100;i++){
+  if(await evaluate("Boolean(document.querySelector('[data-cc-action=load]'))"))break;
+  await delay(100);
+ }
+ assert.equal(await evaluate("document.querySelector('.wtw-cc-slot strong')?.textContent"),
+  'Browser return point',await evaluate("document.querySelector('.wtw-cc-notice')?.textContent||'Compact Save did not respond'"));
+ assert.equal(await evaluate(`(()=>{
+  document.querySelector('[data-cc-action="close"]').click();
+  document.querySelector('[data-ng="action"][data-val="Continue"]').click();
+  return document.querySelector('.ng-global-date strong')?.textContent;
+ })()`),'1999-01-02');
+ await evaluate(`window.confirm=()=>true; document.querySelector('[data-ng="save-open"]').click()`);
+ for(let i=0;i<100;i++){
+  if(await evaluate("!document.getElementById('wtwCommercialCareerModal')?.hidden && Boolean(document.querySelector('[data-cc-action=load]'))"))break;
+  await delay(100);
+ }
+ await evaluate(`document.querySelector('[data-cc-action="load"]').click()`);
+ for(let i=0;i<100;i++){
+  try{
+   if(await evaluate("document.querySelector('.ng-global-date strong')?.textContent==='1999-01-01'"))break;
+  }catch{}
+  await delay(100);
+ }
+ assert.equal(await evaluate("document.querySelector('.ng-global-date strong')?.textContent"),'1999-01-01');
+ assert.equal(await evaluate("window.WTWCompactCareerManager.listSlots().then(rows=>rows.length)"),1);
  console.log('WTW_BROWSER_PLAYTEST_PASS '+JSON.stringify({
   date:progressed.date,horseCount:progressed.horseCount,
   owned:progressed.owned,races:progressed.results,saveReload:'IDENTICAL',
-  defaultFounding:'ZERO_RACEHORSES',screensUnchanged:true}));
+  defaultFounding:'ZERO_RACEHORSES',decisionReload:'RECORDED',compactSaveLoad:'RESTORED'}));
 }finally{
  try{ws?.close()}catch{}
  try{proc.kill('SIGTERM')}catch{}

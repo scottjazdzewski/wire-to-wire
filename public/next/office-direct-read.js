@@ -12,21 +12,33 @@
   if(!Number.isFinite(stamp))return '';
   return new Date(stamp).toISOString().slice(0,10)===value?value:'';
  }
- function gameDate({engineDate,careerDate,legacyDate,cleanMode=true}={}){
+ function gameDate({engineDate,careerDate}={}){
   const engine=validDate(engineDate);
   if(engine&&engine>=START)return engine;
   const saved=validDate(careerDate);
-  // A stale hidden date chip cannot rewind/override the supported 1999 game.
-  if(cleanMode)return saved&&saved>=START?saved:START;
-  return validDate(legacyDate)||saved||START;
+  return saved&&saved>=START?saved:START;
  }
- function messages({sourceMessages,legacyMessages,cleanMode=true}={}){
-  if(Array.isArray(sourceMessages))return sourceMessages;
-  // When 1999 source data is loading, show an empty Inbox, not old demo cases.
-  if(cleanMode)return [];
-  return Array.isArray(legacyMessages)?legacyMessages:[];
+ function decisions(state){
+  const text=value=>typeof value==='string'?value:'';
+  const pending=Object.values(state?.decisions?.pending||{});
+  const resolved=Object.values(state?.decisions?.resolved||{});
+  return [...pending,...resolved].map(row=>{
+   const closed=Boolean(row.resolved_date);
+   const context=row.context||{};
+   const title=text(context.title)||row.id;
+   const summary=text(context.summary);
+   const label=id=>(Object.hasOwn(context.option_labels||{},id)&&text(context.option_labels[id]))||id;
+   const moves=closed?[]:row.option_ids.map(optionId=>({optionId,title:label(optionId),tag:'DECISION'}));
+   return {
+    message:{case:row.id,from:'Game engine',title,meta:summary,time:row.created_date,
+     initials:'WT',urgent:!closed,resolved:closed},
+    desk:{type:'MANAGEMENT DECISION',title,summary,source:'Game engine',
+     pressure:closed?'Recorded':'Awaiting choice',risk:'',read:summary,moves,intel:[],
+     receipt:closed?{choiceTitle:label(row.option_id),date:row.resolved_date}:null}
+   };
+  });
  }
- const api=Object.freeze({schema:'WTW_OFFICE_DIRECT_READ_V1',validDate,gameDate,messages});
+ const api=Object.freeze({schema:'WTW_OFFICE_DIRECT_READ_V2',validDate,gameDate,decisions});
  if(global)global.__WTW_OFFICE_DIRECT_READ__=api;
  if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:null);

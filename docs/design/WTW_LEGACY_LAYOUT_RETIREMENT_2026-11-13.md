@@ -89,3 +89,9 @@ These **nine entirely unreferenced historical theme files were physically remove
 **Next replacement targets:** direct load/import using native save-validation contracts; case/decision action routing through the same command interface; profile/fixture read projections without hidden Office DOM. The legacy controller and hidden Office markup stay quarantined until these are verified against save, decision and navigation behavior.
 
 **Regression gate:** `tests/office-direct-command-bridge.test.mjs` asserts the Save and Continue paths use direct methods, validates asynchronous command coalescing and fail-closed behavior, and checks that no hidden UI controls are accessed by the adapter.
+
+## Direct career restore and engine decisions
+
+- The compact career manager and existing named slots use `SAVE_CURRENT` and `LOAD_CAREER`. Founding loads validate the source world, seed and actual calendar date before replacing the active save, then restore through normal startup. The compact dialog imports both .wtwsave and founding JSON snapshots into slots. It restores a slot only when the player selects Load.
+- The 38-horse playtest uses its own IndexedDB run. Continue and decision answers use that run's command service. Inbox choices carry the engine's decision and option IDs, and the desk displays the persisted receipt. Opening-world advisory cards are still department links. The pilot no longer mirrors its clock into the founding save.
+- The hidden file input, matching Load button and FileReader handler are gone. The visible date, inbox and choice controls have no Office selectors. Profile and other source routes still depend on the quarantined route shell and compatibility scripts.

@@ -8,20 +8,21 @@ const source=read('public/next/office-direct-command.js');
 const next=read('public/next/next.js');
 const office=read('public/office-v30-4.js');
 const html=read('public/next/index.html');
+const commercial=read('public/next/1999-commercial-career-manager.mjs');
 const boot=manager=>{
  const window={__WTW_1999_MANAGEMENT__:manager};
  const module={exports:{}};
- vm.runInNewContext(source,{window,module,Promise,Error,String},{filename:'office-direct-command.js'});
+ vm.runInNewContext(source,{window,module,Promise,Error,String,URLSearchParams},{filename:'office-direct-command.js'});
  return {window,api:module.exports};
 };
 
 test('one headless action surface; no legacy screen, DOM or own game storage',()=>{
  const {api}=boot({mode:'FOUNDING_1999'});
- assert.equal(api.schema,'WTW_OFFICE_DIRECT_COMMANDS_V1');
+ assert.equal(api.schema,'WTW_OFFICE_DIRECT_COMMANDS_V2');
  assert.equal(Object.isFrozen(api),true);
  assert.deepEqual(Object.keys(api).sort(),['dispatch','schema']);
  assert.doesNotMatch(source,/\bdocument\b|\blocalStorage\b|\bindexedDB\b|querySelector|\.click\s*\(|\.innerHTML/);
- assert.match(html,/office-direct-command\.js\?rev=wtw-headless-commands-v1/);
+ assert.match(html,/office-direct-command\.js\?rev=wtw-headless-commands-v2/);
  assert.ok(html.indexOf('office-v30-4.js')<html.indexOf('office-direct-command.js'));
  assert.ok(html.indexOf('office-direct-command.js')<html.indexOf('/next/next.js'));
 });
@@ -86,6 +87,40 @@ test('pilot gameplay IndexedDB save cannot masquerade as a named legacy save',()
  window.__WTW_1999_UI_DATA__={gameplayService:{state:{clock:{date:'1999-01-02'}}}};
  assert.throws(()=>api.dispatch('SAVE_CURRENT'),/playtest saves to its game engine automatically/i);
  assert.equal(saved,0);
+});
+
+test('both Load controls use the same founding authority, guarded before pilot startup',()=>{
+ const payload={date:'1999-02-01'};
+ let restored;
+ const {window,api}=boot({mode:'FOUNDING_1999',restoreCareer:game=>{restored=game}});
+ api.dispatch('LOAD_CAREER',payload);
+ assert.strictEqual(restored,payload);
+ window.location={search:'?playtest=38'};
+ assert.throws(()=>api.dispatch('LOAD_CAREER',{}),/switch to the founding world/);
+ assert.throws(()=>api.dispatch('ADVANCE_DAY'),/playtest clock is still loading/);
+ assert.strictEqual(restored,payload);
+ assert.match(next,/\.dispatch\('LOAD_CAREER',slot.game\)/);
+ assert.match(commercial,/\.dispatch\('LOAD_CAREER',game\)/);
+ assert.match(commercial,/\.dispatch\('SAVE_CURRENT'\)/);
+ assert.doesNotMatch(commercial,/\.app \[data-act\]|localStorage\./);
+});
+
+test('decisions use the selected engine case and choice and release the lock after errors',async()=>{
+ const {window,api}=boot({mode:'FOUNDING_1999'});
+ assert.throws(()=>api.dispatch('ANSWER_DECISION',{}),/decision service unavailable/);
+ const pending={'D-1':{option_ids:['rest','work']}};
+ const calls=[];
+ let attempt=0;
+ window.__WTW_1999_UI_DATA__={gameplayService:{state:{decisions:{pending}},
+  submit:(...args)=>{calls.push(args);return ++attempt===1?Promise.reject(Error('Save failed')):'committed'}}};
+ assert.throws(()=>api.dispatch('ANSWER_DECISION',{decision_id:'D-1',option_id:'other'}),/no longer available/);
+ assert.throws(()=>api.dispatch('ANSWER_DECISION',{decision_id:'__proto__',option_id:'rest'}),/no longer available/);
+ const payload={decision_id:'D-1',option_id:'rest'};
+ const first=api.dispatch('ANSWER_DECISION',payload);
+ assert.throws(()=>api.dispatch('ANSWER_DECISION',payload),/already being recorded/);
+ await assert.rejects(first,/Save failed/);
+ assert.equal(await api.dispatch('ANSWER_DECISION',payload),'committed');
+ assert.deepEqual(JSON.parse(JSON.stringify(calls)),Array(2).fill(['ANSWER_DECISION',payload,'player']));
 });
 
 test('game command errors are reported rather than silently advancing',()=>{

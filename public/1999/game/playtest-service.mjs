@@ -221,18 +221,6 @@ export async function bootBrowserPlaytest1999(){
  const listeners=new Set();let busy=Promise.resolve();
  const sync=()=>{
   const v=engine.view();
-  const key=globalThis.__WTW_1999_MANAGEMENT__?.saveKey;
-  if(key&&typeof localStorage!=='undefined'){
-   const raw=localStorage.getItem(key);
-   if(raw){const shell=JSON.parse(raw);
-    if(shell?.worldAnchor?.schema==='WTW_1999_FOUNDING_CAREER_V1'){
-     shell.date=v.date;shell.turn=engine.state.clock.days_elapsed;
-     shell.worldAnchor.playtestRunId=v.run_id;
-     shell.worldAnchor.playtestProvenance=v.notes;
-     localStorage.setItem(key,JSON.stringify(shell));
-    }
-   }
-  }
   for(const listener of listeners)listener(v);
   if(typeof CustomEvent==='function')globalThis.dispatchEvent?.(
    new CustomEvent('wtw1999-playtest-update',{detail:{date:v.date,revision:v.revision}}));
@@ -243,7 +231,7 @@ export async function bootBrowserPlaytest1999(){
   getRaceOpportunities(horseId,opts={}){return engine.getRaceOpportunities(horseId,opts)},
   onChange(fn){listeners.add(fn);return()=>listeners.delete(fn)},
   submit(type,payload,actor='player'){
-   busy=busy.then(async()=>{
+   const operation=busy.then(async()=>{
     // Persist first; publish state only if the transaction succeeds.
     const saved=engine.getSave();
     try{const out=engine.command(type,payload,{actor});await transact(db,'readwrite',engine.getSave());
@@ -253,7 +241,8 @@ export async function bootBrowserPlaytest1999(){
      throw error;
     }
    });
-   return busy;
+   busy=operation.catch(()=>{});
+   return operation;
   },
   advanceTo(date){
    busy=busy.then(async()=>{

@@ -931,15 +931,6 @@ if(/[?&]playtest=38(?:&|$)/.test(window.location?.search||'')){
   activePlaytest=service;
   const apply=view=>{
    playtestSnapshot=view;viewDate=view.date;
-   const chip=document.querySelector('.dateChip');
-   if(chip){
-    const textNode=[...chip.childNodes].find(n=>n.nodeType===3);
-    if(textNode)textNode.nodeValue=view.date;
-    else chip.append(view.date);
-   }
-   const mgr=window.__WTW_1999_MANAGEMENT__;
-   if(mgr)mgr.advanceOneDay=()=>service.submit('ADVANCE_DAY',{},'system').
-    catch(error=>{window.__WTW_1999_PLAYTEST_ERROR__=String(error?.message||error)});
    stableHorses=view.stable;
    horseLookup=new Map([...srcHorses,...view.all_horses].map(h=>[h.name,h]));
    for(const p of view.people)peopleNames.set(p.id,p.name);

@@ -70,6 +70,17 @@ test('true 1999 save persists progress without restoring old cases',()=>{
  assert.equal(two.state.horseState['H-1996-008001'].tested,true);
  assert.equal(two.state.currentCase,'opening-stable');
 });
+test('direct restore retains a slot snapshot and rejects invalid loads before replacing progress',()=>{
+ const one=start(),manager=one.window.__WTW_1999_MANAGEMENT__;
+ const slot={...one.state,date:'1999-01-12',turn:11,horseDevelopment:{schema:'WTW_1999_HORSE_DEVELOPMENT_V1',marker:'saved'}};
+ manager.restoreCareer(slot);
+ const saved=one.records.get(KEY);
+ for(const date of ['1998-12-31','1999-02-30','2014-07-99'])
+  assert.throws(()=>manager.restoreCareer({...slot,date}),/valid founding/);
+ assert.throws(()=>manager.restoreCareer({...slot,worldAnchor:{...slot.worldAnchor,seed:10}}),/valid founding/);
+ assert.equal(one.records.get(KEY),saved);
+ assert.deepEqual(start(Object.fromEntries(one.records)).state,slot);
+});
 test('invalid dated or mislabeled 1999 saves reset to clean Jan 1',()=>{
  const old=JSON.stringify({schema:SCHEMA,date:'2014-07-15',worldAnchor:{schema:SCHEMA,startDate:'1999-01-01',seed:19990101},currentCase:'powerline'});
  const testCases=[
