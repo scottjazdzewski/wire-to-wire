@@ -33,9 +33,10 @@ export function run1999RacingAgents({state,world,emit}){
     for(const race of gameRaceProgram(state,world,trackId,raceDay)){
      // Reserve stakes for real qualification/nomination work; source-driven
      // modeled maiden/class races have testable entry conditions today.
-     if(race.stakeId||race.sexRestriction!=='OPEN'||race.ageRequirement!=='3YO+')continue;
+     if(race.stakeId||race.conditions!=='Maiden Special Weight'||
+      race.sexRestriction!=='OPEN'||race.ageRequirement!=='3YO+')continue;
      const record={id:race.id,track_id:race.trackId,date:race.date,age:race.ageRequirement,
-      sex:race.sexRestriction,maiden:race.maidenOnly,max_wins:race.maxCareerWins,
+      sex:race.sexRestriction,conditions:race.conditions,maiden:race.maidenOnly,max_wins:race.maxCareerWins,
       surface:race.surface,field_capacity:race.fieldCapacity};
      const eligible=local.filter(h=>raceEligibility(state,h,record).eligible);
      if(eligible.length<2)continue;
