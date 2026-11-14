@@ -7,7 +7,9 @@
 import {
  ORGANIZATION_STYLE_MODEL,organizationNamingRegion,organizationNamingEra,
  contextualFarmCandidate,contextualOwnerCandidate,contextualStableCandidate,
- contextualBreakingCandidate,REGIONAL_NAMING_ANCHORS
+ contextualBreakingCandidate,REGIONAL_NAMING_ANCHORS,
+ generationalFarmCandidate,generationalOwnerCandidate,
+ generationalStableCandidate,generationalBreakingCandidate
 } from './organization-naming-styles.mjs';
 export const ORGANIZATION_NAME_MODEL='WTW_1999_ORGANIZATION_NAMING_V5';
 export const OWNERSHIP_ARCHETYPES=Object.freeze([
@@ -240,6 +242,7 @@ export function createOrganizationNameRoster({
   if(!Array.isArray(items)||(items.length&&items.length!==count))
    throw Error('Invalid '+label+' naming contexts');
   if(items.some(x=>!x||typeof x!=='object'||!['HERITAGE','ESTABLISHED','CONTEMPORARY',undefined].includes(x.era)||
+   (x.namingYear!==undefined&&(!Number.isInteger(x.namingYear)||x.namingYear<2000||x.namingYear>2099))||
    x.region!==undefined&&!['KENTUCKY','FLORIDA','CALIFORNIA','NEW_YORK',
     'MID_ATLANTIC','ONTARIO','LOUISIANA','BRITAIN_IRELAND','GENERAL_NORTH_AMERICA'].includes(x.region)))
    throw Error('Unsupported '+label+' naming context');
@@ -286,7 +289,9 @@ export function createOrganizationNameRoster({
    // A proposed family surname for a farm name does not create a person link.
    familyName:farmContexts[i]?.familyName||draw(SURNAMES,seed,'v7-farm-family:'+i)};
   return claim(a=>a<48?
-   contextualFarmCandidate(seed,i,a,farmKinds[i],context):
+   context.namingYear>1999?
+    generationalFarmCandidate(seed,i,a,farmKinds[i],context):
+    contextualFarmCandidate(seed,i,a,farmKinds[i],context):
    farmName(seed,i,a,farmKinds[i]),'farm');
  });
  let partnershipGroupsCreated=0;
@@ -302,7 +307,9 @@ export function createOrganizationNameRoster({
   const context=ownerContexts[i]||{};
   const name=claim(attempt=>{
    const candidate=attempt<48?
-    contextualOwnerCandidate(seed,i,attempt,principal,alignPrincipalSurnames?preferred:'',context):
+    context.namingYear>1999?
+     generationalOwnerCandidate(seed,i,attempt,principal,alignPrincipalSurnames?preferred:'',context):
+     contextualOwnerCandidate(seed,i,attempt,principal,alignPrincipalSurnames?preferred:'',context):
     ownerName(seed,i,attempt,principal,alignPrincipalSurnames,preferred);
    // Small 1999 editorial share of corporate forms, not a representation
    // of actual corporate registration or exact contemporary percentages.
@@ -329,11 +336,15 @@ export function createOrganizationNameRoster({
  const barns=Array.from({length:barnCount},(_,i)=>{
   const family=trainerPrimarySurnames[i]||surname(trainerNames[i]);
   return claim(a=>a<48?
-   contextualStableCandidate(seed,i,a,trainerNames[i],family,trainerContexts[i]||{}):
+   trainerContexts[i]?.namingYear>1999?
+    generationalStableCandidate(seed,i,a,trainerNames[i],family,trainerContexts[i]):
+    contextualStableCandidate(seed,i,a,trainerNames[i],family,trainerContexts[i]||{}):
    barnName(seed,i,a,trainerNames[i],rareFamily(family,familyFrequency),family),'barn');
  });
  const breakingCenters=Array.from({length:breakingCount},(_,i)=>claim(a=>a<48?
-  contextualBreakingCandidate(seed,i,a,breakingContexts[i]||{}):
+  breakingContexts[i]?.namingYear>1999?
+   generationalBreakingCandidate(seed,i,a,breakingContexts[i]):
+   contextualBreakingCandidate(seed,i,a,breakingContexts[i]||{}):
   breakingName(seed,i,a),'breaking'));
  return {
   model:ORGANIZATION_NAME_MODEL,styleModel:ORGANIZATION_STYLE_MODEL,
