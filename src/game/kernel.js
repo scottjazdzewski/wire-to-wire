@@ -164,7 +164,8 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
   if(c.type!=='ADVANCE_DAY'&&[
    'RESPOND_TO_TRAINER_CONCERN','SET_OWNER_TRAINER_MANDATE',
    'OFFER_TRAINER_SERVICE_TERMS','SET_HORSE_CARE_POLICY',
-   'CONFIRM_1999_PLAYER_RACE_PLAN','ENTER_1999_RACE',
+   'CONFIRM_1999_RACE_PLAN','ENTER_1999_RACE',
+   'SETTLE_1999_RACE','BOOK_1999_JOCKEY',
    'SHIP_1999_HORSE','RETURN_1999_HORSE'
   ].includes(c.type))
    updateOwnerTrainerLiveReviews({state:next,world,emit,events:output,
