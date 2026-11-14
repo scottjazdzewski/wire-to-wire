@@ -75,3 +75,17 @@ These **nine entirely unreferenced historical theme files were physically remove
 - `tests/office-direct-read-adapter.test.mjs` verifies source priority, game-date validation, loading behavior, and that the adapter cannot access the DOM.
 
 **Still requiring headless migration:** action dispatch (Continue, Save, Load), native route and record projection, certain hidden Office state and fixtures, and compatibility status/calculation scripts. These remain permanently hidden until direct feature-parity tests prove a replacement. **Do not remove those live dependencies prematurely or reenable the old UI.**
+
+
+## Direct game-command bridge — Phase 2 (2026-11-14)
+
+**Migrated active operations:**
+- The single `/next/` management game now sends **Save Current Game** and **Continue / Advance One Day** through one DOM-free `public/next/office-direct-command.js` command interface. Neither requires clicking the hidden Office `Save` button.
+- The existing canonical Office controller exports `window.__WTW_1999_MANAGEMENT__.saveCurrentCareer()`, invoking exactly the current `saveState()` logic. This deliberately preserves native save format, game chronology and the training-state merge while removing the hidden clickable control.
+- Continue calls the existing `advanceOneDay()` authority through the same headless command surface. In the 38-horse engine pilot the dynamic hook still resolves to the IndexedDB-backed `ADVANCE_DAY` game command. The bridge coalesces concurrent pending asynchronous advances, rather than queuing duplicate days from repeated clicks.
+- **No fake pilot named saves.** When the IndexedDB pilot engine is active, legacy localStorage named-save capture is rejected with an explicit explanation. Pilot gameplay remains auto-saved by its own durable game engine; proper pilot named import/export must use that engine's schema in a later gated phase.
+- The current layout is unchanged: same top Continue and Save/Load dialog, same placement/keyboard behavior, one FM/OOTP-style management interface. No second UI, game ledger, save namespace or alternate decision engine is introduced.
+
+**Next replacement targets:** direct load/import using native save-validation contracts; case/decision action routing through the same command interface; profile/fixture read projections without hidden Office DOM. The legacy controller and hidden Office markup stay quarantined until these are verified against save, decision and navigation behavior.
+
+**Regression gate:** `tests/office-direct-command-bridge.test.mjs` asserts the Save and Continue paths use direct methods, validates asynchronous command coalescing and fail-closed behavior, and checks that no hidden UI controls are accessed by the adapter.
