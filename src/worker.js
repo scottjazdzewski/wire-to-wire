@@ -1,5 +1,6 @@
 import {qaPendingInactiveAuthority,qaPendingInactiveEditionIds} from './history-inactive-read-model.js';
 import {readLocal1999World} from '../public/1999/engine/local-api.mjs';
+import {makePrivateHorseNamePreview} from './horse-naming-ai-service.js';
 // Cloudflare Worker / D1 API. Deliberately separate from all other WTW and non-WTW projects.
 // Privacy: every request requires authenticated Cloudflare Access in deployed environments.
 const jsonHeaders = {
@@ -138,6 +139,21 @@ async function bootstrap(db) {
 }
 async function api(request,env,email) {
   const url = new URL(request.url);
+  // Private opt-in CREATIVE PREVIEW ONLY: model output never edits game saves,
+  // D1, historic canon, nor the 1999 registration release gate.
+  if(url.pathname==='/api/naming/preview') {
+    if(request.method!=='POST') return response({error:'Use POST for naming preview'},405);
+    if(request.headers.get('content-type')?.split(';')[0]!=='application/json')
+      return response({error:'JSON required'},415);
+    const origin=request.headers.get('Origin');
+    if(origin&&origin!==url.origin)return response({error:'Origin mismatch'},403);
+    const raw=await request.text();
+    if(raw.length>18000)return response({error:'Naming request too large'},413);
+    let body;
+    try{body=JSON.parse(raw)}catch{return response({error:'Malformed JSON'},400)}
+    const result=await makePrivateHorseNamePreview({env,body});
+    return response(result.payload,result.status);
+  }
   // One world only: the approved empty racing roster with founding breeding
   // stock and all 118 tracks. The old synthetic worker routes are REMOVED.
   if(url.pathname.startsWith('/api/1999/')) {
