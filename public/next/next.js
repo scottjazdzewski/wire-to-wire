@@ -1492,12 +1492,22 @@ function profileDetail(route,sourceOverride=null){
   isFarm?['Overview','Connected Horses','Operations','Connections','History']:
   isTrack?['Overview','Meet Schedule','Major Races','Connections','History']:
   ['Overview','Connections','History']);
+ // One canonical dossier view sequence for horse/person/track/farm/owner.
+ // Local arrows visit the existing Overview, deeper records and History in that
+ // order, cycling at the ends. They never change the global browser history.
+ const dossierPageIndex=Math.max(0,tabs.indexOf(APP.detailTab));
+ const dossierPrev=tabs[(dossierPageIndex-1+tabs.length)%tabs.length];
+ const dossierNext=tabs[(dossierPageIndex+1)%tabs.length];
  const rows=(items)=>'<div class="ng-data-rows">'+items.map(i=>`<div class="ng-data-row"><span>${safe(i.label)}</span>${namedProfileValue(i.label,i.value)}</div>`).join('')+'</div>';
  const pills='<div class="ng-status-pills">'+states.slice(0,4).map(x=>`<span>${safe(x)}</span>`).join('')+'</div>';
  const tabbar=(isTrack||isFarm||isPerson||isHorse)?`<nav class="ng-person-dossierbar ng-management-dossierbar" aria-label="Profile records navigation">
    <span class="ng-person-dossierlabel">${isHorse?'HORSE RACING FILE':isPerson?'PERSONNEL DOSSIER':isTrack?'TRACK DOSSIER':source.dataset.foundingContext==='facility'?'FACILITY DOSSIER':'OWNERSHIP DOSSIER'} <small>${safe(APP.detailTab.toUpperCase())}</small></span>
    <div class="ng-person-dossieractions">
     <button type="button" data-ng="detailtab" data-val="Overview" class="${APP.detailTab==='Overview'?'on':''}" aria-current="${APP.detailTab==='Overview'?'page':'false'}">OVERVIEW</button>
+    <span class="ng-profile-stepper" role="group" aria-label="Previous and next dossier views">
+     <button type="button" class="ng-profile-step" data-ng="profile-step" data-val="-1" aria-label="Previous dossier view: ${safe(dossierPrev)}" title="Previous: ${safe(dossierPrev)}"><span aria-hidden="true">‹</span></button>
+     <button type="button" class="ng-profile-step" data-ng="profile-step" data-val="1" aria-label="Next dossier view: ${safe(dossierNext)}" title="Next: ${safe(dossierNext)}"><span aria-hidden="true">›</span></button>
+    </span>
     <button type="button" data-ng="detailtab" data-val="History" class="${APP.detailTab==='History'?'on':''}" aria-current="${APP.detailTab==='History'?'page':'false'}">HISTORY</button>
     <select data-ng-select="profile-record" aria-label="Open deeper profile records">
      <option value="">MORE RECORDS</option>
@@ -4130,6 +4140,19 @@ window.addEventListener('click',e=>{
  if(key==='network-role'){APP.networkRole=val;APP.networkPage=0;APP.networkFocus='';return paint()}
  if(key==='network-page'){APP.networkPage=Math.max(0,APP.networkPage+Number(val));return paint()}
  if(key==='network-select'){APP.networkFocus=val;return paint()}
+ if(key==='profile-step'){
+  // Read the existing tab buttons and deeper-record dropdown, not a second
+  // navigation inventory. The canonical source tabs use Overview -> record
+  // sections -> History; both arrows wrap at the ends.
+  const nav=btn.closest('.ng-person-dossierbar');
+  const select=nav?.querySelector('select[data-ng-select="profile-record"]');
+  const pages=['Overview',...[...(select?.options||[])].map(option=>option.value).filter(Boolean),'History'];
+  const step=Number(val);
+  if(!nav||!Number.isInteger(step)||Math.abs(step)!==1)return;
+  const at=pages.indexOf(APP.detailTab);
+  APP.detailTab=pages[((at<0?0:at)+step+pages.length)%pages.length];
+  return paint();
+ }
  if(key==='detailtab'){APP.detailTab=val;return paint()}
  if(key==='stake-sort'){if(APP.stakeSort===val)APP.stakeSortDesc=!APP.stakeSortDesc;else{APP.stakeSort=val;APP.stakeSortDesc=false}return paint()}
  if(key==='sourcebutton'){const n=$('#routeBody [data-act]')[Number(val)];
