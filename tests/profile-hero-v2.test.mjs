@@ -118,7 +118,7 @@ test("horse and personnel dossier top labels are profile-specific, never route c
  assert.match(src,/if\(value&&value\.textContent!==name\)/);
 });
 test("profile dossier subnavigation keeps buttons and more records on narrow screens",()=>{
- assert.match(css,/ng-profile-view\.ng-profile-horse \.ng-person-dossieractions/);
+ assert.match(css,/ng-profile-view \.ng-person-dossieractions/);
  assert.match(css,/grid-template-columns:minmax\(64px,1fr\) minmax\(64px,1fr\) minmax\(110px,1\.5fr\)/);
  assert.match(css,/height:auto!important/);
 });
