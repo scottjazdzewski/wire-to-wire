@@ -34,3 +34,14 @@ No source/canon edits, new entities, new rating fields, save-schema changes, ros
 
 ## Next phase
 Curate per-entity visual palettes from approved source logos, add transparent PNG/WebP derivatives for the right identity artwork, then tie the player Office and Horse Profile identity to **canonical owner/stable IDs**. Do not manufacture ownership links or apply theme colors as facts about historical logos.
+
+
+## Phase v2 — Deeper FM/OOTP-style profile atmosphere (2026-11-14)
+
+The shared 1999 profile interface has moved beyond just a colored header. The **same** track/organization identity now supplies a stronger translucent hero spotlight, tint to profile record tabs, actionable profile tools, supporting management card surfaces/headers, dossier context, and focus styling. Colors are always derived from the existing `--wtw-id-*` tokens, not hardcoded one-off CSS per track. No page template, widget position, sidebar behavior, status meaning, or screen size rule changes.
+
+- Added carefully staged **art-direction candidate palettes** for Aqueduct (`T-0001`), Keeneland (`T-0014`), Santa Anita (`T-0028`) and Del Mar (`T-0030`). These are not assertions about official venue brand guides. Total explicitly curated palettes: **9 tracks and 5 organizations**; all other supported profiles still use deterministic ID-stable house themes.
+- The atmospheric treatment remains scoped to `#wtwNextgen[data-wtw-identity]`. Office, unrelated routes, injury and eligibility states, and Continue keep the standard colors and geometry.
+- The original transparent logo artwork, upload pipeline, category badges, horse data, history and economic engine are unchanged. **Subtle photographic hero backgrounds remain deferred** until approved art exists.
+- `tests/identity-themes.test.mjs` prevents presentation rules from leaking into global controls or changing geometry. `scripts/desktop-visual-audit.sh` verifies the actual Aqueduct, Gulfstream, and Kingsmere palette values on rendered profiles, confirms they differ, and checks that Office returns to neutral styling.
+- This is a staged polish improvement, **not** final FM/OOTP visual signoff. The same screenshot review and text/logo contrast requirements remain in force.
