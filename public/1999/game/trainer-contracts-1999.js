@@ -98,7 +98,7 @@ export function offerTrainerServiceTerms({state,world,command,emit}){
  ensure((command.actor==='system'&&owner!==state.player.operation_id)||
   (command.actor==='player'&&state.player.role==='owner'&&
    state.player.operation_id===owner),
-  'TRAINER_PERMISSION','Player-controlled service terms require the player's own authorized command');
+  'TRAINER_PERMISSION','Player-controlled service terms require an authorized player command');
  const account=quote.owner_cash_minor;
  ensure(account!==null&&account>=p.daily_fee_minor*quote.horse_count*7,
   'TRAINER_FUNDS','Owner needs seven days of proposed trainer fees in available cash');
