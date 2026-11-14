@@ -39,6 +39,13 @@ Create ONE high-quality hero mark for each track/organization. Real racecourses 
 | T-0030 | Del Mar | Major West Coast track |
 | T-0094 | Sweetwater Park | Fictional WTW expansion; high-quality new game brand |
 
+## Profile pages without a logo yet
+- All canonical track, racing stable, ownership, stud farm, and other facility profiles now reserve a consistent identity area in the right-hand hero, even when there was **no source image element** in the underlying page.
+- Until a real logo is assigned, this area shows an elegant **typographic monogram derived solely from the visible entity name**, plus an accurate category label. This is explicitly a WTW temporary presentation—not a historical or official crest.
+- As soon as the generator uploads the correct transparent file under `track-hero/T-####.webp` or `organization-hero/O-....webp`, the asset is automatically recognized on a refreshed page and the placeholder disappears.
+- Images that fail decoding do not erase their existing logo or the source record.
+- No duplicate or invented horse ownership, barn address, racing status, or brand colors are added by this treatment.
+
 ## Existing logo fallback
 The UI's `profile-hero-v2.mjs` has a conservative, browser-only white-matte cleanup for **edge-connected white backgrounds** on legacy logo files, plus adaptive contrast for dark navy lettering. Original repository files are unchanged. New transparent artwork automatically takes precedence by the exact canonical-ID file path; its pixels are never altered. This is not a replacement for real logo production.
 
