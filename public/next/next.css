@@ -3052,137 +3052,52 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 }
 
 
-/* Compact source-linked horse/track/trainer records. Match existing dossier
-   controls and roster typography; do not inherit legacy 18px world panels. */
-#wtwNextgen .ng-connected-profile{
- display:flex;flex-direction:column;flex:0 0 auto;min-height:0;
- margin:0 3px 6px;background:#171e22;border:1px solid #3c4b47;
- color:#e7eee4;font-size:var(--wtw-ui-list-text,11px)!important
-}
+#wtwNextgen .ng-connected-profile{display:flex;flex-direction:column;flex:0 0 auto;min-height:0;margin:0 3px 6px;background:#171e22;border:1px solid #3c4b47;color:#e7eee4;font-size:var(--wtw-ui-list-text,11px)!important}
 #wtwNextgen .ng-profile-view:has(.ng-connected-profile){overflow:auto!important;scrollbar-width:thin}
-#wtwNextgen .ng-connected-profile>header{
- display:flex;align-items:center;justify-content:space-between;gap:8px;
- padding:6px 10px;background:#20292b;border-bottom:1px solid #3c4b47
-}
-#wtwNextgen .ng-connected-profile>header strong{
- font-size:var(--wtw-ui-section-title,11px)!important;font-weight:790!important;letter-spacing:.035em
-}
-#wtwNextgen .ng-connected-profile>header span{
- color:#aebdaf;font-size:var(--wtw-ui-profile-status,9px)!important
-}
+#wtwNextgen .ng-connected-profile>header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;background:#20292b;border-bottom:1px solid #3c4b47}
+#wtwNextgen .ng-connected-profile>header strong{font-size:var(--wtw-ui-section-title,11px)!important;font-weight:790!important;letter-spacing:.035em}
+#wtwNextgen .ng-connected-profile>header span{color:#aebdaf;font-size:var(--wtw-ui-profile-status,9px)!important}
 #wtwNextgen .ng-connected-drop{border-bottom:1px solid #3c4b47;background:#171e22}
-#wtwNextgen .ng-connected-drop>summary{
- list-style:none;display:flex;align-items:center;gap:10px;cursor:pointer;
- padding:7px 10px;color:#e5efe7!important;background:#1e262a;
- font-size:var(--wtw-ui-profile-tab,10px)!important;font-weight:760!important
-}
+#wtwNextgen .ng-connected-drop>summary{list-style:none;display:flex;align-items:center;gap:10px;cursor:pointer;padding:7px 10px;color:#e5efe7!important;background:#1e262a;font-size:var(--wtw-ui-profile-tab,10px)!important;font-weight:760!important}
 #wtwNextgen .ng-connected-drop>summary::-webkit-details-marker{display:none}
-#wtwNextgen .ng-connected-drop>summary::before{
- content:'▸';color:#e3c77f;font-size:10px;display:inline-block;transition:transform .15s
-}
+#wtwNextgen .ng-connected-drop>summary::before{content:'▸';color:#e3c77f;font-size:10px;display:inline-block;transition:transform .15s}
 #wtwNextgen .ng-connected-drop[open]>summary::before{transform:rotate(90deg)}
-#wtwNextgen .ng-connected-drop>summary:hover,
-#wtwNextgen .ng-connected-drop[open]>summary{background:#315e48;color:#fff9e3!important}
+#wtwNextgen .ng-connected-drop>summary:hover,#wtwNextgen .ng-connected-drop[open]>summary{background:#315e48;color:#fff9e3!important}
 #wtwNextgen .ng-connected-count{margin-left:auto;color:#b4cdbb;font-size:var(--wtw-ui-profile-status,9px)!important}
 #wtwNextgen .ng-connected-scroll{overflow:auto;max-height:240px;scrollbar-width:thin}
 #wtwNextgen .ng-connected-table{border-collapse:collapse;width:100%;table-layout:auto;font-variant-numeric:tabular-nums}
-#wtwNextgen .ng-connected-table th,#wtwNextgen .ng-connected-table td{
- font-size:var(--wtw-ui-list-text,11px)!important;white-space:nowrap;overflow:hidden;
- text-overflow:ellipsis;text-align:left;padding:6px 9px;border-right:1px solid #34453e;border-bottom:1px solid #354640;
- line-height:1.2!important;vertical-align:middle
-}
-#wtwNextgen .ng-connected-table th{
- font-size:var(--wtw-roster-meta,9px)!important;font-weight:800!important;
- background:#2a3534;color:#c0cbbd
-}
+#wtwNextgen .ng-connected-table th,#wtwNextgen .ng-connected-table td{font-size:var(--wtw-ui-list-text,11px)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;padding:6px 9px;border-right:1px solid #34453e;border-bottom:1px solid #354640;line-height:1.2!important;vertical-align:middle}
+#wtwNextgen .ng-connected-table th{font-size:var(--wtw-roster-meta,9px)!important;font-weight:800!important;background:#2a3534;color:#c0cbbd}
 #wtwNextgen .ng-connected-table tr:nth-child(odd) td{background:#1d2627}
 #wtwNextgen .ng-connected-table tr:nth-child(even) td{background:#232b2d}
 #wtwNextgen .ng-connected-table tr:hover td{background:#31503d}
-#wtwNextgen .ng-connected-table button.ng-entity-reference{
- font-size:inherit!important;font-weight:700!important;color:#e9d394!important;
- padding:0!important;min-height:0!important;background:transparent!important;border:0!important;
- text-align:left!important
-}
-#wtwNextgen .ng-connected-empty,#wtwNextgen .ng-connected-disclosure{
- padding:8px 10px;margin:0;font-size:var(--wtw-ui-list-text,11px)!important;
- color:#b4cdbb;line-height:1.35
-}
+#wtwNextgen .ng-connected-table button.ng-entity-reference{font-size:inherit!important;font-weight:700!important;color:#e9d394!important;padding:0!important;min-height:0!important;background:transparent!important;border:0!important;text-align:left!important}
+#wtwNextgen .ng-connected-empty,#wtwNextgen .ng-connected-disclosure{padding:8px 10px;margin:0;font-size:var(--wtw-ui-list-text,11px)!important;color:#b4cdbb;line-height:1.35}
 #wtwNextgen .ng-connected-disclosure{font-size:var(--wtw-ui-profile-status,9px)!important;background:#20292b}
-
-
-/* All trainer, track and ownership dropdown tables share Horse Directory controls.
-   Keep the existing typography tokens, compact rows and both scroll axes. */
-#wtwNextgen .ng-connected-tools{
- display:flex;align-items:end;gap:6px;flex-wrap:wrap;min-height:30px;
- padding:5px 7px;background:#161e22;border-bottom:1px solid #384840;
- font-size:var(--wtw-roster-label,9px)!important
-}
-#wtwNextgen .ng-connected-tools label{
- display:flex;flex-direction:column;gap:3px;color:#b4cabc;
- font-size:var(--wtw-roster-label,9px)!important;font-weight:800!important;
- letter-spacing:.02em
-}
-#wtwNextgen .ng-connected-tools input,
-#wtwNextgen .ng-connected-tools select{
- box-sizing:border-box;height:25px!important;max-width:200px;min-width:110px;
- background:#0c1417;border:1px solid #3d5246;border-radius:2px;
- color:#e3ebdf;padding:3px 7px!important;
- font-size:var(--wtw-roster-input,9.5px)!important
-}
+#wtwNextgen .ng-connected-tools{display:flex;align-items:end;gap:6px;flex-wrap:wrap;min-height:30px;padding:5px 7px;background:#161e22;border-bottom:1px solid #384840;font-size:var(--wtw-roster-label,9px)!important}
+#wtwNextgen .ng-connected-tools label{display:flex;flex-direction:column;gap:3px;color:#b4cabc;font-size:var(--wtw-roster-label,9px)!important;font-weight:800!important;letter-spacing:.02em}
+#wtwNextgen .ng-connected-tools input,#wtwNextgen .ng-connected-tools select{box-sizing:border-box;height:25px!important;max-width:200px;min-width:110px;background:#0c1417;border:1px solid #3d5246;border-radius:2px;color:#e3ebdf;padding:3px 7px!important;font-size:var(--wtw-roster-input,9.5px)!important}
 #wtwNextgen .ng-connected-tools label:first-child input{width:clamp(120px,13vw,195px)}
-#wtwNextgen .ng-connected-tools button{
- box-sizing:border-box;height:25px!important;min-width:0!important;
- padding:3px 8px!important;border:1px solid #445b4c!important;
- border-radius:2px!important;background:#1f2a2c!important;
- color:#b6c8b9!important;white-space:nowrap!important;
- font-size:var(--wtw-roster-control,8.5px)!important;font-weight:760!important
-}
-#wtwNextgen .ng-connected-tools button:hover,
-#wtwNextgen .ng-connected-tools button.on{
- background:#315a43!important;color:#f9df9d!important;border-color:#668d6a!important
-}
+#wtwNextgen .ng-connected-tools button{box-sizing:border-box;height:25px!important;min-width:0!important;padding:3px 8px!important;border:1px solid #445b4c!important;border-radius:2px!important;background:#1f2a2c!important;color:#b6c8b9!important;white-space:nowrap!important;font-size:var(--wtw-roster-control,8.5px)!important;font-weight:760!important}
+#wtwNextgen .ng-connected-tools button:hover,#wtwNextgen .ng-connected-tools button.on{background:#315a43!important;color:#f9df9d!important;border-color:#668d6a!important}
 #wtwNextgen .ng-connected-view{display:flex;gap:3px;margin-left:auto}
-#wtwNextgen .ng-connected-scroll{
- display:block;max-height:280px;max-width:100%;overflow:auto!important;
- overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#5b7d69 #12231e
-}
-#wtwNextgen .ng-connected-table{
- width:100%;min-width:max-content;table-layout:auto;border-collapse:collapse
-}
+#wtwNextgen .ng-connected-scroll{display:block;max-height:280px;max-width:100%;overflow:auto!important;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#5b7d69 #12231e}
+#wtwNextgen .ng-connected-table{width:100%;min-width:max-content;table-layout:auto;border-collapse:collapse}
 #wtwNextgen .ng-connected-table th{position:sticky;top:0;z-index:2;padding:0!important}
-#wtwNextgen .ng-connected-table th button{
- display:flex;align-items:center;justify-content:space-between;gap:8px;
- width:100%;height:25px!important;padding:4px 9px!important;
- background:transparent!important;border:0!important;cursor:pointer;
- color:inherit!important;font-size:var(--wtw-roster-head,8.3px)!important;
- font-weight:820!important;text-align:left!important;white-space:nowrap
-}
-#wtwNextgen .ng-connected-table th button:hover,
-#wtwNextgen .ng-connected-table th[aria-sort="ascending"] button,
-#wtwNextgen .ng-connected-table th[aria-sort="descending"] button{color:#eecf8e!important}
+#wtwNextgen .ng-connected-table th button{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;height:25px!important;padding:4px 9px!important;background:transparent!important;border:0!important;cursor:pointer;color:inherit!important;font-size:var(--wtw-roster-head,8.3px)!important;font-weight:820!important;text-align:left!important;white-space:nowrap}
+#wtwNextgen .ng-connected-table th button:hover,#wtwNextgen .ng-connected-table th[aria-sort="ascending"] button,#wtwNextgen .ng-connected-table th[aria-sort="descending"] button{color:#eecf8e!important}
 #wtwNextgen .ng-connected-table td{height:28px!important;max-height:28px}
 #wtwNextgen .ng-connected-table.compact .ng-connected-optional{display:none!important}
 #wtwNextgen .ng-connected-content{min-width:0;max-width:100%}
-@media(max-width:860px){
- #wtwNextgen .ng-connected-view{margin-left:0}
- #wtwNextgen .ng-connected-tools label{flex:1 1 120px}
- #wtwNextgen .ng-connected-tools input,#wtwNextgen .ng-connected-tools select{width:100%;max-width:none}
+@media(max-width:860px){#wtwNextgen .ng-connected-view{margin-left:0}
+#wtwNextgen .ng-connected-tools label{flex:1 1 120px}
+#wtwNextgen .ng-connected-tools input,#wtwNextgen .ng-connected-tools select{width:100%;max-width:none}
 }
-
-/* Universal table view: Horse Directory / Stable / Racing / Breeding /
-   Sales / Personnel / Facilities / Finances / World and profile records. */
-#wtwNextgen .ng-dept-roster .ng-rs-table.compact th.ng-dpt-optional,
-#wtwNextgen .ng-dept-roster .ng-rs-table.compact td.ng-dpt-optional{display:none!important}
+#wtwNextgen .ng-dept-roster .ng-rs-table.compact th.ng-dpt-optional,#wtwNextgen .ng-dept-roster .ng-rs-table.compact td.ng-dpt-optional{display:none!important}
 #wtwNextgen .ng-dept-roster .ng-rs-table.compact{min-width:0!important;width:100%!important}
 #wtwNextgen .ng-dept-roster .ng-rs-table.compact th:not(.ng-dpt-optional){width:auto!important}
 #wtwNextgen .ng-dept-view{margin-left:auto;display:flex;align-items:center;gap:3px}
 #wtwNextgen .ng-track-stakes .ng-connected-drop{border:0!important;background:transparent}
-#wtwNextgen .ng-track-stakes .ng-connected-drop>summary{
- font-size:var(--wtw-ui-profile-tab,10px)!important;
- padding:5px 8px!important;border-bottom:1px solid #3c4b47
-}
+#wtwNextgen .ng-track-stakes .ng-connected-drop>summary{font-size:var(--wtw-ui-profile-tab,10px)!important;padding:5px 8px!important;border-bottom:1px solid #3c4b47}
 #wtwNextgen .ng-track-stakes .ng-connected-scroll{max-height:340px}
-#wtwNextgen .ng-connected-table th,
-#wtwNextgen .ng-connected-table td{
- font-size:var(--wtw-ui-list-text,11px)!important
-}
+#wtwNextgen .ng-connected-table th,#wtwNextgen .ng-connected-table td{font-size:var(--wtw-ui-list-text,11px)!important}
