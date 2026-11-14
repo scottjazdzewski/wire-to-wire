@@ -178,6 +178,7 @@
     "public/assets/places/track-hero/T-0013.webp": "57bf67a53dea059a5c79d9fbeb203d05fdb07f37",
     "public/assets/places/track-hero/T-0016.webp": "42cef892cde35349e019e436edd333f7b0424d4b",
     "public/assets/places/track-hero/T-0019.webp": "853357e0e2b01dcd018989ea845c3cc3a7262c04",
+    "public/assets/places/track-hero/T-0022.webp": "a9289435f4aaa64da5996355beae06dd5196e795",
     "public/assets/places/track-hero/T-0024.webp": "e540776129e5b79963066d666555d40de067e1b9",
     "public/assets/places/track-hero/T-0030.webp": "ad2dc18ea6bd7c580d2aaabf3c050e2f26629b0e",
     "public/assets/places/track-hero/T-0032.webp": "97eaa861a288cbad08fb7ed5bb2f28076e657dd2",
@@ -386,5 +387,14 @@
     "public/assets/wtw-logo.png": "f674d4d401fa9eabcc500f637312c79e123d4c38",
     "public/assets/wtw-office-approved-logo.png": "f23f1ff00d386bf8252cf4796e09dbc2ec1e1ce4",
     "public/assets/wtw-office-original-photo.jpg": "4482f0cef9eb8aeb61d90b1fd52aee613d311659"
-  }
+  },
+  "followupApprovedAssetImports": [
+    {
+      "asset": "public/assets/places/track-hero/T-0022.webp",
+      "sha": "a9289435f4aaa64da5996355beae06dd5196e795",
+      "sourceMainCommit": "9ed369fb76ffe00dbf7e76b58047fd3efe28dacc",
+      "identity": "T-0022",
+      "action": "Recorded pre-existing main addition; original artwork and track hero index unchanged"
+    }
+  ]
 }
