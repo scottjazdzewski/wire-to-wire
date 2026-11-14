@@ -93,6 +93,11 @@ frame.onload=()=>setTimeout(()=>{
    newsOfficeLinks:[...d.querySelectorAll('.ng-news-screen [data-ng="case"]')].length,
    newsSourceStatus:d.querySelector('.ng-news-screen .ng-manager-sidebar')?.textContent?.includes('NOT CONNECTED')||false,
    worldPreviewRows:[...d.querySelectorAll('.ng-manager-screen:not(.ng-news-screen) .ng-manager-row')].length,
+   worldPreviewSourceOnly:[...d.querySelectorAll('.ng-manager-screen:not(.ng-news-screen) [data-ng="search-go"]')]
+    .every(button=>{
+     const item=win.__WTW_NEXT__?.app?.searchIndex?.[Number(button.dataset.val)];
+     return Boolean(item?.worldKey&&item?.canonicalId);
+    }),
    people:rect('.ng-person-horse-dossier'),
    profile:rect('.ng-route-profile .ng-profile-view'),
    intro:rect('.ng-route-profile .ng-profile-intro'),
@@ -228,6 +233,7 @@ for name in ('world-directory','world-news','office-news','laptop-world-news'):
  assert not data['duplicateGlobalMenuVisible'],(name,'Duplicate global navigation')
  if name=='world-directory':
   assert 0<=data['worldPreviewRows']<=100,(name,'World preview is unbounded')
+  assert data['worldPreviewSourceOnly'],(name,'Legacy Office demo record leaked into World preview')
  else:
   assert data['newsDashboard'] and data['newsDashboard']['width']>=800,(name,'News screen not visible')
   assert data['newsSourceStatus'],(name,'Unverified news misrepresented as connected')
