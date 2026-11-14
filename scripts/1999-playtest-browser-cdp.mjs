@@ -166,10 +166,56 @@ try{
  }
  assert.equal(await evaluate("document.querySelector('.ng-global-date strong')?.textContent"),'1999-01-01');
  assert.equal(await evaluate("window.WTWCompactCareerManager.listSlots().then(rows=>rows.length)"),1);
+ const profiles=[
+  ['Breeding','Stallions','.ng-profile-horse:not(.ng-profile-person)'],
+  ['Personnel','Trainers','.ng-profile-person'],
+  ['Tracks','All Tracks','.ng-profile-track:not(.ng-profile-farm)'],
+  ['Facilities','Stud Farms','.ng-profile-farm'],
+  ['Personnel','Owners','.ng-profile-farm']
+ ];
+ for(const [department,view,profile] of profiles){
+  const opened=await evaluate(`(()=>{
+   const root=document.getElementById('wtwNextgen');
+   root.querySelector('.ng-game-rail [data-val='+CSS.escape(${JSON.stringify(department)})+']').click();
+   const select=root.querySelector('select[data-ng-select="department-tab"]');
+   select.value=${JSON.stringify(view)};
+   select.dispatchEvent(new Event('change',{bubbles:true}));
+   const rows=root.querySelectorAll('[data-ng="dept-open"]');
+   rows[0]?.click();
+   return Boolean(root.querySelector(${JSON.stringify(profile)}));
+  })()`);
+  assert.equal(opened,true,department+' / '+view+' profile did not open');
+  assert.equal(await evaluate(`(()=>{
+   const profile=document.querySelector('[data-profile-record]');
+   const controls=profile.querySelector('.ng-management-dossierbar');
+   const history=controls.querySelector('[data-val="History"]');
+   history.click();
+   const records=document.querySelector('.ng-management-dossierbar select');
+   const record=records.options[1].value;
+   const focus=document.activeElement.dataset.val==='History';
+   records.value=record;
+   records.dispatchEvent(new Event('change',{bubbles:true}));
+   return focus&&document.querySelector('[data-profile-record]').dataset.profileRecord===record;
+  })()`),true,department+' record navigation failed');
+  const selected=await evaluate("document.querySelector('[data-profile-record]').dataset.profileRecord");
+  await evaluate(`document.querySelector('[data-ng="back"]').click()`);
+  for(let i=0;i<100;i++){
+   if(await evaluate("Boolean(document.querySelector('.ng-dept-roster'))"))break;
+   await delay(25);
+  }
+  assert.equal(await evaluate("document.querySelector('select[data-ng-select=department-tab]')?.value"),view);
+  await evaluate(`document.querySelector('[data-ng="forward"]').click()`);
+  for(let i=0;i<100;i++){
+   if(await evaluate("Boolean(document.querySelector('[data-profile-record]'))"))break;
+   await delay(25);
+  }
+  assert.equal(await evaluate("document.querySelector('[data-profile-record]')?.dataset.profileRecord"),selected);
+ }
  console.log('WTW_BROWSER_PLAYTEST_PASS '+JSON.stringify({
   date:progressed.date,horseCount:progressed.horseCount,
   owned:progressed.owned,races:progressed.results,saveReload:'IDENTICAL',
-  defaultFounding:'ZERO_RACEHORSES',decisionReload:'RECORDED',compactSaveLoad:'RESTORED'}));
+  defaultFounding:'ZERO_RACEHORSES',decisionReload:'RECORDED',compactSaveLoad:'RESTORED',
+  profileNavigation:'5 FAMILIES VERIFIED'}));
 }finally{
  try{ws?.close()}catch{}
  try{proc.kill('SIGTERM')}catch{}

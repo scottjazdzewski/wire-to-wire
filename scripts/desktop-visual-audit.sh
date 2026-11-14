@@ -9,17 +9,17 @@ trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
 for i in {1..30}; do curl -fsS 'http://127.0.0.1:8765/' >/dev/null 2>&1 && break; sleep .5; done
 
 capture(){
-  local name="$1" route="$2" marker="$3" target="$2"
+  local name="$1" route="$2" marker="$3" target="$2" viewport="${4:-1536,864}"
   # The management app now lives at /next/; the root forwards there.
   # Go directly to /next/ so route-specific query strings survive.
   if [[ "$route" != archive/* ]]; then target="next/$route"; fi
   echo "Rendering $name -> /$target"
   "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
-    --force-device-scale-factor=1 --window-size=1536,864 \
+    --force-device-scale-factor=1 --window-size="$viewport" \
     --virtual-time-budget=4000 --screenshot="visual-audit/screenshots/$name.png" \
     "http://127.0.0.1:8765/$target" >/tmp/wtw-chrome-"$name".log 2>&1
   "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
-    --force-device-scale-factor=1 --window-size=1536,864 \
+    --force-device-scale-factor=1 --window-size="$viewport" \
     --virtual-time-budget=4000 --dump-dom \
     "http://127.0.0.1:8765/$target" >"visual-audit/dom/$name.html" 2>/tmp/wtw-dom-"$name".log
   if ! grep -Eq "$marker" "visual-audit/dom/$name.html"; then
@@ -31,7 +31,7 @@ capture(){
 }
 capture racing-office '' 'ng-board'
 capture global-search '?ui=Search' 'ng-search-roster-page'
-capture horse-profile '?page=horse&name=The+Last+Match' 'ng-horse-dossier'
+capture horse-profile '?ui=WorldRecord%3Ahorse%3AH-1992-000002' 'ng-horse-dossier'
 capture people-profile '?ui=WorldRecord%3Aperson%3AP-000018' 'ng-person-horse-dossier'
 capture founder-owner '?ui=FoundingProfile%3Aownership%3AO-000014' 'ng-track-workspace'
 capture founder-facility '?ui=FoundingProfile%3Afacility%3AO-000068' 'ng-track-workspace'
@@ -44,6 +44,16 @@ capture facilities '?ui=Facilities' 'ng-manager-screen|ng-dept-roster'
 capture finances '?ui=Finances' 'ng-manager-screen|ng-dept-roster'
 capture breeding '?ui=Breeding' 'ng-manager-screen|ng-dept-roster'
 capture history-vault 'archive/' 'History Vault'
+for viewport in 1366,768 1280,800; do
+  width="${viewport%,*}"
+  capture "horse-profile-$width" '?ui=WorldRecord%3Ahorse%3AH-1992-000002' 'ng-horse-dossier' "$viewport"
+  capture "people-profile-$width" '?ui=WorldRecord%3Aperson%3AP-000018' 'ng-person-horse-dossier' "$viewport"
+  capture "aqueduct-track-$width" '?ui=WorldRecord%3Atrack%3AT-0001' 'ng-profile-track' "$viewport"
+  capture "kingsmere-farm-$width" '?ui=FoundingProfile%3Afacility%3AO-000061' 'ng-profile-farm' "$viewport"
+  capture "founder-owner-$width" '?ui=FoundingProfile%3Aownership%3AO-000014' 'ng-track-workspace' "$viewport"
+  capture "personnel-$width" '?ui=Personnel' 'ng-dept-roster' "$viewport"
+  capture "facilities-$width" '?ui=Facilities' 'ng-dept-roster' "$viewport"
+done
 # Browser geometry probe: screenshot files alone cannot detect a collapsed
 # CSS media scope. Measure the *rendered* game viewport at desktop resolution.
 cat > public/__wtw_visual_probe.html <<'HTML'
@@ -81,7 +91,7 @@ frame.onload=()=>setTimeout(()=>{
    intro:rect('.ng-route-profile .ng-profile-intro'),
    identity:rect('.ng-route-profile .ng-profile-identity'),
    heroMark:rect('.ng-route-profile .ng-profile-source-photo'),
-   localNavigation:rect('.ng-route-profile .ng-profiletabs')||rect('.ng-route-profile .ng-person-dossierbar'),
+   localNavigation:rect('.ng-route-profile .ng-management-dossierbar'),
    profileName:d.querySelector('.ng-route-profile .ng-profile-identity h2')?.textContent?.trim()||'',
    sourceBridgeVisible:win.getComputedStyle(d.querySelector('.app')).display!=='none',
    duplicateGlobalMenuVisible:[...d.querySelectorAll('#wtwNextgen > .ng-subbar')]
@@ -107,14 +117,14 @@ probe(){
 }
 probe office ''
 probe search '%3Fui%3DSearch'
-probe horse '%3Fpage%3Dhorse%26name%3DThe%2BLast%2BMatch'
+probe horse '%3Fui%3DWorldRecord%253Ahorse%253AH-1992-000002'
 probe person '%3Fui%3DWorldRecord%253Aperson%253AP-000018'
 probe aqueduct '%3Fui%3DWorldRecord%253Atrack%253AT-0001'
 probe gulfstream '%3Fui%3DWorldRecord%253Atrack%253AT-0017'
 probe farm '%3Fui%3DFoundingProfile%253Afacility%253AO-000061'
 probe stable '%3Fui%3DFoundingProfile%253Aownership%253AO-000045'
 probe owner '%3Fui%3DFoundingProfile%253Aownership%253AO-000014'
-probe laptop-horse '%3Fpage%3Dhorse%26name%3DThe%2BLast%2BMatch' '1280,800'
+probe laptop-horse '%3Fui%3DWorldRecord%253Ahorse%253AH-1992-000002' '1280,800'
 probe laptop-person '%3Fui%3DWorldRecord%253Aperson%253AP-000018' '1280,800'
 probe laptop-aqueduct '%3Fui%3DWorldRecord%253Atrack%253AT-0001' '1280,800'
 probe laptop-farm '%3Fui%3DFoundingProfile%253Afacility%253AO-000061' '1280,800'
