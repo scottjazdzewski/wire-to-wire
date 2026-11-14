@@ -46,6 +46,7 @@ test('founding operations carry approved names under existing owner IDs, never d
  assert.equal(look('O-005919').name,'Knight’s Way');
  assert.equal(look('O-005794').name,'Potomac Heritage Stable');
  assert.equal(look('O-FOUNDING-1999-005').name,'All The Colors');
+ assert.equal(look('O-FOUNDING-1999-002').name,'Takimori Stud');
  assert.equal(look('O-FOUNDING-1999-007').name,'Velvet Key Racing');
  assert.equal(look('O-FOUNDING-1999-011').name,'Longleaf Farm');
  assert.equal(look('O-FOUNDING-1999-012').name,'Palma Real Stable');

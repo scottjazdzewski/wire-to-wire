@@ -812,7 +812,7 @@ function loadWorld1999(){
  if(world1999Data||world1999LoadFailed)return Promise.resolve();
  if(world1999Loading)return world1999Promise||Promise.resolve();
  world1999Loading=true;
- const basePath='/data/wtw-1999-founding-directory-v1.json?rev=wtw1999-approved-only-20261113-r1';
+ const basePath='/data/wtw-1999-founding-directory-v1.json?rev=wtw1999-takimori-name-20261114-r2';
  world1999Promise=Promise.all([
   fetch(basePath,{credentials:'same-origin',cache:'force-cache'}).then(r=>
    r.ok?r.json():Promise.reject(Error('1999 directory unavailable'))),
@@ -4416,7 +4416,7 @@ const bootJson=path=>fetch(path+'?v='+bootVersion,{credentials:'same-origin',cac
  .then(r=>r.ok?r.json():Promise.reject(Error('UI asset index unavailable')));
 const bootJobs=[
  loadWorld1999(),
- bootJson(isClean1999()?'/assets/office/founding-organization-logo-index.json?rev=founder-approved-32-20261114':'/assets/office/organization-logo-index.json')
+ bootJson(isClean1999()?'/assets/office/founding-organization-logo-index.json?rev=founder-approved-35-20261114':'/assets/office/organization-logo-index.json')
   .then(index=>{if(index&&typeof index==='object'&&!Array.isArray(index)){organizationLogoIndex=index;if(APP.ready)schedulePaint(20)}})
   .catch(()=>{/* Neutral organization mark is the fallback. */}),
  bootJson('/assets/game/attribute-catalog.v1.json')
