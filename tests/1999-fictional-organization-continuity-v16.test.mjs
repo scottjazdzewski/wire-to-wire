@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createFictionalWorldNameEngine}
  from '../public/1999/engine/fictional-world-name-engine.mjs';
+import {createIndexedFictionalNameRegistry,generateIndexedFictionalNames}
+ from '../public/1999/engine/indexed-fictional-name-registry.mjs';
 import {
  createFictionalOrganizationContinuityRegistry,
  FICTIONAL_ORGANIZATION_CONTINUITY_MODEL,
@@ -269,6 +271,99 @@ test('1,000 scripted management changes have small cursor and append-only replay
  assert.equal(recovered.revision,1000);
  assert.equal(recovered.getOrganization(stable.id).name,stable.name);
  assert.equal(recovered.getOrganization(stable.id).trainerId,initial);
+});
+test('future successor is accepted only after separate naming-registry identity approval',()=>{
+ const world=testWorld(),seed=19990101,worldId=config.worldId;
+ const protectedOrganizations=[...world.owners,...world.stables,
+  ...world.farms,...world.trainingCenters].map(x=>x.name);
+ const names=createIndexedFictionalNameRegistry({
+  worldId,seed,protectedPeople:world.people.map(x=>x.name),
+  protectedOrganizations
+ });
+ const batch=generateIndexedFictionalNames({
+  registry:names,worldId,seed,year:2030,roles:{trainer:4,farm_manager:3},
+  owners:6,facilities:{generalFarms:1},maxPartnershipGroups:2
+ });
+ const newPerson=batch.people.find(p=>p.role==='owner'),
+  futureTrainer=batch.people.find(p=>p.role==='trainer');
+ assert.ok(newPerson&&futureTrainer);
+ const accepted=names.getApprovedPerson(newPerson.id);
+ assert.deepEqual(accepted,{
+  id:newPerson.id,name:newPerson.name,role:'owner',
+  primarySurname:newPerson.primarySurname,birthYear:newPerson.birthYear
+ });
+ const owner=world.owners.find(o=>o.ownershipArchetype==='PRIVATE_RACING_OPERATION'),
+  stable=world.stables[0],reg=createFictionalOrganizationContinuityRegistry({
+   source:origin(world),approvedPersonLookup:id=>names.getApprovedPerson(id)
+  });
+ const payload={
+  id:newPerson.id,name:newPerson.name,role:newPerson.role,
+  primarySurname:newPerson.primarySurname,birthYear:newPerson.birthYear
+ };
+ const proposed={type:'REGISTER_APPROVED_PERSON',person:{...payload},
+  eventId:'NEW1',sourceId:'ACCEPTED_NAME_BATCH_2030',year:2030};
+ const forged={...proposed,eventId:'FORGED',
+  person:{...payload,name:'Invented Replacement'}};
+ assert.throws(()=>reg.apply({expectedRevision:0,event:forged}),
+  /does not match the approved naming registry/);
+ assert.equal(reg.revision,0);
+ reg.apply({expectedRevision:0,event:proposed});
+ assert.equal(reg.getPerson(newPerson.id).name,newPerson.name);
+ const trainerPayload={
+  id:futureTrainer.id,name:futureTrainer.name,role:futureTrainer.role,
+  primarySurname:futureTrainer.primarySurname,birthYear:futureTrainer.birthYear
+ };
+ reg.apply({expectedRevision:1,event:{
+  type:'REGISTER_APPROVED_PERSON',person:trainerPayload,
+  eventId:'NEW2',sourceId:'ACCEPTED_NAME_BATCH_2030',year:2030
+ }});
+ reg.apply({expectedRevision:2,event:ev(
+  'SUCC1','CHANGE_OWNER_PRINCIPAL',owner.id,2031,{toPersonId:newPerson.id}
+ )});
+ reg.apply({expectedRevision:3,event:ev(
+  'SUCC2','CHANGE_STABLE_TRAINER',stable.id,2031,{toPersonId:futureTrainer.id}
+ )});
+ assert.equal(reg.getOrganization(owner.id).name,owner.name);
+ assert.equal(reg.getOrganization(owner.id).principalId,newPerson.id);
+ assert.equal(reg.getOrganization(stable.id).name,stable.name);
+ assert.equal(reg.getOrganization(stable.id).trainerId,futureTrainer.id);
+ const restored=createFictionalOrganizationContinuityRegistry({
+  snapshot:JSON.parse(JSON.stringify(reg.exportSnapshot()))
+ });
+ assert.equal(restored.revision,4);
+ assert.equal(restored.getPerson(newPerson.id).name,newPerson.name);
+ assert.equal(restored.getOrganization(owner.id).principalId,newPerson.id);
+ assert.equal(restored.getOrganization(stable.id).trainerId,futureTrainer.id);
+});
+test('new family relationships require supplied verified lineage rather than equal surnames',()=>{
+ const world=testWorld(),family=world.owners.find(x=>
+  x.ownershipArchetype==='FAMILY_OPERATION');
+ const incoming=world.people.find(p=>p.role==='owner'&&p.id!==family.principalId);
+ assert.ok(family&&incoming);
+ const relation={type:'REGISTER_DOCUMENTED_FAMILY_LINK',
+  eventId:'LINK-1',sourceId:'EXPLICIT_FAMILY_GENEALOGY_RECORD',
+  personAId:family.principalId,personBId:incoming.id,
+  relationshipKind:'PARENT_CHILD',year:2028};
+ const reg=createFictionalOrganizationContinuityRegistry({
+  source:origin(world),
+  familyLinkLookup:record=>record.sourceId==='EXPLICIT_FAMILY_GENEALOGY_RECORD'
+ });
+ assert.throws(()=>createFictionalOrganizationContinuityRegistry({
+  source:origin(world)
+ }).apply({expectedRevision:0,event:relation}),/not been approved/);
+ reg.apply({expectedRevision:0,event:relation});
+ reg.apply({expectedRevision:1,event:ev(
+  'SUCC-FAMILY','CHANGE_OWNER_PRINCIPAL',family.id,2029,{
+   toPersonId:incoming.id
+  }
+ )});
+ assert.equal(reg.getOrganization(family.id).name,family.name);
+ const restored=createFictionalOrganizationContinuityRegistry({
+  snapshot:reg.exportSnapshot()
+ });
+ assert.equal(restored.getOrganization(family.id).principalId,incoming.id);
+ assert.equal(restored.revision,2);
+ assert.equal(restored.getOrganization(family.id).familyName,family.familyName);
 });
 test('V16 creates no world entities, horse names, save writes or UI changes',()=>{
  const code=readFileSync(new URL(
