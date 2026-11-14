@@ -58,6 +58,10 @@ The product-wide guard includes `tests/product-legacy-code-retirement.test.mjs`.
 
 **Do not describe kernel roundtrips as 10,000 real app launches.** Neither test proves zero future bugs. Before public sale, extend the matrix to long-session and 10,000 actual launch endurance, interrupted writes, OS crashes, backup/restore, disk quota, version migrations, platform combinations, network loss and recovery drills. Confirm real release builds, not just a test fixture.
 
+## Mandatory physical removal of superseded code
+
+When an established implementation is replaced, **Physically delete** the obsolete renderer, duplicate control, CSS, dead handlers and parallel menu code **in that PR**. Do not leave inaccessible but executable prototypes or dormant alternate pages that another change could accidentally reactivate. A required hidden engine compatibility adapter may remain only with documented active call sites and a tracked exit plan. Removal must preserve career saves, **save compatibility**, canonical identities, imported history, active simulation contracts and any current browser integration. Add tests that reject resurrection of the removed implementation.
+
 ## Authority and safeguards
 
 - UI workstream: maintain approved shared UI, not revise engine outcomes.
