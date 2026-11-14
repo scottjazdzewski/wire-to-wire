@@ -10,8 +10,9 @@ import { validateGameRun } from './state.js';
 import {makeReputationBaseline,applyReputationSignal} from './reputation.js';
 import {FACILITY_COMMANDS,facilityAction,advanceFacilities} from './facility-operations.js';
 import {OWNERSHIP_COMMANDS,ownershipAction} from './ownership.js';
+import {HORSE_REGISTRATION_COMMANDS,registerHorseAction} from './horse-registration.js';
 
-const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS]);
+const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS]);
 const MAX_PENDING = 5000;
 function appendLog(state, commandId, kind, details) {
   const event = { seq: state.event_log.length + 1, command_id: commandId,
@@ -96,6 +97,8 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     next.runtime.people[p.person_id].reputation=updated;
     emit('PERSON_REPUTATION_CHANGED',{person_id:p.person_id,signal:p.signal,
       before:current.scores,after:updated.scores,source_refs:p.source_refs});
+  } else if (HORSE_REGISTRATION_COMMANDS.includes(c.type)) {
+    registerHorseAction({state:next,world,command:c,emit});
   } else if (OWNERSHIP_COMMANDS.includes(c.type)) {
     ownershipAction({state:next,world,command:c,emit});
   } else if (FACILITY_COMMANDS.includes(c.type)) {
