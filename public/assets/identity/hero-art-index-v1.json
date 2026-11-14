@@ -1,0 +1,12 @@
+{
+  "schema": "WTW_HERO_ART_INDEX_V1",
+  "purpose": "Optional, approved transparent hero logo paths; used only on matching canonical entities.",
+  "notes": [
+    "The UI may display existing legacy source logos if an approved transparent hero asset is not yet supplied.",
+    "Upload converted/new hero images into public/assets/places/track-hero/T-####.webp or public/assets/places/organization-hero/O-....webp.",
+    "Populate tracks/organizations with exact canonical IDs only after the respective file exists. No name-based guessing.",
+    "Do not overwrite original published logos or the approved Track Profile badge."
+  ],
+  "tracks": {},
+  "organizations": {}
+}
