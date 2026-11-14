@@ -54,6 +54,12 @@ capture finances '?ui=Finances' 'ng-manager-screen|ng-dept-roster'
 capture breeding '?ui=Breeding' 'ng-manager-screen|ng-dept-roster'
 capture history-vault 'archive/' 'Historical Racing Records'
 capture history-year-review 'archive/?page=races&review=1953' 'history-year-review'
+# The annual masthead, three Classic panels and season controls must also
+# render at the narrower desktop width used by many laptop/management players.
+"$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+  --force-device-scale-factor=1 --window-size=1280,800 --virtual-time-budget=4000 \
+  --screenshot="visual-audit/screenshots/history-year-review-1280.png" \
+  'http://127.0.0.1:8765/archive/?page=races&review=1953' >/tmp/wtw-chrome-year1280.log 2>&1
 # Browser geometry probe: screenshot files alone cannot detect a collapsed
 # CSS media scope. Measure the *rendered* game viewport at desktop resolution.
 cat > public/__wtw_visual_probe.html <<'HTML'

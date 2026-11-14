@@ -363,43 +363,73 @@ function renderHistoryLedger(){
 function renderHistoryYearReview(){
  const year=state.year,winners=historyWinners();
  const summary=historyYearSummary(year,state.data?.races||[],winners,state.data?.awards||[]);
- const classic=summary.classics.map(item=>{
+ const classics=summary.classics.map((item,i)=>{
   const r=item.row;
-  return '<article class="history-classic"><span>THE CLASSICS</span><h3>'+h(item.name)+'</h3>'+
-   (r?(r.won?openButton('entity',r.winnerId,r.winner):
-    '<p>Winner not recorded in the active source.</p>')+
-    '<small>'+h(r.track||'Venue unknown')+' · '+h(r.date||'Day not recorded')+'</small>':
-    '<p>No active edition for this race is loaded for '+year+'.</p>')+'</article>';
+  const winner=r&&r.won
+   ?'<div class="history-classic-winner"><small>RECORDED WINNER</small>'+openButton('entity',r.winnerId,r.winner)+'</div>'
+   :'<div class="history-classic-unrecorded">Winner not recorded in the active source</div>';
+  const location=r?
+   h(r.track||'Venue not recorded')+' · '+h(r.date||'Exact day not recorded'):
+   'No active edition loaded for '+h(year);
+  return '<article class="history-classic history-classic-'+(i+1)+'">'+
+   '<div class="history-classic-strap"><span class="history-classic-number">0'+(i+1)+'</span>'+
+    '<span>THE AMERICAN CLASSICS</span></div>'+
+   '<h3>'+h(item.name)+'</h3>'+winner+
+   '<div class="history-classic-footer"><span>'+location+'</span></div></article>';
  }).join('');
  const awards=summary.verifiedAwards.length?
   '<div class="history-awards">'+summary.verifiedAwards.map(r=>
-   '<div><strong>'+h(r.category)+'</strong><span>'+h(r.name)+'</span><small>'+h(r.sourceId)+'</small></div>').join('')+'</div>':
-  '<p class="history-no-awards">No source-verified annual awards are available in this History read model. Championship titles are never inferred from race wins or backfilled as facts.</p>';
+   '<div class="history-award-record"><span class="history-award-star" aria-hidden="true">★</span><strong>'+
+    h(r.category)+'</strong><span>'+h(r.name)+'</span><small>VERIFIED · '+h(r.sourceId)+'</small></div>').join('')+'</div>':
+  '<div class="history-no-awards"><span class="history-awards-emblem" aria-hidden="true">★</span>'+
+   '<div><strong>Verified annual honors not yet available</strong>'+
+    '<p>No source-verified annual awards are available in this History read model. Championship titles are never inferred from race wins or backfilled as facts.</p></div></div>';
+ const metrics=[
+  [summary.rows.length,'RACE EDITIONS','Recorded in the active season ledger'],
+  [summary.recordedWinners,'RACE WINNERS','Results with a linked winning horse'],
+  [summary.uniqueVenues,'RACECOURSES','Distinct recorded host venues'],
+  [summary.exactDates,'EXACT DATES','Documented as historical exact dates']
+ ].map(([n,label,description],i)=>
+  '<div class="history-review-stat history-review-stat-'+(i+1)+'"><small>ANNUAL DATA / 0'+(i+1)+'</small>'+
+   '<strong>'+h(n)+'</strong><span>'+label+'</span><em>'+description+'</em></div>').join('');
+ const options=years().map(y=>'<option value="'+y+'"'+(y===year?' selected':'')+'>'+y+'</option>').join('');
  return '<div class="history-ledger-page history-year-review">'+
-  '<header class="history-ledger-title"><div><span class="smallcaps">RACING HISTORY · SEASON DOSSIER</span><h2>'+
-   h(year)+' Year in Review</h2><p>Documented winners and major race results. Award records appear only when source-approved.</p></div>'+
-   '<div class="history-review-navigation"><button type="button" data-history-back="1">← ALL HISTORICAL RECORDS</button>'+
-   '<label>YEAR <select data-history-review-year aria-label="Year in Review season">'+years().map(y=>
-    '<option value="'+y+'"'+(y===year?' selected':'')+'>'+y+'</option>').join('')+'</select></label></div></header>'+
-  '<div class="history-review-metrics">'+
-   '<div><strong>'+summary.rows.length+'</strong><span>active race editions</span></div>'+
-   '<div><strong>'+summary.recordedWinners+'</strong><span>recorded winners</span></div>'+
-   '<div><strong>'+summary.uniqueVenues+'</strong><span>racecourses</span></div>'+
-   '<div><strong>'+summary.exactDates+'</strong><span>sourced exact dates</span></div></div>'+
-  '<section class="history-review-section"><header><h3>Classic Winners</h3><small>Race records only · original winner IDs retained</small></header>'+
-   '<div class="history-classics-grid">'+classic+'</div></section>'+
-  '<section class="history-review-section"><header><h3>Championships & Awards</h3><small>Strict source-approval gate</small></header>'+awards+'</section>'+
-  '<section class="history-review-section"><header><h3>Recorded Season Leaders</h3><small>Stakes wins in the active edition ledger; not an award or championship ranking</small></header>'+
+  '<header class="history-review-hero" data-season="'+h(year)+'">'+
+   '<div class="history-review-masthead"><span class="history-review-edition">WIRE TO WIRE <b> / </b> THE RACING ANNUAL</span>'+
+    '<span class="history-review-overline">THE RECORD OF THE SEASON · '+h(year)+'</span>'+
+    '<h2><span>'+h(year)+'</span> <strong>Year in Review</strong></h2>'+
+    '<p>The recorded races. The classic winners. The horses that shaped the season. Every result linked to its source.</p></div>'+
+   '<div class="history-review-side"><div class="history-review-seal" aria-hidden="true">'+
+    '<span>WTW</span><strong>'+h(year)+'</strong><small>THE RACING ANNUAL</small></div>'+
+    '<nav class="history-review-navigation" aria-label="Historical annual navigation">'+
+     '<button type="button" data-history-back="1">← ALL HISTORICAL RECORDS</button>'+
+     '<label>SELECT SEASON <select data-history-review-year aria-label="Year in Review season">'+options+'</select></label></nav>'+
+   '</div></header>'+
+  '<div class="history-review-metrics">'+metrics+'</div>'+
+  '<section class="history-review-section history-review-classics-section"><header><div>'+
+    '<span class="history-review-section-kicker">THE BLUE RIBAND</span><h3>Classic Winners</h3></div>'+
+    '<small>Actual recorded winners · original horse and race IDs retained</small></header>'+
+    '<div class="history-classics-grid">'+classics+'</div></section>'+
+  '<section class="history-review-section history-review-awards-section"><header><div>'+
+    '<span class="history-review-section-kicker">SEASON HONORS</span><h3>Championships & Awards</h3></div>'+
+    '<small>Only published, source-approved annual honors</small></header>'+awards+'</section>'+
+  '<section class="history-review-section history-review-leaders-section"><header><div>'+
+    '<span class="history-review-section-kicker">THE LEADERBOARD</span><h3>Recorded Season Leaders</h3></div>'+
+    '<small>Wins in the loaded edition ledger · not championship rankings</small></header>'+
    (summary.mostRecordedWins.length?'<div class="history-season-leaders">'+summary.mostRecordedWins.map((r,i)=>
-    '<div><span>'+(i+1)+'</span>'+openButton('entity',r.horse_id,r.name||r.horse_id)+
-    '<strong>'+r.wins+' recorded wins</strong></div>').join('')+'</div>':
+    '<div><span class="history-leader-rank">'+String(i+1).padStart(2,'0')+'</span>'+
+     openButton('entity',r.horse_id,r.name||r.horse_id)+
+     '<strong>'+r.wins+' <small>recorded wins</small></strong></div>').join('')+'</div>':
     '<p class="history-no-awards">No race winners recorded for this season.</p>')+'</section>'+
-  '<section class="history-review-section"><header><h3>Complete '+h(year)+' Race Results</h3><small>'+
-    summary.rows.length+' active editions · independently scrollable</small></header>'+
+  '<section class="history-review-section history-review-results-section"><header><div>'+
+    '<span class="history-review-section-kicker">THE COMPLETE RECORD</span><h3>'+h(year)+' Race Results</h3></div>'+
+    '<small>'+summary.rows.length+' active editions · independently scrollable</small></header>'+
    '<div class="history-ledger-table-region history-review-table" tabindex="0" role="region" aria-label="Scrollable year in review race results">'+
-   '<table class="history-ledger-table"><thead><tr><th>YEAR</th><th>DATE</th><th>RACE</th><th>RACECOURSE</th><th>WINNER</th><th>DATE EVIDENCE</th></tr></thead>'+
+   '<table class="history-ledger-table history-review-results-table"><thead><tr>'+
+    '<th>YEAR</th><th>DATE</th><th>RACE</th><th>RACECOURSE</th><th>WINNER</th><th>DATE EVIDENCE</th></tr></thead>'+
    '<tbody>'+(summary.rows.map(r=>historyRaceRow(r,false)).join('')||
-    '<tr><td colspan="6" class="history-no-rows">No active source editions are loaded.</td></tr>')+'</tbody></table></div></section>'+
+    '<tr><td colspan="6" class="history-no-rows">No active source editions are loaded.</td></tr>')+
+    '</tbody></table></div></section>'+
   '</div>';
 }
 function renderRaces(){
