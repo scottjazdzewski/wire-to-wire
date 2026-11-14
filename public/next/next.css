@@ -3345,6 +3345,16 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
   color-mix(in srgb,var(--wtw-id-deep) 30%,#1b2529),#1b2428 90%)!important;
 }
 
+/* Track badge never falls back to duplicating the big branded venue logo.
+ * Use the approved category marker even before async palette activation. */
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track:not(.ng-profile-farm) .ng-profile-badgeframe{
+ background:#14221e url("/assets/profile-badges/v2/wtw_badge_track.png")
+  center / contain no-repeat!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track:not(.ng-profile-farm) .ng-profile-badgeframe img{
+ visibility:hidden!important;
+}
+
 /* ===== END folded source: public/next/identity-themes.css ===== */
 
 /* ===== BEGIN folded source: public/next/profile-hero-v2.css ===== */
