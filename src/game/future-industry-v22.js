@@ -38,12 +38,15 @@ function industryYear(industry){
  return year;
 }
 function validIndustry(industry){
- if(!industry||typeof industry.getOrganization!=='function'||
+ if(!industry||industry.model!=='WTW_INDUSTRY_IDENTITY_BRIDGE_V18'||
+  typeof industry.getOrganization!=='function'||
   typeof industry.getPersonIdentity!=='function'||
   typeof industry.iterateOrganizations!=='function'||
   typeof industry.registerApprovedPerson!=='function'||
   typeof industry.registerApprovedOrganization!=='function'||
-  typeof industry.applyTransition!=='function')
+  typeof industry.applyTransition!=='function'||
+  typeof industry.getApprovedIdentity!=='function'||
+  typeof industry.getApprovedOrganizationIdentity!=='function')
   throw Error('V22 needs the real V18–V21 industry identity bridge');
  return industry;
 }
@@ -104,8 +107,20 @@ export function createFutureIndustryGameGatewayV22({state,world,industry}={}){
    filter(op=>!usable.has(op.id)).map(op=>op.id);
   if(source.unsupportedOwnerRefs)
    throw Error('Game-run owner source has unapproved organization references');
+  // Scope V20 BEFORE sorting/paging. Otherwise hundreds of detached-only
+  // V12 organizations could crowd out genuinely game-addressable owners.
+  const linkedProjection={
+   continuityRevision:industry.continuityRevision,
+   continuityCursor:industry.continuityCursor,
+   getPersonIdentity:id=>industry.getPersonIdentity(id),
+   *iterateOrganizations(filter={}){
+    for(const op of industry.iterateOrganizations(filter)){
+     if(usable.has(op.id))yield op;
+    }
+   }
+  };
   const index=createFictionalIndustryReuseIndexV20({
-   continuity:industry,usageByOrganizationId:source.counts
+   continuity:linkedProjection,usageByOrganizationId:source.counts
   });
   const raw=index.findReusable({kind:'OWNER',region,slots,policy,
    includeOtherRegions,limit:250});
@@ -142,8 +157,8 @@ export function createFutureIndustryGameGatewayV22({state,world,industry}={}){
   requireId(personId,'approved person ID');
   requireId(eventId,'game-approved person event ID');
   requireId(sourceId,'game decision source ID');
-  const approved=industry.getApprovedIdentity(personId);
-  if(!approved)throw Error('Future staff must already have durable V12 naming approval');
+  // Registration itself refreshes V12 on an unknown ID, so a newly approved
+  // person from another tab is visible without a stale precheck here.
   await industry.registerApprovedPerson({personId,eventId,sourceId,year});
   return Object.freeze({model:GAME_INDUSTRY_GATEWAY_MODEL_V22,
    personId,year,continuityRegistered:true,gameWorldActivated:false,
@@ -154,9 +169,8 @@ export function createFutureIndustryGameGatewayV22({state,world,industry}={}){
   requireId(organizationId,'approved future organization ID');
   requireId(eventId,'business admission event ID');
   requireId(sourceId,'game decision source ID');
-  const approved=industry.getApprovedOrganizationIdentity(organizationId);
-  if(!approved?.registration)
-   throw Error('Future business lacks durable V19 typed naming approval');
+  // Authoritative V19 registration handles a previously unseen approval by
+  // refreshing the V12 naming index; callers never provide the firm payload.
   await industry.registerApprovedOrganization({
    organizationId,eventId,sourceId,year
   });
