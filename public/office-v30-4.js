@@ -1250,6 +1250,13 @@
       saveState();
       return JSON.parse(localStorage.getItem(STATE_KEY)||'null');
     };
+    // The game's Office HOME command closes the active source route through
+    // the same native case transition as the old handler, but requires NO
+    // hidden DOM button, cloned click or competing UI state.
+    game.returnToOffice=()=>{
+      loadCase(currentCase,true);
+      return true;
+    };
   }
   window.addEventListener('popstate',restoreLocationPage);
   // Office has its own daily decision desk; Escape is not a substitute for normal

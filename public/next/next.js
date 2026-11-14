@@ -189,7 +189,14 @@ function titleCaseOfficeFact(value){
 function goOffice(){
  const hadCustom=Boolean(APP.custom);
  APP.custom='';APP.section='Office';APP.page='Office';
- bridgeNode(originalAct('Office Overview'));
+ if(window.__WTW_1999_MANAGEMENT__){
+  // Direct native Office route action, never a hidden "Office Overview" click.
+  const commands=window.__WTW_OFFICE_COMMANDS__;
+  if(!commands)throw Error('Game navigation commands have not loaded');
+  commands.dispatch('RETURN_OFFICE');
+ }else{
+  bridgeNode(originalAct('Office Overview')); // Non-founding compatibility only.
+ }
  if(hadCustom)pushUIHistory('');
  paint();
 }
@@ -202,13 +209,11 @@ function openMenu(section){
  if(section==='Sales'){APP.departmentAuction='';APP.departmentCompany=''}
  if(section==='Racing'){APP.racingMode='meets';APP.racingTrack=''}
  if(section==='History'){window.location.assign('/archive/?page=races');return}
- // Stable is a first-class next-generation screen. Clicking it must NOT
- // depend on the hidden Office's legacy click handler or its route shell.
- if(section==='Stable')return openCustomView('Stable — Overview','Stable','Overview');
- // The January 1999 Racing office must never depend on the legacy Office route,
- // which can reopen demo state or fail while the real world is loaded.
- if(section==='Racing')return openCustomView('Racing — Overview','Racing','Overview');
- if(section==='Sales')return openCustomView('Sales — Overview','Sales','Overview');
+ // Source-backed departments share one navigation grammar. Every category
+ // is routed by the approved /next/ renderer, never an old Office button.
+ if(section==='Office')return goOffice();
+ if(section==='Stable'||DEP_NAMES.has(section))
+  return openCustomView(section+' — Overview',section,'Overview');
  APP.section=section;APP.page='Overview';APP.custom='';
  if(actions[section])bridgeNode(originalAct(actions[section]));
  else{openCustomView(section,section,'Overview')}

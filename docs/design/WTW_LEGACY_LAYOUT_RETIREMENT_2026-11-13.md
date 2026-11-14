@@ -95,3 +95,12 @@ These **nine entirely unreferenced historical theme files were physically remove
 - The compact career manager and existing named slots use `SAVE_CURRENT` and `LOAD_CAREER`. Founding loads validate the source world, seed and actual calendar date before replacing the active save, then restore through normal startup. The compact dialog imports both .wtwsave and founding JSON snapshots into slots. It restores a slot only when the player selects Load.
 - The 38-horse playtest uses its own IndexedDB run. Continue and decision answers use that run's command service. Inbox choices carry the engine's decision and option IDs, and the desk displays the persisted receipt. Opening-world advisory cards are still department links. The pilot no longer mirrors its clock into the founding save.
 - The hidden file input, matching Load button and FileReader handler are gone. The visible date, inbox and choice controls have no Office selectors. Profile and other source routes still depend on the quarantined route shell and compatibility scripts.
+
+## Direct Office/department navigation — Phase 3 (2026-11-14)
+
+The `goOffice()` player control no longer clicks an invisible Office Overview button in the founding 1999 career. `__WTW_OFFICE_COMMANDS__.dispatch('RETURN_OFFICE')` delegates to the existing native Office `loadCase(currentCase,true)` route closer, maintaining the established case and browser-route lifecycle without an alternate UI. Non-founding compatibility remains explicitly gated.
+
+`openMenu()` now uses **one direct `openCustomView(section+' — Overview')` navigation path** for Stable and every department registered in `DEP_NAMES` (Racing, Sales, Breeding, Personnel, Facilities, Finances and Tracks). These pages already share the canonical roster renderer. World source/profile routes and legacy-backed special views are deliberately not force-migrated until equivalent native record projection exists. No gameplay data, saves or identities are changed.
+
+`tests/fm-direct-office-navigation.test.mjs` requires the direct Office command, single source-backed department navigation, and rejects missing native services. These changes do **not** authorize deleting the hidden profile source DOM yet.
+

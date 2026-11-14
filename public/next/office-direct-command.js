@@ -22,6 +22,11 @@
    if(typeof manager.restoreCareer!=='function')throw Error('Current game load service unavailable');
    return manager.restoreCareer(payload);
   }
+  if(command==='RETURN_OFFICE'){
+   if(typeof manager.returnToOffice!=='function')
+    throw Error('Current game navigation service unavailable');
+   return manager.returnToOffice();
+  }
   if(command==='ANSWER_DECISION'){
    if(!pilot)throw Error('Game decision service unavailable');
    if(pendingDecision)throw Error('A game decision is already being recorded');

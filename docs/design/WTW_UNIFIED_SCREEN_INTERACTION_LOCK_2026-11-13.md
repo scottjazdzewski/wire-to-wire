@@ -82,3 +82,8 @@ The Racing Office, Horse Profile and Stable screen family comparison has establi
 6. Merge only verified changes. Do not describe a screen as **finished** until screenshots and interaction have been reviewed.
 
 This document formalizes the user's product direction and complements the existing `WTW_FM_OOTP_CANONICAL_DESKTOP_STYLE_2026-11-10.md`, `WTW_DESKTOP_SUBPAGE_DESIGN_SYSTEM_2026-11-10.md` and `MANAGEMENT_STUDIO_VISUAL_RELEASE_GATE.md`. Where older phase notes conflict, choose the **shared-function, no-UI-drift** rule above rather than resurrecting a previous iteration.
+
+## Direct FM/OOTP navigation parity — 2026-11-14
+
+Office Home uses the native `RETURN_OFFICE` game command in the 1999 career instead of an invisible click. All first-class data-roster departments and Stable use the same `openCustomView(section+' — Overview')` route and shared view-state grammar. Navigation stays inside `#wtwNextgen`, with one browser-history system; no competing Office screen is revived. Special historical and person/horse profile routes retain source-compatible adapters until they pass equivalent direct-projection tests. `tests/fm-direct-office-navigation.test.mjs` is a permanent regression gate.
+
