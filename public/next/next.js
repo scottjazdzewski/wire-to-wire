@@ -3317,10 +3317,17 @@ function departmentRoster(section,page='Overview'){
  }
  if(!globalDirectory)rows.sort((a,b)=>{
   if(section==='Racing'&&(page==='Calendar'||page==='Race Planning'||page==='Overview'&&APP.racingMode==='day')&&
-     (!APP.departmentSortKey||APP.departmentSortKey==='track'||APP.departmentSortKey==='date'))
-   return String(a.track).localeCompare(String(b.track))||
-    Number(a._cardOrder??999)-Number(b._cardOrder??999)||
+     (!APP.departmentSortKey||APP.departmentSortKey==='track'||APP.departmentSortKey==='date')){
+   // Chronological race-card order is preserved within a track, but clicking
+   // the TRACK / DATE column must actually reverse the primary sort.
+   const dateOrder=String(a._iso||a.date||'').localeCompare(String(b._iso||b.date||''));
+   const trackOrder=String(a.track).localeCompare(String(b.track));
+   const raceOrder=Number(a._cardOrder??999)-Number(b._cardOrder??999)||
     String(a.race).localeCompare(String(b.race),undefined,{numeric:true});
+   return APP.departmentSortKey==='date'?
+    dateOrder*sign||trackOrder||raceOrder:
+    trackOrder*sign||dateOrder||raceOrder;
+  }
   let av=selectedSort==='date'&&a._iso?a._iso:a[selectedSort],bv=selectedSort==='date'&&b._iso?b._iso:b[selectedSort];
   const am=av===null||av===undefined||av==='',bm=bv===null||bv===undefined||bv==='';
   if(am!==bm)return am?1:-1;
