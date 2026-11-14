@@ -161,3 +161,107 @@ export function contextualBreakingCandidate(seed,index,attempt,context={}){
  const root=regionRoot(seed,key,context.region||'GENERAL_NORTH_AMERICA',attempt);
  return root+' '+draw(SUFFIXES.BREAKING_AND_TRAINING,seed,key+':suffix');
 }
+
+
+/**
+ * V15 — opt-in 2000–2099 organization naming ecology.
+ *
+ * These are conservative editorial contemporary racing-business styles, not
+ * predictions of future business law, proof of a founding date or claims
+ * about an existing family link. The pre-existing contextual* functions
+ * above remain the entire 1999 factory path, unchanged.
+ */
+export const GENERATIONAL_ORGANIZATION_NAME_MODEL='WTW_GENERATIONAL_RACING_ORGANIZATIONS_V15';
+const v15Period=year=>{
+ if(!Number.isInteger(year)||year<2000||year>2099)
+  throw Error('V15 organization name year must be 2000–2099');
+ return year<2020?'EARLY_21ST_CENTURY':
+  year<2050?'CONTEMPORARY_EDITORIAL':'FUTURE_EDITORIAL';
+};
+export function generationalOrganizationNamingPeriod(year){
+ return year===1999?'FROZEN_1999':v15Period(year);
+}
+export function generationalOrganizationNamingEra(seed,index,category,year){
+ if(year===1999)return organizationNamingEra(seed,index,category);
+ const period=v15Period(year);
+ const roll=hash(seed,'v15-era:'+category+':'+index+':'+period)%100;
+ // These are style labels, never actual organization-founding years.
+ const heritage=period==='EARLY_21ST_CENTURY'?19:period==='CONTEMPORARY_EDITORIAL'?14:12;
+ const established=period==='EARLY_21ST_CENTURY'?57:period==='CONTEMPORARY_EDITORIAL'?48:45;
+ return roll<heritage?'HERITAGE':roll<established?'ESTABLISHED':'CONTEMPORARY';
+}
+function v15Context(seed,index,attempt,category,context){
+ const year=context.namingYear,period=v15Period(year),
+  era=context.era||generationalOrganizationNamingEra(seed,index,category,year);
+ const key='v15-'+category+':'+period+':'+index+':'+attempt;
+ const root=regionRoot(seed,key,context.region||'GENERAL_NORTH_AMERICA',attempt);
+ return {period,era,key,root,roll:hash(seed,key+':style')%100};
+}
+export function generationalFarmCandidate(seed,index,attempt,kind,context={}){
+ if(!SUFFIXES[kind])throw Error('Unsupported V15 farm purpose '+kind);
+ const {period,era,key,root,roll}=v15Context(seed,index,attempt,'farm',context);
+ const family=String(context.familyName||'').trim();
+ const suffix=draw(SUFFIXES[kind],seed,key+':suffix');
+ let stem=root;
+ if(family&&roll<(era==='HERITAGE'?28:17))stem=family;
+ else if(family&&roll<45)stem=root+' '+family;
+ else if(family&&roll<55)stem=family+' '+draw(
+  ['Hill','Grove','Vale','Meadows','Fields','Gate'],seed,key+':family-land');
+ else if(roll>=92&&period!=='EARLY_21ST_CENTURY')
+  stem=root+' '+draw(['Meadows','Place','Fields'],seed,key+':land');
+ return (stem+' '+suffix).replace(/\bFarm\s+Farm\b/gi,'Farm');
+}
+export function generationalOwnerCandidate(seed,index,attempt,principal,primarySurname,context={}){
+ const {era,key,root,roll,period}=v15Context(seed,index,attempt,'owner',context);
+ const family=String(primarySurname||'').trim();
+ const full=String(principal||'').replace(/^(?:Dr|Mr|Mrs|Ms)\.\s*/i,'').trim();
+ const initials=full&&family?full[0].toUpperCase()+'. '+family[0].toUpperCase()+'.':'';
+ // Avoid imaginary co-owners. Every named surname must be supplied from
+ // the owner principal; partnerships receive a business label, not an
+ // invented second person. The group ceiling is enforced by the caller.
+ if(family&&roll<23)return family+' '+draw(
+  ['Racing','Thoroughbreds','Racing Stable','Stables'],seed,key+':family');
+ if(full&&roll<41)return full+' '+draw(
+  ['Racing','Thoroughbreds','Stable'],seed,key+':principal');
+ if(family&&roll<55)return family+' '+draw(
+  ['Family Racing','Family Stable','Family Thoroughbreds'],seed,key+':family-company');
+ if(roll<67)return root+' '+draw(
+  ['Racing','Thoroughbreds','Bloodstock','Racing Stable'],seed,key+':regional');
+ if(family&&roll<78)return family+' '+draw(
+  era==='HERITAGE'?['Estate Racing','Racing Stable','Thoroughbreds']:
+   ['Racing Holdings','Bloodstock','Racing Associates','Thoroughbreds'],
+  seed,key+':company');
+ if(roll<88)return root+' '+draw(
+  period==='EARLY_21ST_CENTURY'?
+   ['Racing Partners','Racing Syndicate','Racing Club','Racing Partnership']:
+   ['Racing Partners','Racing Partnership','Racing Group','Racing Syndicate'],
+  seed,key+':group');
+ if(initials&&roll<94)return initials+' '+draw(
+  ['Racing','Thoroughbreds','Stable'],seed,key+':initials');
+ return root+' '+draw(['Racing','Stables','Bloodstock','Thoroughbreds'],
+  seed,key+':fallback');
+}
+export function generationalStableCandidate(seed,index,attempt,trainer,primarySurname,context={}){
+ const {key,root,roll}=v15Context(seed,index,attempt,'stable',context);
+ const full=String(trainer||'').replace(/^Dr\.\s+/,'').trim();
+ const family=String(primarySurname||'').trim();
+ if(!family&&!full)return root+' Racing Stable';
+ if(roll<19)return full+' Racing';
+ if(roll<34)return family+' Stables';
+ if(roll<46)return family+' Racing';
+ if(roll<57)return full+' Racing Stable';
+ if(roll<67)return family+' Training';
+ if(roll<78)return root+' '+family+' Racing';
+ if(roll<87)return full+' Race Barn';
+ if(roll<94)return root+' '+family+' Training Barn';
+ return family+' '+draw(['Racing Team','Racing Stable'],seed,key+':suffix');
+}
+export function generationalBreakingCandidate(seed,index,attempt,context={}){
+ const {key,root,roll}=v15Context(seed,index,attempt,'breaking',context);
+ const suffix=roll<63?draw(
+  ['Training Center','Pre-Training','Breaking & Training','Young Horse Training'],
+  seed,key+':training'):
+  draw(['Horse Development','Equine Training Center','Starting & Training'],
+   seed,key+':develop');
+ return root+' '+suffix;
+}

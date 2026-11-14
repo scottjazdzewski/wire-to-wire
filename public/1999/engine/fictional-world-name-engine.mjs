@@ -12,7 +12,9 @@ import {createPersonnelNameRoster,PERSONNEL_NAME_MODEL} from './personnel-name-e
 import {roleOrigin,GEO_NAME_MODEL} from './geographic-names.mjs';
 import {createOrganizationNameRoster,ORGANIZATION_NAME_MODEL} from './organization-name-engine.mjs';
 import {
- ORGANIZATION_STYLE_MODEL,organizationNamingRegion,organizationNamingEra
+ ORGANIZATION_STYLE_MODEL,organizationNamingRegion,organizationNamingEra,
+ GENERATIONAL_ORGANIZATION_NAME_MODEL,generationalOrganizationNamingPeriod,
+ generationalOrganizationNamingEra
 } from './organization-naming-styles.mjs';
 import {
  JOCKEY_COLONIES,JOCKEY_COLONY_NAME_MODEL,
@@ -408,9 +410,13 @@ export function createFictionalWorldNameEngine(input){
   weightedPick(seed,'farm-market:'+i,farmMarkets));
  const breakingNameMarkets=Array.from({length:facilities.breakingTraining},(_,i)=>
   weightedPick(seed,'breaking-market:'+i,markets));
+ const orgStyleAt=(i,category)=>year===SUPPORTED_NAME_ERA?
+  organizationNamingEra(seed,i,category):
+  generationalOrganizationNamingEra(seed,i,category,year);
  const orgContexts=(items,category)=>items.map((p,i)=>({
   region:organizationNamingRegion(p.location||p),
-  era:organizationNamingEra(seed,i,category)
+  era:orgStyleAt(i,category),
+  ...(year>SUPPORTED_NAME_ERA?{namingYear:year}:{})
  }));
  const farmPurposePlan=farmKindOrder(seed,facilities);
  const org=createOrganizationNameRoster({
@@ -442,7 +448,11 @@ export function createFictionalWorldNameEngine(input){
    principalRelationship:familyNamed?'NAMED_FAMILY_PRINCIPAL':'DESIGNATED_PRINCIPAL',
    familyName:familyNamed?principalFamily:null,
    namingRegion:organizationNamingRegion(principal.location),
-   namingEraStyle:organizationNamingEra(seed,i,'owner'),
+   namingEraStyle:orgStyleAt(i,'owner'),
+    ...(year>SUPPORTED_NAME_ERA?{
+     organizationNamingPeriod:generationalOrganizationNamingPeriod(year),
+     organizationNamingModel:GENERATIONAL_ORGANIZATION_NAME_MODEL
+    }:{}),
    ownershipArchetype:org.ownerArchetypes[i],
    location:principal.location,source:'FICTIONAL_WORLD_ENGINE'});
  }));
@@ -451,7 +461,11 @@ export function createFictionalWorldNameEngine(input){
   return frozen({id:makeId(worldId,'RACING-STABLE',i),worldId,name,
    kind:'RACING_STABLE',trainerId:trainer.id,trainerName:trainer.name,
    namingRegion:organizationNamingRegion(trainer.location),
-   namingEraStyle:organizationNamingEra(seed,i,'stable'),
+   namingEraStyle:orgStyleAt(i,'stable'),
+    ...(year>SUPPORTED_NAME_ERA?{
+     organizationNamingPeriod:generationalOrganizationNamingPeriod(year),
+     organizationNamingModel:GENERATIONAL_ORGANIZATION_NAME_MODEL
+    }:{}),
    location:trainer.location,source:'FICTIONAL_WORLD_ENGINE'});
  }));
  const farmManagers=basePeople.slice(indexes.farm_manager??0,(indexes.farm_manager??0)+(roles.farm_manager??0));
@@ -470,7 +484,11 @@ export function createFictionalWorldNameEngine(input){
   const market=farmNameMarkets[i];
   return frozen({id:makeId(worldId,'FARM',i),worldId,name,kind:org.farmKinds[i],
    namingRegion:organizationNamingRegion(market),
-   namingEraStyle:organizationNamingEra(seed,i,'farm'),
+   namingEraStyle:orgStyleAt(i,'farm'),
+    ...(year>SUPPORTED_NAME_ERA?{
+     organizationNamingPeriod:generationalOrganizationNamingPeriod(year),
+     organizationNamingModel:GENERATIONAL_ORGANIZATION_NAME_MODEL
+    }:{}),
    managerIds:Object.freeze(managerIdsByFarm[i]),
    location:loc(market),source:'FICTIONAL_WORLD_ENGINE'});
  }));
@@ -479,7 +497,11 @@ export function createFictionalWorldNameEngine(input){
   return frozen({id:makeId(worldId,'TRAINING-CENTER',i),worldId,name,
    kind:'BREAKING_AND_TRAINING',
    namingRegion:organizationNamingRegion(market),
-   namingEraStyle:organizationNamingEra(seed,i,'breaking'),
+   namingEraStyle:orgStyleAt(i,'breaking'),
+    ...(year>SUPPORTED_NAME_ERA?{
+     organizationNamingPeriod:generationalOrganizationNamingPeriod(year),
+     organizationNamingModel:GENERATIONAL_ORGANIZATION_NAME_MODEL
+    }:{}),
    location:loc(market),source:'FICTIONAL_WORLD_ENGINE'});
  }));
  const people=Object.freeze(basePeople.map(person=>{
@@ -532,10 +554,16 @@ export function createFictionalWorldNameEngine(input){
   markets:markets.map(m=>[m.id,m.city,m.region,m.country,m.code,m.weight,m.breeding,m.racing,m.jockeyColony]),
   originWeights:spec.originWeights,colonyWeights:spec.jockeyColonyWeights,
   reserved:spec.protectedNames,ownerNamingPolicy:spec.ownerNamingPolicy,
-  indexRevision:spec.externalNameIndex?.revision??null})).toString(16).padStart(8,'0');
+  indexRevision:spec.externalNameIndex?.revision??null,
+  ...(year>SUPPORTED_NAME_ERA?{organizationNameGeneration:GENERATIONAL_ORGANIZATION_NAME_MODEL}:{})
+  })).toString(16).padStart(8,'0');
  const manifest=frozen({schema:year===SUPPORTED_NAME_ERA?
   FICTIONAL_WORLD_NAME_ENGINE:LATER_GENERATION_NAME_ENGINE,worldId,seed,year,
-  ...(year>SUPPORTED_NAME_ERA?{generationalNameModel:GENERATIONAL_PERSON_NAME_MODEL}:{}),
+  ...(year>SUPPORTED_NAME_ERA?{
+   generationalNameModel:GENERATIONAL_PERSON_NAME_MODEL,
+   generationalOrganizationNameModel:GENERATIONAL_ORGANIZATION_NAME_MODEL,
+   generationalOrganizationPeriod:generationalOrganizationNamingPeriod(year)
+  }:{}),
   fingerprint:specFingerprint,jockeyColonyNameModel:JOCKEY_COLONY_NAME_MODEL,
   usBirthCohortNameModel:US_BIRTH_COHORT_NAME_MODEL,
   latinCaribbeanNameModel:LATIN_CARIBBEAN_NAME_MODEL,

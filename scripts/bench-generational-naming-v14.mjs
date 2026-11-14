@@ -13,6 +13,8 @@ import {auditFictionalIdentityNaming}
  from '../public/1999/engine/fictional-name-quality-audit.mjs';
 import {auditFictionalGenerationalNameQuality}
  from '../public/1999/engine/generational-name-quality-v14.mjs';
+import {auditGenerationalOrganizationNames}
+ from '../public/1999/engine/generational-organization-quality-v15.mjs';
 
 const opts={batches:100,owners:40,trainers:30,jockeys:25,
  farms:5,historic:12000,seed:19990101,start:1999,end:2099};
@@ -56,14 +58,18 @@ for(let i=0;i<opts.batches;i++){
  const cohort=auditFictionalGenerationalNameQuality({
   manifest:result.manifest,people:result.people
  },{expectedYear:year});
+ const business=auditGenerationalOrganizationNames(result,{
+  expectedYear:year,partnershipLimit:128
+ });
  const quality=auditFictionalIdentityNaming({...result,
   // The indexed registry already validates the full protected historic set.
   // The read-only quality audit checks representative protected identity only,
   // rather than copying thousands of historic names into EVERY benchmark call.
   protectedNames:['Historical Person Protected']});
- if(!cohort.pass||!quality.pass){
+ if(!cohort.pass||!quality.pass||!business.pass){
   console.error(JSON.stringify({batchIndex:i,year,cohortIssues:cohort.issues,
-   cohortCounts:cohort.issueCounts,identityIssues:quality.issues}));
+   cohortCounts:cohort.issueCounts,identityIssues:quality.issues,
+   organizationIssues:business.issues}));
   process.exit(1);
  }
  cursor=result.nextCursor;
@@ -73,7 +79,7 @@ for(let i=0;i<opts.batches;i++){
  counts.organizations+=organizations;
  counts.modern+=cohort.birthYearAfter1989;
  counts.future+=cohort.birthYearAfter2025;
- counts.issues+=cohort.issueTotal+quality.totalErrors;
+ counts.issues+=cohort.issueTotal+quality.totalErrors+business.issueTotal;
  const era=year<2020?'1999–2019':year<2050?'2020–2049':
   year<2080?'2050–2079':'2080–2099';
  byYear[era]=(byYear[era]||0)+result.people.length;
@@ -86,6 +92,7 @@ latencies.sort((a,b)=>a-b);
 const lateCursorBytes=Buffer.byteLength(JSON.stringify(cursor),'utf8');
 console.log(JSON.stringify({
  benchmark:'WTW-GENERATIONAL-NAMING-V14',
+ organizationQualityModel:'WTW_GENERATIONAL_ORGANIZATION_QA_V15',
  disposable:true,playableWorldModified:false,
  options:opts,issuedNames:registry.namesIssued,
  owners:registry.ownerCount,partnershipGroups:registry.formalGroupsIssued,
