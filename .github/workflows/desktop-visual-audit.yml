@@ -5,12 +5,14 @@ on:
     paths:
       - 'public/**'
       - 'scripts/desktop-visual-audit.sh'
+      - 'scripts/1999-full-screen-controls-cdp.mjs'
       - '.github/workflows/desktop-visual-audit.yml'
   pull_request:
     paths:
       - 'public/next/**'
       - 'scripts/desktop-visual-audit.sh'
       - 'tests/ui-uniformity-lock.test.mjs'
+      - 'tests/ui-core-information-controls-contract.test.mjs'
       - '.github/workflows/desktop-visual-audit.yml'
   workflow_dispatch:
 
@@ -34,5 +36,30 @@ jobs:
         with:
           name: wtw-fm-ootp-desktop-screens
           path: visual-audit/
+          retention-days: 14
+          if-no-files-found: warn
+
+  screen-interaction-matrix:
+    name: All Department Views and Table Controls in Chromium
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check actual game rail, VIEW selectors, sortable roster and preserved career on each screen
+        shell: bash
+        run: |
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME"
+          CHROME="$CHROME" node scripts/1999-full-screen-controls-cdp.mjs | tee full-screen-qa.log
+          grep -q 'WTW_SCREEN_MATRIX_PASS' full-screen-qa.log
+      - name: Preserve screen interaction QA results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-full-screen-control-matrix
+          path: full-screen-qa.log
           retention-days: 14
           if-no-files-found: warn
