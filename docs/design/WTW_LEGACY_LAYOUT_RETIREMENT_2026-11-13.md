@@ -50,7 +50,7 @@ Remaining adapter-dependent scripts include `office-v30-1.js`, `office-v30-4.js`
 
 
 ### Retired unused legacy Office CSS generations — 2026-11-13
-The only current playable stylesheets are `public/next/next.css`, `1999-commercial-career.css`, `identity-themes.css` and `profile-hero-v2.css`. The History Vault uses its separate `public/style.css`.
+The only current playable management stylesheet is **`public/next/next.css`**. All former career, entity-identity, and profile-hero declarations have been folded into it in the original cascade order; their three separate CSS files are deleted. The History Vault uses its separate `public/style.css`.
 
 These **nine entirely unreferenced historical theme files were physically removed** from production:
 - `public/office-compact-v31.css`
