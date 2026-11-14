@@ -142,7 +142,10 @@ test('on-demand model rejects malformed state, cross-world reuse and invalid pol
   maxPartnershipGroups:200}),/Incompatible/);
  assert.throws(()=>generateOnDemandFictionalNames({...base,maxPartnershipGroups:-2}),/Invalid maximum/);
  assert.throws(()=>generateOnDemandFictionalNames({...base,soleOwnerPercent:101}),/Invalid on-demand/);
- assert.throws(()=>generateOnDemandFictionalNames({...base,year:2014}),/1999 opening/);
+ assert.throws(()=>generateOnDemandFictionalNames({...base,year:2100}),/1999–2099/);
+ const newer=generateOnDemandFictionalNames({...base,state:a.nextState,year:2014});
+ assert.equal(newer.nextState.year,2014);
+ assert.throws(()=>generateOnDemandFictionalNames({...base,state:newer.nextState,year:2000}),/Incompatible/);
  assert.throws(()=>generateOnDemandFictionalNames({...base,roles:{},owners:0}),/empty/);
  assert.throws(()=>listReusableFictionalOwners(a.nextState,{limit:0}),/result limit/);
  assert.throws(()=>listReusableFictionalOwnershipGroups({}),/Invalid/);
