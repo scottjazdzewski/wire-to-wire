@@ -241,7 +241,7 @@ function pageTab(name){if(APP.section==='History'){const pages={'Race Results':'
   APP.departmentScrollLimit=160;APP.departmentScrollReset=true;
   return openCustomView('World — '+name,'World',name);
  }
- if(s==='World'&&(name==='Tracks'||name==='Meets'))return openMenu('Tracks');
+ if(s==='World'&&(name==='Tracks'||name==='Meets'))return openCustomView('World — '+name,'World',name);
  if(s==='World'&&(name==='Overview'||name==='Major Races'||name==='News'))return openCustomView('World — '+name,'World',name);
  openCustomView(`${s} — ${name}`,s,name);
 }
@@ -2946,6 +2946,7 @@ function depRows(section,page,demo,auction){
   }));
  }
  if(section==='World'&&page==='Tracks')return depTrackRows('All Tracks',depGameDay(),true);
+ if(section==='World'&&page==='Meets')return depTrackRows('Active Meets',depGameDay(),true);
  if(section==='Tracks')return depTrackRows(page,depGameDay(),true);
  if(section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'){
   const tracks=depTrackRows('Overview',depRaceBrowseDate());
@@ -3266,7 +3267,8 @@ function departmentRoster(section,page='Overview'){
  const worldAttributeKey=worldTrait?.key||'';
  const specs=section==='Personnel'&&page==='Owners'?DEP_COLUMNS.OwnershipGroups:
   section==='Personnel'&&page==='Principals'?DEP_COLUMNS.PersonnelPrincipals:
-  section==='World'&&page==='Tracks'?DEP_COLUMNS.Tracks:section==='World'?(page==='1999 Horses'?
+  section==='World'&&page==='Tracks'?DEP_COLUMNS.Tracks:
+  section==='World'&&page==='Meets'?DEP_COLUMNS.Meets:section==='World'?(page==='1999 Horses'?
    [...WORLD_1999_COLUMNS.Horses,...(worldTrait?[['attr:'+worldAttributeKey,worldTrait.label+' · TEST',10]]:[])]:
    page==='People'?WORLD_1999_COLUMNS.People:WORLD_1999_COLUMNS.Organizations):
   section==='Sales'&&page==='Watchlist'?DEP_COLUMNS.SalesWatchlist:section==='Sales'&&page==='Sale Calendar'?DEP_COLUMNS.SaleCalendar:section==='Sales'&&page==='Sale Companies'?DEP_COLUMNS.SaleCompanies:section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:section==='Racing'&&(page==='Calendar'||page==='Race Planning'||page==='Overview'&&APP.racingMode==='day')?DEP_COLUMNS.DayCard:section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'?DEP_COLUMNS.Meets:DEP_COLUMNS[section];
@@ -3574,7 +3576,7 @@ function managerDashboard(){
  if(section==='Stable'&&(page==='Overview'||page==='Horses'))return liveStableRosterView();
  if(typeof DEP_NAMES!=='undefined'&&DEP_NAMES.has(section))return departmentRoster(section,page);
  if(section==='World'&&page==='1999 Horses')return liveStableRosterView(true);
- if(section==='World'&&['People','Organizations'].includes(page))return departmentRoster('World',page);
+ if(section==='World'&&['People','Organizations','Tracks','Meets'].includes(page))return departmentRoster('World',page);
  const configs={
   Office:{kinds:['decision','horse','person'],label:'RACING OPERATIONS'},
   Stable:{kinds:['horse','person','farm'],label:'HORSES & STABLE OPERATIONS'},
