@@ -3,6 +3,34 @@
   "purpose": "UI-only visual identity palettes, keyed by established entity IDs. These do not alter registries, histories, owner colors, or ratings.",
   "palette_status": "WTW art-direction candidates; not verified official color specifications.",
   "tracks": {
+    "T-0001": {
+      "name": "Aqueduct",
+      "deep": "#112D42",
+      "base": "#1C6283",
+      "bright": "#81CFE8",
+      "highlight": "#F0DEBB"
+    },
+    "T-0014": {
+      "name": "Keeneland",
+      "deep": "#192F27",
+      "base": "#366E52",
+      "bright": "#A3D6AD",
+      "highlight": "#E9D6AC"
+    },
+    "T-0028": {
+      "name": "Santa Anita",
+      "deep": "#3A242B",
+      "base": "#884B49",
+      "bright": "#E5A486",
+      "highlight": "#F6DCB1"
+    },
+    "T-0030": {
+      "name": "Del Mar",
+      "deep": "#163445",
+      "base": "#226C82",
+      "bright": "#8FCFE0",
+      "highlight": "#F4D9AA"
+    },
     "T-0002": {
       "name": "Belmont Park",
       "deep": "#102E29",
