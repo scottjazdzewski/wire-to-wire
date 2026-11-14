@@ -17,6 +17,7 @@ test('available ownership logos are published only for exact 1999 founding names
  assert.equal(manifest.approvedOrganizationIds.length,37);
  assert.equal(manifest.publishedCount,Object.keys(manifest.organizations).length);
  assert.equal(manifest.remainingWithoutMatchedLogo,directory.organizations.length-manifest.publishedCount);
+ assert.deepEqual(legacy.organizations,{},'retired 108-owner index must not serve pixelated imagery');
  const entries=Object.entries(manifest.organizations);
  assert.equal(entries.length,manifest.publishedCount);
  const allowed=new Set(directory.organizations.map(o=>o.id));
@@ -26,15 +27,8 @@ test('available ownership logos are published only for exact 1999 founding names
   assert.ok(allowed.has(id),id);
   assert.ok(exists('public'+path),path);
   const org=directory.organizations.find(o=>o.id===id);
-  // Existing legacy assets need BOTH exact ID/name; newly approved sources have
-  // dedicated canonical-ID filenames and never inherit mislabeled old marks.
-  if(path.startsWith('/assets/office/owner-logos/')){
-   assert.equal(path,legacy.organizations['organization:'+id],id);
-   assert.ok(Object.keys(legacy.organizations).some(k=>k==='organization:'+org.name&&legacy.organizations[k]===path),
-    org.name+' does not have the matching archived artwork name');
-  }else{
-   assert.equal(path,'/assets/office/founding-organization-logos/'+id+'.png',id);
-  }
+  assert.equal(path,'/assets/office/founding-organization-logos/'+id+'.png',id);
+  assert.doesNotMatch(path,/owner-logos|_v1_64/,'retired low-resolution generated crest cannot be active');
  }
  assert.equal(manifest.organizations['organization:O-000002'],'/assets/office/founding-organization-logos/O-000002.png','Harrowgate must use its NEW approved artwork');
  assert.equal(manifest.organizations['organization:O-000056'],'/assets/office/founding-organization-logos/O-000056.png','Quickfire must use its NEW approved artwork');
@@ -60,7 +54,7 @@ test('existing approved track logos, badge set and selected ID-verified portrait
 });
 
 test('the clean Office loads only the founder manifest, without silently reviving legacy organizations',()=>{
- assert.match(ui,/founding-organization-logo-index\.json\?rev=founder-approved-35-20261114/);
+ assert.match(ui,/founding-organization-logo-index\.json\?rev=founder-approved-29-20261114/);
  assert.match(ui,/const approvedOrg=isClean1999\(\)\?/);
  assert.match(ui,/approvedOrg\?\['organization:'\+approvedOrg\.id\]/);
  assert.match(ui,/const allowed=\(world1999Data\?\.organizations\|\|\[\]\)\.some\(o=>o\.id===id\)/);
