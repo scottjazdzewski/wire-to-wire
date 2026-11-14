@@ -37,13 +37,16 @@ const siteAvailable=(state,site,horse)=> {
   h.current_residence_id===site.id).length;
  const reserved=(site.contracts||[]).filter(c=>c.start<=state.clock.date&&c.end>=state.clock.date).
   reduce((n,c)=>n+c.stalls,0);
- return others+reserved<site.stalls;
+ const visiting=Object.values(state.runtime.racing?.horse_travel||{}).
+  filter(t=>t.destination_site_id===site.id&&
+   ['OUTBOUND','AT_DESTINATION'].includes(t.status)).length;
+ return others+reserved+visiting<site.stalls;
 };
 function blocking(state,horse){
  if(horse.status!=='IN_TRAINING')return 'HORSE_NOT_IN_TRAINING';
  if(allEntries(state,horse.horse_id))return 'LIVE_RACE_ENTRY';
  const travel=horseTravelStatus(state,horse.horse_id);
- if(travel&&travel.status!=='AT_HOME')return 'HORSE_SHIPPING_OR_AWAY';
+ if(travel&&travel.status!=='HOME')return 'HORSE_SHIPPING_OR_AWAY';
  if(state.runtime.trainer_management_requests?.training_orders?.[horse.horse_id])
   return 'TEMPORARY_WORKOUT_IN_FORCE';
  return null;
@@ -222,6 +225,8 @@ export function advanceTrainerEmployment({state,world,emit}){
   const before=h.trainer_id,site=state.runtime.facilities.sites[item.destination_site_id];
   h.trainer_id=item.to_trainer_id;h.current_residence_id=site.id;
   h.racing_barn_id=site.id;h.residence_kind=site.residence_kind;
+  const travel=state.runtime.racing?.horse_travel?.[h.horse_id];
+  if(travel?.status==='HOME')travel.home_site_id=site.id;
   h.host_track_id=site.host_track_id;
   const care=state.runtime.horse?.[h.horse_id];
   if(care?.training)care.training.trainerId=item.to_trainer_id;
