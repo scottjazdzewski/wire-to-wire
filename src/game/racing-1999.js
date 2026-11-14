@@ -7,6 +7,7 @@ import {ensure,isObject,worldIdentity,nextDate,validDate} from './contracts.js';
 import {buildConditionBook1999} from '../../public/next/1999-condition-book-engine.mjs';
 import {getGameHorsePerformance,modelHorsePostRaceResponse} from './horse-care.js';
 import {applyRaceAgentFeedback} from './daily-agents.js';
+import {horseTravelStatus,effectiveHorseTrack,validate1999HorseShipping} from './shipping-1999.js';
 
 export const GAME_RACING_SCHEMA='WTW_1999_CAREER_RACING_V1';
 export const RACING_COMMANDS=Object.freeze(['ACTIVATE_JOCKEY_COLONY','OPEN_1999_RACE','ENTER_1999_RACE',
@@ -20,7 +21,7 @@ const frac=(seed,key)=>{let n=(2166136261^(seed>>>0))>>>0;
  n^=n>>>16;n=Math.imul(n,2246822507);n^=n>>>13;
  return (n>>>0)/4294967296};
 export const createRacingRuntime=()=>({
- schema:GAME_RACING_SCHEMA,jockeys:{},jockey_finances_minor:{},trainer_finances_minor:{},
+ schema:GAME_RACING_SCHEMA,jockeys:{},jockey_finances_minor:{},trainer_finances_minor:{},horse_travel:{},
  last_selection_date:null,last_settlement_date:null,selection_count:0
 });
 const root=state=>state.runtime.racing??(state.runtime.racing=createRacingRuntime());
@@ -86,7 +87,13 @@ export function raceEligibility(state,horse,race){
  if(race.maiden&&horse.career.wins>0)reasons.push('MAIDEN_RESTRICTION');
  if(race.max_wins!==null&&race.max_wins!==undefined&&horse.career.wins>race.max_wins)
   reasons.push('CAREER_WIN_LIMIT');
- if(!site||site.host_track_id!==race.track_id)reasons.push('NOT_STABLED_AT_TRACK');
+ const trip=horseTravelStatus(state,horse.horse_id);
+ const arrivalConfirmed=trip?.status==='OUTBOUND'&&trip.destination_track_id===race.track_id&&
+  dayGap(trip.arrival_date,race.date)>=2;
+ if(!site||effectiveHorseTrack(state,horse)!==race.track_id&&!arrivalConfirmed)
+  reasons.push('NOT_PHYSICALLY_AT_TRACK_OR_CONFIRMED_TO_ARRIVE');
+ if(trip?.status==='AT_DESTINATION'&&trip.destination_track_id===race.track_id&&
+  dayGap(trip.arrival_date,race.date)<2)reasons.push('SHIPPING_ACCLIMATION_WINDOW');
  if(!care||care.training.sorenessDays>0||care.training.currentRisk>=.78||
   care.training.readiness<.43||care.history.at(-1)?.unfunded===true)
   reasons.push('CONDITION_NOT_CLEARED');
@@ -207,7 +214,8 @@ function settle1999Race({state,world,race_id,emit}){
   'RACE_DATE','A race can only be settled on its scheduled game day');
  const entries=race.field.map(id=>state.runtime.entries[id]);
  ensure(entries.length>=2&&entries.length<=race.field_capacity&&entries.every(e=>
-  e&&e.status==='BOOKED'&&rt.jockeys[e.jockey_id]),
+  e&&e.status==='BOOKED'&&rt.jockeys[e.jockey_id]&&
+   effectiveHorseTrack(state,state.runtime.registered_horses.by_id[e.horse_id])===race.track_id),
   'RACE_FIELD','A valid field requires at least two fully booked runners');
  const horseSet=new Set(entries.map(e=>e.horse_id));
  ensure(horseSet.size===entries.length,'RACE_FIELD','Duplicate horse in race field');
@@ -269,6 +277,7 @@ function settle1999Race({state,world,race_id,emit}){
 }
 export function validateRacingRuntime(state,world){
  const rt=state.runtime.racing;
+ validate1999HorseShipping(state,world);
  if(!rt)return;
  ensure(rt.schema===GAME_RACING_SCHEMA&&isObject(rt.jockeys)&&
   isObject(rt.jockey_finances_minor)&&isObject(rt.trainer_finances_minor)&&

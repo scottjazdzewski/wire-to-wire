@@ -622,6 +622,51 @@ function scanGlobalHorseIndex(){
  setTimeout(scanGlobalHorseIndex,0);
 }
 function worldHorseBrowse({offset=0,limit=160,search='',sort='name',desc=false,filters={},attributeKey=''}={}){
+ if(activePlaytest&&playtestSnapshot){
+  // In the isolated 1999 game, the racing directory is ALL registered game
+  // runners (not the 73 approved source breeding animals). It shares the
+  // same stable roster/sort renderer; only its data source differs.
+  const normalized=x=>String(x??'').toLowerCase().replaceAll('_',' ').trim();
+  const needle=normalized(search),filterValue=normalized(filters.query);
+  const min=filters.ageMin===''||filters.ageMin==null?null:Number(filters.ageMin);
+  const max=filters.ageMax===''||filters.ageMax==null?null:Number(filters.ageMax);
+  const rows=playtestSnapshot.all_horses.map((h,i)=>({
+   _directoryIndex:i,_kind:'horse',_name:h.name,_id:h.horse_id,
+   _testGenerated:true,name:h.name,age:String(1999-h.foaling_year),sex:h.sex,
+   sire:'NOT ASSIGNED',dam:'NOT ASSIGNED',owner:h.owner_name||h.owner_id,
+   breeder:ownerNames.get(h.breederId)||h.breederId,
+   trainer:h.trainer_name||h.trainer_id,track:h.track_name,
+   status:h.shipping_status==='OUTBOUND'?'IN TRANSIT · ARRIVES '+h.shipping_arrival_date:
+    h.shipping_status==='RETURNING'?'RETURNING HOME · ARRIVES '+h.shipping_arrival_date:
+    h.shipping_status==='AT_DESTINATION'?'VISITING · '+h.site_name:
+    'IN TRAINING · '+h.home_site_name,
+   registryGroup:'REGISTERED 1999 GAME HORSE',
+   ca:h.attributes?.current_ability??null,pa:h.attributes?.potential_ability??null,
+   home_site_id:h.home_site_id,current_site_id:h.current_site_id,
+   shipping_status:h.shipping_status,
+   ...(attributeKey?{['attr:'+attributeKey]:h.attributes?.[attributeKey]??null}:{})
+  })).filter(h=>{
+   if(needle&&!['name','_id','owner','breeder','trainer','track','status']
+    .some(k=>normalized(h[k]).includes(needle)))return false;
+   if(min!==null&&Number(h.age)<min)return false;
+   if(max!==null&&Number(h.age)>max)return false;
+   if(filters.sex&&normalized(h.sex)!==normalized(filters.sex))return false;
+   if(filters.status&&!normalized(h.status).includes(normalized(filters.status)))return false;
+   if(filters.field&&filters.query&&!normalized(h[filters.field]).includes(filterValue))return false;
+   return true;
+  });
+  const key=['name','age','sex','owner','trainer','track','breeder','status','ca','pa',
+   'shipping_status'].includes(sort)?sort:'name';
+  rows.sort((x,y)=>{
+   const a=x[key],b=y[key];
+   const cmp=['age','ca','pa'].includes(key)?Number(a)-Number(b):
+    String(a??'').localeCompare(String(b??''),undefined,{numeric:true,sensitivity:'base'});
+   return (desc?-cmp:cmp)||x._directoryIndex-y._directoryIndex;
+  });
+  return {total:rows.length,loaded:playtestSnapshot.all_horses.length,indexing:false,
+   items:rows.slice(Math.max(0,offset),Math.max(0,offset)+Math.max(1,limit)),
+   progress:playtestSnapshot.all_horses.length};
+ }
  // Source-only index of 73 approved breeding horses; no synthetic worker.
  if(!globalHorseStarted){
   globalHorseStarted=true;

@@ -7,6 +7,7 @@
 import {ensure,isObject,worldIdentity} from './contracts.js';
 import {TRAINING_PLANS,createHorseTrainingRecord,advanceHorseTrainingDay}
  from '../../public/1999/engine/horse-development.mjs';
+import {horseTravelStatus,effectiveHorseCareSite} from './shipping-1999.js';
 
 export const HORSE_CARE_SCHEMA='WTW_1999_CONNECTED_HORSE_CARE_V1';
 export const TRAINER_SKILLS_SCHEMA='WTW_1999_TRAINER_SKILLS_GAME_V1';
@@ -144,13 +145,16 @@ export function advanceGameHorseCare({state,world,emit}){
   a.horse_id.localeCompare(b.horse_id));
  const accounts=state.runtime.finances.operation_balances_minor,day=state.clock.date;
  const occupancy={};
- for(const h of horses)occupancy[h.current_residence_id]=(occupancy[h.current_residence_id]||0)+1;
+ for(const h of horses){
+  const liveSite=effectiveHorseCareSite(state,h);
+  if(liveSite)occupancy[liveSite.id]=(occupancy[liveSite.id]||0)+1;
+ }
  for(const h of horses){
   if(!h.starting_attributes){emit('HORSE_NEEDS_ATTRIBUTES',{horse_id:h.horse_id});continue}
   initializeGameHorseCare(state,h);
   const r=state.runtime.horse[h.horse_id];
   if(r.last_day===day)continue;
-  const site=state.runtime.facilities?.sites?.[h.current_residence_id];
+  const site=effectiveHorseCareSite(state,h);
   ensure(Boolean(site),'HORSE_CARE_SITE','Registered horse lost its physical barn');
   if(r.finance.month!==day.slice(0,7)){
    r.finance.month=day.slice(0,7);r.finance.spent_minor=0;
@@ -163,7 +167,11 @@ export function advanceGameHorseCare({state,world,emit}){
   const context=estimateContext(p,site,occupancy[h.current_residence_id]);
   const train={...r.training,plan:p.training_plan};
   const allowed=site.status==='ACTIVE'&&site.staff_count>=site.staff_required;
-  const workout=r.agent?.date===day?r.agent.workout:null;
+  const trip=horseTravelStatus(state,h.horse_id),
+   arrivalToday=trip?.history?.at(-1)?.date===day&&
+    ['ARRIVED_AT_TRACK','RETURNED_HOME'].includes(trip.history.at(-1).event);
+  const forcedRest=trip&&['OUTBOUND','RETURNING'].includes(trip.status)||arrivalToday;
+  const workout=forcedRest?'REST':r.agent?.date===day?r.agent.workout:null;
   const work=advanceHorseTrainingDay(train,info.horse,info.trainer,day,
    state.rng.seed,{...context,workout});
   const charge_minor=Math.round(work.charge*100);
@@ -222,7 +230,7 @@ export function getGameHorsePerformance(state,world,id){
  ensure(Boolean(horse),'UNKNOWN_HORSE','Horse must be registered in the active game');
  const care=state.runtime.horse[id],a=horse.starting_attributes;
  ensure(Boolean(care)&&Boolean(a),'HORSE_CARE_ATTRIBUTES','Horse care record and starting abilities required');
- const t=care.training,site=state.runtime.facilities.sites[horse.current_residence_id];
+ const t=care.training,site=effectiveHorseCareSite(state,horse);
  const skills=state.runtime.people[horse.trainer_id]?.game_training_skills||
   modeledTrainerSkills(horse.trainer_id,state.rng.seed);
  const score=cap(a.current_ability/99*.61+t.readiness*.21+

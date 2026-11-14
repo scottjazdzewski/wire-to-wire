@@ -12,7 +12,7 @@ const modules=[
  'contracts.js','rng.js','attribute-contract.js','reputation.js',
  'facility-operations.js','ownership.js','horse-registration.js',
  'horse-starting-attributes.js','horse-care.js','daily-agents.js',
- 'racing-1999.js','race-agents-1999.js','people-generator.js',
+ 'racing-1999.js','race-agents-1999.js','shipping-1999.js','people-generator.js',
  'facility-market-1999.js','state.js','kernel.js','persistence.js',
  'selectors.js','horse-connections.js','1999-pilot-fixture.js','index.js'
 ];

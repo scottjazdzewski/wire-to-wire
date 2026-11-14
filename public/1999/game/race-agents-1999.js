@@ -3,6 +3,7 @@
  * approved 1999 modeled meet/calendar; no ghost results or artificial jockeys.
  */
 import {gameRaceProgram,raceEligibility,racingAction,jockeyBookingDecision} from './racing-1999.js';
+import {shippingAssessment,shippingAction,horseTravelStatus,effectiveHorseTrack} from './shipping-1999.js';
 const diff=(a,b)=>(Date.parse(b+'T12:00:00Z')-Date.parse(a+'T12:00:00Z'))/86400000;
 const plus=(date,n)=>new Date(Date.parse(date+'T12:00:00Z')+n*86400000).toISOString().slice(0,10);
 const horses=state=>Object.values(state.runtime.registered_horses?.by_id||{}).
@@ -14,6 +15,114 @@ const ridden=(state,jockeyId,race)=>Object.values(state.runtime.entries||{}).
  some(e=>e.jockey_id===jockeyId&&e.status!=='SCRATCHED'&&
   state.runtime.races[e.race_id]?.date===race.date&&
   (e.race_id===race.id||state.runtime.races[e.race_id].track_id!==race.track_id));
+/** Each trainer compares an actual open future race with the horse's ability,
+ * surface, distance, welfare, home location, available jockey and owner's cash.
+ * No AI enters or ships a player-owned horse.
+ */
+function raceFit(h,race){
+ const a=h.starting_attributes;
+ const surface=race.surface==='TURF'?a.turf_aptitude:a.dirt_aptitude;
+ const distance=race.distance_furlongs<8?a.sprint_aptitude:a.route_aptitude;
+ return .47*surface+.39*distance+.14*(a.current_ability/99);
+}
+function hasFutureEntry(state,h){
+ return Object.values(state.runtime.entries||{}).some(e=>e.horse_id===h.horse_id&&
+  ['ENTERED','BOOKED'].includes(e.status)&&
+  state.runtime.races[e.race_id]?.date>=state.clock.date);
+}
+function autonomousAwayTravel({state,world,emit}){
+ const day=state.clock.date,rt=state.runtime.racing;
+ // Let the opening maiden campaigns establish honest form before trainers
+ // consider shipping. Later choices are weekly, keyed to the one game clock.
+ if(state.clock.days_elapsed<22||state.clock.days_elapsed%7!==1)return;
+ let shipped=0,evaluated=0,declined=0;
+ const cards=Object.values(state.runtime.races||{}).
+  filter(r=>r.status==='ENTRIES_OPEN'&&r.field.length>=2&&
+   r.field.length<r.field_capacity&&r.conditions==='Maiden Special Weight'&&
+   r.age==='3YO+'&&r.sex==='OPEN'&&diff(day,r.date)>=6).
+  sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id));
+ for(const h of horses(state).filter(h=>h.owner_organization_id!==state.player.operation_id)){
+  if(shipped>=2)break;
+  if(!h.host_track_id||horseTravelStatus(state,h.horse_id)?.status!=='HOME'&&
+   horseTravelStatus(state,h.horse_id)||hasFutureEntry(state,h)||h.career.wins>0)continue;
+  const care=state.runtime.horse[h.horse_id];
+  if(!care||care.training.readiness<.56||care.training.currentRisk>=.64||
+   care.training.sorenessDays>0)continue;
+  evaluated++;
+  const options=[];
+  for(const race of cards){
+   if(race.track_id===h.host_track_id)continue;
+   const check=raceEligibility(state,h,race);
+   if(check.reasons.some(x=>x!=='NOT_PHYSICALLY_AT_TRACK_OR_CONFIRMED_TO_ARRIVE'))continue;
+   const sites=Object.values(state.runtime.facilities.sites).
+    filter(site=>site.host_track_id===race.track_id&&site.type==='RACING_STABLE').
+    sort((x,y)=>x.id.localeCompare(y.id));
+   for(const site of sites){
+    const quote=shippingAssessment(state,world,h.horse_id,site.id,{targetRaceId:race.id});
+    if(!quote.allowed)continue;
+    const match=raceFit(h,race),available=money(state,h.owner_organization_id);
+    const jockey=Object.values(rt.jockeys).
+     filter(j=>j.home_track_id===race.track_id&&!ridden(state,j.id,race)&&
+      jockeyBookingDecision(state,world,race,h,j).accept).
+     sort((a,b)=>b.skills.judgment+b.skills.horse_handling-
+      a.skills.judgment-a.skills.horse_handling||a.id.localeCompare(b.id))[0];
+    if(!jockey)continue;
+    const expectedOwnerPurse=Math.round(race.purse_minor*.23*match*.8),
+     haulRoundTrip=2*quote.route.cost_minor,bookFee=6000,
+     boardingReserve=Math.ceil(care.policy.monthly_budget_minor/30*14);
+    const score=expectedOwnerPurse-haulRoundTrip-bookFee;
+    if(score<=0||available<haulRoundTrip+boardingReserve+bookFee)continue;
+    options.push({race,site,quote,jockey,match,score,expectedOwnerPurse,
+     haulRoundTrip,bookFee});
+   }
+  }
+  options.sort((a,b)=>b.score-a.score||a.race.date.localeCompare(b.race.date)||
+   a.site.id.localeCompare(b.site.id));
+  const choice=options[0];
+  if(!choice){declined++;continue}
+  shippingAction({state,world,command:{actor:'system',type:'SHIP_1999_HORSE',
+   payload:{horse_id:h.horse_id,destination_site_id:choice.site.id,
+    target_race_id:choice.race.id}},emit});
+  racingAction({state,world,command:{actor:'system',type:'ENTER_1999_RACE',
+   payload:{race_id:choice.race.id,horse_id:h.horse_id}},emit});
+  racingAction({state,world,command:{actor:'system',type:'BOOK_1999_JOCKEY',
+   payload:{race_id:choice.race.id,horse_id:h.horse_id,jockey_id:choice.jockey.id}},emit});
+  shipped++;
+  emit('AI_TRAINER_AWAY_CAMPAIGN',{date:day,horse_id:h.horse_id,
+   trainer_id:h.trainer_id,owner_id:h.owner_organization_id,
+   target_race_id:choice.race.id,destination_site_id:choice.site.id,
+   jockey_id:choice.jockey.id,fit:Math.round(choice.match*1000)/1000,
+   expected_owner_purse_minor:choice.expectedOwnerPurse,
+   return_haul_budget_minor:choice.haulRoundTrip,
+   net_opportunity_minor:choice.score,
+   reason:'FUNDED_SURFACE_DISTANCE_AND_CLASS_OPPORTUNITY'});
+ }
+ emit('AI_TRAINER_SHIPPING_REVIEW',{date:day,candidates_evaluated:evaluated,
+  shipped,declined,reason:'EXPECTED_VALUE_WELFARE_STALLS_AND_RACE_CONDITIONS'});
+}
+function autonomousReturnTravel({state,world,emit}){
+ const trips=state.runtime.racing?.horse_travel||{},day=state.clock.date;
+ for(const id of Object.keys(trips).sort()){
+  const t=trips[id],h=state.runtime.registered_horses.by_id[id];
+  if(t.status!=='AT_DESTINATION'||!h||h.owner_organization_id===state.player.operation_id||
+   hasFutureEntry(state,h))continue;
+  // Leave recovery time at the host before booking a homeward carrier.
+  const last=Object.values(state.runtime.races).filter(r=>r.results?.some(x=>x.horse_id===id)).
+   sort((a,b)=>b.date.localeCompare(a.date))[0];
+  if(!last||diff(last.date,day)<3)continue;
+  const care=state.runtime.horse[id];
+  if(!care||care.training.sorenessDays>0||care.training.currentRisk>.7)continue;
+  const from=state.runtime.facilities.sites[t.destination_site_id],
+   home=state.runtime.facilities.sites[t.home_site_id];
+  const available=money(state,h.owner_organization_id);
+  if(available<t.outbound_cost_minor+Math.ceil(care.policy.monthly_budget_minor/30*7))continue;
+  shippingAction({state,world,command:{actor:'system',type:'RETURN_1999_HORSE',
+   payload:{horse_id:id}},emit});
+  emit('AI_TRAINER_RETURN_CAMPAIGN',{horse_id:id,trainer_id:h.trainer_id,
+   from_site_id:from.id,home_site_id:home.id,
+   reason:'POSTRACE_RECOVERY_COMPLETE_NO_FUTURE_BOOKING'});
+ }
+}
 export function run1999RacingAgents({state,world,emit}){
  const rt=state.runtime.racing;
  if(!rt||Object.keys(rt.jockeys).length<2)return;
@@ -78,6 +187,7 @@ export function run1999RacingAgents({state,world,emit}){
   }
   rt.last_selection_date=day;
  }
+ autonomousAwayTravel({state,world,emit});
  // Today's race is not automatically a real result unless at least two
  // medically cleared runners and confirmed jockeys are in the valid field.
  for(const race of Object.values(state.runtime.races||{}).
@@ -104,5 +214,6 @@ export function run1999RacingAgents({state,world,emit}){
     reasons:['INSUFFICIENT_CLEARED_AND_BOOKED_STARTERS'],starters:race.field.length});
   }
  }
+ autonomousReturnTravel({state,world,emit});
  rt.last_settlement_date=day;
 }
