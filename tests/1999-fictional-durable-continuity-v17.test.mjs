@@ -228,7 +228,7 @@ test('1000 append-only lifecycle events keep cursor compact and histories in sep
   const rev=svc.revision;
   await svc.apply({expectedRevision:rev,event:evt(
    'LOAD-'+i,i%2===0?'CLOSE_ORGANIZATION':'REOPEN_ORGANIZATION',
-   farm.id,1999+Math.floor(i/50)
+   farm.id,1999
   )});
  }
  const data=await storage.read({worldId});
