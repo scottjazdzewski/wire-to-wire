@@ -3266,6 +3266,140 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 #wtwNextgen[data-wtw-identity-kind="track"] .ng-route-profile .ng-profile-badgeframe img{
   visibility:hidden!important;
 }
+/* WTW ENTITY ATMOSPHERE v2 — the SAME shared profile template for every
+ * track, owner, racing stable, stud farm and breeding organization.
+ * Vivid brand depth, not a separate navigation, card layout, or photograph.
+ * Do not theme medical/eligibility warnings, Continue, outcomes or status pills.
+ * These colors exist ONLY while a recognized immutable ID is active. */
+#wtwNextgen[data-wtw-identity]{
+ --wtw-id-panel:color-mix(in srgb,var(--wtw-id-deep) 36%,#151e24);
+ --wtw-id-panel-edge:color-mix(in srgb,var(--wtw-id-bright) 30%,#405050);
+ --wtw-id-panel-wash:color-mix(in srgb,var(--wtw-id-base) 21%,#192229);
+}
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profile-intro{
+ background:
+  radial-gradient(ellipse at 82% 43%,
+   color-mix(in srgb,var(--wtw-id-bright) 32%,transparent),transparent 53%),
+  radial-gradient(ellipse at 10% 4%,
+   color-mix(in srgb,var(--wtw-id-base) 25%,transparent),transparent 62%),
+  linear-gradient(102deg,
+   color-mix(in srgb,var(--wtw-id-base) 71%,#1a2329) 0%,
+   color-mix(in srgb,var(--wtw-id-deep) 79%,#161e24) 56%,#121a20 100%)!important;
+ box-shadow:inset 0 1px 0 #ffffff1d,inset 0 -1px 0 #0008,
+  0 8px 26px #0008,0 0 27px color-mix(in srgb,var(--wtw-id-bright) 10%,transparent)!important;
+}
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profile-breadcrumb{
+ color:color-mix(in srgb,var(--wtw-id-highlight) 85%,#ffffff)!important;
+}
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profiletabs{
+ background:linear-gradient(180deg,
+  color-mix(in srgb,var(--wtw-id-deep) 49%,#20282c),#172025)!important;
+ border-bottom-color:var(--wtw-id-panel-edge)!important;
+}
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profile-tools button{
+ color:#f0f4f4!important;
+ border-color:var(--wtw-id-panel-edge)!important;
+ background:linear-gradient(180deg,
+  color-mix(in srgb,var(--wtw-id-base) 31%,#1a2328),
+  color-mix(in srgb,var(--wtw-id-deep) 48%,#131c21))!important;
+ box-shadow:inset 0 1px 0 #ffffff13!important;
+}
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profile-tools button:hover,
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profile-tools button:focus-visible{
+ background:linear-gradient(180deg,
+  color-mix(in srgb,var(--wtw-id-base) 57%,#1c272a),
+  color-mix(in srgb,var(--wtw-id-deep) 51%,#20282c))!important;
+ border-color:var(--wtw-id-bright)!important;
+}
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-detailcard,
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-tier1-card{
+ background:linear-gradient(155deg,var(--wtw-id-panel-wash),#171f23 77%)!important;
+ border-color:var(--wtw-id-panel-edge)!important;
+}
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-detailcard>header,
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-tier1-card>header{
+ background:linear-gradient(92deg,
+  color-mix(in srgb,var(--wtw-id-base) 57%,#202a2f),
+  color-mix(in srgb,var(--wtw-id-deep) 42%,#222d31))!important;
+ border-bottom-color:var(--wtw-id-panel-edge)!important;
+ color:#fff4df!important;
+}
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profile-facts>div{
+ background:linear-gradient(110deg,
+  color-mix(in srgb,var(--wtw-id-deep) 31%,#1c2529),
+  #1a2226 90%)!important;
+}
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-person-dossierbar{
+ background:linear-gradient(90deg,var(--wtw-id-panel),#1c252b)!important;
+ border-bottom-color:var(--wtw-id-panel-edge)!important;
+}
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-person-dossieractions button.on{
+ background:color-mix(in srgb,var(--wtw-id-base) 60%,#202a2f)!important;
+ border-color:var(--wtw-id-bright)!important;
+ color:#fff!important;
+}
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-person-dossieractions select{
+ background:var(--wtw-id-panel)!important;
+ border-color:var(--wtw-id-panel-edge)!important;
+ color:#f1f5f4!important;
+}
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profiletabs button:focus-visible,
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-person-dossieractions button:focus-visible,
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profile-tools button:focus-visible{
+ outline:2px solid var(--wtw-id-highlight)!important;
+ outline-offset:2px;
+}
+@media (prefers-reduced-motion:no-preference){
+ #wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profile-tools button{
+  transition:background-color .16s ease,border-color .16s ease,box-shadow .16s ease;
+ }
+}
+
+/* Connected-record tables are management navigation, not semantic status.
+ * Their search bar, expanded section and active view choice must inherit the
+ * SAME track/farm/owner colors; previously every profile reverted to green. */
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-connected-drop{
+ border-color:var(--wtw-id-panel-edge)!important;
+}
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-connected-drop>summary{
+ background:linear-gradient(92deg,
+  color-mix(in srgb,var(--wtw-id-base) 64%,#1d292d),
+  color-mix(in srgb,var(--wtw-id-deep) 53%,#203034))!important;
+ color:#fff5e6!important;
+ border-bottom-color:var(--wtw-id-panel-edge)!important;
+}
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-connected-drop>summary:hover,
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-connected-drop>summary:focus-visible{
+ background:linear-gradient(90deg,
+  color-mix(in srgb,var(--wtw-id-base) 78%,#1c2a2e),
+  color-mix(in srgb,var(--wtw-id-deep) 54%,#263035))!important;
+}
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-connected-tools{
+ background:linear-gradient(90deg,var(--wtw-id-panel),#182127)!important;
+ border-color:var(--wtw-id-panel-edge)!important;
+}
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-connected-tools button,
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-connected-tools select{
+ border-color:var(--wtw-id-panel-edge)!important;
+}
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-connected-view button.on{
+ background:color-mix(in srgb,var(--wtw-id-base) 73%,#18272c)!important;
+ border-color:var(--wtw-id-bright)!important;
+ box-shadow:inset 0 -2px var(--wtw-id-highlight)!important;
+ color:#ffffff!important;
+}
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-connected-table thead th{
+ background:color-mix(in srgb,var(--wtw-id-base) 23%,#263233)!important;
+ border-color:var(--wtw-id-panel-edge)!important;
+}
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-connected-drop>summary:focus-visible,
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-connected-tools button:focus-visible,
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-connected-tools select:focus-visible,
+#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-connected-tools input:focus-visible{
+ outline:2px solid var(--wtw-id-highlight)!important;
+ outline-offset:2px;
+}
+
 /* ===== END folded source: public/next/identity-themes.css ===== */
 
 /* ===== BEGIN folded source: public/next/profile-hero-v2.css ===== */

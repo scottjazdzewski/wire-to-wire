@@ -12,7 +12,7 @@ Status: Production UI; new transparent hero marks auto-discover from their exact
 - Horse and personnel **dossiers** retain their local Overview/History/MORE RECORDS controls. Their global breadcrumb uses a clean **HORSE PROFILE / [name]** or **PERSONNEL PROFILE / [name]**, never a percent-encoded route. At narrow widths the local dossier controls wrap without hiding functionality.
 - Raw internal `WorldRecord:track%3A...` codes are never visible as the title on track/farm profiles.
 - Page-specific identity palette remains intact. Background photographs **are not included**; a separate art window owns those.
-- Deferred work item **#6**: deepen the entity palette into more panels/interactive elements after hero art is settled; do NOT silently do this in the present pass.
+- **#6 identity palette expansion has begun in a separate approved UI-only phase (November 14)**: shared profile tools, cards, tabs and dossier accents now respond to entity palettes. This does **not** add photographic hero backgrounds or change the logo generator's upload contract. Further imagery remains deferred.
 
 ## Logo generator — exact asset contract
 Create ONE high-quality hero mark for each track/organization. Real racecourses should use the authenticated existing identity with accurate lettering, emblems, proportions and colors; do not invent official-looking logos or change real track names. Fictional WTW venues can have new game-universe designs.

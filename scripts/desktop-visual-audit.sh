@@ -109,6 +109,12 @@ frame.onload=()=>setTimeout(()=>{
    heroMark:rect('.ng-route-profile .ng-profile-source-photo'),
    localNavigation:rect('.ng-route-profile .ng-profiletabs')||rect('.ng-route-profile .ng-person-dossierbar'),
    profileName:d.querySelector('.ng-route-profile .ng-profile-identity h2')?.textContent?.trim()||'',
+   identityId:d.getElementById('wtwNextgen')?.getAttribute('data-wtw-identity')||'',
+   identitySource:d.getElementById('wtwNextgen')?.getAttribute('data-wtw-identity-source')||'',
+   identityBase:win.getComputedStyle(d.getElementById('wtwNextgen')).
+    getPropertyValue('--wtw-id-base').trim(),
+   profileBackdrop:d.querySelector('.ng-route-profile .ng-profile-intro')?
+    win.getComputedStyle(d.querySelector('.ng-route-profile .ng-profile-intro')).backgroundImage:'',
    sourceBridgeVisible:win.getComputedStyle(d.querySelector('.app')).display!=='none',
    duplicateGlobalMenuVisible:[...d.querySelectorAll('#wtwNextgen > .ng-subbar')]
     .some(n=>win.getComputedStyle(n).display!=='none'),
@@ -158,6 +164,32 @@ probe laptop-owner '%3Fui%3DFoundingProfile%253Aownership%253AO-000014' '1280,80
 python3 - <<'PY'
 import json,html,re
 from pathlib import Path
+# Verify real rendered identity coloring and no leaked identity in the Office.
+expected={
+ 'aqueduct':('T-0001','#1C6283'),
+ 'gulfstream':('T-0017','#214784'),
+ 'farm':('O-000061','#745681')
+}
+values=[]
+for name,(identity,base) in expected.items():
+ source=Path(f'visual-audit/dom/probe-{name}.html').read_text()
+ assert 'data-check="ready"' in source,(name,'Identity probe incomplete')
+ match=re.search(r'<pre id="measure"[^>]*>(.*?)</pre>',source,re.S)
+ assert match,(name,'Identity probe metrics missing')
+ data=json.loads(html.unescape(match.group(1)))
+ assert data['identityId']==identity,(name,'Wrong entity color context',data['identityId'])
+ assert data['identitySource']=='curated',(name,'Palette registry did not resolve')
+ assert data['identityBase'].upper()==base,(name,'Wrong active brand color',data['identityBase'])
+ assert 'gradient' in data['profileBackdrop'],(name,'Profile atmosphere missing')
+ values.append(data['identityBase'])
+assert len(set(values))==len(values),'Distinct entities share the same active brand color'
+plain=Path('visual-audit/dom/probe-office.html').read_text()
+match=re.search(r'<pre id="measure"[^>]*>(.*?)</pre>',plain,re.S)
+assert match
+data=json.loads(html.unescape(match.group(1)))
+assert data['identityId']=='',(data['identityId'],'Brand theme leaked into Office')
+print('ENTITY ATMOSPHERE verified in Chromium:',expected)
+
 for name in ('office','search','horse','person'):
  source=Path(f'visual-audit/dom/probe-{name}.html').read_text()
  assert 'data-check="ready"' in source, (name,'Geometry probe did not complete')
