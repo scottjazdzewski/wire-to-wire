@@ -244,12 +244,15 @@ function pageTab(name){if(APP.section==='History'){const pages={'Race Results':'
  if(s==='World'&&(name==='Overview'||name==='Major Races'||name==='News'))return openCustomView('World — '+name,'World',name);
  openCustomView(`${s} — ${name}`,s,name);
 }
-let engineDecisions=null,officeDecisionFiles=[];
+let engineDecisionState=null,officeDecisionFiles=[];
 function decisionFiles(){
- const decisions=window.__WTW_1999_UI_DATA__?.gameplayService?.state?.decisions;
- if(decisions!==engineDecisions){
-  engineDecisions=decisions;
-  officeDecisionFiles=window.__WTW_OFFICE_DIRECT_READ__.decisions({decisions});
+ const game=window.__WTW_1999_UI_DATA__?.gameplayService?.state;
+ if(game!==engineDecisionState){
+  engineDecisionState=game;
+  officeDecisionFiles=[
+   ...window.__WTW_OFFICE_DIRECT_READ__.trainerRequests(game),
+   ...window.__WTW_OFFICE_DIRECT_READ__.decisions({decisions:game?.decisions})
+  ];
  }
  return officeDecisionFiles;
 }
@@ -1344,6 +1347,18 @@ async function answerDecision(decisionId,optionId){
  }catch(error){APP.decisionError=String(error?.message||error)}
  finally{APP.decisionPending=false;paint()}
 }
+/** Trainer replies use the same Desk and the canonical durable game command. */
+async function answerTrainerRequest(requestId,choice){
+ if(APP.decisionPending)return;
+ APP.decisionPending=true;
+ APP.decisionError='';
+ paint();
+ try{
+  await window.__WTW_OFFICE_COMMANDS__.dispatch('ANSWER_TRAINER_MANAGEMENT_REQUEST',{
+   request_id:requestId,choice});
+ }catch(error){APP.decisionError=String(error?.message||error)}
+ finally{APP.decisionPending=false;paint()}
+}
 function center(){
  const d=currDesk(),messages=currentMessages(),resolved=d.receipt;
  const index=messages.findIndex(m=>m.case===APP.activeCase)+1;
@@ -1351,7 +1366,9 @@ function center(){
  const isDecision=Boolean(resolved||d.moves.some(m=>m.optionId));
  const moves=resolved
   ?`<div class="ng-resolved"><div class="ng-resolution-title">${glyph('check',16)} ${safe(resolved.choiceTitle)}</div><div class="ng-outtext">Recorded on ${safe(resolved.date)}</div><div class="ng-outcome-actions"><button class="ng-nextopen" data-ng="nextopen">NEXT OPEN CASE ${glyph('right',13)}</button></div></div>`
-  :d.moves.map((m,i)=>`<button type="button" class="ng-move ng-move-${i%3}" ${m.optionId
+  :d.moves.map((m,i)=>`<button type="button" class="ng-move ng-move-${i%3}" ${m.requestId
+   ?`data-ng="answer-trainer-request" data-decision="${safe(m.requestId)}" data-val="${safe(m.optionId)}" ${APP.decisionPending?'disabled':''}`
+   :m.optionId
    ?`data-ng="answer-decision" data-decision="${safe(APP.activeCase)}" data-val="${safe(m.optionId)}" ${APP.decisionPending?'disabled':''}`
    :`data-ng="menu" data-val="${safe(m.menu)}"`}><span class="ng-move-number">0${i+1}</span><span class="ng-move-body"><span class="ng-movetag">${safe(m.tag)}</span><strong>${safe(m.title)}</strong></span><span class="ng-movearrow">${glyph('right',17)}</span></button>`).join('');
 return `<section class="ng-main"><section class="ng-card ng-feature"><header class="ng-cardhead"><span class="ng-sectionicon gold">${glyph('folder',17)}</span><div class="ng-headinggroup"><h3>Decision Desk</h3><span>THE MANAGER'S PRIORITY FILE</span></div><button class="ng-org-chip" data-ng="organization" aria-label="Open organization overview; available cash ${safe(cashDisplay())}" title="View your racing operation and available cash">${organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',false,true)}<span class="ng-org-chip-cash"><small>CASH</small><strong>${safe(cashDisplay())}</strong></span></button><div class="ng-case-navigation"><div class="ng-case-pips" aria-label="Select today's case">${messages.map((m,i)=>`<button type="button" data-ng="case" data-val="${safe(m.case)}" class="ng-case-pip ${m.case===APP.activeCase?'on':''} ${m.resolved?'reviewed':m.urgent?'priority':''}" title="${safe(m.title)}${m.resolved?' — Reviewed':''}" aria-label="Case ${i+1}: ${safe(m.title)}" aria-current="${m.case===APP.activeCase?'true':'false'}"></button>`).join('')}</div><span class="ng-case-position"><span class="ng-live-dot"></span>${String(index).padStart(2,'0')} / ${String(messages.length).padStart(2,'0')}</span><div class="ng-case-arrows"><button type="button" data-ng="caseprev" aria-label="Previous decision" title="Previous case">${glyph('left',13)}</button><button type="button" data-ng="casenext" aria-label="Next decision" title="Next case">${glyph('right',13)}</button></div></div></header><div class="ng-featurebody"><div class="ng-case"><div class="ng-case-eyebrow"><span></span>${safe(d.type)} <i>·</i> ${safe(msg?.from||source)}</div><div class="ng-casetitle ng-static-title"><h2>${safe(d.title)}</h2></div><p class="ng-case-summary">${safe(d.summary)}</p><div class="ng-facts">${[['Pressure',d.pressure],['Primary risk',d.risk],['Manager read',d.read]].map((f,i)=>`<div class="ng-fact ng-fact-${i}"><small>${safe(f[0])}</small><b>${safe(titleCaseOfficeFact(f[1]))}</b></div>`).join('')}</div><div class="ng-caseactions">${isDecision?'':`<button data-ng="action" data-val="Open file">REVIEW FULL FILE ${glyph('arrow',14)}</button>`}</div></div><div class="ng-featurephoto">${decisionScene(d)}</div></div></section><div class="ng-centerbottom"><section class="ng-card ng-intel"><header class="ng-cardhead"><span class="ng-sectionicon">${glyph('sparkle',16)}</span><div class="ng-headinggroup"><h3>Intelligence</h3><span>${d.intel.length} SOURCE READS</span></div>${isDecision?'':`<button class="ng-cardlink" data-ng="action" data-val="Open current source">${safe(source)} ${glyph('arrow',12)}</button>`}</header><div class="ng-intelgrid">${d.intel.map((item,i)=>`<button class="ng-intelitem ng-intel-${i%4}" data-ng="intel" data-val="${i}"><span class="ng-intel-kicker" aria-label="Source ${i+1}"><span class="ng-intel-marker"></span>0${i+1}</span><b>${safe(item.title)}</b><p>${safe(item.body)}</p></button>`).join('')}</div></section><section class="ng-card ng-choices"><header class="ng-cardhead"><span class="ng-sectionicon gold">${glyph('flag',16)}</span><div class="ng-headinggroup"><h3>${isDecision?'Your Call':'Explore the World'}</h3><span>${isDecision?'MANAGEMENT DECISION':'JANUARY 1999 TEST NAVIGATION'}</span></div><span class="ng-choice-count">${resolved?'RECORDED':`${d.moves.length} OPTIONS`}</span></header><div class="ng-moves">${moves}${APP.decisionError?`<p class="ng-save-error" role="alert">${safe(APP.decisionError)}</p>`:''}</div></section></div></section>`;
@@ -4125,6 +4142,7 @@ window.addEventListener('click',e=>{
  if(key==='fixture'){const n=$$('.right .fixtureList .fixture[data-track]')[Number(val)];return bridgeNode(n)}
  if(key==='track'){const row=$$('.right .fixture').find(x=>x.dataset.track===val);if(row){const p=$('p',row);return bridgeNode(p)}return bridgeNode(originalAct('World'))}
  if(key==='answer-decision')return answerDecision(btn.dataset.decision,val);
+ if(key==='answer-trainer-request')return answerTrainerRequest(btn.dataset.decision,val);
  if(key==='intel'){if(window.__WTW_1999_MANAGEMENT__)return openMenu('World');return bridgeNode($('#intelGrid .intelCard')[Number(val)])}
  if(key==='network-sort'){APP.networkSort=val;APP.networkPage=0;APP.networkFocus='';return paint()}
  if(key==='network-role'){APP.networkRole=val;APP.networkPage=0;APP.networkFocus='';return paint()}
