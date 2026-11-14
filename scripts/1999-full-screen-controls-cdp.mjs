@@ -94,14 +94,14 @@ try {
   let latest=null;
   for(let i=0;i<90;i++){
    latest=await view();
-   if(latest?.ready&&(!section||latest.section===section)&&(!page||latest.page===page))
+   if(latest?.ready&&latest.rail&&latest.header&&latest.hiddenOffice&&latest.numberOfRoots===1&&latest.date&&(!section||latest.section===section)&&(!page||latest.page===page))
     return latest;
    await delay(80);
   }
   throw Error(where+': game screen did not open; '+JSON.stringify(latest));
  }
  const baseline=await ready(null,null,'Initial Office');
- assert.ok(baseline.rail&&baseline.header&&baseline.hiddenOffice);
+ assert.ok(baseline.rail&&baseline.header&&baseline.hiddenOffice,'Initial game shell incomplete: '+JSON.stringify(baseline));
  assert.equal(baseline.numberOfRoots,1);
  let pageCount=0,tableCount=0;
  for(const [section,pages] of Object.entries(tabmap)){
