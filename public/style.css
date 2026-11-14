@@ -755,7 +755,7 @@ button:disabled{cursor:not-allowed;opacity:.5}
 
 .header-help{border:1px solid #42524b;background:#1c2629;color:#aad0b6;font-weight:750;border-radius:7px;padding:8px 11px}
 
-.env-pill{background:#e2c784;color:#dcc487;border:1px solid #8f7b57;border-color:#8f7b57}
+.env-pill{background:#e2c784;color:#241e2c;border:1px solid #8f7b57;border-color:#8f7b57}
 
 .env-pill.live{background:#3b6b51;color:#aad0b6;border-color:#42524b}
 
@@ -1832,6 +1832,13 @@ body{margin:0;background:var(--cream);color:var(--ink);font-size:12px;line-heigh
 /* THE RACING ANNUAL — Year in Review editorial identity.
  * Existing source/read model and History table stay unchanged.  One definitive
  * component layer; no legacy olive annual-card styles or parallel UI layouts. */
+/* The archive demo warning is genuine provenance information, not a gold-on-gold banner. */
+.main:has(.history-year-review) > .callout{
+ color:#f7e7cf;background:linear-gradient(107deg,#4a293d,#202b3d 76%);
+ border:1px solid #a68a64;border-left:4px solid #e4bc74;border-radius:4px;
+ margin-bottom:10px;padding:10px 13px;font-size:11px;line-height:1.45
+}
+.main:has(.history-year-review) > .callout strong{color:#fff1d2}
 .history-year-review{
  --annual-ink:#111a29;--annual-wine:#67263f;--annual-red:#c84b5d;
  --annual-gold:#e4bc74;--annual-cream:#f5e8ce;--annual-muted:#b5c2d3;
