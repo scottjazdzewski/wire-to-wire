@@ -18,6 +18,21 @@ import {
 
 export const DURABLE_FICTIONAL_NAMING_MODEL='WTW_DURABLE_FICTIONAL_NAMES_V12';
 export const DURABLE_NAMING_BUNDLE_MODEL='WTW_NAMING_ARCHIVE_V12';
+// V18 optional naming metadata is appended ONLY for newly approved people;
+// pre-V18 records remain valid without inferred nationality or culture.
+export const APPROVED_PERSON_NAMING_METADATA_MODEL='WTW_APPROVED_PERSON_NAMING_METADATA_V18';
+const PERSON_NAMING_FIELDS=Object.freeze([
+ 'birthCountry','nameStyle','nameStructure','nameOrigin','givenNameDecade',
+ 'regionalNamingCohort','internationalNamingCohort','internationalNameCulture',
+ 'professionalOriginModel','generationalNameEvidence','jockeyColony',
+ 'riderOriginModel'
+]);
+function namingMetadata(person){
+ const data={model:APPROVED_PERSON_NAMING_METADATA_MODEL};
+ for(const field of PERSON_NAMING_FIELDS)
+  if(person[field]!==undefined)data[field]=clone(person[field]);
+ return Object.keys(data).length>1?data:null;
+}
 const safeNames=(names,label)=>{
  if(!Array.isArray(names)||names.some(n=>typeof n!=='string'||!n.trim()))
   throw Error('Invalid '+label);
@@ -43,7 +58,8 @@ const compact=(prepared,registry)=>Object.freeze({
 });
 function batchRecord(prepared){
  const people=prepared.batch.people.map(x=>({id:x.id,name:x.name,
-  role:x.role,primarySurname:x.primarySurname,birthYear:x.birthYear}));
+  role:x.role,primarySurname:x.primarySurname,birthYear:x.birthYear,
+  ...(namingMetadata(x)?{identityMetadataV18:namingMetadata(x)}:{})}));
  const owners=prepared.batch.owners.map(x=>({
   id:x.id,name:x.name,namingRegion:x.namingRegion,
   ownershipArchetype:x.ownershipArchetype,principalId:x.principalId
@@ -74,6 +90,7 @@ function hydrate(data){
   protectedOrganizations:meta.protectedOrganizations
  });
  const sorted=[...data.batches].sort((a,b)=>a.revision-b.revision);
+ const identityById=new Map();
  for(const row of sorted){
   if(row.expectedRevision!==registry.revision||
    row.revision!==registry.revision+1||!Number.isSafeInteger(row.batchIndex)||
@@ -84,6 +101,15 @@ function hydrate(data){
    expectedRevision:row.expectedRevision,batchIndex:row.batchIndex,
    people:row.people,organizations:row.organizations,owners:row.owners
   });
+  for(const person of row.people){
+   const metadata=person.identityMetadataV18;
+   if(metadata!==undefined){
+    if(!metadata||metadata.model!==APPROVED_PERSON_NAMING_METADATA_MODEL||
+     Object.keys(metadata).some(k=>k!=='model'&&!PERSON_NAMING_FIELDS.includes(k)))
+     throw Error('Invalid versioned approved-person naming metadata');
+    identityById.set(person.id,clone(metadata));
+   }
+  }
  }
  if(registry.revision!==meta.revision)
   throw Error('Durable registry and cursor revisions disagree');
@@ -96,7 +122,7 @@ function hydrate(data){
   cursor.ownersIssued!==registry.ownerCount
  ))throw Error('Durable naming cursor failed identity reconciliation');
  if(meta.revision>0&&!cursor)throw Error('Committed naming registry has no cursor');
- return {registry,cursor};
+ return {registry,cursor,identityById};
 }
 function assertStorage(storage){
  if(!storage||typeof storage.read!=='function'||
@@ -245,12 +271,12 @@ export async function openDurableFictionalNameService({
   JSON.stringify(data.meta.protectedPeople)!==JSON.stringify(protectedPeople)||
   JSON.stringify(data.meta.protectedOrganizations)!==JSON.stringify(protectedOrganizations)))
   throw Error('Existing naming registry has different protected identities');
- let {registry,cursor}=hydrate(data);
+ let {registry,cursor,identityById}=hydrate(data);
  let unusable=false;
  async function refresh(){
   const latest=await storage.read({worldId,seed});
   ensureStoredData(latest,worldId,seed);
-  ({registry,cursor}=hydrate(latest));
+  ({registry,cursor,identityById}=hydrate(latest));
   unusable=false;
   return cursor;
  }
@@ -277,6 +303,10 @@ export async function openDurableFictionalNameService({
    if(JSON.stringify(result.nextCursor)!==JSON.stringify(nextCursor))
     throw Error('Durable and memory naming cursors diverged');
    cursor=result.nextCursor;
+   for(const person of record.people){
+    if(person.identityMetadataV18)
+     identityById.set(person.id,clone(person.identityMetadataV18));
+   }
    return Object.freeze({...result,storageModel:DURABLE_FICTIONAL_NAMING_MODEL});
   }catch(error){
    // Persistence succeeded. Never continue using a potentially stale
@@ -304,6 +334,12 @@ export async function openDurableFictionalNameService({
   listOwners:(options)=>registry.listOwners(options),
   listGroups:(options)=>registry.listGroups(options),
   hasName:(name)=>registry.hasAnyName(name),
-  getApprovedPerson:(id)=>registry.getApprovedPerson(id)
+  getApprovedPerson:(id)=>registry.getApprovedPerson(id),
+  getApprovedPersonIdentity:(id)=>{
+   const person=registry.getApprovedPerson(id);
+   if(!person)return null;
+   return Object.freeze({...person,
+    namingMetadata:identityById.has(id)?Object.freeze(clone(identityById.get(id))):null});
+  }
  });
 }
