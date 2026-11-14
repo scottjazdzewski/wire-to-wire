@@ -30,6 +30,8 @@ capture(){
   test -s "visual-audit/screenshots/$name.png"
 }
 capture racing-office '' 'ng-board'
+capture stable-roster '?ui=Stable%20%E2%80%94%20Overview' 'ng-stable-roster-v2'
+capture racing-roster '?ui=Racing%20%E2%80%94%20Overview' 'ng-dept-roster'
 capture global-search '?ui=Search' 'ng-search-roster-page'
 capture horse-profile '?page=horse&name=The+Last+Match' 'ng-horse-dossier'
 capture people-profile '?ui=WorldRecord%3Aperson%3AP-000018' 'ng-person-horse-dossier'
@@ -74,6 +76,13 @@ frame.onload=()=>setTimeout(()=>{
    shell:rect('.ng-manager-shell'),
    header:rect('.ng-global'),
    page:rect('.ng-board')||rect('.ng-routegrid'),
+   roster:rect('.ng-rs-roster'),
+   rosterToolbar:rect('.ng-rs-tools'),
+   densityControls:[...d.querySelectorAll('.ng-rs-mode button')].map(button=>({
+    text:button.textContent.trim(),value:button.dataset.val,
+    active:button.classList.contains('on'),
+    pressed:button.getAttribute('aria-pressed')
+   })),
    horse:rect('.ng-horse-dossier'),
    search:rect('.ng-search-roster-page'),
    people:rect('.ng-person-horse-dossier'),
@@ -106,6 +115,10 @@ probe(){
     >"visual-audit/dom/probe-$key.html" 2>"/tmp/wtw-probe-$key.log"
 }
 probe office ''
+probe stable-roster '%3Fui%3DStable%2520%25E2%2580%2594%2520Overview'
+probe racing-roster '%3Fui%3DRacing%2520%25E2%2580%2594%2520Overview'
+probe laptop-stable-roster '%3Fui%3DStable%2520%25E2%2580%2594%2520Overview' '1280,800'
+probe laptop-racing-roster '%3Fui%3DRacing%2520%25E2%2580%2594%2520Overview' '1280,800'
 probe search '%3Fui%3DSearch'
 probe horse '%3Fpage%3Dhorse%26name%3DThe%2BLast%2BMatch'
 probe person '%3Fui%3DWorldRecord%253Aperson%253AP-000018'
@@ -137,6 +150,23 @@ for name in ('office','search','horse','person'):
  if name=='search':assert data['search'] and data['search']['width']>=990,(name,'Search roster not visible')
  if name=='person':assert data['people'] and data['people']['width']>=990,(name,'People Horse-dossier not visible')
  print('VISUAL GEOMETRY',name,'rail',rail['width'],'stage',stage['width'],'crest',brand['width'])
+# Actual in-game Stable and Racing rosters must share one density pattern,
+# not merely use similar CSS in source. This also checks laptop layouts.
+for name in ('stable-roster','racing-roster','laptop-stable-roster','laptop-racing-roster'):
+ source=Path(f'visual-audit/dom/probe-{name}.html').read_text()
+ assert 'data-check="ready"' in source,(name,'Roster geometry probe incomplete')
+ match=re.search(r'<pre id="measure"[^>]*>(.*?)</pre>',source,re.S)
+ assert match,(name,'Missing roster metrics')
+ data=json.loads(html.unescape(match.group(1)))
+ assert data['roster'] and data['roster']['width']>=850,(name,'Roster workspace missing or clipped')
+ assert data['rosterToolbar'] and data['rosterToolbar']['width']>=850,(name,'Shared toolbar missing')
+ buttons=data['densityControls']
+ assert [b['value'] for b in buttons]==['all','compact'],(name,'View mode order drift',buttons)
+ assert [b['text'] for b in buttons]==['ALL COLUMNS','QUICK VIEW'],(name,'Mode labels drift',buttons)
+ assert sum(b['active'] and b['pressed']=='true' for b in buttons)==1,(name,'Selected mode state inconsistent',buttons)
+ assert not data['sourceBridgeVisible'],(name,'Legacy Office became visible')
+ assert not data['duplicateGlobalMenuVisible'],(name,'Redundant navigation appeared')
+ print('ROSTER PARITY',name,'width',data['roster']['width'],'toolbar',data['rosterToolbar']['width'])
 # Same core chrome, record controls and protected identity space across profiles.
 profiles=('horse','person','aqueduct','gulfstream','farm','stable','owner',
           'laptop-horse','laptop-person','laptop-aqueduct','laptop-farm','laptop-owner')
