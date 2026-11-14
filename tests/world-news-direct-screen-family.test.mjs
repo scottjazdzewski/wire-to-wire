@@ -7,7 +7,7 @@ const ui=read('public/next/next.js');
 const html=read('public/next/index.html');
 const office=read('public/office-v30-4.js');
 const browser=read('scripts/1999-management-browser-smoke.sh');
-const start=ui.indexOf('function managerRecordViewControl(');
+const start=ui.indexOf('function managementViewOptions(');
 const end=ui.indexOf('\nfunction managerDashboard(){',start);
 assert.ok(start>0&&end>start,'News and World must reuse canonical manager controls');
 const functions=ui.slice(start,end);
