@@ -236,6 +236,32 @@ export function advanceGameHorseCare({state,world,emit}){
     h.horse_id,site.id,transaction,{owner_id:h.owner_organization_id,
      trainer_id:h.trainer_id,board_minor:info.board_minor,
      trainer_fee_minor:info.fee_minor});
+   // The facility receives the combined boarding/training invoice, then
+   // remits the trainer's earned fee to the permanent P-ID. The site keeps
+   // the boarding portion, irrespective of ownership or temporary location.
+   addFinance(state,operator,-info.fee_minor,'HORSE_CARE_TRAINER_REMITTANCE',
+    h.horse_id,site.id,transaction,{trainer_id:h.trainer_id,
+     owner_id:h.owner_organization_id});
+   const paid=state.runtime.racing?.trainer_finances_minor;
+   ensure(isObject(paid),'HORSE_CARE_FINANCES','Missing saved trainer earnings registry');
+   const previous=paid[h.trainer_id]||0;
+   ensure(money(previous)&&money(previous+info.fee_minor),
+    'HORSE_CARE_FINANCES','Trainer earnings must remain valid integer cents');
+   paid[h.trainer_id]=previous+info.fee_minor;
+   state.runtime.finances.ledger.push({date:state.clock.date,
+    transaction_id:transaction,kind:'HORSE_CARE_TRAINER_EARNINGS',
+    operation_id:null,person_id:h.trainer_id,horse_id:h.horse_id,
+    site_id:site.id,amount_minor:info.fee_minor,
+    source:'MODELED_PAID_DAILY_TRAINER_SERVICE'});
+   // Feed, medicines and workout supplies leave the game economy for a
+   // modeled external supplier; explicit settlement prevents money from
+   // disappearing without an auditable counterparty.
+   const outside=used-service;
+   if(outside>0)state.runtime.finances.ledger.push({date:state.clock.date,
+    transaction_id:transaction,kind:'HORSE_CARE_SUPPLIER_RECEIPT',
+    operation_id:null,horse_id:h.horse_id,site_id:site.id,
+    amount_minor:outside,owner_id:h.owner_organization_id,
+    source:'MODELED_EXTERNAL_CARE_SUPPLY_PROVIDER'});
    r.finance.spent_minor+=used;r.finance.lifetime_minor+=used;
   }
   r.training=result.horse;r.last_day=day;
