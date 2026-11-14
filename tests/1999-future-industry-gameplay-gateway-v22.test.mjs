@@ -218,13 +218,14 @@ test('V22 explicitly approved FUTURE person and business events enter V17, not a
  const reuse=gw.quoteOwnerReuse({region:'KENTUCKY',slots:1});
  assert.ok(!reuse.candidates.some(x=>x.id===firm.id));
  assert.equal(reuse.detachedBusinessesExcluded,1);
- const stale=dispatchGameCommand({
+ assert.throws(()=>dispatchGameCommand({
   state,world:w,
   command:{id:'V22:UNAPPROVED_ASSIGN',
    actor:'system',type:'ASSIGN_HORSE_OWNER',
    payload:{horse_id:'H-TEST-004',owner_id:firm.id}}
- });
- assert.fail('game kernel incorrectly accepted non-world future owner '+stale.state);
+ }),error=>error.code==='UNKNOWN_OWNER');
+ assert.equal(exportGameSave(state,w),gameBefore);
+ assert.equal(JSON.stringify(w),worldBefore);
 });
 test('V22 game-clock approved personnel events obey V17 succession and retirement guards',async()=>{
  const {bridge}=await setup(),w=world(),state=makeRun(w,'2001-09-13');
