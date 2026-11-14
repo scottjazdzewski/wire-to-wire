@@ -12,6 +12,7 @@ import {TRAINING_PLANS,recommendHorseWorkout} from '../engine/horse-development.
 import {facilityAction} from './facility-operations.js';
 import {horseTravelStatus,physicalHorseSiteId,effectiveHorseCareSite} from './shipping-1999.js';
 import {trainerDailyFee} from './trainer-contracts-1999.js';
+import {getOwnerTrainerMandate} from './owner-trainer-career-1999.js';
 import {advancePostRaceCampaigns,postRaceWorkoutGuidance,postRaceCarePriority} from './post-race-campaign-1999.js';
 
 export const DAILY_AGENT_SCHEMA='WTW_DAILY_AGENT_DECISIONS_V1';
@@ -114,16 +115,20 @@ function ownerDecision(state,h,site,profile,related,ownerHerd,day){
   aptitude=h.starting_attributes.potential_ability/99;
  const severity=record.training.sorenessDays>0||risk>.53;
  const raceCare=postRaceCarePriority(state,h);
+ const mandate=getOwnerTrainerMandate(state,h.owner_organization_id,h.trainer_id);
+ const backed=mandate==='SUPPORT'&&runway>2.3&&related.owner_trust>=.38;
+ const watchful=mandate==='WATCH'||mandate==='IMPROVEMENT_PLAN';
  const canInvest=runway>2.5&&(profile.investment_appetite>.6||aptitude>.75)&&
-  related.owner_trust>=.38;
+  related.owner_trust>=.38&&(!watchful||runway>4);
+ const improve=mandate==='IMPROVEMENT_PLAN'&&runway>1.5;
  const conserve=runway<1.3;
- const feed=conserve?'ECONOMY':canInvest||
+ const feed=conserve?'ECONOMY':canInvest||backed||
   raceCare.active&&runway>3&&profile.investment_appetite>.49?
   'PREMIUM':'STANDARD';
  const care=severity||(!conserve&&
-  (profile.welfare_priority>.73||
+  (profile.welfare_priority>.73||improve||
    raceCare.active&&profile.welfare_priority>.44))?'PROACTIVE':'BASIC';
- const mult=conserve?1.04:canInvest?1.22:1.13;
+ const mult=conserve?1.04:improve?1.26:backed?1.25:canInvest?1.22:1.13;
  const monthly_budget_minor=Math.max(0,Math.min(100000000,
   Math.round((baseline+
    (FEED_PROGRAMS[feed].daily_minor-FEED_PROGRAMS.STANDARD.daily_minor+
@@ -131,12 +136,16 @@ function ownerDecision(state,h,site,profile,related,ownerHerd,day){
  return {feed,care,training_plan:record.policy.training_plan,monthly_budget_minor,
   reason:severity?'HORSE_WELFARE_RECOVERY':conserve?'OWNER_LIQUIDITY_PRESSURE':
    raceCare.active?'POST_RACE_CARE_INVESTMENT':
+   improve?'TRAINER_IMPROVEMENT_EQUINE_CARE_SUPPORT':
+   backed?'SUSTAINED_TRAINER_SUCCESS_BACKING':
+   watchful?'OWNER_MONITORS_TRAINER_RESULTS':
    canInvest?'BACKING_PROMISING_HORSE':'BALANCED_CARE_INVESTMENT',
   evidence:{owner_cash_minor:cash??null,approx_runway_months:Math.round(runway*10)/10,
    expected_monthly_need_minor:totalNeed,
    horse_potential:h.starting_attributes.potential_ability,
    owner_welfare_priority:profile.welfare_priority,
    trainer_trust:related.owner_trust,fitness,risk,
+   trainer_career_mandate:mandate,
    postrace_priority:raceCare.active,
    previous_race_id:raceCare.last_race_id??null}};
 }
