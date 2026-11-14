@@ -22,7 +22,7 @@ test('one headless action surface; no legacy screen, DOM or own game storage',()
  assert.equal(Object.isFrozen(api),true);
  assert.deepEqual(Object.keys(api).sort(),['dispatch','schema']);
  assert.doesNotMatch(source,/\bdocument\b|\blocalStorage\b|\bindexedDB\b|querySelector|\.click\s*\(|\.innerHTML/);
- assert.match(html,/office-direct-command\.js\?rev=wtw-headless-commands-v2/);
+ assert.match(html,/office-direct-command\.js\?rev=wtw-headless-commands-v3/);
  assert.ok(html.indexOf('office-v30-4.js')<html.indexOf('office-direct-command.js'));
  assert.ok(html.indexOf('office-direct-command.js')<html.indexOf('/next/next.js'));
 });
