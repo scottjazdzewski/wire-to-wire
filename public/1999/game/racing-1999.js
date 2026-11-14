@@ -66,11 +66,24 @@ export function gameRaceProgram(state,world,trackId,date){
  return buildConditionBook1999({date,track,trackIndex:ix,seed:state.rng.seed,
   sourceStakes:[],includeKnownStakes:false});
 }
+/** Only races with fully modeled entry conditions may open for gameplay.
+ * Claiming transfers, starter qualification, weights and stakes nominations
+ * remain proposals, not quietly accepted as ordinary allowance races. */
+export function supported1999RaceClass(race){
+ const maiden=typeof race?.maiden==='boolean'?race.maiden:race?.maidenOnly;
+ const maxWins=race?.max_wins??race?.maxCareerWins;
+ if(race?.conditions==='Maiden Special Weight')
+  return maiden===true&&maxWins==null;
+ if(race?.conditions==='Allowance')
+  return maiden===false&&[1,2].includes(maxWins);
+ return false;
+}
 function raceShape(book){
  return {id:book.id,track_id:book.trackId,date:book.date,number:book.number,
   name:book.name,conditions:book.conditions,age:book.ageRequirement,
   sex:book.sexRestriction,surface:book.surface,distance_furlongs:book.distanceFurlongs,
   max_wins:book.maxCareerWins,maiden:book.maidenOnly,
+  win_restriction:book.winRestriction,full_conditions:book.fullConditions,
   field_capacity:book.fieldCapacity,purse_minor:Math.round(book.purse*100),
   source:'WTW_1999_TRACK_SPECIFIC_MEET_PROGRESSION',
   status:'ENTRIES_OPEN',field:[],results:null,escrow_minor:Math.round(book.purse*100)};
@@ -82,10 +95,14 @@ export function raceEligibility(state,horse,race){
    race.age==='3YO+'&&age<3)reasons.push('AGE_RESTRICTION');
  if(race.sex==='FILLIES_AND_MARES'&&!['FILLY','MARE'].includes(horse.sex))
   reasons.push('SEX_RESTRICTION');
- if(race.conditions!=='Maiden Special Weight')
+ if(!supported1999RaceClass(race))
   reasons.push('CLASS_CONDITIONS_NOT_YET_MODELED');
- if(race.maiden&&horse.career.wins>0)reasons.push('MAIDEN_RESTRICTION');
- if(race.max_wins!==null&&race.max_wins!==undefined&&horse.career.wins>race.max_wins)
+ if(race.conditions==='Maiden Special Weight'&&horse.career.wins>0)
+  reasons.push('MAIDEN_RESTRICTION');
+ if(race.conditions==='Allowance'&&horse.career.wins<1)
+  reasons.push('ALLOWANCE_REQUIRES_MAIDEN_VICTORY');
+ const maxWins=race.max_wins??race.maxCareerWins;
+ if(Number.isInteger(maxWins)&&horse.career.wins>maxWins)
   reasons.push('CAREER_WIN_LIMIT');
  const trip=horseTravelStatus(state,horse.horse_id);
  const arrivalConfirmed=trip?.status==='OUTBOUND'&&trip.destination_track_id===race.track_id&&
@@ -103,10 +120,13 @@ export function raceEligibility(state,horse,race){
   filter(r=>r.status==='OFFICIAL_SIM_RESULT'&&r.results?.some(row=>row.horse_id===horse.horse_id))
   .sort((a,b)=>b.date.localeCompare(a.date));
  if(history.length&&dayGap(history[0].date,race.date)<12)reasons.push('INSUFFICIENT_RECOVERY_SPACING');
- const other=Object.values(state.runtime.entries||{}).some(e=>e.horse_id===horse.horse_id&&
-  e.race_id!==race.id&&state.runtime.races?.[e.race_id]?.date===race.date&&
-  e.status!=='SCRATCHED');
- if(other)reasons.push('CONFLICTING_ENTRY');
+ const planned=Object.values(state.runtime.entries||{}).filter(e=>
+  e.horse_id===horse.horse_id&&e.race_id!==race.id&&
+  ['ENTERED','BOOKED'].includes(e.status)).map(e=>state.runtime.races?.[e.race_id]).
+  filter(r=>r?.status==='ENTRIES_OPEN');
+ if(planned.some(r=>r.date===race.date))reasons.push('CONFLICTING_ENTRY');
+ else if(planned.some(r=>Math.abs(dayGap(r.date,race.date))<12))
+  reasons.push('CONFLICTING_CAMPAIGN_SPACING');
  return {eligible:reasons.length===0,reasons};
 }
 function charge(state,owner,amount,kind,race,h,jockeyId){
@@ -139,6 +159,8 @@ export function racingAction({state,world,command,emit}){
   const book=gameRaceProgram(state,world,p.track_id,p.date).find(x=>x.id===p.race_id);
   ensure(book&&!state.runtime.races[p.race_id]&&!book.stakeId,
    'RACE_PROGRAM','Race ID must match an ordinary modeled source condition book');
+  ensure(supported1999RaceClass(book),
+   'RACE_CLASS_UNMODELED','Only modeled maiden special weight and NW2/NW3 allowance conditions may be entered');
   state.runtime.races[book.id]=raceShape(book);
   emit('RACE_PROGRAM_OPENED',{race_id:book.id,date:book.date,track_id:book.trackId,
    surface:book.surface,distance_furlongs:book.distanceFurlongs,
@@ -246,7 +268,15 @@ function settle1999Race({state,world,race_id,emit}){
     amount_minor:jockeyShare,race_id:race.id,horse_id:horse.horse_id},
    {date:state.clock.date,kind:'RACE_PURSE_TRAINER_CREDIT',operation_id:null,person_id:horse.trainer_id,
     amount_minor:trainerShare,race_id:race.id,horse_id:horse.horse_id});
+  const firstCareerWin=i===0&&horse.career.wins===0;
   horse.career.starts++;if(i===0)horse.career.wins++;
+  if(firstCareerWin){
+   emit('HORSE_MAIDEN_GRADUATED',{horse_id:horse.horse_id,race_id:race.id,
+    owner_id:owner,trainer_id:horse.trainer_id,jockey_id:jockey,
+    date:race.date,wins:horse.career.wins,
+    next_step:'ALLOWANCE_NW2_OR_NW3_IF_ELIGIBLE',
+    authority:'MODELED_1999_GAME_CAREER_NOT_HISTORICAL'});
+  }
   horse.career.earnings_minor+=awarded;
   const j=rt.jockeys[jockey];j.starts++;if(i===0)j.wins++;
   const outcome=1-i/Math.max(1,scored.length-1);
@@ -293,6 +323,7 @@ export function validateRacingRuntime(state,world){
  for(const [id,r] of Object.entries(state.runtime.races||{})){
   if(!r.source||r.source!=='WTW_1999_TRACK_SPECIFIC_MEET_PROGRESSION')continue;
   ensure(r.id===id&&trackFor(world,r.track_id)&&validDate(r.date)&&
+   supported1999RaceClass(r)&&
    ['ENTRIES_OPEN','OFFICIAL_SIM_RESULT','CANCELLED_INSUFFICIENT_FIELD'].includes(r.status)&&
    Array.isArray(r.field)&&r.field.length<=r.field_capacity&&
    cents(r.purse_minor)&&cents(r.escrow_minor)&&
