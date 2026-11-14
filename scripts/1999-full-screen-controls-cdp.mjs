@@ -142,11 +142,68 @@ try {
   }
   console.log('WTW_SCREEN_FAMILY_PASS '+section+' '+pages.length+' views');
  }
- assert.ok(pageCount>=50,'Most of the approved screen inventory was lost');
+ // The Office home intentionally uses its approved compact horizontal quick-nav,
+ // while its deeper pages use the same management VIEW menu as other departments.
+ for(const page of Array.from(tabmap.Office)){
+  const home=await evaluate(`(()=>{
+   const b=document.querySelector('#wtwNextgen .ng-game-rail [data-ng="office"]');
+   if(!b)return false;b.click();return true;
+  })()`);
+  assert.ok(home,'Office return control missing');
+  await ready('Office','Office','Office overview');
+  if(page!=='Overview'){
+   const opened=await evaluate(`(()=>{
+    const tab=[...document.querySelectorAll('#wtwNextgen .ng-subnav [data-ng="tab"]')]
+     .find(n=>n.dataset.val===${JSON.stringify(page)});
+    if(!tab)return false;tab.click();return true;
+   })()`);
+   assert.ok(opened,'Office quick-nav missing '+page);
+   const state=page==='Calendar'?
+    await ready('Racing','Overview','Office calendar to Racing'):
+    await ready('Office',page,'Office / '+page);
+   assert.equal(state.numberOfRoots,1);
+   assert.equal(state.legacy,0);
+   assert.equal(state.date,baseline.date);
+   if(page!=='Calendar'){
+    assert.equal(state.selected,page,'Office deep-view dropdown out of sync: '+page);
+    assert.deepEqual(state.options,Array.from(tabmap.Office));
+   }
+  }else{
+   const board=await evaluate("!!document.querySelector('#wtwNextgen .ng-board')");
+   assert.ok(board,'Approved interactive Office dashboard is missing');
+  }
+  pageCount++;
+ }
+ console.log('WTW_SCREEN_FAMILY_PASS Office '+tabmap.Office.length+' views');
+
+ // History is an independently routed Archive but remains part of the product.
+ // Verify every canonical History category without moving it into /next/ or
+ // reviving obsolete Office/Manager windows.
+ await command('Page.enable');
+ const archiveCodes=['races','horses','people','tracks','seasons','sources'];
+ assert.equal(archiveCodes.length,tabmap.History.length);
+ for(const code of archiveCodes){
+  await command('Page.navigate',{url:'http://127.0.0.1:8891/archive/?page='+code});
+  let passed=false,last=null;
+  for(let retry=0;retry<120;retry++){
+   try{
+    last=await evaluate(`({
+      path:location.pathname,category:new URLSearchParams(location.search).get('page'),
+      vault:document.body?.textContent?.includes('History Vault')||false
+    })`);
+    if(last?.path==='/archive/'&&last.category===code&&last.vault){passed=true;break}
+   }catch{}
+   await delay(80);
+  }
+  assert.ok(passed,'Historical Archive route failed '+code+': '+JSON.stringify(last));
+  pageCount++;
+ }
+ console.log('WTW_SCREEN_FAMILY_PASS History '+archiveCodes.length+' views');
+ assert.ok(pageCount>=67,'The accepted Office + department + History screen inventory was reduced');
  assert.ok(tableCount>=18,'Full sortable roster family coverage unexpectedly missing');
  console.log('WTW_SCREEN_MATRIX_PASS '+JSON.stringify({
   individualViews:pageCount,sortableScrollableTableViews:tableCount,
-  date:baseline.date,oneUI:true,menuConsistency:true,sections:Object.keys(tabmap).length-2
+  date:baseline.date,oneUI:true,menuConsistency:true,sections:Object.keys(tabmap).length
  }));
 }finally {
  try{ws?.close()}catch{}
