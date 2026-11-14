@@ -246,11 +246,14 @@ function pageTab(name){if(APP.section==='History'){const pages={'Race Results':'
 }
 let engineDecisionState=null,officeDecisionFiles=[];
 function decisionFiles(){
- const game=window.__WTW_1999_UI_DATA__?.gameplayService?.state;
+ const service=window.__WTW_1999_UI_DATA__?.gameplayService;
+ const game=service?.state;
  if(game!==engineDecisionState){
   engineDecisionState=game;
+  const requests=game&&typeof service.getTrainerManagementRequests==='function'?
+   service.getTrainerManagementRequests():null;
   officeDecisionFiles=[
-   ...window.__WTW_OFFICE_DIRECT_READ__.trainerRequests(game),
+   ...window.__WTW_OFFICE_DIRECT_READ__.trainerRequests(game,requests),
    ...window.__WTW_OFFICE_DIRECT_READ__.decisions({decisions:game?.decisions})
   ];
  }
