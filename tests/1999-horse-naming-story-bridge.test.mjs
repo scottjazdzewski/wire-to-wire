@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {buildGameHorseNamingBrief,screenGameHorseName,recordGameNameEditorialDecision} from '../src/game/horse-naming-bridge.js';
+import {buildGameHorseNamingBrief,screenGameHorseName,recordGameNameEditorialDecision,createHorseNamingRuntime,validateHorseNamingRuntime,recordHorseNamingStoryAction} from '../src/game/horse-naming-bridge.js';
 const world={entities:{horses:[{id:'H-A',name:'Historical Champion'}],organizations:[
  {id:'O-OWNER',name:'Harrowgate Farm'},{id:'O-BREEDER',name:'Kingsley Farm'}]}};
 const horse={horse_id:'H-GAME-1999-TEST001',foaling_year:1996,owner_organization_id:'O-OWNER',breeder_organization_id:'O-BREEDER',sire_id:null,dam_id:null};
@@ -51,4 +51,24 @@ test('rejects unsupported names, empty explanations and spoofed story source',()
  assert.ok(bad.reasons.includes('REGISTRATION_NAME_FORMAT'));
  assert.ok(bad.reasons.includes('UNVERIFIED_STORY_ANCHOR'));
  assert.ok(bad.reasons.includes('UNEXPLAINED_NAME'));
+});
+
+test('player naming story persists with identity and is used on the next brief',()=>{
+ const state2={...state,clock:{date:'1999-01-01'},player:{role:'owner',operation_id:'O-OWNER'},
+  runtime:{horse_naming:createHorseNamingRuntime()},event_log:[]};
+ let event=null;
+ recordHorseNamingStoryAction({state:state2,world,command:{type:'RECORD_HORSE_NAMING_STORY',actor:'player',
+  payload:{horse,story_id:'OWNER-STORY-01',story:story.story}},emit:(kind,details)=>{event={kind,details}}});
+ assert.equal(event.kind,'HORSE_NAMING_STORY_RECORDED');
+ assert.equal(Object.keys(state2.runtime.horse_naming.stories_by_id).length,1);
+ assert.equal(buildGameHorseNamingBrief({world,state:state2,horse}).status,'READY_FOR_ORIGINAL_NAME_WRITING');
+ validateHorseNamingRuntime(state2,world);
+});
+test('only the real owner can author a persistent naming story',()=>{
+ const state2={...state,clock:{date:'1999-01-01'},player:{role:'owner',operation_id:'O-OTHER'},
+  runtime:{horse_naming:createHorseNamingRuntime()},event_log:[]};
+ assert.throws(()=>recordHorseNamingStoryAction({state:state2,world,
+  command:{type:'RECORD_HORSE_NAMING_STORY',actor:'player',
+  payload:{horse,story_id:'OWNER-STORY-01',story:story.story}},emit:()=>{}}));
+ assert.equal(Object.keys(state2.runtime.horse_naming.stories_by_id).length,0);
 });
