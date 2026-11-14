@@ -114,3 +114,17 @@ test('real 1999 browser smoke keeps complete People/Tracks checks with the share
  assert.doesNotMatch(browser,/const worldPeopleTab=\[/);
  assert.doesNotMatch(browser,/const worldTracksTab=\[/);
 });
+
+
+test('News variant uses the SAME full-width manager container as World, not a half-width generic route',()=>{
+ const news=mk('World','News',[]).sourceNewsDesk();
+ assert.match(news,/^<section class="ng-manager-screen ng-news-screen">/);
+ assert.match(ui,/isManager=body\.startsWith\('<section class="ng-manager-screen'\)/);
+ assert.match(ui,/isManager\?'ng-route-manager'/);
+ // Shared CSS selector .ng-route-manager owns the full-width management stage.
+ // The additional ng-news-screen class is only a variant, never a new layout.
+ assert.doesNotMatch(ui,/isManager=body\.startsWith\('<section class="ng-manager-screen">'\)/);
+ assert.match(news,/<strong>RACING NEWS STATUS<\/strong><span>NOT CONNECTED<\/span>/);
+ assert.match(news,/PRIORITY BRIEFINGS/);
+ assert.equal((news.match(/class="ng-manager-metric"/g)||[]).length,4);
+});
