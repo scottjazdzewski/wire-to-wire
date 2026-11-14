@@ -31,7 +31,8 @@ export function nextDate(date) {
   return d.toISOString().slice(0, 10);
 }
 export function jsonClone(x) { return JSON.parse(JSON.stringify(x)); }
-export function strictJSON(value) {
+export const MAX_GAME_SAVE_CHARS=64_000_000;
+export function strictJSON(value,maxLength=1_000_000) {
   const visited = new WeakSet();
   const check = v => {
     ensure(v !== undefined && typeof v !== 'function' && typeof v !== 'symbol' && typeof v !== 'bigint',
@@ -57,7 +58,8 @@ export function strictJSON(value) {
   };
   check(value);
   const encoded = JSON.stringify(value);
-  ensure(typeof encoded === 'string' && encoded.length <= 1_000_000, 'INVALID_PAYLOAD', 'JSON payload must be serializable and under 1 MB');
+  ensure(Number.isSafeInteger(maxLength)&&maxLength>0&&typeof encoded==='string'&&encoded.length<=maxLength,
+   'INVALID_PAYLOAD', 'JSON exceeds the authorized size limit');
   return JSON.parse(encoded);
 }
 

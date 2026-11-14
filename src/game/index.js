@@ -25,3 +25,6 @@ export {HORSE_CARE_SCHEMA,TRAINER_SKILLS_SCHEMA,HORSE_CARE_COMMANDS,FEED_PROGRAM
  from './horse-care.js';
 
 export {DAILY_AGENT_SCHEMA,createDailyAgentRuntime,getAgentRelationships} from './daily-agents.js';
+
+export {GAME_RACING_SCHEMA,RACING_COMMANDS,createRacingRuntime,gameRaceProgram,
+ raceEligibility,modeledJockeySkills,getGameRacingRoster} from './racing-1999.js';

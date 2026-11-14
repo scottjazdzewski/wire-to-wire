@@ -14,8 +14,10 @@ import {OWNERSHIP_COMMANDS,ownershipAction} from './ownership.js';
 import {HORSE_REGISTRATION_COMMANDS,registerHorseAction} from './horse-registration.js';
 import {HORSE_CARE_COMMANDS,setHorseCarePolicy,initializeGameHorseCare,advanceGameHorseCare} from './horse-care.js';
 import {runAutonomousDay,settleDailyAgentFeedback} from './daily-agents.js';
+import {RACING_COMMANDS,racingAction} from './racing-1999.js';
+import {run1999RacingAgents} from './race-agents-1999.js';
 
-const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_CARE_COMMANDS]);
+const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_CARE_COMMANDS,...RACING_COMMANDS]);
 const MAX_PENDING = 5000;
 function appendLog(state, commandId, kind, details) {
   const event = { seq: state.event_log.length + 1, command_id: commandId,
@@ -104,6 +106,8 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     registerHorseAction({state:next,world,command:c,emit});
     const horse=next.runtime.registered_horses?.by_id?.[c.payload?.horse?.horse_id];
     if(horse)initializeGameHorseCare(next,horse);
+  } else if (RACING_COMMANDS.includes(c.type)) {
+    racingAction({state:next,world,command:c,emit});
   } else if (HORSE_CARE_COMMANDS.includes(c.type)) {
     setHorseCarePolicy({state:next,world,command:c,emit});
   } else if (OWNERSHIP_COMMANDS.includes(c.type)) {
@@ -119,6 +123,7 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     advanceFacilities({state:next,world,emit});
     advanceGameHorseCare({state:next,world,emit});
     settleDailyAgentFeedback({state:next,emit});
+    run1999RacingAgents({state:next,world,emit});
     const ready = next.scheduler.pending.filter(x => x.due_date <= next.clock.date);
     next.scheduler.pending = next.scheduler.pending.filter(x => x.due_date > next.clock.date);
     for (const event of ready) {
