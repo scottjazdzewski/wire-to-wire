@@ -64,3 +64,14 @@ These **nine entirely unreferenced historical theme files were physically remove
 - `public/office-visual-system-v38.css`
 
 **Retired visual CSS is not a fallback.** Do not add a reference to these files when a current page looks wrong: fix the shared, approved stylesheet. `tests/no-legacy-screen-regression.test.mjs` enforces their absence. The older `office-fm-v32.js` to `v37.js` scripts are a **separate, still-active hidden source/data compatibility chain** and are not deleted by this CSS-only change.
+
+
+## Headless Office bridge extraction — Phase 1 (2026-11-14)
+
+**Migrated read operations (no UI or game data changes):**
+- Game date on the live 1999 management UI is read first from the active gameplay service clock, then from the saved founding career state. A hidden `.dateChip` is no longer consulted in supported founding mode.
+- The Office inbox uses the canonical `__WTW_1999_UI_DATA__.officeMessages` array. During data-module loading, it shows an empty inbox instead of resurrecting obsolete demo messages from `.left .msg`.
+- Both now go through the small DOM-free `public/next/office-direct-read.js` adapter. The adapter is read-only, has no CSS/HTML/screens, doesn't write game state, and is loaded before the current renderer.
+- `tests/office-direct-read-adapter.test.mjs` verifies source priority, game-date validation, loading behavior, and that the adapter cannot access the DOM.
+
+**Still requiring headless migration:** action dispatch (Continue, Save, Load), native route and record projection, certain hidden Office state and fixtures, and compatibility status/calculation scripts. These remain permanently hidden until direct feature-parity tests prove a replacement. **Do not remove those live dependencies prematurely or reenable the old UI.**
