@@ -39,7 +39,7 @@ test('all real track profiles retain the one approved full stakes and two-column
 });
 
 test('web app loads fresh bundled CSS and JavaScript rather than stale browser cache',()=>{
- assert.match(html,/\/next\/next\.js\?rev=wtw1999-retire-pixelated-logos-20261114/);
+ assert.match(html,/\/next\/next\.js\?rev=wtw1999-mar-azul-approved-20261114/);
  assert.match(html,/\/next\/next\.css\?rev=wtw-track-profile-permanent-20261114/);
  assert.equal((html.match(/rel="stylesheet"/g)||[]).length,1,'One authoritative management CSS');
 });
