@@ -67,7 +67,7 @@ test('one clock day changes all 38 conditions and books actual owner expense and
  assert.ok(getGameHorsePerformance(after,world,id).race_performance_index>0);
  assert.deepEqual(importGameSave(exportGameSave(after,world),world),after);
  const repeat=dispatchGameCommand({state:after,world,command:{
-  id:'test:next:1999-01-01',actor:'system',type:'ADVANCE_DAY',payload:{}}});
+  id:'test:next:1999-01-01',type:'ADVANCE_DAY',actor:'system',payload:{}}});
  assert.equal(repeat.duplicate,true);assert.equal(repeat.state,after);
 });
 test('feed, veterinary care, trainer aptitude and barn condition materially alter training outcomes',()=>{
