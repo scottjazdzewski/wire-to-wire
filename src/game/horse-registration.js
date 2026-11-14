@@ -8,7 +8,7 @@ import {ensure,isObject,requireString,validDate,worldIdentity} from './contracts
 export const HORSE_REGISTRATION_SCHEMA='WTW_CAREER_HORSES_V1';
 export const HORSE_REGISTRATION_COMMANDS=Object.freeze(['REGISTER_GAME_HORSE']);
 const SAFE_ID=/^H-GAME-1999-[A-Za-z0-9-]{1,64}$/;
-const SAFE_REF=/^[A-Za-z0-9][A-Za-z0-9_-]{1,127}$/;
+const SAFE_REF=/^[A-Za-z0-9][A-Za-z0-9_:-]{1,127}$/;
 const SEXES=new Set(['COLT','FILLY','HORSE','MARE','GELDING']);
 const PROVENANCE='NEW_1999_GAME_FICTION';
 const norm=x=>String(x||'').normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-US');
@@ -54,6 +54,11 @@ export function validateHorseRegistrationRuntime(state,world){
    typeof h.naming.release_id==='string'&&h.naming.release_id.length>0&&
    typeof h.naming.candidate_id==='string'&&h.naming.candidate_id.length>0,
    'HORSE_REGISTRY','Missing accepted name provenance');
+  const site=state.runtime.facilities?.sites?.[h.current_residence_id];
+  ensure(site&&site.id===h.current_residence_id&&site.status==='ACTIVE'&&
+   ['RACING_STABLE','TRAINING_CENTER'].includes(site.type)&&
+   site.stalls>0&&site.staff_count>=site.staff_required,
+   'HORSE_REGISTRY','Registered horse home is not operational');
   ensure(isObject(h.career)&&h.career.starts===0&&h.career.wins===0&&h.career.earnings_minor===0,
    'HORSE_REGISTRY','Cannot import historical starts or winnings');
   ensure(rt.by_receipt[h.registration_receipt_id]===id,
@@ -97,13 +102,17 @@ export function registerHorseAction({state,world,command,emit}){
    h.current_residence_id===h.racing_barn_id&&
    typeof h.trainer_id==='string'&&h.trainer_id.trim(),
    'HORSE_HOME','Registration requires actual residence, barn, trainer and foaling locality');
- const site=state.runtime.facilities?.properties?.[h.current_residence_id]||
-   state.runtime.facilities?.sites?.[h.current_residence_id]||null;
- ensure(site&&site.id===h.current_residence_id&&
-   site.type!=='STUD'&&site.type!=='FARM_REFERENCE','UNREGISTERED_BARN',
-   'Residence must be an actual registered race-training facility');
- ensure((site.capacity??site.stall_capacity??0)>Object.values(rt.by_id).filter(x=>x.current_residence_id===h.current_residence_id).length,
-   'BARN_FULL','No certified available stall capacity');
+ const site=state.runtime.facilities?.sites?.[h.current_residence_id]||null;
+ ensure(site&&site.id===h.current_residence_id&&site.status==='ACTIVE'&&
+   ['RACING_STABLE','TRAINING_CENTER'].includes(site.type)&&
+   site.staff_count>=site.staff_required,
+   'UNREGISTERED_BARN','Residence must be an active staffed physical race-training facility');
+ const effectiveCapacity=site.staff_required>0?
+   Math.floor(site.stalls*Math.min(site.staff_count,site.staff_required)/site.staff_required):site.stalls;
+ const occupied=Object.values(rt.by_id).filter(x=>x.current_residence_id===h.current_residence_id).length;
+ const reserved=(site.contracts||[]).filter(c=>c.start<=state.clock.date&&c.end>=state.clock.date)
+   .reduce((sum,c)=>sum+c.stalls,0);
+ ensure(effectiveCapacity>occupied+reserved,'BARN_FULL','No available operational stall capacity');
  ensure(worldIdentity(world,'people',h.trainer_id),'UNKNOWN_TRAINER','Trainer must resolve to approved person identity');
  ensure(h.status==='IN_TRAINING','HORSE_STATUS','Racehorses must register as in training');
  const horse={
