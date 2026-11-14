@@ -36,6 +36,9 @@ test('horse, people, track, stable and farm profiles share one renderer family',
  assert.match(js,/data-ng="detailtab"/,'Local sections must remain real navigation actions');
  assert.match(profile,/polishDossierContext\(root\)/,'Dossier header names must not regress to raw routes');
  assert.match(profile,/ensureHeroStage\(profile,kind,name\)/,'Track and farm use one hero stage');
+ assert.match(js,/wtw-unassigned-media/,'Horse and personnel missing-image states must share a real component');
+ assert.match(css,/\.wtw-unassigned-media strong/,'Missing-image monograms must use the one style authority');
+ assert.ok(!js.includes('IMAGE SLOT RESERVED'),'No unfinished placeholder labels on game profiles');
 });
 
 test('all profile record lists keep the same sorting/filtering/quick view behavior',()=>{
