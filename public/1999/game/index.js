@@ -51,4 +51,4 @@ export {OWNER_TRAINER_REVIEW_SCHEMA,OWNER_TRAINER_REVIEW_COMMANDS,
  ownerTrainerEvidence,selectOwnerTrainerMandate,getOwnerTrainerMandate,getOwnerTrainerCareerReview,
  getTrainerCareerForm} from './owner-trainer-career-1999.js';
 
-export {GAME_NAMING_BRIDGE_SCHEMA,buildGameHorseNamingBrief,screenGameHorseName,recordGameNameEditorialDecision} from './horse-naming-bridge.js';
+export {GAME_NAMING_BRIDGE_SCHEMA,HORSE_NAMING_COMMANDS,createHorseNamingRuntime,validateHorseNamingRuntime,recordHorseNamingStoryAction,buildGameHorseNamingBrief,screenGameHorseName,recordGameNameEditorialDecision} from './horse-naming-bridge.js';
