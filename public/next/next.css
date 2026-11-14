@@ -1944,11 +1944,12 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-search-typebar button,.ng-search-sortbar button{border:1px solid #3c4b47;border-radius:3px;padding:5px 8px;min-height:25px;background:#1e262a;color:#b4cdbb;font-size:9px;font-weight:780;white-space:nowrap;cursor:pointer}
 .ng-search-typebar button.on,.ng-search-sortbar button.on{background:#315e48;border-color:#c5ab6e;color:#ffe6a7}
 .ng-search-sortbar>span{font-size:9px;font-weight:760;color:#b4cdbb;padding-right:4px}
+.ng-search-sortbar .ng-search-sort-arrow{font-size:10px;font-style:normal;display:inline-block;min-width:10px;margin-left:3px;color:#ead39d}
 .ng-search-roster-page .ng-search-table{display:flex;flex-direction:column;flex:1 1 0;min-height:0;border:1px solid #3d4b47;background:#171f22;overflow:hidden}
 .ng-search-table-head,.ng-search-row{box-sizing:border-box;display:grid;grid-template-columns:76px minmax(185px,1.2fr) minmax(180px,1.1fr) minmax(125px,.75fr) 42px;align-items:center;column-gap:8px}
 .ng-search-table-head{flex:0 0 25px;min-height:25px;padding:0 9px;background:#2a3532;color:#eddaa7;border-bottom:1px solid #4b6254;font-size:var(--wtw-ui-list-meta);font-weight:840;letter-spacing:.045em}
 .ng-search-table-head>span:last-child{text-align:center}
-.ng-search-roster-page .ng-search-table-body{display:flex;flex-direction:column;flex:1 1 0;min-height:0;overflow:hidden!important}
+.ng-search-roster-page .ng-search-table-body{display:flex;flex-direction:column;flex:1 1 0;min-height:0;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#718b76 #172125}
 .ng-search-roster-page .ng-search-row{flex:0 0 24px;min-height:24px;width:100%;padding:1px 9px;text-align:left;color:#e1ece1;background:#1e272a;border:0;border-bottom:1px solid #364340;cursor:pointer}
 .ng-search-roster-page .ng-search-row:nth-child(even){background:#242e30}
 .ng-search-roster-page .ng-search-row:hover,

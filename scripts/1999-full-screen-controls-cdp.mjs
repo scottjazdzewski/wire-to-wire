@@ -391,6 +391,83 @@ try {
   console.log('WTW_PROFILE_CONTROLS_PASS '+item.family+' '+original.name+' '+deeper);
  }
 
+ // Global Search is a full-height source-linked directory. Verify the actual
+ // controls update the row order, do not mutate the career, and scroll with
+ // keyboard focus. This catches decorative sort buttons and clipped previews.
+ await evaluate(`(()=>{
+  window.dispatchEvent(new KeyboardEvent('keydown',{key:'k',ctrlKey:true,bubbles:true}));
+  return true;
+ })()`);
+ const searchStatus=()=>evaluate(`(()=>{
+  const root=document.getElementById('wtwNextgen');
+  const body=root?.querySelector('#ngSearchResults');
+  const buttons=[...(root?.querySelectorAll('.ng-search-sort')||[])];
+  return {ready:!!root?.querySelector('.ng-search-roster-page')&&!!body&&buttons.length===3,
+   date:root?.querySelector('.ng-global-date strong')?.textContent?.trim()||'',
+   rows:[...(body?.querySelectorAll('.ng-search-row')||[])].map(row=>({
+    name:row.querySelector('.ng-search-row-name strong')?.textContent?.trim()||'',
+    owner:row.querySelector('.ng-search-row-owner')?.textContent?.trim()||''
+   })),
+   bodyFocus:body?.tabIndex===0&&body?.getAttribute('role')==='region',
+   scrollTop:body?.scrollTop||0,scrollHeight:body?.scrollHeight||0,clientHeight:body?.clientHeight||0,
+   sort:buttons.map(b=>({key:b.dataset.val,pressed:b.getAttribute('aria-pressed'),arrow:b.querySelector('i')?.textContent?.trim()})),
+   legacy:root?.querySelectorAll('.ng-connected-profile,.ng-connected-drop,.ng-connected-table').length||0
+  };
+ })()`);
+ let initialSearch=null;
+ for(let n=0;n<90;n++){
+  initialSearch=await searchStatus();
+  if(initialSearch?.ready&&initialSearch.rows.length>0)break;
+  await delay(100);
+ }
+ assert.ok(initialSearch?.ready&&initialSearch.rows.length>0,
+  'Global Search failed to open from the standard Ctrl+K shortcut');
+ assert.ok(initialSearch.bodyFocus,'Global Search results are not keyboard-focusable');
+ assert.equal(initialSearch.legacy,0);
+ assert.equal(initialSearch.date,baseline.date,'Opening Global Search advanced the career');
+ assert.ok(initialSearch.rows.length>=10,'Global Search unexpectedly lost the source-linked directory');
+ async function sortSearch(field){
+  const changed=await evaluate(`(()=>{
+   const b=document.querySelector('#wtwNextgen .ng-search-sort[data-val="${field}"]');
+   if(!b)return false;b.click();return true;
+  })()`);
+  assert.ok(changed,'Global Search missing sort control '+field);
+  await delay(80);
+  return searchStatus();
+ }
+ const descSearch=await sortSearch('name');
+ assert.equal(descSearch.sort.find(x=>x.key==='name')?.arrow,'▼','Name sort did not reverse');
+ for(let i=1;i<descSearch.rows.length;i++)
+  assert.ok(descSearch.rows[i-1].name.localeCompare(descSearch.rows[i].name,undefined,
+   {numeric:true,sensitivity:'base'})>=0,'Search results claim DESC but names are not reversed');
+ const ascSearch=await sortSearch('name');
+ assert.equal(ascSearch.sort.find(x=>x.key==='name')?.arrow,'▲');
+ for(let i=1;i<ascSearch.rows.length;i++)
+  assert.ok(ascSearch.rows[i-1].name.localeCompare(ascSearch.rows[i].name,undefined,
+   {numeric:true,sensitivity:'base'})<=0,'Search results claim ASC but names are not sorted');
+ for(const field of ['type','owner']){
+  const ascending=await sortSearch(field);
+  assert.equal(ascending.sort.find(x=>x.key===field)?.arrow,'▲',field+' did not activate');
+  const descending=await sortSearch(field);
+  assert.equal(descending.sort.find(x=>x.key===field)?.arrow,'▼',field+' did not reverse');
+  assert.equal(descending.date,baseline.date);
+ }
+ const scrollBefore=await searchStatus();
+ if(scrollBefore.scrollHeight>scrollBefore.clientHeight+10){
+  const scrolled=await evaluate(`(()=>{
+   const region=document.querySelector('#ngSearchResults');
+   region.focus();region.scrollTop=region.scrollHeight;
+   return {focused:document.activeElement===region,scrollTop:region.scrollTop};
+  })()`);
+  assert.ok(scrolled.focused&&scrolled.scrollTop>0,
+   'Global Search long list cannot be independently focused/scrolled');
+ }
+ console.log('WTW_GLOBAL_SEARCH_CONTROLS_PASS '+JSON.stringify({
+  visibleRows:initialSearch.rows.length,sortDirections:6,
+  independentlyScrollable:scrollBefore.scrollHeight>scrollBefore.clientHeight+10,
+  date:baseline.date
+ }));
+
  // History is an independently routed Archive but remains part of the product.
  // Verify every canonical History category without moving it into /next/ or
  // reviving obsolete Office/Manager windows.
