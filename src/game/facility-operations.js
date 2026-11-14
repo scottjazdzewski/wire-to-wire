@@ -355,6 +355,9 @@ export function advanceFacilities({state,world,emit}){
   if(cost)post(state,account,-cost,'FACILITY_DAILY_OPERATIONS',site.id,null);
   if(wages)post(state,account,-wages,'FACILITY_STAFF_PAYROLL',site.id,null);
   if(maintenance)post(state,account,-maintenance,'FACILITY_MAINTENANCE',site.id,null);
+  const rent=site.residence_kind==='TRACK_TRAINER_BARN'?(site.track_rent_daily_minor??0):0;
+  if(rent)post(state,account,-rent,'FACILITY_TRACK_RENT',site.id,null);
+  expense+=rent;
  }
  if(gross||expense)emit('FACILITY_OPERATING_DAY',{date:day,
   gross_minor:gross,cost_minor:expense,net_minor:gross-expense});
@@ -473,6 +476,7 @@ export function facilityFinancialReport(state,world,operationId,{from,to}={}){
   payroll_minor:-amounts.FACILITY_STAFF_PAYROLL,
   maintenance_minor:-amounts.FACILITY_MAINTENANCE,
   overhead_minor:-amounts.FACILITY_DAILY_OPERATIONS,
+  track_rent_minor:-(amounts.FACILITY_TRACK_RENT??0),
   cash_minor:state.runtime.finances.operation_balances_minor?.[operationId]??null,
   sites:Object.values(siteMap).sort((a,b)=>a.site_name.localeCompare(b.site_name))};
 }
