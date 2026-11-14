@@ -9,6 +9,7 @@ Status: Production UI; new transparent hero marks auto-discover from their exact
 - The HERO logo is the distinctive right mark. No cream plaque or forced rectangle.
 - The title and four identity facts must remain readable, with action buttons below them.
 - The redundant horizontal menu strip is hidden globally; the department navigation and local VIEW selector continue to work.
+- Horse and personnel **dossiers** retain their local Overview/History/MORE RECORDS controls. Their global breadcrumb uses a clean **HORSE PROFILE / [name]** or **PERSONNEL PROFILE / [name]**, never a percent-encoded route. At narrow widths the local dossier controls wrap without hiding functionality.
 - Raw internal `WorldRecord:track%3A...` codes are never visible as the title on track/farm profiles.
 - Page-specific identity palette remains intact. Background photographs **are not included**; a separate art window owns those.
 - Deferred work item **#6**: deepen the entity palette into more panels/interactive elements after hero art is settled; do NOT silently do this in the present pass.
