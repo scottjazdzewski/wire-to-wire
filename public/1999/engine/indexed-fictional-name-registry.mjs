@@ -144,6 +144,7 @@ export function createIndexedFictionalNameRegistry({
   if(isRecognizedOrganizationName(item.name))
    roots.add(organizationRootOfName(item.name));
  }
+ const personById=new Map(issuedPeople.map(person=>[person.id,person]));
  const storedOrgIds=new Set(issuedOrganizations.map(o=>o.id));
  for(const owner of ownerEntities){
   checkId(owner.id,'stored owner ID');checkId(owner.name,'stored owner name');
@@ -220,7 +221,13 @@ export function createIndexedFictionalNameRegistry({
   }
   // The preflight passed. These operations cannot fail on duplicate values.
   for(const person of people){
-   issuedPeople.push(Object.freeze({id:person.id,name:person.name}));
+   const approved=Object.freeze({
+    id:person.id,name:person.name,
+    ...(typeof person.role==='string'?{role:person.role}:{}),
+    ...(typeof person.primarySurname==='string'?{primarySurname:person.primarySurname}:{}),
+    ...(Number.isInteger(person.birthYear)?{birthYear:person.birthYear}:{})
+   });
+   issuedPeople.push(approved);personById.set(approved.id,approved);
    addName(person.name,personKeys);
    entityIds.add(person.id);
   }
@@ -266,6 +273,7 @@ export function createIndexedFictionalNameRegistry({
   get ownerCount(){return ownerEntities.length},
   get formalGroupsIssued(){return groupEntities.length},
   hasAnyName:index.hasAnyName,
+  getApprovedPerson:id=>personById.has(id)?Object.freeze({...personById.get(id)}):null,
   listOwners,listGroups,commit,snapshot:snapshotNow
  });
 }
