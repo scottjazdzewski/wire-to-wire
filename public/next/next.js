@@ -243,7 +243,7 @@ function pageTab(name){if(APP.section==='History'){const pages={'Race Results':'
 const currentMessages=()=>{
  const sourceMessages=window.__WTW_1999_UI_DATA__?.officeMessages;
  const cleanMode=isClean1999();
- const legacyMessages=cleanMode?null:$('.left .msg[data-case]').map(n=>({
+ const legacyMessages=cleanMode?null:$$('.left .msg[data-case]').map(n=>({
   case:n.dataset.case,from:$('.from',n)?.textContent.trim()||'Stable Office',
   title:$('.title',n)?.textContent.trim()||'',meta:$('.meta',n)?.textContent.trim()||'',
   time:$('.time',n)?.textContent.trim()||'',urgent:n.classList.contains('urgent'),
