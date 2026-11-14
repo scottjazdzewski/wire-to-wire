@@ -9,7 +9,7 @@ import {dispatchGameCommand} from './kernel.js';
 import {model1999StartingHorseAttributes} from './horse-starting-attributes.js';
 export const PILOT_SCENARIO_SCHEMA='WTW_1999_TEST_HORSE_START_AND_RESIDENCE_V1';
 
-export function build1999PilotGameRun({world,manifest,playerOperationId,runId='WTW-RUN-TEST-PILOT-38'}={}){
+export function build1999PilotGameRun({world,manifest,playerOperationId,runId='WTW-RUN-TEST-PILOT-38',jockeys=[]}={}){
  ensure(manifest?.schema===PILOT_SCENARIO_SCHEMA&&
   manifest.status==='ISOLATED_GAME_TEST_COHORT_NOT_AUTHORITATIVE_OPENING'&&
   Array.isArray(manifest.assignments)&&Array.isArray(manifest.sites),
@@ -94,6 +94,11 @@ export function build1999PilotGameRun({world,manifest,playerOperationId,runId='W
     training_plan:['AUTO','BALANCED','SPEED','STAMINA','GATE','LIGHT'][index%6],
     monthly_budget_minor:410000+(index%5)*52000
    }
+  });
+ }
+ if(jockeys.length){
+  apply('pilot:jockey-colony','ACTIVATE_JOCKEY_COLONY',{
+   jockeys:jockeys.map(j=>({id:j.id,home_track_id:j.homeTrackId}))
   });
  }
  ensure(Object.keys(state.runtime.registered_horses.by_id).length===manifest.horse_count,
