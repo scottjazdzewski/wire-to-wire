@@ -76,3 +76,7 @@ export {TRAINER_MANAGEMENT_SCHEMA,TRAINER_MANAGEMENT_COMMANDS,TRAINER_MANAGEMENT
  from './trainer-management-requests-1999.js';
 
 export {LOCAL_HORSE_NAMING_SCHEMA,createLocalStoryIdeas,generateLocalStoryFirstHorseNames,generateLocalPopulationNamingBatch} from './horse-naming-local-v485.js';
+
+export {TRAINER_EMPLOYMENT_SCHEMA,TRAINER_EMPLOYMENT_COMMANDS,
+ createTrainerEmploymentRuntime,getLocalTrainerHiringMarket}
+ from './trainer-employment-1999.js';

@@ -625,7 +625,7 @@ export function validateOwnerTrainerReviews(state,world){
     includes(p.trainer_position))&&
    (p.trainer_position_reason===undefined||typeof p.trainer_position_reason==='string')&&
    (p.live_assessment===undefined||isObject(p.live_assessment)&&
-    p.live_assessment.date===state.clock.date&&
+    validDate(p.live_assessment.date)&&p.live_assessment.date<=state.clock.date&&
     p.live_assessment.owner_id===p.owner_id&&
     p.live_assessment.trainer_id===p.trainer_id&&
     Number.isFinite(p.live_assessment.owner_confidence)&&
