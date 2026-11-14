@@ -80,9 +80,16 @@ test('28-day owner/trainer career reviews use only official race results, paid c
   if(item.owner_id===completed.player.operation_id)
    assert.equal(item.history[0].reason,'PLAYER_OWNER_RETAINS_DIRECTION',
     'The player owns this manager decision even with limited race evidence');
-  else if(expected<3)
+  else if(item.evidence.decision_sample_basis==='INSUFFICIENT')
    assert.equal(item.history[0].reason,'WAIT_FOR_SUSTAINED_RACE_SAMPLE');
+  else if(expected<3)
+   assert.ok(item.evidence.trainer_multi_client_starts>=5,
+    'Small owner sample may be supplemented only by five actual multi-client trainer starts');
  }
+ assert.ok(entries.some(x=>x.evidence.decision_sample_basis==='TRAINER_MULTI_CLIENT_FORM'),
+  'Single-horse owners must be able to evaluate a trainer using enough real results across clients');
+ assert.ok(reviews.totals.ai_mandate_changes>=1,
+  'The 45 actual modeled starters must produce at least one evidence-driven AI owner action');
  const trainersSeen=[...new Set(all(completed).map(h=>h.trainer_id))];
  for(const t of trainersSeen){
   const career=getTrainerCareerForm(completed,t);
@@ -99,7 +106,14 @@ test('28-day owner/trainer career reviews use only official race results, paid c
   date:completed.clock.date,approved_person_ids:trainersSeen.length,
   review_pairs:entries.length,actual_races:official.length,
   starts:official.reduce((n,r)=>n+r.results.length,0),
-  owner_changes:reviews.totals.ai_mandate_changes}));
+  owner_changes:reviews.totals.ai_mandate_changes,
+  trainer_form_by_id:trainersSeen.map(id=>({
+   id,starts:getTrainerCareerForm(completed,id).starts,
+   form:getTrainerCareerForm(completed,id).average_relative_form})),
+  decisions:entries.filter(x=>x.mandate!=='NORMAL').map(x=>({
+   owner:x.owner_id,trainer:x.trainer_id,mandate:x.mandate,
+   sample:x.evidence.decision_sample_basis,
+   reviewed_form:x.evidence.decision_form}))}));
 });
 test('long-term judgments require real samples and distinguish owner-financing pressure from trainer ability',()=>{
  const example={starts:5,average_relative_form:-.28,owner_trust:.4,
