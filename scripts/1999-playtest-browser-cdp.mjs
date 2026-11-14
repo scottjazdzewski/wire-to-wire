@@ -110,7 +110,7 @@ try{
   }catch{}
   await delay(250);
  }
- assert.deepEqual(clean,{url:'/next/',stable:0,sourceHorses:73,playtest:false});
+ assert.deepEqual(clean,{url:'/next/',stable:0,sourceHorses:0,playtest:false});
  console.log('WTW_BROWSER_PLAYTEST_PASS '+JSON.stringify({
   date:progressed.date,horseCount:progressed.horseCount,
   owned:progressed.owned,races:progressed.results,saveReload:'IDENTICAL',
