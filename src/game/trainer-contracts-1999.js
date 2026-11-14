@@ -93,6 +93,52 @@ function startAgreement(state,world,owner,trainer,emit){
   trainer_capacity:quote.trainer_capacity,provenance:agreement.provenance});
  return agreement;
 }
+/**
+ * An accepted trainer-market move is not a speculative contract quotation.
+ * Activate the signed service fee only after the horse and actual racing
+ * barn have changed, and terminate the prior owner's service ONLY if that
+ * trainer no longer has any horses for that owner.
+ */
+export function completeTrainerEmploymentAgreement({state,world,item,emit}){
+ const rt=root(state),owner=item.owner_id,previous=item.from_trainer_id,
+  incoming=item.to_trainer_id,oldKey=pair(owner,previous),
+  newKey=pair(owner,incoming);
+ const other=ownersHorses(state,owner,incoming).length;
+ ensure(other>0,'TRAINER_HIRE_CONTRACT','Accepted trainer must hold the transferred horse');
+ const existing=rt.by_pair[newKey]??null;
+ if(existing?.status==='ACTIVE'){
+  ensure(existing.daily_fee_minor===item.daily_fee_minor,
+   'TRAINER_HIRE_CONTRACT','Existing client terms cannot change through a horse move');
+ }else{
+  const prior=existing?.status==='TERMINATED'?{
+   signed_on:existing.signed_on,ended_on:existing.ended_on,
+   daily_fee_minor:existing.daily_fee_minor,
+   revision:existing.revision,reason:existing.last_review_reason}:null;
+  if(prior)delete rt.by_pair[newKey];
+  const agreement=startAgreement(state,world,owner,incoming,emit);
+  agreement.daily_fee_minor=item.daily_fee_minor;
+  agreement.provenance='MODELED_ACCEPTED_TRAINER_HIRING_OFFER';
+  agreement.last_review_reason='SAME_TRACK_HIRING_TERMS_ACTIVATED';
+  if(prior)agreement.previous_employment=[
+   ...(existing.previous_employment||[]),prior].slice(-8);
+  emit('TRAINER_EMPLOYMENT_AGREEMENT_SIGNED',{
+   owner_id:owner,trainer_id:incoming,horse_id:item.horse_id,
+   daily_fee_minor:item.daily_fee_minor,
+   previous_relationship_reopened:Boolean(prior)});
+ }
+ const departing=rt.by_pair[oldKey];
+ if(!ownersHorses(state,owner,previous).length&&departing?.status==='ACTIVE'){
+  departing.status='TERMINATED';departing.ended_on=state.clock.date;
+  departing.pending=null;
+  departing.last_review_reason='LAST_OWNER_HORSE_TRANSFERRED';
+  emit('TRAINER_SERVICE_RELATIONSHIP_ENDED',{
+   owner_id:owner,trainer_id:previous,
+   horse_id:item.horse_id,ended_on:state.clock.date,
+   reason:'LAST_OWNER_HORSE_TRANSFERRED',
+   other_owners_unaffected:true});
+ }
+}
+
 export function trainerDailyFee(state,horse,skills){
  const existing=state.runtime.trainer_contracts?.by_pair?.[
   pair(horse.owner_organization_id,horse.trainer_id)];
@@ -218,7 +264,16 @@ export function validateTrainerContracts(state,world){
   ensure(isObject(a)&&pair(a.owner_id,a.trainer_id)===k&&
    Boolean(worldIdentity(world,'organizations',a.owner_id))&&
    Boolean(peopleSource(world,a.trainer_id))&&
-   a.status==='ACTIVE'&&integer(a.revision)&&a.revision>=1&&
+   ['ACTIVE','TERMINATED'].includes(a.status)&&
+   (a.status==='ACTIVE'?a.ended_on===undefined:
+    validDate(a.ended_on)&&a.ended_on<=state.clock.date&&
+    !ownersHorses(state,a.owner_id,a.trainer_id).length&&a.pending===null)&&
+   (a.previous_employment===undefined||Array.isArray(a.previous_employment)&&
+    a.previous_employment.length<=8&&a.previous_employment.every(x=>
+     validDate(x.signed_on)&&validDate(x.ended_on)&&
+     integer(x.daily_fee_minor)&&x.daily_fee_minor>=3000&&
+     x.daily_fee_minor<=25000))&&
+   integer(a.revision)&&a.revision>=1&&
    integer(a.daily_fee_minor)&&a.daily_fee_minor>=3000&&a.daily_fee_minor<=25000&&
    validDate(a.signed_on)&&a.signed_on<=state.clock.date&&
    validDate(a.effective_on)&&a.effective_on<=state.clock.date&&
