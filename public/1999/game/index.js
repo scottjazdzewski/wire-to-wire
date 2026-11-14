@@ -74,3 +74,5 @@ export {foalingEventNamingBrief,planPopulationNamingCohorts,auditPopulationNamin
 export {TRAINER_MANAGEMENT_SCHEMA,TRAINER_MANAGEMENT_COMMANDS,TRAINER_MANAGEMENT_CHOICES,
  TRAINER_MANAGEMENT_KINDS,createTrainerManagementRuntime,getTrainerManagementRequests}
  from './trainer-management-requests-1999.js';
+
+export {LOCAL_HORSE_NAMING_SCHEMA,createLocalStoryIdeas,generateLocalStoryFirstHorseNames,generateLocalPopulationNamingBatch} from './horse-naming-local-v485.js';
