@@ -63,6 +63,8 @@ jobs:
         run: node --test tests/1999-connected-horse-care-economy.test.mjs
       - name: Autonomous owner trainer and barn decisions with causal replay
         run: node --test tests/1999-autonomous-owner-trainer-barn-agents.test.mjs
+      - name: Owner barn trainer and outside care payments reconcile in saved career
+        run: node --test tests/1999-trainer-care-fee-economy.test.mjs
       - name: Travel-day horse welfare, real away-barn occupancy and balanced boarding
         run: node --test tests/1999-real-away-barn-care-and-transit.test.mjs
       - name: Physical shipping and 31-day autonomous trainer campaign replay
