@@ -20,7 +20,7 @@ const frac=(seed,key)=>{let n=(2166136261^(seed>>>0))>>>0;
  n^=n>>>16;n=Math.imul(n,2246822507);n^=n>>>13;
  return (n>>>0)/4294967296};
 export const createRacingRuntime=()=>({
- schema:GAME_RACING_SCHEMA,jockeys:{},jockey_finances_minor:{},
+ schema:GAME_RACING_SCHEMA,jockeys:{},jockey_finances_minor:{},trainer_finances_minor:{},
  last_selection_date:null,last_settlement_date:null,selection_count:0
 });
 const root=state=>state.runtime.racing??(state.runtime.racing=createRacingRuntime());
@@ -222,18 +222,22 @@ function settle1999Race({state,world,race_id,emit}){
  awards[paidPlaces-1]=remainder;
  const results=scored.map(({horse,entry,composite,rider},i)=>{
   const awarded=awards[i];
-  const jockeyShare=Math.round(awarded*.1),ownerShare=awarded-jockeyShare;
+  const jockeyShare=Math.round(awarded*.1),trainerShare=Math.round(awarded*.1),
+   ownerShare=awarded-jockeyShare-trainerShare;
   const owner=horse.owner_organization_id,jockey=entry.jockey_id;
   const money=state.runtime.finances.operation_balances_minor;
   ensure(cents(money[owner]),'RACE_FINANCE','Owner account must exist to settle race');
   money[owner]+=ownerShare;
   if(owner===state.player.operation_id)state.runtime.finances.balance_minor=money[owner];
   rt.jockey_finances_minor[jockey]+=jockeyShare;
+  rt.trainer_finances_minor[horse.trainer_id]=(rt.trainer_finances_minor[horse.trainer_id]||0)+trainerShare;
   state.runtime.finances.ledger.push(
    {date:state.clock.date,kind:'RACE_PURSE_OWNER_CREDIT',operation_id:owner,
     amount_minor:ownerShare,race_id:race.id,horse_id:horse.horse_id},
    {date:state.clock.date,kind:'RACE_PURSE_JOCKEY_CREDIT',operation_id:null,person_id:jockey,
-    amount_minor:jockeyShare,race_id:race.id,horse_id:horse.horse_id});
+    amount_minor:jockeyShare,race_id:race.id,horse_id:horse.horse_id},
+   {date:state.clock.date,kind:'RACE_PURSE_TRAINER_CREDIT',operation_id:null,person_id:horse.trainer_id,
+    amount_minor:trainerShare,race_id:race.id,horse_id:horse.horse_id});
   horse.career.starts++;if(i===0)horse.career.wins++;
   horse.career.earnings_minor+=awarded;
   const j=rt.jockeys[jockey];j.starts++;if(i===0)j.wins++;
@@ -247,6 +251,7 @@ function settle1999Race({state,world,race_id,emit}){
   return {horse_id:horse.horse_id,owner_id:owner,trainer_id:horse.trainer_id,
    jockey_id:jockey,finish:i+1,earnings_minor:awarded,
    owner_share_minor:ownerShare,jockey_share_minor:jockeyShare,
+   trainer_share_minor:trainerShare,
    performance_index:composite,rider_index:rider};
  });
  applyRaceAgentFeedback({state,world,race,results,emit});
@@ -266,7 +271,8 @@ export function validateRacingRuntime(state,world){
  const rt=state.runtime.racing;
  if(!rt)return;
  ensure(rt.schema===GAME_RACING_SCHEMA&&isObject(rt.jockeys)&&
-  isObject(rt.jockey_finances_minor)&&Number.isSafeInteger(rt.selection_count),
+  isObject(rt.jockey_finances_minor)&&isObject(rt.trainer_finances_minor)&&
+  Number.isSafeInteger(rt.selection_count),
   'RACE_SAVE','Invalid race subsystem');
  for(const j of Object.values(rt.jockeys))
   ensure(person(world,j.id)&&Boolean(trackFor(world,j.home_track_id))&&
