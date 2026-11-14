@@ -132,9 +132,15 @@ test('autonomous owner funds postrace care, while cash and actual horse-care inv
  const unfunded=structuredClone(scenario);
  unfunded.runtime.finances.operation_balances_minor[owner]=0;
  const blocked=day(unfunded);
- assert.ok(blocked.runtime.finances.operation_balances_minor[owner]>=0);
+ // Separate barn payroll and upkeep can create real operating debt in
+ // existing facility accounting. Never mistake that debt for paid horse care.
+ assert.ok(Number.isSafeInteger(blocked.runtime.finances.operation_balances_minor[owner]));
  assert.ok(blocked.event_log.some(e=>e.kind==='HORSE_CARE_UNFUNDED'&&
-  e.details.owner_id===owner));
+  e.details.owner_id===owner&&e.details.horse_id===h.horse_id));
+ assert.equal(blocked.runtime.finances.ledger.filter(e=>
+  e.date==='1999-01-08'&&e.horse_id===h.horse_id&&
+  e.kind==='HORSE_CARE_OWNER_PAYMENT').length,0,
+  'An insolvent operation cannot post fictional paid care to the horse');
 });
 test('AI trainer waits for real dated recovery and changes future race fit by trained preferences',()=>{
  const state=through('1999-01-07');
