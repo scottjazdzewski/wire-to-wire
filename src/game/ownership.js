@@ -192,7 +192,7 @@ export function getOwnerPortfolioView(state,world,ownerId,{offset=0,limit=30}={}
  }
  for(const h of Object.values(registered))
   if(h.owner_organization_id===ownerId&&!ids.includes(h.horse_id))ids.push(h.horse_id);
- ids.sort((a,b)=>(index.horseById.get(a)?.name||registered[a]?.registered_name||'')
+ if(Object.keys(registered).length)ids.sort((a,b)=>(index.horseById.get(a)?.name||registered[a]?.registered_name||'')
   .localeCompare(index.horseById.get(b)?.name||registered[b]?.registered_name||'')||a.localeCompare(b));
  const items=ids.slice(offset,offset+limit).map(id=>{
   const horse=index.horseById.get(id)||registered[id];
@@ -201,5 +201,5 @@ export function getOwnerPortfolioView(state,world,ownerId,{offset=0,limit=30}={}
    ownership_overridden:Object.hasOwn(overlays,id)};
  });
  return {owner_id:ownerId,total:ids.length,offset,limit,items,
-  source:'APPROVED_WORLD_PLUS_REGISTERED_GAME_HORSES_AND_OWNERSHIP_DELTAS'};
+  source:'APPROVED_WORLD_PLUS_GAME_RUN_OWNERSHIP_DELTAS'};
 }
