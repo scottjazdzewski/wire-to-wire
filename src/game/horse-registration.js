@@ -50,6 +50,7 @@ export function validateHorseRegistrationRuntime(state,world){
    typeof h.trainer_id==='string'&&h.trainer_id.length>0&&
    typeof h.racing_barn_id==='string'&&h.racing_barn_id===h.current_residence_id,
    'HORSE_REGISTRY','Missing actual home/trainer/foaling locality');
+  ensure(worldIdentity(world,'people',h.trainer_id),'HORSE_REGISTRY','Unknown trainer person identity');
   ensure(isObject(h.naming)&&h.naming.status==='ACCEPTED'&&
    typeof h.naming.release_id==='string'&&h.naming.release_id.length>0&&
    typeof h.naming.candidate_id==='string'&&h.naming.candidate_id.length>0,
