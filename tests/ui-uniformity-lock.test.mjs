@@ -46,18 +46,22 @@ test('horse, people, track, stable and farm profiles share one renderer family',
  assert.ok(!js.includes('IMAGE SLOT RESERVED'),'No unfinished placeholder labels on game profiles');
 });
 
-test('all profile record lists keep the same sorting/filtering/quick view behavior',()=>{
- assert.equal(count(js,/function connectedTableState\(/g),1);
- assert.equal(count(js,/function profileRecordSection\(/g),1);
- for(const handler of ['connected-sort','connected-search','connected-column',
-   'connected-contains','connected-clear','connected-mode']){
-  assert.ok(js.includes(handler),handler+' must remain a shared profile-control action');
- }
- for(const section of ['MEETS','STAKES RACES','TRAINERS & BARNS',
-  'HORSES CURRENTLY ON SITE','TRAINER ATTRIBUTES','OWNED HORSES']){
-  assert.ok(js.includes("profileRecordSection('"+section+"'"),section+' must reuse the same renderer');
- }
- assert.match(js,/aria-sort=/,'Sort state must be communicated consistently');
+test('the one FM/OOTP renderer owns track rosters and the same view modes across departments',()=>{
+ const start=js.indexOf('const stakesTable=(limit=100)=>{');
+ const stop=js.indexOf('\n const entityPhotoKind=',start);
+ const track=js.slice(start,stop);
+ assert.ok(start>0&&stop>start);
+ assert.match(track,/ng-stakes-table/);
+ assert.match(track,/data-ng="stake-sort"/);
+ assert.match(track,/data-ng="1999-stake"/);
+ assert.match(track,/ng-stakes-trophy/);
+ assert.match(js,/function rosterDensityControls\(scope,activeMode\)/);
+ assert.match(js,/rosterDensityControls\('department',departmentMode\)/);
+ assert.match(js,/rosterDensityControls\(directory\?'directory':'stable',mode\)/);
+ assert.match(css,/\.ng-track-workspace\{display:grid!important/);
+ assert.match(js,/trackHistoryPanel\(\)/);
+ assert.doesNotMatch(js,/pilotHorseConnectionsPanel|profileRecordSection|connectedTableState|ng-connected-profile/);
+ assert.doesNotMatch(css,/\.ng-connected-drop|\.ng-connected-profile/);
 });
 
 test('entity colors and logos can change, but never create another navigation implementation',()=>{
@@ -88,10 +92,10 @@ test('a screenshot smoke test does not mean FM/OOTP visual approval',()=>{
   assert.ok(audit.includes('capture '+view+' '),'Visual route missing: '+view);
  }
  assert.match(standard,/mark \*\*REJECTED\*\*/,'Weak interfaces must be explicitly rejected');
- for(const view of ['aqueduct-track','gulfstream-track','kingsmere-farm','northbank-stable']){
+ for(const view of ['aqueduct-track','belmont-track','gulfstream-track','kingsmere-farm','northbank-stable']){
   assert.ok(audit.includes('capture '+view+' '),'Missing cross-screen comparison screenshot: '+view);
  }
- for(const name of ['laptop-horse','laptop-person','laptop-aqueduct','laptop-farm','laptop-owner']){
+ for(const name of ['laptop-horse','laptop-person','laptop-aqueduct','laptop-belmont','laptop-farm','laptop-owner']){
   assert.ok(audit.includes('probe '+name+' '),'Missing laptop geometry check: '+name);
  }
  assert.match(audit,/UNIFIED PROFILE GEOMETRY VERIFIED/);
