@@ -11,6 +11,7 @@ import { validateGameRun } from './state.js';
 import {makeReputationBaseline,applyReputationSignal} from './reputation.js';
 import {FACILITY_COMMANDS,facilityAction,advanceFacilities} from './facility-operations.js';
 import {OWNERSHIP_COMMANDS,ownershipAction} from './ownership.js';
+import {FUTURE_INDUSTRY_COMMANDS_V23,applyFutureIndustryGameAction} from './future-industry-activation-v23.js';
 import {HORSE_REGISTRATION_COMMANDS,registerHorseAction} from './horse-registration.js';
 import {HORSE_NAMING_COMMANDS,recordHorseNamingStoryAction} from './horse-naming-bridge.js';
 import {HORSE_NAME_OWNER_COMMANDS,stageStoryHorseNameAction,ownerDecidesHorseNameAction} from './horse-name-owner-release.js';
@@ -23,7 +24,7 @@ import {TRAINER_CONTRACT_COMMANDS,offerTrainerServiceTerms,advanceTrainerContrac
 import {OWNER_TRAINER_REVIEW_COMMANDS,setOwnerTrainerMandate,advanceOwnerTrainerReviews} from './owner-trainer-career-1999.js';
 import {PLAYER_RACE_PLAN_COMMANDS,confirm1999PlayerRacePlan} from './player-race-plan-1999.js';
 
-const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_NAMING_COMMANDS,...HORSE_NAME_OWNER_COMMANDS,...HORSE_CARE_COMMANDS,...RACING_COMMANDS,...HORSE_SHIPPING_COMMANDS,...TRAINER_CONTRACT_COMMANDS,...OWNER_TRAINER_REVIEW_COMMANDS,...PLAYER_RACE_PLAN_COMMANDS]);
+const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...FUTURE_INDUSTRY_COMMANDS_V23,...HORSE_REGISTRATION_COMMANDS,...HORSE_NAMING_COMMANDS,...HORSE_NAME_OWNER_COMMANDS,...HORSE_CARE_COMMANDS,...RACING_COMMANDS,...HORSE_SHIPPING_COMMANDS,...TRAINER_CONTRACT_COMMANDS,...OWNER_TRAINER_REVIEW_COMMANDS,...PLAYER_RACE_PLAN_COMMANDS]);
 const MAX_PENDING = 5000;
 function appendLog(state, commandId, kind, details) {
   const event = { seq: state.event_log.length + 1, command_id: commandId,
@@ -129,6 +130,8 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     offerTrainerServiceTerms({state:next,world,command:c,emit});
   } else if (HORSE_CARE_COMMANDS.includes(c.type)) {
     setHorseCarePolicy({state:next,world,command:c,emit});
+  } else if (FUTURE_INDUSTRY_COMMANDS_V23.includes(c.type)) {
+    applyFutureIndustryGameAction({state:next,world,command:c,emit});
   } else if (OWNERSHIP_COMMANDS.includes(c.type)) {
     ownershipAction({state:next,world,command:c,emit});
   } else if (FACILITY_COMMANDS.includes(c.type)) {
