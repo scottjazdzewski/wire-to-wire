@@ -58,7 +58,8 @@ test('shipping is a financed physical trip, preserves permanent barn and cannot 
  assert.equal(s.runtime.finances.ledger.filter(x=>x.horse_id===h.horse_id&&
   ['HORSE_OUTBOUND_SHIPPING_CHARGE','MODELED_HORSE_CARRIER_RECEIPT'].includes(x.kind)).
   reduce((n,x)=>n+x.amount_minor,0),0);
- assert.throws(()=>ship(s,h,away,'player'),x=>x.code==='SHIP_BLOCKED');
+ assert.throws(()=>run(s,'shipping:duplicate-attempt','SHIP_1999_HORSE',
+  {horse_id:h.horse_id,destination_site_id:away},'player'),x=>x.code==='SHIP_BLOCKED');
  for(let i=0;i<2;i++)s=day(s);
  assert.equal(horseTravelStatus(s,h.horse_id).status,'OUTBOUND');
  s=day(s);
@@ -91,7 +92,9 @@ test('race entry requires arriving two days early; impossible route, money and p
   {race_id:race.id,track_id:'T-0001',date:race.date});
  const r=s.runtime.races[race.id];
  assert.ok(raceEligibility(s,h,r).reasons.includes('NOT_PHYSICALLY_AT_TRACK_OR_CONFIRMED_TO_ARRIVE'));
- const poor=structuredClone(s);poor.runtime.finances.operation_balances_minor[h.owner_organization_id]=100;
+ const poor=structuredClone(s);
+ poor.runtime.finances.operation_balances_minor[h.owner_organization_id]=100;
+ poor.runtime.finances.balance_minor=100;
  const assessed=shippingAssessment(poor,world,h.horse_id,away);
  assert.ok(assessed.reasons.includes('OWNER_CANNOT_FUND_HAUL_AND_CARE_RESERVE'));
  assert.throws(()=>ship(poor,h,away,'player'),x=>x.code==='SHIP_BLOCKED');
