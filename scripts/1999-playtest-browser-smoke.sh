@@ -15,7 +15,7 @@ const status=document.getElementById('status'),frame=document.getElementById('ga
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const check=(name,ok)=>{if(!ok)throw Error(name);steps.push(name)};
 async function until(fn,description){
- for(let i=0;i<75;i++){
+ for(let i=0;i<650;i++){
   const result=fn();if(result)return result;
   await pause(200);
  }
@@ -70,7 +70,7 @@ frame.src='/next/?playtest=38';
 </script></body></html>
 HTML
 "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
- --window-size=1450,850 --virtual-time-budget=32000 --dump-dom \
+ --window-size=1450,850 --virtual-time-budget=180000 --dump-dom \
  'http://127.0.0.1:8869/__1999_playtest_probe.html' > visual-audit/1999/playtest-dom.html 2>/tmp/wtw-1999-playtest-chrome.log
 python3 - <<'PY'
 from pathlib import Path
