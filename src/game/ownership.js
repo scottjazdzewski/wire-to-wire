@@ -9,6 +9,7 @@
  * Changes to ownership are sparse deltas in the existing WTW_GAME_RUN_V1 save.
  */
 import {ensure,isObject,requireString,validDate} from './contracts.js';
+import {gameFutureOrganization,eligibleFutureOwner} from './future-industry-activation-v23.js';
 export const OWNERSHIP_RUNTIME_SCHEMA='WTW_RUN_HORSE_OWNERSHIP_V1';
 export const OWNERSHIP_COMMANDS=Object.freeze([
  'ASSIGN_HORSE_OWNER','REQUEST_HORSE_TRANSFER',
@@ -50,9 +51,11 @@ export function validateOwnershipRuntime(state,world){
   isObject(runtime.owner_overrides)&&isObject(runtime.pending_transfers),
   'OWNERSHIP_RUNTIME','Invalid ownership runtime structure');
  const {horseById,ownerById}=indexWorld(world);
+ const knownOwner=id=>ownerById.has(id)||
+  gameFutureOrganization(state,world,id)?.kind==='OWNER';
  for(const [horseId,override] of Object.entries(runtime.owner_overrides)){
   ensure(horseById.has(horseId)&&isObject(override)&&
-   typeof override.owner_id==='string'&&ownerById.has(override.owner_id)&&
+   typeof override.owner_id==='string'&&knownOwner(override.owner_id)&&
    typeof override.changed_on==='string'&&validDate(override.changed_on)&&
    override.changed_on<=state.clock.date &&
    ['INITIAL_ASSIGNMENT','GAMEPLAY_TRANSFER'].includes(override.kind),
@@ -64,8 +67,8 @@ export function validateOwnershipRuntime(state,world){
  for(const [requestId,request] of Object.entries(runtime.pending_transfers)){
   ensure(isObject(request)&&request.request_id===requestId&&
    typeof request.horse_id==='string'&&horseById.has(request.horse_id)&&
-   typeof request.from_owner_id==='string'&&ownerById.has(request.from_owner_id)&&
-   typeof request.to_owner_id==='string'&&ownerById.has(request.to_owner_id)&&
+   typeof request.from_owner_id==='string'&&knownOwner(request.from_owner_id)&&
+   typeof request.to_owner_id==='string'&&knownOwner(request.to_owner_id)&&
    request.from_owner_id!==request.to_owner_id&&
    REQUEST_TYPES.has(request.transfer_type)&&
    validDate(request.requested_on)&&request.requested_on<=state.clock.date,
@@ -74,10 +77,15 @@ export function validateOwnershipRuntime(state,world){
    'STALE_HORSE_OWNER','Pending transfer no longer belongs to original owner');
  }
 }
-function verifyOrg(world,id){
+function verifyOrg(state,world,id,{newAssignment=true}={}){
  requireString(id,'owner_id',128);
- ensure(indexWorld(world).ownerById.has(id),'UNKNOWN_OWNER',
-  'Owner is not an approved organization '+id);
+ const worldApproved=indexWorld(world).ownerById.has(id);
+ const future=gameFutureOrganization(state,world,id);
+ ensure(worldApproved||future?.kind==='OWNER','UNKNOWN_OWNER',
+  'Owner is not an approved career organization '+id);
+ if(!worldApproved&&newAssignment)
+  ensure(eligibleFutureOwner(state,world,id),'INACTIVE_FUTURE_OWNER',
+   'Future owner must have an active eligible approved principal');
 }
 function verifyHorse(world,id){
  requireString(id,'horse_id',128);
@@ -95,7 +103,7 @@ export function ownershipAction({state,world,command,emit}){
  const rt=ownership(state);
  if(type==='ASSIGN_HORSE_OWNER'){
   ensure(actor==='system','UNAUTHORIZED_COMMAND','Only game authoring can assign a previously unowned accepted horse');
-  verifyHorse(world,p.horse_id);verifyOrg(world,p.owner_id);
+  verifyHorse(world,p.horse_id);verifyOrg(state,world,p.owner_id);
   ensure(currentHorseOwnerId(state,world,p.horse_id)===null,
    'HORSE_ALREADY_OWNED','Cannot overwrite historical or existing ownership');
   rt.owner_overrides[p.horse_id]={
@@ -109,7 +117,7 @@ export function ownershipAction({state,world,command,emit}){
   ensure(actor==='player','UNAUTHORIZED_COMMAND','Only player can request a transfer');
   ensure(state.player.role==='owner'&&Boolean(state.player.operation_id),
    'UNAUTHORIZED_COMMAND','Only owner-role player with an approved operation may request an outgoing transfer');
-  verifyHorse(world,p.horse_id);verifyOrg(world,p.to_owner_id);
+  verifyHorse(world,p.horse_id);verifyOrg(state,world,p.to_owner_id);
   validRequestId(p.request_id);
   const from=currentHorseOwnerId(state,world,p.horse_id);
   ensure(from===state.player.operation_id,'NOT_HORSE_OWNER','You can only transfer a horse owned by your operation');
@@ -138,6 +146,7 @@ export function ownershipAction({state,world,command,emit}){
   validRequestId(p.request_id);
   const request=rt.pending_transfers[p.request_id];
   ensure(Boolean(request),'UNKNOWN_TRANSFER','No such pending ownership transfer');
+  verifyOrg(state,world,request.to_owner_id);
   const current=currentHorseOwnerId(state,world,request.horse_id);
   ensure(current===request.from_owner_id,'STALE_HORSE_OWNER','Horse changed owner since transfer request');
   if(request.transfer_type==='SALE'){
@@ -179,7 +188,7 @@ export function ownershipAction({state,world,command,emit}){
  * membership and the small transfer overlay, never full profile records.
  */
 export function getOwnerPortfolioView(state,world,ownerId,{offset=0,limit=30}={}){
- verifyOrg(world,ownerId);
+ verifyOrg(state,world,ownerId,{newAssignment:false});
  ensure(Number.isInteger(offset)&&offset>=0&&Number.isInteger(limit)&&limit>=0&&limit<=100,
   'INVALID_PAGING','Owner portfolio page must be 0..100 horses');
  const index=indexWorld(world),base=index.baseline.get(ownerId)||[],
