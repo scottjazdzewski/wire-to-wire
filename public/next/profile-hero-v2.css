@@ -301,3 +301,65 @@
   width:56px!important;height:56px!important;min-width:56px!important;max-width:56px!important;flex-basis:56px!important;
  }
 }
+
+
+/* Unbranded operations and racecourses get a polished, source-derived
+   TEMPORARY typographic identifier instead of "IMAGE SLOT RESERVED".
+   No invented crest or official branding. The exact-ID artwork takes its
+   place as soon as a genuine transparent image is available. */
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo.wtw-hero-typographic{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .wtw-hero-fallback{
+  position:relative;
+  z-index:1;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  width:100%;
+  min-width:0;
+  min-height:112px;
+  gap:1px;
+  text-align:center;
+  filter:drop-shadow(0 6px 8px rgba(0,0,0,.45));
+  pointer-events:none;
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .wtw-hero-fallback-monogram{
+  display:block;
+  color:#f4ead2;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(49px,5.1vw,78px);
+  font-weight:800;
+  line-height:1;
+  letter-spacing:-.075em;
+  text-shadow:0 1px 0 #ffffff26,0 4px 9px #0007,
+    0 0 18px color-mix(in srgb,var(--wtw-id-bright,#dac488) 29%,transparent);
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .wtw-hero-fallback-descriptor{
+  display:block;
+  margin-top:4px;
+  color:color-mix(in srgb,var(--wtw-id-highlight,#e3d29e) 87%,white);
+  font-size:9px;
+  font-weight:800;
+  line-height:1.2;
+  letter-spacing:.19em;
+  text-transform:uppercase;
+  text-shadow:0 2px 5px #000b;
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .wtw-hero-fallback::after{
+  content:"";
+  display:block;
+  width:min(110px,64%);
+  height:2px;
+  margin-top:8px;
+  background:linear-gradient(90deg,transparent,
+    var(--wtw-id-bright,#c8b37b),transparent);
+  border-radius:100%;
+}
+@media(max-width:740px){
+ #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .wtw-hero-fallback{min-height:90px;}
+ #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .wtw-hero-fallback-monogram{font-size:56px;}
+}
