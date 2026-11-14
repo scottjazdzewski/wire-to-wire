@@ -11,7 +11,7 @@ export function getStableView(state, world) {
   validateGameRun(state, world);
   return state.stable_horse_ids.map(id => {
     const canonical = careerHorse(state, world, id);
-    return { id, name: canonical.name, source_status: canonical.source_status || 'UNSPECIFIED',
+    return { id, name: canonical.name, source_status: canonical.source_status || canonical.provenance || 'UNSPECIFIED',
       current_owner_id: state.runtime.registered_horses?.by_id?.[id]?.owner_organization_id ?? currentHorseOwnerId(state,world,id),
       runtime: structuredClone(state.runtime.horse[id] || {}),
       pending_decision_ids: Object.values(state.decisions.pending).filter(d => d.horse_id === id).map(d => d.id) };
