@@ -45,7 +45,9 @@ export function build1999PilotGameRun({world,manifest,playerOperationId,runId='W
  const apply=(id,type,payload)=>{state=dispatchGameCommand({world,state,
   command:{id,type,payload,actor:'system'}}).state;};
  const operators=[...new Set(manifest.sites.map(s=>s.operator_organization_id))].sort();
- for(const id of operators)apply('pilot:funds:'+id,'FACILITY_SEED_FUNDS',{
+ const ownerIds=[...new Set(manifest.assignments.map(h=>h.owner_organization_id))].sort();
+ const funders=[...new Set([...operators,...ownerIds])].sort();
+ for(const id of funders)apply('pilot:funds:'+id,'FACILITY_SEED_FUNDS',{
   operation_id:id,balance_minor:25000000,source_kind:'SIMULATED_TEST',
   source_ref:'ISOLATED_1999_PILOT_FINANCE_FIXTURE_NOT_OPENING_CANON'});
  for(const site of manifest.sites){
@@ -69,7 +71,7 @@ export function build1999PilotGameRun({world,manifest,playerOperationId,runId='W
  // editorial source batch or claim approval by external horse-name registry.
  const release={release_id:'TEST-NAMES-1999-PILOT-V1',status:'ACCEPTED',
   candidates:accepted,reserved_names:{version:'TEST-1999-V1',names:[]}};
- for(const h of manifest.assignments){
+ for(const [index,h] of manifest.assignments.entries()){
   apply('pilot:horse:'+h.horse_id,'REGISTER_GAME_HORSE',{
    horse:{
     horse_id:h.horse_id,registration_receipt_id:h.registration_receipt_id,
@@ -82,6 +84,16 @@ export function build1999PilotGameRun({world,manifest,playerOperationId,runId='W
     racing_barn_id:h.racing_barn_id,trainer_id:h.trainer_id,
     status:'IN_TRAINING',starting_attributes:h.starting_attributes
    },naming_release:release
+  });
+  // Distinct owner-funded choices: not sourced historical care/finances.
+  // They use the exact same command interface as the player's decisions.
+  apply('pilot:care:'+h.horse_id,'SET_HORSE_CARE_POLICY',{
+   horse_id:h.horse_id,policy:{
+    feed:['STANDARD','PREMIUM','ECONOMY'][index%3],
+    care:index%4===0?'PROACTIVE':'BASIC',
+    training_plan:['AUTO','BALANCED','SPEED','STAMINA','GATE','LIGHT'][index%6],
+    monthly_budget_minor:410000+(index%5)*52000
+   }
   });
  }
  ensure(Object.keys(state.runtime.registered_horses.by_id).length===manifest.horse_count,
