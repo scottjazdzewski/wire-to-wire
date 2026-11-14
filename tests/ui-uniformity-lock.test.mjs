@@ -80,6 +80,13 @@ test('a screenshot smoke test does not mean FM/OOTP visual approval',()=>{
   assert.ok(audit.includes('capture '+view+' '),'Visual route missing: '+view);
  }
  assert.match(standard,/mark \*\*REJECTED\*\*/,'Weak interfaces must be explicitly rejected');
+ for(const view of ['aqueduct-track','gulfstream-track','kingsmere-farm','northbank-stable']){
+  assert.ok(audit.includes('capture '+view+' '),'Missing cross-screen comparison screenshot: '+view);
+ }
+ for(const name of ['laptop-horse','laptop-person','laptop-aqueduct','laptop-farm','laptop-owner']){
+  assert.ok(audit.includes('probe '+name+' '),'Missing laptop geometry check: '+name);
+ }
+ assert.match(audit,/UNIFIED PROFILE GEOMETRY VERIFIED/);
  assert.match(standard,/A \*\*person\*\* compares screenshots/,'Visual acceptance needs an actual reviewer');
  assert.match(standard,/No CSS patch stacks|No CSS patch stack|one canonical management stylesheet/i);
 });
