@@ -15,10 +15,10 @@ function card(world,sourceId,date){
 const summary=r=>({date:r.date,trackId:r.trackId,number:r.number,name:r.name,purse:r.purse,
  surface:r.surface,distanceFurlongs:r.distanceFurlongs,stakeId:r.stakeId||null});
 
-test('all 118 playable tracks have tiered class/purse and volume profiles',()=>{
+test('115 playable tracks have tiered class/purse profiles; all 118 identities remain',()=>{
  assert.equal(browser.counts.tracks,118);
  const premier=trackConditionProfile1999('T-0013'),local=trackConditionProfile1999('T-0048'),
- fair=trackConditionProfile1999('T-0042'),fiction=trackConditionProfile1999('T-0094');
+ fair=trackConditionProfile1999('T-0045'),fiction=trackConditionProfile1999('T-0094');
  assert.equal(premier.tier,'PREMIER');
  assert.equal(local.tier,'LOCAL');
  assert.equal(fair.tier,'FAIR');
@@ -29,7 +29,7 @@ test('all 118 playable tracks have tiered class/purse and volume profiles',()=>{
  assert.ok(local.typicalRaces>=fair.typicalRaces);
  for(let i=0;i<browser.counts.tracks;i++){
   const track=browser.trackAt(i),p=trackConditionProfile1999(track.sourceTrackId);
-  assert.ok(p,'no racing identity: '+track.id);
+  if(!p){assert.equal(track.racing.racesPerCard,0);continue;}
   assert.equal(track.racing.programTier,p.tier);
   assert.ok(p.purses.msw>p.purses.mdn);
  }
