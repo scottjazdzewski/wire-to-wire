@@ -43,6 +43,7 @@ test('newly installed approved organization logos are all exact 256-square PNGs'
 });
 test('No stale legacy identity substitutions in active 1999 logo index',()=>{
  for(const [key,path] of Object.entries(index.organizations)){
+  assert.doesNotMatch(path,/owner-logos|_v1_64/,'pixelated owner fallback is retired');
   assert.match(key,/^organization:O-(?:\d{6}|FOUNDING-1999-\d{3})$/);
   assert.ok(current.has(key.slice('organization:'.length)),'unknown organization '+key);
   assert.ok(!/state[-_]?flag|states\//i.test(path),'state/flag logo substituted for owner '+key);

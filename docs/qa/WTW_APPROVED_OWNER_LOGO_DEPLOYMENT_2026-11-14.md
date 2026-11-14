@@ -46,3 +46,7 @@ Scope: 37 existing opening organizations only. 25 exact-ID 256px user-approved l
 ## Historical asset files
 
 Legacy `public/assets/office/owner-logos/` files remain in source control as archived/non-1999 assets; their stale copies are no longer used as fallback for any of the 25 newly verified current identities. Deleting source assets unrelated to the active 1999 index is intentionally avoided because other game contexts may still reference them.
+
+## 2026-11-14 quality retirement (later milestone)
+
+At the user's request all 108 early 64×64 generated owner crests were deleted from the deployed site and removed from the old alias index. The six that were still mapped in the January 1999 roster (St. Alloy Partners, Argosy Bloodstock, Whitcombe Family, Northbank Racing, Argosy Racing Partners, Circle B Racing) now show neutral initials until individually approved high-resolution original artwork exists. **29** exact-ID 256×256 approved marks remain live; **8** organizations have neutral identity placeholders. The site's approved Drive originals and 32/64px derivatives of approved source art remain preserved. No game identifiers, saves, horses, or racing data changed. See the live founding-organization-logo-index.json for current status; sections above document the earlier 2026-11-14 handoff snapshot.

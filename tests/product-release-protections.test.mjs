@@ -27,7 +27,9 @@ function blobHash(bytes){
 test('Every shipped image is present and has exact approved bytes: logos, trophies, badges, flags, heroes',()=>{
  assert.equal(lock.schema,'WTW_APPROVED_VISUAL_ASSET_LOCK_V1');
  const listed=Object.keys(lock.assets).sort();
- assert.ok(listed.length>=300,'Visual asset lock unexpectedly sparse');
+ assert.ok(listed.length>=250,'Visual asset lock unexpectedly sparse after 108 generated 64px logos retired');
+ assert.ok(listed.every(path=>!path.startsWith('public/assets/office/owner-logos/')),
+  'Retired pixelated owner images must never return to the approved visual lock');
  assert.deepEqual(allImages('public/assets'),listed,
   'A visual asset was added or removed without release manifest review');
  for(const path of listed){
