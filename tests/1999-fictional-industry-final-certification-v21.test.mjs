@@ -141,3 +141,20 @@ test('V21 certificate is reproducible from the same seed and intentionally carri
   '../public/1999/engine/founding-world-1999.mjs',import.meta.url),'utf8');
  assert.doesNotMatch(boot,/fictional-industry-readiness-v21|certify-fictional-industry-v21/);
 });
+test('V21 operator certification command emits parseable standalone PASS certificate',()=>{
+ const command=new URL(
+  '../scripts/certify-fictional-industry-v21.mjs',import.meta.url).pathname;
+ const output=execFileSync(process.execPath,[command],{
+  encoding:'utf8',timeout:90000,maxBuffer:1024*1024
+ });
+ const result=JSON.parse(output);
+ assert.equal(result.model,FICTIONAL_INDUSTRY_CERTIFICATION_MODEL_V21);
+ assert.equal(result.result,'PASS');
+ assert.equal(result.yearStart,1999);
+ assert.equal(result.yearEnd,2099);
+ assert.equal(result.disposable,true);
+ assert.equal(result.playableWorldModified,false);
+ assert.equal(result.noHorsesCreated,true);
+ assert.equal(result.archiveRestorationVerified,true);
+ assert.match(result.certificationDigest,/^sha256-[a-f0-9]{64}$/);
+});
