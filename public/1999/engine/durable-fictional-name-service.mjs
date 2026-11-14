@@ -42,7 +42,8 @@ const compact=(prepared,registry)=>Object.freeze({
  ownersIssued:registry.ownerCount+prepared.batch.owners.length
 });
 function batchRecord(prepared){
- const people=prepared.batch.people.map(x=>({id:x.id,name:x.name}));
+ const people=prepared.batch.people.map(x=>({id:x.id,name:x.name,
+  role:x.role,primarySurname:x.primarySurname,birthYear:x.birthYear}));
  const owners=prepared.batch.owners.map(x=>({
   id:x.id,name:x.name,namingRegion:x.namingRegion,
   ownershipArchetype:x.ownershipArchetype,principalId:x.principalId
@@ -302,6 +303,7 @@ export async function openDurableFictionalNameService({
   generate,refresh,exportBundle,
   listOwners:(options)=>registry.listOwners(options),
   listGroups:(options)=>registry.listGroups(options),
-  hasName:(name)=>registry.hasAnyName(name)
+  hasName:(name)=>registry.hasAnyName(name),
+  getApprovedPerson:(id)=>registry.getApprovedPerson(id)
  });
 }

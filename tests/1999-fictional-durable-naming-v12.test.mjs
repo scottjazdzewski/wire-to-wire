@@ -50,10 +50,11 @@ test('durable V12 naming writes append-only batches, not full previous name arra
  const service=await openDurableFictionalNameService({storage,worldId,seed,
   protectedPeople:['José García'],protectedOrganizations:['Kingsmere Farm']});
  const cursorLengths=[];
- let people=0,owners=0;
+ let people=0,owners=0,firstApprovedPerson=null;
  for(let i=0;i<60;i++){
   const next=await service.generate(params);
   people+=next.people.length;owners+=next.owners.length;
+  if(!firstApprovedPerson)firstApprovedPerson=next.people[0];
   const size=JSON.stringify(next.nextCursor).length;
   cursorLengths.push(size);
   assert.equal(next.manifest.writtenToGame,false);
@@ -77,6 +78,14 @@ test('durable V12 naming writes append-only batches, not full previous name arra
  assert.deepEqual(reopened.cursor,service.cursor);
  assert.equal(reopened.namesIssued,service.namesIssued);
  assert.equal(reopened.ownerCount,service.ownerCount);
+ const approved=reopened.getApprovedPerson(firstApprovedPerson.id);
+ assert.deepEqual(approved,{
+  id:firstApprovedPerson.id,name:firstApprovedPerson.name,
+  role:firstApprovedPerson.role,
+  primarySurname:firstApprovedPerson.primarySurname,
+  birthYear:firstApprovedPerson.birthYear
+ });
+ assert.equal(reopened.getApprovedPerson('UNISSUED-ID'),null);
  assert.ok(reopened.hasName('José García'));
  assert.ok(reopened.listOwners({limit:30}).length===30);
  assert.equal(reopened.listGroups({limit:100}).length,service.partnershipGroupsIssued);
