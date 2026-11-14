@@ -40,7 +40,7 @@ Football Manager and Out of the Park Baseball are the reference **level of quali
 - Shared profile composition: **one** `profileDetail()` renderer, `restored1999Profile()` adapter; profile visual companion is `public/next/profile-hero-v2.mjs`. No per-entity renderer forks.
 - Shared connected-record controls: **one** `connectedTableState()` + **one** `profileRecordSection()`; no custom table for each track/owner/trainer.
 - Entity palette companion: `public/next/identity-themes.mjs`; unique colors are an identity layer, not an alternate UX.
-- Current **temporary existing** stylesheets in /next/: `next.css`, `1999-commercial-career.css`, `identity-themes.css`, `profile-hero-v2.css`. This four-file baseline is acknowledged as technical debt relative to the earlier single-CSS authority. **Do not add a fifth or a screen-specific override file.** Consolidate into existing shared rules in a controlled refactor with visual proof; do not cause a blind all-at-once CSS rewrite while parallel windows are active.
+- **One canonical management stylesheet:** `public/next/next.css` now contains all active shared layout, career dialog, entity themes and profile hero rules in the same tested cascade order. The prior three CSS companion files were physically retired. **Do not re-add them or create page-specific stylesheets.** Change shared rules in `next.css` and keep one profile/table/nav interaction system across all relevant pages.
 - Existing original assets and canonical data stay in their current authority; UI changes may read but not mutate them.
 
 ## Old layout retirement — permanent authority
