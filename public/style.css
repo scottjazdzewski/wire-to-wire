@@ -1692,22 +1692,22 @@ body{margin:0;background:var(--cream);color:var(--ink);font-size:12px;line-heigh
 
 }
 
-.network-page,.vault-page{display:grid;gap:16px}
+.network-page{display:grid;gap:16px}
 
-.network-hero,.vault-hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(340px,.8fr);gap:22px;align-items:center;padding:22px 24px;border-radius:15px;color:#fff;background:radial-gradient(circle at 86% 18%,rgba(217,196,142,.16),transparent 22rem),
+.network-hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(340px,.8fr);gap:22px;align-items:center;padding:22px 24px;border-radius:15px;color:#fff;background:radial-gradient(circle at 86% 18%,rgba(217,196,142,.16),transparent 22rem),
     linear-gradient(115deg,#141d21,#141d21);border:1px solid rgba(183,148,79,.30)}
 
-.network-hero .smallcaps,.vault-hero .smallcaps{color:#a8cbb8}
+.network-hero .smallcaps{color:#a8cbb8}
 
-.network-hero h2,.vault-hero h2{margin:5px 0 7px;font:700 27px/1.05 Georgia,"Times New Roman",serif}
+.network-hero h2{margin:5px 0 7px;font:700 27px/1.05 Georgia,"Times New Roman",serif}
 
-.network-hero p,.vault-hero p{margin:0;max-width:690px;color:#ccddd3;font-size:10px;line-height:1.55}
+.network-hero p{margin:0;max-width:690px;color:#ccddd3;font-size:10px;line-height:1.55}
 
-.network-hero-stats,.vault-hero-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.network-hero-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 
-.network-hero-stats span,.vault-hero-stats span{padding:10px;border-radius:9px;border:1px solid rgba(255,255,255,.11);background:#1c26290b;color:#b9cbbf;font-size:8px}
+.network-hero-stats span{padding:10px;border-radius:9px;border:1px solid rgba(255,255,255,.11);background:#1c26290b;color:#b9cbbf;font-size:8px}
 
-.network-hero-stats b,.vault-hero-stats b{display:block;color:#fff;font:700 20px Georgia,"Times New Roman",serif}
+.network-hero-stats b{display:block;color:#fff;font:700 20px Georgia,"Times New Roman",serif}
 
 .network-role-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 
@@ -1741,55 +1741,11 @@ body{margin:0;background:var(--cream);color:var(--ink);font-size:12px;line-heigh
 
 .network-card-v2 .people-card-footer .button{font-size:8px;padding:6px 8px}
 
-.vault-page .year-tabs{margin-bottom:0}
-
-.vault-month-group{border:1px solid #3e4c42;border-radius:3px;background:#1a2225;overflow:hidden;box-shadow:none}
-
-.vault-month-group>header{display:flex;justify-content:space-between;align-items:end;gap:12px;padding:8px 10px;background:#28312e;border-bottom:1px solid #46564b}
-
-.vault-month-group>header h3{margin:3px 0 0;font:700 17px Georgia,"Times New Roman",serif;color:#bddbc8}
-
-.vault-month-group>header>span{font-size:8px;color:#bbc9c0}
-
-.vault-race-list{display:grid}
-
-.vault-race-card{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:13px;align-items:center;padding:7px 10px;border-bottom:1px solid #36443f}
-
-.vault-race-card:last-child{border-bottom:0}
-
-.vault-race-card:hover{background:#29372f}
-
-.vault-race-date{display:grid;place-items:center;min-height:43px;border-radius:3px;background:#27302c;border:1px solid #4b5a4e}
-
-.vault-race-date small{font-size:6px;color:#bbc9c0;font-weight:850}
-
-.vault-race-date strong{font:700 20px/1 Georgia,"Times New Roman",serif;color:#aad0b6}
-
-.vault-race-date span{font-size:6px;color:#9c7c41;font-weight:850;letter-spacing:.08em}
-
-.vault-race-main{min-width:0}
-
-.vault-race-kicker{display:flex;align-items:center;gap:7px;color:#bbc9c0;font-size:8px;min-width:0}
-
-.vault-race-kicker .name-edit-pair{max-width:58%}
-
-.vault-race-main h4{margin:4px 0 5px;font:700 15px Georgia,"Times New Roman",serif}
-
-.vault-race-main h4 button{padding:0;border:0;background:none;color:#bddbc8;font:inherit;text-align:left}
-
-.vault-race-winner{display:flex;align-items:center;gap:7px;font-size:8px;color:#bbc9c0}
-
-.vault-race-winner>span{font-size:6px;letter-spacing:.11em;font-weight:900;color:#9a7f49}
-
-.vault-race-winner button{padding:0;border:0;background:none;color:#aad0b6;font-size:9px;font-weight:850}
-
-.vault-race-actions .button{font-size:8px;padding:6px 8px}
-
 @media(max-width:980px){
 
 .network-grid-v2{grid-template-columns:repeat(2,minmax(0,1fr))}
 
-.network-hero,.vault-hero{grid-template-columns:1fr}
+.network-hero{grid-template-columns:1fr}
 
 }
 
@@ -1799,9 +1755,9 @@ body{margin:0;background:var(--cream);color:var(--ink);font-size:12px;line-heigh
 
 .network-grid-v2{grid-template-columns:1fr}
 
-.vault-race-card{grid-template-columns:46px minmax(0,1fr)}
 
-.vault-race-actions{grid-column:2}
+
+
 
 }
 
@@ -1826,4 +1782,86 @@ body{margin:0;background:var(--cream);color:var(--ink);font-size:12px;line-heigh
  .wtw-pedigree-columns{grid-template-columns:repeat(6,minmax(136px,1fr));min-width:890px}
  .wtw-pedigree-generation-nodes{min-height:900px}
  .wtw-pedigree-node button,.wtw-pedigree-node strong{font-size:9px}
+}
+
+
+/* Approved History v2: one dense archive ledger and a single Year in Review
+ * dossier. Removed the retired month-by-month card presentation above. */
+.main:has(.history-ledger-page){padding:12px 14px 18px}
+.history-ledger-page{display:grid;gap:9px;min-width:0;color:#deebe1}
+.history-ledger-title{display:flex;justify-content:space-between;align-items:center;gap:18px;min-width:0;padding:10px 14px;border:1px solid #69745d;border-left:4px solid #d0ad6c;background:linear-gradient(110deg,#344a3b,#1d292c 80%)}
+.history-ledger-title h2{font:700 23px/1.1 Georgia,serif;color:#f2dda7;margin:3px 0 4px}
+.history-ledger-title p{color:#c4d4c8;font-size:10px;line-height:1.4;margin:0}
+.history-ledger-count{min-width:164px;display:grid;justify-items:end;gap:2px}
+.history-ledger-count strong{font:700 26px Georgia,serif;color:#f0d697}
+.history-ledger-count span{font-size:9px;font-weight:800;text-transform:uppercase}
+.history-ledger-count small{font-size:9px;color:#bdcebf;white-space:nowrap}
+.history-ledger-tools{display:grid;grid-template-columns:minmax(112px,140px) minmax(150px,220px) minmax(190px,1fr) auto;align-items:end;gap:8px;background:#26362e;border:1px solid #5b6c5c;padding:8px 10px}
+.history-ledger-tools label,.history-review-navigation label{display:grid;gap:4px;min-width:0;color:#bbd0c0;font-size:9px;font-weight:800;letter-spacing:.055em}
+.history-ledger-tools select,.history-ledger-tools input,.history-review-navigation select{width:100%;min-width:0;height:32px;padding:5px 8px;background:#182729;color:#f2f2e9;border:1px solid #78917e;border-radius:3px;font-size:11px}
+.history-ledger-tools input:focus-visible,.history-ledger-tools select:focus-visible,.history-review-navigation select:focus-visible{outline:2px solid #f0cd8c}
+.history-ledger-tools>.button{height:32px;white-space:nowrap;font-size:10px;padding:5px 11px}
+.history-source-note{padding:5px 9px;border-left:3px solid #ccaa68;background:#27372e;font-size:9px;color:#d3dfd2}
+.history-ledger-table-region{max-height:calc(100dvh - 300px);min-height:320px;min-width:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#89a092 #1e2a2b;background:#1b2829;border:1px solid #5c725f}
+.history-ledger-table-region:focus-visible{outline:2px solid #f0c57e;outline-offset:2px}
+.history-ledger-table{width:100%;min-width:940px;border-collapse:collapse;table-layout:fixed;font-size:11px}
+.history-ledger-table th{position:sticky;top:0;z-index:2;padding:0;background:#344c3d;border-bottom:2px solid #a78e5c;color:#eddcb6;text-align:left;white-space:nowrap}
+.history-ledger-table th:nth-child(1){width:67px}.history-ledger-table th:nth-child(2){width:112px}
+.history-ledger-table th:nth-child(3){width:25%}.history-ledger-table th:nth-child(4){width:19%}
+.history-ledger-table th:nth-child(5){width:24%}.history-ledger-table th:nth-child(6){width:169px}
+.history-ledger-table th button{width:100%;min-height:32px;padding:7px 9px;display:flex;justify-content:space-between;gap:4px;align-items:center;background:transparent;border:0;color:inherit;letter-spacing:.05em;font-size:9px;font-weight:850;text-align:left;cursor:pointer}
+.history-ledger-table th button:hover,.history-ledger-table th button:focus-visible,.history-ledger-table th[aria-sort="ascending"] button,.history-ledger-table th[aria-sort="descending"] button{background:#50674e;color:#fff2c6}
+.history-ledger-table th button:focus-visible{outline:2px solid #f1d490;outline-offset:-2px}
+.history-ledger-table tr{border-bottom:1px solid #394c40}
+.history-ledger-table tr:nth-child(even){background:#23312e}.history-ledger-table tr:hover{background:#345041}
+.history-ledger-table td{padding:5px 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#dce9df;vertical-align:middle}
+.history-ledger-table .name-edit-pair{max-width:100%;flex-wrap:nowrap;align-items:center}
+.history-ledger-table .name-cell{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0;background:transparent;border:0;text-align:left;color:#efd8a1;font-size:11px;font-weight:750}
+.history-ledger-table .name-cell:hover,.history-ledger-table .name-cell:focus-visible{text-decoration:underline;color:#fff1c2}
+.history-ledger-table .inline-rename{font-size:11px!important;min-height:19px;flex-shrink:0}
+.history-year-cell button{border:0;background:transparent;color:#f0cb82;font-size:11px;font-weight:850;padding:2px 0;cursor:pointer}
+.history-year-cell button:hover,.history-year-cell button:focus-visible{text-decoration:underline}
+.history-date-cell{font-variant-numeric:tabular-nums;color:#c2d5c7!important}
+.history-ledger-table .date-evidence{font-size:8px;white-space:nowrap}
+.history-no-rows{text-align:center!important;padding:22px!important}
+.history-ledger-pagination{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#25352f;padding:6px 10px;border:1px solid #526a59;color:#c9d7c9;font-size:10px}
+.history-ledger-pagination>div{display:flex;align-items:center;gap:9px}
+.history-ledger-pagination button,.history-review-navigation button{background:#3c513f;color:#f0daab;border:1px solid #8e7a56;padding:5px 10px;border-radius:3px;font-size:10px;font-weight:800;cursor:pointer}
+.history-ledger-pagination button:disabled{opacity:.4;cursor:default}
+.history-review-navigation{display:flex;align-items:center;gap:12px}
+.history-review-navigation label{min-width:120px}
+.history-review-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.history-review-metrics>div{display:grid;gap:3px;background:linear-gradient(140deg,#344d3b,#26352d);padding:10px 12px;border:1px solid #6e805f}
+.history-review-metrics strong{font:700 25px Georgia,serif;color:#f0d396}
+.history-review-metrics span{font-size:9px;letter-spacing:.04em;text-transform:uppercase;color:#d0dfd0}
+.history-review-section{min-width:0;background:#202d2c;border:1px solid #5b6c5a}
+.history-review-section>header{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:9px 11px;border-bottom:1px solid #667760;background:#334739}
+.history-review-section>header h3{font:700 16px Georgia,serif;color:#eed8a0;margin:0}
+.history-review-section>header small{font-size:9px;color:#cedacb}
+.history-classics-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:9px}
+.history-classic{display:grid;align-content:start;gap:6px;padding:11px;min-width:0;background:linear-gradient(135deg,#3b503d,#25332d);border-left:3px solid #d5ae62}
+.history-classic>span{font-size:8px;color:#d9c691;letter-spacing:.08em}
+.history-classic h3{font:700 16px Georgia,serif;color:#f4e8ca;margin:0}
+.history-classic .name-cell{border:0;background:none;color:#f0d48b;font-weight:850;text-align:left;padding:0}
+.history-classic p,.history-classic small{font-size:10px;color:#cbd6c9;margin:0}
+.history-no-awards{font-size:11px;color:#ccd9ca;margin:0;padding:13px}
+.history-awards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:8px}
+.history-awards>div{display:grid;gap:4px;border-left:3px solid #c6a365;background:#2b3b31;padding:8px;font-size:10px}
+.history-season-leaders{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:8px}
+.history-season-leaders>div{display:flex;align-items:center;gap:6px;min-width:0;background:#304136;padding:7px}
+.history-season-leaders>div>span{color:#dfc07d;font-weight:850}
+.history-season-leaders .name-edit-pair{flex:1;min-width:0}
+.history-season-leaders strong{font-size:9px;white-space:nowrap;color:#d4e1d1}
+.history-review-table{min-height:140px;max-height:400px;border:0}
+@media(max-width:1150px){
+.history-ledger-tools{grid-template-columns:130px minmax(130px,1fr) minmax(180px,1.2fr)}
+.history-ledger-tools>.button{grid-column:1/-1;justify-self:start}
+.history-season-leaders{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:720px){
+.history-ledger-title{display:grid}.history-ledger-title h2{font-size:20px}.history-ledger-count{justify-items:start}
+.history-ledger-tools{grid-template-columns:repeat(2,minmax(0,1fr))}.history-ledger-search{grid-column:1/-1}
+.history-classics-grid,.history-awards{grid-template-columns:1fr}
+.history-review-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.history-review-navigation{flex-wrap:wrap}
+.history-ledger-table-region{max-height:calc(100dvh - 350px)}
 }
