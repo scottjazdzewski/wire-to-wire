@@ -67,3 +67,12 @@ test('entity visual-depth v2 remains strictly scoped to the current shared profi
  assert.doesNotMatch(own,/\.ng-global-continue|\.ng-msgtag\.urgent|\.ng-status-pills|\.ng-injury|\.ng-eligibility/);
  assert.doesNotMatch(own,/grid-template|position\s*:|width\s*:|height\s*:|display\s*:none/);
 });
+
+test('new themes are cache-busted coherently without a second stylesheet',()=>{
+ const page=readFileSync(new URL('../public/next/index.html',import.meta.url),'utf8');
+ const module=readFileSync(new URL('../public/next/identity-themes.mjs',import.meta.url),'utf8');
+ assert.match(page,/identity-themes\.mjs\?rev=wtw-identity-depth-v2-20261114/);
+ assert.match(module,/visual-themes-v1\.json\?v=20261114b/);
+ assert.match(page,/next\.css\?rev=wtw-identity-atmosphere-v2-20261114/);
+ assert.equal((page.match(/rel="stylesheet"/g)||[]).length,1);
+});
