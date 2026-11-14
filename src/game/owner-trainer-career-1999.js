@@ -7,6 +7,7 @@
  * No dismissal/reassignment, invented cash, new roster, or alternative clock.
  */
 import {ensure,isObject,validDate,worldIdentity} from './contracts.js';
+import {workingRelationshipProfile} from './working-relationship-1999.js';
 
 export const OWNER_TRAINER_REVIEW_SCHEMA='WTW_1999_OWNER_TRAINER_CAREER_REVIEWS_V1';
 export const OWNER_TRAINER_REVIEW_COMMANDS=Object.freeze(['SET_OWNER_TRAINER_MANDATE']);
@@ -61,6 +62,7 @@ export function ownerTrainerEvidence(state,world,owner,trainer,{days=56}={}){
  const horses=registered(state).filter(h=>h.owner_organization_id===owner&&
   h.trainer_id===trainer),horseIds=new Set(horses.map(h=>h.horse_id));
  const relation=state.runtime.agents?.relationships?.[pair(owner,trainer)]||null;
+ const working=workingRelationshipProfile(state,owner,trainer);
  const relative=results.map(x=>{
   const horse=state.runtime.registered_horses.by_id[x.horse_id];
   const expected=.2+.6*(horse?.starting_attributes?.current_ability??55)/99;
@@ -119,6 +121,12 @@ export function ownerTrainerEvidence(state,world,owner,trainer,{days=56}={}){
   observed_care_days:history.length,
   owner_trust:relation?.owner_trust??.5,
   trainer_support:relation?.trainer_support??.5,
+  owner_patience:working.owner_patience,
+  trainer_patience:working.trainer_patience,
+  working_relationship_strength:working.working_relationship_strength,
+  relationship_friction:working.relationship_friction,
+  expectation_alignment:working.expectation_alignment,
+  shared_working_days:working.shared_working_days,
   owner_cash_minor:Number.isSafeInteger(cash)?cash:null,
   provenance:'ACTUAL_SAVED_GAME_RESULTS_AND_FINANCE_NOT_HISTORICAL_ASSESSMENT'};
 }
@@ -149,22 +157,69 @@ export function setOwnerTrainerMandate({state,world,command,emit}){
   reason:a.reason,financial_terms_unchanged:true,
   existing_horse_orders_unchanged:true});
 }
+/**
+ * Same objective results can produce different decisions because expectations
+ * and patience matter. The relationship buys some grace, but very poor,
+ * repeated evidence overrides even strong personal loyalty.
+ *
+ * Optional new evidence fields default to neutral so older saves/tests remain
+ * valid; no decision is ever made from merely a personality rating.
+ */
 export function selectOwnerTrainerMandate(e,previous,ownerCash){
+ const ownerPatience=e.owner_patience??.5;
+ const bond=e.working_relationship_strength??.5;
  const sufficient=e.decision_sample_basis?
   e.decision_sample_basis!=='INSUFFICIENT':e.starts>=3;
  const form=e.decision_form??e.average_relative_form;
  const effectiveStarts=e.decision_sample_starts??e.starts;
- if(!sufficient)return {mandate:previous,reason:'WAIT_FOR_SUSTAINED_RACE_SAMPLE'};
+ const impatientEarly=ownerPatience<.34&&e.starts>=2&&form!==null&&
+  Number.isFinite(form);
+ if((!sufficient&&!impatientEarly)||
+  (ownerPatience>.78&&effectiveStarts<4))
+  return {mandate:previous,reason:'WAIT_FOR_SUSTAINED_RACE_SAMPLE'};
  if(e.unfunded_horse_days>0||ownerCash===null||ownerCash<=0)
   return {mandate:previous,reason:'OWNER_FINANCING_PRESSURE_NOT_TRAINER_FAULT'};
- const poor=form<-.085&&e.owner_trust<.59;
- if(previous==='WATCH'&&effectiveStarts>=4&&form<-.20&&
-  e.owner_trust<.48)return {mandate:'IMPROVEMENT_PLAN',
-   reason:'REPEATED_UNDERPERFORMANCE_WITH_ADEQUATE_FUNDS'};
- if(poor)return {mandate:'WATCH',reason:'SUSTAINED_RESULTS_BELOW_ABILITY_EXPECTATION'};
+ // A patient owner and a trusted, functional partnership both increase the
+ // poor-form threshold; negative values mean weaker results are tolerated.
+ const poorLimit=-.085-(ownerPatience-.5)*.15-(bond-.5)*.12;
+ const severeLimit=-.20-(ownerPatience-.5)*.12-(bond-.5)*.08;
+ const relationshipConfidence=.65*e.owner_trust+.35*bond;
+ const poor=form<poorLimit&&
+  (relationshipConfidence<.63||form<severeLimit-.07);
+ if(previous==='WATCH'&&effectiveStarts>=4&&form<severeLimit&&
+  (relationshipConfidence<.62||form<-.37))
+  return {mandate:'IMPROVEMENT_PLAN',
+   reason:'REPEATED_UNDERPERFORMANCE_EXCEEDS_PATIENCE_AND_RELATIONSHIP_GRACE'};
+ if(poor)return {mandate:'WATCH',reason:
+  ownerPatience<.36?'IMPATIENT_OWNER_REACTS_TO_BELOW_EXPECTED_FORM':
+   'SUSTAINED_RESULTS_EXCEED_WORKING_RELATIONSHIP_GRACE'};
  if(form>.065&&e.owner_trust>.44)
   return {mandate:'SUPPORT',reason:'SUSTAINED_OVERPERFORMANCE_EARNS_BACKING'};
+ if(previous==='WATCH'&&form<0&&bond>.70&&ownerPatience>.65)
+  return {mandate:'NORMAL',reason:'OWNER_GRANTS_RENEWED_CHANCE_TO_TRUSTED_TRAINER'};
  return {mandate:'NORMAL',reason:'STABLE_PERFORMANCE_AND_SUSTAINED_REVIEW'};
+}
+/** Trainer impatience is independent of the owner's satisfaction. This
+ * returns advisory pressure/status, not an invented resignation or firing.
+ * Sustained owner underfunding is a valid grievance, not trainer failure. */
+export function assessTrainerRelationshipPosition(e,previous='COMMITTED'){
+ const patience=e.trainer_patience??.5,trust=e.trainer_support??.5;
+ const bond=e.working_relationship_strength??.5;
+ const friction=e.relationship_friction??0;
+ const service=e.shared_working_days??0;
+ const unmet=e.unfunded_horse_days??0;
+ const pressure=.55*(1-trust)+.29*(1-bond)+.16*friction+
+  Math.min(.28,unmet*.065)+(.5-patience)*.31;
+ if(service<14&&unmet===0)return {position:'COMMITTED',
+  reason:'EARLY_PARTNERSHIP_TOO_SOON_TO_JUDGE'};
+ if(pressure>.81&&service>=28)return {position:'CONSIDERING_DEPARTURE',
+  reason:'TRAINER_PATIENCE_EXHAUSTED_BY_RELATIONSHIP_AND_OWNER_SUPPORT'};
+ if(pressure>.60)return {position:'PRESSING_FOR_CHANGE',
+  reason:unmet>0?'TRAINER_EXPECTS_OWNER_TO_FUND_AGREED_CARE':
+   'TRAINER_EXPECTS_BETTER_WORKING_RELATIONSHIP'};
+ if(pressure>.43)return {position:'FRUSTRATED',
+  reason:'TRAINER_PATIENCE_AND_WORKING_ALIGNMENT_UNDER_STRAIN'};
+ return {position:'COMMITTED',reason:'TRAINER_ACCEPTS_CURRENT_PARTNERSHIP'};
 }
 /** Called every real game day, BEFORE owner funding and contract renewal.
  * One 28-day decision per pair, persisted with evidence and exact reasons. */
@@ -177,6 +232,17 @@ export function advanceOwnerTrainerReviews({state,world,emit}){
   if(item.next_review_date>today)continue;
   const evidence=ownerTrainerEvidence(state,world,owner,trainer);
   const old=item.mandate;
+  const trainerBefore=item.trainer_position??'COMMITTED';
+  const trainerMood=assessTrainerRelationshipPosition(evidence,trainerBefore);
+  item.trainer_position=trainerMood.position;
+  item.trainer_position_reason=trainerMood.reason;
+  if(trainerMood.position!==trainerBefore)
+   emit('TRAINER_WORKING_RELATIONSHIP_SIGNAL',{owner_id:owner,trainer_id:trainer,
+    previous:trainerBefore,next:trainerMood.position,
+    reason:trainerMood.reason,trainer_patience:evidence.trainer_patience,
+    owner_patience:evidence.owner_patience,
+    relationship_strength:evidence.working_relationship_strength,
+    no_automatic_employment_change:true});
   const playerControlled=state.player.role==='owner'&&owner===state.player.operation_id;
   const choice=playerControlled?
    {mandate:old,reason:'PLAYER_OWNER_RETAINS_DIRECTION'}:
@@ -194,7 +260,11 @@ export function advanceOwnerTrainerReviews({state,world,emit}){
    win_rate:evidence.win_rate,average_relative_form:evidence.average_relative_form,
    trainer_starts:evidence.trainer_multi_client_starts,
    decision_form:evidence.decision_form,decision_sample_basis:evidence.decision_sample_basis,
-   unfunded_horse_days:evidence.unfunded_horse_days});
+   unfunded_horse_days:evidence.unfunded_horse_days,
+   owner_patience:evidence.owner_patience,
+   trainer_patience:evidence.trainer_patience,
+   working_relationship_strength:evidence.working_relationship_strength,
+   trainer_position:item.trainer_position});
   if(item.history.length>8)item.history.splice(0,item.history.length-8);
   rt.totals.scheduled_reviews++;
   emit('OWNER_TRAINER_CAREER_REVIEW',{owner_id:owner,trainer_id:trainer,
@@ -205,6 +275,11 @@ export function advanceOwnerTrainerReviews({state,world,emit}){
    decision_form:evidence.decision_form,
    sample_basis:evidence.decision_sample_basis,
    owner_trust:evidence.owner_trust,
+   owner_patience:evidence.owner_patience,
+   trainer_patience:evidence.trainer_patience,
+   relationship_strength:evidence.working_relationship_strength,
+   trainer_position:item.trainer_position,
+   relationship_friction:evidence.relationship_friction,
    care_spend_minor:evidence.care_expense_minor,
    owner_purse_minor:evidence.owner_purse_minor,
    funding_days_missing:evidence.unfunded_horse_days,
@@ -247,6 +322,8 @@ export function getOwnerTrainerCareerReview(state,world,owner,trainer){
   next_review_date:saved?.next_review_date||null,
   last_review_date:saved?.last_review_date||null,reason:saved?.reason||null,
   reviews:saved?.history||[],
+  trainer_position:saved?.trainer_position||'COMMITTED',
+  trainer_position_reason:saved?.trainer_position_reason||'INITIAL_RELATIONSHIP',
   current_evidence:ownerTrainerEvidence(state,world,owner,trainer),
   last_evaluation:saved?.evidence||null});
 }
@@ -274,7 +351,12 @@ export function validateOwnerTrainerReviews(state,world){
    (p.last_review_date===null||validDate(p.last_review_date)&&
     p.last_review_date<=state.clock.date)&&
    Number.isSafeInteger(p.review_count)&&p.review_count>=0&&
-   typeof p.reason==='string'&&Array.isArray(p.history)&&p.history.length<=8&&
+   typeof p.reason==='string'&&
+   (p.trainer_position===undefined||
+    ['COMMITTED','FRUSTRATED','PRESSING_FOR_CHANGE','CONSIDERING_DEPARTURE'].
+    includes(p.trainer_position))&&
+   (p.trainer_position_reason===undefined||typeof p.trainer_position_reason==='string')&&
+   Array.isArray(p.history)&&p.history.length<=8&&
    p.history.every(h=>isObject(h)&&validDate(h.date)&&h.date<=state.clock.date&&
     OWNER_TRAINER_MANDATES.includes(h.mandate)&&
     typeof h.reason==='string'&&Number.isSafeInteger(h.starts)&&h.starts>=0)&&
