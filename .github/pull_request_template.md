@@ -9,6 +9,7 @@ State the affected screen/engine/data/asset behavior, the canonical source of tr
 - [ ] Inspected imports, live `<script>`s, dynamic consumers, worker routes, command handlers and save formats before deleting any code
 - [ ] Updated `docs/engineering/WTW_DEAD_CODE_RETIREMENT_LEDGER.md` for any retired functionality or still-needed temporary adapter
 - [ ] Existing source IDs, historical records, named horses, racing outcomes, save/load, financial transactions and approved artwork are unchanged unless explicitly authorized
+- [ ] If any approved logo, badge, hero, trophy, portrait or other image was added/replaced/removed, updated `ops/approved-visual-assets.lock.json` with the **exact verified blob SHA in this same PR** (never an unreviewed follow-up)
 - [ ] No second UI, fake preview records, new CSS patch stack or retired Office/Manager screen
 - [ ] Relevant shared UI menus work: compact VIEW dropdown, sorted/filterable table, keyboard-accessible independent scrolling and correct back/forward behavior
 - [ ] Validated on relevant screen families, not only the page edited; checked real rendered screenshots where UI/art changes
