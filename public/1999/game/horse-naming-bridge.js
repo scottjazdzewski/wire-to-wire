@@ -1,0 +1,106 @@
+/**
+ * WIRE TO WIRE — active 1999 game naming-origin bridge.
+ * Uses actual world identity and journal evidence. Proposals are NOT name releases.
+ * Pure ESM: no external dependencies, persistent writes, or secret credentials.
+ */
+import {ensure, worldIdentity} from './contracts.js';
+
+export const GAME_NAMING_BRIDGE_SCHEMA='WTW_GAME_NAME_ORIGIN_BRIDGE_V1';
+const nameKey=v=>String(v??'').normalize('NFKC').toLocaleLowerCase('en-US')
+ .replace(/[\u2018\u2019]/g,"'").replace(/[^a-z0-9]+/g,'');
+const safeId=/^H-GAME-1999-[A-Za-z0-9-]{1,64}$/;
+const allowedName=/^[\p{L}\p{N} '&\u2019-]+$/u;
+const plain=x=>x&&typeof x==='object'&&!Array.isArray(x);
+const text=x=>typeof x==='string'?x.trim():'';
+
+function checkHorse(world,horse){
+ ensure(plain(horse)&&safeId.test(horse.horse_id||''),
+  'NAMING_ID','Requires a future 1999 career horse ID');
+ ensure(Number.isInteger(horse.foaling_year)&&horse.foaling_year>=1980&&horse.foaling_year<=1996,
+  'NAMING_AGE','Expected a valid 1999 registered horse foaling year');
+ const owner=worldIdentity(world,'organizations',horse.owner_organization_id);
+ const breeder=worldIdentity(world,'organizations',horse.breeder_organization_id);
+ ensure(Boolean(owner)&&Boolean(breeder),'NAMING_PARTIES','Owner and breeder must exist in the current world');
+ // The 1999 registrar explicitly forbids inferred sire/dam identities for game horses.
+ ensure(!horse.sire_id&&!horse.dam_id,'NAMING_UNRELEASED_PEDIGREE','Game career lineage is not released');
+ return {owner,breeder};
+}
+
+function eventMentionsHorse(event,horse){
+ const d=event?.details;
+ return plain(d)&&[d.horse_id,d.foal_id,d.subject_horse_id].includes(horse.horse_id);
+}
+
+/** Bind a proposed game horse to ACTUAL owner/breeder and source journal events. */
+export function buildGameHorseNamingBrief({world,state,horse,ownerStories=[]}={}){
+ const {owner,breeder}=checkHorse(world,horse);
+ ensure(plain(state)&&Array.isArray(state.event_log),'NAMING_JOURNAL','Current game journal required');
+ ensure(Array.isArray(ownerStories),'NAMING_STORIES','Owner stories must be a list');
+ const evidence=[];
+ for(const e of state.event_log){
+  if(!eventMentionsHorse(e,horse))continue;
+  if(typeof e.kind!=='string'||!Number.isInteger(e.seq)||!/^\d{4}-\d{2}-\d{2}$/.test(e.date))continue;
+  evidence.push({id:`GAME_EVENT:${e.seq}`,kind:'GAME_EVENT',date:e.date,
+   sourceRef:`event_log:${e.seq}`,detail:e.kind,
+   // Event details are included exactly, not paraphrased into invented stories.
+   sourceDetails:JSON.parse(JSON.stringify(e.details))});
+ }
+ for(const s of ownerStories){
+  ensure(plain(s)&&text(s.story_id)&&text(s.story).length>=24&&text(s.story).length<=1000,
+   'NAMING_STORY','Owner story needs stable ID and useful narrative');
+  ensure(s.owner_id===horse.owner_organization_id&&s.horse_id===horse.horse_id&&
+   s.attested_by==='OWNER','NAMING_STORY_SOURCE','Story must be explicitly attested for this owner and horse');
+  ensure(!evidence.some(e=>e.id===`OWNER_STORY:${s.story_id}`),'NAMING_DUPLICATE_STORY','Duplicate story ID');
+  evidence.push({id:`OWNER_STORY:${s.story_id}`,kind:'OWNER_ATTESTED',
+   sourceRef:`owner_story:${s.story_id}`,detail:s.story.trim()});
+ }
+ const seen=new Set();
+ ensure(evidence.every(e=>!seen.has(e.id)&&seen.add(e.id)),'NAMING_DUPLICATE_EVIDENCE','Duplicate evidence');
+ const directStory=evidence.some(e=>e.kind==='OWNER_ATTESTED');
+ // A plain registration event is not enough to supply a meaningful naming story.
+ const meaningfulEvent=evidence.some(e=>e.kind==='GAME_EVENT'&&
+  !['GAME_HORSE_REGISTERED','HORSE_CARE_POLICY_SET','EVENT_SCHEDULED'].includes(e.detail));
+ return {
+  schema:GAME_NAMING_BRIDGE_SCHEMA,horseId:horse.horse_id,foalingYear:horse.foaling_year,
+  owner:{id:horse.owner_organization_id,name:owner.name},
+  breeder:{id:horse.breeder_organization_id,name:breeder.name},
+  foalingLocationId:text(horse.foaling_location_id)||null,
+  evidence,
+  status:directStory||meaningfulEvent?'READY_FOR_ORIGINAL_NAME_WRITING':'NEEDS_A_REAL_HORSE_STORY',
+  instruction:'Create a name tied to this horse and this owner, not a stock phrase. Preserve source evidence. No word-list assembly. No unverified pedigree.'
+ };
+}
+
+/** A literal candidate + explanation is NOT accepted merely because it passed QA. */
+export function screenGameHorseName({world,state,brief,proposal,reviewedNames=[],reservedNames=[],issuedNames=[]}={}){
+ ensure(brief?.schema===GAME_NAMING_BRIDGE_SCHEMA,'NAMING_BRIEF','Valid game naming brief required');
+ ensure(plain(proposal),'NAMING_PROPOSAL','Proposal required');
+ const reasons=[];
+ const name=text(proposal.name),normalized=nameKey(name);
+ if(!name||name.length>18||!allowedName.test(name)||name!==proposal.name)reasons.push('REGISTRATION_NAME_FORMAT');
+ if(brief.status!=='READY_FOR_ORIGINAL_NAME_WRITING')reasons.push('MISSING_MEANINGFUL_ORIGIN');
+ const anchor=brief.evidence.find(e=>e.id===proposal.evidenceId);
+ if(!anchor)reasons.push('UNVERIFIED_STORY_ANCHOR');
+ if(text(proposal.explanation).length<30)reasons.push('UNEXPLAINED_NAME');
+ if(!text(proposal.writer_id))reasons.push('MISSING_WRITER_ID');
+ const prior=[...(world?.entities?.horses||[]).map(x=>x.name),
+  ...Object.values(state?.runtime?.registered_horses?.by_id||{}).map(x=>x.registered_name),
+  ...reviewedNames,...reservedNames,...issuedNames];
+ if(normalized&&prior.some(n=>nameKey(typeof n==='string'?n:n?.name)===normalized))reasons.push('NAME_ALREADY_USED_OR_REVIEWED');
+ return {schema:GAME_NAMING_BRIDGE_SCHEMA,horseId:brief.horseId,
+  name,evidenceId:proposal.evidenceId,origin:anchor?.detail||null,
+  explanation:text(proposal.explanation),writerId:text(proposal.writer_id),
+  status:reasons.length?'HELD':'AWAITING_INDEPENDENT_EDITOR',reasons,
+  // No registration API, accepted release, game save or user-rating impersonation.
+  gameWrites:0,registrationStatus:'NOT_RELEASED'};
+}
+
+export function recordGameNameEditorialDecision(screened,{editorId,verdict,notes}={}){
+ ensure(screened?.status==='AWAITING_INDEPENDENT_EDITOR','NAMING_EDITOR','Only screened proposals can be reviewed');
+ ensure(text(editorId)&&editorId!==screened.writerId,'NAMING_INDEPENDENCE','Editor must differ from writer');
+ ensure(['SEND_TO_OWNER','REJECT','REVISE'].includes(verdict)&&text(notes).length>=20,
+  'NAMING_EDITOR','Explicit editorial verdict and explanation required');
+ return {...screened,editorId,editorNotes:text(notes),
+  status:verdict==='SEND_TO_OWNER'?'PENDING_OWNER_REVIEW':'HELD_BY_EDITOR',
+  registrationStatus:'NOT_RELEASED',gameWrites:0};
+}
