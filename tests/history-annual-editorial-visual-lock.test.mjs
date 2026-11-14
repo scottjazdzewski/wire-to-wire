@@ -18,7 +18,7 @@ test('Year in Review is a premium branded racing annual, never a flat olive page
  for(const item of ['history-review-hero','history-review-masthead','history-review-edition',
   'history-review-seal','history-review-stat','history-review-classics-section',
   'history-review-awards-section','history-review-leaders-section',
-  'history-review-results-section','history-classic-1','history-classic-2','history-classic-3']){
+  'history-review-results-section','history-classic-2','history-classic-3']){
   assert.ok(annual.includes(item)||annualCSS.includes(item),'Missing annual visual hierarchy: '+item);
  }
  assert.match(annualCSS,/--annual-ink:#111a29/);
@@ -27,6 +27,10 @@ test('Year in Review is a premium branded racing annual, never a flat olive page
  assert.match(annualCSS,/radial-gradient/);
  assert.match(annualCSS,/\.history-review-hero::before/);
  assert.match(annualCSS,/\.history-classic-2\{/);
+ assert.match(annualCSS,/\.history-classic\{/,
+  'First Classic uses the shared definitive card style');
+ assert.match(annual,/history-classic-'\+\(i\+1\)/,
+  'All three Classics get generated stable ordinal classes');
  assert.match(annualCSS,/\.history-classic-3\{/);
  assert.match(annualCSS,/\.history-year-review \.history-ledger-table th\{/);
  assert.match(css,/\.main:has\(\.history-year-review\) > \.callout\{[^}]*color:#f7e7cf/);
