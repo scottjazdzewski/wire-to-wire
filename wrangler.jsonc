@@ -3,6 +3,7 @@
   "name": "wtw-canon-desk",
   "main": "src/worker.js",
   "compatibility_date": "2026-11-07",
+  "ai": { "binding": "AI" },
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
