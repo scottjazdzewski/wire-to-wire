@@ -21,6 +21,57 @@ export const DURABLE_NAMING_BUNDLE_MODEL='WTW_NAMING_ARCHIVE_V12';
 // V18 optional naming metadata is appended ONLY for newly approved people;
 // pre-V18 records remain valid without inferred nationality or culture.
 export const APPROVED_PERSON_NAMING_METADATA_MODEL='WTW_APPROVED_PERSON_NAMING_METADATA_V18';
+export const APPROVED_ORGANIZATION_REGISTRATION_MODEL='WTW_APPROVED_ORGANIZATION_REGISTRATION_V19';
+// Preserve typed, source-assigned organization roles in newly committed naming
+// batches only. A legacy V12 name stays approved as a name but not as a new
+// continuity firm until independently verified: never guess its kind.
+const ORGANIZATION_KINDS=Object.freeze(['OWNER','STABLE','FARM','TRAINING_CENTER']);
+function registrationMetadata(prepared,organization){
+ const sourcePools=[
+  ['OWNER',prepared.batch.owners],['STABLE',prepared.batch.stables],
+  ['FARM',prepared.batch.farms],['TRAINING_CENTER',prepared.batch.trainingCenters]
+ ];
+ const entry=sourcePools.find(([kind,rows])=>rows.some(x=>x.id===organization.id));
+ if(!entry)throw Error('Unclassified V19 organizational naming proposal');
+ const [kind,rows]=entry,source=rows.find(x=>x.id===organization.id);
+ const base={model:APPROVED_ORGANIZATION_REGISTRATION_MODEL,
+  kind,approvedYear:prepared.year,namingRegion:source.namingRegion??null,
+  location:source.location===undefined?null:clone(source.location)};
+ if(kind==='OWNER')return {...base,
+  ownershipArchetype:source.ownershipArchetype??null,
+  familyName:source.familyName??null,principalId:source.principalId};
+ if(kind==='STABLE')return {...base,trainerId:source.trainerId};
+ if(kind==='FARM')return {...base,
+  facilityKind:source.kind??null,managerIds:clone(source.managerIds??[])};
+ return {...base,facilityKind:source.kind??null,managerIds:[]};
+}
+function validateRegistrationMetadata(value,organization){
+ const id=x=>typeof x==='string'&&!!x.trim();
+ if(!value||value.model!==APPROVED_ORGANIZATION_REGISTRATION_MODEL||
+  !ORGANIZATION_KINDS.includes(value.kind)||
+  !Number.isInteger(value.approvedYear)||value.approvedYear<1999||
+  value.approvedYear>2099||!id(value.namingRegion)||
+  !value.location||typeof value.location!=='object'||Array.isArray(value.location))
+  throw Error('Invalid V19 durable organizational registration metadata');
+ if(value.kind==='OWNER'&&(!id(value.principalId)||
+  !id(value.ownershipArchetype)||value.principalId!==organization.principalId||
+  value.ownershipArchetype!==organization.ownershipArchetype))
+  throw Error('Approved ownership identity was changed in storage');
+ if(value.kind==='STABLE'&&!id(value.trainerId))
+  throw Error('Invalid approved stable trainer ID');
+ if(['FARM','TRAINING_CENTER'].includes(value.kind)&&(
+  !Array.isArray(value.managerIds)||value.managerIds.some(x=>!id(x))||
+  new Set(value.managerIds).size!==value.managerIds.length))
+  throw Error('Invalid approved facility personnel IDs');
+ const fields={
+  OWNER:['model','kind','approvedYear','namingRegion','location','ownershipArchetype','familyName','principalId'],
+  STABLE:['model','kind','approvedYear','namingRegion','location','trainerId'],
+  FARM:['model','kind','approvedYear','namingRegion','location','facilityKind','managerIds'],
+  TRAINING_CENTER:['model','kind','approvedYear','namingRegion','location','facilityKind','managerIds']
+ };
+ if(Object.keys(value).some(k=>!fields[value.kind].includes(k)))
+  throw Error('Unknown V19 organization registration fields');
+}
 const PERSON_NAMING_FIELDS=Object.freeze([
  'birthCountry','nameStyle','nameStructure','nameOrigin','givenNameDecade',
  'regionalNamingCohort','internationalNamingCohort','internationalNameCulture',
@@ -68,7 +119,8 @@ function batchRecord(prepared){
  // replay validation. Non-owner stable/farm names remain distinct entities.
  const organizations=prepared.organizations.map(x=>({
   id:x.id,name:x.name,principalId:x.principalId??null,
-  ownershipArchetype:x.ownershipArchetype??null
+  ownershipArchetype:x.ownershipArchetype??null,
+  registrationV19:registrationMetadata(prepared,x)
  }));
  return Object.freeze({
   expectedRevision:prepared.expectedRevision,
@@ -90,7 +142,7 @@ function hydrate(data){
   protectedOrganizations:meta.protectedOrganizations
  });
  const sorted=[...data.batches].sort((a,b)=>a.revision-b.revision);
- const identityById=new Map();
+ const identityById=new Map(),organizationRegistrationById=new Map();
  for(const row of sorted){
   if(row.expectedRevision!==registry.revision||
    row.revision!==registry.revision+1||!Number.isSafeInteger(row.batchIndex)||
@@ -101,6 +153,12 @@ function hydrate(data){
    expectedRevision:row.expectedRevision,batchIndex:row.batchIndex,
    people:row.people,organizations:row.organizations,owners:row.owners
   });
+  for(const organization of row.organizations){
+   if(organization.registrationV19!==undefined){
+    validateRegistrationMetadata(organization.registrationV19,organization);
+    organizationRegistrationById.set(organization.id,clone(organization.registrationV19));
+   }
+  }
   for(const person of row.people){
    const metadata=person.identityMetadataV18;
    if(metadata!==undefined){
@@ -122,7 +180,7 @@ function hydrate(data){
   cursor.ownersIssued!==registry.ownerCount
  ))throw Error('Durable naming cursor failed identity reconciliation');
  if(meta.revision>0&&!cursor)throw Error('Committed naming registry has no cursor');
- return {registry,cursor,identityById};
+ return {registry,cursor,identityById,organizationRegistrationById};
 }
 function assertStorage(storage){
  if(!storage||typeof storage.read!=='function'||
@@ -271,12 +329,12 @@ export async function openDurableFictionalNameService({
   JSON.stringify(data.meta.protectedPeople)!==JSON.stringify(protectedPeople)||
   JSON.stringify(data.meta.protectedOrganizations)!==JSON.stringify(protectedOrganizations)))
   throw Error('Existing naming registry has different protected identities');
- let {registry,cursor,identityById}=hydrate(data);
+ let {registry,cursor,identityById,organizationRegistrationById}=hydrate(data);
  let unusable=false;
  async function refresh(){
   const latest=await storage.read({worldId,seed});
   ensureStoredData(latest,worldId,seed);
-  ({registry,cursor,identityById}=hydrate(latest));
+  ({registry,cursor,identityById,organizationRegistrationById}=hydrate(latest));
   unusable=false;
   return cursor;
  }
@@ -303,6 +361,10 @@ export async function openDurableFictionalNameService({
    if(JSON.stringify(result.nextCursor)!==JSON.stringify(nextCursor))
     throw Error('Durable and memory naming cursors diverged');
    cursor=result.nextCursor;
+   for(const organization of record.organizations){
+    if(organization.registrationV19)
+     organizationRegistrationById.set(organization.id,clone(organization.registrationV19));
+   }
    for(const person of record.people){
     if(person.identityMetadataV18)
      identityById.set(person.id,clone(person.identityMetadataV18));
@@ -335,6 +397,14 @@ export async function openDurableFictionalNameService({
   listGroups:(options)=>registry.listGroups(options),
   hasName:(name)=>registry.hasAnyName(name),
   getApprovedPerson:(id)=>registry.getApprovedPerson(id),
+  getApprovedOrganization:(id)=>registry.getApprovedOrganization(id),
+  getApprovedOrganizationIdentity:(id)=>{
+   const organization=registry.getApprovedOrganization(id);
+   if(!organization)return null;
+   return Object.freeze({...organization,
+    registration:organizationRegistrationById.has(id)?
+     Object.freeze(clone(organizationRegistrationById.get(id))):null});
+  },
   getApprovedPersonIdentity:(id)=>{
    const person=registry.getApprovedPerson(id);
    if(!person)return null;
