@@ -2606,7 +2606,8 @@ function liveStableRosterView(directory=false){
    ' ENTERED · '+all.filter(x=>x.hasTarget&&!x.entered).length+' TARGETED · '+all.filter(x=>['watch','treat'].includes(x.health[0])).length+
    ' VET WATCH</span>'+(directory?'':'<button data-ng="stable-world-edit" title="Open the editable 1999 World horse records">✎ EDIT 1999 RECORDS</button>')+'<button data-ng="menu" data-val="Racing">RACE CALENDAR ↗</button></div>'+
   (directory&&universe.indexing?'<div role="status" class="ng-dpt-disclosure">Indexing the registered world horse directory; source records remain unchanged.</div>':'')+
-  '<div class="ng-rs-tools"><label for="'+(directory?'ngDirectorySearch':'ngStableSearch')+'">SEARCH</label><input id="'+(directory?'ngDirectorySearch':'ngStableSearch')+'" data-ng-input="'+(directory?'directory-search':'stable-search')+'" type="search" value="'+safe(directory?APP.directorySearch:APP.stableSearch)+
+  '<div class="ng-rs-tools">'+managerRecordViewControl(directory?'World':'Stable',directory?'1999 Horses':APP.page||'Overview')+
+  '<label for="'+(directory?'ngDirectorySearch':'ngStableSearch')+'">SEARCH</label><input id="'+(directory?'ngDirectorySearch':'ngStableSearch')+'" data-ng-input="'+(directory?'directory-search':'stable-search')+'" type="search" value="'+safe(directory?APP.directorySearch:APP.stableSearch)+
    '" placeholder="Horse, owner, trainer, status…" autocomplete="off"/><div class="ng-rs-filters">'+filters+'</div>'+
    rosterDensityControls(directory?'directory':'stable',mode)+'</div>'+
   (window.WTW1999RosterFilters?.render(columns,stableCriteria,safe,scope)||'')+
