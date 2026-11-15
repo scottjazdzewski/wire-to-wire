@@ -1,6 +1,8 @@
 # WIRE TO WIRE — PRODUCT-WIDE SOFTWARE RELEASE CONTRACT
 Effective: November 14, 2026. Applies to EVERY engineering window, every file, branch, PR and release in this repository.
 
+**NOVEMBER 14 OWNER CLARIFICATION — FINAL FICTIONAL-GAME DIRECTION:** The shipped default world is **fully fictional**, with richly believable *invented* racing history; real-world racing historical data is NOT a launch requirement or default playable foundation. Save/Load must offer one-button complete active-world creation, and players must permanently edit names, profiles, uploaded photos/logos and safely reuse world templates. Changes must propagate to the actual engine and survive backups and software updates. Preserve existing legacy research and saves without deleting them; any future real-history module must be optional and isolated. New authority: `docs/engineering/WTW_FICTIONAL_WORLD_GENESIS_AND_CUSTOMIZATION_CONTRACT.md` and Issues #185/#189.
+
 **This is a commercial software product, not a series of separate chat mockups.** Work must preserve what has already been approved and the one real saveable management game.
 
 ## Mandatory distribution destination: self-contained Windows EXE, not hosted gameplay
