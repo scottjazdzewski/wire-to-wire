@@ -72,6 +72,23 @@ export function paletteFromImageData(image){
  const secondary=(other&&actualPixel(other))||primary;
  return {base:asHex(primary),bright:asHex(secondary),source:"logo-pixels"};
 }
+function isActualEntityLogo(img,identity,source){
+ const id=identity.id,kind=identity.kind;
+ const path=source.startsWith("data:")||source.startsWith("blob:")?"":new URL(source,document.baseURI).pathname;
+ const exact=kind==="track"?
+  ["/assets/places/track-hero/"+id+".webp",
+   "/assets/places/track-logos/"+id+".webp",
+   "/assets/tracks/"+id+".webp"]:
+  ["/assets/places/organization-hero/"+id+".webp",
+   "/assets/office/founding-organization-logos/"+id+".png"];
+ if(exact.includes(path))return true;
+ // The hero renderer creates temporary blob URLs by optical-cropping the
+ // already verified exact-ID logo; these retain its unchanged logo colors.
+ if(source.startsWith("blob:")&&img.closest(".wtw-hero-transparent"))return true;
+ // A player's career-local image edit replaces the actual identity artwork.
+ if(source.startsWith("data:image/")&&img.closest(".ng-profile-source-photo"))return true;
+ return false;
+}
 function startThemes(){
  const shell=document.getElementById("wtwNextgen");
  if(!shell)return;
@@ -122,7 +139,7 @@ function startThemes(){
   shell.setAttribute("data-wtw-identity-kind",identity.kind);
   const img=shell.querySelector(".ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo img");
   const src=img&&(img.currentSrc||img.src);
-  if(!img||!src){clearPalette();return;}
+  if(!img||!src||!isActualEntityLogo(img,identity,src)){clearPalette();return;}
   if(!img.complete||img.naturalWidth<1||img.naturalHeight<1){
    clearPalette();
    if(!observed.has(img)){
