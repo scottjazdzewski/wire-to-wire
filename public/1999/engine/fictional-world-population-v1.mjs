@@ -161,13 +161,14 @@ export async function assembleFictional1999Industry({
   horses.push(horse);
   pool.push(horse);
  }
+ const allHorseIds=new Set([...parents,...horses].map(h=>h.id));
  const entities={horses:[...parents,...horses],people,organizations,
   tracks:tracks.map(t=>({...t}))};
  for(const h of horses){
   if(!organizationIds.has(h.ownerId)||!organizationIds.has(h.stableId)||
    !organizationIds.has(h.breederId)||!peopleById.has(h.trainerId)||
-   !trackIds.has(h.homeTrackId)||!ancestorIds.has(h.sireId)&&!horses.some(p=>p.id===h.sireId)||
-   !ancestorIds.has(h.damId)&&!horses.some(p=>p.id===h.damId))
+   !trackIds.has(h.homeTrackId)||!allHorseIds.has(h.sireId)||
+   !allHorseIds.has(h.damId))
    throw Error('World relationship integrity failed for '+h.id);
  }
  const manifest={schema:FICTIONAL_1999_INDUSTRY_SCHEMA,seed,worldId,startDate:START,
