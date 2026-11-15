@@ -123,6 +123,11 @@ capture tracks-all-tracks '?ui=Tracks%20%E2%80%94%20All%20Tracks' 'ng-manager-sh
 capture tracks-stakes '?ui=Tracks%20%E2%80%94%20Stakes' 'ng-manager-shell'
 capture office-reports '?ui=Reports' 'ng-manager-shell'
 capture history-vault 'archive/' 'Historical Racing Records'
+capture history-horses 'archive/?page=horses' 'brand-title'
+capture history-people-farms 'archive/?page=people' 'brand-title'
+capture history-tracks-facilities 'archive/?page=tracks' 'brand-title'
+capture history-calendar 'archive/?page=seasons' 'brand-title'
+capture history-coverage 'archive/?page=sources' 'brand-title'
 capture history-year-review 'archive/?page=races&review=1953' 'history-year-review'
 # The annual masthead, three Classic panels and season controls must also
 # render at the narrower desktop width used by many laptop/management players.
