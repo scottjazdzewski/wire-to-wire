@@ -12,7 +12,9 @@ import {horseTravelStatus,effectiveHorseTrack,validate1999HorseShipping} from '.
 
 export const GAME_RACING_SCHEMA='WTW_1999_CAREER_RACING_V1';
 export const RACING_COMMANDS=Object.freeze(['ACTIVATE_JOCKEY_COLONY','OPEN_1999_RACE','ENTER_1999_RACE',
- 'BOOK_1999_JOCKEY','SETTLE_1999_RACE']);
+ 'BOOK_1999_JOCKEY','SET_1999_RACE_TACTICS','SETTLE_1999_RACE']);
+export const RACE_TACTICS=Object.freeze(['AUTO','LEAD','PRESS','STALK','CLOSE']);
+export const RACE_TACTICS_PREVIEW_SCHEMA='WTW_1999_RACE_TACTICS_PREVIEW_V1';
 const cents=x=>Number.isSafeInteger(x)&&x>=0;
 const dayGap=(a,b)=>(Date.parse(b+'T12:00:00Z')-Date.parse(a+'T12:00:00Z'))/86400000;
 const bound=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
@@ -130,6 +132,112 @@ export function raceEligibility(state,horse,race){
   reasons.push('CONFLICTING_CAMPAIGN_SPACING');
  return {eligible:reasons.length===0,reasons};
 }
+/**
+ * Racing instructions belong to an actual booked runner; these estimates use
+ * only known competitor horse attributes, the chosen jockey, the existing
+ * training record, and the exact source condition-book race.
+ *
+ * AUTO preserves the pre-tactics simulation byte-for-byte, so loading an
+ * older career cannot silently change its future results.
+ */
+function fieldPace(state,race,horseId){
+ const rivals=race.field.map(id=>state.runtime.entries[id]).
+  filter(e=>e&&e.horse_id!==horseId&&['ENTERED','BOOKED'].includes(e.status)).
+  map(e=>({horse:state.runtime.registered_horses?.by_id?.[e.horse_id],entry:e})).
+  filter(e=>Boolean(e.horse?.starting_attributes));
+ const front=rivals.filter(({horse,entry})=>
+  horse.starting_attributes.early_pace>=.67||
+  ['LEAD','PRESS'].includes(entry.race_tactic)).length;
+ const mean=rivals.length?rivals.reduce((n,{horse,entry})=>
+  n+bound(horse.starting_attributes.early_pace+
+   (entry.race_tactic==='LEAD'?.12:entry.race_tactic==='PRESS'?.065:0)),0)/rivals.length:.5;
+ const pressure=rating(bound(.68*mean+.32*(rivals.length?front/rivals.length:.35)));
+ return {pressure,front_runners:front,rival_count:rivals.length};
+}
+function tacticalFit(state,race,entry,tactic){
+ const horse=state.runtime.registered_horses?.by_id?.[entry.horse_id],
+  j=state.runtime.racing?.jockeys?.[entry.jockey_id]?.skills,
+  training=state.runtime.horse?.[entry.horse_id]?.training,
+  pace=fieldPace(state,race,entry.horse_id);
+ if(!horse?.starting_attributes||!j||!training)
+  return {...pace,tactic,adjustment:0,reason:'RIDER_OR_CONDITION_NOT_YET_AVAILABLE'};
+ const a=horse.starting_attributes,f=bound(training.fitness),
+  long=race.distance_furlongs>=8?1:.38;
+ let effect=0,reason='AUTOMATIC_BASELINE_PRESERVED';
+ if(tactic==='LEAD'){
+  effect=.093*(a.early_pace-.5)+.045*(a.acceleration-.5)+
+   .034*(j.pace-.5)+.072*(.5-pace.pressure)-
+   .034*long*(1-a.stamina)-.021*(1-f);
+  reason=pace.pressure>=.62?'EARLY_SPEED_CONTEST_AND_DISTANCE_COST':
+   'EARLY_SPEED_AGAINST_KNOWN_FIELD';
+ }else if(tactic==='PRESS'){
+  effect=.070*(a.early_pace-.5)+.044*(a.stamina-.5)+
+   .034*(j.pace-.5)+.035*(.5-pace.pressure)-
+   .017*long*(1-f);
+  reason='PRESS_THE_EARLY_PACE_WITH_STAMINA';
+ }else if(tactic==='STALK'){
+  effect=.057*(a.consistency-.5)+.048*(a.finishing_kick-.5)+
+   .036*(j.judgment-.5)-.019*Math.abs(pace.pressure-.5);
+  reason='TRACK_THE_PACE_AND_RESERVE_A_FINISH';
+ }else if(tactic==='CLOSE'){
+  effect=.096*(a.finishing_kick-.5)+.055*(a.stamina-.5)+
+   .039*(j.finish-.5)+.078*(pace.pressure-.5)-
+   .025*long*(1-f);
+  reason=pace.pressure>=.62?'HOT_PACE_BENEFITS_LATE_RUN':
+   'LATE_RUN_MUST_OVERCOME_EXPECTED_PACE';
+ }
+ return {...pace,tactic,adjustment:Math.round(Math.max(-.085,Math.min(.085,effect))*1000)/1000,reason};
+}
+/** Read-only race-day outlook, never the hidden deterministic finishing order. */
+export function get1999RaceTacticsPreview(state,world,{race_id,horse_id}={}){
+ const race=state.runtime.races?.[race_id],
+  horse=state.runtime.registered_horses?.by_id?.[horse_id],
+  entry=state.runtime.entries?.[race_id+':'+horse_id];
+ ensure(race&&race.source==='WTW_1999_TRACK_SPECIFIC_MEET_PROGRESSION'&&
+  race.status==='ENTRIES_OPEN'&&race.date>=state.clock.date&&
+  horse&&state.player.role==='owner'&&
+  state.player.operation_id===horse.owner_organization_id&&
+  entry?.status==='BOOKED'&&entry.jockey_id&&
+  entry.owner_id===horse.owner_organization_id&&entry.trainer_id===horse.trainer_id&&
+  Boolean(state.runtime.racing?.jockeys?.[entry.jockey_id]),
+  'RACE_TACTICS_PREVIEW','Choose an actually booked horse owned by the player before race settlement');
+ const field=fieldPace(state,race,horse_id);
+ return structuredClone({
+  schema:RACE_TACTICS_PREVIEW_SCHEMA,as_of:state.clock.date,
+  expected_revision:state.revision,horse_id,race_id,track_id:race.track_id,
+  race_date:race.date,jockey_id:entry.jockey_id,
+  current_tactic:entry.race_tactic??'AUTO',
+  field_pressure_index:field.pressure,known_rivals:field.rival_count,
+  known_front_runners:field.front_runners,
+  options:RACE_TACTICS.map(t=>({tactic:t,...tacticalFit(state,race,entry,t)})),
+  source:'LOCAL_GAME_HORSES_BOOKED_JOCKEY_AND_RACE_CARD_NOT_PREDICTED_RESULT',
+  historical_result_claimed:false});
+}
+/** Owner-issued jockey instruction, immutable once the race is official. */
+function setRaceTactics({state,world,command,emit}){
+ const p=command.payload;
+ ensure(command.actor==='player'&&state.player.role==='owner',
+  'RACE_TACTICS_PERMISSION','Only the actual owner may direct a booked mount');
+ ensure(isObject(p)&&typeof p.race_id==='string'&&
+  typeof p.horse_id==='string'&&RACE_TACTICS.includes(p.tactic),
+  'RACE_TACTICS_CHOICE','Choose an actual race, horse and supported tactical direction');
+ ensure(Number.isSafeInteger(p.expected_revision)&&
+  p.expected_revision===state.revision,
+  'RACE_TACTICS_STALE','The game changed since the race outlook was read');
+ const preview=get1999RaceTacticsPreview(state,world,p);
+ const entry=state.runtime.entries[p.race_id+':'+p.horse_id];
+ const before=entry.race_tactic??'AUTO';
+ if(p.tactic==='AUTO')delete entry.race_tactic;
+ else entry.race_tactic=p.tactic;
+ const selected=preview.options.find(x=>x.tactic===p.tactic);
+ emit('PLAYER_RACE_TACTICS_INSTRUCTED',{race_id:p.race_id,horse_id:p.horse_id,
+  owner_id:entry.owner_id,trainer_id:entry.trainer_id,
+  jockey_id:entry.jockey_id,previous_tactic:before,
+  selected_tactic:p.tactic,pressure_index:selected.pressure,
+  projected_adjustment:selected.adjustment,reason:selected.reason,
+  factual_race_result_known:false,finance_changed:false});
+}
+
 function charge(state,owner,amount,kind,race,h,jockeyId){
  const money=state.runtime.finances.operation_balances_minor;
  ensure(cents(money[owner])&&money[owner]>=amount,'RACE_FINANCE','Owner cannot afford race booking');
@@ -210,6 +318,8 @@ export function racingAction({state,world,command,emit}){
   emit('JOCKEY_MOUNT_BOOKED',{race_id:race.id,horse_id:horse.horse_id,jockey_id:j.id,
    booked_track_id:race.track_id,home_track_id:j.home_track_id,away_travel:travel,
    fee_minor:fee,reason:decision.reason,acceptance:decision.suited_index,threshold:decision.threshold});
+ }else if(type==='SET_1999_RACE_TACTICS'){
+  setRaceTactics({state,world,command,emit});
  }else if(type==='SETTLE_1999_RACE'){
   ensure(command.actor==='system','RACE_PERMISSION','Only game race controller settles races');
   settle1999Race({state,world,race_id:p.race_id,emit});
@@ -226,9 +336,12 @@ function performance(state,world,race,entry){
  const rider=rating(j.judgment*.24+j.pace*.28+j.finish*.26+j.horse_handling*.22);
  const variation=(frac(state.rng.seed,entry.horse_id+':'+race.id+':race')-.5)*.11*
   (1.3-.6*a.consistency);
+ const instruction=entry.race_tactic??'AUTO';
+ const tactical=tacticalFit(state,race,entry,instruction);
  const composite=now.race_performance_index*.49+surface*.14+distance*.14+
-  pace*.09+rider*.10+j.composure*.04+variation;
- return {entry,horse,composite:rating(composite),rider};
+  pace*.09+rider*.10+j.composure*.04+variation+tactical.adjustment;
+ return {entry,horse,composite:rating(composite),rider,
+  tactical:instruction==='AUTO'?null:tactical};
 }
 const SHARES=[.6,.2,.11,.06,.03];
 function settle1999Race({state,world,race_id,emit}){
@@ -244,6 +357,11 @@ function settle1999Race({state,world,race_id,emit}){
  ensure(horseSet.size===entries.length,'RACE_FIELD','Duplicate horse in race field');
  const scored=entries.map(e=>performance(state,world,race,e)).
   sort((a,b)=>b.composite-a.composite||a.horse.horse_id.localeCompare(b.horse.horse_id));
+ for(const row of scored)if(row.tactical)emit('RACE_TACTICAL_EXECUTION',{
+  race_id:race.id,horse_id:row.horse.horse_id,jockey_id:row.entry.jockey_id,
+  tactic:row.tactical.tactic,pressure_index:row.tactical.pressure,
+  adjustment_index:row.tactical.adjustment,reason:row.tactical.reason,
+  modeled:true});
  const paidPlaces=Math.min(scored.length,5),shares=SHARES.slice(0,paidPlaces);
  const weight=shares.reduce((a,b)=>a+b,0),awards=scored.map(()=>0);
  let remainder=race.purse_minor;
@@ -251,7 +369,7 @@ function settle1999Race({state,world,race_id,emit}){
   awards[i]=Math.floor(race.purse_minor*shares[i]/weight);remainder-=awards[i];
  }
  awards[paidPlaces-1]=remainder;
- const results=scored.map(({horse,entry,composite,rider},i)=>{
+ const results=scored.map(({horse,entry,composite,rider,tactical},i)=>{
   const awarded=awards[i];
   const jockeyShare=Math.round(awarded*.1),trainerShare=Math.round(awarded*.1),
    ownerShare=awarded-jockeyShare-trainerShare;
@@ -291,7 +409,11 @@ function settle1999Race({state,world,race_id,emit}){
    jockey_id:jockey,finish:i+1,earnings_minor:awarded,
    owner_share_minor:ownerShare,jockey_share_minor:jockeyShare,
    trainer_share_minor:trainerShare,
-   performance_index:composite,rider_index:rider};
+   performance_index:composite,rider_index:rider,
+   ...(tactical?{race_tactic:tactical.tactic,
+    field_pressure_index:tactical.pressure,
+    tactical_adjustment_index:tactical.adjustment,
+    tactical_reason:tactical.reason}:{})};
  });
  applyRaceAgentFeedback({state,world,race,results,emit});
  registerPostRaceCampaigns({state,world,race,results,emit});
@@ -336,12 +458,29 @@ export function validateRacingRuntime(state,world){
    ensure(e&&e.race_id===id&&state.runtime.registered_horses?.by_id?.[e.horse_id]&&
     e.id===entryId,'RACE_SAVE','Missing runner or horse reference');
    if(e.jockey_id)ensure(Boolean(rt.jockeys[e.jockey_id]),'RACE_SAVE','Missing booked jockey');
+   if(e.race_tactic!==undefined)
+    ensure(e.status==='BOOKED'||e.status==='RESULTED','RACE_TACTICS_SAVE',
+     'Only a booked/resulted mount may retain a tactic');
+   ensure(e.race_tactic===undefined||RACE_TACTICS.includes(e.race_tactic)&&e.race_tactic!=='AUTO',
+    'RACE_TACTICS_SAVE','Unknown or unsupported saved jockey instruction');
   }
   if(r.status==='OFFICIAL_SIM_RESULT'){
    ensure(Array.isArray(r.results)&&r.results.length===r.field.length&&
     r.results.reduce((x,y)=>x+y.earnings_minor,0)===r.purse_minor&&
     new Set(r.results.map(x=>x.finish)).size===r.field.length,
     'RACE_SAVE','Settlement must reconcile purse and full finishing order');
+   for(const result of r.results){
+    if(result.race_tactic===undefined)continue; // Old saves and AUTO are unchanged.
+    const e=state.runtime.entries[r.id+':'+result.horse_id];
+    ensure(RACE_TACTICS.includes(result.race_tactic)&&
+     result.race_tactic!=='AUTO'&&e?.race_tactic===result.race_tactic&&
+     Number.isFinite(result.field_pressure_index)&&
+     result.field_pressure_index>=0&&result.field_pressure_index<=1&&
+     Number.isFinite(result.tactical_adjustment_index)&&
+     Math.abs(result.tactical_adjustment_index)<=.085&&
+     typeof result.tactical_reason==='string',
+     'RACE_TACTICS_SAVE','Race tactics result must be linked to booked owner instruction');
+   }
   }
  }
 }
