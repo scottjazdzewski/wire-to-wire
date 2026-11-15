@@ -12,9 +12,9 @@ test('horse profile calls out future birthdates relative to current game clock',
  for(const date of ['March 9, 2012','2012-03-09']){
   const s=chronology(date,'1999-01-01');
   assert.equal(s.future,true,date);
-  assert.match(s.warning,/RECORDED DOB/);
-  assert.match(s.warning,/AFTER GAME DATE 1999-01-01/);
-  assert.match(s.warning,/current age and racing eligibility are not established/);
+  assert.match(s.warning,/DATE CONFLICT: DOB/);
+  assert.match(s.warning,/after game day 1999-01-01/);
+  assert.match(s.warning,/Age and racing eligibility need source review/);
  }
  assert.match(js,/horseBirthChronology\(horseField\('Date of birth'\),depGameDay\(\)\)/);
  assert.match(js,/horseChronology\.future\?'NOT FOALED':horseField\('Age'\)/);
