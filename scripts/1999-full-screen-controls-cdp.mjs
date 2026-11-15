@@ -182,6 +182,60 @@ try {
   }
   console.log('WTW_SCREEN_FAMILY_PASS '+section+' '+pages.length+' views');
  }
+ // Verify ACTUAL record-row clicks on three different departments. List
+ // Previous/Next must track the filtered/sorted visible row order and its
+ // immutable source identities, never change a detail tab or the game clock.
+ for(const specimen of [
+  {section:'Personnel',page:'Trainers',family:'trainer'},
+  {section:'Facilities',page:'Farms',family:'facility'},
+  {section:'Tracks',page:'All Tracks',family:'track'}
+ ]){
+  const rail=await evaluate('(()=>{const n=document.querySelector("#wtwNextgen .ng-game-rail [data-ng=\"menu\"][data-val=\"'+specimen.section+'\"]");if(!n)return false;n.click();return true})()');
+  assert.ok(rail,'Record browsing rail missing '+specimen.section);
+  await ready(specimen.section,'Overview','Record browsing '+specimen.section);
+  const tab=await evaluate('(()=>{const s=document.querySelector("#wtwNextgen select[data-ng-select=\"department-tab\"],#wtwNextgen select[data-ng-select=\"manager-screen\"]");if(!s||![...s.options].some(o=>o.value==='+JSON.stringify(specimen.page)+'))return false;s.value='+JSON.stringify(specimen.page)+';s.dispatchEvent(new Event("change",{bubbles:true}));return true})()');
+  assert.ok(tab,'Cannot select '+specimen.section+' / '+specimen.page);
+  await ready(specimen.section,specimen.page,'Source-backed record list '+specimen.family);
+  const visible=await evaluate('(()=>[...document.querySelectorAll("#wtwNextgen .ng-rs-table tbody button[data-ng=\"dept-open\"]")].map(b=>({name:b.textContent.trim(),index:b.dataset.val})))()');
+  assert.ok(visible.length>=2,'Need at least two real '+specimen.family+' rows to browse');
+  const opened=await evaluate('(()=>{const btn=document.querySelector("#wtwNextgen .ng-rs-table tbody button[data-ng=\"dept-open\"]");if(!btn)return false;btn.click();return true})()');
+  assert.ok(opened,'Cannot open first '+specimen.family+' record');
+  const status=()=>evaluate('(()=>{const a=window.__WTW_NEXT__?.app,r=document.getElementById("wtwNextgen");return {custom:a?.custom||"",family:a?.recordBrowse?.family||"",cursor:a?.recordBrowse?.index,total:a?.recordBrowse?.items?.length||0,items:a?.recordBrowse?.items?.map(x=>x.name)||[],date:r?.querySelector(".ng-global-date strong")?.textContent?.trim()||"",next:!!r?.querySelector("button[data-ng=\"dossier-entity-step\"][data-val=\"1\"]"),back:!!r?.querySelector("button[data-ng=\"dossier-entity-step\"][data-val=\"-1\"]"),recordBar:!!r?.querySelector(".ng-record-browse-bar,.ng-person-dossierbar")}})()');
+  let before=null;
+  for(let retry=0;retry<90;retry++){
+   before=await status();
+   if(before?.family===specimen.family&&before.cursor===0&&before.next&&before.back&&before.recordBar)break;
+   await delay(100);
+  }
+  assert.equal(before?.family,specimen.family,
+   'Opening '+specimen.family+' from a visible roster failed to capture category: '+JSON.stringify(before));
+  assert.ok(before.total>=2&&before.next&&before.back&&before.recordBar);
+  assert.equal(before.date,baseline.date,'Opening '+specimen.family+' list moved the game clock');
+  assert.equal(before.items[0],visible[0].name,
+   'First '+specimen.family+' source row does not match the opened record');
+  const stepped=await evaluate('(()=>{const b=document.querySelector("#wtwNextgen button[data-ng=\"dossier-entity-step\"][data-val=\"1\"]");if(!b||b.disabled)return false;b.click();return true})()');
+  assert.ok(stepped,'NEXT missing from '+specimen.family+' source detail');
+  let after=null;
+  for(let retry=0;retry<90;retry++){
+   after=await status();
+   if(after?.cursor===1&&after.custom!==before.custom&&after.next&&after.back)break;
+   await delay(100);
+  }
+  assert.equal(after?.cursor,1,'NEXT did not advance '+specimen.family+' list cursor: '+JSON.stringify(after));
+  assert.notEqual(after.custom,before.custom,'NEXT opened the same '+specimen.family+' identity');
+  assert.equal(after.date,baseline.date);
+  const returned=await evaluate('(()=>{const b=document.querySelector("#wtwNextgen button[data-ng=\"dossier-entity-step\"][data-val=\"-1\"]");if(!b||b.disabled)return false;b.click();return true})()');
+  assert.ok(returned,'PREVIOUS missing after '+specimen.family+' step');
+  for(let retry=0;retry<90;retry++){
+   after=await status();
+   if(after?.cursor===0&&after.custom===before.custom)break;
+   await delay(100);
+  }
+  assert.equal(after?.cursor,0,'PREVIOUS did not return to '+specimen.family+' list origin');
+  assert.equal(after.custom,before.custom,'PREVIOUS returned to different source ID');
+  console.log('WTW_LIST_ORIGIN_RECORD_BROWSE_PASS '+specimen.family+' '+before.total+' entries');
+ }
+
  // The Office home intentionally uses its approved compact horizontal quick-nav,
  // while its deeper pages use the same management VIEW menu as other departments.
  for(const page of Array.from(tabmap.Office)){
