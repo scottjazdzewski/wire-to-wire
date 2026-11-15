@@ -14,7 +14,7 @@ import {OWNERSHIP_COMMANDS,ownershipAction} from './ownership.js';
 import {HORSE_REGISTRATION_COMMANDS,registerHorseAction} from './horse-registration.js';
 import {HORSE_NAMING_COMMANDS,recordHorseNamingStoryAction} from './horse-naming-bridge.js';
 import {HORSE_NAME_OWNER_COMMANDS,stageStoryHorseNameAction,ownerDecidesHorseNameAction} from './horse-name-owner-release.js';
-import {HORSE_CARE_COMMANDS,setHorseCarePolicy,initializeGameHorseCare,advanceGameHorseCare} from './horse-care.js';
+import {HORSE_CARE_COMMANDS,setHorseCarePolicy,set1999RacePreparation,initializeGameHorseCare,advanceGameHorseCare} from './horse-care.js';
 import {runAutonomousDay,settleDailyAgentFeedback} from './daily-agents.js';
 import {RACING_COMMANDS,racingAction} from './racing-1999.js';
 import {run1999RacingAgents} from './race-agents-1999.js';
@@ -136,7 +136,9 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
   } else if (TRAINER_CONTRACT_COMMANDS.includes(c.type)) {
     offerTrainerServiceTerms({state:next,world,command:c,emit});
   } else if (HORSE_CARE_COMMANDS.includes(c.type)) {
-    setHorseCarePolicy({state:next,world,command:c,emit});
+    if(c.type==='SET_1999_RACE_PREPARATION')
+     set1999RacePreparation({state:next,world,command:c,emit});
+    else setHorseCarePolicy({state:next,world,command:c,emit});
   } else if (OWNERSHIP_COMMANDS.includes(c.type)) {
     ownershipAction({state:next,world,command:c,emit});
   } else if (FACILITY_COMMANDS.includes(c.type)) {
