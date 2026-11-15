@@ -3,22 +3,29 @@
   "authority": {
     "source": "WTW CANON REGISTRIES — 1999 START v3.3 WORKING RECONCILIATION",
     "spreadsheet_url": "https://docs.google.com/spreadsheets/d/1Lhpe6DG1foQ2-zayQBg4bKpTtu4MP_itpM1zo2GRSEA/edit",
-    "generated_from": "Track_Registry + International_Track_Registry + Track_Geography",
-    "as_of": "2026-11-09",
-    "provenance": "Derived site-view snapshot. Drive remains immutable-ID authority; this is not a second master ledger."
+    "generated_from": "Protected v3.3 source registry plus owner-approved WTW 1999 track expansion overlay",
+    "as_of": "2026-11-15",
+    "provenance": "Protected historical/source identities remain unchanged. Six owner-approved game-world track IDs and presentation metadata are appended as a separate overlay."
   },
   "counts": {
-    "north_america": 118,
+    "north_america": 124,
     "international": 0,
-    "total": 118,
+    "total": 124,
     "sourced_localities": 105,
     "boundary_provisional": 5,
-    "fictional_wtw_proposed": 8
+    "fictional_wtw_proposed": 8,
+    "fictional_wtw_approved": 5,
+    "alternate_history_continued": 1,
+    "active_1999": 107,
+    "historical_only_1999": 17
   },
   "visibility_notes": [
     "Display city/locality and travel node for every track.",
     "Five boundary cases have reliable regional travel nodes but dual municipality/place precision remains provisional.",
-    "Eight fictional WTW tracks have explicitly proposed travel localities.",
+    "Eight fictional WTW tracks retain their explicitly proposed travel localities; five additional fictional venues are owner-approved.",
+    "Playfair is an alternate-history 1999 operation; its real historical identity remains separate from that modeled continuation.",
+    "San Mateo County Fair is a meeting at Bay Meadows (T-0032), not an additional physical facility.",
+    "Seventeen track IDs remain historical-only for active 1999 racing; their profiles and source history are retained.",
     "All 139 race editions without a Track_ID in the historical calendar are inactive or quarantined; do not silently assign them."
   ],
   "tracks": [
@@ -548,7 +555,8 @@
       "travel_node": "Renton, WA, USA",
       "opening_state": "OPEN",
       "foundation_status": "CORE_CALENDAR",
-      "macro_circuit": "Pacific Northwest / Inland"
+      "macro_circuit": "Pacific Northwest / Inland",
+      "game_operating_status": "HISTORICAL_ONLY"
     },
     {
       "id": "T-0034",
@@ -692,7 +700,8 @@
       "travel_node": "Mays Landing, NJ, USA",
       "opening_state": "OPEN",
       "foundation_status": "SHORT_MEET_SUPPORTING",
-      "macro_circuit": "Mid-Atlantic / Appalachia"
+      "macro_circuit": "Mid-Atlantic / Appalachia",
+      "game_operating_status": "HISTORICAL_ONLY"
     },
     {
       "id": "T-0043",
@@ -996,7 +1005,10 @@
       "travel_node": "Sunland Park, NM, USA",
       "opening_state": "OPEN",
       "foundation_status": "MAJOR_REGIONAL_MIXED",
-      "macro_circuit": "Mountain / Southwest"
+      "macro_circuit": "Mountain / Southwest",
+      "game_presentation_name": "Comanche Raceway",
+      "source_name_preserved": "Sunland Park",
+      "source_identity_preserved": true
     },
     {
       "id": "T-0062",
@@ -1220,7 +1232,12 @@
       "travel_node": "San Mateo, CA, USA",
       "opening_state": "OPEN",
       "foundation_status": "FAIR_SHORT_MEET",
-      "macro_circuit": "Northern / Central California"
+      "macro_circuit": "Northern / Central California",
+      "physical_track_id": "T-0032",
+      "venue_type": "FAIR_MEETING_AT_EXISTING_TRACK",
+      "physical_facility_status": "SHARED_BAY_MEADOWS_FACILITY",
+      "game_presentation_name": "San Mateo County Fair",
+      "source_name_preserved": "San Mateo"
     },
     {
       "id": "T-0076",
@@ -1668,7 +1685,8 @@
       "travel_node": "Bronx, NY, USA",
       "opening_state": "CLOSED_PRE_1999",
       "foundation_status": "HISTORICAL_ONLY_CLOSED",
-      "macro_circuit": "New York / Northeast"
+      "macro_circuit": "New York / Northeast",
+      "game_operating_status": "HISTORICAL_ONLY"
     },
     {
       "id": "T-0104",
@@ -1684,7 +1702,8 @@
       "travel_node": "Bronx, NY, USA",
       "opening_state": "CLOSED_PRE_1999",
       "foundation_status": "HISTORICAL_ONLY_CLOSED",
-      "macro_circuit": "New York / Northeast"
+      "macro_circuit": "New York / Northeast",
+      "game_operating_status": "HISTORICAL_ONLY"
     },
     {
       "id": "T-0105",
@@ -1700,7 +1719,8 @@
       "travel_node": "Brooklyn, NY, USA",
       "opening_state": "CLOSED_PRE_1999",
       "foundation_status": "HISTORICAL_ONLY_CLOSED",
-      "macro_circuit": "New York / Northeast"
+      "macro_circuit": "New York / Northeast",
+      "game_operating_status": "HISTORICAL_ONLY"
     },
     {
       "id": "T-0106",
@@ -1732,7 +1752,8 @@
       "travel_node": "Jamaica, Queens, NY, USA",
       "opening_state": "CLOSED_PRE_1999",
       "foundation_status": "HISTORICAL_ONLY_CLOSED",
-      "macro_circuit": "New York / Northeast"
+      "macro_circuit": "New York / Northeast",
+      "game_operating_status": "HISTORICAL_ONLY"
     },
     {
       "id": "T-0108",
@@ -1748,7 +1769,8 @@
       "travel_node": "Yonkers, NY, USA",
       "opening_state": "CLOSED_PRE_1999",
       "foundation_status": "HISTORICAL_ONLY_CLOSED",
-      "macro_circuit": "New York / Northeast"
+      "macro_circuit": "New York / Northeast",
+      "game_operating_status": "HISTORICAL_ONLY"
     },
     {
       "id": "T-0109",
@@ -1764,7 +1786,8 @@
       "travel_node": "Lexington, KY, USA",
       "opening_state": "CLOSED_PRE_1999",
       "foundation_status": "HISTORICAL_ONLY_CLOSED",
-      "macro_circuit": "Kentucky / Midwest"
+      "macro_circuit": "Kentucky / Midwest",
+      "game_operating_status": "HISTORICAL_ONLY"
     },
     {
       "id": "T-0110",
@@ -1780,7 +1803,8 @@
       "travel_node": "Cincinnati, OH, USA",
       "opening_state": "CLOSED_PRE_1999",
       "foundation_status": "HISTORICAL_ONLY_CLOSED",
-      "macro_circuit": "Midwest / Great Lakes"
+      "macro_circuit": "Midwest / Great Lakes",
+      "game_operating_status": "HISTORICAL_ONLY"
     },
     {
       "id": "T-0111",
@@ -1796,7 +1820,8 @@
       "travel_node": "Maple Heights, OH, USA",
       "opening_state": "CLOSED_PRE_1999",
       "foundation_status": "HISTORICAL_ONLY_CLOSED",
-      "macro_circuit": "Midwest / Great Lakes"
+      "macro_circuit": "Midwest / Great Lakes",
+      "game_operating_status": "HISTORICAL_ONLY"
     },
     {
       "id": "T-0112",
@@ -1812,7 +1837,8 @@
       "travel_node": "Aurora, OH, USA",
       "opening_state": "CLOSED_PRE_1999",
       "foundation_status": "HISTORICAL_ONLY_CLOSED",
-      "macro_circuit": "Midwest / Great Lakes"
+      "macro_circuit": "Midwest / Great Lakes",
+      "game_operating_status": "HISTORICAL_ONLY"
     },
     {
       "id": "T-0113",
@@ -1828,7 +1854,8 @@
       "travel_node": "Jefferson, LA, USA",
       "opening_state": "CLOSED_PRE_1999",
       "foundation_status": "HISTORICAL_ONLY_CLOSED",
-      "macro_circuit": "Louisiana / South Gulf"
+      "macro_circuit": "Louisiana / South Gulf",
+      "game_operating_status": "HISTORICAL_ONLY"
     },
     {
       "id": "T-0114",
@@ -1844,7 +1871,8 @@
       "travel_node": "Toronto, ON, Canada",
       "opening_state": "CLOSED_PRE_1999",
       "foundation_status": "HISTORICAL_PREDECESSOR",
-      "macro_circuit": "Canada East"
+      "macro_circuit": "Canada East",
+      "game_operating_status": "HISTORICAL_ONLY"
     },
     {
       "id": "T-0115",
@@ -1860,7 +1888,8 @@
       "travel_node": "Aurora, IL, USA",
       "opening_state": "CLOSED_PRE_1999",
       "foundation_status": "HISTORICAL_PREDECESSOR",
-      "macro_circuit": "Midwest / Great Lakes"
+      "macro_circuit": "Midwest / Great Lakes",
+      "game_operating_status": "HISTORICAL_ONLY"
     },
     {
       "id": "T-0116",
@@ -1876,7 +1905,8 @@
       "travel_node": "Warrensville Heights, OH, USA",
       "opening_state": "CLOSED_PRE_1999",
       "foundation_status": "HISTORICAL_PREDECESSOR",
-      "macro_circuit": "Kentucky / Ohio Valley"
+      "macro_circuit": "Kentucky / Ohio Valley",
+      "game_operating_status": "HISTORICAL_ONLY"
     },
     {
       "id": "T-0117",
@@ -1892,7 +1922,8 @@
       "travel_node": "North Randall, OH, USA",
       "opening_state": "CLOSED_PRE_1999",
       "foundation_status": "HISTORICAL_PREDECESSOR",
-      "macro_circuit": "Kentucky / Ohio Valley"
+      "macro_circuit": "Kentucky / Ohio Valley",
+      "game_operating_status": "HISTORICAL_ONLY"
     },
     {
       "id": "T-0118",
@@ -1908,7 +1939,111 @@
       "travel_node": "Covington, KY, USA",
       "opening_state": "CLOSED_PRE_1999",
       "foundation_status": "HISTORICAL_ONLY_CLOSED",
-      "macro_circuit": "Kentucky / Ohio Valley"
+      "macro_circuit": "Kentucky / Ohio Valley",
+      "game_operating_status": "HISTORICAL_ONLY"
+    },
+    {
+      "id": "T-0119",
+      "name": "Bluff City Downs",
+      "registry": "NORTH_AMERICA",
+      "city_locality": "Memphis / Collierville",
+      "state_province_region": "Tennessee",
+      "country": "USA",
+      "metro_or_subregion": "Memphis Metro",
+      "geography_status": "OWNER_APPROVED_FICTIONAL_GEOGRAPHY",
+      "source_basis": "USER_APPROVED_FICTIONAL_WORLD_GEOGRAPHY",
+      "boundary_note": null,
+      "travel_node": "Memphis / Collierville, TN, USA",
+      "opening_state": "FICTIONAL_GAME_MODELED",
+      "foundation_status": "WTW_GAME_MODELED_ACTIVE_1999",
+      "macro_circuit": "Mississippi Valley",
+      "game_operating_status": "OPEN_1999"
+    },
+    {
+      "id": "T-0120",
+      "name": "Lowcountry Racecourse",
+      "registry": "NORTH_AMERICA",
+      "city_locality": "Charleston / Johns Island",
+      "state_province_region": "South Carolina",
+      "country": "USA",
+      "metro_or_subregion": "Charleston Metro",
+      "geography_status": "OWNER_APPROVED_FICTIONAL_GEOGRAPHY",
+      "source_basis": "USER_APPROVED_FICTIONAL_WORLD_GEOGRAPHY",
+      "boundary_note": null,
+      "travel_node": "Charleston / Johns Island, SC, USA",
+      "opening_state": "FICTIONAL_GAME_MODELED",
+      "foundation_status": "WTW_GAME_MODELED_ACTIVE_1999",
+      "macro_circuit": "Coastal Carolinas",
+      "game_operating_status": "OPEN_1999"
+    },
+    {
+      "id": "T-0121",
+      "name": "Live Oak Park",
+      "registry": "NORTH_AMERICA",
+      "city_locality": "Savannah / Pooler",
+      "state_province_region": "Georgia",
+      "country": "USA",
+      "metro_or_subregion": "Savannah Metro",
+      "geography_status": "OWNER_APPROVED_FICTIONAL_GEOGRAPHY",
+      "source_basis": "USER_APPROVED_FICTIONAL_WORLD_GEOGRAPHY",
+      "boundary_note": null,
+      "travel_node": "Savannah / Pooler, GA, USA",
+      "opening_state": "FICTIONAL_GAME_MODELED",
+      "foundation_status": "WTW_GAME_MODELED_ACTIVE_1999",
+      "macro_circuit": "Coastal Georgia",
+      "game_operating_status": "OPEN_1999"
+    },
+    {
+      "id": "T-0122",
+      "name": "Red River Downs",
+      "registry": "NORTH_AMERICA",
+      "city_locality": "Fargo / West Fargo",
+      "state_province_region": "North Dakota",
+      "country": "USA",
+      "metro_or_subregion": "Fargo Metro",
+      "geography_status": "OWNER_APPROVED_FICTIONAL_GEOGRAPHY",
+      "source_basis": "USER_APPROVED_FICTIONAL_WORLD_GEOGRAPHY",
+      "boundary_note": null,
+      "travel_node": "Fargo / West Fargo, ND, USA",
+      "opening_state": "FICTIONAL_GAME_MODELED",
+      "foundation_status": "WTW_GAME_MODELED_ACTIVE_1999",
+      "macro_circuit": "Northern Plains",
+      "game_operating_status": "OPEN_1999"
+    },
+    {
+      "id": "T-0123",
+      "name": "Bitterroot Downs",
+      "registry": "NORTH_AMERICA",
+      "city_locality": "Missoula / Lolo",
+      "state_province_region": "Montana",
+      "country": "USA",
+      "metro_or_subregion": "Missoula Metro",
+      "geography_status": "OWNER_APPROVED_FICTIONAL_GEOGRAPHY",
+      "source_basis": "USER_APPROVED_FICTIONAL_WORLD_GEOGRAPHY",
+      "boundary_note": null,
+      "travel_node": "Missoula / Lolo, MT, USA",
+      "opening_state": "FICTIONAL_GAME_MODELED",
+      "foundation_status": "WTW_GAME_MODELED_ACTIVE_1999",
+      "macro_circuit": "Northern Rockies",
+      "game_operating_status": "OPEN_1999"
+    },
+    {
+      "id": "T-0124",
+      "name": "Playfair Race Course",
+      "registry": "NORTH_AMERICA",
+      "city_locality": "Spokane",
+      "state_province_region": "Washington",
+      "country": "USA",
+      "metro_or_subregion": "Spokane",
+      "geography_status": "OWNER_APPROVED_ALTERNATE_HISTORY",
+      "source_basis": "HISTORICAL_IDENTITY_USER_APPROVED_ALTERNATE_1999_OPERATION",
+      "boundary_note": null,
+      "travel_node": "Spokane, WA, USA",
+      "opening_state": "OPEN_1999_ALTERNATE_HISTORY",
+      "foundation_status": "HISTORICAL_IDENTITY_ALT_HISTORY_1999_OPERATIONAL",
+      "macro_circuit": "Pacific Northwest",
+      "game_operating_status": "OPEN_1999",
+      "source_identity_preserved": true
     }
   ]
 }

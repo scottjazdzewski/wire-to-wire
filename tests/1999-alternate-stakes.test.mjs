@@ -5,9 +5,9 @@ import {WTW_ALTERNATE_STAKES_1999} from '../public/next/1999-alternate-stakes.mj
 import {openingWorld1999} from '../src/1999/opening-world.v1.mjs';
 test('every WTW 1999 course has a stake source or an explicitly modeled ungraded feature',()=>{
  const all=Object.values(TRACK_PROGRAM_1999);
- assert.equal(all.length,118);
- assert.equal(all.filter(p=>p.trackOperating==='OPEN_1999').length,115);
- assert.equal(all.filter(p=>p.trackOperating==='HISTORICAL_ONLY').length,3);
+ assert.equal(all.length,124);
+ assert.equal(all.filter(p=>p.trackOperating==='OPEN_1999').length,107);
+ assert.equal(all.filter(p=>p.trackOperating==='HISTORICAL_ONLY').length,17);
  assert.equal(all.filter(p=>p.trackOperating==='ARCHIVE_ONLY_1999').length,0);
  assert.ok(all.filter(p=>p.trackOperating==='OPEN_1999').every(p=>p.stakesIds.length||WTW_ALTERNATE_STAKES_1999.some(e=>e.trackId===p.id)));
  assert.equal(WTW_ALTERNATE_STAKES_1999.length,191); // five retired-course features removed from playable calendar
@@ -33,11 +33,11 @@ test('modeled races never trespass off-meet or off-surface and never pretend to 
   assert.ok(Number.isInteger(r.purse1999)&&r.purse1999>0);
  }
 });
-test('the 16 alternate-history venue identities keep their feature records; only active courses race',()=>{
+test('all alternate-history identities keep their records; only Sheepshead and Playfair race',()=>{
  const revived=Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION');
- assert.equal(revived.length,16);
- assert.equal(revived.filter(p=>p.trackOperating==='OPEN_1999').length,14);
- assert.equal(revived.filter(p=>p.trackOperating==='HISTORICAL_ONLY').length,2);
+ assert.equal(revived.length,17);
+ assert.equal(revived.filter(p=>p.trackOperating==='OPEN_1999').length,2);
+ assert.equal(revived.filter(p=>p.trackOperating==='HISTORICAL_ONLY').length,15);
  for(const p of revived){
   const races=WTW_ALTERNATE_STAKES_1999.filter(r=>r.trackId===p.id);
   assert.equal(races.length,p.trackOperating==='OPEN_1999'?2:0,p.name);

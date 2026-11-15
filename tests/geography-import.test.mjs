@@ -22,6 +22,7 @@ test('all Drive v3.3 geography source partitions compile into isolated D1 SQL wi
   assert.equal(m.unique_organizations,108);
   assert.equal(m.tracks.north_america,118);
   assert.equal(m.tracks.international,0);
+  assert.equal(m.tracks.owner_approved_game_expansion,6);
   assert.equal(m.files.length,24);
   assert.equal(m.sql_chunks.reduce((a,b)=>a+b.records,0),8449);
   assert.match(m.digest,/^[0-9a-f]{64}$/);

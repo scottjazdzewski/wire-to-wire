@@ -37,7 +37,7 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   const ui=w.__WTW_1999_UI_DATA__;
   check('1999 data adapter initialized',Boolean(ui));
   check('Clean founding world excludes old B01 generated racehorses',ui.counts.horses===0&&ui.counts.worldHorses===73);
-  check('1999 supported racecourse geography available',ui.counts.tracks>=50&&ui.counts.tracks<=118);
+  check('1999 supported racecourse geography available',ui.counts.tracks>=50&&ui.counts.tracks<=124);
   check('Old B01 opening horses excluded from the visible stable',ui.stableHorses.length===0);
   check('1999 inbox not 2014 demo',d.querySelector('.ng-msgtitle')?.textContent.includes('1999'));
   check('1999 decision desk not 2014 case',d.querySelector('.ng-casetitle')?.textContent.includes('1999'));
@@ -60,8 +60,8 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    !d.querySelector('#wtwNextgen .ng-rs-horse')&&ui.stableHorses.length===0);
   click('Racing');await pause(300);
   const fullTrackPicker=d.querySelector('#wtwNextgen select[data-ng-select="department-track"]');
-  check('Racing drop-down includes exactly the 115 playable founding circuits',
-   Boolean(fullTrackPicker)&&ui.counts.tracks===118&&fullTrackPicker.options.length===116&&
+  check('Racing drop-down includes exactly the 107 playable 1999 circuits',
+   Boolean(fullTrackPicker)&&ui.counts.tracks===124&&fullTrackPicker.options.length===108&&
    [...fullTrackPicker.options].some(o=>o.value==='Saratoga')&&
    ![...fullTrackPicker.options].some(o=>['Atlantic City Race Course','Aurora Downs','Bainbridge Park'].includes(o.value)));
   noDuplicateTabs('Racing');
@@ -261,9 +261,10 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   await pause(340);
   noDuplicateTabs('Tracks');
   const worldTracks=w.__WTW_NEXT__?.app?.departmentVisible||[];
-  if(!(worldTracks.length===118&&worldTracks.every(t=>t._kind==='track')&&
+  if(!(worldTracks.length===124&&worldTracks.every(t=>t._kind==='track')&&
    worldTracks.some(t=>t._canonId==='T-0102'&&t.name==='Oriental Park')&&
    worldTracks.some(t=>t._canonId==='T-0118'&&t.status.includes('HISTORICAL'))&&
+   worldTracks.some(t=>t._canonId==='T-0106'&&/^Sheepshead Bay/.test(t.name)&&!t.status.includes('HISTORICAL'))&&
    !worldTracks.some(t=>/Curragh|Newmarket|Ascot/.test(t.name))))
    throw Error('Site track registry mismatch '+JSON.stringify({
     length:worldTracks.length,section:w.__WTW_NEXT__?.app?.section,
@@ -272,11 +273,12 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
     historic:worldTracks.find(t=>t._canonId==='T-0118'),
     intl:worldTracks.filter(t=>/Curragh|Newmarket|Ascot/.test(t.name)).map(t=>t.name)
    }));
-  check('All 16 historical North American tracks remain visible, closed and without 1999 meets',
+  check('All 17 archived tracks remain visible, while Sheepshead Bay stays active',
+   worldTracks.filter(t=>t.status.includes('HISTORICAL')).length===17&&
    worldTracks.filter(t=>t._canonId>='T-0103'&&t._canonId<='T-0118').length===16&&
-   worldTracks.filter(t=>t._canonId>='T-0103'&&t._canonId<='T-0118').every(t=>
-    t.status.includes('HISTORICAL')&&!t.meetWindow&&!t._meetState.active));
-  steps.push('All 118 North American including Cuba displayed; 16 historic closed and zero international');
+   worldTracks.filter(t=>t._canonId>='T-0103'&&t._canonId<='T-0118'&&t.status.includes('HISTORICAL')).length===15&&
+   worldTracks.filter(t=>t.status.includes('HISTORICAL')).every(t=>!t.meetWindow&&!t._meetState.active));
+  steps.push('All 124 North American/Cuban tracks displayed; 17 history-only and zero international');
   click('Personnel');await pause(230);
   pickView('Owners');await pause(250);
   const firstOwner=d.querySelector('#wtwNextgen [data-ng="dept-open"]');
