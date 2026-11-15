@@ -23,3 +23,9 @@ V487 obtains the full deterministic story-backed authored pool, skips names alre
 - Dedicated V487 tests verify alternative fallback after first suggestions are pre-reserved; all reservation keys correspond exactly to final editorial-ready proposals; reviewed-name exclusion; duplicate-free two-foal cohorts; deterministic browser/source parity; no network calls; and complete hold when catalogue is exhausted.
 - Run existing V486 and older naming tests plus product-wide tests and GitHub workflows; inspect CI before merging.
 - Rollback is to revert the isolated V487 PR after accounting for other merged work; historical data, saves, UI, artwork and their locks are untouched.
+
+## Cohort result semantics
+- `newCandidateNameKeys`: normalized keys for **final audit-ready** proposals only; caller must persist these keys atomically before further cohorts.
+- `exhaustedFoals`: number of foals without a final audit-ready candidate (including catalogue exhaustion and screened holds).
+- `held`: rejected **proposals in the final shortlist audit**, not a count of nameless foals. With pre-screening, `held` can be zero even when `exhaustedFoals` is nonzero.
+- `nextRecentNames`: the rolling recent-60 context for style fatigue. It must never replace the complete global registry passed as `existingNames`.
