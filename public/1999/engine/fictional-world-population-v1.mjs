@@ -12,8 +12,33 @@ import {createFictionalWorldNameEngine} from './fictional-world-name-engine.mjs'
 import {completeFictionalPersonBiographiesV1} from './fictional-person-biographies-v1.mjs';
 import {model1999StartingHorseAttributes} from '../game/horse-starting-attributes.js';
 import {validateWorld,WORLD_SCHEMA} from '../game/contracts.js';
+import {generateLocalPopulationNamingBatch,LOCAL_HORSE_NAMING_ALGORITHM_REVISION}
+ from '../game/horse-naming-local-v485.js';
+import {POPULATION_NAMING_SCHEMA} from '../game/horse-naming-population-planner.js';
 
 export const FICTIONAL_1999_INDUSTRY_SCHEMA='WTW_FICTIONAL_1999_INDUSTRY_V1';
+/**
+ * The 1999 world uses the same swappable naming contracts as later foaling.
+ * This preview adapter NEVER promotes candidate names to registrations.
+ * A future horse-name revision can replace the provider without changing
+ * IDs, the world generator, or any already persisted career.
+ */
+export const FICTIONAL_1999_NAMING_BRIDGE_SCHEMA='WTW_1999_NAMING_BRIDGE_V1';
+export function previewFictional1999HorseNames({
+ batch,existingNames=[],attempt=0,horseNamingProvider=generateLocalPopulationNamingBatch
+}={}){
+ if(batch?.schema!==POPULATION_NAMING_SCHEMA)
+  throw Error('Invalid horse-naming cohort for 1999 world');
+ if(typeof horseNamingProvider!=='function')throw Error('Invalid horse-naming provider');
+ const preview=horseNamingProvider({batch,existingNames,attempt});
+ if(preview?.approvedForRegistration!==false||preview?.writesToGame!==false||
+  !Array.isArray(preview?.screened))
+  throw Error('Naming preview must remain non-registering and review-gated');
+ return {schema:FICTIONAL_1999_NAMING_BRIDGE_SCHEMA,
+  providerRevision:preview.algorithmRevision??LOCAL_HORSE_NAMING_ALGORITHM_REVISION,
+  ...preview};
+}
+
 const START='1999-01-01';
 const cleanId=(prefix,id)=>prefix+'-'+String(id).replace(/^WTWFI-/,'').replaceAll('_','-');
 const hash=(seed,key)=>{let h=(2166136261^(seed>>>0))>>>0;
@@ -57,6 +82,7 @@ function sexOf(h){return String(h.sex||'').toUpperCase()}
  */
 export async function assembleFictional1999Industry({
  seed=19990101,worldId='WTW1999Industry',tracks,horseNames,
+ horseNameProvider=null,personOrganizationNameProvider=createFictionalWorldNameEngine,
  foundationHorses=[],horseCount=horseNames?.length??0,
  trainersPerTrack=4,jockeysPerTrack=3,ownersPerTrack=8
 }={}){
@@ -75,13 +101,30 @@ export async function assembleFictional1999Industry({
  if(trackIds.size!==tracks.length)throw Error('Duplicate track ID');
  if(!Array.isArray(foundationHorses))throw Error('Foundation pedigree must be an array');
  const protectedNames=foundationHorses.map(h=>h.name);
- verifyNames(horseNames,horseCount,protectedNames);
+ // The provider contract is intentionally independent of the world schema.
+ // Only an explicit reviewed/approved batch can enter the canonical registry.
+ let acceptedNames=horseNames;
+ let horseNamingRevision='EXTERNAL_ACCEPTED_HORSE_NAME_BATCH';
+ if(acceptedNames==null&&horseNameProvider){
+  if(typeof horseNameProvider!=='function')throw Error('Invalid horse name provider');
+  const result=await horseNameProvider({
+   worldId,seed,year:1999,horseCount,protectedNames:[...protectedNames]
+  });
+  if(!result||result.approvedForRegistration!==true||
+   !Array.isArray(result.names)||!text(result.algorithmRevision))
+   throw Error('Horse naming provider returned unapproved or incomplete names');
+  acceptedNames=result.names;
+  horseNamingRevision=result.algorithmRevision;
+ }
+ verifyNames(acceptedNames,horseCount,protectedNames);
+ if(typeof personOrganizationNameProvider!=='function')
+  throw Error('Invalid people/organization naming provider');
  const trainers=active.length*trainersPerTrack;
  const jockeys=active.length*jockeysPerTrack;
  const owners=active.length*ownersPerTrack;
  const farmManagers=Math.max(8,Math.ceil(active.length*1.4));
  const farms=Math.max(4,Math.floor(farmManagers*.8));
- const named=createFictionalWorldNameEngine({
+ const named=personOrganizationNameProvider({
   worldId,seed,year:1999,owners,
   roles:{trainer:trainers,jockey:jockeys,farm_manager:farmManagers,
    veterinarian:Math.ceil(active.length*.8),farrier:Math.ceil(active.length*.8),
@@ -150,7 +193,7 @@ export async function assembleFictional1999Industry({
   const owner=ownerOrg[draw(seed,'owner:'+i,ownerOrg.length)];
   const farm=farmOrg[draw(seed,'breeder:'+i,farmOrg.length)];
   const horse={
-   id,name:horseNames[i],sex,foalYear:year,birth_date:dateFor(seed,id,year),
+   id,name:acceptedNames[i],sex,foalYear:year,birth_date:dateFor(seed,id,year),
    sireId:sire.id,damId:dam.id,ownerId:owner.id,breederId:farm.id,
    trainerId:stable.trainerId,stableId:stable.id,
    homeTrackId:stable.home_track_id,foalingFarmId:farm.id,
@@ -159,7 +202,7 @@ export async function assembleFictional1999Industry({
     horse_id:id,seed,foaling_year:year,sex
    }),
    career:{starts:0,wins:0,earnings_minor:0},
-   source:'GENERATED_FICTIONAL_1999',namingAuthority:'EXTERNAL_ACCEPTED_HORSE_NAME_BATCH'
+   source:'GENERATED_FICTIONAL_1999',namingAuthority:'APPROVED_NAMING_PROVIDER_BATCH'
   };
   horses.push(horse);
   for(let future=year+4;future<=1996;future++)
@@ -178,7 +221,9 @@ export async function assembleFictional1999Industry({
  const manifest={schema:FICTIONAL_1999_INDUSTRY_SCHEMA,seed,worldId,startDate:START,
   generatorRevision:FICTIONAL_1999_INDUSTRY_SCHEMA,
   namingRevision:named.manifest.schema,namingFingerprint:named.manifest.fingerprint,
-  horseNaming:'EXTERNAL_ACCEPTED_BATCH',activeTracks:active.length,
+  horseNaming:'ACCEPTED_BATCH',horseNamingRevision,
+  peopleOrganizationNamingRevision:named.manifest.schema,
+  activeTracks:active.length,
   archivedTracks:tracks.length-active.length,generatedHorses:horses.length,
   foundationHorses:parents.length,people:people.length,organizations:organizations.length};
  const authority={snapshot_id:'WTW-FICTIONAL-1999-'+seed+'-'+worldId,
