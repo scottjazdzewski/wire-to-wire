@@ -37,6 +37,11 @@ test('desktop only bundles one approved UI and has no remote gaming URL',()=>{
  assert.match(main,/cancel:true/);
  assert.match(main,/sandbox:true,contextIsolation:true,nodeIntegration:false/);
  assert.match(main,/reportSmoke/);
+ assert.match(main,/wtw-startup-diagnostics\.log/);
+ assert.match(main,/dialog\.showErrorBox/);
+ assert.match(main,/smokePhase==='visible'/);
+ assert.match(main,/capturePage\(\)/);
+ assert.match(main,/win\.show\(\);win\.focus\(\)/);
  assert.doesNotMatch(main,/loadURL\(['"]https?:\/\//);
  assert.doesNotMatch(preload,/ipcRenderer|require\(['"](?:fs|child_process|net)['"]\)/);
  assert.equal(pkg.build.extraResources[0].to,'game-public');
