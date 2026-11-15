@@ -4209,8 +4209,8 @@ function managerCareerView(){
   '<button type="button" data-ng="organization">OPEN OPERATION '+glyph('right',13)+'</button></div>'+
   '<dl class="ng-career-facts">'+
   fact('MANAGER',person)+fact('POSITION',role)+fact('WORLD',mode)+
-  fact('WORLD SEED',seed)+fact('ACTIVE RACE TARGETS',races.length)+
-  fact('CAREER RECORD','Local current save')+'</dl>'+
+  fact('WORLD SEED',seed)+fact('RECORDED RACE FILES',races.length)+
+  fact('CAREER STATUS','Current local session')+'</dl>'+
   '<header class="ng-career-section-title"><strong>CURRENT MANAGEMENT PRIORITIES</strong>'+
   '<span>'+safe(notice)+' · '+action.length+' FILES</span></header>'+
   '<div class="ng-career-priorities" role="region" tabindex="0" aria-label="Active career decision files">'+
