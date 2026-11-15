@@ -2016,3 +2016,18 @@ body{margin:0;background:var(--cream);color:var(--ink);font-size:12px;line-heigh
  .history-review-section>header small{max-width:45%}
  .history-season-leaders{grid-template-columns:1fr}
 }
+
+/* Same compact Previous/Next record vocabulary inside the History Vault drawer.
+ * Record list navigation is separate from page pagination and source correction. */
+.archive-record-browser{position:sticky;top:0;z-index:2;display:flex;
+ align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px;
+ padding:6px 13px;border:1px solid #88704b;background:#25352f;
+ color:#edd7a3;border-radius:4px;font:750 11px/1.3 system-ui,sans-serif;
+ letter-spacing:.06em}
+.archive-record-browser>div{display:inline-flex;gap:4px}
+.archive-record-browser button{display:grid;place-items:center;width:30px;
+ height:26px;border:1px solid #b59a68;border-radius:3px;
+ background:#28352d;color:#f2dbac;font:800 19px/1 Georgia,serif;
+ cursor:pointer}
+.archive-record-browser button:hover{background:#47624c}
+.archive-record-browser button:focus-visible{outline:2px solid #ffdd91;outline-offset:2px}

@@ -138,3 +138,17 @@ Permanent guards: `tests/dossier-local-navigation.test.mjs` and `scripts/1999-fu
 
 **Year in Review future visual direction:** the user approved the premium annual style for now and wants a vintage newspaper/editorial character when returning later. Do not begin another annual redesign while restoring the shared profile navigation.
 
+
+
+## Universal sorted-list record Previous / Next — November 14, 2026
+
+New user-locked extension: **Every applicable record list must support previous/next entry navigation after opening a row**, including trainers, jockeys, owners, farms, racing stables, breeders, tracks, horses and race files, and every corresponding source-backed directory. This is ONE shared record browser, never bespoke arrow logic for individual departments.
+
+- **List-origin context outranks alphabetical fallback**: when the player opens an entry from a sorted/filtered table, the arrows follow the *currently visible list order*, not an unrelated alphabetic roster or the selected record's Overview/History sections. Only entries of that source-defined peer family qualify. At the end of a list, arrows wrap through the same current peer list.
+- The context is a UI-only snapshot of the visible records and their stable IDs, actions and source routes. It must survive going entry → next entry → next entry, but must never alter world generation, a game save, the 1999 clock or authentic historical identities.
+- Directly opened records with no originating list continue to use the existing source-backed canonical peer ordering. Missing, unsupported or singleton lists must not silently substitute other categories.
+- Existing dossier-entity-step and the original route-opening handlers are authoritative. The common route-level pager is used for applicable details that lack a complete dossier bar (for example World record, Race file or honest preview). Never resurrect the retired section pager or a parallel UI.
+- The upper-shell Back/Forward controls remain history navigation; Overview/History/MORE RECORDS remain within the current record.
+- No pagers on non-record utilities or actions (forms, dashboards, announcements) that cannot open a genuine detail record. The History Vault's separate archive application needs its own parity pass before claiming full archival coverage.
+
+Regression gate: tests/universal-record-list-navigation.test.mjs verifies list ordering, peer-family separation, filtered subsets, exact IDs and race-file routing. Actual production Windows UI acceptance must still exercise representative rosters and source-backed details in Chromium.
