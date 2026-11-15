@@ -50,12 +50,6 @@ function trackOpen(t){
 }
 function birthYearOf(h){return Number(h.foalYear??h.foaling_year??h.birth_date?.slice(0,4)??0)}
 function sexOf(h){return String(h.sex||'').toUpperCase()}
-function pickParent(pool,sex,year,seed,key){
- const eligible=pool.filter(h=>birthYearOf(h)<=year-4&&
-  (sex==='sire'?['HORSE','COLT','STALLION'].includes(sexOf(h)):
-   ['MARE','FILLY','BROODMARE'].includes(sexOf(h))));
- return eligible.length?eligible[draw(seed,key,eligible.length)]:null;
-}
 /**
  * Generate all IDs and relationships in memory; no storage writes, HTTP or
  * fallback to the old 38-horse fixture. horseNames is a frozen, independently
