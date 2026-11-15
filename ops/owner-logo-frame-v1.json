@@ -334,14 +334,25 @@
     },
     {
       "path": "public/assets/office/founding-organization-logos/O-FOUNDING-1999-008.png",
-      "source_sha256": "d23667a7c1022bd2245006a142a2341501a6635ef2d903e0c5254ae2f12f0632",
-      "output_sha256": "d49d9834a242786163e8bc196a87529307b3bc67846fdb8ef2b2b0dd4539bff7",
+      "source_sha256": "5327880f1cee06514645327bdf84231f65bbd2449bd718e00a63f0f590e815d8",
+      "output_sha256": "966073b32d469cae0ac6ebcb3b478234187f5a899ea8bb73b6cf4781407acbf6",
       "background": [
-        0,
-        0,
-        0
+        250,
+        243,
+        232
       ],
-      "old_frame_pixels_removed": 0
+      "old_frame_pixels_removed": 0,
+      "source_revision": "USER_REQUESTED_BLACK_BAND_CORRECTION_2026-11-15",
+      "approved_original": "https://drive.google.com/file/d/1FTm_Lv-Sjg9Uz4Qx4zcHdshpoWIeOeBo/view",
+      "border_rgb": [
+        0,
+        48,
+        31
+      ],
+      "border_inset_px": 5,
+      "border_px": 5,
+      "radius_px": 28,
+      "approval_note": "Existing green-gold V and Vesper Brook horse/wordmark unchanged; remove black padding, cream background fills rounded field, green identity-matched border"
     },
     {
       "path": "public/assets/office/founding-organization-logos/O-FOUNDING-1999-009.png",
