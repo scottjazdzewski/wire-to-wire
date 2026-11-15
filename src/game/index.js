@@ -21,7 +21,8 @@ export {HORSE_REGISTRATION_SCHEMA,HORSE_REGISTRATION_COMMANDS,createHorseRegistr
 export {getCareerHorseConnections} from './horse-connections.js';
 
 export {HORSE_CARE_SCHEMA,TRAINER_SKILLS_SCHEMA,HORSE_CARE_COMMANDS,FEED_PROGRAMS,CARE_PROGRAMS,
- modeledTrainerSkills,createHorseCareRecord,getGameHorsePerformance,modelHorsePostRaceResponse}
+ modeledTrainerSkills,createHorseCareRecord,HORSE_RACE_PREPARATION_SCHEMA,RACE_PREPARATION_APPROACHES,
+ get1999RacePreparation,getGameHorsePerformance,modelHorsePostRaceResponse}
  from './horse-care.js';
 
 export {DAILY_AGENT_SCHEMA,createDailyAgentRuntime,getAgentRelationships} from './daily-agents.js';
