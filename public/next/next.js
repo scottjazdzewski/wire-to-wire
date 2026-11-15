@@ -2424,7 +2424,7 @@ function profileDetail(route,sourceOverride=null){
       'SOURCE-LINKED 1999',founderOrg?.location||'NOT RECORDED']:
      [h.horse,String(h.role||'').replaceAll('_',' '),(h.recordedStakesYears||[]).join(', ')||'—',
       h.status==='SOURCE_VERIFIED'?'SOURCE':'REVIEW'];
-    const cells=cols.map(v=>'<span>'+safe(v||'—')+'</span>').join('');
+    const cells=cols.map(v=>'<span title="'+safe(v||'—')+'">'+safe(v||'—')+'</span>').join('');
     return target?
      '<button class="ng-stakes-data" data-ng="world-open" data-val="'+safe(target.worldKey)+
       '" aria-label="Open '+safe(cols[0])+' record">'+cells+'</button>':
