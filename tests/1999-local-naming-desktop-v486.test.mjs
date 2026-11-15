@@ -92,7 +92,7 @@ test('offline V486 does not require a network, browser origin, or Cloudflare run
  const mirror=await readFile(new URL('../public/1999/game/horse-naming-local-v485.js',import.meta.url),'utf8');
  const ui=await readFile(new URL('../public/next/1999-naming-desk.mjs',import.meta.url),'utf8');
  assert.equal(src,mirror);
- assert.doesNotMatch(src,/\\b(?:fetch|XMLHttpRequest|WebSocket|localStorage|indexedDB|env\\.AI)\\s*\\(/);
+ assert.doesNotMatch(src,/\b(?:fetch|XMLHttpRequest|WebSocket|localStorage|indexedDB|env\.AI)\s*\(/);
  assert.match(ui,/55,000-per-year target is NOT capacity-certified/);
  assert.doesNotMatch(ui,/AI requests are budget-limited/);
  const prior=globalThis.fetch;
