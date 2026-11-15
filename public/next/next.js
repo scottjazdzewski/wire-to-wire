@@ -3949,7 +3949,11 @@ function worldCompleteDirectoryView(){
   '</span></footer></section></div></section>';
 }
 function managerDashboard(){
- const section=APP.section||'Office',page=APP.page||'Overview';
+ const section=APP.section||'Office',routeName=String(APP.custom||'');
+ // Direct deep links must not silently turn Messages/Decisions into Overview.
+ // Shared renderer/records stay authoritative; only the route context changes.
+ const page=section==='Office'&&/^(Messages|Decisions|Reports|Career)$/.test(routeName)?
+  routeName:(APP.page||'Overview');
  // The live Stable roster is routed directly, even without a legacy Office route.
  if(section==='World'&&page==='Overview')return worldCompleteDirectoryView();
  if(section==='Stable'&&(page==='Overview'||page==='Horses'))return liveStableRosterView();
