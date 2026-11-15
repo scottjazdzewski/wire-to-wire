@@ -78,6 +78,15 @@ test("edge-connected whites disappear while enclosed white brand details survive
  assert.equal(a[(9*w+9)*4+3],255); // Dark badge is kept
  assert.ok(res.box.width<30&&res.box.height<30);
 });
+test("dark approved track wordmarks use a narrow readable light field rather than a blown-out billboard glow",()=>{
+ const start=css.indexOf('.ng-profile-source-photo.wtw-hero-dark-ink::before{');
+ const end=css.indexOf('}',start);
+ const rule=css.slice(start,end);
+ assert.match(rule,/inset:31% -2%!important/);
+ assert.match(rule,/ellipse 91% 82%/);
+ assert.match(rule,/filter:blur\(3px\)!important/);
+ assert.doesNotMatch(rule,/\.88\)|blur\(9px\)/);
+});
 test("hero grid explicitly separates metadata, actions and logo",()=>{
  assert.match(css,/grid-template-areas:"badge identity mark" "badge tools mark"/);
  assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);

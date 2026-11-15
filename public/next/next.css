@@ -3648,14 +3648,12 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
   }
 }
 
-/* Dark navy/ink wordmarks become readable after removing white matte:
-   a diffuse ivory spotlight supplies contrast, never a rectangular plaque. */
+/* Source-ink contrast: a narrow light field, NOT a giant halo or plaque. */
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo.wtw-hero-dark-ink::before{
- background:radial-gradient(ellipse at 50% 50%,
-   rgba(248,248,237,.88) 0%,
-   rgba(238,242,233,.52) 37%,
-   rgba(236,240,236,.12) 61%,transparent 77%)!important;
- filter:blur(9px)!important;
+ inset:31% -2%!important;
+ background:radial-gradient(ellipse 91% 82% at 50% 50%,
+   rgba(237,240,231,.72),rgba(230,236,229,.32) 48%,transparent 90%)!important;
+ filter:blur(3px)!important;
 }
 
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo.wtw-hero-white-matte{isolation:auto!important}
