@@ -99,12 +99,25 @@ export function namingTasteScore(profile,{name,originMotif=''},{direction=''}={}
  }
  const candidateShape=shape(name);
  let score=(preference.motif[originMotif]||0)*2+(preference.shape[candidateShape]||0);
- const prompt=String(direction||'').toLowerCase();
- if(/\b(one.word|single.word|short names?|brief names?)\b/.test(prompt)&&candidateShape==='single')score+=12;
- if(/\b(two.word|two words?)\b/.test(prompt)&&candidateShape==='two')score+=12;
- if(/\b(phrase|sentence|conversation|spoken)\b/.test(prompt)&&candidateShape==='phrase')score+=12;
- if(/\b(subtle|understated|simple)\b/.test(prompt)&&name.length<=11)score+=4;
- if(/\b(longer|lyrical|poetic)\b/.test(prompt)&&name.length>=13)score+=4;
+ // Learn from the owner's explicit previous creative prompts as well as
+ // their outcomes. Rejects temper that direction; keeps/choices reinforce it.
+ // This is deterministic local preference memory, NOT neural training.
+ const promptMatch=hint=>{
+  const p=String(hint||'').toLowerCase();let v=0;
+  if(/\b(one.word|single.word|short names?|brief names?)\b/.test(p)&&candidateShape==='single')v+=12;
+  if(/\b(two.word|two words?)\b/.test(p)&&candidateShape==='two')v+=12;
+  if(/\b(phrase|sentence|conversation|spoken)\b/.test(p)&&candidateShape==='phrase')v+=12;
+  if(/\b(subtle|understated|simple)\b/.test(p)&&name.length<=11)v+=4;
+  if(/\b(longer|lyrical|poetic)\b/.test(p)&&name.length>=13)v+=4;
+  return v;
+ };
+ let historical=0;
+ for(const e of profile.events){
+  const weight=e.decision==='CHOOSE'?0.75:e.decision==='KEEP'?0.5:-0.5;
+  historical+=promptMatch(e.prompt)*weight;
+ }
+ score+=Math.max(-24,Math.min(24,historical));
+ score+=promptMatch(direction)*1.5; // the current prompt has priority
  return score;
 }
 export function rankNamingCandidates(candidates,profile,{direction=''}={}){
