@@ -11,7 +11,7 @@ import {plan1999IndustryStaffing,generate1999StaffingBatches}
  from './fictional-industry-staffing-1999.mjs';
 export const PERSISTENT_INDUSTRY_SCHEMA='WTW_PERSISTENT_INDUSTRY_1999_V1';
 export const PERSISTENT_INDUSTRY_DB='WireToWireFictionalIndustry1999V1';
-const stores=['manifests','horseBatches','personBatches','horseEdits'];
+const stores=['manifests','horseBatches','personBatches','horseEdits','careerRuns'];
 function request(req){return new Promise((resolve,reject)=>{
  req.onsuccess=()=>resolve(req.result);
  req.onerror=()=>reject(req.error||Error('IndexedDB request failed'));
@@ -44,6 +44,22 @@ export async function open1999IndustryDatabase(indexedDB=globalThis.indexedDB){
     tx.oncomplete=()=>resolve();
     tx.onerror=()=>reject(tx.error||Error('Industry batch commit failed'));
     tx.onabort=()=>reject(tx.error||Error('Industry batch aborted'));
+   });
+  },
+  async putCareerRun(worldId,runId,record){
+   return new Promise((resolve,reject)=>{
+    const tx=db.transaction(['manifests','careerRuns'],'readwrite');
+    const manifestReq=tx.objectStore('manifests').get(worldId);
+    manifestReq.onsuccess=()=>{
+     const manifest=manifestReq.result;
+     if(manifest?.status!=='COMPLETE'){
+      tx.abort();return;
+     }
+     tx.objectStore('careerRuns').put(record,worldId+':'+runId);
+    };
+    tx.oncomplete=()=>resolve();
+    tx.onerror=()=>reject(tx.error||Error('Career run commit failed'));
+    tx.onabort=()=>reject(Error('World incomplete or career run transaction aborted'));
    });
   },
   async putHorseEdit(worldId,horseId,edit){
@@ -170,4 +186,39 @@ export async function readPersistent1999HorseProfile(store,manifest,horseId){
  if(!horse)return null;
  const edit=await store.get('horseEdits',keyOf(manifest.seed,manifest.worldId)+':'+horseId);
  return {...horse,...(edit||{})};
+}
+
+/**
+ * Career runtime is an independent, mutable checkpoint referencing the
+ * immutable COMPLETE industry manifest. Saving does not rewrite horse batches.
+ */
+export async function savePersistent1999CareerRun(store,manifest,{
+ runId,gameDate='1999-01-01',player,changes={},version=1
+}={}){
+ if(manifest?.schema!==PERSISTENT_INDUSTRY_SCHEMA||
+  manifest.status!=='COMPLETE'||!store?.putCareerRun||
+  typeof runId!=='string'||!/^[-A-Za-z0-9_]{1,80}$/.test(runId)||
+  typeof gameDate!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(gameDate)||
+  !player||typeof player!=='object'||Array.isArray(player)||
+  !changes||typeof changes!=='object'||Array.isArray(changes)||
+  !Number.isSafeInteger(version)||version<1)
+  throw Error('Invalid persistent industry career run');
+ const record={schema:'WTW_INDUSTRY_CAREER_RUN_V1',
+  worldId:manifest.worldId,worldSeed:manifest.seed,
+  worldSchema:manifest.schema,runId,gameDate,
+  player:structuredClone(player),changes:structuredClone(changes),version};
+ await store.putCareerRun(keyOf(manifest.seed,manifest.worldId),runId,record);
+ return record;
+}
+export async function loadPersistent1999CareerRun(store,manifest,runId){
+ if(manifest?.status!=='COMPLETE'||typeof runId!=='string')
+  throw Error('Completed world and run ID required');
+ const record=await store.get('careerRuns',
+  keyOf(manifest.seed,manifest.worldId)+':'+runId);
+ if(!record)return null;
+ if(record.schema!=='WTW_INDUSTRY_CAREER_RUN_V1'||
+  record.worldId!==manifest.worldId||record.worldSeed!==manifest.seed||
+  record.worldSchema!==manifest.schema)
+  throw Error('Career run references a different world');
+ return record;
 }
