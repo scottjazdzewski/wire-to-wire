@@ -52,7 +52,7 @@ export function* generate1999StaffingBatches({
    n-=staffing.counts[role];
   }
   throw Error('Personnel name index exceeds staffing plan');
- });
+ },[],{normalizeNamesForAccent:true});
  if(generatedNames.length!==total)throw Error('Incomplete personnel name roster');
  let batch=[],offset=0,nameIndex=0;
  for(const [role,rule] of Object.entries(roles)){
