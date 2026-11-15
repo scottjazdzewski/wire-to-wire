@@ -6,7 +6,7 @@ const js=readFileSync(new URL('../public/next/next.js',import.meta.url),'utf8');
 const catalog=JSON.parse(readFileSync(new URL('../public/assets/game/attribute-catalog.v1.json',import.meta.url),'utf8'));
 const esc=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 
-const start=js.indexOf('  const personnelGroups=[');
+const start=js.indexOf('  const firstRole=roles[0]||null;');
 const end=js.indexOf('  const reputationSource=work.reputation_profile;',start);
 assert.ok(start>0&&end>start,'Test must execute the exact production personnel rating renderer');
 const run=new Function('common','special','roleDisplay','observed','modelNumber','safe','roles','cat','titleCaseUIRole',
@@ -59,7 +59,7 @@ test('all catalog professional roles show their actual union of common and speci
 
 test('compound founder, chief strategist and racing-industry roles resolve to actual skill catalogs',()=>{
  const begin=js.indexOf('  const namedRoles={');
- const end=js.indexOf('  const work=state().staffState?',begin);
+ const end=js.indexOf('  const personId=',begin);
  assert.ok(begin>0&&end>begin);
  const classify=new Function('roleName','athleteAttributeCatalog',
   js.slice(begin,end)+'\nreturn {roles,role};');
