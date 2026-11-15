@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
 
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const js=read('public/next/next.js');
@@ -239,4 +240,69 @@ test('a screenshot smoke test does not mean FM/OOTP visual approval',()=>{
  assert.match(audit,/UNIFIED PROFILE GEOMETRY VERIFIED/);
  assert.match(standard,/A \*\*person\*\* compares screenshots/,'Visual acceptance needs an actual reviewer');
  assert.match(standard,/No CSS patch stacks|No CSS patch stack|one canonical management stylesheet/i);
+});
+
+test('ALL registered manager VIEW routes have independent screenshot evidence or an explicit existing-route alias',()=>{
+ const start=js.indexOf('const tabmap='),end=js.indexOf('\nconst actions=',start);
+ assert.ok(start>=0&&end>start,'VIEW catalog was not found');
+ const tabmap=runInNewContext(js.slice(start,end)+'\ntabmap;');
+ const captures=[...audit.matchAll(/^capture\s+([\w-]+)\s+'([^']*)'/gm)]
+  .map(match=>{
+   const [_,slug,route]=match;
+   const ui=route.startsWith('?')?new URLSearchParams(route.slice(1)).get('ui'):null;
+   return {slug,ui,route};
+  });
+ const slugs=new Set(captures.map(x=>x.slug));
+ assert.equal(slugs.size,captures.length,'Screenshot artifact names must be unique');
+ const office={
+  Overview:'racing-office',Messages:'office-messages',Decisions:'office-decisions',
+  Calendar:'racing-roster',News:'office-news',Reports:'office-reports',Career:'office-career'
+ };
+ // Office Calendar is not a second renderer; its existing button routes
+ // to the actual Racing desk. Do not invent another Office calendar page.
+ assert.match(js,/if\(name==='Calendar'\)return openMenu\('Racing'\)/);
+ const history={
+  'Race Results':'history-vault',Horses:'history-horses',
+  'People & Farms':'history-people-farms',
+  'Facilities & Tracks':'history-tracks-facilities',
+  'Historical Calendar':'history-calendar',Coverage:'history-coverage'
+ };
+ const absent=[];
+ for(const [section,pages] of Object.entries(tabmap)){
+  for(const page of pages){
+   if(section==='Office'||section==='History'){
+    const alias=(section==='Office'?office:history)[page];
+    if(!alias||!slugs.has(alias))absent.push(section+' / '+page);
+    continue;
+   }
+   const exact=section+' — '+page;
+   const aliases=page==='Overview'?[section,exact]:[exact];
+   if(!captures.some(x=>aliases.includes(x.ui)))absent.push(section+' / '+page);
+  }
+ }
+ assert.deepEqual(absent,[], 'Every registered VIEW needs an actual rendered screenshot or confirmed alias');
+ assert.ok(captures.length>=80,'Screenshot coverage must not drop below 80 distinct routes');
+ for(const page of ['stable-horses','stable-training','office-messages','office-decisions','office-career',
+  'horse-profile','people-profile','history-year-review'])
+  assert.ok(slugs.has(page),'Missing critical career/profile route: '+page);
+});
+
+test('one shared readable typography scale applies across ALL management screens',()=>{
+ const root=css.match(/\.ng-manager-shell\{([^}]*)\}/)?.[1];
+ const laptop=css.match(/@media\(min-width:1081px\) and \(max-width:1300px\)\{\.ng-manager-shell\{([^}]*)\}/)?.[1];
+ const narrow=css.match(/@media\(max-width:1080px\)\{\.ng-manager-shell\{([^}]*)\}/)?.[1];
+ assert.ok(root&&laptop&&narrow,'Desktop/laptop typography variables missing');
+ const value=(string,token)=>Number(string.match(new RegExp('--wtw-ui-'+token+':([\\d.]+)px'))?.[1]);
+ for(const [name,vars,textMinimum,nameMinimum,metaMinimum] of [
+  ['desktop',root,10.5,11,9.5],['laptop',laptop,10,10.5,9],
+  ['compact',narrow,9.5,10,9]
+ ]){
+  assert.ok(value(vars,'list-text')>=textMinimum,name+' text is too small');
+  assert.ok(value(vars,'list-name')>=nameMinimum,name+' record names are too small');
+  assert.ok(value(vars,'list-meta')>=metaMinimum,name+' metadata is illegible');
+ }
+ assert.equal((root.match(/--wtw-ui-profile-title:/g)||[]).length,1,
+  'Shared profile typography variables must not be duplicated');
+ assert.match(css,/\.ng-manager-row-name strong\{font-size:var\(--wtw-ui-list-name\)/);
+ assert.match(css,/\.ng-manager-row-detail\{font-size:var\(--wtw-ui-list-text\)/);
 });
