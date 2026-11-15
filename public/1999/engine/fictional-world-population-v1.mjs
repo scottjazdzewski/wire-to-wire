@@ -139,7 +139,7 @@ export async function assembleFictional1999Industry({
    breakingTraining:Math.ceil(active.length*.4)},
   protectedNames
  });
- const canonicalPersonId=id=>cleanId('P',id);
+ const canonicalPersonId=id=>String(id).startsWith('P-')?id:cleanId('P',id);
  const canonicalOrgId=id=>cleanId('O',id);
  const people=completeFictionalPersonBiographiesV1({people:named.people,seed})
   .map(p=>({...p,id:canonicalPersonId(p.id),
