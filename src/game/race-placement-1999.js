@@ -21,7 +21,6 @@ const grade=row=>row.tier==='HIGH_MATCH'?0:
  row.tier==='VIABLE'?1:row.tier==='CAUTION'?2:
  row.tier==='ALREADY_BOOKED'?3:row.tier==='RECOVERY_HOLD'?4:
  row.tier==='NOT_ENTERABLE'?5:6;
-const match=arr=>arr?.length?arr[0]:null;
 const priorRaceFit=(state,horse,row)=>{
  const plan=getGamePostRaceCampaign(state,horse.horse_id);
  if(!plan)return {campaign: null, recovery_hold:false,
@@ -62,19 +61,16 @@ function executableQuote(state,world,horseId,row){
   [...row.receiving_barn_options].filter(s=>s.allowed).sort((a,b)=>
    a.shipping_minor-b.shipping_minor||
    a.destination_site_id.localeCompare(b.destination_site_id)).slice(0,3):[null];
- const accepted=[];
+ // Most race cards need one quote, not one state clone per competing
+ // mount and stable. Candidates are already ordered by jockey suitability,
+ // then exact available travel price and permanent IDs.
  for(const j of jockeys)for(const site of destinations){
   const request={horse_id:horseId,race_id:row.race_id,
    jockey_id:j.jockey_id,destination_site_id:site?.destination_site_id??null};
   const quote=quote1999PlayerRacePlan(state,world,request);
-  if(quote.can_confirm)accepted.push({request,quote,
-   jockey_suitability:j.suited_index});
+  if(quote.can_confirm)return {request,quote,jockey_suitability:j.suited_index};
  }
- accepted.sort((a,b)=>b.jockey_suitability-a.jockey_suitability||
-  a.quote.immediate_total_minor-b.quote.immediate_total_minor||
-  a.request.jockey_id.localeCompare(b.request.jockey_id)||
-  (a.request.destination_site_id??'').localeCompare(b.request.destination_site_id??''));
- return match(accepted);
+ return null;
 }
 /** No invented win percentages. This ranks only known local game options
  * with a documented, modeled fit index and exact idempotent booking quote.
