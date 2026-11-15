@@ -84,3 +84,52 @@ export function validate1999GraphBatch(records,ids){
  }
  return {valid:problems.length===0,problems};
 }
+
+/**
+ * Validate every typed relationship against the exact opening-world census.
+ * This avoids loading all horses or people to check a cross-batch target.
+ * Cohort/role identity is verified by permanent ID and ordinal bounds.
+ */
+export function validate1999IndustryReferences(records,{
+ plan,staffing,tracks,farms,owners
+}={}){
+ if(!plan?.counts||!staffing?.counts||![tracks,farms,owners].every(Array.isArray))
+  throw Error('Missing world census for relationship validation');
+ const allowed=new Set([...tracks,...farms,...owners].map(x=>x.id));
+ const horseCohorts=['broodmares','stallions','yearlings','twoYearOldProspects',
+  'threeYearOldRunners','fourYearOldRunners','fivePlusRunners'];
+ const horseTokens=horseCohorts.map(x=>x.toUpperCase());
+ const roleNames=Object.keys(staffing.counts);
+ const roleTokens=roleNames.map(x=>x.toUpperCase().replaceAll('_','-'));
+ function known(id){
+  if(allowed.has(id))return true;
+  const horse=/^H-FICTIONAL-1999-([A-Z]+)-(\d{7})$/.exec(id);
+  if(horse){
+   const n=horseTokens.indexOf(horse[1]);
+   return n>=0&&Number(horse[2])>=1&&
+    Number(horse[2])<=plan.counts[horseCohorts[n]];
+  }
+  const person=/^P-FICTIONAL-1999-([A-Z-]+)-(\d{7})$/.exec(id);
+  if(person){
+   const n=roleTokens.indexOf(person[1]);
+   return n>=0&&Number(person[2])>=1&&
+    Number(person[2])<=staffing.counts[roleNames[n]];
+  }
+  return false;
+ }
+ const problems=[];
+ for(const entity of records){
+  if(!known(entity.id))problems.push({id:entity.id,reason:'UNKNOWN_ENTITY'});
+  if(!entity.ratings||!Object.values(entity.ratings).every(
+   x=>Number.isInteger(x)&&x>=0&&x<=100))
+   problems.push({id:entity.id,reason:'INVALID_RATINGS'});
+  if(!Array.isArray(entity.relationships)){
+   problems.push({id:entity.id,reason:'MISSING_RELATIONSHIPS'});continue;
+  }
+  for(const edge of entity.relationships){
+   if(edge.fromId!==entity.id||!known(edge.toId))
+    problems.push({id:entity.id,reason:'BROKEN_REFERENCE',edge});
+  }
+ }
+ return {valid:problems.length===0,problems};
+}
