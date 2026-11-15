@@ -302,16 +302,15 @@ export function generateProvisional1999HorseNames({
   !Array.isArray(protectedNames))throw Error('Invalid provisional horse naming request');
  const single=[...new Set(VOICES.flatMap(v=>[...v.names,...(V488_WHOLE_NAMES[v.id]||[])]))]
   .filter(n=>n.length<=18&&n.length>=2);
- const words=[...new Set(single.flatMap(n=>n.split(/\\s+/).filter(w=>w.length>=3&&w.length<=11)))];
+ const words=[...new Set(single.flatMap(n=>n.split(/\s+/).filter(w=>w.length>=3&&w.length<=11)))];
  const reserved=new Set(protectedNames.map(norm)),names=[];
  // Every candidate remains a natural phrase from the existing writer's words.
  // This is a bootstrap naming tier, never a replacement for its editorial desk.
- const a=fnv('opening|'+seed),b=fnv('opening-words|'+seed);
+ const a=fnv('opening|'+seed);
  const max=single.length+words.length*words.length;
  if(horseCount+reserved.size>max)throw Error('Provisional naming vocabulary exhausted');
  for(let i=0,attempts=0;names.length<horseCount&&attempts<max;attempts++){
-  const j=(a+Math.imul(attempts,7919))>>>0;
-  const index=j%max;
+  const index=(a+attempts)%max;
   const candidate=index<single.length?single[index]:
    words[Math.floor((index-single.length)/words.length)]+' '+
    words[(index-single.length)%words.length];
