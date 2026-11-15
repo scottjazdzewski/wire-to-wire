@@ -89,10 +89,12 @@ test('Office Career is its own source-backed career and save view, never World s
  assert.match(page,/gameplayService\?\.state/);
  assert.match(page,/const person=recorded/);
  assert.match(page,/const role=recorded/);
- assert.match(page,/PLAYER CAREER & WORLD STATUS/);
+ assert.match(page,/MANAGER CAREER & OPERATION/);
  assert.match(page,/managerRecordViewControl\('Office','Career'\)/);
  assert.match(page,/data-ng="commercial-career-open"/);
- assert.match(page,/Missing identity, history, finances and achievements are not invented/);
+ assert.match(page,/Not recorded/);
+ assert.match(page,/No urgent decisions are recorded/);
+ assert.match(page,/const action=messages\.filter\(m=>m\.urgent&&!m\.resolved\)/);
  assert.doesNotMatch(page,/globalSearchItems\(|fakeCareer|mockPlayer/);
  assert.match(js,/section==='Office'&&page==='Career'\)return managerCareerView\(\)/);
 });
@@ -128,6 +130,38 @@ test('Office selects source case inline and previews recorded risks before openi
  assert.match(js,/if\(key==='office-focus'\)/);
  assert.doesNotMatch(view,/mockMessage|fakeCase|Math\.random/);
  assert.match(css,/ng-manager-message-inbox \.ng-manager-row\[aria-pressed="true"\]/);
+});
+test('Career dossier uses only current-save identity, actionable Office cases, follow-ups and approved organization mark',()=>{
+ const a=js.indexOf('function managerCareerView(){');
+ const b=js.indexOf('function managerDashboard(){',a);
+ assert.ok(a>=0&&b>a);
+ const view=js.slice(a,b);
+ assert.match(view,/const game=state\(\),live=/);
+ assert.match(view,/org=playerOrganization\(\)/);
+ assert.match(view,/organizationLogoMarkup\(org\.id,org\.name,'stable',true,false\)/);
+ assert.match(view,/messages=currentMessages\(\)/);
+ assert.match(view,/const action=messages\.filter\(m=>m\.urgent&&!m\.resolved\)/);
+ assert.match(view,/follow=openFollowUps\(\),due=dueActions\(\)/);
+ assert.match(view,/availableCash\(\)/);
+ assert.match(view,/Not recorded/);
+ assert.match(view,/data-ng="case"/);
+ assert.match(view,/data-ng="followup"/);
+ assert.match(view,/data-ng="commercial-career-open"/);
+ assert.match(view,/data-ng="organization"/);
+ assert.match(view,/ng-career-priorities/);
+ assert.match(view,/OFFICE UPDATES/);
+ assert.match(view,/messages\.filter\(m=>!m\.urgent\|\|m\.resolved\)/);
+ assert.match(view,/Manager and position not recorded/);
+
+ assert.match(view,/ng-career-identity/);
+ assert.match(view,/ng-career-facts/);
+ assert.doesNotMatch(view,/Math\.random|fabricatedAchievement|fakeJobOffer/);
+ assert.match(css,/#wtwNextgen \.ng-career-identity/);
+ assert.match(css,/#wtwNextgen \.ng-career-facts/);
+});
+test('Today priority facts retain their complete recorded values for inspection',()=>{
+ assert.ok(js.includes('title="${safe(f[0]+'), 'Today fact title lacks the original source');
+ assert.ok(js.includes('aria-label="${safe(f[0]+'), 'Today fact aria label lacks the original source');
 });
 test('Stable Training opens the real simulation training desk and has a working back-to-roster action',()=>{
  const start=js.indexOf('function liveStableTrainingView(){');
