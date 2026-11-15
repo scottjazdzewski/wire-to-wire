@@ -990,7 +990,12 @@ function dossierEntityOrder(a,b){
 }
 function dossierAdjacentRecords(entry,records){
  const family=dossierEntityCategory(entry);
- const eligible=(records||[]).filter(item=>dossierEntityCategory(item)===family)
+ // A live track's PREVIOUS/NEXT must not jump into retired 1999 venues.
+ // Direct historical IDs continue to open, but browse only within their archive.
+ const historyOnly=x=>x?._world?.operating==='HISTORICAL_ONLY'||
+  x?._world?.playableIn1999===false;
+ const eligible=(records||[]).filter(item=>dossierEntityCategory(item)===family&&
+  (family!=='track'||historyOnly(item)===historyOnly(entry)))
   .slice().sort(dossierEntityOrder);
  const i=eligible.findIndex(item=>item.worldKey===entry.worldKey);
  if(i<0||eligible.length<2)return {family,previous:null,next:null};
