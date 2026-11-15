@@ -54,7 +54,7 @@ export function createNamingDeskController({
  const model={fields:{ownerName:'Naming Lab Owner',breederName:'Naming Lab Breeder',
   foalingYear:'1996',story:'',direction:'',targetHorseId:''},
   busy:false,error:'',notice:'',results:[],allResults:[],recentNames:[],attempt:0,
-  shortlist:[],rejected:[],hasGenerated:false,view:'ALL',
+  shortlist:[],rejected:[],hasGenerated:false,view:'ALL',sortKey:'name',sortDesc:false,
   feedback:createNamingFeedback()};
  try{model.feedback=validateNamingFeedback(load()||createNamingFeedback())}
  catch(error){model.error='NAMING HISTORY UNAVAILABLE: '+String(error.message||error)}
@@ -78,6 +78,11 @@ export function createNamingDeskController({
   const next=String(value||'').toUpperCase();
   if(!['ALL','NEW','KEEP','CHOOSE','REJECT'].includes(next))return false;
   model.view=next;refresh();return true;
+ }
+ function sort(key){
+  if(!['name','originMotif','decision'].includes(key))return false;
+  model.sortDesc=model.sortKey===key?!model.sortDesc:false;
+  model.sortKey=key;refresh();return true;
  }
  function generate(){
   if(model.busy)return false;
@@ -173,6 +178,7 @@ export function createNamingDeskController({
   if(key==='naming-choose')return choose(val);
   if(key==='naming-clear')return clear();
   if(key==='naming-view')return setView(val);
+  if(key==='naming-sort')return sort(val);
   return false;
  }
  function render(){
@@ -190,7 +196,12 @@ export function createNamingDeskController({
     evidenceQuote:'',horseId:item.horseId
    });
   const rows=[...displayed.values()].filter(x=>model.view==='ALL'||
-   model.view==='NEW'&&!x.decision||x.decision===model.view);
+   model.view==='NEW'&&!x.decision||x.decision===model.view)
+   .sort((a,b)=>{
+    const key=model.sortKey,left=String(a[key]||''),right=String(b[key]||'');
+    const value=left.localeCompare(right,undefined,{sensitivity:'base'});
+    return (model.sortDesc?-value:value)||a.name.localeCompare(b.name);
+   });
   const counts={KEEP:0,CHOOSE:0,REJECT:0};
   bank.forEach(x=>counts[x.decision]++);
   const targetOptions=targets.map(t=>'<option value="'+esc(t.id)+'"'+
@@ -200,6 +211,9 @@ export function createNamingDeskController({
    (model.view===v?'on':'')+'">'+
    ({ALL:'ALL',NEW:'NEW',KEEP:'KEPT',CHOOSE:'CHOSEN',REJECT:'REJECTED'}[v])+
    '</button>').join('');
+  const head=(field,label)=>'<button type="button" data-ng="naming-sort" data-val="'+
+   field+'" class="ng-naming-sort" aria-label="Sort by '+esc(label)+'">'+esc(label)+
+   (model.sortKey===field?(model.sortDesc?' ↓':' ↑'):' ↕')+'</button>';
   const tableRows=rows.map((r,i)=>{
    const verdict=r.decision||'NEW',locked=verdict==='REJECT'||verdict==='CHOOSE';
    const valid=r.status==='AWAITING_INDEPENDENT_EDITOR';
@@ -246,8 +260,8 @@ export function createNamingDeskController({
    '</section><div class="ng-naming-table-toolbar"><strong>NAME PROPOSALS & SAVED DECISIONS</strong>'+
     '<div class="ng-naming-view-filters">'+options+'</div><small>'+rows.length+' ROWS</small></div>'+
    '<div class="ng-naming-table-scroll" tabindex="0" role="region" aria-label="Generated horse names and decisions">'+
-    '<table class="ng-naming-table"><thead><tr><th>#</th><th>NAME & INSPIRATION</th>'+
-    '<th>ORIGIN</th><th>STATUS</th><th>YOUR DECISION</th></tr></thead><tbody>'+
+    '<table class="ng-naming-table"><thead><tr><th>#</th><th>'+head('name','NAME & INSPIRATION')+'</th>'+
+    '<th>'+head('originMotif','ORIGIN')+'</th><th>'+head('decision','STATUS')+'</th><th>YOUR DECISION</th></tr></thead><tbody>'+
      (tableRows||'<tr><td colspan="5" class="ng-naming-no-results">Tell a horse story and generate suggestions. Kept names remain in your bank; rejected names never return in this career.</td></tr>')+
     '</tbody></table></div>'+
    '<footer class="ng-naming-footer">KEEP = future name bank · REJECT = career-wide exclusion · CHOOSE = saves your horse-specific selection, pending official game identity registration. '+
@@ -255,7 +269,7 @@ export function createNamingDeskController({
     ' 55,000-per-year target is NOT capacity-certified; names without safe unique candidates remain held.</footer></div></section>';
  }
  return {mode:NAMING_DESK_MODE,setField,defaultOwner,generate,mark,reject,choose,clear,
-  setView,action,snapshot,render};
+  setView,sort,action,snapshot,render};
 }
 
 if(typeof window!=='undefined'){
