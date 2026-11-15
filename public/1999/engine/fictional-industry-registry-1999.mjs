@@ -14,7 +14,7 @@ const cohorts=[
  ['twoYearOldProspects','TWO_YEAR_OLD_PROSPECT',1997],
  ['threeYearOldRunners','RACING',1996],
  ['fourYearOldRunners','RACING',1995],
- ['fivePlusRunners','RACING',1993]
+ ['fivePlusRunners','RACING',1994]
 ];
 function hash(seed,key){
  let h=(2166136261^(seed>>>0))>>>0;
@@ -54,7 +54,7 @@ export function* generate1999IndustryRegistryBatches({
    const sex=status==='BROODMARE'?'MARE':status==='STALLION'?'HORSE':
     choose(seed,id+':sex',2)===0?'COLT':'FILLY';
    const born=year-(breeder?choose(seed,id+':age',11):
-    cohort==='fivePlusRunners'?choose(seed,id+':older',5):0);
+    cohort==='fivePlusRunners'?choose(seed,id+':older',6):0);
    const sireId=breeder?null:ref('stallions',choose(seed,id+':sire',stallionCount));
    const damId=breeder?null:ref('broodmares',choose(seed,id+':dam',broodmareCount));
    const projected=cohort==='annualFoals';
