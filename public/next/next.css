@@ -223,6 +223,7 @@ body.wtw-next-active{overflow:auto}
 
 /* Shared UI presentation retained. */
 #wtwNextgen .ng-manager-career .ng-career-scroll{gap:7px;padding:8px;background:#172126}
+#wtwNextgen .ng-manager-career .ng-manager-case{grid-template-columns:20px minmax(0,1fr) 22px}
 #wtwNextgen .ng-career-identity{padding:14px 16px;border:1px solid #506b59;background:linear-gradient(110deg,#304b3e,#192a30)}
 #wtwNextgen .ng-career-identity small{font-size:9px;letter-spacing:.09em;color:#d5d1aa;font-weight:780}
 #wtwNextgen .ng-career-identity h3{margin:6px 0;font-size:22px;line-height:1.13;color:#f9edcc}
