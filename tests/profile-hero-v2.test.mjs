@@ -96,7 +96,7 @@ test("transparent brand pixels are never altered by white-background fallback",(
 test("legacy approved dark ink logos receive a neutral contrast halo without altering their pixel colors",()=>{
  const source=readFileSync(new URL("../public/next/profile-hero-v2.mjs",import.meta.url),"utf8");
  assert.match(source,/heroAvailable\(absolute\)\.then\(visual=>/);
- assert.match(source,/mark\.classList\.toggle\("wtw-hero-dark-ink",visual\.ok&&visual\.darkInk\)/);
+ assert.match(source,/mark\.classList\.toggle\("wtw-hero-dark-ink",visual\.ok&&\(visual\.darkInk\|\|matte\)\)/);
  assert.match(css,/\.ng-profile-source-photo\.wtw-hero-dark-ink::before/);
 });
 test("white legacy track mattes are cleaned before a potentially missing exact-ID upload probe",()=>{
