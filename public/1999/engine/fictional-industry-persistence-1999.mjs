@@ -125,7 +125,9 @@ export async function createPersistent1999Industry({
  const id=keyOf(seed,worldId);
  const directoryHash=directorySignature([farms,tracks,owners]);
  const plan=plan1999Ecosystem({seed,targetOpeningHorses});
- const staffing=plan1999IndustryStaffing({seed,ecosystem:plan});
+ const ensureCircuitCoverage=targetOpeningHorses!==null;
+ const staffing=plan1999IndustryStaffing({seed,ecosystem:plan,
+  minimumRacingTracks:ensureCircuitCoverage?tracks.length:0});
  const totalHorses=count1999Registry(plan);
  if(targetOpeningHorses!==null&&totalHorses!==targetOpeningHorses)
   throw Error('Persistent industry size differs from selected world size');
@@ -157,13 +159,15 @@ export async function createPersistent1999Industry({
    existing.coveringCount!==plan.minimumCoversForTargetFoals||
    existing.calendarSchema!==FICTIONAL_1999_CALENDAR_SCHEMA||
    existing.horseNamingRevision!==horseNamingRevision||
-   existing.personBiographyRevision!==INDUSTRY_PERSON_BIOGRAPHY_REVISION)
+   existing.personBiographyRevision!==INDUSTRY_PERSON_BIOGRAPHY_REVISION||
+   Boolean(existing.ensureCircuitCoverage)!==ensureCircuitCoverage)
    throw Error('Existing industry identity or generation parameters conflict');
   if(existing.status==='COMPLETE')return existing;
  }
  let manifest=existing??{
   schema:PERSISTENT_INDUSTRY_SCHEMA,worldId,seed,batchSize,directoryHash,
-  targetOpeningHorses,status:'GENERATING',horseCount:totalHorses,personCount:totalPeople,
+  targetOpeningHorses,ensureCircuitCoverage,status:'GENERATING',
+  horseCount:totalHorses,personCount:totalPeople,
   horseBatchesCommitted:0,personBatchesCommitted:0,
   directoryCommitted:false,graphSchema:INDUSTRY_GRAPH_SCHEMA,
   horseNamingRevision,personBiographyRevision:INDUSTRY_PERSON_BIOGRAPHY_REVISION,
@@ -193,7 +197,8 @@ export async function createPersistent1999Industry({
  // training/jockey link is a geographically coherent workplace relationship.
  const staffByTrack={trainer:new Map(),jockey:new Map()};
  for(const staffBatch of generate1999StaffingBatches({
-  seed,staffing,tracks,farms,batchSize,nameRoster:personnelNames
+  seed,staffing,tracks,farms,batchSize,nameRoster:personnelNames,
+  ensureCircuitCoverage
  })){
   for(const person of staffBatch.records){
    if(!['trainer','jockey'].includes(person.role))continue;
@@ -211,7 +216,8 @@ export async function createPersistent1999Industry({
   ['horseBatches',generate1999IndustryRegistryBatches({
    seed,plan,farms,tracks,owners,batchSize,emitNames:true})],
   ['personBatches',generate1999StaffingBatches({
-   seed,staffing,tracks,farms,batchSize,nameRoster:personnelNames})]
+   seed,staffing,tracks,farms,batchSize,nameRoster:personnelNames,
+   ensureCircuitCoverage})]
  ]){
   const progressKey=kind==='horseBatches'?'horseBatchesCommitted':'personBatchesCommitted';
   let index=0;
