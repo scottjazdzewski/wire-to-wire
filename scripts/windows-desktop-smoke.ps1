@@ -24,6 +24,8 @@ foreach($step in @(@("write",$writeReport),@("read",$readReport))){
  $env:WTW_SMOKE_PHASE=$phase
  $env:WTW_SMOKE_REPORT=$report
  $env:WTW_SMOKE_USER_DATA=$statePath
+ $launcherStartedAtUtc=Get-Date
+ $launcherTimer=[Diagnostics.Stopwatch]::StartNew()
  try{
    $process=Start-Process -FilePath $Executable -ArgumentList $arguments -PassThru
    # Some portable wrappers exit before their extracted Electron child and
@@ -49,7 +51,16 @@ foreach($step in @(@("write",$writeReport),@("read",$readReport))){
    Remove-Item Env:WTW_SMOKE_REPORT -ErrorAction SilentlyContinue
    Remove-Item Env:WTW_SMOKE_USER_DATA -ErrorAction SilentlyContinue
  }
+ $launcherTimer.Stop()
  $proof=Get-Content -Raw $report|ConvertFrom-Json
+ if(!$proof.startup -or $proof.startup.totalMs -le 0 -or
+    $proof.startup.gameUIReady -le 0 -or
+    $proof.startup.gameUIReady -gt $proof.startup.totalMs){
+  throw "Packaged desktop startup timing evidence is missing or inconsistent: $(Get-Content -Raw $report)"
+ }
+ $proof | Add-Member -Force -NotePropertyName launcherToGameReadyMs -NotePropertyValue $launcherTimer.ElapsedMilliseconds
+ $proof | Add-Member -Force -NotePropertyName launcherStartedAtUtc -NotePropertyValue $launcherStartedAtUtc.ToUniversalTime().ToString('o')
+ [IO.File]::WriteAllText($report,($proof|ConvertTo-Json -Depth 10),[Text.UTF8Encoding]::new($false))
  if($proof.bundledOrigin -ne "wtw://game" -or
     $proof.gameDate -ne "1999-01-01" -or
     $proof.gameInterface -ne "ONE_APPROVED_UI"){
@@ -59,5 +70,7 @@ foreach($step in @(@("write",$writeReport),@("read",$readReport))){
   throw "Per-user local origin did not survive process exit/restart"
  }
  Write-Host "WTW_WINDOWS_DESKTOP_PROCESS_$($phase.ToUpperInvariant())_PASS"
+ Write-Host "WTW_WINDOWS_LAUNCH_TO_GAME_READY_MS $($proof.launcherToGameReadyMs)"
+ Write-Host "WTW_ELECTRON_PROCESS_TO_GAME_READY_MS $([Math]::Round($proof.startup.gameUIReady))"
 }
 Write-Host "WTW_WINDOWS_DESKTOP_REOPEN_PASS $TargetLabel"
