@@ -15,6 +15,7 @@ test('streaming opening registry covers every ecosystem cohort with unique perma
    byCohort[h.cohort]=(byCohort[h.cohort]||0)+1;
    assert.equal(h.name,null);
    assert.equal(h.ownerId,'O-OWNER-1');
+   if(h.cohort==='fivePlusRunners')assert.ok(h.foalYear<=1994);
    assert.equal(h.birthplace.country,'USA');
    if(!['broodmares','stallions'].includes(h.cohort)){
     assert.ok(h.sireId&&h.damId);
