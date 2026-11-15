@@ -95,11 +95,15 @@ const inspect=`(async()=>{
   const first=await api.readPersistent1999IndustryBatch(store,status.manifest,'horseBatches',0);
   const cards=await api.readPersistent1999IndustryBatch(store,status.manifest,'calendarBatches',0);
   const staff=await api.readPersistent1999IndustryBatch(store,status.manifest,'personBatches',0);
+  const firstRunner=await api.findPersistent1999Horse(store,status.manifest,
+   'H-FICTIONAL-1999-THREEYEAROLDRUNNERS-0000001');
   return {state:'READY',horses:c.horses,people:c.people,coverings:c.coverings,
    raceDays:c.raceDays,scheduledRaces:c.scheduledRaces,organizations:directory.length,
    tracks:directory.filter(x=>x.id.startsWith('T-')).length,
    namedPersonnel:staff.filter(x=>!!x.name).length,
-   ratedHorse:first.every(x=>x.ratings?.speed>0),cards:cards.length,
+   ratedHorse:first.every(x=>x.ratings?.speed>0),
+   namedBreeders:first.every(x=>!!x.name&&x.namingStatus==='PROVISIONAL_EDITABLE_1999_OPENING'),
+   namedRacehorse:!!firstRunner?.name,cards:cards.length,
    immutableHorseId:first[0]?.id,worldId:status.manifest.worldId,
    calendarHasEntries:cards.some(x=>x.races.some(r=>r.fieldHorseIds.length>0))};
  }finally{store.close()}
@@ -134,6 +138,8 @@ try{
  assert.ok(snap.coverings>40000,'Expected full breeding books');
  assert.equal(snap.calendarHasEntries,false,'No pre-generated race results or entries');
  assert.equal(snap.ratedHorse,true,'Every opening horse must have ratings');
+ assert.equal(snap.namedBreeders,true,'Broodmares must have provisional registered names');
+ assert.equal(snap.namedRacehorse,true,'Race-ready horses must have provisional names');
  assert.ok(snap.namedPersonnel>0,'Personnel naming provider did not populate names');
  console.log('WTW_FULL_WORLD_FIRST_OPEN_PASS '+JSON.stringify(snap));
  await stop(browser);browser=null;
