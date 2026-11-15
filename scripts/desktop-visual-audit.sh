@@ -312,6 +312,67 @@ data=json.loads(html.unescape(match.group(1)))
 assert data['identityId']=='' and data['logoThemeReady']=='',(data,'Brand theme leaked into Office')
 print('LOGO-SOURCED ENTITY ATMOSPHERE verified in Chromium:',palette_rows)
 
+# The rendered screenshot itself must contain no Gulfstream white rectangle.
+# Chromium CSS/DOM can report 'multiply' even when isolation prevents blending.
+# Decode Chrome's standard RGB/RGBA PNG with Python stdlib; no Pillow/network.
+import struct,zlib
+def png_scanlines(path):
+ source=Path(path).read_bytes()
+ assert source[:8]==b'\\x89PNG\\r\\n\\x1a\\n',(path,'Not PNG')
+ off=8;idat=bytearray();size=None
+ while off<len(source):
+  count=int.from_bytes(source[off:off+4],'big')
+  label=source[off+4:off+8];chunk=source[off+8:off+8+count]
+  off+=count+12
+  if label==b'IHDR':
+   width,height,depth,mode,comp,flt,interlace=struct.unpack('>IIBBBBB',chunk)
+   assert depth==8 and mode in (2,6) and interlace==0,(path,'Unexpected PNG format',mode)
+   size=(width,height,3 if mode==2 else 4)
+  elif label==b'IDAT':idat.extend(chunk)
+  elif label==b'IEND':break
+ width,height,ch=size
+ raw=zlib.decompress(idat);stride=width*ch;start=0;above=bytearray(stride)
+ for y in range(height):
+  kind=raw[start];line=bytearray(raw[start+1:start+stride+1]);start+=stride+1
+  assert kind in range(5),(path,'Unsupported PNG row filter',kind)
+  if kind:
+   for i in range(stride):
+    left=line[i-ch] if i>=ch else 0
+    up=above[i]
+    corner=above[i-ch] if i>=ch else 0
+    if kind==1:predict=left
+    elif kind==2:predict=up
+    elif kind==3:predict=(left+up)//2
+    else:
+     p=left+up-corner
+     ds=(abs(p-left),abs(p-up),abs(p-corner))
+     predict=(left,up,corner)[ds.index(min(ds))]
+    line[i]=(line[i]+predict)&255
+  yield y,width,ch,line
+  above=line
+
+source=Path('visual-audit/dom/probe-gulfstream.html').read_text()
+match=re.search(r'<pre id="measure"[^>]*>(.*?)</pre>',source,re.S)
+assert match,'Gulfstream geometry missing'
+metrics=json.loads(html.unescape(match.group(1)))
+mark=metrics['heroMark']
+assert mark and mark['width']>150 and mark['height']>90,'No measurable Gulfstream logo'
+# Inspect the centered actual image rather than a fixed page coordinate.
+x0=int(mark['left']+mark['width']*.19)
+x1=int(mark['left']+mark['width']*.81)
+y0=int(mark['top']+mark['height']*.10)
+y1=int(mark['top']+mark['height']*.90)
+bright=sampled=0
+for y,width,ch,line in png_scanlines('visual-audit/screenshots/gulfstream-track.png'):
+ if y<y0 or y>=y1:continue
+ for x in range(max(0,x0),min(width,x1)):
+  rgb=line[x*ch:x*ch+3]
+  sampled+=1
+  if min(rgb)>235:bright+=1
+whiteness=bright/max(1,sampled)
+assert whiteness<.08,('Gulfstream still has a white rectangular logo plaque',round(whiteness,3),metrics['logoSrc'],metrics['logoMixBlend'])
+print('GULFSTREAM SCREENSHOT WHITE-PLAQUE CHECK',round(whiteness,4))
+
 for name in ('office','search','horse','person'):
  source=Path(f'visual-audit/dom/probe-{name}.html').read_text()
  assert 'data-check="ready"' in source, (name,'Geometry probe did not complete')
