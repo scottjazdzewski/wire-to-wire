@@ -48,17 +48,48 @@ Visually reviewed all 27 production screenshots (including narrow desktop varian
 | Bellwether Stud founder facility | CLOSER / NO | Real mark brings stronger identity; right panels cramped and left pane underfilled | P1 |
 | 1280-wide founder facility and year review | CLOSER / NO | Test exists and basic geometry passes; must inspect text clipping, label legibility and action placement at narrow desktop before acceptance | P1 |
 
+## Second screenshot inspection — 43 rendered captures, November 15
+**Actual evidence:** [Expanded Chrome route screenshots](https://github.com/scottjazdzewski/wire-to-wire/actions/runs/43685619314), artifact `wtw-fm-ootp-desktop-screens`. All automated visual/geometry checks passed on that run; **human FM/OOTP release signoff still fails**.
+
+### Logo correctness improved — do not mistake this for whole-page approval
+- **Santa Anita:** the actual approved mark is dark green with a bright green element. The latest browser DOM confirms `data-wtw-identity-source=logo-pixels` and `wtw-hero-dark-ink`; new ivory neutral spotlight makes its genuine dark-green wordmark visible. The page is **CLOSER / NO** because its stakes rows still expose truncated internal condition/status strings and large empty areas.
+- **Aqueduct:** authentic cyan wordmark is now visible against a neutral dark logo well while the header inherits genuine cyan ink; **CLOSER / NO** until complete track context and text-density review.
+- **Belmont:** genuine approved green, not a universal default; good context but missing/uncertified detail areas remain.
+- **Gulfstream:** the legacy approved source still appears on a rectangular white matte; need approved transparent display derivative, never recolor or invent its navy identity.
+- **All logos:** one validated pixel-derived source, no selected burgundy or house palette. Neutral is required when a logo is unavailable.
+
+### Additional route verdicts
+| Newly captured route | FM/OOTP? | Observed issue | Workstream |
+|---|---|---|---|
+| Sales Overview | **NO** | Entirely empty auction/market roster and nearly full-screen unused stage | Gameplay market data + UI empty state |
+| Sales Auctions | **NO** | Same empty view, no differentiated auction experience | Gameplay + UI |
+| Naming Desk | **CLOSER / NO** | Meaningful local naming tools/gates exist, but huge empty proposal area dominates until proposals generated; not polished enough as a working desk | UI + naming |
+| Office Messages | **NO** | Screenshot used generic connected-record dashboard. Fix applied so direct route retains 'Messages' and can restrict to decision records; real inbox-specific layout still needed | UI |
+| Office Decisions | **NO** | Same generic dashboard bug; route-context fix applied; must differentiate actionable decisions from general record search | UI |
+| Office Career | **NO** | Generic dashboard shown instead of genuine job/career progression | Gameplay career + UI |
+| Stable Training | **NO** | Generic whole-world connected-directory screen, not training-specific schedule/assignments | Gameplay + UI |
+| Racing Calendar | **CLOSER / NO** | Real calendar grid plus condition-book table useful; controls/row text still too small and busy | UI |
+| Racing Entries | **NO** | No committed entries and almost full-page blank roster | Gameplay race flow + UI empty state |
+| Breeding Foals | **NO** | Very little actual supported foal data, underfilled management screen | World/breeding + UI |
+| Personnel Jockeys | **CLOSER / NO** | Genuine jockey roster is present; most ability/financial fields unassessed, identity weak | Data + UI |
+| Facilities Stud Farms | **CLOSER / NO** | Credible sourced subset, but very sparse columns and unused space | Data + UI |
+| Finances Cash Flow | **NO** | Only uncertified opening-account context; no genuine cash-flow series yet | Gameplay finance + UI |
+| World Organizations | **CLOSER / NO** | Populated canonical organization list with source-backed context; branding differentiation in roster still weak | UI |
+| World People | **CLOSER / NO** | Populated personnel list, but dense low-contrast type and missing portraits/role hierarchy | UI |
+
+**Human verdict:** Still **ZERO YES**. The game is structurally closer to an OOTP/FM management system, but the sparse market/roster screens, generic department pages, blank financial content and incomplete race-specific presentation remain unacceptable. The all-screen signoff ledger stays OPEN.
+
 ## Mandatory not-yet-captured routes — NOT APPROVED
 No screenshot signoff until each family and critical subview is actually seen. This includes:
-- **Front Office:** Inbox, Decisions, Calendar routing, Reports, Career, Save/Continue panels.
-- **Stable:** Horses, Training, Health, Race Plans, Barns, Naming Desk.
-- **Racing:** Calendar, Entries, Results, Stakes, Race Planning, actual race-detail file, jockey/transport workflows.
-- **Breeding:** Stallions, Broodmares, Foals, Pedigrees, Stud Farms.
-- **Sales:** Overview, Auctions, Sale Calendar, Sale Companies, Catalogs, Watchlist, Private Offers.
-- **Personnel:** Trainers, Jockeys, Owners, Principals, Staff; individual people and linked histories.
-- **Facilities:** Stud Farms, Training Centers, Breaking Facilities, Racing Stables, Farms, Trainer Barns; organization/facility detail and editing.
-- **Finances:** Cash Flow, Operating Costs, Budgets and transaction details.
-- **World:** 1999 Horses, People, Organizations, Tracks, Meets, Major Races, News, any edit dialog, import/export.
+- **Front Office:** Calendar routing, Reports, Save/Continue panels (Messages, Decisions and Career captured but NOT approved).
+- **Stable:** Horses, Health, Race Plans, Barns (Training and Naming Desk captured but NOT approved).
+- **Racing:** Results, Stakes, Race Planning, actual race-detail file, jockey/transport workflows (Calendar and Entries captured but NOT approved).
+- **Breeding:** Stallions, Broodmares, Pedigrees, Stud Farms (Foals captured but NOT approved).
+- **Sales:** Sale Calendar, Sale Companies, Catalogs, Watchlist, Private Offers (Overview and Auctions captured but NOT approved).
+- **Personnel:** Trainers, Owners, Principals, Staff; individual people and linked histories (Jockeys captured but NOT approved).
+- **Facilities:** Training Centers, Breaking Facilities, Racing Stables, Farms, Trainer Barns; organization/facility detail and editing (Stud Farms captured but NOT approved).
+- **Finances:** Operating Costs, Budgets and transaction details (Cash Flow captured but NOT approved).
+- **World:** 1999 Horses, Major Races, any edit dialog, import/export (People, Organizations, Tracks, Meets, News captured but NOT approved).
 - **History:** Race Results, Horses, People & Farms, Facilities & Tracks, Historical Calendar, Coverage; real year and race navigation.
 - **Entities:** Every profile type, exact approved identity artwork, backward/forward record paging, sorting, filter reset, image/biography editing.
 
