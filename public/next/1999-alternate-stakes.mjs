@@ -26,7 +26,7 @@ const featureNames={
  'T-0098':'Silver State Nevada Cup','T-0099':'Wasatch Mountain Classic',
  'T-0100':'Heartland Missouri Derby','T-0101':'Cream City Wisconsin Mile',
  'T-0119':'Bluff City Cup','T-0120':'Lowcountry Turf Classic',
- 'T-0121':'Live Oak Coastal Classic','T-0122':'Red River Prairie Cup',
+ 'T-0121':'Live Oak Coastal Classic','T-0122':'Sioux Plains Prairie Cup',
  'T-0123':'Bitterroot Mountain Classic',
 };
 const iso=(monthDay)=>'1999-'+monthDay;
@@ -85,7 +85,7 @@ const fictionalStakes={
  'T-0119':['Mississippi Valley Derby','Tennessee Oaks','Bluff City Juvenile','Mid-South Turf Cup','Mississippi Valley Sprint'],
  'T-0120':['Charleston Spring Derby','Lowcountry Oaks','Johns Island Turf Stakes','Charleston Sprint','Carolina Juvenile Turf'],
  'T-0121':['Savannah Classic','Coastal Georgia Oaks','Live Oak Sprint','Savannah Juvenile'],
- 'T-0122':['Prairie Derby','Fargo Sprint','Red River Juvenile'],
+ 'T-0122':['Prairie Derby','Fargo Sprint','Sioux Plains Juvenile'],
  'T-0123':['Bitterroot Mountain Derby','Missoula Mile','Bitterroot Juvenile']
 };
 const localStakesTerms={
