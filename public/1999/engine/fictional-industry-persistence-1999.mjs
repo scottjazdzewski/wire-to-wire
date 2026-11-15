@@ -409,3 +409,21 @@ export async function verifyPersistent1999WorldOpen(store,manifest){
   coverings:manifest.coveringCount,raceDays:manifest.scheduledCards,
   scheduledRaces:manifest.scheduledRaces,directoryEntities:directory.length};
 }
+
+/**
+ * Reopen the existing opening-world snapshot without rerunning population
+ * generation. An incomplete manifest is never exposed as a playable world.
+ */
+export async function reopenPersistent1999Industry(store,{
+ seed=19990101,worldId='WTW1999FullIndustry'
+}={}){
+ if(!store?.get||!Number.isSafeInteger(seed)||seed<1||!worldId)
+  throw Error('Invalid 1999 world reopen request');
+ const manifest=await store.get('manifests',keyOf(seed,worldId));
+ if(!manifest)return null;
+ if(manifest.schema!==PERSISTENT_INDUSTRY_SCHEMA)
+  throw Error('Unsupported 1999 industry schema');
+ if(manifest.status!=='COMPLETE')return {status:'GENERATING',manifest};
+ const certificate=await verifyPersistent1999WorldOpen(store,manifest);
+ return {status:'READY',manifest,certificate};
+}
