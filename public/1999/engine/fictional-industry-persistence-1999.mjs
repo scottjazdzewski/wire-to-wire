@@ -12,9 +12,11 @@ import {plan1999IndustryStaffing,generate1999StaffingBatches}
 import {connect1999Horse,connect1999Person,connect1999DirectoryEntity,
  validate1999GraphBatch,validate1999IndustryReferences,INDUSTRY_GRAPH_SCHEMA}
  from './fictional-industry-graph-1999.mjs';
+import {generate1999CoveringLedger,BREEDING_BOOK_1999_SCHEMA}
+ from './fictional-industry-breeding-book-1999.mjs';
 export const PERSISTENT_INDUSTRY_SCHEMA='WTW_PERSISTENT_INDUSTRY_1999_V1';
 export const PERSISTENT_INDUSTRY_DB='WireToWireFictionalIndustry1999V1';
-const stores=['manifests','horseBatches','personBatches','horseEdits','careerRuns','directory'];
+const stores=['manifests','horseBatches','personBatches','horseEdits','careerRuns','directory','coveringBatches'];
 function request(req){return new Promise((resolve,reject)=>{
  req.onsuccess=()=>resolve(req.result);
  req.onerror=()=>reject(req.error||Error('IndexedDB request failed'));
@@ -22,7 +24,7 @@ function request(req){return new Promise((resolve,reject)=>{
 export async function open1999IndustryDatabase(indexedDB=globalThis.indexedDB){
  if(!indexedDB?.open)throw Error('IndexedDB is required for offline industry persistence');
  const db=await new Promise((resolve,reject)=>{
-  const req=indexedDB.open(PERSISTENT_INDUSTRY_DB,2);
+  const req=indexedDB.open(PERSISTENT_INDUSTRY_DB,3);
   req.onupgradeneeded=()=>{
    for(const name of stores)
     if(!req.result.objectStoreNames.contains(name))
@@ -47,7 +49,7 @@ export async function open1999IndustryDatabase(indexedDB=globalThis.indexedDB){
    });
   },
   async commitBatch({worldId,manifest,kind,index,records}){
-   if(!['horseBatches','personBatches'].includes(kind)||
+   if(!['horseBatches','personBatches','coveringBatches'].includes(kind)||
     !Number.isInteger(index)||index<0||!Array.isArray(records)||!records.length)
     throw Error('Invalid industry batch');
    return new Promise((resolve,reject)=>{
@@ -96,7 +98,7 @@ function directorySignature(directories){
  let h=2166136261;
  for(const directory of directories){
   for(const entity of directory){
-   const value=JSON.stringify([entity.id,entity.location??null]);
+   const value=JSON.stringify(entity);
    for(let i=0;i<value.length;i++){
     h^=value.charCodeAt(i);h=Math.imul(h,16777619);
    }
@@ -129,7 +131,9 @@ export async function createPersistent1999Industry({
    existing.directoryHash!==directoryHash||
    existing.horseCount!==totalHorses||
    existing.personCount!==totalPeople||
-   existing.graphSchema!==INDUSTRY_GRAPH_SCHEMA)
+   existing.graphSchema!==INDUSTRY_GRAPH_SCHEMA||
+   existing.breedingSchema!==BREEDING_BOOK_1999_SCHEMA||
+   existing.coveringCount!==plan.minimumCoversForTargetFoals)
    throw Error('Existing industry identity or generation parameters conflict');
   if(existing.status==='COMPLETE')return existing;
  }
@@ -138,6 +142,8 @@ export async function createPersistent1999Industry({
   status:'GENERATING',horseCount:totalHorses,personCount:totalPeople,
   horseBatchesCommitted:0,personBatchesCommitted:0,
   directoryCommitted:false,graphSchema:INDUSTRY_GRAPH_SCHEMA,
+  breedingSchema:BREEDING_BOOK_1999_SCHEMA,
+  coveringCount:plan.minimumCoversForTargetFoals,coveringBatchesCommitted:0,
   plan,staffing,source:'DETERMINISTIC_OFFLINE_1999'
  };
  if(!manifest.directoryCommitted){
@@ -181,6 +187,32 @@ export async function createPersistent1999Industry({
     totalHorses:totalPeople});
   }
  }
+ let coveringIndex=0,coveringsChecked=0;
+ for(const batch of generate1999CoveringLedger({
+  seed,broodmares:plan.counts.broodmares,stallions:plan.counts.stallions,
+  targetCovers:plan.minimumCoversForTargetFoals,batchSize
+ })){
+  if(coveringIndex<manifest.coveringBatchesCommitted){
+   coveringsChecked+=batch.records.length;coveringIndex++;continue;
+  }
+  for(const cover of batch.records){
+   const mare=/^H-FICTIONAL-1999-BROODMARES-(\\d{7})$/.exec(cover.mareId);
+   const stallion=/^H-FICTIONAL-1999-STALLIONS-(\\d{7})$/.exec(cover.stallionId);
+   if(!mare||Number(mare[1])>plan.counts.broodmares||
+    !stallion||Number(stallion[1])>plan.counts.stallions||
+    cover.status!=='COVERING_BOOKED'||cover.liveFoalId!==null)
+    throw Error('Invalid 1999 covering relationship '+cover.id);
+  }
+  const next={...manifest,coveringBatchesCommitted:coveringIndex+1};
+  await store.commitBatch({worldId:id,manifest:next,
+   kind:'coveringBatches',index:coveringIndex,records:batch.records});
+  manifest=next;
+  coveringsChecked+=batch.records.length;coveringIndex++;
+  onProgress({kind:'coveringBatches',completed:coveringIndex,
+   totalRecords:plan.minimumCoversForTargetFoals});
+ }
+ if(coveringsChecked!==plan.minimumCoversForTargetFoals)
+  throw Error('1999 covering ledger did not reconcile to planned bookings');
  manifest={...manifest,status:'COMPLETE'};
  await store.commitManifest(id,manifest);
  return manifest;
@@ -188,10 +220,11 @@ export async function createPersistent1999Industry({
 export async function readPersistent1999IndustryBatch(store,manifest,kind,index){
  if(manifest?.schema!==PERSISTENT_INDUSTRY_SCHEMA||
   manifest.status!=='COMPLETE'||
-  !['horseBatches','personBatches'].includes(kind)||
+  !['horseBatches','personBatches','coveringBatches'].includes(kind)||
   !Number.isInteger(index)||index<0||
   index>=(kind==='horseBatches'?manifest.horseBatchesCommitted:
-   manifest.personBatchesCommitted))
+   kind==='personBatches'?manifest.personBatchesCommitted:
+   manifest.coveringBatchesCommitted))
   throw Error('Industry is not complete or batch is unavailable');
  const records=await store.get(kind,keyOf(manifest.seed,manifest.worldId)+':'+index);
  if(!records)throw Error('Industry batch missing from durable storage');
