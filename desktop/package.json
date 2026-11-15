@@ -27,6 +27,7 @@
     "files": [
       "main.cjs",
       "preload.cjs",
+      "local-content.cjs",
       "package.json",
       "!**/.git/**"
     ],
