@@ -20,10 +20,10 @@ test('1999 integrated quick world has horses, personnel, ratings and race dates'
  assert.equal(career.run.world_ref.sha256,career.world.authority.sha256);
 });
 
-test('full 1999 opening world is populated across the entire active meet circuit',async()=>{
- const career=await create1999PopulatedTestWorld({horseCount:3083});
+test('20,000-horse full 1999 opening world is populated across the entire active meet circuit',async()=>{
+ const career=await create1999PopulatedTestWorld({horseCount:20000});
  const world=career.world;
- assert.equal(world.manifest.generatedHorses,3083);
+ assert.equal(world.manifest.generatedHorses,20000);
  assert.ok(world.manifest.activeTracks>=90);
  assert.ok(world.entities.people.filter(p=>p.role==='trainer').length>=300);
  assert.ok(world.entities.people.filter(p=>p.role==='jockey').length>=250);
