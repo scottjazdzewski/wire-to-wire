@@ -103,6 +103,57 @@ test('no real horse target means choose fails closed, but keep and reject work',
  assert.equal(d.snapshot().feedback.revision,1);
 });
 
+
+test('saved rejection and taste feed back into future offline foaling batches',async()=>{
+ const {foalingEventNamingBrief,planPopulationNamingCohorts}=await import(
+  '../src/game/horse-naming-population-planner.js');
+ const {generateLocalPopulationNamingBatch}=await import(
+  '../src/game/horse-naming-local-v485.js');
+ const {generateLocalPopulationNamingBatch:browserBatch}=await import(
+  '../public/1999/game/horse-naming-local-v485.js');
+ const horseId='H-FUTURE-NAMING-V489-0041';
+ const brief=foalingEventNamingBrief({horseId,foalingYear:2041,
+  owner:{id:'OWNER-2041',name:'Example Owner'},
+  breeder:{id:'BREEDER-2041',name:'Example Breeder'},
+  event:{kind:'FOALING_EVENT',eventId:'EVENT-V489-2041-0001',horseId,
+   naming_narrative:story}});
+ const [batch]=[...planPopulationNamingCohorts([brief],{
+  runId:'RUN-NAMING-V489',year:2041})];
+ const initial=generateLocalPopulationNamingBatch({batch});
+ const first=initial.screened[0].proposals[0].name;
+ let learned=recordNamingFeedback(createNamingFeedback(),{
+  name:first,decision:'REJECT',motifId:'storm',prompt:'short understated names'});
+ learned=recordNamingFeedback(learned,{
+  name:'Night Courier',decision:'KEEP',motifId:'night',
+  prompt:'I prefer short understated names'});
+ const out=generateLocalPopulationNamingBatch({
+  batch,nameFeedback:learned,direction:'understated'});
+ assert.deepEqual(out,browserBatch({batch,nameFeedback:learned,direction:'understated'}));
+ assert.ok(out.screened[0].proposals.every(p=>p.name!==first));
+ assert.ok(!out.newCandidateNameKeys.includes(first.toLowerCase().replace(/[^a-z0-9]/g,'')));
+ assert.equal(out.remoteRequests,0);
+ assert.equal(out.writesToGame,false);
+});
+
+test('portable career delta preserves naming feedback with no separate storage',async()=>{
+ const {createCareerDelta,recoverCareerDelta,encodeCareerSave,decodeCareerSave}=
+  await import('../public/1999/engine/compact-career.mjs');
+ const profile={schema:'WTW_WORLD_PROFILE_V1',seed:19990101,population:73,
+  mode:'FOUNDING_1999',generator:'WTW_1999_FOUNDING_WORLD_V1'};
+ const old={version:'WTW_1999_FOUNDING_CAREER_V1',schema:'WTW_1999_FOUNDING_CAREER_V1',
+  date:'1999-01-01',currentCase:'opening-stable',turn:0,
+  worldAnchor:{schema:'WTW_1999_FOUNDING_CAREER_V1',startDate:'1999-01-01',
+   seed:19990101,mode:'FOUNDING_1999',population:73,worldProfile:profile},
+  horseState:{},ownerState:{},decisionLog:[]};
+ const saved=structuredClone(old);
+ saved.namingFeedback=recordNamingFeedback(createNamingFeedback(),
+  {name:'A New Era',decision:'REJECT',motifId:'books'});
+ const delta=createCareerDelta(saved,old,profile);
+ assert.deepEqual(recoverCareerDelta(delta,old).namingFeedback,saved.namingFeedback);
+ const record=await encodeCareerSave(saved,old,profile);
+ const restored=await decodeCareerSave(record,old);
+ assert.deepEqual(restored.namingFeedback,saved.namingFeedback);
+});
 test('new Naming Desk uses existing game save, does not create a second storage or remote name generator',async()=>{
  const [bootstrap,desk,ui]=await Promise.all([
   readFile(new URL('../public/next/1999-bootstrap.js',import.meta.url),'utf8'),
