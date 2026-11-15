@@ -15,10 +15,10 @@ const folded=s=>String(s).normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
 const oneMarket=[{id:'racing-colony',city:'Elmont',region:'New York',
  country:'United States',code:'US',weight:1,racing:true,breeding:false}];
 
-test('all 11 Latin American and Caribbean origin profiles offer country-specific period inventory',()=>{
+test('all 12 Latin American and Caribbean origin profiles offer country-specific period inventory',()=>{
  assert.match(LATIN_CARIBBEAN_NAME_MODEL,/LATIN_CARIBBEAN_1999/);
  assert.deepEqual([...REGIONAL_NAMING_ORIGINS],
-  ['PR','PA','VE','MX','CL','PE','CO','DO','AR','UY','BR']);
+  ['PR','CU','PA','VE','MX','CL','PE','CO','DO','AR','UY','BR']);
  for(const country of REGIONAL_NAMING_ORIGINS){
   const p=COUNTRY_NAME_PROFILES[country];
   assert.ok(p);

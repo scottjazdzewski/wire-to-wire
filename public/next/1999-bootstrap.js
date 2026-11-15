@@ -1,5 +1,6 @@
 /* WTW January 1999 user-approved CLEAN opening; zero racing horses.
- * Only the small founding scenario, approved staff and 118 tracks remain.
+ * The approved founding scenario and 124-track directory remain the baseline;
+ * fictional New World generation is an independent career operation.
  * Old generated worlds and their browser save keys are retired and purged. */
 (()=>{
 'use strict';

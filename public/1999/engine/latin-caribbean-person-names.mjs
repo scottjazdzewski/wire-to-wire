@@ -14,7 +14,7 @@
  * Puerto Rico's PR geographic code refers to a U.S. territory.
  */
 export const LATIN_CARIBBEAN_NAME_MODEL='WTW_LATIN_CARIBBEAN_1999_PERIOD_PERSON_NAMES_V1';
-export const REGIONAL_NAMING_ORIGINS=Object.freeze(['PR','PA','VE','MX','CL','PE','CO','DO','AR','UY','BR']);
+export const REGIONAL_NAMING_ORIGINS=Object.freeze(['PR','CU','PA','VE','MX','CL','PE','CO','DO','AR','UY','BR']);
 const split=s=>Object.freeze(s.split(' ').filter(Boolean));
 const unique=a=>Object.freeze([...new Set(a)]);
 const COMMON=Object.freeze({
@@ -28,6 +28,12 @@ const country=(oldM,youngM,oldF,youngF,family)=>Object.freeze({
  oldM:split(oldM),youngM:split(youngM),oldF:split(oldF),youngF:split(youngF),family:split(family)
 });
 export const COUNTRY_NAME_PROFILES=Object.freeze({
+ CU:country(
+  'José Juan Carlos Luis Antonio Manuel Francisco Miguel Rafael Pedro Roberto Ramón Fernando Jorge Ricardo Héctor Eduardo Raúl Julio Alberto Oscar Enrique Víctor Guillermo Orlando Armando',
+  'José Carlos Luis Miguel Juan Javier Ángel Alejandro Andrés Daniel Eduardo Gabriel Rafael Jorge Fernando Ricardo Manuel Víctor David Francisco Julio Sergio',
+  'María Carmen Ana Rosa Teresa Isabel Elena Mercedes Beatriz Lucía Patricia Lourdes Olga Marta Gloria Alicia Margarita Silvia Josefina',
+  'María Ana Laura Gabriela Carolina Adriana Daniela Andrea Patricia Verónica Claudia Alejandra Natalia Paola Sandra Marcela Isabel Lucía Valeria Vanessa',
+  'García Rodríguez González Martínez Hernández López Pérez Sánchez Ramírez Torres Flores Rivera Gómez Díaz Ortiz Morales Ruiz Álvarez Cruz Jiménez Romero Castro Mendoza Vargas Salazar Rojas Silva Castillo Fernández Navarro'),
  PR:country(
   'José Juan Luis Rafael Ángel Héctor Carlos Roberto Miguel Ramón Edgardo Orlando Víctor Wilfredo',
   'Luis Carlos Miguel José Ángel Javier Edwin Juan Héctor Jorge Efraín Alexis Ricardo Jonathan',

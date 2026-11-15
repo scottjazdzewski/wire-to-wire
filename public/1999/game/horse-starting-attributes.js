@@ -18,7 +18,7 @@ export function model1999StartingHorseAttributes({horse_id,seed=19990101,foaling
   'HORSE_ATTRIBUTES','Permanent test horse ID required');
  ensure(Number.isSafeInteger(seed)&&seed>0&&seed<=4294967295,
   'HORSE_ATTRIBUTES','Positive 32-bit model seed required');
- ensure(Number.isInteger(foaling_year)&&foaling_year>=1980&&foaling_year<=1996,
+ ensure(Number.isInteger(foaling_year)&&foaling_year>=1980&&foaling_year<=1997,
   'HORSE_ATTRIBUTES','1999 racing-age birth year required');
  ensure(['COLT','FILLY','HORSE','MARE','GELDING'].includes(sex),
   'HORSE_ATTRIBUTES','Invalid racing sex');

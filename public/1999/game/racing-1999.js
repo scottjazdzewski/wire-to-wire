@@ -67,7 +67,7 @@ export function gameRaceProgram(state,world,trackId,date){
  if(!track||!validDate(date)||!date.startsWith('1999-'))return [];
  const ix=world.entities.tracks.findIndex(t=>t.id===trackId);
  return buildConditionBook1999({date,track,trackIndex:ix,seed:state.rng.seed,
-  sourceStakes:[],includeKnownStakes:false});
+  sourceStakes:[],includeKnownStakes:true});
 }
 /** Only races with fully modeled entry conditions may open for gameplay.
  * Claiming transfers, starter qualification, weights and stakes nominations
@@ -75,6 +75,16 @@ export function gameRaceProgram(state,world,trackId,date){
 export function supported1999RaceClass(race){
  const maiden=typeof race?.maiden==='boolean'?race.maiden:race?.maidenOnly;
  const maxWins=race?.max_wins??race?.maxCareerWins;
+ if(race?.stakeId||race?.stake_id){
+  const modeled=race?.canonical===false&&Boolean(race?.stakeSourceStatus||
+   race?.stake_source_status);
+  const purseMinor=race?.purse_minor??Math.round(Number(race?.purse)*100);
+  return Boolean(modeled&&['2YO','3YO','3YO+','4YO+'].includes(race.age||
+    race.ageRequirement)&&['OPEN','FILLIES_AND_MARES'].includes(race.sex||
+    race.sexRestriction)&&['DIRT','TURF'].includes(race.surface)&&
+    Number.isFinite(race.distance_furlongs??race.distanceFurlongs)&&
+    cents(purseMinor)&&purseMinor>0);
+ }
  if(race?.conditions==='Maiden Special Weight')
   return maiden===true&&maxWins==null;
  if(race?.conditions==='Allowance')
@@ -85,6 +95,9 @@ function raceShape(book){
  return {id:book.id,track_id:book.trackId,date:book.date,number:book.number,
   name:book.name,conditions:book.conditions,age:book.ageRequirement,
   sex:book.sexRestriction,surface:book.surface,distance_furlongs:book.distanceFurlongs,
+  stake_id:book.stakeId||null,stake_name:book.stakeName||null,
+  stake_source_status:book.stakeSourceStatus||null,
+  stakes_grade:book.stakesGrade||null,canonical:book.canonical===true,
   max_wins:book.maxCareerWins,maiden:book.maidenOnly,
   win_restriction:book.winRestriction,full_conditions:book.fullConditions,
   field_capacity:book.fieldCapacity,purse_minor:Math.round(book.purse*100),
@@ -266,8 +279,8 @@ export function racingAction({state,world,command,emit}){
    dayGap(state.clock.date,p.date)>=2&&dayGap(state.clock.date,p.date)<=28,
    'RACE_PROGRAM','Only legal future 1999 race cards may open');
   const book=gameRaceProgram(state,world,p.track_id,p.date).find(x=>x.id===p.race_id);
-  ensure(book&&!state.runtime.races[p.race_id]&&!book.stakeId,
-   'RACE_PROGRAM','Race ID must match an ordinary modeled source condition book');
+  ensure(book&&!state.runtime.races[p.race_id]&&(!book.stakeId||book.canonical===false),
+   'RACE_PROGRAM','Race ID must match an ordinary or locally modeled noncanonical condition book');
   ensure(supported1999RaceClass(book),
    'RACE_CLASS_UNMODELED','Only modeled maiden special weight and NW2/NW3 allowance conditions may be entered');
   state.runtime.races[book.id]=raceShape(book);

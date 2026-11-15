@@ -83,7 +83,7 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
  const records=[];
  for(let i=0;i<count;i++){
   const role=roleAt(i),country=options.countryAt?options.countryAt(i,role):roleOrigin(seed,i,role);
-  if(!['US','CA','GB','IE','PR','PA','VE','MX','CL','PE','CO','DO','AR','BR','UY','FR','DE','JP','AU','NZ','AE','HK'].includes(country))
+  if(!['US','CA','GB','IE','PR','CU','PA','VE','MX','CL','PE','CO','DO','AR','BR','UY','FR','DE','JP','AU','NZ','AE','HK'].includes(country))
    throw Error('Unsupported fictional person naming origin: '+country);
   const feminine=hash(seed,'sex:'+i)%100 < (role==='jockey'?7:role==='trainer'?22:role==='owner'?32:35);
   // Optional 1999 fictional-world birth-decade selection. The original

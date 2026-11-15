@@ -38,7 +38,9 @@ test('only the selected 37 founders, 41 people and 73 breeding horses enter 1999
  assert.equal(world.counts.auctions,0);
  assert.equal(world.counts.trainers,0);
  assert.equal(world.counts.facilities,30);
- assert.equal(world.counts.tracks,118);
+ assert.equal(world.counts.tracks,124);
+ assert.equal(world.counts.activeTracks,107);
+ assert.equal(world.counts.historicalTracks,17);
  const approvedStock=ids([...world.sourceStallions,...world.sourceBroodmares]);
  assert.equal(approvedStock.size,73);
 });
@@ -64,7 +66,7 @@ test('browser API serves approved foundation only and refuses retired generated 
  assert.equal(api('/api/1999/horses').total,0);
  assert.equal(api('/api/1999/people').total,41);
  assert.equal(api('/api/1999/organizations').total,37);
- assert.equal(api('/api/1999/sim/tracks').total,118);
+ assert.equal(api('/api/1999/sim/tracks').total,124);
  assert.equal(api('/api/1999/sim/auctions').total,0);
  assert.equal(api('/api/1999/sim/people').total,0);
  assert.throws(()=>readLocal1999World('/api/1999/sim/overview?mode=CANON_ANCHORED_TEST'));

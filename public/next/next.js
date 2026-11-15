@@ -5,6 +5,8 @@
 'use strict';
 const $=(q,p=document)=>p.querySelector(q), $$=(q,p=document)=>[...p.querySelectorAll(q)];
 const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const locationText=v=>typeof v==='string'?v:v&&typeof v==='object'?
+ [v.city||v.locality,v.state||v.region,v.country].filter(Boolean).join(', '):'';
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
@@ -35,8 +37,6 @@ function personGeographyRecord(source,name){
 }
 
 const genericDeskPhoto='/assets/office/approved-office-photo.jpg';
-const WTW_RETIRED_TRACK_IDS=new Set(['T-0042','T-0112','T-0115']); // Historical IDs retained; excluded from game menus.
-
 let organizationLogoIndex=null; // UI-only logo refs, never organizational authority.
 const isClean1999=()=>window.__WTW_1999_MANAGEMENT__?.worldProfile?.mode==='FOUNDING_1999';
 
@@ -830,7 +830,8 @@ function loadWorld1999(){
   isClean1999()?fetch('/data/wtw-1999-trainer-pilot-v1.json?rev=source-trainer-identities-v1-20261113',
    {credentials:'same-origin',cache:'force-cache'}).then(r=>
     r.ok?r.json():Promise.reject(Error('Source trainer pilot unavailable'))):Promise.resolve(null)
- ]).then(([data,geo,pilot,trainerPilot])=>{
+ ]).then(async ([data,geo,pilot,trainerPilot])=>{
+   const trackPrograms=await import('./1999-track-program.mjs');
    if(data?.schema!=='WTW_1999_WORLD_DIRECTORY_V1'||
      !Array.isArray(data.tracks)||!Array.isArray(data.people)||
      !Array.isArray(data.organizations)||!Array.isArray(data.horses))
@@ -864,24 +865,43 @@ function loadWorld1999(){
       p.abilityStatus!=='UNASSESSED'||p.contract!==null))
      throw Error('Trainer identity pilot violates founding population boundary');
     world1999TrainerRoster=trainerPilot.trainers;
-    if(geo?.counts?.north_america!==118||!Array.isArray(geo.tracks))
+    if(geo?.counts?.north_america!==124||!Array.isArray(geo.tracks))
      throw Error('Complete North American track authority unavailable');
     const canonical=geo.tracks.filter(t=>t.registry==='NORTH_AMERICA');
     const ids=new Set(data.tracks.map(t=>t.id));
     const missing=canonical.filter(t=>!ids.has(t.id));
-    if(canonical.length!==118||data.tracks.length+missing.length!==118)
-     throw Error('North American 118-track identity reconciliation failed');
-    // Add source-registered historical racecourses to the SITE DIRECTORY only.
-    // Never create a meet, active condition book, physical facility or horse.
-    data={...data,tracks:[...data.tracks,...missing.map(t=>({
-     id:t.id,name:t.name,location:t.travel_node,
-     region:t.macro_circuit||t.state_province_region||'',
-     circuit:'HISTORICAL NORTH AMERICA',operating:'HISTORICAL_ONLY',
-     registry:t.registry,geographyStatus:t.geography_status,
-     historicalFoundationStatus:t.foundation_status,
-     sourceBasis:t.source_basis,playableIn1999:false,
-     historicalClosure:'CLOSED_PRE_1999',trackOperating:'HISTORICAL_ONLY'
-    }))]};
+    if(canonical.length!==124||data.tracks.length+missing.length!==124)
+     throw Error('North American 124-track identity reconciliation failed');
+    // Merge the complete local 1999 program catalog into the one track directory.
+    // The source geography remains unchanged; fictional/alternate-history
+    // additions are game identities with modeled meet data from the shared engine.
+    const joined=[...data.tracks,...missing.map(t=>{
+     const p=trackPrograms.trackProgram1999(t.id)||{};
+     return {id:t.id,name:p.name||t.game_presentation_name||t.name,
+      sourceName:p.sourceName||t.source_name_preserved||t.name,
+      location:t.travel_node,region:p.region||t.macro_circuit||t.state_province_region||'',
+      circuit:p.circuit||t.macro_circuit||'North American Circuit',
+      operating:p.trackOperating||'HISTORICAL_ONLY',trackOperating:p.trackOperating||'HISTORICAL_ONLY',
+      playableIn1999:p.playableIn1999===true,meetWindow:p.meetWindow||'',
+      raceDays:p.raceDays||'',preferredDays:p.preferredDays||'',surfaces:p.surfaces||'',
+      physicalTrackId:p.physicalTrackId||t.physical_track_id||t.id,
+      venueType:p.venueType||t.venue_type||'PHYSICAL_RACECOURSE',
+      registry:t.registry,geographyStatus:t.geography_status,
+      historicalFoundationStatus:t.foundation_status,sourceBasis:t.source_basis,
+      metroOrSubregion:p.metroOrSubregion||t.metro_or_subregion||'',
+      ...(p.archiveStatus?{archiveStatus:p.archiveStatus}:{}),
+      ...(p.realWorldClosure?{realWorldClosure:p.realWorldClosure}:{})};
+    })];
+    data={...data,tracks:joined.map(t=>{
+     const p=trackPrograms.trackProgram1999(t.id);if(!p)return t;
+     return {...t,name:p.name,sourceName:p.sourceName||t.sourceName||t.name,
+      region:p.region||t.region,circuit:p.circuit||t.circuit,
+      operating:p.trackOperating,trackOperating:p.trackOperating,
+      playableIn1999:p.playableIn1999,meetWindow:p.meetWindow,
+      raceDays:p.raceDays,preferredDays:p.preferredDays,surfaces:p.surfaces,
+      physicalTrackId:p.physicalTrackId||t.physicalTrackId||t.id,
+      venueType:p.venueType||t.venueType||'PHYSICAL_RACECOURSE'};
+    })};
    }
    world1999Base=data;world1999Data=worldApplyEdits(data);
    if(APP.ready)schedulePaint(15);
@@ -896,8 +916,8 @@ function world1999Key(kind,item){
 function world1999Entries(){
  if(!world1999Data)return [];
  return [
-  ...world1999Data.tracks.filter(t=>!WTW_RETIRED_TRACK_IDS.has(t.id)).map(t=>({
-   kind:'track',name:t.name,detail:t.region||t.circuit||'',location:t.location||'',
+  ...world1999Data.tracks.map(t=>({
+   kind:'track',name:t.name,detail:t.region||t.circuit||'',location:locationText(t.location),
    canonicalId:t.id,worldKey:world1999Key('track',t),_world:t
   })),
   ...[...world1999Data.people,...world1999JockeyRoster,...world1999TrainerRoster].map(p=>({
@@ -929,7 +949,6 @@ function world1999Entry(key){
  const source=worldSourceRecord(key,world1999Data);
  if(!source)return null;
  const kind=key.split(':',1)[0];
- if(kind==='track'&&WTW_RETIRED_TRACK_IDS.has(source.id))return null;
  if(kind==='track'&&!world1999Data?.tracks?.some(t=>t.id===source.id))return null;
  return {kind,name:source.name,canonicalId:source.id||'',worldKey:key,_world:source};
 }
@@ -1897,6 +1916,8 @@ function profileDetail(route,sourceOverride=null){
    '</div></div>':'';
 
  const stakeDateRank=value=>{
+  const iso=String(value||'').match(/^1999-(\d{2})-(\d{2})$/);
+  if(iso)return Number(iso[1])*32+Number(iso[2]);
   const match=String(value||'').match(/\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(\d{1,2})\b/i);
   if(!match)return Number.MAX_SAFE_INTEGER;
   const month='jan feb mar apr may jun jul aug sep oct nov dec'.split(' ').indexOf(match[1].slice(0,3).toLowerCase());
@@ -1904,41 +1925,66 @@ function profileDetail(route,sourceOverride=null){
  };
  // Read-only: summarize only the WTW race rows already available on this track.
  const stakeScheduleSummary=()=>{
-  const raw=trackRaces.map(r=>r.node?.children?.[3]?.textContent?.trim()||'');
-  const parsed=raw.map(v=>/^\$[\d,]+(?:\.\d+)?$/.test(v)?Number(v.replace(/[$,]/g,'')):null);
+  const modeled=window.__WTW_1999_UI_DATA__?.stakesForTrack?.(route.title)||[];
+  const raw=modeled.length?modeled.map(r=>Number(r.purse1999??r.purse)):
+   trackRaces.map(r=>r.node?.children?.[3]?.textContent?.trim()||'');
+  const parsed=raw.map(v=>typeof v==='number'?v:/^\$[\d,]+(?:\.\d+)?$/.test(v)?Number(v.replace(/[$,]/g,'')):null);
   const canTotal=parsed.length>0&&parsed.every(v=>typeof v==='number'&&Number.isFinite(v));
   const sum=canTotal?parsed.reduce((a,b)=>a+b,0):0;
   const amount=canTotal?'$'+sum.toLocaleString('en-US'):'';
-  return trackRaces.length+' RACE RECORDS'+(canTotal?' · '+amount+' SCHEDULED PURSES':'');
+  return (modeled.length||trackRaces.length)+' RACE RECORDS'+(canTotal?' · '+amount+' SCHEDULED PURSES':'');
  };
  // Same sorting/filter/view/scroll renderer as every other roster. The
  // public stakes list is sourced from the existing approved track dossier.
  const stakesTable=(limit=100)=>{
   const gradeRank=value=>{const g=(String(value||'').match(/\bG([123])\b/i)||[])[1];return g?Number(g):/major/i.test(value)?4:5};
-  const purseRank=value=>{const n=Number(String(value||'').replace(/[^\d.]/g,''));return Number.isFinite(n)?n:-1};
-  const rank=(key,row)=>key==='date'?stakeDateRank(row.cols[1]):key==='grade'?gradeRank(row.cols[2]):key==='purse'?purseRank(row.cols[3]):row.cols[0].toLocaleLowerCase();
+  const modelRows=window.__WTW_1999_UI_DATA__?.stakesForTrack?.(route.title)||[];
+  const rows=modelRows.length?modelRows.map(r=>{
+   const rawAgeSex=String(r.ageSex||'').trim();
+   const age=String(r.ageRequirement||rawAgeSex.match(/\b(?:2|3|4)\s*YO\+?\b/i)?.[0]||rawAgeSex).trim();
+   const sexes=String(r.sexRestriction||r.ageSex||'').toUpperCase();
+   const sex=/FILL|MARE|F&M/.test(sexes)?'Fillies & mares':
+    /OPEN/.test(sexes)?'Open':'All sexes';
+   const date=String(r.localDate||r.date||'');
+   return {id:r.id||r.stakeId||'',name:r.name||'Modeled stakes',date,
+    conditions:[age,sex].filter(Boolean).join(' · '),
+    distance:Number(r.distanceFurlongs??r.distanceF)||0,
+    surface:String(r.surface||'—').replace(/^./,x=>x.toUpperCase()),
+    grade:String(r.grade||r.status||r.division||'—'),
+    purse:Number(r.purse1999??r.purse)||0};
+  }):trackRaces.map(row=>{
+   const cols=[...row.node.children].map(item=>item.textContent.trim());
+   while(cols.length<4)cols.push('—');
+   return {id:row.node.dataset.stakeId||'',name:cols[0],date:cols[1],
+    conditions:'—',distance:0,surface:'—',grade:cols[2],
+    purse:purseRank(cols[3]),legacy:row};
+  });
+  const rank=(key,row)=>key==='date'?stakeDateRank(row.date):
+   key==='grade'?gradeRank(row.grade):key==='purse'?row.purse:
+   key==='distance'?row.distance:key==='surface'?row.surface.toLocaleLowerCase():
+   key==='conditions'?row.conditions.toLocaleLowerCase():row.name.toLocaleLowerCase();
   const compare=(a,b)=>{
    const av=rank(APP.stakeSort,a),bv=rank(APP.stakeSort,b);
    const result=typeof av==='number'&&typeof bv==='number'?av-bv:String(av).localeCompare(String(bv),undefined,{numeric:true,sensitivity:'base'});
-   return (APP.stakeSortDesc?-1:1)*result || a.cols[0].localeCompare(b.cols[0]);
+   return (APP.stakeSortDesc?-1:1)*result || a.name.localeCompare(b.name);
   };
-  const ordered=trackRaces.map(row=>({row,cols:[...row.node.children].map(item=>item.textContent.trim()).slice(0,4)}))
-   .sort(compare);
-  const labels=[['name','RACE'],['date','DATE'],['grade','GRADE'],['purse','PURSE']];
+  const ordered=rows.sort(compare);
+  const labels=[['name','RACE'],['date','DATE'],['conditions','CONDITIONS'],
+   ['distance','DISTANCE'],['surface','SURFACE'],['grade','CLASS'],['purse','PURSE']];
   const header=labels.map(([key,label])=>{
    const active=APP.stakeSort===key,mark=active?(APP.stakeSortDesc?'↓':'↑'):'↕';
    return '<button type="button" data-ng="stake-sort" data-val="'+key+'" aria-sort="'+(active?(APP.stakeSortDesc?'descending':'ascending'):'none')+'"><span>'+label+'</span><i aria-hidden="true">'+mark+'</i></button>';
   }).join('');
   return '<div class="ng-stakes-table"><div class="ng-stakes-head">'+header+'</div>'+
-   (ordered.slice(0,limit).map(({row,cols})=>{
-    while(cols.length<4)cols.push('—');
-    const grade=(cols[2].match(/\bG([123])\b/i)||[])[1];
-    const gradeCell=grade?'<span class="ng-stakes-grade" aria-label="Grade '+grade+'" title="Grade '+grade+'"><img class="ng-stakes-trophy" src="/assets/trophies/approved-grade-'+grade+'-64.png" alt="" width="16" height="16" decoding="async"/><small class="ng-stakes-grade-text" aria-hidden="true">G'+grade+'</small></span>':'<span>'+safe(cols[2])+'</span>';
-    const stakeId=row.node.dataset.stakeId||'';
-    // Detached source rows have no legacy Office index: keep a live 1999 race-file click target.
-    return '<button class="ng-stakes-data" data-ng="1999-stake" data-val="'+safe(stakeId)+
-      '" data-name="'+safe(cols[0])+'" data-track="'+safe(route.title)+'" data-date="'+safe(cols[1])+'">'+
-     '<span>'+safe(cols[0])+'</span><span>'+safe(cols[1])+'</span>'+gradeCell+'<span>'+safe(cols[3])+'</span></button>';
+   (ordered.slice(0,limit).map(row=>{
+    const grade=(row.grade.match(/\bG([123])\b/i)||[])[1],modeledGrade=/^WTW\s+G[123]$/i.test(row.grade);
+    const gradeCell=modeledGrade?'<span class="ng-stakes-modeled-class" title="Modeled game class; no official grade is implied">'+safe(row.grade)+' · MODELED</span>':grade?'<span class="ng-stakes-grade" aria-label="Grade '+grade+'" title="'+safe(row.grade)+'"><img class="ng-stakes-trophy" src="/assets/trophies/approved-grade-'+grade+'-64.png" alt="" width="16" height="16" decoding="async"/><small class="ng-stakes-grade-text" aria-hidden="true">'+safe(row.grade)+'</small></span>':'<span>'+safe(row.grade)+'</span>';
+    // Detailed condition-book entries use the same modeled race-file route as calendar cards.
+    return '<button class="ng-stakes-data" data-ng="1999-stake" data-val="'+safe(row.id)+
+      '" data-name="'+safe(row.name)+'" data-track="'+safe(route.title)+'" data-date="'+safe(row.date)+'">'+
+     '<span>'+safe(row.name)+'</span><span>'+safe(row.date)+'</span><span>'+safe(row.conditions)+'</span>'+
+     '<span>'+(row.distance?safe(row.distance)+'f':'—')+'</span><span>'+safe(row.surface)+'</span>'+gradeCell+
+     '<span>'+(row.purse?money(row.purse):'—')+'</span></button>';
    }).join('')||'<div class="ng-empty-record">No verified stakes rows connected.</div>')+'</div>';
  };
  const entityPhotoKind=isHorse?'horse':isPerson?'person':isFarm?'farm':isTrack?'track':'';
@@ -3064,7 +3110,7 @@ function depTrackCalendar(includeRetired=false){
  const known=new Set(office.map(x=>x.id||x.name));
  const others=(world1999Data?.tracks||[])
   .filter(t=>!known.has(t.id)&&!known.has(t.name))
-  .map(t=>({id:t.id,name:t.name,location:t.location,region:t.region,circuit:t.circuit,
+  .map(t=>({id:t.id,name:t.name,location:locationText(t.location),region:t.region,circuit:t.circuit,
    operating:t.operating,playableIn1999:t.playableIn1999!==false,
    meetWindow:'',raceDays:'',preferredDays:'',stakes:[],_source1999:true}));
  const extra=(window.__WTW_1999_UI_DATA__?.extraTracks?.()||[]).filter(t=>
@@ -3073,25 +3119,29 @@ function depTrackCalendar(includeRetired=false){
  const byName=new Map(extra.map(t=>[t.name,t]));
  const seen=new Set([...office,...others].flatMap(t=>[t.id,t.name]).filter(Boolean));
  const missing=extra.filter(t=>!seen.has(t.id)&&!seen.has(t.name));
- return [...office,...others,...missing].filter(t=>(includeRetired||!WTW_RETIRED_TRACK_IDS.has(t.id))&&(
+ return [...office,...others,...missing].filter(t=>(
   !isClean1999()||!permittedTracks.size||permittedTracks.has(t.id)||permittedNames.has(t.name))).map(t=>{
   // The 1999 source directory, NOT the old track-program/demo defaults,
   // decides whether a historical racecourse is closed and remains dormant.
   const canonical=(world1999Data?.tracks||[]).find(r=>r.id===t.id);
   if(isClean1999()&&canonical?.operating==='HISTORICAL_ONLY')
-   return {...t,id:canonical.id,name:canonical.name,location:canonical.location,
+   return {...t,id:canonical.id,name:canonical.name,location:locationText(canonical.location),
     circuit:canonical.circuit||t.circuit,operating:'HISTORICAL_ONLY',
     meetWindow:'',raceDays:'',preferredDays:'',stakes:[],
     playableIn1999:false,_source1999:true,_historyOnly:true};
   const p=byId.get(t.id)||byName.get(t.name)||null;
   const sourceStakes=(window.__WTW_1999_UI_DATA__?.stakesForTrack?.(t.name)||[])
    .map(r=>({...r,date:r.localDate||r.date||'',class:r.status||r.division||r.grade||'',purse:r.purse1999}));
-  return {...t,...(p?{
+  const projected={...t,...(p?{
    surfaces:p.surfaces,meetWindow:p.meetWindow,raceDays:p.raceDays,
    preferredDays:p.preferredDays,calendarBasis:p.calendarBasis,
    calendarSource:p.calendarSource,operating:p.operating,_source1999:false
   }:{}),stakes:sourceStakes.length?sourceStakes:(Array.isArray(t.stakes)?t.stakes:[])};
- });
+  return isClean1999()&&canonical?{...projected,id:canonical.id,name:canonical.name,
+   location:locationText(canonical.location),circuit:canonical.circuit||projected.circuit,
+   operating:canonical.operating||projected.operating,
+   playableIn1999:canonical.playableIn1999!==false,_source1999:true}:projected;
+ }).filter(t=>includeRetired||t.operating!=='HISTORICAL_ONLY'&&t.playableIn1999!==false);
 }
 function depCalendarIso(value,year=depGameDay().slice(0,4)){
  const d=String(value||'').match(/^([A-Za-z]{3})\s+(\d{1,2})$/);

@@ -70,7 +70,7 @@ test('US historical 1990-2019 top-30 lists and partial 2020-2025 official rankin
 });
 test('every international naming country retains its own contemporary given pool, with accents and stable cultural subprofiles',()=>{
  for(const [country,culture] of Object.entries({
-  PR:null,PA:null,VE:null,MX:null,CL:null,PE:null,CO:null,DO:null,
+  PR:null,CU:null,PA:null,VE:null,MX:null,CL:null,PE:null,CO:null,DO:null,
   AR:null,UY:null,BR:null,IE:null,FR:null,DE:null,JP:null,AU:null,
   NZ:null,AE:null,HK:null,CA:'CA_FR',GB:'GB_WALES'
  })){

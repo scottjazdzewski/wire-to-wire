@@ -60,6 +60,7 @@ const regional=(male,female)=>Object.freeze({
  masculine:words(male),feminine:words(female)
 });
 export const MODERN_EDITORIAL_ORIGIN_GIVEN_NAMES=Object.freeze({
+ CU:regional('Alejandro Javier Daniel Miguel Ernesto Luis Adrián Carlos Rafael Roberto','Camila Valeria Daniela Mariana Lucía Gabriela Isabel Natalia Teresa Adriana'),
  PR:regional('Gabriel Sebastián Adrián Emilio Matías Javier Alexis Ángel Diego Leonardo','Valeria Camila Sofía Isabella Daniela Victoria Gabriela Natalia Adriana Lucía'),
  PA:regional('Gabriel Andrés Sebastián Alejandro Javier Diego Daniel Nicolás David Mateo','Valentina Camila Isabella Mariana Sofía Daniela Victoria Gabriela Lucía'),
  VE:regional('Andrés Alejandro Sebastián Santiago Diego Gabriel Leonardo Daniel Nicolás','Valentina Sofía Isabella Camila Daniela Gabriela Natalia Victoria Andrea'),
