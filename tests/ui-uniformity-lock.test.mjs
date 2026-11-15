@@ -120,6 +120,15 @@ test('Stable Health, Race Plans and Barns show real player horses and never gene
  assert.doesNotMatch(view,/globalSearchItems\(\)|sourceLinkedWorldDirectory|demoRecords/);
  assert.match(js,/\['Health','Race Plans','Barns'\]\.includes\(page\)\)return stableOperationsView\(page\)/);
 });
+test('empty department actions only use registered VIEW tabs; no fictional data',()=>{
+ const helper=js.slice(js.indexOf('function departmentEmptyPanel('),js.indexOf('function departmentRoster('));
+ assert.match(helper,/tabmap\[section\]/);
+ assert.match(helper,/data-ng="tab"/);
+ assert.match(helper,/NO VERIFIED LEDGER ROWS/);
+ assert.match(helper,/NO COMMITTED ENTRIES/);
+ assert.match(js,/departmentEmptyPanel\(section,page,globalIndexing\?/);
+ assert.match(css,/td\.ng-rs-no-results\{height:148px!important/);
+});
 test('do not add page-specific CSS layers or new style patch stacks',()=>{
  const assets=[...html.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/g)]
   .map(m=>m[1].split('?')[0]);

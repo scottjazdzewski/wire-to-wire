@@ -3558,6 +3558,28 @@ function depNumeric(v){
  if(!/^-?\d+(?:\.\d+)?[kKmM]?$/.test(s))return null;
  return Number(s.replace(/[kKmM]$/,''))*(/[mM]$/.test(s)?1000000:/[kK]$/.test(s)?1000:1);
 }
+/* A zero-row management screen may navigate only to registered game views. */
+function departmentEmptyPanel(section,page,message){
+ const views={Sales:['Sale Calendar','Sale Companies'],Breeding:['Broodmares','Stud Farms'],
+  Racing:['Calendar','Race Planning'],Personnel:['Trainers','Jockeys'],
+  Facilities:['Farms','Stud Farms'],Finances:['Operating Costs','Budgets'],
+  World:['People','Organizations'],Tracks:['All Tracks','Active Meets']};
+ const filtered=Boolean(APP.departmentSearch||window.WTW1999RosterFilters?.get(APP,section+'|'+page));
+ const indexing=String(message).startsWith('Indexing ');
+ const links=filtered||indexing?[]:(views[section]||[]).filter(tab=>
+  tab!==page&&(tabmap[section]||[]).includes(tab));
+ const headline=indexing?'INDEXING SOURCE RECORDS':filtered?'NO MATCHING RECORDS':
+  section==='Racing'&&page==='Entries'?'NO COMMITTED ENTRIES':
+  section==='Racing'&&page==='Results'?'NO RECORDED RESULTS':
+  section==='Finances'?'NO VERIFIED LEDGER ROWS':
+  section==='Sales'&&page==='Watchlist'?'NO WATCHED LOTS':'NO SOURCE RECORDS IN THIS VIEW';
+ return '<div class="ng-dept-empty-stage" role="status"><strong>'+safe(headline)+'</strong>'+
+  '<p>'+safe(message)+'</p>'+
+  (links.length?'<div class="ng-dept-empty-actions" aria-label="Available existing game views">'+
+   links.map(tab=>'<button type="button" data-ng="tab" data-val="'+safe(tab)+
+    '" aria-label="Open '+safe(tab)+' view">'+safe(tab.toUpperCase())+' ↗</button>').join('')+
+   '</div>':'')+'</div>';
+}
 function departmentRoster(section,page='Overview'){
  const demo=false; // Registered 1999 content only; preview population retired.
  const auctions=section==='Sales'?depAuctionList(demo):[];
@@ -3769,7 +3791,7 @@ function departmentRoster(section,page='Overview'){
   (section==='Racing'&&page==='Race Planning'?(window.WTW1999PlayerRacePlans?.render?.()||''):'')+
   '<section class="ng-rs-roster"><header><strong>'+safe(section.toUpperCase())+' · SORTABLE ROSTER</strong><div class="ng-dpt-pager">'+pager+'</div></header>'+
   '<div class="ng-rs-scroll" tabindex="0" role="region" aria-label="'+safe(section)+' roster — scroll vertically and click column headings to sort"><table class="ng-rs-table ng-dpt-table '+(departmentMode==='compact'?'compact':'all')+'"><thead><tr>'+heads+'</tr></thead><tbody>'+
-  (body||'<tr><td colspan="'+specs.length+'" class="ng-rs-no-results">'+safe(globalIndexing?
+  (body||'<tr><td colspan="'+specs.length+'" class="ng-rs-no-results">'+departmentEmptyPanel(section,page,globalIndexing?
    'Indexing '+globalProgress.toLocaleString('en-US')+' of '+(globalMareDirectory?Number(window.__WTW_1999_UI_DATA__?.counts?.breedingMares||0).toLocaleString('en-US')+' breeding mares':Number(window.__WTW_1999_UI_DATA__?.counts?.worldHorses||0).toLocaleString('en-US')+' horses')+
    ' for global sort/filter — source identities retained.':
    section==='Racing'&&racingDayView?'No races in the proposed condition book on '+racingDate+'. Choose another track or date.':section==='World'&&!world1999Data?'Loading the 1999 world registry…':section==='Sales'&&page==='Watchlist'?'No watched lots yet. Select ☆ beside a catalog hip to watch it for this session.':section==='Sales'&&page==='Private Offers'?'No recorded private offers. Bidding and negotiation are not enabled in this UI preview.':section==='Sales'?'No catalog lots recorded for this view.':demo?'No matching records.':'No supported records in this view.')+'</td></tr>')+

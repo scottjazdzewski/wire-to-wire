@@ -1368,7 +1368,8 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 #wtwNextgen .ng-rs-legend .ng-rs-signal{font-size:var(--wtw-roster-legend)}
 #wtwNextgen .ng-rs-legend .ng-rs-signal i{height:11px;width:11px;flex-basis:11px;font-size:8px}
 #wtwNextgen .ng-rs-legend>span:last-child{margin-left:auto;color:#91a99a;font-size:var(--wtw-roster-legend)}
-#wtwNextgen .ng-rs-no-results{height:162px;padding:28px!important;text-align:center;vertical-align:middle;color:#d2dfd4;font-size:13px;font-weight:650;letter-spacing:.015em;background:radial-gradient(ellipse at center,#202c31,#151d21 74%)}
+#wtwNextgen .ng-rs-table td.ng-rs-no-results{height:148px!important;max-height:none!important;white-space:normal!important;padding:16px!important}
+#wtwNextgen .ng-rs-no-results button{padding:5px;border:1px solid #5a806a;cursor:pointer}
 #wtwNextgen .ng-rs-table.compact{min-width:0;width:100%}
 #wtwNextgen .ng-rs-table.compact th:nth-child(11),#wtwNextgen .ng-rs-table.compact td:nth-child(11),
 #wtwNextgen .ng-rs-table.compact th:nth-child(17),#wtwNextgen .ng-rs-table.compact td:nth-child(17){display:none}
