@@ -1,15 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createPersistent1999Industry,readPersistent1999IndustryBatch,findPersistent1999Horse}
+import {createPersistent1999Industry,readPersistent1999IndustryBatch,findPersistent1999Horse,
+ updatePersistent1999Horse,readPersistent1999HorseProfile}
  from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
 function memoryStore(){
- const data={manifests:new Map(),horseBatches:new Map(),personBatches:new Map()};
+ const data={manifests:new Map(),horseBatches:new Map(),personBatches:new Map(),horseEdits:new Map()};
  return {get:async(s,k)=>data[s].get(k),
   commitBatch:async({worldId,manifest,kind,index,records})=>{
    data[kind].set(worldId+':'+index,structuredClone(records));
    data.manifests.set(worldId,structuredClone(manifest));
   },
-  commitManifest:async(id,m)=>{data.manifests.set(id,structuredClone(m))}};
+  commitManifest:async(id,m)=>{data.manifests.set(id,structuredClone(m))},
+  putHorseEdit:async(id,horseId,edit)=>{data.horseEdits.set(id+':'+horseId,structuredClone(edit))}};
 }
 const dirs={farms:[{id:'O-FARM-1',location:{country:'USA'}}],
  tracks:[{id:'T-0001'}],owners:[{id:'O-OWNER-1'}]};
@@ -27,6 +29,10 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
  assert.deepEqual(await readPersistent1999IndustryBatch(store,b,'horseBatches',0),first);
  assert.deepEqual(await findPersistent1999Horse(store,b,first[0].id),first[0]);
  assert.equal(await findPersistent1999Horse(store,b,'H-FICTIONAL-1999-BROODMARES-9999999'),null);
+ await updatePersistent1999Horse(store,b,first[0].id,{name:'Copper Horizon'});
+ const edited=await readPersistent1999HorseProfile(store,b,first[0].id);
+ assert.equal(edited.name,'Copper Horizon');
+ assert.equal((await findPersistent1999Horse(store,b,first[0].id)).name,null);
 });
 test('interrupted industry genesis resumes at committed checkpoint',async()=>{
  const store=memoryStore();let writes=0;
