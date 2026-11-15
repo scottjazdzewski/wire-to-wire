@@ -42,7 +42,8 @@ test('worldwide census audit resolves cross-batch parents and staff and rejects 
   staffing:{counts:{trainer:2,jockey:2,groom:1}},
   tracks:[{id:'T-1'}],farms:[{id:'O-F-1'}],owners:[{id:'O-O-1'}]};
  const h=connect1999Horse({id:'H-FICTIONAL-1999-THREEYEAROLDRUNNERS-0000001',
-  status:'RACING',ownerId:'O-O-1',foalingFarmId:'O-F-1',
+  status:'RACING',cohort:'threeYearOldRunners',foalYear:1996,
+  birthplace:{farmId:'O-F-1'},ownerId:'O-O-1',foalingFarmId:'O-F-1',
   sireId:'H-FICTIONAL-1999-STALLIONS-0000002',
   damId:'H-FICTIONAL-1999-BROODMARES-0000002',
   homeTrackId:'T-1'},{seed:19990101,trainerCount:2,jockeyCount:2});
@@ -52,4 +53,18 @@ test('worldwide census audit resolves cross-batch parents and staff and rejects 
  const audit=validate1999IndustryReferences([broken],census);
  assert.equal(audit.valid,false);
  assert.ok(audit.problems.some(p=>p.reason==='BROKEN_REFERENCE'));
+});
+
+test('world audit rejects impossible opening ages and mismatched foaling farms',()=>{
+ const census={plan:{counts:{broodmares:1,stallions:1,yearlings:1,
+  twoYearOldProspects:1,threeYearOldRunners:1,fourYearOldRunners:1,
+  fivePlusRunners:1}},staffing:{counts:{trainer:1,jockey:1}},
+  tracks:[{id:'T-1'}],farms:[{id:'O-F-1'}],owners:[{id:'O-O-1'}]};
+ const h=connect1999Horse({id:'H-FICTIONAL-1999-THREEYEAROLDRUNNERS-0000001',
+  cohort:'threeYearOldRunners',foalYear:1997,status:'RACING',
+  ownerId:'O-O-1',foalingFarmId:'O-F-1',birthplace:{farmId:'O-WRONG'},
+  homeTrackId:'T-1'},{seed:19990101,trainerCount:1,jockeyCount:1});
+ const reasons=validate1999IndustryReferences([h],census).problems.map(x=>x.reason);
+ assert.ok(reasons.includes('INVALID_FOAL_YEAR'));
+ assert.ok(reasons.includes('BIRTHPLACE_FARM_MISMATCH'));
 });
