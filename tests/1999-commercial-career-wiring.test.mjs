@@ -50,3 +50,20 @@ test('local-first compact manager retains saves but cannot import an old populat
  assert.doesNotMatch(manager,/worldHorseDirectoryAt|allPages|fetch\(/);
  assert.match(manager,/No account, monthly fee or cloud storage required/);
 });
+
+test('new founding career gets its own named, durable compact slot before switching live world',()=>{
+ assert.match(manager,/NEW CAREER \/ START FROM SCRATCH/);
+ assert.match(manager,/data-cc="new-name"/);
+ assert.match(manager,/CREATE &amp; SAVE NEW CAREER/);
+ assert.match(manager,/careerName=modal\(\)\.querySelector/);
+ const action=manager.slice(manager.indexOf("if(action==='new-world'){"),
+  manager.indexOf("const id=element.dataset.id;",manager.indexOf("if(action==='new-world'){")));
+ const backup=action.indexOf("const backup=await storeGame('Pre-new-world backup");
+ const created=action.indexOf("const created=await storeGame(careerName,fresh)");
+ const activated=action.indexOf("dispatch('LOAD_CAREER',fresh)");
+ assert.ok(backup>=0&&created>backup&&activated>created,
+  'backup then named fresh world must commit before active career changes');
+ assert.match(action,/This does NOT generate the unfinished full fictional industry/);
+ assert.doesNotMatch(action,/localStorage\.removeItem|indexedDB\.deleteDatabase|removeSlot\(/);
+ assert.match(manager,/Full fictional 1999 world genesis and reusable customized world templates are not yet available/);
+});
