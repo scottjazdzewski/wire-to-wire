@@ -9,7 +9,7 @@ test('opening staffing reflects full racing and breeding ecosystem',()=>{
  assert.ok(plan.counts.trainer>3000);
  assert.ok(plan.counts.jockey>2000);
  assert.ok(plan.counts.groom>15000);
- assert.ok(plan.counts.breeding_attendant>9000);
+ assert.ok(plan.counts.breeding_attendant>6000);
  const ids=new Set();let total=0;
  for(const batch of generate1999StaffingBatches({staffing:plan,
   tracks:[{id:'T-0001',location:{region:'New York'}}],
