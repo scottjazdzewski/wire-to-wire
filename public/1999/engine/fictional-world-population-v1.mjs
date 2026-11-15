@@ -11,6 +11,7 @@
 import {createFictionalWorldNameEngine} from './fictional-world-name-engine.mjs';
 import {completeFictionalPersonBiographiesV1} from './fictional-person-biographies-v1.mjs';
 import {model1999StartingHorseAttributes} from '../game/horse-starting-attributes.js';
+import {buildFictional1999RaceCalendar} from './fictional-world-calendar-v1.mjs';
 import {validateWorld,WORLD_SCHEMA} from '../game/contracts.js';
 import {generateLocalPopulationNamingBatch,generateProvisional1999HorseNames,LOCAL_HORSE_NAMING_ALGORITHM_REVISION}
  from '../game/horse-naming-local-v485.js';
@@ -249,9 +250,13 @@ export async function assembleFictional1999Industry({
   activeTracks:active.length,
   archivedTracks:tracks.length-active.length,generatedHorses:horses.length,
   foundationHorses:parents.length,people:people.length,organizations:organizations.length};
+ const calendar=buildFictional1999RaceCalendar(tracks);
+ manifest.scheduledCards=calendar.summary.raceDays;
+ manifest.scheduledRaces=calendar.summary.scheduledRaces;
+ manifest.unprogrammedTrackIds=calendar.unprogrammedTrackIds;
  const authority={snapshot_id:'WTW-FICTIONAL-1999-'+seed+'-'+worldId,
-  source:'OFFLINE_GENERATED_FICTIONAL_GAME',sha256:await digest({manifest,entities})};
- const world={schema:WORLD_SCHEMA,start_date:START,authority,entities,manifest};
+  source:'OFFLINE_GENERATED_FICTIONAL_GAME',sha256:await digest({manifest,entities,calendar})};
+ const world={schema:WORLD_SCHEMA,start_date:START,authority,entities,calendar,manifest};
  validateWorld(world);
  return world;
 }
