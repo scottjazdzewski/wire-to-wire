@@ -40,7 +40,7 @@ test('V487 screens later authored foal names when earliest two are already regis
  assert.deepEqual(out,generateLocalPopulationNamingBatch({batch,existingNames:blocked,attempt:0}));
  assert.equal(JSON.stringify(batch),input,'naming never mutates the certified foaling record');
  assert.equal(out.algorithmRevision,LOCAL_HORSE_NAMING_ALGORITHM_REVISION);
- assert.equal(out.algorithmRevision,'WTW_LOCAL_NAMING_RULES_V488');
+ assert.equal(out.algorithmRevision,'WTW_LOCAL_NAMING_RULES_V489');
  assert.ok(out.readyForIndependentEditor>0,'later valid names should be offered');
  assert.equal(out.screened[0].proposals.length,out.readyForIndependentEditor);
  assert.ok(out.screened[0].proposals.every(p=>p.status==='READY_FOR_INDEPENDENT_EDITOR'));
