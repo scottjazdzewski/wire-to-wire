@@ -9,8 +9,13 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'
 const start=js.indexOf('  const personnelGroups=[');
 const end=js.indexOf('  const reputationSource=work.reputation_profile;',start);
 assert.ok(start>0&&end>start,'Test must execute the exact production personnel rating renderer');
-const render=new Function('common','special','roleDisplay','observed','modelNumber','safe',
+const run=new Function('common','special','roleDisplay','observed','modelNumber','safe','roles','cat','titleCaseUIRole',
  js.slice(start,end)+'\nreturn profileAttributes();');
+const render=(common,special,roleDisplay,observed,modelNumber,safe,selectedRoles)=>{
+ const roles=selectedRoles||[String(roleDisplay).toLowerCase().replaceAll(' ','_')];
+ const titleCaseUIRole=x=>String(x).replace(/\b\w/g,ch=>ch.toUpperCase());
+ return run(common,special,roleDisplay,observed,modelNumber,safe,roles,catalog,titleCaseUIRole);
+};
 
 test('personnel Overview shows real role-specific attribute names, not 46 placeholder slots',()=>{
  const common=catalog.person_common,special=catalog.person_roles.jockey;
@@ -68,6 +73,15 @@ test('compound founder, chief strategist and racing-industry roles resolve to ac
  assert.deepEqual(trainer.roles,['trainer']);
  const stable=classify('stable groom',catalog);
  assert.deepEqual(stable.roles,['stable_staff']);
+});
+test('multi-role founders show separate approved owner and bloodstock specialty groups',()=>{
+ const defs=[...catalog.person_roles.owner,...catalog.person_roles.bloodstock_professional];
+ const sheet=render(catalog.person_common,defs,'Founder / Chief Bloodstock Strategist',new Map(),()=>null,esc,
+  ['owner','bloodstock_professional']);
+ assert.equal(sheet.total,catalog.person_common.length+defs.length);
+ assert.match(sheet.html,/OWNER SKILLS/);
+ assert.match(sheet.html,/BLOODSTOCK PROFESSIONAL SKILLS/);
+ assert.match(sheet.html,/Bloodstock Valuation|Deal Negotiation|Market Knowledge/);
 });
 test('Overview and deeper Attributes share the same source model, while the horse dossier remains unchanged',()=>{
  assert.match(js,/const skillSheet=person\.profileAttributes\(\)/);
