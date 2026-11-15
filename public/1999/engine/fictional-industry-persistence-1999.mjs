@@ -51,8 +51,13 @@ export async function open1999IndustryDatabase(indexedDB=globalThis.indexedDB){
     .objectStore('horseEdits').put(edit,worldId+':'+horseId));
   },
   async commitManifest(worldId,manifest){
-   return request(db.transaction('manifests','readwrite')
-    .objectStore('manifests').put(manifest,worldId));
+   return new Promise((resolve,reject)=>{
+    const tx=db.transaction('manifests','readwrite');
+    tx.objectStore('manifests').put(manifest,worldId);
+    tx.oncomplete=()=>resolve();
+    tx.onerror=()=>reject(tx.error||Error('Manifest commit failed'));
+    tx.onabort=()=>reject(tx.error||Error('Manifest commit aborted'));
+   });
   },
   close(){db.close()}
  };
