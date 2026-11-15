@@ -97,6 +97,8 @@ function ordinaryAge1999(seed,raceId,date,weekPlan){
 }
 
 function levelFor(id,program){
+ if(['PREMIER','MAJOR','REGIONAL','LOCAL','FAIR','GROWTH','REVIVAL'].includes(program?.gameTier))
+  return program.gameTier;
  if(program?.basis==='WTW_FICTIONAL_GAME_MODELED')return 'GROWTH';
  if(/WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION|WTW_ALTERNATE_SURVIVAL_MODELED/.test(program?.basis||''))return 'REVIVAL';
  if(FAIR.has(id))return 'FAIR';
@@ -194,7 +196,9 @@ export function buildConditionBook1999({date,track,trackIndex,seed=19990101,sour
    cl=String(stake.grade||stake.status||'STAKES');
    ageRequirement=ageForStakes(stake);
    sexRestriction=sexesForStakes(stake);
-   winRestriction='Stakes nomination, qualification and declared weights to be determined';
+   winRestriction=stake.canonical===false?
+    'WTW feature entry under listed age, sex, surface and distance conditions':
+    'Stakes nomination, qualification and declared weights to be determined';
    fullConditions=String(stake.fullConditions||stake.name+'; '+ageRequirement+'; '+(sexRestriction==='FILLIES_AND_MARES'?'fillies and mares':'open sexes')+
     '. Stakes nominations and eligibility are not yet published in this WTW game condition book.');
    surface=String(stake.surface||'DIRT').toUpperCase();
@@ -233,7 +237,9 @@ export function buildConditionBook1999({date,track,trackIndex,seed=19990101,sour
    name:stake?.name||'Race '+number,conditions:stake?'Stakes — '+cl:cl,
    maidenOnly:!stake&&cl.startsWith('Maiden'),maxCareerWins,claimingPrice,winRestriction,fullConditions,
    weightConditions:'Weights and allowances pending declaration; no official impost recorded',
-   entryTerms:'No official entry deadline or nomination terms recorded',
+   entryTerms:stake?.canonical===false?
+    'WTW modeled entry; listed age, sex, surface and distance restrictions apply. No nomination fee is modeled.':
+    'No official entry deadline or nomination terms recorded',
    ageRequirement,sexRestriction,surface,distanceFurlongs,purse,
    fieldCapacity:8+hash(seed,raceId+':field')%7,currentEntries:[],results:[],
    status:'CONDITION_BOOK_PROPOSAL_NOT_RUN',canonical:false,programTier:profile.tier,

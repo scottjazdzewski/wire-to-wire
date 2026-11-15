@@ -3,9 +3,9 @@ import {test} from 'node:test';
 import {TRACK_PROGRAM_1999,trackMeetOpen1999} from '../public/next/1999-track-program.mjs';
 import {WTW_ALTERNATE_STAKES_1999} from '../public/next/1999-alternate-stakes.mjs';
 import {WTW_REGIONAL_STAKES_1999} from '../public/next/1999-regional-stakes.mjs';
-test('all 118 approved North American/Cuban tracks retain their 1999 racing program',()=>{
- assert.equal(Object.keys(TRACK_PROGRAM_1999).length,118);
- assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='WTW_FICTIONAL_GAME_MODELED').length,8);
+test('all 124 approved North American/Cuban identities retain their program or archive status',()=>{
+ assert.equal(Object.keys(TRACK_PROGRAM_1999).length,124);
+ assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='WTW_FICTIONAL_GAME_MODELED').length,13);
 });
 test('regional expansion complements rather than duplicates 1999 source and fictional flagship stakes',()=>{
  const currentIds=new Set(WTW_ALTERNATE_STAKES_1999.map(x=>x.id));

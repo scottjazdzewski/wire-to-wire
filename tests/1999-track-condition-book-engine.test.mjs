@@ -15,8 +15,10 @@ function card(world,sourceId,date){
 const summary=r=>({date:r.date,trackId:r.trackId,number:r.number,name:r.name,purse:r.purse,
  surface:r.surface,distanceFurlongs:r.distanceFurlongs,stakeId:r.stakeId||null});
 
-test('115 playable tracks have tiered class/purse profiles; all 118 identities remain',()=>{
- assert.equal(browser.counts.tracks,118);
+test('107 playable tracks have tiered class/purse profiles; all 124 identities remain',()=>{
+ assert.equal(browser.counts.tracks,124);
+ assert.equal(browser.counts.activeTracks,107);
+ assert.equal(browser.counts.historicalTracks,17);
  const premier=trackConditionProfile1999('T-0013'),local=trackConditionProfile1999('T-0048'),
  fair=trackConditionProfile1999('T-0045'),fiction=trackConditionProfile1999('T-0094');
  assert.equal(premier.tier,'PREMIER');

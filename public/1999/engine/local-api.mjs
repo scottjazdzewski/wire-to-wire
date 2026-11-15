@@ -4,7 +4,8 @@
  * NO full-world generator, no 87,500 or 325,000 test horses, no legacy
  * fictional mode, no generated owner, trainer, barn, staff or auction.
  * 1999 living animals are only 73 APPROVED breeding stock until the user
- * explicitly registers new game horses. The 118 racecourses remain visible.
+ * explicitly registers new game horses. All 124 approved track IDs remain visible;
+ * 107 have active modeled 1999 racing and 17 retain historical-only profiles.
  */
 import {createFounding1999Universe,FOUNDING_WORLD_MODE} from './founding-world-1999.mjs';
 import {createClean1999Clock} from '../test-clock.mjs';

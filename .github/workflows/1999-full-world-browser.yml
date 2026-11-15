@@ -1,0 +1,38 @@
+name: WTW Full 1999 Browser World Acceptance
+on:
+  pull_request:
+    paths:
+      - 'public/1999/engine/fictional-industry-*.mjs'
+      - 'public/1999/engine/fictional-world-name-engine.mjs'
+      - 'public/1999/engine/personnel-name-engine.mjs'
+      - 'public/next/1999-commercial-career-manager.mjs'
+      - 'public/next/1999-track-program.mjs'
+      - 'scripts/1999-full-world-browser-cdp.mjs'
+      - '.github/workflows/1999-full-world-browser.yml'
+  workflow_dispatch:
+jobs:
+  full-world-chromium:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify installed Chromium
+        run: command -v google-chrome || command -v chromium || command -v chromium-browser
+      - name: Generate, reopen, and inspect full 1999 industry in real Chromium IndexedDB
+        shell: bash
+        run: |
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          CHROME="$CHROME" node scripts/1999-full-world-browser-cdp.mjs | tee full-world-browser.log
+          grep -q 'WTW_FULL_WORLD_FIRST_OPEN_PASS' full-world-browser.log
+          grep -q 'WTW_FULL_WORLD_BROWSER_REOPEN_PASS' full-world-browser.log
+      - name: Save full-world browser test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-full-1999-world-browser-evidence
+          path: full-world-browser.log
+          retention-days: 14
+          if-no-files-found: warn
