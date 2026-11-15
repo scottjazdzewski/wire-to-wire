@@ -95,20 +95,34 @@ export function createNamingDeskController({
    // Career-wide rejected and already-chosen names always stay excluded.
    // Kept names remain available from the bank for another future horse.
    const blocked=excludedNamingFeedbackNames(feedback());
-   const verdict=generateLocalStoryFirstHorseNames({
-    ...scenario,attempt:model.attempt++,count:8,
-    recentNames:model.recentNames,additionalReviewedNames:blocked,
-    nameFeedback:feedback(),direction:model.fields.direction
-   });
-   model.results=verdict.screened;
+   // A single button press presents a genuine list instead of just 8 cards.
+   // Each of three calls still uses the existing eight-name editorial gate;
+   // we never bypass source, history, length or independent-screen checks.
+   const found=[],batchKeys=new Set(),recent=[...model.recentNames],profile=feedback();
+   let held=0;
+   for(let page=0;page<3;page++){
+    const verdict=generateLocalStoryFirstHorseNames({
+     ...scenario,attempt:model.attempt++,count:8,
+     recentNames:recent.slice(-60),
+     additionalReviewedNames:[...blocked,...found.map(x=>x.name)],
+     nameFeedback:profile,direction:model.fields.direction
+    });
+    held+=verdict.held||0;
+    for(const candidate of verdict.screened){
+     const key=candidate.name.toLocaleLowerCase('en-US');
+     if(batchKeys.has(key))continue;
+     batchKeys.add(key);found.push(candidate);recent.push(candidate.name);
+    }
+   }
+   model.results=found;
    const existing=new Set(model.allResults.map(x=>x.name.toLocaleLowerCase('en-US')));
    for(const row of model.results)if(!existing.has(row.name.toLocaleLowerCase('en-US'))){
     model.allResults.push(row);existing.add(row.name.toLocaleLowerCase('en-US'));
    }
    model.recentNames=[...model.recentNames,...model.results.map(r=>r.name)].slice(-60);
    model.hasGenerated=true;model.view='ALL';
-   model.notice=verdict.readyForIndependentEditor+' EDITOR-SCREENED NAME(S) · '+
-    verdict.held+' HELD · 0 NETWORK CALLS. Your prior choices influence ranking.';
+   model.notice=model.results.length+' EDITOR-SCREENED NAME(S) · '+
+    held+' HELD · 0 NETWORK CALLS. Your prior choices influence ranking.';
   }catch(error){
    model.error='LOCAL NAMING FAILED: '+String(error?.message||error);
   }finally{model.busy=false;refresh()}
