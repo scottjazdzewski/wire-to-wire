@@ -74,8 +74,8 @@ if grep -q 'CONNECTED WORLD RECORDS' visual-audit/dom/office-messages.html ||
    grep -q 'CONNECTED WORLD RECORDS' visual-audit/dom/office-decisions.html; then
  echo 'Office Inbox/Decisions regressed to generic world directory' >&2; exit 1
 fi
-if ! grep -q 'training-set' visual-audit/dom/stable-training.html; then
- echo 'Stable Training missing real weekly program controls' >&2; exit 1
+if ! grep -q 'WEEKLY PROGRAM / CHANGE PLAN' visual-audit/dom/stable-training.html; then
+ echo 'Stable Training missing its real program and condition table' >&2; exit 1
 fi
 capture racing-calendar '?ui=Racing%20%E2%80%94%20Calendar' 'ng-dept-roster'
 capture racing-entries '?ui=Racing%20%E2%80%94%20Entries' 'ng-dept-roster'
