@@ -291,6 +291,7 @@ try {
    names:[...screen.querySelectorAll('.ng-manager-rows .ng-manager-row-name strong')]
     .map(x=>x.textContent.trim()),sourceLinks:[...screen.querySelectorAll('.ng-manager-rows .ng-manager-row')]
     .map(x=>x.dataset.val),
+   worldTotal:screen?.querySelector('.ng-world-directory-pager')?.textContent?.match(/(\d+) RECORDS/)?.[1]||null,
    legacy:screen?.querySelectorAll('.ng-connected-profile,.ng-connected-drop').length||0
   };
  })()`);
@@ -324,10 +325,24 @@ try {
   const descending=await managerReady(item.title+' descending',item.cls,'descending');
   assert.equal(ascending.names.length,original.names.length);
   assert.equal(descending.names.length,original.names.length);
-  assert.deepEqual(ascending.sourceLinks.slice().sort(),original.sourceLinks.slice().sort(),
-   'Sorting changed the source-linked record identities in '+item.title);
-  assert.deepEqual(descending.sourceLinks.slice().sort(),original.sourceLinks.slice().sort(),
-   'Reverse sorting changed the source-linked record identities in '+item.title);
+  if(item.title==='World Overview'){
+   // The full directory pages only visible DOM rows. Descending sort is
+   // expected to expose different canonical IDs from the same full index.
+   assert.equal(ascending.worldTotal,original.worldTotal);
+   assert.equal(descending.worldTotal,original.worldTotal);
+   for(const view of [original,ascending,descending]){
+    assert.ok(view.names.length>0&&view.names.length<=100);
+    assert.equal(view.sourceLinks.length,view.names.length);
+    assert.ok(view.sourceLinks.every(id=>
+     /^(?:horse|historical-horse|person|farm|track):[A-Za-z0-9-]+$/.test(id)),
+     'World contains an unapproved or unstable record link');
+   }
+  }else{
+   assert.deepEqual(ascending.sourceLinks.slice().sort(),original.sourceLinks.slice().sort(),
+    'Sorting changed the source-linked record identities in '+item.title);
+   assert.deepEqual(descending.sourceLinks.slice().sort(),original.sourceLinks.slice().sort(),
+    'Reverse sorting changed the source-linked record identities in '+item.title);
+  }
   const cmp=(a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'});
   if(original.names.length>=2){
    assert.deepEqual(ascending.names,ascending.names.slice().sort(cmp),
