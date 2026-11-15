@@ -4123,6 +4123,66 @@ function stableOperationsView(page){
   '</strong><small>Review source-backed records and available controls</small></span>'+
   '<span>'+glyph('right',13)+'</span></button></div></section></aside></div></section>';
 }
+/* Player career is an operational dossier, not the World directory.
+ * Read only the existing career record; missing values stay unknown. */
+function managerCareerView(){
+ const game=state(),live=window.__WTW_1999_UI_DATA__?.gameplayService?.state||{};
+ const player=live.player||game.player||{};
+ const world=game.worldAnchor||{};
+ const profile=world.worldProfile||{};
+ const date=depGameDay(),horses=horseRows();
+ const pending=currentMessages().filter(m=>!m.resolved);
+ const recorded=(v)=>v===undefined||v===null||v===''?'Not recorded':String(v);
+ const worldMode=profile.mode||world.mode;
+ const label=worldMode==='FOUNDING_1999'?'Founding 1999':recorded(worldMode);
+ const person=recorded(player.name||player.personName||player.personId);
+ const role=recorded(player.role);
+ const operation=recorded(player.organizationName||player.operationName||player.organizationId);
+ const seed=recorded(profile.seed??world.seed);
+ const money=availableCash();
+ const metric=(heading,value)=>'<div class="ng-manager-metric"><small>'+safe(heading)+
+  '</small><strong>'+safe(value)+'</strong></div>';
+ const cell=(title,value)=>'<div class="ng-manager-row" role="row">'+
+  '<span class="ng-manager-row-type">CAREER</span>'+
+  '<span class="ng-manager-row-name"><strong>'+safe(title)+'</strong></span>'+
+  '<span class="ng-manager-row-detail">'+safe(value)+'</span>'+
+  '<span class="ng-manager-row-context">SOURCE RECORD</span></div>';
+ const go=(section,title,description)=>'<button type="button" class="ng-manager-case" data-ng="menu" data-val="'+section+'">'+
+  '<span>'+glyph('folder',14)+'</span><span><strong>'+title+'</strong><small>'+
+  description+'</small></span><span>'+glyph('right',13)+'</span></button>';
+ return '<section class="ng-manager-screen ng-manager-career">'+
+  '<header class="ng-manager-head"><div class="ng-manager-identity">'+
+  '<span>FRONT OFFICE / CAREER</span><h2>PLAYER CAREER & WORLD STATUS</h2></div>'+
+  '<div class="ng-manager-controls">'+managerRecordViewControl('Office','Career')+
+  '<button type="button" data-ng="save-open">'+glyph('save',13)+' MANAGE CAREERS</button></div></header>'+
+  '<div class="ng-manager-metrics">'+
+  metric('GAME DATE',date)+metric('ACTIVE STABLE HORSES',horses.length)+
+  metric('OPEN OFFICE FILES',pending.length)+
+  metric('RECORDED CASH',money===null?'Not recorded':depMoney(money))+
+  '</div><div class="ng-manager-workspace">'+
+  '<section class="ng-manager-primary"><header><strong>CURRENT CAREER RECORD</strong>'+
+  '<span>LOCAL GAME STATE · READ-ONLY</span></header>'+
+  '<div class="ng-manager-rows" role="region" tabindex="0" aria-label="Current player career facts">'+
+  cell('PLAYER',person)+cell('ROLE',role)+cell('OPERATION',operation)+
+  cell('WORLD',label)+cell('WORLD SEED',seed)+cell('CURRENT DATE',date)+
+  '<p class="ng-manager-empty">This view contains only recorded career fields. '+
+  'Missing identity, history, finances and achievements are not invented.</p></div>'+
+  '</section><aside class="ng-manager-sidebar"><section class="ng-manager-secondary">'+
+  '<header><strong>CAREER MANAGEMENT</strong><span>LOCAL SAVES</span></header>'+
+  '<div class="ng-manager-secondary-list">'+
+  '<button type="button" class="ng-manager-case" data-ng="commercial-career-open">'+
+  '<span>'+glyph('save',14)+'</span><span><strong>WORLD & COMPACT SAVE MANAGER</strong>'+
+  '<small>Inspect, save, load or export local careers</small></span>'+
+  '<span>'+glyph('right',13)+'</span></button>'+
+  '<p class="ng-manager-empty">Opening this manager does not overwrite the current career. '+
+  'Loading or creating another world requires confirmation.</p></div></section>'+
+  '<section class="ng-manager-secondary"><header><strong>OPERATIONS</strong>'+
+  '<span>EXISTING DESKS</span></header><div class="ng-manager-secondary-list">'+
+  go('Stable','STABLE ROSTER','Review assigned horses')+
+  go('Racing','RACING CALENDAR','Review condition books and targets')+
+  go('Finances','FINANCE DESK','Review posted financial evidence')+
+  '</div></section></aside></div></section>';
+}
 function managerDashboard(){
  const section=APP.section||'Office',routeName=String(APP.custom||'');
  // Direct deep links must not silently turn Messages/Decisions into Overview.
@@ -4130,6 +4190,7 @@ function managerDashboard(){
  const page=section==='Office'&&/^(Messages|Decisions|Reports|Career)$/.test(routeName)?
   routeName:(APP.page||'Overview');
  if(section==='Office'&&['Messages','Decisions'].includes(page))return managerOfficeInboxView(page);
+ if(section==='Office'&&page==='Career')return managerCareerView();
  if(section==='Stable'&&['Health','Race Plans','Barns'].includes(page))return stableOperationsView(page);
  if(section==='Stable'&&page==='Training')return liveStableTrainingView();
  // The live Stable roster is routed directly, even without a legacy Office route.

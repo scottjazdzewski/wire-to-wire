@@ -80,6 +80,22 @@ test('direct Office deep links keep their requested page instead of silently sho
  assert.match(js,/if\(section==='Office'&&\['Messages','Decisions'\]\.includes\(page\)\)return kind==='decision'/);
  assert.match(js,/managerRecordViewControl\(section,page\)/);
 });
+test('Office Career is its own source-backed career and save view, never World search',()=>{
+ const start=js.indexOf('function managerCareerView(){');
+ const end=js.indexOf('function managerDashboard(){',start);
+ assert.ok(start>0&&end>start);
+ const page=js.slice(start,end);
+ assert.match(page,/const game=state\(\)/);
+ assert.match(page,/gameplayService\?\.state/);
+ assert.match(page,/const person=recorded/);
+ assert.match(page,/const role=recorded/);
+ assert.match(page,/PLAYER CAREER & WORLD STATUS/);
+ assert.match(page,/managerRecordViewControl\('Office','Career'\)/);
+ assert.match(page,/data-ng="commercial-career-open"/);
+ assert.match(page,/Missing identity, history, finances and achievements are not invented/);
+ assert.doesNotMatch(page,/globalSearchItems\(|fakeCareer|mockPlayer/);
+ assert.match(js,/section==='Office'&&page==='Career'\)return managerCareerView\(\)/);
+});
 test('Office Inbox and Decisions use source cases, not a fake connected-world directory',()=>{
  const start=js.indexOf('function managerOfficeInboxView(page){');
  const stop=js.indexOf('function managerDashboard(){',start);

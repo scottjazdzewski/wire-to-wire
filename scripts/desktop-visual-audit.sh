@@ -79,7 +79,7 @@ capture naming-desk '?ui=Stable%20%E2%80%94%20Naming%20Desk' 'ng-naming-desk'
 capture office-messages '?ui=Messages' 'ng-manager-message-inbox'
 capture office-decisions '?ui=Decisions' 'ng-manager-message-inbox'
 
-capture office-career '?ui=Career' 'ng-manager-screen'
+capture office-career '?ui=Career' 'ng-manager-career'
 capture stable-training '?ui=Stable%20%E2%80%94%20Training' 'ng-training-desk'
 # Real content checks: a generic directory is no longer acceptable on these routes.
 if grep -q 'CONNECTED WORLD RECORDS' visual-audit/dom/office-messages.html ||
