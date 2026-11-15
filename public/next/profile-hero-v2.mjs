@@ -32,8 +32,10 @@ export function removeWhiteEdgeMatte(imageData){
     !data||data.length!==width*height*4)return {changed:false,box:null};
  const corners=[0,width-1,width*(height-1),width*height-1];
  const nearWhite=p=>{
-  const i=4*p;
-  return data[i]>=232&&data[i+1]>=232&&data[i+2]>=232;
+  const i=4*p,r=data[i],g=data[i+1],b=data[i+2];
+  // Match the actual white-matte detector: off-white WebP exports are
+  // not guaranteed to have RGB 255 corners after compression.
+  return data[i+3]>=240&&Math.min(r,g,b)>=228&&Math.max(r,g,b)-Math.min(r,g,b)<32;
  };
  if(corners.filter(nearWhite).length<3)return {changed:false,box:null};
  const pixels=width*height,seen=new Uint8Array(pixels),queue=new Uint32Array(pixels);

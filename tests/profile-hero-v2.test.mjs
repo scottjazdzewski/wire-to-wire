@@ -34,6 +34,19 @@ test("legacy white-matte display uses reversible local blending before optional 
  assert.match(js,/img\.style\.mixBlendMode="";/);
  assert.match(js,/cachedLegacyHero\(absolute\)/);
 });
+test("off-white logo exports accepted by detector are also removable",()=>{
+ const w=40,h=30,rgba=new Uint8ClampedArray(w*h*4);
+ for(let i=0;i<w*h;i++)rgba.set([229,230,229,255],i*4);
+ for(let y=11;y<=18;y++)for(let x=6;x<=33;x++)rgba.set([8,24,61,255],(y*w+x)*4);
+ const ink=(14*w+12)*4;
+ const original=[...rgba.slice(ink,ink+4)];
+ assert.equal(hasLightCornerMatte({width:w,height:h,data:rgba}),true);
+ const result=removeWhiteEdgeMatte({width:w,height:h,data:rgba});
+ assert.equal(result.changed,true);
+ assert.equal(rgba[3],0);
+ assert.deepEqual([...rgba.slice(ink,ink+4)],original);
+ assert.ok(result.box.width<w&&result.box.height<h);
+});
 test("unreliable or missing corner mattes are preserved",()=>{
  const w=20,h=20,arr=new Uint8ClampedArray(w*h*4);
  for(let i=0;i<w*h;i++){arr[i*4]=8;arr[i*4+1]=92;arr[i*4+2]=43;arr[i*4+3]=255;}
