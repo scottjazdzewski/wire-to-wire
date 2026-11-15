@@ -9,9 +9,12 @@ import {generate1999IndustryRegistryBatches,count1999Registry}
  from './fictional-industry-registry-1999.mjs';
 import {plan1999IndustryStaffing,generate1999StaffingBatches}
  from './fictional-industry-staffing-1999.mjs';
+import {connect1999Horse,connect1999Person,connect1999DirectoryEntity,
+ validate1999GraphBatch,INDUSTRY_GRAPH_SCHEMA}
+ from './fictional-industry-graph-1999.mjs';
 export const PERSISTENT_INDUSTRY_SCHEMA='WTW_PERSISTENT_INDUSTRY_1999_V1';
 export const PERSISTENT_INDUSTRY_DB='WireToWireFictionalIndustry1999V1';
-const stores=['manifests','horseBatches','personBatches','horseEdits','careerRuns'];
+const stores=['manifests','horseBatches','personBatches','horseEdits','careerRuns','directory'];
 function request(req){return new Promise((resolve,reject)=>{
  req.onsuccess=()=>resolve(req.result);
  req.onerror=()=>reject(req.error||Error('IndexedDB request failed'));
@@ -32,6 +35,16 @@ export async function open1999IndustryDatabase(indexedDB=globalThis.indexedDB){
   async get(store,key){
    if(!stores.includes(store))throw Error('Unknown industry store');
    return request(db.transaction(store,'readonly').objectStore(store).get(key));
+  },
+  async commitDirectory(worldId,manifest,records){
+   return new Promise((resolve,reject)=>{
+    const tx=db.transaction(['manifests','directory'],'readwrite');
+    tx.objectStore('directory').put(records,worldId);
+    tx.objectStore('manifests').put(manifest,worldId);
+    tx.oncomplete=()=>resolve();
+    tx.onerror=()=>reject(tx.error||Error('Industry directory commit failed'));
+    tx.onabort=()=>reject(tx.error||Error('Industry directory commit aborted'));
+   });
   },
   async commitBatch({worldId,manifest,kind,index,records}){
    if(!['horseBatches','personBatches'].includes(kind)||
@@ -115,7 +128,8 @@ export async function createPersistent1999Industry({
    existing.batchSize!==batchSize||
    existing.directoryHash!==directoryHash||
    existing.horseCount!==totalHorses||
-   existing.personCount!==totalPeople)
+   existing.personCount!==totalPeople||
+   existing.graphSchema!==INDUSTRY_GRAPH_SCHEMA)
    throw Error('Existing industry identity or generation parameters conflict');
   if(existing.status==='COMPLETE')return existing;
  }
@@ -123,8 +137,25 @@ export async function createPersistent1999Industry({
   schema:PERSISTENT_INDUSTRY_SCHEMA,worldId,seed,batchSize,directoryHash,
   status:'GENERATING',horseCount:totalHorses,personCount:totalPeople,
   horseBatchesCommitted:0,personBatchesCommitted:0,
+  directoryCommitted:false,graphSchema:INDUSTRY_GRAPH_SCHEMA,
   plan,staffing,source:'DETERMINISTIC_OFFLINE_1999'
  };
+ if(!manifest.directoryCommitted){
+  const records=[
+   ...tracks.map(t=>connect1999DirectoryEntity(t,{seed,type:'track'})),
+   ...farms.map(f=>connect1999DirectoryEntity(f,{seed,type:'farm',
+    homeTrackId:tracks.find(t=>f.id.includes(t.id))?.id??null})),
+   ...owners.map(o=>connect1999DirectoryEntity(o,{seed,type:'owner',
+    homeTrackId:tracks.find(t=>o.id.includes(t.id))?.id??null}))
+  ];
+  const ids=new Set([...tracks,...farms,...owners].map(e=>e.id));
+  const audit=validate1999GraphBatch(records,ids);
+  if(!audit.valid)throw Error('Industry directory has broken graph references');
+  const next={...manifest,directoryCommitted:true};
+  if(!store.commitDirectory)throw Error('Durable directory store unavailable');
+  await store.commitDirectory(id,next,records);
+  manifest=next;
+ }
  for(const [kind,generator] of [
   ['horseBatches',generate1999IndustryRegistryBatches({
    seed,plan,farms,tracks,owners,batchSize})],
@@ -136,7 +167,11 @@ export async function createPersistent1999Industry({
   for(const batch of generator){
    if(index<manifest[progressKey]){index++;continue}
    const next={...manifest,[progressKey]:index+1};
-   await store.commitBatch({worldId:id,manifest:next,kind,index,records:batch.records});
+   const records=kind==='horseBatches'?
+    batch.records.map(h=>connect1999Horse(h,{seed,
+     trainerCount:staffing.counts.trainer,jockeyCount:staffing.counts.jockey})):
+    batch.records.map(p=>connect1999Person(p,{seed}));
+   await store.commitBatch({worldId:id,manifest:next,kind,index,records});
    manifest=next;index++;
    onProgress({kind,completed:index,totalRecords:kind==='horseBatches'?
     totalHorses:totalPeople});
@@ -236,4 +271,12 @@ export async function loadPersistent1999CareerRun(store,manifest,runId){
   record.worldSchema!==manifest.schema)
   throw Error('Career run references a different world');
  return record;
+}
+
+export async function readPersistent1999Directory(store,manifest){
+ if(manifest?.status!=='COMPLETE'||!manifest.directoryCommitted)
+  throw Error('Industry directory is incomplete');
+ const directory=await store.get('directory',keyOf(manifest.seed,manifest.worldId));
+ if(!Array.isArray(directory))throw Error('Industry directory missing');
+ return directory;
 }
