@@ -9,6 +9,8 @@ on:
       - 'scripts/windows-desktop-smoke.ps1'
       - 'scripts/windows-desktop-visible.ps1'
       - 'scripts/build-wtw-desktop-icon.py'
+      - 'scripts/prepare-wtw-desktop-release.mjs'
+      - 'tests/desktop-latest-release.test.mjs'
       - 'tests/desktop-g1-local-content.test.cjs'
       - '.github/workflows/windows-desktop-exe.yml'
   push:
@@ -20,6 +22,8 @@ on:
       - 'scripts/windows-desktop-smoke.ps1'
       - 'scripts/windows-desktop-visible.ps1'
       - 'scripts/build-wtw-desktop-icon.py'
+      - 'scripts/prepare-wtw-desktop-release.mjs'
+      - 'tests/desktop-latest-release.test.mjs'
       - 'tests/desktop-g1-local-content.test.cjs'
       - '.github/workflows/windows-desktop-exe.yml'
   workflow_dispatch:
@@ -55,7 +59,7 @@ jobs:
       - name: Validate one offline app protocol and source-backed G1 shell
         shell: pwsh
         run: |
-          node --test tests/desktop-g1-local-content.test.cjs
+          node --test tests/desktop-g1-local-content.test.cjs tests/desktop-latest-release.test.mjs
           node --check desktop/main.cjs
           node --check desktop/preload.cjs
           node --check desktop/local-content.cjs
@@ -122,3 +126,100 @@ jobs:
             dist/visible-evidence/*.png
           if-no-files-found: warn
           retention-days: 14
+
+  publish-verified-latest:
+    name: Publish Latest Verified Windows EXEs
+    needs: windows-executable
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: wtw-desktop-publish-latest
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Check out the exact version that passed Windows tests
+        uses: actions/checkout@v4
+      - name: Publish only when no newer successfully verified EXE has already been released
+        id: current
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Continuous engineering moves main frequently. The newest VALIDATED
+          # build can be published even if newer untested commits exist.
+          # Never replace a later successful release with an older build.
+          previous_sha="$(gh release view --json targetCommitish --jq '.targetCommitish' 2>/dev/null || true)"
+          if [[ "$previous_sha" =~ ^[a-f0-9]{40}$ ]]; then
+            relation="$(gh api "repos/$GITHUB_REPOSITORY/compare/$GITHUB_SHA...$previous_sha" --jq '.status')"
+            case "$relation" in
+              ahead|identical)
+                echo "Already published an equally new or newer tested revision: $previous_sha"
+                echo "eligible=false" >> "$GITHUB_OUTPUT"
+                exit 0
+                ;;
+              behind)
+                echo "A newer verified release is eligible to replace $previous_sha"
+                ;;
+              *)
+                echo "::error::Published release is not on same ordered history; refusing an unsafe update: $relation"
+                exit 1
+                ;;
+            esac
+          fi
+          echo "eligible=true" >> "$GITHUB_OUTPUT"
+      - name: Download the successfully tested EXEs
+        if: steps.current.outputs.eligible == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: WireToWire-Windows-Portable-and-Setup
+          path: incoming
+      - name: Verify package contents and assign permanent filenames
+        if: steps.current.outputs.eligible == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/prepare-wtw-desktop-release.mjs incoming release-assets "$GITHUB_SHA" "$GITHUB_RUN_ID"
+          ls -lh release-assets
+          {
+            echo '# Wire to Wire — Latest Windows Desktop Test Build'
+            echo
+            echo '**UNSIGNED DEVELOPMENT BUILD — NOT READY FOR COMMERCIAL SALE.**'
+            echo
+            echo "Git commit: $GITHUB_SHA"
+            echo
+            echo "GitHub Actions build: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo
+            echo 'Portable EXE, setup EXE and faster-starting no-install folder ZIP share one game.'
+            echo
+            echo 'This release is from the newest fully tested published build. Unmerged changes are never included.'
+            echo
+            echo 'G2 complete offline historical data and G3 desktop-authoritative career storage are unfinished. Keep backups of your career saves.'
+            echo
+            echo 'This is not a code-signed retail release.'
+          } > release-notes.md
+      - name: Create, verify and publish the complete latest Windows release
+        if: steps.current.outputs.eligible == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="desktop-test-run$GITHUB_RUN_NUMBER-$(echo "$GITHUB_SHA" | cut -c1-12)"
+          gh release create "$tag" release-assets/* \
+            --target "$GITHUB_SHA" \
+            --title "Wire to Wire Desktop Test Build — Run $GITHUB_RUN_NUMBER" \
+            --notes-file release-notes.md \
+            --draft
+          names="$(gh release view "$tag" --json assets --jq '[.assets[].name] | sort | join(",")')"
+          expected="$(printf '%s\n' 'SHA256SUMS.txt' 'WTW-Latest-Build-Info.json' 'WireToWire-NoInstall-Latest.zip' 'WireToWire-Portable-Latest.exe' 'WireToWire-Setup-Latest.exe' | sort | paste -sd, -)"
+          if [[ "$names" != "$expected" ]]; then
+            echo "::error::Unverified or incomplete release: $names"
+            exit 1
+          fi
+          # Only after all five assets exist may the stable URL switch over.
+          gh release edit "$tag" --draft=false --latest
+          echo "WTW_LATEST_PORTABLE https://github.com/$GITHUB_REPOSITORY/releases/latest/download/WireToWire-Portable-Latest.exe"
+          echo "WTW_LATEST_INSTALLER https://github.com/$GITHUB_REPOSITORY/releases/latest/download/WireToWire-Setup-Latest.exe"
+          echo "WTW_LATEST_FOLDER https://github.com/$GITHUB_REPOSITORY/releases/latest/download/WireToWire-NoInstall-Latest.zip"
