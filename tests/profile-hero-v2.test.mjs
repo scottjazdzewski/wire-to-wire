@@ -73,6 +73,12 @@ test("transparent brand pixels are never altered by white-background fallback",(
  assert.equal(removeWhiteEdgeMatte({width:w,height:h,data:arr}).changed,false);
  assert.deepEqual(arr,before);
 });
+test("legacy approved dark ink logos receive a neutral contrast halo without altering their pixel colors",()=>{
+ const source=readFileSync(new URL("../public/next/profile-hero-v2.mjs",import.meta.url),"utf8");
+ assert.match(source,/heroAvailable\(absolute\)\.then\(visual=>/);
+ assert.match(source,/mark\.classList\.toggle\("wtw-hero-dark-ink",visual\.ok&&visual\.darkInk\)/);
+ assert.match(css,/\.ng-profile-source-photo\.wtw-hero-dark-ink::before/);
+});
 test("farm/ownership logo badges are inside the protected hero grid",()=>{
  assert.match(css,/ng-profile-view\.ng-profile-farm > \.ng-profile-intro > \.ng-org-mark/);
 });
