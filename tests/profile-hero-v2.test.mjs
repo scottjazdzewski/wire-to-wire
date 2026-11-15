@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync,existsSync} from "node:fs";
-import {removeWhiteEdgeMatte,heroContext,profileTitle,heroCandidate,heroInitials,dossierLabel,visibleAlphaBounds} from "../public/next/profile-hero-v2.mjs";
+import {removeWhiteEdgeMatte,hasLightCornerMatte,heroContext,profileTitle,heroCandidate,heroInitials,dossierLabel,visibleAlphaBounds} from "../public/next/profile-hero-v2.mjs";
 
 const css=readFileSync(new URL("../public/next/next.css",import.meta.url),"utf8");
 const index=readFileSync(new URL("../public/next/index.html",import.meta.url),"utf8");
@@ -13,6 +13,47 @@ test("track and farm titles never expose raw route identifiers",()=>{
  assert.deepEqual(heroContext("WorldRecord:track%3AT-0017",""),{kind:"track",id:"T-0017"});
  assert.deepEqual(heroContext("FoundingProfile:facility:O-000061",""),{kind:"organization",id:"O-000061"});
  assert.equal(heroContext("WorldRecord:horse%3AH-0001",""),null);
+});
+test("white source canvases are detected from pixels, never track identities",()=>{
+ const w=32,h=24,rgba=new Uint8ClampedArray(w*h*4);
+ for(let i=0;i<w*h;i++)rgba.set([252,250,247,255],i*4);
+ for(let y=8;y<16;y++)for(let x=4;x<28;x++){
+  rgba.set([8,28,66,255],(y*w+x)*4);
+ }
+ assert.equal(hasLightCornerMatte({width:w,height:h,data:rgba}),true);
+ const transparent=rgba.slice();
+ for(const p of [0,w-1,w*(h-1),w*h-1])transparent[p*4+3]=0;
+ assert.equal(hasLightCornerMatte({width:w,height:h,data:transparent}),false);
+ assert.equal(hasLightCornerMatte({width:w,height:h,data:new Uint8ClampedArray(4)}),false);
+});
+test("legacy logo display conversion uses lossless, in-memory PNG, never a delayed WebP export",()=>{
+ const code=readFileSync(new URL("../public/next/profile-hero-v2.mjs",import.meta.url),"utf8");
+ const convert=code.slice(code.indexOf('async function makeLegacyHero('),code.indexOf('function cachedLegacyHero(',code.indexOf('async function makeLegacyHero(')));
+ assert.match(convert,/out\.toDataURL\("image\/png"\)/);
+ assert.match(convert,/data:image\/png;base64,/);
+ assert.doesNotMatch(convert,/out\.toBlob|createObjectURL/);
+ assert.match(convert,/removeWhiteEdgeMatte\(pixels\)/);
+});
+test("legacy white-matte display uses reversible local blending before optional alpha extraction",()=>{
+ const js=readFileSync(new URL("../public/next/profile-hero-v2.mjs",import.meta.url),"utf8");
+ assert.match(js,/hasLightCornerMatte\(\{width:sample\.width,height:sample\.height,data\}\)/);
+ assert.match(js,/img\.style\.mixBlendMode=matte\?"multiply":""/);
+ assert.match(js,/wtw-hero-white-matte/);
+ assert.match(js,/img\.style\.mixBlendMode="";/);
+ assert.match(js,/cachedLegacyHero\(absolute\)/);
+});
+test("off-white logo exports accepted by detector are also removable",()=>{
+ const w=40,h=30,rgba=new Uint8ClampedArray(w*h*4);
+ for(let i=0;i<w*h;i++)rgba.set([229,230,229,255],i*4);
+ for(let y=11;y<=18;y++)for(let x=6;x<=33;x++)rgba.set([8,24,61,255],(y*w+x)*4);
+ const ink=(14*w+12)*4;
+ const original=[...rgba.slice(ink,ink+4)];
+ assert.equal(hasLightCornerMatte({width:w,height:h,data:rgba}),true);
+ const result=removeWhiteEdgeMatte({width:w,height:h,data:rgba});
+ assert.equal(result.changed,true);
+ assert.equal(rgba[3],0);
+ assert.deepEqual([...rgba.slice(ink,ink+4)],original);
+ assert.ok(result.box.width<w&&result.box.height<h);
 });
 test("unreliable or missing corner mattes are preserved",()=>{
  const w=20,h=20,arr=new Uint8ClampedArray(w*h*4);
@@ -36,6 +77,15 @@ test("edge-connected whites disappear while enclosed white brand details survive
  assert.equal(a[(14*w+14)*4+3],255); // Interior white is brand ink
  assert.equal(a[(9*w+9)*4+3],255); // Dark badge is kept
  assert.ok(res.box.width<30&&res.box.height<30);
+});
+test("dark approved track wordmarks use a narrow readable light field rather than a blown-out billboard glow",()=>{
+ const start=css.indexOf('.ng-profile-source-photo.wtw-hero-dark-ink::before{');
+ const end=css.indexOf('}',start);
+ const rule=css.slice(start,end);
+ assert.match(rule,/inset:31% -2%!important/);
+ assert.match(rule,/ellipse 91% 82%/);
+ assert.match(rule,/filter:blur\(3px\)!important/);
+ assert.doesNotMatch(rule,/\.88\)|blur\(9px\)/);
 });
 test("hero grid explicitly separates metadata, actions and logo",()=>{
  assert.match(css,/grid-template-areas:"badge identity mark" "badge tools mark"/);
@@ -72,6 +122,19 @@ test("transparent brand pixels are never altered by white-background fallback",(
  const before=arr.slice();
  assert.equal(removeWhiteEdgeMatte({width:w,height:h,data:arr}).changed,false);
  assert.deepEqual(arr,before);
+});
+test("legacy approved dark ink logos receive a neutral contrast halo without altering their pixel colors",()=>{
+ const source=readFileSync(new URL("../public/next/profile-hero-v2.mjs",import.meta.url),"utf8");
+ assert.match(source,/heroAvailable\(absolute\)\.then\(visual=>/);
+ assert.match(source,/mark\.classList\.toggle\("wtw-hero-dark-ink",visual\.ok&&\(visual\.darkInk\|\|matte\)\)/);
+ assert.match(css,/\.ng-profile-source-photo\.wtw-hero-dark-ink::before/);
+});
+test("white legacy track mattes are cleaned before a potentially missing exact-ID upload probe",()=>{
+ const code=readFileSync(new URL("../public/next/profile-hero-v2.mjs",import.meta.url),"utf8");
+ const eager=code.indexOf('if(kind==="track"&&LEGACY_TRACK.test(img.getAttribute("src")||""))legacy();');
+ const later=code.indexOf('if(candidate){',eager);
+ assert.ok(eager>=0&&later>eager,"Gulfstream must not stay on white matte while an upload 404 is probed");
+ assert.match(code,/cachedLegacyHero\(absolute\)\.then\(asset=>/);
 });
 test("farm/ownership logo badges are inside the protected hero grid",()=>{
  assert.match(css,/ng-profile-view\.ng-profile-farm > \.ng-profile-intro > \.ng-org-mark/);

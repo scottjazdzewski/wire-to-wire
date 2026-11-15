@@ -1,3 +1,5 @@
+> **SUPERSEDED 2026-11-15:** This document describes the retired handcrafted/hash palette pilot. The current locked contract is [Logo-First Identity and Profile Depth v3](./WTW_LOGO_PIXEL_IDENTITY_AND_DEPTH_V3_2026-11-15.md). No colors in this archived document should be used in production.
+
 # WIRE TO WIRE — Entity Identity Theme System v1
 
 ## Purpose

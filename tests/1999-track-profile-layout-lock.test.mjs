@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const ui=read('public/next/next.js');
 const css=read('public/next/next.css');
-const palettes=JSON.parse(read('public/assets/identity/visual-themes-v1.json'));
+const theme=read('public/next/identity-themes.mjs');
 const stakes=ui.slice(ui.indexOf('const stakesTable=(limit=100)=>{'),
  ui.indexOf('\n const entityPhotoKind=',ui.indexOf('const stakesTable=(limit=100)=>{')));
 const trackStart=ui.indexOf('}else if(isTrack){\n   left=');
@@ -41,13 +41,26 @@ test('full stakes roster is visible by default with sortable columns, race links
  assert.match(css,/\.ng-track-stakes \.ng-stakes-table\{[^}]*overflow-y:auto/);
 });
 
-test('real track brand colors are derived from logo-matched canonical ID and control the actual hero',()=>{
- const belmont=palettes.tracks['T-0002'];
- assert.equal(belmont.name,'Belmont Park');
- assert.equal(belmont.base.toUpperCase(),'#0C603C');
- assert.equal(belmont.highlight.toUpperCase(),'#F0FFF5');
- assert.match(css,/#wtwNextgen\[data-wtw-identity\] \.ng-route-profile \.ng-profile-view\.ng-profile-track > \.ng-profile-intro\{/);
- assert.match(css,/#wtwNextgen\[data-wtw-identity\] \.ng-route-profile \.ng-track-stakes \.ng-stakes-head\{/);
+test('game-planned stakes have a human-readable grade badge, never a leaking internal enum',()=>{
+ assert.match(stakes,/const gradeLabel=\/\^PLANNED\[_ \]WTW/);
+ assert.match(stakes,/\?'PLANNED':cols\[2\]/);
+ assert.match(stakes,/safe\(gradeLabel\)/);
+ assert.match(stakes,/const rank=\(key,row\)/);
+ assert.match(stakes,/ng-stakes-trophy/);
+});
+test('facility desktop columns allocate readable room and preserve source tooltips',()=>{
+ assert.match(css,/ng-facility-records :is\(\.ng-stakes-head,\.ng-stakes-data\)\{grid-template-columns:/);
+ assert.match(css,/minmax\(0,1\.43fr\)!important/);
+ assert.match(ui,/const cells=cols\.map\(v=>'<span title="/);
+});
+test('real track brand colors come from actual approved logo pixels, not a guessed palette',()=>{
+ assert.match(theme,/paletteFromImageData/);
+ assert.match(theme,/logo-pixels/);
+ assert.match(theme,/isActualEntityLogo/);
+ assert.match(theme,/data-wtw-logo-theme/);
+ assert.doesNotMatch(theme,/housePalette|SWATCHES|visual-themes-v1\.json/);
+ assert.match(css,/#wtwNextgen\[data-wtw-identity\]\[data-wtw-logo-theme="ready"\] \.ng-route-profile \.ng-profile-view\.ng-profile-track > \.ng-profile-intro\{/);
+ assert.match(css,/#wtwNextgen\[data-wtw-identity\]\[data-wtw-logo-theme="ready"\] \.ng-route-profile \.ng-track-stakes \.ng-stakes-head\{/);
  assert.match(css,/--wtw-id-base/);
  assert.match(css,/\.ng-profile-view\.ng-profile-track:not\(\.ng-profile-farm\) \.ng-profile-badgeframe\{/);
  assert.match(css,/wtw_badge_track\.png/);

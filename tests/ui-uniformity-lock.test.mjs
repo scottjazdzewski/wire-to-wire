@@ -65,7 +65,7 @@ test('the one FM/OOTP renderer owns track rosters and the same view modes across
 });
 
 test('entity colors and logos can change, but never create another navigation implementation',()=>{
- assert.match(themes,/paletteFor\(/,'Entity-specific palettes remain presentation-only');
+ assert.match(themes,/paletteFromImageData\(/,'Entity-specific colors must come from the actual displayed logo pixels, presentation-only');
  assert.match(profile,/heroCandidate\(/,'Entity hero marks follow canonical IDs');
  assert.match(profile,/visibleAlphaBounds\(/,'Transparent master logos retain visual fitting');
  assert.match(profileCSS,/grid-template-areas:"badge identity mark" "badge tools mark"/,
@@ -75,6 +75,92 @@ test('entity colors and logos can change, but never create another navigation im
  assert.match(standard,/status semantics/,'Semantically meaningful status colors must be protected');
 });
 
+test('direct Office deep links keep their requested page instead of silently showing Overview',()=>{
+ assert.match(js,/const page=section==='Office'&&\/\^\(Messages\|Decisions\|Reports\|Career\)\$\/\.test\(routeName\)/);
+ assert.match(js,/if\(section==='Office'&&\['Messages','Decisions'\]\.includes\(page\)\)return kind==='decision'/);
+ assert.match(js,/managerRecordViewControl\(section,page\)/);
+});
+test('Office Career is its own source-backed career and save view, never World search',()=>{
+ const start=js.indexOf('function managerCareerView(){');
+ const end=js.indexOf('function managerDashboard(){',start);
+ assert.ok(start>0&&end>start);
+ const page=js.slice(start,end);
+ assert.match(page,/const game=state\(\)/);
+ assert.match(page,/gameplayService\?\.state/);
+ assert.match(page,/const person=recorded/);
+ assert.match(page,/const role=recorded/);
+ assert.match(page,/PLAYER CAREER & WORLD STATUS/);
+ assert.match(page,/managerRecordViewControl\('Office','Career'\)/);
+ assert.match(page,/data-ng="commercial-career-open"/);
+ assert.match(page,/Missing identity, history, finances and achievements are not invented/);
+ assert.doesNotMatch(page,/globalSearchItems\(|fakeCareer|mockPlayer/);
+ assert.match(js,/section==='Office'&&page==='Career'\)return managerCareerView\(\)/);
+});
+test('Office Inbox and Decisions use source cases, not a fake connected-world directory',()=>{
+ const start=js.indexOf('function managerOfficeInboxView(page){');
+ const stop=js.indexOf('function managerDashboard(){',start);
+ assert.ok(start>0&&stop>start);
+ const inbox=js.slice(start,stop);
+ assert.match(inbox,/const all=currentMessages\(\)/);
+ assert.match(inbox,/page==='Decisions'\?all\.filter\(m=>!m\.resolved\):all/);
+ assert.match(inbox,/data-ng="case"/);
+ assert.match(inbox,/ng-manager-message-inbox/);
+ assert.match(inbox,/FRONT OFFICE/);
+ assert.doesNotMatch(inbox,/data-ng="search-go"|fakeCase|exampleDecision|placeholderMessage/);
+ const dashboard=js.slice(js.indexOf('function managerDashboard(){'),js.indexOf('function open1999Race(',js.indexOf('function managerDashboard(){')));
+ assert.match(dashboard,/managerOfficeInboxView\(page\)/);
+ assert.match(dashboard,/page==='Training'\)return liveStableTrainingView\(\)/);
+});
+test('Stable Training opens the real simulation training desk and has a working back-to-roster action',()=>{
+ const start=js.indexOf('function liveStableTrainingView(){');
+ const stop=js.indexOf('function worldDirectoryHorseRows(){',start);
+ const view=js.slice(start,stop);
+ assert.match(view,/adapter\.horseTraining/);
+ assert.match(view,/data-ng="training-set"/);
+ assert.match(view,/ng-training-desk/);
+ assert.match(view,/data-ng="stable-filter" data-val="all"/);
+ assert.match(js,/APP\.custom==='Stable — Training'&&val==='all'/);
+ assert.match(js,/openCustomView\('Stable — Overview','Stable','Overview'\)/);
+});
+test('zero-horse player-stable views show grounded onboarding instead of an empty void',()=>{
+ const code=js.slice(js.indexOf('function stableOperationsView('),js.indexOf('function managerDashboard('));
+ assert.match(code,/ng-manager-onboarding/);
+ assert.match(code,/ZERO ASSIGNED HORSES/);
+ assert.match(code,/data-ng="menu" data-val="Stable"/);
+ assert.match(code,/data-ng="menu" data-val="World"/);
+ assert.match(css,/#wtwNextgen \.ng-manager-onboarding/);
+});
+test('Stable Health, Race Plans and Barns show real player horses and never generic World directory records',()=>{
+ const start=js.indexOf('function stableOperationsView(page){');
+ const end=js.indexOf('function managerDashboard(){',start);
+ assert.ok(start>0&&end>start);
+ const view=js.slice(start,end);
+ assert.match(view,/const rows=horseRows\(\),game=state\(\),races=racingRows\(\),cases=currentMessages\(\)/);
+ assert.match(view,/liveStableHorseData\(h,races\.find\(r=>r\.name===h\.name\),game,cases\)/);
+ assert.match(view,/managerRecordViewControl\('Stable',page\)/);
+ assert.match(view,/managerSortableColumns\(scope/);
+ assert.match(view,/data-ng="horse"/);
+ assert.match(view,/Source records have not been invented/);
+ assert.doesNotMatch(view,/globalSearchItems\(\)|sourceLinkedWorldDirectory|demoRecords/);
+ assert.match(js,/\['Health','Race Plans','Barns'\]\.includes\(page\)\)return stableOperationsView\(page\)/);
+});
+test('an untouched roster filter does not falsely hide source-empty navigation',()=>{
+ const helper=js.slice(js.indexOf('function departmentEmptyPanel('),js.indexOf('function departmentRoster('));
+ assert.match(helper,/const criteria=window\.WTW1999RosterFilters\?\.get/);
+ assert.match(helper,/criteria\.field&&String\(criteria\.query\|\|''\)\.trim\(\)/);
+ assert.match(helper,/criteria\.ageMin\?\?''/);
+ assert.match(helper,/criteria\.ageMax\?\?''/);
+ assert.doesNotMatch(helper,/Boolean\(APP\.departmentSearch\|\|window\.WTW1999RosterFilters/);
+});
+test('empty department actions only use registered VIEW tabs; no fictional data',()=>{
+ const helper=js.slice(js.indexOf('function departmentEmptyPanel('),js.indexOf('function departmentRoster('));
+ assert.match(helper,/tabmap\[section\]/);
+ assert.match(helper,/data-ng="tab"/);
+ assert.match(helper,/NO VERIFIED LEDGER ROWS/);
+ assert.match(helper,/NO COMMITTED ENTRIES/);
+ assert.match(js,/departmentEmptyPanel\(section,page,globalIndexing\?/);
+ assert.match(css,/td\.ng-rs-no-results\{height:148px!important/);
+});
 test('do not add page-specific CSS layers or new style patch stacks',()=>{
  const assets=[...html.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/g)]
   .map(m=>m[1].split('?')[0]);

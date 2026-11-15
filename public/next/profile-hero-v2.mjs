@@ -9,6 +9,19 @@ const ID_ORG=/^O-[0-9A-Za-z-]+$/;
 const LEGACY_TRACK=/\/assets\/(?:places\/track-logos|tracks)\/T-\d{4}\.webp(?:[?#]|$)/;
 const cache=new Map();
 
+/* Source-image evidence only: an image with a light opaque export canvas
+ * receives a non-destructive presentation blend while its transparent crop
+ * is prepared. Never guess from a track name or mutate approved artwork. */
+export function hasLightCornerMatte({width,height,data}={}){
+ if(!Number.isInteger(width)||!Number.isInteger(height)||width<2||height<2||
+    !data||data.length!==width*height*4)return false;
+ const pixels=[0,width-1,width*(height-1),width*height-1];
+ return pixels.filter(p=>{
+  const i=p*4;
+  return data[i+3]>=240&&Math.min(data[i],data[i+1],data[i+2])>=228&&
+   Math.max(data[i],data[i+1],data[i+2])-Math.min(data[i],data[i+1],data[i+2])<32;
+ }).length>=3;
+}
 /* Pixel-correct white matte elimination for LEGACY photo-backed track marks.
  * Only boundary-connected light pixels are keyed. Interior white details
  * surrounded by a colored emblem are preserved. The original file is never
@@ -19,8 +32,10 @@ export function removeWhiteEdgeMatte(imageData){
     !data||data.length!==width*height*4)return {changed:false,box:null};
  const corners=[0,width-1,width*(height-1),width*height-1];
  const nearWhite=p=>{
-  const i=4*p;
-  return data[i]>=232&&data[i+1]>=232&&data[i+2]>=232;
+  const i=4*p,r=data[i],g=data[i+1],b=data[i+2];
+  // Match the actual white-matte detector: off-white WebP exports are
+  // not guaranteed to have RGB 255 corners after compression.
+  return data[i+3]>=240&&Math.min(r,g,b)>=228&&Math.max(r,g,b)-Math.min(r,g,b)<32;
  };
  if(corners.filter(nearWhite).length<3)return {changed:false,box:null};
  const pixels=width*height,seen=new Uint8Array(pixels),queue=new Uint32Array(pixels);
@@ -40,8 +55,12 @@ export function removeWhiteEdgeMatte(imageData){
  for(let y=0;y<height;y++){enqueue(y*width);enqueue(y*width+width-1);}
  while(head<tail){
   const p=queue[head++],i=p*4,r=data[i],g=data[i+1],b=data[i+2];
-  const min=Math.min(r,g,b),a=(255-min)/255;
-  if(a<=0.016){data[i]=0;data[i+1]=0;data[i+2]=0;data[i+3]=0;}
+  const min=Math.min(r,g,b),max=Math.max(r,g,b),a=(255-min)/255;
+  // An opaque neutral off-white export canvas is not brand ink. Clear it
+  // completely rather than leaving a gray 10% rectangular ghost.
+  if((min>=228&&max-min<32)||a<=0.016){
+   data[i]=0;data[i+1]=0;data[i+2]=0;data[i+3]=0;
+  }
   else {
     const residual=255*(1-a);
     data[i]=Math.round(Math.max(0,Math.min(255,(r-residual)/a)));
@@ -84,10 +103,15 @@ async function makeLegacyHero(url){
  await original.decode();
  if(!original.naturalWidth||!original.naturalHeight)return null;
  const canvas=document.createElement("canvas");
- canvas.width=original.naturalWidth;canvas.height=original.naturalHeight;
+ // The profile displays this at less than 200px. Avoid decoding/editing
+ // millions of full-export pixels on each route visit; scaled source ink
+ // preserves the exact logo appearance at rendered UI resolution.
+ const scale=Math.min(1,768/Math.max(original.naturalWidth,original.naturalHeight));
+ canvas.width=Math.max(2,Math.round(original.naturalWidth*scale));
+ canvas.height=Math.max(2,Math.round(original.naturalHeight*scale));
  const ctx=canvas.getContext("2d",{willReadFrequently:true});
  if(!ctx)return null;
- ctx.drawImage(original,0,0);
+ ctx.drawImage(original,0,0,canvas.width,canvas.height);
  const pixels=ctx.getImageData(0,0,canvas.width,canvas.height);
  const result=removeWhiteEdgeMatte(pixels);
  if(!result.changed)return null;
@@ -99,9 +123,12 @@ async function makeLegacyHero(url){
  outctx.drawImage(canvas,
   result.box.x,result.box.y,result.box.width,result.box.height,
   0,0,out.width,out.height);
- const blob=await new Promise(resolve=>out.toBlob(resolve,"image/webp",.95));
- if(!blob)return null;
- return {url:URL.createObjectURL(blob),darkInk:result.darkInk};
+ // Lossless PNG preserves every surviving logo pixel and alpha. Avoid an
+ // asynchronous WebP encoder that can leave the original white export
+ // visible while a desktop view is already being painted.
+ const output=out.toDataURL("image/png");
+ if(!output.startsWith("data:image/png;base64,"))return null;
+ return {url:output,darkInk:result.darkInk};
 }
 function cachedLegacyHero(src){
  if(!cache.has(src))cache.set(src,makeLegacyHero(src).catch(()=>null));
@@ -189,7 +216,7 @@ function heroAvailable(src){
   heroProbes.set(src,img.decode().then(async()=>{
    // A dark wordmark needs extra contrast on a themed dark header. Sample
    // without changing the logo's source colors, even when optical crop fails.
-   let darkInk=false;
+   let darkInk=false,lightMatte=false;
    try{
     const sample=document.createElement("canvas");
     sample.width=64;sample.height=48;
@@ -197,6 +224,9 @@ function heroAvailable(src){
     if(ctx){
      ctx.drawImage(img,0,0,sample.width,sample.height);
      const data=ctx.getImageData(0,0,sample.width,sample.height).data;
+     // A source logo can still have a flat white export canvas. Detect
+     // the *actual pixels* of that canvas; do not assume any track has one.
+     lightMatte=hasLightCornerMatte({width:sample.width,height:sample.height,data});
      let luminosity=0,pixels=0;
      for(let i=0;i<data.length;i+=4)if(data[i+3]>=105){
       luminosity+=.2126*data[i]+.7152*data[i+1]+.0722*data[i+2];pixels++;
@@ -207,8 +237,8 @@ function heroAvailable(src){
    let displayUrl=src;
    try{displayUrl=await makeOpticalHero(img,src);}
    catch{/* The original transparent image remains a safe fallback. */}
-   return {ok:true,darkInk,displayUrl};
-  }).catch(()=>({ok:false,darkInk:false,displayUrl:src})));
+   return {ok:true,darkInk,lightMatte,displayUrl};
+  }).catch(()=>({ok:false,darkInk:false,lightMatte:false,displayUrl:src})));
  }
  return heroProbes.get(src);
 }
@@ -359,20 +389,40 @@ function init(){
    // transparent assets are used unmodified, including their letter counters.
    img.dataset.wtwMatteSource=src;
    const absolute=new URL(src,location.href).href;
+   // Existing approved marks may have no white matte to remove. Preserve
+   // the original image, but still reveal dark green/navy logo ink with a
+   // neutral ivory spotlight. Never recolor the brand artwork.
+   heroAvailable(absolute).then(visual=>{
+    if(!img.isConnected||img.dataset.wtwMatteSource!==src)return;
+    const matte=Boolean(visual.ok&&visual.lightMatte);
+    // Pure white pixels visually inherit the existing surface, while real
+    // navy/green logo pixels sit against the existing ivory radial spotlight.
+    // The immutable source WebP and its sampled palette are unchanged.
+    img.style.mixBlendMode=matte?"multiply":"";
+    mark.classList.toggle("wtw-hero-dark-ink",visual.ok&&(visual.darkInk||matte));
+    mark.classList.toggle("wtw-hero-white-matte",matte);
+   });
    cachedLegacyHero(absolute).then(asset=>{
     if(!asset||!img.isConnected||img.dataset.wtwMatteSource!==src)return;
     img.addEventListener("error",()=>{
      if(!img.isConnected||img.getAttribute("src")!==asset.url)return;
      img.src=src;img.dataset.wtwMatteSource=src;
-     mark.classList.remove("wtw-hero-transparent","wtw-hero-dark-ink");
+     mark.classList.remove("wtw-hero-transparent","wtw-hero-dark-ink","wtw-hero-white-matte");
+     img.style.mixBlendMode="";
      mark.classList.add("wtw-hero-legacy");
     },{once:true});
     img.src=asset.url;img.dataset.wtwMatteSource=asset.url;
-    mark.classList.remove("wtw-hero-legacy");
+    img.style.mixBlendMode="";
+    mark.classList.remove("wtw-hero-legacy","wtw-hero-white-matte");
     mark.classList.add("wtw-hero-transparent");
     if(asset.darkInk)mark.classList.add("wtw-hero-dark-ink");
    });
   };
+  // Start the approved local legacy-logo display cleanup immediately.
+  // Waiting for a non-existent T-ID transparent upload probe can leave a
+  // solid white matte on screen, especially for Gulfstream's navy wordmark.
+  // A genuine exact-ID hero upload still replaces this derivative normally.
+  if(kind==="track"&&LEGACY_TRACK.test(img.getAttribute("src")||""))legacy();
   if(candidate){
    const matching=img.dataset.wtwHeroProbePath===candidate;
    const state=matching?img.dataset.wtwHeroState:"";
@@ -397,7 +447,8 @@ function init(){
      },{once:true});
      img.src=display;
      img.dataset.wtwMatteSource=display;
-     mark.classList.remove("wtw-hero-legacy","wtw-hero-dark-ink");
+     img.style.mixBlendMode="";
+     mark.classList.remove("wtw-hero-legacy","wtw-hero-dark-ink","wtw-hero-white-matte");
      mark.classList.add("wtw-hero-transparent");
      if(visual.darkInk)mark.classList.add("wtw-hero-dark-ink");
     });

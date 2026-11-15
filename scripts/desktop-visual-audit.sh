@@ -2,7 +2,11 @@
 set -euo pipefail
 CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
 if [[ -z "$CHROME" ]]; then echo "Browser unavailable: cannot visually validate" >&2; exit 1; fi
-mkdir -p visual-audit/screenshots visual-audit/dom
+mkdir -p visual-audit/screenshots visual-audit/dom visual-audit/source-logos
+# Include exact, UNMODIFIED approved original files for auditing contrast and
+# alpha-matte conversion. These are evidence only, never shipped UI variants.
+cp public/assets/places/track-logos/T-0017.webp visual-audit/source-logos/T-0017.webp
+cp public/assets/places/track-logos/T-0001.webp visual-audit/source-logos/T-0001.webp
 python3 -m http.server 8765 --bind 127.0.0.1 --directory public >/tmp/wtw-visual-http.log 2>&1 &
 SERVER_PID=$!
 trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
@@ -52,13 +56,90 @@ capture founder-facility '?ui=FoundingProfile%3Afacility%3AO-000068' 'ng-track-w
 capture aqueduct-track '?ui=WorldRecord%3Atrack%3AT-0001' 'ng-profile-track'
 capture belmont-track '?ui=WorldRecord%3Atrack%3AT-0002' 'ng-profile-track'
 capture gulfstream-track '?ui=WorldRecord%3Atrack%3AT-0017' 'ng-profile-track'
+capture santa-anita-track '?ui=WorldRecord%3Atrack%3AT-0028' 'ng-profile-track'
 capture kingsmere-farm '?ui=FoundingProfile%3Afacility%3AO-000061' 'ng-profile-farm'
 capture northbank-stable '?ui=FoundingProfile%3Aownership%3AO-000045' 'ng-profile-farm'
 capture personnel '?ui=Personnel' 'ng-manager-screen|ng-dept-roster'
 capture facilities '?ui=Facilities' 'ng-manager-screen|ng-dept-roster'
 capture finances '?ui=Finances' 'ng-manager-screen|ng-dept-roster'
 capture breeding '?ui=Breeding' 'ng-manager-screen|ng-dept-roster'
+# Extended every-department proof: these are NOT visually signed off merely
+# because they render. Their actual screenshot output joins the human ledger.
+capture sales-overview '?ui=Sales%20%E2%80%94%20Overview' 'ng-dept-roster'
+capture sales-auctions '?ui=Sales%20%E2%80%94%20Auctions' 'ng-dept-roster'
+# A zero-row catalogue is not a filter miss; it must show source-honest
+# context and genuinely working links to existing sales views.
+if ! grep -q 'ng-dept-empty-actions' visual-audit/dom/sales-auctions.html; then
+ echo 'Sales Auctions has no unfiltered empty-state management actions' >&2; exit 1
+fi
+if grep -q 'NO MATCHING RECORDS' visual-audit/dom/sales-auctions.html; then
+ echo 'Unfiltered Sales Auctions incorrectly claims a search mismatch' >&2; exit 1
+fi
+capture naming-desk '?ui=Stable%20%E2%80%94%20Naming%20Desk' 'ng-naming-desk'
+capture office-messages '?ui=Messages' 'ng-manager-message-inbox'
+capture office-decisions '?ui=Decisions' 'ng-manager-message-inbox'
+
+capture office-career '?ui=Career' 'ng-manager-career'
+capture stable-training '?ui=Stable%20%E2%80%94%20Training' 'ng-training-desk'
+# Real content checks: a generic directory is no longer acceptable on these routes.
+if grep -q 'CONNECTED WORLD RECORDS' visual-audit/dom/office-messages.html ||
+   grep -q 'CONNECTED WORLD RECORDS' visual-audit/dom/office-decisions.html; then
+ echo 'Office Inbox/Decisions regressed to generic world directory' >&2; exit 1
+fi
+if ! grep -q 'WEEKLY PROGRAM / CHANGE PLAN' visual-audit/dom/stable-training.html; then
+ echo 'Stable Training missing its real program and condition table' >&2; exit 1
+fi
+capture racing-calendar '?ui=Racing%20%E2%80%94%20Calendar' 'ng-dept-roster'
+capture racing-entries '?ui=Racing%20%E2%80%94%20Entries' 'ng-dept-roster'
+capture breeding-foals '?ui=Breeding%20%E2%80%94%20Foals' 'ng-dept-roster'
+capture personnel-jockeys '?ui=Personnel%20%E2%80%94%20Jockeys' 'ng-dept-roster'
+capture facilities-stud-farms '?ui=Facilities%20%E2%80%94%20Stud%20Farms' 'ng-dept-roster'
+capture finances-cash-flow '?ui=Finances%20%E2%80%94%20Cash%20Flow' 'ng-dept-roster'
+capture world-organizations '?ui=World%20%E2%80%94%20Organizations' 'ng-dept-roster'
+capture world-people '?ui=World%20%E2%80%94%20People' 'ng-dept-roster'
+
+# EVERY department VIEW must have a screenshot before visual signoff.
+# The generic shell marker permits an honest screenshot of missing content;
+# it does NOT certify the subview as OOTP/FM quality.
+capture stable-health '?ui=Stable%20%E2%80%94%20Health' 'ng-manager-onboarding'
+capture stable-race-plans '?ui=Stable%20%E2%80%94%20Race%20Plans' 'ng-manager-shell'
+capture stable-barns '?ui=Stable%20%E2%80%94%20Barns' 'ng-manager-shell'
+capture racing-results '?ui=Racing%20%E2%80%94%20Results' 'ng-manager-shell'
+capture racing-stakes '?ui=Racing%20%E2%80%94%20Stakes' 'ng-manager-shell'
+capture racing-race-planning '?ui=Racing%20%E2%80%94%20Race%20Planning' 'ng-manager-shell'
+capture breeding-stallions '?ui=Breeding%20%E2%80%94%20Stallions' 'ng-manager-shell'
+capture breeding-broodmares '?ui=Breeding%20%E2%80%94%20Broodmares' 'ng-manager-shell'
+capture breeding-pedigrees '?ui=Breeding%20%E2%80%94%20Pedigrees' 'ng-manager-shell'
+capture breeding-stud-farms '?ui=Breeding%20%E2%80%94%20Stud%20Farms' 'ng-manager-shell'
+capture sales-sale-calendar '?ui=Sales%20%E2%80%94%20Sale%20Calendar' 'ng-manager-shell'
+capture sales-sale-companies '?ui=Sales%20%E2%80%94%20Sale%20Companies' 'ng-manager-shell'
+capture sales-catalogs '?ui=Sales%20%E2%80%94%20Catalogs' 'ng-manager-shell'
+capture sales-watchlist '?ui=Sales%20%E2%80%94%20Watchlist' 'ng-manager-shell'
+capture sales-private-offers '?ui=Sales%20%E2%80%94%20Private%20Offers' 'ng-manager-shell'
+capture personnel-trainers '?ui=Personnel%20%E2%80%94%20Trainers' 'ng-manager-shell'
+capture personnel-owners '?ui=Personnel%20%E2%80%94%20Owners' 'ng-manager-shell'
+capture personnel-principals '?ui=Personnel%20%E2%80%94%20Principals' 'ng-manager-shell'
+capture personnel-staff '?ui=Personnel%20%E2%80%94%20Staff' 'ng-manager-shell'
+capture facilities-training-centers '?ui=Facilities%20%E2%80%94%20Training%20Centers' 'ng-manager-shell'
+capture facilities-breaking-facilities '?ui=Facilities%20%E2%80%94%20Breaking%20Facilities' 'ng-manager-shell'
+capture facilities-racing-stables '?ui=Facilities%20%E2%80%94%20Racing%20Stables' 'ng-manager-shell'
+capture facilities-farms '?ui=Facilities%20%E2%80%94%20Farms' 'ng-manager-shell'
+capture facilities-trainer-barns '?ui=Facilities%20%E2%80%94%20Trainer%20Barns' 'ng-manager-shell'
+capture finances-operating-costs '?ui=Finances%20%E2%80%94%20Operating%20Costs' 'ng-manager-shell'
+capture finances-budgets '?ui=Finances%20%E2%80%94%20Budgets' 'ng-manager-shell'
+capture world-1999-horses '?ui=World%20%E2%80%94%201999%20Horses' 'ng-manager-shell'
+capture world-major-races '?ui=World%20%E2%80%94%20Major%20Races' 'ng-manager-shell'
+capture tracks-overview '?ui=Tracks%20%E2%80%94%20Overview' 'ng-manager-shell'
+capture tracks-active-meets '?ui=Tracks%20%E2%80%94%20Active%20Meets' 'ng-manager-shell'
+capture tracks-all-tracks '?ui=Tracks%20%E2%80%94%20All%20Tracks' 'ng-manager-shell'
+capture tracks-stakes '?ui=Tracks%20%E2%80%94%20Stakes' 'ng-manager-shell'
+capture office-reports '?ui=Reports' 'ng-manager-shell'
 capture history-vault 'archive/' 'Historical Racing Records'
+capture history-horses 'archive/?page=horses' 'brand-title'
+capture history-people-farms 'archive/?page=people' 'brand-title'
+capture history-tracks-facilities 'archive/?page=tracks' 'brand-title'
+capture history-calendar 'archive/?page=seasons' 'brand-title'
+capture history-coverage 'archive/?page=sources' 'brand-title'
 capture history-year-review 'archive/?page=races&review=1953' 'history-year-review'
 # The annual masthead, three Classic panels and season controls must also
 # render at the narrower desktop width used by many laptop/management players.
@@ -134,6 +215,12 @@ frame.onload=()=>setTimeout(()=>{
    identitySource:d.getElementById('wtwNextgen')?.getAttribute('data-wtw-identity-source')||'',
    identityBase:win.getComputedStyle(d.getElementById('wtwNextgen')).
     getPropertyValue('--wtw-id-base').trim(),
+   logoThemeReady:d.getElementById('wtwNextgen')?.getAttribute('data-wtw-logo-theme')||'',
+   logoSrc:d.querySelector('.ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo img')?.currentSrc||'',
+   logoMixBlend:d.querySelector('.ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo img')?
+    win.getComputedStyle(d.querySelector('.ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo img')).mixBlendMode:'',
+   logoMatteFlag:!!d.querySelector('.ng-route-profile .ng-profile-source-photo.wtw-hero-white-matte'),
+   logoTransparentFlag:!!d.querySelector('.ng-route-profile .ng-profile-source-photo.wtw-hero-transparent'),
    profileBackdrop:d.querySelector('.ng-route-profile .ng-profile-intro')?
     win.getComputedStyle(d.querySelector('.ng-route-profile .ng-profile-intro')).backgroundImage:'',
    trackWorkspace:rect('.ng-route-profile .ng-track-workspace'),
@@ -187,6 +274,7 @@ probe person '%3Fui%3DWorldRecord%253Aperson%253AP-000018'
 probe aqueduct '%3Fui%3DWorldRecord%253Atrack%253AT-0001'
 probe belmont '%3Fui%3DWorldRecord%253Atrack%253AT-0002'
 probe gulfstream '%3Fui%3DWorldRecord%253Atrack%253AT-0017'
+probe santa-anita '%3Fui%3DWorldRecord%253Atrack%253AT-0028'
 probe farm '%3Fui%3DFoundingProfile%253Afacility%253AO-000061'
 probe stable '%3Fui%3DFoundingProfile%253Aownership%253AO-000045'
 probe owner '%3Fui%3DFoundingProfile%253Aownership%253AO-000014'
@@ -199,32 +287,104 @@ probe laptop-owner '%3Fui%3DFoundingProfile%253Aownership%253AO-000014' '1280,80
 python3 - <<'PY'
 import json,html,re
 from pathlib import Path
-# Verify real rendered identity coloring and no leaked identity in the Office.
+# Verify identity colors are extracted from displayed images, never constants.
+# This deliberately does NOT assert hand-picked values for track brands.
 expected={
- 'aqueduct':('T-0001','#1C6283'),
- 'belmont':('T-0002','#0C603C'),
- 'gulfstream':('T-0017','#214784'),
- 'farm':('O-000061','#745681')
+ 'aqueduct':'T-0001',
+ 'belmont':'T-0002',
+ 'gulfstream':'T-0017',
+ 'santa-anita':'T-0028',
+ 'farm':'O-000061'
 }
-values=[]
-for name,(identity,base) in expected.items():
+palette_rows={}
+for name,identity in expected.items():
  source=Path(f'visual-audit/dom/probe-{name}.html').read_text()
  assert 'data-check="ready"' in source,(name,'Identity probe incomplete')
  match=re.search(r'<pre id="measure"[^>]*>(.*?)</pre>',source,re.S)
  assert match,(name,'Identity probe metrics missing')
  data=json.loads(html.unescape(match.group(1)))
- assert data['identityId']==identity,(name,'Wrong entity color context',data['identityId'])
- assert data['identitySource']=='curated',(name,'Palette registry did not resolve')
- assert data['identityBase'].upper()==base,(name,'Wrong active brand color',data['identityBase'])
+ assert data['identityId']==identity,(name,'Wrong entity identity',data['identityId'])
+ assert data['identitySource']=='logo-pixels',(name,'Not derived from actual displayed logo',data)
+ assert data['logoThemeReady']=='ready',(name,'Logo pixel sample not applied')
+ assert re.fullmatch(r'#[0-9A-Fa-f]{6}',data['identityBase']),(name,'Invalid pixel-derived color')
+ assert data['logoSrc'],(name,'Logo image absent from approved profile')
+ if name=='gulfstream':
+  # Actual legacy wordmark has an opaque white source canvas. A raw source
+  # with normal blending is a white rectangle: this IS a screenshot failure.
+  cleaned=data['logoTransparentFlag'] and (
+   data['logoSrc'].startswith('blob:') or data['logoSrc'].startswith('data:image/'))
+  assert cleaned,(name,'Gulfstream must display an actual alpha-matte derivative; blending a white rectangle is not visual acceptance',data)
+  assert data['logoMixBlend'] in ('normal',''),(name,'Temporary blend still active after logo conversion',data)
  assert 'gradient' in data['profileBackdrop'],(name,'Profile atmosphere missing')
- values.append(data['identityBase'])
-assert len(set(values))==len(values),'Distinct entities share the same active brand color'
+ palette_rows[name]=data['identityBase']
+assert len(set(palette_rows.values()))>1,'All logos resolve to the same generic color'
 plain=Path('visual-audit/dom/probe-office.html').read_text()
 match=re.search(r'<pre id="measure"[^>]*>(.*?)</pre>',plain,re.S)
 assert match
 data=json.loads(html.unescape(match.group(1)))
-assert data['identityId']=='',(data['identityId'],'Brand theme leaked into Office')
-print('ENTITY ATMOSPHERE verified in Chromium:',expected)
+assert data['identityId']=='' and data['logoThemeReady']=='',(data,'Brand theme leaked into Office')
+print('LOGO-SOURCED ENTITY ATMOSPHERE verified in Chromium:',palette_rows)
+
+# The rendered screenshot itself must contain no Gulfstream white rectangle.
+# Chromium CSS/DOM can report 'multiply' even when isolation prevents blending.
+# Decode Chrome's standard RGB/RGBA PNG with Python stdlib; no Pillow/network.
+import struct,zlib
+def png_scanlines(path):
+ source=Path(path).read_bytes()
+ assert source[:8]==b'\x89PNG\r\n\x1a\n',(path,'Not PNG')
+ off=8;idat=bytearray();size=None
+ while off<len(source):
+  count=int.from_bytes(source[off:off+4],'big')
+  label=source[off+4:off+8];chunk=source[off+8:off+8+count]
+  off+=count+12
+  if label==b'IHDR':
+   width,height,depth,mode,comp,flt,interlace=struct.unpack('>IIBBBBB',chunk)
+   assert depth==8 and mode in (2,6) and interlace==0,(path,'Unexpected PNG format',mode)
+   size=(width,height,3 if mode==2 else 4)
+  elif label==b'IDAT':idat.extend(chunk)
+  elif label==b'IEND':break
+ width,height,ch=size
+ raw=zlib.decompress(idat);stride=width*ch;start=0;above=bytearray(stride)
+ for y in range(height):
+  kind=raw[start];line=bytearray(raw[start+1:start+stride+1]);start+=stride+1
+  assert kind in range(5),(path,'Unsupported PNG row filter',kind)
+  if kind:
+   for i in range(stride):
+    left=line[i-ch] if i>=ch else 0
+    up=above[i]
+    corner=above[i-ch] if i>=ch else 0
+    if kind==1:predict=left
+    elif kind==2:predict=up
+    elif kind==3:predict=(left+up)//2
+    else:
+     p=left+up-corner
+     ds=(abs(p-left),abs(p-up),abs(p-corner))
+     predict=(left,up,corner)[ds.index(min(ds))]
+    line[i]=(line[i]+predict)&255
+  yield y,width,ch,line
+  above=line
+
+source=Path('visual-audit/dom/probe-gulfstream.html').read_text()
+match=re.search(r'<pre id="measure"[^>]*>(.*?)</pre>',source,re.S)
+assert match,'Gulfstream geometry missing'
+metrics=json.loads(html.unescape(match.group(1)))
+mark=metrics['heroMark']
+assert mark and mark['width']>150 and mark['height']>90,'No measurable Gulfstream logo'
+# Inspect the centered actual image rather than a fixed page coordinate.
+x0=int(mark['left']+mark['width']*.19)
+x1=int(mark['left']+mark['width']*.81)
+y0=int(mark['top']+mark['height']*.10)
+y1=int(mark['top']+mark['height']*.90)
+bright=sampled=0
+for y,width,ch,line in png_scanlines('visual-audit/screenshots/gulfstream-track.png'):
+ if y<y0 or y>=y1:continue
+ for x in range(max(0,x0),min(width,x1)):
+  rgb=line[x*ch:x*ch+3]
+  sampled+=1
+  if min(rgb)>235:bright+=1
+whiteness=bright/max(1,sampled)
+assert whiteness<.08,('Gulfstream still has a white rectangular logo plaque',round(whiteness,3),metrics['logoSrc'],metrics['logoMixBlend'])
+print('GULFSTREAM SCREENSHOT WHITE-PLAQUE CHECK',round(whiteness,4))
 
 for name in ('office','search','horse','person'):
  source=Path(f'visual-audit/dom/probe-{name}.html').read_text()
