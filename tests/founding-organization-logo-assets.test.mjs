@@ -159,6 +159,28 @@ test('Whitcombe and Argosy Bloodstock approved sports marks are exact-ID, 256-sq
   assert.ok(index.audit.published.some(x=>x.id===a.id&&x.name===a.name));
   assert.ok(!index.audit.notPublished.some(x=>x.id===a.id));
  }
- assert.equal(index.publishedCount,36);
- assert.deepEqual(index.audit.notPublished.map(x=>x.id),['O-000057']);
+ assert.equal(index.publishedCount,37);
+ assert.deepEqual(index.audit.notPublished.map(x=>x.id),[]);
+});
+
+test('Argosy Racing Partners uses precisely the same approved logo bytes as related Argosy Bloodstock',()=>{
+ const bloodstock='O-000014',racing='O-000057';
+ const a=roster.organizations.find(o=>o.id===bloodstock),b=roster.organizations.find(o=>o.id===racing);
+ assert.equal(a?.name,'Argosy Bloodstock');
+ assert.equal(b?.name,'Argosy Racing Partners');
+ assert.equal(b?.relatedBloodstockAgencyId,bloodstock,'related but distinct founding organizations');
+ const pathA='public/assets/office/founding-organization-logos/'+bloodstock+'.png';
+ const pathB='public/assets/office/founding-organization-logos/'+racing+'.png';
+ assert.equal(index.organizations['organization:'+bloodstock],'/'+pathA.replace('public/',''));
+ assert.equal(index.organizations['organization:'+racing],'/'+pathB.replace('public/',''));
+ const imageA=readFileSync(resolve(root,pathA)),imageB=readFileSync(resolve(root,pathB));
+ assert.ok(imageA.equals(imageB),'exact same approved logo, no revised flags, racing lettering, colors or other artwork');
+ assert.equal(imageB.readUInt32BE(16),256);assert.equal(imageB.readUInt32BE(20),256);assert.equal(imageB[25],2);
+ const evidence=readJson('ops/owner-logo-frame-v1.json'),lock=readJson('ops/approved-visual-assets.lock.json');
+ const aRow=evidence.assets.find(x=>x.path===pathA),bRow=evidence.assets.find(x=>x.path===pathB);
+ assert.equal(bRow.output_sha256,aRow.output_sha256);
+ assert.deepEqual(bRow.border_rgb,aRow.border_rgb);
+ assert.equal(bRow.radius_px,28);assert.equal(bRow.border_px,5);assert.equal(bRow.border_inset_px,5);
+ assert.equal(lock.assets[pathA],lock.assets[pathB],'same exact blob for game installation');
+ assert.equal(index.publishedCount,37);assert.equal(index.remainingWithoutMatchedLogo,0);
 });
