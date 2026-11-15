@@ -212,7 +212,8 @@ export function getGamePostRaceCampaign(state,horseId){
   fatigue:training?.fatigue??null,
   soundness_risk:training?.currentRisk??null,
   soreness_days:training?.sorenessDays??null,
-  risk_change_since_finish:training?
+  risk_change_since_finish:training&&
+   Number.isFinite(value.race_risk_at_finish)?
    Math.round((training.currentRisk-value.race_risk_at_finish)*10000)/10000:null,
   official_finish:result?.finish??null,
   official_field_size:race?.status==='OFFICIAL_SIM_RESULT'?
