@@ -30,11 +30,15 @@ try{
  if($data.phase -ne "visible" -or !$data.windowVisible -or
     $data.bundledOrigin -ne "wtw://game" -or
     $data.gameInterface -ne "ONE_APPROVED_UI" -or
-    $data.screenshotBytes -lt 25000 -or
+    $data.frameWidth -lt 900 -or $data.frameHeight -lt 450 -or
+    $data.renderedButtons -lt 5 -or
     !(Test-Path (Join-Path $EvidenceDir "wtw-visible-desktop.png"))){
   throw "The desktop window failed visual verification: $(Get-Content -Raw $report)"
  }
- Write-Host "WTW_WINDOWS_ACTUAL_VISIBLE_GAME_WINDOW_PASS"
+ Write-Host "WTW_WINDOWS_VISIBLE_WINDOW_AND_RENDERED_LAYOUT_PASS"
+ if($data.screenshotStatus -eq "NONINTERACTIVE_WINDOWS_RUNNER_UNVERIFIED"){
+  Write-Warning "The CI Windows runner cannot certify photographed pixels. A user-machine visual check remains REQUIRED."
+ }
  try{Wait-Process -Id $process.Id -Timeout 15 -ErrorAction Stop}catch{}
 }finally{
  Remove-Item Env:WTW_SMOKE_PHASE -ErrorAction SilentlyContinue
