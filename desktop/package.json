@@ -9,8 +9,9 @@
   "license": "UNLICENSED",
   "scripts": {
     "start": "electron .",
-    "build:windows": "electron-builder --win nsis --x64 --publish never",
-    "build:windows:unpacked": "electron-builder --win dir --x64 --publish never"
+    "build:windows": "electron-builder --win nsis portable --x64 --publish never",
+    "build:windows:unpacked": "electron-builder --win dir --x64 --publish never",
+    "build:windows:portable": "electron-builder --win portable --x64 --publish never"
   },
   "devDependencies": {
     "electron": "45.3.2",
@@ -64,6 +65,9 @@
       "shortcutName": "Wire to Wire",
       "deleteAppDataOnUninstall": false
     },
-    "publish": null
+    "publish": null,
+    "portable": {
+      "artifactName": "WireToWire-Portable-${version}-${arch}.${ext}"
+    }
   }
 }
