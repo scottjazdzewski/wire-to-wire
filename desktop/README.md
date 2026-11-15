@@ -47,6 +47,6 @@ Three development downloads are built from exactly the same app:
 
 If the app launches and fails after Electron startup, it now writes `wtw-startup-diagnostics.log` in Electron's per-user `app.getPath('userData')` folder and displays an explicit error dialog with the file path. On many Windows installations this is within `%APPDATA%\Wire to Wire`. A failure before Electron's main process starts may produce **no** log: the Windows security/event logs and IT help desk are the appropriate route in that case.
 
-The Windows CI must verify both local origin/storage reopen and **an actually visible game window** with a screenshot. Headless/hidden-window tests alone are no longer accepted as proof the game opens to a human user. The folder archive is an alternate diagnostic format, not a means to circumvent endpoint policy.
+The Windows CI verifies local origin/storage reopen and checks that a visible BrowserWindow has a substantial, CSS-laid-out management interface. A screenshot is retained for diagnosis, but GitHub-hosted Windows runners do not provide a trustworthy interactive desktop; an empty/black screenshot on that runner **must not** be misreported as proof that a customer's window is blank or that the visible UI is fully certified. Manual Windows customer-machine display testing remains mandatory. Hidden-window tests alone are insufficient. The folder archive is an alternate diagnostic format, not a means to circumvent endpoint policy.
 
 **This is still G1 development software, unsigned and NOT YET DESKTOP CERTIFIED for retail.**
