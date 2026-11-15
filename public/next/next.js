@@ -2083,7 +2083,11 @@ function profileDetail(route,sourceOverride=null){
   const cat=athleteAttributeCatalog||{};
   const roles=[...new Set(roleTokens.filter(key=>cat.person_roles?.[key]))];
   const role=roles.find(key=>key!=='owner')||roles[0]||null;
-  const work=state().staffState?.[route.title]||{};
+  // Permanent Person ID wins over mutable display name; preserve legacy
+  // name-indexed career saves until their migration has been certified.
+  const personId=source?.dataset?.personId||'';
+  const work=(personId&&state().staffState?.[personId])||
+   state().staffState?.[route.title]||{};
   const observations=Array.isArray(work.attribute_observations)?work.attribute_observations:[];
   const observed=new Map(observations.filter(x=>x&&typeof x.attribute_key==='string').map(x=>[x.attribute_key,x]));
   const common=cat.person_common||[],special=[...new Map(roles.flatMap(role=>cat.person_roles?.[role]||[]).map(def=>[def.key,def])).values()];
