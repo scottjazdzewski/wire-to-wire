@@ -29,6 +29,7 @@
       "main.cjs",
       "preload.cjs",
       "local-content.cjs",
+      "career-store.cjs",
       "package.json",
       "!**/.git/**"
     ],

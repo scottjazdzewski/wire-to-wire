@@ -19,8 +19,8 @@ For an installable Windows binary, run `npm run build:windows` from `desktop/`, 
 ## G1 acceptance limits (must not misrepresent this prototype)
 
 - The management UI launches from **bundled files**, without a remote website, local HTTP server or Python on the customer's PC.
-- The browser-origin IndexedDB and localStorage transition state persists between app launches under Electron's per-user application directory. **This is not yet desktop-authoritative transactional career storage (G3).**
-- The private D1 historical archive `/api/` routes are **not** shipped as a complete offline history database. API requests return 404 (G2) rather than silently fetching source data from the internet.
+- The active game's autosave still uses browser-origin localStorage. Compact career slots now use a transactional desktop-owned file store under Electron's per-user application directory; existing compact IndexedDB slots are copied idempotently and retained as migration sources. Windows process-reopen coverage exercises both stores. **This is a partial G3 milestone, not yet desktop-authoritative active-game storage.**
+- Historical D1 `/api/` routes are not part of the offline game. A real-history module is optional future work under the current fictional-first product direction.
 - There is no retail code-signing identity, update channel, or Windows installation on a separate clean consumer machine yet (G5).
 - The bundled static runtime currently contains only public game resources. The older bridge code remains non-visual but active for game commands until source-parity migration G4.
 - A successful startup/restart smoke test does **not** mean all race progression, historical data, screenshots and long-lived careers are retail-certified.
@@ -33,7 +33,7 @@ The Windows ICO is generated at build time from `public/assets/wtw-office-approv
 
 `scripts/windows-desktop-smoke.ps1` launches the **unpacked packaged application** in two separate Windows processes using the same per-user test profile. It validates local content origin, approved management UI, January 1999 state and a persisted marker, without requiring a browser or hosted server. It also builds and uploads the NSIS installer.
 
-Next: migrate historical records into a bundled indexed pack, then move full career authority into per-user desktop-owned storage.
+Next G3 step: move the active game's autosave and recovery authority into the desktop-owned store without breaking current careers, race commits, or `.wtwsave` compatibility. Real historical racing data is optional for the fictional-first launch; do not treat its migration as a launch blocker.
 
 ## Windows no-window startup troubleshooting (G1.1)
 

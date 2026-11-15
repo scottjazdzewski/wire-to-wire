@@ -21,6 +21,7 @@ const req=request=>new Promise((resolve,reject)=>{
  request.onerror=()=>reject(request.error||Error('IndexedDB read failed'));
 });
 let dbPromise=null;
+let desktopMigrationPromise=null;
 function openDB(){
  if(dbPromise)return dbPromise;
  if(!('indexedDB' in window))return Promise.reject(Error(
@@ -37,19 +38,19 @@ function openDB(){
  }).catch(error=>{dbPromise=null;throw error});
  return dbPromise;
 }
-async function listSlots(){
+async function listIndexedSlots(){
  const db=await openDB(),tx=db.transaction('slots','readonly');
  const slots=await req(tx.objectStore('slots').getAll());
  return slots.sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt)));
 }
-async function findSlot(id){
+async function findIndexedSlot(id){
  const db=await openDB(),tx=db.transaction(['slots','payloads'],'readonly');
  const meta=await req(tx.objectStore('slots').get(id));
  const data=await req(tx.objectStore('payloads').get(id));
  if(!meta||!data)throw Error('Saved career is unavailable or incomplete');
  return {meta,...data};
 }
-async function writeSlot(meta,record){
+async function writeIndexedSlot(meta,record){
  const db=await openDB();
  // Atomic: never report success if payload or metadata failed to persist.
  await new Promise((resolve,reject)=>{
@@ -61,7 +62,7 @@ async function writeSlot(meta,record){
   tx.objectStore('payloads').put({id:meta.id,header:record.header,bytes:record.bytes});
  });
 }
-async function removeSlot(id){
+async function removeIndexedSlot(id){
  const db=await openDB();
  await new Promise((resolve,reject)=>{
   const tx=db.transaction(['slots','payloads'],'readwrite');
@@ -70,6 +71,44 @@ async function removeSlot(id){
   tx.objectStore('slots').delete(id);
   tx.objectStore('payloads').delete(id);
  });
+}
+function desktopCareerStore(){return window.WTWDesktop?.careers||null}
+async function ensureDesktopMigration(){
+ const store=desktopCareerStore();if(!store)return;
+ if(desktopMigrationPromise)return desktopMigrationPromise;
+ desktopMigrationPromise=(async()=>{
+  // Copy old IndexedDB careers once they are found; never remove or rewrite the
+  // source records. A retry after interruption skips IDs already committed.
+  const existing=await store.list(),known=new Set(existing.map(slot=>slot.id));
+  const legacy=await listIndexedSlots();
+  for(const meta of legacy){
+   if(known.has(meta.id))continue;
+   const record=await findIndexedSlot(meta.id);
+   await store.put(record.meta,{header:record.header,bytes:record.bytes});
+   known.add(meta.id);
+  }
+ })().catch(error=>{desktopMigrationPromise=null;throw error});
+ return desktopMigrationPromise;
+}
+async function listSlots(){
+ const store=desktopCareerStore();
+ if(store){await ensureDesktopMigration();return store.list()}
+ return listIndexedSlots();
+}
+async function findSlot(id){
+ const store=desktopCareerStore();
+ if(store){await ensureDesktopMigration();return store.get(id)}
+ return findIndexedSlot(id);
+}
+async function writeSlot(meta,record){
+ const store=desktopCareerStore();
+ if(store){await ensureDesktopMigration();return store.put(meta,record)}
+ return writeIndexedSlot(meta,record);
+}
+async function removeSlot(id){
+ const store=desktopCareerStore();
+ if(store){await ensureDesktopMigration();return store.remove(id)}
+ return removeIndexedSlot(id);
 }
 function config(){
  const api=window.WTW1999CommercialConfig;
