@@ -31,6 +31,8 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
  assert.equal(first[0].id,'H-FICTIONAL-1999-BROODMARES-0000001');
  const b=await createPersistent1999Industry(params);
  assert.deepEqual(b,a);
+ await assert.rejects(createPersistent1999Industry({...params,
+  tracks:[{id:'T-DIFFERENT'}]}),/generation parameters conflict/);
  assert.deepEqual(await readPersistent1999IndustryBatch(store,b,'horseBatches',0),first);
  assert.deepEqual(await findPersistent1999Horse(store,b,first[0].id),first[0]);
  assert.equal(await findPersistent1999Horse(store,b,'H-FICTIONAL-1999-BROODMARES-9999999'),null);
