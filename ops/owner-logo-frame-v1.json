@@ -1,0 +1,363 @@
+{
+  "schema": "WTW_APPROVED_OWNER_FRAME_V1",
+  "source_revision": "7ed6774c8bc4fa660f382251d74bac3e8993bb23",
+  "canvas_px": 256,
+  "image_mode": "RGB",
+  "radius_px": 28,
+  "border_px": 5,
+  "border_inset_px": 5,
+  "border_rgb": [
+    244,
+    237,
+    222
+  ],
+  "outer_corners_rgb": [
+    6,
+    7,
+    9
+  ],
+  "approved_logo_count": 31,
+  "assets": [
+    {
+      "path": "public/assets/office/founding-organization-logos/O-000001.png",
+      "source_sha256": "1b10ed01b4c5f03ff151c4fec0a09a3a26717fa4275deea0d6b7fbb3b38d0bef",
+      "output_sha256": "ceba19aeff42389b5dda30a5e316d33d94cae4b482ee5dfdd2d81a8680d955d2",
+      "background": [
+        88,
+        1,
+        1
+      ],
+      "old_frame_pixels_removed": 5013
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-000002.png",
+      "source_sha256": "97f7316121133c587d74b2355641ff37d6ae6066425089244e0d509dc977abcb",
+      "output_sha256": "ee0d36576b8079da8d29d5d3c286bdc39fe3ab4c67d5e52ad02cf9f40df743f1",
+      "background": [
+        0,
+        0,
+        0
+      ],
+      "old_frame_pixels_removed": 2956
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-000003.png",
+      "source_sha256": "59e388e0cd7ef04139bcc2185c01488cc58f8bf47765807c38ddc73af249ccc8",
+      "output_sha256": "feb1a4433e32d204892796a86d108f344b5ffcd2375b2bcc6690b99d062bd247",
+      "background": [
+        241,
+        232,
+        218
+      ],
+      "old_frame_pixels_removed": 7720
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-000047.png",
+      "source_sha256": "43ff885ba7a92e24f9fcb0a7e9f11cdaacc357e817c1154b8f243df297552ab2",
+      "output_sha256": "894130df28ed19e43d33539adfaf1756e9bbaf44434cc9232e87f7ca4482a399",
+      "background": [
+        20,
+        21,
+        31
+      ],
+      "old_frame_pixels_removed": 6035
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-000056.png",
+      "source_sha256": "502ac226ec9c10ad9049e0a23edaf086afb8acc308791d74c61e9f156ccc571f",
+      "output_sha256": "75fe7defa734814615f8a8ef650f9b51317c409510975b2704c06d8cac991741",
+      "background": [
+        11,
+        11,
+        11
+      ],
+      "old_frame_pixels_removed": 6157
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-000061.png",
+      "source_sha256": "b9492219ad57e7397dd08033d858407fdbb7d9119e84191f057986e7a1e7b1eb",
+      "output_sha256": "ff0c8c4428481be7e22571ac50a3ed8fc5c33f603c9cc2a21b0abc8096c1443a",
+      "background": [
+        46,
+        1,
+        67
+      ],
+      "old_frame_pixels_removed": 0
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-000062.png",
+      "source_sha256": "24733749af76e1fcee6e666692983e6bcb2d94282b5063e5a0335d9db2037620",
+      "output_sha256": "3c5848e6ec2cfab98c3e9f586c7d63dd890d1a3e078a530eb31388e400a6f756",
+      "background": [
+        20,
+        24,
+        30
+      ],
+      "old_frame_pixels_removed": 2828
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-000063.png",
+      "source_sha256": "2e323fd260b18cb6281eef0759f8b04b4ccf02d2d6f1b9dd76b05bbad537a0f3",
+      "output_sha256": "bf057f497f7ca582f2583edc811578fcafe81f85c2519bf83844767a16be0811",
+      "background": [
+        2,
+        43,
+        18
+      ],
+      "old_frame_pixels_removed": 5124
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-000064.png",
+      "source_sha256": "990a9aba799087bc4f7ea1c46c1efdc47cb861fbdad12b41df88500344f68799",
+      "output_sha256": "04eae749086857e57af35ec9a0d22a1be3e639865ae69577a0b7e534b45cae74",
+      "background": [
+        254,
+        245,
+        230
+      ],
+      "old_frame_pixels_removed": 9661
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-000066.png",
+      "source_sha256": "2adb2f8aace612af6cf5f2494fc3054a39776866ed52b1a705bb75342dbc1c2b",
+      "output_sha256": "606eef8b042028af8c434a172465febe3970a301b61cec2a805a1b22056b1652",
+      "background": [
+        0,
+        0,
+        0
+      ],
+      "old_frame_pixels_removed": 5155
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-000067.png",
+      "source_sha256": "0a569218ff05d0e0661a213909e65e8b5bcdcd05289ec1efb03f173daae0d654",
+      "output_sha256": "57c2db3c9ab1a8b65475bc2fc2ce3ba7bdc3465a22551bc9915733015cecfea6",
+      "background": [
+        1,
+        34,
+        41
+      ],
+      "old_frame_pixels_removed": 6520
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-000068.png",
+      "source_sha256": "bf36a604d6b2d4ac4c807cd060de00289cac9a52d88320f3d101491e2ea285a4",
+      "output_sha256": "cb97ae2a2b2ba33a9c45998006303cdbe65442041d05071a0c2033f7c8263081",
+      "background": [
+        0,
+        21,
+        131
+      ],
+      "old_frame_pixels_removed": 5667
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-000071.png",
+      "source_sha256": "69ba6070007c1dc79c7e7f7f16212659796757117c97fda5a990a6261cb3489a",
+      "output_sha256": "aa01d832886c9c39d6559677a49ab49c64191f625eeeed0fbed5b2dc9fcf81f3",
+      "background": [
+        0,
+        24,
+        71
+      ],
+      "old_frame_pixels_removed": 6056
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-005794.png",
+      "source_sha256": "94a082294c6fc6f73d06965212b2549c856257be4f20005ef0b703bc49cc2910",
+      "output_sha256": "32fae1f86b9103831b8d94403b71dddec663c3f1f8ae742b4d84402e76b7366f",
+      "background": [
+        1,
+        15,
+        39
+      ],
+      "old_frame_pixels_removed": 4924
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-005910.png",
+      "source_sha256": "240f0c2106df7e55538084b958e07e647e81e5a81c51350ecd6d4b0cab85642c",
+      "output_sha256": "3ddee6e9f34d044623e5eee99a0bd5688ae21fbf298d5283958642a4b56fac5e",
+      "background": [
+        0,
+        16,
+        50
+      ],
+      "old_frame_pixels_removed": 9209
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-005919.png",
+      "source_sha256": "cb4b60d4afdd4fa3b113cdeda6b32fd8803be47fc21869ffc9d7b47ba6f27303",
+      "output_sha256": "0adc92989340f4386ae465cde6a65c4b12a98d7a7db8ca3b27eb5e8340668e58",
+      "background": [
+        145,
+        1,
+        12
+      ],
+      "old_frame_pixels_removed": 0
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-006905.png",
+      "source_sha256": "5d94f4ff81507b6d752f75b2718f74269171b6a468a419376ff173b8fe89cc47",
+      "output_sha256": "44b959f91ad5dffe75796589ca421619c0fee2cbfb11ca46b2413d3bdf239d8d",
+      "background": [
+        51,
+        2,
+        105
+      ],
+      "old_frame_pixels_removed": 0
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-FOUNDING-1999-001.png",
+      "source_sha256": "bb8943a776c0906489ba96aa2db0d4c1e6fdcaf4c7713db24feb62dae705ef1d",
+      "output_sha256": "8123de6e485ee5ecba9511b202ab42dada7e86437146225ea4c1f1cdc335fd7f",
+      "background": [
+        0,
+        0,
+        0
+      ],
+      "old_frame_pixels_removed": 0
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-FOUNDING-1999-002.png",
+      "source_sha256": "736b30ab993200a40d7f7d20a162b568d174b9e5170e7e7f2be34756b574f435",
+      "output_sha256": "791739b0d391cd10faa755ba58a9a726d9337e72dad98afb555abf1f085744de",
+      "background": [
+        0,
+        0,
+        0
+      ],
+      "old_frame_pixels_removed": 1455
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-FOUNDING-1999-003.png",
+      "source_sha256": "bd4778275795cebe74d3bf16a90e1c61c4ad7fd6baffecf90671ad47c6ffb7b1",
+      "output_sha256": "a830f8345bbcbfdd9d4e0673f63a9ae94778983bd1e3ede152451b27ab2dd87c",
+      "background": [
+        253,
+        244,
+        228
+      ],
+      "old_frame_pixels_removed": 8004
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-FOUNDING-1999-004.png",
+      "source_sha256": "910ae1c26f6b976e81097936afd2d640f57cf8d94234cdfaf0982afbfb97be52",
+      "output_sha256": "6f4cf78a061365434e21ee6f98e5c9600eb31036a07b12deaa5f7baf2cd1ea83",
+      "background": [
+        2,
+        1,
+        1
+      ],
+      "old_frame_pixels_removed": 5379
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-FOUNDING-1999-005.png",
+      "source_sha256": "d65df4b80efb0fe1464c7abf47b86ef6d2310a3f3a6f6e5056b03884332c7467",
+      "output_sha256": "b13f874cb774d1ec7163c39123807c26c96690b1e83048ac5a4b7747b4f3fb80",
+      "background": [
+        1,
+        51,
+        25
+      ],
+      "old_frame_pixels_removed": 6029
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-FOUNDING-1999-006.png",
+      "source_sha256": "674a9f9b5dfff2aa07caead512ad542574092452d4ba2e70989487816c8b60a3",
+      "output_sha256": "fd0b467903d2f46668d620636bff6528ba20836f421ffe9a952caeefd061a768",
+      "background": [
+        10,
+        14,
+        29
+      ],
+      "old_frame_pixels_removed": 4856
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-FOUNDING-1999-007.png",
+      "source_sha256": "63daba8ead8654b2d511ea1cb481d4f6e3e3703b2c8e89138a353cc66936f6e3",
+      "output_sha256": "b6f17e9bd8de6c0a9381e2b704193a2f64147e23156ada674ee2ae51ee1b32bc",
+      "background": [
+        57,
+        7,
+        29
+      ],
+      "old_frame_pixels_removed": 4648
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-FOUNDING-1999-008.png",
+      "source_sha256": "d23667a7c1022bd2245006a142a2341501a6635ef2d903e0c5254ae2f12f0632",
+      "output_sha256": "d49d9834a242786163e8bc196a87529307b3bc67846fdb8ef2b2b0dd4539bff7",
+      "background": [
+        0,
+        0,
+        0
+      ],
+      "old_frame_pixels_removed": 0
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-FOUNDING-1999-009.png",
+      "source_sha256": "f226af33e5b260e2f49436b4f6b1e07cbe8e43fbb8104219cc35057fa2f74087",
+      "output_sha256": "5f78001aed39ac51bf281178283e1a774a02737851041f49cac5ed9a12ef5e8e",
+      "background": [
+        1,
+        46,
+        50
+      ],
+      "old_frame_pixels_removed": 7668
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-FOUNDING-1999-010.png",
+      "source_sha256": "2f5cf0473c0fb6ad5230d16aa10402664adb00fa385c6129219f69be95cb38d5",
+      "output_sha256": "56c7e7ca257d05517d412aa933d39546e2fd6319dc18ad949fc236d59facb316",
+      "background": [
+        196,
+        62,
+        2
+      ],
+      "old_frame_pixels_removed": 6209
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-FOUNDING-1999-011.png",
+      "source_sha256": "dcfeea7f6dbc89c9752b5f7213fbe5cc43a7f9075fc5619aebb285ba81bd048a",
+      "output_sha256": "2ec455db12fcb36ccafcce07bcc4a8875080f40ff7e7e3acbb20cd661b4bf967",
+      "background": [
+        12,
+        40,
+        40
+      ],
+      "old_frame_pixels_removed": 4384
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-FOUNDING-1999-012.png",
+      "source_sha256": "372db4efb8f58afa991a7f7ece207678a9d5082358c189c0097512717c099926",
+      "output_sha256": "182b72af3fff60f058061581e455205bc8ce9e95a5fc379f45501d922730441e",
+      "background": [
+        105,
+        193,
+        252
+      ],
+      "old_frame_pixels_removed": 6383
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-FOUNDING-1999-013.png",
+      "source_sha256": "98297ae5482ea458c0cb4391dac5389fccdf24a4390d6d359be93930888bbb21",
+      "output_sha256": "d0f47f1c1a0b69349b22a78a2198b9773dd3b9a61bbbbcf2b071f95f8dec0efb",
+      "background": [
+        2,
+        42,
+        26
+      ],
+      "old_frame_pixels_removed": 7681
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-FOUNDING-1999-014.png",
+      "source_sha256": "8a117b98588352131fd9564adc36380acbcdf110bdead74b22011efbc85145f1",
+      "output_sha256": "6b764e32ae356cac6a6185e40426ba436619e104db265bac50dd3e51fcec72ae",
+      "background": [
+        17,
+        38,
+        19
+      ],
+      "old_frame_pixels_removed": 8382
+    }
+  ]
+}
