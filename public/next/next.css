@@ -3881,37 +3881,14 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  #wtwNextgen .ng-rp-tools label{flex-basis:100%}
 }
 
-/* V483 Naming Desk: inside the ONE manager renderer; research preview only. */
-.ng-naming-desk .ng-naming-status{color:#d4c18e;font-size:9px;font-weight:800;letter-spacing:.045em}
-.ng-naming-editor{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-bottom:1px solid #3c4a42;background:#1b2629}
-.ng-naming-editor label{display:flex;flex-direction:column;gap:5px;color:#bcd0bd;font-size:10px;font-weight:780;min-width:0}
-.ng-naming-fields{display:grid;grid-template-columns:1fr 1fr 110px;gap:9px;min-width:0}
-.ng-naming-editor input,.ng-naming-editor textarea{display:block;width:100%;box-sizing:border-box;border:1px solid #475d51;border-radius:2px;background:#111a1d;color:#e6ecdf;padding:7px 8px;font:inherit;font-size:11px;min-width:0}
-.ng-naming-editor input:focus-visible,.ng-naming-editor textarea:focus-visible{outline:2px solid #d7bf83;outline-offset:1px}
-.ng-naming-editor textarea{min-height:68px;resize:vertical}
+/* V489 Naming Desk — ONE current list editor (retired V483 cards removed). */
+.ng-naming-desk .ng-naming-status{color:#d4c18e;font-size:9px;font-weight:800}
 .ng-naming-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .ng-naming-actions button{background:#294738;border:1px solid #5e7d5e;color:#eadcae;padding:6px 10px;border-radius:2px;font-size:10px;font-weight:800;cursor:pointer}
-.ng-naming-actions button:disabled{cursor:default;opacity:.55}
-.ng-naming-actions small,.ng-naming-actions span{color:#a2b9ab;font-size:9px}
+.ng-naming-actions button:disabled{opacity:.55;cursor:default}
+.ng-naming-actions small{color:#a2b9ab;font-size:9px}
 .ng-naming-error{color:#f0ad9f;border-left:3px solid #b86458;padding:5px 8px;background:#332623;font-size:10px;margin:0}
 .ng-naming-notice{color:#d8dfba;padding:5px 8px;background:#28352a;font-size:10px;margin:0}
-.ng-naming-results{display:flex;flex:1;flex-direction:column;gap:5px;min-height:0;overflow:auto;padding:7px 9px}
-.ng-naming-candidate{padding:9px 10px;border:1px solid #3d5347;background:#1f2c2c}
-.ng-naming-candidate-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.ng-naming-candidate-head strong{color:#f1e1b5;font-size:14px}
-.ng-naming-candidate-head small,.ng-naming-provenance{color:#bad0b9;font-size:9px}
-.ng-naming-candidate p{margin:6px 0;color:#d4e1d5;font-size:11px;line-height:1.4}
-.ng-naming-provenance{display:block}
-.ng-naming-issues{display:block;color:#e4b29b;font-size:9px;margin-top:4px}
-.ng-naming-candidate .ng-naming-actions{margin-top:7px}
-.ng-naming-guidance{padding:8px 11px;gap:7px}
-.ng-naming-guidance p{margin:0;color:#bfcec0;font-size:10px;line-height:1.4;border-bottom:1px solid #303f38;padding-bottom:6px}
-.ng-naming-desk .ng-manager-sidebar{overflow:auto}
-@media(max-width:850px){.ng-naming-desk .ng-manager-workspace{grid-template-columns:minmax(0,1fr);overflow:auto}
-.ng-naming-desk .ng-manager-sidebar{overflow:visible}
-.ng-naming-desk .ng-naming-fields{grid-template-columns:1fr 1fr}
-.ng-naming-desk .ng-naming-fields label:last-child{grid-column:1/-1}}
-
 
 /* Shared record-to-record pager on source-backed list detail screens.
  * Matches the original Overview-adjacent dossier arrows; never page-tabs. */
