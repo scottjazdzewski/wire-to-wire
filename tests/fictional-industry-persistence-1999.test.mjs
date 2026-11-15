@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createPersistent1999Industry,readPersistent1999IndustryBatch,findPersistent1999Horse,
  updatePersistent1999Horse,readPersistent1999HorseProfile,
  savePersistent1999CareerRun,loadPersistent1999CareerRun,
- readPersistent1999Directory}
+ readPersistent1999Directory,verifyPersistent1999WorldOpen}
  from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
 function memoryStore(){
  const data={manifests:new Map(),horseBatches:new Map(),personBatches:new Map(),horseEdits:new Map(),careerRuns:new Map(),directory:new Map(),coveringBatches:new Map(),calendarBatches:new Map()};
@@ -30,6 +30,9 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
  const params={store,seed:19990101,worldId:'FullTest',...dirs,batchSize:4000};
  const a=await createPersistent1999Industry(params);
  assert.equal(a.status,'COMPLETE');
+ const certificate=await verifyPersistent1999WorldOpen(store,a);
+ assert.equal(certificate.status,'OPEN_VERIFIED');
+ assert.equal(certificate.horses,a.horseCount);
  assert.ok(a.horseCount>180000);
  assert.ok(a.personCount>30000);
  assert.ok(a.coveringCount>50000);
@@ -63,6 +66,7 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
  assert.ok(directory.every(e=>e.ratings&&Array.isArray(e.relationships)));
  const b=await createPersistent1999Industry(params);
  assert.deepEqual(b,a);
+ assert.equal((await verifyPersistent1999WorldOpen(store,b)).status,'OPEN_VERIFIED');
  await assert.rejects(createPersistent1999Industry({...params,
   tracks:[{id:'T-DIFFERENT'}]}),/generation parameters conflict/);
  assert.deepEqual(await readPersistent1999IndustryBatch(store,b,'horseBatches',0),first);
