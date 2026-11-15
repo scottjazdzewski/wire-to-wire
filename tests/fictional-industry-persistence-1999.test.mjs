@@ -6,7 +6,7 @@ import {createPersistent1999Industry,readPersistent1999IndustryBatch,findPersist
  readPersistent1999Directory}
  from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
 function memoryStore(){
- const data={manifests:new Map(),horseBatches:new Map(),personBatches:new Map(),horseEdits:new Map(),careerRuns:new Map(),directory:new Map()};
+ const data={manifests:new Map(),horseBatches:new Map(),personBatches:new Map(),horseEdits:new Map(),careerRuns:new Map(),directory:new Map(),coveringBatches:new Map()};
  return {get:async(s,k)=>data[s].get(k),
   commitDirectory:async(id,manifest,records)=>{
    data.directory.set(id,structuredClone(records));
@@ -32,6 +32,12 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
  assert.equal(a.status,'COMPLETE');
  assert.ok(a.horseCount>180000);
  assert.ok(a.personCount>30000);
+ assert.ok(a.coveringCount>50000);
+ assert.ok(a.coveringBatchesCommitted>10);
+ const firstCoverings=await readPersistent1999IndustryBatch(store,a,'coveringBatches',0);
+ assert.ok(firstCoverings.every(c=>c.mareId.startsWith('H-FICTIONAL-1999-BROODMARES-')&&
+  c.stallionId.startsWith('H-FICTIONAL-1999-STALLIONS-')&&
+  c.status==='COVERING_BOOKED'&&c.liveFoalId===null));
  const first=await readPersistent1999IndustryBatch(store,a,'horseBatches',0);
  assert.equal(first[0].id,'H-FICTIONAL-1999-BROODMARES-0000001');
  assert.ok(first[0].ratings.speed>=15);
@@ -70,6 +76,7 @@ test('interrupted industry genesis resumes at committed checkpoint',async()=>{
  const done=await createPersistent1999Industry({...params,store});
  assert.equal(done.status,'COMPLETE');
  assert.ok(done.horseBatchesCommitted>2);
+ assert.ok(done.coveringBatchesCommitted>0);
 });
 
 test('incomplete worlds cannot receive playable career runs',async()=>{
