@@ -118,3 +118,27 @@ export async function readPersistent1999IndustryBatch(store,manifest,kind,index)
  if(!records)throw Error('Industry batch missing from durable storage');
  return records;
 }
+
+/**
+ * O(1) indexed lookup of a permanent horse identity. Reads exactly one
+ * persisted batch; never rebuilds the 200k+ horse population to open a profile.
+ */
+export async function findPersistent1999Horse(store,manifest,horseId){
+ if(manifest?.status!=='COMPLETE'||typeof horseId!=='string')
+  throw Error('Completed world and horse ID required');
+ const match=/^H-FICTIONAL-1999-(BROODMARES|STALLIONS|YEARLINGS|TWOYEAROLDPROSPECTS|THREEYEAROLDRUNNERS|FOURYEAROLDRUNNERS|FIVEPLUSRUNNERS)-(\\d{7})$/.exec(horseId);
+ if(!match)return null;
+ const names=['broodmares','stallions','yearlings','twoYearOldProspects',
+  'threeYearOldRunners','fourYearOldRunners','fivePlusRunners'];
+ const tokens=['BROODMARES','STALLIONS','YEARLINGS','TWOYEAROLDPROSPECTS',
+  'THREEYEAROLDRUNNERS','FOURYEAROLDRUNNERS','FIVEPLUSRUNNERS'];
+ const position=tokens.indexOf(match[1]);
+ const index=Number(match[2])-1;
+ if(index<0||index>=manifest.plan.counts[names[position]])return null;
+ let global=index;
+ for(let i=0;i<position;i++)global+=manifest.plan.counts[names[i]];
+ const batchIndex=Math.floor(global/manifest.batchSize);
+ const records=await readPersistent1999IndustryBatch(store,manifest,'horseBatches',batchIndex);
+ return records[global%manifest.batchSize]?.id===horseId?
+  records[global%manifest.batchSize]:null;
+}
