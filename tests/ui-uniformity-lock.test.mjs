@@ -102,7 +102,8 @@ test('Office Inbox and Decisions use source cases, not a fake connected-world di
  assert.ok(start>0&&stop>start);
  const inbox=js.slice(start,stop);
  assert.match(inbox,/const all=currentMessages\(\)/);
- assert.match(inbox,/page==='Decisions'\?all\.filter\(m=>!m\.resolved\):all/);
+ assert.match(inbox,/const actionable=all\.filter\(m=>m\.urgent&&!m\.resolved\)/);
+ assert.match(inbox,/const listed=\(decisions\?actionable:all\)/);
  assert.match(inbox,/data-ng="case"/);
  assert.match(inbox,/ng-manager-message-inbox/);
  assert.match(inbox,/FRONT OFFICE/);
@@ -110,6 +111,23 @@ test('Office Inbox and Decisions use source cases, not a fake connected-world di
  const dashboard=js.slice(js.indexOf('function managerDashboard(){'),js.indexOf('function open1999Race(',js.indexOf('function managerDashboard(){')));
  assert.match(dashboard,/managerOfficeInboxView\(page\)/);
  assert.match(dashboard,/page==='Training'\)return liveStableTrainingView\(\)/);
+});
+test('Office selects source case inline and previews recorded risks before opening',()=>{
+ const begin=js.indexOf('function managerOfficeInboxView(page){');
+ const end=js.indexOf('/* One native Stable workflow',begin);
+ const view=js.slice(begin,end);
+ assert.match(view,/managerSortableColumns\(scope/);
+ assert.match(view,/data-ng="office-focus"/);
+ assert.match(view,/aria-pressed/);
+ assert.match(view,/ng-office-file-preview/);
+ assert.match(view,/desk\?\.read/);
+ assert.match(view,/desk\?\.risk/);
+ assert.match(view,/SOURCE-LINKED NEXT STEPS/);
+ assert.match(view,/data-ng="case"/);
+ assert.match(view,/data-ng="menu"/);
+ assert.match(js,/if\(key==='office-focus'\)/);
+ assert.doesNotMatch(view,/mockMessage|fakeCase|Math\.random/);
+ assert.match(css,/ng-manager-message-inbox \.ng-manager-row\[aria-pressed="true"\]/);
 });
 test('Stable Training opens the real simulation training desk and has a working back-to-roster action',()=>{
  const start=js.indexOf('function liveStableTrainingView(){');
