@@ -182,13 +182,7 @@ function inputProfile(){
  });
 }
 let fullIndustryManifest=null;
-const INDUSTRY_CHOICE_KEY='wtw1999LastChosenIndustryV1';
-let chosenIndustry=null;
-try{chosenIndustry=JSON.parse(localStorage.getItem(INDUSTRY_CHOICE_KEY)||'null')}catch{}
-let selectedIndustryHorses=Number.isSafeInteger(chosenIndustry?.horseCount)?
- chosenIndustry.horseCount:250000;
-let selectedIndustrySeed=Number.isSafeInteger(chosenIndustry?.seed)?
- chosenIndustry.seed:19990101;
+let selectedIndustryHorses=250000,selectedIndustrySeed=19990101;
 const INDUSTRY_SIZE_MIN=10000,INDUSTRY_SIZE_MAX=325000;
 function requestedIndustry(){
  const root=modal();
@@ -199,7 +193,6 @@ function requestedIndustry(){
  if(!Number.isSafeInteger(seed)||seed<1||seed>4294967295)
   throw Error('Invalid 1999 industry seed');
  selectedIndustryHorses=horseCount;selectedIndustrySeed=seed;
- localStorage.setItem(INDUSTRY_CHOICE_KEY,JSON.stringify({horseCount,seed}));
  // Distinct sizes keep independent manifests, immutable records and edits.
  return {seed,targetOpeningHorses:horseCount,
   worldId:'WTW1999FullIndustry-H'+horseCount};
