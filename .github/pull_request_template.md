@@ -3,6 +3,15 @@
 ### What changed and why?
 State the affected screen/engine/data/asset behavior, the canonical source of truth, and the approved baseline preserved or the expressly reviewed replacement.
 
+### Desktop-first commercial delivery (required even while browser previews remain)
+- [ ] The change is compatible with the future offline Windows EXE and its ONE local game engine; no new mandatory Cloudflare/D1/API/CDN/web-account dependency
+- [ ] Required game data/art are available as bundled read-only resources or via a tested local offline adapter, with no remote-only gameplay path
+- [ ] Any changed save/event format preserves older careers and portable `.wtwsave` migration; no browser-origin-dependent storage assumed as final retail authority
+- [ ] If gameplay, data access, or packaging changed, described actual desktop/offline acceptance needed (not merely a green web deploy); unported dependencies are explicitly tracked
+- [ ] No private history admin/correction controls, source credentials or developer environment are bundled as retail features
+
+Desktop compatibility assessment / known offline dependencies:
+
 ### Mandatory for every engineering window
 - [ ] Started from current `main`; checked for concurrent changes before merging
 - [ ] There is one supported implementation; **deleted the obsolete implementation physically** (files, dead functions, CSS, old tests, stale instructions), or proved no replacement/retirement was involved
