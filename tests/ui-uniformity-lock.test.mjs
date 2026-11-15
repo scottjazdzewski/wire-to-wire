@@ -80,6 +80,32 @@ test('direct Office deep links keep their requested page instead of silently sho
  assert.match(js,/if\(section==='Office'&&\['Messages','Decisions'\]\.includes\(page\)\)return kind==='decision'/);
  assert.match(js,/managerRecordViewControl\(section,page\)/);
 });
+test('Office Inbox and Decisions use source cases, not a fake connected-world directory',()=>{
+ const start=js.indexOf('function managerOfficeInboxView(page){');
+ const stop=js.indexOf('function managerDashboard(){',start);
+ assert.ok(start>0&&stop>start);
+ const inbox=js.slice(start,stop);
+ assert.match(inbox,/const all=currentMessages\(\)/);
+ assert.match(inbox,/page==='Decisions'\?all\.filter\(m=>!m\.resolved\):all/);
+ assert.match(inbox,/data-ng="case"/);
+ assert.match(inbox,/ng-manager-message-inbox/);
+ assert.match(inbox,/FRONT OFFICE/);
+ assert.doesNotMatch(inbox,/data-ng="search-go"|fakeCase|exampleDecision|placeholderMessage/);
+ const dashboard=js.slice(js.indexOf('function managerDashboard(){'),js.indexOf('function open1999Race(',js.indexOf('function managerDashboard(){')));
+ assert.match(dashboard,/managerOfficeInboxView\(page\)/);
+ assert.match(dashboard,/page==='Training'\)return liveStableTrainingView\(\)/);
+});
+test('Stable Training opens the real simulation training desk and has a working back-to-roster action',()=>{
+ const start=js.indexOf('function liveStableTrainingView(){');
+ const stop=js.indexOf('function worldDirectoryHorseRows(){',start);
+ const view=js.slice(start,stop);
+ assert.match(view,/adapter\.horseTraining/);
+ assert.match(view,/data-ng="training-set"/);
+ assert.match(view,/ng-training-desk/);
+ assert.match(view,/data-ng="stable-filter" data-val="all"/);
+ assert.match(js,/APP\.custom==='Stable — Training'&&val==='all'/);
+ assert.match(js,/openCustomView\('Stable — Overview','Stable','Overview'\)/);
+});
 test('do not add page-specific CSS layers or new style patch stacks',()=>{
  const assets=[...html.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/g)]
   .map(m=>m[1].split('?')[0]);
