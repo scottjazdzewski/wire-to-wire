@@ -203,7 +203,7 @@ function industryDirectories(){
 }
 async function browseFullIndustry(page=0,kind=industryBrowseKind){
  if(!fullIndustryManifest)throw Error('Open the full industry first');
- if(!['horseBatches','personBatches','directory'].includes(kind))throw Error('Invalid industry view');
+ if(!['horseBatches','personBatches','directory','calendarBatches','coveringBatches'].includes(kind))throw Error('Invalid industry view');
  if(kind==='directory'){
   industryBrowseKind=kind;
   const count=industryDirectory.length;
@@ -219,10 +219,13 @@ async function browseFullIndustry(page=0,kind=industryBrowseKind){
  }
  industryBrowseKind=kind;
  const count=kind==='horseBatches'?fullIndustryManifest.horseCount:
-  fullIndustryManifest.personCount;
+  kind==='personBatches'?fullIndustryManifest.personCount:
+  kind==='calendarBatches'?fullIndustryManifest.scheduledCards:
+  fullIndustryManifest.coveringCount;
  const max=Math.ceil(count/20);
  industryBrowsePage=Math.max(0,Math.min(max-1,page));
- const first=industryBrowsePage*20,batchSize=fullIndustryManifest.batchSize;
+ const first=industryBrowsePage*20,batchSize=kind==='calendarBatches'?100:
+  fullIndustryManifest.batchSize;
  const store=await open1999IndustryDatabase();
  try{
   const ids=[Math.floor(first/batchSize),Math.floor((first+19)/batchSize)];
@@ -230,16 +233,24 @@ async function browseFullIndustry(page=0,kind=industryBrowseKind){
   const b=ids[1]===ids[0]?a:await readPersistent1999IndustryBatch(store,fullIndustryManifest,kind,ids[1]);
   const records=Array.from({length:Math.min(20,count-first)},
    (_,i)=>{const index=first+i;return (Math.floor(index/batchSize)===ids[0]?a:b)[index%batchSize]});
-  industryBrowseHtml='<p>'+esc(kind==='horseBatches'?'HORSES':'PERSONNEL')+
-   ' '+fmt(first+1)+'–'+fmt(first+records.length)+' OF '+fmt(count)+'</p>'+
-   '<div style="max-height:260px;overflow:auto">'+records.map(h=>
-    '<div class="wtw-cc-slot"><strong>'+esc(h.name||h.id)+'</strong> · '+
-    esc(kind==='horseBatches'?h.cohort:h.role)+' · '+
-    esc(kind==='horseBatches'?h.sex:h.tier)+' · '+
-    esc(kind==='horseBatches'?h.foalYear:h.workplaceId)+
-    (kind==='horseBatches'?'<button data-cc-action="inspect-listed-horse" data-id="'+
-     esc(h.id)+'">PROFILE</button>':'')+
-    '</div>').join('')+'</div>';
+  const title={horseBatches:'HORSES',personBatches:'PERSONNEL',
+   calendarBatches:'RACE CARDS',coveringBatches:'BREEDING BOOKINGS'}[kind];
+  industryBrowseHtml='<p>'+title+' '+fmt(first+1)+'–'+
+   fmt(first+records.length)+' OF '+fmt(count)+'</p>'+
+   '<div style="max-height:260px;overflow:auto">'+records.map(h=>{
+    if(kind==='calendarBatches')return '<div class="wtw-cc-slot"><strong>'+
+     esc(h.date)+' · '+esc(h.trackId)+'</strong> · '+
+     fmt(h.races.length)+' scheduled races · '+esc(h.id)+'</div>';
+    if(kind==='coveringBatches')return '<div class="wtw-cc-slot"><strong>'+
+     esc(h.id)+'</strong> · mare '+esc(h.mareId)+
+     ' · stallion '+esc(h.stallionId)+' · '+esc(h.status)+'</div>';
+    return '<div class="wtw-cc-slot"><strong>'+esc(h.name||h.id)+'</strong> · '+
+     esc(kind==='horseBatches'?h.cohort:h.role)+' · '+
+     esc(kind==='horseBatches'?h.sex:h.tier)+' · '+
+     esc(kind==='horseBatches'?h.foalYear:h.workplaceId)+
+     (kind==='horseBatches'?'<button data-cc-action="inspect-listed-horse" data-id="'+
+      esc(h.id)+'">PROFILE</button>':'')+'</div>';
+   }).join('')+'</div>';
  }finally{store.close()}
 }
 async function inspectFullIndustryHorse(horseId){
@@ -284,7 +295,9 @@ async function refresh(){
    '<button data-cc-action="inspect-full-horse">OPEN HORSE PROFILE</button>'+ 
    '<div class="wtw-cc-actions"><button data-cc-action="industry-horses">HORSES</button>'+ 
    '<button data-cc-action="industry-people">PERSONNEL</button>'+ 
-   '<button data-cc-action="industry-directory">TRACKS / FARMS / OWNERS</button></div>'+ 
+   '<button data-cc-action="industry-directory">TRACKS / FARMS / OWNERS</button>'+ 
+   '<button data-cc-action="industry-calendar">RACE CALENDAR</button>'+ 
+   '<button data-cc-action="industry-coverings">BREEDING BOOK</button></div>'+ 
    '<p>BREEDING STOCK '+fmt(fullIndustryManifest.plan.counts.broodmares+fullIndustryManifest.plan.counts.stallions)+
    ' · YEARLINGS '+fmt(fullIndustryManifest.plan.counts.yearlings)+
    ' · 2YO PROSPECTS '+fmt(fullIndustryManifest.plan.counts.twoYearOldProspects)+
@@ -371,9 +384,12 @@ async function perform(action,element){
   notice='Full 1999 world reopened and census verified. Existing career unchanged.';
   return;
  }
- if(action==='industry-horses'||action==='industry-people'||action==='industry-directory'){
+ if(['industry-horses','industry-people','industry-directory',
+  'industry-calendar','industry-coverings'].includes(action)){
   await browseFullIndustry(0,action==='industry-horses'?'horseBatches':
-   action==='industry-people'?'personBatches':'directory');
+   action==='industry-people'?'personBatches':
+   action==='industry-calendar'?'calendarBatches':
+   action==='industry-coverings'?'coveringBatches':'directory');
   return;
  }
  if(action==='industry-prev'||action==='industry-next'){
