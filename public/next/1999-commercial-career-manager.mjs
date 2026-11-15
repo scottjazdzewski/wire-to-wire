@@ -11,7 +11,7 @@ import {open1999IndustryDatabase,createPersistent1999Industry,
  savePersistent1999CareerRun,loadPersistent1999CareerRun}
  from '/1999/engine/fictional-industry-persistence-1999.mjs';
 import {TRACK_PROGRAM_1999} from '/next/1999-track-program.mjs';
-import {readPersistent1999HorseProfile}
+import {readPersistent1999HorseProfile,readPersistent1999IndustryBatch}
  from '/1999/engine/fictional-industry-persistence-1999.mjs';
 
 const DB_NAME='WireToWireClean1999CareersV2';
@@ -178,6 +178,7 @@ function inputProfile(){
  });
 }
 let fullIndustryManifest=null;
+let industryBrowsePage=0,industryBrowseHtml='';
 function industryDirectories(){
  const tracks=Object.values(TRACK_PROGRAM_1999)
   .filter(t=>t.playableIn1999!==false&&t.trackOperating==='OPEN_1999')
@@ -192,6 +193,26 @@ function industryDirectories(){
   name:t.name+' Region Ownership '+(i+1),location:t.location
  })));
  return {tracks,farms,owners};
+}
+async function browseFullIndustry(page=0){
+ if(!fullIndustryManifest)throw Error('Open the full industry first');
+ const max=Math.ceil(fullIndustryManifest.horseCount/20);
+ industryBrowsePage=Math.max(0,Math.min(max-1,page));
+ const first=industryBrowsePage*20,batchSize=fullIndustryManifest.batchSize;
+ const store=await open1999IndustryDatabase();
+ try{
+  const ids=[Math.floor(first/batchSize),Math.floor((first+19)/batchSize)];
+  const a=await readPersistent1999IndustryBatch(store,fullIndustryManifest,'horseBatches',ids[0]);
+  const b=ids[1]===ids[0]?a:await readPersistent1999IndustryBatch(store,fullIndustryManifest,'horseBatches',ids[1]);
+  const records=Array.from({length:Math.min(20,fullIndustryManifest.horseCount-first)},
+   (_,i)=>{const index=first+i;return (Math.floor(index/batchSize)===ids[0]?a:b)[index%batchSize]});
+  industryBrowseHtml='<p>HORSES '+fmt(first+1)+'–'+fmt(first+records.length)+
+   ' OF '+fmt(fullIndustryManifest.horseCount)+'</p>'+
+   '<div style="max-height:260px;overflow:auto">'+records.map(h=>
+    '<div class="wtw-cc-slot"><strong>'+esc(h.id)+'</strong> · '+
+    esc(h.cohort)+' · '+esc(h.sex)+' · '+esc(h.foalYear)+
+    ' · '+esc(h.ownerId)+'</div>').join('')+'</div>';
+ }finally{store.close()}
 }
 async function inspectFullIndustryHorse(horseId){
  if(!fullIndustryManifest)throw Error('Open the full industry first');
@@ -229,7 +250,9 @@ async function refresh(){
    ' horses · '+fmt(fullIndustryManifest.personCount)+' personnel · '+
    esc(fullIndustryManifest.status)+'</p>'+
    '<label>HORSE ID<input data-cc="inspect-horse" value="H-FICTIONAL-1999-BROODMARES-0000001"/></label>'+
-   '<button data-cc-action="inspect-full-horse">OPEN HORSE PROFILE</button>':'')+
+   '<button data-cc-action="inspect-full-horse">OPEN HORSE PROFILE</button>'+ 
+   '<div class="wtw-cc-actions"><button data-cc-action="industry-prev">PREVIOUS 20</button>'+ 
+   '<button data-cc-action="industry-next">NEXT 20</button></div>'+industryBrowseHtml:'')+
   '</div>'+
   '<div class="wtw-cc-section"><h3>NEW CAREER / START FROM SCRATCH</h3>'+
   '<p>1999 founding foundation (development): 73 protected breeding horses, no registered racing horses and no generated industry. A complete fictional population and its believable history are still in engineering. This action creates a separate named career from the available foundation; it does not claim to generate the future full world.</p>'+
@@ -268,7 +291,12 @@ async function perform(action,element){
   fullIndustryManifest=await prepareFictionalIndustry({
    seed,worldId:'WTW1999FullIndustry',...industryDirectories(),batchSize:2000
   });
+  await browseFullIndustry(0);
   notice='Full industry stored and ready to inspect. Existing career unchanged.';
+  return;
+ }
+ if(action==='industry-prev'||action==='industry-next'){
+  await browseFullIndustry(industryBrowsePage+(action==='industry-next'?1:-1));
   return;
  }
  if(action==='inspect-full-horse'){
