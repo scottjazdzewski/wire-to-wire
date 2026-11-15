@@ -44,6 +44,7 @@ test('owner authorization, cross-owner, collision and permanently rejected names
  assert.throws(()=>apply(start,{...command('NAME:010','Blue Hour','KEEP'),actor:'system'}),e=>e.code==='NAMING_FEEDBACK_AUTH');
  assert.throws(()=>apply(start,command('NAME:011','North Window','CHOOSE','H-OTHER')),e=>e.code==='NAMING_FEEDBACK_HORSE');
  assert.throws(()=>apply(start,command('NAME:012','Historic Ace','CHOOSE','H-CANON-1')),e=>e.code==='NAMING_FEEDBACK_COLLISION');
+ assert.throws(()=>apply(start,command('NAME:012B','Historic Ace','KEEP')),e=>e.code==='NAMING_FEEDBACK_COLLISION');
  assert.throws(()=>apply(start,command('NAME:013','Blue Hour','KEEP','H-CANON-1')),e=>e.code==='NAMING_FEEDBACK_HORSE');
  const rejected=apply(start,command('NAME:014','Blue Hour','REJECT')).state;
  assert.throws(()=>apply(rejected,command('NAME:015','Blue Hour','KEEP')),/permanently rejected/i);
