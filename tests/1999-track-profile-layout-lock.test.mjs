@@ -41,6 +41,13 @@ test('full stakes roster is visible by default with sortable columns, race links
  assert.match(css,/\.ng-track-stakes \.ng-stakes-table\{[^}]*overflow-y:auto/);
 });
 
+test('game-planned stakes have a human-readable grade badge, never a leaking internal enum',()=>{
+ assert.match(stakes,/const gradeLabel=\/\^PLANNED\[_ \]WTW/);
+ assert.match(stakes,/\?'PLANNED':cols\[2\]/);
+ assert.match(stakes,/safe\(gradeLabel\)/);
+ assert.match(stakes,/const rank=\(key,row\)/);
+ assert.match(stakes,/ng-stakes-trophy/);
+});
 test('real track brand colors come from actual approved logo pixels, not a guessed palette',()=>{
  assert.match(theme,/paletteFromImageData/);
  assert.match(theme,/logo-pixels/);
