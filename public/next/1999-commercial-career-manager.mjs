@@ -8,7 +8,8 @@
 import {encodeCareerSave,decodeCareerSave,packCareerFile,unpackCareerFile}
  from '/1999/engine/compact-career.mjs';
 import {open1999IndustryDatabase,createPersistent1999Industry,
- savePersistent1999CareerRun,loadPersistent1999CareerRun}
+ savePersistent1999CareerRun,loadPersistent1999CareerRun,
+ verifyPersistent1999WorldOpen}
  from '/1999/engine/fictional-industry-persistence-1999.mjs';
 import {TRACK_PROGRAM_1999} from '/next/1999-track-program.mjs';
 import {readPersistent1999HorseProfile,readPersistent1999IndustryBatch,
@@ -332,10 +333,13 @@ async function perform(action,element){
    }
   });
   const db=await open1999IndustryDatabase();
-  try{industryDirectory=await readPersistent1999Directory(db,fullIndustryManifest)}
+  try{
+   await verifyPersistent1999WorldOpen(db,fullIndustryManifest);
+   industryDirectory=await readPersistent1999Directory(db,fullIndustryManifest)
+  }
   finally{db.close()}
   await browseFullIndustry(0);
-  notice='Full industry stored and ready to inspect. Existing career unchanged.';
+  notice='Full 1999 world reopened and census verified. Existing career unchanged.';
   return;
  }
  if(action==='industry-horses'||action==='industry-people'||action==='industry-directory'){
