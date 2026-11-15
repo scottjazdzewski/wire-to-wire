@@ -990,7 +990,12 @@ function dossierEntityOrder(a,b){
 }
 function dossierAdjacentRecords(entry,records){
  const family=dossierEntityCategory(entry);
- const eligible=(records||[]).filter(item=>dossierEntityCategory(item)===family)
+ // A live track's PREVIOUS/NEXT must not jump into retired 1999 venues.
+ // Direct historical IDs continue to open, but browse only within their archive.
+ const historyOnly=x=>x?._world?.operating==='HISTORICAL_ONLY'||
+  x?._world?.playableIn1999===false;
+ const eligible=(records||[]).filter(item=>dossierEntityCategory(item)===family&&
+  (family!=='track'||historyOnly(item)===historyOnly(entry)))
   .slice().sort(dossierEntityOrder);
  const i=eligible.findIndex(item=>item.worldKey===entry.worldKey);
  if(i<0||eligible.length<2)return {family,previous:null,next:null};
@@ -1405,7 +1410,10 @@ function world1999Linked(kind,id,label){
 
 function globalSearchItems(){
  const rows=typeof window.__wtwOfficeSearchRecords==='function'?window.__wtwOfficeSearchRecords():[];
- const universe=world1999Entries();
+ // The 1999 search is operational: historical-only courses remain available
+ // by immutable record ID and through History, not in the live track picker.
+ const universe=world1999Entries().filter(e=>e.kind!=='track'||
+  e._world?.operating!=='HISTORICAL_ONLY'&&e._world?.playableIn1999!==false);
  const pages=[
   {kind:'page',name:'Racing Office',detail:'Decision Desk and Inbox',section:'Office'},
   {kind:'page',name:'Organization Overview',detail:'Stable finances, horses and commitments'},
@@ -1416,9 +1424,10 @@ function globalSearchItems(){
   }))),
   ...currentMessages().map(m=>({kind:'decision',name:m.title,detail:'Office · '+m.from,caseId:m.case}))
  ];
- const playableTracks=window.__WTW_1999_UI_DATA__?.extraTracks?.()||[];
- const playableTrackIds=new Set(playableTracks.map(t=>t.id));
- const playableTrackNames=new Set(playableTracks.map(t=>t.name));
+ const playableTracks=universe.filter(e=>e.kind==='track');
+ const playableTrackIds=new Set(playableTracks.map(t=>t.canonicalId));
+ const playableTrackNames=new Set(playableTracks.flatMap(t=>
+  [t.name,t._world?.sourceName]).filter(Boolean));
  const original=rows.filter(r=>r&&typeof r.name==='string'&&
    (r.kind!=='track'||playableTrackIds.has(r.id)||playableTrackNames.has(r.name))).map(r=>{
   const bucket={horse:'horses',person:'people',farm:'organizations',track:'tracks'}[r.kind];
@@ -3303,9 +3312,9 @@ function depRows(section,page,demo,auction){
     o.leadershipStatus==='ESTABLISHED_1999_PRINCIPAL_LINK'?'ESTABLISHED':o.status||''
   }));
  }
- if(section==='World'&&page==='Tracks')return depTrackRows('All Tracks',depGameDay(),true);
- if(section==='World'&&page==='Meets')return depTrackRows('Active Meets',depGameDay(),true);
- if(section==='Tracks')return depTrackRows(page,depGameDay(),true);
+ if(section==='World'&&page==='Tracks')return depTrackRows('All Tracks',depGameDay());
+ if(section==='World'&&page==='Meets')return depTrackRows('Active Meets',depGameDay());
+ if(section==='Tracks')return depTrackRows(page,depGameDay());
  if(section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'){
   const tracks=depTrackRows('Overview',depRaceBrowseDate());
   if(APP.racingTrack)return tracks.filter(t=>t.name===APP.racingTrack).map(t=>({
@@ -3996,7 +4005,10 @@ function worldCompleteDirectoryView(){
  const historic=(world1999Data?.historicalHorses||[]).filter(h=>h.id&&h.name)
   .map(h=>({kind:'historical-horse',name:h.name,detail:'ARCHIVED BLOODLINE',
    canonicalId:h.id,worldKey:'historical-horse:'+h.id,_world:h}));
- const entries=[...world1999Entries(),...historic];
+ // Operational World screens exclude retired 1999 venues. Historic IDs and
+ // source data are still resolvable by world1999Entry() and in History Vault.
+ const entries=[...world1999Entries().filter(e=>e.kind!=='track'||
+  e._world?.operating!=='HISTORICAL_ONLY'&&e._world?.playableIn1999!==false),...historic];
  const kinds=[['all','ALL'],['horse','HORSES'],['historical-horse','PAST HORSES'],
   ['person','PEOPLE'],['farm','ORGANIZATIONS'],['track','TRACKS']];
  const names=new Map((world1999Data?.organizations||[]).map(x=>[x.id,x.name]));
