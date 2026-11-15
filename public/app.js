@@ -9,7 +9,7 @@ const fields = {
   connection: {party_id:'Connected owner / trainer / person ID',year:'Season',role:'Connection role',basis:'Evidence basis'},
   result: {horse_id:'Placed horse ID',position:'Finishing position'}
 };
-const state = {page:'races',year:1998,calendarMonth:null,role:'trainer',involvement:'balanced',search:'',trackDirectory:null,data:null,mode:'LOADING',changes:[],nameEdits:[],availableYears:[],edit:null,rename:null,apiIssue:'',orgHistory:[],orgHistoryStatus:'NOT_LOADED',history:{view:'ledger',year:'all',track:'all',sort:'year',desc:true,query:'',page:0}};
+const state = {page:'races',year:1998,calendarMonth:null,role:'trainer',involvement:'balanced',search:'',trackDirectory:null,data:null,mode:'LOADING',changes:[],nameEdits:[],availableYears:[],edit:null,rename:null,apiIssue:'',orgHistory:[],orgHistoryStatus:'NOT_LOADED',recordBrowse:null,history:{view:'ledger',year:'all',track:'all',sort:'year',desc:true,query:'',page:0}};
 const GAME_PREF_KEY = 'wtw_game_manager_preferences_v1';
 try { const saved=JSON.parse(localStorage.getItem(GAME_PREF_KEY)||'{}'); if(['owner','trainer','farm','breeder','jockey'].includes(saved.role))state.role=saved.role; if(['hands-on','balanced','executive'].includes(saved.involvement))state.involvement=saved.involvement; } catch {}
 // Deep links from the main Racing Office open the existing protected historical archive.
@@ -46,6 +46,88 @@ function formatStatus(s){if(s==='NAME_APPROVED')return pill('Approved');if(s==='
 function count(kind){return state.data?.entities.filter(e=>e.kind===kind).length||0}
 function renameButton(type,id,name){return `<button type="button" class="inline-rename" data-rename-type="${h(type)}" data-id="${h(id)}" data-current-name="${h(name)}" title="Edit this name" aria-label="Edit name ${h(name)}">✎</button>`}
 function openButton(type,id,label){return `<span class="name-edit-pair"><button type="button" class="name-cell" data-open-type="${h(type)}" data-id="${h(id)}">${h(label)}</button>${renameButton(type,id,label)}</span>`}
+
+/* History Vault record-to-record browsing uses the same source-ID rule as
+ * the playable manager. No fake identities, extra data or game-state writes.
+ * The clicked LIST (including its filter/sort) becomes the immutable cursor.
+ */
+function archiveRecordFamily(type,id){
+ if(type==='race')return 'race';
+ if(type==='history-org')return 'organization';
+ if(type!=='entity')return '';
+ const record=entity(id);
+ if(!record)return '';
+ if(record.kind==='person'){
+  const role=String(record.role||'').toLowerCase();
+  if(/trainer/.test(role))return 'trainer';
+  if(/jockey|rider/.test(role))return 'jockey';
+  if(/owner/.test(role))return 'owner';
+  if(/breeder/.test(role))return 'breeder';
+  return 'person';
+ }
+ if(record.kind==='organization'||record.kind==='farm'){
+  const role=String(record.role||record.summary||'').toLowerCase();
+  if(/racing stable/.test(role))return 'racing stable';
+  if(/ownership|partnership|agency/.test(role))return 'owner';
+  return 'farm';
+ }
+ return record.kind==='track'?'track':record.kind==='horse'?'horse':record.kind||'';
+}
+function archiveListEntry(type,id){
+ const key=String(id||''),family=archiveRecordFamily(type,key);
+ const record=type==='race'?race(key):type==='entity'?entity(key):
+  type==='history-org'?(state.orgHistory||[]).find(x=>x.organization_id===key):null;
+ if(!family||!record)return null;
+ return {type,id:key,family,name:record.name||record.canonical_name||key};
+}
+function archiveCaptureList(button,type,id){
+ if(!button.closest('#app'))return; // Cross-reference inside a dossier is not a new list.
+ const container=button.closest('tbody,.stable-grid,.people-grid,.racecourse-atlas-grid,.panel,#app');
+ if(!container)return;
+ const selected=archiveListEntry(type,id);
+ if(!selected){state.recordBrowse=null;return}
+ const buttons=[...container.querySelectorAll('[data-open-type][data-id],[data-history-org]')];
+ const seen=new Set(),items=[];
+ for(const node of buttons){
+  const entry=node.hasAttribute('data-history-org')?
+   archiveListEntry('history-org',node.dataset.historyOrg):
+   archiveListEntry(node.dataset.openType,node.dataset.id);
+  if(!entry||entry.family!==selected.family)continue;
+  const k=entry.type+':'+entry.id;
+  if(seen.has(k))continue; // Multiple actions per card do not create duplicates.
+  seen.add(k);items.push(entry);
+ }
+ const index=items.findIndex(item=>item.type===selected.type&&item.id===selected.id);
+ state.recordBrowse=items.length>=2&&index>=0?{items,index,sourcePage:state.page}:null;
+}
+function archiveRecordCursor(type,id){
+ const cursor=state.recordBrowse;
+ if(!cursor||cursor.items.length<2)return null;
+ const selected=cursor.items[cursor.index];
+ return selected?.type===type&&selected.id===id?cursor:null;
+}
+function archiveRecordPager(type,id){
+ const cursor=archiveRecordCursor(type,id),target=$('detail-content');
+ if(!cursor||!target)return;
+ const prev=cursor.items[(cursor.index+cursor.items.length-1)%cursor.items.length];
+ const next=cursor.items[(cursor.index+1)%cursor.items.length];
+ const family=cursor.items[cursor.index].family;
+ const bar=document.createElement('nav');
+ bar.className='archive-record-browser';
+ bar.setAttribute('aria-label','Previous and next '+family+' records');
+ bar.innerHTML='<span>'+h(family.toUpperCase())+' · '+(cursor.index+1)+' / '+cursor.items.length+
+  '</span><div><button type="button" data-archive-record-step="-1" aria-label="Previous '+h(family)+': '+h(prev.name)+'" title="Previous: '+h(prev.name)+'">‹</button>'+
+  '<button type="button" data-archive-record-step="1" aria-label="Next '+h(family)+': '+h(next.name)+'" title="Next: '+h(next.name)+'">›</button></div>';
+ target.prepend(bar);
+}
+function archiveRecordStep(direction){
+ const cursor=state.recordBrowse,active=state.openDetail;
+ if(!cursor||!active||!archiveRecordCursor(active.type,active.id)||![1,-1].includes(direction))return;
+ cursor.index=(cursor.index+direction+cursor.items.length)%cursor.items.length;
+ const next=cursor.items[cursor.index];
+ openDetail(next.type,next.id); // The original read-only source dossier.
+}
+
 function venueName(record){if(!record?.track_name)return 'Track unrecorded';return `<span class="name-edit-pair"><span>${h(record.track_name)}</span>${renameButton('venue',record.id,record.track_name)}</span>`}
 function editButton(type,id,label='Propose correction',className='button button-quiet'){return `<button class="${className}" data-edit-type="${h(type)}" data-id="${h(id)}">${h(label)}</button>`}
 function pageTitle(){return ({overview:'Command Center',seasons:'Race Calendar',horses:'My Stable',people:'People & Farms',tracks:'Racecourses',races:'History Records',search:'Archive Search',changes:'Record Review',sources:'History Coverage'})[state.page]||'Command Center'}
@@ -605,6 +687,7 @@ async function openDetail(type,id){
   $('drawer-backdrop').hidden=false;
   $('detail-drawer').classList.add('open');
   $('detail-drawer').setAttribute('aria-hidden','false');
+  archiveRecordPager(type,id);
   return;
  }
  let e=type==='entity'?entity(id):type==='race'?race(id):null;
@@ -658,6 +741,7 @@ async function openDetail(type,id){
   if(heading)heading.insertAdjacentHTML('beforeend','<div class="horse-connection-strip">'+cards+'</div>');
  }
  $('drawer-backdrop').hidden=false;$('detail-drawer').classList.add('open');$('detail-drawer').setAttribute('aria-hidden','false');
+ archiveRecordPager(type,id);
  if(type==='entity'&&e.kind==='horse'){
   const uri=new URL(window.location.href);
   if(uri.searchParams.get('horse')!==id){
@@ -698,7 +782,7 @@ async function openDetail(type,id){
   }catch{const panel=$('horse-pedigree-panel');if(panel)panel.innerHTML='<div class="pedigree-card"><small>PEDIGREE</small><strong>Details unavailable</strong></div>'}
  }
 }
-function closeDrawer(){ state.openDetail=null; $('detail-drawer').classList.remove('open');$('detail-drawer').setAttribute('aria-hidden','true');$('drawer-backdrop').hidden=true;
+function closeDrawer(){ state.recordBrowse=null;state.openDetail=null; $('detail-drawer').classList.remove('open');$('detail-drawer').setAttribute('aria-hidden','true');$('drawer-backdrop').hidden=true;
  const url=new URL(window.location.href);
  if(url.searchParams.has('horse')){url.searchParams.delete('horse');window.history.replaceState({},'',url.pathname+url.search);}
 }
@@ -805,7 +889,8 @@ async function decideChange(id,decision){const item=state.changes.find(v=>v.id==
  } else {item.status=decision;item.decided_at=new Date().toISOString();storeChanges()}
  toast(decision==='REJECTED'?'Proposal rejected.':'Approved for future promotion; source record remains untouched.');render();
 }
-document.addEventListener('click',e=>{const t=e.target.closest('[data-page],[data-year],[data-calendar-step],[data-calendar-agenda],[data-open-type],[data-edit-type],[data-rename-type],[data-close-drawer],[data-review-action],[data-history-org],[data-history-sort],[data-history-year],[data-history-back],[data-history-page]');if(!t)return;
+document.addEventListener('click',e=>{const t=e.target.closest('[data-page],[data-year],[data-calendar-step],[data-calendar-agenda],[data-open-type],[data-edit-type],[data-rename-type],[data-close-drawer],[data-review-action],[data-history-org],[data-history-sort],[data-history-year],[data-history-back],[data-history-page],[data-archive-record-step]');if(!t)return;
+ if(t.dataset.archiveRecordStep){archiveRecordStep(Number(t.dataset.archiveRecordStep));return}
  if(t.dataset.historySort){const field=t.dataset.historySort;if(!['year','date','race','track','winner','evidence'].includes(field))return;if(state.history.sort===field)state.history.desc=!state.history.desc;else{state.history.sort=field;state.history.desc=field==='year'}state.history.page=0;render();return}
  if(t.dataset.historyYear){const y=Number(t.dataset.historyYear);if(!years().includes(y))return;setYear(y);return}
  if(t.dataset.historyBack){
@@ -815,7 +900,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-page],[dat
   render();return
  }
  if(t.dataset.historyPage){const direction=t.dataset.historyPage==='next'?1:-1;state.history.page=Math.max(0,state.history.page+direction);render();return}
- if(t.dataset.page){setPage(t.dataset.page);return}if(t.dataset.year){setYear(t.dataset.year);return}if(t.dataset.calendarStep){const next=Number(state.calendarMonth)+Number(t.dataset.calendarStep);if(next>=0&&next<=11){state.calendarMonth=next;render()}return}if(t.dataset.calendarAgenda){const agenda=document.getElementById('calendar-agenda');agenda?.scrollIntoView({behavior:'smooth',block:'center'});agenda?.focus({preventScroll:true});return}if(t.dataset.closeDrawer){closeDrawer();return}if(t.dataset.historyOrg){openDetail('history-org',t.dataset.historyOrg);return}if(t.dataset.renameType){showRename(t.dataset.renameType,t.dataset.id,t.dataset.currentName);return}if(t.dataset.openType){openDetail(t.dataset.openType,t.dataset.id);return}if(t.dataset.editType){showEdit(t.dataset.editType,t.dataset.id);return}if(t.dataset.reviewAction){decideChange(t.dataset.reviewId,t.dataset.reviewAction)}
+ if(t.dataset.page){setPage(t.dataset.page);return}if(t.dataset.year){setYear(t.dataset.year);return}if(t.dataset.calendarStep){const next=Number(state.calendarMonth)+Number(t.dataset.calendarStep);if(next>=0&&next<=11){state.calendarMonth=next;render()}return}if(t.dataset.calendarAgenda){const agenda=document.getElementById('calendar-agenda');agenda?.scrollIntoView({behavior:'smooth',block:'center'});agenda?.focus({preventScroll:true});return}if(t.dataset.closeDrawer){closeDrawer();return}if(t.dataset.historyOrg){archiveCaptureList(t,'history-org',t.dataset.historyOrg);openDetail('history-org',t.dataset.historyOrg);return}if(t.dataset.renameType){showRename(t.dataset.renameType,t.dataset.id,t.dataset.currentName);return}if(t.dataset.openType){archiveCaptureList(t,t.dataset.openType,t.dataset.id);openDetail(t.dataset.openType,t.dataset.id);return}if(t.dataset.editType){showEdit(t.dataset.editType,t.dataset.id);return}if(t.dataset.reviewAction){decideChange(t.dataset.reviewId,t.dataset.reviewAction)}
 });
 window.addEventListener('popstate',()=>{
  const query=new URLSearchParams(window.location.search);
