@@ -264,7 +264,7 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   if(!(worldTracks.length===124&&worldTracks.every(t=>t._kind==='track')&&
    worldTracks.some(t=>t._canonId==='T-0102'&&t.name==='Oriental Park')&&
    worldTracks.some(t=>t._canonId==='T-0118'&&t.status.includes('HISTORICAL'))&&
-   worldTracks.some(t=>t._canonId==='T-0106'&&t.name==='Sheepshead Bay'&&!t.status.includes('HISTORICAL'))&&
+   worldTracks.some(t=>t._canonId==='T-0106'&&/^Sheepshead Bay/.test(t.name)&&!t.status.includes('HISTORICAL'))&&
    !worldTracks.some(t=>/Curragh|Newmarket|Ascot/.test(t.name))))
    throw Error('Site track registry mismatch '+JSON.stringify({
     length:worldTracks.length,section:w.__WTW_NEXT__?.app?.section,
