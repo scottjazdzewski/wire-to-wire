@@ -10,6 +10,7 @@ import {get1999HorseRaceOpportunities} from './race-opportunities-1999.js';
 import {quote1999PlayerRacePlan} from './player-race-plan-1999.js';
 import {getGameHorsePerformance} from './horse-care.js';
 import {getGamePostRaceCampaign} from './post-race-campaign-1999.js';
+import {effectiveHorseTrack} from './shipping-1999.js';
 
 export const RACE_PLACEMENT_ADVICE_SCHEMA='WTW_1999_OWNER_RACE_PLACEMENT_ADVICE_V1';
 const round=x=>Math.round(x*1000)/1000;
@@ -92,7 +93,7 @@ export function get1999RacePlacementAdvice(state,world,horseId,{
   condition=getGameHorsePerformance(state,world,horseId),
   trainerSkill=condition.trainer_gameplay_skills?.race_placement??.5;
  const rows=opportunities.rows.map(row=>{
-  const trackLocal=horse.host_track_id===row.track_id,
+  const trackLocal=effectiveHorseTrack(state,horse)===row.track_id,
    proposed=row.source_status!=='ACTUAL_GAME_RACE_ENTRIES_OPEN',
    booking=proposed?null:executableQuote(state,world,horseId,row),
    post=priorRaceFit(state,horse,row),field=rivals(state,row,horseId),
@@ -114,7 +115,7 @@ export function get1999RacePlacementAdvice(state,world,horseId,{
   const rivalPenalty=field.mean_ability===null?0:
    Math.max(0,field.mean_ability-horse.starting_attributes.current_ability/99)*.09;
   const travelPenalty=trackLocal?0:.035;
-  const trainerPenalty=post.campaign&&!post.class_preferred?.025:0;
+  const trainerPenalty=post.campaign&&!post.class_preferred ? .025 : 0;
   const suitability=round(clamp(
    row.class_fit*.51+condition.readiness*.19+condition.fitness*.11+
    (1-condition.soundness_risk)*.09+trainerSkill*.10-
