@@ -12,7 +12,9 @@ const html=read('public/next/index.html');
 
 test('one REAL approved renderer serves Track-style facilities and Horse-style founding personnel',()=>{
  assert.match(office,/return restored1999Profile\(kind==='person'\?'person':'farm'/);
- assert.match(office,/return x\?profileDetail\(x.route,x.node\):null/);
+ assert.match(office,/if\(!x\)return null/);
+ assert.match(office,/track:'Track Profile'/);
+ assert.match(office,/return profileDetail\(\{\.\.\.x\.route,kicker\},x\.node\)/);
  assert.match(office,/function profileDetail\(route,sourceOverride=null\)/);
  assert.match(office,/isFarm\?'ng-profile-farm ng-profile-track'/);
  assert.match(office,/isPerson\?'ng-profile-person ng-profile-horse'/);

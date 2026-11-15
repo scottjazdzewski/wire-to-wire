@@ -26,7 +26,9 @@ test('one shared management shell, route entry and department navigation remain 
 test('horse, people, track, stable and farm profiles share one renderer family',()=>{
  assert.equal(count(js,/function profileDetail\(/g),1,'No copied entity profile implementations');
  assert.equal(count(js,/function restored1999Profile\(/g),1,'All canonical records use one restored-profile adapter');
- assert.match(js,/return x\?profileDetail\(x\.route,x\.node\):null/);
+ assert.match(js,/if\(!x\)return null/);
+ assert.match(js,/track:'Track Profile'/);
+ assert.match(js,/return profileDetail\(\{\.\.\.x\.route,kicker\},x\.node\)/);
  assert.match(js,/if\(kind==='horse'\|\|kind==='person'\|\|kind==='track'\)return restored1999Profile/);
  assert.match(js,/return restored1999Profile\(kind==='person'\?'person':'farm'/);
  assert.match(js,/ng-profile-intro/,'Shared identity row must stay');
