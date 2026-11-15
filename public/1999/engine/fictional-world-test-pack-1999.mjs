@@ -30,7 +30,7 @@ export function fictional1999Foundation({seed=19990101,sires=80,mares=120}={}){
  }));
 }
 export async function create1999PopulatedTestWorld({
- seed=19990101,worldId='WTW1999Test',horseCount=3083,trackLimit=null
+ seed=19990101,worldId='WTW1999Test',horseCount=20000,trackLimit=null
 }={}){
  const tracks=fictional1999TrackPack().filter(t=>t.playableIn1999&&
   t.trackOperating==='OPEN_1999');
