@@ -4030,7 +4030,7 @@ function managerOfficeInboxView(page){
   '<button class="ng-manager-row" type="button" data-ng="office-focus" data-val="'+safe(m.case)+
   '" aria-pressed="'+String(chosen?.case===m.case)+'" aria-label="Preview office file: '+safe(name)+'">'+
   '<span class="ng-manager-row-type">'+safe(kind)+'</span>'+
-  '<span class="ng-manager-row-name"><strong>'+safe(name)+'</strong></span>'+
+  '<span class="ng-manager-row-name"><strong>'+safe(name)+'</strong><small>'+safe(m.meta||"Source-linked Office correspondence")+'</small></span>'+
   '<span class="ng-manager-row-detail">'+safe(detail)+'</span>'+
   '<span class="ng-manager-row-context">'+safe(context)+'</span>'+
   '<span class="ng-manager-row-open">'+glyph('right',12)+'</span></button>').join('');

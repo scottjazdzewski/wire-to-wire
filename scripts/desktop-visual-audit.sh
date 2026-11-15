@@ -78,6 +78,18 @@ fi
 capture naming-desk '?ui=Stable%20%E2%80%94%20Naming%20Desk' 'ng-naming-desk'
 capture office-messages '?ui=Messages' 'ng-manager-message-inbox'
 capture office-decisions '?ui=Decisions' 'ng-manager-message-inbox'
+# Readability at the supported laptop desktop width; never resize the
+# ordinary management shell or install another UI presentation.
+"$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+ --force-device-scale-factor=1 --window-size=1280,800 --virtual-time-budget=4000 \
+ --screenshot="visual-audit/screenshots/office-messages-1280.png" \
+ 'http://127.0.0.1:8765/next/?ui=Messages' >/tmp/wtw-office-inbox1280.log 2>&1
+"$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+ --force-device-scale-factor=1 --window-size=1280,800 --virtual-time-budget=4000 \
+ --screenshot="visual-audit/screenshots/office-decisions-1280.png" \
+ 'http://127.0.0.1:8765/next/?ui=Decisions' >/tmp/wtw-office-decisions1280.log 2>&1
+test -s visual-audit/screenshots/office-messages-1280.png
+test -s visual-audit/screenshots/office-decisions-1280.png
 
 capture office-career '?ui=Career' 'ng-manager-career'
 capture stable-training '?ui=Stable%20%E2%80%94%20Training' 'ng-training-desk'

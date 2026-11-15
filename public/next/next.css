@@ -224,6 +224,9 @@ body.wtw-next-active{overflow:auto}
 
 
 /* Source-backed Office file preview lives inside the one manager workspace. */
+#wtwNextgen .ng-manager-message-inbox .ng-manager-row{flex-basis:46px;min-height:46px;padding:6px 8px}
+#wtwNextgen .ng-manager-message-inbox .ng-manager-row-name{display:flex;flex-direction:column;align-items:flex-start;gap:3px}
+#wtwNextgen .ng-manager-message-inbox .ng-manager-row-name small{font-size:10px;color:#aac0b1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 #wtwNextgen .ng-manager-message-inbox .ng-manager-row[aria-pressed="true"]{background:#30463b!important;box-shadow:inset 3px 0 #e0bf74}
 #wtwNextgen .ng-manager-message-inbox .ng-manager-workspace{grid-template-columns:minmax(0,1.83fr) minmax(315px,1fr)}
 #wtwNextgen .ng-office-file-preview{padding:12px;background:linear-gradient(145deg,#293c35,#172429);border-bottom:1px solid #405649}
@@ -3391,13 +3394,10 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 /* ===== BEGIN folded source: public/next/profile-hero-v2.css ===== */
 /* Preserve established identity geometry. */
 
-/* Redundant horizontal section strips are superseded by the sidebar and the
-   department VIEW selector. Hide on EVERY route, including Office and World. */
+/* Preserve the canonical management and dossier presentation. */
 #wtwNextgen > .ng-subbar{display:none!important;flex:0 0 0!important;height:0!important;min-height:0!important;padding:0!important;border:0!important}
 
-/* One template shared by track, stud farm, racing stable and owner profiles.
-   The floating logo owns the right grid column; names/metadata cannot be
-   squeezed by it or by the route action buttons. */
+/* Preserve the canonical management and dossier presentation. */
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro{
   display:grid!important;
   grid-template-columns:70px minmax(0,1fr) clamp(205px,22vw,292px)!important;
@@ -3525,9 +3525,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
   background:color-mix(in srgb,var(--wtw-id-base,#506052) 56%,#1e262a)!important;
   border-color:var(--wtw-id-bright,#d7c48d)!important;
 }
-/* A genuine hero MARK stage, not a white/cream signboard.
-   Existing art stays legible; transparent assets show off the full silhouette.
-   The generator can replace legacy logos without further layout changes. */
+/* Preserve the canonical management and dossier presentation. */
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo{
   grid-area:mark!important;
   position:relative!important;
@@ -3816,9 +3814,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 /* ===== END folded source: public/next/profile-hero-v2.css ===== */
 
 
-/* Shared missing-media treatment for HORSE and PERSON dossiers.
-   Artwork is optional; production placeholders must never be visible.
-   Name-derived monograms are typography, not invented portraits. */
+/* Preserve the canonical management and dossier presentation. */
 #wtwNextgen .ng-route-profile .ng-profile-source-photo.ng-profile-portrait .ng-profile-photo-empty.wtw-unassigned-media{
  display:flex!important;align-items:center!important;justify-content:center!important;
  flex-direction:column!important;gap:3px!important;padding:5px!important;
