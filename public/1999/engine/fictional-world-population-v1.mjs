@@ -143,6 +143,13 @@ export async function assembleFictional1999Industry({
  const canonicalOrgId=id=>cleanId('O',id);
  const people=completeFictionalPersonBiographiesV1({people:named.people,seed})
   .map(p=>({...p,id:canonicalPersonId(p.id),
+   ratings:{schema:'WTW_FICTIONAL_1999_PERSON_RATINGS_V1',
+    professional_ability:25+draw(seed,'professional:'+p.id,66),
+    potential:Math.min(99,40+draw(seed,'potential:'+p.id,60)),
+    experience:Math.min(99,12+Math.floor(p.biography.age_at_opening*.9)+
+     draw(seed,'experience:'+p.id,25)),
+    consistency:25+draw(seed,'consistency:'+p.id,70),
+    provenance:'MODELED_OPENING_1999'},
    ...(p.stableId?{stableId:canonicalOrgId(p.stableId)}:{}),
    ...(p.organizationId?{organizationId:canonicalOrgId(p.organizationId)}:{}),
    ...(p.farmId?{farmId:canonicalOrgId(p.farmId)}:{})}));
@@ -204,6 +211,11 @@ export async function assembleFictional1999Industry({
   const farm=farmOrg[draw(seed,'breeder:'+i,farmOrg.length)];
   const horse={
    id,name:acceptedNames[i],sex,foalYear:year,birth_date:dateFor(seed,id,year),
+   birthplace:{city:farm.location?.city??null,
+    region:farm.location?.region??null,
+    country:farm.location?.country??null,
+    farm_id:farm.id,provenance:'MODELED_FOALING_FARM'},
+   age_at_opening:1999-year,
    sireId:sire.id,damId:dam.id,ownerId:owner.id,breederId:farm.id,
    trainerId:stable.trainerId,stableId:stable.id,
    homeTrackId:stable.home_track_id,foalingFarmId:farm.id,
