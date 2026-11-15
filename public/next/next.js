@@ -1722,26 +1722,6 @@ function profileDetail(route,sourceOverride=null){
  const details=$$('.profilePanel',source).map(n=>({title:text('h3',n),lines:n.textContent.trim().slice(0,700)}));
  const trackRaces=$$('.stakesRow',source).map((n,i)=>({name:text('strong',n),date:n.textContent.trim(),node:n,index:i}));
  const isHorse=route.kicker==='Horse Profile',isPerson=route.kicker==='People Profile',isFarm=route.kicker==='Farm Profile',isTrack=route.kicker==='Track Profile';
- const personnelAttributeColumns=(compact=false)=>{
-  const groupSizes=[9,15,12,10];
-  return groupSizes.map((count,index)=>{
-   // Retain the unassigned detail matrix only in MORE RECORDS → Attributes.
-   // On the Overview it is misleading to fill a whole screen with 46 fake
-   // slot names. Show the four approved groups, never invent role ratings.
-   const list=compact?
-    '<div class="ng-person-unassessed-group" role="status"><strong>UNASSESSED</strong>'+
-    '<p>No verified role-specific skill ratings recorded. Unknown is not zero.</p></div>':
-    Array.from({length:count},(_,n)=>
-     '<div class="ng-horse-rating-row ability-unrated"><span>Attribute slot '+
-     String(n+1).padStart(2,'0')+'</span>'+
-     '<span class="ng-horse-rating-unassessed" aria-hidden="true"></span>'+
-     '<strong class="unknown">—</strong></div>').join('');
-   return '<section class="ng-horse-mgr-panel ng-horse-ratings" data-personnel-attribute-group="'+(index+1)+
-    '"><header><strong>ATTRIBUTE GROUP '+String(index+1).padStart(2,'0')+
-    '</strong><span>0/'+count+' ASSIGNED</span></header>'+
-    '<div class="ng-horse-rating-rows">'+list+'</div></section>';
-  }).join('');
- };
 
  const tabs=(isHorse?['Overview','Career Record','Pedigree','Achievements','Connections','History']:
   isPerson?['Overview','Attributes','Reputation','Network','Stable Horses','Career','Connections','History']:
@@ -2094,6 +2074,55 @@ function profileDetail(route,sourceOverride=null){
   // A model-only number is not an observed skill rating or certified fact.
   const modelNumber=def=>{const n=modeled?.[def.key];return typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=1?n:null;};
   const quick=cat.display?.person_overview||{},commonQuick=(quick.common||[]).map(key=>common.find(t=>t.key===key)).filter(Boolean);
+  // The attribute sheet is a VIEW of existing personnel observations and
+  // explicit game TEST evaluations. Neither a placeholder matrix nor a new
+  // random scorer is an acceptable substitute for the model.
+  const personnelGroups=[
+   {title:'JUDGMENT & PROFESSIONAL SKILLS',defs:common.slice(0,6)},
+   {title:'WORK HABITS & WELLBEING',defs:common.slice(6)},
+   {title:roleDisplay.toUpperCase()+' SPECIALTIES I',defs:special.slice(0,Math.ceil(special.length/2))},
+   {title:roleDisplay.toUpperCase()+' SPECIALTIES II',defs:special.slice(Math.ceil(special.length/2))}
+  ];
+  const ratingEvidence=def=>{
+   const obs=observed.get(def.key);
+   const sourced=obs&&['estimated','measured'].includes(obs.status)&&obs.estimate!=null&&
+    Array.isArray(obs.evidence_refs)&&obs.evidence_refs.length>0;
+   if(sourced){
+    const low=Number(obs.scale_min??0),high=Number(obs.scale_max??100),num=Number(obs.estimate);
+    const pct=Number.isFinite(num)&&Number.isFinite(low)&&Number.isFinite(high)&&high>low?
+     Math.max(0,Math.min(100,100*(num-low)/(high-low))):null;
+    return {value:String(obs.estimate),percent:pct,kind:obs.status==='measured'?'MEASURED':'SCOUT ESTIMATE'};
+   }
+   const modeledValue=modelNumber(def);
+   if(modeledValue!==null)return {
+    value:String(Math.round(modeledValue*99)),percent:modeledValue*100,kind:'SIMULATED TEST · NOT OBSERVED'
+   };
+   return {value:'—',percent:null,kind:'NO GAME OR SCOUT ASSESSMENT'};
+  };
+  const profileAttributes=()=>{
+   let assessed=0,modeledCount=0;
+   const rendered=personnelGroups.map((group,i)=>{
+    const lines=group.defs.map(def=>{
+     const result=ratingEvidence(def);
+     if(result.kind==='MEASURED'||result.kind==='SCOUT ESTIMATE')assessed++;
+     if(result.kind.startsWith('SIMULATED'))modeledCount++;
+     const title=def.label+' · '+result.kind+' · '+def.meaning;
+     return '<div class="ng-horse-rating-row '+(result.percent===null?'ability-unrated':'ability-known')+
+      '" title="'+safe(title)+'" aria-label="'+safe(title)+'">'+
+      '<span>'+safe(def.label)+'</span>'+
+      (result.percent===null?'<span class="ng-horse-rating-unassessed" aria-hidden="true"></span>':
+       '<span class="ng-horse-rating-track" aria-hidden="true"><i style="width:'+result.percent.toFixed(1)+'%"></i></span>')+
+      '<strong class="'+(result.percent===null?'unknown':'known')+'" title="'+safe(result.kind)+'">'+
+      safe(result.value)+'</strong></div>';
+    }).join('');
+    return '<section class="ng-horse-mgr-panel ng-horse-ratings" data-personnel-attribute-group="'+(i+1)+'">'+
+     '<header><strong>'+safe(group.title)+'</strong><span>'+group.defs.length+' DEFINED</span></header>'+
+     '<div class="ng-horse-rating-rows">'+(lines||
+       '<p class="ng-horse-small-note">Role-specific definitions not yet available.</p>')+'</div></section>';
+   }).join('');
+   return {html:rendered,assessed,modeled:modeledCount,total:personnelGroups.reduce((n,g)=>n+g.defs.length,0)};
+  };
+
   const reputationSource=work.reputation_profile;
   const validRep=reputationSource?.schema==='WTW_PERSON_REPUTATION_V1'&&typeof reputationSource.scores?.overall==='number'&&
    Number.isFinite(reputationSource.scores.overall)&&reputationSource.scores.overall>=0&&reputationSource.scores.overall<=100&&
@@ -2210,7 +2239,7 @@ function profileDetail(route,sourceOverride=null){
   const networkOverview=`<div class="ng-person-overview-network"><div class="ng-person-overview-network-total"><strong>${knownRelations.length}</strong><span>SOURCED WORKING RELATIONSHIPS</span></div>${knownRelations.length?knownRelations.slice(0,4).map(r=>`<div class="ng-person-overview-relation"><strong title="${safe(r.name)}">${safe(r.name)}</strong><span>${r.score==null?'Unrated':safe(String(r.score))+'/100'}</span></div>`).join(''):'<div class="ng-person-compact-empty">No reported contacts yet.</div>'}</div>`;
   const events=rep?.history||[];
   const eventRows=events.length?events.slice().reverse().map(x=>`<div class="ng-person-rep-event"><b>${safe(x.date)}</b><span>${safe(x.signal.replaceAll('_',' '))}</span><small>${safe(x.source_refs?.join(', ')||'No evidence')}</small></div>`).join(''):'<p class="ng-person-unrated">No reputation events have been recorded.</p>';
-  return {attributes,reputation,networkPreview,network,careerContent,careerOverview,horseAssignments,networkOverview,eventRows,roleName,rep,trust,knownRelationsCount:knownRelations.length,assignedHorseCount:assignedCount};
+  return {attributes,reputation,networkPreview,network,careerContent,careerOverview,horseAssignments,networkOverview,eventRows,roleName,rep,trust,profileAttributes,knownRelationsCount:knownRelations.length,assignedHorseCount:assignedCount};
  };
  const isOrganizationProfile=/^(?:Farm|Stable|Organization|Sales Organization|Ownership Group|Breeding Farm) Profile$/.test(route.kicker);
  // Reuse already-published exact-ID art in the EXISTING identity frame. Track
@@ -2375,7 +2404,8 @@ function profileDetail(route,sourceOverride=null){
    const person=personWork();
    const panel=(name,body,more='')=>'<section class="ng-horse-mgr-panel '+more+'"><header><strong>'+
     name+'</strong></header>'+body+'</section>';
-   const professionalSlots=personnelAttributeColumns(true);
+   const skillSheet=person.profileAttributes();
+   const professionalSlots=skillSheet.html;
    const careerWins=personWins&&personWins!=='—'?personWins:'Not recorded';
    const standing=person.rep?String(person.rep.scores.overall)+'/100':'Unrated';
    const currentRole=titleCaseUIRole(person.roleName||source.dataset.personRole||'Not recorded');
@@ -2407,7 +2437,7 @@ function profileDetail(route,sourceOverride=null){
    const relationOverview=person.networkOverview+
     '<button type="button" class="ng-entity-open" data-ng="detailtab" data-val="Network">WORKING NETWORK ↗</button>';
    left=`<div class="ng-horse-dossier ng-person-horse-dossier" data-template="horse-overview" data-personnel-role="${safe(source.dataset.personRole||'unspecified')}">
-    <div class="ng-horse-dossier-caption"><strong>PROFESSIONAL & RACING INTELLIGENCE</strong><span>RATINGS UNASSESSED · VERIFIED CAREER CONTEXT BELOW</span></div>
+    <div class="ng-horse-dossier-caption"><strong>PROFESSIONAL & RACING INTELLIGENCE</strong><span>ASSESSMENTS: ${skillSheet.assessed} VERIFIED · ${skillSheet.modeled} SIMULATED TEST · ${skillSheet.total-skillSheet.assessed-skillSheet.modeled} UNASSESSED</span></div>
     <div class="ng-horse-mgr-four">${professionalSlots}</div>
     ${statusSlots}
     <div class="ng-horse-mgr-five">
@@ -2510,13 +2540,14 @@ function profileDetail(route,sourceOverride=null){
  }else if((APP.detailTab==='Stable Horses'&&isPerson)||(APP.detailTab==='Connected Horses'&&isFarm)){
   left=`<section class="ng-detailcard ng-detailwide"><header>CONNECTED HORSE RECORDS</header>${isFarm?founderStockRows():connectedHorseRows()}</section>`;
  }else if(APP.detailTab==='Attributes'&&isPerson){
-  // The detail tab is the SAME unassigned Horse-format attribute matrix as
-  // the Overview. Older role scores and simulated legacy sheets never render.
-  left=`<div class="ng-horse-dossier ng-person-horse-dossier" data-template="horse-attributes">
-   <div class="ng-horse-dossier-caption"><strong>PERSONNEL ATTRIBUTES · ROLE DEFINITION PENDING</strong><span>0 OF 46 SLOTS ASSIGNED · NO SCORES</span></div>
-   <div class="ng-horse-mgr-four">${personnelAttributeColumns()}</div>
-   <p class="ng-horse-small-note">The four-category structure is locked to the Horse profile. Role-specific labels and ratings will be approved separately.</p>
-  </div>`;
+  const person=personWork(),sheet=person.profileAttributes();
+  left='<div class="ng-horse-dossier ng-person-horse-dossier" data-template="person-role-attributes">'+
+   '<div class="ng-horse-dossier-caption"><strong>PROFESSIONAL ATTRIBUTE ASSESSMENTS</strong><span>'+
+   sheet.assessed+' EVIDENCE-BASED · '+sheet.modeled+' SIMULATED TEST · '+
+   (sheet.total-sheet.assessed-sheet.modeled)+' NOT YET ASSESSED</span></div>'+
+   '<div class="ng-horse-mgr-four">'+sheet.html+'</div>'+
+   '<p class="ng-horse-small-note">Ratings reflect only recorded game evaluations or explicit scouting evidence. Simulated TEST is not verified observation. Unassessed values are not zero.</p>'+
+   '</div>';
  }else if(APP.detailTab==='Reputation'&&isPerson){
   const person=personWork();
   left=`<section class="ng-detailcard ng-person-detail-sheet"><header>PROFESSIONAL REPUTATION</header>${person.reputation(true)}</section>`;
