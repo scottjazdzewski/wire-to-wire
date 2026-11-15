@@ -783,7 +783,8 @@ const worldHorseById=id=>{
   return found?.index>=0?worldHorsePage(found.index,1).items?.[0]||null:null;
  }catch{return null}
 };
-const activeRacecourses=get('1999-active-tracks','/api/1999/sim/tracks',worldCounts.tracks);
+const activeRacecourses=get('1999-active-tracks','/api/1999/sim/tracks',worldCounts.tracks)
+ .filter(t=>trackProgram1999(t.id)?.trackOperating!=='HISTORICAL_ONLY');
 const activeTrackIds=new Set(activeRacecourses.map(t=>t.id));
 const activeTrackNames=new Set(activeRacecourses.map(t=>t.name));
 const sourceStakes=get('1999-source-stakes','/api/1999/calendar',93);

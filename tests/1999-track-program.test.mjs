@@ -36,11 +36,11 @@ test('all 93 canonical stakes remain ID-linked inside their host 1999 meet windo
  assert.equal(Object.values(TRACK_PROGRAM_1999).reduce((a,p)=>a+p.stakesIds.length,0),93);
 });
 
-test('115 North American tracks remain playable; three user-retired sites retain history',()=>{
+test('101 North American tracks remain playable; 17 retired sites retain history',()=>{
  const northAmerican=Object.values(TRACK_PROGRAM_1999).filter(x=>x.id.startsWith('T-'));
  assert.equal(northAmerican.length,118);
- assert.equal(northAmerican.filter(x=>x.trackOperating==='OPEN_1999').length,115);
- for(const id of ['T-0042','T-0112','T-0115']){
+ assert.equal(northAmerican.filter(x=>x.trackOperating==='OPEN_1999').length,101);
+ for(const id of ["T-0033","T-0042","T-0103","T-0104","T-0105","T-0107","T-0108","T-0109","T-0110","T-0111","T-0112","T-0113","T-0114","T-0115","T-0116","T-0117","T-0118"]){
   const retired=trackProgram1999(id);
   assert.equal(retired.trackOperating,'HISTORICAL_ONLY');
   assert.equal(retired.playableIn1999,false);
@@ -48,7 +48,8 @@ test('115 North American tracks remain playable; three user-retired sites retain
   assert.equal(trackCardSurface1999(id,0),null);
  }
  const revived=northAmerican.filter(x=>x.basis==='WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION'&&x.playableIn1999!==false);
- assert.equal(revived.length,14);
+ assert.equal(revived.length,1);
+ assert.equal(revived[0].id,'T-0106');
  for(const p of revived){
   assert.ok(p.meets.length>=2,p.name+' missing revived meet');
   assert.ok(p.dayPattern.length>=4,p.name+' missing race-day pattern');
