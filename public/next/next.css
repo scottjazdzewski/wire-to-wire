@@ -3164,12 +3164,8 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 /* ===== END folded source: public/next/1999-commercial-career.css ===== */
 
 /* ===== BEGIN folded source: public/next/identity-themes.css ===== */
-/* WTW image-derived identity atmosphere v3.
- * Original logos determine the brand accents; no hand-picked colors.
- * This stays inside the consolidated management CSS; no geometry changes.
- * Semantic indicators (injury, warning, availability, Continue) keep their
- * established colors. All overrides are limited to an identified entity.
- */
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro{box-shadow:inset 0 1px 0 #ffffff19,0 9px 24px #0009!important;}
+/* Logo-first theme: colors come from approved artwork, not presets. */
 #wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"]{
   --wtw-id-highlight:#f2f5ef; /* neutral readable text, not a brand swatch */
   --wtw-id-deep:color-mix(in srgb,var(--wtw-id-base) 36%,#10181d);
@@ -3211,17 +3207,6 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
   background:linear-gradient(135deg,
     color-mix(in srgb,var(--wtw-id-deep) 24%,#0c1215),#0c1215 58%)!important;
 }
-#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-intro{
-  background:
-    radial-gradient(ellipse at 79% 32%,
-      color-mix(in srgb,var(--wtw-id-bright) 18%,transparent),transparent 48%),
-    linear-gradient(105deg,
-      color-mix(in srgb,var(--wtw-id-base) 68%,#1d2627) 0%,
-      var(--wtw-id-deep) 52%,#171f24 100%)!important;
-  border-color:color-mix(in srgb,var(--wtw-id-bright) 40%,#45514e)!important;
-  border-top:2px solid var(--wtw-id-bright)!important;
-  box-shadow:inset 0 1px 0 #ffffff16,0 7px 19px #0007!important;
-}
 #wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-intro h2{
   color:#ffffff!important;
   text-shadow:0 2px 6px #000a!important;
@@ -3234,15 +3219,6 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 #wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-profiletabs button:hover{
   background:color-mix(in srgb,var(--wtw-id-base) 51%,#212a2c)!important;
   color:#ffffff!important;
-}
-#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-profile-farm .ng-tier1-card>header,
-#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-profile-track .ng-tier1-card>header,
-#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-profile-farm .ng-detailcard>header,
-#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-profile-track .ng-detailcard>header{
-  background:linear-gradient(90deg,
-    color-mix(in srgb,var(--wtw-id-base) 51%,#29332f),#29332f)!important;
-  border-bottom-color:color-mix(in srgb,var(--wtw-id-bright) 45%,#4a5d4f)!important;
-  color:#f8f4e9!important;
 }
 #wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-profile-track .ng-profile-source-photo{
   border-color:var(--wtw-id-highlight)!important;
@@ -3272,11 +3248,8 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 #wtwNextgen[data-wtw-identity-kind="track"][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-badgeframe img{
   visibility:hidden!important;
 }
-/* WTW ENTITY ATMOSPHERE v2 — the SAME shared profile template for every
- * track, owner, racing stable, stud farm and breeding organization.
- * Vivid brand depth, not a separate navigation, card layout, or photograph.
- * Do not theme medical/eligibility warnings, Continue, outcomes or status pills.
- * These colors exist ONLY while a recognized immutable ID is active. */
+/* WTW PROFILE DEPTH — integrated, no patch stack. Neutral layering remains when a logo is missing. */
+/* WTW ENTITY ATMOSPHERE v2 — official logo ink only; no geometry or status changes. */
 #wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"]{
  --wtw-id-panel:color-mix(in srgb,var(--wtw-id-deep) 36%,#151e24);
  --wtw-id-panel-edge:color-mix(in srgb,var(--wtw-id-bright) 30%,#405050);
@@ -3321,6 +3294,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 #wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-tier1-card{
  background:linear-gradient(155deg,var(--wtw-id-panel-wash),#171f23 77%)!important;
  border-color:var(--wtw-id-panel-edge)!important;
+ box-shadow:inset 0 1px 0 #ffffff13,0 6px 18px #0007!important;
 }
 #wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-detailcard>header,
 #wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-tier1-card>header{
@@ -3361,10 +3335,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  }
 }
 
-/* PERMANENT ENTITY-IDENTITY CONTRACT: Use the real organization's palette
- * on the approved track/stable/farm hero, without changing its grid geometry.
- * This selector has precedence over the later shared track hero geometry;
- * real logos and badges stay in their protected columns. */
+/* Logo-first theme: colors come from approved artwork, not presets. */
 #wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro{
  background:
   radial-gradient(ellipse at 85% 35%,color-mix(in srgb,var(--wtw-id-bright) 29%,transparent),transparent 48%),
@@ -3382,6 +3353,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
   color-mix(in srgb,var(--wtw-id-base) 59%,#202a2a),
   color-mix(in srgb,var(--wtw-id-deep) 54%,#253030))!important;
  border-bottom-color:color-mix(in srgb,var(--wtw-id-bright) 46%,#455851)!important;
+ box-shadow:inset 0 1px 0 #ffffff19,inset 0 -1px 0 #0006!important;
 }
 #wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-track-stakes .ng-stakes-head{
  background:color-mix(in srgb,var(--wtw-id-base) 33%,#263431)!important;
@@ -3409,55 +3381,6 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 
 
 
-/* WTW PROFILE DEPTH — no separate cards, no geometry changes.
- * Neutral layering remains when a logo is missing or monochrome. */
-#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro{
-  box-shadow:inset 0 1px 0 #ffffff18,inset 0 -1px 0 #0008,0 10px 26px #0009!important;
-}
-#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .ng-tier1-card,
-#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .ng-detailcard{
-  box-shadow:inset 0 1px 0 #ffffff0d,0 4px 15px #0006!important;
-}
-#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro{
-  background:
-    radial-gradient(ellipse at 78% 44%,
-      color-mix(in srgb,var(--wtw-id-bright) 25%,transparent),transparent 46%),
-    radial-gradient(ellipse at 9% 2%,
-      color-mix(in srgb,var(--wtw-id-base) 26%,transparent),transparent 60%),
-    linear-gradient(106deg,
-      color-mix(in srgb,var(--wtw-id-base) 56%,#1e292c),
-      color-mix(in srgb,var(--wtw-id-deep) 70%,#1c252a) 57%,#131b20)!important;
-  box-shadow:inset 0 1px 0 #ffffff24,inset 0 -1px 0 #0008,
-    0 10px 28px #000a,0 0 21px color-mix(in srgb,var(--wtw-id-base) 10%,transparent)!important;
-  border-top-color:var(--wtw-id-bright)!important;
-}
-#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-source-photo{
-  background:
-    radial-gradient(ellipse at 50% 35%,
-      color-mix(in srgb,var(--wtw-id-base) 19%,transparent),
-      #172025 78%)!important;
-  box-shadow:inset 0 1px 0 #ffffff20,0 9px 25px #000a,
-    0 0 16px color-mix(in srgb,var(--wtw-id-bright) 11%,transparent)!important;
-}
-#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-track-workspace .ng-tier1-card{
-  border-color:color-mix(in srgb,var(--wtw-id-base) 22%,#46514f)!important;
-  box-shadow:inset 0 1px 0 #ffffff0d,0 5px 17px #0008!important;
-}
-#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-track-workspace .ng-tier1-card > header{
-  background:linear-gradient(90deg,
-    color-mix(in srgb,var(--wtw-id-base) 46%,#263035),
-    color-mix(in srgb,var(--wtw-id-deep) 38%,#253034) 76%,#202a2e)!important;
-  border-bottom-color:color-mix(in srgb,var(--wtw-id-bright) 30%,#495553)!important;
-  box-shadow:inset 0 1px 0 #ffffff19,inset 0 -1px 0 #0005!important;
-}
-#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-track-meet-fact,
-#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-track-history-facts > div{
-  box-shadow:inset 2px 0 0 color-mix(in srgb,var(--wtw-id-bright) 48%,transparent),
-    inset 0 1px 0 #ffffff0a!important;
-}
-#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-stakes-head{
-  box-shadow:inset 0 1px 0 #ffffff19,inset 0 -1px 0 #0007!important;
-}
 /* ===== END folded source: public/next/identity-themes.css ===== */
 
 /* ===== BEGIN folded source: public/next/profile-hero-v2.css ===== */
