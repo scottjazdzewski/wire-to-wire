@@ -529,7 +529,7 @@ try {
   if(!b)return false;b.click();return true;
  })()`);
  assert.equal(openInbox,true,'Office Inbox rail action missing');
- await ready('Office','Messages','Office Inbox');
+ assert.equal((await ready('Office',null,'Office Inbox')).selected,'Messages');
  const officeInitial=await evaluate(`(()=>{
   const r=document.getElementById('wtwNextgen');
   const rows=[...r.querySelectorAll('.ng-manager-rows [data-ng="office-focus"]')];
@@ -544,7 +544,7 @@ try {
   if(!b)return false;b.click();return true;
  })()`);
  assert.equal(focusOffice,true);
- await ready('Office','Messages','Office preview after selection');
+ assert.equal((await ready('Office',null,'Office preview after selection')).selected,'Messages');
  const preview=await evaluate(`(()=>{
   const r=document.getElementById('wtwNextgen'),app=window.__WTW_NEXT__.app;
   return {caseId:app.activeCase,
@@ -566,7 +566,7 @@ try {
   sel.value='Decisions';sel.dispatchEvent(new Event('change',{bubbles:true}));return true;
  })()`);
  assert.equal(decisionSelect,true,'Could not choose Decisions via standard VIEW');
- await ready('Office','Decisions','Office Decisions');
+ assert.equal((await ready('Office',null,'Office Decisions')).selected,'Decisions');
  const actions=await evaluate(`(()=>{
   const r=document.getElementById('wtwNextgen');
   return {statuses:[...r.querySelectorAll('.ng-manager-rows [data-ng="office-focus"]')].map(x=>x.querySelector('.ng-manager-row-type')?.textContent?.trim()),
