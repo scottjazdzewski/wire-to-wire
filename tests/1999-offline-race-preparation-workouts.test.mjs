@@ -100,6 +100,9 @@ test('owner-approved race conditioning uses one paid daily training engine and r
  const record=s.runtime.horse[id],worked=record.history.findLast(x=>
   x.date===s.clock.date&&x.preparation_race_id===r.id);
  assert.ok(worked,'Actual target-specific workout must be stored on canonical paid care day');
+ assert.equal(s.clock.date,'1999-01-03');
+ assert.equal(worked.work,'REST','The weekly trainer rest day overrides an owner sharpen instruction');
+ assert.equal(worked.preparation_phase,'TRAINER_SAFETY_ADJUSTMENT');
  assert.equal(record.race_preparation.last_work_date,s.clock.date);
  assert.equal(record.race_preparation.last_workout,worked.work);
  assert.equal(record.last_day,s.clock.date);
