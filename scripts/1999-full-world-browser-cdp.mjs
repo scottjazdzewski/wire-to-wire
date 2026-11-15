@@ -103,6 +103,7 @@ const inspect=`(async()=>{
    approvedExpansion:['T-0119','T-0120','T-0121','T-0122','T-0123','T-0124'].every(id=>directory.some(t=>t.id===id)),
    archivedExcluded:!['T-0033','T-0103','T-0104','T-0105','T-0107','T-0108'].some(id=>directory.some(t=>t.id===id)),
    comanche:directory.find(t=>t.id==='T-0061')?.name,
+   fairHostTrack:directory.find(t=>t.id==='T-0075')?.physicalTrackId,
    namedPersonnel:staff.filter(x=>!!x.name).length,
    staffBios:staff.every(x=>!!x.dateOfBirth&&!!x.birthplace?.city&&!!x.birthCountryCode),
    ratedHorse:first.every(x=>x.ratings?.speed>0),
@@ -141,6 +142,7 @@ try{
  assert.equal(snap.approvedExpansion,true,'Missing approved six expansion venues');
  assert.equal(snap.archivedExcluded,true,'Archived 1999 venues remained active');
  assert.equal(snap.comanche,'Comanche Raceway');
+ assert.equal(snap.fairHostTrack,'T-0032','San Mateo County Fair must use Bay Meadows facility');
  assert.ok(snap.raceDays>=1500,'Expected complete condition-book race calendar');
  assert.ok(snap.scheduledRaces>snap.raceDays);
  assert.ok(snap.coverings>40000,'Expected full breeding books');
