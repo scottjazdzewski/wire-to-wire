@@ -52,6 +52,7 @@ capture founder-facility '?ui=FoundingProfile%3Afacility%3AO-000068' 'ng-track-w
 capture aqueduct-track '?ui=WorldRecord%3Atrack%3AT-0001' 'ng-profile-track'
 capture belmont-track '?ui=WorldRecord%3Atrack%3AT-0002' 'ng-profile-track'
 capture gulfstream-track '?ui=WorldRecord%3Atrack%3AT-0017' 'ng-profile-track'
+capture santa-anita-track '?ui=WorldRecord%3Atrack%3AT-0028' 'ng-profile-track'
 capture kingsmere-farm '?ui=FoundingProfile%3Afacility%3AO-000061' 'ng-profile-farm'
 capture northbank-stable '?ui=FoundingProfile%3Aownership%3AO-000045' 'ng-profile-farm'
 capture personnel '?ui=Personnel' 'ng-manager-screen|ng-dept-roster'
@@ -189,6 +190,7 @@ probe person '%3Fui%3DWorldRecord%253Aperson%253AP-000018'
 probe aqueduct '%3Fui%3DWorldRecord%253Atrack%253AT-0001'
 probe belmont '%3Fui%3DWorldRecord%253Atrack%253AT-0002'
 probe gulfstream '%3Fui%3DWorldRecord%253Atrack%253AT-0017'
+probe santa-anita '%3Fui%3DWorldRecord%253Atrack%253AT-0028'
 probe farm '%3Fui%3DFoundingProfile%253Afacility%253AO-000061'
 probe stable '%3Fui%3DFoundingProfile%253Aownership%253AO-000045'
 probe owner '%3Fui%3DFoundingProfile%253Aownership%253AO-000014'
@@ -207,6 +209,7 @@ expected={
  'aqueduct':'T-0001',
  'belmont':'T-0002',
  'gulfstream':'T-0017',
+ 'santa-anita':'T-0028',
  'farm':'O-000061'
 }
 palette_rows={}
