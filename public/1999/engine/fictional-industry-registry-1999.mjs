@@ -52,6 +52,8 @@ export function* generate1999IndustryRegistryBatches({
    const racing=status==='RACING';
    const breeder=status==='BROODMARE'||status==='STALLION';
    const sex=status==='BROODMARE'?'MARE':status==='STALLION'?'HORSE':
+    racing?(choose(seed,id+':sex',2)===0?
+     (choose(seed,id+':gelding',4)===0?'HORSE':'GELDING'):'MARE'):
     choose(seed,id+':sex',2)===0?'COLT':'FILLY';
    const born=year-(breeder?choose(seed,id+':age',11):
     cohort==='fivePlusRunners'?choose(seed,id+':older',6):0);
