@@ -14,9 +14,11 @@ import {connect1999Horse,connect1999Person,connect1999DirectoryEntity,
  from './fictional-industry-graph-1999.mjs';
 import {generate1999CoveringLedger,BREEDING_BOOK_1999_SCHEMA}
  from './fictional-industry-breeding-book-1999.mjs';
+import {buildFictional1999RaceCalendar,FICTIONAL_1999_CALENDAR_SCHEMA}
+ from './fictional-world-calendar-v1.mjs';
 export const PERSISTENT_INDUSTRY_SCHEMA='WTW_PERSISTENT_INDUSTRY_1999_V1';
 export const PERSISTENT_INDUSTRY_DB='WireToWireFictionalIndustry1999V1';
-const stores=['manifests','horseBatches','personBatches','horseEdits','careerRuns','directory','coveringBatches'];
+const stores=['manifests','horseBatches','personBatches','horseEdits','careerRuns','directory','coveringBatches','calendarBatches'];
 function request(req){return new Promise((resolve,reject)=>{
  req.onsuccess=()=>resolve(req.result);
  req.onerror=()=>reject(req.error||Error('IndexedDB request failed'));
@@ -24,7 +26,7 @@ function request(req){return new Promise((resolve,reject)=>{
 export async function open1999IndustryDatabase(indexedDB=globalThis.indexedDB){
  if(!indexedDB?.open)throw Error('IndexedDB is required for offline industry persistence');
  const db=await new Promise((resolve,reject)=>{
-  const req=indexedDB.open(PERSISTENT_INDUSTRY_DB,3);
+  const req=indexedDB.open(PERSISTENT_INDUSTRY_DB,4);
   req.onupgradeneeded=()=>{
    for(const name of stores)
     if(!req.result.objectStoreNames.contains(name))
@@ -49,7 +51,7 @@ export async function open1999IndustryDatabase(indexedDB=globalThis.indexedDB){
    });
   },
   async commitBatch({worldId,manifest,kind,index,records}){
-   if(!['horseBatches','personBatches','coveringBatches'].includes(kind)||
+   if(!['horseBatches','personBatches','coveringBatches','calendarBatches'].includes(kind)||
     !Number.isInteger(index)||index<0||!Array.isArray(records)||!records.length)
     throw Error('Invalid industry batch');
    return new Promise((resolve,reject)=>{
@@ -133,7 +135,8 @@ export async function createPersistent1999Industry({
    existing.personCount!==totalPeople||
    existing.graphSchema!==INDUSTRY_GRAPH_SCHEMA||
    existing.breedingSchema!==BREEDING_BOOK_1999_SCHEMA||
-   existing.coveringCount!==plan.minimumCoversForTargetFoals)
+   existing.coveringCount!==plan.minimumCoversForTargetFoals||
+   existing.calendarSchema!==FICTIONAL_1999_CALENDAR_SCHEMA)
    throw Error('Existing industry identity or generation parameters conflict');
   if(existing.status==='COMPLETE')return existing;
  }
@@ -144,6 +147,8 @@ export async function createPersistent1999Industry({
   directoryCommitted:false,graphSchema:INDUSTRY_GRAPH_SCHEMA,
   breedingSchema:BREEDING_BOOK_1999_SCHEMA,
   coveringCount:plan.minimumCoversForTargetFoals,coveringBatchesCommitted:0,
+  calendarSchema:FICTIONAL_1999_CALENDAR_SCHEMA,calendarBatchesCommitted:0,
+  scheduledCards:0,scheduledRaces:0,
   plan,staffing,source:'DETERMINISTIC_OFFLINE_1999'
  };
  if(!manifest.directoryCommitted){
@@ -232,6 +237,33 @@ export async function createPersistent1999Industry({
  }
  if(coveringsChecked!==plan.minimumCoversForTargetFoals)
   throw Error('1999 covering ledger did not reconcile to planned bookings');
+ const calendar=buildFictional1999RaceCalendar(tracks,{seed});
+ if(calendar.unprogrammedTrackIds.length)
+  throw Error('Tracks missing approved 1999 racing programs: '+
+   calendar.unprogrammedTrackIds.join(', '));
+ if(!calendar.summary.raceDays||!calendar.summary.scheduledRaces)
+  throw Error('Opening 1999 world has no race opportunities');
+ const calendarBatchSize=100;
+ for(let i=0;i<calendar.cards.length;i+=calendarBatchSize){
+  const index=Math.floor(i/calendarBatchSize);
+  if(index<manifest.calendarBatchesCommitted)continue;
+  const cards=calendar.cards.slice(i,i+calendarBatchSize);
+  for(const card of cards){
+   if(!tracks.some(t=>t.id===card.trackId)||card.races.length===0||
+    card.races.some(r=>r.status!=='SCHEDULED'||r.winnerId!==null||
+     r.fieldHorseIds.length!==0))
+    throw Error('Invalid unopened 1999 race card '+card.id);
+  }
+  const next={...manifest,calendarBatchesCommitted:index+1,
+   scheduledCards:calendar.summary.raceDays,
+   scheduledRaces:calendar.summary.scheduledRaces,
+   tracksWithCards:calendar.summary.tracksWithCards};
+  await store.commitBatch({worldId:id,manifest:next,kind:'calendarBatches',
+   index,records:cards});
+  manifest=next;
+  onProgress({kind:'calendarBatches',completed:index+1,
+   totalRecords:calendar.summary.raceDays});
+ }
  manifest={...manifest,status:'COMPLETE'};
  await store.commitManifest(id,manifest);
  return manifest;
@@ -243,7 +275,8 @@ export async function readPersistent1999IndustryBatch(store,manifest,kind,index)
   !Number.isInteger(index)||index<0||
   index>=(kind==='horseBatches'?manifest.horseBatchesCommitted:
    kind==='personBatches'?manifest.personBatchesCommitted:
-   manifest.coveringBatchesCommitted))
+   kind==='coveringBatches'?manifest.coveringBatchesCommitted:
+   manifest.calendarBatchesCommitted))
   throw Error('Industry is not complete or batch is unavailable');
  const records=await store.get(kind,keyOf(manifest.seed,manifest.worldId)+':'+index);
  if(!records)throw Error('Industry batch missing from durable storage');
