@@ -3925,3 +3925,52 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  font:800 18px/1 Georgia,serif;cursor:pointer}
 .ng-record-browse-bar button.ng-profile-entity-step:hover{background:#50634e;border-color:#dabd80}
 .ng-record-browse-bar button.ng-profile-entity-step:focus-visible{outline:2px solid #f0cf8a;outline-offset:2px}
+
+
+/* V489: dense, full-height table for the one existing Horse Naming Desk. */
+.ng-naming-desk .ng-naming-workspace{display:flex;flex-direction:column;min-height:0;overflow:hidden;background:#172125}
+.ng-naming-composer{display:flex;flex-direction:column;gap:5px;flex:0 0 auto;max-height:46%;overflow:auto;padding:7px 9px;border-bottom:1px solid #415347;background:#1c292b}
+.ng-naming-composer label{display:flex;flex-direction:column;gap:3px;color:#bfd0be;font-size:10px;font-weight:760;min-width:0}
+.ng-naming-desk .ng-naming-fields{display:grid;grid-template-columns:minmax(110px,1fr) minmax(110px,1fr) 95px minmax(165px,1.35fr);gap:7px;min-width:0}
+.ng-naming-composer input,.ng-naming-composer select,.ng-naming-composer textarea{box-sizing:border-box;width:100%;min-width:0;min-height:26px;padding:5px 7px;background:#111b1f;color:#e6eade;border:1px solid #4a6554;border-radius:2px;font:inherit;font-size:11px}
+.ng-naming-composer input:focus-visible,.ng-naming-composer select:focus-visible,.ng-naming-composer textarea:focus-visible{outline:2px solid #dec988;outline-offset:1px}
+.ng-naming-composer textarea{min-height:39px;max-height:95px;resize:vertical}
+.ng-naming-composer .ng-naming-actions button.primary{background:#735526;border:1px solid #d1b87c;color:#fff3d3;font-size:10px}
+.ng-naming-table-toolbar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:9px;padding:5px 10px;min-height:32px;border-bottom:1px solid #415347}
+.ng-naming-table-toolbar>strong{color:#efe1b7;letter-spacing:.04em;font-size:10px}
+.ng-naming-table-toolbar>small{color:#b6c5ba;font-size:10px}
+.ng-naming-view-filters{display:flex;align-items:center;gap:3px}
+.ng-naming-view-filters button{background:#273830;color:#c5d3c4;border:1px solid #435748;padding:4px 8px;cursor:pointer;font-size:10px;font-weight:750}
+.ng-naming-view-filters button.on{background:#876f3c;border-color:#dbbb70;color:#fff5d4}
+.ng-naming-table-scroll{min-height:0;flex:1;overflow:auto;scrollbar-width:thin;scrollbar-color:#576a5c #172125}
+.ng-naming-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:10px;color:#dfebdf}
+.ng-naming-table th{position:sticky;top:0;z-index:1;background:#2b3938;color:#c8d5c4;font-size:9px;letter-spacing:.035em;text-align:left;padding:7px 9px;border-bottom:1px solid #667461}
+.ng-naming-table td{padding:5px 9px;border-bottom:1px solid #35453e;vertical-align:middle;line-height:1.2;overflow-wrap:anywhere}
+.ng-naming-table tbody tr:nth-child(even){background:#1d292b}
+.ng-naming-table tbody tr:hover{background:#273a36}
+.ng-naming-table th:first-child{width:32px}
+.ng-naming-table th:nth-child(2){width:33%}
+.ng-naming-table th:nth-child(3){width:90px}
+.ng-naming-table th:nth-child(4){width:128px}
+.ng-naming-table th:nth-child(5){width:340px}
+.ng-naming-row-number{color:#a9bdae}
+.ng-naming-row-name strong{display:block;font-size:11px;color:#f2e3b7}
+.ng-naming-row-name small{display:block;color:#abbdb0;font-size:9px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ng-naming-decision{font-size:9px;font-weight:800;letter-spacing:.025em;color:#d4d8ad}
+.ng-naming-list-buttons{display:flex;gap:4px;flex-wrap:nowrap}
+.ng-naming-list-buttons button{background:#304737;color:#e3edcd;border:1px solid #5b735a;padding:5px 6px;border-radius:2px;font-size:9px;font-weight:800;cursor:pointer;white-space:nowrap}
+.ng-naming-list-buttons button:first-child{background:#69562f;border-color:#b59c65;color:#fff2d0}
+.ng-naming-list-buttons button:last-child{background:#513735;border-color:#87534c;color:#f5d3cb}
+.ng-naming-list-buttons button:disabled{opacity:.38;cursor:default}
+.ng-naming-no-results{color:#b0c2b7;padding:22px 10px!important;text-align:center}
+.ng-naming-footer{flex:0 0 auto;padding:5px 10px;color:#b2bdb1;border-top:1px solid #394b42;font-size:9px;line-height:1.25}
+@media(max-width:1350px){
+ .ng-naming-table th:nth-child(5){width:310px}
+ .ng-naming-list-buttons button{padding:4px;font-size:8px}
+}
+@media(max-width:990px){
+ .ng-naming-desk .ng-naming-fields{grid-template-columns:1fr 1fr}
+ .ng-naming-table-scroll{overflow:auto}
+ .ng-naming-table{min-width:890px}
+ .ng-naming-composer{max-height:52%}
+}
