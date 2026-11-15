@@ -160,6 +160,33 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    ui.departmentRows('Facilities','Training Centers').length===0&&
    ui.departmentRows('Facilities','Breaking Facilities').length===0);
   click('World');await pause(240);
+  const worldRoot=d.querySelector('#wtwNextgen .ng-world-complete');
+  check('World overview is a full-width searchable roster with visible export/import',
+   Boolean(worldRoot)&&Boolean(worldRoot.querySelector('.ng-manager-rows'))&&
+   Boolean(worldRoot.querySelector('#ngWorldDirectorySearch'))&&
+   Boolean(worldRoot.querySelector('[data-ng="world-export"]'))&&
+   Boolean(worldRoot.querySelector('[data-ng="world-import-open"]'))&&
+   worldRoot.querySelectorAll('[data-ng="world-open"]').length>0);
+  const sourceSearch=worldRoot.querySelector('#ngWorldDirectorySearch');
+  sourceSearch.value='T-0001';
+  sourceSearch.dispatchEvent(new w.Event('input',{bubbles:true}));
+  await pause(65);
+  check('World search finds canonical record IDs, beyond default visible rows',
+   Boolean(d.querySelector('#wtwNextgen [data-ng="world-open"][data-val="track:T-0001"]')));
+  const cleared=d.querySelector('#ngWorldDirectorySearch');cleared.value='';
+  cleared.dispatchEvent(new w.Event('input',{bubbles:true}));
+  await pause(40);
+  d.querySelector('[data-ng="world-directory-type"][data-val="person"]').click();
+  await pause(40);
+  const peopleResults=[...d.querySelectorAll('.ng-world-complete [data-ng="world-open"]')];
+  check('World type filter retains source-linked identities',
+   peopleResults.length>0&&peopleResults.every(n=>n.dataset.val.startsWith('person:')));
+  d.querySelector('[data-ng="world-directory-type"][data-val="all"]').click();
+  await pause(40);
+  d.querySelector('.ng-world-complete [data-ng="manager-sort"][data-val="identity"]').click();
+  await pause(40);
+  check('World canonical ID column sorts the complete index',
+   Boolean(d.querySelector('.ng-world-complete [aria-sort="ascending"] [data-ng="manager-sort"][data-val="identity"]')));
   // World is now a first-class FM/OOTP manager page with the SAME record
   // view picker used by all other management screens. No legacy tab strip.
   const worldView=d.querySelector('#wtwNextgen select[data-ng-select="manager-screen"]');

@@ -35,16 +35,28 @@ test('World overview and World race files no longer click the hidden 2014 Office
  assert.doesNotMatch(nav,/bridgeNode\(originalAct\('World'\)\)/);
 });
 
-test('world directory preview includes every source category without rendering unbounded full population',()=>{
- const body=ui.slice(ui.indexOf('function managerDashboard(){'),ui.indexOf('\nfunction open1999Race('));
- assert.match(body,/World:\{kinds:\['horse','person','farm','track','race'\]/);
- assert.match(body,/const all=section==='World'&&page==='Overview'&&isClean1999\(\)\?/);
- assert.match(body,/world1999Entries\(\):globalSearchItems\(\)/);
- assert.match(body,/visibleItems=section==='World'&&page==='Overview'\?/);
- assert.match(body,/items\.filter\(row=>row\.kind===kind\)\.slice\(0,20\)/);
- assert.match(body,/visibleItems\.length\+' OF '\+items\.length\+' SOURCE RECORDS/);
- assert.match(body,/managerSortRecords\(overviewScope,visibleItems\.map/);
- assert.match(body,/managerRecordViewControl\(section,page\)/);
+test('World landing is a full-width searchable, sortable, paged directory with export/import',()=>{
+ const start=ui.indexOf('function worldCompleteDirectoryView(){');
+ const end=ui.indexOf('\nfunction managerDashboard(){',start);
+ assert.ok(start>0&&end>start,'One authoritative World directory view is required');
+ const fn=ui.slice(start,end);
+ assert.match(ui,/if\(section==='World'&&page==='Overview'\)return worldCompleteDirectoryView\(\)/);
+ assert.match(fn,/\.\.\.world1999Entries\(\)/);
+ assert.match(fn,/historical-horse/);
+ assert.match(fn,/world1999Data\?\.historicalHorses/);
+ assert.match(fn,/ng-manager-screen ng-world-complete/);
+ assert.match(fn,/ng-manager-rows/);
+ assert.match(fn,/managerSortableColumns\(scope,/);
+ assert.match(fn,/data-ng-input="world-directory-search"/);
+ assert.match(fn,/data-ng="world-export"/);
+ assert.match(fn,/data-ng="world-import-open"/);
+ assert.match(fn,/data-ng="world-directory-page"/);
+ assert.match(fn,/pageSize=100/);
+ assert.match(fn,/data-ng="world-open"/);
+ assert.doesNotMatch(ui,/items\.filter\(row=>row\.kind===kind\)\.slice\(0,20\)/);
+ assert.match(ui,/APP\.worldDirectorySearch=input\.value;APP\.worldDirectoryPage=0/);
+ assert.match(ui,/world-directory-type/);
+ assert.match(ui,/world-directory-page/);
 });
 
 test('News uses the same record-view dropdown as the established management dashboards',()=>{

@@ -112,12 +112,17 @@ frame.onload=()=>setTimeout(()=>{
    opportunityIntegrity:d.querySelector('.ng-opportunity-screen .ng-manager-sidebar')?.textContent?.includes('LIVE SOURCES ONLY')||false,
    newsOfficeLinks:[...d.querySelectorAll('.ng-news-screen [data-ng="case"]')].length,
    newsSourceStatus:d.querySelector('.ng-news-screen .ng-manager-sidebar')?.textContent?.includes('NOT CONNECTED')||false,
-   worldPreviewRows:[...d.querySelectorAll('.ng-manager-screen:not(.ng-news-screen) .ng-manager-row')].length,
-   worldPreviewSourceOnly:[...d.querySelectorAll('.ng-manager-screen:not(.ng-news-screen) [data-ng="search-go"]')]
-    .every(button=>{
-     const item=win.__WTW_NEXT__?.app?.searchIndex?.[Number(button.dataset.val)];
-     return Boolean(item?.worldKey&&item?.canonicalId);
-    }),
+   worldPreviewRows:[...d.querySelectorAll('.ng-world-complete [data-ng="world-open"]')].length,
+   worldPreviewSourceOnly:(()=>{
+    const rows=[...d.querySelectorAll('.ng-world-complete [data-ng="world-open"]')];
+    return rows.length>0&&rows.every(button=>
+     /^(?:horse|historical-horse|person|farm|track):[A-Za-z0-9-]+$/.test(button.dataset.val||''));
+   })(),
+   worldDirectoryTools:Boolean(d.querySelector('.ng-world-complete #ngWorldDirectorySearch'))&&
+    Boolean(d.querySelector('.ng-world-complete [data-ng="world-export"]'))&&
+    Boolean(d.querySelector('.ng-world-complete [data-ng="world-import-open"]'))&&
+    Boolean(d.querySelector('.ng-world-complete [data-ng="world-directory-type"]'))&&
+    Boolean(d.querySelector('.ng-world-complete [data-ng="manager-sort"]')),
    people:rect('.ng-person-horse-dossier'),
    profile:rect('.ng-route-profile .ng-profile-view'),
    intro:rect('.ng-route-profile .ng-profile-intro'),
@@ -322,8 +327,9 @@ for name in ('world-directory','world-news','office-news','laptop-world-news'):
  assert not data['sourceBridgeVisible'],(name,'Old Office screen reappeared')
  assert not data['duplicateGlobalMenuVisible'],(name,'Duplicate global navigation')
  if name=='world-directory':
-  assert 0<=data['worldPreviewRows']<=100,(name,'World preview is unbounded')
-  assert data['worldPreviewSourceOnly'],(name,'Legacy Office demo record leaked into World preview')
+  assert 0<data['worldPreviewRows']<=100,(name,'World directory rows missing or unbounded')
+  assert data['worldPreviewSourceOnly'],(name,'World directory contains an unverified source ID')
+  assert data['worldDirectoryTools'],(name,'World lacks visible search, sort, filters or import/export')
  else:
   assert data['newsDashboard'] and data['newsDashboard']['width']>=800,(name,'News screen not visible')
   assert data['newsSourceStatus'],(name,'Unverified news misrepresented as connected')
