@@ -30,6 +30,17 @@ test('20,000-horse full 1999 opening world is populated across the entire active
  assert.ok(world.calendar.summary.raceDays>=3000);
  assert.equal(world.calendar.unprogrammedTrackIds.length,0);
  assert.equal(new Set(world.entities.horses.map(h=>h.id)).size,world.entities.horses.length);
+ const racehorses=world.entities.horses.filter(h=>h.source==='GENERATED_FICTIONAL_1999');
+ assert.equal(racehorses.length,20000);
+ assert.ok(racehorses.every(h=>h.racingStatus1999==='IN_TRAINING'&&
+  h.age_at_opening>=3&&h.age_at_opening<=7));
+ const distribution=new Map();
+ for(const h of racehorses)
+  distribution.set(h.homeTrackId,(distribution.get(h.homeTrackId)||0)+1);
+ assert.equal(distribution.size,world.manifest.activeTracks);
+ assert.ok([...distribution.values()].every(n=>n>=100));
+ assert.ok(world.calendar.cards.every(c=>c.races.length>0&&
+  c.races.every(r=>r.purse_minor>0&&r.distance_furlongs>0)));
  assert.ok(world.entities.horses.filter(h=>h.source==='GENERATED_FICTIONAL_1999')
   .every(h=>h.birthplace?.country&&h.ratings&&h.ownerId&&h.trainerId));
  assert.equal(career.run.world_ref.sha256,world.authority.sha256);
