@@ -3951,3 +3951,6 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  .ng-naming-table{min-width:890px}
  .ng-naming-composer{max-height:52%}
 }
+
+.ng-naming-sort{appearance:none;background:transparent;color:inherit;border:0;padding:0;text-align:left;font:inherit;font-weight:800;cursor:pointer}
+.ng-naming-sort:focus-visible{outline:2px solid #e0c58a;outline-offset:2px}
