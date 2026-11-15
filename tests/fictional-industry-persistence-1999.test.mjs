@@ -40,6 +40,13 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
  const certificate=await verifyPersistent1999WorldOpen(store,a);
  assert.equal(certificate.status,'OPEN_VERIFIED');
  assert.equal(certificate.horses,a.horseCount);
+ assert.equal(certificate.raceDays,a.scheduledCards);
+ assert.equal(certificate.scheduledRaces,a.scheduledRaces);
+ const finalCalendar=await readPersistent1999IndustryBatch(store,a,'calendarBatches',
+  a.calendarBatchesCommitted-1);
+ assert.equal(finalCalendar.length,
+  a.scheduledCards-(a.calendarBatchesCommitted-1)*100);
+
  assert.ok(a.horseCount>180000);
  assert.ok(a.personCount>30000);
  assert.ok(a.coveringCount>50000);
@@ -114,4 +121,20 @@ test('incomplete worlds cannot receive playable career runs',async()=>{
   worldId:'Incomplete',seed:19990101,status:'GENERATING'};
  await assert.rejects(savePersistent1999CareerRun(store,incomplete,{
   runId:'bad',player:{role:'owner'}}),/Invalid persistent industry career run/);
+});
+
+test('opening certificate rejects missing durable race calendar data',async()=>{
+ const store=memoryStore();
+ const params={store,seed:19990103,worldId:'CalendarCorruption',...dirs,
+  batchSize:5000};
+ const world=await createPersistent1999Industry(params);
+ const broken={...store,get:async(kind,key)=>{
+  if(kind==='calendarBatches')return undefined;
+  return store.get(kind,key);
+ }};
+ await assert.rejects(verifyPersistent1999WorldOpen(broken,world),
+  /Industry batch missing from durable storage/);
+ await assert.rejects(reopenPersistent1999Industry(broken,{
+  seed:params.seed,worldId:params.worldId}),
+  /Industry batch missing from durable storage/);
 });
