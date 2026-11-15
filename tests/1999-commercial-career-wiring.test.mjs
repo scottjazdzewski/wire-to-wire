@@ -47,7 +47,9 @@ test('local-first compact manager retains saves but cannot import an old populat
  assert.match(manager,/encodeCareerSave\(game,baseline,profile\)/);
  assert.match(manager,/packCareerFile\(record\)/);
  assert.match(manager,/await storeGame\('Pre-new-world backup/);
- assert.doesNotMatch(manager,/worldHorseDirectoryAt|allPages|fetch\(/);
+ assert.doesNotMatch(manager,/worldHorseDirectoryAt|allPages|fetch\\(['"]https?:|fetch\\(['"]\\/api\\//);
+ assert.match(manager,/fetch\\('\\/data\\/track-geography-v33\\.json'\\)/,
+  'Local bundled geography is allowed; remote runtime data calls are not');
  assert.match(manager,/No account, monthly fee or cloud storage required/);
 });
 
