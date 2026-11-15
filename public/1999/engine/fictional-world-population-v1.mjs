@@ -131,15 +131,15 @@ export async function assembleFictional1999Industry({
  });
  const horses=[];
  const sirePools=new Map(),damPools=new Map();
- for(let year=1989;year<=1997;year++){
+ for(let year=1989;year<=1996;year++){
   sirePools.set(year,parents.filter(h=>birthYearOf(h)<=year-4&&
    ['HORSE','COLT','STALLION'].includes(sexOf(h))));
   damPools.set(year,parents.filter(h=>birthYearOf(h)<=year-4&&
    ['MARE','FILLY','BROODMARE'].includes(sexOf(h))));
  }
  for(let i=0;i<horseCount;i++){
-  const id='H-WTW1999-'+seed.toString(16).toUpperCase()+'-'+String(i+1).padStart(7,'0');
-  const year=1989+draw(seed,'foal-year:'+i,9);
+  const id='H-GAME-1999-'+seed.toString(16).toUpperCase()+'-'+String(i+1).padStart(7,'0');
+  const year=1989+draw(seed,'foal-year:'+i,8);
   const sex=draw(seed,'sex:'+i,2)===0?'COLT':'FILLY';
   const sires=sirePools.get(year),dams=damPools.get(year);
   const sire=sires.length?sires[draw(seed,'sire:'+i,sires.length)]:null;
@@ -161,7 +161,7 @@ export async function assembleFictional1999Industry({
    source:'GENERATED_FICTIONAL_1999',namingAuthority:'EXTERNAL_ACCEPTED_HORSE_NAME_BATCH'
   };
   horses.push(horse);
-  for(let future=year+4;future<=1997;future++)
+  for(let future=year+4;future<=1996;future++)
    (sex==='COLT'?sirePools:damPools).get(future).push(horse);
  }
  const allHorseIds=new Set([...parents,...horses].map(h=>h.id));
