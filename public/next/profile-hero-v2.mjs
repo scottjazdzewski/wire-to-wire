@@ -97,10 +97,15 @@ async function makeLegacyHero(url){
  await original.decode();
  if(!original.naturalWidth||!original.naturalHeight)return null;
  const canvas=document.createElement("canvas");
- canvas.width=original.naturalWidth;canvas.height=original.naturalHeight;
+ // The profile displays this at less than 200px. Avoid decoding/editing
+ // millions of full-export pixels on each route visit; scaled source ink
+ // preserves the exact logo appearance at rendered UI resolution.
+ const scale=Math.min(1,768/Math.max(original.naturalWidth,original.naturalHeight));
+ canvas.width=Math.max(2,Math.round(original.naturalWidth*scale));
+ canvas.height=Math.max(2,Math.round(original.naturalHeight*scale));
  const ctx=canvas.getContext("2d",{willReadFrequently:true});
  if(!ctx)return null;
- ctx.drawImage(original,0,0);
+ ctx.drawImage(original,0,0,canvas.width,canvas.height);
  const pixels=ctx.getImageData(0,0,canvas.width,canvas.height);
  const result=removeWhiteEdgeMatte(pixels);
  if(!result.changed)return null;
