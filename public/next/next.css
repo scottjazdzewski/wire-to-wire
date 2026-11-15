@@ -3651,15 +3651,14 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
    a diffuse ivory spotlight supplies contrast, never a rectangular plaque. */
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo.wtw-hero-dark-ink::before{
  background:radial-gradient(ellipse at 50% 50%,
-   rgba(248,248,237,.78) 0%,
-   rgba(238,242,233,.38) 37%,
-   rgba(236,240,236,.08) 61%,transparent 77%)!important;
+   rgba(248,248,237,.88) 0%,
+   rgba(238,242,233,.52) 37%,
+   rgba(236,240,236,.12) 61%,transparent 77%)!important;
  filter:blur(9px)!important;
 }
 
-/* Canonical 1999 farm/ownership profile marks are .ng-org-mark, not
- * .ng-profile-badgeframe. Give them the SAME protected left grid cell as
- * track badges so a facility/owner name cannot be pushed or overlapped. */
+#wtwNextgen .ng-route-profile .ng-profile-source-photo.wtw-hero-dark-ink:not(.wtw-hero-white-matte) img{filter:drop-shadow(0 0 2px #e3ebd1d9) drop-shadow(0 0 7px #e3ecca8a)!important;}
+/* Farm/owner logo category badge stays in its locked left grid cell. */
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-farm > .ng-profile-intro > .ng-org-mark{
   grid-area:badge!important;
   justify-self:center!important;
