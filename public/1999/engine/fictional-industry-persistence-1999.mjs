@@ -11,7 +11,7 @@ import {plan1999IndustryStaffing,generate1999StaffingBatches}
  from './fictional-industry-staffing-1999.mjs';
 export const PERSISTENT_INDUSTRY_SCHEMA='WTW_PERSISTENT_INDUSTRY_1999_V1';
 export const PERSISTENT_INDUSTRY_DB='WireToWireFictionalIndustry1999V1';
-const stores=['manifests','horseBatches','personBatches'];
+const stores=['manifests','horseBatches','personBatches','horseEdits'];
 function request(req){return new Promise((resolve,reject)=>{
  req.onsuccess=()=>resolve(req.result);
  req.onerror=()=>reject(req.error||Error('IndexedDB request failed'));
@@ -45,6 +45,10 @@ export async function open1999IndustryDatabase(indexedDB=globalThis.indexedDB){
     tx.onerror=()=>reject(tx.error||Error('Industry batch commit failed'));
     tx.onabort=()=>reject(tx.error||Error('Industry batch aborted'));
    });
+  },
+  async putHorseEdit(worldId,horseId,edit){
+   return request(db.transaction('horseEdits','readwrite')
+    .objectStore('horseEdits').put(edit,worldId+':'+horseId));
   },
   async commitManifest(worldId,manifest){
    return request(db.transaction('manifests','readwrite')
@@ -141,4 +145,24 @@ export async function findPersistent1999Horse(store,manifest,horseId){
  const records=await readPersistent1999IndustryBatch(store,manifest,'horseBatches',batchIndex);
  return records[global%manifest.batchSize]?.id===horseId?
   records[global%manifest.batchSize]:null;
+}
+
+/** Player-owned changes are stored separately; regeneration cannot overwrite them. */
+export async function updatePersistent1999Horse(store,manifest,horseId,edit){
+ const horse=await findPersistent1999Horse(store,manifest,horseId);
+ if(!horse)throw Error('Unknown persistent horse');
+ if(!store.putHorseEdit)throw Error('Persistent horse edits are unavailable');
+ if(!edit||typeof edit!=='object'||Array.isArray(edit)||
+  Object.keys(edit).some(key=>!['name','ownerId','trainerId','status'].includes(key)))
+  throw Error('Horse edit contains immutable or unsupported fields');
+ if('name'in edit&&(typeof edit.name!=='string'||!edit.name.trim()||
+  edit.name.length>36))throw Error('Invalid horse name');
+ await store.putHorseEdit(keyOf(manifest.seed,manifest.worldId),horseId,edit);
+ return {...horse,...edit};
+}
+export async function readPersistent1999HorseProfile(store,manifest,horseId){
+ const horse=await findPersistent1999Horse(store,manifest,horseId);
+ if(!horse)return null;
+ const edit=await store.get('horseEdits',keyOf(manifest.seed,manifest.worldId)+':'+horseId);
+ return {...horse,...(edit||{})};
 }
