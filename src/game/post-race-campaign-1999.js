@@ -236,8 +236,8 @@ export function validatePostRaceCampaigns(state,world){
   ensure(Number.isSafeInteger(v)&&v>=0,'POST_RACE_SAVE','Invalid review counter');
  for(const [id,p] of Object.entries(store.by_horse)){
   const horse=state.runtime.registered_horses?.by_id?.[id],
-   race=state.runtime.races?.[p.last_race_id],
-   entry=state.runtime.entries?.[p.last_race_id+':'+id];
+   race=state.runtime.races?.[p?.last_race_id],
+   entry=state.runtime.entries?.[p?.last_race_id+':'+id];
   // This is the RACE-DAY trainer, not a permanently fixed employee.
   // A later valid local hire must not invalidate an official career result.
   ensure(Boolean(horse)&&isObject(p)&&p.horse_id===id&&
