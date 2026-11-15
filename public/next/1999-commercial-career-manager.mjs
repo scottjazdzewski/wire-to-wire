@@ -194,14 +194,15 @@ async function refresh(){
   '<div class="wtw-cc-current">CURRENT WORLD · '+fmt(current.population)+' HORSES · '+
    esc('FOUNDING 1999')+
    ' · SEED '+esc(current.seed)+'</div>'+
-  '<div class="wtw-cc-section"><h3>NEW WORLD</h3>'+
-  '<p>Clean January 1999: 73 approved breeding horses, no registered racing horses, no generated personnel or facilities. Future entrants are added only by registration.</p>'+ 
-  '<div class="wtw-cc-grid"><label>APPROVED BREEDING HORSES<input data-cc="population" type="number" min="73" max="73" step="1" value="73" readonly/></label>'+ 
+  '<div class="wtw-cc-section"><h3>NEW CAREER / START FROM SCRATCH</h3>'+
+  '<p>1999 founding foundation (development): 73 protected breeding horses, no registered racing horses and no generated industry. A complete fictional population and its believable history are still in engineering. This action creates a separate named career from the available foundation; it does not claim to generate the future full world.</p>'+
+  '<div class="wtw-cc-grid"><label>NEW CAREER NAME<input data-cc="new-name" type="text" maxlength="80" value="New 1999 Founding Career"/></label>'+
+  '<label>APPROVED BREEDING HORSES<input data-cc="population" type="number" min="73" max="73" step="1" value="73" readonly/></label>'+ 
   '<label>WORLD SOURCE<select data-cc="mode"><option value="FOUNDING_1999" selected>Founding 1999 (source only)</option></select></label>'+
   '<label>WORLD SEED<input data-cc="seed" type="number" min="1" max="4294967295" step="1" value="'+esc(current.seed)+'"/></label></div>'+
   '<div class="wtw-cc-actions">'+config().presets.map(p=>'<button data-cc-action="preset" data-population="'+p.population+'" data-mode="'+(p.mode||'CANON_ANCHORED_TEST')+'">'+esc(p.label)+'</button>').join('')+'</div>'+
-  '<p class="wtw-cc-warning">Approved small 1999 world ONLY. Retired synthetic test modes and legacy career migrations are unavailable.</p>'+ 
-  '<button data-cc-action="new-world" class="primary">CREATE NEW WORLD (BACK UP CURRENT CAREER FIRST)</button></div>'+
+  '<p class="wtw-cc-warning">Founding 1999 scenario only (73 breeding horses). Full fictional 1999 world genesis and reusable customized world templates are not yet available. The current career will be saved to a new backup slot first.</p>'+
+  '<button data-cc-action="new-world" class="primary">CREATE &amp; SAVE NEW CAREER</button></div>'+
   '<div class="wtw-cc-section"><h3>COMPACT SAVES · '+slots.length+' SLOTS</h3>'+
   '<p>Local device only. No account, monthly fee or cloud storage required. Portable .wtwsave files have checksums and gzip compression where supported. Total compact-save budget: 512 MB across slots.</p>'+
   '<div class="wtw-cc-actions"><input data-cc="save-name" maxlength="80" placeholder="Name current career" value="1999 Career"/>'+
@@ -232,15 +233,21 @@ async function perform(action,element){
  }
  if(action==='new-world'){
   const profile=inputProfile();
-  if(!window.confirm('Create a new '+fmt(profile.population)+'-horse '+
-   'founding'+
-   ' world? The current career will be backed up before it is replaced.'))return;
+  const careerName=modal().querySelector('[data-cc="new-name"]')?.value?.trim();
+  if(!careerName)throw Error('Enter a name for the new career');
+  if(!window.confirm('Create and save a separate "'+careerName.slice(0,80)+
+   '" career using the 73-horse founding 1999 development foundation? '+
+   'This does NOT generate the unfinished full fictional industry. '+
+   'The current active career will be backed up first; neither career will be deleted.'))return;
   const backup=await storeGame('Pre-new-world backup · '+new Date().toISOString().slice(0,16),
    captureCurrent());
   const fresh=baselineFor(profile);
-  // New settings take effect only after the confirmed, successful backup.
+  // A separate confirmed career slot must exist BEFORE the active world changes.
+  // If disk quota/storage fails here, retain the current active game untouched.
+  const created=await storeGame(careerName,fresh);
   window.__WTW_OFFICE_COMMANDS__.dispatch('LOAD_CAREER',fresh);
-  notice='Previous career backed up as '+backup.name+'.';
+  notice='Current career preserved as '+backup.name+'; new career saved as '+
+   created.name+'.';
   location.reload();return;
  }
  const id=element.dataset.id;if(!id)throw Error('Save slot ID missing');
