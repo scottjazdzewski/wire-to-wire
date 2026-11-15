@@ -3,6 +3,8 @@
  * Creates role- and circuit-linked personnel identities for a populated world.
  * Names and individual biographies are supplied by the independent naming desk.
  */
+import {createPersonnelNameRoster,PERSONNEL_NAME_MODEL}
+ from './personnel-name-engine.mjs';
 export const INDUSTRY_STAFFING_1999_SCHEMA='WTW_INDUSTRY_STAFFING_1999_V1';
 const roles=Object.freeze({
  trainer:{horsesPerPerson:24,tiers:['NATIONAL','MAJOR_CIRCUIT','REGIONAL','SMALL_BARN']},
@@ -36,12 +38,23 @@ export function plan1999IndustryStaffing({seed=19990101,ecosystem}={}){
   note:'MODELED_LABOR_MARKET_NOT_EMPLOYMENT_CONTRACTS'};
 }
 export function* generate1999StaffingBatches({
- seed=19990101,staffing,tracks,farms,batchSize=1000
+ seed=19990101,staffing,tracks,farms,batchSize=1000,nameRoster=null
 }={}){
  if(!staffing?.counts||!Array.isArray(tracks)||!tracks.length||
   !Array.isArray(farms)||!farms.length||!Number.isInteger(batchSize)||
   batchSize<1||batchSize>5000)throw Error('Invalid staffing materialization');
- let batch=[],offset=0;
+ const total=Object.values(staffing.counts).reduce((n,v)=>n+v,0);
+ const roleOrder=Object.keys(roles);
+ const generatedNames=nameRoster??createPersonnelNameRoster(seed,total,index=>{
+  let n=index;
+  for(const role of roleOrder){
+   if(n<staffing.counts[role])return role;
+   n-=staffing.counts[role];
+  }
+  throw Error('Personnel name index exceeds staffing plan');
+ });
+ if(generatedNames.length!==total)throw Error('Incomplete personnel name roster');
+ let batch=[],offset=0,nameIndex=0;
  for(const [role,rule] of Object.entries(roles)){
   for(let i=0;i<staffing.counts[role];i++){
    const id='P-FICTIONAL-1999-'+role.toUpperCase().replaceAll('_','-')+'-'+
@@ -52,8 +65,10 @@ export function* generate1999StaffingBatches({
    const tierRoll=hash(seed,id+':tier')%1000;
    const tier=rule.tiers[Math.min(rule.tiers.length-1,
     tierRoll<25?0:tierRoll<170?1:tierRoll<530?2:3)];
+   const named=generatedNames[nameIndex++];
    batch.push({id,role,tier,workplaceId:base.id,
-    name:null,namingStatus:'AWAITING_PERSON_NAMING_ENGINE',
+    name:named.name,namingStatus:'GENERATED_1999_PERSONNEL_ENGINE',
+    nameModel:PERSONNEL_NAME_MODEL,
     ratings:{ability:20+hash(seed,id+':ability')%80,
      potential:20+hash(seed,id+':potential')%80,
      consistency:20+hash(seed,id+':consistency')%80},
