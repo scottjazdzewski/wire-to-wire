@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createPersistent1999Industry,readPersistent1999IndustryBatch,findPersistent1999Horse,
  updatePersistent1999Horse,readPersistent1999HorseProfile,
  savePersistent1999CareerRun,loadPersistent1999CareerRun,
- readPersistent1999Directory,verifyPersistent1999WorldOpen,
+ readPersistent1999Directory,findPersistent1999Person,verifyPersistent1999WorldOpen,
  reopenPersistent1999Industry}
  from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
 function memoryStore(){
@@ -80,6 +80,10 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
  for(let i=0;i<a.personBatchesCommitted;i++)
   staff.push(...await readPersistent1999IndustryBatch(store,a,'personBatches',i));
  const trainer=staff.find(p=>p.id===runner.trainerId);
+ const trainerLookup=await findPersistent1999Person(store,a,runner.trainerId);
+ assert.deepEqual(trainerLookup,trainer);
+ assert.ok(trainerLookup.dateOfBirth&&trainerLookup.birthplace.city);
+ assert.equal(trainerLookup.birthplace.countryCode,trainerLookup.birthCountryCode);
  const jockey=staff.find(p=>p.id===runner.jockeyId);
  assert.equal(trainer?.workplaceId,runner.homeTrackId);
  assert.equal(jockey?.workplaceId,runner.homeTrackId);
