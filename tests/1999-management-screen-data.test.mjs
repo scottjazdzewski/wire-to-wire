@@ -144,7 +144,8 @@ test('race-calendar browser remains accessible without assigning entrants or res
  assert.ok(card.length>0);
  assert.ok(card.every(row=>row.horse===''&&row.status.includes('NOT ENTERED')));
  const tracks=ui.extraTracks();
- assert.equal(tracks.length,ui.counts.tracks);
+ assert.equal(ui.counts.tracks,118); // immutable source identities still exist
+ assert.equal(tracks.length,101); // only operational tracks appear in Racing
  assert.ok(tracks.some(t=>t.name==='Saratoga'));
  assert.equal(ui.racingDayCards('1999-01-01','Saratoga').length,0);
  assert.match(ui.bridgeStatus,/NO_1999_OUTCOME_COMMITTED/);

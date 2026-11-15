@@ -783,7 +783,10 @@ const worldHorseById=id=>{
   return found?.index>=0?worldHorsePage(found.index,1).items?.[0]||null:null;
  }catch{return null}
 };
-const activeRacecourses=get('1999-active-tracks','/api/1999/sim/tracks',worldCounts.tracks)
+const sourceRacecourses=get('1999-active-tracks','/api/1999/sim/tracks',worldCounts.tracks);
+// Keep original canonical source indices: condition-book reads are index-addressed.
+const sourceRacecourseIndex=new Map(sourceRacecourses.map((t,i)=>[t.id,i]));
+const activeRacecourses=sourceRacecourses
  .filter(t=>trackProgram1999(t.id)?.trackOperating!=='HISTORICAL_ONLY');
 const activeTrackIds=new Set(activeRacecourses.map(t=>t.id));
 const activeTrackNames=new Set(activeRacecourses.map(t=>t.name));
@@ -792,7 +795,7 @@ const allStakes1999=[...sourceStakes,...WTW_ALTERNATE_STAKES_1999,...WTW_REGIONA
  .filter(r=>activeTrackIds.has(r.trackId)||activeTrackNames.has(r.trackName));
 // Browsable 1999 day cards: read the ONE deterministic condition-book generator.
  // No live results, horses entered, or official race-card fixtures are inferred.
- const racingTrackIndexByName=new Map(activeRacecourses.map((t,i)=>[t.name,i]));
+ const racingTrackIndexByName=new Map(activeRacecourses.map(t=>[t.name,sourceRacecourseIndex.get(t.id)]));
  const racingCardCache=new Map();
  const validCalendarDate=date=>/^1999-\d{2}-\d{2}$/.test(String(date||''))&&
   !Number.isNaN(Date.parse(date+'T12:00:00Z'))&&
@@ -810,9 +813,9 @@ const allStakes1999=[...sourceStakes,...WTW_ALTERNATE_STAKES_1999,...WTW_REGIONA
   if(racingCardCache.has(key))return racingCardCache.get(key);
   const records=[];
   const chosen=trackName?racingTrackIndexByName.get(trackName):null;
-  const indices=trackName?(chosen===undefined?[]:[chosen]):activeRacecourses.map((_,i)=>i);
+  const indices=trackName?(chosen===undefined?[]:[chosen]):activeRacecourses.map(t=>sourceRacecourseIndex.get(t.id));
   for(const index of indices){
-   const t=activeRacecourses[index];
+   const t=sourceRacecourses[index];
    if(!trackMeetOpen1999(t.id,date))continue;
    const conditions=readLocal1999World('/api/1999/sim/conditions?'+worldQuery+'&date='+
      encodeURIComponent(date)+'&trackIndex='+index);
