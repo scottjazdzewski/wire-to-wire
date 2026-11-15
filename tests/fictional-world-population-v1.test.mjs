@@ -102,3 +102,17 @@ test('1999 world automatically assigns provisional editable horse names from cur
  assert.ok(world.entities.horses.slice(2).every(h=>
   h.namingAuthority==='PROVISIONAL_EDITABLE_OPENING_WORLD'));
 });
+
+test('generated horses and personnel carry modeled opening birthplaces and ratings',async()=>{
+ const world=await assembleFictional1999Industry({
+  seed:19990101,worldId:'BirthplaceRatingsTest',tracks,
+  foundationHorses:foundation,horseCount:36
+ });
+ const horses=world.entities.horses.filter(h=>h.source==='GENERATED_FICTIONAL_1999');
+ assert.equal(horses.length,36);
+ assert.ok(horses.every(h=>h.birthplace?.farm_id===h.foalingFarmId&&
+  Number.isInteger(h.age_at_opening)&&h.ratings));
+ assert.ok(world.entities.people.every(p=>p.birthplace?.country&&
+  p.date_of_birth&&p.ratings?.professional_ability>=25&&
+  p.ratings?.potential<=99));
+});
