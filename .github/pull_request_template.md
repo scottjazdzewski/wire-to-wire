@@ -3,6 +3,18 @@
 ### What changed and why?
 State the affected screen/engine/data/asset behavior, the canonical source of truth, and the approved baseline preserved or the expressly reviewed replacement.
 
+### Required desktop-offline declaration (checked automatically for every PR)
+
+Desktop compatibility assessment: Explain how this PR fits the ONE locally installed Windows game.
+
+Local runtime and data: State which code executes locally and the source of bundled data/art, or `No runtime/data change`.
+
+Save compatibility: State migration, export/import and existing-career effects, or `No save format change`.
+
+Network dependencies: List any existing offline blockers and why this PR adds no required remote gameplay service, or `No additional network dependency`.
+
+Offline verification: List exact actual browser/unit/Windows packaged tests run. Use `NOT YET DESKTOP CERTIFIED` if no real packaged Windows test exists; do not claim one.
+
 ### Desktop-first commercial delivery (required even while browser previews remain)
 - [ ] The change is compatible with the future offline Windows EXE and its ONE local game engine; no new mandatory Cloudflare/D1/API/CDN/web-account dependency
 - [ ] Required game data/art are available as bundled read-only resources or via a tested local offline adapter, with no remote-only gameplay path
