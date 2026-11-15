@@ -5,6 +5,7 @@
  */
 import {ensure, worldIdentity} from './contracts.js';
 import {createNamingFeedback,validateNamingFeedback,recordNamingFeedback,nameFeedbackKey} from './horse-naming-feedback-v489.js';
+import {OWNER_REVIEWED_NAME_KEYS_V478} from './horse-naming-owner-review-v478.js';
 
 export const GAME_NAMING_BRIDGE_SCHEMA='WTW_GAME_NAME_ORIGIN_BRIDGE_V1';
 export const HORSE_NAMING_COMMANDS=Object.freeze(['RECORD_HORSE_NAMING_STORY','OWNER_SET_HORSE_NAMING_PREFERENCE']);
@@ -177,11 +178,16 @@ export function recordHorseNamingPreferenceAction({state,world,command,emit}){
   ensure(horse&&state.stable_horse_ids.includes(horseId)&&
    horse.owner_organization_id===state.player.operation_id,
    'NAMING_FEEDBACK_HORSE','Choose requires a real player-owned horse');
-  const registered=[...world.entities.horses.map(h=>h.name),
-   ...Object.values(state.runtime.registered_horses?.by_id||{}).map(h=>h.registered_name)];
-  ensure(!registered.some(n=>nameFeedbackKey(n)===nameFeedbackKey(p.name)),
-   'NAMING_FEEDBACK_COLLISION','This name is already registered');
  }else ensure(!horseId,'NAMING_FEEDBACK_HORSE','Only Choose may identify a horse');
+ // A kept name promises future availability; never bank or choose names that
+ // are already registered or in the protected owner-review exclusion ledger.
+ if(p.decision!=='REJECT'){
+  const registered=[...world.entities.horses.map(h=>h.name),
+   ...Object.values(state.runtime.registered_horses?.by_id||{}).map(h=>h.registered_name),
+   ...OWNER_REVIEWED_NAME_KEYS_V478];
+  ensure(!registered.some(n=>nameFeedbackKey(n)===nameFeedbackKey(p.name)),
+   'NAMING_FEEDBACK_COLLISION','Name is already registered or previously reviewed');
+ }
  const rt=state.runtime.horse_naming,prior=rt.feedback??createNamingFeedback();
  const updated=recordNamingFeedback(prior,{name:p.name,decision:p.decision,
   motifId:p.motif_id,horseId,prompt:p.prompt});
