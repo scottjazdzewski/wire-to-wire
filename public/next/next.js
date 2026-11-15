@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,worldAttributeKey:'',stableMode:'all',stableSearch:'',directorySort:'name',directorySortDesc:false,directoryFilter:'all',directoryMode:'all',directorySearch:'',directoryHorseItems:[],departmentModes:{},racingMode:'meets',racingTrack:'',racingDate:'',racingCalendarOpen:false,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchSortDesc:false,searchPage:0,managerSortScope:'',managerSortKey:'',managerSortDesc:false};
+const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,worldAttributeKey:'',stableMode:'all',stableSearch:'',directorySort:'name',directorySortDesc:false,directoryFilter:'all',directoryMode:'all',directorySearch:'',directoryHorseItems:[],departmentModes:{},racingMode:'meets',racingTrack:'',racingDate:'',racingCalendarOpen:false,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchSortDesc:false,searchPage:0,managerSortScope:'',managerSortKey:'',managerSortDesc:false,recordBrowse:null};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -1023,7 +1023,128 @@ function dossierOfficeAdjacent(route){
  if(same.length!==1)return null;
  return dossierAdjacentRecords(same[0],records);
 }
+
+/* One cursor from the currently sorted and filtered visible records to their
+ * actual source-backed detail views. UI state only: never part of a game save.
+ */
+const RECORD_BROWSE_ACTIONS=new Set([
+ 'dept-open','directory-horse','horse','world-open','search-go','pilot-horse'
+]);
+const RECORD_BROWSE_LIST='.ng-rs-scroll,.ng-manager-rows,#ngSearchResults,.ng-world-related,.ng-stakes-table,.ng-managementtable';
+function recordBrowseEntry(action,value){
+ let row=null;
+ if(action==='dept-open')row=APP.departmentVisible[Number(value)];
+ else if(action==='search-go')row=APP.searchIndex[Number(value)];
+ else if(action==='directory-horse')row=APP.directoryHorseItems.find(x=>x._directoryId===value)?._directoryRecord;
+ else if(action==='world-open')row=world1999Entry(value);
+ else if(action==='pilot-horse')row=pilotRelationships?.horses.find(x=>x.id===value);
+ if(action==='horse'){
+  const h=horseRows().find(x=>x.name===value);
+  return {action,value,kind:'horse',name:value,id:h?.horseId||'',
+   worldKey:h?.horseId?'horse:'+h.horseId:''};
+ }
+ if(!row)return null;
+ const kind=row.kind||row._kind||(action==='directory-horse'?'horse':
+  action==='pilot-horse'?'horse':'');
+ if(!['horse','person','farm','track','race','sale-event','sale-company'].includes(kind))return null;
+ const name=String(row._name||row.name||row.title||row.race||'').trim();
+ if(!name)return null;
+ return {action,value,kind,name,
+  id:String(row.canonicalId||row._canonId||row._id||row.id||''),
+  worldKey:row.worldKey||row._worldKey||'',
+  detail:row.detail||row.role||row._role||'',
+  role:row.role||row._role||row.detail||'',
+  type:row.type||row.detail||'',
+  track:row.track||row._track||''};
+}
+function recordBrowseFamily(entry){
+ return dossierEntityCategory({
+  kind:entry.kind,detail:entry.detail,
+  _world:{role:entry.role||entry.detail,type:entry.type||entry.detail}
+ });
+}
+function recordBrowseCapture(btn,action,value){
+ if(!RECORD_BROWSE_ACTIONS.has(action))return;
+ const scope=btn.closest(RECORD_BROWSE_LIST);
+ if(!scope)return;
+ const buttons=[...scope.querySelectorAll('button[data-ng="'+action+'"]')];
+ const selected=buttons.indexOf(btn);
+ if(selected<0)return;
+ const entries=buttons.map(b=>recordBrowseEntry(action,b.dataset.val||''));
+ const chosen=entries[selected];
+ if(!chosen)return;
+ const family=recordBrowseFamily(chosen);
+ const eligible=entries.filter(e=>e&&recordBrowseFamily(e)===family);
+ const at=eligible.findIndex(e=>e.action===action&&e.value===value);
+ if(eligible.length<2||at<0){APP.recordBrowse=null;return}
+ APP.recordBrowse={family,items:eligible,index:at,
+  section:APP.section,page:APP.page,
+  departmentVisible:action==='dept-open'?APP.departmentVisible.slice():null,
+  searchIndex:action==='search-go'?APP.searchIndex.slice():null};
+}
+function recordBrowseMatches(route){
+ const context=APP.recordBrowse;
+ const item=context?.items?.[context.index];
+ if(!item)return false;
+ const custom=String(APP.custom||'');
+ if(custom.startsWith('WorldRecord:')){
+  const key=decodeURIComponent(custom.slice('WorldRecord:'.length));
+  return item.worldKey===key||Boolean(item.id&&key===item.kind+':'+item.id);
+ }
+ if(custom.startsWith('FoundingProfile:')){
+  const parts=custom.slice('FoundingProfile:'.length).split(':');
+  return Boolean(item.id&&item.id===decodeURIComponent(parts.slice(1).join(':')));
+ }
+ if(custom.startsWith('PilotHorse:'))
+  return item.id===decodeURIComponent(custom.slice('PilotHorse:'.length));
+ if(custom.startsWith('RaceFile:'))
+  return item.kind==='race'&&
+   (APP.raceDetail?.name===item.name||APP.raceDetail?.id===item.id&&Boolean(item.id));
+ if(custom.startsWith('Preview:'))
+  return APP.previewEntity?.name===item.name&&
+   (APP.previewEntity?.kind===item.kind||item.kind==='farm'&&APP.previewEntity?.kind==='connection');
+ return Boolean(route?.title&&route.title===item.name&&
+  ({'Horse Profile':'horse','People Profile':'person',
+   'Track Profile':'track','Farm Profile':'farm'})[route.kicker]===item.kind);
+}
+function recordBrowseContext(route){
+ if(!recordBrowseMatches(route))return null;
+ const {items,index,family}=APP.recordBrowse;
+ return {family,source:'list',index,total:items.length,
+  previous:items[(index-1+items.length)%items.length],
+  next:items[(index+1)%items.length]};
+}
+function recordBrowseStep(direction){
+ if(direction!==1&&direction!==-1||!recordBrowseMatches(currentRoute()))return false;
+ const context=APP.recordBrowse;
+ const old=context.index;
+ context.index=(old+direction+context.items.length)%context.items.length;
+ const item=context.items[context.index];
+ // Reuse the one authoritative existing list action for every record type.
+ if(context.departmentVisible)APP.departmentVisible=context.departmentVisible;
+ if(context.searchIndex)APP.searchIndex=context.searchIndex;
+ const target=document.createElement('button');
+ target.type='button';target.hidden=true;target.dataset.ng=item.action;
+ target.dataset.val=item.value;
+ root.appendChild(target);
+ try{target.click()}finally{target.remove()}
+ return true;
+}
+function recordBrowseToolbar(route){
+ const context=dossierNavigationContext(route);
+ if(!context.previous||!context.next)return '';
+ const label=context.source==='list'?
+  'LIST '+(context.index+1)+' / '+context.total+' · '+context.family.toUpperCase():
+  context.family.toUpperCase()+' RECORDS';
+ return '<nav class="ng-record-browse-bar" aria-label="Browse previous and next records in this list">'+
+  '<span>'+safe(label)+'</span><span class="ng-profile-entity-pager" role="group" aria-label="Previous and next '+safe(context.family)+' records">'+
+  '<button type="button" class="ng-profile-entity-step" data-ng="dossier-entity-step" data-val="-1" aria-label="Previous '+safe(context.family)+': '+safe(context.previous.name)+'" title="Previous: '+safe(context.previous.name)+'">‹</button>'+
+  '<button type="button" class="ng-profile-entity-step" data-ng="dossier-entity-step" data-val="1" aria-label="Next '+safe(context.family)+': '+safe(context.next.name)+'" title="Next: '+safe(context.next.name)+'">›</button></span></nav>';
+}
+
 function dossierNavigationContext(route){
+ const list=recordBrowseContext(route);
+ if(list)return list;
  const source=dossierCurrentEntity(route);
  if(source)return {...dossierAdjacentRecords(source,world1999Entries()),source:'world'};
  const fallback=dossierOfficeAdjacent(route);
@@ -1035,6 +1156,7 @@ function dossierOpenAdjacent(direction,route){
  const choices=dossierNavigationContext(route);
  const next=direction<0?choices.previous:choices.next;
  if(!next)return false;
+ if(choices.source==='list')return recordBrowseStep(direction);
  if(choices.source==='office'){
   if(!window.__wtwOfficeOpenSearchRecord?.(next.kind,next.name,next.officeTrack))return false;
   APP.custom='';APP.detailTab='Overview';APP.moreOpen=false;
@@ -3877,7 +3999,7 @@ else if(APP.custom.startsWith('RaceFile:')){const id=decodeURIComponent(APP.cust
 else if(APP.custom.startsWith('Preview:')){body=previewRecordView()}
 else {body=managerDashboard()}
 const isProfile=Boolean(profile)||body.startsWith('<div class="ng-profile-view '),isOrganization=APP.custom==='Organization Overview',isSearch=APP.custom==='Search',isManager=body.startsWith('<section class="ng-manager-screen');
-return `<main class="ng-route ${isProfile?'ng-route-profile':isOrganization?'ng-route-organization':isSearch?'ng-route-search':isManager?'ng-route-manager':''}">${isProfile||isOrganization||isManager?'':`<header class="ng-routeheading"><span class="ng-route-badge-slot" aria-hidden="true">${APP.custom==='Organization Overview'?organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',true,true):`<img class="ng-routebadge" src="${safe(bdg)}" alt=""/>`}</span><div class="ng-routetext"><small>${safe(kicker)}</small><h1>${safe(title)}</h1></div><button class="ng-back" data-ng="office">← RACING OFFICE</button></header>`}<div class="ng-routegrid" data-route-key="${safe((route?.kicker||APP.custom||APP.section)+'|'+(route?.title||APP.custom||APP.page))}"><div class="ng-routeinner">${body}</div></div></main>`;}
+return `<main class="ng-route ${isProfile?'ng-route-profile':isOrganization?'ng-route-organization':isSearch?'ng-route-search':isManager?'ng-route-manager':''}">${isProfile||isOrganization||isManager?'':`<header class="ng-routeheading"><span class="ng-route-badge-slot" aria-hidden="true">${APP.custom==='Organization Overview'?organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',true,true):`<img class="ng-routebadge" src="${safe(bdg)}" alt=""/>`}</span><div class="ng-routetext"><small>${safe(kicker)}</small><h1>${safe(title)}</h1></div><button class="ng-back" data-ng="office">← RACING OFFICE</button></header>`}<div class="ng-routegrid" data-route-key="${safe((route?.kicker||APP.custom||APP.section)+'|'+(route?.title||APP.custom||APP.page))}"><div class="ng-routeinner">${!isProfile&&/^(?:WorldRecord:|RaceFile:|Preview:|PilotHorse:)/.test(APP.custom)?recordBrowseToolbar(route):''}${body}</div></div></main>`;}
 // Keep browser-native select menus mounted while the user chooses an option.
 // Hidden Office mutations repaint this interface frequently; a full re-render
 // while the menu is open destroys the select and interrupts the mouse gesture.
@@ -3964,6 +4086,7 @@ window.addEventListener('click',e=>{
  const btn=e.target.closest('#wtwNextgen [data-ng],#wtwNextgen [data-act]');if(!btn)return;
  e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();
  const key=btn.dataset.ng, val=btn.dataset.val||'';
+ if(RECORD_BROWSE_ACTIONS.has(key))recordBrowseCapture(btn,key,val);
  if(key==='naming-desk')return openCustomView('Stable — Naming Desk','Stable','Naming Desk');
  if(key&&key.startsWith('naming-'))return window.WTW1999NamingDesk?.action?.(key,val);
  if(!key && btn.dataset.act){syntheticAction(btn);return}

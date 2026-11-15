@@ -34,3 +34,19 @@ The Windows ICO is generated at build time from `public/assets/wtw-office-approv
 `scripts/windows-desktop-smoke.ps1` launches the **unpacked packaged application** in two separate Windows processes using the same per-user test profile. It validates local content origin, approved management UI, January 1999 state and a persisted marker, without requiring a browser or hosted server. It also builds and uploads the NSIS installer.
 
 Next: migrate historical records into a bundled indexed pack, then move full career authority into per-user desktop-owned storage.
+
+## Windows no-window startup troubleshooting (G1.1)
+
+On a managed/work computer, seeing the Windows SmartScreen **Run anyway** prompt means only the first unsigned-file reputation check was passed. It does **not** prove endpoint security permits the extracted portable Electron child or its DLLs. Never bypass IT-managed app restrictions; ask IT if corporate policy blocks the program.
+
+Three development downloads are built from exactly the same app:
+
+1. `WireToWire-Portable-0.1.1-x64.exe`: single file; extracts its runtime to Windows' temp location before launch. Some endpoint policies disallow execution from temp.
+2. `WireToWire-NoInstall-Folder-0.1.1-x64.zip`: extract the `win-unpacked` directory to an approved local location and run `Wire to Wire.exe` **inside** it. **No installer or admin privileges needed**, but the corporate allowlist may still block unsigned EXEs. Keep every DLL/resource alongside the executable. Do not run directly inside ZIP preview.
+3. `WireToWire-Setup-0.1.1-x64.exe`: standard per-user development installer. Do not install this on a locked-down workplace computer without approval.
+
+If the app launches and fails after Electron startup, it now writes `wtw-startup-diagnostics.log` in Electron's per-user `app.getPath('userData')` folder and displays an explicit error dialog with the file path. On many Windows installations this is within `%APPDATA%\Wire to Wire`. A failure before Electron's main process starts may produce **no** log: the Windows security/event logs and IT help desk are the appropriate route in that case.
+
+The Windows CI verifies local origin/storage reopen and checks that a visible BrowserWindow has a substantial, CSS-laid-out management interface. A screenshot is retained for diagnosis, but GitHub-hosted Windows runners do not provide a trustworthy interactive desktop; an empty/black screenshot on that runner **must not** be misreported as proof that a customer's window is blank or that the visible UI is fully certified. Manual Windows customer-machine display testing remains mandatory. Hidden-window tests alone are insufficient. The folder archive is an alternate diagnostic format, not a means to circumvent endpoint policy.
+
+**This is still G1 development software, unsigned and NOT YET DESKTOP CERTIFIED for retail.**
