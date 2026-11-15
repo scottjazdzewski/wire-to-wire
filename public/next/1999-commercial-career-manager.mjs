@@ -475,7 +475,25 @@ async function handleChange(event){
  }
 }
 async function open(){
- try{notice='';await refresh()}
+ try{
+  notice='';
+  const store=await open1999IndustryDatabase();
+  try{
+   const reopened=await reopenPersistent1999Industry(store,{
+    seed:19990101,worldId:'WTW1999FullIndustry'});
+   if(reopened?.status==='READY'){
+    fullIndustryManifest=reopened.manifest;
+    industryDirectory=await readPersistent1999Directory(store,fullIndustryManifest);
+    await browseFullIndustry(0,'directory');
+    notice='Saved January 1999 world verified and available for inspection.';
+   }else if(reopened?.status==='GENERATING'){
+    notice='January 1999 world creation was interrupted. Select CREATE / RESUME FULL INDUSTRY.';
+   }
+  }catch(error){
+   notice='1999 world could not be verified: '+String(error.message||error);
+  }finally{store.close()}
+  await refresh();
+ }
  catch(error){
   const root=modal();root.innerHTML='<section class="wtw-cc-panel" role="dialog">'+
    '<button data-cc-action="close">CLOSE</button><h2>CAREER STORAGE UNAVAILABLE</h2><p>'+
