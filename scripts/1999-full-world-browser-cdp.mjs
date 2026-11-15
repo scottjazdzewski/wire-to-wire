@@ -101,7 +101,9 @@ const inspect=`(async()=>{
    raceDays:c.raceDays,scheduledRaces:c.scheduledRaces,organizations:directory.length,
    tracks:directory.filter(x=>x.id.startsWith('T-')).length,
    namedPersonnel:staff.filter(x=>!!x.name).length,
+   staffBios:staff.every(x=>!!x.dateOfBirth&&!!x.birthplace?.city&&!!x.birthCountryCode),
    ratedHorse:first.every(x=>x.ratings?.speed>0),
+   horseBirthplaces:first.every(x=>!!x.birthplace?.city&&!!x.birthplace?.country),
    namedBreeders:first.every(x=>!!x.name&&x.namingStatus==='PROVISIONAL_EDITABLE_1999_OPENING'),
    namedRacehorse:!!firstRunner?.name,cards:cards.length,
    immutableHorseId:first[0]?.id,worldId:status.manifest.worldId,
@@ -138,6 +140,8 @@ try{
  assert.ok(snap.coverings>40000,'Expected full breeding books');
  assert.equal(snap.calendarHasEntries,false,'No pre-generated race results or entries');
  assert.equal(snap.ratedHorse,true,'Every opening horse must have ratings');
+ assert.equal(snap.horseBirthplaces,true,'Opening horses require actual modeled foaling locations');
+ assert.equal(snap.staffBios,true,'Every opening staff record needs a full modeled birthplace and birthdate');
  assert.equal(snap.namedBreeders,true,'Broodmares must have provisional registered names');
  assert.equal(snap.namedRacehorse,true,'Race-ready horses must have provisional names');
  assert.ok(snap.namedPersonnel>0,'Personnel naming provider did not populate names');
