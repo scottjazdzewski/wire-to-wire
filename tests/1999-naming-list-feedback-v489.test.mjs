@@ -122,6 +122,7 @@ test('Generating more keeps all earlier proposals visible in the list',()=>{
  const d=createNamingDeskController();
  for(const [name,value] of Object.entries(fields))d.setField(name,value);
  assert.equal(d.generate(),true);
+ assert.ok(d.snapshot().results.length>8,'one story request should show more than eight screened rows');
  const first=d.snapshot().allResults.map(x=>x.name);
  assert.ok(first.length>0);
  assert.equal(d.generate(),true);
