@@ -883,6 +883,10 @@ function loadWorld1999(){
      historicalClosure:'CLOSED_PRE_1999',trackOperating:'HISTORICAL_ONLY'
     }))]};
    }
+   // In the 1999 game projection, owner-approved fictional names replace
+   // display labels without altering the separately preserved source record.
+   data={...data,tracks:data.tracks.map(t=>t.gameDisplayName?
+    {...t,historicalName:t.name,name:t.gameDisplayName}:t)};
    world1999Base=data;world1999Data=worldApplyEdits(data);
    if(APP.ready)schedulePaint(15);
   })
@@ -3116,7 +3120,7 @@ function depTrackCalendar(includeRetired=false){
   const p=byId.get(t.id)||byName.get(t.name)||null;
   const sourceStakes=(window.__WTW_1999_UI_DATA__?.stakesForTrack?.(t.name)||[])
    .map(r=>({...r,date:r.localDate||r.date||'',class:r.status||r.division||r.grade||'',purse:r.purse1999}));
-  return {...t,...(p?{
+  return {...t,name:p?.name||canonical?.name||t.name,...(p?{
    surfaces:p.surfaces,meetWindow:p.meetWindow,raceDays:p.raceDays,
    preferredDays:p.preferredDays,calendarBasis:p.calendarBasis,
    calendarSource:p.calendarSource,operating:p.operating,_source1999:false
