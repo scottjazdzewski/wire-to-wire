@@ -16,7 +16,7 @@
     7,
     9
   ],
-  "approved_logo_count": 32,
+  "approved_logo_count": 33,
   "assets": [
     {
       "path": "public/assets/office/founding-organization-logos/O-000001.png",
@@ -50,6 +50,20 @@
         218
       ],
       "old_frame_pixels_removed": 7720
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-000045.png",
+      "source_sha256": "e415a4d03fe7e812bb9a3ac9a4c88c0221604a102b78689a9a5e8930eb5c99e5",
+      "output_sha256": "9ad2b8eaeb90f0c0f95d827c35fff02e7ab9e3e6450b40089557c908dae0e966",
+      "background": [
+        0,
+        53,
+        65
+      ],
+      "old_frame_pixels_removed": 0,
+      "source_revision": "USER_APPROVED_2026-11-15_TREE_FREE_VECTOR",
+      "approved_original": "https://drive.google.com/file/d/1MCAkeF1bbJu25-i1IC2xdavnxjWcLZFH/view",
+      "approval_note": "Original flat teal/stone bluff and river, no trees, NORTHBANK carved in cliff; original composition preserved, exact 256-square external frame"
     },
     {
       "path": "public/assets/office/founding-organization-logos/O-000047.png",

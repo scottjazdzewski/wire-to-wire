@@ -96,3 +96,23 @@ test('Circle B approved concentric B mark is exact-ID, 256-square RGB and protec
  assert.match(ui,/organizationLogoMarkup\(owner\.id,owner\.name,'organization'/);
  assert.match(ui,/approvedIdentityAsset\('organization',source\.dataset\.organizationId/);
 });
+
+test('Northbank approved tree-free bluff mark is exact-ID, RGB and byte-locked',()=>{
+ const id='O-000045';
+ assert.equal(roster.organizations.find(x=>x.id===id)?.name,'Northbank Racing');
+ const path=index.organizations['organization:'+id];
+ assert.equal(path,'/assets/office/founding-organization-logos/O-000045.png');
+ const bytes=readFileSync(resolve(root,'public'+path));
+ assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
+ assert.equal(bytes.readUInt32BE(16),256);
+ assert.equal(bytes.readUInt32BE(20),256);
+ assert.equal(bytes[25],2,'Northbank production badge must be opaque RGB');
+ assert.ok(index.audit.published.some(x=>x.id===id&&x.name==='Northbank Racing'));
+ assert.ok(!index.audit.notPublished.some(x=>x.id===id));
+ const frame=readJson('ops/owner-logo-frame-v1.json');
+ assert.ok(frame.assets.some(x=>x.path==='public'+path&&x.output_sha256==='9ad2b8eaeb90f0c0f95d827c35fff02e7ab9e3e6450b40089557c908dae0e966'));
+ const ui=readFileSync(resolve(root,'public/next/next.js'),'utf8');
+ assert.match(ui,/function organizationLogoMarkup\(id,name,kind=/);
+ assert.match(ui,/organizationLogoMarkup\(owner\.id,owner\.name,'organization'/);
+ assert.match(ui,/approvedIdentityAsset\('organization',source\.dataset\.organizationId/);
+});

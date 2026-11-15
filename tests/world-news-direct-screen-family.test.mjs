@@ -109,7 +109,7 @@ test('News remains empty rather than making up a racing feed when source briefin
 });
 
 test('one 1999 UI asset and canonical News renderer, no additional stylesheet or application',()=>{
- assert.match(html,/\/next\/next\.js\?rev=wtw1999-circle-b-approved-20261115/);
+ assert.match(html,/\/next\/next\.js\?rev=wtw1999-northbank-approved-20261115/);
  assert.match(ui,/else if\(APP\.custom==='Office — News'\|\|APP\.custom==='World — News'\)\{body=sourceNewsDesk\(\)\}/);
  assert.equal((html.match(/rel="stylesheet"/g)||[]).length,1);
  assert.doesNotMatch(functions,/querySelector|\.app \[data-act\]|document\.createElement/);
