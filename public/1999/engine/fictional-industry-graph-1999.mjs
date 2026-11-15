@@ -36,7 +36,7 @@ export function relationship1999(type,fromId,toId){
  return {type,fromId,toId,provenance:'MODELED_1999_OPENING_WORLD'};
 }
 export function connect1999Horse(horse,{seed,trainerCount=0,jockeyCount=0,
- tracks=[],farms=[],owners=[]}={}){
+ tracks=[],farms=[],owners=[],staffByTrack=null}={}){
  if(!horse?.id||!Number.isSafeInteger(seed)||seed<1)throw Error('Invalid horse graph input');
  const id=horse.id,edges=[];
  const add=(type,target)=>{if(target)edges.push(relationship1999(type,id,target))};
@@ -46,10 +46,17 @@ export function connect1999Horse(horse,{seed,trainerCount=0,jockeyCount=0,
  add('OUT_OF',horse.damId);
  add('HOME_TRACK',horse.homeTrackId);
  const active=horse.status==='RACING'||horse.status==='TWO_YEAR_OLD_PROSPECT';
- const trainerId=active&&trainerCount?
-  'P-FICTIONAL-1999-TRAINER-'+String(1+hash(seed,id+':trainer')%trainerCount).padStart(7,'0'):null;
- const jockeyId=horse.status==='RACING'&&jockeyCount?
-  'P-FICTIONAL-1999-JOCKEY-'+String(1+hash(seed,id+':jockey')%jockeyCount).padStart(7,'0'):null;
+ const assigned=(role,count)=>{
+  if(staffByTrack){
+   const candidates=staffByTrack[role]?.get(horse.homeTrackId)||[];
+   if(!candidates.length)throw Error('No '+role+' available at '+horse.homeTrackId);
+   return candidates[hash(seed,id+':'+role)%candidates.length];
+  }
+  return count?'P-FICTIONAL-1999-'+role.toUpperCase()+'-'+
+   String(1+hash(seed,id+':'+role)%count).padStart(7,'0'):null;
+ };
+ const trainerId=active?assigned('trainer',trainerCount):null;
+ const jockeyId=horse.status==='RACING'?assigned('jockey',jockeyCount):null;
  add('TRAINED_BY',trainerId);
  add('PREFERRED_JOCKEY',jockeyId);
  return {...horse,trainerId,jockeyId,
