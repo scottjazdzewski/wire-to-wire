@@ -287,3 +287,40 @@ export function generateLocalPopulationNamingBatch({batch,existingNames=[],attem
   requiresFullLocalNameRegistry:true,
   writesToGame:false,approvedForRegistration:false};
 }
+
+/**
+ * Offline 1999 opening-world name assignment.
+ * Unlike foaling-event names, these are explicitly EDITABLE PROVISIONAL
+ * identities: there is no fabricated foaling event or owner approval.
+ * Draws only from the existing curated naming writer's vocabulary.
+ */
+export function generateProvisional1999HorseNames({
+ seed=19990101,horseCount,protectedNames=[]
+}={}){
+ if(!Number.isSafeInteger(seed)||seed<1||seed>4294967295||
+  !Number.isInteger(horseCount)||horseCount<1||horseCount>100000||
+  !Array.isArray(protectedNames))throw Error('Invalid provisional horse naming request');
+ const single=[...new Set(VOICES.flatMap(v=>[...v.names,...(V488_WHOLE_NAMES[v.id]||[])]))]
+  .filter(n=>n.length<=18&&n.length>=2);
+ const words=[...new Set(single.flatMap(n=>n.split(/\\s+/).filter(w=>w.length>=3&&w.length<=11)))];
+ const reserved=new Set(protectedNames.map(norm)),names=[];
+ // Every candidate remains a natural phrase from the existing writer's words.
+ // This is a bootstrap naming tier, never a replacement for its editorial desk.
+ const a=fnv('opening|'+seed),b=fnv('opening-words|'+seed);
+ const max=single.length+words.length*words.length;
+ if(horseCount+reserved.size>max)throw Error('Provisional naming vocabulary exhausted');
+ for(let i=0,attempts=0;names.length<horseCount&&attempts<max;attempts++){
+  const j=(a+Math.imul(attempts,7919))>>>0;
+  const index=j%max;
+  const candidate=index<single.length?single[index]:
+   words[Math.floor((index-single.length)/words.length)]+' '+
+   words[(index-single.length)%words.length];
+  const key=norm(candidate);
+  if(candidate.length>18||!key||reserved.has(key))continue;
+  reserved.add(key);names.push(candidate);
+ }
+ if(names.length!==horseCount)throw Error('Provisional name inventory insufficient');
+ return {names,algorithmRevision:LOCAL_HORSE_NAMING_ALGORITHM_REVISION+
+  ':OPENING_PROVISIONAL_V1',provisional:true,editable:true,
+  approvedForRegistration:false,source:'CURATED_LOCAL_VOCABULARY_NO_FOALING_EVIDENCE'};
+}
