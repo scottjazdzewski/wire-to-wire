@@ -35,11 +35,11 @@ test('V488 authored catalogue has 600 normalized whole names; all fit game lengt
    .map(n=>n[1]||n[2]));
  assert.equal(names.length,601,'241 prior whole-name slots plus 360 new reviewed slots');
  const keys=new Set(names.map(norm));
- assert.equal(keys.size,600,'one old duplicate between motifs is harmless');
+ assert.equal(keys.size,601,'all authored names must be distinct');
  assert.ok(names.every(x=>x.length>0&&x.length<=18&&!/\d/.test(x)));
  const rated=new Set(OWNER_REVIEWED_NAME_KEYS_V478);
- assert.equal([...keys].filter(x=>rated.has(x)).length,14);
- assert.equal(keys.size-[...keys].filter(x=>rated.has(x)).length,586);
+ assert.equal([...keys].filter(x=>rated.has(x)).length,0,'never offer a prior owner-reviewed name');
+ assert.equal(keys.size-[...keys].filter(x=>rated.has(x)).length,601);
 });
 
 test('V488 retains bounded Naming Desk previews but scans every authored name for foaling',()=>{
