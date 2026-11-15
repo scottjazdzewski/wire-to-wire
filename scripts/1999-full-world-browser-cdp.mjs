@@ -86,7 +86,7 @@ const inspect=`(async()=>{
  const store=await api.open1999IndustryDatabase();
  try{
   const status=await api.reopenPersistent1999Industry(store,{
-   seed:19990101,worldId:'WTW1999FullIndustry'});
+   seed:19990101,worldId:'WTW1999FullIndustry-H250000'});
   if(!status)return {state:'MISSING'};
   if(status.status!=='READY')return {state:status.status,
    batches:status.manifest?.horseBatchesCommitted||0};
@@ -136,7 +136,7 @@ try{
   await pause(900);
  }
  assert.equal(snap?.state,'READY','Full industry never reached READY: '+JSON.stringify(snap));
- assert.ok(snap.horses>180000,'Expected entire living horse industry');
+ assert.equal(snap.horses,250000,'Default world must materialize the complete selected 250k horses');
  assert.ok(snap.people>30000,'Expected full support workforce');
  assert.equal(snap.tracks,107,'Owner-approved operating 1999 track count');
  assert.equal(snap.approvedExpansion,true,'Missing approved six expansion venues');
