@@ -88,10 +88,11 @@ export function assignStallionServiceBooks({seed=19990101,stallions,broodmares,
  const books=new Array(stallions).fill(0);
  let remaining=targetCovers;
  // Allocate proportionally, with deterministic stable tie breaking and hard cap.
- const weightTotal=weights.reduce((a,b)=>a+b,0);
+ const weighted=weights.map(w=>w*w);
+ const weightTotal=weighted.reduce((a,b)=>a+b,0);
  if(weightTotal===0&&remaining>0)throw Error('No stallion capacity');
  for(let i=0;i<stallions;i++){
-  books[i]=Math.min(maxCovers,Math.floor(targetCovers*weights[i]/weightTotal));
+  books[i]=Math.min(maxCovers,Math.floor(targetCovers*weighted[i]/weightTotal));
   remaining-=books[i];
  }
  for(let pass=0;remaining>0;pass++){
