@@ -369,3 +369,43 @@ export async function readPersistent1999Directory(store,manifest){
  if(!Array.isArray(directory))throw Error('Industry directory missing');
  return directory;
 }
+
+/**
+ * Lightweight reopen certificate. Verifies all population checkpoint counts,
+ * directory presence, and the first/last committed batch of each store.
+ * Full semantic validation happens during generation, before each commit.
+ */
+export async function verifyPersistent1999WorldOpen(store,manifest){
+ if(manifest?.schema!==PERSISTENT_INDUSTRY_SCHEMA||
+  manifest.status!=='COMPLETE'||!manifest.directoryCommitted)
+  throw Error('1999 world is not complete');
+ const counts=[
+  ['horseBatches',manifest.horseCount,manifest.batchSize,
+   manifest.horseBatchesCommitted],
+  ['personBatches',manifest.personCount,manifest.batchSize,
+   manifest.personBatchesCommitted],
+  ['coveringBatches',manifest.coveringCount,manifest.batchSize,
+   manifest.coveringBatchesCommitted],
+  ['calendarBatches',manifest.scheduledCards,100,
+   manifest.calendarBatchesCommitted]
+ ];
+ for(const [kind,total,size,committed] of counts){
+  if(!Number.isSafeInteger(total)||total<1||
+   !Number.isSafeInteger(size)||size<1||
+   committed!==Math.ceil(total/size))
+   throw Error('1999 world '+kind+' checkpoint count mismatch');
+  const first=await readPersistent1999IndustryBatch(store,manifest,kind,0);
+  const last=await readPersistent1999IndustryBatch(store,manifest,kind,committed-1);
+  if(first.length!==Math.min(total,size)||
+   last.length!==total-(committed-1)*size)
+   throw Error('1999 world '+kind+' has incomplete persisted records');
+ }
+ const directory=await readPersistent1999Directory(store,manifest);
+ if(!directory.length||directory.some(x=>!x.id||!x.ratings||
+  !Array.isArray(x.relationships)))
+  throw Error('1999 world directory is incomplete');
+ return {status:'OPEN_VERIFIED',worldId:manifest.worldId,
+  seed:manifest.seed,horses:manifest.horseCount,people:manifest.personCount,
+  coverings:manifest.coveringCount,raceDays:manifest.scheduledCards,
+  scheduledRaces:manifest.scheduledRaces,directoryEntities:directory.length};
+}
