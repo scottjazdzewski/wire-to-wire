@@ -4,7 +4,7 @@
  * Player and AI share the same commands, money limits and development rules.
  * This module never advances its own clock or modifies the founding source.
  */
-import {ensure,isObject,worldIdentity} from './contracts.js';
+import {ensure,isObject,worldIdentity,validDate} from './contracts.js';
 import {TRAINING_PLANS,createHorseTrainingRecord,advanceHorseTrainingDay}
  from '../../public/1999/engine/horse-development.mjs';
 import {horseTravelStatus,effectiveHorseCareSite} from './shipping-1999.js';
@@ -273,17 +273,17 @@ export function validateHorseCareRuntime(state,world){
    ensure(isObject(prep)&&prep.schema===HORSE_RACE_PREPARATION_SCHEMA&&
     prep.horse_id===id&&prep.owner_id===h.owner_organization_id&&
     typeof prep.race_id==='string'&&
-    typeof prep.race_date==='string'&&
+    validDate(prep.race_date)&&validDate(prep.selected_on)&&
     prep.race_date>=prep.selected_on&&
     prep.selected_on<=state.clock.date&&
     RACE_PREPARATION_APPROACHES.includes(prep.approach)&&
     Object.hasOwn(TRAINING_PLANS,prep.original_training_plan)&&
     ['ACTIVE','COMPLETED','CANCELLED'].includes(prep.status)&&
-    (prep.last_work_date===null||typeof prep.last_work_date==='string'&&
+    (prep.last_work_date===null||validDate(prep.last_work_date)&&
       prep.last_work_date>=prep.selected_on&&prep.last_work_date<=state.clock.date)&&
     (prep.last_workout===null||Object.hasOwn(TRAINING_PLANS,prep.last_workout))&&
     (prep.status==='ACTIVE'?prep.closed_on===null&&prep.close_reason===null:
-     typeof prep.closed_on==='string'&&prep.closed_on<=state.clock.date&&
+     validDate(prep.closed_on)&&prep.closed_on<=state.clock.date&&
       typeof prep.close_reason==='string'),
     'HORSE_RACE_PREP_SAVE','Invalid targeted training cycle in player career');
    const race=state.runtime.races?.[prep.race_id],
