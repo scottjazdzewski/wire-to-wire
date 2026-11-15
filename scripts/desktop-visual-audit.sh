@@ -205,6 +205,10 @@ frame.onload=()=>setTimeout(()=>{
     getPropertyValue('--wtw-id-base').trim(),
    logoThemeReady:d.getElementById('wtwNextgen')?.getAttribute('data-wtw-logo-theme')||'',
    logoSrc:d.querySelector('.ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo img')?.currentSrc||'',
+   logoMixBlend:d.querySelector('.ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo img')?
+    win.getComputedStyle(d.querySelector('.ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo img')).mixBlendMode:'',
+   logoMatteFlag:!!d.querySelector('.ng-route-profile .ng-profile-source-photo.wtw-hero-white-matte'),
+   logoTransparentFlag:!!d.querySelector('.ng-route-profile .ng-profile-source-photo.wtw-hero-transparent'),
    profileBackdrop:d.querySelector('.ng-route-profile .ng-profile-intro')?
     win.getComputedStyle(d.querySelector('.ng-route-profile .ng-profile-intro')).backgroundImage:'',
    trackWorkspace:rect('.ng-route-profile .ng-track-workspace'),
@@ -292,6 +296,12 @@ for name,identity in expected.items():
  assert data['logoThemeReady']=='ready',(name,'Logo pixel sample not applied')
  assert re.fullmatch(r'#[0-9A-Fa-f]{6}',data['identityBase']),(name,'Invalid pixel-derived color')
  assert data['logoSrc'],(name,'Logo image absent from approved profile')
+ if name=='gulfstream':
+  # Actual legacy wordmark has an opaque white source canvas. A raw source
+  # with normal blending is a white rectangle: this IS a screenshot failure.
+  cleaned=data['logoSrc'].startswith('blob:') or (
+   data['logoMixBlend']=='multiply' and data['logoMatteFlag'])
+  assert cleaned,(name,'White source canvas still appears as a rectangular plaque',data)
  assert 'gradient' in data['profileBackdrop'],(name,'Profile atmosphere missing')
  palette_rows[name]=data['identityBase']
 assert len(set(palette_rows.values()))>1,'All logos resolve to the same generic color'
