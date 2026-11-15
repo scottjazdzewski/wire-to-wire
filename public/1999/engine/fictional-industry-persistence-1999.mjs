@@ -384,6 +384,26 @@ export async function loadPersistent1999CareerRun(store,manifest,runId){
  return record;
 }
 
+
+/** Lookup a persistent person directly by role and permanent ordinal ID. */
+export async function findPersistent1999Person(store,manifest,personId){
+ if(manifest?.status!=='COMPLETE'||typeof personId!=='string')
+  throw Error('Completed world and person ID required');
+ const match=/^P-FICTIONAL-1999-([A-Z-]+)-(\d{7})$/.exec(personId);
+ if(!match)return null;
+ const roles=Object.keys(manifest.staffing?.counts||{});
+ const token=match[1],position=roles.findIndex(r=>
+  r.toUpperCase().replaceAll('_','-')===token);
+ if(position<0)return null;
+ const ordinal=Number(match[2]);
+ if(ordinal<1||ordinal>manifest.staffing.counts[roles[position]])return null;
+ let global=ordinal-1;
+ for(let i=0;i<position;i++)global+=manifest.staffing.counts[roles[i]];
+ const batchIndex=Math.floor(global/manifest.batchSize);
+ const records=await readPersistent1999IndustryBatch(store,manifest,'personBatches',batchIndex);
+ const person=records[global%manifest.batchSize];
+ return person?.id===personId?person:null;
+}
 export async function readPersistent1999Directory(store,manifest){
  if(manifest?.status!=='COMPLETE'||!manifest.directoryCommitted)
   throw Error('Industry directory is incomplete');
