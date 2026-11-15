@@ -111,7 +111,7 @@ function directorySignature(directories){
 }
 export async function createPersistent1999Industry({
  store,seed=19990101,worldId='WTW1999FullIndustry',
- farms,tracks,owners,batchSize=1000,onProgress=()=>{}
+ farms,tracks,owners,batchSize=1000,onProgress=()=>{},yieldControl=async()=>{}
 }={}){
  if(!store?.get||!store?.commitBatch||!store?.commitManifest||
   !Number.isSafeInteger(seed)||seed<1||!worldId||
@@ -209,6 +209,7 @@ export async function createPersistent1999Industry({
    manifest=next;index++;
    onProgress({kind,completed:index,totalRecords:kind==='horseBatches'?
     totalHorses:totalPeople});
+   if(index%8===0)await yieldControl();
   }
  }
  let coveringIndex=0,coveringsChecked=0;
@@ -234,6 +235,7 @@ export async function createPersistent1999Industry({
   coveringsChecked+=batch.records.length;coveringIndex++;
   onProgress({kind:'coveringBatches',completed:coveringIndex,
    totalRecords:plan.minimumCoversForTargetFoals});
+  if(coveringIndex%8===0)await yieldControl();
  }
  if(coveringsChecked!==plan.minimumCoversForTargetFoals)
   throw Error('1999 covering ledger did not reconcile to planned bookings');
@@ -263,6 +265,7 @@ export async function createPersistent1999Industry({
   manifest=next;
   onProgress({kind:'calendarBatches',completed:index+1,
    totalRecords:calendar.summary.raceDays});
+  if((index+1)%8===0)await yieldControl();
  }
  manifest={...manifest,status:'COMPLETE'};
  await store.commitManifest(id,manifest);
