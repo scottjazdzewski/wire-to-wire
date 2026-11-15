@@ -162,6 +162,24 @@ export async function createPersistent1999Industry({
   await store.commitDirectory(id,next,records);
   manifest=next;
  }
+ // The racing labor market is indexed before horse allocation, so every
+ // training/jockey link is a geographically coherent workplace relationship.
+ const staffByTrack={trainer:new Map(),jockey:new Map()};
+ for(const staffBatch of generate1999StaffingBatches({
+  seed,staffing,tracks,farms,batchSize
+ })){
+  for(const person of staffBatch.records){
+   if(!['trainer','jockey'].includes(person.role))continue;
+   const byTrack=staffByTrack[person.role];
+   if(!byTrack.has(person.workplaceId))byTrack.set(person.workplaceId,[]);
+   byTrack.get(person.workplaceId).push(person.id);
+  }
+ }
+ for(const track of tracks){
+  if(!staffByTrack.trainer.get(track.id)?.length||
+   !staffByTrack.jockey.get(track.id)?.length)
+   throw Error('Opening circuit lacks a trainer or jockey workforce: '+track.id);
+ }
  for(const [kind,generator] of [
   ['horseBatches',generate1999IndustryRegistryBatches({
    seed,plan,farms,tracks,owners,batchSize})],
@@ -175,7 +193,8 @@ export async function createPersistent1999Industry({
    const next={...manifest,[progressKey]:index+1};
    const records=kind==='horseBatches'?
     batch.records.map(h=>connect1999Horse(h,{seed,
-     trainerCount:staffing.counts.trainer,jockeyCount:staffing.counts.jockey})):
+     trainerCount:staffing.counts.trainer,jockeyCount:staffing.counts.jockey,
+     staffByTrack})):
     batch.records.map(p=>connect1999Person(p,{seed}));
    const audit=validate1999IndustryReferences(records,{
     plan,staffing,tracks,farms,owners});
