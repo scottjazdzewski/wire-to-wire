@@ -42,7 +42,7 @@ The playable game is the bundled, offline Windows desktop application developed 
 
 ## One permanent physical logo frame standard
 
-Every owner, farm, stud and stable logo in the playable world uses the same **256×256 opaque RGB PNG**, **28px rounded corner radius**, **5px warm-ivory border #F4EDDE**, inset **5px**, with external near-black corner pixels `#060709`. The border is physically included in the production PNG, never invented at runtime with CSS. No per-company override or separate 64/128/512px in-game assets. Continue using exact organization ID file paths, one local source of truth and the preserved high-resolution original Drive master. See [the complete production contract](../../../docs/branding/OWNER_LOGO_PRODUCTION_STANDARD.md) and `scripts/normalize_owner_logo_art.py`.
+Every owner, farm, stud and stable logo in the playable world uses the same **256×256 opaque RGB PNG**, **28px rounded corner radius**, **5px warm-ivory border #F4EDDE**, inset **5px**, with external near-black corner pixels `#060709`. The border is physically included in the production PNG, never invented at runtime with CSS. No per-company override or separate 64/128/512px in-game assets. Continue using exact organization ID file paths, one local source of truth and the preserved high-resolution original Drive master. See [the complete production contract](../../../../docs/branding/OWNER_LOGO_PRODUCTION_STANDARD.md) and `scripts/normalize_owner_logo_art.py`.
 
 ## One-line instruction for all other production windows
 
