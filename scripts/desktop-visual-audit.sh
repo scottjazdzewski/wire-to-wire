@@ -54,6 +54,13 @@ fi
 if ! grep -q 'NOT FOALED' visual-audit/dom/horse-profile.html; then
  echo 'Horse profile has no honest future-birth status' >&2; exit 1
 fi
+# Important profile state must also remain readable at laptop width.
+"$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+ --force-device-scale-factor=1 --window-size=1280,800 --virtual-time-budget=4000 \
+ --screenshot="visual-audit/screenshots/horse-profile-1280.png" \
+ 'http://127.0.0.1:8765/next/?page=horse&name=The+Last+Match' \
+ >/tmp/wtw-horse-profile1280.log 2>&1
+test -s visual-audit/screenshots/horse-profile-1280.png
 capture people-profile '?ui=WorldRecord%3Aperson%3AP-000018' 'ng-person-horse-dossier'
 capture founder-owner '?ui=FoundingProfile%3Aownership%3AO-000014' 'ng-track-workspace'
 capture founder-facility '?ui=FoundingProfile%3Afacility%3AO-000068' 'ng-track-workspace'
