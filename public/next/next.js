@@ -4204,7 +4204,10 @@ function paint(){
   scroll:card.scrollTop
  }));
  const route=currentRoute();
- const stage=(route||APP.custom)?renderRoute():`<main class="ng-board">${inbox()}${center()}${right()}</main>`;
+ let stage;
+ try{stage=(route||APP.custom)?renderRoute():`<main class="ng-board">${inbox()}${center()}${right()}</main>`;
+  window.__WTW_NEXT_PAINT_ERROR__=null;
+ }catch(error){window.__WTW_NEXT_PAINT_ERROR__=String(error?.stack||error);throw error}
  root.innerHTML=header()+'<div class="ng-manager-shell">'+managerSidebar()+
    '<div class="ng-manager-stage">'+stage+'</div></div>'+(APP.savePanelOpen?namedSavePanel():'');
  const nextRoute=$('.ng-routegrid',root),nextTab=$('.ng-profiletabs .on',root)?.dataset.val||'';
