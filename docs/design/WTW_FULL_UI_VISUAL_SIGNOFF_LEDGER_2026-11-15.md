@@ -132,6 +132,7 @@ Source: [full browser capture run, 81 screenshot files](https://github.com/scott
 | `people-profile.png` | **NO — unapproved** | Individual premium UI review pending | P0 |
 | `founder-owner.png` | **NO — unapproved** | Real-logo contrast/identity acceptance | P1 |
 | `founder-facility.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `racing-office.png` | **NO — unapproved** | Editorial hierarchy, inbox detail and actionable daily state still require premium OOTP/FM signoff | P0 |
 | `aqueduct-track.png` | **NO — unapproved** | Real-logo contrast/identity acceptance | P1 |
 | `belmont-track.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
 | `gulfstream-track.png` | **NO — unapproved** | Pending latest UI rerender | P0 |
@@ -198,7 +199,7 @@ Source: [full browser capture run, 81 screenshot files](https://github.com/scott
 | `history-coverage.png` | **NO — unapproved** | Individual premium UI review pending | P2 |
 | `history-year-review.png` | **NO — unapproved** | Individual premium UI review pending | P2 |
 
-Additionally, the audit captures `founder-facility-1280.png` and `history-year-review-1280.png` at 1280×800. Both are **NO — not yet signed off** until individual legibility/clipping verification. All `78` canonical routes have a screenshot; this is evidence coverage, not approval.
+Additionally, the audit captures `founder-facility-1280.png` and `history-year-review-1280.png` at 1280×800. Both are **NO — not yet signed off** until individual legibility/clipping verification. All `79` canonical routes have a screenshot; this is evidence coverage, not approval.
 
 **Live source-backed content deficit:** Breeding Foals/Pedigrees/Overview, Facilities Breaking Facilities/Training Centers/Trainer Barns, Finances, Sales Auctions/Catalogs/Watchlist/Private Offers, Personnel Staff, Racing Entries/Results and the player Stable currently show essentially empty source-backed roster tables. We cannot fill these with fabricated records or make page completeness claims. The engine/world workstreams must deliver the meaningful source data, while UI ensures honest empty-state workflows.
 
