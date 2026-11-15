@@ -23,3 +23,21 @@ test('stallion books vary including zero covers and large commercial books',()=>
  assert.ok(books.largestBook>=150);
  assert.ok(books.books.every(n=>n>=0&&n<=220));
 });
+
+
+test('selected opening worlds scale precisely without counting unborn 1999 foals',()=>{
+ for(const size of [10000,25000,87500,150000,325000]){
+  const a=plan1999Ecosystem({seed:19990101,targetOpeningHorses:size});
+  const b=plan1999Ecosystem({seed:19990101,targetOpeningHorses:size});
+  assert.deepEqual(a,b);
+  assert.equal(a.openingRegistryHorses,size);
+  assert.equal(a.requestedOpeningHorses,size);
+  assert.equal(Object.entries(a.counts).filter(([key])=>key!=='annualFoals')
+   .reduce((sum,[,count])=>sum+count,0),size);
+  assert.ok(Object.entries(a.counts).every(([,n])=>n>0));
+  assert.ok(a.minimumCoversForTargetFoals<=a.counts.broodmares);
+ }
+ assert.throws(()=>plan1999Ecosystem({targetOpeningHorses:73}),/10000–325000/);
+ assert.throws(()=>plan1999Ecosystem({targetOpeningHorses:325001}),/10000–325000/);
+ assert.throws(()=>plan1999Ecosystem({targetOpeningHorses:20000.5}),/10000–325000/);
+});
