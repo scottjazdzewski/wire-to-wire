@@ -96,6 +96,32 @@ test('Office Career is its own source-backed career and save view, never World s
  assert.doesNotMatch(page,/globalSearchItems\(|fakeCareer|mockPlayer/);
  assert.match(js,/section==='Office'&&page==='Career'\)return managerCareerView\(\)/);
 });
+test('Career is a source-backed appointment dossier with live manager attention rather than a flat record table',()=>{
+ const i=js.indexOf('function managerCareerView(){');
+ const j=js.indexOf('function managerDashboard(){',i);
+ const view=js.slice(i,j);
+ assert.match(view,/const pending=currentMessages\(\)\.filter\(m=>!m\.resolved\)/);
+ assert.match(view,/actionable=pending\.filter\(m=>m\.urgent\)/);
+ assert.match(view,/const due=dueActions\(\)/);
+ assert.match(view,/ng-career-identity/);
+ assert.match(view,/ng-career-fields/);
+ assert.match(view,/ng-career-attention/);
+ assert.match(view,/data-ng="case"/);
+ assert.match(view,/data-ng="commercial-career-open"/);
+ assert.match(view,/Missing identity, history, finances and achievements are not invented/);
+ assert.doesNotMatch(view,/Math\.random|inventedBiography|fakeEarnings|mockAchievement/);
+ assert.match(css,/ng-career-identity/);
+ assert.match(css,/ng-career-alert-mark/);
+});
+test('Today shows current action and due counts without a new manager window',()=>{
+ const i=js.indexOf('function center(){');
+ const j=js.indexOf('function right(){',i);
+ const today=js.slice(i,j);
+ assert.match(today,/const actionCount=messages\.filter\(m=>m\.urgent&&!m\.resolved\)\.length/);
+ assert.match(today,/FOLLOW-UPS DUE/);
+ assert.match(today,/THE MANAGER|Decision Desk/);
+ assert.match(js,/const stage=\(route\|\|APP\.custom\)\?renderRoute\(\):/);
+});
 test('Office Inbox and Decisions use source cases, not a fake connected-world directory',()=>{
  const start=js.indexOf('function managerOfficeInboxView(page){');
  const stop=js.indexOf('function managerDashboard(){',start);
