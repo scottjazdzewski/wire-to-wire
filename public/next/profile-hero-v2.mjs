@@ -9,6 +9,19 @@ const ID_ORG=/^O-[0-9A-Za-z-]+$/;
 const LEGACY_TRACK=/\/assets\/(?:places\/track-logos|tracks)\/T-\d{4}\.webp(?:[?#]|$)/;
 const cache=new Map();
 
+/* Source-image evidence only: an image with a light opaque export canvas
+ * receives a non-destructive presentation blend while its transparent crop
+ * is prepared. Never guess from a track name or mutate approved artwork. */
+export function hasLightCornerMatte({width,height,data}={}){
+ if(!Number.isInteger(width)||!Number.isInteger(height)||width<2||height<2||
+    !data||data.length!==width*height*4)return false;
+ const pixels=[0,width-1,width*(height-1),width*height-1];
+ return pixels.filter(p=>{
+  const i=p*4;
+  return data[i+3]>=240&&Math.min(data[i],data[i+1],data[i+2])>=228&&
+   Math.max(data[i],data[i+1],data[i+2])-Math.min(data[i],data[i+1],data[i+2])<32;
+ }).length>=3;
+}
 /* Pixel-correct white matte elimination for LEGACY photo-backed track marks.
  * Only boundary-connected light pixels are keyed. Interior white details
  * surrounded by a colored emblem are preserved. The original file is never
@@ -199,12 +212,7 @@ function heroAvailable(src){
      const data=ctx.getImageData(0,0,sample.width,sample.height).data;
      // A source logo can still have a flat white export canvas. Detect
      // the *actual pixels* of that canvas; do not assume any track has one.
-     const corners=[0,sample.width-1,sample.width*(sample.height-1),sample.width*sample.height-1];
-     lightMatte=corners.filter(p=>{
-      const i=p*4;
-      return data[i+3]>=240&&Math.min(data[i],data[i+1],data[i+2])>=228&&
-       Math.max(data[i],data[i+1],data[i+2])-Math.min(data[i],data[i+1],data[i+2])<32;
-     }).length>=3;
+     lightMatte=hasLightCornerMatte({width:sample.width,height:sample.height,data});
      let luminosity=0,pixels=0;
      for(let i=0;i<data.length;i+=4)if(data[i+3]>=105){
       luminosity+=.2126*data[i]+.7152*data[i+1]+.0722*data[i+2];pixels++;
