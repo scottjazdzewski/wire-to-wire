@@ -70,7 +70,7 @@ test('reject unauthorized actors, unaccepted names, collisions and youngstock',(
  const before=JSON.stringify(s);
  assert.throws(()=>dispatch(s,w,'reg:player','REGISTER_GAME_HORSE',payload(),'player'),e=>e.code==='UNAUTHORIZED_COMMAND');
  assert.throws(()=>dispatch(s,w,'reg:unknown','REGISTER_GAME_HORSE',payload({registered_name:'Unreleased Name'})),e=>e.code==='UNACCEPTED_HORSE_NAME');
- assert.throws(()=>dispatch(s,w,'reg:young','REGISTER_GAME_HORSE',payload({foaling_year:1997,birth_date:'1997-05-01'})),e=>e.code==='HORSE_AGE');
+ assert.throws(()=>dispatch(s,w,'reg:young','REGISTER_GAME_HORSE',payload({foaling_year:1998,birth_date:'1998-05-01'})),e=>e.code==='HORSE_AGE');
  assert.throws(()=>dispatch(s,w,'reg:lineage','REGISTER_GAME_HORSE',payload({sire_id:'H-FOUNDING-SIRE'})),e=>e.code==='LINEAGE_NOT_RELEASED');
  assert.throws(()=>dispatch(s,w,'reg:reserved','REGISTER_GAME_HORSE',
   payload({registered_name:'Historical Champion'},{

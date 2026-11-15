@@ -50,7 +50,7 @@ export const FICTIONAL_WORLD_NAME_ENGINE='WTW_FICTIONAL_WORLD_IDENTITIES_V7';
 export const SUPPORTED_NAME_ERA=1999; // Frozen historical V7 opening scenario.
 export const SUPPORTED_NAME_YEAR_RANGE=GENERATIONAL_NAME_YEAR_RANGE;
 export const LATER_GENERATION_NAME_ENGINE='WTW_FICTIONAL_WORLD_IDENTITIES_V13';
-export const SUPPORTED_ORIGINS=Object.freeze(['US','CA','GB','IE','PR','PA','VE','MX','CL','PE','CO','DO','AR','BR','UY','FR','DE','JP','AU','NZ','AE','HK']);
+export const SUPPORTED_ORIGINS=Object.freeze(['US','CA','GB','IE','PR','CU','PA','VE','MX','CL','PE','CO','DO','AR','BR','UY','FR','DE','JP','AU','NZ','AE','HK']);
 export const DEFAULT_WORLD_ROLE_COUNTS=Object.freeze({
  trainer:4200,jockey:1800,farm_manager:550,veterinarian:430,
  farrier:420,bloodstock_agent:360,racing_secretary:134

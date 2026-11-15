@@ -200,7 +200,7 @@ try {
   assert.ok(visible.length>=2,'Need at least two real '+specimen.family+' rows to browse');
   const opened=await evaluate(`(()=>{const b=document.querySelector('#wtwNextgen .ng-rs-table tbody button[data-ng="dept-open"]');if(!b)return false;b.click();return true})()`);
   assert.ok(opened,'Cannot open first '+specimen.family+' record');
-  const status=()=>evaluate(`(()=>{const a=window.__WTW_NEXT__?.app,r=document.getElementById('wtwNextgen');return {custom:a?.custom||'',family:a?.recordBrowse?.family||'',cursor:a?.recordBrowse?.index,total:a?.recordBrowse?.items?.length||0,items:a?.recordBrowse?.items?.map(x=>x.name)||[],date:r?.querySelector('.ng-global-date strong')?.textContent?.trim()||'',next:!!r?.querySelector('button[data-ng="dossier-entity-step"][data-val="1"]'),back:!!r?.querySelector('button[data-ng="dossier-entity-step"][data-val="-1"]'),recordBar:!!r?.querySelector('.ng-record-browse-bar,.ng-person-dossierbar')}})()`);
+ const status=()=>evaluate(`(()=>{const a=window.__WTW_NEXT__?.app,r=document.getElementById('wtwNextgen'),inner=r?.querySelector('.ng-routeinner');return {paintError:window.__WTW_NEXT_PAINT_ERROR__||'',custom:a?.custom||'',family:a?.recordBrowse?.family||'',cursor:a?.recordBrowse?.index,total:a?.recordBrowse?.items?.length||0,items:a?.recordBrowse?.items?.map(x=>x.name)||[],date:r?.querySelector('.ng-global-date strong')?.textContent?.trim()||'',next:!!r?.querySelector('button[data-ng="dossier-entity-step"][data-val="1"]'),back:!!r?.querySelector('button[data-ng="dossier-entity-step"][data-val="-1"]'),recordBar:!!r?.querySelector('.ng-record-browse-bar,.ng-person-dossierbar'),profileView:!!r?.querySelector('.ng-profile-view'),routeText:inner?.textContent?.trim().slice(0,240)||'',routeMarkup:inner?.innerHTML.slice(0,700)||''}})()`);
   let before=null;
   for(let retry=0;retry<90;retry++){
    before=await status();
@@ -209,7 +209,8 @@ try {
   }
   assert.equal(before?.family,specimen.family,
    'Opening '+specimen.family+' from a visible roster failed to capture category: '+JSON.stringify(before));
-  assert.ok(before.total>=2&&before.next&&before.back&&before.recordBar);
+  assert.ok(before.total>=2&&before.next&&before.back&&before.recordBar,
+   'Record browse controls missing for '+specimen.family+': '+JSON.stringify({before,visible:visible.slice(0,3)}));
   assert.equal(before.date,baseline.date,'Opening '+specimen.family+' list moved the game clock');
   assert.equal(before.items[0],visible[0].name,
    'First '+specimen.family+' source row does not match the opened record');

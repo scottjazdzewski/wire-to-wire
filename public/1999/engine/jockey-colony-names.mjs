@@ -13,7 +13,7 @@ export const JOCKEY_COLONIES=Object.freeze([
  'MID_ATLANTIC','LOUISIANA','ONTARIO','OTHER_US','OTHER_CANADA','OTHER_INTERNATIONAL'
 ]);
 export const JOCKEY_LATIN_AMERICAN_CARIBBEAN_ORIGINS=Object.freeze([
- 'PR','PA','VE','MX','CL','PE','CO','DO','AR','BR','UY'
+ 'PR','CU','PA','VE','MX','CL','PE','CO','DO','AR','BR','UY'
 ]);
 // The mix reflects the strong Latin American and Caribbean pipeline in
 // 1990s North American racing, particularly NY / South FL / Southern CA.

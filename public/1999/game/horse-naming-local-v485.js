@@ -7,11 +7,13 @@
  */
 import {verifyNamingBriefAgainstGame,screenStoryFirstIdeas} from './horse-naming-model-creator.js';
 import {foalingEventNamingBrief,auditPopulationNamingResults,POPULATION_NAMING_SCHEMA,POPULATION_NAMING_BATCH_SIZE} from './horse-naming-population-planner.js';
+import {OWNER_REVIEWED_NAME_KEYS_V478} from './horse-naming-owner-review-v478.js';
 
 export const LOCAL_HORSE_NAMING_SCHEMA='WTW_LOCAL_HORSE_NAMING_V485';
 // Freeze behavioral revision per named cohort when game foaling becomes save-backed.
 // This V486 marker changes selection and fail-closed audit, not the V485 wire schema.
 export const LOCAL_HORSE_NAMING_ALGORITHM_REVISION='WTW_LOCAL_NAMING_RULES_V488';
+export const FICTIONAL_WORLD_HORSE_NAME_REVISION='WTW_LOCAL_WORLD_HORSE_NAMES_V489';
 const norm=x=>String(x||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('en-US').replace(/[^a-z0-9]/g,'');
 const clean=x=>String(x||'').trim();
 const fnv=s=>{let h=2166136261;for(const x of String(s)){h^=x.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
@@ -87,6 +89,100 @@ const V488_WHOLE_NAMES=Object.freeze({
  "markings": ["Signature Mark","A Certain Look","Look Again","The Small Detail","Hard to Miss","Distinctive","Marked for Life","At First Glance","Unmistakable","Just So","You Can Tell","Marked Out"],
  "whimsy": ["No Laughing Matter","The Funny Side","Oh Really","That Was Funny","You Must Be Joking","Who Said So","Hear Me Out","Not a Chance","You Heard Me","Just Kidding","Good One","Here We Go"],
 });
+
+/**
+ * Deterministic opening-roster naming through the same offline horse-naming
+ * engine. Individual foal registrations still use the story/editor/owner gate
+ * above; a fictional world's initial population is created under its frozen
+ * world-genesis manifest and must not be represented as owner-reviewed.
+ *
+ * V489 uses the existing authored whole-name library first. If a world needs
+ * more names, it pairs two distinct, curated single-word names from different
+ * story voices. This keeps names inside the horse-naming system while giving
+ * a full 118-track world enough unique opening identities. The returned
+ * provenance explicitly distinguishes those generated opening names from
+ * later owner-approved foal names.
+ */
+export function createFictionalWorldHorseNameRoster({seed=19990101,count,
+ reservedNames=[]}={}){
+ if(!Number.isSafeInteger(seed)||seed<1||seed>4294967295||
+  !Number.isInteger(count)||count<1||count>30000||!Array.isArray(reservedNames)||
+  reservedNames.some(x=>typeof x!=='string'))
+  throw Error('Invalid fictional-world horse naming request');
+ const reviewed=new Set(OWNER_REVIEWED_NAME_KEYS_V478);
+ const used=new Set(reservedNames.map(norm));
+ const authorNames=[],anchors=[];
+ for(const voice of VOICES){
+  const authored=[...voice.names,...(V488_WHOLE_NAMES[voice.id]||[])];
+  for(const name of authored){
+   const key=norm(name);
+   if(name.length>18||!key||reviewed.has(key)||used.has(key))continue;
+   authorNames.push({name,key,voice:voice.id,method:'AUTHORED_WHOLE_NAME'});
+  }
+  for(const name of authored){
+   const key=norm(name);
+   if(name.length>18||!/^\p{L}+$/u.test(name)||reviewed.has(key))continue;
+   anchors.push({name,key,voice:voice.id});
+  }
+ }
+ const uniqueRows=rows=>[...new Map(rows.map(row=>[row.key,row])).values()];
+ const authored=uniqueRows(authorNames);
+ const words=uniqueRows(anchors);
+ const expanded=[];
+ for(const left of words)for(const right of words){
+  if(left.key===right.key||left.voice===right.voice)continue;
+  const name=left.name+' '+right.name,key=norm(name);
+  if(name.length>18||reviewed.has(key)||used.has(key))continue;
+  expanded.push({name,key,voice:left.voice+'+'+right.voice,
+   method:'CURATED_CROSS_VOICE_NAME_PAIR'});
+ }
+ const shuffle=(rows,label)=>{
+  const random=rng(fnv(seed+':'+label));
+  for(let i=rows.length-1;i>0;i--){
+   const j=Math.floor(random()*(i+1));[rows[i],rows[j]]=[rows[j],rows[i]];
+  }
+ };
+ shuffle(authored,'authored');shuffle(expanded,'expanded');
+ const selected=[];
+ for(const row of authored){
+  if(used.has(row.key))continue;
+  used.add(row.key);selected.push({name:row.name,method:row.method,voice:row.voice});
+  if(selected.length===count)break;
+ }
+ const stopWords=new Set(['a','an','the','to','of','for','in','at','on','and','from','with','my','your','me','i','it','is','was','as']);
+ const recent=[],openingHits=new Map(),contentHits=new Map();
+ const add=(map,key)=>map.set(key,(map.get(key)||0)+1);
+ const subtract=(map,key)=>{const n=(map.get(key)||0)-1;if(n<=0)map.delete(key);else map.set(key,n)};
+ const wordsOf=name=>String(name).toLocaleLowerCase('en-US').match(/[\p{L}\p{N}]+/gu)||[];
+ const remember=name=>{
+  const words=wordsOf(name),opener=words[0]||'',content=[...new Set(words.filter(w=>w.length>=4&&!stopWords.has(w)))];
+  add(openingHits,opener);content.forEach(w=>add(contentHits,w));recent.push({opener,content});
+  if(recent.length>40){const old=recent.shift();subtract(openingHits,old.opener);old.content.forEach(w=>subtract(contentHits,w));}
+ };
+ selected.forEach(row=>remember(row.name));
+ const remaining=new Set(expanded.map(row=>row.key));
+ let added=true;
+ while(selected.length<count&&added){
+  added=false;
+  for(const row of expanded){
+   if(selected.length===count)break;
+   if(!remaining.has(row.key)||used.has(row.key))continue;
+   const words=wordsOf(row.name),opener=words[0]||'',content=[...new Set(words.filter(w=>w.length>=4&&!stopWords.has(w)))];
+   if((openingHits.get(opener)||0)>=3||content.some(w=>(contentHits.get(w)||0)>=5))continue;
+   remaining.delete(row.key);used.add(row.key);
+   selected.push({name:row.name,method:row.method,voice:row.voice});remember(row.name);added=true;
+  }
+ }
+ if(selected.length!==count)
+  throw Error('The approved offline horse-naming engine currently supports '+
+   selected.length+' unique names for this world\'s protected-name set; expand its authored inventory before generating this size');
+ return Object.freeze({schema:LOCAL_HORSE_NAMING_SCHEMA,revision:FICTIONAL_WORLD_HORSE_NAME_REVISION,
+  seed,count:selected.length,names:Object.freeze(selected.map(Object.freeze)),
+  authoredCount:selected.filter(x=>x.method==='AUTHORED_WHOLE_NAME').length,
+  expandedCount:selected.filter(x=>x.method==='CURATED_CROSS_VOICE_NAME_PAIR').length,
+  provenance:'FICTIONAL_WORLD_GENESIS_NOT_OWNER_REVIEWED',
+  protectedReviewedNames:OWNER_REVIEWED_NAME_KEYS_V478.length});
+}
 
 function getEvidence(brief){
  const arr=(brief?.evidence||[]).map(e=>({

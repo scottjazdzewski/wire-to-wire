@@ -12,7 +12,9 @@ const html=read('public/next/index.html');
 
 test('one REAL approved renderer serves Track-style facilities and Horse-style founding personnel',()=>{
  assert.match(office,/return restored1999Profile\(kind==='person'\?'person':'farm'/);
- assert.match(office,/return x\?profileDetail\(x.route,x.node\):null/);
+ assert.match(office,/if\(!x\)return null/);
+ assert.match(office,/track:'Track Profile'/);
+ assert.match(office,/return profileDetail\(\{\.\.\.x\.route,kicker\},x\.node\)/);
  assert.match(office,/function profileDetail\(route,sourceOverride=null\)/);
  assert.match(office,/isFarm\?'ng-profile-farm ng-profile-track'/);
  assert.match(office,/isPerson\?'ng-profile-person ng-profile-horse'/);
@@ -106,17 +108,19 @@ test('all approved people resolve by exact ownership ID, including investor-only
  }
 });
 
-test('118 North American incl. Cuba and 16 domestic historical closures visible; ZERO international in game site directory',()=>{
+test('124 North American incl. Cuba and six owner-approved venues; ZERO international in game site directory',()=>{
  const domestic=geography.tracks.filter(t=>t.registry==='NORTH_AMERICA');
  const intl=geography.tracks.filter(t=>t.registry==='INTERNATIONAL');
- assert.equal(domestic.length,118);
+ assert.equal(domestic.length,124);
  assert.equal(intl.length,0);
  assert.equal(directory.tracks.length,102);
  assert.equal(domestic.filter(t=>t.opening_state==='CLOSED_PRE_1999').length,16);
  assert.ok(domestic.some(t=>t.name==='Oriental Park'&&t.country==='Cuba'));
  const names=new Set(domestic.map(t=>t.id));
  assert.ok(directory.tracks.every(t=>names.has(t.id)));
- assert.match(office,/data=\{\.\.\.data,tracks:\[\.\.\.data\.tracks,\.\.\.missing\.map\(t=>\(\{/);
+ assert.match(office,/const trackPrograms=await import\('\.\/1999-track-program\.mjs'\)/);
+ assert.match(office,/const joined=\[\.\.\.data\.tracks,\.\.\.missing\.map\(t=>\{/);
+ assert.match(office,/playableIn1999:p\.playableIn1999===true/);
  assert.match(office,/geo\.tracks\.filter\(t=>t\.registry==='NORTH_AMERICA'\)/);
  assert.match(office,/permittedTracks\.has\(t\.id\)/);
  assert.match(office,/HISTORICAL · CLOSED BEFORE 1999/);
