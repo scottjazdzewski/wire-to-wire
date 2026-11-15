@@ -85,7 +85,7 @@ export async function assembleFictional1999Industry({
  seed=19990101,worldId='WTW1999Industry',tracks,horseNames,
  horseNameProvider=generateProvisional1999HorseNames,
  personOrganizationNameProvider=createFictionalWorldNameEngine,
- foundationHorses=[],horseCount=horseNames?.length??10000,
+ foundationHorses=[],horseCount=horseNames?.length??20000,
  trainersPerTrack=4,jockeysPerTrack=3,ownersPerTrack=8
 }={}){
  if(!Number.isSafeInteger(seed)||seed<1||seed>4294967295)
