@@ -2265,7 +2265,7 @@ function profileDetail(route,sourceOverride=null){
  const horseFlagCode=horseFoalingAlias||((horseFlagCodes.has(horseCountryCode))?horseCountryCode:'');
  const horseFlagPath=horseFlagCodes.has(horseFlagCode)?'/assets/flags/v1/'+horseFlagCode+'.svg':'';
  const horseFoalingDisplay=[horseFoalingCity,horseFoalingState,horseCountryLabel].filter(v=>v&&v!=='—').join(', ')||'Not recorded';
- const horseChronology=isHorse?horseBirthChronology(horseField('Date of birth'),state()?.date):
+ const horseChronology=isHorse?horseBirthChronology(horseField('Date of birth'),depGameDay()):
   {future:false,warning:''};
  const horseChronologyWarning=horseChronology.future?
   '<div class="ng-horse-chronology-alert" role="status" title="'+safe(horseChronology.warning)+'">'+
