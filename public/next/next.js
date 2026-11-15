@@ -3948,12 +3948,62 @@ function worldCompleteDirectoryView(){
   'EXPORT EDITS FOR GPT REVIEW · THE FULL GENERATED WORLD IS STILL IN DEVELOPMENT')+
   '</span></footer></section></div></section>';
 }
+/* The real Office Inbox / Decisions are not the World directory.
+ * Reuse the ONE management shell, row grammar, and canonical case action. */
+function managerOfficeInboxView(page){
+ const all=currentMessages();
+ const listed=(page==='Decisions'?all.filter(m=>!m.resolved):all).slice();
+ listed.sort((a,b)=>Number(!b.resolved&&b.urgent)-Number(!a.resolved&&a.urgent));
+ const action=all.filter(m=>!m.resolved&&m.urgent).length;
+ const open=all.filter(m=>!m.resolved).length,reviewed=all.length-open;
+ const chosen=listed.find(m=>m.case===APP.activeCase)||listed[0]||null;
+ const stat=(name,value)=>'<div class="ng-manager-metric"><small>'+name+'</small><strong>'+safe(value)+'</strong></div>';
+ const rows=listed.map(m=>
+  '<button class="ng-manager-row" type="button" data-ng="case" data-val="'+safe(m.case)+'" aria-label="Open office file: '+safe(m.title)+'">'+
+  '<span class="ng-manager-row-type">'+(m.resolved?'REVIEWED':m.urgent?'ACTION':'OPEN')+'</span>'+
+  '<span class="ng-manager-row-name"><strong>'+safe(m.title)+'</strong></span>'+
+  '<span class="ng-manager-row-detail">'+safe(m.from||'Office')+'</span>'+
+  '<span class="ng-manager-row-context">'+(m.resolved?'Reviewed file':m.urgent?'Response requested':'Awaiting review')+'</span>'+
+  '<span class="ng-manager-row-open">'+glyph('right',12)+'</span></button>').join('');
+ const focused=chosen?
+  '<div class="ng-manager-secondary-list"><div class="ng-manager-case">'+
+  '<span class="ng-manager-case-indicator '+(chosen.resolved?'resolved':chosen.urgent?'urgent':'')+'"></span>'+
+  '<span><strong>'+safe(chosen.title)+'</strong><small>'+safe(chosen.from||'Office')+'</small></span>'+
+  '<span class="ng-manager-case-state">'+(chosen.resolved?'REVIEWED':chosen.urgent?'ACTION':'OPEN')+'</span></div>'+
+  '<button class="ng-manager-case" type="button" data-ng="case" data-val="'+safe(chosen.case)+'" aria-label="Open selected office file">'+
+  '<span>'+glyph('folder',14)+'</span><span><strong>OPEN THE COMPLETE FILE</strong><small>Review source information and available decisions</small></span><span>'+glyph('right',13)+'</span></button></div>':
+  '<p class="ng-manager-empty">No matching office files. Nothing has been invented.</p>';
+ return '<section class="ng-manager-screen ng-manager-message-inbox">'+
+  '<header class="ng-manager-head"><div class="ng-manager-identity">'+
+  '<span>FRONT OFFICE / '+safe(page.toUpperCase())+'</span>'+
+  '<h2>'+(page==='Decisions'?'DECISIONS & ACTION FILES':'OFFICE INBOX')+'</h2></div>'+
+  '<div class="ng-manager-controls">'+managerRecordViewControl('Office',page)+
+  '<button data-ng="office" type="button">'+glyph('left',13)+' TODAY</button></div></header>'+
+  '<div class="ng-manager-metrics">'+stat('TOTAL OFFICE FILES',all.length)+
+  stat('REQUIRES ACTION',action)+stat('OPEN / UNREVIEWED',open)+
+  stat('REVIEWED',reviewed)+'</div>'+
+  '<div class="ng-manager-workspace"><section class="ng-manager-primary"><header><strong>'+
+  (page==='Decisions'?'OUTSTANDING DECISION FILES':'SOURCE-LINKED MESSAGES')+
+  '</strong><span>'+listed.length+' FILES · CLICK A SUBJECT TO OPEN</span></header>'+
+  '<div class="ng-manager-rows" role="region" tabindex="0" aria-label="Office messages and decisions">'+
+  (rows||'<p class="ng-manager-empty">No outstanding decisions. Reviewed files remain in the Office Inbox.</p>')+
+  '</div></section><aside class="ng-manager-sidebar">'+
+  '<section class="ng-manager-secondary"><header><strong>SELECTED OFFICE FILE</strong><span>'+
+  (chosen?(chosen.urgent&&!chosen.resolved?'ACTION':'FILE'):'NONE')+
+  '</span></header>'+focused+'</section>'+
+  '<section class="ng-manager-secondary"><header><strong>WORKFLOW</strong><span>OFFICE</span></header>'+
+  '<div class="ng-manager-secondary-list"><p class="ng-manager-empty">'+
+  'Open a source-linked file to review the complete information and available decisions. This list does not commit any game action.'+
+  '</p></div></section></aside></div></section>';
+}
 function managerDashboard(){
  const section=APP.section||'Office',routeName=String(APP.custom||'');
  // Direct deep links must not silently turn Messages/Decisions into Overview.
  // Shared renderer/records stay authoritative; only the route context changes.
  const page=section==='Office'&&/^(Messages|Decisions|Reports|Career)$/.test(routeName)?
   routeName:(APP.page||'Overview');
+ if(section==='Office'&&['Messages','Decisions'].includes(page))return managerOfficeInboxView(page);
+ if(section==='Stable'&&page==='Training')return liveStableTrainingView();
  // The live Stable roster is routed directly, even without a legacy Office route.
  if(section==='World'&&page==='Overview')return worldCompleteDirectoryView();
  if(section==='Stable'&&(page==='Overview'||page==='Horses'))return liveStableRosterView();
@@ -4470,7 +4520,9 @@ window.addEventListener('click',e=>{
   // The selector alone changes the highlighted attribute column.
   return paint();
  }
- if(key==='stable-filter'){APP.stableFilter=val;return paint()}
+ if(key==='stable-filter'){APP.stableFilter=val;
+  if(APP.custom==='Stable — Training'&&val==='all')return openCustomView('Stable — Overview','Stable','Overview');
+  return paint()}
   if(key==='stable-mode'){APP.stableMode=val;return paint()}
  if(key==='filter'){APP.filter=val;APP.msgPage=0;return paint()}
  if(key==='prev-msg'){APP.msgPage=Math.max(0,APP.msgPage-1);return paint()}
