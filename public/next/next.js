@@ -3143,7 +3143,7 @@ function depTrackCalendar(includeRetired=false){
    preferredDays:p.preferredDays,calendarBasis:p.calendarBasis,
    calendarSource:p.calendarSource,operating:p.operating,_source1999:false
   }:{}),stakes:sourceStakes.length?sourceStakes:(Array.isArray(t.stakes)?t.stakes:[])};
- });
+ }).filter(t=>includeRetired||(t.operating!=='HISTORICAL_ONLY'&&t.playableIn1999!==false));
 }
 function depCalendarIso(value,year=depGameDay().slice(0,4)){
  const d=String(value||'').match(/^([A-Za-z]{3})\s+(\d{1,2})$/);
