@@ -2085,6 +2085,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
   "T-0061": {
     "id": "T-0061",
     "name": "Sunland Park",
+    "gameDisplayName": "Comanche Raceway",
     "surfaces": "Dirt",
     "meets": [
       [

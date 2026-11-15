@@ -28,7 +28,8 @@ export function createFoundingSourceBase1999({seed=19990101}={}){
   const t=tracks[i],program=trackProgram1999(t.id),
    active=program?.trackOperating==='OPEN_1999',
    profile=active?trackConditionProfile1999(t.id,seed):null;
-  return {id:t.id,sourceTrackId:t.id,name:t.name,location:location(t),
+  return {id:t.id,sourceTrackId:t.id,name:program?.gameDisplayName||t.name,
+   historicalName:program?.gameDisplayName?t.name:null,location:location(t),
    surface:trackCardSurface1999(t.id,1)||'HISTORICAL',
    surfaces:program?.surfaces||'Not recorded',
    operating:active?'OPEN_1999':'HISTORICAL_ONLY',playableIn1999:active,
