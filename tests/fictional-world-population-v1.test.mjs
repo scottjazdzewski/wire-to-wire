@@ -88,3 +88,17 @@ test('existing horse-name preview never registers or mutates the game',()=>{
   horseNamingProvider:()=>({approvedForRegistration:true,writesToGame:true,screened:[]})
  }),/review-gated/);
 });
+
+test('1999 world automatically assigns provisional editable horse names from current writer',async()=>{
+ const world=await assembleFictional1999Industry({
+  seed:19990101,worldId:'WTWProvisionalTest',tracks,
+  foundationHorses:foundation,horseCount:24
+ });
+ assert.equal(world.manifest.generatedHorses,24);
+ assert.equal(world.manifest.horseNaming,'PROVISIONAL_EDITABLE');
+ assert.ok(world.manifest.horseNamingRevision.includes('OPENING_PROVISIONAL'));
+ const names=world.entities.horses.slice(2).map(h=>h.name);
+ assert.equal(new Set(names.map(x=>x.toLowerCase())).size,24);
+ assert.ok(world.entities.horses.slice(2).every(h=>
+  h.namingAuthority==='PROVISIONAL_EDITABLE_OPENING_WORLD'));
+});
