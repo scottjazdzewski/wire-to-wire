@@ -19,3 +19,18 @@ test('1999 integrated quick world has horses, personnel, ratings and race dates'
   .every(h=>h.birthplace&&h.ratings&&h.sireId&&h.damId));
  assert.equal(career.run.world_ref.sha256,career.world.authority.sha256);
 });
+
+test('full 1999 opening world is populated across the entire active meet circuit',async()=>{
+ const career=await create1999PopulatedTestWorld({horseCount:3083});
+ const world=career.world;
+ assert.equal(world.manifest.generatedHorses,3083);
+ assert.ok(world.manifest.activeTracks>=90);
+ assert.ok(world.entities.people.filter(p=>p.role==='trainer').length>=300);
+ assert.ok(world.entities.people.filter(p=>p.role==='jockey').length>=250);
+ assert.ok(world.calendar.summary.raceDays>=3000);
+ assert.equal(world.calendar.unprogrammedTrackIds.length,0);
+ assert.equal(new Set(world.entities.horses.map(h=>h.id)).size,world.entities.horses.length);
+ assert.ok(world.entities.horses.filter(h=>h.source==='GENERATED_FICTIONAL_1999')
+  .every(h=>h.birthplace?.country&&h.ratings&&h.ownerId&&h.trainerId));
+ assert.equal(career.run.world_ref.sha256,world.authority.sha256);
+},{timeout:120000});
