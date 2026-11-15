@@ -92,11 +92,10 @@ export function createNamingDeskController({
    const blocked=excludedNamingFeedbackNames(feedback());
    const verdict=generateLocalStoryFirstHorseNames({
     ...scenario,attempt:model.attempt++,count:8,
-    recentNames:model.recentNames,additionalReviewedNames:blocked
+    recentNames:model.recentNames,additionalReviewedNames:blocked,
+    nameFeedback:feedback(),direction:model.fields.direction
    });
-   model.results=rankNamingCandidates(verdict.screened,feedback(),{
-    direction:model.fields.direction
-   });
+   model.results=verdict.screened;
    model.recentNames=[...model.recentNames,...model.results.map(r=>r.name)].slice(-60);
    model.hasGenerated=true;model.view='ALL';
    model.notice=verdict.readyForIndependentEditor+' EDITOR-SCREENED NAME(S) · '+
