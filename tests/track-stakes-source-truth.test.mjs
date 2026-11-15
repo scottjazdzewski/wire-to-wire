@@ -13,20 +13,23 @@ assert.ok(helperStart>0&&helperEnd>helperStart&&tableStart>helperEnd&&tableEnd>t
 const {trackStakesGradeView,trackStakesPurseValue}=new Function(
  ui.slice(helperStart,helperEnd)+'\nreturn {trackStakesGradeView,trackStakesPurseValue};')();
 const safe=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const dateRank=v=>v==='TBA'?Number.MAX_SAFE_INTEGER:Number(String(v).slice(4));
+const dateStart=ui.indexOf(' const stakeDateRank=');
+const dateEnd=ui.indexOf(' // Read-only: summarize',dateStart);
+assert.ok(dateStart>0&&dateEnd>dateStart,'Date rank must use canonical source');
+const stakeDateRank=new Function(ui.slice(dateStart,dateEnd)+'\nreturn stakeDateRank;')();
 const row=(id,name,date,grade,purse)=>({node:{
  children:[name,date,grade,purse].map(textContent=>({textContent})),dataset:{stakeId:id}
 }});
 const rows=[
- row('S-1','Unverified Graded','Jan 04','PLANNED_WTW_G1','$—'),
- row('S-2','Official Listed','Jan 02','G2','$125,000'),
+ row('S-1','Unverified Graded','1999-03-06','PLANNED_WTW_G1','$—'),
+ row('S-2','Official Listed','1999-02-20','G2','$125,000'),
  row('S-3','Undated Feature','TBA','G3','$20,000')
 ];
 const app={stakeSort:'grade',stakeSortDesc:false};
 const render=new Function('trackRaces','APP','route','safe','stakeDateRank',
  'trackStakesGradeView','trackStakesPurseValue',
  ui.slice(tableStart,tableEnd)+'\nreturn stakesTable;')(
- rows,app,{title:'Example Track'},safe,dateRank,trackStakesGradeView,trackStakesPurseValue);
+ rows,app,{title:'Example Track'},safe,stakeDateRank,trackStakesGradeView,trackStakesPurseValue);
 const names=html=>[...html.matchAll(/data-name="([^"]+)"/g)].map(x=>x[1]);
 
 test('planned internal source code never becomes an official graded trophy',()=>{
@@ -67,9 +70,19 @@ test('unknown purse and date always sort last regardless of sort direction',()=>
   assert.equal(names(render()).at(-1),'Unverified Graded');
   app.stakeSort='date';app.stakeSortDesc=desc;
   assert.equal(names(render()).at(-1),'Undated Feature');
+  assert.deepEqual(names(render()).slice(0,2),desc?
+   ['Unverified Graded','Official Listed']:['Official Listed','Unverified Graded']);
  }
  app.stakeSort='grade';app.stakeSortDesc=false;
  assert.equal(names(render()).at(-1),'Unverified Graded');
  // Sorting the displayed rows must never mutate the underlying track source.
  assert.deepEqual(rows.map(r=>r.node.dataset.stakeId),['S-1','S-2','S-3']);
+});
+
+test('ISO dates and dated month names sort by actual calendar date, not race title',()=>{
+ assert.ok(stakeDateRank('1999-02-20')<stakeDateRank('1999-03-06'));
+ assert.ok(stakeDateRank('1999-12-31')<stakeDateRank('2000-01-01'));
+ assert.equal(stakeDateRank('Mar 6, 1999'),stakeDateRank('1999-03-06'));
+ assert.equal(stakeDateRank('TBA'),Number.MAX_SAFE_INTEGER);
+ assert.equal(stakeDateRank('1999-13-01'),Number.MAX_SAFE_INTEGER);
 });
