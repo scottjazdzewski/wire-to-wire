@@ -144,18 +144,33 @@ jobs:
     steps:
       - name: Check out the exact version that passed Windows tests
         uses: actions/checkout@v4
-      - name: Refuse to publish an older build when main has advanced
+      - name: Publish only when no newer successfully verified EXE has already been released
         id: current
         shell: bash
         run: |
           set -euo pipefail
-          remote_sha="$(git ls-remote origin refs/heads/main | cut -f1)"
-          if [[ "$remote_sha" != "$GITHUB_SHA" ]]; then
-            echo "This build is from $GITHUB_SHA; current main is $remote_sha. Skipping stale publication."
-            echo "eligible=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "eligible=true" >> "$GITHUB_OUTPUT"
+          # Continuous engineering moves main frequently. The newest VALIDATED
+          # build can be published even if newer untested commits exist.
+          # Never replace a later successful release with an older build.
+          previous_sha="$(gh release view --json targetCommitish --jq '.targetCommitish' 2>/dev/null || true)"
+          if [[ "$previous_sha" =~ ^[a-f0-9]{40}$ ]]; then
+            relation="$(gh api "repos/$GITHUB_REPOSITORY/compare/$GITHUB_SHA...$previous_sha" --jq '.status')"
+            case "$relation" in
+              ahead|identical)
+                echo "Already published an equally new or newer tested revision: $previous_sha"
+                echo "eligible=false" >> "$GITHUB_OUTPUT"
+                exit 0
+                ;;
+              behind)
+                echo "A newer verified release is eligible to replace $previous_sha"
+                ;;
+              *)
+                echo "::error::Published release is not on same ordered history; refusing an unsafe update: $relation"
+                exit 1
+                ;;
+            esac
           fi
+          echo "eligible=true" >> "$GITHUB_OUTPUT"
       - name: Download the successfully tested EXEs
         if: steps.current.outputs.eligible == 'true'
         uses: actions/download-artifact@v4
