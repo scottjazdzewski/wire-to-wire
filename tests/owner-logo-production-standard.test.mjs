@@ -59,3 +59,12 @@ test('Vesper Brook corrected cream field is the exact approved opaque RGB badge'
  assert.equal(createHash('sha256').update(bytes).digest('hex'),a.output_sha256);
  assert.equal(registry.organizations['organization:O-FOUNDING-1999-008'],'/assets/office/founding-organization-logos/O-FOUNDING-1999-008.png');
 });
+
+test('approved gold Saint Alloy logo preserves the shared border dimensions',()=>{
+ const path='public/assets/office/founding-organization-logos/O-000011.png';
+ const a=evidence.assets.find(row=>row.path===path);
+ assert.ok(a);assert.equal(a.radius_px,28);assert.equal(a.border_px,5);assert.equal(a.border_inset_px,5);
+ assert.deepEqual(a.border_rgb,[244,196,27]);
+ assert.equal(a.output_sha256,'1d990b41239e39ca3b9621b385b8b537101a4a46d2deba701eee18d15ee9bf49');
+ assert.equal(createHash('sha256').update(readFileSync(new URL('../'+path,import.meta.url))).digest('hex'),a.output_sha256);
+});

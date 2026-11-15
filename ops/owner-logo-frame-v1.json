@@ -16,7 +16,7 @@
     7,
     9
   ],
-  "approved_logo_count": 33,
+  "approved_logo_count": 34,
   "assets": [
     {
       "path": "public/assets/office/founding-organization-logos/O-000001.png",
@@ -50,6 +50,28 @@
         218
       ],
       "old_frame_pixels_removed": 7720
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-000011.png",
+      "source_sha256": "e22c3ff38f17a484c61b1a2d401482ef1bacaea470ee60976135deb03bf6889e",
+      "output_sha256": "1d990b41239e39ca3b9621b385b8b537101a4a46d2deba701eee18d15ee9bf49",
+      "background": [
+        0,
+        0,
+        0
+      ],
+      "old_frame_pixels_removed": 0,
+      "source_revision": "USER_APPROVED_SAINT_ALLOY_SCRIPT_2026-11-15",
+      "approved_original": "https://drive.google.com/file/d/18CTpdTdCxZfyvLeMLU2PDWmw8_RCe6bM/view",
+      "border_rgb": [
+        244,
+        196,
+        27
+      ],
+      "border_inset_px": 5,
+      "border_px": 5,
+      "radius_px": 28,
+      "approval_note": "Wordmark Saint Alloy script only, Pittsburg black-gold heritage, no P/horse/supplementary text; fixed square export to user-approved visual standard"
     },
     {
       "path": "public/assets/office/founding-organization-logos/O-000045.png",

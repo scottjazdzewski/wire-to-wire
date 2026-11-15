@@ -1,6 +1,6 @@
 {
   "schema": "WTW_FOUNDING_1999_APPROVED_ORGANIZATION_LOGOS_V1",
-  "version": "2026-11-15-northbank-approved-33-256-v12",
+  "version": "2026-11-15-saint-alloy-approved-34-256-v13",
   "authority": "37 canonical January 1999 founding organizations, exact O-ID and display name. User-approved Drive master originals; no legacy identity/name alias substitutions.",
   "approvedOrganizationIds": [
     "O-000001",
@@ -74,12 +74,13 @@
     "organization:O-FOUNDING-1999-009": "/assets/office/founding-organization-logos/O-FOUNDING-1999-009.png",
     "organization:O-006905": "/assets/office/founding-organization-logos/O-006905.png",
     "organization:O-000059": "/assets/office/founding-organization-logos/O-000059.png",
-    "organization:O-000045": "/assets/office/founding-organization-logos/O-000045.png"
+    "organization:O-000045": "/assets/office/founding-organization-logos/O-000045.png",
+    "organization:O-000011": "/assets/office/founding-organization-logos/O-000011.png"
   },
-  "pending": "Four unmatched founding organizations retain neutral initials until exact-ID high-resolution art approval.",
+  "pending": "Remaining three founding organizations have no user-approved high-resolution asset; retain neutral initials until accepted.",
   "forbiddenFallback": "DO_NOT_USE_LEGACY_OR_UNMATCHED_ORGANIZATIONS_OR_UNAPPROVED_NAME_ALIASES",
-  "publishedCount": 33,
-  "remainingWithoutMatchedLogo": 4,
+  "publishedCount": 34,
+  "remainingWithoutMatchedLogo": 3,
   "audit": {
     "source": "Only verified, exact-ID 256px approved artwork in Drive master remains live; retired 64px placeholder assets removed from distribution.",
     "matchingRule": "SAME_EXACT_ORGANIZATION_ID_AND_NAME",
@@ -281,14 +282,15 @@
         "name": "Northbank Racing",
         "path": "/assets/office/founding-organization-logos/O-000045.png",
         "match": "USER_APPROVED_CANONICAL_ID_AND_EXACT_NAME"
-      }
-    ],
-    "notPublished": [
+      },
       {
         "id": "O-000011",
         "name": "St. Alloy Partners",
-        "reason": "RETIRED_PIXELATED_64PX_LEGACY_IMAGE__NEUTRAL_UNTIL_APPROVED_HIGH_RES"
-      },
+        "path": "/assets/office/founding-organization-logos/O-000011.png",
+        "match": "USER_APPROVED_CANONICAL_ID_AND_EXACT_NAME"
+      }
+    ],
+    "notPublished": [
       {
         "id": "O-000014",
         "name": "Argosy Bloodstock",
@@ -339,6 +341,7 @@
     "O-FOUNDING-1999-009",
     "O-006905",
     "O-000059",
-    "O-000045"
+    "O-000045",
+    "O-000011"
   ]
 }
