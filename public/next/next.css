@@ -2100,10 +2100,10 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 /* Wordmarks have much larger transparent top/bottom margins than the crests. */
 .ng-route-profile .ng-profile-track .ng-profile-source-photo img[src$="/T-0001.webp"]{transform:scale(1.52)}
 .ng-route-profile .ng-profile-track .ng-profile-source-photo img[src$="/T-0003.webp"]{transform:scale(1.47)}
-.ng-track-workspace{display:grid!important;grid-template-columns:minmax(0,1.23fr) minmax(285px,.77fr)!important;gap:8px!important;width:100%;height:100%;min-height:0;overflow:hidden}
+.ng-track-workspace{display:grid!important;grid-template-columns:minmax(0,1.55fr) minmax(300px,.75fr)!important;gap:8px!important;width:100%;height:100%;min-height:0;overflow:hidden}
 .ng-track-workspace>.ng-tier1-card,.ng-track-info-stack>.ng-tier1-card{min-height:0!important}
-.ng-track-stakes .ng-stakes-table{flex:1 1 auto;min-height:0;overflow-x:hidden;overflow-y:auto;scrollbar-width:thin;padding:2px 5px 4px}
-.ng-track-stakes .ng-stakes-data{min-height:30px!important;padding:3px 7px!important}
+.ng-track-stakes .ng-stakes-table{flex:1 1 auto;min-height:0;overflow-x:auto;overflow-y:auto;scrollbar-width:thin;padding:2px 5px 4px}
+.ng-track-stakes-table .ng-stakes-head,.ng-track-stakes-table .ng-stakes-data{grid-template-columns:minmax(145px,2fr) repeat(7,minmax(74px,1fr))!important;min-width:790px}.ng-track-stakes .ng-stakes-data{min-height:30px!important;padding:3px 7px!important}
 .ng-track-stakes .ng-stakes-head{min-height:26px!important;padding:3px 7px!important}
 .ng-track-stakes .ng-stakes-data span{font-size:10.5px!important}
 .ng-track-stakes>header span{display:block;max-width:58%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px!important;font-weight:800;letter-spacing:.02em;color:#dfcfab}
@@ -2351,7 +2351,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  color:#ecd39d!important;background:#24342c!important;font-size:8.5px!important;
  font-weight:800!important;white-space:nowrap!important;cursor:pointer
 }
-.ng-track-history-content{display:flex;flex-direction:column;gap:7px;min-height:0;padding:8px 9px;overflow:hidden}
+.ng-track-history-content{display:flex;flex-direction:column;gap:7px;min-height:0;padding:8px 9px;overflow:hidden}.ng-track-history-content>.ng-tier1-card{flex:1 1 0}
 .ng-track-history-facts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:5px;flex:0 0 auto}
 .ng-track-history-facts>div{display:flex;flex-direction:column;gap:2px;min-width:0;background:#1e282a;padding:5px 7px;border-bottom:1px solid #40524a}
 .ng-track-history-facts small{font-size:8px;line-height:1.1;color:#afc3ae;font-weight:800;letter-spacing:.035em;text-transform:uppercase}
@@ -2819,11 +2819,11 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 #wtwNextgen .ng-1999-race-file>header p{color:#bcd1be;margin:0;font-size:12px}
 #wtwNextgen .ng-1999-race-file button{cursor:pointer;background:#233634;color:#f1dca6;border:1px solid #536a59;border-radius:3px;padding:7px 9px;font-size:11px;font-weight:800}
 #wtwNextgen .ng-1999-race-file button:hover{background:#335044}
-#wtwNextgen .ng-race-file-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,.8fr);gap:10px;min-height:0;flex:1 1 auto}
+#wtwNextgen .ng-race-file-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(360px,.75fr);gap:10px;min-height:0;flex:1 1 auto}
 #wtwNextgen .ng-race-file-panel{min-width:0;min-height:0;overflow:auto;background:#161f22;border:1px solid #3e5148}
 #wtwNextgen .ng-race-file-panel>h3{position:sticky;top:0;z-index:2;margin:0;padding:10px 13px;background:#283633;color:#f1dfb2;border-bottom:1px solid #475950;font-size:12px;letter-spacing:.02em}
 #wtwNextgen .ng-race-file-panel>p{padding:10px 13px;margin:0;color:#b5c7ba;line-height:1.45;font-size:12px}
-#wtwNextgen .ng-race-file-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:10px}
+#wtwNextgen .ng-race-file-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;padding:10px}
 #wtwNextgen .ng-race-file-facts>div{background:#202b2c;border:1px solid #3d4e46;padding:9px;min-width:0}
 #wtwNextgen .ng-race-file-facts small{display:block;color:#aebfae;font-size:10px;font-weight:750;letter-spacing:.04em}
 #wtwNextgen .ng-race-file-facts strong{display:block;color:#f0ddac;font-size:12px;line-height:1.45;margin-top:4px;overflow-wrap:anywhere}
@@ -2832,7 +2832,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 #wtwNextgen .ng-race-eligible-list span{color:#afc2b0;font-size:10px;font-weight:500}
 #wtwNextgen .ng-1999-source-note{border-top:1px solid #3a4b43;font-style:italic}
 @media(max-width:1050px){#wtwNextgen .ng-race-file-grid{grid-template-columns:1fr}}
-@media(max-width:600px){#wtwNextgen .ng-race-file-facts,#wtwNextgen .ng-race-eligible-list{grid-template-columns:1fr}}
+@media(max-width:1080px){#wtwNextgen .ng-race-file-grid{grid-template-columns:1fr}}@media(max-width:600px){#wtwNextgen .ng-race-file-facts,#wtwNextgen .ng-race-eligible-list{grid-template-columns:1fr}}
 
 /* 1999 stable attribute-comparison pane; does not change the approved horse dossier. */
 #wtwNextgen .ng-attribute-picker{display:flex;align-items:center;flex-wrap:wrap;gap:9px;padding:9px 13px;
@@ -3947,3 +3947,6 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  font:800 18px/1 Georgia,serif;cursor:pointer}
 .ng-record-browse-bar button.ng-profile-entity-step:hover{background:#50634e;border-color:#dabd80}
 .ng-record-browse-bar button.ng-profile-entity-step:focus-visible{outline:2px solid #f0cf8a;outline-offset:2px}
+
+
+.ng-route:has(.ng-1999-race-file) .ng-routegrid{flex:1;overflow:hidden}.ng-routeinner.ng-race-file-route-inner{grid-template-columns:1fr}

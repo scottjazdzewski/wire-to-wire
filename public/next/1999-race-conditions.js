@@ -13,6 +13,9 @@ const sexOK=(sex,horse)=>{
 };
 function render(race,ui){
  if(!race)return '<section class="ng-1999-race-file"><h2>Race source unavailable</h2><p>No record found. No race or eligibility details were invented.</p></section>';
+ const raceId=String(race.id||race._raceId||ui?.raceEditId||'');
+ let edits={};try{const saved=JSON.parse(localStorage.getItem('wtw1999RaceDetailEditsV1')||'{}');if(saved&&typeof saved==='object')edits=saved[raceId]||{}}catch{}
+ race={...race,...edits};
  const id=String(race.id||''),alternate=race.calendarBasis==='WTW_ALTERNATE_HISTORY_GAME_MODELED',proposal=id.startsWith('R-TEST-')||race.canonical===false;
  const name=race.name||race.race||race.conditions||('Race '+(race.number||'')),track=race.trackName||race.track||'';
  const date=race.localDate||race.date||'Not recorded';
@@ -68,7 +71,11 @@ function render(race,ui){
  return '<section class="ng-1999-race-file"><header><div><small>'+
    safe(alternate?'WTW 1999 ALTERNATE-HISTORY STAKES · NOT YET RUN':proposal?'1999 SIMULATED CONDITION BOOK · NOT ENTERED':'1999 SOURCE STAKES · NOT YET RUN')+
    '</small><h2>'+safe(name)+'</h2><p>'+safe(track)+' · '+safe(date)+'</p></div>'+
-   '<button data-ng="named-entity" data-kind="track" data-name="'+safe(track)+'">TRACK PROFILE ↗</button></header>'+
+   '<div class="ng-race-file-actions"><button data-ng="named-entity" data-kind="track" data-name="'+safe(track)+'">TRACK PROFILE ↗</button>'+
+   '<button data-ng="race-edit">'+(ui?.raceEditOpen?'CLOSE EDITOR':'EDIT RACE DETAILS')+'</button></div></header>'+
+   (ui?.raceEditOpen?'<section class="ng-race-editor"><header><strong>EDIT RACE RECORD</strong><span>'+(ui?.raceEditError?safe(ui.raceEditError):'Changes are saved locally for this race ID.')+'</span></header><div class="ng-world-editor-fields">'+
+   [['name','RACE NAME'],['trackName','RACECOURSE'],['localDate','RACE DATE'],['grade','GRADE'],['purse','PURSE'],['ageRequirement','AGE CONDITIONS'],['sexRestriction','SEX CONDITIONS'],['distanceFurlongs','DISTANCE (FURLONGS)'],['surface','SURFACE'],['winRestriction','WIN / CLASS RESTRICTIONS'],['claimingPrice','CLAIMING PRICE'],['weightConditions','WEIGHT CONDITIONS'],['entryTerms','ENTRY / NOMINATION TERMS'],['fullConditions','FULL CONDITIONS'],['fieldCapacity','FIELD CAPACITY']].map(([field,label])=>'<label class="ng-world-edit-field"><span>'+safe(label)+'</span><textarea data-race-field="'+field+'" rows="'+(/Conditions|TERMS|RESTRICTIONS/.test(label)?'2':'1')+'">'+safe(ui?.raceEditDraft?.[field]??race[field]??'')+'</textarea></label>').join('')+
+   '</div><footer><button data-ng="race-edit-cancel">CANCEL</button><button class="save" data-ng="race-edit-save">SAVE RACE DETAILS</button></footer></section>':'')+
    '<div class="ng-race-file-grid"><section class="ng-race-file-panel"><h3>FULL AVAILABLE RACE CONDITIONS</h3>'+
    '<div class="ng-race-file-facts">'+entries.map(([key,value])=>'<div><small>'+safe(key)+'</small><strong>'+safe(value)+'</strong></div>').join('')+'</div>'+
    '<p class="ng-1999-source-note">'+(proposal?

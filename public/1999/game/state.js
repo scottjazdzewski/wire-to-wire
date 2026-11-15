@@ -27,7 +27,9 @@ export function createGameRun({ world, runId, seed, player, stableHorseIds = [],
   ensure(PLAYER_ROLES.includes(player.role), 'INVALID_PLAYER', 'Unknown management role');
   ensure(INVOLVEMENT_LEVELS.includes(player.involvement), 'INVALID_PLAYER', 'Unknown involvement level');
   const operationId = player.operation_id || null;
+  const personId = player.person_id || null;
   ensure(!operationId || Boolean(worldIdentity(world, 'organizations', operationId)), 'UNKNOWN_OPERATION', 'Player operation must exist in approved world snapshot');
+  ensure(!personId || Boolean(worldIdentity(world, 'people', personId)), 'UNKNOWN_PERSON', 'Player person must exist in approved world snapshot');
   ensure(Array.isArray(stableHorseIds) && new Set(stableHorseIds).size === stableHorseIds.length, 'INVALID_STABLE', 'Stable Horse IDs must be unique');
   for (const horseId of stableHorseIds) ensure(Boolean(worldIdentity(world, 'horses', horseId)), 'UNKNOWN_HORSE', 'Horse not in approved world snapshot: '+horseId);
   const date = startDate || world.start_date;
@@ -39,7 +41,7 @@ export function createGameRun({ world, runId, seed, player, stableHorseIds = [],
     revision: 0,
     clock: { date, days_elapsed: 0 },
     rng: { seed: seed >>> 0 },
-    player: { role: player.role, involvement: player.involvement, operation_id: operationId },
+    player: { role: player.role, involvement: player.involvement, operation_id: operationId, person_id: personId },
     stable_horse_ids: [...stableHorseIds],
     runtime: { horse: {}, races: {}, entries: {}, people: personGenerationCatalog?generatePeopleRuntime({world,catalog:personGenerationCatalog}):{}, finances: { balance_minor: null, ledger: [], operation_balances_minor: {} }, facilities:createFacilityState(), ownership:createOwnershipRuntime(), registered_horses:createHorseRegistrationRuntime(),horse_naming:createHorseNamingRuntime(), agents:createDailyAgentRuntime(),racing:createRacingRuntime(),trainer_contracts:createTrainerContractRuntime(),post_race_campaigns:createPostRaceCampaignRuntime(),owner_trainer_reviews:createOwnerTrainerReviewRuntime(),trainer_management_requests:createTrainerManagementRuntime(),trainer_employment:createTrainerEmploymentRuntime() },
     decisions: { pending: {}, resolved: {} },
@@ -61,6 +63,7 @@ export function validateGameRun(state, world) {
   validateSeed(state.rng.seed);
   ensure(isObject(state.player) && PLAYER_ROLES.includes(state.player.role) && INVOLVEMENT_LEVELS.includes(state.player.involvement), 'RUN_PLAYER', 'Invalid player role');
   ensure(!state.player.operation_id || Boolean(worldIdentity(world, 'organizations', state.player.operation_id)), 'UNKNOWN_OPERATION', 'Player operation ID not found');
+  ensure(!state.player.person_id || Boolean(worldIdentity(world, 'people', state.player.person_id)), 'UNKNOWN_PERSON', 'Player person ID not found');
   ensure(Array.isArray(state.stable_horse_ids) && new Set(state.stable_horse_ids).size === state.stable_horse_ids.length, 'INVALID_STABLE', 'Invalid stable roster');
   for (const id of state.stable_horse_ids) ensure(Boolean(careerHorse(state, world, id)), 'UNKNOWN_HORSE', 'Unknown stable horse '+id);
   ensure(isObject(state.runtime) && isObject(state.runtime.horse) && isObject(state.runtime.races) && isObject(state.runtime.entries) && isObject(state.runtime.people)

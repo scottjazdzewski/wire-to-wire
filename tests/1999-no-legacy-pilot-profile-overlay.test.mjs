@@ -47,7 +47,8 @@ test('source-backed history, meets and stakes belong to the approved track works
  assert.ok(start>0&&end>start);
  const track=ui.slice(start,end);
  assert.match(track,/ng-track-workspace/);
- assert.match(track,/trackHistoryPanel\(\)/);
+ assert.match(track,/entityDossierCard/);
+ assert.match(ui,/if\(isTrack&&APP\.detailTab==='History'\)\{\s*left=trackHistoryFull\(\)/);
  assert.match(track,/trackMeetFacts/);
  assert.match(track,/stakesTable\(100\)/);
  assert.doesNotMatch(track,/38-horse|TEST COHORT|ng-connected/);

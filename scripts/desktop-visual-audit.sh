@@ -39,6 +39,7 @@ capture office-news '?ui=Office%20%E2%80%94%20News' 'ng-news-screen'
 capture opportunity-board '?ui=Opportunities' 'ng-opportunity-screen'
 capture racing-roster '?ui=Racing%20%E2%80%94%20Overview' 'ng-dept-roster'
 capture global-search '?ui=Search' 'ng-search-roster-page'
+capture race-file '?ui=RaceFile%3AWTW-STK-1999-T-0101-05' 'ng-1999-race-file'
 capture horse-profile '?page=horse&name=The+Last+Match' 'ng-horse-dossier'
 capture people-profile '?ui=WorldRecord%3Aperson%3AP-000018' 'ng-person-horse-dossier'
 capture founder-owner '?ui=FoundingProfile%3Aownership%3AO-000014' 'ng-track-workspace'
@@ -260,7 +261,7 @@ for name in ('stable-roster','racing-roster','laptop-stable-roster','laptop-raci
  print('ROSTER PARITY',name,'width',data['roster']['width'],'toolbar',data['rosterToolbar']['width'])
 # The approved track presentation is a two-column stadium dossier. Test
 # actual rendered Belmont desktop/laptop geometry; never permit pilot cohort
-# tables to displace the Stakes, Meet or History sections.
+# tables to displace the Stakes, Meet or biography/achievements dossier.
 for name in ('belmont','laptop-belmont','aqueduct','gulfstream'):
  source=Path(f'visual-audit/dom/probe-{name}.html').read_text()
  assert 'data-check="ready"' in source,(name,'Track layout not rendered')
@@ -269,10 +270,10 @@ for name in ('belmont','laptop-belmont','aqueduct','gulfstream'):
  d=json.loads(html.unescape(match.group(1)))
  assert d['trackWorkspace'] and d['trackWorkspace']['width']>=850,(name,'Approved workspace missing')
  assert d['trackStakes'] and d['trackStakes']['width']>=400,(name,'Major Stakes column absent')
- assert d['trackMeet'] and d['trackHistory'],(name,'Meet or Track History missing')
+ assert d['trackMeet'] and d['trackHistory'],(name,'Meet or profile dossier missing')
  assert d['trackMeet']['top']<d['trackHistory']['top'],(name,'Meet must be above History')
  assert d['trackStakes']['left']<d['trackHistory']['left'],(name,'Stakes must be left; History right')
- assert d['stakeSortButtons']==4,(name,'Full sortable stakes table replaced by dropdown')
+ assert d['stakeSortButtons']==8,(name,'Track stakes table must sort all displayed conditions and race details')
  assert d['stakeRows']>=1,(name,'Approved source-linked stakes absent')
  assert d['legacyPilotPanels']==0,(name,'Obsolete 38-horse cohort overlay returned')
  assert d['approvedTrackBadge'],(name,'Left category badge replaced with duplicate venue logo')

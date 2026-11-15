@@ -32,7 +32,8 @@ test('all real track profiles retain the one approved full stakes and two-column
  assert.match(profile,/\$\{stakesTable\(100\)\}/);
  assert.match(profile,/ng-track-workspace/);
  assert.match(profile,/MEET & CONDITIONS/);
- assert.match(profile,/trackHistoryPanel\(\)/);
+ assert.match(profile,/entityDossierCard/);
+ assert.match(profile,/if\(isTrack&&APP\.detailTab==='History'\)\{\s*left=trackHistoryFull\(\)/);
  assert.doesNotMatch(profile,/profileRecordSection|pilotHorseConnectionsPanel|ng-connected/);
  assert.doesNotMatch(css,/ng-connected-profile|ng-connected-drop/);
  assert.match(css,/\.ng-track-stakes \.ng-stakes-table\{[^}]*overflow-y:auto/);

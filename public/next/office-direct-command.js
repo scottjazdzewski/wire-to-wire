@@ -28,6 +28,13 @@
     throw Error('Current game navigation service unavailable');
    return manager.returnToOffice();
   }
+  if(command==='CHANGE_PLAYER_JOB'){
+   if(!pilot)throw Error('Job changes require an active playable game career');
+   const {role,operation_id=null,person_id=null}=payload||{};
+   if(!['owner','trainer','farm','breeder','jockey'].includes(role))
+    throw Error('Choose an available career role');
+   return pilot.submit('CHANGE_PLAYER_JOB',{role,operation_id,person_id},'player');
+  }
   if(command==='ANSWER_TRAINER_MANAGEMENT_REQUEST'){
    if(!pilot)throw Error('Trainer management requests require an active playable 1999 career');
    if(pendingTrainerRequest)throw Error('A trainer management response is already being saved');

@@ -5,7 +5,7 @@
  * the single operation ledger. Race entry and actual result settlement remain future.
  */
 import {
-  ensure, isObject, requireString, jsonClone, strictJSON, validDate, nextDate
+  ensure, isObject, requireString, jsonClone, strictJSON, validDate, nextDate, PLAYER_ROLES, worldIdentity
 } from './contracts.js';
 import { validateGameRun } from './state.js';
 import {makeReputationBaseline,applyReputationSignal} from './reputation.js';
@@ -25,7 +25,7 @@ import {PLAYER_RACE_PLAN_COMMANDS,confirm1999PlayerRacePlan} from './player-race
 import {TRAINER_MANAGEMENT_COMMANDS,answerTrainerManagementRequest,prepareTrainerManagementDay,reactToTrainerEvents} from './trainer-management-requests-1999.js';
 import {TRAINER_EMPLOYMENT_COMMANDS,trainerEmploymentAction,advanceTrainerEmployment,considerTrainerEmployment} from './trainer-employment-1999.js';
 
-const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_NAMING_COMMANDS,...HORSE_NAME_OWNER_COMMANDS,...HORSE_CARE_COMMANDS,...RACING_COMMANDS,...HORSE_SHIPPING_COMMANDS,...TRAINER_CONTRACT_COMMANDS,...OWNER_TRAINER_REVIEW_COMMANDS,...TRAINER_MANAGEMENT_COMMANDS,...TRAINER_EMPLOYMENT_COMMANDS,...PLAYER_RACE_PLAN_COMMANDS]);
+const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL', 'CHANGE_PLAYER_JOB',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_NAMING_COMMANDS,...HORSE_NAME_OWNER_COMMANDS,...HORSE_CARE_COMMANDS,...RACING_COMMANDS,...HORSE_SHIPPING_COMMANDS,...TRAINER_CONTRACT_COMMANDS,...OWNER_TRAINER_REVIEW_COMMANDS,...TRAINER_MANAGEMENT_COMMANDS,...TRAINER_EMPLOYMENT_COMMANDS,...PLAYER_RACE_PLAN_COMMANDS]);
 const MAX_PENDING = 5000;
 function appendLog(state, commandId, kind, details) {
   const event = { seq: state.event_log.length + 1, command_id: commandId,
@@ -54,7 +54,21 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
   const next = jsonClone(state);
   const output = [];
   const emit = (kind, details) => output.push(appendLog(next, c.id, kind, details));
-  if (c.type === 'SCHEDULE_EVENT') {
+  if(c.type==='CHANGE_PLAYER_JOB'){
+    ensure(c.actor==='player','UNAUTHORIZED_COMMAND','Only the player may change the active job perspective');
+    const p=c.payload;
+    ensure(PLAYER_ROLES.includes(p.role),'INVALID_PLAYER_JOB','Choose an available game role');
+    const operationId=p.operation_id||null,personId=p.person_id||null;
+    ensure(!operationId||Boolean(worldIdentity(world,'organizations',operationId)),
+      'UNKNOWN_OPERATION','Selected job organization is not in this world');
+    ensure(!personId||Boolean(worldIdentity(world,'people',personId)),
+      'UNKNOWN_PERSON','Selected job person is not in this world');
+    next.player.role=p.role;
+    next.player.operation_id=operationId;
+    next.player.person_id=personId;
+    emit('PLAYER_JOB_CHANGED',{role:p.role,operation_id:operationId,person_id:personId,
+      purpose:'PLAYER_PERSPECTIVE_SWITCH'});
+  } else if (c.type === 'SCHEDULE_EVENT') {
     ensure(c.actor === 'system', 'UNAUTHORIZED_COMMAND', 'Only a registered game system can schedule an event');
     const p = c.payload;
     requireString(p.event_id, 'payload.event_id', 128);

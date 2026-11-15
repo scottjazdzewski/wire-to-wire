@@ -59,7 +59,7 @@ test('the one FM/OOTP renderer owns track rosters and the same view modes across
  assert.match(js,/rosterDensityControls\('department',departmentMode\)/);
  assert.match(js,/rosterDensityControls\(directory\?'directory':'stable',mode\)/);
  assert.match(css,/\.ng-track-workspace\{display:grid!important/);
- assert.match(js,/trackHistoryPanel\(\)/);
+ assert.match(js,/if\(isTrack&&APP\.detailTab==='History'\)\{\s*left=trackHistoryFull\(\)/);
  assert.doesNotMatch(js,/pilotHorseConnectionsPanel|profileRecordSection|connectedTableState|ng-connected-profile/);
  assert.doesNotMatch(css,/\.ng-connected-drop|\.ng-connected-profile/);
 });

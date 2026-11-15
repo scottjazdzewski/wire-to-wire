@@ -59,6 +59,21 @@ test('player training order is a true game command and survives a saved career r
  assert.throws(()=>importGameSave(saved.replace('WTW_GAME_RUN_V1','BROKEN_SAVE'),e.world),
   err=>err.code==='SAVE_CORRUPTED'||err.code==='RUN_SCHEMA');
 });
+test('player can change job viewpoint and the managed roster follows the selected role after reload',async()=>{
+ const e=await createPlaytestCareer(context),ownerView=e.view();
+ const horse=ownerView.all_horses.find(h=>h.owner_id==='O-000061');
+ assert.ok(horse);
+ const trainer=e.world.entities.people.find(p=>p.id===horse.trainer_id);
+ e.command('CHANGE_PLAYER_JOB',{role:'trainer',operation_id:horse.owner_id,person_id:trainer.id});
+ const trainerView=e.view();
+ assert.equal(trainerView.player.role,'trainer');
+ assert.ok(trainerView.stable.length>0);
+ assert.ok(trainerView.stable.every(h=>h.trainer_id===trainer.id));
+ const reopened=await createPlaytestCareer({...context,save:e.getSave()});
+ assert.deepEqual(reopened.view(),trainerView);
+ e.command('CHANGE_PLAYER_JOB',{role:'owner',operation_id:horse.owner_id,person_id:null});
+ assert.ok(e.view().stable.every(h=>h.owner_id===horse.owner_id));
+});
 test('15-day browser playtest reproduces actual race results, condition, finances and agent feedback',async()=>{
  const e=await createPlaytestCareer(context);
  e.advanceTo('1999-01-16');
