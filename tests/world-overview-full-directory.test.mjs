@@ -114,3 +114,22 @@ test('Full World list shares management CSS; no second app or added stylesheet',
  assert.equal((ui.match(/function worldCompleteDirectoryView\(/g)||[]).length,1);
  assert.doesNotMatch(ui,/items\.filter\(row=>row\.kind===kind\)\.slice\(0,20\)/);
 });
+
+test('retired venues are excluded from live World track roster, not deleted from source',()=>{
+ const state=app();state.worldDirectoryType='track';
+ const active={kind:'track',name:'Sioux Plains',canonicalId:'T-0122',
+  worldKey:'track:T-0122',detail:'Northern Plains',location:'North Dakota',
+  _world:{id:'T-0122',playableIn1999:true,operating:'OPEN_1999'}};
+ const retired={kind:'track',name:'Longacres',canonicalId:'T-0033',
+  worldKey:'track:T-0033',detail:'Historic Seattle course',location:'Washington',
+  _world:{id:'T-0033',playableIn1999:false,operating:'HISTORICAL_ONLY'}};
+ const records=[active,retired];
+ const html=build(state,records)();
+ assert.match(html,/Sioux Plains/);
+ assert.match(html,/track:T-0122/);
+ assert.doesNotMatch(html,/Longacres/);
+ assert.doesNotMatch(html,/track:T-0033/);
+ assert.match(html,/1 OF 1 MATCHES/);
+ assert.equal(records.length,2,'Original source records must stay available');
+ assert.equal(records[1]._world.operating,'HISTORICAL_ONLY');
+});
