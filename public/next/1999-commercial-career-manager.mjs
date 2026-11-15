@@ -421,7 +421,7 @@ async function refresh(){
   '<button data-cc-action="close">✕ CLOSE</button></header>'+
   '<div class="wtw-cc-current">CURRENT INSTALLED SAVE · SEED '+esc(current.seed)+
    ' · new test careers use the selected world size</div>'+
-  '<div class="wtw-cc-section"><h3>NEW CAREER WORLD — CHOOSE YOUR SIZE</h3>'+
+  '<div class="wtw-cc-section"><h3>NEW CAREER WORLD — CHOOSE YOUR SIZE · FULL FICTIONAL 1999 INDUSTRY</h3>'+
   '<p>Choose a custom world scale. Horse cohorts, breeding stock, personnel, owners, farms and the geographically distributed track circuit scale together. 100% is the standard world; larger settings support a massive world.</p>'+
   '<label>WORLD SIZE SCALE (% OF STANDARD)<input data-cc="world-size-percent" type="number" min="1" max="'+INDUSTRY_ECOSYSTEM_MAX_SIZE_PERCENT+'" step="1" value="'+esc(fullIndustryManifest?.worldSizePercent??100)+'"></label>'+
   '<label>WORLD SEED<input data-cc="seed" type="number" min="1" max="4294967295" step="1" value="'+esc(current.seed)+'"></label>'+
