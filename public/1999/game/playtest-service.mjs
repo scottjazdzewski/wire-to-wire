@@ -9,7 +9,7 @@
  */
 import {WORLD_SCHEMA,dispatchGameCommand,exportGameSave,importGameSave,nextDate,
  getGameHorsePerformance,getGameRacingRoster,getAgentRelationships,
- getOwnerPortfolioView,getCareerHorseConnections,get1999HorseRaceOpportunities,getTrainerContract,quote1999PlayerRacePlan,getOwnerTrainerCareerReview,getTrainerCareerForm,getGamePostRaceCampaign,
+ getOwnerPortfolioView,getCareerHorseConnections,get1999HorseRaceOpportunities,get1999RacePlacementAdvice,getTrainerContract,quote1999PlayerRacePlan,getOwnerTrainerCareerReview,getTrainerCareerForm,getGamePostRaceCampaign,
  getTrainerManagementRequests,get1999RaceTacticsPreview,get1999RacePreparation,
  horseTravelStatus,effectiveHorseTrack,
  effectiveHorseCareSite}
@@ -150,6 +150,7 @@ export async function createPlaytestCareer({directory,trainers,jockeys,cohort,sa
   getRelationship(ownerId,trainerId){return getAgentRelationships(state,ownerId,trainerId)},
   getOwnerPortfolio(ownerId){return getOwnerPortfolioView(state,world,ownerId)},
   getRaceOpportunities(horseId,opts={}){return get1999HorseRaceOpportunities(state,world,horseId,opts)},
+  getRacePlacementAdvice(horseId,opts={}){return get1999RacePlacementAdvice(state,world,horseId,opts)},
   getRacePlanQuote(payload){return quote1999PlayerRacePlan(state,world,payload)},
   getRaceTacticsPreview(payload){return get1999RaceTacticsPreview(state,world,payload)},
   getRacePreparation(payload){return get1999RacePreparation(state,world,payload)},
@@ -239,6 +240,7 @@ export async function bootBrowserPlaytest1999(){
   get state(){return engine.state},view:()=>engine.view(),getSave:()=>engine.getSave(),
   get world(){return engine.world},
   getRaceOpportunities(horseId,opts={}){return engine.getRaceOpportunities(horseId,opts)},
+  getRacePlacementAdvice(horseId,opts={}){return engine.getRacePlacementAdvice(horseId,opts)},
   getRacePlanQuote(payload){return engine.getRacePlanQuote(payload)},
   getRaceTacticsPreview(payload){return engine.getRaceTacticsPreview(payload)},
   getRacePreparation(payload){return engine.getRacePreparation(payload)},
