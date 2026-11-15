@@ -42,6 +42,16 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
  assert.equal(first[0].id,'H-FICTIONAL-1999-BROODMARES-0000001');
  assert.ok(first[0].ratings.speed>=15);
  assert.ok(first[0].relationships.some(e=>e.type==='OWNED_BY'));
+ const runner=await findPersistent1999Horse(store,a,
+  'H-FICTIONAL-1999-THREEYEAROLDRUNNERS-0000001');
+ assert.ok(runner.trainerId&&runner.jockeyId&&runner.homeTrackId);
+ const staff=[];
+ for(let i=0;i<a.personBatchesCommitted;i++)
+  staff.push(...await readPersistent1999IndustryBatch(store,a,'personBatches',i));
+ const trainer=staff.find(p=>p.id===runner.trainerId);
+ const jockey=staff.find(p=>p.id===runner.jockeyId);
+ assert.equal(trainer?.workplaceId,runner.homeTrackId);
+ assert.equal(jockey?.workplaceId,runner.homeTrackId);
  const directory=await readPersistent1999Directory(store,a);
  assert.equal(directory.length,3);
  assert.ok(directory.every(e=>e.ratings&&Array.isArray(e.relationships)));
