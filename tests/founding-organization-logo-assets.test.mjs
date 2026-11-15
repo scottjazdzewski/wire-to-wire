@@ -116,3 +116,17 @@ test('Northbank approved tree-free bluff mark is exact-ID, RGB and byte-locked',
  assert.match(ui,/organizationLogoMarkup\(owner\.id,owner\.name,'organization'/);
  assert.match(ui,/approvedIdentityAsset\('organization',source\.dataset\.organizationId/);
 });
+
+test('approved Saint Alloy is an opaque 256-square exact-OID wordmark',()=>{
+ const id='O-000011';
+ assert.equal(roster.organizations.find(o=>o.id===id)?.name,'St. Alloy Partners');
+ const path=index.organizations['organization:'+id];
+ assert.equal(path,'/assets/office/founding-organization-logos/O-000011.png');
+ const data=readFileSync(resolve(root,'public'+path));
+ assert.equal(data.readUInt32BE(16),256);assert.equal(data.readUInt32BE(20),256);assert.equal(data[25],2);
+ assert.ok(index.audit.published.some(o=>o.id===id));
+ const frame=readJson('ops/owner-logo-frame-v1.json');
+ const row=frame.assets.find(a=>a.path==='public'+path);
+ assert.equal(row.output_sha256,'1d990b41239e39ca3b9621b385b8b537101a4a46d2deba701eee18d15ee9bf49');
+ assert.deepEqual(row.border_rgb,[244,196,27]);
+});
