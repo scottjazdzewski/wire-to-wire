@@ -27,8 +27,9 @@ const day=state=>dispatchGameCommand({state,world,command:{
  id:'live-review:day:'+state.clock.date,type:'ADVANCE_DAY',actor:'system',payload:{}}}).state;
 const through=date=>{let state=fresh();while(state.clock.date<date)state=day(state);return state};
 function firstOfficial(state){
- const race=Object.values(state.runtime.races).filter(r=>
-  r.status==='OFFICIAL_SIM_RESULT').sort((a,b)=>a.date.localeCompare(b.date))[0];
+ const options=Object.values(state.runtime.races).filter(r=>
+  r.status==='OFFICIAL_SIM_RESULT').sort((a,b)=>b.date.localeCompare(a.date));
+ const race=options.find(r=>r.date===state.clock.date)??options[0];
  assert.ok(race?.results?.length>1,'Expected a real settled 1999 race');
  return {race,result:race.results[0],horse:state.runtime.registered_horses.by_id[race.results[0].horse_id]};
 }
