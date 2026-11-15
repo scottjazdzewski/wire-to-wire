@@ -184,7 +184,7 @@ function inputProfile(){
 let fullIndustryManifest=null;
 let industryBrowsePage=0,industryBrowseHtml='',industryBrowseKind='horseBatches';
 let industryDirectory=[];
-function industryDirectories(){
+function industryDirectories(seed=19990101){
  const tracks=Object.values(TRACK_PROGRAM_1999)
   .filter(t=>t.playableIn1999!==false&&t.trackOperating==='OPEN_1999')
   .map(t=>({id:t.id,name:t.name,location:t.location??{}}));
@@ -193,7 +193,7 @@ function industryDirectories(){
  // track-prefix placeholders. Permanent world IDs remain unchanged.
  const farmCount=tracks.length*4,ownerCount=tracks.length*10;
  const generated=createFictionalWorldNameEngine({
-  worldId:'WTW1999IndustryDirectory',seed:19990101,year:1999,
+  worldId:'WTW1999IndustryDirectory',seed,year:1999,
   roles:{},owners:ownerCount,
   facilities:{generalFarms:farmCount,studFarms:0,nurseries:0,
    bloodstockFarms:0,breakingTraining:0},
@@ -387,7 +387,7 @@ async function perform(action,element){
   const seed=Number(modal().querySelector('[data-cc="seed"]')?.value||19990101);
   const progress=modal().querySelector('[data-cc="industry-progress"]');
   fullIndustryManifest=await prepareFictionalIndustry({
-   seed,worldId:'WTW1999FullIndustry',...industryDirectories(),batchSize:2000,
+   seed,worldId:'WTW1999FullIndustry',...industryDirectories(seed),batchSize:2000,
    yieldControl:()=>new Promise(resolve=>setTimeout(resolve,0)),
    onProgress:({kind,completed,totalRecords})=>{
     if(progress)progress.textContent='Creating '+kind+' · batch '+completed+
