@@ -112,3 +112,96 @@ No screenshot signoff until each family and critical subview is actually seen. T
 
 ## Status rollup (as of this authored inspection)
 **YES: zero screens approved. CLOSER but still NO: numerous. Blocked / missing: multiple.** The one-shell architecture is substantially improved, but **the answer to “Does the product visually look like OOTP or FM?” is NOT YET.**
+
+## Complete route-capture register — 79 canonical routes + 2 narrow desktop variants
+
+Source: [full browser capture run, 81 screenshot files](https://github.com/scottjazdzewski/wire-to-wire/actions/runs/43686976832), with all route captures driven by the existing shared shell and `scripts/desktop-visual-audit.sh`. The run passed automated screenshot/geometry assertions. Contact-sheet review has identified the issues above; **individual, full-resolution human FM/OOTP visual signoff has NOT been given**. Latest PR changes to matte rendering and Stable-specific operations have not yet cleared their own visual gate.
+
+| Captured screenshot | Does it look like a fully finished FM/OOTP screen? | Outstanding review focus | Priority |
+|---|---|---|---|
+| `stable-roster.png` | **NO — unapproved** | Sparse, generic or no verified game records | P0 |
+| `world-directory.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `world-tracks.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `world-meets.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `world-news.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `office-news.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `opportunity-board.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `racing-roster.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `global-search.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `horse-profile.png` | **NO — unapproved** | Individual premium UI review pending | P0 |
+| `people-profile.png` | **NO — unapproved** | Individual premium UI review pending | P0 |
+| `founder-owner.png` | **NO — unapproved** | Real-logo contrast/identity acceptance | P1 |
+| `founder-facility.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `aqueduct-track.png` | **NO — unapproved** | Real-logo contrast/identity acceptance | P1 |
+| `belmont-track.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `gulfstream-track.png` | **NO — unapproved** | Pending latest UI rerender | P0 |
+| `santa-anita-track.png` | **NO — unapproved** | Real-logo contrast/identity acceptance | P1 |
+| `kingsmere-farm.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `northbank-stable.png` | **NO — unapproved** | Real-logo contrast/identity acceptance | P1 |
+| `personnel.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `facilities.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `finances.png` | **NO — unapproved** | Sparse, generic or no verified game records | P1 |
+| `breeding.png` | **NO — unapproved** | Sparse, generic or no verified game records | P1 |
+| `sales-overview.png` | **NO — unapproved** | Sparse, generic or no verified game records | P1 |
+| `sales-auctions.png` | **NO — unapproved** | Sparse, generic or no verified game records | P1 |
+| `naming-desk.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `office-messages.png` | **NO — unapproved** | Pending latest UI rerender | P0 |
+| `office-decisions.png` | **NO — unapproved** | Pending latest UI rerender | P0 |
+| `office-career.png` | **NO — unapproved** | Sparse, generic or no verified game records | P0 |
+| `stable-training.png` | **NO — unapproved** | Pending latest UI rerender | P0 |
+| `racing-calendar.png` | **NO — unapproved** | Individual premium UI review pending | P0 |
+| `racing-entries.png` | **NO — unapproved** | Sparse, generic or no verified game records | P1 |
+| `breeding-foals.png` | **NO — unapproved** | Sparse, generic or no verified game records | P1 |
+| `personnel-jockeys.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `facilities-stud-farms.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `finances-cash-flow.png` | **NO — unapproved** | Sparse, generic or no verified game records | P1 |
+| `world-organizations.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `world-people.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `stable-health.png` | **NO — unapproved** | Pending latest UI rerender | P0 |
+| `stable-race-plans.png` | **NO — unapproved** | Pending latest UI rerender | P0 |
+| `stable-barns.png` | **NO — unapproved** | Pending latest UI rerender | P0 |
+| `racing-results.png` | **NO — unapproved** | Sparse, generic or no verified game records | P1 |
+| `racing-stakes.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `racing-race-planning.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `breeding-stallions.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `breeding-broodmares.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `breeding-pedigrees.png` | **NO — unapproved** | Sparse, generic or no verified game records | P1 |
+| `breeding-stud-farms.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `sales-sale-calendar.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `sales-sale-companies.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `sales-catalogs.png` | **NO — unapproved** | Sparse, generic or no verified game records | P1 |
+| `sales-watchlist.png` | **NO — unapproved** | Sparse, generic or no verified game records | P1 |
+| `sales-private-offers.png` | **NO — unapproved** | Sparse, generic or no verified game records | P1 |
+| `personnel-trainers.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `personnel-owners.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `personnel-principals.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `personnel-staff.png` | **NO — unapproved** | Sparse, generic or no verified game records | P1 |
+| `facilities-training-centers.png` | **NO — unapproved** | Sparse, generic or no verified game records | P1 |
+| `facilities-breaking-facilities.png` | **NO — unapproved** | Sparse, generic or no verified game records | P1 |
+| `facilities-racing-stables.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `facilities-farms.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `facilities-trainer-barns.png` | **NO — unapproved** | Sparse, generic or no verified game records | P1 |
+| `finances-operating-costs.png` | **NO — unapproved** | Sparse, generic or no verified game records | P1 |
+| `finances-budgets.png` | **NO — unapproved** | Sparse, generic or no verified game records | P1 |
+| `world-1999-horses.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `world-major-races.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `tracks-overview.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `tracks-active-meets.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `tracks-all-tracks.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `tracks-stakes.png` | **NO — unapproved** | Individual premium UI review pending | P1 |
+| `office-reports.png` | **NO — unapproved** | Sparse, generic or no verified game records | P1 |
+| `history-vault.png` | **NO — unapproved** | Individual premium UI review pending | P2 |
+| `history-horses.png` | **NO — unapproved** | Individual premium UI review pending | P2 |
+| `history-people-farms.png` | **NO — unapproved** | Individual premium UI review pending | P2 |
+| `history-tracks-facilities.png` | **NO — unapproved** | Individual premium UI review pending | P2 |
+| `history-calendar.png` | **NO — unapproved** | Individual premium UI review pending | P2 |
+| `history-coverage.png` | **NO — unapproved** | Individual premium UI review pending | P2 |
+| `history-year-review.png` | **NO — unapproved** | Individual premium UI review pending | P2 |
+
+Additionally, the audit captures `founder-facility-1280.png` and `history-year-review-1280.png` at 1280×800. Both are **NO — not yet signed off** until individual legibility/clipping verification. All `78` canonical routes have a screenshot; this is evidence coverage, not approval.
+
+**Live source-backed content deficit:** Breeding Foals/Pedigrees/Overview, Facilities Breaking Facilities/Training Centers/Trainer Barns, Finances, Sales Auctions/Catalogs/Watchlist/Private Offers, Personnel Staff, Racing Entries/Results and the player Stable currently show essentially empty source-backed roster tables. We cannot fill these with fabricated records or make page completeness claims. The engine/world workstreams must deliver the meaningful source data, while UI ensures honest empty-state workflows.
+
+**Design consistency deficit:** Career/Reports and several Stable subviews were near-identical generic World directories in the captured screenshots. Dedicated Stable Health/Race Plans/Barns have been implemented on PR #221 and require fresh screenshot acceptance. The Office Inbox/Decisions had already received dedicated case-file views. The History Vault has a distinct editorial UI and needs visual-quality consistency without merging its historical data into the fictional gameplay world.
+
+**Logo acceptance:** Source palettes must always be derived from true displayed logo pixels, never designer-selected team colors. Gulfstream's source opaque white canvas is a P0 defect and has a presentation-only matte treatment under test. Santa Anita needs stronger contrast for its actual dark green wordmark (not burgundy). No protected original logo source files were changed.
