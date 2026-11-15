@@ -1,17 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createPersistent1999Industry,readPersistent1999IndustryBatch,findPersistent1999Horse,
- updatePersistent1999Horse,readPersistent1999HorseProfile}
+ updatePersistent1999Horse,readPersistent1999HorseProfile,
+ savePersistent1999CareerRun,loadPersistent1999CareerRun}
  from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
 function memoryStore(){
- const data={manifests:new Map(),horseBatches:new Map(),personBatches:new Map(),horseEdits:new Map()};
+ const data={manifests:new Map(),horseBatches:new Map(),personBatches:new Map(),horseEdits:new Map(),careerRuns:new Map()};
  return {get:async(s,k)=>data[s].get(k),
   commitBatch:async({worldId,manifest,kind,index,records})=>{
    data[kind].set(worldId+':'+index,structuredClone(records));
    data.manifests.set(worldId,structuredClone(manifest));
   },
   commitManifest:async(id,m)=>{data.manifests.set(id,structuredClone(m))},
-  putHorseEdit:async(id,horseId,edit)=>{data.horseEdits.set(id+':'+horseId,structuredClone(edit))}};
+  putHorseEdit:async(id,horseId,edit)=>{data.horseEdits.set(id+':'+horseId,structuredClone(edit))},
+  putCareerRun:async(id,runId,record)=>{
+   if(data.manifests.get(id)?.status!=='COMPLETE')throw Error('World incomplete');
+   data.careerRuns.set(id+':'+runId,structuredClone(record));
+  }};
 }
 const dirs={farms:[{id:'O-FARM-1',location:{country:'USA'}}],
  tracks:[{id:'T-0001'}],owners:[{id:'O-OWNER-1'}]};
@@ -33,6 +38,11 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
  const edited=await readPersistent1999HorseProfile(store,b,first[0].id);
  assert.equal(edited.name,'Copper Horizon');
  assert.equal((await findPersistent1999Horse(store,b,first[0].id)).name,null);
+ const run=await savePersistent1999CareerRun(store,b,{runId:'career-1',
+  player:{role:'owner',organizationId:'O-OWNER-1'},
+  changes:{balanceMinor:123456},gameDate:'1999-02-01'});
+ assert.deepEqual(await loadPersistent1999CareerRun(store,b,'career-1'),run);
+ assert.equal((await readPersistent1999HorseProfile(store,b,first[0].id)).name,'Copper Horizon');
 });
 test('interrupted industry genesis resumes at committed checkpoint',async()=>{
  const store=memoryStore();let writes=0;
@@ -48,4 +58,12 @@ test('interrupted industry genesis resumes at committed checkpoint',async()=>{
  const done=await createPersistent1999Industry({...params,store});
  assert.equal(done.status,'COMPLETE');
  assert.ok(done.horseBatchesCommitted>2);
+});
+
+test('incomplete worlds cannot receive playable career runs',async()=>{
+ const store=memoryStore();
+ const incomplete={schema:'WTW_PERSISTENT_INDUSTRY_1999_V1',
+  worldId:'Incomplete',seed:19990101,status:'GENERATING'};
+ await assert.rejects(savePersistent1999CareerRun(store,incomplete,{
+  runId:'bad',player:{role:'owner'}}),/Invalid persistent industry career run/);
 });
