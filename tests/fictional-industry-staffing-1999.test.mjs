@@ -18,7 +18,7 @@ test('opening staffing reflects full racing and breeding ecosystem',()=>{
    assert.ok(!ids.has(person.id));ids.add(person.id);total++;
    assert.ok(person.ratings.ability>=20&&person.ratings.ability<=99);
    assert.ok(person.workplaceId);
-   assert.match(person.dateOfBirth,/^\\d{4}-\\d{2}-\\d{2}$/);
+   assert.match(person.dateOfBirth,/^\d{4}-\d{2}-\d{2}$/);
    assert.ok(person.birthplace?.city&&person.birthplace?.region);
    assert.ok(person.birthplace.countryCode===person.birthCountryCode);
    assert.ok(person.ageAtOpening>=16&&person.ageAtOpening<=70);
