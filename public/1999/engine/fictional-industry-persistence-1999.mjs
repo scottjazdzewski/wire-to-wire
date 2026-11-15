@@ -137,7 +137,7 @@ export async function createPersistent1999Industry({
    offset-=count;
   }
   throw Error('Personnel naming index outside opening workforce');
- });
+ },[],{normalizeNamesForAccent:true});
  const existing=await store.get('manifests',id);
  if(existing){
   if(existing.schema!==PERSISTENT_INDUSTRY_SCHEMA||
