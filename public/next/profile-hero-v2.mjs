@@ -380,6 +380,11 @@ function init(){
     if(asset.darkInk)mark.classList.add("wtw-hero-dark-ink");
    });
   };
+  // Start the approved local legacy-logo display cleanup immediately.
+  // Waiting for a non-existent T-ID transparent upload probe can leave a
+  // solid white matte on screen, especially for Gulfstream's navy wordmark.
+  // A genuine exact-ID hero upload still replaces this derivative normally.
+  if(kind==="track"&&LEGACY_TRACK.test(img.getAttribute("src")||""))legacy();
   if(candidate){
    const matching=img.dataset.wtwHeroProbePath===candidate;
    const state=matching?img.dataset.wtwHeroState:"";
