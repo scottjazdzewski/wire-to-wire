@@ -12,6 +12,8 @@ import {open1999IndustryDatabase,createPersistent1999Industry,
  verifyPersistent1999WorldOpen,reopenPersistent1999Industry}
  from '/1999/engine/fictional-industry-persistence-1999.mjs';
 import {TRACK_PROGRAM_1999} from '/next/1999-track-program.mjs';
+import {createFictionalWorldNameEngine}
+ from '/1999/engine/fictional-world-name-engine.mjs';
 import {readPersistent1999HorseProfile,readPersistent1999IndustryBatch,
  readPersistent1999Directory}
  from '/1999/engine/fictional-industry-persistence-1999.mjs';
@@ -187,18 +189,36 @@ function industryDirectories(){
   .filter(t=>t.playableIn1999!==false&&t.trackOperating==='OPEN_1999')
   .map(t=>({id:t.id,name:t.name,location:t.location??{}}));
  if(!tracks.length)throw Error('No approved operating 1999 tracks');
- const farms=tracks.flatMap(t=>Array.from({length:4},(_,i)=>({
-  id:'O-FICTIONAL-FARM-'+t.id+'-'+String(i+1).padStart(2,'0'),
-  name:t.name+' Region Farm '+(i+1),location:t.location,
-  namingStatus:'PROVISIONAL_REPLACE_FROM_APPROVED_DIRECTORY',
-  geographyStatus:t.location?.region?'REGION_PROVIDED':'LOCATION_REVIEW_REQUIRED'
- })));
- const owners=tracks.flatMap(t=>Array.from({length:10},(_,i)=>({
-  id:'O-FICTIONAL-OWNER-'+t.id+'-'+String(i+1).padStart(2,'0'),
-  name:t.name+' Region Ownership '+(i+1),location:t.location,
-  namingStatus:'PROVISIONAL_REPLACE_FROM_APPROVED_DIRECTORY',
-  geographyStatus:t.location?.region?'REGION_PROVIDED':'LOCATION_REVIEW_REQUIRED'
- })));
+ // Reuse the established 1999 organization identity engine, never fabricate
+ // track-prefix placeholders. Permanent world IDs remain unchanged.
+ const farmCount=tracks.length*4,ownerCount=tracks.length*10;
+ const generated=createFictionalWorldNameEngine({
+  worldId:'WTW1999IndustryDirectory',seed:19990101,year:1999,
+  roles:{},owners:ownerCount,
+  facilities:{generalFarms:farmCount,studFarms:0,nurseries:0,
+   bloodstockFarms:0,breakingTraining:0},
+  protectedNames:tracks.map(t=>t.name)
+ });
+ if(generated.owners.length!==ownerCount||
+  generated.farms.length!==farmCount)
+  throw Error('1999 approved organization name generator returned an incomplete directory');
+ const farms=tracks.flatMap((t,trackIndex)=>Array.from({length:4},(_,i)=>{
+  const named=generated.farms[trackIndex*4+i];
+  return {id:'O-FICTIONAL-FARM-'+t.id+'-'+String(i+1).padStart(2,'0'),
+   name:named.name,location:t.location,
+   namingStatus:'GENERATED_1999_ORGANIZATION_ENGINE',
+   namingSourceId:named.id,
+   geographyStatus:t.location?.region?'REGION_PROVIDED':'LOCATION_REVIEW_REQUIRED'};
+ }));
+ const owners=tracks.flatMap((t,trackIndex)=>Array.from({length:10},(_,i)=>{
+  const named=generated.owners[trackIndex*10+i];
+  return {id:'O-FICTIONAL-OWNER-'+t.id+'-'+String(i+1).padStart(2,'0'),
+   name:named.name,location:t.location,
+   ownershipArchetype:named.ownershipArchetype,
+   namingStatus:'GENERATED_1999_ORGANIZATION_ENGINE',
+   namingSourceId:named.id,
+   geographyStatus:t.location?.region?'REGION_PROVIDED':'LOCATION_REVIEW_REQUIRED'};
+ }));
  return {tracks,farms,owners};
 }
 async function browseFullIndustry(page=0,kind=industryBrowseKind){
