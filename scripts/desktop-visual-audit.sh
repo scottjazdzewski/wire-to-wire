@@ -67,6 +67,14 @@ capture breeding '?ui=Breeding' 'ng-manager-screen|ng-dept-roster'
 # because they render. Their actual screenshot output joins the human ledger.
 capture sales-overview '?ui=Sales%20%E2%80%94%20Overview' 'ng-dept-roster'
 capture sales-auctions '?ui=Sales%20%E2%80%94%20Auctions' 'ng-dept-roster'
+# A zero-row catalogue is not a filter miss; it must show source-honest
+# context and genuinely working links to existing sales views.
+if ! grep -q 'ng-dept-empty-actions' visual-audit/dom/sales-auctions.html; then
+ echo 'Sales Auctions has no unfiltered empty-state management actions' >&2; exit 1
+fi
+if grep -q 'NO MATCHING RECORDS' visual-audit/dom/sales-auctions.html; then
+ echo 'Unfiltered Sales Auctions incorrectly claims a search mismatch' >&2; exit 1
+fi
 capture naming-desk '?ui=Stable%20%E2%80%94%20Naming%20Desk' 'ng-naming-desk'
 capture office-messages '?ui=Messages' 'ng-manager-message-inbox'
 capture office-decisions '?ui=Decisions' 'ng-manager-message-inbox'

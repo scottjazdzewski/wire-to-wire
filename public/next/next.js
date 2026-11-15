@@ -3564,7 +3564,14 @@ function departmentEmptyPanel(section,page,message){
   Racing:['Calendar','Race Planning'],Personnel:['Trainers','Jockeys'],
   Facilities:['Farms','Stud Farms'],Finances:['Operating Costs','Budgets'],
   World:['People','Organizations'],Tracks:['All Tracks','Active Meets']};
- const filtered=Boolean(APP.departmentSearch||window.WTW1999RosterFilters?.get(APP,section+'|'+page));
+ // RosterFilters.get() always returns an object, even when every input
+ // is empty. Only an ACTIVE criterion can hide the useful zero-state links.
+ const criteria=window.WTW1999RosterFilters?.get(APP,section+'|'+page);
+ const filtered=Boolean(APP.departmentSearch.trim()||(criteria&&(
+  (criteria.field&&String(criteria.query||'').trim())||
+  String(criteria.ageMin??'').trim()!==''||
+  String(criteria.ageMax??'').trim()!==''||
+  criteria.sex||criteria.status)));
  const indexing=String(message).startsWith('Indexing ');
  const links=filtered||indexing?[]:(views[section]||[]).filter(tab=>
   tab!==page&&(tabmap[section]||[]).includes(tab));

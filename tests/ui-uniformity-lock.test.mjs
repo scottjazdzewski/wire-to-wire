@@ -120,6 +120,14 @@ test('Stable Health, Race Plans and Barns show real player horses and never gene
  assert.doesNotMatch(view,/globalSearchItems\(\)|sourceLinkedWorldDirectory|demoRecords/);
  assert.match(js,/\['Health','Race Plans','Barns'\]\.includes\(page\)\)return stableOperationsView\(page\)/);
 });
+test('an untouched roster filter does not falsely hide source-empty navigation',()=>{
+ const helper=js.slice(js.indexOf('function departmentEmptyPanel('),js.indexOf('function departmentRoster('));
+ assert.match(helper,/const criteria=window\.WTW1999RosterFilters\?\.get/);
+ assert.match(helper,/criteria\.field&&String\(criteria\.query\|\|''\)\.trim\(\)/);
+ assert.match(helper,/criteria\.ageMin\?\?''/);
+ assert.match(helper,/criteria\.ageMax\?\?''/);
+ assert.doesNotMatch(helper,/Boolean\(APP\.departmentSearch\|\|window\.WTW1999RosterFilters/);
+});
 test('empty department actions only use registered VIEW tabs; no fictional data',()=>{
  const helper=js.slice(js.indexOf('function departmentEmptyPanel('),js.indexOf('function departmentRoster('));
  assert.match(helper,/tabmap\[section\]/);
