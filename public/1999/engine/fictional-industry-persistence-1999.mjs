@@ -274,7 +274,7 @@ export async function createPersistent1999Industry({
 export async function readPersistent1999IndustryBatch(store,manifest,kind,index){
  if(manifest?.schema!==PERSISTENT_INDUSTRY_SCHEMA||
   manifest.status!=='COMPLETE'||
-  !['horseBatches','personBatches','coveringBatches'].includes(kind)||
+  !['horseBatches','personBatches','coveringBatches','calendarBatches'].includes(kind)||
   !Number.isInteger(index)||index<0||
   index>=(kind==='horseBatches'?manifest.horseBatchesCommitted:
    kind==='personBatches'?manifest.personBatchesCommitted:
