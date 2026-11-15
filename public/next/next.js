@@ -1919,10 +1919,22 @@ function profileDetail(route,sourceOverride=null){
    '</div></div>':'';
 
  const stakeDateRank=value=>{
-  const match=String(value||'').match(/\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(\d{1,2})\b/i);
+  const source=String(value||'').trim();
+  // 1999 track dossiers use ISO dates. Do not accidentally sort their
+  // sortable DATE column by race name merely because a month word is absent.
+  const iso=source.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(iso){
+   const year=Number(iso[1]),month=Number(iso[2]),day=Number(iso[3]);
+   return month>=1&&month<=12&&day>=1&&day<=31?
+    year*416+month*32+day:Number.MAX_SAFE_INTEGER;
+  }
+  const match=source.match(/\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(\d{1,2})\b/i);
   if(!match)return Number.MAX_SAFE_INTEGER;
   const month='jan feb mar apr may jun jul aug sep oct nov dec'.split(' ').indexOf(match[1].slice(0,3).toLowerCase());
-  return month<0?Number.MAX_SAFE_INTEGER:month*32+Number(match[2]);
+  const day=Number(match[2]);
+  if(month<0||day<1||day>31)return Number.MAX_SAFE_INTEGER;
+  const explicitYear=(source.match(/\b(?:19|20)\d{2}\b/)||[])[0];
+  return (explicitYear?Number(explicitYear)*416:0)+(month+1)*32+day;
  };
  // Read-only: summarize only the WTW race rows already available on this track.
  const stakeScheduleSummary=()=>{
