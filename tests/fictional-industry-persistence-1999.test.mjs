@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createPersistent1999Industry,readPersistent1999IndustryBatch}
+import {createPersistent1999Industry,readPersistent1999IndustryBatch,findPersistent1999Horse}
  from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
 function memoryStore(){
  const data={manifests:new Map(),horseBatches:new Map(),personBatches:new Map()};
@@ -25,6 +25,8 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
  const b=await createPersistent1999Industry(params);
  assert.deepEqual(b,a);
  assert.deepEqual(await readPersistent1999IndustryBatch(store,b,'horseBatches',0),first);
+ assert.deepEqual(await findPersistent1999Horse(store,b,first[0].id),first[0]);
+ assert.equal(await findPersistent1999Horse(store,b,'H-FICTIONAL-1999-BROODMARES-9999999'),null);
 });
 test('interrupted industry genesis resumes at committed checkpoint',async()=>{
  const store=memoryStore();let writes=0;
