@@ -178,7 +178,7 @@ function inputProfile(){
  });
 }
 let fullIndustryManifest=null;
-let industryBrowsePage=0,industryBrowseHtml='';
+let industryBrowsePage=0,industryBrowseHtml='',industryBrowseKind='horseBatches';
 function industryDirectories(){
  const tracks=Object.values(TRACK_PROGRAM_1999)
   .filter(t=>t.playableIn1999!==false&&t.trackOperating==='OPEN_1999')
@@ -194,24 +194,30 @@ function industryDirectories(){
  })));
  return {tracks,farms,owners};
 }
-async function browseFullIndustry(page=0){
+async function browseFullIndustry(page=0,kind=industryBrowseKind){
  if(!fullIndustryManifest)throw Error('Open the full industry first');
- const max=Math.ceil(fullIndustryManifest.horseCount/20);
+ if(!['horseBatches','personBatches'].includes(kind))throw Error('Invalid industry view');
+ industryBrowseKind=kind;
+ const count=kind==='horseBatches'?fullIndustryManifest.horseCount:
+  fullIndustryManifest.personCount;
+ const max=Math.ceil(count/20);
  industryBrowsePage=Math.max(0,Math.min(max-1,page));
  const first=industryBrowsePage*20,batchSize=fullIndustryManifest.batchSize;
  const store=await open1999IndustryDatabase();
  try{
   const ids=[Math.floor(first/batchSize),Math.floor((first+19)/batchSize)];
-  const a=await readPersistent1999IndustryBatch(store,fullIndustryManifest,'horseBatches',ids[0]);
-  const b=ids[1]===ids[0]?a:await readPersistent1999IndustryBatch(store,fullIndustryManifest,'horseBatches',ids[1]);
-  const records=Array.from({length:Math.min(20,fullIndustryManifest.horseCount-first)},
+  const a=await readPersistent1999IndustryBatch(store,fullIndustryManifest,kind,ids[0]);
+  const b=ids[1]===ids[0]?a:await readPersistent1999IndustryBatch(store,fullIndustryManifest,kind,ids[1]);
+  const records=Array.from({length:Math.min(20,count-first)},
    (_,i)=>{const index=first+i;return (Math.floor(index/batchSize)===ids[0]?a:b)[index%batchSize]});
-  industryBrowseHtml='<p>HORSES '+fmt(first+1)+'–'+fmt(first+records.length)+
-   ' OF '+fmt(fullIndustryManifest.horseCount)+'</p>'+
+  industryBrowseHtml='<p>'+esc(kind==='horseBatches'?'HORSES':'PERSONNEL')+
+   ' '+fmt(first+1)+'–'+fmt(first+records.length)+' OF '+fmt(count)+'</p>'+
    '<div style="max-height:260px;overflow:auto">'+records.map(h=>
-    '<div class="wtw-cc-slot"><strong>'+esc(h.id)+'</strong> · '+
-    esc(h.cohort)+' · '+esc(h.sex)+' · '+esc(h.foalYear)+
-    ' · '+esc(h.ownerId)+'</div>').join('')+'</div>';
+    '<div class="wtw-cc-slot"><strong>'+esc(h.name||h.id)+'</strong> · '+
+    esc(kind==='horseBatches'?h.cohort:h.role)+' · '+
+    esc(kind==='horseBatches'?h.sex:h.tier)+' · '+
+    esc(kind==='horseBatches'?h.foalYear:h.workplaceId)+
+    '</div>').join('')+'</div>';
  }finally{store.close()}
 }
 async function inspectFullIndustryHorse(horseId){
@@ -251,6 +257,14 @@ async function refresh(){
    esc(fullIndustryManifest.status)+'</p>'+
    '<label>HORSE ID<input data-cc="inspect-horse" value="H-FICTIONAL-1999-BROODMARES-0000001"/></label>'+
    '<button data-cc-action="inspect-full-horse">OPEN HORSE PROFILE</button>'+ 
+   '<div class="wtw-cc-actions"><button data-cc-action="industry-horses">HORSES</button>'+ 
+   '<button data-cc-action="industry-people">PERSONNEL</button></div>'+ 
+   '<p>BREEDING STOCK '+fmt(fullIndustryManifest.plan.counts.broodmares+fullIndustryManifest.plan.counts.stallions)+
+   ' · YEARLINGS '+fmt(fullIndustryManifest.plan.counts.yearlings)+
+   ' · 2YO PROSPECTS '+fmt(fullIndustryManifest.plan.counts.twoYearOldProspects)+
+   ' · 3YO RUNNERS '+fmt(fullIndustryManifest.plan.counts.threeYearOldRunners)+
+   ' · 4YO RUNNERS '+fmt(fullIndustryManifest.plan.counts.fourYearOldRunners)+
+   ' · OLDER RUNNERS '+fmt(fullIndustryManifest.plan.counts.fivePlusRunners)+'</p>'+ 
    '<div class="wtw-cc-actions"><button data-cc-action="industry-prev">PREVIOUS 20</button>'+ 
    '<button data-cc-action="industry-next">NEXT 20</button></div>'+industryBrowseHtml:'')+
   '</div>'+
@@ -293,6 +307,10 @@ async function perform(action,element){
   });
   await browseFullIndustry(0);
   notice='Full industry stored and ready to inspect. Existing career unchanged.';
+  return;
+ }
+ if(action==='industry-horses'||action==='industry-people'){
+  await browseFullIndustry(0,action==='industry-horses'?'horseBatches':'personBatches');
   return;
  }
  if(action==='industry-prev'||action==='industry-next'){
