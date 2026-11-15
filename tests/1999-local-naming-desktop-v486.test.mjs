@@ -17,7 +17,7 @@ const norm=x=>String(x).normalize('NFKD').toLowerCase().replace(/[^a-z0-9]/g,'')
 
 test('V485 wire schema retained but the V486 deterministic algorithm is clearly revision-pinned',()=>{
  assert.equal(LOCAL_HORSE_NAMING_SCHEMA,'WTW_LOCAL_HORSE_NAMING_V485');
- assert.equal(LOCAL_HORSE_NAMING_ALGORITHM_REVISION,'WTW_LOCAL_NAMING_RULES_V488');
+ assert.equal(LOCAL_HORSE_NAMING_ALGORITHM_REVISION,'WTW_LOCAL_NAMING_RULES_V489');
  assert.equal(BROWSER_REVISION,LOCAL_HORSE_NAMING_ALGORITHM_REVISION);
  const scenario=buildNamingLabScenario(fields);
  const original=JSON.stringify(scenario);
