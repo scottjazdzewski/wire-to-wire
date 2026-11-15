@@ -139,7 +139,13 @@ export async function assembleFictional1999Industry({
    breakingTraining:Math.ceil(active.length*.4)},
   protectedNames
  });
- const people=completeFictionalPersonBiographiesV1({people:named.people,seed});
+ const canonicalPersonId=id=>cleanId('P',id);
+ const canonicalOrgId=id=>cleanId('O',id);
+ const people=completeFictionalPersonBiographiesV1({people:named.people,seed})
+  .map(p=>({...p,id:canonicalPersonId(p.id),
+   ...(p.stableId?{stableId:canonicalOrgId(p.stableId)}:{}),
+   ...(p.organizationId?{organizationId:canonicalOrgId(p.organizationId)}:{}),
+   ...(p.farmId?{farmId:canonicalOrgId(p.farmId)}:{})}));
  const peopleById=new Map(people.map(p=>[p.id,p]));
  const stableOrg=named.stables.map((s,i)=>({
   ...s,id:cleanId('O',s.id),trainerId:cleanId('P',s.trainerId),
