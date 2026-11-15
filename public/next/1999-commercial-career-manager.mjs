@@ -283,7 +283,9 @@ async function refresh(){
    ' · 3YO RUNNERS '+fmt(fullIndustryManifest.plan.counts.threeYearOldRunners)+
    ' · 4YO RUNNERS '+fmt(fullIndustryManifest.plan.counts.fourYearOldRunners)+
    ' · OLDER RUNNERS '+fmt(fullIndustryManifest.plan.counts.fivePlusRunners)+
-   ' · 1999 COVERINGS BOOKED '+fmt(fullIndustryManifest.coveringCount)+'</p>'+ 
+   ' · 1999 COVERINGS BOOKED '+fmt(fullIndustryManifest.coveringCount)+
+   ' · SCHEDULED RACE DAYS '+fmt(fullIndustryManifest.scheduledCards)+
+   ' · RACES '+fmt(fullIndustryManifest.scheduledRaces)+'</p>'+ 
    '<div class="wtw-cc-actions"><button data-cc-action="industry-prev">PREVIOUS 20</button>'+ 
    '<button data-cc-action="industry-next">NEXT 20</button></div>'+industryBrowseHtml:'')+
   '</div>'+
