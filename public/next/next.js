@@ -173,6 +173,8 @@ function pushUIHistory(view){
  if(url!==location.pathname+location.search)window.history.pushState({wtwUI:view||'office'},'',url);
 }
 function openCustomView(view,section='Office',page='Overview'){
+ // Leaving a roster after a native VIEW selection must not defer its profile paint.
+ endNativeSelectInteraction(false);
  APP.custom=view;APP.section=section;APP.page=page;APP.moreOpen=false;
  pushUIHistory(view);paint();
 }
