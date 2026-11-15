@@ -353,6 +353,7 @@ async function perform(action,element){
   const progress=modal().querySelector('[data-cc="industry-progress"]');
   fullIndustryManifest=await prepareFictionalIndustry({
    seed,worldId:'WTW1999FullIndustry',...industryDirectories(),batchSize:2000,
+   yieldControl:()=>new Promise(resolve=>setTimeout(resolve,0)),
    onProgress:({kind,completed,totalRecords})=>{
     if(progress)progress.textContent='Creating '+kind+' · batch '+completed+
      ' · '+fmt(totalRecords)+' planned records. Do not close this window.';
