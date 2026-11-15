@@ -1919,10 +1919,22 @@ function profileDetail(route,sourceOverride=null){
    '</div></div>':'';
 
  const stakeDateRank=value=>{
-  const match=String(value||'').match(/\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(\d{1,2})\b/i);
+  const source=String(value||'').trim();
+  // 1999 track dossiers use ISO dates. Do not accidentally sort their
+  // sortable DATE column by race name merely because a month word is absent.
+  const iso=source.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(iso){
+   const year=Number(iso[1]),month=Number(iso[2]),day=Number(iso[3]);
+   return month>=1&&month<=12&&day>=1&&day<=31?
+    year*416+month*32+day:Number.MAX_SAFE_INTEGER;
+  }
+  const match=source.match(/\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(\d{1,2})\b/i);
   if(!match)return Number.MAX_SAFE_INTEGER;
   const month='jan feb mar apr may jun jul aug sep oct nov dec'.split(' ').indexOf(match[1].slice(0,3).toLowerCase());
-  return month<0?Number.MAX_SAFE_INTEGER:month*32+Number(match[2]);
+  const day=Number(match[2]);
+  if(month<0||day<1||day>31)return Number.MAX_SAFE_INTEGER;
+  const explicitYear=(source.match(/\b(?:19|20)\d{2}\b/)||[])[0];
+  return (explicitYear?Number(explicitYear)*416:0)+(month+1)*32+day;
  };
  // Read-only: summarize only the WTW race rows already available on this track.
  const stakeScheduleSummary=()=>{
@@ -1933,14 +1945,36 @@ function profileDetail(route,sourceOverride=null){
   const amount=canTotal?'$'+sum.toLocaleString('en-US'):'';
   return trackRaces.length+' RACE RECORDS'+(canTotal?' · '+amount+' SCHEDULED PURSES':'');
  };
+
+ // These functions change presentation/sorting only. Source grade and purse
+ // strings remain unchanged in the underlying 1999 race records.
+ const trackStakesGradeView=raw=>{
+  const source=String(raw??'').trim();
+  if(/^PLANNED[_ ]WTW(?:_|$)/i.test(source))
+   return {label:'PLANNED',grade:null,description:'Game-modeled race; official grade not certified',rank:5};
+  const grade=(source.match(/\bG([123])\b/i)||[])[1]||null;
+  return {label:source||'—',grade,description:source||'Grade not recorded',
+   rank:grade?Number(grade):/major/i.test(source)?4:5};
+ };
+ const trackStakesPurseValue=raw=>{
+  const source=String(raw??'').trim();
+  if(!/^\$[\d,]+(?:\.\d+)?$/.test(source))return null;
+  const amount=Number(source.replace(/[$,]/g,''));
+  return Number.isFinite(amount)?amount:null;
+ };
  // Same sorting/filter/view/scroll renderer as every other roster. The
  // public stakes list is sourced from the existing approved track dossier.
  const stakesTable=(limit=100)=>{
-  const gradeRank=value=>{const g=(String(value||'').match(/\bG([123])\b/i)||[])[1];return g?Number(g):/major/i.test(value)?4:5};
-  const purseRank=value=>{const n=Number(String(value||'').replace(/[^\d.]/g,''));return Number.isFinite(n)?n:-1};
-  const rank=(key,row)=>key==='date'?stakeDateRank(row.cols[1]):key==='grade'?gradeRank(row.cols[2]):key==='purse'?purseRank(row.cols[3]):row.cols[0].toLocaleLowerCase();
+  const rank=(key,row)=>key==='date'?stakeDateRank(row.cols[1]):
+   key==='grade'?trackStakesGradeView(row.cols[2]).rank:
+   key==='purse'?trackStakesPurseValue(row.cols[3]):row.cols[0].toLocaleLowerCase();
   const compare=(a,b)=>{
    const av=rank(APP.stakeSort,a),bv=rank(APP.stakeSort,b);
+   // An unknown date or purse is unknown, not January 1 or $0.
+   // Keep unverified values at the bottom in BOTH sort directions.
+   const unknown=value=>APP.stakeSort==='purse'&&value===null||
+    APP.stakeSort==='date'&&value===Number.MAX_SAFE_INTEGER;
+   if(unknown(av)!==unknown(bv))return unknown(av)?1:-1;
    const result=typeof av==='number'&&typeof bv==='number'?av-bv:String(av).localeCompare(String(bv),undefined,{numeric:true,sensitivity:'base'});
    return (APP.stakeSortDesc?-1:1)*result || a.cols[0].localeCompare(b.cols[0]);
   };
@@ -1954,12 +1988,11 @@ function profileDetail(route,sourceOverride=null){
   return '<div class="ng-stakes-table"><div class="ng-stakes-head">'+header+'</div>'+
    (ordered.slice(0,limit).map(({row,cols})=>{
     while(cols.length<4)cols.push('—');
-    const grade=(cols[2].match(/\bG([123])\b/i)||[])[1];
-    // Keep the untouched source grade for sorting; never show internal
-    // PLANNED_WTW_* machine codes as if they were race grades.
-    const gradeLabel=/^PLANNED[_ ]WTW(?:_|$)/i.test(cols[2])?'PLANNED':cols[2];
-    const gradeInfo=gradeLabel==='PLANNED'?'Game-modeled race; official grade not certified':cols[2];
-    const gradeCell=grade?'<span class="ng-stakes-grade" aria-label="Grade '+grade+'" title="Grade '+grade+'"><img class="ng-stakes-trophy" src="/assets/trophies/approved-grade-'+grade+'-64.png" alt="" width="16" height="16" decoding="async"/><small class="ng-stakes-grade-text" aria-hidden="true">G'+grade+'</small></span>':'<span title="'+safe(gradeInfo)+'">'+safe(gradeLabel)+'</span>';
+    const gradeView=trackStakesGradeView(cols[2]);
+    // Only source-confirmed grade strings may display the G1/G2/G3 trophies.
+    // A modeled PLANNED_WTW_* grade always stays PLANNED, even with G1 in its code.
+    const grade=gradeView.grade;
+    const gradeCell=grade?'<span class="ng-stakes-grade" aria-label="Grade '+grade+'" title="Grade '+grade+'"><img class="ng-stakes-trophy" src="/assets/trophies/approved-grade-'+grade+'-64.png" alt="" width="16" height="16" decoding="async"/><small class="ng-stakes-grade-text" aria-hidden="true">G'+grade+'</small></span>':'<span title="'+safe(gradeView.description)+'">'+safe(gradeView.label)+'</span>';
     const stakeId=row.node.dataset.stakeId||'';
     // Detached source rows have no legacy Office index: keep a live 1999 race-file click target.
     return '<button class="ng-stakes-data" data-ng="1999-stake" data-val="'+safe(stakeId)+
