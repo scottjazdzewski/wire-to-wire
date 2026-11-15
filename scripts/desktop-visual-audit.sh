@@ -2,7 +2,11 @@
 set -euo pipefail
 CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
 if [[ -z "$CHROME" ]]; then echo "Browser unavailable: cannot visually validate" >&2; exit 1; fi
-mkdir -p visual-audit/screenshots visual-audit/dom
+mkdir -p visual-audit/screenshots visual-audit/dom visual-audit/source-logos
+# Include exact, UNMODIFIED approved original files for auditing contrast and
+# alpha-matte conversion. These are evidence only, never shipped UI variants.
+cp public/assets/places/track-logos/T-0017.webp visual-audit/source-logos/T-0017.webp
+cp public/assets/places/track-logos/T-0001.webp visual-audit/source-logos/T-0001.webp
 python3 -m http.server 8765 --bind 127.0.0.1 --directory public >/tmp/wtw-visual-http.log 2>&1 &
 SERVER_PID=$!
 trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
