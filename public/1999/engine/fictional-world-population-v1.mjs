@@ -135,13 +135,21 @@ export async function assembleFictional1999Industry({
   ancestorIds.add(h.id);
   return {...h,foalYear:birthYearOf(h)};
  });
- const horses=[],pool=[...parents];
+ const horses=[];
+ const sirePools=new Map(),damPools=new Map();
+ for(let year=1989;year<=1997;year++){
+  sirePools.set(year,parents.filter(h=>birthYearOf(h)<=year-4&&
+   ['HORSE','COLT','STALLION'].includes(sexOf(h))));
+  damPools.set(year,parents.filter(h=>birthYearOf(h)<=year-4&&
+   ['MARE','FILLY','BROODMARE'].includes(sexOf(h))));
+ }
  for(let i=0;i<horseCount;i++){
   const id='H-WTW1999-'+seed.toString(16).toUpperCase()+'-'+String(i+1).padStart(7,'0');
   const year=1989+draw(seed,'foal-year:'+i,9);
   const sex=draw(seed,'sex:'+i,2)===0?'COLT':'FILLY';
-  const sire=pickParent(pool,'sire',year,seed,'sire:'+i);
-  const dam=pickParent(pool,'dam',year,seed,'dam:'+i);
+  const sires=sirePools.get(year),dams=damPools.get(year);
+  const sire=sires.length?sires[draw(seed,'sire:'+i,sires.length)]:null;
+  const dam=dams.length?dams[draw(seed,'dam:'+i,dams.length)]:null;
   if(!sire||!dam)throw Error('Incomplete foundation sire/dam cohort for horse '+id);
   const stable=stableOrg[i%stableOrg.length];
   const owner=ownerOrg[draw(seed,'owner:'+i,ownerOrg.length)];
@@ -159,7 +167,8 @@ export async function assembleFictional1999Industry({
    source:'GENERATED_FICTIONAL_1999',namingAuthority:'EXTERNAL_ACCEPTED_HORSE_NAME_BATCH'
   };
   horses.push(horse);
-  pool.push(horse);
+  for(let future=year+4;future<=1997;future++)
+   (sex==='COLT'?sirePools:damPools).get(future).push(horse);
  }
  const allHorseIds=new Set([...parents,...horses].map(h=>h.id));
  const entities={horses:[...parents,...horses],people,organizations,
