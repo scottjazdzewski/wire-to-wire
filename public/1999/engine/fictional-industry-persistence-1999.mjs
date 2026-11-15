@@ -9,6 +9,7 @@ import {generate1999IndustryRegistryBatches,count1999Registry}
  from './fictional-industry-registry-1999.mjs';
 import {plan1999IndustryStaffing,generate1999StaffingBatches}
  from './fictional-industry-staffing-1999.mjs';
+import {createPersonnelNameRoster} from './personnel-name-engine.mjs';
 import {connect1999Horse,connect1999Person,connect1999DirectoryEntity,
  validate1999GraphBatch,validate1999IndustryReferences,INDUSTRY_GRAPH_SCHEMA}
  from './fictional-industry-graph-1999.mjs';
@@ -125,6 +126,18 @@ export async function createPersistent1999Industry({
  const staffing=plan1999IndustryStaffing({seed,ecosystem:plan});
  const totalHorses=count1999Registry(plan);
  const totalPeople=Object.values(staffing.counts).reduce((a,b)=>a+b,0);
+ // Generate the deterministic roster once. The workforce indexing and
+ // persisted people pass must use the same identities without repeating
+ // the expensive geographic name collision screening.
+ const roleCounts=Object.entries(staffing.counts);
+ const personnelNames=createPersonnelNameRoster(seed,totalPeople,index=>{
+  let offset=index;
+  for(const [role,count] of roleCounts){
+   if(offset<count)return role;
+   offset-=count;
+  }
+  throw Error('Personnel naming index outside opening workforce');
+ });
  const existing=await store.get('manifests',id);
  if(existing){
   if(existing.schema!==PERSISTENT_INDUSTRY_SCHEMA||
@@ -171,7 +184,7 @@ export async function createPersistent1999Industry({
  // training/jockey link is a geographically coherent workplace relationship.
  const staffByTrack={trainer:new Map(),jockey:new Map()};
  for(const staffBatch of generate1999StaffingBatches({
-  seed,staffing,tracks,farms,batchSize
+  seed,staffing,tracks,farms,batchSize,nameRoster:personnelNames
  })){
   for(const person of staffBatch.records){
    if(!['trainer','jockey'].includes(person.role))continue;
@@ -189,7 +202,7 @@ export async function createPersistent1999Industry({
   ['horseBatches',generate1999IndustryRegistryBatches({
    seed,plan,farms,tracks,owners,batchSize})],
   ['personBatches',generate1999StaffingBatches({
-   seed,staffing,tracks,farms,batchSize})]
+   seed,staffing,tracks,farms,batchSize,nameRoster:personnelNames})]
  ]){
   const progressKey=kind==='horseBatches'?'horseBatchesCommitted':'personBatchesCommitted';
   let index=0;
