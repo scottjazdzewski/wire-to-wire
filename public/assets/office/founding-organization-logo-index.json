@@ -1,6 +1,6 @@
 {
   "schema": "WTW_FOUNDING_1999_APPROVED_ORGANIZATION_LOGOS_V1",
-  "version": "2026-11-14-mar-azul-approved-30-opaque-256-v9",
+  "version": "2026-11-14-ledbetter-calder-approved-31-opaque-256-v10",
   "authority": "37 canonical January 1999 founding organizations, exact O-ID and display name. User-approved Drive master originals; no legacy identity/name alias substitutions.",
   "approvedOrganizationIds": [
     "O-000001",
@@ -71,12 +71,13 @@
     "organization:O-FOUNDING-1999-002": "/assets/office/founding-organization-logos/O-FOUNDING-1999-002.png",
     "organization:O-005910": "/assets/office/founding-organization-logos/O-005910.png",
     "organization:O-FOUNDING-1999-013": "/assets/office/founding-organization-logos/O-FOUNDING-1999-013.png",
-    "organization:O-FOUNDING-1999-009": "/assets/office/founding-organization-logos/O-FOUNDING-1999-009.png"
+    "organization:O-FOUNDING-1999-009": "/assets/office/founding-organization-logos/O-FOUNDING-1999-009.png",
+    "organization:O-006905": "/assets/office/founding-organization-logos/O-006905.png"
   },
-  "pending": "Seven unmatched organizations use neutral initials until high-resolution artwork is approved; never substitute generated 64px logos, state flags or unrelated identity marks.",
+  "pending": "Six remaining unmatched organizations use neutral initials until individually approved high-resolution artwork; do not substitute retired generated logos, state flags, or similar-name owners.",
   "forbiddenFallback": "DO_NOT_USE_LEGACY_OR_UNMATCHED_ORGANIZATIONS_OR_UNAPPROVED_NAME_ALIASES",
-  "publishedCount": 30,
-  "remainingWithoutMatchedLogo": 7,
+  "publishedCount": 31,
+  "remainingWithoutMatchedLogo": 6,
   "audit": {
     "source": "Only verified, exact-ID 256px approved artwork in Drive master remains live; retired 64px placeholder assets removed from distribution.",
     "matchingRule": "SAME_EXACT_ORGANIZATION_ID_AND_NAME",
@@ -260,6 +261,12 @@
         "name": "Mar Azul Racing",
         "path": "/assets/office/founding-organization-logos/O-FOUNDING-1999-009.png",
         "match": "USER_APPROVED_CANONICAL_ID_AND_EXACT_NAME"
+      },
+      {
+        "id": "O-006905",
+        "name": "Ledbetter Calder Stables",
+        "path": "/assets/office/founding-organization-logos/O-006905.png",
+        "match": "USER_APPROVED_CANONICAL_ID_AND_EXACT_NAME"
       }
     ],
     "notPublished": [
@@ -292,11 +299,6 @@
         "id": "O-000059",
         "name": "Circle B Racing",
         "reason": "RETIRED_PIXELATED_64PX_LEGACY_IMAGE__NEUTRAL_UNTIL_APPROVED_HIGH_RES"
-      },
-      {
-        "id": "O-006905",
-        "name": "Ledbetter Calder Stables",
-        "reason": "NO_MATCHING_USER_APPROVED_LOGO_FILE"
       }
     ]
   },
@@ -330,6 +332,7 @@
     "O-FOUNDING-1999-002",
     "O-005910",
     "O-FOUNDING-1999-013",
-    "O-FOUNDING-1999-009"
+    "O-FOUNDING-1999-009",
+    "O-006905"
   ]
 }

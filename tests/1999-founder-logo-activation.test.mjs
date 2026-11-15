@@ -54,7 +54,7 @@ test('existing approved track logos, badge set and selected ID-verified portrait
 });
 
 test('the clean Office loads only the founder manifest, without silently reviving legacy organizations',()=>{
- assert.match(ui,/founding-organization-logo-index\.json\?rev=founder-approved-30-20261114/);
+ assert.match(ui,/founding-organization-logo-index\.json\?rev=founder-approved-31-20261114/);
  assert.match(ui,/const approvedOrg=isClean1999\(\)\?/);
  assert.match(ui,/approvedOrg\?\['organization:'\+approvedOrg\.id\]/);
  assert.match(ui,/const allowed=\(world1999Data\?\.organizations\|\|\[\]\)\.some\(o=>o\.id===id\)/);

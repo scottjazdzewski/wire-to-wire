@@ -63,3 +63,16 @@ test('Mar Azul uses an opaque 256x256 exact-ID badge rather than an old horse or
  assert.equal(bytes[25],2,'Approved Mar Azul file must be opaque truecolor RGB');
  assert.ok(index.audit.published.some(x=>x.id===id&&x.name==='Mar Azul Racing'));
 });
+
+test('Ledbetter Calder approved LC logo is 256px opaque RGB and keyed by immutable O-ID',()=>{
+ const id='O-006905',org=roster.organizations.find(x=>x.id===id);
+ assert.equal(org.name,'Ledbetter Calder Stables');
+ const path=index.organizations['organization:'+id];
+ assert.equal(path,'/assets/office/founding-organization-logos/'+id+'.png');
+ const bytes=readFileSync(resolve(root,'public'+path));
+ assert.equal(bytes.readUInt32BE(16),256);
+ assert.equal(bytes.readUInt32BE(20),256);
+ assert.equal(bytes[25],2,'The approved LC badge is RGB with opaque purple corners');
+ assert.ok(index.audit.published.some(x=>x.id===id&&x.name==='Ledbetter Calder Stables'));
+ assert.ok(!index.audit.notPublished.some(x=>x.id===id));
+});
