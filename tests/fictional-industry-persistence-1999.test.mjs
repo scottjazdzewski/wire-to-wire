@@ -64,6 +64,14 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
  const first=await readPersistent1999IndustryBatch(store,a,'horseBatches',0);
  assert.equal(first[0].id,'H-FICTIONAL-1999-BROODMARES-0000001');
  assert.ok(first[0].ratings.speed>=15);
+ assert.ok(first[0].name&&first[0].namingStatus==='PROVISIONAL_EDITABLE_1999_OPENING');
+ assert.ok(a.horseNamingRevision.includes('OPENING_INDUSTRY_V1'));
+ const namedAdult=await findPersistent1999Horse(store,a,
+  'H-FICTIONAL-1999-THREEYEAROLDRUNNERS-0000001');
+ assert.ok(namedAdult.name&&namedAdult.namingRevision===a.horseNamingRevision);
+ const yearling=await findPersistent1999Horse(store,a,
+  'H-FICTIONAL-1999-YEARLINGS-0000001');
+ assert.equal(yearling.name,null);
  assert.ok(first[0].relationships.some(e=>e.type==='OWNED_BY'));
  const runner=await findPersistent1999Horse(store,a,
   'H-FICTIONAL-1999-THREEYEAROLDRUNNERS-0000001');
@@ -89,7 +97,7 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
  await updatePersistent1999Horse(store,b,first[0].id,{name:'Copper Horizon'});
  const edited=await readPersistent1999HorseProfile(store,b,first[0].id);
  assert.equal(edited.name,'Copper Horizon');
- assert.equal((await findPersistent1999Horse(store,b,first[0].id)).name,null);
+ assert.equal((await findPersistent1999Horse(store,b,first[0].id)).name,first[0].name);
  const run=await savePersistent1999CareerRun(store,b,{runId:'career-1',
   player:{role:'owner',organizationId:'O-OWNER-1'},
   changes:{balanceMinor:123456},gameDate:'1999-02-01'});
