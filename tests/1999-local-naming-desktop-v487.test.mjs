@@ -40,7 +40,7 @@ test('V487 screens later authored foal names when earliest two are already regis
  assert.deepEqual(out,generateLocalPopulationNamingBatch({batch,existingNames:blocked,attempt:0}));
  assert.equal(JSON.stringify(batch),input,'naming never mutates the certified foaling record');
  assert.equal(out.algorithmRevision,LOCAL_HORSE_NAMING_ALGORITHM_REVISION);
- assert.equal(out.algorithmRevision,'WTW_LOCAL_NAMING_RULES_V487');
+ assert.equal(out.algorithmRevision,'WTW_LOCAL_NAMING_RULES_V488');
  assert.ok(out.readyForIndependentEditor>0,'later valid names should be offered');
  assert.equal(out.screened[0].proposals.length,out.readyForIndependentEditor);
  assert.ok(out.screened[0].proposals.every(p=>p.status==='READY_FOR_INDEPENDENT_EDITOR'));
@@ -70,7 +70,7 @@ test('V487 never reserves failed owner-reviewed names and never duplicates withi
 
 test('V487 exhausts safely if all authored names are pre-reserved, with empty reservation delta',()=>{
  const brief=makeBrief(3),batch=batchFor([brief]);
- const pool=createLocalStoryIdeas(brief,{count:8,attempt:0}).suggestions.map(s=>s.name);
+ const pool=createLocalStoryIdeas(brief,{count:8,attempt:0,scanAll:true}).suggestions.map(s=>s.name);
  assert.ok(pool.length>0);
  const out=generateLocalPopulationNamingBatch({batch,existingNames:pool});
  assert.equal(out.exhaustedFoals,1);
