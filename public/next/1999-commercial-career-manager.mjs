@@ -182,6 +182,21 @@ function inputProfile(){
  });
 }
 let fullIndustryManifest=null;
+let selectedIndustryHorses=25000,selectedIndustrySeed=19990101;
+const INDUSTRY_SIZE_MIN=10000,INDUSTRY_SIZE_MAX=325000;
+function requestedIndustry(){
+ const root=modal();
+ const horseCount=Number(root.querySelector('[data-cc="industry-size"]')?.value??selectedIndustryHorses);
+ const seed=Number(root.querySelector('[data-cc="seed"]')?.value??selectedIndustrySeed);
+ if(!Number.isSafeInteger(horseCount)||horseCount<INDUSTRY_SIZE_MIN||
+  horseCount>INDUSTRY_SIZE_MAX)throw Error('Choose 10000–325000 opening horses');
+ if(!Number.isSafeInteger(seed)||seed<1||seed>4294967295)
+  throw Error('Invalid 1999 industry seed');
+ selectedIndustryHorses=horseCount;selectedIndustrySeed=seed;
+ // Distinct sizes keep independent manifests, immutable records and edits.
+ return {seed,targetOpeningHorses:horseCount,
+  worldId:'WTW1999FullIndustry-H'+horseCount};
+}
 let industryBrowsePage=0,industryBrowseHtml='',industryBrowseKind='horseBatches';
 let industryDirectory=[];
 async function industryDirectories(seed=19990101){
@@ -327,6 +342,7 @@ async function refresh(){
    ' · SEED '+esc(current.seed)+'</div>'+
   '<div class="wtw-cc-section"><h3>FULL FICTIONAL 1999 INDUSTRY — WORLD EXPLORER</h3>'+
   '<p>Generate and reopen the complete 1999 industry without replacing your current career. Personnel, farm and owner identities use the existing naming generators. Horse names remain held where the approved story-based naming process has not released them. This is an industry inspection build; full-world live race gameplay is not yet activated.</p>'+
+  '<label>OPENING HORSES (10,000–325,000)<input data-cc="industry-size" type="number" min="10000" max="325000" step="1" value="'+esc(selectedIndustryHorses)+'"/></label>'+
   '<div class="wtw-cc-actions"><button data-cc-action="open-existing-industry">OPEN SAVED 1999 WORLD</button>'+ 
   '<button data-cc-action="open-full-industry">CREATE / RESUME FULL INDUSTRY</button></div>'+ 
   '<p data-cc="industry-progress" role="status" aria-live="polite">'+
@@ -385,11 +401,11 @@ async function perform(action,element){
  }
  if(action==='import'){modal().querySelector('[data-cc="import-file"]').click();return}
  if(action==='open-existing-industry'){
-  const seed=Number(modal().querySelector('[data-cc="seed"]')?.value||19990101);
+  const {seed,worldId}=requestedIndustry();
   const db=await open1999IndustryDatabase();
   try{
    const reopened=await reopenPersistent1999Industry(db,{
-    seed,worldId:'WTW1999FullIndustry'});
+    seed,worldId});
    if(!reopened){
     notice='No saved full 1999 world found. Select CREATE / RESUME FULL INDUSTRY.';
     return;
@@ -406,11 +422,11 @@ async function perform(action,element){
   return;
  }
  if(action==='open-full-industry'){
-  notice='Generating the complete industry. This may take several minutes.';
-  const seed=Number(modal().querySelector('[data-cc="seed"]')?.value||19990101);
+  notice='Generating the selected industry. Existing careers are untouched.';
+  const {seed,worldId,targetOpeningHorses}=requestedIndustry();
   const progress=modal().querySelector('[data-cc="industry-progress"]');
   fullIndustryManifest=await prepareFictionalIndustry({
-   seed,worldId:'WTW1999FullIndustry',...(await industryDirectories(seed)),batchSize:2000,
+   seed,worldId,targetOpeningHorses,...(await industryDirectories(seed)),batchSize:2000,
    yieldControl:()=>new Promise(resolve=>setTimeout(resolve,0)),
    onProgress:({kind,completed,totalRecords})=>{
     if(progress)progress.textContent='Creating '+kind+' · batch '+completed+
