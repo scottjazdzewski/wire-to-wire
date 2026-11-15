@@ -11,6 +11,11 @@ const {bundledFile,htmlContentSecurityPolicy}=require('./local-content.cjs');
 
 const ORIGIN='wtw://game';
 const args=process.argv.slice(1);
+const startupStartedAt=process.hrtime.bigint();
+const startupMilestones={};
+function markStartup(name){
+ startupMilestones[name]=Number(process.hrtime.bigint()-startupStartedAt)/1e6;
+}
 function option(name){
  const flag='--'+name+'=';
  const item=args.find(a=>a.startsWith(flag));
@@ -58,12 +63,14 @@ const contentRoot=app.isPackaged
  :path.resolve(__dirname,'..','public');
 
 function reportSmoke(details,passed){
+ const evidence={...details,startup:{...startupMilestones,
+  totalMs:Number(process.hrtime.bigint()-startupStartedAt)/1e6}};
  if(smokeReport){
   const filename=path.resolve(smokeReport);
   fs.mkdirSync(path.dirname(filename),{recursive:true});
-  fs.writeFileSync(filename,JSON.stringify(details,null,2)+'\n','utf8');
+  fs.writeFileSync(filename,JSON.stringify(evidence,null,2)+'\n','utf8');
  }
- console.log('WTW_DESKTOP_SMOKE_'+(passed?'PASS ':'FAIL ')+JSON.stringify(details));
+ console.log('WTW_DESKTOP_SMOKE_'+(passed?'PASS ':'FAIL ')+JSON.stringify(evidence));
  app.exit(passed?0:1);
 }
 
@@ -142,6 +149,8 @@ function openGameWindow(){
   recordBootFailure('Game renderer exited unexpectedly',JSON.stringify(details)));
  win.on('unresponsive',()=>
   recordBootFailure('Game window became unresponsive','Windows could not display the active game window.'));
+ win.webContents.once('did-finish-load',()=>markStartup('documentLoaded'));
+ markStartup('windowCreated');
 
  return win;
 }
@@ -183,6 +192,7 @@ async function runSmoke(win){
  if(!last?.gameVisible||!last.oldOfficeHidden||!last.schema||!last.date||
     last.desktop!=='windows-desktop')throw Error('Game UI did not initialize: '+JSON.stringify(last));
  if(last.origin!==ORIGIN)throw Error('Application loaded an unexpected origin: '+last.origin);
+ markStartup('gameUIReady');
  if(smokePhase==='visible'){
   // GitHub's Windows runner uses a noninteractive service session; a Chromium
   // capture there can contain only background pixels although the DOM is ready.
@@ -232,8 +242,10 @@ async function runSmoke(win){
 }
 
 app.whenReady().then(async()=>{
+ markStartup('appReady');
  restrictNetwork();
  protocol.handle('wtw',serveLocalAsset);
+ markStartup('protocolReady');
  const win=openGameWindow();
  await win.loadURL(ORIGIN+'/next/index.html');
  if(!smokePhase){win.show();win.focus();}
