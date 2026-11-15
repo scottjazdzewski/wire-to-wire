@@ -81,7 +81,7 @@ test('multi-role founders show separate approved owner and bloodstock specialty 
  assert.equal(sheet.total,catalog.person_common.length+defs.length);
  assert.match(sheet.html,/OWNER SKILLS/);
  assert.match(sheet.html,/BLOODSTOCK PROFESSIONAL SKILLS/);
- assert.match(sheet.html,/Bloodstock Valuation|Deal Negotiation|Market Knowledge/);
+ assert.match(sheet.html,/Pedigree Interpretation|Bloodstock Markets|Prospect Inspection/);
 });
 test('Overview and deeper Attributes share the same source model, while the horse dossier remains unchanged',()=>{
  assert.match(js,/const skillSheet=person\.profileAttributes\(\)/);
