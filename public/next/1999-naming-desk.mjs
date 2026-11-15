@@ -53,7 +53,7 @@ export function createNamingDeskController({
  const write=typeof saveFeedback==='function'?saveFeedback:(next)=>{memory=next;return next};
  const model={fields:{ownerName:'Naming Lab Owner',breederName:'Naming Lab Breeder',
   foalingYear:'1996',story:'',direction:'',targetHorseId:''},
-  busy:false,error:'',notice:'',results:[],recentNames:[],attempt:0,
+  busy:false,error:'',notice:'',results:[],allResults:[],recentNames:[],attempt:0,
   shortlist:[],rejected:[],hasGenerated:false,view:'ALL',
   feedback:createNamingFeedback()};
  try{model.feedback=validateNamingFeedback(load()||createNamingFeedback())}
@@ -96,6 +96,10 @@ export function createNamingDeskController({
     nameFeedback:feedback(),direction:model.fields.direction
    });
    model.results=verdict.screened;
+   const existing=new Set(model.allResults.map(x=>x.name.toLocaleLowerCase('en-US')));
+   for(const row of model.results)if(!existing.has(row.name.toLocaleLowerCase('en-US'))){
+    model.allResults.push(row);existing.add(row.name.toLocaleLowerCase('en-US'));
+   }
    model.recentNames=[...model.recentNames,...model.results.map(r=>r.name)].slice(-60);
    model.hasGenerated=true;model.view='ALL';
    model.notice=verdict.readyForIndependentEditor+' EDITOR-SCREENED NAME(S) · '+
@@ -108,7 +112,7 @@ export function createNamingDeskController({
  function row(name){
   const key=String(name||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
     .toLocaleLowerCase('en-US').replace(/[^a-z0-9]/g,'');
-  const result=model.results.find(r=>r.name&&r.name.normalize('NFKD')
+  const result=model.allResults.find(r=>r.name&&r.name.normalize('NFKD')
    .replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('en-US')
    .replace(/[^a-z0-9]/g,'')===key);
   const prior=feedback().decisions[key];
@@ -156,7 +160,7 @@ export function createNamingDeskController({
  function choose(name){return decide(name,'CHOOSE')}
  function clear(){
   if(model.busy)return false;
-  model.results=[];model.recentNames=[];model.attempt=0;model.error='';
+  model.results=[];model.allResults=[];model.recentNames=[];model.attempt=0;model.error='';
   // Never erase lifetime rejected/kept/chosen decisions by clearing a preview.
   model.notice='Current proposal list cleared. Saved choices remain in this career.';
   refresh();return true;
@@ -176,7 +180,7 @@ export function createNamingDeskController({
   const targets=currentTargets();
   const bank=Object.values(profile.decisions);
   const displayed=new Map();
-  for(const item of model.results)displayed.set(item.name.toLocaleLowerCase('en-US'),{
+  for(const item of model.allResults)displayed.set(item.name.toLocaleLowerCase('en-US'),{
    ...item,decision:profile.decisions[item.name.normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
     .toLocaleLowerCase('en-US').replace(/[^a-z0-9]/g,'')]?.decision||''});
   for(const item of bank)if(![...displayed.values()].some(x=>x.name===item.name))
