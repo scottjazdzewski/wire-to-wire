@@ -10,6 +10,7 @@ import {generate1999IndustryRegistryBatches,count1999Registry}
 import {plan1999IndustryStaffing,generate1999StaffingBatches}
  from './fictional-industry-staffing-1999.mjs';
 import {createPersonnelNameRoster} from './personnel-name-engine.mjs';
+import {LOCAL_HORSE_NAMING_ALGORITHM_REVISION} from '../game/horse-naming-local-v485.js';
 import {connect1999Horse,connect1999Person,connect1999DirectoryEntity,
  validate1999GraphBatch,validate1999IndustryReferences,INDUSTRY_GRAPH_SCHEMA}
  from './fictional-industry-graph-1999.mjs';
@@ -125,6 +126,7 @@ export async function createPersistent1999Industry({
  const plan=plan1999Ecosystem({seed});
  const staffing=plan1999IndustryStaffing({seed,ecosystem:plan});
  const totalHorses=count1999Registry(plan);
+ const horseNamingRevision=LOCAL_HORSE_NAMING_ALGORITHM_REVISION+':OPENING_INDUSTRY_V1';
  const totalPeople=Object.values(staffing.counts).reduce((a,b)=>a+b,0);
  // Generate the deterministic roster once. The workforce indexing and
  // persisted people pass must use the same identities without repeating
@@ -149,7 +151,8 @@ export async function createPersistent1999Industry({
    existing.graphSchema!==INDUSTRY_GRAPH_SCHEMA||
    existing.breedingSchema!==BREEDING_BOOK_1999_SCHEMA||
    existing.coveringCount!==plan.minimumCoversForTargetFoals||
-   existing.calendarSchema!==FICTIONAL_1999_CALENDAR_SCHEMA)
+   existing.calendarSchema!==FICTIONAL_1999_CALENDAR_SCHEMA||
+   existing.horseNamingRevision!==horseNamingRevision)
    throw Error('Existing industry identity or generation parameters conflict');
   if(existing.status==='COMPLETE')return existing;
  }
@@ -158,6 +161,7 @@ export async function createPersistent1999Industry({
   status:'GENERATING',horseCount:totalHorses,personCount:totalPeople,
   horseBatchesCommitted:0,personBatchesCommitted:0,
   directoryCommitted:false,graphSchema:INDUSTRY_GRAPH_SCHEMA,
+  horseNamingRevision,
   breedingSchema:BREEDING_BOOK_1999_SCHEMA,
   coveringCount:plan.minimumCoversForTargetFoals,coveringBatchesCommitted:0,
   calendarSchema:FICTIONAL_1999_CALENDAR_SCHEMA,calendarBatchesCommitted:0,
@@ -200,7 +204,7 @@ export async function createPersistent1999Industry({
  }
  for(const [kind,generator] of [
   ['horseBatches',generate1999IndustryRegistryBatches({
-   seed,plan,farms,tracks,owners,batchSize})],
+   seed,plan,farms,tracks,owners,batchSize,emitNames:true})],
   ['personBatches',generate1999StaffingBatches({
    seed,staffing,tracks,farms,batchSize,nameRoster:personnelNames})]
  ]){
