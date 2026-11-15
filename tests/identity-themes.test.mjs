@@ -73,7 +73,7 @@ test('new themes are cache-busted coherently without a second stylesheet',()=>{
  const module=readFileSync(new URL('../public/next/identity-themes.mjs',import.meta.url),'utf8');
  assert.match(page,/identity-themes\.mjs\?rev=wtw-track-identity-locked-20261114/);
  assert.match(module,/visual-themes-v1\.json\?v=20261114c-track-restore/);
- assert.match(page,/next\.css\?rev=wtw-track-profile-permanent-20261114/);
+ assert.match(page,/next\.css\?rev=wtw-uniform-organization-logos-20261114/);
  assert.equal((page.match(/rel="stylesheet"/g)||[]).length,1);
 });
 
