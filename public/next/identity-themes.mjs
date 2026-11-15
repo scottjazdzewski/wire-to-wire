@@ -45,7 +45,9 @@ export function paletteFromImageData(image){
   const a=data[i+3];if(a<96)continue;
   const r=data[i],g=data[i+1],b=data[i+2],hi=Math.max(r,g,b),lo=Math.min(r,g,b);
   const chroma=hi-lo;
-  if(hi<68||chroma<33||chroma/Math.max(hi,1)<.19)continue;
+  // Dark saturated green/blue ink is still real logo ink (e.g. Santa Anita).
+  // Exclude near-black noise by requiring relative chroma and nonzero value.
+  if(hi<24||chroma<13||chroma/Math.max(hi,1)<.22)continue;
   const bin=Math.floor(hueOf(r,g,b)/15)%24;
   const w=(a/255)*(.65+chroma/255);
   const x=bins[bin];x.weight+=w;x.r+=w*r;x.g+=w*g;x.b+=w*b;
@@ -66,9 +68,16 @@ export function paletteFromImageData(image){
  };
  const first=ranked[0],primary=actualPixel(first);
  if(!primary)return null;
- const other=ranked.slice(1).find(x=>
-  x.weight>=first.weight*.24&&
-  Math.min(Math.abs(x.i-first.i),24-Math.abs(x.i-first.i))>=2);
+ // A small vivid stripe or emblem can be the logo's real highlight,
+ // even if most pixels are the much darker main wordmark.
+ const firstValue=Math.max(...primary);
+ const other=ranked.slice(1).find(x=>{
+  if(x.weight<Math.max(1.5,first.weight*.035))return false;
+  const actual=actualPixel(x);
+  if(!actual)return false;
+  const hueGap=Math.min(Math.abs(x.i-first.i),24-Math.abs(x.i-first.i));
+  return hueGap>=2||Math.max(...actual)>firstValue*1.5;
+ });
  const secondary=(other&&actualPixel(other))||primary;
  return {base:asHex(primary),bright:asHex(secondary),source:"logo-pixels"};
 }
