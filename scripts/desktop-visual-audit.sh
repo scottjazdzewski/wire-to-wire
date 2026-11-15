@@ -92,6 +92,19 @@ test -s visual-audit/screenshots/office-messages-1280.png
 test -s visual-audit/screenshots/office-decisions-1280.png
 
 capture office-career '?ui=Career' 'ng-manager-career'
+# Career is a major desktop management desk: verify the laptop viewport too.
+"$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+ --force-device-scale-factor=1 --window-size=1280,800 --virtual-time-budget=4000 \
+ --screenshot="visual-audit/screenshots/office-career-1280.png" \
+ 'http://127.0.0.1:8765/next/?ui=Career' >/tmp/wtw-career1280.log 2>&1
+test -s visual-audit/screenshots/office-career-1280.png
+if ! grep -q 'ng-career-identity' visual-audit/dom/office-career.html; then
+ echo 'Career identity dossier missing from actual browser render' >&2; exit 1
+fi
+if ! grep -q 'ng-career-priority' visual-audit/dom/office-career.html; then
+ echo 'Career has no source-backed active management priorities' >&2; exit 1
+fi
+
 capture stable-training '?ui=Stable%20%E2%80%94%20Training' 'ng-training-desk'
 # Real content checks: a generic directory is no longer acceptable on these routes.
 if grep -q 'CONNECTED WORLD RECORDS' visual-audit/dom/office-messages.html ||
