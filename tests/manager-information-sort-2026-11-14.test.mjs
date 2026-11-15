@@ -64,7 +64,9 @@ test('Sorting is scoped to its displayed screen and all contexts use the one int
 });
 
 test('Information-rich management panels expose keyboard-focusable internal scroll, no second stylesheet',()=>{
- assert.equal((ui.match(/class="ng-manager-rows" tabindex="0" role="region"/g)||[]).length,3);
+ assert.equal((ui.match(/class="ng-manager-rows" tabindex="0" role="region"/g)||[]).length,4,
+  'World, News, Opportunities, and Stable operations all retain keyboard-accessible scroll regions');
+ assert.match(ui,/function stableOperationsView\(page\)/);
  assert.equal((ui.match(/class="ng-manager-secondary-list" tabindex="0" role="region"/g)||[]).length,2);
  assert.match(css,/\.ng-manager-rows:focus-visible,\.ng-manager-secondary-list:focus-visible/);
  assert.match(css,/\.ng-manager-columns>span\[aria-sort="descending"\]>button/);
