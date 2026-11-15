@@ -149,6 +149,10 @@ test('Career dossier uses only current-save identity, actionable Office cases, f
  assert.match(view,/data-ng="commercial-career-open"/);
  assert.match(view,/data-ng="organization"/);
  assert.match(view,/ng-career-priorities/);
+ assert.match(view,/OFFICE UPDATES/);
+ assert.match(view,/messages\.filter\(m=>!m\.urgent\|\|m\.resolved\)/);
+ assert.match(view,/Manager and position not recorded/);
+
  assert.match(view,/ng-career-identity/);
  assert.match(view,/ng-career-facts/);
  assert.doesNotMatch(view,/Math\.random|fabricatedAchievement|fakeJobOffer/);
