@@ -48,3 +48,30 @@ test('personnel naming retains deterministic stable IDs and geographic workplace
    ['farm_manager','breeding_attendant'].includes(person.role)?'F-0001':'T-0001');
  }
 });
+
+
+test('sized worlds guarantee one trainer and jockey for every approved circuit',()=>{
+ const tracks=Array.from({length:107},(_,i)=>({
+  id:'T-'+String(i+1).padStart(4,'0'),location:{region:'Kentucky'}
+ }));
+ const ecosystem=plan1999Ecosystem({seed:19990101,targetOpeningHorses:10000});
+ const staffing=plan1999IndustryStaffing({
+  seed:19990101,ecosystem,minimumRacingTracks:tracks.length
+ });
+ assert.ok(staffing.counts.trainer>=tracks.length);
+ assert.ok(staffing.counts.jockey>=tracks.length);
+ const persons=[...generate1999StaffingBatches({
+  seed:19990101,staffing,tracks,
+  farms:[{id:'O-FARM-1',location:{region:'Kentucky'}}],
+  batchSize:5000,ensureCircuitCoverage:true
+ })].flatMap(batch=>batch.records);
+ for(const role of ['trainer','jockey']){
+  const covered=new Set(persons.filter(p=>p.role===role).map(p=>p.workplaceId));
+  assert.equal(covered.size,tracks.length);
+  for(const track of tracks)assert.ok(covered.has(track.id));
+ }
+ assert.throws(()=>[...generate1999StaffingBatches({
+  seed:19990101,staffing:{counts:{...staffing.counts,jockey:1}},tracks,
+  farms:[{id:'O-FARM-1'}],ensureCircuitCoverage:true
+ })],/Invalid staffing materialization/);
+});
