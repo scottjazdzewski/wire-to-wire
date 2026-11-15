@@ -15,6 +15,7 @@ On the one canonical **daily care day**, the approved schedule suggests workouts
 - Final week: `PREP` alternating with `LIGHT` (more conservative plans only `LIGHT`);
 - Last 3–2 days: `LIGHT`;
 - The day before and race day: `REST` to taper into the actual start;
+- The original trainer algorithm's weekly rest day or safer lighter workload always overrides a targeted owner instruction;
 - Soreness, excessive fatigue or risk: `REST` or `LIGHT` regardless of the chosen owner strategy;
 - Shipping/returning: the **existing carrier-rest workflow** remains authoritative; track arrival always forces rest.
 
