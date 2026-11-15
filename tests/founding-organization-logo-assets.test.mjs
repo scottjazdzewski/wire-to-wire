@@ -76,3 +76,23 @@ test('Ledbetter Calder approved LC logo is 256px opaque RGB and keyed by immutab
  assert.ok(index.audit.published.some(x=>x.id===id&&x.name==='Ledbetter Calder Stables'));
  assert.ok(!index.audit.notPublished.some(x=>x.id===id));
 });
+
+test('Circle B approved concentric B mark is exact-ID, 256-square RGB and protected',()=>{
+ const id='O-000059',org=roster.organizations.find(x=>x.id===id);
+ assert.equal(org?.name,'Circle B Racing');
+ const path=index.organizations['organization:'+id];
+ assert.equal(path,'/assets/office/founding-organization-logos/O-000059.png');
+ const bytes=readFileSync(resolve(root,'public'+path));
+ assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
+ assert.equal(bytes.readUInt32BE(16),256);
+ assert.equal(bytes.readUInt32BE(20),256);
+ assert.equal(bytes[25],2,'Circle B production badge must be RGB with opaque corners');
+ assert.ok(index.audit.published.some(x=>x.id===id&&x.name==='Circle B Racing'));
+ assert.ok(!index.audit.notPublished.some(x=>x.id===id));
+ const frame=readJson('ops/owner-logo-frame-v1.json');
+ assert.ok(frame.assets.some(x=>x.path==='public'+path&&x.output_sha256==='6406b49e6f8b2dfaed55ef057703ef419ef2269b4c0e6c0b690517eb02505c31'));
+ const ui=readFileSync(resolve(root,'public/next/next.js'),'utf8');
+ assert.match(ui,/function organizationLogoMarkup\(id,name,kind=/);
+ assert.match(ui,/organizationLogoMarkup\(owner\.id,owner\.name,'organization'/);
+ assert.match(ui,/approvedIdentityAsset\('organization',source\.dataset\.organizationId/);
+});
