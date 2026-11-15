@@ -627,10 +627,12 @@ try {
  const today=await evaluate(`(()=>{
   const r=document.getElementById('wtwNextgen');
   return {date:r.querySelector('.ng-global-date strong')?.textContent?.trim(),
-   priority:r.querySelector('.ng-feature .ng-headinggroup>span')?.textContent?.trim()};
+   priority:r.querySelector('.ng-feature .ng-headinggroup>span')?.textContent?.trim(),
+   caseState:r.querySelector('.ng-main .ng-case-eyebrow')?.textContent?.trim()};
  })()`);
  assert.equal(today.date,baseline.date,'Reviewing career action advanced game time');
  assert.match(today.priority,/ACTION FILES.*FOLLOW-UPS DUE/,'Today lost current priority count');
+ assert.match(today.caseState,/ACTION REQUIRED/,'Today did not visibly identify the selected action file');
  console.log('WTW_CAREER_DOSSIER_PASS '+JSON.stringify({fields:career.values.length,actionCount:career.actionCount,clock:today.date}));
 
  // Global Search is a full-height source-linked directory. Verify the actual

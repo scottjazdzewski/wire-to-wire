@@ -120,6 +120,7 @@ test('Today shows current action and due counts without a new manager window',()
  const today=js.slice(i,j);
  assert.match(today,/const actionCount=messages\.filter\(m=>m\.urgent&&!m\.resolved\)\.length/);
  assert.match(today,/FOLLOW-UPS DUE/);
+ assert.match(today,/const priorityState=msg\?\.resolved\?'REVIEWED':msg\?\.urgent\?'ACTION REQUIRED':'INFORMATION'/);
  assert.match(today,/THE MANAGER|Decision Desk/);
  assert.match(js,/const stage=\(route\|\|APP\.custom\)\?renderRoute\(\):/);
 });
