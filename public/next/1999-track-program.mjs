@@ -1240,10 +1240,10 @@ export const TRACK_PROGRAM_1999=Object.freeze({
     "sourceUrl": null,
     "stakesIds": [],
     "stakesDates": [],
-    "trackOperating": "OPEN_1999",
+    "trackOperating": "HISTORICAL_ONLY",
     "surfaceStatus": "WORKING_1999_SURFACE_UNVERIFIED",
     "calendarExceptions": null,
-    "playableIn1999": true
+    "playableIn1999": false
   },
   "T-0034": {
     "id": "T-0034",
@@ -3372,7 +3372,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
     "sourceUrl": null,
     "stakesIds": [],
     "stakesDates": [],
-    "trackOperating": "OPEN_1999",
+    "trackOperating": "HISTORICAL_ONLY",
     "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
     "calendarExceptions": null,
     "realWorldClosure": "CLOSED_BEFORE_1999",
@@ -3380,7 +3380,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
       "Jerome Park Spring Handicap",
       "Jerome Park Autumn Cup"
     ],
-    "playableIn1999": true
+    "playableIn1999": false
   },
   "T-0104": {
     "id": "T-0104",
@@ -3409,7 +3409,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
     "sourceUrl": null,
     "stakesIds": [],
     "stakesDates": [],
-    "trackOperating": "OPEN_1999",
+    "trackOperating": "HISTORICAL_ONLY",
     "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
     "calendarExceptions": null,
     "realWorldClosure": "CLOSED_BEFORE_1999",
@@ -3417,7 +3417,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
       "Morris Park Spring Classic",
       "Morris Park Autumn Invitational"
     ],
-    "playableIn1999": true
+    "playableIn1999": false
   },
   "T-0105": {
     "id": "T-0105",
@@ -3446,7 +3446,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
     "sourceUrl": null,
     "stakesIds": [],
     "stakesDates": [],
-    "trackOperating": "OPEN_1999",
+    "trackOperating": "HISTORICAL_ONLY",
     "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
     "calendarExceptions": null,
     "realWorldClosure": "CLOSED_BEFORE_1999",
@@ -3454,7 +3454,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
       "Gravesend Summer Mile",
       "Gravesend Autumn Handicap"
     ],
-    "playableIn1999": true
+    "playableIn1999": false
   },
   "T-0106": {
     "id": "T-0106",
@@ -3521,7 +3521,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
     "sourceUrl": null,
     "stakesIds": [],
     "stakesDates": [],
-    "trackOperating": "OPEN_1999",
+    "trackOperating": "HISTORICAL_ONLY",
     "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
     "calendarExceptions": null,
     "realWorldClosure": "CLOSED_BEFORE_1999",
@@ -3529,7 +3529,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
       "Jamaica Winter Handicap",
       "Jamaica Autumn Classic"
     ],
-    "playableIn1999": true
+    "playableIn1999": false
   },
   "T-0108": {
     "id": "T-0108",
@@ -3559,7 +3559,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
     "sourceUrl": null,
     "stakesIds": [],
     "stakesDates": [],
-    "trackOperating": "OPEN_1999",
+    "trackOperating": "HISTORICAL_ONLY",
     "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
     "calendarExceptions": null,
     "realWorldClosure": "CLOSED_BEFORE_1999",
@@ -3567,7 +3567,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
       "Empire City Winter Cup",
       "Empire City Fall Championship"
     ],
-    "playableIn1999": true
+    "playableIn1999": false
   },
   "T-0109": {
     "id": "T-0109",
@@ -3596,7 +3596,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
     "sourceUrl": null,
     "stakesIds": [],
     "stakesDates": [],
-    "trackOperating": "OPEN_1999",
+    "trackOperating": "HISTORICAL_ONLY",
     "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
     "calendarExceptions": null,
     "realWorldClosure": "CLOSED_BEFORE_1999",
@@ -3604,7 +3604,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
       "Kentucky Association Spring Mile",
       "Lexington Heritage Handicap"
     ],
-    "playableIn1999": true
+    "playableIn1999": false
   },
   "T-0110": {
     "id": "T-0110",
@@ -3633,7 +3633,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
     "sourceUrl": null,
     "stakesIds": [],
     "stakesDates": [],
-    "trackOperating": "OPEN_1999",
+    "trackOperating": "HISTORICAL_ONLY",
     "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
     "calendarExceptions": null,
     "realWorldClosure": "CLOSED_BEFORE_1999",
@@ -3641,7 +3641,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
       "Chester Park Spring Classic",
       "Chester Park Autumn Cup"
     ],
-    "playableIn1999": true
+    "playableIn1999": false
   },
   "T-0111": {
     "id": "T-0111",
@@ -3670,7 +3670,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
     "sourceUrl": null,
     "stakesIds": [],
     "stakesDates": [],
-    "trackOperating": "OPEN_1999",
+    "trackOperating": "HISTORICAL_ONLY",
     "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
     "calendarExceptions": null,
     "realWorldClosure": "CLOSED_BEFORE_1999",
@@ -3678,7 +3678,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
       "Maple Heights Summer Stakes",
       "Maple Heights Fall Handicap"
     ],
-    "playableIn1999": true
+    "playableIn1999": false
   },
   "T-0112": {
     "id": "T-0112",
@@ -3745,7 +3745,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
     "sourceUrl": null,
     "stakesIds": [],
     "stakesDates": [],
-    "trackOperating": "OPEN_1999",
+    "trackOperating": "HISTORICAL_ONLY",
     "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
     "calendarExceptions": null,
     "realWorldClosure": "CLOSED_BEFORE_1999",
@@ -3753,7 +3753,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
       "Jefferson Park Winter Classic",
       "Jefferson Park Holiday Handicap"
     ],
-    "playableIn1999": true
+    "playableIn1999": false
   },
   "T-0114": {
     "id": "T-0114",
@@ -3782,7 +3782,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
     "sourceUrl": null,
     "stakesIds": [],
     "stakesDates": [],
-    "trackOperating": "OPEN_1999",
+    "trackOperating": "HISTORICAL_ONLY",
     "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
     "calendarExceptions": null,
     "realWorldClosure": "CLOSED_BEFORE_1999",
@@ -3790,7 +3790,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
       "Greenwood Spring Mile",
       "Old Woodbine Autumn Cup"
     ],
-    "playableIn1999": true
+    "playableIn1999": false
   },
   "T-0115": {
     "id": "T-0115",
@@ -3856,7 +3856,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
     "sourceUrl": null,
     "stakesIds": [],
     "stakesDates": [],
-    "trackOperating": "OPEN_1999",
+    "trackOperating": "HISTORICAL_ONLY",
     "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
     "calendarExceptions": null,
     "realWorldClosure": "CLOSED_BEFORE_1999",
@@ -3864,7 +3864,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
       "Cranwood Spring Invitational",
       "Cranwood Fall Handicap"
     ],
-    "playableIn1999": true
+    "playableIn1999": false
   },
   "T-0117": {
     "id": "T-0117",
@@ -3893,7 +3893,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
     "sourceUrl": null,
     "stakesIds": [],
     "stakesDates": [],
-    "trackOperating": "OPEN_1999",
+    "trackOperating": "HISTORICAL_ONLY",
     "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
     "calendarExceptions": null,
     "realWorldClosure": "CLOSED_BEFORE_1999",
@@ -3901,7 +3901,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
       "Randall Park Summer Stakes",
       "Randall Park Autumn Cup"
     ],
-    "playableIn1999": true
+    "playableIn1999": false
   },
   "T-0118": {
     "id": "T-0118",
@@ -3931,7 +3931,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
     "sourceUrl": null,
     "stakesIds": [],
     "stakesDates": [],
-    "trackOperating": "OPEN_1999",
+    "trackOperating": "HISTORICAL_ONLY",
     "surfaceStatus": "WTW_ALTERNATE_HISTORY_COURSE_SPECIFICATION",
     "calendarExceptions": null,
     "realWorldClosure": "CLOSED_BEFORE_1999",
@@ -3939,7 +3939,7 @@ export const TRACK_PROGRAM_1999=Object.freeze({
       "Latonia Winter Classic",
       "Latonia Holiday Handicap"
     ],
-    "playableIn1999": true
+    "playableIn1999": false
   }
 });
 export const trackProgram1999=id=>TRACK_PROGRAM_1999[id]||null;

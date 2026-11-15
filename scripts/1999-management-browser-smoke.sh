@@ -60,10 +60,10 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    !d.querySelector('#wtwNextgen .ng-rs-horse')&&ui.stableHorses.length===0);
   click('Racing');await pause(300);
   const fullTrackPicker=d.querySelector('#wtwNextgen select[data-ng-select="department-track"]');
-  check('Racing drop-down includes exactly the 115 playable founding circuits',
-   Boolean(fullTrackPicker)&&ui.counts.tracks===118&&fullTrackPicker.options.length===116&&
+  check('Racing drop-down includes only the 101 active 1999 tracks',
+   Boolean(fullTrackPicker)&&ui.counts.tracks===118&&fullTrackPicker.options.length===102&&
    [...fullTrackPicker.options].some(o=>o.value==='Saratoga')&&
-   ![...fullTrackPicker.options].some(o=>['Atlantic City Race Course','Aurora Downs','Bainbridge Park'].includes(o.value)));
+   ![...fullTrackPicker.options].some(o=>['Atlantic City Race Course','Aurora Downs','Bainbridge Park','Jerome Park','Morris Park','Gravesend Racetrack','Jamaica Race Course','Empire City Race Track','Kentucky Association Track','Chester Park','Maple Heights Park','Jefferson Park','Old Woodbine / Greenwood','Cranwood Park','Randall Park','Latonia Race Track','Longacres'].includes(o.value)));
   noDuplicateTabs('Racing');
   check('Date browser opens on Jan 1 without advancing the game',
    d.querySelector('#ngRacingBrowseDate')?.value==='1999-01-01');
@@ -272,11 +272,12 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
     historic:worldTracks.find(t=>t._canonId==='T-0118'),
     intl:worldTracks.filter(t=>/Curragh|Newmarket|Ascot/.test(t.name)).map(t=>t.name)
    }));
-  check('All 16 historical North American tracks remain visible, closed and without 1999 meets',
+  check('World keeps all 16 historical identities but only Sheepshead Bay races in 1999',
    worldTracks.filter(t=>t._canonId>='T-0103'&&t._canonId<='T-0118').length===16&&
-   worldTracks.filter(t=>t._canonId>='T-0103'&&t._canonId<='T-0118').every(t=>
-    t.status.includes('HISTORICAL')&&!t.meetWindow&&!t._meetState.active));
-  steps.push('All 118 North American including Cuba displayed; 16 historic closed and zero international');
+   worldTracks.filter(t=>t._canonId>='T-0103'&&t._canonId<='T-0118'&&t._canonId!=='T-0106').every(t=>
+    t.status.includes('HISTORICAL')&&!t.meetWindow&&!t._meetState.active)&&
+   worldTracks.some(t=>t._canonId==='T-0106'&&!t.status.includes('HISTORICAL')&&Boolean(t.meetWindow)));
+  steps.push('All 118 historic geographic IDs preserved; only Sheepshead Bay of 16 historical venues active');
   click('Personnel');await pause(230);
   pickView('Owners');await pause(250);
   const firstOwner=d.querySelector('#wtwNextgen [data-ng="dept-open"]');

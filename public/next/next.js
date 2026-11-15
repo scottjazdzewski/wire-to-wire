@@ -35,7 +35,7 @@ function personGeographyRecord(source,name){
 }
 
 const genericDeskPhoto='/assets/office/approved-office-photo.jpg';
-const WTW_RETIRED_TRACK_IDS=new Set(['T-0042','T-0112','T-0115']); // Historical IDs retained; excluded from game menus.
+const WTW_RETIRED_TRACK_IDS=new Set(["T-0033","T-0042","T-0103","T-0104","T-0105","T-0107","T-0108","T-0109","T-0110","T-0111","T-0112","T-0113","T-0114","T-0115","T-0116","T-0117","T-0118"]); // Historical IDs retained; excluded from game menus.
 
 let organizationLogoIndex=null; // UI-only logo refs, never organizational authority.
 const isClean1999=()=>window.__WTW_1999_MANAGEMENT__?.worldProfile?.mode==='FOUNDING_1999';
@@ -3108,12 +3108,14 @@ function depTrackCalendar(includeRetired=false){
   // The 1999 source directory, NOT the old track-program/demo defaults,
   // decides whether a historical racecourse is closed and remains dormant.
   const canonical=(world1999Data?.tracks||[]).find(r=>r.id===t.id);
-  if(isClean1999()&&canonical?.operating==='HISTORICAL_ONLY')
+  const p=byId.get(t.id)||byName.get(t.name)||null;
+  // Sheepshead Bay is the one explicitly approved 1999 historical survivor.
+  // Preserve archived source dossiers without suppressing its live meet.
+  if(isClean1999()&&canonical?.operating==='HISTORICAL_ONLY'&&p?.operating!=='OPEN_1999')
    return {...t,id:canonical.id,name:canonical.name,location:canonical.location,
     circuit:canonical.circuit||t.circuit,operating:'HISTORICAL_ONLY',
     meetWindow:'',raceDays:'',preferredDays:'',stakes:[],
     playableIn1999:false,_source1999:true,_historyOnly:true};
-  const p=byId.get(t.id)||byName.get(t.name)||null;
   const sourceStakes=(window.__WTW_1999_UI_DATA__?.stakesForTrack?.(t.name)||[])
    .map(r=>({...r,date:r.localDate||r.date||'',class:r.status||r.division||r.grade||'',purse:r.purse1999}));
   return {...t,...(p?{

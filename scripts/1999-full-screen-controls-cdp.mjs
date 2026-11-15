@@ -416,7 +416,15 @@ try {
    'Opened the wrong canonical '+item.family+' source ID: '+original.sourceRecord);
   // A profile without approved person art has no theme key, by design.
   // If a theme exists, it must never belong to a different entity.
-  if(item.family==='TRACK')assert.equal(original.identity,item.id,'Wrong approved track logo/theme');
+  if(item.family==='TRACK'){
+   // Identity-theme and hero-art adapters update after the dossier DOM mounts.
+   // Wait for the exact immutable theme key rather than racing their observer.
+   let theme=original;
+   for(let attempt=0;attempt<80&&theme.identity!==item.id;attempt++){
+    await delay(100);theme=await profileStatus();
+   }
+   assert.equal(theme.identity,item.id,'Wrong approved track logo/theme');
+  }
   else if(item.id&&original.identity)assert.equal(original.identity,item.id,'Wrong '+item.family+' logo/theme');
   const deeper=original.options.find(x=>x&&x!=='Overview'&&x!=='History');
   assert.ok(deeper,item.family+' has no deeper record view');
