@@ -104,10 +104,11 @@ function quoteNear(narrative,regex){
 function shapes(name){const n=name.trim().split(/\s+/).length;return n===1?'single':n===2?'two':'phrase'}
 
 /** Reusable pure creative proposals for a TRUSTED game brief. Does not approve. */
-export function createLocalStoryIdeas(brief,{count=8,attempt=0}={}){
+export function createLocalStoryIdeas(brief,{count=8,attempt=0,scanAll=false}={}){
  if(brief?.status!=='READY_FOR_ORIGINAL_NAME_WRITING'||
   !Number.isInteger(count)||count<1||count>8||
-  !Number.isInteger(attempt)||attempt<0||attempt>1000000)
+  !Number.isInteger(attempt)||attempt<0||attempt>1000000||
+  typeof scanAll!=='boolean')
   throw Error('Invalid trusted local foal naming brief');
  const source=getEvidence(brief);
  if(!source.length)return {suggestions:[],hits:[]};
@@ -119,25 +120,37 @@ export function createLocalStoryIdeas(brief,{count=8,attempt=0}={}){
   hits.push({voice,evidenceId:e.evidenceId,narrative:e.narrative});
  }
  if(!hits.length)return {suggestions:[],hits:[]};
- // Randomized across *motifs* but no word-grid joins. Each name is a fully
- // written candidate. Cap one proposal per motif on a first pass to fight fatigue.
  hits=hits.map(x=>({...x,sort:random()})).sort((a,b)=>a.sort-b.sort);
- const suggestions=[],seen=new Set(),maxAttempts=hits.length*12;
- let trials=0,pass=0;
- while(suggestions.length<count*3&&trials++<maxAttempts){
-  const hit=hits[(trials-1)%hits.length];
-  const offset=(Math.floor(random()*hit.voice.names.length)+(pass*3))%hit.voice.names.length;
-  const name=hit.voice.names[offset];
-  if(name.length>18||seen.has(norm(name))||!norm(name)){
-   if(trials%hits.length===0)pass++;continue;
+ // The Naming Desk gets up to 24 varied initial ideas; it still shows at
+ // most eight suggestions through the established shared editor gate.
+ // Actual foaling cohorts scan the complete eligible author-written pool.
+ const limit=scanAll?Infinity:count*3;
+ const pools=new Map(VOICES.map(v=>[v.id,[...v.names,...(V488_WHOLE_NAMES[v.id]||[])]]));
+ const passes=Math.max(...hits.map(h=>pools.get(h.voice.id).length));
+ const suggestions=[],seen=new Set();
+ const gcd=(a,b)=>{while(b){const t=b;b=a%b;a=t}return a};
+ const selectors=new Map(hits.map(h=>{
+  const names=pools.get(h.voice.id),length=names.length;
+  const offset=fnv(seed+'|'+h.voice.id+'|start')%length;
+  let step=1+(fnv(seed+'|'+h.voice.id+'|step')%Math.max(1,length-1));
+  while(gcd(step,length)!==1)step=step%length+1;
+  return [h.voice.id,{offset,step}];
+ }));
+ for(let pass=0;pass<passes&&suggestions.length<limit;pass++){
+  for(const hit of hits){
+   const names=pools.get(hit.voice.id),selector=selectors.get(hit.voice.id);
+   if(pass>=names.length)continue;
+   const name=names[(selector.offset+pass*selector.step)%names.length];
+   const nameKey=norm(name);
+   if(name.length>18||!nameKey||seen.has(nameKey))continue;
+   seen.add(nameKey);
+   const quote=quoteNear(hit.narrative,hit.voice.cue);
+   suggestions.push({name,evidenceId:hit.evidenceId,evidenceQuote:quote,
+    explanation:'The source recalls “'+quote+'.” “'+name+'” refers to '+
+     hit.voice.why+', which makes the association specific to this foal.',
+    motifId:hit.voice.id});
+   if(suggestions.length>=limit)break;
   }
-  seen.add(norm(name));
-  const e=hit.narrative;
-  const quote=quoteNear(e,hit.voice.cue);
-  suggestions.push({name,evidenceId:hit.evidenceId,evidenceQuote:quote,
-   explanation:`The source recalls “${quote}.” “${name}” refers to ${hit.voice.why}, which makes the association specific to this foal.`,
-   motifId:hit.voice.id});
-  if(trials%hits.length===0)pass++;
  }
  return {suggestions,hits};
 }
@@ -234,7 +247,7 @@ export function generateLocalPopulationNamingBatch({batch,existingNames=[],attem
   // story-backed pool first, then reserve ONLY up to two editorial-ready names.
   // Exclude globally reserved keys with a Set before screening to avoid
   // rebuilding a large all-time name registry for every individual proposal.
-  const {suggestions}=createLocalStoryIdeas(trusted,{count:8,attempt});
+  const {suggestions}=createLocalStoryIdeas(trusted,{count:8,attempt,scanAll:true});
   const viable=suggestions.filter(s=>!knownKeys.has(norm(s.name)));
   const preview=auditPopulationNamingResults({
    results:[{horseId:trusted.horseId,candidates:viable}],
