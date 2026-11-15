@@ -30,7 +30,7 @@ test('opening Opportunity Board uses the one approved route, never clicks an obs
  assert.match(ui,/else if\(APP\.custom==='Opportunities'\)\{body=sourceOpportunityBoard\(\)\}/);
  assert.match(ui,/isManager=body\.startsWith\('<section class="ng-manager-screen'\)/);
  assert.doesNotMatch(ui,/OPEN LIVE OPPORTUNITY BOARD/);
- assert.match(html,/\/next\/next\.js\?rev=wtw1999-st-alloy-approved-20261115/);
+ assert.match(html,/\/next\/next\.js\?rev=wtw1999-whitcombe-argosy-approved-20261115/);
 });
 
 test('Opportunity Board uses existing FM/OOTP workspace, control grammar and direct desk navigation',()=>{

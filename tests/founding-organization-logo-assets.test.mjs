@@ -130,3 +130,35 @@ test('approved Saint Alloy is an opaque 256-square exact-OID wordmark',()=>{
  assert.equal(row.output_sha256,'1d990b41239e39ca3b9621b385b8b537101a4a46d2deba701eee18d15ee9bf49');
  assert.deepEqual(row.border_rgb,[244,196,27]);
 });
+
+test('Whitcombe and Argosy Bloodstock approved sports marks are exact-ID, 256-square and frame SHA-locked',()=>{
+ const evidence=readJson('ops/owner-logo-frame-v1.json');
+ const lock=readJson('ops/approved-visual-assets.lock.json');
+ const cases=[
+  {id:'O-000037',name:'Whitcombe Family',sha:'5ecf19bcb6a8ee9f2dccd15882a2fbd5e4a1f1ce3be71f5774fd456309c148f2',border:[244,237,222]},
+  {id:'O-000014',name:'Argosy Bloodstock',sha:'225b8d95323e42ddc81329d680d412ca9fce7e8cf8ec62981c8a0e1a14024d3a',border:[215,171,67]},
+ ];
+ for(const a of cases){
+  const org=roster.organizations.find(o=>o.id===a.id);
+  assert.equal(org?.name,a.name);
+  const path='public/assets/office/founding-organization-logos/'+a.id+'.png';
+  assert.equal(index.organizations['organization:'+a.id],'/'+path.replace(/^public\//,''));
+  const bytes=readFileSync(resolve(root,path));
+  assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
+  assert.equal(bytes.readUInt32BE(16),256);
+  assert.equal(bytes.readUInt32BE(20),256);
+  assert.equal(bytes[25],2,'opaque RGB badge');
+  const audit=evidence.assets.find(x=>x.path===path);
+  assert.ok(audit,'missing approved artwork evidence');
+  assert.equal(audit.output_sha256,a.sha);
+  assert.equal(audit.radius_px,28);
+  assert.equal(audit.border_inset_px,5);
+  assert.equal(audit.border_px,5);
+  assert.deepEqual(audit.border_rgb,a.border);
+  assert.ok(lock.assets[path],path+' missing canonical visual asset lock');
+  assert.ok(index.audit.published.some(x=>x.id===a.id&&x.name===a.name));
+  assert.ok(!index.audit.notPublished.some(x=>x.id===a.id));
+ }
+ assert.equal(index.publishedCount,36);
+ assert.deepEqual(index.audit.notPublished.map(x=>x.id),['O-000057']);
+});
