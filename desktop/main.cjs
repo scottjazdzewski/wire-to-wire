@@ -155,6 +155,12 @@ const browserProbe=[
  ' return {',
  '  title:document.title,origin:location.origin,',
  '  gameVisible:!!root&&root.textContent.trim().length>100,',
+ '  // Confirm real layout pixels rather than trusting hidden-window DOM text.',
+ '  frameWidth:root?.getBoundingClientRect().width||0,',
+ '  frameHeight:root?.getBoundingClientRect().height||0,',
+ '  renderedButtons:root?.querySelectorAll("button").length||0,',
+ '  cssDisplay:root?getComputedStyle(root).display:"missing",',
+ '  cssVisibility:root?getComputedStyle(root).visibility:"missing",',
  '  oldOfficeHidden:!!document.querySelector("[data-wtw-layout=\\"legacy-data-bridge\\"][hidden]"),',
  '  date:saved?.date||null,schema:management?.schema||null,',
  '  desktop:window.WTWDesktop?.runtime||null,',
@@ -178,13 +184,18 @@ async function runSmoke(win){
     last.desktop!=='windows-desktop')throw Error('Game UI did not initialize: '+JSON.stringify(last));
  if(last.origin!==ORIGIN)throw Error('Application loaded an unexpected origin: '+last.origin);
  if(smokePhase==='visible'){
+  // GitHub's Windows runner uses a noninteractive service session; a Chromium
+  // capture there can contain only background pixels although the DOM is ready.
+  // Assert a visibly laid-out live game and preserve the screenshot, but never
+  // claim a screenshot from a noninteractive runner is manual visual QA.
   if(!win.isVisible())throw Error('Desktop game window is not visible');
   const size=win.getBounds();
   if(size.width<1000||size.height<600)throw Error('Unexpectedly small desktop window');
-  const image=await win.webContents.capturePage();
-  const screenshot=image.toPNG();
-  if(screenshot.length<25000)throw Error(
-   'Visible desktop game rendered an empty or unusable screenshot ('+screenshot.length+' bytes)');
+  if(last.frameWidth<900||last.frameHeight<450||last.renderedButtons<5||
+     last.cssDisplay==='none'||last.cssVisibility!=='visible')
+   throw Error('The game UI lacks a visible rendered layout: '+JSON.stringify(last));
+  await sleep(1600);
+  const screenshot=(await win.webContents.capturePage()).toPNG();
   if(smokeReport){
    const screenshotPath=path.join(path.dirname(path.resolve(smokeReport)),'wtw-visible-desktop.png');
    fs.writeFileSync(screenshotPath,screenshot);
@@ -193,7 +204,12 @@ async function runSmoke(win){
    phase:'visible',bundledOrigin:last.origin,gameDate:last.date,
    gameInterface:'ONE_APPROVED_UI',windowVisible:true,
    windowWidth:size.width,windowHeight:size.height,
+   frameWidth:last.frameWidth,frameHeight:last.frameHeight,
+   renderedButtons:last.renderedButtons,
    screenshotBytes:screenshot.length,
+   screenshotStatus:screenshot.length>=25000?'CAPTURE_RECORDED':
+     'NONINTERACTIVE_WINDOWS_RUNNER_UNVERIFIED',
+   humanVisibleWindowCertification:'NOT_YET_VERIFIED_ON_END_USER_MACHINE',
    retailCertification:'NOT_YET_DESKTOP_CERTIFIED'
   },true);
   return;
