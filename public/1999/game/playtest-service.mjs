@@ -10,7 +10,7 @@
 import {WORLD_SCHEMA,dispatchGameCommand,exportGameSave,importGameSave,nextDate,
  getGameHorsePerformance,getGameRacingRoster,getAgentRelationships,
  getOwnerPortfolioView,getCareerHorseConnections,get1999HorseRaceOpportunities,getTrainerContract,quote1999PlayerRacePlan,getOwnerTrainerCareerReview,getTrainerCareerForm,getGamePostRaceCampaign,
- getTrainerManagementRequests,get1999RaceTacticsPreview,
+ getTrainerManagementRequests,get1999RaceTacticsPreview,get1999RacePreparation,
  horseTravelStatus,effectiveHorseTrack,
  effectiveHorseCareSite}
  from './index.js';
@@ -152,6 +152,7 @@ export async function createPlaytestCareer({directory,trainers,jockeys,cohort,sa
   getRaceOpportunities(horseId,opts={}){return get1999HorseRaceOpportunities(state,world,horseId,opts)},
   getRacePlanQuote(payload){return quote1999PlayerRacePlan(state,world,payload)},
   getRaceTacticsPreview(payload){return get1999RaceTacticsPreview(state,world,payload)},
+  getRacePreparation(payload){return get1999RacePreparation(state,world,payload)},
   getPostRaceCampaign(horseId){return getGamePostRaceCampaign(state,horseId)},
   getTrainerAgreement(ownerId,trainerId){return getTrainerContract(state,world,ownerId,trainerId)},
   getOwnerTrainerReview(ownerId,trainerId){return getOwnerTrainerCareerReview(state,world,ownerId,trainerId)},
@@ -240,6 +241,7 @@ export async function bootBrowserPlaytest1999(){
   getRaceOpportunities(horseId,opts={}){return engine.getRaceOpportunities(horseId,opts)},
   getRacePlanQuote(payload){return engine.getRacePlanQuote(payload)},
   getRaceTacticsPreview(payload){return engine.getRaceTacticsPreview(payload)},
+  getRacePreparation(payload){return engine.getRacePreparation(payload)},
   getPostRaceCampaign(horseId){return engine.getPostRaceCampaign(horseId)},
   getTrainerAgreement(ownerId,trainerId){return engine.getTrainerAgreement(ownerId,trainerId)},
   getOwnerTrainerReview(ownerId,trainerId){return engine.getOwnerTrainerReview(ownerId,trainerId)},
