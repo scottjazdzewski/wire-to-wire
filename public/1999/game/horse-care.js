@@ -5,7 +5,7 @@
  * This module never advances its own clock or modifies the founding source.
  */
 import {ensure,isObject,worldIdentity,validDate} from './contracts.js';
-import {TRAINING_PLANS,createHorseTrainingRecord,advanceHorseTrainingDay}
+import {TRAINING_PLANS,createHorseTrainingRecord,advanceHorseTrainingDay,recommendHorseWorkout}
  from '../engine/horse-development.mjs';
 import {horseTravelStatus,effectiveHorseCareSite} from './shipping-1999.js';
 import {trainerDailyFee} from './trainer-contracts-1999.js';
@@ -372,8 +372,15 @@ export function advanceGameHorseCare({state,world,emit}){
     ['ARRIVED_AT_TRACK','RETURNED_HOME'].includes(trip.history.at(-1).event);
   const forcedRest=arrivalToday;
   const prepStep=livePrep?preparationStep(livePrep,r.training,day):null;
-  const workout=forcedRest?'REST':prepStep?prepStep.workout:
-   r.agent?.date===day?r.agent.workout:null;
+  // Use the SAME trainer model's rest/day-safety signal; targeted owner
+  // preparation cannot bypass its weekly rest or fatigue-limited workload.
+  const trainerSafety=prepStep?recommendHorseWorkout(train,info.horse,info.trainer,day):null;
+  const workout=forcedRest?'REST':prepStep?
+   trainerSafety==='REST'?'REST':
+   trainerSafety==='LIGHT'&&prepStep.workout!=='REST'?'LIGHT':
+   prepStep.workout:r.agent?.date===day?r.agent.workout:null;
+  const prepPhase=prepStep?(forcedRest?'ARRIVAL_REST':
+   workout!==prepStep.workout?'TRAINER_SAFETY_ADJUSTMENT':prepStep.phase):null;
   const work=advanceHorseTrainingDay(train,info.horse,info.trainer,day,
    state.rng.seed,{...context,workout});
   const charge_minor=Math.round(work.charge*100);
@@ -445,15 +452,16 @@ export function advanceGameHorseCare({state,world,emit}){
    emit('HORSE_RACE_PREPARATION_WORKOUT',{horse_id:h.horse_id,
     owner_id:h.owner_organization_id,race_id:livePrep.race_id,
     days_to_race:prepStep.days_to_race,
-    phase:forcedRest?'ARRIVAL_REST':prepStep.phase,
+    phase:prepPhase,
     planned_workout:workout,actual_workout:result.work,
     funded:canPay,paid_minor:used,readiness:r.training.readiness,
     fatigue:r.training.fatigue,risk:r.training.currentRisk});
   }
   r.history.push({date:day,work:result.work,
    ...(livePrep?{preparation_race_id:livePrep.race_id,
-    preparation_phase:forcedRest?'ARRIVAL_REST':prepStep.phase}:{}),
-   agent_reason:r.agent?.date===day?r.agent.reason:null,paid_minor:used,
+    preparation_phase:prepPhase}:{}),
+   agent_reason:livePrep?'OWNER_APPROVED_RACE_PREPARATION':
+    r.agent?.date===day?r.agent.reason:null,paid_minor:used,
    nutrition:p.feed,care:p.care,facility_id:site.id,
    crowding:round4(context.crowding),barn_quality:site.quality,
    fitness:r.training.fitness,readiness:r.training.readiness,
