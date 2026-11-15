@@ -54,7 +54,7 @@ try{
   if(mounted)break;await wait(120);
  }
  assert.ok(mounted,'Naming Desk was not mounted in approved /next/ UI');
- const get=(name)=>evaluate("(()=>{const e=document.querySelector('#wtwNextgen [data-naming-field=\"'+"+JSON.stringify(name)+"+'\"]');if(!e)return null;const b=e.getBoundingClientRect();return {x:b.left+b.width/2,y:b.top+b.height/2,value:e.value,focused:document.activeElement===e,connected:e.isConnected}})()");
+ const get=(name)=>evaluate("(()=>{const e=document.querySelector('#wtwNextgen [data-naming-field="+JSON.stringify(name)+"]');if(!e)return null;const b=e.getBoundingClientRect();return {x:b.left+b.width/2,y:b.top+b.height/2,value:e.value,focused:document.activeElement===e,connected:e.isConnected}})()");
  // CDP pointer events emulate a single physical click, not element.focus().
  const click=async(name)=>{
   const a=await get(name);assert.ok(a&&a.connected,'Missing visible Naming Desk field: '+name);
