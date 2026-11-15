@@ -1,6 +1,10 @@
 # WIRE TO WIRE — INSTRUCTIONS FOR ALL ENGINEERING AGENTS & CHAT WINDOWS
 **Product destination:** installed, offline-first Windows desktop horse-racing management software sold to customers. The future website is a marketing, checkout, download and support channel—not the game runtime.
 
+## Latest owner-approved product scope (supersedes older default real-history requirements)
+
+**Launch game = one deeply believable FICTIONAL racing universe, NOT recreated authentic racing history.** From Save/Load, the player must be able to generate a **complete active world with one button**, and must be able to permanently customize entity names, game-compatible fields, uploaded photos and logos, with every edit reflected in the engine and retained through saves/updates. Preserve legacy real-history research separately for a possible optional future module; never delete saved records or silently mix real results into the fictional world. Read `docs/engineering/WTW_FICTIONAL_WORLD_GENESIS_AND_CUSTOMIZATION_CONTRACT.md` before changing world/history/data/editor/asset behavior.
+
 Read these **before touching any code**:
 1. `docs/engineering/PRODUCT_WIDE_RELEASE_CONTRACT.md`
 2. `docs/engineering/WTW_DESKTOP_FIRST_COMMERCIAL_ARCHITECTURE.md`
