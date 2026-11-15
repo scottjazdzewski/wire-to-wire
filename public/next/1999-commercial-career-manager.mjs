@@ -182,7 +182,13 @@ function inputProfile(){
  });
 }
 let fullIndustryManifest=null;
-let selectedIndustryHorses=25000,selectedIndustrySeed=19990101;
+const INDUSTRY_CHOICE_KEY='wtw1999LastChosenIndustryV1';
+let chosenIndustry=null;
+try{chosenIndustry=JSON.parse(localStorage.getItem(INDUSTRY_CHOICE_KEY)||'null')}catch{}
+let selectedIndustryHorses=Number.isSafeInteger(chosenIndustry?.horseCount)?
+ chosenIndustry.horseCount:250000;
+let selectedIndustrySeed=Number.isSafeInteger(chosenIndustry?.seed)?
+ chosenIndustry.seed:19990101;
 const INDUSTRY_SIZE_MIN=10000,INDUSTRY_SIZE_MAX=325000;
 function requestedIndustry(){
  const root=modal();
@@ -193,6 +199,7 @@ function requestedIndustry(){
  if(!Number.isSafeInteger(seed)||seed<1||seed>4294967295)
   throw Error('Invalid 1999 industry seed');
  selectedIndustryHorses=horseCount;selectedIndustrySeed=seed;
+ localStorage.setItem(INDUSTRY_CHOICE_KEY,JSON.stringify({horseCount,seed}));
  // Distinct sizes keep independent manifests, immutable records and edits.
  return {seed,targetOpeningHorses:horseCount,
   worldId:'WTW1999FullIndustry-H'+horseCount};
@@ -558,13 +565,15 @@ async function open(){
   const store=await open1999IndustryDatabase();
   try{
    const reopened=await reopenPersistent1999Industry(store,{
+    seed:selectedIndustrySeed,worldId:'WTW1999FullIndustry-H'+selectedIndustryHorses});
+   const selected=reopened??await reopenPersistent1999Industry(store,{
     seed:19990101,worldId:'WTW1999FullIndustry'});
-   if(reopened?.status==='READY'){
-    fullIndustryManifest=reopened.manifest;
+   if(selected?.status==='READY'){
+    fullIndustryManifest=selected.manifest;
     industryDirectory=await readPersistent1999Directory(store,fullIndustryManifest);
     await browseFullIndustry(0,'directory');
     notice='Saved January 1999 world verified and available for inspection.';
-   }else if(reopened?.status==='GENERATING'){
+   }else if(selected?.status==='GENERATING'){
     notice='January 1999 world creation was interrupted. Select CREATE / RESUME FULL INDUSTRY.';
    }
   }catch(error){
