@@ -55,8 +55,12 @@ export function removeWhiteEdgeMatte(imageData){
  for(let y=0;y<height;y++){enqueue(y*width);enqueue(y*width+width-1);}
  while(head<tail){
   const p=queue[head++],i=p*4,r=data[i],g=data[i+1],b=data[i+2];
-  const min=Math.min(r,g,b),a=(255-min)/255;
-  if(a<=0.016){data[i]=0;data[i+1]=0;data[i+2]=0;data[i+3]=0;}
+  const min=Math.min(r,g,b),max=Math.max(r,g,b),a=(255-min)/255;
+  // An opaque neutral off-white export canvas is not brand ink. Clear it
+  // completely rather than leaving a gray 10% rectangular ghost.
+  if((min>=228&&max-min<32)||a<=0.016){
+   data[i]=0;data[i+1]=0;data[i+2]=0;data[i+3]=0;
+  }
   else {
     const residual=255*(1-a);
     data[i]=Math.round(Math.max(0,Math.min(255,(r-residual)/a)));
