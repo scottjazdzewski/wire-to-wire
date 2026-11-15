@@ -126,6 +126,31 @@ export function validate1999IndustryReferences(records,{
   if(!Array.isArray(entity.relationships)){
    problems.push({id:entity.id,reason:'MISSING_RELATIONSHIPS'});continue;
   }
+  if(entity.id.startsWith('H-FICTIONAL-1999-')){
+   const year=Number(entity.foalYear);
+   const cohort=entity.cohort;
+   if(!Number.isInteger(year)||year>1998||
+    (cohort==='yearlings'&&year!==1998)||
+    (cohort==='twoYearOldProspects'&&year!==1997)||
+    (cohort==='threeYearOldRunners'&&year!==1996)||
+    (cohort==='fourYearOldRunners'&&year!==1995)||
+    (cohort==='fivePlusRunners'&&year>1994))
+    problems.push({id:entity.id,reason:'INVALID_FOAL_YEAR'});
+   if(entity.sireId===entity.id||entity.damId===entity.id||
+    (entity.sireId&&entity.sireId===entity.damId))
+    problems.push({id:entity.id,reason:'INVALID_PARENTAGE'});
+   if(entity.sireId&&!entity.sireId.startsWith('H-FICTIONAL-1999-STALLIONS-'))
+    problems.push({id:entity.id,reason:'INVALID_SIRE_ROLE'});
+   if(entity.damId&&!entity.damId.startsWith('H-FICTIONAL-1999-BROODMARES-'))
+    problems.push({id:entity.id,reason:'INVALID_DAM_ROLE'});
+   if(entity.foalingFarmId&&entity.birthplace?.farmId!==entity.foalingFarmId)
+    problems.push({id:entity.id,reason:'BIRTHPLACE_FARM_MISMATCH'});
+   if(entity.homeTrackId&&!tracks.some(t=>t.id===entity.homeTrackId))
+    problems.push({id:entity.id,reason:'INVALID_HOME_TRACK'});
+   if(entity.trainerId&&entity.status!=='RACING'&&
+    entity.status!=='TWO_YEAR_OLD_PROSPECT')
+    problems.push({id:entity.id,reason:'INACTIVE_HORSE_HAS_TRAINER'});
+  }
   for(const edge of entity.relationships){
    if(edge.fromId!==entity.id||!known(edge.toId))
     problems.push({id:entity.id,reason:'BROKEN_REFERENCE',edge});
