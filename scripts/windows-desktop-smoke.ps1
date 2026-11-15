@@ -25,14 +25,30 @@ foreach($step in @(@("write",$writeReport),@("read",$readReport))){
  $env:WTW_SMOKE_REPORT=$report
  $env:WTW_SMOKE_USER_DATA=$statePath
  try{
-   $process=Start-Process -FilePath $Executable -ArgumentList $arguments -PassThru -Wait
+   $process=Start-Process -FilePath $Executable -ArgumentList $arguments -PassThru
+   # Some portable wrappers exit before their extracted Electron child and
+   # some wait for it. The child's authenticated JSON handshake is definitive,
+   # not the wrapper's PID or command-line forwarding.
+   $deadline=(Get-Date).AddMinutes(3)
+   while(!(Test-Path -LiteralPath $report) -and (Get-Date) -lt $deadline){
+     Start-Sleep -Milliseconds 750
+     $process.Refresh()
+     if($process.HasExited -and $process.ExitCode -ne 0){
+       throw "Packaged desktop wrapper failed: $phase exit=$($process.ExitCode)"
+     }
+   }
+   if(!(Test-Path -LiteralPath $report)){
+     if(!$process.HasExited){Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue}
+     throw "Desktop process did not report an offline startup/save result for $phase"
+   }
+   # The main Electron child terminates immediately after writing the report.
+   # A brief drain avoids a profile lock before the second launch.
+   try{Wait-Process -Id $process.Id -Timeout 15 -ErrorAction Stop}catch{}
  }finally{
    Remove-Item Env:WTW_SMOKE_PHASE -ErrorAction SilentlyContinue
    Remove-Item Env:WTW_SMOKE_REPORT -ErrorAction SilentlyContinue
    Remove-Item Env:WTW_SMOKE_USER_DATA -ErrorAction SilentlyContinue
  }
- if($process.ExitCode -ne 0){ throw "Packaged desktop run failed: $phase exit=$($process.ExitCode)" }
- if(!(Test-Path -LiteralPath $report)){throw "Missing smoke evidence for $phase"}
  $proof=Get-Content -Raw $report|ConvertFrom-Json
  if($proof.bundledOrigin -ne "wtw://game" -or
     $proof.gameDate -ne "1999-01-01" -or
