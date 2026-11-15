@@ -10,7 +10,7 @@ import {generate1999IndustryRegistryBatches,count1999Registry}
 import {plan1999IndustryStaffing,generate1999StaffingBatches}
  from './fictional-industry-staffing-1999.mjs';
 import {connect1999Horse,connect1999Person,connect1999DirectoryEntity,
- validate1999GraphBatch,INDUSTRY_GRAPH_SCHEMA}
+ validate1999GraphBatch,validate1999IndustryReferences,INDUSTRY_GRAPH_SCHEMA}
  from './fictional-industry-graph-1999.mjs';
 export const PERSISTENT_INDUSTRY_SCHEMA='WTW_PERSISTENT_INDUSTRY_1999_V1';
 export const PERSISTENT_INDUSTRY_DB='WireToWireFictionalIndustry1999V1';
@@ -171,6 +171,10 @@ export async function createPersistent1999Industry({
     batch.records.map(h=>connect1999Horse(h,{seed,
      trainerCount:staffing.counts.trainer,jockeyCount:staffing.counts.jockey})):
     batch.records.map(p=>connect1999Person(p,{seed}));
+   const audit=validate1999IndustryReferences(records,{
+    plan,staffing,tracks,farms,owners});
+   if(!audit.valid)throw Error('Broken 1999 industry entity relationships: '+
+    JSON.stringify(audit.problems.slice(0,5)));
    await store.commitBatch({worldId:id,manifest:next,kind,index,records});
    manifest=next;index++;
    onProgress({kind,completed:index,totalRecords:kind==='horseBatches'?
