@@ -136,4 +136,16 @@ test('race conditions show documented restrictions and explicitly provisional el
  assert.match(rendered,/All remain provisional/);
  const unknown=context.window.WTW1999RaceConditions.render({id:'S-1999',name:'Stakes',trackName:'Belmont Park'},{ownedHorses:()=>horses});
  assert.match(unknown,/No named horse can be certified eligible/);
+ const editable=context.window.WTW1999RaceConditions.render(race,{ownedHorses:()=>horses,
+  raceEditOpen:true,raceEditId:'R-TEST-1999-1',raceEditDraft:{...race,name:'Renamed Maiden'}});
+ assert.match(editable,/ng-race-editor/);
+ assert.match(editable,/data-race-field="ageRequirement"/);
+ assert.match(editable,/data-race-field="sexRestriction"/);
+ assert.match(editable,/data-race-field="distanceFurlongs"/);
+ assert.match(editable,/Renamed Maiden/);
+ assert.match(context.window.WTW1999RaceConditions.render(race,{raceEditOpen:true,raceEditError:'A race needs a name.'}),/A race needs a name\./);
+ const next=get('public/next/next.js');
+ for(const column of ['AGE','SEX','SURFACE','DISTANCE'])assert.match(next,new RegExp("\\['"+column.toLowerCase()+"','"+column+"'\\]"));
+ assert.match(next,/ng-track-stakes-table/);
+ assert.match(next,/RACE_EDIT_KEY/);
 });

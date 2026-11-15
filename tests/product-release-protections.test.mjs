@@ -52,7 +52,7 @@ test('One canonical playable UI, protected track family and no resurrected scree
  assert.match(js,/function profileDetail\(route,sourceOverride=null\)/);
  assert.match(js,/ng-track-workspace/);
  assert.match(js,/ng-stakes-table/);
- assert.match(js,/trackHistoryPanel\(\)/);
+ assert.match(js,/if\(isTrack&&APP\.detailTab==='History'\)\{\s*left=trackHistoryFull\(\)/);
  assert.match(css,/ng-track-info-stack/);
  for(const path of ['public/manager/manager.js','public/manager/manager.css',
   'public/office-v30-2.js','public/office-v30-3.js'])

@@ -20,10 +20,12 @@ test('approved track overview is ONE two-column stadium workspace, not a generic
  assert.match(trackOverview,/MEET & CONDITIONS/);
  assert.match(trackOverview,/trackConfigMarkup/);
  assert.match(trackOverview,/trackMeetFacts/);
- assert.match(trackOverview,/trackHistoryPanel\(\)/);
+ assert.match(trackOverview,/entityDossierCard/);
+ assert.match(ui,/if\(isTrack&&APP\.detailTab==='History'\)\{\s*left=trackHistoryFull\(\)/);
+ for(const key of ['name','date','grade','purse','age','sex','surface','distance'])assert.match(stakes,new RegExp("\\['"+key+"','"));
  assert.match(trackOverview,/stakesTable\(100\)/);
  assert.doesNotMatch(trackOverview,/ng-connected|profileRecordSection|1999 TEST COHORT/);
- assert.match(css,/\.ng-track-workspace\{display:grid!important;grid-template-columns:minmax\(0,1\.23fr\) minmax\(285px,\.77fr\)/);
+ assert.match(css,/\.ng-track-workspace\{display:grid!important;grid-template-columns:minmax\(0,1\.55fr\) minmax\(300px,\.75fr\)/);
  assert.match(css,/\.ng-track-info-stack\{display:grid;grid-template-columns:minmax\(0,1fr\)/);
 });
 

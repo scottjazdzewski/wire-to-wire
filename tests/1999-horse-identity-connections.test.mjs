@@ -57,5 +57,5 @@ test('test-cohort connections remain in the actual pilot engine, never injected 
  assert.doesNotMatch(js,/function pilotHorseConnectionsPanel\(|const pilotID=pilotKind|profileRecordSection\(/);
  assert.match(js,/ng-track-workspace/);
  assert.match(js,/const stakesTable=\(limit=100\)=>\{/);
- assert.match(js,/return '<div class="ng-stakes-table">/);
+ assert.match(js,/return '<div class="ng-stakes-table ng-track-stakes-table">/);
 });

@@ -81,7 +81,7 @@ test('Every profile keeps consistent local controls; no menu can resurrect retir
  assert.match(ui,/data-ng="detailtab"/);
  assert.match(ui,/aria-current=/);
  assert.match(ui,/ng-track-info-stack/);
- assert.match(ui,/trackHistoryPanel\(\)/);
+ assert.match(ui,/if\(isTrack&&APP\.detailTab==='History'\)\{\s*left=trackHistoryFull\(\)/);
  assert.doesNotMatch(ui,/pilotHorseConnectionsPanel|profileRecordSection|connectedTableState|ng-connected-profile/);
 });
 

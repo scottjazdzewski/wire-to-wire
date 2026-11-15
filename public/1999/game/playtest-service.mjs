@@ -127,8 +127,18 @@ export async function createPlaytestCareer({directory,trainers,jockeys,cohort,sa
   });
   return {schema:PLAYTEST_SCHEMA,run_id:state.run_id,date:state.clock.date,
    revision:state.revision,player_operation_id:state.player.operation_id,
+   player:{...state.player},
    as_of:state.clock.date,horse_count:runners.length,source_history_modified:false,
-   all_horses:runners,stable:runners.filter(x=>x.owner_id===state.player.operation_id),
+   all_horses:runners,stable:runners.filter(x=>{
+    const {role,operation_id:operationId,person_id:personId}=state.player;
+    if(role==='owner')return x.owner_id===operationId;
+    if(role==='trainer')return x.trainer_id===personId;
+    if(role==='breeder')return x.breederId===operationId;
+    if(role==='farm')return x.owner_id===operationId||x.breederId===operationId;
+    if(role==='jockey')return Object.values(state.runtime.entries).some(e=>
+     e.horse_id===x.horse_id&&e.jockey_id===personId&&e.status!=='SCRATCHED');
+    return false;
+   }),
    races:racing,entries,people:world.entities.people,
    physical_locations:runners.map(h=>({horse_id:h.horse_id,
     owner_id:h.owner_id,trainer_id:h.trainer_id,

@@ -5,10 +5,14 @@
 'use strict';
 const $=(q,p=document)=>p.querySelector(q), $$=(q,p=document)=>[...p.querySelectorAll(q)];
 const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const RACE_EDIT_KEY='wtw1999RaceDetailEditsV1';
+function raceEditStore(){try{const value=JSON.parse(localStorage.getItem(RACE_EDIT_KEY)||'{}');return value&&typeof value==='object'&&!Array.isArray(value)?value:{}}catch{return {}}}
+function raceEditId(race){return String(race?.id||race?._raceId||'').trim()}
+function raceEditProjection(race){const id=raceEditId(race);return id?{...race,...(raceEditStore()[id]||{})}:race}
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,worldAttributeKey:'',worldDirectorySearch:'',worldDirectoryType:'all',worldDirectoryPage:0,stableMode:'all',stableSearch:'',directorySort:'name',directorySortDesc:false,directoryFilter:'all',directoryMode:'all',directorySearch:'',directoryHorseItems:[],departmentModes:{},racingMode:'meets',racingTrack:'',racingDate:'',racingCalendarOpen:false,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchSortDesc:false,searchPage:0,managerSortScope:'',managerSortKey:'',managerSortDesc:false,recordBrowse:null};
+const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,raceEditOpen:false,raceEditDraft:null,jobChangeOpen:false,jobChangeBusy:false,jobChangeError:'',jobDraft:null,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,worldAttributeKey:'',worldDirectorySearch:'',worldDirectoryType:'all',worldDirectoryPage:0,stableMode:'all',stableSearch:'',directorySort:'name',directorySortDesc:false,directoryFilter:'all',directoryMode:'all',directorySearch:'',directoryHorseItems:[],departmentModes:{},racingMode:'meets',racingTrack:'',racingDate:'',racingCalendarOpen:false,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchSortDesc:false,searchPage:0,managerSortScope:'',managerSortKey:'',managerSortDesc:false,recordBrowse:null};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -94,6 +98,34 @@ function namedSavePanel(){
   '<button type="button" data-ng="named-export-current">EXPORT CURRENT GAME</button>'+
   '<button type="button" data-ng="commercial-career-open" class="primary">WORLD SETUP & COMPACT SAVES</button></footer>'+
   '</section></div>';
+}
+function jobChangePanel(){
+ const service=window.__WTW_1999_UI_DATA__?.gameplayService;
+ if(!APP.jobChangeOpen||!service)return '';
+ const state=service.state,world=service.world,draft=APP.jobDraft||state.player;
+ const roles=[['owner','Owner'],['trainer','Trainer'],['farm','Farm manager'],
+  ['breeder','Breeder'],['jockey','Jockey']];
+ const organizations=world.entities.organizations||[],people=world.entities.people||[];
+ let personRows=people;
+ if(draft.role==='jockey')personRows=people.filter(p=>state.runtime.racing?.jockeys?.[p.id]);
+ else if(draft.role==='trainer')personRows=people.filter(p=>/trainer/i.test(p.role||''));
+ else if(draft.role==='breeder')personRows=people.filter(p=>/breeder|farm principal/i.test(p.role||''));
+ if(!personRows.some(p=>p.id===draft.person_id)&&personRows.length===0)personRows=people;
+ const options=(rows,selected,label)=>'<option value=""'+(!selected?' selected':'')+'>'+label+'</option>'+rows.map(row=>
+  '<option value="'+safe(row.id)+'"'+(row.id===selected?' selected':'')+'>'+safe(row.name)+' · '+safe(row.id)+'</option>').join('');
+ return '<div class="ng-save-shade"><section class="ng-save-dialog" role="dialog" aria-modal="true" aria-label="Change player job">'+
+  '<header><div><small>WIRE TO WIRE / PLAYER PERSPECTIVE</small><h2>CHANGE JOB</h2></div>'+
+  '<button type="button" data-ng="job-close" aria-label="Close job selector">✕ CLOSE</button></header>'+
+  '<div class="ng-save-create"><label for="ngJobRole">ROLE</label><select id="ngJobRole" data-ng-select="job-role">'+
+  roles.map(([value,label])=>'<option value="'+value+'"'+(draft.role===value?' selected':'')+'>'+label+'</option>').join('')+'</select></div>'+
+  '<div class="ng-save-create"><label for="ngJobOperation">OPERATION / FARM</label><select id="ngJobOperation" data-ng-select="job-operation">'+
+  options(organizations,draft.operation_id,'Choose an organization')+'</select></div>'+
+  '<div class="ng-save-create"><label for="ngJobPerson">PERSON</label><select id="ngJobPerson" data-ng-select="job-person">'+
+  options(personRows,draft.person_id,'Choose a person')+'</select></div>'+
+  (APP.jobChangeError?'<p class="ng-save-error" role="alert">'+safe(APP.jobChangeError)+'</p>':'')+
+  '<footer><span>This changes the active player role and selected organization/person in the saved career.</span>'+
+  '<button type="button" data-ng="job-save" class="primary"'+(APP.jobChangeBusy?' disabled':'')+'>'+
+  (APP.jobChangeBusy?'SAVING…':'SAVE JOB & VIEW WORLD')+'</button></footer></section></div>';
 }
 function namedSaveCreate(){
  const name=APP.saveDraftName.trim(),rows=namedSaves();
@@ -460,6 +492,7 @@ function managerSidebar(){
 }
 function header(){
  const date=depGameDay();
+ const player=window.__WTW_1999_UI_DATA__?.gameplayService?.state?.player;
  const due=dueActions();
  // Each entity Overview has its own fully visible profile navigation.
  // Do not waste desktop height on unrelated department subtabs.
@@ -474,6 +507,7 @@ function header(){
   <div class="ng-hist"><button data-ng="back" aria-label="Previous page" title="Previous page">${glyph('left',15)}</button><button data-ng="forward" aria-label="Next page" title="Next page">${glyph('right',15)}</button></div>
   <button class="ng-mini-home" data-ng="office" title="Racing Office" aria-label="Go to Racing Office"><img class="ng-logo-mini" src="/assets/wtw-office-approved-logo.png" alt=""/><span class="ng-wordmark"><strong>WIRE TO WIRE</strong><small>RACING MANAGER</small></span></button>
   <div class="ng-manager-top-context"><strong>${safe(APP.section.toUpperCase())}</strong><span>${safe((APP.custom||profileRoute?.title||APP.page||'Overview').replace(/^Office$/,'Overview'))}</span></div>
+  ${player?`<button class="ng-global-due" data-ng="job-open" title="Change your player job and inspect the world from another role">${safe(player.role.toUpperCase())} · CHANGE JOB</button>`:''}
   <div class="ng-global-tools"><button class="ng-iconbtn" data-ng="custom" data-val="Search" aria-label="Search">${glyph('search',17)}</button><button class="ng-iconbtn" data-ng="custom" data-val="Messages" aria-label="Inbox">${glyph('mail',17)}<i></i></button><button class="ng-iconbtn" data-ng="save-open" aria-label="Save or load named games" title="Save, load, or rename a game">${glyph('save',17)}</button></div>
   <button class="ng-global-date" data-ng="menu" data-val="Racing" title="Open calendar for in-world date ${safe(date)}" aria-label="In-world date ${safe(date)}. Open racing calendar"><span>GAME DATE</span><strong>${safe(date)}</strong></button>
   ${due.length?'<button class="ng-global-due" data-ng="due" title="Review due management follow-ups">'+glyph('alert',13)+' DUE '+due.length+'</button>':''}
@@ -560,7 +594,10 @@ function worldRecordName(kind,id,otherwise=''){
 function worldEditOpen(key){
  const source=world1999Entry(key);
  if(!source)return;
- APP.worldEditKey=key;APP.worldEditDraft={...source._world};APP.worldEditStatus='';
+ const draft={...source._world};
+ draft.biography=String(draft.biography||'');
+ draft.achievements=Array.isArray(draft.achievements)?draft.achievements.join('\n'):String(draft.achievements||'');
+ APP.worldEditKey=key;APP.worldEditDraft=draft;APP.worldEditStatus='';
  APP.worldPhotoDraft=undefined;APP.worldEditBusy=false;
  // An EDIT button in the World roster must open its record, not simply repaint the directory.
  if(APP.custom!=='WorldRecord:'+encodeURIComponent(key))return openWorld1999Entity(key);
@@ -695,8 +732,8 @@ function worldEditFieldHTML(field,value){
  else if(typeof value==='boolean')control='<select data-world-field="'+safe(field)+'">'+
   '<option value="true"'+(value?' selected':'')+'>Yes</option>'+
   '<option value="false"'+(!value?' selected':'')+'>No</option></select>';
- else if(/^(notes?|description|legacySummary|history|biography|background|conditionReport)$/i.test(field)||String(value??'').length>140)
-  control='<textarea data-world-field="'+safe(field)+'" rows="2">'+safe(String(value??''))+'</textarea>';
+ else if(/^(notes?|description|legacySummary|history|biography|background|conditionReport|achievements)$/i.test(field)||String(value??'').length>140)
+  control='<textarea data-world-field="'+safe(field)+'" rows="'+(field==='biography'||field==='achievements'?4:2)+'">'+safe(String(value??''))+'</textarea>';
  else control='<input data-world-field="'+safe(field)+'" type="text" maxlength="10000" value="'+safe(String(value??''))+'"/>';
  return '<label class="ng-world-edit-field"><span>'+safe(label)+
   (hint?'<small>'+safe(hint)+'</small>':'')+'</span>'+control+'</label>';
@@ -704,7 +741,7 @@ function worldEditFieldHTML(field,value){
 function worldEditMarkup(entry){
  const key=entry.worldKey,d=APP.worldEditDraft||entry._world;
  const fields=Object.keys(d).filter(worldEditValidField).sort((a,b)=>
-  a==='name'?-1:b==='name'?1:a.localeCompare(b));
+  a==='name'?-1:b==='name'?1:a==='biography'?-1:b==='biography'?1:a==='achievements'?-1:b==='achievements'?1:a.localeCompare(b));
  const locked=['id','key','_role','registeredInV33'].filter(k=>d[k]!==undefined);
  return '<section class="ng-world-editor" data-world-record="'+safe(key)+'">'+
   '<header><div><small>WIRE TO WIRE / WORLD EDITOR</small><h2>'+safe(d.name||entry.name)+'</h2></div>'+
@@ -1876,9 +1913,6 @@ function profileDetail(route,sourceOverride=null){
   '<div><small>'+safe(trackHistory.capacityType)+'</small><strong>'+safe(trackHistory.capacity)+'</strong>'+
   (trackHistory.capacityAsOf?'<em>'+safe(trackHistory.capacityAsOf)+'</em>':'')+'</div></div>';
  const trackHistoryBlurb=()=>'<p class="ng-track-history-blurb">'+safe(trackHistory.blurb)+'</p>';
- const trackHistoryPanel=()=>'<section class="ng-tier1-card ng-track-history-card" aria-label="Track history">'+
-  '<header>TRACK HISTORY <button data-ng="detailtab" data-val="History" aria-label="Open full history of '+safe(route.title)+'">FULL HISTORY ↗</button></header>'+
-  '<div class="ng-track-history-content">'+trackHistoryFacts()+trackHistoryBlurb()+'</div></section>';
  const trackHistoryFull=()=>'<section class="ng-detailcard ng-detailwide ng-track-history-full">'+
   '<header>TRACK HISTORY · '+safe(route.title)+' <button data-ng="detailtab" data-val="Overview">← TRACK OVERVIEW</button></header>'+
   trackHistoryFacts()+trackHistoryBlurb()+
@@ -1897,6 +1931,8 @@ function profileDetail(route,sourceOverride=null){
    '</div></div>':'';
 
  const stakeDateRank=value=>{
+  const iso=String(value||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(iso)return Number(iso[2])*32+Number(iso[3]);
   const match=String(value||'').match(/\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(\d{1,2})\b/i);
   if(!match)return Number.MAX_SAFE_INTEGER;
   const month='jan feb mar apr may jun jul aug sep oct nov dec'.split(' ').indexOf(match[1].slice(0,3).toLowerCase());
@@ -1916,33 +1952,55 @@ function profileDetail(route,sourceOverride=null){
  const stakesTable=(limit=100)=>{
   const gradeRank=value=>{const g=(String(value||'').match(/\bG([123])\b/i)||[])[1];return g?Number(g):/major/i.test(value)?4:5};
   const purseRank=value=>{const n=Number(String(value||'').replace(/[^\d.]/g,''));return Number.isFinite(n)?n:-1};
-  const rank=(key,row)=>key==='date'?stakeDateRank(row.cols[1]):key==='grade'?gradeRank(row.cols[2]):key==='purse'?purseRank(row.cols[3]):row.cols[0].toLocaleLowerCase();
+ const rank=(key,row)=>key==='date'?stakeDateRank(row.cols[1]):key==='grade'?gradeRank(row.cols[2]):key==='purse'?purseRank(row.cols[3]):key==='distance'?Number.parseFloat(row.cols[7])||-1:row.cols[{name:0,age:4,sex:5,surface:6}[key]??0].toLocaleLowerCase();
   const compare=(a,b)=>{
    const av=rank(APP.stakeSort,a),bv=rank(APP.stakeSort,b);
    const result=typeof av==='number'&&typeof bv==='number'?av-bv:String(av).localeCompare(String(bv),undefined,{numeric:true,sensitivity:'base'});
    return (APP.stakeSortDesc?-1:1)*result || a.cols[0].localeCompare(b.cols[0]);
   };
-  const ordered=trackRaces.map(row=>({row,cols:[...row.node.children].map(item=>item.textContent.trim()).slice(0,4)}))
+  const ordered=trackRaces.map(row=>{
+   const id=row.node.dataset.stakeId||'';
+   const sourceRace=id?window.__WTW_1999_UI_DATA__?.findStake?.(id):null;
+   const race=sourceRace?raceEditProjection(sourceRace):null;
+   const old=[...row.node.children].map(item=>item.textContent.trim());
+   const age=String(race?.ageRequirement||race?.ageRestriction||race?.ageCondition||'Not recorded').replace(/\bYO(\+)?/ig,(_,plus)=>'yo'+(plus||'')).replace(/YEAR-OLD/ig,'yo');
+   const sex=String(race?.sexRestriction||race?.sexCondition||'Not recorded').replace(/_/g,' ').replace(/\bFILLIES AND MARES\b/i,'Fillies & Mares').replace(/\bCOLTS AND GELDINGS\b/i,'Colts & Geldings').replace(/\bOPEN\b/i,'Open');
+   const surface=race?.surface||race?.surfaceType||'Not recorded';
+   const rawDistance=race?.distanceFurlongs??race?.distanceF??race?.distance;
+   const distance=rawDistance===undefined||rawDistance===null?'Not recorded':typeof rawDistance==='number'?rawDistance+' furlongs':String(rawDistance);
+   const grade=race?.grade||race?.grade1999||race?.status||old[2]||'Not recorded';
+   const purseValue=race?.purse1999??race?.purse??old[3]??'Not recorded';
+   const purse=typeof purseValue==='number'&&Number.isFinite(purseValue)?'$'+purseValue.toLocaleString('en-US'):String(purseValue);
+   const cols=[race?.name||old[0]||'Race',race?.localDate||race?.date||old[1]||'Not recorded',String(grade),String(purse),String(age),String(sex),String(surface),String(distance)];
+   return {row,cols};
+  })
    .sort(compare);
-  const labels=[['name','RACE'],['date','DATE'],['grade','GRADE'],['purse','PURSE']];
+  const labels=[['name','RACE'],['date','DATE'],['grade','GRADE'],['purse','PURSE'],['age','AGE'],['sex','SEX'],['surface','SURFACE'],['distance','DISTANCE']];
   const header=labels.map(([key,label])=>{
    const active=APP.stakeSort===key,mark=active?(APP.stakeSortDesc?'↓':'↑'):'↕';
    return '<button type="button" data-ng="stake-sort" data-val="'+key+'" aria-sort="'+(active?(APP.stakeSortDesc?'descending':'ascending'):'none')+'"><span>'+label+'</span><i aria-hidden="true">'+mark+'</i></button>';
   }).join('');
-  return '<div class="ng-stakes-table"><div class="ng-stakes-head">'+header+'</div>'+
+  return '<div class="ng-stakes-table ng-track-stakes-table"><div class="ng-stakes-head">'+header+'</div>'+
    (ordered.slice(0,limit).map(({row,cols})=>{
-    while(cols.length<4)cols.push('—');
+    while(cols.length<8)cols.push('Not recorded');
     const grade=(cols[2].match(/\bG([123])\b/i)||[])[1];
     const gradeCell=grade?'<span class="ng-stakes-grade" aria-label="Grade '+grade+'" title="Grade '+grade+'"><img class="ng-stakes-trophy" src="/assets/trophies/approved-grade-'+grade+'-64.png" alt="" width="16" height="16" decoding="async"/><small class="ng-stakes-grade-text" aria-hidden="true">G'+grade+'</small></span>':'<span>'+safe(cols[2])+'</span>';
     const stakeId=row.node.dataset.stakeId||'';
     // Detached source rows have no legacy Office index: keep a live 1999 race-file click target.
     return '<button class="ng-stakes-data" data-ng="1999-stake" data-val="'+safe(stakeId)+
       '" data-name="'+safe(cols[0])+'" data-track="'+safe(route.title)+'" data-date="'+safe(cols[1])+'">'+
-     '<span>'+safe(cols[0])+'</span><span>'+safe(cols[1])+'</span>'+gradeCell+'<span>'+safe(cols[3])+'</span></button>';
+     '<span>'+safe(cols[0])+'</span><span>'+safe(cols[1])+'</span>'+gradeCell+'<span>'+safe(cols[3])+'</span>'+cols.slice(4).map(value=>'<span title="'+safe(value)+'">'+safe(value)+'</span>').join('')+'</button>';
    }).join('')||'<div class="ng-empty-record">No verified stakes rows connected.</div>')+'</div>';
  };
  const entityPhotoKind=isHorse?'horse':isPerson?'person':isFarm?'farm':isTrack?'track':'';
  const profileSource=entityPhotoKind?world1999Match(entityPhotoKind,route.title):null;
+ const narrative=profileSource?._world||{};
+ const biographyText=String(narrative.biography||'').trim();
+ const achievementItems=(()=>{const value=narrative.achievements;if(Array.isArray(value)&&value.length)return value.map(String).map(x=>x.trim()).filter(Boolean);if(typeof value==='string'&&value.trim())return value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);return notes})();
+ const narrativeCard=(title,body,cls='')=>'<section class="ng-tier1-card ng-profile-narrative '+cls+'"><header>'+title+'</header>'+body+'</section>';
+ const biographyCard=narrativeCard('BIOGRAPHY',biographyText?'<p>'+safe(biographyText)+'</p>':'<p class="ng-narrative-empty">Biography not recorded. Use EDIT RECORD to add one.</p>','ng-profile-biography');
+ const achievementsCard=narrativeCard('ACHIEVEMENTS',achievementItems.length?'<ul>'+achievementItems.map(item=>'<li>'+safe(item)+'</li>').join('')+'</ul>':'<p class="ng-narrative-empty">No achievements recorded. Use EDIT RECORD to add them.</p>','ng-profile-achievements');
+ const entityDossierCard='<section class="ng-tier1-card ng-track-history-card"><header>BIOGRAPHY & ACHIEVEMENTS</header><div class="ng-track-history-content">'+biographyCard+achievementsCard+'</div></section>';
  const horseImage=entityPhotoKind?approvedIdentityAsset(entityPhotoKind,profileSource?._world?.id||'',route.title):'';
  const sourceDecision=isHorse?$('#routeBody [data-act="Open profile decision"]'):null;
  const sourceFollowUp=isHorse?$('#routeBody [data-act="Open follow-up"]'):null;
@@ -2357,6 +2415,7 @@ function profileDetail(route,sourceOverride=null){
  if(APP.detailTab==='Overview'){
   if(isHorse){
    left=athleteOverview();
+   left=left.replace(/<\/div>$/,'<div class="ng-horse-mgr-bottom">'+biographyCard+achievementsCard+'</div></div>');
    right='';footer='';
   }else if(isPerson){
    // Structural lock: exactly the Horse Overview's four rating columns,
@@ -2398,6 +2457,7 @@ function profileDetail(route,sourceOverride=null){
      ${panel('CAREER RECORD & HISTORY','<p class="ng-horse-small-note">Role-specific career measures will be set with the personnel model. No figures inferred.</p>','ng-horse-form-card')}
      ${panel('BACKGROUND & CONNECTIONS',approvedLinks,'ng-horse-pedigree-card')}
     </div>
+    <div class="ng-horse-mgr-bottom">${biographyCard}${achievementsCard}</div>
     <div class="ng-horse-mgr-summary"><div><strong>PERSONNEL OFFICE SUMMARY</strong><span>${safe(approvedConnections)}</span></div>
      <div class="ng-horse-mgr-actions"><button type="button" data-ng="detailtab" data-val="Connections">VIEW CONNECTIONS ↗</button></div>
     </div>
@@ -2450,12 +2510,7 @@ function profileDetail(route,sourceOverride=null){
        <div class="ng-track-meet-facts">${stats.map(([label,value])=>'<div class="ng-track-meet-fact"><small>'+safe(label)+'</small><strong>'+safe(value)+'</strong></div>').join('')}</div>
        <div class="ng-track-operating-notes">${founderPersonLinks()}</div>
       </div></section>
-     <section class="ng-tier1-card ng-track-history-card"><header>${facilityContext?'FACILITY HISTORY':'OWNERSHIP HISTORY'} <button data-ng="detailtab" data-val="History">FULL HISTORY ↗</button></header>
-      <div class="ng-track-history-content"><div class="ng-track-history-facts">
-       <div><small>FOUNDED / OPENED</small><strong>NOT RECORDED</strong></div>
-       <div><small>HISTORICAL LINKS</small><strong>${founderHistorical.length}</strong></div>
-      </div><p class="ng-track-history-blurb">${safe(founderOrg?.approvedOrigin||'Historical description awaiting approved source.')}</p></div>
-     </section>
+     ${entityDossierCard}
     </div>
    </div>`;right='';footer='';
   }else if(isTrack){
@@ -2468,7 +2523,7 @@ function profileDetail(route,sourceOverride=null){
       ${trackOperatingNotes.length?`<div class="ng-track-operating-notes">${trackOperatingNotes.slice(0,3).map(x=>`<article><b>${safe(x.label)}</b><span>${safe(x.value)}</span></article>`).join('')}</div>`:''}
       ${trackOfficeContext?`<div class="ng-track-office-context"><b>CURRENT OFFICE CONTEXT</b><span>${safe(trackOfficeContext.value)}</span></div>`:''}
      </div></section>
-     ${trackHistoryPanel()}
+     ${entityDossierCard}
     </div>
    </div>`;right='';footer='';
   }else{
@@ -2526,7 +2581,7 @@ function profileDetail(route,sourceOverride=null){
     '<span>RACE / TRACK</span><span>FINISH</span><span>SOURCE</span></div>'+rows+'</div>':
     '<p class="ng-horse-small-note">Unraced in the 1999 test world at opening.</p>')+'</section>';
  }else if(APP.detailTab==='Achievements'&&isHorse){
-  left=`<section class="ng-detailcard ng-detailwide"><header>RECORDED ACHIEVEMENTS</header><div class="ng-notes">${horseAchievements.map(n=>`<div>${safe(n)}</div>`).join('')||'<div>No achievements documented in the current source record.</div>'}</div></section>`;
+  left=`<section class="ng-detailcard ng-detailwide"><header>RECORDED ACHIEVEMENTS</header><div class="ng-notes">${[...new Set([...horseAchievements,...achievementItems])].map(n=>`<div>${safe(n)}</div>`).join('')||'<div>No achievements documented in the current source record.</div>'}</div></section>`;
  }else if(isTrack&&(APP.detailTab==='Meet Schedule'||APP.detailTab==='Major Races')){
   if(APP.detailTab==='Major Races'){
    left=`<section class="ng-detailcard ng-detailwide"><header>STAKES RACE RECORDS</header>${stakesTable()}</section>`;
@@ -4062,11 +4117,11 @@ else if(APP.custom==='Search'){body=searchView()}
 else if(APP.custom.startsWith('WorldRecord:')){body=world1999Profile()}
 else if(APP.custom.startsWith('FoundingProfile:')){body=founding1999Profile()}
 else if(APP.custom.startsWith('PilotHorse:')){body=pilotHorseDetail(decodeURIComponent(APP.custom.slice('PilotHorse:'.length)))}
-else if(APP.custom.startsWith('RaceFile:')){const id=decodeURIComponent(APP.custom.slice('RaceFile:'.length));const race=APP.raceRouteKey===id?APP.raceDetail:window.__WTW_1999_UI_DATA__?.findRace?.(id);body=window.WTW1999RaceConditions?.render(race,window.__WTW_1999_UI_DATA__)||'<section class="ng-1999-race-file"><h2>Race file loading unavailable</h2></section>'}
+else if(APP.custom.startsWith('RaceFile:')){const id=decodeURIComponent(APP.custom.slice('RaceFile:'.length));const race=APP.raceRouteKey===id?APP.raceDetail:window.__WTW_1999_UI_DATA__?.findRace?.(id);body=window.WTW1999RaceConditions?.render(race,{...window.__WTW_1999_UI_DATA__,raceEditId:APP.raceRouteKey,raceEditOpen:APP.raceEditOpen,raceEditDraft:APP.raceEditDraft,raceEditError:APP.raceEditError})||'<section class="ng-1999-race-file"><h2>Race file loading unavailable</h2></section>'}
 else if(APP.custom.startsWith('Preview:')){body=previewRecordView()}
 else {body=managerDashboard()}
 const isProfile=Boolean(profile)||body.startsWith('<div class="ng-profile-view '),isOrganization=APP.custom==='Organization Overview',isSearch=APP.custom==='Search',isManager=body.startsWith('<section class="ng-manager-screen');
-return `<main class="ng-route ${isProfile?'ng-route-profile':isOrganization?'ng-route-organization':isSearch?'ng-route-search':isManager?'ng-route-manager':''}">${isProfile||isOrganization||isManager?'':`<header class="ng-routeheading"><span class="ng-route-badge-slot" aria-hidden="true">${APP.custom==='Organization Overview'?organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',true,true):`<img class="ng-routebadge" src="${safe(bdg)}" alt=""/>`}</span><div class="ng-routetext"><small>${safe(kicker)}</small><h1>${safe(title)}</h1></div><button class="ng-back" data-ng="office">← RACING OFFICE</button></header>`}<div class="ng-routegrid" data-route-key="${safe((route?.kicker||APP.custom||APP.section)+'|'+(route?.title||APP.custom||APP.page))}"><div class="ng-routeinner">${!isProfile&&/^(?:WorldRecord:|RaceFile:|Preview:|PilotHorse:)/.test(APP.custom)?recordBrowseToolbar(route):''}${body}</div></div></main>`;}
+return `<main class="ng-route ${isProfile?'ng-route-profile':isOrganization?'ng-route-organization':isSearch?'ng-route-search':isManager?'ng-route-manager':''}">${isProfile||isOrganization||isManager?'':`<header class="ng-routeheading"><span class="ng-route-badge-slot" aria-hidden="true">${APP.custom==='Organization Overview'?organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',true,true):`<img class="ng-routebadge" src="${safe(bdg)}" alt=""/>`}</span><div class="ng-routetext"><small>${safe(kicker)}</small><h1>${safe(title)}</h1></div><button class="ng-back" data-ng="office">← RACING OFFICE</button></header>`}<div class="ng-routegrid" data-route-key="${safe((route?.kicker||APP.custom||APP.section)+'|'+(route?.title||APP.custom||APP.page))}"><div class="ng-routeinner${APP.custom.startsWith('RaceFile:')?' ng-race-file-route-inner':''}">${!isProfile&&/^(?:WorldRecord:|RaceFile:|Preview:|PilotHorse:)/.test(APP.custom)?recordBrowseToolbar(route):''}${body}</div></div></main>`;}
 // Keep browser-native select menus mounted while the user chooses an option.
 // Hidden Office mutations repaint this interface frequently; a full re-render
 // while the menu is open destroys the select and interrupts the mouse gesture.
@@ -4151,7 +4206,8 @@ function paint(){
  const route=currentRoute();
  const stage=(route||APP.custom)?renderRoute():`<main class="ng-board">${inbox()}${center()}${right()}</main>`;
  root.innerHTML=header()+'<div class="ng-manager-shell">'+managerSidebar()+
-   '<div class="ng-manager-stage">'+stage+'</div></div>'+(APP.savePanelOpen?namedSavePanel():'');
+   '<div class="ng-manager-stage">'+stage+'</div></div>'+(APP.jobChangeOpen?jobChangePanel():'')+
+   (APP.savePanelOpen?namedSavePanel():'');
  const nextRoute=$('.ng-routegrid',root),nextTab=$('.ng-profiletabs .on',root)?.dataset.val||'';
  const nextRoster=$('.ng-dept-roster .ng-rs-scroll',root);
  if(nextRoster){
@@ -4181,6 +4237,24 @@ window.addEventListener('click',e=>{
  e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();
  const key=btn.dataset.ng, val=btn.dataset.val||'';
  if(RECORD_BROWSE_ACTIONS.has(key))recordBrowseCapture(btn,key,val);
+ if(key==='job-open'){
+  const player=window.__WTW_1999_UI_DATA__?.gameplayService?.state?.player;
+  if(!player)return;
+  APP.jobDraft={...player};APP.jobChangeError='';APP.jobChangeOpen=true;return paint();
+ }
+ if(key==='job-close'){APP.jobChangeOpen=false;APP.jobChangeError='';return paint()}
+ if(key==='job-save'){
+  if(APP.jobChangeBusy)return;
+  const draft=APP.jobDraft||{},commands=window.__WTW_OFFICE_COMMANDS__;
+  if(!commands)return APP.jobChangeError='Game commands are unavailable.',paint();
+  APP.jobChangeBusy=true;APP.jobChangeError='';paint();
+  Promise.resolve(commands.dispatch('CHANGE_PLAYER_JOB',draft)).then(()=>{
+   APP.jobChangeOpen=false;APP.jobDraft=null;APP.jobChangeBusy=false;APP.jobChangeError='';paint();
+  }).catch(error=>{
+   APP.jobChangeBusy=false;APP.jobChangeError=String(error?.message||error);paint();
+  });
+  return;
+ }
  if(key==='naming-desk')return openCustomView('Stable — Naming Desk','Stable','Naming Desk');
  if(key&&key.startsWith('naming-'))return window.WTW1999NamingDesk?.action?.(key,val);
  if(!key && btn.dataset.act){syntheticAction(btn);return}
@@ -4379,6 +4453,21 @@ window.addEventListener('click',e=>{
   return paint();
  }
  if(key==='stable-world-edit'){APP.section='World';return pageTab('1999 Horses')}
+ if(key==='race-edit'){
+  APP.raceEditOpen=!APP.raceEditOpen;
+  APP.raceEditDraft=APP.raceEditOpen?{...raceEditProjection(APP.raceDetail||{})}:null;
+  APP.raceEditError='';
+  return paint();
+ }
+ if(key==='race-edit-cancel'){APP.raceEditOpen=false;APP.raceEditDraft=null;return paint()}
+ if(key==='race-edit-save'){
+  const race=APP.raceDetail||{},id=String(race.id||race._raceId||APP.raceRouteKey||'');
+  if(!id)return;
+  if(!String(APP.raceEditDraft?.name||'').trim()){APP.raceEditError='A race needs a name.';return paint()}
+  const edits={...raceEditStore(),[id]:{...(APP.raceEditDraft||{})}};
+  try{localStorage.setItem(RACE_EDIT_KEY,JSON.stringify(edits));APP.raceDetail=raceEditProjection(race);APP.raceEditOpen=false;APP.raceEditDraft=null;return paint()}
+  catch(error){APP.raceEditError='Could not save race details: '+String(error?.message||error);return paint()}
+ }
  if(key==='world-edit')return worldEditOpen(val);
  if(key==='world-edit-source'){
   const kind=btn.dataset.kind,name=btn.dataset.name;
@@ -4537,6 +4626,23 @@ window.addEventListener('click',e=>{
 root.addEventListener('change',event=>{
   const field=event.target;
   if(field.id==='ngNamedSavesImport')return namedSaveImport(field.files?.[0]);
+  if(field.matches('select[data-ng-select="job-role"]')){
+   APP.jobDraft={...(APP.jobDraft||{}),role:field.value};
+   const service=window.__WTW_1999_UI_DATA__?.gameplayService;
+   if(service){const people=service.world.entities.people||[],state=service.state;
+    const eligible=field.value==='jockey'?people.filter(p=>state.runtime.racing?.jockeys?.[p.id]):
+     field.value==='trainer'?people.filter(p=>/trainer/i.test(p.role||'')):
+     field.value==='breeder'?people.filter(p=>/breeder|farm principal/i.test(p.role||'')):people;
+    if(!eligible.some(p=>p.id===APP.jobDraft.person_id))APP.jobDraft.person_id=null;
+   }
+   return paint();
+  }
+  if(field.matches('select[data-ng-select="job-operation"]')){
+   APP.jobDraft={...(APP.jobDraft||{}),operation_id:field.value||null};return;
+  }
+  if(field.matches('select[data-ng-select="job-person"]')){
+   APP.jobDraft={...(APP.jobDraft||{}),person_id:field.value||null};return;
+  }
   if(field.matches('select[data-ng-select^="race-plan-"]')){
    endNativeSelectInteraction(false);
    return window.WTW1999PlayerRacePlans?.select?.(field.dataset.ngSelect,field.value);
@@ -4603,6 +4709,7 @@ root.addEventListener('input',event=>{
  if(event.target?.id==='ngNamedSaveName')APP.saveDraftName=event.target.value;
 });
 root.addEventListener('keydown',event=>{
+ if(APP.jobChangeOpen&&event.key==='Escape'){event.preventDefault();APP.jobChangeOpen=false;APP.jobChangeError='';return paint()}
  if(APP.savePanelOpen&&event.key==='Escape'){event.preventDefault();APP.savePanelOpen=false;return paint()}
  if(APP.savePanelOpen&&event.key==='Enter'&&event.target?.id==='ngNamedSaveName'){event.preventDefault();return namedSaveCreate()}
  if(event.key==='Escape'&&event.target===activeNativeSelect){
@@ -4709,6 +4816,8 @@ function restoreNextUIRoute(){
 }
 // Keep editors mounted while typing. Only the Save action writes to storage.
 root.addEventListener('input',event=>{
+ const raceField=event.target.closest('[data-race-field]');
+ if(raceField&&APP.raceEditDraft){APP.raceEditDraft[raceField.dataset.raceField]=raceField.value;return}
  const node=event.target.closest('[data-world-field]');
  if(!node||!APP.worldEditDraft)return;
  const field=node.dataset.worldField;

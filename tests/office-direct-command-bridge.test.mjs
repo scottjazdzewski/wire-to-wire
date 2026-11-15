@@ -123,6 +123,19 @@ test('decisions use the selected engine case and choice and release the lock aft
  assert.deepEqual(JSON.parse(JSON.stringify(calls)),Array(2).fill(['ANSWER_DECISION',payload,'player']));
 });
 
+test('change job is dispatched to the active career save service',async()=>{
+ const {window,api}=boot({mode:'FOUNDING_1999'});
+ assert.throws(()=>api.dispatch('CHANGE_PLAYER_JOB',{role:'trainer'}),/active playable game career/);
+ const calls=[];
+ window.__WTW_1999_UI_DATA__={gameplayService:{
+  submit:(...args)=>{calls.push(args);return Promise.resolve('committed')}
+ }};
+ const payload={role:'trainer',operation_id:'O-1',person_id:'P-1'};
+ assert.equal(await api.dispatch('CHANGE_PLAYER_JOB',payload),'committed');
+ assert.deepEqual(JSON.parse(JSON.stringify(calls)),[['CHANGE_PLAYER_JOB',payload,'player']]);
+ assert.throws(()=>api.dispatch('CHANGE_PLAYER_JOB',{role:'invalid'}),/available career role/);
+});
+
 test('game command errors are reported rather than silently advancing',()=>{
  const segment=next.slice(next.indexOf("if(window.__WTW_1999_MANAGEMENT__&&val==='Continue')"),
   next.indexOf("if(window.__WTW_1999_MANAGEMENT__&&['Open file'"));
