@@ -11,7 +11,7 @@ import {foalingEventNamingBrief,auditPopulationNamingResults,POPULATION_NAMING_S
 export const LOCAL_HORSE_NAMING_SCHEMA='WTW_LOCAL_HORSE_NAMING_V485';
 // Freeze behavioral revision per named cohort when game foaling becomes save-backed.
 // This V486 marker changes selection and fail-closed audit, not the V485 wire schema.
-export const LOCAL_HORSE_NAMING_ALGORITHM_REVISION='WTW_LOCAL_NAMING_RULES_V486';
+export const LOCAL_HORSE_NAMING_ALGORITHM_REVISION='WTW_LOCAL_NAMING_RULES_V487';
 const norm=x=>String(x||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('en-US').replace(/[^a-z0-9]/g,'');
 const clean=x=>String(x||'').trim();
 const fnv=s=>{let h=2166136261;for(const x of String(s)){h^=x.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
@@ -170,10 +170,13 @@ export function generateLocalStoryFirstHorseNames({world,state,horse,brief,count
 export function generateLocalPopulationNamingBatch({batch,existingNames=[],attempt=0}={}){
  if(batch?.schema!==POPULATION_NAMING_SCHEMA||!Array.isArray(batch.items)||
   !batch.items.length||batch.items.length>POPULATION_NAMING_BATCH_SIZE||
-  !Array.isArray(existingNames))throw Error('Invalid local population naming batch');
- const results=[],briefs=[],known=[...existingNames,...(batch.recentNames||[])];
- const newCandidateKeys=new Set(),seenHorses=new Set();
- let exhaustedFoals=0;
+  !Array.isArray(existingNames)||!Array.isArray(batch.recentNames||[]))
+  throw Error('Invalid local population naming batch');
+ // The full registry is an input from the single game-save authority. Recent
+ // fatigue context is additional, never a substitute for all-time uniqueness.
+ const priorNames=[...existingNames,...(batch.recentNames||[])];
+ const known=[...priorNames],knownKeys=new Set(known.map(norm));
+ const results=[],briefs=[],seenHorses=new Set();
  for(const item of batch.items){
   const brief=item?.brief;
   if(typeof brief?.horseId!=='string'||seenHorses.has(brief.horseId))
@@ -190,32 +193,50 @@ export function generateLocalPopulationNamingBatch({batch,existingNames=[],attem
    owner:brief.owner,breeder:brief.breeder,event});
   if(JSON.stringify(trusted)!==JSON.stringify(brief)||brief.foalingYear!==batch.year)
    throw Error('Foal naming record did not match actual game-event brief');
+
+  // V486 took the first two names before the independent screen. A previously
+  // reviewed or malformed suggestion could consume a registry key and strand
+  // a foal despite valid, later authored alternatives. Screen the whole local
+  // story-backed pool first, then reserve ONLY up to two editorial-ready names.
+  // Exclude globally reserved keys with a Set before screening to avoid
+  // rebuilding a large all-time name registry for every individual proposal.
   const {suggestions}=createLocalStoryIdeas(trusted,{count:8,attempt});
-  const seen=new Set(known.map(norm)),candidates=[];
-  for(const item of suggestions){
-   if(seen.has(norm(item.name)))continue;
-   candidates.push({...item,origin:'ON_DEVICE_FOALING_EVENT',status:'NEEDS_INDEPENDENT_EDITOR'});
-   seen.add(norm(item.name));
-   newCandidateKeys.add(norm(item.name));
-   if(candidates.length>=2)break;
+  const viable=suggestions.filter(s=>!knownKeys.has(norm(s.name)));
+  const preview=auditPopulationNamingResults({
+   results:[{horseId:trusted.horseId,candidates:viable}],
+   briefs:[trusted],existingNames:[]
+  });
+  const candidates=[];
+  for(let i=0;i<viable.length&&candidates.length<2;i++){
+   if(preview.screened[0].proposals[i].status!=='READY_FOR_INDEPENDENT_EDITOR')continue;
+   const proposal=viable[i],key=norm(proposal.name);
+   if(!key||knownKeys.has(key))continue;
+   candidates.push({...proposal,origin:'ON_DEVICE_FOALING_EVENT',
+    status:'NEEDS_INDEPENDENT_EDITOR'});
+   knownKeys.add(key);
+   known.push(proposal.name);
   }
-  known.push(...candidates.map(x=>x.name));
-  if(candidates.length===0)exhaustedFoals++;
-  briefs.push(trusted);results.push({horseId:trusted.horseId,candidates,
+  briefs.push(trusted);
+  results.push({horseId:trusted.horseId,candidates,
    namingStatus:candidates.length?'REQUIRES_EDITOR':'HOLD_NO_UNIQUE_LOCAL_CANDIDATE',
    approvedForRegistration:false,gameWrites:0});
  }
- const audit=auditPopulationNamingResults({results,briefs,existingNames:[...existingNames,...(batch.recentNames||[])]});
+ // Independent final batch audit is authoritative. A held candidate is NEVER
+ // included in the returned cumulative reservation delta.
+ const audit=auditPopulationNamingResults({results,briefs,existingNames:priorNames});
+ const newCandidateNameKeys=[...new Set(audit.screened.flatMap(row=>row.proposals)
+  .filter(p=>p.status==='READY_FOR_INDEPENDENT_EDITOR').map(p=>norm(p.name)))].sort();
+ const exhaustedFoals=audit.screened.filter(row=>
+  !row.proposals.some(p=>p.status==='READY_FOR_INDEPENDENT_EDITOR')).length;
  return {schema:LOCAL_HORSE_NAMING_SCHEMA,jobId:batch.jobId,year:batch.year,
   requested:batch.items.length,screened:audit.screened,
   readyForIndependentEditor:audit.readyForIndependentEditor,
   held:audit.held,status:'LOCAL_BATCH_COMPLETE_NEEDS_EDITOR',
   nextRecentNames:known.slice(-60),remoteRequests:0,creditsUsed:0,
   algorithmRevision:LOCAL_HORSE_NAMING_ALGORITHM_REVISION,
-  exhaustedFoals,newCandidateNameKeys:[...newCandidateKeys].sort(),
-  // Never treat recent-name fatigue (last 60) as a complete uniqueness ledger.
-  // The caller must union newCandidateNameKeys into the locally saved global
-  // issued/reserved-name registry before planning another cohort.
+  exhaustedFoals,newCandidateNameKeys,
+  // The local save authority must atomically union these keys into its
+  // complete issued/reserved name registry before scheduling later cohorts.
   requiresFullLocalNameRegistry:true,
   writesToGame:false,approvedForRegistration:false};
 }
