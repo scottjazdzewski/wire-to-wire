@@ -10,6 +10,9 @@ import {encodeCareerSave,decodeCareerSave,packCareerFile,unpackCareerFile}
 import {open1999IndustryDatabase,createPersistent1999Industry,
  savePersistent1999CareerRun,loadPersistent1999CareerRun}
  from '/1999/engine/fictional-industry-persistence-1999.mjs';
+import {TRACK_PROGRAM_1999} from '/next/1999-track-program.mjs';
+import {readPersistent1999HorseProfile}
+ from '/1999/engine/fictional-industry-persistence-1999.mjs';
 
 const DB_NAME='WireToWireClean1999CareersV2';
 const MAX_SLOTS=60,MAX_TOTAL_BYTES=512*1024*1024;
@@ -174,6 +177,28 @@ function inputProfile(){
   mode:dom.querySelector('[data-cc="mode"]')?.value||'FOUNDING_1999'
  });
 }
+let fullIndustryManifest=null;
+function industryDirectories(){
+ const tracks=Object.values(TRACK_PROGRAM_1999)
+  .filter(t=>t.playableIn1999!==false&&t.trackOperating==='OPEN_1999')
+  .map(t=>({id:t.id,name:t.name,location:t.location??{}}));
+ if(!tracks.length)throw Error('No approved operating 1999 tracks');
+ const farms=tracks.flatMap(t=>Array.from({length:4},(_,i)=>({
+  id:'O-FICTIONAL-FARM-'+t.id+'-'+String(i+1).padStart(2,'0'),
+  name:t.name+' Region Farm '+(i+1),location:t.location
+ })));
+ const owners=tracks.flatMap(t=>Array.from({length:10},(_,i)=>({
+  id:'O-FICTIONAL-OWNER-'+t.id+'-'+String(i+1).padStart(2,'0'),
+  name:t.name+' Region Ownership '+(i+1),location:t.location
+ })));
+ return {tracks,farms,owners};
+}
+async function inspectFullIndustryHorse(horseId){
+ if(!fullIndustryManifest)throw Error('Open the full industry first');
+ const store=await open1999IndustryDatabase();
+ try{return await readPersistent1999HorseProfile(store,fullIndustryManifest,horseId)}
+ finally{store.close()}
+}
 let busy=false,notice='';
 async function refresh(){
  const root=modal();
@@ -197,6 +222,15 @@ async function refresh(){
   '<div class="wtw-cc-current">CURRENT WORLD · '+fmt(current.population)+' HORSES · '+
    esc('FOUNDING 1999')+
    ' · SEED '+esc(current.seed)+'</div>'+
+  '<div class="wtw-cc-section"><h3>FULL FICTIONAL 1999 INDUSTRY — WORLD EXPLORER</h3>'+
+  '<p>Generate and reopen the large opening-world registry without replacing your current career. This is a population explorer; live race gameplay is not yet activated for this world.</p>'+
+  '<div class="wtw-cc-actions"><button data-cc-action="open-full-industry">CREATE / OPEN FULL INDUSTRY</button></div>'+
+  (fullIndustryManifest?'<p>WORLD STORED · '+fmt(fullIndustryManifest.horseCount)+
+   ' horses · '+fmt(fullIndustryManifest.personCount)+' personnel · '+
+   esc(fullIndustryManifest.status)+'</p>'+
+   '<label>HORSE ID<input data-cc="inspect-horse" value="H-FICTIONAL-1999-BROODMARES-0000001"/></label>'+
+   '<button data-cc-action="inspect-full-horse">OPEN HORSE PROFILE</button>':'')+
+  '</div>'+
   '<div class="wtw-cc-section"><h3>NEW CAREER / START FROM SCRATCH</h3>'+
   '<p>1999 founding foundation (development): 73 protected breeding horses, no registered racing horses and no generated industry. A complete fictional population and its believable history are still in engineering. This action creates a separate named career from the available foundation; it does not claim to generate the future full world.</p>'+
   '<div class="wtw-cc-grid"><label>NEW CAREER NAME<input data-cc="new-name" type="text" maxlength="80" value="New 1999 Founding Career"/></label>'+
@@ -228,6 +262,24 @@ async function perform(action,element){
   return;
  }
  if(action==='import'){modal().querySelector('[data-cc="import-file"]').click();return}
+ if(action==='open-full-industry'){
+  notice='Generating the complete industry. This may take several minutes.';
+  const seed=Number(modal().querySelector('[data-cc="seed"]')?.value||19990101);
+  fullIndustryManifest=await prepareFictionalIndustry({
+   seed,worldId:'WTW1999FullIndustry',...industryDirectories(),batchSize:2000
+  });
+  notice='Full industry stored and ready to inspect. Existing career unchanged.';
+  return;
+ }
+ if(action==='inspect-full-horse'){
+  const id=modal().querySelector('[data-cc="inspect-horse"]')?.value?.trim();
+  const horse=await inspectFullIndustryHorse(id);
+  notice=horse?('HORSE PROFILE · '+horse.id+' · '+(horse.name||'UNNAMED')+
+   ' · '+horse.sex+' · foaled '+horse.foalYear+' · '+horse.status+
+   ' · owner '+horse.ownerId+' · sire '+horse.sireId+' · dam '+horse.damId):
+   'No horse exists with that ID.';
+  return;
+ }
  if(action==='save'){
   const name=modal().querySelector('[data-cc="save-name"]').value.trim();
   if(!name)throw Error('Enter a career name');
