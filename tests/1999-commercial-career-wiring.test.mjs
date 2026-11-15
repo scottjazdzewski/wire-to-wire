@@ -50,3 +50,15 @@ test('local-first compact manager retains saves but cannot import an old populat
  assert.doesNotMatch(manager,/worldHorseDirectoryAt|allPages|fetch\(/);
  assert.match(manager,/No account, monthly fee or cloud storage required/);
 });
+
+test('Save/Load offers direct GPT world-edits export with original JSON/media authority',()=>{
+ assert.match(manager,/data-cc-action="export-world-edits"/);
+ assert.match(manager,/window\.WTWWorldEdits\?\.exportForGPT/);
+ assert.match(manager,/wire-to-wire-world-edits\.json/);
+ assert.match(manager,/is not a complete career backup/);
+ assert.match(ui,/window\.WTWWorldEdits=Object\.freeze\(\{exportForGPT:worldExportEdits\}\)/);
+ assert.match(ui,/const WORLD_EDIT_EXPORT='WTW_WORLD_USER_EDITS_V1'/);
+ assert.match(ui,/const data=\{schema:WORLD_EDIT_EXPORT,exportedAt:new Date\(\)\.toISOString\(\),/);
+ assert.match(ui,/changes:worldUserPatches,images/);
+ assert.doesNotMatch(manager,/githubToken|pushToGithub|automaticallyPublishWorld/);
+});
