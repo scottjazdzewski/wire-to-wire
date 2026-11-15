@@ -23,7 +23,8 @@ export function plan1999IndustryStaffing({seed=19990101,ecosystem}={}){
  const c=ecosystem.counts;
  const racing=c.twoYearOldProspects+c.threeYearOldRunners+
   c.fourYearOldRunners+c.fivePlusRunners;
- const breeding=c.broodmares+c.stallions+c.annualFoals+c.yearlings;
+ // January 1 staffing excludes the projected foal crop, not yet born.
+ const breeding=c.broodmares+c.stallions+c.yearlings;
  const counts={};
  for(const [role,rule] of Object.entries(roles)){
   const population=['farm_manager','breeding_attendant'].includes(role)?
