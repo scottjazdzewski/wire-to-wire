@@ -97,6 +97,15 @@ test('premium depth keeps the existing profile geometry, controls and neutral fa
  assert.match(styles,/WTW PROFILE DEPTH/);
  assert.match(styles,/Neutral layering remains when a logo is missing/);
 });
+test('replacing a logo source triggers new color extraction after every load',()=>{
+ const m=moduleSource.slice(moduleSource.indexOf('function startThemes(){'));
+ assert.match(m,/if\(!observed\.has\(img\)\)\{/);
+ assert.match(m,/img\.addEventListener\("load",apply\);/);
+ assert.match(m,/img\.addEventListener\("error",apply\);/);
+ assert.doesNotMatch(m,/img\.addEventListener\("load",apply,\{once:true\}\)/);
+ assert.match(m,/new MutationObserver\(apply\)\.observe\(shell/);
+ assert.match(m,/attributeFilter:\["data-wtw-identity","src"\]/);
+});
 test('cache busting uses the original one-stylesheet profile architecture',()=>{
  const page=readFileSync(new URL('../public/next/index.html',import.meta.url),'utf8');
  assert.match(page,/identity-themes\.mjs\?rev=wtw-logo-pixel-depth-20261115/);

@@ -149,13 +149,16 @@ function startThemes(){
   const img=shell.querySelector(".ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo img");
   const src=img&&(img.currentSrc||img.src);
   if(!img||!src||!isActualEntityLogo(img,identity,src)){clearPalette();return;}
+  // A single profile IMG is reused as a transparent image loads. Attach a
+  // persistent listener once per element, not once per SOURCE; otherwise
+  // the logo's second load can leave the profile permanently neutral.
+  if(!observed.has(img)){
+   observed.add(img);
+   img.addEventListener("load",apply);
+   img.addEventListener("error",apply);
+  }
   if(!img.complete||img.naturalWidth<1||img.naturalHeight<1){
    clearPalette();
-   if(!observed.has(img)){
-    observed.add(img);
-    img.addEventListener("load",apply,{once:true});
-    img.addEventListener("error",apply,{once:true});
-   }
    return;
   }
   const colors=imagePalette(img,src);
