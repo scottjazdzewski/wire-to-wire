@@ -252,7 +252,7 @@ export function createNamingDeskController({
     '</tbody></table></div>'+
    '<footer class="ng-naming-footer">KEEP = future name bank · REJECT = career-wide exclusion · CHOOSE = saves your horse-specific selection, pending official game identity registration. '+
     (!targets.length?'No eligible horse is currently connected, so Choose is unavailable.':'')+
-    '</footer></div></section>';
+    ' 55,000-per-year target is NOT capacity-certified; names without safe unique candidates remain held.</footer></div></section>';
  }
  return {mode:NAMING_DESK_MODE,setField,defaultOwner,generate,mark,reject,choose,clear,
   setView,action,snapshot,render};
