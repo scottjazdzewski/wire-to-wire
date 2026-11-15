@@ -76,6 +76,8 @@ test('Overview and deeper Attributes share the same source model, while the hors
  assert.match(js,/data-template="person-role-attributes"/);
  assert.match(js,/source\?\.dataset\?\.testAttributeModel==='true'/);
  assert.match(js,/Array\.isArray\(obs\.evidence_refs\)&&obs\.evidence_refs\.length>0/);
+ assert.match(js,/state\(\)\.staffState\?\.\[personId\]/);
+ assert.match(js,/state\(\)\.staffState\?\.\[route\.title\]/);
  assert.match(js,/const athleteOverview=\(\)=>/);
  assert.match(js,/const horseStarRating=\(key,label\)=>/);
 });
