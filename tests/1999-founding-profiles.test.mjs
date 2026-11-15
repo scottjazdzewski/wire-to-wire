@@ -27,16 +27,20 @@ test('one REAL approved renderer serves Track-style facilities and Horse-style f
  assert.ok(!html.includes('1999-founding-profiles.js'));
 });
 
-test('all person roles use the exact complete Horse layout, with blank role attributes',()=>{
+test('people share the complete Horse dossier geometry but use genuine role catalogs and recorded ratings',()=>{
  assert.match(office,/data-template="horse-overview"/);
- assert.match(office,/const groupSizes=\[9,15,12,10\]/);
+ assert.match(office,/const personnelGroups=\[/);
+ assert.match(office,/const profileAttributes=\(\)=>/);
+ assert.match(office,/const professionalSlots=skillSheet\.html/);
  assert.match(office,/ng-horse-mgr-four/);
  assert.match(office,/ng-horse-condition-strip/);
  assert.match(office,/ng-horse-mgr-five/);
  assert.match(office,/ng-horse-mgr-bottom/);
  assert.match(office,/ng-horse-mgr-summary/);
- assert.match(office,/0 OF 46 ROLE-SPECIFIC SLOTS DEFINED/);
- assert.match(office,/attribute.*slot/i);
+ assert.match(office,/data-template="person-role-attributes"/);
+ assert.match(office,/SIMULATED TEST · NOT OBSERVED/);
+ assert.match(office,/Array\.isArray\(obs\.evidence_refs\)&&obs\.evidence_refs\.length>0/);
+ assert.doesNotMatch(office,/Attribute slot [0-9]|0 OF 46 ROLE-SPECIFIC SLOTS DEFINED/);
  assert.doesNotMatch(html,/1999-founding-profiles\.js/);
 });
 
