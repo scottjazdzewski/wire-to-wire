@@ -110,7 +110,7 @@ def render_frame(source):
                           (SIZE-INSET-1)*RENDER_SCALE,(SIZE-INSET-1)*RENDER_SCALE),
                          radius=RADIUS*RENDER_SCALE,
                          outline=(*IVORY,255),width=STROKE*RENDER_SCALE)
-    frame=frame.resize((SIZE,SIZE),Image.Resampling.LANCZOS)
+    frame=frame.resize((SIZE,SIZE),Image.Resampling.BOX)
     final=Image.alpha_composite(final.convert('RGBA'),frame).convert('RGB')
     assert final.size==(256,256)
     assert final.getpixel((0,0))==CORNER
