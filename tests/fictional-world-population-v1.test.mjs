@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assembleFictional1999Industry} from '../public/1999/engine/fictional-world-population-v1.mjs';
+import {assembleFictional1999Industry,previewFictional1999HorseNames}
+ from '../public/1999/engine/fictional-world-population-v1.mjs';
+import {POPULATION_NAMING_SCHEMA} from '../public/1999/game/horse-naming-population-planner.js';
 import {validateWorld} from '../public/1999/game/contracts.js';
 import {createGameRun,validateGameRun} from '../public/1999/game/state.js';
 import attributeCatalog from '../public/1999/engine/attribute-catalog.mjs';
@@ -55,4 +57,34 @@ test('seed freezes identities and rejects missing, duplicate or unapproved horse
   horseCount:2,horseNames:['Only One']}),/Exactly 2 accepted horse names/);
  await assert.rejects(assembleFictional1999Industry({tracks,foundationHorses:foundation,
   horseNames:['Same Name','Same Name']}),/Duplicate/);
+});
+
+test('naming providers are replaceable and their revisions are frozen per world',async()=>{
+ const names=Array.from({length:32},(_,i)=>'Test Name '+String(i+1).padStart(2,'0'));
+ const build=horseNameProvider=>assembleFictional1999Industry({
+  seed:19990101,worldId:'WTWTestWorld',tracks,foundationHorses:foundation,
+  horseCount:32,horseNameProvider
+ });
+ const a=await build(async()=>({approvedForRegistration:true,names,algorithmRevision:'HORSE_V1'}));
+ const b=await build(async()=>({approvedForRegistration:true,names,algorithmRevision:'HORSE_V2'}));
+ assert.equal(a.manifest.horseNamingRevision,'HORSE_V1');
+ assert.equal(b.manifest.horseNamingRevision,'HORSE_V2');
+ assert.notEqual(a.authority.sha256,b.authority.sha256);
+ assert.deepEqual(a.entities.horses,b.entities.horses);
+ await assert.rejects(build(async()=>({approvedForRegistration:false,names,
+  algorithmRevision:'HORSE_V3'})),/unapproved/);
+});
+test('existing horse-name preview never registers or mutates the game',()=>{
+ const preview=previewFictional1999HorseNames({
+  batch:{schema:POPULATION_NAMING_SCHEMA,year:1999,jobId:'wtw_test_1999_000000',
+   items:[{brief:{horseId:'H-TEST-1999-0001'}}]},
+  horseNamingProvider:()=>({algorithmRevision:'V999',approvedForRegistration:false,
+   writesToGame:false,screened:[],held:1})
+ });
+ assert.equal(preview.providerRevision,'V999');
+ assert.equal(preview.approvedForRegistration,false);
+ assert.throws(()=>previewFictional1999HorseNames({
+  batch:{schema:POPULATION_NAMING_SCHEMA,items:[]},
+  horseNamingProvider:()=>({approvedForRegistration:true,writesToGame:true,screened:[]})
+ }),/review-gated/);
 });
