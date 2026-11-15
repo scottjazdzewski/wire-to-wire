@@ -50,6 +50,7 @@ export function* generate1999IndustryRegistryBatches({
    const owner=owners[choose(seed,id+':owner',owners.length)];
    const track=tracks[choose(seed,id+':track',tracks.length)];
    const racing=status==='RACING';
+   const inTraining=racing||status==='TWO_YEAR_OLD_PROSPECT';
    const breeder=status==='BROODMARE'||status==='STALLION';
    const sex=status==='BROODMARE'?'MARE':status==='STALLION'?'HORSE':
     racing?(choose(seed,id+':sex',2)===0?
@@ -70,7 +71,7 @@ export function* generate1999IndustryRegistryBatches({
     birthplace:{city:farm.location?.city??null,region:farm.location?.region??null,
      country:farm.location?.country??null,farmId:farm.id,
      provenance:'MODELED_FOALING_FARM'},
-    homeTrackId:racing?track.id:null,
+    homeTrackId:inTraining?track.id:null,
     development:{readiness:choose(seed,id+':readiness',101),
      soundness:choose(seed,id+':soundness',101),
      potential:1+choose(seed,id+':potential',99)},
