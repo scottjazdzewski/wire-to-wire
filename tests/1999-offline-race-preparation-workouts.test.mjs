@@ -7,6 +7,7 @@ import {WORLD_SCHEMA,dispatchGameCommand,exportGameSave,importGameSave,
  quote1999PlayerRacePlan,getGameRacingRoster,getGameHorsePerformance}
  from '../src/game/index.js';
 import {build1999PilotGameRun} from '../src/game/1999-pilot-fixture.js';
+import {createPlaytestCareer} from '../public/1999/game/playtest-service.mjs';
 
 const read=p=>JSON.parse(readFileSync(new URL(p,import.meta.url),'utf8'));
 const directory=read('../public/data/wtw-1999-founding-directory-v1.json');
@@ -190,4 +191,40 @@ test('cash-constrained owner preparation cannot fabricate a paid workout or igno
  assert.ok(s.event_log.some(e=>e.kind==='HORSE_RACE_PREPARATION_WORKOUT'&&
   e.details.horse_id===h.horse_id&&e.details.funded===false));
  assert.deepEqual(importGameSave(exportGameSave(s,world),world),s);
+});
+
+test('the existing locally instantiated career service exposes the same read-only preparation and commands',async()=>{
+ const engine=await createPlaytestCareer({directory,trainers,jockeys,cohort:manifest});
+ engine.advanceDay();
+ const state=engine.state,owner=state.player.operation_id;
+ const choices=[];
+ for(const horse of Object.values(state.runtime.registered_horses.by_id)
+  .filter(h=>h.owner_organization_id===owner)){
+  const options=engine.getRaceOpportunities(horse.horse_id,{includeProposals:false}).rows;
+  for(const entry of options.filter(r=>r.status==='PLAYER_CAN_ENTER')){
+   for(const j of entry.available_jockeys.filter(j=>j.owner_can_pay)){
+    const quote=engine.getRacePlanQuote({horse_id:horse.horse_id,
+     race_id:entry.race_id,jockey_id:j.jockey_id,destination_site_id:null});
+    if(quote.can_confirm)choices.push({horse,entry,j,quote});
+   }
+  }
+ }
+ assert.ok(choices.length,'The browser test fixture has an executable local race booking');
+ const c=choices[0];
+ engine.command('CONFIRM_1999_RACE_PLAN',{
+  horse_id:c.horse.horse_id,race_id:c.entry.race_id,
+  jockey_id:c.j.jockey_id,destination_site_id:null,
+  expected_revision:c.quote.expected_revision,
+  maximum_total_minor:c.quote.immediate_total_minor});
+ const view=engine.getRacePreparation({horse_id:c.horse.horse_id,
+  race_id:c.entry.race_id});
+ assert.equal(view.horse_id,c.horse.horse_id);
+ assert.equal(view.active_plan,null);
+ engine.command('SET_1999_RACE_PREPARATION',{
+  horse_id:c.horse.horse_id,race_id:c.entry.race_id,
+  approach:'BALANCED',expected_revision:view.expected_revision});
+ assert.equal(engine.getRacePreparation({horse_id:c.horse.horse_id,
+  race_id:c.entry.race_id}).active_plan.approach,'BALANCED');
+ const saved=engine.getSave();
+ assert.deepEqual(importGameSave(saved,engine.world),engine.state);
 });
