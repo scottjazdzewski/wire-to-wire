@@ -2,11 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createPersistent1999Industry,readPersistent1999IndustryBatch,findPersistent1999Horse,
  updatePersistent1999Horse,readPersistent1999HorseProfile,
- savePersistent1999CareerRun,loadPersistent1999CareerRun}
+ savePersistent1999CareerRun,loadPersistent1999CareerRun,
+ readPersistent1999Directory}
  from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
 function memoryStore(){
- const data={manifests:new Map(),horseBatches:new Map(),personBatches:new Map(),horseEdits:new Map(),careerRuns:new Map()};
+ const data={manifests:new Map(),horseBatches:new Map(),personBatches:new Map(),horseEdits:new Map(),careerRuns:new Map(),directory:new Map()};
  return {get:async(s,k)=>data[s].get(k),
+  commitDirectory:async(id,manifest,records)=>{
+   data.directory.set(id,structuredClone(records));
+   data.manifests.set(id,structuredClone(manifest));
+  },
   commitBatch:async({worldId,manifest,kind,index,records})=>{
    data[kind].set(worldId+':'+index,structuredClone(records));
    data.manifests.set(worldId,structuredClone(manifest));
@@ -29,6 +34,11 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
  assert.ok(a.personCount>30000);
  const first=await readPersistent1999IndustryBatch(store,a,'horseBatches',0);
  assert.equal(first[0].id,'H-FICTIONAL-1999-BROODMARES-0000001');
+ assert.ok(first[0].ratings.speed>=15);
+ assert.ok(first[0].relationships.some(e=>e.type==='OWNED_BY'));
+ const directory=await readPersistent1999Directory(store,a);
+ assert.equal(directory.length,3);
+ assert.ok(directory.every(e=>e.ratings&&Array.isArray(e.relationships)));
  const b=await createPersistent1999Industry(params);
  assert.deepEqual(b,a);
  await assert.rejects(createPersistent1999Industry({...params,
