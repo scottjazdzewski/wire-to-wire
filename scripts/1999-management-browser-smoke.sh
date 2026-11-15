@@ -276,7 +276,7 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    worldTracks.filter(t=>t._canonId>='T-0103'&&t._canonId<='T-0118').length===16&&
    worldTracks.filter(t=>t._canonId>='T-0103'&&t._canonId<='T-0118'&&t._canonId!=='T-0106').every(t=>
     t.status.includes('HISTORICAL')&&!t.meetWindow&&!t._meetState.active)&&
-   worldTracks.some(t=>t._canonId==='T-0106'&&t.operating==='OPEN_1999'));
+   worldTracks.some(t=>t._canonId==='T-0106'&&!t.status.includes('HISTORICAL')&&Boolean(t.meetWindow)));
   steps.push('All 118 historic geographic IDs preserved; only Sheepshead Bay of 16 historical venues active');
   click('Personnel');await pause(230);
   pickView('Owners');await pause(250);
