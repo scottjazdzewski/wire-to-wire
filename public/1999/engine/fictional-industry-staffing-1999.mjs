@@ -16,6 +16,39 @@ const roles=Object.freeze({
  farm_manager:{horsesPerPerson:230,tiers:['MAJOR','COMMERCIAL','SMALL']},
  breeding_attendant:{horsesPerPerson:17,tiers:['SENIOR','EXPERIENCED','JUNIOR']}
 });
+export const INDUSTRY_PERSON_BIOGRAPHY_REVISION='WTW_1999_PERSONNEL_BIO_V1';
+// Geographical birth places are authored fictional starting assumptions;
+// they do not imply that birthplace, nationality, and workplace are identical.
+const FICTIONAL_BIRTHPLACES=Object.freeze({
+ US:[['Lexington','Kentucky'],['Ocala','Florida'],['New York','New York'],['Baltimore','Maryland'],['Louisville','Kentucky'],['Chicago','Illinois'],['Memphis','Tennessee'],['Los Angeles','California'],['New Orleans','Louisiana']],
+ CA:[['Toronto','Ontario'],['Vancouver','British Columbia'],['Montreal','Quebec'],['Calgary','Alberta']],
+ GB:[['Newmarket','Suffolk'],['London','England'],['Manchester','Greater Manchester']],
+ IE:[['Dublin','Leinster'],['Naas','County Kildare'],['Cork','County Cork']],
+ PR:[['San Juan','Puerto Rico'],['Ponce','Puerto Rico']],
+ PA:[['Panama City','Panama'],['David','Chiriquí']],
+ VE:[['Caracas','Capital District'],['Maracay','Aragua']],
+ MX:[['Mexico City','Mexico City'],['Guadalajara','Jalisco']],
+ CL:[['Santiago','Santiago Metropolitan'],['Valparaíso','Valparaíso']],
+ PE:[['Lima','Lima'],['Arequipa','Arequipa']],
+ CO:[['Bogotá','Bogotá'],['Medellín','Antioquia']],
+ DO:[['Santo Domingo','Distrito Nacional'],['Santiago','Santiago']],
+ AR:[['Buenos Aires','Buenos Aires'],['La Plata','Buenos Aires Province']],
+ BR:[['São Paulo','São Paulo'],['Rio de Janeiro','Rio de Janeiro']],
+ UY:[['Montevideo','Montevideo']],
+ FR:[['Paris','Île-de-France'],['Chantilly','Oise']],
+ DE:[['Berlin','Berlin'],['Cologne','North Rhine-Westphalia']],
+ JP:[['Tokyo','Tokyo'],['Osaka','Osaka']],
+ AU:[['Sydney','New South Wales'],['Melbourne','Victoria']],
+ NZ:[['Auckland','Auckland'],['Christchurch','Canterbury']],
+ AE:[['Dubai','Dubai'],['Abu Dhabi','Abu Dhabi']],
+ HK:[['Hong Kong','Hong Kong']]
+});
+const ROLE_BIRTH_YEARS=Object.freeze({
+ trainer:[1938,1970],jockey:[1957,1982],groom:[1944,1981],
+ exercise_rider:[1951,1981],veterinarian:[1942,1973],
+ farrier:[1940,1977],farm_manager:[1938,1970],
+ breeding_attendant:[1945,1980]
+});
 function hash(seed,s){let h=(2166136261^(seed>>>0))>>>0;
  for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}
  return h>>>0}
@@ -66,7 +99,21 @@ export function* generate1999StaffingBatches({
    const tier=rule.tiers[Math.min(rule.tiers.length-1,
     tierRoll<25?0:tierRoll<170?1:tierRoll<530?2:3)];
    const named=generatedNames[nameIndex++];
+   const country=named.birthCountry||'US';
+   const cities=FICTIONAL_BIRTHPLACES[country];
+   if(!cities?.length)throw Error('Unmodeled 1999 birth country '+country);
+   const [city,region]=cities[hash(seed,id+':birthplace')%cities.length];
+   const [minYear,maxYear]=ROLE_BIRTH_YEARS[role]||[1945,1980];
+   const birthYear=minYear+hash(seed,id+':birthYear')%(maxYear-minYear+1);
+   const month=1+hash(seed,id+':birthMonth')%12;
+   const day=1+hash(seed,id+':birthDay')%28;
+   const dateOfBirth=String(birthYear)+'-'+String(month).padStart(2,'0')+
+    '-'+String(day).padStart(2,'0');
    batch.push({id,role,tier,workplaceId:base.id,
+    dateOfBirth,ageAtOpening:1999-birthYear-(month>1||month===1&&day>1?1:0),
+    birthplace:{city,region,countryCode:country,provenance:'MODELED_FICTIONAL_1999'},
+    birthCountryCode:country,nationalityCode:country,
+    biographyRevision:INDUSTRY_PERSON_BIOGRAPHY_REVISION,
     name:named.name,namingStatus:'GENERATED_1999_PERSONNEL_ENGINE',
     nameModel:PERSONNEL_NAME_MODEL,
     ratings:{ability:20+hash(seed,id+':ability')%80,
