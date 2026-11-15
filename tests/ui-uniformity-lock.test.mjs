@@ -106,6 +106,20 @@ test('Stable Training opens the real simulation training desk and has a working 
  assert.match(js,/APP\.custom==='Stable — Training'&&val==='all'/);
  assert.match(js,/openCustomView\('Stable — Overview','Stable','Overview'\)/);
 });
+test('Stable Health, Race Plans and Barns show real player horses and never generic World directory records',()=>{
+ const start=js.indexOf('function stableOperationsView(page){');
+ const end=js.indexOf('function managerDashboard(){',start);
+ assert.ok(start>0&&end>start);
+ const view=js.slice(start,end);
+ assert.match(view,/const rows=horseRows\(\),game=state\(\),races=racingRows\(\),cases=currentMessages\(\)/);
+ assert.match(view,/liveStableHorseData\(h,races\.find\(r=>r\.name===h\.name\),game,cases\)/);
+ assert.match(view,/managerRecordViewControl\('Stable',page\)/);
+ assert.match(view,/managerSortableColumns\(scope/);
+ assert.match(view,/data-ng="horse"/);
+ assert.match(view,/no records have been fabricated/);
+ assert.doesNotMatch(view,/globalSearchItems\(\)|sourceLinkedWorldDirectory|demoRecords/);
+ assert.match(js,/\['Health','Race Plans','Barns'\]\.includes\(page\)\)return stableOperationsView\(page\)/);
+});
 test('do not add page-specific CSS layers or new style patch stacks',()=>{
  const assets=[...html.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/g)]
   .map(m=>m[1].split('?')[0]);
