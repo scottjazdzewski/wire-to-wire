@@ -3164,52 +3164,54 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 /* ===== END folded source: public/next/1999-commercial-career.css ===== */
 
 /* ===== BEGIN folded source: public/next/identity-themes.css ===== */
-/* WTW entity themes v1.
- * Layered after the consolidated management CSS; no screen geometry changes.
+/* WTW image-derived identity atmosphere v3.
+ * Original logos determine the brand accents; no hand-picked colors.
+ * This stays inside the consolidated management CSS; no geometry changes.
  * Semantic indicators (injury, warning, availability, Continue) keep their
  * established colors. All overrides are limited to an identified entity.
  */
-#wtwNextgen[data-wtw-identity]{
-  --wtw-id-highlight:#ead7a7;
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"]{
+  --wtw-id-highlight:#f2f5ef; /* neutral readable text, not a brand swatch */
+  --wtw-id-deep:color-mix(in srgb,var(--wtw-id-base) 36%,#10181d);
 }
-#wtwNextgen[data-wtw-identity] .ng-global{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-global{
   background:linear-gradient(104deg,
     color-mix(in srgb,var(--wtw-id-base) 65%,#11191d) 0%,
     var(--wtw-id-deep) 46%,#11191d 100%)!important;
   border-bottom:1px solid color-mix(in srgb,var(--wtw-id-bright) 55%,#303e3b)!important;
   box-shadow:inset 0 -2px 0 color-mix(in srgb,var(--wtw-id-bright) 15%,transparent)!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-manager-top-context{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-manager-top-context{
   border-left-color:color-mix(in srgb,var(--wtw-id-bright) 43%,#33433d)!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-manager-top-context strong{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-manager-top-context strong{
   color:var(--wtw-id-highlight)!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-game-rail{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-game-rail{
   background:linear-gradient(178deg,
     color-mix(in srgb,var(--wtw-id-deep) 72%,#13191d),#11191d 72%)!important;
   border-right-color:color-mix(in srgb,var(--wtw-id-base) 35%,#303e3b)!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-manager-rail-link.on{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-manager-rail-link.on{
   background:linear-gradient(90deg,
     color-mix(in srgb,var(--wtw-id-base) 70%,#20282a),
     color-mix(in srgb,var(--wtw-id-deep) 60%,#1c2527))!important;
   border-left-color:var(--wtw-id-bright)!important;
   color:#ffffff!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-manager-rail-link.on .ng-manager-rail-icon{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-manager-rail-link.on .ng-manager-rail-icon{
   color:var(--wtw-id-highlight)!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-manager-rail-link:hover,
-#wtwNextgen[data-wtw-identity] .ng-manager-rail-link:focus-visible{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-manager-rail-link:hover,
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-manager-rail-link:focus-visible{
   background:color-mix(in srgb,var(--wtw-id-base) 43%,#202b2a)!important;
   color:#fff!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-manager-stage{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-manager-stage{
   background:linear-gradient(135deg,
     color-mix(in srgb,var(--wtw-id-deep) 24%,#0c1215),#0c1215 58%)!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profile-intro{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-intro{
   background:
     radial-gradient(ellipse at 79% 32%,
       color-mix(in srgb,var(--wtw-id-bright) 18%,transparent),transparent 48%),
@@ -3220,41 +3222,41 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
   border-top:2px solid var(--wtw-id-bright)!important;
   box-shadow:inset 0 1px 0 #ffffff16,0 7px 19px #0007!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profile-intro h2{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-intro h2{
   color:#ffffff!important;
   text-shadow:0 2px 6px #000a!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-profiletabs button.on{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-profiletabs button.on{
   background:color-mix(in srgb,var(--wtw-id-base) 83%,#151f20)!important;
   color:#fff!important;
   box-shadow:inset 0 -3px var(--wtw-id-highlight)!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-profiletabs button:hover{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-profiletabs button:hover{
   background:color-mix(in srgb,var(--wtw-id-base) 51%,#212a2c)!important;
   color:#ffffff!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-profile-farm .ng-tier1-card>header,
-#wtwNextgen[data-wtw-identity] .ng-profile-track .ng-tier1-card>header,
-#wtwNextgen[data-wtw-identity] .ng-profile-farm .ng-detailcard>header,
-#wtwNextgen[data-wtw-identity] .ng-profile-track .ng-detailcard>header{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-profile-farm .ng-tier1-card>header,
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-profile-track .ng-tier1-card>header,
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-profile-farm .ng-detailcard>header,
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-profile-track .ng-detailcard>header{
   background:linear-gradient(90deg,
     color-mix(in srgb,var(--wtw-id-base) 51%,#29332f),#29332f)!important;
   border-bottom-color:color-mix(in srgb,var(--wtw-id-bright) 45%,#4a5d4f)!important;
   color:#f8f4e9!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-profile-track .ng-profile-source-photo{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-profile-track .ng-profile-source-photo{
   border-color:var(--wtw-id-highlight)!important;
   box-shadow:inset 0 0 0 1px #ffffff5b,0 8px 24px #000a,
     0 0 22px color-mix(in srgb,var(--wtw-id-bright) 18%,transparent)!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-profile-track .ng-profile-source-photo img{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-profile-track .ng-profile-source-photo img{
   filter:drop-shadow(0 3px 3px #0005)!important;
 }
 @media(prefers-reduced-motion:no-preference){
-  #wtwNextgen[data-wtw-identity] .ng-profile-track .ng-profile-source-photo{
+  #wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-profile-track .ng-profile-source-photo{
     transition:box-shadow .18s ease,transform .18s ease!important;
   }
-  #wtwNextgen[data-wtw-identity] .ng-profile-track .ng-profile-source-photo:hover{
+  #wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-profile-track .ng-profile-source-photo:hover{
     transform:translateY(-2px)!important;
     box-shadow:0 12px 29px #000b,
       0 0 25px color-mix(in srgb,var(--wtw-id-bright) 24%,transparent)!important;
@@ -3263,11 +3265,11 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 
 /* Track badge is the small left navigation identity; the existing track
  * logo remains the large right-hand hero artwork. */
-#wtwNextgen[data-wtw-identity-kind="track"] .ng-route-profile .ng-profile-badgeframe{
+#wtwNextgen[data-wtw-identity-kind="track"][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-badgeframe{
   background:#16221f url("/assets/profile-badges/v2/wtw_badge_track.png") center / contain no-repeat!important;
   border-color:color-mix(in srgb,var(--wtw-id-bright) 48%,#4d6158)!important;
 }
-#wtwNextgen[data-wtw-identity-kind="track"] .ng-route-profile .ng-profile-badgeframe img{
+#wtwNextgen[data-wtw-identity-kind="track"][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-badgeframe img{
   visibility:hidden!important;
 }
 /* WTW ENTITY ATMOSPHERE v2 — the SAME shared profile template for every
@@ -3275,12 +3277,12 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  * Vivid brand depth, not a separate navigation, card layout, or photograph.
  * Do not theme medical/eligibility warnings, Continue, outcomes or status pills.
  * These colors exist ONLY while a recognized immutable ID is active. */
-#wtwNextgen[data-wtw-identity]{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"]{
  --wtw-id-panel:color-mix(in srgb,var(--wtw-id-deep) 36%,#151e24);
  --wtw-id-panel-edge:color-mix(in srgb,var(--wtw-id-bright) 30%,#405050);
  --wtw-id-panel-wash:color-mix(in srgb,var(--wtw-id-base) 21%,#192229);
 }
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profile-intro{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-intro{
  background:
   radial-gradient(ellipse at 82% 43%,
    color-mix(in srgb,var(--wtw-id-bright) 32%,transparent),transparent 53%),
@@ -3292,15 +3294,15 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  box-shadow:inset 0 1px 0 #ffffff1d,inset 0 -1px 0 #0008,
   0 8px 26px #0008,0 0 27px color-mix(in srgb,var(--wtw-id-bright) 10%,transparent)!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profile-breadcrumb{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-breadcrumb{
  color:color-mix(in srgb,var(--wtw-id-highlight) 85%,#ffffff)!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profiletabs{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profiletabs{
  background:linear-gradient(180deg,
   color-mix(in srgb,var(--wtw-id-deep) 49%,#20282c),#172025)!important;
  border-bottom-color:var(--wtw-id-panel-edge)!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profile-tools button{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-tools button{
  color:#f0f4f4!important;
  border-color:var(--wtw-id-panel-edge)!important;
  background:linear-gradient(180deg,
@@ -3308,53 +3310,53 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
   color-mix(in srgb,var(--wtw-id-deep) 48%,#131c21))!important;
  box-shadow:inset 0 1px 0 #ffffff13!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profile-tools button:hover,
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profile-tools button:focus-visible{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-tools button:hover,
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-tools button:focus-visible{
  background:linear-gradient(180deg,
   color-mix(in srgb,var(--wtw-id-base) 57%,#1c272a),
   color-mix(in srgb,var(--wtw-id-deep) 51%,#20282c))!important;
  border-color:var(--wtw-id-bright)!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-detailcard,
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-tier1-card{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-detailcard,
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-tier1-card{
  background:linear-gradient(155deg,var(--wtw-id-panel-wash),#171f23 77%)!important;
  border-color:var(--wtw-id-panel-edge)!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-detailcard>header,
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-tier1-card>header{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-detailcard>header,
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-tier1-card>header{
  background:linear-gradient(92deg,
   color-mix(in srgb,var(--wtw-id-base) 57%,#202a2f),
   color-mix(in srgb,var(--wtw-id-deep) 42%,#222d31))!important;
  border-bottom-color:var(--wtw-id-panel-edge)!important;
  color:#fff4df!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profile-facts>div{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-facts>div{
  background:linear-gradient(110deg,
   color-mix(in srgb,var(--wtw-id-deep) 31%,#1c2529),
   #1a2226 90%)!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-person-dossierbar{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-person-dossierbar{
  background:linear-gradient(90deg,var(--wtw-id-panel),#1c252b)!important;
  border-bottom-color:var(--wtw-id-panel-edge)!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-person-dossieractions button.on{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-person-dossieractions button.on{
  background:color-mix(in srgb,var(--wtw-id-base) 60%,#202a2f)!important;
  border-color:var(--wtw-id-bright)!important;
  color:#fff!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-person-dossieractions select{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-person-dossieractions select{
  background:var(--wtw-id-panel)!important;
  border-color:var(--wtw-id-panel-edge)!important;
  color:#f1f5f4!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profiletabs button:focus-visible,
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-person-dossieractions button:focus-visible,
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profile-tools button:focus-visible{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profiletabs button:focus-visible,
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-person-dossieractions button:focus-visible,
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-tools button:focus-visible{
  outline:2px solid var(--wtw-id-highlight)!important;
  outline-offset:2px;
 }
 @media (prefers-reduced-motion:no-preference){
- #wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profile-tools button{
+ #wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-tools button{
   transition:background-color .16s ease,border-color .16s ease,box-shadow .16s ease;
  }
 }
@@ -3363,7 +3365,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  * on the approved track/stable/farm hero, without changing its grid geometry.
  * This selector has precedence over the later shared track hero geometry;
  * real logos and badges stay in their protected columns. */
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro{
  background:
   radial-gradient(ellipse at 85% 35%,color-mix(in srgb,var(--wtw-id-bright) 29%,transparent),transparent 48%),
   linear-gradient(105deg,
@@ -3373,24 +3375,24 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  border-top-color:var(--wtw-id-bright)!important;
  border-color:color-mix(in srgb,var(--wtw-id-bright) 46%,#465955)!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-track-workspace .ng-track-stakes > header,
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-track-workspace .ng-track-meet-card > header,
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-track-workspace .ng-track-history-card > header{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-track-workspace .ng-track-stakes > header,
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-track-workspace .ng-track-meet-card > header,
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-track-workspace .ng-track-history-card > header{
  background:linear-gradient(90deg,
   color-mix(in srgb,var(--wtw-id-base) 59%,#202a2a),
   color-mix(in srgb,var(--wtw-id-deep) 54%,#253030))!important;
  border-bottom-color:color-mix(in srgb,var(--wtw-id-bright) 46%,#455851)!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-track-stakes .ng-stakes-head{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-track-stakes .ng-stakes-head{
  background:color-mix(in srgb,var(--wtw-id-base) 33%,#263431)!important;
  border-bottom-color:color-mix(in srgb,var(--wtw-id-bright) 40%,#435650)!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-track-stakes .ng-stakes-data:hover,
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-track-stakes .ng-stakes-data:focus-visible{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-track-stakes .ng-stakes-data:hover,
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-track-stakes .ng-stakes-data:focus-visible{
  background:color-mix(in srgb,var(--wtw-id-base) 42%,#202a2a)!important;
 }
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-track-workspace .ng-track-meet-fact,
-#wtwNextgen[data-wtw-identity] .ng-route-profile .ng-track-workspace .ng-track-history-facts > div{
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-track-workspace .ng-track-meet-fact,
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-track-workspace .ng-track-history-facts > div{
  background:linear-gradient(105deg,
   color-mix(in srgb,var(--wtw-id-deep) 30%,#1b2529),#1b2428 90%)!important;
 }
@@ -3405,6 +3407,57 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  visibility:hidden!important;
 }
 
+
+
+/* WTW PROFILE DEPTH — no separate cards, no geometry changes.
+ * Neutral layering remains when a logo is missing or monochrome. */
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro{
+  box-shadow:inset 0 1px 0 #ffffff18,inset 0 -1px 0 #0008,0 10px 26px #0009!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .ng-tier1-card,
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .ng-detailcard{
+  box-shadow:inset 0 1px 0 #ffffff0d,0 4px 15px #0006!important;
+}
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro{
+  background:
+    radial-gradient(ellipse at 78% 44%,
+      color-mix(in srgb,var(--wtw-id-bright) 25%,transparent),transparent 46%),
+    radial-gradient(ellipse at 9% 2%,
+      color-mix(in srgb,var(--wtw-id-base) 26%,transparent),transparent 60%),
+    linear-gradient(106deg,
+      color-mix(in srgb,var(--wtw-id-base) 56%,#1e292c),
+      color-mix(in srgb,var(--wtw-id-deep) 70%,#1c252a) 57%,#131b20)!important;
+  box-shadow:inset 0 1px 0 #ffffff24,inset 0 -1px 0 #0008,
+    0 10px 28px #000a,0 0 21px color-mix(in srgb,var(--wtw-id-base) 10%,transparent)!important;
+  border-top-color:var(--wtw-id-bright)!important;
+}
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-source-photo{
+  background:
+    radial-gradient(ellipse at 50% 35%,
+      color-mix(in srgb,var(--wtw-id-base) 19%,transparent),
+      #172025 78%)!important;
+  box-shadow:inset 0 1px 0 #ffffff20,0 9px 25px #000a,
+    0 0 16px color-mix(in srgb,var(--wtw-id-bright) 11%,transparent)!important;
+}
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-track-workspace .ng-tier1-card{
+  border-color:color-mix(in srgb,var(--wtw-id-base) 22%,#46514f)!important;
+  box-shadow:inset 0 1px 0 #ffffff0d,0 5px 17px #0008!important;
+}
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-track-workspace .ng-tier1-card > header{
+  background:linear-gradient(90deg,
+    color-mix(in srgb,var(--wtw-id-base) 46%,#263035),
+    color-mix(in srgb,var(--wtw-id-deep) 38%,#253034) 76%,#202a2e)!important;
+  border-bottom-color:color-mix(in srgb,var(--wtw-id-bright) 30%,#495553)!important;
+  box-shadow:inset 0 1px 0 #ffffff19,inset 0 -1px 0 #0005!important;
+}
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-track-meet-fact,
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-track-history-facts > div{
+  box-shadow:inset 2px 0 0 color-mix(in srgb,var(--wtw-id-bright) 48%,transparent),
+    inset 0 1px 0 #ffffff0a!important;
+}
+#wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"] .ng-route-profile .ng-stakes-head{
+  box-shadow:inset 0 1px 0 #ffffff19,inset 0 -1px 0 #0007!important;
+}
 /* ===== END folded source: public/next/identity-themes.css ===== */
 
 /* ===== BEGIN folded source: public/next/profile-hero-v2.css ===== */
