@@ -36,6 +36,8 @@ export {HORSE_SHIPPING_SCHEMA,HORSE_SHIPPING_COMMANDS,modeledShippingRoute,
 
 export {RACE_OPPORTUNITY_SCHEMA,get1999HorseRaceOpportunities}
  from './race-opportunities-1999.js';
+export {RACE_PLACEMENT_ADVICE_SCHEMA,get1999RacePlacementAdvice}
+ from './race-placement-1999.js';
 
 export {TRAINER_CONTRACT_SCHEMA,TRAINER_CONTRACT_COMMANDS,createTrainerContractRuntime,
  trainerContractQuote,baselineTrainerDailyFee,trainerDailyFee,getTrainerContract} from './trainer-contracts-1999.js';
