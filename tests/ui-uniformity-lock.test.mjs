@@ -112,6 +112,7 @@ test('Career is a source-backed appointment dossier with live manager attention 
  assert.doesNotMatch(view,/Math\.random|inventedBiography|fakeEarnings|mockAchievement/);
  assert.match(css,/ng-career-identity/);
  assert.match(css,/ng-career-alert-mark/);
+ assert.match(css,/ng-manager-career \\.ng-manager-case\\{grid-template-columns:20px/);
 });
 test('Today shows current action and due counts without a new manager window',()=>{
  const i=js.indexOf('function center(){');

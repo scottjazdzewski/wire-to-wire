@@ -603,6 +603,8 @@ try {
    actionCase:r.querySelector('.ng-career-attention-row')?.dataset.val,
    manage:!!r.querySelector('[data-ng="commercial-career-open"]'),
    existingDesks:r.querySelectorAll('.ng-manager-career [data-ng="menu"]').length,
+   sidebarIconOverlap:[...r.querySelectorAll('.ng-manager-career .ng-manager-case')].some(row=>
+    row.children[0]?.getBoundingClientRect().right>row.children[1]?.getBoundingClientRect().left+1),
    note:r.querySelector('.ng-career-boundary')?.textContent?.trim(),
    identity:r.querySelector('.ng-career-identity')?.getBoundingClientRect().width,
    rail:r.querySelector('.ng-game-rail')?.getBoundingClientRect().width
@@ -613,6 +615,7 @@ try {
  assert.ok(career.identity>150&&career.rail>100,'Career identity does not fit in the actual manager shell');
  assert.ok(career.title&&career.values.length>=6,'Career dossier failed to display recorded fields');
  assert.ok(career.manage&&career.existingDesks>=3,'Career lost local saves or existing department controls');
+ assert.equal(career.sidebarIconOverlap,false,'Career sidebar icon overlaps an action title');
  assert.match(career.note,/not invented/,'Missing-field disclosure removed from Career');
  assert.ok(career.actionCount>=1&&career.actionCase,'Opening review sources missing from active Career');
  const fromCareer=await evaluate(`(()=>{
