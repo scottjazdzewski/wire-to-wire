@@ -2144,6 +2144,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 .ng-track-operating-notes b,.ng-track-office-context b{color:#e2c88d;font-size:9px}
 .ng-track-operating-notes span,.ng-track-office-context span{color:#d2dfd4;font-size:10px;overflow-wrap:anywhere}
 .ng-track-office-context{display:flex;flex-direction:column;gap:4px;margin-top:7px;padding:8px;background:#1e262a}
+@media(min-width:1081px) and (max-width:1300px){.ng-profile-horse .ng-horse-rating-row{min-height:19px;padding:1px 4px}}
 .ng-profile-horse .ng-horse-chronology-alert{padding:3px 7px;background:#423329;border-left:3px solid #d5a06b;color:#f8ddb8;font-size:10px;font-weight:700;line-height:1.25}
 .ng-horse-star-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 15px;margin:4px 0 5px}
 .ng-horse-star-rating{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
