@@ -127,7 +127,8 @@ export async function assembleFictional1999Industry({
    !Number.isInteger(birthYearOf(h))||birthYearOf(h)>1995||
    ancestorIds.has(h.id))throw Error('Invalid or duplicate foundation pedigree');
   ancestorIds.add(h.id);
-  return {...h,foalYear:birthYearOf(h)};
+  return {...h,foalYear:birthYearOf(h),activeIn1999:false,
+   racingStatus1999:'FOUNDATION_PEDIGREE_ONLY'};
  });
  const horses=[];
  const sirePools=new Map(),damPools=new Map();
