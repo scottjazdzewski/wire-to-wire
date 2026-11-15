@@ -1261,7 +1261,10 @@ function pilotHorseDetail(id){
 
 function restored1999Profile(kind,record){
  const x=window.WTW1999Profiles?.source(kind,record,window.__WTW_1999_UI_DATA__);
- return x?profileDetail(x.route,x.node):null;
+ if(!x)return null;
+ const kicker={horse:'Horse Profile',person:'People Profile',farm:'Farm Profile',
+  track:'Track Profile'}[kind]||x.route?.kicker;
+ return profileDetail({...x.route,kicker},x.node);
 }
 function world1999Profile(){
  const key=decodeURIComponent(String(APP.custom||'').slice('WorldRecord:'.length));
