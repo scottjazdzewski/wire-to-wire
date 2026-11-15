@@ -53,20 +53,38 @@ function restrictNetwork(){
  session.defaultSession.setPermissionCheckHandler(()=>false);
 }
 
+const mediaTypes=Object.freeze({
+ '.html':'text/html; charset=utf-8',
+ '.js':'text/javascript; charset=utf-8',
+ '.mjs':'text/javascript; charset=utf-8',
+ '.cjs':'text/javascript; charset=utf-8',
+ '.json':'application/json; charset=utf-8',
+ '.css':'text/css; charset=utf-8',
+ '.svg':'image/svg+xml',
+ '.png':'image/png',
+ '.jpg':'image/jpeg',
+ '.jpeg':'image/jpeg',
+ '.webp':'image/webp',
+ '.gif':'image/gif',
+ '.ico':'image/x-icon',
+ '.woff':'font/woff',
+ '.woff2':'font/woff2',
+ '.ttf':'font/ttf',
+ '.wasm':'application/wasm'
+});
+
 async function serveLocalAsset(request){
  const filename=bundledFile(contentRoot,request.url);
  if(!filename)return new Response('Unavailable offline; historical data migration pending',{status:404});
  try{
   const result=await net.fetch(pathToFileURL(filename).toString());
   if(!result.ok)return result;
-  if(path.extname(filename).toLowerCase()==='.html'){
-   const headers=new Headers(result.headers);
-   headers.set('Content-Type','text/html; charset=utf-8');
-   headers.set('Content-Security-Policy',htmlContentSecurityPolicy);
-   headers.set('X-Content-Type-Options','nosniff');
-   return new Response(result.body,{status:result.status,headers});
-  }
-  return result;
+  const ext=path.extname(filename).toLowerCase();
+  const headers=new Headers(result.headers);
+  headers.set('Content-Type',mediaTypes[ext]||'application/octet-stream');
+  headers.set('X-Content-Type-Options','nosniff');
+  if(ext==='.html')headers.set('Content-Security-Policy',htmlContentSecurityPolicy);
+  return new Response(result.body,{status:result.status,headers});
  }catch(error){
   console.error('Missing bundled asset:',path.relative(contentRoot,filename),error?.message);
   return new Response('Bundled asset missing',{status:404});
