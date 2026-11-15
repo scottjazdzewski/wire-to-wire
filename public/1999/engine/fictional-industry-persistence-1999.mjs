@@ -22,7 +22,7 @@ function request(req){return new Promise((resolve,reject)=>{
 export async function open1999IndustryDatabase(indexedDB=globalThis.indexedDB){
  if(!indexedDB?.open)throw Error('IndexedDB is required for offline industry persistence');
  const db=await new Promise((resolve,reject)=>{
-  const req=indexedDB.open(PERSISTENT_INDUSTRY_DB,1);
+  const req=indexedDB.open(PERSISTENT_INDUSTRY_DB,2);
   req.onupgradeneeded=()=>{
    for(const name of stores)
     if(!req.result.objectStoreNames.contains(name))
