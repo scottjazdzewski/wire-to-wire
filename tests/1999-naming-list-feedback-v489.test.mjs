@@ -35,6 +35,26 @@ test('V489 feedback is versioned, deterministic, mirrored, and derives styles fr
  assert.deepEqual(chosen,JSON.parse(JSON.stringify(chosen)));
 });
 
+test('old creative prompts really affect new name rankings without the old prompt being retyped',()=>{
+ const prior=recordNamingFeedback(createNamingFeedback(),{
+  name:'Old Song',decision:'KEEP',motifId:'books',
+  prompt:'I like long lyrical poetic phrases, not plain two words'
+ });
+ const phrase={name:'A Matter of Time',originMotif:'other'};
+ const short={name:'Swift',originMotif:'other'};
+ const phraseScore=namingTasteScore(prior,phrase);
+ const shortScore=namingTasteScore(prior,short);
+ assert.ok(phraseScore>shortScore,'learned poetic-phrase direction survives later requests');
+ const explicit=namingTasteScore(prior,short,{direction:'a single word, brief name'});
+ assert.ok(explicit>shortScore,'current prompt changes the score immediately');
+ const rejected=recordNamingFeedback(prior,{
+  name:'A Bad Example',decision:'REJECT',motifId:'other',
+  prompt:'longer lyrical poetic phrases'
+ });
+ assert.ok(namingTasteScore(rejected,phrase)<namingTasteScore(prior,phrase),
+  'rejections temper repeated prompt preferences');
+});
+
 test('permanent rejects cannot be reused, and accepted names cannot move horses',()=>{
  const a=recordNamingFeedback(createNamingFeedback(),{name:'Trouble Already',decision:'REJECT',motifId:'personality'});
  assert.throws(()=>recordNamingFeedback(a,{name:'Trouble Already',decision:'KEEP'}),/permanently rejected/i);
