@@ -4783,6 +4783,11 @@ window.addEventListener('click',e=>{
 },true);
 root.addEventListener('change',event=>{
   const field=event.target;
+  if(field.matches('select[data-naming-field]')){
+   endNativeSelectInteraction(false);
+   window.WTW1999NamingDesk?.setField?.(field.dataset.namingField,field.value);
+   return;
+  }
   if(field.id==='ngNamedSavesImport')return namedSaveImport(field.files?.[0]);
   if(field.matches('select[data-ng-select^="race-plan-"]')){
    endNativeSelectInteraction(false);
