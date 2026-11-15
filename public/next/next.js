@@ -2063,8 +2063,26 @@ function profileDetail(route,sourceOverride=null){
    'veterinarian':'veterinarian','farrier':'farrier',
    'racing secretary':'racing_secretary'
   };
-  const roleTokens=roleName.split(/\s*(?:\/|,|\+|&)\s*/).map(x=>namedRoles[x]||x.replaceAll(' ','_'));
-  const roles=[...new Set(roleTokens.filter(Boolean))],role=roles[0]||null,cat=athleteAttributeCatalog||{};
+  const roleTokens=roleName.split(/\s*(?:\/|,|\+|&)\s*/).map(token=>{
+   const t=token.trim();
+   if(namedRoles[t])return namedRoles[t];
+   // Exact record titles can include a seniority prefix, not an arbitrary new
+   // profession. Map explicit expertise to existing catalog definitions.
+   if(/bloodstock/.test(t))return /agent/.test(t)?'bloodstock_agent':'bloodstock_professional';
+   if(/jockey|race\s*rider/.test(t))return 'jockey';
+   if(/trainer|conditioner/.test(t))return 'trainer';
+   if(/veterinar|equine\s*doctor/.test(t))return 'veterinarian';
+   if(/farrier|blacksmith/.test(t))return 'farrier';
+   if(/farm\s*manager|stud\s*manager/.test(t))return 'farm_manager';
+   if(/racing\s*secretary/.test(t))return 'racing_secretary';
+   if(/stable\s*staff|groom/.test(t))return 'stable_staff';
+   if(/breeder|stud\s*master/.test(t))return 'breeder';
+   if(/owner|founder|investor|principal/.test(t))return 'owner';
+   return t.replaceAll(' ','_');
+  });
+  const cat=athleteAttributeCatalog||{};
+  const roles=[...new Set(roleTokens.filter(key=>cat.person_roles?.[key]))];
+  const role=roles.find(key=>key!=='owner')||roles[0]||null;
   const work=state().staffState?.[route.title]||{};
   const observations=Array.isArray(work.attribute_observations)?work.attribute_observations:[];
   const observed=new Map(observations.filter(x=>x&&typeof x.attribute_key==='string').map(x=>[x.attribute_key,x]));
