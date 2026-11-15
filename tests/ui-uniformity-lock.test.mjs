@@ -75,6 +75,11 @@ test('entity colors and logos can change, but never create another navigation im
  assert.match(standard,/status semantics/,'Semantically meaningful status colors must be protected');
 });
 
+test('direct Office deep links keep their requested page instead of silently showing Overview',()=>{
+ assert.match(js,/const page=section==='Office'&&\/\^\(Messages\|Decisions\|Reports\|Career\)\$\/\.test\(routeName\)/);
+ assert.match(js,/if\(section==='Office'&&\['Messages','Decisions'\]\.includes\(page\)\)return kind==='decision'/);
+ assert.match(js,/managerRecordViewControl\(section,page\)/);
+});
 test('do not add page-specific CSS layers or new style patch stacks',()=>{
  const assets=[...html.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/g)]
   .map(m=>m[1].split('?')[0]);
