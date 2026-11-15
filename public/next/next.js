@@ -3968,10 +3968,9 @@ function managerDashboard(){
   World:{kinds:['horse','person','farm','track','race'],label:'RACING WORLD DIRECTORY'}
  };
  const config=configs[section]||configs.Office;
- // World Overview must only display the 1999 registry. The hidden Office
- // search index contains obsolete B01 demo horses and is not an authority.
- const all=section==='World'&&page==='Overview'&&isClean1999()?
-  world1999Entries():globalSearchItems();
+ // The full World Overview uses worldCompleteDirectoryView(). All other
+ // management pages retain their own existing source-linked search index.
+ const all=globalSearchItems();
  APP.searchIndex=all;
  const kindFilter=({kind,detail,name})=>{
   if(!config.kinds.includes(kind))return false;
@@ -3992,13 +3991,9 @@ function managerDashboard(){
  const items=found.filter(r=>r.kind==='horse'||r.kind==='person'||r.kind==='farm'||r.kind==='track'||r.kind==='race'||r.kind==='decision');
  const messages=currentMessages(),open=messages.filter(m=>!m.resolved);
  const upcoming=racingRows();
- // Source-backed World landing: a capped category-balanced preview, with
- // full original directories always reachable through the RECORD VIEW menu.
- const visibleItems=section==='World'&&page==='Overview'?
-  ['horse','person','farm','track','race'].flatMap(kind=>
-   items.filter(row=>row.kind===kind).slice(0,20)):items;
+ // The obsolete capped World preview is retired; one full directory exists.
  const overviewScope=section+':'+page;
- const records=managerSortRecords(overviewScope,visibleItems.map(r=>{
+ const records=managerSortRecords(overviewScope,items.map(r=>{
   const owner=r.kind==='horse'?horseOwnership(r.name):null;
   const context=r.kind==='horse'?(owner?.name||'Not recorded'):r.kind==='race'?(r.track||'—'):(r.detail||'—');
   const detail=r.kind==='horse'?(horseRows().find(h=>h.name===r.name)?.activity||'Horse file'):r.detail||'Connected record';
@@ -4033,9 +4028,7 @@ function managerDashboard(){
   '<div class="ng-manager-metrics">'+metrics+'</div>'+
   '<div class="ng-manager-workspace"><section class="ng-manager-primary"><header>'+
    '<strong>'+safe(page==='Overview'?'CONNECTED WORLD RECORDS':page.toUpperCase()+' · CONNECTED RECORDS')+'</strong>'+
-   '<span>'+(visibleItems.length<items.length?
-    visibleItems.length+' OF '+items.length+' SOURCE RECORDS — SELECT A FULL DIRECTORY':
-    items.length+' SOURCE-LINKED RECORDS')+'</span></header>'+
+   '<span>'+items.length+' SOURCE-LINKED RECORDS</span></header>'+
    managerSortableColumns(overviewScope,[['kind','TYPE'],['name','NAME'],['detail','ROLE / ACTIVITY'],['context','OWNER / LOCATION']])+
    '<div class="ng-manager-rows" tabindex="0" role="region" aria-label="Scrollable sortable management records">'+(records||'<p class="ng-manager-empty">No source-linked records for this screen yet. Nothing has been invented to fill the table.</p>')+'</div></section>'+
    '<aside class="ng-manager-sidebar"><section class="ng-manager-secondary"><header><strong>DECISION INBOX</strong><span>'+open.length+' OPEN</span></header>'+
