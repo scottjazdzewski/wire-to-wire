@@ -12,7 +12,7 @@ import {makeReputationBaseline,applyReputationSignal} from './reputation.js';
 import {FACILITY_COMMANDS,facilityAction,advanceFacilities} from './facility-operations.js';
 import {OWNERSHIP_COMMANDS,ownershipAction} from './ownership.js';
 import {HORSE_REGISTRATION_COMMANDS,registerHorseAction} from './horse-registration.js';
-import {HORSE_NAMING_COMMANDS,recordHorseNamingStoryAction} from './horse-naming-bridge.js';
+import {HORSE_NAMING_COMMANDS,recordHorseNamingStoryAction,recordHorseNamingPreferenceAction} from './horse-naming-bridge.js';
 import {HORSE_NAME_OWNER_COMMANDS,stageStoryHorseNameAction,ownerDecidesHorseNameAction} from './horse-name-owner-release.js';
 import {HORSE_CARE_COMMANDS,setHorseCarePolicy,set1999RacePreparation,initializeGameHorseCare,advanceGameHorseCare} from './horse-care.js';
 import {runAutonomousDay,settleDailyAgentFeedback} from './daily-agents.js';
@@ -114,7 +114,9 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     if(c.type==='STAGE_STORY_HORSE_NAME')stageStoryHorseNameAction({state:next,world,command:c,emit});
     else ownerDecidesHorseNameAction({state:next,world,command:c,emit});
   } else if (HORSE_NAMING_COMMANDS.includes(c.type)) {
-    recordHorseNamingStoryAction({state:next,world,command:c,emit});
+    if(c.type==='OWNER_SET_HORSE_NAMING_PREFERENCE')
+      recordHorseNamingPreferenceAction({state:next,world,command:c,emit});
+    else recordHorseNamingStoryAction({state:next,world,command:c,emit});
   } else if (HORSE_REGISTRATION_COMMANDS.includes(c.type)) {
     registerHorseAction({state:next,world,command:c,emit});
     const horse=next.runtime.registered_horses?.by_id?.[c.payload?.horse?.horse_id];
