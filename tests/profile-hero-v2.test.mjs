@@ -79,6 +79,13 @@ test("legacy approved dark ink logos receive a neutral contrast halo without alt
  assert.match(source,/mark\.classList\.toggle\("wtw-hero-dark-ink",visual\.ok&&visual\.darkInk\)/);
  assert.match(css,/\.ng-profile-source-photo\.wtw-hero-dark-ink::before/);
 });
+test("white legacy track mattes are cleaned before a potentially missing exact-ID upload probe",()=>{
+ const code=readFileSync(new URL("../public/next/profile-hero-v2.mjs",import.meta.url),"utf8");
+ const eager=code.indexOf('if(kind==="track"&&LEGACY_TRACK.test(img.getAttribute("src")||""))legacy();');
+ const later=code.indexOf('if(candidate){',eager);
+ assert.ok(eager>=0&&later>eager,"Gulfstream must not stay on white matte while an upload 404 is probed");
+ assert.match(code,/cachedLegacyHero\(absolute\)\.then\(asset=>/);
+});
 test("farm/ownership logo badges are inside the protected hero grid",()=>{
  assert.match(css,/ng-profile-view\.ng-profile-farm > \.ng-profile-intro > \.ng-org-mark/);
 });
