@@ -585,6 +585,51 @@ try {
  assert.equal((await view()).date,baseline.date,'Opening full Office file advanced career');
  console.log('WTW_OFFICE_PREVIEW_PASS '+JSON.stringify({inbox:officeInitial.rows,actions:actions.statuses.length,date:baseline.date}));
 
+ // Career dossier uses the real in-world appointment, save manager and
+ // actionable Office case sources. Opening a case must not advance the date.
+ const careerOpen=await evaluate(`(()=>{
+  const b=document.querySelector('#wtwNextgen .ng-subnav [data-ng="tab"][data-val="Career"]');
+  if(!b)return false;b.click();return true;
+ })()`);
+ assert.ok(careerOpen,'Career VIEW is absent on the canonical Office navigation');
+ await ready('Office','Career','Career dossier');
+ const career=await evaluate(`(()=>{
+  const r=document.getElementById('wtwNextgen'),app=window.__WTW_NEXT__.app;
+  return {
+   custom:app.custom,date:r.querySelector('.ng-global-date strong')?.textContent?.trim(),
+   title:r.querySelector('.ng-career-identity h3')?.textContent?.trim(),
+   values:[...r.querySelectorAll('.ng-career-field strong')].map(x=>x.textContent.trim()),
+   actionCount:r.querySelectorAll('.ng-career-attention-row').length,
+   actionCase:r.querySelector('.ng-career-attention-row')?.dataset.val,
+   manage:!!r.querySelector('[data-ng="commercial-career-open"]'),
+   existingDesks:r.querySelectorAll('.ng-manager-career [data-ng="menu"]').length,
+   note:r.querySelector('.ng-career-boundary')?.textContent?.trim(),
+   identity:r.querySelector('.ng-career-identity')?.getBoundingClientRect().width,
+   rail:r.querySelector('.ng-game-rail')?.getBoundingClientRect().width
+  };
+ })()`);
+ assert.equal(career.custom,'Career');
+ assert.equal(career.date,baseline.date,'Opening Career dossier advanced game date');
+ assert.ok(career.identity>150&&career.rail>100,'Career identity does not fit in the actual manager shell');
+ assert.ok(career.title&&career.values.length>=6,'Career dossier failed to display recorded fields');
+ assert.ok(career.manage&&career.existingDesks>=3,'Career lost local saves or existing department controls');
+ assert.match(career.note,/not invented/,'Missing-field disclosure removed from Career');
+ assert.ok(career.actionCount>=1&&career.actionCase,'Opening review sources missing from active Career');
+ const fromCareer=await evaluate(`(()=>{
+  const b=document.querySelector('#wtwNextgen .ng-career-attention-row');
+  if(!b)return false;b.click();return true;
+ })()`);
+ assert.ok(fromCareer,'Career recorded action does not open full case');
+ await ready('Office','Office','Career action returns to Today');
+ const today=await evaluate(`(()=>{
+  const r=document.getElementById('wtwNextgen');
+  return {date:r.querySelector('.ng-global-date strong')?.textContent?.trim(),
+   priority:r.querySelector('.ng-feature .ng-headinggroup>span')?.textContent?.trim()};
+ })()`);
+ assert.equal(today.date,baseline.date,'Reviewing career action advanced game time');
+ assert.match(today.priority,/ACTION FILES.*FOLLOW-UPS DUE/,'Today lost current priority count');
+ console.log('WTW_CAREER_DOSSIER_PASS '+JSON.stringify({fields:career.values.length,actionCount:career.actionCount,clock:today.date}));
+
  // Global Search is a full-height source-linked directory. Verify the actual
  // controls update the row order, do not mutate the career, and scroll with
  // keyboard focus. This catches decorative sort buttons and clipped previews.
