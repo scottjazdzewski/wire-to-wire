@@ -201,7 +201,7 @@ export async function assembleFictional1999Industry({
  }
  for(let i=0;i<horseCount;i++){
   const id='H-GAME-1999-'+seed.toString(16).toUpperCase()+'-'+String(i+1).padStart(7,'0');
-  const year=1989+draw(seed,'foal-year:'+i,8);
+  const year=1992+draw(seed,'foal-year:'+i,5);
   const sex=draw(seed,'sex:'+i,2)===0?'COLT':'FILLY';
   const sires=sirePools.get(year),dams=damPools.get(year);
   const sire=sires.length?sires[draw(seed,'sire:'+i,sires.length)]:null;
@@ -220,7 +220,7 @@ export async function assembleFictional1999Industry({
    sireId:sire.id,damId:dam.id,ownerId:owner.id,breederId:farm.id,
    trainerId:stable.trainerId,stableId:stable.id,
    homeTrackId:stable.home_track_id,foalingFarmId:farm.id,
-   racingStatus1999:year>=1992?'IN_TRAINING':'ACTIVE_OR_BREEDING',
+   racingStatus1999:'IN_TRAINING',
    ratings:model1999StartingHorseAttributes({
     horse_id:id,seed,foaling_year:year,sex
    }),
