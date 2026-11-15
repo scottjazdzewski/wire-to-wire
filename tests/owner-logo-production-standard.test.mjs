@@ -27,3 +27,20 @@ test('all approved founding logo PNGs have identical reproducible frame geometry
   assert.ok(lock.assets[a.path],a.path+' must be in visual-asset lock');
  }
 });
+test('approved Split Rail and Davenport art uses one exact frame geometry with user-approved red accent',()=>{
+ const red=[145,4,23];
+ const IDs=['O-FOUNDING-1999-001','O-FOUNDING-1999-004'];
+ const shas=['5bfd2481d1bd39ad0caa2d5193b0702cfe18be207dd92ce061c240f62d265c97',
+             '9ce639f33f94e21235b17c3161619e85641066dcd6f96b7d8b97a9797d3f8837'];
+ IDs.forEach((id,i)=>{
+  const path='public/assets/office/founding-organization-logos/'+id+'.png';
+  const row=evidence.assets.find(x=>x.path===path);
+  assert.ok(row,'identity-specific approved art must remain in audit');
+  assert.deepEqual(row.border_rgb,red,id+' exact identity accent');
+  assert.equal(row.radius_px,28); assert.equal(row.border_px,5);assert.equal(row.border_inset_px,5);
+  assert.equal(row.output_sha256,shas[i],id+' approved frame output');
+  const data=readFileSync(new URL('../'+path,import.meta.url));
+  assert.equal(createHash('sha256').update(data).digest('hex'),shas[i]);
+  assert.equal(data[25],2,'only opaque RGB game output is approved');
+ });
+});

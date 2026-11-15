@@ -13,7 +13,7 @@ Create or reuse exactly one child folder **per approved logo/organization ID**:
 
 Inside that folder, keep:
 - `O-000014_ARGOSY_BLOODSTOCK_ORIGINAL_APPROVED.png` — highest-quality accepted source, retaining its approved design and transparent background where applicable.
-- **Required single game output:** `O-000014_ARGOSY_BLOODSTOCK_256.png` — exact 256×256 opaque RGB PNG with the same rounded corners and border line as every other approved logo. Any older 1024/512/128/64/32 exports stay archival only; the installed game does not need them.
+- **Required single game output:** `O-000014_ARGOSY_BLOODSTOCK_256.png` — exact 256×256 opaque RGB PNG with the same 28px rounded corners, 5px inset/width border geometry as every other approved logo (individual user-approved border accent color is allowed). Any older 1024/512/128/64/32 exports stay archival only; the installed game does not need them.
 - `manifest.json` with exact `organization_id`, exact full organization name, approval status, source/version and references to exported assets.
 - Optional convenience ZIP containing the *same* approved files.
 
@@ -42,8 +42,8 @@ The playable game is the bundled, offline Windows desktop application developed 
 
 ## One permanent physical logo frame standard
 
-Every owner, farm, stud and stable logo in the playable world uses the same **256×256 opaque RGB PNG**, **28px rounded corner radius**, **5px warm-ivory border #F4EDDE**, inset **5px**, with external near-black corner pixels `#060709`. The border is physically included in the production PNG, never invented at runtime with CSS. No per-company override or separate 64/128/512px in-game assets. Continue using exact organization ID file paths, one local source of truth and the preserved high-resolution original Drive master. See [the complete production contract](../../../../docs/branding/OWNER_LOGO_PRODUCTION_STANDARD.md) and `scripts/normalize_owner_logo_art.py`.
+Every owner, farm, stud and stable logo in the playable world uses the same **256×256 opaque RGB PNG**, **28px rounded corner radius**, **5px border**, inset **5px** (default warm ivory `#F4EDDE`, with approved per-logo accent color allowed), with external near-black corner pixels `#060709`. The border is physically included in the production PNG, never invented at runtime with CSS. No per-company override or separate 64/128/512px in-game assets. Continue using exact organization ID file paths, one local source of truth and the preserved high-resolution original Drive master. See [the complete production contract](../../../../docs/branding/OWNER_LOGO_PRODUCTION_STANDARD.md) and `scripts/normalize_owner_logo_art.py`.
 
 ## One-line instruction for all other production windows
 
-> **WTW OWNER LOGOS — FIX THE ARTWORK, NOT THE UI:** Keep the approved original master under its existing Drive exact-ID folder, generate **one 256×256 RGB PNG** with the same **28px rounded corners** and **5px #F4EDDE border inset 5px**, and ship only `public/assets/office/founding-organization-logos/O-<ID>.png` by immutable approved ID. The local desktop game uses that one file across every profile. Check optical margins at game size, protect old source art and update exact SHA lock in the same PR. Never create another interface or use Cloudflare for local logos.
+> **WTW OWNER LOGOS — FIX THE ARTWORK, NOT THE UI:** Keep the approved original master under its existing Drive exact-ID folder, generate **one 256×256 RGB PNG** with the same **28px rounded corners** and **5px border inset 5px** (default ivory; approved brand accent color permitted), and ship only `public/assets/office/founding-organization-logos/O-<ID>.png` by immutable approved ID. The local desktop game uses that one file across every profile. Check optical margins at game size, protect old source art and update exact SHA lock in the same PR. Never create another interface or use Cloudflare for local logos.

@@ -235,14 +235,25 @@
     },
     {
       "path": "public/assets/office/founding-organization-logos/O-FOUNDING-1999-001.png",
-      "source_sha256": "bb8943a776c0906489ba96aa2db0d4c1e6fdcaf4c7713db24feb62dae705ef1d",
-      "output_sha256": "8123de6e485ee5ecba9511b202ab42dada7e86437146225ea4c1f1cdc335fd7f",
+      "source_sha256": "61474c8ccb3170bb23fe77375a14026a3818628458bfaad0522a51f958766ca7",
+      "output_sha256": "5bfd2481d1bd39ad0caa2d5193b0702cfe18be207dd92ce061c240f62d265c97",
       "background": [
-        0,
-        0,
-        0
+        254,
+        254,
+        254
       ],
-      "old_frame_pixels_removed": 0
+      "old_frame_pixels_removed": 0,
+      "source_revision": "USER_APPROVED_2026-11-15_BADGE_CORRECTION",
+      "approved_original": "https://drive.google.com/file/d/12wiABmqyF-feIQaQE6pDykmw2vg1D5fh/view",
+      "border_rgb": [
+        145,
+        4,
+        23
+      ],
+      "border_inset_px": 5,
+      "radius_px": 28,
+      "border_px": 5,
+      "approval_note": "True white field all the way to rounded boundary, red-accent brand border, approved D monogram retained"
     },
     {
       "path": "public/assets/office/founding-organization-logos/O-FOUNDING-1999-002.png",
@@ -268,14 +279,25 @@
     },
     {
       "path": "public/assets/office/founding-organization-logos/O-FOUNDING-1999-004.png",
-      "source_sha256": "910ae1c26f6b976e81097936afd2d640f57cf8d94234cdfaf0982afbfb97be52",
-      "output_sha256": "6f4cf78a061365434e21ee6f98e5c9600eb31036a07b12deaa5f7baf2cd1ea83",
+      "source_sha256": "f7a380c24d0bd5093a0d0dbff7332b8c59e67e132f3fe23c348133124d197629",
+      "output_sha256": "9ce639f33f94e21235b17c3161619e85641066dcd6f96b7d8b97a9797d3f8837",
       "background": [
-        2,
+        1,
         1,
         1
       ],
-      "old_frame_pixels_removed": 5379
+      "old_frame_pixels_removed": 0,
+      "source_revision": "USER_APPROVED_2026-11-15_BADGE_CORRECTION",
+      "approved_original": "https://drive.google.com/file/d/1XRG06FkdDh0PwAwcv-2SLHDdAejbTQGM/view",
+      "border_rgb": [
+        145,
+        4,
+        23
+      ],
+      "border_inset_px": 5,
+      "radius_px": 28,
+      "border_px": 5,
+      "approval_note": "Full black background through badge, red-accent brand border, approved SR monogram retained"
     },
     {
       "path": "public/assets/office/founding-organization-logos/O-FOUNDING-1999-005.png",
