@@ -100,6 +100,45 @@ try {
   }
   throw Error(where+': game screen did not open; '+JSON.stringify(latest));
  }
+
+ // Shared legibility / geometry contract at the actual 1280x800 desktop
+ // viewport for every registered department VIEW, not a screenshot guess.
+ async function checkLaptopLayout(where){
+  await command('Emulation.setDeviceMetricsOverride',{
+   width:1280,height:800,deviceScaleFactor:1,mobile:false
+  });
+  try{
+   const box=await evaluate(`(()=>{
+    const root=document.getElementById('wtwNextgen');
+    const shell=root?.querySelector('.ng-manager-shell');
+    const stage=root?.querySelector('.ng-manager-stage');
+    const vars=shell?getComputedStyle(shell):null;
+    const rect=x=>x?.getBoundingClientRect();
+    const r=rect(root),sc=rect(shell),st=rect(stage);
+    return {
+     width:document.documentElement.clientWidth,
+     overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
+     date:root?.querySelector('.ng-global-date strong')?.textContent?.trim()||'',
+     shellVisible:!!sc&&sc.left>=-2&&sc.right<=innerWidth+2&&sc.width>500,
+     stageVisible:!!st&&st.left>=0&&st.right<=innerWidth+2&&st.width>600,
+     listText:parseFloat(vars?.getPropertyValue('--wtw-ui-list-text')||0),
+     listName:parseFloat(vars?.getPropertyValue('--wtw-ui-list-name')||0),
+     listMeta:parseFloat(vars?.getPropertyValue('--wtw-ui-list-meta')||0),
+     rail:!!root?.querySelector('.ng-game-rail'),
+     header:!!root?.querySelector('.ng-global')
+    };
+   })()`);
+   assert.equal(box.width,1280,where+' laptop viewport was not applied');
+   assert.ok(box.overflow<=3,where+' has document-level horizontal overflow: '+JSON.stringify(box));
+   assert.ok(box.shellVisible&&box.stageVisible&&box.rail&&box.header,
+    where+' cut off the shared manager navigation or work area: '+JSON.stringify(box));
+   assert.ok(box.listText>=10&&box.listName>=10.5&&box.listMeta>=9,
+    where+' uses unreadably small shared row typography: '+JSON.stringify(box));
+   assert.equal(box.date,baseline.date,where+' laptop reflow advanced game time');
+  }finally{
+   await command('Emulation.clearDeviceMetricsOverride');
+  }
+ }
  const baseline=await ready(null,null,'Initial Office');
  assert.ok(baseline.rail&&baseline.header&&baseline.hiddenOffice,'Initial game shell incomplete: '+JSON.stringify(baseline));
  assert.equal(baseline.numberOfRoots,1);
@@ -133,6 +172,7 @@ try {
    assert.equal(status.selected,page,'Wrong active VIEW state: '+section+' / '+page);
    assert.deepEqual(status.options,Array.from(pages),'VIEW options inconsistent on '+section+' / '+page);
    assert.equal(status.date,baseline.date,'Browsing a screen advanced the game clock');
+   await checkLaptopLayout(section+' / '+page);
    if(status.roster){
     assert.ok(status.sortable>=2,'Unsortable roster: '+section+' / '+page);
     assert.ok(status.scrollable,'Unreachable roster scroll: '+section+' / '+page);
@@ -266,6 +306,7 @@ try {
    const board=await evaluate("!!document.querySelector('#wtwNextgen .ng-board')");
    assert.ok(board,'Approved interactive Office dashboard is missing');
   }
+  await checkLaptopLayout('Office / '+page);
   pageCount++;
  }
  console.log('WTW_SCREEN_FAMILY_PASS Office '+tabmap.Office.length+' views');

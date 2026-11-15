@@ -35,6 +35,7 @@ capture(){
 }
 capture racing-office '' 'ng-board'
 capture stable-roster '?ui=Stable%20%E2%80%94%20Overview' 'ng-stable-roster-v2'
+capture stable-horses '?ui=Stable%20%E2%80%94%20Horses' 'ng-stable-roster-v2'
 capture world-directory '?ui=World%20%E2%80%94%20Overview' 'ng-manager-screen'
 capture world-tracks '?ui=World%20%E2%80%94%20Tracks' 'ng-dept-roster'
 capture world-meets '?ui=World%20%E2%80%94%20Meets' 'ng-dept-roster'

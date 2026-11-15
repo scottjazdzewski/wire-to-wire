@@ -16,7 +16,7 @@
     7,
     9
   ],
-  "approved_logo_count": 36,
+  "approved_logo_count": 37,
   "assets": [
     {
       "path": "public/assets/office/founding-organization-logos/O-000001.png",
@@ -152,6 +152,29 @@
         11
       ],
       "old_frame_pixels_removed": 6157
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-000057.png",
+      "source_sha256": "d651db8cff50b867660c15c4f19c18aadb0b58aa9daa94b2d17fb5a5df475be1",
+      "output_sha256": "225b8d95323e42ddc81329d680d412ca9fce7e8cf8ec62981c8a0e1a14024d3a",
+      "background": [
+        6,
+        19,
+        40
+      ],
+      "old_frame_pixels_removed": 0,
+      "source_revision": "USER_APPROVED_2026-11-15_SAME_ARGOSY_BLOODSTOCK_LOGO",
+      "approved_original": "https://drive.google.com/file/d/1rnoN06F9gYiGvZqfBOmXPjlYAUg26_ja/view",
+      "border_rgb": [
+        215,
+        171,
+        67
+      ],
+      "border_inset_px": 5,
+      "border_px": 5,
+      "radius_px": 28,
+      "approval_note": "Exact byte-for-byte duplicate of approved Argosy Bloodstock game artwork O-000014, not redesigned; separate entity ID O-000057",
+      "shared_artwork_source_organization_id": "O-000014"
     },
     {
       "path": "public/assets/office/founding-organization-logos/O-000059.png",
