@@ -124,7 +124,7 @@ test('Stable Health, Race Plans and Barns show real player horses and never gene
  assert.match(view,/managerRecordViewControl\('Stable',page\)/);
  assert.match(view,/managerSortableColumns\(scope/);
  assert.match(view,/data-ng="horse"/);
- assert.match(view,/no records have been fabricated/);
+ assert.match(view,/Source records have not been invented/);
  assert.doesNotMatch(view,/globalSearchItems\(\)|sourceLinkedWorldDirectory|demoRecords/);
  assert.match(js,/\['Health','Race Plans','Barns'\]\.includes\(page\)\)return stableOperationsView\(page\)/);
 });
