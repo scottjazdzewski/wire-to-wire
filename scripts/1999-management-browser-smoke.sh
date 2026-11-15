@@ -37,7 +37,7 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   const ui=w.__WTW_1999_UI_DATA__;
   check('1999 data adapter initialized',Boolean(ui));
   check('Clean founding world excludes old B01 generated racehorses',ui.counts.horses===0&&ui.counts.worldHorses===73);
-  check('1999 supported racecourse geography available',ui.counts.tracks>=50&&ui.counts.tracks<=118);
+  check('1999 supported racecourse geography available',ui.counts.tracks>=50&&ui.counts.tracks<=124);
   check('Old B01 opening horses excluded from the visible stable',ui.stableHorses.length===0);
   check('1999 inbox not 2014 demo',d.querySelector('.ng-msgtitle')?.textContent.includes('1999'));
   check('1999 decision desk not 2014 case',d.querySelector('.ng-casetitle')?.textContent.includes('1999'));

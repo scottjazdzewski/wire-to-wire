@@ -209,7 +209,8 @@ try {
   }
   assert.equal(before?.family,specimen.family,
    'Opening '+specimen.family+' from a visible roster failed to capture category: '+JSON.stringify(before));
-  assert.ok(before.total>=2&&before.next&&before.back&&before.recordBar);
+  assert.ok(before.total>=2&&before.next&&before.back&&before.recordBar,
+   'Record browse controls missing for '+specimen.family+': '+JSON.stringify({before,visible:visible.slice(0,3)}));
   assert.equal(before.date,baseline.date,'Opening '+specimen.family+' list moved the game clock');
   assert.equal(before.items[0],visible[0].name,
    'First '+specimen.family+' source row does not match the opened record');

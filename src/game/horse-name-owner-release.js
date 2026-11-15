@@ -41,7 +41,7 @@ export function validateHorseNameCandidates(state,world){
    goodDate(c.created_date)&&c.created_date<=state.clock.date&&
    worldIdentity(world,'organizations',c.owner_organization_id)&&
    worldIdentity(world,'organizations',c.breeder_organization_id)&&
-   Number.isInteger(c.foaling_year)&&c.foaling_year>=1980&&c.foaling_year<=1996&&
+   Number.isInteger(c.foaling_year)&&c.foaling_year>=1980&&c.foaling_year<=1997&&
    text(c.story_id)&&text(c.evidence_id)&&text(c.explanation).length>=35&&
    c.writer_id===GAME_NAME_WRITER_ID&&text(c.editor_id)&&c.editor_id!==c.writer_id&&
    text(c.editor_notes).length>=20,
