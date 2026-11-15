@@ -72,7 +72,7 @@ test('naming providers are replaceable and their revisions are frozen per world'
  assert.notEqual(a.authority.sha256,b.authority.sha256);
  assert.deepEqual(a.entities.horses,b.entities.horses);
  await assert.rejects(build(async()=>({approvedForRegistration:false,names,
-  algorithmRevision:'HORSE_V3'})),/unapproved/);
+  algorithmRevision:'HORSE_V3'})),/neither approved nor editable provisional/);
 });
 test('existing horse-name preview never registers or mutates the game',()=>{
  const preview=previewFictional1999HorseNames({
