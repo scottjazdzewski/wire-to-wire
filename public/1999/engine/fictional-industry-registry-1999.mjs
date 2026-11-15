@@ -7,6 +7,7 @@
  * forecast mode emits projected records with null DOB/sex, never live horses.
  */
 import {plan1999Ecosystem} from './fictional-industry-ecosystem-1999.mjs';
+import {generateProvisional1999IndustryNameRoster} from '../game/horse-naming-local-v485.js';
 export const INDUSTRY_REGISTRY_1999_SCHEMA='WTW_INDUSTRY_REGISTRY_1999_V1';
 const cohorts=[
  ['broodmares','BROODMARE',1985],['stallions','STALLION',1984],
@@ -31,7 +32,8 @@ function validateRefs(label,items){
 }
 export function* generate1999IndustryRegistryBatches({
  seed=19990101,plan=plan1999Ecosystem({seed}),
- farms,tracks,owners,batchSize=1000,includeProjectedFoals=false
+ farms,tracks,owners,batchSize=1000,includeProjectedFoals=false,
+ emitNames=false,protectedHorseNames=[]
 }={}){
  if(!Number.isSafeInteger(seed)||seed<1||!plan?.counts||
   !Number.isInteger(batchSize)||batchSize<1||batchSize>5000)
@@ -39,6 +41,13 @@ export function* generate1999IndustryRegistryBatches({
  validateRefs('farms',farms);validateRefs('tracks',tracks);
  validateRefs('owners',owners);
  const counts=plan.counts,broodmareCount=counts.broodmares,stallionCount=counts.stallions;
+ const registeredCohorts=new Set(['broodmares','stallions','twoYearOldProspects',
+  'threeYearOldRunners','fourYearOldRunners','fivePlusRunners']);
+ const nameCount=cohorts.reduce((n,[cohort])=>
+  n+(registeredCohorts.has(cohort)?counts[cohort]:0),0);
+ const naming=emitNames?generateProvisional1999IndustryNameRoster({
+  seed,horseCount:nameCount,protectedNames:protectedHorseNames}):null;
+ let namingIndex=0;
  let batch=[],offset=0;
  for(const [cohort,status,year] of cohorts){
   if(cohort==='annualFoals'&&!includeProjectedFoals)continue;
@@ -61,12 +70,16 @@ export function* generate1999IndustryRegistryBatches({
    const sireId=breeder?null:ref('stallions',choose(seed,id+':sire',stallionCount));
    const damId=breeder?null:ref('broodmares',choose(seed,id+':dam',broodmareCount));
    const projected=cohort==='annualFoals';
+   const assignedName=emitNames&&registeredCohorts.has(cohort)&&!projected?
+    naming.names[namingIndex++]:null;
    const horse={
     id,cohort,status:projected?'PROJECTED_NOT_YET_BORN':status,
     sex:projected?null:sex,foalYear:born,
     dateOfBirth:projected?null:String(born)+'-'+String(2+choose(seed,id+':month',5)).padStart(2,'0')+
      '-'+String(1+choose(seed,id+':day',28)).padStart(2,'0'),
-    name:null,namingStatus:'UNNAMED_PERMANENT_ID',
+    name:assignedName,
+    namingStatus:assignedName?'PROVISIONAL_EDITABLE_1999_OPENING':'UNNAMED_PERMANENT_ID',
+    namingRevision:assignedName?naming.algorithmRevision:null,
     sireId,damId,ownerId:owner.id,foalingFarmId:farm.id,
     birthplace:{city:farm.location?.city??null,region:farm.location?.region??null,
      country:farm.location?.country??null,farmId:farm.id,
