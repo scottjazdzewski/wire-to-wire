@@ -359,6 +359,13 @@ function init(){
    // transparent assets are used unmodified, including their letter counters.
    img.dataset.wtwMatteSource=src;
    const absolute=new URL(src,location.href).href;
+   // Existing approved marks may have no white matte to remove. Preserve
+   // the original image, but still reveal dark green/navy logo ink with a
+   // neutral ivory spotlight. Never recolor the brand artwork.
+   heroAvailable(absolute).then(visual=>{
+    if(!img.isConnected||img.dataset.wtwMatteSource!==src)return;
+    mark.classList.toggle("wtw-hero-dark-ink",visual.ok&&visual.darkInk);
+   });
    cachedLegacyHero(absolute).then(asset=>{
     if(!asset||!img.isConnected||img.dataset.wtwMatteSource!==src)return;
     img.addEventListener("error",()=>{
