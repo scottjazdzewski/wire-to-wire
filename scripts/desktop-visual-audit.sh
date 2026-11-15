@@ -299,9 +299,10 @@ for name,identity in expected.items():
  if name=='gulfstream':
   # Actual legacy wordmark has an opaque white source canvas. A raw source
   # with normal blending is a white rectangle: this IS a screenshot failure.
-  cleaned=data['logoSrc'].startswith('blob:') or (
-   data['logoMixBlend']=='multiply' and data['logoMatteFlag'])
-  assert cleaned,(name,'White source canvas still appears as a rectangular plaque',data)
+  cleaned=data['logoTransparentFlag'] and (
+   data['logoSrc'].startswith('blob:') or data['logoSrc'].startswith('data:image/'))
+  assert cleaned,(name,'Gulfstream must display an actual alpha-matte derivative; blending a white rectangle is not visual acceptance',data)
+  assert data['logoMixBlend'] in ('normal',''),(name,'Temporary blend still active after logo conversion',data)
  assert 'gradient' in data['profileBackdrop'],(name,'Profile atmosphere missing')
  palette_rows[name]=data['identityBase']
 assert len(set(palette_rows.values()))>1,'All logos resolve to the same generic color'
