@@ -71,3 +71,14 @@ test('new founding career gets its own named, durable compact slot before switch
  assert.doesNotMatch(action,/localStorage\.removeItem|indexedDB\.deleteDatabase|removeSlot\(/);
  assert.match(manager,/Full fictional 1999 world genesis and reusable customized world templates are not yet available/);
 });
+
+
+test('industry explorer selects independent exact-size persisted worlds; legacy save still reads',()=>{
+ assert.match(manager,/data-cc="industry-size" type="number" min="10000" max="325000"/);
+ assert.match(manager,/targetOpeningHorses:horseCount/);
+ assert.match(manager,/worldId:'WTW1999FullIndustry-H'\+horseCount/);
+ assert.match(manager,/seed,worldId,targetOpeningHorses,\.\.\.\(await industryDirectories\(seed\)\)/);
+ assert.match(manager,/seed,worldId\}\);/);
+ assert.match(manager,/full-world live race gameplay is not yet activated/);
+ assert.match(config,/population:73/,'original founding-world career remains importable');
+});

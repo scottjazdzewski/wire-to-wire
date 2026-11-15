@@ -52,8 +52,9 @@ const ROLE_BIRTH_YEARS=Object.freeze({
 function hash(seed,s){let h=(2166136261^(seed>>>0))>>>0;
  for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}
  return h>>>0}
-export function plan1999IndustryStaffing({seed=19990101,ecosystem}={}){
- if(!ecosystem?.counts||!Number.isSafeInteger(seed)||seed<1)
+export function plan1999IndustryStaffing({seed=19990101,ecosystem,minimumRacingTracks=0}={}){
+ if(!ecosystem?.counts||!Number.isSafeInteger(seed)||seed<1||
+  !Number.isSafeInteger(minimumRacingTracks)||minimumRacingTracks<0)
   throw Error('Invalid opening industry staffing plan');
  const c=ecosystem.counts;
  const racing=c.twoYearOldProspects+c.threeYearOldRunners+
@@ -64,17 +65,21 @@ export function plan1999IndustryStaffing({seed=19990101,ecosystem}={}){
  for(const [role,rule] of Object.entries(roles)){
   const population=['farm_manager','breeding_attendant'].includes(role)?
    breeding:racing;
-  counts[role]=Math.ceil(population/rule.horsesPerPerson);
+  counts[role]=Math.max(Math.ceil(population/rule.horsesPerPerson),
+   ['trainer','jockey'].includes(role)?minimumRacingTracks:0);
  }
  return {schema:INDUSTRY_STAFFING_1999_SCHEMA,seed,racingPopulation:racing,
   breedingAndYoungstockPopulation:breeding,counts,
   note:'MODELED_LABOR_MARKET_NOT_EMPLOYMENT_CONTRACTS'};
 }
 export function* generate1999StaffingBatches({
- seed=19990101,staffing,tracks,farms,batchSize=1000,nameRoster=null
+ seed=19990101,staffing,tracks,farms,batchSize=1000,nameRoster=null,
+ ensureCircuitCoverage=false
 }={}){
  if(!staffing?.counts||!Array.isArray(tracks)||!tracks.length||
-  !Array.isArray(farms)||!farms.length||!Number.isInteger(batchSize)||
+  !Array.isArray(farms)||!farms.length||typeof ensureCircuitCoverage!=='boolean'||
+  (ensureCircuitCoverage&&['trainer','jockey'].some(role=>
+   staffing.counts[role]<tracks.length))||!Number.isInteger(batchSize)||
   batchSize<1||batchSize>5000)throw Error('Invalid staffing materialization');
  const total=Object.values(staffing.counts).reduce((n,v)=>n+v,0);
  const roleOrder=Object.keys(roles);
@@ -94,7 +99,8 @@ export function* generate1999StaffingBatches({
     String(i+1).padStart(7,'0');
    const base=['farm_manager','breeding_attendant'].includes(role)?
     farms[hash(seed,id+':farm')%farms.length]:
-    tracks[hash(seed,id+':track')%tracks.length];
+    ensureCircuitCoverage&&['trainer','jockey'].includes(role)&&i<tracks.length?
+     tracks[i]:tracks[hash(seed,id+':track')%tracks.length];
    const tierRoll=hash(seed,id+':tier')%1000;
    const tier=rule.tiers[Math.min(rule.tiers.length-1,
     tierRoll<25?0:tierRoll<170?1:tierRoll<530?2:3)];

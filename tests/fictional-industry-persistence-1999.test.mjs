@@ -150,3 +150,19 @@ test('opening certificate rejects missing durable race calendar data',async()=>{
   seed:params.seed,worldId:params.worldId}),
   /Industry batch missing from durable storage/);
 });
+
+
+test('exact custom industry size persists independently and cannot silently change',async()=>{
+ const store=memoryStore(),params={store,seed:19990107,worldId:'Sized12000',
+  targetOpeningHorses:12000,...dirs,batchSize:5000};
+ const manifest=await createPersistent1999Industry(params);
+ assert.equal(manifest.status,'COMPLETE');
+ assert.equal(manifest.horseCount,12000);
+ assert.equal(manifest.targetOpeningHorses,12000);
+ assert.equal((await verifyPersistent1999WorldOpen(store,manifest)).horses,12000);
+ assert.deepEqual(await createPersistent1999Industry(params),manifest);
+ await assert.rejects(createPersistent1999Industry({...params,targetOpeningHorses:15000}),
+  /generation parameters conflict/);
+ assert.equal((await reopenPersistent1999Industry(store,{seed:params.seed,
+  worldId:params.worldId})).manifest.horseCount,12000);
+});
