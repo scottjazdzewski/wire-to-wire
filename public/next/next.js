@@ -4050,6 +4050,7 @@ function managerOfficeInboxView(page){
   '<p class="ng-manager-empty">No matching source-linked Office files.</p>';
  const valid=new Set(['Stable','Racing','Breeding','Sales','Personnel','Facilities','Finances','World','Tracks']);
  const moves=(Array.isArray(desk?.moves)?desk.moves:[]).filter(m=>m&&valid.has(m.menu)).slice(0,2);
+ const choiceCount=(Array.isArray(desk?.moves)?desk.moves:[]).filter(m=>m&&m.optionId).length;
  const links=moves.map(m=>
   '<button type="button" class="ng-manager-case" data-ng="menu" data-val="'+safe(m.menu)+'">'+
   '<span class="ng-manager-case-indicator"></span>'+
@@ -4074,8 +4075,10 @@ function managerOfficeInboxView(page){
   '<section class="ng-manager-secondary"><header><strong>FILE PREVIEW</strong><span>'+
   (chosen?safe(status):'NONE')+'</span></header>'+preview+'</section>'+
   '<section class="ng-manager-secondary"><header><strong>SOURCE-LINKED NEXT STEPS</strong><span>'+
-  moves.length+' OPTIONS</span></header><div class="ng-manager-secondary-list">'+
-  (links||'<p class="ng-manager-empty">Select a source-linked file for its recorded department links. Previewing does not commit a game action.</p>')+
+  (moves.length||choiceCount)+' OPTIONS</span></header><div class="ng-manager-secondary-list">'+
+  (links||(choiceCount?'<p class="ng-manager-empty">'+choiceCount+
+   ' recorded decision choices are available in the complete file. Selecting a choice occurs only inside the authoritative decision desk.</p>':
+   '<p class="ng-manager-empty">Select a source-linked file for its recorded department links. Previewing does not commit a game action.</p>'))+
   '</div></section></aside></div></section>';
 }
 
