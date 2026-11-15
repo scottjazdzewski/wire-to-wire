@@ -148,7 +148,7 @@ export function createNamingDeskController({notify=()=>{}}={}){
    '<p>No shortlisted names. The shortlist is temporary and is not a game save or approval.</p>')+'</div></section>'+ 
    '<section class="ng-manager-secondary"><header><strong>POPULATION SAFETY</strong></header>'+ 
    '<div class="ng-manager-secondary-list ng-naming-guidance"><p>The live 1999 roster, foaling records, horse identities, history, IndexedDB careers and registration gate are never modified by this desk.</p>'+ 
-   '<p>When breeding is ready, actual saved horse and owner IDs can enter the separate owner-review workflow.</p><p>POPULATION PIPELINE · 16 source-backed foals per batch · 3,438 batches for 55,000 horses/year · AI requests are budget-limited and proposals remain unregistered.</p></div></section></aside></div></section>';
+   '<p>When breeding is ready, actual saved horse and owner IDs can enter the separate owner-review workflow.</p><p>OFFLINE FOALING PIPELINE · up to 16 source-backed foals per batch, no network or AI requests. The 55,000-per-year target is NOT capacity-certified; names without distinct valid candidates remain held and require review.</p></div></section></aside></div></section>';
  }
  return {mode:NAMING_DESK_MODE,setField,defaultOwner,generate,mark,reject,clear,action,snapshot,render};
 }
