@@ -207,8 +207,10 @@ async function refresh(){
   '<div class="wtw-cc-actions"><input data-cc="save-name" maxlength="80" placeholder="Name current career" value="1999 Career"/>'+
   '<button data-cc-action="save" class="primary">SAVE CURRENT CAREER</button>'+
   '<button data-cc-action="import">IMPORT CAREER</button>'+
+  '<button data-cc-action="export-world-edits" title="Export names, record edits, photos and logos for review in the World WORK tab">EXPORT WORLD EDITS FOR GPT</button>'+
   '<input type="file" data-cc="import-file" accept=".wtwsave,.json,application/octet-stream,application/json" hidden>'+
-  '</div>'+ 
+  '</div>'+
+  '<p>Export World Edits for GPT downloads a separate JSON containing your World Editor changes and images. Upload it in ChatGPT for approval and GitHub integration. It does not alter the official EXE by itself and is not a complete career backup.</p>'+ 
   (notice?'<p class="wtw-cc-notice" role="status">'+esc(notice)+'</p>':'')+
   '<div class="wtw-cc-slots">'+(saved||'<p>No compact careers yet. Saving creates a portable, compressed career delta.</p>')+'</div>'+
   quota+'</div><footer>Only approved founding-era game saves may be loaded. Old generated populations cannot be restored.</footer></section>';
@@ -224,6 +226,14 @@ async function perform(action,element){
   return;
  }
  if(action==='import'){modal().querySelector('[data-cc="import-file"]').click();return}
+ if(action==='export-world-edits'){
+  const exportEdits=window.WTWWorldEdits?.exportForGPT;
+  if(typeof exportEdits!=='function')throw Error('World Editor export is not loaded');
+  const ok=await exportEdits();
+  if(!ok)throw Error('World edits export failed; no official update was created');
+  notice='Exported wire-to-wire-world-edits.json. Upload this JSON to your World WORK tab for reviewed GitHub integration. Your career .wtwsave is separate.';
+  return;
+ }
  if(action==='save'){
   const name=modal().querySelector('[data-cc="save-name"]').value.trim();
   if(!name)throw Error('Enter a career name');
