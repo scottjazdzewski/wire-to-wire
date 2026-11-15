@@ -2760,7 +2760,9 @@ function liveStableTrainingView(){
   notice+
   '<p class="ng-training-explainer">Choose a horse’s weekly program; continue the calendar to run its workouts, recovery, fatigue, fitness and modeled risk. Sunday rest and graded work are applied automatically. Training costs are recorded in the current save’s simulation ledger—not certified payments or historical veterinary facts.</p>'+
   '<div class="ng-rs-scroll" tabindex="0" role="region" aria-label="Horse training plans and condition"><table class="ng-rs-table ng-training-table"><thead><tr>'+
-   heads+'</tr></thead><tbody>'+rows+'</tbody></table></div></section>';
+   heads+'</tr></thead><tbody>'+(rows||'<tr><td colspan="8" class="ng-rs-no-results">'+
+   'No horses are assigned to the current stable. Return to the stable roster to review available horses; no workouts or training plans have been invented.'+
+   '</td></tr>')+'</tbody></table></div></section>';
 }
 
 // World Horse Directory uses the Stable roster presentation but never substitutes
