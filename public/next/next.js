@@ -2099,11 +2099,19 @@ function profileDetail(route,sourceOverride=null){
   // The attribute sheet is a VIEW of existing personnel observations and
   // explicit game TEST evaluations. Neither a placeholder matrix nor a new
   // random scorer is an acceptable substitute for the model.
+  const firstRole=roles[0]||null;
+  const roleOne=firstRole?(cat.person_roles?.[firstRole]||[]):[];
+  const firstKeys=new Set(roleOne.map(d=>d.key));
+  const split=roles.length>1?roleOne:special.slice(0,Math.ceil(special.length/2));
+  const remainder=roles.length>1?special.filter(d=>!firstKeys.has(d.key)):
+   special.slice(Math.ceil(special.length/2));
+  const roleTitle=key=>titleCaseUIRole((key||'Role').replaceAll('_',' ')).toUpperCase();
   const personnelGroups=[
    {title:'JUDGMENT & PROFESSIONAL SKILLS',defs:common.slice(0,6)},
    {title:'WORK HABITS & WELLBEING',defs:common.slice(6)},
-   {title:roleDisplay.toUpperCase()+' SPECIALTIES I',defs:special.slice(0,Math.ceil(special.length/2))},
-   {title:roleDisplay.toUpperCase()+' SPECIALTIES II',defs:special.slice(Math.ceil(special.length/2))}
+   {title:roleTitle(firstRole)+' SKILLS',defs:split},
+   {title:roles.length>1?(roles.length===2?roleTitle(roles[1])+' SKILLS':'OTHER ROLE SKILLS'):
+    roleTitle(firstRole)+' SKILLS · CONT.',defs:remainder}
   ];
   const ratingEvidence=def=>{
    const obs=observed.get(def.key);
