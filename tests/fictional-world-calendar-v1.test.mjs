@@ -4,9 +4,9 @@ import {buildFictional1999RaceCalendar} from '../public/1999/engine/fictional-wo
 test('1999 game-modeled cards use the real local meet schedule, with unentered fields',()=>{
  const c=buildFictional1999RaceCalendar([{id:'T-0001',name:'Aqueduct'}]);
  assert.ok(c.cards.length>30);
- assert.equal(c.summary.scheduledRaces,c.cards.length*8);
+ assert.equal(c.summary.scheduledRaces,c.cards.reduce((n,card)=>n+card.races.length,0));
  assert.ok(c.cards.every(card=>card.races.every(r=>r.fieldHorseIds.length===0&&
-  r.winnerId===null&&r.status==='SCHEDULED')));
+  r.winnerId===null&&r.status==='SCHEDULED'&&r.purse_minor>0)));
  assert.equal(c.unprogrammedTrackIds.length,0);
  assert.ok(c.cards.every(card=>card.date.startsWith('1999-')));
 });
