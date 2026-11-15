@@ -18,7 +18,28 @@ test('opening staffing reflects full racing and breeding ecosystem',()=>{
    assert.ok(!ids.has(person.id));ids.add(person.id);total++;
    assert.ok(person.ratings.ability>=20&&person.ratings.ability<=99);
    assert.ok(person.workplaceId);
+   assert.ok(typeof person.name==='string'&&person.name.trim().length>2);
+   assert.equal(person.namingStatus,'GENERATED_1999_PERSONNEL_ENGINE');
   }
  }
  assert.equal(total,Object.values(plan.counts).reduce((a,b)=>a+b,0));
+});
+
+test('personnel naming retains deterministic stable IDs and geographic workplace',()=>{
+ const staffing={counts:{trainer:2,jockey:2,groom:2,exercise_rider:1,
+  veterinarian:1,farrier:1,farm_manager:1,breeding_attendant:1}};
+ const args={seed:19990101,staffing,
+  tracks:[{id:'T-0001',location:{region:'New York'}}],
+  farms:[{id:'F-0001',location:{region:'Kentucky'}}],batchSize:3};
+ const one=[...generate1999StaffingBatches(args)].flatMap(x=>x.records);
+ const two=[...generate1999StaffingBatches(args)].flatMap(x=>x.records);
+ assert.deepEqual(one,two);
+ assert.equal(new Set(one.map(x=>x.id)).size,one.length);
+ assert.equal(new Set(one.map(x=>x.name.toLowerCase())).size,one.length);
+ for(const person of one){
+  assert.ok(person.name);
+  assert.ok(person.nameModel);
+  assert.equal(person.workplaceId,
+   ['farm_manager','breeding_attendant'].includes(person.role)?'F-0001':'T-0001');
+ }
 });
