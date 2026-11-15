@@ -5,6 +5,12 @@ const path=require('node:path');
 const {URL}=require('node:url');
 
 function bundledFile(root,url){
+ // Validate the incoming literal path BEFORE URL normalizes dot segments.
+ // Otherwise /next/%2e%2e/ might silently become a different asset.
+ const literal=String(url||'').split(/[?#]/,1)[0];
+ const rawPath=literal.replace(/^wtw:\/\/game/i,'');
+ if(rawPath.split('/').some(part=>part==='.'||part==='..')||
+    /%(?:2e|2f|5c|00)/i.test(rawPath))return null;
  let parsed;
  try{parsed=new URL(url)}catch{return null}
  if(parsed.protocol!=='wtw:'||parsed.hostname!=='game'||parsed.port||
