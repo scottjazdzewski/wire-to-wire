@@ -11,7 +11,7 @@ import {foalingEventNamingBrief,auditPopulationNamingResults,POPULATION_NAMING_S
 export const LOCAL_HORSE_NAMING_SCHEMA='WTW_LOCAL_HORSE_NAMING_V485';
 // Freeze behavioral revision per named cohort when game foaling becomes save-backed.
 // This V486 marker changes selection and fail-closed audit, not the V485 wire schema.
-export const LOCAL_HORSE_NAMING_ALGORITHM_REVISION='WTW_LOCAL_NAMING_RULES_V487';
+export const LOCAL_HORSE_NAMING_ALGORITHM_REVISION='WTW_LOCAL_NAMING_RULES_V488';
 const norm=x=>String(x||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('en-US').replace(/[^a-z0-9]/g,'');
 const clean=x=>String(x||'').trim();
 const fnv=s=>{let h=2166136261;for(const x of String(s)){h^=x.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
@@ -53,6 +53,40 @@ const VOICES=Object.freeze([
  {id:'markings',cue:/\b(star|stripe|white blaze|marking|spot|freckle|coat|black mane|chestnut|roan|gray|grey)\b/i,why:'the foal’s explicitly recorded appearance',names:['White Blaze','The Mark','Speckled','Freckle','Bright Mark','Starboard','One Spot','Signature']},
  {id:'whimsy',cue:/\b(laugh|laughter|smile|funny|joke|giggle|humor|humour|silly|grin)\b/i,why:'a genuine humorous or affectionate detail in the account',names:['Inside Joke','Who Knew','A Good Laugh','Laughing Matter','There You Go','Not Funny','The Punchline','The Grin']}
 ]);
+// V488: individually authored whole names, never word-grid permutations.
+// All remain provisional until the existing source/history/editor gates pass.
+const V488_WHOLE_NAMES=Object.freeze({
+ "storm": ["Rumble Seat","Storm Signal","One More Flash","Upwind","Out of the Blue","In the Eye","Before It Breaks","Rolling Weather","The Long Roll","Static Charge","Under the Eaves","Clear Between"],
+ "blackout": ["The Last Match","No Light Left","Lights Please","The Fuse","Without Warning","Pitch Black","A Candle Left","Switch It Off","When It Came Back","Power Play","The Dark Hour","Flicker Once"],
+ "breathing": ["Second Wind","Soft Exhale","One More Breath","Easy Rhythm","The Long Sigh","Just Breathe","Steady Heart","Off the Beat","Hear Me Now","Between Beats","A Deep Breath","Still Here"],
+ "calm": ["Never in Doubt","It Can Wait","All Is Well","Take Five","Steady On","Without a Fuss","Unshaken","Hush Now","Easy Going","No Hurry","At Ease","Quiet Company"],
+ "bell": ["The Third Toll","Clear as a Bell","Last Chime","Ringing True","Bronzework","At the Sound","One More Chime","The Bell Rope","Sound Check","In the Belfry","Call to Order","The Echo"],
+ "rain": ["Last Raindrop","The Rain Delay","Between Showers","Under the Awning","When It Clears","Rain or Shine","The Washout","After the Flood","Puddle Jumper","Storm Drain","Wet Through","A Drop More"],
+ "sun": ["Up With the Sun","Early Light","Sun Came Up","Before Noon","Daylight Again","First to Rise","New Horizon","East Window","Morning Person","The First Hour","Into Daylight","Wide Awake"],
+ "night": ["Late Edition","Moon After Moon","Once at Midnight","The Quiet Hours","Midnight Caller","Out Past Ten","After the Moon","Night Traveller","Just After Dark","Sleepless","The Night Watch","Before the Dawn"],
+ "gate": ["Just Past the Gate","The Far Paddock","The Open Latch","Over the Back","At the Fence","Last Fencepost","Between Fields","Back Pasture","Out of the Gate","The Side Entrance","Through the Gap","Beyond the Fence"],
+ "train": ["The Night Express","Last Whistle","Down the Line","Freight House","Track Change","Next Stop","The Station Clock","On the Platform","The Switchyard","One Way Ticket","Right of Way","Final Departure"],
+ "music": ["Second Movement","In the Refrain","Perfect Pitch","The High Note","Half a Measure","On Repeat","Last Encore","Blue Melody","A Minor Key","Off the Record","Call and Response","Fine Tuning"],
+ "books": ["In the Footnotes","Last Page","The Unwritten","Open Book","Loose Leaf","By the Letter","Between the Lines","The Last Chapter","Underlined","An Old Edition","The First Draft","A Page Ahead"],
+ "road": ["Wrong Turn","Halfway There","The Back Road","Long Way Home","The Shortcut","No Road Signs","Mile by Mile","Off the Map","Still Going","The Next Mile","Return Ticket","The Last Bend"],
+ "family": ["Auntie's Favorite","Family Saying","Oldest Trick","Mother Knows","For My Father","One for Mama","Second Cousin","A Family Secret","The Family Name","Little Brother","Like Her Mother","Long Remembered"],
+ "fire": ["First Spark","Fireside","The Last Ember","Burning Bright","Smoke Signal","In the Ashes","Kindling","Keep the Fire","Fire in the Grate","After the Smoke","Emberglow","The Fire Line"],
+ "river": ["Under the Bridge","Across the Water","Riverbend","The Ferryman","Just Downstream","At the Landing","Creekside","The Boathouse","Waters Meet","Back to Shore","The River Road","At Low Water"],
+ "orchard": ["Last Apple","Branch by Branch","Garden Party","The Old Orchard","Under the Pears","First Harvest","Bloom Again","Pears for Tea","The Greenhouse","A Garden Gate","Early Blossom","The Apple Shed"],
+ "foal": ["First on the Scene","Right on Time","The Little One","Just Arrived","There He Goes","The New Arrival","By Morning","A Fine Beginning","First One Up","Welcome Home","Born Ready","Still Growing"],
+ "wildlife": ["A Fox at Dusk","The Red Fox","A Bird in Hand","The Barn Owl","Hawk on a Post","The White Hare","Foxfire","A Crow's Call","On the Wing","The Hound Came","Night Heron","A Feather Found"],
+ "winter": ["After the Snow","By the Fireside","A White Morning","The First Flake","Frost Line","Thawing Out","Ice on the Pond","Cold Morning","January Light","The Last Sleet","Under the Snow","Winter Window"],
+ "summer": ["July Evening","One Hot Day","The Summer House","August Light","In the Shade","Summer Visitor","At High Noon","Heat of the Day","Late in August","First of June","Sunburnt","A Summer Memory"],
+ "market": ["On Market Street","A County Affair","The Fairground","Town Hall","At the Parade","Sunday Market","Homegrown","The Village Green","Little Street","The Grandstand","Familiar Faces","End of the Fair"],
+ "craft": ["An Honest Trade","Hand to Hand","The Old Workbench","Fine Grain","Copper Nail","Black Iron","Work in Progress","Cut to Measure","Well Made","The Ironworks","Shaped by Hand","The Final Cut"],
+ "seaside": ["Beyond the Pier","The Harbour Wall","An Island Away","On the Dunes","Harbor Lights","Sea Glass","Homeward Bound","A Fair Wind","Last to Sail","Into the Tide","The Salt Air","Dockside"],
+ "luck": ["One Good Turn","Pure Chance","As Luck Has It","Against All Odds","The Long Shot","Fortune Found","Take Another","On a Hunch","Lucky Again","No Accident","My Good Fortune","Try Once More"],
+ "personality": ["The Last Word","Trouble Already","Make Me","Why Not Me","Don't Tell Me","A Mind to Win","Won't Budge","Watch This","The Usual Suspect","Get My Way","Not for Sale","No Small Thing"],
+ "door": ["The Back Door","On the Step","Someone Knocking","The Side Window","Open the Door","Halfway In","Under the Porch","The Front Step","Welcome Mat","The Brass Knob","Through the Window","Door to Door"],
+ "movement": ["Quick on His Feet","One Long Stride","Off We Go","The Next Step","A Little Hop","On the Move","The Side Step","Full of Running","Keep Moving","A Step Beyond","In Full Flight","First to Move"],
+ "markings": ["A White Star","The Little Blaze","Three White Socks","The Dark Patch","One White Heel","Distinctive","Marked for Life","A Single Stripe","On the Forehead","The White Foot","The Grey Streak","Marked Out"],
+ "whimsy": ["No Laughing Matter","The Funny Side","Oh Really","That Was Funny","You Must Be Joking","Who Said So","Hear Me Out","Not a Chance","I Told You So","Just Kidding","Good One","What Next"],
+});
 
 function getEvidence(brief){
  const arr=(brief?.evidence||[]).map(e=>({
@@ -70,10 +104,11 @@ function quoteNear(narrative,regex){
 function shapes(name){const n=name.trim().split(/\s+/).length;return n===1?'single':n===2?'two':'phrase'}
 
 /** Reusable pure creative proposals for a TRUSTED game brief. Does not approve. */
-export function createLocalStoryIdeas(brief,{count=8,attempt=0}={}){
+export function createLocalStoryIdeas(brief,{count=8,attempt=0,scanAll=false}={}){
  if(brief?.status!=='READY_FOR_ORIGINAL_NAME_WRITING'||
   !Number.isInteger(count)||count<1||count>8||
-  !Number.isInteger(attempt)||attempt<0||attempt>1000000)
+  !Number.isInteger(attempt)||attempt<0||attempt>1000000||
+  typeof scanAll!=='boolean')
   throw Error('Invalid trusted local foal naming brief');
  const source=getEvidence(brief);
  if(!source.length)return {suggestions:[],hits:[]};
@@ -85,25 +120,37 @@ export function createLocalStoryIdeas(brief,{count=8,attempt=0}={}){
   hits.push({voice,evidenceId:e.evidenceId,narrative:e.narrative});
  }
  if(!hits.length)return {suggestions:[],hits:[]};
- // Randomized across *motifs* but no word-grid joins. Each name is a fully
- // written candidate. Cap one proposal per motif on a first pass to fight fatigue.
  hits=hits.map(x=>({...x,sort:random()})).sort((a,b)=>a.sort-b.sort);
- const suggestions=[],seen=new Set(),maxAttempts=hits.length*12;
- let trials=0,pass=0;
- while(suggestions.length<count*3&&trials++<maxAttempts){
-  const hit=hits[(trials-1)%hits.length];
-  const offset=(Math.floor(random()*hit.voice.names.length)+(pass*3))%hit.voice.names.length;
-  const name=hit.voice.names[offset];
-  if(name.length>18||seen.has(norm(name))||!norm(name)){
-   if(trials%hits.length===0)pass++;continue;
+ // The Naming Desk gets up to 24 varied initial ideas; it still shows at
+ // most eight suggestions through the established shared editor gate.
+ // Actual foaling cohorts scan the complete eligible author-written pool.
+ const limit=scanAll?Infinity:count*3;
+ const pools=new Map(VOICES.map(v=>[v.id,[...v.names,...(V488_WHOLE_NAMES[v.id]||[])]]));
+ const passes=Math.max(...hits.map(h=>pools.get(h.voice.id).length));
+ const suggestions=[],seen=new Set();
+ const gcd=(a,b)=>{while(b){const t=b;b=a%b;a=t}return a};
+ const selectors=new Map(hits.map(h=>{
+  const names=pools.get(h.voice.id),length=names.length;
+  const offset=fnv(seed+'|'+h.voice.id+'|start')%length;
+  let step=1+(fnv(seed+'|'+h.voice.id+'|step')%Math.max(1,length-1));
+  while(gcd(step,length)!==1)step=step%length+1;
+  return [h.voice.id,{offset,step}];
+ }));
+ for(let pass=0;pass<passes&&suggestions.length<limit;pass++){
+  for(const hit of hits){
+   const names=pools.get(hit.voice.id),selector=selectors.get(hit.voice.id);
+   if(pass>=names.length)continue;
+   const name=names[(selector.offset+pass*selector.step)%names.length];
+   const nameKey=norm(name);
+   if(name.length>18||!nameKey||seen.has(nameKey))continue;
+   seen.add(nameKey);
+   const quote=quoteNear(hit.narrative,hit.voice.cue);
+   suggestions.push({name,evidenceId:hit.evidenceId,evidenceQuote:quote,
+    explanation:'The source recalls “'+quote+'.” “'+name+'” refers to '+
+     hit.voice.why+', which makes the association specific to this foal.',
+    motifId:hit.voice.id});
+   if(suggestions.length>=limit)break;
   }
-  seen.add(norm(name));
-  const e=hit.narrative;
-  const quote=quoteNear(e,hit.voice.cue);
-  suggestions.push({name,evidenceId:hit.evidenceId,evidenceQuote:quote,
-   explanation:`The source recalls “${quote}.” “${name}” refers to ${hit.voice.why}, which makes the association specific to this foal.`,
-   motifId:hit.voice.id});
-  if(trials%hits.length===0)pass++;
  }
  return {suggestions,hits};
 }
@@ -200,7 +247,7 @@ export function generateLocalPopulationNamingBatch({batch,existingNames=[],attem
   // story-backed pool first, then reserve ONLY up to two editorial-ready names.
   // Exclude globally reserved keys with a Set before screening to avoid
   // rebuilding a large all-time name registry for every individual proposal.
-  const {suggestions}=createLocalStoryIdeas(trusted,{count:8,attempt});
+  const {suggestions}=createLocalStoryIdeas(trusted,{count:8,attempt,scanAll:true});
   const viable=suggestions.filter(s=>!knownKeys.has(norm(s.name)));
   const preview=auditPopulationNamingResults({
    results:[{horseId:trusted.horseId,candidates:viable}],
