@@ -3010,15 +3010,6 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
   width:100%!important;height:100%!important;object-fit:cover!important;
   transform:none!important;padding:0!important;
 }
-/* Facility and ownership share the actual Track logo plate (214x108);
-   the approved 4:3 master remains fully visible via contain. */
-#wtwNextgen .ng-route-profile .ng-profile-farm.ng-profile-track .ng-profile-facility-logo{
-  width:214px!important;height:108px!important;flex:0 0 214px!important;
-}
-#wtwNextgen .ng-route-profile .ng-profile-farm.ng-profile-track .ng-profile-facility-logo img{
-  width:100%!important;height:100%!important;object-fit:contain!important;
-  transform:none!important;padding:7px!important;box-sizing:border-box!important;
-}
 #wtwNextgen .ng-profile-photo-empty{
   display:flex;width:100%;height:100%;box-sizing:border-box;
   align-items:center;justify-content:center;flex-direction:column;
@@ -3647,6 +3638,37 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
   }
   #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .ng-profile-tools button{
     font-size:9px!important;padding:6px!important;
+  }
+}
+
+/* Canonical 1999 founding facility/ownership logo viewport.
+   Every approved organization ships ONE exact-ID 256x256 PNG. The existing
+   profile hero displays the ENTIRE square without per-organization zoom,
+   extra padding, aspect distortion, invented border, or repaint. Keep
+   track logos in their separately approved hero presentation. */
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-farm.ng-profile-track > .ng-profile-intro > .ng-profile-facility-logo{
+  --wtw-facility-logo-side:140px;
+  width:var(--wtw-facility-logo-side)!important;
+  min-width:var(--wtw-facility-logo-side)!important;
+  max-width:var(--wtw-facility-logo-side)!important;
+  height:var(--wtw-facility-logo-side)!important;
+  min-height:var(--wtw-facility-logo-side)!important;
+  flex:0 0 var(--wtw-facility-logo-side)!important;
+  aspect-ratio:1 / 1!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-farm.ng-profile-track > .ng-profile-intro > .ng-profile-facility-logo > img{
+  width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;
+  object-fit:contain!important;object-position:center!important;
+  transform:none!important;padding:0!important;
+}
+@media(max-width:1080px){
+  #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-farm.ng-profile-track > .ng-profile-intro > .ng-profile-facility-logo{
+    --wtw-facility-logo-side:125px;
+  }
+}
+@media(max-width:740px){
+  #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-farm.ng-profile-track > .ng-profile-intro > .ng-profile-facility-logo{
+    --wtw-facility-logo-side:108px;
   }
 }
 

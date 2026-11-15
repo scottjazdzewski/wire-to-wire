@@ -156,3 +156,22 @@ test("optical-fit derivatives only change display URLs, never canonical exact-ID
  assert.match(source,/logo\.src=visual\.displayUrl\|\|candidate/);
  assert.equal(heroCandidate("track","T-0017"),"/assets/places/track-hero/T-0017.webp");
 });
+
+test("all founding owner and facility hero badges share one square presentation contract",()=>{
+ const manifest=JSON.parse(readFileSync(new URL("../public/assets/office/founding-organization-logo-index.json",import.meta.url),"utf8"));
+ for(const [key,path] of Object.entries(manifest.organizations)){
+  assert.match(key,/^organization:O-/);
+  assert.equal(path,"/assets/office/founding-organization-logos/"+key.split("organization:")[1]+".png");
+  const bytes=readFileSync(new URL("../public"+path,import.meta.url));
+  assert.equal(bytes.readUInt32BE(16),256,key+" width");
+  assert.equal(bytes.readUInt32BE(20),256,key+" height");
+ }
+ assert.ok(css.includes("--wtw-facility-logo-side:140px;"));
+ assert.ok(css.includes("--wtw-facility-logo-side:125px;"));
+ assert.ok(css.includes("--wtw-facility-logo-side:108px;"));
+ assert.match(css,/ng-profile-view\.ng-profile-farm\.ng-profile-track > \.ng-profile-intro > \.ng-profile-facility-logo > img/);
+ assert.match(css,/aspect-ratio:1 \/ 1!important/);
+ assert.match(css,/object-fit:contain!important;object-position:center!important/);
+ assert.doesNotMatch(css,/Facility and ownership share the actual Track logo plate \(214x108\)/);
+ assert.doesNotMatch(css,/\.ng-profile-farm\.ng-profile-track \.ng-profile-facility-logo\{\s*width:214px/);
+});

@@ -123,6 +123,12 @@ frame.onload=()=>setTimeout(()=>{
    intro:rect('.ng-route-profile .ng-profile-intro'),
    identity:rect('.ng-route-profile .ng-profile-identity'),
    heroMark:rect('.ng-route-profile .ng-profile-source-photo'),
+   heroImage:rect('.ng-route-profile .ng-profile-facility-logo > img'),
+   heroNatural:(()=>{
+    const img=d.querySelector('.ng-route-profile .ng-profile-facility-logo > img');
+    return img?{width:img.naturalWidth,height:img.naturalHeight,
+      complete:img.complete,source:img.getAttribute('src')}:null;
+   })(),
    localNavigation:rect('.ng-route-profile .ng-profiletabs')||rect('.ng-route-profile .ng-person-dossierbar'),
    profileName:d.querySelector('.ng-route-profile .ng-profile-identity h2')?.textContent?.trim()||'',
    identityId:d.getElementById('wtwNextgen')?.getAttribute('data-wtw-identity')||'',
@@ -191,6 +197,15 @@ probe laptop-aqueduct '%3Fui%3DWorldRecord%253Atrack%253AT-0001' '1280,800'
 probe laptop-belmont '%3Fui%3DWorldRecord%253Atrack%253AT-0002' '1280,800'
 probe laptop-farm '%3Fui%3DFoundingProfile%253Afacility%253AO-000061' '1280,800'
 probe laptop-owner '%3Fui%3DFoundingProfile%253Aownership%253AO-000014' '1280,800'
+# User-approved five-logo comparison: all must share the same square bounding
+# box independent of palette or embedded transparent artwork margins.
+probe logo-bellwether '%3Fui%3DFoundingProfile%253Afacility%253AO-000068'
+probe logo-aurelian '%3Fui%3DFoundingProfile%253Afacility%253AO-000066'
+probe logo-takimori '%3Fui%3DFoundingProfile%253Afacility%253AO-FOUNDING-1999-002'
+probe logo-split-rail '%3Fui%3DFoundingProfile%253Afacility%253AO-FOUNDING-1999-004'
+probe logo-crescent-mile '%3Fui%3DFoundingProfile%253Afacility%253AO-000062'
+probe laptop-logo-bellwether '%3Fui%3DFoundingProfile%253Afacility%253AO-000068' '1280,800'
+probe laptop-logo-split-rail '%3Fui%3DFoundingProfile%253Afacility%253AO-FOUNDING-1999-004' '1280,800'
 python3 - <<'PY'
 import json,html,re
 from pathlib import Path
@@ -275,6 +290,26 @@ for name in ('belmont','laptop-belmont','aqueduct','gulfstream'):
  print('TRACK CHASSIS RESTORED',name,'stakes',d['stakeRows'],'workspace',d['trackWorkspace']['width'])
 
 # Same core chrome, record controls and protected identity space across profiles.
+# Independent Chromium proof that five differently styled approved organization
+# logos occupy the SAME CSS pixel square. No source art is altered or zoomed.
+for name in ('logo-bellwether','logo-aurelian','logo-takimori',
+             'logo-split-rail','logo-crescent-mile',
+             'laptop-logo-bellwether','laptop-logo-split-rail'):
+ source=Path(f'visual-audit/dom/probe-{name}.html').read_text()
+ assert 'data-check="ready"' in source,(name,'Facility image probe failed')
+ match=re.search(r'<pre id="measure"[^>]*>(.*?)</pre>',source,re.S)
+ assert match,(name,'Facility image geometry missing')
+ d=json.loads(html.unescape(match.group(1)))
+ slot,img,natural=d['heroMark'],d['heroImage'],d['heroNatural']
+ assert slot and img and natural,(name,'Approved facility mark missing')
+ assert slot['width']==140 and slot['height']==140,(name,'Facility plate is not 140 CSS px square',slot)
+ assert img['width']==140 and img['height']==140,(name,'Approved logo rendered at inconsistent size',img)
+ assert natural['width']==256 and natural['height']==256,(name,'Logo source must be single 256-square game export',natural)
+ assert natural['complete'],(name,'Approved logo did not finish loading')
+ assert not natural['source'].startswith(('http:','https:')),(name,'Remote art dependency')
+ assert not d['metadataClipped'],(name,'Facility metadata clipped',d['metadataClipped'])
+ print('APPROVED ORGANIZATION LOGO SQUARE',name,slot['width'],img['width'],natural['width'])
+
 profiles=('horse','person','aqueduct','belmont','gulfstream','farm','stable','owner',
           'laptop-horse','laptop-person','laptop-aqueduct','laptop-belmont','laptop-farm','laptop-owner')
 rows=[]
