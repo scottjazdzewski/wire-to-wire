@@ -521,6 +521,70 @@ try {
   console.log('WTW_PROFILE_CONTROLS_PASS '+item.family+' '+original.name+' '+deeper+' entity-arrows:'+firstNeighbor);
  }
 
+
+ // Source-backed Office files: selecting a row previews it in place, while
+ // only OPEN COMPLETE FILE enters the authoritative Today decision screen.
+ const openInbox=await evaluate(`(()=>{
+  const b=document.querySelector('#wtwNextgen .ng-game-rail [data-ng="custom"][data-val="Messages"]');
+  if(!b)return false;b.click();return true;
+ })()`);
+ assert.equal(openInbox,true,'Office Inbox rail action missing');
+ await ready('Office','Messages','Office Inbox');
+ const officeInitial=await evaluate(`(()=>{
+  const r=document.getElementById('wtwNextgen');
+  const rows=[...r.querySelectorAll('.ng-manager-rows [data-ng="office-focus"]')];
+  return {rows:rows.length,first:rows[0]?.dataset.val,second:rows[1]?.dataset.val,
+   selected:rows.filter(x=>x.getAttribute('aria-pressed')==='true').map(x=>x.dataset.val),
+   date:r.querySelector('.ng-global-date strong')?.textContent?.trim()};
+ })()`);
+ assert.ok(officeInitial.rows>=3&&officeInitial.second,'Inbox source files absent');
+ assert.equal(officeInitial.selected.length,1,'Inbox has no unique selected file');
+ const focusOffice=await evaluate(`(()=>{
+  const b=[...document.querySelectorAll('#wtwNextgen .ng-manager-rows [data-ng="office-focus"]')][1];
+  if(!b)return false;b.click();return true;
+ })()`);
+ assert.equal(focusOffice,true);
+ await ready('Office','Messages','Office preview after selection');
+ const preview=await evaluate(`(()=>{
+  const r=document.getElementById('wtwNextgen'),app=window.__WTW_NEXT__.app;
+  return {caseId:app.activeCase,
+   selected:[...r.querySelectorAll('.ng-manager-rows [data-ng="office-focus"][aria-pressed="true"]')].map(b=>b.dataset.val),
+   title:r.querySelector('.ng-office-file-preview h3')?.textContent?.trim(),
+   summary:r.querySelector('.ng-office-file-preview p')?.textContent?.trim(),
+   facts:r.querySelectorAll('.ng-office-file-facts dd').length,
+   open:r.querySelector('.ng-office-open')?.dataset.val,
+   date:r.querySelector('.ng-global-date strong')?.textContent?.trim()};
+ })()`);
+ assert.equal(preview.caseId,officeInitial.second,'Preview selection failed');
+ assert.deepEqual(preview.selected,[officeInitial.second]);
+ assert.equal(preview.open,officeInitial.second,'Full file button points to wrong case');
+ assert.ok(preview.title&&preview.summary&&preview.facts>=2,'Source-backed case preview missing facts');
+ assert.equal(preview.date,baseline.date,'Previewing an Office file advanced game date');
+ const decisionSelect=await evaluate(`(()=>{
+  const sel=document.querySelector('#wtwNextgen select[data-ng-select="manager-screen"]');
+  if(!sel)return false;
+  sel.value='Decisions';sel.dispatchEvent(new Event('change',{bubbles:true}));return true;
+ })()`);
+ assert.equal(decisionSelect,true,'Could not choose Decisions via standard VIEW');
+ await ready('Office','Decisions','Office Decisions');
+ const actions=await evaluate(`(()=>{
+  const r=document.getElementById('wtwNextgen');
+  return {statuses:[...r.querySelectorAll('.ng-manager-rows [data-ng="office-focus"]')].map(x=>x.querySelector('.ng-manager-row-type')?.textContent?.trim()),
+   preview:!!r.querySelector('.ng-office-file-preview'),
+   date:r.querySelector('.ng-global-date strong')?.textContent?.trim()};
+ })()`);
+ assert.ok(actions.statuses.length>0&&actions.statuses.length<officeInitial.rows,'Decisions still duplicates Inbox');
+ assert.ok(actions.statuses.every(x=>x==='ACTION'),'Informational messages leaked into Decisions');
+ assert.ok(actions.preview&&actions.date===baseline.date);
+ const fileOpened=await evaluate(`(()=>{
+  const b=document.querySelector('#wtwNextgen .ng-office-open');
+  if(!b)return false;b.click();return true;
+ })()`);
+ assert.equal(fileOpened,true,'Open complete Office file control missing');
+ await ready('Office','Office','Office complete case');
+ assert.equal((await view()).date,baseline.date,'Opening full Office file advanced career');
+ console.log('WTW_OFFICE_PREVIEW_PASS '+JSON.stringify({inbox:officeInitial.rows,actions:actions.statuses.length,date:baseline.date}));
+
  // Global Search is a full-height source-linked directory. Verify the actual
  // controls update the row order, do not mutate the career, and scroll with
  // keyboard focus. This catches decorative sort buttons and clipped previews.
