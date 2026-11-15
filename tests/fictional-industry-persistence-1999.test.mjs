@@ -6,7 +6,7 @@ import {createPersistent1999Industry,readPersistent1999IndustryBatch,findPersist
  readPersistent1999Directory}
  from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
 function memoryStore(){
- const data={manifests:new Map(),horseBatches:new Map(),personBatches:new Map(),horseEdits:new Map(),careerRuns:new Map(),directory:new Map(),coveringBatches:new Map()};
+ const data={manifests:new Map(),horseBatches:new Map(),personBatches:new Map(),horseEdits:new Map(),careerRuns:new Map(),directory:new Map(),coveringBatches:new Map(),calendarBatches:new Map()};
  return {get:async(s,k)=>data[s].get(k),
   commitDirectory:async(id,manifest,records)=>{
    data.directory.set(id,structuredClone(records));
@@ -34,6 +34,12 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
  assert.ok(a.personCount>30000);
  assert.ok(a.coveringCount>50000);
  assert.ok(a.coveringBatchesCommitted>10);
+ assert.ok(a.scheduledCards>0);
+ assert.ok(a.scheduledRaces>a.scheduledCards);
+ assert.ok(a.calendarBatchesCommitted>0);
+ const firstCards=await readPersistent1999IndustryBatch(store,a,'calendarBatches',0);
+ assert.ok(firstCards.every(c=>c.races.every(r=>r.winnerId===null&&
+  r.fieldHorseIds.length===0&&r.status==='SCHEDULED')));
  const firstCoverings=await readPersistent1999IndustryBatch(store,a,'coveringBatches',0);
  assert.ok(firstCoverings.every(c=>c.mareId.startsWith('H-FICTIONAL-1999-BROODMARES-')&&
   c.stallionId.startsWith('H-FICTIONAL-1999-STALLIONS-')&&
