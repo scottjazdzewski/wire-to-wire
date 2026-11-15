@@ -92,6 +92,22 @@ test('Naming Desk uses dense list and persists Keep / Reject / Choose through th
  assert.ok(d.render().includes('REJECTED · NEVER REUSE'));
 });
 
+test('Generating more keeps all earlier proposals visible in the list',()=>{
+ const d=createNamingDeskController();
+ for(const [name,value] of Object.entries(fields))d.setField(name,value);
+ assert.equal(d.generate(),true);
+ const first=d.snapshot().allResults.map(x=>x.name);
+ assert.ok(first.length>0);
+ assert.equal(d.generate(),true);
+ const all=d.snapshot().allResults.map(x=>x.name);
+ assert.ok(all.length>first.length,'successive requests build a larger scrollable table');
+ assert.equal(new Set(all).size,all.length);
+ assert.ok(first.every(x=>all.includes(x)));
+ assert.ok(d.render().includes(first[0]));
+ assert.equal(d.clear(),true);
+ assert.deepEqual(d.snapshot().allResults,[]);
+});
+
 test('no real horse target means choose fails closed, but keep and reject work',()=>{
  const d=createNamingDeskController();
  for(const [name,value] of Object.entries(fields))d.setField(name,value);
