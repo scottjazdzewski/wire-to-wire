@@ -78,13 +78,13 @@ test('Naming Desk waits until real async career commit before showing success',a
   getTargets:()=>[{id:'H-CANON-1',name:'Historic Ace'}]
  });
  for(const [field,value] of Object.entries({ownerName:'Owner A',breederName:'Breeder B',
-  foalingYear:'1996',story:'The foal was born on the night the owner climbed a hill to watch a rare sunrise over the farm.'}))
+  foalingYear:'1996',story:'The farm lost electric power during a violent storm. The owner found the mare by listening to her calm, steady breathing in the dark barn.'}))
   desk.setField(field,value);
  assert.equal(desk.generate(),true);
  const name=desk.snapshot().results[0].name;
  const pending=desk.action('naming-keep',name);
  assert.equal(ledger.revision,0);
- assert.notMatch(desk.snapshot().notice,/saved to the game/);
+ assert.doesNotMatch(desk.snapshot().notice,/saved to the game/);
  release();
  assert.equal(await pending,true);
  assert.equal(ledger.revision,1);
