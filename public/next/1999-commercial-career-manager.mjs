@@ -237,6 +237,8 @@ async function browseFullIndustry(page=0,kind=industryBrowseKind){
     esc(kind==='horseBatches'?h.cohort:h.role)+' · '+
     esc(kind==='horseBatches'?h.sex:h.tier)+' · '+
     esc(kind==='horseBatches'?h.foalYear:h.workplaceId)+
+    (kind==='horseBatches'?'<button data-cc-action="inspect-listed-horse" data-id="'+
+     esc(h.id)+'">PROFILE</button>':'')+
     '</div>').join('')+'</div>';
  }finally{store.close()}
 }
@@ -376,6 +378,18 @@ async function perform(action,element){
  }
  if(action==='industry-prev'||action==='industry-next'){
   await browseFullIndustry(industryBrowsePage+(action==='industry-next'?1:-1));
+  return;
+ }
+ if(action==='inspect-listed-horse'){
+  const horse=await inspectFullIndustryHorse(element.dataset.id);
+  if(!horse)throw Error('Selected horse missing from saved 1999 world');
+  notice='HORSE PROFILE · '+horse.id+' · '+(horse.name||'UNNAMED')+
+   ' · '+horse.sex+' · foaled '+horse.foalYear+' · '+horse.status+
+   ' · owner '+horse.ownerId+' · farm '+horse.foalingFarmId+
+   ' · sire '+horse.sireId+' · dam '+horse.damId+
+   ' · home track '+horse.homeTrackId+
+   ' · trainer '+horse.trainerId+' · jockey '+horse.jockeyId+
+   ' · RATINGS '+Object.entries(horse.ratings||{}).map(([k,v])=>k+':'+v).join(', ');
   return;
  }
  if(action==='inspect-full-horse'){
