@@ -8,10 +8,6 @@ const PROFILE_KEY='wtwFoundingWorldProfileV1';
 const MAIN='wtw1999FoundingStateV1',SCHEMA='WTW_WORLD_PROFILE_V1';
 const DEFAULT=Object.freeze({schema:SCHEMA,population:73,seed:19990101,
  mode:'FOUNDING_1999',generator:'WTW_1999_FOUNDING_WORLD_V1'});
-const PRESETS=Object.freeze([
- Object.freeze({id:'founding',label:'1999 Opening — 73 approved breeding horses, 0 racing horses',
-  population:73,mode:'FOUNDING_1999'})
-]);
 function normalize(value){
  const mode=value?.mode??DEFAULT.mode;
  const population=Number(value?.population??DEFAULT.population);
@@ -37,6 +33,6 @@ function pin(profile){
  localStorage.setItem(PROFILE_KEY,JSON.stringify(clean));
  return clean;
 }
-window.WTW1999CommercialConfig=Object.freeze({schema:SCHEMA,presets:PRESETS,
+window.WTW1999CommercialConfig=Object.freeze({schema:SCHEMA,
  defaults:DEFAULT,normalize,current,pin,key:PROFILE_KEY});
 })();

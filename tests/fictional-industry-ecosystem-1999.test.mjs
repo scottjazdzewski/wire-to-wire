@@ -14,6 +14,21 @@ test('1999 ecosystem produces bounded non-identical cohort populations',()=>{
  assert.ok(a.modeledLivingPopulation>220000);
  assert.ok(a.minimumCoversForTargetFoals<=a.counts.broodmares);
 });
+test('world size scales every opening cohort without changing identity rules',()=>{
+ const small=plan1999Ecosystem({seed:19990101,worldSizePercent:10});
+ const full=plan1999Ecosystem({seed:19990101,worldSizePercent:100});
+ assert.equal(small.worldSizePercent,10);
+ assert.equal(full.worldSizePercent,100);
+ const massive=plan1999Ecosystem({seed:19990101,worldSizePercent:121});
+ assert.equal(massive.worldSizePercent,121);
+ assert.ok(massive.modeledLivingPopulation>320000);
+ for(const key of Object.keys(full.counts)){
+  assert.ok(small.counts[key]>0);
+  assert.ok(small.counts[key]<full.counts[key],key+' should scale down');
+ }
+ assert.throws(()=>plan1999Ecosystem({worldSizePercent:0}),/Invalid 1999 ecosystem/);
+ assert.throws(()=>plan1999Ecosystem({worldSizePercent:122}),/Invalid 1999 ecosystem/);
+});
 test('stallion books vary including zero covers and large commercial books',()=>{
  const books=assignStallionServiceBooks({
   seed:19990101,stallions:7000,broodmares:63000,targetCovers:59000

@@ -41,8 +41,11 @@ export function* generate1999IndustryRegistryBatches({
  validateRefs('farms',farms);validateRefs('tracks',tracks);
  validateRefs('owners',owners);
  const counts=plan.counts,broodmareCount=counts.broodmares,stallionCount=counts.stallions;
- const registeredCohorts=new Set(['broodmares','stallions','twoYearOldProspects',
-  'threeYearOldRunners','fourYearOldRunners','fivePlusRunners']);
+ // Every horse that exists on January 1 needs a stable display identity before
+ // the census can be adapted to the canonical game world. Projected foals are
+ // forecasts, not entities, and deliberately remain unnamed until birth.
+ const registeredCohorts=new Set(['broodmares','stallions','yearlings',
+  'twoYearOldProspects','threeYearOldRunners','fourYearOldRunners','fivePlusRunners']);
  const nameCount=cohorts.reduce((n,[cohort])=>
   n+(registeredCohorts.has(cohort)?counts[cohort]:0),0);
  const naming=emitNames?generateProvisional1999IndustryNameRoster({
@@ -57,7 +60,11 @@ export function* generate1999IndustryRegistryBatches({
    const id=ref(cohort,i);
    const farm=farms[choose(seed,id+':farm',farms.length)];
    const owner=owners[choose(seed,id+':owner',owners.length)];
-   const track=tracks[choose(seed,id+':track',tracks.length)];
+   // Keep each operation's opening horses at its directory home circuit.
+   // This gives a player a coherent local stable for the existing race engine
+   // and avoids assigning horses randomly across every track in the country.
+   const track=tracks.find(x=>x.id===owner.homeTrackId||owner.id.includes(x.id))||
+    tracks[choose(seed,id+':track',tracks.length)];
    const racing=status==='RACING';
    const inTraining=racing||status==='TWO_YEAR_OLD_PROSPECT';
    const breeder=status==='BROODMARE'||status==='STALLION';

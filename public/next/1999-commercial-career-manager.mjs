@@ -14,9 +14,16 @@ import {open1999IndustryDatabase,createPersistent1999Industry,
 import {TRACK_PROGRAM_1999} from '/next/1999-track-program.mjs';
 import {createFictionalWorldNameEngine}
  from '/1999/engine/fictional-world-name-engine.mjs';
+import {INDUSTRY_ECOSYSTEM_MAX_SIZE_PERCENT}
+ from '/1999/engine/fictional-industry-ecosystem-1999.mjs';
 import {readPersistent1999HorseProfile,readPersistent1999IndustryBatch,
  readPersistent1999Directory,findPersistent1999Person}
  from '/1999/engine/fictional-industry-persistence-1999.mjs';
+import {openPersistent1999GameCareer} from '/1999/engine/fictional-industry-game-world-bridge-1999.mjs';
+import {dispatchGameCommand} from '/1999/game/kernel.js';
+import {gameRaceProgram,supported1999RaceClass,raceEligibility}
+ from '/1999/game/racing-1999.js';
+import {validateGameRun} from '/1999/game/state.js';
 
 const DB_NAME='WireToWireClean1999CareersV2';
 const MAX_SLOTS=60,MAX_TOTAL_BYTES=512*1024*1024;
@@ -173,23 +180,24 @@ function modal(){
  }
  return root;
 }
-function inputProfile(){
- const dom=modal();
- return config().normalize({
-  population:Number(dom.querySelector('[data-cc="population"]')?.value||73),
-  seed:Number(dom.querySelector('[data-cc="seed"]')?.value||19990101),
-  mode:dom.querySelector('[data-cc="mode"]')?.value||'FOUNDING_1999'
- });
+function selectedWorldSizePercent(){
+ const value=Number(modal().querySelector('[data-cc="world-size-percent"]')?.value||
+  fullIndustryManifest?.worldSizePercent||100);
+ if(!Number.isInteger(value)||value<1||value>INDUSTRY_ECOSYSTEM_MAX_SIZE_PERCENT)
+  throw Error('World size must be a whole-number scale from 1 to '+
+   INDUSTRY_ECOSYSTEM_MAX_SIZE_PERCENT+' percent');
+ return value;
 }
 let fullIndustryManifest=null;
+let activeWorldCareer=null;
 let industryBrowsePage=0,industryBrowseHtml='',industryBrowseKind='horseBatches';
 let industryDirectory=[];
-async function industryDirectories(seed=19990101){
+async function industryDirectories(seed=19990101,worldSizePercent=100){
  const response=await fetch('/data/track-geography-v33.json');
  if(!response.ok)throw Error('Bundled 1999 track geography unavailable');
  const geo=await response.json();
  const geoById=new Map((geo.tracks||[]).map(g=>[g.id,g]));
- const tracks=Object.values(TRACK_PROGRAM_1999)
+ const allTracks=Object.values(TRACK_PROGRAM_1999)
   .filter(t=>t.playableIn1999!==false&&t.trackOperating==='OPEN_1999')
   .map(t=>{
    const g=geoById.get(t.id);
@@ -203,10 +211,21 @@ async function industryDirectories(seed=19990101){
     physicalFacilityStatus:t.physicalFacilityStatus||'STANDALONE_FACILITY',
     geographyProvenance:g.geography_status};
   });
- if(!tracks.length)throw Error('No approved operating 1999 tracks');
+ if(!allTracks.length)throw Error('No approved operating 1999 tracks');
  // Reuse the established 1999 organization identity engine, never fabricate
  // track-prefix placeholders. Permanent world IDs remain unchanged.
- const farmCount=tracks.length*4,ownerCount=tracks.length*10;
+ if(!Number.isInteger(worldSizePercent)||worldSizePercent<1||
+  worldSizePercent>INDUSTRY_ECOSYSTEM_MAX_SIZE_PERCENT)
+  throw Error('Choose a world size from 1% to '+
+   INDUSTRY_ECOSYSTEM_MAX_SIZE_PERCENT+'%');
+ const scale=worldSizePercent/100;
+ const trackCount=Math.min(allTracks.length,Math.max(2,
+  Math.ceil(allTracks.length*scale)));
+ const selectedIndexes=new Set(Array.from({length:trackCount},(_,i)=>
+  Math.round(i*(allTracks.length-1)/Math.max(1,trackCount-1))));
+ const tracks=allTracks.filter((_,i)=>selectedIndexes.has(i));
+ const farmCount=Math.max(tracks.length,Math.ceil(tracks.length*4*scale));
+ const ownerCount=Math.max(tracks.length*2,Math.ceil(tracks.length*10*scale));
  const generated=createFictionalWorldNameEngine({
   worldId:'WTW1999IndustryDirectory',seed,year:1999,
   roles:{},owners:ownerCount,
@@ -217,23 +236,23 @@ async function industryDirectories(seed=19990101){
  if(generated.owners.length!==ownerCount||
   generated.farms.length!==farmCount)
   throw Error('1999 approved organization name generator returned an incomplete directory');
- const farms=tracks.flatMap((t,trackIndex)=>Array.from({length:4},(_,i)=>{
-  const named=generated.farms[trackIndex*4+i];
-  return {id:'O-FICTIONAL-FARM-'+t.id+'-'+String(i+1).padStart(2,'0'),
+ const farms=Array.from({length:farmCount},(_,index)=>{
+  const t=tracks[index%tracks.length],named=generated.farms[index];
+  return {id:'O-FICTIONAL-FARM-'+t.id+'-'+String(1+Math.floor(index/tracks.length)).padStart(2,'0'),
    name:named.name,location:t.location,
    namingStatus:'GENERATED_1999_ORGANIZATION_ENGINE',
    namingSourceId:named.id,
    geographyStatus:t.location?.region?'REGION_PROVIDED':'LOCATION_REVIEW_REQUIRED'};
- }));
- const owners=tracks.flatMap((t,trackIndex)=>Array.from({length:10},(_,i)=>{
-  const named=generated.owners[trackIndex*10+i];
-  return {id:'O-FICTIONAL-OWNER-'+t.id+'-'+String(i+1).padStart(2,'0'),
+ });
+ const owners=Array.from({length:ownerCount},(_,index)=>{
+  const t=tracks[index%tracks.length],named=generated.owners[index];
+  return {id:'O-FICTIONAL-OWNER-'+t.id+'-'+String(1+Math.floor(index/tracks.length)).padStart(2,'0'),
    name:named.name,location:t.location,
    ownershipArchetype:named.ownershipArchetype,
    namingStatus:'GENERATED_1999_ORGANIZATION_ENGINE',
    namingSourceId:named.id,
    geographyStatus:t.location?.region?'REGION_PROVIDED':'LOCATION_REVIEW_REQUIRED'};
- }));
+ });
  return {tracks,farms,owners};
 }
 async function browseFullIndustry(page=0,kind=industryBrowseKind){
@@ -302,13 +321,91 @@ async function inspectFullIndustryPerson(personId){
  try{return await findPersistent1999Person(store,fullIndustryManifest,personId)}
  finally{store.close()}
 }
+function canonicalRunId(manifest){return 'WTW-RUN-1999-'+manifest.seed+'-SIZE-'+
+ (manifest.worldSizePercent??100)}
+async function persistCanonicalRun(){
+ if(!activeWorldCareer)return;
+ const store=await open1999IndustryDatabase();
+ try{await savePersistent1999CareerRun(store,activeWorldCareer.manifest,{
+  runId:activeWorldCareer.run.run_id,gameDate:activeWorldCareer.run.clock.date,
+  player:activeWorldCareer.run.player,
+  changes:{canonicalRun:activeWorldCareer.run},
+  version:Math.max(1,activeWorldCareer.run.revision+1)})}
+ finally{store.close()}
+}
+async function resumeCanonicalRun(store,manifest){
+ const saved=await loadPersistent1999CareerRun(store,manifest,canonicalRunId(manifest));
+ if(!saved?.changes?.canonicalRun)return null;
+ const career=await openPersistent1999GameCareer(store,manifest,{
+  runId:canonicalRunId(manifest),operationId:saved.player.operation_id});
+ validateGameRun(saved.changes.canonicalRun,career.world);
+ return {...career,run:saved.changes.canonicalRun,manifest};
+}
+async function startCanonicalRun(){
+ if(!fullIndustryManifest||fullIndustryManifest.status!=='COMPLETE')
+  throw Error('Create or open a completed world first');
+ const store=await open1999IndustryDatabase();
+ try{
+  activeWorldCareer=await openPersistent1999GameCareer(store,fullIndustryManifest,
+   {runId:canonicalRunId(fullIndustryManifest)});
+  activeWorldCareer.manifest=fullIndustryManifest;
+  await persistCanonicalRun();
+ }finally{store.close()}
+ notice='TEST CAREER READY · '+fmt(activeWorldCareer.playableHorseCount)+
+  ' owned runners at '+activeWorldCareer.homeTrackId+'.';
+}
+async function advanceCanonicalRun(){
+ if(!activeWorldCareer)throw Error('Start a test career first');
+ const state=dispatchGameCommand({state:activeWorldCareer.run,
+  world:activeWorldCareer.world,command:{
+   id:'player-day-'+(activeWorldCareer.run.clock.days_elapsed+1),
+   type:'ADVANCE_DAY',actor:'player',payload:{}}}).state;
+ activeWorldCareer.run=state;await persistCanonicalRun();
+ const official=Object.values(state.runtime.races).filter(r=>
+  r.status==='OFFICIAL_SIM_RESULT').sort((a,b)=>b.date.localeCompare(a.date))[0];
+ const winner=official?.results?.[0]?.horse_id?
+  state.runtime.registered_horses.by_id[official.results[0].horse_id]?.registered_name:
+  null;
+ notice='GAME DATE '+state.clock.date+(official?' · '+official.track_id+
+  ' RACE COMPLETE · '+(winner||official.results[0].horse_id)+' WON':' · simulation advanced');
+}
+async function openNextTestRace(){
+ if(!activeWorldCareer)throw Error('Start a test career first');
+ const {run,world,homeTrackId}=activeWorldCareer;
+ let selected=null;
+ for(let offset=2;offset<=28&&!selected;offset++){
+  const date=new Date(Date.parse(run.clock.date+'T00:00:00Z')+
+   offset*86400000).toISOString().slice(0,10);
+  const race=gameRaceProgram(run,world,homeTrackId,date).find(r=>
+   supported1999RaceClass(r)&&r.conditions==='Maiden Special Weight');
+  if(!race)continue;
+  const opened=dispatchGameCommand({state:run,world,command:{
+   id:'player-open-'+race.id,type:'OPEN_1999_RACE',actor:'system',
+   payload:{track_id:homeTrackId,date,race_id:race.id}}}).state;
+  const eligible=opened.stable_horse_ids.map(id=>
+   opened.runtime.registered_horses.by_id[id]).filter(h=>
+    raceEligibility(opened,h,opened.runtime.races[race.id]).eligible);
+  const field=eligible.slice(0,Math.min(2,race.fieldCapacity));
+  if(field.length<2)continue;
+  let entered=opened;
+  for(const horse of field)entered=dispatchGameCommand({state:entered,world,
+   command:{id:'player-enter-'+race.id+'-'+horse.horse_id,
+    type:'ENTER_1999_RACE',actor:'player',
+    payload:{race_id:race.id,horse_id:horse.horse_id}}}).state;
+  selected={race,state:entered};
+ }
+ if(!selected)throw Error('No eligible local maiden race with two owned runners is scheduled in the next 28 days');
+ activeWorldCareer.run=selected.state;await persistCanonicalRun();
+ notice='RACE OPEN · '+selected.race.date+' · '+selected.race.name+
+  ' · '+selected.state.runtime.races[selected.race.id].field.length+
+  ' player horses entered. Advance days to race day.';
+}
 let busy=false,notice='';
 async function refresh(){
  const root=modal();
  const current=config().current(),slots=await listSlots();
  const saved=slots.map(x=>'<div class="wtw-cc-slot"><div><strong>'+esc(x.name)+'</strong>'+
-  '<small>'+esc(x.date)+' · '+fmt(x.profile?.population)+' horses · '+
-   esc('Founding 1999')+
+  '<small>'+esc(x.date)+' · '+esc('Existing save')+
    ' · '+kb(x.bytes)+' ('+esc(x.encoding)+')</small></div>'+
    '<div class="wtw-cc-actions"><button data-cc-action="load" data-id="'+esc(x.id)+'">LOAD</button>'+
    '<button data-cc-action="export" data-id="'+esc(x.id)+'">EXPORT</button>'+
@@ -322,25 +419,36 @@ async function refresh(){
  root.innerHTML='<section class="wtw-cc-panel" role="dialog" aria-modal="true" aria-label="Compact careers and world setup">'+
   '<header><div><small>WIRE TO WIRE / LOCAL-FIRST CAREERS</small><h2>WORLD & CAREER MANAGER</h2></div>'+
   '<button data-cc-action="close">✕ CLOSE</button></header>'+
-  '<div class="wtw-cc-current">CURRENT WORLD · '+fmt(current.population)+' HORSES · '+
-   esc('FOUNDING 1999')+
-   ' · SEED '+esc(current.seed)+'</div>'+
-  '<div class="wtw-cc-section"><h3>FULL FICTIONAL 1999 INDUSTRY — WORLD EXPLORER</h3>'+
-  '<p>Generate and reopen the complete 1999 industry without replacing your current career. Personnel, farm and owner identities use the existing naming generators. Horse names remain held where the approved story-based naming process has not released them. This is an industry inspection build; full-world live race gameplay is not yet activated.</p>'+
-  '<div class="wtw-cc-actions"><button data-cc-action="open-existing-industry">OPEN SAVED 1999 WORLD</button>'+ 
-  '<button data-cc-action="open-full-industry">CREATE / RESUME FULL INDUSTRY</button></div>'+ 
+  '<div class="wtw-cc-current">CURRENT INSTALLED SAVE · SEED '+esc(current.seed)+
+   ' · new test careers use the selected world size</div>'+
+  '<div class="wtw-cc-section"><h3>NEW CAREER WORLD — CHOOSE YOUR SIZE</h3>'+
+  '<p>Choose a custom world scale. Horse cohorts, breeding stock, personnel, owners, farms and the geographically distributed track circuit scale together. 100% is the standard world; larger settings support a massive world.</p>'+
+  '<label>WORLD SIZE SCALE (% OF STANDARD)<input data-cc="world-size-percent" type="number" min="1" max="'+INDUSTRY_ECOSYSTEM_MAX_SIZE_PERCENT+'" step="1" value="'+esc(fullIndustryManifest?.worldSizePercent??100)+'"></label>'+
+  '<label>WORLD SEED<input data-cc="seed" type="number" min="1" max="4294967295" step="1" value="'+esc(current.seed)+'"></label>'+
+  '<div class="wtw-cc-actions"><button data-cc-action="open-existing-industry">OPEN SAVED WORLD AT THIS SIZE</button>'+
+  '<button data-cc-action="open-full-industry">CREATE / RESUME WORLD AT THIS SIZE</button></div>'+
   '<p data-cc="industry-progress" role="status" aria-live="polite">'+
   (busy?'Preparing the full world…':'Opening-world records are stored on this device.')+'</p>'+
   (fullIndustryManifest?'<p>WORLD STORED · '+fmt(fullIndustryManifest.horseCount)+
    ' horses · '+fmt(fullIndustryManifest.personCount)+' personnel · '+
+   fmt(fullIndustryManifest.worldSizePercent??100)+'% OF FULL · '+
    esc(fullIndustryManifest.status)+'</p>'+
+   '<div class="wtw-cc-section"><h3>PLAYABLE GAMEPLAY TEST</h3>'+
+   (activeWorldCareer?'<p>ACTIVE · '+esc(activeWorldCareer.run.clock.date)+
+    ' · '+fmt(activeWorldCareer.playableHorseCount)+' player runners · '+
+    esc(activeWorldCareer.homeTrackId)+' · race engine connected</p>'+
+    '<div class="wtw-cc-actions"><button data-cc-action="open-next-test-race">OPEN NEXT TEST RACE / ENTER TWO</button>'+
+    '<button data-cc-action="advance-test-day" class="primary">ADVANCE ONE GAME DAY</button></div>':
+    '<p>Create a local test career from this exact world census. It uses the existing game clock, horse care, jockey booking and race settlement systems.</p>'+
+    '<button data-cc-action="start-test-career" class="primary">START TEST CAREER</button>')+
+   '</div>'+
    '<label>HORSE ID<input data-cc="inspect-horse" value="H-FICTIONAL-1999-BROODMARES-0000001"/></label>'+
-   '<button data-cc-action="inspect-full-horse">OPEN HORSE PROFILE</button>'+ 
-   '<div class="wtw-cc-actions"><button data-cc-action="industry-horses">HORSES</button>'+ 
-   '<button data-cc-action="industry-people">PERSONNEL</button>'+ 
-   '<button data-cc-action="industry-directory">TRACKS / FARMS / OWNERS</button>'+ 
-   '<button data-cc-action="industry-calendar">RACE CALENDAR</button>'+ 
-   '<button data-cc-action="industry-coverings">BREEDING BOOK</button></div>'+ 
+   '<button data-cc-action="inspect-full-horse">OPEN HORSE PROFILE</button>'+
+   '<div class="wtw-cc-actions"><button data-cc-action="industry-horses">HORSES</button>'+
+   '<button data-cc-action="industry-people">PERSONNEL</button>'+
+   '<button data-cc-action="industry-directory">TRACKS / FARMS / OWNERS</button>'+
+   '<button data-cc-action="industry-calendar">RACE CALENDAR</button>'+
+   '<button data-cc-action="industry-coverings">BREEDING BOOK</button></div>'+
    '<p>BREEDING STOCK '+fmt(fullIndustryManifest.plan.counts.broodmares+fullIndustryManifest.plan.counts.stallions)+
    ' · YEARLINGS '+fmt(fullIndustryManifest.plan.counts.yearlings)+
    ' · 2YO PROSPECTS '+fmt(fullIndustryManifest.plan.counts.twoYearOldProspects)+
@@ -349,47 +457,36 @@ async function refresh(){
    ' · OLDER RUNNERS '+fmt(fullIndustryManifest.plan.counts.fivePlusRunners)+
    ' · 1999 COVERINGS BOOKED '+fmt(fullIndustryManifest.coveringCount)+
    ' · SCHEDULED RACE DAYS '+fmt(fullIndustryManifest.scheduledCards)+
-   ' · RACES '+fmt(fullIndustryManifest.scheduledRaces)+'</p>'+ 
-   '<div class="wtw-cc-actions"><button data-cc-action="industry-prev">PREVIOUS 20</button>'+ 
+   ' · RACES '+fmt(fullIndustryManifest.scheduledRaces)+'</p>'+
+   '<div class="wtw-cc-actions"><button data-cc-action="industry-prev">PREVIOUS 20</button>'+
    '<button data-cc-action="industry-next">NEXT 20</button></div>'+industryBrowseHtml:'')+
   '</div>'+
-  '<div class="wtw-cc-section"><h3>NEW CAREER / START FROM SCRATCH</h3>'+
-  '<p>1999 founding foundation (development): 73 protected breeding horses, no registered racing horses and no generated industry. A complete fictional population and its believable history are still in engineering. This action creates a separate named career from the available foundation; it does not claim to generate the future full world.</p>'+
-  '<div class="wtw-cc-grid"><label>NEW CAREER NAME<input data-cc="new-name" type="text" maxlength="80" value="New 1999 Founding Career"/></label>'+
-  '<label>APPROVED BREEDING HORSES<input data-cc="population" type="number" min="73" max="73" step="1" value="73" readonly/></label>'+ 
-  '<label>WORLD SOURCE<select data-cc="mode"><option value="FOUNDING_1999" selected>Founding 1999 (source only)</option></select></label>'+
-  '<label>WORLD SEED<input data-cc="seed" type="number" min="1" max="4294967295" step="1" value="'+esc(current.seed)+'"/></label></div>'+
-  '<div class="wtw-cc-actions">'+config().presets.map(p=>'<button data-cc-action="preset" data-population="'+p.population+'" data-mode="'+(p.mode||'CANON_ANCHORED_TEST')+'">'+esc(p.label)+'</button>').join('')+'</div>'+
-  '<p class="wtw-cc-warning">Founding 1999 scenario only (73 breeding horses). Full fictional 1999 world genesis and reusable customized world templates are not yet available. The current career will be saved to a new backup slot first.</p>'+
-  '<button data-cc-action="new-world" class="primary">CREATE &amp; SAVE NEW CAREER</button></div>'+
+  '<p class="wtw-cc-warning">The generated world is stored separately from existing careers. Start a gameplay test career to use the canonical game clock and race engine with horses from this world.</p>'+
   '<div class="wtw-cc-section"><h3>COMPACT SAVES · '+slots.length+' SLOTS</h3>'+
   '<p>Local device only. No account, monthly fee or cloud storage required. Portable .wtwsave files have checksums and gzip compression where supported. Total compact-save budget: 512 MB across slots.</p>'+
   '<div class="wtw-cc-actions"><input data-cc="save-name" maxlength="80" placeholder="Name current career" value="1999 Career"/>'+
   '<button data-cc-action="save" class="primary">SAVE CURRENT CAREER</button>'+
   '<button data-cc-action="import">IMPORT CAREER</button>'+
   '<input type="file" data-cc="import-file" accept=".wtwsave,.json,application/octet-stream,application/json" hidden>'+
-  '</div>'+ 
+  '</div>'+
   (notice?'<p class="wtw-cc-notice" role="status">'+esc(notice)+'</p>':'')+
   '<div class="wtw-cc-slots">'+(saved||'<p>No compact careers yet. Saving creates a portable, compressed career delta.</p>')+'</div>'+
-  quota+'</div><footer>Only approved founding-era game saves may be loaded. Old generated populations cannot be restored.</footer></section>';
+  quota+'</div><footer>New size-selected worlds and test careers are stored separately from the currently installed save.</footer></section>';
  root.hidden=false;
 }
 async function perform(action,element){
  if(action==='close'){modal().hidden=true;return}
- if(action==='preset'){
-  const input=modal().querySelector('[data-cc="population"]');
-  input.value=String(element.dataset.population);
-  const mode=modal().querySelector('[data-cc="mode"]');
-  if(mode)mode.value=element.dataset.mode||'CANON_ANCHORED_TEST';
-  return;
- }
  if(action==='import'){modal().querySelector('[data-cc="import-file"]').click();return}
+ if(action==='start-test-career'){await startCanonicalRun();return}
+ if(action==='advance-test-day'){await advanceCanonicalRun();return}
+ if(action==='open-next-test-race'){await openNextTestRace();return}
  if(action==='open-existing-industry'){
   const seed=Number(modal().querySelector('[data-cc="seed"]')?.value||19990101);
+  const worldSizePercent=selectedWorldSizePercent();
   const db=await open1999IndustryDatabase();
   try{
    const reopened=await reopenPersistent1999Industry(db,{
-    seed,worldId:'WTW1999FullIndustry'});
+    seed,worldId:'WTW1999FullIndustry',worldSizePercent});
    if(!reopened){
     notice='No saved full 1999 world found. Select CREATE / RESUME FULL INDUSTRY.';
     return;
@@ -400,17 +497,20 @@ async function perform(action,element){
    }
    fullIndustryManifest=reopened.manifest;
    industryDirectory=await readPersistent1999Directory(db,fullIndustryManifest);
+   activeWorldCareer=await resumeCanonicalRun(db,fullIndustryManifest);
   }finally{db.close()}
   await browseFullIndustry(0,'directory');
-  notice='Saved 1999 world opened and verified. Existing career unchanged.';
+  notice='Saved '+(reopened.manifest.worldSizePercent??100)+'% world opened and verified. Existing career unchanged.';
   return;
  }
  if(action==='open-full-industry'){
   notice='Generating the complete industry. This may take several minutes.';
   const seed=Number(modal().querySelector('[data-cc="seed"]')?.value||19990101);
+  const worldSizePercent=selectedWorldSizePercent();
   const progress=modal().querySelector('[data-cc="industry-progress"]');
   fullIndustryManifest=await prepareFictionalIndustry({
-   seed,worldId:'WTW1999FullIndustry',...(await industryDirectories(seed)),batchSize:2000,
+   seed,worldId:'WTW1999FullIndustry',worldSizePercent,
+   ...(await industryDirectories(seed,worldSizePercent)),batchSize:2000,
    yieldControl:()=>new Promise(resolve=>setTimeout(resolve,0)),
    onProgress:({kind,completed,totalRecords})=>{
     if(progress)progress.textContent='Creating '+kind+' · batch '+completed+
@@ -424,7 +524,7 @@ async function perform(action,element){
   }
   finally{db.close()}
   await browseFullIndustry(0);
-  notice='Full 1999 world reopened and census verified. Existing career unchanged.';
+  notice='1999 world created at '+worldSizePercent+'% and census verified. Existing career unchanged.';
   return;
  }
  if(['industry-horses','industry-people','industry-directory',
@@ -487,25 +587,6 @@ async function perform(action,element){
   const slot=await storeGame(name,captureCurrent());
   notice='Saved '+slot.name+' · '+kb(slot.bytes)+'.';return;
  }
- if(action==='new-world'){
-  const profile=inputProfile();
-  const careerName=modal().querySelector('[data-cc="new-name"]')?.value?.trim();
-  if(!careerName)throw Error('Enter a name for the new career');
-  if(!window.confirm('Create and save a separate "'+careerName.slice(0,80)+
-   '" career using the 73-horse founding 1999 development foundation? '+
-   'This does NOT generate the unfinished full fictional industry. '+
-   'The current active career will be backed up first; neither career will be deleted.'))return;
-  const backup=await storeGame('Pre-new-world backup · '+new Date().toISOString().slice(0,16),
-   captureCurrent());
-  const fresh=baselineFor(profile);
-  // A separate confirmed career slot must exist BEFORE the active world changes.
-  // If disk quota/storage fails here, retain the current active game untouched.
-  const created=await storeGame(careerName,fresh);
-  window.__WTW_OFFICE_COMMANDS__.dispatch('LOAD_CAREER',fresh);
-  notice='Current career preserved as '+backup.name+'; new career saved as '+
-   created.name+'.';
-  location.reload();return;
- }
  const id=element.dataset.id;if(!id)throw Error('Save slot ID missing');
  if(action==='load'){
   if(!window.confirm('Load this career and replace unsaved progress?'))return;
@@ -546,8 +627,10 @@ async function open(){
    if(reopened?.status==='READY'){
     fullIndustryManifest=reopened.manifest;
     industryDirectory=await readPersistent1999Directory(store,fullIndustryManifest);
+    activeWorldCareer=await resumeCanonicalRun(store,fullIndustryManifest);
     await browseFullIndustry(0,'directory');
-    notice='Saved January 1999 world verified and available for inspection.';
+    notice=activeWorldCareer?'Saved gameplay test career resumed at '+
+     activeWorldCareer.run.clock.date+'.':'Saved January 1999 world verified and ready.';
    }else if(reopened?.status==='GENERATING'){
     notice='January 1999 world creation was interrupted. Select CREATE / RESUME FULL INDUSTRY.';
    }

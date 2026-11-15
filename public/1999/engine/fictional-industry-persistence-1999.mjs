@@ -4,7 +4,8 @@
  * A world is visible to the game only after its COMPLETE manifest is written.
  * Never changes the legacy founding-world career store.
  */
-import {plan1999Ecosystem} from './fictional-industry-ecosystem-1999.mjs';
+import {plan1999Ecosystem,INDUSTRY_ECOSYSTEM_MAX_SIZE_PERCENT}
+ from './fictional-industry-ecosystem-1999.mjs';
 import {generate1999IndustryRegistryBatches,count1999Registry}
  from './fictional-industry-registry-1999.mjs';
 import {plan1999IndustryStaffing,generate1999StaffingBatches,
@@ -98,7 +99,8 @@ export async function open1999IndustryDatabase(indexedDB=globalThis.indexedDB){
   close(){db.close()}
  };
 }
-const keyOf=(seed,worldId)=>worldId+':'+seed;
+const keyOf=(seed,worldId,worldSizePercent=100)=>worldId+':'+seed+
+ (worldSizePercent===100?'':':SIZE-'+worldSizePercent);
 function directorySignature(directories){
  let h=2166136261;
  for(const directory of directories){
@@ -113,18 +115,20 @@ function directorySignature(directories){
  return (h>>>0).toString(16).padStart(8,'0');
 }
 export async function createPersistent1999Industry({
- store,seed=19990101,worldId='WTW1999FullIndustry',
+ store,seed=19990101,worldId='WTW1999FullIndustry',worldSizePercent=100,
  farms,tracks,owners,batchSize=1000,onProgress=()=>{},yieldControl=async()=>{}
 }={}){
  if(!store?.get||!store?.commitBatch||!store?.commitManifest||
   !Number.isSafeInteger(seed)||seed<1||!worldId||
+  !Number.isInteger(worldSizePercent)||worldSizePercent<1||
+  worldSizePercent>INDUSTRY_ECOSYSTEM_MAX_SIZE_PERCENT||
   !Array.isArray(farms)||!farms.length||
   !Array.isArray(tracks)||!tracks.length||
   !Array.isArray(owners)||!owners.length)
   throw Error('Invalid persistent industry genesis request');
- const id=keyOf(seed,worldId);
+ const id=keyOf(seed,worldId,worldSizePercent);
  const directoryHash=directorySignature([farms,tracks,owners]);
- const plan=plan1999Ecosystem({seed});
+ const plan=plan1999Ecosystem({seed,worldSizePercent});
  const staffing=plan1999IndustryStaffing({seed,ecosystem:plan});
  const totalHorses=count1999Registry(plan);
  const horseNamingRevision=LOCAL_HORSE_NAMING_ALGORITHM_REVISION+':OPENING_INDUSTRY_V1';
@@ -145,6 +149,7 @@ export async function createPersistent1999Industry({
  if(existing){
   if(existing.schema!==PERSISTENT_INDUSTRY_SCHEMA||
    existing.seed!==seed||existing.worldId!==worldId||
+   (existing.worldSizePercent??100)!==worldSizePercent||
    existing.batchSize!==batchSize||
    existing.directoryHash!==directoryHash||
    existing.horseCount!==totalHorses||
@@ -159,7 +164,7 @@ export async function createPersistent1999Industry({
   if(existing.status==='COMPLETE')return existing;
  }
  let manifest=existing??{
-  schema:PERSISTENT_INDUSTRY_SCHEMA,worldId,seed,batchSize,directoryHash,
+  schema:PERSISTENT_INDUSTRY_SCHEMA,worldId,seed,worldSizePercent,batchSize,directoryHash,
   status:'GENERATING',horseCount:totalHorses,personCount:totalPeople,
   horseBatchesCommitted:0,personBatchesCommitted:0,
   directoryCommitted:false,graphSchema:INDUSTRY_GRAPH_SCHEMA,
@@ -300,7 +305,8 @@ export async function readPersistent1999IndustryBatch(store,manifest,kind,index)
    kind==='coveringBatches'?manifest.coveringBatchesCommitted:
    manifest.calendarBatchesCommitted))
   throw Error('Industry is not complete or batch is unavailable');
- const records=await store.get(kind,keyOf(manifest.seed,manifest.worldId)+':'+index);
+ const records=await store.get(kind,keyOf(manifest.seed,manifest.worldId,
+  manifest.worldSizePercent??100)+':'+index);
  if(!records)throw Error('Industry batch missing from durable storage');
  return records;
 }
@@ -339,13 +345,15 @@ export async function updatePersistent1999Horse(store,manifest,horseId,edit){
   throw Error('Horse edit contains immutable or unsupported fields');
  if('name'in edit&&(typeof edit.name!=='string'||!edit.name.trim()||
   edit.name.length>36))throw Error('Invalid horse name');
- await store.putHorseEdit(keyOf(manifest.seed,manifest.worldId),horseId,edit);
+ await store.putHorseEdit(keyOf(manifest.seed,manifest.worldId,
+  manifest.worldSizePercent??100),horseId,edit);
  return {...horse,...edit};
 }
 export async function readPersistent1999HorseProfile(store,manifest,horseId){
  const horse=await findPersistent1999Horse(store,manifest,horseId);
  if(!horse)return null;
- const edit=await store.get('horseEdits',keyOf(manifest.seed,manifest.worldId)+':'+horseId);
+ const edit=await store.get('horseEdits',keyOf(manifest.seed,manifest.worldId,
+  manifest.worldSizePercent??100)+':'+horseId);
  return {...horse,...(edit||{})};
 }
 
@@ -368,14 +376,15 @@ export async function savePersistent1999CareerRun(store,manifest,{
   worldId:manifest.worldId,worldSeed:manifest.seed,
   worldSchema:manifest.schema,runId,gameDate,
   player:structuredClone(player),changes:structuredClone(changes),version};
- await store.putCareerRun(keyOf(manifest.seed,manifest.worldId),runId,record);
+ await store.putCareerRun(keyOf(manifest.seed,manifest.worldId,
+  manifest.worldSizePercent??100),runId,record);
  return record;
 }
 export async function loadPersistent1999CareerRun(store,manifest,runId){
  if(manifest?.status!=='COMPLETE'||typeof runId!=='string')
   throw Error('Completed world and run ID required');
  const record=await store.get('careerRuns',
-  keyOf(manifest.seed,manifest.worldId)+':'+runId);
+  keyOf(manifest.seed,manifest.worldId,manifest.worldSizePercent??100)+':'+runId);
  if(!record)return null;
  if(record.schema!=='WTW_INDUSTRY_CAREER_RUN_V1'||
   record.worldId!==manifest.worldId||record.worldSeed!==manifest.seed||
@@ -407,7 +416,8 @@ export async function findPersistent1999Person(store,manifest,personId){
 export async function readPersistent1999Directory(store,manifest){
  if(manifest?.status!=='COMPLETE'||!manifest.directoryCommitted)
   throw Error('Industry directory is incomplete');
- const directory=await store.get('directory',keyOf(manifest.seed,manifest.worldId));
+ const directory=await store.get('directory',keyOf(manifest.seed,manifest.worldId,
+  manifest.worldSizePercent??100));
  if(!Array.isArray(directory))throw Error('Industry directory missing');
  return directory;
 }
@@ -447,7 +457,8 @@ export async function verifyPersistent1999WorldOpen(store,manifest){
   !Array.isArray(x.relationships)))
   throw Error('1999 world directory is incomplete');
  return {status:'OPEN_VERIFIED',worldId:manifest.worldId,
-  seed:manifest.seed,horses:manifest.horseCount,people:manifest.personCount,
+  seed:manifest.seed,worldSizePercent:manifest.worldSizePercent??100,
+  horses:manifest.horseCount,people:manifest.personCount,
   coverings:manifest.coveringCount,raceDays:manifest.scheduledCards,
   scheduledRaces:manifest.scheduledRaces,directoryEntities:directory.length};
 }
@@ -457,11 +468,13 @@ export async function verifyPersistent1999WorldOpen(store,manifest){
  * generation. An incomplete manifest is never exposed as a playable world.
  */
 export async function reopenPersistent1999Industry(store,{
- seed=19990101,worldId='WTW1999FullIndustry'
+ seed=19990101,worldId='WTW1999FullIndustry',worldSizePercent=100
 }={}){
- if(!store?.get||!Number.isSafeInteger(seed)||seed<1||!worldId)
+ if(!store?.get||!Number.isSafeInteger(seed)||seed<1||!worldId||
+  !Number.isInteger(worldSizePercent)||worldSizePercent<1||
+  worldSizePercent>INDUSTRY_ECOSYSTEM_MAX_SIZE_PERCENT)
   throw Error('Invalid 1999 world reopen request');
- const manifest=await store.get('manifests',keyOf(seed,worldId));
+ const manifest=await store.get('manifests',keyOf(seed,worldId,worldSizePercent));
  if(!manifest)return null;
  if(manifest.schema!==PERSISTENT_INDUSTRY_SCHEMA)
   throw Error('Unsupported 1999 industry schema');

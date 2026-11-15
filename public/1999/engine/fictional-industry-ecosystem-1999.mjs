@@ -4,6 +4,7 @@
  * pregnancies, personnel and finances are materialized by downstream engines.
  */
 export const INDUSTRY_ECOSYSTEM_1999_SCHEMA='WTW_INDUSTRY_ECOSYSTEM_1999_V1';
+export const INDUSTRY_ECOSYSTEM_MAX_SIZE_PERCENT=121;
 export const INDUSTRY_ECOSYSTEM_1999=Object.freeze({
  schema:INDUSTRY_ECOSYSTEM_1999_SCHEMA,year:1999,
  ranges:{
@@ -30,31 +31,38 @@ const hash=(seed,key)=>{let h=(2166136261^(seed>>>0))>>>0;
  for(let i=0;i<key.length;i++){h^=key.charCodeAt(i);h=Math.imul(h,16777619)}
  return (h>>>0)/4294967296};
 const bounded=(seed,key,[min,max])=>Math.floor(min+hash(seed,key)*(max-min+1));
-export function plan1999Ecosystem({seed=19990101,settings=INDUSTRY_ECOSYSTEM_1999}={}){
+export function plan1999Ecosystem({seed=19990101,settings=INDUSTRY_ECOSYSTEM_1999,
+ worldSizePercent=100}={}){
  if(!Number.isSafeInteger(seed)||seed<1||seed>4294967295||
-  settings?.schema!==INDUSTRY_ECOSYSTEM_1999_SCHEMA)
+  settings?.schema!==INDUSTRY_ECOSYSTEM_1999_SCHEMA||
+  !Number.isInteger(worldSizePercent)||worldSizePercent<1||
+  worldSizePercent>INDUSTRY_ECOSYSTEM_MAX_SIZE_PERCENT)
   throw Error('Invalid 1999 ecosystem seed or schema');
- for(const [key,range] of Object.entries(settings.ranges))
+ const ranges=Object.fromEntries(Object.entries(settings.ranges).map(([key,range])=>{
   if(!Array.isArray(range)||range.length!==2||!range.every(Number.isSafeInteger)||
    range[0]<0||range[1]<range[0])throw Error('Invalid ecosystem range '+key);
- const counts=Object.fromEntries(Object.entries(settings.ranges)
+  const scale=worldSizePercent/100;
+  return [key,range.map(value=>Math.max(1,Math.round(value*scale)))];
+ }));
+ const sizedSettings={...settings,ranges};
+ const counts=Object.fromEntries(Object.entries(sizedSettings.ranges)
   .map(([key,range])=>[key,bounded(seed,'cohort:'+key,range)]));
  const {broodmares,stallions,annualFoals,yearlings,twoYearOldProspects,
   threeYearOldRunners,fourYearOldRunners,fivePlusRunners}=counts;
- if(yearlings>settings.ranges.annualFoals[1]||
-  twoYearOldProspects>settings.ranges.yearlings[1]||
-  threeYearOldRunners>settings.ranges.twoYearOldProspects[1]||
-  fourYearOldRunners>settings.ranges.threeYearOldRunners[1])
+ if(yearlings>sizedSettings.ranges.annualFoals[1]||
+  twoYearOldProspects>sizedSettings.ranges.yearlings[1]||
+  threeYearOldRunners>sizedSettings.ranges.twoYearOldProspects[1]||
+  fourYearOldRunners>sizedSettings.ranges.threeYearOldRunners[1])
   throw Error('Opening cohorts cannot reconcile across adjacent historical crops');
  // Cohorts represent different birth years: no invalid direct subtraction.
  // Fertility is a probability, not a guarantee of an annual foal count.
- const pregnanciesRequired=Math.ceil(annualFoals/settings.biological.liveFoalRate[1]);
- const coversRequired=Math.ceil(pregnanciesRequired/settings.biological.conceptionRate[1]);
- const maxCovers=stallions*settings.biological.maxCoversPerStallion;
+ const pregnanciesRequired=Math.ceil(annualFoals/sizedSettings.biological.liveFoalRate[1]);
+ const coversRequired=Math.ceil(pregnanciesRequired/sizedSettings.biological.conceptionRate[1]);
+ const maxCovers=stallions*sizedSettings.biological.maxCoversPerStallion;
  if(coversRequired>broodmares||coversRequired>maxCovers)
   throw Error('Foal crop exceeds breeding capacity');
  const activeRunners=threeYearOldRunners+fourYearOldRunners+fivePlusRunners;
- return {schema:INDUSTRY_ECOSYSTEM_1999_SCHEMA,seed,counts,
+ return {schema:INDUSTRY_ECOSYSTEM_1999_SCHEMA,seed,worldSizePercent,counts,
   activeRunnersExcludingTwoYearOlds:activeRunners,
   potentialRacingPopulation:activeRunners+twoYearOldProspects,
   breedingStock:broodmares+stallions,
@@ -62,7 +70,7 @@ export function plan1999Ecosystem({seed=19990101,settings=INDUSTRY_ECOSYSTEM_199
    twoYearOldProspects+activeRunners,
   minimumCoversForTargetFoals:coversRequired,
   minimumPregnanciesForTargetFoals:pregnanciesRequired,
-  hierarchy:settings.hierarchy,
+  hierarchy:sizedSettings.hierarchy,
   assumptions:{cohorts:'SEPARATE_BIRTH_YEARS',
    twoYearOldProspects:'NOT_ALL_STARTERS',
    fivePlusRunners:'COMBINED_OLDER_AGE_COHORT',

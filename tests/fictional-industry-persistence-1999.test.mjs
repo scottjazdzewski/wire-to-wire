@@ -71,7 +71,8 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
  assert.ok(namedAdult.name&&namedAdult.namingRevision===a.horseNamingRevision);
  const yearling=await findPersistent1999Horse(store,a,
   'H-FICTIONAL-1999-YEARLINGS-0000001');
- assert.equal(yearling.name,null);
+ assert.ok(yearling.name&&yearling.namingStatus==='PROVISIONAL_EDITABLE_1999_OPENING');
+ assert.equal(yearling.namingRevision,a.horseNamingRevision);
  assert.ok(first[0].relationships.some(e=>e.type==='OWNED_BY'));
  const runner=await findPersistent1999Horse(store,a,
   'H-FICTIONAL-1999-THREEYEAROLDRUNNERS-0000001');

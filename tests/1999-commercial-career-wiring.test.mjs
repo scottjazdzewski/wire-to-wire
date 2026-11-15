@@ -42,11 +42,11 @@ test('73-source world directory has no worker, no population mode and no full-wo
  assert.equal(existsSync(file('public/next/1999-world-index.worker.mjs')),false);
  assert.equal(existsSync(file('public/1999/engine/full-world-generator.mjs')),false);
 });
-test('local-first compact manager retains saves but cannot import an old population',()=>{
+test('local-first compact manager retains save slots without switching careers during world inspection',()=>{
  assert.match(manager,/indexedDB\.open\(DB_NAME,1\)/);
  assert.match(manager,/encodeCareerSave\(game,baseline,profile\)/);
  assert.match(manager,/packCareerFile\(record\)/);
- assert.match(manager,/await storeGame\('Pre-new-world backup/);
+ assert.doesNotMatch(manager,/storeGame\('Pre-new-world backup|action==='new-world'/);
  assert.ok(!manager.includes('worldHorseDirectoryAt')&&!manager.includes('allPages'));
  assert.ok(!manager.includes("fetch('http")&&!manager.includes('fetch("http')&&
   !manager.includes("fetch('/api/"));
@@ -55,19 +55,17 @@ test('local-first compact manager retains saves but cannot import an old populat
  assert.match(manager,/No account, monthly fee or cloud storage required/);
 });
 
-test('new founding career gets its own named, durable compact slot before switching live world',()=>{
- assert.match(manager,/NEW CAREER \/ START FROM SCRATCH/);
- assert.match(manager,/data-cc="new-name"/);
- assert.match(manager,/CREATE &amp; SAVE NEW CAREER/);
- assert.match(manager,/careerName=modal\(\)\.querySelector/);
- const action=manager.slice(manager.indexOf("if(action==='new-world'){"),
-  manager.indexOf("const id=element.dataset.id;",manager.indexOf("if(action==='new-world'){")));
- const backup=action.indexOf("const backup=await storeGame('Pre-new-world backup");
- const created=action.indexOf("const created=await storeGame(careerName,fresh)");
- const activated=action.indexOf("dispatch('LOAD_CAREER',fresh)");
- assert.ok(backup>=0&&created>backup&&activated>created,
-  'backup then named fresh world must commit before active career changes');
- assert.match(action,/This does NOT generate the unfinished full fictional industry/);
- assert.doesNotMatch(action,/localStorage\.removeItem|indexedDB\.deleteDatabase|removeSlot\(/);
- assert.match(manager,/Full fictional 1999 world genesis and reusable customized world templates are not yet available/);
+test('new world setup is size-selected; legacy 73-horse career activation is not recreated',()=>{
+ assert.match(manager,/NEW CAREER WORLD — CHOOSE YOUR SIZE/);
+ assert.ok(manager.includes('data-cc="world-size-percent" type="number" min="1" max="\'+INDUSTRY_ECOSYSTEM_MAX_SIZE_PERCENT'));
+ assert.match(manager,/CREATE \/ RESUME WORLD AT THIS SIZE/);
+ assert.match(manager,/worldSizePercent/);
+ assert.match(manager,/createPersistent1999Industry/);
+ assert.doesNotMatch(manager,/data-cc="population"|data-cc="new-name"|action==='new-world'|population:73/);
+ assert.match(manager,/START TEST CAREER/);
+ assert.match(manager,/OPEN NEXT TEST RACE \/ ENTER TWO/);
+ assert.match(manager,/ADVANCE ONE GAME DAY/);
+ assert.match(manager,/openPersistent1999GameCareer/);
+ assert.match(config,/population!==73/,'legacy 73-horse saves remain on their compatibility path');
+ assert.match(bootstrap,/worldAnchor\.population===73/,'legacy validation remains for existing saves');
 });

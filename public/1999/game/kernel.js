@@ -5,7 +5,7 @@
  * the single operation ledger. Race entry and actual result settlement remain future.
  */
 import {
-  ensure, isObject, requireString, jsonClone, strictJSON, validDate, nextDate
+  ensure, isObject, requireString, jsonClone, strictJSON, validDate, nextDate, worldIdentity
 } from './contracts.js';
 import { validateGameRun } from './state.js';
 import {makeReputationBaseline,applyReputationSignal} from './reputation.js';
@@ -92,7 +92,7 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     ensure(c.actor === 'system', 'UNAUTHORIZED_COMMAND', 'Only the audited game generator can establish professional reputation');
     const p=c.payload;
     requireString(p.person_id,'payload.person_id',128);
-    ensure(world.entities.people.some(person=>person.id===p.person_id),'UNKNOWN_PERSON','Reputation must reference an approved person ID');
+    ensure(Boolean(worldIdentity(world,'people',p.person_id)),'UNKNOWN_PERSON','Reputation must reference an approved person ID');
     ensure(!next.runtime.people[p.person_id]?.reputation,'REPUTATION_EXISTS','Cannot replace an established reputation baseline');
     const profile=makeReputationBaseline({catalog,scores:p.scores,date:next.clock.date,
       source_kind:p.source_kind,source_refs:p.source_refs,circuit_id:p.circuit_id??null});
@@ -102,7 +102,7 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     ensure(c.actor === 'system', 'UNAUTHORIZED_COMMAND', 'Only verified gameplay outcomes can affect professional reputation');
     const p=c.payload;
     requireString(p.person_id,'payload.person_id',128);
-    ensure(world.entities.people.some(person=>person.id===p.person_id),'UNKNOWN_PERSON','Unknown person for reputation signal');
+    ensure(Boolean(worldIdentity(world,'people',p.person_id)),'UNKNOWN_PERSON','Unknown person for reputation signal');
     const current=next.runtime.people[p.person_id]?.reputation;
     ensure(Boolean(current),'REPUTATION_BASELINE','Person needs an approved starting reputation');
     const updated=applyReputationSignal({catalog,profile:current,signal:p.signal,
