@@ -266,7 +266,9 @@ async function refresh(){
    ' · SEED '+esc(current.seed)+'</div>'+
   '<div class="wtw-cc-section"><h3>FULL FICTIONAL 1999 INDUSTRY — WORLD EXPLORER</h3>'+
   '<p>Generate and reopen the large opening-world registry without replacing your current career. This is a population explorer; live race gameplay is not yet activated for this world.</p>'+
-  '<div class="wtw-cc-actions"><button data-cc-action="open-full-industry">CREATE / OPEN FULL INDUSTRY</button></div>'+
+  '<div class="wtw-cc-actions"><button data-cc-action="open-full-industry">CREATE / OPEN FULL INDUSTRY</button></div>'+ 
+  '<p data-cc="industry-progress" role="status" aria-live="polite">'+
+  (busy?'Preparing the full world…':'Opening-world records are stored on this device.')+'</p>'+
   (fullIndustryManifest?'<p>WORLD STORED · '+fmt(fullIndustryManifest.horseCount)+
    ' horses · '+fmt(fullIndustryManifest.personCount)+' personnel · '+
    esc(fullIndustryManifest.status)+'</p>'+
@@ -280,7 +282,8 @@ async function refresh(){
    ' · 2YO PROSPECTS '+fmt(fullIndustryManifest.plan.counts.twoYearOldProspects)+
    ' · 3YO RUNNERS '+fmt(fullIndustryManifest.plan.counts.threeYearOldRunners)+
    ' · 4YO RUNNERS '+fmt(fullIndustryManifest.plan.counts.fourYearOldRunners)+
-   ' · OLDER RUNNERS '+fmt(fullIndustryManifest.plan.counts.fivePlusRunners)+'</p>'+ 
+   ' · OLDER RUNNERS '+fmt(fullIndustryManifest.plan.counts.fivePlusRunners)+
+   ' · 1999 COVERINGS BOOKED '+fmt(fullIndustryManifest.coveringCount)+'</p>'+ 
    '<div class="wtw-cc-actions"><button data-cc-action="industry-prev">PREVIOUS 20</button>'+ 
    '<button data-cc-action="industry-next">NEXT 20</button></div>'+industryBrowseHtml:'')+
   '</div>'+
@@ -318,8 +321,13 @@ async function perform(action,element){
  if(action==='open-full-industry'){
   notice='Generating the complete industry. This may take several minutes.';
   const seed=Number(modal().querySelector('[data-cc="seed"]')?.value||19990101);
+  const progress=modal().querySelector('[data-cc="industry-progress"]');
   fullIndustryManifest=await prepareFictionalIndustry({
-   seed,worldId:'WTW1999FullIndustry',...industryDirectories(),batchSize:2000
+   seed,worldId:'WTW1999FullIndustry',...industryDirectories(),batchSize:2000,
+   onProgress:({kind,completed,totalRecords})=>{
+    if(progress)progress.textContent='Creating '+kind+' · batch '+completed+
+     ' · '+fmt(totalRecords)+' planned records. Do not close this window.';
+   }
   });
   const db=await open1999IndustryDatabase();
   try{industryDirectory=await readPersistent1999Directory(db,fullIndustryManifest)}
