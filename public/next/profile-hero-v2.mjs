@@ -189,7 +189,7 @@ function heroAvailable(src){
   heroProbes.set(src,img.decode().then(async()=>{
    // A dark wordmark needs extra contrast on a themed dark header. Sample
    // without changing the logo's source colors, even when optical crop fails.
-   let darkInk=false;
+   let darkInk=false,lightMatte=false;
    try{
     const sample=document.createElement("canvas");
     sample.width=64;sample.height=48;
@@ -197,6 +197,14 @@ function heroAvailable(src){
     if(ctx){
      ctx.drawImage(img,0,0,sample.width,sample.height);
      const data=ctx.getImageData(0,0,sample.width,sample.height).data;
+     // A source logo can still have a flat white export canvas. Detect
+     // the *actual pixels* of that canvas; do not assume any track has one.
+     const corners=[0,sample.width-1,sample.width*(sample.height-1),sample.width*sample.height-1];
+     lightMatte=corners.filter(p=>{
+      const i=p*4;
+      return data[i+3]>=240&&Math.min(data[i],data[i+1],data[i+2])>=228&&
+       Math.max(data[i],data[i+1],data[i+2])-Math.min(data[i],data[i+1],data[i+2])<32;
+     }).length>=3;
      let luminosity=0,pixels=0;
      for(let i=0;i<data.length;i+=4)if(data[i+3]>=105){
       luminosity+=.2126*data[i]+.7152*data[i+1]+.0722*data[i+2];pixels++;
@@ -207,8 +215,8 @@ function heroAvailable(src){
    let displayUrl=src;
    try{displayUrl=await makeOpticalHero(img,src);}
    catch{/* The original transparent image remains a safe fallback. */}
-   return {ok:true,darkInk,displayUrl};
-  }).catch(()=>({ok:false,darkInk:false,displayUrl:src})));
+   return {ok:true,darkInk,lightMatte,displayUrl};
+  }).catch(()=>({ok:false,darkInk:false,lightMatte:false,displayUrl:src})));
  }
  return heroProbes.get(src);
 }
@@ -364,18 +372,26 @@ function init(){
    // neutral ivory spotlight. Never recolor the brand artwork.
    heroAvailable(absolute).then(visual=>{
     if(!img.isConnected||img.dataset.wtwMatteSource!==src)return;
-    mark.classList.toggle("wtw-hero-dark-ink",visual.ok&&visual.darkInk);
+    const matte=Boolean(visual.ok&&visual.lightMatte);
+    // Pure white pixels visually inherit the existing surface, while real
+    // navy/green logo pixels sit against the existing ivory radial spotlight.
+    // The immutable source WebP and its sampled palette are unchanged.
+    img.style.mixBlendMode=matte?"multiply":"";
+    mark.classList.toggle("wtw-hero-dark-ink",visual.ok&&(visual.darkInk||matte));
+    mark.classList.toggle("wtw-hero-white-matte",matte);
    });
    cachedLegacyHero(absolute).then(asset=>{
     if(!asset||!img.isConnected||img.dataset.wtwMatteSource!==src)return;
     img.addEventListener("error",()=>{
      if(!img.isConnected||img.getAttribute("src")!==asset.url)return;
      img.src=src;img.dataset.wtwMatteSource=src;
-     mark.classList.remove("wtw-hero-transparent","wtw-hero-dark-ink");
+     mark.classList.remove("wtw-hero-transparent","wtw-hero-dark-ink","wtw-hero-white-matte");
+     img.style.mixBlendMode="";
      mark.classList.add("wtw-hero-legacy");
     },{once:true});
     img.src=asset.url;img.dataset.wtwMatteSource=asset.url;
-    mark.classList.remove("wtw-hero-legacy");
+    img.style.mixBlendMode="";
+    mark.classList.remove("wtw-hero-legacy","wtw-hero-white-matte");
     mark.classList.add("wtw-hero-transparent");
     if(asset.darkInk)mark.classList.add("wtw-hero-dark-ink");
    });
@@ -409,7 +425,8 @@ function init(){
      },{once:true});
      img.src=display;
      img.dataset.wtwMatteSource=display;
-     mark.classList.remove("wtw-hero-legacy","wtw-hero-dark-ink");
+     img.style.mixBlendMode="";
+     mark.classList.remove("wtw-hero-legacy","wtw-hero-dark-ink","wtw-hero-white-matte");
      mark.classList.add("wtw-hero-transparent");
      if(visual.darkInk)mark.classList.add("wtw-hero-dark-ink");
     });
