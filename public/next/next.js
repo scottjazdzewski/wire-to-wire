@@ -8,7 +8,7 @@ const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
-const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,worldAttributeKey:'',worldDirectorySearch:'',worldDirectoryType:'all',worldDirectoryPage:0,stableMode:'all',stableSearch:'',directorySort:'name',directorySortDesc:false,directoryFilter:'all',directoryMode:'all',directorySearch:'',directoryHorseItems:[],departmentModes:{},racingMode:'meets',racingTrack:'',racingDate:'',racingCalendarOpen:false,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchSortDesc:false,searchPage:0,managerSortScope:'',managerSortKey:'',managerSortDesc:false,recordBrowse:null};
+const APP={worldEditKey:'',worldEditDraft:null,worldPhotoDraft:undefined,worldEditStatus:'',worldEditBusy:false,savePanelOpen:false,saveDraftName:'',saveError:'',section:'Office',page:'Office',custom:'',filter:'All',msgPage:0,focus:'',detailTab:'Overview',routeId:'',ready:false,activeCase:'opening-stable',paintQueued:false,moreOpen:false,stableSort:'name',stableSortDesc:false,trainingSort:'name',trainingSortDesc:false,stableFilter:'all',stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',stableAttributeDesc:true,worldAttributeKey:'',worldDirectorySearch:'',worldDirectoryType:'all',worldDirectoryPage:0,stableMode:'all',stableSearch:'',directorySort:'name',directorySortDesc:false,directoryFilter:'all',directoryMode:'all',directorySearch:'',directoryHorseItems:[],departmentModes:{},racingMode:'meets',racingTrack:'',racingDate:'',racingCalendarOpen:false,departmentSearch:'',departmentSortKey:'',departmentSortDesc:false,departmentPageIndex:0,departmentScrollLimit:160,departmentScrollReset:false,departmentAuction:'',departmentCompany:'',salesWatched:{},departmentVisible:[],networkSort:'best',networkRole:'all',networkPage:0,networkFocus:'',stakeSort:'date',stakeSortDesc:false,searchQuery:'',searchIndex:[],searchType:'all',searchSort:'name',searchSortDesc:false,searchPage:0,managerSortScope:'',managerSortKey:'',managerSortDesc:false,recordBrowse:null};
 let officePhotoIndex=null; // Optional UI-only media references; no duplication of historical/game entities.
 let athleteAttributeCatalog=null; // One versioned shared character-definition file; no new horse ratings.
 
@@ -2697,7 +2697,31 @@ function stableShortDate(value){
 function liveStableTrainingView(){
  const adapter=window.__WTW_1999_UI_DATA__;
  if(!adapter?.horseTraining)return '<section class="ng-functional"><p>Training engine is unavailable for the current career.</p></section>';
- const horses=horseRows(),fin=adapter.trainingCosts?.()||{},plans=adapter.TRAINING_PLANS||{};
+ const horses=horseRows().slice(),fin=adapter.trainingCosts?.()||{},plans=adapter.TRAINING_PLANS||{};
+ const sortKey=APP.trainingSort||'name',sortDesc=Boolean(APP.trainingSortDesc);
+ const sortable=h=>{
+  const p=adapter.horseTraining(h.horseId||h.name)||{};
+  return {name:String(h.name||'').toLowerCase(),fitness:p.fitness,fatigue:p.fatigue,
+   readiness:p.readiness,risk:p.currentRisk,status:p.status,plan:p.plan,
+   last:p.lastWork?.date||''};
+ };
+ horses.sort((a,b)=>{
+  const x=sortable(a)[sortKey],y=sortable(b)[sortKey];
+  const left=typeof x==='number'?x:Number.NEGATIVE_INFINITY;
+  const right=typeof y==='number'?y:Number.NEGATIVE_INFINITY;
+  const direction=typeof x==='number'||typeof y==='number'?left-right:
+   String(x??'').localeCompare(String(y??''),undefined,{numeric:true,sensitivity:'base'});
+  return (sortDesc?-1:1)*direction||String(a.name).localeCompare(String(b.name));
+ });
+ const columns=[['name','HORSE'],['fitness','FITNESS'],['fatigue','FATIGUE'],
+  ['readiness','READINESS'],['risk','RISK'],['status','MONITOR'],
+  ['plan','WEEKLY PROGRAM / CHANGE PLAN'],['last','LATEST WORK']];
+ const heads=columns.map(([key,label])=>{
+  const active=key===sortKey;
+  const order=active?(sortDesc?'descending':'ascending'):'none';
+  return '<th aria-sort="'+order+'"><button type="button" data-ng="training-sort" data-val="'+key+'">'+
+   label+' <i aria-hidden="true">'+(active?(sortDesc?'↓':'↑'):'↕')+'</i></button></th>';
+ }).join('');
  const fmt=x=>Math.round(Number(x||0)*100)+'%';
  const money=x=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(Number(x||0));
  const rows=horses.map(h=>{
@@ -2727,6 +2751,7 @@ function liveStableTrainingView(){
  return '<section class="ng-functional ng-training-desk">'+
   '<div class="ng-rs-title"><strong>STABLE · TRAINING COMMAND</strong><span>'+horses.length+
    ' HORSES · IN-GAME DATE '+safe(depGameDay())+' · SIMULATED CONDITION</span>'+
+   managerRecordViewControl('Stable',APP.page==='Training'?'Training':'Overview')+
    '<button data-ng="stable-filter" data-val="all">BACK TO ROSTER</button></div>'+
   '<div class="ng-training-summary"><div><small>WORKED THROUGH</small><strong>'+safe(fin.processedThrough||'1999-01-01')+
    '</strong></div><div><small>POSTED TRAINING DAYS</small><strong>'+safe(fin.entries||0)+'</strong></div>'+
@@ -2734,9 +2759,8 @@ function liveStableTrainingView(){
    '</strong></div><div><small>SORENESS WATCHES</small><strong>'+safe(fin.recordedHealthAlerts||0)+'</strong></div></div>'+
   notice+
   '<p class="ng-training-explainer">Choose a horse’s weekly program; continue the calendar to run its workouts, recovery, fatigue, fitness and modeled risk. Sunday rest and graded work are applied automatically. Training costs are recorded in the current save’s simulation ledger—not certified payments or historical veterinary facts.</p>'+
-  '<div class="ng-rs-scroll" tabindex="0" aria-label="Horse training plans and condition"><table class="ng-rs-table ng-training-table"><thead><tr>'+
-   '<th>HORSE</th><th>FITNESS</th><th>FATIGUE</th><th>READINESS</th><th>RISK</th><th>MONITOR</th><th>WEEKLY PROGRAM / CHANGE PLAN</th><th>LATEST WORK</th>'+
-   '</tr></thead><tbody>'+rows+'</tbody></table></div></section>';
+  '<div class="ng-rs-scroll" tabindex="0" role="region" aria-label="Horse training plans and condition"><table class="ng-rs-table ng-training-table"><thead><tr>'+
+   heads+'</tr></thead><tbody>'+rows+'</tbody></table></div></section>';
 }
 
 // World Horse Directory uses the Stable roster presentation but never substitutes
@@ -4523,6 +4547,8 @@ window.addEventListener('click',e=>{
   // The selector alone changes the highlighted attribute column.
   return paint();
  }
+ if(key==='training-sort'){APP.trainingSortDesc=APP.trainingSort===val?!APP.trainingSortDesc:false;
+  APP.trainingSort=val;return paint()}
  if(key==='stable-filter'){APP.stableFilter=val;
   if(APP.custom==='Stable — Training'&&val==='all')return openCustomView('Stable — Overview','Stable','Overview');
   return paint()}
