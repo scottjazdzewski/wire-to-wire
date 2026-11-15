@@ -23,13 +23,30 @@ test('streaming opening registry covers every ecosystem cohort with unique perma
   batches++;
  }
  assert.equal(total,count1999Registry(plan));
- assert.ok(total>230000&&batches>30);
+ assert.ok(total>180000&&batches>30);
  for(const [cohort,count] of Object.entries(plan.counts))
-  assert.equal(byCohort[cohort],count);
+  assert.equal(byCohort[cohort]||0,cohort==='annualFoals'?0:count);
 });
 test('opening registry records are deterministic across independent batches',()=>{
  const opts={seed:19990101,...dirs,batchSize:17};
  const a=generate1999IndustryRegistryBatches(opts).next().value;
  const b=generate1999IndustryRegistryBatches(opts).next().value;
  assert.deepEqual(a,b);
+});
+
+test('1999 unborn foals are forecasts, not living January 1 horses',()=>{
+ const plan=plan1999Ecosystem();
+ const forecasts=generate1999IndustryRegistryBatches({
+  seed:19990101,plan,...dirs,batchSize:1000,includeProjectedFoals:true
+ });
+ let projected=0;
+ for(const batch of forecasts)for(const h of batch.records){
+  if(h.cohort==='annualFoals'){
+   projected++;assert.equal(h.dateOfBirth,null);
+   assert.equal(h.sex,null);assert.equal(h.status,'PROJECTED_NOT_YET_BORN');
+  }
+ }
+ assert.equal(projected,plan.counts.annualFoals);
+ assert.equal(count1999Registry(plan,{includeProjectedFoals:true}),
+  count1999Registry(plan)+projected);
 });
