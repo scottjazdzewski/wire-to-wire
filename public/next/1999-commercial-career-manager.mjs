@@ -11,7 +11,8 @@ import {open1999IndustryDatabase,createPersistent1999Industry,
  savePersistent1999CareerRun,loadPersistent1999CareerRun}
  from '/1999/engine/fictional-industry-persistence-1999.mjs';
 import {TRACK_PROGRAM_1999} from '/next/1999-track-program.mjs';
-import {readPersistent1999HorseProfile,readPersistent1999IndustryBatch}
+import {readPersistent1999HorseProfile,readPersistent1999IndustryBatch,
+ readPersistent1999Directory}
  from '/1999/engine/fictional-industry-persistence-1999.mjs';
 
 const DB_NAME='WireToWireClean1999CareersV2';
@@ -179,6 +180,7 @@ function inputProfile(){
 }
 let fullIndustryManifest=null;
 let industryBrowsePage=0,industryBrowseHtml='',industryBrowseKind='horseBatches';
+let industryDirectory=[];
 function industryDirectories(){
  const tracks=Object.values(TRACK_PROGRAM_1999)
   .filter(t=>t.playableIn1999!==false&&t.trackOperating==='OPEN_1999')
@@ -196,7 +198,20 @@ function industryDirectories(){
 }
 async function browseFullIndustry(page=0,kind=industryBrowseKind){
  if(!fullIndustryManifest)throw Error('Open the full industry first');
- if(!['horseBatches','personBatches'].includes(kind))throw Error('Invalid industry view');
+ if(!['horseBatches','personBatches','directory'].includes(kind))throw Error('Invalid industry view');
+ if(kind==='directory'){
+  industryBrowseKind=kind;
+  const count=industryDirectory.length;
+  industryBrowsePage=Math.max(0,Math.min(Math.ceil(count/20)-1,page));
+  const first=industryBrowsePage*20;
+  const records=industryDirectory.slice(first,first+20);
+  industryBrowseHtml='<p>TRACKS / FARMS / OWNERS '+fmt(first+1)+'–'+
+   fmt(first+records.length)+' OF '+fmt(count)+'</p>'+records.map(e=>
+   '<div class="wtw-cc-slot"><strong>'+esc(e.name||e.id)+'</strong> · '+
+   esc(e.id)+' · '+esc(Object.entries(e.ratings).slice(0,3)
+    .map(([k,v])=>k+': '+v).join(' / '))+'</div>').join('');
+  return;
+ }
  industryBrowseKind=kind;
  const count=kind==='horseBatches'?fullIndustryManifest.horseCount:
   fullIndustryManifest.personCount;
@@ -258,7 +273,8 @@ async function refresh(){
    '<label>HORSE ID<input data-cc="inspect-horse" value="H-FICTIONAL-1999-BROODMARES-0000001"/></label>'+
    '<button data-cc-action="inspect-full-horse">OPEN HORSE PROFILE</button>'+ 
    '<div class="wtw-cc-actions"><button data-cc-action="industry-horses">HORSES</button>'+ 
-   '<button data-cc-action="industry-people">PERSONNEL</button></div>'+ 
+   '<button data-cc-action="industry-people">PERSONNEL</button>'+ 
+   '<button data-cc-action="industry-directory">TRACKS / FARMS / OWNERS</button></div>'+ 
    '<p>BREEDING STOCK '+fmt(fullIndustryManifest.plan.counts.broodmares+fullIndustryManifest.plan.counts.stallions)+
    ' · YEARLINGS '+fmt(fullIndustryManifest.plan.counts.yearlings)+
    ' · 2YO PROSPECTS '+fmt(fullIndustryManifest.plan.counts.twoYearOldProspects)+
@@ -305,12 +321,16 @@ async function perform(action,element){
   fullIndustryManifest=await prepareFictionalIndustry({
    seed,worldId:'WTW1999FullIndustry',...industryDirectories(),batchSize:2000
   });
+  const db=await open1999IndustryDatabase();
+  try{industryDirectory=await readPersistent1999Directory(db,fullIndustryManifest)}
+  finally{db.close()}
   await browseFullIndustry(0);
   notice='Full industry stored and ready to inspect. Existing career unchanged.';
   return;
  }
- if(action==='industry-horses'||action==='industry-people'){
-  await browseFullIndustry(0,action==='industry-horses'?'horseBatches':'personBatches');
+ if(action==='industry-horses'||action==='industry-people'||action==='industry-directory'){
+  await browseFullIndustry(0,action==='industry-horses'?'horseBatches':
+   action==='industry-people'?'personBatches':'directory');
   return;
  }
  if(action==='industry-prev'||action==='industry-next'){
@@ -322,7 +342,9 @@ async function perform(action,element){
   const horse=await inspectFullIndustryHorse(id);
   notice=horse?('HORSE PROFILE · '+horse.id+' · '+(horse.name||'UNNAMED')+
    ' · '+horse.sex+' · foaled '+horse.foalYear+' · '+horse.status+
-   ' · owner '+horse.ownerId+' · sire '+horse.sireId+' · dam '+horse.damId):
+   ' · owner '+horse.ownerId+' · sire '+horse.sireId+' · dam '+horse.damId+
+   ' · trainer '+horse.trainerId+' · jockey '+horse.jockeyId+
+   ' · RATINGS '+Object.entries(horse.ratings||{}).map(([k,v])=>k+':'+v).join(', ')):
    'No horse exists with that ID.';
   return;
  }
