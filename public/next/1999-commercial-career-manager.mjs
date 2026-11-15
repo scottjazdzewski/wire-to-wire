@@ -189,11 +189,15 @@ function industryDirectories(){
  if(!tracks.length)throw Error('No approved operating 1999 tracks');
  const farms=tracks.flatMap(t=>Array.from({length:4},(_,i)=>({
   id:'O-FICTIONAL-FARM-'+t.id+'-'+String(i+1).padStart(2,'0'),
-  name:t.name+' Region Farm '+(i+1),location:t.location
+  name:t.name+' Region Farm '+(i+1),location:t.location,
+  namingStatus:'PROVISIONAL_REPLACE_FROM_APPROVED_DIRECTORY',
+  geographyStatus:t.location?.region?'REGION_PROVIDED':'LOCATION_REVIEW_REQUIRED'
  })));
  const owners=tracks.flatMap(t=>Array.from({length:10},(_,i)=>({
   id:'O-FICTIONAL-OWNER-'+t.id+'-'+String(i+1).padStart(2,'0'),
-  name:t.name+' Region Ownership '+(i+1),location:t.location
+  name:t.name+' Region Ownership '+(i+1),location:t.location,
+  namingStatus:'PROVISIONAL_REPLACE_FROM_APPROVED_DIRECTORY',
+  geographyStatus:t.location?.region?'REGION_PROVIDED':'LOCATION_REVIEW_REQUIRED'
  })));
  return {tracks,farms,owners};
 }
@@ -266,7 +270,7 @@ async function refresh(){
    esc('FOUNDING 1999')+
    ' · SEED '+esc(current.seed)+'</div>'+
   '<div class="wtw-cc-section"><h3>FULL FICTIONAL 1999 INDUSTRY — WORLD EXPLORER</h3>'+
-  '<p>Generate and reopen the large opening-world registry without replacing your current career. This is a population explorer; live race gameplay is not yet activated for this world.</p>'+
+  '<p>Generate and reopen the large opening-world registry without replacing your current career. Horse and personnel names and some farm/owner identities still await approved naming inputs. Live race gameplay is not yet activated for this world.</p>'+
   '<div class="wtw-cc-actions"><button data-cc-action="open-full-industry">CREATE / OPEN FULL INDUSTRY</button></div>'+ 
   '<p data-cc="industry-progress" role="status" aria-live="polite">'+
   (busy?'Preparing the full world…':'Opening-world records are stored on this device.')+'</p>'+
