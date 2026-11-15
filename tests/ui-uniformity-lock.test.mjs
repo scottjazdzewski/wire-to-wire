@@ -106,6 +106,14 @@ test('Stable Training opens the real simulation training desk and has a working 
  assert.match(js,/APP\.custom==='Stable — Training'&&val==='all'/);
  assert.match(js,/openCustomView\('Stable — Overview','Stable','Overview'\)/);
 });
+test('zero-horse player-stable views show grounded onboarding instead of an empty void',()=>{
+ const code=js.slice(js.indexOf('function stableOperationsView('),js.indexOf('function managerDashboard('));
+ assert.match(code,/ng-manager-onboarding/);
+ assert.match(code,/ZERO ASSIGNED HORSES/);
+ assert.match(code,/data-ng="menu" data-val="Stable"/);
+ assert.match(code,/data-ng="menu" data-val="World"/);
+ assert.match(css,/#wtwNextgen \.ng-manager-onboarding/);
+});
 test('Stable Health, Race Plans and Barns show real player horses and never generic World directory records',()=>{
  const start=js.indexOf('function stableOperationsView(page){');
  const end=js.indexOf('function managerDashboard(){',start);

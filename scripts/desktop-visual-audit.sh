@@ -101,7 +101,7 @@ capture world-people '?ui=World%20%E2%80%94%20People' 'ng-dept-roster'
 # EVERY department VIEW must have a screenshot before visual signoff.
 # The generic shell marker permits an honest screenshot of missing content;
 # it does NOT certify the subview as OOTP/FM quality.
-capture stable-health '?ui=Stable%20%E2%80%94%20Health' 'ng-manager-shell'
+capture stable-health '?ui=Stable%20%E2%80%94%20Health' 'ng-manager-onboarding'
 capture stable-race-plans '?ui=Stable%20%E2%80%94%20Race%20Plans' 'ng-manager-shell'
 capture stable-barns '?ui=Stable%20%E2%80%94%20Barns' 'ng-manager-shell'
 capture racing-results '?ui=Racing%20%E2%80%94%20Results' 'ng-manager-shell'

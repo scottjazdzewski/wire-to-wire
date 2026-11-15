@@ -4105,8 +4105,13 @@ function stableOperationsView(page){
   facts.head+'</strong><span>'+horses.length+' PLAYER-STABLE HORSES</span></header>'+
   managerSortableColumns(scope,[['kind','TYPE'],['name','NAME'],['detail',facts.left],['context',facts.right]])+
   '<div class="ng-manager-rows" tabindex="0" role="region" aria-label="'+safe(title)+'">'+
-  (list||'<p class="ng-manager-empty">No horses are assigned to the current player stable. '+
-   'Use the Stable roster to review the opening operation; no records have been fabricated.</p>')+
+  (list||'<section class="ng-manager-onboarding" role="status">'+
+   '<small>CURRENT PLAYER STABLE · ZERO ASSIGNED HORSES</small>'+
+   '<h3>NO HORSES IN THE ACTIVE ROSTER</h3>'+
+   '<p>This career has no assigned horses for '+safe(page)+
+   '. Source records have not been invented.</p>'+
+   '<div><button type="button" data-ng="menu" data-val="Stable">STABLE ROSTER</button>'+
+   '<button type="button" data-ng="menu" data-val="World">WORLD DIRECTORY</button></div></section>')+
   '</div></section><aside class="ng-manager-sidebar">'+
   '<section class="ng-manager-secondary"><header><strong>RECORD AUTHORITY</strong>'+
   '<span>SOURCE / CAREER</span></header><div class="ng-manager-secondary-list">'+
