@@ -65,7 +65,7 @@ test('the one FM/OOTP renderer owns track rosters and the same view modes across
 });
 
 test('entity colors and logos can change, but never create another navigation implementation',()=>{
- assert.match(themes,/paletteFor\(/,'Entity-specific palettes remain presentation-only');
+ assert.match(themes,/paletteFromImageData\(/,'Entity-specific colors must come from the actual displayed logo pixels, presentation-only');
  assert.match(profile,/heroCandidate\(/,'Entity hero marks follow canonical IDs');
  assert.match(profile,/visibleAlphaBounds\(/,'Transparent master logos retain visual fitting');
  assert.match(profileCSS,/grid-template-areas:"badge identity mark" "badge tools mark"/,
