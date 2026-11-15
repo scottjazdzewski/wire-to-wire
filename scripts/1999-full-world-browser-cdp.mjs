@@ -159,6 +159,31 @@ try{
  })()`);
  assert.ok(ui.visible&&ui.hasFullWorld&&ui.hasSavedWorld&&ui.hasDirectory,
   'Stored world not accessible through the actual Career Manager');
+ const profileView=await browser.evalJS(`(async()=>{
+  const click=async(selector)=>{
+   const button=document.querySelector(selector);
+   if(!button)throw Error('Missing world UI control '+selector);
+   button.click();
+   for(let i=0;i<40;i++){
+    await new Promise(ok=>setTimeout(ok,80));
+    if(!document.querySelector('#wtwCommercialCareerModal')?.textContent?.includes('Creating'))break;
+   }
+  };
+  await click('[data-cc-action="industry-people"]');
+  await new Promise(ok=>setTimeout(ok,300));
+  await click('[data-cc-action="inspect-listed-person"]');
+  await new Promise(ok=>setTimeout(ok,300));
+  const person=!!document.querySelector('#wtwCommercialCareerModal')?.textContent?.includes('PERSON PROFILE');
+  await click('[data-cc-action="industry-directory"]');
+  await new Promise(ok=>setTimeout(ok,300));
+  await click('[data-cc-action="inspect-listed-entity"]');
+  await new Promise(ok=>setTimeout(ok,300));
+  const entity=!!document.querySelector('#wtwCommercialCareerModal')?.textContent?.includes('INDUSTRY PROFILE');
+  return {person,entity};
+ })()`);
+ assert.equal(profileView.person,true,'Birthplace/person profile cannot open from staff directory');
+ assert.equal(profileView.entity,true,'Track/farm/owner profile cannot open from directory');
+ console.log('WTW_FULL_WORLD_PROFILE_NAVIGATION_PASS '+JSON.stringify(profileView));
  console.log('WTW_FULL_WORLD_BROWSER_REOPEN_PASS '+JSON.stringify({snap,ui}));
 }finally{
  await stop(browser);
