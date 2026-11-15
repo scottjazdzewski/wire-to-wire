@@ -221,7 +221,7 @@ export function createNamingDeskController({
   return '<section class="ng-manager-screen ng-naming-desk" aria-label="Horse Naming Desk">'+
    '<div class="ng-manager-head"><div class="ng-manager-identity">'+
     '<span>STABLE / HORSE NAMES</span><h2>NAMING DESK</h2></div>'+
-   '<div class="ng-manager-controls"><span class="ng-naming-status">OFFLINE · PERSONALIZED BY YOUR CHOICES</span>'+
+   '<div class="ng-manager-controls"><span class="ng-naming-status">ON-DEVICE · LEARNS YOUR PREFERENCES</span>'+
     '<button type="button" data-ng="naming-clear">CLEAR CURRENT LIST</button></div></div>'+
    '<div class="ng-manager-metrics">'+metric('NAME DECISIONS',profile.revision)+
     metric('KEPT FOR LATER',counts.KEEP)+metric('CHOSEN',counts.CHOOSE)+
