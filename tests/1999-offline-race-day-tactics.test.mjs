@@ -89,8 +89,12 @@ test('owner riding instructions persist, are idempotent, can change before the r
   e.details.selected_tactic===change&&e.details.finance_changed===false));
  assert.equal(out.state.runtime.finances.ledger.length,initialLedger);
  assert.deepEqual(importGameSave(exportGameSave(out.state,world),world),out.state);
- const again=set(out.state,x,change);
+ // A duplicate must repeat the exact authorized revision and payload;
+ // changing the revision under the same command ID is a real conflict.
+ const again=set(out.state,x,change,'pace:instruction:1','player',s.revision);
  assert.equal(again.duplicate,true);
+ assert.throws(()=>set(out.state,x,change),
+  e=>e.code==='COMMAND_CONFLICT');
  assert.deepEqual(again.state,out.state);
  const reverted=set(out.state,x,'AUTO','pace:instruction:2');
  assert.equal(reverted.state.runtime.entries[x.race.id+':'+x.horse.horse_id].race_tactic,undefined);
