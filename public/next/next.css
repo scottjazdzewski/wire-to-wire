@@ -3657,6 +3657,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  filter:blur(9px)!important;
 }
 
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo.wtw-hero-white-matte{isolation:auto!important}
 #wtwNextgen .ng-route-profile .ng-profile-source-photo.wtw-hero-dark-ink:not(.wtw-hero-white-matte) img{filter:drop-shadow(0 0 2px #e3ebd1d9) drop-shadow(0 0 7px #e3ecca8a)!important;}
 /* Farm/owner logo category badge stays in its locked left grid cell. */
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-farm > .ng-profile-intro > .ng-org-mark{
