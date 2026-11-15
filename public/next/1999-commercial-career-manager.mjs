@@ -9,7 +9,7 @@ import {encodeCareerSave,decodeCareerSave,packCareerFile,unpackCareerFile}
  from '/1999/engine/compact-career.mjs';
 import {open1999IndustryDatabase,createPersistent1999Industry,
  savePersistent1999CareerRun,loadPersistent1999CareerRun,
- verifyPersistent1999WorldOpen}
+ verifyPersistent1999WorldOpen,reopenPersistent1999Industry}
  from '/1999/engine/fictional-industry-persistence-1999.mjs';
 import {TRACK_PROGRAM_1999} from '/next/1999-track-program.mjs';
 import {readPersistent1999HorseProfile,readPersistent1999IndustryBatch,
@@ -271,7 +271,8 @@ async function refresh(){
    ' · SEED '+esc(current.seed)+'</div>'+
   '<div class="wtw-cc-section"><h3>FULL FICTIONAL 1999 INDUSTRY — WORLD EXPLORER</h3>'+
   '<p>Generate and reopen the large opening-world registry without replacing your current career. Horse and personnel names and some farm/owner identities still await approved naming inputs. Live race gameplay is not yet activated for this world.</p>'+
-  '<div class="wtw-cc-actions"><button data-cc-action="open-full-industry">CREATE / OPEN FULL INDUSTRY</button></div>'+ 
+  '<div class="wtw-cc-actions"><button data-cc-action="open-existing-industry">OPEN SAVED 1999 WORLD</button>'+ 
+  '<button data-cc-action="open-full-industry">CREATE / RESUME FULL INDUSTRY</button></div>'+ 
   '<p data-cc="industry-progress" role="status" aria-live="polite">'+
   (busy?'Preparing the full world…':'Opening-world records are stored on this device.')+'</p>'+
   (fullIndustryManifest?'<p>WORLD STORED · '+fmt(fullIndustryManifest.horseCount)+
@@ -325,6 +326,27 @@ async function perform(action,element){
   return;
  }
  if(action==='import'){modal().querySelector('[data-cc="import-file"]').click();return}
+ if(action==='open-existing-industry'){
+  const seed=Number(modal().querySelector('[data-cc="seed"]')?.value||19990101);
+  const db=await open1999IndustryDatabase();
+  try{
+   const reopened=await reopenPersistent1999Industry(db,{
+    seed,worldId:'WTW1999FullIndustry'});
+   if(!reopened){
+    notice='No saved full 1999 world found. Select CREATE / RESUME FULL INDUSTRY.';
+    return;
+   }
+   if(reopened.status!=='READY'){
+    notice='1999 world generation is incomplete. Select CREATE / RESUME FULL INDUSTRY.';
+    return;
+   }
+   fullIndustryManifest=reopened.manifest;
+   industryDirectory=await readPersistent1999Directory(db,fullIndustryManifest);
+  }finally{db.close()}
+  await browseFullIndustry(0,'directory');
+  notice='Saved 1999 world opened and verified. Existing career unchanged.';
+  return;
+ }
  if(action==='open-full-industry'){
   notice='Generating the complete industry. This may take several minutes.';
   const seed=Number(modal().querySelector('[data-cc="seed"]')?.value||19990101);
