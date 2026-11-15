@@ -2125,7 +2125,9 @@ function profileDetail(route,sourceOverride=null){
      if(result.kind==='MEASURED'||result.kind==='SCOUT ESTIMATE')assessed++;
      if(result.kind.startsWith('SIMULATED'))modeledCount++;
      const title=def.label+' · '+result.kind+' · '+def.meaning;
-     return '<div class="ng-horse-rating-row '+(result.percent===null?'ability-unrated':'ability-known')+
+     const band=result.percent===null?'ability-unrated':result.percent>=75?'ability-high':
+      result.percent>=55?'ability-good':result.percent>=35?'ability-moderate':'ability-low';
+     return '<div class="ng-horse-rating-row '+band+
       '" title="'+safe(title)+'" aria-label="'+safe(title)+'">'+
       '<span>'+safe(def.label)+'</span>'+
       (result.percent===null?'<span class="ng-horse-rating-unassessed" aria-hidden="true"></span>':
