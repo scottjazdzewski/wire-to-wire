@@ -7,6 +7,7 @@ on:
       - 'public/next/**'
       - 'public/1999/**'
       - 'scripts/windows-desktop-smoke.ps1'
+      - 'scripts/windows-desktop-visible.ps1'
       - 'scripts/build-wtw-desktop-icon.py'
       - 'tests/desktop-g1-local-content.test.cjs'
       - '.github/workflows/windows-desktop-exe.yml'
@@ -17,6 +18,7 @@ on:
       - 'public/next/**'
       - 'public/1999/**'
       - 'scripts/windows-desktop-smoke.ps1'
+      - 'scripts/windows-desktop-visible.ps1'
       - 'scripts/build-wtw-desktop-icon.py'
       - 'tests/desktop-g1-local-content.test.cjs'
       - '.github/workflows/windows-desktop-exe.yml'
@@ -85,6 +87,18 @@ jobs:
         run: |
           $portable=Get-ChildItem dist/windows -Filter 'WireToWire-Portable-*.exe' | Select-Object -First 1
           ./scripts/windows-desktop-smoke.ps1 -Executable $portable.FullName -EvidenceDir (Join-Path $PWD 'dist/portable-evidence') -TargetLabel 'portable'
+      - name: Verify actual desktop window is visible and capture a screenshot
+        shell: pwsh
+        run: |
+          ./scripts/windows-desktop-visible.ps1 -Executable (Resolve-Path 'dist/windows/win-unpacked/Wire to Wire.exe').Path -EvidenceDir (Join-Path $PWD 'dist/visible-evidence')
+      - name: Package folder-based portable option without a self-extracting wrapper
+        shell: pwsh
+        run: |
+          $version=node -p "JSON.parse(require('fs').readFileSync('desktop/package.json','utf8')).version"
+          $target="dist/windows/WireToWire-NoInstall-Folder-$version-x64.zip"
+          Compress-Archive -Path 'dist/windows/win-unpacked' -DestinationPath $target -CompressionLevel Optimal -Force
+          if(!(Test-Path $target)){throw 'No-install folder ZIP is missing'}
+          Write-Host "WTW_WINDOWS_FOLDER_BASED_NO_INSTALL_PASS $target"
       - name: Preserve both EXEs for immediate Windows download
         if: always()
         uses: actions/upload-artifact@v4
@@ -93,6 +107,7 @@ jobs:
           path: |
             dist/windows/WireToWire-Portable-*.exe
             dist/windows/WireToWire-Setup-*.exe
+            dist/windows/WireToWire-NoInstall-Folder-*.zip
           if-no-files-found: warn
           retention-days: 14
       - name: Preserve packaged Windows test evidence
@@ -103,5 +118,7 @@ jobs:
           path: |
             dist/evidence/*.json
             dist/portable-evidence/*.json
+            dist/visible-evidence/*.json
+            dist/visible-evidence/*.png
           if-no-files-found: warn
           retention-days: 14

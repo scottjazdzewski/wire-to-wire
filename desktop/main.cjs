@@ -6,7 +6,7 @@
 const fs=require('node:fs');
 const path=require('node:path');
 const {pathToFileURL}=require('node:url');
-const {app,BrowserWindow,protocol,net,session}=require('electron');
+const {app,BrowserWindow,protocol,net,session,dialog}=require('electron');
 const {bundledFile,htmlContentSecurityPolicy}=require('./local-content.cjs');
 
 const ORIGIN='wtw://game';
@@ -22,6 +22,27 @@ function option(name){
 const smokePhase=option('wtw-smoke')||process.env.WTW_SMOKE_PHASE||null;
 const smokeReport=option('wtw-smoke-report')||process.env.WTW_SMOKE_REPORT||null;
 const smokeUserData=option('wtw-smoke-user-data')||process.env.WTW_SMOKE_USER_DATA||null;
+function recordBootFailure(context,error){
+ const description=String(error?.stack||error?.message||error||'Unknown startup error');
+ let logfile='Unavailable';
+ try{
+  logfile=path.join(app.getPath('userData'),'wtw-startup-diagnostics.log');
+  fs.mkdirSync(path.dirname(logfile),{recursive:true});
+  fs.appendFileSync(logfile,'['+new Date().toISOString()+'] '+context+'\n'+description+'\n','utf8');
+ }catch(writeError){
+  console.error('Unable to write startup diagnostics',String(writeError));
+ }
+ console.error('WTW DESKTOP STARTUP:',context,description,'Diagnostic file:',logfile);
+ if(!smokePhase&&app.isReady()){
+  try{dialog.showErrorBox('Wire to Wire could not open',
+   'The game encountered an error while starting.\n\n'+
+   description.slice(0,450)+'\n\nDiagnostic file:\n'+logfile+
+   '\n\nYour saved careers have not been deleted.');}
+  catch(dialogError){console.error('Unable to show startup error window',String(dialogError));}
+ }
+}
+process.on('uncaughtException',error=>recordBootFailure('uncaughtException',error));
+process.on('unhandledRejection',error=>recordBootFailure('unhandledRejection',error));
 app.setName('Wire to Wire');
 if(smokeUserData){
  const userPath=path.resolve(smokeUserData);
@@ -100,7 +121,8 @@ function openGameWindow(){
   width:1536,height:864,minWidth:1040,minHeight:680,
   backgroundColor:'#131c1d',
   autoHideMenuBar:true,
-  show:!smokePhase,
+  // The original smoke test hid the actual window, masking user-visible startup failures.
+  show:!smokePhase||smokePhase==='visible',
   webPreferences:{
    sandbox:true,contextIsolation:true,nodeIntegration:false,webSecurity:true,
    allowRunningInsecureContent:false,webviewTag:false,
@@ -111,9 +133,16 @@ function openGameWindow(){
  win.webContents.on('will-navigate',(event,url)=>{
   if(!url.startsWith(ORIGIN+'/'))event.preventDefault();
  });
- win.webContents.on('did-fail-load',(_event,code,description,url)=>{
-  console.error('Desktop document load failed:',code,description,url);
+ win.webContents.on('did-fail-load',(_event,code,description,url,isMainFrame)=>{
+  if(isMainFrame&&code!==-3)recordBootFailure(
+   'Failed to load the main game document ('+code+'): '+url,description);
+  else console.error('Game resource failed:',code,description,url);
  });
+ win.webContents.on('render-process-gone',(_event,details)=>
+  recordBootFailure('Game renderer exited unexpectedly',JSON.stringify(details)));
+ win.on('unresponsive',()=>
+  recordBootFailure('Game window became unresponsive','Windows could not display the active game window.'));
+
  return win;
 }
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -126,6 +155,12 @@ const browserProbe=[
  ' return {',
  '  title:document.title,origin:location.origin,',
  '  gameVisible:!!root&&root.textContent.trim().length>100,',
+ '  // Confirm real layout pixels rather than trusting hidden-window DOM text.',
+ '  frameWidth:root?.getBoundingClientRect().width||0,',
+ '  frameHeight:root?.getBoundingClientRect().height||0,',
+ '  renderedButtons:root?.querySelectorAll("button").length||0,',
+ '  cssDisplay:root?getComputedStyle(root).display:"missing",',
+ '  cssVisibility:root?getComputedStyle(root).visibility:"missing",',
  '  oldOfficeHidden:!!document.querySelector("[data-wtw-layout=\\"legacy-data-bridge\\"][hidden]"),',
  '  date:saved?.date||null,schema:management?.schema||null,',
  '  desktop:window.WTWDesktop?.runtime||null,',
@@ -148,6 +183,37 @@ async function runSmoke(win){
  if(!last?.gameVisible||!last.oldOfficeHidden||!last.schema||!last.date||
     last.desktop!=='windows-desktop')throw Error('Game UI did not initialize: '+JSON.stringify(last));
  if(last.origin!==ORIGIN)throw Error('Application loaded an unexpected origin: '+last.origin);
+ if(smokePhase==='visible'){
+  // GitHub's Windows runner uses a noninteractive service session; a Chromium
+  // capture there can contain only background pixels although the DOM is ready.
+  // Assert a visibly laid-out live game and preserve the screenshot, but never
+  // claim a screenshot from a noninteractive runner is manual visual QA.
+  if(!win.isVisible())throw Error('Desktop game window is not visible');
+  const size=win.getBounds();
+  if(size.width<1000||size.height<600)throw Error('Unexpectedly small desktop window');
+  if(last.frameWidth<900||last.frameHeight<450||last.renderedButtons<5||
+     last.cssDisplay==='none'||last.cssVisibility!=='visible')
+   throw Error('The game UI lacks a visible rendered layout: '+JSON.stringify(last));
+  await sleep(1600);
+  const screenshot=(await win.webContents.capturePage()).toPNG();
+  if(smokeReport){
+   const screenshotPath=path.join(path.dirname(path.resolve(smokeReport)),'wtw-visible-desktop.png');
+   fs.writeFileSync(screenshotPath,screenshot);
+  }
+  reportSmoke({
+   phase:'visible',bundledOrigin:last.origin,gameDate:last.date,
+   gameInterface:'ONE_APPROVED_UI',windowVisible:true,
+   windowWidth:size.width,windowHeight:size.height,
+   frameWidth:last.frameWidth,frameHeight:last.frameHeight,
+   renderedButtons:last.renderedButtons,
+   screenshotBytes:screenshot.length,
+   screenshotStatus:screenshot.length>=25000?'CAPTURE_RECORDED':
+     'NONINTERACTIVE_WINDOWS_RUNNER_UNVERIFIED',
+   humanVisibleWindowCertification:'NOT_YET_VERIFIED_ON_END_USER_MACHINE',
+   retailCertification:'NOT_YET_DESKTOP_CERTIFIED'
+  },true);
+  return;
+ }
  if(smokePhase==='write'){
   await win.webContents.executeJavaScript(
    'localStorage.setItem("WTW_DESKTOP_G1_REOPEN_PROOF","LOCAL_FIRST_1999");true;',true);
@@ -170,10 +236,11 @@ app.whenReady().then(async()=>{
  protocol.handle('wtw',serveLocalAsset);
  const win=openGameWindow();
  await win.loadURL(ORIGIN+'/next/index.html');
+ if(!smokePhase){win.show();win.focus();}
  if(smokePhase)await runSmoke(win);
 }).catch(error=>{
  const description=String(error?.stack||error?.message||error);
- console.error('WTW desktop boot failure:',description);
+ recordBootFailure('Application initialization',description);
  if(smokePhase)reportSmoke({phase:smokePhase,error:description},false);
 });
 app.on('window-all-closed',()=>app.quit());
