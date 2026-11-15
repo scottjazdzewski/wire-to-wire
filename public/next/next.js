@@ -1722,14 +1722,20 @@ function profileDetail(route,sourceOverride=null){
  const details=$$('.profilePanel',source).map(n=>({title:text('h3',n),lines:n.textContent.trim().slice(0,700)}));
  const trackRaces=$$('.stakesRow',source).map((n,i)=>({name:text('strong',n),date:n.textContent.trim(),node:n,index:i}));
  const isHorse=route.kicker==='Horse Profile',isPerson=route.kicker==='People Profile',isFarm=route.kicker==='Farm Profile',isTrack=route.kicker==='Track Profile';
- const personnelAttributeColumns=()=>{
+ const personnelAttributeColumns=(compact=false)=>{
   const groupSizes=[9,15,12,10];
   return groupSizes.map((count,index)=>{
-   const list=Array.from({length:count},(_,n)=>
-    '<div class="ng-horse-rating-row ability-unrated"><span>Attribute slot '+
-    String(n+1).padStart(2,'0')+'</span>'+
-    '<span class="ng-horse-rating-unassessed" aria-hidden="true"></span>'+
-    '<strong class="unknown">—</strong></div>').join('');
+   // Retain the unassigned detail matrix only in MORE RECORDS → Attributes.
+   // On the Overview it is misleading to fill a whole screen with 46 fake
+   // slot names. Show the four approved groups, never invent role ratings.
+   const list=compact?
+    '<div class="ng-person-unassessed-group" role="status"><strong>UNASSESSED</strong>'+
+    '<p>No verified role-specific skill ratings recorded. Unknown is not zero.</p></div>':
+    Array.from({length:count},(_,n)=>
+     '<div class="ng-horse-rating-row ability-unrated"><span>Attribute slot '+
+     String(n+1).padStart(2,'0')+'</span>'+
+     '<span class="ng-horse-rating-unassessed" aria-hidden="true"></span>'+
+     '<strong class="unknown">—</strong></div>').join('');
    return '<section class="ng-horse-mgr-panel ng-horse-ratings" data-personnel-attribute-group="'+(index+1)+
     '"><header><strong>ATTRIBUTE GROUP '+String(index+1).padStart(2,'0')+
     '</strong><span>0/'+count+' ASSIGNED</span></header>'+
@@ -2204,7 +2210,7 @@ function profileDetail(route,sourceOverride=null){
   const networkOverview=`<div class="ng-person-overview-network"><div class="ng-person-overview-network-total"><strong>${knownRelations.length}</strong><span>SOURCED WORKING RELATIONSHIPS</span></div>${knownRelations.length?knownRelations.slice(0,4).map(r=>`<div class="ng-person-overview-relation"><strong title="${safe(r.name)}">${safe(r.name)}</strong><span>${r.score==null?'Unrated':safe(String(r.score))+'/100'}</span></div>`).join(''):'<div class="ng-person-compact-empty">No reported contacts yet.</div>'}</div>`;
   const events=rep?.history||[];
   const eventRows=events.length?events.slice().reverse().map(x=>`<div class="ng-person-rep-event"><b>${safe(x.date)}</b><span>${safe(x.signal.replaceAll('_',' '))}</span><small>${safe(x.source_refs?.join(', ')||'No evidence')}</small></div>`).join(''):'<p class="ng-person-unrated">No reputation events have been recorded.</p>';
-  return {attributes,reputation,networkPreview,network,careerContent,careerOverview,horseAssignments,networkOverview,eventRows,roleName,rep};
+  return {attributes,reputation,networkPreview,network,careerContent,careerOverview,horseAssignments,networkOverview,eventRows,roleName,rep,trust,knownRelationsCount:knownRelations.length,assignedHorseCount:assignedCount};
  };
  const isOrganizationProfile=/^(?:Farm|Stable|Organization|Sales Organization|Ownership Group|Breeding Farm) Profile$/.test(route.kicker);
  // Reuse already-published exact-ID art in the EXISTING identity frame. Track
@@ -2363,32 +2369,45 @@ function profileDetail(route,sourceOverride=null){
    left=athleteOverview();
    right='';footer='';
   }else if(isPerson){
-   // Structural lock: exactly the Horse Overview's four rating columns,
-   // seven-item condition strip, five office panels, two lower panels and
-   // full-width summary. Labels are UNASSIGNED until the user approves
-   // role-specific personnel attributes; never invent ability scores.
+   // Keep Horse dossier geometry: four evidence groups, seven visible
+   // context facts, five source-backed work panels and bottom records.
+   // Unapproved personnel attributes never masquerade as actual ability.
    const person=personWork();
    const panel=(name,body,more='')=>'<section class="ng-horse-mgr-panel '+more+'"><header><strong>'+
     name+'</strong></header>'+body+'</section>';
-   const professionalSlots=personnelAttributeColumns();
-   const statusSlots='<div class="ng-horse-condition-strip" aria-label="Personnel condition and status slots">'+
-    Array.from({length:7},(_,i)=>'<div class="ng-horse-condition-cell"><span>STATUS SLOT '+
-    (i+1)+'</span><strong class="unknown">—</strong></div>').join('')+'</div>';
+   const professionalSlots=personnelAttributeColumns(true);
+   const careerWins=personWins&&personWins!=='—'?personWins:'Not recorded';
+   const standing=person.rep?String(person.rep.scores.overall)+'/100':'Unrated';
+   const currentRole=titleCaseUIRole(person.roleName||source.dataset.personRole||'Not recorded');
+   const personnelStatus=[
+    ['ROLE',currentRole],['RECORDED WINS',careerWins],
+    ['LINKED HORSES',String(person.assignedHorseCount)],
+    ['APPROVED OPERATIONS',String(founderAffiliations.length)],
+    ['WORKING CONTACTS',String(person.knownRelationsCount)],
+    ['STANDING',standing],
+    ['WORKING TRUST',person.trust===null?'Not assessed':String(person.trust)]
+   ];
+   const statusSlots='<div class="ng-horse-condition-strip" aria-label="Recorded personnel context">'+
+    personnelStatus.map(([label,value])=>
+     '<div class="ng-horse-condition-cell" title="'+safe(label+': '+value)+'"><span>'+safe(label)+
+     '</span><strong>'+safe(value)+'</strong></div>').join('')+'</div>';
    const approvedLinks=founderAffiliationRows();
    const approvedConnections=founderAffiliations.length?
     founderAffiliations.map(o=>o.name).join(' · '):'Organization not yet assigned';
-   // Keep the Horse page's complete overview visible at the same desktop
-   // resolution. Full reputation, network and career detail live in deeper
-   // tabs; these are concise record summaries with no inferred statistics.
+   // Profile tabs retain detailed attributes, verified reputation, network
+   // and career context; the first screen prioritizes what is actually known.
    const summaryLines=items=>'<div class="ng-horse-mgr-rows">'+items.map(([label,value])=>
     '<div class="ng-horse-mgr-row"><span>'+safe(label)+'</span><strong>'+safe(value)+'</strong></div>'
    ).join('')+'</div>';
-   const careerOverview=summaryLines([['Certified career results','—'],['Current appointment','Not recorded']]);
-   const reputationOverview=summaryLines([['Professional standing','Unrated'],['Trust assessment','—']]);
-   const relationOverview=summaryLines([['Approved institutions',String(founderAffiliations.length)],
-    ['Observed professional contacts','—']]);
+   const careerOverview=person.careerOverview;
+   const reputationOverview=summaryLines([
+    ['Professional standing',standing],
+    ['Working trust',person.trust===null?'Not assessed':String(person.trust)]
+   ])+'<button type="button" class="ng-entity-open" data-ng="detailtab" data-val="Reputation">FULL REPUTATION ↗</button>';
+   const relationOverview=person.networkOverview+
+    '<button type="button" class="ng-entity-open" data-ng="detailtab" data-val="Network">WORKING NETWORK ↗</button>';
    left=`<div class="ng-horse-dossier ng-person-horse-dossier" data-template="horse-overview" data-personnel-role="${safe(source.dataset.personRole||'unspecified')}">
-    <div class="ng-horse-dossier-caption"><strong>PROFESSIONAL & RACING INTELLIGENCE</strong><span>0 OF 46 ROLE-SPECIFIC SLOTS DEFINED · NOT SCORED</span></div>
+    <div class="ng-horse-dossier-caption"><strong>PROFESSIONAL & RACING INTELLIGENCE</strong><span>RATINGS UNASSESSED · VERIFIED CAREER CONTEXT BELOW</span></div>
     <div class="ng-horse-mgr-four">${professionalSlots}</div>
     ${statusSlots}
     <div class="ng-horse-mgr-five">
