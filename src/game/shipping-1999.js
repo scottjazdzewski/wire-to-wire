@@ -137,8 +137,11 @@ export function shippingAssessment(state,world,horseId,destinationSiteId,{target
  if(previous&&previous.status!=='HOME')reasons.push('ALREADY_TRAVELING_OR_AWAY');
  const origin=state.runtime.facilities?.sites?.[horse.current_residence_id];
  const destination=state.runtime.facilities?.sites?.[destinationSiteId];
- if(!origin||!destination||!worldIdentity(world,'tracks',destination?.host_track_id))
+ const destinationTrack=destination&&world.entities?.tracks?.find(t=>t.id===destination.host_track_id);
+ if(!origin||!destination||!destinationTrack||!worldIdentity(world,'tracks',destination?.host_track_id))
   reasons.push('UNKNOWN_RACECOURSE_BARN');
+ if(destinationTrack?.playableIn1999===false)
+  reasons.push('DESTINATION_TRACK_NOT_ACTIVE_IN_1999');
  if(destinationSiteId===horse.current_residence_id||
   destination?.host_track_id===horse.host_track_id&&horse.host_track_id)
   reasons.push('ALREADY_AT_RACECOURSE');
