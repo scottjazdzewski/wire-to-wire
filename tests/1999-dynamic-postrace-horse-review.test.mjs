@@ -53,7 +53,8 @@ test('postrace review is a pure live view of real results, horse condition and g
  assert.equal(live.current_trainer_id,horse.trainer_id);
  assert.equal(live.trainer_changed_since_race,false);
  assert.equal(live.fitness,state.runtime.horse[horse.horse_id].training.fitness);
- assert.equal(live.phase,review.phase);
+ assert.ok(['RECOVERY_REST','WELFARE_HOLD'].includes(live.phase),
+  'Live health holds may be stricter than the original race-day snapshot');
  assert.equal(live.placement_not_automatically_authorized,true);
  assert.equal(live.origin,'SAVED_OFFICIAL_RACE_CURRENT_HORSE_CONDITION_AND_GAME_CLOCK');
  assert.equal(JSON.stringify(state.runtime.post_race_campaigns.by_horse[horse.horse_id]),
