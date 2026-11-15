@@ -184,10 +184,22 @@ function inputProfile(){
 let fullIndustryManifest=null;
 let industryBrowsePage=0,industryBrowseHtml='',industryBrowseKind='horseBatches';
 let industryDirectory=[];
-function industryDirectories(seed=19990101){
+async function industryDirectories(seed=19990101){
+ const response=await fetch('/data/track-geography-v33.json');
+ if(!response.ok)throw Error('Bundled 1999 track geography unavailable');
+ const geo=await response.json();
+ const geoById=new Map((geo.tracks||[]).map(g=>[g.id,g]));
  const tracks=Object.values(TRACK_PROGRAM_1999)
   .filter(t=>t.playableIn1999!==false&&t.trackOperating==='OPEN_1999')
-  .map(t=>({id:t.id,name:t.name,location:t.location??{}}));
+  .map(t=>{
+   const g=geoById.get(t.id);
+   if(!g?.city_locality||!g?.state_province_region||!g?.country)
+    throw Error('Missing local foaling/racing geography for '+t.id);
+   return {id:t.id,name:t.name,location:{city:g.city_locality,
+    region:g.state_province_region,country:g.country,
+    metro:g.metro_or_subregion||null,circuit:g.macro_circuit||null},
+    geographyProvenance:g.geography_status};
+  });
  if(!tracks.length)throw Error('No approved operating 1999 tracks');
  // Reuse the established 1999 organization identity engine, never fabricate
  // track-prefix placeholders. Permanent world IDs remain unchanged.
@@ -395,7 +407,7 @@ async function perform(action,element){
   const seed=Number(modal().querySelector('[data-cc="seed"]')?.value||19990101);
   const progress=modal().querySelector('[data-cc="industry-progress"]');
   fullIndustryManifest=await prepareFictionalIndustry({
-   seed,worldId:'WTW1999FullIndustry',...industryDirectories(seed),batchSize:2000,
+   seed,worldId:'WTW1999FullIndustry',...(await industryDirectories(seed)),batchSize:2000,
    yieldControl:()=>new Promise(resolve=>setTimeout(resolve,0)),
    onProgress:({kind,completed,totalRecords})=>{
     if(progress)progress.textContent='Creating '+kind+' · batch '+completed+
