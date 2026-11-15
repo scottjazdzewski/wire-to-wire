@@ -46,7 +46,8 @@ export function buildNamingLabScenario({ownerName,breederName,story,foalingYear=
  * for isolated tests; the UI never silently claims memory-only writes persist.
  */
 export function createNamingDeskController({
- notify=()=>{},loadFeedback=null,saveFeedback=null,getTargets=()=>[]
+ notify=()=>{},loadFeedback=null,saveFeedback=null,getTargets=()=>[],
+ gameplayActive=()=>false,commitGameplay=null
 }={}){
  let memory=createNamingFeedback();
  const load=typeof loadFeedback==='function'?loadFeedback:()=>memory;
@@ -59,7 +60,13 @@ export function createNamingDeskController({
  try{model.feedback=validateNamingFeedback(load()||createNamingFeedback())}
  catch(error){model.error='NAMING HISTORY UNAVAILABLE: '+String(error.message||error)}
  function refresh(){notify()}
- function feedback(){return validateNamingFeedback(model.feedback)}
+ function feedback(){
+  // Reload from the active saved career, including after a real game engine
+  // resumes asynchronously or the player loads a different save slot.
+  const live=load();
+  if(live)model.feedback=validateNamingFeedback(live);
+  return validateNamingFeedback(model.feedback);
+ }
  function currentTargets(){
   const rows=getTargets();
   return Array.isArray(rows)?rows.filter(row=>
@@ -174,6 +181,40 @@ export function createNamingDeskController({
    refresh();return true;
   }catch(error){model.error=String(error?.message||error);refresh();return false}
  }
+ async function decideGameplay(name,decision){
+  if(model.busy||typeof commitGameplay!=='function')return false;
+  model.error='';model.notice='';
+  let attempted=null;
+  try{
+   const item=row(name),target=decision==='CHOOSE'?model.fields.targetHorseId:'';
+   if(!item||item.status!=='AWAITING_INDEPENDENT_EDITOR')
+    throw Error('Only independently screened names may be reviewed');
+   if(decision==='CHOOSE'&&!currentTargets().some(x=>x.id===target))
+    throw Error('Select a real player-owned horse before choosing');
+   const prior=feedback();
+   attempted=recordNamingFeedback(prior,{name:item.name,decision,
+    motifId:item.motifId,horseId:target,prompt:model.fields.direction});
+   if(attempted===prior){model.notice='Already recorded: '+item.name;return true}
+   model.busy=true;refresh();
+   // The actual game service resolves only AFTER its IndexedDB transaction
+   // commits. Never display a false success on an interrupted write.
+   await commitGameplay({name:item.name,decision,motif_id:item.motifId,
+    horse_id:target,prompt:model.fields.direction});
+   model.feedback=validateNamingFeedback(load()||attempted);
+   if(model.feedback.revision!==attempted.revision)
+    throw Error('Game did not persist the expected name preference revision');
+   model.shortlist=Object.values(model.feedback.decisions)
+    .filter(x=>x.decision==='KEEP').map(x=>x.name);
+   model.rejected=Object.values(model.feedback.decisions)
+    .filter(x=>x.decision==='REJECT').map(x=>x.name);
+   model.notice=decision==='KEEP'?item.name+' kept for later in the saved game.':
+    decision==='REJECT'?item.name+' permanently rejected in the saved game.':
+    item.name+' selected for '+currentTargets().find(x=>x.id===target)?.name+
+    '. Player decision is saved; official registrar approval remains pending.';
+   return true;
+  }catch(error){model.error=String(error?.message||error);return false}
+  finally{model.busy=false;refresh()}
+ }
  function mark(name){return decide(name,'KEEP')}
  function reject(name){return decide(name,'REJECT')}
  function choose(name){return decide(name,'CHOOSE')}
@@ -187,9 +228,9 @@ export function createNamingDeskController({
  function snapshot(){return JSON.parse(JSON.stringify(model))}
  function action(key,val){
   if(key==='naming-generate')return generate();
-  if(key==='naming-keep')return mark(val);
-  if(key==='naming-reject')return reject(val);
-  if(key==='naming-choose')return choose(val);
+  if(key==='naming-keep')return gameplayActive()?decideGameplay(val,'KEEP'):mark(val);
+  if(key==='naming-reject')return gameplayActive()?decideGameplay(val,'REJECT'):reject(val);
+  if(key==='naming-choose')return gameplayActive()?decideGameplay(val,'CHOOSE'):choose(val);
   if(key==='naming-clear')return clear();
   if(key==='naming-view')return setView(val);
   if(key==='naming-sort')return sort(val);
@@ -290,15 +331,17 @@ if(typeof window!=='undefined'){
  const manager=window.__WTW_1999_MANAGEMENT__;
  const desk=createNamingDeskController({
   notify:()=>window.__WTW_NEXT__?.paint?.(),
-  loadFeedback:()=>manager?.readNamingFeedback?.()||null,
+  loadFeedback:()=>window.__WTW_1999_UI_DATA__?.gameplayService?.state?.runtime?.horse_naming?.feedback||manager?.readNamingFeedback?.()||null,
+  gameplayActive:()=>Boolean(window.__WTW_1999_UI_DATA__?.gameplayService),
+  commitGameplay:payload=>window.__WTW_1999_UI_DATA__.gameplayService.submit('OWNER_SET_HORSE_NAMING_PREFERENCE',payload),
   saveFeedback:(next,revision)=>{
    if(!manager?.commitNamingFeedback)throw Error('Career naming save service unavailable');
    if(window.__WTW_1999_UI_DATA__?.gameplayService)
     throw Error('Playtest naming needs a gameplay-owned save bridge; no detached writes allowed');
    return manager.commitNamingFeedback(next,revision);
   },
-  getTargets:()=>Array.isArray(window.__WTW_1999_UI_DATA__?.stableHorses)?
-   window.__WTW_1999_UI_DATA__.stableHorses.map(h=>({
+  getTargets:()=>Array.isArray(window.__WTW_1999_UI_DATA__?.gameplayService?.view?.()?.stable||window.__WTW_1999_UI_DATA__?.stableHorses)?
+   (window.__WTW_1999_UI_DATA__?.gameplayService?.view?.()?.stable||window.__WTW_1999_UI_DATA__.stableHorses).map(h=>({
     id:String(h.horse_id||h.id||''),name:String(h.name||'')
    })).filter(h=>h.id&&h.name):[]
  });
