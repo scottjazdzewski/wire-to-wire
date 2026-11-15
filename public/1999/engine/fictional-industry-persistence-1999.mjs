@@ -126,7 +126,7 @@ export async function readPersistent1999IndustryBatch(store,manifest,kind,index)
 export async function findPersistent1999Horse(store,manifest,horseId){
  if(manifest?.status!=='COMPLETE'||typeof horseId!=='string')
   throw Error('Completed world and horse ID required');
- const match=/^H-FICTIONAL-1999-(BROODMARES|STALLIONS|YEARLINGS|TWOYEAROLDPROSPECTS|THREEYEAROLDRUNNERS|FOURYEAROLDRUNNERS|FIVEPLUSRUNNERS)-(\\d{7})$/.exec(horseId);
+ const match=/^H-FICTIONAL-1999-(BROODMARES|STALLIONS|YEARLINGS|TWOYEAROLDPROSPECTS|THREEYEAROLDRUNNERS|FOURYEAROLDRUNNERS|FIVEPLUSRUNNERS)-(\d{7})$/.exec(horseId);
  if(!match)return null;
  const names=['broodmares','stallions','yearlings','twoYearOldProspects',
   'threeYearOldRunners','fourYearOldRunners','fivePlusRunners'];
