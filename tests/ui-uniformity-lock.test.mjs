@@ -89,10 +89,12 @@ test('Office Career is its own source-backed career and save view, never World s
  assert.match(page,/gameplayService\?\.state/);
  assert.match(page,/const person=recorded/);
  assert.match(page,/const role=recorded/);
- assert.match(page,/PLAYER CAREER & WORLD STATUS/);
+ assert.match(page,/MANAGER CAREER & OPERATION/);
  assert.match(page,/managerRecordViewControl\('Office','Career'\)/);
  assert.match(page,/data-ng="commercial-career-open"/);
- assert.match(page,/Missing identity, history, finances and achievements are not invented/);
+ assert.match(page,/Not recorded/);
+ assert.match(page,/No urgent decisions are recorded/);
+ assert.match(page,/const action=messages\.filter\(m=>m\.urgent&&!m\.resolved\)/);
  assert.doesNotMatch(page,/globalSearchItems\(|fakeCareer|mockPlayer/);
  assert.match(js,/section==='Office'&&page==='Career'\)return managerCareerView\(\)/);
 });
