@@ -318,7 +318,7 @@ print('LOGO-SOURCED ENTITY ATMOSPHERE verified in Chromium:',palette_rows)
 import struct,zlib
 def png_scanlines(path):
  source=Path(path).read_bytes()
- assert source[:8]==b'\\x89PNG\\r\\n\\x1a\\n',(path,'Not PNG')
+ assert source[:8]==b'\x89PNG\r\n\x1a\n',(path,'Not PNG')
  off=8;idat=bytearray();size=None
  while off<len(source):
   count=int.from_bytes(source[off:off+4],'big')
