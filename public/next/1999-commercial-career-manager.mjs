@@ -15,7 +15,7 @@ import {TRACK_PROGRAM_1999} from '/next/1999-track-program.mjs';
 import {createFictionalWorldNameEngine}
  from '/1999/engine/fictional-world-name-engine.mjs';
 import {readPersistent1999HorseProfile,readPersistent1999IndustryBatch,
- readPersistent1999Directory}
+ readPersistent1999Directory,findPersistent1999Person}
  from '/1999/engine/fictional-industry-persistence-1999.mjs';
 
 const DB_NAME='WireToWireClean1999CareersV2';
@@ -234,7 +234,8 @@ async function browseFullIndustry(page=0,kind=industryBrowseKind){
    fmt(first+records.length)+' OF '+fmt(count)+'</p>'+records.map(e=>
    '<div class="wtw-cc-slot"><strong>'+esc(e.name||e.id)+'</strong> · '+
    esc(e.id)+' · '+esc(Object.entries(e.ratings).slice(0,3)
-    .map(([k,v])=>k+': '+v).join(' / '))+'</div>').join('');
+    .map(([k,v])=>k+': '+v).join(' / '))+
+    ' <button data-cc-action="inspect-listed-entity" data-id="'+esc(e.id)+'">PROFILE</button></div>').join('');
   return;
  }
  industryBrowseKind=kind;
@@ -268,8 +269,9 @@ async function browseFullIndustry(page=0,kind=industryBrowseKind){
      esc(kind==='horseBatches'?h.cohort:h.role)+' · '+
      esc(kind==='horseBatches'?h.sex:h.tier)+' · '+
      esc(kind==='horseBatches'?h.foalYear:h.workplaceId)+
-     (kind==='horseBatches'?'<button data-cc-action="inspect-listed-horse" data-id="'+
-      esc(h.id)+'">PROFILE</button>':'')+'</div>';
+     (kind==='horseBatches'||kind==='personBatches'?'<button data-cc-action="'+
+      (kind==='horseBatches'?'inspect-listed-horse':'inspect-listed-person')+
+      '" data-id="'+esc(h.id)+'">PROFILE</button>':'')+'</div>';
    }).join('')+'</div>';
  }finally{store.close()}
 }
@@ -277,6 +279,12 @@ async function inspectFullIndustryHorse(horseId){
  if(!fullIndustryManifest)throw Error('Open the full industry first');
  const store=await open1999IndustryDatabase();
  try{return await readPersistent1999HorseProfile(store,fullIndustryManifest,horseId)}
+ finally{store.close()}
+}
+async function inspectFullIndustryPerson(personId){
+ if(!fullIndustryManifest)throw Error('Open the full industry first');
+ const store=await open1999IndustryDatabase();
+ try{return await findPersistent1999Person(store,fullIndustryManifest,personId)}
  finally{store.close()}
 }
 let busy=false,notice='';
@@ -414,6 +422,25 @@ async function perform(action,element){
  }
  if(action==='industry-prev'||action==='industry-next'){
   await browseFullIndustry(industryBrowsePage+(action==='industry-next'?1:-1));
+  return;
+ }
+ if(action==='inspect-listed-person'){
+  const p=await inspectFullIndustryPerson(element.dataset.id);
+  if(!p)throw Error('Selected person missing from saved 1999 world');
+  notice='PERSON PROFILE · '+p.name+' · '+p.id+' · '+p.role+' / '+p.tier+
+   ' · born '+p.dateOfBirth+' · '+p.birthplace?.city+', '+
+   p.birthplace?.region+' ('+p.birthCountryCode+')'+
+   ' · age '+p.ageAtOpening+' · works at '+p.workplaceId+
+   ' · RATINGS '+Object.entries(p.ratings||{}).map(([k,v])=>k+':'+v).join(', ');
+  return;
+ }
+ if(action==='inspect-listed-entity'){
+  const e=industryDirectory.find(x=>x.id===element.dataset.id);
+  if(!e)throw Error('Selected organization or track missing');
+  notice='INDUSTRY PROFILE · '+(e.name||e.id)+' · '+e.id+
+   ' · location '+(e.location?.city||e.location?.region||'To be modeled')+
+   ' · RATINGS '+Object.entries(e.ratings||{}).map(([k,v])=>k+':'+v).join(', ')+
+   ' · LINKS '+(e.relationships||[]).map(r=>r.type+':'+r.toId).join(', ');
   return;
  }
  if(action==='inspect-listed-horse'){
