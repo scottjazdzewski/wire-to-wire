@@ -1,0 +1,107 @@
+name: Wire to Wire Windows Desktop EXE
+
+on:
+  pull_request:
+    paths:
+      - 'desktop/**'
+      - 'public/next/**'
+      - 'public/1999/**'
+      - 'scripts/windows-desktop-smoke.ps1'
+      - 'scripts/build-wtw-desktop-icon.py'
+      - 'tests/desktop-g1-local-content.test.cjs'
+      - '.github/workflows/windows-desktop-exe.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'desktop/**'
+      - 'public/next/**'
+      - 'public/1999/**'
+      - 'scripts/windows-desktop-smoke.ps1'
+      - 'scripts/build-wtw-desktop-icon.py'
+      - 'tests/desktop-g1-local-content.test.cjs'
+      - '.github/workflows/windows-desktop-exe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-executable:
+    name: Portable EXE and Windows Installer
+    runs-on: windows-latest
+    timeout-minutes: 35
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: 'false'
+    steps:
+      - name: Check out one authoritative Wire to Wire game
+        uses: actions/checkout@v4
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Use Python for build-time icon conversion only
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare approved application icon from official game artwork
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check Pillow
+          python scripts/build-wtw-desktop-icon.py
+          if(!(Test-Path desktop/assets/wtw-app.ico)){throw "Windows application icon missing"}
+      - name: Validate one offline app protocol and source-backed G1 shell
+        shell: pwsh
+        run: |
+          node --test tests/desktop-g1-local-content.test.cjs
+          node --check desktop/main.cjs
+          node --check desktop/preload.cjs
+          node --check desktop/local-content.cjs
+      - name: Install development-only Electron packager dependencies
+        shell: pwsh
+        run: npm install --prefix desktop --no-audit --no-fund
+      - name: Package unsigned portable EXE and conventional setup EXE
+        shell: pwsh
+        run: npm run build:windows --prefix desktop
+      - name: Confirm both distinct Windows executables exist
+        shell: pwsh
+        run: |
+          $setup=Get-ChildItem dist/windows -Filter 'WireToWire-Setup-*.exe' | Select-Object -First 1
+          $portable=Get-ChildItem dist/windows -Filter 'WireToWire-Portable-*.exe' | Select-Object -First 1
+          $unpacked='dist/windows/win-unpacked/Wire to Wire.exe'
+          if(!$setup -or !$portable -or !(Test-Path $unpacked)){
+            Get-ChildItem dist/windows -Recurse | Select-Object FullName,Length
+            throw 'Portable, Setup and unpacked app are all required'
+          }
+          Write-Host "WTW_DESKTOP_BOTH_EXE_TARGETS_PASS"
+          Write-Host "Portable EXE: $($portable.FullName)"
+          Write-Host "Installer EXE: $($setup.FullName)"
+      - name: Run real desktop process twice without installed game or remote browser
+        shell: pwsh
+        run: |
+          ./scripts/windows-desktop-smoke.ps1 -Executable (Resolve-Path 'dist/windows/win-unpacked/Wire to Wire.exe').Path -EvidenceDir (Join-Path $PWD 'dist/evidence') -TargetLabel 'unpacked'
+      - name: Run portable EXE directly with no installation and verify reopen
+        shell: pwsh
+        run: |
+          $portable=Get-ChildItem dist/windows -Filter 'WireToWire-Portable-*.exe' | Select-Object -First 1
+          ./scripts/windows-desktop-smoke.ps1 -Executable $portable.FullName -EvidenceDir (Join-Path $PWD 'dist/portable-evidence') -TargetLabel 'portable'
+      - name: Preserve both EXEs for immediate Windows download
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: WireToWire-Windows-Portable-and-Setup
+          path: |
+            dist/windows/WireToWire-Portable-*.exe
+            dist/windows/WireToWire-Setup-*.exe
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Preserve packaged Windows test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: WireToWire-Windows-Real-Launch-QA
+          path: |
+            dist/evidence/*.json
+            dist/portable-evidence/*.json
+          if-no-files-found: warn
+          retention-days: 14
