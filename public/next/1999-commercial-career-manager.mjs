@@ -198,6 +198,9 @@ async function industryDirectories(seed=19990101){
    return {id:t.id,name:t.name,location:{city:g.city_locality,
     region:g.state_province_region,country:g.country,
     metro:g.metro_or_subregion||null,circuit:g.macro_circuit||null},
+    physicalTrackId:t.physicalTrackId||t.id,
+    venueType:t.venueType||'PHYSICAL_RACECOURSE',
+    physicalFacilityStatus:t.physicalFacilityStatus||'STANDALONE_FACILITY',
     geographyProvenance:g.geography_status};
   });
  if(!tracks.length)throw Error('No approved operating 1999 tracks');
