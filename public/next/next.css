@@ -3555,10 +3555,9 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
   z-index:0!important;
   border:0!important;
   border-radius:50%!important;
+  /* Neutral ink-well keeps vivid cyan/green wordmarks visible on colored heroes. */
   background:radial-gradient(ellipse at center,
-    color-mix(in srgb,var(--wtw-id-bright,#b3d2c5) 23%,transparent),
-    color-mix(in srgb,var(--wtw-id-base,#56726b) 11%,transparent) 40%,
-    transparent 72%)!important;
+    rgba(3,10,15,.90) 2%,rgba(4,12,17,.62) 42%,transparent 74%)!important;
   filter:blur(9px)!important;
   pointer-events:none!important;
 }
