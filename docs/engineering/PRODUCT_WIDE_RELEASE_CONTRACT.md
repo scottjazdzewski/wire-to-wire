@@ -3,6 +3,20 @@ Effective: November 14, 2026. Applies to EVERY engineering window, every file, b
 
 **This is a commercial software product, not a series of separate chat mockups.** Work must preserve what has already been approved and the one real saveable management game.
 
+## Mandatory distribution destination: self-contained Windows EXE, not hosted gameplay
+
+**Wire to Wire is an offline-first, installable, single-player Windows desktop game.** Every engineering window builds toward one signed downloadable setup EXE that installs a local game with no mandatory Cloudflare, GitHub, browser tab, account, external server or internet connection during normal career play. The future website is for promotion, commerce, installers, support and optional signed updates.
+
+Decision and migration authority: `docs/engineering/WTW_DESKTOP_FIRST_COMMERCIAL_ARCHITECTURE.md`.
+
+- Keep the ONE existing approved `/next/` presentation and one canonical JavaScript gameplay engine. HTML/CSS/JS are legitimate bundled desktop UI technologies; the browser-preview deployment is a temporary development surface, not the shipping game.
+- New game features MUST work through local/offline engine and content contracts. Do not add mandatory D1, remote API, CDN, AI or Cloudflare runtime dependencies; existing dependencies must be tracked and retired before retail certification.
+- Ship a complete approved read-only historical/content pack, not an authenticated Cloudflare admin client. The private history correction/approval desk stays outside the player binary.
+- Player careers and permanent race results belong in durable per-user local storage with versioning, export/import, atomicity, backups and migrations. Current IndexedDB and `.wtwsave` compatibility is preserved while migrating to a desktop-owned save authority.
+- Keep the developer website and testing pipelines working until the actual packaged app has data, UI and save parity. **A green web deploy or Chromium page smoke test is not a commercial EXE certification.**
+- No mass UI rewrite, parallel renderer or second simulation in the course of packaging. Desktop packaging, offline source reads and save migration are separately testable milestones with explicit rollback.
+- All PRs must declare desktop compatibility; before commercial release, a real Windows install/launch/offline/save/exit/relaunch/update test suite must pass.
+
 ## Universal rule: nothing solved gets silently undone
 
 1. Start from the newest `main` and use a small, isolated branch. Recheck main and retest before merging; other windows are working concurrently.
