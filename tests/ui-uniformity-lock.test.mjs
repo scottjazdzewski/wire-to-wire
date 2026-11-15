@@ -156,8 +156,8 @@ test('Career dossier uses only current-save identity, actionable Office cases, f
  assert.match(css,/#wtwNextgen \.ng-career-facts/);
 });
 test('Today priority facts retain their complete recorded values for inspection',()=>{
- assert.match(js,/title="\\$\\{safe\(f\[0\]\+': '\+f\[1\]\)\\}"/);
- assert.match(js,/aria-label="\\$\\{safe\(f\[0\]\+': '\+f\[1\]\)\\}"/);
+ assert.ok(js.includes('title="${safe(f[0]+'), 'Today fact title lacks the original source');
+ assert.ok(js.includes('aria-label="${safe(f[0]+'), 'Today fact aria label lacks the original source');
 });
 test('Stable Training opens the real simulation training desk and has a working back-to-roster action',()=>{
  const start=js.indexOf('function liveStableTrainingView(){');
