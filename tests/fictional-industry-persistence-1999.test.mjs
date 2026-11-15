@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {createPersistent1999Industry,readPersistent1999IndustryBatch,findPersistent1999Horse,
  updatePersistent1999Horse,readPersistent1999HorseProfile,
  savePersistent1999CareerRun,loadPersistent1999CareerRun,
- readPersistent1999Directory,verifyPersistent1999WorldOpen}
+ readPersistent1999Directory,verifyPersistent1999WorldOpen,
+ reopenPersistent1999Industry}
  from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
 function memoryStore(){
  const data={manifests:new Map(),horseBatches:new Map(),personBatches:new Map(),horseEdits:new Map(),careerRuns:new Map(),directory:new Map(),coveringBatches:new Map(),calendarBatches:new Map()};
@@ -28,8 +29,14 @@ const dirs={farms:[{id:'O-FARM-1',location:{country:'USA'}}],
 test('full 1999 industry persists and reopens exactly without regeneration',async()=>{
  const store=memoryStore();
  const params={store,seed:19990101,worldId:'FullTest',...dirs,batchSize:4000};
+ assert.equal(await reopenPersistent1999Industry(store,{seed:params.seed,
+  worldId:params.worldId}),null);
  const a=await createPersistent1999Industry(params);
  assert.equal(a.status,'COMPLETE');
+ const reopened=await reopenPersistent1999Industry(store,{seed:params.seed,
+  worldId:params.worldId});
+ assert.equal(reopened.status,'READY');
+ assert.deepEqual(reopened.manifest,a);
  const certificate=await verifyPersistent1999WorldOpen(store,a);
  assert.equal(certificate.status,'OPEN_VERIFIED');
  assert.equal(certificate.horses,a.horseCount);
@@ -92,6 +99,8 @@ test('interrupted industry genesis resumes at committed checkpoint',async()=>{
  await assert.rejects(createPersistent1999Industry({...params,store:interrupted}),/Simulated crash/);
  const saved=await store.get('manifests','ResumeTest:19990102');
  assert.equal(saved.status,'GENERATING');
+ assert.equal((await reopenPersistent1999Industry(store,{seed:params.seed,
+  worldId:params.worldId})).status,'GENERATING');
  assert.equal(saved.horseBatchesCommitted,2);
  const done=await createPersistent1999Industry({...params,store});
  assert.equal(done.status,'COMPLETE');
