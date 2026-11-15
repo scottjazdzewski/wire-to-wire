@@ -16,9 +16,12 @@ function option(name){
  const item=args.find(a=>a.startsWith(flag));
  return item?item.slice(flag.length):null;
 }
-const smokePhase=option('wtw-smoke');
-const smokeReport=option('wtw-smoke-report');
-const smokeUserData=option('wtw-smoke-user-data');
+// The portable Windows wrapper may not forward process arguments. The test
+// runner also uses inherited environment variables, which reach the extracted
+// Electron child without requiring an installer or a launcher rewrite.
+const smokePhase=option('wtw-smoke')||process.env.WTW_SMOKE_PHASE||null;
+const smokeReport=option('wtw-smoke-report')||process.env.WTW_SMOKE_REPORT||null;
+const smokeUserData=option('wtw-smoke-user-data')||process.env.WTW_SMOKE_USER_DATA||null;
 app.setName('Wire to Wire');
 if(smokeUserData){
  const userPath=path.resolve(smokeUserData);
