@@ -4168,6 +4168,9 @@ function managerCareerView(){
  const person=recorded(player.name||player.personName||player.personId);
  const role=recorded(player.role),operation=recorded(player.organizationName||player.operationName||org.name);
  const seed=recorded(profile.seed??world.seed);
+ const managerLine=person==='Not recorded'&&role==='Not recorded'?'Manager and position not recorded':
+  person==='Not recorded'?'Manager not recorded · '+role:
+  role==='Not recorded'?person+' · Position not recorded':person+' · '+role;
  const metric=(heading,value)=>'<div class="ng-manager-metric"><small>'+safe(heading)+
   '</small><strong>'+safe(value)+'</strong></div>';
  const fact=(name,value)=>'<div class="ng-career-fact"><dt>'+safe(name)+
@@ -4182,6 +4185,12 @@ function managerCareerView(){
   '<span><strong>'+safe(m.title)+'</strong><small>'+safe(m.from||'Office')+
   ' · '+safe(m.meta||'Source-linked management file')+'</small></span>'+
   '<span class="ng-manager-case-state">ACTION</span></button>').join('');
+ const officeUpdates=messages.filter(m=>!m.urgent||m.resolved).slice(0,3).map(m=>
+  '<button type="button" class="ng-manager-case ng-career-update" data-ng="case" data-val="'+safe(m.case)+'">'+
+  '<span class="ng-manager-case-indicator"></span>'+
+  '<span><strong>'+safe(m.title)+'</strong><small>'+safe(m.from||'Office')+
+  ' · '+safe(m.meta||'Source-linked correspondence')+'</small></span>'+
+  '<span class="ng-manager-case-state">'+(m.resolved?'REVIEWED':'INFO')+'</span></button>').join('');
  const next=follow.slice(0,4).map(f=>
   '<button class="ng-manager-case" type="button" data-ng="followup" data-val="'+safe(f.id)+'">'+
   '<span>'+glyph('folder',14)+'</span><span><strong>'+safe(f.caseTitle||f.caseId||'Follow-up')+
@@ -4205,7 +4214,7 @@ function managerCareerView(){
   organizationLogoMarkup(org.id,org.name,'stable',true,false)+
   '<div class="ng-career-identity-copy"><small>ACTIVE RACING OPERATION</small>'+
   '<h3>'+safe(operation)+'</h3>'+
-  '<p>'+safe(person)+' · '+safe(role)+' · '+safe(date)+'</p></div>'+
+  '<p>'+safe(managerLine)+' · '+safe(date)+'</p></div>'+
   '<button type="button" data-ng="organization">OPEN OPERATION '+glyph('right',13)+'</button></div>'+
   '<dl class="ng-career-facts">'+
   fact('MANAGER',person)+fact('POSITION',role)+fact('WORLD',mode)+
@@ -4220,6 +4229,10 @@ function managerCareerView(){
   follow.length+' OPEN · '+due.length+' DUE</span></header>'+
   '<div class="ng-career-followups" role="region" tabindex="0" aria-label="Recorded career follow-up actions">'+
   (next||'<p class="ng-manager-empty">No dated follow-ups recorded in this career.</p>')+
+  '</div>'+
+  '<header class="ng-career-section-title"><strong>OFFICE UPDATES</strong><span>RECORDED CORRESPONDENCE</span></header>'+
+  '<div class="ng-career-followups" role="region" tabindex="0" aria-label="Informational Office reports">'+
+  (officeUpdates||'<p class="ng-manager-empty">No additional informational reports recorded.</p>')+
   '</div></section>'+
   '<aside class="ng-manager-sidebar"><section class="ng-manager-secondary">'+
   '<header><strong>CAREER MANAGEMENT</strong><span>LOCAL SAVE CONTROLS</span></header>'+
@@ -4228,7 +4241,7 @@ function managerCareerView(){
   '<span>'+glyph('save',14)+'</span><span><strong>WORLD & COMPACT SAVE MANAGER</strong>'+
   '<small>Inspect, save, load or export local careers</small></span>'+
   '<span>'+glyph('right',13)+'</span></button>'+
-  '<p class="ng-manager-empty">Reviewing this manager does not overwrite the active career. A new world or different save must be confirmed.</p>'+
+  '<p class="ng-manager-empty">Review only. Creating or loading a different world requires confirmation.</p>'+
   '</div></section>'+
   '<section class="ng-manager-secondary"><header><strong>WORKING DESKS</strong>'+
   '<span>EXISTING GAME SCREENS</span></header><div class="ng-manager-secondary-list">'+
