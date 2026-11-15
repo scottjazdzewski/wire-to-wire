@@ -39,6 +39,16 @@ test('dominant identity swatch comes directly from a visible logo pixel',()=>{
  assert.equal(p?.bright,'#C3A43C');
  assert.equal(p?.source,'logo-pixels');
 });
+test('authentic very dark saturated logo ink is retained instead of becoming neutral',()=>{
+ const ink=artwork([
+  ...Array.from({length:80},()=>[0,57,41]),
+  ...Array.from({length:16},()=>[15,231,28]),
+  ...Array.from({length:110},()=>[0,0,0,0])
+ ]);
+ const chosen=paletteFromImageData(ink);
+ assert.equal(chosen?.base,'#003929');
+ assert.equal(chosen?.bright,'#0FE71C');
+});
 test('logos with a white matte, monochrome ink or transparent canvas receive no made-up brand',()=>{
  assert.equal(paletteFromImageData(artwork(Array.from({length:40},()=>[255,255,255]))),null);
  assert.equal(paletteFromImageData(artwork(Array.from({length:40},()=>[0,0,0]))),null);
