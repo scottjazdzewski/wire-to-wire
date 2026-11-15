@@ -5,7 +5,7 @@ import {createGameRun,validateGameRun} from '../game/state.js';
 export const FICTIONAL_1999_CAREER_BRIDGE_SCHEMA='WTW_FICTIONAL_1999_CAREER_BRIDGE_V1';
 export async function createFictional1999GameRun({
  seed=19990101,worldId='WTW1999Industry',tracks,foundationHorses=[],
- horseCount=10000,trainersPerTrack=4,jockeysPerTrack=3,ownersPerTrack=8,
+ horseCount=20000,trainersPerTrack=4,jockeysPerTrack=3,ownersPerTrack=8,
  playerRole='owner',involvement='balanced',
  horseNameProvider,personOrganizationNameProvider
 }={}){
