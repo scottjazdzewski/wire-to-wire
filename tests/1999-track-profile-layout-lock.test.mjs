@@ -51,7 +51,7 @@ test('game-planned stakes have a human-readable grade badge, never a leaking int
 test('facility desktop columns allocate readable room and preserve source tooltips',()=>{
  assert.match(css,/ng-facility-records :is\(\.ng-stakes-head,\.ng-stakes-data\)\{grid-template-columns:/);
  assert.match(css,/minmax\(0,1\.43fr\)!important/);
- assert.match(js,/const cells=cols\.map\(v=>'<span title="/);
+ assert.match(ui,/const cells=cols\.map\(v=>'<span title="/);
 });
 test('real track brand colors come from actual approved logo pixels, not a guessed palette',()=>{
  assert.match(theme,/paletteFromImageData/);
