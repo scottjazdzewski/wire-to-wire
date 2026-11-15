@@ -1595,7 +1595,9 @@ async function answerTrainerRequest(requestId,choice){
 function center(){
  const d=currDesk(),messages=currentMessages(),resolved=d.receipt;
  const index=messages.findIndex(m=>m.case===APP.activeCase)+1;
+ const actionCount=messages.filter(m=>m.urgent&&!m.resolved).length;
  const msg=messages[index-1],source=d.source||'Stable Office';
+ const priorityState=msg?.resolved?'REVIEWED':msg?.urgent?'ACTION REQUIRED':'INFORMATION';
  const isDecision=Boolean(resolved||d.moves.some(m=>m.optionId));
  const moves=resolved
   ?`<div class="ng-resolved"><div class="ng-resolution-title">${glyph('check',16)} ${safe(resolved.choiceTitle)}</div><div class="ng-outtext">Recorded on ${safe(resolved.date)}</div><div class="ng-outcome-actions"><button class="ng-nextopen" data-ng="nextopen">NEXT OPEN CASE ${glyph('right',13)}</button></div></div>`
@@ -1604,7 +1606,7 @@ function center(){
    :m.optionId
    ?`data-ng="answer-decision" data-decision="${safe(APP.activeCase)}" data-val="${safe(m.optionId)}" ${APP.decisionPending?'disabled':''}`
    :`data-ng="menu" data-val="${safe(m.menu)}"`}><span class="ng-move-number">0${i+1}</span><span class="ng-move-body"><span class="ng-movetag">${safe(m.tag)}</span><strong>${safe(m.title)}</strong></span><span class="ng-movearrow">${glyph('right',17)}</span></button>`).join('');
-return `<section class="ng-main"><section class="ng-card ng-feature"><header class="ng-cardhead"><span class="ng-sectionicon gold">${glyph('folder',17)}</span><div class="ng-headinggroup"><h3>Decision Desk</h3><span>THE MANAGER'S PRIORITY FILE</span></div><button class="ng-org-chip" data-ng="organization" aria-label="Open organization overview; available cash ${safe(cashDisplay())}" title="View your racing operation and available cash">${organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',false,true)}<span class="ng-org-chip-cash"><small>CASH</small><strong>${safe(cashDisplay())}</strong></span></button><div class="ng-case-navigation"><div class="ng-case-pips" aria-label="Select today's case">${messages.map((m,i)=>`<button type="button" data-ng="case" data-val="${safe(m.case)}" class="ng-case-pip ${m.case===APP.activeCase?'on':''} ${m.resolved?'reviewed':m.urgent?'priority':''}" title="${safe(m.title)}${m.resolved?' — Reviewed':''}" aria-label="Case ${i+1}: ${safe(m.title)}" aria-current="${m.case===APP.activeCase?'true':'false'}"></button>`).join('')}</div><span class="ng-case-position"><span class="ng-live-dot"></span>${String(index).padStart(2,'0')} / ${String(messages.length).padStart(2,'0')}</span><div class="ng-case-arrows"><button type="button" data-ng="caseprev" aria-label="Previous decision" title="Previous case">${glyph('left',13)}</button><button type="button" data-ng="casenext" aria-label="Next decision" title="Next case">${glyph('right',13)}</button></div></div></header><div class="ng-featurebody"><div class="ng-case"><div class="ng-case-eyebrow"><span></span>${safe(d.type)} <i>·</i> ${safe(msg?.from||source)}</div><div class="ng-casetitle ng-static-title"><h2>${safe(d.title)}</h2></div><p class="ng-case-summary">${safe(d.summary)}</p><div class="ng-facts">${[['Pressure',d.pressure],['Primary risk',d.risk],['Manager read',d.read]].map((f,i)=>`<div class="ng-fact ng-fact-${i}"><small>${safe(f[0])}</small><b>${safe(titleCaseOfficeFact(f[1]))}</b></div>`).join('')}</div><div class="ng-caseactions">${isDecision?'':`<button data-ng="action" data-val="Open file">REVIEW FULL FILE ${glyph('arrow',14)}</button>`}</div></div><div class="ng-featurephoto">${decisionScene(d)}</div></div></section><div class="ng-centerbottom"><section class="ng-card ng-intel"><header class="ng-cardhead"><span class="ng-sectionicon">${glyph('sparkle',16)}</span><div class="ng-headinggroup"><h3>Intelligence</h3><span>${d.intel.length} SOURCE READS</span></div>${isDecision?'':`<button class="ng-cardlink" data-ng="action" data-val="Open current source">${safe(source)} ${glyph('arrow',12)}</button>`}</header><div class="ng-intelgrid">${d.intel.map((item,i)=>`<button class="ng-intelitem ng-intel-${i%4}" data-ng="intel" data-val="${i}"><span class="ng-intel-kicker" aria-label="Source ${i+1}"><span class="ng-intel-marker"></span>0${i+1}</span><b>${safe(item.title)}</b><p>${safe(item.body)}</p></button>`).join('')}</div></section><section class="ng-card ng-choices"><header class="ng-cardhead"><span class="ng-sectionicon gold">${glyph('flag',16)}</span><div class="ng-headinggroup"><h3>${isDecision?'Your Call':'Explore the World'}</h3><span>${isDecision?'MANAGEMENT DECISION':'JANUARY 1999 TEST NAVIGATION'}</span></div><span class="ng-choice-count">${resolved?'RECORDED':`${d.moves.length} OPTIONS`}</span></header><div class="ng-moves">${moves}${APP.decisionError?`<p class="ng-save-error" role="alert">${safe(APP.decisionError)}</p>`:''}</div></section></div></section>`;
+return `<section class="ng-main"><section class="ng-card ng-feature"><header class="ng-cardhead"><span class="ng-sectionicon gold">${glyph('folder',17)}</span><div class="ng-headinggroup"><h3>Decision Desk</h3><span>${actionCount} ACTION FILES · ${dueActions().length} FOLLOW-UPS DUE</span></div><button class="ng-org-chip" data-ng="organization" aria-label="Open organization overview; available cash ${safe(cashDisplay())}" title="View your racing operation and available cash">${organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',false,true)}<span class="ng-org-chip-cash"><small>CASH</small><strong>${safe(cashDisplay())}</strong></span></button><div class="ng-case-navigation"><div class="ng-case-pips" aria-label="Select today's case">${messages.map((m,i)=>`<button type="button" data-ng="case" data-val="${safe(m.case)}" class="ng-case-pip ${m.case===APP.activeCase?'on':''} ${m.resolved?'reviewed':m.urgent?'priority':''}" title="${safe(m.title)}${m.resolved?' — Reviewed':''}" aria-label="Case ${i+1}: ${safe(m.title)}" aria-current="${m.case===APP.activeCase?'true':'false'}"></button>`).join('')}</div><span class="ng-case-position"><span class="ng-live-dot"></span>${String(index).padStart(2,'0')} / ${String(messages.length).padStart(2,'0')}</span><div class="ng-case-arrows"><button type="button" data-ng="caseprev" aria-label="Previous decision" title="Previous case">${glyph('left',13)}</button><button type="button" data-ng="casenext" aria-label="Next decision" title="Next case">${glyph('right',13)}</button></div></div></header><div class="ng-featurebody"><div class="ng-case"><div class="ng-case-eyebrow"><span></span>${safe(priorityState)} <i>·</i> ${safe(d.type)} <i>·</i> ${safe(msg?.from||source)}</div><div class="ng-casetitle ng-static-title"><h2>${safe(d.title)}</h2></div><p class="ng-case-summary">${safe(d.summary)}</p><div class="ng-facts">${[['Pressure',d.pressure],['Primary risk',d.risk],['Manager read',d.read]].map((f,i)=>`<div class="ng-fact ng-fact-${i}"><small>${safe(f[0])}</small><b>${safe(titleCaseOfficeFact(f[1]))}</b></div>`).join('')}</div><div class="ng-caseactions">${isDecision?'':`<button data-ng="action" data-val="Open file">REVIEW FULL FILE ${glyph('arrow',14)}</button>`}</div></div><div class="ng-featurephoto">${decisionScene(d)}</div></div></section><div class="ng-centerbottom"><section class="ng-card ng-intel"><header class="ng-cardhead"><span class="ng-sectionicon">${glyph('sparkle',16)}</span><div class="ng-headinggroup"><h3>Intelligence</h3><span>${d.intel.length} SOURCE READS</span></div>${isDecision?'':`<button class="ng-cardlink" data-ng="action" data-val="Open current source">${safe(source)} ${glyph('arrow',12)}</button>`}</header><div class="ng-intelgrid">${d.intel.map((item,i)=>`<button class="ng-intelitem ng-intel-${i%4}" data-ng="intel" data-val="${i}"><span class="ng-intel-kicker" aria-label="Source ${i+1}"><span class="ng-intel-marker"></span>0${i+1}</span><b>${safe(item.title)}</b><p>${safe(item.body)}</p></button>`).join('')}</div></section><section class="ng-card ng-choices"><header class="ng-cardhead"><span class="ng-sectionicon gold">${glyph('flag',16)}</span><div class="ng-headinggroup"><h3>${isDecision?'Your Call':'Explore the World'}</h3><span>${isDecision?'MANAGEMENT DECISION':'JANUARY 1999 TEST NAVIGATION'}</span></div><span class="ng-choice-count">${resolved?'RECORDED':`${d.moves.length} OPTIONS`}</span></header><div class="ng-moves">${moves}${APP.decisionError?`<p class="ng-save-error" role="alert">${safe(APP.decisionError)}</p>`:''}</div></section></div></section>`;
 }
 function right(){const horses=horseRows(),races=racingRows();const leads=document.querySelectorAll('.app .oppList .oppItem').length;const entered=races.filter(r=>/entered/i.test(r.status)).length;
 return `<aside class="ng-right"><section class="ng-card ng-roster"><header class="ng-cardhead"><span class="ng-badge-slot" aria-hidden="true"><img class="ng-headicon" src="${badge('horse')}" alt=""/></span><div class="ng-headinggroup"><h3>Stable Roster</h3><span>${horses.length} HORSES · CURRENT ACTIVITY</span></div><button class="ng-cardlink" data-ng="menu" data-val="Stable">ALL ${glyph('arrow',12)}</button></header><div class="ng-rostercolumns"><span>HORSE / ACTIVITY</span><span>STATUS</span></div><div class="ng-rosterrows">${horses.length?horses.map(h=>`<button class="ng-rosterrow" aria-label="Open horse profile: ${safe(h.name)}" data-ng="horse" data-val="${safe(h.name)}"><span class="ng-rostername">${horseOwnerBadge(h.name)}${safe(h.name)}</span><span class="ng-horseact">${safe(h.activity)}</span><span class="ng-rostertag">${safe(h.tag)}</span></button>`).join(''):'<div class="ng-rail-empty">No horses are listed for this stable yet.</div>'}</div></section><section class="ng-card ng-races"><header class="ng-cardhead"><span class="ng-badge-slot" aria-hidden="true"><img class="ng-headicon" src="${badge('meet_schedule')}" alt=""/></span><div class="ng-headinggroup"><h3>Race Schedule</h3><span>UPCOMING ENTRIES & TARGETS</span></div><button class="ng-cardlink" data-ng="menu" data-val="Racing">FULL ${glyph('arrow',12)}</button></header><div class="ng-entrycolumns"><span>DATE</span><span>HORSE / RACECOURSE</span><span>STATUS</span></div><div class="ng-entrylist">${races.length?races.map((r,i)=>`<button class="ng-entryrow" aria-label="Open race target: ${safe(r.name)} at ${safe(r.track)}" data-ng="fixture" data-val="${i}"><span class="ng-entrydate">${safe(r.date)}</span><span class="ng-entrycopy"><b>${horseOwnerBadge(r.name)}${safe(r.name)}</b><span><i class="ng-flag-us" aria-label="United States" role="img"></i> ${safe(r.track)}</span></span><span class="ng-entrytag"><b>${safe(r.tag)}</b><small class="${/entered/i.test(r.status)?'entered':''}">${safe(r.status.replace('·','').trim())}</small></span></button>`).join(''):'<div class="ng-rail-empty">No upcoming race targets are currently recorded.</div>'}</div></section><button class="ng-leads" data-ng="custom" data-val="Opportunities"><span class="ng-lead-star">${glyph('sparkle',16)}</span><strong>OPPORTUNITIES</strong><span>${leads?`${leads} CURRENT LEADS`:"NO CURRENT LEADS"}</span>${glyph('right',16)}</button></aside>`;
@@ -4152,13 +4154,17 @@ function stableOperationsView(page){
 }
 /* Player career is an operational dossier, not the World directory.
  * Read only the existing career record; missing values stay unknown. */
+/* The Career screen is a player's actual management dossier, never a
+ * narrative biography assembled from missing seed data. Every number, link
+ * and date below derives from the active local career or Office projection. */
 function managerCareerView(){
  const game=state(),live=window.__WTW_1999_UI_DATA__?.gameplayService?.state||{};
  const player=live.player||game.player||{};
  const world=game.worldAnchor||{};
  const profile=world.worldProfile||{};
  const date=depGameDay(),horses=horseRows();
- const pending=currentMessages().filter(m=>!m.resolved);
+ const pending=currentMessages().filter(m=>!m.resolved),actionable=pending.filter(m=>m.urgent);
+ const due=dueActions();
  const recorded=(v)=>v===undefined||v===null||v===''?'Not recorded':String(v);
  const worldMode=profile.mode||world.mode;
  const label=worldMode==='FOUNDING_1999'?'Founding 1999':recorded(worldMode);
@@ -4169,14 +4175,16 @@ function managerCareerView(){
  const money=availableCash();
  const metric=(heading,value)=>'<div class="ng-manager-metric"><small>'+safe(heading)+
   '</small><strong>'+safe(value)+'</strong></div>';
- const cell=(title,value)=>'<div class="ng-manager-row" role="row">'+
-  '<span class="ng-manager-row-type">CAREER</span>'+
-  '<span class="ng-manager-row-name"><strong>'+safe(title)+'</strong></span>'+
-  '<span class="ng-manager-row-detail">'+safe(value)+'</span>'+
-  '<span class="ng-manager-row-context">SOURCE RECORD</span></div>';
+ const field=(title,value)=>'<div class="ng-career-field"><small>'+safe(title)+'</small>'+
+  '<strong>'+safe(value)+'</strong></div>';
  const go=(section,title,description)=>'<button type="button" class="ng-manager-case" data-ng="menu" data-val="'+section+'">'+
   '<span>'+glyph('folder',14)+'</span><span><strong>'+title+'</strong><small>'+
   description+'</small></span><span>'+glyph('right',13)+'</span></button>';
+ const files=actionable.slice(0,4).map(m=>
+  '<button class="ng-career-attention-row" type="button" data-ng="case" data-val="'+safe(m.case)+'">'+
+  '<span class="ng-career-alert-mark" aria-hidden="true"></span><span>'+
+  '<strong>'+safe(m.title||'Office file')+'</strong><small>'+safe(m.from||'Office')+
+  ' · '+safe(m.meta||'Review requested')+'</small></span>'+glyph('right',13)+'</button>').join('');
  return '<section class="ng-manager-screen ng-manager-career">'+
   '<header class="ng-manager-head"><div class="ng-manager-identity">'+
   '<span>FRONT OFFICE / CAREER</span><h2>PLAYER CAREER & WORLD STATUS</h2></div>'+
@@ -4184,17 +4192,24 @@ function managerCareerView(){
   '<button type="button" data-ng="save-open">'+glyph('save',13)+' MANAGE CAREERS</button></div></header>'+
   '<div class="ng-manager-metrics">'+
   metric('GAME DATE',date)+metric('ACTIVE STABLE HORSES',horses.length)+
-  metric('OPEN OFFICE FILES',pending.length)+
+  metric('ACTION / DUE',actionable.length+' / '+due.length)+
   metric('RECORDED CASH',money===null?'Not recorded':depMoney(money))+
   '</div><div class="ng-manager-workspace">'+
-  '<section class="ng-manager-primary"><header><strong>CURRENT CAREER RECORD</strong>'+
-  '<span>LOCAL GAME STATE · READ-ONLY</span></header>'+
-  '<div class="ng-manager-rows" role="region" tabindex="0" aria-label="Current player career facts">'+
-  cell('PLAYER',person)+cell('ROLE',role)+cell('OPERATION',operation)+
-  cell('WORLD',label)+cell('WORLD SEED',seed)+cell('CURRENT DATE',date)+
-  '<p class="ng-manager-empty">This view contains only recorded career fields. '+
-  'Missing identity, history, finances and achievements are not invented.</p></div>'+
-  '</section><aside class="ng-manager-sidebar"><section class="ng-manager-secondary">'+
+  '<section class="ng-manager-primary"><header><strong>CURRENT MANAGEMENT APPOINTMENT</strong>'+
+  '<span>ACTIVE LOCAL CAREER</span></header>'+
+  '<div class="ng-manager-rows ng-career-scroll" role="region" tabindex="0" aria-label="Current player career facts and actionable files">'+
+  '<div class="ng-career-identity"><small>MANAGER FILE · RECORDED IDENTITY</small>'+
+  '<h3>'+safe(person)+'</h3><p>'+safe(role)+' · '+safe(operation)+'</p></div>'+
+  '<div class="ng-career-fields">'+
+  field('ROLE',role)+field('OPERATION',operation)+
+  field('WORLD',label)+field('WORLD SEED',seed)+field('CURRENT DATE',date)+
+  field('STABLE HORSES',horses.length)+
+  '</div><section class="ng-career-attention"><header><strong>ACTION REQUIRED</strong><span>'+
+  actionable.length+' OPEN · '+due.length+' DUE FOLLOW-UPS</span></header>'+
+  (files||'<p class="ng-manager-empty">No urgent Office file is outstanding for this career. Informational correspondence remains in Inbox.</p>')+
+  '</section><p class="ng-career-boundary">Missing identity, history, finances and achievements are not invented. '+
+  'This dossier reads recorded local game and Office state; it does not submit management decisions.</p>'+
+  '</div></section><aside class="ng-manager-sidebar"><section class="ng-manager-secondary">'+
   '<header><strong>CAREER MANAGEMENT</strong><span>LOCAL SAVES</span></header>'+
   '<div class="ng-manager-secondary-list">'+
   '<button type="button" class="ng-manager-case" data-ng="commercial-career-open">'+

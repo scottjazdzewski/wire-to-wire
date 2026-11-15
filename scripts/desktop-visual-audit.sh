@@ -92,6 +92,16 @@ test -s visual-audit/screenshots/office-messages-1280.png
 test -s visual-audit/screenshots/office-decisions-1280.png
 
 capture office-career '?ui=Career' 'ng-manager-career'
+# Career is a genuine management dossier at full desktop and laptop sizes.
+"$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+ --force-device-scale-factor=1 --window-size=1280,800 --virtual-time-budget=4000 \
+ --screenshot="visual-audit/screenshots/office-career-1280.png" \
+ 'http://127.0.0.1:8765/next/?ui=Career' >/tmp/wtw-office-career1280.log 2>&1
+test -s visual-audit/screenshots/office-career-1280.png
+if ! grep -q 'ng-career-identity' visual-audit/dom/office-career.html ||
+   ! grep -q 'ng-career-attention' visual-audit/dom/office-career.html; then
+ echo 'Career dossier missing recorded manager identity or action file section' >&2; exit 1
+fi
 capture stable-training '?ui=Stable%20%E2%80%94%20Training' 'ng-training-desk'
 # Real content checks: a generic directory is no longer acceptable on these routes.
 if grep -q 'CONNECTED WORLD RECORDS' visual-audit/dom/office-messages.html ||
