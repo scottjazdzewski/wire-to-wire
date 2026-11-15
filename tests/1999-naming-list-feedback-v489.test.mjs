@@ -68,6 +68,12 @@ test('Naming Desk uses dense list and persists Keep / Reject / Choose through th
  assert.match(d.render(),/CHOOSE FOR THIS HORSE/);
  assert.match(d.render(),/KEEP/);
  assert.match(d.render(),/REJECT/);
+ assert.match(d.render(),/data-ng="naming-sort"/);
+ assert.equal(d.sort('originMotif'),true);
+ assert.equal(d.snapshot().sortKey,'originMotif');
+ assert.equal(d.sort('originMotif'),true);
+ assert.equal(d.snapshot().sortDesc,true);
+ assert.equal(d.sort('not-a-column'),false);
  assert.equal(d.mark(suggestions[0].name),true);
  assert.equal(d.reject(suggestions[1].name),true);
  assert.equal(d.choose(suggestions[2].name),true);
