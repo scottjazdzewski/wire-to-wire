@@ -19,7 +19,18 @@ foreach($step in @(@("write",$writeReport),@("read",$readReport))){
    "--wtw-smoke-user-data=$statePath"
  )
  Write-Host "Starting $TargetLabel $phase desktop run: $Executable"
- $process=Start-Process -FilePath $Executable -ArgumentList $arguments -PassThru -Wait
+ # The electron-builder portable wrapper sometimes consumes CLI args. Environment
+ # settings are inherited by its extracted child; set them for either target.
+ $env:WTW_SMOKE_PHASE=$phase
+ $env:WTW_SMOKE_REPORT=$report
+ $env:WTW_SMOKE_USER_DATA=$statePath
+ try{
+   $process=Start-Process -FilePath $Executable -ArgumentList $arguments -PassThru -Wait
+ }finally{
+   Remove-Item Env:WTW_SMOKE_PHASE -ErrorAction SilentlyContinue
+   Remove-Item Env:WTW_SMOKE_REPORT -ErrorAction SilentlyContinue
+   Remove-Item Env:WTW_SMOKE_USER_DATA -ErrorAction SilentlyContinue
+ }
  if($process.ExitCode -ne 0){ throw "Packaged desktop run failed: $phase exit=$($process.ExitCode)" }
  if(!(Test-Path -LiteralPath $report)){throw "Missing smoke evidence for $phase"}
  $proof=Get-Content -Raw $report|ConvertFrom-Json
