@@ -4031,8 +4031,35 @@ root.addEventListener('focusout',event=>{
    endNativeSelectInteraction(true);
  },0);
 },true);
+// Keep the Naming Desk's actual input/textarea DOM nodes alive while editing.
+// A hidden Office adapter or delayed game-data update may request paint() at
+// any time; replacing the full management root during a click/keystroke makes
+// normal text entry appear to require holding the mouse button down.
+let namingEditorPaintPending=false;
+function namingEditorHasFocus(){
+ const node=document.activeElement;
+ return APP.custom==='Stable — Naming Desk'&&root.contains(node)&&
+  node?.matches?.('[data-naming-field]')===true;
+}
+root.addEventListener('focusout',event=>{
+ if(!event.target?.matches?.('[data-naming-field]'))return;
+ // Wait for the next field to receive focus. Moving between Naming Desk
+ // inputs must not destroy the new field or its cursor.
+ setTimeout(()=>{
+  if(namingEditorPaintPending&&!namingEditorHasFocus()){
+   namingEditorPaintPending=false;
+   schedulePaint(0);
+  }
+ },0);
+},true);
 function paint(){
  if(!APP.ready)return;
+ if(namingEditorHasFocus()){
+  namingEditorPaintPending=true;
+  return; // preserve the focused input and selection while editing
+ }
+ namingEditorPaintPending=false;
+ // Read-only career progression: date drives the one source world, not UI stars.
  // Read-only career progression: date drives the one source world, not UI stars.
  window.__WTW_1999_UI_DATA__?.setGameDate?.(depGameDay());
  if(window.__WTW_1999_MANAGEMENT__&&!window.__WTW_1999_UI_DATA__){

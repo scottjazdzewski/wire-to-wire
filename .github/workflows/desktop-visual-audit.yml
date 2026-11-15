@@ -6,6 +6,7 @@ on:
       - 'public/**'
       - 'scripts/desktop-visual-audit.sh'
       - 'scripts/1999-full-screen-controls-cdp.mjs'
+      - 'scripts/1999-naming-desk-focus-cdp.mjs'
       - '.github/workflows/desktop-visual-audit.yml'
   pull_request:
     paths:
@@ -61,12 +62,21 @@ jobs:
           test -n "$CHROME"
           CHROME="$CHROME" node scripts/1999-full-screen-controls-cdp.mjs | tee full-screen-qa.log
           grep -q 'WTW_SCREEN_MATRIX_PASS' full-screen-qa.log
+      - name: Verify Naming Desk single-click typing in real Chromium
+        shell: bash
+        run: |
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME"
+          CHROME="$CHROME" node scripts/1999-naming-desk-focus-cdp.mjs | tee naming-desk-focus-qa.log
+          grep -q 'WTW_NAMING_DESK_FOCUS_PASS' naming-desk-focus-qa.log
       - name: Preserve screen interaction QA results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: wtw-full-screen-control-matrix
-          path: full-screen-qa.log
+          path: |
+            full-screen-qa.log
+            naming-desk-focus-qa.log
           retention-days: 14
           if-no-files-found: warn
 
