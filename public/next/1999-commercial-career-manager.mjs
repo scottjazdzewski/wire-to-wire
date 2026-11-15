@@ -7,6 +7,9 @@
  */
 import {encodeCareerSave,decodeCareerSave,packCareerFile,unpackCareerFile}
  from '/1999/engine/compact-career.mjs';
+import {open1999IndustryDatabase,createPersistent1999Industry,
+ savePersistent1999CareerRun,loadPersistent1999CareerRun}
+ from '/1999/engine/fictional-industry-persistence-1999.mjs';
 
 const DB_NAME='WireToWireClean1999CareersV2';
 const MAX_SLOTS=60,MAX_TOTAL_BYTES=512*1024*1024;
@@ -289,5 +292,26 @@ async function open(){
   root.hidden=false;
  }
 }
+/**
+ * Full-industry preparation uses its own storage and does not replace the
+ * running 73-horse founding career. Play activation requires engine compatibility.
+ */
+async function prepareFictionalIndustry(options){
+ const store=await open1999IndustryDatabase();
+ try{return await createPersistent1999Industry({...options,store})}
+ finally{store.close()}
+}
+async function saveFictionalIndustryCareer(manifest,run){
+ const store=await open1999IndustryDatabase();
+ try{return await savePersistent1999CareerRun(store,manifest,run)}
+ finally{store.close()}
+}
+async function readFictionalIndustryCareer(manifest,runId){
+ const store=await open1999IndustryDatabase();
+ try{return await loadPersistent1999CareerRun(store,manifest,runId)}
+ finally{store.close()}
+}
 window.WTWCompactCareerManager=Object.freeze({open,listSlots,storeGame,
- restoreGame,exportSlot,importFile,dbName:DB_NAME});
+ restoreGame,exportSlot,importFile,dbName:DB_NAME,
+ prepareFictionalIndustry,saveFictionalIndustryCareer,
+ readFictionalIndustryCareer});
