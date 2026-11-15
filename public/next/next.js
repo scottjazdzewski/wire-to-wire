@@ -197,8 +197,8 @@ function horseBirthChronology(dateOfBirth,gameDate){
  const today=new Date(clock+'T00:00:00Z');
  if(Number.isNaN(today.getTime())||born<=today)return {future:false,warning:''};
  return {future:true,
-  warning:'RECORDED DOB '+text+' IS AFTER GAME DATE '+clock+
-   '. Source chronology requires review; current age and racing eligibility are not established.'};
+  warning:'DATE CONFLICT: DOB '+text+' is after game day '+clock+
+   '. Age and racing eligibility need source review.'};
 }
 function titleCaseUIRole(value){
  // Display-only: never changes the canonical role stored in the world.
