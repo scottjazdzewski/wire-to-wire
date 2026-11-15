@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {assembleFictional1999Industry} from '../public/1999/engine/fictional-world-population-v1.mjs';
 import {validateWorld} from '../public/1999/game/contracts.js';
+import {createGameRun,validateGameRun} from '../public/1999/game/state.js';
+import attributeCatalog from '../public/1999/engine/attribute-catalog.mjs';
 const tracks=[
  {id:'T-1001',name:'Test Valley Downs',playableIn1999:true,trackOperating:'OPEN_1999'},
  {id:'T-1002',name:'Test Coastal Park',playableIn1999:true,trackOperating:'OPEN_1999'},
@@ -38,7 +40,12 @@ test('1999 industry creates a real, linked snapshot from existing name/ratings e
   assert.ok(p.birthplace.city&&p.birthplace.region&&p.birthplace.country_code);
   assert.ok(p.work_location);
  }
- assert.deepEqual(JSON.parse(JSON.stringify(world)),world);
+ const run=createGameRun({world,runId:'WTW-RUN-1999-INDUSTRY-TEST',seed:19990101,
+  player:{role:'owner',involvement:'balanced',operation_id:world.entities.organizations[0].id},
+  stableHorseIds:[world.entities.horses[2].id],personGenerationCatalog:attributeCatalog});
+ assert.equal(Object.keys(run.runtime.people).length,world.entities.people.length);
+ assert.equal(validateGameRun(run,world),run);
+ assert.equal(JSON.parse(JSON.stringify(world)).authority.sha256,world.authority.sha256);
 });
 test('seed freezes identities and rejects missing, duplicate or unapproved horse names',async()=>{
  const a=await make(19990101),b=await make(19990101),c=await make(19990102);
