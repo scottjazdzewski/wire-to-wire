@@ -46,13 +46,13 @@ test('real track brand colors come from actual approved logo pixels, not a guess
  assert.match(theme,/logo-pixels/);
  assert.match(theme,/isActualEntityLogo/);
  assert.match(theme,/data-wtw-logo-theme/);
- assert.doesNotMatch(theme,/housePalette|SWATCHES|visual-themes-v1\\.json/);
- assert.match(css,/#wtwNextgen\\[data-wtw-identity\\]\\[data-wtw-logo-theme="ready"\\] \\.ng-route-profile \\.ng-profile-view\\.ng-profile-track > \\.ng-profile-intro\\{/);
- assert.match(css,/#wtwNextgen\\[data-wtw-identity\\]\\[data-wtw-logo-theme="ready"\\] \\.ng-route-profile \\.ng-track-stakes \\.ng-stakes-head\\{/);
+ assert.doesNotMatch(theme,/housePalette|SWATCHES|visual-themes-v1\.json/);
+ assert.match(css,/#wtwNextgen\[data-wtw-identity\]\[data-wtw-logo-theme="ready"\] \.ng-route-profile \.ng-profile-view\.ng-profile-track > \.ng-profile-intro\{/);
+ assert.match(css,/#wtwNextgen\[data-wtw-identity\]\[data-wtw-logo-theme="ready"\] \.ng-route-profile \.ng-track-stakes \.ng-stakes-head\{/);
  assert.match(css,/--wtw-id-base/);
- assert.match(css,/\\.ng-profile-view\\.ng-profile-track:not\\(\\.ng-profile-farm\\) \\.ng-profile-badgeframe\\{/);
- assert.match(css,/wtw_badge_track\\.png/);
- assert.match(css,/\\.ng-profile-badgeframe img\\{\\s*visibility:hidden!important/);
+ assert.match(css,/\.ng-profile-view\.ng-profile-track:not\(\.ng-profile-farm\) \.ng-profile-badgeframe\{/);
+ assert.match(css,/wtw_badge_track\.png/);
+ assert.match(css,/\.ng-profile-badgeframe img\{\s*visibility:hidden!important/);
 });
 
 test('track presentation preserves action buttons, identity metadata and history independently of its logo',()=>{
