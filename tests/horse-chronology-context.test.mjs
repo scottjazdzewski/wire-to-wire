@@ -16,6 +16,7 @@ test('horse profile calls out future birthdates relative to current game clock',
   assert.match(s.warning,/AFTER GAME DATE 1999-01-01/);
   assert.match(s.warning,/current age and racing eligibility are not established/);
  }
+ assert.match(js,/horseBirthChronology\(horseField\('Date of birth'\),depGameDay\(\)\)/);
  assert.match(js,/horseChronology\.future\?'NOT FOALED':horseField\('Age'\)/);
  assert.match(js,/ng-horse-chronology-alert/);
  assert.match(js,/role="status"/);
