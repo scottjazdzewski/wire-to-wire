@@ -26,6 +26,14 @@ test("white source canvases are detected from pixels, never track identities",()
  assert.equal(hasLightCornerMatte({width:w,height:h,data:transparent}),false);
  assert.equal(hasLightCornerMatte({width:w,height:h,data:new Uint8ClampedArray(4)}),false);
 });
+test("legacy logo display conversion uses lossless, in-memory PNG, never a delayed WebP export",()=>{
+ const code=readFileSync(new URL("../public/next/profile-hero-v2.mjs",import.meta.url),"utf8");
+ const convert=code.slice(code.indexOf('async function makeLegacyHero('),code.indexOf('function cachedLegacyHero(',code.indexOf('async function makeLegacyHero(')));
+ assert.match(convert,/out\.toDataURL\("image\/png"\)/);
+ assert.match(convert,/data:image\/png;base64,/);
+ assert.doesNotMatch(convert,/out\.toBlob|createObjectURL/);
+ assert.match(convert,/removeWhiteEdgeMatte\(pixels\)/);
+});
 test("legacy white-matte display uses reversible local blending before optional alpha extraction",()=>{
  const js=readFileSync(new URL("../public/next/profile-hero-v2.mjs",import.meta.url),"utf8");
  assert.match(js,/hasLightCornerMatte\(\{width:sample\.width,height:sample\.height,data\}\)/);

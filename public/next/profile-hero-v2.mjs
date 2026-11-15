@@ -123,9 +123,12 @@ async function makeLegacyHero(url){
  outctx.drawImage(canvas,
   result.box.x,result.box.y,result.box.width,result.box.height,
   0,0,out.width,out.height);
- const blob=await new Promise(resolve=>out.toBlob(resolve,"image/webp",.95));
- if(!blob)return null;
- return {url:URL.createObjectURL(blob),darkInk:result.darkInk};
+ // Lossless PNG preserves every surviving logo pixel and alpha. Avoid an
+ // asynchronous WebP encoder that can leave the original white export
+ // visible while a desktop view is already being painted.
+ const output=out.toDataURL("image/png");
+ if(!output.startsWith("data:image/png;base64,"))return null;
+ return {url:output,darkInk:result.darkInk};
 }
 function cachedLegacyHero(src){
  if(!cache.has(src))cache.set(src,makeLegacyHero(src).catch(()=>null));
