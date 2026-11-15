@@ -79,6 +79,19 @@ export async function open1999IndustryDatabase(indexedDB=globalThis.indexedDB){
  };
 }
 const keyOf=(seed,worldId)=>worldId+':'+seed;
+function directorySignature(directories){
+ let h=2166136261;
+ for(const directory of directories){
+  for(const entity of directory){
+   const value=JSON.stringify([entity.id,entity.location??null]);
+   for(let i=0;i<value.length;i++){
+    h^=value.charCodeAt(i);h=Math.imul(h,16777619);
+   }
+  }
+  h^=directory.length;h=Math.imul(h,16777619);
+ }
+ return (h>>>0).toString(16).padStart(8,'0');
+}
 export async function createPersistent1999Industry({
  store,seed=19990101,worldId='WTW1999FullIndustry',
  farms,tracks,owners,batchSize=1000,onProgress=()=>{}
@@ -90,6 +103,7 @@ export async function createPersistent1999Industry({
   !Array.isArray(owners)||!owners.length)
   throw Error('Invalid persistent industry genesis request');
  const id=keyOf(seed,worldId);
+ const directoryHash=directorySignature([farms,tracks,owners]);
  const plan=plan1999Ecosystem({seed});
  const staffing=plan1999IndustryStaffing({seed,ecosystem:plan});
  const totalHorses=count1999Registry(plan);
@@ -99,13 +113,14 @@ export async function createPersistent1999Industry({
   if(existing.schema!==PERSISTENT_INDUSTRY_SCHEMA||
    existing.seed!==seed||existing.worldId!==worldId||
    existing.batchSize!==batchSize||
+   existing.directoryHash!==directoryHash||
    existing.horseCount!==totalHorses||
    existing.personCount!==totalPeople)
    throw Error('Existing industry identity or generation parameters conflict');
   if(existing.status==='COMPLETE')return existing;
  }
  let manifest=existing??{
-  schema:PERSISTENT_INDUSTRY_SCHEMA,worldId,seed,batchSize,
+  schema:PERSISTENT_INDUSTRY_SCHEMA,worldId,seed,batchSize,directoryHash,
   status:'GENERATING',horseCount:totalHorses,personCount:totalPeople,
   horseBatchesCommitted:0,personBatchesCommitted:0,
   plan,staffing,source:'DETERMINISTIC_OFFLINE_1999'
