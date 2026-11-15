@@ -179,9 +179,50 @@ export function postRaceAIPlacement(state,horse,race){
  return {eligible:true,bonus:(surface?.08:-.06)+(distance?.06:-.045),
   reason:surface&&distance?'TRAINER_PREFERRED_COURSE':'TRAINER_COMPARES_ALTERNATE_COURSE'};
 }
+export const POST_RACE_LIVE_REVIEW_SCHEMA='WTW_1999_DAILY_POSTRACE_REVIEW_V1';
+/** One evolving horse review atop its unchanged, official race-day record.
+ * All progress comes from today's saved horse condition, calendar and actual
+ * settled race. No alternate training simulation or extra save field. */
 export function getGamePostRaceCampaign(state,horseId){
  const value=state.runtime.post_race_campaigns?.by_horse?.[horseId];
- return value?structuredClone(value):null;
+ if(!value)return null;
+ const horse=state.runtime.registered_horses?.by_id?.[horseId],
+  training=state.runtime.horse?.[horseId]?.training,
+  race=state.runtime.races?.[value.last_race_id],
+  result=race?.status==='OFFICIAL_SIM_RESULT'?
+   race.results?.find(x=>x.horse_id===horseId):null;
+ const asOf=state.clock.date,
+  elapsed=Math.max(0,gap(value.last_race_date,asOf)),
+  untilReturn=Math.max(0,gap(asOf,value.earliest_next_race_date)),
+  phase=phaseFor(value,training,asOf),
+  guidance=horse?postRaceWorkoutGuidance(state,horse,asOf):null;
+ const live={
+  schema:POST_RACE_LIVE_REVIEW_SCHEMA,as_of:asOf,
+  horse_id:horseId,last_race_id:value.last_race_id,
+  original_race_trainer_id:value.trainer_id,
+  current_trainer_id:horse?.trainer_id??null,
+  trainer_changed_since_race:Boolean(horse&&horse.trainer_id!==value.trainer_id),
+  days_since_race:elapsed,days_until_return_window:untilReturn,
+  return_window_open:untilReturn===0,
+  phase,trainer_workout:guidance?.workout??null,
+  trainer_workout_reason:guidance?.reason??'NO_CURRENT_TRAINING_GUIDANCE',
+  welfare_hold:phase==='WELFARE_HOLD'||phase==='RECOVERY_REST',
+  fitness:training?.fitness??null,
+  readiness:training?.readiness??null,
+  fatigue:training?.fatigue??null,
+  soundness_risk:training?.currentRisk??null,
+  soreness_days:training?.sorenessDays??null,
+  risk_change_since_finish:training?
+   Math.round((training.currentRisk-value.race_risk_at_finish)*10000)/10000:null,
+  official_finish:result?.finish??null,
+  official_field_size:race?.status==='OFFICIAL_SIM_RESULT'?
+   race.results.length:null,
+  official_tactic:result?result.race_tactic??'AUTO':null,
+  official_earnings_minor:result?.earnings_minor??null,
+  placement_not_automatically_authorized:true,
+  origin:'SAVED_OFFICIAL_RACE_CURRENT_HORSE_CONDITION_AND_GAME_CLOCK'
+ };
+ return {...structuredClone(value),live_assessment:structuredClone(live)};
 }
 export function validatePostRaceCampaigns(state,world){
  const store=state.runtime.post_race_campaigns;
@@ -194,9 +235,17 @@ export function validatePostRaceCampaigns(state,world){
  for(const v of Object.values(store.totals))
   ensure(Number.isSafeInteger(v)&&v>=0,'POST_RACE_SAVE','Invalid review counter');
  for(const [id,p] of Object.entries(store.by_horse)){
-  const horse=state.runtime.registered_horses?.by_id?.[id];
+  const horse=state.runtime.registered_horses?.by_id?.[id],
+   race=state.runtime.races?.[p.last_race_id],
+   entry=state.runtime.entries?.[p.last_race_id+':'+id];
+  // This is the RACE-DAY trainer, not a permanently fixed employee.
+  // A later valid local hire must not invalidate an official career result.
   ensure(Boolean(horse)&&isObject(p)&&p.horse_id===id&&
-   p.owner_id===horse.owner_organization_id&&p.trainer_id===horse.trainer_id&&
+   p.owner_id===horse.owner_organization_id&&
+   race?.status==='OFFICIAL_SIM_RESULT'&&
+   race.results?.some(row=>row.horse_id===id&&
+    row.trainer_id===p.trainer_id&&row.finish===p.finish)&&
+   entry?.trainer_id===p.trainer_id&&entry.owner_id===p.owner_id&&
    validDate(p.last_race_date)&&p.last_race_date<=state.clock.date&&
    validDate(p.earliest_next_race_date)&&p.earliest_next_race_date>p.last_race_date&&
    validDate(p.last_review_date)&&p.last_review_date<=state.clock.date&&
