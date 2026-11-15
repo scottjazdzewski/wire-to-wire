@@ -4026,6 +4026,69 @@ function managerOfficeInboxView(page){
   'Open a source-linked file to review the complete information and available decisions. This list does not commit any game action.'+
   '</p></div></section></aside></div></section>';
 }
+/* One native Stable workflow per department VIEW. Display actual career
+ * horse, health and race-plan records; never substitute the global directory
+ * or pretend ownership implies a boarding/barn assignment. */
+function stableOperationsView(page){
+ const rows=horseRows(),game=state(),races=racingRows(),cases=currentMessages();
+ const horses=rows.map(h=>liveStableHorseData(h,races.find(r=>r.name===h.name),game,cases));
+ const scope='Stable:'+page;
+ const isHealth=page==='Health',isRace=page==='Race Plans';
+ const title=isHealth?'HEALTH & CONDITION':isRace?'RACE TARGETS & PLANNING':'BARN & TRAINER ASSIGNMENTS';
+ const facts=isHealth?
+  {head:'HORSE CONDITION RECORDS',left:'HEALTH / WATCH',right:'READINESS',detail:x=>x.health[1],context:x=>x.ready[1],
+   note:'Only documented veterinary states or explicitly identified simulated workload cautions appear. Unassessed does not mean healthy.'}:
+  isRace?{head:'HORSE CAMPAIGN FILES',left:'RACE TARGET',right:'ENTRY / NEXT DATE',detail:x=>x.target,context:x=>x.upcoming,
+   note:'A target is not a confirmed entry. Use Racing to inspect live condition books and validated opportunities.'}:
+  {head:'STABLE PERSONNEL CONNECTIONS',left:'TRAINER',right:'REGISTERED OWNER',detail:x=>x.trainer,context:x=>x.owner,
+   note:'Trainer and ownership connections are not barn locations. A physical barn allocation is shown only if recorded in the career.'};
+ const data=managerSortRecords(scope,horses.map(x=>({name:x.name,
+   detail:String(facts.detail(x)||'Not recorded'),context:String(facts.context(x)||'Not recorded'),
+   kind:'HORSE',_horse:x})));
+ const list=data.map(x=>'<button class="ng-manager-row" data-ng="horse" data-val="'+safe(x.name)+
+  '" type="button" aria-label="Open '+safe(x.name)+' dossier">'+
+  '<span class="ng-manager-row-type">HORSE</span>'+
+  '<span class="ng-manager-row-name"><strong>'+safe(x.name)+'</strong></span>'+
+  '<span class="ng-manager-row-detail">'+safe(x.detail)+'</span>'+
+  '<span class="ng-manager-row-context">'+safe(x.context)+'</span>'+
+  '<span class="ng-manager-row-open">'+glyph('right',12)+'</span></button>').join('');
+ const monitoring=horses.filter(x=>['watch','treat'].includes(x.health[0])).length;
+ const withTargets=horses.filter(x=>x.hasTarget).length;
+ const openCases=horses.reduce((n,x)=>n+x.cases.filter(c=>!c.resolved).length,0);
+ const stats=[['ASSIGNED HORSES',horses.length],
+  [isHealth?'HEALTH WATCHES':isRace?'RECORDED TARGETS':'KNOWN TRAINERS',isHealth?monitoring:isRace?withTargets:
+   horses.filter(x=>x.trainer!=='Not recorded').length],
+  [isHealth?'UNASSESSED HEALTH':isRace?'WITHOUT TARGET':'TRAINER UNRECORDED',
+   isHealth?horses.filter(x=>x.health[0]==='unknown').length:
+   isRace?horses.length-withTargets:horses.filter(x=>x.trainer==='Not recorded').length],
+  ['OPEN HORSE FILES',openCases]];
+ const metric=stats.map(([label,value])=>'<div class="ng-manager-metric"><small>'+label+
+  '</small><strong>'+safe(value)+'</strong></div>').join('');
+ const destination=isRace?'Racing':page==='Barns'?'Facilities':'Stable';
+ return '<section class="ng-manager-screen ng-stable-operations-view">'+
+  '<header class="ng-manager-head"><div class="ng-manager-identity"><span>STABLE / '+
+  safe(page.toUpperCase())+'</span><h2>'+title+'</h2></div><div class="ng-manager-controls">'+
+  managerRecordViewControl('Stable',page)+
+  '<button type="button" data-ng="menu" data-val="'+destination+'">'+
+  glyph('arrow',13)+' OPEN '+destination.toUpperCase()+'</button></div></header>'+
+  '<div class="ng-manager-metrics">'+metric+'</div>'+
+  '<div class="ng-manager-workspace"><section class="ng-manager-primary"><header><strong>'+
+  facts.head+'</strong><span>'+horses.length+' PLAYER-STABLE HORSES</span></header>'+
+  managerSortableColumns(scope,[['kind','TYPE'],['name','NAME'],['detail',facts.left],['context',facts.right]])+
+  '<div class="ng-manager-rows" tabindex="0" role="region" aria-label="'+safe(title)+'">'+
+  (list||'<p class="ng-manager-empty">No horses are assigned to the current player stable. '+
+   'Use the Stable roster to review the opening operation; no records have been fabricated.</p>')+
+  '</div></section><aside class="ng-manager-sidebar">'+
+  '<section class="ng-manager-secondary"><header><strong>RECORD AUTHORITY</strong>'+
+  '<span>SOURCE / CAREER</span></header><div class="ng-manager-secondary-list">'+
+  '<p class="ng-manager-empty">'+safe(facts.note)+'</p></div></section>'+
+  '<section class="ng-manager-secondary"><header><strong>NEXT WORKFLOW</strong><span>'+safe(destination.toUpperCase())+
+  '</span></header><div class="ng-manager-secondary-list">'+
+  '<button type="button" class="ng-manager-case" data-ng="menu" data-val="'+destination+'">'+
+  '<span>'+glyph('folder',14)+'</span><span><strong>OPEN '+safe(destination.toUpperCase())+
+  '</strong><small>Review source-backed records and available controls</small></span>'+
+  '<span>'+glyph('right',13)+'</span></button></div></section></aside></div></section>';
+}
 function managerDashboard(){
  const section=APP.section||'Office',routeName=String(APP.custom||'');
  // Direct deep links must not silently turn Messages/Decisions into Overview.
@@ -4033,6 +4096,7 @@ function managerDashboard(){
  const page=section==='Office'&&/^(Messages|Decisions|Reports|Career)$/.test(routeName)?
   routeName:(APP.page||'Overview');
  if(section==='Office'&&['Messages','Decisions'].includes(page))return managerOfficeInboxView(page);
+ if(section==='Stable'&&['Health','Race Plans','Barns'].includes(page))return stableOperationsView(page);
  if(section==='Stable'&&page==='Training')return liveStableTrainingView();
  // The live Stable roster is routed directly, even without a legacy Office route.
  if(section==='World'&&page==='Overview')return worldCompleteDirectoryView();
