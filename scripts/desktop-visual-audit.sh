@@ -45,6 +45,15 @@ capture opportunity-board '?ui=Opportunities' 'ng-opportunity-screen'
 capture racing-roster '?ui=Racing%20%E2%80%94%20Overview' 'ng-dept-roster'
 capture global-search '?ui=Search' 'ng-search-roster-page'
 capture horse-profile '?page=horse&name=The+Last+Match' 'ng-horse-dossier'
+# This source-backed historical TEST example is born in 2012; the game clock
+# starts in January 1999. A polished profile may never silently imply that a
+# future-born horse is an eligible active racehorse.
+if ! grep -q 'ng-horse-chronology-alert' visual-audit/dom/horse-profile.html; then
+ echo 'Horse profile hides DOB later than the game clock' >&2; exit 1
+fi
+if ! grep -q 'NOT FOALED' visual-audit/dom/horse-profile.html; then
+ echo 'Horse profile has no honest future-birth status' >&2; exit 1
+fi
 capture people-profile '?ui=WorldRecord%3Aperson%3AP-000018' 'ng-person-horse-dossier'
 capture founder-owner '?ui=FoundingProfile%3Aownership%3AO-000014' 'ng-track-workspace'
 capture founder-facility '?ui=FoundingProfile%3Afacility%3AO-000068' 'ng-track-workspace'
