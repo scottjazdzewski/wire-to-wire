@@ -134,6 +134,8 @@ frame.onload=()=>setTimeout(()=>{
    identitySource:d.getElementById('wtwNextgen')?.getAttribute('data-wtw-identity-source')||'',
    identityBase:win.getComputedStyle(d.getElementById('wtwNextgen')).
     getPropertyValue('--wtw-id-base').trim(),
+   logoThemeReady:d.getElementById('wtwNextgen')?.getAttribute('data-wtw-logo-theme')||'',
+   logoSrc:d.querySelector('.ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo img')?.currentSrc||'',
    profileBackdrop:d.querySelector('.ng-route-profile .ng-profile-intro')?
     win.getComputedStyle(d.querySelector('.ng-route-profile .ng-profile-intro')).backgroundImage:'',
    trackWorkspace:rect('.ng-route-profile .ng-track-workspace'),
@@ -199,32 +201,35 @@ probe laptop-owner '%3Fui%3DFoundingProfile%253Aownership%253AO-000014' '1280,80
 python3 - <<'PY'
 import json,html,re
 from pathlib import Path
-# Verify real rendered identity coloring and no leaked identity in the Office.
+# Verify identity colors are extracted from displayed images, never constants.
+# This deliberately does NOT assert hand-picked values for track brands.
 expected={
- 'aqueduct':('T-0001','#1C6283'),
- 'belmont':('T-0002','#0C603C'),
- 'gulfstream':('T-0017','#214784'),
- 'farm':('O-000061','#745681')
+ 'aqueduct':'T-0001',
+ 'belmont':'T-0002',
+ 'gulfstream':'T-0017',
+ 'farm':'O-000061'
 }
-values=[]
-for name,(identity,base) in expected.items():
+palette_rows={}
+for name,identity in expected.items():
  source=Path(f'visual-audit/dom/probe-{name}.html').read_text()
  assert 'data-check="ready"' in source,(name,'Identity probe incomplete')
  match=re.search(r'<pre id="measure"[^>]*>(.*?)</pre>',source,re.S)
  assert match,(name,'Identity probe metrics missing')
  data=json.loads(html.unescape(match.group(1)))
- assert data['identityId']==identity,(name,'Wrong entity color context',data['identityId'])
- assert data['identitySource']=='curated',(name,'Palette registry did not resolve')
- assert data['identityBase'].upper()==base,(name,'Wrong active brand color',data['identityBase'])
+ assert data['identityId']==identity,(name,'Wrong entity identity',data['identityId'])
+ assert data['identitySource']=='logo-pixels',(name,'Not derived from actual displayed logo',data)
+ assert data['logoThemeReady']=='ready',(name,'Logo pixel sample not applied')
+ assert re.fullmatch(r'#[0-9A-Fa-f]{6}',data['identityBase']),(name,'Invalid pixel-derived color')
+ assert data['logoSrc'],(name,'Logo image absent from approved profile')
  assert 'gradient' in data['profileBackdrop'],(name,'Profile atmosphere missing')
- values.append(data['identityBase'])
-assert len(set(values))==len(values),'Distinct entities share the same active brand color'
+ palette_rows[name]=data['identityBase']
+assert len(set(palette_rows.values()))>1,'All logos resolve to the same generic color'
 plain=Path('visual-audit/dom/probe-office.html').read_text()
 match=re.search(r'<pre id="measure"[^>]*>(.*?)</pre>',plain,re.S)
 assert match
 data=json.loads(html.unescape(match.group(1)))
-assert data['identityId']=='',(data['identityId'],'Brand theme leaked into Office')
-print('ENTITY ATMOSPHERE verified in Chromium:',expected)
+assert data['identityId']=='' and data['logoThemeReady']=='',(data,'Brand theme leaked into Office')
+print('LOGO-SOURCED ENTITY ATMOSPHERE verified in Chromium:',palette_rows)
 
 for name in ('office','search','horse','person'):
  source=Path(f'visual-audit/dom/probe-{name}.html').read_text()
