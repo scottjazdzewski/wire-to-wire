@@ -5037,7 +5037,7 @@ const bootJson=path=>fetch(path+'?v='+bootVersion,{credentials:'same-origin',cac
  .then(r=>r.ok?r.json():Promise.reject(Error('UI asset index unavailable')));
 const bootJobs=[
  loadWorld1999(),
- bootJson(isClean1999()?'/assets/office/founding-organization-logo-index.json?rev=founder-approved-34-20261115':'/assets/office/organization-logo-index.json?rev=generated-64px-retired-20261114')
+ bootJson(isClean1999()?'/assets/office/founding-organization-logo-index.json?rev=founder-approved-36-20261115':'/assets/office/organization-logo-index.json?rev=generated-64px-retired-20261114')
   .then(index=>{if(index&&typeof index==='object'&&!Array.isArray(index)){organizationLogoIndex=index;if(APP.ready)schedulePaint(20)}})
   .catch(()=>{/* Neutral organization mark is the fallback. */}),
  bootJson('/assets/game/attribute-catalog.v1.json')
