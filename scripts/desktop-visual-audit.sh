@@ -64,10 +64,18 @@ capture breeding '?ui=Breeding' 'ng-manager-screen|ng-dept-roster'
 capture sales-overview '?ui=Sales%20%E2%80%94%20Overview' 'ng-dept-roster'
 capture sales-auctions '?ui=Sales%20%E2%80%94%20Auctions' 'ng-dept-roster'
 capture naming-desk '?ui=Stable%20%E2%80%94%20Naming%20Desk' 'ng-naming-desk'
-capture office-messages '?ui=Messages' 'ng-manager-screen'
-capture office-decisions '?ui=Decisions' 'ng-manager-screen'
+capture office-messages '?ui=Messages' 'ng-manager-message-inbox'
+capture office-decisions '?ui=Decisions' 'ng-manager-message-inbox'
+# Real content checks: a generic directory is no longer acceptable on these routes.
+if grep -q 'CONNECTED WORLD RECORDS' visual-audit/dom/office-messages.html ||
+   grep -q 'CONNECTED WORLD RECORDS' visual-audit/dom/office-decisions.html; then
+ echo 'Office Inbox/Decisions regressed to generic world directory' >&2; exit 1
+fi
+if ! grep -q 'training-set' visual-audit/dom/stable-training.html; then
+ echo 'Stable Training missing real weekly program controls' >&2; exit 1
+fi
 capture office-career '?ui=Career' 'ng-manager-screen'
-capture stable-training '?ui=Stable%20%E2%80%94%20Training' 'ng-manager-screen'
+capture stable-training '?ui=Stable%20%E2%80%94%20Training' 'ng-training-desk'
 capture racing-calendar '?ui=Racing%20%E2%80%94%20Calendar' 'ng-dept-roster'
 capture racing-entries '?ui=Racing%20%E2%80%94%20Entries' 'ng-dept-roster'
 capture breeding-foals '?ui=Breeding%20%E2%80%94%20Foals' 'ng-dept-roster'
