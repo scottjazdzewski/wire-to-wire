@@ -52,6 +52,23 @@ test('all catalog professional roles show their actual union of common and speci
  }
 });
 
+test('compound founder, chief strategist and racing-industry roles resolve to actual skill catalogs',()=>{
+ const begin=js.indexOf('  const namedRoles={');
+ const end=js.indexOf('  const work=state().staffState?',begin);
+ assert.ok(begin>0&&end>begin);
+ const classify=new Function('roleName','athleteAttributeCatalog',
+  js.slice(begin,end)+'\nreturn {roles,role};');
+ const strategist=classify('founder / chief bloodstock strategist',catalog);
+ assert.ok(strategist.roles.includes('owner'));
+ assert.ok(strategist.roles.includes('bloodstock_professional'));
+ assert.equal(strategist.role,'bloodstock_professional');
+ const jockey=classify('senior jockey',catalog);
+ assert.deepEqual(jockey.roles,['jockey']);
+ const trainer=classify('head trainer',catalog);
+ assert.deepEqual(trainer.roles,['trainer']);
+ const stable=classify('stable groom',catalog);
+ assert.deepEqual(stable.roles,['stable_staff']);
+});
 test('Overview and deeper Attributes share the same source model, while the horse dossier remains unchanged',()=>{
  assert.match(js,/const skillSheet=person\.profileAttributes\(\)/);
  assert.match(js,/const professionalSlots=skillSheet\.html/);
