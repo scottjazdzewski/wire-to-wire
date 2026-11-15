@@ -4,7 +4,7 @@
 
 ## Concrete behavior changed
 
-The original 30 motif voices contained 241 authored slots, 240 distinct normalized full names. V488 adds 360 individually written whole-name alternatives tied to the same verified motif categories. There are now **601 slots / 600 distinct normalized names** in total, including one pre-existing cross-motif duplicate. Of these, 14 occur in the original 520 owner-reviewed exclusion keys, leaving an absolute **upper bound of 586** before protected historical records and existing issued or reserved names. These numbers are mechanical availability, **not** creative-quality certification.
+The original 30 motif voices contained 241 authored slots, 240 distinct normalized full names. V488 adds 360 individually written whole-name alternatives tied to the same verified motif categories. V488 also replaces 14 candidate entries that collided with the recorded 520 owner-reviewed names and removes one cross-motif duplicate. There are now **601 authored slots / 601 distinct normalized names**, and **zero** overlap with the owner-reviewed exclusion keys. The upper bound is 601 **before protected historical records and existing issued or reserved names**. These numbers are mechanical availability, **not** creative-quality certification.
 
 **Naming Desk:** The existing single-horse interface still screens no more than 24 authored possibilities, shows at most eight editorial-screened suggestions and never grants a registration.
 
@@ -24,7 +24,7 @@ The original 30 motif voices contained 241 authored slots, 240 distinct normaliz
 
 **Save compatibility:** No save structure is changed or written to in this PR. A separate single-writer gameplay/save integration must durably persist all pending/issued keys and the pinned name algorithm version before a production 1999–2099 career can auto-name large foaling populations.
 
-**Offline verification:** V488 tests exercise entire source-backed pool enumeration, 600 distinct authored names, 14 owner-reviewed collisions, upper bound, desk limit, fallback after 24 early reservations, consecutive cohort uniqueness and source/browser parity with fetch disabled; the repository's full source, integrity and desktop pipelines must pass before merge.
+**Offline verification:** V488 tests exercise entire source-backed pool enumeration, 601 distinct authored names, zero owner-reviewed collisions, upper bound, desk limit, fallback after 24 early reservations, consecutive cohort uniqueness and source/browser parity with fetch disabled; the repository's full source, integrity and desktop pipelines must pass before merge.
 
 **Windows certification:** **NOT YET DESKTOP CERTIFIED** for installed offline name issuance, owner decisions and save/reopen. An executable build alone does not establish naming-gameplay persistence.
 
