@@ -196,8 +196,8 @@ export async function createPersistent1999Industry({
    coveringsChecked+=batch.records.length;coveringIndex++;continue;
   }
   for(const cover of batch.records){
-   const mare=/^H-FICTIONAL-1999-BROODMARES-(\\d{7})$/.exec(cover.mareId);
-   const stallion=/^H-FICTIONAL-1999-STALLIONS-(\\d{7})$/.exec(cover.stallionId);
+   const mare=/^H-FICTIONAL-1999-BROODMARES-(\d{7})$/.exec(cover.mareId);
+   const stallion=/^H-FICTIONAL-1999-STALLIONS-(\d{7})$/.exec(cover.stallionId);
    if(!mare||Number(mare[1])>plan.counts.broodmares||
     !stallion||Number(stallion[1])>plan.counts.stallions||
     cover.status!=='COVERING_BOOKED'||cover.liveFoalId!==null)
