@@ -303,7 +303,7 @@ async function refresh(){
    esc('FOUNDING 1999')+
    ' · SEED '+esc(current.seed)+'</div>'+
   '<div class="wtw-cc-section"><h3>FULL FICTIONAL 1999 INDUSTRY — WORLD EXPLORER</h3>'+
-  '<p>Generate and reopen the large opening-world registry without replacing your current career. Horse and personnel names and some farm/owner identities still await approved naming inputs. Live race gameplay is not yet activated for this world.</p>'+
+  '<p>Generate and reopen the complete 1999 industry without replacing your current career. Personnel, farm and owner identities use the existing naming generators. Horse names remain held where the approved story-based naming process has not released them. This is an industry inspection build; full-world live race gameplay is not yet activated.</p>'+
   '<div class="wtw-cc-actions"><button data-cc-action="open-existing-industry">OPEN SAVED 1999 WORLD</button>'+ 
   '<button data-cc-action="open-full-industry">CREATE / RESUME FULL INDUSTRY</button></div>'+ 
   '<p data-cc="industry-progress" role="status" aria-live="polite">'+
