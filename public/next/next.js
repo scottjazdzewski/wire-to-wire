@@ -785,8 +785,13 @@ async function worldExportEdits(){
   anchor.href=url;anchor.download='wire-to-wire-world-edits.json';anchor.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
   APP.worldEditStatus='World edit backup exported.';paint();
- }catch(err){APP.worldEditStatus='Export failed: '+(err?.message||err);paint()}
+  return true;
+ }catch(err){APP.worldEditStatus='Export failed: '+(err?.message||err);paint();return false}
 }
+// Reuse the SAME validated World Editor export from Save/Load. This export
+// contains text patches and replacement images but is NOT a career .wtwsave
+// or an automatic change to the repository's approved fictional source.
+window.WTWWorldEdits=Object.freeze({exportForGPT:worldExportEdits});
 async function worldImportEdits(file){
  if(!file)return;
  try{
