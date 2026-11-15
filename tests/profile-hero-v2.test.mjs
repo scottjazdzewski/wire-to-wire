@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync,existsSync} from "node:fs";
-import {removeWhiteEdgeMatte,heroContext,profileTitle,heroCandidate,heroInitials,dossierLabel,visibleAlphaBounds} from "../public/next/profile-hero-v2.mjs";
+import {removeWhiteEdgeMatte,hasLightCornerMatte,heroContext,profileTitle,heroCandidate,heroInitials,dossierLabel,visibleAlphaBounds} from "../public/next/profile-hero-v2.mjs";
 
 const css=readFileSync(new URL("../public/next/next.css",import.meta.url),"utf8");
 const index=readFileSync(new URL("../public/next/index.html",import.meta.url),"utf8");
@@ -13,6 +13,26 @@ test("track and farm titles never expose raw route identifiers",()=>{
  assert.deepEqual(heroContext("WorldRecord:track%3AT-0017",""),{kind:"track",id:"T-0017"});
  assert.deepEqual(heroContext("FoundingProfile:facility:O-000061",""),{kind:"organization",id:"O-000061"});
  assert.equal(heroContext("WorldRecord:horse%3AH-0001",""),null);
+});
+test("white source canvases are detected from pixels, never track identities",()=>{
+ const w=32,h=24,rgba=new Uint8ClampedArray(w*h*4);
+ for(let i=0;i<w*h;i++)rgba.set([252,250,247,255],i*4);
+ for(let y=8;y<16;y++)for(let x=4;x<28;x++){
+  rgba.set([8,28,66,255],(y*w+x)*4);
+ }
+ assert.equal(hasLightCornerMatte({width:w,height:h,data:rgba}),true);
+ const transparent=rgba.slice();
+ for(const p of [0,w-1,w*(h-1),w*h-1])transparent[p*4+3]=0;
+ assert.equal(hasLightCornerMatte({width:w,height:h,data:transparent}),false);
+ assert.equal(hasLightCornerMatte({width:w,height:h,data:new Uint8ClampedArray(4)}),false);
+});
+test("legacy white-matte display uses reversible local blending before optional alpha extraction",()=>{
+ const js=readFileSync(new URL("../public/next/profile-hero-v2.mjs",import.meta.url),"utf8");
+ assert.match(js,/hasLightCornerMatte\(\{width:sample\.width,height:sample\.height,data\}\)/);
+ assert.match(js,/img\.style\.mixBlendMode=matte\?"multiply":""/);
+ assert.match(js,/wtw-hero-white-matte/);
+ assert.match(js,/img\.style\.mixBlendMode="";/);
+ assert.match(js,/cachedLegacyHero\(absolute\)/);
 });
 test("unreliable or missing corner mattes are preserved",()=>{
  const w=20,h=20,arr=new Uint8ClampedArray(w*h*4);
