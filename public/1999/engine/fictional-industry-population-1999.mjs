@@ -1,6 +1,9 @@
 /**
  * Fictional 1999 whole-industry population authority.
  *
+ * LEGACY FIXED-COHORT REFERENCE ONLY. The active variable-range scenario
+ * authority is fictional-industry-ecosystem-1999.mjs. Do not use this fixed
+ * 248,000-horse plan for new world generation.
  * Counts are scenario assumptions, NOT historical US census claims.
  * The opening world separates registered animals from named race-ready horses.
  * Birth cohorts reconcile to an annual 40,000 foal crop. Unnamed youngstock
