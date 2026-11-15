@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
+import {APPROVED_NEW_TRACK_PROGRAMS_1999} from '../public/next/approved-track-expansion-1999.mjs';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const inputDir=path.join(root,'data/geography/import');
@@ -104,10 +105,13 @@ for(const name of names){
 }
 const trackBytes=fs.readFileSync(trackPath);
 const tr=JSON.parse(trackBytes.toString('utf8'));
-if(tr.schema_version!=='WTW_TRACK_GEOGRAPHY_DIRECTORY_V1'||tr.counts?.total!==118||tr.tracks?.length!==118)
- throw Error('Site track directory must contain exactly 118 approved domestic/Cuban tracks, no international tracks');
-files.push({path:'public/data/track-geography-v33.json',sha256:sha(trackBytes),records:tr.tracks.length});
-for(const t of tr.tracks){
+const expansionIds=new Set(APPROVED_NEW_TRACK_PROGRAMS_1999.map(t=>t.id));
+const importedTracks=tr.tracks?.filter(t=>!expansionIds.has(t.id))||[];
+if(tr.schema_version!=='WTW_TRACK_GEOGRAPHY_DIRECTORY_V1'||tr.counts?.total!==124||
+ tr.tracks?.length!==124||tr.counts?.international!==0||importedTracks.length!==118)
+ throw Error('Site track directory must contain 118 protected source tracks plus six separately approved game tracks');
+files.push({path:'public/data/track-geography-v33.json',sha256:sha(trackBytes),records:importedTracks.length});
+for(const t of importedTracks){
  push(record({id:'TRACK-'+t.id,entityId:t.id,entityKind:'track',relation:'TRACK_LOCATION',
   city:t.city_locality,region:t.state_province_region,country:t.country,place:t.name,travel:t.travel_node,
   locationType:t.opening_state,geoStatus:t.geography_status,canon:t.geography_status,
@@ -119,9 +123,11 @@ const expected={horse_current:2522,horse_foaling:2991,participant_geography:2688
 for(const [k,n] of Object.entries(expected)){if(counts[k]!==n)throw Error('Wrong '+k+' count: '+counts[k]+' expected '+n);}
 if(records.length!==8449||seen.size!==8449||currentHorseIDs.size!==2488||foalingHorseIDs.size!==2991||orgIDs.size!==108)
  throw Error('Unique Horse_ID, organization or global location join gate failed');
-const nNorth=tr.tracks.filter(t=>t.registry==='NORTH_AMERICA').length;
-const nInternational=tr.tracks.filter(t=>t.registry==='INTERNATIONAL').length;
-if(nNorth!==118||nInternational!==0)throw Error('Only 118 approved North American/Cuban tracks may be in the current game location directory');
+const nNorth=importedTracks.filter(t=>t.registry==='NORTH_AMERICA').length;
+const nInternational=importedTracks.filter(t=>t.registry==='INTERNATIONAL').length;
+const approvedGameExpansionTracks=tr.tracks.length-importedTracks.length;
+if(nNorth!==118||nInternational!==0||approvedGameExpansionTracks!==6)
+ throw Error('The source read model must stay at 118; the six approved game tracks remain outside historical source import');
 const digest=sha(files.map(f=>f.path+':'+f.sha256).join('\n')+'\n'+records.map(r=>r.record_sha256).join('\n'));
 fs.mkdirSync(outputDir,{recursive:true});
 const chunks=[];
@@ -144,7 +150,7 @@ fs.writeFileSync(path.join(outputDir,'geo_999_manifest.sql'),last);
 const manifest={batch_id:batch,digest,authority_url:sourceURL,counts,total:records.length,
  unique_horses_current:currentHorseIDs.size,unique_horses_foaling:foalingHorseIDs.size,
  unique_organizations:orgIDs.size,unlocated_registered_1999_horses:503,
- tracks:{north_america:nNorth,international:nInternational},files,
+ tracks:{north_america:nNorth,international:nInternational,owner_approved_game_expansion:approvedGameExpansionTracks},files,
  sql_chunks:chunks,source_policy:p,
  safety:"No Cloudflare import performed by this compiler. Database mutation requires separate manual, isolated, confirmed workflow."};
 fs.writeFileSync(path.join(outputDir,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
