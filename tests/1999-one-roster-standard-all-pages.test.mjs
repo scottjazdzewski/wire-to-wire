@@ -39,7 +39,7 @@ test('all real track profiles retain the one approved full stakes and two-column
 });
 
 test('web app loads fresh bundled CSS and JavaScript rather than stale browser cache',()=>{
- assert.match(html,/\/next\/next\.js\?rev=wtw1999-ledbetter-approved-20261114/);
+ assert.match(html,/\/next\/next\.js\?rev=wtw1999-circle-b-approved-20261115/);
  assert.match(html,/\/next\/next\.css\?rev=wtw-logo-pixel-depth-20261115/);
  assert.equal((html.match(/rel="stylesheet"/g)||[]).length,1,'One authoritative management CSS');
 });

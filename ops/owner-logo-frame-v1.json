@@ -16,7 +16,7 @@
     7,
     9
   ],
-  "approved_logo_count": 31,
+  "approved_logo_count": 32,
   "assets": [
     {
       "path": "public/assets/office/founding-organization-logos/O-000001.png",
@@ -72,6 +72,20 @@
         11
       ],
       "old_frame_pixels_removed": 6157
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-000059.png",
+      "source_sha256": "75cbb5d8a07fb426e3a4e8eaaa3e7c6f04d81b5137bd30ae4135c69ae0abfdc8",
+      "output_sha256": "6406b49e6f8b2dfaed55ef057703ef419ef2269b4c0e6c0b690517eb02505c31",
+      "background": [
+        0,
+        16,
+        41
+      ],
+      "old_frame_pixels_removed": 0,
+      "source_revision": "USER_APPROVED_2026-11-15",
+      "approved_original": "https://drive.google.com/file/d/1lQKBEnejI9it091XDtjqi-exqBRt7vmd/view",
+      "approval_note": "Exact B and concentric target preserved; standardized external 5px border and 28px corners"
     },
     {
       "path": "public/assets/office/founding-organization-logos/O-000061.png",
