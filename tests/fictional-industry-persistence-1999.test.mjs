@@ -44,9 +44,12 @@ test('large durable industry batches gzip compact and legacy raw records remain 
  assert.equal(await decodePersistent1999StoredValue(batch),batch,
   'legacy structured-clone records should remain readable');
 });
+// Keep the in-memory persistence fixture bounded. The real Chromium acceptance
+// separately generates and reopens the complete 300,000-horse world.
 test('full 1999 industry persists and reopens exactly without regeneration',async()=>{
  const store=memoryStore();
- const params={store,seed:19990101,worldId:'FullTest',...dirs,batchSize:4000};
+ const params={store,seed:19990101,worldId:'FullTest',targetOpeningHorses:12000,
+  ...dirs,batchSize:4000};
  assert.equal(await reopenPersistent1999Industry(store,{seed:params.seed,
   worldId:params.worldId}),null);
  const a=await createPersistent1999Industry(params);
@@ -65,10 +68,11 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
  assert.equal(finalCalendar.length,
   a.scheduledCards-(a.calendarBatchesCommitted-1)*100);
 
- assert.ok(a.horseCount>180000);
- assert.ok(a.personCount>30000);
- assert.ok(a.coveringCount>50000);
- assert.ok(a.coveringBatchesCommitted>10);
+ assert.equal(a.horseCount,12000);
+ assert.equal(a.targetOpeningHorses,12000);
+ assert.ok(a.personCount>0);
+ assert.ok(a.coveringCount>0);
+ assert.ok(a.coveringBatchesCommitted>0);
  assert.ok(a.scheduledCards>0);
  assert.ok(a.scheduledRaces>a.scheduledCards);
  assert.ok(a.calendarBatchesCommitted>0);
@@ -133,7 +137,8 @@ test('interrupted industry genesis resumes at committed checkpoint',async()=>{
   if(++writes===3)throw Error('Simulated crash');
   return store.commitBatch(args);
  }};
- const params={seed:19990102,worldId:'ResumeTest',...dirs,batchSize:5000};
+ const params={seed:19990102,worldId:'ResumeTest',targetOpeningHorses:12000,
+  ...dirs,batchSize:5000};
  await assert.rejects(createPersistent1999Industry({...params,store:interrupted}),/Simulated crash/);
  const saved=await store.get('manifests','ResumeTest:19990102');
  assert.equal(saved.status,'GENERATING');
@@ -157,7 +162,7 @@ test('incomplete worlds cannot receive playable career runs',async()=>{
 test('opening certificate rejects missing durable race calendar data',async()=>{
  const store=memoryStore();
  const params={store,seed:19990103,worldId:'CalendarCorruption',...dirs,
-  batchSize:5000};
+  targetOpeningHorses:12000,batchSize:5000};
  const world=await createPersistent1999Industry(params);
  const broken={...store,get:async(kind,key)=>{
   if(kind==='calendarBatches')return undefined;
