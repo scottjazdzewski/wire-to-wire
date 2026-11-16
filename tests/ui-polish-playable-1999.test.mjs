@@ -95,3 +95,15 @@ test('the generated horse directory never renders the 300,000-record array',()=>
  assert.match(roster,/directory&&universe\?\.paged/);
  assert.match(ui,/APP\.directoryPage=0;return paint\(\)/);
 });
+
+
+test('generated world search/filter applies across the whole census, not one visible page',()=>{
+ const manager=read('public/next/1999-commercial-career-manager.mjs');
+ assert.match(manager,/function playableWorldHorseBrowse\(\{offset=0,limit=160,search='',sort='name',desc=false,filters=\{\}\}/);
+ assert.match(manager,/const key=\[query,sort,Boolean\(desc\),JSON\.stringify\(filters\|\|\{\}\)\]/);
+ assert.match(manager,/const found=\(query\|\|hasFilters\)\?pool\.filter\(matching\):pool/);
+ assert.match(manager,/window\.WTW1999RosterFilters\.matches/);
+ assert.match(ui,/filters:window\.WTW1999RosterFilters\?\.get\(APP,'World\|1999 Horses'\)/);
+ assert.match(ui,/if\(!universe\?\.paged&&stableCriteria/);
+ assert.match(ui,/return universe\?\.paged\|\|!search/);
+});
