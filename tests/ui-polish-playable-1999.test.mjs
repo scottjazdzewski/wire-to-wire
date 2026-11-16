@@ -46,6 +46,8 @@ test('Office Race Schedule visible rows no longer target retired fixtureList DOM
 test('Stable first paints quick but retains explicit All Columns choice at 1024',()=>{
  assert.match(ui,/stableMode:'auto'/);
  assert.match(ui,/APP\.stableMode==='auto'\?\(window\.innerWidth<=1080\?'compact':'all'\)/);
+ assert.match(ui,/directoryMode:'auto'/);
+ assert.match(ui,/APP\.directoryMode==='auto'\?\(window\.innerWidth<=1080\?'compact':'all'\):APP\.directoryMode/);
  assert.match(ui,/if\(key==='stable-mode'\)\{APP\.stableMode=val;return paint\(\)\}/);
  const narrow=css.slice(css.indexOf('/* UI Window 4:'));
  assert.match(narrow,/@media \(min-width:781px\) and \(max-width:1080px\)/);
