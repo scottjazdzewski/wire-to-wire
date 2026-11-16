@@ -25,11 +25,15 @@
       "output": "../dist/windows",
       "buildResources": "assets"
     },
+    "electronLanguages": [
+      "en-US"
+    ],
     "files": [
       "main.cjs",
       "preload.cjs",
       "local-content.cjs",
       "package.json",
+      "!**/node_modules/wtw-canon-desk/**",
       "!**/.git/**"
     ],
     "extraResources": [
