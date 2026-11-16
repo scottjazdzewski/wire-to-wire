@@ -129,7 +129,8 @@ export function resolve1999PremierJockeyOffers({state,world,emit}){
    const decision=jockeyBookingDecision(state,world,race,horse,jockey);
    if(!decision.accept)return null;
    const price=decision.quote.feeMinor+o.bonus_minor;
-   if(!cents(price)||!cents(state.runtime.finances.operation_balances_minor?.[o.owner_id])||
+   if(!cents(price)||price>o.maximum_jockey_fee_minor||
+    !cents(state.runtime.finances.operation_balances_minor?.[o.owner_id])||
     state.runtime.finances.operation_balances_minor[o.owner_id]<price)return null;
    const bond=get1999JockeyPartnership(state,{
     trainerId:horse.trainer_id,ownerId:horse.owner_organization_id,
@@ -148,6 +149,7 @@ export function resolve1999PremierJockeyOffers({state,world,emit}){
    // Recheck the actual authoritative schedule and owner funds right now.
    const decision=jockeyBookingDecision(state,world,race,horse,jockey);
    if(!decision.accept||entry.status!=='ENTERED'||
+    decision.quote.feeMinor+offer.bonus_minor>offer.maximum_jockey_fee_minor||
     state.runtime.finances.operation_balances_minor[offer.owner_id]<
      decision.quote.feeMinor+offer.bonus_minor)continue;
    racingAction({state,world,command:{actor:'system',
@@ -469,7 +471,10 @@ export function racingAction({state,world,command,emit}){
   ensure(decision.accept,'PREMIER_OFFER_DECLINED',decision.reason);
   ensure(p.bonus_minor<=premierBonusCap(decision.quote),
    'PREMIER_OFFER_BONUS','Signing premium exceeds the modeled rider limit');
-  const cost=decision.quote.feeMinor+p.bonus_minor;
+  const cost=decision.quote.feeMinor+p.bonus_minor,
+   authorized=p.maximum_jockey_fee_minor??cost;
+  ensure(cents(authorized)&&authorized>=cost&&authorized<=10000000,
+   'PREMIER_OFFER_AUTHORIZATION','No premier mount may exceed owner-authorized rider compensation');
   ensure(cents(state.runtime.finances.operation_balances_minor?.[horse.owner_organization_id])&&
    state.runtime.finances.operation_balances_minor[horse.owner_organization_id]>=cost,
    'PREMIER_OFFER_CASH','Owner cannot cover quoted winning mount and signing premium');
@@ -483,12 +488,13 @@ export function racingAction({state,world,command,emit}){
    jockey_id:jockey.id,trainer_id:horse.trainer_id,
    owner_id:horse.owner_organization_id,
    bonus_minor:p.bonus_minor,quoted_base_minor:decision.quote.feeMinor,
+   maximum_jockey_fee_minor:authorized,
    offered_date:state.clock.date,status:'PENDING'};
   emit(prior?'JOCKEY_PREMIER_OFFER_RAISED':'JOCKEY_PREMIER_OFFER_SUBMITTED',{
    offer_id:id,race_id:race.id,horse_id:horse.horse_id,
    jockey_id:jockey.id,owner_id:horse.owner_organization_id,
    trainer_id:horse.trainer_id,bonus_minor:p.bonus_minor,
-   maximum_possible_payment_minor:cost,owner_debited:false,
+   maximum_possible_payment_minor:authorized,owner_debited:false,
    decision_due_date:new Date(Date.parse(race.date+'T12:00:00Z')-
     4*86400000).toISOString().slice(0,10)});
  }else if(type==='BOOK_1999_JOCKEY'){
@@ -517,6 +523,8 @@ export function racingAction({state,world,command,emit}){
    rt.premier_offers?.[p.market_offer_id]?.bonus_minor===bonus,
    'PREMIER_OFFER_BONUS','Only signed market winners may pay a negotiated premium');
   const fee=quote.feeMinor+bonus;
+  if(p.market_offer_id)ensure(fee<=rt.premier_offers[p.market_offer_id].maximum_jockey_fee_minor,
+   'PREMIER_OFFER_AUTHORIZATION','Signed mount exceeds authorized maximum jockey cost');
   charge(state,horse.owner_organization_id,fee,'JOCKEY_MOUNT_AND_TRAVEL_FEE',race,horse,j.id);
   rt.jockey_finances_minor[j.id]+=fee;
   state.runtime.finances.ledger.push({date:state.clock.date,kind:'JOCKEY_FEE_RECEIVED',
@@ -676,7 +684,8 @@ export function validateRacingRuntime(state,world){
     ['PENDING','SIGNED','DECLINED'].includes(o.status)&&
     validDate(o.offered_date)&&o.offered_date<=state.clock.date&&
     cents(o.bonus_minor)&&o.bonus_minor<=250000&&
-    cents(o.quoted_base_minor),
+    cents(o.quoted_base_minor)&&cents(o.maximum_jockey_fee_minor)&&
+    o.maximum_jockey_fee_minor>=o.quoted_base_minor+o.bonus_minor,
     'PREMIER_SAVE','Invalid race, rider, or audited offer source');
    if(o.status==='SIGNED'){
     const entry=state.runtime.entries?.[o.race_id+':'+o.horse_id];
