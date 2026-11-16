@@ -115,6 +115,8 @@ try {
     const vars=shell?getComputedStyle(shell):null;
     const rect=x=>x?.getBoundingClientRect();
     const r=rect(root),sc=rect(shell),st=rect(stage);
+    const picker=root?.querySelector('select[data-ng-select="manager-screen"],select[data-ng-select="department-tab"]');
+    const pickerLabel=picker?.closest('label'),pickerRect=rect(picker),pickerLabelRect=rect(pickerLabel);
     return {
      width:document.documentElement.clientWidth,
      overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
@@ -125,7 +127,12 @@ try {
      listName:parseFloat(vars?.getPropertyValue('--wtw-ui-list-name')||0),
      listMeta:parseFloat(vars?.getPropertyValue('--wtw-ui-list-meta')||0),
      rail:!!root?.querySelector('.ng-game-rail'),
-     header:!!root?.querySelector('.ng-global')
+     header:!!root?.querySelector('.ng-global'),
+     picker:pickerLabel?{
+      display:getComputedStyle(pickerLabel).display,
+      height:pickerLabelRect?.height||0,
+      selectHeight:pickerRect?.height||0
+     }:null
     };
    })()`);
    assert.equal(box.width,1280,where+' laptop viewport was not applied');
@@ -135,6 +142,10 @@ try {
    assert.ok(box.listText>=10&&box.listName>=10.5&&box.listMeta>=9,
     where+' uses unreadably small shared row typography: '+JSON.stringify(box));
    assert.equal(box.date,baseline.date,where+' laptop reflow advanced game time');
+   if(box.picker)assert.ok(
+    ['flex','inline-flex'].includes(box.picker.display)&&
+    box.picker.height<=box.picker.selectHeight+8,
+    where+' VIEW label/dropdown stacked or mismatched: '+JSON.stringify(box.picker));
   }finally{
    await command('Emulation.clearDeviceMetricsOverride');
   }
@@ -310,6 +321,46 @@ try {
   pageCount++;
  }
  console.log('WTW_SCREEN_FAMILY_PASS Office '+tabmap.Office.length+' views');
+
+ // Modern route pages own their INTERNAL columns. The shared route shell
+ // must stay full-width at 1280px and at the 1024px breakpoint.
+ for(const item of [
+  {name:'Organization Overview',ui:'Organization Overview',selector:'.ng-org-overview'},
+  {name:'Due Actions',ui:'Due Actions',selector:'.ng-due-overview'},
+  {name:'Race File',ui:'RaceFile:layout-audit-missing-record',selector:'.ng-1999-race-file'},
+  {name:'Search',ui:'Search',selector:'.ng-search-page'},
+  {name:'World Record',ui:'WorldRecord:track:T-0002',selector:'.ng-world-source-profile'}
+ ]){
+  await command('Page.navigate',{url:url+'?ui='+encodeURIComponent(item.ui)});
+  for(const width of [1280,1024]){
+   await command('Emulation.setDeviceMetricsOverride',{
+    width,height:800,deviceScaleFactor:1,mobile:false
+   });
+   try{
+    let box=null;
+    for(let attempt=0;attempt<90;attempt++){
+     box=await evaluate(`(()=>{
+      const root=document.getElementById('wtwNextgen');
+      const screen=root?.querySelector(${JSON.stringify(item.selector)});
+      const host=screen?.closest('.ng-routeinner');
+      const parent=host?.getBoundingClientRect(),child=screen?.getBoundingClientRect();
+      return {found:!!screen,ratio:parent?.width?child.width/parent.width:0,
+       parentWidth:parent?.width||0,screenWidth:child?.width||0,
+       gameDate:root?.querySelector('.ng-global-date strong')?.textContent?.trim()||''};
+     })()`);
+     if(box?.found&&box.parentWidth>300)break;
+     await delay(100);
+    }
+    assert.ok(box?.found&&box.parentWidth>300,item.name+' route did not render at '+width+': '+JSON.stringify(box));
+    assert.ok(box.ratio>.82,
+     item.name+' is trapped in a half-width route grid at '+width+': '+JSON.stringify(box));
+    assert.equal(box.gameDate,baseline.date,item.name+' navigation advanced the game date');
+    console.log('WTW_FULL_WIDTH_ROUTE_PASS '+item.name+' '+width+'px '+Math.round(box.ratio*100)+'%');
+   }finally{
+    await command('Emulation.clearDeviceMetricsOverride');
+   }
+  }
+ }
 
  // Check REAL information-panel sorting on all three shared manager families.
  // These are dense, source-linked record lists, not ornamental unclickable headers.

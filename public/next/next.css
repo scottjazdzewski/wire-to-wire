@@ -138,7 +138,7 @@ body.wtw-next-active{overflow:auto}
 .ng-routetext h1{font-size:22px;letter-spacing:-.03em;margin:3px 0 0;font-weight:760}
 .ng-back{background:#1e262a;color:#eaf0eb;border:1px solid #3c4b47;border-radius:3px;padding:8px 13px;font-size:12px!important}
 .ng-routegrid{display:grid;grid-template-columns:1fr;min-height:0;overflow:auto;gap:10px}
-.ng-routeinner{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:10px;min-width:0;background:transparent}
+.ng-routeinner{display:block;min-width:0;background:transparent}
 .ng-routeinner .routeCard,.ng-routeinner .profilePage,.ng-routeinner .stableRouteMain,.ng-routeinner .worldPage,.ng-routeinner .trackProfilePage,.ng-routeinner .horseProfilePage{background:#171e22;border:1px solid #3c4b47;border-radius:6px;padding:13px;min-width:0}
 .ng-routeinner .profilePage,.ng-routeinner .horseProfilePage,.ng-routeinner .trackProfilePage{grid-column:span 2}
 .ng-routeinner h3{font-size:14px;margin:4px 0 10px}
@@ -188,6 +188,7 @@ body.wtw-next-active{overflow:auto}
 .ng-manager-identity h2{margin:0;font-size:15px;line-height:1.2;letter-spacing:.015em;font-weight:800;color:#eff2ec;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ng-manager-controls{display:flex;align-items:center;justify-content:flex-end;gap:7px;min-width:0}
 .ng-manager-controls label{display:flex;align-items:center;gap:6px;font-size:9px;font-weight:750;color:#a1b9ad;white-space:nowrap}
+.ng-manager-view-picker{display:inline-flex;align-items:center}
 .ng-manager-controls select{min-width:130px;height:26px;padding:3px 6px;border:1px solid #42534c;border-radius:2px;background:#202a2c;color:#e4e9e3;font-size:10px}
 .ng-routeinner .ng-manager-controls>button{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:26px;padding:3px 9px;border:1px solid #476d54;border-radius:2px;background:#284837;color:#e9ddb6;font-size:9px!important;font-weight:780;white-space:nowrap}
 .ng-manager-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
@@ -1126,7 +1127,7 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-org-mark{width:25px;height:25px;flex-basis:25px}
 .ng-global .ng-global-due{height:30px}
 }
-.ng-routeinner:has(.ng-org-overview),.ng-routeinner:has(.ng-due-overview){overflow-y:auto!important;overflow-x:hidden!important}
+.ng-routeinner:has(.ng-org-overview),.ng-routeinner:has(.ng-due-overview),.ng-routeinner:has(.ng-1999-race-file){overflow-y:auto!important;overflow-x:hidden!important}
 .ng-org-overview,.ng-due-overview{padding:7px;max-width:1500px;color:#e8efec}
 .ng-org-overview-top{display:flex;align-items:center;gap:16px;padding:14px 18px;border:1px solid #3c4b47;border-radius:5px;background:linear-gradient(110deg,#1e262a,#171e22)}
 .ng-org-overview-name{min-width:0}

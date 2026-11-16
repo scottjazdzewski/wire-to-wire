@@ -3889,7 +3889,7 @@ function managementViewOptions(section,page){
  return (tabmap[section]||[]).map(t=>'<option value="'+safe(t)+'" '+(t===page?'selected':'')+'>'+safe(t)+'</option>').join('');
 }
 function managerRecordViewControl(section,page){
- return '<label>VIEW <select data-ng-select="manager-screen" aria-label="Choose '+safe(section)+' view">'+
+ return '<label class="ng-manager-view-picker">VIEW <select data-ng-select="manager-screen" aria-label="Choose '+safe(section)+' view">'+
   managementViewOptions(section,page)+'</select></label>';
 }
 /* News is a source-backed Office bulletin board, not a fictional 2014
