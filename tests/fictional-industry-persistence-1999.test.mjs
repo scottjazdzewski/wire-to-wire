@@ -4,7 +4,8 @@ import {createPersistent1999Industry,readPersistent1999IndustryBatch,findPersist
  updatePersistent1999Horse,readPersistent1999HorseProfile,
  savePersistent1999CareerRun,loadPersistent1999CareerRun,
  readPersistent1999Directory,findPersistent1999Person,verifyPersistent1999WorldOpen,
- reopenPersistent1999Industry}
+ reopenPersistent1999Industry,encodePersistent1999StoredValue,
+ decodePersistent1999StoredValue,PERSISTENT_INDUSTRY_COMPRESSION_SCHEMA}
  from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
 function memoryStore(){
  const data={manifests:new Map(),horseBatches:new Map(),personBatches:new Map(),horseEdits:new Map(),careerRuns:new Map(),directory:new Map(),coveringBatches:new Map(),calendarBatches:new Map()};
@@ -26,6 +27,23 @@ function memoryStore(){
 }
 const dirs={farms:[{id:'O-FARM-1',location:{country:'USA'}}],
  tracks:[{id:'T-0001'}],owners:[{id:'O-OWNER-1'}]};
+test('large durable industry batches gzip compact and legacy raw records remain readable',async()=>{
+ const batch=Array.from({length:2500},(_,i)=>({
+  id:'H-FICTIONAL-1999-THREEYEAROLDRUNNERS-'+String(i+1).padStart(7,'0'),
+  name:'Copper Horizon',status:'RACING',sex:i%2?'F':'M',foalYear:1996,
+  ownerId:'O-FICTIONAL-OWNER-T-0001-01',homeTrackId:'T-0001',
+  ratings:{speed:67,stamina:64,class:62,form:59},
+  birthplace:{city:'Lexington',region:'Kentucky',country:'USA'}}));
+ const rawBytes=Buffer.byteLength(JSON.stringify(batch));
+ const compact=await encodePersistent1999StoredValue(batch);
+ assert.equal(compact.schema,PERSISTENT_INDUSTRY_COMPRESSION_SCHEMA);
+ assert.equal(compact.rawBytes,rawBytes);
+ assert.ok(compact.data.byteLength<rawBytes/4,
+  'modeled horse batches should use substantially less durable storage');
+ assert.deepEqual(await decodePersistent1999StoredValue(compact),batch);
+ assert.equal(await decodePersistent1999StoredValue(batch),batch,
+  'legacy structured-clone records should remain readable');
+});
 test('full 1999 industry persists and reopens exactly without regeneration',async()=>{
  const store=memoryStore();
  const params={store,seed:19990101,worldId:'FullTest',...dirs,batchSize:4000};
