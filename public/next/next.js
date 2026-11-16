@@ -4465,17 +4465,17 @@ else if(APP.custom==='Search'){body=searchView()}
 else if(APP.custom.startsWith('WorldRecord:')){body=world1999Profile()}
 else if(APP.custom.startsWith('FoundingProfile:')){body=founding1999Profile()}
 else if(APP.custom.startsWith('PilotHorse:')){body=pilotHorseDetail(decodeURIComponent(APP.custom.slice('PilotHorse:'.length)))}
+else if(APP.custom.startsWith('RaceFile:Career:')){
+ const id=decodeURIComponent(APP.custom.slice('RaceFile:Career:'.length));
+ const saved=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ const row=saved?.raceRows?.find(r=>r.id===id);
+ body=row?window.WTW1999CanonicalCareerRaceFile?.render?.(row):null;
+ if(!body)body='<section class="ng-1999-race-file"><h2>Saved race unavailable</h2><p>This race ID is not in the active game career. No other run was substituted.</p></section>';
+}
 else if(APP.custom.startsWith('RaceFile:')){
  const id=decodeURIComponent(APP.custom.slice('RaceFile:'.length));
- const saved=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
- if(saved){
-  const row=saved.raceRows?.find(r=>r.id===id);
-  body=row?window.WTW1999CanonicalCareerRaceFile?.render?.(row):null;
-  if(!body)body='<section class="ng-1999-race-file"><h2>Saved race unavailable</h2><p>This race ID is not in the active game career. No other run was substituted.</p></section>';
- }else{
-  const race=APP.raceRouteKey===id?APP.raceDetail:window.__WTW_1999_UI_DATA__?.findRace?.(id);
-  body=window.WTW1999RaceConditions?.render(race,window.__WTW_1999_UI_DATA__)||'<section class="ng-1999-race-file"><h2>Race file loading unavailable</h2></section>';
- }
+ const race=APP.raceRouteKey===id?APP.raceDetail:window.__WTW_1999_UI_DATA__?.findRace?.(id);
+ body=window.WTW1999RaceConditions?.render(race,window.__WTW_1999_UI_DATA__)||'<section class="ng-1999-race-file"><h2>Race file loading unavailable</h2></section>';
 }
 else if(APP.custom.startsWith('Preview:')){body=previewRecordView()}
 else {body=managerDashboard()}
@@ -4907,7 +4907,7 @@ window.addEventListener('click',e=>{
  if(saved){
   const row=saved.raceRows?.find(r=>r.id===val);
   if(!row)return; // Never resolve a saved race by a coincidental Office row index.
-  return openCustomView('RaceFile:'+encodeURIComponent(row.id),'Racing',APP.page);
+  return openCustomView('RaceFile:Career:'+encodeURIComponent(row.id),'Racing',APP.page);
  }
  const n=$('.right .fixtureList .fixture[data-track]')[Number(val)];return bridgeNode(n);
 }
