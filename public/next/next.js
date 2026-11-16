@@ -3549,6 +3549,12 @@ function previewRecordRoute(kind,name,row=null){
 }
 function openEntityRecord(name,preferred='',row=null){
  if(entityNotRecorded(name))return false;
+ // Calendar's clickable venue names resolve to the same canonical Track
+ // Profile as World rows; do not let the retired Office search win first.
+ if(preferred==='track'){
+  const venue=world1999Match('track',name);
+  if(venue)return openWorld1999Entity(venue.worldKey);
+ }
  if(isClean1999()&&['farm','person','connection',''].includes(preferred)){
   const found=world1999Match(preferred==='connection'?'':preferred,name);
   if(found?.kind==='farm')return openFounding1999Profile('ownership',found.canonicalId);
