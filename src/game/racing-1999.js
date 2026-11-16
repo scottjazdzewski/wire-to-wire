@@ -509,6 +509,7 @@ export function racingAction({state,world,command,emit}){
    const id=premierOfferId(race.id,horse.horse_id,j.id);
    ensure(command.actor==='system'&&p.market_offer_id===id&&
     rt.premier_offers?.[id]?.status==='PENDING'&&
+    p.market_bonus_minor===rt.premier_offers[id].bonus_minor&&
     dayGap(state.clock.date,race.date)<=4,
     'PREMIER_OFFER_REQUIRED','Elite major-stakes rides must win a competing offer before signing');
   }
