@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createPersistent1999Industry,savePersistent1999CareerRun,
  loadPersistent1999CareerRun} from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
-import {openPersistent1999GameCareer} from '../public/1999/engine/fictional-industry-game-world-bridge-1999.mjs';
+import {digestPersistent1999GameSnapshot,openPersistent1999GameCareer}
+ from '../public/1999/engine/fictional-industry-game-world-bridge-1999.mjs';
 import {validateGameRun} from '../public/1999/game/state.js';
 import {dispatchGameCommand} from '../public/1999/game/kernel.js';
 import {gameRaceProgram,supported1999RaceClass,raceEligibility}
@@ -26,6 +27,24 @@ function memoryStore(){
   },
   commitManifest:async(id,manifest)=>data.manifests.set(id,structuredClone(manifest))};
 }
+
+test('full-scale career snapshot hashes preserve census order in bounded chunks',async()=>{
+ const manifest={worldId:'FullScaleDigestTest',seed:19990101,
+  targetOpeningHorses:300000,horseCount:300000,personCount:75000};
+ const entities={
+  horses:Array.from({length:300000},(_,i)=>({id:'H-'+i,name:'Horse '+i})),
+  people:Array.from({length:75000},(_,i)=>({id:'P-'+i,name:'Person '+i})),
+  organizations:Array.from({length:1605},(_,i)=>({id:'O-'+i,name:'Org '+i})),
+  tracks:Array.from({length:107},(_,i)=>({id:'T-'+i,name:'Track '+i}))
+ };
+ const cards=Array.from({length:10000},(_,i)=>({id:'R-'+i,date:'1999-01-01'}));
+ const snapshot={manifest,entities,cards};
+ const first=await digestPersistent1999GameSnapshot(snapshot);
+ assert.match(first,/^[a-f0-9]{64}$/);
+ entities.horses[0].name+=' changed';
+ const changed=await digestPersistent1999GameSnapshot(snapshot);
+ assert.notEqual(changed,first,'any horse record change must change the snapshot digest');
+});
 
 test('10,000-horse persisted 1999 world opens and runs a canonical race career',async()=>{
  const store=memoryStore();
