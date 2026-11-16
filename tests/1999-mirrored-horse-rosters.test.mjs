@@ -11,7 +11,11 @@ test('Stable and World Horse Directory share the identical 17-column roster rend
  assert.match(roster,/\['activity','CURRENT ACTIVITY'\]\]/);
  assert.match(roster,/const sortKey=directory\?APP\.directorySort:APP\.stableSort/);
  assert.match(roster,/const stableCriteria=window\.WTW1999RosterFilters\?\.get\(APP,scope\)/);
- assert.match(roster,/const mode=directory\?APP\.directoryMode:APP\.stableMode/);
+ // Both views share one renderer. On an initial <=1080px Stable visit,
+ // the presentation defaults to Quick View without changing Directory state,
+ // data columns, saved records, or a user's subsequent explicit selection.
+ assert.match(roster,/const mode=directory\?APP\.directoryMode:/);
+ assert.match(roster,/APP\.stableMode==='auto'\?\(window\.innerWidth<=1080\?'compact':'all'\):APP\.stableMode/);
  assert.match(roster,/data-ng="'\+\(directory\?'directory-sort':'stable-sort'\)/);
  assert.match(roster,/data-ng="'\+\(directory\?'directory-horse':'horse'\)/);
 });
