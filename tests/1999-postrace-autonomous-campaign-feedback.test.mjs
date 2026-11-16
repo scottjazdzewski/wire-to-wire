@@ -191,7 +191,19 @@ test('player-directed workouts are only overridden for compulsory postrace welfa
   }
   if(choice)break;
  }
- assert.ok(choice,'Pilot player owner must have an actual entry and jockey option');
+ if(!choice){
+  const diagnostics=Object.values(state.runtime.registered_horses.by_id).
+   filter(x=>x.owner_organization_id===state.player.operation_id).
+   flatMap(h=>get1999HorseRaceOpportunities(state,world,h.horse_id,{
+    includeProposals:false}).rows.map(r=>({
+     horse:h.horse_id,race:r.race_id,track:r.track_id,status:r.status,
+     reasons:r.eligibility_reasons,
+     availableJockeys:r.available_jockeys.length,
+     fundedJockeys:r.available_jockeys.filter(j=>j.owner_can_pay).length
+    }))).slice(0,24);
+  assert.fail('Player must have a genuinely funded available jockey and open entry: '+
+   JSON.stringify(diagnostics));
+ }
  state=command(state,'postrace:player:entry','CONFIRM_1999_RACE_PLAN',{
   ...choice.payload,expected_revision:choice.quote.expected_revision,
   maximum_total_minor:choice.quote.immediate_total_minor},'player');
