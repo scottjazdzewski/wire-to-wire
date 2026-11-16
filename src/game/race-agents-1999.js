@@ -223,16 +223,36 @@ export function run1999RacingAgents({state,world,emit}){
     // AI trainers may not consume every starter and rider slot before a
     // player-owned eligible home runner can be booked. A real available
     // jockey is still required: we reserve opportunity, not invent mounts.
-    const playerHasLocalCandidate=stable(state,trackId).some(h=>
+    const playerCandidates=stable(state,trackId).filter(h=>
      h.owner_organization_id===state.player.operation_id&&
      !hasFutureEntry(state,h)&&
      raceEligibility(state,h,confirmed).eligible);
-    const playerReserve=playerHasLocalCandidate?
-     Math.min(2,Math.max(0,confirmed.field_capacity-2)):0;
+    const playerReserve=playerCandidates.length?
+     Math.min(playerCandidates.length,2,Math.max(0,confirmed.field_capacity-2)):0;
     const maxAiBookings=Math.max(2,confirmed.field_capacity-playerReserve);
+    // Preserve a REAL accepting, funded jockey for each potential player
+    // mount, not just an empty field slot. AI cannot take every rider before
+    // the owner can exercise their own booking choice.
+    const playerJockeyOptions=new Set();
+    for(const playerHorse of playerCandidates.slice(0,playerReserve)){
+     const candidates=Object.values(rt.jockeys).filter(j=>{
+      if(playerJockeyOptions.has(j.id))return false;
+      const decision=jockeyBookingDecision(state,world,confirmed,playerHorse,j);
+      return decision.accept&&money(state,playerHorse.owner_organization_id)>=
+       decision.quote.feeMinor;
+     }).sort((a,b)=>
+      (a.home_track_id===trackId?-1:1)-(b.home_track_id===trackId?-1:1)||
+      jockeyChoiceScore(playerHorse,b,
+       jockeyBookingDecision(state,world,confirmed,playerHorse,b),confirmed)-
+      jockeyChoiceScore(playerHorse,a,
+       jockeyBookingDecision(state,world,confirmed,playerHorse,a),confirmed)||
+      a.id.localeCompare(b.id));
+     if(candidates[0])playerJockeyOptions.add(candidates[0].id);
+    }
     let accepted=0;
     for(const h of chosen.eligible.slice(0,maxAiBookings)){
      const jockeys=Object.values(rt.jockeys).filter(j=>{
+      if(playerJockeyOptions.has(j.id))return false;
       const decision=jockeyBookingDecision(state,world,confirmed,h,j);
       return decision.accept&&money(state,h.owner_organization_id)>=
        decision.quote.feeMinor;
