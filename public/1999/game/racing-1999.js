@@ -9,7 +9,8 @@ import {getGameHorsePerformance,modelHorsePostRaceResponse} from './horse-care.j
 import {applyRaceAgentFeedback} from './daily-agents.js';
 import {registerPostRaceCampaigns} from './post-race-campaign-1999.js';
 import {horseTravelStatus,effectiveHorseTrack,validate1999HorseShipping} from './shipping-1999.js';
-import {assessJockeySchedule,quoteJockeyMount,jockeyRaceImportance}
+import {assessJockeySchedule,quoteJockeyMount,jockeyRaceImportance,
+ jockeyTierFromPerson}
  from '../engine/jockey-engagements-1999.mjs';
 
 export const GAME_RACING_SCHEMA='WTW_1999_CAREER_RACING_V1';
@@ -297,8 +298,7 @@ export function racingAction({state,world,command,emit}){
    // Selected legacy 1999 elite identities have user-approved travel
    // standing but NO sourced performance rating. Their game tier must
    // follow that identity flag, never erase it with a REGIONAL fallback.
-   const contractedTier=identity?.tier??
-    (identity?.eliteFirstPriority===true?'ELITE':'REGIONAL');
+   const contractedTier=jockeyTierFromPerson(identity);
    const baseReputation=identity?.ratings?.ability?
     rating(.34+.28*identity.ratings.ability/100+
      (identity.tier==='ELITE'?.12:identity.tier==='ESTABLISHED'?.06:0)):.5;
