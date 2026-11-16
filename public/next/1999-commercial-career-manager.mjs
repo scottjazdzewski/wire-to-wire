@@ -180,7 +180,7 @@ function modal(){
 }
 let fullIndustryManifest=null;
 let activeWorldCareer=null;
-let selectedIndustryHorses=250000,selectedIndustrySeed=19990101;
+let selectedIndustryHorses=300000,selectedIndustrySeed=19990101;
 const INDUSTRY_SIZE_MIN=10000,INDUSTRY_SIZE_MAX=325000;
 function requestedIndustry(){
  const root=modal();
@@ -191,9 +191,10 @@ function requestedIndustry(){
  if(!Number.isSafeInteger(seed)||seed<1||seed>4294967295)
   throw Error('Invalid 1999 industry seed');
  selectedIndustryHorses=horseCount;selectedIndustrySeed=seed;
- // Distinct sizes keep independent manifests, immutable records and edits.
+ // The new cohort model gets its own immutable records; keep legacy manifests
+ // addressable through the open-saved fallback below.
  return {seed,targetOpeningHorses:horseCount,
-  worldId:'WTW1999FullIndustry-H'+horseCount};
+  worldId:'WTW1999FullIndustry-COHORTS-V2-H'+horseCount};
 }
 let industryBrowsePage=0,industryBrowseHtml='',industryBrowseKind='horseBatches';
 let industryDirectory=[];
@@ -396,6 +397,7 @@ let busy=false,notice='';
 async function refresh(){
  const root=modal();
  const current=config().current(),slots=await listSlots();
+ const mareTurnover=fullIndustryManifest?.plan?.nextSeasonMareTurnover||null;
  const saved=slots.map(x=>'<div class="wtw-cc-slot"><div><strong>'+esc(x.name)+'</strong>'+
   '<small>'+esc(x.date)+' · '+fmt(x.profile?.population)+' horses · '+
    esc('1999 career save')+
@@ -414,14 +416,16 @@ async function refresh(){
   '<button data-cc-action="close">✕ CLOSE</button></header>'+
   '<div class="wtw-cc-current">CURRENT CAREER SAVE · SEED '+esc(current.seed)+'</div>'+
   '<div class="wtw-cc-section"><h3>FULL FICTIONAL 1999 INDUSTRY — WORLD EXPLORER</h3>'+
-  '<p>Create or reopen a complete fictional racing world at the size you choose. Its census, calendar and industry directory are saved locally; a separate test career uses the canonical race engine.</p>'+
-  '<label>OPENING HORSES (10,000–325,000)<input data-cc="industry-size" type="number" min="10000" max="325000" step="1" value="'+esc(selectedIndustryHorses)+'"/></label>'+
+  '<p>Choose the January 1 horse census. The coming foal crop is forecast separately, varies by world and season, and is not counted as born yet. Breeding mares also turn over as some retire and eligible racing fillies graduate into the breeding pool.</p>'+
+  '<label>JANUARY 1 OPENING HORSES (10,000–325,000)<input data-cc="industry-size" type="number" min="10000" max="325000" step="1" value="'+esc(selectedIndustryHorses)+'"/></label>'+
   '<div class="wtw-cc-actions"><button data-cc-action="open-existing-industry">OPEN SAVED 1999 WORLD</button>'+ 
   '<button data-cc-action="open-full-industry">CREATE / RESUME FULL INDUSTRY</button></div>'+ 
   '<p data-cc="industry-progress" role="status" aria-live="polite">'+
   (busy?'Preparing the full world…':'Opening-world records are stored on this device.')+'</p>'+
   (fullIndustryManifest?'<p>WORLD STORED · '+fmt(fullIndustryManifest.horseCount)+
-   ' horses · '+fmt(fullIndustryManifest.personCount)+' personnel · '+
+   ' January 1 horses + '+fmt(fullIndustryManifest.plan.counts.annualFoals)+
+   ' forecast foals · ABOUT '+fmt(fullIndustryManifest.plan.modeledLivingPopulation)+
+   ' total horses · '+fmt(fullIndustryManifest.personCount)+' personnel · '+
    esc(fullIndustryManifest.status)+'</p>'+
    '<div class="wtw-cc-section"><h3>PLAYABLE GAMEPLAY TEST</h3>'+
    (activeWorldCareer?'<p>ACTIVE · '+esc(activeWorldCareer.run.clock.date)+
@@ -445,6 +449,8 @@ async function refresh(){
    ' · 3YO RUNNERS '+fmt(fullIndustryManifest.plan.counts.threeYearOldRunners)+
    ' · 4YO RUNNERS '+fmt(fullIndustryManifest.plan.counts.fourYearOldRunners)+
    ' · OLDER RUNNERS '+fmt(fullIndustryManifest.plan.counts.fivePlusRunners)+
+   ' · NEXT SEASON MARES RETIRING '+(mareTurnover?fmt(mareTurnover.retired):'NOT FORECAST')+
+   ' / GRADUATING IN '+(mareTurnover?fmt(mareTurnover.graduatedIntoBreeding):'NOT FORECAST')+
    ' · 1999 COVERINGS BOOKED '+fmt(fullIndustryManifest.coveringCount)+
    ' · SCHEDULED RACE DAYS '+fmt(fullIndustryManifest.scheduledCards)+
    ' · RACES '+fmt(fullIndustryManifest.scheduledRaces)+'</p>'+ 
@@ -473,8 +479,12 @@ async function perform(action,element){
   const {seed,worldId}=requestedIndustry();
   const db=await open1999IndustryDatabase();
   try{
-   const reopened=await reopenPersistent1999Industry(db,{
-    seed,worldId});
+   let reopened=await reopenPersistent1999Industry(db,{seed,worldId});
+   if(!reopened){
+    // Keep completed worlds created by the previous cohort model readable.
+    reopened=await reopenPersistent1999Industry(db,{
+     seed,worldId:'WTW1999FullIndustry-H'+selectedIndustryHorses});
+   }
    if(!reopened){
     notice='No saved full 1999 world found. Select CREATE / RESUME FULL INDUSTRY.';
     return;

@@ -337,7 +337,7 @@ export function generateProvisional1999IndustryNameRoster({
  seed=19990101,horseCount,protectedNames=[]
 }={}){
  if(!Number.isSafeInteger(seed)||seed<1||seed>4294967295||
-  !Number.isInteger(horseCount)||horseCount<1||horseCount>300000||
+  !Number.isInteger(horseCount)||horseCount<1||horseCount>325000||
   !Array.isArray(protectedNames))
   throw Error('Invalid industry horse naming request');
  const baseCount=Math.min(horseCount,70000);

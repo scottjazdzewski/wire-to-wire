@@ -14,7 +14,7 @@ test('approved UI loads the local career manager after the shared game interface
  const uiIndex=html.indexOf('/next/next.js?rev=');
  const managerIndex=html.indexOf('/next/1999-commercial-career-manager.mjs?rev=');
  assert.ok(config>=0&&bootstrap>config&&uiIndex>bootstrap&&managerIndex>uiIndex);
- assert.match(html,/1999-commercial-career-manager\.mjs\?rev=wtw-custom-world-playtest-v2/);
+ assert.match(html,/1999-commercial-career-manager\.mjs\?rev=wtw-custom-world-cohort-v3/);
  assert.match(html,/href="\/next\/next\.css\?rev=/);
  assert.match(css,/\.wtw-cc-backdrop\[hidden\]\{display:none!important\}/);
  assert.match(ui,/if\(key==='save-open'\)/);
@@ -36,7 +36,7 @@ test('compact career saves remain local and the manager adds no hosted runtime d
 test('custom-size worlds connect to the canonical playable race career',()=>{
  assert.match(manager,/data-cc="industry-size" type="number" min="10000" max="325000"/);
  assert.match(manager,/targetOpeningHorses:horseCount/);
- assert.match(manager,/worldId:'WTW1999FullIndustry-H'\+horseCount/);
+ assert.match(manager,/worldId:'WTW1999FullIndustry-COHORTS-V2-H'\+horseCount/);
  assert.match(manager,/START TEST CAREER/);
  assert.match(manager,/OPEN NEXT TEST RACE \/ ENTER TWO/);
  assert.match(manager,/ADVANCE ONE GAME DAY/);

@@ -7,12 +7,19 @@ test('1999 ecosystem produces bounded non-identical cohort populations',()=>{
  const b=plan1999Ecosystem({seed:19990102});
  assert.deepEqual(a,plan1999Ecosystem({seed:19990101}));
  assert.notDeepEqual(a.counts,b.counts);
- assert.ok(a.counts.broodmares>=60000&&a.counts.broodmares<=65000);
- assert.ok(a.counts.stallions>=6500&&a.counts.stallions<=7500);
- assert.ok(a.counts.annualFoals>=48000&&a.counts.annualFoals<=52000);
- assert.ok(a.activeRunnersExcludingTwoYearOlds>=63000);
+ assert.ok(a.counts.broodmares>=60000&&a.counts.broodmares<=63000);
+ assert.ok(a.counts.stallions>=9000&&a.counts.stallions<=11000);
+ assert.ok(a.counts.annualFoals>=48000&&a.counts.annualFoals<=51500);
+ assert.ok(a.activeRunnersExcludingTwoYearOlds>=126000);
  assert.ok(a.modeledLivingPopulation>220000);
  assert.ok(a.minimumCoversForTargetFoals<=a.counts.broodmares);
+ assert.ok(a.nextSeasonMareTurnover.retired>0);
+ assert.ok(a.nextSeasonMareTurnover.graduatedIntoBreeding>0);
+ const nextYear=plan1999Ecosystem({seed:19990101,year:2000,
+  previousBroodmares:a.nextSeasonMareTurnover.closingBroodmares});
+ assert.equal(nextYear.counts.broodmares,
+  a.nextSeasonMareTurnover.closingBroodmares);
+ assert.notEqual(nextYear.counts.annualFoals,a.counts.annualFoals);
 });
 test('stallion books vary including zero covers and large commercial books',()=>{
  const books=assignStallionServiceBooks({

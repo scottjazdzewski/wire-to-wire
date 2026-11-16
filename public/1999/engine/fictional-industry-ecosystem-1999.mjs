@@ -3,18 +3,20 @@
  * Numbers are bounded outcomes, never fixed annual quotas. Horse records,
  * pregnancies, personnel and finances are materialized by downstream engines.
  */
-export const INDUSTRY_ECOSYSTEM_1999_SCHEMA='WTW_INDUSTRY_ECOSYSTEM_1999_V1';
+export const INDUSTRY_ECOSYSTEM_1999_SCHEMA='WTW_INDUSTRY_ECOSYSTEM_1999_V2';
 export const INDUSTRY_ECOSYSTEM_1999=Object.freeze({
  schema:INDUSTRY_ECOSYSTEM_1999_SCHEMA,year:1999,
  ranges:{
-  broodmares:[60000,65000],stallions:[6500,7500],
-  annualFoals:[48000,52000],yearlings:[45000,50000],
-  twoYearOldProspects:[35000,40000],
-  threeYearOldRunners:[28000,30000],fourYearOldRunners:[22000,25000],
-  fivePlusRunners:[13000,21000]
+  broodmares:[60000,63000],stallions:[9000,11000],
+  annualFoals:[48000,51500],yearlings:[46000,50000],
+  twoYearOldProspects:[43000,47000],
+  threeYearOldRunners:[38000,42000],fourYearOldRunners:[33000,37000],
+  fivePlusRunners:[55000,65000]
  },
  biological:{maxCoversPerStallion:220,minimumBroodmareAge:3,
-  conceptionRate:[.73,.90],liveFoalRate:[.88,.96]},
+  conceptionRate:[.73,.90],liveFoalRate:[.88,.96],
+  broodmareRetirementRate:[.04,.08],eligibleMareShare:[.46,.53],
+  broodmareGraduationRate:[.09,.13]},
  hierarchy:{
   stallion:{elite:0.015,commercial:0.085,regional:0.25,limited:0.65},
   trainer:{national:0.025,majorCircuit:0.125,regional:0.35,smallBarn:0.50},
@@ -30,6 +32,31 @@ const hash=(seed,key)=>{let h=(2166136261^(seed>>>0))>>>0;
  for(let i=0;i<key.length;i++){h^=key.charCodeAt(i);h=Math.imul(h,16777619)}
  return (h>>>0)/4294967296};
 const bounded=(seed,key,[min,max])=>Math.floor(min+hash(seed,key)*(max-min+1));
+/**
+ * Forecast next season's broodmare-pool turnover. Retirements leave the
+ * breeding population; a variable share of eligible 3YO/4YO fillies graduate
+ * from racing into the pool. This is an aggregate planning projection; the
+ * career layer must commit individual horse status changes when it simulates
+ * that season.
+ */
+export function planAnnualBroodmareTurnover({seed=19990101,year=2000,
+ broodmares,eligibleFemalePopulation}={}){
+ if(!Number.isSafeInteger(seed)||seed<1||seed>4294967295||
+  !Number.isInteger(year)||year<1900||year>9998||
+  !Number.isSafeInteger(broodmares)||broodmares<1||
+  !Number.isSafeInteger(eligibleFemalePopulation)||eligibleFemalePopulation<0)
+  throw Error('Invalid annual broodmare turnover request');
+ const retireRate=.04+hash(seed,'mare-retirement-rate:'+year)*.04;
+ const graduationRate=.09+hash(seed,'mare-graduation-rate:'+year)*.04;
+ const retired=Math.min(broodmares,Math.max(1,Math.round(broodmares*retireRate)));
+ const entrants=Math.min(eligibleFemalePopulation,
+  Math.round(eligibleFemalePopulation*graduationRate));
+ return {season:year,openingBroodmares:broodmares,
+  eligibleFemalePopulation,retired,graduatedIntoBreeding:entrants,
+  closingBroodmares:broodmares-retired+entrants,
+  retirementRate:+retireRate.toFixed(4),graduationRate:+graduationRate.toFixed(4),
+  provenance:'MODELED_SEEDED_COHORT_TURNOVER'};
+}
 /**
  * January 1 population excludes projected 1999 foals not yet born.
  * Largest-remainder cohort apportionment preserves the precise chosen size.
@@ -56,11 +83,13 @@ function scaleOpeningCohorts(base,target,biology){
  return Object.fromEntries(Object.keys(base).map(key=>[key,counts[key]]));
 }
 export function plan1999Ecosystem({
- seed=19990101,settings=INDUSTRY_ECOSYSTEM_1999,targetOpeningHorses=null
+ seed=19990101,year=1999,settings=INDUSTRY_ECOSYSTEM_1999,
+ targetOpeningHorses=null,previousBroodmares=null
 }={}){
  if(!Number.isSafeInteger(seed)||seed<1||seed>4294967295||
+  !Number.isSafeInteger(year)||year<1900||year>9998||
   settings?.schema!==INDUSTRY_ECOSYSTEM_1999_SCHEMA)
-  throw Error('Invalid 1999 ecosystem seed or schema');
+  throw Error('Invalid ecosystem seed, year or schema');
  for(const [key,range] of Object.entries(settings.ranges))
   if(!Array.isArray(range)||range.length!==2||!range.every(Number.isSafeInteger)||
    range[0]<0||range[1]<range[0])throw Error('Invalid ecosystem range '+key);
@@ -68,8 +97,17 @@ export function plan1999Ecosystem({
   targetOpeningHorses<OPENING_WORLD_SIZE_1999.min||
   targetOpeningHorses>OPENING_WORLD_SIZE_1999.max))
   throw Error('Opening world size must be 10000–325000 horses');
+ if(previousBroodmares!==null&&(!Number.isSafeInteger(previousBroodmares)||
+  previousBroodmares<1||targetOpeningHorses!==null))
+  throw Error('Prior broodmare stock is only valid for an unscaled annual projection');
  const sampled=Object.fromEntries(Object.entries(settings.ranges)
-  .map(([key,range])=>[key,bounded(seed,'cohort:'+key,range)]));
+  .map(([key,range])=>[key,bounded(seed,
+   key==='annualFoals'?'annual-foal-crop:'+year:'cohort:'+key,range)]));
+ if(previousBroodmares!==null){
+  sampled.annualFoals=Math.round(sampled.annualFoals*
+   previousBroodmares/sampled.broodmares);
+  sampled.broodmares=previousBroodmares;
+ }
  const openingSampled=Object.entries(sampled).filter(([key])=>key!=='annualFoals')
   .reduce((sum,[,count])=>sum+count,0);
  const relativeScale=targetOpeningHorses===null?1:targetOpeningHorses/openingSampled;
@@ -90,12 +128,18 @@ export function plan1999Ecosystem({
  const maxCovers=stallions*settings.biological.maxCoversPerStallion;
  if(coversRequired>broodmares||coversRequired>maxCovers)
   throw Error('Foal crop exceeds breeding capacity');
+ const eligibleFemalePopulation=Math.floor(
+  (threeYearOldRunners+fourYearOldRunners)*
+  (.46+hash(seed,'eligible-mare-share:'+(year+1))*.07));
+ const nextSeasonMareTurnover=planAnnualBroodmareTurnover({
+  seed,year:year+1,broodmares,eligibleFemalePopulation
+ });
  const activeRunners=threeYearOldRunners+fourYearOldRunners+fivePlusRunners;
  const openingRegistryHorses=broodmares+stallions+yearlings+
   twoYearOldProspects+activeRunners;
  if(targetOpeningHorses!==null&&openingRegistryHorses!==targetOpeningHorses)
   throw Error('Opening registry did not match the chosen world size');
- return {schema:INDUSTRY_ECOSYSTEM_1999_SCHEMA,seed,counts,
+ return {schema:INDUSTRY_ECOSYSTEM_1999_SCHEMA,seed,year,counts,
   requestedOpeningHorses:targetOpeningHorses,openingRegistryHorses,
   activeRunnersExcludingTwoYearOlds:activeRunners,
   potentialRacingPopulation:activeRunners+twoYearOldProspects,
@@ -104,6 +148,7 @@ export function plan1999Ecosystem({
    twoYearOldProspects+activeRunners,
   minimumCoversForTargetFoals:coversRequired,
   minimumPregnanciesForTargetFoals:pregnanciesRequired,
+  nextSeasonMareTurnover,
   hierarchy:settings.hierarchy,
   assumptions:{cohorts:'SEPARATE_BIRTH_YEARS',
    twoYearOldProspects:'NOT_ALL_STARTERS',
