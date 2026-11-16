@@ -751,6 +751,16 @@ export function validateRacingRuntime(state,world){
     r.results.reduce((x,y)=>x+y.earnings_minor,0)===r.purse_minor&&
     new Set(r.results.map(x=>x.finish)).size===r.field.length,
     'RACE_SAVE','Settlement must reconcile purse and full finishing order');
+   const resultHorseIds=new Set();
+   for(let i=0;i<r.results.length;i++){
+    const result=r.results[i],entryId=`${id}:${result?.horse_id}`,
+     entry=state.runtime.entries?.[entryId];
+    ensure(typeof result?.horse_id==='string'&&
+     !resultHorseIds.has(result.horse_id)&&r.field.includes(entryId)&&
+     entry?.status==='RESULTED'&&entry.finish===i+1&&result.finish===i+1,
+     'RACE_SAVE','Official results must match each starter once in finish order');
+    resultHorseIds.add(result.horse_id);
+   }
    for(const result of r.results){
     if(result.race_tactic===undefined)continue; // Old saves and AUTO are unchanged.
     const e=state.runtime.entries[r.id+':'+result.horse_id];
