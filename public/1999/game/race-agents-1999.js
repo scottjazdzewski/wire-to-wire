@@ -223,10 +223,25 @@ export function run1999RacingAgents({state,world,emit}){
     // AI trainers may not consume every starter and rider slot before a
     // player-owned eligible home runner can be booked. A real available
     // jockey is still required: we reserve opportunity, not invent mounts.
-    const playerCandidates=stable(state,trackId).filter(h=>
-     h.owner_organization_id===state.player.operation_id&&
-     !hasFutureEntry(state,h)&&
-     raceEligibility(state,h,confirmed).eligible);
+    // Player-owned horses can target legitimate AWAY opportunities too.
+    // Protecting only local horses would let AI consume the host track's
+    // entire rider colony even when the player can fund/complete shipping.
+    const receivingSites=Object.values(state.runtime.facilities?.sites||{}).
+     filter(site=>site.type==='RACING_STABLE'&&site.host_track_id===trackId);
+    const playerCandidates=horses(state).filter(h=>{
+     if(h.owner_organization_id!==state.player.operation_id||
+      hasFutureEntry(state,h))return false;
+     const eligibility=raceEligibility(state,h,confirmed);
+     if(eligibility.eligible)return true;
+     if(eligibility.reasons.length!==1||
+      eligibility.reasons[0]!=='NOT_PHYSICALLY_AT_TRACK_OR_CONFIRMED_TO_ARRIVE')
+      return false;
+     return receivingSites.some(site=>{
+      const shipping=shippingAssessment(state,world,h.horse_id,site.id,
+       {targetRaceId:confirmed.id});
+      return shipping.allowed;
+     });
+    });
     const playerReserve=playerCandidates.length?
      Math.min(playerCandidates.length,2,Math.max(0,confirmed.field_capacity-2)):0;
     const maxAiBookings=Math.max(2,confirmed.field_capacity-playerReserve);
