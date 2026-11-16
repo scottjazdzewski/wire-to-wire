@@ -27,6 +27,8 @@ jobs:
           CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
           CHROME="$CHROME" node scripts/1999-full-world-browser-cdp.mjs | tee full-world-browser.log
           grep -q 'WTW_FULL_WORLD_FIRST_OPEN_PASS' full-world-browser.log
+          grep -q 'WTW_FULL_WORLD_RACE_SETTLEMENT_PASS' full-world-browser.log
+          grep -q 'WTW_FULL_WORLD_RACE_REOPEN_PASS' full-world-browser.log
           grep -q 'WTW_FULL_WORLD_BROWSER_REOPEN_PASS' full-world-browser.log
       - name: Save full-world browser test evidence
         if: always()
