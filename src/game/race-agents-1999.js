@@ -140,6 +140,67 @@ function autonomousReturnTravel({state,world,emit}){
    reason:'POSTRACE_RECOVERY_COMPLETE_NO_FUTURE_BOOKING'});
  }
 }
+/**
+ * A declined premier offer does not itself secure a replacement rider.
+ * After the market closes, AI trainers may sign a genuine, affordable
+ * non-elite jockey for the same eligible horse. Never auto-book the
+ * player's horse, invent paid mounts or override already signed rides.
+ */
+export function book1999LostPremierFallbacks({state,world,emit}){
+ const rt=state.runtime.racing,all=Object.values(rt?.premier_offers||{});
+ const lost=new Map();
+ for(const o of all){
+  if(o.status!=='DECLINED'||o.resolved_date!==state.clock.date)continue;
+  const key=o.race_id+':'+o.horse_id;
+  if(!lost.has(key))lost.set(key,o);
+ }
+ let booked=0,unavailable=0,playerDecisions=0;
+ for(const key of [...lost.keys()].sort()){
+  const lostOffer=lost.get(key),raceId=lostOffer.race_id,
+   horseId=lostOffer.horse_id;
+  const entry=state.runtime.entries?.[key],
+   race=state.runtime.races?.[raceId],
+   horse=state.runtime.registered_horses?.by_id?.[horseId];
+  if(!race||race.status!=='ENTRIES_OPEN'||!horse||!entry||
+   entry.status!=='ENTERED'||entry.jockey_id)continue;
+  const competing=all.filter(o=>o.race_id===raceId&&o.horse_id===horseId);
+  if(competing.some(o=>['PENDING','SIGNED'].includes(o.status)))continue;
+  if(horse.owner_organization_id===state.player.operation_id){
+   playerDecisions++;
+   emit('PLAYER_PREMIER_FALLBACK_AVAILABLE',{race_id:raceId,
+    horse_id:horseId,
+    decision:'OWNER_SELECTS_REAL_ALTERNATIVE_NO_AUTOMATIC_PAYMENT'});
+   continue;
+  }
+  if(!raceEligibility(state,horse,race).eligible)continue;
+  const affordable=Object.values(rt.jockeys).filter(j=>
+   !premierMarketRace(race,j)).map(j=>({
+    jockey:j,decision:jockeyBookingDecision(state,world,race,horse,j)
+   })).filter(row=>row.decision.accept&&
+    money(state,horse.owner_organization_id)>=row.decision.quote.feeMinor).
+   sort((a,b)=>jockeyChoiceScore(state,horse,b.jockey,b.decision,race)-
+    jockeyChoiceScore(state,horse,a.jockey,a.decision,race)||
+    a.jockey.id.localeCompare(b.jockey.id));
+  if(!affordable.length){
+   unavailable++;
+   emit('AI_PREMIER_FALLBACK_UNAVAILABLE',{race_id:raceId,
+    horse_id:horseId,owner_id:horse.owner_organization_id,
+    trainer_id:horse.trainer_id,
+    reason:'NO_AVAILABLE_ACCEPTING_FUNDED_ALTERNATIVE'});
+   continue;
+  }
+  const selected=affordable[0];
+  racingAction({state,world,command:{actor:'system',
+   type:'BOOK_1999_JOCKEY',payload:{race_id:raceId,horse_id:horseId,
+    jockey_id:selected.jockey.id}},emit});
+  booked++;
+  emit('AI_PREMIER_FALLBACK_BOOKED',{race_id:raceId,horse_id:horseId,
+   trainer_id:horse.trainer_id,owner_id:horse.owner_organization_id,
+   jockey_id:selected.jockey.id,fee_minor:entry.fee_minor,
+   source:'REAL_DECLINED_PREMIER_BIDS'});
+ }
+ return {booked,unavailable,playerDecisions};
+}
 export function run1999RacingAgents({state,world,emit}){
  const rt=state.runtime.racing;
  if(!rt||Object.keys(rt.jockeys).length<2)return;
@@ -333,9 +394,10 @@ export function run1999RacingAgents({state,world,emit}){
   }
   rt.last_selection_date=day;
  }
- // Four days before a major race, resolve every real rival proposal and
- // create ONLY the winner's paid mount, prior to race-day field formation.
+ // Award elite rides at the four-day deadline. The losing AI owner
+ // may then hire an actual available rider; player decisions remain manual.
  resolve1999PremierJockeyOffers({state,world,emit});
+ book1999LostPremierFallbacks({state,world,emit});
  autonomousAwayTravel({state,world,emit});
  // Today's race is not automatically a real result unless at least two
  // medically cleared runners and confirmed jockeys are in the valid field.
