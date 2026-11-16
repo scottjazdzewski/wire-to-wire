@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {racingAction,createRacingRuntime,
- resolve1999PremierJockeyOffers,jockeyBookingDecision}
+ resolve1999PremierJockeyOffers,compact1999PremierJockeyOffers,jockeyBookingDecision}
  from '../src/game/racing-1999.js';
 import {premierOfferId,scorePremierJockeyOffer,premierBonusCap}
  from '../public/1999/engine/jockey-premier-market-1999.mjs';
@@ -269,4 +269,30 @@ test('winning elite jockey signs separate races on same card without requiring a
  const trackAndDate=new Set([s.runtime.races[raceId],s.runtime.races[second]].
   map(r=>r.track_id+'|'+r.date));
  assert.equal(trackAndDate.size,1,'Same jockey can work an entire card at one track');
+});
+
+test('decades of saved jockey offers cannot fill the live save with old declined bids or erase signed mounts',()=>{
+ const s=fixture(),{act}=entrants(s);
+ act('OFFER_1999_PREMIER_JOCKEY',{race_id:raceId,horse_id:horseIds[0],
+  jockey_id:jockeyId,bonus_minor:80000},'player');
+ act('OFFER_1999_PREMIER_JOCKEY',{race_id:raceId,horse_id:horseIds[1],
+  jockey_id:jockeyId,bonus_minor:110000},'system');
+ s.clock.date='1999-01-08';
+ const result=resolve1999PremierJockeyOffers({state:s,world,emit:()=>{}});
+ assert.equal(result.signed,1);
+ const paidBefore=structuredClone(s.runtime.finances.ledger);
+ const signedBefore=structuredClone(s.runtime.entries[raceId+':'+horseIds[0]]);
+ assert.equal(Object.keys(s.runtime.racing.premier_offers).length,2);
+ s.clock.date='1999-07-15';
+ const compact=compact1999PremierJockeyOffers({state:s,emit:()=>{}});
+ assert.deepEqual(compact,{removed:2,retained:0});
+ assert.deepEqual(s.runtime.finances.ledger,paidBefore,
+  'The actual rider fee and owner debit must remain permanent');
+ assert.deepEqual(s.runtime.entries[raceId+':'+horseIds[0]],signedBefore,
+  'Accepted signed mounts must survive removal of the old proposal record');
+ assert.deepEqual(compact1999PremierJockeyOffers({state:s,emit:()=>{}}),
+  {removed:0,retained:0});
+ const saved=JSON.parse(JSON.stringify(s));
+ assert.equal(Object.keys(saved.runtime.racing.premier_offers).length,0);
+ assert.deepEqual(saved.runtime.entries,s.runtime.entries);
 });
