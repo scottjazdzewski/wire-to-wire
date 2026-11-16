@@ -188,6 +188,7 @@ body.wtw-next-active{overflow:auto}
 .ng-manager-identity h2{margin:0;font-size:15px;line-height:1.2;letter-spacing:.015em;font-weight:800;color:#eff2ec;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ng-manager-controls{display:flex;align-items:center;justify-content:flex-end;gap:7px;min-width:0}
 .ng-manager-controls label{display:flex;align-items:center;gap:6px;font-size:9px;font-weight:750;color:#a1b9ad;white-space:nowrap}
+#wtwNextgen .ng-manager-view-picker{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .ng-manager-controls select{min-width:130px;height:26px;padding:3px 6px;border:1px solid #42534c;border-radius:2px;background:#202a2c;color:#e4e9e3;font-size:10px}
 .ng-routeinner .ng-manager-controls>button{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:26px;padding:3px 9px;border:1px solid #476d54;border-radius:2px;background:#284837;color:#e9ddb6;font-size:9px!important;font-weight:780;white-space:nowrap}
 .ng-manager-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
@@ -1126,7 +1127,7 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-org-mark{width:25px;height:25px;flex-basis:25px}
 .ng-global .ng-global-due{height:30px}
 }
-.ng-routeinner:has(.ng-org-overview),.ng-routeinner:has(.ng-due-overview){overflow-y:auto!important;overflow-x:hidden!important}
+.ng-routeinner:has(.ng-org-overview),.ng-routeinner:has(.ng-due-overview),.ng-routeinner:has(.ng-1999-race-file){display:block;overflow-y:auto!important;overflow-x:hidden!important}
 .ng-org-overview,.ng-due-overview{padding:7px;max-width:1500px;color:#e8efec}
 .ng-org-overview-top{display:flex;align-items:center;gap:16px;padding:14px 18px;border:1px solid #3c4b47;border-radius:5px;background:linear-gradient(110deg,#1e262a,#171e22)}
 .ng-org-overview-name{min-width:0}
@@ -1279,7 +1280,7 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-routegrid:has(.ng-stable-directory){overflow:hidden!important;display:block!important;flex:1 1 auto!important;min-height:0!important}
 .ng-routeinner:has(.ng-stable-directory){height:100%!important;min-height:0!important;overflow:hidden!important;display:block!important}
 
-/* Live Stable · personnel-directory-inspired FM/OOTP no-scroll roster */
+
 #wtwNextgen .ng-route:has(.ng-stable-roster-v2)>.ng-routeheading{display:none!important}
 #wtwNextgen .ng-route:has(.ng-stable-roster-v2){padding:4px 8px 6px!important}
 #wtwNextgen .ng-route:has(.ng-stable-roster-v2) .ng-routegrid{display:block!important;flex:1 1 0!important;min-height:0!important;overflow:hidden!important;padding:0!important}
@@ -3153,8 +3154,8 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 /* ===== BEGIN folded source: public/next/identity-themes.css ===== */
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro{box-shadow:inset 0 1px 0 #ffffff19,0 9px 24px #0009!important;}
 /* Logo-first theme: colors come from approved artwork, not presets. */
-/* WTW PROFILE DEPTH — integrated, no patch stack. Neutral layering remains when a logo is missing. */
-/* WTW ENTITY ATMOSPHERE v2 — official logo ink only; no geometry or status changes. */
+
+
 #wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"]{
   --wtw-id-highlight:#f2f5ef; /* neutral readable text, not a brand swatch */
   --wtw-id-deep:color-mix(in srgb,var(--wtw-id-base) 36%,#10181d);
