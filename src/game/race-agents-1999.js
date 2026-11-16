@@ -12,10 +12,25 @@ const horses=state=>Object.values(state.runtime.registered_horses?.by_id||{}).
  sort((a,b)=>a.horse_id.localeCompare(b.horse_id));
 const stable=(state,trackId)=>horses(state).filter(h=>h.host_track_id===trackId);
 const money=(state,owner)=>state.runtime.finances.operation_balances_minor[owner]??0;
-const ridden=(state,jockeyId,race)=>Object.values(state.runtime.entries||{}).
- some(e=>e.jockey_id===jockeyId&&e.status!=='SCRATCHED'&&
-  state.runtime.races[e.race_id]?.date===race.date&&
-  (e.race_id===race.id||state.runtime.races[e.race_id].track_id!==race.track_id));
+// Booking decisions read the complete dated itinerary, not one horse per day.
+// Stable trainer-rider familiarity helps contract a mount, but never overrides
+// a jockey's actual schedule, finances, race fitness or acceptance.
+const trainerAffinity=(trainerId,jockeyId)=>{
+ let h=2166136261;
+ for(const c of trainerId+':'+jockeyId){
+  h^=c.charCodeAt(0);h=Math.imul(h,16777619)
+ }
+ return (h>>>0)/4294967296;
+};
+const jockeyChoiceScore=(h,j,decision,race)=>{
+ const reputation=j.game_reputation??.5;
+ const prestige=race.stake_id||race.purse_minor>=10000000?1:0;
+ return decision.suited_index*.5+j.skills.judgment*.18+
+  reputation*.13+trainerAffinity(h.trainer_id,j.id)*.12+
+  (j.tier==='ELITE'?prestige*.11:0)+
+  (j.home_track_id===race.track_id?.05:0)-
+  decision.quote.feeMinor/Math.max(750000,race.purse_minor)*.06;
+};
 /** Each trainer compares an actual open future race with the horse's ability,
  * surface, distance, welfare, home location, available jockey and owner's cash.
  * No AI enters or ships a player-owned horse.
@@ -63,13 +78,15 @@ function autonomousAwayTravel({state,world,emit}){
     if(!quote.allowed)continue;
     const match=raceFit(h,race),available=money(state,h.owner_organization_id);
     const jockey=Object.values(rt.jockeys).
-     filter(j=>j.home_track_id===race.track_id&&!ridden(state,j.id,race)&&
+     filter(j=>j.home_track_id===race.track_id&&
       jockeyBookingDecision(state,world,race,h,j).accept).
-     sort((a,b)=>b.skills.judgment+b.skills.horse_handling-
-      a.skills.judgment-a.skills.horse_handling||a.id.localeCompare(b.id))[0];
+     sort((a,b)=>jockeyChoiceScore(h,b,jockeyBookingDecision(state,world,race,h,b),race)-
+      jockeyChoiceScore(h,a,jockeyBookingDecision(state,world,race,h,a),race)||
+      a.id.localeCompare(b.id))[0];
     if(!jockey)continue;
     const expectedOwnerPurse=Math.round(race.purse_minor*.23*match*.8),
-     haulRoundTrip=2*quote.route.cost_minor,bookFee=6000,
+     haulRoundTrip=2*quote.route.cost_minor,
+     bookFee=jockeyBookingDecision(state,world,race,h,jockey).quote.feeMinor,
      boardingReserve=Math.ceil(care.policy.monthly_budget_minor/30*14);
     const score=expectedOwnerPurse-haulRoundTrip-bookFee;
     if(score<=0||available<haulRoundTrip+boardingReserve+bookFee)continue;
@@ -194,13 +211,16 @@ export function run1999RacingAgents({state,world,emit}){
     const confirmed=state.runtime.races[r.id];
     let accepted=0;
     for(const h of chosen.eligible.slice(0,confirmed.field_capacity)){
-     const jockeys=Object.values(rt.jockeys).filter(j=>!ridden(state,j.id,confirmed)&&
-      (j.home_track_id===trackId||diff(day,r.date)>=4)&&
-      money(state,h.owner_organization_id)>=(j.home_track_id===trackId?6000:24000)&&
-      jockeyBookingDecision(state,world,confirmed,h,j).accept).
-      sort((a,b)=>(a.home_track_id===trackId?-1:1)-(b.home_track_id===trackId?-1:1)||
-       b.skills.horse_handling+b.skills.judgment-
-       a.skills.horse_handling-a.skills.judgment||a.id.localeCompare(b.id));
+     const jockeys=Object.values(rt.jockeys).filter(j=>{
+      const decision=jockeyBookingDecision(state,world,confirmed,h,j);
+      return decision.accept&&money(state,h.owner_organization_id)>=
+       decision.quote.feeMinor;
+     }).sort((a,b)=>{
+      const qa=jockeyBookingDecision(state,world,confirmed,h,a);
+      const qb=jockeyBookingDecision(state,world,confirmed,h,b);
+      return jockeyChoiceScore(h,b,qb,confirmed)-
+       jockeyChoiceScore(h,a,qa,confirmed)||a.id.localeCompare(b.id);
+     });
      if(!jockeys.length)continue;
      racingAction({state,world,command:{actor:'system',type:'ENTER_1999_RACE',
       payload:{race_id:r.id,horse_id:h.horse_id}},emit});
