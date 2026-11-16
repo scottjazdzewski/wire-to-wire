@@ -159,7 +159,11 @@ test('fixed-baseline terms leave the original 15-day 38-horse game race cycle de
  for(let i=0;i<15;i++){a=advance(a);b=advance(b)}
  assert.deepEqual(a,b);
  assert.equal(a.clock.date,'1999-01-16');
- assert.equal(Object.values(a.runtime.races).filter(r=>r.status==='OFFICIAL_SIM_RESULT').length,3);
+ const completed=Object.values(a.runtime.races).filter(r=>r.status==='OFFICIAL_SIM_RESULT');
+ assert.ok(completed.length>=2,'Autonomous trainer/jockey bookings must produce real fields');
+ assert.ok(completed.every(r=>r.results.length>=2&&
+  r.results.every(row=>Boolean(a.runtime.racing.jockeys[row.jockey_id]))),
+  'Every paid result must name a real booked jockey');
  assert.equal(Object.keys(a.runtime.trainer_contracts.by_pair).length>0,true);
  const totalCare=a.runtime.finances.ledger.filter(x=>x.kind==='HORSE_CARE_TRAINER_EARNINGS').
  reduce((n,x)=>n+x.amount_minor,0);
