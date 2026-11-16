@@ -9,6 +9,8 @@ import {getGameHorsePerformance,modelHorsePostRaceResponse} from './horse-care.j
 import {applyRaceAgentFeedback} from './daily-agents.js';
 import {registerPostRaceCampaigns} from './post-race-campaign-1999.js';
 import {horseTravelStatus,effectiveHorseTrack,validate1999HorseShipping} from './shipping-1999.js';
+import {assessJockeySchedule,quoteJockeyMount,jockeyRaceImportance}
+ from '../engine/jockey-engagements-1999.mjs';
 
 export const GAME_RACING_SCHEMA='WTW_1999_CAREER_RACING_V1';
 export const RACING_COMMANDS=Object.freeze(['ACTIVATE_JOCKEY_COLONY','OPEN_1999_RACE','ENTER_1999_RACE',
@@ -39,19 +41,30 @@ const person=(world,id)=>Boolean(worldIdentity(world,'people',id));
 export function jockeyBookingDecision(state,world,race,horse,jockey){
  const rt=root(state),j=typeof jockey==='string'?rt.jockeys[jockey]:jockey;
  if(!j||!race||!horse)return {accept:false,reason:'UNKNOWN_BOOKING_PARTIES'};
- const away=j.home_track_id!==race.track_id,lead=dayGap(state.clock.date,race.date);
- if(lead<1||away&&lead<4)return {accept:false,reason:'INSUFFICIENT_TRAVEL_LEAD'};
+ // Bookings are the source of truth: a professional can ride 8+ different
+ // races on one card, but not two horses in the same race or at two tracks.
+ const schedule=assessJockeySchedule(state,world,j,race);
+ if(!schedule.allowed)return {accept:false,reason:schedule.reason,schedule};
+ const away=schedule.away,lead=dayGap(state.clock.date,race.date);
+ const quote=quoteJockeyMount(j,race,{additionalTravel:schedule.additionalTravel});
+ const importance=jockeyRaceImportance(race);
  const personal=j.skills,horseState=getGameHorsePerformance(state,world,horse.horse_id);
  const h=horse.starting_attributes,standing=j.game_reputation??.5;
  const suited=rating(personal.horse_handling*.38+personal.composure*.17+
   h.temperament*.18+horseState.race_performance_index*.27);
- const required=away?.37+standing*.13:.26+standing*.08;
+ // National stars pursue important, well-paid mounts; they can ride the
+ // undercard at the same meeting without a second travel charge.
+ const elite=j.tier==='ELITE',established=j.tier==='ESTABLISHED';
+ const prestige=importance.nationalFeature?.095:importance.significance===2?.035:0;
+ const required=(away?.37+standing*.13:.26+standing*.08)+
+  (elite&&!importance.stakes?.055:0)-(elite||established?prestige:prestige*.35);
  const favor=(frac(state.rng.seed,j.id+':'+race.id+':'+horse.horse_id+':mount')-.5)*.09;
  const accept=suited+favor>=required;
  return {accept,reason:accept?(away?'JOCKEY_ACCEPTS_PAID_TRAVEL':'JOCKEY_ACCEPTS_LOCAL_MOUNT'):
    'JOCKEY_DECLINES_UNSUITABLE_MOUNT',suited_index:suited,
    threshold:rating(required),away,lead_days:lead,
-   jockey_reputation:standing};
+   jockey_reputation:standing,schedule,quote,
+   race_importance:importance.significance};
 }
 export function modeledJockeySkills(id,seed){
  ensure(/^P-[A-Za-z0-9-]+$/.test(id),'JOCKEY_ID','Permanent selected jockey ID required');
@@ -270,8 +283,11 @@ export function racingAction({state,world,command,emit}){
    ensure(isObject(j)&&person(world,j.id)&&trackFor(world,j.home_track_id)&&!unique.has(j.id),
     'JOCKEY_COLONY','Selected jockey needs an approved P-ID and home-track T-ID');
    unique.add(j.id);
-   rt.jockeys[j.id]={id:j.id,home_track_id:j.home_track_id,skills:modeledJockeySkills(j.id,state.rng.seed),
-    source:'SELECTED_1999_JOCKEY_IDENTITY_GAME_MODEL',starts:0,wins:0,game_reputation:.5,last_track_id:j.home_track_id};
+   const identity=world.entities.people.find(p=>p.id===j.id);
+   rt.jockeys[j.id]={id:j.id,home_track_id:j.home_track_id,
+    tier:identity?.tier??'REGIONAL',skills:modeledJockeySkills(j.id,state.rng.seed),
+    source:'SELECTED_1999_JOCKEY_IDENTITY_GAME_MODEL',starts:0,wins:0,
+    game_reputation:.5,last_track_id:j.home_track_id};
    rt.jockey_finances_minor[j.id]=0;
   }
   emit('JOCKEY_COLONY_ACTIVATED',{jockeys:unique.size,ratings:'MODELED_NOT_SOURCE_CERTIFIED'});
@@ -314,24 +330,24 @@ export function racingAction({state,world,command,emit}){
   ensure(command.actor==='system'||(command.actor==='player'&&
    state.player.operation_id===horse.owner_organization_id),
    'RACE_PERMISSION','Player cannot book another owner’s mount');
-  const gap=dayGap(state.clock.date,race.date),travel=j.home_track_id!==race.track_id;
-  ensure(gap>=1&&(!travel||gap>=4),'JOCKEY_TRAVEL','Away-colony jockey requires four days to arrange travel');
-  const conflicts=Object.values(state.runtime.entries).filter(e=>e.jockey_id===j.id&&
-   state.runtime.races[e.race_id]?.date===race.date&&e.status!=='SCRATCHED');
-  ensure(!conflicts.some(e=>e.race_id===race.id),'JOCKEY_DOUBLE_BOOK','One jockey cannot ride two horses in a race');
-  ensure(conflicts.every(e=>state.runtime.races[e.race_id].track_id===race.track_id),
-   'JOCKEY_LOCATION','One jockey cannot ride at separate tracks on the same date');
+  const schedule=assessJockeySchedule(state,world,j,race);
+  ensure(schedule.allowed,'JOCKEY_SCHEDULE',schedule.reason);
   const decision=jockeyBookingDecision(state,world,race,horse,j);
   ensure(decision.accept,'JOCKEY_DECLINED',decision.reason);
-  const base=6000,travelMinor=travel?18000:0,fee=base+travelMinor;
+  const quote=decision.quote,travel=schedule.away,fee=quote.feeMinor;
   charge(state,horse.owner_organization_id,fee,'JOCKEY_MOUNT_AND_TRAVEL_FEE',race,horse,j.id);
   rt.jockey_finances_minor[j.id]+=fee;
   state.runtime.finances.ledger.push({date:state.clock.date,kind:'JOCKEY_FEE_RECEIVED',
    operation_id:null,person_id:j.id,amount_minor:fee,race_id:race.id,horse_id:horse.horse_id});
   entry.jockey_id=j.id;entry.status='BOOKED';entry.fee_minor=fee;entry.travel=travel;
+  entry.mount_fee_minor=quote.mountMinor;entry.travel_fee_minor=quote.travelMinor;
   emit('JOCKEY_MOUNT_BOOKED',{race_id:race.id,horse_id:horse.horse_id,jockey_id:j.id,
-   booked_track_id:race.track_id,home_track_id:j.home_track_id,away_travel:travel,
-   fee_minor:fee,reason:decision.reason,acceptance:decision.suited_index,threshold:decision.threshold});
+   trainer_id:horse.trainer_id,booked_track_id:race.track_id,
+   home_track_id:j.home_track_id,away_travel:travel,fee_minor:fee,
+   mount_fee_minor:quote.mountMinor,travel_fee_minor:quote.travelMinor,
+   jockey_tier:j.tier,race_importance:decision.race_importance,
+   card_mount_number:schedule.sameCardCount+1,
+   reason:decision.reason,acceptance:decision.suited_index,threshold:decision.threshold});
  }else if(type==='SET_1999_RACE_TACTICS'){
   setRaceTactics({state,world,command,emit});
  }else if(type==='SETTLE_1999_RACE'){
@@ -369,6 +385,8 @@ function settle1999Race({state,world,race_id,emit}){
   'RACE_FIELD','A valid field requires at least two fully booked runners');
  const horseSet=new Set(entries.map(e=>e.horse_id));
  ensure(horseSet.size===entries.length,'RACE_FIELD','Duplicate horse in race field');
+ ensure(new Set(entries.map(e=>e.jockey_id)).size===entries.length,
+  'RACE_FIELD','One jockey may not ride multiple starters in one race');
  const scored=entries.map(e=>performance(state,world,race,e)).
   sort((a,b)=>b.composite-a.composite||a.horse.horse_id.localeCompare(b.horse.horse_id));
  for(const row of scored)if(row.tactical)emit('RACE_TACTICAL_EXECUTION',{
