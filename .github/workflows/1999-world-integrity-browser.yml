@@ -32,6 +32,10 @@ jobs:
           node --test tests/1999-world-integrity-circuits.test.mjs \
             tests/1999-full-world-approved-geography.test.mjs \
             tests/1999-physical-shipping-and-away-race.test.mjs \
+            tests/1999-real-away-barn-care-and-transit.test.mjs \
+            tests/1999-connected-horse-care-economy.test.mjs \
+            tests/1999-trainer-care-fee-economy.test.mjs \
+            tests/1999-owner-race-entry-opportunities.test.mjs \
             tests/1999-track-condition-book-engine.test.mjs \
             2>&1 | tee world-circuit-audit.log
       - name: Preserve unit audit log
