@@ -22,7 +22,7 @@ const DAY=86400000;
 function requireValue(ok,message){if(!ok)throw Error('Full-world 90-day circuit: '+message)}
 const at=offset=>new Date(Date.UTC(1999,0,1)+offset*DAY).toISOString().slice(0,10);
 const add=(map,key,amount=1)=>map.set(key,(map.get(key)||0)+amount);
-const pair=map,key=>map.get(key)||0;
+const pair=(map,key)=>map.get(key)||0;
 
 /**
  * Fixed 1999-01-02 to 1999-04-01 inclusive; the initial date is 1999-01-01.
