@@ -144,3 +144,23 @@ test('generated People/Farm/Personnel and Race Calendar rows use immutable gamep
  assert.match(ui,/window\.WTWCompactCareerManager\?\.playableCalendarSummary\?\.\(/);
  assert.match(ui,/if\(r\._wtwGeneratedWorld&&\['person','farm'\]\.includes\(r\._kind\)\)/);
 });
+
+
+test('laptop Quick View keeps roster labels within their own cells',()=>{
+ const css=read('public/next/next.css');
+ assert.match(css,/Window 4 — 1024px Stable\/World Quick View text containment/);
+ assert.match(css,/ng-stable-roster-v2 \.ng-rs-table\.compact td\{/);
+ assert.match(css,/text-overflow:ellipsis!important/);
+ assert.match(css,/ng-rs-signal i\{/);
+ assert.match(qa,/compactContent/);
+ assert.match(qa,/Compact roster content spills into adjacent cells/);
+});
+
+test('large-world career save-size blocker is explained without changing game persistence',()=>{
+ const manager=read('public/next/1999-commercial-career-manager.mjs');
+ assert.match(manager,/action==='start-test-career'/);
+ assert.match(manager,/Invalid string length/);
+ assert.match(manager,/CAREER START BLOCKED/);
+ assert.match(manager,/The 300,000-horse world remains saved and browsable/);
+ assert.match(manager,/await persistCanonicalRun\(\)/);
+});
