@@ -157,8 +157,26 @@ def main():
                 # track mark, not a separate approved profile identity.
                 if hero.exists():after.save(hero,"WEBP",lossless=True,method=6)
         records.append(checks(id,before,after))
+        if not args.apply:
+            # A green CI check must be based on actual, committed image bytes,
+            # not on a hypothetical new output computed in memory.
+            committed=np.asarray(rgba(logo))
+            expected=np.asarray(after)
+            assert committed.shape==expected.shape and np.array_equal(committed,expected), \
+                ("committed runtime track logo differs from certified source",id)
+            if id not in APPROVED_HERO_AS_LOGO and (HERO/(id+".webp")).exists():
+                committed_hero=np.asarray(rgba(HERO/(id+".webp")))
+                assert np.array_equal(committed_hero,expected), \
+                    ("profile hero differs from corrected track logo",id)
         samples.append((id,before.copy(),after.copy()))
-    # All other existing approved identity assets must remain intact.
+    # Check all other existing track marks without editing them. Already
+    # transparent, curated logos must not be repainted by a generic parser.
+    all_tracks=sorted(LOGOS.glob("T-*.webp"))
+    for source in all_tracks:
+        a=np.asarray(rgba(source).getchannel("A"))
+        h,w=a.shape
+        assert int(max(a[0,0],a[0,w-1],a[h-1,0],a[h-1,w-1]))<75, \
+            ("track logo still has an opaque corner canvas",source.name)
     # A contact sheet exposes matte errors more reliably than alpha-only tests.
     grid=Image.new("RGB",(1040,370*len(samples)),"#10251d")
     for i,(id,before,after) in enumerate(samples):
