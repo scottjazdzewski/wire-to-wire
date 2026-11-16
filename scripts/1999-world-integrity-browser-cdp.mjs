@@ -190,6 +190,13 @@ try{
  assert.equal(seasonBefore.openingHorses,size);
  assert.equal(seasonBefore.check,'PASS_READ_ONLY_NOT_GAMEPLAY_CERTIFICATION');
  assert.equal(seasonBefore.period.days,90);
+ assert.equal(seasonBefore.raceClassCoverage.sourceScheduledRaces,
+  seasonBefore.period.scheduledRaces,
+  'race class audit must count every 1999 90-day condition-book race');
+ assert.equal(Object.values(seasonBefore.raceClassCoverage.classCounts).
+  reduce((n,v)=>n+v,0),seasonBefore.period.scheduledRaces);
+ assert.ok(seasonBefore.raceClassCoverage.classesWithoutFullyModeledOpeningEntryRules>0,
+  'do not misrepresent unimplemented race classes as playable');
  assert.equal(seasonBefore.sourceShippingReadiness.actualShipments,0,
   'readiness audit must never fabricate shipping');
  assert.ok(seasonBefore.sourceShippingReadiness.modeledDomesticRoadPairs>0);
