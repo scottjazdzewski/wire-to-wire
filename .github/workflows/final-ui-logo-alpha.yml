@@ -1,0 +1,60 @@
+name: WTW Final Track Logo Transparency QA
+on:
+  push:
+    branches:
+      - ui/polish-playable-1999
+    paths:
+      - 'scripts/repair-final-track-logo-alpha.py'
+      - '.github/workflows/final-ui-logo-alpha.yml'
+      - 'public/assets/places/track-logos/**'
+      - 'public/assets/places/track-hero/**'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: wtw-final-ui-logo-alpha
+  cancel-in-progress: false
+jobs:
+  repair-and-verify-mark-artifacts:
+    name: Clean 1999 identity marks
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Checkout active UI branch with original approved logo history
+        uses: actions/checkout@v4
+        with:
+          ref: ui/polish-playable-1999
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Prepare reproducible image processing
+        run: |
+          python3 -m pip install -q 'Pillow>=10,<13' 'numpy>=1.24,<3' 'scipy>=1.11,<2'
+      - name: Rebuild only damaged exact-ID track logo copies
+        run: |
+          python3 scripts/repair-final-track-logo-alpha.py --apply
+      - name: Commit repaired assets to the UI branch without force-pushing
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add public/assets/places/track-logos public/assets/places/track-hero
+          if git diff --cached --quiet; then
+            echo "WTW_FINAL_TRACK_ALPHA_ALREADY_CLEAN"
+          else
+            git config user.name "wire-to-wire-ui-ci"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "UI assets: restore 1999 track transparency and remove corrupted color streaks"
+            git pull --rebase origin ui/polish-playable-1999
+            git push origin HEAD:ui/polish-playable-1999
+            echo "WTW_FINAL_TRACK_ALPHA_PUSHED"
+          fi
+      - name: Check actual committed assets and 24 exact-ID logos
+        run: |
+          python3 scripts/repair-final-track-logo-alpha.py
+      - name: Save before/after grid and exact-source validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-1999-track-logo-cleanup-evidence
+          path: visual-audit/asset-transparency/final-logo-fixes/
+          retention-days: 14
+          if-no-files-found: warn

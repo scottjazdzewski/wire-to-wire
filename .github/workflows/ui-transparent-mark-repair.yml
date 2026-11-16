@@ -1,0 +1,56 @@
+name: UI Transparent Mark Repair
+# Historical audit pipeline retained for manual reference only.
+# Final brand-safe alpha restoration is owned by final-ui-logo-alpha.yml.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  prepare-transparent-marks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout current UI branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ui/polish-playable-1999
+          persist-credentials: true
+      - name: Python and audited image tooling
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install image processing dependencies
+        run: python -m pip install --disable-pip-version-check 'Pillow>=10,<13' 'numpy>=1.24,<3'
+      - name: Create derived ALPHA marks without altering originals
+        run: python scripts/fix-ui-logo-transparency.py --write
+      - name: Eliminate verified enclosed-paper rectangles on published logo displays
+        run: python scripts/repair-ui-paper-rectangles.py --apply
+      - name: Upload alpha audit and generated mark comparison
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-ui-alpha-audit
+          path: |
+            visual-audit/asset-transparency/
+          retention-days: 14
+          if-no-files-found: warn
+      - name: Commit generated exact-ID hero assets into same UI branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add public/assets/places/track-hero public/assets/places/track-logos
+          if git diff --cached --quiet; then
+            echo 'UI_ALPHA_NO_NEW_DERIVATIVES'
+            exit 0
+          fi
+          git config user.name 'wire-to-wire-ui-automation'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'UI assets: remove opaque white export canvases via transparent display derivatives'
+          # Other dedicated image workers share this PR branch. Rebase the
+          # newly generated, ID-stable hero images on their latest changes;
+          # never force-push or discard another worker's edits.
+          git pull --rebase origin ui/polish-playable-1999
+          git pull --rebase origin ui/polish-playable-1999
+          git push origin HEAD:ui/polish-playable-1999
+          echo 'UI_ALPHA_DERIVATIVES_PUSHED'

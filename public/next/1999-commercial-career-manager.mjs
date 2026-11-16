@@ -470,7 +470,7 @@ async function refresh(){
  root.hidden=false;
 }
 async function perform(action,element){
- if(action==='close'){modal().hidden=true;return}
+ if(action==='close'){modal().hidden=true;window.__WTW_NEXT__?.paint?.();return}
  if(action==='import'){modal().querySelector('[data-cc="import-file"]').click();return}
  if(action==='start-test-career'){await startCanonicalRun();return}
  if(action==='advance-test-day'){await advanceCanonicalRun();return}
@@ -602,7 +602,20 @@ async function handleClick(event){
  const action=button.dataset.ccAction;
  if(busy&&action!=='close')return;
  try{busy=true;await perform(action,button);if(action!=='close')await refresh()}
- catch(error){notice='ERROR: '+String(error?.message||error);await refresh()}
+ catch(error){
+  // A complete 300k industry can be browsed while a game-run save at that
+  // scale still exceeds Chromium's maximum single string size. Show the
+  // exact UI blocker, rather than implying the world data was deleted.
+  const largeRun=action==='start-test-career'&&
+   fullIndustryManifest?.horseCount>=300000&&
+   /Invalid string length/i.test(String(error?.message||error));
+  notice=largeRun?
+   'CAREER START BLOCKED · The 300,000-horse world remains saved and browsable, '+
+   'but the playable career snapshot exceeds the browser save-size limit. '+
+   'The game/save engineering window must resolve this before full-size play testing.':
+   'ERROR: '+String(error?.message||error);
+  await refresh()
+ }
  finally{busy=false}
 }
 async function handleChange(event){
@@ -629,7 +642,12 @@ async function open(){
    if(selected?.status==='READY'){
     fullIndustryManifest=selected.manifest;
     industryDirectory=await readPersistent1999Directory(store,fullIndustryManifest);
-    activeWorldCareer=await resumeCanonicalRun(store,fullIndustryManifest);
+    // The full world already lives in this session. Reopening the manager
+    // must not rehydrate or rehash 300,000 horses again after each close.
+    if(!activeWorldCareer||
+       activeWorldCareer.manifest?.worldId!==fullIndustryManifest.worldId||
+       activeWorldCareer.manifest?.seed!==fullIndustryManifest.seed)
+     activeWorldCareer=await resumeCanonicalRun(store,fullIndustryManifest);
     await browseFullIndustry(0,'directory');
     notice=activeWorldCareer?'Saved gameplay test career resumed at '+
      activeWorldCareer.run.clock.date+'.':'Saved world verified and ready.';
@@ -667,7 +685,268 @@ async function readFictionalIndustryCareer(manifest,runId){
  try{return await loadPersistent1999CareerRun(store,manifest,runId)}
  finally{store.close()}
 }
+/**
+ * UI-only, read-only view of the actual active persisted 1999 career.
+ * The canonical run/horse registry remains owned by the game engine; do
+ * not synthesize another roster or write a second gameplay state.
+ */
+let uiWorldIndex=null,uiWorldBrowse=null;
+function playableWorldLookup(){
+ const world=activeWorldCareer?.world;
+ if(!world)return null;
+ if(uiWorldIndex?.world===world)return uiWorldIndex;
+ uiWorldBrowse=null;
+ uiWorldIndex={world,
+  owners:new Map(world.entities.organizations.map(o=>[o.id,o.name])),
+  people:new Map(world.entities.people.map(p=>[p.id,p.name])),
+  tracks:new Map(world.entities.tracks.map(t=>[t.id,t.name]))};
+ return uiWorldIndex;
+}
+function playableWorldStatus(){
+ if(!activeWorldCareer)return null;
+ const c=activeWorldCareer;
+ return {worldId:c.manifest.worldId,seed:c.manifest.seed,
+  horseCount:c.manifest.horseCount,personCount:c.manifest.personCount,
+  gameDate:c.run.clock.date,operationId:c.operation.id,
+  operationName:c.operation.name,ownedHorses:c.run.stable_horse_ids.length,
+  homeTrackId:c.homeTrackId};
+}
+function playableStableRows(){
+ const c=activeWorldCareer;
+ if(!c)return null;
+ const lookup=playableWorldLookup();
+ return c.run.stable_horse_ids.map(id=>{
+  const horse=c.run.runtime.registered_horses.by_id[id];
+  if(!horse)return null;
+  return {horseId:id,name:horse.registered_name||horse.name,
+   _wtwGeneratedWorld:true,age:String(horse.racing_age_1999),
+   sex:horse.sex,activity:String(horse.status||'IN_TRAINING').replaceAll('_',' '),
+   owner:c.operation.name,ownerId:c.operation.id,trainerId:horse.trainer_id,
+   breederId:horse.breeder_organization_id,
+   trainer:lookup.people.get(horse.trainer_id)||'Not assigned',
+   tag:lookup.tracks.get(horse.host_track_id)||'1999 RACING',
+   attributes:horse.starting_attributes||null,
+   money:horse.career?.earnings_minor??null,
+   starts:horse.career?.starts??null,wins:horse.career?.wins??null};
+ }).filter(Boolean);
+}
+/** Current Office racing targets are entries in the authoritative game
+ * race registry, never speculative schedule rows from the 73-horse source. */
+function playableRacingRows(){
+ const c=activeWorldCareer,lookup=playableWorldLookup();
+ if(!c)return null;
+ const owned=new Set(c.run.stable_horse_ids);
+ const rows=[];
+ for(const race of Object.values(c.run.runtime.races||{})){
+  for(const entry of race.field||[]){
+   const id=typeof entry==='string'?entry:entry.horse_id||entry.horseId;
+   if(!owned.has(id))continue;
+   const horse=c.run.runtime.registered_horses.by_id[id];
+   if(!horse)continue;
+   rows.push({horseId:id,name:horse.registered_name||horse.name,
+    date:race.date,track:lookup.tracks.get(race.track_id)||race.track_id,
+    tag:race.conditions||race.race_class||'1999 RACE',
+    status:race.status==='OFFICIAL_SIM_RESULT'?'Resulted':'Entered',
+    raceId:race.id});
+  }
+ }
+ return rows.sort((a,b)=>a.date.localeCompare(b.date)||a.name.localeCompare(b.name));
+}
+/** Profiles for actual modeled 1999 people, owners and farms. Match stable
+ * permanent ID first; display-name fallback is allowed only if unique.
+ * Never guess an entity when two generated people share a name.
+ */
+function playableEntityProfile(kind,identity){
+ const c=activeWorldCareer;
+ if(!c||!['person','farm','connection'].includes(kind)||!identity)return null;
+ const type=kind==='person'?'person':'farm';
+ const pool=type==='person'?c.world.entities.people:c.world.entities.organizations;
+ const direct=pool.find(x=>x.id===identity);
+ const found=direct?[direct]:pool.filter(x=>x.name===identity);
+ if(found.length!==1)return null;
+ const record=found[0],location=record.location||record.birthplace||{};
+ const locationLabel=typeof location==='string'?location:
+  [location.city||location.locality,location.region||location.state,location.country].filter(Boolean).join(', ');
+ return {...record,_id:record.id,_kind:type,_wtwGeneratedWorld:true,_testGenerated:true,
+  name:record.name,_testAttrs:record.ratings||{},
+  location:locationLabel,base:locationLabel,
+  status:'MODELED 1999 INDUSTRY · NOT HISTORICAL SOURCE',
+  dateOfBirth:record.dateOfBirth||record.birth_date||null,
+  ratingsProvenance:record.ratingsProvenance||'MODELED_1999_UNCALIBRATED'};
+}
+function playableHorseProfile(identity){
+ const c=activeWorldCareer,lookup=playableWorldLookup();
+ if(!c||!identity)return null;
+ const ids=c.run.stable_horse_ids;
+ let registered=c.run.runtime.registered_horses.by_id[identity]||null;
+ if(!registered){
+  const matches=ids.map(id=>c.run.runtime.registered_horses.by_id[id])
+   .filter(h=>h&&(h.registered_name===identity||h.name===identity));
+  if(matches.length===1)registered=matches[0];
+ }
+ const sourceId=registered?.world_source_horse_id||identity;
+ const source=c.world.entities.horses.find(h=>h.id===sourceId);
+ if(!source)return null;
+ const id=registered?.horse_id||source.id;
+ const attributes=registered?.starting_attributes||source.ratings||{};
+ const ca=Number(attributes.current_ability),pa=Number(attributes.potential_ability);
+ const haveAbility=Number.isInteger(ca)&&Number.isInteger(pa)&&ca>=1&&pa>=1;
+ const modeledStars=value=>Math.max(1,Math.min(5,Math.ceil(value/20)));
+ return {id,_id:id,_kind:'horse',_wtwGeneratedWorld:true,_testGenerated:true,
+  _directoryIndex:0,name:registered?.registered_name||source.name,
+  foalYear:source.foalYear,age:1999-source.foalYear,
+  sex:registered?.sex||source.sex,dateOfBirth:source.dateOfBirth,
+  status:registered?.status||source.status,
+  racingStatus1999:registered?.status||source.status,
+  sireId:source.sireId,damId:source.damId,
+  ownerId:source.ownerId,owner:lookup.owners.get(source.ownerId)||source.ownerId,
+  trainerId:registered?.trainer_id||source.trainerId,
+  trainer:lookup.people.get(registered?.trainer_id||source.trainerId)||'Not assigned',
+  breederId:source.foalingFarmId,
+  breeder:lookup.owners.get(source.foalingFarmId)||source.foalingFarmId,
+  foalingGeography:source.birthplace||{},
+  track:lookup.tracks.get(source.homeTrackId)||'',
+  _testAttrs:attributes,
+  _testCareer:registered?.career||{},
+  _testAbility:haveAbility?{
+   schema:'WTW_1999_AGE_ABILITY_V1',
+   currentStars:modeledStars(ca),potentialStars:modeledStars(pa),
+   careerStage:'MODELED 1999 CAREER · ability '+ca+' / '+pa+' of 99'
+  }:null};
+}
+/** Sort/search are applied before slicing, so 300k records never become
+ * 300k DOM rows. Cache one query per active world, not a second registry.
+ */
+function playableWorldHorseBrowse({offset=0,limit=160,search='',sort='name',desc=false,filters={}}={}){
+ const c=activeWorldCareer,lookup=playableWorldLookup();
+ if(!c)return null;
+ const pool=c.world.entities.horses;
+ const query=String(search??'').trim().toLocaleLowerCase('en-US');
+ const key=[query,sort,Boolean(desc),JSON.stringify(filters||{})].join('|');
+ if(uiWorldBrowse?.world!==c.world||uiWorldBrowse.key!==key){
+  const field=h=>{
+   switch(sort){
+    case 'age':return 1999-Number(h.foalYear||1999);
+    case 'sex':return h.sex||'';
+    case 'owner':return lookup.owners.get(h.ownerId)||h.ownerId||'';
+    case 'trainer':return lookup.people.get(h.trainerId)||h.trainerId||'';
+    case 'breeder':return lookup.owners.get(h.foalingFarmId)||h.foalingFarmId||'';
+    case 'activity':return h.status||'';
+    default:return h.name||h.id||'';
+   }
+  };
+  const matching=(h)=>{
+   if(query&&![h.id,h.name,lookup.owners.get(h.ownerId),
+    lookup.people.get(h.trainerId),lookup.owners.get(h.foalingFarmId),
+    lookup.tracks.get(h.homeTrackId)].some(v=>
+    String(v||'').toLocaleLowerCase('en-US').includes(query)))return false;
+   if(!window.WTW1999RosterFilters?.matches)return true;
+   return window.WTW1999RosterFilters.matches({
+    name:h.name,age:1999-Number(h.foalYear),sex:h.sex,status:h.status,
+    activity:h.status,owner:lookup.owners.get(h.ownerId)||h.ownerId,
+    trainer:lookup.people.get(h.trainerId)||h.trainerId,
+    breeder:lookup.owners.get(h.foalingFarmId)||h.foalingFarmId,
+    ability:'',potential:'',health:'',readiness:'',form:'',
+    last:'',next:'',target:'',record:''
+   },filters);
+  };
+  const hasFilters=Object.values(filters||{}).some(v=>v!==''&&v!=null);
+  const found=(query||hasFilters)?pool.filter(matching):pool;
+  const ordered=[...found].sort((a,b)=>{
+   const x=field(a),y=field(b);
+   const n=typeof x==='number'&&typeof y==='number'?x-y:
+    String(x).localeCompare(String(y),undefined,{numeric:true,sensitivity:'base'});
+   return (desc?-n:n)||a.id.localeCompare(b.id);
+  });
+  uiWorldBrowse={world:c.world,key,ordered};
+ }
+ const total=uiWorldBrowse.ordered.length;
+ const first=Math.min(Math.max(0,Math.floor(Number(offset)||0)),Math.max(0,total-1));
+ const pageSize=Math.max(1,Math.min(160,Math.floor(Number(limit)||160)));
+ const items=uiWorldBrowse.ordered.slice(first,first+pageSize).map(h=>({
+  _wtwGeneratedWorld:true,_testGenerated:true,_kind:'horse',
+  _name:h.name,_id:h.id,_directoryId:h.id,_directoryIndex:0,
+  _directoryRecord:h,name:h.name,age:String(1999-h.foalYear),sex:h.sex,
+  owner:lookup.owners.get(h.ownerId)||h.ownerId||'',ownerId:h.ownerId,
+  breeder:lookup.owners.get(h.foalingFarmId)||h.foalingFarmId||'',breederId:h.foalingFarmId,
+  trainer:lookup.people.get(h.trainerId)||h.trainerId||'',trainerId:h.trainerId,
+  status:String(h.status||'').replaceAll('_',' '),
+  activity:String(h.status||'').replaceAll('_',' '),
+  attributes:h.ratings||null,
+  homeTrackId:h.homeTrackId,
+  track:lookup.tracks.get(h.homeTrackId)||'',
+  foalYear:h.foalYear,dateOfBirth:h.dateOfBirth
+ }));
+ return {items,total,offset:first,worldTotal:pool.length,paged:true,indexing:false};
+}
+
+/** Window 4: read-only, bounded directories backed by the active world. */
+let otherIndex=null,cardIndex=null;
+function playableDirectoryBrowse({kind='people',offset=0,limit=160,search='',sort='name',desc=false,filters={}}={}){
+ const career=activeWorldCareer;if(!career)return null;
+ const people=['people','trainers','jockeys'].includes(kind);
+ const full=people?career.world.entities.people:career.world.entities.organizations;
+ const original=kind==='trainers'?full.filter(e=>e.role==='trainer'):
+  kind==='jockeys'?full.filter(e=>e.role==='jockey'):
+  kind==='farms'?full.filter(e=>e.id.startsWith('O-FICTIONAL-FARM-')):
+  kind==='owners'?full.filter(e=>e.id.startsWith('O-FICTIONAL-OWNER-')):full;
+ const lookup=playableWorldLookup(),query=String(search||'').trim().toLowerCase();
+ const key=kind+'|'+query+'|'+sort+'|'+desc+'|'+JSON.stringify(filters);
+ if(otherIndex?.world!==career.world||otherIndex.key!==key){
+  const place=v=>typeof v==='string'?v:[v?.city,v?.region||v?.state,v?.country].filter(Boolean).join(', ');
+  const records=original.map(e=>({
+   _wtwGeneratedWorld:true,_testGenerated:true,
+   _kind:people?'person':'farm',_id:e.id,_name:e.name,name:e.name,
+   role:e.role||'',base:place(e.location),location:place(e.location),
+   type:e.type||e.ownershipArchetype||(e.id.startsWith('O-FICTIONAL-FARM-')?'Farm':'Owner'),
+   operation:lookup.owners.get(e.workplaceId)||'',principal:'',
+   status:'1999 FICTIONAL · MODELED'
+  })).filter(e=>(!query||[e._id,e.name,e.role,e.base,e.location,e.type,e.operation]
+   .some(v=>String(v||'').toLowerCase().includes(query)))&&
+   (!window.WTW1999RosterFilters?.matches||window.WTW1999RosterFilters.matches(e,filters)));
+  records.sort((a,b)=>(desc?-1:1)*(String(a[sort]||a.name)
+   .localeCompare(String(b[sort]||b.name),undefined,{numeric:true,sensitivity:'base'})||a._id.localeCompare(b._id)));
+  otherIndex={world:career.world,key,records};
+ }
+ const total=otherIndex.records.length,first=Math.max(0,Math.min(total,Number(offset)||0));
+ return {items:otherIndex.records.slice(first,first+Math.max(1,Math.min(500,Number(limit)||160))),
+  total,paged:true,indexing:false};
+}
+function playableCardsByDate(){
+ const c=activeWorldCareer;if(!c)return null;
+ if(cardIndex?.world===c.world)return cardIndex.days;
+ const days=new Map();
+ for(const card of c.world.calendar?.cards||[]){
+  if(!days.has(card.date))days.set(card.date,[]);
+  days.get(card.date).push(card);
+ }
+ cardIndex={world:c.world,days};return days;
+}
+function playableCalendarSummary(date,trackName=''){
+ const c=activeWorldCareer;if(!c)return null;
+ const lk=playableWorldLookup();
+ const cards=(playableCardsByDate()?.get(date)||[]).filter(x=>!trackName||lk.tracks.get(x.trackId)===trackName);
+ return {trackCount:cards.length,plannedStakes:0,scheduledRaces:cards.reduce((n,c)=>n+c.races.length,0)};
+}
+function playableCalendarRows(date,trackName=''){
+ const c=activeWorldCareer;if(!c)return null;
+ const lk=playableWorldLookup();
+ return (playableCardsByDate()?.get(date)||[])
+  .filter(x=>!trackName||lk.tracks.get(x.trackId)===trackName)
+  .flatMap(card=>card.races.map(r=>{
+   const track=lk.tracks.get(card.trackId)||card.trackId;
+   const race=c.run.runtime.races?.[r.id],name='Race '+r.raceNumber;
+   return {_kind:'race',_name:track+' '+name,_raceId:r.id,
+    _raceData:{...r,name,number:r.raceNumber,conditions:r.condition,date,track_id:card.trackId},
+    _iso:date,_cardOrder:r.raceNumber,_track:track,
+    date,track,race:name,class:r.condition,surface:r.surface,
+    distance:r.distance_furlongs+'f',purse:'$'+(r.purse_minor/100).toLocaleString('en-US'),
+    status:race?.status||'SCHEDULED · GAME',fieldCount:race?.field?.length||0};
+  }));
+}
 window.WTWCompactCareerManager=Object.freeze({open,listSlots,storeGame,
  restoreGame,exportSlot,importFile,dbName:DB_NAME,
  prepareFictionalIndustry,saveFictionalIndustryCareer,
- readFictionalIndustryCareer});
+ readFictionalIndustryCareer,playableWorldStatus,playableStableRows,
+ playableRacingRows,playableHorseProfile,playableEntityProfile,playableWorldHorseBrowse,
+ playableDirectoryBrowse,playableCalendarSummary,playableCalendarRows});

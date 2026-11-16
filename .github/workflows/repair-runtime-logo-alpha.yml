@@ -1,0 +1,64 @@
+name: WTW Runtime Identity Matte Repair
+# Historical audit pipeline retained for manual reference only.
+# Final brand-safe alpha restoration is owned by final-ui-logo-alpha.yml.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply-source-image-alpha:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact UI polish branch
+        uses: actions/checkout@v4
+        with:
+          ref: ui/polish-playable-1999
+          persist-credentials: true
+      - name: Prepare image processing
+        run: |
+          python3 -m pip install --quiet Pillow numpy scipy
+      - name: Apply approved matte removal to actual source assets
+        run: |
+          python3 scripts/repair-runtime-logo-alpha.py --apply \
+            --report visual-audit/logo-alpha-repair/applied.json \
+            --sheet visual-audit/logo-alpha-repair/before-after.jpg
+          git status --short public/assets
+          git diff --stat -- public/assets
+          echo "UI image change count: $(git status --porcelain -- public/assets | wc -l)"
+      - name: Commit replacement image bytes to current UI PR branch
+        run: |
+          git config user.name "wire-to-wire-ui-ci"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/assets/places/track-logos public/assets/places/track-hero \
+            public/assets/office/founding-organization-logos \
+            public/assets/profile-badges/v2 public/assets/wtw-logo.png public/assets/wtw-office-approved-logo.png
+          if git diff --cached --quiet; then
+            echo "WTW_LOGO_ASSETS_ALREADY_TRANSPARENT"
+          else
+            git commit -m "UI assets: remove baked logo mattes while preserving mark identities"
+            git pull --rebase origin ui/polish-playable-1999
+            git push origin HEAD:ui/polish-playable-1999
+            echo "WTW_LOGO_ASSETS_PUSHED"
+          fi
+      - name: Validate known alpha corrections in committed files
+        run: |
+          python3 scripts/repair-runtime-logo-alpha.py --verify \
+            --report visual-audit/logo-alpha-repair/verify.json \
+            --sheet visual-audit/logo-alpha-repair/remaining.jpg
+          python3 - <<'PY'
+          from PIL import Image
+          for name in ("T-0017.webp", "T-0013.webp", "T-0003.webp"):
+              with Image.open("public/assets/places/track-logos/"+name) as im:
+                  assert im.convert("RGBA").getpixel((0,0))[3] < 12, name
+          with Image.open("public/assets/places/track-hero/T-0003.webp") as im:
+              assert im.convert("RGBA").getpixel((0,0))[3] < 12, "Saratoga hero still has opaque red matte"
+          print("WTW_RUNTIME_IMAGES_ALPHA_VERIFIED")
+          PY
+      - name: Preserve inspectable before/after output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-runtime-logo-alpha-before-after
+          path: visual-audit/logo-alpha-repair/
+          retention-days: 14

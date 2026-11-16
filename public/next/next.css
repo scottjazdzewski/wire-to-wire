@@ -3907,3 +3907,153 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  font:800 18px/1 Georgia,serif;cursor:pointer}
 .ng-record-browse-bar button.ng-profile-entity-step:hover{background:#50634e;border-color:#dabd80}
 .ng-record-browse-bar button.ng-profile-entity-step:focus-visible{outline:2px solid #f0cf8a;outline-offset:2px}
+
+/* UI Window 4: the preexisting ALL COLUMNS option remains available with
+ * its intentional in-panel horizontal scroll. QUICK VIEW on 1024px laptops
+ * shows the core operational fields (horse, age, sex, health, ready,
+ * CA, PA, upcoming race, owner and trainer) without hiding page controls. */
+@media (min-width:781px) and (max-width:1080px){
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-table.compact{
+  width:100%!important;min-width:0!important;table-layout:fixed!important;
+ }
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-table.compact :is(th,td):nth-child(8),
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-table.compact :is(th,td):nth-child(9),
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-table.compact :is(th,td):nth-child(11),
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-table.compact :is(th,td):nth-child(12),
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-table.compact :is(th,td):nth-child(15),
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-table.compact :is(th,td):nth-child(16),
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-table.compact :is(th,td):nth-child(17){display:none!important}
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-table.compact th:first-child{
+  width:20%!important;
+ }
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-table.compact th:nth-child(13),
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-table.compact th:nth-child(14){
+  width:14%!important;
+ }
+}
+
+/* UI Window 4: narrow Office and Stable headers remain legible inside
+ * the locked three-column layout; no extra top row or document scrolling. */
+@media (min-width:781px) and (max-width:1080px){
+ #wtwNextgen .ng-board .ng-main .ng-intel>.ng-cardhead,
+ #wtwNextgen .ng-board .ng-main .ng-choices>.ng-cardhead{
+  gap:5px!important;padding-inline:7px!important;min-width:0!important;
+ }
+ #wtwNextgen .ng-board .ng-main .ng-intel>.ng-cardhead .ng-headinggroup,
+ #wtwNextgen .ng-board .ng-main .ng-choices>.ng-cardhead .ng-headinggroup{
+  flex:1 1 auto!important;min-width:0!important;max-width:100%!important;
+  overflow:hidden!important;
+ }
+ #wtwNextgen .ng-board .ng-main .ng-intel>.ng-cardhead .ng-headinggroup h3,
+ #wtwNextgen .ng-board .ng-main .ng-choices>.ng-cardhead .ng-headinggroup h3{
+  display:block!important;min-width:0!important;max-width:100%!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+  font-size:11px!important;line-height:1.2!important;
+ }
+ #wtwNextgen .ng-board .ng-main .ng-intel>.ng-cardhead .ng-cardlink{
+  flex:0 1 65px!important;max-width:65px!important;min-width:0!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+  font-size:9px!important;
+ }
+ #wtwNextgen .ng-board .ng-main .ng-choices>.ng-cardhead .ng-choice-count{
+  flex:0 1 58px!important;max-width:58px!important;min-width:0!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+  font-size:9px!important;
+ }
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-title,
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-roster>header{
+  gap:7px!important;min-width:0!important;
+ }
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-title strong,
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-roster>header strong{
+  flex:0 0 auto!important;white-space:nowrap!important;
+ }
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-title>span,
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-roster>header>span{
+  display:block!important;flex:1 1 auto!important;min-width:0!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+ }
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-roster>header>span{
+  text-align:right!important;
+ }
+}
+
+/* UI Window 4 — generated 1999 career in the existing World and Stable views.
+ * No new navigation, screen template, asset, or game-data mutation. */
+#wtwNextgen .ng-world-playable-banner{
+ display:flex;align-items:center;gap:9px;min-height:32px;max-width:100%;
+ box-sizing:border-box;padding:4px 9px;border-bottom:1px solid #4c6857;
+ background:#1b312a;color:#dae5d9;overflow:hidden;
+}
+#wtwNextgen .ng-world-playable-banner strong{
+ flex:0 0 auto;font-size:10px;letter-spacing:.04em;color:#e3d7aa;
+}
+#wtwNextgen .ng-world-playable-banner span{
+ flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;
+ white-space:nowrap;font-size:10px;
+}
+#wtwNextgen .ng-world-playable-banner button{
+ flex:0 0 auto;min-height:23px;padding:2px 8px;border:1px solid #577e61;
+ border-radius:3px;background:#315743;color:#f8eddd;
+ font-size:9px;font-weight:800;cursor:pointer;
+}
+#wtwNextgen .ng-directory-page-controls{
+ display:inline-flex;align-items:center;gap:5px;flex:0 0 auto;min-width:0;
+ margin-left:5px;font-variant-numeric:tabular-nums;
+}
+#wtwNextgen .ng-directory-page-controls strong{
+ font-size:9px;color:#e6d299;white-space:nowrap;
+}
+#wtwNextgen .ng-directory-page-controls button{
+ min-height:18px;min-width:23px;padding:0 4px;border:1px solid #4c6758;
+ background:#21382e;color:#f4ead9;border-radius:2px;
+}
+#wtwNextgen .ng-directory-page-controls button:disabled{opacity:.45;cursor:default}
+@media (min-width:781px) and (max-width:1080px){
+ #wtwNextgen .ng-world-playable-banner{gap:5px;padding-inline:6px}
+ #wtwNextgen .ng-world-playable-banner strong{font-size:8px}
+ #wtwNextgen .ng-world-playable-banner span{font-size:8px}
+ #wtwNextgen .ng-world-playable-banner button{padding:2px 5px;font-size:8px}
+ #wtwNextgen .ng-directory-roster .ng-rs-roster>header>span{
+  flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;
+ }
+}
+
+/* Window 4 — 1024px Stable/World Quick View text containment.
+ * The historical 17-column All Columns option is unchanged. Cell title
+ * attributes retain full values; only the compact visual preview truncates. */
+@media (min-width:781px) and (max-width:1080px){
+ #wtwNextgen .ng-stable-roster-v2 .ng-rs-table.compact{
+  table-layout:fixed!important;width:100%!important;min-width:0!important;
+ }
+ #wtwNextgen .ng-stable-roster-v2 .ng-rs-table.compact td{
+  max-width:0!important;overflow:hidden!important;
+  white-space:nowrap!important;text-overflow:ellipsis!important;
+ }
+ #wtwNextgen .ng-stable-roster-v2 .ng-rs-table.compact td .ng-rs-signal{
+  display:inline-flex!important;align-items:center!important;
+  max-width:100%!important;min-width:0!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;
+  white-space:nowrap!important;vertical-align:middle!important;
+ }
+ #wtwNextgen .ng-stable-roster-v2 .ng-rs-table.compact td .ng-rs-signal i{
+  flex:0 0 auto!important;
+ }
+ #wtwNextgen .ng-stable-roster-v2 .ng-rs-table.compact td .ng-rs-horse,
+ #wtwNextgen .ng-stable-roster-v2 .ng-rs-table.compact td .ng-entity-reference{
+  display:inline-flex!important;max-width:100%!important;min-width:0!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;
+  white-space:nowrap!important;vertical-align:middle!important;
+ }
+ #wtwNextgen .ng-stable-roster-v2 .ng-rs-table.compact td .ng-rs-horse span{
+  display:block!important;min-width:0!important;overflow:hidden!important;
+  text-overflow:ellipsis!important;white-space:nowrap!important;
+ }
+ #wtwNextgen .ng-stable-roster-v2 .ng-rs-table.compact td.ng-rs-stars-cell{
+  text-align:center!important;
+ }
+ #wtwNextgen .ng-stable-roster-v2 .ng-rs-table.compact td .ng-rs-stars{
+  display:inline-block!important;max-width:100%!important;overflow:hidden!important;
+  font-size:10px!important;letter-spacing:-.065em!important;white-space:nowrap!important;
+ }
+}
