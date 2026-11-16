@@ -204,6 +204,9 @@ try{
   pairsWithMeetDateAfterModeledTravelAndRecovery>0,
   'no modeled circuit movement windows found');
  if(size>=300000){
+  assert.equal(seasonBefore.raceClassCoverage.
+   olderHorseSourceRacesWithoutTwoMatchingActiveLocalRunners,0,
+   'production-size world lost source age/sex candidate coverage for adult horses');
   assert.equal(seasonBefore.sourceCapacity.tracksWithFewerThanTwoResidentJockeys,0,
    'default and maximum full worlds must not lose two-jockey local coverage');
   assert.equal(seasonBefore.sourceCapacity.tracksNeedingGuestRunnersToFillAllRaces,0,
