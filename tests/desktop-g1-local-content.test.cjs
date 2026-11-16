@@ -33,7 +33,8 @@ test('desktop only bundles one approved UI and has no remote gaming URL',()=>{
  const main=fs.readFileSync(path.join(__dirname,'../desktop/main.cjs'),'utf8');
  const preload=fs.readFileSync(path.join(__dirname,'../desktop/preload.cjs'),'utf8');
  const pkg=JSON.parse(fs.readFileSync(path.join(__dirname,'../desktop/package.json'),'utf8'));
- assert.match(main,/wtw:\/\/game\/next\/index\.html/);
+ assert.match(main,/const ORIGIN='wtw:\/\/game';/);
+ assert.match(main,/win\.loadURL\(ORIGIN\+'\/next\/index\.html'\)/);
  assert.match(main,/cancel:true/);
  assert.match(main,/sandbox:true,contextIsolation:true,nodeIntegration:false/);
  assert.match(main,/reportSmoke/);
