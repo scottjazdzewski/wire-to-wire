@@ -410,7 +410,10 @@ function organizationOverview(){
  const panel=(title,linkLabel,key,val,body,count)=>'<section class="ng-org-overview-panel"><header><h3>'+safe(title)+'</h3><span class="ng-tier1-count">'+safe(String(count))+'</span><button data-ng="'+safe(key)+'" data-val="'+safe(val)+'">'+safe(linkLabel)+' '+glyph('arrow',12)+'</button></header><div class="ng-org-overview-list">'+(body||'<p>No matching records in the current Office.</p>')+'</div></section>';
  const openCases=messages.filter(m=>!m.resolved);
  const horseRowsHTML=horses.slice(0,4).map(h=>'<button data-ng="horse" data-val="'+safe(h.name)+'">'+horseOwnerBadge(h.name)+'<strong>'+safe(h.name)+'</strong><span>'+safe(h.activity||'Stable file')+'</span>'+glyph('right',14)+'</button>').join('');
- const raceRowsHTML=races.slice(0,4).map((r,i)=>link('fixture',i,r.name,r.date+' · '+r.track+' · '+r.status)).join('');
+ // A canonical race is linked by its immutable game ID, not a legacy Office DOM index.
+ const savedCareer=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ const raceRowsHTML=races.slice(0,4).map((r,i)=>link('fixture',savedCareer?r.id:i,
+  r.name,r.date+' · '+r.track+' · '+r.status)).join('');
  const dueRowsHTML=follow.slice(0,4).map(f=>link('followup',f.id,f.caseTitle||f.caseId||'Follow-up',(f.dueDate||'No date')+' · '+(due.includes(f)?'DUE':'OPEN'))).join('');
  const decisionRowsHTML=openCases.slice(0,4).map(m=>link('case',m.case,m.title,m.from)).join('');
  const financialStatus=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?'Saved career · game ledger':
@@ -4458,7 +4461,18 @@ else if(APP.custom==='Search'){body=searchView()}
 else if(APP.custom.startsWith('WorldRecord:')){body=world1999Profile()}
 else if(APP.custom.startsWith('FoundingProfile:')){body=founding1999Profile()}
 else if(APP.custom.startsWith('PilotHorse:')){body=pilotHorseDetail(decodeURIComponent(APP.custom.slice('PilotHorse:'.length)))}
-else if(APP.custom.startsWith('RaceFile:')){const id=decodeURIComponent(APP.custom.slice('RaceFile:'.length));const race=APP.raceRouteKey===id?APP.raceDetail:window.__WTW_1999_UI_DATA__?.findRace?.(id);body=window.WTW1999RaceConditions?.render(race,window.__WTW_1999_UI_DATA__)||'<section class="ng-1999-race-file"><h2>Race file loading unavailable</h2></section>'}
+else if(APP.custom.startsWith('RaceFile:')){
+ const id=decodeURIComponent(APP.custom.slice('RaceFile:'.length));
+ const saved=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ if(saved){
+  const row=saved.raceRows?.find(r=>r.id===id);
+  body=row?window.WTW1999CanonicalCareerRaceFile?.render?.(row):null;
+  if(!body)body='<section class="ng-1999-race-file"><h2>Saved race unavailable</h2><p>This race ID is not in the active game career. No other run was substituted.</p></section>';
+ }else{
+  const race=APP.raceRouteKey===id?APP.raceDetail:window.__WTW_1999_UI_DATA__?.findRace?.(id);
+  body=window.WTW1999RaceConditions?.render(race,window.__WTW_1999_UI_DATA__)||'<section class="ng-1999-race-file"><h2>Race file loading unavailable</h2></section>';
+ }
+}
 else if(APP.custom.startsWith('Preview:')){body=previewRecordView()}
 else {body=managerDashboard()}
 const isProfile=Boolean(profile)||body.startsWith('<div class="ng-profile-view '),isOrganization=APP.custom==='Organization Overview',isSearch=APP.custom==='Search',isManager=body.startsWith('<section class="ng-manager-screen');
@@ -4884,7 +4898,15 @@ window.addEventListener('click',e=>{
   if(row?._canonId)return openWorld1999Entity('horse:'+row._canonId);
   return openEntityRecord(val,'horse');
  }
- if(key==='fixture'){const n=$$('.right .fixtureList .fixture[data-track]')[Number(val)];return bridgeNode(n)}
+ if(key==='fixture'){
+ const saved=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ if(saved){
+  const row=saved.raceRows?.find(r=>r.id===val);
+  if(!row)return; // Never resolve a saved race by a coincidental Office row index.
+  return openCustomView('RaceFile:'+encodeURIComponent(row.id),'Racing',APP.page);
+ }
+ const n=$('.right .fixtureList .fixture[data-track]')[Number(val)];return bridgeNode(n);
+}
  if(key==='track'){const row=$$('.right .fixture').find(x=>x.dataset.track===val);if(row){const p=$('p',row);return bridgeNode(p)}return bridgeNode(originalAct('World'))}
  if(key==='answer-decision')return answerDecision(btn.dataset.decision,val);
  if(key==='answer-trainer-request')return answerTrainerRequest(btn.dataset.decision,val);
