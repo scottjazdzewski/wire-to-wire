@@ -404,7 +404,11 @@ function openOrganization(){return openCustomView('Organization Overview')}
 function organizationOverview(){
  const org=playerOrganization(),st=state(),horses=horseRows(),races=racingRows(),messages=currentMessages(),follow=openFollowUps(),due=dueActions();
  const leads=document.querySelectorAll('.app .oppList .oppItem').length;
- const entered=races.filter(r=>/Entered/i.test(r.status)).length;
+ // Count real open race entries, not races whose display status happens to say Entered.
+ const entered=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?
+  races.reduce((n,r)=>n+(r.gameStatus==='ENTRIES_OPEN'?
+   (r.raceFile?.field||[]).filter(e=>['ENTERED','BOOKED'].includes(e.status)).length:0),0):
+  races.filter(r=>/Entered/i.test(r.status)).length;
  const stat=(label,value)=>'<div><strong>'+safe(value)+'</strong><small>'+safe(label)+'</small></div>';
  const link=(key,val,title,desc)=>'<button data-ng="'+safe(key)+'" data-val="'+safe(val)+'"><strong>'+safe(title)+'</strong><span>'+safe(desc)+'</span>'+glyph('right',14)+'</button>';
  const panel=(title,linkLabel,key,val,body,count)=>'<section class="ng-org-overview-panel"><header><h3>'+safe(title)+'</h3><span class="ng-tier1-count">'+safe(String(count))+'</span><button data-ng="'+safe(key)+'" data-val="'+safe(val)+'">'+safe(linkLabel)+' '+glyph('arrow',12)+'</button></header><div class="ng-org-overview-list">'+(body||'<p>No matching records in the current Office.</p>')+'</div></section>';
