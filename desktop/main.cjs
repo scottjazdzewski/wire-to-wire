@@ -1,13 +1,15 @@
 'use strict';
 /* G1 Windows shell for the ONE existing Wire to Wire game.
  * No hosted game URL, no HTTP server, no separate simulation or UI.
- * G2 local D1 historical pack and G3 desktop-owned career storage remain open.
+ * Compact career slots use G3's first native-store slice; active autosave is
+ * still browser-origin. Real-history content is optional for fictional launch.
  */
 const fs=require('node:fs');
 const path=require('node:path');
 const {pathToFileURL}=require('node:url');
-const {app,BrowserWindow,protocol,net,session,dialog}=require('electron');
+const {app,BrowserWindow,protocol,net,session,dialog,ipcMain}=require('electron');
 const {bundledFile,htmlContentSecurityPolicy}=require('./local-content.cjs');
+const {createCareerStore}=require('./career-store.cjs');
 
 const ORIGIN='wtw://game';
 const args=process.argv.slice(1);
@@ -84,6 +86,22 @@ function restrictNetwork(){
  session.defaultSession.setPermissionCheckHandler(()=>false);
 }
 
+function registerCareerStorage(){
+ const store=createCareerStore(path.join(app.getPath('userData'),'careers-v1'));
+ const trustedSender=event=>{
+  try{return new URL(event.senderFrame?.url||'').origin===ORIGIN}
+  catch{return false}
+ };
+ const handle=(channel,action)=>ipcMain.handle(channel,async(event,...args)=>{
+  if(!trustedSender(event))throw Error('Career storage request came from an untrusted page');
+  return action(...args);
+ });
+ handle('wtw-careers:list',()=>store.list());
+ handle('wtw-careers:get',id=>store.get(id));
+ handle('wtw-careers:put',(meta,record)=>store.put(meta,record));
+ handle('wtw-careers:remove',id=>store.remove(id));
+}
+
 const mediaTypes=Object.freeze({
  '.html':'text/html; charset=utf-8',
  '.js':'text/javascript; charset=utf-8',
@@ -106,7 +124,7 @@ const mediaTypes=Object.freeze({
 
 async function serveLocalAsset(request){
  const filename=bundledFile(contentRoot,request.url);
- if(!filename)return new Response('Unavailable offline; historical data migration pending',{status:404});
+ if(!filename)return new Response('Bundled game resource is unavailable offline',{status:404});
  try{
   const result=await net.fetch(pathToFileURL(filename).toString());
   if(!result.ok)return result;
@@ -227,16 +245,31 @@ async function runSmoke(win){
  if(smokePhase==='write'){
   await win.webContents.executeJavaScript(
    'localStorage.setItem("WTW_DESKTOP_G1_REOPEN_PROOF","LOCAL_FIRST_1999");true;',true);
+  const wroteCareer=await win.webContents.executeJavaScript(
+   'window.WTWDesktop.careers.put('+JSON.stringify({
+    id:'career-desktop-smoke-000001',name:'Desktop storage smoke',date:'1999-01-01',
+    createdAt:'2026-11-14T00:00:00.000Z',updatedAt:'2026-11-14T00:00:00.000Z',bytes:4
+   })+',{header:{schema:"WTW_COMPACT_CAREER_V1",size:4,checksum:"smoke"},'+
+   'bytes:new Uint8Array([87,84,87,49])}).then(()=>true)',true);
+  if(!wroteCareer)throw Error('Desktop-owned career storage write did not complete');
  }else if(smokePhase==='read'){
   if(last.savedMarker!=='LOCAL_FIRST_1999')
    throw Error('App-local state was lost across a real Windows process restart');
+  const recoveredCareer=await win.webContents.executeJavaScript(
+   '(async()=>{const c=await window.WTWDesktop.careers.get("career-desktop-smoke-000001");'+
+   'const ok=c.meta.name==="Desktop storage smoke"&&'+
+   'Array.from(c.bytes).join(",")==="87,84,87,49";'+
+   'if(!ok)throw Error("Desktop career payload changed across process restart");'+
+   'await window.WTWDesktop.careers.remove(c.meta.id);return true})()',true);
+  if(!recoveredCareer)throw Error('Desktop-owned career storage did not reopen');
  }else throw Error('Unknown smoke test phase '+smokePhase);
  reportSmoke({
   phase:smokePhase,bundledOrigin:last.origin,
   gameDate:last.date,foundingSchema:last.schema,gameInterface:'ONE_APPROVED_UI',
   appLocalStorageReopen:smokePhase==='read'?'VERIFIED':'WRITTEN',
-  careerSaveAuthority:'CURRENT_INDEXEDDB_TRANSITION_ONLY',
-  offlineHistoricalD1:'G2_NOT_YET_MIGRATED',
+  desktopCompactCareerStoreReopen:smokePhase==='read'?'VERIFIED':'WRITTEN',
+  careerSaveAuthority:'PARTIAL_NATIVE_COMPACT_SLOTS; ACTIVE_GAME_AUTOSAVE_STILL_LOCALSTORAGE',
+  realHistoryModule:'OPTIONAL_FUTURE_WORK; NOT_REQUIRED_FOR_FICTIONAL_LAUNCH',
   retailCertification:'NOT_YET_DESKTOP_CERTIFIED'
  },true);
 }
@@ -244,9 +277,11 @@ async function runSmoke(win){
 app.whenReady().then(async()=>{
  markStartup('appReady');
  restrictNetwork();
+ registerCareerStorage();
  protocol.handle('wtw',serveLocalAsset);
  markStartup('protocolReady');
  const win=openGameWindow();
+ // Existing approved UI entry point: wtw://game/next/index.html.
  await win.loadURL(ORIGIN+'/next/index.html');
  if(!smokePhase){win.show();win.focus();}
  if(smokePhase)await runSmoke(win);

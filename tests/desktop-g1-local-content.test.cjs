@@ -43,9 +43,14 @@ test('desktop only bundles one approved UI and has no remote gaming URL',()=>{
  assert.match(main,/capturePage\(\)/);
  assert.match(main,/win\.show\(\);win\.focus\(\)/);
  assert.doesNotMatch(main,/loadURL\(['"]https?:\/\//);
- assert.doesNotMatch(preload,/ipcRenderer|require\(['"](?:fs|child_process|net)['"]\)/);
+ assert.doesNotMatch(preload,/require\(['"](?:fs|child_process|net)['"]\)/);
+ assert.doesNotMatch(preload,/sendSync|executeJavaScript|openExternal/);
+ for(const channel of ['list','get','put','remove'])
+  assert.match(preload,new RegExp("ipcRenderer\\.invoke\\('wtw-careers:"+channel+"'"));
+ assert.match(main,/senderFrame\?\.url/);
  assert.equal(pkg.build.extraResources[0].to,'game-public');
  assert.equal(pkg.build.nsis.deleteAppDataOnUninstall,false);
  assert.equal(pkg.build.win.icon,'assets/wtw-app.ico');
  assert.ok(pkg.build.files.includes('local-content.cjs'));
+ assert.ok(pkg.build.files.includes('career-store.cjs'));
 });

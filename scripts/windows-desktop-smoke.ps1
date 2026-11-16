@@ -69,6 +69,9 @@ foreach($step in @(@("write",$writeReport),@("read",$readReport))){
  if($phase -eq "read" -and $proof.appLocalStorageReopen -ne "VERIFIED"){
   throw "Per-user local origin did not survive process exit/restart"
  }
+ if($phase -eq "read" -and $proof.desktopCompactCareerStoreReopen -ne "VERIFIED"){
+  throw "Desktop-owned compact career data did not survive process exit/restart"
+ }
  Write-Host "WTW_WINDOWS_DESKTOP_PROCESS_$($phase.ToUpperInvariant())_PASS"
  Write-Host "WTW_WINDOWS_LAUNCH_TO_GAME_READY_MS $($proof.launcherToGameReadyMs)"
  Write-Host "WTW_ELECTRON_PROCESS_TO_GAME_READY_MS $([Math]::Round($proof.startup.gameUIReady))"
