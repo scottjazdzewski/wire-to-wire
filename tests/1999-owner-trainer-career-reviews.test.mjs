@@ -62,13 +62,17 @@ test('28-day owner/trainer career reviews use only official race results, paid c
  assert.ok(entries.every(e=>e.last_review_date==='1999-01-30'));
  const official=Object.values(completed.runtime.races).
   filter(r=>r.status==='OFFICIAL_SIM_RESULT'&&r.date<='1999-01-30');
+ // Owner reviews occur before the Jan 30 racing-agent settlement. Results
+ // from later the SAME DAY cannot retroactively appear in that review.
+ // Post-settlement trainer career form may correctly include Jan 30 races.
+ const reviewOfficial=official.filter(r=>r.date<'1999-01-30');
  assert.ok(official.length>=3);
  for(const [id,item] of Object.entries(reviews.by_pair)){
   assert.equal(pairOf({owner_organization_id:item.owner_id,trainer_id:item.trainer_id}),id);
-  const expected=official.reduce((n,r)=>n+r.results.filter(x=>
+  const expected=reviewOfficial.reduce((n,r)=>n+r.results.filter(x=>
    x.owner_id===item.owner_id&&x.trainer_id===item.trainer_id).length,0);
   assert.equal(item.evidence.starts,expected);
-  assert.equal(item.evidence.wins,official.reduce((n,r)=>n+r.results.filter(x=>
+  assert.equal(item.evidence.wins,reviewOfficial.reduce((n,r)=>n+r.results.filter(x=>
    x.owner_id===item.owner_id&&x.trainer_id===item.trainer_id&&x.finish===1).length,0));
   assert.equal(item.evidence.care_expense_minor,
    -completed.runtime.finances.ledger.filter(row=>row.kind==='HORSE_CARE_OWNER_PAYMENT'&&
