@@ -21,6 +21,8 @@ import {gameRaceProgram,supported1999RaceClass,raceEligibility}
 import {validateGameRun} from '/1999/game/state.js';
 import {packShared1999Career,unpackShared1999Career,sameShared1999WorldIdentity}
  from '/1999/engine/shared-1999-career-package.mjs?rev=wtw-shared-career-world-identity-v2';
+import {projectPopulated1999Career}
+ from '/next/1999-populated-career-read-model.mjs';
 
 const DB_NAME='WireToWireClean1999CareersV2';
 const MAX_SLOTS=60,MAX_TOTAL_BYTES=512*1024*1024;
@@ -190,23 +192,19 @@ function publishCareerReadModel(){
   }
   return;
  }
- const operation=career.world.entities.organizations.find(x=>x.id===run.player.operation_id);
- if(!operation)throw Error('Active game operation missing from the world');
- const rawBalance=run.runtime.finances?.operation_balances_minor?.[operation.id];
- const horses=(run.stable_horse_ids||[]).map(id=>run.runtime.registered_horses?.by_id?.[id]).filter(Boolean)
-  .map(h=>({horseId:h.horse_id,name:h.registered_name,activity:h.status||'In training',tag:h.status||'In training'}));
- const races=Object.values(run.runtime.races||{}).filter(r=>r&&r.status!=='CANCELLED')
-  .map(r=>({name:r.name||r.conditions||r.id,date:r.date||'',track:r.track_id||'',status:r.status||'Planned'}))
-  .sort((a,b)=>a.date.localeCompare(b.date));
- const snapshot={schema:'WTW_CANONICAL_CAREER_READ_MODEL_V1',
-  worldId:career.manifest.worldId,runId:run.run_id,
-  worldHorseCount:career.manifest.horseCount,personCount:career.manifest.personCount,
-  operationId:operation.id,operationName:operation.name,
-  date:run.clock.date,revision:run.revision,horseRows:horses,raceRows:races,
-  cashMinor:Number.isSafeInteger(rawBalance)?rawBalance:null};
+ // Keep the saved run as the single authority for visible horses and posted
+ // operation cash. Never fall through to the unrelated founding Office roster.
+ const sourceCash=run.runtime.finances?.operation_balances_minor?.[run.player.operation_id];
+ const stableSize=run.stable_horse_ids.length;
+ const snapshot=projectPopulated1999Career({
+  manifest:career.manifest,world:career.world,run});
+ if(snapshot.horseRows.length!==stableSize||
+  snapshot.cashMinor!==(Number.isSafeInteger(sourceCash)?sourceCash:null))
+  throw Error('Active career UI and posted game ledger did not reconcile');
  const prior=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
- if(prior?.revision===snapshot.revision&&prior?.operationId===snapshot.operationId&&prior?.date===snapshot.date)return;
- window.__WTW_ACTIVE_WORLD_CAREER_VIEW__=Object.freeze(snapshot);
+ if(prior?.revision===snapshot.revision&&prior?.runId===snapshot.runId&&
+  prior?.date===snapshot.date&&prior?.worldId===snapshot.worldId)return;
+ window.__WTW_ACTIVE_WORLD_CAREER_VIEW__=snapshot;
  window.__WTW_NEXT__?.paint?.();
 }
 let selectedIndustryHorses=300000,selectedIndustrySeed=19990101;
