@@ -138,6 +138,13 @@ const sourceHorseIds=new Set(srcHorses.map(h=>h.id));
 const ownerIndex=srcOrgs.findIndex(o=>o.id===activeOwnerId);
 const initialOwner=q('/api/1999/sim/owners','offset='+Math.max(0,ownerIndex)+'&limit=1').items?.[0]||null;
 const openingCash=initialOwner?.finances?.cash??null;
+// Display-only title formatting. Preserve source records, IDs and proper acronyms.
+const officeTitle=value=>String(value??'').replace(/\b[A-Za-z][A-Za-z'-]*\b/g,
+ (word,offset,source)=>{
+  if(/^[A-Z]{2,}$/.test(word))return word;
+  if(offset>0&&/^(and|or|the|of|in|to|at|for|a|an|on)$/i.test(word))return word.toLowerCase();
+  return word[0].toUpperCase()+word.slice(1).toLowerCase();
+ });
 const messageSpecs=[
  ['opening-stable','Stable Office','1999 opening roster: '+selectedOwner,
   'Old B01 horses excluded · awaiting new racing registrations',true,'Stable'],
@@ -157,11 +164,11 @@ const messageSpecs=[
   'Source-locked horses preserved; other population groups simulated',false,'World']
 ];
 const officeMessages=messageSpecs.map(([caseId,from,title,meta,urgent,section],i)=>({
- case:caseId,from,title,meta,time:'DAY 1',urgent,resolved:false,
+ case:caseId,from,title:officeTitle(title),meta,time:'DAY 1',urgent,resolved:false,
  initials:from.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase(),section
 }));
 const officeDesks=Object.fromEntries(messageSpecs.map(([key,from,title,meta,urgent,section])=>[key,{
- type:'1999 OPENING / '+(urgent?'REVIEW':'INTELLIGENCE'),title,summary:meta,
+ type:'1999 OPENING / '+(urgent?'REVIEW':'INTELLIGENCE'),title:officeTitle(title),summary:meta,
  pressure:urgent?'Review before 1999 play':'Planning',
  risk:'No 1999 result or payment may be precommitted',
  read:'Source canon preserved; simulated attributes flagged',source:from,

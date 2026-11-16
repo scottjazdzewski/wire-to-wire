@@ -528,7 +528,14 @@ try {
   const history=await profileReady(item.family+' history','HISTORY');
   assert.equal(history.history,'page',item.family+' history is not active after clicking');
   assert.equal(history.name,original.name,'Identity changed when opening '+item.family+' history');
-  assert.equal(history.identity,original.identity);
+  // Theme/logo identity hydrates asynchronously. A blank initial attribute may
+  // become the approved source ID; it must never switch to another ID.
+  const checkIdentity=(snapshot,label)=>{
+   if(snapshot.identity)assert.equal(snapshot.identity,item.id,
+    label+' displayed a different organization/person/track logo identity');
+  };
+  checkIdentity(original,'Initial '+item.family);
+  checkIdentity(history,'History '+item.family);
   assert.equal(history.sourceRecord,original.sourceRecord);
   assert.equal(history.date,baseline.date);
 
@@ -543,7 +550,7 @@ try {
   const record=await profileReady(item.family+' '+deeper,deeper.toUpperCase());
   assert.equal(record.selected,deeper,'MORE RECORDS selected the wrong view in '+item.family);
   assert.equal(record.name,original.name);
-  assert.equal(record.identity,original.identity);
+  checkIdentity(record,'record '+item.family);
   assert.equal(record.sourceRecord,original.sourceRecord);
   assert.equal(record.date,baseline.date);
   const returnHome=await evaluate(`(()=>{
@@ -553,7 +560,7 @@ try {
   assert.equal(returnHome,true,'OVERVIEW control missing after '+deeper+' in '+item.family);
   const restored=await profileReady(item.family+' restored overview','OVERVIEW');
   assert.equal(restored.overview,'page');
-  assert.equal(restored.identity,original.identity);
+  checkIdentity(restored,'restored '+item.family);
   assert.equal(restored.sourceRecord,original.sourceRecord);
   assert.equal(restored.name,original.name);
   assert.equal(restored.date,baseline.date);

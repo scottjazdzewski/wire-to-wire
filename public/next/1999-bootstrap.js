@@ -10,6 +10,24 @@ const RETIRED_KEYS=['wtw:1999:test-universe-mode:v1','wtw:1999:test-universe-sav
 const SCHEMA='WTW_1999_FOUNDING_CAREER_V1', SESSION='wtw1999FoundingSessionV1';
 const SEED=19990101;
 const selectedWorld=window.WTW1999CommercialConfig?.current?.()||{population:73,mode:'FOUNDING_1999',seed:SEED};
+// Gameplay-only opening liquidity, never an assertion about Kingsmere's
+// historical books. This belongs to the saved player career, not the source.
+const OPENING_CASH_USD=2500000;
+function openingFinances(){
+ return {stable:{available_cash:OPENING_CASH_USD,currency:'USD',
+  status:'Modeled 1999 opening capital · gameplay, not historical'},
+  openingCapital:{operation_id:'O-000061',amount_minor:OPENING_CASH_USD*100,
+   currency:'USD',provenance:'MODELED_KINGSMERE_1999_PLAYER_OPENING',
+   posted:false}};
+}
+function openingFinanceUpgrade(game){
+ const hasFinance=game.finances&&Object.keys(game.finances).length>0;
+ const untouched=Object.keys(game.horseState||{}).length===0&&
+  Object.keys(game.calendarState||{}).length===0&&
+  (game.decisionLog||[]).length===0&&!game.horseDevelopment&&
+  game.worldAnchor?.lastCommittedTransaction==null;
+ return !hasFinance&&untouched?{...game,finances:openingFinances()}:game;
+}
 
 function fresh(profile=selectedWorld){
  const world=window.WTW1999CommercialConfig?.normalize?.(profile)||profile;
@@ -17,7 +35,7 @@ function fresh(profile=selectedWorld){
   version:SCHEMA,schema:SCHEMA,date:START,
   currentCase:'opening-stable',turn:0,resolvedCases:{},decisionLog:[],
   horseState:{},ownerState:{},staffState:{},calendarState:{},
-  finances:{},scoutingState:{},messageState:{},followUps:[],
+  finances:openingFinances(),scoutingState:{},messageState:{},followUps:[],
   // No pre-play 1999 result or transaction and no injected old case effects.
   worldAnchor:{schema:SCHEMA,startDate:START,seed:world.seed,mode:world.mode,
    population:world.population,worldProfile:world,
@@ -65,6 +83,10 @@ try{
  const previous=parse(localStorage.getItem(MAIN));
  const keep=valid(previous)&&localStorage.getItem(SESSION)==='active';
  if(!keep)localStorage.setItem(MAIN,JSON.stringify(fresh()));
+ else{
+  const seeded=openingFinanceUpgrade(previous);
+  if(seeded!==previous)localStorage.setItem(MAIN,JSON.stringify(seeded));
+ }
  localStorage.setItem(SESSION,'active');
 }catch(error){window.__WTW_1999_BOOT_WARNING__=String(error?.message||error)}
 window.__WTW_1999_MANAGEMENT__={

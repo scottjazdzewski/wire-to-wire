@@ -180,6 +180,34 @@ function modal(){
 }
 let fullIndustryManifest=null;
 let activeWorldCareer=null;
+// Read-only bridge to the existing committed game run: do not seed a second
+// balance, infer assets, or mutate the immutable 1999 world directory.
+function publishCareerReadModel(){
+ const career=activeWorldCareer,run=career?.run;
+ if(!run){
+  if(window.__WTW_ACTIVE_WORLD_CAREER_VIEW__){
+   delete window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+   window.__WTW_NEXT__?.paint?.();
+  }
+  return;
+ }
+ const operation=career.world.entities.organizations.find(x=>x.id===run.player.operation_id);
+ if(!operation)throw Error('Active game operation missing from the world');
+ const rawBalance=run.runtime.finances?.operation_balances_minor?.[operation.id];
+ const horses=(run.stable_horse_ids||[]).map(id=>run.runtime.registered_horses?.by_id?.[id]).filter(Boolean)
+  .map(h=>({horseId:h.horse_id,name:h.registered_name,activity:h.status||'In training',tag:h.status||'In training'}));
+ const races=Object.values(run.runtime.races||{}).filter(r=>r&&r.status!=='CANCELLED')
+  .map(r=>({name:r.name||r.conditions||r.id,date:r.date||'',track:r.track_id||'',status:r.status||'Planned'}))
+  .sort((a,b)=>a.date.localeCompare(b.date));
+ const snapshot={schema:'WTW_CANONICAL_CAREER_READ_MODEL_V1',
+  operationId:operation.id,operationName:operation.name,
+  date:run.clock.date,revision:run.revision,horseRows:horses,raceRows:races,
+  cashMinor:Number.isSafeInteger(rawBalance)?rawBalance:null};
+ const prior=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ if(prior?.revision===snapshot.revision&&prior?.operationId===snapshot.operationId&&prior?.date===snapshot.date)return;
+ window.__WTW_ACTIVE_WORLD_CAREER_VIEW__=Object.freeze(snapshot);
+ window.__WTW_NEXT__?.paint?.();
+}
 let selectedIndustryHorses=300000,selectedIndustrySeed=19990101;
 const INDUSTRY_SIZE_MIN=10000,INDUSTRY_SIZE_MAX=325000;
 function requestedIndustry(){
@@ -395,6 +423,7 @@ async function openNextTestRace(){
 }
 let busy=false,notice='';
 async function refresh(){
+ publishCareerReadModel();
  const root=modal();
  const current=config().current(),slots=await listSlots();
  const mareTurnover=fullIndustryManifest?.plan?.nextSeasonMareTurnover||null;

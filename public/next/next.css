@@ -1789,7 +1789,7 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
  .ng-route-profile .ng-profile-farm .ng-profiletabs,
  .ng-route-profile .ng-profile-track .ng-profiletabs{height:34px!important;min-height:34px!important}
 .ng-route-organization .ng-routegrid{display:block!important;flex:1 1 0!important;min-height:0!important;overflow:hidden!important}
-.ng-route-organization .ng-routeinner{box-sizing:border-box!important;height:100%!important;min-height:0!important;overflow:hidden!important}
+.ng-route-organization .ng-routeinner{display:block!important;box-sizing:border-box!important;width:100%!important;height:100%!important;min-height:0!important;overflow:hidden!important}
 .ng-tier1-org{display:flex;flex-direction:column;box-sizing:border-box;height:100%;min-height:0;gap:7px;overflow:hidden}
 .ng-tier1-org .ng-org-overview-top{box-sizing:border-box;flex:0 0 70px;min-height:70px;padding:6px 13px;gap:11px}
 .ng-tier1-org .ng-org-overview-name h2{font-size:21px;margin:2px 0}
@@ -3907,3 +3907,5 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  font:800 18px/1 Georgia,serif;cursor:pointer}
 .ng-record-browse-bar button.ng-profile-entity-step:hover{background:#50634e;border-color:#dabd80}
 .ng-record-browse-bar button.ng-profile-entity-step:focus-visible{outline:2px solid #f0cf8a;outline-offset:2px}
+#wtwNextgen .ng-subbar .ng-subnav>button{display:flex!important;align-items:center;justify-content:center;height:100%}
+#wtwNextgen .ng-route-profile .ng-profiletabs>button{display:flex!important;align-items:center;justify-content:center;height:100%}
