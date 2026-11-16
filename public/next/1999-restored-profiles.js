@@ -142,10 +142,11 @@ function source(kind,record,ui){
   const generated=d._wtwGeneratedWorld===true;
   node.dataset.organizationId=id;
   node.dataset.foundingContext=d._foundingContext||'ownership';
-  node.innerHTML='<div class="profileSubline">1999 '+safe(context)+' · '+safe(d.type||'FOUNDING ORGANIZATION')+'</div>'+
+  node.innerHTML='<div class="profileSubline">1999 '+safe(context)+' · '+
+   safe(d.type||(generated?'MODELED RACING ORGANIZATION':'FOUNDING ORGANIZATION'))+'</div>'+
    field('Location',location||'Not recorded')+
-   field('Type',d.type||'Founding institution')+
-   field('Owner',chief||'Pending leadership approval')+
+   field('Type',d.type||(generated?'Modeled racing organization':'Founding institution'))+
+   field('Owner',chief||(generated?'Not modeled':'Pending leadership approval'))+
    field('Current status',generated?'FICTIONAL 1999 GAME INDUSTRY · MODELED':
     d.leadershipStatus==='PENDING_USER_REVIEW_NO_APPROVED_PRINCIPAL'?
      'PRINCIPAL NAME NOT APPROVED':'APPROVED FOUNDING INSTITUTION')+
