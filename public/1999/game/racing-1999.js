@@ -66,14 +66,24 @@ export function jockeyBookingDecision(state,world,race,horse,jockey){
    jockey_reputation:standing,schedule,quote,
    race_importance:importance.significance};
 }
-export function modeledJockeySkills(id,seed){
+export function modeledJockeySkills(id,seed,identity=null){
  ensure(/^P-[A-Za-z0-9-]+$/.test(id),'JOCKEY_ID','Permanent selected jockey ID required');
- return {rating_source:'1999_MODELED_GAME_SCORING_NOT_CANONICAL',
+ const baseline={rating_source:'1999_MODELED_GAME_SCORING_NOT_CANONICAL',
   judgment:rating(.38+.56*frac(seed,id+':judgment')),
   pace:rating(.36+.58*frac(seed,id+':pace')),
   finish:rating(.34+.6*frac(seed,id+':finish')),
   composure:rating(.38+.54*frac(seed,id+':composure')),
   horse_handling:rating(.38+.54*frac(seed,id+':handling'))};
+ // Real persisted rider ability and standing inform NEW careers. Existing
+ // saved ratings remain untouched. Source identities are the authority.
+ if(!Number.isFinite(identity?.ratings?.ability))return baseline;
+ const ability=identity.ratings.ability/100;
+ const bonus={ELITE:.13,ESTABLISHED:.065,REGIONAL:0,DEVELOPING:-.025}
+  [identity.tier]??0;
+ return Object.fromEntries(Object.entries(baseline).map(([key,value])=>
+  [key,key==='rating_source'?
+   'MODELED_FROM_PERSISTED_JOCKEY_1999_ABILITIES':
+   rating(value*.65+ability*.35+bonus)]));
 }
 export function gameRaceProgram(state,world,trackId,date){
  const track=trackFor(world,trackId);
@@ -284,10 +294,14 @@ export function racingAction({state,world,command,emit}){
     'JOCKEY_COLONY','Selected jockey needs an approved P-ID and home-track T-ID');
    unique.add(j.id);
    const identity=world.entities.people.find(p=>p.id===j.id);
+   const baseReputation=identity?.ratings?.ability?
+    rating(.34+.28*identity.ratings.ability/100+
+     (identity.tier==='ELITE'?.12:identity.tier==='ESTABLISHED'?.06:0)):.5;
    rt.jockeys[j.id]={id:j.id,home_track_id:j.home_track_id,
-    tier:identity?.tier??'REGIONAL',skills:modeledJockeySkills(j.id,state.rng.seed),
+    tier:identity?.tier??'REGIONAL',
+    skills:modeledJockeySkills(j.id,state.rng.seed,identity),
     source:'SELECTED_1999_JOCKEY_IDENTITY_GAME_MODEL',starts:0,wins:0,
-    game_reputation:.5,last_track_id:j.home_track_id};
+    game_reputation:baseReputation,last_track_id:j.home_track_id};
    rt.jockey_finances_minor[j.id]=0;
   }
   emit('JOCKEY_COLONY_ACTIVATED',{jockeys:unique.size,ratings:'MODELED_NOT_SOURCE_CERTIFIED'});
