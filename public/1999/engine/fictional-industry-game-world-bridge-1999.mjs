@@ -12,6 +12,59 @@ import {readPersistent1999Directory,readPersistent1999IndustryBatch,
  verifyPersistent1999WorldOpen} from './fictional-industry-persistence-1999.mjs';
 
 export const PERSISTED_1999_GAME_BRIDGE_SCHEMA='WTW_PERSISTED_1999_GAME_BRIDGE_V1';
+/**
+ * Select a finite active booking board from the real persisted professionals.
+ * A multi-track player stable must see local riders at EACH home circuit,
+ * not just the home track of its first horse. Identities are never invented.
+ * The full world directory and all other jockeys remain intact.
+ */
+export function select1999CareerJockeyColony(people,trackIds,{limit=120}={}){
+ if(!Array.isArray(people)||!Array.isArray(trackIds)||
+  !Number.isSafeInteger(limit)||limit<2||limit>120)
+  throw Error('Invalid live jockey colony selection');
+ const localsByTrack=new Map();
+ for(const trackId of [...new Set(trackIds)].sort()){
+  localsByTrack.set(trackId,people.filter(p=>
+   p.role==='jockey'&&p.workplaceId===trackId).
+   sort((a,b)=>(b.ratings?.ability??0)-(a.ratings?.ability??0)||
+    a.id.localeCompare(b.id)));
+ }
+ const selected=[],ids=new Set(),push=p=>{
+  if(!p||ids.has(p.id)||selected.length>=limit)return false;
+  selected.push({id:p.id,home_track_id:p.workplaceId});ids.add(p.id);
+  return true;
+ };
+ const tracks=[...localsByTrack.keys()];
+ // Two locally based riders for every active player barn before paying for
+ // wider options; then round-robin the remaining local budget fairly.
+ const localBudget=Math.min(limit,Math.max(tracks.length*2,
+  Math.min(80,limit-20)));
+ for(let round=0;round<25&&selected.length<localBudget;round++){
+  let added=0;
+  for(const trackId of tracks){
+   if(selected.length>=localBudget)break;
+   if(push(localsByTrack.get(trackId)[round]))added++;
+  }
+  if(!added)break;
+ }
+ const elsewhere=people.filter(p=>p.role==='jockey'&&!ids.has(p.id));
+ for(const tier of ['ELITE','ESTABLISHED']){
+  for(const p of elsewhere.filter(x=>x.tier===tier).sort((a,b)=>
+   (b.ratings?.ability??0)-(a.ratings?.ability??0)||a.id.localeCompare(b.id))){
+   if(selected.length>=limit)break;
+   push(p);
+  }
+ }
+ // When a saved older world has no high-tier visitors available, use other
+ // real professionals rather than inventing a roster or forfeiting slots.
+ for(const p of elsewhere.filter(x=>!ids.has(x.id)).sort((a,b)=>
+  (b.ratings?.ability??0)-(a.ratings?.ability??0)||a.id.localeCompare(b.id))){
+  if(selected.length>=limit)break;
+  push(p);
+ }
+ return selected;
+}
+
 const TRACK_ID=/^(?:T|IT)-[A-Za-z0-9-]+$/;
 async function digest(value){
  const bytes=new TextEncoder().encode(JSON.stringify(value));
@@ -144,22 +197,10 @@ export async function openPersistent1999GameCareer(store,manifest,{
   initializeGameHorseCare(run,h);
  }
  const homeTrack=openingRoster[0].homeTrackId;
- // The player has access to real local riders and an actual national
- // visiting circuit, not fabricated rider identities or one home jockey per
- // mount. A rider still belongs to their home track and must accept a dated,
- // funded, geographically compatible booking before appearing elsewhere.
- const actualJockeys=people.filter(p=>p.role==='jockey');
- const localJockeys=actualJockeys.filter(p=>p.workplaceId===homeTrack).
-  sort((a,b)=>b.ratings.ability-a.ratings.ability||a.id.localeCompare(b.id));
- const nationalJockeys=actualJockeys.filter(p=>p.workplaceId!==homeTrack&&
-  p.tier==='ELITE').sort((a,b)=>
-   b.ratings.ability-a.ratings.ability||a.id.localeCompare(b.id));
- const establishedVisitors=actualJockeys.filter(p=>
-  p.workplaceId!==homeTrack&&p.tier==='ESTABLISHED').sort((a,b)=>
-   b.ratings.ability-a.ratings.ability||a.id.localeCompare(b.id));
- const openingJockeys=[...localJockeys.slice(0,70),
-  ...nationalJockeys.slice(0,35),...establishedVisitors.slice(0,15)]
-  .slice(0,120).map(p=>({id:p.id,home_track_id:p.workplaceId}));
+ // Selection covers ALL player's actual barn circuits, then adds national
+ // available jockeys. Scheduling still controls every signed mount.
+ const openingJockeys=select1999CareerJockeyColony(
+  people,[...trackGroups.keys()]);
  if(openingJockeys.length>=2){
   const result=dispatchGameCommand({state:run,world,command:{id:'opening-jockey-colony',
    type:'ACTIVATE_JOCKEY_COLONY',actor:'system',
