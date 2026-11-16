@@ -90,10 +90,41 @@ try{
  },180000);
  const world=await evaluate('(()=>{const e=document.querySelector("#wtwCommercialCareerModal");return {playing:!!e?.textContent.includes("canonical race engine connected"),horseCount:/10,000/.test(e?.textContent||""),actions:[...e.querySelectorAll("button[data-cc-action]")].map(x=>x.dataset.ccAction)};})()');
  assert.ok(world.playing&&world.horseCount,'Persisted world failed to enter playable test career');
+ const live=await evaluate('(()=>{const api=window.WTWCompactCareerManager;const status=api.playableWorldStatus();const stable=api.playableStableRows();const page=api.playableWorldHorseBrowse({offset:0,limit:20});return {status,stableCount:stable.length,stableId:stable[0]?.horseId,total:page.total,pageRows:page.items.length}})()');
+ assert.equal(live.status.horseCount,10000,'UI career linked to the wrong world');
+ assert.equal(live.total,10000,'UI directory is not using the persisted full census');
+ assert.ok(live.stableCount>=2&&live.stableId,'No player-owned game horse reached the UI');
+ assert.equal(live.pageRows,20,'Directory must read a bounded page');
+ console.log('WTW_UI_ACTIVE_CAREER_BRIDGE_PASS '+JSON.stringify(live));
  // Capture the actual runtime pages, not the opaque Career Manager overlay.
  // The manager is reopened separately for its own dedicated screenshots.
  await evaluate('document.querySelector("#wtwCommercialCareerModal [data-cc-action=close]")?.click();true');
  await delay(140);
+ await evaluate('(()=>{const u=window.__WTW_NEXT__;u.app.section="Stable";u.app.page="Overview";u.app.custom="Stable — Overview";u.paint();return true})()');
+ await delay(220);
+ const stableLive=await evaluate('(()=>({rows:document.querySelectorAll("#wtwNextgen .ng-rs-table tbody tr").length,first:document.querySelector("#wtwNextgen button[data-ng=horse]")?.dataset.val||null}))()');
+ assert.ok(stableLive.rows>=2&&stableLive.first,'Main Stable did not render player-owned 1999 horses');
+ await evaluate('document.querySelector("#wtwNextgen button[data-ng=horse]").click();true');
+ await delay(200);
+ const stableProfile=await evaluate('(()=>({route:window.__WTW_NEXT__.app.custom,visible:!!document.querySelector("#wtwNextgen .ng-route-profile")}))()');
+ assert.ok(stableProfile.visible&&stableProfile.route.startsWith('Preview:horse:'),
+  'Player-owned game horse did not open an actual generated dossier');
+ console.log('WTW_UI_ACTIVE_STABLE_PROFILE_PASS '+JSON.stringify({stableLive,stableProfile}));
+ await evaluate('(()=>{const u=window.__WTW_NEXT__;u.app.section="World";u.app.page="1999 Horses";u.app.custom="World — 1999 Horses";u.app.directoryPage=0;u.app.directorySearch="";u.paint();return true})()');
+ await delay(250);
+ const worldPage=await evaluate('(()=>({rows:document.querySelectorAll("#wtwNextgen .ng-rs-table tbody tr").length,heading:document.querySelector("#wtwNextgen .ng-stable-visible")?.textContent||"",first:document.querySelector("#wtwNextgen button[data-ng=directory-horse]")?.dataset.val||"",pager:document.querySelectorAll("#wtwNextgen button[data-ng=directory-page]").length}))()');
+ assert.equal(worldPage.rows,160,'Only a bounded 160-horse page must be rendered');
+ assert.ok(worldPage.heading.includes('10,000')&&worldPage.pager===2,'World page count absent');
+ await evaluate('document.querySelectorAll("#wtwNextgen button[data-ng=directory-page]")[1].click();true');
+ await delay(120);
+ const worldNext=await evaluate('document.querySelector("#wtwNextgen button[data-ng=directory-horse]")?.dataset.val');
+ assert.ok(worldNext&&worldNext!==worldPage.first,'World next-page action not wired');
+ await evaluate('document.querySelector("#wtwNextgen button[data-ng=directory-horse]").click();true');
+ await delay(180);
+ const worldHorse=await evaluate('(()=>({route:window.__WTW_NEXT__.app.custom,visible:!!document.querySelector("#wtwNextgen .ng-route-profile")}))()');
+ assert.ok(worldHorse.visible&&worldHorse.route.startsWith('Preview:horse:'),
+  'Full-world horse row fails to open a genuine generated dossier');
+ console.log('WTW_UI_FULL_WORLD_DIRECTORY_PASS '+JSON.stringify({worldPage,worldNext,worldHorse}));
  await send('Emulation.setDeviceMetricsOverride',{width:1440,height:900,deviceScaleFactor:1,mobile:false});
  const screenshots=[];
  const audit=[];
@@ -105,6 +136,7 @@ try{
   ['calendar','Racing','Calendar','Racing — Calendar'],
   ['world','World','Overview','World — Overview'],
   ['world-tracks','World','Tracks','World — Tracks'],
+  ['world-horses','World','1999 Horses','World — 1999 Horses'],
   ['track-belmont','World','Tracks','WorldRecord:track:T-0002'],
   ['track-churchill','World','Tracks','WorldRecord:track:T-0013'],
   ['track-keeneland','World','Tracks','WorldRecord:track:T-0014'],
