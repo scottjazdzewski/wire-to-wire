@@ -196,9 +196,12 @@ try{
  assert.ok(seasonBefore.sourceShippingReadiness.
   pairsWithMeetDateAfterModeledTravelAndRecovery>0,
   'no modeled circuit movement windows found');
- if(size>=300000)assert.equal(
-  seasonBefore.sourceCapacity.tracksWithFewerThanTwoResidentJockeys,0,
-  'default and maximum full worlds must not lose two-jockey local coverage');
+ if(size>=300000){
+  assert.equal(seasonBefore.sourceCapacity.tracksWithFewerThanTwoResidentJockeys,0,
+   'default and maximum full worlds must not lose two-jockey local coverage');
+  assert.equal(seasonBefore.sourceCapacity.tracksNeedingGuestRunnersToFillAllRaces,0,
+   'default and maximum world source calendars lost their optimistic local two-starter capacity');
+ }
  assert.deepEqual(seasonBefore.period.checkpoints.map(c=>c.elapsedDays),[30,60,90]);
  console.log('WTW_FULL_WORLD_90_DAY_CIRCUIT_READINESS_PASS '+JSON.stringify({
   size,seed,report:seasonBefore}));
