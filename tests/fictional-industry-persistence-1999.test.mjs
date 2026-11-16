@@ -5,10 +5,14 @@ import {createPersistent1999Industry,readPersistent1999IndustryBatch,findPersist
  savePersistent1999CareerRun,loadPersistent1999CareerRun,
  readPersistent1999Directory,findPersistent1999Person,verifyPersistent1999WorldOpen,
  reopenPersistent1999Industry,encodePersistent1999StoredValue,
- decodePersistent1999StoredValue,PERSISTENT_INDUSTRY_COMPRESSION_SCHEMA}
+ decodePersistent1999StoredValue,PERSISTENT_INDUSTRY_COMPRESSION_SCHEMA,
+ readPersistent1999LifecycleHorse,readPersistent1999FoalForecasts,
+ readPersistent1999LifecycleEvents}
  from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
+import {resolve1999FoalBirth} from '../public/1999/engine/fictional-industry-breeding-book-1999.mjs';
 function memoryStore(){
  const data={manifests:new Map(),horseBatches:new Map(),personBatches:new Map(),horseEdits:new Map(),careerRuns:new Map(),directory:new Map(),coveringBatches:new Map(),calendarBatches:new Map()};
+ data.industryLifecycle=new Map();
  return {get:async(s,k)=>data[s].get(k),
   commitDirectory:async(id,manifest,records)=>{
    data.directory.set(id,structuredClone(records));
@@ -23,6 +27,14 @@ function memoryStore(){
   putCareerRun:async(id,runId,record)=>{
    if(data.manifests.get(id)?.status!=='COMPLETE')throw Error('World incomplete');
    data.careerRuns.set(id+':'+runId,structuredClone(record));
+  },
+  commitLifecycleRun:async({worldKey,runId,record,checkpoint,horseUpdates=[],eventWrites=[],dataWrites=[]})=>{
+   if(data.manifests.get(worldKey)?.status!=='COMPLETE')throw Error('World incomplete');
+   const runKey=worldKey+':'+runId;
+   data.careerRuns.set(worldKey+':'+runId,structuredClone(record));
+   data.industryLifecycle.set(runKey+':checkpoint',structuredClone(checkpoint));
+   for(const update of horseUpdates)data.industryLifecycle.set(runKey+':horse:'+update.id,structuredClone(update));
+   for(const write of [...eventWrites,...dataWrites])data.industryLifecycle.set(write.key,structuredClone(write.value));
   }};
 }
 const dirs={farms:[{id:'O-FARM-1',location:{country:'USA'}}],
@@ -189,4 +201,404 @@ test('exact custom industry size persists independently and cannot silently chan
   /generation parameters conflict/);
  assert.equal((await reopenPersistent1999Industry(store,{seed:params.seed,
   worldId:params.worldId})).manifest.horseCount,12000);
+});
+
+test('career date commits foals only on due dates and persists aging and mare turnover',async()=>{
+ const store=memoryStore();
+ const manifest=await createPersistent1999Industry({store,seed:19990111,
+  worldId:'LifecycleTest',targetOpeningHorses:10000,...dirs,batchSize:1000});
+ const runId='WTW-RUN-1999-'+manifest.seed+'-SIZE-10000';
+ const player={role:'owner',organizationId:'O-OWNER-1'};
+ const opening=await savePersistent1999CareerRun(store,manifest,{runId,
+  gameDate:'1999-01-01',player,changes:{},version:1});
+ assert.equal(opening.lifecycle.openingHorseCount,10000);
+ assert.equal(manifest.horseCount,10000,'unborn foals do not change opening size');
+ const forecasts=await readPersistent1999FoalForecasts(store,manifest,runId,1999);
+ assert.ok(forecasts.length>100);
+ assert.ok(forecasts.every(f=>!f.materialized&&!f.resolved));
+ const firstDate=forecasts.map(f=>f.birthDate).sort()[0];
+ const firstId=forecasts.find(f=>f.birthDate===firstDate).foalId;
+ assert.equal(await readPersistent1999LifecycleHorse(store,manifest,runId,firstId),null,
+  'a forecast is not a horse before birth');
+ const before=new Date(Date.parse(firstDate+'T00:00:00Z')-86400000)
+  .toISOString().slice(0,10);
+ await savePersistent1999CareerRun(store,manifest,{runId,gameDate:before,
+  player,changes:{},version:2});
+ assert.equal(await readPersistent1999LifecycleHorse(store,manifest,runId,firstId),null);
+ const liveForecast=forecasts.find(f=>resolve1999FoalBirth({seed:manifest.seed,forecast:f}));
+ assert.ok(liveForecast,'seed should produce a live foal');
+ await savePersistent1999CareerRun(store,manifest,{runId,
+  gameDate:liveForecast.birthDate,player,changes:{},version:3});
+ const born=await readPersistent1999LifecycleHorse(store,manifest,runId,liveForecast.foalId);
+ assert.equal(born.status,'FOAL');
+ assert.equal(born.dateOfBirth,liveForecast.birthDate);
+ assert.equal(born.sireId,liveForecast.sireId);
+ assert.equal(born.damId,liveForecast.damId);
+ assert.equal(born.ownerId,liveForecast.ownerId);
+ assert.equal(born.foalingFarmId,liveForecast.foalingFarmId);
+ assert.equal((await readPersistent1999HorseProfile(store,manifest,
+  liveForecast.foalId,{runId})).dateOfBirth,liveForecast.birthDate);
+ assert.equal(await findPersistent1999Horse(store,manifest,liveForecast.foalId),null,
+  'a seasonal child remains outside the immutable opening census');
+ await savePersistent1999CareerRun(store,manifest,{runId,gameDate:'1999-12-31',
+  player,changes:{},version:4});
+ const rollover=await savePersistent1999CareerRun(store,manifest,{runId,
+  gameDate:'2000-01-01',player,changes:{},version:5});
+ assert.equal(manifest.horseCount,10000);
+ assert.ok(rollover.lifecycle.population>10000);
+ assert.equal(rollover.lifecycle.population,
+  10000+rollover.lifecycle.birthsByYear[1999]-
+   rollover.lifecycle.deathsByYear[2000]);
+ const turnover=await readPersistent1999LifecycleEvents(store,manifest,runId,
+  '2000-01-01');
+ const change=turnover.find(x=>x.type==='BROODMARE_TURNOVER');
+ const stallionChange=turnover.find(x=>x.type==='STALLION_TURNOVER');
+ const attrition=turnover.filter(x=>x.type==='YOUNGSTOCK_ATTRITION');
+ assert.equal(attrition.length,2);
+ const foalLosses=attrition.find(x=>x.stage==='FOAL_TO_YEARLING');
+ const yearlingLosses=attrition.find(x=>x.stage==='YEARLING_TO_TWO_YEAR_OLD');
+ assert.ok(foalLosses.deaths>0&&foalLosses.closingCohortSize<foalLosses.openingCohortSize);
+ assert.ok(yearlingLosses.deaths>0&&yearlingLosses.closingCohortSize<yearlingLosses.openingCohortSize);
+ assert.equal(rollover.lifecycle.deathsByYear[2000],
+  foalLosses.deaths+yearlingLosses.deaths);
+ const deadIds=attrition.flatMap(x=>x.deathHorseIds);
+ assert.equal(new Set(deadIds).size,deadIds.length,
+  'each horse can die in only one cohort transition');
+ const deadFoal=await readPersistent1999LifecycleHorse(store,manifest,runId,
+  foalLosses.deathHorseIds[0]);
+ assert.equal(deadFoal.status,'DECEASED');
+ assert.equal(deadFoal.deathStage,'FOAL_TO_YEARLING');
+ assert.equal(deadFoal.deathDate,'2000-01-01');
+ assert.equal(deadFoal.damId,forecasts.find(f=>f.foalId===deadFoal.id).damId);
+ assert.ok(deadFoal.sireId&&deadFoal.ownerId&&deadFoal.foalingFarmId,
+  'a deceased horse retains parentage, ownership, and foaling location');
+ assert.ok(change&&change.retired>0&&change.graduated>0);
+ assert.ok(stallionChange&&stallionChange.retired>0);
+ assert.equal(stallionChange.closingStallions,
+  stallionChange.openingStallions-stallionChange.retired+
+   stallionChange.graduated);
+ assert.equal(stallionChange.retiredHorseIds.length,stallionChange.retired);
+ const stallionPool=await store.get('industryLifecycle',manifest.worldId+':'+
+  manifest.seed+':'+runId+':stallion-pool:2000');
+ assert.equal(stallionPool.length,stallionChange.closingStallions);
+ assert.equal(new Set(stallionPool).size,stallionPool.length);
+ const retiredStallion=await readPersistent1999LifecycleHorse(store,manifest,
+  runId,stallionChange.retiredHorseIds[0]);
+ assert.equal(retiredStallion.status,'RETIRED_STALLION');
+ assert.equal(retiredStallion.breedingStatus,'RETIRED');
+ const season2000=await store.get('industryLifecycle',manifest.worldId+':'+
+  manifest.seed+':'+runId+':season:2000');
+ assert.ok(season2000.plannedFoals>0&&season2000.marketConditions.marketIndex>0);
+ assert.equal(change.closingBroodmares,
+  change.openingBroodmares-change.retired+change.graduated);
+ const retired=await readPersistent1999LifecycleHorse(store,manifest,runId,
+  change.retiredHorseIds[0]);
+ const graduate=await readPersistent1999LifecycleHorse(store,manifest,runId,
+  change.graduatedHorseIds[0]);
+ assert.equal(retired.status,'RETIRED_BROODMARE');
+ assert.equal(retired.breedingStatus,'RETIRED');
+ assert.equal(graduate.status,'BROODMARE');
+ assert.equal(graduate.sex,'MARE');
+ assert.equal(graduate.graduatedYear,2000);
+ let agedYearling=null;
+ for(let i=1;i<=manifest.plan.counts.yearlings&&!agedYearling;i++){
+  const horse=await readPersistent1999LifecycleHorse(store,manifest,runId,
+   'H-FICTIONAL-1999-YEARLINGS-'+String(i).padStart(7,'0'));
+  if(horse?.status==='TWO_YEAR_OLD_PROSPECT')agedYearling=horse;
+ }
+ assert.ok(agedYearling,'surviving opening yearling should enter the 2YO cohort');
+ assert.equal(agedYearling.cohort,'twoYearOldProspects');
+ const reopened=await loadPersistent1999CareerRun(store,manifest,runId);
+ assert.deepEqual(reopened.lifecycle,rollover.lifecycle);
+ assert.equal((await readPersistent1999LifecycleHorse(store,manifest,runId,
+  change.retiredHorseIds[0])).status,'RETIRED_BROODMARE');
+ assert.equal((await readPersistent1999LifecycleHorse(store,manifest,runId,
+  change.graduatedHorseIds[0])).status,'BROODMARE');
+ assert.equal((await readPersistent1999LifecycleHorse(store,manifest,runId,
+  deadFoal.id)).status,'DECEASED','attrition status survives save/reopen');
+ assert.equal((await readPersistent1999HorseProfile(store,manifest,
+  change.retiredHorseIds[0])).status,'RETIRED_BROODMARE',
+  'canonical profile lookup reads the persisted lifecycle without UI changes');
+ await assert.rejects(savePersistent1999CareerRun(store,manifest,{runId,
+  gameDate:'1999-12-31',player,changes:{},version:6}),/cannot move backward/);
+ const repeated=await savePersistent1999CareerRun(store,manifest,{runId,
+  gameDate:'2000-01-01',player,changes:{},version:6});
+ assert.deepEqual(repeated.lifecycle,rollover.lifecycle,
+  'saving the same rollover twice must not repeat births, deaths, or transitions');
+ const reopenedFoal=await readPersistent1999LifecycleHorse(store,manifest,runId,
+  liveForecast.foalId);
+ assert.ok(['YEARLING','DECEASED'].includes(reopenedFoal.status));
+ assert.equal(reopenedFoal.dateOfBirth,born.dateOfBirth);
+ await savePersistent1999CareerRun(store,manifest,{runId,gameDate:'2001-01-01',
+  player,changes:{},version:6});
+ const yearTwo=await loadPersistent1999CareerRun(store,manifest,runId);
+ assert.ok(yearTwo.lifecycle.birthsByYear[2000]>0);
+ assert.equal(yearTwo.lifecycle.population,10000+
+  yearTwo.lifecycle.birthsByYear[1999]+yearTwo.lifecycle.birthsByYear[2000]-
+  yearTwo.lifecycle.horseDeaths);
+ const yearTwoEvents=await readPersistent1999LifecycleEvents(store,manifest,runId,
+  '2001-01-01');
+ const yearTwoAttrition=yearTwoEvents.find(x=>x.type==='YOUNGSTOCK_ATTRITION'&&
+  x.stage==='YEARLING_TO_TWO_YEAR_OLD');
+ assert.ok(yearTwoAttrition?.deaths>0);
+ const deadIdSet=new Set([...attrition,...yearTwoEvents.filter(x=>
+  x.type==='YOUNGSTOCK_ATTRITION')].flatMap(x=>x.deathHorseIds));
+ const agedFirstFoalForecast=forecasts.find(f=>resolve1999FoalBirth({
+  seed:manifest.seed,forecast:f})&&!deadIdSet.has(f.foalId));
+ assert.ok(agedFirstFoalForecast,'a surviving 1999 foal should enter the 2YO cohort');
+ const agedFirstFoal=await readPersistent1999LifecycleHorse(store,manifest,runId,
+  agedFirstFoalForecast.foalId);
+ assert.equal(agedFirstFoal.status,'TWO_YEAR_OLD_PROSPECT');
+ assert.equal(agedFirstFoal.cohort,'twoYearOldProspects');
+ assert.equal(agedFirstFoal.age,2);
+ assert.equal(agedFirstFoal.dateOfBirth,agedFirstFoalForecast.birthDate);
+ const closedCrop=await readPersistent1999FoalForecasts(store,manifest,runId,1999);
+ assert.ok(closedCrop.every(f=>f.resolved));
+ const liveCrop=closedCrop.filter(f=>f.materialized);
+ assert.equal(liveCrop.length,yearTwo.lifecycle.birthsByYear[1999]);
+ assert.equal(closedCrop.length,liveCrop.length+
+  yearTwo.lifecycle.lossesByYear[1999]);
+ assert.equal(new Set(liveCrop.map(f=>f.foalId)).size,liveCrop.length);
+ const directory=await readPersistent1999Directory(store,manifest);
+ for(const forecast of liveCrop){
+  const foal=await readPersistent1999LifecycleHorse(store,manifest,runId,forecast.foalId);
+  const dam=await readPersistent1999LifecycleHorse(store,manifest,runId,forecast.damId);
+  const sire=await findPersistent1999Horse(store,manifest,forecast.sireId);
+  assert.ok(dam&&sire&&directory.some(x=>x.id===forecast.foalingFarmId));
+  assert.equal(foal.sireId,sire.id);
+  assert.equal(foal.damId,dam.id);
+  assert.equal(foal.ownerId,forecast.ownerId);
+  assert.equal(foal.birthplace.farmId,forecast.foalingFarmId);
+ }
+ assert.notEqual(yearTwo.lifecycle.birthsByYear[2000],
+  yearTwo.lifecycle.birthsByYear[1999],
+  'realized foal totals should vary as the seed and active mare pool change');
+ await savePersistent1999CareerRun(store,manifest,{runId,gameDate:'2002-01-01',
+  player,changes:{},version:7});
+ let eligibleSeasonalFilly=null;
+ for(const forecast of forecasts){
+  if(deadIdSet.has(forecast.foalId)||!resolve1999FoalBirth({
+   seed:manifest.seed,forecast}))continue;
+  const horse=await readPersistent1999LifecycleHorse(store,manifest,runId,
+   forecast.foalId);
+  if(horse?.age===3&&horse.sex==='MARE'&&horse.status==='RACING'){
+   eligibleSeasonalFilly=horse;break;
+  }
+ }
+ assert.ok(eligibleSeasonalFilly,
+  'a surviving 1999 filly should mature into the eligible 3YO racing cohort');
+ await savePersistent1999CareerRun(store,manifest,{runId,gameDate:'2003-01-01',
+  player,changes:{},version:8});
+ const yearFour=await loadPersistent1999CareerRun(store,manifest,runId);
+ const turnover2003=(await readPersistent1999LifecycleEvents(store,manifest,runId,
+  '2003-01-01')).find(event=>event.type==='BROODMARE_TURNOVER');
+ const seasonalGraduate=turnover2003?.graduatedHorseIds.find(id=>
+  id.startsWith('H-FICTIONAL-1999-FOALS-1999-'));
+ assert.ok(seasonalGraduate,
+  'a surviving seasonal filly should graduate after aging into the eligible racing cohort');
+ const graduatedFoal=await readPersistent1999LifecycleHorse(store,manifest,runId,
+  seasonalGraduate);
+ assert.equal(graduatedFoal.status,'BROODMARE');
+ assert.equal(graduatedFoal.cohort,'broodmares');
+ assert.equal(graduatedFoal.sex,'MARE');
+ assert.equal(graduatedFoal.foalYear,1999);
+ assert.equal(graduatedFoal.graduatedYear,2003);
+ assert.ok(graduatedFoal.damId&&graduatedFoal.sireId&&graduatedFoal.ownerId&&
+  graduatedFoal.foalingFarmId,'graduation preserves the horse record and pedigree');
+ const breedingPool=await store.get('industryLifecycle',manifest.worldId+':'+
+  manifest.seed+':'+runId+':breeding-pool:2003');
+ assert.equal(breedingPool.filter(id=>id===seasonalGraduate).length,1,
+  'the graduated filly enters the persisted active breeding pool exactly once');
+ assert.ok(yearFour.lifecycle.population===10000+
+  Object.values(yearFour.lifecycle.birthsByYear).reduce((sum,n)=>sum+n,0)-
+  yearFour.lifecycle.horseDeaths);
+ assert.equal((await loadPersistent1999CareerRun(store,manifest,runId)).lifecycle.lastDate,
+  '2003-01-01','longer cohort and breeding changes survive reopen');
+});
+
+test('small persistent industry keeps births, cohorts, and breeding records coherent for three decades',async()=>{
+ const store=memoryStore(),manifest=await createPersistent1999Industry({store,
+  seed:19990111,worldId:'LifecycleDecades',targetOpeningHorses:10000,
+  ...dirs,batchSize:1000});
+ const runId='WTW-RUN-1999-'+manifest.seed+'-SIZE-10000';
+ const player={role:'owner',organizationId:'O-OWNER-1'};
+ const opening=await savePersistent1999CareerRun(store,manifest,{runId,
+  gameDate:'1999-01-01',player,changes:{},version:1});
+ assert.equal(opening.lifecycle.openingHorseCount,10000);
+ const births=[],populations=[];
+ const deathsSeen=new Set(),graduatesSeen=new Set(),retirementsSeen=new Set();
+ const directory=await readPersistent1999Directory(store,manifest);
+ const directoryIds=new Set(directory.map(entity=>entity.id));
+ const stallionsRetiredSeen=new Set(),stallionsGraduatedSeen=new Set();
+ const marketIndices=[],plannedFoalCrops=[];
+ for(let year=2000;year<=2031;year++){
+  const date=year+'-01-01';
+  const saved=await savePersistent1999CareerRun(store,manifest,{runId,
+   gameDate:date,player,changes:{},version:year-1998});
+  const reopened=await loadPersistent1999CareerRun(store,manifest,runId);
+  assert.deepEqual(reopened.lifecycle,saved.lifecycle,
+   'career checkpoint should be durable after every annual save');
+  assert.equal(saved.lifecycle.lastDate,date);
+  assert.equal(saved.lifecycle.seasonYear,year);
+  assert.equal(saved.lifecycle.openingHorseCount,10000);
+  const totalBirths=Object.values(saved.lifecycle.birthsByYear)
+   .reduce((sum,count)=>sum+count,0);
+  assert.equal(saved.lifecycle.population,10000+totalBirths-saved.lifecycle.horseDeaths,
+   'population equals the opening census plus live births minus individual deaths');
+  const events=await readPersistent1999LifecycleEvents(store,manifest,runId,date);
+  const turnover=events.find(event=>event.type==='BROODMARE_TURNOVER');
+  const stallionTurnover=events.find(event=>event.type==='STALLION_TURNOVER');
+  const attrition=events.filter(event=>event.type==='YOUNGSTOCK_ATTRITION');
+  assert.ok(turnover,'every year commits a broodmare turnover event');
+  assert.ok(stallionTurnover,'every year commits a stallion turnover event');
+  assert.equal(turnover.retiredHorseIds.length,turnover.retired);
+  assert.equal(turnover.graduatedHorseIds.length,turnover.graduated);
+  assert.equal(turnover.closingBroodmares,turnover.openingBroodmares-
+   turnover.retired+turnover.graduated);
+  assert.equal(new Set(turnover.retiredHorseIds).size,turnover.retired);
+  assert.equal(new Set(turnover.graduatedHorseIds).size,turnover.graduated);
+  assert.equal(stallionTurnover.retiredHorseIds.length,stallionTurnover.retired);
+  assert.equal(stallionTurnover.graduatedHorseIds.length,stallionTurnover.graduated);
+  assert.equal(stallionTurnover.closingStallions,stallionTurnover.openingStallions-
+   stallionTurnover.retired+stallionTurnover.graduated);
+  for(const id of stallionTurnover.retiredHorseIds){
+   assert.ok(!stallionsRetiredSeen.has(id),'a stallion cannot retire twice');
+   stallionsRetiredSeen.add(id);
+   assert.equal((await readPersistent1999LifecycleHorse(store,manifest,runId,
+    id)).status,'RETIRED_STALLION');
+  }
+  for(const id of stallionTurnover.graduatedHorseIds){
+   assert.ok(!stallionsGraduatedSeen.has(id),'a colt cannot graduate twice');
+   stallionsGraduatedSeen.add(id);
+   const graduated=await readPersistent1999LifecycleHorse(store,manifest,runId,id);
+   assert.equal(graduated.status,'STALLION');
+   assert.equal(graduated.sex,'HORSE');
+   assert.equal(graduated.graduatedYear,year);
+   assert.ok(graduated.sireId&&graduated.damId&&graduated.ownerId&&
+    graduated.foalingFarmId&&directoryIds.has(graduated.ownerId)&&
+    directoryIds.has(graduated.foalingFarmId),
+    'a graduated stallion retains his pedigree, owner and foaling farm');
+   assert.ok(await readPersistent1999LifecycleHorse(store,manifest,runId,
+    graduated.sireId));
+   assert.ok(await readPersistent1999LifecycleHorse(store,manifest,runId,
+    graduated.damId));
+  }
+  const season=await store.get('industryLifecycle',manifest.worldId+':'+
+   manifest.seed+':'+runId+':season:'+year);
+  assert.ok(season.marketConditions.averagePurseStrength>0);
+  assert.ok(season.marketConditions.marketIndex>0);
+  assert.equal(season.plannedFoals,season.marketConditions.plannedFoals);
+  marketIndices.push(season.marketConditions.marketIndex);
+  plannedFoalCrops.push(season.plannedFoals);
+  for(const id of turnover.retiredHorseIds){
+   assert.ok(!retirementsSeen.has(id),'a broodmare cannot retire twice');
+   retirementsSeen.add(id);
+  }
+  for(const id of turnover.graduatedHorseIds){
+   assert.ok(!graduatesSeen.has(id),'a filly cannot graduate twice');
+   graduatesSeen.add(id);
+  }
+  assert.equal(attrition.length,2,'both young-horse cohort transitions are recorded');
+  let annualDeaths=0;
+  for(const event of attrition){
+   assert.ok(event.deaths>0);
+   assert.equal(event.deathHorseIds.length,event.deaths);
+   assert.equal(event.openingCohortSize,event.closingCohortSize+event.deaths);
+   annualDeaths+=event.deaths;
+   for(const id of event.deathHorseIds){
+    assert.ok(!deathsSeen.has(id),'a horse can be selected for attrition only once');
+    deathsSeen.add(id);
+    const horse=await readPersistent1999LifecycleHorse(store,manifest,runId,id);
+    assert.equal(horse?.status,'DECEASED');
+    assert.equal(horse.deathDate,date);
+    assert.ok(horse.sireId&&horse.damId&&horse.ownerId&&horse.foalingFarmId);
+    assert.notEqual(horse.sireId,horse.damId);
+    assert.ok(directoryIds.has(horse.ownerId));
+    assert.ok(directoryIds.has(horse.foalingFarmId));
+   }
+  }
+  assert.equal(saved.lifecycle.deathsByYear[year],annualDeaths);
+  const breedingPool=await store.get('industryLifecycle',manifest.worldId+':'+
+   manifest.seed+':'+runId+':breeding-pool:'+year);
+  assert.equal(breedingPool.length,turnover.closingBroodmares);
+  assert.equal(new Set(breedingPool).size,breedingPool.length,
+   'the active breeding pool contains unique identities each year');
+  const activeStallions=await store.get('industryLifecycle',manifest.worldId+':'+
+   manifest.seed+':'+runId+':stallion-pool:'+year);
+  assert.equal(activeStallions.length,stallionTurnover.closingStallions);
+  assert.equal(new Set(activeStallions).size,activeStallions.length,
+   'the active stallion pool contains unique identities each year');
+  const retired=await readPersistent1999LifecycleHorse(store,manifest,runId,
+   turnover.retiredHorseIds[0]);
+  assert.equal(retired.status,'RETIRED_BROODMARE');
+  if(turnover.graduatedHorseIds.length){
+   const graduated=await readPersistent1999LifecycleHorse(store,manifest,runId,
+    turnover.graduatedHorseIds[0]);
+   assert.equal(graduated.status,'BROODMARE');
+   assert.equal(graduated.graduatedYear,year);
+  }
+  const completedYear=year-1;
+  const completedSeason=await store.get('industryLifecycle',manifest.worldId+':'+
+   manifest.seed+':'+runId+':season:'+completedYear);
+  const completedMares=await store.get('industryLifecycle',manifest.worldId+':'+
+   manifest.seed+':'+runId+':breeding-pool:'+completedYear);
+  const completedStallions=await store.get('industryLifecycle',manifest.worldId+':'+
+   manifest.seed+':'+runId+':stallion-pool:'+completedYear);
+  const liveFoals=saved.lifecycle.birthsByYear[completedYear]||0;
+  births.push(liveFoals);
+  populations.push({year:completedYear,broodmares:completedMares.length,
+   stallions:completedStallions.length,plannedFoals:completedSeason.plannedFoals,
+   marketIndex:completedSeason.marketConditions.marketIndex,
+   liveFoals,populationAtRollover:saved.lifecycle.population,
+   deathsAtRollover:annualDeaths});
+ }
+ assert.ok(new Set(births).size>=10,
+  'annual live birth totals should vary across the three-decade run');
+ assert.ok(deathsSeen.size>0&&graduatesSeen.size>0&&retirementsSeen.size>0);
+ assert.ok(stallionsRetiredSeen.size>0&&stallionsGraduatedSeen.size>0);
+ assert.ok(new Set(marketIndices).size>10,
+  'purse strength and supply should produce changing market conditions');
+ assert.ok(new Set(plannedFoalCrops).size>10,
+  'market-adjusted planned foal crops should not use a fixed annual quota');
+ const final=await loadPersistent1999CareerRun(store,manifest,runId);
+ assert.equal(final.lifecycle.seasonYear,2031);
+ assert.equal(final.lifecycle.population,populations.at(-1).populationAtRollover);
+
+ // Once both mortality stages have passed, each birth cohort must partition
+ // exactly into its still-active records and its two recorded death groups.
+ for(let birthYear=1999;birthYear<=2029;birthYear++){
+  const survivors=await store.get('industryLifecycle',manifest.worldId+':'+
+   manifest.seed+':'+runId+':foal-cohort:'+birthYear)||[];
+  const ids=new Set(survivors);
+  assert.equal(ids.size,survivors.length,'a seasonal cohort cannot duplicate a horse ID');
+  const firstDeaths=(await readPersistent1999LifecycleEvents(store,manifest,runId,
+   (birthYear+1)+'-01-01')).find(event=>event.type==='YOUNGSTOCK_ATTRITION'&&
+    event.stage==='FOAL_TO_YEARLING')?.deathHorseIds||[];
+  const secondDeaths=(await readPersistent1999LifecycleEvents(store,manifest,runId,
+   (birthYear+2)+'-01-01')).find(event=>event.type==='YOUNGSTOCK_ATTRITION'&&
+    event.stage==='YEARLING_TO_TWO_YEAR_OLD')?.deathHorseIds||[];
+  const all=new Set([...survivors,...firstDeaths,...secondDeaths]);
+  assert.equal(all.size,survivors.length+firstDeaths.length+secondDeaths.length,
+   'survivors and deaths partition the cohort without duplicate or orphan IDs');
+  assert.equal(all.size,final.lifecycle.birthsByYear[birthYear]||0,
+   'every live birth remains represented after two cohort transitions');
+ }
+ const oldCohort=await store.get('industryLifecycle',manifest.worldId+':'+
+  manifest.seed+':'+runId+':foal-cohort:2000');
+ const longLivedId=oldCohort.find(id=>id.includes('-'));
+ const longLived=await readPersistent1999LifecycleHorse(store,manifest,runId,longLivedId);
+ assert.equal(longLived.age,31);
+ assert.ok(['RACING','BROODMARE'].includes(longLived.status));
+ assert.ok(longLived.sireId&&longLived.damId&&longLived.ownerId&&longLived.foalingFarmId,
+  'a 31-year-old seasonal horse retains its permanent record and pedigree');
+ assert.equal((await loadPersistent1999CareerRun(store,manifest,runId)).gameDate,
+  '2031-01-01','the latest multi-decade career checkpoint reopens cleanly');
+ const totalLiveBirths=Object.values(final.lifecycle.birthsByYear)
+  .reduce((sum,count)=>sum+count,0);
+ console.log('WTW_INDUSTRY_THREE_DECADES_MEMORY_PASS '+JSON.stringify({
+  seed:manifest.seed,openingHorseCount:manifest.horseCount,annual:populations,
+  finalPopulation:final.lifecycle.population,liveBirths:totalLiveBirths,
+  deaths:final.lifecycle.horseDeaths,retirements:retirementsSeen.size,
+  graduations:graduatesSeen.size,stallionRetirements:stallionsRetiredSeen.size,
+  stallionGraduations:stallionsGraduatedSeen.size,longLivedHorseId:longLived.id}));
 });

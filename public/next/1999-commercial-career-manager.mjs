@@ -202,6 +202,8 @@ function publishCareerReadModel(){
   .map(r=>({name:r.name||r.conditions||r.id,date:r.date||'',track:r.track_id||'',status:r.status||'Planned'}))
   .sort((a,b)=>a.date.localeCompare(b.date));
  const snapshot={schema:'WTW_CANONICAL_CAREER_READ_MODEL_V1',
+  worldId:career.manifest.worldId,runId:run.run_id,
+  worldHorseCount:career.manifest.horseCount,personCount:career.manifest.personCount,
   operationId:operation.id,operationName:operation.name,
   date:run.clock.date,revision:run.revision,horseRows:horses,raceRows:races,
   cashMinor:Number.isSafeInteger(rawBalance)?rawBalance:null};
@@ -381,7 +383,7 @@ async function exportSharedCareer(){
  return {bytes:bytes.byteLength,worldId:activeWorldCareer.manifest.worldId,
   runId:activeWorldCareer.run.run_id,gameDate:activeWorldCareer.run.clock.date};
 }
-async function importSharedCareerFile(file){
+async function importSharedCareerFile(file,{preserveExistingProgress=false}={}){
  if(!file)throw Error('Choose a shared full-world career file');
  if(file.size>64*1024*1024)throw Error('Shared career file exceeds 64 MiB');
  const checkpoint=await unpackShared1999Career(await file.arrayBuffer());
@@ -434,31 +436,66 @@ async function importSharedCareerFile(file){
     involvement:checkpoint.careerRecord.player.involvement});
   if(career.world.authority.sha256!==wanted.snapshotSha256)
    throw Error('Generated world records do not match the shared career fingerprint');
-  const run=checkpoint.careerRecord.changes.canonicalRun;
-  validateGameRun(run,career.world);
+  const checkpointRun=checkpoint.careerRecord.changes.canonicalRun;
+  validateGameRun(checkpointRun,career.world);
   const prior=await loadPersistent1999CareerRun(db,fullIndustryManifest,
    checkpoint.careerRecord.runId);
+  const preservedRun=preserveExistingProgress&&prior?.changes?.canonicalRun?
+   prior.changes.canonicalRun:null;
+  if(preservedRun)validateGameRun(preservedRun,career.world);
   if(prior&&JSON.stringify(prior)!==JSON.stringify(checkpoint.careerRecord)&&
+   !preservedRun&&
    !window.confirm('This test career already has different progress. Replace only that test career with the imported checkpoint?'))
    throw Error('Import cancelled; current career was not changed');
-  if(!prior||JSON.stringify(prior)!==JSON.stringify(checkpoint.careerRecord))
+  if((!prior||JSON.stringify(prior)!==JSON.stringify(checkpoint.careerRecord))&&
+   !preservedRun)
    await savePersistent1999CareerRun(db,fullIndustryManifest,{
     runId:checkpoint.careerRecord.runId,gameDate:checkpoint.careerRecord.gameDate,
     player:checkpoint.careerRecord.player,changes:checkpoint.careerRecord.changes,
     version:checkpoint.careerRecord.version});
   const confirmed=await loadPersistent1999CareerRun(db,fullIndustryManifest,
    checkpoint.careerRecord.runId);
-  if(JSON.stringify(confirmed)!==JSON.stringify(checkpoint.careerRecord))
+  const expectedStoredRecord=preservedRun?prior:checkpoint.careerRecord;
+  if(JSON.stringify(confirmed)!==JSON.stringify(expectedStoredRecord))
    throw Error('Imported career did not survive IndexedDB read-back');
+  const run=preservedRun||checkpointRun;
   activeWorldCareer={...career,run,manifest:fullIndustryManifest};
   industryDirectory=await readPersistent1999Directory(db,fullIndustryManifest);
   await browseFullIndustry(0,'directory');
   publishCareerReadModel();
   notice='SHARED CAREER READY · '+run.clock.date+' · '+fmt(fullIndustryManifest.horseCount)+
-   ' horses · '+fmt(fullIndustryManifest.personCount)+' personnel · exact world verified.';
+   ' horses · '+fmt(fullIndustryManifest.personCount)+' personnel · exact world verified.'+
+   (preservedRun?' Existing local progress kept.':'');
   return {worldId:wanted.worldId,seed:wanted.seed,runId:run.run_id,
    gameDate:run.clock.date,snapshotSha256:wanted.snapshotSha256};
  }finally{db.close()}
+}
+let bundledCareerBootstrap=null;
+function bootstrapBundledCareer(){
+ if(bundledCareerBootstrap)return bundledCareerBootstrap;
+ bundledCareerBootstrap=(async()=>{
+  if(window.WTWDesktop?.runtime!=='windows-desktop')
+   throw Error('Bundled career auto-load is available only in the Windows desktop app');
+  await open();
+  busy=true;notice='LOADING THE SHARED 1999 TEST CAREER…';await refresh();
+  try{
+   const response=await fetch('/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER.wtwcareer.gz');
+   if(!response.ok)throw Error('Bundled shared career file is missing ('+response.status+')');
+   if(typeof DecompressionStream!=='function')
+    throw Error('This Windows build cannot decompress its bundled career checkpoint');
+   const stream=response.body.pipeThrough(new DecompressionStream('gzip'));
+   const bytes=await new Response(stream).arrayBuffer();
+   const file=new File([bytes],'WTW_1999_FULL_WORLD_SHARED_CAREER.wtwcareer',
+    {type:'application/json'});
+   const result=await importSharedCareerFile(file,{preserveExistingProgress:true});
+   return {...result,horseCount:fullIndustryManifest.horseCount,
+    personCount:fullIndustryManifest.personCount,playableHorseCount:activeWorldCareer.playableHorseCount};
+  }catch(error){
+   notice='SHARED 1999 CAREER LOAD FAILED · '+String(error?.message||error);
+   await refresh();throw error;
+  }finally{busy=false;await refresh()}
+ })();
+ return bundledCareerBootstrap;
 }
 async function resumeCanonicalRun(store,manifest){
  const saved=await loadPersistent1999CareerRun(store,manifest,canonicalRunId(manifest));
@@ -819,4 +856,11 @@ async function readFictionalIndustryCareer(manifest,runId){
 window.WTWCompactCareerManager=Object.freeze({open,listSlots,storeGame,
  restoreGame,exportSlot,importFile,dbName:DB_NAME,
  prepareFictionalIndustry,saveFictionalIndustryCareer,
- readFictionalIndustryCareer,sharedCareerBytes,importSharedCareerFile});
+ readFictionalIndustryCareer,sharedCareerBytes,importSharedCareerFile,
+ bootstrapBundledCareer});
+if(window.WTWDesktop?.runtime==='windows-desktop'&&!window.WTWDesktop.smokeMode){
+ window.WTWDesktopCareerBootstrapPromise=bootstrapBundledCareer().catch(error=>{
+  console.error('Bundled full-world career startup failed',error);
+  return {error:String(error?.message||error)};
+ });
+}

@@ -193,6 +193,43 @@ async function runSmoke(win){
     last.desktop!=='windows-desktop')throw Error('Game UI did not initialize: '+JSON.stringify(last));
  if(last.origin!==ORIGIN)throw Error('Application loaded an unexpected origin: '+last.origin);
  markStartup('gameUIReady');
+ if(smokePhase==='career-write'||smokePhase==='career-read'){
+  const career=await win.webContents.executeJavaScript(`(async()=>{
+   const deadline=Date.now()+300000;
+   while(Date.now()<deadline){
+    const api=window.WTWCompactCareerManager;
+    if(api?.bootstrapBundledCareer){
+     const loaded=await api.bootstrapBundledCareer();
+     const view=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+     return {...loaded,mainUiCareer:view?{
+      worldId:view.worldId,runId:view.runId,date:view.date,
+      worldHorseCount:view.worldHorseCount,personCount:view.personCount,
+      playerHorseCount:view.horseRows?.length||0,operationName:view.operationName
+     }:null};
+    }
+    await new Promise(resolve=>setTimeout(resolve,250));
+   }
+   throw Error('Bundled career manager did not load');
+  })()`,true);
+  if(career.worldId!=='WTW1999FullIndustry-COHORTS-V2-H300000'||
+     career.seed!==19990101||career.horseCount!==300000||
+     career.personCount!==75724||career.runId!=='WTW-RUN-1999-19990101-SIZE-300000'||
+     !/^\d{4}-\d{2}-\d{2}$/.test(career.gameDate)||
+     !/^[a-f0-9]{64}$/.test(career.snapshotSha256||'')||
+     career.mainUiCareer?.worldId!==career.worldId||
+     career.mainUiCareer?.runId!==career.runId||
+     career.mainUiCareer?.date!==career.gameDate||
+     career.mainUiCareer?.worldHorseCount!==300000||
+     career.mainUiCareer?.personCount!==75724||
+     career.mainUiCareer?.playerHorseCount!==career.playableHorseCount)
+   throw Error('Bundled career identity did not match the approved 300k checkpoint: '+JSON.stringify(career));
+  reportSmoke({phase:smokePhase,bundledOrigin:last.origin,gameDate:last.date,
+   foundingSchema:last.schema,gameInterface:'ONE_APPROVED_UI',
+   careerBootstrap:career,careerStorage:'INDEXEDDB_WORLD_AND_CANONICAL_RUN',
+   careerReopen:smokePhase==='career-read'?'VERIFIED':'WRITTEN',
+   retailCertification:'NOT_YET_DESKTOP_CERTIFIED'},true);
+  return;
+ }
  if(smokePhase==='visible'){
   // GitHub's Windows runner uses a noninteractive service session; a Chromium
   // capture there can contain only background pixels although the DOM is ready.

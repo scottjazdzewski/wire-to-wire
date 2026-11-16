@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {plan1999Ecosystem} from '../public/1999/engine/fictional-industry-ecosystem-1999.mjs';
-import {generate1999IndustryRegistryBatches,count1999Registry}
+import {generate1999IndustryRegistryBatches,count1999Registry,
+ project1999HorseForYear}
  from '../public/1999/engine/fictional-industry-registry-1999.mjs';
 const dirs={farms:[{id:'O-FARM-1',location:{city:'Lexington',region:'Kentucky',country:'USA'}}],
  tracks:[{id:'T-0001'}],owners:[{id:'O-OWNER-1'}]};
@@ -45,9 +46,33 @@ test('1999 unborn foals are forecasts, not living January 1 horses',()=>{
   if(h.cohort==='annualFoals'){
    projected++;assert.equal(h.dateOfBirth,null);
    assert.equal(h.sex,null);assert.equal(h.status,'PROJECTED_NOT_YET_BORN');
+   assert.match(h.forecastBirthDate,/^1999-0[2-7]-\d{2}$/);
   }
  }
  assert.equal(projected,plan.counts.annualFoals);
  assert.equal(count1999Registry(plan,{includeProjectedFoals:true}),
   count1999Registry(plan)+projected);
+});
+
+test('small, 300,000, and maximum registries keep exact size, unique IDs, and valid pedigrees through aging',()=>{
+ for(const size of [10000,300000,325000]){
+  const seed=19991116,plan=plan1999Ecosystem({seed,targetOpeningHorses:size});
+  const ids=new Set();let count=0;const aged={};
+  for(const batch of generate1999IndustryRegistryBatches({seed,plan,...dirs,
+   batchSize:5000,emitNames:false}))for(const horse of batch.records){
+   assert.ok(!ids.has(horse.id));ids.add(horse.id);count++;
+   const projected=project1999HorseForYear(horse,2000);
+   aged[projected.cohort]=(aged[projected.cohort]||0)+1;
+   assert.ok(!['PROJECTED_NOT_YET_BORN','FOAL'].includes(projected.status));
+   if(horse.sireId){
+    const sire=/^H-FICTIONAL-1999-STALLIONS-(\d{7})$/.exec(horse.sireId);
+    const dam=/^H-FICTIONAL-1999-BROODMARES-(\d{7})$/.exec(horse.damId);
+    assert.ok(sire&&Number(sire[1])<=plan.counts.stallions);
+    assert.ok(dam&&Number(dam[1])<=plan.counts.broodmares);
+   }
+  }
+  assert.equal(count,size);
+  assert.equal(ids.size,size);
+  assert.equal(Object.values(aged).reduce((sum,n)=>sum+n,0),size);
+ }
 });
