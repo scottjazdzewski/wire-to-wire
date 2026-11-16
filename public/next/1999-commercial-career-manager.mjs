@@ -22,6 +22,8 @@ import {dispatchGameCommand} from '/1999/game/kernel.js';
 import {gameRaceProgram,supported1999RaceClass,raceEligibility}
  from '/1999/game/racing-1999.js';
 import {validateGameRun} from '/1999/game/state.js';
+import {packShared1999Career,unpackShared1999Career}
+ from '/1999/engine/shared-1999-career-package.mjs';
 
 const DB_NAME='WireToWireClean1999CareersV2';
 const MAX_SLOTS=60,MAX_TOTAL_BYTES=512*1024*1024;
@@ -355,6 +357,109 @@ async function persistCanonicalRun(){
   version:Math.max(1,activeWorldCareer.run.revision+1)})}
  finally{store.close()}
 }
+async function sharedCareerBytes(){
+ if(!activeWorldCareer?.manifest||!activeWorldCareer?.run)
+  throw Error('Start or open the full-world test career first');
+ const store=await open1999IndustryDatabase();
+ try{
+  const record=await loadPersistent1999CareerRun(store,activeWorldCareer.manifest,
+   activeWorldCareer.run.run_id);
+  if(!record)throw Error('The active full-world career has not been saved');
+  return packShared1999Career({manifest:activeWorldCareer.manifest,
+   snapshotSha256:activeWorldCareer.world.authority.sha256,careerRecord:record});
+ }finally{store.close()}
+}
+async function exportSharedCareer(){
+ const bytes=await sharedCareerBytes();
+ const blob=new Blob([bytes],{type:'application/json'});
+ const url=URL.createObjectURL(blob),link=document.createElement('a');
+ link.href=url;
+ link.download='WTW_1999_FULL_WORLD_'+selectedIndustryHorses+'_'+
+  selectedIndustrySeed+'_'+activeWorldCareer.run.clock.date+'.wtwcareer';
+ document.body.appendChild(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1500);
+ return {bytes:bytes.byteLength,worldId:activeWorldCareer.manifest.worldId,
+  runId:activeWorldCareer.run.run_id,gameDate:activeWorldCareer.run.clock.date};
+}
+async function importSharedCareerFile(file){
+ if(!file)throw Error('Choose a shared full-world career file');
+ if(file.size>64*1024*1024)throw Error('Shared career file exceeds 64 MiB');
+ const checkpoint=await unpackShared1999Career(await file.arrayBuffer());
+ const wanted=checkpoint.world,expected=wanted.manifest;
+ selectedIndustrySeed=wanted.seed;selectedIndustryHorses=wanted.targetOpeningHorses;
+ const sizeInput=modal().querySelector('[data-cc="industry-size"]');
+ if(sizeInput)sizeInput.value=String(selectedIndustryHorses);
+ const db=await open1999IndustryDatabase();
+ try{
+  let existing=await reopenPersistent1999Industry(db,{seed:wanted.seed,worldId:wanted.worldId});
+  if(existing?.status==='GENERATING'){
+   notice='Resuming the exact shared world before importing its career.';
+   fullIndustryManifest=await createPersistent1999Industry({store:db,
+    seed:wanted.seed,worldId:wanted.worldId,
+    targetOpeningHorses:wanted.targetOpeningHorses,
+    ...(await industryDirectories(wanted.seed)),batchSize:expected.batchSize,
+    yieldControl:()=>new Promise(resolve=>setTimeout(resolve,0)),
+    onProgress:({kind,completed,totalRecords})=>{
+     const progress=modal().querySelector('[data-cc="industry-progress"]');
+     if(progress)progress.textContent='Rebuilding shared '+kind+' · batch '+
+      completed+' · '+fmt(totalRecords)+' planned records. Keep this window open.';
+    }});
+  }else if(!existing){
+   notice='Creating the exact shared world before importing its career.';
+   fullIndustryManifest=await createPersistent1999Industry({store:db,
+    seed:wanted.seed,worldId:wanted.worldId,
+    targetOpeningHorses:wanted.targetOpeningHorses,
+    ...(await industryDirectories(wanted.seed)),batchSize:expected.batchSize,
+    yieldControl:()=>new Promise(resolve=>setTimeout(resolve,0)),
+    onProgress:({kind,completed,totalRecords})=>{
+     const progress=modal().querySelector('[data-cc="industry-progress"]');
+     if(progress)progress.textContent='Creating shared '+kind+' · batch '+
+      completed+' · '+fmt(totalRecords)+' planned records. Keep this window open.';
+    }});
+  }else{
+   fullIndustryManifest=existing.manifest;
+  }
+  const ready=await reopenPersistent1999Industry(db,{seed:wanted.seed,worldId:wanted.worldId});
+  if(ready?.status!=='READY')throw Error('Shared 1999 world could not be completed');
+  fullIndustryManifest=ready.manifest;
+  if(JSON.stringify(fullIndustryManifest)!==JSON.stringify(expected))
+   throw Error('This build creates a different world manifest; checkpoint import stopped safely');
+  const sameOpenWorld=activeWorldCareer?.manifest?.worldId===wanted.worldId&&
+   activeWorldCareer.manifest.seed===wanted.seed;
+  const career=sameOpenWorld?activeWorldCareer:
+   await openPersistent1999GameCareer(db,fullIndustryManifest,{
+    runId:checkpoint.careerRecord.runId,
+    operationId:checkpoint.careerRecord.player.operation_id,
+    playerRole:checkpoint.careerRecord.player.role,
+    involvement:checkpoint.careerRecord.player.involvement});
+  if(career.world.authority.sha256!==wanted.snapshotSha256)
+   throw Error('Generated world records do not match the shared career fingerprint');
+  const run=checkpoint.careerRecord.changes.canonicalRun;
+  validateGameRun(run,career.world);
+  const prior=await loadPersistent1999CareerRun(db,fullIndustryManifest,
+   checkpoint.careerRecord.runId);
+  if(prior&&JSON.stringify(prior)!==JSON.stringify(checkpoint.careerRecord)&&
+   !window.confirm('This test career already has different progress. Replace only that test career with the imported checkpoint?'))
+   throw Error('Import cancelled; current career was not changed');
+  if(!prior||JSON.stringify(prior)!==JSON.stringify(checkpoint.careerRecord))
+   await savePersistent1999CareerRun(db,fullIndustryManifest,{
+    runId:checkpoint.careerRecord.runId,gameDate:checkpoint.careerRecord.gameDate,
+    player:checkpoint.careerRecord.player,changes:checkpoint.careerRecord.changes,
+    version:checkpoint.careerRecord.version});
+  const confirmed=await loadPersistent1999CareerRun(db,fullIndustryManifest,
+   checkpoint.careerRecord.runId);
+  if(JSON.stringify(confirmed)!==JSON.stringify(checkpoint.careerRecord))
+   throw Error('Imported career did not survive IndexedDB read-back');
+  activeWorldCareer={...career,run,manifest:fullIndustryManifest};
+  industryDirectory=await readPersistent1999Directory(db,fullIndustryManifest);
+  await browseFullIndustry(0,'directory');
+  publishCareerReadModel();
+  notice='SHARED CAREER READY · '+run.clock.date+' · '+fmt(fullIndustryManifest.horseCount)+
+   ' horses · '+fmt(fullIndustryManifest.personCount)+' personnel · exact world verified.';
+  return {worldId:wanted.worldId,seed:wanted.seed,runId:run.run_id,
+   gameDate:run.clock.date,snapshotSha256:wanted.snapshotSha256};
+ }finally{db.close()}
+}
 async function resumeCanonicalRun(store,manifest){
  const saved=await loadPersistent1999CareerRun(store,manifest,canonicalRunId(manifest));
  if(!saved?.changes?.canonicalRun)return null;
@@ -461,7 +566,8 @@ async function refresh(){
     ' · '+fmt(activeWorldCareer.playableHorseCount)+' player runners · '+
     esc(activeWorldCareer.homeTrackId)+' · canonical race engine connected</p>'+
     '<div class="wtw-cc-actions"><button data-cc-action="open-next-test-race">OPEN NEXT TEST RACE / ENTER TWO</button>'+ 
-    '<button data-cc-action="advance-test-day" class="primary">ADVANCE ONE GAME DAY</button></div>':
+   '<button data-cc-action="advance-test-day" class="primary">ADVANCE ONE GAME DAY</button>'+
+   '<button data-cc-action="export-shared-career">EXPORT SHARED CAREER</button></div>':
     '<p>Start a local test career from this exact saved world. Race decisions and results use the existing game clock and settlement engine.</p>'+ 
     '<button data-cc-action="start-test-career" class="primary">START TEST CAREER</button>')+
    '</div>'+
@@ -492,6 +598,8 @@ async function refresh(){
   '<button data-cc-action="save" class="primary">SAVE CURRENT CAREER</button>'+
   '<button data-cc-action="import">IMPORT CAREER</button>'+
   '<input type="file" data-cc="import-file" accept=".wtwsave,.json,application/octet-stream,application/json" hidden>'+
+  '<button data-cc-action="import-shared-career">IMPORT SHARED FULL-WORLD CAREER</button>'+
+  '<input type="file" data-cc="import-shared-file" accept=".wtwcareer,application/json" hidden>'+
   '</div>'+ 
   (notice?'<p class="wtw-cc-notice" role="status">'+esc(notice)+'</p>':'')+
   '<div class="wtw-cc-slots">'+(saved||'<p>No compact careers yet. Saving creates a portable, compressed career delta.</p>')+'</div>'+
@@ -501,6 +609,11 @@ async function refresh(){
 async function perform(action,element){
  if(action==='close'){modal().hidden=true;return}
  if(action==='import'){modal().querySelector('[data-cc="import-file"]').click();return}
+ if(action==='import-shared-career'){modal().querySelector('[data-cc="import-shared-file"]').click();return}
+ if(action==='export-shared-career'){
+  const result=await exportSharedCareer();
+  notice='SHARED CAREER EXPORTED · '+kb(result.bytes)+' · '+result.gameDate+'.';return;
+ }
  if(action==='start-test-career'){await startCanonicalRun();return}
  if(action==='advance-test-day'){await advanceCanonicalRun();return}
  if(action==='open-next-test-race'){await openNextTestRace();return}
@@ -635,6 +748,13 @@ async function handleClick(event){
  finally{busy=false}
 }
 async function handleChange(event){
+ if(event.target.matches('[data-cc="import-shared-file"]')){
+  const file=event.target.files?.[0];if(!file)return;
+  try{busy=true;await importSharedCareerFile(file)}
+  catch(error){notice='SHARED CAREER IMPORT FAILED: '+String(error?.message||error)}
+  finally{busy=false;event.target.value='';await refresh()}
+  return;
+ }
  if(event.target.matches('[data-cc="import-file"]')){
   const file=event.target.files?.[0];if(!file)return;
   try{busy=true;const slot=await importFile(file);
@@ -699,4 +819,4 @@ async function readFictionalIndustryCareer(manifest,runId){
 window.WTWCompactCareerManager=Object.freeze({open,listSlots,storeGame,
  restoreGame,exportSlot,importFile,dbName:DB_NAME,
  prepareFictionalIndustry,saveFictionalIndustryCareer,
- readFictionalIndustryCareer});
+ readFictionalIndustryCareer,sharedCareerBytes,importSharedCareerFile});
