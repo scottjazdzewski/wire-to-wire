@@ -46,6 +46,15 @@ function recordBootFailure(context,error){
   catch(dialogError){console.error('Unable to show startup error window',String(dialogError));}
  }
 }
+function recordRendererHealth(message){
+ const entry='['+new Date().toISOString()+'] '+message+'\n';
+ try{
+  const logfile=path.join(app.getPath('userData'),'wtw-startup-diagnostics.log');
+  fs.mkdirSync(path.dirname(logfile),{recursive:true});
+  fs.appendFileSync(logfile,entry,'utf8');
+ }catch(error){console.error('Unable to record renderer health',String(error));}
+ console.warn('WTW DESKTOP RENDERER:',message);
+}
 process.on('uncaughtException',error=>recordBootFailure('uncaughtException',error));
 process.on('unhandledRejection',error=>recordBootFailure('unhandledRejection',error));
 app.setName('Wire to Wire');
@@ -147,8 +156,14 @@ function openGameWindow(){
  });
  win.webContents.on('render-process-gone',(_event,details)=>
   recordBootFailure('Game renderer exited unexpectedly',JSON.stringify(details)));
- win.on('unresponsive',()=>
-  recordBootFailure('Game window became unresponsive','Windows could not display the active game window.'));
+ // Electron reports a transient unresponsive renderer as soon as its UI thread
+ // misses the watchdog. Long background generation is not a failed startup;
+ // keep the app interactive and log the watchdog recovery without placing a
+ // modal error over the career manager.
+ win.on('unresponsive',()=>recordRendererHealth(
+  'Renderer watchdog fired; waiting for the game window to recover.'));
+ win.webContents.on('responsive',()=>recordRendererHealth(
+  'Renderer recovered and is accepting input again.'));
  win.webContents.once('did-finish-load',()=>markStartup('documentLoaded'));
  markStartup('windowCreated');
 
