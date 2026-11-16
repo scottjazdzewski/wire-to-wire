@@ -138,6 +138,7 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
   residentTrainers:pair(personByTrackRole,id+'|trainer'),
   residentJockeys:pair(personByTrackRole,id+'|jockey'),
   quarterCards:0,quarterRaces:0,declaredFieldSlots:0,
+  maximumSingleRaceFieldCapacity:0,
   raceDaysWithCards:0,minStartSlotsForRaceSettlement:0
  }]));
  for(const id of tracks.keys()){
@@ -214,6 +215,8 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
      'invalid condition-book finances or capacity '+r.id);
     day.races++;windowRaces++;
     load.quarterRaces++;load.declaredFieldSlots+=r.fieldCapacity;
+    load.maximumSingleRaceFieldCapacity=Math.max(
+     load.maximumSingleRaceFieldCapacity,r.fieldCapacity);
     load.minStartSlotsForRaceSettlement+=2;
     add(raceClassCounts,r.condition);
     // Claiming, Starter, Handicap etc. lack completed canonical entry rules.
@@ -342,8 +345,18 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
   firstDemographicGaps:demographicGaps,
   raceDayFitnessWinsFundsTravelAndEntriesNotModeled:true
  };
+ const tracksShortOfOneFullFieldOfDistinctJockeys=trackLoad.filter(t=>
+  t.quarterCards>0&&t.residentJockeys<t.maximumSingleRaceFieldCapacity);
  const sourceCapacity={
   rule:'SOURCE_LOCAL_RESIDENT_CAPACITY_ONLY_NO_CROSS_TRACK_JOCKEY_TRAVEL',
+  maximumSingleRaceUsesDistinctJockeys_NotRacesTimesFieldSize:true,
+  tracksShortOfOneFullFieldOfDistinctJockeys:
+   tracksShortOfOneFullFieldOfDistinctJockeys.length,
+  deficitTracksForFullField:tracksShortOfOneFullFieldOfDistinctJockeys.map(t=>({
+   trackId:t.trackId,localJockeys:t.residentJockeys,
+   largestSingleField:t.maximumSingleRaceFieldCapacity,
+   sourceCards:t.quarterCards
+  })),
   twoRunnersPerRaceIsMinimumNotFullField:true,
   canonicalMinimumDaysBetweenRaceStarts:minimumHorseCampaignSpacingDays,
   optimisticMaxStartsPerLocalRunnerIn90Days:optimisticMaxStartsPerLocalRunner,
