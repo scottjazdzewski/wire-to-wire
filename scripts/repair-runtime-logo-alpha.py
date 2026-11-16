@@ -227,10 +227,11 @@ def main():
         records.append(record)
     # Versioned asset identity stays fixed; photo textures stay untouched.
     if opts.apply:
-        assert "public/assets/places/track-logos/T-0017.webp" in changed, \
-            "Gulfstream source matte was not corrected"
-        assert "public/assets/places/track-logos/T-0013.webp" in changed, \
-            "Churchill source matte was not corrected"
+        for basename in ("T-0017.webp", "T-0013.webp"):
+            path = ROOT / "public/assets/places/track-logos" / basename
+            with Image.open(path) as img:
+                assert img.convert("RGBA").getpixel((0, 0))[3] < 12, \
+                    basename+" still has an opaque source matte"
     if opts.verify:
         problem = [r for r in records if r["changed"] and
                    "/places/track-logos/" in r["path"]]
