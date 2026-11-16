@@ -286,7 +286,7 @@ function selectAdjacentCase(direction=1,onlyOpen=false){
 const currDesk=()=>decisionFiles().find(file=>file.message.case===APP.activeCase)?.desk||
  window.__WTW_1999_UI_DATA__?.officeDesks?.[APP.activeCase]||{title:'No case selected',moves:[],intel:[]};
 const horseRows=()=>window.WTWCompactCareerManager?.playableStableRows?.()??(window.__WTW_1999_MANAGEMENT__?window.__WTW_1999_UI_DATA__?.stableHorses||[]:$('.right .boardRows .rankRow').map((n,i)=>({name:$('strong',n)?.textContent.trim()||'',activity:$('.wtwV37HorseActivity',n)?.textContent.trim()||n.title||'No current Office activity recorded',tag:n.querySelector(':scope > span:last-child')?.textContent.trim()||'',index:i+1})));
-const racingRows=()=>window.__WTW_1999_MANAGEMENT__?[]:$('.right .fixtureList .fixture[data-track]').map(n=>{const name=$('h4',n)?.textContent.trim()||'';const saved=state();const isPowerline=name==='Powerline';const confirmed=isPowerline && (saved.calendarState?.['Churchill R3']?.status==='Entered' || /^Entered/i.test(saved.horseState?.Powerline?.status||''));return {name,date:$('.d',n)?.textContent.trim()||'',track:n.dataset.track||'',tag:$('.raceTag',n)?.textContent.trim()||'',status:confirmed?'Entered':($('.wtwV37EntryFlag',n)?.textContent.trim()||'Target')}});
+const racingRows=()=>window.WTWCompactCareerManager?.playableRacingRows?.()??(window.__WTW_1999_MANAGEMENT__?[]:$('.right .fixtureList .fixture[data-track]').map(n=>{const name=$('h4',n)?.textContent.trim()||'';const saved=state();const isPowerline=name==='Powerline';const confirmed=isPowerline && (saved.calendarState?.['Churchill R3']?.status==='Entered' || /^Entered/i.test(saved.horseState?.Powerline?.status||''));return {name,date:$('.d',n)?.textContent.trim()||'',track:n.dataset.track||'',tag:$('.raceTag',n)?.textContent.trim()||'',status:confirmed?'Entered':($('.wtwV37EntryFlag',n)?.textContent.trim()||'Target')}}));
 const glyph=(name,size=16)=>{const paths={
   chevron:'<path d="m6 9 6 6 6-6"/>',
   left:'<path d="m15 18-6-6 6-6"/>',
@@ -4945,6 +4945,8 @@ window.addEventListener('click',e=>{
   // fixtureList markup. Every visible row must open its source-backed horse.
   const target=racingRows()[Number(val)];
   if(!target)return openMenu('Racing');
+  const generated=window.WTWCompactCareerManager?.playableHorseProfile?.(target.horseId||target.name);
+  if(generated)return previewRecordRoute('horse',generated.name,generated);
   const horse=window.__WTW_1999_UI_DATA__?.stableHorsePreview?.(target.name);
   if(horse?._canonId&&world1999Entry('horse:'+horse._canonId))
    return openWorld1999Entity('horse:'+horse._canonId);
