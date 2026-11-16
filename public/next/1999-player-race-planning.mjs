@@ -32,7 +32,7 @@ function render(){
  const choices=opportunities.rows||[];
  const opened=choices.filter(r=>r.source_status==='ACTUAL_GAME_RACE_ENTRIES_OPEN');
  if(!choices.some(r=>r.race_id===local.raceId)){
-  local.raceId=(opened.find(r=>r.status==='PLAYER_CAN_ENTER'||r.status==='SHIPPING_REQUIRED')||
+  local.raceId=(opened.find(r=>r.status==='PREMIER_REPLACEMENT_REQUIRED'||r.status==='PLAYER_CAN_ENTER'||r.status==='SHIPPING_REQUIRED')||
    opened[0]||choices[0])?.race_id||'';
   reset(1);
  }
@@ -77,6 +77,8 @@ function render(){
   'Condition-book proposal only — not open for entries':
   current.status==='PREMIER_OFFER_PENDING'?
    'Premier jockey offer submitted — awaiting competitive rider selection':
+  current.status==='PREMIER_REPLACEMENT_REQUIRED'?'Premier bid lost — choose a replacement jockey for this existing entry':
+  current.status==='PREMIER_REPLACEMENT_UNAVAILABLE'?'Premier bid lost — no affordable replacement currently available':
   current.status==='ALREADY_ENTERED'?'Already entered in this race':
   current.status==='PLAYER_CAN_ENTER'?'At racecourse; entry currently permitted':
   current.status==='SHIPPING_REQUIRED'?'Travel and receiving barn must be authorized':
@@ -128,7 +130,7 @@ function render(){
   details+'<p class="ng-dpt-disclosure" role="status"><strong>'+safe(status)+'</strong>'+
   (raceReasons.length?' · '+safe([...new Set(raceReasons.map(label))].join(' · ')):'')+'</p>'+
   (current&&current.source_status==='ACTUAL_GAME_RACE_ENTRIES_OPEN'&&
-   !['ALREADY_ENTERED','PREMIER_OFFER_PENDING'].includes(current.status)?'<div class="ng-rs-tools ng-rp-tools">'+
+   !['ALREADY_ENTERED','PREMIER_OFFER_PENDING','PREMIER_REPLACEMENT_UNAVAILABLE'].includes(current.status)?'<div class="ng-rs-tools ng-rp-tools">'+
    '<label>ACCEPTING JOCKEY <select data-ng-select="race-plan-jockey" '+(!jockeys.length?'disabled':'')+'>'+
    (jockeyOptions||'<option>No accepting available jockey</option>')+'</select></label>'+
    (chosenJockey?.premier_offer_required?
@@ -147,11 +149,15 @@ function render(){
   (local.notice?'<p role="status" class="ng-rp-success">'+safe(local.notice)+'</p>':'')+
   '<button type="button" class="primary" data-ng="race-plan-confirm" '+
   (!quote?.can_confirm||local.busy?'disabled':'')+
-  ' aria-label="'+(quote?.premier_offer_required?
+  ' aria-label="'+(quote?.existing_entry_fallback?
+   'Authorize a replacement jockey for the existing race entry of ':
+   quote?.premier_offer_required?
    'Submit a competitive unsigned premier jockey offer for ':
    'Authorize actual game race entry and jockey booking for ')+safe(selected.name)+'">'+
   (local.busy?'SAVING AUTHORIZED ENTRY…':quote?.can_confirm?
-   quote.premier_offer_required?
+   quote.existing_entry_fallback?
+    'BOOK REPLACEMENT JOCKEY & PAY '+currency(quote.immediate_total_minor):
+    quote.premier_offer_required?
     'SUBMIT PREMIER OFFER · PAY '+currency(quote.immediate_total_minor)+' NOW':
     'CONFIRM ENTRY & PAY '+currency(quote.immediate_total_minor):
     'ENTRY NOT AUTHORIZED')+'</button>'+
@@ -186,7 +192,11 @@ async function confirm(){
  const quote=game.getRacePlanQuote(opts);
  if(!quote.can_confirm){local.error=quote.blockers.map(x=>x.code+': '+x.message).join('; ');return paint()}
  const h=game.view().stable.find(x=>x.horse_id===local.horseId);
- const message=quote.premier_offer_required?
+ const message=quote.existing_entry_fallback?
+  'The premier rider selected a rival. Sign a replacement jockey for '+h.name+
+  ' in '+quote.race_id+' for '+currency(quote.jockey_booking_minor)+
+  '? The horse is already entered and will not pay a second entry or shipping fee.':
+  quote.premier_offer_required?
   'Submit competitive premier-jockey offer for '+h.name+' in '+quote.race_id+
   ' on '+quote.race_date+'? Signing bonus '+currency(quote.offer_bonus_minor)+
   '; maximum jockey cost if selected '+currency(quote.potential_jockey_if_signed_minor)+
@@ -206,7 +216,10 @@ async function confirm(){
   await game.submit('CONFIRM_1999_RACE_PLAN',{...opts,
    expected_revision:quote.expected_revision,
    maximum_total_minor:quote.total_if_signed_minor},'player');
-  local.notice=quote.premier_offer_required?
+  local.notice=quote.existing_entry_fallback?
+   'REPLACEMENT JOCKEY BOOKED · '+h.name+' · existing entry retained · '+
+    currency(quote.immediate_total_minor)+' charged and saved.':
+   quote.premier_offer_required?
    'PREMIER OFFER SUBMITTED · '+h.name+' · rider decides on '+
     quote.premier_decision_due_date+
     ' · no jockey fee yet; shipping paid now '+currency(quote.outbound_shipping_minor)+'.':
