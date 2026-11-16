@@ -22,7 +22,7 @@ jobs:
         run: |
           CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
           test -n "$CHROME"
-          CHROME="$CHROME" node scripts/ui-polish-playable-1999-browser-cdp.mjs | tee ui-polish.log
+          WTW_UI_POLISH_PHASE=after CHROME="$CHROME" node scripts/ui-polish-playable-1999-browser-cdp.mjs | tee ui-polish.log
           grep -q WTW_UI_POLISH_BASELINE_PASS ui-polish.log
       - name: Upload viewport before or after evidence
         if: always()
