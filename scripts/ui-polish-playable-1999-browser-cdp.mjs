@@ -118,7 +118,7 @@ try{
  for(const kind of ['farm','person']){
   await evaluate('(()=>{const u=window.__WTW_NEXT__;u.app.section="Stable";u.app.page="Overview";u.app.custom="Stable — Overview";u.paint();return true})()');
   await delay(130);
-  const action=await evaluate('(()=>{const x=document.querySelector("#wtwNextgen button[data-ng=named-entity][data-kind='+JSON.stringify(kind)+'][data-identity]");if(!x)return null;const id=x.dataset.identity;x.click();return id})()');
+  const action=await evaluate('(()=>{const x=[...document.querySelectorAll("#wtwNextgen button[data-ng=named-entity][data-identity]")].find(x=>x.dataset.kind==='+JSON.stringify(kind)+');if(!x)return null;const id=x.dataset.identity;x.click();return id})()');
   assert.ok(action,'Generated Stable '+kind+' identity link is missing');
   await delay(150);
   const opened=await evaluate('(()=>({route:window.__WTW_NEXT__.app.custom,visible:!!document.querySelector("#wtwNextgen .ng-route-profile"),unregistered:(document.querySelector("#wtwNextgen")?.textContent||"").includes("UNREGISTERED ·")}))()');
