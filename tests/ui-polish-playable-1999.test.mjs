@@ -122,3 +122,25 @@ test('generated people, owners and farms are linkable by exact ID without fake f
  assert.match(profile,/FICTIONAL 1999 GAME INDUSTRY · MODELED/);
  assert.match(profile,/Operating ratings · 1999 GAME MODEL/);
 });
+
+
+test('generated People/Farm/Personnel and Race Calendar rows use immutable gameplay world',()=>{
+ const manager=read('public/next/1999-commercial-career-manager.mjs');
+ assert.match(manager,/function playableDirectoryBrowse\(\{/);
+ assert.match(manager,/const full=people\?career\.world\.entities\.people:career\.world\.entities\.organizations/);
+ assert.match(manager,/const total=otherIndex\.records\.length/);
+ assert.match(manager,/Math\.min\(500,Number\(limit\)\|\|160\)/);
+ assert.match(manager,/function playableCardsByDate\(\)/);
+ assert.match(manager,/for\(const card of c\.world\.calendar\?\.cards\|\|\[\]\)/);
+ assert.match(manager,/function playableCalendarSummary\(date,trackName=''\)/);
+ assert.match(manager,/function playableCalendarRows\(date,trackName=''\)/);
+ assert.match(ui,/const liveKind=section==='World'&&page==='People'\?'people'/);
+ assert.match(ui,/section==='World'&&page==='Organizations'\?'organizations'/);
+ assert.match(ui,/section==='Facilities'&&page==='Farms'\?'farms'/);
+ assert.match(ui,/section==='Personnel'&&page==='Trainers'\?'trainers'/);
+ assert.match(ui,/section==='Personnel'&&page==='Jockeys'\?'jockeys'/);
+ assert.match(ui,/window\.WTWCompactCareerManager\.playableDirectoryBrowse\(\{/);
+ assert.match(ui,/window\.WTWCompactCareerManager\?\.playableCalendarRows\?\.\(/);
+ assert.match(ui,/window\.WTWCompactCareerManager\?\.playableCalendarSummary\?\.\(/);
+ assert.match(ui,/if\(r\._wtwGeneratedWorld&&\['person','farm'\]\.includes\(r\._kind\)\)/);
+});
