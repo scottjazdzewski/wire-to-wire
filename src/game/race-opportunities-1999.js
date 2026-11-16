@@ -42,6 +42,9 @@ function optionJockeys(state,world,horse,race){
    state.runtime.races[e.race_id]?.date===race.date);
   if(sameDay.some(e=>e.race_id===race.id||
    state.runtime.races[e.race_id]?.track_id!==race.track_id))continue;
+  // A declined premier bidder can hire an ordinary rider, but can no
+  // longer make a fresh elite bid inside the four-day decision window.
+  if(premierMarketRace(race,j)&&lead(state.clock.date,race.date)<5)continue;
   const quote=jockeyBookingDecision(state,world,race,horse,j);
   if(!quote.accept)continue;
   const fee=quote.quote.feeMinor;
@@ -140,6 +143,8 @@ function raceSelection(state,world,horse,race,bookOpen){
  let status='BLOCKED';
  if(entry&&pendingPremierOffers.length&&!entry.jockey_id)
   status='PREMIER_OFFER_PENDING';
+ else if(entry&&!entry.jockey_id&&currentPremierOffers.some(o=>o.status==='DECLINED'))
+  status=fundedJockey?'PREMIER_REPLACEMENT_REQUIRED':'PREMIER_REPLACEMENT_UNAVAILABLE';
  else if(entry)status='ALREADY_ENTERED';
  else if(!sourceOpen)status='CONDITION_BOOK_PROPOSAL_NOT_ENTERABLE';
  else if(!needsShip&&check.eligible&&!fieldFull&&fundedJockey&&playerOwns)
@@ -166,6 +171,8 @@ function raceSelection(state,world,horse,race,bookOpen){
     (fundedJockey?.premier_offer_required?'OFFER_1999_PREMIER_JOCKEY':'ENTER_1999_RACE'):
    status==='SHIPPING_REQUIRED'?'SHIP_1999_HORSE':
    status==='PREMIER_OFFER_PENDING'?'WAIT_FOR_PREMIER_DECISION':
+   status==='PREMIER_REPLACEMENT_REQUIRED'?'BOOK_1999_JOCKEY':
+   status==='PREMIER_REPLACEMENT_UNAVAILABLE'?'FIND_AVAILABLE_REPLACEMENT':
    status==='ALREADY_ENTERED'?entry.jockey_id?'NONE_BOOKED':'BOOK_1999_JOCKEY':
    status==='CONDITION_BOOK_PROPOSAL_NOT_ENTERABLE'?'WAIT_FOR_RACE_SECRETARY_OPENING':
    'RESOLVE_ELIGIBILITY_OR_FINANCING',
