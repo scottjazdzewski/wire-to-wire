@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageOps
-from scipy.ndimage import binary_propagation, distance_transform_edt
+from scipy.ndimage import binary_propagation, distance_transform_edt, binary_dilation
 
 ROOT = Path(__file__).resolve().parents[1]
 TARGETS = (
@@ -32,6 +32,35 @@ CHROMA_LOGOS = {
     "T-0006.webp": "white-yellow-on-purple",
     "T-0007.webp": "white-gold-on-black",
 }
+# A dark-green game interface needs an ivory *edge*, not a changed brand hue.
+# The source letters stay exactly their approved navy, green, or burgundy.
+CONTRAST_EDGE_MARKS = {
+    "T-0004.webp", "T-0008.webp", "T-0013.webp", "T-0014.webp",
+    "T-0015.webp", "T-0016.webp", "T-0017.webp",
+}
+
+def dark_ui_edge(art: Image.Image, path: Path):
+    if ("track-logos" not in path.parts or
+            path.name not in CONTRAST_EDGE_MARKS):
+        return art
+    raw = np.asarray(art.convert("RGBA")).copy()
+    a = raw[:, :, 3]
+    rgb = raw[:, :, :3].astype(np.float32)
+    # Apply only to visibly dark ink; bright symbols and marks are unchanged.
+    value = 0.2126 * rgb[:, :, 0] + 0.7152 * rgb[:, :, 1] + 0.0722 * rgb[:, :, 2]
+    is_dark_ink = (a > 95) & (value < 123) & (np.max(rgb, axis=2) < 192)
+    if int(is_dark_ink.sum()) < 100:
+        return art
+    thickness = max(2, min(14, int(round(min(a.shape) * 0.009))))
+    extended = binary_dilation(is_dark_ink, iterations=thickness)
+    ring = extended & (a < 40)
+    if not ring.any():
+        return art
+    halo = np.zeros_like(raw)
+    halo[:, :, :3] = [248, 239, 214]
+    halo[:, :, 3] = np.where(ring, 185, 0).astype(np.uint8)
+    base = Image.fromarray(halo, "RGBA")
+    return Image.alpha_composite(base, art.convert("RGBA"))
 
 def bounded(values, low, high):
     return np.clip((values - low) / (high - low), 0.0, 1.0)
@@ -53,6 +82,10 @@ def repaired_rgba(im: Image.Image, path: Path):
     # A genuine alpha-cutout is not a defect. Do not erase artwork inside it.
     transparent_corners = float(np.mean(corners[:, 3] < 32))
     if transparent_corners >= 0.85:
+        # Previously repaired sources may still need contrast-safe edging.
+        outlined = dark_ui_edge(im, path)
+        if not np.array_equal(np.asarray(outlined), original):
+            return outlined, "existing-transparent-mark-contrast-edge"
         return None, "already-transparent-corners"
     bg = np.median(corners[:, :3].astype(np.float32), axis=0)
     spread = np.max(np.abs(corners[:, :3].astype(np.float32) - bg), axis=1)
@@ -131,7 +164,10 @@ def repaired_rgba(im: Image.Image, path: Path):
     result[:, :, 3] = alpha
     result[alpha == 0, :3] = 0
     rgba = Image.fromarray(result, "RGBA")
-    return rgba, method
+    outlined = dark_ui_edge(rgba, path)
+    if not np.array_equal(np.asarray(outlined), result):
+        method += "+ivory-edge-for-dark-ui"
+    return outlined, method
 
 def logo_paths():
     found = set()
