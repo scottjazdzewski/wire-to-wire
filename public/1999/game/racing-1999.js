@@ -108,7 +108,8 @@ export function raceEligibility(state,horse,race){
  const reasons=[],care=state.runtime.horse?.[horse.horse_id],site=state.runtime.facilities?.sites?.[horse.current_residence_id];
  const age=1999-horse.foaling_year;
  if(race.age==='3YO'&&age!==3||race.age==='2YO'&&age!==2||
-   race.age==='3YO+'&&age<3)reasons.push('AGE_RESTRICTION');
+   race.age==='3YO+'&&age<3||race.age==='4YO+'&&age<4)
+  reasons.push('AGE_RESTRICTION');
  if(race.sex==='FILLIES_AND_MARES'&&!['FILLY','MARE'].includes(horse.sex))
   reasons.push('SEX_RESTRICTION');
  if(!supported1999RaceClass(race))
