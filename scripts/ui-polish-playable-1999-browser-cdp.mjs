@@ -203,7 +203,9 @@ try{
    await evaluate('(()=>{const ui=window.__WTW_NEXT__;ui.app.section='+JSON.stringify(section)+';ui.app.page='+JSON.stringify(page)+';ui.app.custom='+JSON.stringify(custom)+';ui.app.detailTab="Overview";ui.paint();return true;})()');
    await delay(300);
    const result=await evaluate('(()=>{const root=document.getElementById("wtwNextgen");const shell=root?.querySelector(".ng-manager-shell");const rect=x=>x?.getBoundingClientRect();const s=rect(shell);const p=root?.querySelector(".ng-route-profile,.ng-board,.ng-dept-roster,.ng-manager-screen,.ng-stable-roster-v2");const images=[...root.querySelectorAll("img")].filter(x=>x.getBoundingClientRect().width>1&&x.getBoundingClientRect().height>1);const visibleButtons=[...root.querySelectorAll("button")].filter(x=>!x.disabled&&getComputedStyle(x).visibility!=="hidden"&&x.getBoundingClientRect().width>1);const out=visibleButtons.filter(x=>{const r=x.getBoundingClientRect();return r.right>innerWidth+3||r.left< -3;}).map(x=>({text:x.textContent.trim().slice(0,26),action:x.dataset.ng||""}));const stake=root.querySelector(".ng-track-stakes .ng-stakes-table");const scroll=stake?{height:stake.clientHeight,content:stake.scrollHeight,overflow:getComputedStyle(stake).overflowY}:null;return {ready:!!shell&&!!p,routeTitle:root.querySelector(".ng-profile-intro h1,.ng-profile-intro h2,.ng-manager-identity h2")?.textContent?.trim()||"",routeClasses:p?.className||"",horizontalOverflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,verticalOverflow:document.documentElement.scrollHeight-document.documentElement.clientHeight,shellFits:!!s&&s.left>=-3&&s.right<=innerWidth+3,offscreenControls:out,buttonCount:visibleButtons.length,unwiredButtons:visibleButtons.filter(x=>!x.dataset.ng&&!x.closest("[data-ng]")&&!x.dataset.ccAction&&!x.getAttribute("onclick")).length,brokenImages:images.filter(x=>x.complete&&x.naturalWidth===0).map(x=>x.getAttribute("src")).slice(0,9),visibleImages:images.length,stakeScroll:scroll};})()');
-   const record={viewport:width+'x'+height,route:name,...result};
+   const compactContent=width===1024&&['stable','world-horses'].includes(name)?
+    await evaluate('(()=>{const table=document.querySelector("#wtwNextgen .ng-stable-roster-v2 .ng-rs-table.compact");if(!table)return {present:false,violations:[]};const rows=[...table.querySelectorAll("tbody tr")].slice(0,8);const violations=[];for(const [rowIndex,row] of rows.entries()){for(const [cellIndex,cell] of [...row.querySelectorAll("td")].entries()){const r=cell.getBoundingClientRect();for(const x of cell.querySelectorAll(".ng-rs-signal,.ng-rs-horse,.ng-entity-reference,.ng-rs-stars")){const v=x.getBoundingClientRect();if(v.right>r.right+1||v.left<r.left-1)violations.push({rowIndex,cellIndex,right:v.right,cellRight:r.right});}}}return {present:true,violations};})()'):null;
+   const record={viewport:width+'x'+height,route:name,...result,...(compactContent?{compactContent}:{})};
    audit.push(record);
    const pic=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
    const file=output+'/'+name+'-'+width+'x'+height+'.png';
@@ -237,6 +239,12 @@ try{
   assert.equal(row.offscreenControls.length,0,
    'Offscreen actions: '+row.route+' '+row.viewport+' '+JSON.stringify(row.offscreenControls));
   assert.equal(row.brokenImages.length,0,'Broken visible marks: '+row.route+' '+row.viewport);
+  if(row.compactContent){
+   assert.ok(row.compactContent.present,'Quick View table missing: '+row.route);
+   assert.equal(row.compactContent.violations.length,0,
+    'Compact roster content spills into adjacent cells: '+
+    row.route+' '+JSON.stringify(row.compactContent.violations.slice(0,5)));
+  }
  }
  const belmontNarrow=audit.find(x=>x.route==='track-belmont'&&x.viewport==='1280x720');
  assert.ok(belmontNarrow?.stakeScroll?.overflow==='auto','Belmont stakes must scroll in own panel');
