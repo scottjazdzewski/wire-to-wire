@@ -21,7 +21,7 @@ function liveState(horse){
      readiness:.9,fatigue:0}}}}};
 }
 const stakes={
- id:'WTW-1999-MODELED-4YO-STAKE',date:'1999-02-13',track_id:'T-0001',
+ id:'WTW-1999-MODELED-4YO-STAKE',date:'1999-01-20',track_id:'T-0001',
  age:'4YO+',sex:'OPEN',conditions:'Handicap',
  surface:'DIRT',distance_furlongs:8,purse_minor:5400000,
  stake_id:'WTW-MODELED-STAKE',stake_source_status:'MODELED',
