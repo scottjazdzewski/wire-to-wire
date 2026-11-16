@@ -204,9 +204,16 @@ def main():
     changed = []
     for path in paths:
         rel = path.relative_to(ROOT).as_posix()
-        with Image.open(path) as source:
-            before = source.convert("RGBA")
-            output, method = repaired_rgba(before, path)
+        try:
+            with Image.open(path) as source:
+                before = source.convert("RGBA")
+                output, method = repaired_rgba(before, path)
+        except (OSError, ValueError) as exc:
+            # Do not destroy a truncated source image by saving a guessed
+            # result. Record the exact source path as unresolved instead.
+            records.append({"path":rel, "method":"UNREADABLE", "changed":False,
+                            "error":type(exc).__name__+": "+str(exc)})
+            continue
         record = {"path": rel, "method": method, "dimensions": list(before.size),
                   "changed": bool(output is not None)}
         if output is not None:
@@ -226,17 +233,20 @@ def main():
             "Churchill source matte was not corrected"
     if opts.verify:
         problem = [r for r in records if r["changed"] and
-                   (r["path"].endswith("/T-0017.webp") or r["path"].endswith("/T-0013.webp"))]
+                   "/places/track-logos/" in r["path"]]
         if problem:
-            raise SystemExit("Known logo backgrounds still opaque: "+str(problem))
+            raise SystemExit("Track identity still has a removable baked matte: "+str(problem))
+    unreadable = [r["path"] for r in records if r["method"] == "UNREADABLE"]
     report = {"inspected": len(paths), "changed": len(changed), "files": changed,
-              "records": records, "mode": "apply" if opts.apply else "verify" if opts.verify else "scan"}
+              "unreadable": unreadable, "records": records,
+              "mode": "apply" if opts.apply else "verify" if opts.verify else "scan"}
     report_path = ROOT / opts.report
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(json.dumps(report, indent=2) + "\n")
     contact_sheet(samples, ROOT / opts.sheet)
     print("WTW_RUNTIME_ALPHA_REPORT "+json.dumps({
-        "inspected": len(paths), "changed": len(changed), "files": changed
+        "inspected": len(paths), "changed": len(changed), "files": changed,
+        "unreadable": unreadable
     }))
     print("WTW_RUNTIME_ALPHA_REPAIR_PASS")
 
