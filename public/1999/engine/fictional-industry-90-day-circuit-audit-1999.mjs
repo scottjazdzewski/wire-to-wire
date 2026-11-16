@@ -264,8 +264,36 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
   t.residentJockeys<2);
  const minimumLocalJockeys=Math.min(...trackLoad.filter(t=>t.quarterCards>0).
   map(t=>t.residentJockeys));
+ // The canonical raceEligibility currently requires at least 12 days
+ // between results. Assume an unrealistically favorable 8 starts/horse
+ // in these 90 days, with no illness, scratches, class/sex restrictions,
+ // same-date conflicts or missed meets. This is an UPPER BOUND only.
+ // A track below the two-runner floor must receive away runners or
+ // leave some source races unfilled; we must never invent those runners.
+ const minimumHorseCampaignSpacingDays=12;
+ const optimisticMaxStartsPerLocalRunner=
+  1+Math.floor((dates.length-1)/minimumHorseCampaignSpacingDays);
+ const localHorseDeficits=trackLoad.filter(t=>t.quarterRaces>0&&
+  t.minStartSlotsForRaceSettlement>
+  t.openingRacingHorses*optimisticMaxStartsPerLocalRunner);
  const sourceCapacity={
   rule:'SOURCE_LOCAL_RESIDENT_CAPACITY_ONLY_NO_CROSS_TRACK_JOCKEY_TRAVEL',
+  twoRunnersPerRaceIsMinimumNotFullField:true,
+  canonicalMinimumDaysBetweenRaceStarts:minimumHorseCampaignSpacingDays,
+  optimisticMaxStartsPerLocalRunnerIn90Days:optimisticMaxStartsPerLocalRunner,
+  tracksNeedingGuestRunnersToFillAllRaces:localHorseDeficits.length,
+  sourceRacesAtThoseTracks:localHorseDeficits.reduce((n,t)=>n+t.quarterRaces,0),
+  theoreticalLocalStartsAtThoseTracks:localHorseDeficits.reduce((n,t)=>
+   n+t.openingRacingHorses*optimisticMaxStartsPerLocalRunner,0),
+  minimumRequiredStartsAtThoseTracks:localHorseDeficits.reduce((n,t)=>
+   n+t.minStartSlotsForRaceSettlement,0),
+  localHorseDeficits:localHorseDeficits.map(t=>({
+   trackId:t.trackId,quarterRaces:t.quarterRaces,
+   openingRacingHorses:t.openingRacingHorses,
+   minimumRequiredStarts:t.minStartSlotsForRaceSettlement,
+   optimisticMaximumLocalStarts:t.openingRacingHorses*optimisticMaxStartsPerLocalRunner
+  })),
+
   minimumDifferentJockeysPerSettledRace:2,
   tracksWithScheduledCards:trackLoad.filter(t=>t.quarterCards>0).length,
   openingResidentRacingHorses:trackLoad.reduce((n,t)=>n+t.openingRacingHorses,0),
