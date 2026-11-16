@@ -710,6 +710,28 @@ function playableStableRows(){
    starts:horse.career?.starts??null,wins:horse.career?.wins??null};
  }).filter(Boolean);
 }
+/** Current Office racing targets are entries in the authoritative game
+ * race registry, never speculative schedule rows from the 73-horse source. */
+function playableRacingRows(){
+ const c=activeWorldCareer,lookup=playableWorldLookup();
+ if(!c)return null;
+ const owned=new Set(c.run.stable_horse_ids);
+ const rows=[];
+ for(const race of Object.values(c.run.runtime.races||{})){
+  for(const entry of race.field||[]){
+   const id=typeof entry==='string'?entry:entry.horse_id||entry.horseId;
+   if(!owned.has(id))continue;
+   const horse=c.run.runtime.registered_horses.by_id[id];
+   if(!horse)continue;
+   rows.push({horseId:id,name:horse.registered_name||horse.name,
+    date:race.date,track:lookup.tracks.get(race.track_id)||race.track_id,
+    tag:race.conditions||race.race_class||'1999 RACE',
+    status:race.status==='OFFICIAL_SIM_RESULT'?'Resulted':'Entered',
+    raceId:race.id});
+  }
+ }
+ return rows.sort((a,b)=>a.date.localeCompare(b.date)||a.name.localeCompare(b.name));
+}
 function playableHorseProfile(identity){
  const c=activeWorldCareer,lookup=playableWorldLookup();
  if(!c||!identity)return null;
@@ -806,4 +828,4 @@ window.WTWCompactCareerManager=Object.freeze({open,listSlots,storeGame,
  restoreGame,exportSlot,importFile,dbName:DB_NAME,
  prepareFictionalIndustry,saveFictionalIndustryCareer,
  readFictionalIndustryCareer,playableWorldStatus,playableStableRows,
- playableHorseProfile,playableWorldHorseBrowse});
+ playableRacingRows,playableHorseProfile,playableWorldHorseBrowse});
