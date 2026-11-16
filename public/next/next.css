@@ -3907,3 +3907,27 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  font:800 18px/1 Georgia,serif;cursor:pointer}
 .ng-record-browse-bar button.ng-profile-entity-step:hover{background:#50634e;border-color:#dabd80}
 .ng-record-browse-bar button.ng-profile-entity-step:focus-visible{outline:2px solid #f0cf8a;outline-offset:2px}
+
+/* UI Window 4: the preexisting ALL COLUMNS option remains available with
+ * its intentional in-panel horizontal scroll. QUICK VIEW on 1024px laptops
+ * shows the core operational fields (horse, age, sex, health, ready,
+ * CA, PA, upcoming race, owner and trainer) without hiding page controls. */
+@media (min-width:781px) and (max-width:1080px){
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-table.compact{
+  width:100%!important;min-width:0!important;table-layout:fixed!important;
+ }
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-table.compact :is(th,td):nth-child(8),
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-table.compact :is(th,td):nth-child(9),
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-table.compact :is(th,td):nth-child(11),
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-table.compact :is(th,td):nth-child(12),
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-table.compact :is(th,td):nth-child(15),
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-table.compact :is(th,td):nth-child(16),
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-table.compact :is(th,td):nth-child(17){display:none!important}
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-table.compact th:first-child{
+  width:20%!important;
+ }
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-table.compact th:nth-child(13),
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-table.compact th:nth-child(14){
+  width:14%!important;
+ }
+}
