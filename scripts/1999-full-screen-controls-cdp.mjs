@@ -528,7 +528,11 @@ try {
   const history=await profileReady(item.family+' history','HISTORY');
   assert.equal(history.history,'page',item.family+' history is not active after clicking');
   assert.equal(history.name,original.name,'Identity changed when opening '+item.family+' history');
-  assert.equal(history.identity,original.identity);
+  // Identity media can become available after the first profile paint.
+  // The resolved badge may gain its correct canonical ID, but never drift
+  // to a different entity as we navigate the same record.
+  if(original.identity)assert.equal(history.identity,original.identity);
+  else if(history.identity)assert.equal(history.identity,item.id);
   assert.equal(history.sourceRecord,original.sourceRecord);
   assert.equal(history.date,baseline.date);
 
