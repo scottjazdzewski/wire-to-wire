@@ -107,3 +107,18 @@ test('generated world search/filter applies across the whole census, not one vis
  assert.match(ui,/if\(!universe\?\.paged&&stableCriteria/);
  assert.match(ui,/return universe\?\.paged\|\|!search/);
 });
+
+
+test('generated people, owners and farms are linkable by exact ID without fake founding claims',()=>{
+ const manager=read('public/next/1999-commercial-career-manager.mjs');
+ const profile=read('public/next/1999-restored-profiles.js');
+ assert.match(manager,/function playableEntityProfile\(kind,identity\)/);
+ assert.match(manager,/const direct=pool\.find\(x=>x\.id===identity\)/);
+ assert.match(manager,/if\(found\.length!==1\)return null/);
+ assert.match(ui,/data-identity="'\+safe\(identity\)/);
+ assert.match(ui,/playableEntityProfile\?\.\(/);
+ assert.match(ui,/if\(live\?\._wtwGeneratedWorld\)return restored1999Profile\(kind,live\)/);
+ assert.match(profile,/const modelPersonTraits=generated\?\(d\._testAttrs\|\|\{\}\)/);
+ assert.match(profile,/FICTIONAL 1999 GAME INDUSTRY · MODELED/);
+ assert.match(profile,/Operating ratings · 1999 GAME MODEL/);
+});
