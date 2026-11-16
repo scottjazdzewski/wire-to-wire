@@ -63,16 +63,35 @@ test('one jockey can ride every race on a ten-race source card; ten jockeys can 
   assessJockeySchedule(s,world,riders[0],races[0]),
   'jockey commitments must survive JSON save/reopen');
 });
+test('archived string-based racecourses retain NY/FL regional and Canadian geography',()=>{
+ const snap={entities:{tracks:[
+  {id:'T-0001',location:'South Ozone Park, New York, USA'},
+  {id:'T-0017',location:'Hallandale Beach, Florida, USA'},
+  {id:'T-0028',location:'Arcadia, California, USA'},
+  {id:'T-0039',location:'Toronto, Ontario, Canada'}
+ ]}};
+ const s=state(),winter=jockey(1,'T-0001','REGIONAL');
+ const easy={id:'R-FL-WINTER',track_id:'T-0017',date:'1999-01-14',
+  purse_minor:2000000,conditions:'Allowance'};
+ assert.equal(jockeyTransferDays(snap.entities.tracks[0],snap.entities.tracks[1]),2);
+ assert.equal(jockeyTransferDays(snap.entities.tracks[0],snap.entities.tracks[3]),3);
+ const season=assessJockeySchedule(s,snap,winter,easy);
+ assert.equal(season.allowed,true,JSON.stringify(season));
+ assert.equal(season.seasonalCircuit,true);
+ assert.equal(assessJockeySchedule(s,snap,winter,
+  {...easy,id:'R-LOW-CA',track_id:'T-0028'}).reason,
+  'LOCAL_JOCKEY_DECLINES_LOW_VALUE_AWAY_TRIP');
+});
 test('same-day different tracks and impossible next-day national flight are rejected',()=>{
  const s=state(),national=jockey(1,'T-0001','ELITE');
  const ny={id:'R-NY',track_id:'T-0001',date:'1999-01-10',
   purse_minor:16000000,conditions:'Allowance'};
- const ca={id:'R-CA',track_id:'T-0017',date:'1999-01-10',
+ const ca={id:'R-CA',track_id:'T-0028',date:'1999-01-10',
   purse_minor:40000000,stake_id:'WTW-STAKE',stakes_grade:'G1'};
  const caNext={...ca,id:'R-CA-NEXT',date:'1999-01-11'};
  const caLater={...ca,id:'R-CA-LATER',date:'1999-01-12'};
  commit(s,ny,national,'H-NY');
- assert.equal(jockeyTransferDays(track('T-0001'),track('T-0017')),2);
+ assert.equal(jockeyTransferDays(track('T-0001'),track('T-0028')),2);
  assert.equal(assessJockeySchedule(s,world,national,ca).reason,'JOCKEY_LOCATION');
  assert.equal(assessJockeySchedule(s,world,national,caNext).reason,
   'JOCKEY_INFEASIBLE_TRAVEL');
@@ -80,7 +99,7 @@ test('same-day different tracks and impossible next-day national flight are reje
 });
 test('elite rider earns a larger premium for major stakes, with one air-travel allowance per visiting card',()=>{
  const s=state(),elite=jockey(1,'T-0001','ELITE');
- const major={id:'R-G1',track_id:'T-0017',date:'1999-01-15',
+ const major={id:'R-G1',track_id:'T-0028',date:'1999-01-15',
   purse_minor:50000000,stake_id:'WTW-MODELED-STAKES',stakes_grade:'G1'};
  const second={...major,id:'R-UNDERCARD',purse_minor:1800000,
   stake_id:null,stakes_grade:null,conditions:'Maiden Special Weight'};
@@ -100,7 +119,7 @@ test('elite rider earns a larger premium for major stakes, with one air-travel a
 });
 test('regional home jockey will not be teleported for an ordinary low-purse cross-country ride',()=>{
  const s=state(),local=jockey(2,'T-0001','REGIONAL');
- const far={id:'R-LOW',track_id:'T-0017',date:'1999-01-15',
+ const far={id:'R-LOW',track_id:'T-0028',date:'1999-01-15',
   purse_minor:1500000,conditions:'Claiming'};
  assert.equal(assessJockeySchedule(s,world,local,far).reason,
   'LOCAL_JOCKEY_DECLINES_LOW_VALUE_AWAY_TRIP');
