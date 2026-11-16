@@ -35,18 +35,19 @@ function materialize(staffing,seed){
  assert.equal(jockeys,staffing.counts.jockey);
  return byTrack;
 }
-test('new real 10k fictional industry has two named local jockey records at every 1999 track with exact horse count',()=>{
+test('new exact 10k industry creates course-program-sized reusable jockey colonies at all 107 tracks',()=>{
  assert.equal(tracks.length,107);
  for(const seed of [19990101,19990102]){
   const ecosystem=plan1999Ecosystem({seed,targetOpeningHorses:10000});
   assert.equal(ecosystem.openingRegistryHorses,10000);
   const current=plan1999IndustryStaffing({seed,ecosystem,
-   minimumRacingTracks:tracks.length});
+   minimumRacingTracks:tracks.length,tracks,courseDemandTargets:true});
   assert.equal(current.minimumJockeysPerTrack,2);
-  assert.ok(current.counts.jockey>=214);
+  assert.ok(current.counts.jockey>=16*tracks.length);
   const jockeys=materialize(current,seed);
   assert.equal(jockeys.size,107);
-  for(const [track,n] of jockeys)assert.ok(n>=2,track+' is below two resident jockeys');
+  for(const [track,n] of jockeys)assert.ok(n>=current.trackJockeyTargets[track],
+   track+' has fewer riders than its real condition-book day needs');
  }
 });
 test('default 300k and maximum 325k industry staffing preserve adequate labor without changing horse crops',()=>{
@@ -55,8 +56,9 @@ test('default 300k and maximum 325k industry staffing preserve adequate labor wi
   const ecosystem=plan1999Ecosystem({seed,targetOpeningHorses:horses});
   assert.equal(ecosystem.openingRegistryHorses,horses);
   const staffing=plan1999IndustryStaffing({seed,ecosystem,
-   minimumRacingTracks:tracks.length});
-  assert.ok(staffing.counts.jockey>=2*tracks.length);
+   minimumRacingTracks:tracks.length,tracks,courseDemandTargets:true});
+  assert.ok(staffing.counts.jockey>=16*tracks.length);
+  assert.equal(Object.keys(staffing.trackJockeyTargets).length,tracks.length);
   assert.ok(staffing.counts.trainer>=tracks.length);
  }
 });
@@ -71,8 +73,9 @@ test('saved original one-jockey staffing layout keeps its legacy permanent IDs a
  assert.equal([...placed.values()].reduce((n,x)=>n+x,0),141);
  assert.ok([...placed.values()].some(x=>x===1));
  const current=plan1999IndustryStaffing({seed,ecosystem,
-  minimumRacingTracks:tracks.length});
- assert.equal(current.counts.jockey,214);
+  minimumRacingTracks:tracks.length,tracks,courseDemandTargets:true});
+ assert.ok(current.counts.jockey>=16*tracks.length);
+ assert.equal(current.policy,'COURSE_SPECIFIC_REUSABLE_JOCKEY_POOLS_1999_V2');
  // Existing world manifests select their own original staffing plan on
  // resume; this fixture confirms that old identities can still materialize.
 });
