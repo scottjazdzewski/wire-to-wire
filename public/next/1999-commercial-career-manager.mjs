@@ -7,13 +7,10 @@
  */
 import {encodeCareerSave,decodeCareerSave,packCareerFile,unpackCareerFile}
  from '/1999/engine/compact-career.mjs';
-import {open1999IndustryDatabase,createPersistent1999Industry,
+import {open1999IndustryDatabase,
  savePersistent1999CareerRun,loadPersistent1999CareerRun,
  verifyPersistent1999WorldOpen,reopenPersistent1999Industry}
  from '/1999/engine/fictional-industry-persistence-1999.mjs';
-import {TRACK_PROGRAM_1999} from '/next/1999-track-program.mjs';
-import {createFictionalWorldNameEngine}
- from '/1999/engine/fictional-world-name-engine.mjs';
 import {readPersistent1999HorseProfile,readPersistent1999IndustryBatch,
  readPersistent1999Directory,findPersistent1999Person}
  from '/1999/engine/fictional-industry-persistence-1999.mjs';
@@ -230,58 +227,6 @@ function requestedIndustry(){
 }
 let industryBrowsePage=0,industryBrowseHtml='',industryBrowseKind='horseBatches';
 let industryDirectory=[];
-async function industryDirectories(seed=19990101){
- const response=await fetch('/data/track-geography-v33.json');
- if(!response.ok)throw Error('Bundled 1999 track geography unavailable');
- const geo=await response.json();
- const geoById=new Map((geo.tracks||[]).map(g=>[g.id,g]));
- const tracks=Object.values(TRACK_PROGRAM_1999)
-  .filter(t=>t.playableIn1999!==false&&t.trackOperating==='OPEN_1999')
-  .map(t=>{
-   const g=geoById.get(t.id);
-   if(!g?.city_locality||!g?.state_province_region||!g?.country)
-    throw Error('Missing local foaling/racing geography for '+t.id);
-   return {id:t.id,name:t.name,location:{city:g.city_locality,
-    region:g.state_province_region,country:g.country,
-    metro:g.metro_or_subregion||null,circuit:g.macro_circuit||null},
-    physicalTrackId:t.physicalTrackId||t.id,
-    venueType:t.venueType||'PHYSICAL_RACECOURSE',
-    physicalFacilityStatus:t.physicalFacilityStatus||'STANDALONE_FACILITY',
-    geographyProvenance:g.geography_status};
-  });
- if(!tracks.length)throw Error('No approved operating 1999 tracks');
- // Reuse the established 1999 organization identity engine, never fabricate
- // track-prefix placeholders. Permanent world IDs remain unchanged.
- const farmCount=tracks.length*4,ownerCount=tracks.length*10;
- const generated=createFictionalWorldNameEngine({
-  worldId:'WTW1999IndustryDirectory',seed,year:1999,
-  roles:{},owners:ownerCount,
-  facilities:{generalFarms:farmCount,studFarms:0,nurseries:0,
-   bloodstockFarms:0,breakingTraining:0},
-  protectedNames:tracks.map(t=>t.name)
- });
- if(generated.owners.length!==ownerCount||
-  generated.farms.length!==farmCount)
-  throw Error('1999 approved organization name generator returned an incomplete directory');
- const farms=tracks.flatMap((t,trackIndex)=>Array.from({length:4},(_,i)=>{
-  const named=generated.farms[trackIndex*4+i];
-  return {id:'O-FICTIONAL-FARM-'+t.id+'-'+String(i+1).padStart(2,'0'),
-   name:named.name,location:t.location,
-   namingStatus:'GENERATED_1999_ORGANIZATION_ENGINE',
-   namingSourceId:named.id,
-   geographyStatus:t.location?.region?'REGION_PROVIDED':'LOCATION_REVIEW_REQUIRED'};
- }));
- const owners=tracks.flatMap((t,trackIndex)=>Array.from({length:10},(_,i)=>{
-  const named=generated.owners[trackIndex*10+i];
-  return {id:'O-FICTIONAL-OWNER-'+t.id+'-'+String(i+1).padStart(2,'0'),
-   name:named.name,location:t.location,
-   ownershipArchetype:named.ownershipArchetype,
-   namingStatus:'GENERATED_1999_ORGANIZATION_ENGINE',
-   namingSourceId:named.id,
-   geographyStatus:t.location?.region?'REGION_PROVIDED':'LOCATION_REVIEW_REQUIRED'};
- }));
- return {tracks,farms,owners};
-}
 async function browseFullIndustry(page=0,kind=industryBrowseKind){
  if(!fullIndustryManifest)throw Error('Open the full industry first');
  if(!['horseBatches','personBatches','directory','calendarBatches','coveringBatches'].includes(kind))throw Error('Invalid industry view');
@@ -397,11 +342,13 @@ async function importSharedCareerFile(file,{preserveExistingProgress=false}={}){
   let existing=await reopenPersistent1999Industry(db,{seed:wanted.seed,worldId:wanted.worldId});
   if(existing?.status==='GENERATING'){
    notice='Resuming the exact shared world before importing its career.';
-   fullIndustryManifest=await createPersistent1999Industry({store:db,
+   fullIndustryManifest=await prepareFictionalIndustry({
     seed:wanted.seed,worldId:wanted.worldId,
-    targetOpeningHorses:wanted.targetOpeningHorses,
-    ...(await industryDirectories(wanted.seed)),batchSize:expected.batchSize,
-    yieldControl:()=>new Promise(resolve=>setTimeout(resolve,0)),
+    targetOpeningHorses:wanted.targetOpeningHorses,batchSize:expected.batchSize,
+    onStage:message=>{
+     const progress=modal().querySelector('[data-cc="industry-progress"]');
+     if(progress)progress.textContent=message;
+    },
     onProgress:({kind,completed,totalRecords})=>{
      const progress=modal().querySelector('[data-cc="industry-progress"]');
      if(progress)progress.textContent='Rebuilding shared '+kind+' · batch '+
@@ -409,11 +356,13 @@ async function importSharedCareerFile(file,{preserveExistingProgress=false}={}){
     }});
   }else if(!existing){
    notice='Creating the exact shared world before importing its career.';
-   fullIndustryManifest=await createPersistent1999Industry({store:db,
+   fullIndustryManifest=await prepareFictionalIndustry({
     seed:wanted.seed,worldId:wanted.worldId,
-    targetOpeningHorses:wanted.targetOpeningHorses,
-    ...(await industryDirectories(wanted.seed)),batchSize:expected.batchSize,
-    yieldControl:()=>new Promise(resolve=>setTimeout(resolve,0)),
+    targetOpeningHorses:wanted.targetOpeningHorses,batchSize:expected.batchSize,
+    onStage:message=>{
+     const progress=modal().querySelector('[data-cc="industry-progress"]');
+     if(progress)progress.textContent=message;
+    },
     onProgress:({kind,completed,totalRecords})=>{
      const progress=modal().querySelector('[data-cc="industry-progress"]');
      if(progress)progress.textContent='Creating shared '+kind+' · batch '+
@@ -687,8 +636,8 @@ async function perform(action,element){
   const {seed,worldId,targetOpeningHorses}=requestedIndustry();
   const progress=modal().querySelector('[data-cc="industry-progress"]');
   fullIndustryManifest=await prepareFictionalIndustry({
-   seed,worldId,targetOpeningHorses,...(await industryDirectories(seed)),batchSize:2000,
-   yieldControl:()=>new Promise(resolve=>setTimeout(resolve,0)),
+   seed,worldId,targetOpeningHorses,batchSize:2000,
+   onStage:message=>{if(progress)progress.textContent=message},
    onProgress:({kind,completed,totalRecords})=>{
     if(progress)progress.textContent='Creating '+kind+' · batch '+completed+
      ' · '+fmt(totalRecords)+' planned records. Do not close this window.';
@@ -841,9 +790,38 @@ async function open(){
  * same canonical engine as the installed career.
  */
 async function prepareFictionalIndustry(options){
- const store=await open1999IndustryDatabase();
- try{return await createPersistent1999Industry({...options,store})}
- finally{store.close()}
+ return createIndustryInWorker(options,options.onProgress,options.onStage);
+}
+let industryWorkerRequestId=0;
+function createIndustryInWorker(options,onProgress=()=>{},onStage=()=>{}){
+ if(typeof Worker!=='function')return Promise.reject(Error(
+  'This app cannot start the background 1999 world builder; update to the current desktop build'));
+ const worker=new Worker('/next/1999-industry-bootstrap-worker.mjs?rev=responsive-genesis-v1',
+  {type:'module'});
+ const id=++industryWorkerRequestId;
+ return new Promise((resolve,reject)=>{
+  let settled=false;
+  const finish=(error,value)=>{
+   if(settled)return;settled=true;worker.terminate();
+   if(error)reject(error);else resolve(value);
+  };
+  worker.addEventListener('message',event=>{
+   const message=event.data;
+   if(message?.id!==id)return;
+   if(message.type==='STAGE'){onStage(message.message);return}
+   if(message.type==='PROGRESS'){onProgress(message);return}
+   if(message.type==='COMPLETE'){finish(null,message.manifest);return}
+   if(message.type==='ERROR')finish(Error(message.message+'\n'+message.stack));
+  });
+  worker.addEventListener('error',event=>finish(Error(
+   'The background world builder failed: '+(event.message||'unknown worker error'))));
+  worker.addEventListener('messageerror',()=>finish(Error(
+   'The background world builder returned an unreadable response')));
+  worker.postMessage({type:'CREATE_1999_INDUSTRY',id,
+   seed:options.seed??19990101,worldId:options.worldId??'WTW1999FullIndustry',
+   targetOpeningHorses:options.targetOpeningHorses??null,
+   batchSize:options.batchSize??1000});
+ });
 }
 async function saveFictionalIndustryCareer(manifest,run){
  const store=await open1999IndustryDatabase();

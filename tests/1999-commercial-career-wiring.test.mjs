@@ -6,6 +6,7 @@ const read=p=>readFileSync(file(p),'utf8');
 const html=read('public/next/index.html');
 const ui=read('public/next/next.js');
 const manager=read('public/next/1999-commercial-career-manager.mjs');
+const industryWorker=read('public/next/1999-industry-bootstrap-worker.mjs');
 const css=read('public/next/next.css');
 
 test('approved UI loads the local career manager after the shared game interface',()=>{
@@ -14,7 +15,7 @@ test('approved UI loads the local career manager after the shared game interface
  const uiIndex=html.indexOf('/next/next.js?rev=');
  const managerIndex=html.indexOf('/next/1999-commercial-career-manager.mjs?rev=');
  assert.ok(config>=0&&bootstrap>config&&uiIndex>bootstrap&&managerIndex>uiIndex);
- assert.match(html,/1999-commercial-career-manager\.mjs\?rev=wtw-custom-world-cohort-v5/);
+ assert.match(html,/1999-commercial-career-manager\.mjs\?rev=wtw-world-builder-worker-v1/);
  assert.match(html,/href="\/next\/next\.css\?rev=/);
  assert.match(css,/\.wtw-cc-backdrop\[hidden\]\{display:none!important\}/);
  assert.match(ui,/if\(key==='save-open'\)/);
@@ -29,7 +30,7 @@ test('compact career saves remain local and the manager adds no hosted runtime d
  assert.match(manager,/No account, monthly fee or cloud storage required/);
  assert.ok(!manager.includes("fetch('http")&&!manager.includes('fetch("http')&&
   !manager.includes("fetch('/api/"));
- assert.ok(manager.includes("fetch('/data/track-geography-v33.json')"),
+ assert.ok(industryWorker.includes("fetch('/data/track-geography-v33.json')"),
   'Track geography must come from a bundled local file');
 });
 
