@@ -244,3 +244,29 @@ test('ordinary nonelite rider remains immediately bookable and paid, no premier 
  assert.equal(s.runtime.finances.ledger.filter(x=>
   x.kind==='JOCKEY_MOUNT_AND_TRAVEL_FEE').length,1);
 });
+
+test('winning elite jockey signs separate races on same card without requiring a different rider per mount',()=>{
+ const s=fixture(),{act,events}=actions(s);
+ const second='R-1999-MODELED-G1-02';
+ s.runtime.races[second]={...structuredClone(s.runtime.races[raceId]),
+  id:second,purse_minor:42000000,escrow_minor:42000000,field:[]};
+ act('ENTER_1999_RACE',{race_id:raceId,horse_id:horseIds[0]},'player');
+ act('ENTER_1999_RACE',{race_id:second,horse_id:horseIds[1]},'system');
+ act('OFFER_1999_PREMIER_JOCKEY',{race_id:raceId,
+  horse_id:horseIds[0],jockey_id:jockeyId,bonus_minor:80000},'player');
+ act('OFFER_1999_PREMIER_JOCKEY',{race_id:second,
+  horse_id:horseIds[1],jockey_id:jockeyId,bonus_minor:80000},'system');
+ s.clock.date='1999-01-08';
+ const result=resolve1999PremierJockeyOffers({state:s,world,
+  emit:(kind,details)=>events.push({kind,details})});
+ assert.deepEqual(result,{signed:2,declined:0,pending:0});
+ assert.equal(s.runtime.entries[raceId+':'+horseIds[0]].jockey_id,jockeyId);
+ assert.equal(s.runtime.entries[second+':'+horseIds[1]].jockey_id,jockeyId);
+ assert.equal(s.runtime.entries[raceId+':'+horseIds[0]].status,'BOOKED');
+ assert.equal(s.runtime.entries[second+':'+horseIds[1]].status,'BOOKED');
+ assert.equal(s.runtime.finances.ledger.filter(x=>x.kind==='JOCKEY_FEE_RECEIVED').length,2);
+ assert.equal(events.filter(e=>e.kind==='JOCKEY_PREMIER_OFFER_SIGNED').length,2);
+ const trackAndDate=new Set([s.runtime.races[raceId],s.runtime.races[second]].
+  map(r=>r.track_id+'|'+r.date));
+ assert.equal(trackAndDate.size,1,'Same jockey can work an entire card at one track');
+});
