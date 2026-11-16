@@ -191,15 +191,30 @@ try{
  const careerAtStart=await readCareerSave();
  assert.ok(careerAtStart.stableHorses>=2,'Full-world career save lacks playable horses');
  const storageAfterStart=await browser.evalJS('navigator.storage.estimate()');
+ await waitFor('full-world race control',async()=>{
+  const ready=await browser.evalJS(`!!document.querySelector('[data-cc-action="open-next-test-race"]')`);
+  return {done:ready,value:ready};
+ });
+ await pause(500);
  const raceClicked=await browser.evalJS(`(()=>{
   const button=document.querySelector('[data-cc-action="open-next-test-race"]');
   if(!button)return false;button.click();return true;
  })()`);
  assert.equal(raceClicked,true,'Full-world race entry control missing');
+ const raceAction=await waitFor('full-world race action result',async()=>{
+  const state=await browser.evalJS(`(()=>{
+   const text=document.querySelector('#wtwCommercialCareerModal')?.textContent||'';
+   return {error:text.match(/ERROR:[^\\n]*/)?.[0]||null,
+    opened:text.match(/RACE OPEN ·[^\\n]*/)?.[0]||null};
+  })()`);
+  return {done:!!(state.error||state.opened),value:state};
+ },45000);
+ assert.ok(raceAction.opened,'Full-world race entry action failed: '+raceAction.error);
+ console.log('WTW_FULL_WORLD_RACE_ACTION_PASS '+JSON.stringify(raceAction));
  await waitFor('full-world race entry save',async()=>{
   const saved=await readCareerSave();
   return {done:!!saved&&saved.races.length>0,value:saved};
- },180000);
+ },30000);
  const careerWithEntries=await readCareerSave();
  assert.ok(careerWithEntries.raceFields.some(r=>r.field>=2),
   'Full-world player horses were not saved in a real race field');
