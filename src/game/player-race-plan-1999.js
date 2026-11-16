@@ -27,6 +27,7 @@ const packet=(state,world,horse,race,jockey,site)=>({
  premier_offer_required:false,offer_bonus_minor:0,
  potential_jockey_if_signed_minor:0,total_if_signed_minor:0,
  premier_decision_due_date:null,
+ existing_entry_fallback:false,
  acceptance:null,needs_shipping:false,can_confirm:false,blockers:[],
  authority:'ACTUAL_GAME_RUN_PLAYER_COMMAND_QUOTE_NOT_HISTORICAL_RESULT'
 });
@@ -44,8 +45,20 @@ export function quote1999PlayerRacePlan(state,world,{
  if(!jockey)return fail('UNKNOWN_JOCKEY','Choose a selected game jockey');
  if(state.player.role!=='owner'||state.player.operation_id!==horse.owner_organization_id)
   return fail('RACE_PERMISSION','Only the horse owner can approve an entry');
- if(state.runtime.entries?.[race.id+':'+horse.horse_id])
-  return fail('RACE_ALREADY_ENTERED','This horse already has an entry in that race');
+ const existing=state.runtime.entries?.[race.id+':'+horse.horse_id];
+ const offers=Object.values(state.runtime.racing?.premier_offers||{}).
+  filter(o=>o.race_id===race.id&&o.horse_id===horse.horse_id);
+ const lostPremier=offers.some(o=>o.status==='DECLINED');
+ const openMarket=offers.some(o=>o.status==='PENDING');
+ const replacement=Boolean(existing&&existing.status==='ENTERED'&&
+  !existing.jockey_id&&lostPremier&&!openMarket);
+ if(existing&&!replacement)
+  return fail('RACE_ALREADY_ENTERED',
+   'A booked entry or unresolved premier-jockey offer cannot be booked again');
+ if(replacement&&premierMarketRace(race,jockey))
+  return fail('PREMIER_OFFER_DEADLINE',
+   'A defeated premier offer requires an actually available ordinary replacement rider');
+ quote.existing_entry_fallback=replacement;
  const balances=state.runtime.finances.operation_balances_minor,
   previous=balances[horse.owner_organization_id];
  if(!amount(previous))return fail('RACE_FINANCE','Owner account is not established');
@@ -89,7 +102,7 @@ export function quote1999PlayerRacePlan(state,world,{
   }
   const afterShip=raceEligibility(proposed,horse,race);
   if(!afterShip.eligible)return fail('RACE_INELIGIBLE',afterShip.reasons.join(', '));
-  racingAction({state:proposed,world,command:{actor:'player',
+  if(!replacement)racingAction({state:proposed,world,command:{actor:'player',
    type:'ENTER_1999_RACE',payload:{horse_id:horse.horse_id,race_id:race.id}},emit:noop});
   const beforeBook=proposed.runtime.finances.operation_balances_minor[horse.owner_organization_id];
   if(quote.premier_offer_required){
@@ -149,8 +162,9 @@ export function confirm1999PlayerRacePlan({state,world,command,emit}){
   actor:'player',type:'SHIP_1999_HORSE',payload:{
    horse_id:p.horse_id,destination_site_id:p.destination_site_id,
    target_race_id:p.race_id}},emit});
- racingAction({state,world,command:{actor:'player',type:'ENTER_1999_RACE',
-  payload:{horse_id:p.horse_id,race_id:p.race_id}},emit});
+ if(!quote.existing_entry_fallback)
+  racingAction({state,world,command:{actor:'player',type:'ENTER_1999_RACE',
+   payload:{horse_id:p.horse_id,race_id:p.race_id}},emit});
  if(quote.premier_offer_required){
   racingAction({state,world,command:{actor:'player',
    type:'OFFER_1999_PREMIER_JOCKEY',payload:{
@@ -174,7 +188,9 @@ export function confirm1999PlayerRacePlan({state,world,command,emit}){
    source:'MODEL_REAL_UNPAID_OFFER_NOT_SIGNED_MOUNT'});
   return;
  }
- emit('PLAYER_RACE_PLAN_CONFIRMED',{horse_id:horse.horse_id,
+ emit(quote.existing_entry_fallback?
+  'PLAYER_PREMIER_REPLACEMENT_JOCKEY_BOOKED':'PLAYER_RACE_PLAN_CONFIRMED',{
+  horse_id:horse.horse_id,
   owner_id:horse.owner_organization_id,trainer_id:horse.trainer_id,
   race_id:race.id,race_date:race.date,track_id:race.track_id,
   jockey_id:p.jockey_id,destination_site_id:quote.needs_shipping?p.destination_site_id:null,
