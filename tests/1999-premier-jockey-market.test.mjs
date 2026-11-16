@@ -11,6 +11,7 @@ import {book1999LostPremierFallbacks}
  from '../src/game/race-agents-1999.js';
 import {quote1999PlayerRacePlan,confirm1999PlayerRacePlan}
  from '../src/game/player-race-plan-1999.js';
+import {get1999HorseRaceOpportunities} from '../src/game/race-opportunities-1999.js';
 
 const raceId='R-1999-MODELED-G1-01',jockeyId='P-1999-ELITE-J-01';
 const ownerIds=['O-1999-RIVAL-A','O-1999-RIVAL-B'];
@@ -358,4 +359,60 @@ test('player loses rival G1 bid: must choose own replacement, no AI booking, no 
  assert.equal(s.runtime.entries[raceId+':'+horseIds[0]].jockey_id,null);
  assert.equal(s.runtime.finances.operation_balances_minor[ownerIds[0]],before);
  assert.ok(events.some(e=>e.kind==='PLAYER_PREMIER_FALLBACK_AVAILABLE'));
+});
+
+test('owner who loses the G1 jockey signs a REAL replacement on existing entry with only one new payment',()=>{
+ const s=fixture(),{act,events}=entrants(s);
+ s.runtime.registered_horses.by_id[horseIds[0]].
+  starting_attributes.current_ability=65;
+ s.runtime.registered_horses.by_id[horseIds[1]].
+  starting_attributes.current_ability=98;
+ const regular='P-1999-FALLBACK-REGIONAL-03';
+ s.runtime.racing.jockeys[regular]={id:regular,
+  home_track_id:'T-0017',tier:'REGIONAL',starts:0,wins:0,
+  skills:{judgment:.97,horse_handling:.94,finish:.91,pace:.87,composure:.93},
+  game_reputation:.75};
+ s.runtime.racing.jockey_finances_minor[regular]=0;
+ act('OFFER_1999_PREMIER_JOCKEY',{race_id:raceId,
+  horse_id:horseIds[0],jockey_id:jockeyId,bonus_minor:80000},'player');
+ act('OFFER_1999_PREMIER_JOCKEY',{race_id:raceId,
+  horse_id:horseIds[1],jockey_id:jockeyId,bonus_minor:120000},'system');
+ s.clock.date='1999-01-08';
+ resolve1999PremierJockeyOffers({state:s,world,
+  emit:(kind,details)=>events.push({kind,details})});
+ const priorEntry=s.runtime.entries[raceId+':'+horseIds[0]];
+ assert.equal(priorEntry.status,'ENTERED');
+ assert.equal(priorEntry.jockey_id,null);
+ const rows=get1999HorseRaceOpportunities(s,world,horseIds[0],
+  {includeProposals:false}).rows;
+ const opportunity=rows.find(r=>r.race_id===raceId);
+ assert.ok(opportunity,'Existing race entry must remain in read-only advisor');
+ assert.equal(opportunity.status,'PREMIER_REPLACEMENT_REQUIRED');
+ assert.equal(opportunity.next_required_action,'BOOK_1999_JOCKEY');
+ assert.ok(opportunity.available_jockeys.some(r=>r.jockey_id===regular));
+ assert.ok(opportunity.available_jockeys.every(r=>!r.premier_offer_required),
+  'Late, already-closed elite auctions cannot appear as valid choices');
+ const quote=quote1999PlayerRacePlan(s,world,{
+  horse_id:horseIds[0],race_id:raceId,jockey_id:regular});
+ assert.equal(quote.can_confirm,true,JSON.stringify(quote.blockers));
+ assert.equal(quote.existing_entry_fallback,true);
+ assert.equal(quote.outbound_shipping_minor,0);
+ assert.equal(quote.jockey_booking_minor,quote.immediate_total_minor);
+ const entryId=priorEntry.id,ledgerBefore=s.runtime.finances.ledger.length,
+  balanceBefore=s.runtime.finances.operation_balances_minor[ownerIds[0]];
+ confirm1999PlayerRacePlan({state:s,world,command:{actor:'player',
+  payload:{horse_id:horseIds[0],race_id:raceId,jockey_id:regular,
+   expected_revision:0,maximum_total_minor:quote.total_if_signed_minor}},
+  emit:(kind,details)=>events.push({kind,details})});
+ assert.equal(s.runtime.entries[raceId+':'+horseIds[0]].id,entryId);
+ assert.equal(s.runtime.races[raceId].field.filter(id=>id===entryId).length,1,
+  'Owner cannot pay to enter an existing race twice');
+ assert.equal(s.runtime.entries[entryId].status,'BOOKED');
+ assert.equal(s.runtime.entries[entryId].jockey_id,regular);
+ assert.equal(balanceBefore-s.runtime.finances.operation_balances_minor[ownerIds[0]],
+  quote.jockey_booking_minor);
+ assert.equal(s.runtime.finances.ledger.length-ledgerBefore,2,
+  'Owner booking and rider receipt are one balanced pair of entries');
+ assert.ok(events.some(e=>e.kind==='PLAYER_PREMIER_REPLACEMENT_JOCKEY_BOOKED'));
+ assert.deepEqual(JSON.parse(JSON.stringify(s.runtime.entries)),s.runtime.entries);
 });
