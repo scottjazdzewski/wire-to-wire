@@ -146,6 +146,18 @@ const fullAudit=`(async()=>{
    jsHeapBytes:performance.memory?.usedJSHeapSize??null};
  }finally{db.close()}
 })()`;
+const fullNinetyDayAudit=`(async()=>{
+ const persistence=await import('/1999/engine/fictional-industry-persistence-1999.mjs');
+ const circuits=await import('/1999/engine/fictional-industry-90-day-circuit-audit-1999.mjs');
+ const store=await persistence.open1999IndustryDatabase();
+ try{
+  const opened=await persistence.reopenPersistent1999Industry(store,{
+   seed:${seed},worldId:${JSON.stringify(worldId)}});
+  if(opened?.status!=='READY')throw Error('Cannot audit an incomplete full world');
+  return await circuits.auditFullWorld1999NinetyDayCircuit(store,opened.manifest,{
+   expectedHorses:${size}});
+ }finally{store.close()}
+})()`;
 try{
  await readyServer();
  browser=await launch();
@@ -174,6 +186,13 @@ try{
  const before=await browser.evaluate(fullAudit);
  assert.equal(before.check,'PASS');
  assert.equal(before.openingHorses,size);
+ const seasonBefore=await browser.evaluate(fullNinetyDayAudit);
+ assert.equal(seasonBefore.openingHorses,size);
+ assert.equal(seasonBefore.check,'PASS_READ_ONLY_NOT_GAMEPLAY_CERTIFICATION');
+ assert.equal(seasonBefore.period.days,90);
+ assert.deepEqual(seasonBefore.period.checkpoints.map(c=>c.elapsedDays),[30,60,90]);
+ console.log('WTW_FULL_WORLD_90_DAY_CIRCUIT_READINESS_PASS '+JSON.stringify({
+  size,seed,report:seasonBefore}));
  console.log('WTW_INTEGRITY_CREATE_PASS '+JSON.stringify({
   size,seed,creationMs,report:before}));
  await stop();
@@ -186,6 +205,12 @@ try{
  const after=await browser.evaluate(fullAudit);
  const reopenMs=Date.now()-reopenStarted;
  assert.equal(after.check,'PASS');
+ const seasonAfter=await browser.evaluate(fullNinetyDayAudit);
+ assert.deepEqual(seasonAfter,seasonBefore,
+  '90-day whole-industry circuit coverage changed across Chromium restart');
+ console.log('WTW_FULL_WORLD_90_DAY_CIRCUIT_REOPEN_PASS '+JSON.stringify({
+  size,seed,period:seasonAfter.period,openingHorses:seasonAfter.openingHorses,
+  liveGameDaysSimulated:seasonAfter.liveGameDaysSimulated}));
  assert.deepEqual({...after,auditMs:null,jsHeapBytes:null},
   {...before,auditMs:null,jsHeapBytes:null},
   'Reopened full census changed after Chrome process restart');
