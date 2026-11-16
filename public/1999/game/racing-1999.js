@@ -294,11 +294,16 @@ export function racingAction({state,world,command,emit}){
     'JOCKEY_COLONY','Selected jockey needs an approved P-ID and home-track T-ID');
    unique.add(j.id);
    const identity=world.entities.people.find(p=>p.id===j.id);
+   // Selected legacy 1999 elite identities have user-approved travel
+   // standing but NO sourced performance rating. Their game tier must
+   // follow that identity flag, never erase it with a REGIONAL fallback.
+   const contractedTier=identity?.tier??
+    (identity?.eliteFirstPriority===true?'ELITE':'REGIONAL');
    const baseReputation=identity?.ratings?.ability?
     rating(.34+.28*identity.ratings.ability/100+
      (identity.tier==='ELITE'?.12:identity.tier==='ESTABLISHED'?.06:0)):.5;
    rt.jockeys[j.id]={id:j.id,home_track_id:j.home_track_id,
-    tier:identity?.tier??'REGIONAL',
+    tier:contractedTier,
     skills:modeledJockeySkills(j.id,state.rng.seed,identity),
     source:'SELECTED_1999_JOCKEY_IDENTITY_GAME_MODEL',starts:0,wins:0,
     game_reputation:baseReputation,last_track_id:j.home_track_id};
