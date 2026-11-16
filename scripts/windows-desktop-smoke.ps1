@@ -1,7 +1,8 @@
 param(
  [Parameter(Mandatory=$true)][string]$Executable,
  [Parameter(Mandatory=$true)][string]$EvidenceDir,
- [string]$TargetLabel = "unpacked"
+ [string]$TargetLabel = "unpacked",
+ [switch]$IncludeCareerBootstrap
 )
 $ErrorActionPreference = "Stop"
 New-Item -ItemType Directory -Force -Path $EvidenceDir | Out-Null
@@ -11,8 +12,17 @@ $writeReport=Join-Path $EvidenceDir "$TargetLabel-write.json"
 $readReport=Join-Path $EvidenceDir "$TargetLabel-read.json"
 New-Item -ItemType Directory -Force -Path $statePath | Out-Null
 
-foreach($step in @(@("write",$writeReport),@("read",$readReport))){
- $phase=$step[0];$report=$step[1]
+$steps=@(
+ [pscustomobject]@{Phase="write";Report=$writeReport},
+ [pscustomobject]@{Phase="read";Report=$readReport}
+)
+if($IncludeCareerBootstrap){
+ $steps += [pscustomobject]@{Phase="career-write";Report=(Join-Path $EvidenceDir "$TargetLabel-career-write.json")}
+ $steps += [pscustomobject]@{Phase="career-read";Report=(Join-Path $EvidenceDir "$TargetLabel-career-read.json")}
+}
+$careerWriteProof=$null
+foreach($step in $steps){
+ $phase=$step.Phase;$report=$step.Report
  $arguments=@(
    "--wtw-smoke=$phase",
    "--wtw-smoke-report=$report",
@@ -31,7 +41,8 @@ foreach($step in @(@("write",$writeReport),@("read",$readReport))){
    # Some portable wrappers exit before their extracted Electron child and
    # some wait for it. The child's authenticated JSON handshake is definitive,
    # not the wrapper's PID or command-line forwarding.
-   $deadline=(Get-Date).AddMinutes(3)
+   $timeoutMinutes=if($phase.StartsWith("career-")){30}else{3}
+   $deadline=(Get-Date).AddMinutes($timeoutMinutes)
    while(!(Test-Path -LiteralPath $report) -and (Get-Date) -lt $deadline){
      Start-Sleep -Milliseconds 750
      $process.Refresh()
@@ -68,6 +79,24 @@ foreach($step in @(@("write",$writeReport),@("read",$readReport))){
  }
  if($phase -eq "read" -and $proof.appLocalStorageReopen -ne "VERIFIED"){
   throw "Per-user local origin did not survive process exit/restart"
+ }
+ if($phase.StartsWith("career-")){
+  $career=$proof.careerBootstrap
+  if(!$career -or $career.worldId -ne "WTW1999FullIndustry-COHORTS-V2-H300000" -or
+     $career.seed -ne 19990101 -or $career.horseCount -ne 300000 -or
+     $career.personCount -ne 75724 -or
+     $career.runId -ne "WTW-RUN-1999-19990101-SIZE-300000" -or
+     !$career.snapshotSha256 -or !$career.gameDate){
+   throw "Packaged EXE did not load the exact shared 300k world and career: $(Get-Content -Raw $report)"
+  }
+  if($phase -eq "career-write"){$careerWriteProof=$proof}
+  if($phase -eq "career-read"){
+   if(!$careerWriteProof -or $career.gameDate -ne $careerWriteProof.careerBootstrap.gameDate -or
+      $career.snapshotSha256 -ne $careerWriteProof.careerBootstrap.snapshotSha256 -or
+      $proof.careerReopen -ne "VERIFIED"){
+    throw "Packaged career did not reopen unchanged after a real process restart"
+   }
+  }
  }
  Write-Host "WTW_WINDOWS_DESKTOP_PROCESS_$($phase.ToUpperInvariant())_PASS"
  Write-Host "WTW_WINDOWS_LAUNCH_TO_GAME_READY_MS $($proof.launcherToGameReadyMs)"

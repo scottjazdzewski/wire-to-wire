@@ -6,6 +6,7 @@ on:
       - 'desktop/**'
       - 'public/next/**'
       - 'public/1999/**'
+      - 'public/assets/careers/**'
       - 'scripts/windows-desktop-smoke.ps1'
       - 'scripts/windows-desktop-visible.ps1'
       - 'scripts/build-wtw-desktop-icon.py'
@@ -19,6 +20,7 @@ on:
       - 'desktop/**'
       - 'public/next/**'
       - 'public/1999/**'
+      - 'public/assets/careers/**'
       - 'scripts/windows-desktop-smoke.ps1'
       - 'scripts/windows-desktop-visible.ps1'
       - 'scripts/build-wtw-desktop-icon.py'
@@ -35,7 +37,7 @@ jobs:
   windows-executable:
     name: Portable EXE and Windows Installer
     runs-on: windows-latest
-    timeout-minutes: 35
+    timeout-minutes: 75
     env:
       CSC_IDENTITY_AUTO_DISCOVERY: 'false'
       ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: 'false'
@@ -59,7 +61,7 @@ jobs:
       - name: Validate one offline app protocol and source-backed G1 shell
         shell: pwsh
         run: |
-          node --test tests/desktop-g1-local-content.test.cjs tests/desktop-latest-release.test.mjs
+          node --test tests/desktop-g1-local-content.test.cjs tests/desktop-latest-release.test.mjs tests/desktop-bundled-career.test.mjs
           node --check desktop/main.cjs
           node --check desktop/preload.cjs
           node --check desktop/local-content.cjs
@@ -106,7 +108,7 @@ jobs:
         shell: pwsh
         run: |
           $portable=Get-ChildItem dist/windows -Filter 'WireToWire-Portable-*.exe' | Select-Object -First 1
-          ./scripts/windows-desktop-smoke.ps1 -Executable $portable.FullName -EvidenceDir (Join-Path $PWD 'dist/portable-evidence') -TargetLabel 'portable'
+          ./scripts/windows-desktop-smoke.ps1 -Executable $portable.FullName -EvidenceDir (Join-Path $PWD 'dist/portable-evidence') -TargetLabel 'portable' -IncludeCareerBootstrap
       - name: Install the setup EXE and test installed launch with app networking blocked
         shell: pwsh
         run: |

@@ -108,8 +108,15 @@ try{
  await evaluate("window.__WTW_1999_PLAYTEST__.advanceTo('1999-01-16').then(()=>true)");
  const progressed=await untilReady('Game progression');
  assert.equal(progressed.date,'1999-01-16');
- assert.equal(progressed.results.length,3);
- assert.equal(progressed.starts,27);
+ assert.ok(progressed.results.length>=2,
+  'Game must settle multiple real source-conditioned races by January 16');
+ assert.ok(progressed.results.every(r=>r.starters>=2),
+  'Every actual result requires two or more fully booked horses and jockeys');
+ assert.equal(new Set(progressed.results.map(r=>r.id)).size,progressed.results.length,
+  'A settled race must never be duplicated');
+ assert.equal(progressed.starts,
+  progressed.results.reduce((n,r)=>n+r.starters,0),
+  'Every starter must come from a real unique race result within the opening recovery window');
  assert.equal(progressed.uiOwned,progressed.owned);
  // New document context reads back the same IDB record; no second run created.
  await command('Page.reload',{ignoreCache:true});

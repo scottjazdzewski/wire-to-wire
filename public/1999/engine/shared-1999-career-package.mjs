@@ -2,6 +2,29 @@
 export const SHARED_1999_CAREER_PACKAGE_SCHEMA='WTW_SHARED_1999_CAREER_V1';
 const utf8=new TextEncoder(),text=new TextDecoder();
 const MAX_BYTES=64*1024*1024;
+function canonicalJsonValue(value){
+ if(Array.isArray(value))return value.map(canonicalJsonValue);
+ if(value&&Object.getPrototypeOf(value)===Object.prototype){
+  const sorted={};
+  for(const key of Object.keys(value).sort())sorted[key]=canonicalJsonValue(value[key]);
+  return sorted;
+ }
+ return value;
+}
+/** Compare a re-opened IndexedDB manifest with its JSON checkpoint form.
+ * Structured clone can change object key insertion order; that is not a
+ * world change. Array order and every JSON value still have to match. */
+export function sameShared1999WorldManifest(a,b){
+ return JSON.stringify(canonicalJsonValue(a))===JSON.stringify(canonicalJsonValue(b));
+}
+/** Compare immutable census identity before the full-record SHA-256 check.
+ * Generator metadata may evolve while a career checkpoint still names the
+ * same seed, size and world. Record equality is verified after reopening. */
+export function sameShared1999WorldIdentity(a,b){
+ return a?.schema===b?.schema&&a?.worldId===b?.worldId&&a?.seed===b?.seed&&
+  a?.targetOpeningHorses===b?.targetOpeningHorses&&
+  a?.horseCount===b?.horseCount&&a?.personCount===b?.personCount;
+}
 async function sha256(bytes){
  if(!globalThis.crypto?.subtle)throw Error('Web Crypto is required for career checkpoint integrity');
  const hash=new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256',bytes));

@@ -11,7 +11,7 @@ import {gameRaceProgram,supported1999RaceClass,raceEligibility}
 
 function memoryStore(){
  const names=['manifests','horseBatches','personBatches','horseEdits',
-  'careerRuns','directory','coveringBatches','calendarBatches'];
+  'careerRuns','directory','coveringBatches','calendarBatches','industryLifecycle'];
  const data=Object.fromEntries(names.map(name=>[name,new Map()]));
  return {get:async(store,key)=>data[store].get(key),
   commitDirectory:async(id,manifest,records)=>{
@@ -24,6 +24,14 @@ function memoryStore(){
   },putCareerRun:async(id,runId,record)=>{
    if(data.manifests.get(id)?.status!=='COMPLETE')throw Error('World incomplete');
    data.careerRuns.set(id+':'+runId,structuredClone(record));
+  },
+  commitLifecycleRun:async({worldKey,runId,record,checkpoint,horseUpdates=[],eventWrites=[],dataWrites=[]})=>{
+   if(data.manifests.get(worldKey)?.status!=='COMPLETE')throw Error('World incomplete');
+   const runKey=worldKey+':'+runId;
+   data.careerRuns.set(worldKey+':'+runId,structuredClone(record));
+   data.industryLifecycle.set(runKey+':checkpoint',structuredClone(checkpoint));
+   for(const update of horseUpdates)data.industryLifecycle.set(runKey+':horse:'+update.id,structuredClone(update));
+   for(const write of [...eventWrites,...dataWrites])data.industryLifecycle.set(write.key,structuredClone(write.value));
   },
   commitManifest:async(id,manifest)=>data.manifests.set(id,structuredClone(manifest))};
 }

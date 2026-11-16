@@ -245,6 +245,17 @@ frame.onload=()=>setTimeout(()=>{
    logoSrc:d.querySelector('.ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo img')?.currentSrc||'',
    logoMixBlend:d.querySelector('.ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo img')?
     win.getComputedStyle(d.querySelector('.ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo img')).mixBlendMode:'',
+   logoAlphaShare:(()=>{
+    const image=d.querySelector('.ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo img');
+    if(!image?.complete||!image.naturalWidth||!image.naturalHeight)return 0;
+    try{
+     const canvas=d.createElement('canvas');canvas.width=64;canvas.height=48;
+     const ctx=canvas.getContext('2d',{willReadFrequently:true});if(!ctx)return 0;
+     ctx.drawImage(image,0,0,64,48);const pixels=ctx.getImageData(0,0,64,48).data;
+     let transparent=0;for(let i=3;i<pixels.length;i+=4)if(pixels[i]<245)transparent++;
+     return transparent/(pixels.length/4);
+    }catch{return 0}
+   })(),
    logoMatteFlag:!!d.querySelector('.ng-route-profile .ng-profile-source-photo.wtw-hero-white-matte'),
    logoTransparentFlag:!!d.querySelector('.ng-route-profile .ng-profile-source-photo.wtw-hero-transparent'),
    profileBackdrop:d.querySelector('.ng-route-profile .ng-profile-intro')?
@@ -335,11 +346,14 @@ for name,identity in expected.items():
  assert re.fullmatch(r'#[0-9A-Fa-f]{6}',data['identityBase']),(name,'Invalid pixel-derived color')
  assert data['logoSrc'],(name,'Logo image absent from approved profile')
  if name=='gulfstream':
-  # Actual legacy wordmark has an opaque white source canvas. A raw source
-  # with normal blending is a white rectangle: this IS a screenshot failure.
-  cleaned=data['logoTransparentFlag'] and (
+  # Accept either the locally generated alpha derivative or the exact approved
+  # track logo once the transparent upload has replaced the old white-matte art.
+  # The latter is sampled directly so an opaque fallback cannot pass by path.
+  derived=data['logoTransparentFlag'] and (
    data['logoSrc'].startswith('blob:') or data['logoSrc'].startswith('data:image/'))
-  assert cleaned,(name,'Gulfstream must display an actual alpha-matte derivative; blending a white rectangle is not visual acceptance',data)
+  uploaded_alpha=(data['logoSrc'].split('?')[0].endswith('/assets/places/track-logos/T-0017.webp') and
+   data['logoAlphaShare']>=0.01)
+  assert derived or uploaded_alpha,(name,'Gulfstream logo has neither a verified transparent derivative nor visible alpha in its approved track asset',data)
   assert data['logoMixBlend'] in ('normal',''),(name,'Temporary blend still active after logo conversion',data)
  assert 'gradient' in data['profileBackdrop'],(name,'Profile atmosphere missing')
  palette_rows[name]=data['identityBase']

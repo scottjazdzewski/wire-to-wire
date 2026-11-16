@@ -59,7 +59,10 @@ function groupFor(code){
 }
 export function modeledShippingRoute(originSite,destinationSite){
  const a=stateOf(originSite),b=stateOf(destinationSite);
- if(!a||!b||originSite.location?.country!=='USA'||
+ // Mainland hauling cannot cross an ocean; offshore operations require a
+ // separately implemented and priced air/sea carrier, never a road quote.
+ if(['AK','HI'].includes(a)||['AK','HI'].includes(b)||
+   !a||!b||originSite.location?.country!=='USA'||
    destinationSite.location?.country!=='USA')
   return {supported:false,reason:'NO_VALIDATED_DOMESTIC_ROUTE'};
  const ag=groupFor(a),bg=groupFor(b);

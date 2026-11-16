@@ -14,7 +14,7 @@ test('approved UI loads the local career manager after the shared game interface
  const uiIndex=html.indexOf('/next/next.js?rev=');
  const managerIndex=html.indexOf('/next/1999-commercial-career-manager.mjs?rev=');
  assert.ok(config>=0&&bootstrap>config&&uiIndex>bootstrap&&managerIndex>uiIndex);
- assert.match(html,/1999-commercial-career-manager\.mjs\?rev=wtw-custom-world-cohort-v3/);
+ assert.match(html,/1999-commercial-career-manager\.mjs\?rev=wtw-custom-world-cohort-v5/);
  assert.match(html,/href="\/next\/next\.css\?rev=/);
  assert.match(css,/\.wtw-cc-backdrop\[hidden\]\{display:none!important\}/);
  assert.match(ui,/if\(key==='save-open'\)/);

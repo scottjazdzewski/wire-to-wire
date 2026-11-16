@@ -30,7 +30,7 @@ test('Every current department and its listed screens uses the same VIEW menu op
    assert.equal((options.match(/selected/g)||[]).length,1,'Exactly one current view: '+section+':'+page);
    assert.ok(options.includes('<option value="'+safe(page)+'" selected>'+safe(page)+'</option>'));
    assert.ok(manager.includes(options),'Management and department views must not fork: '+section);
-   assert.match(manager,/<label>VIEW <select data-ng-select="manager-screen"/);
+   assert.match(manager,/<label(?: class="ng-manager-view-picker")?>VIEW <select data-ng-select="manager-screen"/);
    assert.ok(manager.includes('aria-label="Choose '+section+' view"'));
    const real=pages.map(p=>'<option value="'+safe(p)+'" '+(p===page?'selected':'')+'>'+safe(p)+'</option>').join('');
    assert.equal(options,real,'Do not reorder or remove previously approved pages');
