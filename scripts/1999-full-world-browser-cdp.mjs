@@ -172,7 +172,11 @@ try{
     registeredHorses:Object.keys(run?.runtime?.registered_horses?.by_id||{}).length,
     races:races.length,
     officialRaces:races.filter(r=>r.status==='OFFICIAL_SIM_RESULT').length,
-    raceFields:races.map(r=>({status:r.status,field:r.field?.length??0,date:r.date}))};
+    raceFields:races.map(r=>({status:r.status,field:r.field?.length??0,date:r.date,
+     raceId:r.id,results:(r.results||[]).map(x=>({horseId:x.horse_id,
+      finish:x.finish,earningsMinor:x.earnings_minor,
+      ownerShareMinor:x.owner_share_minor,jockeyShareMinor:x.jockey_share_minor,
+      trainerShareMinor:x.trainer_share_minor}))}))};
   }finally{db.close()}
  })()`);
  await waitFor('full-world career start control',async()=>{
@@ -233,11 +237,135 @@ try{
   const v=await browser.evalJS('Boolean(window.WTWCompactCareerManager?.open)');
   return {done:v,value:v};
  });
- await browser.evalJS('window.WTWCompactCareerManager.open().then(()=>true)');
  const careerAfterProcessRestart=await readCareerSave();
  assert.deepEqual(careerAfterProcessRestart,careerAfterDay,
   'Played full-world career record changed or failed to reopen after Chromium restart');
  console.log('WTW_FULL_WORLD_PLAYED_SAVE_REOPEN_PASS '+JSON.stringify(careerAfterProcessRestart));
+ const raceSettlement=await browser.evalJS(`(async()=>{
+  const persistence=await import('/1999/engine/fictional-industry-persistence-1999.mjs');
+  const bridge=await import('/1999/engine/fictional-industry-game-world-bridge-1999.mjs');
+  const {dispatchGameCommand}=await import('/1999/game/kernel.js');
+  const {gameRaceProgram,supported1999RaceClass,raceEligibility}=await import('/1999/game/racing-1999.js');
+  const db=await persistence.open1999IndustryDatabase();
+  try{
+   const reopened=await persistence.reopenPersistent1999Industry(db,{
+    seed:19990101,worldId:${JSON.stringify(snap.worldId)}});
+   if(!reopened||reopened.status!=='READY')throw Error('Completed full world did not reopen');
+   const runId='WTW-RUN-1999-'+reopened.manifest.seed+'-SIZE-'+
+    (reopened.manifest.targetOpeningHorses??reopened.manifest.horseCount);
+   const saved=await persistence.loadPersistent1999CareerRun(db,reopened.manifest,runId);
+   if(!saved?.changes?.canonicalRun)throw Error('Saved full-world career is missing');
+   const career=await bridge.openPersistent1999GameCareer(db,reopened.manifest,{
+    runId,operationId:saved.player.operation_id});
+   const world=career.world;let state=saved.changes.canonicalRun;
+   const baselineBalance=state.runtime.finances.operation_balances_minor[state.player.operation_id];
+   let chosen=null;
+   for(let offset=2;offset<=28&&!chosen;offset++){
+    const date=new Date(Date.parse(state.clock.date+'T00:00:00Z')+
+     offset*86400000).toISOString().slice(0,10);
+    for(const book of gameRaceProgram(state,world,career.homeTrackId,date)){
+     if(!supported1999RaceClass(book)||book.conditions!=='Maiden Special Weight'||
+      state.runtime.races[book.id])continue;
+     try{
+      let opened=dispatchGameCommand({state,world,command:{
+       id:'full-world-open-'+book.id,type:'OPEN_1999_RACE',actor:'system',
+       payload:{track_id:career.homeTrackId,date,race_id:book.id}}}).state;
+      const eligible=opened.stable_horse_ids.map(id=>
+       opened.runtime.registered_horses.by_id[id]).filter(h=>
+        raceEligibility(opened,h,opened.runtime.races[book.id]).eligible);
+      if(eligible.length>=2)chosen={book,state:opened,horses:eligible.slice(0,
+       Math.min(8,book.fieldCapacity))};
+     }catch{}
+     if(chosen)break;
+    }
+   }
+   if(!chosen)throw Error('No eligible local maiden field found in the next 28 days');
+   state=chosen.state;
+   for(const horse of chosen.horses){
+    state=dispatchGameCommand({state,world,command:{
+     id:'full-world-enter-'+chosen.book.id+'-'+horse.horse_id,
+     type:'ENTER_1999_RACE',actor:'player',
+     payload:{race_id:chosen.book.id,horse_id:horse.horse_id}}}).state;
+   }
+   const used=new Set();
+   for(const horse of chosen.horses){
+    let booked=false;
+    for(const jockey of Object.values(state.runtime.racing.jockeys)){
+     if(used.has(jockey.id))continue;
+     try{
+      state=dispatchGameCommand({state,world,command:{
+       id:'full-world-book-'+chosen.book.id+'-'+horse.horse_id+'-'+jockey.id,
+       type:'BOOK_1999_JOCKEY',actor:'player',
+       payload:{race_id:chosen.book.id,horse_id:horse.horse_id,jockey_id:jockey.id}}}).state;
+      used.add(jockey.id);booked=true;break;
+     }catch{}
+    }
+    if(!booked)throw Error('No available local jockey accepted horse '+horse.horse_id);
+   }
+   const openedDate=state.clock.date;
+   while(state.clock.date<chosen.book.date){
+    state=dispatchGameCommand({state,world,command:{
+     id:'full-world-race-day-'+state.clock.date,type:'ADVANCE_DAY',
+     actor:'player',payload:{}}}).state;
+   }
+   let race=state.runtime.races[chosen.book.id];
+   if(race.status==='ENTRIES_OPEN'){
+    state=dispatchGameCommand({state,world,command:{
+     id:'full-world-finalize-'+chosen.book.id,type:'SETTLE_1999_RACE',
+     actor:'system',payload:{race_id:chosen.book.id}}}).state;
+    race=state.runtime.races[chosen.book.id];
+   }
+   if(race.status!=='OFFICIAL_SIM_RESULT')
+    throw Error('Full-world race did not settle: '+race.status);
+   if(race.results.length<2)throw Error('Official full-world race has fewer than two results');
+   const awarded=race.results.reduce((sum,row)=>sum+row.earnings_minor,0);
+   if(awarded!==race.purse_minor)throw Error('Race purse distribution does not balance');
+   if(new Set(race.results.map(x=>x.horse_id)).size!==race.results.length)
+    throw Error('Official race contains duplicate horses');
+   const savedRace={runId,gameDate:state.clock.date,player:state.player,
+    changes:{canonicalRun:state},version:state.revision+1};
+   await persistence.savePersistent1999CareerRun(db,reopened.manifest,savedRace);
+   const roundTrip=await persistence.loadPersistent1999CareerRun(db,reopened.manifest,runId);
+   if(JSON.stringify(roundTrip.changes.canonicalRun)!==JSON.stringify(state))
+    throw Error('Official race did not survive persistent save read-back');
+   return {worldHorses:reopened.manifest.horseCount,worldId:reopened.manifest.worldId,
+    operationId:state.player.operation_id,homeTrack:career.homeTrackId,
+    raceId:race.id,raceName:race.name,raceDate:race.date,openedFromDate:openedDate,
+    status:race.status,starterCount:race.results.length,purseMinor:race.purse_minor,
+    awardedMinor:awarded,playerBalanceBefore:baselineBalance,
+    playerBalanceAfter:state.runtime.finances.operation_balances_minor[state.player.operation_id],
+    results:race.results.map(x=>({horseId:x.horse_id,finish:x.finish,
+     earningsMinor:x.earnings_minor,ownerShareMinor:x.owner_share_minor,
+     jockeyShareMinor:x.jockey_share_minor,trainerShareMinor:x.trainer_share_minor})),
+    saveReadBack:true,careerDate:state.clock.date};
+  }finally{db.close()}
+ })()`);
+ assert.equal(raceSettlement.worldHorses,300000,'Race must use the persisted 300k world');
+ assert.equal(raceSettlement.status,'OFFICIAL_SIM_RESULT');
+ assert.ok(raceSettlement.starterCount>=2);
+ assert.equal(raceSettlement.awardedMinor,raceSettlement.purseMinor,
+  'Official purse awards must reconcile to the scheduled purse');
+ assert.equal(raceSettlement.saveReadBack,true);
+ console.log('WTW_FULL_WORLD_RACE_SETTLEMENT_PASS '+JSON.stringify(raceSettlement));
+ const careerAfterRace=await readCareerSave();
+ assert.ok(careerAfterRace.officialRaces>=1,'Saved career must contain an official race');
+ assert.ok(careerAfterRace.raceFields.some(r=>r.raceId===raceSettlement.raceId&&
+  r.status==='OFFICIAL_SIM_RESULT'&&r.results.length===raceSettlement.starterCount),
+  'Saved official race does not match the race settlement evidence');
+ await stop(browser);browser=null;
+ browser=await launch();
+ await waitFor('Career Manager after race restart',async()=>{
+  const v=await browser.evalJS('Boolean(window.WTWCompactCareerManager?.open)');
+  return {done:v,value:v};
+ });
+ await browser.evalJS('window.WTWCompactCareerManager.open().then(()=>true)');
+ const careerAfterRaceRestart=await readCareerSave();
+ assert.deepEqual(careerAfterRaceRestart,careerAfterRace,
+  'Official full-world race changed or failed to reopen after Chromium restart');
+ assert.ok(careerAfterRaceRestart.raceFields.some(r=>r.raceId===raceSettlement.raceId&&
+  r.status==='OFFICIAL_SIM_RESULT'&&r.results.length===raceSettlement.starterCount),
+  'Official result is missing after Chromium process restart');
+ console.log('WTW_FULL_WORLD_RACE_REOPEN_PASS '+JSON.stringify({raceSettlement,careerAfterRaceRestart}));
  const reopened=await browser.evalJS(inspect);
  assert.deepEqual(reopened,snap,'Full world changed after Chromium process restart');
  const ui=await browser.evalJS(`(()=>{
