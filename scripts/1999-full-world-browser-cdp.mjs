@@ -259,29 +259,50 @@ try{
     runId,operationId:saved.player.operation_id});
    const world=career.world;let state=saved.changes.canonicalRun;
    const baselineBalance=state.runtime.finances.operation_balances_minor[state.player.operation_id];
-   let chosen=null;
-   for(let offset=2;offset<=28&&!chosen;offset++){
+   const dayGap=(from,to)=>(Date.parse(to+'T00:00:00Z')-
+    Date.parse(from+'T00:00:00Z'))/86400000;
+   const activeHorses=state.stable_horse_ids.map(id=>
+    state.runtime.registered_horses.by_id[id]);
+   const occupiedTracks=[...new Set(activeHorses.map(h=>h.host_track_id))].sort();
+   let chosen=null;const scheduleEvidence=[];
+   for(let offset=2;offset<=365&&!chosen;offset++){
     const date=new Date(Date.parse(state.clock.date+'T00:00:00Z')+
      offset*86400000).toISOString().slice(0,10);
-    for(const book of gameRaceProgram(state,world,career.homeTrackId,date)){
-     if(!supported1999RaceClass(book)||book.conditions!=='Maiden Special Weight'||
-      state.runtime.races[book.id])continue;
-     try{
-      let opened=dispatchGameCommand({state,world,command:{
-       id:'full-world-open-'+book.id,type:'OPEN_1999_RACE',actor:'system',
-       payload:{track_id:career.homeTrackId,date,race_id:book.id}}}).state;
-      const eligible=opened.stable_horse_ids.map(id=>
-       opened.runtime.registered_horses.by_id[id]).filter(h=>
-        raceEligibility(opened,h,opened.runtime.races[book.id]).eligible);
-      if(eligible.length>=2)chosen={book,state:opened,horses:eligible.slice(0,
-       Math.min(8,book.fieldCapacity))};
-     }catch{}
+    if(!date.startsWith('1999-'))break;
+    for(const trackId of occupiedTracks){
+     const localHorses=activeHorses.filter(h=>h.host_track_id===trackId);
+     const books=gameRaceProgram(state,world,trackId,date).filter(book=>
+      supported1999RaceClass(book)&&book.conditions==='Maiden Special Weight'&&
+      !state.runtime.races[book.id]&&
+      (trackId===career.homeTrackId||dayGap(state.clock.date,date)>=4));
+     if(books.length)scheduleEvidence.push({date,trackId,books:books.length,
+      stableHorses:localHorses.length});
+     for(const book of books){
+      const eligible=localHorses.filter(h=>raceEligibility(state,h,book).eligible);
+      if(eligible.length<2)continue;
+      chosen={book,trackId,horseIds:eligible.slice(0,
+       Math.min(8,book.fieldCapacity)).map(h=>h.horse_id)};
+      break;
+     }
      if(chosen)break;
     }
    }
-   if(!chosen)throw Error('No eligible local maiden field found in the next 28 days');
-   state=chosen.state;
-   for(const horse of chosen.horses){
+   if(!chosen)throw Error('No eligible maiden on player stable tracks in 1999; tracks '+
+    JSON.stringify(occupiedTracks)+'; scheduled candidates '+JSON.stringify(scheduleEvidence.slice(0,12)));
+   while(dayGap(state.clock.date,chosen.book.date)>28){
+    state=dispatchGameCommand({state,world,command:{
+     id:'full-world-race-window-'+state.clock.date,type:'ADVANCE_DAY',
+     actor:'player',payload:{}}}).state;
+   }
+   const opened=dispatchGameCommand({state,world,command:{
+    id:'full-world-open-'+chosen.book.id,type:'OPEN_1999_RACE',actor:'system',
+    payload:{track_id:chosen.trackId,date:chosen.book.date,race_id:chosen.book.id}}}).state;
+   const horses=chosen.horseIds.map(id=>opened.runtime.registered_horses.by_id[id]);
+   if(horses.filter(h=>raceEligibility(opened,h,
+    opened.runtime.races[chosen.book.id]).eligible).length<2)
+    throw Error('Selected full-world starters lost race eligibility before entry');
+   state=opened;
+   for(const horse of horses){
     state=dispatchGameCommand({state,world,command:{
      id:'full-world-enter-'+chosen.book.id+'-'+horse.horse_id,
      type:'ENTER_1999_RACE',actor:'player',
@@ -329,7 +350,7 @@ try{
    if(JSON.stringify(roundTrip.changes.canonicalRun)!==JSON.stringify(state))
     throw Error('Official race did not survive persistent save read-back');
    return {worldHorses:reopened.manifest.horseCount,worldId:reopened.manifest.worldId,
-    operationId:state.player.operation_id,homeTrack:career.homeTrackId,
+    operationId:state.player.operation_id,homeTrack:career.homeTrackId,raceTrack:chosen.trackId,
     raceId:race.id,raceName:race.name,raceDate:race.date,openedFromDate:openedDate,
     status:race.status,starterCount:race.results.length,purseMinor:race.purse_minor,
     awardedMinor:awarded,playerBalanceBefore:baselineBalance,
