@@ -16,6 +16,10 @@ on:
       - 'tests/1999-national-jockey-engagements.test.mjs'
       - 'tests/1999-jockey-partnerships.test.mjs'
       - 'tests/1999-premier-jockey-market.test.mjs'
+      - 'tests/1999-premier-jockey-ui.test.mjs'
+      - 'public/next/1999-player-race-planning.mjs'
+      - 'src/game/player-race-plan-1999.js'
+      - 'public/1999/game/player-race-plan-1999.js'
       - 'public/1999/engine/jockey-premier-market-1999.mjs'
       - 'public/1999/engine/jockey-partnerships-1999.mjs'
       - 'public/1999/engine/jockey-engagements-1999.mjs'
@@ -53,6 +57,7 @@ jobs:
             tests/1999-national-jockey-engagements.test.mjs \
             tests/1999-jockey-partnerships.test.mjs \
             tests/1999-premier-jockey-market.test.mjs \
+            tests/1999-premier-jockey-ui.test.mjs \
             2>&1 | tee world-circuit-audit.log
       - name: Preserve unit audit log
         if: always()
