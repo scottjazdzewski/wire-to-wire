@@ -147,7 +147,8 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
  }
  // Full-census age/sex upper bounds; 2YO prospects are NOT assumed ready.
  const raceClassCounts=new Map(),demographicGaps=[];
- let ageSexInsufficientRaces=0,unmodeledClassRaces=0;
+ let ageSexInsufficientRaces=0,matureAgeSexInsufficientRaces=0,
+  juvenileAgeSexInsufficientRaces=0,unmodeledClassRaces=0;
  const residentDemographics=[...demographicByTrack.entries()].map(([key,count])=>{
   const [trackId,status,age,sex]=key.split('|');
   return {trackId,status,age:Number(age),sex,count};
@@ -221,6 +222,8 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
     const pool=candidates(c.trackId,r);
     if(pool.currentRacing<2){
      ageSexInsufficientRaces++;
+     if(r.age==='2YO')juvenileAgeSexInsufficientRaces++;
+     else matureAgeSexInsufficientRaces++;
      if(demographicGaps.length<100)demographicGaps.push({
       raceId:r.id,trackId:c.trackId,date:c.date,
       age:r.age,sex:r.sex,condition:r.condition,
@@ -332,6 +335,10 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
   restrictionsChecked:'OPENING_RESIDENT_AGE_AND_SEX_UPPER_BOUND_ONLY',
   racesWithFewerThanTwoDemographicallyMatchingActiveLocalRunners:
    ageSexInsufficientRaces,
+  twoYearOldSourceRacesWithoutTwoActiveLocalRunners:
+   juvenileAgeSexInsufficientRaces,
+  olderHorseSourceRacesWithoutTwoMatchingActiveLocalRunners:
+   matureAgeSexInsufficientRaces,
   firstDemographicGaps:demographicGaps,
   raceDayFitnessWinsFundsTravelAndEntriesNotModeled:true
  };
