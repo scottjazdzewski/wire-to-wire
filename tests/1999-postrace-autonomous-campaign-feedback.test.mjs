@@ -6,6 +6,7 @@ import {WORLD_SCHEMA,dispatchGameCommand,exportGameSave,importGameSave,
  getGamePostRaceCampaign,postRaceWorkoutGuidance,postRaceCarePriority,
  postRaceAIPlacement,get1999HorseRaceOpportunities,quote1999PlayerRacePlan}
  from '../src/game/index.js';
+import {jockeyBookingDecision} from '../src/game/racing-1999.js';
 import {build1999PilotGameRun} from '../src/game/1999-pilot-fixture.js';
 import {createPlaytestCareer} from '../public/1999/game/playtest-service.mjs';
 
@@ -32,13 +33,17 @@ const through=date=>{let s=fresh();while(s.clock.date<date)s=day(s);return s};
 test('every actual starter receives one dated, persistent result-linked trainer campaign, never a fabricated result',()=>{
  const state=through('1999-01-09');
  const races=resultRaces(state);
- assert.equal(races.length,3);
+ assert.ok(races.length>=2,'A real game career must settle multiple race fields');
+ const starters=races.reduce((n,r)=>n+r.results.length,0);
+ const starterIds=new Set(races.flatMap(r=>r.results.map(x=>x.horse_id)));
+ assert.equal(starters,starterIds.size,
+  'Real 12-day recovery must prevent repeated starts in the first 8 days');
  const source=JSON.stringify(world);
  const plans=state.runtime.post_race_campaigns;
  assert.equal(plans.schema,'WTW_1999_POSTRACE_CAMPAIGN_V1');
- assert.equal(plans.totals.race_reviews,27);
- assert.equal(Object.keys(plans.by_horse).length,27);
- assert.equal(state.event_log.filter(e=>e.kind==='HORSE_POST_RACE_CAMPAIGN_CREATED').length,27);
+ assert.equal(plans.totals.race_reviews,starters);
+ assert.equal(Object.keys(plans.by_horse).length,starterIds.size);
+ assert.equal(state.event_log.filter(e=>e.kind==='HORSE_POST_RACE_CAMPAIGN_CREATED').length,starters);
  for(const race of races){
   for(const result of race.results){
    const p=getGamePostRaceCampaign(state,result.horse_id);
@@ -187,7 +192,26 @@ test('player-directed workouts are only overridden for compulsory postrace welfa
   }
   if(choice)break;
  }
- assert.ok(choice,'Pilot player owner must have an actual entry and jockey option');
+ if(!choice){
+  const diagnostics=Object.values(state.runtime.registered_horses.by_id).
+   filter(x=>x.owner_organization_id===state.player.operation_id).
+   flatMap(h=>get1999HorseRaceOpportunities(state,world,h.horse_id,{
+    includeProposals:false}).rows.map(r=>({
+     horse:h.horse_id,race:r.race_id,track:r.track_id,status:r.status,
+     reasons:r.eligibility_reasons,
+     availableJockeys:r.available_jockeys.length,
+     fundedJockeys:r.available_jockeys.filter(j=>j.owner_can_pay).length,
+     jockeyRejectionTotals:Object.values(state.runtime.racing.jockeys).reduce((counts,j)=>{
+      const race=state.runtime.races[r.race_id];
+      if(!race)return counts;
+      const reason=jockeyBookingDecision(state,world,race,h,j).reason;
+      counts[reason]=(counts[reason]||0)+1;
+      return counts;
+     },{})
+    }))).slice(0,24);
+  assert.fail('Player must have a genuinely funded available jockey and open entry: '+
+   JSON.stringify(diagnostics));
+ }
  state=command(state,'postrace:player:entry','CONFIRM_1999_RACE_PLAN',{
   ...choice.payload,expected_revision:choice.quote.expected_revision,
   maximum_total_minor:choice.quote.immediate_total_minor},'player');

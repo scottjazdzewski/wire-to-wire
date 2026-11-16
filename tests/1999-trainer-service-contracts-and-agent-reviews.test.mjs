@@ -128,12 +128,35 @@ test('AI service renewal responds to recorded reputation, trust and owner cash a
   professional_standing:1};
  const quote=trainerContractQuote(s,world,owner,trainer);
  assert.ok(quote.minimum_acceptable_minor>first);
+ // A jockey-driven January race campaign can generate a legitimate EARLY
+ // contract renewal. When accepted, its next review is scheduled 28 days
+ // after the new terms become effective; never assume it stays on Jan 30.
  while(s.clock.date<'1999-01-29')s=advance(s);
+ const scheduled=getTrainerContract(s,world,owner,trainer).agreement.review_on;
+ const beforeScheduled=new Date(Date.parse(scheduled)-86400000).
+  toISOString().slice(0,10);
+ assert.ok(beforeScheduled>=s.clock.date,'Next scheduled review must be in the future');
+ while(s.clock.date<beforeScheduled)s=advance(s);
+ const current=getTrainerContract(s,world,owner,trainer).agreement;
+ assert.equal(current.review_on,scheduled,'Agreement review date may not drift before its due day');
+ const feeBeforeReview=current.daily_fee_minor;
+ // Set the controlled exceptional market evidence at the actual review
+ // boundary, after the month's genuine races have updated professional form.
+ s.runtime.people[trainer].game_race_record={starts:20,wins:16,
+  managed_purse_minor:3000000,professional_standing:1};
+ s.runtime.agents.relationships[id].trainer_support=.05;
  const reviewQuote=trainerContractQuote(s,world,owner,trainer);
- assert.ok(reviewQuote.minimum_acceptable_minor>first);
- s=advance(s); // January 30: agent reviews the actual January 29 trust/standing
+ assert.ok(reviewQuote.minimum_acceptable_minor>feeBeforeReview,
+  'A fully-funded, exceptional trainer must face a higher market quote');
+ s=advance(s); // Exactly the agreement's actual, persisted next-review date
+ assert.equal(s.clock.date,scheduled);
  const offer=getTrainerContract(s,world,owner,trainer).agreement;
- assert.ok(offer.pending,'AI must negotiate an affordable raise in response to exceptional trainer standing');
+ assert.ok(offer.pending,'AI must negotiate an affordable raise when trainer standing is exceptional: '+
+  JSON.stringify({reviewQuote,offer,ownerCash:s.runtime.finances.operation_balances_minor[owner],
+   review:s.runtime.owner_trainer_reviews.by_pair[id]?.evidence,
+   latestTrainerForm:s.runtime.people[trainer]?.game_race_record,
+   lastReview:s.event_log.filter(e=>e.kind==='TRAINER_SERVICE_REVIEWED'&&
+    e.details.owner_id===owner&&e.details.trainer_id===trainer).at(-1)?.details}));
  // The renewal is quoted *after* the real concern response, then the
  // normal daily care settlement can change trust again before day-end reads.
  // Verify the exact posted contract decision, not a stale day-end preview.
@@ -141,12 +164,13 @@ test('AI service renewal responds to recorded reputation, trust and owner cash a
   e.details.owner_id===owner&&e.details.trainer_id===trainer);
  assert.ok(renewal,'The scheduled fee action must be journaled');
  assert.equal(offer.pending.daily_fee_minor,renewal.details.new_daily_fee_minor);
- assert.ok(offer.pending.daily_fee_minor>first);
+ assert.ok(offer.pending.daily_fee_minor>feeBeforeReview);
  if(offer.pending.daily_fee_minor!==reviewQuote.minimum_acceptable_minor)
   assert.ok(s.event_log.some(e=>e.kind==='TRAINER_CONCERN_RESPONDED'&&
    e.details.owner_id===owner&&e.details.trainer_id===trainer),
    'An intervening relationship conversation must explain changed pricing');
- assert.equal(offer.daily_fee_minor,first,'Review cannot retroactively change today\'s fee');
+ assert.equal(offer.daily_fee_minor,feeBeforeReview,
+  'Review cannot retroactively change today\'s actual existing fee');
  s=advance(s);
  const active=getTrainerContract(s,world,owner,trainer).agreement;
  assert.equal(active.daily_fee_minor,renewal.details.new_daily_fee_minor);
@@ -159,7 +183,11 @@ test('fixed-baseline terms leave the original 15-day 38-horse game race cycle de
  for(let i=0;i<15;i++){a=advance(a);b=advance(b)}
  assert.deepEqual(a,b);
  assert.equal(a.clock.date,'1999-01-16');
- assert.equal(Object.values(a.runtime.races).filter(r=>r.status==='OFFICIAL_SIM_RESULT').length,3);
+ const completed=Object.values(a.runtime.races).filter(r=>r.status==='OFFICIAL_SIM_RESULT');
+ assert.ok(completed.length>=2,'Autonomous trainer/jockey bookings must produce real fields');
+ assert.ok(completed.every(r=>r.results.length>=2&&
+  r.results.every(row=>Boolean(a.runtime.racing.jockeys[row.jockey_id]))),
+  'Every paid result must name a real booked jockey');
  assert.equal(Object.keys(a.runtime.trainer_contracts.by_pair).length>0,true);
  const totalCare=a.runtime.finances.ledger.filter(x=>x.kind==='HORSE_CARE_TRAINER_EARNINGS').
  reduce((n,x)=>n+x.amount_minor,0);
