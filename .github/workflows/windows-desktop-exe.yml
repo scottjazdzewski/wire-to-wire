@@ -65,10 +65,12 @@ jobs:
           node --check desktop/local-content.cjs
       - name: Install development-only Electron packager dependencies
         shell: pwsh
-        run: npm install --prefix desktop --no-audit --no-fund
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
       - name: Package unsigned portable EXE and conventional setup EXE
         shell: pwsh
-        run: npm run build:windows --prefix desktop
+        working-directory: desktop
+        run: npm run build:windows
       - name: Confirm both distinct Windows executables exist
         shell: pwsh
         run: |
@@ -80,8 +82,22 @@ jobs:
             throw 'Portable, Setup and unpacked app are all required'
           }
           Write-Host "WTW_DESKTOP_BOTH_EXE_TARGETS_PASS"
-          Write-Host "Portable EXE: $($portable.FullName)"
-          Write-Host "Installer EXE: $($setup.FullName)"
+          $folderZip=Get-ChildItem dist/windows -Filter 'WireToWire-NoInstall-Folder-*.zip' -ErrorAction SilentlyContinue | Select-Object -First 1
+          $targets=@($setup,$portable,$folderZip) | Where-Object { $_ }
+          foreach($file in $targets){
+            Write-Host ("WTW_PACKAGE_SIZE {0} {1:N2} MiB ({2} bytes)" -f $file.Name,($file.Length/1MB),$file.Length)
+          }
+          $unpackedBytes=(Get-ChildItem 'dist/windows/win-unpacked' -File -Recurse | Measure-Object Length -Sum).Sum
+          Write-Host ("WTW_PACKAGE_SIZE win-unpacked {0:N2} MiB ({1} bytes)" -f ($unpackedBytes/1MB),$unpackedBytes)
+          $recursivePackage='dist/windows/win-unpacked/resources/app.asar.unpacked/node_modules/wtw-canon-desk'
+          if(Test-Path -LiteralPath $recursivePackage){
+            throw "The desktop package recursively embeds the repository build output: $recursivePackage"
+          }
+          $asarEntries=@(& node -e 'const asar=require("./desktop/node_modules/@electron/asar"); console.log(asar.listPackage("dist/windows/win-unpacked/resources/app.asar").join("\n"))')
+          if($LASTEXITCODE -ne 0){throw 'Could not inspect the packaged app.asar'}
+          if($asarEntries -match 'node_modules[/\\]wtw-canon-desk[/\\]'){
+            throw 'The desktop app.asar contains the repository package recursively'
+          }
       - name: Run real desktop process twice without installed game or remote browser
         shell: pwsh
         run: |
@@ -142,16 +158,31 @@ jobs:
           $target="dist/windows/WireToWire-NoInstall-Folder-$version-x64.zip"
           Compress-Archive -Path 'dist/windows/win-unpacked' -DestinationPath $target -CompressionLevel Optimal -Force
           if(!(Test-Path $target)){throw 'No-install folder ZIP is missing'}
+          $folderZip=Get-Item -LiteralPath $target
+          Write-Host ("WTW_PACKAGE_SIZE {0} {1:N2} MiB ({2} bytes)" -f $folderZip.Name,($folderZip.Length/1MB),$folderZip.Length)
           Write-Host "WTW_WINDOWS_FOLDER_BASED_NO_INSTALL_PASS $target"
-      - name: Preserve both EXEs for immediate Windows download
+      - name: Preserve the Windows setup installer separately
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: WireToWire-Windows-Portable-and-Setup
-          path: |
-            dist/windows/WireToWire-Portable-*.exe
-            dist/windows/WireToWire-Setup-*.exe
-            dist/windows/WireToWire-NoInstall-Folder-*.zip
+          name: WireToWire-Windows-Setup
+          path: dist/windows/WireToWire-Setup-*.exe
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Preserve the self-extracting portable build separately
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: WireToWire-Windows-Portable
+          path: dist/windows/WireToWire-Portable-*.exe
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Preserve the folder-based portable build separately
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: WireToWire-Windows-NoInstall
+          path: dist/windows/WireToWire-NoInstall-Folder-*.zip
           if-no-files-found: warn
           retention-days: 14
       - name: Preserve packaged Windows test evidence
@@ -216,7 +247,19 @@ jobs:
         if: steps.current.outputs.eligible == 'true'
         uses: actions/download-artifact@v4
         with:
-          name: WireToWire-Windows-Portable-and-Setup
+          name: WireToWire-Windows-Setup
+          path: incoming
+      - name: Add the successfully tested portable EXE
+        if: steps.current.outputs.eligible == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: WireToWire-Windows-Portable
+          path: incoming
+      - name: Add the successfully tested folder-based portable build
+        if: steps.current.outputs.eligible == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: WireToWire-Windows-NoInstall
           path: incoming
       - name: Verify package contents and assign permanent filenames
         if: steps.current.outputs.eligible == 'true'
@@ -233,6 +276,8 @@ jobs:
             echo "Git commit: $GITHUB_SHA"
             echo
             echo "GitHub Actions build: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo
+            echo "Editable source archive for this exact tested build: https://github.com/$GITHUB_REPOSITORY/archive/$GITHUB_SHA.zip"
             echo
             echo 'Portable EXE, setup EXE and faster-starting no-install folder ZIP share one game.'
             echo
