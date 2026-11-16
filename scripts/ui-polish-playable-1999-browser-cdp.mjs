@@ -152,6 +152,28 @@ try{
  assert.ok(worldHorse.visible&&worldHorse.route.startsWith('Preview:horse:'),
   'Full-world horse row fails to open a genuine generated dossier');
  console.log('WTW_UI_FULL_WORLD_DIRECTORY_PASS '+JSON.stringify({worldPage,worldNext,worldHorse}));
+ for(const route of [
+  {kind:'person',section:'World',page:'People'},
+  {kind:'farm',section:'Facilities',page:'Farms'}
+ ]){
+  await evaluate('(()=>{const u=window.__WTW_NEXT__;u.app.section='+JSON.stringify(route.section)+';u.app.page='+JSON.stringify(route.page)+';u.app.custom='+JSON.stringify(route.section+' — '+route.page)+';u.paint();return true})()');
+  await delay(200);
+  const table=await evaluate('(()=>({rows:window.__WTW_NEXT__.app.departmentVisible.length,generated:window.__WTW_NEXT__.app.departmentVisible[0]?._wtwGeneratedWorld||false,first:window.__WTW_NEXT__.app.departmentVisible[0]?._id||null}))()');
+  assert.ok(table.rows>=1&&table.generated&&table.first,
+   'Generated '+route.page+' did not appear in existing World/Facilities table');
+  await evaluate('document.querySelector("#wtwNextgen button[data-ng=dept-open]").click();true');
+  await delay(160);
+  const dossier=await evaluate('(()=>({route:window.__WTW_NEXT__.app.custom,visible:!!document.querySelector("#wtwNextgen .ng-route-profile")}))()');
+  assert.ok(dossier.visible&&dossier.route.startsWith('Preview:'+route.kind+':'),
+   'Generated '+route.page+' row does not open the exact-profile dossier');
+  console.log('WTW_UI_GENERATED_DIRECTORY_PROFILE_PASS '+JSON.stringify({route,table,dossier}));
+ }
+ await evaluate('(()=>{const u=window.__WTW_NEXT__;u.app.section="Racing";u.app.page="Calendar";u.app.custom="Racing — Calendar";u.app.racingDate='+JSON.stringify(directory.dated.date)+';u.paint();return true})()');
+ await delay(240);
+ const raceCalendar=await evaluate('(()=>({count:window.__WTW_NEXT__.app.departmentVisible.length,first:window.__WTW_NEXT__.app.departmentVisible[0]?._raceId||null,status:window.__WTW_NEXT__.app.departmentVisible[0]?.status||"",selectedDate:window.__WTW_NEXT__.app.racingDate}))()');
+ assert.ok(raceCalendar.count>0&&raceCalendar.first&&raceCalendar.status.includes('SCHEDULED'),
+  'Racing Calendar still shows legacy cards instead of generated-world condition book');
+ console.log('WTW_UI_LIVE_CALENDAR_VIEW_PASS '+JSON.stringify(raceCalendar));
  await send('Emulation.setDeviceMetricsOverride',{width:1440,height:900,deviceScaleFactor:1,mobile:false});
  const screenshots=[];
  const audit=[];
