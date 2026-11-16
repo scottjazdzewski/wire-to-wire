@@ -59,7 +59,8 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
   }
  }
  requireValue(people===manifest.personCount,'full personnel count changed');
- const horseIds=new Set(),byTrack=new Map(),cohorts=new Map(),status=new Map();
+ const horseIds=new Set(),byTrack=new Map(),racingByTrack=new Map(),
+  prospectsByTrack=new Map(),cohorts=new Map(),status=new Map();
  let allHorses=0,racing=0,prospects=0;
  for(let i=0;i<manifest.horseBatchesCommitted;i++){
   const batch=await readPersistent1999IndustryBatch(store,manifest,'horseBatches',i);
@@ -82,8 +83,8 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
      requireValue(staffById.get(h.jockeyId)?.workplaceId===h.homeTrackId&&
       staffById.get(h.jockeyId)?.role==='jockey',
       'jockey at another circuit '+h.id);
-     racing++;
-    }else prospects++;
+     racing++;add(racingByTrack,h.homeTrackId);
+    }else{prospects++;add(prospectsByTrack,h.homeTrackId)}
     add(byTrack,h.homeTrackId);
    }
   }
@@ -120,6 +121,21 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
  const summaries=dates.map(date=>({date,tracks:0,cards:0,races:0,
   fieldCapacity:0,purseMinor:0}));
  const byDate=new Map(summaries.map(x=>[x.date,x]));
+ // Opening-resident resources are measured against each track's calendar.
+ // This is source-only local capacity: an away jockey can potentially travel,
+ // but is NOT considered present without a canonical booking and itinerary.
+ const localLoad=new Map([...tracks.keys()].map(id=>[id,{
+  trackId:id,openingRacingHorses:0,openingTwoYearOldProspects:0,
+  residentTrainers:pair(personByTrackRole,id+'|trainer'),
+  residentJockeys:pair(personByTrackRole,id+'|jockey'),
+  quarterCards:0,quarterRaces:0,declaredFieldSlots:0,
+  raceDaysWithCards:0,minStartSlotsForRaceSettlement:0
+ }]));
+ for(const id of tracks.keys()){
+  const row=localLoad.get(id);
+  row.openingRacingHorses=pair(racingByTrack,id);
+  row.openingTwoYearOldProspects=pair(prospectsByTrack,id);
+ }
  const datesByTrack=new Map(),observedCards=new Set(),observedRaces=new Set();
  const physicalVenues=new Map();
  let allCards=0,allRaces=0,windowCards=0,windowRaces=0;
@@ -149,6 +165,8 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
     pair(personByTrackRole,c.trackId+'|jockey')>0,
     'unworkable track personnel coverage for '+c.id);
    day.tracks++;day.cards++;windowCards++;
+   const load=localLoad.get(c.trackId);
+   load.quarterCards++;load.raceDaysWithCards++;
    for(const r of c.races){
     requireValue(r?.id&&!observedRaces.has(r.id),'duplicate race '+r?.id);
     observedRaces.add(r.id);
@@ -159,6 +177,8 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
      Number.isSafeInteger(r.fieldCapacity)&&r.fieldCapacity>0,
      'invalid condition-book finances or capacity '+r.id);
     day.races++;windowRaces++;
+    load.quarterRaces++;load.declaredFieldSlots+=r.fieldCapacity;
+    load.minStartSlotsForRaceSettlement+=2;
     day.purseMinor+=r.purse_minor;
     day.fieldCapacity+=r.fieldCapacity;
    }
@@ -167,6 +187,25 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
  requireValue(allCards===manifest.scheduledCards&&allRaces===manifest.scheduledRaces,
   'annual source racing calendar no longer matches stored manifest');
  requireValue(windowRaces>0&&windowCards>0,'90-day racing circuit has no races');
+ const trackLoad=[...localLoad.values()].sort((a,b)=>a.trackId.localeCompare(b.trackId));
+ const localJockeyShortages=trackLoad.filter(t=>t.quarterCards>0&&
+  t.residentJockeys<2);
+ const minimumLocalJockeys=Math.min(...trackLoad.filter(t=>t.quarterCards>0).
+  map(t=>t.residentJockeys));
+ const sourceCapacity={
+  rule:'SOURCE_LOCAL_RESIDENT_CAPACITY_ONLY_NO_CROSS_TRACK_JOCKEY_TRAVEL',
+  minimumDifferentJockeysPerSettledRace:2,
+  minimumResidentJockeysAtScheduledTracks:minimumLocalJockeys,
+  tracksWithFewerThanTwoResidentJockeys:localJockeyShortages.length,
+  cardsAtThoseTracks:localJockeyShortages.reduce((n,t)=>n+t.quarterCards,0),
+  racesAtThoseTracks:localJockeyShortages.reduce((n,t)=>n+t.quarterRaces,0),
+  residentJockeysAreNotGuaranteedAvailableForEveryRace:true,
+  sourceCalendarIsNotGuaranteedToBeRunInFull:true,
+  localDeficits:localJockeyShortages.map(t=>({
+   trackId:t.trackId,jockeys:t.residentJockeys,scheduledCards:t.quarterCards,
+   scheduledRaces:t.quarterRaces
+  }))
+ };
  const checkpoints=[30,60,90].map(n=>{
   const block=summaries.slice(n-30,n);
   return {gameDate:block.at(-1).date,elapsedDays:n,
@@ -187,6 +226,7 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
   cohortCounts:Object.fromEntries(cohorts),statusCounts:Object.fromEntries(status),
   period:{start:dates[0],end,days:90,trackCards:windowCards,
    scheduledRaces:windowRaces,checkpoints},
+  sourceCapacity,
   countsCovered:{horses:horseIds.size,people:staffById.size,
    breedingCoverings:coveringIds.size,
    calendarCards:allCards,calendarRaces:allRaces},
