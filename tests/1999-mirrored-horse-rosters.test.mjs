@@ -24,7 +24,7 @@ test('Directory uses world roster rather than personal stable and has separate s
  assert.match(source,/function worldDirectoryHorseRows\(\)/);
  assert.match(source,/adapter\.worldHorseBrowse\(\{offset:0,limit:Math\.max\(160,total\),sort:'name'\}\)/);
  assert.match(roster,/const horses=directory\?universe\.items:horseRows\(\)/);
- assert.match(source,/directorySearch:'',directoryHorseItems:\[\]/);
+ assert.match(source,/directorySearch:'',directoryPage:0,directoryHorseItems:\[\]/);
  assert.match(source,/if\(key==='directory-sort'\)/);
  assert.match(source,/if\(key==='directory-horse'\)/);
  assert.match(source,/input\[data-ng-input="directory-search"\]/);
