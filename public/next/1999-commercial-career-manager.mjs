@@ -602,7 +602,20 @@ async function handleClick(event){
  const action=button.dataset.ccAction;
  if(busy&&action!=='close')return;
  try{busy=true;await perform(action,button);if(action!=='close')await refresh()}
- catch(error){notice='ERROR: '+String(error?.message||error);await refresh()}
+ catch(error){
+  // A complete 300k industry can be browsed while a game-run save at that
+  // scale still exceeds Chromium's maximum single string size. Show the
+  // exact UI blocker, rather than implying the world data was deleted.
+  const largeRun=action==='start-test-career'&&
+   fullIndustryManifest?.horseCount>=300000&&
+   /Invalid string length/i.test(String(error?.message||error));
+  notice=largeRun?
+   'CAREER START BLOCKED · The 300,000-horse world remains saved and browsable, '+
+   'but the playable career snapshot exceeds the browser save-size limit. '+
+   'The game/save engineering window must resolve this before full-size play testing.':
+   'ERROR: '+String(error?.message||error);
+  await refresh()
+ }
  finally{busy=false}
 }
 async function handleChange(event){
