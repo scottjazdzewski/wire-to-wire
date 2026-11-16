@@ -138,7 +138,7 @@ body.wtw-next-active{overflow:auto}
 .ng-routetext h1{font-size:22px;letter-spacing:-.03em;margin:3px 0 0;font-weight:760}
 .ng-back{background:#1e262a;color:#eaf0eb;border:1px solid #3c4b47;border-radius:3px;padding:8px 13px;font-size:12px!important}
 .ng-routegrid{display:grid;grid-template-columns:1fr;min-height:0;overflow:auto;gap:10px}
-.ng-routeinner{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:10px;min-width:0;background:transparent}
+.ng-routeinner{display:block;min-width:0;background:transparent}
 .ng-routeinner .routeCard,.ng-routeinner .profilePage,.ng-routeinner .stableRouteMain,.ng-routeinner .worldPage,.ng-routeinner .trackProfilePage,.ng-routeinner .horseProfilePage{background:#171e22;border:1px solid #3c4b47;border-radius:6px;padding:13px;min-width:0}
 .ng-routeinner .profilePage,.ng-routeinner .horseProfilePage,.ng-routeinner .trackProfilePage{grid-column:span 2}
 .ng-routeinner h3{font-size:14px;margin:4px 0 10px}
@@ -1127,7 +1127,7 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-org-mark{width:25px;height:25px;flex-basis:25px}
 .ng-global .ng-global-due{height:30px}
 }
-.ng-routeinner:has(.ng-org-overview),.ng-routeinner:has(.ng-due-overview),.ng-routeinner:has(.ng-1999-race-file){display:block;overflow-y:auto!important;overflow-x:hidden!important}
+.ng-routeinner:has(.ng-org-overview),.ng-routeinner:has(.ng-due-overview),.ng-routeinner:has(.ng-1999-race-file){overflow-y:auto!important;overflow-x:hidden!important}
 .ng-org-overview,.ng-due-overview{padding:7px;max-width:1500px;color:#e8efec}
 .ng-org-overview-top{display:flex;align-items:center;gap:16px;padding:14px 18px;border:1px solid #3c4b47;border-radius:5px;background:linear-gradient(110deg,#1e262a,#171e22)}
 .ng-org-overview-name{min-width:0}
