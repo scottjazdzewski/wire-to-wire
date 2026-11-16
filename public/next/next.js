@@ -5112,6 +5112,7 @@ function restoreNextUIRoute(){
  const p=new URLSearchParams(location.search),view=p.has('page')?'':p.get('ui')||'';
  APP.custom=view;APP.moreOpen=false;
  if(view){
+  if(view.startsWith('RaceFile:Career:')){APP.section='Racing';APP.page='Overview';return}
   if(view.startsWith('WorldRecord:')){APP.section='World';APP.page='Overview';return}
   if(view.startsWith('FoundingProfile:')){
    const kind=view.split(':')[1];
