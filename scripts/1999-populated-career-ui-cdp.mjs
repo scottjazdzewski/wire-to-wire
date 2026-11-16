@@ -131,8 +131,8 @@ try{
  assert.deepEqual(home.raceLinks,model.raceRows.slice(0,4).map(r=>r.id));
  await shot('organization',1280,800);
  assert.ok(await click("document.querySelector('#wtwNextgen .ng-game-rail [data-ng=\"menu\"][data-val=\"Stable\"]')"));
- await until('Stable roster',`(()=>({ok:!!document.querySelector('#wtwNextgen .ng-rs-table [data-ng="career-horse"]')}))()`);
- const names=await evalJS(`[...document.querySelectorAll('#wtwNextgen .ng-rs-table [data-ng="career-horse"]')].map(x=>x.dataset.val)`);
+ await until('Stable roster',`(()=>({ok:!!document.querySelector('#wtwNextgen .ng-rs-table [data-horse-id]')}))()`);
+ const names=await evalJS(`[...document.querySelectorAll('#wtwNextgen .ng-rs-table [data-horse-id]')].map(x=>x.dataset.horseId)`);
  assert.deepEqual(names.slice().sort(),model.horseRows.map(h=>h.horseId).sort());
  const sortButton="document.querySelector('#wtwNextgen .ng-rs-table [data-ng=\"stable-sort\"][data-val=\"name\"]')";
  assert.ok(await click(sortButton));
@@ -144,11 +144,11 @@ try{
   input.dispatchEvent(new Event('input',{bubbles:true}));return true;
  })()`);
  assert.ok(filter);
- const filtered=await evalJS(`[...document.querySelectorAll('#wtwNextgen .ng-rs-table [data-ng="career-horse"]')].map(x=>x.dataset.val)`);
+ const filtered=await evalJS(`[...document.querySelectorAll('#wtwNextgen .ng-rs-table [data-horse-id]')].map(x=>x.dataset.horseId)`);
  assert.deepEqual(filtered,[withResult.horseId],'Name search did not retain exact H-ID');
  await evalJS(`(()=>{const input=document.querySelector('#wtwNextgen input[data-ng-input="stable-search"]');input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));return true})()`);
  await shot('stable',1440,900);
- assert.ok(await click(`[...document.querySelectorAll('#wtwNextgen .ng-rs-table [data-ng="career-horse"]')].find(x=>x.dataset.val===${JSON.stringify(withResult.horseId)})`));
+ assert.ok(await click(`[...document.querySelectorAll('#wtwNextgen .ng-rs-table [data-horse-id]')].find(x=>x.dataset.horseId===${JSON.stringify(withResult.horseId)})`));
  await until('Horse profile',`(()=>({ok:document.querySelector('#wtwNextgen [data-career-horse-id]')?.dataset.careerHorseId===${JSON.stringify(withResult.horseId)}}))()`);
  const profileFields=await evalJS("document.querySelector('#wtwNextgen [data-career-horse-id]')?.textContent||''");
  assert.ok(profileFields.includes(withResult.name)&&profileFields.includes(withResult.horseId));
