@@ -77,40 +77,39 @@ test('real race opportunity tells player exact available selected jockeys, fees 
   s.runtime.finances.operation_balances_minor[h.owner_organization_id]);
  assert.deepEqual(importGameSave(exportGameSave(entered,world),world),entered);
 });
-test('away venue is a shipping requirement, not a fabricated entry or available mount',()=>{
- const s=day(fresh()),h=playerHorse(s);
+test('away venue verifies funded horse shipping and a truly available jockey before suggesting entry',()=>{
+ const s=day(fresh()),h=playerHorse(s),before=structuredClone(s);
  const view=get1999HorseRaceOpportunities(s,world,h.horse_id,{includeProposals:false});
- const away=view.rows.find(r=>r.status==='SHIPPING_REQUIRED'&&
-  r.track_id!==h.host_track_id);
- if(!away){
-  const inspected=view.rows.filter(r=>r.track_id!==h.host_track_id).
-   map(row=>{
-    const race=s.runtime.races[row.race_id];
-    const eligible=race?raceEligibility(s,h,race):null;
-    const shipping=Object.values(s.runtime.facilities.sites).
-     filter(site=>site.type==='RACING_STABLE'&&site.host_track_id===row.track_id).
-     map(site=>({site:site.id,...shippingAssessment(s,world,h.horse_id,site.id,
-      {targetRaceId:race?.id})}));
-    const jockeys=race?Object.values(s.runtime.racing.jockeys).reduce((n,rider)=>{
-     const verdict=jockeyBookingDecision(s,world,race,h,rider);
-     n[verdict.reason]=(n[verdict.reason]||0)+1;
-     return n;
-    },{}):{};
-    return {id:row.race_id,track:row.track_id,status:row.status,
-     reasons:row.eligibility_reasons,field:race?.field.length,
-     capacity:race?.field_capacity,eligible,shipping:shipping.map(x=>({
-      site:x.site,allowed:x.allowed,reasons:x.reasons,days:x.route?.days})),
-     jockeyRejections:jockeys};
-   });
-  assert.fail('Shippable away horse must retain an accepting real jockey: '+
-   JSON.stringify(inspected));
- }
- const approved=away.receiving_barn_options.find(s=>s.allowed);
- assert.ok(approved);
+ const away=view.rows.find(r=>r.track_id!==h.host_track_id&&
+  r.receiving_barn_options?.some(site=>site.allowed));
+ assert.ok(away,'At least one actual source race must have funded, timed physical shipping');
+ const approved=away.receiving_barn_options.find(site=>site.allowed);
  assert.ok(approved.stalls_available>0);
  assert.ok(approved.travel_days>=1);
  assert.ok(approved.shipping_minor>0);
- assert.equal(away.next_required_action,'SHIP_1999_HORSE');
+ const race=s.runtime.races[away.race_id];
+ assert.deepEqual(raceEligibility(s,h,race).reasons,
+  ['NOT_PHYSICALLY_AT_TRACK_OR_CONFIRMED_TO_ARRIVE']);
+ const actualShipping=shippingAssessment(s,world,h.horse_id,
+  approved.destination_site_id,{targetRaceId:race.id});
+ assert.equal(actualShipping.allowed,true,'Horse transfer requires a real stall, route and owner cash');
+ const decisions=Object.values(s.runtime.racing.jockeys).
+  map(rider=>jockeyBookingDecision(s,world,race,h,rider));
+ const accepting=decisions.filter(x=>x.accept);
+ if(away.status==='SHIPPING_REQUIRED'){
+  assert.ok(accepting.length>0,'SHIPPING_REQUIRED must never imply a phantom rider');
+  assert.ok(away.available_jockeys.some(j=>j.owner_can_pay));
+  assert.equal(away.next_required_action,'SHIP_1999_HORSE');
+ }else{
+  assert.equal(away.status,'BLOCKED',
+   'A shippable horse cannot be entered when no real affordable jockey accepts');
+  assert.ok(away.eligibility_reasons.some(reason=>
+   ['NO_ACCEPTING_AVAILABLE_JOCKEY','OWNER_CANNOT_PAY_JOCKEY_BOOKING'].includes(reason)));
+  assert.ok(accepting.length===0||!away.available_jockeys.some(j=>j.owner_can_pay),
+   'BLOCKED requires a real absence of affordable accepting jockey options');
+  assert.notEqual(away.next_required_action,'SHIP_1999_HORSE',
+   'Do not encourage a paid shipment when the runner has no rider to book');
+ }
  assert.ok(away.eligibility_reasons.includes('NOT_PHYSICALLY_AT_TRACK_OR_CONFIRMED_TO_ARRIVE'));
  assert.equal(s.runtime.racing.horse_travel[h.horse_id],undefined);
  assert.equal(s.runtime.finances.ledger.some(l=>l.kind==='HORSE_OUTBOUND_SHIPPING_CHARGE'),false);
@@ -120,6 +119,7 @@ test('away venue is a shipping requirement, not a fabricated entry or available 
  const unauthorized=get1999HorseRaceOpportunities(s,world,other.horse_id,{
   includeProposals:false});
  assert.ok(unauthorized.rows.every(x=>x.status!=='PLAYER_CAN_ENTER'));
+ assert.deepEqual(s,before,'Read-only away jockey/shipping advice must never book or charge anything');
 });
 test('after a maiden victory the entry advisor recognizes NW2/NW3 proposals without mislabeling them real races',()=>{
  let s=fresh();for(let i=0;i<15;i++)s=day(s);
