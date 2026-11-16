@@ -38,6 +38,28 @@ CONTRAST_EDGE_MARKS = {
     "T-0004.webp", "T-0008.webp", "T-0013.webp", "T-0014.webp",
     "T-0015.webp", "T-0016.webp", "T-0017.webp",
 }
+# Keeneland's export has an enclosed white rectangular paper field behind
+# the horse and wordmark. Exterior flood-fill cannot reach the inner paper.
+INTERNAL_PAPER_MARKS = {"T-0014.webp"}
+
+def remove_internal_paper(art: Image.Image, path: Path):
+    if ("track-logos" not in path.parts or
+            path.name not in INTERNAL_PAPER_MARKS):
+        return art
+    raw = np.asarray(art.convert("RGBA")).copy()
+    rgb = raw[:, :, :3].astype(np.float32)
+    high = np.max(rgb, axis=2)
+    low = np.min(rgb, axis=2)
+    # Truly neutral paper only. The approved warm-ivory lettering edge is
+    # deliberately nonneutral and remains visible on the green game UI.
+    paper = (low > 188) & ((high - low) < 21)
+    strength = np.where(paper, bounded(np.max(np.abs(rgb - 255.0), axis=2), 8, 58), 1.0)
+    alpha = np.rint(raw[:, :, 3].astype(np.float32) * strength).astype(np.uint8)
+    if np.array_equal(alpha, raw[:, :, 3]):
+        return art
+    raw[:, :, 3] = alpha
+    raw[alpha == 0, :3] = 0
+    return Image.fromarray(raw, "RGBA")
 
 def dark_ui_edge(art: Image.Image, path: Path):
     if ("track-logos" not in path.parts or
@@ -83,7 +105,8 @@ def repaired_rgba(im: Image.Image, path: Path):
     transparent_corners = float(np.mean(corners[:, 3] < 32))
     if transparent_corners >= 0.85:
         # Previously repaired sources may still need contrast-safe edging.
-        outlined = dark_ui_edge(im, path)
+        clean = remove_internal_paper(im, path)
+        outlined = dark_ui_edge(clean, path)
         if not np.array_equal(np.asarray(outlined), original):
             return outlined, "existing-transparent-mark-contrast-edge"
         return None, "already-transparent-corners"
@@ -163,7 +186,7 @@ def repaired_rgba(im: Image.Image, path: Path):
         result[:, :, k][affected] = np.clip(channel[affected], 0, 255).astype(np.uint8)
     result[:, :, 3] = alpha
     result[alpha == 0, :3] = 0
-    rgba = Image.fromarray(result, "RGBA")
+    rgba = remove_internal_paper(Image.fromarray(result, "RGBA"), path)
     outlined = dark_ui_edge(rgba, path)
     if not np.array_equal(np.asarray(outlined), result):
         method += "+ivory-edge-for-dark-ui"
@@ -227,6 +250,11 @@ def synthetic_test():
     cutout = Image.new("RGBA", (128, 96), (0, 0, 0, 0))
     ImageDraw.Draw(cutout).ellipse([30, 20, 90, 78], fill="#ffda64")
     assert repaired_rgba(cutout, Path("track-logos/TEST.webp"))[0] is None
+    paper = Image.new("RGBA", (128, 96), "white")
+    ImageDraw.Draw(paper).rectangle([25, 18, 102, 75], outline="#006c45", width=8)
+    cleaned = remove_internal_paper(paper, Path("track-logos/T-0014.webp"))
+    assert cleaned.getpixel((60, 46))[3] == 0, "enclosed white paper remained"
+    assert cleaned.getpixel((27, 20))[3] == 255, "approved green emblem stroke erased"
     print("Transparency repair synthetic tests passed.")
 
 def main():
