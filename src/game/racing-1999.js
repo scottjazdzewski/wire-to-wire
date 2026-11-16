@@ -690,8 +690,6 @@ export function validateRacingRuntime(state,world){
     validDate(o.resolved_date),'PREMIER_SAVE','Declined offer must retain resolution');
   }
  }
-}
-
  for(const [trainerId,earnedMinor] of Object.entries(rt.trainer_finances_minor))
   ensure(person(world,trainerId)&&cents(earnedMinor),
    'RACE_SAVE','Trainer earned fees and purses must resolve to an approved person and integer cents');
