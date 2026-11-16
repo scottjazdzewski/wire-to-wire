@@ -97,15 +97,15 @@ try{
  // Profile routes and department routes use actual renderer, without a second UI.
  const routes=[
   ['office','Office','Office',''],
-  ['stable','Stable','Overview',''],
-  ['calendar','Racing','Calendar',''],
-  ['world','World','Overview',''],
-  ['world-tracks','World','Tracks',''],
+  ['stable','Stable','Overview','Stable — Overview'],
+  ['calendar','Racing','Calendar','Racing — Calendar'],
+  ['world','World','Overview','World — Overview'],
+  ['world-tracks','World','Tracks','World — Tracks'],
   ['track-belmont','World','Tracks','WorldRecord:track:T-0002'],
-  ['track-churchill','World','Tracks','WorldRecord:track:T-0003'],
-  ['track-keeneland','World','Tracks','WorldRecord:track:T-0006'],
-  ['track-saratoga','World','Tracks','WorldRecord:track:T-0005'],
-  ['horse','World','1999 Horses','WorldRecord:horse:H-000001'],
+  ['track-churchill','World','Tracks','WorldRecord:track:T-0013'],
+  ['track-keeneland','World','Tracks','WorldRecord:track:T-0014'],
+  ['track-saratoga','World','Tracks','WorldRecord:track:T-0003'],
+  ['horse','World','1999 Horses','WorldRecord:horse:H-1992-000002'],
   ['people','World','People','WorldRecord:person:P-000018'],
   ['farm','Facilities','Farms','FoundingProfile:facility:O-000061']
  ];
