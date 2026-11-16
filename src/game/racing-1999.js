@@ -178,6 +178,29 @@ export function resolve1999PremierJockeyOffers({state,world,emit}){
  return {signed,declined,pending:Object.values(offers).filter(o=>
   o.status==='PENDING').length};
 }
+/**
+ * Keep large saved careers bounded. An accepted mount's permanent entry,
+ * rider/owner ledger and race result ARE the contract record. Old declined
+ * market bids need not stay in the live offer table for decades, since their
+ * outcome is already recorded in the game event journal.
+ */
+export function compact1999PremierJockeyOffers({state,emit}){
+ const offers=state.runtime.racing?.premier_offers;
+ if(!offers)return {removed:0,retained:0};
+ const completed=Object.values(offers).filter(o=>o.status!=='PENDING').
+  sort((a,b)=>(b.resolved_date??b.offered_date).
+    localeCompare(a.resolved_date??a.offered_date)||a.id.localeCompare(b.id));
+ const keep=new Set(completed.filter((o,i)=>i<2000&&
+  dayGap(o.resolved_date??o.offered_date,state.clock.date)<=120).map(o=>o.id));
+ let removed=0;
+ for(const o of completed)if(!keep.has(o.id)){delete offers[o.id];removed++}
+ if(removed&&emit)emit('JOCKEY_PREMIER_OFFER_ARCHIVE_COMPACTED',{
+  removed,retained:Object.keys(offers).length,retention_days:120,
+  active_offers_preserved:true,
+  signed_mount_ledger_retained:true,
+  result:'DETAILED_SOURCE_EVENT_LOG_AND_SIGNED_ENTRIES_RETAINED'});
+ return {removed,retained:Object.keys(offers).length};
+}
 export function modeledJockeySkills(id,seed,identity=null){
  ensure(/^P-[A-Za-z0-9-]+$/.test(id),'JOCKEY_ID','Permanent selected jockey ID required');
  const baseline={rating_source:'1999_MODELED_GAME_SCORING_NOT_CANONICAL',
