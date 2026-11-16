@@ -95,6 +95,8 @@ test('race opening is wired to the exact saved ID and a live reopened projection
  assert.match(manager,/WTW1999CanonicalCareerRaceFile=Object\.freeze/);
  assert.match(manager,/prior\?\.worldId===snapshot\.worldId&&prior\?\.runId===snapshot\.runId/);
  assert.match(ui,/savedCareer\?r\.id:i/);
+ assert.match(ui,/SAVED GAME RACES & RESULTS/);
+ assert.match(ui,/savedRaceView\?'RACE \/ RACECOURSE':'HORSE \/ RACECOURSE'/);
  assert.match(ui,/data-ng="fixture" data-val="\$\{safe\(window\.__WTW_ACTIVE_WORLD_CAREER_VIEW__\?r\.id:i\)\}/);
  assert.match(ui,/data-ng="fixture" data-val="'\+safe\(window\.__WTW_ACTIVE_WORLD_CAREER_VIEW__\?r\.id:i\)/);
  assert.match(ui,/r\.gameStatus==='ENTRIES_OPEN'/);
