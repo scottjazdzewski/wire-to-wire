@@ -780,12 +780,12 @@ function playableHorseProfile(identity){
 /** Sort/search are applied before slicing, so 300k records never become
  * 300k DOM rows. Cache one query per active world, not a second registry.
  */
-function playableWorldHorseBrowse({offset=0,limit=160,search='',sort='name',desc=false}={}){
+function playableWorldHorseBrowse({offset=0,limit=160,search='',sort='name',desc=false,filters={}}={}){
  const c=activeWorldCareer,lookup=playableWorldLookup();
  if(!c)return null;
  const pool=c.world.entities.horses;
  const query=String(search??'').trim().toLocaleLowerCase('en-US');
- const key=[query,sort,Boolean(desc)].join('|');
+ const key=[query,sort,Boolean(desc),JSON.stringify(filters||{})].join('|');
  if(uiWorldBrowse?.world!==c.world||uiWorldBrowse.key!==key){
   const field=h=>{
    switch(sort){
@@ -798,10 +798,23 @@ function playableWorldHorseBrowse({offset=0,limit=160,search='',sort='name',desc
     default:return h.name||h.id||'';
    }
   };
-  const found=query?pool.filter(h=>
-   [h.id,h.name,lookup.owners.get(h.ownerId),lookup.people.get(h.trainerId),
-    lookup.owners.get(h.foalingFarmId),lookup.tracks.get(h.homeTrackId)]
-   .some(v=>String(v||'').toLocaleLowerCase('en-US').includes(query))):pool;
+  const matching=(h)=>{
+   if(query&&![h.id,h.name,lookup.owners.get(h.ownerId),
+    lookup.people.get(h.trainerId),lookup.owners.get(h.foalingFarmId),
+    lookup.tracks.get(h.homeTrackId)].some(v=>
+    String(v||'').toLocaleLowerCase('en-US').includes(query)))return false;
+   if(!window.WTW1999RosterFilters?.matches)return true;
+   return window.WTW1999RosterFilters.matches({
+    name:h.name,age:1999-Number(h.foalYear),sex:h.sex,status:h.status,
+    activity:h.status,owner:lookup.owners.get(h.ownerId)||h.ownerId,
+    trainer:lookup.people.get(h.trainerId)||h.trainerId,
+    breeder:lookup.owners.get(h.foalingFarmId)||h.foalingFarmId,
+    ability:'',potential:'',health:'',readiness:'',form:'',
+    last:'',next:'',target:'',record:''
+   },filters);
+  };
+  const hasFilters=Object.values(filters||{}).some(v=>v!==''&&v!=null);
+  const found=(query||hasFilters)?pool.filter(matching):pool;
   const ordered=[...found].sort((a,b)=>{
    const x=field(a),y=field(b);
    const n=typeof x==='number'&&typeof y==='number'?x-y:
