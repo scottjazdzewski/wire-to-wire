@@ -60,6 +60,8 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
   }
  }
  requireValue(people===manifest.personCount,'full personnel count changed');
+ // Source-demographic eligibility is not race-day fitness or entry permission.
+ const demographicByTrack=new Map();
  const horseIds=new Set(),byTrack=new Map(),racingByTrack=new Map(),
   prospectsByTrack=new Map(),cohorts=new Map(),status=new Map();
  let allHorses=0,racing=0,prospects=0;
@@ -85,7 +87,13 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
       staffById.get(h.jockeyId)?.role==='jockey',
       'jockey at another circuit '+h.id);
      racing++;add(racingByTrack,h.homeTrackId);
-    }else{prospects++;add(prospectsByTrack,h.homeTrackId)}
+     add(demographicByTrack,
+      h.homeTrackId+'|RACING|'+(1999-h.foalYear)+'|'+h.sex);
+    }else{
+     prospects++;add(prospectsByTrack,h.homeTrackId);
+     add(demographicByTrack,
+      h.homeTrackId+'|TWO_YEAR_OLD_PROSPECT|'+(1999-h.foalYear)+'|'+h.sex);
+    }
     add(byTrack,h.homeTrackId);
    }
   }
@@ -137,6 +145,30 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
   row.openingRacingHorses=pair(racingByTrack,id);
   row.openingTwoYearOldProspects=pair(prospectsByTrack,id);
  }
+ // Full-census age/sex upper bounds; 2YO prospects are NOT assumed ready.
+ const raceClassCounts=new Map(),demographicGaps=[];
+ let ageSexInsufficientRaces=0,unmodeledClassRaces=0;
+ const residentDemographics=[...demographicByTrack.entries()].map(([key,count])=>{
+  const [trackId,status,age,sex]=key.split('|');
+  return {trackId,status,age:Number(age),sex,count};
+ });
+ const candidates=(trackId,race)=>{
+  requireValue(['2YO','3YO','3YO+','4YO+'].includes(race.age),
+   'unknown modeled race age restriction '+race.id+' '+race.age);
+  requireValue(['OPEN','FILLIES_AND_MARES'].includes(race.sex),
+   'unknown modeled race sex restriction '+race.id+' '+race.sex);
+  const eligible=residentDemographics.filter(d=>
+   d.trackId===trackId&&
+   (race.age==='2YO'?d.age===2:race.age==='3YO'?d.age===3:
+    race.age==='4YO+'?d.age>=4:d.age>=3)&&
+   (race.sex==='OPEN'||['FILLY','MARE'].includes(d.sex)));
+  return {
+   currentRacing:eligible.filter(d=>d.status==='RACING').
+    reduce((n,d)=>n+d.count,0),
+   undevelopedProspects:eligible.filter(d=>
+    d.status==='TWO_YEAR_OLD_PROSPECT').reduce((n,d)=>n+d.count,0)
+  };
+ };
  const datesByTrack=new Map(),observedCards=new Set(),observedRaces=new Set();
  const trackDates=new Map([...tracks.keys()].map(id=>[id,[]]));
  const physicalVenues=new Map();
@@ -182,6 +214,20 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
     day.races++;windowRaces++;
     load.quarterRaces++;load.declaredFieldSlots+=r.fieldCapacity;
     load.minStartSlotsForRaceSettlement+=2;
+    add(raceClassCounts,r.condition);
+    // Claiming, Starter, Handicap etc. lack completed canonical entry rules.
+    if(!['Maiden Special Weight','Allowance'].includes(r.condition))
+     unmodeledClassRaces++;
+    const pool=candidates(c.trackId,r);
+    if(pool.currentRacing<2){
+     ageSexInsufficientRaces++;
+     if(demographicGaps.length<100)demographicGaps.push({
+      raceId:r.id,trackId:c.trackId,date:c.date,
+      age:r.age,sex:r.sex,condition:r.condition,
+      openingResidentEligibleRacing:pool.currentRacing,
+      openingPotentialButUntrainedProspects:pool.undevelopedProspects
+     });
+    }
     day.purseMinor+=r.purse_minor;
     day.fieldCapacity+=r.fieldCapacity;
    }
@@ -276,6 +322,19 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
  const localHorseDeficits=trackLoad.filter(t=>t.quarterRaces>0&&
   t.minStartSlotsForRaceSettlement>
   t.openingRacingHorses*optimisticMaxStartsPerLocalRunner);
+ const raceClassCoverage={
+  sourceScheduledRaces:windowRaces,
+  classCounts:Object.fromEntries(raceClassCounts),
+  classesWithoutFullyModeledOpeningEntryRules:unmodeledClassRaces,
+  classesPotentiallySupportedAtCanonicalGameLevel:
+   windowRaces-unmodeledClassRaces,
+  notAClaimOfPlayableRaces:true,
+  restrictionsChecked:'OPENING_RESIDENT_AGE_AND_SEX_UPPER_BOUND_ONLY',
+  racesWithFewerThanTwoDemographicallyMatchingActiveLocalRunners:
+   ageSexInsufficientRaces,
+  firstDemographicGaps:demographicGaps,
+  raceDayFitnessWinsFundsTravelAndEntriesNotModeled:true
+ };
  const sourceCapacity={
   rule:'SOURCE_LOCAL_RESIDENT_CAPACITY_ONLY_NO_CROSS_TRACK_JOCKEY_TRAVEL',
   twoRunnersPerRaceIsMinimumNotFullField:true,
@@ -334,7 +393,7 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
   cohortCounts:Object.fromEntries(cohorts),statusCounts:Object.fromEntries(status),
   period:{start:dates[0],end,days:90,trackCards:windowCards,
    scheduledRaces:windowRaces,checkpoints},
-  sourceCapacity,sourceShippingReadiness,
+  sourceCapacity,sourceShippingReadiness,raceClassCoverage,
   countsCovered:{horses:horseIds.size,people:staffById.size,
    breedingCoverings:coveringIds.size,
    calendarCards:allCards,calendarRaces:allRaces},
