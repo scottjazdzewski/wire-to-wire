@@ -43,7 +43,7 @@ CONTRAST_EDGE_MARKS = {
 INTERNAL_PAPER_MARKS = {"T-0014.webp"}
 
 def remove_internal_paper(art: Image.Image, path: Path):
-    if ("track-logos" not in path.parts or
+    if (not ("track-logos" in path.parts or "track-hero" in path.parts) or
             path.name not in INTERNAL_PAPER_MARKS):
         return art
     raw = np.asarray(art.convert("RGBA")).copy()
