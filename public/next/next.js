@@ -4875,7 +4875,16 @@ window.addEventListener('click',e=>{
   if(row?._canonId)return openWorld1999Entity('horse:'+row._canonId);
   return openEntityRecord(val,'horse');
  }
- if(key==='fixture'){const n=$$('.right .fixtureList .fixture[data-track]')[Number(val)];return bridgeNode(n)}
+ if(key==='fixture'){
+  // The live Office schedule uses ng-entryrow, not the retired Office
+  // fixtureList markup. Every visible row must open its source-backed horse.
+  const target=racingRows()[Number(val)];
+  if(!target)return openMenu('Racing');
+  const horse=window.__WTW_1999_UI_DATA__?.stableHorsePreview?.(target.name);
+  if(horse?._canonId&&world1999Entry('horse:'+horse._canonId))
+   return openWorld1999Entity('horse:'+horse._canonId);
+  return openEntityRecord(target.name,'horse');
+ }
  if(key==='track'){
   // Never route a live Calendar/Office track link through retired Office HTML.
   // A track name opens the existing canonical profile; unknown references
