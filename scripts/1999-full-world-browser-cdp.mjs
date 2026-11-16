@@ -261,46 +261,64 @@ try{
    const baselineBalance=state.runtime.finances.operation_balances_minor[state.player.operation_id];
    const dayGap=(from,to)=>(Date.parse(to+'T00:00:00Z')-
     Date.parse(from+'T00:00:00Z'))/86400000;
-   const activeHorses=state.stable_horse_ids.map(id=>
-    state.runtime.registered_horses.by_id[id]);
-   const occupiedTracks=[...new Set(activeHorses.map(h=>h.host_track_id))].sort();
-   let chosen=null;const scheduleEvidence=[];
-   for(let offset=2;offset<=365&&!chosen;offset++){
-    const date=new Date(Date.parse(state.clock.date+'T00:00:00Z')+
-     offset*86400000).toISOString().slice(0,10);
-    if(!date.startsWith('1999-'))break;
-    for(const trackId of occupiedTracks){
-     const localHorses=activeHorses.filter(h=>h.host_track_id===trackId);
-     const books=gameRaceProgram(state,world,trackId,date).filter(book=>
-      supported1999RaceClass(book)&&book.conditions==='Maiden Special Weight'&&
-      !state.runtime.races[book.id]&&
-      (trackId===career.homeTrackId||dayGap(state.clock.date,date)>=4));
-     if(books.length)scheduleEvidence.push({date,trackId,books:books.length,
-      stableHorses:localHorses.length});
-     for(const book of books){
-      const eligible=localHorses.filter(h=>raceEligibility(state,h,book).eligible);
-      if(eligible.length<2)continue;
-      chosen={book,trackId,horseIds:eligible.slice(0,
-       Math.min(8,book.fieldCapacity)).map(h=>h.horse_id)};
-      break;
+   const raceView=book=>({id:book.id,track_id:book.trackId,date:book.date,
+    age:book.ageRequirement,sex:book.sexRestriction,conditions:book.conditions,
+    surface:book.surface,distance_furlongs:book.distanceFurlongs,
+    field_capacity:book.fieldCapacity,max_wins:book.maxCareerWins,
+    maiden:book.maidenOnly,status:'ENTRIES_OPEN',field:[]});
+   const occupiedTracks=[...new Set(state.stable_horse_ids.map(id=>
+    state.runtime.registered_horses.by_id[id].host_track_id))].sort();
+   const excludedRaces=new Set();let chosen=null;const scheduleEvidence=[];
+   for(let attempt=0;attempt<24&&!chosen;attempt++){
+    let plan=null;
+    for(let offset=2;offset<=365&&!plan;offset++){
+     const date=new Date(Date.parse(state.clock.date+'T00:00:00Z')+
+      offset*86400000).toISOString().slice(0,10);
+     if(!date.startsWith('1999-'))break;
+     for(const trackId of occupiedTracks){
+      const localHorses=state.stable_horse_ids.map(id=>
+       state.runtime.registered_horses.by_id[id]).filter(h=>h.host_track_id===trackId);
+      const books=gameRaceProgram(state,world,trackId,date).filter(book=>
+       supported1999RaceClass(book)&&book.conditions==='Maiden Special Weight'&&
+       !state.runtime.races[book.id]&&!excludedRaces.has(book.id)&&
+       (trackId===career.homeTrackId||dayGap(state.clock.date,date)>=4));
+      if(books.length)scheduleEvidence.push({date,trackId,books:books.length,
+       stableHorses:localHorses.length});
+      for(const book of books){
+       const legalEntryDate=new Date(Math.max(Date.parse(state.clock.date+'T00:00:00Z'),
+        Date.parse(book.date+'T00:00:00Z')-4*86400000)).toISOString().slice(0,10);
+       const probe={...state,clock:{...state.clock,date:legalEntryDate}};
+       const possible=localHorses.filter(h=>raceEligibility(probe,h,raceView(book)).reasons
+        .every(reason=>reason==='CONDITION_NOT_CLEARED'));
+       if(possible.length<2)continue;
+       plan={book,trackId};break;
+      }
+      if(plan)break;
      }
-     if(chosen)break;
     }
+    if(!plan)throw Error('No statically eligible maiden on player stable tracks in 1999; tracks '+
+     JSON.stringify(occupiedTracks)+'; scheduled candidates '+JSON.stringify(scheduleEvidence.slice(0,12)));
+    while(dayGap(state.clock.date,plan.book.date)>4){
+     state=dispatchGameCommand({state,world,command:{
+      id:'full-world-race-window-'+state.clock.date,type:'ADVANCE_DAY',
+      actor:'player',payload:{}}}).state;
+    }
+    const localHorses=state.stable_horse_ids.map(id=>
+     state.runtime.registered_horses.by_id[id]).filter(h=>h.host_track_id===plan.trackId);
+    const ready=localHorses.filter(h=>raceEligibility(state,h,raceView(plan.book)).eligible)
+     .sort((a,b)=>state.runtime.horse[b.horse_id].training.readiness-
+      state.runtime.horse[a.horse_id].training.readiness||
+      state.runtime.horse[a.horse_id].training.currentRisk-
+      state.runtime.horse[b.horse_id].training.currentRisk||
+      a.horse_id.localeCompare(b.horse_id));
+    if(ready.length<2){excludedRaces.add(plan.book.id);continue}
+    chosen={...plan,horses:ready.slice(0,Math.min(8,plan.book.fieldCapacity))};
    }
-   if(!chosen)throw Error('No eligible maiden on player stable tracks in 1999; tracks '+
-    JSON.stringify(occupiedTracks)+'; scheduled candidates '+JSON.stringify(scheduleEvidence.slice(0,12)));
-   while(dayGap(state.clock.date,chosen.book.date)>28){
-    state=dispatchGameCommand({state,world,command:{
-     id:'full-world-race-window-'+state.clock.date,type:'ADVANCE_DAY',
-     actor:'player',payload:{}}}).state;
-   }
+   if(!chosen)throw Error('Could not find a race with two cleared starters after 24 scheduled candidates');
    const opened=dispatchGameCommand({state,world,command:{
     id:'full-world-open-'+chosen.book.id,type:'OPEN_1999_RACE',actor:'system',
     payload:{track_id:chosen.trackId,date:chosen.book.date,race_id:chosen.book.id}}}).state;
-   const horses=chosen.horseIds.map(id=>opened.runtime.registered_horses.by_id[id]);
-   if(horses.filter(h=>raceEligibility(opened,h,
-    opened.runtime.races[chosen.book.id]).eligible).length<2)
-    throw Error('Selected full-world starters lost race eligibility before entry');
+   const horses=chosen.horses.map(h=>opened.runtime.registered_horses.by_id[h.horse_id]);
    state=opened;
    for(const horse of horses){
     state=dispatchGameCommand({state,world,command:{
