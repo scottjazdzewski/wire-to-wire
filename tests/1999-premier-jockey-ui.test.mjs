@@ -6,7 +6,7 @@ import vm from 'node:vm';
 const source=readFileSync(new URL(
  '../public/next/1999-player-race-planning.mjs',import.meta.url),'utf8');
 
-function makeScreen(premier){
+function makeScreen(premier,{replacement=false}={}){
  const commands=[],quotes=[];
  const rider={jockey_id:'P-1999-ELITE-J-01',home_track_id:'T-0017',
   fee_minor:105000,owner_can_pay:true,away_travel:false,
@@ -15,7 +15,7 @@ function makeScreen(premier){
   track_id:'T-0017',conditions:premier?'Stakes — G1':'Allowance',
   surface:'DIRT',distance_furlongs:8,purse_minor:50000000,
   capacity:12,entries:0,source_status:'ACTUAL_GAME_RACE_ENTRIES_OPEN',
-  eligibility_reasons:[],status:'PLAYER_CAN_ENTER',
+  eligibility_reasons:[],status:replacement?'PREMIER_REPLACEMENT_REQUIRED':'PLAYER_CAN_ENTER',
   available_jockeys:[rider],receiving_barn_options:[]};
  const game={
   view:()=>({stable:[{horse_id:'H-1999-ONE',name:'Win Candidate',
@@ -28,6 +28,7 @@ function makeScreen(premier){
    return {can_confirm:true,blockers:[],
     race_id:opportunity.race_id,race_date:opportunity.date,
     expected_revision:4,premier_offer_required:premier,
+    existing_entry_fallback:replacement,
     offer_bonus_minor:premier?opts.bonus_minor:0,
     potential_jockey_if_signed_minor:premier?105000+opts.bonus_minor:0,
     total_if_signed_minor:premier?105000+opts.bonus_minor:105000,
@@ -79,4 +80,18 @@ test('normal local jockeys still use immediate paid confirmation on the original
  assert.equal(commands[0].payload.maximum_total_minor,105000);
  assert.equal(commands[0].payload.bonus_minor,0);
  assert.match(api.current().notice,/jockey booked/i);
+});
+
+test('rejected premier owner can book a real local replacement from existing desk with no second entry',async()=>{
+ const {api,commands}=makeScreen(false,{replacement:true});
+ const screen=api.render();
+ assert.match(screen,/Premier bid lost/);
+ assert.match(screen,/BOOK REPLACEMENT JOCKEY & PAY \$1,050\.00/);
+ assert.doesNotMatch(screen,/SUBMIT PREMIER OFFER/);
+ await api.confirm();
+ assert.equal(commands.length,1);
+ assert.equal(commands[0].type,'CONFIRM_1999_RACE_PLAN');
+ assert.equal(commands[0].actor,'player');
+ assert.equal(commands[0].payload.maximum_total_minor,105000);
+ assert.match(api.current().notice,/REPLACEMENT JOCKEY BOOKED/);
 });
