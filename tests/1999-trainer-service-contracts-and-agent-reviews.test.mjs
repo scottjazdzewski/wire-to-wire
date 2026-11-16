@@ -129,11 +129,23 @@ test('AI service renewal responds to recorded reputation, trust and owner cash a
  const quote=trainerContractQuote(s,world,owner,trainer);
  assert.ok(quote.minimum_acceptable_minor>first);
  while(s.clock.date<'1999-01-29')s=advance(s);
+ // The jockey-driven race results can legitimately refresh a trainer's
+ // professional form during the month. For this specific contract unit
+ // scenario, establish the exceptional form immediately BEFORE the scheduled
+ // review, rather than assuming a Jan 2 rating cannot evolve for 27 days.
+ s.runtime.people[trainer].game_race_record={starts:20,wins:16,
+  managed_purse_minor:3000000,professional_standing:1};
+ s.runtime.agents.relationships[id].trainer_support=.05;
  const reviewQuote=trainerContractQuote(s,world,owner,trainer);
  assert.ok(reviewQuote.minimum_acceptable_minor>first);
  s=advance(s); // January 30: agent reviews the actual January 29 trust/standing
  const offer=getTrainerContract(s,world,owner,trainer).agreement;
- assert.ok(offer.pending,'AI must negotiate an affordable raise in response to exceptional trainer standing');
+ assert.ok(offer.pending,'AI must negotiate an affordable raise when trainer standing is exceptional: '+
+  JSON.stringify({reviewQuote,offer,ownerCash:s.runtime.finances.operation_balances_minor[owner],
+   review:s.runtime.owner_trainer_reviews.by_pair[id]?.evidence,
+   latestTrainerForm:s.runtime.people[trainer]?.game_race_record,
+   lastReview:s.event_log.filter(e=>e.kind==='TRAINER_SERVICE_REVIEWED'&&
+    e.details.owner_id===owner&&e.details.trainer_id===trainer).at(-1)?.details}));
  // The renewal is quoted *after* the real concern response, then the
  // normal daily care settlement can change trust again before day-end reads.
  // Verify the exact posted contract decision, not a stale day-end preview.
