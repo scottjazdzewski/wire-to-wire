@@ -2,6 +2,21 @@
 export const SHARED_1999_CAREER_PACKAGE_SCHEMA='WTW_SHARED_1999_CAREER_V1';
 const utf8=new TextEncoder(),text=new TextDecoder();
 const MAX_BYTES=64*1024*1024;
+function canonicalJsonValue(value){
+ if(Array.isArray(value))return value.map(canonicalJsonValue);
+ if(value&&Object.getPrototypeOf(value)===Object.prototype){
+  const sorted={};
+  for(const key of Object.keys(value).sort())sorted[key]=canonicalJsonValue(value[key]);
+  return sorted;
+ }
+ return value;
+}
+/** Compare a re-opened IndexedDB manifest with its JSON checkpoint form.
+ * Structured clone can change object key insertion order; that is not a
+ * world change. Array order and every JSON value still have to match. */
+export function sameShared1999WorldManifest(a,b){
+ return JSON.stringify(canonicalJsonValue(a))===JSON.stringify(canonicalJsonValue(b));
+}
 async function sha256(bytes){
  if(!globalThis.crypto?.subtle)throw Error('Web Crypto is required for career checkpoint integrity');
  const hash=new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256',bytes));

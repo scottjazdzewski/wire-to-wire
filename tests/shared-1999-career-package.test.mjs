@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
-import {packShared1999Career,unpackShared1999Career}
+import {packShared1999Career,unpackShared1999Career,sameShared1999WorldManifest}
  from '../public/1999/engine/shared-1999-career-package.mjs';
 
 globalThis.crypto??=webcrypto;
@@ -34,4 +34,12 @@ test('shared 1999 career checkpoint rejects changed bytes and mismatched world/r
  await assert.rejects(packShared1999Career({manifest,
   snapshotSha256:'b'.repeat(64),careerRecord:{...careerRecord,gameDate:'1999-05-28'}}),
   /metadata does not match/);
+});
+
+test('shared 1999 world manifests ignore key order but reject any changed values',()=>{
+ const first={schema:'WTW_PERSISTENT_INDUSTRY_1999_V1',plan:{seed:19990101,counts:{mares:60,stallions:10}},tracks:['T-0001','T-0002']};
+ const reordered={tracks:['T-0001','T-0002'],plan:{counts:{stallions:10,mares:60},seed:19990101},schema:'WTW_PERSISTENT_INDUSTRY_1999_V1'};
+ assert.equal(sameShared1999WorldManifest(first,reordered),true);
+ assert.equal(sameShared1999WorldManifest(first,{...reordered,tracks:['T-0002','T-0001']}),false);
+ assert.equal(sameShared1999WorldManifest(first,{...reordered,plan:{...reordered.plan,seed:19990102}}),false);
 });

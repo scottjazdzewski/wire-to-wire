@@ -22,8 +22,8 @@ import {dispatchGameCommand} from '/1999/game/kernel.js';
 import {gameRaceProgram,supported1999RaceClass,raceEligibility}
  from '/1999/game/racing-1999.js';
 import {validateGameRun} from '/1999/game/state.js';
-import {packShared1999Career,unpackShared1999Career}
- from '/1999/engine/shared-1999-career-package.mjs';
+import {packShared1999Career,unpackShared1999Career,sameShared1999WorldManifest}
+ from '/1999/engine/shared-1999-career-package.mjs?rev=wtw-shared-career-manifest-canonical-v1';
 
 const DB_NAME='WireToWireClean1999CareersV2';
 const MAX_SLOTS=60,MAX_TOTAL_BYTES=512*1024*1024;
@@ -424,7 +424,7 @@ async function importSharedCareerFile(file,{preserveExistingProgress=false}={}){
   const ready=await reopenPersistent1999Industry(db,{seed:wanted.seed,worldId:wanted.worldId});
   if(ready?.status!=='READY')throw Error('Shared 1999 world could not be completed');
   fullIndustryManifest=ready.manifest;
-  if(JSON.stringify(fullIndustryManifest)!==JSON.stringify(expected))
+  if(!sameShared1999WorldManifest(fullIndustryManifest,expected))
    throw Error('This build creates a different world manifest; checkpoint import stopped safely');
   const sameOpenWorld=activeWorldCareer?.manifest?.worldId===wanted.worldId&&
    activeWorldCareer.manifest.seed===wanted.seed;
