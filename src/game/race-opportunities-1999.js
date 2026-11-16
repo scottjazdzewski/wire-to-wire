@@ -24,6 +24,8 @@ const raceClass=book=>({
  maiden:book.maiden??book.maidenOnly,max_wins:book.max_wins??book.maxCareerWins,
  surface:book.surface,distance_furlongs:book.distance_furlongs??book.distanceFurlongs,
  field_capacity:book.field_capacity??book.fieldCapacity,
+ stake_id:book.stake_id??book.stakeId??null,
+ stakes_grade:book.stakes_grade??book.stakesGrade??null,
  purse_minor:book.purse_minor??Math.round(book.purse*100),
  status:book.status,source:book.source??book.conditionBookBasis,
  field:book.field??[]
@@ -40,11 +42,16 @@ function optionJockeys(state,world,horse,race){
    state.runtime.races[e.race_id]?.track_id!==race.track_id))continue;
   const quote=jockeyBookingDecision(state,world,race,horse,j);
   if(!quote.accept)continue;
-  const away=j.home_track_id!==race.track_id,fee=away?24000:6000;
+  const fee=quote.quote.feeMinor;
   options.push({
    jockey_id:j.id,home_track_id:j.home_track_id,
-   away_travel:away,fee_minor:fee,acceptance_reason:quote.reason,
-   suited_index:quote.suited_index,
+   jockey_tier:j.tier??'REGIONAL',
+   away_travel:quote.away,fee_minor:fee,
+   mount_fee_minor:quote.quote.mountMinor,
+   travel_fee_minor:quote.quote.travelMinor,
+   previous_mounts_at_same_track_that_day:quote.schedule.sameCardCount,
+   race_importance:quote.race_importance,
+   acceptance_reason:quote.reason,suited_index:quote.suited_index,
    owner_can_pay:money(account)&&account>=fee,
    source:'MODELED_AVAILABLE_JOCKEY_AGENT_NOT_HISTORICAL_CONTRACT'
   });
