@@ -15,9 +15,12 @@ import {assessJockeySchedule,quoteJockeyMount,jockeyRaceImportance,
 
 import {get1999JockeyPartnership} from '../engine/jockey-partnerships-1999.mjs';
 
+import {premierMarketRace,scorePremierJockeyOffer,premierBonusCap,premierOfferId}
+ from '../engine/jockey-premier-market-1999.mjs';
+
 export const GAME_RACING_SCHEMA='WTW_1999_CAREER_RACING_V1';
 export const RACING_COMMANDS=Object.freeze(['ACTIVATE_JOCKEY_COLONY','OPEN_1999_RACE','ENTER_1999_RACE',
- 'BOOK_1999_JOCKEY','SET_1999_RACE_TACTICS','SETTLE_1999_RACE']);
+ 'BOOK_1999_JOCKEY','OFFER_1999_PREMIER_JOCKEY','SET_1999_RACE_TACTICS','SETTLE_1999_RACE']);
 export const RACE_TACTICS=Object.freeze(['AUTO','LEAD','PRESS','STALK','CLOSE']);
 export const RACE_TACTICS_PREVIEW_SCHEMA='WTW_1999_RACE_TACTICS_PREVIEW_V1';
 const cents=x=>Number.isSafeInteger(x)&&x>=0;
@@ -29,7 +32,8 @@ const frac=(seed,key)=>{let n=(2166136261^(seed>>>0))>>>0;
  n^=n>>>16;n=Math.imul(n,2246822507);n^=n>>>13;
  return (n>>>0)/4294967296};
 export const createRacingRuntime=()=>({
- schema:GAME_RACING_SCHEMA,jockeys:{},jockey_finances_minor:{},trainer_finances_minor:{},horse_travel:{},
+ schema:GAME_RACING_SCHEMA,jockeys:{},jockey_finances_minor:{},trainer_finances_minor:{},
+ premier_offers:{},horse_travel:{},
  last_selection_date:null,last_settlement_date:null,selection_count:0
 });
 const root=state=>state.runtime.racing??(state.runtime.racing=createRacingRuntime());
@@ -346,6 +350,47 @@ export function racingAction({state,world,command,emit}){
   emit('RACE_ENTRY_CONFIRMED',{race_id:race.id,horse_id:horse.horse_id,
    trainer_id:horse.trainer_id,owner_id:horse.owner_organization_id,
    decision:entry.decision});
+ }else if(type==='OFFER_1999_PREMIER_JOCKEY'){
+  const race=state.runtime.races?.[p.race_id],
+   horse=state.runtime.registered_horses?.by_id?.[p.horse_id],
+   entry=state.runtime.entries?.[p.race_id+':'+p.horse_id],
+   jockey=rt.jockeys?.[p.jockey_id];
+  ensure(race&&horse&&jockey&&entry&&entry.status==='ENTERED'&&
+   race.status==='ENTRIES_OPEN'&&premierMarketRace(race,jockey),
+   'PREMIER_OFFER_ELIGIBILITY','Only entered horses can offer for an elite major-stakes mount');
+  ensure(command.actor==='system'||command.actor==='player'&&
+   horse.owner_organization_id===state.player.operation_id,
+   'PREMIER_OFFER_PERMISSION','Only the owning operation may propose a rider');
+  ensure(dayGap(state.clock.date,race.date)>=5,
+   'PREMIER_OFFER_DEADLINE','Premier offers must arrive before the four-day decision');
+  ensure(cents(p.bonus_minor)&&p.bonus_minor<=250000,
+   'PREMIER_OFFER_BONUS','Premier signing premium must be modeled integer cents');
+  const decision=jockeyBookingDecision(state,world,race,horse,jockey);
+  ensure(decision.accept,'PREMIER_OFFER_DECLINED',decision.reason);
+  ensure(p.bonus_minor<=premierBonusCap(decision.quote),
+   'PREMIER_OFFER_BONUS','Signing premium exceeds the modeled rider limit');
+  const cost=decision.quote.feeMinor+p.bonus_minor;
+  ensure(cents(state.runtime.finances.operation_balances_minor?.[horse.owner_organization_id])&&
+   state.runtime.finances.operation_balances_minor[horse.owner_organization_id]>=cost,
+   'PREMIER_OFFER_CASH','Owner cannot cover quoted winning mount and signing premium');
+  const offers=rt.premier_offers??(rt.premier_offers={});
+  const id=premierOfferId(race.id,horse.horse_id,jockey.id),prior=offers[id];
+  ensure(!prior||prior.status==='PENDING'&&p.bonus_minor>prior.bonus_minor,
+   'PREMIER_OFFER_EXISTS','Only a larger pending offer may replace a proposal');
+  ensure(Object.keys(offers).length<5000||prior,
+   'PREMIER_OFFER_LIMIT','Too many unresolved race offers');
+  offers[id]={id,race_id:race.id,horse_id:horse.horse_id,
+   jockey_id:jockey.id,trainer_id:horse.trainer_id,
+   owner_id:horse.owner_organization_id,
+   bonus_minor:p.bonus_minor,quoted_base_minor:decision.quote.feeMinor,
+   offered_date:state.clock.date,status:'PENDING'};
+  emit(prior?'JOCKEY_PREMIER_OFFER_RAISED':'JOCKEY_PREMIER_OFFER_SUBMITTED',{
+   offer_id:id,race_id:race.id,horse_id:horse.horse_id,
+   jockey_id:jockey.id,owner_id:horse.owner_organization_id,
+   trainer_id:horse.trainer_id,bonus_minor:p.bonus_minor,
+   maximum_possible_payment_minor:cost,owner_debited:false,
+   decision_due_date:new Date(Date.parse(race.date+'T12:00:00Z')-
+    4*86400000).toISOString().slice(0,10)});
  }else if(type==='BOOK_1999_JOCKEY'){
   const race=state.runtime.races[p.race_id],entry=state.runtime.entries[p.race_id+':'+p.horse_id],
    horse=state.runtime.registered_horses?.by_id?.[p.horse_id],j=rt.jockeys[p.jockey_id];
@@ -354,21 +399,36 @@ export function racingAction({state,world,command,emit}){
   ensure(command.actor==='system'||(command.actor==='player'&&
    state.player.operation_id===horse.owner_organization_id),
    'RACE_PERMISSION','Player cannot book another owner’s mount');
+  if(premierMarketRace(race,j)){
+   const id=premierOfferId(race.id,horse.horse_id,j.id);
+   ensure(command.actor==='system'&&p.market_offer_id===id&&
+    rt.premier_offers?.[id]?.status==='PENDING'&&
+    dayGap(state.clock.date,race.date)<=4,
+    'PREMIER_OFFER_REQUIRED','Elite major-stakes rides must win a competing offer before signing');
+  }
   const schedule=assessJockeySchedule(state,world,j,race);
   ensure(schedule.allowed,'JOCKEY_SCHEDULE',schedule.reason);
   const decision=jockeyBookingDecision(state,world,race,horse,j);
   ensure(decision.accept,'JOCKEY_DECLINED',decision.reason);
-  const quote=decision.quote,travel=schedule.away,fee=quote.feeMinor;
+  const quote=decision.quote,travel=schedule.away,
+   bonus=Number.isSafeInteger(p.market_bonus_minor)?p.market_bonus_minor:0;
+  ensure(bonus===0||premierMarketRace(race,j)&&
+   p.market_offer_id===premierOfferId(race.id,horse.horse_id,j.id)&&
+   rt.premier_offers?.[p.market_offer_id]?.bonus_minor===bonus,
+   'PREMIER_OFFER_BONUS','Only signed market winners may pay a negotiated premium');
+  const fee=quote.feeMinor+bonus;
   charge(state,horse.owner_organization_id,fee,'JOCKEY_MOUNT_AND_TRAVEL_FEE',race,horse,j.id);
   rt.jockey_finances_minor[j.id]+=fee;
   state.runtime.finances.ledger.push({date:state.clock.date,kind:'JOCKEY_FEE_RECEIVED',
    operation_id:null,person_id:j.id,amount_minor:fee,race_id:race.id,horse_id:horse.horse_id});
   entry.jockey_id=j.id;entry.status='BOOKED';entry.fee_minor=fee;entry.travel=travel;
-  entry.mount_fee_minor=quote.mountMinor;entry.travel_fee_minor=quote.travelMinor;
+  entry.mount_fee_minor=quote.mountMinor+bonus;entry.travel_fee_minor=quote.travelMinor;
+  entry.premier_signing_bonus_minor=bonus;
   emit('JOCKEY_MOUNT_BOOKED',{race_id:race.id,horse_id:horse.horse_id,jockey_id:j.id,
    trainer_id:horse.trainer_id,booked_track_id:race.track_id,
    home_track_id:j.home_track_id,away_travel:travel,fee_minor:fee,
-   mount_fee_minor:quote.mountMinor,travel_fee_minor:quote.travelMinor,
+   mount_fee_minor:quote.mountMinor+bonus,travel_fee_minor:quote.travelMinor,
+   premier_signing_bonus_minor:bonus,market_offer_id:p.market_offer_id??null,
    jockey_tier:j.tier,race_importance:decision.race_importance,
    trainer_partnership_mounts:decision.relationship.trainerMounts,
    owner_partnership_mounts:decision.relationship.ownerMounts,
