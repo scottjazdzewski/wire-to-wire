@@ -54,7 +54,10 @@ def remove_internal_paper(art: Image.Image, path: Path):
     # deliberately nonneutral and remains visible on the green game UI.
     paper = (low > 188) & ((high - low) < 21)
     strength = np.where(paper, bounded(np.max(np.abs(rgb - 255.0), axis=2), 8, 58), 1.0)
-    alpha = np.rint(raw[:, :, 3].astype(np.float32) * strength).astype(np.uint8)
+    # Fixed per-pixel cap makes this pass idempotent; a second audit must
+    # never keep multiplying antialiased pixels toward invisible.
+    target_alpha = np.rint(255.0 * strength).astype(np.uint8)
+    alpha = np.minimum(raw[:, :, 3], target_alpha)
     if np.array_equal(alpha, raw[:, :, 3]):
         return art
     raw[:, :, 3] = alpha
