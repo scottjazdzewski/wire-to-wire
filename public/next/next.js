@@ -2861,6 +2861,11 @@ function liveStableTrainingView(){
 // World Horse Directory uses the Stable roster presentation but never substitutes
 // an owner's stable roster for the full world source. IDs remain authoritative.
 function worldDirectoryHorseRows(){
+ const generated=window.WTWCompactCareerManager?.playableWorldHorseBrowse?.({
+  offset:APP.directoryPage*160,limit:160,search:APP.directorySearch,
+  sort:APP.directorySort,desc:APP.directorySortDesc
+ });
+ if(generated)return generated;
  const adapter=window.__WTW_1999_UI_DATA__;
  const total=Number(adapter?.counts?.worldHorses??adapter?.counts?.horses??0);
  if(adapter?.worldHorseBrowse){
@@ -2879,6 +2884,7 @@ function worldDirectoryHorseRows(){
  }))};
 }
 function liveDirectoryHorseData(h,game,files,races){
+ if(h?._wtwGeneratedWorld)return liveStableHorseData(h,null,game,files);
  const base=liveStableHorseData({
   name:h.name,horseId:h._id||h._canonId||h.id,
   activity:h.status||'Source status not recorded'
@@ -2960,7 +2966,7 @@ function liveStableRosterView(directory=false){
   owner:x=>x.owner||null,trainer:x=>x.trainer||null,breeder:x=>x.breeder||null,
   record:x=>x.record?Number(x.record.split('-')[0]):null,activity:x=>x.activity};
  const field=keys[sortKey]||keys.name;
- filtered.sort((a,b)=>{
+ if(!universe?.paged)filtered.sort((a,b)=>{
   const av=field(a),bv=field(b),am=av==null||av==='',bm=bv==null||bv==='';
   if(am!==bm)return am?1:-1;
   const cmp=typeof av==='number'&&typeof bv==='number'?av-bv:String(av).localeCompare(String(bv),undefined,{numeric:true,sensitivity:'base'});
@@ -3009,8 +3015,16 @@ function liveStableRosterView(directory=false){
    '" placeholder="Horse, owner, trainer, status…" autocomplete="off"/><div class="ng-rs-filters">'+filters+'</div>'+
    rosterDensityControls(directory?'directory':'stable',mode)+'</div>'+
   (window.WTW1999RosterFilters?.render(columns,stableCriteria,safe,scope)||'')+
-  '<section class="ng-rs-roster"><header><strong>HORSE MANAGEMENT ROSTER</strong><span class="ng-stable-visible">'+filtered.length+' OF '+all.length+
-   ' HORSES · CLICK HEADINGS TO SORT</span></header>'+
+  '<section class="ng-rs-roster"><header><strong>HORSE MANAGEMENT ROSTER</strong><span class="ng-stable-visible">'+
+   (directory&&universe?.paged?filtered.length+' SHOWN · '+universe.total.toLocaleString('en-US')+' WORLD HORSES':
+    filtered.length+' OF '+all.length+' HORSES')+' · CLICK HEADINGS TO SORT</span>'+
+   (directory&&universe?.paged?
+    '<div class="ng-directory-page-controls"><button type="button" data-ng="directory-page" data-val="-1" '+
+    (APP.directoryPage===0?'disabled':'')+' aria-label="Previous world horse page">‹</button><strong>'+
+    (APP.directoryPage+1)+' / '+Math.max(1,Math.ceil(universe.total/160))+'</strong>'+
+    '<button type="button" data-ng="directory-page" data-val="1" '+
+    ((APP.directoryPage+1)*160>=universe.total?'disabled':'')+
+    ' aria-label="Next world horse page">›</button></div>':'')+'</header>'+
    '<div class="ng-rs-scroll" tabindex="0" role="region" aria-label="Sortable horse roster; horizontally scroll for every column"><table class="ng-rs-table '+(mode==='compact'?'compact':'all')+
    '"><thead><tr>'+th+'</tr></thead><tbody>'+ (rowHTML||'<tr><td colspan="17" class="ng-rs-no-results">'+safe(emptyRosterMessage)+'</td></tr>')+
    '</tbody></table></div>'+legend+'</section></section>';
@@ -4084,6 +4098,13 @@ function worldCompleteDirectoryView(){
  const filters=kinds.map(([k,label])=>'<button type="button" data-ng="world-directory-type" data-val="'+k+
   '" class="'+(type===k?'on':'')+'" aria-pressed="'+(type===k)+'">'+label+' <b>'+
   (k==='all'?entries.length:entries.filter(e=>e.kind===k).length)+'</b></button>').join('');
+ const playable=window.WTWCompactCareerManager?.playableWorldStatus?.();
+ const liveBadge=playable?
+  '<div class="ng-world-playable-banner" role="status"><strong>ACTIVE FICTIONAL 1999 WORLD</strong>'+
+  '<span>'+playable.horseCount.toLocaleString('en-US')+' HORSES · '+
+  playable.ownedHorses+' OWNED · GAME DATE '+safe(playable.gameDate)+
+  ' · SOURCE HISTORY RETAINED SEPARATELY</span>'+
+  '<button type="button" data-ng="tab" data-val="1999 Horses">BROWSE LIVE HORSES ↗</button></div>':'';
  const pager='<div class="ng-world-directory-pager"><span>'+
   (sorted.length?first+1:0)+'–'+Math.min(first+pageSize,sorted.length)+' OF '+sorted.length+
   ' MATCHES · '+entries.length+' RECORDS</span>'+
@@ -4103,7 +4124,7 @@ function worldCompleteDirectoryView(){
   '<button type="button" data-ng="world-export" title="Download edits and images for GPT">EXPORT EDITS</button>'+
   '<button type="button" data-ng="world-import-open" title="Load World edits backup">IMPORT EDITS</button>'+
   '<input type="file" id="wtwWorldImportInput" accept="application/json,.json" hidden/></div></header>'+
-  '<div class="ng-world-directory-types" role="group" aria-label="World record type filter">'+filters+'</div>'+
+  liveBadge+'<div class="ng-world-directory-types" role="group" aria-label="World record type filter">'+filters+'</div>'+
   '<div class="ng-manager-workspace"><section class="ng-manager-primary"><header>'+
   '<strong>ALL CONNECTED RECORDS</strong><span>'+sorted.length+' MATCHING · OPEN PROFILE TO EDIT</span></header>'+
   managerSortableColumns(scope,[['kind','TYPE'],['name','NAME'],['detail','ROLE / TYPE'],
@@ -4875,10 +4896,13 @@ window.addEventListener('click',e=>{
    capacity:farm.capacity||'',status:'1999 TEST WORLD FACILITY',_testGenerated:true});
  }
  if(key==='named-entity')return openEntityRecord(btn.dataset.name||'',btn.dataset.kind||'',btn.dataset.track?{_track:btn.dataset.track}:null);
- if(key==='directory-sort'){if(APP.directorySort===val)APP.directorySortDesc=!APP.directorySortDesc;else{APP.directorySort=val;APP.directorySortDesc=false}return paint()}
+ if(key==='directory-sort'){if(APP.directorySort===val)APP.directorySortDesc=!APP.directorySortDesc;else{APP.directorySort=val;APP.directorySortDesc=false}APP.directoryPage=0;return paint()}
+ if(key==='directory-page'){APP.directoryPage=Math.max(0,APP.directoryPage+Number(val));return paint()}
  if(key==='directory-filter'){APP.directoryFilter=val;return paint()}
  if(key==='directory-mode'){APP.directoryMode=val;return paint()}
  if(key==='directory-horse'){
+  const generated=window.WTWCompactCareerManager?.playableHorseProfile?.(val);
+  if(generated)return previewRecordRoute('horse',generated.name,generated);
   const record=APP.directoryHorseItems.find(x=>x._directoryId===val)?._directoryRecord;
   if(!record)return;
   if(record._worldKey&&world1999Entry(record._worldKey))return openWorld1999Entity(record._worldKey);
@@ -5092,7 +5116,7 @@ root.addEventListener('input',event=>{
   return;
  }
  if(input.matches('input[data-ng-input="directory-search"]')){
-  APP.directorySearch=input.value;const cursor=input.selectionStart;
+  APP.directorySearch=input.value;APP.directoryPage=0;const cursor=input.selectionStart;
   paint();const found=root.querySelector('input[data-ng-input="directory-search"]');
   if(found){found.focus();found.setSelectionRange(cursor,cursor)}return;
  }
