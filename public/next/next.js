@@ -285,8 +285,8 @@ function selectAdjacentCase(direction=1,onlyOpen=false){
 }
 const currDesk=()=>decisionFiles().find(file=>file.message.case===APP.activeCase)?.desk||
  window.__WTW_1999_UI_DATA__?.officeDesks?.[APP.activeCase]||{title:'No case selected',moves:[],intel:[]};
-const horseRows=()=>window.__WTW_1999_MANAGEMENT__?window.__WTW_1999_UI_DATA__?.stableHorses||[]:$('.right .boardRows .rankRow').map((n,i)=>({name:$('strong',n)?.textContent.trim()||'',activity:$('.wtwV37HorseActivity',n)?.textContent.trim()||n.title||'No current Office activity recorded',tag:n.querySelector(':scope > span:last-child')?.textContent.trim()||'',index:i+1}));
-const racingRows=()=>window.__WTW_1999_MANAGEMENT__?[]:$('.right .fixtureList .fixture[data-track]').map(n=>{const name=$('h4',n)?.textContent.trim()||'';const saved=state();const isPowerline=name==='Powerline';const confirmed=isPowerline && (saved.calendarState?.['Churchill R3']?.status==='Entered' || /^Entered/i.test(saved.horseState?.Powerline?.status||''));return {name,date:$('.d',n)?.textContent.trim()||'',track:n.dataset.track||'',tag:$('.raceTag',n)?.textContent.trim()||'',status:confirmed?'Entered':($('.wtwV37EntryFlag',n)?.textContent.trim()||'Target')}});
+const horseRows=()=>window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.horseRows|| (window.__WTW_1999_MANAGEMENT__?window.__WTW_1999_UI_DATA__?.stableHorses||[]:$('.right .boardRows .rankRow').map((n,i)=>({name:$('strong',n)?.textContent.trim()||'',activity:$('.wtwV37HorseActivity',n)?.textContent.trim()||n.title||'No current Office activity recorded',tag:n.querySelector(':scope > span:last-child')?.textContent.trim()||'',index:i+1}))); 
+const racingRows=()=>window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.raceRows|| (window.__WTW_1999_MANAGEMENT__?[]:$('.right .fixtureList .fixture[data-track]').map(n=>{const name=$('h4',n)?.textContent.trim()||'';const saved=state();const isPowerline=name==='Powerline';const confirmed=isPowerline && (saved.calendarState?.['Churchill R3']?.status==='Entered' || /^Entered/i.test(saved.horseState?.Powerline?.status||''));return {name,date:$('.d',n)?.textContent.trim()||'',track:n.dataset.track||'',tag:$('.raceTag',n)?.textContent.trim()||'',status:confirmed?'Entered':($('.wtwV37EntryFlag',n)?.textContent.trim()||'Target')}}));
 const glyph=(name,size=16)=>{const paths={
   chevron:'<path d="m6 9 6 6 6-6"/>',
   left:'<path d="m15 18-6-6 6-6"/>',
@@ -311,6 +311,8 @@ const glyph=(name,size=16)=>{const paths={
 
 /* Shared logo slot for player stable, farms and all future organization profiles. */
 function playerOrganization(){
+ const game=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ if(game?.operationId)return {id:game.operationId,name:game.operationName};
  const active=window.__WTW_1999_UI_DATA__;
  if(window.__WTW_1999_MANAGEMENT__&&active?.sourceOwnerId)return {id:active.sourceOwnerId,name:active.sourceOwnerName};
  const st=state(),o=st.organization&&typeof st.organization==='object'?st.organization:
@@ -370,16 +372,22 @@ function horseOwnerBadge(name,showName=false){
    (showName?'<span class="ng-horse-owner-name">'+safe(owner?.name||'Not recorded')+'</span>':'')+'</span>';
 }
 function availableCash(){
+ const career=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ if(career&&Number.isSafeInteger(career.cashMinor))return career.cashMinor/100;
+ const pilot=window.__WTW_1999_UI_DATA__?.gameplayService?.state;
+ const owner=pilot?.player?.operation_id;
+ const pilotMinor=pilot?.runtime?.finances?.operation_balances_minor?.[owner];
+ if(Number.isSafeInteger(pilotMinor))return pilotMinor/100;
  const st=state(),f=st.finances||{},stable=f.stable||{};
  const values=[stable.available_cash,stable.availableCash,stable.cash_balance,stable.cashBalance,f.available_cash,f.availableCash];
  const value=values.find(x=>typeof x==='number'&&Number.isFinite(x));
  return value===undefined?null:value;
 }
 function cashDisplay(){
- if(window.__WTW_1999_MANAGEMENT__&&Number.isFinite(window.__WTW_1999_UI_DATA__?.openingCash))
-  return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(window.__WTW_1999_UI_DATA__.openingCash)+' (TEST)';
  const cash=availableCash();
- return cash===null?'—':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(cash);
+ if(cash===null)return 'Not funded';
+ const display=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(cash);
+ return window.__WTW_1999_UI_DATA__?.gameplayService&&!window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?display+' (TEST)':display;
 }
 function openFollowUps(){
  const follow=state().followUps;
@@ -405,9 +413,11 @@ function organizationOverview(){
  const raceRowsHTML=races.slice(0,4).map((r,i)=>link('fixture',i,r.name,r.date+' · '+r.track+' · '+r.status)).join('');
  const dueRowsHTML=follow.slice(0,4).map(f=>link('followup',f.id,f.caseTitle||f.caseId||'Follow-up',(f.dueDate||'No date')+' · '+(due.includes(f)?'DUE':'OPEN'))).join('');
  const decisionRowsHTML=openCases.slice(0,4).map(m=>link('case',m.case,m.title,m.from)).join('');
- const financialStatus=typeof st.finances?.stable?.status==='string'?st.finances.stable.status:'Financial baseline not established';
+ const financialStatus=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?'Saved career · game ledger':
+  window.__WTW_1999_UI_DATA__?.gameplayService?'Gameplay pilot · game ledger':
+  typeof st.finances?.stable?.status==='string'?st.finances.stable.status:'Opening finance not initialized';
  const cash=availableCash();
- const finance='<div class="ng-org-finance"><small>AVAILABLE CASH</small><strong>'+safe(cashDisplay())+'</strong><p>'+safe(financialStatus)+(cash===null?' · No verified dollar amount':'')+'</p></div>';
+ const finance='<div class="ng-org-finance"><small>AVAILABLE CASH</small><strong>'+safe(cashDisplay())+'</strong><p>'+safe(financialStatus)+(cash===null?' · Establish opening capital in the game career':'')+'</p></div>';
  const opLinks='<div class="ng-tier1-shortcuts">'+[
   ['Personnel','PERSONNEL'],['Facilities','FACILITIES'],['Sales','SALES'],['Finances','FINANCES']
  ].map(([name,label])=>'<button data-ng="menu" data-val="'+safe(name)+'">'+safe(label)+' '+glyph('arrow',12)+'</button>').join('')+
@@ -3113,6 +3123,8 @@ const DEP_MONTH={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,No
 // The active engine owns the date. A legacy date chip is not authoritative
 // and must not rewind the 1999 playtest or drive its calendar.
 function depGameDay(){
+ const canonicalDate=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.date;
+ if(/^\d{4}-\d{2}-\d{2}$/.test(canonicalDate||''))return canonicalDate;
  const engineDate=window.__WTW_1999_UI_DATA__?.gameplayService?.state?.clock?.date;
  const careerDate=state().date;
  return window.__WTW_OFFICE_DIRECT_READ__.gameDate({engineDate,careerDate});
