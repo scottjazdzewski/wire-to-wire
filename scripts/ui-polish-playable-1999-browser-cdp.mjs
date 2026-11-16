@@ -163,7 +163,7 @@ try{
  await delay(250);
  const trackOpened=await evaluate('(()=>({custom:window.__WTW_NEXT__.app.custom,shown:!!document.querySelector("#wtwNextgen .ng-profile-track")}))()');
  assert.equal(worldTrackLink.clicked,true,'World Tracks Belmont row does not exist');
- assert.ok(trackOpened.shown&&trackOpened.custom.includes('track:T-0002'),
+ assert.ok(trackOpened.shown&&decodeURIComponent(trackOpened.custom.slice('WorldRecord:'.length))==='track:T-0002',
   'World Tracks row did not navigate to canonical Belmont Profile: '+JSON.stringify(trackOpened));
  audit.push({route:'world-to-belmont-click',...trackOpened});
  const report={phase,base:'playable-1999',world,viewports,audit,screenshots};
