@@ -153,6 +153,82 @@ try{
  assert.equal(snap.namedBreeders,true,'Broodmares must have provisional registered names');
  assert.equal(snap.namedRacehorse,true,'Race-ready horses must have provisional names');
  assert.ok(snap.namedPersonnel>0,'Personnel naming provider did not populate names');
+ const readCareerSave=async()=>browser.evalJS(`(async()=>{
+  const api=await import('/1999/engine/fictional-industry-persistence-1999.mjs');
+  const db=await api.open1999IndustryDatabase();
+  try{
+   const world=await api.reopenPersistent1999Industry(db,{
+    seed:19990101,worldId:${JSON.stringify(snap.worldId)}});
+   const manifest=world.manifest;
+   const runId='WTW-RUN-1999-'+manifest.seed+'-SIZE-'+
+    (manifest.targetOpeningHorses??manifest.horseCount);
+   const record=await api.loadPersistent1999CareerRun(db,manifest,runId);
+   if(!record)return null;
+   const json=JSON.stringify(record),run=record.changes?.canonicalRun;
+   const races=Object.values(run?.runtime?.races||{});
+   return {gameDate:record.gameDate,
+    utf8JsonBytes:new TextEncoder().encode(json).length,
+    stableHorses:run?.stable_horse_ids?.length??0,
+    registeredHorses:Object.keys(run?.runtime?.registered_horses?.by_id||{}).length,
+    races:races.length,
+    officialRaces:races.filter(r=>r.status==='OFFICIAL_SIM_RESULT').length,
+    raceFields:races.map(r=>({status:r.status,field:r.field?.length??0,date:r.date}))};
+  }finally{db.close()}
+ })()`);
+ await waitFor('full-world career start control',async()=>{
+  const ready=await browser.evalJS(`!!document.querySelector('[data-cc-action="start-test-career"]')`);
+  return {done:ready,value:ready};
+ });
+ const storageBeforeCareer=await browser.evalJS('navigator.storage.estimate()');
+ const startClicked=await browser.evalJS(`(()=>{
+  const button=document.querySelector('[data-cc-action="start-test-career"]');
+  if(!button)return false;button.click();return true;
+ })()`);
+ assert.equal(startClicked,true,'Full-world test career control missing');
+ await waitFor('full-world career save',async()=>{
+  const saved=await readCareerSave();return {done:!!saved,value:saved};
+ },300000);
+ const careerAtStart=await readCareerSave();
+ assert.ok(careerAtStart.stableHorses>=2,'Full-world career save lacks playable horses');
+ const storageAfterStart=await browser.evalJS('navigator.storage.estimate()');
+ const raceClicked=await browser.evalJS(`(()=>{
+  const button=document.querySelector('[data-cc-action="open-next-test-race"]');
+  if(!button)return false;button.click();return true;
+ })()`);
+ assert.equal(raceClicked,true,'Full-world race entry control missing');
+ await waitFor('full-world race entry save',async()=>{
+  const saved=await readCareerSave();
+  return {done:!!saved&&saved.races.length>0,value:saved};
+ },180000);
+ const careerWithEntries=await readCareerSave();
+ assert.ok(careerWithEntries.raceFields.some(r=>r.field>=2),
+  'Full-world player horses were not saved in a real race field');
+ let careerAfterRace=careerWithEntries;
+ for(let day=0;day<35&&careerAfterRace.officialRaces<1;day++){
+  const previousDate=careerAfterRace.gameDate;
+  const advanced=await browser.evalJS(`(()=>{
+   const button=document.querySelector('[data-cc-action="advance-test-day"]');
+   if(!button)return false;button.click();return true;
+  })()`);
+  assert.equal(advanced,true,'Full-world game-day control missing');
+  await waitFor('full-world game-day save',async()=>{
+   const saved=await readCareerSave();
+   return {done:!!saved&&saved.gameDate!==previousDate,value:saved};
+  },120000);
+  careerAfterRace=await readCareerSave();
+ }
+ assert.ok(careerAfterRace.officialRaces>=1,
+  'Full-world entered race did not become an official saved result within 35 days');
+ const storageAfterRace=await browser.evalJS('navigator.storage.estimate()');
+ const playedCareerEvidence={worldHorses:snap.horses,worldId:snap.worldId,
+  storageUsageBytes:{beforeCareer:storageBeforeCareer.usage,
+   afterStart:storageAfterStart.usage,afterOfficialRace:storageAfterRace.usage},
+  saves:{careerAtStart,careerWithEntries,careerAfterOfficialRace:careerAfterRace},
+  deltas:{startToEntryBytes:careerWithEntries.utf8JsonBytes-careerAtStart.utf8JsonBytes,
+   entryToOfficialBytes:careerAfterRace.utf8JsonBytes-careerWithEntries.utf8JsonBytes,
+   worldToCareerStartStorageBytes:storageAfterStart.usage-storageBeforeCareer.usage,
+   worldToOfficialRaceStorageBytes:storageAfterRace.usage-storageBeforeCareer.usage}};
+ console.log('WTW_FULL_WORLD_PLAYED_SAVE_SIZE '+JSON.stringify(playedCareerEvidence));
  console.log('WTW_FULL_WORLD_FIRST_OPEN_PASS '+JSON.stringify(snap));
  await stop(browser);browser=null;
  browser=await launch();
@@ -161,6 +237,10 @@ try{
   return {done:v,value:v};
  });
  await browser.evalJS('window.WTWCompactCareerManager.open().then(()=>true)');
+ const careerAfterProcessRestart=await readCareerSave();
+ assert.deepEqual(careerAfterProcessRestart,careerAfterRace,
+  'Played full-world career record changed or failed to reopen after Chromium restart');
+ console.log('WTW_FULL_WORLD_PLAYED_SAVE_REOPEN_PASS '+JSON.stringify(careerAfterProcessRestart));
  const reopened=await browser.evalJS(inspect);
  assert.deepEqual(reopened,snap,'Full world changed after Chromium process restart');
  const ui=await browser.evalJS(`(()=>{
