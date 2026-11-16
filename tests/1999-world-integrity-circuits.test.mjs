@@ -128,6 +128,16 @@ test('cross-track schedules leave time for modeled physical shipping and two-day
  const tooSoon=new Date(Date.parse(shippingDate+'T12:00:00Z')+
   (coast.days+1)*86400000).toISOString().slice(0,10);
  assert.ok(tooSoon<earliest,'pre-race two-day arrival interval must be enforced');
+ const alaska={location:{city:'Anchorage',state:'Alaska',country:'USA'}};
+ const hawaii={location:{city:'Honolulu',state:'Hawaii',country:'USA'}};
+ for(const offshore of [alaska,hawaii]){
+  assert.equal(modeledShippingRoute(east,offshore).supported,false,
+   'mainland-to-offshore travel requires an actual air/sea carrier');
+  assert.equal(modeledShippingRoute(offshore,east).supported,false,
+   'offshore-to-mainland travel cannot be quoted as road hauling');
+ }
+ assert.equal(modeledShippingRoute(alaska,hawaii).supported,false,
+  'offshore-to-offshore travel also requires an actual carrier');
  const canada={location:{city:'Toronto',state:'Ontario',country:'Canada'}};
  assert.equal(modeledShippingRoute(east,canada).supported,false,
   'unsupported cross-border route must fail closed');
