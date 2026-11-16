@@ -138,6 +138,29 @@ test('elite rider earns a larger premium for major stakes, with one air-travel a
  assert.equal(next.additionalTravel,false);
  assert.equal(quoteJockeyMount(elite,second,{additionalTravel:next.additionalTravel}).travelMinor,0);
 });
+test('visiting jockey is charged for one continuous meeting trip, not every race day, with real save continuity',()=>{
+ const s=state(),rider=jockey(51,'T-0001','ELITE');
+ const visit={id:'R-CA-G1-OPEN',track_id:'T-0028',date:'1999-01-12',
+  purse_minor:48000000,stake_id:'WTW-FEATURE',stakes_grade:'G1'};
+ const during={id:'R-CA-THURSDAY',track_id:'T-0028',date:'1999-01-14',
+  purse_minor:2800000,conditions:'Allowance'};
+ const separate={id:'R-CA-TWO-WEEKS',track_id:'T-0028',date:'1999-01-25',
+  purse_minor:48000000,stake_id:'WTW-FEATURE-2'};
+ const first=commit(s,visit,rider,'H-ONE');
+ assert.equal(first.additionalTravel,true);
+ assert.ok(quoteJockeyMount(rider,visit,{additionalTravel:first.additionalTravel}).travelMinor>0);
+ const continuation=assessJockeySchedule(s,world,rider,during);
+ assert.equal(continuation.allowed,true,JSON.stringify(continuation));
+ assert.equal(continuation.existingVisitingMeet,true);
+ assert.equal(continuation.additionalTravel,false,'A real rider cannot collect the same visit travel twice');
+ commit(s,during,rider,'H-TWO');
+ assert.equal(quoteJockeyMount(rider,during,{
+  additionalTravel:continuation.additionalTravel}).travelMinor,0);
+ const anotherTrip=assessJockeySchedule(s,world,rider,separate);
+ assert.equal(anotherTrip.additionalTravel,true,'A distinct later visiting meet needs a newly funded trip');
+ const saved=JSON.parse(JSON.stringify(s));
+ assert.deepEqual(assessJockeySchedule(saved,world,rider,separate),anotherTrip);
+});
 test('regional home jockey will not be teleported for an ordinary low-purse cross-country ride',()=>{
  const s=state(),local=jockey(2,'T-0001','REGIONAL');
  const far={id:'R-LOW',track_id:'T-0028',date:'1999-01-15',
