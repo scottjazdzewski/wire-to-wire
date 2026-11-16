@@ -12,7 +12,7 @@ const modules=[
  'contracts.js','rng.js','attribute-contract.js','reputation.js',
  'facility-operations.js','ownership.js','horse-registration.js',
  'horse-starting-attributes.js','horse-care.js','trainer-contracts-1999.js','working-relationship-1999.js','owner-trainer-career-1999.js','trainer-management-requests-1999.js','trainer-employment-1999.js','post-race-campaign-1999.js','daily-agents.js',
- 'racing-1999.js','race-opportunities-1999.js','player-race-plan-1999.js','race-agents-1999.js','shipping-1999.js','people-generator.js',
+ 'racing-1999.js','race-opportunities-1999.js','race-placement-1999.js','player-race-plan-1999.js','race-agents-1999.js','shipping-1999.js','people-generator.js',
  'facility-market-1999.js','state.js','kernel.js','persistence.js',
  'selectors.js','horse-connections.js','1999-pilot-fixture.js',
  'future-industry-v22.js','index.js'
