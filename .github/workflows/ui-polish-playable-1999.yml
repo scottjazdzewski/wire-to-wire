@@ -1,0 +1,36 @@
+name: WTW Playable UI Polish Window 4
+on:
+  pull_request:
+    paths:
+      - 'public/next/**'
+      - 'scripts/ui-polish-playable-1999-browser-cdp.mjs'
+      - '.github/workflows/ui-polish-playable-1999.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-browser-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test playable world and capture screen matrix
+        shell: bash
+        run: |
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME"
+          CHROME="$CHROME" node scripts/ui-polish-playable-1999-browser-cdp.mjs | tee ui-polish.log
+          grep -q WTW_UI_POLISH_BASELINE_PASS ui-polish.log
+      - name: Upload viewport before or after evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-playable-ui-window4-evidence
+          path: |
+            visual-audit/playable-ui-window4/
+            ui-polish.log
+          retention-days: 14
+          if-no-files-found: warn
