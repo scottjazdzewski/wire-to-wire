@@ -10,8 +10,13 @@ permissions:
   contents: read
 jobs:
   real-browser-matrix:
+    name: Playable UI / ${{ matrix.world_horses }} horses
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        world_horses: [10000, 300000]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,13 +27,15 @@ jobs:
         run: |
           CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
           test -n "$CHROME"
-          WTW_UI_POLISH_PHASE=after CHROME="$CHROME" node scripts/ui-polish-playable-1999-browser-cdp.mjs | tee ui-polish.log
+          WTW_UI_WORLD_HORSES="${{ matrix.world_horses }}" WTW_UI_POLISH_PHASE=after CHROME="$CHROME" node scripts/ui-polish-playable-1999-browser-cdp.mjs | tee ui-polish.log
           grep -q WTW_UI_POLISH_BASELINE_PASS ui-polish.log
+          grep -q WTW_UI_ACTIVE_STABLE_PROFILE_PASS ui-polish.log
+          grep -q WTW_UI_FULL_WORLD_DIRECTORY_PASS ui-polish.log
       - name: Upload viewport before or after evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: wtw-playable-ui-window4-evidence
+          name: wtw-playable-ui-window4-${{ matrix.world_horses }}-evidence
           path: |
             visual-audit/playable-ui-window4/
             ui-polish.log
