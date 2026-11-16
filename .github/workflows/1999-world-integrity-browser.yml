@@ -55,7 +55,7 @@ jobs:
           - horses: 300000
             seed: 19990101
           - horses: 325000
-            seed: 19990717
+            seed: 19990101
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
