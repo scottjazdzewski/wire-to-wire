@@ -104,6 +104,6 @@ test('race opening is wired to the exact saved ID and a live reopened projection
  assert.match(ui,/saved\?\.raceRows\?\.find\(r=>r\.id===id\)/);
  assert.match(ui,/else if\(APP\.custom\.startsWith\('RaceFile:'\)\)/);
  assert.match(ui,/APP\.custom\.startsWith\('RaceFile:Career:'\)/);
- assert.match(ui,/if\(view\.startsWith\('RaceFile:Career:'\)\)\{APP\.section==='Racing'|if\(view\.startsWith\('RaceFile:Career:'\)\)\{APP\.section='Racing'/);
+ assert.match(ui,/if\(view\.startsWith\('RaceFile:Career:'\)\)\{APP\.section='Racing'/);
  assert.match(ui,/window\.WTW1999CanonicalCareerRaceFile\?\.render\?\.\(row\)/);
 });
