@@ -5,6 +5,7 @@
  */
 import {createPersonnelNameRoster,PERSONNEL_NAME_MODEL}
  from './personnel-name-engine.mjs';
+import {trackConditionProfile1999} from '../../next/1999-condition-book-engine.mjs';
 export const INDUSTRY_STAFFING_1999_SCHEMA='WTW_INDUSTRY_STAFFING_1999_V1';
 const roles=Object.freeze({
  trainer:{horsesPerPerson:24,tiers:['NATIONAL','MAJOR_CIRCUIT','REGIONAL','SMALL_BARN']},
@@ -53,28 +54,48 @@ function hash(seed,s){let h=(2166136261^(seed>>>0))>>>0;
  for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}
  return h>>>0}
 export function plan1999IndustryStaffing({
- seed=19990101,ecosystem,minimumRacingTracks=0,minimumJockeysPerTrack=2
+ seed=19990101,ecosystem,minimumRacingTracks=0,minimumJockeysPerTrack=2,
+ tracks=null,courseDemandTargets=false
 }={}){
  if(!ecosystem?.counts||!Number.isSafeInteger(seed)||seed<1||
   !Number.isSafeInteger(minimumRacingTracks)||minimumRacingTracks<0||
-  ![1,2].includes(minimumJockeysPerTrack))
+  ![1,2].includes(minimumJockeysPerTrack)||
+  (courseDemandTargets&&(!Array.isArray(tracks)||
+   tracks.length!==minimumRacingTracks||
+   new Set(tracks.map(t=>t.id)).size!==tracks.length)))
+
   throw Error('Invalid opening industry staffing plan');
  const c=ecosystem.counts;
  const racing=c.twoYearOldProspects+c.threeYearOldRunners+
   c.fourYearOldRunners+c.fivePlusRunners;
  // January 1 staffing excludes the projected foal crop, not yet born.
  const breeding=c.broodmares+c.stallions+c.yearlings;
+ // A full track card needs a reusable colony of perhaps 16–25 riders,
+ // not a distinct jockey for each mount on each race. Program tiers drive
+ // that standing pool; national stars can still ride important away meets.
+ const trackJockeyTargets=courseDemandTargets?Object.fromEntries(tracks.map(t=>{
+  const program=trackConditionProfile1999(t.id,seed);
+  if(!program)throw Error('No 1999 race program to size jockey colony '+t.id);
+  const factor=program.tier==='PREMIER'?2.1:
+   program.tier==='MAJOR'?2:program.tier==='REGIONAL'?1.85:1.7;
+  return [t.id,Math.max(16,Math.min(25,Math.ceil(program.racesMax*factor)))];
+ })):null;
+ const requiredJockeys=trackJockeyTargets?
+  Object.values(trackJockeyTargets).reduce((n,v)=>n+v,0):0;
  const counts={};
  for(const [role,rule] of Object.entries(roles)){
   const population=['farm_manager','breeding_attendant'].includes(role)?
    breeding:racing;
   counts[role]=Math.max(Math.ceil(population/rule.horsesPerPerson),
    role==='trainer'?minimumRacingTracks:
-   role==='jockey'?minimumRacingTracks*minimumJockeysPerTrack:0);
+   role==='jockey'?Math.max(minimumRacingTracks*minimumJockeysPerTrack,
+    requiredJockeys):0);
  }
  return {schema:INDUSTRY_STAFFING_1999_SCHEMA,seed,racingPopulation:racing,
   breedingAndYoungstockPopulation:breeding,counts,
   minimumJockeysPerTrack:minimumRacingTracks?minimumJockeysPerTrack:0,
+  ...(trackJockeyTargets?{trackJockeyTargets,
+   policy:'COURSE_SPECIFIC_REUSABLE_JOCKEY_POOLS_1999_V2'}:{}),
   note:'MODELED_LABOR_MARKET_NOT_EMPLOYMENT_CONTRACTS'};
 }
 export function* generate1999StaffingBatches({
@@ -88,6 +109,17 @@ export function* generate1999StaffingBatches({
    staffing.counts.jockey<tracks.length*(staffing.minimumJockeysPerTrack??1)))||
   !Number.isInteger(batchSize)||
   batchSize<1||batchSize>5000)throw Error('Invalid staffing materialization');
+ const fullTargets=staffing.trackJockeyTargets;
+ if(fullTargets&&(
+  Object.keys(fullTargets).length!==tracks.length||
+  tracks.some(t=>!Number.isSafeInteger(fullTargets[t.id])||
+   fullTargets[t.id]<2||fullTargets[t.id]>25)||
+  Object.values(fullTargets).reduce((n,v)=>n+v,0)>staffing.counts.jockey))
+  throw Error('Invalid persisted course-specific jockey workforce');
+ const guaranteedJockeyTracks=fullTargets?
+  tracks.flatMap(t=>Array(fullTargets[t.id]).fill(t)):
+  Array.from({length:tracks.length*(staffing.minimumJockeysPerTrack??1)},
+   (_,i)=>tracks[i%tracks.length]);
  const total=Object.values(staffing.counts).reduce((n,v)=>n+v,0);
  const roleOrder=Object.keys(roles);
  const generatedNames=nameRoster??createPersonnelNameRoster(seed,total,index=>{
@@ -107,12 +139,13 @@ export function* generate1999StaffingBatches({
    // Two genuine, stable local jockey identities per active course for newly
    // generated full worlds. Existing saved rosters without the field retain
    // their original one-per-course layout and permanent IDs.
-   const guaranteed=role==='trainer'?tracks.length:
-    role==='jockey'?tracks.length*(staffing.minimumJockeysPerTrack??1):0;
    const base=['farm_manager','breeding_attendant'].includes(role)?
     farms[hash(seed,id+':farm')%farms.length]:
-    ensureCircuitCoverage&&i<guaranteed?
-     tracks[i%tracks.length]:tracks[hash(seed,id+':track')%tracks.length];
+    ensureCircuitCoverage&&role==='trainer'&&i<tracks.length?
+     tracks[i]:
+    ensureCircuitCoverage&&role==='jockey'&&i<guaranteedJockeyTracks.length?
+     guaranteedJockeyTracks[i]:
+     tracks[hash(seed,id+':track')%tracks.length];
    const tierRoll=hash(seed,id+':tier')%1000;
    const tier=rule.tiers[Math.min(rule.tiers.length-1,
     tierRoll<25?0:tierRoll<170?1:tierRoll<530?2:3)];
