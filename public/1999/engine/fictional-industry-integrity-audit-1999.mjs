@@ -148,10 +148,14 @@ export async function auditPersistent1999World(store,manifest,{expectedHorses=nu
       OUT_OF:h.damId,HOME_TRACK:h.homeTrackId,TRAINED_BY:h.trainerId,
       PREFERRED_JOCKEY:h.jockeyId})[type]).length,
     'extra horse relationship '+h.id);
-   if(h.sireId)check(/^H-FICTIONAL-1999-STALLIONS-\d{7}$/.test(h.sireId),
-    'wrong sire role '+h.id);
-   if(h.damId)check(/^H-FICTIONAL-1999-BROODMARES-\d{7}$/.test(h.damId),
-    'wrong dam role '+h.id);
+   if(h.sireId)check(/^H-FICTIONAL-1999-STALLIONS-\d{7}$/.test(h.sireId)&&
+    Number(h.sireId.slice(-7))>=1&&
+    Number(h.sireId.slice(-7))<=manifest.plan.counts.stallions,
+    'missing or wrong sire reference '+h.id);
+   if(h.damId)check(/^H-FICTIONAL-1999-BROODMARES-\d{7}$/.test(h.damId)&&
+    Number(h.damId.slice(-7))>=1&&
+    Number(h.damId.slice(-7))<=manifest.plan.counts.broodmares,
+    'missing or wrong dam reference '+h.id);
    if(h.status==='RACING'||h.status==='TWO_YEAR_OLD_PROSPECT'){
     check(tracks.has(h.homeTrackId),'no live horse home track '+h.id);
     check(h.trainerId&&workplaces.get(h.trainerId)===h.homeTrackId,
