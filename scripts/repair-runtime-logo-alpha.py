@@ -17,12 +17,13 @@ from scipy.ndimage import binary_propagation, distance_transform_edt
 ROOT = Path(__file__).resolve().parents[1]
 TARGETS = (
     "public/assets/places/track-logos/*.*",
+    "public/assets/places/track-hero/*.*",
     "public/assets/office/founding-organization-logos/*.*",
     "public/assets/profile-badges/v2/*.*",
     "public/assets/wtw-logo.png",
     "public/assets/wtw-office-approved-logo.png",
 )
-EXCLUDED = ("/portraits/", "/track-hero/", "/places/farms/", "/trophies/")
+EXCLUDED = ("/portraits/", "/places/farms/", "/trophies/")
 APPROVED_EXTENSIONS = {".png", ".webp"}
 # These backgrounds are known to be integral to the source *raster*, not
 # cutouts. Keep foreground text/emblems; remove backdrop chroma only.
@@ -140,7 +141,9 @@ def logo_paths():
                 rel = path.relative_to(ROOT).as_posix()
                 if not any(block in "/" + rel for block in EXCLUDED):
                     found.add(path)
-    return sorted(found)
+    return sorted(found, key=lambda p: (
+        0 if "track-logos" in p.parts else 1 if "track-hero" in p.parts else 2,
+        p.as_posix()))
 
 def save_image(path, image):
     # Keep the existing URL and extension; no new filenames or logos.
@@ -208,6 +211,25 @@ def main():
             with Image.open(path) as source:
                 before = source.convert("RGBA")
                 output, method = repaired_rgba(before, path)
+            # The legacy Saratoga hero contains a flat red export panel,
+            # not a visible mark. Reconstruct its transparent *display* mark
+            # from the already-approved original T-0003 track logo; never
+            # invent a new emblem, alter the ID, or change the canvas size.
+            if ("track-hero" in path.parts and path.name == "T-0003.webp" and
+                float(np.max(np.std(np.asarray(before.convert("RGB")),
+                                        axis=(0, 1)))) < 12):
+                sibling = path.parent.parent / "track-logos" / path.name
+                with Image.open(sibling) as src:
+                    approved = src.convert("RGBA")
+                    cutout, _ = repaired_rgba(approved, sibling)
+                    approved = cutout if cutout is not None else approved
+                approved.thumbnail((int(before.width * .92),
+                                    int(before.height * .88)), Image.Resampling.LANCZOS)
+                output = Image.new("RGBA", before.size, (0, 0, 0, 0))
+                output.alpha_composite(approved, (
+                    (before.width-approved.width)//2,
+                    (before.height-approved.height)//2))
+                method = "approved-saratoga-mark-replaces-flat-red-export-matte"
         except (OSError, ValueError) as exc:
             # Do not destroy a truncated source image by saving a guessed
             # result. Record the exact source path as unresolved instead.
@@ -234,7 +256,8 @@ def main():
                     basename+" still has an opaque source matte"
     if opts.verify:
         problem = [r for r in records if r["changed"] and
-                   "/places/track-logos/" in r["path"]]
+                   ("/places/track-logos/" in r["path"] or
+                    "/places/track-hero/" in r["path"])]
         if problem:
             raise SystemExit("Track identity still has a removable baked matte: "+str(problem))
     unreadable = [r["path"] for r in records if r["method"] == "UNREADABLE"]
