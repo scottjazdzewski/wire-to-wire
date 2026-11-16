@@ -204,7 +204,14 @@ try{
   pairsWithMeetDateAfterModeledTravelAndRecovery>0,
   'no modeled circuit movement windows found');
  assert.equal(seasonBefore.sourceCapacity.tracksWithFewerThanTwoResidentJockeys,0,
-  'all new full-world sizes must seed two real jockeys per operating track');
+  'no new full-world track can have fewer than two resident jockeys');
+ assert.equal(seasonBefore.sourceCapacity.tracksShortOfOneFullFieldOfDistinctJockeys,0,
+  'real program-sized jockey colony cannot fill the largest single race');
+ assert.ok(seasonBefore.sourceCapacity.tracksWithScheduledCards>0);
+ // Multiple rides per jockey on a card are allowed; NEVER multiply jockey
+ // headcount by the number of races to estimate single-day labor demand.
+ assert.equal(seasonBefore.sourceCapacity.
+  maximumSingleRaceUsesDistinctJockeys_NotRacesTimesFieldSize,true);
  if(size>=300000){
   assert.equal(seasonBefore.raceClassCoverage.
    olderHorseSourceRacesWithoutTwoMatchingActiveLocalRunners,0,
