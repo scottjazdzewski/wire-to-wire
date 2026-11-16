@@ -157,11 +157,9 @@ try{
  const click=await browser.evaluate(`(()=>{
   const root=document.querySelector('#wtwCommercialCareerModal');
   const n=root?.querySelector('[data-cc="industry-size"]');
-  const s=root?.querySelector('[data-cc="seed"]');
   const b=root?.querySelector('[data-cc-action="open-full-industry"]');
-  if(!n||!s||!b)return false;
+  if(!n||!b)return false;
   n.value=${JSON.stringify(String(size))};
-  s.value=${JSON.stringify(String(seed))};
   b.click();return true;
  })()`);
  assert.equal(click,true,'Cannot create selected-size world via actual UI');
@@ -196,5 +194,6 @@ try{
 }finally{
  await stop();
  server.kill('SIGTERM');
- rmSync(profile,{recursive:true,force:true});
+ try{rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:250})}
+ catch(error){console.warn('Chromium test-profile cleanup:',error.code||error.message)}
 }
