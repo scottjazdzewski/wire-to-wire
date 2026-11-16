@@ -29,15 +29,16 @@ test('the one shared VIEW picker is horizontally aligned in every container',()=
  assert.match(browser,/checkLaptopLayout\(section\+' \/ '\+page\)/);
 });
 
-test('Due Actions, Racing File and the owner dashboard cannot inherit a half-width route grid',()=>{
- for(const cls of ['ng-org-overview','ng-due-overview','ng-1999-race-file']){
-  assert.ok(css.includes('.ng-routeinner:has(.'+cls+')'),
-   cls+' must be explicitly handled as full width');
+test('every modern route owns the full width instead of inheriting a half-page grid',()=>{
+ assert.match(css,/\\.ng-routeinner\\{display:block;/,
+  'Route parent must not default to a two-column grid');
+ for(const cls of ['ng-org-overview','ng-due-overview','ng-1999-race-file',
+  'ng-search-page','ng-world-source-profile']){
   assert.ok(browser.includes("selector:'."+cls+"'"),
-   cls+' must have an actual browser geometry check');
+   cls+' must have actual Chromium geometry checks');
  }
- assert.match(css,/\.ng-routeinner:has\(\.ng-1999-race-file\)\{display:block/);
  assert.match(browser,/is trapped in a half-width route grid/);
+ assert.match(browser,/for\\(const width of \\[1280,1024\\]\\)/);
 });
 
 test('the permanent UI stays within the single-stylesheet size limit',()=>{
