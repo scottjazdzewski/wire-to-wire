@@ -402,15 +402,26 @@ function openOrganization(){return openCustomView('Organization Overview')}
 
 /* Full operation overview using only the live Office state; no additional ledger. */
 function organizationOverview(){
- const org=playerOrganization(),st=state(),horses=horseRows(),races=racingRows(),messages=currentMessages(),follow=openFollowUps(),due=dueActions();
- const leads=document.querySelectorAll('.app .oppList .oppItem').length;
- const entered=races.filter(r=>/Entered/i.test(r.status)).length;
+ const org=playerOrganization(),st=state(),horses=horseRows(),races=racingRows();
+ const career=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ // Historic Office correspondence belongs to its former career, not the
+ // selected generated full-world player. Never label it as active decisions.
+ const messages=career?[]:currentMessages(),follow=career?[]:openFollowUps();
+ const due=career?[]:dueActions();
+ const leads=career?0:document.querySelectorAll('.app .oppList .oppItem').length;
+ const entered=career?races.reduce((sum,r)=>sum+(r.playerEntryCount||0),0):
+  races.filter(r=>/Entered/i.test(r.status)).length;
+ const targets=career?races.filter(r=>r.status==='ENTRIES_OPEN'&&!r.playerEntryCount).length:
+  races.length-entered;
  const stat=(label,value)=>'<div><strong>'+safe(value)+'</strong><small>'+safe(label)+'</small></div>';
  const link=(key,val,title,desc)=>'<button data-ng="'+safe(key)+'" data-val="'+safe(val)+'"><strong>'+safe(title)+'</strong><span>'+safe(desc)+'</span>'+glyph('right',14)+'</button>';
  const panel=(title,linkLabel,key,val,body,count)=>'<section class="ng-org-overview-panel"><header><h3>'+safe(title)+'</h3><span class="ng-tier1-count">'+safe(String(count))+'</span><button data-ng="'+safe(key)+'" data-val="'+safe(val)+'">'+safe(linkLabel)+' '+glyph('arrow',12)+'</button></header><div class="ng-org-overview-list">'+(body||'<p>No matching records in the current Office.</p>')+'</div></section>';
  const openCases=messages.filter(m=>!m.resolved);
- const horseRowsHTML=horses.slice(0,4).map(h=>'<button data-ng="horse" data-val="'+safe(h.name)+'">'+horseOwnerBadge(h.name)+'<strong>'+safe(h.name)+'</strong><span>'+safe(h.activity||'Stable file')+'</span>'+glyph('right',14)+'</button>').join('');
- const raceRowsHTML=races.slice(0,4).map((r,i)=>link('fixture',i,r.name,r.date+' · '+r.track+' · '+r.status)).join('');
+ const horseRowsHTML=horses.slice(0,4).map(h=>'<button data-ng="'+(career?'career-horse':'horse')+'" data-val="'+safe(career?h.horseId:h.name)+'">'+
+  (career?organizationLogoMarkup(h.ownerId,h.ownerName,'organization',false,false):horseOwnerBadge(h.name))+
+  '<strong>'+safe(h.name)+'</strong><span>'+safe(h.activity||'Stable file')+'</span>'+glyph('right',14)+'</button>').join('');
+ const raceRowsHTML=races.slice(0,4).map((r,i)=>link(career?'career-race':'fixture',
+  career?r.id:i,r.name,r.date+' · '+r.track+' · '+(r.statusLabel||r.status))).join('');
  const dueRowsHTML=follow.slice(0,4).map(f=>link('followup',f.id,f.caseTitle||f.caseId||'Follow-up',(f.dueDate||'No date')+' · '+(due.includes(f)?'DUE':'OPEN'))).join('');
  const decisionRowsHTML=openCases.slice(0,4).map(m=>link('case',m.case,m.title,m.from)).join('');
  const financialStatus=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?'Saved career · game ledger':
@@ -424,7 +435,7 @@ function organizationOverview(){
  '<button data-ng="custom" data-val="Opportunities">OPPORTUNITIES ('+leads+') '+glyph('arrow',12)+'</button></div>';
  return '<div class="ng-org-overview ng-tier1-org"><div class="ng-org-overview-top">'+organizationLogoMarkup(org.id,org.name,'stable',true,true)+
   '<div class="ng-org-overview-name"><small>YOUR RACING OPERATION</small><h2>'+safe(org.name)+'</h2><p>Current commitments and decisions · '+safe(depGameDay())+'</p></div></div>'+
-  '<div class="ng-org-overview-stats">'+stat('HORSES',horses.length)+stat('RACE TARGETS',races.length-entered)+stat('CONFIRMED ENTRIES',entered)+stat('OPEN CASES',openCases.length)+stat('DUE',due.length)+stat('OPPORTUNITIES',leads)+'</div>'+
+  '<div class="ng-org-overview-stats">'+stat('HORSES',horses.length)+stat('RACE TARGETS',targets)+stat('CONFIRMED ENTRIES',entered)+stat('OPEN CASES',openCases.length)+stat('DUE',due.length)+stat('OPPORTUNITIES',leads)+'</div>'+
   '<div class="ng-org-overview-grid">'+panel('STABLE ROSTER','ALL HORSES','menu','Stable',horseRowsHTML,horses.length)+panel('RACING COMMITMENTS','CALENDAR','menu','Racing',raceRowsHTML,races.length)+
   panel('OPEN DECISIONS','ALL FILES','tab','Decisions',decisionRowsHTML,openCases.length)+panel('FOLLOW-UPS','DECISION DESK','office','',dueRowsHTML,follow.length)+
   '<section class="ng-org-overview-panel"><header><h3>FINANCES & OPERATIONS</h3><button data-ng="menu" data-val="Finances">FINANCES '+glyph('arrow',12)+'</button></header>'+finance+'</section>'+
@@ -2665,7 +2676,44 @@ function liveStableRating(name,key,game){
   display:valid?'<span class="ng-rs-stars" title="Evidence-backed '+safe(key.replace(/_/g,' '))+': '+n+'/5"><b>'+('★'.repeat(n))+'</b>'+('☆'.repeat(5-n))+'</span>':
    '<span class="ng-rs-missing" title="No sourced current rating">—</span>'};
 }
+// Canonical May 1999 career horses are keyed by the saved H-ID, never by a
+// legacy Office name. No hidden potential or unverified vet clearance leaks.
+function liveSavedCareerHorseData(h){
+ const risk=Number.isFinite(h.risk)?h.risk:null;
+ const soreness=Number.isSafeInteger(h.sorenessDays)?h.sorenessDays:null;
+ const health=soreness>0?['watch','Soreness watch','Game-modeled training soreness; not a veterinary diagnosis']:
+  risk!==null&&risk>=.75?['watch','Workload watch','Game-modeled workload risk; not a veterinary diagnosis']:
+  ['unknown','Unassessed','No veterinary clearance in this saved game'];
+ const ready=h.entered?['entered','Entered','Confirmed game entry; does not imply veterinary clearance']:
+  Number.isFinite(h.readiness)?
+  [h.readiness>=.75?'ready':'building',Math.round(h.readiness*100)+'%',
+   'Game-modeled race readiness; not medical clearance']:
+  ['unknown','Unassessed','No saved game readiness assessment'];
+ const sex=String(h.sex||''),sexCode=({
+  COLT:'C',FILLY:'F',GELDING:'G',MARE:'M',HORSE:'H',STALLION:'S'
+ })[sex.toUpperCase()]||sex;
+ const results=h.results||[];
+ const complete=Number.isSafeInteger(h.starts)&&results.length===h.starts;
+ const record=Number.isSafeInteger(h.starts)&&Number.isSafeInteger(h.wins)?
+  [h.starts,h.wins,complete?results.filter(x=>x.finish===2).length:'—',
+   complete?results.filter(x=>x.finish===3).length:'—'].join('-'):'Not recorded';
+ const money=Number.isSafeInteger(h.earningsMinor)?
+  new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2})
+   .format(h.earningsMinor/100):'Not recorded';
+ const rating={value:null,display:'<span class="ng-rs-missing" title="No player-visible scouting rating from this saved run">—</span>'};
+ const upcoming=h.nextRaceId?h.nextRaceDate+' · '+h.nextRaceTrack:'Not entered';
+ return {horseId:h.horseId,name:h.name,age:h.age==null?'':String(h.age),
+  sex:sexCode,sexFull:sex,health,ready,form:['unknown','—','No multi-start form trend recorded'],
+  last:h.lastRaceDate||'Not recorded',upcoming,target:h.nextRaceName||'No target',
+  money,owner:h.ownerName||'Not recorded',ownerId:h.ownerId,
+  trainer:h.trainerName||'Not recorded',breeder:h.breederName||'Not recorded',
+  record,activity:h.activity||'Saved game horse',
+  ability:rating,potential:rating,
+  entered:Boolean(h.entered),hasTarget:Boolean(h.nextRaceId),cases:[]};
+}
 function liveStableHorseData(h,r,game,caseFiles){
+ if(h.horseId&&window.__WTW_ACTIVE_WORLD_CAREER_VIEW__)
+  return liveSavedCareerHorseData(h);
  const name=h.name,source=window.__WTW_1999_UI_DATA__?.sourceFacts?.(h.name)|| (typeof window.__wtwOfficeHorseRosterFacts==='function'?window.__wtwOfficeHorseRosterFacts(name)||{}:{});
  const saved=game.horseState?.[name]||{},scout=game.scoutingState?.[name]||{},cal=game.calendarState?.[name]||{};
  const related=caseFiles.filter(x=>x.title.toLowerCase().includes(name.toLowerCase()));
@@ -2814,7 +2862,7 @@ function liveStableTrainingView(){
     (disabled?' disabled':'')+'>'+safe(id==='BALANCED'?'BALANCED':id==='STAMINA'?'STAMINA':id==='SPEED'?'SPEED':
      id==='GATE'?'GATE':id==='PREP'?'RACE PREP':id==='LIGHT'?'LIGHT':'REST')+'</button>';
   }).join('');
-  return '<tr><td><button data-ng="horse" data-val="'+safe(h.name)+'">'+safe(h.name)+'</button>'+
+  return '<tr><td><button data-ng="'+(h.horseId&&window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?'career-horse':'horse')+'" data-val="'+safe(h.horseId&&window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?h.horseId:h.name)+'">'+safe(h.name)+'</button>'+
    '<small>'+safe(profile.horseId)+'</small></td>'+
    '<td><strong>'+fmt(profile.fitness)+'</strong></td><td><strong>'+fmt(profile.fatigue)+'</strong></td>'+
    '<td><strong>'+fmt(profile.readiness)+'</strong></td><td>'+fmt(profile.currentRisk)+'</td>'+
@@ -2953,8 +3001,11 @@ function liveStableRosterView(directory=false){
  const cell=(value,klass='',title='')=>'<td class="'+klass+'" title="'+safe(title||String(value||''))+'">'+(value||'<span class="ng-rs-missing">—</span>')+'</td>';
  const txt=(value,klass='')=>cell(value?safe(value):'',klass,value);
  const rowHTML=filtered.map(x=>{
-  const ownerMark=horseOwnerBadge(x.name);
-  const name='<button type="button" class="ng-rs-horse" data-ng="'+(directory?'directory-horse':'horse')+'" data-val="'+safe(directory?x._directoryId:x.name)+'">'+(directory?'':ownerMark)+
+  const ownerMark=x.horseId?
+   '<span class="ng-horse-owner-badge is-known" title="Owner: '+safe(x.owner)+'">'+
+   organizationLogoMarkup(x.ownerId,x.owner,'organization',false,false)+'</span>':
+   horseOwnerBadge(x.name);
+  const name='<button type="button" class="ng-rs-horse" data-ng="'+(directory?'directory-horse':'horse')+'" data-val="'+safe(directory?x._directoryId:x.name)+'"'+(x.horseId?' data-horse-id="'+safe(x.horseId)+'"':'')+'>'+(directory?'':ownerMark)+
    '<span>'+safe(x.name)+'</span></button>';
   const datum=[cell(name,'ng-rs-first'),txt(x.age,'ng-rs-numeric'),txt(x.sex,'ng-rs-numeric'),
    cell(liveStableSignal(...x.health)),cell(liveStableSignal(...x.ready)),
@@ -4433,6 +4484,90 @@ function managerDashboard(){
      '<div class="ng-manager-secondary-list" tabindex="0" role="region" aria-label="Scrollable management details">'+(schedule||'<p class="ng-manager-empty">No recorded race targets.</p>')+'</div></section>'+
    '</aside></div></section>';
 }
+// Exact canonical H-ID routing. Never seek a generated horse in the retired
+// Office name index or treat a missing result as an empty historical profile.
+function openSavedCareerHorse(id){
+ const view=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ if(!view?.horseRows.some(h=>h.horseId===id))return false;
+ return openCustomView('CareerHorse:'+encodeURIComponent(id),'Stable','Overview');
+}
+function openSavedCareerRace(id){
+ const view=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ if(!view?.raceRows.some(r=>r.id===id))return false;
+ return openCustomView('RaceFile:'+encodeURIComponent(id),'Racing','Overview');
+}
+const gameMoney=minor=>Number.isSafeInteger(minor)?
+ new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(minor/100):
+ 'Not recorded';
+function savedCareerHorseProfile(){
+ const view=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ const id=decodeURIComponent(APP.custom.slice('CareerHorse:'.length));
+ const h=view?.horseRows.find(row=>row.horseId===id);
+ if(!h)return '<section class="ng-world-source-profile" style="grid-column:1/-1" role="status"><header><strong>CAREER HORSE UNAVAILABLE</strong></header><p>Open the original saved career to access this horse. No substitute record has been created.</p></section>';
+ const fact=(label,value)=>'<div><small>'+safe(label)+'</small><strong>'+
+  safe(value==null||value===''?'Not recorded':value)+'</strong></div>';
+ const fmtPct=value=>Number.isFinite(value)?Math.round(value*100)+'%':'Not assessed';
+ const entries=h.nextRaceId?'<button type="button" data-ng="career-race" data-val="'+safe(h.nextRaceId)+'"><strong>'+
+  safe(h.nextRaceName)+'</strong><span>'+safe(h.nextRaceDate+' · '+h.nextRaceTrack)+
+  ' · CONFIRMED GAME ENTRY</span></button>':'<p>No current entry is committed for this horse.</p>';
+ const results=h.results.map(r=>'<button type="button" data-ng="career-race" data-val="'+safe(r.raceId)+'"><strong>'+
+  safe(r.name)+'</strong><span>'+safe(r.date+' · '+r.track+' · finish '+r.finish)+
+  ' · '+safe(gameMoney(r.earningsMinor))+'</span></button>').join('');
+ const warnings=h.sorenessDays>0?'Modeled training soreness watch ('+h.sorenessDays+' days). This is not a veterinary diagnosis.':
+  h.risk>=.75?'Modeled workload caution. This is not a veterinary diagnosis.':
+  'No veterinary clearance is documented by this game profile.';
+ return '<section class="ng-world-source-profile" style="grid-column:1/-1" data-career-horse-id="'+safe(h.horseId)+'">'+
+  '<header><div><small>ACTIVE 1999 GAME CAREER · REGISTERED HORSE</small><h2>'+safe(h.name)+
+  '</h2></div><div class="ng-world-profile-actions"><button type="button" data-ng="menu" data-val="Stable">← STABLE ROSTER</button></div></header>'+
+  '<div class="ng-world-profile-sub"><strong>'+safe(h.horseId)+'</strong><span>'+safe(h.sex||'Sex not recorded')+
+  '</span><span>1999 GAME DATE '+safe(view.date)+'</span></div>'+
+  '<div class="ng-world-profile-facts">'+
+   fact('RACING AGE',h.age)+fact('DATE OF BIRTH',h.birthDate)+
+   fact('OWNER',h.ownerName)+fact('TRAINER',h.trainerName)+
+   fact('BREEDER',h.breederName)+fact('HOME TRACK',h.trackName)+
+   fact('CURRENT BARN ID',h.residenceId)+
+   fact('OFFICIAL GAME STARTS',h.starts)+fact('OFFICIAL GAME WINS',h.wins)+
+   fact('GAME CAREER EARNINGS',gameMoney(h.earningsMinor))+
+   fact('MODELED FITNESS',fmtPct(h.fitness))+
+   fact('MODELED READINESS',fmtPct(h.readiness))+
+  '</div><p class="ng-world-profile-footnote">'+safe(warnings)+'</p>'+
+  '<section class="ng-world-related"><header><strong>NEXT RACE ENTRY</strong><span>'+
+  (h.nextRaceId?'1 committed entry':'No entry')+'</span></header>'+entries+'</section>'+
+  '<section class="ng-world-related"><header><strong>OFFICIAL GAME RESULTS</strong><span>'+h.results.length+
+  ' saved results</span></header>'+(results||'<p>No official simulated race result for this horse in the active career.</p>')+'</section>'+
+  '<div class="ng-world-profile-reference"><small>AUTHORITATIVE SAVED WORLD '+safe(view.worldId)+
+  ' · RUN '+safe(view.runId)+' · NO HISTORICAL RESULTS IMPLIED</small></div></section>';
+}
+function savedCareerRaceFile(race){
+ const view=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ const fact=(label,value)=>'<div><small>'+safe(label)+'</small><strong>'+safe(value==null||value===''?'Not recorded':value)+'</strong></div>';
+ const results=race.status==='OFFICIAL_SIM_RESULT'?
+  '<p>Official result committed in the active game save. Finishes and purses are game-modeled, not historical.</p>'+
+  '<div class="ng-race-eligible-list">'+race.results.map(result=>{
+   const owned=view?.horseRows.some(h=>h.horseId===result.horseId);
+   const text=safe(result.finish+'. '+result.horseName+' · '+gameMoney(result.earningsMinor));
+   return owned?'<button type="button" data-ng="career-horse" data-val="'+safe(result.horseId)+'">'+
+    text+'</button>':'<p>'+text+'</p>';
+  }).join('')+'</div>':
+  '<p>'+safe(race.statusLabel)+' · '+race.fieldCount+' saved entries · '+
+   race.playerEntryCount+' current player entries. No result has been committed.</p>'+
+  '<div class="ng-race-eligible-list">'+(view?.horseRows||[]).filter(h=>h.nextRaceId===race.id)
+   .map(h=>'<button type="button" data-ng="career-horse" data-val="'+safe(h.horseId)+'">'+
+    safe(h.name)+' · CONFIRMED ENTRY</button>').join('')+'</div>';
+ return '<section class="ng-1999-race-file" style="grid-column:1/-1" data-career-race-id="'+safe(race.id)+'">'+
+  '<header><div><small>CANONICAL 1999 GAME RACE · '+safe(race.statusLabel.toUpperCase())+'</small>'+
+  '<h2>'+safe(race.name)+'</h2><p>'+safe(race.track)+' · '+safe(race.date)+' · '+safe(race.id)+'</p></div>'+
+  '<button type="button" data-ng="menu" data-val="Racing">RACING CALENDAR</button></header>'+
+  '<div class="ng-race-file-grid"><section class="ng-race-file-panel"><h3>SAVED RACE CONDITIONS</h3>'+
+  '<div class="ng-race-file-facts">'+fact('GAME STATUS',race.statusLabel)+fact('RACE DATE',race.date)+
+   fact('TRACK',race.track)+fact('CLASS',race.conditions)+fact('AGE',race.age)+fact('SEX',race.sex)+
+   fact('SURFACE',race.surface)+fact('DISTANCE',race.distanceFurlongs==null?null:race.distanceFurlongs+' furlongs')+
+   fact('PUBLISHED PURSE',gameMoney(race.purseMinor))+fact('FIELD SIZE',race.fieldCount)+
+   fact('CONDITIONS',race.fullConditions)+'</div>'+
+  '<p>Only the selected saved career supplies entries, race results and finances. No historical outcome has been inferred.</p>'+
+  '</section><section class="ng-race-file-panel"><h3>FIELD / OFFICIAL RESULT</h3>'+results+
+  '</section></div></section>';
+}
 function open1999Race(record){
  if(!record)return false;
  const race=record._raceData||record;
@@ -4447,6 +4582,7 @@ function open1999Race(record){
 function renderRoute(){const route=APP.custom?null:currentRoute();const previewMode=APP.custom.startsWith('Preview:');const title=previewMode?(APP.previewEntity?.name||decodeURIComponent(APP.custom.split(':').slice(2).join(':'))):route?.title||APP.custom||'Page';const kicker=previewMode?'RECORD PREVIEW':route?.kicker||APP.section;const bdg=route?badge(({'Horse Profile':'horse','People Profile':'people','Farm Profile':'farm_stable','Track Profile':'track','Race Calendar':'meet_schedule','Stable':'farm_stable','Sales':'connections','News':'history','World':'track','Opportunity Board':'reputation'}[route.kicker])||'history'):pageBadge();
 let body='';const profile=route&&/Profile$/.test(route.kicker)?profileDetail(route):null;const functional=route?functionalRoute(route):null;if(profile)body=profile;else if(functional)body=functional;else if(route)body=route.body;else if(APP.custom==='Organization Overview'){body=organizationOverview()}
 else if(APP.custom==='Due Actions'){body=dueActionOverview()}
+else if(APP.custom.startsWith('CareerHorse:')){body=savedCareerHorseProfile()}
 else if(APP.custom==='Stable — Naming Desk'){
  window.WTW1999NamingDesk?.defaultOwner?.(window.__WTW_1999_UI_DATA__?.sourceOwnerName);
  body=window.WTW1999NamingDesk?.render?.()||'<section class="ng-manager-screen"><p role="status">Preparing Naming Desk…</p></section>';
@@ -4458,11 +4594,13 @@ else if(APP.custom==='Search'){body=searchView()}
 else if(APP.custom.startsWith('WorldRecord:')){body=world1999Profile()}
 else if(APP.custom.startsWith('FoundingProfile:')){body=founding1999Profile()}
 else if(APP.custom.startsWith('PilotHorse:')){body=pilotHorseDetail(decodeURIComponent(APP.custom.slice('PilotHorse:'.length)))}
-else if(APP.custom.startsWith('RaceFile:')){const id=decodeURIComponent(APP.custom.slice('RaceFile:'.length));const race=APP.raceRouteKey===id?APP.raceDetail:window.__WTW_1999_UI_DATA__?.findRace?.(id);body=window.WTW1999RaceConditions?.render(race,window.__WTW_1999_UI_DATA__)||'<section class="ng-1999-race-file"><h2>Race file loading unavailable</h2></section>'}
+else if(APP.custom.startsWith('RaceFile:')){const id=decodeURIComponent(APP.custom.slice('RaceFile:'.length));const careerRace=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.raceRows.find(r=>r.id===id);if(careerRace)body=savedCareerRaceFile(careerRace);else if(window.__WTW_ACTIVE_WORLD_CAREER_VIEW__)body='<section class="ng-1999-race-file" role="status"><h2>Saved race not found</h2><p>The selected career has no race with this ID. No historical result was substituted.</p></section>';else{const race=APP.raceRouteKey===id?APP.raceDetail:window.__WTW_1999_UI_DATA__?.findRace?.(id);body=window.WTW1999RaceConditions?.render(race,window.__WTW_1999_UI_DATA__)||'<section class="ng-1999-race-file"><h2>Race file loading unavailable</h2></section>'}}
 else if(APP.custom.startsWith('Preview:')){body=previewRecordView()}
 else {body=managerDashboard()}
-const isProfile=Boolean(profile)||body.startsWith('<div class="ng-profile-view '),isOrganization=APP.custom==='Organization Overview',isSearch=APP.custom==='Search',isManager=body.startsWith('<section class="ng-manager-screen');
-return `<main class="ng-route ${isProfile?'ng-route-profile':isOrganization?'ng-route-organization':isSearch?'ng-route-search':isManager?'ng-route-manager':''}">${isProfile||isOrganization||isManager?'':`<header class="ng-routeheading"><span class="ng-route-badge-slot" aria-hidden="true">${APP.custom==='Organization Overview'?organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',true,true):`<img class="ng-routebadge" src="${safe(bdg)}" alt=""/>`}</span><div class="ng-routetext"><small>${safe(kicker)}</small><h1>${safe(title)}</h1></div><button class="ng-back" data-ng="office">← RACING OFFICE</button></header>`}<div class="ng-routegrid" data-route-key="${safe((route?.kicker||APP.custom||APP.section)+'|'+(route?.title||APP.custom||APP.page))}"><div class="ng-routeinner">${!isProfile&&/^(?:WorldRecord:|RaceFile:|Preview:|PilotHorse:)/.test(APP.custom)?recordBrowseToolbar(route):''}${body}</div></div></main>`;}
+const isCareerDetail=APP.custom.startsWith('CareerHorse:')||
+ (APP.custom.startsWith('RaceFile:')&&Boolean(window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.raceRows.some(r=>r.id===decodeURIComponent(APP.custom.slice('RaceFile:'.length)))));
+const isProfile=Boolean(profile)||body.startsWith('<div class="ng-profile-view ')||APP.custom.startsWith('CareerHorse:'),isOrganization=APP.custom==='Organization Overview',isSearch=APP.custom==='Search',isManager=body.startsWith('<section class="ng-manager-screen');
+return `<main class="ng-route ${isProfile?'ng-route-profile':isOrganization?'ng-route-organization':isSearch?'ng-route-search':isManager?'ng-route-manager':''}">${isProfile||isOrganization||isManager||isCareerDetail?'':`<header class="ng-routeheading"><span class="ng-route-badge-slot" aria-hidden="true">${APP.custom==='Organization Overview'?organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',true,true):`<img class="ng-routebadge" src="${safe(bdg)}" alt=""/>`}</span><div class="ng-routetext"><small>${safe(kicker)}</small><h1>${safe(title)}</h1></div><button class="ng-back" data-ng="office">← RACING OFFICE</button></header>`}<div class="ng-routegrid" data-route-key="${safe((route?.kicker||APP.custom||APP.section)+'|'+(route?.title||APP.custom||APP.page))}"><div class="ng-routeinner">${!isProfile&&/^(?:WorldRecord:|RaceFile:|Preview:|PilotHorse:)/.test(APP.custom)?recordBrowseToolbar(route):''}${body}</div></div></main>`;}
 // Keep browser-native select menus mounted while the user chooses an option.
 // Hidden Office mutations repaint this interface frequently; a full re-render
 // while the menu is open destroys the select and interrupts the mouse gesture.
@@ -4878,13 +5016,22 @@ window.addEventListener('click',e=>{
    window.location.assign('/archive/?page=horses&horse='+encodeURIComponent(val));
   return;
  }
+ if(key==='career-horse')return openSavedCareerHorse(val);
+ if(key==='career-race')return openSavedCareerRace(val);
  if(key==='horse'){
+  const career=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+  if(career){
+   const byId=btn.dataset.horseId;
+   if(byId)return openSavedCareerHorse(byId);
+   const matches=career.horseRows.filter(h=>h.name===val);
+   return matches.length===1?openSavedCareerHorse(matches[0].horseId):false;
+  }
   const row=window.__WTW_1999_UI_DATA__?.stableHorsePreview?.(val);
   if(row?._testGenerated)return previewRecordRoute('horse',val,row);
   if(row?._canonId)return openWorld1999Entity('horse:'+row._canonId);
   return openEntityRecord(val,'horse');
  }
- if(key==='fixture'){const n=$$('.right .fixtureList .fixture[data-track]')[Number(val)];return bridgeNode(n)}
+ if(key==='fixture'){if(window.__WTW_ACTIVE_WORLD_CAREER_VIEW__)return false;const n=$$('.right .fixtureList .fixture[data-track]')[Number(val)];return bridgeNode(n)}
  if(key==='track'){const row=$$('.right .fixture').find(x=>x.dataset.track===val);if(row){const p=$('p',row);return bridgeNode(p)}return bridgeNode(originalAct('World'))}
  if(key==='answer-decision')return answerDecision(btn.dataset.decision,val);
  if(key==='answer-trainer-request')return answerTrainerRequest(btn.dataset.decision,val);
@@ -5086,6 +5233,8 @@ function restoreNextUIRoute(){
  const p=new URLSearchParams(location.search),view=p.has('page')?'':p.get('ui')||'';
  APP.custom=view;APP.moreOpen=false;
  if(view){
+  if(view.startsWith('CareerHorse:')){APP.section='Stable';APP.page='Overview';return}
+  if(view.startsWith('RaceFile:')){APP.section='Racing';APP.page='Overview';return}
   if(view.startsWith('WorldRecord:')){APP.section='World';APP.page='Overview';return}
   if(view.startsWith('FoundingProfile:')){
    const kind=view.split(':')[1];

@@ -1,0 +1,56 @@
+name: WTW 1999 Populated Career UI Acceptance
+on:
+  pull_request:
+    paths:
+      - 'public/next/next.js'
+      - 'public/next/1999-commercial-career-manager.mjs'
+      - 'public/next/1999-populated-career-read-model.mjs'
+      - 'public/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER.wtwcareer.gz'
+      - 'tests/1999-populated-career-ui.test.mjs'
+      - 'scripts/1999-populated-career-ui-cdp.mjs'
+      - '.github/workflows/1999-populated-career-ui.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  populated-career-ui:
+    name: May 1999 Real Career Roster, Profiles, Race File and Screenshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check canonical UI/projection/browser syntax
+        run: |
+          node --check public/next/1999-populated-career-read-model.mjs
+          node --check public/next/1999-commercial-career-manager.mjs
+          node --check public/next/next.js
+          node --check scripts/1999-populated-career-ui-cdp.mjs
+      - name: Verify exact bundled 300,000-horse May 29 career projection and save/reopen
+        run: node --test tests/1999-populated-career-ui.test.mjs
+      - name: Open actual saved career UI and capture three desktop sizes
+        shell: bash
+        run: |
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME"
+          mkdir -p dist/populated-ui-screens
+          CHROME="$CHROME" WTW_POPULATED_UI_ARTIFACT_DIR="$GITHUB_WORKSPACE/dist/populated-ui-screens" node scripts/1999-populated-career-ui-cdp.mjs | tee populated-ui-browser.log
+          grep -q 'WTW_POPULATED_CAREER_UI_PASS' populated-ui-browser.log
+          test -s dist/populated-ui-screens/organization-1280x800.png
+          test -s dist/populated-ui-screens/stable-1440x900.png
+          test -s dist/populated-ui-screens/horse-profile-1440x900.png
+          test -s dist/populated-ui-screens/official-race-1366x768.png
+      - name: Preserve UI screenshots and exact-world read checks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-shared-may1999-populated-career-ui
+          path: |
+            populated-ui-browser.log
+            dist/populated-ui-screens/*.png
+          retention-days: 14
+          if-no-files-found: warn
