@@ -52,8 +52,14 @@ function optionJockeys(state,world,horse,race){
    previous_mounts_at_same_track_that_day:quote.schedule.sameCardCount,
    race_importance:quote.race_importance,
    acceptance_reason:quote.reason,suited_index:quote.suited_index,
+   trainer_partnership_mounts:quote.relationship.trainerMounts,
+   trainer_partnership_wins:quote.relationship.trainerWins,
+   owner_partnership_mounts:quote.relationship.ownerMounts,
+   trainer_relationship_index:quote.relationship.trainerBond,
+   owner_relationship_index:quote.relationship.ownerBond,
    owner_can_pay:money(account)&&account>=fee,
    recommendation_index:Math.round(1000*(quote.suited_index*.61+
+    quote.relationship.trainerBond*.1+quote.relationship.ownerBond*.04+
     (j.game_reputation??.5)*.16+
     ((j.tier==='ELITE'?.16:j.tier==='ESTABLISHED'?.09:0)*
      (quote.race_importance>=2?1:.25))-
