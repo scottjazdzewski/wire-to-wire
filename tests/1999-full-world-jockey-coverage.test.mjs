@@ -5,6 +5,8 @@ import {plan1999Ecosystem}
  from '../public/1999/engine/fictional-industry-ecosystem-1999.mjs';
 import {plan1999IndustryStaffing,generate1999StaffingBatches}
  from '../public/1999/engine/fictional-industry-staffing-1999.mjs';
+import {select1999CareerJockeyColony}
+ from '../public/1999/engine/fictional-industry-game-world-bridge-1999.mjs';
 
 const tracks=Object.values(TRACK_PROGRAM_1999).
  filter(x=>x.trackOperating==='OPEN_1999'&&x.playableIn1999===true);
@@ -78,4 +80,38 @@ test('saved original one-jockey staffing layout keeps its legacy permanent IDs a
  assert.equal(current.policy,'COURSE_SPECIFIC_REUSABLE_JOCKEY_POOLS_1999_V2');
  // Existing world manifests select their own original staffing plan on
  // resume; this fixture confirms that old identities can still materialize.
+});
+
+
+test('actual generated 10k workforce exposes local riders at every player-owned circuit plus real national touring riders',()=>{
+ const seed=19990101,horses=10000;
+ const ecosystem=plan1999Ecosystem({seed,targetOpeningHorses:horses});
+ assert.equal(ecosystem.openingRegistryHorses,horses);
+ const staffing=plan1999IndustryStaffing({seed,ecosystem,
+  minimumRacingTracks:tracks.length,tracks,courseDemandTargets:true});
+ const people=[];
+ for(const batch of generate1999StaffingBatches({
+  seed,staffing,tracks,farms,batchSize:1000,
+  nameRoster:roster(total(staffing.counts)),ensureCircuitCoverage:true
+ })){
+  people.push(...batch.records.filter(p=>p.role==='jockey'));
+ }
+ assert.equal(people.length,staffing.counts.jockey);
+ const visited=tracks.filter((_,i)=>i%7===0).slice(0,15).map(t=>t.id);
+ assert.equal(visited.length,15);
+ const result=select1999CareerJockeyColony(people,visited);
+ assert.ok(result.length<=120);
+ assert.equal(new Set(result.map(j=>j.id)).size,result.length,
+  'One real jockey identity must never be duplicated as a visitor');
+ const all=new Map(people.map(j=>[j.id,j]));
+ assert.ok(result.every(j=>all.get(j.id)?.workplaceId===j.home_track_id),
+  'Every touring rider must preserve a permanent home workplace ID');
+ for(const trackId of visited){
+  const local=result.filter(j=>j.home_track_id===trackId);
+  assert.ok(local.length>=2,'No career can hide the local jockey colony at '+trackId);
+ }
+ assert.ok(result.some(j=>all.get(j.id).tier==='ELITE'),
+  'A multi-circuit player should see existing elite national riders');
+ assert.deepEqual(select1999CareerJockeyColony(people,visited),result,
+  'The same saved 10k industry always produces an identical career booking board');
 });
