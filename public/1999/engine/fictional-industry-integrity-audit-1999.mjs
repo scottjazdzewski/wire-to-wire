@@ -9,6 +9,8 @@ import {readPersistent1999IndustryBatch,readPersistent1999Directory}
  from './fictional-industry-persistence-1999.mjs';
 import {TRACK_PROGRAM_1999,trackMeetOpen1999,scheduledRaceDays1999}
  from '../../next/1999-track-program.mjs';
+import {buildConditionBook1999}
+ from '../../next/1999-condition-book-engine.mjs';
 
 export const INDUSTRY_FULL_INTEGRITY_AUDIT_SCHEMA='WTW_1999_FULL_CENSUS_AUDIT_V1';
 const ROLES=new Set(['trainer','jockey','groom','exercise_rider','veterinarian',
@@ -87,6 +89,9 @@ export async function auditPersistent1999World(store,manifest,{expectedHorses=nu
    personIds.add(p.id);people++;
    check(ROLES.has(p.role)&&roleFromId(p.id)===p.role,'wrong personnel role '+p.id);
    roleCounts[p.role]=(roleCounts[p.role]||0)+1;
+   check(p.id==='P-FICTIONAL-1999-'+p.role.toUpperCase().replaceAll('_','-')+
+    '-'+String(roleCounts[p.role]).padStart(7,'0'),
+    'missing personnel ordinal / unexpected personnel order '+p.id);
    ratings(p,p.role,seed);
    check(Array.isArray(p.relationships),'person missing relationships '+p.id);
    edge(p,'WORKS_AT',p.workplaceId);
@@ -112,6 +117,9 @@ export async function auditPersistent1999World(store,manifest,{expectedHorses=nu
    check(h?.id&&!horses.has(h.id),'duplicate horse ID '+h?.id);
    horses.add(h.id);horseCount++;
    byCohort[h.cohort]=(byCohort[h.cohort]||0)+1;
+   check(h.id==='H-FICTIONAL-1999-'+String(h.cohort).toUpperCase()+'-'+
+    String(byCohort[h.cohort]).padStart(7,'0'),
+    'missing horse ordinal / unexpected horse cohort order '+h.id);
    horseStatuses[h.status]=(horseStatuses[h.status]||0)+1;
    ratings(h,'horse',seed);
    check(h.registryProvenance==='FICTIONAL_1999_DETERMINISTIC_V1',
@@ -183,6 +191,7 @@ export async function auditPersistent1999World(store,manifest,{expectedHorses=nu
  }
  check(coverings===manifest.coveringCount,'covering census mismatch');
  const cards=new Set(),races=new Set(),daysByTrack={};
+ const trackOrder=new Map([...tracks.keys()].map((id,i)=>[id,i]));
  let scheduled=0,cardCount=0;
  for(let i=0;i<manifest.calendarBatchesCommitted;i++){
   const batch=await readPersistent1999IndustryBatch(store,manifest,'calendarBatches',i);
@@ -197,7 +206,19 @@ export async function auditPersistent1999World(store,manifest,{expectedHorses=nu
    daysByTrack[card.trackId]=(daysByTrack[card.trackId]||0)+1;
    check(Array.isArray(card.races)&&card.races.length>0,
     'empty scheduled card '+card.id);
+   const book=buildConditionBook1999({date:card.date,
+    track:tracks.get(card.trackId),trackIndex:trackOrder.get(card.trackId),
+    seed,sourceStakes:[],includeKnownStakes:false});
+   check(book.length===card.races.length,'condition book length drift '+card.id);
    for(const [idx,r] of card.races.entries()){
+    const expected=book[idx];
+    check(r.id===expected.id&&r.condition===expected.conditions&&
+     r.age===expected.ageRequirement&&r.sex===expected.sexRestriction&&
+     r.surface===expected.surface&&
+     r.distance_furlongs===expected.distanceFurlongs&&
+     r.fieldCapacity===expected.fieldCapacity&&
+     r.purse_minor===Math.round(expected.purse*100),
+     'condition book content drift '+r.id);
     check(r.id&&!races.has(r.id),'duplicate race ID '+r.id);
     races.add(r.id);scheduled++;
     check(r.raceNumber===idx+1&&raceStatus(r)&&
