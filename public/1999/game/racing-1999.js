@@ -13,6 +13,8 @@ import {assessJockeySchedule,quoteJockeyMount,jockeyRaceImportance,
  jockeyTierFromPerson}
  from '../engine/jockey-engagements-1999.mjs';
 
+import {get1999JockeyPartnership} from '../engine/jockey-partnerships-1999.mjs';
+
 export const GAME_RACING_SCHEMA='WTW_1999_CAREER_RACING_V1';
 export const RACING_COMMANDS=Object.freeze(['ACTIVATE_JOCKEY_COLONY','OPEN_1999_RACE','ENTER_1999_RACE',
  'BOOK_1999_JOCKEY','SET_1999_RACE_TACTICS','SETTLE_1999_RACE']);
@@ -49,6 +51,8 @@ export function jockeyBookingDecision(state,world,race,horse,jockey){
  const away=schedule.away,lead=dayGap(state.clock.date,race.date);
  const quote=quoteJockeyMount(j,race,{additionalTravel:schedule.additionalTravel});
  const importance=jockeyRaceImportance(race);
+ const relationship=get1999JockeyPartnership(state,{
+  trainerId:horse.trainer_id,ownerId:horse.owner_organization_id,jockeyId:j.id});
  const personal=j.skills,horseState=getGameHorsePerformance(state,world,horse.horse_id);
  const h=horse.starting_attributes,standing=j.game_reputation??.5;
  const suited=rating(personal.horse_handling*.38+personal.composure*.17+
@@ -58,13 +62,14 @@ export function jockeyBookingDecision(state,world,race,horse,jockey){
  const elite=j.tier==='ELITE',established=j.tier==='ESTABLISHED';
  const prestige=importance.nationalFeature?.095:importance.significance===2?.035:0;
  const required=(away?.37+standing*.13:.26+standing*.08)+
-  (elite&&!importance.stakes?.055:0)-(elite||established?prestige:prestige*.35);
+  (elite&&!importance.stakes?.055:0)-(elite||established?prestige:prestige*.35)-
+  relationship.trainerBond*.075-relationship.ownerBond*.035;
  const favor=(frac(state.rng.seed,j.id+':'+race.id+':'+horse.horse_id+':mount')-.5)*.09;
  const accept=suited+favor>=required;
  return {accept,reason:accept?(away?'JOCKEY_ACCEPTS_PAID_TRAVEL':'JOCKEY_ACCEPTS_LOCAL_MOUNT'):
    'JOCKEY_DECLINES_UNSUITABLE_MOUNT',suited_index:suited,
    threshold:rating(required),away,lead_days:lead,
-   jockey_reputation:standing,schedule,quote,
+   jockey_reputation:standing,relationship,schedule,quote,
    race_importance:importance.significance};
 }
 export function modeledJockeySkills(id,seed,identity=null){
@@ -365,6 +370,8 @@ export function racingAction({state,world,command,emit}){
    home_track_id:j.home_track_id,away_travel:travel,fee_minor:fee,
    mount_fee_minor:quote.mountMinor,travel_fee_minor:quote.travelMinor,
    jockey_tier:j.tier,race_importance:decision.race_importance,
+   trainer_partnership_mounts:decision.relationship.trainerMounts,
+   owner_partnership_mounts:decision.relationship.ownerMounts,
    card_mount_number:schedule.sameCardCount+1,
    reason:decision.reason,acceptance:decision.suited_index,threshold:decision.threshold});
  }else if(type==='SET_1999_RACE_TACTICS'){
