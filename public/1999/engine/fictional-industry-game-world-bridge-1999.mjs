@@ -144,8 +144,22 @@ export async function openPersistent1999GameCareer(store,manifest,{
   initializeGameHorseCare(run,h);
  }
  const homeTrack=openingRoster[0].homeTrackId;
- const openingJockeys=people.filter(p=>p.role==='jockey'&&p.workplaceId===homeTrack)
-  .slice(0,120).map(p=>({id:p.id,home_track_id:homeTrack}));
+ // The player has access to real local riders and an actual national
+ // visiting circuit, not fabricated rider identities or one home jockey per
+ // mount. A rider still belongs to their home track and must accept a dated,
+ // funded, geographically compatible booking before appearing elsewhere.
+ const actualJockeys=people.filter(p=>p.role==='jockey');
+ const localJockeys=actualJockeys.filter(p=>p.workplaceId===homeTrack).
+  sort((a,b)=>b.ratings.ability-a.ratings.ability||a.id.localeCompare(b.id));
+ const nationalJockeys=actualJockeys.filter(p=>p.workplaceId!==homeTrack&&
+  p.tier==='ELITE').sort((a,b)=>
+   b.ratings.ability-a.ratings.ability||a.id.localeCompare(b.id));
+ const establishedVisitors=actualJockeys.filter(p=>
+  p.workplaceId!==homeTrack&&p.tier==='ESTABLISHED').sort((a,b)=>
+   b.ratings.ability-a.ratings.ability||a.id.localeCompare(b.id));
+ const openingJockeys=[...localJockeys.slice(0,70),
+  ...nationalJockeys.slice(0,35),...establishedVisitors.slice(0,15)]
+  .slice(0,120).map(p=>({id:p.id,home_track_id:p.workplaceId}));
  if(openingJockeys.length>=2){
   const result=dispatchGameCommand({state:run,world,command:{id:'opening-jockey-colony',
    type:'ACTIVATE_JOCKEY_COLONY',actor:'system',
