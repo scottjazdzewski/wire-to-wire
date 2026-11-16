@@ -155,10 +155,13 @@ export function run1999RacingAgents({state,world,emit}){
    if(local.length<2)continue;
    // One open race per modeled class per circuit. Allowance fields should
    // never replace maiden races, and maiden winners cannot enter both.
-   for(const racingClass of ['Maiden Special Weight','Allowance']){
+   for(const racingClass of ['Maiden Special Weight','Allowance','FEATURE']){
     if(Object.values(state.runtime.races).some(r=>r.track_id===trackId&&
-     r.status==='ENTRIES_OPEN'&&r.date>=day&&r.conditions===racingClass))continue;
+     r.status==='ENTRIES_OPEN'&&r.date>=day&&
+     (racingClass==='FEATURE'?Boolean(r.stake_id):r.conditions===racingClass)))
+     continue;
     const eligibleAtHome=local.filter(h=>
+     racingClass==='FEATURE'?h.career.starts>=1:
      racingClass==='Allowance'?h.career.wins>=1:h.career.wins===0);
     if(eligibleAtHome.length<2){
      if(racingClass==='Allowance'&&eligibleAtHome.length){
@@ -173,12 +176,19 @@ export function run1999RacingAgents({state,world,emit}){
     for(let offset=5;offset<=12;offset++){
      const raceDay=plus(day,offset);
      for(const race of gameRaceProgram(state,world,trackId,raceDay)){
-      if(race.stakeId||race.conditions!==racingClass||
+      const gameModeledFeature=racingClass==='FEATURE'&&
+       Boolean(race.stakeId)&&race.canonical===false;
+      if(!(gameModeledFeature||!race.stakeId&&
+        racingClass!=='FEATURE'&&race.conditions===racingClass)||
        race.sexRestriction!=='OPEN'||race.ageRequirement!=='3YO+'||
        !supported1999RaceClass(race))continue;
       const record={id:race.id,track_id:race.trackId,date:race.date,
        age:race.ageRequirement,sex:race.sexRestriction,
        conditions:race.conditions,maiden:race.maidenOnly,max_wins:race.maxCareerWins,
+       stake_id:race.stakeId||null,
+       stake_source_status:race.stakeSourceStatus||null,
+       stakes_grade:race.stakesGrade||null,canonical:race.canonical,
+       purse_minor:Math.round(race.purse*100),
        surface:race.surface,distance_furlongs:race.distanceFurlongs,
        field_capacity:race.fieldCapacity};
       const eligible=eligibleAtHome.filter(h=>
@@ -192,7 +202,8 @@ export function run1999RacingAgents({state,world,emit}){
       // Entries and talent matter, but do not override medical eligibility,
       // known class rules, or the horse's required race spacing.
       const score=eligible.length*100+averageFit*26+condition*14-
-       offset*2-Math.abs(race.distanceFurlongs-8)*3;
+       offset*2-Math.abs(race.distanceFurlongs-8)*3+
+       (gameModeledFeature?Math.round(Math.min(80,race.purse/5000)):0);
       plans.push({race,eligible,score,averageFit});
      }
     }
@@ -230,11 +241,14 @@ export function run1999RacingAgents({state,world,emit}){
     }
     rt.selection_count++;
     emit('RACE_SECRETARY_AND_TRAINER_PLAN',{track_id:trackId,race_id:r.id,
-     date:r.date,conditions:racingClass,
+     date:r.date,conditions:racingClass==='FEATURE'?r.conditions:racingClass,
+     modeled_feature:racingClass==='FEATURE',
      max_career_wins:r.maxCareerWins??null,
      eligible_horses:chosen.eligible.length,accepted_starters:accepted,
      jockey_bookings:accepted,average_surface_distance_fit:Math.round(chosen.averageFit*1000)/1000,
-     reason:racingClass==='Allowance'?
+     reason:racingClass==='FEATURE'?
+      'FUNDED_GAME_MODELED_STAKES_WITH_REAL_AVAILABLE_RIDERS':
+      racingClass==='Allowance'?
       'MAIDEN_GRADUATES_ENTER_SOURCE_CONDITIONED_NW_ALLOWANCE':
       'MAIDEN_FIELD_SURFACE_DISTANCE_AND_JOCKEY_AVAILABILITY',
      player_horses_entered_automatically:false});
