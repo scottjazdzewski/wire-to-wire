@@ -18,6 +18,31 @@ async function digest(value){
  const result=new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256',bytes));
  return [...result].map(x=>x.toString(16).padStart(2,'0')).join('');
 }
+async function digestRecords(label,records){
+ const chunkSize=1000,parallelChunks=16,hashes=[];
+ for(let start=0;start<records.length;start+=chunkSize*parallelChunks){
+  const pending=[];
+  for(let offset=start;offset<Math.min(records.length,start+chunkSize*parallelChunks);
+   offset+=chunkSize)
+   pending.push(digest(records.slice(offset,offset+chunkSize)));
+  hashes.push(...await Promise.all(pending));
+ }
+ return digest({schema:'WTW_PERSISTED_1999_RECORD_SEQUENCE_SHA256_V1',
+  label,count:records.length,chunkSize,hashes});
+}
+export async function digestPersistent1999GameSnapshot({manifest,entities,cards}){
+ const openingHorseCount=manifest?.targetOpeningHorses??manifest?.horseCount??
+  entities?.horses?.length??0;
+ // Keep the original digest for the previously supported 10k career saves.
+ if(openingHorseCount<=10000)return digest({manifest,entities,cards});
+ const [manifestHash,horsesHash,peopleHash,organizationsHash,tracksHash,cardsHash]=
+  await Promise.all([digest(manifest),digestRecords('horses',entities.horses),
+   digestRecords('people',entities.people),
+   digestRecords('organizations',entities.organizations),
+   digestRecords('tracks',entities.tracks),digestRecords('cards',cards)]);
+ return digest({schema:'WTW_PERSISTED_1999_GAME_SNAPSHOT_SHA256_V2',
+  manifestHash,entities:{horsesHash,peopleHash,organizationsHash,tracksHash},cardsHash});
+}
 async function readAll(store,manifest,kind,count){
  const batchSize=kind==='calendarBatches'?100:manifest.batchSize;
  const committed=kind==='calendarBatches'?manifest.calendarBatchesCommitted:
@@ -55,7 +80,8 @@ export async function openPersistent1999GameCareer(store,manifest,{
   authority:{snapshot_id:'WTW-PERSISTED-1999-'+manifest.seed+'-'+
    manifest.worldId+'-'+(manifest.targetOpeningHorses??manifest.horseCount),
    source:'PERSISTED_FICTIONAL_1999_INDUSTRY',
-   sha256:await digest({manifest,entities:{horses,people,organizations,tracks},cards})},
+   sha256:await digestPersistent1999GameSnapshot({manifest,
+    entities:{horses,people,organizations,tracks},cards})},
   entities:{horses,people,organizations,tracks},
   calendar:{schema:manifest.calendarSchema,year:1999,cards,
    summary:{raceDays:manifest.scheduledCards,
