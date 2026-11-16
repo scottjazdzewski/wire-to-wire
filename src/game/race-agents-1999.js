@@ -5,6 +5,7 @@
 import {gameRaceProgram,raceEligibility,racingAction,jockeyBookingDecision,supported1999RaceClass} from './racing-1999.js';
 import {postRaceAIPlacement} from './post-race-campaign-1999.js';
 import {shippingAssessment,shippingAction,horseTravelStatus,effectiveHorseTrack} from './shipping-1999.js';
+import {get1999JockeyPartnership} from '../../public/1999/engine/jockey-partnerships-1999.mjs';
 const diff=(a,b)=>(Date.parse(b+'T12:00:00Z')-Date.parse(a+'T12:00:00Z'))/86400000;
 const plus=(date,n)=>new Date(Date.parse(date+'T12:00:00Z')+n*86400000).toISOString().slice(0,10);
 const horses=state=>Object.values(state.runtime.registered_horses?.by_id||{}).
@@ -15,18 +16,13 @@ const money=(state,owner)=>state.runtime.finances.operation_balances_minor[owner
 // Booking decisions read the complete dated itinerary, not one horse per day.
 // Stable trainer-rider familiarity helps contract a mount, but never overrides
 // a jockey's actual schedule, finances, race fitness or acceptance.
-const trainerAffinity=(trainerId,jockeyId)=>{
- let h=2166136261;
- for(const c of trainerId+':'+jockeyId){
-  h^=c.charCodeAt(0);h=Math.imul(h,16777619)
- }
- return (h>>>0)/4294967296;
-};
-const jockeyChoiceScore=(h,j,decision,race)=>{
+const jockeyChoiceScore=(state,h,j,decision,race)=>{
  const reputation=j.game_reputation??.5;
  const prestige=race.stake_id||race.purse_minor>=10000000?1:0;
+ const bond=get1999JockeyPartnership(state,{
+  trainerId:h.trainer_id,ownerId:h.owner_organization_id,jockeyId:j.id});
  return decision.suited_index*.5+j.skills.judgment*.18+
-  reputation*.13+trainerAffinity(h.trainer_id,j.id)*.12+
+  reputation*.13+bond.trainerBond*.1+bond.ownerBond*.045+
   (j.tier==='ELITE'?prestige*.11:0)+
   (j.home_track_id===race.track_id?.05:0)-
   decision.quote.feeMinor/Math.max(750000,race.purse_minor)*.06;
@@ -80,8 +76,8 @@ function autonomousAwayTravel({state,world,emit}){
     const jockey=Object.values(rt.jockeys).
      filter(j=>j.home_track_id===race.track_id&&
       jockeyBookingDecision(state,world,race,h,j).accept).
-     sort((a,b)=>jockeyChoiceScore(h,b,jockeyBookingDecision(state,world,race,h,b),race)-
-      jockeyChoiceScore(h,a,jockeyBookingDecision(state,world,race,h,a),race)||
+     sort((a,b)=>jockeyChoiceScore(state,h,b,jockeyBookingDecision(state,world,race,h,b),race)-
+      jockeyChoiceScore(state,h,a,jockeyBookingDecision(state,world,race,h,a),race)||
       a.id.localeCompare(b.id))[0];
     if(!jockey)continue;
     const expectedOwnerPurse=Math.round(race.purse_minor*.23*match*.8),
@@ -257,9 +253,9 @@ export function run1999RacingAgents({state,world,emit}){
        decision.quote.feeMinor;
      }).sort((a,b)=>
       (a.home_track_id===trackId?-1:1)-(b.home_track_id===trackId?-1:1)||
-      jockeyChoiceScore(playerHorse,b,
+      jockeyChoiceScore(state,playerHorse,b,
        jockeyBookingDecision(state,world,confirmed,playerHorse,b),confirmed)-
-      jockeyChoiceScore(playerHorse,a,
+      jockeyChoiceScore(state,playerHorse,a,
        jockeyBookingDecision(state,world,confirmed,playerHorse,a),confirmed)||
       a.id.localeCompare(b.id));
      if(candidates[0])playerJockeyOptions.add(candidates[0].id);
@@ -274,8 +270,8 @@ export function run1999RacingAgents({state,world,emit}){
      }).sort((a,b)=>{
       const qa=jockeyBookingDecision(state,world,confirmed,h,a);
       const qb=jockeyBookingDecision(state,world,confirmed,h,b);
-      return jockeyChoiceScore(h,b,qb,confirmed)-
-       jockeyChoiceScore(h,a,qa,confirmed)||a.id.localeCompare(b.id);
+      return jockeyChoiceScore(state,h,b,qb,confirmed)-
+       jockeyChoiceScore(state,h,a,qa,confirmed)||a.id.localeCompare(b.id);
      });
      if(!jockeys.length)continue;
      racingAction({state,world,command:{actor:'system',type:'ENTER_1999_RACE',
