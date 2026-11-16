@@ -112,11 +112,29 @@ try{
  assert.ok(stableProfile.visible&&stableProfile.route.startsWith('Preview:horse:'),
   'Player-owned game horse did not open an actual generated dossier');
  console.log('WTW_UI_ACTIVE_STABLE_PROFILE_PASS '+JSON.stringify({stableLive,stableProfile}));
+ // The owner and trainer references must open their real generated records,
+ // not the retired 73-horse Office's "unregistered" placeholder.
+ const linked=[];
+ for(const kind of ['farm','person']){
+  await evaluate('(()=>{const u=window.__WTW_NEXT__;u.app.section="Stable";u.app.page="Overview";u.app.custom="Stable — Overview";u.paint();return true})()');
+  await delay(130);
+  const action=await evaluate('(()=>{const x=document.querySelector("#wtwNextgen button[data-ng=named-entity][data-kind='+JSON.stringify(kind)+'][data-identity]");if(!x)return null;const id=x.dataset.identity;x.click();return id})()');
+  assert.ok(action,'Generated Stable '+kind+' identity link is missing');
+  await delay(150);
+  const opened=await evaluate('(()=>({route:window.__WTW_NEXT__.app.custom,visible:!!document.querySelector("#wtwNextgen .ng-route-profile"),unregistered:(document.querySelector("#wtwNextgen")?.textContent||"").includes("UNREGISTERED ·")}))()');
+  assert.ok(opened.visible&&opened.route.startsWith('Preview:'+kind+':')&&!opened.unregistered,
+   'Generated Stable '+kind+' did not open a proper profile: '+JSON.stringify(opened));
+  linked.push({kind,id:action,route:opened.route});
+ }
+ console.log('WTW_UI_GENERATED_PEOPLE_FARMS_PASS '+JSON.stringify(linked));
  await evaluate('(()=>{const u=window.__WTW_NEXT__;u.app.section="World";u.app.page="1999 Horses";u.app.custom="World — 1999 Horses";u.app.directoryPage=0;u.app.directorySearch="";u.paint();return true})()');
  await delay(250);
  const worldPage=await evaluate('(()=>({rows:document.querySelectorAll("#wtwNextgen .ng-rs-table tbody tr").length,heading:document.querySelector("#wtwNextgen .ng-stable-visible")?.textContent||"",first:document.querySelector("#wtwNextgen button[data-ng=directory-horse]")?.dataset.val||"",pager:document.querySelectorAll("#wtwNextgen button[data-ng=directory-page]").length}))()');
  assert.equal(worldPage.rows,160,'Only a bounded 160-horse page must be rendered');
  assert.ok(worldPage.heading.includes(openingHorses.toLocaleString('en-US'))&&worldPage.pager===2,'World page count absent');
+ const exact=await evaluate('(()=>{const api=window.WTWCompactCareerManager;const id=document.querySelector("#wtwNextgen button[data-ng=directory-horse]")?.dataset.val;const result=api.playableWorldHorseBrowse({search:id,limit:20});return {matches:result.total,identity:result.items[0]?._id}})()');
+ assert.equal(exact.matches,1,'Permanent horse ID search must cover the entire census');
+ assert.equal(exact.identity,worldPage.first,'Exact permanent horse ID resolved to wrong entity');
  await evaluate('document.querySelectorAll("#wtwNextgen button[data-ng=directory-page]")[1].click();true');
  await delay(120);
  const worldNext=await evaluate('document.querySelector("#wtwNextgen button[data-ng=directory-horse]")?.dataset.val');
