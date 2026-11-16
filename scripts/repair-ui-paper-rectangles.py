@@ -16,13 +16,13 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 BASE_SHA="6d98025e65dfc6ad74d6e7f9c7815c2ee138f5db"
-IDS=("T-0004","T-0014")
+IDS=("T-0004","T-0014","T-0007")
 LOGOS=Path("public/assets/places/track-logos")
 HEROS=Path("public/assets/places/track-hero")
 REPORT=Path("visual-audit/asset-transparency/paper-matte-review.json")
 
 def connected_paper_mask(rgba):
-    pixels=np.asarray(rgba.convert("RGBA"),dtype=np.uint8)
+    pixels=np.asarray(rgba.convert("RGBA"),dtype=np.uint8).copy()
     h,w=pixels.shape[:2]
     rgb=pixels[:,:,:3].astype(np.int16)
     light=(rgb.min(axis=2)>=224)&((rgb.max(axis=2)-rgb.min(axis=2))<=45)&(pixels[:,:,3]>=225)
@@ -57,6 +57,25 @@ def repair(id):
     original=subprocess.check_output(["git","show",f"{BASE_SHA}:{path}"],timeout=12)
     with Image.open(BytesIO(original)) as src:
         rgba=src.convert("RGBA")
+    if id=="T-0007":
+        # Pimlico's approved export is a gold/white emblem on pure black.
+        # Restore the unmodified icon from source; do not decontaminate RGB
+        # against a guessed matte (that creates bright horizontal stripes).
+        pixels=np.asarray(rgba,dtype=np.uint8).copy()
+        h,w=pixels.shape[:2]
+        before=Image.fromarray(pixels.copy(),"RGBA")
+        rgb=pixels[:,:,:3].astype(np.int16)
+        brightest=rgb.max(axis=2)
+        pixels[:,:,3]=np.clip((brightest-13)*255/45,0,255).astype(np.uint8)
+        pixels[pixels[:,:,3]<3,0:3]=0
+        result=Image.fromarray(pixels,"RGBA")
+        report={"track_id":id,"method":"black-only-matte-from-approved-source",
+                "alpha_corners":[int(pixels[y,x,3]) for y,x in
+                                 [(0,0),(0,w-1),(h-1,0),(h-1,w-1)]]}
+        for p in (LOGOS/f"{id}.webp",HEROS/f"{id}.webp"):
+            p.parent.mkdir(parents=True,exist_ok=True)
+            result.save(p,"WEBP",lossless=True,method=6)
+        return before,result,report
     pixels,mask,bbox,size=connected_paper_mask(rgba)
     h,w=pixels.shape[:2]
     before=Image.fromarray(pixels.copy(),"RGBA")
