@@ -150,8 +150,21 @@ export function assessJockeySchedule(state,world,j,race){
  const away=j.home_track_id!==race.track_id;
  const lead=gap(state.clock.date,race.date);
  if(lead<1)return {allowed:false,reason:'INSUFFICIENT_BOOKING_LEAD'};
- // A new away trip needs advance acceptance and commercial arrangements.
- if(away&&sameCardCount===0&&lead<4)
+ // Professional jockeys commonly ride several days of a visiting meet.
+ // Reuse the existing, paid travel engagement if another real booked ride
+ // is within the same seven-day trip block and no other track intervenes.
+ // This is not a separate invented journey record: settled/entered mounts
+ // remain the source of truth across save and resume.
+ const existingVisit=away&&previous.some(r=>{
+  if(r.track_id!==race.track_id||Math.abs(gap(r.date,race.date))>7)return false;
+  const lo=r.date<race.date?r.date:race.date;
+  const hi=r.date>race.date?r.date:race.date;
+  return !previous.some(other=>other.track_id!==race.track_id&&
+   other.date>=lo&&other.date<=hi);
+ });
+ // A FIRST away engagement requires advance travel arrangements; subsequent
+ // mounts within the same visiting block do not get a second travel debit.
+ if(away&&!existingVisit&&sameCardCount===0&&lead<4)
   return {allowed:false,reason:'INSUFFICIENT_TRAVEL_LEAD'};
  const importance=jockeyRaceImportance(race);
  const national=['ELITE','ESTABLISHED'].includes(tier(j));
@@ -160,11 +173,13 @@ export function assessJockeySchedule(state,world,j,race){
  // Regional jockeys routinely switch between nearby courses and winter
  // colonies, but do not fly coast-to-coast for an ordinary cheap mount.
  // Elite/established riders may negotiate national engagements.
- if(away&&sameCardCount===0&&!national&&!importance.nationalFeature&&
-  importance.purseMinor<7500000&&homeTrip>1&&!seasonal)
+ if(away&&!existingVisit&&sameCardCount===0&&!national&&
+  !importance.nationalFeature&&importance.purseMinor<7500000&&
+  homeTrip>1&&!seasonal)
   return {allowed:false,reason:'LOCAL_JOCKEY_DECLINES_LOW_VALUE_AWAY_TRIP'};
  return {allowed:true,reason:'AVAILABLE',away,
-  sameCardCount,additionalTravel:away&&sameCardCount===0,
+  sameCardCount,existingVisitingMeet:existingVisit,
+  additionalTravel:away&&sameCardCount===0&&!existingVisit,
   homeTripDays:homeTrip,seasonalCircuit:seasonal,
   bookedDifferentRacesAtTrack:sameCardCount,
   tripChecks:trips.length,nationalSchedule:national,
