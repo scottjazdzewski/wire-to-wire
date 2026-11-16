@@ -1,11 +1,7 @@
 name: WTW Runtime Identity Matte Repair
+# Historical audit pipeline retained for manual reference only.
+# Final brand-safe alpha restoration is owned by final-ui-logo-alpha.yml.
 on:
-  push:
-    branches:
-      - ui/polish-playable-1999
-    paths:
-      - 'scripts/repair-runtime-logo-alpha.py'
-      - '.github/workflows/repair-runtime-logo-alpha.yml'
   workflow_dispatch:
 permissions:
   contents: write
