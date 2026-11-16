@@ -24,7 +24,8 @@ async function waitFor(label,read,ms=35000){
  const start=Date.now();let last=null;
  while(Date.now()-start<ms){
   try{last=await read();if(last?.ready)return last.value;}
-  catch(error){last={error:String(error)};}
+  catch(error){if(String(error).includes('WTW_CAREER_START_BLOCKER:'))throw error;
+   last={error:String(error)};}
   await delay(220);
  }
  throw Error(label+' timed out: '+JSON.stringify(last));
@@ -87,7 +88,7 @@ try{
  await evaluate('document.querySelector("[data-cc-action=start-test-career]").click();true');
  await waitFor('playable custom-world career',async()=>{
   const value=await evaluate('(()=>{const e=document.querySelector("#wtwCommercialCareerModal");return {ready:!!e?.querySelector("[data-cc-action=advance-test-day]"),error:(e?.textContent||"").match(/ERROR:[^\\n]{0,240}/)?.[0]||null};})()');
-  if(value.error)throw Error(value.error);
+  if(value.error)throw Error('WTW_CAREER_START_BLOCKER: '+value.error);
   return {ready:value.ready,value:value};
  },openingHorses===300000?480000:180000);
  const world=await evaluate('(()=>{const e=document.querySelector("#wtwCommercialCareerModal");return {playing:!!e?.textContent.includes("canonical race engine connected"),horseCount:(e?.textContent||"").includes("'+openingHorses.toLocaleString('en-US')+'"),actions:[...e.querySelectorAll("button[data-cc-action]")].map(x=>x.dataset.ccAction)};})()');
@@ -98,6 +99,12 @@ try{
  assert.ok(live.stableCount>=2&&live.stableId,'No player-owned game horse reached the UI');
  assert.equal(live.pageRows,20,'Directory must read a bounded page');
  console.log('WTW_UI_ACTIVE_CAREER_BRIDGE_PASS '+JSON.stringify(live));
+ const directory=await evaluate('(()=>{const api=window.WTWCompactCareerManager;const people=api.playableDirectoryBrowse({kind:"people",limit:20});const farms=api.playableDirectoryBrowse({kind:"farms",limit:20});const owners=api.playableDirectoryBrowse({kind:"owners",limit:20});const dated=["1999-02-20","1999-03-06","1999-05-01","1999-07-10"].map(date=>({date,...api.playableCalendarSummary(date)})).find(x=>x.trackCount>0);return {people:people.total,firstPerson:people.items[0]?._id,farms:farms.total,owners:owners.total,dated,firstRace:dated?api.playableCalendarRows(dated.date)?.[0]?.status:null};})()');
+ assert.equal(directory.people,live.status.personCount,'Generated People directory lost personnel');
+ assert.ok(directory.farms>=100&&directory.owners>=100,'Generated ownership or farm directory missing');
+ assert.ok(directory.dated?.trackCount>0&&directory.firstRace?.includes('SCHEDULED'),
+  'Racing Calendar not using persisted condition-book dates');
+ console.log('WTW_UI_PEOPLE_FARMS_CALENDAR_SOURCE_PASS '+JSON.stringify(directory));
  // Capture the actual runtime pages, not the opaque Career Manager overlay.
  // The manager is reopened separately for its own dedicated screenshots.
  await evaluate('document.querySelector("#wtwCommercialCareerModal [data-cc-action=close]")?.click();true');
@@ -157,6 +164,9 @@ try{
   ['world','World','Overview','World — Overview'],
   ['world-tracks','World','Tracks','World — Tracks'],
   ['world-horses','World','1999 Horses','World — 1999 Horses'],
+  ['world-people','World','People','World — People'],
+  ['world-organizations','World','Organizations','World — Organizations'],
+  ['facilities-farms','Facilities','Farms','Facilities — Farms'],
   ['track-belmont','World','Tracks','WorldRecord:track:T-0002'],
   ['track-churchill','World','Tracks','WorldRecord:track:T-0013'],
   ['track-keeneland','World','Tracks','WorldRecord:track:T-0014'],
@@ -222,7 +232,7 @@ try{
  assert.ok(trackOpened.shown&&decodeURIComponent(trackOpened.custom.slice('WorldRecord:'.length))==='track:T-0002',
   'World Tracks row did not navigate to canonical Belmont Profile: '+JSON.stringify(trackOpened));
  audit.push({route:'world-to-belmont-click',...trackOpened});
- const report={phase,worldSize:openingHorses,base:'playable-1999',world,viewports,audit,screenshots};
+ const report={phase,worldSize:openingHorses,base:'playable-1999',world,live,directory,viewports,audit,screenshots};
  writeFileSync(output+'/audit.json',JSON.stringify(report,null,2));
  console.log('WTW_UI_POLISH_PHASE '+phase);
  console.log('WTW_UI_PLAYABLE_WORLD '+JSON.stringify(world));
