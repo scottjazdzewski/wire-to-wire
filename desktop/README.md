@@ -25,6 +25,12 @@ For an installable Windows binary, run `npm run build:windows` from `desktop/`, 
 - The bundled static runtime currently contains only public game resources. The older bridge code remains non-visual but active for game commands until source-parity migration G4.
 - A successful startup/restart smoke test does **not** mean all race progression, historical data, screenshots and long-lived careers are retail-certified.
 
+## 1999 full-world verification (November 16, 2026)
+
+- The deterministic 300,000-horse world opened in Chromium IndexedDB, started a career, advanced to January 2, 1999, and reopened with the saved career intact after a Chromium restart.
+- Compressing the durable horse, personnel, breeding, calendar and directory batches reduced the measured initial IndexedDB footprint from 91,099,810 bytes to 49,461,390 bytes (45.7%). Existing raw records remain readable and compact as they are read.
+- The separate 10,000-horse regression completed a canonical race and reopened its saved result. Full-world race settlement at 300,000 horses still needs its own acceptance run.
+
 ## One approved application icon
 
 The Windows ICO is generated at build time from `public/assets/wtw-office-approved-logo.png`; the original brand asset remains untouched.

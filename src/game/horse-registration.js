@@ -12,6 +12,7 @@ const SAFE_ID=/^H-GAME-1999-[A-Za-z0-9-]{1,64}$/;
 const SAFE_REF=/^[A-Za-z0-9][A-Za-z0-9_:-]{1,127}$/;
 const SEXES=new Set(['COLT','FILLY','HORSE','MARE','GELDING']);
 const PROVENANCE='NEW_1999_GAME_FICTION';
+const OPENING_WORLD_PROVENANCE='OPENING_1999_WORLD_CAREER';
 
 export const HORSE_STARTING_ATTRIBUTES_SCHEMA='WTW_1999_GAME_HORSE_ATTRIBUTES_V1';
 const HORSE_RATE_KEYS=Object.freeze([
@@ -57,19 +58,35 @@ export function validateHorseRegistrationRuntime(state,world){
  ensure(isObject(rt)&&rt.schema===HORSE_REGISTRATION_SCHEMA&&isObject(rt.by_id)&&isObject(rt.by_receipt),
    'HORSE_REGISTRY','Malformed career horse registry');
  const names=new Set(world.entities.horses.map(h=>norm(h.name)));
+ const activeNames=new Set(),sourceHorseIds=new Set();
  for(const [id,h] of Object.entries(rt.by_id)){
-  ensure(isObject(h)&&h.horse_id===id&&SAFE_ID.test(id)&&!worldIdentity(world,'horses',id),
+  const source=h?.world_source_horse_id?worldIdentity(world,'horses',h.world_source_horse_id):null;
+  const openingWorldHorse=h?.provenance===OPENING_WORLD_PROVENANCE&&source&&
+   sourceHorseIds.has(h.world_source_horse_id)===false&&source.id!==id&&
+   source.status==='RACING'&&source.name===h.registered_name&&
+   source.ownerId===h.owner_organization_id&&
+   source.foalYear===h.foaling_year&&source.dateOfBirth===h.birth_date&&
+   source.sex===h.sex&&source.foalingFarmId===h.breeder_organization_id&&
+   source.trainerId===h.trainer_id&&source.homeTrackId===h.host_track_id;
+  ensure(isObject(h)&&h.horse_id===id&&SAFE_ID.test(id)&&!worldIdentity(world,'horses',id)&&
+   (h.provenance===PROVENANCE&&!h.world_source_horse_id||openingWorldHorse),
    'HORSE_REGISTRY','Invalid or colliding game horse ID');
-  ensure(h.provenance===PROVENANCE&&h.registration_date<=state.clock.date&&validDate(h.registration_date),
+  if(openingWorldHorse)sourceHorseIds.add(h.world_source_horse_id);
+  ensure([PROVENANCE,OPENING_WORLD_PROVENANCE].includes(h.provenance)&&
+   h.registration_date<=state.clock.date&&validDate(h.registration_date),
    'HORSE_REGISTRY','Invalid registration provenance/date');
   ensure(h.foaling_year<=1996&&h.foaling_year>=1980&&Number.isInteger(h.foaling_year)&&
    validDate(h.birth_date)&&Number(h.birth_date.slice(0,4))===h.foaling_year&&
    h.racing_age_1999===1999-h.foaling_year&&SEXES.has(h.sex),
    'HORSE_REGISTRY','Invalid horse age, sex or date');
+  const nameKey=norm(h.registered_name);
   ensure(typeof h.registered_name==='string'&&h.registered_name.trim()===h.registered_name&&
-   h.registered_name.length>0&&!names.has(norm(h.registered_name)),
+   h.registered_name.length>0&&
+   (openingWorldHorse?nameKey===norm(source.name):!names.has(nameKey))&&
+   !activeNames.has(nameKey),
    'HORSE_REGISTRY','Duplicate or invalid registered name');
-  names.add(norm(h.registered_name));
+  activeNames.add(nameKey);
+  if(!openingWorldHorse)names.add(nameKey);
   ensure(worldIdentity(world,'organizations',h.owner_organization_id)&&
    worldIdentity(world,'organizations',h.breeder_organization_id),
    'HORSE_REGISTRY','Unknown approved owner/breeder');
@@ -83,7 +100,10 @@ export function validateHorseRegistrationRuntime(state,world){
    typeof h.racing_barn_id==='string'&&h.racing_barn_id===h.current_residence_id,
    'HORSE_REGISTRY','Missing actual home/trainer/foaling locality');
   ensure(worldIdentity(world,'people',h.trainer_id),'HORSE_REGISTRY','Unknown trainer person identity');
-  ensure(isObject(h.naming)&&h.naming.status==='ACCEPTED'&&
+  ensure(isObject(h.naming)&&
+   (h.naming.status==='ACCEPTED'&&h.provenance===PROVENANCE||
+    h.naming.status==='PROVISIONAL_EDITABLE'&&openingWorldHorse&&
+     h.naming.source_horse_id===source.id)&&
    typeof h.naming.release_id==='string'&&h.naming.release_id.length>0&&
    typeof h.naming.candidate_id==='string'&&h.naming.candidate_id.length>0,
    'HORSE_REGISTRY','Missing accepted name provenance');

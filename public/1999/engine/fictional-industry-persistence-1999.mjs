@@ -21,11 +21,35 @@ import {buildFictional1999RaceCalendar,FICTIONAL_1999_CALENDAR_SCHEMA}
  from './fictional-world-calendar-v1.mjs';
 export const PERSISTENT_INDUSTRY_SCHEMA='WTW_PERSISTENT_INDUSTRY_1999_V1';
 export const PERSISTENT_INDUSTRY_DB='WireToWireFictionalIndustry1999V1';
+export const PERSISTENT_INDUSTRY_COMPRESSION_SCHEMA='WTW_INDUSTRY_GZIP_JSON_V1';
 const stores=['manifests','horseBatches','personBatches','horseEdits','careerRuns','directory','coveringBatches','calendarBatches'];
+const compressibleStores=new Set(['horseBatches','personBatches','directory',
+ 'coveringBatches','calendarBatches']);
 function request(req){return new Promise((resolve,reject)=>{
  req.onsuccess=()=>resolve(req.result);
  req.onerror=()=>reject(req.error||Error('IndexedDB request failed'));
 })}
+export async function encodePersistent1999StoredValue(value){
+ const json=JSON.stringify(value);
+ if(typeof json!=='string'||json.length<1024||
+  typeof CompressionStream!=='function'||typeof DecompressionStream!=='function')return value;
+ const raw=new TextEncoder().encode(json);
+ const stream=new Blob([raw]).stream().pipeThrough(new CompressionStream('gzip'));
+ const compressed=new Uint8Array(await new Response(stream).arrayBuffer());
+ if(compressed.byteLength+64>=raw.byteLength)return value;
+ return {schema:PERSISTENT_INDUSTRY_COMPRESSION_SCHEMA,encoding:'gzip',
+  rawBytes:raw.byteLength,data:compressed};
+}
+export async function decodePersistent1999StoredValue(value){
+ if(value?.schema!==PERSISTENT_INDUSTRY_COMPRESSION_SCHEMA)return value;
+ if(value.encoding!=='gzip'||!(value.data instanceof Uint8Array))
+  throw Error('Invalid compressed 1999 industry storage record');
+ const stream=new Blob([value.data]).stream().pipeThrough(new DecompressionStream('gzip'));
+ const raw=new Uint8Array(await new Response(stream).arrayBuffer());
+ if(Number.isSafeInteger(value.rawBytes)&&raw.byteLength!==value.rawBytes)
+  throw Error('Compressed 1999 industry record length mismatch');
+ return JSON.parse(new TextDecoder().decode(raw));
+}
 export async function open1999IndustryDatabase(indexedDB=globalThis.indexedDB){
  if(!indexedDB?.open)throw Error('IndexedDB is required for offline industry persistence');
  const db=await new Promise((resolve,reject)=>{
@@ -38,15 +62,34 @@ export async function open1999IndustryDatabase(indexedDB=globalThis.indexedDB){
   req.onsuccess=()=>resolve(req.result);
   req.onerror=()=>reject(req.error||Error('Industry database open failed'));
  });
+ const writeStored=async(store,key,value)=>new Promise((resolve,reject)=>{
+  const tx=db.transaction(store,'readwrite');
+  tx.objectStore(store).put(value,key);
+  tx.oncomplete=()=>resolve();
+  tx.onerror=()=>reject(tx.error||Error('Industry record compaction failed'));
+  tx.onabort=()=>reject(tx.error||Error('Industry record compaction aborted'));
+ });
  return {
   async get(store,key){
    if(!stores.includes(store))throw Error('Unknown industry store');
-   return request(db.transaction(store,'readonly').objectStore(store).get(key));
+   const stored=await request(db.transaction(store,'readonly').objectStore(store).get(key));
+   if(stored?.schema===PERSISTENT_INDUSTRY_COMPRESSION_SCHEMA)
+    return decodePersistent1999StoredValue(stored);
+   if(stored!==undefined&&compressibleStores.has(store)){
+    const compact=await encodePersistent1999StoredValue(stored);
+    if(compact!==stored){
+     // Rewrite old raw values in place as they are read. The transaction is
+     // atomic, so an interrupted upgrade leaves the original record readable.
+     try{await writeStored(store,key,compact)}catch{}
+    }
+   }
+   return stored;
   },
   async commitDirectory(worldId,manifest,records){
+   const compact=await encodePersistent1999StoredValue(records);
    return new Promise((resolve,reject)=>{
     const tx=db.transaction(['manifests','directory'],'readwrite');
-    tx.objectStore('directory').put(records,worldId);
+    tx.objectStore('directory').put(compact,worldId);
     tx.objectStore('manifests').put(manifest,worldId);
     tx.oncomplete=()=>resolve();
     tx.onerror=()=>reject(tx.error||Error('Industry directory commit failed'));
@@ -57,9 +100,10 @@ export async function open1999IndustryDatabase(indexedDB=globalThis.indexedDB){
    if(!['horseBatches','personBatches','coveringBatches','calendarBatches'].includes(kind)||
     !Number.isInteger(index)||index<0||!Array.isArray(records)||!records.length)
     throw Error('Invalid industry batch');
+   const compact=await encodePersistent1999StoredValue(records);
    return new Promise((resolve,reject)=>{
     const tx=db.transaction(['manifests',kind],'readwrite');
-    tx.objectStore(kind).put(records,worldId+':'+index);
+    tx.objectStore(kind).put(compact,worldId+':'+index);
     tx.objectStore('manifests').put(manifest,worldId);
     tx.oncomplete=()=>resolve();
     tx.onerror=()=>reject(tx.error||Error('Industry batch commit failed'));
