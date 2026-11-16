@@ -89,7 +89,7 @@ export function resolve1999PremierJockeyOffers({state,world,emit}){
  const pending=Object.values(offers).filter(o=>o.status==='PENDING'&&
   (!state.runtime.races?.[o.race_id]||
    dayGap(state.clock.date,state.runtime.races[o.race_id].date)<=4));
- if(!pending.length)return {signed:0,declined:0,pending:0};
+ if(!pending.length)return {signed:0,declined:0,pending:Object.values(offers).filter(o=>o.status==='PENDING').length};
  const done=(offer,reason,winner=null)=>{
   offer.status='DECLINED';offer.resolved_date=state.clock.date;
   offer.reason=reason;if(winner)offer.winning_horse_id=winner;
