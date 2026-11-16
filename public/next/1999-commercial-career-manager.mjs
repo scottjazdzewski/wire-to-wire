@@ -629,7 +629,12 @@ async function open(){
    if(selected?.status==='READY'){
     fullIndustryManifest=selected.manifest;
     industryDirectory=await readPersistent1999Directory(store,fullIndustryManifest);
-    activeWorldCareer=await resumeCanonicalRun(store,fullIndustryManifest);
+    // The full world already lives in this session. Reopening the manager
+    // must not rehydrate or rehash 300,000 horses again after each close.
+    if(!activeWorldCareer||
+       activeWorldCareer.manifest?.worldId!==fullIndustryManifest.worldId||
+       activeWorldCareer.manifest?.seed!==fullIndustryManifest.seed)
+     activeWorldCareer=await resumeCanonicalRun(store,fullIndustryManifest);
     await browseFullIndustry(0,'directory');
     notice=activeWorldCareer?'Saved gameplay test career resumed at '+
      activeWorldCareer.run.clock.date+'.':'Saved world verified and ready.';
