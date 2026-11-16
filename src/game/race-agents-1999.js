@@ -3,7 +3,8 @@
  * approved 1999 modeled meet/calendar; no ghost results or artificial jockeys.
  */
 import {gameRaceProgram,raceEligibility,racingAction,jockeyBookingDecision,
- resolve1999PremierJockeyOffers,supported1999RaceClass} from './racing-1999.js';
+ resolve1999PremierJockeyOffers,compact1999PremierJockeyOffers,
+ supported1999RaceClass} from './racing-1999.js';
 import {postRaceAIPlacement} from './post-race-campaign-1999.js';
 import {shippingAssessment,shippingAction,horseTravelStatus,effectiveHorseTrack} from './shipping-1999.js';
 import {get1999JockeyPartnership} from '../../public/1999/engine/jockey-partnerships-1999.mjs';
@@ -143,6 +144,9 @@ export function run1999RacingAgents({state,world,emit}){
  const rt=state.runtime.racing;
  if(!rt||Object.keys(rt.jockeys).length<2)return;
  const day=state.clock.date;
+ // Prune only resolved old bids before any new submissions this week.
+ // Pending offers, signed entries and credited earnings remain untouched.
+ compact1999PremierJockeyOffers({state,emit});
  // Secretary and trainers plan a week's targets on the opening/weekly review,
  // without silently entering player-controlled runners.
  if(state.clock.days_elapsed%7===1&&rt.last_selection_date!==day){
