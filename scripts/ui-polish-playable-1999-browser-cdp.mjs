@@ -90,6 +90,10 @@ try{
  },180000);
  const world=await evaluate('(()=>{const e=document.querySelector("#wtwCommercialCareerModal");return {playing:!!e?.textContent.includes("canonical race engine connected"),horseCount:/10,000/.test(e?.textContent||""),actions:[...e.querySelectorAll("button[data-cc-action]")].map(x=>x.dataset.ccAction)};})()');
  assert.ok(world.playing&&world.horseCount,'Persisted world failed to enter playable test career');
+ // Capture the actual runtime pages, not the opaque Career Manager overlay.
+ // The manager is reopened separately for its own dedicated screenshots.
+ await evaluate('document.querySelector("#wtwCommercialCareerModal [data-cc-action=close]")?.click();true');
+ await delay(140);
  await send('Emulation.setDeviceMetricsOverride',{width:1440,height:900,deviceScaleFactor:1,mobile:false});
  const screenshots=[];
  const audit=[];
