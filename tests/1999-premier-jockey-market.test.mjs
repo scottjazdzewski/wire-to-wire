@@ -7,6 +7,8 @@ import {premierOfferId,scorePremierJockeyOffer,premierBonusCap}
  from '../public/1999/engine/jockey-premier-market-1999.mjs';
 import {get1999JockeyPartnership}
  from '../public/1999/engine/jockey-partnerships-1999.mjs';
+import {quote1999PlayerRacePlan,confirm1999PlayerRacePlan}
+ from '../src/game/player-race-plan-1999.js';
 
 const raceId='R-1999-MODELED-G1-01',jockeyId='P-1999-ELITE-J-01';
 const ownerIds=['O-1999-RIVAL-A','O-1999-RIVAL-B'];
@@ -47,7 +49,7 @@ function fixture(){
     stress:.1,currentRisk:.01,sorenessDays:0,speedCondition:.91,
     staminaCondition:.88}};
  }
- return {rng:{seed:19990101},clock:{date:'1999-01-02',days_elapsed:1},
+ return {revision:0,rng:{seed:19990101},clock:{date:'1999-01-02',days_elapsed:1},
   player:{role:'owner',operation_id:ownerIds[0]},
   runtime:{racing:rt,registered_horses:{by_id:horses},
    horse:care,people:{},facilities:{sites:{
@@ -176,4 +178,69 @@ test('real past partnerships affect major-race competing offers even with equal 
  assert.ok(won.relationshipIndex>old.relationshipIndex);
  assert.equal(s.runtime.racing.premier_offers&&
   Object.keys(s.runtime.racing.premier_offers).length,0);
+});
+
+test('real owner atomic race-plan quote offers an elite mount without prematurely taking the jockey fee',()=>{
+ const s=fixture(),events=[];
+ const payload={horse_id:horseIds[0],race_id:raceId,
+  jockey_id:jockeyId,bonus_minor:70000};
+ const quoted=quote1999PlayerRacePlan(s,world,payload);
+ assert.equal(quoted.can_confirm,true,JSON.stringify(quoted.blockers));
+ assert.equal(quoted.premier_offer_required,true);
+ assert.equal(quoted.offer_bonus_minor,70000);
+ assert.equal(quoted.premier_decision_due_date,'1999-01-08');
+ assert.equal(quoted.immediate_total_minor,0,
+  'Home-stable player rider offer may not debit jockey before signature');
+ assert.ok(quoted.potential_jockey_if_signed_minor>70000);
+ assert.equal(quoted.total_if_signed_minor,quoted.potential_jockey_if_signed_minor);
+ assert.equal(s.runtime.finances.ledger.length,0);
+ const committed=confirm1999PlayerRacePlan({state:s,world,
+  command:{actor:'player',payload:{
+   ...payload,expected_revision:0,
+   maximum_total_minor:quoted.total_if_signed_minor}},
+  emit:(kind,details)=>events.push({kind,details})});
+ assert.equal(committed,undefined);
+ assert.ok(events.some(e=>e.kind==='PLAYER_PREMIER_RIDE_OFFER_SUBMITTED'));
+ assert.equal(events.filter(e=>e.kind==='PLAYER_RACE_PLAN_CONFIRMED').length,0);
+ assert.equal(s.runtime.entries[raceId+':'+horseIds[0]].status,'ENTERED');
+ assert.equal(s.runtime.entries[raceId+':'+horseIds[0]].jockey_id,null);
+ const offer=s.runtime.racing.premier_offers[premierOfferId(
+  raceId,horseIds[0],jockeyId)];
+ assert.equal(offer.status,'PENDING');
+ assert.equal(offer.maximum_jockey_fee_minor,quoted.total_if_signed_minor);
+ assert.equal(s.runtime.finances.ledger.length,0);
+ assert.equal(s.runtime.finances.operation_balances_minor[ownerIds[0]],10000000);
+ const prior=JSON.parse(JSON.stringify(s));
+ assert.deepEqual(prior.runtime.racing.premier_offers,s.runtime.racing.premier_offers);
+ // The owner can authorize only what was quoted, not a later surprise fee.
+ const forbidden=fixture(),bad=quote1999PlayerRacePlan(forbidden,world,
+  {...payload,bonus_minor:250001});
+ assert.equal(bad.can_confirm,false);
+ assert.ok(bad.blockers.some(b=>b.code==='PREMIER_OFFER_BONUS'));
+});
+test('ordinary nonelite rider remains immediately bookable and paid, no premier offer needed',()=>{
+ const s=fixture(),horse=s.runtime.registered_horses.by_id[horseIds[0]];
+ const normal='P-1999-LOCAL-JOCKEY-03';
+ s.runtime.racing.jockeys[normal]={
+  id:normal,home_track_id:'T-0017',tier:'REGIONAL',starts:0,wins:0,
+  skills:{judgment:.85,horse_handling:.87,finish:.78,pace:.79,composure:.82},
+  game_reputation:.65};
+ s.runtime.racing.jockey_finances_minor[normal]=0;
+ const r=s.runtime.races[raceId];
+ r.conditions='Allowance';r.stake_id=null;r.stake_source_status=null;
+ r.stakes_grade=null;r.purse_minor=4500000;r.max_wins=1;
+ const p={horse_id:horse.horse_id,race_id:raceId,jockey_id:normal};
+ const quote=quote1999PlayerRacePlan(s,world,p);
+ assert.equal(quote.can_confirm,true,JSON.stringify(quote.blockers));
+ assert.equal(quote.premier_offer_required,false);
+ assert.ok(quote.jockey_booking_minor>0);
+ assert.equal(quote.immediate_total_minor,quote.jockey_booking_minor);
+ confirm1999PlayerRacePlan({state:s,world,
+  command:{actor:'player',payload:{...p,expected_revision:0,
+   maximum_total_minor:quote.total_if_signed_minor}},emit:()=>{}});
+ assert.equal(s.runtime.entries[raceId+':'+horseIds[0]].status,'BOOKED');
+ assert.equal(s.runtime.entries[raceId+':'+horseIds[0]].jockey_id,normal);
+ assert.equal(Object.keys(s.runtime.racing.premier_offers).length,0);
+ assert.equal(s.runtime.finances.ledger.filter(x=>
+  x.kind==='JOCKEY_MOUNT_AND_TRAVEL_FEE').length,1);
 });
