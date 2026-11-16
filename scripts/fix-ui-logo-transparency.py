@@ -11,14 +11,21 @@ from __future__ import annotations
 import argparse
 from collections import deque
 import json
+import shutil
+import subprocess
+import tempfile
 from pathlib import Path
-from PIL import Image, ImageChops
+from PIL import Image
 import numpy as np
 
 ROOT = Path("public/assets")
 LOGOS = ROOT / "places/track-logos"
 HEROS = ROOT / "places/track-hero"
 REPORT = Path("visual-audit/asset-transparency/ui-alpha-audit.json")
+# Immutable PR #250 gameplay base: original approved marks before UI alpha edits.
+# This prevents repeated in-place matte correction from contaminating
+# transparent hero derivatives, while never changing the source file.
+SOURCE_BASE = "6d98025e65dfc6ad74d6e7f9c7815c2ee138f5db"
 ASSESS = [
     ROOT / "places/track-logos", ROOT / "places/track-hero",
     ROOT / "places/farms", ROOT / "office/founding-organization-logos",
@@ -118,17 +125,54 @@ def main():
                                              "error":type(exc).__name__+": "+str(exc)})
                 continue
             report["assets"].append(item)
-            if folder==LOGOS and item["opaque_white_matte"]:
-                output=HEROS/source.name
-                if not output.exists():candidates.append((source,output))
-    for source,out in candidates:
+            if folder==LOGOS:
+                out=HEROS/source.name
+                if out.exists():continue
+                # Recover genuine approved pre-edit pixels; the source may
+                # have been transparency-adjusted by another UI window.
+                base=None
+                try:
+                    base=subprocess.check_output(
+                        ["git","show",SOURCE_BASE+":"+source.as_posix()],
+                        stderr=subprocess.DEVNULL,timeout=12)
+                except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+                    pass
+                baseline=None
+                if base:
+                    with tempfile.TemporaryDirectory(prefix="wtw-alpha-baseline-") as tmp:
+                        original=Path(tmp)/source.name
+                        original.write_bytes(base)
+                        try:baseline=scan(original)
+                        except (OSError,ValueError):pass
+                if baseline and baseline["opaque_white_matte"]:
+                    candidates.append((source,out,"original-white-matte",base))
+                elif item["alpha_percent"]>=2:
+                    # This exact-ID file already has approved transparent
+                    # pixels; copy the existing mark without another edit.
+                    candidates.append((source,out,"source-already-alpha",None))
+    for source,out,method,base in candidates:
         try:
-            result=clear_border_matte(source,out) if args.write else {"changed":False,"reason":"preview mode"}
+            if args.write and method=="original-white-matte":
+                with tempfile.TemporaryDirectory(prefix="wtw-alpha-original-") as tmp:
+                    original=Path(tmp)/source.name
+                    original.write_bytes(base)
+                    result=clear_border_matte(original,out)
+            elif args.write:
+                out.parent.mkdir(parents=True,exist_ok=True)
+                shutil.copy2(source,out)
+                verified=scan(out)
+                result={"changed":verified["alpha_percent"]>=2,
+                        "method":"approved transparent source copied",
+                        "new_alpha_percent":verified["alpha_percent"],
+                        "output":out.as_posix()}
+                if not result["changed"]:out.unlink(missing_ok=True)
+            else:
+                result={"changed":False,"reason":"preview mode"}
         except (OSError, ValueError) as exc:
             result={"changed":False,"reason":"decode-error: "+str(exc)}
             report["unreadable"].append({"path":source.as_posix(),"error":str(exc)})
         report["new_transparent_hero_derivatives"].append({
-            "source":source.as_posix(),**result})
+            "source":source.as_posix(),"method":method,**result})
     # Existing intentional plaques, portraits and photography are NOT a
     # transparency defect; only logo export canvases without a hero need
     # conversion. Remaining anomalous legacy logos are logged for review.
