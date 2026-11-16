@@ -322,34 +322,44 @@ try {
  }
  console.log('WTW_SCREEN_FAMILY_PASS Office '+tabmap.Office.length+' views');
 
- // Full-width route screens must not regress into the retired two-column
- // parent that previously cut Kingsmere's operation dashboard in half.
- // A missing race still renders the Race File empty state with the same shell.
+ // Modern route pages own their INTERNAL columns. The shared route shell
+ // must stay full-width at 1280px and at the 1024px breakpoint.
  for(const item of [
   {name:'Organization Overview',ui:'Organization Overview',selector:'.ng-org-overview'},
   {name:'Due Actions',ui:'Due Actions',selector:'.ng-due-overview'},
-  {name:'Race File',ui:'RaceFile:layout-audit-missing-record',selector:'.ng-1999-race-file'}
+  {name:'Race File',ui:'RaceFile:layout-audit-missing-record',selector:'.ng-1999-race-file'},
+  {name:'Search',ui:'Search',selector:'.ng-search-page'},
+  {name:'World Record',ui:'WorldRecord:track:T-0002',selector:'.ng-world-source-profile'}
  ]){
   await command('Page.navigate',{url:url+'?ui='+encodeURIComponent(item.ui)});
-  let box=null;
-  for(let attempt=0;attempt<90;attempt++){
-   box=await evaluate(`(()=>{
-    const root=document.getElementById('wtwNextgen');
-    const screen=root?.querySelector(${JSON.stringify(item.selector)});
-    const host=screen?.closest('.ng-routeinner');
-    const parent=host?.getBoundingClientRect(),child=screen?.getBoundingClientRect();
-    return {found:!!screen,ratio:parent?.width?child.width/parent.width:0,
-     parentWidth:parent?.width||0,screenWidth:child?.width||0,
-     gameDate:root?.querySelector('.ng-global-date strong')?.textContent?.trim()||''};
-   })()`);
-   if(box?.found&&box.parentWidth>300)break;
-   await delay(100);
+  for(const width of [1280,1024]){
+   await command('Emulation.setDeviceMetricsOverride',{
+    width,height:800,deviceScaleFactor:1,mobile:false
+   });
+   try{
+    let box=null;
+    for(let attempt=0;attempt<90;attempt++){
+     box=await evaluate(`(()=>{
+      const root=document.getElementById('wtwNextgen');
+      const screen=root?.querySelector(${JSON.stringify(item.selector)});
+      const host=screen?.closest('.ng-routeinner');
+      const parent=host?.getBoundingClientRect(),child=screen?.getBoundingClientRect();
+      return {found:!!screen,ratio:parent?.width?child.width/parent.width:0,
+       parentWidth:parent?.width||0,screenWidth:child?.width||0,
+       gameDate:root?.querySelector('.ng-global-date strong')?.textContent?.trim()||''};
+     })()`);
+     if(box?.found&&box.parentWidth>300)break;
+     await delay(100);
+    }
+    assert.ok(box?.found&&box.parentWidth>300,item.name+' route did not render at '+width+': '+JSON.stringify(box));
+    assert.ok(box.ratio>.82,
+     item.name+' is trapped in a half-width route grid at '+width+': '+JSON.stringify(box));
+    assert.equal(box.gameDate,baseline.date,item.name+' navigation advanced the game date');
+    console.log('WTW_FULL_WIDTH_ROUTE_PASS '+item.name+' '+width+'px '+Math.round(box.ratio*100)+'%');
+   }finally{
+    await command('Emulation.clearDeviceMetricsOverride');
+   }
   }
-  assert.ok(box?.found&&box.parentWidth>300,item.name+' route did not render: '+JSON.stringify(box));
-  assert.ok(box.ratio>.82,
-   item.name+' is trapped in a half-width route grid: '+JSON.stringify(box));
-  assert.equal(box.gameDate,baseline.date,item.name+' navigation advanced the game date');
-  console.log('WTW_FULL_WIDTH_ROUTE_PASS '+item.name+' '+Math.round(box.ratio*100)+'%');
  }
 
  // Check REAL information-panel sorting on all three shared manager families.
