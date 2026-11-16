@@ -13,6 +13,11 @@ on:
       - 'tests/1999-world-integrity-circuits.test.mjs'
       - 'tests/1999-full-world-jockey-coverage.test.mjs'
       - 'tests/1999-world-4yo-race-eligibility.test.mjs'
+      - 'tests/1999-national-jockey-engagements.test.mjs'
+      - 'public/1999/engine/jockey-engagements-1999.mjs'
+      - 'src/game/race-agents-1999.js'
+      - 'public/1999/game/race-agents-1999.js'
+      - 'public/1999/engine/fictional-industry-game-world-bridge-1999.mjs'
       - 'src/game/racing-1999.js'
       - 'public/1999/game/racing-1999.js'
       - 'public/1999/engine/fictional-industry-persistence-1999.mjs'
@@ -41,6 +46,7 @@ jobs:
             tests/1999-track-condition-book-engine.test.mjs \
             tests/1999-full-world-jockey-coverage.test.mjs \
             tests/1999-world-4yo-race-eligibility.test.mjs \
+            tests/1999-national-jockey-engagements.test.mjs \
             2>&1 | tee world-circuit-audit.log
       - name: Preserve unit audit log
         if: always()
