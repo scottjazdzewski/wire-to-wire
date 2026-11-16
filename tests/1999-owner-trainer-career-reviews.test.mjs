@@ -98,8 +98,9 @@ test('28-day owner/trainer career reviews use only official race results, paid c
  for(const t of trainersSeen){
   const career=getTrainerCareerForm(completed,t);
   assert.ok(career&&career.as_of==='1999-01-30');
-  assert.equal(career.starts,official.reduce((n,r)=>n+r.results.filter(x=>
-   x.trainer_id===t).length,0));
+  assert.equal(career.starts,reviewOfficial.reduce((n,r)=>n+r.results.filter(x=>
+   x.trainer_id===t).length,0),
+   'Career form is a Jan30 review-time snapshot, not a backdated Jan30 evening result');
   assert.equal(career.provenance,'MODELED_1999_GAME_RESULTS_NOT_HISTORICAL_PROFESSIONAL_RATING');
  }
  assert.equal(JSON.stringify(world),snapshot,'No change to historical source identities');
