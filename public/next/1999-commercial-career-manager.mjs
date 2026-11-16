@@ -22,8 +22,8 @@ import {dispatchGameCommand} from '/1999/game/kernel.js';
 import {gameRaceProgram,supported1999RaceClass,raceEligibility}
  from '/1999/game/racing-1999.js';
 import {validateGameRun} from '/1999/game/state.js';
-import {packShared1999Career,unpackShared1999Career,sameShared1999WorldManifest}
- from '/1999/engine/shared-1999-career-package.mjs?rev=wtw-shared-career-manifest-canonical-v1';
+import {packShared1999Career,unpackShared1999Career,sameShared1999WorldIdentity}
+ from '/1999/engine/shared-1999-career-package.mjs?rev=wtw-shared-career-world-identity-v2';
 
 const DB_NAME='WireToWireClean1999CareersV2';
 const MAX_SLOTS=60,MAX_TOTAL_BYTES=512*1024*1024;
@@ -381,6 +381,7 @@ async function exportSharedCareer(){
  document.body.appendChild(link);link.click();link.remove();
  setTimeout(()=>URL.revokeObjectURL(url),1500);
  return {bytes:bytes.byteLength,worldId:activeWorldCareer.manifest.worldId,
+  snapshotSha256:activeWorldCareer.world.authority.sha256,
   runId:activeWorldCareer.run.run_id,gameDate:activeWorldCareer.run.clock.date};
 }
 async function importSharedCareerFile(file,{preserveExistingProgress=false}={}){
@@ -424,8 +425,8 @@ async function importSharedCareerFile(file,{preserveExistingProgress=false}={}){
   const ready=await reopenPersistent1999Industry(db,{seed:wanted.seed,worldId:wanted.worldId});
   if(ready?.status!=='READY')throw Error('Shared 1999 world could not be completed');
   fullIndustryManifest=ready.manifest;
-  if(!sameShared1999WorldManifest(fullIndustryManifest,expected))
-   throw Error('This build creates a different world manifest; checkpoint import stopped safely');
+  if(!sameShared1999WorldIdentity(fullIndustryManifest,expected))
+   throw Error('This build creates a different shared-world identity; checkpoint import stopped safely');
   const sameOpenWorld=activeWorldCareer?.manifest?.worldId===wanted.worldId&&
    activeWorldCareer.manifest.seed===wanted.seed;
   const career=sameOpenWorld?activeWorldCareer:
@@ -435,7 +436,8 @@ async function importSharedCareerFile(file,{preserveExistingProgress=false}={}){
     playerRole:checkpoint.careerRecord.player.role,
     involvement:checkpoint.careerRecord.player.involvement});
   if(career.world.authority.sha256!==wanted.snapshotSha256)
-   throw Error('Generated world records do not match the shared career fingerprint');
+   throw Error('Generated world records do not match the shared career fingerprint: expected '+
+    wanted.snapshotSha256+' but generated '+career.world.authority.sha256);
   const checkpointRun=checkpoint.careerRecord.changes.canonicalRun;
   validateGameRun(checkpointRun,career.world);
   const prior=await loadPersistent1999CareerRun(db,fullIndustryManifest,

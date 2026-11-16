@@ -27,8 +27,8 @@ test('desktop startup auto-loads the bundle while smoke runs can invoke it deter
  assert.match(manager,/bootstrapBundledCareer\(\)\.catch/);
  assert.match(manager,/window\.WTWDesktop\?\.runtime==='windows-desktop'&&!window\.WTWDesktop\.smokeMode/);
  assert.match(manager,/importSharedCareerFile\(file,\{preserveExistingProgress:true\}\)/);
- assert.match(manager,/sameShared1999WorldManifest\(fullIndustryManifest,expected\)/);
- assert.match(manager,/wtw-shared-career-manifest-canonical-v1/);
+ assert.match(manager,/sameShared1999WorldIdentity\(fullIndustryManifest,expected\)/);
+ assert.match(manager,/wtw-shared-career-world-identity-v2/);
  assert.match(manager,/Existing local progress kept/);
  assert.match(preload,/smokeMode/);
  assert.match(desktopSmoke,/IncludeCareerBootstrap/);

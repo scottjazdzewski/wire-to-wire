@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
-import {packShared1999Career,unpackShared1999Career,sameShared1999WorldManifest}
+import {packShared1999Career,unpackShared1999Career,sameShared1999WorldManifest,
+ sameShared1999WorldIdentity}
  from '../public/1999/engine/shared-1999-career-package.mjs';
 
 globalThis.crypto??=webcrypto;
@@ -42,4 +43,12 @@ test('shared 1999 world manifests ignore key order but reject any changed values
  assert.equal(sameShared1999WorldManifest(first,reordered),true);
  assert.equal(sameShared1999WorldManifest(first,{...reordered,tracks:['T-0002','T-0001']}),false);
  assert.equal(sameShared1999WorldManifest(first,{...reordered,plan:{...reordered.plan,seed:19990102}}),false);
+});
+
+test('world checkpoint identity survives generator metadata updates but rejects census changes',()=>{
+ assert.equal(sameShared1999WorldIdentity(manifest,{...manifest,
+  plan:{...manifest.plan,modeledLivingPopulation:350254},horseNamingRevision:'V489'}),true);
+ assert.equal(sameShared1999WorldIdentity(manifest,{...manifest,seed:19990102}),false);
+ assert.equal(sameShared1999WorldIdentity(manifest,{...manifest,personCount:75725}),false);
+ assert.equal(sameShared1999WorldIdentity(manifest,{...manifest,targetOpeningHorses:325000}),false);
 });
