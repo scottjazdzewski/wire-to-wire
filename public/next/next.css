@@ -3931,3 +3931,49 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
   width:14%!important;
  }
 }
+
+/* UI Window 4: narrow Office and Stable headers remain legible inside
+ * the locked three-column layout; no extra top row or document scrolling. */
+@media (min-width:781px) and (max-width:1080px){
+ #wtwNextgen .ng-board .ng-main .ng-intel>.ng-cardhead,
+ #wtwNextgen .ng-board .ng-main .ng-choices>.ng-cardhead{
+  gap:5px!important;padding-inline:7px!important;min-width:0!important;
+ }
+ #wtwNextgen .ng-board .ng-main .ng-intel>.ng-cardhead .ng-headinggroup,
+ #wtwNextgen .ng-board .ng-main .ng-choices>.ng-cardhead .ng-headinggroup{
+  flex:1 1 auto!important;min-width:0!important;max-width:100%!important;
+  overflow:hidden!important;
+ }
+ #wtwNextgen .ng-board .ng-main .ng-intel>.ng-cardhead .ng-headinggroup h3,
+ #wtwNextgen .ng-board .ng-main .ng-choices>.ng-cardhead .ng-headinggroup h3{
+  display:block!important;min-width:0!important;max-width:100%!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+  font-size:11px!important;line-height:1.2!important;
+ }
+ #wtwNextgen .ng-board .ng-main .ng-intel>.ng-cardhead .ng-cardlink{
+  flex:0 1 65px!important;max-width:65px!important;min-width:0!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+  font-size:9px!important;
+ }
+ #wtwNextgen .ng-board .ng-main .ng-choices>.ng-cardhead .ng-choice-count{
+  flex:0 1 58px!important;max-width:58px!important;min-width:0!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+  font-size:9px!important;
+ }
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-title,
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-roster>header{
+  gap:7px!important;min-width:0!important;
+ }
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-title strong,
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-roster>header strong{
+  flex:0 0 auto!important;white-space:nowrap!important;
+ }
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-title>span,
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-roster>header>span{
+  display:block!important;flex:1 1 auto!important;min-width:0!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+ }
+ #wtwNextgen .ng-stable-roster-v2:not(.ng-dept-roster) .ng-rs-roster>header>span{
+  text-align:right!important;
+ }
+}
