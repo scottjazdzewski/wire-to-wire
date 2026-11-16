@@ -1,0 +1,179 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {racingAction,createRacingRuntime,
+ resolve1999PremierJockeyOffers,jockeyBookingDecision}
+ from '../src/game/racing-1999.js';
+import {premierOfferId,scorePremierJockeyOffer,premierBonusCap}
+ from '../public/1999/engine/jockey-premier-market-1999.mjs';
+import {get1999JockeyPartnership}
+ from '../public/1999/engine/jockey-partnerships-1999.mjs';
+
+const raceId='R-1999-MODELED-G1-01',jockeyId='P-1999-ELITE-J-01';
+const ownerIds=['O-1999-RIVAL-A','O-1999-RIVAL-B'];
+const horseIds=['H-1999-G1-CONTENDER-A','H-1999-G1-CONTENDER-B'];
+const trainerIds=['P-1999-TRAINER-A','P-1999-TRAINER-B'];
+const riders=['P-1999-ELITE-J-01','P-1999-ELITE-J-02'];
+const world={entities:{tracks:[{id:'T-0017',location:{state:'Florida',country:'USA'}}],people:[]}};
+function fixture(){
+ const rt=createRacingRuntime();
+ rt.jockeys=Object.fromEntries(riders.map((id,i)=>[id,{
+  id,home_track_id:'T-0017',tier:'ELITE',starts:0,wins:0,
+  skills:{judgment:.92,horse_handling:.95,finish:.9,pace:.86,composure:.86},
+  game_reputation:.84
+ }]));
+ rt.jockey_finances_minor=Object.fromEntries(riders.map(id=>[id,0]));
+ const race={id:raceId,date:'1999-01-12',track_id:'T-0017',
+  age:'3YO+',sex:'OPEN',conditions:'Handicap',
+  surface:'DIRT',distance_furlongs:8,
+  stake_id:'WTW-MODELED-G1',stake_source_status:'MODELED',
+  stakes_grade:'G1',canonical:false,maiden:false,max_wins:null,
+  purse_minor:50000000,escrow_minor:50000000,
+  field_capacity:12,status:'ENTRIES_OPEN',field:[],results:null,
+  source:'WTW_1999_TRACK_SPECIFIC_MEET_PROGRESSION'};
+ const horses={},care={};
+ for(let i=0;i<2;i++){
+  const id=horseIds[i];
+  horses[id]={horse_id:id,foaling_year:1996,sex:'COLT',
+   trainer_id:trainerIds[i],owner_organization_id:ownerIds[i],
+   home_track_id:'T-0017',host_track_id:'T-0017',
+   current_residence_id:'F-1999-LOCAL-BARN',
+   starting_attributes:{current_ability:i===0?96:79,
+    potential_ability:94,temperament:.88,dirt_aptitude:.87,
+    turf_aptitude:.62,route_aptitude:.9,sprint_aptitude:.75},
+   career:{starts:1,wins:1,earnings_minor:1500000}};
+  care[id]={policy:{feed:'HAY',care:'BALANCED',monthly_budget_minor:90000},
+   finance:{spent_minor:0},history:[],
+   training:{readiness:.95,fitness:.89,fatigue:.02,confidence:.85,
+    stress:.1,currentRisk:.01,sorenessDays:0,speedCondition:.91,
+    staminaCondition:.88}};
+ }
+ return {rng:{seed:19990101},clock:{date:'1999-01-02',days_elapsed:1},
+  player:{role:'owner',operation_id:ownerIds[0]},
+  runtime:{racing:rt,registered_horses:{by_id:horses},
+   horse:care,people:{},facilities:{sites:{
+    'F-1999-LOCAL-BARN':{id:'F-1999-LOCAL-BARN',
+     host_track_id:'T-0017',quality:.9,status:'ACTIVE'}}},
+   finances:{balance_minor:10000000,
+    operation_balances_minor:{[ownerIds[0]]:10000000,
+     [ownerIds[1]]:10000000},ledger:[]},
+   races:{[raceId]:race},entries:{}}};
+}
+function actions(s){
+ const events=[];
+ const act=(type,payload,actor='system')=>racingAction({
+  state:s,world,command:{type,payload,actor},
+  emit:(kind,details)=>events.push({kind,details})});
+ return {act,events};
+}
+function entrants(s){
+ const {act,events}=actions(s);
+ for(let i=0;i<2;i++)
+  act('ENTER_1999_RACE',{race_id:raceId,horse_id:horseIds[i]},
+   i===0?'player':'system');
+ return {act,events};
+}
+test('two rival owners can offer premier mount; no owner or jockey pays before jockey selects',()=>{
+ const s=fixture(),{act,events}=entrants(s);
+ const quote=jockeyBookingDecision(s,world,s.runtime.races[raceId],
+  s.runtime.registered_horses.by_id[horseIds[0]],
+  s.runtime.racing.jockeys[jockeyId]);
+ assert.equal(quote.accept,true,quote.reason);
+ assert.ok(premierBonusCap(quote.quote)>80000);
+ act('OFFER_1999_PREMIER_JOCKEY',{race_id:raceId,horse_id:horseIds[0],
+  jockey_id:jockeyId,bonus_minor:80000},'player');
+ act('OFFER_1999_PREMIER_JOCKEY',{race_id:raceId,horse_id:horseIds[1],
+  jockey_id:jockeyId,bonus_minor:120000},'system');
+ assert.equal(Object.keys(s.runtime.racing.premier_offers).length,2);
+ assert.ok(Object.values(s.runtime.racing.premier_offers).every(x=>x.status==='PENDING'));
+ assert.equal(s.runtime.finances.ledger.length,0);
+ assert.equal(s.runtime.finances.operation_balances_minor[ownerIds[0]],10000000);
+ assert.equal(s.runtime.finances.operation_balances_minor[ownerIds[1]],10000000);
+ assert.equal(resolve1999PremierJockeyOffers({state:s,world,emit:()=>{}}).signed,0);
+ assert.ok(events.filter(x=>x.kind==='JOCKEY_PREMIER_OFFER_SUBMITTED').length===2);
+ assert.throws(()=>act('BOOK_1999_JOCKEY',{race_id:raceId,
+  horse_id:horseIds[0],jockey_id:jockeyId},'player'),/competing offer/i);
+});
+test('at four-day major-race deadline best quality and relationships win: one signed mount, one debit, loser notified',()=>{
+ const s=fixture(),{act,events}=entrants(s);
+ act('OFFER_1999_PREMIER_JOCKEY',{race_id:raceId,horse_id:horseIds[0],
+  jockey_id:jockeyId,bonus_minor:80000},'player');
+ act('OFFER_1999_PREMIER_JOCKEY',{race_id:raceId,horse_id:horseIds[1],
+  jockey_id:jockeyId,bonus_minor:120000},'system');
+ const start=JSON.parse(JSON.stringify(s));
+ s.clock.date='1999-01-08';
+ const summary=resolve1999PremierJockeyOffers({state:s,world,
+  emit:(kind,details)=>events.push({kind,details})});
+ assert.deepEqual(summary,{signed:1,declined:1,pending:0});
+ const offer=Object.values(s.runtime.racing.premier_offers),
+  signed=offer.find(x=>x.status==='SIGNED'),
+  loser=offer.find(x=>x.status==='DECLINED');
+ assert.ok(signed&&loser);
+ assert.equal(signed.horse_id,horseIds[0],
+  'Better horse must win despite rival offering somewhat more cash');
+ assert.equal(loser.reason,'RIVAL_HORSE_WON_PREMIER_RIDE');
+ assert.equal(loser.winning_horse_id,horseIds[0]);
+ const entry=s.runtime.entries[raceId+':'+horseIds[0]];
+ assert.equal(entry.status,'BOOKED');
+ assert.equal(entry.jockey_id,jockeyId);
+ assert.equal(entry.premier_signing_bonus_minor,80000);
+ assert.equal(s.runtime.entries[raceId+':'+horseIds[1]].status,'ENTERED');
+ assert.equal(s.runtime.finances.ledger.filter(x=>x.kind==='JOCKEY_FEE_RECEIVED').length,1);
+ assert.equal(s.runtime.finances.ledger.filter(x=>x.kind==='JOCKEY_MOUNT_AND_TRAVEL_FEE').length,1);
+ assert.equal(s.runtime.finances.operation_balances_minor[ownerIds[1]],10000000);
+ assert.equal(s.runtime.racing.jockey_finances_minor[jockeyId],entry.fee_minor);
+ assert.ok(events.some(e=>e.kind==='JOCKEY_PREMIER_OFFER_SIGNED'));
+ assert.ok(events.some(e=>e.kind==='JOCKEY_PREMIER_OFFER_DECLINED'));
+ const again=resolve1999PremierJockeyOffers({state:s,world,emit:()=>{}});
+ assert.deepEqual(again,{signed:0,declined:0,pending:0});
+ assert.equal(s.runtime.finances.ledger.filter(x=>x.kind==='JOCKEY_FEE_RECEIVED').length,1);
+ // The offer source and decision are permanent, not a new synthetic table.
+ const clone=JSON.parse(JSON.stringify(s));
+ assert.deepEqual(clone.runtime.racing.premier_offers,s.runtime.racing.premier_offers);
+ assert.deepEqual(clone.runtime.entries,s.runtime.entries);
+ assert.equal(start.runtime.finances.ledger.length,0);
+});
+test('pending offers can be raised but cannot be paid early, late, or above the cap',()=>{
+ const s=fixture(),{act}=entrants(s);
+ act('OFFER_1999_PREMIER_JOCKEY',{race_id:raceId,horse_id:horseIds[0],
+  jockey_id:jockeyId,bonus_minor:25000},'player');
+ act('OFFER_1999_PREMIER_JOCKEY',{race_id:raceId,horse_id:horseIds[0],
+  jockey_id:jockeyId,bonus_minor:50000},'player');
+ assert.equal(s.runtime.racing.premier_offers[premierOfferId(
+  raceId,horseIds[0],jockeyId)].bonus_minor,50000);
+ assert.throws(()=>act('OFFER_1999_PREMIER_JOCKEY',{race_id:raceId,
+  horse_id:horseIds[0],jockey_id:jockeyId,bonus_minor:20000},'player'));
+ assert.throws(()=>act('OFFER_1999_PREMIER_JOCKEY',{race_id:raceId,
+  horse_id:horseIds[1],jockey_id:jockeyId,bonus_minor:250001},'system'));
+ s.clock.date='1999-01-08';
+ assert.throws(()=>act('OFFER_1999_PREMIER_JOCKEY',{race_id:raceId,
+  horse_id:horseIds[1],jockey_id:jockeyId,bonus_minor:10000},'system'));
+ assert.equal(s.runtime.finances.ledger.length,0);
+});
+test('real past partnerships affect major-race competing offers even with equal bids',()=>{
+ const s=fixture(),{act,events}=entrants(s),r=s.runtime.races[raceId];
+ const prior={id:'R-1999-PRIOR',date:'1999-01-01',track_id:r.track_id,
+  status:'OFFICIAL_SIM_RESULT',results:[],purse_minor:2000000};
+ s.runtime.races[prior.id]=prior;
+ // Add an authentic completed previous team effort for the less-favored
+ // horse; no fake relationship is inserted into any permanent profile.
+ s.runtime.entries[prior.id+':'+horseIds[1]]={
+  id:prior.id+':'+horseIds[1],race_id:prior.id,
+  horse_id:horseIds[1],owner_id:ownerIds[1],trainer_id:trainerIds[1],
+  jockey_id:jockeyId,status:'RESULTED',finish:1};
+ prior.results.push({horse_id:horseIds[1],jockey_share_minor:12000});
+ const bond=get1999JockeyPartnership(s,{
+  trainerId:trainerIds[1],ownerId:ownerIds[1],jockeyId});
+ assert.ok(bond.trainerMounts>0&&bond.trainerWins>0);
+ const first=s.runtime.registered_horses.by_id[horseIds[0]],
+  second=s.runtime.registered_horses.by_id[horseIds[1]],
+  jockey=s.runtime.racing.jockeys[jockeyId],
+  quote=jockeyBookingDecision(s,world,r,first,jockey).quote;
+ const old=scorePremierJockeyOffer({horse:first,jockey,race:r,
+  partnership:get1999JockeyPartnership(s,{trainerId:trainerIds[0],
+   ownerId:ownerIds[0],jockeyId}),quote,bonus_minor:10000});
+ const won=scorePremierJockeyOffer({horse:second,jockey,race:r,
+  partnership:bond,quote,bonus_minor:10000});
+ assert.ok(won.relationshipIndex>old.relationshipIndex);
+ assert.equal(s.runtime.racing.premier_offers&&
+  Object.keys(s.runtime.racing.premier_offers).length,0);
+});
