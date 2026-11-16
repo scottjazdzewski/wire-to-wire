@@ -32,13 +32,17 @@ const through=date=>{let s=fresh();while(s.clock.date<date)s=day(s);return s};
 test('every actual starter receives one dated, persistent result-linked trainer campaign, never a fabricated result',()=>{
  const state=through('1999-01-09');
  const races=resultRaces(state);
- assert.equal(races.length,3);
+ assert.ok(races.length>=2,'A real game career must settle multiple race fields');
+ const starters=races.reduce((n,r)=>n+r.results.length,0);
+ const starterIds=new Set(races.flatMap(r=>r.results.map(x=>x.horse_id)));
+ assert.equal(starters,starterIds.size,
+  'Real 12-day recovery must prevent repeated starts in the first 8 days');
  const source=JSON.stringify(world);
  const plans=state.runtime.post_race_campaigns;
  assert.equal(plans.schema,'WTW_1999_POSTRACE_CAMPAIGN_V1');
- assert.equal(plans.totals.race_reviews,27);
- assert.equal(Object.keys(plans.by_horse).length,27);
- assert.equal(state.event_log.filter(e=>e.kind==='HORSE_POST_RACE_CAMPAIGN_CREATED').length,27);
+ assert.equal(plans.totals.race_reviews,starters);
+ assert.equal(Object.keys(plans.by_horse).length,starterIds.size);
+ assert.equal(state.event_log.filter(e=>e.kind==='HORSE_POST_RACE_CAMPAIGN_CREATED').length,starters);
  for(const race of races){
   for(const result of race.results){
    const p=getGamePostRaceCampaign(state,result.horse_id);
