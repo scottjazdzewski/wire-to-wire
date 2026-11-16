@@ -4913,8 +4913,9 @@ window.addEventListener('click',e=>{
  if(key==='named-entity'){
   const name=btn.dataset.name||'',kind=btn.dataset.kind||'',
    identity=btn.dataset.identity||'';
-  const modeled=window.WTWCompactCareerManager?.playableEntityProfile?.(
-   kind==='person'?'person':'farm',identity||name);
+  const modeled=['person','farm','connection'].includes(kind)?
+   window.WTWCompactCareerManager?.playableEntityProfile?.(
+    kind==='person'?'person':'farm',identity||name):null;
   if(modeled)return previewRecordRoute(modeled._kind,modeled.name,modeled);
   return openEntityRecord(name,kind,btn.dataset.track?{_track:btn.dataset.track}:null);
  }
