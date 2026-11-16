@@ -11,6 +11,7 @@ on:
       - 'public/next/1999-condition-book-engine.mjs'
       - 'public/1999/game/shipping-1999.js'
       - 'tests/1999-world-integrity-circuits.test.mjs'
+      - 'tests/1999-world-integrity-90-day-circuit.test.mjs'
       - 'scripts/1999-world-integrity-browser-cdp.mjs'
       - '.github/workflows/1999-world-integrity-browser.yml'
   workflow_dispatch:
@@ -45,6 +46,29 @@ jobs:
         with:
           name: wtw-1999-world-circuit-audit
           path: world-circuit-audit.log
+          retention-days: 14
+          if-no-files-found: warn
+
+  ninety-day-circuit-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Advance 90 days with shipping, capacity, bookings, finance and save/reopen checks
+        run: |
+          set -o pipefail
+          node --test tests/1999-world-integrity-90-day-circuit.test.mjs \
+            2>&1 | tee world-90-day-circuit.log
+          grep -q 'WTW_1999_90_DAY_CIRCUIT_PASS' world-90-day-circuit.log
+      - name: Preserve 90-day regression evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-1999-90-day-circuit
+          path: world-90-day-circuit.log
           retention-days: 14
           if-no-files-found: warn
 
