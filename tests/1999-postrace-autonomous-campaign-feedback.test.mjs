@@ -4,7 +4,8 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {WORLD_SCHEMA,dispatchGameCommand,exportGameSave,importGameSave,
  getGamePostRaceCampaign,postRaceWorkoutGuidance,postRaceCarePriority,
- postRaceAIPlacement,get1999HorseRaceOpportunities,quote1999PlayerRacePlan}
+ postRaceAIPlacement,get1999HorseRaceOpportunities,quote1999PlayerRacePlan,
+ jockeyBookingDecision}
  from '../src/game/index.js';
 import {build1999PilotGameRun} from '../src/game/1999-pilot-fixture.js';
 import {createPlaytestCareer} from '../public/1999/game/playtest-service.mjs';
@@ -199,7 +200,14 @@ test('player-directed workouts are only overridden for compulsory postrace welfa
      horse:h.horse_id,race:r.race_id,track:r.track_id,status:r.status,
      reasons:r.eligibility_reasons,
      availableJockeys:r.available_jockeys.length,
-     fundedJockeys:r.available_jockeys.filter(j=>j.owner_can_pay).length
+     fundedJockeys:r.available_jockeys.filter(j=>j.owner_can_pay).length,
+     jockeyRejectionTotals:Object.values(state.runtime.racing.jockeys).reduce((counts,j)=>{
+      const race=state.runtime.races[r.race_id];
+      if(!race)return counts;
+      const reason=jockeyBookingDecision(state,world,race,h,j).reason;
+      counts[reason]=(counts[reason]||0)+1;
+      return counts;
+     },{})
     }))).slice(0,24);
   assert.fail('Player must have a genuinely funded available jockey and open entry: '+
    JSON.stringify(diagnostics));
