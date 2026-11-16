@@ -16,6 +16,7 @@ import {readPersistent1999Directory,readPersistent1999IndustryBatch}
  from './fictional-industry-persistence-1999.mjs';
 import {trackMeetOpen1999,trackPhysicalVenueId1999}
  from '../../next/1999-track-program.mjs';
+import {modeledShippingRoute} from '../game/shipping-1999.js';
 
 export const FULL_WORLD_CIRCUIT_90_DAY_SCHEMA='WTW_FULL_WORLD_CIRCUIT_90_DAY_READINESS_V1';
 const DAY=86400000;
@@ -137,6 +138,7 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
   row.openingTwoYearOldProspects=pair(prospectsByTrack,id);
  }
  const datesByTrack=new Map(),observedCards=new Set(),observedRaces=new Set();
+ const trackDates=new Map([...tracks.keys()].map(id=>[id,[]]));
  const physicalVenues=new Map();
  let allCards=0,allRaces=0,windowCards=0,windowRaces=0;
  for(let i=0;i<manifest.calendarBatchesCommitted;i++){
@@ -160,6 +162,7 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
    const trackDay=c.trackId+'|'+c.date;
    requireValue(!datesByTrack.has(trackDay),'duplicate track/racing date '+trackDay);
    datesByTrack.set(trackDay,true);
+   trackDates.get(c.trackId).push(c.date);
    requireValue(pair(byTrack,c.trackId)>0,'no runners at card '+c.id);
    requireValue(pair(personByTrackRole,c.trackId+'|trainer')>0&&
     pair(personByTrackRole,c.trackId+'|jockey')>0,
@@ -187,6 +190,75 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
  requireValue(allCards===manifest.scheduledCards&&allRaces===manifest.scheduledRaces,
   'annual source racing calendar no longer matches stored manifest');
  requireValue(windowRaces>0&&windowCards>0,'90-day racing circuit has no races');
+ // The saved industry has physical track locations and actual meet dates.
+ // Verify potential date-respecting routes, without creating a shipment,
+ // a jockey booking, a boarding invoice or any fabricated race result.
+ const routeBands=new Map(),routeReasons=new Map();
+ const trackSites=new Map([...tracks.values()].map(t=>[t.id,{
+  id:t.id,location:{city:t.location?.city,
+   state:t.location?.region,country:t.location?.country}
+ }]));
+ for(const days of trackDates.values())days.sort();
+ let consideredPairs=0,sharedVenuePairs=0,supportedPairs=0;
+ let unsupportedPairs=0,routeFeasiblePairs=0,noDateConnectionPairs=0;
+ const visitedTracks=new Set();
+ for(const from of tracks.keys()){
+  for(const to of tracks.keys()){
+   if(from===to)continue;
+   if(trackPhysicalVenueId1999(from)===trackPhysicalVenueId1999(to)){
+    sharedVenuePairs++;continue;
+   }
+   consideredPairs++;
+   const outward=modeledShippingRoute(trackSites.get(from),trackSites.get(to));
+   const reverse=modeledShippingRoute(trackSites.get(to),trackSites.get(from));
+   requireValue(outward.supported===reverse.supported,
+    'asymmetric shipping support '+from+' to '+to);
+   if(!outward.supported){
+    unsupportedPairs++;
+    add(routeReasons,outward.reason||'UNSUPPORTED');
+    continue;
+   }
+   requireValue(outward.band===reverse.band&&outward.days===reverse.days&&
+    outward.cost_minor===reverse.cost_minor&&
+    Number.isSafeInteger(outward.cost_minor)&&outward.cost_minor>0&&
+    Number.isInteger(outward.days)&&outward.days>=1,
+    'incorrect route symmetry, cost, or duration '+from+' to '+to);
+   requireValue(!('miles' in outward),
+    'model fabricated measured physical road miles '+from+' to '+to);
+   supportedPairs++;
+   add(routeBands,outward.band);
+   const fromDates=trackDates.get(from),toDates=trackDates.get(to);
+   // The 2 extra days are arrival recovery before the next opportunity.
+   const arrivalWindow=(outward.days+2)*DAY;
+   const possible=fromDates.some(date=>{
+    const departure=Date.parse(date+'T12:00:00Z');
+    return toDates.some(next=>
+     Date.parse(next+'T12:00:00Z')-departure>=arrivalWindow);
+   });
+   if(possible){
+    routeFeasiblePairs++;
+    visitedTracks.add(from);visitedTracks.add(to);
+   }else noDateConnectionPairs++;
+  }
+ }
+ requireValue(consideredPairs+sharedVenuePairs===tracks.size*(tracks.size-1),
+  'route matrix did not visit every ordered track pair');
+ requireValue(supportedPairs+unsupportedPairs===consideredPairs,
+  'route matrix lost a supported or unsupported pair');
+ requireValue(routeFeasiblePairs>0,
+  'no cross-track meet opportunities available in 90 days');
+ const sourceShippingReadiness={
+  meaning:'POTENTIAL_TRACK_TO_TRACK_MEET_WINDOWS_NOT_ACTUAL_HORSE_OR_JOCKEY_SHIPMENTS',
+  requiresTwoArrivalRecoveryDays:true,geographicOrderedPairs:consideredPairs,
+  sharedPhysicalVenueOrderedPairs:sharedVenuePairs,
+  modeledDomesticRoadPairs:supportedPairs,unsupportedGeographyPairs:unsupportedPairs,
+  pairsWithMeetDateAfterModeledTravelAndRecovery:routeFeasiblePairs,
+  pairsWithoutAnInWindowMeetDateAfterTravel:noDateConnectionPairs,
+  tracksConnectedByAtLeastOnePossibleMeetTransfer:visitedTracks.size,
+  modeledHaulingBands:Object.fromEntries(routeBands),
+  unsupportedGeographyReasons:Object.fromEntries(routeReasons),
+  actualShipments:0,actualShippingChargesMinor:0
+ };
  const trackLoad=[...localLoad.values()].sort((a,b)=>a.trackId.localeCompare(b.trackId));
  const localJockeyShortages=trackLoad.filter(t=>t.quarterCards>0&&
   t.residentJockeys<2);
@@ -234,7 +306,7 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
   cohortCounts:Object.fromEntries(cohorts),statusCounts:Object.fromEntries(status),
   period:{start:dates[0],end,days:90,trackCards:windowCards,
    scheduledRaces:windowRaces,checkpoints},
-  sourceCapacity,
+  sourceCapacity,sourceShippingReadiness,
   countsCovered:{horses:horseIds.size,people:staffById.size,
    breedingCoverings:coveringIds.size,
    calendarCards:allCards,calendarRaces:allRaces},
