@@ -91,6 +91,46 @@ jobs:
         run: |
           $portable=Get-ChildItem dist/windows -Filter 'WireToWire-Portable-*.exe' | Select-Object -First 1
           ./scripts/windows-desktop-smoke.ps1 -Executable $portable.FullName -EvidenceDir (Join-Path $PWD 'dist/portable-evidence') -TargetLabel 'portable'
+      - name: Install the setup EXE and test installed launch with app networking blocked
+        shell: pwsh
+        run: |
+          $setup=Get-ChildItem dist/windows -Filter 'WireToWire-Setup-*.exe' | Select-Object -First 1
+          if(!$setup){throw 'Conventional Windows setup EXE is missing'}
+          $installDir=Join-Path $PWD 'dist/wtw-installed'
+          $installer=Start-Process -FilePath $setup.FullName -ArgumentList @('/S',"/D=$installDir") -PassThru -Wait
+          if($installer.ExitCode -ne 0){throw "Silent setup install failed: exit=$($installer.ExitCode)"}
+          $installedExe=Join-Path $installDir 'Wire to Wire.exe'
+          if(!(Test-Path -LiteralPath $installedExe)){throw "Installed game executable missing: $installedExe"}
+          Get-Process -Name 'Wire to Wire' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+          $ruleName='WTW-Offline-Installed-Smoke-'+$PID
+          $ruleCreated=$false
+          $evidenceDir=Join-Path $PWD 'dist/installed-offline-evidence'
+          try{
+            New-NetFirewallRule -Name $ruleName -DisplayName 'WTW installed offline smoke' -Direction Outbound -Program $installedExe -Action Block -Profile Any | Out-Null
+            $ruleCreated=$true
+            $rule=Get-NetFirewallRule -Name $ruleName
+            $filter=Get-NetFirewallApplicationFilter -AssociatedNetFirewallRule $rule
+            if($rule.Direction -ne 'Outbound' -or $rule.Action -ne 'Block' -or
+               [IO.Path]::GetFullPath($filter.Program) -ine [IO.Path]::GetFullPath($installedExe)){
+              throw 'Outbound firewall block does not target the installed game executable'
+            }
+            ./scripts/windows-desktop-smoke.ps1 -Executable $installedExe -EvidenceDir $evidenceDir -TargetLabel 'installed-offline'
+            $proof=[ordered]@{
+              result='PASS'
+              setupExe=$setup.Name
+              installationExitCode=$installer.ExitCode
+              installedExecutable=$installedExe
+              networkRestriction='WINDOWS_FIREWALL_OUTBOUND_BLOCK_FOR_APP_EXE'
+              firewallRule=$ruleName
+              firewallProgram=$filter.Program
+              writeProof=(Get-Content -Raw (Join-Path $evidenceDir 'installed-offline-write.json') | ConvertFrom-Json)
+              reopenProof=(Get-Content -Raw (Join-Path $evidenceDir 'installed-offline-read.json') | ConvertFrom-Json)
+            }
+            $proof | ConvertTo-Json -Depth 10 | Set-Content -Path (Join-Path $evidenceDir 'installed-offline-install.json') -Encoding utf8
+            Write-Host 'WTW_WINDOWS_INSTALLED_OFFLINE_REOPEN_PASS'
+          }finally{
+            if($ruleCreated){Remove-NetFirewallRule -Name $ruleName -ErrorAction SilentlyContinue}
+          }
       - name: Verify actual desktop window is visible and capture a screenshot
         shell: pwsh
         run: |
@@ -122,6 +162,7 @@ jobs:
           path: |
             dist/evidence/*.json
             dist/portable-evidence/*.json
+            dist/installed-offline-evidence/*.json
             dist/visible-evidence/*.json
             dist/visible-evidence/*.png
           if-no-files-found: warn
