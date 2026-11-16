@@ -53,11 +53,18 @@ function optionJockeys(state,world,horse,race){
    race_importance:quote.race_importance,
    acceptance_reason:quote.reason,suited_index:quote.suited_index,
    owner_can_pay:money(account)&&account>=fee,
+   recommendation_index:Math.round(1000*(quote.suited_index*.61+
+    (j.game_reputation??.5)*.16+
+    ((j.tier==='ELITE'?.16:j.tier==='ESTABLISHED'?.09:0)*
+     (quote.race_importance>=2?1:.25))-
+    fee/Math.max(750000,race.purse_minor)*.045))/1000,
    source:'MODELED_AVAILABLE_JOCKEY_AGENT_NOT_HISTORICAL_CONTRACT'
   });
  }
- return options.sort((a,b)=>a.fee_minor-b.fee_minor||
-  b.suited_index-a.suited_index||a.jockey_id.localeCompare(b.jockey_id));
+ // The visible trainer recommendation is quality-aware. Expensive stars
+ // outrank low-fee journeymen on important features, but owners still choose.
+ return options.sort((a,b)=>b.recommendation_index-a.recommendation_index||
+  a.fee_minor-b.fee_minor||a.jockey_id.localeCompare(b.jockey_id));
 }
 function travelOptions(state,world,horse,race){
  const sites=Object.values(state.runtime.facilities?.sites||{}).
