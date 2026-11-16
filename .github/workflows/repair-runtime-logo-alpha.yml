@@ -34,7 +34,7 @@ jobs:
         run: |
           git config user.name "wire-to-wire-ui-ci"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/assets/places/track-logos public/assets/places/track-hero \ 
+          git add public/assets/places/track-logos public/assets/places/track-hero \
             public/assets/office/founding-organization-logos \
             public/assets/profile-badges/v2 public/assets/wtw-logo.png public/assets/wtw-office-approved-logo.png
           if git diff --cached --quiet; then
