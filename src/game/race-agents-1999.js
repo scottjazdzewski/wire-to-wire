@@ -220,8 +220,18 @@ export function run1999RacingAgents({state,world,emit}){
     racingAction({state,world,command:{actor:'system',type:'OPEN_1999_RACE',
      payload:{track_id:trackId,date:r.date,race_id:r.id}},emit});
     const confirmed=state.runtime.races[r.id];
+    // AI trainers may not consume every starter and rider slot before a
+    // player-owned eligible home runner can be booked. A real available
+    // jockey is still required: we reserve opportunity, not invent mounts.
+    const playerHasLocalCandidate=stable(state,trackId).some(h=>
+     h.owner_organization_id===state.player.operation_id&&
+     !hasFutureEntry(state,h)&&
+     raceEligibility(state,h,confirmed).eligible);
+    const playerReserve=playerHasLocalCandidate?
+     Math.min(2,Math.max(0,confirmed.field_capacity-2)):0;
+    const maxAiBookings=Math.max(2,confirmed.field_capacity-playerReserve);
     let accepted=0;
-    for(const h of chosen.eligible.slice(0,confirmed.field_capacity)){
+    for(const h of chosen.eligible.slice(0,maxAiBookings)){
      const jockeys=Object.values(rt.jockeys).filter(j=>{
       const decision=jockeyBookingDecision(state,world,confirmed,h,j);
       return decision.accept&&money(state,h.owner_organization_id)>=
