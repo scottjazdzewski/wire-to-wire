@@ -2,10 +2,12 @@
  * Daily trainer/jockey/race-secretary agents. Game program is sourced from
  * approved 1999 modeled meet/calendar; no ghost results or artificial jockeys.
  */
-import {gameRaceProgram,raceEligibility,racingAction,jockeyBookingDecision,supported1999RaceClass} from './racing-1999.js';
+import {gameRaceProgram,raceEligibility,racingAction,jockeyBookingDecision,
+ resolve1999PremierJockeyOffers,supported1999RaceClass} from './racing-1999.js';
 import {postRaceAIPlacement} from './post-race-campaign-1999.js';
 import {shippingAssessment,shippingAction,horseTravelStatus,effectiveHorseTrack} from './shipping-1999.js';
 import {get1999JockeyPartnership} from '../engine/jockey-partnerships-1999.mjs';
+import {premierMarketRace,premierBonusCap} from '../engine/jockey-premier-market-1999.mjs';
 const diff=(a,b)=>(Date.parse(b+'T12:00:00Z')-Date.parse(a+'T12:00:00Z'))/86400000;
 const plus=(date,n)=>new Date(Date.parse(date+'T12:00:00Z')+n*86400000).toISOString().slice(0,10);
 const horses=state=>Object.values(state.runtime.registered_horses?.by_id||{}).
@@ -245,7 +247,11 @@ export function run1999RacingAgents({state,world,emit}){
     // mount, not just an empty field slot. AI cannot take every rider before
     // the owner can exercise their own booking choice.
     const playerJockeyOptions=new Set();
-    for(const playerHorse of playerCandidates.slice(0,playerReserve)){
+    // On a major feature, player and rival owners compete for the best
+    // riders through the SAME open, unpaid offer market. Do not secretly
+    // assign the best elite jockey to the player before offers are judged.
+    for(const playerHorse of (racingClass==='FEATURE'?[]:
+      playerCandidates.slice(0,playerReserve))){
      const candidates=Object.values(rt.jockeys).filter(j=>{
       if(playerJockeyOptions.has(j.id))return false;
       const decision=jockeyBookingDecision(state,world,confirmed,playerHorse,j);
@@ -260,7 +266,7 @@ export function run1999RacingAgents({state,world,emit}){
       a.id.localeCompare(b.id));
      if(candidates[0])playerJockeyOptions.add(candidates[0].id);
     }
-    let accepted=0;
+    let accepted=0,booked=0,offered=0;
     for(const h of chosen.eligible.slice(0,maxAiBookings)){
      const jockeys=Object.values(rt.jockeys).filter(j=>{
       if(playerJockeyOptions.has(j.id))return false;
@@ -274,11 +280,36 @@ export function run1999RacingAgents({state,world,emit}){
        jockeyChoiceScore(state,h,a,qa,confirmed)||a.id.localeCompare(b.id);
      });
      if(!jockeys.length)continue;
-     racingAction({state,world,command:{actor:'system',type:'ENTER_1999_RACE',
-      payload:{race_id:r.id,horse_id:h.horse_id}},emit});
-     racingAction({state,world,command:{actor:'system',type:'BOOK_1999_JOCKEY',
-      payload:{race_id:r.id,horse_id:h.horse_id,jockey_id:jockeys[0].id}},emit});
-     accepted++;
+     const eliteBids=jockeys.filter(j=>premierMarketRace(confirmed,j)).
+      slice(0,3);
+     // Only actual elite national-feature mounts use competitive proposals.
+     // A trainer can inquire about two or three stars, but cannot sign two
+     // riders: the first winning offer locks the horse and voids the others.
+     if(eliteBids.length){
+      racingAction({state,world,command:{actor:'system',type:'ENTER_1999_RACE',
+       payload:{race_id:r.id,horse_id:h.horse_id}},emit});
+      accepted++;
+      for(const rider of eliteBids){
+       const decision=jockeyBookingDecision(state,world,confirmed,h,rider);
+       const remaining=money(state,h.owner_organization_id)-
+        decision.quote.feeMinor;
+       const ceiling=Math.max(0,Math.min(
+        premierBonusCap(decision.quote),remaining));
+       const strength=h.starting_attributes.current_ability/100;
+       const bonus=Math.max(0,Math.floor(ceiling*(.2+.38*strength)));
+       racingAction({state,world,command:{actor:'system',
+        type:'OFFER_1999_PREMIER_JOCKEY',payload:{
+         race_id:r.id,horse_id:h.horse_id,jockey_id:rider.id,
+         bonus_minor:bonus}},emit});
+       offered++;
+      }
+     }else{
+      racingAction({state,world,command:{actor:'system',type:'ENTER_1999_RACE',
+       payload:{race_id:r.id,horse_id:h.horse_id}},emit});
+      racingAction({state,world,command:{actor:'system',type:'BOOK_1999_JOCKEY',
+       payload:{race_id:r.id,horse_id:h.horse_id,jockey_id:jockeys[0].id}},emit});
+      accepted++;booked++;
+     }
     }
     rt.selection_count++;
     emit('RACE_SECRETARY_AND_TRAINER_PLAN',{track_id:trackId,race_id:r.id,
@@ -286,7 +317,8 @@ export function run1999RacingAgents({state,world,emit}){
      modeled_feature:racingClass==='FEATURE',
      max_career_wins:r.maxCareerWins??null,
      eligible_horses:chosen.eligible.length,accepted_starters:accepted,
-     jockey_bookings:accepted,average_surface_distance_fit:Math.round(chosen.averageFit*1000)/1000,
+     jockey_bookings:booked,premier_unpaid_offers:offered,
+     average_surface_distance_fit:Math.round(chosen.averageFit*1000)/1000,
      reason:racingClass==='FEATURE'?
       'FUNDED_GAME_MODELED_STAKES_WITH_REAL_AVAILABLE_RIDERS':
       racingClass==='Allowance'?
@@ -297,6 +329,9 @@ export function run1999RacingAgents({state,world,emit}){
   }
   rt.last_selection_date=day;
  }
+ // Four days before a major race, resolve every real rival proposal and
+ // create ONLY the winner's paid mount, prior to race-day field formation.
+ resolve1999PremierJockeyOffers({state,world,emit});
  autonomousAwayTravel({state,world,emit});
  // Today's race is not automatically a real result unless at least two
  // medically cleared runners and confirmed jockeys are in the valid field.
