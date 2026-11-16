@@ -3907,21 +3907,5 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  font:800 18px/1 Georgia,serif;cursor:pointer}
 .ng-record-browse-bar button.ng-profile-entity-step:hover{background:#50634e;border-color:#dabd80}
 .ng-record-browse-bar button.ng-profile-entity-step:focus-visible{outline:2px solid #f0cf8a;outline-offset:2px}
-
-/* Shared Overview/tab control alignment — applies identically to all sibling
-   tabs so the first button does not change height, hit area or baseline. */
-#wtwNextgen .ng-subbar .ng-subnav>button{
- display:inline-flex!important;align-items:center!important;justify-content:center!important;
- align-self:stretch!important;box-sizing:border-box!important;height:100%!important;
- min-height:0!important;line-height:1.1!important;vertical-align:middle!important;
-}
-#wtwNextgen .ng-route-profile .ng-profiletabs>button{
- display:inline-flex!important;align-items:center!important;justify-content:center!important;
- align-self:stretch!important;box-sizing:border-box!important;height:100%!important;
- line-height:1.1!important;white-space:nowrap!important;
-}
-#wtwNextgen .ng-manager-controls select[data-ng-select="manager-screen"]{
- box-sizing:border-box!important;min-height:27px!important;
- vertical-align:middle!important;line-height:1.2!important;
- padding-block:3px!important;
-}
+#wtwNextgen .ng-subbar .ng-subnav>button{display:flex!important;align-items:center;justify-content:center;height:100%}
+#wtwNextgen .ng-route-profile .ng-profiletabs>button{display:flex!important;align-items:center;justify-content:center;height:100%}
