@@ -34,7 +34,8 @@ jobs:
         run: |
           git config user.name "wire-to-wire-ui-ci"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/assets/places/track-logos public/assets/office/founding-organization-logos \
+          git add public/assets/places/track-logos public/assets/places/track-hero \ 
+            public/assets/office/founding-organization-logos \
             public/assets/profile-badges/v2 public/assets/wtw-logo.png public/assets/wtw-office-approved-logo.png
           if git diff --cached --quiet; then
             echo "WTW_LOGO_ASSETS_ALREADY_TRANSPARENT"
@@ -54,6 +55,8 @@ jobs:
           for name in ("T-0017.webp", "T-0013.webp", "T-0003.webp"):
               with Image.open("public/assets/places/track-logos/"+name) as im:
                   assert im.convert("RGBA").getpixel((0,0))[3] < 12, name
+          with Image.open("public/assets/places/track-hero/T-0003.webp") as im:
+              assert im.convert("RGBA").getpixel((0,0))[3] < 12, "Saratoga hero still has opaque red matte"
           print("WTW_RUNTIME_IMAGES_ALPHA_VERIFIED")
           PY
       - name: Preserve inspectable before/after output
