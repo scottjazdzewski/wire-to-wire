@@ -2669,7 +2669,9 @@ function liveStableHorseData(h,r,game,caseFiles){
   };
   const age=Number(h.age);
   return {name:h.name,horseId:h.horseId||h._id||h._directoryId,
+   _wtwGeneratedWorld:true,
    _directoryId:h._directoryId||h._id||h.horseId,_directoryRecord:h._directoryRecord||h,
+   ownerId:h.ownerId||'',trainerId:h.trainerId||'',breederId:h.breederId||'',
    age:Number.isInteger(age)?String(age):'',sex:({COLT:'C',FILLY:'F',HORSE:'H',GELDING:'G',MARE:'M'})[h.sex]||h.sex||'',
    sexFull:h.sex||'',health:['unknown','Unassessed','No verified veterinary examination'],
    ready:['building','In training','Persisted custom 1999 career · no clearance inferred'],
@@ -2985,13 +2987,21 @@ function liveStableRosterView(directory=false){
   const ownerMark=horseOwnerBadge(x.name);
   const name='<button type="button" class="ng-rs-horse" data-ng="'+(directory?'directory-horse':'horse')+'" data-val="'+safe(directory?x._directoryId:(x.horseId||x.name))+'">'+(directory?'':ownerMark)+
    '<span>'+safe(x.name)+'</span></button>';
+  const modeledLink=(label,kind,identity,value)=>{
+   if(x._wtwGeneratedWorld&&identity&&value&&value!=='Not recorded')
+    return '<button type="button" class="ng-entity-reference" data-ng="named-entity" '+
+     'data-kind="'+safe(kind)+'" data-name="'+safe(value)+'" data-identity="'+safe(identity)+
+     '" title="Open '+safe(value)+' profile">'+safe(value)+' ↗</button>';
+   return namedProfileValue(label,value);
+  };
   const datum=[cell(name,'ng-rs-first'),txt(x.age,'ng-rs-numeric'),txt(x.sex,'ng-rs-numeric'),
    cell(liveStableSignal(...x.health)),cell(liveStableSignal(...x.ready)),
    cell(x.ability.display,'ng-rs-stars-cell'),cell(x.potential.display,'ng-rs-stars-cell'),
    cell(liveStableSignal(...x.form)),txt(stableShortDate(x.last),'ng-rs-numeric'),txt(stableShortDate(x.upcoming),'ng-rs-race'),
    txt(x.target,'ng-rs-target'),txt(x.money,'ng-rs-numeric'),
-   cell(namedProfileValue('Owner',x.owner),'',x.owner),cell(namedProfileValue('Trainer',x.trainer),'',x.trainer),
-   cell(namedProfileValue('Breeder',x.breeder),'',x.breeder),
+   cell(modeledLink('Owner','farm',x.ownerId,x.owner),'',x.owner),
+   cell(modeledLink('Trainer','person',x.trainerId,x.trainer),'',x.trainer),
+   cell(modeledLink('Breeder','farm',x.breederId,x.breeder),'',x.breeder),
    txt(x.record,'ng-rs-numeric'),txt(x.activity,'ng-rs-activity')];
   return '<tr class="ng-wtw-roster-row" data-search="'+safe([x.name,x.activity,x.target,x.owner,x.trainer,x.breeder,x.health[1],x.ready[1]].join(' ').toLowerCase())+'">'+datum.join('')+'</tr>';
  }).join('');
@@ -3589,7 +3599,8 @@ function previewRecordRoute(kind,name,row=null){
  APP.previewEntity={kind,name,row:row||null};
  // URL contains the specific preview name: browser back/forward and refresh
  // keep the identity; it is not a new canonical horse or organization record.
- const identity=kind==='person'&&row?._kind==='person'&&row._id?row._id:
+ const identity=(kind==='person'||kind==='farm')&&row?._wtwGeneratedWorld&&row._id?row._id:
+  kind==='person'&&row?._kind==='person'&&row._id?row._id:
   kind==='horse'&&row?._wtwGeneratedWorld&&row._id?row._id:
   kind==='horse'&&row?._directoryIndex!=null&&row._id?row._id:name;
  openCustomView('Preview:'+encodeURIComponent(kind)+':'+encodeURIComponent(identity),APP.section,APP.page);
@@ -3647,8 +3658,10 @@ function previewRecordView(){
  const horses=world1999Data?.horses||[];
  const person=people.find(p=>p.id===id||p.id===fromState?.row?._canonId&&p.name===name);
  const horse=horses.find(h=>h.id===id||h.id===fromState?.row?._canonId&&h.name===name);
- const live=kind==='horse'?window.WTWCompactCareerManager?.playableHorseProfile?.(id):null;
- if(live?._wtwGeneratedWorld)return restored1999Profile('horse',live);
+ const live=kind==='horse'?window.WTWCompactCareerManager?.playableHorseProfile?.(id):
+  (kind==='person'||kind==='farm')?
+   window.WTWCompactCareerManager?.playableEntityProfile?.(kind,id):null;
+ if(live?._wtwGeneratedWorld)return restored1999Profile(kind,live);
  // Reuse the approved Horse-style profile only after exact canonical identity
  // has been verified; unregistered entities never acquire mock attributes.
  if(person||horse){
@@ -4897,7 +4910,14 @@ window.addEventListener('click',e=>{
    type:'FOALING / BREEDING FARM',location:[loc.city,loc.state,loc.country].filter(Boolean).join(', '),
    capacity:farm.capacity||'',status:'1999 TEST WORLD FACILITY',_testGenerated:true});
  }
- if(key==='named-entity')return openEntityRecord(btn.dataset.name||'',btn.dataset.kind||'',btn.dataset.track?{_track:btn.dataset.track}:null);
+ if(key==='named-entity'){
+  const name=btn.dataset.name||'',kind=btn.dataset.kind||'',
+   identity=btn.dataset.identity||'';
+  const modeled=window.WTWCompactCareerManager?.playableEntityProfile?.(
+   kind==='person'?'person':'farm',identity||name);
+  if(modeled)return previewRecordRoute(modeled._kind,modeled.name,modeled);
+  return openEntityRecord(name,kind,btn.dataset.track?{_track:btn.dataset.track}:null);
+ }
  if(key==='directory-sort'){if(APP.directorySort===val)APP.directorySortDesc=!APP.directorySortDesc;else{APP.directorySort=val;APP.directorySortDesc=false}APP.directoryPage=0;return paint()}
  if(key==='directory-page'){APP.directoryPage=Math.max(0,APP.directoryPage+Number(val));return paint()}
  if(key==='directory-filter'){APP.directoryFilter=val;return paint()}
