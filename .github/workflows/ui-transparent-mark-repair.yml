@@ -48,5 +48,9 @@ jobs:
           git config user.name 'wire-to-wire-ui-automation'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'UI assets: remove opaque white export canvases via transparent display derivatives'
+          # Other dedicated image workers share this PR branch. Rebase the
+          # newly generated, ID-stable hero images on their latest changes;
+          # never force-push or discard another worker's edits.
+          git pull --rebase origin ui/polish-playable-1999
           git push origin HEAD:ui/polish-playable-1999
           echo 'UI_ALPHA_DERIVATIVES_PUSHED'
