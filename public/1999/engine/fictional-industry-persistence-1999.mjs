@@ -126,26 +126,34 @@ export async function createPersistent1999Industry({
  const directoryHash=directorySignature([farms,tracks,owners]);
  const plan=plan1999Ecosystem({seed,targetOpeningHorses});
  const ensureCircuitCoverage=targetOpeningHorses!==null;
- const staffing=plan1999IndustryStaffing({seed,ecosystem:plan,
-  minimumRacingTracks:ensureCircuitCoverage?tracks.length:0});
+ const coverageTracks=ensureCircuitCoverage?tracks.length:0;
+ const currentStaffing=plan1999IndustryStaffing({seed,ecosystem:plan,
+  minimumRacingTracks:coverageTracks,minimumJockeysPerTrack:2});
+ // Before this upgrade completed custom worlds guaranteed one jockey at
+ // every course. Their already-issued permanent personnel IDs, names and
+ // IndexedDB records MUST NOT be rewritten simply because new genesis uses
+ // a two-jockey floor. The exact stored staffing plan selects the old
+ // deterministic generator when a saved world is resumed.
+ const legacyStaffing=plan1999IndustryStaffing({seed,ecosystem:plan,
+  minimumRacingTracks:coverageTracks,minimumJockeysPerTrack:1});
+ const existing=await store.get('manifests',id);
+ const exactCounts=(a,b)=>Object.keys(b).every(role=>
+  Number.isSafeInteger(a?.[role])&&a[role]===b[role])&&
+  Object.keys(a||{}).length===Object.keys(b).length;
+ const storedCounts=existing?.staffing?.counts;
+ const legacyCompatible=existing&&exactCounts(storedCounts,legacyStaffing.counts)&&
+  (existing.staffing.minimumJockeysPerTrack===undefined||
+   existing.staffing.minimumJockeysPerTrack===1);
+ const currentCompatible=existing&&exactCounts(storedCounts,currentStaffing.counts)&&
+  existing.staffing.minimumJockeysPerTrack===currentStaffing.minimumJockeysPerTrack;
+ if(existing&&!legacyCompatible&&!currentCompatible)
+  throw Error('Existing industry has an unrecognized personnel staffing plan');
+ const staffing=existing?existing.staffing:currentStaffing;
  const totalHorses=count1999Registry(plan);
  if(targetOpeningHorses!==null&&totalHorses!==targetOpeningHorses)
   throw Error('Persistent industry size differs from selected world size');
  const horseNamingRevision=LOCAL_HORSE_NAMING_ALGORITHM_REVISION+':OPENING_INDUSTRY_V1';
  const totalPeople=Object.values(staffing.counts).reduce((a,b)=>a+b,0);
- // Generate the deterministic roster once. The workforce indexing and
- // persisted people pass must use the same identities without repeating
- // the expensive geographic name collision screening.
- const roleCounts=Object.entries(staffing.counts);
- const personnelNames=createPersonnelNameRoster(seed,totalPeople,index=>{
-  let offset=index;
-  for(const [role,count] of roleCounts){
-   if(offset<count)return role;
-   offset-=count;
-  }
-  throw Error('Personnel naming index outside opening workforce');
- },[],{normalizeNamesForAccent:true});
- const existing=await store.get('manifests',id);
  if(existing){
   if(existing.schema!==PERSISTENT_INDUSTRY_SCHEMA||
    existing.seed!==seed||existing.worldId!==worldId||
@@ -164,6 +172,17 @@ export async function createPersistent1999Industry({
    throw Error('Existing industry identity or generation parameters conflict');
   if(existing.status==='COMPLETE')return existing;
  }
+ // Generate one deterministic name roster matching the exact chosen staffing
+ // plan (including an old saved plan in the middle of resumable genesis).
+ const roleCounts=Object.entries(staffing.counts);
+ const personnelNames=createPersonnelNameRoster(seed,totalPeople,index=>{
+  let offset=index;
+  for(const [role,count] of roleCounts){
+   if(offset<count)return role;
+   offset-=count;
+  }
+  throw Error('Personnel name index outside opening workforce');
+ },[],{normalizeNamesForAccent:true});
  let manifest=existing??{
   schema:PERSISTENT_INDUSTRY_SCHEMA,worldId,seed,batchSize,directoryHash,
   targetOpeningHorses,ensureCircuitCoverage,status:'GENERATING',
