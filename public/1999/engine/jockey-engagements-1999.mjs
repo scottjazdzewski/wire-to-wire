@@ -34,13 +34,34 @@ const states=[
 ];
 const stateCodes=Object.fromEntries(states.map(x=>x.split(':')));
 const stateOf=t=>{
- const value=t?.location?.state??t?.location?.region??null;
+ // Older canonical world snapshots store venue location as
+ // "City, State, Country"; the generated 300k industry stores an object.
+ // Both must have the same geography in real jockey scheduling.
+ const loc=t?.location;
+ const value=typeof loc==='string'?
+  loc.split(',').at(-2)?.trim():
+  loc?.state??loc?.region??null;
  if(!value)return null;
  return stateCodes[value]||String(value).toUpperCase();
 };
 const groupOf=code=>Object.entries(regions).
  find(([,codes])=>codes.split(',').includes(code))?.[0]??null;
-const countryOf=t=>String(t?.location?.country||'USA').toUpperCase();
+const countryOf=t=>{
+ const loc=t?.location;
+ const country=typeof loc==='string'?loc.split(',').at(-1)?.trim():
+  loc?.country;
+ return String(country||'USA').toUpperCase();
+};
+function seasonalRidingCircuit(a,b,date){
+ const from=stateOf(a),to=stateOf(b),month=Number(date?.slice(5,7));
+ if(!Number.isInteger(month))return false;
+ // Winter Florida attracts NY/MD/KY circuit riders; summer NY attracts
+ // winter-Florida riders. They still require booked travel and a clear diary.
+ return (month>=1&&month<=4&&to==='FL'&&
+    ['NY','NJ','PA','MD','DE','VA','KY'].includes(from))||
+  (month>=5&&month<=10&&['NY','NJ'].includes(to)&&
+    ['FL','KY','MD','VA'].includes(from));
+}
 /** Modeled time for one professional to change racing venues.
  * Returns 0 only for the same racecourse; 1 for nearby regional movement,
  * 2 for distant domestic air travel, 3 for international air travel.
@@ -126,13 +147,18 @@ export function assessJockeySchedule(state,world,j,race){
   return {allowed:false,reason:'INSUFFICIENT_TRAVEL_LEAD'};
  const importance=jockeyRaceImportance(race);
  const national=['ELITE','ESTABLISHED'].includes(tier(j));
- if(away&&sameCardCount===0&&!national&&!importance.nationalFeature&&
-  importance.purseMinor<7500000)
-  return {allowed:false,reason:'LOCAL_JOCKEY_DECLINES_LOW_VALUE_AWAY_TRIP'};
  const homeTrip=jockeyTransferDays(home,thisTrack);
+ const seasonal=seasonalRidingCircuit(home,thisTrack,race.date);
+ // Regional jockeys routinely switch between nearby courses and winter
+ // colonies, but do not fly coast-to-coast for an ordinary cheap mount.
+ // Elite/established riders may negotiate national engagements.
+ if(away&&sameCardCount===0&&!national&&!importance.nationalFeature&&
+  importance.purseMinor<7500000&&homeTrip>1&&!seasonal)
+  return {allowed:false,reason:'LOCAL_JOCKEY_DECLINES_LOW_VALUE_AWAY_TRIP'};
  return {allowed:true,reason:'AVAILABLE',away,
   sameCardCount,additionalTravel:away&&sameCardCount===0,
-  homeTripDays:homeTrip,bookedDifferentRacesAtTrack:sameCardCount,
+  homeTripDays:homeTrip,seasonalCircuit:seasonal,
+  bookedDifferentRacesAtTrack:sameCardCount,
   tripChecks:trips.length,nationalSchedule:national,
   raceSignificance:importance.significance};
 }
