@@ -7,6 +7,8 @@ import {WORLD_SCHEMA,dispatchGameCommand,exportGameSave,importGameSave,
  getGameRacingRoster} from '../src/game/index.js';
 import {build1999PilotGameRun} from '../src/game/1999-pilot-fixture.js';
 import {createPlaytestCareer} from '../public/1999/game/playtest-service.mjs';
+import {jockeyBookingDecision,raceEligibility} from '../src/game/racing-1999.js';
+import {shippingAssessment} from '../src/game/shipping-1999.js';
 const read=p=>JSON.parse(readFileSync(new URL(p,import.meta.url),'utf8'));
 const d=read('../public/data/wtw-1999-founding-directory-v1.json');
 const t=read('../public/data/wtw-1999-trainer-pilot-v1.json');
@@ -80,7 +82,29 @@ test('away venue is a shipping requirement, not a fabricated entry or available 
  const view=get1999HorseRaceOpportunities(s,world,h.horse_id,{includeProposals:false});
  const away=view.rows.find(r=>r.status==='SHIPPING_REQUIRED'&&
   r.track_id!==h.host_track_id);
- assert.ok(away,JSON.stringify(view.rows.map(x=>({id:x.race_id,track:x.track_id,status:x.status,reasons:x.eligibility_reasons}))));
+ if(!away){
+  const inspected=view.rows.filter(r=>r.track_id!==h.host_track_id).
+   map(row=>{
+    const race=s.runtime.races[row.race_id];
+    const eligible=race?raceEligibility(s,h,race):null;
+    const shipping=Object.values(s.runtime.facilities.sites).
+     filter(site=>site.type==='RACING_STABLE'&&site.host_track_id===row.track_id).
+     map(site=>({site:site.id,...shippingAssessment(s,world,h.horse_id,site.id,
+      {targetRaceId:race?.id})}));
+    const jockeys=race?Object.values(s.runtime.racing.jockeys).reduce((n,rider)=>{
+     const verdict=jockeyBookingDecision(s,world,race,h,rider);
+     n[verdict.reason]=(n[verdict.reason]||0)+1;
+     return n;
+    },{}):{};
+    return {id:row.race_id,track:row.track_id,status:row.status,
+     reasons:row.eligibility_reasons,field:race?.field.length,
+     capacity:race?.field_capacity,eligible,shipping:shipping.map(x=>({
+      site:x.site,allowed:x.allowed,reasons:x.reasons,days:x.route?.days})),
+     jockeyRejections:jockeys};
+   });
+  assert.fail('Shippable away horse must retain an accepting real jockey: '+
+   JSON.stringify(inspected));
+ }
  const approved=away.receiving_barn_options.find(s=>s.allowed);
  assert.ok(approved);
  assert.ok(approved.stalls_available>0);
