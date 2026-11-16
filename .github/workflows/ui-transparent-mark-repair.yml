@@ -1,12 +1,7 @@
 name: UI Transparent Mark Repair
+# Historical audit pipeline retained for manual reference only.
+# Final brand-safe alpha restoration is owned by final-ui-logo-alpha.yml.
 on:
-  push:
-    branches:
-      - ui/polish-playable-1999
-    paths:
-      - scripts/fix-ui-logo-transparency.py
-      - scripts/repair-ui-paper-rectangles.py
-      - .github/workflows/ui-transparent-mark-repair.yml
   workflow_dispatch:
 permissions:
   contents: write
