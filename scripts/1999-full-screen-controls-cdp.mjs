@@ -329,7 +329,7 @@ try {
   {name:'Due Actions',ui:'Due Actions',selector:'.ng-due-overview'},
   {name:'Race File',ui:'RaceFile:layout-audit-missing-record',selector:'.ng-1999-race-file'},
   {name:'Search',ui:'Search',selector:'.ng-search-page'},
-  {name:'World Record',ui:'WorldRecord:track:T-0002',selector:'.ng-world-source-profile'}
+  {name:'World Record',ui:'WorldRecord:track:T-0002',selector:'.ng-route-profile'}
  ]){
   await command('Page.navigate',{url:url+'?ui='+encodeURIComponent(item.ui)});
   for(const width of [1280,1024]){

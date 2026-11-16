@@ -33,7 +33,7 @@ test('every modern route owns the full width instead of inheriting a half-page g
  assert.match(css,/\.ng-routeinner\{display:block;/,
   'Route parent must not default to a two-column grid');
  for(const cls of ['ng-org-overview','ng-due-overview','ng-1999-race-file',
-  'ng-search-page','ng-world-source-profile']){
+  'ng-search-page','ng-route-profile']){
   assert.ok(browser.includes("selector:'."+cls+"'"),
    cls+' must have actual Chromium geometry checks');
  }
