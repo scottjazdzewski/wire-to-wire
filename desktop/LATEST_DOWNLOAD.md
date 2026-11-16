@@ -7,6 +7,8 @@ These links are designed to stay the same as newer **tested** Windows builds are
 - **Regular Windows setup EXE:** https://github.com/scottjazdzewski/wire-to-wire/releases/latest/download/WireToWire-Setup-Latest.exe
 - **Which build is newest?** https://github.com/scottjazdzewski/wire-to-wire/releases/latest
 - **Exact source version and SHA-256 hashes:** https://github.com/scottjazdzewski/wire-to-wire/releases/latest/download/WTW-Latest-Build-Info.json
+- **Editable game source:** https://github.com/scottjazdzewski/wire-to-wire
+- **Source ZIP for the exact tested build:** Open the Build Info JSON above and use its `sourceArchiveUrl` link.
 
 Bookmark the portable EXE link if your machine permits an unsigned portable application; otherwise use the extracted-folder build, if permitted by workplace policies. The setup EXE is for machines where normal installation is authorized.
 
