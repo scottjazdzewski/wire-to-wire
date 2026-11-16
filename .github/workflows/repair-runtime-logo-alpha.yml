@@ -29,15 +29,21 @@ jobs:
             --sheet visual-audit/logo-alpha-repair/before-after.jpg
           git status --short public/assets
           git diff --stat -- public/assets
-          test -n "$(git status --porcelain -- public/assets)"
+          echo "UI image change count: $(git status --porcelain -- public/assets | wc -l)"
       - name: Commit replacement image bytes to current UI PR branch
         run: |
           git config user.name "wire-to-wire-ui-ci"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/assets/places/track-logos public/assets/office/founding-organization-logos \
             public/assets/profile-badges/v2 public/assets/wtw-logo.png public/assets/wtw-office-approved-logo.png
-          git commit -m "UI assets: remove baked logo mattes while preserving mark identities"
-          git push origin HEAD:ui/polish-playable-1999
+          if git diff --cached --quiet; then
+            echo "WTW_LOGO_ASSETS_ALREADY_TRANSPARENT"
+          else
+            git commit -m "UI assets: remove baked logo mattes while preserving mark identities"
+            git pull --rebase origin ui/polish-playable-1999
+            git push origin HEAD:ui/polish-playable-1999
+            echo "WTW_LOGO_ASSETS_PUSHED"
+          fi
       - name: Validate known alpha corrections in committed files
         run: |
           python3 scripts/repair-runtime-logo-alpha.py --verify \
