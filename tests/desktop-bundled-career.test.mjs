@@ -6,6 +6,7 @@ import {unpackShared1999Career} from '../public/1999/engine/shared-1999-career-p
 
 const asset=new URL('../public/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER.wtwcareer.gz',import.meta.url);
 const manager=readFileSync(new URL('../public/next/1999-commercial-career-manager.mjs',import.meta.url),'utf8');
+const industryWorker=readFileSync(new URL('../public/next/1999-industry-bootstrap-worker.mjs',import.meta.url),'utf8');
 const preload=readFileSync(new URL('../desktop/preload.cjs',import.meta.url),'utf8');
 const desktopSmoke=readFileSync(new URL('../scripts/windows-desktop-smoke.ps1',import.meta.url),'utf8');
 const fullWorldSmoke=readFileSync(new URL('../scripts/1999-full-world-browser-cdp.mjs',import.meta.url),'utf8');
@@ -34,6 +35,13 @@ test('desktop startup auto-loads the bundle while smoke runs can invoke it deter
  assert.match(manager,/sameShared1999WorldIdentity\(fullIndustryManifest,expected\)/);
  assert.match(manager,/wtw-shared-career-world-identity-v2/);
  assert.match(manager,/Existing local progress kept/);
+ assert.match(manager,/new Worker\('\/next\/1999-industry-bootstrap-worker\.mjs/);
+ assert.doesNotMatch(manager,/createPersistent1999Industry/,
+  'the interactive renderer must not materialize the entire world');
+ assert.match(industryWorker,/createPersistent1999Industry/);
+ assert.match(industryWorker,/send\('STAGE'/);
+ assert.match(industryWorker,/onProgress:progress=>send\('PROGRESS',progress\)/);
+ assert.match(industryWorker,/yieldControl:\(\)=>new Promise/);
  assert.match(preload,/smokeMode/);
  assert.match(desktopSmoke,/IncludeCareerBootstrap/);
  assert.match(desktopSmoke,/career-read/);
