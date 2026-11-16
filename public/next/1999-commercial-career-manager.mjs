@@ -619,9 +619,12 @@ async function open(){
   notice='';
   const store=await open1999IndustryDatabase();
   try{
-   const reopened=await reopenPersistent1999Industry(store,{
+   let selected=await reopenPersistent1999Industry(store,{
+    seed:selectedIndustrySeed,
+    worldId:'WTW1999FullIndustry-COHORTS-V2-H'+selectedIndustryHorses});
+   if(!selected)selected=await reopenPersistent1999Industry(store,{
     seed:selectedIndustrySeed,worldId:'WTW1999FullIndustry-H'+selectedIndustryHorses});
-   const selected=reopened??await reopenPersistent1999Industry(store,{
+   if(!selected)selected=await reopenPersistent1999Industry(store,{
     seed:19990101,worldId:'WTW1999FullIndustry'});
    if(selected?.status==='READY'){
     fullIndustryManifest=selected.manifest;

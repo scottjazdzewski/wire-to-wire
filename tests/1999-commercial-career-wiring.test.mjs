@@ -37,6 +37,7 @@ test('custom-size worlds connect to the canonical playable race career',()=>{
  assert.match(manager,/data-cc="industry-size" type="number" min="10000" max="325000"/);
  assert.match(manager,/targetOpeningHorses:horseCount/);
  assert.match(manager,/worldId:'WTW1999FullIndustry-COHORTS-V2-H'\+horseCount/);
+ assert.match(manager,/worldId:'WTW1999FullIndustry-COHORTS-V2-H'\+selectedIndustryHorses/);
  assert.match(manager,/START TEST CAREER/);
  assert.match(manager,/OPEN NEXT TEST RACE \/ ENTER TWO/);
  assert.match(manager,/ADVANCE ONE GAME DAY/);
