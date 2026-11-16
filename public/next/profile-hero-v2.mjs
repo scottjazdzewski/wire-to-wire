@@ -362,6 +362,7 @@ function init(){
     heroAvailable(candidate).then(visual=>{
      if(!mark.isConnected||mark.dataset.wtwHeroProbePath!==candidate||!visual.ok)return;
      const logo=document.createElement("img");
+     if(kind==="organization")logo.className="ng-org-image wtw-logo-artwork";
      logo.decoding="async";logo.loading="eager";logo.alt=name+" logo";
      logo.addEventListener("error",()=>{
       if(!mark.isConnected)return;
@@ -371,7 +372,12 @@ function init(){
      logo.dataset.wtwHeroProbePath=candidate;
      logo.dataset.wtwHeroState="active";
      logo.src=visual.displayUrl||candidate;
-     mark.replaceChildren(logo);
+     if(kind==="organization"){
+      const frame=document.createElement("span");
+      frame.className="wtw-logo-frame";
+      frame.append(logo);
+      mark.replaceChildren(frame);
+     }else mark.replaceChildren(logo);
      mark.classList.remove("wtw-hero-typographic","wtw-hero-legacy","wtw-hero-dark-ink");
      mark.classList.add("wtw-hero-transparent");
      mark.setAttribute("aria-label",name+" logo");

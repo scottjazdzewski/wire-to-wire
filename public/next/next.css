@@ -3229,8 +3229,8 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 }
 
 #wtwNextgen[data-wtw-identity-kind="track"][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-badgeframe{
-  background:#16221f url("/assets/profile-badges/v2/wtw_badge_track.png") center / contain no-repeat!important;
-  border-color:color-mix(in srgb,var(--wtw-id-bright) 48%,#4d6158)!important;
+  background:transparent url("/assets/profile-badges/v2/wtw_badge_track.png") center / contain no-repeat!important;
+  filter:drop-shadow(0 3px 4px #0008) drop-shadow(0 0 5px color-mix(in srgb,var(--wtw-id-bright) 42%,transparent))!important;
 }
 #wtwNextgen[data-wtw-identity-kind="track"][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-badgeframe img{
   visibility:hidden!important;
@@ -3357,8 +3357,9 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 /* Track badge never falls back to duplicating the big branded venue logo.
  * Use the approved category marker even before async palette activation. */
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track:not(.ng-profile-farm) .ng-profile-badgeframe{
- background:#14221e url("/assets/profile-badges/v2/wtw_badge_track.png")
+ background:transparent url("/assets/profile-badges/v2/wtw_badge_track.png")
   center / contain no-repeat!important;
+ filter:drop-shadow(0 3px 4px #0008)!important;
 }
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track:not(.ng-profile-farm) .ng-profile-badgeframe img{
  visibility:hidden!important;
@@ -3523,17 +3524,16 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
   overflow:visible!important;
   box-shadow:none!important;
 }
-#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo::before{
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo:not(.ng-profile-facility-logo)::before{
   content:""!important;
   position:absolute!important;
-  inset:5% 0!important;
+  inset:18% 7%!important;
   z-index:0!important;
-  border:0!important;
-  border-radius:50%!important;
-  /* Neutral ink-well keeps vivid cyan/green wordmarks visible on colored heroes. */
-  background:radial-gradient(ellipse at center,
-    rgba(3,10,15,.90) 2%,rgba(4,12,17,.62) 42%,transparent 74%)!important;
-  filter:blur(9px)!important;
+  border:1px solid rgba(211,196,151,.22)!important;
+  border-radius:6px!important;
+  background:linear-gradient(180deg,#1d2927 0%,#111a1d 100%)!important;
+  box-shadow:0 5px 14px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.08)!important;
+  filter:none!important;
   pointer-events:none!important;
 }
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo img{
@@ -3622,16 +3622,19 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
   }
 }
 
-/* Source-ink contrast: a narrow light field, NOT a giant halo or plaque. */
-#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo.wtw-hero-dark-ink::before{
- inset:31% -2%!important;
- background:radial-gradient(ellipse 91% 82% at 50% 50%,
-   rgba(237,240,231,.72),rgba(230,236,229,.32) 48%,transparent 90%)!important;
- filter:blur(3px)!important;
+/* Dark track wordmarks get a compact light plate; square facility logos use
+   their own centered palette-aware logo frame below. */
+#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo:not(.ng-profile-facility-logo).wtw-hero-dark-ink::before{
+ inset:20% 1%!important;
+ border:1px solid rgba(26,39,40,.32)!important;
+ border-radius:6px!important;
+ background:linear-gradient(180deg,#f3f0e5 0%,#dedccb 100%)!important;
+ box-shadow:0 3px 10px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.72)!important;
+ filter:none!important;
 }
 
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo.wtw-hero-white-matte{isolation:auto!important}
-#wtwNextgen .ng-route-profile .ng-profile-source-photo.wtw-hero-dark-ink:not(.wtw-hero-white-matte) img{filter:drop-shadow(0 0 2px #e3ebd1d9) drop-shadow(0 0 7px #e3ecca8a)!important;}
+#wtwNextgen .ng-route-profile .ng-profile-source-photo.wtw-hero-dark-ink:not(.wtw-hero-white-matte) img{filter:drop-shadow(0 1px 1px rgba(0,0,0,.48))!important;}
 /* Farm/owner logo category badge stays in its locked left grid cell. */
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-farm > .ng-profile-intro > .ng-org-mark{
   grid-area:badge!important;
@@ -3722,12 +3725,12 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 
 /* Preserve established identity geometry. */
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-farm > .ng-profile-intro > .ng-org-mark{
- background:#152420 url("/assets/profile-badges/v2/wtw_badge_farm_stable.png")
+ background:transparent url("/assets/profile-badges/v2/wtw_badge_farm_stable.png")
    center / contain no-repeat!important;
  border:0!important;
  border-radius:0!important;
  box-shadow:none!important;
- filter:drop-shadow(0 3px 4px #0006)!important;
+ filter:drop-shadow(0 3px 4px #0008) drop-shadow(0 0 5px color-mix(in srgb,var(--wtw-id-bright,#cfb882) 38%,transparent))!important;
 }
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-farm > .ng-profile-intro > .ng-org-mark > .ng-org-image,
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-farm > .ng-profile-intro > .ng-org-mark > .ng-org-initials{
@@ -3909,3 +3912,67 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 .ng-record-browse-bar button.ng-profile-entity-step:focus-visible{outline:2px solid #f0cf8a;outline-offset:2px}
 #wtwNextgen .ng-subbar .ng-subnav>button{display:flex!important;align-items:center;justify-content:center;height:100%}
 #wtwNextgen .ng-route-profile .ng-profiletabs>button{display:flex!important;align-items:center;justify-content:center;height:100%}
+
+/* One presentation treatment for every opaque, rounded organization logo.
+   Clip the black export corners at the already-approved 28/256 frame radius;
+   the immutable artwork and its internal colors stay unchanged. */
+#wtwNextgen .ng-org-mark.wtw-logo-surface{
+  overflow:hidden!important;
+  isolation:isolate!important;
+  border:1px solid color-mix(in srgb,var(--wtw-id-bright,#cfb882) 52%,#586460)!important;
+  border-radius:8px!important;
+  background:linear-gradient(145deg,
+    color-mix(in srgb,var(--wtw-id-base,#26332f) 34%,#263033),#12191d 76%)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.11),0 3px 9px rgba(0,0,0,.34),
+    0 0 0 1px rgba(0,0,0,.26)!important;
+}
+#wtwNextgen .ng-org-mark.wtw-logo-surface>.wtw-logo-artwork{
+  display:block!important;
+  width:100%!important;height:100%!important;
+  object-fit:contain!important;
+  border-radius:10.94%!important;
+  clip-path:inset(0 round 10.94%)!important;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.24))!important;
+}
+/* The large facility asset keeps its established 214×108 slot, with a compact
+   square identity plaque centered inside it instead of a black rectangle. */
+#wtwNextgen .ng-route-profile .ng-profile-farm.ng-profile-track .ng-profile-facility-logo{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  overflow:visible!important;
+  border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;
+}
+#wtwNextgen .ng-profile-facility-logo>.wtw-logo-frame{
+  display:grid!important;place-items:center!important;
+  width:min(100%,98px)!important;height:auto!important;aspect-ratio:1!important;
+  box-sizing:border-box!important;padding:3px!important;
+  overflow:hidden!important;
+  border:1px solid color-mix(in srgb,var(--wtw-id-bright,#cfb882) 58%,#586460)!important;
+  border-radius:10.94%!important;
+  background:linear-gradient(145deg,
+    color-mix(in srgb,var(--wtw-id-base,#26332f) 42%,#273033),#12191d 78%)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 4px 12px rgba(0,0,0,.36),
+    0 0 13px color-mix(in srgb,var(--wtw-id-bright,#cfb882) 13%,transparent)!important;
+}
+#wtwNextgen .ng-route-profile .ng-profile-farm.ng-profile-track .ng-profile-facility-logo>.wtw-logo-frame>.wtw-logo-artwork{
+  width:100%!important;height:100%!important;padding:0!important;
+  object-fit:contain!important;transform:none!important;
+  border-radius:10.94%!important;clip-path:inset(0 round 10.94%)!important;
+}
+/* In small roster chips and headers, retain the same corner cleanup and add a
+   thin tonal edge without changing their locked dimensions. */
+#wtwNextgen .ng-main>.ng-feature>.ng-cardhead .ng-org-chip .ng-org-mark.wtw-logo-surface{
+  overflow:hidden!important;
+  border:1px solid color-mix(in srgb,var(--wtw-id-bright,#cfb882) 48%,#54605d)!important;
+  border-radius:5px!important;
+  background:linear-gradient(145deg,#27332f,#11191d)!important;
+  box-shadow:0 2px 5px #0008!important;
+}
+/* Owner-approved visual corrections: these two founding marks have an extra
+   generated outside ring. Crop that edge and enlarge the original mark 10%;
+   their inner artwork and source files remain exact. */
+#wtwNextgen .wtw-logo-artwork[src*="O-FOUNDING-1999-001.png"],
+#wtwNextgen .wtw-logo-artwork[src*="O-FOUNDING-1999-004.png"]{
+  clip-path:inset(8.5% round 15%)!important;
+  transform:scale(1.1)!important;
+}

@@ -332,10 +332,10 @@ function organizationLogoMarkup(id,name,kind='organization',large=false,brandFal
  const brandLogo=brandFallback&&!entityLogo?'/assets/wtw-office-approved-logo.png':'';
  const src=entityLogo||brandLogo;
  const initials=name==='YOUR STABLE'?'ST':name.split(/\s+/).slice(0,2).map(t=>t[0]||'').join('').toUpperCase().slice(0,2)||'ORG';
- const content=src?'<img class="ng-org-image" src="'+safe(src)+'" alt="" loading="lazy" decoding="async"/>':
+ const content=src?'<img class="ng-org-image wtw-logo-artwork" src="'+safe(src)+'" alt="" loading="lazy" decoding="async"/>':
   '<span class="ng-org-initials" aria-hidden="true">'+safe(initials)+'</span>';
  const description=entityLogo?'Approved logo for '+name:brandLogo?'Wire to Wire game logo, opening '+name+' operations':'Temporary logo placeholder for '+name;
- return '<span class="ng-org-mark'+(large?' ng-org-mark-large':'')+'" data-placeholder="'+safe(initials)+'" aria-label="'+safe(description)+'">'+content+'</span>';
+ return '<span class="ng-org-mark'+(large?' ng-org-mark-large':'')+(src?' wtw-logo-surface':'')+'" data-placeholder="'+safe(initials)+'" aria-label="'+safe(description)+'">'+content+'</span>';
 }
 // One presentation component across every horse occurrence. Identity comes
 // only from Office horse owner references; training/boarding != ownership.
@@ -2420,7 +2420,7 @@ function profileDetail(route,sourceOverride=null){
   nameTokens[0].slice(0,1)+nameTokens.at(-1).slice(0,1):
   (nameTokens[0]||'WT').slice(0,2)).toUpperCase();
  const fallbackType=isHorse?'HORSE':isPerson?'PERSON':'ORGANIZATION';
- const imageMarkup=photoSrc?'<img src="'+safe(photoSrc)+'" alt="" loading="lazy" decoding="async"/>':
+ const imageMarkup=photoSrc?(isFarm?'<span class="wtw-logo-frame"><img class="ng-org-image wtw-logo-artwork" src="'+safe(photoSrc)+'" alt="" loading="lazy" decoding="async"/></span>':'<img src="'+safe(photoSrc)+'" alt="" loading="lazy" decoding="async"/>'):
   '<div class="ng-profile-photo-empty wtw-unassigned-media" aria-label="No source image assigned">'+
    '<strong aria-hidden="true">'+safe(sourceInitials)+'</strong>'+
    '<small>'+fallbackType+'</small></div>';

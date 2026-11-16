@@ -35,7 +35,7 @@ Create ONE high-quality hero mark for each track/organization. Real racecourses 
 | T-0001 | Aqueduct | White-backed cyan wordmark, good matte pilot |
 | T-0017 | Gulfstream Park | White-backed dark wordmark, use contrast-aware stage |
 | T-0013 | Churchill Downs | White-backed horizontal wordmark |
-| T-0002 | Belmont Park | Green branded field; needs a genuinely isolated silhouette |
+| T-0002 | Belmont Park | User-supplied green wordmark with genuine alpha, including transparent letter counters; fitted to the dark-ink contrast stage |
 | T-0003 | Saratoga | Historic track identity |
 | T-0028 | Santa Anita | Major West Coast track |
 | T-0014 | Keeneland | Major Kentucky track |
