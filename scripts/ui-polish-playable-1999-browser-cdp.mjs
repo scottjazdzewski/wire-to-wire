@@ -10,6 +10,8 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 
 const chrome=process.env.CHROME||'chromium';
+const openingHorses=Number(process.env.WTW_UI_WORLD_HORSES||10000);
+assert.ok([10000,300000].includes(openingHorses),'UI test world must be 10k or 300k');
 const phase=process.env.WTW_UI_POLISH_PHASE||'before';
 const output='visual-audit/playable-ui-window4/'+phase;
 mkdirSync(output,{recursive:true});
@@ -76,23 +78,23 @@ try{
  await evaluate('window.WTWCompactCareerManager.open().then(()=>true)');
  let manager=await evaluate('(()=>{const e=document.querySelector("#wtwCommercialCareerModal");return {visible:!!e&&!e.hidden,actionCount:e?.querySelectorAll("[data-cc-action]").length||0};})()');
  assert.ok(manager.visible,'Career Manager did not open');
- await evaluate('(()=>{const n=document.querySelector("[data-cc=industry-size]");n.value="10000";document.querySelector("[data-cc-action=open-full-industry]").click();return true;})()');
- await waitFor('selected 10000-horse world generation',async()=>{
+ await evaluate('(()=>{const n=document.querySelector("[data-cc=industry-size]");n.value="'+openingHorses+'";document.querySelector("[data-cc-action=open-full-industry]").click();return true;})()');
+ await waitFor('selected '+openingHorses+'-horse world generation',async()=>{
   const value=await evaluate('(()=>{const e=document.querySelector("#wtwCommercialCareerModal");return {ready:!!e?.querySelector("[data-cc-action=start-test-career]"),error:(e?.textContent||"").match(/ERROR:[^\\n]{0,240}/)?.[0]||null};})()');
   if(value.error)throw Error(value.error);
   return {ready:value.ready,value:value};
- },240000);
+ },openingHorses===300000?900000:240000);
  await evaluate('document.querySelector("[data-cc-action=start-test-career]").click();true');
  await waitFor('playable custom-world career',async()=>{
   const value=await evaluate('(()=>{const e=document.querySelector("#wtwCommercialCareerModal");return {ready:!!e?.querySelector("[data-cc-action=advance-test-day]"),error:(e?.textContent||"").match(/ERROR:[^\\n]{0,240}/)?.[0]||null};})()');
   if(value.error)throw Error(value.error);
   return {ready:value.ready,value:value};
- },180000);
- const world=await evaluate('(()=>{const e=document.querySelector("#wtwCommercialCareerModal");return {playing:!!e?.textContent.includes("canonical race engine connected"),horseCount:/10,000/.test(e?.textContent||""),actions:[...e.querySelectorAll("button[data-cc-action]")].map(x=>x.dataset.ccAction)};})()');
+ },openingHorses===300000?480000:180000);
+ const world=await evaluate('(()=>{const e=document.querySelector("#wtwCommercialCareerModal");return {playing:!!e?.textContent.includes("canonical race engine connected"),horseCount:(e?.textContent||"").includes("'+openingHorses.toLocaleString('en-US')+'"),actions:[...e.querySelectorAll("button[data-cc-action]")].map(x=>x.dataset.ccAction)};})()');
  assert.ok(world.playing&&world.horseCount,'Persisted world failed to enter playable test career');
  const live=await evaluate('(()=>{const api=window.WTWCompactCareerManager;const status=api.playableWorldStatus();const stable=api.playableStableRows();const page=api.playableWorldHorseBrowse({offset:0,limit:20});return {status,stableCount:stable.length,stableId:stable[0]?.horseId,total:page.total,pageRows:page.items.length}})()');
- assert.equal(live.status.horseCount,10000,'UI career linked to the wrong world');
- assert.equal(live.total,10000,'UI directory is not using the persisted full census');
+ assert.equal(live.status.horseCount,openingHorses,'UI career linked to the wrong world');
+ assert.equal(live.total,openingHorses,'UI directory is not using the persisted full census');
  assert.ok(live.stableCount>=2&&live.stableId,'No player-owned game horse reached the UI');
  assert.equal(live.pageRows,20,'Directory must read a bounded page');
  console.log('WTW_UI_ACTIVE_CAREER_BRIDGE_PASS '+JSON.stringify(live));
@@ -114,7 +116,7 @@ try{
  await delay(250);
  const worldPage=await evaluate('(()=>({rows:document.querySelectorAll("#wtwNextgen .ng-rs-table tbody tr").length,heading:document.querySelector("#wtwNextgen .ng-stable-visible")?.textContent||"",first:document.querySelector("#wtwNextgen button[data-ng=directory-horse]")?.dataset.val||"",pager:document.querySelectorAll("#wtwNextgen button[data-ng=directory-page]").length}))()');
  assert.equal(worldPage.rows,160,'Only a bounded 160-horse page must be rendered');
- assert.ok(worldPage.heading.includes('10,000')&&worldPage.pager===2,'World page count absent');
+ assert.ok(worldPage.heading.includes(openingHorses.toLocaleString('en-US'))&&worldPage.pager===2,'World page count absent');
  await evaluate('document.querySelectorAll("#wtwNextgen button[data-ng=directory-page]")[1].click();true');
  await delay(120);
  const worldNext=await evaluate('document.querySelector("#wtwNextgen button[data-ng=directory-horse]")?.dataset.val');
@@ -202,7 +204,7 @@ try{
  assert.ok(trackOpened.shown&&decodeURIComponent(trackOpened.custom.slice('WorldRecord:'.length))==='track:T-0002',
   'World Tracks row did not navigate to canonical Belmont Profile: '+JSON.stringify(trackOpened));
  audit.push({route:'world-to-belmont-click',...trackOpened});
- const report={phase,base:'playable-1999',world,viewports,audit,screenshots};
+ const report={phase,worldSize:openingHorses,base:'playable-1999',world,viewports,audit,screenshots};
  writeFileSync(output+'/audit.json',JSON.stringify(report,null,2));
  console.log('WTW_UI_POLISH_PHASE '+phase);
  console.log('WTW_UI_PLAYABLE_WORLD '+JSON.stringify(world));
