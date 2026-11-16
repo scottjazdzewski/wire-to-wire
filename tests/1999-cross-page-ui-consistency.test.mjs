@@ -30,7 +30,7 @@ test('the one shared VIEW picker is horizontally aligned in every container',()=
 });
 
 test('every modern route owns the full width instead of inheriting a half-page grid',()=>{
- assert.match(css,/\\.ng-routeinner\\{display:block;/,
+ assert.match(css,/\.ng-routeinner\{display:block;/,
   'Route parent must not default to a two-column grid');
  for(const cls of ['ng-org-overview','ng-due-overview','ng-1999-race-file',
   'ng-search-page','ng-world-source-profile']){
@@ -38,7 +38,7 @@ test('every modern route owns the full width instead of inheriting a half-page g
    cls+' must have actual Chromium geometry checks');
  }
  assert.match(browser,/is trapped in a half-width route grid/);
- assert.match(browser,/for\\(const width of \\[1280,1024\\]\\)/);
+ assert.match(browser,/for\(const width of \[1280,1024\]\)/);
 });
 
 test('the permanent UI stays within the single-stylesheet size limit',()=>{
