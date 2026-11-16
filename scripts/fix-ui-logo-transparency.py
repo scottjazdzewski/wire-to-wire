@@ -102,19 +102,31 @@ def main():
     ap.add_argument("--write",action="store_true")
     args=ap.parse_args()
     report={"schema":"WTW_UI_ALPHA_AUDIT_V1","source_preservation":True,
-            "assets":[],"new_transparent_hero_derivatives":[],"needs_manual_review":[]}
+            "assets":[],"new_transparent_hero_derivatives":[],"needs_manual_review":[],"unreadable":[]}
     candidates=[]
     for folder in ASSESS:
         if not folder.is_dir():continue
         for source in sorted(folder.iterdir()):
             if source.suffix.lower() not in (".webp",".png",".jpg",".jpeg"):continue
-            item=scan(source)
+            try:
+                item=scan(source)
+            except (OSError, ValueError) as exc:
+                # An unrelated truncated portrait must not block repair of
+                # valid logos. Record the exact corrupt path for a separate
+                # asset-integrity fix instead of silently trusting its alpha.
+                report["unreadable"].append({"path":source.as_posix(),
+                                             "error":type(exc).__name__+": "+str(exc)})
+                continue
             report["assets"].append(item)
             if folder==LOGOS and item["opaque_white_matte"]:
                 output=HEROS/source.name
                 if not output.exists():candidates.append((source,output))
     for source,out in candidates:
-        result=clear_border_matte(source,out) if args.write else {"changed":False,"reason":"preview mode"}
+        try:
+            result=clear_border_matte(source,out) if args.write else {"changed":False,"reason":"preview mode"}
+        except (OSError, ValueError) as exc:
+            result={"changed":False,"reason":"decode-error: "+str(exc)}
+            report["unreadable"].append({"path":source.as_posix(),"error":str(exc)})
         report["new_transparent_hero_derivatives"].append({
             "source":source.as_posix(),**result})
     # Existing intentional plaques, portraits and photography are NOT a
@@ -132,7 +144,8 @@ def main():
         "track_heroes":len(hero_ids),
         "opaque_white_legacy_logos":sum(x["opaque_white_matte"] for x in report["assets"] if Path(x["path"]).parent==LOGOS),
         "derivatives_written":sum(x["changed"] for x in report["new_transparent_hero_derivatives"]),
-        "remaining_suspect_legacy_no_hero":len(report["needs_manual_review"])
+        "remaining_suspect_legacy_no_hero":len(report["needs_manual_review"]),
+        "unreadable_assets":len(report["unreadable"])
     }
     REPORT.parent.mkdir(parents=True,exist_ok=True)
     REPORT.write_text(json.dumps(report,indent=2)+"\n")
