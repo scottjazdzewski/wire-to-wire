@@ -128,14 +128,17 @@ export async function createPersistent1999Industry({
  const ensureCircuitCoverage=targetOpeningHorses!==null;
  const coverageTracks=ensureCircuitCoverage?tracks.length:0;
  const currentStaffing=plan1999IndustryStaffing({seed,ecosystem:plan,
-  minimumRacingTracks:coverageTracks,minimumJockeysPerTrack:2});
- // Before this upgrade completed custom worlds guaranteed one jockey at
- // every course. Their already-issued permanent personnel IDs, names and
- // IndexedDB records MUST NOT be rewritten simply because new genesis uses
- // a two-jockey floor. The exact stored staffing plan selects the old
- // deterministic generator when a saved world is resumed.
+  minimumRacingTracks:coverageTracks,minimumJockeysPerTrack:2,
+  tracks:ensureCircuitCoverage?tracks:null,
+  courseDemandTargets:ensureCircuitCoverage});
+ // The previous real worlds have one- or two-jockey minimum coverage.
+ // Retain their already assigned permanent P-IDs, biography roster and
+ // place-of-employment even when new custom worlds use demand-based
+ // 16-25 jockey track pools. This also preserves an interrupted genesis.
  const legacyStaffing=plan1999IndustryStaffing({seed,ecosystem:plan,
   minimumRacingTracks:coverageTracks,minimumJockeysPerTrack:1});
+ const intermediateStaffing=plan1999IndustryStaffing({seed,ecosystem:plan,
+  minimumRacingTracks:coverageTracks,minimumJockeysPerTrack:2});
  const existing=await store.get('manifests',id);
  const exactCounts=(a,b)=>Object.keys(b).every(role=>
   Number.isSafeInteger(a?.[role])&&a[role]===b[role])&&
@@ -144,9 +147,14 @@ export async function createPersistent1999Industry({
  const legacyCompatible=existing&&exactCounts(storedCounts,legacyStaffing.counts)&&
   (existing.staffing.minimumJockeysPerTrack===undefined||
    existing.staffing.minimumJockeysPerTrack===1);
+ const intermediateCompatible=existing&&!existing.staffing.trackJockeyTargets&&
+  exactCounts(storedCounts,intermediateStaffing.counts)&&
+  existing.staffing.minimumJockeysPerTrack===2;
  const currentCompatible=existing&&exactCounts(storedCounts,currentStaffing.counts)&&
-  existing.staffing.minimumJockeysPerTrack===currentStaffing.minimumJockeysPerTrack;
- if(existing&&!legacyCompatible&&!currentCompatible)
+  existing.staffing.minimumJockeysPerTrack===currentStaffing.minimumJockeysPerTrack&&
+  JSON.stringify(existing.staffing.trackJockeyTargets??null)===
+   JSON.stringify(currentStaffing.trackJockeyTargets??null);
+ if(existing&&!legacyCompatible&&!intermediateCompatible&&!currentCompatible)
   throw Error('Existing industry has an unrecognized personnel staffing plan');
  const staffing=existing?existing.staffing:currentStaffing;
  const totalHorses=count1999Registry(plan);
