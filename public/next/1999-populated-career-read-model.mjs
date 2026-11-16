@@ -13,21 +13,27 @@ const statusLabel=status=>({
 })[status]||String(status||'Not recorded').replaceAll('_',' ');
 
 /** Original IDs, posted balances, field entries and official results only. */
-export function projectPopulated1999Career({manifest,world,run}={}){
+export function projectPopulated1999Career({manifest,world=null,run,snapshotSha256=null}={}){
  if(!run?.run_id||!run?.clock?.date||!run?.player?.operation_id||
   !Array.isArray(run.stable_horse_ids)||!run.runtime?.registered_horses?.by_id||
   !run.runtime?.races||!run.runtime?.entries||
   !manifest?.worldId||!Number.isSafeInteger(manifest.seed)||
-  !world?.entities?.organizations||!world?.entities?.people||!world?.entities?.tracks)
+  (!world&&!snapshotSha256)||(world&&(!world.entities?.organizations||
+   !world.entities?.people||!world.entities?.tracks)))
   throw Error('A complete saved 1999 career and its original world are required');
- if(run.world_ref?.sha256!==world.authority?.sha256||
-  run.world_ref?.snapshot_id!==world.authority?.snapshot_id||
+ if(run.world_ref?.sha256!==(world?.authority?.sha256||snapshotSha256)||
+  (world&&run.world_ref?.snapshot_id!==world.authority?.snapshot_id)||
   run.run_id!=='WTW-RUN-1999-'+manifest.seed+'-SIZE-'+
    (manifest.targetOpeningHorses??manifest.horseCount))
   throw Error('UI projection refused a mismatched world or career identity');
  const operationId=run.player.operation_id;
- const organization=world.entities.organizations.find(x=>x.id===operationId);
- if(!organization)throw Error('Player operation is missing from its canonical world');
+ const organization=world?.entities.organizations.find(x=>x.id===operationId);
+ if(world&&!organization)throw Error('Player operation is missing from its canonical world');
+ // Portable checkpoint tests may supply the exact world SHA without loading
+ // 300,000 world entities. At runtime the verified original world is required.
+ const operationName=organization?.name||operationId;
+ const tracks=world?.entities?.tracks||[],people=world?.entities?.people||[],
+  organizations=world?.entities?.organizations||[];
  const registry=run.runtime.registered_horses.by_id;
  const stableIds=new Set(run.stable_horse_ids);
  const entryRows=Object.values(run.runtime.entries);
@@ -43,7 +49,7 @@ export function projectPopulated1999Career({manifest,world,run}={}){
    }));
   return Object.freeze({
    id:r.id,name:r.name||r.conditions||r.id,date:r.date,
-   trackId:r.track_id,track:nameOrId(world.entities.tracks,r.track_id),
+   trackId:r.track_id,track:nameOrId(tracks,r.track_id),
    status:r.status,statusLabel:statusLabel(r.status),
    conditions:r.conditions||'',fullConditions:r.full_conditions||'',
    age:r.age||'',sex:r.sex||'',surface:r.surface||'',
@@ -88,11 +94,11 @@ export function projectPopulated1999Career({manifest,world,run}={}){
   return Object.freeze({
    horseId:id,name:h.registered_name,age,foalYear:h.foaling_year,
    birthDate:h.birth_date||'',sex:h.sex||'',
-   ownerId:h.owner_organization_id,ownerName:organization.name,
-   trainerId:h.trainer_id,trainerName:nameOrId(world.entities.people,h.trainer_id),
+   ownerId:h.owner_organization_id,ownerName:operationName,
+   trainerId:h.trainer_id,trainerName:nameOrId(people,h.trainer_id),
    breederId:h.breeder_organization_id,
-   breederName:nameOrId(world.entities.organizations,h.breeder_organization_id),
-   trackId:h.host_track_id,trackName:nameOrId(world.entities.tracks,h.host_track_id),
+   breederName:nameOrId(organizations,h.breeder_organization_id),
+   trackId:h.host_track_id,trackName:nameOrId(tracks,h.host_track_id),
    residenceId:h.current_residence_id||'',
    starts:Number.isSafeInteger(record.starts)?record.starts:null,
    wins:Number.isSafeInteger(record.wins)?record.wins:null,
@@ -111,7 +117,7 @@ export function projectPopulated1999Career({manifest,world,run}={}){
   worldId:manifest.worldId,runId:run.run_id,revision:run.revision,
   date:run.clock.date,worldHorseCount:manifest.horseCount,
   personCount:manifest.personCount,
-  operationId,operationName:organization.name,
+  operationId,operationName,
   cashMinor:Number.isSafeInteger(cashMinor)?cashMinor:null,
   horseRows:Object.freeze(horseRows),raceRows:Object.freeze(raceRows)
  });
