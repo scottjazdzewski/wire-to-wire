@@ -56,7 +56,6 @@ export function jockeyTransferDays(a,b){
  if(['AK','HI','PR'].includes(sa)||['AK','HI','PR'].includes(sb))return 2;
  return sa===sb||groupOf(sa)&&groupOf(sa)===groupOf(sb)?1:2;
 }
-const clamp=(x,lo,hi)=>Math.max(lo,Math.min(hi,x));
 const tier=j=>['ELITE','ESTABLISHED','REGIONAL','DEVELOPING'].includes(j?.tier)?
  j.tier:'REGIONAL';
 export function jockeyRaceImportance(race){
@@ -127,7 +126,8 @@ export function assessJockeySchedule(state,world,j,race){
   return {allowed:false,reason:'INSUFFICIENT_TRAVEL_LEAD'};
  const importance=jockeyRaceImportance(race);
  const national=['ELITE','ESTABLISHED'].includes(tier(j));
- if(away&&!national&&!importance.nationalFeature&&importance.purseMinor<7500000)
+ if(away&&sameCardCount===0&&!national&&!importance.nationalFeature&&
+  importance.purseMinor<7500000)
   return {allowed:false,reason:'LOCAL_JOCKEY_DECLINES_LOW_VALUE_AWAY_TRIP'};
  const homeTrip=jockeyTransferDays(home,thisTrack);
  return {allowed:true,reason:'AVAILABLE',away,
