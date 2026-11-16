@@ -100,6 +100,23 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
    pair(personByTrackRole,id+'|jockey')>0,
    'missing on-track runners or professionals '+id);
 
+ // Covering reservations are part of the existing full industry, but are
+ // never evidence that a forecast 1999 foal has already been born.
+ let coverings=0;
+ const coveringIds=new Set();
+ for(let i=0;i<manifest.coveringBatchesCommitted;i++){
+  const batch=await readPersistent1999IndustryBatch(store,manifest,'coveringBatches',i);
+  for(const c of batch){
+   requireValue(c?.id&&!coveringIds.has(c.id),'duplicate covering '+c?.id);
+   coveringIds.add(c.id);coverings++;
+   requireValue(horseIds.has(c.mareId)&&horseIds.has(c.stallionId)&&
+    c.status==='COVERING_BOOKED'&&c.liveFoalId===null,
+    'phantom birth or invalid booked parentage '+c.id);
+  }
+ }
+ requireValue(coverings===manifest.coveringCount,
+  'breeding-book count differs from persisted census');
+
  const summaries=dates.map(date=>({date,tracks:0,cards:0,races:0,
   fieldCapacity:0,purseMinor:0}));
  const byDate=new Map(summaries.map(x=>[x.date,x]));
@@ -165,11 +182,13 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
  return {schema:FULL_WORLD_CIRCUIT_90_DAY_SCHEMA,worldId:manifest.worldId,
   seed:manifest.seed,openingHorses:allHorses,openingPeople:people,
   openingOwners:owners.size,openingFarms:farms.size,tracks:tracks.size,
+  bookedUnbirthedCoverings:coverings,
   activeRacingHorses:racing,twoYearOldProspects:prospects,
   cohortCounts:Object.fromEntries(cohorts),statusCounts:Object.fromEntries(status),
   period:{start:dates[0],end,days:90,trackCards:windowCards,
    scheduledRaces:windowRaces,checkpoints},
   countsCovered:{horses:horseIds.size,people:staffById.size,
+   breedingCoverings:coveringIds.size,
    calendarCards:allCards,calendarRaces:allRaces},
   verified:'FULL_WORLD_READ_ONLY_CIRCUIT_SCHEDULE_AND_WORKFORCE',
   liveGameDaysSimulated:0,liveRacesSettled:0,
