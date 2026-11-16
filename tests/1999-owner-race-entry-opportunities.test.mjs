@@ -51,8 +51,12 @@ test('real race opportunity tells player exact available selected jockeys, fees 
  assert.equal(ready.eligibility_reasons.length,0);
  assert.equal(ready.next_required_action,'ENTER_1999_RACE');
  assert.ok(ready.available_jockeys.length>0);
- assert.ok(ready.available_jockeys.every(j=>s.runtime.racing.jockeys[j.jockey_id]&&
-  j.owner_can_pay&&j.fee_minor===6000||s.runtime.racing.jockeys[j.jockey_id]&&j.fee_minor===24000));
+ assert.ok(ready.available_jockeys.every(j=>
+  s.runtime.racing.jockeys[j.jockey_id]&&
+  Number.isSafeInteger(j.fee_minor)&&j.fee_minor>0&&
+  j.fee_minor===j.mount_fee_minor+j.travel_fee_minor&&
+  (j.away_travel||j.travel_fee_minor===0)),
+  'The owner quote must use the actual jockey booking model, never flat $60/$240 fees');
  assert.equal(ready.owner_cash_minor,s.runtime.finances.operation_balances_minor[h.owner_organization_id]);
  assert.equal(ready.source_status,'ACTUAL_GAME_RACE_ENTRIES_OPEN');
  assert.deepEqual(s,before,'Query must not create a booking or debit cash');
