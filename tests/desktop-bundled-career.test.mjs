@@ -18,9 +18,13 @@ test('the desktop bundles the checksummed shared 300k May 1999 career compactly'
  assert.equal(checkpoint.world.seed,19990101);
  assert.equal(checkpoint.world.horseCount,300000);
  assert.equal(checkpoint.world.personCount,75724);
+ assert.equal(checkpoint.world.snapshotSha256,'027c41916c344dc68a42532f82aff1f006479dc21f0ba587fd20e92e323ce42f');
  assert.equal(checkpoint.careerRecord.runId,'WTW-RUN-1999-19990101-SIZE-300000');
  assert.equal(checkpoint.careerRecord.gameDate,'1999-05-29');
  assert.ok(checkpoint.careerRecord.changes.canonicalRun.stable_horse_ids.length>=2);
+ const officialRaces=Object.values(checkpoint.careerRecord.changes.canonicalRun.runtime.races||{})
+  .filter(r=>r.status==='OFFICIAL_SIM_RESULT');
+ assert.equal(officialRaces.length,1,'Shared test career should include the 1999 race already settled in acceptance');
 });
 
 test('desktop startup auto-loads the bundle while smoke runs can invoke it deterministically',()=>{

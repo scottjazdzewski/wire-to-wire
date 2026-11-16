@@ -969,5 +969,6 @@ try{
 }finally{
  await stop(browser);
  server.kill('SIGTERM');
- rmSync(profile,{recursive:true,force:true});
+ try{rmSync(profile,{recursive:true,force:true,maxRetries:30,retryDelay:100})}
+ catch(error){console.warn('WTW_BROWSER_PROFILE_CLEANUP_WARNING '+JSON.stringify({code:error?.code,message:error?.message}))}
 }
