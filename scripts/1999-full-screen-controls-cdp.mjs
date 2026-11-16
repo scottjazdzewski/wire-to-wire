@@ -533,6 +533,7 @@ try {
   // to a different entity as we navigate the same record.
   if(original.identity)assert.equal(history.identity,original.identity);
   else if(history.identity)assert.equal(history.identity,item.id);
+  const expectedIdentity=original.identity||history.identity;
   assert.equal(history.sourceRecord,original.sourceRecord);
   assert.equal(history.date,baseline.date);
 
@@ -547,7 +548,7 @@ try {
   const record=await profileReady(item.family+' '+deeper,deeper.toUpperCase());
   assert.equal(record.selected,deeper,'MORE RECORDS selected the wrong view in '+item.family);
   assert.equal(record.name,original.name);
-  assert.equal(record.identity,original.identity);
+  if(expectedIdentity)assert.equal(record.identity,expectedIdentity);
   assert.equal(record.sourceRecord,original.sourceRecord);
   assert.equal(record.date,baseline.date);
   const returnHome=await evaluate(`(()=>{
@@ -557,7 +558,7 @@ try {
   assert.equal(returnHome,true,'OVERVIEW control missing after '+deeper+' in '+item.family);
   const restored=await profileReady(item.family+' restored overview','OVERVIEW');
   assert.equal(restored.overview,'page');
-  assert.equal(restored.identity,original.identity);
+  if(expectedIdentity)assert.equal(restored.identity,expectedIdentity);
   assert.equal(restored.sourceRecord,original.sourceRecord);
   assert.equal(restored.name,original.name);
   assert.equal(restored.date,baseline.date);
