@@ -7,6 +7,8 @@ import {premierOfferId,scorePremierJockeyOffer,premierBonusCap}
  from '../public/1999/engine/jockey-premier-market-1999.mjs';
 import {get1999JockeyPartnership}
  from '../public/1999/engine/jockey-partnerships-1999.mjs';
+import {book1999LostPremierFallbacks}
+ from '../src/game/race-agents-1999.js';
 import {quote1999PlayerRacePlan,confirm1999PlayerRacePlan}
  from '../src/game/player-race-plan-1999.js';
 
@@ -295,4 +297,65 @@ test('decades of saved jockey offers cannot fill the live save with old declined
  const saved=JSON.parse(JSON.stringify(s));
  assert.equal(Object.keys(saved.runtime.racing.premier_offers).length,0);
  assert.deepEqual(saved.runtime.entries,s.runtime.entries);
+});
+
+test('losing AI trainer hires affordable real alternate after G1 bid without affecting the winner',()=>{
+ const s=fixture(),{act,events}=entrants(s);
+ const alternate='P-1999-LOCAL-FALLBACK-01';
+ s.runtime.racing.jockeys[alternate]={id:alternate,
+  home_track_id:'T-0017',tier:'REGIONAL',starts:0,wins:0,
+  skills:{judgment:.96,horse_handling:.95,finish:.91,pace:.89,composure:.87},
+  game_reputation:.76};
+ s.runtime.racing.jockey_finances_minor[alternate]=0;
+ act('OFFER_1999_PREMIER_JOCKEY',{race_id:raceId,
+  horse_id:horseIds[0],jockey_id:jockeyId,bonus_minor:80000},'player');
+ act('OFFER_1999_PREMIER_JOCKEY',{race_id:raceId,
+  horse_id:horseIds[1],jockey_id:jockeyId,bonus_minor:120000},'system');
+ s.clock.date='1999-01-08';
+ assert.deepEqual(resolve1999PremierJockeyOffers({state:s,world,
+  emit:(kind,details)=>events.push({kind,details})}),
+  {signed:1,declined:1,pending:0});
+ const loser=s.runtime.entries[raceId+':'+horseIds[1]];
+ assert.equal(loser.status,'ENTERED');
+ const before=s.runtime.finances.operation_balances_minor[ownerIds[1]];
+ const result=book1999LostPremierFallbacks({state:s,world,
+  emit:(kind,details)=>events.push({kind,details})});
+ assert.deepEqual(result,{booked:1,unavailable:0,playerDecisions:0});
+ assert.equal(loser.status,'BOOKED');
+ assert.equal(loser.jockey_id,alternate);
+ assert.ok(loser.fee_minor>0);
+ assert.equal(before-s.runtime.finances.operation_balances_minor[ownerIds[1]],
+  loser.fee_minor,'Only actually signed fallback mount charges rival owner');
+ assert.equal(s.runtime.racing.jockey_finances_minor[alternate],loser.fee_minor);
+ assert.equal(s.runtime.entries[raceId+':'+horseIds[0]].jockey_id,jockeyId);
+ assert.ok(events.some(e=>e.kind==='AI_PREMIER_FALLBACK_BOOKED'));
+ const ledger=structuredClone(s.runtime.finances.ledger);
+ assert.deepEqual(book1999LostPremierFallbacks({state:s,world,emit:()=>{}}),
+  {booked:0,unavailable:0,playerDecisions:0},
+  'Fallback cannot rebook or double-charge a horse already booked');
+ assert.deepEqual(s.runtime.finances.ledger,ledger);
+ assert.deepEqual(JSON.parse(JSON.stringify(s.runtime.entries)),s.runtime.entries);
+});
+test('player loses rival G1 bid: must choose own replacement, no AI booking, no debit',()=>{
+ const s=fixture(),{act,events}=entrants(s);
+ // Make the rival an objectively better prospect and higher offer.
+ s.runtime.registered_horses.by_id[horseIds[0]].
+  starting_attributes.current_ability=65;
+ s.runtime.registered_horses.by_id[horseIds[1]].
+  starting_attributes.current_ability=98;
+ act('OFFER_1999_PREMIER_JOCKEY',{race_id:raceId,
+  horse_id:horseIds[0],jockey_id:jockeyId,bonus_minor:80000},'player');
+ act('OFFER_1999_PREMIER_JOCKEY',{race_id:raceId,
+  horse_id:horseIds[1],jockey_id:jockeyId,bonus_minor:120000},'system');
+ s.clock.date='1999-01-08';
+ assert.equal(resolve1999PremierJockeyOffers({state:s,world,
+  emit:(kind,details)=>events.push({kind,details})}).signed,1);
+ assert.equal(s.runtime.entries[raceId+':'+horseIds[0]].status,'ENTERED');
+ const before=s.runtime.finances.operation_balances_minor[ownerIds[0]];
+ const result=book1999LostPremierFallbacks({state:s,world,
+  emit:(kind,details)=>events.push({kind,details})});
+ assert.deepEqual(result,{booked:0,unavailable:0,playerDecisions:1});
+ assert.equal(s.runtime.entries[raceId+':'+horseIds[0]].jockey_id,null);
+ assert.equal(s.runtime.finances.operation_balances_minor[ownerIds[0]],before);
+ assert.ok(events.some(e=>e.kind==='PLAYER_PREMIER_FALLBACK_AVAILABLE'));
 });
