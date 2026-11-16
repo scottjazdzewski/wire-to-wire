@@ -29,6 +29,7 @@ jobs:
           node-version: '22'
       - name: Full track, calendar and shipping matrix
         run: |
+          set -o pipefail
           node --test tests/1999-world-integrity-circuits.test.mjs \
             tests/1999-full-world-approved-geography.test.mjs \
             tests/1999-physical-shipping-and-away-race.test.mjs \

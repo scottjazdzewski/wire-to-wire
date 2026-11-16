@@ -75,9 +75,20 @@ test('every 1999 calendar card across all tracks remains unopened and matches it
  for(const [id,n] of Object.entries(expected))
   assert.equal(dates.get(id).size,n,'owner-approved expansion '+id);
 });
-test('all domestic 1999 track-pair shipping quotes are symmetric, funded amounts and real travel durations',()=>{
- const domestic=active.map(site).filter(x=>x.location.country==='USA');
- assert.ok(domestic.length>=95,'unexpectedly low US circuit coverage');
+test('all mainland US 1999 track-pair shipping quotes are symmetric with real modeled costs and durations',()=>{
+ const usSites=active.map(site).filter(x=>x.location.country==='USA');
+ const offshore=usSites.filter(x=>x.location.state==='Puerto Rico');
+ const domestic=usSites.filter(x=>x.location.state!=='Puerto Rico');
+ assert.ok(domestic.length>=95,'unexpectedly low continental circuit coverage');
+ assert.equal(offshore.length,1,'El Comandante is an offshore Puerto Rico operation');
+ for(const destination of offshore){
+  for(const origin of [domestic[0],domestic.at(-1)]){
+   assert.equal(modeledShippingRoute(origin,destination).supported,false,
+    'do not invent a mainland road route to Puerto Rico');
+   assert.equal(modeledShippingRoute(destination,origin).supported,false,
+    'offshore return shipping requires a separate modeled air/sea carrier');
+  }
+ }
  let examined=0,crossCountry=0,regional=0;
  for(let i=0;i<domestic.length;i++){
   for(let j=i+1;j<domestic.length;j++){
@@ -99,7 +110,8 @@ test('all domestic 1999 track-pair shipping quotes are symmetric, funded amounts
  }
  assert.ok(examined>4000&&crossCountry>0&&regional>0);
  console.info('WTW_1999_ROUTE_MATRIX',JSON.stringify({
-  domesticTrackPairs:examined,crossCountry,regional}));
+  mainlandPairs:examined,offshoreRequiringAirSeaCarrier:offshore.length,
+  crossCountry,regional}));
 });
 test('cross-track schedules leave time for modeled physical shipping and two-day arrival buffer',()=>{
  const west=site(TRACK_PROGRAM_1999['T-0017']);
