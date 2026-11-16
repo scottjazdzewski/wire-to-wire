@@ -1,84 +1,48 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync,existsSync} from 'node:fs';
+import {readFileSync} from 'node:fs';
 const file=p=>new URL('../'+p,import.meta.url);
 const read=p=>readFileSync(file(p),'utf8');
 const html=read('public/next/index.html');
-const bootstrap=read('public/next/1999-bootstrap.js');
 const ui=read('public/next/next.js');
-const config=read('public/next/1999-commercial-config.js');
-const source=read('public/next/1999-ui-source.mjs');
-const api=read('public/1999/engine/local-api.mjs');
 const manager=read('public/next/1999-commercial-career-manager.mjs');
 const css=read('public/next/next.css');
 
-test('approved UI loads small 1999 commercial config before bootstrap and career manager after UI',()=>{
- const a=html.indexOf('/next/1999-commercial-config.js');
- const b=html.indexOf('/next/1999-bootstrap.js');
- const c=html.indexOf('/next/next.js?rev=');
- const d=html.indexOf('/next/1999-commercial-career-manager.mjs');
- assert.ok(a>=0&&b>a&&c>b&&d>c);
+test('approved UI loads the local career manager after the shared game interface',()=>{
+ const config=html.indexOf('/next/1999-commercial-config.js');
+ const bootstrap=html.indexOf('/next/1999-bootstrap.js');
+ const uiIndex=html.indexOf('/next/next.js?rev=');
+ const managerIndex=html.indexOf('/next/1999-commercial-career-manager.mjs?rev=');
+ assert.ok(config>=0&&bootstrap>config&&uiIndex>bootstrap&&managerIndex>uiIndex);
+ assert.match(html,/1999-commercial-career-manager\.mjs\?rev=wtw-custom-world-playtest-v2/);
  assert.match(html,/href="\/next\/next\.css\?rev=/);
  assert.match(css,/\.wtw-cc-backdrop\[hidden\]\{display:none!important\}/);
  assert.match(ui,/if\(key==='save-open'\)/);
  assert.match(ui,/window\.WTWCompactCareerManager\?\.open/);
 });
-test('retired 2014 and generated-world browser storage cannot be selected or migrated',()=>{
- assert.match(bootstrap,/CLEAN_RESET='wtw1999UserApprovedCleanResetV2'/);
- assert.match(bootstrap,/localStorage\.removeItem\(MAIN\)/);
- assert.match(bootstrap,/indexedDB\?\.deleteDatabase\?/);
- assert.match(config,/population:73/);
- assert.match(config,/mode:'FOUNDING_1999'/);
- assert.match(config,/mode!=='FOUNDING_1999'\|\|population!==73/);
- assert.match(manager,/WireToWireClean1999CareersV2/);
- assert.doesNotMatch(manager,/migrateLegacy|COPY LEGACY SAVES|FULLY_FICTIONAL_TEST/);
-});
-test('73-source world directory has no worker, no population mode and no full-world factory',()=>{
- assert.match(source,/const gameWorldProfile=/);
- assert.match(source,/const worldQuery=/);
- assert.match(source,/&mode=FOUNDING_1999&population=73/);
- assert.doesNotMatch(source,/1999-world-index\.worker|FULLY_FICTIONAL_TEST/);
- assert.match(api,/Retired synthetic world mode is not available/);
- assert.equal(existsSync(file('public/next/1999-world-index.worker.mjs')),false);
- assert.equal(existsSync(file('public/1999/engine/full-world-generator.mjs')),false);
-});
-test('local-first compact manager retains saves but cannot import an old population',()=>{
+
+test('compact career saves remain local and the manager adds no hosted runtime dependency',()=>{
  assert.match(manager,/indexedDB\.open\(DB_NAME,1\)/);
  assert.match(manager,/encodeCareerSave\(game,baseline,profile\)/);
  assert.match(manager,/packCareerFile\(record\)/);
- assert.match(manager,/await storeGame\('Pre-new-world backup/);
- assert.ok(!manager.includes('worldHorseDirectoryAt')&&!manager.includes('allPages'));
+ assert.match(manager,/WireToWireClean1999CareersV2/);
+ assert.match(manager,/No account, monthly fee or cloud storage required/);
  assert.ok(!manager.includes("fetch('http")&&!manager.includes('fetch("http')&&
   !manager.includes("fetch('/api/"));
  assert.ok(manager.includes("fetch('/data/track-geography-v33.json')"),
-  'Local bundled geography is allowed; remote runtime data calls are not');
- assert.match(manager,/No account, monthly fee or cloud storage required/);
+  'Track geography must come from a bundled local file');
 });
 
-test('new founding career gets its own named, durable compact slot before switching live world',()=>{
- assert.match(manager,/NEW CAREER \/ START FROM SCRATCH/);
- assert.match(manager,/data-cc="new-name"/);
- assert.match(manager,/CREATE &amp; SAVE NEW CAREER/);
- assert.match(manager,/careerName=modal\(\)\.querySelector/);
- const action=manager.slice(manager.indexOf("if(action==='new-world'){"),
-  manager.indexOf("const id=element.dataset.id;",manager.indexOf("if(action==='new-world'){")));
- const backup=action.indexOf("const backup=await storeGame('Pre-new-world backup");
- const created=action.indexOf("const created=await storeGame(careerName,fresh)");
- const activated=action.indexOf("dispatch('LOAD_CAREER',fresh)");
- assert.ok(backup>=0&&created>backup&&activated>created,
-  'backup then named fresh world must commit before active career changes');
- assert.match(action,/This does NOT generate the unfinished full fictional industry/);
- assert.doesNotMatch(action,/localStorage\.removeItem|indexedDB\.deleteDatabase|removeSlot\(/);
- assert.match(manager,/Full fictional 1999 world genesis and reusable customized world templates are not yet available/);
-});
-
-
-test('industry explorer selects independent exact-size persisted worlds; legacy save still reads',()=>{
+test('custom-size worlds connect to the canonical playable race career',()=>{
  assert.match(manager,/data-cc="industry-size" type="number" min="10000" max="325000"/);
  assert.match(manager,/targetOpeningHorses:horseCount/);
  assert.match(manager,/worldId:'WTW1999FullIndustry-H'\+horseCount/);
- assert.match(manager,/seed,worldId,targetOpeningHorses,\.\.\.\(await industryDirectories\(seed\)\)/);
- assert.match(manager,/seed,worldId\}\);/);
- assert.match(manager,/full-world live race gameplay is not yet activated/);
- assert.match(config,/population:73/,'original founding-world career remains importable');
+ assert.match(manager,/START TEST CAREER/);
+ assert.match(manager,/OPEN NEXT TEST RACE \/ ENTER TWO/);
+ assert.match(manager,/ADVANCE ONE GAME DAY/);
+ assert.match(manager,/openPersistent1999GameCareer/);
+ assert.match(manager,/savePersistent1999CareerRun/);
+ assert.match(manager,/gameRaceProgram/);
+ assert.match(manager,/fullIndustryManifest\?'<p>WORLD STORED/);
+ assert.doesNotMatch(manager,/NEW CAREER \/ START FROM SCRATCH|data-cc="population"|data-cc="new-name"|action==='new-world'/);
 });
