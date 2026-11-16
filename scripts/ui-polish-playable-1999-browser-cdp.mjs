@@ -136,6 +136,36 @@ try{
  await evaluate('(()=>{const ui=window.__WTW_NEXT__;ui.app.section="World";ui.app.page="Tracks";ui.app.custom="WorldRecord:track:T-0002";ui.app.detailTab="Overview";ui.paint();return true;})()');
  const tabs=await evaluate('(()=>[...document.querySelectorAll("#wtwNextgen .ng-person-dossieractions button[data-ng=detailtab]")].map(x=>x.dataset.val))()');
  audit.push({route:'belmont-track-tabs',tabs});
+
+ // Treat no page scroll, no clipped controls, and valid source profiles as
+ // release gates, not decorative screenshot evidence.
+ const rendered=audit.filter(x=>typeof x.ready==='boolean');
+ for(const row of rendered){
+  assert.ok(row.ready,'Route failed to open: '+row.route+' '+row.viewport);
+  assert.ok(row.shellFits,'Management shell clipped: '+row.route+' '+row.viewport);
+  assert.ok(row.horizontalOverflow<=3&&row.verticalOverflow<=3,
+   'Document overflow: '+row.route+' '+row.viewport);
+  assert.equal(row.unwiredButtons,0,'Inert buttons: '+row.route+' '+row.viewport);
+  assert.equal(row.offscreenControls.length,0,
+   'Offscreen actions: '+row.route+' '+row.viewport+' '+JSON.stringify(row.offscreenControls));
+  assert.equal(row.brokenImages.length,0,'Broken visible marks: '+row.route+' '+row.viewport);
+ }
+ const belmontNarrow=audit.find(x=>x.route==='track-belmont'&&x.viewport==='1280x720');
+ assert.ok(belmontNarrow?.stakeScroll?.overflow==='auto','Belmont stakes must scroll in own panel');
+ assert.ok(belmontNarrow.stakeScroll.content>belmontNarrow.stakeScroll.height,
+  'Belmont narrow stakes roster must not be clipped');
+ const stableNarrow=audit.find(x=>x.route==='stable'&&x.viewport==='1024x768');
+ assert.ok(stableNarrow?.ready,'1024 Stable screen missing');
+ // Exercise the actual World Tracks row -> canonical track dossier action.
+ await evaluate('(()=>{const ui=window.__WTW_NEXT__;ui.app.section="World";ui.app.page="Tracks";ui.app.custom="World — Tracks";ui.paint();return true;})()');
+ await delay(260);
+ const worldTrackLink=await evaluate('(()=>{const root=document.getElementById("wtwNextgen");const btn=[...root.querySelectorAll("button[data-ng=dept-open]")].find(x=>x.textContent.includes("Belmont Park"));if(!btn)return {clicked:false,rows:root.querySelectorAll("button[data-ng=dept-open]").length};btn.click();return {clicked:true};})()');
+ await delay(250);
+ const trackOpened=await evaluate('(()=>({custom:window.__WTW_NEXT__.app.custom,shown:!!document.querySelector("#wtwNextgen .ng-profile-track")}))()');
+ assert.equal(worldTrackLink.clicked,true,'World Tracks Belmont row does not exist');
+ assert.ok(trackOpened.shown&&trackOpened.custom.includes('track:T-0002'),
+  'World Tracks row did not navigate to canonical Belmont Profile: '+JSON.stringify(trackOpened));
+ audit.push({route:'world-to-belmont-click',...trackOpened});
  const report={phase,base:'playable-1999',world,viewports,audit,screenshots};
  writeFileSync(output+'/audit.json',JSON.stringify(report,null,2));
  console.log('WTW_UI_POLISH_PHASE '+phase);
