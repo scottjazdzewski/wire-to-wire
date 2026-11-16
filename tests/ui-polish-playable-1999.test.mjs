@@ -19,6 +19,18 @@ test('live track links open canonical source IDs, never dormant Office fixtures'
  assert.doesNotMatch(handler,/bridgeNode|\.right \.fixture/);
 });
 
+test('Calendar venue name links open canonical Track Profiles before other record search',()=>{
+ const a=ui.indexOf("function openEntityRecord(name,preferred='',row=null){");
+ const b=ui.indexOf("function ",a+15);
+ assert.ok(a>0&&b>a);
+ const block=ui.slice(a,b);
+ assert.match(block,/if\(preferred==='track'\)/);
+ assert.match(block,/world1999Match\('track',name\)/);
+ assert.match(block,/openWorld1999Entity\(venue.worldKey\)/);
+ assert.ok(block.indexOf("if(preferred==='track')")<block.indexOf('entitySourceMatch('),
+  'Legacy Office search must not steal Calendar Track links');
+});
+
 test('Office Race Schedule visible rows no longer target retired fixtureList DOM',()=>{
  const begin=ui.indexOf("if(key==='fixture'){");
  const end=ui.indexOf("if(key==='track'){",begin);
