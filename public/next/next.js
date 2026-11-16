@@ -3191,7 +3191,8 @@ function depRacingCalendar(){
  const rows=Array.from({length:leading},()=>'<span class="ng-racing-calendar-pad"></span>');
  for(let day=1;day<=days;day++){
   const iso=month+'-'+String(day).padStart(2,'0');
-  const counts=window.__WTW_1999_UI_DATA__?.racingDaySummary?.(iso,selected)||{trackCount:0,plannedStakes:0};
+  const counts=window.WTWCompactCareerManager?.playableCalendarSummary?.(iso,selected)??
+  window.__WTW_1999_UI_DATA__?.racingDaySummary?.(iso,selected)??{trackCount:0,plannedStakes:0};
   const activity=counts.trackCount?counts.trackCount+' '+(selected?'card':'tracks'):'DARK';
   const stake=counts.plannedStakes?' · '+counts.plannedStakes+' stakes':'';
   rows.push('<button type="button" data-ng="racing-calendar-day" data-val="'+iso+'" class="'+
@@ -3315,6 +3316,12 @@ function depFacilityRows(page,demo){
 }
 
 function depRows(section,page,demo,auction){
+ if(section==='Racing'&&(page==='Calendar'||page==='Race Planning'||
+  page==='Overview'&&APP.racingMode==='day')){
+  const live=window.WTWCompactCareerManager?.playableCalendarRows?.(
+   depRaceBrowseDate(),APP.racingTrack);
+  if(live)return live;
+ }
  // Populate the EXISTING OOTP/FM Personnel list with source-named pilot jockeys,
  // keeping all ratings, mounts, contracts and income blank until engine authoring.
  if(isClean1999()&&section==='Personnel'&&
@@ -3748,7 +3755,16 @@ function departmentRoster(section,page='Overview'){
   Boolean(window.__WTW_1999_UI_DATA__?.breedingMareBrowse);
  const virtualBroodmares=section==='Breeding'&&page==='Broodmares'&&!globalMareDirectory&&
   window.__WTW_1999_UI_DATA__?.breedingMarePage;
- const globalDirectory=globalHorseDirectory||globalMareDirectory;
+ // Keep the existing table shape and controls; only the data source changes.
+ // No 70k-person DOM or legacy 73-horse shadow world.
+ const liveKind=section==='World'&&page==='People'?'people':
+  section==='World'&&page==='Organizations'?'organizations':
+  section==='Facilities'&&page==='Farms'?'farms':
+  section==='Personnel'&&page==='Trainers'?'trainers':
+  section==='Personnel'&&page==='Jockeys'?'jockeys':
+  section==='Personnel'&&page==='Owners'?'owners':null;
+ const liveDirectory=Boolean(liveKind&&window.WTWCompactCareerManager?.playableWorldStatus?.());
+ const globalDirectory=globalHorseDirectory||globalMareDirectory||liveDirectory;
  const virtualMethod=virtualHorseIndex?'worldHorsePage':virtualBroodmares?'breedingMarePage':null;
  // Large populations stay in the generator. Load a window, not 26k or 87.5k
  // complete horse profiles into every table render.
@@ -3763,18 +3779,25 @@ function departmentRoster(section,page='Overview'){
    if(offset+100>=virtualTotal)break;
   }
  }
- let rows=virtualMethod?virtualData:depRows(section,page,demo,auction);
+ let rows=virtualMethod?virtualData:liveDirectory?[]:depRows(section,page,demo,auction);
  const search=APP.departmentSearch.trim().toLowerCase();
- if(search&&!virtualMethod)rows=rows.filter(r=>specs.some(([key])=>String(r[key]??'').toLowerCase().includes(search)));
+ if(search&&!virtualMethod&&!liveDirectory)rows=rows.filter(r=>specs.some(([key])=>String(r[key]??'').toLowerCase().includes(search)));
  const rosterScope=section+'|'+page;
  const departmentMode=APP.departmentModes[rosterScope]==='compact'?'compact':'all';
  const rosterFilter=window.WTW1999RosterFilters?.get(APP,rosterScope)||null;
- if(rosterFilter)rows=rows.filter(r=>window.WTW1999RosterFilters.matches(r,rosterFilter));
+ if(rosterFilter&&!liveDirectory)rows=rows.filter(r=>window.WTW1999RosterFilters.matches(r,rosterFilter));
  const defaultSort=section==='World'?'name':section==='Sales'&&page==='Watchlist'?'auction':section==='Racing'&&(page==='Calendar'||page==='Race Planning'||page==='Overview'&&APP.racingMode==='day')?'track':section==='Racing'&&(page!=='Overview'||APP.racingMode==='mine'||APP.racingTrack)?'date':section==='Sales'&&page!=='Sale Calendar'&&page!=='Sale Companies'?'hip':section==='Finances'?'date':specs[0][0];
  const selectedSort=specs.some(x=>x[0]===APP.departmentSortKey)?APP.departmentSortKey:defaultSort;
  const sign=APP.departmentSortKey?(APP.departmentSortDesc?-1:1):(section==='Finances'?-1:1);
  let globalIndexing=false,globalProgress=0;
- if(globalDirectory){
+ if(liveDirectory){
+  const result=window.WTWCompactCareerManager.playableDirectoryBrowse({
+   kind:liveKind,offset:0,limit:APP.departmentScrollLimit,
+   search:APP.departmentSearch,sort:selectedSort,desc:sign<0,filters:rosterFilter||{}
+  });
+  rows=result.items||[];virtualTotal=result.total||0;
+ }
+ if(!liveDirectory&&(globalHorseDirectory||globalMareDirectory)){
   const browse=globalHorseDirectory?'worldHorseBrowse':'breedingMareBrowse';
   const result=window.__WTW_1999_UI_DATA__[browse]({
    offset:0,limit:APP.departmentScrollLimit,search:APP.departmentSearch,
@@ -4790,6 +4813,8 @@ window.addEventListener('click',e=>{
  if(key==='dept-company'){APP.departmentCompany=val;return pageTab('Sale Calendar')}
  if(key==='dept-open'){
   const r=APP.departmentVisible[Number(val)];if(!r)return;
+  if(r._wtwGeneratedWorld&&['person','farm'].includes(r._kind))
+   return previewRecordRoute(r._kind,r._name,r);
    if(r._kind==='race')return open1999Race(r._raceData||r);
   if(r._mareIndex!=null){
    const full=window.__WTW_1999_UI_DATA__?.breedingMareByModelIndex?.(r._mareIndex);
