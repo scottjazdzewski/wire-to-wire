@@ -3005,7 +3005,7 @@ function liveStableRosterView(directory=false){
    '<span class="ng-horse-owner-badge is-known" title="Owner: '+safe(x.owner)+'">'+
    organizationLogoMarkup(x.ownerId,x.owner,'organization',false,false)+'</span>':
    horseOwnerBadge(x.name);
-  const name='<button type="button" class="ng-rs-horse" data-ng="'+(directory?'directory-horse':x.horseId?'career-horse':'horse')+'" data-val="'+safe(directory?x._directoryId:x.horseId||x.name)+'">'+(directory?'':ownerMark)+
+  const name='<button type="button" class="ng-rs-horse" data-ng="'+(directory?'directory-horse':'horse')+'" data-val="'+safe(directory?x._directoryId:x.name)+'"'+(x.horseId?' data-horse-id="'+safe(x.horseId)+'"':'')+'>'+(directory?'':ownerMark)+
    '<span>'+safe(x.name)+'</span></button>';
   const datum=[cell(name,'ng-rs-first'),txt(x.age,'ng-rs-numeric'),txt(x.sex,'ng-rs-numeric'),
    cell(liveStableSignal(...x.health)),cell(liveStableSignal(...x.ready)),
