@@ -60,3 +60,36 @@ test('release capture covers three actual laptop sizes and approved four tracks'
  assert.match(qa,/start-test-career/);
  assert.match(qa,/Page.captureScreenshot/);
 });
+
+
+test('active custom-world Stable and World data bind to the ONE persisted canonical game run',()=>{
+ const manager=read('public/next/1999-commercial-career-manager.mjs');
+ assert.match(manager,/function playableWorldStatus\(\)/);
+ assert.match(manager,/function playableStableRows\(\)/);
+ assert.match(manager,/c\.run\.stable_horse_ids\.map\(id=>/);
+ assert.match(manager,/function playableWorldHorseBrowse\(\{/);
+ assert.match(manager,/c\.world\.entities\.horses/);
+ assert.match(manager,/const pageSize=Math\.max\(1,Math\.min\(160,/);
+ assert.match(manager,/function playableHorseProfile\(identity\)/);
+ assert.match(manager,/function playableRacingRows\(\)/);
+ assert.match(ui,/window\.WTWCompactCareerManager\?\.playableStableRows\?\.\(\)/);
+ assert.match(ui,/window\.WTWCompactCareerManager\?\.playableRacingRows\?\.\(\)/);
+ assert.match(ui,/window\.WTWCompactCareerManager\?\.playableWorldHorseBrowse\?\.\(\{/);
+ assert.match(ui,/offset:APP\.directoryPage\*160,limit:160/);
+ assert.match(ui,/if\(generated\?\._wtwGeneratedWorld\)return restored1999Profile/);
+ assert.match(ui,/data-ng="directory-page"/);
+ assert.match(ui,/ng-world-playable-banner/);
+ assert.match(ui,/No verified veterinary examination/);
+ assert.match(ui,/1999 GAME MODEL/);
+});
+test('the generated horse directory never renders the 300,000-record array',()=>{
+ const source=ui.slice(ui.indexOf('function worldDirectoryHorseRows(){'),
+  ui.indexOf('function liveDirectoryHorseData(',ui.indexOf('function worldDirectoryHorseRows(){')));
+ assert.match(source,/const generated=window\.WTWCompactCareerManager\?\.playableWorldHorseBrowse\?\.\(\{/);
+ assert.match(source,/if\(generated\)return generated/);
+ const roster=ui.slice(ui.indexOf('function liveStableRosterView(directory=false){'),
+  ui.indexOf('function functionalRoute(',ui.indexOf('function liveStableRosterView(directory=false){')));
+ assert.match(roster,/if\(!universe\?\.paged\)filtered\.sort/);
+ assert.match(roster,/directory&&universe\?\.paged/);
+ assert.match(ui,/APP\.directoryPage=0;return paint\(\)/);
+});
