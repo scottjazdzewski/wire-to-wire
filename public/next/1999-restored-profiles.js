@@ -99,7 +99,8 @@ function source(kind,record,ui){
   // Clean founding people are APPROVED identities, not approved test ratings.
   // Preserve the model for later explicit gameplay-test admission only.
   const sourceModel=!founding&&personId?ui?.sourcePersonModel?.(personId):null;
-  const modelPersonTraits=founding?{}:(d._testAttrs||sourceModel?.attributes||{});
+  const modelPersonTraits=generated?(d._testAttrs||{}):
+   founding?{}:(d._testAttrs||sourceModel?.attributes||{});
   node.dataset.personId=personId;
   node.dataset.operatingOrganizationId=d.operatingOrganizationId||'';
   node.dataset.investorInOrganizationId=d.investorInOrganizationId||'';
@@ -138,20 +139,25 @@ function source(kind,record,ui){
   const location=d.location||d.locationLabel||'';
   const chief=d.publicPrincipal||d.principalOwner||'';
   const context=d._foundingContext==='facility'?'FACILITY':'OWNERSHIP';
+  const generated=d._wtwGeneratedWorld===true;
   node.dataset.organizationId=id;
   node.dataset.foundingContext=d._foundingContext||'ownership';
   node.innerHTML='<div class="profileSubline">1999 '+safe(context)+' · '+safe(d.type||'FOUNDING ORGANIZATION')+'</div>'+
    field('Location',location||'Not recorded')+
    field('Type',d.type||'Founding institution')+
    field('Owner',chief||'Pending leadership approval')+
-   field('Current status',d.leadershipStatus==='PENDING_USER_REVIEW_NO_APPROVED_PRINCIPAL'?
+   field('Current status',generated?'FICTIONAL 1999 GAME INDUSTRY · MODELED':
+    d.leadershipStatus==='PENDING_USER_REVIEW_NO_APPROVED_PRINCIPAL'?
      'PRINCIPAL NAME NOT APPROVED':'APPROVED FOUNDING INSTITUTION')+
    field('Organization ID',id)+
-   field('Operating capacity','Not certified')+
+   field('Operating capacity',generated?'Not modeled':'Not certified')+
+   (generated?panel('Operating ratings · 1999 GAME MODEL',Object.entries(d.ratings||{})
+    .map(([name,value])=>name+' · '+value+'/100 · modeled, not independently certified')):'')+
    panel('Achievements')+
    panel('Connected Horses')+
    panel('Organization context',[d.approvedOrigin||
-    'No approved separate institution history provided.']);
+    (generated?'Fictional 1999 game industry entity; no historical founding record is claimed.':
+    'No approved separate institution history provided.')]);
  }else if(kind==='track'){
   // Attach the canonical T-ID to the existing Track profile for its available
   // source-published logo. Do not alter identity or racing-calendar state.
