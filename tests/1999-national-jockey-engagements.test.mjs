@@ -6,7 +6,7 @@ import {TRACK_PROGRAM_1999,trackMeetOpen1999}
 import {buildConditionBook1999}
  from '../public/next/1999-condition-book-engine.mjs';
 import {assessJockeySchedule,quoteJockeyMount,jockeyTransferDays,
- jockeyRaceImportance}
+ jockeyRaceImportance,jockeyTierFromPerson}
  from '../public/1999/engine/jockey-engagements-1999.mjs';
 
 const geo=JSON.parse(readFileSync(new URL(
@@ -35,6 +35,27 @@ function commit(s,race,j,horseId){
   jockey_id:j.id,status:'BOOKED'};
  return verdict;
 }
+test('approved elite source riders qualify for national bookings with NO fictional historical ability values',()=>{
+ const source=JSON.parse(readFileSync(new URL(
+  '../public/data/wtw-1999-jockey-pilot-v1.json',import.meta.url),'utf8'));
+ assert.equal(source.jockeys.length,26);
+ const elite=source.jockeys.filter(p=>p.eliteFirstPriority===true);
+ assert.ok(elite.length>=4);
+ assert.ok(elite.every(p=>p.performanceRatings===null));
+ assert.ok(elite.every(p=>jockeyTierFromPerson(p)==='ELITE'));
+ assert.equal(jockeyTierFromPerson({
+  tier:'ESTABLISHED',eliteFirstPriority:true}),'ESTABLISHED',
+  'Explicit persisted tier takes precedence over legacy elite-source flag');
+ const rider=elite.find(p=>p.homeTrackId==='T-0039');
+ assert.ok(rider,'Approved Woodbine-based Canadian elite visitor remains sourced');
+ const j={id:rider.id,home_track_id:rider.homeTrackId,
+  tier:jockeyTierFromPerson(rider)};
+ const spring={id:'GAME-MODELED-INVITATION',track_id:'T-0001',
+  date:'1999-01-20',purse_minor:50000000,stake_id:'WTW-FEATURE',stakes_grade:'G1'};
+ const result=assessJockeySchedule(state(),world,j,spring);
+ assert.equal(result.allowed,true,JSON.stringify(result));
+ assert.equal(result.nationalSchedule,true);
+});
 test('107 true operating venues remain available for national jockey schedules',()=>{
  assert.equal(tracks.length,107);
  assert.equal(new Set(tracks.map(t=>t.id)).size,107);
