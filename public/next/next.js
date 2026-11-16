@@ -2863,7 +2863,8 @@ function liveStableTrainingView(){
 function worldDirectoryHorseRows(){
  const generated=window.WTWCompactCareerManager?.playableWorldHorseBrowse?.({
   offset:APP.directoryPage*160,limit:160,search:APP.directorySearch,
-  sort:APP.directorySort,desc:APP.directorySortDesc
+  sort:APP.directorySort,desc:APP.directorySortDesc,
+  filters:window.WTW1999RosterFilters?.get(APP,'World|1999 Horses')||{}
  });
  if(generated)return generated;
  const adapter=window.__WTW_1999_UI_DATA__;
@@ -2942,7 +2943,7 @@ function liveStableRosterView(directory=false){
   APP.stableMode==='auto'?(window.innerWidth<=1080?'compact':'all'):APP.stableMode;
  if(directory)APP.directoryHorseItems=all;
  const filtered=all.filter(x=>{
-  if(stableCriteria&&!window.WTW1999RosterFilters.matches({
+  if(!universe?.paged&&stableCriteria&&!window.WTW1999RosterFilters.matches({
    name:x.name,age:x.age,sex:x.sexFull||x.sex,status:x.activity,
    health:x.health?.[1],readiness:x.ready?.[1],form:x.form?.[1],
    earnings:x.money,owner:x.owner,trainer:x.trainer,breeder:x.breeder,
@@ -2953,7 +2954,7 @@ function liveStableRosterView(directory=false){
   if(activeFilter==='unassigned'&&x.hasTarget)return false;
   if(activeFilter==='vet'&&!['watch','treat'].includes(x.health[0]))return false;
   if(activeFilter==='ready'&&!['ready','entered'].includes(x.ready[0]))return false;
-  return !search||[x.name,x.activity,x.target,x.owner,x.trainer,x.breeder,x.health[1],x.ready[1]]
+  return universe?.paged||!search||[x.name,x.activity,x.target,x.owner,x.trainer,x.breeder,x.health[1],x.ready[1]]
    .some(v=>String(v||'').toLowerCase().includes(search));
  });
  const ratingScore=x=>x?.value??null;
@@ -5023,7 +5024,7 @@ root.addEventListener('change',event=>{
    const k=field.dataset.ngSelect.slice('roster-filter-'.length);
    const scope=field.closest('.ng-list-filters')?.dataset.filterScope;
    if(scope){window.WTW1999RosterFilters.get(APP,scope)[k]=field.value;
-    APP.departmentScrollLimit=160;APP.departmentScrollReset=true;}
+    APP.departmentScrollLimit=160;APP.departmentScrollReset=true;APP.directoryPage=0;}
    return paint();
   }
   if(field.matches('select[data-ng-select="world-attribute"]')){
@@ -5127,7 +5128,7 @@ root.addEventListener('input',event=>{
   const k=input.dataset.ngInput.slice('roster-filter-'.length);
   const scope=input.closest('.ng-list-filters')?.dataset.filterScope;
   if(scope){window.WTW1999RosterFilters.get(APP,scope)[k]=input.value;
-   APP.departmentScrollLimit=160;APP.departmentScrollReset=true;}
+   APP.departmentScrollLimit=160;APP.departmentScrollReset=true;APP.directoryPage=0;}
   const caret=input.selectionStart;
   paint();
   const field=[...root.querySelectorAll('input[data-ng-input^="roster-filter-"]')]
