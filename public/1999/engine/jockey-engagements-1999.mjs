@@ -77,8 +77,16 @@ export function jockeyTransferDays(a,b){
  if(['AK','HI','PR'].includes(sa)||['AK','HI','PR'].includes(sb))return 2;
  return sa===sb||groupOf(sa)&&groupOf(sa)===groupOf(sb)?1:2;
 }
-const tier=j=>['ELITE','ESTABLISHED','REGIONAL','DEVELOPING'].includes(j?.tier)?
- j.tier:'REGIONAL';
+/** Interpret explicit approved elite source identity without inferring a
+ * historical performance rating. Legacy selected riders carry only their
+ * elite-first-priority identity flag; later generated people have tier.
+ */
+export function jockeyTierFromPerson(person){
+ if(['ELITE','ESTABLISHED','REGIONAL','DEVELOPING'].includes(person?.tier))
+  return person.tier;
+ return person?.eliteFirstPriority===true?'ELITE':'REGIONAL';
+}
+const tier=j=>jockeyTierFromPerson(j);
 export function jockeyRaceImportance(race){
  const purse=Math.max(0,Number(race?.purse_minor??race?.purseMinor??0));
  const graded=String(race?.stakes_grade??race?.stakesGrade??'').toUpperCase();
