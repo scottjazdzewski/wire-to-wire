@@ -602,16 +602,19 @@ test('small persistent industry keeps births, cohorts, and breeding records cohe
  const longLivedId=oldCohort.find(id=>id.includes('-'));
  const longLived=await readPersistent1999LifecycleHorse(store,manifest,runId,longLivedId);
  assert.ok(longLived.age<=31);
- assert.ok(['DECEASED','RETIRED_RACEHORSE','BROODMARE',
-  'RETIRED_BROODMARE','STALLION','RETIRED_STALLION'].includes(longLived.status));
- assert.notEqual(longLived.status,'RACING',
-  'an old horse cannot remain an immortal active runner');
+ assert.equal(longLived.status,'DECEASED',
+  'the 2000 birth cohort must be extinct in the 2031 living population');
  assert.ok(longLived.sireId&&longLived.damId&&longLived.ownerId&&longLived.foalingFarmId,
   'a 31-year-old seasonal horse retains its permanent record and pedigree');
  assert.equal((await loadPersistent1999CareerRun(store,manifest,runId)).gameDate,
   '2031-01-01','the latest multi-decade career checkpoint reopens cleanly');
  const totalLiveBirths=Object.values(final.lifecycle.birthsByYear)
   .reduce((sum,count)=>sum+count,0);
+ const remainingEligibleBirths=Object.entries(final.lifecycle.birthsByYear)
+  .filter(([birthYear])=>Number(birthYear)>=2001)
+  .reduce((sum,[,count])=>sum+count,0);
+ assert.ok(final.lifecycle.population<=remainingEligibleBirths,
+  'no opening horse or 1999/2000 birth may inflate the living 2031 population');
  console.log('WTW_INDUSTRY_THREE_DECADES_MEMORY_PASS '+JSON.stringify({
   seed:manifest.seed,openingHorseCount:manifest.horseCount,annual:populations,
   finalPopulation:final.lifecycle.population,liveBirths:totalLiveBirths,
@@ -620,7 +623,7 @@ test('small persistent industry keeps births, cohorts, and breeding records cohe
   stallionGraduations:stallionsGraduatedSeen.size,longLivedHorseId:longLived.id}));
 });
 
-test('two seeds persist real juvenile debuts and mature attrition through 2005',async()=>{
+test('two seeds persist juvenile debuts and mature attrition; second seed runs 32 seasons',async()=>{
  for(const seed of [19990111,19990113]){
   const store=memoryStore();
   const manifest=await createPersistent1999Industry({store,seed,
@@ -647,7 +650,8 @@ test('two seeds persist real juvenile debuts and mature attrition through 2005',
    gameDate:'1999-09-01',player});
   assert.ok(september.lifecycle.juvenileDebuts>april.lifecycle.juvenileDebuts);
   let final;
-  for(let year=2000;year<=2005;year++){
+  const finalYear=seed===19990113?2031:2005;
+  for(let year=2000;year<=finalYear;year++){
    final=await savePersistent1999CareerRun(store,manifest,{runId,
     gameDate:year+'-01-01',player});
    const events=await readPersistent1999LifecycleEvents(store,manifest,runId,
@@ -661,8 +665,15 @@ test('two seeds persist real juvenile debuts and mature attrition through 2005',
     Object.values(final.lifecycle.birthsByYear).reduce((a,b)=>a+b,0)-
     final.lifecycle.horseDeaths);
   }
-  assert.equal(final.lifecycle.seasonYear,2005);
+  assert.equal(final.lifecycle.seasonYear,finalYear);
   assert.ok(final.lifecycle.matureHorseDeaths>0);
+  if(finalYear===2031){
+   const liveRecentBirths=Object.entries(final.lifecycle.birthsByYear)
+    .filter(([birthYear])=>Number(birthYear)>=2001)
+    .reduce((sum,[,count])=>sum+count,0);
+   assert.ok(final.lifecycle.population<=liveRecentBirths,
+    'the second 32-season seed must not retain expired opening/early cohorts');
+  }
   assert.ok(final.lifecycle.retiredRacehorses>0);
   assert.ok(final.lifecycle.juvenileDebuts>0);
   assert.equal((await readPersistent1999LifecycleHorse(store,manifest,runId,
