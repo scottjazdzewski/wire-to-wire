@@ -1095,8 +1095,16 @@ async function assignRacingHome(horse,patch,{store,manifest,directoryById,
  rosterCache}={}){
  if(patch.status!=='RACING')return patch;
  const owner=directoryById.get(horse.ownerId);
+ // Some legacy/save-compatible owners have no explicit homeTrackId.
+ // Use the existing local track directory deterministically in that case;
+ // never fabricate a track or change the immutable owner's source record.
+ const existingTracks=[...directoryById.values()].filter(entity=>
+  entity.id?.startsWith('T-')).sort((a,b)=>a.id.localeCompare(b.id));
+ const fallbackIndex=Math.floor(seeded1999Unit(manifest.seed,
+  'owner-circuit:'+horse.ownerId)*existingTracks.length);
  const trackId=horse.homeTrackId||owner?.homeTrackId||
-  owner?.relationships?.find(edge=>edge.type==='REGIONAL_CIRCUIT')?.toId;
+  owner?.relationships?.find(edge=>edge.type==='REGIONAL_CIRCUIT')?.toId||
+  existingTracks[fallbackIndex]?.id;
  if(!trackId||!directoryById.get(trackId)?.id?.startsWith('T-'))
   throw Error('Racing transition has no valid owner home circuit '+horse.id);
  let trainerId=horse.trainerId;
