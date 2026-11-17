@@ -208,7 +208,11 @@ test('a canon organization used as owner and farm stays one permanent directory 
   location:{city:'Versailles',region:'Kentucky',country:'USA'},
   homeTrackId:'T-0001',operatingRoles:['BREEDER','LEGAL_OWNER'],
   portfolioTier:'ELITE',maxHorses:900};
- const owners=[shared,...Array.from({length:11},(_,i)=>({
+ const regional={id:'O-TEST-REGIONAL',name:'Regional Partnership',
+  type:'RACING PARTNERSHIP',locationLabel:'Lexington, Kentucky, USA',
+  geographyRecords:[{locality:'Lexington',region:'Kentucky',country:'USA'}],
+  homeTrackId:'T-0001'};
+ const owners=[shared,regional,...Array.from({length:11},(_,i)=>({
   id:'O-TEST-ELITE-'+String(i+1).padStart(2,'0'),portfolioTier:'ELITE',
   maxHorses:900,homeTrackId:'T-0001'}))];
  const manifest=await createPersistent1999Industry({store,seed:19990117,
@@ -222,6 +226,8 @@ test('a canon organization used as owner and farm stays one permanent directory 
  assert.ok(canon[0].operatingRoles.includes('LEGAL_OWNER'));
  assert.ok(canon[0].roleRatings.owner&&canon[0].roleRatings.farm);
  assert.equal(canon[0].relationships.filter(e=>e.type==='REGIONAL_CIRCUIT').length,1);
+ assert.deepEqual(directory.find(row=>row.id===regional.id).location,
+  {city:'Lexington',region:'Kentucky',country:'USA'});
  const owned=await readPersistent1999IndustryBatch(store,manifest,'horseBatches',0);
  assert.ok(owned.some(h=>h.ownerId==='O-000061'));
 });

@@ -367,6 +367,16 @@ export async function createPersistent1999Industry({
  };
  if(!manifest.directoryCommitted){
   const byId=new Map();
+  const operatingLocation=(entity,homeTrackId)=>{
+   const source=(entity.geographyRecords||[]).find(x=>x.locality||x.city)||{};
+   const track=tracks.find(x=>x.id===homeTrackId),local=track?.location||{};
+   const current=entity.location||{};
+   return {city:current.city||current.locality||source.locality||source.city||
+     local.city||local.locality||entity.name||'Unknown',
+    region:current.region||current.state||source.region||source.state||
+     local.region||local.state||'Unknown',
+    country:current.country||source.country||local.country||'USA'};
+  };
   const mergeDirectoryRecord=(record,role,roleRatingKey=role)=>{
    const prior=byId.get(record.id);
    const roles=new Set([...(prior?.operatingRoles||[]),role,
@@ -383,14 +393,18 @@ export async function createPersistent1999Industry({
   };
   for(const track of tracks)
    mergeDirectoryRecord(connect1999DirectoryEntity(track,{seed,type:'track'}),'TRACK');
-  for(const farm of farms)
-   mergeDirectoryRecord(connect1999DirectoryEntity(farm,{seed,type:'farm',
-    homeTrackId:farm.homeTrackId??tracks.find(t=>farm.id.includes(t.id))?.id??null}),
+  for(const farm of farms){
+   const homeTrackId=farm.homeTrackId??tracks.find(t=>farm.id.includes(t.id))?.id??null;
+   mergeDirectoryRecord(connect1999DirectoryEntity({...farm,
+    location:operatingLocation(farm,homeTrackId)},{seed,type:'farm',homeTrackId}),
     'BREEDING_OR_CARE_FACILITY','farm');
-  for(const owner of owners)
-   mergeDirectoryRecord(connect1999DirectoryEntity(owner,{seed,type:'owner',
-    homeTrackId:owner.homeTrackId??tracks.find(t=>owner.id.includes(t.id))?.id??null}),
+  }
+  for(const owner of owners){
+   const homeTrackId=owner.homeTrackId??tracks.find(t=>owner.id.includes(t.id))?.id??null;
+   mergeDirectoryRecord(connect1999DirectoryEntity({...owner,
+    location:operatingLocation(owner,homeTrackId)},{seed,type:'owner',homeTrackId}),
     'LEGAL_OWNER','owner');
+  }
   const records=[...byId.values()];
   const ids=new Set([...tracks,...farms,...owners].map(e=>e.id));
   const audit=validate1999GraphBatch(records,ids);
