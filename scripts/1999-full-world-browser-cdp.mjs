@@ -532,13 +532,13 @@ try{
  assert.ok(kingsmereView.inventoryCount>=5,'Kingsmere opening operation inventory is incomplete');
  assert.equal(kingsmereView.horseRows.length,kingsmereView.inventoryCount,
   'Every owned, managed, boarded and trained Kingsmere horse must be on its roster');
- assert.ok(kingsmereView.horseRows.filter(h=>/^H-\\d{4}-/.test(h.sourceHorseId||'')).length>=5,
+ assert.ok(kingsmereView.horseRows.filter(h=>/^H-\d{4}-/.test(h.sourceHorseId||'')).length>=5,
   'Kingsmere roster must include the five approved canonical breeding residents');
  const kingRunId='WTW-RUN-1999-19990101-SIZE-300000-OP-O-000061';
  const kingsmereAtStart=await readCareerSave(kingRunId);
  assert.equal(kingsmereAtStart.operationId,'O-000061');
  assert.equal(kingsmereAtStart.stableHorses,kingsmereView.inventoryCount);
- const kingsmereFounder=kingsmereView.horseRows.find(h=>/^H-\\d{4}-/.test(h.sourceHorseId||''));
+ const kingsmereFounder=kingsmereView.horseRows.find(h=>/^H-\d{4}-/.test(h.sourceHorseId||''));
  const founderProfile=await browser.evalJS(`(async()=>{
   const input=document.querySelector('[data-cc="inspect-horse"]');
   const button=document.querySelector('[data-cc-action="inspect-full-horse"]');
@@ -562,11 +562,22 @@ try{
  const kingsmereSaved=await readCareerSave(kingRunId);
  assert.equal(kingsmereSaved.operationId,'O-000061');
  assert.equal(kingsmereSaved.stableHorses,kingsmereView.inventoryCount);
+ await browser.evalJS('window.WTWCompactCareerManager.open().then(()=>true)');
+ const kingsmereReopenedView=await waitFor('Kingsmere career manager reopen',async()=>{
+  const view=await browser.evalJS(`(()=>{
+   const v=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+   return v?{operationId:v.operationId,date:v.date,
+    inventoryCount:v.operationInventoryCount,horseRows:v.horseRows.length}:null;
+  })()`);
+  return {done:view?.operationId==='O-000061'&&view?.date==='1999-01-02',value:view};
+ },120000);
+ assert.equal(kingsmereReopenedView.inventoryCount,kingsmereView.inventoryCount);
+ assert.equal(kingsmereReopenedView.horseRows,kingsmereView.inventoryCount);
  console.log('WTW_KINGSMERE_PLAYABLE_SAVE_REOPEN_PASS '+JSON.stringify({
   operationId:kingsmereView.operationId,operationName:kingsmereView.operationName,
   worldHorses:kingsmereView.worldHorseCount,inventory:kingsmereView.inventoryCount,
   relationshipCounts:kingsmereView.relationships,approvedResidentHorses:
-   kingsmereView.horseRows.filter(h=>/^H-\\d{4}-/.test(h.sourceHorseId||'')).length,
+   kingsmereView.horseRows.filter(h=>/^H-\d{4}-/.test(h.sourceHorseId||'')).length,
   gameDate:kingsmereSaved.gameDate,registeredHorses:kingsmereSaved.registeredHorses,
   savedStableHorseCount:kingsmereSaved.stableHorses,horseProfileOpened:true}));
  await browser.evalJS(`(()=>{
