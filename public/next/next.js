@@ -2914,11 +2914,49 @@ function rosterDensityControls(scope,activeMode){
  * links. It must NOT substitute the test-run's 30 active runners for a selected
  * employer, and ownership is never falsely described as barn residency.
  */
+/**
+ * Approved founding farms retain their own immutable source IDs. The legacy
+ * 73 breeding records are never presented as the 300k fictional population;
+ * the exact farm's current records remain accessible for identity reconciliation.
+ */
+function approvedFoundingFarmStableRosterView({id}={}){
+ const org=world1999Data?.organizations?.find(x=>x.id===id);
+ if(!org)return '<section class="ng-functional" role="status">Approved founding farm could not be verified. No replacement organization was selected.</section>';
+ const horses=(world1999Data?.horses||[]).filter(h=>
+  h.farmOrganizationId===id||h.standingFarm1999?.farmOrganizationId===id);
+ const rows=horses.map(h=>'<tr><td><button data-ng="saved-stable-founding-horse" data-val="'+safe(h.id)+'">'+safe(h.name)+'</button></td>'+
+  '<td>'+safe(h.id)+'</td><td>'+safe(h._role||'Not recorded')+'</td>'+
+  '<td>'+safe(h.status||'Not recorded')+'</td><td>'+
+  safe(h.standingFarm1999?.farmName||org.name)+'</td></tr>').join('');
+ return '<section class="ng-functional ng-stable-roster-v2">'+
+  '<div class="ng-rs-title"><strong>'+safe(org.name)+' · APPROVED FOUNDING FARM</strong>'+
+  '<span>'+horses.length+' VERIFIED SOURCE HORSES</span></div>'+
+  '<p>Organization ID: '+safe(id)+' · '+safe(org.locationLabel||'')+'</p>'+
+  '<p>This farm is an existing approved 1999 identity. These source horses must be retained while the full 300,000-horse fictional career is integrated. They are not invented 1999 race starters or automatically active in the new racing engine.</p>'+
+  '<div class="ng-rs-tools">'+
+  '<button type="button" data-ng="saved-stable-current">VIEW GENERATED WORLD OPERATION</button>'+
+  '<button type="button" data-ng="saved-stable-change">CHOOSE ANOTHER OWNER OR TRAINER</button></div>'+
+  '<section class="ng-rs-roster"><header><strong>REGISTERED FARM HORSES</strong>'+
+  '<span>'+horses.length+' SOURCE-LINKED RECORDS</span></header>'+
+  '<div class="ng-rs-scroll" tabindex="0" role="region" aria-label="Approved founding farm horses"><table class="ng-rs-table"><thead><tr>'+
+  '<th>HORSE</th><th>IMMUTABLE HORSE ID</th><th>ROLE</th><th>STATUS</th><th>FARM</th>'+
+  '</tr></thead><tbody>'+(rows||'<tr><td colspan="5">No approved living horses linked to this founding farm.</td></tr>')+
+  '</tbody></table></div></section>'+
+  '<p>These founding IDs must be reconciled with the one official industry and gameplay save. Approved source records remain viewable; no competing world or new racing history has been created.</p></section>';
+}
 function savedWorldAffiliationStableView(){
  const career=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
  if(!career?.worldHorseBrowse||!career?.worldEntityById)
   return '<section class="ng-functional" role="status"><h2>OPENING SAVED STABLE</h2><p>Waiting for the full fictional 1999 world; no legacy horses were substituted.</p></section>';
- const picked=APP.savedStableAffiliation;
+ const savedState=state();
+ const approvedWorkplaceId=savedState?.organization?.id||
+  savedState?.stable?.organizationId||null;
+ const foundingEmployer=!APP.savedStableAffiliation&&
+  !APP.savedStableIgnoreDefaultEmployer&&approvedWorkplaceId?
+  world1999Data?.organizations?.find(o=>o.id===approvedWorkplaceId):null;
+ const picked=APP.savedStableAffiliation||
+  (foundingEmployer?{kind:'founding',id:foundingEmployer.id}:null);
+ if(picked?.kind==='founding')return approvedFoundingFarmStableRosterView(picked);
  const kind=picked?.kind||'organization';
  const entityId=picked?.id||career.operationId;
  const linked=career.worldEntityById(kind,entityId);
@@ -2937,12 +2975,17 @@ function savedWorldAffiliationStableView(){
   const orgs=career.worldEntityBrowse?.('organization',{search:query,limit:12})?.items||[];
   const people=(career.worldEntityBrowse?.('person',{search:query,limit:40})?.items||[])
    .filter(x=>String(x.role).toLowerCase()==='trainer').slice(0,12);
-  choices=[...orgs.map(x=>({...x,_affiliationKind:'organization'})),
+  const founding=(world1999Data?.organizations||[])
+   .filter(x=>x.name.toLocaleLowerCase('en-US').includes(
+    query.toLocaleLowerCase('en-US'))).slice(0,12);
+  choices=[...founding.map(x=>({_id:x.id,name:x.name,
+    _affiliationKind:'founding'})),
+   ...orgs.map(x=>({...x,_affiliationKind:'organization'})),
    ...people.map(x=>({...x,_affiliationKind:'person'}))];
  }
  const buttons=choices.map(e=>'<button type="button" data-ng="saved-stable-choose" data-val="'+
   safe(e._affiliationKind+':'+e._id)+'">'+safe(e.name)+' <small>'+
-  safe(e._affiliationKind==='person'?'TRAINER':'ORGANIZATION')+' · '+safe(e._id)+'</small></button>').join('');
+  safe(e._affiliationKind==='person'?'TRAINER':e._affiliationKind==='founding'?'APPROVED FOUNDING FARM':'GENERATED WORLD ORGANIZATION')+' · '+safe(e._id)+'</small></button>').join('');
  const caption=kind==='person'?'HORSES ASSIGNED TO THIS TRAINER':
   kind==='track'?'HORSES BASED AT THIS RACECOURSE':
   'HORSES OWNED BY THIS ORGANIZATION';
@@ -5137,6 +5180,13 @@ window.addEventListener('click',e=>{
  if(key==='saved-stable-choose'){
   const separator=val.indexOf(':'),kind=val.slice(0,separator),
    id=val.slice(separator+1);
+  if(kind==='founding'){
+   const source=world1999Data?.organizations?.find(x=>x.id===id);
+   if(!source)return;
+   APP.savedStableAffiliation={kind,id};APP.savedStableView='linked';
+   APP.savedStableSearch='';APP.stableSearch='';APP.savedStablePage=0;
+   return paint();
+  }
   const api=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
   const chosen=api?.worldEntityById?.(kind,id);
   if(!chosen||!['organization','person'].includes(kind))return;
@@ -5145,8 +5195,21 @@ window.addEventListener('click',e=>{
   APP.savedStableView='linked';APP.stableSearch='';
   APP.savedStableSearch='';return paint();
  }
+ if(key==='saved-stable-founding-horse'){
+  const found=world1999Data?.horses?.find(h=>h.id===val);
+  if(!found)return;
+  return openWorld1999Entity('horse:'+found.id);
+ }
+ if(key==='saved-stable-change'){
+  APP.savedStableAffiliation=null;APP.savedStableSearch='';
+  APP.savedStablePage=0;APP.savedStableView='linked';
+  // Ignore old Office employer preference only for this explicit browse.
+  APP.savedStableIgnoreDefaultEmployer=true;
+  return paint();
+ }
  if(key==='saved-stable-current'){
   APP.savedStableAffiliation=null;APP.savedStablePage=0;
+  APP.savedStableIgnoreDefaultEmployer=true;
   APP.stableSearch='';APP.savedStableView='linked';return paint();
  }
  if(key==='saved-stable-active'){
