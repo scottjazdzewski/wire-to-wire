@@ -39,6 +39,26 @@ export function connect1999Horse(horse,{seed,trainerCount=0,jockeyCount=0,
  tracks=[],farms=[],owners=[],staffByTrack=null,staffByFarm=null}={}){
  if(!horse?.id||!Number.isSafeInteger(seed)||seed<1)throw Error('Invalid horse graph input');
  const id=horse.id,edges=[];
+ const ratings=rate1999Entity(seed,'horse',id);
+ const development={...(horse.development||{})};
+ let familyDelta=0;
+ if(horse.sireId||horse.damId){
+  const sire=horse.sireId?score(seed,horse.sireId,'breedingValue'):55;
+  const dam=horse.damId?score(seed,horse.damId,'breedingValue'):55;
+  const familyValue=sire*.42+dam*.58;
+  familyDelta=Math.round((familyValue-55)*.22);
+  for(const [attribute,weight] of Object.entries({
+   speed:.55,stamina:.50,acceleration:.45,class:.55,breedingValue:.75
+  }))ratings[attribute]=Math.max(15,Math.min(95,
+   ratings[attribute]+Math.round(familyDelta*weight)));
+  if(Number.isFinite(development.potential))
+   development.potential=Math.max(1,Math.min(99,development.potential+familyDelta));
+ }
+ const resourceAdjustment={HANDFUL:0,SMALL:1,REGIONAL:2,MAJOR:3,ELITE:4}[
+  horse.ownerPortfolioTier]??0;
+ if(Number.isFinite(development.readiness))
+  development.readiness=Math.max(0,Math.min(100,
+   development.readiness+resourceAdjustment));
  const add=(type,target)=>{if(target)edges.push(relationship1999(type,id,target))};
  add('OWNED_BY',horse.ownerId);
  add('BRED_BY',horse.breederId);
@@ -76,9 +96,9 @@ export function connect1999Horse(horse,{seed,trainerCount=0,jockeyCount=0,
  add('TRAINED_AT',trainingBarnId);
  add('TRAINED_BY',trainerId);
  add('PREFERRED_JOCKEY',jockeyId);
- return {...horse,trainerId,jockeyId,careFacilityId,careStaffId,
+ return {...horse,development,trainerId,jockeyId,careFacilityId,careStaffId,
   trainingBarnId,
-  ratings:rate1999Entity(seed,'horse',id),
+  ratings,
   relationships:edges,ratingsProvenance:'MODELED_1999_UNCALIBRATED'};
 }
 export function connect1999Person(person,{seed}={}){

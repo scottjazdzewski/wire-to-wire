@@ -26,6 +26,27 @@ test('clean founding game world still begins with exactly zero racers and zero p
  assert.equal(fresh.stable_horse_ids.length,0);
  assert.equal(source.counts.openingHorses,0);
 });
+test('playable opening attributes use persisted ratings, pedigree development and tier resources',()=>{
+ const horse_id='H-GAME-1999-QUALITY-PROBE';
+ const weak=model1999StartingHorseAttributes({horse_id,seed:19990101,
+  foaling_year:1997,sex:'COLT',ownerPortfolioTier:'HANDFUL',
+  horseRatings:{speed:15,stamina:15,acceleration:15,class:15,
+   consistency:15,surfaceDirt:15,surfaceTurf:15},
+  development:{potential:25,readiness:10,soundness:10}});
+ const strong=model1999StartingHorseAttributes({horse_id,seed:19990101,
+  foaling_year:1997,sex:'COLT',ownerPortfolioTier:'ELITE',
+  horseRatings:{speed:95,stamina:95,acceleration:95,class:95,
+   consistency:95,surfaceDirt:95,surfaceTurf:95},
+  development:{potential:95,readiness:95,soundness:95}});
+ assert.ok(strong.current_ability>weak.current_ability);
+ assert.ok(strong.potential_ability>weak.potential_ability);
+ assert.ok(strong.raw_speed>weak.raw_speed);
+ assert.ok(strong.stamina>weak.stamina);
+ assert.ok(strong.training_focus>weak.training_focus,
+  'elite resources improve readiness without assigning racing outcomes');
+ assert.ok(strong.soundness_risk<weak.soundness_risk,
+  'observed modeled soundness informs race-day risk');
+});
 test('exact 38-horse test cohort has frozen abilities, 8 real registered residences, and zero overbooking',()=>{
  const state=build1999PilotGameRun({world,manifest});
  const horses=Object.values(state.runtime.registered_horses.by_id);

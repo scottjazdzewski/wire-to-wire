@@ -265,7 +265,9 @@ export async function openPersistent1999GameCareer(store,manifest,{
     'OPENING_WORLD:'+manifest.worldId,candidate_id:source.id,
     source_horse_id:source.id},
    starting_attributes:model1999StartingHorseAttributes({horse_id:id,
-    seed:manifest.seed,foaling_year:source.foalYear,sex:source.sex}),
+   seed:manifest.seed,foaling_year:source.foalYear,sex:source.sex,
+   horseRatings:source.ratings,development:source.development,
+   ownerPortfolioTier:source.ownerPortfolioTier}),
    career:{starts:0,wins:0,earnings_minor:0}};
   run.runtime.registered_horses.by_id[id]=h;
   run.runtime.registered_horses.by_receipt[h.registration_receipt_id]=id;
