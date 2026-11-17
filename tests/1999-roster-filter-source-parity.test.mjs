@@ -74,3 +74,25 @@ test('matching and rendering do not mutate the registered horse or organization 
  matches(row,criteria({field:'earnings',query:'-250'}));
  assert.equal(JSON.stringify(row),snapshot);
 });
+
+
+test('the existing Stable attribute ranking prints real age zero rather than unknown',()=>{
+ const attrSource=readFileSync(new URL('../public/next/1999-attribute-ranking.js',import.meta.url),'utf8');
+ const view={window:{}};
+ vm.runInNewContext(attrSource,view,{filename:'1999-attribute-ranking.js'});
+ const adapter={
+  horseAttributeGroups:[{name:'Racing',definitions:[{key:'raw_speed',label:'Speed'}]}],
+  stableHorseAttributes:()=>({raw_speed:0.40}),
+  sourceFacts:()=>({age:0,sex:'C',racing_status:'UNRACED',
+   connections:{owner:'Canonical Owner',trainer:'Canonical Trainer'}})
+ };
+ const markup=view.window.WTW1999AttributeRanking.render({
+  horses:[{name:'Saved Foal'}],adapter,
+  app:{stableAttributeKey:'raw_speed',stableAttributeSort:'raw_speed',
+   stableAttributeDesc:true,stableSearch:'',stableFilter:'attributes'},
+  ownerBadge:()=>'',safe:value=>String(value??'')
+ });
+ assert.match(markup,/<td>0<\/td><td>C<\/td>/,
+  'Age 0 must be visible on the real attribute-ranking screen');
+ assert.match(markup,/Saved Foal/);
+});
