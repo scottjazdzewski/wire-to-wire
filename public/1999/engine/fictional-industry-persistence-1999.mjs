@@ -1151,7 +1151,7 @@ async function assignRacingHome(horse,patch,{store,manifest,directoryById,
  return {...patch,homeTrackId:trackId,trainerId,relationships};
 }
 async function matureHorseRolloverForYear(store,manifest,runKey,year,horseUpdates,{
- overrideMap,addEvent,maturePoolCache,turnover,graduatedYears,
+ overrideMap,addEvent,maturePoolCache,birthCohortCache,turnover,graduatedYears,
  graduatedStallionYears,directoryById,rosterCache}={}){
  let previous=maturePoolCache.get(year-1);
  if(!previous){
@@ -1171,8 +1171,11 @@ async function matureHorseRolloverForYear(store,manifest,runKey,year,horseUpdate
   for(const horse of await readBaseCohort(store,manifest,origin))
    if(horse.foalYear===year-3)entrants.push(horse.id);
  }else{
-  const ids=await store.get('industryLifecycle',lifecycleKey(runKey,
-   'foal-cohort:'+(year-3)))||[];
+  // A multi-year date advance may already have formed this cohort in the
+  // current transaction. Read the in-flight cache before durable prior saves.
+  const cached=birthCohortCache.get(year-3);
+  const ids=cached??(await store.get('industryLifecycle',lifecycleKey(runKey,
+   'foal-cohort:'+(year-3)))||[]);
   entrants.push(...ids);
  }
  const entrantSet=new Set(entrants);
@@ -1471,8 +1474,9 @@ async function advancePersistent1999IndustryLifecycle(store,manifest,{
      previousLiveFoals:current.birthsByYear[year-1]||0});
    for(const update of horseUpdates)overrideMap.set(update.id,update);
    const mature=await matureHorseRolloverForYear(lifecycleStore,manifest,
-    runKey,year,horseUpdates,{overrideMap,addEvent,maturePoolCache,turnover,
-     graduatedYears,graduatedStallionYears,directoryById,rosterCache});
+    runKey,year,horseUpdates,{overrideMap,addEvent,maturePoolCache,
+     birthCohortCache,turnover,graduatedYears,graduatedStallionYears,
+     directoryById,rosterCache});
    addData({key:lifecycleKey(runKey,'mature-pool:'+year),value:mature.members});
    const schedule=await prepareLifecycleSeason(lifecycleStore,manifest,runKey,{
     year,mareRecords:turnover.nextPool,stallionRecords:turnover.nextStallions,
