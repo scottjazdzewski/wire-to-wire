@@ -4,7 +4,7 @@ import {gunzipSync} from 'node:zlib';
 import {readFileSync} from 'node:fs';
 import {unpackShared1999Career} from '../public/1999/engine/shared-1999-career-package.mjs';
 
-const asset=new URL('../public/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER_V6.wtwcareer.gz',import.meta.url);
+const asset=new URL('../public/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER_V7.wtwcareer.gz',import.meta.url);
 const frozenAsset=new URL('../public/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER.wtwcareer.gz',import.meta.url);
 const manager=readFileSync(new URL('../public/next/1999-commercial-career-manager.mjs',import.meta.url),'utf8');
 const industryWorker=readFileSync(new URL('../public/next/1999-industry-bootstrap-worker.mjs',import.meta.url),'utf8');
@@ -12,11 +12,11 @@ const preload=readFileSync(new URL('../desktop/preload.cjs',import.meta.url),'ut
 const desktopSmoke=readFileSync(new URL('../scripts/windows-desktop-smoke.ps1',import.meta.url),'utf8');
 const fullWorldSmoke=readFileSync(new URL('../scripts/1999-full-world-browser-cdp.mjs',import.meta.url),'utf8');
 
-test('the desktop bundles V6 and preserves the frozen May 29 reference career',async()=>{
+test('the desktop bundles V7 and preserves the frozen May 29 reference career',async()=>{
  const compressed=readFileSync(asset);
- assert.ok(compressed.byteLength<2_000_000,'V6 checkpoint should stay under 2 MB');
+ assert.ok(compressed.byteLength<2_000_000,'V7 checkpoint should stay under 2 MB');
  const checkpoint=await unpackShared1999Career(gunzipSync(compressed));
- assert.equal(checkpoint.world.worldId,'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V6-H300000');
+ assert.equal(checkpoint.world.worldId,'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V7-H300000');
  assert.equal(checkpoint.world.seed,19990101);
  assert.equal(checkpoint.world.horseCount,300000);
  assert.equal(checkpoint.world.personCount,75705);

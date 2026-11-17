@@ -260,7 +260,7 @@ function requestedIndustry(){
  // The new cohort model gets its own immutable records; keep legacy manifests
  // addressable through the open-saved fallback below.
  return {seed,targetOpeningHorses:horseCount,
-  worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V6-H'+horseCount};
+  worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V7-H'+horseCount};
 }
 let industryBrowsePage=0,industryBrowseHtml='',industryBrowseKind='horseBatches';
 let industryDirectory=[];
@@ -478,7 +478,7 @@ function bootstrapBundledCareer(){
   await open();
   busy=true;notice='LOADING THE SHARED 1999 TEST CAREER…';await refresh();
   try{
-   const response=await fetch('/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER_V6.wtwcareer.gz?rev=wtw-shared-career-v6-20261117');
+   const response=await fetch('/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER_V7.wtwcareer.gz?rev=wtw-shared-career-v7-20261117');
    if(!response.ok)throw Error('Bundled shared career file is missing ('+response.status+')');
    if(typeof DecompressionStream!=='function')
     throw Error('This Windows build cannot decompress its bundled career checkpoint');
@@ -684,6 +684,11 @@ async function perform(action,element){
   try{
    let reopened=await reopenPersistent1999Industry(db,{seed,worldId});
    if(!reopened){
+    // Partnership naming is a new world identity; retain V6 career data.
+    reopened=await reopenPersistent1999Industry(db,{seed,
+     worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V6-H'+selectedIndustryHorses});
+   }
+   if(!reopened){
     // Keep completed worlds created by the previous cohort model readable.
     reopened=await reopenPersistent1999Industry(db,{
      seed,worldId:'WTW1999FullIndustry-H'+selectedIndustryHorses});
@@ -833,6 +838,9 @@ async function open(){
   const store=await open1999IndustryDatabase();
   try{
    let selected=await reopenPersistent1999Industry(store,{
+    seed:selectedIndustrySeed,
+    worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V7-H'+selectedIndustryHorses});
+   if(!selected)selected=await reopenPersistent1999Industry(store,{
     seed:selectedIndustrySeed,
     worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V6-H'+selectedIndustryHorses});
    if(!selected)selected=await reopenPersistent1999Industry(store,{

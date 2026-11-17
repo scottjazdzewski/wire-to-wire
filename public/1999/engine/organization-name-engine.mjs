@@ -12,7 +12,7 @@ import {
  generationalFarmCandidate,generationalOwnerCandidate,
  generationalStableCandidate,generationalBreakingCandidate
 } from './organization-naming-styles.mjs';
-export const ORGANIZATION_NAME_MODEL='WTW_1999_ORGANIZATION_NAMING_V6_CENSUS_2000_OWNER_LEXICON';
+export const ORGANIZATION_NAME_MODEL='WTW_1999_ORGANIZATION_NAMING_V7_CENSUS_2000_OWNER_LEXICON_PARTNERSHIPS';
 export const OWNERSHIP_ARCHETYPES=Object.freeze([
  'INDIVIDUAL_OWNER','FAMILY_OPERATION','PARTNERSHIP_OR_SYNDICATE',
  'CO_OWNERS','FARM_OWNERSHIP','RACING_COMPANY','PRIVATE_RACING_OPERATION'
