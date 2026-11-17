@@ -259,6 +259,14 @@ try{
    const career=await bridge.openPersistent1999GameCareer(db,reopened.manifest,{
     runId,operationId:saved.player.operation_id});
    const world=career.world;let state=saved.changes.canonicalRun;
+   const sourceHorseIds=new Set(world.entities.horses.map(h=>h.id));
+   const registeredStableHorseIds=state.stable_horse_ids.filter(id=>
+    Boolean(state.runtime.registered_horses.by_id[id]));
+   const unresolvedStableHorseIds=state.stable_horse_ids.filter(id=>
+    !state.runtime.registered_horses.by_id[id]&&!sourceHorseIds.has(id));
+   if(unresolvedStableHorseIds.length)throw Error('Opening operation roster contains unresolved horse IDs: '+
+    JSON.stringify(unresolvedStableHorseIds.slice(0,12)));
+   if(!registeredStableHorseIds.length)throw Error('Opening operation has no registered racing horses');
    const baselineBalance=state.runtime.finances.operation_balances_minor[state.player.operation_id];
    const dayGap=(from,to)=>(Date.parse(to+'T00:00:00Z')-
     Date.parse(from+'T00:00:00Z'))/86400000;
@@ -267,7 +275,7 @@ try{
     surface:book.surface,distance_furlongs:book.distanceFurlongs,
     field_capacity:book.fieldCapacity,max_wins:book.maxCareerWins,
     maiden:book.maidenOnly,status:'ENTRIES_OPEN',field:[]});
-   const occupiedTracks=[...new Set(state.stable_horse_ids.map(id=>
+   const occupiedTracks=[...new Set(registeredStableHorseIds.map(id=>
     state.runtime.registered_horses.by_id[id].host_track_id))].sort();
    const excludedRaces=new Set();let chosen=null;const scheduleEvidence=[];
    for(let attempt=0;attempt<24&&!chosen;attempt++){
@@ -277,7 +285,7 @@ try{
       offset*86400000).toISOString().slice(0,10);
      if(!date.startsWith('1999-'))break;
      for(const trackId of occupiedTracks){
-      const localHorses=state.stable_horse_ids.map(id=>
+      const localHorses=registeredStableHorseIds.map(id=>
        state.runtime.registered_horses.by_id[id]).filter(h=>h.host_track_id===trackId);
       const books=gameRaceProgram(state,world,trackId,date).filter(book=>
        supported1999RaceClass(book)&&book.conditions==='Maiden Special Weight'&&
@@ -304,7 +312,7 @@ try{
       id:'full-world-race-window-'+state.clock.date,type:'ADVANCE_DAY',
       actor:'player',payload:{}}}).state;
     }
-    const localHorses=state.stable_horse_ids.map(id=>
+    const localHorses=registeredStableHorseIds.map(id=>
      state.runtime.registered_horses.by_id[id]).filter(h=>h.host_track_id===plan.trackId);
     const ready=localHorses.filter(h=>raceEligibility(state,h,raceView(plan.book)).eligible)
      .sort((a,b)=>state.runtime.horse[b.horse_id].training.readiness-
@@ -370,6 +378,9 @@ try{
     throw Error('Official race did not survive persistent save read-back');
    return {worldHorses:reopened.manifest.horseCount,worldId:reopened.manifest.worldId,
     operationId:state.player.operation_id,homeTrack:career.homeTrackId,raceTrack:chosen.trackId,
+    operationRosterCount:state.stable_horse_ids.length,
+    registeredRacingHorseCount:registeredStableHorseIds.length,
+    canonicalNonrunnerRosterCount:state.stable_horse_ids.length-registeredStableHorseIds.length,
     raceId:race.id,raceName:race.name,raceDate:race.date,openedFromDate:openedDate,
     status:race.status,starterCount:race.results.length,purseMinor:race.purse_minor,
     awardedMinor:awarded,playerBalanceBefore:baselineBalance,
