@@ -4,7 +4,7 @@ import {gunzipSync} from 'node:zlib';
 import {readFileSync} from 'node:fs';
 import {unpackShared1999Career} from '../public/1999/engine/shared-1999-career-package.mjs';
 
-const asset=new URL('../public/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER_V4.wtwcareer.gz',import.meta.url);
+const asset=new URL('../public/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER_V5.wtwcareer.gz',import.meta.url);
 const manager=readFileSync(new URL('../public/next/1999-commercial-career-manager.mjs',import.meta.url),'utf8');
 const industryWorker=readFileSync(new URL('../public/next/1999-industry-bootstrap-worker.mjs',import.meta.url),'utf8');
 const preload=readFileSync(new URL('../desktop/preload.cjs',import.meta.url),'utf8');
@@ -15,7 +15,7 @@ test('the desktop bundles the checksummed shared 300k May 1999 career compactly'
  const compressed=readFileSync(asset);
  assert.ok(compressed.byteLength<600_000,'Bundled checkpoint should stay under 600 KB');
  const checkpoint=await unpackShared1999Career(gunzipSync(compressed));
- assert.equal(checkpoint.world.worldId,'WTW1999FullIndustry-COHORTS-V4-OWNER-V9-NAMES-H300000');
+ assert.equal(checkpoint.world.worldId,'WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H300000');
  assert.equal(checkpoint.world.seed,19990101);
  assert.equal(checkpoint.world.horseCount,300000);
  assert.equal(checkpoint.world.personCount,75724);

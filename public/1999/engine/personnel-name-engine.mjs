@@ -9,7 +9,7 @@
  * Stable ordering and a fixed seed guarantee repeatable identities.
  */
 import {createGeographicNameRoster,GEO_NAME_MODEL} from './geographic-names.mjs';
-export const PERSONNEL_NAME_MODEL='WTW_1999_PROFESSIONAL_ROLE_NAMES_V4';
+export const PERSONNEL_NAME_MODEL='WTW_1999_PROFESSIONAL_ROLE_NAMES_V5';
 
 function hash(seed,key){
  let h=(2166136261^(seed>>>0))>>>0;

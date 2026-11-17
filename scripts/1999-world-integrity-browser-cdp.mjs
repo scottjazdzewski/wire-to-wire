@@ -14,7 +14,7 @@ const size=Number(process.env.WTW_INTEGRITY_SIZE||10000);
 const seed=Number(process.env.WTW_INTEGRITY_SEED||19990101);
 assert.ok([10000,300000,325000].includes(size),'Unsupported scale acceptance size');
 assert.ok(Number.isSafeInteger(seed)&&seed>0);
-const worldId='WTW1999FullIndustry-COHORTS-V4-OWNER-V9-NAMES-H'+size;
+const worldId='WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H'+size;
 const key=worldId+':'+seed;
 const profile=mkdtempSync(join(tmpdir(),'wtw-integrity-'+size+'-'));
 const cdpPort=Number(process.env.WTW_INTEGRITY_CDP_PORT||9447);

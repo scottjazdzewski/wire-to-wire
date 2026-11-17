@@ -378,7 +378,8 @@ export async function createPersistent1999Industry({
    byId.set(record.id,{...prior,...record,operatingRoles:[...roles],
     ratings:{...prior.ratings,...record.ratings},
     roleRatings:{...prior.roleRatings,[roleRatingKey]:record.ratings},
-    relationships:[...prior.relationships,...record.relationships]});
+    relationships:[...new Map([...prior.relationships,...record.relationships].map(edge=>
+     [`${edge.type}:${edge.fromId}:${edge.toId}`,edge])).values()]});
   };
   for(const track of tracks)
    mergeDirectoryRecord(connect1999DirectoryEntity(track,{seed,type:'track'}),'TRACK');

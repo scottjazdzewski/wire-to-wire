@@ -86,7 +86,7 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
 
  assert.equal(a.horseCount,12000);
  assert.equal(a.ownerPortfolio.schema,'WTW_FICTIONAL_OWNER_PORTFOLIOS_V9');
- assert.equal(a.personNameRevision,'WTW_1999_PROFESSIONAL_ROLE_NAMES_V4');
+ assert.equal(a.personNameRevision,'WTW_1999_PROFESSIONAL_ROLE_NAMES_V5');
  assert.equal(a.ownerPortfolio.capacityShortfall,0);
  assert.equal(Object.values(a.ownerPortfolio.byTier).reduce(
   (sum,tier)=>sum+tier.horses,0),12000);
@@ -206,7 +206,8 @@ test('interrupted industry genesis resumes at committed checkpoint',async()=>{
 test('a canon organization used as owner and farm stays one permanent directory identity',async()=>{
  const store=memoryStore(),shared={id:'O-000061',name:'Kingsmere Farm',
   location:{city:'Versailles',region:'Kentucky',country:'USA'},
-  operatingRoles:['BREEDER','LEGAL_OWNER'],portfolioTier:'ELITE',maxHorses:900};
+  homeTrackId:'T-0001',operatingRoles:['BREEDER','LEGAL_OWNER'],
+  portfolioTier:'ELITE',maxHorses:900};
  const owners=[shared,...Array.from({length:11},(_,i)=>({
   id:'O-TEST-ELITE-'+String(i+1).padStart(2,'0'),portfolioTier:'ELITE',
   maxHorses:900,homeTrackId:'T-0001'}))];
@@ -220,6 +221,7 @@ test('a canon organization used as owner and farm stays one permanent directory 
  assert.ok(canon[0].operatingRoles.includes('BREEDING_OR_CARE_FACILITY'));
  assert.ok(canon[0].operatingRoles.includes('LEGAL_OWNER'));
  assert.ok(canon[0].roleRatings.owner&&canon[0].roleRatings.farm);
+ assert.equal(canon[0].relationships.filter(e=>e.type==='REGIONAL_CIRCUIT').length,1);
  const owned=await readPersistent1999IndustryBatch(store,manifest,'horseBatches',0);
  assert.ok(owned.some(h=>h.ownerId==='O-000061'));
 });

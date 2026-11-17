@@ -130,31 +130,39 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
    if(!name){
     // Walk remaining same-country combinations from a persistent cursor. This
     // avoids repeated random scans as the base name pool fills. When the
-    // weighted first/surname pairs run thin, use a full given name in the
-    // middle-name position rather than manufacturing identity with initials.
-    const combinations=given.length*family.length*27;
+    // weighted first/surname pairs run thin, use full given names or a second
+    // family name rather than manufacturing identity with initials.
+    const variationCount=(1+given.length)*(1+family.length);
+    const combinations=given.length*family.length*variationCount;
     const poolKey=country+'|'+given.length+'|'+given[0]+'|'+
      family.length+'|'+family[0];
     const start=exhaustiveCursorByPool.get(poolKey)??
      hash(seed,'exhaustive-name-start:'+poolKey)%combinations;
     for(let offset=0;offset<combinations;offset++){
      const slot=(start+offset)%combinations;
-     const pair=Math.floor(slot/27),middleIndex=slot%27;
+     const pair=Math.floor(slot/variationCount),middleIndex=slot%variationCount;
      const first=given[Math.floor(pair/family.length)];
      const last=family[pair%family.length];
-     const middle=middleIndex===0?null:
-      given[(hash(seed,'exhaustive-middle-name:'+i+':'+middleIndex)%given.length)];
-     if(middle&&(
-      middle.toLocaleLowerCase('en-US')===first.toLocaleLowerCase('en-US')||
-      middle.toLocaleLowerCase('en-US')===last.toLocaleLowerCase('en-US')))continue;
+     const middleSlot=Math.floor(middleIndex/(1+family.length));
+     const familySlot=middleIndex%(1+family.length);
+     const middleGiven=middleSlot?given[middleSlot-1]:null;
+     const secondFamily=familySlot?family[familySlot-1]:null;
+     if(middleGiven&&(
+      middleGiven.toLocaleLowerCase('en-US')===first.toLocaleLowerCase('en-US')||
+      middleGiven.toLocaleLowerCase('en-US')===last.toLocaleLowerCase('en-US')))continue;
+     if(secondFamily&&(
+      secondFamily.toLocaleLowerCase('en-US')===first.toLocaleLowerCase('en-US')||
+      secondFamily.toLocaleLowerCase('en-US')===last.toLocaleLowerCase('en-US')))continue;
      if(options.avoidIdenticalGivenSurname&&
       first.toLocaleLowerCase('en-US')===last.toLocaleLowerCase('en-US'))continue;
-     const candidate=middle?first+' '+middle+' '+last:first+' '+last;
-     const baseFirst=middle?first+' '+middle:first;
-     const base=baseKey(baseFirst,last);
+     const candidate=[first,middleGiven,last,secondFamily].filter(Boolean).join(' ');
+     const base=baseKey(middleGiven?first+' '+middleGiven:first,
+      secondFamily?last+' '+secondFamily:last);
      if((baseCounts.get(base)||0)>=limit)continue;
      if(reserved.has(canonKey(candidate))||externallyReserved(candidate))continue;
-     name=candidate;selectedFirst=first;selectedSurname=last;selectedBaseFirst=baseFirst;
+     name=candidate;selectedFirst=first;
+     selectedSurname=secondFamily?last+' '+secondFamily:last;
+     selectedBaseFirst=middleGiven?first+' '+middleGiven:first;
      exhaustiveCursorByPool.set(poolKey,(slot+1)%combinations);break;
     }
    }
