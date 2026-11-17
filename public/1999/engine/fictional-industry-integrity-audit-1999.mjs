@@ -112,54 +112,50 @@ export async function auditPersistent1999World(store,manifest,{expectedHorses=nu
  check(people===manifest.personCount,'person census mismatch');
  for(const [role,count] of Object.entries(manifest.staffing.counts))
   check(roleCounts[role]===count,'person role census mismatch '+role);
- const horses=new Set(),byCohort={},homeTrackCounts={},horseStatuses={};
+ const horses=new Set(),foundingHorseIds=new Set(manifest.foundingHorseIds||[]),
+  foundFoundingHorseIds=new Set(),byCohort={},homeTrackCounts={},horseStatuses={};
  let horseCount=0,connectedRunners=0;
- const requiredEdges=['OWNED_BY','FOALED_AT','SIRED_BY','OUT_OF','HOME_TRACK',
-  'TRAINED_BY','PREFERRED_JOCKEY'];
  for(let i=0;i<manifest.horseBatchesCommitted;i++){
   const batch=await readPersistent1999IndustryBatch(store,manifest,'horseBatches',i);
   for(const h of batch){
    check(h?.id&&!horses.has(h.id),'duplicate horse ID '+h?.id);
    horses.add(h.id);horseCount++;
-   byCohort[h.cohort]=(byCohort[h.cohort]||0)+1;
-   check(h.id==='H-FICTIONAL-1999-'+String(h.cohort).toUpperCase()+'-'+
-    String(byCohort[h.cohort]).padStart(7,'0'),
-    'missing horse ordinal / unexpected horse cohort order '+h.id);
+   const approvedFounder=foundingHorseIds.has(h.id);
+   if(approvedFounder)foundFoundingHorseIds.add(h.id);
+   else{
+    byCohort[h.cohort]=(byCohort[h.cohort]||0)+1;
+    check(h.id==='H-FICTIONAL-1999-'+String(h.cohort).toUpperCase()+'-'+
+     String(byCohort[h.cohort]).padStart(7,'0'),
+     'missing horse ordinal / unexpected horse cohort order '+h.id);
+   }
    horseStatuses[h.status]=(horseStatuses[h.status]||0)+1;
    ratings(h,'horse',seed);
-   check(h.registryProvenance==='FICTIONAL_1999_DETERMINISTIC_V1',
+   check(h.registryProvenance===(approvedFounder?
+    'APPROVED_FOUNDING_1999_SOURCE':'FICTIONAL_1999_DETERMINISTIC_V1'),
     'unprovenanced horse '+h.id);
-   check(owners.has(h.ownerId)&&farms.has(h.foalingFarmId),
+   check(owners.has(h.ownerId)&&(!h.foalingFarmId||farms.has(h.foalingFarmId)),
     'broken ownership / foaling reference '+h.id);
-   const farm=farms.get(h.foalingFarmId);
-   check(h.birthplace?.farmId===h.foalingFarmId&&
-    h.birthplace?.city===farm.location.city&&
-    h.birthplace?.region===farm.location.region&&
-    h.birthplace?.country===farm.location.country,
-    'foaling location mismatch '+h.id);
+   if(h.foalingFarmId){
+    const farm=farms.get(h.foalingFarmId);
+    check(farm&&h.birthplace?.farmId===h.foalingFarmId&&
+     h.birthplace?.city===farm.location.city&&
+     h.birthplace?.region===farm.location.region&&
+     h.birthplace?.country===farm.location.country,
+     'foaling location mismatch '+h.id);
+   }
    check(Number.isInteger(h.foalYear)&&h.foalYear<=1998&&h.dateOfBirth&&
     h.dateOfBirth.startsWith(String(h.foalYear)+'-'),
     'unborn or invalid dated opening horse '+h.id);
    check(h.status!=='PROJECTED_NOT_YET_BORN',
     'forecast foal incorrectly entered opening horse census');
    check(Array.isArray(h.relationships),'horse relationship list missing '+h.id);
-   for(const [type,target] of [
-    ['OWNED_BY',h.ownerId],['FOALED_AT',h.foalingFarmId],
-    ['SIRED_BY',h.sireId],['OUT_OF',h.damId],
-    ['HOME_TRACK',h.homeTrackId],['TRAINED_BY',h.trainerId],
-    ['PREFERRED_JOCKEY',h.jockeyId]])edge(h,type,target);
-   check(h.relationships.length===requiredEdges.filter(type=>
-    ({OWNED_BY:h.ownerId,FOALED_AT:h.foalingFarmId,SIRED_BY:h.sireId,
-      OUT_OF:h.damId,HOME_TRACK:h.homeTrackId,TRAINED_BY:h.trainerId,
-      PREFERRED_JOCKEY:h.jockeyId})[type]).length,
-    'extra horse relationship '+h.id);
-   if(h.sireId)check(/^H-FICTIONAL-1999-STALLIONS-\d{7}$/.test(h.sireId)&&
-    Number(h.sireId.slice(-7))>=1&&
-    Number(h.sireId.slice(-7))<=manifest.plan.counts.stallions,
+   if(h.sireId)check(approvedFounder?foundingHorseIds.has(h.sireId):
+    /^H-FICTIONAL-1999-STALLIONS-\d{7}$/.test(h.sireId)&&
+     Number(h.sireId.slice(-7))>=1&&Number(h.sireId.slice(-7))<=manifest.plan.counts.stallions,
     'missing or wrong sire reference '+h.id);
-   if(h.damId)check(/^H-FICTIONAL-1999-BROODMARES-\d{7}$/.test(h.damId)&&
-    Number(h.damId.slice(-7))>=1&&
-    Number(h.damId.slice(-7))<=manifest.plan.counts.broodmares,
+   if(h.damId)check(approvedFounder?foundingHorseIds.has(h.damId):
+    /^H-FICTIONAL-1999-BROODMARES-\d{7}$/.test(h.damId)&&
+     Number(h.damId.slice(-7))>=1&&Number(h.damId.slice(-7))<=manifest.plan.counts.broodmares,
     'missing or wrong dam reference '+h.id);
    if(h.status==='RACING'||h.status==='TWO_YEAR_OLD_PROSPECT'){
     check(tracks.has(h.homeTrackId),'no live horse home track '+h.id);
@@ -172,11 +168,27 @@ export async function auditPersistent1999World(store,manifest,{expectedHorses=nu
     homeTrackCounts[h.homeTrackId]=(homeTrackCounts[h.homeTrackId]||0)+1;
    }else check(!h.trainerId&&!h.jockeyId&&!h.homeTrackId,
     'inactive horse assigned to racing workforce '+h.id);
-   check(h.name?.trim()&&h.namingStatus==='PROVISIONAL_EDITABLE_1999_OPENING',
+   if(approvedFounder){
+    check(h.foundingSource?.id===h.id&&h.name?.trim(),
+     'approved founding horse identity/history changed '+h.id);
+   }else check(h.name?.trim()&&h.namingStatus==='PROVISIONAL_EDITABLE_1999_OPENING',
     'unregistered opening horse name '+h.id);
+   const expectedEdges=[
+    ['OWNED_BY',h.ownerId],['BRED_BY',h.breederId],
+    ['FOALED_AT',h.foalingFarmId],['CARED_AT',h.careFacilityId],
+    ['CARED_BY',h.careStaffId],['SIRED_BY',h.sireId],['OUT_OF',h.damId],
+    ['HOME_TRACK',h.homeTrackId],['TRAINED_AT',h.trainingBarnId],
+    ['TRAINED_BY',h.trainerId],['PREFERRED_JOCKEY',h.jockeyId]
+   ];
+   for(const [type,target] of expectedEdges)edge(h,type,target);
+   check(h.relationships.length===expectedEdges.filter(([,target])=>target).length,
+    'extra horse relationship '+h.id);
   }
  }
  check(horseCount===manifest.horseCount,'horse census mismatch');
+ check(foundFoundingHorseIds.size===foundingHorseIds.size&&
+  [...foundingHorseIds].every(id=>foundFoundingHorseIds.has(id)),
+  'approved founding horse IDs missing from the opening registry');
  for(const [cohort,count] of Object.entries(manifest.plan.counts)){
   if(cohort==='annualFoals')continue;
   check(byCohort[cohort]===count,'horse cohort mismatch '+cohort);
