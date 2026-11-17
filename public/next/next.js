@@ -2946,8 +2946,6 @@ function approvedFoundingFarmStableRosterView({id}={}){
 }
 function savedWorldAffiliationStableView(){
  const career=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
- if(!career?.worldHorseBrowse||!career?.worldEntityById)
-  return '<section class="ng-functional" role="status"><h2>OPENING SAVED STABLE</h2><p>Waiting for the full fictional 1999 world; no legacy horses were substituted.</p></section>';
  const savedState=state();
  const approvedWorkplaceId=savedState?.organization?.id||
   savedState?.stable?.organizationId||null;
@@ -2957,6 +2955,8 @@ function savedWorldAffiliationStableView(){
  const picked=APP.savedStableAffiliation||
   (foundingEmployer?{kind:'founding',id:foundingEmployer.id}:null);
  if(picked?.kind==='founding')return approvedFoundingFarmStableRosterView(picked);
+ if(!career?.worldHorseBrowse||!career?.worldEntityById)
+  return '<section class="ng-functional" role="status"><h2>OPENING SAVED STABLE</h2><p>The full 300,000-horse career has not loaded. Existing founding identities have not been substituted as the generated industry.</p></section>';
  const kind=picked?.kind||'organization';
  const entityId=picked?.id||career.operationId;
  const linked=career.worldEntityById(kind,entityId);
@@ -3026,8 +3026,12 @@ function savedWorldAffiliationStableView(){
   '</section>';
 }
 function liveStableRosterView(directory=false){
- if(!directory&&window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.worldHorseBrowse&&
-  APP.savedStableView!=='active')return savedWorldAffiliationStableView();
+ const savedOrgId=state()?.organization?.id||state()?.stable?.organizationId;
+ const approvedOrgSelected=APP.savedStableAffiliation?.kind==='founding'||
+  Boolean(savedOrgId&&world1999Data?.organizations?.some(x=>x.id===savedOrgId));
+ if(!directory&&APP.savedStableView!=='active'&&
+  (window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.worldHorseBrowse||approvedOrgSelected))
+  return savedWorldAffiliationStableView();
  if(!directory&&window.WTWDesktop?.runtime==='windows-desktop'&&
   !window.WTWDesktop.smokeMode&&!window.__WTW_ACTIVE_WORLD_CAREER_VIEW__)
   return '<section class="ng-functional" role="status">Loading the actual saved career; no test roster substituted.</section>';
