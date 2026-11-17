@@ -766,7 +766,7 @@ export function validateRacingRuntime(state,world){
    }
    if(o.status==='CANCELLED'){
     const entry=state.runtime.entries?.[o.race_id+':'+o.horse_id];
-    ensure(entry?.status==='ENTERED'&&
+    ensure(['ENTERED','BOOKED','RESULTED','SCRATCHED'].includes(entry?.status)&&
      entry.cancelled_jockey_id===o.jockey_id&&
      validDate(o.cancelled_date)&&o.reason==='SIGNED_RIDER_BECAME_UNAVAILABLE'&&
      o.refunded_minor===o.final_fee_minor,
