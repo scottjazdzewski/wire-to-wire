@@ -23,7 +23,11 @@ function memoryStore(){
    data.manifests.set(worldId,structuredClone(manifest));
   },
   commitManifest:async(id,m)=>{data.manifests.set(id,structuredClone(m))},
-  putHorseEdit:async(id,horseId,edit)=>{data.horseEdits.set(id+':'+horseId,structuredClone(edit))},
+  putHorseEdit:async(id,horseId,edit)=>{
+   const key=id+':'+horseId;
+   const prior=data.horseEdits.get(key)||{};
+   data.horseEdits.set(key,structuredClone({...prior,...edit}));
+  },
   putCareerRun:async(id,runId,record)=>{
    if(data.manifests.get(id)?.status!=='COMPLETE')throw Error('World incomplete');
    data.careerRuns.set(id+':'+runId,structuredClone(record));
@@ -136,12 +140,41 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
  await updatePersistent1999Horse(store,b,first[0].id,{name:'Copper Horizon'});
  const edited=await readPersistent1999HorseProfile(store,b,first[0].id);
  assert.equal(edited.name,'Copper Horizon');
+ assert.equal(edited.id,first[0].id,'the horse ID is immutable under rename');
+ // Each later transaction modifies only its selected fields; previous naming
+ // edits and subsequent owner/care edits must coexist in the SAME stored row.
+ const statusPatch=await updatePersistent1999Horse(store,b,first[0].id,{
+  status:'RETIRED_BROODMARE'
+ });
+ assert.equal(statusPatch.name,'Copper Horizon','status change must not erase name');
+ assert.equal(statusPatch.status,'RETIRED_BROODMARE');
+ const ownerPatch=await updatePersistent1999Horse(store,b,first[0].id,{
+  ownerId:first[0].ownerId
+ });
+ assert.equal(ownerPatch.name,'Copper Horizon','owner change must not erase name');
+ assert.equal(ownerPatch.status,'RETIRED_BROODMARE','owner change must retain status');
+ const renamedAgain=await updatePersistent1999Horse(store,b,first[0].id,{
+  name:'Copper Afterglow'
+ });
+ assert.equal(renamedAgain.name,'Copper Afterglow');
+ assert.equal(renamedAgain.status,'RETIRED_BROODMARE');
+ assert.equal(renamedAgain.sireId,first[0].sireId,'pedigree sire must not change');
+ assert.equal(renamedAgain.damId,first[0].damId,'pedigree dam must not change');
+ await assert.rejects(updatePersistent1999Horse(store,b,first[0].id,{
+  sireId:'H-BAD-PARENT'
+ }),/immutable or unsupported/);
  assert.equal((await findPersistent1999Horse(store,b,first[0].id)).name,first[0].name);
+ const revised=await readPersistent1999HorseProfile(store,b,first[0].id);
+ assert.equal(revised.name,'Copper Afterglow');
+ assert.equal(revised.status,'RETIRED_BROODMARE');
+ assert.equal(revised.ownerId,first[0].ownerId);
+ assert.equal(revised.id,first[0].id);
  const run=await savePersistent1999CareerRun(store,b,{runId:'career-1',
   player:{role:'owner',organizationId:'O-OWNER-1'},
   changes:{balanceMinor:123456},gameDate:'1999-02-01'});
  assert.deepEqual(await loadPersistent1999CareerRun(store,b,'career-1'),run);
- assert.equal((await readPersistent1999HorseProfile(store,b,first[0].id)).name,'Copper Horizon');
+ assert.equal((await readPersistent1999HorseProfile(store,b,first[0].id)).name,'Copper Afterglow');
+ assert.equal((await readPersistent1999HorseProfile(store,b,first[0].id)).status,'RETIRED_BROODMARE');
 });
 test('interrupted industry genesis resumes at committed checkpoint',async()=>{
  const store=memoryStore();let writes=0;
