@@ -6,7 +6,8 @@
 import {get1999JockeyPartnership} from './jockey-partnerships-1999.mjs';
 export const JOCKEY_RETAINER_SCHEMA='WTW_1999_JOCKEY_RETAINERS_V1';
 export const JOCKEY_RETAINER_COMMANDS=Object.freeze([
- 'OFFER_1999_JOCKEY_RETAINER','WITHDRAW_1999_JOCKEY_RETAINER']);
+ 'OFFER_1999_JOCKEY_RETAINER','WITHDRAW_1999_JOCKEY_RETAINER',
+ 'TERMINATE_1999_JOCKEY_RETAINER']);
 const DAY=86400000;
 const gap=(a,b)=>Math.round((Date.parse(b+'T12:00:00Z')-Date.parse(a+'T12:00:00Z'))/DAY);
 const date=d=>typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&
@@ -62,6 +63,14 @@ export function jockeyRetainerAction({state,world,command,emit}){
   emit('JOCKEY_RETAINER_OFFER_WITHDRAWN',{offer_id:o.id,
    owner_id:o.owner_id,jockey_id:o.jockey_id,charged_minor:0});
   return {withdrawn:true};
+ }
+ if(command.type==='TERMINATE_1999_JOCKEY_RETAINER'){
+  const c=rt.contracts[p.contract_id];
+  if(!c||c.status!=='ACTIVE'||!ownerMayAct(state,c.owner_id,command.actor)||
+   today>c.end_date)throw Error('Only the owning party can end a live signed retainer');
+  terminate(state,c,'OWNER_WITHDRAWAL',emit,.15);
+  return {terminated:true,refunded_minor:c.refunded_minor,
+   cancellation_penalty_minor:c.cancellation_penalty_minor};
  }
  if(command.type!=='OFFER_1999_JOCKEY_RETAINER')
   throw Error('Unsupported jockey retainer command');
@@ -138,17 +147,20 @@ function recordTransfer(state,c,amount,reason){
    amount_minor:-sign*amount,contract_id:c.id});
 }
 /** Pro-rated refunds are explicit ledger reversals; original payment remains. */
-function terminate(state,c,reason,emit){
+function terminate(state,c,reason,emit,penaltyRate=0){
  const day=state.clock.date,first=day>c.start_date?day:c.start_date;
  const remaining=Math.max(0,gap(first,c.end_date)+1),
   duration=gap(c.start_date,c.end_date)+1,
-  refund=Math.floor(c.total_fee_minor*remaining/duration);
+  unserved=Math.floor(c.total_fee_minor*remaining/duration),
+  penalty=Math.floor(unserved*penaltyRate),refund=unserved-penalty;
  if(refund)recordTransfer(state,c,refund,'REFUND');
  c.status='TERMINATED';c.terminated_date=day;
  c.refunded_minor=refund;c.termination_reason=reason;
+ c.cancellation_penalty_minor=penalty;
  emit('JOCKEY_RETAINER_TERMINATED',{contract_id:c.id,reason,
   jockey_id:c.jockey_id,owner_id:c.owner_id,
-  refunded_minor:refund,unused_days:remaining});
+  refunded_minor:refund,unused_days:remaining,
+  cancellation_penalty_minor:penalty});
 }
 /** Called inside the same ADVANCE_DAY as racing, after workforce transitions. */
 export function advance1999JockeyRetainers({state,world,emit}){

@@ -210,3 +210,28 @@ test('actual AI agents submit a market bid against player owner without debiting
  assert.equal(s.runtime.finances.ledger.length,2);
  validate1999JockeyRetainers(JSON.parse(JSON.stringify(s)),world);
 });
+
+test('owner may terminate live retainer once; explicit notice penalty and real refund ledger',()=>{
+ const {s,b,big}=auction();
+ s.clock.date='1999-06-13';
+ const unused=Math.floor(big*11/14);
+ const penalty=Math.floor(unused*.15),refund=unused-penalty;
+ assert.throws(()=>act(s,'TERMINATE_1999_JOCKEY_RETAINER',
+  {contract_id:b.id},'player'),/owning party/i);
+ const out=act(s,'TERMINATE_1999_JOCKEY_RETAINER',
+  {contract_id:b.id},'system');
+ assert.equal(out.terminated,true);
+ assert.equal(out.refunded_minor,refund);
+ assert.equal(out.cancellation_penalty_minor,penalty);
+ assert.equal(s.runtime.racing.retainers.contracts[b.id].status,'TERMINATED');
+ assert.equal(s.runtime.finances.operation_balances_minor[ownerB],
+  2000000-big+refund);
+ assert.equal(s.runtime.racing.jockey_finances_minor[j],big-refund);
+ assert.equal(s.runtime.finances.ledger.length,4);
+ assert.equal(s.runtime.finances.ledger.reduce((a,x)=>a+x.amount_minor,0),0);
+ assert.equal(get1999JockeyRetainerPreference(s,{jockeyId:j,
+  ownerId:ownerB,trainerId:trainerB,raceDate:'1999-06-14'}).priority,0);
+ assert.throws(()=>act(s,'TERMINATE_1999_JOCKEY_RETAINER',
+  {contract_id:b.id},'system'),/live signed retainer/i);
+ validate1999JockeyRetainers(JSON.parse(JSON.stringify(s)),world);
+});
