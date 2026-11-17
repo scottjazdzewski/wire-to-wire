@@ -24,6 +24,9 @@ test('1999 fair meeting uses existing Bay Meadows physical racing surface',()=>{
  assert.equal(same1999PhysicalVenue('T-0032','T-0031'),false);
  assert.equal(same1999PhysicalVenue('T-0032',null),false);
  assert.equal(same1999PhysicalVenue('T-0032','T-NOT-A-TRACK'),false);
+ assert.equal(same1999PhysicalVenue('T-FUTURE-001','T-FUTURE-001'),true,
+  'same immutable generated track ID remains co-located without legacy registry overlay');
+ assert.equal(same1999PhysicalVenue('T-FUTURE-001','T-FUTURE-002'),false);
  assert.equal(trackMeetOpen1999('T-0075','1999-08-14'),true);
  assert.equal(trackMeetOpen1999('T-0032','1999-08-14'),false);
 });
