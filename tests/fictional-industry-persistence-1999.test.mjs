@@ -492,6 +492,17 @@ test('small persistent industry keeps births, cohorts, and breeding records cohe
   assert.ok(season.marketConditions.averagePurseStrength>0);
   assert.ok(season.marketConditions.marketIndex>0);
   assert.equal(season.plannedFoals,season.marketConditions.plannedFoals);
+  assert.ok(season.coveringCount<=saved.lifecycle.activeBroodmares,
+   'the new season may never book more coverings than living active mares');
+  assert.ok(season.coveringCount<=saved.lifecycle.activeStallions*220,
+   'the new season may not exceed stallion service capacity');
+  assert.ok(season.marketConditions.targetCovers<=
+   season.marketConditions.rolloverServiceCapacity,
+   'post-turnover service capacity bounds the annual market book');
+  if(season.marketConditions.constrainedByBreedingCapacity)
+   assert.ok(season.plannedFoals<=
+    Math.floor(season.marketConditions.targetCovers*.90*.96),
+    'constrained annual foals cannot exceed feasible covering yield');
   marketIndices.push(season.marketConditions.marketIndex);
   plannedFoalCrops.push(season.plannedFoals);
   for(const id of turnover.retiredHorseIds){
