@@ -79,6 +79,7 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
  if(limit!==Infinity&&(!Number.isInteger(limit)||limit<1))
   throw Error('Invalid maximum repeated given/surname pairing');
  const baseCounts=new Map();
+ const exhaustiveCursorByPool=new Map();
  const baseKey=(first,last)=>(first+' '+last).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
  const records=[];
  for(let i=0;i<count;i++){
@@ -104,7 +105,7 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
    throw Error('Invalid country-specific surname pool');
   const family=suppliedFamily??countryFamily;
   let name=null,selectedFirst=null,selectedSurname=null;
-  for(let attempt=0;attempt<400;attempt++){
+  for(let attempt=0;attempt<32;attempt++){
    const first=birthCohortPool?
     (options.givenNameAt?options.givenNameAt(i,role,country,feminine,attempt):pick(given,seed,'given:'+i+':'+attempt)):
     country==='US'||country==='CA'?censusPick(given,feminine?F_FREQ:M_FREQ,seed,'given:'+i+':'+attempt):
@@ -126,16 +127,30 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
    // Weighted Census names can exhaust high-frequency combinations. Fall
    // back to plausible combinations from the SAME country's name pools.
    // Do not append numeric row identifiers to human names.
-   for(let attempt=0;attempt<4096;attempt++){
-    const first=pick(given,seed,'fallback-given:'+i+':'+attempt);
-    const last=pick(family,seed,'fallback-family:'+i+':'+attempt);
-    const letter=String.fromCharCode(65+hash(seed,'fallback-middle:'+i+':'+attempt)%26);
-    const candidate=attempt<1024?first+' '+last:first+' '+letter+'. '+last;
-    const base=baseKey(first,last);
-    if(options.avoidIdenticalGivenSurname&&first.toLocaleLowerCase('en-US')===last.toLocaleLowerCase('en-US'))continue;
-    if((baseCounts.get(base)||0)>=limit)continue;
-    if(!reserved.has(canonKey(candidate))&&!externallyReserved(candidate)){
-     name=candidate;selectedFirst=first;selectedSurname=last;break}
+   if(!name){
+    // Walk remaining same-country combinations from a persistent cursor. This
+    // avoids repeated random scans as the base name pool fills while middle
+    // initials expand it without numeric suffixes or country-mismatched names.
+    const combinations=given.length*family.length*27;
+    const poolKey=country+'|'+given.length+'|'+given[0]+'|'+
+     family.length+'|'+family[0];
+    const start=exhaustiveCursorByPool.get(poolKey)??
+     hash(seed,'exhaustive-name-start:'+poolKey)%combinations;
+    for(let offset=0;offset<combinations;offset++){
+     const slot=(start+offset)%combinations;
+     const pair=Math.floor(slot/27),initial=slot%27;
+     const first=given[Math.floor(pair/family.length)];
+     const last=family[pair%family.length];
+     if(options.avoidIdenticalGivenSurname&&
+      first.toLocaleLowerCase('en-US')===last.toLocaleLowerCase('en-US'))continue;
+     const base=baseKey(first,last);
+     if((baseCounts.get(base)||0)>=limit)continue;
+     const candidate=initial===0?first+' '+last:
+      first+' '+String.fromCharCode(64+initial)+'. '+last;
+     if(reserved.has(canonKey(candidate))||externallyReserved(candidate))continue;
+     name=candidate;selectedFirst=first;selectedSurname=last;
+     exhaustiveCursorByPool.set(poolKey,(slot+1)%combinations);break;
+    }
    }
    if(!name)throw Error('Country-specific personnel name pool exhausted; expand it instead of adding numbered identities');
   }

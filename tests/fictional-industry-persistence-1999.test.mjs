@@ -86,6 +86,7 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
 
  assert.equal(a.horseCount,12000);
  assert.equal(a.ownerPortfolio.schema,'WTW_FICTIONAL_OWNER_PORTFOLIOS_V9');
+ assert.equal(a.personNameRevision,'WTW_1999_PROFESSIONAL_ROLE_NAMES_V4');
  assert.equal(a.ownerPortfolio.capacityShortfall,0);
  assert.equal(Object.values(a.ownerPortfolio.byTier).reduce(
   (sum,tier)=>sum+tier.horses,0),12000);

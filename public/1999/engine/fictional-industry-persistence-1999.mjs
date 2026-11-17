@@ -14,7 +14,8 @@ import {generate1999IndustryRegistryBatches,count1999Registry,
 import {plan1999IndustryStaffing,generate1999StaffingBatches,
  INDUSTRY_PERSON_BIOGRAPHY_REVISION}
  from './fictional-industry-staffing-1999.mjs';
-import {createPersonnelNameRoster} from './personnel-name-engine.mjs';
+import {createPersonnelNameRoster,PERSONNEL_NAME_MODEL}
+ from './personnel-name-engine.mjs';
 import {LOCAL_HORSE_NAMING_ALGORITHM_REVISION} from '../game/horse-naming-local-v485.js';
 import {connect1999Horse,connect1999Person,connect1999DirectoryEntity,
  validate1999GraphBatch,validate1999IndustryReferences,INDUSTRY_GRAPH_SCHEMA}
@@ -329,6 +330,7 @@ export async function createPersistent1999Industry({
    existing.ownerPortfolio?.capacityShortfall!==0||
    existing.horseNamingRevision!==horseNamingRevision||
    existing.personBiographyRevision!==INDUSTRY_PERSON_BIOGRAPHY_REVISION||
+   existing.personNameRevision!==PERSONNEL_NAME_MODEL||
    Boolean(existing.ensureCircuitCoverage)!==ensureCircuitCoverage)
    throw Error('Existing industry identity or generation parameters conflict');
   if(existing.status==='COMPLETE')return existing;
@@ -353,6 +355,7 @@ export async function createPersistent1999Industry({
   horseBatchesCommitted:0,personBatchesCommitted:0,
   directoryCommitted:false,graphSchema:INDUSTRY_GRAPH_SCHEMA,
   horseNamingRevision,personBiographyRevision:INDUSTRY_PERSON_BIOGRAPHY_REVISION,
+  personNameRevision:PERSONNEL_NAME_MODEL,
   breedingSchema:BREEDING_BOOK_1999_SCHEMA,
   coveringCount:plan.minimumCoversForTargetFoals,coveringBatchesCommitted:0,
   ownerPortfolio:{schema:FICTIONAL_PORTFOLIO_MODEL,

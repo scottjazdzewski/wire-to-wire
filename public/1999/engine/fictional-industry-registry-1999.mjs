@@ -74,10 +74,17 @@ export function* generate1999IndustryRegistryBatches({
   facilityPoolByTrack('FOALING_FARM',track)]));
  const staffedCareIds=Array.isArray(careFacilityIds)?new Set(careFacilityIds):null;
  const carePoolByTrack=new Map(tracks.map(track=>{
-  const pool=facilityPoolByTrack('BOARDING_FACILITY',track).filter(f=>
-   !staffedCareIds||staffedCareIds.has(f.id));
+  const boardingFacilities=farms.filter(f=>
+   f.operatingRoles?.includes('BOARDING_FACILITY'));
+  const pool=(boardingFacilities.length?boardingFacilities:farms).filter(f=>
+   (!staffedCareIds||staffedCareIds.has(f.id)));
   if(!pool.length)throw Error('No physically staffed boarding facility near '+track.id);
-  return [track.id,pool];
+  const sameRegion=pool.filter(f=>regionKey(f.location?.region)===
+   regionKey(track.location?.region));
+  const sameCountry=pool.filter(f=>f.location?.country&&
+   f.location.country===track.location?.country);
+  return [track.id,sameRegion.length?sameRegion:sameCountry.length?
+   sameCountry:pool];
  }));
  const trainingPoolByTrack=new Map(tracks.map(track=>[track.id,
   facilityPoolByTrack('TRAINING_BARN',track)]));

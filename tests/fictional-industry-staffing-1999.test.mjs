@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {plan1999Ecosystem} from '../public/1999/engine/fictional-industry-ecosystem-1999.mjs';
 import {plan1999IndustryStaffing,generate1999StaffingBatches}
  from '../public/1999/engine/fictional-industry-staffing-1999.mjs';
+import {createGeographicNameRoster}
+ from '../public/1999/engine/geographic-names.mjs';
 test('opening staffing reflects full racing and breeding ecosystem',()=>{
  const ecosystem=plan1999Ecosystem();
  const plan=plan1999IndustryStaffing({ecosystem});
@@ -47,6 +49,15 @@ test('personnel naming retains deterministic stable IDs and geographic workplace
   assert.equal(person.workplaceId,
    ['farm_manager','breeding_attendant'].includes(person.role)?'F-0001':'T-0001');
  }
+});
+
+test('large same-country personnel pools stay unique without numeric name suffixes',()=>{
+ const count=20000;
+ const names=createGeographicNameRoster(19990101,count,()=> 'trainer',[],{
+  countryAt:()=> 'US'});
+ assert.equal(names.length,count);
+ assert.equal(new Set(names.map(x=>x.name.toLowerCase())).size,count);
+ assert.ok(names.every(x=>x.birthCountry==='US'&&!/\d/.test(x.name)));
 });
 
 
