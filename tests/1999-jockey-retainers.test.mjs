@@ -9,6 +9,8 @@ import {createRacingRuntime,jockeyBookingDecision}
  from '../src/game/racing-1999.js';
 import {assessJockeySchedule}
  from '../public/1999/engine/jockey-engagements-1999.mjs';
+import {propose1999AIRiderRetainers}
+ from '../src/game/race-agents-1999.js';
 
 const j='P-1999-RETAINER-JOCKEY',
  ownerA='O-1999-RETAINER-PLAYER',ownerB='O-1999-RETAINER-AI',
@@ -180,4 +182,31 @@ test('retirement interrupts a genuine signed contract with correct owner refund'
  assert.equal(out.terminated,0,'contract ended before annual retirement');
  assert.equal(s.runtime.racing.retainers.contracts[b.id].status,'EXPIRED');
  assert.equal(s.runtime.racing.jockey_finances_minor[j],big);
+});
+
+test('actual AI agents submit a market bid against player owner without debiting player cash',()=>{
+ const s=fixture();
+ s.clock.days_elapsed=7;
+ s.runtime.finances.operation_balances_minor[ownerB]=5000000;
+ const start='1999-06-06',end='1999-06-19';
+ const q=quote1999JockeyRetainer(s,{jockeyId:j,startDate:start,endDate:end});
+ const player=propose(s,ownerA,trainerA,
+  Math.ceil(q.minimum_fee_minor*1.05),'player',start,end);
+ const events=[],first=propose1999AIRiderRetainers({state:s,world,
+  emit:(kind,details)=>events.push({kind,details})});
+ assert.equal(first.offered,1);
+ assert.ok(events.some(x=>x.kind==='AI_OWNER_JOCKEY_RETAINER_PROPOSED'));
+ assert.equal(s.runtime.finances.ledger.length,0);
+ assert.equal(s.runtime.finances.balance_minor,2000000);
+ const again=propose1999AIRiderRetainers({state:s,world,emit:()=>{}});
+ assert.equal(again.offered,0,'AI cannot repeat the same signed-date proposal');
+ s.clock.date='1999-06-05';
+ const resolution=advance1999JockeyRetainers({state:s,world,emit:()=>{}});
+ assert.equal(resolution.signed,1);
+ assert.equal(resolution.declined,1);
+ assert.equal(s.runtime.racing.retainers.offers[player.id].status,'DECLINED');
+ assert.equal(s.runtime.finances.balance_minor,2000000);
+ assert.equal(s.runtime.finances.operation_balances_minor[ownerA],2000000);
+ assert.equal(s.runtime.finances.ledger.length,2);
+ validate1999JockeyRetainers(JSON.parse(JSON.stringify(s)),world);
 });
