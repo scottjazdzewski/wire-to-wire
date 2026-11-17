@@ -2851,9 +2851,12 @@ function liveStableTrainingView(){
 // an owner's stable roster for the full world source. IDs remain authoritative.
 function worldDirectoryHorseRows(){
  const adapter=window.__WTW_1999_UI_DATA__;
- const total=Number(adapter?.counts?.worldHorses??adapter?.counts?.horses??0);
- if(adapter?.worldHorseBrowse){
-  const response=adapter.worldHorseBrowse({offset:0,limit:Math.max(160,total),sort:'name'});
+ const canonical=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ const browse=canonical?.worldHorseBrowse||adapter?.worldHorseBrowse;
+ const total=Number(canonical?.worldHorseCount??adapter?.counts?.worldHorses??adapter?.counts?.horses??0);
+ if(browse){
+  // This separate roster preview is bounded; never render 300,000 DOM rows.
+  const response=browse({offset:0,limit:160,sort:'name'});
   if(response?.indexing)return {indexing:true,total:response.total||total,items:[]};
   if(Array.isArray(response?.items))return {indexing:false,total:response.total??response.items.length,items:response.items};
  }
@@ -3554,6 +3557,27 @@ function namedProfileValue(label,value,preferred=''){
  if(!kind||entityNotRecorded(value))return '<strong>'+safe(value||'—')+'</strong>';
  return entityReferenceButton(value,kind);
 }
+function savedIndustryHorseProfile(){
+ const id=decodeURIComponent(String(APP.custom||'').slice('SavedIndustryHorse:'.length));
+ const career=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ const h=career?.worldHorseById?.(id);
+ if(!h||h._savedWorldId!==career.worldId)
+  return '<section class="ng-world-source-profile"><header><strong>SAVED WORLD HORSE UNAVAILABLE</strong></header><p>No other world or horse was substituted.</p></section>';
+ const facts=[['Permanent horse ID',h._id],['Age in 1999',h.age],
+  ['Sex',h.sex],['1999 status',h.status],['Source cohort',h.registryGroup],
+  ['Sire ID',h.sire],['Dam ID',h.dam],['Owner',h.owner],['Owner ID',h.ownerId],
+  ['Trainer',h.trainer],['Trainer ID',h.trainerId],['Breeder / foaling farm',h.breeder],
+  ['Foaling farm ID',h.foalingFarmId],['Home track',h.track],
+  ['Track ID',h.homeTrackId]];
+ return '<section class="ng-world-source-profile" data-world-kind="saved-industry-horse" data-world-id="'+safe(h._id)+'">'+
+  '<header><strong>REGISTERED 1999 INDUSTRY HORSE · SAVED GAME WORLD</strong></header>'+
+  '<h2>'+safe(h.name)+'</h2>'+
+  '<p>Verified world '+safe(career.worldId)+' · career date '+safe(career.date)+'</p>'+
+  '<div class="ng-world-editor-fields">'+facts.map(([label,value])=>
+   '<div><small>'+safe(label)+'</small><strong>'+safe(value==null||value===''?'Not recorded':String(value))+'</strong></div>').join('')+'</div>'+
+  '<p>Source registry profile. Editing these relationships requires a saved-career gameplay command; display-only changes are not offered as game edits.</p>'+
+  '<button type="button" data-ng="tab" data-val="1999 Horses">RETURN TO WORLD HORSE DIRECTORY</button></section>';
+}
 function previewRecordRoute(kind,name,row=null){
  if(entityNotRecorded(name))return;
  APP.previewEntity={kind,name,row:row||null};
@@ -3688,8 +3712,9 @@ function departmentRoster(section,page='Overview'){
    page==='People'?WORLD_1999_COLUMNS.People:WORLD_1999_COLUMNS.Organizations):
   section==='Sales'&&page==='Watchlist'?DEP_COLUMNS.SalesWatchlist:section==='Sales'&&page==='Sale Calendar'?DEP_COLUMNS.SaleCalendar:section==='Sales'&&page==='Sale Companies'?DEP_COLUMNS.SaleCompanies:section==='Breeding'&&page==='Stud Farms'?DEP_COLUMNS.Facilities:section==='Racing'&&(page==='Calendar'||page==='Race Planning'||page==='Overview'&&APP.racingMode==='day')?DEP_COLUMNS.DayCard:section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'?DEP_COLUMNS.Meets:DEP_COLUMNS[section];
  // Every department now uses one progressive, sortable roster without pagination.
+ const savedWorldBrowse=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.worldHorseBrowse;
  const globalHorseDirectory=section==='World'&&page==='1999 Horses'&&
-  Boolean(window.__WTW_1999_UI_DATA__?.worldHorseBrowse);
+  Boolean(savedWorldBrowse||window.__WTW_1999_UI_DATA__?.worldHorseBrowse);
  const virtualHorseIndex=section==='World'&&page==='1999 Horses'&&!globalHorseDirectory&&
   window.__WTW_1999_UI_DATA__?.worldHorsePage;
  const globalMareDirectory=section==='Breeding'&&page==='Broodmares'&&
@@ -3724,7 +3749,9 @@ function departmentRoster(section,page='Overview'){
  let globalIndexing=false,globalProgress=0;
  if(globalDirectory){
   const browse=globalHorseDirectory?'worldHorseBrowse':'breedingMareBrowse';
-  const result=window.__WTW_1999_UI_DATA__[browse]({
+  const industryBrowser=globalHorseDirectory&&savedWorldBrowse?
+   savedWorldBrowse:window.__WTW_1999_UI_DATA__[browse];
+  const result=industryBrowser({
    offset:0,limit:APP.departmentScrollLimit,search:APP.departmentSearch,
    sort:selectedSort,desc:sign<0,filters:rosterFilter||{},attributeKey:globalHorseDirectory?worldAttributeKey:''
   });
@@ -4463,6 +4490,7 @@ else if(APP.custom==='Opportunities'){body=sourceOpportunityBoard()}
 else if(['Messages','Decisions'].includes(APP.custom)){body=managerDashboard()}
 else if(APP.custom==='Search'){body=searchView()}
 else if(APP.custom.startsWith('WorldRecord:')){body=world1999Profile()}
+else if(APP.custom.startsWith('SavedIndustryHorse:')){body=savedIndustryHorseProfile()}
 else if(APP.custom.startsWith('FoundingProfile:')){body=founding1999Profile()}
 else if(APP.custom.startsWith('PilotHorse:')){body=pilotHorseDetail(decodeURIComponent(APP.custom.slice('PilotHorse:'.length)))}
 else if(APP.custom.startsWith('RaceFile:Career:')){
@@ -4742,6 +4770,9 @@ window.addEventListener('click',e=>{
  if(key==='dept-company'){APP.departmentCompany=val;return pageTab('Sale Calendar')}
  if(key==='dept-open'){
   const r=APP.departmentVisible[Number(val)];if(!r)return;
+  if(r._savedWorldId&&r._kind==='horse'&&
+   window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.worldHorseById?.(r._id))
+   return openCustomView('SavedIndustryHorse:'+encodeURIComponent(r._id),'World','1999 Horses');
    if(r._kind==='race')return open1999Race(r._raceData||r);
   if(r._mareIndex!=null){
    const full=window.__WTW_1999_UI_DATA__?.breedingMareByModelIndex?.(r._mareIndex);
@@ -4869,6 +4900,8 @@ window.addEventListener('click',e=>{
  if(key==='directory-horse'){
   const record=APP.directoryHorseItems.find(x=>x._directoryId===val)?._directoryRecord;
   if(!record)return;
+  if(record._savedWorldId&&window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.worldHorseById?.(record._id))
+   return openCustomView('SavedIndustryHorse:'+encodeURIComponent(record._id),'World','1999 Horses');
   if(record._worldKey&&world1999Entry(record._worldKey))return openWorld1999Entity(record._worldKey);
   if(record._canonId&&world1999Entry('horse:'+record._canonId))return openWorld1999Entity('horse:'+record._canonId);
   return previewRecordRoute('horse',record.name,record);
