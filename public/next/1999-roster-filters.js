@@ -2,8 +2,16 @@
 (()=>{
 'use strict';
 const normalize=v=>String(v??'').replaceAll('_',' ').trim().toLowerCase();
-const number=v=>{const n=Number(String(v??'').replace(/[$,%]/g,'').replaceAll(',','').trim());
- return Number.isFinite(n)?n:null;};
+const number=v=>{
+ // Unknown values are not zero: newborns aged 0 must be distinguishable from missing ages.
+ const raw=String(v??'').trim();
+ if(!raw)return null;
+ const accounting=raw.startsWith('(')&&raw.endsWith(')');
+ const amount=(accounting?raw.slice(1,-1):raw).replace(/[$,%]/g,'').replaceAll(',','').trim();
+ if(!amount)return null;
+ const n=Number(amount);
+ return Number.isFinite(n)?(accounting?-n:n):null;
+};
 const initial=()=>({field:'',query:'',ageMin:'',ageMax:'',sex:'',status:''});
 const get=(app,scope)=>{
  if(!app.rosterFilters||typeof app.rosterFilters!=='object')app.rosterFilters={};
@@ -16,8 +24,11 @@ function matches(row,criteria){
  if(criteria.ageMin!==''&&(ageValue===null||ageValue<Number(criteria.ageMin)))return false;
  if(criteria.ageMax!==''&&(ageValue===null||ageValue>Number(criteria.ageMax)))return false;
  if(criteria.sex&&normalize(row.sex)!==normalize(criteria.sex))return false;
- const status=normalize(row.status??row.racingStatus1999??row.activity??row.ready);
- if(criteria.status&&!status.includes(normalize(criteria.status)))return false;
+ const status=normalize([row.status,row.racingStatus1999,row.activity,row.ready]
+  .find(v=>v!=null&&String(v).trim()!==''));
+ // Match a selected status on word boundaries: ACTIVE must not match INACTIVE.
+ const words=value=>' '+normalize(value).replace(/[^a-z0-9]+/g,' ').trim()+' ';
+ if(criteria.status&&!words(status).includes(words(criteria.status)))return false;
  if(criteria.field&&criteria.query){
   const actual=row[criteria.field];
   const query=String(criteria.query).trim();
@@ -35,7 +46,7 @@ function render(schema,criteria,safe,scope){
  const withAge=fields.some(([k])=>k==='age');
  const withSex=fields.some(([k])=>k==='sex');
  const withStatus=fields.some(([k])=>['status','activity','readiness'].includes(k));
- const val=(k)=>safe(criteria[k]||'');
+ const val=(k)=>safe(criteria[k]??'');
  return '<div class="ng-list-filters" data-filter-scope="'+safe(scope)+'" aria-label="Filter roster columns">'+
   '<label>COLUMN <select data-ng-select="roster-filter-field"><option value="">Choose column</option>'+keyOptions+'</select></label>'+
   '<label>CONTAINS <input type="search" data-ng-input="roster-filter-query" value="'+val('query')+'" placeholder="Text or number"/></label>'+
