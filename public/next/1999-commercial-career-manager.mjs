@@ -197,8 +197,23 @@ function publishCareerReadModel(){
  const operation=career.world.entities.organizations.find(x=>x.id===run.player.operation_id);
  if(!operation)throw Error('Active game operation missing from the world');
  const rawBalance=run.runtime.finances?.operation_balances_minor?.[operation.id];
- const horses=(run.stable_horse_ids||[]).map(id=>run.runtime.registered_horses?.by_id?.[id]).filter(Boolean)
-  .map(h=>({horseId:h.horse_id,name:h.registered_name,activity:h.status||'In training',tag:h.status||'In training'}));
+ const sourceById=new Map((career.world.entities.horses||[]).map(h=>[h.id,h]));
+ const horses=(run.stable_horse_ids||[]).map(id=>{
+  const active=run.runtime.registered_horses?.by_id?.[id]||null;
+  const source=sourceById.get(active?.registration_receipt?.candidate_id)||
+   sourceById.get(id)||null;
+  if(!active&&!source)return null;
+  const relationships=new Set([
+   ...(source?.ownerId===operation.id?['OWNED']:[]),
+   ...(source?.managementOrganizationId===operation.id?['MANAGED']:[]),
+   ...(source?.careFacilityId===operation.id?['BOARDED']:[]),
+   ...(source?.trainingBarnId===operation.id?['TRAINED']:[])
+  ]);
+  return {horseId:active?.horse_id||id,sourceHorseId:source?.id||null,
+   name:active?.registered_name||source?.name||id,
+   activity:active?.status||source?.status||'Stable care',
+   tag:[...relationships].join(' · ')||active?.status||source?.status||'Stable'};
+ }).filter(Boolean);
  const races=projectCanonical1999RaceRows(run,career.world);
  const snapshot={schema:'WTW_CANONICAL_CAREER_READ_MODEL_V1',
   worldId:career.manifest.worldId,runId:run.run_id,
@@ -213,7 +228,20 @@ function publishCareerReadModel(){
  window.__WTW_ACTIVE_WORLD_CAREER_VIEW__=Object.freeze(snapshot);
  window.__WTW_NEXT__?.paint?.();
 }
-let selectedIndustryHorses=300000,selectedIndustrySeed=19990101;
+let selectedIndustryHorses=300000,selectedIndustrySeed=19990101,
+ selectedPlayerOperationId='O-000061';
+const FEATURED_OPERATION_IDS=['O-000061','O-000001','O-000003','O-000062',
+ 'O-000066','O-FOUNDING-1999-001','O-FOUNDING-1999-004'];
+function featuredOperations(){
+ const byId=new Map(industryDirectory.map(row=>[row.id,row]));
+ return FEATURED_OPERATION_IDS.map(id=>byId.get(id)).filter(row=>
+  row?.operatingRoles?.includes('LEGAL_OWNER'));
+}
+function featuredOperationOptions(){
+ return featuredOperations().map(row=>'<option value="'+esc(row.id)+'"'+
+  (row.id===selectedPlayerOperationId?' selected':'')+'>'+esc(row.name||row.id)+
+  ' · '+esc(row.portfolioTier||'OPERATION')+'</option>').join('');
+}
 const INDUSTRY_SIZE_MIN=10000,INDUSTRY_SIZE_MAX=325000;
 function requestedIndustry(){
  const root=modal();
@@ -299,6 +327,15 @@ async function inspectFullIndustryPerson(personId){
 }
 function canonicalRunId(manifest){return 'WTW-RUN-1999-'+manifest.seed+'-SIZE-'+
  (manifest.targetOpeningHorses??manifest.horseCount)}
+function operationRunId(manifest,operationId){
+ return canonicalRunId(manifest)+'-OP-'+operationId;
+}
+function savePreferredOperation(manifest,operationId){
+ try{localStorage.setItem('wtw-active-operation:'+manifest.worldId,operationId)}catch{}
+}
+function preferredOperation(manifest){
+ try{return localStorage.getItem('wtw-active-operation:'+manifest.worldId)||''}catch{return ''}
+}
 async function persistCanonicalRun(){
  if(!activeWorldCareer)return;
  const store=await open1999IndustryDatabase();
@@ -453,25 +490,42 @@ function bootstrapBundledCareer(){
  return bundledCareerBootstrap;
 }
 async function resumeCanonicalRun(store,manifest){
- const saved=await loadPersistent1999CareerRun(store,manifest,canonicalRunId(manifest));
+ const preferred=preferredOperation(manifest);
+ const operationId=preferred&&industryDirectory.some(row=>row.id===preferred&&
+  row.operatingRoles?.includes('LEGAL_OWNER'))?preferred:'';
+ const runId=operationId?operationRunId(manifest,operationId):canonicalRunId(manifest);
+ const saved=await loadPersistent1999CareerRun(store,manifest,runId);
  if(!saved?.changes?.canonicalRun)return null;
  const career=await openPersistent1999GameCareer(store,manifest,{
-  runId:canonicalRunId(manifest),operationId:saved.player.operation_id});
+  runId,operationId:saved.player.operation_id});
  validateGameRun(saved.changes.canonicalRun,career.world);
+ selectedPlayerOperationId=saved.player.operation_id;
  return {...career,run:saved.changes.canonicalRun,manifest};
 }
-async function startCanonicalRun(){
+async function startCanonicalRun(operationId=null){
  if(!fullIndustryManifest||fullIndustryManifest.status!=='COMPLETE')
   throw Error('Create or open a completed world first');
+ const chosenId=operationId&&featuredOperations().some(row=>row.id===operationId)?
+  operationId:null;
+ const runId=chosenId?operationRunId(fullIndustryManifest,chosenId):
+  canonicalRunId(fullIndustryManifest);
  const store=await open1999IndustryDatabase();
  try{
+  const saved=await loadPersistent1999CareerRun(store,fullIndustryManifest,runId);
   activeWorldCareer=await openPersistent1999GameCareer(store,fullIndustryManifest,
-   {runId:canonicalRunId(fullIndustryManifest)});
+   {runId,operationId:chosenId});
+  if(saved?.changes?.canonicalRun){
+   validateGameRun(saved.changes.canonicalRun,activeWorldCareer.world);
+   activeWorldCareer.run=saved.changes.canonicalRun;
+  }
   activeWorldCareer.manifest=fullIndustryManifest;
   await persistCanonicalRun();
  }finally{store.close()}
+ if(chosenId){selectedPlayerOperationId=chosenId;
+  savePreferredOperation(fullIndustryManifest,chosenId)}
  notice='TEST CAREER READY · '+fmt(activeWorldCareer.playableHorseCount)+
-  ' owned runners at '+activeWorldCareer.homeTrackId+'.';
+  ' racing horses · '+fmt(activeWorldCareer.operationInventoryCount)+
+  ' managed/owned/boarded/trainable horses at '+activeWorldCareer.homeTrackId+'.';
 }
 async function advanceCanonicalRun(){
  if(!activeWorldCareer)throw Error('Start a test career first');
@@ -554,8 +608,11 @@ async function refresh(){
    ' total horses · '+fmt(fullIndustryManifest.personCount)+' personnel · '+
    esc(fullIndustryManifest.status)+'</p>'+
    '<div class="wtw-cc-section"><h3>PLAYABLE GAMEPLAY TEST</h3>'+
+   '<label>PLAYER OPERATION<select data-cc="player-operation">'+featuredOperationOptions()+'</select></label>'+
+   '<button data-cc-action="open-selected-operation">OPEN / SWITCH OPERATION</button> '+
    (activeWorldCareer?'<p>ACTIVE · '+esc(activeWorldCareer.run.clock.date)+
-    ' · '+fmt(activeWorldCareer.playableHorseCount)+' player runners · '+
+    ' · '+esc(activeWorldCareer.operation.name)+' · '+
+    fmt(activeWorldCareer.operationInventoryCount)+' relationship-linked horses · '+
     esc(activeWorldCareer.homeTrackId)+' · canonical race engine connected</p>'+
     '<div class="wtw-cc-actions"><button data-cc-action="open-next-test-race">OPEN NEXT TEST RACE / ENTER TWO</button>'+ 
    '<button data-cc-action="advance-test-day" class="primary">ADVANCE ONE GAME DAY</button>'+
@@ -607,6 +664,11 @@ async function perform(action,element){
   notice='SHARED CAREER EXPORTED · '+kb(result.bytes)+' · '+result.gameDate+'.';return;
  }
  if(action==='start-test-career'){await startCanonicalRun();return}
+ if(action==='open-selected-operation'){
+  const operationId=modal().querySelector('[data-cc="player-operation"]')?.value||'';
+  if(!operationId)throw Error('No approved major operation is available in this saved world');
+  await startCanonicalRun(operationId);return;
+ }
  if(action==='advance-test-day'){await advanceCanonicalRun();return}
  if(action==='open-next-test-race'){await openNextTestRace();return}
  if(action==='open-existing-industry'){
@@ -740,6 +802,9 @@ async function handleClick(event){
  finally{busy=false}
 }
 async function handleChange(event){
+ if(event.target.matches('[data-cc="player-operation"]')){
+  selectedPlayerOperationId=event.target.value;return;
+ }
  if(event.target.matches('[data-cc="import-shared-file"]')){
   const file=event.target.files?.[0];if(!file)return;
   try{busy=true;await importSharedCareerFile(file)}
