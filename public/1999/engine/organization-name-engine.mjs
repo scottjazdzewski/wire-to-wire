@@ -249,8 +249,24 @@ export function createOrganizationNameRoster({
  }
  for(const n of [ownerCount,barnCount,farmCount,breakingCount])
   if(!Number.isInteger(n)||n<0)throw Error('Invalid naming count');
- const used=new Set(protectedNames.map(norm).filter(Boolean));
- const roots=new Set(protectedNames.filter(s=>trailing.test(String(s))).map(rootOf).filter(Boolean));
+ // Source owners are approved, immutable inputs, not candidates. Reserve ALL
+ // their names before generating farms or barns; otherwise a new business
+ // can accidentally take an existing owner's exact or distinctive root.
+ if(!Array.isArray(sourceOwnerNames)||sourceOwnerNames.length>ownerCount)
+  throw Error('Invalid source owner name list');
+ const lockedSourceNames=[],sourceNameKeys=new Set();
+ for(const name of sourceOwnerNames){
+  if(name===null||name===undefined||name==='')continue;
+  if(typeof name!=='string'||!name.trim()||name!==name.trim())
+   throw Error('Invalid approved source owner name');
+  const key=norm(name);
+  if(sourceNameKeys.has(key))
+   throw Error('Duplicate approved source owner name: '+name);
+  sourceNameKeys.add(key);lockedSourceNames.push(name);
+ }
+ const protectedBusinessNames=[...protectedNames,...lockedSourceNames];
+ const used=new Set(protectedBusinessNames.map(norm).filter(Boolean));
+ const roots=new Set(protectedBusinessNames.filter(s=>trailing.test(String(s))).map(rootOf).filter(Boolean));
  const hasProtectedPrefixConflict=createProtectedOrganizationRootGuard(roots);
  const stems=new Map(),distinctiveRootCounts=new Map();
  const perCategory={owner:0,barn:0,farm:0,breaking:0};
@@ -294,7 +310,14 @@ export function createOrganizationNameRoster({
     contextualFarmCandidate(seed,i,a,farmKinds[i],context):
    farmName(seed,i,a,farmKinds[i]),'farm');
  });
- let partnershipGroupsCreated=0;
+ // Locked partnerships also use the real owner roster slots. Count them
+ // against the same hard group ceiling so newly generated groups cannot
+ // silently exceed it. Never rename or substitute a locked identity.
+ let partnershipGroupsCreated=sourceOwnerNames.reduce((n,name,i)=>
+  n+(name&&classifyFictionalOwnerName(name,principalNames[i]||'')===
+   'PARTNERSHIP_OR_SYNDICATE'?1:0),0);
+ if(ownerPartnershipLimit!==null&&partnershipGroupsCreated>ownerPartnershipLimit)
+  throw Error('Approved source partnerships exceed naming group ceiling');
  const owners=Array.from({length:ownerCount},(_,i)=>{
   if(sourceOwnerNames[i])return sourceOwnerNames[i];
   const principal=String(principalNames[i]||'').trim();
