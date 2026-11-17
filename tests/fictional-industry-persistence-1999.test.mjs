@@ -787,5 +787,15 @@ test('portable 1999 career import accepts only additive lifecycle metadata upgra
   assert.equal(samePersistent1999CareerImportReadback(original,
    {...upgraded,...patch}),false,
    'an imported run must reject altered identity, results or living census');
+ const beforeLifecycle={...original};
+ delete beforeLifecycle.lifecycle;
+ assert.ok(samePersistent1999CareerImportReadback(beforeLifecycle,upgraded),
+  'pre-lifecycle portable careers may gain a validated per-run checkpoint');
+ assert.equal(samePersistent1999CareerImportReadback(beforeLifecycle,{
+  ...upgraded,lifecycle:{...upgraded.lifecycle,runId:'WRONG'}
+ }),false,'migration must preserve the canonical run identity');
+ assert.equal(samePersistent1999CareerImportReadback(beforeLifecycle,{
+  ...upgraded,lifecycle:{...upgraded.lifecycle,lastDate:'1999-05-30'}
+ }),false,'migration must never change the imported career date');
  assert.equal(samePersistent1999CareerImportReadback(original,null),false);
 });
