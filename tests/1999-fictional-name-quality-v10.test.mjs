@@ -71,7 +71,11 @@ test('expanded Census-era owner lexicon supports the complete 16,700-owner opera
  assert.equal(roster.owners.length,16700);
  assert.equal(new Set(roster.owners.map(normalize)).size,16700);
  assert.ok(roster.owners.every(name=>!/[0-9]/.test(name)));
- assert.ok(roster.owners.filter(name=>/\b(?:Partners?|Partnership|Syndicate|Club|Group)\b/i.test(name)).length>0);
+ const partnershipNames=roster.owners.filter(name=>
+  /\b(?:Partners?|Partnership|Syndicate|Club|Group)\b/i.test(name));
+ assert.ok(partnershipNames.length>=1600&&partnershipNames.length<=2100,
+  'expected a seeded partnership share of about 11% after sole owners');
+ assert.equal(roster.summary.partnershipGroupsCreated,partnershipNames.length);
  assert.ok(roster.owners.filter(name=>/\b(?:Racing|Thoroughbreds|Stable|Stables|Bloodstock)\b/i.test(name)).length>10000);
 });
 test('quality auditing validates 11,202 people and 8,408 organizations across different seeds',()=>{

@@ -324,7 +324,23 @@ export function createOrganizationNameRoster({
   if(sole&&principal){used.add(norm(principal));return principal;}
   const preferred=principalPrimarySurnames[i]||surname(principal);
   const context=ownerContexts[i]||{};
+  // Reserve a seeded share for recognizable multi-person ownership groups.
+  // The legacy owner-name templates are weighted toward private stables and
+  // family operations, leaving partnerships rare in the full owner directory.
+  const plannedPartnership=hash(seed,'owner-partnership-share:'+i)%100<12;
+  const partnershipSlotAvailable=ownerPartnershipLimit===null||
+   partnershipGroupsCreated<ownerPartnershipLimit;
+  const usePartnershipForm=plannedPartnership&&partnershipSlotAvailable;
   const name=claim(attempt=>{
+   if(usePartnershipForm){
+    const coOwner=draw(OWNER_SURNAMES,seed,'owner-partner-surname:'+i+':'+attempt);
+    const suffix=draw(['Racing Partners','Racing Partnership',
+     'Thoroughbred Partnership','Racing Syndicate'],seed,
+     'owner-partner-form:'+i+':'+attempt);
+    // Keep the named principal's family attached while adding a second
+    // real surname from the Census lexicon to the ownership record.
+    return coOwner+' & '+preferred+' '+suffix;
+   }
    const candidate=attempt<48?
     context.namingYear>1999?
      generationalOwnerCandidate(seed,i,attempt,principal,alignPrincipalSurnames?preferred:'',context):

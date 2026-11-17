@@ -12,9 +12,9 @@ const preload=readFileSync(new URL('../desktop/preload.cjs',import.meta.url),'ut
 const desktopSmoke=readFileSync(new URL('../scripts/windows-desktop-smoke.ps1',import.meta.url),'utf8');
 const fullWorldSmoke=readFileSync(new URL('../scripts/1999-full-world-browser-cdp.mjs',import.meta.url),'utf8');
 
-test('the desktop bundles V5 and preserves the frozen May 29 reference career',async()=>{
+test('the desktop bundles V6 and preserves the frozen May 29 reference career',async()=>{
  const compressed=readFileSync(asset);
- assert.ok(compressed.byteLength<2_000_000,'V5 checkpoint should stay under 2 MB');
+ assert.ok(compressed.byteLength<2_000_000,'V6 checkpoint should stay under 2 MB');
  const checkpoint=await unpackShared1999Career(gunzipSync(compressed));
  assert.equal(checkpoint.world.worldId,'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V6-H300000');
  assert.equal(checkpoint.world.seed,19990101);

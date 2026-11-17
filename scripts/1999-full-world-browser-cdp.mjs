@@ -418,6 +418,20 @@ try{
   r.status==='OFFICIAL_SIM_RESULT'&&r.results.length===raceSettlement.starterCount),
   'Official result is missing after Chromium process restart');
  console.log('WTW_FULL_WORLD_RACE_REOPEN_PASS '+JSON.stringify({raceSettlement,careerAfterRaceRestart}));
+ await waitFor('saved test career resume control after Chromium restart',async()=>{
+  const ready=await browser.evalJS(`!!document.querySelector('[data-cc-action="start-test-career"]')`);
+  return {done:ready,value:ready};
+ });
+ await browser.evalJS(`document.querySelector('[data-cc-action="start-test-career"]').click()`);
+ const resumedCareerView=await waitFor('saved test career resume in the game UI',async()=>{
+  const value=await browser.evalJS(`(()=>{const v=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+   return v?{operationId:v.operationId,date:v.date,worldHorseCount:v.worldHorseCount,
+    inventoryCount:v.operationInventoryCount}:null})()`);
+  return {done:value?.operationId===careerAfterRaceRestart.operationId&&
+   value?.date===careerAfterRaceRestart.gameDate,value};
+ },120000);
+ assert.equal(resumedCareerView.worldHorseCount,300000,
+  'The saved career must reopen against the same persisted full world');
  const sharedCareer=await browser.evalJS(`(async()=>{
   const bytes=await window.WTWCompactCareerManager.sharedCareerBytes();
   const json=new TextDecoder().decode(bytes);
