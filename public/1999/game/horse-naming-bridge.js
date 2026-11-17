@@ -17,7 +17,7 @@ const text=x=>typeof x==='string'?x.trim():'';
 function checkHorse(world,horse){
  ensure(plain(horse)&&safeId.test(horse.horse_id||''),
   'NAMING_ID','Requires a future 1999 career horse ID');
- ensure(Number.isInteger(horse.foaling_year)&&horse.foaling_year>=1980&&horse.foaling_year<=1996,
+ ensure(Number.isInteger(horse.foaling_year)&&horse.foaling_year>=1980&&horse.foaling_year<=1997,
   'NAMING_AGE','Expected a valid 1999 registered horse foaling year');
  const owner=worldIdentity(world,'organizations',horse.owner_organization_id);
  const breeder=worldIdentity(world,'organizations',horse.breeder_organization_id);

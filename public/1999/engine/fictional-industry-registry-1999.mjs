@@ -40,31 +40,47 @@ function validateRefs(label,items){
 export function* generate1999IndustryRegistryBatches({
  seed=19990101,plan=plan1999Ecosystem({seed}),
  farms,tracks,owners,batchSize=1000,includeProjectedFoals=false,
- emitNames=false,protectedHorseNames=[],ownerPortfolioPlan=null
+ emitNames=false,protectedHorseNames=[],ownerPortfolioPlan=null,
+ foundingHorses=[],careFacilityIds=null
 }={}){
  if(!Number.isSafeInteger(seed)||seed<1||!plan?.counts||
   !Number.isInteger(batchSize)||batchSize<1||batchSize>5000)
   throw Error('Invalid opening industry batch request');
  validateRefs('farms',farms);validateRefs('tracks',tracks);
  validateRefs('owners',owners);
+ if(!Array.isArray(foundingHorses)||new Set(foundingHorses.map(h=>h?.id)).size!==foundingHorses.length)
+  throw Error('Approved founding horse list must have unique permanent IDs');
  const counts=plan.counts,broodmareCount=counts.broodmares,stallionCount=counts.stallions;
  const openingHorseCount=count1999Registry(plan);
+ const populationHorseCount=openingHorseCount+foundingHorses.length;
  const ownership=ownerPortfolioPlan??planFictionalOwnerPortfolios({
-  seed,owners,horseCount:openingHorseCount
+  seed,owners,horseCount:populationHorseCount
  });
- if(ownership.seed!==seed||ownership.horseCount!==openingHorseCount||
+ if(ownership.seed!==seed||ownership.horseCount!==populationHorseCount||
   ownership.ownerIds.length!==owners.length||
   ownership.ownerIds.some((id,index)=>id!==owners[index].id))
   throw Error('Owner portfolio plan does not match the opening horse census and directory');
  const regionKey=value=>String(value||'').trim().toLowerCase().replace(/[^a-z]/g,'');
- const farmPoolByTrack=new Map(tracks.map(track=>{
-  const sameRegion=farms.filter(f=>regionKey(f.location?.region)===
+ const facilityPoolByTrack=(role,track)=>{
+  const candidates=farms.filter(f=>f.operatingRoles?.includes(role));
+  const pool=candidates.length?candidates:farms;
+  const sameRegion=pool.filter(f=>regionKey(f.location?.region)===
    regionKey(track.location?.region));
-  const sameCountry=farms.filter(f=>f.location?.country&&
+  const sameCountry=pool.filter(f=>f.location?.country&&
    f.location.country===track.location?.country);
-  return [track.id,sameRegion.length?sameRegion:sameCountry.length?
-   sameCountry:farms];
+  return sameRegion.length?sameRegion:sameCountry.length?sameCountry:pool;
+ };
+ const farmPoolByTrack=new Map(tracks.map(track=>[track.id,
+  facilityPoolByTrack('FOALING_FARM',track)]));
+ const staffedCareIds=Array.isArray(careFacilityIds)?new Set(careFacilityIds):null;
+ const carePoolByTrack=new Map(tracks.map(track=>{
+  const pool=facilityPoolByTrack('BOARDING_FACILITY',track).filter(f=>
+   !staffedCareIds||staffedCareIds.has(f.id));
+  if(!pool.length)throw Error('No physically staffed boarding facility near '+track.id);
+  return [track.id,pool];
  }));
+ const trainingPoolByTrack=new Map(tracks.map(track=>[track.id,
+  facilityPoolByTrack('TRAINING_BARN',track)]));
  // Every horse that exists on January 1 needs a stable display identity before
  // the census can be adapted to the canonical game world. Projected foals are
  // forecasts, not entities, and deliberately remain unnamed until birth.
@@ -96,6 +112,13 @@ export function* generate1999IndustryRegistryBatches({
    const farm=farmPool[choose(seed,id+':farm',farmPool.length)];
    const racing=status==='RACING';
    const inTraining=racing||status==='TWO_YEAR_OLD_PROSPECT';
+   const trainingPool=trainingPoolByTrack.get(track.id)||farms;
+   const trainingBarn=inTraining?trainingPool[
+    choose(seed,id+':training-barn',trainingPool.length)]:null;
+   const carePool=carePoolByTrack.get(track.id)||farms;
+   const careOptions=carePool.filter(x=>x.id!==farm.id&&x.id!==trainingBarn?.id);
+   const careFacility=(careOptions.length?careOptions:carePool)[
+    choose(seed,id+':care-facility',careOptions.length||carePool.length)];
    const breeder=status==='BROODMARE'||status==='STALLION';
    const sex=status==='BROODMARE'?'MARE':status==='STALLION'?'HORSE':
     racing?(choose(seed,id+':sex',2)===0?
@@ -118,6 +141,7 @@ export function* generate1999IndustryRegistryBatches({
     namingRevision:assignedName?naming.algorithmRevision:null,
     sireId,damId,ownerId:owner.id,ownerPortfolioTier:ownership.ownerTier[ownerIndex],
     breederId:farm.id,foalingFarmId:farm.id,
+    careFacilityId:careFacility.id,trainingBarnId:trainingBarn?.id??null,
     birthplace:{city:farm.location?.city??null,region:farm.location?.region??null,
      country:farm.location?.country??null,farmId:farm.id,
      provenance:'MODELED_FOALING_FARM'},
@@ -133,6 +157,33 @@ export function* generate1999IndustryRegistryBatches({
      records:batch,continuation:cohort+':'+(i+1)};
     offset+=batch.length;batch=[];
    }
+  }
+ }
+ for(let i=0;i<foundingHorses.length;i++){
+  const source=foundingHorses[i],ownerIndex=ownership.ownerIndexForHorse[horseIndex++],
+   owner=owners[ownerIndex];
+  if(!/^H-[A-Za-z0-9-]+$/.test(source.id||'')||!source.name||
+   !['BROODMARE','STALLION'].includes(source.status)||!source.careFacilityId)
+   throw Error('Invalid approved founding horse '+String(source?.id||''));
+  const sourceSire=source.sourcePedigree?.sireId,sourceDam=source.sourcePedigree?.damId;
+  const horse={...source,
+   cohort:source.cohort||source.status.toLowerCase(),
+   ownerId:source.ownerId||owner.id,
+   sourcePedigree:{sireId:sourceSire||null,damId:sourceDam||null},
+   sireId:sourceSire&&foundingHorses.some(x=>x.id===sourceSire)?sourceSire:null,
+   damId:sourceDam&&foundingHorses.some(x=>x.id===sourceDam)?sourceDam:null,
+   foalingFarmId:source.foalingFarmId||null,breederId:source.breederId||null,
+   birthplace:source.birthplace||{city:null,region:null,country:null,
+    farmId:null,provenance:'SOURCE_NOT_RECORDED'},
+   homeTrackId:null,trainerId:null,jockeyId:null,
+   ownerPortfolioTier:ownership.ownerTier[ownerIndex],
+   registryProvenance:'APPROVED_FOUNDING_1999_SOURCE',
+   foundingSource:source.sourceRecord||null};
+  batch.push(horse);
+  if(batch.length===batchSize){
+   yield {schema:INDUSTRY_REGISTRY_1999_SCHEMA,seed,offset,
+    records:batch,continuation:'approvedFoundingHorses:'+(i+1)};
+   offset+=batch.length;batch=[];
   }
  }
  if(batch.length)yield {schema:INDUSTRY_REGISTRY_1999_SCHEMA,seed,offset,

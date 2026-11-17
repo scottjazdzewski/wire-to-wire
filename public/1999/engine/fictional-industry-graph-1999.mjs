@@ -36,13 +36,27 @@ export function relationship1999(type,fromId,toId){
  return {type,fromId,toId,provenance:'MODELED_1999_OPENING_WORLD'};
 }
 export function connect1999Horse(horse,{seed,trainerCount=0,jockeyCount=0,
- tracks=[],farms=[],owners=[],staffByTrack=null}={}){
+ tracks=[],farms=[],owners=[],staffByTrack=null,staffByFarm=null}={}){
  if(!horse?.id||!Number.isSafeInteger(seed)||seed<1)throw Error('Invalid horse graph input');
  const id=horse.id,edges=[];
  const add=(type,target)=>{if(target)edges.push(relationship1999(type,id,target))};
  add('OWNED_BY',horse.ownerId);
  add('BRED_BY',horse.breederId);
  add('FOALED_AT',horse.foalingFarmId);
+ // The foaling farm remains a real, physical care relationship at opening;
+ // racing horses additionally have a distinct track-based training circuit.
+ // A caregiver is selected from the actual staff assigned to that farm, with
+ // a deterministic labor-market fallback for farms without a resident hire.
+ const careFacilityId=horse.careFacilityId||horse.foalingFarmId||null;
+ const farmStaff=staffByFarm?.get(careFacilityId)||{};
+ const allFarmStaff=staffByFarm?.get('*')||{};
+ const carePool=[...(farmStaff.breeding_attendant||[]),
+  ...(farmStaff.farm_manager||[]),...(allFarmStaff.breeding_attendant||[]),
+  ...(allFarmStaff.farm_manager||[])];
+ const careStaffId=carePool.length?
+  carePool[hash(seed,id+':care-staff')%carePool.length]:null;
+ add('CARED_AT',careFacilityId);
+ add('CARED_BY',careStaffId);
  add('SIRED_BY',horse.sireId);
  add('OUT_OF',horse.damId);
  add('HOME_TRACK',horse.homeTrackId);
@@ -58,9 +72,12 @@ export function connect1999Horse(horse,{seed,trainerCount=0,jockeyCount=0,
  };
  const trainerId=active?assigned('trainer',trainerCount):null;
  const jockeyId=horse.status==='RACING'?assigned('jockey',jockeyCount):null;
+ const trainingBarnId=active?(horse.trainingBarnId||horse.homeTrackId):null;
+ add('TRAINED_AT',trainingBarnId);
  add('TRAINED_BY',trainerId);
  add('PREFERRED_JOCKEY',jockeyId);
- return {...horse,trainerId,jockeyId,
+ return {...horse,trainerId,jockeyId,careFacilityId,careStaffId,
+  trainingBarnId,
   ratings:rate1999Entity(seed,'horse',id),
   relationships:edges,ratingsProvenance:'MODELED_1999_UNCALIBRATED'};
 }
@@ -99,11 +116,12 @@ export function validate1999GraphBatch(records,ids){
  * Cohort/role identity is verified by permanent ID and ordinal bounds.
  */
 export function validate1999IndustryReferences(records,{
- plan,staffing,tracks,farms,owners
+ plan,staffing,tracks,farms,owners,foundingHorses=[]
 }={}){
- if(!plan?.counts||!staffing?.counts||![tracks,farms,owners].every(Array.isArray))
+ if(!plan?.counts||!staffing?.counts||![tracks,farms,owners,foundingHorses].every(Array.isArray))
   throw Error('Missing world census for relationship validation');
  const allowed=new Set([...tracks,...farms,...owners].map(x=>x.id));
+ const foundingHorseIds=new Set(foundingHorses.map(x=>x.id));
  const horseCohorts=['broodmares','stallions','yearlings','twoYearOldProspects',
   'threeYearOldRunners','fourYearOldRunners','fivePlusRunners'];
  const horseTokens=horseCohorts.map(x=>x.toUpperCase());
@@ -111,6 +129,7 @@ export function validate1999IndustryReferences(records,{
  const roleTokens=roleNames.map(x=>x.toUpperCase().replaceAll('_','-'));
  function known(id){
   if(allowed.has(id))return true;
+  if(foundingHorseIds.has(id))return true;
   const horse=/^H-FICTIONAL-1999-([A-Z]+)-(\d{7})$/.exec(id);
   if(horse){
    const n=horseTokens.indexOf(horse[1]);
@@ -157,6 +176,14 @@ export function validate1999IndustryReferences(records,{
     problems.push({id:entity.id,reason:'INVALID_BREEDER'});
    if(entity.homeTrackId&&!tracks.some(t=>t.id===entity.homeTrackId))
     problems.push({id:entity.id,reason:'INVALID_HOME_TRACK'});
+   if(!entity.careFacilityId||!farms.some(f=>f.id===entity.careFacilityId))
+    problems.push({id:entity.id,reason:'MISSING_CARE_FACILITY'});
+   if(entity.careStaffId&&!/^P-FICTIONAL-1999-(?:FARM-MANAGER|BREEDING-ATTENDANT)-\d{7}$/.test(entity.careStaffId))
+    problems.push({id:entity.id,reason:'INVALID_CARE_STAFF'});
+   if(entity.trainingBarnId&&(!entity.homeTrackId||
+    !farms.some(f=>f.id===entity.trainingBarnId)&&
+    !tracks.some(t=>t.id===entity.trainingBarnId)))
+    problems.push({id:entity.id,reason:'INVALID_TRAINING_CIRCUIT'});
    if(entity.trainerId&&entity.status!=='RACING'&&
     entity.status!=='TWO_YEAR_OLD_PROSPECT')
     problems.push({id:entity.id,reason:'INACTIVE_HORSE_HAS_TRAINER'});

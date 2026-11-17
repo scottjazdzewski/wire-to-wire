@@ -167,7 +167,14 @@ export async function openPersistent1999GameCareer(store,manifest,{
    horseNamingRevision:manifest.horseNamingRevision}};
  validateWorld(world);
  const ownerGroups=new Map();
- for(const h of horses)if(h.status==='RACING'&&h.ownerId){
+ const operationHorses=new Map();
+ for(const h of horses){
+  for(const operationId of new Set([h.ownerId,h.managementOrganizationId].filter(Boolean))){
+   if(!operationHorses.has(operationId))operationHorses.set(operationId,[]);
+   operationHorses.get(operationId).push(h);
+  }
+ }
+ for(const h of horses)if(['RACING','TWO_YEAR_OLD_PROSPECT'].includes(h.status)&&h.ownerId){
   if(!ownerGroups.has(h.ownerId))ownerGroups.set(h.ownerId,[]);
   ownerGroups.get(h.ownerId).push(h);
  }
@@ -179,8 +186,9 @@ export async function openPersistent1999GameCareer(store,manifest,{
  // The selected operator's stable is the full canonical racing string. The
  // previous 30-horse slice made the saved 300k census appear complete while
  // silently omitting most horses from playable career records.
+ const openingInventory=operationHorses.get(operation.id)||[];
  const openingRoster=ownerGroups.get(operation.id)||[];
- if(!openingRoster.length)throw Error('Selected operation needs an opening runner');
+ if(!openingRoster.length)throw Error('Selected operation needs an opening runner or training prospect');
  const run=createGameRun({world,runId,seed:manifest.seed,
   player:{role:playerRole,involvement,operation_id:operation.id},stableHorseIds:[]});
  const trackGroups=new Map();
@@ -198,6 +206,12 @@ export async function openPersistent1999GameCareer(store,manifest,{
   if(!trainer)throw Error('Opening track lacks a playable trainer identity: '+trackId);
   const siteId='F-1999-OPENING-'+trackId;
   const loc=track.location||{};
+  const tierBonus={HANDFUL:0,SMALL:3,REGIONAL:7,MAJOR:12,ELITE:18}[
+   operation.portfolioTier]??0;
+  const resources=operation.ratings?.resources??55;
+  const ambition=operation.ratings?.ambition??55;
+  const facilityQuality=Math.max(35,Math.min(95,
+   Math.round(.62*resources+.23*ambition+.15*55+tierBonus)));
   run.runtime.facilities.sites[siteId]={id:siteId,offer_id:null,
    owner_id:operation.id,operator_organization_id:operation.id,
    name:format1999OpeningBarnName(operation,track),type:'RACING_STABLE',
@@ -209,7 +223,7 @@ export async function openPersistent1999GameCareer(store,manifest,{
    source_ref:'PERSISTED_FICTIONAL_1999_OPENING_WORLD',status:'ACTIVE',
    acquired_date:run.clock.date,open_date:run.clock.date,
    stalls:Math.max(60,group.length),max_stalls:Math.max(60,group.length),
-   quality:60,daily_upkeep_minor:0,daily_boarding_minor:0,
+   quality:facilityQuality,daily_upkeep_minor:0,daily_boarding_minor:0,
    staff_required:1,staff_count:1,staff_wage_daily_minor:0,
    track_rent_daily_minor:0,maintenance_daily_minor:0,
    maintenance_policy:'STANDARD',contracts:[],upgrade:null,land_acres:0};
@@ -226,6 +240,8 @@ export async function openPersistent1999GameCareer(store,manifest,{
    racing_age_1999:1999-source.foalYear,
    sire_id:source.sireId,dam_id:source.damId,
    breeder_organization_id:source.foalingFarmId,
+   care_facility_organization_id:source.careFacilityId,
+   training_barn_organization_id:source.trainingBarnId,
    owner_organization_id:source.ownerId,
    foaling_location_id:source.foalingFarmId,
    current_residence_id:siteId,racing_barn_id:siteId,
@@ -244,6 +260,13 @@ export async function openPersistent1999GameCareer(store,manifest,{
   run.stable_horse_ids.push(id);activeIds.push(id);
   initializeGameHorseCare(run,h);
  }
+ // Breeding stock and youngstock remain their original canonical world
+ // records in the same career database. Put them on the operation roster so
+ // the player sees every owned horse, while the racing engine continues to
+ // operate only on registered racehorses with game attributes.
+ const activeSourceIds=new Set(openingRoster.map(source=>source.id));
+ const nonRunners=openingInventory.filter(source=>!activeSourceIds.has(source.id));
+ for(const source of nonRunners)run.stable_horse_ids.push(source.id);
  const homeTrack=openingRoster[0].homeTrackId;
  // Selection covers ALL player's actual barn circuits, then adds national
  // available jockeys. Scheduling still controls every signed mount.
@@ -258,6 +281,9 @@ export async function openPersistent1999GameCareer(store,manifest,{
  validateGameRun(run,world);
  return {schema:PERSISTED_1999_GAME_BRIDGE_SCHEMA,world,run,
   operation,certificate,playableHorseCount:activeIds.length,
+  operationInventoryCount:openingInventory.length,
+  operationInventoryByStatus:Object.fromEntries([...openingInventory.reduce((counts,h)=>
+   counts.set(h.status,(counts.get(h.status)||0)+1),new Map())].sort(([a],[b])=>a.localeCompare(b))),
   openingJockeyCount:openingJockeys.length,
   homeTrackId:homeTrack};
 }

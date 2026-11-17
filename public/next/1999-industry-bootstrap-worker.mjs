@@ -43,6 +43,9 @@ async function industryDirectories(seed){
   /OWNERSHIP|RACING STABLE/.test(o.type||''));
  const canonicalFarms=canonicalOrganizations.filter(o=>
   ['FARM','STUD_FARM'].includes(o.facilityDisplayCategory));
+ const canonicalTrainingBarns=canonicalOrganizations.filter(o=>
+  ['RACING_STABLE','TRAINING_CENTER','RACING_STABLE_ORGANIZATION'].
+   includes(o.facilityDisplayCategory));
  let ownerCount=Math.max(tracks.length*10,Math.ceil(requestedSize/18));
  const ownerIdAt=index=>'O-FICTIONAL-OWNER-'+String(index+1).padStart(6,'0');
  let capacity=assessFictionalOwnerCapacity({seed,horseCount:requestedSize,
@@ -68,10 +71,15 @@ async function industryDirectories(seed){
   throw Error('1999 approved organization name generator returned an incomplete directory');
  const farms=tracks.flatMap((t,trackIndex)=>Array.from({length:4},(_,i)=>{
   const named=generated.farms[trackIndex*4+i];
+  const trainingFacility=i>=2;
   return {id:'O-FICTIONAL-FARM-'+t.id+'-'+String(i+1).padStart(2,'0'),
    name:named.name,location:t.location,
-   operatingRoles:['BREEDER','FOALING_FARM','BOARDING_FACILITY'],
-   facilityKind:'COMMERCIAL_BREEDING_AND_CARE',
+   homeTrackId:t.id,
+   operatingRoles:trainingFacility?
+    ['RACING_STABLE','TRAINING_BARN','BOARDING_FACILITY']:
+    ['BREEDER','FOALING_FARM','BOARDING_FACILITY'],
+   facilityKind:trainingFacility?'RACING_STABLE_AND_TRAINING_BARN':
+    'COMMERCIAL_BREEDING_AND_CARE',
    namingStatus:'GENERATED_1999_ORGANIZATION_ENGINE',
    namingSourceId:named.id,
    geographyStatus:t.location?.region?'REGION_PROVIDED':'LOCATION_REVIEW_REQUIRED'};
@@ -105,6 +113,14 @@ async function industryDirectories(seed){
   id:org.id,name:org.name,location:locationFor(org),
   homeTrackId:homeTrackFor(org),organizationType:org.type,
   operatingRoles:['BREEDER','FOALING_FARM','BOARDING_FACILITY'],
+  sourceSchema:founding.schema,sourcePublicationTier:org.publicationTier,
+  approvedOrigin:org.approvedOrigin||null,historicalEvidence:org.historicalEvidence||null,
+  principalOwnerId:org.principalOwnerId||null,
+  leadershipPeopleIds:org.leadershipPeopleIds||[],sourceStatus:org.displayNameStatus||null
+ })),...canonicalTrainingBarns.map(org=>({
+  id:org.id,name:org.name,location:locationFor(org),
+  homeTrackId:homeTrackFor(org),organizationType:org.type,
+  operatingRoles:['RACING_STABLE','TRAINING_BARN','BOARDING_FACILITY'],
   sourceSchema:founding.schema,sourcePublicationTier:org.publicationTier,
   approvedOrigin:org.approvedOrigin||null,historicalEvidence:org.historicalEvidence||null,
   principalOwnerId:org.principalOwnerId||null,
@@ -144,7 +160,24 @@ async function industryDirectories(seed){
    leadershipPeopleIds:org.leadershipPeopleIds||[],
    leadershipStatus:org.leadershipStatus||null,sourceStatus:org.displayNameStatus||null};
  })];
- return {tracks,farms:farmsWithCanon,owners};
+ const foundingHorses=(founding.horses||[]).map(h=>{
+  const resident=h.standingFarm1999||h.boardingFarm1999||null;
+  const careFacilityId=resident?.farmOrganizationId||h.farmOrganizationId||null;
+  const status=h._role==='stallion'?'STALLION':h._role==='broodmare'?'BROODMARE':null;
+  if(!/^H-[A-Za-z0-9-]+$/.test(h.id||'')||!h.name||!status||!careFacilityId||
+   !farmsWithCanon.some(f=>f.id===careFacilityId))
+   throw Error('Approved founding horse has no valid identity, life stage, or resident facility: '+(h.id||'unknown'));
+  return {id:h.id,name:h.name,status,cohort:h._role,
+   sex:h.sex||(h._role==='broodmare'?'MARE':'HORSE'),foalYear:h.foalYear||null,
+   ownerId:h.ownerId||null,breederId:h.breederOrganizationId||careFacilityId,
+   foalingFarmId:h.foalingFarmId||careFacilityId,careFacilityId,
+   managementOrganizationId:careFacilityId,
+   sourcePedigree:{sireId:h.sireId||null,damId:h.damId||null},
+   sourceStatus:h.status||'APPROVED_FOUNDING_SOURCE',
+   sourceEvidence:h.evidenceStatus||h.population||'APPROVED_FOUNDING_DIRECTORY',
+   sourceRevision:founding.schema,sourceRecord:h};
+ });
+ return {tracks,farms:farmsWithCanon,owners,foundingHorses,requestedSize};
 }
 
 self.addEventListener('message',async event=>{
@@ -160,7 +193,7 @@ self.addEventListener('message',async event=>{
   store=await open1999IndustryDatabase();
   const manifest=await createPersistent1999Industry({
    ...directories,store,seed:request.seed,worldId:request.worldId,
-   targetOpeningHorses:request.targetOpeningHorses,
+   targetOpeningHorses:request.targetOpeningHorses??directories.requestedSize,
    batchSize:request.batchSize,
    yieldControl:()=>new Promise(resolve=>setTimeout(resolve,0)),
    onProgress:progress=>send('PROGRESS',progress)

@@ -9,6 +9,8 @@ import {validateGameRun} from '../public/1999/game/state.js';
 import {dispatchGameCommand} from '../public/1999/game/kernel.js';
 import {gameRaceProgram,supported1999RaceClass,raceEligibility}
  from '../public/1999/game/racing-1999.js';
+import {getCareerHorseConnections}
+ from '../public/1999/game/horse-connections.js';
 
 function memoryStore(){
  const names=['manifests','horseBatches','personBatches','horseEdits',
@@ -98,11 +100,19 @@ test('10,000-horse persisted 1999 world opens and runs a canonical race career',
  assert.ok(openingSite.head_trainer_person_id,'trainer identity must remain linked');
  assert.ok(career.playableHorseCount>0);
  const ownedRunners=career.world.entities.horses.filter(h=>
-  h.status==='RACING'&&h.ownerId===career.operation.id);
+  ['RACING','TWO_YEAR_OLD_PROSPECT'].includes(h.status)&&
+  h.ownerId===career.operation.id);
  assert.equal(career.playableHorseCount,ownedRunners.length,
   'the playable run must not truncate a selected operator at a demo roster size');
  assert.ok(career.openingJockeyCount>=2);
  assert.equal(validateGameRun(career.run,career.world),career.run);
+ const registered=Object.values(career.run.runtime.registered_horses.by_id)[0];
+ assert.ok(registered.care_facility_organization_id);
+ assert.ok(registered.training_barn_organization_id);
+ const careRoster=getCareerHorseConnections(career.run,career.world,{
+  kind:'care_facility',id:registered.care_facility_organization_id});
+ assert.ok(careRoster.horses.some(h=>
+  h.id===registered.horse_id&&h.training_barn_organization_id===registered.training_barn_organization_id));
  let state=career.run,raceChoice=null;
  for(let offset=2;offset<=28&&!raceChoice;offset++){
   const date=new Date(Date.UTC(1999,0,1+offset)).toISOString().slice(0,10);
@@ -113,7 +123,7 @@ test('10,000-horse persisted 1999 world opens and runs a canonical race career',
    id:'test-open-'+date,type:'OPEN_1999_RACE',actor:'system',
    payload:{track_id:career.homeTrackId,date,race_id:book.id}}});
   state=opened.state;
-  const candidates=state.stable_horse_ids.map(id=>state.runtime.registered_horses.by_id[id]);
+  const candidates=state.stable_horse_ids.map(id=>state.runtime.registered_horses.by_id[id]).filter(Boolean);
   for(let i=0;i<candidates.length&&!raceChoice;i++)for(let j=i+1;j<candidates.length;j++){
    const pair=[candidates[i],candidates[j]];
    if(pair.every(h=>raceEligibility(state,h,state.runtime.races[book.id]).eligible)){
@@ -180,25 +190,53 @@ test('approved Kingsmere is an openable owner-farm operator with a persistent fu
   id:'O-TEST-OP-'+String(i+1).padStart(2,'0'),name:'Test Operation '+(i+1),
   portfolioTier:'ELITE',
   maxHorses:900,homeTrackId:'T-0001'}))];
+ const trainingFarm={id:'O-TRAINING-1999-01',name:'Keeneland Training Barn',
+  location:kingsmere.location,homeTrackId:'T-0001',
+  operatingRoles:['RACING_STABLE','TRAINING_BARN','BOARDING_FACILITY']};
+ const careFarm={id:'O-CARE-1999-01',name:'Bluegrass Boarding Farm',
+  location:kingsmere.location,homeTrackId:'T-0001',
+  operatingRoles:['BOARDING_FACILITY']};
+ kingsmere.operatingRoles.push('BOARDING_FACILITY');
  const manifest=await createPersistent1999Industry({store,seed:19990117,
   worldId:'KingsmereCareerIntegration',targetOpeningHorses:10000,batchSize:1000,
   tracks:[{id:'T-0001',name:'Keeneland',location:{city:'Lexington',
-   region:'Kentucky',country:'USA'}}],farms:[kingsmere],owners});
+   region:'Kentucky',country:'USA'}}],farms:[kingsmere,trainingFarm,careFarm],owners});
  const career=await openPersistent1999GameCareer(store,manifest,{
   runId:'WTW-RUN-KINGSMERE-1999',operationId:'O-000061'});
  const ownedRunners=career.world.entities.horses.filter(h=>
-  h.status==='RACING'&&h.ownerId==='O-000061');
+  ['RACING','TWO_YEAR_OLD_PROSPECT'].includes(h.status)&&
+  h.ownerId==='O-000061');
  assert.ok(ownedRunners.length>1);
+ const firstActive=career.run.runtime.registered_horses.by_id[
+  'H-GAME-1999-WORLD-'+ownedRunners[0].id.replace(/^H-FICTIONAL-1999-/,'')];
+ assert.notEqual(firstActive.care_facility_organization_id,
+  firstActive.training_barn_organization_id,
+  'boarding and racing-stable relationships must remain distinct when the world has separate facilities');
+ const twoYearProspects=ownedRunners.filter(h=>h.status==='TWO_YEAR_OLD_PROSPECT');
+ assert.ok(twoYearProspects.length>0);
+ assert.ok(twoYearProspects.every(source=>{
+  const id='H-GAME-1999-WORLD-'+source.id.replace(/^H-FICTIONAL-1999-/,'');
+  const active=career.run.runtime.registered_horses.by_id[id];
+  return active?.foaling_year===1997&&active.racing_age_1999===2&&
+   active.status==='IN_TRAINING'&&active.starting_attributes.current_ability<
+    active.starting_attributes.potential_ability;
+ }), '2-year-old prospects should enter as developing, non-peak game horses');
  assert.equal(career.playableHorseCount,ownedRunners.length);
- assert.ok(career.run.stable_horse_ids.every(id=>{
-  const horse=career.run.runtime.registered_horses.by_id[id];
-  return horse.owner_organization_id==='O-000061'&&horse.world_source_horse_id;
- }));
+ const registeredRunnerIds=career.run.stable_horse_ids.filter(id=>
+  Boolean(career.run.runtime.registered_horses.by_id[id]));
+ assert.equal(registeredRunnerIds.length,ownedRunners.length);
+ const ownedNonRunners=career.world.entities.horses.filter(h=>
+  h.ownerId==='O-000061'&&
+  !['RACING','TWO_YEAR_OLD_PROSPECT'].includes(h.status));
+ assert.ok(ownedNonRunners.some(h=>h.status==='BROODMARE'));
+ assert.ok(ownedNonRunners.every(h=>career.run.stable_horse_ids.includes(h.id)),
+  'breeding stock and youngstock must appear on the same playable stable roster');
+ assert.equal(career.operationInventoryCount,ownedRunners.length+ownedNonRunners.length);
  const saved=await savePersistent1999CareerRun(store,manifest,{
   runId:career.run.run_id,player:career.run.player,gameDate:career.run.clock.date,
   changes:{canonicalRun:career.run},version:2});
  const reopened=await loadPersistent1999CareerRun(store,manifest,career.run.run_id);
  assert.deepEqual(reopened,saved);
  assert.equal(reopened.changes.canonicalRun.stable_horse_ids.length,
-  ownedRunners.length,'the selected operation must survive save and reopen intact');
+  career.operationInventoryCount,'the full operation inventory must survive save and reopen intact');
 });

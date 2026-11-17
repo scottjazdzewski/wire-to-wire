@@ -188,7 +188,8 @@ function scaleOpeningCohorts(base,target,biology){
 }
 export function plan1999Ecosystem({
  seed=19990101,year=1999,settings=INDUSTRY_ECOSYSTEM_1999,
- targetOpeningHorses=null,previousBroodmares=null,worldScale=null
+ targetOpeningHorses=null,previousBroodmares=null,worldScale=null,
+ allowSmallOpeningPopulation=false
 }={}){
  if(!Number.isSafeInteger(seed)||seed<1||seed>4294967295||
   !Number.isSafeInteger(year)||year<1900||year>9998||
@@ -197,10 +198,13 @@ export function plan1999Ecosystem({
  for(const [key,range] of Object.entries(settings.ranges))
   if(!Array.isArray(range)||range.length!==2||!range.every(Number.isSafeInteger)||
    range[0]<0||range[1]<range[0])throw Error('Invalid ecosystem range '+key);
+ if(typeof allowSmallOpeningPopulation!=='boolean')
+  throw Error('Invalid small-population genesis setting');
  if(targetOpeningHorses!==null&&(!Number.isSafeInteger(targetOpeningHorses)||
-  targetOpeningHorses<OPENING_WORLD_SIZE_1999.min||
+  targetOpeningHorses<(allowSmallOpeningPopulation?1:OPENING_WORLD_SIZE_1999.min)||
   targetOpeningHorses>OPENING_WORLD_SIZE_1999.max))
-  throw Error('Opening world size must be 10000–325000 horses');
+  throw Error(allowSmallOpeningPopulation?'Invalid internal 1999 opening population':
+   'Opening world size must be 10000–325000 horses');
  if(previousBroodmares!==null&&(!Number.isSafeInteger(previousBroodmares)||
   previousBroodmares<1||targetOpeningHorses!==null))
   throw Error('Prior broodmare stock is only valid for an unscaled annual projection');

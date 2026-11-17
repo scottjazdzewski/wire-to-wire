@@ -223,6 +223,30 @@ test('a canon organization used as owner and farm stays one permanent directory 
  assert.ok(owned.some(h=>h.ownerId==='O-000061'));
 });
 
+test('approved founding breeding residents keep IDs in the exact population and lifecycle',async()=>{
+ const store=memoryStore(),source={id:'H-1991-000006',name:'Heyday',
+  status:'STALLION',cohort:'stallion',sex:'HORSE',foalYear:1991,
+  ownerId:null,breederId:'O-FARM-1',foalingFarmId:'O-FARM-1',
+  careFacilityId:'O-FARM-1',managementOrganizationId:'O-OWNER-1',
+  sourcePedigree:{sireId:null,damId:null},sourceRecord:{id:'H-1991-000006',
+   name:'Heyday',firstBreedingSeason:1996,evidenceStatus:'ACTIVE_UNPROVEN_CLASSIC_SIRE'}};
+ const manifest=await createPersistent1999Industry({store,seed:19990131,
+  worldId:'ApprovedFoundingResident',targetOpeningHorses:10000,
+  foundingHorses:[source],...dirs,batchSize:1000});
+ assert.equal(manifest.horseCount,10000);
+ assert.equal(manifest.generatedHorseCount,9999);
+ assert.equal(manifest.foundingHorseCount,1);
+ const preserved=await findPersistent1999Horse(store,manifest,source.id);
+ assert.equal(preserved.id,source.id);
+ assert.equal(preserved.name,'Heyday');
+ assert.equal(preserved.sourceRecord.firstBreedingSeason,1996);
+ assert.equal(preserved.careFacilityId,'O-FARM-1');
+ const run=await savePersistent1999CareerRun(store,manifest,{runId:'founding-resident',
+  gameDate:'1999-01-02',player:{role:'owner',operation_id:'O-OWNER-1'}});
+ assert.equal(run.lifecycle.activeStallions,manifest.plan.counts.stallions+1,
+  'approved active breeding residents join the same saved-world breeding pool');
+});
+
 test('incomplete worlds cannot receive playable career runs',async()=>{
  const store=memoryStore();
  const incomplete={schema:'WTW_PERSISTENT_INDUSTRY_1999_V1',

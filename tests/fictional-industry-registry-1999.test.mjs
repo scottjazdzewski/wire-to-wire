@@ -80,6 +80,30 @@ test('1999 unborn foals are forecasts, not living January 1 horses',()=>{
   count1999Registry(plan)+projected);
 });
 
+test('registry keeps foaling, physical care and training facilities as separate ID links',()=>{
+ const facilities=[
+  {id:'O-FOALING-1',location:{region:'Kentucky',country:'USA'},
+   operatingRoles:['BREEDER','FOALING_FARM','BOARDING_FACILITY']},
+  {id:'O-TRAINING-1',location:{region:'Kentucky',country:'USA'},
+   operatingRoles:['RACING_STABLE','TRAINING_BARN','BOARDING_FACILITY']}
+ ];
+ const seed=19990122,plan=plan1999Ecosystem({seed,targetOpeningHorses:10000});
+ let sawTrainingHorse=false,sawSeparatedCare=false;
+ for(const batch of generate1999IndustryRegistryBatches({seed,plan,
+  farms:facilities,tracks:dirs.tracks,owners:dirs.owners,batchSize:1000}))
+  for(const horse of batch.records){
+   assert.ok(facilities.some(f=>f.id===horse.foalingFarmId));
+   assert.ok(facilities.some(f=>f.id===horse.careFacilityId));
+   if(horse.status==='RACING'||horse.status==='TWO_YEAR_OLD_PROSPECT'){
+    sawTrainingHorse=true;
+    assert.equal(horse.trainingBarnId,'O-TRAINING-1');
+   }
+   if(horse.careFacilityId!==horse.foalingFarmId)sawSeparatedCare=true;
+  }
+ assert.ok(sawTrainingHorse);
+ assert.ok(sawSeparatedCare);
+});
+
 test('small, 300,000, and maximum registries keep exact size, unique IDs, and valid pedigrees through aging',()=>{
  for(const size of [10000,300000,325000]){
   const seed=19991116,plan=plan1999Ecosystem({seed,targetOpeningHorses:size});
