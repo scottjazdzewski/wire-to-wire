@@ -3,6 +3,7 @@
  * Schedule comes from the EXISTING 1999 track condition-book generator. All
  * results and professional ratings here are GAME-MODELED, never historic facts.
  */
+import {same1999PhysicalVenue} from './physical-venue-1999.js';
 import {ensure,isObject,worldIdentity,nextDate,validDate} from './contracts.js';
 import {buildConditionBook1999} from '../../public/next/1999-condition-book-engine.mjs';
 import {getGameHorsePerformance,modelHorsePostRaceResponse} from './horse-care.js';
@@ -313,11 +314,11 @@ export function raceEligibility(state,horse,race){
  if(Number.isInteger(maxWins)&&horse.career.wins>maxWins)
   reasons.push('CAREER_WIN_LIMIT');
  const trip=horseTravelStatus(state,horse.horse_id);
- const arrivalConfirmed=trip?.status==='OUTBOUND'&&trip.destination_track_id===race.track_id&&
+ const arrivalConfirmed=trip?.status==='OUTBOUND'&&same1999PhysicalVenue(trip.destination_track_id,race.track_id)&&
   dayGap(trip.arrival_date,race.date)>=2;
- if(!site||effectiveHorseTrack(state,horse)!==race.track_id&&!arrivalConfirmed)
+ if(!site||!same1999PhysicalVenue(effectiveHorseTrack(state,horse),race.track_id)&&!arrivalConfirmed)
   reasons.push('NOT_PHYSICALLY_AT_TRACK_OR_CONFIRMED_TO_ARRIVE');
- if(trip?.status==='AT_DESTINATION'&&trip.destination_track_id===race.track_id&&
+ if(trip?.status==='AT_DESTINATION'&&same1999PhysicalVenue(trip.destination_track_id,race.track_id)&&
   dayGap(trip.arrival_date,race.date)<2)reasons.push('SHIPPING_ACCLIMATION_WINDOW');
  if(!care||care.training.sorenessDays>0||care.training.currentRisk>=.78||
   care.training.readiness<.43||care.history.at(-1)?.unfunded===true)
@@ -632,7 +633,7 @@ function settle1999Race({state,world,race_id,emit}){
  const entries=race.field.map(id=>state.runtime.entries[id]);
  ensure(entries.length>=2&&entries.length<=race.field_capacity&&entries.every(e=>
   e&&e.status==='BOOKED'&&rt.jockeys[e.jockey_id]&&
-   effectiveHorseTrack(state,state.runtime.registered_horses.by_id[e.horse_id])===race.track_id),
+   same1999PhysicalVenue(effectiveHorseTrack(state,state.runtime.registered_horses.by_id[e.horse_id]),race.track_id)),
   'RACE_FIELD','A valid field requires at least two fully booked runners');
  const horseSet=new Set(entries.map(e=>e.horse_id));
  ensure(horseSet.size===entries.length,'RACE_FIELD','Duplicate horse in race field');
