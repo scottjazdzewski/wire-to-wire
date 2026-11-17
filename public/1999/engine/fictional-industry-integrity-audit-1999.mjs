@@ -4,7 +4,8 @@
  * every rated horse, person, organization and initially scheduled race.
  * IndexedDB remains the source of truth; no mutations or result generation.
  */
-import {rate1999Entity} from './fictional-industry-graph-1999.mjs';
+import {connect1999Horse,rate1999Entity}
+ from './fictional-industry-graph-1999.mjs';
 import {readPersistent1999IndustryBatch,readPersistent1999Directory}
  from './fictional-industry-persistence-1999.mjs';
 import {TRACK_PROGRAM_1999,trackMeetOpen1999,scheduledRaceDays1999}
@@ -17,7 +18,11 @@ const ROLES=new Set(['trainer','jockey','groom','exercise_rider','veterinarian',
  'farrier','farm_manager','breeding_attendant']);
 function check(condition,message){if(!condition)throw Error('1999 integrity: '+message)}
 function ratings(record,type,seed){
- const expected=rate1999Entity(seed,type,record.id);
+ // Horse ratings include the same deterministic sire/dam adjustment used at
+ // genesis. Recompute through the graph constructor so yearling and prospect
+ // records are compared against their persisted, pedigree-aware ratings.
+ const expected=type==='horse'?
+  connect1999Horse(record,{seed}).ratings:rate1999Entity(seed,type,record.id);
  const actual=record.roleRatings?.[type]??record.ratings;
  check(record.ratingsProvenance==='MODELED_1999_UNCALIBRATED',
   record.id+' missing modeled ratings provenance');
