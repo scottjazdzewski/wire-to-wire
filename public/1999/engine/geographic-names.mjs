@@ -129,8 +129,9 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
    // Do not append numeric row identifiers to human names.
    if(!name){
     // Walk remaining same-country combinations from a persistent cursor. This
-    // avoids repeated random scans as the base name pool fills while middle
-    // initials expand it without numeric suffixes or country-mismatched names.
+    // avoids repeated random scans as the base name pool fills. When the
+    // weighted first/surname pairs run thin, use a full given name in the
+    // middle-name position rather than manufacturing identity with initials.
     const combinations=given.length*family.length*27;
     const poolKey=country+'|'+given.length+'|'+given[0]+'|'+
      family.length+'|'+family[0];
@@ -138,17 +139,18 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
      hash(seed,'exhaustive-name-start:'+poolKey)%combinations;
     for(let offset=0;offset<combinations;offset++){
      const slot=(start+offset)%combinations;
-     const pair=Math.floor(slot/27),initial=slot%27;
+     const pair=Math.floor(slot/27),middleIndex=slot%27;
      const first=given[Math.floor(pair/family.length)];
      const last=family[pair%family.length];
+     const middle=middleIndex===0?null:
+      given[(hash(seed,'exhaustive-middle-name:'+i+':'+middleIndex)%given.length)];
+     if(middle&&(
+      middle.toLocaleLowerCase('en-US')===first.toLocaleLowerCase('en-US')||
+      middle.toLocaleLowerCase('en-US')===last.toLocaleLowerCase('en-US')))continue;
      if(options.avoidIdenticalGivenSurname&&
       first.toLocaleLowerCase('en-US')===last.toLocaleLowerCase('en-US'))continue;
-     const candidate=initial===0?first+' '+last:
-      first+' '+String.fromCharCode(64+initial)+'. '+last;
-     // A middle initial creates a distinct visible given-name/surname
-     // pairing. Count it as such so a small national pool can scale without
-     // violating the per-pair repetition limit or resorting to numeric IDs.
-     const baseFirst=initial===0?first:first+' '+String.fromCharCode(64+initial)+'.';
+     const candidate=middle?first+' '+middle+' '+last:first+' '+last;
+     const baseFirst=middle?first+' '+middle:first;
      const base=baseKey(baseFirst,last);
      if((baseCounts.get(base)||0)>=limit)continue;
      if(reserved.has(canonKey(candidate))||externallyReserved(candidate))continue;

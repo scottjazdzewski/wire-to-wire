@@ -18,10 +18,11 @@ const ROLES=new Set(['trainer','jockey','groom','exercise_rider','veterinarian',
 function check(condition,message){if(!condition)throw Error('1999 integrity: '+message)}
 function ratings(record,type,seed){
  const expected=rate1999Entity(seed,type,record.id);
+ const actual=record.roleRatings?.[type]??record.ratings;
  check(record.ratingsProvenance==='MODELED_1999_UNCALIBRATED',
   record.id+' missing modeled ratings provenance');
- check(record.ratings&&Object.keys(record.ratings).length===Object.keys(expected).length&&
-  Object.entries(expected).every(([key,value])=>record.ratings[key]===value),
+ check(actual&&Object.keys(actual).length===Object.keys(expected).length&&
+  Object.entries(expected).every(([key,value])=>actual[key]===value),
   record.id+' rating mismatch for '+type);
 }
 function edge(record,type,toId){
@@ -53,29 +54,33 @@ export async function auditPersistent1999World(store,manifest,{expectedHorses=nu
  for(const record of directory){
   check(record?.id&&!allIds.has(record.id),'duplicate directory ID '+record?.id);
   allIds.add(record.id);
-  const type=record.id.startsWith('T-')?'track':
-   record.id.startsWith('O-FICTIONAL-FARM-')?'farm':
-   record.id.startsWith('O-FICTIONAL-OWNER-')?'owner':null;
-  check(type,'unknown directory entity '+record.id);
-  ratings(record,type,seed);
   check(Array.isArray(record.relationships),'directory relationship list missing '+record.id);
-  if(type==='track'){
+  const roles=new Set(record.operatingRoles||[]);
+  if(record.id.startsWith('T-')||roles.has('TRACK')){
+   ratings(record,'track',seed);
    tracks.set(record.id,record);
    check(TRACK_PROGRAM_1999[record.id]?.playableIn1999===true&&
     TRACK_PROGRAM_1999[record.id]?.trackOperating==='OPEN_1999',
     'archived/unapproved opening track '+record.id);
   }else{
-   (type==='farm'?farms:owners).set(record.id,record);
-   const match=/T-\d{4}/.exec(record.id);
-   const home=match?.[0]??null;
-   check(!!home&&tracks.size>=0,'directory missing track locality '+record.id);
+   const isFarm=roles.has('BREEDING_OR_CARE_FACILITY')||
+    record.id.startsWith('O-FICTIONAL-FARM-');
+   const isOwner=roles.has('LEGAL_OWNER')||
+    record.id.startsWith('O-FICTIONAL-OWNER-');
+   check(isFarm||isOwner,'unknown directory entity '+record.id);
+   if(isFarm){ratings(record,'farm',seed);farms.set(record.id,record)}
+   if(isOwner){ratings(record,'owner',seed);owners.set(record.id,record)}
+   const home=record.homeTrackId??record.relationships.find(e=>
+    e.type==='REGIONAL_CIRCUIT')?.toId??null;
+   check(!!home,'directory missing track locality '+record.id);
    edge(record,'REGIONAL_CIRCUIT',home);
   }
  }
  check(tracks.size===107,'expected 107 active tracks, found '+tracks.size);
  check(farms.size>0&&owners.size>0,'farm/owner directory missing');
  for(const record of [...farms.values(),...owners.values()]){
-  const home=/T-\d{4}/.exec(record.id)?.[0];
+  const home=record.homeTrackId??record.relationships.find(e=>
+   e.type==='REGIONAL_CIRCUIT')?.toId??null;
   check(tracks.has(home),'organization not connected to live track '+record.id);
   check(record.location?.city&&record.location?.region&&record.location?.country,
    'unlocated organization '+record.id);
