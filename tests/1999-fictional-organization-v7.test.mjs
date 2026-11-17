@@ -181,11 +181,51 @@ test('locked source partnerships consume the real cap without changing their app
   /Approved source partnerships exceed naming group ceiling/);
  assert.throws(()=>createOrganizationNameRoster({...args,
   sourceOwnerNames:['Saffron Racing Club','SAFFRON RACING CLUB']}),
-  /Duplicate approved source owner name/);
+  /Duplicate approved source organization name/);
  assert.throws(()=>createOrganizationNameRoster({...args,
   sourceOwnerNames:['Mar Azul Racing ',null]}),/Invalid approved source owner name/);
  assert.throws(()=>createOrganizationNameRoster({...args,
   sourceOwnerNames:Array(19).fill(null)}),/Invalid source owner name list/);
+});
+
+test('approved stud farm and racing-barn names remain exact while new names avoid their roots',()=>{
+ const base={seed:19990101,ownerCount:8,barnCount:6,farmCount:5,
+  principalNames:Array.from({length:8},(_,i)=>'Owner Person '+i),
+  trainerNames:Array.from({length:6},(_,i)=>'Trainer Person '+i),
+  farmKindPlan:['STUD_FARM','FARM','FARM','THOROUGHBRED_NURSERY','BLOODSTOCK_FARM']};
+ const baseline=createOrganizationNameRoster(base);
+ const farmName=baseline.farms[0],barnName=baseline.barns[0];
+ const approved={...base,sourceFarmNames:[farmName],sourceBarnNames:[barnName]};
+ const actual=createOrganizationNameRoster(approved);
+ assert.equal(actual.farms[0],farmName);
+ assert.equal(actual.barns[0],barnName);
+ assert.equal(actual.farmKinds[0],'STUD_FARM','stud farm purpose is never reset by label');
+ assert.deepEqual(actual,createOrganizationNameRoster(approved));
+ assert.deepEqual(baseline,createOrganizationNameRoster(base),
+  'existing V7 names must remain unchanged when no source names are passed');
+ const names=[...actual.owners,...actual.barns,...actual.farms,...actual.breakingCenters];
+ assert.equal(new Set(names.map(normalize)).size,names.length);
+ const reservation=createOrganizationNameRoster({
+  ...base,sourceFarmNames:[barnName]
+ });
+ assert.equal(reservation.farms[0],barnName,
+  'approved source farm must win if generated barn formerly used the exact name');
+ assert.notEqual(reservation.barns[0],barnName,'new racing barn must try another root');
+ assert.throws(()=>createOrganizationNameRoster({...base,
+  sourceOwnerNames:[farmName],sourceFarmNames:[farmName]}),
+ /Duplicate approved source organization name/);
+ assert.throws(()=>createOrganizationNameRoster({...base,
+  sourceBarnNames:[farmName],sourceFarmNames:[farmName]}),
+ /Duplicate approved source organization name/);
+ assert.throws(()=>createOrganizationNameRoster({...base,
+  sourceBarnNames:['Split Rail Racing Stable ']}),
+ /Invalid approved source barn name/);
+ assert.throws(()=>createOrganizationNameRoster({...base,
+  sourceFarmNames:Array(6).fill(null)}),
+ /Invalid source farm name list/);
+ assert.throws(()=>createOrganizationNameRoster({...base,
+  sourceBarnNames:Array(7).fill(null)}),
+ /Invalid source barn name list/);
 });
 
 test('sole proprietor names cannot silently duplicate approved owner or person identities',()=>{
