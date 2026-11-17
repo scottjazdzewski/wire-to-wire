@@ -9,6 +9,8 @@ import {postRaceAIPlacement} from './post-race-campaign-1999.js';
 import {shippingAssessment,shippingAction,horseTravelStatus,effectiveHorseTrack} from './shipping-1999.js';
 import {get1999JockeyPartnership} from '../../public/1999/engine/jockey-partnerships-1999.mjs';
 import {premierMarketRace,premierBonusCap} from '../../public/1999/engine/jockey-premier-market-1999.mjs';
+import {quote1999JockeyRetainer,jockeyRetainerAction}
+ from '../../public/1999/engine/jockey-retainers-1999.mjs';
 const diff=(a,b)=>(Date.parse(b+'T12:00:00Z')-Date.parse(a+'T12:00:00Z'))/86400000;
 const plus=(date,n)=>new Date(Date.parse(date+'T12:00:00Z')+n*86400000).toISOString().slice(0,10);
 const horses=state=>Object.values(state.runtime.registered_horses?.by_id||{}).
@@ -271,10 +273,73 @@ export function book1999UnavailableJockeyReplacements({state,world,emit}){
  }
  return {booked,player_decisions,unavailable};
 }
+/**
+ * Real AI owners may pursue paid rider continuity, never player funds.
+ * The auction itself remains the one retainer module: this merely submits
+ * genuine financed proposals from active horses/owners in the saved career.
+ */
+export function propose1999AIRiderRetainers({state,world,emit}){
+ const day=state.clock.date,rt=state.runtime.racing;
+ if(!rt||!day.startsWith('1999-'))return {offered:0,evaluated:0};
+ const start=plus(day,5),end=plus(day,18);
+ const selected=new Map();
+ for(const h of horses(state)){
+  if(h.owner_organization_id===state.player.operation_id||
+   !h.trainer_id||!h.host_track_id)continue;
+  if(!selected.has(h.owner_organization_id))
+   selected.set(h.owner_organization_id,h);
+ }
+ let offered=0,evaluated=0;
+ for(const [owner,h] of [...selected].sort((a,b)=>a[0].localeCompare(b[0]))){
+  if(offered>=4)break;
+  evaluated++;
+  const riders=Object.values(rt.jockeys).filter(j=>
+   j.career_status!=='RETIRED'&&j.home_track_id===h.host_track_id&&
+   !(j.availability&&j.availability.start_date<=end&&
+    j.availability.through_date>=start)).
+   sort((a,b)=>(b.skills?.judgment??0)-(a.skills?.judgment??0)||
+    (b.game_reputation??0)-(a.game_reputation??0)||
+    a.id.localeCompare(b.id));
+  const jockey=riders[0];
+  if(!jockey)continue;
+  const quote=quote1999JockeyRetainer(state,{
+   jockeyId:jockey.id,startDate:start,endDate:end});
+  const fee=Math.round(quote.minimum_fee_minor*
+   (1.08+Math.min(.16,(h.career?.starts??0)*.012)));
+  const account=money(state,owner);
+  // Conservative AI retainers are a strategic expense, not a payroll tax
+  // on every owner. Keep ample care and race-entry cash available.
+  if(account<fee*20)continue;
+  const already=Object.values(rt.retainers?.offers||{}).some(o=>
+   o.owner_id===owner&&o.jockey_id===jockey.id&&
+   o.start_date===start);
+  const reserved=Object.values(rt.retainers?.contracts||{}).some(c=>
+   c.jockey_id===jockey.id&&c.status==='ACTIVE'&&
+   c.start_date<=end&&c.end_date>=start);
+  if(already||reserved)continue;
+  jockeyRetainerAction({state,world,command:{actor:'system',
+   type:'OFFER_1999_JOCKEY_RETAINER',payload:{
+    owner_id:owner,trainer_id:h.trainer_id,jockey_id:jockey.id,
+    start_date:start,end_date:end,total_fee_minor:fee}},emit});
+  offered++;
+  emit('AI_OWNER_JOCKEY_RETAINER_PROPOSED',{
+   owner_id:owner,trainer_id:h.trainer_id,jockey_id:jockey.id,
+   start_date:start,end_date:end,total_fee_minor:fee,
+   actual_owner_balance_minor:account,
+   reason:'MODELED_FUNDED_LOCAL_JOCKEY_CONTINUITY_NOT_ASSUMED_HIRING'});
+ }
+ emit('AI_JOCKEY_RETAINER_MARKET_REVIEW',{date:day,
+  evaluated_owners:evaluated,submitted:offered,
+  player_funds_reserved:false,contracts_signed_immediately:false});
+ return {offered,evaluated};
+}
 export function run1999RacingAgents({state,world,emit}){
  const rt=state.runtime.racing;
  if(!rt||Object.keys(rt.jockeys).length<2)return;
  const day=state.clock.date;
+ // Funded AI owner proposals use the same real competitive rider market.
+ if(state.clock.days_elapsed%28===7)
+  propose1999AIRiderRetainers({state,world,emit});
  // Prune only resolved old bids before any new submissions this week.
  // Pending offers, signed entries and credited earnings remain untouched.
  compact1999PremierJockeyOffers({state,emit});
