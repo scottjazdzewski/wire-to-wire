@@ -1049,7 +1049,10 @@ async function bootstrapMaturePool(store,manifest,runKey,year,overrideMap,
   for(const base of await readBaseCohort(store,manifest,cohort)){
    if(year-Number(base.foalYear)<4&&cohort!=='threeYearOldRunners'&&
     cohort!=='fourYearOldRunners'&&cohort!=='fivePlusRunners')continue;
-   const horse=await effectiveLifecycleHorse(store,manifest,runKey,base.id,overrideMap);
+   // A brand-new 2000 rollover has no mature-horse sidecars yet.
+   // Avoid one IndexedDB transaction per opening adult at 300k scale.
+   const horse=year===2000?base:
+    await effectiveLifecycleHorse(store,manifest,runKey,base.id,overrideMap);
    add(horse);
   }
  }
