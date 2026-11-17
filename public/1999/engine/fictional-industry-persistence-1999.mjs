@@ -163,8 +163,25 @@ export async function open1999IndustryDatabase(indexedDB=globalThis.indexedDB){
    });
   },
   async putHorseEdit(worldId,horseId,edit){
-   return request(db.transaction('horseEdits','readwrite')
-    .objectStore('horseEdits').put(edit,worldId+':'+horseId));
+   // Apply only changed fields, atomically, so changing a status/owner never
+   // erases a previously approved horse name (including cross-tab writes).
+   return new Promise((resolve,reject)=>{
+    const tx=db.transaction('horseEdits','readwrite');
+    const records=tx.objectStore('horseEdits');
+    const key=worldId+':'+horseId;
+    let updated=null;
+    const prior=records.get(key);
+    prior.onsuccess=()=>{
+     const existing=prior.result;
+     if(existing!==undefined&&(!existing||typeof existing!=='object'||
+      Array.isArray(existing))){tx.abort();return}
+     updated={...(existing??{}),...edit};
+     records.put(updated,key);
+    };
+    tx.oncomplete=()=>resolve(updated);
+    tx.onerror=()=>reject(tx.error||Error('Horse edit transaction failed'));
+    tx.onabort=()=>reject(tx.error||Error('Horse edit transaction aborted'));
+   });
   },
   async commitManifest(worldId,manifest){
    return new Promise((resolve,reject)=>{
@@ -475,8 +492,12 @@ export async function updatePersistent1999Horse(store,manifest,horseId,edit){
   throw Error('Horse edit contains immutable or unsupported fields');
  if('name'in edit&&(typeof edit.name!=='string'||!edit.name.trim()||
   edit.name.length>36))throw Error('Invalid horse name');
- await store.putHorseEdit(keyOf(manifest.seed,manifest.worldId),horseId,edit);
- return {...horse,...edit};
+ const worldKey=keyOf(manifest.seed,manifest.worldId);
+ await store.putHorseEdit(worldKey,horseId,edit);
+ const merged=await store.get('horseEdits',worldKey+':'+horseId);
+ if(!merged||typeof merged!=='object'||Array.isArray(merged))
+  throw Error('Horse edit was not durably recorded');
+ return {...horse,...merged};
 }
 export async function readPersistent1999HorseProfile(store,manifest,horseId,{runId=null}={}){
  const canonicalRunId=runId??('WTW-RUN-1999-'+manifest.seed+'-SIZE-'+
