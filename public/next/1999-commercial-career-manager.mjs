@@ -256,6 +256,8 @@ function publishCareerReadModel(){
   operationId:operation.id,operationName:operation.name,
   date:run.clock.date,revision:run.revision,horseRows:horses,raceRows:races,
   worldHorseCount:indexedHorseDirectory.size,
+  worldEntityCounts:Object.fromEntries(Object.entries(indexedOtherDirectories).map(
+   ([kind,index])=>[kind,index.size])),
   worldHorseBrowse:indexedHorseDirectory.browse,
   worldHorseById:indexedHorseDirectory.byId,
   worldEntityBrowse:(kind,options)=>indexedOtherDirectories[kind]?.browse(options)||null,
