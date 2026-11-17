@@ -434,7 +434,7 @@ function bootstrapBundledCareer(){
   await open();
   busy=true;notice='LOADING THE SHARED 1999 TEST CAREER…';await refresh();
   try{
-   const response=await fetch('/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER.wtwcareer.gz?rev=wtw-shared-career-may-1999-v2');
+   const response=await fetch('/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER_V4.wtwcareer.gz?rev=wtw-shared-career-v4-20261117');
    if(!response.ok)throw Error('Bundled shared career file is missing ('+response.status+')');
    if(typeof DecompressionStream!=='function')
     throw Error('This Windows build cannot decompress its bundled career checkpoint');
