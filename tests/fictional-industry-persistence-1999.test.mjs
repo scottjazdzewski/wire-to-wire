@@ -719,3 +719,35 @@ test('two seeds persist juvenile debuts and mature attrition; second seed runs 3
    .lifecycle,final.lifecycle);
  }
 });
+
+test('a single 1999-to-2005 save matches sequential annual lifecycle commits',async()=>{
+ const store=memoryStore(),seed=19990117;
+ const manifest=await createPersistent1999Industry({store,seed,
+  worldId:'SingleSpanLifecycle',targetOpeningHorses:10000,
+  ...dirs,batchSize:1000});
+ const player={role:'owner',organizationId:'O-OWNER-1'};
+ const sequentialId='LIFECYCLE-SEQUENTIAL-1999',singleId='LIFECYCLE-ONESHOT-1999';
+ const run=(runId,gameDate)=>savePersistent1999CareerRun(store,manifest,{
+  runId,gameDate,player,changes:{},version:1});
+ await run(sequentialId,'1999-01-01');
+ await run(singleId,'1999-01-01');
+ let yearly;
+ for(let year=2000;year<=2005;year++)
+  yearly=await run(sequentialId,year+'-01-01');
+ const oneShot=await run(singleId,'2005-01-01');
+ for(const key of ['population','foalsBorn','horseDeaths','matureHorseDeaths',
+  'juvenileDebuts','retiredRacehorses','activeBroodmares','activeStallions',
+  'racingPopulation','birthsByYear','deathsByYear'])
+  assert.deepEqual(oneShot.lifecycle[key],yearly.lifecycle[key],
+   'save cadence cannot alter deterministic industry lifecycle: '+key);
+ for(const birthYear of [1999,2000,2001]){
+  const key=manifest.worldId+':'+seed+':';
+  const sequential=await store.get('industryLifecycle',key+sequentialId+
+   ':foal-cohort:'+birthYear);
+  const single=await store.get('industryLifecycle',key+singleId+
+   ':foal-cohort:'+birthYear);
+  assert.deepEqual(single,sequential,'birth cohort differs by save cadence');
+ }
+ assert.deepEqual((await loadPersistent1999CareerRun(store,manifest,singleId))
+  .lifecycle,oneShot.lifecycle);
+});
