@@ -60,7 +60,12 @@ export function createPersistedIndustryHorseDirectory({world,manifest,year=1999}
    const min=where.ageMin==null||where.ageMin===''?null:Number(where.ageMin);
    const max=where.ageMax==null||where.ageMax===''?null:Number(where.ageMax);
    const status=text(where.status),sex=text(where.sex);
+   // Permanent IDs, never name similarity: owner, trainer, farm and base are
+   // DIFFERENT links. Employment alone does not imply barn residency.
+   const relations=['ownerId','trainerId','foalingFarmId','homeTrackId'];
+   const matched=relations.filter(key=>where[key]!=null&&where[key]!=='');
    cachedRows=horses.filter(h=>{
+    if(matched.some(key=>String(h[key]||'')!==String(where[key])))return false;
     const a=age(h);
     if(min!==null&&Number.isFinite(min)&&(a===null||a<min))return false;
     if(max!==null&&Number.isFinite(max)&&(a===null||a>max))return false;
