@@ -681,7 +681,11 @@ function statusUpdate(horse,patch){
   return {id:horse.id,kind:'BORN',horse:{...horse,...patch}};
  // Each sidecar replaces the previous sidecar, not merges with it. Carry
  // committed development, debut and breeding history across later transitions.
- const keys=['development','racingDebutDate','racingReadiness',
+ // STATUS sidecars replace prior STATUS sidecars. Carry the effective status
+ // itself as well as supporting attributes or a later development update can
+ // silently undo a saved juvenile debut or retirement.
+ const keys=['status','cohort','sex','development','racingDebutDate',
+  'racingReadiness',
   'lastReadinessReview','nextReadinessReview','developmentYear',
   'progressionYear','lastProgressionStage','homeTrackId',
   'trainerId','relationships',
