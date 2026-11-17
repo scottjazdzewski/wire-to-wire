@@ -2850,6 +2850,9 @@ function liveStableTrainingView(){
 // World Horse Directory uses the Stable roster presentation but never substitutes
 // an owner's stable roster for the full world source. IDs remain authoritative.
 function worldDirectoryHorseRows(){
+ if(window.WTWDesktop?.runtime==='windows-desktop'&&!window.WTWDesktop.smokeMode&&
+  !window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.worldHorseBrowse)
+  return {indexing:true,total:0,items:[]};
  const adapter=window.__WTW_1999_UI_DATA__;
  const canonical=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
  const browse=canonical?.worldHorseBrowse||adapter?.worldHorseBrowse;
@@ -3781,6 +3784,9 @@ function departmentEmptyPanel(section,page,message){
    '</div>':'')+'</div>';
 }
 function departmentRoster(section,page='Overview'){
+ if(section==='World'&&window.WTWDesktop?.runtime==='windows-desktop'&&
+  !window.WTWDesktop.smokeMode&&!window.__WTW_ACTIVE_WORLD_CAREER_VIEW__)
+  return '<section class="ng-manager-screen" role="status"><h2>OPENING SAVED FICTIONAL WORLD</h2><p>The full career must finish loading before its real World registers can be explored. No 73-horse historical index is substituted.</p></section>';
  const demo=false; // Registered 1999 content only; preview population retired.
  const auctions=section==='Sales'?depAuctionList(demo):[];
  const gameDay=depGameDay();
