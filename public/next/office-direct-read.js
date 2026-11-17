@@ -22,13 +22,14 @@
   const text=value=>typeof value==='string'?value:'';
   const pending=Object.values(state?.decisions?.pending||{});
   const resolved=Object.values(state?.decisions?.resolved||{});
-  return [...pending,...resolved].map(row=>{
+  return [...pending,...resolved].filter(row=>row&&typeof row==='object'&&typeof row.id==='string'&&row.id).map(row=>{
    const closed=Boolean(row.resolved_date);
    const context=row.context||{};
    const title=text(context.title)||row.id;
    const summary=text(context.summary);
    const label=id=>(Object.hasOwn(context.option_labels||{},id)&&text(context.option_labels[id]))||id;
-   const moves=closed?[]:row.option_ids.map(optionId=>({optionId,title:label(optionId),tag:'DECISION'}));
+   const optionIds=Array.isArray(row.option_ids)?row.option_ids.filter(id=>typeof id==='string'&&id):[];
+   const moves=closed?[]:optionIds.map(optionId=>({optionId,title:label(optionId),tag:'DECISION'}));
    return {
     message:{case:row.id,from:'Game engine',title,meta:summary,time:row.created_date,
      initials:'WT',urgent:!closed,resolved:closed},
