@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {createPersistedIndustryHorseDirectory,PERSISTED_INDUSTRY_DIRECTORY_SCHEMA}
+import {createPersistedIndustryHorseDirectory,createPersistedIndustryEntityDirectory,PERSISTED_INDUSTRY_DIRECTORY_SCHEMA}
  from '../public/next/1999-persisted-world-directory.mjs';
 
 function fixture(){
@@ -66,5 +66,23 @@ test('current desktop UI favors saved world directory and explicitly distinguish
  assert.match(manager,/publishCareerReadModel\(\);/);
  assert.match(ui,/savedWorldBrowse=window\.__WTW_ACTIVE_WORLD_CAREER_VIEW__\?\.worldHorseBrowse/);
  assert.match(ui,/SavedIndustryHorse:/);
- assert.match(ui,/display-only changes are not offered as game edits/);
+ assert.match(ui,/SAVE WORLD CHANGES/);
+ assert.match(manager,/editSavedWorldEntity/);
+ assert.match(ui,/worldEntityBrowse\(savedOtherKind,options\)/);
+});
+
+test('saved world directory also exposes all people, organizations and tracks with permanent IDs',()=>{
+ const f=fixture();
+ for(const kind of ['person','organization','track']){
+  const api=createPersistedIndustryEntityDirectory({...f,kind});
+  assert.equal(api.size,2);
+  assert.equal(api.browse({limit:1,offset:0}).items.length,1);
+  assert.equal(api.browse({limit:1,offset:1}).items.length,1);
+  assert.equal(api.browse({search:'no-such-record'}).total,0);
+  assert.equal(api.byId('not-a-record'),null);
+ }
+ assert.equal(createPersistedIndustryEntityDirectory({...f,kind:'person'})
+  .byId('P-01').name,'June Foley');
+ assert.equal(createPersistedIndustryEntityDirectory({...f,kind:'organization'})
+  .byId('O-01').name,'Red Orchard');
 });
