@@ -3569,6 +3569,25 @@ function namedProfileValue(label,value,preferred=''){
  if(!kind||entityNotRecorded(value))return '<strong>'+safe(value||'—')+'</strong>';
  return entityReferenceButton(value,kind);
 }
+function savedIndustryOverview(){
+ const career=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ if(!career)return '<section class="ng-manager-screen"><p role="status">Opening saved fictional industry…</p></section>';
+ const categories=[
+  ['HORSES','1999 Horses',career.worldHorseCount],
+  ['PEOPLE','People',career.worldEntityCounts?.person],
+  ['OWNERS & FARMS','Organizations',career.worldEntityCounts?.organization],
+  ['RACETRACKS','Tracks',career.worldEntityCounts?.track]];
+ return '<section class="ng-manager-screen">'+
+  '<header><h2>FICTIONAL 1999 WORLD · '+safe(career.worldId)+'</h2>'+
+   '<p>Saved career date '+safe(career.date)+' · one canonical world · permanent IDs</p></header>'+
+  '<div class="ng-manager-metrics">'+categories.map(([label,page,count])=>
+   '<button type="button" data-ng="tab" data-val="'+safe(page)+'">'+
+   '<strong>'+safe(Number(count||0).toLocaleString('en-US'))+'</strong>'+
+   '<span>'+safe(label)+'</span><small>VIEW FULL DIRECTORY</small></button>').join('')+'</div>'+
+  '<p>The WORLD directories show the complete saved population. STABLE shows only the player-owned roster. Select any record to inspect or edit its supported fields.</p>'+
+  '<p>Edits to the frozen base world are stored as career-specific overrides and preserved with this saved game. Active racing transfers and transactions remain gameplay commands.</p>'+
+  '</section>';
+}
 function savedIndustryProfile(kind,id){
  const career=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
  const record=kind==='horse'?career?.worldHorseById?.(id):
@@ -4562,6 +4581,7 @@ else if(APP.custom==='Office — News'||APP.custom==='World — News'){body=sour
 else if(APP.custom==='Opportunities'){body=sourceOpportunityBoard()}
 else if(['Messages','Decisions'].includes(APP.custom)){body=managerDashboard()}
 else if(APP.custom==='Search'){body=searchView()}
+else if(APP.custom==='World — Overview'&&window.__WTW_ACTIVE_WORLD_CAREER_VIEW__){body=savedIndustryOverview()}
 else if(APP.custom.startsWith('WorldRecord:')){body=world1999Profile()}
 else if(APP.custom.startsWith('SavedIndustryHorse:')){body=savedIndustryHorseProfile()}
 else if(APP.custom.startsWith('SavedIndustryEntity:')){body=savedIndustryEntityProfileRoute()}
