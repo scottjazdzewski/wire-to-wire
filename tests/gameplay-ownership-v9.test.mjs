@@ -351,3 +351,49 @@ test('source-backed registered horse replaces its source identity in paged owner
   'One source-linked animal cannot appear twice as distinct owned horses');
  assert.equal(world.entities.horses[0].ownerId,'O-1999-001');
 });
+
+test('real booked race cannot be sold out from under trainer, jockey and buyer; funds remain untouched',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const {createHash}=await import('node:crypto');
+ const {build1999PilotGameRun}=await import('../src/game/1999-pilot-fixture.js');
+ const {get1999HorseRaceOpportunities}=await import('../src/game/index.js');
+ const load=path=>JSON.parse(readFileSync(new URL(path,import.meta.url),'utf8'));
+ const d=load('../public/data/wtw-1999-founding-directory-v1.json');
+ const t=load('../public/data/wtw-1999-trainer-pilot-v1.json');
+ const j=load('../public/data/wtw-1999-jockey-pilot-v1.json');
+ const cohort=load('../data/1999-gameplay/first-38-horses-attributes-and-barns-v1.json');
+ const people=[...new Map([...d.people,...t.trainers,...j.jockeys].map(x=>[x.id,x])).values()];
+ const cw={schema:WORLD_SCHEMA,start_date:'1999-01-01',
+  authority:{snapshot_id:'WTW-REGISTERED-SALE-ENTRY-GATE',
+   source:'TEST_NOT_HISTORICAL',sha256:createHash('sha256').
+    update('registered-sale-race-commitment-gate').digest('hex')},
+  entities:{horses:d.horses,people,organizations:d.organizations,tracks:d.tracks}};
+ let s=build1999PilotGameRun({world:cw,manifest:cohort,jockeys:j.jockeys});
+ const call=(id,type,payload={},actor='system')=>{
+  s=dispatchGameCommand({state:s,world:cw,
+   command:{id,type,payload,actor}}).state;
+ };
+ call('sale:gate:day','ADVANCE_DAY',{});
+ const h=Object.values(s.runtime.registered_horses.by_id).
+  find(x=>x.owner_organization_id===s.player.operation_id&&x.host_track_id==='T-0017');
+ assert.ok(h);
+ const available=get1999HorseRaceOpportunities(s,cw,h.horse_id,{
+  includeProposals:false}).rows.find(x=>x.status==='PLAYER_CAN_ENTER'&&x.track_id===h.host_track_id);
+ assert.ok(available,'Existing game should expose actual open race for the player');
+ call('sale:gate:enter','ENTER_1999_RACE',{
+  race_id:available.race_id,horse_id:h.horse_id},'player');
+ const newOwner=Object.values(s.runtime.registered_horses.by_id).
+  find(x=>x.owner_organization_id!==h.owner_organization_id).owner_organization_id;
+ call('sale:gate:request','REQUEST_HORSE_TRANSFER',{
+  request_id:'SALE-WITH-ENTRY',horse_id:h.horse_id,to_owner_id:newOwner,
+  transfer_type:'SALE',price_minor:125000},'player');
+ const prior=structuredClone(s);
+ assert.throws(()=>dispatchGameCommand({state:s,world:cw,command:{
+  id:'sale:gate:blocked','SETTLE_HORSE_SALE',actor:'system',
+  payload:{request_id:'SALE-WITH-ENTRY',settlement_id:'SALE-WITH-ENTRY'}}}),
+  e=>e.code==='HORSE_TRANSFER_RACE_ENTRY');
+ assert.deepEqual(s,prior,'Rejected sale cannot debit or alter the prior saved run');
+ assert.equal(s.runtime.registered_horses.by_id[h.horse_id].owner_organization_id,
+  prior.player.operation_id);
+ assert.deepEqual(importGameSave(exportGameSave(s,cw),cw),s);
+});
