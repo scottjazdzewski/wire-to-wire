@@ -522,6 +522,7 @@ export function racingAction({state,world,command,emit}){
   const horse=state.runtime.registered_horses?.by_id?.[p.horse_id];
   ensure(Boolean(horse)&&
    (command.actor==='system'||command.actor==='player'&&
+    state.player.role==='owner'&&
     horse.owner_organization_id===state.player.operation_id),
    'RACE_PERMISSION','Only the owning player or authorized game system may scratch a horse');
   scratch1999RaceEntry({state,race_id:p.race_id,horse_id:p.horse_id,
