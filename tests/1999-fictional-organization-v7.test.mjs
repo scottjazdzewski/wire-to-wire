@@ -188,6 +188,30 @@ test('locked source partnerships consume the real cap without changing their app
   sourceOwnerNames:Array(19).fill(null)}),/Invalid source owner name list/);
 });
 
+test('sole proprietor names cannot silently duplicate approved owner or person identities',()=>{
+ const args={seed:19990101,ownerCount:2,barnCount:0,farmCount:0,
+  soleOwnerPercent:100,principalNames:['Alex West','Mina Brown']};
+ const valid=createOrganizationNameRoster(args);
+ assert.deepEqual(valid.owners,args.principalNames);
+ assert.equal(valid.summary.soleOwners,2);
+ assert.deepEqual(valid,createOrganizationNameRoster(args));
+ assert.throws(()=>createOrganizationNameRoster({...args,
+  principalNames:['Alex West','Alex West']}),
+ /Duplicate or protected sole owner identity/);
+ assert.throws(()=>createOrganizationNameRoster({...args,
+  sourceOwnerNames:['Alex West']}),
+ /Duplicate or protected sole owner identity/);
+ assert.throws(()=>createOrganizationNameRoster({...args,
+  protectedNames:['Mina Brown']}),
+ /Duplicate or protected sole owner identity/);
+ const externalNameIndex={
+  hasAnyName:name=>name==='Mina Brown',
+  hasOrganizationRootConflict:()=>false
+ };
+ assert.throws(()=>createOrganizationNameRoster({...args,externalNameIndex}),
+ /Duplicate or protected sole owner identity/);
+});
+
 test('regional V7 naming generator stays independent of active-world and horse generators',()=>{
  const src=readFileSync(new URL('../public/1999/engine/organization-naming-styles.mjs',import.meta.url),'utf8');
  const old=readFileSync(new URL('../public/1999/engine/founding-world-1999.mjs',import.meta.url),'utf8');
