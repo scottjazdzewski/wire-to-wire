@@ -30,7 +30,7 @@ const founding=new Map([
  ['O-FOUNDING-1999-004','Split Rail Farm']
 ]);
 const blobHash=(bytes)=>createHash('sha1')
- .update('blob '+bytes.length+'\\0').update(bytes).digest('hex');
+ .update('blob '+bytes.length+String.fromCharCode(0)).update(bytes).digest('hex');
 
 test('Belmont, Gulfstream and all 1999 approved expansion marks load by immutable T-ID with an exact asset lock',()=>{
  for(const [id,name] of trackNames){
@@ -74,7 +74,11 @@ test('Davenport Hall and Split Rail keep approved ONE 256px opaque framed identi
 test('real player dossier logo stage preserves proportions, with no competing image handler',()=>{
  const css=read('public/next/next.css').toString();
  const browser=read('scripts/desktop-visual-audit.sh').toString();
- assert.match(css,/\\.ng-profile-source-photo img\\{[\\s\\S]*?object-fit:contain!important/);
+ const logoCssAnchor='#wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo img{';
+ const logoCssIndex=css.indexOf(logoCssAnchor);
+ assert.ok(logoCssIndex>=0,'original approved profile hero renderer is present');
+ assert.ok(css.slice(logoCssIndex,css.indexOf('}',logoCssIndex)).includes('object-fit:contain!important'),
+   'rendered logo image must preserve its shape');
  for(const [id] of trackNames){
   const slug=id.toLowerCase().replace('-','');
   assert.ok(browser.includes('T-'+id.slice(2)),slug+' game-screen audit route');
