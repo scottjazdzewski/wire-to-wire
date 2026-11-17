@@ -219,6 +219,9 @@ function publishCareerReadModel(){
   worldId:career.manifest.worldId,runId:run.run_id,
   worldHorseCount:career.manifest.horseCount,personCount:career.manifest.personCount,
   operationId:operation.id,operationName:operation.name,
+  operationInventoryCount:career.operationInventoryCount,
+  operationInventoryByRelationship:career.operationInventoryByRelationship,
+  operationInventoryByStatus:career.operationInventoryByStatus,
   date:run.clock.date,revision:run.revision,horseRows:horses,raceRows:races,
   cashMinor:Number.isSafeInteger(rawBalance)?rawBalance:null};
  const prior=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
