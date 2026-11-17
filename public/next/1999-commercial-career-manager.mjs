@@ -227,7 +227,7 @@ function requestedIndustry(){
  // The new cohort model gets its own immutable records; keep legacy manifests
  // addressable through the open-saved fallback below.
  return {seed,targetOpeningHorses:horseCount,
-  worldId:'WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H'+horseCount};
+  worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H'+horseCount};
 }
 let industryBrowsePage=0,industryBrowseHtml='',industryBrowseKind='horseBatches';
 let industryDirectory=[];
@@ -434,7 +434,7 @@ function bootstrapBundledCareer(){
   await open();
   busy=true;notice='LOADING THE SHARED 1999 TEST CAREER…';await refresh();
   try{
-   const response=await fetch('/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER_V5.wtwcareer.gz?rev=wtw-shared-career-v5-20261117');
+   const response=await fetch('/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER_V6.wtwcareer.gz?rev=wtw-shared-career-v6-20261117');
    if(!response.ok)throw Error('Bundled shared career file is missing ('+response.status+')');
    if(typeof DecompressionStream!=='function')
     throw Error('This Windows build cannot decompress its bundled career checkpoint');
@@ -762,7 +762,7 @@ async function open(){
   try{
    let selected=await reopenPersistent1999Industry(store,{
     seed:selectedIndustrySeed,
-    worldId:'WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H'+selectedIndustryHorses});
+    worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H'+selectedIndustryHorses});
    if(!selected)selected=await reopenPersistent1999Industry(store,{
     seed:selectedIndustrySeed,
     worldId:'WTW1999FullIndustry-COHORTS-V3-OWNER-V9-H'+selectedIndustryHorses});

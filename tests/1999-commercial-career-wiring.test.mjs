@@ -38,13 +38,19 @@ test('compact career saves remain local and the manager adds no hosted runtime d
   industryWorker.indexOf("self.addEventListener('message'"));
  assert.doesNotMatch(directoryBuilder,/request\.targetOpeningHorses/,
   'the worker message must pass requested size into the directory builder explicitly');
+ assert.match(directoryBuilder,/fetch\('\/data\/horse-foaling-registry-projection-v33\.json'\)/,
+  'approved founder foaling evidence must load separately from standing farms');
+ assert.match(directoryBuilder,/foalingFarmId:h\.foalingFarmId\|\|null/,
+  'a current standing farm must not be substituted as an unverified birthplace farm');
+ assert.match(directoryBuilder,/careFacilityId,/,
+  'the approved standing farm remains a distinct physical-care relationship');
 });
 
 test('custom-size worlds connect to the canonical playable race career',()=>{
  assert.match(manager,/data-cc="industry-size" type="number" min="10000" max="325000"/);
  assert.match(manager,/targetOpeningHorses:horseCount/);
- assert.match(manager,/worldId:'WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H'\+horseCount/);
- assert.match(manager,/worldId:'WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H'\+selectedIndustryHorses/);
+ assert.match(manager,/worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H'\+horseCount/);
+ assert.match(manager,/worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H'\+selectedIndustryHorses/);
  assert.match(manager,/worldId:'WTW1999FullIndustry-COHORTS-V3-OWNER-V9-H'\+selectedIndustryHorses/,
   'previous V3 allocations remain discoverable after the naming engine revision');
  assert.match(manager,/worldId:'WTW1999FullIndustry-COHORTS-V2-H'\+selectedIndustryHorses/,

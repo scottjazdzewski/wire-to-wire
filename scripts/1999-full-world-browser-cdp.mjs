@@ -87,7 +87,7 @@ const inspect=`(async()=>{
  const store=await api.open1999IndustryDatabase();
  try{
   const status=await api.reopenPersistent1999Industry(store,{
-   seed:19990101,worldId:'WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H300000'});
+   seed:19990101,worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H300000'});
   if(!status)return {state:'MISSING'};
   if(status.status!=='READY')return {state:status.status,
    batches:status.manifest?.horseBatchesCommitted||0};
@@ -446,7 +446,7 @@ try{
  assert.deepEqual(careerAfterSharedImport,careerAfterRace,
   'Export/import of the shared career changed its official race checkpoint');
  const bundledCheckpoint=await browser.evalJS(`(async()=>{
-  const response=await fetch('/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER_V5.wtwcareer.gz');
+  const response=await fetch('/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER_V6.wtwcareer.gz');
   if(!response.ok)throw Error('Bundled career checkpoint asset is unavailable');
   const bytes=await new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
   const result=await window.WTWCompactCareerManager.importSharedCareerFile(
@@ -510,7 +510,7 @@ try{
    "const api=await import('/1999/engine/fictional-industry-persistence-1999.mjs');"+
    "const db=await api.open1999IndustryDatabase();try{"+
    "const world=await api.reopenPersistent1999Industry(db,{seed:19990101,"+
-   "worldId:'WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H300000'});"+
+   "worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H300000'});"+
    "const runId='WTW-RUN-1999-19990101-SIZE-300000';"+
    "const record=await api.loadPersistent1999CareerRun(db,world.manifest,runId);"+
    "if(!record)throw Error('Shared reference career missing during lifecycle audit');"+
@@ -530,7 +530,7 @@ try{
   const store=await api.open1999IndustryDatabase();
   try{
    const world=await api.reopenPersistent1999Industry(store,{seed:19990101,
-    worldId:'WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H300000'});
+    worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H300000'});
    if(world?.status!=='READY'||world.manifest.horseCount!==300000)
     throw Error('Lifecycle probe did not load the exact 300,000-horse opening census');
    const manifest=world.manifest,runId='WTW-FULL-WORLD-LIFECYCLE-300K';
@@ -683,7 +683,7 @@ try{
   const store=await api.open1999IndustryDatabase();
   try{
    const world=await api.reopenPersistent1999Industry(store,{seed:19990101,
-    worldId:'WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H300000'});
+    worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H300000'});
    const directory=await api.readPersistent1999Directory(store,world.manifest);
    const clean=entity=>Object.fromEntries(Object.entries(entity).filter(([key])=>
     !['ratings','relationships','ratingsProvenance'].includes(key)));
@@ -691,21 +691,21 @@ try{
    const farms=directory.filter(entity=>entity.id.startsWith('O-FICTIONAL-FARM-')).map(clean);
    const owners=directory.filter(entity=>entity.id.startsWith('O-FICTIONAL-OWNER-')).map(clean);
    const manifest=await api.createPersistent1999Industry({store,seed:19990101,
-    worldId:'WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H325000',targetOpeningHorses:325000,
+    worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H325000',targetOpeningHorses:325000,
     farms,tracks,owners,batchSize:2000});
    return {status:manifest.status,horseCount:manifest.horseCount,
     targetOpeningHorses:manifest.targetOpeningHorses,worldId:manifest.worldId};
   }finally{store.close()}
  })()`);
  assert.deepEqual(maximumWorld,{status:'COMPLETE',horseCount:325000,
-  targetOpeningHorses:325000,worldId:'WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H325000'});
+  targetOpeningHorses:325000,worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H325000'});
  console.log('WTW_MAX_WORLD_OPENING_PASS '+JSON.stringify(maximumWorld));
  const smallWorld=await browser.evalJS(`(async()=>{
   const api=await import('/1999/engine/fictional-industry-persistence-1999.mjs');
   const store=await api.open1999IndustryDatabase();
   try{
    const source=await api.reopenPersistent1999Industry(store,{seed:19990101,
-    worldId:'WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H300000'});
+    worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H300000'});
    const directory=await api.readPersistent1999Directory(store,source.manifest);
    const clean=entity=>Object.fromEntries(Object.entries(entity).filter(([key])=>
     !['ratings','relationships','ratingsProvenance'].includes(key)));
@@ -713,7 +713,7 @@ try{
    const farms=directory.filter(entity=>entity.id.startsWith('O-FICTIONAL-FARM-')).map(clean);
    const owners=directory.filter(entity=>entity.id.startsWith('O-FICTIONAL-OWNER-')).map(clean);
    const manifest=await api.createPersistent1999Industry({store,seed:19990111,
-    worldId:'WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H10000',targetOpeningHorses:10000,
+    worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H10000',targetOpeningHorses:10000,
     farms,tracks,owners,batchSize:1000});
    return {status:manifest.status,horseCount:manifest.horseCount,
     targetOpeningHorses:manifest.targetOpeningHorses,seed:manifest.seed,
@@ -722,10 +722,10 @@ try{
  })()`);
  assert.deepEqual(smallWorld,{status:'COMPLETE',horseCount:10000,
   targetOpeningHorses:10000,seed:19990111,
-  worldId:'WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H10000'});
+  worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H10000'});
  console.log('WTW_SMALL_WORLD_OPENING_PASS '+JSON.stringify(smallWorld));
  const maximumProbe=lifecycleProbe
-  .replaceAll('WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H300000','WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H325000')
+  .replaceAll('WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H300000','WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H325000')
   .replaceAll('WTW-FULL-WORLD-LIFECYCLE-300K','WTW-FULL-WORLD-LIFECYCLE-325K')
   .replaceAll('300000','325000');
  const maximumLifecycle=await browser.evalJS(maximumProbe);
@@ -741,7 +741,7 @@ try{
   let store=await api.open1999IndustryDatabase();
   try{
    const world=await api.reopenPersistent1999Industry(store,{seed:19990111,
-    worldId:'WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H10000'});
+    worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H10000'});
    if(world?.status!=='READY'||world.manifest.horseCount!==10000)
     throw Error('Decade run did not open the exact 10,000-horse world');
    const manifest=world.manifest,runId='WTW-INDUSTRY-DECADES-10000';
@@ -868,7 +868,7 @@ try{
       throw Error('Repeated rollover duplicated decade transitions in '+year);
      store.close();store=await api.open1999IndustryDatabase();
      const reopened=await api.reopenPersistent1999Industry(store,{seed:19990111,
-      worldId:'WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H10000'});
+      worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H10000'});
      const roundTrip=await api.loadPersistent1999CareerRun(store,reopened.manifest,runId);
      if(reopened.status!=='READY'||roundTrip?.gameDate!==date||
       roundTrip.lifecycle.population!==saved.lifecycle.population)
@@ -930,7 +930,7 @@ try{
   const store=await api.open1999IndustryDatabase();
   try{
    const world=await api.reopenPersistent1999Industry(store,{seed:19990101,
-    worldId:'WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H300000'});
+    worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H300000'});
    const runId='WTW-FULL-WORLD-LIFECYCLE-300K';
    const saved=await api.loadPersistent1999CareerRun(store,world.manifest,runId);
    const foal=await api.readPersistent1999LifecycleHorse(store,world.manifest,runId,
@@ -957,7 +957,7 @@ try{
  assert.equal(reopenedLifecycle.graduate.status,'BROODMARE');
  console.log('WTW_FULL_WORLD_LIFECYCLE_REOPEN_PASS '+JSON.stringify(reopenedLifecycle));
  const maxReopenedProbe=reopenedLifecycleProbe
-  .replaceAll('WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H300000','WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H325000')
+  .replaceAll('WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H300000','WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H325000')
   .replaceAll('WTW-FULL-WORLD-LIFECYCLE-300K','WTW-FULL-WORLD-LIFECYCLE-325K')
   .replaceAll(lifecycle.foalId,maximumLifecycle.foalId)
   .replaceAll(lifecycle.retiredId,maximumLifecycle.retiredId)
@@ -974,7 +974,7 @@ try{
   const store=await api.open1999IndustryDatabase();
   try{
    const world=await api.reopenPersistent1999Industry(store,{seed:19990111,
-    worldId:'WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H10000'});
+    worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H10000'});
    const runId='WTW-INDUSTRY-DECADES-10000';
    const saved=await api.loadPersistent1999CareerRun(store,world.manifest,runId);
    const horse=await api.readPersistent1999LifecycleHorse(store,world.manifest,runId,

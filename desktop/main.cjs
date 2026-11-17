@@ -226,16 +226,16 @@ async function runSmoke(win){
    }
    throw Error('Bundled career manager did not load');
   })()`,true);
-  if(career.worldId!=='WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H300000'||
+  if(career.worldId!=='WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H300000'||
      career.seed!==19990101||career.horseCount!==300000||
-     career.personCount!==75724||career.runId!=='WTW-RUN-1999-19990101-SIZE-300000'||
+     career.personCount!==75705||career.runId!=='WTW-RUN-1999-19990101-SIZE-300000'||
      !/^\d{4}-\d{2}-\d{2}$/.test(career.gameDate)||
      !/^[a-f0-9]{64}$/.test(career.snapshotSha256||'')||
      career.mainUiCareer?.worldId!==career.worldId||
      career.mainUiCareer?.runId!==career.runId||
      career.mainUiCareer?.date!==career.gameDate||
      career.mainUiCareer?.worldHorseCount!==300000||
-     career.mainUiCareer?.personCount!==75724||
+     career.mainUiCareer?.personCount!==75705||
      career.mainUiCareer?.playerHorseCount!==career.playableHorseCount)
    throw Error('Bundled career identity did not match the approved 300k checkpoint: '+JSON.stringify(career));
   reportSmoke({phase:smokePhase,bundledOrigin:last.origin,gameDate:last.date,

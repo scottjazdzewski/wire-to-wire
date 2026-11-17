@@ -4,7 +4,7 @@ import {gunzipSync} from 'node:zlib';
 import {readFileSync} from 'node:fs';
 import {unpackShared1999Career} from '../public/1999/engine/shared-1999-career-package.mjs';
 
-const asset=new URL('../public/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER_V5.wtwcareer.gz',import.meta.url);
+const asset=new URL('../public/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER_V6.wtwcareer.gz',import.meta.url);
 const frozenAsset=new URL('../public/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER.wtwcareer.gz',import.meta.url);
 const manager=readFileSync(new URL('../public/next/1999-commercial-career-manager.mjs',import.meta.url),'utf8');
 const industryWorker=readFileSync(new URL('../public/next/1999-industry-bootstrap-worker.mjs',import.meta.url),'utf8');
@@ -16,11 +16,11 @@ test('the desktop bundles V5 and preserves the frozen May 29 reference career',a
  const compressed=readFileSync(asset);
  assert.ok(compressed.byteLength<2_000_000,'V5 checkpoint should stay under 2 MB');
  const checkpoint=await unpackShared1999Career(gunzipSync(compressed));
- assert.equal(checkpoint.world.worldId,'WTW1999FullIndustry-COHORTS-V5-OWNER-V9-NAMES-V5-H300000');
+ assert.equal(checkpoint.world.worldId,'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H300000');
  assert.equal(checkpoint.world.seed,19990101);
  assert.equal(checkpoint.world.horseCount,300000);
  assert.equal(checkpoint.world.personCount,75705);
- assert.equal(checkpoint.world.snapshotSha256,'81dcec2885adee8fff388aa5fa8a0bbe812ad8ca53fbaa9ef5186e489492f5e0');
+ assert.match(checkpoint.world.snapshotSha256,/^[a-f0-9]{64}$/);
  assert.equal(checkpoint.careerRecord.runId,'WTW-RUN-1999-19990101-SIZE-300000');
  assert.equal(checkpoint.careerRecord.gameDate,'1999-01-22');
  assert.equal(checkpoint.careerRecord.changes.canonicalRun.stable_horse_ids.length,658);

@@ -13,12 +13,15 @@ import {assessFictionalOwnerCapacity,planFictionalOwnerPortfolios}
  from '/1999/engine/fictional-owner-portfolio-planner.mjs';
 
 async function industryDirectories(seed,targetOpeningHorses=null){
- const [geoResponse,foundingResponse]=await Promise.all([
+ const [geoResponse,foundingResponse,foalingResponse]=await Promise.all([
   fetch('/data/track-geography-v33.json'),
-  fetch('/data/wtw-1999-founding-directory-v1.json')]);
+  fetch('/data/wtw-1999-founding-directory-v1.json'),
+  fetch('/data/horse-foaling-registry-projection-v33.json')]);
  if(!geoResponse.ok)throw Error('Bundled 1999 track geography unavailable');
  if(!foundingResponse.ok)throw Error('Bundled approved 1999 organization directory unavailable');
- const [geo,founding]=await Promise.all([geoResponse.json(),foundingResponse.json()]);
+ if(!foalingResponse.ok)throw Error('Bundled approved horse foaling records unavailable');
+ const [geo,founding,foaling]=await Promise.all([
+  geoResponse.json(),foundingResponse.json(),foalingResponse.json()]);
  const geoById=new Map((geo.tracks||[]).map(g=>[g.id,g]));
  const tracks=Object.values(TRACK_PROGRAM_1999)
   .filter(t=>t.playableIn1999!==false&&t.trackOperating==='OPEN_1999')
@@ -163,14 +166,23 @@ async function industryDirectories(seed,targetOpeningHorses=null){
  const foundingHorses=(founding.horses||[]).map(h=>{
   const resident=h.standingFarm1999||h.boardingFarm1999||null;
   const careFacilityId=resident?.farmOrganizationId||h.farmOrganizationId||null;
+  const foalingSource=foaling.records?.[h.id]||null;
+  const birthplace=h.birthplace|| (foalingSource?{
+   city:foalingSource.locality||null,
+   region:foalingSource.region||foalingSource.breedingJurisdiction||null,
+   country:foalingSource.foalingCountry||null,
+   farmId:h.foalingFarmId||null,
+   provenance:foalingSource.jurisdictionIsNotExactFoalingPlace?
+    'APPROVED_SOURCE_JURISDICTION_NOT_EXACT_FARM':'APPROVED_SOURCE_FOALING_RECORD'
+  }:null);
   const status=h._role==='stallion'?'STALLION':h._role==='broodmare'?'BROODMARE':null;
   if(!/^H-[A-Za-z0-9-]+$/.test(h.id||'')||!h.name||!status||!careFacilityId||
    !farmsWithCanon.some(f=>f.id===careFacilityId))
    throw Error('Approved founding horse has no valid identity, life stage, or resident facility: '+(h.id||'unknown'));
   return {id:h.id,name:h.name,status,cohort:h._role,
    sex:h.sex||(h._role==='broodmare'?'MARE':'HORSE'),foalYear:h.foalYear||null,
-   ownerId:h.ownerId||null,breederId:h.breederOrganizationId||careFacilityId,
-   foalingFarmId:h.foalingFarmId||careFacilityId,careFacilityId,
+   ownerId:h.ownerId||null,breederId:h.breederOrganizationId||null,
+   foalingFarmId:h.foalingFarmId||null,birthplace,careFacilityId,
    managementOrganizationId:careFacilityId,
    sourcePedigree:{sireId:h.sireId||null,damId:h.damId||null},
    sourceStatus:h.status||'APPROVED_FOUNDING_SOURCE',
