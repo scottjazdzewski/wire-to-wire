@@ -154,7 +154,7 @@ try{
  assert.equal(snap.namedBreeders,true,'Broodmares must have provisional registered names');
  assert.equal(snap.namedRacehorse,true,'Race-ready horses must have provisional names');
  assert.ok(snap.namedPersonnel>0,'Personnel naming provider did not populate names');
- const readCareerSave=async()=>browser.evalJS(`(async()=>{
+ const readCareerSave=async(working=false)=>browser.evalJS(`(async()=>{
   const api=await import('/1999/engine/fictional-industry-persistence-1999.mjs');
   const db=await api.open1999IndustryDatabase();
   try{
@@ -162,7 +162,7 @@ try{
     seed:19990101,worldId:${JSON.stringify(snap.worldId)}});
    const manifest=world.manifest;
    const runId='WTW-RUN-1999-'+manifest.seed+'-SIZE-'+
-    (manifest.targetOpeningHorses??manifest.horseCount);
+    (manifest.targetOpeningHorses??manifest.horseCount)+'${working?'-PLAYER':''}';
    const record=await api.loadPersistent1999CareerRun(db,manifest,runId);
    if(!record)return null;
    const json=JSON.stringify(record),run=record.changes?.canonicalRun;
@@ -216,9 +216,13 @@ try{
  },45000);
  assert.ok(dayAction.advanced,'Full-world day advance failed: '+dayAction.error);
  const careerAfterDay=await waitFor('full-world one-day career save',async()=>{
-  const saved=await readCareerSave();
+  const saved=await readCareerSave(true);
   return {done:!!saved&&saved.gameDate!==careerAtStart.gameDate,value:saved};
  },60000);
+ assert.deepEqual(await readCareerSave(false),careerAtStart,
+  'Frozen reference career changed when player advanced the working copy');
+ assert.ok(careerAfterDay.runId.endsWith('-PLAYER'),
+  'Advanced game must belong to the independently saved player working career');
  assert.equal(careerAfterDay.gameDate,dayAction.advanced.match(/GAME DATE (\d{4}-\d{2}-\d{2})/)?.[1],
   'The one-day game advance notice and persisted career date disagree');
  const storageAfterDay=await browser.evalJS('navigator.storage.estimate()');
@@ -238,7 +242,7 @@ try{
   const v=await browser.evalJS('Boolean(window.WTWCompactCareerManager?.open)');
   return {done:v,value:v};
  });
- const careerAfterProcessRestart=await readCareerSave();
+ const careerAfterProcessRestart=await readCareerSave(true);
  assert.deepEqual(careerAfterProcessRestart,careerAfterDay,
   'Played full-world career record changed or failed to reopen after Chromium restart');
  console.log('WTW_FULL_WORLD_PLAYED_SAVE_REOPEN_PASS '+JSON.stringify(careerAfterProcessRestart));
@@ -253,7 +257,7 @@ try{
     seed:19990101,worldId:${JSON.stringify(snap.worldId)}});
    if(!reopened||reopened.status!=='READY')throw Error('Completed full world did not reopen');
    const runId='WTW-RUN-1999-'+reopened.manifest.seed+'-SIZE-'+
-    (reopened.manifest.targetOpeningHorses??reopened.manifest.horseCount);
+    (reopened.manifest.targetOpeningHorses??reopened.manifest.horseCount)+'-PLAYER';
    const saved=await persistence.loadPersistent1999CareerRun(db,reopened.manifest,runId);
    if(!saved?.changes?.canonicalRun)throw Error('Saved full-world career is missing');
    const career=await bridge.openPersistent1999GameCareer(db,reopened.manifest,{
@@ -387,7 +391,7 @@ try{
   'Official purse awards must reconcile to the scheduled purse');
  assert.equal(raceSettlement.saveReadBack,true);
  console.log('WTW_FULL_WORLD_RACE_SETTLEMENT_PASS '+JSON.stringify(raceSettlement));
- const careerAfterRace=await readCareerSave();
+ const careerAfterRace=await readCareerSave(true);
  assert.ok(careerAfterRace.officialRaces>=1,'Saved career must contain an official race');
  assert.ok(careerAfterRace.raceFields.some(r=>r.raceId===raceSettlement.raceId&&
   r.status==='OFFICIAL_SIM_RESULT'&&r.results.length===raceSettlement.starterCount),
@@ -399,7 +403,7 @@ try{
   return {done:v,value:v};
  });
  await browser.evalJS('window.WTWCompactCareerManager.open().then(()=>true)');
- const careerAfterRaceRestart=await readCareerSave();
+ const careerAfterRaceRestart=await readCareerSave(true);
  assert.deepEqual(careerAfterRaceRestart,careerAfterRace,
   'Official full-world race changed or failed to reopen after Chromium restart');
  assert.ok(careerAfterRaceRestart.raceFields.some(r=>r.raceId===raceSettlement.raceId&&
@@ -431,7 +435,7 @@ try{
   worldId:sharedCareer.imported.worldId,runId:sharedCareer.imported.runId,
   gameDate:sharedCareer.imported.gameDate,raceId:raceSettlement.raceId,
   importReadBack:true}));
- const careerAfterSharedImport=await readCareerSave();
+ const careerAfterSharedImport=await readCareerSave(true);
  assert.deepEqual(careerAfterSharedImport,careerAfterRace,
   'Export/import of the shared career changed its official race checkpoint');
  const bundledCheckpoint=await browser.evalJS(`(async()=>{
@@ -456,7 +460,7 @@ try{
  assert.equal(bundledCheckpoint.mainUiCareer?.gameDate,careerAfterRace.gameDate);
  assert.equal(bundledCheckpoint.mainUiCareer?.worldHorseCount,300000);
  assert.equal(bundledCheckpoint.mainUiCareer?.people,75724);
- const careerAfterBundledImport=await readCareerSave();
+ const careerAfterBundledImport=await readCareerSave(true);
  assert.deepEqual(careerAfterBundledImport,careerAfterRace,
   'Bundled career bootstrap replaced local race progress');
  console.log('WTW_BUNDLED_CAREER_CHECKPOINT_REOPEN_PASS '+JSON.stringify(bundledCheckpoint));
