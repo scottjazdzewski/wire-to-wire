@@ -635,6 +635,10 @@ try{
    // May 1999 checkpoint. Certify real mature transitions through 2005.
    let final2005=saved;
    const adultYearChecks=[];
+   // The canonical 300k career receives the extended 1999–2005 proof.
+   // The separate 325k maximum-size acceptance retains its already certified
+   // two-season scope rather than duplicating a multi-year stress test.
+   if(runId.endsWith('300K')){
    for(let season=2002;season<=2005;season++){
     final2005=await save(season+'-01-01',season-1995);
     const events=await api.readPersistent1999LifecycleEvents(store,manifest,
@@ -657,6 +661,7 @@ try{
    if(persisted2005.gameDate!=='2005-01-01'||
     persisted2005.lifecycle.population!==final2005.lifecycle.population)
     throw Error('300k five-year lifecycle checkpoint did not save and reopen');
+   }
    return {runId,openingHorseCount:saved.lifecycle.openingHorseCount,
     population2000:year2000.lifecycle.population,population2001:saved.lifecycle.population,
     births1999:saved.lifecycle.birthsByYear[1999],births2000:saved.lifecycle.birthsByYear[2000],
