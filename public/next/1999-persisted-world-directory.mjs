@@ -42,7 +42,7 @@ export function createPersistedIndustryHorseDirectory({world,manifest,year=1999}
  const row=h=>({
   _kind:'horse',_name:h.name,_id:h.id,_canonId:h.id,
   _savedWorldId:manifest.worldId,
-  name:h.name,age:age(h),sex:h.sex||'',status:h.status||'',
+  name:h.name,biography:h.biography||'',age:age(h),sex:h.sex||'',status:h.status||'',
   registryGroup:h.cohort||'',sire:h.sireId||'',dam:h.damId||'',
   owner:label(org,h.ownerId),breeder:label(org,h.foalingFarmId),
   trainer:label(people,h.trainerId),track:label(tracks,h.homeTrackId),
