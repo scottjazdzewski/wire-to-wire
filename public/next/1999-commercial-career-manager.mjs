@@ -23,8 +23,10 @@ import {packShared1999Career,unpackShared1999Career,sameShared1999WorldIdentity}
  from '/1999/engine/shared-1999-career-package.mjs?rev=wtw-shared-career-world-identity-v2';
 import {projectCanonical1999RaceRows,renderCanonical1999RaceFile}
  from '/next/1999-canonical-career-race-files.mjs';
-import {createPersistedIndustryHorseDirectory}
+import {createPersistedIndustryHorseDirectory,createPersistedIndustryEntityDirectory}
  from '/next/1999-persisted-world-directory.mjs';
+import {createCareerWorldEdits,addCareerWorldEdit,applyCareerWorldEdits}
+ from '/next/1999-career-world-edits.mjs';
 
 const DB_NAME='WireToWireClean1999CareersV2';
 const MAX_SLOTS=60,MAX_TOTAL_BYTES=512*1024*1024;
@@ -183,7 +185,44 @@ function modal(){
 }
 let fullIndustryManifest=null;
 let activeWorldCareer=null;
-let indexedCareerWorld=null,indexedHorseDirectory=null;
+let indexedCareerWorld=null,indexedHorseDirectory=null,indexedOtherDirectories=null;
+function hydrateCareerEdits(career,record){
+ const edits=record?.changes?.worldEdits||createCareerWorldEdits();
+ applyCareerWorldEdits(career.world,edits,{run:career.run});
+ career.worldEdits=edits;
+ career.editVersion=0;
+ return career;
+}
+async function editSavedWorldEntity({kind,id,patch}={}){
+ const career=activeWorldCareer;
+ if(!career?.run||!career.manifest)throw Error('Open a saved game before editing world records');
+ const edits=addCareerWorldEdit(career.worldEdits,career.world,kind,id,patch,
+  {run:career.run});
+ const nextRun=structuredClone(career.run);
+ if(kind==='horse'&&Object.hasOwn(patch,'name')){
+  const name=patch.name.trim();
+  for(const h of Object.values(nextRun.runtime.registered_horses.by_id))
+   if(h.world_source_horse_id===id){h.name=name;h.registered_name=name}
+ }
+ const db=await open1999IndustryDatabase();
+ try{
+  const record=await savePersistent1999CareerRun(db,career.manifest,{
+   runId:nextRun.run_id,gameDate:nextRun.clock.date,player:nextRun.player,
+   changes:{canonicalRun:nextRun,worldEdits:edits},
+   version:Math.max(1,nextRun.revision+1)});
+  const verified=await loadPersistent1999CareerRun(db,career.manifest,nextRun.run_id);
+  if(JSON.stringify(verified?.changes?.worldEdits)!==JSON.stringify(edits))
+   throw Error('World customization did not survive durable read-back');
+  career.run=nextRun;career.worldEdits=edits;
+  applyCareerWorldEdits(career.world,edits,{run:career.run});
+  indexedHorseDirectory?.invalidate();
+  Object.values(indexedOtherDirectories||{}).forEach(index=>index.invalidate());
+  career.editVersion=(career.editVersion||0)+1;
+  publishCareerReadModel();
+  return {id,kind,worldId:career.manifest.worldId,runId:career.run.run_id,
+   editVersion:career.editVersion,recordVersion:record.version};
+ }finally{db.close()}
+}
 // One renderer for exact ID-linked records from the current saved game only.
 window.WTW1999CanonicalCareerRaceFile=Object.freeze({render:renderCanonical1999RaceFile});
 // Read-only bridge to the existing committed game run: do not seed a second
@@ -206,6 +245,9 @@ function publishCareerReadModel(){
  if(indexedCareerWorld!==career.world){
   indexedHorseDirectory=createPersistedIndustryHorseDirectory({
    world:career.world,manifest:career.manifest});
+  indexedOtherDirectories=Object.fromEntries(['person','organization','track'].map(kind=>
+   [kind,createPersistedIndustryEntityDirectory({world:career.world,
+    manifest:career.manifest,kind})]));
   indexedCareerWorld=career.world;
  }
  const snapshot={schema:'WTW_CANONICAL_CAREER_READ_MODEL_V1',
@@ -213,13 +255,17 @@ function publishCareerReadModel(){
   worldHorseCount:career.manifest.horseCount,personCount:career.manifest.personCount,
   operationId:operation.id,operationName:operation.name,
   date:run.clock.date,revision:run.revision,horseRows:horses,raceRows:races,
+  worldHorseCount:indexedHorseDirectory.size,
   worldHorseBrowse:indexedHorseDirectory.browse,
   worldHorseById:indexedHorseDirectory.byId,
+  worldEntityBrowse:(kind,options)=>indexedOtherDirectories[kind]?.browse(options)||null,
+  worldEntityById:(kind,id)=>indexedOtherDirectories[kind]?.byId(id)||null,
+  editVersion:career.editVersion||0,
   cashMinor:Number.isSafeInteger(rawBalance)?rawBalance:null};
  const prior=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
  if(prior?.worldId===snapshot.worldId&&prior?.runId===snapshot.runId&&
   prior?.revision===snapshot.revision&&prior?.operationId===snapshot.operationId&&
-  prior?.date===snapshot.date)return;
+  prior?.date===snapshot.date&&prior?.editVersion===snapshot.editVersion)return;
  window.__WTW_ACTIVE_WORLD_CAREER_VIEW__=Object.freeze(snapshot);
  window.__WTW_NEXT__?.paint?.();
 }
@@ -314,7 +360,8 @@ async function persistCanonicalRun(){
  const store=await open1999IndustryDatabase();
  try{await savePersistent1999CareerRun(store,activeWorldCareer.manifest,{
   runId:activeWorldCareer.run.run_id,gameDate:activeWorldCareer.run.clock.date,
-  player:activeWorldCareer.run.player,changes:{canonicalRun:activeWorldCareer.run},
+  player:activeWorldCareer.run.player,changes:{canonicalRun:activeWorldCareer.run,
+   worldEdits:activeWorldCareer.worldEdits||createCareerWorldEdits()},
   version:Math.max(1,activeWorldCareer.run.revision+1)})}
  finally{store.close()}
 }
@@ -424,7 +471,8 @@ async function importSharedCareerFile(file,{preserveExistingProgress=false}={}){
   if(JSON.stringify(confirmed)!==JSON.stringify(expectedStoredRecord))
    throw Error('Imported career did not survive IndexedDB read-back');
   const run=preservedRun||checkpointRun;
-  activeWorldCareer={...career,run,manifest:fullIndustryManifest};
+  activeWorldCareer=hydrateCareerEdits({...career,run,manifest:fullIndustryManifest},
+   expectedStoredRecord);
   industryDirectory=await readPersistent1999Directory(db,fullIndustryManifest);
   await browseFullIndustry(0,'directory');
   publishCareerReadModel();
@@ -470,7 +518,7 @@ async function resumeCanonicalRun(store,manifest){
  const career=await openPersistent1999GameCareer(store,manifest,{
   runId:canonicalRunId(manifest),operationId:saved.player.operation_id});
  validateGameRun(saved.changes.canonicalRun,career.world);
- return {...career,run:saved.changes.canonicalRun,manifest};
+ return hydrateCareerEdits({...career,run:saved.changes.canonicalRun,manifest},saved);
 }
 async function startCanonicalRun(){
  if(!fullIndustryManifest||fullIndustryManifest.status!=='COMPLETE')
@@ -480,6 +528,8 @@ async function startCanonicalRun(){
   activeWorldCareer=await openPersistent1999GameCareer(store,fullIndustryManifest,
    {runId:canonicalRunId(fullIndustryManifest)});
   activeWorldCareer.manifest=fullIndustryManifest;
+  activeWorldCareer.worldEdits=createCareerWorldEdits();
+  activeWorldCareer.editVersion=0;
   await persistCanonicalRun();
  }finally{store.close()}
  publishCareerReadModel();
@@ -875,7 +925,7 @@ window.WTWCompactCareerManager=Object.freeze({open,listSlots,storeGame,
  restoreGame,exportSlot,importFile,dbName:DB_NAME,
  prepareFictionalIndustry,saveFictionalIndustryCareer,
  readFictionalIndustryCareer,sharedCareerBytes,importSharedCareerFile,
- bootstrapBundledCareer});
+ bootstrapBundledCareer,editSavedWorldEntity});
 if(window.WTWDesktop?.runtime==='windows-desktop'&&!window.WTWDesktop.smokeMode){
  window.WTWDesktopCareerBootstrapPromise=bootstrapBundledCareer().catch(error=>{
   console.error('Bundled full-world career startup failed',error);
