@@ -207,7 +207,9 @@ function publishCareerReadModel(){
    ...(source?.ownerId===operation.id?['OWNED']:[]),
    ...(source?.managementOrganizationId===operation.id?['MANAGED']:[]),
    ...(source?.careFacilityId===operation.id?['BOARDED']:[]),
-   ...(source?.trainingBarnId===operation.id?['TRAINED']:[])
+   ...(source?.trainingBarnId===operation.id?['TRAINED']:[]),
+   ...(source?.breederId===operation.id?['BRED']:[]),
+   ...(source?.foalingFarmId===operation.id?['FOALED AT']:[])
   ]);
   return {horseId:active?.horse_id||id,sourceHorseId:source?.id||null,
    name:active?.registered_name||source?.name||id,

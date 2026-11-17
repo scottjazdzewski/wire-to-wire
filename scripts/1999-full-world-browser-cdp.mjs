@@ -580,6 +580,47 @@ try{
    kingsmereView.horseRows.filter(h=>/^H-\d{4}-/.test(h.sourceHorseId||'')).length,
   gameDate:kingsmereSaved.gameDate,registeredHorses:kingsmereSaved.registeredHorses,
   savedStableHorseCount:kingsmereSaved.stableHorses,horseProfileOpened:true}));
+ const majorOperationRosters=[];
+ for(const operation of [
+  {id:'O-000001',name:'Wetherby Plain'},
+  {id:'O-000003',name:'Four Corners Farm'},
+  {id:'O-000062',name:'Crescent Mile Farm'},
+  {id:'O-000066',name:'Aurelian Stud'},
+  {id:'O-FOUNDING-1999-001',name:'Davenport Hall Farm'},
+  {id:'O-FOUNDING-1999-004',name:'Split Rail Farm'}
+ ]){
+  await browser.evalJS(`(()=>{
+   const select=document.querySelector('[data-cc="player-operation"]');
+   const button=document.querySelector('[data-cc-action="open-selected-operation"]');
+   if(!select||!button||![...select.options].some(option=>option.value===${JSON.stringify(operation.id)}))
+    throw Error(${JSON.stringify(operation.name+' is missing from the playable operation selector')});
+   select.value=${JSON.stringify(operation.id)};
+   select.dispatchEvent(new Event('change',{bubbles:true}));button.click();return true;
+  })()`);
+  const view=await waitFor('playable '+operation.name+' roster',async()=>{
+   const value=await browser.evalJS(`(()=>{const v=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+    return v?{operationId:v.operationId,operationName:v.operationName,date:v.date,
+     worldHorseCount:v.worldHorseCount,inventoryCount:v.operationInventoryCount,
+     relationships:v.operationInventoryByRelationship,
+     horses:v.horseRows.map(h=>({horseId:h.horseId,sourceHorseId:h.sourceHorseId,
+      name:h.name,activity:h.activity,tag:h.tag}))}:null})()`);
+   return {done:value?.operationId===operation.id,value};
+  },180000);
+  assert.ok(view.inventoryCount>0,operation.name+' has no playable horse relationships');
+  assert.equal(view.horses.length,view.inventoryCount,
+   operation.name+' roster omitted relationship-linked horses');
+  assert.equal(view.worldHorseCount,300000);
+  const saved=await waitFor(operation.name+' saved-world career',async()=>{
+   const value=await readCareerSave('WTW-RUN-1999-19990101-SIZE-300000-OP-'+operation.id);
+   return {done:value?.operationId===operation.id,value};
+  },120000);
+  assert.equal(saved.stableHorses,view.inventoryCount);
+  majorOperationRosters.push({id:operation.id,name:operation.name,
+   inventory:view.inventoryCount,relationships:view.relationships,
+   gameDate:saved.gameDate,roster:view.horses.slice(0,8)});
+ }
+ console.log('WTW_APPROVED_MAJOR_OPERATION_SAVED_ROSTERS_PASS '+
+  JSON.stringify(majorOperationRosters));
  await browser.evalJS(`(()=>{
   document.querySelector('[data-cc-action="start-test-career"]')?.click();return true;
  })()`);

@@ -211,6 +211,10 @@ test('approved Kingsmere is an openable owner-farm operator with a persistent fu
   career.world.entities.horses.filter(h=>h.careFacilityId==='O-000061').length,
   'operation inventory must include horses physically boarded at its facilities');
  assert.ok(career.operationInventoryByRelationship.OWNED>=ownedRunners.length);
+ assert.equal(career.operationInventoryByRelationship.BRED,
+  career.world.entities.horses.filter(h=>h.breederId==='O-000061').length);
+ assert.equal(career.operationInventoryByRelationship.FOALED_AT,
+  career.world.entities.horses.filter(h=>h.foalingFarmId==='O-000061').length);
  const firstActive=career.run.runtime.registered_horses.by_id[
   'H-GAME-1999-WORLD-'+ownedRunners[0].id.replace(/^H-FICTIONAL-1999-/,'')];
  assert.notEqual(firstActive.care_facility_organization_id,
@@ -235,7 +239,8 @@ test('approved Kingsmere is an openable owner-farm operator with a persistent fu
  assert.ok(ownedNonRunners.some(h=>h.status==='BROODMARE'));
  assert.ok(ownedNonRunners.every(h=>career.run.stable_horse_ids.includes(h.id)),
   'breeding stock and youngstock must appear on the same playable stable roster');
- assert.equal(career.operationInventoryCount,ownedRunners.length+ownedNonRunners.length);
+ assert.equal(career.operationInventoryCount,new Set(career.run.stable_horse_ids).size,
+  'the playable roster includes every distinct horse with an operation relationship');
  const saved=await savePersistent1999CareerRun(store,manifest,{
   runId:career.run.run_id,player:career.run.player,gameDate:career.run.clock.date,
   changes:{canonicalRun:career.run},version:2});

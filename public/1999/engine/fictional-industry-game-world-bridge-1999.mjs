@@ -171,7 +171,8 @@ export async function openPersistent1999GameCareer(store,manifest,{
  const operationHorseRoles=new Map();
  for(const h of horses){
   const links=[[h.ownerId,'OWNED'],[h.managementOrganizationId,'MANAGED'],
-   [h.careFacilityId,'BOARDED'],[h.trainingBarnId,'TRAINED']];
+   [h.careFacilityId,'BOARDED'],[h.trainingBarnId,'TRAINED'],
+   [h.breederId,'BRED'],[h.foalingFarmId,'FOALED_AT']];
   const seenForHorse=new Set();
   for(const [operationId,role] of links){
    if(!operationId)continue;
@@ -293,7 +294,7 @@ export async function openPersistent1999GameCareer(store,manifest,{
   Object.assign(run,result.state);
  }
  validateGameRun(run,world);
- const relationshipCounts={OWNED:0,MANAGED:0,BOARDED:0,TRAINED:0};
+ const relationshipCounts={OWNED:0,MANAGED:0,BOARDED:0,TRAINED:0,BRED:0,FOALED_AT:0};
  for(const roles of (operationHorseRoles.get(operation.id)||new Map()).values())
   for(const role of roles)relationshipCounts[role]++;
  return {schema:PERSISTED_1999_GAME_BRIDGE_SCHEMA,world,run,
