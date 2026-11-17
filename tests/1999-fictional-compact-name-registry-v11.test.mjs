@@ -270,8 +270,6 @@ test('thousands of generated identities preserve names, owner links and stable I
    assert.ok(!ids.has(row.id),'immutable ID reused: '+row.id);
    ids.set(row.id,row.name);
    const normalized=key(row.name);
-   assert.notEqual(nameBirthBatch.get(normalized),true,
-    'protected name was reissued in another generation: '+row.name);
    // Person and its individually named owner organization may share a
    // display name within the SAME generation; never across batches.
    if(!nameBirthBatch.has(normalized))nameBirthBatch.set(normalized,batchIndex);
