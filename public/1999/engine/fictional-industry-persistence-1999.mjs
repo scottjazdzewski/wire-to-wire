@@ -677,9 +677,16 @@ function statusPatch(base,state){
  return state?.patch?{...(base||{}),...state.patch}:base;
 }
 function statusUpdate(horse,patch){
- return horse.registryProvenance==='MODELED_SEASONAL_BIRTH'?
-  {id:horse.id,kind:'BORN',horse:{...horse,...patch}}:
-  {id:horse.id,kind:'STATUS',patch};
+ if(horse.registryProvenance==='MODELED_SEASONAL_BIRTH')
+  return {id:horse.id,kind:'BORN',horse:{...horse,...patch}};
+ // Each sidecar replaces the previous sidecar, not merges with it. Carry
+ // committed development, debut and breeding history across later transitions.
+ const keys=['development','racingDebutDate','racingReadiness',
+  'lastReadinessReview','nextReadinessReview','developmentYear',
+  'retirementYear','retirementReason','graduatedYear','breedingStatus'];
+ const carried=Object.fromEntries(keys.filter(key=>horse[key]!==undefined)
+  .map(key=>[key,horse[key]]));
+ return {id:horse.id,kind:'STATUS',patch:{...carried,...patch}};
 }
 async function readPoolRecords(store,manifest,runKey,year,overrideMap=new Map(),
  poolOverride=null,graduatedYears=new Map()){
@@ -1105,13 +1112,16 @@ async function matureHorseRolloverForYear(store,manifest,runKey,year,horseUpdate
   if(active.has(id))continue;
   const horse=await effectiveLifecycleHorse(store,manifest,runKey,id,overrideMap);
   if(horse&&horse.status!=='DECEASED')
-   active.set(id,compactMatureHorse(horse,year));
+   active.set(id,{...compactMatureHorse(horse,year),newlyRetired:true});
  }
  const deaths=[],retired=[],developed=[],started=[];
  let racingDelta=0;
  for(const [id,entry] of active){
   const before=entry.status;
-  const plan=plan1999MatureHorseYear({seed:manifest.seed,year,horse:entry});
+  // Retirement happens at the start of the year; do not immediately kill
+  // the same horse on that retirement date.
+  const plan=entry.newlyRetired?{decision:'UNCHANGED',patch:null}:
+   plan1999MatureHorseYear({seed:manifest.seed,year,horse:entry});
   const nextStatus=plan.patch?.status||before;
   if(entry.newEntrant&&!entry.priorRacing&&nextStatus==='RACING')racingDelta++;
   if((!entry.newEntrant||entry.priorRacing)&&before==='RACING'&&
@@ -1135,7 +1145,7 @@ async function matureHorseRolloverForYear(store,manifest,runKey,year,horseUpdate
   if(entry.newEntrant&&nextStatus==='RACING')started.push(id);
   active.set(id,{...entry,status:nextStatus,
    development:plan.patch?.development||entry.development,
-   newEntrant:undefined,priorRacing:undefined});
+   newEntrant:undefined,priorRacing:undefined,newlyRetired:undefined});
  }
  const members=[...active.values()];
  if(new Set(members.map(x=>x.id)).size!==members.length)
