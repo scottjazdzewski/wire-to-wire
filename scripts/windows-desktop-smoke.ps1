@@ -82,7 +82,7 @@ foreach($step in $steps){
  }
  if($phase.StartsWith("career-")){
   $career=$proof.careerBootstrap
-  if(!$career -or $career.worldId -ne "WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V8-H300000" -or
+  if(!$career -or $career.worldId -ne "WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V9-H300000" -or
      $career.seed -ne 19990101 -or $career.horseCount -ne 300000 -or
      $career.personCount -ne 75705 -or
      $career.runId -ne "WTW-RUN-1999-19990101-SIZE-300000" -or

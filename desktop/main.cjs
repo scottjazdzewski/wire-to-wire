@@ -226,7 +226,7 @@ async function runSmoke(win){
    }
    throw Error('Bundled career manager did not load');
   })()`,true);
-  if(career.worldId!=='WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V8-H300000'||
+  if(career.worldId!=='WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V9-H300000'||
      career.seed!==19990101||career.horseCount!==300000||
      career.personCount!==75705||career.runId!=='WTW-RUN-1999-19990101-SIZE-300000'||
      !/^\d{4}-\d{2}-\d{2}$/.test(career.gameDate)||

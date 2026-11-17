@@ -12,8 +12,9 @@ import {TRACK_PROGRAM_1999,trackMeetOpen1999,scheduledRaceDays1999}
  from '../../next/1999-track-program.mjs';
 import {buildConditionBook1999}
  from '../../next/1999-condition-book-engine.mjs';
+import {PORTFOLIO_TIERS} from './fictional-owner-portfolio-planner.mjs';
 
-export const INDUSTRY_FULL_INTEGRITY_AUDIT_SCHEMA='WTW_1999_FULL_CENSUS_AUDIT_V1';
+export const INDUSTRY_FULL_INTEGRITY_AUDIT_SCHEMA='WTW_1999_FULL_CENSUS_AUDIT_V2';
 const ROLES=new Set(['trainer','jockey','groom','exercise_rider','veterinarian',
  'farrier','farm_manager','breeding_attendant']);
 function check(condition,message){if(!condition)throw Error('1999 integrity: '+message)}
@@ -118,7 +119,10 @@ export async function auditPersistent1999World(store,manifest,{expectedHorses=nu
  for(const [role,count] of Object.entries(manifest.staffing.counts))
   check(roleCounts[role]===count,'person role census mismatch '+role);
  const horses=new Set(),foundingHorseIds=new Set(manifest.foundingHorseIds||[]),
-  foundFoundingHorseIds=new Set(),byCohort={},homeTrackCounts={},horseStatuses={};
+  foundFoundingHorseIds=new Set(),byCohort={},homeTrackCounts={},horseStatuses={},
+  ownerTierStats=Object.fromEntries(PORTFOLIO_TIERS.map(tier=>[tier.id,{
+   owners:0,horses:0,minHorsesEach:tier.min,maxHorsesEach:tier.max
+  }])),ownerPortfolioByOwner=new Map();
  let horseCount=0,connectedRunners=0;
  for(let i=0;i<manifest.horseBatchesCommitted;i++){
   const batch=await readPersistent1999IndustryBatch(store,manifest,'horseBatches',i);
@@ -140,6 +144,20 @@ export async function auditPersistent1999World(store,manifest,{expectedHorses=nu
     'unprovenanced horse '+h.id);
    check(owners.has(h.ownerId)&&(!h.foalingFarmId||farms.has(h.foalingFarmId)),
     'broken ownership / foaling reference '+h.id);
+   const owner=owners.get(h.ownerId),tierStats=ownerTierStats[h.ownerPortfolioTier];
+   check(!!tierStats,'missing or invalid owner portfolio tier '+h.id);
+   const priorPortfolio=ownerPortfolioByOwner.get(h.ownerId);
+   if(priorPortfolio){
+    check(priorPortfolio.tier===h.ownerPortfolioTier,
+     'owner portfolio tier changed within assigned horses '+h.ownerId);
+    priorPortfolio.horses++;
+    tierStats.horses++;
+   }else{
+    ownerPortfolioByOwner.set(h.ownerId,{tier:h.ownerPortfolioTier,horses:1});
+    tierStats.owners++;tierStats.horses++;
+   }
+   if(owner.portfolioTier)check(owner.portfolioTier===h.ownerPortfolioTier,
+    'approved operator portfolio tier disagrees with horse allocation '+h.id);
    if(h.foalingFarmId){
     const farm=farms.get(h.foalingFarmId);
     check(farm&&h.birthplace?.farmId===h.foalingFarmId&&
@@ -193,6 +211,19 @@ export async function auditPersistent1999World(store,manifest,{expectedHorses=nu
   }
  }
  check(horseCount===manifest.horseCount,'horse census mismatch');
+ check(ownerPortfolioByOwner.size===owners.size,
+  'owner portfolio plan left directory owners without horses');
+ for(const tier of PORTFOLIO_TIERS){
+  const actual=ownerTierStats[tier.id],planned=manifest.ownerPortfolio?.byTier?.[tier.id];
+  check(!!planned&&actual.owners===planned.owners&&actual.horses===planned.horses,
+   'persisted owner-tier allocation differs from its saved plan '+tier.id);
+  for(const [ownerId,portfolio] of ownerPortfolioByOwner){
+   if(portfolio.tier!==tier.id)continue;
+   const cap=owners.get(ownerId).maxHorses??tier.max;
+   check(portfolio.horses>=tier.min&&portfolio.horses<=cap,
+    'actual owner portfolio is outside its tier capacity '+ownerId);
+  }
+ }
  check(foundFoundingHorseIds.size===foundingHorseIds.size&&
   [...foundingHorseIds].every(id=>foundFoundingHorseIds.has(id)),
   'approved founding horse IDs missing from the opening registry');
@@ -267,6 +298,7 @@ export async function auditPersistent1999World(store,manifest,{expectedHorses=nu
  return {schema:INDUSTRY_FULL_INTEGRITY_AUDIT_SCHEMA,seed,
   worldId:manifest.worldId,openingHorses:horseCount,personnel:people,
   owners:owners.size,farms:farms.size,activeTracks:tracks.size,
+  ownerPortfolioByTier:ownerTierStats,
   connectedRunners,coverings,scheduledCards:cardCount,scheduledRaces:scheduled,
   horseCohorts:byCohort,horseStatuses,
   check:'PASS',forecastFoalsExcluded:true,unopenedCards:true};

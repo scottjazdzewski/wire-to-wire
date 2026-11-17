@@ -6,16 +6,24 @@
 const NTRA_POLL_URL='https://sudoku.infoplease.com/sports/1999-season/ntra-national-thoroughbred-poll';
 const BREEDERS_CUP_RECAP_URL='https://stats.breederscup.com/bcosShowDocument.cfm?id=21';
 const BREEDERS_CUP_FIELD_URL='https://www.latimes.com/archives/la-xpm-1999-nov-04-sp-29892-story.html';
+const KENTUCKY_DERBY_FIELD_URL='https://www.latimes.com/archives/la-xpm-1999-may-01-sp-33118-story.html';
+const PREAKNESS_FIELD_URL='https://www.latimes.com/archives/la-xpm-1999-may-15-sp-37548-story.html';
+const PREAKNESS_RESULT_URL='https://www.godolphin.com/runners-and-results/racecard/267888';
+const FRANCE_GALOP_LEADERS_URL='https://www.thoroughbreddailynews.com/pdf/tdn/1999/tdn991206.pdf';
 const NTRA_ECLIPSE_URL='https://www.ntra.com/eclipse-awards/history/';
 
-const record=(name,source,asOf,url,surnames=[])=>Object.freeze({
- name,source,asOf,url,surnames:Object.freeze(surnames)
+const record=(name,source,referenceDate,url,surnames=[])=>Object.freeze({
+ name,source,referenceYear:1999,referenceDate,url,surnames:Object.freeze(surnames)
 });
 
 const poll=(name,surnames=[])=>record(name,'NTRA_1999_THOROUGHBRED_POLL','1999-09-19',NTRA_POLL_URL,surnames);
 const cup=(name,surnames=[])=>record(name,'BREEDERS_CUP_1999_WINNER_RECAP','1999-11-06',BREEDERS_CUP_RECAP_URL,surnames);
 const field=(name,surnames=[])=>record(name,'LOS_ANGELES_TIMES_1999_BREEDERS_CUP_FIELD','1999-11-04',BREEDERS_CUP_FIELD_URL,surnames);
-const eclipse=(name,surnames=[])=>record(name,'NTRA_1999_ECLIPSE_OWNER_BREEDER_AWARDS','1999-12-31',NTRA_ECLIPSE_URL,surnames);
+const derby=(name,surnames=[])=>record(name,'LOS_ANGELES_TIMES_1999_KENTUCKY_DERBY_FIELD','1999-05-01',KENTUCKY_DERBY_FIELD_URL,surnames);
+const preakness=(name,surnames=[])=>record(name,'LOS_ANGELES_TIMES_1999_PREAKNESS_FIELD','1999-05-15',PREAKNESS_FIELD_URL,surnames);
+const preaknessResult=(name,surnames=[])=>record(name,'GODOLPHIN_1999_PREAKNESS_RESULT','1999-05-15',PREAKNESS_RESULT_URL,surnames);
+const france=(name,surnames=[])=>record(name,'FRANCE_GALOP_1999_OWNER_EARNINGS','1999-12-02',FRANCE_GALOP_LEADERS_URL,surnames);
+const eclipse=(name,surnames=[])=>record(name,'NTRA_1999_ECLIPSE_OWNER_BREEDER_AWARDS',null,NTRA_ECLIPSE_URL,surnames);
 
 export const VERIFIED_RACING_OWNER_NAMES_1999=Object.freeze([
  poll('Rudlein Stable & W. Clifton Jr.',['Clifton']),
@@ -88,6 +96,36 @@ export const VERIFIED_RACING_OWNER_NAMES_1999=Object.freeze([
  field('W. Bruce Lunsford',['Lunsford']),
  field('Jeffrey Sengara',['Sengara']),
  field('Peter Harris',['Harris']),
+
+ // Additional personal and stable labels from the complete 1999 Kentucky
+ // Derby and Preakness fields, alongside a contemporaneous European standings
+ // table sourced to France Galop.
+ derby('Godolphin Stable'),
+ derby('Barry Schwartz',['Schwartz']),
+ derby('Stephen Hilbert',['Hilbert']),
+ derby('Aaron and Marie Jones',['Jones']),
+ derby('T N T Stud'),
+ derby('Bob and Beverly Lewis',['Lewis']),
+ derby('James Jackson',['Jackson']),
+ derby('Allen and Madeleine Paulson',['Paulson']),
+ derby('Prairie Star Racing and Gunther',['Gunther']),
+ derby('J. Stone and A. Hancock III',['Stone','Hancock']),
+ derby('John and Betty Mabee',['Mabee']),
+
+ preakness('Classic Stable'),
+ preakness('Southbelle Stable'),
+ preakness('M. Langford and Classic Stable',['Langford']),
+ preaknessResult('John Gunther and Prairie Star Racing',['Gunther']),
+
+ france('Wertheimer et Frere',['Wertheimer']),
+ france('H H the Aga Khan',['Khan']),
+ france('Jean-Luc Lagardere',['Lagardere']),
+ france('Michael Tabor',['Tabor']),
+ france('Khalid Abdullah',['Abdullah']),
+ france('Sheikh Mohammed bin Rashid al Maktoum',['Maktoum']),
+ france('Sheikh Maktoum bin Rashid al Maktoum',['Maktoum']),
+ france('Mise de Moratalla',['Moratalla']),
+ france('Godolphin'),
 
  eclipse('Frank Stronach',['Stronach']),
  eclipse('William S. Farish',['Farish'])

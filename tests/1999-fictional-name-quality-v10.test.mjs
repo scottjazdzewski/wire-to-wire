@@ -81,19 +81,28 @@ test('expanded Census-era owner lexicon supports the complete 16,700-owner opera
  assert.ok(roster.owners.filter(name=>/\b(?:Racing|Thoroughbreds|Stable|Stables|Bloodstock)\b/i.test(name)).length>10000);
 });
 test('documented 1999 racing owners feed the generated owner-name vocabulary',()=>{
- assert.equal(VERIFIED_RACING_OWNER_NAMES_1999.length,69);
- assert.equal(new Set(VERIFIED_RACING_OWNER_NAMES_1999.map(x=>x.name)).size,69);
- assert.ok(VERIFIED_RACING_OWNER_NAMES_1999.every(x=>x.asOf.startsWith('1999-')&&
+ assert.ok(VERIFIED_RACING_OWNER_NAMES_1999.length>=90);
+ assert.equal(new Set(VERIFIED_RACING_OWNER_NAMES_1999.map(x=>x.name)).size,
+  VERIFIED_RACING_OWNER_NAMES_1999.length);
+ assert.ok(VERIFIED_RACING_OWNER_NAMES_1999.every(x=>x.referenceYear===1999&&
+  (x.referenceDate===null||x.referenceDate.startsWith('1999-'))&&
   /^https:\/\//.test(x.url)&&x.surnames.every(s=>typeof s==='string'&&s.length>1)));
  assert.ok(VERIFIED_RACING_OWNER_NAMES_1999.filter(x=>
   x.source==='LOS_ANGELES_TIMES_1999_BREEDERS_CUP_FIELD').length>=45);
- assert.ok(VERIFIED_RACING_OWNER_SURNAME_INPUTS_1999.length>=60);
+ assert.ok(VERIFIED_RACING_OWNER_NAMES_1999.filter(x=>
+  x.source==='LOS_ANGELES_TIMES_1999_KENTUCKY_DERBY_FIELD').length>=10);
+ assert.ok(VERIFIED_RACING_OWNER_NAMES_1999.filter(x=>
+  x.source==='FRANCE_GALOP_1999_OWNER_EARNINGS').length>=9);
+ assert.ok(VERIFIED_RACING_OWNER_SURNAME_INPUTS_1999.length>=70);
  for(const surname of ['Clifton','Pegram','Vance','Tafel','Hancock','Stone',
   'Scatuorchio','Oxley','Lanni','Schiappa','Poslosky','Garey','Chandler',
-  'Randall','Naify','Sanan','Heerensperger','Zolozzi','Melnyk','Farish','Stronach'])
+  'Randall','Naify','Sanan','Heerensperger','Zolozzi','Melnyk','Farish','Stronach',
+  'Schwartz','Hilbert','Mabee','Gunther','Langford','Wertheimer','Khan',
+  'Lagardere','Abdullah','Maktoum','Moratalla'])
   assert.ok(VERIFIED_RACING_OWNER_SURNAME_INPUTS_1999.includes(surname),
    'missing sourced 1999 owner surname '+surname);
- for(const notAPersonalSurname of ['Padua','Paraneck','Godolphin','Overbrook'])
+ for(const notAPersonalSurname of ['Padua','Paraneck','Godolphin','Overbrook',
+  'Golden Eagle','T N T'])
   assert.ok(!VERIFIED_RACING_OWNER_SURNAME_INPUTS_1999.includes(notAPersonalSurname),
    'stable and farm brands must not enter the personal surname pool');
  const principals=Array.from({length:16700},(_,i)=>
@@ -104,8 +113,23 @@ test('documented 1999 racing owners feed the generated owner-name vocabulary',()
  assert.equal(roster.model,ARCHIVAL_RACING_OWNER_NAME_MODEL);
  const sourcedSurnameHits=VERIFIED_RACING_OWNER_SURNAME_INPUTS_1999.filter(surname=>
   roster.owners.some(name=>new RegExp('\\b'+surname+'\\b','i').test(name)));
- assert.ok(sourcedSurnameHits.length>=35,
+ assert.ok(sourcedSurnameHits.length>=40,
   'generated owner directory should draw a substantial subset of archival racing surnames');
+});
+test('full 1999 naming engine versions archival sources without changing permanent organization IDs',()=>{
+ const input={worldId:'OwnerNameSourceIntegration',seed:19990101,protectedNames:['Kingsmere Farm']};
+ const census=createFictionalWorldNameEngine(input);
+ const archival=createFictionalWorldNameEngine({...input,
+  ownerNameSourceModel:'ARCHIVAL_1999_RACING_OWNERS'});
+ assert.equal(census.manifest.organizationNameModel,
+  'WTW_1999_ORGANIZATION_NAMING_V7_CENSUS_2000_OWNER_LEXICON_PARTNERSHIPS');
+ assert.equal(archival.manifest.organizationNameModel,ARCHIVAL_RACING_OWNER_NAME_MODEL);
+ assert.notEqual(census.manifest.fingerprint,archival.manifest.fingerprint);
+ assert.deepEqual(census.people.map(x=>x.id),archival.people.map(x=>x.id));
+ assert.deepEqual(census.owners.map(x=>x.id),archival.owners.map(x=>x.id));
+ assert.ok(VERIFIED_RACING_OWNER_SURNAME_INPUTS_1999.filter(surname=>
+  archival.owners.some(owner=>new RegExp('\\b'+surname+'\\b','i').test(owner.name))).length>=12,
+  'full-world owner generator must emit sourced racing surnames');
 });
 test('quality auditing validates 11,202 people and 8,408 organizations across different seeds',()=>{
  for(const seed of [19990101,19990102,23555331]){
