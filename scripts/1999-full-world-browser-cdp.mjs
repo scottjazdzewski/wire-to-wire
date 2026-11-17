@@ -797,6 +797,15 @@ try{
       deceasedIds.add(id);
      }
     }
+    const mature=events.find(event=>event.type==='MATURE_HORSE_LIFECYCLE');
+    if(!mature||mature.deathHorseIds.length!==mature.deaths||
+     mature.retiredHorseIds.length!==mature.retired)
+     throw Error('Mature horse transitions were not durably committed in '+year);
+    annualDeaths+=mature.deaths;
+    for(const id of mature.deathHorseIds){
+     if(deceasedIds.has(id))throw Error('Adult death duplicated a previous horse '+id);
+     deceasedIds.add(id);
+    }
     const births=saved.lifecycle.birthsByYear[year-1]||0;
     const totalBirths=Object.values(saved.lifecycle.birthsByYear)
      .reduce((sum,count)=>sum+count,0);
@@ -882,10 +891,10 @@ try{
     ':'+runId+':foal-cohort:2000');
    const longLivedHorseId=oldCohort[0];
    const horse=await api.readPersistent1999LifecycleHorse(store,manifest,runId,longLivedHorseId);
-   if(horse?.age!==31||!horse.sireId||!horse.damId||!horse.ownerId||
-    !horse.foalingFarmId||!directoryIds.has(horse.ownerId)||
-    !directoryIds.has(horse.foalingFarmId))
-    throw Error('Thirty-one-year-old horse lost age, pedigree, ownership, or foaling place');
+   if(!horse||horse.age>31||horse.status==='RACING'||!horse.sireId||
+     !horse.damId||!horse.ownerId||!horse.foalingFarmId||
+     !directoryIds.has(horse.ownerId)||!directoryIds.has(horse.foalingFarmId))
+     throw Error('A thirty-one-year-old cohort horse was immortal or lost its pedigree');
    const final=await api.loadPersistent1999CareerRun(store,manifest,runId);
    if(new Set(annual.map(row=>row.births)).size<10||marketIndices.size<10||
     plannedCrops.size<10)
