@@ -4,6 +4,8 @@ import {execFileSync} from 'node:child_process';
 import {createOrganizationNameRoster,createProtectedOrganizationRootGuard,
  hasArtificialOrganizationPhrase}
  from '../public/1999/engine/organization-name-engine.mjs';
+import {CENSUS_2000_OWNER_SURNAMES}
+ from '../public/1999/engine/census-2000-owner-surnames.mjs';
 import {createFictionalWorldNameEngine}
  from '../public/1999/engine/fictional-world-name-engine.mjs';
 import {generateOnDemandFictionalNames}
@@ -57,6 +59,20 @@ test('large protected historical roster does not produce a near-identical new bu
  assert.equal(new Set(all.map(normalize)).size,all.length);
  assert.ok(!all.some(x=>/^(Kingsmere|River Stone|Old Oak Estate)\b/i.test(x)));
  assert.equal(roster.summary.farms,90);
+});
+test('expanded Census-era owner lexicon supports the complete 16,700-owner operating base',()=>{
+ assert.equal(CENSUS_2000_OWNER_SURNAMES.length,1000);
+ const given=['Avery','Bailey','Casey','Dakota','Ellis','Frankie','Harper','Jamie',
+  'Kendall','Logan','Morgan','Parker','Quinn','Riley','Sawyer','Taylor','Wren','Zion'];
+ const principals=Array.from({length:16700},(_,i)=>
+  given[i%given.length]+' '+CENSUS_2000_OWNER_SURNAMES[Math.floor(i/given.length)]);
+ const roster=createOrganizationNameRoster({seed:19990101,ownerCount:principals.length,
+  barnCount:0,farmCount:0,principalNames:principals});
+ assert.equal(roster.owners.length,16700);
+ assert.equal(new Set(roster.owners.map(normalize)).size,16700);
+ assert.ok(roster.owners.every(name=>!/[0-9]/.test(name)));
+ assert.ok(roster.owners.filter(name=>/\b(?:Partners?|Partnership|Syndicate|Club|Group)\b/i.test(name)).length>0);
+ assert.ok(roster.owners.filter(name=>/\b(?:Racing|Thoroughbreds|Stable|Stables|Bloodstock)\b/i.test(name)).length>10000);
 });
 test('quality auditing validates 11,202 people and 8,408 organizations across different seeds',()=>{
  for(const seed of [19990101,19990102,23555331]){

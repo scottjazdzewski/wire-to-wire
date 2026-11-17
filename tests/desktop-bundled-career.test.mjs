@@ -16,7 +16,7 @@ test('the desktop bundles V5 and preserves the frozen May 29 reference career',a
  const compressed=readFileSync(asset);
  assert.ok(compressed.byteLength<2_000_000,'V5 checkpoint should stay under 2 MB');
  const checkpoint=await unpackShared1999Career(gunzipSync(compressed));
- assert.equal(checkpoint.world.worldId,'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V5-H300000');
+ assert.equal(checkpoint.world.worldId,'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V6-H300000');
  assert.equal(checkpoint.world.seed,19990101);
  assert.equal(checkpoint.world.horseCount,300000);
  assert.equal(checkpoint.world.personCount,75705);

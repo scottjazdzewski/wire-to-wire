@@ -4,6 +4,7 @@
  * One seeded registry protects names across owners, barns and farms.
  * Entity IDs, locations, ownership, and horse links are outside this module.
  */
+import {CENSUS_2000_OWNER_SURNAMES} from './census-2000-owner-surnames.mjs';
 import {
  ORGANIZATION_STYLE_MODEL,organizationNamingRegion,organizationNamingEra,
  contextualFarmCandidate,contextualOwnerCandidate,contextualStableCandidate,
@@ -11,7 +12,7 @@ import {
  generationalFarmCandidate,generationalOwnerCandidate,
  generationalStableCandidate,generationalBreakingCandidate
 } from './organization-naming-styles.mjs';
-export const ORGANIZATION_NAME_MODEL='WTW_1999_ORGANIZATION_NAMING_V5';
+export const ORGANIZATION_NAME_MODEL='WTW_1999_ORGANIZATION_NAMING_V6_CENSUS_2000_OWNER_LEXICON';
 export const OWNERSHIP_ARCHETYPES=Object.freeze([
  'INDIVIDUAL_OWNER','FAMILY_OPERATION','PARTNERSHIP_OR_SYNDICATE',
  'CO_OWNERS','FARM_OWNERSHIP','RACING_COMPANY','PRIVATE_RACING_OPERATION'
@@ -30,6 +31,7 @@ export function classifyFictionalOwnerName(name,principalName=''){
 }
 
 const SURNAMES='Abbott|Adler|Ainsworth|Aldridge|Allen|Alston|Anderson|Archer|Armstrong|Ashford|Atkins|Atwood|Baird|Baldwin|Banks|Barlow|Barnes|Barrett|Baxter|Beckett|Bellamy|Bennett|Benton|Berryman|Bishop|Blackwell|Blair|Bledsoe|Bolton|Boone|Bradford|Bradshaw|Brennan|Brooks|Browning|Buchanan|Burke|Burnett|Byrne|Caldwell|Callahan|Calvert|Campbell|Carleton|Carson|Carter|Chambers|Chandler|Chapman|Clark|Clayton|Clements|Clifton|Coleman|Collins|Connelly|Conrad|Cooper|Corbett|Crawford|Cullen|Dalton|Danvers|Davenport|Dawson|Delaney|Dixon|Donovan|Doyle|Draper|Dunbar|Duncan|Ellison|Emerson|Everett|Fairchild|Farrow|Ferguson|Fisher|Fitzgerald|Fleming|Fletcher|Forbes|Foster|Franklin|Frazier|Gaines|Gallagher|Garrison|Gentry|Gibson|Gilbert|Gillespie|Gordon|Graham|Granger|Grant|Graves|Griffin|Guthrie|Hale|Haley|Hamilton|Hancock|Hardin|Harper|Harrington|Harris|Hartley|Hawkins|Hayes|Henderson|Hensley|Hollis|Holmes|Holt|Horton|Howard|Hudson|Hughes|Hunt|Ingram|Irving|Jackson|Jarrett|Jennings|Keller|Kendall|Kennedy|Keene|Kerr|Kincaid|King|Kirkland|Lancaster|Langley|Lawrence|Lawson|Leighton|Lennox|Lloyd|Lowell|Maddox|Manning|Marshall|Mason|McAllister|McBride|McCarthy|McConnell|McDowell|McIntyre|McKay|Mercer|Merritt|Mitchell|Monroe|Montgomery|Morgan|Morrison|Murphy|Nelson|Newman|Nichols|Nolan|Norton|OBrien|OConnor|Odom|Osborne|Owens|Parker|Parrish|Patterson|Payne|Pearson|Pemberton|Perkins|Perry|Phillips|Pierce|Porter|Prescott|Price|Quinn|Ramsey|Randolph|Reed|Reynolds|Rhodes|Riley|Robbins|Roberts|Robertson|Rogers|Rowan|Russell|Rutledge|Sampson|Sawyer|Schneider|Scott|Shaw|Shepherd|Sherman|Simmons|Sinclair|Sloane|Spencer|Stafford|Stanford|Stanton|Stevens|Stewart|Stone|Stratton|Sullivan|Sutton|Talbot|Tanner|Taylor|Thatcher|Thomas|Thompson|Thornton|Turner|Vance|Vaughn|Walker|Wallace|Walsh|Warren|Watson|Weller|Wells|Weston|Whitaker|Whitcomb|White|Whittaker|Wilcox|Williams|Willis|Wilson|Winters|Woodard|Woodward|Wright|Yates|Young'.split('|');
+const OWNER_SURNAMES=Object.freeze([...new Set([...SURNAMES,...CENSUS_2000_OWNER_SURNAMES])]);
 const LAND='Ashbourne|Briarfield|Bridlewood|Brookhaven|Buckeye|Calder|Camden|Canebrake|Carriage Hill|Cedar Vale|Chapel Hill|Chesapeake|Chestnut Hollow|Claremont|Clear Fork|Clearwater|Cloverleaf|Coldstream|Copper Run|Cottonwood|Crescent Mile|Cypress Bend|Deerfield|Dry Creek|Eastfield|Elk River|Elmwood|Fairhaven|Fairview|Far Hills|Fern Hill|Fieldstone|Flat Rock|Foxcroft|Foxglove|Fox Hollow|Gallant Hill|Glenarden|Glenview|Goldcrest|Grand Oaks|Greenfield|Greenway|Hawthorne|Hazelbrook|Heather Glen|Highfield|Highland|Hillcroft|Hillview|Holly Springs|Horse Creek|Ironwood|Juniper|Kingsmere|Larkspur|Laurel Hill|Laurelwood|Limestone|Little Fork|Longbranch|Longford|Maple Grove|Mapleton|Marshfield|Meadowgate|Mill Creek|Millbrook|Millstone|Monarch Hill|Montclair|Morningside|Northfield|Oak Glen|Oak Hill|Oakleigh|Oakridge|Old Mill|Old Orchard|Oldfield|Overbrook|Overlook|Pinecroft|Pinegrove|Pine Hill|Pinehurst|Prairie Hill|Quail Run|Quarry Hill|Red Bank|Red Clay|Red Fox|Red Gate|Red Oak|Ridgecrest|Ridgefield|Riverbend|Rivergate|Riverton|Rockford|Rock Haven|Rock Ridge|Rosecroft|Rose Hill|Rosewood|Round Hill|Sagebrush|Sandstone|Seven Oaks|Shady Grove|Silverleaf|Southbank|Springbrook|Springfield|Springhill|Stillwater|Stonebrook|Stonefield|Stonegate|Stonehaven|Stoneleigh|Stonewall|Sugar Creek|Sunnyside|Sweetwater|Sycamore|Tall Oaks|Tanglewood|Thornfield|Three Oaks|Timbercrest|Timberlake|Timberline|Twin Rivers|Valley Forge|Valleyview|Walnut Grove|Westfield|Westhaven|Westover|White Fence|Whitehall|White Oak|Wildflower|Willowbend|Willowbrook|Willowfield|Windfield|Windham|Windward|Woodcrest|Woodfield|Woodhaven|Woodland|Woodside'.split('|');
 const PLACES='Bluewater|Breakwater|Broadway|Canal Street|Capstone|Century|Charter|Commonwealth|Crossroads|Deepwater|Eastgate|Evergreen|Fairmont|First Post|Frontier|Gatehouse|Granite|Greenbrier|Hearthside|Heritage|Highpoint|Iron Gate|Landmark|Longview|Market Street|Meridian|Milepost|Northbound|Northstar|Old Dominion|Overland|Pacesetter|Parkland|Piedmont|Portside|Prospect|Railhead|Redline|Reservoir|River City|Saddleback|Seaboard|Second Street|Shoreline|Southgate|Summit|Tidewater|Trade Wind|Union Hill|Upland|Westbridge|Westline|Westport|Whitestone'.split('|');
 
@@ -150,18 +152,29 @@ function ownerName(seed,i,attempt,principal,alignPrincipalSurname=false,preferre
  // In new fictional worlds, a surname-bearing owner business belongs to its
  // declared principal's family, not to an unrelated randomly sampled family.
  const family=alignPrincipalSurname&&principal?(preferredFamily||surname(principal)):draw(SURNAMES,seed,k+':family');
- const second=draw(SURNAMES,seed,k+':family2');
+ const second=draw(OWNER_SURNAMES,seed,k+':family2');
  const land=draw(LAND,seed,k+':land');
  const place=draw(PLACES,seed,k+':place');
  const club=draw(CLUB_ROOTS,seed,k+':club');
  const suffix=draw(OWNER_SUFFIX,seed,k+':suffix');
  const roll=style(seed,'owner',i,attempt);
- // At scale, the finite shared stem vocabulary can be saturated by protected
- // names and root-conflict rules. Use the actual unique principal as a
- // deterministic long-tail business identity before declaring the pool full.
- if(attempt>=48&&principal)return principal+' '+
-  draw(['Racing','Thoroughbreds','Bloodstock','Racing Stable','Equine'],seed,
-   k+':principal-fallback');
+ // The 2000 Census surname table expands the long tail with authentic,
+ // era-near surname variety. Late deterministic candidates combine the
+ // principal's own family name with real local and racing vocabulary, giving
+ // every owner many natural business-name options before exhaustion.
+ if(attempt>=48){
+  const tail=draw(OWNER_SURNAMES,seed,k+':expanded-family');
+  const mode=hash(seed,k+':expanded-owner-mode')%5;
+  if(mode===0)return family+' '+place+' '+
+   draw(['Racing','Thoroughbreds','Bloodstock','Stable'],seed,k+':expanded-suffix');
+  if(mode===1)return place+' '+family+' '+
+   draw(['Racing','Thoroughbreds','Stable','Bloodstock'],seed,k+':expanded-place-suffix');
+  if(mode===2)return family+' '+land+' '+
+   draw(['Racing','Thoroughbreds','Stables','Bloodstock'],seed,k+':expanded-land-suffix');
+  if(mode===3)return tail+' '+family+' '+
+   draw(['Racing','Thoroughbreds','Bloodstock','Stable'],seed,k+':expanded-dual-suffix');
+  return place+' '+second+' & '+family+' Racing Partners';
+ }
  if(roll<15)return family+' '+suffix;
  if(roll<26)return family+' & '+second+' '+draw(['Racing','Partners','Bloodstock'],seed,k+':duo');
  if(roll<37)return land+' '+suffix;
