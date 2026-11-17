@@ -28,6 +28,12 @@ function validateSingle(world,kind,id,patch,{run=null}={}){
    throw Error('Unsupported '+kind+' editable field: '+key);
   if(key==='name'&&(!value.trim()||/[\x00-\x1F\x7F]/.test(value)))
    throw Error('Name must be visible text');
+  if(key==='name'&&value.trim().toLocaleLowerCase('en-US')!==
+      entity.name.toLocaleLowerCase('en-US')&&
+      world.entities[{horse:'horses',person:'people',organization:'organizations',track:'tracks'}[kind]]
+       .some(other=>other.id!==id&&String(other.name||'').toLocaleLowerCase('en-US')===
+        value.trim().toLocaleLowerCase('en-US')))
+   throw Error('Another '+kind+' already has that name');
   if(key==='biography'&&/[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(value))
    throw Error('Biography contains invalid characters');
   if(['ownerId','trainerId','homeTrackId'].includes(key)){
