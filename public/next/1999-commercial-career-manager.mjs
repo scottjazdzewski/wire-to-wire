@@ -27,6 +27,8 @@ import {createPersistedIndustryHorseDirectory,createPersistedIndustryEntityDirec
  from '/next/1999-persisted-world-directory.mjs';
 import {createCareerWorldEdits,addCareerWorldEdit,applyCareerWorldEdits}
  from '/next/1999-career-world-edits.mjs';
+import {buildWorldEditReviewExport}
+ from '/next/1999-world-edit-review-export.mjs';
 
 const DB_NAME='WireToWireClean1999CareersV2';
 const MAX_SLOTS=60,MAX_TOTAL_BYTES=512*1024*1024;
@@ -404,6 +406,23 @@ async function sharedCareerBytes(){
    snapshotSha256:activeWorldCareer.world.authority.sha256,careerRecord:record});
  }finally{store.close()}
 }
+function exportCareerWorldChangesForReview(){
+ const c=activeWorldCareer;
+ if(!c?.run||!c.manifest)throw Error('Open your saved career to export world edits');
+ const data=buildWorldEditReviewExport({
+  manifest:c.manifest,world:c.world,run:c.run,
+  worldEdits:c.worldEdits||createCareerWorldEdits(),
+  createdAt:new Date().toISOString()
+ });
+ const blob=new Blob([JSON.stringify(data,null,2)+'\n'],{type:'application/json'});
+ const url=URL.createObjectURL(blob),link=document.createElement('a');
+ link.href=url;
+ link.download='WIRE_TO_WIRE_1999_WORLD_CHANGES_FOR_REVIEW_'+
+  c.run.clock.date+'.json';
+ document.body.appendChild(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),4000);
+ return {count:data.recordCount,date:c.run.clock.date};
+}
 async function exportSharedCareer(){
  const bytes=await sharedCareerBytes();
  const blob=new Blob([bytes],{type:'application/json'});
@@ -666,7 +685,8 @@ async function refresh(){
     '<div class="wtw-cc-actions"><button class="primary" data-cc-action="enter-industry-game">ENTER GAME · VIEW ALL WORLD HORSES</button></div>'+
     '<div class="wtw-cc-actions"><button data-cc-action="open-next-test-race">OPEN NEXT TEST RACE / ENTER TWO</button>'+ 
    '<button data-cc-action="advance-test-day" class="primary">ADVANCE ONE GAME DAY</button>'+
-   '<button data-cc-action="export-shared-career">EXPORT SHARED CAREER</button></div>':
+   '<button data-cc-action="export-shared-career">EXPORT SHARED CAREER</button>'+ 
+   '<button data-cc-action="export-world-changes-review">EXPORT WORLD CHANGES FOR CHATGPT</button></div>':
     '<p>Start a local test career from this exact saved world. Race decisions and results use the existing game clock and settlement engine.</p>'+ 
     '<button data-cc-action="start-test-career" class="primary">START TEST CAREER</button>')+
    '</div>'+
@@ -694,7 +714,8 @@ async function refresh(){
   '<div class="wtw-cc-section"><h3>COMPACT SAVES · '+slots.length+' SLOTS</h3>'+
   '<p>Local device only. No account, monthly fee or cloud storage required. Portable .wtwsave files have checksums and gzip compression where supported. Total compact-save budget: 512 MB across slots.</p>'+
   '<div class="wtw-cc-actions"><input data-cc="save-name" maxlength="80" placeholder="Name current career" value="1999 Career"/>'+
-  '<button data-cc-action="save" class="primary">SAVE CURRENT CAREER</button>'+
+  '<button data-cc-action="save" class="primary">SAVE CURRENT CAREER</button>'+ 
+  '<button data-cc-action="export-world-changes-review" title="Export career-owned World edits by immutable ID for reviewed starting-world integration">EXPORT WORLD CHANGES FOR CHATGPT</button>'+
   '<button data-cc-action="import">IMPORT CAREER</button>'+
   '<input type="file" data-cc="import-file" accept=".wtwsave,.json,application/octet-stream,application/json" hidden>'+
   '<button data-cc-action="import-shared-career">IMPORT SHARED FULL-WORLD CAREER</button>'+
@@ -722,6 +743,13 @@ async function perform(action,element){
  }
  if(action==='import'){modal().querySelector('[data-cc="import-file"]').click();return}
  if(action==='import-shared-career'){modal().querySelector('[data-cc="import-shared-file"]').click();return}
+ if(action==='export-world-changes-review'){
+  const result=exportCareerWorldChangesForReview();
+  notice='WORLD CHANGES FILE EXPORTED · '+fmt(result.count)+
+   ' edited records. Upload the JSON to the WIRE TO WIRE integration chat. '+
+   'No game source was changed automatically.';
+  return;
+ }
  if(action==='export-shared-career'){
   const result=await exportSharedCareer();
   notice='SHARED CAREER EXPORTED · '+kb(result.bytes)+' · '+result.gameDate+'.';return;
