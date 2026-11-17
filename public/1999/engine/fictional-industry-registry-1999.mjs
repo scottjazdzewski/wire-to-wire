@@ -152,11 +152,16 @@ export function project1999HorseForYear(horse,year){
   return {...horse,age,cohort:'retiredBroodmares'};
  if(horse.status==='RETIRED_STALLION')
   return {...horse,age,cohort:'retiredStallions'};
+ if(horse.status==='RETIRED_RACEHORSE')
+  return {...horse,age,cohort:'retiredRunners'};
  const cohort=age<=0?'foals':age===1?'yearlings':age===2?
   'twoYearOldProspects':age===3?'threeYearOldRunners':age===4?
   'fourYearOldRunners':'fivePlusRunners';
+ // Calendar aging cannot overwrite a committed juvenile debut, delay, or
+ // racing retirement. Youngstock without an explicit debut stay prospects.
  const status=age<=0?'FOAL':age===1?'YEARLING':age===2?
-  'TWO_YEAR_OLD_PROSPECT':'RACING';
+  (horse.status==='RACING'?'RACING':'TWO_YEAR_OLD_PROSPECT'):
+  (horse.status==='TWO_YEAR_OLD_PROSPECT'?'TWO_YEAR_OLD_PROSPECT':'RACING');
  const sex=horse.sex==='FILLY'&&age>=3?'MARE':
   horse.sex==='COLT'&&age>=3?'HORSE':horse.sex;
  return {...horse,age,sex,cohort,status};

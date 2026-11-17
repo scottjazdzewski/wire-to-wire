@@ -9,6 +9,7 @@ import {encodeCareerSave,decodeCareerSave,packCareerFile,unpackCareerFile}
  from '/1999/engine/compact-career.mjs';
 import {open1999IndustryDatabase,
  savePersistent1999CareerRun,loadPersistent1999CareerRun,
+ samePersistent1999CareerImportReadback,
  verifyPersistent1999WorldOpen,reopenPersistent1999Industry}
  from '/1999/engine/fictional-industry-persistence-1999.mjs';
 import {readPersistent1999HorseProfile,readPersistent1999IndustryBatch,
@@ -411,8 +412,9 @@ async function importSharedCareerFile(file,{preserveExistingProgress=false}={}){
   const confirmed=await loadPersistent1999CareerRun(db,fullIndustryManifest,
    checkpoint.careerRecord.runId);
   const expectedStoredRecord=preservedRun?prior:checkpoint.careerRecord;
-  if(JSON.stringify(confirmed)!==JSON.stringify(expectedStoredRecord))
-   throw Error('Imported career did not survive IndexedDB read-back');
+  if(!samePersistent1999CareerImportReadback(expectedStoredRecord,confirmed,
+   {preservedRun:Boolean(preservedRun)}))
+   throw Error('Imported career did not survive verified IndexedDB read-back');
   const run=preservedRun||checkpointRun;
   activeWorldCareer={...career,run,manifest:fullIndustryManifest};
   industryDirectory=await readPersistent1999Directory(db,fullIndustryManifest);

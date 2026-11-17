@@ -631,6 +631,37 @@ try{
    if(saved.lifecycle.population!==300000+saved.lifecycle.birthsByYear[1999]+
     saved.lifecycle.birthsByYear[2000]-saved.lifecycle.horseDeaths)
     throw Error('Full-world population checkpoint does not equal opening horses plus births less deaths');
+   // The 300k industry runs in a separate career key, never the shared
+   // May 1999 checkpoint. Certify real mature transitions through 2005.
+   let final2005=saved;
+   const adultYearChecks=[];
+   // The canonical 300k career receives the extended 1999–2005 proof.
+   // The separate 325k maximum-size acceptance retains its already certified
+   // two-season scope rather than duplicating a multi-year stress test.
+   if(runId.endsWith('300K')){
+   for(let season=2002;season<=2005;season++){
+    final2005=await save(season+'-01-01',season-1995);
+    const events=await api.readPersistent1999LifecycleEvents(store,manifest,
+     runId,season+'-01-01');
+    const mature=events.find(event=>event.type==='MATURE_HORSE_LIFECYCLE');
+    const young=events.filter(event=>event.type==='YOUNGSTOCK_ATTRITION')
+     .reduce((sum,event)=>sum+event.deaths,0);
+    if(!mature||mature.deaths<=0||
+     final2005.lifecycle.deathsByYear[season]!==young+mature.deaths)
+     throw Error('Full 300k adult mortality did not reconcile in '+season);
+    const births=Object.values(final2005.lifecycle.birthsByYear)
+     .reduce((sum,count)=>sum+count,0);
+    if(final2005.lifecycle.population!==300000+births-
+     final2005.lifecycle.horseDeaths)
+     throw Error('Full 300k living population drift in '+season);
+    adultYearChecks.push({season,adultDeaths:mature.deaths,
+     racingRetirements:mature.retired,population:final2005.lifecycle.population});
+   }
+   const persisted2005=await api.loadPersistent1999CareerRun(store,manifest,runId);
+   if(persisted2005.gameDate!=='2005-01-01'||
+    persisted2005.lifecycle.population!==final2005.lifecycle.population)
+    throw Error('300k five-year lifecycle checkpoint did not save and reopen');
+   }
    return {runId,openingHorseCount:saved.lifecycle.openingHorseCount,
     population2000:year2000.lifecycle.population,population2001:saved.lifecycle.population,
     births1999:saved.lifecycle.birthsByYear[1999],births2000:saved.lifecycle.birthsByYear[2000],
@@ -657,7 +688,9 @@ try{
      manifest.seed+':'+runId+':season:1999')).marketConditions.marketIndex,
     marketIndex2000:season2000.marketConditions.marketIndex,
     foalId:sample.foalId,birthDate:sample.birthDate,agedFoalId:survivor.foalId,
-    deceasedHorseId:deadId,retiredId,graduateId};
+    deceasedHorseId:deadId,retiredId,graduateId,
+    adultYearChecks,population2005:final2005.lifecycle.population,
+    matureDeaths2005:final2005.lifecycle.matureHorseDeaths};
   }finally{store.close()}
  })()`;
  const lifecycle=await browser.evalJS(lifecycleProbe);
@@ -797,6 +830,15 @@ try{
       deceasedIds.add(id);
      }
     }
+    const mature=events.find(event=>event.type==='MATURE_HORSE_LIFECYCLE');
+    if(!mature||mature.deathHorseIds.length!==mature.deaths||
+     mature.retiredHorseIds.length!==mature.retired)
+     throw Error('Mature horse transitions were not durably committed in '+year);
+    annualDeaths+=mature.deaths;
+    for(const id of mature.deathHorseIds){
+     if(deceasedIds.has(id))throw Error('Adult death duplicated a previous horse '+id);
+     deceasedIds.add(id);
+    }
     const births=saved.lifecycle.birthsByYear[year-1]||0;
     const totalBirths=Object.values(saved.lifecycle.birthsByYear)
      .reduce((sum,count)=>sum+count,0);
@@ -882,11 +924,16 @@ try{
     ':'+runId+':foal-cohort:2000');
    const longLivedHorseId=oldCohort[0];
    const horse=await api.readPersistent1999LifecycleHorse(store,manifest,runId,longLivedHorseId);
-   if(horse?.age!==31||!horse.sireId||!horse.damId||!horse.ownerId||
-    !horse.foalingFarmId||!directoryIds.has(horse.ownerId)||
-    !directoryIds.has(horse.foalingFarmId))
-    throw Error('Thirty-one-year-old horse lost age, pedigree, ownership, or foaling place');
+   if(!horse||horse.age>31||horse.status==='RACING'||!horse.sireId||
+     !horse.damId||!horse.ownerId||!horse.foalingFarmId||
+     !directoryIds.has(horse.ownerId)||!directoryIds.has(horse.foalingFarmId))
+     throw Error('A thirty-one-year-old cohort horse was immortal or lost its pedigree');
    const final=await api.loadPersistent1999CareerRun(store,manifest,runId);
+   const eligibleBirths=Object.entries(final.lifecycle.birthsByYear)
+    .filter(([birthYear])=>Number(birthYear)>=2001)
+    .reduce((sum,[,count])=>sum+count,0);
+   if(final.lifecycle.population>eligibleBirths)
+    throw Error('Expired generations inflate living 2031 population');
    if(new Set(annual.map(row=>row.births)).size<10||marketIndices.size<10||
     plannedCrops.size<10)
     throw Error('Annual live foal totals did not vary over the decades');
@@ -939,11 +986,18 @@ try{
   }finally{store.close()}
  })()`;
  const reopenedLifecycle=await browser.evalJS(reopenedLifecycleProbe);
- assert.equal(reopenedLifecycle.lastDate,'2001-01-01');
+ assert.equal(reopenedLifecycle.lastDate,'2005-01-01');
  assert.equal(reopenedLifecycle.lifecycle.openingHorseCount,300000);
- assert.equal(reopenedLifecycle.foal.status,'TWO_YEAR_OLD_PROSPECT');
- assert.equal(reopenedLifecycle.retired.status,'RETIRED_BROODMARE');
- assert.equal(reopenedLifecycle.graduate.status,'BROODMARE');
+ assert.ok(reopenedLifecycle.foal&&reopenedLifecycle.foal.age<=6&&
+   ['RACING','DECEASED','RETIRED_RACEHORSE','BROODMARE','STALLION',
+    'RETIRED_BROODMARE','RETIRED_STALLION','TWO_YEAR_OLD_PROSPECT'].includes(reopenedLifecycle.foal.status),
+   '300k seasonal foal keeps a legitimate durable age-six career status');
+ assert.ok(['RETIRED_BROODMARE','DECEASED']
+   .includes(reopenedLifecycle.retired.status),
+   'originally retired broodmare must not return to breeding');
+ assert.ok(['BROODMARE','RETIRED_BROODMARE','DECEASED']
+   .includes(reopenedLifecycle.graduate.status),
+   'graduated mare must keep her breeding career across later seasons');
  console.log('WTW_FULL_WORLD_LIFECYCLE_REOPEN_PASS '+JSON.stringify(reopenedLifecycle));
  const maxReopenedProbe=reopenedLifecycleProbe
   .replaceAll('WTW1999FullIndustry-COHORTS-V2-H300000','WTW1999FullIndustry-COHORTS-V2-H325000')
@@ -979,7 +1033,8 @@ try{
  assert.equal(decadesReopen.openingHorseCount,10000);
  assert.equal(decadesReopen.seasonYear,2031);
  assert.equal(decadesReopen.population,decades.finalPopulation);
- assert.equal(decadesReopen.horse.age,31);
+ assert.ok(decadesReopen.horse.age<=31);
+  assert.notEqual(decadesReopen.horse.status,'RACING');
  assert.ok(decadesReopen.horse.sireId&&decadesReopen.horse.damId&&
   decadesReopen.horse.ownerId&&decadesReopen.horse.foalingFarmId);
  console.log('WTW_INDUSTRY_DECADES_REOPEN_PASS '+JSON.stringify(decadesReopen));
