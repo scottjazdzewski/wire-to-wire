@@ -103,10 +103,14 @@ function ensureCareerHorseTransferReady(state,id){
  const h=state.runtime.registered_horses?.by_id?.[id];
  if(!h)return;
  const trip=state.runtime.racing?.horse_travel?.[id];
- ensure(!trip||!['OUTBOUND','RETURNING'].includes(trip.status),
+ ensure(!trip||!['OUTBOUND','RETURNING','AT_DESTINATION'].includes(trip.status),
   'HORSE_TRANSFER_IN_TRANSIT','A traveling horse must arrive before changing ownership');
  ensure(state.runtime.horse?.[id]?.race_preparation?.status!=='ACTIVE',
   'HORSE_TRANSFER_RACE_PREP','Complete or cancel approved race preparation before transferring ownership');
+ ensure(!state.runtime.trainer_employment?.by_horse?.[id],
+  'HORSE_TRANSFER_TRAINER_OFFER','Resolve an accepted trainer change before transferring ownership');
+ ensure(!state.runtime.trainer_management_requests?.training_orders?.[id],
+  'HORSE_TRANSFER_TRAINER_ORDER','Resolve an active owner trainer order before changing ownership');
  ensure(!Object.values(state.runtime.entries||{}).some(e=>
   e?.horse_id===id&&['BOOKED','ENTERED'].includes(e.status)&&
   !['OFFICIAL_SIM_RESULT','CANCELLED_INSUFFICIENT_FIELD'].includes(
