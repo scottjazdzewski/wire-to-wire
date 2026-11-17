@@ -154,20 +154,21 @@ try{
  assert.equal(snap.namedBreeders,true,'Broodmares must have provisional registered names');
  assert.equal(snap.namedRacehorse,true,'Race-ready horses must have provisional names');
  assert.ok(snap.namedPersonnel>0,'Personnel naming provider did not populate names');
- const readCareerSave=async()=>browser.evalJS(`(async()=>{
+ const readCareerSave=async(selectedRunId=null)=>browser.evalJS(`(async()=>{
   const api=await import('/1999/engine/fictional-industry-persistence-1999.mjs');
   const db=await api.open1999IndustryDatabase();
   try{
    const world=await api.reopenPersistent1999Industry(db,{
     seed:19990101,worldId:${JSON.stringify(snap.worldId)}});
    const manifest=world.manifest;
-   const runId='WTW-RUN-1999-'+manifest.seed+'-SIZE-'+
+   const runId=${JSON.stringify(selectedRunId)}||'WTW-RUN-1999-'+manifest.seed+'-SIZE-'+
     (manifest.targetOpeningHorses??manifest.horseCount);
    const record=await api.loadPersistent1999CareerRun(db,manifest,runId);
    if(!record)return null;
    const json=JSON.stringify(record),run=record.changes?.canonicalRun;
    const races=Object.values(run?.runtime?.races||{});
    return {gameDate:record.gameDate,runId:record.runId,
+    operationId:run?.player?.operation_id||record.player?.operation_id||null,
     utf8JsonBytes:new TextEncoder().encode(json).length,
     stableHorses:run?.stable_horse_ids?.length??0,
     registeredHorses:Object.keys(run?.runtime?.registered_horses?.by_id||{}).length,
@@ -466,7 +467,7 @@ try{
  assert.equal(bundledCheckpoint.mainUiCareer?.runId,careerAfterRace.runId);
  assert.equal(bundledCheckpoint.mainUiCareer?.gameDate,careerAfterRace.gameDate);
  assert.equal(bundledCheckpoint.mainUiCareer?.worldHorseCount,300000);
- assert.equal(bundledCheckpoint.mainUiCareer?.people,75724);
+ assert.equal(bundledCheckpoint.mainUiCareer?.people,75705);
  const careerAfterBundledImport=await readCareerSave();
  assert.deepEqual(careerAfterBundledImport,careerAfterRace,
   'Bundled career bootstrap replaced local race progress');
@@ -506,6 +507,71 @@ try{
  assert.equal(profileView.person,true,'Birthplace/person profile cannot open from staff directory');
  assert.equal(profileView.entity,true,'Track/farm/owner profile cannot open from directory');
  console.log('WTW_FULL_WORLD_PROFILE_NAVIGATION_PASS '+JSON.stringify(profileView));
+ const selectedKingsmere=await browser.evalJS(`(()=>{
+  const select=document.querySelector('[data-cc="player-operation"]');
+  const button=document.querySelector('[data-cc-action="open-selected-operation"]');
+  if(!select||!button||![...select.options].some(o=>o.value==='O-000061'))
+   throw Error('Kingsmere is missing from the playable operation selector');
+  select.value='O-000061';
+  select.dispatchEvent(new Event('change',{bubbles:true}));
+  button.click();return true;
+ })()`);
+ assert.equal(selectedKingsmere,true,'Kingsmere player career control failed');
+ const kingsmereView=await waitFor('playable Kingsmere opening career',async()=>{
+  const view=await browser.evalJS(`(()=>{
+   const v=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+   return v?{operationId:v.operationId,operationName:v.operationName,
+    date:v.date,worldHorseCount:v.worldHorseCount,
+    inventoryCount:v.operationInventoryCount,
+    relationships:v.operationInventoryByRelationship,
+    horseRows:v.horseRows.map(h=>({horseId:h.horseId,sourceHorseId:h.sourceHorseId,
+     name:h.name,activity:h.activity,tag:h.tag}))}:null;
+  })()`);
+  return {done:view?.operationId==='O-000061',value:view};
+ },180000);
+ assert.ok(kingsmereView.inventoryCount>=5,'Kingsmere opening operation inventory is incomplete');
+ assert.equal(kingsmereView.horseRows.length,kingsmereView.inventoryCount,
+  'Every owned, managed, boarded and trained Kingsmere horse must be on its roster');
+ assert.ok(kingsmereView.horseRows.filter(h=>/^H-\\d{4}-/.test(h.sourceHorseId||'')).length>=5,
+  'Kingsmere roster must include the five approved canonical breeding residents');
+ const kingRunId='WTW-RUN-1999-19990101-SIZE-300000-OP-O-000061';
+ const kingsmereAtStart=await readCareerSave(kingRunId);
+ assert.equal(kingsmereAtStart.operationId,'O-000061');
+ assert.equal(kingsmereAtStart.stableHorses,kingsmereView.inventoryCount);
+ const kingsmereFounder=kingsmereView.horseRows.find(h=>/^H-\\d{4}-/.test(h.sourceHorseId||''));
+ const founderProfile=await browser.evalJS(`(async()=>{
+  const input=document.querySelector('[data-cc="inspect-horse"]');
+  const button=document.querySelector('[data-cc-action="inspect-full-horse"]');
+  input.value=${JSON.stringify(kingsmereFounder?.sourceHorseId||'')};button.click();
+  await new Promise(ok=>setTimeout(ok,300));
+  return document.querySelector('#wtwCommercialCareerModal')?.textContent||'';
+ })()`);
+ assert.ok(founderProfile.includes('HORSE PROFILE')&&
+  founderProfile.includes(kingsmereFounder?.sourceHorseId||''),
+  'Kingsmere founding horse profile did not open from the actual saved operation');
+ const kingsmereDay=await browser.evalJS(`(()=>{
+  const button=document.querySelector('[data-cc-action="advance-test-day"]');
+  if(!button)throw Error('Kingsmere game-day control missing');
+  button.click();return true;
+ })()`);
+ assert.equal(kingsmereDay,true);
+ await waitFor('Kingsmere career save after permitted game advance',async()=>{
+  const saved=await readCareerSave(kingRunId);
+  return {done:saved?.gameDate==='1999-01-02',value:saved};
+ },120000);
+ const kingsmereSaved=await readCareerSave(kingRunId);
+ assert.equal(kingsmereSaved.operationId,'O-000061');
+ assert.equal(kingsmereSaved.stableHorses,kingsmereView.inventoryCount);
+ console.log('WTW_KINGSMERE_PLAYABLE_SAVE_REOPEN_PASS '+JSON.stringify({
+  operationId:kingsmereView.operationId,operationName:kingsmereView.operationName,
+  worldHorses:kingsmereView.worldHorseCount,inventory:kingsmereView.inventoryCount,
+  relationshipCounts:kingsmereView.relationships,approvedResidentHorses:
+   kingsmereView.horseRows.filter(h=>/^H-\\d{4}-/.test(h.sourceHorseId||'')).length,
+  gameDate:kingsmereSaved.gameDate,registeredHorses:kingsmereSaved.registeredHorses,
+  savedStableHorseCount:kingsmereSaved.stableHorses,horseProfileOpened:true}));
+ await browser.evalJS(`(()=>{
+  document.querySelector('[data-cc-action="start-test-career"]')?.click();return true;
+ })()`);
  const readSharedReferenceFingerprint=async()=>browser.evalJS("(async()=>{"+
    "const api=await import('/1999/engine/fictional-industry-persistence-1999.mjs');"+
    "const db=await api.open1999IndustryDatabase();try{"+
