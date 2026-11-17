@@ -913,8 +913,9 @@ async function turnoverForYear(store,manifest,runKey,year,horseUpdates,
   previousLiveFoals=0}={}){
  const openingMares=await readPoolRecords(store,manifest,runKey,year-1,
   overrideMap,poolCache.get(year-1)||null,graduatedYears);
- const openingStallions=await readStallionPoolRecords(store,manifest,runKey,
-  year-1,overrideMap,stallionPoolCache.get(year-1)||null);
+ const openingStallions=(await readStallionPoolRecords(store,manifest,runKey,
+  year-1,overrideMap,stallionPoolCache.get(year-1)||null))
+  .map(h=>project1999HorseForYear(h,year));
  const eligible=await readEligibleFemaleCandidates(store,manifest,runKey,year,
   overrideMap,birthCohortCache,graduatedYears);
  const eligibleMales=await readEligibleStallionCandidates(store,manifest,runKey,
@@ -990,7 +991,7 @@ async function turnoverForYear(store,manifest,runKey,year,horseUpdates,
  const nextStallionPool=openingStallions
   .filter(h=>!retiredStallionIds.has(h.id))
   .concat(stallionGraduates.map(h=>({...h,status:'STALLION',cohort:'stallions',
-   breedingStatus:'ACTIVE',graduatedYear:year,age:undefined})));
+   breedingStatus:'ACTIVE',graduatedYear:year,age:year-Number(h.foalYear)})));
  if(!nextStallionPool.length||new Set(nextStallionPool.map(h=>h.id)).size!==
   nextStallionPool.length)
   throw Error('Stallion turnover produced an empty or duplicate active pool');
