@@ -350,6 +350,16 @@ test('source-backed registered horse replaces its source identity in paged owner
  assert.ok(!page.items.some(h=>h.id==='H-1999-000001'),
   'One source-linked animal cannot appear twice as distinct owned horses');
  assert.equal(world.entities.horses[0].ownerId,'O-1999-001');
+ state.runtime.registered_horses.by_id[id].owner_organization_id='O-1999-002';
+ state.runtime.ownership.owner_overrides[id]={
+  owner_id:'O-1999-002',kind:'GAMEPLAY_TRANSFER',changed_on:state.clock.date};
+ const transferred=getOwnerPortfolioView(state,world,'O-1999-002',{limit:20});
+ const item=transferred.items.find(x=>x.id===id);
+ assert.ok(item);
+ assert.equal(item.canonical_owner_id,'O-1999-001',
+  'Source owner remains fixed while game ownership changes');
+ assert.equal(item.owner_id,'O-1999-002');
+ assert.equal(item.ownership_overridden,true);
 });
 
 test('real booked race cannot be sold out from under trainer, jockey and buyer; funds remain untouched',async()=>{

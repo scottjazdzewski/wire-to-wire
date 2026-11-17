@@ -317,7 +317,9 @@ export function getOwnerPortfolioView(state,world,ownerId,{offset=0,limit=30}={}
  const items=ids.slice(offset,offset+limit).map(id=>{
   const horse=index.horseById.get(id)||registered[id];
   return {id,name:horse.name,owner_id:ownerId,
-   canonical_owner_id:horse.owner_organization_id??sourceOwnerId(horse),
+   canonical_owner_id:horse.world_source_horse_id?
+    sourceOwnerId(index.horseById.get(horse.world_source_horse_id)||horse):
+    horse.owner_organization_id??sourceOwnerId(horse),
    ownership_overridden:Object.hasOwn(overlays,id)};
  });
  return {owner_id:ownerId,total:ids.length,offset,limit,items,
