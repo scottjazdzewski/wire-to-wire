@@ -54,4 +54,7 @@ test('Stable UI clearly distinguishes full saved ownership/training rosters from
  assert.match(ui,/ACTIVE RACING TEST HORSES/);
  assert.match(ui,/not the separate 30-runner game test/);
  assert.match(ui,/barn housing are different records/);
+ assert.match(ui,/saved-world-related-horses/);
+ assert.match(ui,/VIEW LINKED HORSES IN STABLE/);
+ assert.match(ui,/HORSES BASED AT THIS RACECOURSE/);
 });
