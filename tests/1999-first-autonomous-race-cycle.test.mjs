@@ -119,6 +119,20 @@ test('first 1999 race completes with full deterministic placings, purse ledger a
  assert.deepEqual(importGameSave(exportGameSave(state,world),world),state);
  const second=fresh();let replay=second;for(let d=0;d<15;d++)replay=day(replay);
  assert.deepEqual(replay,state,'Same seed and actor state yield identical 15-day career');
+ const duplicateHorse=structuredClone(state);
+ const duplicateRace=Object.values(duplicateHorse.runtime.races).find(r=>
+  r.status==='OFFICIAL_SIM_RESULT'&&r.results.length>=2);
+ assert.ok(duplicateRace);
+ duplicateRace.results[1].horse_id=duplicateRace.results[0].horse_id;
+ assert.throws(()=>exportGameSave(duplicateHorse,world),e=>e.code==='RACE_SAVE',
+  'Saved results cannot list one horse twice');
+ const misordered=structuredClone(state);
+ const orderedRace=Object.values(misordered.runtime.races).find(r=>
+  r.status==='OFFICIAL_SIM_RESULT'&&r.results.length>=2);
+ [orderedRace.results[0],orderedRace.results[1]]=
+  [orderedRace.results[1],orderedRace.results[0]];
+ assert.throws(()=>exportGameSave(misordered,world),e=>e.code==='RACE_SAVE',
+  'Saved result rows must agree with the official finish order');
 });
 test('race eligibility and bookings block unsafe and impossible choices',()=>{
  const state=day(fresh()),race=getGameRacingRoster(state)[0];
