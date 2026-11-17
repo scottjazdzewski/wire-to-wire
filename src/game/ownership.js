@@ -50,20 +50,26 @@ export function validateOwnershipRuntime(state,world){
   isObject(runtime.owner_overrides)&&isObject(runtime.pending_transfers),
   'OWNERSHIP_RUNTIME','Invalid ownership runtime structure');
  const {horseById,ownerById}=indexWorld(world);
+ const registered=state.runtime.registered_horses?.by_id||{};
+ const knownHorse=id=>horseById.has(id)||Object.hasOwn(registered,id);
  for(const [horseId,override] of Object.entries(runtime.owner_overrides)){
-  ensure(horseById.has(horseId)&&isObject(override)&&
+  ensure(knownHorse(horseId)&&isObject(override)&&
    typeof override.owner_id==='string'&&ownerById.has(override.owner_id)&&
    typeof override.changed_on==='string'&&validDate(override.changed_on)&&
    override.changed_on<=state.clock.date &&
    ['INITIAL_ASSIGNMENT','GAMEPLAY_TRANSFER'].includes(override.kind),
    'OWNERSHIP_RUNTIME','Invalid horse-owner delta '+horseId);
   if(override.kind==='INITIAL_ASSIGNMENT')
-   ensure(!sourceOwnerId(horseById.get(horseId)),'CANON_OWNER_LOCK',
-    'Cannot replace a source owner with an initial assignment');
+   ensure(horseById.has(horseId)&&!sourceOwnerId(horseById.get(horseId)),
+    'CANON_OWNER_LOCK','Cannot replace an existing registered or source owner');
+  if(Object.hasOwn(registered,horseId))
+   ensure(override.kind==='GAMEPLAY_TRANSFER'&&
+    registered[horseId].owner_organization_id===override.owner_id,
+    'OWNERSHIP_RUNTIME','Registered career owner and transfer delta disagree');
  }
  for(const [requestId,request] of Object.entries(runtime.pending_transfers)){
   ensure(isObject(request)&&request.request_id===requestId&&
-   typeof request.horse_id==='string'&&horseById.has(request.horse_id)&&
+   typeof request.horse_id==='string'&&knownHorse(request.horse_id)&&
    typeof request.from_owner_id==='string'&&ownerById.has(request.from_owner_id)&&
    typeof request.to_owner_id==='string'&&ownerById.has(request.to_owner_id)&&
    request.from_owner_id!==request.to_owner_id&&
@@ -86,6 +92,26 @@ function verifyHorse(world,id){
  requireString(id,'horse_id',128);
  ensure(indexWorld(world).horseById.has(id),'UNKNOWN_HORSE',
   'Horse is not in the accepted world snapshot '+id);
+}
+function verifyTransferHorse(state,world,id){
+ requireString(id,'horse_id',128);
+ ensure(indexWorld(world).horseById.has(id)||
+  Object.hasOwn(state.runtime.registered_horses?.by_id||{},id),
+  'UNKNOWN_HORSE','Horse must exist in approved world or active registered career');
+}
+function ensureCareerHorseTransferReady(state,id){
+ const h=state.runtime.registered_horses?.by_id?.[id];
+ if(!h)return;
+ const trip=state.runtime.racing?.horse_travel?.[id];
+ ensure(!trip||!['OUTBOUND','RETURNING'].includes(trip.status),
+  'HORSE_TRANSFER_IN_TRANSIT','A traveling horse must arrive before changing ownership');
+ ensure(state.runtime.horse?.[id]?.race_preparation?.status!=='ACTIVE',
+  'HORSE_TRANSFER_RACE_PREP','Complete or cancel approved race preparation before transferring ownership');
+ ensure(!Object.values(state.runtime.entries||{}).some(e=>
+  e?.horse_id===id&&['BOOKED','ENTERED'].includes(e.status)&&
+  !['OFFICIAL_SIM_RESULT','CANCELLED_INSUFFICIENT_FIELD'].includes(
+   state.runtime.races?.[e.race_id]?.status)),
+  'HORSE_TRANSFER_RACE_ENTRY','Resolve current race commitments before a change of owner');
 }
 function ownership(state){return state.runtime.ownership??(state.runtime.ownership=createOwnershipRuntime())}
 function validRequestId(id){
@@ -112,7 +138,7 @@ export function ownershipAction({state,world,command,emit}){
   ensure(actor==='player','UNAUTHORIZED_COMMAND','Only player can request a transfer');
   ensure(state.player.role==='owner'&&Boolean(state.player.operation_id),
    'UNAUTHORIZED_COMMAND','Only owner-role player with an approved operation may request an outgoing transfer');
-  verifyHorse(world,p.horse_id);verifyOrg(world,p.to_owner_id);
+  verifyTransferHorse(state,world,p.horse_id);verifyOrg(world,p.to_owner_id);
   validRequestId(p.request_id);
   const from=currentHorseOwnerId(state,world,p.horse_id);
   ensure(from===state.player.operation_id,'NOT_HORSE_OWNER','You can only transfer a horse owned by your operation');
@@ -148,6 +174,7 @@ export function ownershipAction({state,world,command,emit}){
   ensure(Boolean(request)&&request.transfer_type==='SALE','UNKNOWN_SALE','A pending horse sale is required');
   ensure(currentHorseOwnerId(state,world,request.horse_id)===request.from_owner_id,
    'STALE_HORSE_OWNER','Seller no longer owns the horse');
+  ensureCareerHorseTransferReady(state,request.horse_id);
   ensure(Number.isSafeInteger(request.price_minor)&&request.price_minor>0,
    'HORSE_SALE_PRICE','Seller must have agreed a price');
   const accounts=state.runtime.finances.operation_balances_minor||{};
@@ -184,6 +211,7 @@ export function ownershipAction({state,world,command,emit}){
   ensure(Boolean(request),'UNKNOWN_TRANSFER','No such pending ownership transfer');
   const current=currentHorseOwnerId(state,world,request.horse_id);
   ensure(current===request.from_owner_id,'STALE_HORSE_OWNER','Horse changed owner since transfer request');
+  ensureCareerHorseTransferReady(state,request.horse_id);
   if(request.transfer_type==='SALE'){
    requireString(p.finance_ledger_id,'finance_ledger_id',128);
    const legs=state.runtime.finances.ledger.filter(line=>
@@ -207,6 +235,37 @@ export function ownershipAction({state,world,command,emit}){
    owner_id:request.to_owner_id,changed_on:state.clock.date,
    kind:'GAMEPLAY_TRANSFER'
   };
+  const registered=state.runtime.registered_horses?.by_id?.[request.horse_id];
+  if(registered){
+   const trainer=registered.trainer_id;
+   registered.owner_organization_id=request.to_owner_id;
+   // Welfare and physical residency stay with the same actual animal; the
+   // new owner receives a fresh monthly spending ceiling, not old invoices.
+   const care=state.runtime.horse?.[request.horse_id];
+   if(care?.finance){
+    const previousSpent=care.finance.spent_minor;
+    care.finance.spent_minor=0;
+    emit('HORSE_CARE_BUDGET_TRANSFERRED',{
+     horse_id:request.horse_id,from_owner_id:request.from_owner_id,
+     to_owner_id:request.to_owner_id,previous_owner_month_spent_minor:previousSpent,
+     facility_id:registered.current_residence_id,trainer_id:trainer});
+   }
+   // A trainer's former client stops paying after selling their last horse;
+   // other owners using the same trainer are not terminated.
+   const oldPair=request.from_owner_id+'|'+trainer;
+   const contract=state.runtime.trainer_contracts?.by_pair?.[oldPair];
+   if(contract?.status==='ACTIVE'&&
+    !Object.values(state.runtime.registered_horses.by_id).some(h=>
+     h.owner_organization_id===request.from_owner_id&&h.trainer_id===trainer)){
+    contract.status='TERMINATED';contract.ended_on=state.clock.date;
+    contract.pending=null;
+    contract.last_review_reason='OWNER_TRANSFERRED_LAST_TRAINED_HORSE';
+    emit('TRAINER_SERVICE_RELATIONSHIP_ENDED',{
+     owner_id:request.from_owner_id,trainer_id:trainer,
+     horse_id:request.horse_id,ended_on:state.clock.date,
+     reason:contract.last_review_reason,other_owners_unaffected:true});
+   }
+  }
   delete rt.pending_transfers[p.request_id];
   if(state.player.role==='owner'&&state.player.operation_id){
    if(state.player.operation_id===request.from_owner_id)
@@ -235,14 +294,20 @@ export function getOwnerPortfolioView(state,world,ownerId,{offset=0,limit=30}={}
   'INVALID_PAGING','Owner portfolio page must be 0..100 horses');
  const index=indexWorld(world),base=index.baseline.get(ownerId)||[],
   overlays=state.runtime.ownership?.owner_overrides||{};
- const baseSet=new Set(base);
  const registered=state.runtime.registered_horses?.by_id||{};
- const ids=base.filter(id=>!Object.hasOwn(overlays,id)||overlays[id].owner_id===ownerId);
- for(const [horseId,change] of Object.entries(overlays)){
-  if(change.owner_id===ownerId&&!baseSet.has(horseId))ids.push(horseId);
- }
+ // A world-source H-ID and its registered H-GAME career record describe the
+ // same physical animal. Never double-count both identities in owner rosters.
+ const representedSources=new Set(Object.values(registered).
+  map(h=>h.world_source_horse_id).filter(Boolean));
+ const ids=[],seen=new Set();
+ const append=id=>{if(!seen.has(id)){seen.add(id);ids.push(id)}};
+ for(const id of base)
+  if(!representedSources.has(id)&&
+   (!Object.hasOwn(overlays,id)||overlays[id].owner_id===ownerId))append(id);
+ for(const [horseId,change] of Object.entries(overlays))
+  if(change.owner_id===ownerId&&!representedSources.has(horseId))append(horseId);
  for(const h of Object.values(registered))
-  if(h.owner_organization_id===ownerId&&!ids.includes(h.horse_id))ids.push(h.horse_id);
+  if(h.owner_organization_id===ownerId)append(h.horse_id);
  if(Object.keys(registered).length)ids.sort((a,b)=>(index.horseById.get(a)?.name||registered[a]?.registered_name||'')
   .localeCompare(index.horseById.get(b)?.name||registered[b]?.registered_name||'')||a.localeCompare(b));
  const items=ids.slice(offset,offset+limit).map(id=>{

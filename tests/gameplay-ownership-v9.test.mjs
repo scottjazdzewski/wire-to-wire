@@ -274,3 +274,64 @@ test('separate horse sales in 1999 and 2000 preserve earlier payments across the
  assert.equal(s.runtime.finances.ledger.filter(x=>x.kind==='HORSE_SALE_SELLER_RECEIPT').length,2);
  assert.deepEqual(importGameSave(exportGameSave(s,world),world),s);
 });
+
+test('actual registered 1999 horse sale changes saved owner, cash, trainer client and stable with no duplicate horse',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const {createHash}=await import('node:crypto');
+ const {build1999PilotGameRun}=await import('../src/game/1999-pilot-fixture.js');
+ const source=JSON.parse(readFileSync(new URL('../public/data/wtw-1999-founding-directory-v1.json',import.meta.url),'utf8'));
+ const trainers=JSON.parse(readFileSync(new URL('../public/data/wtw-1999-trainer-pilot-v1.json',import.meta.url),'utf8'));
+ const manifest=JSON.parse(readFileSync(new URL('../data/1999-gameplay/first-38-horses-attributes-and-barns-v1.json',import.meta.url),'utf8'));
+ const people=new Map([...source.people,...trainers.trainers].map(x=>[x.id,x]));
+ const cw={schema:WORLD_SCHEMA,start_date:'1999-01-01',
+  authority:{snapshot_id:'WTW-REGISTERED-SALE-38',source:'TEST_PILOT_NOT_HISTORICAL',
+   sha256:createHash('sha256').update('registered-sale/1999').digest('hex')},
+  entities:{horses:source.horses,organizations:source.organizations,tracks:source.tracks,
+   people:[...people.values()]}};
+ let s=build1999PilotGameRun({world:cw,manifest}),originalWorld=JSON.stringify(cw);
+ s=dispatchGameCommand({world:cw,state:s,command:{
+  id:'pilot:sale:advance',type:'ADVANCE_DAY',actor:'system',payload:{}}}).state;
+ const h=Object.values(s.runtime.registered_horses.by_id).
+  find(x=>x.owner_organization_id===s.player.operation_id);
+ assert.ok(h);
+ const buyer=Object.values(s.runtime.registered_horses.by_id).
+  find(x=>x.owner_organization_id!==s.player.operation_id).owner_organization_id;
+ const oldOwner=h.owner_organization_id,oldTrainer=h.trainer_id,oldBarn=h.current_residence_id;
+ const oldHorse=structuredClone(h),oldCare=structuredClone(s.runtime.horse[h.horse_id]);
+ const oldStable=getStableView(s,cw).length;
+ const oldPortfolio=getOwnerPortfolioView(s,cw,oldOwner,{limit:0}).total;
+ const newPortfolio=getOwnerPortfolioView(s,cw,buyer,{limit:0}).total;
+ const beforeBuyer=s.runtime.finances.operation_balances_minor[buyer];
+ const beforeSeller=s.runtime.finances.operation_balances_minor[oldOwner];
+ const issue=(id,type,payload,actor='player')=>{
+  s=dispatchGameCommand({world:cw,state:s,command:{id,type,payload,actor}}).state;
+ };
+ issue('pilot:sale:request','REQUEST_HORSE_TRANSFER',{
+  request_id:'PILOT-CAREER-SALE',horse_id:h.horse_id,
+  to_owner_id:buyer,transfer_type:'SALE',price_minor:125000});
+ issue('pilot:sale:settle','SETTLE_HORSE_SALE',{
+  request_id:'PILOT-CAREER-SALE',settlement_id:'PILOT-CAREER-SALE'},'system');
+ const sold=s.runtime.registered_horses.by_id[h.horse_id];
+ assert.equal(sold.owner_organization_id,buyer);
+ assert.equal(sold.trainer_id,oldTrainer);
+ assert.equal(sold.current_residence_id,oldBarn);
+ assert.equal(sold.racing_barn_id,oldBarn);
+ assert.equal(sold.registration_receipt_id,oldHorse.registration_receipt_id);
+ assert.deepEqual(sold.career,oldHorse.career);
+ assert.equal(s.runtime.horse[h.horse_id].finance.spent_minor,0);
+ assert.equal(s.runtime.horse[h.horse_id].finance.lifetime_minor,
+  oldCare.finance.lifetime_minor);
+ assert.equal(s.runtime.finances.operation_balances_minor[buyer],beforeBuyer-125000);
+ assert.equal(s.runtime.finances.operation_balances_minor[oldOwner],beforeSeller+125000);
+ assert.equal(getStableView(s,cw).length,oldStable-1);
+ assert.equal(getOwnerPortfolioView(s,cw,oldOwner,{limit:0}).total,oldPortfolio-1);
+ assert.equal(getOwnerPortfolioView(s,cw,buyer,{limit:0}).total,newPortfolio+1);
+ assert.deepEqual(importGameSave(exportGameSave(s,cw),cw),s);
+ assert.equal(JSON.stringify(cw),originalWorld);
+ issue('pilot:sale:next','ADVANCE_DAY',{},'system');
+ const latest=s.runtime.finances.ledger.filter(x=>
+  x.kind==='HORSE_CARE_OWNER_PAYMENT'&&x.horse_id===h.horse_id);
+ assert.ok(latest.length>=1,'Horse remains in a live care program after transfer');
+ assert.equal(latest.at(-1).operation_id,buyer,'New owner pays the next daily care bill');
+ assert.deepEqual(importGameSave(exportGameSave(s,cw),cw),s);
+});
