@@ -495,6 +495,24 @@ try{
  assert.equal(profileView.person,true,'Birthplace/person profile cannot open from staff directory');
  assert.equal(profileView.entity,true,'Track/farm/owner profile cannot open from directory');
  console.log('WTW_FULL_WORLD_PROFILE_NAVIGATION_PASS '+JSON.stringify(profileView));
+ const readSharedReferenceFingerprint=async()=>browser.evalJS("(async()=>{"+
+   "const api=await import('/1999/engine/fictional-industry-persistence-1999.mjs');"+
+   "const db=await api.open1999IndustryDatabase();try{"+
+   "const world=await api.reopenPersistent1999Industry(db,{seed:19990101,"+
+   "worldId:'WTW1999FullIndustry-COHORTS-V2-H300000'});"+
+   "const runId='WTW-RUN-1999-19990101-SIZE-300000';"+
+   "const record=await api.loadPersistent1999CareerRun(db,world.manifest,runId);"+
+   "if(!record)throw Error('Shared reference career missing during lifecycle audit');"+
+   "const digest=await crypto.subtle.digest('SHA-256',"+
+   "new TextEncoder().encode(JSON.stringify(record)));"+
+   "return {runId:record.runId,gameDate:record.gameDate,version:record.version,"+
+   "sha256:Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('')};"+
+   "}finally{db.close()}})()");
+ const sharedReferenceBeforeLifecycle=await readSharedReferenceFingerprint();
+ assert.equal(sharedReferenceBeforeLifecycle.runId,
+  'WTW-RUN-1999-19990101-SIZE-300000');
+ assert.equal(sharedReferenceBeforeLifecycle.gameDate,careerAfterBundledImport.gameDate,
+  'Lifecycle audit must start from the preserved shared career checkpoint');
  const lifecycleProbe=`(async()=>{
   const api=await import('/1999/engine/fictional-industry-persistence-1999.mjs');
   const breeding=await import('/1999/engine/fictional-industry-breeding-book-1999.mjs');
@@ -965,6 +983,11 @@ try{
  assert.ok(decadesReopen.horse.sireId&&decadesReopen.horse.damId&&
   decadesReopen.horse.ownerId&&decadesReopen.horse.foalingFarmId);
  console.log('WTW_INDUSTRY_DECADES_REOPEN_PASS '+JSON.stringify(decadesReopen));
+ const sharedReferenceAfterLifecycle=await readSharedReferenceFingerprint();
+ assert.deepEqual(sharedReferenceAfterLifecycle,sharedReferenceBeforeLifecycle,
+  'Lifecycle tests changed the shared reference career during copy-based testing');
+ console.log('WTW_SHARED_REFERENCE_CAREER_PRESERVED_PASS '+
+  JSON.stringify(sharedReferenceAfterLifecycle));
  console.log('WTW_FULL_WORLD_BROWSER_REOPEN_PASS '+JSON.stringify({snap,ui}));
 }finally{
  await stop(browser);
