@@ -12,7 +12,7 @@ import {ensure,isObject,requireString,validDate} from './contracts.js';
 export const OWNERSHIP_RUNTIME_SCHEMA='WTW_RUN_HORSE_OWNERSHIP_V1';
 export const OWNERSHIP_COMMANDS=Object.freeze([
  'ASSIGN_HORSE_OWNER','REQUEST_HORSE_TRANSFER',
- 'CANCEL_HORSE_TRANSFER','COMMIT_HORSE_TRANSFER'
+ 'CANCEL_HORSE_TRANSFER','COMMIT_HORSE_TRANSFER','SETTLE_HORSE_SALE'
 ]);
 const WORLD_INDEX=new WeakMap();
 const REQUEST_TYPES=new Set(['GIFT','SALE']);
@@ -68,6 +68,9 @@ export function validateOwnershipRuntime(state,world){
    typeof request.to_owner_id==='string'&&ownerById.has(request.to_owner_id)&&
    request.from_owner_id!==request.to_owner_id&&
    REQUEST_TYPES.has(request.transfer_type)&&
+   (request.price_minor===undefined||request.transfer_type==='SALE'&&
+    Number.isSafeInteger(request.price_minor)&&request.price_minor>0&&
+    request.price_minor<=1000000000000)&&
    validDate(request.requested_on)&&request.requested_on<=state.clock.date,
    'OWNERSHIP_RUNTIME','Invalid pending ownership transfer');
   ensure(currentHorseOwnerId(state,world,request.horse_id)===request.from_owner_id,
@@ -118,10 +121,15 @@ export function ownershipAction({state,world,command,emit}){
   ensure(!Object.values(rt.pending_transfers).some(x=>x.horse_id===p.horse_id),
    'PENDING_TRANSFER','Horse already has an unresolved transfer request');
   ensure(REQUEST_TYPES.has(p.transfer_type),'INVALID_TRANSFER','Transfer must be a GIFT or SALE');
+  if(p.transfer_type==='SALE')ensure(Number.isSafeInteger(p.price_minor)&&
+   p.price_minor>0&&p.price_minor<=1000000000000,
+   'HORSE_SALE_PRICE','Seller must approve a positive sale price in cents');
+  else ensure(p.price_minor===undefined,'INVALID_TRANSFER','A gift cannot set a sale price');
   rt.pending_transfers[p.request_id]={
    request_id:p.request_id,horse_id:p.horse_id,
    from_owner_id:from,to_owner_id:p.to_owner_id,
-   transfer_type:p.transfer_type,requested_on:state.clock.date
+   transfer_type:p.transfer_type,requested_on:state.clock.date,
+   ...(p.transfer_type==='SALE'?{price_minor:p.price_minor}:{})
   };
   emit('HORSE_TRANSFER_REQUESTED',rt.pending_transfers[p.request_id]);
  }else if(type==='CANCEL_HORSE_TRANSFER'){
@@ -133,6 +141,42 @@ export function ownershipAction({state,world,command,emit}){
    'UNAUTHORIZED_COMMAND','Only the selling owner or game system can cancel this request');
   delete rt.pending_transfers[p.request_id];
   emit('HORSE_TRANSFER_CANCELLED',{request_id:p.request_id,horse_id:request.horse_id});
+ }else if(type==='SETTLE_HORSE_SALE'){
+  ensure(actor==='system','UNAUTHORIZED_COMMAND','Only the game transaction service may settle a horse sale');
+  validRequestId(p.request_id);validRequestId(p.settlement_id);
+  const request=rt.pending_transfers[p.request_id];
+  ensure(Boolean(request)&&request.transfer_type==='SALE','UNKNOWN_SALE','A pending horse sale is required');
+  ensure(currentHorseOwnerId(state,world,request.horse_id)===request.from_owner_id,
+   'STALE_HORSE_OWNER','Seller no longer owns the horse');
+  ensure(Number.isSafeInteger(request.price_minor)&&request.price_minor>0,
+   'HORSE_SALE_PRICE','Seller must have agreed a price');
+  const accounts=state.runtime.finances.operation_balances_minor||{};
+  const buyer=request.to_owner_id,seller=request.from_owner_id,price=request.price_minor;
+  ensure(Number.isSafeInteger(accounts[buyer])&&accounts[buyer]>=price&&
+   Number.isSafeInteger(accounts[seller])&&Number.isSafeInteger(accounts[seller]+price),
+   'HORSE_SALE_FUNDS','Buyer must have funds and both owners need established accounts');
+  const transaction='HORSE_SALE:'+p.settlement_id;
+  ensure(!state.runtime.finances.ledger.some(l=>l.transaction_id===transaction),
+   'HORSE_SALE_DUPLICATE','Settlement transaction was already used');
+  accounts[buyer]-=price;accounts[seller]+=price;
+  if(state.player.operation_id===buyer)state.runtime.finances.balance_minor=accounts[buyer];
+  if(state.player.operation_id===seller)state.runtime.finances.balance_minor=accounts[seller];
+  for(const [org,kind,amount] of [
+   [buyer,'HORSE_SALE_BUYER_PAYMENT',-price],
+   [seller,'HORSE_SALE_SELLER_RECEIPT',price]
+  ])state.runtime.finances.ledger.push({
+   date:state.clock.date,transaction_id:transaction,
+   operation_id:org,horse_id:request.horse_id,
+   from_owner_id:seller,to_owner_id:buyer,amount_minor:amount,
+   kind,settlement_status:'POSTED',price_minor:price
+  });
+  emit('HORSE_SALE_CASH_SETTLED',{request_id:request.request_id,
+   transaction_id:transaction,horse_id:request.horse_id,
+   buyer_id:buyer,seller_id:seller,price_minor:price,net_minor:0});
+  // Reuse the existing audited transfer, roster, and saved ownership update.
+  ownershipAction({state,world,command:{...command,
+   type:'COMMIT_HORSE_TRANSFER',payload:{
+    request_id:p.request_id,finance_ledger_id:transaction}},emit});
  }else if(type==='COMMIT_HORSE_TRANSFER'){
   ensure(actor==='system','UNAUTHORIZED_COMMAND','Only the verified game transaction system can commit ownership changes');
   validRequestId(p.request_id);
@@ -142,12 +186,18 @@ export function ownershipAction({state,world,command,emit}){
   ensure(current===request.from_owner_id,'STALE_HORSE_OWNER','Horse changed owner since transfer request');
   if(request.transfer_type==='SALE'){
    requireString(p.finance_ledger_id,'finance_ledger_id',128);
-   const posted=state.runtime.finances.ledger.find(line=>
-    line.id===p.finance_ledger_id&&line.horse_id===request.horse_id&&
+   const legs=state.runtime.finances.ledger.filter(line=>
+    line.transaction_id===p.finance_ledger_id&&line.horse_id===request.horse_id&&
     line.from_owner_id===request.from_owner_id&&line.to_owner_id===request.to_owner_id&&
     line.settlement_status==='POSTED');
-   ensure(Boolean(posted),'FINANCE_NOT_SETTLED',
-    'Cannot transfer a sold horse without a posted matching settlement');
+   const price=request.price_minor;
+   ensure(Number.isSafeInteger(price)&&price>0&&legs.length===2&&
+    legs.some(x=>x.kind==='HORSE_SALE_BUYER_PAYMENT'&&
+     x.operation_id===request.to_owner_id&&x.amount_minor===-price)&&
+    legs.some(x=>x.kind==='HORSE_SALE_SELLER_RECEIPT'&&
+     x.operation_id===request.from_owner_id&&x.amount_minor===price)&&
+    legs.reduce((n,x)=>n+x.amount_minor,0)===0,
+    'FINANCE_NOT_SETTLED','A sale requires posted matching buyer and seller cash entries');
   }else{
    ensure(p.finance_ledger_id===undefined,'INVALID_TRANSFER',
     'Gift transfer cannot declare a paid sale settlement');

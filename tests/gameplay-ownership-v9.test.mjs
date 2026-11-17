@@ -98,7 +98,7 @@ test('sale does not change owner until a genuine matching finance ledger record 
  const world=w();let s=run(world);
  s=send(world,s,cmd('owner:sell','REQUEST_HORSE_TRANSFER',{
   request_id:'SALE-TEST-1',horse_id:'H-1999-000002',
-  to_owner_id:'O-1999-002',transfer_type:'SALE'
+  to_owner_id:'O-1999-002',transfer_type:'SALE',price_minor:50000
  })).state;
  const before=JSON.stringify(s);
  assert.throws(()=>send(world,s,cmd('system:post','COMMIT_HORSE_TRANSFER',{
@@ -118,11 +118,11 @@ test('sale does not change owner until a genuine matching finance ledger record 
   from_owner_id:'O-1999-001',to_owner_id:'O-1999-002',
   settlement_status:'POSTED',amount_minor:50000
  });
- s=send(world,passed,cmd('system:post','COMMIT_HORSE_TRANSFER',{
+ assert.throws(()=>send(world,passed,cmd('system:post','COMMIT_HORSE_TRANSFER',{
   request_id:'SALE-TEST-1',finance_ledger_id:'POSTED-LEDGER-1'
- },'system')).state;
- assert.equal(currentHorseOwnerId(s,world,'H-1999-000002'),'O-1999-002');
- assert.equal(s.event_log.at(-1).details.finance_ledger_id,'POSTED-LEDGER-1');
+ },'system')),e=>e.code==='FINANCE_NOT_SETTLED',
+ 'One posted-looking row cannot pay for the horse');
+ assert.equal(currentHorseOwnerId(passed,world,'H-1999-000002'),'O-1999-001');
 });
 
 test('invalid requests cannot transfer another owner horse, invent owner, or bypass one-horse pending rule',()=>{
@@ -191,4 +191,73 @@ test('planner-generated 100k horse ownership can be paged from the same accepted
  const after=getOwnerPortfolioView(state,universe,chosen,{offset:30,limit:30});
  assert.equal(after.total,page.total);
  assert.ok(after.items.every(x=>x.owner_id===chosen));
+});
+
+test('seller-approved sale posts exact buyer debit and seller receipt before permanent ownership transfer',()=>{
+ const world=w();let s=run(world);
+ for(const [id,amount] of [['O-1999-001',100000],['O-1999-002',90000]])
+  s=send(world,s,cmd('sale:seed:'+id,'FACILITY_SEED_FUNDS',{
+   operation_id:id,balance_minor:amount,source_kind:'SIMULATED_TEST',
+   source_ref:'two-party business payment fixture'},'system')).state;
+ assert.throws(()=>send(world,s,cmd('sale:unpriced','REQUEST_HORSE_TRANSFER',{
+  request_id:'UNPRICED-1999',horse_id:'H-1999-000001',
+  to_owner_id:'O-1999-002',transfer_type:'SALE'
+ })),e=>e.code==='HORSE_SALE_PRICE');
+ s=send(world,s,cmd('sale:request','REQUEST_HORSE_TRANSFER',{
+  request_id:'SALE-PAID-1999',horse_id:'H-1999-000001',
+  to_owner_id:'O-1999-002',transfer_type:'SALE',price_minor:50000
+ })).state;
+ const buyerPoor=structuredClone(s);
+ buyerPoor.runtime.finances.operation_balances_minor['O-1999-002']=49999;
+ assert.throws(()=>send(world,buyerPoor,cmd('sale:poor','SETTLE_HORSE_SALE',{
+  request_id:'SALE-PAID-1999',settlement_id:'PAID-1999'
+ },'system')),e=>e.code==='HORSE_SALE_FUNDS');
+ assert.equal(currentHorseOwnerId(buyerPoor,world,'H-1999-000001'),'O-1999-001');
+ const result=send(world,s,cmd('sale:settle','SETTLE_HORSE_SALE',{
+  request_id:'SALE-PAID-1999',settlement_id:'PAID-1999'
+ },'system'));
+ s=result.state;
+ const entries=s.runtime.finances.ledger.filter(x=>x.transaction_id==='HORSE_SALE:PAID-1999');
+ assert.equal(entries.length,2);
+ assert.equal(entries.reduce((sum,x)=>sum+x.amount_minor,0),0);
+ assert.equal(entries.find(x=>x.kind==='HORSE_SALE_BUYER_PAYMENT').amount_minor,-50000);
+ assert.equal(entries.find(x=>x.kind==='HORSE_SALE_SELLER_RECEIPT').amount_minor,50000);
+ assert.equal(s.runtime.finances.operation_balances_minor['O-1999-002'],40000);
+ assert.equal(s.runtime.finances.operation_balances_minor['O-1999-001'],150000);
+ assert.equal(s.runtime.finances.balance_minor,150000);
+ assert.equal(currentHorseOwnerId(s,world,'H-1999-000001'),'O-1999-002');
+ assert.equal(getOwnerPortfolioView(s,world,'O-1999-002').total,2);
+ assert.equal(getOfficeView(s,world).player_owner_horse_count,1);
+ assert.ok(result.events.some(e=>e.kind==='HORSE_SALE_CASH_SETTLED'));
+ assert.ok(result.events.some(e=>e.kind==='HORSE_OWNERSHIP_TRANSFERRED'));
+ assert.deepEqual(importGameSave(exportGameSave(s,world),world),s);
+ const replay=send(world,s,cmd('sale:settle','SETTLE_HORSE_SALE',{
+  request_id:'SALE-PAID-1999',settlement_id:'PAID-1999'
+ },'system'));
+ assert.equal(replay.duplicate,true);assert.equal(replay.state,s);
+ assert.equal(world.entities.horses[0].ownerId,'O-1999-001');
+});
+test('separate horse sales in 1999 and 2000 preserve earlier payments across the save',()=>{
+ const world=w();let s=run(world);
+ for(const [id,amount] of [['O-1999-001',100000],['O-1999-002',200000]])
+  s=send(world,s,cmd('annual:fund:'+id,'FACILITY_SEED_FUNDS',{
+   operation_id:id,balance_minor:amount,source_kind:'SIMULATED_TEST',
+   source_ref:'multi-year sale test'},'system')).state;
+ const sell=(id,horse,price)=>{
+  s=send(world,s,cmd('annual:req:'+id,'REQUEST_HORSE_TRANSFER',{
+   request_id:id,horse_id:horse,to_owner_id:'O-1999-002',
+   transfer_type:'SALE',price_minor:price})).state;
+  s=send(world,s,cmd('annual:pay:'+id,'SETTLE_HORSE_SALE',{
+   request_id:id,settlement_id:id},'system')).state;
+ };
+ sell('SALE-1999-A','H-1999-000001',40000);
+ for(let i=0;i<366;i++)s=send(world,s,cmd('annual:day:'+i,'ADVANCE_DAY',{})).state;
+ assert.equal(s.clock.date,'2000-01-02');
+ sell('SALE-2000-B','H-1999-000002',60000);
+ assert.equal(s.runtime.finances.operation_balances_minor['O-1999-001'],200000);
+ assert.equal(s.runtime.finances.operation_balances_minor['O-1999-002'],100000);
+ assert.equal(s.stable_horse_ids.length,0);
+ assert.equal(s.runtime.finances.ledger.filter(x=>x.kind==='HORSE_SALE_BUYER_PAYMENT').length,2);
+ assert.equal(s.runtime.finances.ledger.filter(x=>x.kind==='HORSE_SALE_SELLER_RECEIPT').length,2);
+ assert.deepEqual(importGameSave(exportGameSave(s,world),world),s);
 });
