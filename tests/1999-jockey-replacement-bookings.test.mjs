@@ -92,16 +92,20 @@ test('player owner is notified once and no unwanted replacement is signed',()=>{
  assert.equal(s.runtime.finances.balance_minor,700000);
  assert.deepEqual(JSON.parse(JSON.stringify(s)),s);
 });
-test('suspensions at destination and actual career dates block candidates until available',()=>{
- const s=fixture({raceDate:'1999-06-20'});
+test('only riders available on actual race date may replace; no ghost travel or fees',()=>{
+ const s=fixture({raceDate:'1999-06-08'});
  s.runtime.racing.jockeys[J1].availability={kind:'SUSPENSION',
   start_date:'1999-06-01',through_date:'1999-06-18',
   reported_date:'1999-06-01',source_race_id:'R-1999-PRIOR'};
- // The only other rider is on the wrong coast and cannot travel for an ordinary maiden.
+ // Visiting California rider cannot teleport to an ordinary Florida maiden.
  const first=execute(s);
  assert.equal(first.outcome.booked,0);
  assert.equal(first.outcome.unavailable,1);
- s.clock.date='1999-06-19';
+ assert.equal(s.runtime.finances.ledger.length,0);
+ assert.equal(s.runtime.entries[R+':'+H].status,'ENTERED');
+ // An ending suspension is not a lifetime ban: check the booked race date,
+ // not only the present career clock, in a distinct later meet.
+ s.runtime.races[R].date='1999-06-20';
  const second=execute(s);
  assert.equal(second.outcome.booked,1);
  assert.equal(s.runtime.entries[R+':'+H].jockey_id,J1);
