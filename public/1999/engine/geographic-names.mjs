@@ -152,7 +152,8 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
      exhaustiveCursorByPool.set(poolKey,(slot+1)%combinations);break;
     }
    }
-   if(!name)throw Error('Country-specific personnel name pool exhausted; expand it instead of adding numbered identities');
+   if(!name)throw Error('Country-specific personnel name pool exhausted for '+country+
+    ' at roster index '+i+' ('+role+'); expand the same-country name pools');
   }
   reserved.add(canonKey(name));
   const key=baseKey(selectedFirst,selectedSurname);
