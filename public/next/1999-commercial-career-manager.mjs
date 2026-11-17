@@ -199,6 +199,8 @@ async function editSavedWorldEntity({kind,id,patch}={}){
  const edits=addCareerWorldEdit(career.worldEdits,career.world,kind,id,patch,
   {run:career.run});
  const nextRun=structuredClone(career.run);
+ const isFrozen=nextRun.run_id===canonicalRunId(career.manifest);
+ if(isFrozen)nextRun.run_id=playerRunId(career.manifest);
  if(kind==='horse'&&Object.hasOwn(patch,'name')){
   const name=patch.name.trim();
   for(const h of Object.values(nextRun.runtime.registered_horses.by_id))
@@ -357,6 +359,27 @@ async function inspectFullIndustryPerson(personId){
 }
 function canonicalRunId(manifest){return 'WTW-RUN-1999-'+manifest.seed+'-SIZE-'+
  (manifest.targetOpeningHorses??manifest.horseCount)}
+function playerRunId(manifest){return canonicalRunId(manifest)+'-PLAYER'}
+async function ensurePlayerWorkingCareer(){
+ const career=activeWorldCareer;
+ if(!career?.run)return;
+ if(career.run.run_id!==canonicalRunId(career.manifest))return;
+ const copy=structuredClone(career.run);
+ copy.run_id=playerRunId(career.manifest);
+ const db=await open1999IndustryDatabase();
+ try{
+  const prior=await loadPersistent1999CareerRun(db,career.manifest,copy.run_id);
+  if(prior?.changes?.canonicalRun)
+   throw Error('Existing editable player career must be resumed before changing the frozen reference');
+  await savePersistent1999CareerRun(db,career.manifest,{
+   runId:copy.run_id,gameDate:copy.clock.date,player:copy.player,
+   changes:{canonicalRun:copy,worldEdits:career.worldEdits||createCareerWorldEdits()},
+   version:Math.max(1,copy.revision+1)});
+  career.run=copy;
+  career.editVersion=(career.editVersion||0)+1;
+  publishCareerReadModel();
+ }finally{db.close()}
+}
 async function persistCanonicalRun(){
  if(!activeWorldCareer)return;
  const store=await open1999IndustryDatabase();
@@ -492,6 +515,16 @@ function bootstrapBundledCareer(){
   if(window.WTWDesktop?.runtime!=='windows-desktop')
    throw Error('Bundled career auto-load is available only in the Windows desktop app');
   await open();
+  if(activeWorldCareer?.run?.run_id===playerRunId(activeWorldCareer.manifest)){
+   // The generated base and frozen bundled checkpoint are already verified.
+   // Never replace local player progress with the bundled engineering sample.
+   modal().hidden=true;
+   return {worldId:activeWorldCareer.manifest.worldId,
+    gameDate:activeWorldCareer.run.clock.date,
+    horseCount:activeWorldCareer.manifest.horseCount,
+    personCount:activeWorldCareer.manifest.personCount,
+    resumedPlayerCareer:true};
+  }
   busy=true;notice='LOADING THE SHARED 1999 TEST CAREER…';await refresh();
   let bootstrapped=false;
   try{
@@ -515,10 +548,11 @@ function bootstrapBundledCareer(){
  return bundledCareerBootstrap;
 }
 async function resumeCanonicalRun(store,manifest){
- const saved=await loadPersistent1999CareerRun(store,manifest,canonicalRunId(manifest));
+ const editable=await loadPersistent1999CareerRun(store,manifest,playerRunId(manifest));
+ const saved=editable||await loadPersistent1999CareerRun(store,manifest,canonicalRunId(manifest));
  if(!saved?.changes?.canonicalRun)return null;
  const career=await openPersistent1999GameCareer(store,manifest,{
-  runId:canonicalRunId(manifest),operationId:saved.player.operation_id});
+  runId:saved.runId,operationId:saved.player.operation_id});
  validateGameRun(saved.changes.canonicalRun,career.world);
  return hydrateCareerEdits({...career,run:saved.changes.canonicalRun,manifest},saved);
 }
@@ -540,6 +574,7 @@ async function startCanonicalRun(){
 }
 async function advanceCanonicalRun(){
  if(!activeWorldCareer)throw Error('Start a test career first');
+ await ensurePlayerWorkingCareer();
  const state=dispatchGameCommand({state:activeWorldCareer.run,
   world:activeWorldCareer.world,command:{
    id:'player-day-'+(activeWorldCareer.run.clock.days_elapsed+1),
@@ -555,6 +590,7 @@ async function advanceCanonicalRun(){
 }
 async function openNextTestRace(){
  if(!activeWorldCareer)throw Error('Start a test career first');
+ await ensurePlayerWorkingCareer();
  const {run,world,homeTrackId}=activeWorldCareer;
  let selected=null;
  for(let offset=2;offset<=28&&!selected;offset++){
