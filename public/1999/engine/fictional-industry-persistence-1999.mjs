@@ -919,8 +919,13 @@ async function turnoverForYear(store,manifest,runKey,year,horseUpdates,
   broodmares:openingMares.length,eligibleFemalePopulation:eligible.length,
   marketIndex:market.marketIndex});
  const rank=(type,h)=>seeded1999Unit(manifest.seed,type+':'+year+':'+h.id);
- const retireIds=new Set([...openingMares].sort((a,b)=>rank('retire',a)-rank('retire',b)||
-  a.id.localeCompare(b.id)).slice(0,turnover.retired).map(h=>h.id));
+ // Market turnover is a floor on retirements: no 40-year-old broodmares.
+ const forcedMareRetireIds=openingMares.filter(h=>year-Number(h.foalYear)>=26)
+  .map(h=>h.id);
+ const retireIds=new Set([...forcedMareRetireIds,
+  ...[...openingMares].sort((a,b)=>rank('retire',a)-rank('retire',b)||
+   a.id.localeCompare(b.id)).slice(0,Math.max(0,turnover.retired-
+    forcedMareRetireIds.length)).map(h=>h.id)]);
  const mareGraduates=[...eligible].sort((a,b)=>rank('graduate',a)-rank('graduate',b)||
   a.id.localeCompare(b.id)).slice(0,turnover.graduatedIntoBreeding);
  for(const mare of openingMares)if(retireIds.has(mare.id)){
@@ -989,6 +994,7 @@ async function turnoverForYear(store,manifest,runKey,year,horseUpdates,
  const entry={date:year+'-01-01',type:'BROODMARE_TURNOVER',year,
   openingBroodmares:openingMares.length,eligibleFillies:eligible.length,
   retired:retireIds.size,graduated:mareGraduates.length,
+  forcedAgeRetirements:forcedMareRetireIds.length,
   closingBroodmares:nextPool.length,provenance:result.provenance,
   marketIndex:market.marketIndex,
   retiredHorseIds:[...retireIds],graduatedHorseIds:mareGraduates.map(h=>h.id)};
@@ -1258,7 +1264,8 @@ async function advancePersistent1999IndustryLifecycle(store,manifest,{
  };
  const eventByDate=new Map(),overrideMap=new Map(),poolCache=new Map(),
   stallionPoolCache=new Map();
- const birthCohortCache=new Map(),forecastCache=new Map(),farmCache=new Map();
+ const birthCohortCache=new Map(),forecastCache=new Map(),farmCache=new Map(),
+  maturePoolCache=new Map();
  const graduatedYears=new Map(),graduatedStallionYears=new Map(),
   activeMaresById=new Map(),activeStallionsById=new Map();
  const directory=await readPersistent1999Directory(lifecycleStore,manifest);
@@ -1296,7 +1303,8 @@ async function advancePersistent1999IndustryLifecycle(store,manifest,{
    seasonYear:1999,lastDate:'1999-01-01',activeBroodmares:pool.length,
    activeStallions:stallionPool.length,retiredBroodmares:0,graduatedFillies:0,
    retiredStallions:0,graduatedStallions:0,
-   racingPopulation:manifest.plan.potentialRacingPopulation,
+   racingPopulation:manifest.plan.activeRunnersExcludingTwoYearOlds,
+   matureHorseDeaths:0,retiredRacehorses:0,juvenileDebuts:0,
    foalsBorn:0,foalLosses:0,
    horseDeaths:0,birthsByYear:{},lossesByYear:{},deathsByYear:{},
    deathsByStage:{FOAL_TO_YEARLING:{},YEARLING_TO_TWO_YEAR_OLD:{}},
@@ -1309,6 +1317,9 @@ async function advancePersistent1999IndustryLifecycle(store,manifest,{
   throw Error('Persistent lifecycle checkpoint is invalid');
  const savedStageDeaths=checkpoint.deathsByStage||{};
  checkpoint={...checkpoint,horseDeaths:checkpoint.horseDeaths||0,
+  matureHorseDeaths:checkpoint.matureHorseDeaths||0,
+  retiredRacehorses:checkpoint.retiredRacehorses||0,
+  juvenileDebuts:checkpoint.juvenileDebuts||0,
   activeStallions:checkpoint.activeStallions??manifest.plan.counts.stallions,
   retiredStallions:checkpoint.retiredStallions||0,
   graduatedStallions:checkpoint.graduatedStallions||0,
@@ -1350,6 +1361,10 @@ async function advancePersistent1999IndustryLifecycle(store,manifest,{
      racingPopulation:current.racingPopulation,
      previousLiveFoals:current.birthsByYear[year-1]||0});
    for(const update of horseUpdates)overrideMap.set(update.id,update);
+   const mature=await matureHorseRolloverForYear(lifecycleStore,manifest,
+    runKey,year,horseUpdates,{overrideMap,addEvent,maturePoolCache,turnover,
+     graduatedYears,graduatedStallionYears});
+   addData({key:lifecycleKey(runKey,'mature-pool:'+year),value:mature.members});
    const schedule=await prepareLifecycleSeason(lifecycleStore,manifest,runKey,{
     year,mareRecords:turnover.nextPool,stallionRecords:turnover.nextStallions,
     market:turnover.market});
@@ -1374,12 +1389,22 @@ async function advancePersistent1999IndustryLifecycle(store,manifest,{
     graduatedStallions:current.graduatedStallions+
      turnover.stallionTurnover.graduated,
     racingPopulation:Math.max(0,current.racingPopulation+
-     (attrition.survivorsByStage.YEARLING_TO_TWO_YEAR_OLD||0)-
-     event.graduated-turnover.stallionTurnover.graduated),
-    population:current.population-attrition.deaths,
-    horseDeaths:current.horseDeaths+attrition.deaths,
-    deathsByYear:{...current.deathsByYear,[year]:attrition.deaths},
+     mature.racingDelta-event.graduated-
+     turnover.stallionTurnover.graduated),
+    population:current.population-attrition.deaths-mature.deaths,
+    horseDeaths:current.horseDeaths+attrition.deaths+mature.deaths,
+    matureHorseDeaths:current.matureHorseDeaths+mature.deaths,
+    retiredRacehorses:current.retiredRacehorses+mature.retired,
+    deathsByYear:{...current.deathsByYear,[year]:
+     attrition.deaths+mature.deaths},
     deathsByStage};
+  }
+  if(date.endsWith('-04-01')||date.endsWith('-09-01')){
+   const juveniles=await juvenileDebutsForDate(lifecycleStore,manifest,
+    runKey,date,horseUpdates,{overrideMap,birthCohortCache,addEvent});
+   current={...current,
+    juvenileDebuts:current.juvenileDebuts+juveniles.started,
+    racingPopulation:current.racingPopulation+juveniles.started};
   }
   const forecastKey=lifecycleForecastKey(runKey,year,date);
   const forecasts=forecastCache.has(forecastKey)?forecastCache.get(forecastKey):
