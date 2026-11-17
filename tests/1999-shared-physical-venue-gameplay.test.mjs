@@ -1,29 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {webcrypto} from 'node:crypto';
+import {gunzipSync} from 'node:zlib';
 import {readFileSync} from 'node:fs';
-import {createHash} from 'node:crypto';
 import {same1999PhysicalVenue} from '../src/game/physical-venue-1999.js';
 import {trackMeetOpen1999,trackPhysicalVenueId1999,TRACK_PROGRAM_1999}
  from '../public/next/1999-track-program.mjs';
 import {buildConditionBook1999}
  from '../public/next/1999-condition-book-engine.mjs';
-import {WORLD_SCHEMA,raceEligibility,effectiveHorseTrack}
- from '../src/game/index.js';
-import {build1999PilotGameRun} from '../src/game/1999-pilot-fixture.js';
+import {raceEligibility,effectiveHorseTrack} from '../src/game/index.js';
+import {unpackShared1999Career}
+ from '../public/1999/engine/shared-1999-career-package.mjs';
 
-const read=p=>JSON.parse(readFileSync(new URL(p,import.meta.url),'utf8'));
-const directory=read('../public/data/wtw-1999-founding-directory-v1.json');
-const trainer=read('../public/data/wtw-1999-trainer-pilot-v1.json');
-const jockey=read('../public/data/wtw-1999-jockey-pilot-v1.json');
-const manifest=read('../data/1999-gameplay/first-38-horses-attributes-and-barns-v1.json');
-const people=[...new Map([...directory.people,...trainer.trainers,...jockey.jockeys]
- .map(x=>[x.id,x])).values()];
-const world={schema:WORLD_SCHEMA,start_date:'1999-01-01',
- authority:{snapshot_id:'VENUE-ID-1999-READ-ONLY-TEST',
-  source:'SAME_PHYSICAL_TRACK_TEST_NOT_HISTORICAL_RESULT',
-  sha256:createHash('sha256').update('1999-existing-fair-venue').digest('hex')},
- entities:{horses:directory.horses,organizations:directory.organizations,
-  tracks:directory.tracks,people}};
+globalThis.crypto??=webcrypto;
+const bundled=new URL('../public/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER.wtwcareer.gz',
+ import.meta.url);
 
 test('1999 fair meeting uses existing Bay Meadows physical racing surface',()=>{
  assert.equal(trackPhysicalVenueId1999('T-0075'),'T-0032');
@@ -55,17 +46,23 @@ test('all 1999 meeting calendars avoid simultaneous cards at a shared physical f
  }
 });
 
-test('approved fair condition-book runner need not ship to its own racing surface',()=>{
- const state=build1999PilotGameRun({world,manifest,jockeys:jockey.jockeys});
+test('actual saved 300k career uses one Bay Meadows facility for its approved fair meeting',async()=>{
+ const checkpoint=await unpackShared1999Career(gunzipSync(readFileSync(bundled)));
+ assert.equal(checkpoint.world.worldId,'WTW1999FullIndustry-COHORTS-V2-H300000');
+ assert.equal(checkpoint.world.horseCount,300000);
+ assert.equal(checkpoint.careerRecord.runId,'WTW-RUN-1999-19990101-SIZE-300000');
+ const state=checkpoint.careerRecord.changes.canonicalRun;
+ assert.equal(state.clock.date,'1999-05-29');
  const original=Object.values(state.runtime.registered_horses.by_id)
   .find(h=>h.starting_attributes&&h.current_residence_id);
- assert.ok(original,'must use an existing registered source-identified horse');
- // Read-only venue-assessment fixture: no canonical save or result is changed.
+ assert.ok(original,'actual bundled career must contain a registered source-identified horse');
+ // Assess a hypothetical Bay Meadows assignment without mutating the
+ // saved career, horse identities, confirmed dates, historical races or ledger.
  const horse={...original,host_track_id:'T-0032'};
  const book=buildConditionBook1999({
   date:'1999-08-14',track:{id:'T-0075',name:'San Mateo County Fair'},
-  trackIndex:74,includeKnownStakes:false});
- assert.ok(book.length>0,'must use an actual approved fair meet day');
+  trackIndex:74,seed:checkpoint.world.seed,includeKnownStakes:false});
+ assert.ok(book.length>0,'the test must use a genuine approved fair meet day');
  const r=book.find(x=>x.conditions==='Maiden Special Weight')||book[0];
  const race={...r,track_id:r.trackId,age:r.ageRequirement,
   sex:r.sexRestriction,max_wins:r.maxCareerWins};
@@ -76,4 +73,7 @@ test('approved fair condition-book runner need not ship to its own racing surfac
  assert.ok(raceEligibility(state,horse,{...race,track_id:'T-0001'}).reasons
   .includes('NOT_PHYSICALLY_AT_TRACK_OR_CONFIRMED_TO_ARRIVE'),
   'a genuinely different track still requires transport');
+ assert.equal(checkpoint.careerRecord.changes.canonicalRun
+  .runtime.registered_horses.by_id[original.horse_id].host_track_id,
+  original.host_track_id,'regression cannot rewrite the real saved horse');
 });
