@@ -924,6 +924,11 @@ try{
      !directoryIds.has(horse.ownerId)||!directoryIds.has(horse.foalingFarmId))
      throw Error('A thirty-one-year-old cohort horse was immortal or lost its pedigree');
    const final=await api.loadPersistent1999CareerRun(store,manifest,runId);
+   const eligibleBirths=Object.entries(final.lifecycle.birthsByYear)
+    .filter(([birthYear])=>Number(birthYear)>=2001)
+    .reduce((sum,[,count])=>sum+count,0);
+   if(final.lifecycle.population>eligibleBirths)
+    throw Error('Expired generations inflate living 2031 population');
    if(new Set(annual.map(row=>row.births)).size<10||marketIndices.size<10||
     plannedCrops.size<10)
     throw Error('Annual live foal totals did not vary over the decades');
@@ -980,7 +985,7 @@ try{
  assert.equal(reopenedLifecycle.lifecycle.openingHorseCount,300000);
  assert.ok(reopenedLifecycle.foal&&reopenedLifecycle.foal.age<=6&&
    ['RACING','DECEASED','RETIRED_RACEHORSE','BROODMARE','STALLION',
-    'TWO_YEAR_OLD_PROSPECT'].includes(reopenedLifecycle.foal.status),
+    'RETIRED_BROODMARE','RETIRED_STALLION','TWO_YEAR_OLD_PROSPECT'].includes(reopenedLifecycle.foal.status),
    '300k seasonal foal keeps a legitimate durable age-six career status');
  assert.ok(['RETIRED_BROODMARE','DECEASED']
    .includes(reopenedLifecycle.retired.status),
