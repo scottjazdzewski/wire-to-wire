@@ -5,6 +5,10 @@ import {WORLD_SCHEMA,createGameRun,dispatchGameCommand,validateGameRun,
  exportGameSave,importGameSave} from '../src/game/index.js';
 import {createNamingFeedback,recordNamingFeedback} from '../src/game/horse-naming-feedback-v489.js';
 import {createNamingDeskController} from '../public/next/1999-naming-desk.mjs';
+import {LOCAL_HORSE_NAMING_ALGORITHM_REVISION,
+ OPENING_PROVISIONAL_HORSE_NAMING_REVISION,OPENING_INDUSTRY_HORSE_NAMING_REVISION,
+ generateProvisional1999IndustryNameRoster}
+ from '../src/game/horse-naming-local-v485.js';
 
 const world={schema:WORLD_SCHEMA,start_date:'1999-01-01',
  authority:{snapshot_id:'WTW-FEEDBACK-V490-TEST',source:'TEST ONLY',sha256:'b'.repeat(64)},
@@ -92,4 +96,19 @@ test('Naming Desk waits until real async career commit before showing success',a
  // The actual persisted KEEP confirmation is deliberately explicit: the name is
  // banked for later, not officially registered to a horse.
  assert.match(desk.snapshot().notice,/kept for later in the saved game/);
+});
+
+
+test('V490 owner feedback revisions never relabel frozen V488 opening industry horses',()=>{
+ assert.equal(LOCAL_HORSE_NAMING_ALGORITHM_REVISION,'WTW_LOCAL_NAMING_RULES_V489');
+ assert.equal(OPENING_PROVISIONAL_HORSE_NAMING_REVISION,
+  'WTW_LOCAL_NAMING_RULES_V488:OPENING_PROVISIONAL_V1');
+ assert.equal(OPENING_INDUSTRY_HORSE_NAMING_REVISION,
+  'WTW_LOCAL_NAMING_RULES_V488:OPENING_INDUSTRY_V1');
+ const spec={seed:19990101,horseCount:150,protectedNames:['Historic Ace']};
+ const first=generateProvisional1999IndustryNameRoster(spec);
+ assert.equal(first.algorithmRevision,OPENING_INDUSTRY_HORSE_NAMING_REVISION);
+ assert.deepEqual(first,generateProvisional1999IndustryNameRoster(spec),
+  'frozen source-world names remain deterministic while editorial feedback evolves');
+ assert.equal(new Set(first.names.map(n=>n.toLowerCase().replace(/[^a-z0-9]/g,''))).size,150);
 });
