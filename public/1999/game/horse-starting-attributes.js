@@ -18,7 +18,7 @@ export function model1999StartingHorseAttributes({horse_id,seed=19990101,foaling
   'HORSE_ATTRIBUTES','Permanent test horse ID required');
  ensure(Number.isSafeInteger(seed)&&seed>0&&seed<=4294967295,
   'HORSE_ATTRIBUTES','Positive 32-bit model seed required');
- ensure(Number.isInteger(foaling_year)&&foaling_year>=1980&&foaling_year<=1997,
+ ensure(Number.isInteger(foaling_year)&&foaling_year>=1980&&foaling_year<=1996,
   'HORSE_ATTRIBUTES','1999 racing-age birth year required');
  ensure(['COLT','FILLY','HORSE','MARE','GELDING'].includes(sex),
   'HORSE_ATTRIBUTES','Invalid racing sex');
@@ -30,9 +30,8 @@ export function model1999StartingHorseAttributes({horse_id,seed=19990101,foaling
  const turf=round(.26+.70*r('turf'));
  const potential=Math.min(99,Math.max(30,Math.round(43+53*r('ceiling'))));
  const age=1999-foaling_year;
- const currentDevelopment=age<=2?.54+.17*r('development'):
-  age===3?.68+.16*r('development'):.79+.13*r('development');
- const current=Math.min(potential,Math.max(25,Math.round(potential*currentDevelopment)));
+ const current=Math.min(potential,Math.max(25,Math.round(
+   potential*(age===3?.68+.16*r('development'):.79+.13*r('development')))));
  const rating={
   schema:HORSE_STARTING_ATTRIBUTES_SCHEMA,provenance:'MODELED_1999_GAMEPLAY_NOT_HISTORICAL',
   current_ability:current,potential_ability:potential,
