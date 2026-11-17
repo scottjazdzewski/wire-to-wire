@@ -744,7 +744,7 @@ export function validateRacingRuntime(state,world){
   for(const [id,p] of Object.entries(rt.generated_jockeys)){
    ensure(p?.id===id&&p.role==='jockey'&&p.provenance===
     'MODELED_FUTURE_JOCKEY_NOT_1999_OPENING_PERSON'&&
-    /^P-GAME-JOCKEY-\\d{4}-\\d{5}$/.test(id)&&
+    /^P-GAME-JOCKEY-\d{4}-\d{5}$/.test(id)&&
     typeof p.name==='string'&&p.name.length>3&&
     validDate(p.dateOfBirth)&&
     Boolean(trackFor(world,p.workplaceId))&&
