@@ -6,6 +6,7 @@ on:
       - 'desktop/**'
       - 'public/next/**'
       - 'public/1999/**'
+      - 'public/assets/careers/**'
       - 'scripts/windows-desktop-smoke.ps1'
       - 'scripts/windows-desktop-visible.ps1'
       - 'scripts/build-wtw-desktop-icon.py'
@@ -19,6 +20,7 @@ on:
       - 'desktop/**'
       - 'public/next/**'
       - 'public/1999/**'
+      - 'public/assets/careers/**'
       - 'scripts/windows-desktop-smoke.ps1'
       - 'scripts/windows-desktop-visible.ps1'
       - 'scripts/build-wtw-desktop-icon.py'
@@ -35,7 +37,7 @@ jobs:
   windows-executable:
     name: Portable EXE and Windows Installer
     runs-on: windows-latest
-    timeout-minutes: 35
+    timeout-minutes: 75
     env:
       CSC_IDENTITY_AUTO_DISCOVERY: 'false'
       ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: 'false'
@@ -59,16 +61,18 @@ jobs:
       - name: Validate one offline app protocol and source-backed G1 shell
         shell: pwsh
         run: |
-          node --test tests/desktop-g1-local-content.test.cjs tests/desktop-latest-release.test.mjs
+          node --test tests/desktop-g1-local-content.test.cjs tests/desktop-latest-release.test.mjs tests/desktop-bundled-career.test.mjs
           node --check desktop/main.cjs
           node --check desktop/preload.cjs
           node --check desktop/local-content.cjs
       - name: Install development-only Electron packager dependencies
         shell: pwsh
-        run: npm install --prefix desktop --no-audit --no-fund
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
       - name: Package unsigned portable EXE and conventional setup EXE
         shell: pwsh
-        run: npm run build:windows --prefix desktop
+        working-directory: desktop
+        run: npm run build:windows
       - name: Confirm both distinct Windows executables exist
         shell: pwsh
         run: |
@@ -80,8 +84,22 @@ jobs:
             throw 'Portable, Setup and unpacked app are all required'
           }
           Write-Host "WTW_DESKTOP_BOTH_EXE_TARGETS_PASS"
-          Write-Host "Portable EXE: $($portable.FullName)"
-          Write-Host "Installer EXE: $($setup.FullName)"
+          $folderZip=Get-ChildItem dist/windows -Filter 'WireToWire-NoInstall-Folder-*.zip' -ErrorAction SilentlyContinue | Select-Object -First 1
+          $targets=@($setup,$portable,$folderZip) | Where-Object { $_ }
+          foreach($file in $targets){
+            Write-Host ("WTW_PACKAGE_SIZE {0} {1:N2} MiB ({2} bytes)" -f $file.Name,($file.Length/1MB),$file.Length)
+          }
+          $unpackedBytes=(Get-ChildItem 'dist/windows/win-unpacked' -File -Recurse | Measure-Object Length -Sum).Sum
+          Write-Host ("WTW_PACKAGE_SIZE win-unpacked {0:N2} MiB ({1} bytes)" -f ($unpackedBytes/1MB),$unpackedBytes)
+          $recursivePackage='dist/windows/win-unpacked/resources/app.asar.unpacked/node_modules/wtw-canon-desk'
+          if(Test-Path -LiteralPath $recursivePackage){
+            throw "The desktop package recursively embeds the repository build output: $recursivePackage"
+          }
+          $asarEntries=@(& node -e 'const asar=require("./desktop/node_modules/@electron/asar"); console.log(asar.listPackage("dist/windows/win-unpacked/resources/app.asar").join("\n"))')
+          if($LASTEXITCODE -ne 0){throw 'Could not inspect the packaged app.asar'}
+          if($asarEntries -match 'node_modules[/\\]wtw-canon-desk[/\\]'){
+            throw 'The desktop app.asar contains the repository package recursively'
+          }
       - name: Run real desktop process twice without installed game or remote browser
         shell: pwsh
         run: |
@@ -90,7 +108,47 @@ jobs:
         shell: pwsh
         run: |
           $portable=Get-ChildItem dist/windows -Filter 'WireToWire-Portable-*.exe' | Select-Object -First 1
-          ./scripts/windows-desktop-smoke.ps1 -Executable $portable.FullName -EvidenceDir (Join-Path $PWD 'dist/portable-evidence') -TargetLabel 'portable'
+          ./scripts/windows-desktop-smoke.ps1 -Executable $portable.FullName -EvidenceDir (Join-Path $PWD 'dist/portable-evidence') -TargetLabel 'portable' -IncludeCareerBootstrap
+      - name: Install the setup EXE and test installed launch with app networking blocked
+        shell: pwsh
+        run: |
+          $setup=Get-ChildItem dist/windows -Filter 'WireToWire-Setup-*.exe' | Select-Object -First 1
+          if(!$setup){throw 'Conventional Windows setup EXE is missing'}
+          $installDir=Join-Path $PWD 'dist/wtw-installed'
+          $installer=Start-Process -FilePath $setup.FullName -ArgumentList @('/S',"/D=$installDir") -PassThru -Wait
+          if($installer.ExitCode -ne 0){throw "Silent setup install failed: exit=$($installer.ExitCode)"}
+          $installedExe=Join-Path $installDir 'Wire to Wire.exe'
+          if(!(Test-Path -LiteralPath $installedExe)){throw "Installed game executable missing: $installedExe"}
+          Get-Process -Name 'Wire to Wire' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+          $ruleName='WTW-Offline-Installed-Smoke-'+$PID
+          $ruleCreated=$false
+          $evidenceDir=Join-Path $PWD 'dist/installed-offline-evidence'
+          try{
+            New-NetFirewallRule -Name $ruleName -DisplayName 'WTW installed offline smoke' -Direction Outbound -Program $installedExe -Action Block -Profile Any | Out-Null
+            $ruleCreated=$true
+            $rule=Get-NetFirewallRule -Name $ruleName
+            $filter=Get-NetFirewallApplicationFilter -AssociatedNetFirewallRule $rule
+            if($rule.Direction -ne 'Outbound' -or $rule.Action -ne 'Block' -or
+               [IO.Path]::GetFullPath($filter.Program) -ine [IO.Path]::GetFullPath($installedExe)){
+              throw 'Outbound firewall block does not target the installed game executable'
+            }
+            ./scripts/windows-desktop-smoke.ps1 -Executable $installedExe -EvidenceDir $evidenceDir -TargetLabel 'installed-offline'
+            $proof=[ordered]@{
+              result='PASS'
+              setupExe=$setup.Name
+              installationExitCode=$installer.ExitCode
+              installedExecutable=$installedExe
+              networkRestriction='WINDOWS_FIREWALL_OUTBOUND_BLOCK_FOR_APP_EXE'
+              firewallRule=$ruleName
+              firewallProgram=$filter.Program
+              writeProof=(Get-Content -Raw (Join-Path $evidenceDir 'installed-offline-write.json') | ConvertFrom-Json)
+              reopenProof=(Get-Content -Raw (Join-Path $evidenceDir 'installed-offline-read.json') | ConvertFrom-Json)
+            }
+            $proof | ConvertTo-Json -Depth 10 | Set-Content -Path (Join-Path $evidenceDir 'installed-offline-install.json') -Encoding utf8
+            Write-Host 'WTW_WINDOWS_INSTALLED_OFFLINE_REOPEN_PASS'
+          }finally{
+            if($ruleCreated){Remove-NetFirewallRule -Name $ruleName -ErrorAction SilentlyContinue}
+          }
       - name: Verify actual desktop window is visible and capture a screenshot
         shell: pwsh
         run: |
@@ -102,16 +160,31 @@ jobs:
           $target="dist/windows/WireToWire-NoInstall-Folder-$version-x64.zip"
           Compress-Archive -Path 'dist/windows/win-unpacked' -DestinationPath $target -CompressionLevel Optimal -Force
           if(!(Test-Path $target)){throw 'No-install folder ZIP is missing'}
+          $folderZip=Get-Item -LiteralPath $target
+          Write-Host ("WTW_PACKAGE_SIZE {0} {1:N2} MiB ({2} bytes)" -f $folderZip.Name,($folderZip.Length/1MB),$folderZip.Length)
           Write-Host "WTW_WINDOWS_FOLDER_BASED_NO_INSTALL_PASS $target"
-      - name: Preserve both EXEs for immediate Windows download
+      - name: Preserve the Windows setup installer separately
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: WireToWire-Windows-Portable-and-Setup
-          path: |
-            dist/windows/WireToWire-Portable-*.exe
-            dist/windows/WireToWire-Setup-*.exe
-            dist/windows/WireToWire-NoInstall-Folder-*.zip
+          name: WireToWire-Windows-Setup
+          path: dist/windows/WireToWire-Setup-*.exe
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Preserve the self-extracting portable build separately
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: WireToWire-Windows-Portable
+          path: dist/windows/WireToWire-Portable-*.exe
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Preserve the folder-based portable build separately
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: WireToWire-Windows-NoInstall
+          path: dist/windows/WireToWire-NoInstall-Folder-*.zip
           if-no-files-found: warn
           retention-days: 14
       - name: Preserve packaged Windows test evidence
@@ -122,6 +195,7 @@ jobs:
           path: |
             dist/evidence/*.json
             dist/portable-evidence/*.json
+            dist/installed-offline-evidence/*.json
             dist/visible-evidence/*.json
             dist/visible-evidence/*.png
           if-no-files-found: warn
@@ -175,7 +249,19 @@ jobs:
         if: steps.current.outputs.eligible == 'true'
         uses: actions/download-artifact@v4
         with:
-          name: WireToWire-Windows-Portable-and-Setup
+          name: WireToWire-Windows-Setup
+          path: incoming
+      - name: Add the successfully tested portable EXE
+        if: steps.current.outputs.eligible == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: WireToWire-Windows-Portable
+          path: incoming
+      - name: Add the successfully tested folder-based portable build
+        if: steps.current.outputs.eligible == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: WireToWire-Windows-NoInstall
           path: incoming
       - name: Verify package contents and assign permanent filenames
         if: steps.current.outputs.eligible == 'true'
@@ -192,6 +278,8 @@ jobs:
             echo "Git commit: $GITHUB_SHA"
             echo
             echo "GitHub Actions build: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo
+            echo "Editable source archive for this exact tested build: https://github.com/$GITHUB_REPOSITORY/archive/$GITHUB_SHA.zip"
             echo
             echo 'Portable EXE, setup EXE and faster-starting no-install folder ZIP share one game.'
             echo

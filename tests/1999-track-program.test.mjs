@@ -1,19 +1,31 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {openingWorld1999} from '../src/1999/opening-world.v1.mjs';
-import {TRACK_PROGRAM_1999,trackProgram1999,trackMeetOpen1999,trackCardSurface1999}
+import {TRACK_PROGRAM_1999,trackProgram1999,trackMeetOpen1999,trackCardSurface1999,
+ trackPhysicalVenueId1999}
  from '../public/next/1999-track-program.mjs';
+import {APPROVED_NEW_TRACK_PROGRAMS_1999,ARCHIVED_TRACK_IDS_1999}
+ from '../public/next/approved-track-expansion-1999.mjs';
 import {applyVerifiedStakeDay1999} from '../public/next/1999-verified-stakes-dates.mjs';
 
-test('every one of the 118 domestic/Cuban canonical track IDs has one 1999 program',()=>{
+test('all 118 protected source IDs plus six owner-approved additions have programs',()=>{
  const ids=openingWorld1999.tracks.map(t=>t.id);
  assert.equal(ids.length,118);
  assert.equal(new Set(ids).size,118);
- assert.deepEqual(Object.keys(TRACK_PROGRAM_1999).sort(),ids.slice().sort());
+ assert.equal(Object.keys(TRACK_PROGRAM_1999).length,124);
+ assert.deepEqual(APPROVED_NEW_TRACK_PROGRAMS_1999.map(t=>t.id),
+  ['T-0119','T-0120','T-0121','T-0122','T-0123','T-0124']);
+ assert.ok(ids.every(id=>TRACK_PROGRAM_1999[id]));
+ assert.deepEqual(Object.keys(TRACK_PROGRAM_1999).sort(),
+  [...ids,...APPROVED_NEW_TRACK_PROGRAMS_1999.map(t=>t.id)].sort());
+ assert.equal(trackProgram1999('T-0061').name,'Comanche Raceway');
+ assert.equal(trackProgram1999('T-0061').sourceName,'Sunland Park');
+ assert.equal(trackProgram1999('T-0075').name,'San Mateo County Fair');
+ assert.equal(trackPhysicalVenueId1999('T-0075'),'T-0032');
  for(const t of openingWorld1999.tracks){
   const program=trackProgram1999(t.id);
   assert.equal(program.id,t.id);
-  assert.equal(program.name,t.name);
+  assert.equal(program.sourceName||program.name,t.name);
   assert.ok(program.basis);
   assert.ok(program.surfaces);
  }
@@ -36,11 +48,12 @@ test('all 93 canonical stakes remain ID-linked inside their host 1999 meet windo
  assert.equal(Object.values(TRACK_PROGRAM_1999).reduce((a,p)=>a+p.stakesIds.length,0),93);
 });
 
-test('115 North American tracks remain playable; three user-retired sites retain history',()=>{
+test('107 tracks race in the 1999 world; 17 history-only identities remain accessible',()=>{
  const northAmerican=Object.values(TRACK_PROGRAM_1999).filter(x=>x.id.startsWith('T-'));
- assert.equal(northAmerican.length,118);
- assert.equal(northAmerican.filter(x=>x.trackOperating==='OPEN_1999').length,115);
- for(const id of ['T-0042','T-0112','T-0115']){
+ assert.equal(northAmerican.length,124);
+ assert.equal(northAmerican.filter(x=>x.trackOperating==='OPEN_1999').length,107);
+ assert.equal(northAmerican.filter(x=>x.trackOperating==='HISTORICAL_ONLY').length,17);
+ for(const id of ['T-0042','T-0112','T-0115',...ARCHIVED_TRACK_IDS_1999]){
   const retired=trackProgram1999(id);
   assert.equal(retired.trackOperating,'HISTORICAL_ONLY');
   assert.equal(retired.playableIn1999,false);
@@ -48,10 +61,10 @@ test('115 North American tracks remain playable; three user-retired sites retain
   assert.equal(trackCardSurface1999(id,0),null);
  }
  const revived=northAmerican.filter(x=>x.basis==='WTW_ALTERNATE_HISTORY_CONTINUED_OPERATION'&&x.playableIn1999!==false);
- assert.equal(revived.length,14);
+ assert.equal(revived.length,2);
  for(const p of revived){
-  assert.ok(p.meets.length>=2,p.name+' missing revived meet');
-  assert.ok(p.dayPattern.length>=4,p.name+' missing race-day pattern');
+  assert.ok(p.meets.length>=1,p.name+' missing modeled meet');
+  assert.ok(p.dayPattern.length>=3,p.name+' missing race-day pattern');
   assert.ok(['Dirt','Dirt · Turf','Turf'].includes(p.surfaces),p.name+' unsupported course');
   assert.equal(p.trackOperating,'OPEN_1999');
   assert.ok(p.meets.some(([a,b])=>{for(let d=Date.parse('1999-'+a+'T12:00:00Z'),end=Date.parse('1999-'+b+'T12:00:00Z');d<=end;d+=86400000){if(trackMeetOpen1999(p.id,new Date(d).toISOString().slice(0,10)))return true;}return false;}),p.name+' no racing dates');
@@ -81,7 +94,7 @@ test('source surface restrictions carry into generated race conditions',()=>{
 test('real state calendars, established game windows and fictitious meets remain distinct',()=>{
  assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='VERIFIED_1999_CALENDAR').length,25);
  assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='APPROVED_WTW_1999_GAME_CALENDAR').length,1);
- assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='WTW_FICTIONAL_GAME_MODELED').length,8);
+ assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='WTW_FICTIONAL_GAME_MODELED').length,13);
  assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='PUBLISHED_1999_SARATOGA_PROPOSAL').length,1);
  assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.basis==='INTERNATIONAL_GAME_MODELED').length,0);
  assert.equal(Object.values(TRACK_PROGRAM_1999).filter(p=>p.trackOperating==='ARCHIVE_ONLY_1999').length,0);

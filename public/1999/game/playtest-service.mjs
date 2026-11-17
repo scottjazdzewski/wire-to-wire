@@ -229,6 +229,11 @@ export async function bootBrowserPlaytest1999(){
  if(!prior)await transact(db,'readwrite',engine.getSave());
  globalThis.__WTW_1999_PLAYTEST_LOADING__='INITIAL_SAVE_COMMITTED';
  const listeners=new Set();let busy=Promise.resolve();
+ // Keep the published career at the LAST DURABLY COMMITTED IndexedDB
+ // revision. A UI/bot reading state during a rider payment transaction must
+ // not see a mount that would disappear on immediate browser reload.
+ const candidateCareer=()=>createPlaytestCareer({
+  directory,trainers,jockeys,cohort,save:engine.getSave()});
  const sync=()=>{
   const v=engine.view();
   for(const listener of listeners)listener(v);
@@ -250,38 +255,30 @@ export async function bootBrowserPlaytest1999(){
   onChange(fn){listeners.add(fn);return()=>listeners.delete(fn)},
   submit(type,payload,actor='player'){
    const operation=busy.then(async()=>{
-    // Persist first; publish state only if the transaction succeeds.
-    const saved=engine.getSave();
-    try{const out=engine.command(type,payload,{actor});await transact(db,'readwrite',engine.getSave());
-     sync();return out;
-    }catch(error){
-     engine=await createPlaytestCareer({directory,trainers,jockeys,cohort,save:saved});
-     throw error;
-    }
+    const next=await candidateCareer(),out=next.command(type,payload,{actor});
+    await transact(db,'readwrite',next.getSave());
+    engine=next;sync();return out;
    });
    busy=operation.catch(()=>{});
    return operation;
   },
   advanceTo(date){
-   busy=busy.then(async()=>{
-    const saved=engine.getSave();
-    try{const result=engine.advanceTo(date);await transact(db,'readwrite',engine.getSave());
-     sync();return result;
-    }catch(error){
-     engine=await createPlaytestCareer({directory,trainers,jockeys,cohort,save:saved});
-     throw error;
-    }
+   const operation=busy.then(async()=>{
+    const next=await candidateCareer(),result=next.advanceTo(date);
+    await transact(db,'readwrite',next.getSave());
+    engine=next;sync();return result;
    });
-   return busy;
+   busy=operation.catch(()=>{});
+   return operation;
   },
   setTrainingPlan(horseId,plan){
-   busy=busy.then(async()=>{
-    const saved=engine.getSave();
-    try{const result=engine.setTrainingPlan(horseId,plan);
-     await transact(db,'readwrite',engine.getSave());sync();return result;
-    }catch(error){engine=await createPlaytestCareer({directory,trainers,jockeys,cohort,save:saved});throw error}
+   const operation=busy.then(async()=>{
+    const next=await candidateCareer(),result=next.setTrainingPlan(horseId,plan);
+    await transact(db,'readwrite',next.getSave());
+    engine=next;sync();return result;
    });
-   return busy;
+   busy=operation.catch(()=>{});
+   return operation;
   }
  };
  globalThis.__WTW_1999_PLAYTEST__=api;

@@ -100,6 +100,56 @@ try {
   }
   throw Error(where+': game screen did not open; '+JSON.stringify(latest));
  }
+
+ // Shared legibility / geometry contract at the actual 1280x800 desktop
+ // viewport for every registered department VIEW, not a screenshot guess.
+ async function checkLaptopLayout(where){
+  await command('Emulation.setDeviceMetricsOverride',{
+   width:1280,height:800,deviceScaleFactor:1,mobile:false
+  });
+  try{
+   const box=await evaluate(`(()=>{
+    const root=document.getElementById('wtwNextgen');
+    const shell=root?.querySelector('.ng-manager-shell');
+    const stage=root?.querySelector('.ng-manager-stage');
+    const vars=shell?getComputedStyle(shell):null;
+    const rect=x=>x?.getBoundingClientRect();
+    const r=rect(root),sc=rect(shell),st=rect(stage);
+    const picker=root?.querySelector('select[data-ng-select="manager-screen"],select[data-ng-select="department-tab"]');
+    const pickerLabel=picker?.closest('label'),pickerRect=rect(picker),pickerLabelRect=rect(pickerLabel);
+    return {
+     width:document.documentElement.clientWidth,
+     overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
+     date:root?.querySelector('.ng-global-date strong')?.textContent?.trim()||'',
+     shellVisible:!!sc&&sc.left>=-2&&sc.right<=innerWidth+2&&sc.width>500,
+     stageVisible:!!st&&st.left>=0&&st.right<=innerWidth+2&&st.width>600,
+     listText:parseFloat(vars?.getPropertyValue('--wtw-ui-list-text')||0),
+     listName:parseFloat(vars?.getPropertyValue('--wtw-ui-list-name')||0),
+     listMeta:parseFloat(vars?.getPropertyValue('--wtw-ui-list-meta')||0),
+     rail:!!root?.querySelector('.ng-game-rail'),
+     header:!!root?.querySelector('.ng-global'),
+     picker:pickerLabel?{
+      display:getComputedStyle(pickerLabel).display,
+      height:pickerLabelRect?.height||0,
+      selectHeight:pickerRect?.height||0
+     }:null
+    };
+   })()`);
+   assert.equal(box.width,1280,where+' laptop viewport was not applied');
+   assert.ok(box.overflow<=3,where+' has document-level horizontal overflow: '+JSON.stringify(box));
+   assert.ok(box.shellVisible&&box.stageVisible&&box.rail&&box.header,
+    where+' cut off the shared manager navigation or work area: '+JSON.stringify(box));
+   assert.ok(box.listText>=10&&box.listName>=10.5&&box.listMeta>=9,
+    where+' uses unreadably small shared row typography: '+JSON.stringify(box));
+   assert.equal(box.date,baseline.date,where+' laptop reflow advanced game time');
+   if(box.picker)assert.ok(
+    ['flex','inline-flex'].includes(box.picker.display)&&
+    box.picker.height<=box.picker.selectHeight+8,
+    where+' VIEW label/dropdown stacked or mismatched: '+JSON.stringify(box.picker));
+  }finally{
+   await command('Emulation.clearDeviceMetricsOverride');
+  }
+ }
  const baseline=await ready(null,null,'Initial Office');
  assert.ok(baseline.rail&&baseline.header&&baseline.hiddenOffice,'Initial game shell incomplete: '+JSON.stringify(baseline));
  assert.equal(baseline.numberOfRoots,1);
@@ -133,6 +183,7 @@ try {
    assert.equal(status.selected,page,'Wrong active VIEW state: '+section+' / '+page);
    assert.deepEqual(status.options,Array.from(pages),'VIEW options inconsistent on '+section+' / '+page);
    assert.equal(status.date,baseline.date,'Browsing a screen advanced the game clock');
+   await checkLaptopLayout(section+' / '+page);
    if(status.roster){
     assert.ok(status.sortable>=2,'Unsortable roster: '+section+' / '+page);
     assert.ok(status.scrollable,'Unreachable roster scroll: '+section+' / '+page);
@@ -266,9 +317,50 @@ try {
    const board=await evaluate("!!document.querySelector('#wtwNextgen .ng-board')");
    assert.ok(board,'Approved interactive Office dashboard is missing');
   }
+  await checkLaptopLayout('Office / '+page);
   pageCount++;
  }
  console.log('WTW_SCREEN_FAMILY_PASS Office '+tabmap.Office.length+' views');
+
+ // Modern route pages own their INTERNAL columns. The shared route shell
+ // must stay full-width at 1280px and at the 1024px breakpoint.
+ for(const item of [
+  {name:'Organization Overview',ui:'Organization Overview',selector:'.ng-org-overview'},
+  {name:'Due Actions',ui:'Due Actions',selector:'.ng-due-overview'},
+  {name:'Race File',ui:'RaceFile:layout-audit-missing-record',selector:'.ng-1999-race-file'},
+  {name:'Search',ui:'Search',selector:'.ng-search-page'},
+  {name:'World Record',ui:'WorldRecord:track:T-0002',selector:'.ng-profile-view'}
+ ]){
+  await command('Page.navigate',{url:url+'?ui='+encodeURIComponent(item.ui)});
+  for(const width of [1280,1024]){
+   await command('Emulation.setDeviceMetricsOverride',{
+    width,height:800,deviceScaleFactor:1,mobile:false
+   });
+   try{
+    let box=null;
+    for(let attempt=0;attempt<90;attempt++){
+     box=await evaluate(`(()=>{
+      const root=document.getElementById('wtwNextgen');
+      const screen=root?.querySelector(${JSON.stringify(item.selector)});
+      const host=screen?.closest('.ng-routeinner');
+      const parent=host?.getBoundingClientRect(),child=screen?.getBoundingClientRect();
+      return {found:!!screen,ratio:parent?.width?child.width/parent.width:0,
+       parentWidth:parent?.width||0,screenWidth:child?.width||0,
+       gameDate:root?.querySelector('.ng-global-date strong')?.textContent?.trim()||''};
+     })()`);
+     if(box?.found&&box.parentWidth>300)break;
+     await delay(100);
+    }
+    assert.ok(box?.found&&box.parentWidth>300,item.name+' route did not render at '+width+': '+JSON.stringify(box));
+    assert.ok(box.ratio>.82,
+     item.name+' is trapped in a half-width route grid at '+width+': '+JSON.stringify(box));
+    assert.equal(box.gameDate,baseline.date,item.name+' navigation advanced the game date');
+    console.log('WTW_FULL_WIDTH_ROUTE_PASS '+item.name+' '+width+'px '+Math.round(box.ratio*100)+'%');
+   }finally{
+    await command('Emulation.clearDeviceMetricsOverride');
+   }
+  }
+ }
 
  // Check REAL information-panel sorting on all three shared manager families.
  // These are dense, source-linked record lists, not ornamental unclickable headers.
@@ -487,7 +579,14 @@ try {
   const history=await profileReady(item.family+' history','HISTORY');
   assert.equal(history.history,'page',item.family+' history is not active after clicking');
   assert.equal(history.name,original.name,'Identity changed when opening '+item.family+' history');
-  assert.equal(history.identity,original.identity);
+  // Theme/logo identity hydrates asynchronously. A blank initial attribute may
+  // become the approved source ID; it must never switch to another ID.
+  const checkIdentity=(snapshot,label)=>{
+   if(snapshot.identity)assert.equal(snapshot.identity,item.id,
+    label+' displayed a different organization/person/track logo identity');
+  };
+  checkIdentity(original,'Initial '+item.family);
+  checkIdentity(history,'History '+item.family);
   assert.equal(history.sourceRecord,original.sourceRecord);
   assert.equal(history.date,baseline.date);
 
@@ -502,7 +601,7 @@ try {
   const record=await profileReady(item.family+' '+deeper,deeper.toUpperCase());
   assert.equal(record.selected,deeper,'MORE RECORDS selected the wrong view in '+item.family);
   assert.equal(record.name,original.name);
-  assert.equal(record.identity,original.identity);
+  checkIdentity(record,'record '+item.family);
   assert.equal(record.sourceRecord,original.sourceRecord);
   assert.equal(record.date,baseline.date);
   const returnHome=await evaluate(`(()=>{
@@ -512,7 +611,7 @@ try {
   assert.equal(returnHome,true,'OVERVIEW control missing after '+deeper+' in '+item.family);
   const restored=await profileReady(item.family+' restored overview','OVERVIEW');
   assert.equal(restored.overview,'page');
-  assert.equal(restored.identity,original.identity);
+  checkIdentity(restored,'restored '+item.family);
   assert.equal(restored.sourceRecord,original.sourceRecord);
   assert.equal(restored.name,original.name);
   assert.equal(restored.date,baseline.date);
@@ -520,6 +619,115 @@ try {
    'Returning to track overview lost its approved full stadium layout');
   console.log('WTW_PROFILE_CONTROLS_PASS '+item.family+' '+original.name+' '+deeper+' entity-arrows:'+firstNeighbor);
  }
+
+
+ // Source-backed Office files: selecting a row previews it in place, while
+ // only OPEN COMPLETE FILE enters the authoritative Today decision screen.
+ const openInbox=await evaluate(`(()=>{
+  const b=document.querySelector('#wtwNextgen .ng-game-rail [data-ng="custom"][data-val="Messages"]');
+  if(!b)return false;b.click();return true;
+ })()`);
+ assert.equal(openInbox,true,'Office Inbox rail action missing');
+ assert.equal((await ready('Office',null,'Office Inbox')).selected,'Messages');
+ const officeInitial=await evaluate(`(()=>{
+  const r=document.getElementById('wtwNextgen');
+  const rows=[...r.querySelectorAll('.ng-manager-rows [data-ng="office-focus"]')];
+  return {rows:rows.length,first:rows[0]?.dataset.val,second:rows[1]?.dataset.val,
+   selected:rows.filter(x=>x.getAttribute('aria-pressed')==='true').map(x=>x.dataset.val),
+   date:r.querySelector('.ng-global-date strong')?.textContent?.trim()};
+ })()`);
+ assert.ok(officeInitial.rows>=3&&officeInitial.second,'Inbox source files absent');
+ assert.equal(officeInitial.selected.length,1,'Inbox has no unique selected file');
+ const focusOffice=await evaluate(`(()=>{
+  const b=[...document.querySelectorAll('#wtwNextgen .ng-manager-rows [data-ng="office-focus"]')][1];
+  if(!b)return false;b.click();return true;
+ })()`);
+ assert.equal(focusOffice,true);
+ assert.equal((await ready('Office',null,'Office preview after selection')).selected,'Messages');
+ const preview=await evaluate(`(()=>{
+  const r=document.getElementById('wtwNextgen'),app=window.__WTW_NEXT__.app;
+  return {caseId:app.activeCase,
+   selected:[...r.querySelectorAll('.ng-manager-rows [data-ng="office-focus"][aria-pressed="true"]')].map(b=>b.dataset.val),
+   title:r.querySelector('.ng-office-file-preview h3')?.textContent?.trim(),
+   summary:r.querySelector('.ng-office-file-preview p')?.textContent?.trim(),
+   facts:r.querySelectorAll('.ng-office-file-facts dd').length,
+   open:r.querySelector('.ng-office-open')?.dataset.val,
+   date:r.querySelector('.ng-global-date strong')?.textContent?.trim()};
+ })()`);
+ assert.equal(preview.caseId,officeInitial.second,'Preview selection failed');
+ assert.deepEqual(preview.selected,[officeInitial.second]);
+ assert.equal(preview.open,officeInitial.second,'Full file button points to wrong case');
+ assert.ok(preview.title&&preview.summary&&preview.facts>=2,'Source-backed case preview missing facts');
+ assert.equal(preview.date,baseline.date,'Previewing an Office file advanced game date');
+ const decisionSelect=await evaluate(`(()=>{
+  const sel=document.querySelector('#wtwNextgen select[data-ng-select="manager-screen"]');
+  if(!sel)return false;
+  sel.value='Decisions';sel.dispatchEvent(new Event('change',{bubbles:true}));return true;
+ })()`);
+ assert.equal(decisionSelect,true,'Could not choose Decisions via standard VIEW');
+ assert.equal((await ready('Office',null,'Office Decisions')).selected,'Decisions');
+ const actions=await evaluate(`(()=>{
+  const r=document.getElementById('wtwNextgen');
+  return {statuses:[...r.querySelectorAll('.ng-manager-rows [data-ng="office-focus"]')].map(x=>x.querySelector('.ng-manager-row-type')?.textContent?.trim()),
+   preview:!!r.querySelector('.ng-office-file-preview'),
+   date:r.querySelector('.ng-global-date strong')?.textContent?.trim()};
+ })()`);
+ assert.ok(actions.statuses.length>0&&actions.statuses.length<officeInitial.rows,'Decisions still duplicates Inbox');
+ assert.ok(actions.statuses.every(x=>x==='ACTION'),'Informational messages leaked into Decisions');
+ assert.ok(actions.preview&&actions.date===baseline.date);
+ const fileOpened=await evaluate(`(()=>{
+  const b=document.querySelector('#wtwNextgen .ng-office-open');
+  if(!b)return false;b.click();return true;
+ })()`);
+ assert.equal(fileOpened,true,'Open complete Office file control missing');
+ await ready('Office','Office','Office complete case');
+ assert.equal((await view()).date,baseline.date,'Opening full Office file advanced career');
+ console.log('WTW_OFFICE_PREVIEW_PASS '+JSON.stringify({inbox:officeInitial.rows,actions:actions.statuses.length,date:baseline.date}));
+
+
+ // Career uses the same source-backed Office VIEW, not a separate renderer.
+ const openCareerMenu=await evaluate(`(()=>{
+  const b=document.querySelector('#wtwNextgen .ng-game-rail [data-ng="custom"][data-val="Messages"]');
+  if(!b)return false;b.click();return true;
+ })()`);
+ assert.equal(openCareerMenu,true,'Career navigation requires the existing Office rail');
+ assert.equal((await ready('Office',null,'Career starting Inbox')).selected,'Messages');
+ const switchCareer=await evaluate(`(()=>{
+  const select=document.querySelector('#wtwNextgen select[data-ng-select="manager-screen"]');
+  if(!select)return false;select.value='Career';
+  select.dispatchEvent(new Event('change',{bubbles:true}));return true;
+ })()`);
+ assert.equal(switchCareer,true,'Career VIEW selector is missing');
+ assert.equal((await ready('Office',null,'Career manager dossier')).selected,'Career');
+ const career=await evaluate(`(()=>{
+  const root=document.getElementById('wtwNextgen');
+  return {identity:root.querySelector('.ng-career-identity h3')?.textContent?.trim(),
+   facts:root.querySelectorAll('.ng-career-fact').length,
+   open:root.querySelectorAll('.ng-career-priority[data-ng="case"]').length,
+   followups:root.querySelectorAll('.ng-career-followups [data-ng="followup"]').length,
+   logo:!!root.querySelector('.ng-career-identity .ng-org-mark'),
+   saves:!!root.querySelector('.ng-manager-career [data-ng="commercial-career-open"]'),
+   date:root.querySelector('.ng-global-date strong')?.textContent?.trim(),
+   overview:!!root.querySelector('.ng-manager-career .ng-career-facts')};
+ })()`);
+ assert.ok(career.identity&&career.facts===6&&career.logo&&career.saves&&career.overview,
+  'Career dossier lacks real recorded identity / facts / save controls');
+ assert.ok(career.open>0,'Career omitted current actionable Office cases');
+ assert.equal(career.date,baseline.date,'Opening Career changed game date');
+ const prioritize=await evaluate(`(()=>{
+  const row=document.querySelector('#wtwNextgen .ng-career-priority[data-ng="case"]');
+  if(!row)return false;row.click();return true;
+ })()`);
+ assert.equal(prioritize,true);
+ await ready('Office','Office','Career priority case action');
+ assert.equal((await view()).date,baseline.date,'Career priority click changed game date');
+ const titleFacts=await evaluate(`(()=>{
+  return [...document.querySelectorAll('#wtwNextgen .ng-main .ng-fact')].map(e=>({
+   title:e.getAttribute('title')||'',label:e.getAttribute('aria-label')||''}));
+ })()`);
+ assert.equal(titleFacts.length,3,'Today desk risk/manager facts missing');
+ assert.ok(titleFacts.every(f=>f.title.includes(': ')&&f.title===f.label),'Today facts truncated without full-source title');
+ console.log('WTW_CAREER_DOSSIER_PASS '+JSON.stringify({identity:career.identity,facts:career.facts,priorities:career.open,date:career.date}));
 
  // Global Search is a full-height source-linked directory. Verify the actual
  // controls update the row order, do not mutate the career, and scroll with

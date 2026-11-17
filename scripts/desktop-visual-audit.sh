@@ -35,6 +35,7 @@ capture(){
 }
 capture racing-office '' 'ng-board'
 capture stable-roster '?ui=Stable%20%E2%80%94%20Overview' 'ng-stable-roster-v2'
+capture stable-horses '?ui=Stable%20%E2%80%94%20Horses' 'ng-stable-roster-v2'
 capture world-directory '?ui=World%20%E2%80%94%20Overview' 'ng-manager-screen'
 capture world-tracks '?ui=World%20%E2%80%94%20Tracks' 'ng-dept-roster'
 capture world-meets '?ui=World%20%E2%80%94%20Meets' 'ng-dept-roster'
@@ -78,8 +79,33 @@ fi
 capture naming-desk '?ui=Stable%20%E2%80%94%20Naming%20Desk' 'ng-naming-desk'
 capture office-messages '?ui=Messages' 'ng-manager-message-inbox'
 capture office-decisions '?ui=Decisions' 'ng-manager-message-inbox'
+# Readability at the supported laptop desktop width; never resize the
+# ordinary management shell or install another UI presentation.
+"$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+ --force-device-scale-factor=1 --window-size=1280,800 --virtual-time-budget=4000 \
+ --screenshot="visual-audit/screenshots/office-messages-1280.png" \
+ 'http://127.0.0.1:8765/next/?ui=Messages' >/tmp/wtw-office-inbox1280.log 2>&1
+"$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+ --force-device-scale-factor=1 --window-size=1280,800 --virtual-time-budget=4000 \
+ --screenshot="visual-audit/screenshots/office-decisions-1280.png" \
+ 'http://127.0.0.1:8765/next/?ui=Decisions' >/tmp/wtw-office-decisions1280.log 2>&1
+test -s visual-audit/screenshots/office-messages-1280.png
+test -s visual-audit/screenshots/office-decisions-1280.png
 
 capture office-career '?ui=Career' 'ng-manager-career'
+# Career is a major desktop management desk: verify the laptop viewport too.
+"$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+ --force-device-scale-factor=1 --window-size=1280,800 --virtual-time-budget=4000 \
+ --screenshot="visual-audit/screenshots/office-career-1280.png" \
+ 'http://127.0.0.1:8765/next/?ui=Career' >/tmp/wtw-career1280.log 2>&1
+test -s visual-audit/screenshots/office-career-1280.png
+if ! grep -q 'ng-career-identity' visual-audit/dom/office-career.html; then
+ echo 'Career identity dossier missing from actual browser render' >&2; exit 1
+fi
+if ! grep -q 'ng-career-priority' visual-audit/dom/office-career.html; then
+ echo 'Career has no source-backed active management priorities' >&2; exit 1
+fi
+
 capture stable-training '?ui=Stable%20%E2%80%94%20Training' 'ng-training-desk'
 # Real content checks: a generic directory is no longer acceptable on these routes.
 if grep -q 'CONNECTED WORLD RECORDS' visual-audit/dom/office-messages.html ||
@@ -219,6 +245,17 @@ frame.onload=()=>setTimeout(()=>{
    logoSrc:d.querySelector('.ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo img')?.currentSrc||'',
    logoMixBlend:d.querySelector('.ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo img')?
     win.getComputedStyle(d.querySelector('.ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo img')).mixBlendMode:'',
+   logoAlphaShare:(()=>{
+    const image=d.querySelector('.ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo img');
+    if(!image?.complete||!image.naturalWidth||!image.naturalHeight)return 0;
+    try{
+     const canvas=d.createElement('canvas');canvas.width=64;canvas.height=48;
+     const ctx=canvas.getContext('2d',{willReadFrequently:true});if(!ctx)return 0;
+     ctx.drawImage(image,0,0,64,48);const pixels=ctx.getImageData(0,0,64,48).data;
+     let transparent=0;for(let i=3;i<pixels.length;i+=4)if(pixels[i]<245)transparent++;
+     return transparent/(pixels.length/4);
+    }catch{return 0}
+   })(),
    logoMatteFlag:!!d.querySelector('.ng-route-profile .ng-profile-source-photo.wtw-hero-white-matte'),
    logoTransparentFlag:!!d.querySelector('.ng-route-profile .ng-profile-source-photo.wtw-hero-transparent'),
    profileBackdrop:d.querySelector('.ng-route-profile .ng-profile-intro')?
@@ -309,11 +346,14 @@ for name,identity in expected.items():
  assert re.fullmatch(r'#[0-9A-Fa-f]{6}',data['identityBase']),(name,'Invalid pixel-derived color')
  assert data['logoSrc'],(name,'Logo image absent from approved profile')
  if name=='gulfstream':
-  # Actual legacy wordmark has an opaque white source canvas. A raw source
-  # with normal blending is a white rectangle: this IS a screenshot failure.
-  cleaned=data['logoTransparentFlag'] and (
+  # Accept either the locally generated alpha derivative or the exact approved
+  # track logo once the transparent upload has replaced the old white-matte art.
+  # The latter is sampled directly so an opaque fallback cannot pass by path.
+  derived=data['logoTransparentFlag'] and (
    data['logoSrc'].startswith('blob:') or data['logoSrc'].startswith('data:image/'))
-  assert cleaned,(name,'Gulfstream must display an actual alpha-matte derivative; blending a white rectangle is not visual acceptance',data)
+  uploaded_alpha=(data['logoSrc'].split('?')[0].endswith('/assets/places/track-logos/T-0017.webp') and
+   data['logoAlphaShare']>=0.01)
+  assert derived or uploaded_alpha,(name,'Gulfstream logo has neither a verified transparent derivative nor visible alpha in its approved track asset',data)
   assert data['logoMixBlend'] in ('normal',''),(name,'Temporary blend still active after logo conversion',data)
  assert 'gradient' in data['profileBackdrop'],(name,'Profile atmosphere missing')
  palette_rows[name]=data['identityBase']

@@ -75,8 +75,8 @@ export function generatePeopleRuntime({world,catalog,worldSeed=null}={}){
   const ref='WTW-GAME-MODEL:PERSON-V1:'+world.authority.snapshot_id+':'+person.id;
   const reputation=makeReputationBaseline({catalog,scores,date:world.start_date,
     circuit_id:circuitId,source_kind:'GENERATED_GAME',source_refs:[ref]});
-  out[person.id]={roles,latent,reputation,observations:[],relationships:{},
-    origin:{kind:'GENERATED_GAME',version:'WTW-PEOPLE-V1',world_snapshot_id:world.authority.snapshot_id}};
+  out[person.id]=strictJSON({roles,latent,reputation,observations:[],relationships:{},
+    origin:{kind:'GENERATED_GAME',version:'WTW-PEOPLE-V1',world_snapshot_id:world.authority.snapshot_id}});
  }
- return strictJSON(out);
+ return out;
 }

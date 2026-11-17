@@ -4,6 +4,12 @@ const path=require('node:path');
 const fs=require('node:fs');
 const {bundledFile,htmlContentSecurityPolicy}=require('../desktop/local-content.cjs');
 const game=path.join(__dirname,'..','public');
+test('background full-world builder is bundled under the allowed worker origin',()=>{
+ const worker=path.join(game,'next','1999-industry-bootstrap-worker.mjs');
+ assert.ok(fs.existsSync(worker),worker);
+ assert.match(fs.readFileSync(worker,'utf8'),/CREATE_1999_INDUSTRY/);
+ assert.match(htmlContentSecurityPolicy,/worker-src 'self'/);
+});
 test('local bundled game protocol resolves approved existing screen and assets',()=>{
  const a=bundledFile(game,'wtw://game/next/index.html?rev=approved');
  const b=bundledFile(game,'wtw://game/assets/wtw-office-approved-logo.png');
@@ -27,18 +33,23 @@ test('protocol refuses cloud API, other origins, encoded traversal and Windows p
   'file:///next/index.html'
  ])assert.equal(bundledFile(game,value),null,value);
  assert.match(htmlContentSecurityPolicy,/connect-src 'self'/);
+ assert.match(htmlContentSecurityPolicy,/worker-src 'self'/);
  assert.match(htmlContentSecurityPolicy,/object-src 'none'/);
 });
 test('desktop only bundles one approved UI and has no remote gaming URL',()=>{
  const main=fs.readFileSync(path.join(__dirname,'../desktop/main.cjs'),'utf8');
  const preload=fs.readFileSync(path.join(__dirname,'../desktop/preload.cjs'),'utf8');
  const pkg=JSON.parse(fs.readFileSync(path.join(__dirname,'../desktop/package.json'),'utf8'));
- assert.match(main,/wtw:\/\/game\/next\/index\.html/);
+ assert.match(main,/const ORIGIN='wtw:\/\/game';/);
+ assert.match(main,/win\.loadURL\(ORIGIN\+'\/next\/index\.html'\)/);
  assert.match(main,/cancel:true/);
  assert.match(main,/sandbox:true,contextIsolation:true,nodeIntegration:false/);
  assert.match(main,/reportSmoke/);
  assert.match(main,/wtw-startup-diagnostics\.log/);
  assert.match(main,/dialog\.showErrorBox/);
+ assert.match(main,/win\.on\('unresponsive',\(\)=>recordRendererHealth/);
+ assert.match(main,/webContents\.on\('responsive'/);
+ assert.doesNotMatch(main,/recordBootFailure\('Game window became unresponsive/);
  assert.match(main,/smokePhase==='visible'/);
  assert.match(main,/capturePage\(\)/);
  assert.match(main,/win\.show\(\);win\.focus\(\)/);

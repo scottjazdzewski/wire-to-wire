@@ -5,6 +5,8 @@
 'use strict';
 const $=(q,p=document)=>p.querySelector(q), $$=(q,p=document)=>[...p.querySelectorAll(q)];
 const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const locationText=v=>typeof v==='string'?v:v&&typeof v==='object'?
+ [v.city||v.locality,v.state||v.region,v.country].filter(Boolean).join(', '):'';
 const approvedBadgeKinds=new Set(["horse","people","farm_stable","track","pedigree","career_record","achievements","reputation","meet_schedule","major_races","connections","history"]);
 const badge=kind=>`/assets/profile-badges/v2/wtw_badge_${approvedBadgeKinds.has(kind)?kind:'history'}.png?shield=20261110b`;
 const root=document.createElement('div');root.id='wtwNextgen';root.setAttribute('aria-label','Wire to Wire game interface');
@@ -35,7 +37,6 @@ function personGeographyRecord(source,name){
 }
 
 const genericDeskPhoto='/assets/office/approved-office-photo.jpg';
-const WTW_RETIRED_TRACK_IDS=new Set(['T-0042','T-0112','T-0115']); // Historical IDs retained; excluded from game menus.
 
 let organizationLogoIndex=null; // UI-only logo refs, never organizational authority.
 const isClean1999=()=>window.__WTW_1999_MANAGEMENT__?.worldProfile?.mode==='FOUNDING_1999';
@@ -284,8 +285,8 @@ function selectAdjacentCase(direction=1,onlyOpen=false){
 }
 const currDesk=()=>decisionFiles().find(file=>file.message.case===APP.activeCase)?.desk||
  window.__WTW_1999_UI_DATA__?.officeDesks?.[APP.activeCase]||{title:'No case selected',moves:[],intel:[]};
-const horseRows=()=>window.__WTW_1999_MANAGEMENT__?window.__WTW_1999_UI_DATA__?.stableHorses||[]:$('.right .boardRows .rankRow').map((n,i)=>({name:$('strong',n)?.textContent.trim()||'',activity:$('.wtwV37HorseActivity',n)?.textContent.trim()||n.title||'No current Office activity recorded',tag:n.querySelector(':scope > span:last-child')?.textContent.trim()||'',index:i+1}));
-const racingRows=()=>window.__WTW_1999_MANAGEMENT__?[]:$('.right .fixtureList .fixture[data-track]').map(n=>{const name=$('h4',n)?.textContent.trim()||'';const saved=state();const isPowerline=name==='Powerline';const confirmed=isPowerline && (saved.calendarState?.['Churchill R3']?.status==='Entered' || /^Entered/i.test(saved.horseState?.Powerline?.status||''));return {name,date:$('.d',n)?.textContent.trim()||'',track:n.dataset.track||'',tag:$('.raceTag',n)?.textContent.trim()||'',status:confirmed?'Entered':($('.wtwV37EntryFlag',n)?.textContent.trim()||'Target')}});
+const horseRows=()=>window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.horseRows|| (window.__WTW_1999_MANAGEMENT__?window.__WTW_1999_UI_DATA__?.stableHorses||[]:$('.right .boardRows .rankRow').map((n,i)=>({name:$('strong',n)?.textContent.trim()||'',activity:$('.wtwV37HorseActivity',n)?.textContent.trim()||n.title||'No current Office activity recorded',tag:n.querySelector(':scope > span:last-child')?.textContent.trim()||'',index:i+1}))); 
+const racingRows=()=>window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.raceRows|| (window.__WTW_1999_MANAGEMENT__?[]:$('.right .fixtureList .fixture[data-track]').map(n=>{const name=$('h4',n)?.textContent.trim()||'';const saved=state();const isPowerline=name==='Powerline';const confirmed=isPowerline && (saved.calendarState?.['Churchill R3']?.status==='Entered' || /^Entered/i.test(saved.horseState?.Powerline?.status||''));return {name,date:$('.d',n)?.textContent.trim()||'',track:n.dataset.track||'',tag:$('.raceTag',n)?.textContent.trim()||'',status:confirmed?'Entered':($('.wtwV37EntryFlag',n)?.textContent.trim()||'Target')}}));
 const glyph=(name,size=16)=>{const paths={
   chevron:'<path d="m6 9 6 6 6-6"/>',
   left:'<path d="m15 18-6-6 6-6"/>',
@@ -310,6 +311,8 @@ const glyph=(name,size=16)=>{const paths={
 
 /* Shared logo slot for player stable, farms and all future organization profiles. */
 function playerOrganization(){
+ const game=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ if(game?.operationId)return {id:game.operationId,name:game.operationName};
  const active=window.__WTW_1999_UI_DATA__;
  if(window.__WTW_1999_MANAGEMENT__&&active?.sourceOwnerId)return {id:active.sourceOwnerId,name:active.sourceOwnerName};
  const st=state(),o=st.organization&&typeof st.organization==='object'?st.organization:
@@ -369,16 +372,22 @@ function horseOwnerBadge(name,showName=false){
    (showName?'<span class="ng-horse-owner-name">'+safe(owner?.name||'Not recorded')+'</span>':'')+'</span>';
 }
 function availableCash(){
+ const career=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ if(career&&Number.isSafeInteger(career.cashMinor))return career.cashMinor/100;
+ const pilot=window.__WTW_1999_UI_DATA__?.gameplayService?.state;
+ const owner=pilot?.player?.operation_id;
+ const pilotMinor=pilot?.runtime?.finances?.operation_balances_minor?.[owner];
+ if(Number.isSafeInteger(pilotMinor))return pilotMinor/100;
  const st=state(),f=st.finances||{},stable=f.stable||{};
  const values=[stable.available_cash,stable.availableCash,stable.cash_balance,stable.cashBalance,f.available_cash,f.availableCash];
  const value=values.find(x=>typeof x==='number'&&Number.isFinite(x));
  return value===undefined?null:value;
 }
 function cashDisplay(){
- if(window.__WTW_1999_MANAGEMENT__&&Number.isFinite(window.__WTW_1999_UI_DATA__?.openingCash))
-  return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(window.__WTW_1999_UI_DATA__.openingCash)+' (TEST)';
  const cash=availableCash();
- return cash===null?'—':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(cash);
+ if(cash===null)return 'Not funded';
+ const display=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(cash);
+ return window.__WTW_1999_UI_DATA__?.gameplayService&&!window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?display+' (TEST)':display;
 }
 function openFollowUps(){
  const follow=state().followUps;
@@ -395,18 +404,27 @@ function openOrganization(){return openCustomView('Organization Overview')}
 function organizationOverview(){
  const org=playerOrganization(),st=state(),horses=horseRows(),races=racingRows(),messages=currentMessages(),follow=openFollowUps(),due=dueActions();
  const leads=document.querySelectorAll('.app .oppList .oppItem').length;
- const entered=races.filter(r=>/Entered/i.test(r.status)).length;
+ // Count real open race entries, not races whose display status happens to say Entered.
+ const entered=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?
+  races.reduce((n,r)=>n+(r.gameStatus==='ENTRIES_OPEN'?
+   (r.raceFile?.field||[]).filter(e=>['ENTERED','BOOKED'].includes(e.status)).length:0),0):
+  races.filter(r=>/Entered/i.test(r.status)).length;
  const stat=(label,value)=>'<div><strong>'+safe(value)+'</strong><small>'+safe(label)+'</small></div>';
  const link=(key,val,title,desc)=>'<button data-ng="'+safe(key)+'" data-val="'+safe(val)+'"><strong>'+safe(title)+'</strong><span>'+safe(desc)+'</span>'+glyph('right',14)+'</button>';
  const panel=(title,linkLabel,key,val,body,count)=>'<section class="ng-org-overview-panel"><header><h3>'+safe(title)+'</h3><span class="ng-tier1-count">'+safe(String(count))+'</span><button data-ng="'+safe(key)+'" data-val="'+safe(val)+'">'+safe(linkLabel)+' '+glyph('arrow',12)+'</button></header><div class="ng-org-overview-list">'+(body||'<p>No matching records in the current Office.</p>')+'</div></section>';
  const openCases=messages.filter(m=>!m.resolved);
  const horseRowsHTML=horses.slice(0,4).map(h=>'<button data-ng="horse" data-val="'+safe(h.name)+'">'+horseOwnerBadge(h.name)+'<strong>'+safe(h.name)+'</strong><span>'+safe(h.activity||'Stable file')+'</span>'+glyph('right',14)+'</button>').join('');
- const raceRowsHTML=races.slice(0,4).map((r,i)=>link('fixture',i,r.name,r.date+' · '+r.track+' · '+r.status)).join('');
+ // A canonical race is linked by its immutable game ID, not a legacy Office DOM index.
+ const savedCareer=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ const raceRowsHTML=races.slice(0,4).map((r,i)=>link('fixture',savedCareer?r.id:i,
+  r.name,r.date+' · '+r.track+' · '+r.status)).join('');
  const dueRowsHTML=follow.slice(0,4).map(f=>link('followup',f.id,f.caseTitle||f.caseId||'Follow-up',(f.dueDate||'No date')+' · '+(due.includes(f)?'DUE':'OPEN'))).join('');
  const decisionRowsHTML=openCases.slice(0,4).map(m=>link('case',m.case,m.title,m.from)).join('');
- const financialStatus=typeof st.finances?.stable?.status==='string'?st.finances.stable.status:'Financial baseline not established';
+ const financialStatus=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?'Saved career · game ledger':
+  window.__WTW_1999_UI_DATA__?.gameplayService?'Gameplay pilot · game ledger':
+  typeof st.finances?.stable?.status==='string'?st.finances.stable.status:'Opening finance not initialized';
  const cash=availableCash();
- const finance='<div class="ng-org-finance"><small>AVAILABLE CASH</small><strong>'+safe(cashDisplay())+'</strong><p>'+safe(financialStatus)+(cash===null?' · No verified dollar amount':'')+'</p></div>';
+ const finance='<div class="ng-org-finance"><small>AVAILABLE CASH</small><strong>'+safe(cashDisplay())+'</strong><p>'+safe(financialStatus)+(cash===null?' · Establish opening capital in the game career':'')+'</p></div>';
  const opLinks='<div class="ng-tier1-shortcuts">'+[
   ['Personnel','PERSONNEL'],['Facilities','FACILITIES'],['Sales','SALES'],['Finances','FINANCES']
  ].map(([name,label])=>'<button data-ng="menu" data-val="'+safe(name)+'">'+safe(label)+' '+glyph('arrow',12)+'</button>').join('')+
@@ -830,7 +848,8 @@ function loadWorld1999(){
   isClean1999()?fetch('/data/wtw-1999-trainer-pilot-v1.json?rev=source-trainer-identities-v1-20261113',
    {credentials:'same-origin',cache:'force-cache'}).then(r=>
     r.ok?r.json():Promise.reject(Error('Source trainer pilot unavailable'))):Promise.resolve(null)
- ]).then(([data,geo,pilot,trainerPilot])=>{
+ ]).then(async ([data,geo,pilot,trainerPilot])=>{
+   const trackPrograms=await import('./1999-track-program.mjs');
    if(data?.schema!=='WTW_1999_WORLD_DIRECTORY_V1'||
      !Array.isArray(data.tracks)||!Array.isArray(data.people)||
      !Array.isArray(data.organizations)||!Array.isArray(data.horses))
@@ -864,24 +883,42 @@ function loadWorld1999(){
       p.abilityStatus!=='UNASSESSED'||p.contract!==null))
      throw Error('Trainer identity pilot violates founding population boundary');
     world1999TrainerRoster=trainerPilot.trainers;
-    if(geo?.counts?.north_america!==118||!Array.isArray(geo.tracks))
+    if(geo?.counts?.north_america!==124||!Array.isArray(geo.tracks))
      throw Error('Complete North American track authority unavailable');
     const canonical=geo.tracks.filter(t=>t.registry==='NORTH_AMERICA');
     const ids=new Set(data.tracks.map(t=>t.id));
     const missing=canonical.filter(t=>!ids.has(t.id));
-    if(canonical.length!==118||data.tracks.length+missing.length!==118)
-     throw Error('North American 118-track identity reconciliation failed');
-    // Add source-registered historical racecourses to the SITE DIRECTORY only.
-    // Never create a meet, active condition book, physical facility or horse.
-    data={...data,tracks:[...data.tracks,...missing.map(t=>({
-     id:t.id,name:t.name,location:t.travel_node,
-     region:t.macro_circuit||t.state_province_region||'',
-     circuit:'HISTORICAL NORTH AMERICA',operating:'HISTORICAL_ONLY',
-     registry:t.registry,geographyStatus:t.geography_status,
-     historicalFoundationStatus:t.foundation_status,
-     sourceBasis:t.source_basis,playableIn1999:false,
-     historicalClosure:'CLOSED_PRE_1999',trackOperating:'HISTORICAL_ONLY'
-    }))]};
+    if(canonical.length!==124||data.tracks.length+missing.length!==124)
+     throw Error('North American 124-track identity reconciliation failed');
+    // Read-only 1999 program overlay: the protected source records and their
+    // pre-1999 historical references remain unchanged.
+    const joined=[...data.tracks,...missing.map(t=>{
+     const p=trackPrograms.trackProgram1999(t.id)||{};
+     return {id:t.id,name:p.name||t.game_presentation_name||t.name,
+      sourceName:p.sourceName||t.source_name_preserved||t.name,
+      location:t.travel_node,region:p.region||t.macro_circuit||t.state_province_region||'',
+      circuit:p.circuit||t.macro_circuit||'North American Circuit',
+      operating:p.trackOperating||'HISTORICAL_ONLY',trackOperating:p.trackOperating||'HISTORICAL_ONLY',
+      playableIn1999:p.playableIn1999===true,meetWindow:p.meetWindow||'',
+      raceDays:p.raceDays||'',preferredDays:p.preferredDays||'',surfaces:p.surfaces||'',
+      physicalTrackId:p.physicalTrackId||t.physical_track_id||t.id,
+      venueType:p.venueType||t.venue_type||'PHYSICAL_RACECOURSE',
+      registry:t.registry,geographyStatus:t.geography_status,
+      historicalFoundationStatus:t.foundation_status,sourceBasis:t.source_basis,
+      metroOrSubregion:p.metroOrSubregion||t.metro_or_subregion||'',
+      ...(p.archiveStatus?{archiveStatus:p.archiveStatus}:{}),
+      ...(p.realWorldClosure?{realWorldClosure:p.realWorldClosure}:{})};
+    })];
+    data={...data,tracks:joined.map(t=>{
+     const p=trackPrograms.trackProgram1999(t.id);if(!p)return t;
+     return {...t,name:p.name,sourceName:p.sourceName||t.sourceName||t.name,
+      region:p.region||t.region,circuit:p.circuit||t.circuit,
+      operating:p.trackOperating,trackOperating:p.trackOperating,
+      playableIn1999:p.playableIn1999,meetWindow:p.meetWindow,
+      raceDays:p.raceDays,preferredDays:p.preferredDays,surfaces:p.surfaces,
+      physicalTrackId:p.physicalTrackId||t.physicalTrackId||t.id,
+      venueType:p.venueType||t.venueType||'PHYSICAL_RACECOURSE'};
+    })};
    }
    world1999Base=data;world1999Data=worldApplyEdits(data);
    if(APP.ready)schedulePaint(15);
@@ -896,8 +933,8 @@ function world1999Key(kind,item){
 function world1999Entries(){
  if(!world1999Data)return [];
  return [
-  ...world1999Data.tracks.filter(t=>!WTW_RETIRED_TRACK_IDS.has(t.id)).map(t=>({
-   kind:'track',name:t.name,detail:t.region||t.circuit||'',location:t.location||'',
+  ...world1999Data.tracks.map(t=>({
+   kind:'track',name:t.name,detail:t.region||t.circuit||'',location:locationText(t.location),
    canonicalId:t.id,worldKey:world1999Key('track',t),_world:t
   })),
   ...[...world1999Data.people,...world1999JockeyRoster,...world1999TrainerRoster].map(p=>({
@@ -929,7 +966,6 @@ function world1999Entry(key){
  const source=worldSourceRecord(key,world1999Data);
  if(!source)return null;
  const kind=key.split(':',1)[0];
- if(kind==='track'&&WTW_RETIRED_TRACK_IDS.has(source.id))return null;
  if(kind==='track'&&!world1999Data?.tracks?.some(t=>t.id===source.id))return null;
  return {kind,name:source.name,canonicalId:source.id||'',worldKey:key,_world:source};
 }
@@ -971,7 +1007,12 @@ function dossierEntityOrder(a,b){
 }
 function dossierAdjacentRecords(entry,records){
  const family=dossierEntityCategory(entry);
- const eligible=(records||[]).filter(item=>dossierEntityCategory(item)===family)
+ // A live track's PREVIOUS/NEXT must not jump into retired 1999 venues.
+ // Direct historical IDs continue to open, but browse only within their archive.
+ const historyOnly=x=>x?._world?.operating==='HISTORICAL_ONLY'||
+  x?._world?.playableIn1999===false;
+ const eligible=(records||[]).filter(item=>dossierEntityCategory(item)===family&&
+  (family!=='track'||historyOnly(item)===historyOnly(entry)))
   .slice().sort(dossierEntityOrder);
  const i=eligible.findIndex(item=>item.worldKey===entry.worldKey);
  if(i<0||eligible.length<2)return {family,previous:null,next:null};
@@ -1242,7 +1283,10 @@ function pilotHorseDetail(id){
 
 function restored1999Profile(kind,record){
  const x=window.WTW1999Profiles?.source(kind,record,window.__WTW_1999_UI_DATA__);
- return x?profileDetail(x.route,x.node):null;
+ if(!x)return null;
+ const kicker={horse:'Horse Profile',person:'People Profile',farm:'Farm Profile',
+  track:'Track Profile'}[kind]||x.route?.kicker;
+ return profileDetail({...x.route,kicker},x.node);
 }
 function world1999Profile(){
  const key=decodeURIComponent(String(APP.custom||'').slice('WorldRecord:'.length));
@@ -1383,7 +1427,10 @@ function world1999Linked(kind,id,label){
 
 function globalSearchItems(){
  const rows=typeof window.__wtwOfficeSearchRecords==='function'?window.__wtwOfficeSearchRecords():[];
- const universe=world1999Entries();
+ // The 1999 search is operational: historical-only courses remain available
+ // by immutable record ID and through History, not in the live track picker.
+ const universe=world1999Entries().filter(e=>e.kind!=='track'||
+  e._world?.operating!=='HISTORICAL_ONLY'&&e._world?.playableIn1999!==false);
  const pages=[
   {kind:'page',name:'Racing Office',detail:'Decision Desk and Inbox',section:'Office'},
   {kind:'page',name:'Organization Overview',detail:'Stable finances, horses and commitments'},
@@ -1394,9 +1441,10 @@ function globalSearchItems(){
   }))),
   ...currentMessages().map(m=>({kind:'decision',name:m.title,detail:'Office · '+m.from,caseId:m.case}))
  ];
- const playableTracks=window.__WTW_1999_UI_DATA__?.extraTracks?.()||[];
- const playableTrackIds=new Set(playableTracks.map(t=>t.id));
- const playableTrackNames=new Set(playableTracks.map(t=>t.name));
+ const playableTracks=universe.filter(e=>e.kind==='track');
+ const playableTrackIds=new Set(playableTracks.map(t=>t.canonicalId));
+ const playableTrackNames=new Set(playableTracks.flatMap(t=>
+  [t.name,t._world?.sourceName]).filter(Boolean));
  const original=rows.filter(r=>r&&typeof r.name==='string'&&
    (r.kind!=='track'||playableTrackIds.has(r.id)||playableTrackNames.has(r.name))).map(r=>{
   const bucket={horse:'horses',person:'people',farm:'organizations',track:'tracks'}[r.kind];
@@ -1604,10 +1652,10 @@ function center(){
    :m.optionId
    ?`data-ng="answer-decision" data-decision="${safe(APP.activeCase)}" data-val="${safe(m.optionId)}" ${APP.decisionPending?'disabled':''}`
    :`data-ng="menu" data-val="${safe(m.menu)}"`}><span class="ng-move-number">0${i+1}</span><span class="ng-move-body"><span class="ng-movetag">${safe(m.tag)}</span><strong>${safe(m.title)}</strong></span><span class="ng-movearrow">${glyph('right',17)}</span></button>`).join('');
-return `<section class="ng-main"><section class="ng-card ng-feature"><header class="ng-cardhead"><span class="ng-sectionicon gold">${glyph('folder',17)}</span><div class="ng-headinggroup"><h3>Decision Desk</h3><span>THE MANAGER'S PRIORITY FILE</span></div><button class="ng-org-chip" data-ng="organization" aria-label="Open organization overview; available cash ${safe(cashDisplay())}" title="View your racing operation and available cash">${organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',false,true)}<span class="ng-org-chip-cash"><small>CASH</small><strong>${safe(cashDisplay())}</strong></span></button><div class="ng-case-navigation"><div class="ng-case-pips" aria-label="Select today's case">${messages.map((m,i)=>`<button type="button" data-ng="case" data-val="${safe(m.case)}" class="ng-case-pip ${m.case===APP.activeCase?'on':''} ${m.resolved?'reviewed':m.urgent?'priority':''}" title="${safe(m.title)}${m.resolved?' — Reviewed':''}" aria-label="Case ${i+1}: ${safe(m.title)}" aria-current="${m.case===APP.activeCase?'true':'false'}"></button>`).join('')}</div><span class="ng-case-position"><span class="ng-live-dot"></span>${String(index).padStart(2,'0')} / ${String(messages.length).padStart(2,'0')}</span><div class="ng-case-arrows"><button type="button" data-ng="caseprev" aria-label="Previous decision" title="Previous case">${glyph('left',13)}</button><button type="button" data-ng="casenext" aria-label="Next decision" title="Next case">${glyph('right',13)}</button></div></div></header><div class="ng-featurebody"><div class="ng-case"><div class="ng-case-eyebrow"><span></span>${safe(d.type)} <i>·</i> ${safe(msg?.from||source)}</div><div class="ng-casetitle ng-static-title"><h2>${safe(d.title)}</h2></div><p class="ng-case-summary">${safe(d.summary)}</p><div class="ng-facts">${[['Pressure',d.pressure],['Primary risk',d.risk],['Manager read',d.read]].map((f,i)=>`<div class="ng-fact ng-fact-${i}"><small>${safe(f[0])}</small><b>${safe(titleCaseOfficeFact(f[1]))}</b></div>`).join('')}</div><div class="ng-caseactions">${isDecision?'':`<button data-ng="action" data-val="Open file">REVIEW FULL FILE ${glyph('arrow',14)}</button>`}</div></div><div class="ng-featurephoto">${decisionScene(d)}</div></div></section><div class="ng-centerbottom"><section class="ng-card ng-intel"><header class="ng-cardhead"><span class="ng-sectionicon">${glyph('sparkle',16)}</span><div class="ng-headinggroup"><h3>Intelligence</h3><span>${d.intel.length} SOURCE READS</span></div>${isDecision?'':`<button class="ng-cardlink" data-ng="action" data-val="Open current source">${safe(source)} ${glyph('arrow',12)}</button>`}</header><div class="ng-intelgrid">${d.intel.map((item,i)=>`<button class="ng-intelitem ng-intel-${i%4}" data-ng="intel" data-val="${i}"><span class="ng-intel-kicker" aria-label="Source ${i+1}"><span class="ng-intel-marker"></span>0${i+1}</span><b>${safe(item.title)}</b><p>${safe(item.body)}</p></button>`).join('')}</div></section><section class="ng-card ng-choices"><header class="ng-cardhead"><span class="ng-sectionicon gold">${glyph('flag',16)}</span><div class="ng-headinggroup"><h3>${isDecision?'Your Call':'Explore the World'}</h3><span>${isDecision?'MANAGEMENT DECISION':'JANUARY 1999 TEST NAVIGATION'}</span></div><span class="ng-choice-count">${resolved?'RECORDED':`${d.moves.length} OPTIONS`}</span></header><div class="ng-moves">${moves}${APP.decisionError?`<p class="ng-save-error" role="alert">${safe(APP.decisionError)}</p>`:''}</div></section></div></section>`;
+return `<section class="ng-main"><section class="ng-card ng-feature"><header class="ng-cardhead"><span class="ng-sectionicon gold">${glyph('folder',17)}</span><div class="ng-headinggroup"><h3>Decision Desk</h3><span>THE MANAGER'S PRIORITY FILE</span></div><button class="ng-org-chip" data-ng="organization" aria-label="Open organization overview; available cash ${safe(cashDisplay())}" title="View your racing operation and available cash">${organizationLogoMarkup(playerOrganization().id,playerOrganization().name,'stable',false,true)}<span class="ng-org-chip-cash"><small>CASH</small><strong>${safe(cashDisplay())}</strong></span></button><div class="ng-case-navigation"><div class="ng-case-pips" aria-label="Select today's case">${messages.map((m,i)=>`<button type="button" data-ng="case" data-val="${safe(m.case)}" class="ng-case-pip ${m.case===APP.activeCase?'on':''} ${m.resolved?'reviewed':m.urgent?'priority':''}" title="${safe(m.title)}${m.resolved?' — Reviewed':''}" aria-label="Case ${i+1}: ${safe(m.title)}" aria-current="${m.case===APP.activeCase?'true':'false'}"></button>`).join('')}</div><span class="ng-case-position"><span class="ng-live-dot"></span>${String(index).padStart(2,'0')} / ${String(messages.length).padStart(2,'0')}</span><div class="ng-case-arrows"><button type="button" data-ng="caseprev" aria-label="Previous decision" title="Previous case">${glyph('left',13)}</button><button type="button" data-ng="casenext" aria-label="Next decision" title="Next case">${glyph('right',13)}</button></div></div></header><div class="ng-featurebody"><div class="ng-case"><div class="ng-case-eyebrow"><span></span>${safe(d.type)} <i>·</i> ${safe(msg?.from||source)}</div><div class="ng-casetitle ng-static-title"><h2>${safe(d.title)}</h2></div><p class="ng-case-summary">${safe(d.summary)}</p><div class="ng-facts">${[['Pressure',d.pressure],['Primary risk',d.risk],['Manager read',d.read]].map((f,i)=>`<div class="ng-fact ng-fact-${i}" title="${safe(f[0]+': '+f[1])}" aria-label="${safe(f[0]+': '+f[1])}"><small>${safe(f[0])}</small><b>${safe(titleCaseOfficeFact(f[1]))}</b></div>`).join('')}</div><div class="ng-caseactions">${isDecision?'':`<button data-ng="action" data-val="Open file">REVIEW FULL FILE ${glyph('arrow',14)}</button>`}</div></div><div class="ng-featurephoto">${decisionScene(d)}</div></div></section><div class="ng-centerbottom"><section class="ng-card ng-intel"><header class="ng-cardhead"><span class="ng-sectionicon">${glyph('sparkle',16)}</span><div class="ng-headinggroup"><h3>Intelligence</h3><span>${d.intel.length} SOURCE READS</span></div>${isDecision?'':`<button class="ng-cardlink" data-ng="action" data-val="Open current source">${safe(source)} ${glyph('arrow',12)}</button>`}</header><div class="ng-intelgrid">${d.intel.map((item,i)=>`<button class="ng-intelitem ng-intel-${i%4}" data-ng="intel" data-val="${i}"><span class="ng-intel-kicker" aria-label="Source ${i+1}"><span class="ng-intel-marker"></span>0${i+1}</span><b>${safe(item.title)}</b><p>${safe(item.body)}</p></button>`).join('')}</div></section><section class="ng-card ng-choices"><header class="ng-cardhead"><span class="ng-sectionicon gold">${glyph('flag',16)}</span><div class="ng-headinggroup"><h3>${isDecision?'Your Call':'Explore the World'}</h3><span>${isDecision?'MANAGEMENT DECISION':'JANUARY 1999 TEST NAVIGATION'}</span></div><span class="ng-choice-count">${resolved?'RECORDED':`${d.moves.length} OPTIONS`}</span></header><div class="ng-moves">${moves}${APP.decisionError?`<p class="ng-save-error" role="alert">${safe(APP.decisionError)}</p>`:''}</div></section></div></section>`;
 }
-function right(){const horses=horseRows(),races=racingRows();const leads=document.querySelectorAll('.app .oppList .oppItem').length;const entered=races.filter(r=>/entered/i.test(r.status)).length;
-return `<aside class="ng-right"><section class="ng-card ng-roster"><header class="ng-cardhead"><span class="ng-badge-slot" aria-hidden="true"><img class="ng-headicon" src="${badge('horse')}" alt=""/></span><div class="ng-headinggroup"><h3>Stable Roster</h3><span>${horses.length} HORSES · CURRENT ACTIVITY</span></div><button class="ng-cardlink" data-ng="menu" data-val="Stable">ALL ${glyph('arrow',12)}</button></header><div class="ng-rostercolumns"><span>HORSE / ACTIVITY</span><span>STATUS</span></div><div class="ng-rosterrows">${horses.length?horses.map(h=>`<button class="ng-rosterrow" aria-label="Open horse profile: ${safe(h.name)}" data-ng="horse" data-val="${safe(h.name)}"><span class="ng-rostername">${horseOwnerBadge(h.name)}${safe(h.name)}</span><span class="ng-horseact">${safe(h.activity)}</span><span class="ng-rostertag">${safe(h.tag)}</span></button>`).join(''):'<div class="ng-rail-empty">No horses are listed for this stable yet.</div>'}</div></section><section class="ng-card ng-races"><header class="ng-cardhead"><span class="ng-badge-slot" aria-hidden="true"><img class="ng-headicon" src="${badge('meet_schedule')}" alt=""/></span><div class="ng-headinggroup"><h3>Race Schedule</h3><span>UPCOMING ENTRIES & TARGETS</span></div><button class="ng-cardlink" data-ng="menu" data-val="Racing">FULL ${glyph('arrow',12)}</button></header><div class="ng-entrycolumns"><span>DATE</span><span>HORSE / RACECOURSE</span><span>STATUS</span></div><div class="ng-entrylist">${races.length?races.map((r,i)=>`<button class="ng-entryrow" aria-label="Open race target: ${safe(r.name)} at ${safe(r.track)}" data-ng="fixture" data-val="${i}"><span class="ng-entrydate">${safe(r.date)}</span><span class="ng-entrycopy"><b>${horseOwnerBadge(r.name)}${safe(r.name)}</b><span><i class="ng-flag-us" aria-label="United States" role="img"></i> ${safe(r.track)}</span></span><span class="ng-entrytag"><b>${safe(r.tag)}</b><small class="${/entered/i.test(r.status)?'entered':''}">${safe(r.status.replace('·','').trim())}</small></span></button>`).join(''):'<div class="ng-rail-empty">No upcoming race targets are currently recorded.</div>'}</div></section><button class="ng-leads" data-ng="custom" data-val="Opportunities"><span class="ng-lead-star">${glyph('sparkle',16)}</span><strong>OPPORTUNITIES</strong><span>${leads?`${leads} CURRENT LEADS`:"NO CURRENT LEADS"}</span>${glyph('right',16)}</button></aside>`;
+function right(){const horses=horseRows(),races=racingRows(),savedRaceView=!!window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;const leads=document.querySelectorAll('.app .oppList .oppItem').length;const entered=races.filter(r=>/entered/i.test(r.status)).length;
+return `<aside class="ng-right"><section class="ng-card ng-roster"><header class="ng-cardhead"><span class="ng-badge-slot" aria-hidden="true"><img class="ng-headicon" src="${badge('horse')}" alt=""/></span><div class="ng-headinggroup"><h3>Stable Roster</h3><span>${horses.length} HORSES · CURRENT ACTIVITY</span></div><button class="ng-cardlink" data-ng="menu" data-val="Stable">ALL ${glyph('arrow',12)}</button></header><div class="ng-rostercolumns"><span>HORSE / ACTIVITY</span><span>STATUS</span></div><div class="ng-rosterrows">${horses.length?horses.map(h=>`<button class="ng-rosterrow" aria-label="Open horse profile: ${safe(h.name)}" data-ng="horse" data-val="${safe(h.name)}"><span class="ng-rostername">${horseOwnerBadge(h.name)}${safe(h.name)}</span><span class="ng-horseact">${safe(h.activity)}</span><span class="ng-rostertag">${safe(h.tag)}</span></button>`).join(''):'<div class="ng-rail-empty">No horses are listed for this stable yet.</div>'}</div></section><section class="ng-card ng-races"><header class="ng-cardhead"><span class="ng-badge-slot" aria-hidden="true"><img class="ng-headicon" src="${badge('meet_schedule')}" alt=""/></span><div class="ng-headinggroup"><h3>Race Schedule</h3><span>${savedRaceView?'SAVED GAME RACES & RESULTS':'UPCOMING ENTRIES & TARGETS'}</span></div><button class="ng-cardlink" data-ng="menu" data-val="Racing">FULL ${glyph('arrow',12)}</button></header><div class="ng-entrycolumns"><span>DATE</span><span>${savedRaceView?'RACE / RACECOURSE':'HORSE / RACECOURSE'}</span><span>STATUS</span></div><div class="ng-entrylist">${races.length?races.map((r,i)=>`<button class="ng-entryrow" aria-label="Open race target: ${safe(r.name)} at ${safe(r.track)}" data-ng="fixture" data-val="${safe(window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?r.id:i)}"><span class="ng-entrydate">${safe(r.date)}</span><span class="ng-entrycopy"><b>${savedRaceView?'':horseOwnerBadge(r.name)}${safe(r.name)}</b><span><i class="ng-flag-us" aria-label="United States" role="img"></i> ${safe(r.track)}</span></span><span class="ng-entrytag"><b>${safe(r.tag)}</b><small class="${/entered/i.test(r.status)?'entered':''}">${safe(r.status.replace('·','').trim())}</small></span></button>`).join(''):'<div class="ng-rail-empty">No upcoming race targets are currently recorded.</div>'}</div></section><button class="ng-leads" data-ng="custom" data-val="Opportunities"><span class="ng-lead-star">${glyph('sparkle',16)}</span><strong>OPPORTUNITIES</strong><span>${leads?`${leads} CURRENT LEADS`:"NO CURRENT LEADS"}</span>${glyph('right',16)}</button></aside>`;
 }
 const currentRoute=()=>{const el=$('#routeShell');if(!el||el.hidden)return null;return {kicker:$('#routeKicker')?.textContent.trim()||'Page',title:$('#routeTitle')?.textContent.trim()||'Page',body:$('#routeBody')?.innerHTML||'',badge:$('.wtwRouteBadge',el)?.getAttribute('src')||badge('history')}};
 const pageBadge=()=>{const map={Stable:'farm_stable',Racing:'major_races',Sales:'connections',Breeding:'pedigree',Personnel:'people',Facilities:'farm_stable',Finances:'reputation',World:'track',Search:'history',Messages:'people',Decisions:'career_record',Reports:'history',Career:'achievements',Opportunities:'reputation'};return badge(map[APP.custom.split(' ')[0]]||map[APP.section]||'history')};
@@ -1897,10 +1945,22 @@ function profileDetail(route,sourceOverride=null){
    '</div></div>':'';
 
  const stakeDateRank=value=>{
-  const match=String(value||'').match(/\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(\d{1,2})\b/i);
+  const source=String(value||'').trim();
+  // 1999 track dossiers use ISO dates. Do not accidentally sort their
+  // sortable DATE column by race name merely because a month word is absent.
+  const iso=source.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(iso){
+   const year=Number(iso[1]),month=Number(iso[2]),day=Number(iso[3]);
+   return month>=1&&month<=12&&day>=1&&day<=31?
+    year*416+month*32+day:Number.MAX_SAFE_INTEGER;
+  }
+  const match=source.match(/\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(\d{1,2})\b/i);
   if(!match)return Number.MAX_SAFE_INTEGER;
   const month='jan feb mar apr may jun jul aug sep oct nov dec'.split(' ').indexOf(match[1].slice(0,3).toLowerCase());
-  return month<0?Number.MAX_SAFE_INTEGER:month*32+Number(match[2]);
+  const day=Number(match[2]);
+  if(month<0||day<1||day>31)return Number.MAX_SAFE_INTEGER;
+  const explicitYear=(source.match(/\b(?:19|20)\d{2}\b/)||[])[0];
+  return (explicitYear?Number(explicitYear)*416:0)+(month+1)*32+day;
  };
  // Read-only: summarize only the WTW race rows already available on this track.
  const stakeScheduleSummary=()=>{
@@ -1911,14 +1971,36 @@ function profileDetail(route,sourceOverride=null){
   const amount=canTotal?'$'+sum.toLocaleString('en-US'):'';
   return trackRaces.length+' RACE RECORDS'+(canTotal?' · '+amount+' SCHEDULED PURSES':'');
  };
+
+ // These functions change presentation/sorting only. Source grade and purse
+ // strings remain unchanged in the underlying 1999 race records.
+ const trackStakesGradeView=raw=>{
+  const source=String(raw??'').trim();
+  if(/^PLANNED[_ ]WTW(?:_|$)/i.test(source))
+   return {label:'PLANNED',grade:null,description:'Game-modeled race; official grade not certified',rank:5};
+  const grade=(source.match(/\bG([123])\b/i)||[])[1]||null;
+  return {label:source||'—',grade,description:source||'Grade not recorded',
+   rank:grade?Number(grade):/major/i.test(source)?4:5};
+ };
+ const trackStakesPurseValue=raw=>{
+  const source=String(raw??'').trim();
+  if(!/^\$[\d,]+(?:\.\d+)?$/.test(source))return null;
+  const amount=Number(source.replace(/[$,]/g,''));
+  return Number.isFinite(amount)?amount:null;
+ };
  // Same sorting/filter/view/scroll renderer as every other roster. The
  // public stakes list is sourced from the existing approved track dossier.
  const stakesTable=(limit=100)=>{
-  const gradeRank=value=>{const g=(String(value||'').match(/\bG([123])\b/i)||[])[1];return g?Number(g):/major/i.test(value)?4:5};
-  const purseRank=value=>{const n=Number(String(value||'').replace(/[^\d.]/g,''));return Number.isFinite(n)?n:-1};
-  const rank=(key,row)=>key==='date'?stakeDateRank(row.cols[1]):key==='grade'?gradeRank(row.cols[2]):key==='purse'?purseRank(row.cols[3]):row.cols[0].toLocaleLowerCase();
+  const rank=(key,row)=>key==='date'?stakeDateRank(row.cols[1]):
+   key==='grade'?trackStakesGradeView(row.cols[2]).rank:
+   key==='purse'?trackStakesPurseValue(row.cols[3]):row.cols[0].toLocaleLowerCase();
   const compare=(a,b)=>{
    const av=rank(APP.stakeSort,a),bv=rank(APP.stakeSort,b);
+   // An unknown date or purse is unknown, not January 1 or $0.
+   // Keep unverified values at the bottom in BOTH sort directions.
+   const unknown=value=>APP.stakeSort==='purse'&&value===null||
+    APP.stakeSort==='date'&&value===Number.MAX_SAFE_INTEGER;
+   if(unknown(av)!==unknown(bv))return unknown(av)?1:-1;
    const result=typeof av==='number'&&typeof bv==='number'?av-bv:String(av).localeCompare(String(bv),undefined,{numeric:true,sensitivity:'base'});
    return (APP.stakeSortDesc?-1:1)*result || a.cols[0].localeCompare(b.cols[0]);
   };
@@ -1932,12 +2014,11 @@ function profileDetail(route,sourceOverride=null){
   return '<div class="ng-stakes-table"><div class="ng-stakes-head">'+header+'</div>'+
    (ordered.slice(0,limit).map(({row,cols})=>{
     while(cols.length<4)cols.push('—');
-    const grade=(cols[2].match(/\bG([123])\b/i)||[])[1];
-    // Keep the untouched source grade for sorting; never show internal
-    // PLANNED_WTW_* machine codes as if they were race grades.
-    const gradeLabel=/^PLANNED[_ ]WTW(?:_|$)/i.test(cols[2])?'PLANNED':cols[2];
-    const gradeInfo=gradeLabel==='PLANNED'?'Game-modeled race; official grade not certified':cols[2];
-    const gradeCell=grade?'<span class="ng-stakes-grade" aria-label="Grade '+grade+'" title="Grade '+grade+'"><img class="ng-stakes-trophy" src="/assets/trophies/approved-grade-'+grade+'-64.png" alt="" width="16" height="16" decoding="async"/><small class="ng-stakes-grade-text" aria-hidden="true">G'+grade+'</small></span>':'<span title="'+safe(gradeInfo)+'">'+safe(gradeLabel)+'</span>';
+    const gradeView=trackStakesGradeView(cols[2]);
+    // Only source-confirmed grade strings may display the G1/G2/G3 trophies.
+    // A modeled PLANNED_WTW_* grade always stays PLANNED, even with G1 in its code.
+    const grade=gradeView.grade;
+    const gradeCell=grade?'<span class="ng-stakes-grade" aria-label="Grade '+grade+'" title="Grade '+grade+'"><img class="ng-stakes-trophy" src="/assets/trophies/approved-grade-'+grade+'-64.png" alt="" width="16" height="16" decoding="async"/><small class="ng-stakes-grade-text" aria-hidden="true">G'+grade+'</small></span>':'<span title="'+safe(gradeView.description)+'">'+safe(gradeView.label)+'</span>';
     const stakeId=row.node.dataset.stakeId||'';
     // Detached source rows have no legacy Office index: keep a live 1999 race-file click target.
     return '<button class="ng-stakes-data" data-ng="1999-stake" data-val="'+safe(stakeId)+
@@ -3049,6 +3130,8 @@ const DEP_MONTH={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,No
 // The active engine owns the date. A legacy date chip is not authoritative
 // and must not rewind the 1999 playtest or drive its calendar.
 function depGameDay(){
+ const canonicalDate=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.date;
+ if(/^\d{4}-\d{2}-\d{2}$/.test(canonicalDate||''))return canonicalDate;
  const engineDate=window.__WTW_1999_UI_DATA__?.gameplayService?.state?.clock?.date;
  const careerDate=state().date;
  return window.__WTW_OFFICE_DIRECT_READ__.gameDate({engineDate,careerDate});
@@ -3103,7 +3186,7 @@ function depTrackCalendar(includeRetired=false){
  const byName=new Map(extra.map(t=>[t.name,t]));
  const seen=new Set([...office,...others].flatMap(t=>[t.id,t.name]).filter(Boolean));
  const missing=extra.filter(t=>!seen.has(t.id)&&!seen.has(t.name));
- return [...office,...others,...missing].filter(t=>(includeRetired||!WTW_RETIRED_TRACK_IDS.has(t.id))&&(
+ return [...office,...others,...missing].filter(t=>(
   !isClean1999()||!permittedTracks.size||permittedTracks.has(t.id)||permittedNames.has(t.name))).map(t=>{
   // The 1999 source directory, NOT the old track-program/demo defaults,
   // decides whether a historical racecourse is closed and remains dormant.
@@ -3121,7 +3204,7 @@ function depTrackCalendar(includeRetired=false){
    preferredDays:p.preferredDays,calendarBasis:p.calendarBasis,
    calendarSource:p.calendarSource,operating:p.operating,_source1999:false
   }:{}),stakes:sourceStakes.length?sourceStakes:(Array.isArray(t.stakes)?t.stakes:[])};
- });
+ }).filter(t=>includeRetired||(t.operating!=='HISTORICAL_ONLY'&&t.playableIn1999!==false));
 }
 function depCalendarIso(value,year=depGameDay().slice(0,4)){
  const d=String(value||'').match(/^([A-Za-z]{3})\s+(\d{1,2})$/);
@@ -3248,9 +3331,9 @@ function depRows(section,page,demo,auction){
     o.leadershipStatus==='ESTABLISHED_1999_PRINCIPAL_LINK'?'ESTABLISHED':o.status||''
   }));
  }
- if(section==='World'&&page==='Tracks')return depTrackRows('All Tracks',depGameDay(),true);
- if(section==='World'&&page==='Meets')return depTrackRows('Active Meets',depGameDay(),true);
- if(section==='Tracks')return depTrackRows(page,depGameDay(),true);
+ if(section==='World'&&page==='Tracks')return depTrackRows('All Tracks',depGameDay());
+ if(section==='World'&&page==='Meets')return depTrackRows('Active Meets',depGameDay());
+ if(section==='Tracks')return depTrackRows(page,depGameDay());
  if(section==='Racing'&&page==='Overview'&&APP.racingMode!=='mine'){
   const tracks=depTrackRows('Overview',depRaceBrowseDate());
   if(APP.racingTrack)return tracks.filter(t=>t.name===APP.racingTrack).map(t=>({
@@ -3813,7 +3896,7 @@ function managementViewOptions(section,page){
  return (tabmap[section]||[]).map(t=>'<option value="'+safe(t)+'" '+(t===page?'selected':'')+'>'+safe(t)+'</option>').join('');
 }
 function managerRecordViewControl(section,page){
- return '<label>VIEW <select data-ng-select="manager-screen" aria-label="Choose '+safe(section)+' view">'+
+ return '<label class="ng-manager-view-picker">VIEW <select data-ng-select="manager-screen" aria-label="Choose '+safe(section)+' view">'+
   managementViewOptions(section,page)+'</select></label>';
 }
 /* News is a source-backed Office bulletin board, not a fictional 2014
@@ -3941,7 +4024,10 @@ function worldCompleteDirectoryView(){
  const historic=(world1999Data?.historicalHorses||[]).filter(h=>h.id&&h.name)
   .map(h=>({kind:'historical-horse',name:h.name,detail:'ARCHIVED BLOODLINE',
    canonicalId:h.id,worldKey:'historical-horse:'+h.id,_world:h}));
- const entries=[...world1999Entries(),...historic];
+ // Operational World screens exclude retired 1999 venues. Historic IDs and
+ // source data are still resolvable by world1999Entry() and in History Vault.
+ const entries=[...world1999Entries().filter(e=>e.kind!=='track'||
+  e._world?.operating!=='HISTORICAL_ONLY'&&e._world?.playableIn1999!==false),...historic];
  const kinds=[['all','ALL'],['horse','HORSES'],['historical-horse','PAST HORSES'],
   ['person','PEOPLE'],['farm','ORGANIZATIONS'],['track','TRACKS']];
  const names=new Map((world1999Data?.organizations||[]).map(x=>[x.id,x.name]));
@@ -4009,52 +4095,79 @@ function worldCompleteDirectoryView(){
 }
 /* The real Office Inbox / Decisions are not the World directory.
  * Reuse the ONE management shell, row grammar, and canonical case action. */
+/* Inspect a source-backed Office file in place; only opening the complete
+ * file switches to the authoritative case desk. No gameplay state mutation. */
 function managerOfficeInboxView(page){
- const all=currentMessages();
- const listed=(page==='Decisions'?all.filter(m=>!m.resolved):all).slice();
- listed.sort((a,b)=>Number(!b.resolved&&b.urgent)-Number(!a.resolved&&a.urgent));
- const action=all.filter(m=>!m.resolved&&m.urgent).length;
- const open=all.filter(m=>!m.resolved).length,reviewed=all.length-open;
+ const all=currentMessages().filter(m=>m&&typeof m.case==='string');
+ const decisions=page==='Decisions';
+ const actionable=all.filter(m=>m.urgent&&!m.resolved);
+ const listed=(decisions?actionable:all).slice();
+ listed.sort((a,b)=>Number(b.urgent&&!b.resolved)-Number(a.urgent&&!a.resolved));
+ const scope='Office:'+page;
  const chosen=listed.find(m=>m.case===APP.activeCase)||listed[0]||null;
- const stat=(name,value)=>'<div class="ng-manager-metric"><small>'+name+'</small><strong>'+safe(value)+'</strong></div>';
- const rows=listed.map(m=>
-  '<button class="ng-manager-row" type="button" data-ng="case" data-val="'+safe(m.case)+'" aria-label="Open office file: '+safe(m.title)+'">'+
-  '<span class="ng-manager-row-type">'+(m.resolved?'REVIEWED':m.urgent?'ACTION':'OPEN')+'</span>'+
-  '<span class="ng-manager-row-name"><strong>'+safe(m.title)+'</strong></span>'+
-  '<span class="ng-manager-row-detail">'+safe(m.from||'Office')+'</span>'+
-  '<span class="ng-manager-row-context">'+(m.resolved?'Reviewed file':m.urgent?'Response requested':'Awaiting review')+'</span>'+
+ const desk=chosen?(decisionFiles().find(f=>f.message.case===chosen.case)?.desk||
+  window.__WTW_1999_UI_DATA__?.officeDesks?.[chosen.case]||null):null;
+ const sorted=managerSortRecords(scope,listed.map(m=>({
+  kind:m.resolved?'REVIEWED':m.urgent?'ACTION':'INFO',
+  name:m.title||'Office file',detail:m.from||'Office',
+  context:m.resolved?'Reviewed':m.urgent?'Response requested':'For information',message:m
+ })));
+ const rows=sorted.map(({message:m,kind,name,detail,context})=>
+  '<button class="ng-manager-row" type="button" data-ng="office-focus" data-val="'+safe(m.case)+
+  '" aria-pressed="'+String(chosen?.case===m.case)+'" aria-label="Preview office file: '+safe(name)+'">'+
+  '<span class="ng-manager-row-type">'+safe(kind)+'</span>'+
+  '<span class="ng-manager-row-name"><strong>'+safe(name)+'</strong><small>'+safe(m.meta||"Source-linked Office correspondence")+'</small></span>'+
+  '<span class="ng-manager-row-detail">'+safe(detail)+'</span>'+
+  '<span class="ng-manager-row-context">'+safe(context)+'</span>'+
   '<span class="ng-manager-row-open">'+glyph('right',12)+'</span></button>').join('');
- const focused=chosen?
-  '<div class="ng-manager-secondary-list"><div class="ng-manager-case">'+
-  '<span class="ng-manager-case-indicator '+(chosen.resolved?'resolved':chosen.urgent?'urgent':'')+'"></span>'+
-  '<span><strong>'+safe(chosen.title)+'</strong><small>'+safe(chosen.from||'Office')+'</small></span>'+
-  '<span class="ng-manager-case-state">'+(chosen.resolved?'REVIEWED':chosen.urgent?'ACTION':'OPEN')+'</span></div>'+
-  '<button class="ng-manager-case" type="button" data-ng="case" data-val="'+safe(chosen.case)+'" aria-label="Open selected office file">'+
-  '<span>'+glyph('folder',14)+'</span><span><strong>OPEN THE COMPLETE FILE</strong><small>Review source information and available decisions</small></span><span>'+glyph('right',13)+'</span></button></div>':
-  '<p class="ng-manager-empty">No matching office files. Nothing has been invented.</p>';
+ const stat=(name,value)=>'<div class="ng-manager-metric"><small>'+name+'</small><strong>'+safe(value)+'</strong></div>';
+ const status=chosen?.resolved?'REVIEWED':chosen?.urgent?'ACTION':'INFO';
+ const preview=chosen?
+  '<div class="ng-office-file-preview" role="status" aria-live="polite">'+
+  '<small>'+safe(chosen.from||'Office')+' · '+safe(status)+'</small>'+
+  '<h3>'+safe(chosen.title||'Office file')+'</h3>'+
+  '<p>'+safe(chosen.meta||desk?.summary||'No source synopsis recorded.')+'</p>'+
+  '<dl class="ng-office-file-facts">'+
+  '<div><dt>MANAGER PRIORITY</dt><dd>'+safe(desk?.pressure||(chosen.urgent?'Review requested':'For information'))+'</dd></div>'+
+  '<div><dt>SOURCE STATUS</dt><dd>'+safe(desk?.read||'Review full source-linked file.')+'</dd></div>'+
+  (desk?.risk?'<div><dt>RECORD LIMITATION</dt><dd>'+safe(desk.risk)+'</dd></div>':'')+
+  '</dl><button class="ng-office-open" type="button" data-ng="case" data-val="'+safe(chosen.case)+
+  '" aria-label="Open complete office file: '+safe(chosen.title)+'">OPEN COMPLETE FILE '+glyph('right',12)+'</button></div>':
+  '<p class="ng-manager-empty">No matching source-linked Office files.</p>';
+ const valid=new Set(['Stable','Racing','Breeding','Sales','Personnel','Facilities','Finances','World','Tracks']);
+ const moves=(Array.isArray(desk?.moves)?desk.moves:[]).filter(m=>m&&valid.has(m.menu)).slice(0,2);
+ const choiceCount=(Array.isArray(desk?.moves)?desk.moves:[]).filter(m=>m&&m.optionId).length;
+ const links=moves.map(m=>
+  '<button type="button" class="ng-manager-case" data-ng="menu" data-val="'+safe(m.menu)+'">'+
+  '<span class="ng-manager-case-indicator"></span>'+
+  '<span><strong>'+safe(m.title||('Open '+m.menu))+'</strong><small>'+safe(m.tag||m.menu)+
+  ' · EXISTING DEPARTMENT</small></span><span class="ng-manager-case-state">OPEN</span></button>').join('');
  return '<section class="ng-manager-screen ng-manager-message-inbox">'+
   '<header class="ng-manager-head"><div class="ng-manager-identity">'+
   '<span>FRONT OFFICE / '+safe(page.toUpperCase())+'</span>'+
-  '<h2>'+(page==='Decisions'?'DECISIONS & ACTION FILES':'OFFICE INBOX')+'</h2></div>'+
+  '<h2>'+(decisions?'DECISIONS & ACTION FILES':'OFFICE INBOX')+'</h2></div>'+
   '<div class="ng-manager-controls">'+managerRecordViewControl('Office',page)+
   '<button data-ng="office" type="button">'+glyph('left',13)+' TODAY</button></div></header>'+
-  '<div class="ng-manager-metrics">'+stat('TOTAL OFFICE FILES',all.length)+
-  stat('REQUIRES ACTION',action)+stat('OPEN / UNREVIEWED',open)+
-  stat('REVIEWED',reviewed)+'</div>'+
+  '<div class="ng-manager-metrics">'+stat('TOTAL FILES',all.length)+
+  stat('ACTION REQUIRED',actionable.length)+stat('INFORMATIONAL',all.filter(m=>!m.urgent&&!m.resolved).length)+
+  stat('REVIEWED',all.filter(m=>m.resolved).length)+'</div>'+
   '<div class="ng-manager-workspace"><section class="ng-manager-primary"><header><strong>'+
-  (page==='Decisions'?'OUTSTANDING DECISION FILES':'SOURCE-LINKED MESSAGES')+
-  '</strong><span>'+listed.length+' FILES · CLICK A SUBJECT TO OPEN</span></header>'+
-  '<div class="ng-manager-rows" role="region" tabindex="0" aria-label="Office messages and decisions">'+
-  (rows||'<p class="ng-manager-empty">No outstanding decisions. Reviewed files remain in the Office Inbox.</p>')+
+  (decisions?'ACTION REQUIRED':'OFFICE CORRESPONDENCE')+'</strong><span>'+listed.length+
+  ' FILES · SELECT A ROW TO PREVIEW</span></header>'+
+  managerSortableColumns(scope,[['kind','STATUS'],['name','FILE'],['detail','FROM'],['context','ATTENTION']])+
+  '<div class="ng-manager-rows" role="region" tabindex="0" aria-label="Sortable source-backed Office correspondence">'+
+  (rows||'<p class="ng-manager-empty">No outstanding action files. Informational correspondence remains in Inbox.</p>')+
   '</div></section><aside class="ng-manager-sidebar">'+
-  '<section class="ng-manager-secondary"><header><strong>SELECTED OFFICE FILE</strong><span>'+
-  (chosen?(chosen.urgent&&!chosen.resolved?'ACTION':'FILE'):'NONE')+
-  '</span></header>'+focused+'</section>'+
-  '<section class="ng-manager-secondary"><header><strong>WORKFLOW</strong><span>OFFICE</span></header>'+
-  '<div class="ng-manager-secondary-list"><p class="ng-manager-empty">'+
-  'Open a source-linked file to review the complete information and available decisions. This list does not commit any game action.'+
-  '</p></div></section></aside></div></section>';
+  '<section class="ng-manager-secondary"><header><strong>FILE PREVIEW</strong><span>'+
+  (chosen?safe(status):'NONE')+'</span></header>'+preview+'</section>'+
+  '<section class="ng-manager-secondary"><header><strong>SOURCE-LINKED NEXT STEPS</strong><span>'+
+  (moves.length||choiceCount)+' OPTIONS</span></header><div class="ng-manager-secondary-list">'+
+  (links||(choiceCount?'<p class="ng-manager-empty">'+choiceCount+
+   ' recorded decision choices are available in the complete file. Selecting a choice occurs only inside the authoritative decision desk.</p>':
+   '<p class="ng-manager-empty">Select a source-linked file for its recorded department links. Previewing does not commit a game action.</p>'))+
+  '</div></section></aside></div></section>';
 }
+
 /* One native Stable workflow per department VIEW. Display actual career
  * horse, health and race-plan records; never substitute the global directory
  * or pretend ownership implies a boarding/barn assignment. */
@@ -4125,63 +4238,110 @@ function stableOperationsView(page){
 }
 /* Player career is an operational dossier, not the World directory.
  * Read only the existing career record; missing values stay unknown. */
+/* Career is a real management dossier, not a generic directory or a second
+ * gameplay authority. All fields and next steps come from the current save. */
 function managerCareerView(){
  const game=state(),live=window.__WTW_1999_UI_DATA__?.gameplayService?.state||{};
- const player=live.player||game.player||{};
- const world=game.worldAnchor||{};
- const profile=world.worldProfile||{};
- const date=depGameDay(),horses=horseRows();
- const pending=currentMessages().filter(m=>!m.resolved);
+ const player=live.player||game.player||{},org=playerOrganization();
+ const world=game.worldAnchor||{},profile=world.worldProfile||{};
+ const horses=horseRows(),races=racingRows(),messages=currentMessages();
+ const action=messages.filter(m=>m.urgent&&!m.resolved);
+ const open=messages.filter(m=>!m.resolved),follow=openFollowUps(),due=dueActions();
+ const date=depGameDay(),cash=availableCash();
  const recorded=(v)=>v===undefined||v===null||v===''?'Not recorded':String(v);
  const worldMode=profile.mode||world.mode;
- const label=worldMode==='FOUNDING_1999'?'Founding 1999':recorded(worldMode);
+ const mode=worldMode==='FOUNDING_1999'?'Founding 1999':recorded(worldMode);
  const person=recorded(player.name||player.personName||player.personId);
- const role=recorded(player.role);
- const operation=recorded(player.organizationName||player.operationName||player.organizationId);
+ const role=recorded(player.role),operation=recorded(player.organizationName||player.operationName||org.name);
  const seed=recorded(profile.seed??world.seed);
- const money=availableCash();
+ const managerLine=person==='Not recorded'&&role==='Not recorded'?'Manager and position not recorded':
+  person==='Not recorded'?'Manager not recorded · '+role:
+  role==='Not recorded'?person+' · Position not recorded':person+' · '+role;
  const metric=(heading,value)=>'<div class="ng-manager-metric"><small>'+safe(heading)+
   '</small><strong>'+safe(value)+'</strong></div>';
- const cell=(title,value)=>'<div class="ng-manager-row" role="row">'+
-  '<span class="ng-manager-row-type">CAREER</span>'+
-  '<span class="ng-manager-row-name"><strong>'+safe(title)+'</strong></span>'+
-  '<span class="ng-manager-row-detail">'+safe(value)+'</span>'+
-  '<span class="ng-manager-row-context">SOURCE RECORD</span></div>';
- const go=(section,title,description)=>'<button type="button" class="ng-manager-case" data-ng="menu" data-val="'+section+'">'+
-  '<span>'+glyph('folder',14)+'</span><span><strong>'+title+'</strong><small>'+
-  description+'</small></span><span>'+glyph('right',13)+'</span></button>';
+ const fact=(name,value)=>'<div class="ng-career-fact"><dt>'+safe(name)+
+  '</dt><dd>'+safe(value)+'</dd></div>';
+ const go=(section,title,description)=>'<button type="button" class="ng-manager-case" data-ng="menu" data-val="'+safe(section)+'">'+
+  '<span>'+glyph('folder',14)+'</span><span><strong>'+safe(title)+'</strong><small>'+
+  safe(description)+'</small></span><span>'+glyph('right',13)+'</span></button>';
+ const priorities=action.slice(0,5).map(m=>
+  '<button type="button" class="ng-manager-case ng-career-priority" data-ng="case" data-val="'+safe(m.case)+
+  '" aria-label="Open management decision: '+safe(m.title)+'">'+
+  '<span class="ng-manager-case-indicator urgent"></span>'+
+  '<span><strong>'+safe(m.title)+'</strong><small>'+safe(m.from||'Office')+
+  ' · '+safe(m.meta||'Source-linked management file')+'</small></span>'+
+  '<span class="ng-manager-case-state">ACTION</span></button>').join('');
+ const officeUpdates=messages.filter(m=>!m.urgent||m.resolved).slice(0,3).map(m=>
+  '<button type="button" class="ng-manager-case ng-career-update" data-ng="case" data-val="'+safe(m.case)+'">'+
+  '<span class="ng-manager-case-indicator"></span>'+
+  '<span><strong>'+safe(m.title)+'</strong><small>'+safe(m.from||'Office')+
+  ' · '+safe(m.meta||'Source-linked correspondence')+'</small></span>'+
+  '<span class="ng-manager-case-state">'+(m.resolved?'REVIEWED':'INFO')+'</span></button>').join('');
+ const next=follow.slice(0,4).map(f=>
+  '<button class="ng-manager-case" type="button" data-ng="followup" data-val="'+safe(f.id)+'">'+
+  '<span>'+glyph('folder',14)+'</span><span><strong>'+safe(f.caseTitle||f.caseId||'Follow-up')+
+  '</strong><small>'+safe(f.dueDate||'Date not recorded')+
+  ' · '+(due.includes(f)?'DUE':'OPEN')+'</small></span><span>'+
+  glyph('right',13)+'</span></button>').join('');
+ const notice=action.length?'REQUIRES REVIEW':'NO URGENT OFFICE FILES';
  return '<section class="ng-manager-screen ng-manager-career">'+
   '<header class="ng-manager-head"><div class="ng-manager-identity">'+
-  '<span>FRONT OFFICE / CAREER</span><h2>PLAYER CAREER & WORLD STATUS</h2></div>'+
+  '<span>FRONT OFFICE / CAREER</span><h2>MANAGER CAREER & OPERATION</h2></div>'+
   '<div class="ng-manager-controls">'+managerRecordViewControl('Office','Career')+
   '<button type="button" data-ng="save-open">'+glyph('save',13)+' MANAGE CAREERS</button></div></header>'+
   '<div class="ng-manager-metrics">'+
-  metric('GAME DATE',date)+metric('ACTIVE STABLE HORSES',horses.length)+
-  metric('OPEN OFFICE FILES',pending.length)+
-  metric('RECORDED CASH',money===null?'Not recorded':depMoney(money))+
+  metric('GAME DATE',date)+metric('ASSIGNED HORSES',horses.length)+
+  metric('ACTION FILES',action.length)+
+  metric('RECORDED CASH',cash===null?'Not recorded':depMoney(cash))+
   '</div><div class="ng-manager-workspace">'+
-  '<section class="ng-manager-primary"><header><strong>CURRENT CAREER RECORD</strong>'+
-  '<span>LOCAL GAME STATE · READ-ONLY</span></header>'+
-  '<div class="ng-manager-rows" role="region" tabindex="0" aria-label="Current player career facts">'+
-  cell('PLAYER',person)+cell('ROLE',role)+cell('OPERATION',operation)+
-  cell('WORLD',label)+cell('WORLD SEED',seed)+cell('CURRENT DATE',date)+
-  '<p class="ng-manager-empty">This view contains only recorded career fields. '+
-  'Missing identity, history, finances and achievements are not invented.</p></div>'+
-  '</section><aside class="ng-manager-sidebar"><section class="ng-manager-secondary">'+
-  '<header><strong>CAREER MANAGEMENT</strong><span>LOCAL SAVES</span></header>'+
+  '<section class="ng-manager-primary ng-career-primary">'+
+  '<header><strong>YOUR CURRENT OPERATION</strong><span>SAVED WORLD · VERIFIED FIELDS</span></header>'+
+  '<div class="ng-career-identity">'+
+  organizationLogoMarkup(org.id,org.name,'stable',true,false)+
+  '<div class="ng-career-identity-copy"><small>ACTIVE RACING OPERATION</small>'+
+  '<h3>'+safe(operation)+'</h3>'+
+  '<p>'+safe(managerLine)+' · '+safe(date)+'</p></div>'+
+  '<button type="button" data-ng="organization">OPEN OPERATION '+glyph('right',13)+'</button></div>'+
+  '<dl class="ng-career-facts">'+
+  fact('MANAGER',person)+fact('POSITION',role)+fact('WORLD',mode)+
+  fact('WORLD SEED',seed)+fact('RECORDED RACE FILES',races.length)+
+  fact('CAREER STATUS','Current local session')+'</dl>'+
+  '<header class="ng-career-section-title"><strong>CURRENT MANAGEMENT PRIORITIES</strong>'+
+  '<span>'+safe(notice)+' · '+action.length+' FILES</span></header>'+
+  '<div class="ng-career-priorities" role="region" tabindex="0" aria-label="Active career decision files">'+
+  (priorities||'<p class="ng-manager-empty">No urgent decisions are recorded. The full Office Inbox retains informational correspondence.</p>')+
+  '</div>'+
+  '<header class="ng-career-section-title"><strong>SCHEDULED FOLLOW-UPS</strong><span>'+
+  follow.length+' OPEN · '+due.length+' DUE</span></header>'+
+  '<div class="ng-career-followups" role="region" tabindex="0" aria-label="Recorded career follow-up actions">'+
+  (next||'<p class="ng-manager-empty">No dated follow-ups recorded in this career.</p>')+
+  '</div>'+
+  '<header class="ng-career-section-title"><strong>OFFICE UPDATES</strong><span>RECORDED CORRESPONDENCE</span></header>'+
+  '<div class="ng-career-followups" role="region" tabindex="0" aria-label="Informational Office reports">'+
+  (officeUpdates||'<p class="ng-manager-empty">No additional informational reports recorded.</p>')+
+  '</div></section>'+
+  '<aside class="ng-manager-sidebar"><section class="ng-manager-secondary">'+
+  '<header><strong>CAREER MANAGEMENT</strong><span>LOCAL SAVE CONTROLS</span></header>'+
   '<div class="ng-manager-secondary-list">'+
   '<button type="button" class="ng-manager-case" data-ng="commercial-career-open">'+
   '<span>'+glyph('save',14)+'</span><span><strong>WORLD & COMPACT SAVE MANAGER</strong>'+
   '<small>Inspect, save, load or export local careers</small></span>'+
   '<span>'+glyph('right',13)+'</span></button>'+
-  '<p class="ng-manager-empty">Opening this manager does not overwrite the current career. '+
-  'Loading or creating another world requires confirmation.</p></div></section>'+
-  '<section class="ng-manager-secondary"><header><strong>OPERATIONS</strong>'+
-  '<span>EXISTING DESKS</span></header><div class="ng-manager-secondary-list">'+
-  go('Stable','STABLE ROSTER','Review assigned horses')+
-  go('Racing','RACING CALENDAR','Review condition books and targets')+
-  go('Finances','FINANCE DESK','Review posted financial evidence')+
-  '</div></section></aside></div></section>';
+  '<p class="ng-manager-empty">Review only. Creating or loading a different world requires confirmation.</p>'+
+  '</div></section>'+
+  '<section class="ng-manager-secondary"><header><strong>WORKING DESKS</strong>'+
+  '<span>EXISTING GAME SCREENS</span></header><div class="ng-manager-secondary-list">'+
+  go('Stable','STABLE ROSTER','Review recorded horses and training')+
+  go('Racing','RACE CALENDAR','Review meetings, entries and targets')+
+  go('Finances','FINANCIAL DESK','Review the verified ledger')+
+  '</div></section>'+
+  '<section class="ng-manager-secondary"><header><strong>OFFICE CORRESPONDENCE</strong><span>'+
+  open.length+' OPEN</span></header><div class="ng-manager-secondary-list">'+
+  '<button type="button" class="ng-manager-case" data-ng="custom" data-val="Messages">'+
+  '<span>'+glyph('folder',14)+'</span><span><strong>OPEN FULL INBOX</strong>'+
+  '<small>Review correspondence and supporting records</small></span>'+
+  '<span>'+glyph('right',13)+'</span></button></div></section>'+
+  '</aside></div></section>';
 }
 function managerDashboard(){
  const section=APP.section||'Office',routeName=String(APP.custom||'');
@@ -4253,12 +4413,12 @@ function managerDashboard(){
   '<span class="ng-manager-case-indicator '+(m.resolved?'resolved':m.urgent?'urgent':'')+'"></span>'+
   '<span><strong>'+safe(m.title)+'</strong><small>'+safe(m.from)+'</small></span>'+
   '<span class="ng-manager-case-state">'+(m.resolved?'REVIEWED':m.urgent?'ACTION':'OPEN')+'</span></button>').join('');
- const schedule=upcoming.slice(0,6).map((r,i)=>'<button class="ng-manager-fixture" data-ng="fixture" data-val="'+i+'">'+
+ const schedule=upcoming.slice(0,6).map((r,i)=>'<button class="ng-manager-fixture" data-ng="fixture" data-val="'+safe(window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?r.id:i)+'">'+
   '<span>'+safe(r.date)+'</span><strong>'+safe(r.name)+'</strong><small>'+safe(r.track)+'</small><em>'+safe(r.status||'TARGET')+'</em></button>').join('');
  const metrics=[
   ['CONNECTED FILES',String(items.length)],
   ['OPEN DECISIONS',String(open.length)],
-  ['RACE TARGETS',String(upcoming.length)],
+  [window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?'SAVED GAME RACES':'RACE TARGETS',String(upcoming.length)],
   ['AVAILABLE CASH',cashDisplay()]
  ].map(([label,value])=>'<div class="ng-manager-metric"><small>'+label+'</small><strong>'+safe(value)+'</strong></div>').join('');
  return '<section class="ng-manager-screen">'+
@@ -4305,7 +4465,18 @@ else if(APP.custom==='Search'){body=searchView()}
 else if(APP.custom.startsWith('WorldRecord:')){body=world1999Profile()}
 else if(APP.custom.startsWith('FoundingProfile:')){body=founding1999Profile()}
 else if(APP.custom.startsWith('PilotHorse:')){body=pilotHorseDetail(decodeURIComponent(APP.custom.slice('PilotHorse:'.length)))}
-else if(APP.custom.startsWith('RaceFile:')){const id=decodeURIComponent(APP.custom.slice('RaceFile:'.length));const race=APP.raceRouteKey===id?APP.raceDetail:window.__WTW_1999_UI_DATA__?.findRace?.(id);body=window.WTW1999RaceConditions?.render(race,window.__WTW_1999_UI_DATA__)||'<section class="ng-1999-race-file"><h2>Race file loading unavailable</h2></section>'}
+else if(APP.custom.startsWith('RaceFile:Career:')){
+ const id=decodeURIComponent(APP.custom.slice('RaceFile:Career:'.length));
+ const saved=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ const row=saved?.raceRows?.find(r=>r.id===id);
+ body=row?window.WTW1999CanonicalCareerRaceFile?.render?.(row):null;
+ if(!body)body='<section class="ng-1999-race-file"><h2>Saved race unavailable</h2><p>This race ID is not in the active game career. No other run was substituted.</p></section>';
+}
+else if(APP.custom.startsWith('RaceFile:')){
+ const id=decodeURIComponent(APP.custom.slice('RaceFile:'.length));
+ const race=APP.raceRouteKey===id?APP.raceDetail:window.__WTW_1999_UI_DATA__?.findRace?.(id);
+ body=window.WTW1999RaceConditions?.render(race,window.__WTW_1999_UI_DATA__)||'<section class="ng-1999-race-file"><h2>Race file loading unavailable</h2></section>';
+}
 else if(APP.custom.startsWith('Preview:')){body=previewRecordView()}
 else {body=managerDashboard()}
 const isProfile=Boolean(profile)||body.startsWith('<div class="ng-profile-view '),isOrganization=APP.custom==='Organization Overview',isSearch=APP.custom==='Search',isManager=body.startsWith('<section class="ng-manager-screen');
@@ -4501,6 +4672,7 @@ window.addEventListener('click',e=>{
  if(key==='world-directory'){APP.section='World';return pageTab('1999 Horses')}
  if(key==='tab')return pageTab(val);
  if(key==='office')return goOffice();
+ if(key==='office-focus'){if(currentMessages().some(m=>m.case===val)){APP.activeCase=val;return paint()}return}
  if(key==='case'){APP.custom='';APP.section='Office';APP.page='Overview';selectMessage(val);return}
  if(key==='casecenter'){goOffice();const next=currentMessages().find(m=>!m.resolved);if(next)selectMessage(next.case);return}
  if(key==='caseprev')return selectAdjacentCase(-1);
@@ -4730,7 +4902,15 @@ window.addEventListener('click',e=>{
   if(row?._canonId)return openWorld1999Entity('horse:'+row._canonId);
   return openEntityRecord(val,'horse');
  }
- if(key==='fixture'){const n=$$('.right .fixtureList .fixture[data-track]')[Number(val)];return bridgeNode(n)}
+ if(key==='fixture'){
+ const saved=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ if(saved){
+  const row=saved.raceRows?.find(r=>r.id===val);
+  if(!row)return; // Never resolve a saved race by a coincidental Office row index.
+  return openCustomView('RaceFile:Career:'+encodeURIComponent(row.id),'Racing',APP.page);
+ }
+ const n=$('.right .fixtureList .fixture[data-track]')[Number(val)];return bridgeNode(n);
+}
  if(key==='track'){const row=$$('.right .fixture').find(x=>x.dataset.track===val);if(row){const p=$('p',row);return bridgeNode(p)}return bridgeNode(originalAct('World'))}
  if(key==='answer-decision')return answerDecision(btn.dataset.decision,val);
  if(key==='answer-trainer-request')return answerTrainerRequest(btn.dataset.decision,val);
@@ -4937,6 +5117,7 @@ function restoreNextUIRoute(){
  const p=new URLSearchParams(location.search),view=p.has('page')?'':p.get('ui')||'';
  APP.custom=view;APP.moreOpen=false;
  if(view){
+  if(view.startsWith('RaceFile:Career:')){APP.section='Racing';APP.page='Overview';return}
   if(view.startsWith('WorldRecord:')){APP.section='World';APP.page='Overview';return}
   if(view.startsWith('FoundingProfile:')){
    const kind=view.split(':')[1];
@@ -5042,7 +5223,7 @@ const bootJson=path=>fetch(path+'?v='+bootVersion,{credentials:'same-origin',cac
  .then(r=>r.ok?r.json():Promise.reject(Error('UI asset index unavailable')));
 const bootJobs=[
  loadWorld1999(),
- bootJson(isClean1999()?'/assets/office/founding-organization-logo-index.json?rev=founder-approved-34-20261115':'/assets/office/organization-logo-index.json?rev=generated-64px-retired-20261114')
+ bootJson(isClean1999()?'/assets/office/founding-organization-logo-index.json?rev=founder-approved-37-20261115':'/assets/office/organization-logo-index.json?rev=generated-64px-retired-20261114')
   .then(index=>{if(index&&typeof index==='object'&&!Array.isArray(index)){organizationLogoIndex=index;if(APP.ready)schedulePaint(20)}})
   .catch(()=>{/* Neutral organization mark is the fallback. */}),
  bootJson('/assets/game/attribute-catalog.v1.json')

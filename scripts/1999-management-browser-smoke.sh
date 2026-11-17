@@ -37,7 +37,7 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   const ui=w.__WTW_1999_UI_DATA__;
   check('1999 data adapter initialized',Boolean(ui));
   check('Clean founding world excludes old B01 generated racehorses',ui.counts.horses===0&&ui.counts.worldHorses===73);
-  check('1999 supported racecourse geography available',ui.counts.tracks>=50&&ui.counts.tracks<=118);
+  check('1999 supported racecourse geography available',ui.counts.tracks>=50&&ui.counts.tracks<=124);
   check('Old B01 opening horses excluded from the visible stable',ui.stableHorses.length===0);
   check('1999 inbox not 2014 demo',d.querySelector('.ng-msgtitle')?.textContent.includes('1999'));
   check('1999 decision desk not 2014 case',d.querySelector('.ng-casetitle')?.textContent.includes('1999'));
@@ -60,8 +60,8 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    !d.querySelector('#wtwNextgen .ng-rs-horse')&&ui.stableHorses.length===0);
   click('Racing');await pause(300);
   const fullTrackPicker=d.querySelector('#wtwNextgen select[data-ng-select="department-track"]');
-  check('Racing drop-down includes exactly the 115 playable founding circuits',
-   Boolean(fullTrackPicker)&&ui.counts.tracks===118&&fullTrackPicker.options.length===116&&
+  check('Racing drop-down includes exactly the 107 playable 1999 circuits',
+   Boolean(fullTrackPicker)&&ui.counts.tracks===124&&fullTrackPicker.options.length===108&&
    [...fullTrackPicker.options].some(o=>o.value==='Saratoga')&&
    ![...fullTrackPicker.options].some(o=>['Atlantic City Race Course','Aurora Downs','Bainbridge Park'].includes(o.value)));
   noDuplicateTabs('Racing');
@@ -261,22 +261,30 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
   await pause(340);
   noDuplicateTabs('Tracks');
   const worldTracks=w.__WTW_NEXT__?.app?.departmentVisible||[];
-  if(!(worldTracks.length===118&&worldTracks.every(t=>t._kind==='track')&&
+  // The protected source retains 124 immutable IDs, but the 1999 game
+  // operates just the 107 owner-approved tracks. The 17 closed courses belong
+  // in historical lookups, not the player-facing operational directory.
+  if(!(worldTracks.length===107&&worldTracks.every(t=>t._kind==='track')&&
    worldTracks.some(t=>t._canonId==='T-0102'&&t.name==='Oriental Park')&&
-   worldTracks.some(t=>t._canonId==='T-0118'&&t.status.includes('HISTORICAL'))&&
+   worldTracks.some(t=>t._canonId==='T-0122'&&t.name==='Sioux Plains')&&
+   worldTracks.some(t=>t._canonId==='T-0061'&&t.name==='Comanche Raceway')&&
+   worldTracks.some(t=>t._canonId==='T-0106'&&/^Sheepshead Bay/.test(t.name)&&!t.status.includes('HISTORICAL'))&&
+   !worldTracks.some(t=>['T-0033','T-0113','T-0118'].includes(t._canonId))&&
    !worldTracks.some(t=>/Curragh|Newmarket|Ascot/.test(t.name))))
-   throw Error('Site track registry mismatch '+JSON.stringify({
+   throw Error('Operational 1999 track registry mismatch '+JSON.stringify({
     length:worldTracks.length,section:w.__WTW_NEXT__?.app?.section,
     page:w.__WTW_NEXT__?.app?.page,first:worldTracks.slice(0,2),
     last:worldTracks.slice(-3),cuba:worldTracks.find(t=>t._canonId==='T-0102'),
-    historic:worldTracks.find(t=>t._canonId==='T-0118'),
+    sioux:worldTracks.find(t=>t._canonId==='T-0122'),
+    retired:worldTracks.filter(t=>t.status?.includes('HISTORICAL')),
     intl:worldTracks.filter(t=>/Curragh|Newmarket|Ascot/.test(t.name)).map(t=>t.name)
    }));
-  check('All 16 historical North American tracks remain visible, closed and without 1999 meets',
-   worldTracks.filter(t=>t._canonId>='T-0103'&&t._canonId<='T-0118').length===16&&
-   worldTracks.filter(t=>t._canonId>='T-0103'&&t._canonId<='T-0118').every(t=>
-    t.status.includes('HISTORICAL')&&!t.meetWindow&&!t._meetState.active));
-  steps.push('All 118 North American including Cuba displayed; 16 historic closed and zero international');
+  check('All 17 archive-only tracks stay outside the 107-track playable roster',
+   ui.counts.tracks===124&&ui.counts.activeTracks===107&&
+   ui.counts.historicalTracks===17&&
+   worldTracks.filter(t=>t.status?.includes('HISTORICAL')).length===0&&
+   !worldTracks.some(t=>['T-0042','T-0112','T-0115','T-0033','T-0113','T-0118'].includes(t._canonId)));
+  steps.push('107 operational North American/Cuban tracks displayed; 17 archived identities remain source-only');
   click('Personnel');await pause(230);
   pickView('Owners');await pause(250);
   const firstOwner=d.querySelector('#wtwNextgen [data-ng="dept-open"]');

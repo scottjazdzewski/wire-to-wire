@@ -16,7 +16,7 @@ const featureNames={
  'T-0042':'Atlantic City Turf Challenge','T-0044':'Colonial Virginia Cup',
  'T-0046':'Kentucky Downs Turf Cup','T-0052':'Canterbury Summer Classic',
  'T-0053':'Prairie Meadows Championship','T-0059':'Turf Paradise Desert Mile',
- 'T-0060':'Yavapai Mile','T-0061':'Sunland Desert Classic',
+ 'T-0060':'Yavapai Mile','T-0061':'Comanche Desert Classic',
  'T-0062':'Ruidoso Mountain Handicap','T-0063':'Albuquerque Fall Classic',
  'T-0064':'Arapahoe Park Mile','T-0065':'Emerald Downs Invitational',
  'T-0076':'Fort Erie Canadian Cup','T-0077':'Hastings Summer Classic',
@@ -25,6 +25,9 @@ const featureNames={
  'T-0096':'Queen City Carolina Derby','T-0097':'Front Range Colorado Mile',
  'T-0098':'Silver State Nevada Cup','T-0099':'Wasatch Mountain Classic',
  'T-0100':'Heartland Missouri Derby','T-0101':'Cream City Wisconsin Mile',
+ 'T-0119':'Bluff City Cup','T-0120':'Lowcountry Turf Classic',
+ 'T-0121':'Live Oak Coastal Classic','T-0122':'Sioux Plains Prairie Cup',
+ 'T-0123':'Bitterroot Mountain Classic',
 };
 const iso=(monthDay)=>'1999-'+monthDay;
 const dayMS=86400000;
@@ -62,7 +65,7 @@ for(const p of Object.values(TRACK_PROGRAM_1999)){
    grade:'WTW UNGRADED FEATURE',ageRequirement:'3YO+',sexRestriction:'OPEN',
    surface,distanceF:turf?8.5:8,distanceFurlongs:turf?8.5:8,purse1999:purse,
    canonical:false,calendarBasis:'WTW_ALTERNATE_HISTORY_GAME_MODELED',
-   fullConditions:'WTW modeled feature race. Exact weights, nomination terms and eligibility conditions are not historically sourced; entries remain uncommitted.'
+   fullConditions:'WTW game-modeled feature; no historical fixture, official grade or result is asserted. Career entry uses the listed age, sex, surface and distance conditions; no nomination fee is modeled.'
   }));
  }
 }
@@ -78,33 +81,78 @@ const fictionalStakes={
  'T-0098':['Nevada Derby','Silver State Oaks','Desert Mile','Reno Sprint','Silver State Juvenile','High Desert Cup','Sierra Distaff','Nevada Classic','Silver State Dirt Mile','Nevada Championship','Desert Marathon'],
  'T-0099':['Wasatch Derby','Great Salt Lake Oaks','Deseret Mile','Wasatch Sprint','Utah Juvenile','Alpine Cup','Mountain Distaff','Salt Lake Classic','Utah Dirt Mile','Wasatch Championship','Mountain Marathon'],
  'T-0100':['Missouri Derby','Heartland Oaks','Show-Me Mile','Missouri River Sprint','Heartland Juvenile','Gateway Turf Cup','Ozark Distaff','Heartland Classic','Missouri Turf Mile','Missouri Summer Cup','Heartland Marathon'],
- 'T-0101':['Wisconsin Derby','Cream City Oaks','Great Lakes Mile','Brew City Sprint','Cream City Juvenile','Lakefront Cup','Badger State Distaff','Cream City Classic','Wisconsin Dirt Mile','Cream City Championship','Dairyland Marathon']
+ 'T-0101':['Wisconsin Derby','Cream City Oaks','Great Lakes Mile','Brew City Sprint','Cream City Juvenile','Lakefront Cup','Badger State Distaff','Cream City Classic','Wisconsin Dirt Mile','Cream City Championship','Dairyland Marathon'],
+ 'T-0119':['Mississippi Valley Derby','Tennessee Oaks','Bluff City Juvenile','Mid-South Turf Cup','Mississippi Valley Sprint'],
+ 'T-0120':['Charleston Spring Derby','Lowcountry Oaks','Johns Island Turf Stakes','Charleston Sprint','Carolina Juvenile Turf'],
+ 'T-0121':['Savannah Classic','Coastal Georgia Oaks','Live Oak Sprint','Savannah Juvenile'],
+ 'T-0122':['Prairie Derby','Fargo Sprint','Sioux Plains Juvenile'],
+ 'T-0123':['Bitterroot Mountain Derby','Missoula Mile','Bitterroot Juvenile']
+};
+const localStakesTerms={
+ 'T-0119':[
+  {grade:'WTW G2',ageRequirement:'3YO',sexRestriction:'OPEN',surface:'DIRT',distance:9,purse:300000},
+  {grade:'WTW G3',ageRequirement:'3YO',sexRestriction:'FILLIES_AND_MARES',surface:'DIRT',distance:8.5,purse:225000},
+  {grade:'WTW G3',ageRequirement:'2YO',sexRestriction:'OPEN',surface:'DIRT',distance:6,purse:175000},
+  {grade:'WTW G3',ageRequirement:'3YO+',sexRestriction:'OPEN',surface:'TURF',distance:9,purse:250000},
+  {grade:'WTW G3',ageRequirement:'3YO+',sexRestriction:'OPEN',surface:'DIRT',distance:6,purse:175000}
+ ],
+ 'T-0120':[
+  {grade:'WTW G2',ageRequirement:'3YO',sexRestriction:'OPEN',surface:'DIRT',distance:9,purse:350000},
+  {grade:'WTW G2',ageRequirement:'3YO',sexRestriction:'FILLIES_AND_MARES',surface:'TURF',distance:8.5,purse:300000},
+  {grade:'WTW G2',ageRequirement:'3YO+',sexRestriction:'OPEN',surface:'TURF',distance:9,purse:300000},
+  {grade:'WTW G3',ageRequirement:'3YO+',sexRestriction:'OPEN',surface:'DIRT',distance:6,purse:200000},
+  {grade:'WTW G3',ageRequirement:'2YO',sexRestriction:'FILLIES_AND_MARES',surface:'TURF',distance:7.5,purse:175000}
+ ],
+ 'T-0121':[
+  {grade:'WTW G3',ageRequirement:'3YO+',sexRestriction:'OPEN',surface:'DIRT',distance:8.5,purse:200000},
+  {grade:'WTW G3',ageRequirement:'3YO',sexRestriction:'FILLIES_AND_MARES',surface:'TURF',distance:8,purse:180000},
+  {grade:'WTW G3',ageRequirement:'3YO+',sexRestriction:'OPEN',surface:'DIRT',distance:6,purse:150000},
+  {grade:'REGIONAL STAKES',ageRequirement:'2YO',sexRestriction:'OPEN',surface:'DIRT',distance:6,purse:125000}
+ ],
+ 'T-0122':[
+  {grade:'REGIONAL STAKES',ageRequirement:'3YO',sexRestriction:'OPEN',surface:'DIRT',distance:8.5,purse:125000},
+  {grade:'REGIONAL STAKES',ageRequirement:'3YO+',sexRestriction:'OPEN',surface:'DIRT',distance:6,purse:90000},
+  {grade:'REGIONAL STAKES',ageRequirement:'2YO',sexRestriction:'OPEN',surface:'DIRT',distance:6,purse:80000}
+ ],
+ 'T-0123':[
+  {grade:'REGIONAL STAKES',ageRequirement:'3YO',sexRestriction:'OPEN',surface:'DIRT',distance:8.5,purse:125000},
+  {grade:'REGIONAL STAKES',ageRequirement:'3YO+',sexRestriction:'OPEN',surface:'DIRT',distance:8,purse:90000},
+  {grade:'REGIONAL STAKES',ageRequirement:'2YO',sexRestriction:'OPEN',surface:'DIRT',distance:6,purse:80000}
+ ]
 };
 const grades=['WTW G1','WTW G2','WTW G3','WTW G3','WTW G3','WTW G2','WTW G3','WTW G1','WTW G3','WTW G2','REGIONAL STAKES'];
 const purses=[600000,400000,300000,250000,200000,300000,225000,650000,220000,325000,175000];
 for(const [id,names] of Object.entries(fictionalStakes)){
  const p=TRACK_PROGRAM_1999[id];
- if(!p||p.basis!=='WTW_FICTIONAL_GAME_MODELED'||names.length!==11)
+ if(!p||p.basis!=='WTW_FICTIONAL_GAME_MODELED'||!names.length||
+  (names.length!==11&&names.length!==localStakesTerms[id]?.length))
   throw Error('Incorrect WTW fictional track program: '+id);
  const saturdays=[];
  for(let t=Date.parse('1999-01-01T12:00:00Z');t<=Date.parse('1999-12-31T12:00:00Z');t+=86400000){
   const d=new Date(t).toISOString().slice(0,10);
   if(new Date(t).getUTCDay()===6&&trackMeetOpen1999(id,d))saturdays.push(d);
  }
- if(saturdays.length<11)throw Error('Too few race dates for '+id);
+ if(saturdays.length<names.length)throw Error('Too few race dates for '+id);
  for(let i=0;i<names.length;i++){
-  const name=names[i],date=saturdays[Math.floor((i+.5)*saturdays.length/names.length)];
-  const turf=/Turf/i.test(name)||p.surfaces.includes('Turf')&&i===7;
+  const name=names[i],date=saturdays[Math.floor((i+.5)*saturdays.length/names.length)],
+   terms=localStakesTerms[id]?.[i]||null;
+  const turf=terms?terms.surface==='TURF':/Turf/i.test(name)||p.surfaces.includes('Turf')&&i===7;
   if(turf&&!p.surfaces.includes('Turf'))throw Error('Turf race on dirt course '+id);
-  const surface=turf?'TURF':'DIRT',distance=/Sprint/.test(name)?6:/Marathon/.test(name)?12:/Derby|Classic/.test(name)?10:8.5;
+  const surface=terms?.surface||(turf?'TURF':'DIRT'),distance=terms?.distance||
+   (/Sprint/.test(name)?6:/Marathon/.test(name)?12:/Derby|Classic/.test(name)?10:8.5);
+  const ageRequirement=terms?.ageRequirement||([0,1,4].includes(i)?'3YO':'3YO+');
+  const sexRestriction=terms?.sexRestriction||([1,6].includes(i)?'FILLIES_AND_MARES':'OPEN');
+  const purse=terms?.purse??purses[i];
   out.push(Object.freeze({
    id:'WTW-STK-1999-'+id+'-'+String(i+2).padStart(2,'0'),
    name,trackId:id,trackName:p.name,localDate:date,date,
-   division:grades[i],grade:grades[i],status:'WTW PLANNED STAKES · NOT RUN',
-   ageRequirement:[0,1,4].includes(i)?'3YO':'3YO+',sexRestriction:[1,6].includes(i)?'FILLIES_AND_MARES':'OPEN',
-   surface,distanceF:distance,distanceFurlongs:distance,purse1999:purses[i],
+   division:terms?.grade||grades[i],grade:terms?.grade||grades[i],status:'WTW PLANNED STAKES · NOT RUN',
+   ageRequirement,sexRestriction,
+   surface,distanceF:distance,distanceFurlongs:distance,purse1999:purse,
    canonical:false,calendarBasis:'WTW_FICTIONAL_GAME_MODELED',
-   fullConditions:'WTW fictional stakes; final imposts, nominations and entry terms are not yet issued. No result or entry has occurred.'
+   fullConditions:'WTW game-modeled '+(terms?.grade||grades[i])+'; '+ageRequirement+'; '+
+    (sexRestriction==='FILLIES_AND_MARES'?'fillies and mares':'open sexes')+'; '+
+    distance+' furlongs on '+(surface==='TURF'?'turf':'dirt')+'. Nominations and entry terms are game-defined; no result or historical grading is asserted.'
   }));
  }
 }

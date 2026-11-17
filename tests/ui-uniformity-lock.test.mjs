@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
 
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const js=read('public/next/next.js');
@@ -26,7 +27,9 @@ test('one shared management shell, route entry and department navigation remain 
 test('horse, people, track, stable and farm profiles share one renderer family',()=>{
  assert.equal(count(js,/function profileDetail\(/g),1,'No copied entity profile implementations');
  assert.equal(count(js,/function restored1999Profile\(/g),1,'All canonical records use one restored-profile adapter');
- assert.match(js,/return x\?profileDetail\(x\.route,x\.node\):null/);
+ assert.match(js,/if\(!x\)return null/);
+ assert.match(js,/track:'Track Profile'/);
+ assert.match(js,/return profileDetail\(\{\.\.\.x\.route,kicker\},x\.node\)/);
  assert.match(js,/if\(kind==='horse'\|\|kind==='person'\|\|kind==='track'\)return restored1999Profile/);
  assert.match(js,/return restored1999Profile\(kind==='person'\?'person':'farm'/);
  assert.match(js,/ng-profile-intro/,'Shared identity row must stay');
@@ -89,10 +92,12 @@ test('Office Career is its own source-backed career and save view, never World s
  assert.match(page,/gameplayService\?\.state/);
  assert.match(page,/const person=recorded/);
  assert.match(page,/const role=recorded/);
- assert.match(page,/PLAYER CAREER & WORLD STATUS/);
+ assert.match(page,/MANAGER CAREER & OPERATION/);
  assert.match(page,/managerRecordViewControl\('Office','Career'\)/);
  assert.match(page,/data-ng="commercial-career-open"/);
- assert.match(page,/Missing identity, history, finances and achievements are not invented/);
+ assert.match(page,/Not recorded/);
+ assert.match(page,/No urgent decisions are recorded/);
+ assert.match(page,/const action=messages\.filter\(m=>m\.urgent&&!m\.resolved\)/);
  assert.doesNotMatch(page,/globalSearchItems\(|fakeCareer|mockPlayer/);
  assert.match(js,/section==='Office'&&page==='Career'\)return managerCareerView\(\)/);
 });
@@ -102,7 +107,8 @@ test('Office Inbox and Decisions use source cases, not a fake connected-world di
  assert.ok(start>0&&stop>start);
  const inbox=js.slice(start,stop);
  assert.match(inbox,/const all=currentMessages\(\)/);
- assert.match(inbox,/page==='Decisions'\?all\.filter\(m=>!m\.resolved\):all/);
+ assert.match(inbox,/const actionable=all\.filter\(m=>m\.urgent&&!m\.resolved\)/);
+ assert.match(inbox,/const listed=\(decisions\?actionable:all\)/);
  assert.match(inbox,/data-ng="case"/);
  assert.match(inbox,/ng-manager-message-inbox/);
  assert.match(inbox,/FRONT OFFICE/);
@@ -110,6 +116,55 @@ test('Office Inbox and Decisions use source cases, not a fake connected-world di
  const dashboard=js.slice(js.indexOf('function managerDashboard(){'),js.indexOf('function open1999Race(',js.indexOf('function managerDashboard(){')));
  assert.match(dashboard,/managerOfficeInboxView\(page\)/);
  assert.match(dashboard,/page==='Training'\)return liveStableTrainingView\(\)/);
+});
+test('Office selects source case inline and previews recorded risks before opening',()=>{
+ const begin=js.indexOf('function managerOfficeInboxView(page){');
+ const end=js.indexOf('/* One native Stable workflow',begin);
+ const view=js.slice(begin,end);
+ assert.match(view,/managerSortableColumns\(scope/);
+ assert.match(view,/data-ng="office-focus"/);
+ assert.match(view,/aria-pressed/);
+ assert.match(view,/ng-office-file-preview/);
+ assert.match(view,/desk\?\.read/);
+ assert.match(view,/desk\?\.risk/);
+ assert.match(view,/SOURCE-LINKED NEXT STEPS/);
+ assert.match(view,/data-ng="case"/);
+ assert.match(view,/data-ng="menu"/);
+ assert.match(js,/if\(key==='office-focus'\)/);
+ assert.doesNotMatch(view,/mockMessage|fakeCase|Math\.random/);
+ assert.match(css,/ng-manager-message-inbox \.ng-manager-row\[aria-pressed="true"\]/);
+});
+test('Career dossier uses only current-save identity, actionable Office cases, follow-ups and approved organization mark',()=>{
+ const a=js.indexOf('function managerCareerView(){');
+ const b=js.indexOf('function managerDashboard(){',a);
+ assert.ok(a>=0&&b>a);
+ const view=js.slice(a,b);
+ assert.match(view,/const game=state\(\),live=/);
+ assert.match(view,/org=playerOrganization\(\)/);
+ assert.match(view,/organizationLogoMarkup\(org\.id,org\.name,'stable',true,false\)/);
+ assert.match(view,/messages=currentMessages\(\)/);
+ assert.match(view,/const action=messages\.filter\(m=>m\.urgent&&!m\.resolved\)/);
+ assert.match(view,/follow=openFollowUps\(\),due=dueActions\(\)/);
+ assert.match(view,/availableCash\(\)/);
+ assert.match(view,/Not recorded/);
+ assert.match(view,/data-ng="case"/);
+ assert.match(view,/data-ng="followup"/);
+ assert.match(view,/data-ng="commercial-career-open"/);
+ assert.match(view,/data-ng="organization"/);
+ assert.match(view,/ng-career-priorities/);
+ assert.match(view,/OFFICE UPDATES/);
+ assert.match(view,/messages\.filter\(m=>!m\.urgent\|\|m\.resolved\)/);
+ assert.match(view,/Manager and position not recorded/);
+
+ assert.match(view,/ng-career-identity/);
+ assert.match(view,/ng-career-facts/);
+ assert.doesNotMatch(view,/Math\.random|fabricatedAchievement|fakeJobOffer/);
+ assert.match(css,/#wtwNextgen \.ng-career-identity/);
+ assert.match(css,/#wtwNextgen \.ng-career-facts/);
+});
+test('Today priority facts retain their complete recorded values for inspection',()=>{
+ assert.ok(js.includes('title="${safe(f[0]+'), 'Today fact title lacks the original source');
+ assert.ok(js.includes('aria-label="${safe(f[0]+'), 'Today fact aria label lacks the original source');
 });
 test('Stable Training opens the real simulation training desk and has a working back-to-roster action',()=>{
  const start=js.indexOf('function liveStableTrainingView(){');
@@ -187,4 +242,69 @@ test('a screenshot smoke test does not mean FM/OOTP visual approval',()=>{
  assert.match(audit,/UNIFIED PROFILE GEOMETRY VERIFIED/);
  assert.match(standard,/A \*\*person\*\* compares screenshots/,'Visual acceptance needs an actual reviewer');
  assert.match(standard,/No CSS patch stacks|No CSS patch stack|one canonical management stylesheet/i);
+});
+
+test('ALL registered manager VIEW routes have independent screenshot evidence or an explicit existing-route alias',()=>{
+ const start=js.indexOf('const tabmap='),end=js.indexOf('\nconst actions=',start);
+ assert.ok(start>=0&&end>start,'VIEW catalog was not found');
+ const tabmap=runInNewContext(js.slice(start,end)+'\ntabmap;');
+ const captures=[...audit.matchAll(/^capture\s+([\w-]+)\s+'([^']*)'/gm)]
+  .map(match=>{
+   const [_,slug,route]=match;
+   const ui=route.startsWith('?')?new URLSearchParams(route.slice(1)).get('ui'):null;
+   return {slug,ui,route};
+  });
+ const slugs=new Set(captures.map(x=>x.slug));
+ assert.equal(slugs.size,captures.length,'Screenshot artifact names must be unique');
+ const office={
+  Overview:'racing-office',Messages:'office-messages',Decisions:'office-decisions',
+  Calendar:'racing-roster',News:'office-news',Reports:'office-reports',Career:'office-career'
+ };
+ // Office Calendar is not a second renderer; its existing button routes
+ // to the actual Racing desk. Do not invent another Office calendar page.
+ assert.match(js,/if\(name==='Calendar'\)return openMenu\('Racing'\)/);
+ const history={
+  'Race Results':'history-vault',Horses:'history-horses',
+  'People & Farms':'history-people-farms',
+  'Facilities & Tracks':'history-tracks-facilities',
+  'Historical Calendar':'history-calendar',Coverage:'history-coverage'
+ };
+ const absent=[];
+ for(const [section,pages] of Object.entries(tabmap)){
+  for(const page of pages){
+   if(section==='Office'||section==='History'){
+    const alias=(section==='Office'?office:history)[page];
+    if(!alias||!slugs.has(alias))absent.push(section+' / '+page);
+    continue;
+   }
+   const exact=section+' — '+page;
+   const aliases=page==='Overview'?[section,exact]:[exact];
+   if(!captures.some(x=>aliases.includes(x.ui)))absent.push(section+' / '+page);
+  }
+ }
+ assert.deepEqual(absent,[], 'Every registered VIEW needs an actual rendered screenshot or confirmed alias');
+ assert.ok(captures.length>=80,'Screenshot coverage must not drop below 80 distinct routes');
+ for(const page of ['stable-horses','stable-training','office-messages','office-decisions','office-career',
+  'horse-profile','people-profile','history-year-review'])
+  assert.ok(slugs.has(page),'Missing critical career/profile route: '+page);
+});
+
+test('one shared readable typography scale applies across ALL management screens',()=>{
+ const root=css.match(/\.ng-manager-shell\{([^}]*)\}/)?.[1];
+ const laptop=css.match(/@media\(min-width:1081px\) and \(max-width:1300px\)\{\.ng-manager-shell\{([^}]*)\}/)?.[1];
+ const narrow=css.match(/@media\(max-width:1080px\)\{\.ng-manager-shell\{([^}]*)\}/)?.[1];
+ assert.ok(root&&laptop&&narrow,'Desktop/laptop typography variables missing');
+ const value=(string,token)=>Number(string.match(new RegExp('--wtw-ui-'+token+':([\\d.]+)px'))?.[1]);
+ for(const [name,vars,textMinimum,nameMinimum,metaMinimum] of [
+  ['desktop',root,10.5,11,9.5],['laptop',laptop,10,10.5,9],
+  ['compact',narrow,9.5,10,9]
+ ]){
+  assert.ok(value(vars,'list-text')>=textMinimum,name+' text is too small');
+  assert.ok(value(vars,'list-name')>=nameMinimum,name+' record names are too small');
+  assert.ok(value(vars,'list-meta')>=metaMinimum,name+' metadata is illegible');
+ }
+ assert.equal((root.match(/--wtw-ui-profile-title:/g)||[]).length,1,
+  'Shared profile typography variables must not be duplicated');
+ assert.match(css,/\.ng-manager-row-name strong\{font-size:var\(--wtw-ui-list-name\)/);
+ assert.match(css,/\.ng-manager-row-detail\{font-size:var\(--wtw-ui-list-text\)/);
 });

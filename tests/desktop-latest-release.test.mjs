@@ -37,6 +37,8 @@ test('stable latest names, checksums, version and SHA are generated from three v
   assert.equal(m.commit,sha);
   assert.equal(m.workflowRunId,12345);
   assert.equal(m.version,version);
+  assert.equal(m.sourceRepository,'https://github.com/scottjazdzewski/wire-to-wire');
+  assert.equal(m.sourceArchiveUrl,`https://github.com/scottjazdzewski/wire-to-wire/archive/${sha}.zip`);
   assert.equal(m.status,'UNSIGNED DEVELOPMENT BUILD — NOT READY FOR COMMERCIAL SALE');
   assert.deepEqual(m.files.map(x=>x.downloadName),[
    'WireToWire-Portable-Latest.exe','WireToWire-Setup-Latest.exe','WireToWire-NoInstall-Latest.zip'

@@ -297,3 +297,84 @@ export function generateLocalPopulationNamingBatch({batch,existingNames=[],attem
   requiresFullLocalNameRegistry:true,
   writesToGame:false,approvedForRegistration:false};
 }
+
+/**
+ * Offline 1999 opening-world name assignment.
+ * Unlike foaling-event names, these are explicitly EDITABLE PROVISIONAL
+ * identities: there is no fabricated foaling event or owner approval.
+ * Draws only from the existing curated naming writer's vocabulary.
+ */
+export function generateProvisional1999HorseNames({
+ seed=19990101,horseCount,protectedNames=[]
+}={}){
+ if(!Number.isSafeInteger(seed)||seed<1||seed>4294967295||
+  !Number.isInteger(horseCount)||horseCount<1||horseCount>100000||
+  !Array.isArray(protectedNames))throw Error('Invalid provisional horse naming request');
+ const single=[...new Set(VOICES.flatMap(v=>[...v.names,...(V488_WHOLE_NAMES[v.id]||[])]))]
+  .filter(n=>n.length<=18&&n.length>=2);
+ const words=[...new Set(single.flatMap(n=>n.split(/\s+/).filter(w=>w.length>=3&&w.length<=11)))];
+ const reserved=new Set(protectedNames.map(norm)),names=[];
+ // Every candidate remains a natural phrase from the existing writer's words.
+ // This is a bootstrap naming tier, never a replacement for its editorial desk.
+ const a=fnv('opening|'+seed);
+ const max=single.length+words.length*words.length;
+ if(horseCount+reserved.size>max)throw Error('Provisional naming vocabulary exhausted');
+ for(let i=0,attempts=0;names.length<horseCount&&attempts<max;attempts++){
+  const index=(a+attempts)%max;
+  const candidate=index<single.length?single[index]:
+   words[Math.floor((index-single.length)/words.length)]+' '+
+   words[(index-single.length)%words.length];
+  const key=norm(candidate);
+  if(candidate.length>18||!key||reserved.has(key))continue;
+  reserved.add(key);names.push(candidate);
+ }
+ if(names.length!==horseCount)throw Error('Provisional name inventory insufficient');
+ return {names,algorithmRevision:LOCAL_HORSE_NAMING_ALGORITHM_REVISION+
+  ':OPENING_PROVISIONAL_V1',provisional:true,editable:true,
+  approvedForRegistration:false,source:'CURATED_LOCAL_VOCABULARY_NO_FOALING_EVIDENCE'};
+}
+
+/**
+ * Commercial-scale opening-world roster. Extends the EXISTING V488 voice
+ * vocabulary when a large racing/breeding industry exceeds the small cohort
+ * capacity of generateProvisional1999HorseNames().
+ *
+ * These are provisional names for testing and player editing, NOT certified
+ * owner-approved registrations and never claims historic clearance.
+ * Small cohorts keep their original V488 assignment unchanged.
+ */
+export function generateProvisional1999IndustryNameRoster({
+ seed=19990101,horseCount,protectedNames=[]
+}={}){
+ if(!Number.isSafeInteger(seed)||seed<1||seed>4294967295||
+  !Number.isInteger(horseCount)||horseCount<1||horseCount>325000||
+  !Array.isArray(protectedNames))
+  throw Error('Invalid industry horse naming request');
+ const baseCount=Math.min(horseCount,70000);
+ const base=generateProvisional1999HorseNames({seed,horseCount:baseCount,protectedNames});
+ if(horseCount===baseCount)return {...base,
+  algorithmRevision:LOCAL_HORSE_NAMING_ALGORITHM_REVISION+':OPENING_INDUSTRY_V1'};
+ const names=[...base.names],reserved=new Set([...protectedNames,...names].map(norm));
+ const words=[...new Set(VOICES.flatMap(v=>[...v.names,...(V488_WHOLE_NAMES[v.id]||[])]).flatMap(
+  n=>n.split(/\s+/).filter(w=>w.length>=3&&w.length<=10)))]
+  .filter(w=>!/^(the|and|for|with|from|into|you|our|your|was|were|but|not)$/i.test(w));
+ const length=words.length,capacity=length**3;
+ const offset=fnv('opening-industry-triples|'+seed)%capacity;
+ for(let i=0;i<capacity&&names.length<horseCount;i++){
+  const k=(offset+i)%capacity;
+  const a=words[Math.floor(k/(length*length))],
+   b=words[Math.floor(k/length)%length],c=words[k%length];
+  if(a===b||a===c||b===c)continue;
+  const candidate=a+' '+b+' '+c;
+  if(candidate.length>18)continue;
+  const key=norm(candidate);
+  if(!key||reserved.has(key))continue;
+  reserved.add(key);names.push(candidate);
+ }
+ if(names.length!==horseCount)
+  throw Error('Opening industry horse-name vocabulary exhausted');
+ return {names,algorithmRevision:LOCAL_HORSE_NAMING_ALGORITHM_REVISION+
+  ':OPENING_INDUSTRY_V1',provisional:true,editable:true,
+  approvedForRegistration:false,
+  source:'V488_LOCAL_VOICES_PROVISIONAL_OPENING_WORLD'};
+}

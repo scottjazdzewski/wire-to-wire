@@ -1,9 +1,12 @@
 /** WTW 1999 track program, ID-keyed projection, NOT an independent historical master.
  * 21 real-track dates from 1999 state commission schedules; 4 locked game-calendar windows.
  * Other active track windows are clearly designated WTW GAME MODELED, not certified 1999 dates.
- * 93 stakesIds reference the locked 1999 stakes source; no new events/results are invented.
+ * 93 stakesIds reference the locked 1999 stakes source. Separate WTW race
+ * invitations are explicitly game-modeled and never become historical results.
  */
-export const TRACK_PROGRAM_1999=Object.freeze({
+import {ARCHIVED_TRACK_IDS_1999,APPROVED_NEW_TRACK_PROGRAMS_1999,
+ APPROVED_TRACK_PRESENTATION_1999} from './approved-track-expansion-1999.mjs';
+const BASE_TRACK_PROGRAM_1999={
   "T-0001": {
     "id": "T-0001",
     "name": "Aqueduct",
@@ -3941,10 +3944,29 @@ export const TRACK_PROGRAM_1999=Object.freeze({
     ],
     "playableIn1999": true
   }
+};
+
+const archivedOverrides=Object.fromEntries(ARCHIVED_TRACK_IDS_1999.map(id=>[
+ id,Object.freeze({...BASE_TRACK_PROGRAM_1999[id],trackOperating:'HISTORICAL_ONLY',
+  playableIn1999:false,archiveStatus:'PERMANENTLY_ARCHIVED_FROM_1999_RACING',
+  archiveReason:id==='T-0033'?'Emerald Downs serves the successor Pacific Northwest racing market.':
+   'Owner-approved historical-only 1999 status; preserve source identity and records.'})
+]));
+const presentationOverrides=Object.fromEntries(Object.entries(APPROVED_TRACK_PRESENTATION_1999)
+ .map(([id,record])=>[id,Object.freeze({...BASE_TRACK_PROGRAM_1999[id],...record})]));
+const expansionPrograms=Object.fromEntries(APPROVED_NEW_TRACK_PROGRAMS_1999
+ .map(record=>[record.id,record]));
+export const TRACK_PROGRAM_1999=Object.freeze({
+ ...BASE_TRACK_PROGRAM_1999,...archivedOverrides,...presentationOverrides,
+ ...expansionPrograms
 });
 export const trackProgram1999=id=>TRACK_PROGRAM_1999[id]||null;
 export const trackMeetOpen1999=(id,date)=>{
  const p=trackProgram1999(id);if(!p||p.trackOperating!=='OPEN_1999'||!/^1999-\d{2}-\d{2}$/.test(date))return false;
+ // Date.parse normalizes nonexistent dates (e.g. Nov 31 => Dec 1).
+ // Never announce or open a card on a date that did not exist in 1999.
+ const timestamp=Date.parse(date+'T12:00:00Z');
+ if(!Number.isFinite(timestamp)||new Date(timestamp).toISOString().slice(0,10)!==date)return false;
  const md=date.slice(5);if(!p.meets.some(([a,b])=>a<=md&&md<=b))return false;
  if(p.darkDates?.includes(date))return false;
  if(p.specialDates?.includes(date)||p.stakesDates.includes(date))return true;
@@ -3954,4 +3976,21 @@ export const trackMeetOpen1999=(id,date)=>{
 export const trackCardSurface1999=(id,slot=0)=>{
  const p=trackProgram1999(id);if(!p||p.trackOperating!=='OPEN_1999')return null;
  return p.surfaces==='Turf'?'TURF':p.surfaces.includes('Turf')&&slot%5===0?'TURF':'DIRT';
+};
+export const scheduledRaceDays1999=id=>{
+ const p=trackProgram1999(id);
+ if(!p||p.trackOperating!=='OPEN_1999')return 0;
+ const days=new Set();
+ for(const [start,end] of p.meets||[]){
+  const a=Date.parse('1999-'+start+'T12:00:00Z'),b=Date.parse('1999-'+end+'T12:00:00Z');
+  for(let ms=a;ms<=b;ms+=86400000){
+   const date=new Date(ms).toISOString().slice(0,10);
+   if(trackMeetOpen1999(id,date))days.add(date);
+  }
+ }
+ return days.size;
+};
+export const trackPhysicalVenueId1999=id=>{
+ const p=trackProgram1999(id);
+ return p?.physicalTrackId||id;
 };

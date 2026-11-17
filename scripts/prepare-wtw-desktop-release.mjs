@@ -55,6 +55,8 @@ const manifest={
  schema:'wtw-desktop-test-build/v1',
  title:'Wire to Wire — newest tested Windows desktop development build',
  commit:sha,
+ sourceRepository:'https://github.com/scottjazdzewski/wire-to-wire',
+ sourceArchiveUrl:`https://github.com/scottjazdzewski/wire-to-wire/archive/${sha}.zip`,
  workflowRunId:Number(runId),
  version,architecture:'windows-x64',createdAtUTC:new Date().toISOString(),
  status:'UNSIGNED DEVELOPMENT BUILD — NOT READY FOR COMMERCIAL SALE',

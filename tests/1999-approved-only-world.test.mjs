@@ -9,7 +9,7 @@ const directory=JSON.parse(readFileSync(file('public/data/wtw-1999-founding-dire
 const jockeys=JSON.parse(readFileSync(file('public/data/wtw-1999-jockey-pilot-v1.json'),'utf8'));
 const trainers=JSON.parse(readFileSync(file('public/data/wtw-1999-trainer-pilot-v1.json'),'utf8'));
 
-test('clean opening has ONLY approved 37 organizations, 41 founding people, 73 breeders, ALL 118 tracks',()=>{
+test('approved founding identities and all 124 1999 track records load without synthetic populations',()=>{
  const w=createFounding1999Universe({seed:19990101});
  const c=read('/api/1999/sim/overview').counts;
  assert.equal(c.horses,0,'Never resurrect generated racing horses');
@@ -19,7 +19,9 @@ test('clean opening has ONLY approved 37 organizations, 41 founding people, 73 b
  assert.equal(c.breedingMares,55);
  assert.equal(c.owners,37);
  assert.equal(c.people,41);
- assert.equal(c.tracks,118);
+ assert.equal(c.tracks,124);
+ assert.equal(c.activeTracks,107);
+ assert.equal(c.historicalTracks,17);
  assert.equal(w.counts.horses,0);
  assert.equal(w.sourceHorses.length,0);
  assert.equal(directory.organizations.length,37);
@@ -43,7 +45,7 @@ test('all existing tracks available, no fake physical barns or staff',()=>{
    x.source==='APPROVED_ORGANIZATION_REFERENCE'||x.status?.includes('NOT_REGISTERED')||
    !x.propertyId),'30 org references never license building assets');
  const tracks=read('/api/1999/sim/tracks?limit=100');
- assert.equal(tracks.total,118);
+ assert.equal(tracks.total,124);
  assert.equal(new Set(tracks.items.map(x=>x.id)).size,100);
 });
 test('only our explicitly selected 26 jockeys and 20 trainers enter Personnel overlays',()=>{

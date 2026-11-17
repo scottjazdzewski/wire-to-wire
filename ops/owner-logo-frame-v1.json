@@ -16,7 +16,7 @@
     7,
     9
   ],
-  "approved_logo_count": 34,
+  "approved_logo_count": 37,
   "assets": [
     {
       "path": "public/assets/office/founding-organization-logos/O-000001.png",
@@ -74,6 +74,50 @@
       "approval_note": "Wordmark Saint Alloy script only, Pittsburg black-gold heritage, no P/horse/supplementary text; fixed square export to user-approved visual standard"
     },
     {
+      "path": "public/assets/office/founding-organization-logos/O-000014.png",
+      "source_sha256": "d651db8cff50b867660c15c4f19c18aadb0b58aa9daa94b2d17fb5a5df475be1",
+      "output_sha256": "225b8d95323e42ddc81329d680d412ca9fce7e8cf8ec62981c8a0e1a14024d3a",
+      "background": [
+        6,
+        19,
+        40
+      ],
+      "old_frame_pixels_removed": 0,
+      "source_revision": "USER_APPROVED_2026-11-15",
+      "approved_original": "https://drive.google.com/file/d/1CNaFglXyGGF_34kUZNIktkTyMZL8Ma2G/view",
+      "border_rgb": [
+        215,
+        171,
+        67
+      ],
+      "border_inset_px": 5,
+      "border_px": 5,
+      "radius_px": 28,
+      "approval_note": "Approved navy-and-gold maritime A, sail, horsehead and ARGOSY BLOODSTOCK lettering; 256-square gold-accent production frame"
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-000037.png",
+      "source_sha256": "d6f42a8e62773f96c5aaffd50191c544c748847e0129c82b9d496874f71a7c0c",
+      "output_sha256": "5ecf19bcb6a8ee9f2dccd15882a2fbd5e4a1f1ce3be71f5774fd456309c148f2",
+      "background": [
+        68,
+        67,
+        67
+      ],
+      "old_frame_pixels_removed": 0,
+      "source_revision": "USER_APPROVED_2026-11-15",
+      "approved_original": "https://drive.google.com/file/d/1RwbL0_JZEcMSt8gkuvDtPpIohDrCJ6jO/view",
+      "border_rgb": [
+        244,
+        237,
+        222
+      ],
+      "border_inset_px": 5,
+      "border_px": 5,
+      "radius_px": 28,
+      "approval_note": "Approved white W with yellow outline and Maryland black/gold/red/white flag background, no FAMILY text; rounded ivory frame"
+    },
+    {
       "path": "public/assets/office/founding-organization-logos/O-000045.png",
       "source_sha256": "e415a4d03fe7e812bb9a3ac9a4c88c0221604a102b78689a9a5e8930eb5c99e5",
       "output_sha256": "9ad2b8eaeb90f0c0f95d827c35fff02e7ab9e3e6450b40089557c908dae0e966",
@@ -108,6 +152,29 @@
         11
       ],
       "old_frame_pixels_removed": 6157
+    },
+    {
+      "path": "public/assets/office/founding-organization-logos/O-000057.png",
+      "source_sha256": "d651db8cff50b867660c15c4f19c18aadb0b58aa9daa94b2d17fb5a5df475be1",
+      "output_sha256": "225b8d95323e42ddc81329d680d412ca9fce7e8cf8ec62981c8a0e1a14024d3a",
+      "background": [
+        6,
+        19,
+        40
+      ],
+      "old_frame_pixels_removed": 0,
+      "source_revision": "USER_APPROVED_2026-11-15_SAME_ARGOSY_BLOODSTOCK_LOGO",
+      "approved_original": "https://drive.google.com/file/d/1rnoN06F9gYiGvZqfBOmXPjlYAUg26_ja/view",
+      "border_rgb": [
+        215,
+        171,
+        67
+      ],
+      "border_inset_px": 5,
+      "border_px": 5,
+      "radius_px": 28,
+      "approval_note": "Exact byte-for-byte duplicate of approved Argosy Bloodstock game artwork O-000014, not redesigned; separate entity ID O-000057",
+      "shared_artwork_source_organization_id": "O-000014"
     },
     {
       "path": "public/assets/office/founding-organization-logos/O-000059.png",

@@ -109,7 +109,7 @@ test('News remains empty rather than making up a racing feed when source briefin
 });
 
 test('one 1999 UI asset and canonical News renderer, no additional stylesheet or application',()=>{
- assert.match(html,/\/next\/next\.js\?rev=wtw1999-st-alloy-approved-20261115/);
+ assert.match(html,/\/next\/next\.js\?rev=wtw1999-argosy-shared-logo-approved-20261115/);
  assert.match(ui,/else if\(APP\.custom==='Office — News'\|\|APP\.custom==='World — News'\)\{body=sourceNewsDesk\(\)\}/);
  assert.equal((html.match(/rel="stylesheet"/g)||[]).length,1);
  assert.doesNotMatch(functions,/querySelector|\.app \[data-act\]|document\.createElement/);
@@ -124,7 +124,10 @@ test('real 1999 browser smoke keeps complete People/Tracks checks with the share
  assert.match(browser,/worldTracksView\.value='Tracks'/);
  assert.match(browser,/worldView\.value='News'/);
  assert.match(browser,/World News uses current source-backed Office briefings/);
- assert.match(browser,/Site track registry mismatch/);
+ assert.match(browser,/Operational 1999 track registry mismatch/);
+ assert.match(browser,/worldTracks.length===107/);
+ assert.match(browser,/ui.counts.historicalTracks===17/);
+ assert.match(browser,/worldTracks.some\(t=>t._canonId==='T-0122'&&t.name==='Sioux Plains'\)/);
  assert.match(browser,/1999 world person source row is navigable/);
  assert.doesNotMatch(browser,/const worldPeopleTab=\[/);
  assert.doesNotMatch(browser,/const worldTracksTab=\[/);

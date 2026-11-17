@@ -42,9 +42,14 @@ test('full stakes roster is visible by default with sortable columns, race links
 });
 
 test('game-planned stakes have a human-readable grade badge, never a leaking internal enum',()=>{
- assert.match(stakes,/const gradeLabel=\/\^PLANNED\[_ \]WTW/);
- assert.match(stakes,/\?'PLANNED':cols\[2\]/);
- assert.match(stakes,/safe\(gradeLabel\)/);
+ // Grade provenance is owned by the same pure formatter for sort and display.
+ const helper=ui.slice(ui.indexOf(' const trackStakesGradeView='),
+  ui.indexOf(' const trackStakesPurseValue='));
+ assert.match(helper,/PLANNED\[_ \]WTW/);
+ assert.match(helper,/label:'PLANNED',grade:null/);
+ assert.match(stakes,/trackStakesGradeView\(row.cols\[2\]\)/);
+ assert.match(stakes,/trackStakesGradeView\(cols\[2\]\)/);
+ assert.match(stakes,/safe\(gradeView.label\)/);
  assert.match(stakes,/const rank=\(key,row\)/);
  assert.match(stakes,/ng-stakes-trophy/);
 });

@@ -1,5 +1,5 @@
 /* WTW canonical desktop CSS. One navigation, one surface system. */
-.ng-manager-shell{--wtw-ui-list-text:9.5px;--wtw-ui-list-name:9.5px;--wtw-ui-list-meta:8.5px;--wtw-ui-profile-title:clamp(21px,1.7vw,24px);--wtw-ui-profile-intro:10.5px;--wtw-ui-profile-label:10px;--wtw-ui-profile-value:11px;--wtw-ui-profile-tab:11.5px;--wtw-ui-profile-status:9px;--wtw-ui-section-title:11px;--wtw-ui-profile-title:clamp(21px,1.7vw,24px);--wtw-ui-profile-intro:10.5px;--wtw-ui-profile-label:10px;--wtw-ui-profile-value:11px;--wtw-ui-profile-tab:11.5px;--wtw-ui-profile-status:9px;--wtw-ui-section-title:11px;display:grid;grid-template-columns:177px minmax(0,1fr);flex:1 1 0;min-width:0;min-height:0;overflow:hidden;background:#0d1317}
+.ng-manager-shell{--wtw-ui-list-text:10.5px;--wtw-ui-list-name:11px;--wtw-ui-list-meta:9.5px;--wtw-ui-profile-title:clamp(21px,1.7vw,24px);--wtw-ui-profile-intro:10.5px;--wtw-ui-profile-label:10px;--wtw-ui-profile-value:11px;--wtw-ui-profile-tab:11.5px;--wtw-ui-profile-status:9px;--wtw-ui-section-title:11px;display:grid;grid-template-columns:177px minmax(0,1fr);flex:1 1 0;min-width:0;min-height:0;overflow:hidden;background:#0d1317}
 .ng-game-rail{box-sizing:border-box;display:flex;flex-direction:column;gap:0;min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden;padding:0 7px 9px;background:#11191d;border-right:1px solid #303e3b;scrollbar-width:thin;scrollbar-color:#3b5148 #11191d}
 .ng-manager-stage{display:flex;flex-direction:column;flex:1 1 0;min-width:0;min-height:0;overflow:hidden;background:#0c1215}
 .ng-manager-rail-brand{display:flex;align-items:center;gap:8px;min-height:49px;flex:0 0 49px;padding:5px 4px 7px;border-bottom:1px solid #303e39;box-sizing:border-box}
@@ -19,8 +19,8 @@
 .ng-manager-top-context{display:flex;align-items:center;gap:9px;flex:1 1 0;min-width:0;padding:0 9px;border-left:1px solid #33433d;white-space:nowrap}
 .ng-manager-top-context strong{font-size:10px;letter-spacing:.06em;color:#e1c98b;font-weight:820;white-space:nowrap}
 .ng-manager-top-context span{font-size:11px;font-weight:620;color:#dce7df;overflow:hidden;text-overflow:ellipsis;min-width:0}
-@media(min-width:1081px) and (max-width:1300px){.ng-manager-shell{--wtw-ui-list-text:8.5px;--wtw-ui-list-name:9px;--wtw-ui-list-meta:8px;grid-template-columns:159px minmax(0,1fr)}.ng-game-rail{padding-left:5px;padding-right:5px}.ng-manager-rail-link{font-size:10px;padding-right:5px}}
-@media(max-width:1080px){.ng-manager-shell{--wtw-ui-list-text:8.5px;--wtw-ui-list-name:9px;--wtw-ui-list-meta:8px;grid-template-columns:46px minmax(0,1fr)}.ng-game-rail{padding-left:4px;padding-right:4px}.ng-manager-rail-brand{justify-content:center}.ng-manager-rail-brand>span,.ng-manager-rail-group h2,.ng-manager-rail-link>span:last-child,.ng-manager-rail-footer{display:none}.ng-manager-rail-link{justify-content:center;padding:0}.ng-manager-rail-icon{flex-basis:24px}}
+@media(min-width:1081px) and (max-width:1300px){.ng-manager-shell{--wtw-ui-list-text:10px;--wtw-ui-list-name:10.5px;--wtw-ui-list-meta:9px;grid-template-columns:159px minmax(0,1fr)}.ng-game-rail{padding-left:5px;padding-right:5px}.ng-manager-rail-link{font-size:10px;padding-right:5px}}
+@media(max-width:1080px){.ng-manager-shell{--wtw-ui-list-text:9.5px;--wtw-ui-list-name:10px;--wtw-ui-list-meta:9px;grid-template-columns:46px minmax(0,1fr)}.ng-game-rail{padding-left:4px;padding-right:4px}.ng-manager-rail-brand{justify-content:center}.ng-manager-rail-brand>span,.ng-manager-rail-group h2,.ng-manager-rail-link>span:last-child,.ng-manager-rail-footer{display:none}.ng-manager-rail-link{justify-content:center;padding:0}.ng-manager-rail-icon{flex-basis:24px}}
 
 *{box-sizing:border-box}
 html,body{margin:0;min-width:0;height:100%;background:var(--wt-bg);color:var(--wt-text);font-family:Inter,"Segoe UI",Arial,sans-serif;font-size:13px;line-height:1.36;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}
@@ -138,7 +138,7 @@ body.wtw-next-active{overflow:auto}
 .ng-routetext h1{font-size:22px;letter-spacing:-.03em;margin:3px 0 0;font-weight:760}
 .ng-back{background:#1e262a;color:#eaf0eb;border:1px solid #3c4b47;border-radius:3px;padding:8px 13px;font-size:12px!important}
 .ng-routegrid{display:grid;grid-template-columns:1fr;min-height:0;overflow:auto;gap:10px}
-.ng-routeinner{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:10px;min-width:0;background:transparent}
+.ng-routeinner{display:block;min-width:0;background:transparent}
 .ng-routeinner .routeCard,.ng-routeinner .profilePage,.ng-routeinner .stableRouteMain,.ng-routeinner .worldPage,.ng-routeinner .trackProfilePage,.ng-routeinner .horseProfilePage{background:#171e22;border:1px solid #3c4b47;border-radius:6px;padding:13px;min-width:0}
 .ng-routeinner .profilePage,.ng-routeinner .horseProfilePage,.ng-routeinner .trackProfilePage{grid-column:span 2}
 .ng-routeinner h3{font-size:14px;margin:4px 0 10px}
@@ -161,8 +161,6 @@ body.wtw-next-active{overflow:auto}
 .ng-route-manager{padding:6px 9px 8px!important}
 .ng-route-manager .ng-routegrid{display:block;flex:1 1 0;min-height:0;overflow:hidden;padding:0}
 .ng-route-manager .ng-routeinner{display:block;height:100%;min-height:0;overflow:hidden;padding:0}
-/* World Overview shares the permanent FM/OOTP manager record grammar, now
- * full-width with every connected source record and visible export controls. */
 .ng-world-complete{grid-template-rows:42px 42px minmax(0,1fr)}
 .ng-world-complete .ng-manager-head{min-width:0}
 .ng-world-complete .ng-manager-controls{flex:1;min-width:0}
@@ -190,6 +188,7 @@ body.wtw-next-active{overflow:auto}
 .ng-manager-identity h2{margin:0;font-size:15px;line-height:1.2;letter-spacing:.015em;font-weight:800;color:#eff2ec;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ng-manager-controls{display:flex;align-items:center;justify-content:flex-end;gap:7px;min-width:0}
 .ng-manager-controls label{display:flex;align-items:center;gap:6px;font-size:9px;font-weight:750;color:#a1b9ad;white-space:nowrap}
+.ng-manager-view-picker{display:inline-flex;align-items:center}
 .ng-manager-controls select{min-width:130px;height:26px;padding:3px 6px;border:1px solid #42534c;border-radius:2px;background:#202a2c;color:#e4e9e3;font-size:10px}
 .ng-routeinner .ng-manager-controls>button{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:26px;padding:3px 9px;border:1px solid #476d54;border-radius:2px;background:#284837;color:#e9ddb6;font-size:9px!important;font-weight:780;white-space:nowrap}
 .ng-manager-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
@@ -203,8 +202,6 @@ body.wtw-next-active{overflow:auto}
 .ng-manager-primary>header span,.ng-manager-secondary>header span{font-size:9px;color:#aac0ad;white-space:nowrap}
 .ng-manager-columns,.ng-manager-row{display:grid;grid-template-columns:65px minmax(120px,1.25fr) minmax(125px,1.1fr) minmax(115px,.9fr) 20px;gap:7px;align-items:center;min-width:0}
 .ng-manager-columns{flex:0 0 26px;padding:4px 8px;background:#2b3535;color:#b6c7b7;font-size:var(--wtw-ui-list-meta);font-weight:810;letter-spacing:.025em}
-/* Same compact, interactive columns on World, News and Opportunities.
- * Scroll regions remain inside the existing manager workspace. */
 .ng-manager-columns>span{display:flex;align-items:center;min-width:0;overflow:hidden}
 .ng-manager-columns>span[role="columnheader"]>button{
  display:flex;align-items:center;justify-content:space-between;gap:4px;width:100%;min-width:0;
@@ -222,6 +219,23 @@ body.wtw-next-active{overflow:auto}
  outline:2px solid #eddaa0;outline-offset:-2px
 }
 
+
+/* Source-backed Office file preview lives inside the one manager workspace. */
+#wtwNextgen .ng-manager-message-inbox .ng-manager-row{flex-basis:46px;min-height:46px;padding:6px 8px}
+#wtwNextgen .ng-manager-message-inbox .ng-manager-row-name{display:flex;flex-direction:column;align-items:flex-start;gap:3px}
+#wtwNextgen .ng-manager-message-inbox .ng-manager-row-name small{font-size:10px;color:#aac0b1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+#wtwNextgen .ng-manager-message-inbox .ng-manager-row[aria-pressed="true"]{background:#30463b!important;box-shadow:inset 3px 0 #e0bf74}
+#wtwNextgen .ng-manager-message-inbox .ng-manager-workspace{grid-template-columns:minmax(0,1.83fr) minmax(315px,1fr)}
+#wtwNextgen .ng-office-file-preview{padding:12px;background:linear-gradient(145deg,#293c35,#172429);border-bottom:1px solid #405649}
+#wtwNextgen .ng-office-file-preview small{font-size:9px;font-weight:750;color:#b9cdb7;letter-spacing:.05em}
+#wtwNextgen .ng-office-file-preview h3{font-size:15px;line-height:1.3;margin:9px 0;color:#f4e9d1}
+#wtwNextgen .ng-office-file-preview p{font-size:11px;line-height:1.45;color:#d2ded6;margin:0 0 8px}
+#wtwNextgen .ng-office-file-facts{display:grid;gap:8px;margin:9px 0}
+#wtwNextgen .ng-office-file-facts div{padding-left:9px;border-left:2px solid #638572}
+#wtwNextgen .ng-office-file-facts dt{font-size:9px;letter-spacing:.04em;color:#dfca91;font-weight:750}
+#wtwNextgen .ng-office-file-facts dd{margin:3px 0 0;font-size:11px;line-height:1.35;color:#e0e9df}
+#wtwNextgen .ng-office-open{width:100%;min-height:32px;border:1px solid #698269;background:#304b3d;color:#f5eccf;font-size:10px;font-weight:780;cursor:pointer}
+#wtwNextgen .ng-office-open:hover,#wtwNextgen .ng-office-open:focus-visible{background:#416049;outline:2px solid #dfc98f;outline-offset:-2px}
 .ng-manager-rows{display:flex;flex-direction:column;flex:1 1 0;min-height:0;overflow:auto;scrollbar-width:thin;scrollbar-color:#567562 #151b20}
 .ng-routeinner .ng-manager-row{display:grid;align-items:center;flex:0 0 28px;width:100%;min-height:28px;max-width:none;box-sizing:border-box;padding:3px 8px;gap:7px;border:0;border-bottom:1px solid #303e39;border-radius:0;background:#1c2529;color:#dfe9e2;text-align:left;font-size:var(--wtw-ui-list-text)!important;cursor:pointer}
 .ng-routeinner .ng-manager-row:nth-child(even){background:#222c30}
@@ -1113,7 +1127,7 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 .ng-org-mark{width:25px;height:25px;flex-basis:25px}
 .ng-global .ng-global-due{height:30px}
 }
-.ng-routeinner:has(.ng-org-overview),.ng-routeinner:has(.ng-due-overview){overflow-y:auto!important;overflow-x:hidden!important}
+.ng-routeinner:has(.ng-org-overview),.ng-routeinner:has(.ng-due-overview),.ng-routeinner:has(.ng-1999-race-file){overflow-y:auto!important;overflow-x:hidden!important}
 .ng-org-overview,.ng-due-overview{padding:7px;max-width:1500px;color:#e8efec}
 .ng-org-overview-top{display:flex;align-items:center;gap:16px;padding:14px 18px;border:1px solid #3c4b47;border-radius:5px;background:linear-gradient(110deg,#1e262a,#171e22)}
 .ng-org-overview-name{min-width:0}
@@ -1282,8 +1296,6 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 
 #wtwNextgen .ng-rs-tools input{box-sizing:border-box;height:22px;width:clamp(112px,14vw,210px);min-width:100px;max-width:210px;background:#0c1417;border:1px solid #3d5246;border-radius:2px;padding:2px 6px;color:#e3ebdf;font-size:var(--wtw-roster-input);outline-offset:2px}
 #wtwNextgen .ng-rs-tools input:focus{outline:1px solid #d5bb7d}
-/* One visible keyboard focus treatment for the shared Stable/Racing roster
- * controls and every Horse/Person/Track/Farm dossier. Never hide focus. */
 #wtwNextgen .ng-rs-tools button:focus-visible,
 #wtwNextgen .ng-rs-tools select:focus-visible,
 #wtwNextgen .ng-person-dossieractions button:focus-visible,
@@ -1390,8 +1402,6 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 }
 
 
-/* Six department management rosters share the ACTIVE Stable FM/OOTP geometry.
-   One stylesheet, no external icons, no page/panel scrolling. */
 #wtwNextgen .ng-dept-roster .ng-rs-table th{width:auto}
 #wtwNextgen .ng-dept-roster .ng-rs-roster>header strong{white-space:nowrap}
 #wtwNextgen .ng-dept-roster .ng-rs-title span{min-width:0;overflow:hidden;text-overflow:ellipsis}
@@ -1514,8 +1524,6 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 #wtwNextgen .ng-dept-roster[data-department="Breeding"][data-page="Stud Farms"] .ng-rs-table th:nth-child(11){width:12%}
 #wtwNextgen .ng-dept-roster[data-department="Breeding"][data-page="Stud Farms"] .ng-rs-table th:nth-child(12){width:8%}
 
-/* Active meet and track directory are independent rosters, with identical
-   typography tokens, row heights and ownership-mark scale as Stable. */
 #wtwNextgen .ng-dpt-track-picker{flex:0 1 260px!important;max-width:260px!important;min-width:145px!important}
 #wtwNextgen .ng-dpt-track-picker select{width:100%;max-width:235px!important}
 #wtwNextgen .ng-dept-roster[data-department="Racing"] .ng-rs-tools{gap:4px}
@@ -1543,8 +1551,6 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
 #wtwNextgen .ng-dept-roster[data-department="Racing"][data-roster-kind="meet"] .ng-rs-table th:nth-child(6){width:5%}
 #wtwNextgen .ng-dept-roster[data-department="Racing"][data-roster-kind="meet"] .ng-rs-table th:nth-child(7){width:11%}
 #wtwNextgen .ng-dept-roster[data-department="Racing"][data-roster-kind="meet"] .ng-rs-table th:nth-child(8){width:6%}
-/* Auction houses have their own chronological schedule and company directory.
-   Inherit the locked FM roster text, 29px rows and 23px header. */
 #wtwNextgen .ng-dept-roster[data-department="Sales"] .ng-rs-title span{max-width:100%;overflow:hidden;text-overflow:ellipsis}
 #wtwNextgen .ng-dpt-auction-picker{flex:0 1 485px!important}
 #wtwNextgen .ng-dpt-auction-picker select{max-width:405px!important}
@@ -1784,7 +1790,7 @@ body.wtw-next-active{overflow:hidden;background:#101518!important;color:#eef5f2}
  .ng-route-profile .ng-profile-farm .ng-profiletabs,
  .ng-route-profile .ng-profile-track .ng-profiletabs{height:34px!important;min-height:34px!important}
 .ng-route-organization .ng-routegrid{display:block!important;flex:1 1 0!important;min-height:0!important;overflow:hidden!important}
-.ng-route-organization .ng-routeinner{box-sizing:border-box!important;height:100%!important;min-height:0!important;overflow:hidden!important}
+.ng-route-organization .ng-routeinner{display:block!important;box-sizing:border-box!important;width:100%!important;height:100%!important;min-height:0!important;overflow:hidden!important}
 .ng-tier1-org{display:flex;flex-direction:column;box-sizing:border-box;height:100%;min-height:0;gap:7px;overflow:hidden}
 .ng-tier1-org .ng-org-overview-top{box-sizing:border-box;flex:0 0 70px;min-height:70px;padding:6px 13px;gap:11px}
 .ng-tier1-org .ng-org-overview-name h2{font-size:21px;margin:2px 0}
@@ -2089,7 +2095,6 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 .ng-person-overview-stats>div{min-height:39px;padding:4px 6px}
 }
 
-/* Track identity logos on an inset presentation plate; preserve transparent pixels and full artwork. */
 .ng-route-profile .ng-profile-track .ng-profile-source-photo{position:relative;isolation:isolate;width:214px!important;height:108px!important;flex:0 0 214px!important;overflow:hidden!important;border:2px solid #a68a50!important;border-top-color:#efe1b3!important;border-radius:7px!important;background:radial-gradient(ellipse at 50% 26%,#fffdf6 0%,#eee4cd 52%,#d0c19f 100%)!important;box-shadow:inset 0 0 0 1px rgba(255,255,247,.8),inset 0 -7px 14px rgba(75,56,21,.14),0 4px 13px rgba(0,0,0,.5),0 0 0 2px rgba(191,159,87,.14)!important}
 /* Restrained depth only on racecourse identities: retains current geometry. */
 .ng-route-profile .ng-profile-track .ng-profile-intro{background:radial-gradient(ellipse at 77% 42%,rgba(148,124,76,.16),transparent 52%),linear-gradient(105deg,#233631 0%,#252d2c 39%,#30272a 68%,#161f23 100%)!important;border:1px solid #675d49!important;border-top:2px solid #ad955f!important;box-shadow:inset 0 1px 0 rgba(255,236,174,.14),inset 0 -10px 24px rgba(0,0,0,.22),0 5px 16px rgba(0,0,0,.36)!important}
@@ -2341,8 +2346,6 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 }
 
 
-/* Track history: permanent lower-right stadium-style information panel.
-   No changes to trophy assets or stakes badges in this phase. */
 .ng-track-history-card{display:flex;flex-direction:column;min-height:0}
 .ng-track-history-card>header{display:flex;align-items:center;justify-content:space-between;gap:6px}
 .ng-track-history-card>header button,.ng-track-history-full>header button{
@@ -2488,8 +2491,6 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 }
 
 
-/* 1999 source-backed World directories. This is a read-only canon projection,
-   NOT a second design system and NOT a player stable population. */
 #wtwNextgen .ng-dept-roster[data-department="World"] .ng-rs-table th,
 #wtwNextgen .ng-dept-roster[data-department="World"] .ng-rs-table td{
  font-size:var(--wtw-roster-text);height:29px
@@ -2810,7 +2811,6 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  gap:4px;white-space:nowrap;
 }
 
-/* Compact race file: conditions and provisional eligibility remain visibly distinct. */
 #wtwNextgen .ng-1999-race-file{display:flex;flex-direction:column;gap:10px;width:100%;min-width:0;min-height:0;color:#ebeadb}
 #wtwNextgen .ng-1999-race-file>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 19px;border:1px solid #56614f;border-top:2px solid #d3b773;background:#202b2b}
 #wtwNextgen .ng-1999-race-file>header small{color:#e4c57e;font-size:10px;font-weight:800;letter-spacing:.07em}
@@ -2833,7 +2833,6 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 @media(max-width:1050px){#wtwNextgen .ng-race-file-grid{grid-template-columns:1fr}}
 @media(max-width:600px){#wtwNextgen .ng-race-file-facts,#wtwNextgen .ng-race-eligible-list{grid-template-columns:1fr}}
 
-/* 1999 stable attribute-comparison pane; does not change the approved horse dossier. */
 #wtwNextgen .ng-attribute-picker{display:flex;align-items:center;flex-wrap:wrap;gap:9px;padding:9px 13px;
  background:#192428;border:1px solid #354740}
 #wtwNextgen .ng-attribute-picker label{color:#d4be77;font-size:11px;font-weight:800}
@@ -3031,8 +3030,6 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
   width:100%!important;height:100%!important;object-fit:cover!important;
   transform:none!important;padding:0!important;
 }
-/* Facility and ownership share the actual Track logo plate (214x108);
-   the approved 4:3 master remains fully visible via contain. */
 #wtwNextgen .ng-route-profile .ng-profile-farm.ng-profile-track .ng-profile-facility-logo{
   width:214px!important;height:108px!important;flex:0 0 214px!important;
 }
@@ -3099,15 +3096,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 #wtwNextgen .ng-dept-roster .ng-rs-table.compact{min-width:0!important;width:100%!important}
 #wtwNextgen .ng-dept-roster .ng-rs-table.compact th:not(.ng-dpt-optional){width:auto!important}
 #wtwNextgen .ng-dept-view{margin-left:auto;display:flex;align-items:center;gap:3px}
-/* =====================================================================
-   WTW AUTHORITATIVE MANAGEMENT DESIGN SYSTEM — SINGLE ACTIVE STYLESHEET
-   Consolidated 2026-11-13 from the four originally loaded /next/ CSS
-   files, preserving exact original cascade order and declarations.
-   These sections ARE NOT alternate page layouts. All shared profiles,
-   departments, rosters, career dialog, brand themes and hero art use
-   the one /next/next.css file. Do not add a new CSS layer or revive
-   any retired stylesheet. Source artwork and JS behavior are unchanged.
-   ===================================================================== */
+/* Canonical FM/OOTP-inspired shared game interface. */
 
 /* ===== BEGIN folded source: public/next/1999-commercial-career.css ===== */
 /* WTW commercial career dialog — intentionally isolated from approved game UI. */
@@ -3165,6 +3154,8 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 /* ===== BEGIN folded source: public/next/identity-themes.css ===== */
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro{box-shadow:inset 0 1px 0 #ffffff19,0 9px 24px #0009!important;}
 /* Logo-first theme: colors come from approved artwork, not presets. */
+/* WTW PROFILE DEPTH — integrated, no patch stack. Neutral layering remains when a logo is missing. */
+/* WTW ENTITY ATMOSPHERE v2 — official logo ink only; no geometry or status changes. */
 #wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"]{
   --wtw-id-highlight:#f2f5ef; /* neutral readable text, not a brand swatch */
   --wtw-id-deep:color-mix(in srgb,var(--wtw-id-base) 36%,#10181d);
@@ -3238,8 +3229,6 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
   }
 }
 
-/* Track badge is the small left navigation identity; the existing track
- * logo remains the large right-hand hero artwork. */
 #wtwNextgen[data-wtw-identity-kind="track"][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-badgeframe{
   background:#16221f url("/assets/profile-badges/v2/wtw_badge_track.png") center / contain no-repeat!important;
   border-color:color-mix(in srgb,var(--wtw-id-bright) 48%,#4d6158)!important;
@@ -3247,8 +3236,6 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 #wtwNextgen[data-wtw-identity-kind="track"][data-wtw-logo-theme="ready"] .ng-route-profile .ng-profile-badgeframe img{
   visibility:hidden!important;
 }
-/* WTW PROFILE DEPTH — integrated, no patch stack. Neutral layering remains when a logo is missing. */
-/* WTW ENTITY ATMOSPHERE v2 — official logo ink only; no geometry or status changes. */
 #wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"]{
  --wtw-id-panel:color-mix(in srgb,var(--wtw-id-deep) 36%,#151e24);
  --wtw-id-panel-edge:color-mix(in srgb,var(--wtw-id-bright) 30%,#405050);
@@ -3383,18 +3370,12 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 /* ===== END folded source: public/next/identity-themes.css ===== */
 
 /* ===== BEGIN folded source: public/next/profile-hero-v2.css ===== */
-/* WTW Profile Hero v2 — identity layout, not gameplay.
-   Source: 1999 management profile HTML. Loaded AFTER next.css & identity-themes.css.
-   No background photographs: that work is owned by the separate art window.
-   Never hide source metadata; logo and actions have independent layout space. */
+/* Preserve established identity geometry. */
 
-/* Redundant horizontal section strips are superseded by the sidebar and the
-   department VIEW selector. Hide on EVERY route, including Office and World. */
+/* Preserve the canonical management and dossier presentation. */
 #wtwNextgen > .ng-subbar{display:none!important;flex:0 0 0!important;height:0!important;min-height:0!important;padding:0!important;border:0!important}
 
-/* One template shared by track, stud farm, racing stable and owner profiles.
-   The floating logo owns the right grid column; names/metadata cannot be
-   squeezed by it or by the route action buttons. */
+/* Preserve the canonical management and dossier presentation. */
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro{
   display:grid!important;
   grid-template-columns:70px minmax(0,1fr) clamp(205px,22vw,292px)!important;
@@ -3439,8 +3420,6 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
   font-size:9.5px!important;
   letter-spacing:.09em!important;
 }
-/* A TWO-COLUMN information grid replaces the original no-wrap ticker.
-   Long track localities, circuit names and operating status are ALL legible. */
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track .ng-tier1-biography{
   display:grid!important;
   grid-template-columns:repeat(2,minmax(0,1fr))!important;
@@ -3522,9 +3501,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
   background:color-mix(in srgb,var(--wtw-id-base,#506052) 56%,#1e262a)!important;
   border-color:var(--wtw-id-bright,#d7c48d)!important;
 }
-/* A genuine hero MARK stage, not a white/cream signboard.
-   Existing art stays legible; transparent assets show off the full silhouette.
-   The generator can replace legacy logos without further layout changes. */
+/* Preserve the canonical management and dossier presentation. */
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo{
   grid-area:mark!important;
   position:relative!important;
@@ -3685,10 +3662,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 }
 
 
-/* Unbranded operations and racecourses get a polished, source-derived
-   TEMPORARY typographic identifier instead of "IMAGE SLOT RESERVED".
-   No invented crest or official branding. The exact-ID artwork takes its
-   place as soon as a genuine transparent image is available. */
+/* Preserve established identity geometry. */
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro > .ng-profile-source-photo.wtw-hero-typographic{
   background:transparent!important;
   border:0!important;
@@ -3747,9 +3721,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 }
 
 
-/* Every large organization portrait uses the same approved category badge on
-   the LEFT, not a second rendering of the farm/stable's hero logo. The actual
-   identity image (or temporary typographic identifier) lives on the RIGHT. */
+/* Preserve established identity geometry. */
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-farm > .ng-profile-intro > .ng-org-mark{
  background:#152420 url("/assets/profile-badges/v2/wtw_badge_farm_stable.png")
    center / contain no-repeat!important;
@@ -3764,9 +3736,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 }
 
 
-/* Every profile dossier has the same local tabs and MORE RECORDS selector,
- * not the removed redundant global department bar. Keep those controls visible and usable
- * on narrow displays instead of letting the old fixed-height strip clip them. */
+/* Preserve established identity geometry. */
 #wtwNextgen .ng-route-profile .ng-profile-view .ng-person-dossierbar{
  min-width:0!important;
  max-width:100%!important;
@@ -3820,9 +3790,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 /* ===== END folded source: public/next/profile-hero-v2.css ===== */
 
 
-/* Shared missing-media treatment for HORSE and PERSON dossiers.
-   Artwork is optional; production placeholders must never be visible.
-   Name-derived monograms are typography, not invented portraits. */
+/* Preserve the canonical management and dossier presentation. */
 #wtwNextgen .ng-route-profile .ng-profile-source-photo.ng-profile-portrait .ng-profile-photo-empty.wtw-unassigned-media{
  display:flex!important;align-items:center!important;justify-content:center!important;
  flex-direction:column!important;gap:3px!important;padding:5px!important;
@@ -3841,8 +3809,6 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  font-weight:750!important;letter-spacing:.11em!important;text-transform:uppercase!important;
 }
 
-/* 1999 owner race confirmation: inherits the one approved Racing screen.
-   Only local field legibility; no global roster, profile or navigation changes. */
 #wtwNextgen .ng-race-plan-workspace{margin:8px 0 12px;padding:12px 14px;
  background:var(--panel,#161e21);border:1px solid rgba(222,211,184,.23);
  border-radius:5px;display:flex;flex-direction:column;gap:9px}
@@ -3876,8 +3842,33 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 }
 
 /* V489 */.ng-naming-desk .ng-naming-status{color:#d4c18e;font-size:9px;font-weight:800}.ng-naming-workspace{display:flex;flex-direction:column;min-height:0;overflow:hidden}.ng-naming-composer{display:flex;flex-direction:column;gap:4px;max-height:48%;overflow:auto;padding:7px 9px}.ng-naming-composer label{display:flex;flex-direction:column;gap:3px;font-size:10px;min-width:0}.ng-naming-fields{display:grid;grid-template-columns:1fr 1fr 85px 1.3fr;gap:7px}.ng-naming-composer input,.ng-naming-composer select,.ng-naming-composer textarea{width:100%;box-sizing:border-box;min-width:0;min-height:26px;padding:5px 7px;background:#111b1f;color:#e6eade;border:1px solid #4a6554;font:inherit;font-size:11px}.ng-naming-composer textarea{min-height:39px;max-height:95px;resize:vertical}.ng-naming-actions,.ng-naming-view-filters,.ng-naming-list-buttons{display:flex;gap:4px;align-items:center;flex-wrap:wrap}.ng-naming-actions button,.ng-naming-view-filters button,.ng-naming-list-buttons button{padding:5px 7px;background:#304737;border:1px solid #5b735a;color:#e3edcd;font-size:9px;font-weight:800;cursor:pointer}.ng-naming-list-buttons{flex-wrap:nowrap}.ng-naming-list-buttons button{white-space:nowrap;padding:4px}.ng-naming-list-buttons button:first-child,.ng-naming-actions button.primary{background:#69562f}.ng-naming-list-buttons button:last-child{background:#513735}.ng-naming-actions button:disabled,.ng-naming-list-buttons button:disabled{opacity:.4;cursor:default}.ng-naming-error,.ng-naming-notice{padding:5px 8px;font-size:10px}.ng-naming-error{color:#f0ad9f}.ng-naming-notice{color:#d8dfba}.ng-naming-table-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 10px}.ng-naming-view-filters button.on{background:#876f3c;color:#fff5d4}.ng-naming-table-scroll{flex:1;min-height:0;overflow:auto}.ng-naming-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:10px}.ng-naming-table th{position:sticky;top:0;background:#2b3938;text-align:left;padding:7px}.ng-naming-table td{padding:5px 7px;border-bottom:1px solid #35453e;overflow-wrap:anywhere}.ng-naming-table th:first-child{width:30px}.ng-naming-table th:nth-child(2){width:31%}.ng-naming-table th:nth-child(3){width:85px}.ng-naming-table th:nth-child(4){width:125px}.ng-naming-table th:nth-child(5){width:325px}.ng-naming-row-name strong{display:block;color:#f2e3b7}.ng-naming-row-name small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ng-naming-footer{padding:5px 10px;font-size:9px;border-top:1px solid #394b42}.ng-naming-sort{background:transparent;color:inherit;border:0;cursor:pointer;font:inherit}@media(max-width:990px){.ng-naming-fields{grid-template-columns:1fr 1fr}.ng-naming-table{min-width:890px}}
-/* Shared record-to-record pager on source-backed list detail screens.
- * Matches the original Overview-adjacent dossier arrows; never page-tabs. */
+
+
+
+/* Career dossier: one local, source-backed management workspace. */
+#wtwNextgen .ng-career-primary{overflow:auto;scrollbar-width:thin}
+#wtwNextgen .ng-career-identity{display:flex;align-items:center;gap:14px;min-height:112px;padding:13px 15px;background:linear-gradient(110deg,#253c34,#182329 72%);border-bottom:1px solid #456154}
+#wtwNextgen .ng-career-identity .ng-org-mark{flex:0 0 76px;width:76px;height:76px;max-width:76px;max-height:76px}
+#wtwNextgen .ng-career-identity .ng-org-image{width:100%;height:100%;object-fit:contain}
+#wtwNextgen .ng-career-identity-copy{min-width:0;flex:1}
+#wtwNextgen .ng-career-identity-copy small{font-size:9px;color:#d7c58d;letter-spacing:.07em;font-weight:760}
+#wtwNextgen .ng-career-identity-copy h3{margin:5px 0;font-size:clamp(17px,1.7vw,25px);line-height:1.13;color:#f5ead4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#wtwNextgen .ng-career-identity-copy p{margin:0;font-size:11px;color:#bbd2c2}
+#wtwNextgen .ng-career-identity>button{border:1px solid #5c816a;background:#294a38;color:#f4e8cf;min-height:30px;padding:5px 9px;font-size:10px;font-weight:800;cursor:pointer;white-space:nowrap}
+#wtwNextgen .ng-career-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;margin:0;background:#3a4b43}
+#wtwNextgen .ng-career-fact{min-width:0;padding:9px 12px;background:#1c292c}
+#wtwNextgen .ng-career-fact dt{font-size:9px;font-weight:760;letter-spacing:.04em;color:#b6c9bd}
+#wtwNextgen .ng-career-fact dd{font-size:12px;font-weight:730;margin:5px 0 0;color:#e8e5d5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#wtwNextgen .ng-career-priorities,#wtwNextgen .ng-career-followups{display:flex;flex-direction:column;overflow:auto;flex:0 0 auto;max-height:210px;scrollbar-width:thin}
+#wtwNextgen .ng-career-followups{max-height:140px}
+#wtwNextgen .ng-career-section-title{flex:0 0 29px}
+#wtwNextgen .ng-career-priority{min-height:43px}
+#wtwNextgen .ng-career-priority .ng-manager-case-indicator{background:#ba6a68}
+#wtwNextgen .ng-career-identity>button:hover{background:#365f49}
+@media(max-width:1180px){#wtwNextgen .ng-career-identity{gap:9px;padding:10px}
+#wtwNextgen .ng-career-identity>button{font-size:9px}
+#wtwNextgen .ng-career-fact{padding:8px}}
+
 .ng-record-browse-bar{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;
  gap:12px;min-height:34px;padding:4px 12px;background:#202b2b;border:1px solid #7b6746;
  border-radius:3px;color:#dfcda6;font:750 11px/1.3 system-ui,sans-serif;letter-spacing:.06em}
@@ -3888,3 +3879,5 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  font:800 18px/1 Georgia,serif;cursor:pointer}
 .ng-record-browse-bar button.ng-profile-entity-step:hover{background:#50634e;border-color:#dabd80}
 .ng-record-browse-bar button.ng-profile-entity-step:focus-visible{outline:2px solid #f0cf8a;outline-offset:2px}
+#wtwNextgen .ng-subbar .ng-subnav>button{display:flex!important;align-items:center;justify-content:center;height:100%}
+#wtwNextgen .ng-route-profile .ng-profiletabs>button{display:flex!important;align-items:center;justify-content:center;height:100%}

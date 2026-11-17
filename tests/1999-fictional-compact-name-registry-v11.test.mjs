@@ -195,3 +195,111 @@ test('indexed benchmark creates no playable world and keeps cursor size bounded'
  assert.ok(report.finalCheckpointBytes<350);
  assert.ok(report.bytesGrowth<20);
 });
+
+
+// This deliberately recomputes the old non-cryptographic snapshot checksum:
+// the test must exercise relational validation, not merely reject bad hashes.
+function recomputeIndexedSnapshotChecksum(snapshot){
+ const hash=(seed,value)=>{
+  let h=(2166136261^(seed>>>0))>>>0;
+  for(const char of String(value)){h^=char.charCodeAt(0);h=Math.imul(h,16777619)}
+  h^=h>>>16;h=Math.imul(h,0x7feb352d);h^=h>>>15;
+  h=Math.imul(h,0x846ca68b);h^=h>>>16;return h>>>0;
+ };
+ let h=0x915ec11;
+ for(const part of [snapshot.model,snapshot.worldId,snapshot.seed,
+  snapshot.revision,snapshot.protectedPeople,snapshot.protectedOrganizations,
+  snapshot.issuedPeople,snapshot.issuedOrganizations,snapshot.ownerEntities])
+  h=hash(h,JSON.stringify(part));
+ snapshot.integrity=h.toString(16).padStart(8,'0');
+ return snapshot;
+}
+
+test('identity-valid checksum must not conceal orphaned principals or divergent owner display names after reopen',()=>{
+ const worldId='OWNER-LINK-REOPEN',seed=19990101;
+ const registry=createIndexedFictionalNameRegistry({worldId,seed});
+ const batch=generateIndexedFictionalNames({registry,worldId,seed,
+  roles:{trainer:10,jockey:8},owners:20,
+  facilities:{generalFarms:2},maxPartnershipGroups:4});
+ const baseline=registry.snapshot(),first=baseline.ownerEntities[0];
+ const approvedOrganization=baseline.issuedOrganizations.find(x=>x.id===first.id);
+ assert.equal(first.name,approvedOrganization.name);
+ assert.ok(baseline.issuedPeople.some(x=>x.id===first.principalId));
+ const reopened=createIndexedFictionalNameRegistry({
+  worldId,seed,snapshot:JSON.parse(JSON.stringify(baseline))
+ });
+ assert.deepEqual(reopened.snapshot(),baseline);
+ const corruptions=[
+  snapshot=>{snapshot.ownerEntities[0].principalId='PERSON-DOES-NOT-EXIST';},
+  snapshot=>{snapshot.ownerEntities[0].name='Different Public Stable Name';},
+  snapshot=>{snapshot.issuedOrganizations.find(x=>x.id===first.id).name='Wrong Approved Business';}
+ ];
+ for(const corrupt of corruptions){
+  const snapshot=JSON.parse(JSON.stringify(baseline));
+  corrupt(snapshot);
+  recomputeIndexedSnapshotChecksum(snapshot);
+  assert.throws(()=>createIndexedFictionalNameRegistry({worldId,seed,snapshot}),
+   /Stored owner organization or principal identity mismatch/);
+ }
+ const revision=registry.revision;
+ assert.throws(()=>registry.commit({
+  expectedRevision:revision,
+  people:[{id:'PERSON-NEW-ONE',name:'Carmen Vale'}],
+  organizations:[{id:'ORG-NEW-ONE',name:'Vale Racing'}],
+  owners:[{id:'ORG-NEW-ONE',name:'VALE RACING',principalId:'PERSON-NEW-ONE'}],
+  batchIndex:batch.nextCursor.nextBatch
+ }),/Owner organization or principal identity mismatch/);
+ assert.equal(registry.revision,revision,'invalid linked names must never commit');
+ assert.deepEqual(registry.snapshot(),baseline,'failed write leaves approved identity unchanged');
+});
+
+test('thousands of generated identities preserve names, owner links and stable IDs across future cohorts and snapshot reopens',()=>{
+ const worldId='GENERATION-LINKS-V11',seed=19990101;
+ const args={worldId,seed,
+  roles:{trainer:65,jockey:54,bloodstock_agent:12,farrier:8},owners:65,
+  facilities:{generalFarms:4,studFarms:2},
+  maxPartnershipGroups:25,soleOwnerPercent:23};
+ let registry=createIndexedFictionalNameRegistry({worldId,seed});
+ let cursor=null,checked=0;
+ const ids=new Map(),nameBirthBatch=new Map();
+ const years=[1999,2005,2011,2017,2023,2029,2035,2041];
+ for(const [batchIndex,year] of years.entries()){
+  const result=generateIndexedFictionalNames({...args,year,registry,cursor});
+  for(const row of [...result.people,...result.owners,...result.stables,
+   ...result.farms,...result.trainingCenters]){
+   assert.ok(!ids.has(row.id),'immutable ID reused: '+row.id);
+   ids.set(row.id,row.name);
+   const normalized=key(row.name);
+   // Person and its individually named owner organization may share a
+   // display name within the SAME generation; never across batches.
+   if(!nameBirthBatch.has(normalized))nameBirthBatch.set(normalized,batchIndex);
+   assert.equal(nameBirthBatch.get(normalized),batchIndex);
+   checked++;
+  }
+  cursor=result.nextCursor;
+  const snapshot=JSON.parse(JSON.stringify(registry.snapshot()));
+  const organizations=new Map(snapshot.issuedOrganizations.map(o=>[o.id,o.name]));
+  const people=new Set(snapshot.issuedPeople.map(p=>p.id));
+  for(const owner of snapshot.ownerEntities){
+   assert.equal(organizations.get(owner.id),owner.name);
+   assert.ok(people.has(owner.principalId));
+  }
+  registry=createIndexedFictionalNameRegistry({worldId,seed,snapshot});
+  assert.deepEqual(registry.snapshot(),snapshot);
+  assert.equal(cursor.revision,registry.revision);
+ }
+ assert.ok(checked>2000,'expected more than two thousand real named person and organization records');
+ assert.equal(ids.size,checked);
+ const alternate=createIndexedFictionalNameRegistry({
+  worldId,seed,snapshot:JSON.parse(JSON.stringify(registry.snapshot()))
+ });
+ const a=generateIndexedFictionalNames({...args,year:2051,registry,cursor});
+ const b=generateIndexedFictionalNames({...args,year:2051,registry:alternate,cursor});
+ assert.deepEqual(
+  [...a.people,...a.owners,...a.stables,...a.farms,...a.trainingCenters]
+   .map(x=>[x.id,x.name]),
+  [...b.people,...b.owners,...b.stables,...b.farms,...b.trainingCenters]
+   .map(x=>[x.id,x.name])
+ );
+ assert.deepEqual(a.nextCursor,b.nextCursor);
+});
