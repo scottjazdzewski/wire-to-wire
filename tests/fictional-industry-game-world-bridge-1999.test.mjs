@@ -207,6 +207,10 @@ test('approved Kingsmere is an openable owner-farm operator with a persistent fu
   ['RACING','TWO_YEAR_OLD_PROSPECT'].includes(h.status)&&
   h.ownerId==='O-000061');
  assert.ok(ownedRunners.length>1);
+ assert.equal(career.operationInventoryByRelationship.BOARDED,
+  career.world.entities.horses.filter(h=>h.careFacilityId==='O-000061').length,
+  'operation inventory must include horses physically boarded at its facilities');
+ assert.ok(career.operationInventoryByRelationship.OWNED>=ownedRunners.length);
  const firstActive=career.run.runtime.registered_horses.by_id[
   'H-GAME-1999-WORLD-'+ownedRunners[0].id.replace(/^H-FICTIONAL-1999-/,'')];
  assert.notEqual(firstActive.care_facility_organization_id,

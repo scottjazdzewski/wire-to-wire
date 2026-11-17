@@ -168,10 +168,22 @@ export async function openPersistent1999GameCareer(store,manifest,{
  validateWorld(world);
  const ownerGroups=new Map();
  const operationHorses=new Map();
+ const operationHorseRoles=new Map();
  for(const h of horses){
-  for(const operationId of new Set([h.ownerId,h.managementOrganizationId].filter(Boolean))){
+  const links=[[h.ownerId,'OWNED'],[h.managementOrganizationId,'MANAGED'],
+   [h.careFacilityId,'BOARDED'],[h.trainingBarnId,'TRAINED']];
+  const seenForHorse=new Set();
+  for(const [operationId,role] of links){
+   if(!operationId)continue;
    if(!operationHorses.has(operationId))operationHorses.set(operationId,[]);
-   operationHorses.get(operationId).push(h);
+   if(!operationHorseRoles.has(operationId))operationHorseRoles.set(operationId,new Map());
+   const roles=operationHorseRoles.get(operationId);
+   if(!roles.has(h.id))roles.set(h.id,new Set());
+   roles.get(h.id).add(role);
+   if(!seenForHorse.has(operationId)){
+    operationHorses.get(operationId).push(h);
+    seenForHorse.add(operationId);
+   }
   }
  }
  for(const h of horses)if(['RACING','TWO_YEAR_OLD_PROSPECT'].includes(h.status)&&h.ownerId){
@@ -279,9 +291,13 @@ export async function openPersistent1999GameCareer(store,manifest,{
   Object.assign(run,result.state);
  }
  validateGameRun(run,world);
+ const relationshipCounts={OWNED:0,MANAGED:0,BOARDED:0,TRAINED:0};
+ for(const roles of (operationHorseRoles.get(operation.id)||new Map()).values())
+  for(const role of roles)relationshipCounts[role]++;
  return {schema:PERSISTED_1999_GAME_BRIDGE_SCHEMA,world,run,
   operation,certificate,playableHorseCount:activeIds.length,
   operationInventoryCount:openingInventory.length,
+  operationInventoryByRelationship:relationshipCounts,
   operationInventoryByStatus:Object.fromEntries([...openingInventory.reduce((counts,h)=>
    counts.set(h.status,(counts.get(h.status)||0)+1),new Map())].sort(([a],[b])=>a.localeCompare(b))),
   openingJockeyCount:openingJockeys.length,
