@@ -31,7 +31,8 @@ async function sha256(bytes){
  return [...hash].map(x=>x.toString(16).padStart(2,'0')).join('');
 }
 function assertInputs(manifest,careerRecord){
- if(manifest?.schema!=='WTW_PERSISTENT_INDUSTRY_1999_V1'||manifest.status!=='COMPLETE'||
+ if(!['WTW_PERSISTENT_INDUSTRY_1999_V1','WTW_PERSISTENT_INDUSTRY_1999_V2']
+   .includes(manifest?.schema)||manifest.status!=='COMPLETE'||
   !Number.isSafeInteger(manifest.seed)||typeof manifest.worldId!=='string'||
   !Number.isSafeInteger(manifest.horseCount)||!Number.isSafeInteger(manifest.personCount)||
   !Number.isSafeInteger(manifest.targetOpeningHorses)||

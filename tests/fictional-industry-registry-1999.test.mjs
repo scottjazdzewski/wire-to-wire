@@ -4,8 +4,10 @@ import {plan1999Ecosystem} from '../public/1999/engine/fictional-industry-ecosys
 import {generate1999IndustryRegistryBatches,count1999Registry,
  project1999HorseForYear}
  from '../public/1999/engine/fictional-industry-registry-1999.mjs';
+import {planFictionalOwnerPortfolios}
+ from '../public/1999/engine/fictional-owner-portfolio-planner.mjs';
 const dirs={farms:[{id:'O-FARM-1',location:{city:'Lexington',region:'Kentucky',country:'USA'}}],
- tracks:[{id:'T-0001'}],owners:[{id:'O-OWNER-1'}]};
+ tracks:[{id:'T-0001'}],owners:[{id:'O-OWNER-1',maxHorses:1000000}]};
 test('streaming opening registry covers every ecosystem cohort with unique permanent IDs',()=>{
  const plan=plan1999Ecosystem({seed:19990101});
  const ids=new Set(),byCohort={};let total=0,batches=0;
@@ -34,6 +36,30 @@ test('opening registry records are deterministic across independent batches',()=
  const a=generate1999IndustryRegistryBatches(opts).next().value;
  const b=generate1999IndustryRegistryBatches(opts).next().value;
  assert.deepEqual(a,b);
+});
+
+test('opening registry consumes the V9 long-tail owner plan exactly once per horse',()=>{
+ const seed=19990101,plan=plan1999Ecosystem({seed,targetOpeningHorses:300000});
+ const owners=Array.from({length:16000},(_,i)=>({
+  id:'O-PORTFOLIO-'+String(i+1).padStart(6,'0')}));
+ const planned=planFictionalOwnerPortfolios({seed,plan,owners,
+  horseCount:300000});
+ const expectedTier=new Map(owners.map((owner,i)=>[owner.id,planned.ownerTier[i]]));
+ const counts=new Map(),byTier={};let total=0;
+ for(const batch of generate1999IndustryRegistryBatches({seed,plan,...dirs,
+  owners,batchSize:5000}))for(const horse of batch.records){
+  total++;counts.set(horse.ownerId,(counts.get(horse.ownerId)||0)+1);
+  assert.equal(horse.ownerPortfolioTier,expectedTier.get(horse.ownerId));
+  byTier[horse.ownerPortfolioTier]=(byTier[horse.ownerPortfolioTier]||0)+1;
+  assert.ok(['HANDFUL','SMALL','REGIONAL','MAJOR','ELITE'].includes(
+   horse.ownerPortfolioTier));
+ }
+ assert.equal(total,300000);
+ assert.equal([...counts.values()].reduce((a,b)=>a+b,0),300000);
+ assert.ok(counts.size>10000,'the full census should use a broad owner base');
+ assert.ok(Object.keys(byTier).length===5,'all five operating tiers receive horses');
+ assert.throws(()=>[...generate1999IndustryRegistryBatches({seed,plan,...dirs,
+  owners:owners.slice(0,10),batchSize:5000})],/Insufficient owner capacity/);
 });
 
 test('1999 unborn foals are forecasts, not living January 1 horses',()=>{

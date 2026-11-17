@@ -9,6 +9,7 @@
 import {plan1999Ecosystem} from './fictional-industry-ecosystem-1999.mjs';
 import {generateProvisional1999IndustryNameRoster} from '../game/horse-naming-local-v485.js';
 import {connect1999Horse} from './fictional-industry-graph-1999.mjs';
+import {planFictionalOwnerPortfolios} from './fictional-owner-portfolio-planner.mjs';
 export const INDUSTRY_REGISTRY_1999_SCHEMA='WTW_INDUSTRY_REGISTRY_1999_V1';
 const cohorts=[
  ['broodmares','BROODMARE',1985],['stallions','STALLION',1984],
@@ -39,7 +40,7 @@ function validateRefs(label,items){
 export function* generate1999IndustryRegistryBatches({
  seed=19990101,plan=plan1999Ecosystem({seed}),
  farms,tracks,owners,batchSize=1000,includeProjectedFoals=false,
- emitNames=false,protectedHorseNames=[]
+ emitNames=false,protectedHorseNames=[],ownerPortfolioPlan=null
 }={}){
  if(!Number.isSafeInteger(seed)||seed<1||!plan?.counts||
   !Number.isInteger(batchSize)||batchSize<1||batchSize>5000)
@@ -47,6 +48,23 @@ export function* generate1999IndustryRegistryBatches({
  validateRefs('farms',farms);validateRefs('tracks',tracks);
  validateRefs('owners',owners);
  const counts=plan.counts,broodmareCount=counts.broodmares,stallionCount=counts.stallions;
+ const openingHorseCount=count1999Registry(plan);
+ const ownership=ownerPortfolioPlan??planFictionalOwnerPortfolios({
+  seed,owners,horseCount:openingHorseCount
+ });
+ if(ownership.seed!==seed||ownership.horseCount!==openingHorseCount||
+  ownership.ownerIds.length!==owners.length||
+  ownership.ownerIds.some((id,index)=>id!==owners[index].id))
+  throw Error('Owner portfolio plan does not match the opening horse census and directory');
+ const regionKey=value=>String(value||'').trim().toLowerCase().replace(/[^a-z]/g,'');
+ const farmPoolByTrack=new Map(tracks.map(track=>{
+  const sameRegion=farms.filter(f=>regionKey(f.location?.region)===
+   regionKey(track.location?.region));
+  const sameCountry=farms.filter(f=>f.location?.country&&
+   f.location.country===track.location?.country);
+  return [track.id,sameRegion.length?sameRegion:sameCountry.length?
+   sameCountry:farms];
+ }));
  // Every horse that exists on January 1 needs a stable display identity before
  // the census can be adapted to the canonical game world. Projected foals are
  // forecasts, not entities, and deliberately remain unnamed until birth.
@@ -56,7 +74,7 @@ export function* generate1999IndustryRegistryBatches({
   n+(registeredCohorts.has(cohort)?counts[cohort]:0),0);
  const naming=emitNames?generateProvisional1999IndustryNameRoster({
   seed,horseCount:nameCount,protectedNames:protectedHorseNames}):null;
- let namingIndex=0;
+ let namingIndex=0,horseIndex=0;
  let batch=[],offset=0;
  for(const [cohort,status,year] of cohorts){
   if(cohort==='annualFoals'&&!includeProjectedFoals)continue;
@@ -64,13 +82,18 @@ export function* generate1999IndustryRegistryBatches({
   if(!Number.isSafeInteger(count)||count<0)throw Error('Invalid registry cohort '+cohort);
   for(let i=0;i<count;i++){
    const id=ref(cohort,i);
-   const farm=farms[choose(seed,id+':farm',farms.length)];
-   const owner=owners[choose(seed,id+':owner',owners.length)];
+   const projected=cohort==='annualFoals';
+   const ownerIndex=projected?
+    ownership.ownerIndexForHorse[choose(seed,id+':dam',broodmareCount)]:
+    ownership.ownerIndexForHorse[horseIndex++];
+   const owner=owners[ownerIndex];
    // Keep each operation's opening horses at its directory home circuit.
    // This gives a player a coherent local stable for the existing race engine
    // and avoids assigning horses randomly across every track in the country.
    const track=tracks.find(x=>x.id===owner.homeTrackId||owner.id.includes(x.id))||
     tracks[choose(seed,id+':track',tracks.length)];
+   const farmPool=farmPoolByTrack.get(track.id)||farms;
+   const farm=farmPool[choose(seed,id+':farm',farmPool.length)];
    const racing=status==='RACING';
    const inTraining=racing||status==='TWO_YEAR_OLD_PROSPECT';
    const breeder=status==='BROODMARE'||status==='STALLION';
@@ -82,7 +105,6 @@ export function* generate1999IndustryRegistryBatches({
     cohort==='fivePlusRunners'?choose(seed,id+':older',6):0);
    const sireId=breeder?null:ref('stallions',choose(seed,id+':sire',stallionCount));
    const damId=breeder?null:ref('broodmares',choose(seed,id+':dam',broodmareCount));
-   const projected=cohort==='annualFoals';
    const assignedName=emitNames&&registeredCohorts.has(cohort)&&!projected?
     naming.names[namingIndex++]:null;
    const horse={
@@ -94,7 +116,8 @@ export function* generate1999IndustryRegistryBatches({
     name:assignedName,
     namingStatus:assignedName?'PROVISIONAL_EDITABLE_1999_OPENING':'UNNAMED_PERMANENT_ID',
     namingRevision:assignedName?naming.algorithmRevision:null,
-    sireId,damId,ownerId:owner.id,foalingFarmId:farm.id,
+    sireId,damId,ownerId:owner.id,ownerPortfolioTier:ownership.ownerTier[ownerIndex],
+    breederId:farm.id,foalingFarmId:farm.id,
     birthplace:{city:farm.location?.city??null,region:farm.location?.region??null,
      country:farm.location?.country??null,farmId:farm.id,
      provenance:'MODELED_FOALING_FARM'},

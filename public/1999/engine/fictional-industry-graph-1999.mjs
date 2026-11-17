@@ -41,6 +41,7 @@ export function connect1999Horse(horse,{seed,trainerCount=0,jockeyCount=0,
  const id=horse.id,edges=[];
  const add=(type,target)=>{if(target)edges.push(relationship1999(type,id,target))};
  add('OWNED_BY',horse.ownerId);
+ add('BRED_BY',horse.breederId);
  add('FOALED_AT',horse.foalingFarmId);
  add('SIRED_BY',horse.sireId);
  add('OUT_OF',horse.damId);
@@ -152,6 +153,8 @@ export function validate1999IndustryReferences(records,{
     problems.push({id:entity.id,reason:'INVALID_DAM_ROLE'});
    if(entity.foalingFarmId&&entity.birthplace?.farmId!==entity.foalingFarmId)
     problems.push({id:entity.id,reason:'BIRTHPLACE_FARM_MISMATCH'});
+   if(entity.breederId&&!farms.some(f=>f.id===entity.breederId))
+    problems.push({id:entity.id,reason:'INVALID_BREEDER'});
    if(entity.homeTrackId&&!tracks.some(t=>t.id===entity.homeTrackId))
     problems.push({id:entity.id,reason:'INVALID_HOME_TRACK'});
    if(entity.trainerId&&entity.status!=='RACING'&&

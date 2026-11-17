@@ -42,7 +42,7 @@ function memoryStore(){
   }};
 }
 const dirs={farms:[{id:'O-FARM-1',location:{country:'USA'}}],
- tracks:[{id:'T-0001'}],owners:[{id:'O-OWNER-1'}]};
+ tracks:[{id:'T-0001'}],owners:[{id:'O-OWNER-1',maxHorses:1000000}]};
 test('large durable industry batches gzip compact and legacy raw records remain readable',async()=>{
  const batch=Array.from({length:2500},(_,i)=>({
   id:'H-FICTIONAL-1999-THREEYEAROLDRUNNERS-'+String(i+1).padStart(7,'0'),
@@ -85,6 +85,10 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
   a.scheduledCards-(a.calendarBatchesCommitted-1)*100);
 
  assert.equal(a.horseCount,12000);
+ assert.equal(a.ownerPortfolio.schema,'WTW_FICTIONAL_OWNER_PORTFOLIOS_V9');
+ assert.equal(a.ownerPortfolio.capacityShortfall,0);
+ assert.equal(Object.values(a.ownerPortfolio.byTier).reduce(
+  (sum,tier)=>sum+tier.horses,0),12000);
  assert.equal(a.targetOpeningHorses,12000);
  assert.ok(a.personCount>0);
  assert.ok(a.coveringCount>0);
@@ -114,6 +118,8 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
  assert.ok(first[0].relationships.some(e=>e.type==='OWNED_BY'));
  const runner=await findPersistent1999Horse(store,a,
   'H-FICTIONAL-1999-THREEYEAROLDRUNNERS-0000001');
+ assert.ok(['HANDFUL','SMALL','REGIONAL','MAJOR','ELITE'].includes(
+  runner.ownerPortfolioTier));
  assert.ok(runner.trainerId&&runner.jockeyId&&runner.homeTrackId);
  const staff=[];
  for(let i=0;i<a.personBatchesCommitted;i++)
@@ -194,6 +200,27 @@ test('interrupted industry genesis resumes at committed checkpoint',async()=>{
  assert.equal(done.status,'COMPLETE');
  assert.ok(done.horseBatchesCommitted>2);
  assert.ok(done.coveringBatchesCommitted>0);
+});
+
+test('a canon organization used as owner and farm stays one permanent directory identity',async()=>{
+ const store=memoryStore(),shared={id:'O-000061',name:'Kingsmere Farm',
+  location:{city:'Versailles',region:'Kentucky',country:'USA'},
+  operatingRoles:['BREEDER','LEGAL_OWNER'],portfolioTier:'ELITE',maxHorses:900};
+ const owners=[shared,...Array.from({length:11},(_,i)=>({
+  id:'O-TEST-ELITE-'+String(i+1).padStart(2,'0'),portfolioTier:'ELITE',
+  maxHorses:900,homeTrackId:'T-0001'}))];
+ const manifest=await createPersistent1999Industry({store,seed:19990117,
+  worldId:'CanonDualRole',targetOpeningHorses:10000,batchSize:5000,
+  tracks:[{id:'T-0001',location:{region:'Kentucky',country:'USA'}}],
+  farms:[shared],owners});
+ const directory=await readPersistent1999Directory(store,manifest);
+ const canon=directory.filter(row=>row.id==='O-000061');
+ assert.equal(canon.length,1);
+ assert.ok(canon[0].operatingRoles.includes('BREEDING_OR_CARE_FACILITY'));
+ assert.ok(canon[0].operatingRoles.includes('LEGAL_OWNER'));
+ assert.ok(canon[0].roleRatings.owner&&canon[0].roleRatings.farm);
+ const owned=await readPersistent1999IndustryBatch(store,manifest,'horseBatches',0);
+ assert.ok(owned.some(h=>h.ownerId==='O-000061'));
 });
 
 test('incomplete worlds cannot receive playable career runs',async()=>{

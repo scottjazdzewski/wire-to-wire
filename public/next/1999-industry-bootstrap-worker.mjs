@@ -8,11 +8,17 @@ import {open1999IndustryDatabase,createPersistent1999Industry}
 import {TRACK_PROGRAM_1999} from '/next/1999-track-program.mjs';
 import {createFictionalWorldNameEngine}
  from '/1999/engine/fictional-world-name-engine.mjs';
+import {plan1999Ecosystem} from '/1999/engine/fictional-industry-ecosystem-1999.mjs';
+import {assessFictionalOwnerCapacity,planFictionalOwnerPortfolios}
+ from '/1999/engine/fictional-owner-portfolio-planner.mjs';
 
 async function industryDirectories(seed){
- const response=await fetch('/data/track-geography-v33.json');
- if(!response.ok)throw Error('Bundled 1999 track geography unavailable');
- const geo=await response.json();
+ const [geoResponse,foundingResponse]=await Promise.all([
+  fetch('/data/track-geography-v33.json'),
+  fetch('/data/wtw-1999-founding-directory-v1.json')]);
+ if(!geoResponse.ok)throw Error('Bundled 1999 track geography unavailable');
+ if(!foundingResponse.ok)throw Error('Bundled approved 1999 organization directory unavailable');
+ const [geo,founding]=await Promise.all([geoResponse.json(),foundingResponse.json()]);
  const geoById=new Map((geo.tracks||[]).map(g=>[g.id,g]));
  const tracks=Object.values(TRACK_PROGRAM_1999)
   .filter(t=>t.playableIn1999!==false&&t.trackOperating==='OPEN_1999')
@@ -29,12 +35,34 @@ async function industryDirectories(seed){
     geographyProvenance:g.geography_status};
   });
  if(!tracks.length)throw Error('No approved operating 1999 tracks');
- const farmCount=tracks.length*4,ownerCount=tracks.length*10;
+ const requestedSize=request.targetOpeningHorses??
+  plan1999Ecosystem({seed,targetOpeningHorses:null}).openingRegistryHorses;
+ const canonicalOrganizations=founding.organizations||[];
+ const canonicalOwners=canonicalOrganizations.filter(o=>
+  ['FARM','STUD_FARM','RACING_STABLE_ORGANIZATION'].includes(o.facilityDisplayCategory)||
+  /OWNERSHIP|RACING STABLE/.test(o.type||''));
+ const canonicalFarms=canonicalOrganizations.filter(o=>
+  ['FARM','STUD_FARM'].includes(o.facilityDisplayCategory));
+ let ownerCount=Math.max(tracks.length*10,Math.ceil(requestedSize/18));
+ const ownerIdAt=index=>'O-FICTIONAL-OWNER-'+String(index+1).padStart(6,'0');
+ let capacity=assessFictionalOwnerCapacity({seed,horseCount:requestedSize,
+  owners:Array.from({length:ownerCount},(_,i)=>({id:ownerIdAt(i)}))});
+ while(capacity.capacityShortfall&&ownerCount<29000){
+  ownerCount=Math.min(29000,ownerCount+Math.max(128,Math.ceil(ownerCount*.03)));
+  capacity=assessFictionalOwnerCapacity({seed,horseCount:requestedSize,
+   owners:Array.from({length:ownerCount},(_,i)=>({id:ownerIdAt(i)}))});
+ }
+ if(capacity.capacityShortfall)
+  throw Error('The requested world size exceeds approved owner-portfolio capacity');
+ const ownerCountByCircuit=Array.from({length:tracks.length},(_,i)=>
+  Math.floor(ownerCount/tracks.length)+(i<ownerCount%tracks.length?1:0));
+ const farmCount=tracks.length*4;
  const generated=createFictionalWorldNameEngine({
   worldId:'WTW1999IndustryDirectory',seed,year:1999,roles:{},owners:ownerCount,
   facilities:{generalFarms:farmCount,studFarms:0,nurseries:0,
    bloodstockFarms:0,breakingTraining:0},
-  protectedNames:tracks.map(t=>t.name)
+  protectedNames:[...tracks.map(t=>t.name),
+   ...canonicalOrganizations.map(o=>o.name).filter(Boolean)]
  });
  if(generated.owners.length!==ownerCount||generated.farms.length!==farmCount)
   throw Error('1999 approved organization name generator returned an incomplete directory');
@@ -42,20 +70,81 @@ async function industryDirectories(seed){
   const named=generated.farms[trackIndex*4+i];
   return {id:'O-FICTIONAL-FARM-'+t.id+'-'+String(i+1).padStart(2,'0'),
    name:named.name,location:t.location,
+   operatingRoles:['BREEDER','FOALING_FARM','BOARDING_FACILITY'],
+   facilityKind:'COMMERCIAL_BREEDING_AND_CARE',
    namingStatus:'GENERATED_1999_ORGANIZATION_ENGINE',
    namingSourceId:named.id,
    geographyStatus:t.location?.region?'REGION_PROVIDED':'LOCATION_REVIEW_REQUIRED'};
  }));
- const owners=tracks.flatMap((t,trackIndex)=>Array.from({length:10},(_,i)=>{
-  const named=generated.owners[trackIndex*10+i];
-  return {id:'O-FICTIONAL-OWNER-'+t.id+'-'+String(i+1).padStart(2,'0'),
-   name:named.name,location:t.location,
+ const locationFor=org=>{
+  const source=(org.geographyRecords||[]).find(x=>x.locality&&x.region)||
+   (org.geographyRecords||[]).find(x=>x.region)||{};
+  return {city:source.locality||null,region:source.region||null,
+   country:source.country||(/\b(UK|England)\b/.test(org.locationLabel||'')?
+    'United Kingdom':/Canada/.test(org.locationLabel||'')?'Canada':'USA'),
+   locationLabel:org.locationLabel||null,
+   geographyProvenance:source.basis||org.locationGranularity||'APPROVED_FOUNDING_DIRECTORY'};
+ };
+ const homeTrackFor=org=>{
+  const location=locationFor(org);
+  return tracks.find(t=>location.region&&
+   String(t.location?.region||'').toLowerCase().includes(
+    String(location.region).split('/')[0].trim().toLowerCase()))?.id||
+   tracks[parseInt(String(org.id).replace(/\D/g,''),10)%tracks.length].id;
+ };
+ const majorPortfolio={
+  'O-000061':{portfolioTier:'ELITE',maxHorses:850,operationStyle:'KENTUCKY_BREED_TO_RACE_CLASSIC'},
+  'O-000001':{portfolioTier:'ELITE',maxHorses:720,operationStyle:'RETAINED_FEMALE_FAMILIES'},
+  'O-000003':{portfolioTier:'MAJOR',maxHorses:195,operationStyle:'MID_ATLANTIC_BREED_TO_RACE'},
+  'O-000062':{portfolioTier:'MAJOR',maxHorses:175,operationStyle:'COMMERCIAL_NURSERY_AND_RACING'},
+  'O-000066':{portfolioTier:'MAJOR',maxHorses:185,operationStyle:'INTEGRATED_BLOODSTOCK_STUD'},
+  'O-FOUNDING-1999-001':{portfolioTier:'MAJOR',maxHorses:180,operationStyle:'NORTHEAST_BREED_TO_RACE'},
+  'O-FOUNDING-1999-004':{portfolioTier:'MAJOR',maxHorses:155,operationStyle:'KENTUCKY_BREED_TO_RACE'}
+ };
+ const farmsWithCanon=[...canonicalFarms.map(org=>({
+  id:org.id,name:org.name,location:locationFor(org),
+  homeTrackId:homeTrackFor(org),organizationType:org.type,
+  operatingRoles:['BREEDER','FOALING_FARM','BOARDING_FACILITY'],
+  sourceSchema:founding.schema,sourcePublicationTier:org.publicationTier,
+  approvedOrigin:org.approvedOrigin||null,historicalEvidence:org.historicalEvidence||null,
+  principalOwnerId:org.principalOwnerId||null,
+  leadershipPeopleIds:org.leadershipPeopleIds||[],sourceStatus:org.displayNameStatus||null
+ })),...farms];
+ const rawOwners=Array.from({length:ownerCount},(_,i)=>({id:ownerIdAt(i)}));
+ const tierPlan=planFictionalOwnerPortfolios({seed,owners:rawOwners,horseCount:0});
+ const ownerCircuitOffsets=ownerCountByCircuit.map((_,index)=>
+  ownerCountByCircuit.slice(0,index).reduce((sum,count)=>sum+count,0));
+ const generatedOwners=tracks.flatMap((t,trackIndex)=>Array.from(
+  {length:ownerCountByCircuit[trackIndex]},(_,i)=>{
+  const globalIndex=ownerCircuitOffsets[trackIndex]+i;
+  const named=generated.owners[globalIndex];
+  return {id:ownerIdAt(globalIndex),name:named.name,location:t.location,
+   homeTrackId:t.id,portfolioTier:tierPlan.ownerTier[globalIndex],
+   portfolioModel:'WTW_FICTIONAL_OWNER_PORTFOLIOS_V9',
+   operatingRoles:['LEGAL_OWNER',named.ownershipArchetype||'PRIVATE_OWNER'],
    ownershipArchetype:named.ownershipArchetype,
    namingStatus:'GENERATED_1999_ORGANIZATION_ENGINE',
    namingSourceId:named.id,
    geographyStatus:t.location?.region?'REGION_PROVIDED':'LOCATION_REVIEW_REQUIRED'};
  }));
- return {tracks,farms,owners};
+ const owners=[...generatedOwners,...canonicalOwners.map(org=>{
+  const location=locationFor(org),profile=majorPortfolio[org.id]||{};
+  return {id:org.id,name:org.name,location,homeTrackId:homeTrackFor(org),
+   portfolioTier:profile.portfolioTier,
+   maxHorses:profile.maxHorses,
+   portfolioModel:'WTW_FICTIONAL_OWNER_PORTFOLIOS_V9',
+   operationStyle:profile.operationStyle||null,
+   ownershipArchetype:org.type,
+   operatingRoles:[org.facilityDisplayCategory||'LEGAL_OWNER'],
+   sourceSchema:founding.schema,sourcePublicationTier:org.publicationTier,
+   approvedOrigin:org.approvedOrigin||null,historicalEvidence:org.historicalEvidence||null,
+   approvedPrincipals:org.approvedPrincipals||null,
+   principalOwner:org.principalOwner||null,principalOwnerId:org.principalOwnerId||null,
+   publicPrincipal:org.publicPrincipal||null,
+   leadershipPeopleIds:org.leadershipPeopleIds||[],
+   leadershipStatus:org.leadershipStatus||null,sourceStatus:org.displayNameStatus||null};
+ })];
+ return {tracks,farms:farmsWithCanon,owners};
 }
 
 self.addEventListener('message',async event=>{

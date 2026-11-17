@@ -39,14 +39,14 @@ function memoryStore(){
 
 test('owner-operated barn labels use approved owner and venue names, never generic double Racing',()=>{
  assert.match(PERSISTED_1999_OPENING_BARN_NAMING_MODEL,/OWNER_TRACK_BARN/);
- const owner={id:'O-OWNER-1',name:'North Star Racing'};
+ const owner={id:'O-OWNER-01',name:'North Star Racing'};
  const a={id:'T-0001',name:'Aqueduct'};
  const b={id:'T-0002',name:'Belmont Park'};
  assert.equal(format1999OpeningBarnName(owner,a),'North Star Racing — Aqueduct Barn');
  assert.equal(format1999OpeningBarnName(owner,b),'North Star Racing — Belmont Park Barn');
  assert.notEqual(format1999OpeningBarnName(owner,a),format1999OpeningBarnName(owner,b));
  assert.equal(owner.name,'North Star Racing','source organization is never renamed');
- assert.throws(()=>format1999OpeningBarnName({id:'O-OWNER-1',name:''},a),
+ assert.throws(()=>format1999OpeningBarnName({id:'O-OWNER-01',name:''},a),
   /real named owner and track/);
  assert.throws(()=>format1999OpeningBarnName(owner,{id:'',name:'Aqueduct'}),
   /real named owner and track/);
@@ -76,23 +76,31 @@ test('10,000-horse persisted 1999 world opens and runs a canonical race career',
   worldId:'CanonicalBridgeTest',targetOpeningHorses:10000,batchSize:500,
   tracks:[{id:'T-0001',name:'Aqueduct',location:{city:'Queens',region:'NY',country:'USA'}}],
   farms:[{id:'O-FARM-1',name:'Blue Meadow Farm',location:{city:'Lexington',region:'KY',country:'USA'}}],
-  owners:[{id:'O-OWNER-1',name:'North Star Racing',location:{city:'New York',region:'NY',country:'USA'}}]});
+  owners:Array.from({length:20},(_,i)=>({
+   id:'O-OWNER-'+String(i+1).padStart(2,'0'),
+   name:i?'North Star Partner '+i:'North Star Racing',
+   portfolioTier:'ELITE',maxHorses:900,
+   homeTrackId:'T-0001',location:{city:'New York',region:'NY',country:'USA'}}))});
  const career=await openPersistent1999GameCareer(store,manifest,{
-  runId:'WTW-RUN-CUSTOM-SIZE-10',operationId:'O-OWNER-1'});
+  runId:'WTW-RUN-CUSTOM-SIZE-10',operationId:'O-OWNER-01'});
  assert.equal(career.world.manifest.targetOpeningHorses,10000);
  assert.equal(manifest.horseCount,10000);
  assert.equal(career.world.entities.horses.length,manifest.horseCount);
  assert.ok(career.world.entities.horses.every(h=>typeof h.name==='string'&&h.name));
  assert.equal(career.world.calendar.cards.length,manifest.scheduledCards);
- assert.equal(career.run.player.operation_id,'O-OWNER-1');
+ assert.equal(career.run.player.operation_id,'O-OWNER-01');
  const openingSite=career.run.runtime.facilities.sites['F-1999-OPENING-T-0001'];
  assert.ok(openingSite,'new barn should exist in canonical game run');
  assert.equal(openingSite.id,'F-1999-OPENING-T-0001');
  assert.equal(openingSite.name,'North Star Racing — Aqueduct Barn');
- assert.equal(openingSite.owner_id,'O-OWNER-1');
+ assert.equal(openingSite.owner_id,'O-OWNER-01');
  assert.equal(openingSite.host_track_id,'T-0001');
  assert.ok(openingSite.head_trainer_person_id,'trainer identity must remain linked');
  assert.ok(career.playableHorseCount>0);
+ const ownedRunners=career.world.entities.horses.filter(h=>
+  h.status==='RACING'&&h.ownerId===career.operation.id);
+ assert.equal(career.playableHorseCount,ownedRunners.length,
+  'the playable run must not truncate a selected operator at a demo roster size');
  assert.ok(career.openingJockeyCount>=2);
  assert.equal(validateGameRun(career.run,career.world),career.run);
  let state=career.run,raceChoice=null;
@@ -160,4 +168,37 @@ test('10,000-horse persisted 1999 world opens and runs a canonical race career',
   'F-1999-OPENING-T-0001'].name,openingSite.name);
  assert.equal(saved.changes.canonicalRun.runtime.facilities.sites[
   'F-1999-OPENING-T-0001'].owner_id,openingSite.owner_id);
+});
+
+test('approved Kingsmere is an openable owner-farm operator with a persistent full racing string',async()=>{
+ const store=memoryStore();
+ const kingsmere={id:'O-000061',name:'Kingsmere Farm',
+  location:{city:'Versailles',region:'Kentucky',country:'USA'},
+  portfolioTier:'ELITE',maxHorses:850,homeTrackId:'T-0001',
+  operatingRoles:['LEGAL_OWNER','BREEDER','FOALING_FARM']};
+ const owners=[kingsmere,...Array.from({length:20},(_,i)=>({
+  id:'O-TEST-OP-'+String(i+1).padStart(2,'0'),name:'Test Operation '+(i+1),
+  portfolioTier:'ELITE',
+  maxHorses:900,homeTrackId:'T-0001'}))];
+ const manifest=await createPersistent1999Industry({store,seed:19990117,
+  worldId:'KingsmereCareerIntegration',targetOpeningHorses:10000,batchSize:1000,
+  tracks:[{id:'T-0001',name:'Keeneland',location:{city:'Lexington',
+   region:'Kentucky',country:'USA'}}],farms:[kingsmere],owners});
+ const career=await openPersistent1999GameCareer(store,manifest,{
+  runId:'WTW-RUN-KINGSMERE-1999',operationId:'O-000061'});
+ const ownedRunners=career.world.entities.horses.filter(h=>
+  h.status==='RACING'&&h.ownerId==='O-000061');
+ assert.ok(ownedRunners.length>1);
+ assert.equal(career.playableHorseCount,ownedRunners.length);
+ assert.ok(career.run.stable_horse_ids.every(id=>{
+  const horse=career.run.runtime.registered_horses.by_id[id];
+  return horse.owner_organization_id==='O-000061'&&horse.world_source_horse_id;
+ }));
+ const saved=await savePersistent1999CareerRun(store,manifest,{
+  runId:career.run.run_id,player:career.run.player,gameDate:career.run.clock.date,
+  changes:{canonicalRun:career.run},version:2});
+ const reopened=await loadPersistent1999CareerRun(store,manifest,career.run.run_id);
+ assert.deepEqual(reopened,saved);
+ assert.equal(reopened.changes.canonicalRun.stable_horse_ids.length,
+  ownedRunners.length,'the selected operation must survive save and reopen intact');
 });

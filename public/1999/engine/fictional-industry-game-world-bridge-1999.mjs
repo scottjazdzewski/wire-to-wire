@@ -176,8 +176,11 @@ export async function openPersistent1999GameCareer(store,manifest,{
    .sort((a,b)=>(ownerGroups.get(b.id)?.length||0)-(ownerGroups.get(a.id)?.length||0)||
     a.id.localeCompare(b.id))[0];
  if(!operation)throw Error('Selected player operation does not exist in this world');
- const openingRoster=(ownerGroups.get(operation.id)||[]).slice(0,30);
- if(openingRoster.length<2)throw Error('Selected operation needs at least two opening runners');
+ // The selected operator's stable is the full canonical racing string. The
+ // previous 30-horse slice made the saved 300k census appear complete while
+ // silently omitting most horses from playable career records.
+ const openingRoster=ownerGroups.get(operation.id)||[];
+ if(!openingRoster.length)throw Error('Selected operation needs an opening runner');
  const run=createGameRun({world,runId,seed:manifest.seed,
   player:{role:playerRole,involvement,operation_id:operation.id},stableHorseIds:[]});
  const trackGroups=new Map();

@@ -25,8 +25,14 @@ import {generate1999SeasonFoalingForecasts,resolve1999FoalBirth}
  from './fictional-industry-breeding-book-1999.mjs';
 import {buildFictional1999RaceCalendar,FICTIONAL_1999_CALENDAR_SCHEMA}
  from './fictional-world-calendar-v1.mjs';
-export const PERSISTENT_INDUSTRY_SCHEMA='WTW_PERSISTENT_INDUSTRY_1999_V1';
+import {planFictionalOwnerPortfolios,assessFictionalOwnerCapacity,
+ FICTIONAL_PORTFOLIO_MODEL} from './fictional-owner-portfolio-planner.mjs';
+export const PERSISTENT_INDUSTRY_SCHEMA='WTW_PERSISTENT_INDUSTRY_1999_V2';
 export const PERSISTENT_INDUSTRY_DB='WireToWireFictionalIndustry1999V1';
+const SUPPORTED_PERSISTENT_INDUSTRY_SCHEMAS=new Set([
+ 'WTW_PERSISTENT_INDUSTRY_1999_V1',PERSISTENT_INDUSTRY_SCHEMA]);
+const supportsPersistentSchema=manifest=>
+ SUPPORTED_PERSISTENT_INDUSTRY_SCHEMAS.has(manifest?.schema);
 export const PERSISTENT_INDUSTRY_COMPRESSION_SCHEMA='WTW_INDUSTRY_GZIP_JSON_V1';
 const compressibleStores=new Set(['horseBatches','personBatches','directory',
  'coveringBatches','calendarBatches']);
@@ -277,6 +283,17 @@ export async function createPersistent1999Industry({
  const totalHorses=count1999Registry(plan);
  if(targetOpeningHorses!==null&&totalHorses!==targetOpeningHorses)
   throw Error('Persistent industry size differs from selected world size');
+ const ownerCapacity=assessFictionalOwnerCapacity({seed,owners,
+  horseCount:totalHorses});
+ if(ownerCapacity.capacityShortfall)
+  throw Error('Owner portfolio capacity is short by '+ownerCapacity.capacityShortfall+
+   ' horses; refusing to create an underallocated 1999 industry');
+ const ownerPortfolioPlan=planFictionalOwnerPortfolios({seed,owners,
+  horseCount:totalHorses});
+ const ownerPortfolioByTier=Object.fromEntries(
+  Object.entries(ownerCapacity.byTier).map(([tier,capacity])=>[tier,{
+   ...capacity,horses:ownerPortfolioPlan.summary.byTier[tier].horses
+  }]));
  const horseNamingRevision=LOCAL_HORSE_NAMING_ALGORITHM_REVISION+':OPENING_INDUSTRY_V1';
  const totalPeople=Object.values(staffing.counts).reduce((a,b)=>a+b,0);
  if(existing){
@@ -291,6 +308,9 @@ export async function createPersistent1999Industry({
    existing.breedingSchema!==BREEDING_BOOK_1999_SCHEMA||
    existing.coveringCount!==plan.minimumCoversForTargetFoals||
    existing.calendarSchema!==FICTIONAL_1999_CALENDAR_SCHEMA||
+   existing.ownerPortfolio?.schema!==FICTIONAL_PORTFOLIO_MODEL||
+   existing.ownerPortfolio?.ownerCount!==owners.length||
+   existing.ownerPortfolio?.capacityShortfall!==0||
    existing.horseNamingRevision!==horseNamingRevision||
    existing.personBiographyRevision!==INDUSTRY_PERSON_BIOGRAPHY_REVISION||
    Boolean(existing.ensureCircuitCoverage)!==ensureCircuitCoverage)
@@ -317,18 +337,39 @@ export async function createPersistent1999Industry({
   horseNamingRevision,personBiographyRevision:INDUSTRY_PERSON_BIOGRAPHY_REVISION,
   breedingSchema:BREEDING_BOOK_1999_SCHEMA,
   coveringCount:plan.minimumCoversForTargetFoals,coveringBatchesCommitted:0,
+  ownerPortfolio:{schema:FICTIONAL_PORTFOLIO_MODEL,
+   ...ownerCapacity,byTier:ownerPortfolioByTier,
+   ownershipSummary:ownerPortfolioPlan.summary},
   calendarSchema:FICTIONAL_1999_CALENDAR_SCHEMA,calendarBatchesCommitted:0,
   scheduledCards:0,scheduledRaces:0,
   plan,staffing,source:'DETERMINISTIC_OFFLINE_1999'
  };
  if(!manifest.directoryCommitted){
-  const records=[
-   ...tracks.map(t=>connect1999DirectoryEntity(t,{seed,type:'track'})),
-   ...farms.map(f=>connect1999DirectoryEntity(f,{seed,type:'farm',
-    homeTrackId:tracks.find(t=>f.id.includes(t.id))?.id??null})),
-   ...owners.map(o=>connect1999DirectoryEntity(o,{seed,type:'owner',
-    homeTrackId:tracks.find(t=>o.id.includes(t.id))?.id??null}))
-  ];
+  const byId=new Map();
+  const mergeDirectoryRecord=(record,role,roleRatingKey=role)=>{
+   const prior=byId.get(record.id);
+   const roles=new Set([...(prior?.operatingRoles||[]),role,
+    ...(record.operatingRoles||[])]);
+   if(!prior){
+    byId.set(record.id,{...record,operatingRoles:[...roles],
+     roleRatings:{[roleRatingKey]:record.ratings}});return;
+   }
+   byId.set(record.id,{...prior,...record,operatingRoles:[...roles],
+    ratings:{...prior.ratings,...record.ratings},
+    roleRatings:{...prior.roleRatings,[roleRatingKey]:record.ratings},
+    relationships:[...prior.relationships,...record.relationships]});
+  };
+  for(const track of tracks)
+   mergeDirectoryRecord(connect1999DirectoryEntity(track,{seed,type:'track'}),'TRACK');
+  for(const farm of farms)
+   mergeDirectoryRecord(connect1999DirectoryEntity(farm,{seed,type:'farm',
+    homeTrackId:farm.homeTrackId??tracks.find(t=>farm.id.includes(t.id))?.id??null}),
+    'BREEDING_OR_CARE_FACILITY','farm');
+  for(const owner of owners)
+   mergeDirectoryRecord(connect1999DirectoryEntity(owner,{seed,type:'owner',
+    homeTrackId:owner.homeTrackId??tracks.find(t=>owner.id.includes(t.id))?.id??null}),
+    'LEGAL_OWNER','owner');
+  const records=[...byId.values()];
   const ids=new Set([...tracks,...farms,...owners].map(e=>e.id));
   const audit=validate1999GraphBatch(records,ids);
   if(!audit.valid)throw Error('Industry directory has broken graph references');
@@ -358,7 +399,8 @@ export async function createPersistent1999Industry({
  }
  for(const [kind,generator] of [
   ['horseBatches',generate1999IndustryRegistryBatches({
-   seed,plan,farms,tracks,owners,batchSize,emitNames:true})],
+   seed,plan,farms,tracks,owners,batchSize,emitNames:true,
+   ownerPortfolioPlan})],
   ['personBatches',generate1999StaffingBatches({
    seed,staffing,tracks,farms,batchSize,nameRoster:personnelNames,
    ensureCircuitCoverage})]
@@ -444,7 +486,7 @@ export async function createPersistent1999Industry({
  return manifest;
 }
 export async function readPersistent1999IndustryBatch(store,manifest,kind,index){
- if(manifest?.schema!==PERSISTENT_INDUSTRY_SCHEMA||
+ if(!supportsPersistentSchema(manifest)||
   manifest.status!=='COMPLETE'||
   !['horseBatches','personBatches','coveringBatches','calendarBatches'].includes(kind)||
   !Number.isInteger(index)||index<0||
@@ -518,7 +560,7 @@ export async function readPersistent1999HorseProfile(store,manifest,horseId,{run
 export async function savePersistent1999CareerRun(store,manifest,{
  runId,gameDate='1999-01-01',player,changes={},version=1
 }={}){
- if(manifest?.schema!==PERSISTENT_INDUSTRY_SCHEMA||
+ if(!supportsPersistentSchema(manifest)||
   manifest.status!=='COMPLETE'||!store?.commitLifecycleRun||
   typeof runId!=='string'||!/^[-A-Za-z0-9_]{1,80}$/.test(runId)||
   !validCalendarDate(gameDate)||
@@ -1302,7 +1344,7 @@ async function advancePersistent1999IndustryLifecycle(store,manifest,{
  * Full semantic validation happens during generation, before each commit.
  */
 export async function verifyPersistent1999WorldOpen(store,manifest){
- if(manifest?.schema!==PERSISTENT_INDUSTRY_SCHEMA||
+ if(!supportsPersistentSchema(manifest)||
   manifest.status!=='COMPLETE'||!manifest.directoryCommitted)
   throw Error('1999 world is not complete');
  const counts=[
@@ -1347,7 +1389,7 @@ export async function reopenPersistent1999Industry(store,{
   throw Error('Invalid 1999 world reopen request');
  const manifest=await store.get('manifests',keyOf(seed,worldId));
  if(!manifest)return null;
- if(manifest.schema!==PERSISTENT_INDUSTRY_SCHEMA)
+ if(!supportsPersistentSchema(manifest))
   throw Error('Unsupported 1999 industry schema');
  if(manifest.status!=='COMPLETE')return {status:'GENERATING',manifest};
  const certificate=await verifyPersistent1999WorldOpen(store,manifest);

@@ -227,7 +227,7 @@ function requestedIndustry(){
  // The new cohort model gets its own immutable records; keep legacy manifests
  // addressable through the open-saved fallback below.
  return {seed,targetOpeningHorses:horseCount,
-  worldId:'WTW1999FullIndustry-COHORTS-V2-H'+horseCount};
+  worldId:'WTW1999FullIndustry-COHORTS-V3-OWNER-V9-H'+horseCount};
 }
 let industryBrowsePage=0,industryBrowseHtml='',industryBrowseKind='horseBatches';
 let industryDirectory=[];
@@ -761,6 +761,9 @@ async function open(){
   const store=await open1999IndustryDatabase();
   try{
    let selected=await reopenPersistent1999Industry(store,{
+    seed:selectedIndustrySeed,
+    worldId:'WTW1999FullIndustry-COHORTS-V3-OWNER-V9-H'+selectedIndustryHorses});
+   if(!selected)selected=await reopenPersistent1999Industry(store,{
     seed:selectedIndustrySeed,
     worldId:'WTW1999FullIndustry-COHORTS-V2-H'+selectedIndustryHorses});
    if(!selected)selected=await reopenPersistent1999Industry(store,{
