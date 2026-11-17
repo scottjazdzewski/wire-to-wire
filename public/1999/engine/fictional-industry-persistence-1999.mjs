@@ -563,7 +563,18 @@ export function samePersistent1999CareerImportReadback(expected,actual,
   'gameDate','player','changes','version'];
  if(!identity.every(key=>JSON.stringify(actual[key])===JSON.stringify(expected[key])))
   return false;
- if(!expected.lifecycle)return actual.lifecycle==null;
+ // Some early shared 1999 files were exported before lifecycle metadata
+ // existed at all. Their engine results remain authoritative; require the
+ // newly materialized lifecycle to match the same run/date and valid census.
+ if(!expected.lifecycle){
+  if(!actual.lifecycle)return true;
+  const next=actual.lifecycle;
+  return next.schema==='WTW_INDUSTRY_LIFECYCLE_V1'&&
+   next.runId===expected.runId&&next.lastDate===expected.gameDate&&
+   next.seasonYear===Number(expected.gameDate.slice(0,4))&&
+   Number.isSafeInteger(next.openingHorseCount)&&next.openingHorseCount>0&&
+   Number.isSafeInteger(next.population)&&next.population>=0;
+ }
  if(!actual.lifecycle||typeof actual.lifecycle!=='object')return false;
  for(const [key,value] of Object.entries(expected.lifecycle)){
   if(key==='racingPopulation')continue;
