@@ -21,6 +21,8 @@ import {gameRaceProgram,supported1999RaceClass,raceEligibility}
 import {validateGameRun} from '/1999/game/state.js';
 import {packShared1999Career,unpackShared1999Career,sameShared1999WorldIdentity}
  from '/1999/engine/shared-1999-career-package.mjs?rev=wtw-shared-career-world-identity-v2';
+import {projectCanonical1999RaceRows,renderCanonical1999RaceFile}
+ from '/next/1999-canonical-career-race-files.mjs';
 
 const DB_NAME='WireToWireClean1999CareersV2';
 const MAX_SLOTS=60,MAX_TOTAL_BYTES=512*1024*1024;
@@ -179,6 +181,8 @@ function modal(){
 }
 let fullIndustryManifest=null;
 let activeWorldCareer=null;
+// One renderer for exact ID-linked records from the current saved game only.
+window.WTW1999CanonicalCareerRaceFile=Object.freeze({render:renderCanonical1999RaceFile});
 // Read-only bridge to the existing committed game run: do not seed a second
 // balance, infer assets, or mutate the immutable 1999 world directory.
 function publishCareerReadModel(){
@@ -195,9 +199,7 @@ function publishCareerReadModel(){
  const rawBalance=run.runtime.finances?.operation_balances_minor?.[operation.id];
  const horses=(run.stable_horse_ids||[]).map(id=>run.runtime.registered_horses?.by_id?.[id]).filter(Boolean)
   .map(h=>({horseId:h.horse_id,name:h.registered_name,activity:h.status||'In training',tag:h.status||'In training'}));
- const races=Object.values(run.runtime.races||{}).filter(r=>r&&r.status!=='CANCELLED')
-  .map(r=>({name:r.name||r.conditions||r.id,date:r.date||'',track:r.track_id||'',status:r.status||'Planned'}))
-  .sort((a,b)=>a.date.localeCompare(b.date));
+ const races=projectCanonical1999RaceRows(run,career.world);
  const snapshot={schema:'WTW_CANONICAL_CAREER_READ_MODEL_V1',
   worldId:career.manifest.worldId,runId:run.run_id,
   worldHorseCount:career.manifest.horseCount,personCount:career.manifest.personCount,
@@ -205,7 +207,9 @@ function publishCareerReadModel(){
   date:run.clock.date,revision:run.revision,horseRows:horses,raceRows:races,
   cashMinor:Number.isSafeInteger(rawBalance)?rawBalance:null};
  const prior=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
- if(prior?.revision===snapshot.revision&&prior?.operationId===snapshot.operationId&&prior?.date===snapshot.date)return;
+ if(prior?.worldId===snapshot.worldId&&prior?.runId===snapshot.runId&&
+  prior?.revision===snapshot.revision&&prior?.operationId===snapshot.operationId&&
+  prior?.date===snapshot.date)return;
  window.__WTW_ACTIVE_WORLD_CAREER_VIEW__=Object.freeze(snapshot);
  window.__WTW_NEXT__?.paint?.();
 }
