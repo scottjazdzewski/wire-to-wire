@@ -93,11 +93,19 @@ function verifyHorse(world,id){
  ensure(indexWorld(world).horseById.has(id),'UNKNOWN_HORSE',
   'Horse is not in the accepted world snapshot '+id);
 }
+function ensureNoRegisteredSourceAlias(state,id){
+ // An admitted source H-ID is a historical identity; ownership of that
+ // physical horse must pass through its sole active H-GAME registration.
+ ensure(!Object.values(state.runtime.registered_horses?.by_id||{}).
+  some(h=>h.world_source_horse_id===id),
+  'HORSE_REGISTERED_ALIAS','Use the admitted game horse ID for ownership transfers');
+}
 function verifyTransferHorse(state,world,id){
  requireString(id,'horse_id',128);
  ensure(indexWorld(world).horseById.has(id)||
   Object.hasOwn(state.runtime.registered_horses?.by_id||{},id),
   'UNKNOWN_HORSE','Horse must exist in approved world or active registered career');
+ ensureNoRegisteredSourceAlias(state,id);
 }
 function ensureCareerHorseTransferReady(state,id){
  const h=state.runtime.registered_horses?.by_id?.[id];
@@ -176,6 +184,7 @@ export function ownershipAction({state,world,command,emit}){
   validRequestId(p.request_id);validRequestId(p.settlement_id);
   const request=rt.pending_transfers[p.request_id];
   ensure(Boolean(request)&&request.transfer_type==='SALE','UNKNOWN_SALE','A pending horse sale is required');
+  ensureNoRegisteredSourceAlias(state,request.horse_id);
   ensure(currentHorseOwnerId(state,world,request.horse_id)===request.from_owner_id,
    'STALE_HORSE_OWNER','Seller no longer owns the horse');
   ensureCareerHorseTransferReady(state,request.horse_id);
@@ -213,6 +222,7 @@ export function ownershipAction({state,world,command,emit}){
   validRequestId(p.request_id);
   const request=rt.pending_transfers[p.request_id];
   ensure(Boolean(request),'UNKNOWN_TRANSFER','No such pending ownership transfer');
+  ensureNoRegisteredSourceAlias(state,request.horse_id);
   const current=currentHorseOwnerId(state,world,request.horse_id);
   ensure(current===request.from_owner_id,'STALE_HORSE_OWNER','Horse changed owner since transfer request');
   ensureCareerHorseTransferReady(state,request.horse_id);
