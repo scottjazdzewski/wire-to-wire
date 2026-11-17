@@ -49,8 +49,10 @@ test('compact career saves remain local and the manager adds no hosted runtime d
 test('custom-size worlds connect to the canonical playable race career',()=>{
  assert.match(manager,/data-cc="industry-size" type="number" min="10000" max="325000"/);
  assert.match(manager,/targetOpeningHorses:horseCount/);
- assert.match(manager,/worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V7-H'\+horseCount/);
- assert.match(manager,/worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V7-H'\+selectedIndustryHorses/);
+ assert.match(manager,/worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V8-H'\+horseCount/);
+ assert.match(manager,/worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V8-H'\+selectedIndustryHorses/);
+ assert.match(manager,/worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V7-H'\+selectedIndustryHorses/,
+  'archival owner-name expansion preserves the partnership-rich prior world');
  assert.match(manager,/worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V6-H'\+selectedIndustryHorses/,
   'the prior Census-only naming revision remains available to its saved careers');
  assert.match(manager,/worldId:'WTW1999FullIndustry-COHORTS-V3-OWNER-V9-H'\+selectedIndustryHorses/,
@@ -65,4 +67,7 @@ test('custom-size worlds connect to the canonical playable race career',()=>{
  assert.match(manager,/gameRaceProgram/);
  assert.match(manager,/fullIndustryManifest\?'<p>WORLD STORED/);
  assert.doesNotMatch(manager,/NEW CAREER \/ START FROM SCRATCH|data-cc="population"|data-cc="new-name"|action==='new-world'/);
+});
+test('the actual full-world bootstrap uses source-backed 1999 racing-owner surnames',()=>{
+ assert.match(industryWorker,/ownerNameSourceModel:'ARCHIVAL_1999_RACING_OWNERS'/);
 });

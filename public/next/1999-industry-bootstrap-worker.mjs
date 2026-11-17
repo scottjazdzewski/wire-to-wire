@@ -68,7 +68,8 @@ async function industryDirectories(seed,targetOpeningHorses=null){
   facilities:{generalFarms:farmCount,studFarms:0,nurseries:0,
    bloodstockFarms:0,breakingTraining:0},
   protectedNames:[...tracks.map(t=>t.name),
-   ...canonicalOrganizations.map(o=>o.name).filter(Boolean)]
+   ...canonicalOrganizations.map(o=>o.name).filter(Boolean)],
+  ownerNameSourceModel:'ARCHIVAL_1999_RACING_OWNERS'
  });
  if(generated.owners.length!==ownerCount||generated.farms.length!==farmCount)
   throw Error('1999 approved organization name generator returned an incomplete directory');

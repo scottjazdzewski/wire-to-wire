@@ -10,7 +10,10 @@
  */
 import {createPersonnelNameRoster,PERSONNEL_NAME_MODEL} from './personnel-name-engine.mjs';
 import {roleOrigin,GEO_NAME_MODEL} from './geographic-names.mjs';
-import {createOrganizationNameRoster,ORGANIZATION_NAME_MODEL} from './organization-name-engine.mjs';
+import {createOrganizationNameRoster,ORGANIZATION_NAME_MODEL,
+ ARCHIVAL_RACING_OWNER_NAME_MODEL} from './organization-name-engine.mjs';
+import {VERIFIED_RACING_OWNER_SURNAME_INPUTS_1999}
+ from './verified-racing-owner-names-1999.mjs';
 import {
  ORGANIZATION_STYLE_MODEL,organizationNamingRegion,organizationNamingEra,
  GENERATIONAL_ORGANIZATION_NAME_MODEL,generationalOrganizationNamingPeriod,
@@ -47,7 +50,7 @@ import {
 } from './generational-person-names-v13.mjs';
 
 export const FICTIONAL_WORLD_NAME_ENGINE='WTW_FICTIONAL_WORLD_IDENTITIES_V7';
-export const SUPPORTED_NAME_ERA=1999; // Frozen historical V7 opening scenario.
+export const SUPPORTED_NAME_ERA=1999; // Frozen historical 1999 opening scenario.
 export const SUPPORTED_NAME_YEAR_RANGE=GENERATIONAL_NAME_YEAR_RANGE;
 export const LATER_GENERATION_NAME_ENGINE='WTW_FICTIONAL_WORLD_IDENTITIES_V13';
 export const SUPPORTED_ORIGINS=Object.freeze(['US','CA','GB','IE','PR','PA','VE','MX','CL','PE','CO','DO','AR','BR','UY','FR','DE','JP','AU','NZ','AE','HK']);
@@ -257,6 +260,9 @@ export function normalizeFictionalWorldNamingSpec(input={}){
   ownerNamingPolicy.soleOwnerPercent!==null&&(!Number.isInteger(ownerNamingPolicy.soleOwnerPercent)||
    ownerNamingPolicy.soleOwnerPercent<0||ownerNamingPolicy.soleOwnerPercent>100)))
   throw Error('Invalid owner naming policy settings');
+ const ownerNameSourceModel=input.ownerNameSourceModel??'CENSUS_2000';
+ if(!['CENSUS_2000','ARCHIVAL_1999_RACING_OWNERS'].includes(ownerNameSourceModel))
+  throw Error('Unsupported owner naming source model');
  const markets=marketList(input.markets);
  const originWeights=validatedCountryWeights(input.originWeightsByRole);
  const jockeyColonyWeights=validatedJockeyColonyWeights(input.jockeyOriginWeightsByColony);
@@ -264,7 +270,7 @@ export function normalizeFictionalWorldNamingSpec(input={}){
   throw Error('A jockey population requires at least one racing market');
  return frozen({worldId,year,seed,owners,roles:frozen(roles),facilities:frozen(facilities),
   farmCount,staff,protectedNames:frozen([...reservedNames]),markets,originWeights,
-  jockeyColonyWeights,ownerNamingPolicy,externalNameIndex});
+  jockeyColonyWeights,ownerNamingPolicy,ownerNameSourceModel,externalNameIndex});
 }
 /**
  * Pure deterministic naming factory. Returns an IN-MEMORY identity proposal,
@@ -435,7 +441,9 @@ export function createFictionalWorldNameEngine(input){
   breakingContexts:orgContexts(breakingNameMarkets,'breaking'),
   alignPrincipalSurnames:true,
   ownerPartnershipLimit:spec.ownerNamingPolicy?.partnershipLimit??null,
-  soleOwnerPercent:spec.ownerNamingPolicy?.soleOwnerPercent??null
+  soleOwnerPercent:spec.ownerNamingPolicy?.soleOwnerPercent??null,
+  ownerSurnameReferences:spec.ownerNameSourceModel==='ARCHIVAL_1999_RACING_OWNERS'?
+   VERIFIED_RACING_OWNER_SURNAME_INPUTS_1999:[]
  });
  const owningOrganizations=Object.freeze(org.owners.map((name,i)=>{
   const id=makeId(worldId,'OWNER',i),principal=principalPeople[i];
@@ -554,6 +562,8 @@ export function createFictionalWorldNameEngine(input){
   markets:markets.map(m=>[m.id,m.city,m.region,m.country,m.code,m.weight,m.breeding,m.racing,m.jockeyColony]),
   originWeights:spec.originWeights,colonyWeights:spec.jockeyColonyWeights,
   reserved:spec.protectedNames,ownerNamingPolicy:spec.ownerNamingPolicy,
+  ...(spec.ownerNameSourceModel==='ARCHIVAL_1999_RACING_OWNERS'?
+   {ownerNameSourceModel:spec.ownerNameSourceModel}:{}),
   indexRevision:spec.externalNameIndex?.revision??null,
   ...(year>SUPPORTED_NAME_ERA?{organizationNameGeneration:GENERATIONAL_ORGANIZATION_NAME_MODEL}:{})
   })).toString(16).padStart(8,'0');
@@ -572,7 +582,9 @@ export function createFictionalWorldNameEngine(input){
   organizationStyleModel:ORGANIZATION_STYLE_MODEL,
   ownershipPartnershipsMinted:org.summary.partnershipGroupsCreated,
   personNameModel:PERSONNEL_NAME_MODEL,
-  countryNameModel:GEO_NAME_MODEL,organizationNameModel:ORGANIZATION_NAME_MODEL,
+  countryNameModel:GEO_NAME_MODEL,organizationNameModel:org.model||
+   (spec.ownerNameSourceModel==='ARCHIVAL_1999_RACING_OWNERS'?
+    ARCHIVAL_RACING_OWNER_NAME_MODEL:ORGANIZATION_NAME_MODEL),
   authoritative:false,sourceCanonIncluded:false,
   horseNamesIncluded:false,tracksIncluded:false,committedToGame:false,counts});
  return frozen({manifest,people,owners:owningOrganizations,stables,farms,trainingCenters});
