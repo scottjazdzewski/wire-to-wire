@@ -536,7 +536,8 @@ function bootstrapBundledCareer(){
   if(window.WTWDesktop?.runtime!=='windows-desktop')
    throw Error('Bundled career auto-load is available only in the Windows desktop app');
   await open();
-  if(activeWorldCareer?.run?.run_id===playerRunId(activeWorldCareer.manifest)){
+  if(activeWorldCareer&&activeWorldCareer.run?.run_id===
+    playerRunId(activeWorldCareer.manifest)){
    // The generated base and frozen bundled checkpoint are already verified.
    // Never replace local player progress with the bundled engineering sample.
    modal().hidden=true;
