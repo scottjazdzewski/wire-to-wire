@@ -146,13 +146,20 @@ export function createIndexedFictionalNameRegistry({
  }
  const approvedPeopleById=new Map(issuedPeople.map(person=>[person.id,person]));
  const approvedOrganizationsById=new Map(issuedOrganizations.map(o=>[o.id,o]));
- const storedOrgIds=new Set(issuedOrganizations.map(o=>o.id));
+ const storedOrgsById=new Map(issuedOrganizations.map(o=>[o.id,o]));
+ const storedPeopleById=new Map(issuedPeople.map(p=>[p.id,p]));
  for(const owner of ownerEntities){
   checkId(owner.id,'stored owner ID');checkId(owner.name,'stored owner name');
   if(ownerIds.has(owner.id))throw Error('Duplicate stored owner ID');
   ownerIds.add(owner.id);
-  if(!storedOrgIds.has(owner.id))
-   throw Error('Stored owner missing parent organization');
+  const organization=storedOrgsById.get(owner.id);
+  if(!organization)throw Error('Stored owner missing parent organization');
+  // An integrity-valid snapshot can still contain internally contradictory
+  // records. Never reopen an owner with a different approved business name
+  // or an orphaned principal; the ID-addressable registry is authoritative.
+  if(owner.name!==organization.name||
+   !storedPeopleById.has(owner.principalId))
+   throw Error('Stored owner organization or principal identity mismatch');
  }
  let revision=snapshot?.revision??0;
  const groupEntities=ownerEntities.filter(x=>x.archetype==='PARTNERSHIP_OR_SYNDICATE');
@@ -216,7 +223,7 @@ export function createIndexedFictionalNameRegistry({
     throw Error('Duplicate or missing ownership organization ID');
    checkId(owner.name,'new owner name');
    const org=orgById.get(owner.id),person=personById.get(owner.principalId);
-   if(nameKey(owner.name)!==nameKey(org.name)||!person)
+   if(owner.name!==org.name||!person)
     throw Error('Owner organization or principal identity mismatch');
    newOwnerIds.add(owner.id);
   }
