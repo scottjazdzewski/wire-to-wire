@@ -4,7 +4,7 @@
  */
 import {gameRaceProgram,raceEligibility,racingAction,jockeyBookingDecision,
  resolve1999PremierJockeyOffers,compact1999PremierJockeyOffers,
- supported1999RaceClass} from './racing-1999.js';
+ supported1999RaceClass,scratch1999RaceEntry} from './racing-1999.js';
 import {postRaceAIPlacement} from './post-race-campaign-1999.js';
 import {shippingAssessment,shippingAction,horseTravelStatus,effectiveHorseTrack} from './shipping-1999.js';
 import {get1999JockeyPartnership} from '../../public/1999/engine/jockey-partnerships-1999.mjs';
@@ -411,10 +411,8 @@ export function run1999RacingAgents({state,world,emit}){
     !care||care.training.sorenessDays>0||
     care.training.currentRisk>=.78||care.training.readiness<.38||
     care.history.at(-1)?.unfunded===true){
-    e.status='SCRATCHED';e.scratch_reason='RACE_DAY_WELFARE_OR_BOOKING';
-    race.field=race.field.filter(x=>x!==id);
-    emit('RACE_DAY_SCRATCH',{race_id:race.id,horse_id:e.horse_id,
-     reason:e.scratch_reason,health_risk:care?.training.currentRisk??null});
+    scratch1999RaceEntry({state,race_id:race.id,horse_id:e.horse_id,
+     reason:'RACE_DAY_WELFARE_OR_BOOKING',actor:'system',emit});
    }
   }
   if(race.field.length>=2){
