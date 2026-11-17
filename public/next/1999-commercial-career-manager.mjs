@@ -334,10 +334,12 @@ function operationRunId(manifest,operationId){
  return canonicalRunId(manifest)+'-OP-'+operationId;
 }
 function savePreferredOperation(manifest,operationId){
- try{localStorage.setItem('wtw-active-operation:'+manifest.worldId,operationId)}catch{}
+ // The active operation is recorded by the canonical career run in IndexedDB.
+ // Do not mirror game selection into a second localStorage save surface.
+ selectedPlayerOperationId=operationId||selectedPlayerOperationId;
 }
 function preferredOperation(manifest){
- try{return localStorage.getItem('wtw-active-operation:'+manifest.worldId)||''}catch{return ''}
+ return selectedPlayerOperationId;
 }
 async function persistCanonicalRun(){
  if(!activeWorldCareer)return;
