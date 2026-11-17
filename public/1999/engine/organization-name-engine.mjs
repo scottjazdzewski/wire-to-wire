@@ -325,7 +325,15 @@ export function createOrganizationNameRoster({
   // the prior one-in-eleven selection for unchanged world-generation calls.
   const sole=soleOwnerPercent===null?i%11===0:
    hash(seed,'owner-sole-status:'+i)%100<soleOwnerPercent;
-  if(sole&&principal){used.add(norm(principal));return principal;}
+  if(sole&&principal){
+   // A sole-proprietor label IS the immutable person's name, so we cannot
+   // evade an existing approved business by silently inventing a suffix.
+   // Fail closed rather than giving two owner IDs the same public identity.
+   const key=norm(principal);
+   if(used.has(key)||externalNameIndex?.hasAnyName(principal))
+    throw Error('Duplicate or protected sole owner identity: '+principal);
+   used.add(key);return principal;
+  }
   const preferred=principalPrimarySurnames[i]||surname(principal);
   const context=ownerContexts[i]||{};
   const name=claim(attempt=>{
