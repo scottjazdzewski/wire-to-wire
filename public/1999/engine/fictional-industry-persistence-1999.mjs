@@ -1234,6 +1234,20 @@ async function youngHorseAttritionForYear(store,manifest,runKey,year,horseUpdate
     provenance:'MODELED_SEEDED_YOUNGSTOCK_ATTRITION'});
    horseUpdates.push(update);overrideMap.set(id,update);survivors.delete(id);
   }
+  // Commit actual youngstock status/cohort changes; age projections alone
+  // must not masquerade as persistent developmental transitions.
+  const stageStatus=transition.stage==='FOAL_TO_YEARLING'?'YEARLING':
+   'TWO_YEAR_OLD_PROSPECT';
+  const stageCohort=transition.stage==='FOAL_TO_YEARLING'?'yearlings':
+   'twoYearOldProspects';
+  for(const id of survivors){
+   const horse=await effectiveLifecycleHorse(store,manifest,runKey,id,overrideMap);
+   if(!horse||horse.foalYear!==transition.birthYear||horse.status==='DECEASED')
+    throw Error('Youngstock progression lost a living horse '+id);
+   const update=statusUpdate(horse,{status:stageStatus,cohort:stageCohort,
+    progressionYear:year,lastProgressionStage:transition.stage});
+   horseUpdates.push(update);overrideMap.set(id,update);
+  }
   birthCohortCache.set(transition.birthYear,survivors);
   deathsByStage[transition.stage]=deceased.length;deaths+=deceased.length;
   survivorsByStage[transition.stage]=survivors.size;
