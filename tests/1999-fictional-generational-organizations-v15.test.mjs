@@ -140,6 +140,30 @@ test('organization-specific QA catches rewritten era, mismatched families and wr
  assert.ok(qa.issues.length>=3);
  assert.throws(()=>auditGenerationalOrganizationNames(w,{expectedYear:1999}),/year mismatch/);
 });
+test('organization QA exposes mismatched owner and trainer display names without rewriting identities',()=>{
+ const w=createFictionalWorldNameEngine({...spec,year:2035});
+ const owner=w.owners[0],stable=w.stables[0];
+ const broken={...w,
+  owners:w.owners.map(o=>o.id===owner.id?
+   {...o,principalName:'Wrong Owner Principal'}:o),
+  stables:w.stables.map(s=>s.id===stable.id?
+   {...s,trainerName:'Wrong Barn Trainer'}:s)
+ };
+ const audit=auditGenerationalOrganizationNames(broken,{expectedYear:2035});
+ assert.equal(audit.pass,false);
+ assert.equal(audit.issueCounts.OWNER_PRINCIPAL_NAME_DRIFT,1);
+ assert.equal(audit.issueCounts.STABLE_TRAINER_NAME_DRIFT,1);
+ assert.equal(audit.issueCounts.OWNER_PRINCIPAL_MISMATCH,0);
+ assert.equal(audit.issueCounts.STABLE_TRAINER_MISMATCH,0);
+ assert.equal(broken.owners[0].principalId,owner.principalId);
+ assert.equal(broken.stables[0].trainerId,stable.trainerId);
+ assert.equal(w.owners[0].principalName,owner.principalName,
+  'audit must not silently change a saved owner name');
+ assert.equal(w.stables[0].trainerName,stable.trainerName,
+  'audit must not silently change trainer or stable names');
+ assert.equal(auditGenerationalOrganizationNames(w,{expectedYear:2035}).pass,true);
+});
+
 test('decades of indexed requests limit new partnerships while preserving every issued identity',()=>{
  const worldId='V15-LONG-GAME-TEST',seed=19990101;
  const reg=createIndexedFictionalNameRegistry({worldId,seed,
