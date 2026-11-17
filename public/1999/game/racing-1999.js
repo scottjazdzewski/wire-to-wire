@@ -21,6 +21,9 @@ import {premierMarketRace,scorePremierJockeyOffer,premierBonusCap,premierOfferId
 import {apply1999JockeyPostRaceConsequences}
  from '../engine/jockey-incidents-1999.mjs';
 
+import {get1999JockeyRetainerPreference,validate1999JockeyRetainers}
+ from '../engine/jockey-retainers-1999.mjs';
+
 export const GAME_RACING_SCHEMA='WTW_1999_CAREER_RACING_V1';
 export const RACING_COMMANDS=Object.freeze(['ACTIVATE_JOCKEY_COLONY','OPEN_1999_RACE','ENTER_1999_RACE',
  'BOOK_1999_JOCKEY','OFFER_1999_PREMIER_JOCKEY','SET_1999_RACE_TACTICS','SETTLE_1999_RACE']);
@@ -61,6 +64,9 @@ export function jockeyBookingDecision(state,world,race,horse,jockey){
  const importance=jockeyRaceImportance(race);
  const relationship=get1999JockeyPartnership(state,{
   trainerId:horse.trainer_id,ownerId:horse.owner_organization_id,jockeyId:j.id});
+ const retainer=get1999JockeyRetainerPreference(state,{
+  jockeyId:j.id,ownerId:horse.owner_organization_id,
+  trainerId:horse.trainer_id,raceDate:race.date});
  const personal=j.skills,horseState=getGameHorsePerformance(state,world,horse.horse_id);
  const h=horse.starting_attributes,standing=j.game_reputation??.5;
  const suited=rating(personal.horse_handling*.38+personal.composure*.17+
@@ -71,13 +77,14 @@ export function jockeyBookingDecision(state,world,race,horse,jockey){
  const prestige=importance.nationalFeature?.095:importance.significance===2?.035:0;
  const required=(away?.37+standing*.13:.26+standing*.08)+
   (elite&&!importance.stakes?.055:0)-(elite||established?prestige:prestige*.35)-
-  relationship.trainerBond*.075-relationship.ownerBond*.035;
+  relationship.trainerBond*.075-relationship.ownerBond*.035-
+  retainer.priority;
  const favor=(frac(state.rng.seed,j.id+':'+race.id+':'+horse.horse_id+':mount')-.5)*.09;
  const accept=suited+favor>=required;
  return {accept,reason:accept?(away?'JOCKEY_ACCEPTS_PAID_TRAVEL':'JOCKEY_ACCEPTS_LOCAL_MOUNT'):
    'JOCKEY_DECLINES_UNSUITABLE_MOUNT',suited_index:suited,
    threshold:rating(required),away,lead_days:lead,
-   jockey_reputation:standing,relationship,schedule,quote,
+   jockey_reputation:standing,relationship,retainer,schedule,quote,
    race_importance:importance.significance};
 }
 /**
@@ -146,7 +153,10 @@ export function resolve1999PremierJockeyOffers({state,world,emit}){
     jockeyId:jockey.id});
    return {offer:o,score:scorePremierJockeyOffer({
     horse,jockey,race,partnership:bond,quote:decision.quote,
-    bonus_minor:o.bonus_minor}).score};
+    bonus_minor:o.bonus_minor}).score+
+    get1999JockeyRetainerPreference(state,{
+     jockeyId:jockey.id,ownerId:horse.owner_organization_id,
+     trainerId:horse.trainer_id,raceDate:race.date}).priority};
   }).filter(Boolean).sort((a,b)=>b.score-a.score||
    b.offer.bonus_minor-a.offer.bonus_minor||
    a.offer.id.localeCompare(b.offer.id));
@@ -720,6 +730,7 @@ function settle1999Race({state,world,race_id,emit}){
 export function validateRacingRuntime(state,world){
  const rt=state.runtime.racing;
  validate1999HorseShipping(state,world);
+ validate1999JockeyRetainers(state,world);
  if(!rt)return;
  ensure(rt.schema===GAME_RACING_SCHEMA&&isObject(rt.jockeys)&&
   isObject(rt.jockey_finances_minor)&&isObject(rt.trainer_finances_minor)&&
