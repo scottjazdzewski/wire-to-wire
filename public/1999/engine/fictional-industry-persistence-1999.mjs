@@ -922,10 +922,18 @@ async function turnoverForYear(store,manifest,runKey,year,horseUpdates,
  const openingStallions=(await readStallionPoolRecords(store,manifest,runKey,
   year-1,overrideMap,stallionPoolCache.get(year-1)||null))
   .map(h=>project1999HorseForYear(h,year));
- const eligible=await readEligibleFemaleCandidates(store,manifest,runKey,year,
-  overrideMap,birthCohortCache,graduatedYears);
- const eligibleMales=await readEligibleStallionCandidates(store,manifest,runKey,
-  year,overrideMap,birthCohortCache,graduatedStallionYears);
+ // Opening census rows never mutate. A retired or deceased runner must
+ // not be selected again merely because its immutable 1999 row says RACING.
+ const priorMatureLedger=year===2000?null:
+  await store.get('industryLifecycle',lifecycleKey(runKey,
+   'mature-pool:'+(year-1)));
+ const activeRacingIds=Array.isArray(priorMatureLedger)?
+  new Set(priorMatureLedger.filter(h=>h.status==='RACING').map(h=>h.id)):null;
+ const stillRacing=horse=>!activeRacingIds||activeRacingIds.has(horse.id);
+ const eligible=(await readEligibleFemaleCandidates(store,manifest,runKey,year,
+  overrideMap,birthCohortCache,graduatedYears)).filter(stillRacing);
+ const eligibleMales=(await readEligibleStallionCandidates(store,manifest,runKey,
+  year,overrideMap,birthCohortCache,graduatedStallionYears)).filter(stillRacing);
  const market=marketPlanForSeason(manifest,directory,{year,
   broodmares:openingMares.length,stallions:openingStallions.length,
   racingPopulation,previousLiveFoals});
