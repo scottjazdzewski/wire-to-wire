@@ -1010,6 +1010,20 @@ async function turnoverForYear(store,manifest,runKey,year,horseUpdates,
   nextStallionPool.length)
   throw Error('Stallion turnover produced an empty or duplicate active pool');
  stallionPoolCache.set(year,nextStallionPool);
+ // The annual market was forecast from the *opening* breeding pool.
+ // Individual age retirements can leave fewer mares or stallions available
+ // on the actual covering date. Never book more mares than still exist.
+ const rolloverServiceCapacity=Math.min(nextPool.length,
+  nextStallionPool.length*220);
+ const executableCovers=Math.min(market.targetCovers,rolloverServiceCapacity);
+ const seasonMarket={...market,targetCovers:executableCovers,
+  plannedFoals:Math.min(market.plannedFoals,
+   Math.floor(executableCovers*.90*.96)),
+  constrainedByBreedingCapacity:market.constrainedByBreedingCapacity||
+   executableCovers<market.targetCovers,
+  rolloverServiceCapacity,preTurnoverTargetCovers:market.targetCovers};
+ if(executableCovers>nextPool.length)
+  throw Error('Seasonal covering demand exceeds actual live broodmares');
  const result=planAnnualBroodmareTurnover({seed:manifest.seed,year,
   broodmares:openingMares.length,eligibleFemalePopulation:eligible.length,
   marketIndex:market.marketIndex});
@@ -1030,7 +1044,7 @@ async function turnoverForYear(store,manifest,runKey,year,horseUpdates,
   marketIndex:market.marketIndex,provenance:stallionPlan.provenance};
  return {turnover:entry,stallionTurnover:stallionEvent,nextPool,
   nextStallions:nextStallionPool,eligible,eligibleMales,retireIds,
-  mareGraduates,stallionGraduates,market};
+  mareGraduates,stallionGraduates,market:seasonMarket};
 }
 
 
