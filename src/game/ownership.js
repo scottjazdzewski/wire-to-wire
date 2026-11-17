@@ -165,7 +165,7 @@ export function ownershipAction({state,world,command,emit}){
    [buyer,'HORSE_SALE_BUYER_PAYMENT',-price],
    [seller,'HORSE_SALE_SELLER_RECEIPT',price]
   ])state.runtime.finances.ledger.push({
-   date:state.clock.date,transaction_id:transaction,
+   date:state.clock.date,transaction_id:transaction,request_id:request.request_id,
    operation_id:org,horse_id:request.horse_id,
    from_owner_id:seller,to_owner_id:buyer,amount_minor:amount,
    kind,settlement_status:'POSTED',price_minor:price
@@ -187,7 +187,8 @@ export function ownershipAction({state,world,command,emit}){
   if(request.transfer_type==='SALE'){
    requireString(p.finance_ledger_id,'finance_ledger_id',128);
    const legs=state.runtime.finances.ledger.filter(line=>
-    line.transaction_id===p.finance_ledger_id&&line.horse_id===request.horse_id&&
+    line.transaction_id===p.finance_ledger_id&&line.request_id===request.request_id&&
+    line.horse_id===request.horse_id&&
     line.from_owner_id===request.from_owner_id&&line.to_owner_id===request.to_owner_id&&
     line.settlement_status==='POSTED');
    const price=request.price_minor;

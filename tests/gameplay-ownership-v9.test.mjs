@@ -118,11 +118,24 @@ test('sale does not change owner until a genuine matching finance ledger record 
   from_owner_id:'O-1999-001',to_owner_id:'O-1999-002',
   settlement_status:'POSTED',amount_minor:50000
  });
+ // Even two correctly signed old ledger legs are not reusable for a new
+ // sale request; each posted payment must bind its own request ID.
+ for(const [operation,kind,amount] of [
+  ['O-1999-002','HORSE_SALE_BUYER_PAYMENT',-50000],
+  ['O-1999-001','HORSE_SALE_SELLER_RECEIPT',50000]
+ ])passed.runtime.finances.ledger.push({
+  transaction_id:'OLD-SALE',request_id:'ANOTHER-SALE',
+  horse_id:'H-1999-000002',from_owner_id:'O-1999-001',to_owner_id:'O-1999-002',
+  kind,operation_id:operation,amount_minor:amount,settlement_status:'POSTED'
+ });
  assert.throws(()=>send(world,passed,cmd('system:post','COMMIT_HORSE_TRANSFER',{
   request_id:'SALE-TEST-1',finance_ledger_id:'POSTED-LEDGER-1'
  },'system')),e=>e.code==='FINANCE_NOT_SETTLED',
  'One posted-looking row cannot pay for the horse');
  assert.equal(currentHorseOwnerId(passed,world,'H-1999-000002'),'O-1999-001');
+ assert.throws(()=>send(world,passed,cmd('system:old-settlement','COMMIT_HORSE_TRANSFER',{
+  request_id:'SALE-TEST-1',finance_ledger_id:'OLD-SALE'
+ },'system')),e=>e.code==='FINANCE_NOT_SETTLED');
 });
 
 test('invalid requests cannot transfer another owner horse, invent owner, or bypass one-horse pending rule',()=>{
