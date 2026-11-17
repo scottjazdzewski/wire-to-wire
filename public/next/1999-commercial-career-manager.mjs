@@ -23,6 +23,12 @@ import {packShared1999Career,unpackShared1999Career,sameShared1999WorldIdentity}
  from '/1999/engine/shared-1999-career-package.mjs?rev=wtw-shared-career-world-identity-v2';
 import {projectCanonical1999RaceRows,renderCanonical1999RaceFile}
  from '/next/1999-canonical-career-race-files.mjs';
+import {createPersistedIndustryHorseDirectory,createPersistedIndustryEntityDirectory}
+ from '/next/1999-persisted-world-directory.mjs';
+import {createCareerWorldEdits,addCareerWorldEdit,applyCareerWorldEdits}
+ from '/next/1999-career-world-edits.mjs';
+import {buildWorldEditReviewExport}
+ from '/next/1999-world-edit-review-export.mjs';
 
 const DB_NAME='WireToWireClean1999CareersV2';
 const MAX_SLOTS=60,MAX_TOTAL_BYTES=512*1024*1024;
@@ -181,6 +187,48 @@ function modal(){
 }
 let fullIndustryManifest=null;
 let activeWorldCareer=null;
+let indexedCareerWorld=null,indexedHorseDirectory=null,indexedOtherDirectories=null;
+function hydrateCareerEdits(career,record){
+ const edits=record?.changes?.worldEdits||createCareerWorldEdits();
+ applyCareerWorldEdits(career.world,edits,{run:career.run});
+ career.worldEdits=edits;
+ career.editVersion=0;
+ return career;
+}
+async function editSavedWorldEntity({kind,id,patch}={}){
+ const career=activeWorldCareer;
+ if(!career?.run||!career.manifest)throw Error('Open a saved game before editing world records');
+ const edits=addCareerWorldEdit(career.worldEdits,career.world,kind,id,patch,
+  {run:career.run});
+ const nextRun=structuredClone(career.run);
+ const isFrozen=nextRun.run_id===canonicalRunId(career.manifest);
+ if(isFrozen)nextRun.run_id=playerRunId(career.manifest);
+ if(kind==='horse'&&Object.hasOwn(patch,'name')){
+  const name=patch.name.trim();
+  for(const h of Object.values(nextRun.runtime.registered_horses.by_id))
+   if(h.world_source_horse_id===id){h.name=name;h.registered_name=name}
+ }
+ const db=await open1999IndustryDatabase();
+ try{
+  if(isFrozen&&await loadPersistent1999CareerRun(db,career.manifest,playerRunId(career.manifest)))
+   throw Error('Editable player career already exists; reopen it before applying changes');
+  const record=await savePersistent1999CareerRun(db,career.manifest,{
+   runId:nextRun.run_id,gameDate:nextRun.clock.date,player:nextRun.player,
+   changes:{canonicalRun:nextRun,worldEdits:edits},
+   version:Math.max(1,nextRun.revision+1)});
+  const verified=await loadPersistent1999CareerRun(db,career.manifest,nextRun.run_id);
+  if(JSON.stringify(verified?.changes?.worldEdits)!==JSON.stringify(edits))
+   throw Error('World customization did not survive durable read-back');
+  career.run=nextRun;career.worldEdits=edits;
+  applyCareerWorldEdits(career.world,edits,{run:career.run});
+  indexedHorseDirectory?.invalidate();
+  Object.values(indexedOtherDirectories||{}).forEach(index=>index.invalidate());
+  career.editVersion=(career.editVersion||0)+1;
+  publishCareerReadModel();
+  return {id,kind,worldId:career.manifest.worldId,runId:career.run.run_id,
+   editVersion:career.editVersion,recordVersion:record.version};
+ }finally{db.close()}
+}
 // One renderer for exact ID-linked records from the current saved game only.
 window.WTW1999CanonicalCareerRaceFile=Object.freeze({render:renderCanonical1999RaceFile});
 // Read-only bridge to the existing committed game run: do not seed a second
@@ -200,16 +248,32 @@ function publishCareerReadModel(){
  const horses=(run.stable_horse_ids||[]).map(id=>run.runtime.registered_horses?.by_id?.[id]).filter(Boolean)
   .map(h=>({horseId:h.horse_id,name:h.registered_name,activity:h.status||'In training',tag:h.status||'In training'}));
  const races=projectCanonical1999RaceRows(run,career.world);
+ if(indexedCareerWorld!==career.world){
+  indexedHorseDirectory=createPersistedIndustryHorseDirectory({
+   world:career.world,manifest:career.manifest});
+  indexedOtherDirectories=Object.fromEntries(['person','organization','track'].map(kind=>
+   [kind,createPersistedIndustryEntityDirectory({world:career.world,
+    manifest:career.manifest,kind})]));
+  indexedCareerWorld=career.world;
+ }
  const snapshot={schema:'WTW_CANONICAL_CAREER_READ_MODEL_V1',
   worldId:career.manifest.worldId,runId:run.run_id,
   worldHorseCount:career.manifest.horseCount,personCount:career.manifest.personCount,
   operationId:operation.id,operationName:operation.name,
   date:run.clock.date,revision:run.revision,horseRows:horses,raceRows:races,
+  worldHorseCount:indexedHorseDirectory.size,
+  worldEntityCounts:Object.fromEntries(Object.entries(indexedOtherDirectories).map(
+   ([kind,index])=>[kind,index.size])),
+  worldHorseBrowse:indexedHorseDirectory.browse,
+  worldHorseById:indexedHorseDirectory.byId,
+  worldEntityBrowse:(kind,options)=>indexedOtherDirectories[kind]?.browse(options)||null,
+  worldEntityById:(kind,id)=>indexedOtherDirectories[kind]?.byId(id)||null,
+  editVersion:career.editVersion||0,
   cashMinor:Number.isSafeInteger(rawBalance)?rawBalance:null};
  const prior=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
  if(prior?.worldId===snapshot.worldId&&prior?.runId===snapshot.runId&&
   prior?.revision===snapshot.revision&&prior?.operationId===snapshot.operationId&&
-  prior?.date===snapshot.date)return;
+  prior?.date===snapshot.date&&prior?.editVersion===snapshot.editVersion)return;
  window.__WTW_ACTIVE_WORLD_CAREER_VIEW__=Object.freeze(snapshot);
  window.__WTW_NEXT__?.paint?.();
 }
@@ -299,12 +363,34 @@ async function inspectFullIndustryPerson(personId){
 }
 function canonicalRunId(manifest){return 'WTW-RUN-1999-'+manifest.seed+'-SIZE-'+
  (manifest.targetOpeningHorses??manifest.horseCount)}
+function playerRunId(manifest){return canonicalRunId(manifest)+'-PLAYER'}
+async function ensurePlayerWorkingCareer(){
+ const career=activeWorldCareer;
+ if(!career?.run)return;
+ if(career.run.run_id!==canonicalRunId(career.manifest))return;
+ const copy=structuredClone(career.run);
+ copy.run_id=playerRunId(career.manifest);
+ const db=await open1999IndustryDatabase();
+ try{
+  const prior=await loadPersistent1999CareerRun(db,career.manifest,copy.run_id);
+  if(prior?.changes?.canonicalRun)
+   throw Error('Existing editable player career must be resumed before changing the frozen reference');
+  await savePersistent1999CareerRun(db,career.manifest,{
+   runId:copy.run_id,gameDate:copy.clock.date,player:copy.player,
+   changes:{canonicalRun:copy,worldEdits:career.worldEdits||createCareerWorldEdits()},
+   version:Math.max(1,copy.revision+1)});
+  career.run=copy;
+  career.editVersion=(career.editVersion||0)+1;
+  publishCareerReadModel();
+ }finally{db.close()}
+}
 async function persistCanonicalRun(){
  if(!activeWorldCareer)return;
  const store=await open1999IndustryDatabase();
  try{await savePersistent1999CareerRun(store,activeWorldCareer.manifest,{
   runId:activeWorldCareer.run.run_id,gameDate:activeWorldCareer.run.clock.date,
-  player:activeWorldCareer.run.player,changes:{canonicalRun:activeWorldCareer.run},
+  player:activeWorldCareer.run.player,changes:{canonicalRun:activeWorldCareer.run,
+   worldEdits:activeWorldCareer.worldEdits||createCareerWorldEdits()},
   version:Math.max(1,activeWorldCareer.run.revision+1)})}
  finally{store.close()}
 }
@@ -319,6 +405,23 @@ async function sharedCareerBytes(){
   return packShared1999Career({manifest:activeWorldCareer.manifest,
    snapshotSha256:activeWorldCareer.world.authority.sha256,careerRecord:record});
  }finally{store.close()}
+}
+function exportCareerWorldChangesForReview(){
+ const c=activeWorldCareer;
+ if(!c?.run||!c.manifest)throw Error('Open your saved career to export world edits');
+ const data=buildWorldEditReviewExport({
+  manifest:c.manifest,world:c.world,run:c.run,
+  worldEdits:c.worldEdits||createCareerWorldEdits(),
+  createdAt:new Date().toISOString()
+ });
+ const blob=new Blob([JSON.stringify(data,null,2)+'\n'],{type:'application/json'});
+ const url=URL.createObjectURL(blob),link=document.createElement('a');
+ link.href=url;
+ link.download='WIRE_TO_WIRE_1999_WORLD_CHANGES_FOR_REVIEW_'+
+  c.run.clock.date+'.json';
+ document.body.appendChild(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),4000);
+ return {count:data.recordCount,date:c.run.clock.date};
 }
 async function exportSharedCareer(){
  const bytes=await sharedCareerBytes();
@@ -414,7 +517,8 @@ async function importSharedCareerFile(file,{preserveExistingProgress=false}={}){
   if(JSON.stringify(confirmed)!==JSON.stringify(expectedStoredRecord))
    throw Error('Imported career did not survive IndexedDB read-back');
   const run=preservedRun||checkpointRun;
-  activeWorldCareer={...career,run,manifest:fullIndustryManifest};
+  activeWorldCareer=hydrateCareerEdits({...career,run,manifest:fullIndustryManifest},
+   expectedStoredRecord);
   industryDirectory=await readPersistent1999Directory(db,fullIndustryManifest);
   await browseFullIndustry(0,'directory');
   publishCareerReadModel();
@@ -432,7 +536,19 @@ function bootstrapBundledCareer(){
   if(window.WTWDesktop?.runtime!=='windows-desktop')
    throw Error('Bundled career auto-load is available only in the Windows desktop app');
   await open();
+  if(activeWorldCareer&&activeWorldCareer.run?.run_id===
+    playerRunId(activeWorldCareer.manifest)){
+   // The generated base and frozen bundled checkpoint are already verified.
+   // Never replace local player progress with the bundled engineering sample.
+   modal().hidden=true;
+   return {worldId:activeWorldCareer.manifest.worldId,
+    gameDate:activeWorldCareer.run.clock.date,
+    horseCount:activeWorldCareer.manifest.horseCount,
+    personCount:activeWorldCareer.manifest.personCount,
+    resumedPlayerCareer:true};
+  }
   busy=true;notice='LOADING THE SHARED 1999 TEST CAREER…';await refresh();
+  let bootstrapped=false;
   try{
    const response=await fetch('/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER.wtwcareer.gz?rev=wtw-shared-career-may-1999-v2');
    if(!response.ok)throw Error('Bundled shared career file is missing ('+response.status+')');
@@ -443,22 +559,24 @@ function bootstrapBundledCareer(){
    const file=new File([bytes],'WTW_1999_FULL_WORLD_SHARED_CAREER.wtwcareer',
     {type:'application/json'});
    const result=await importSharedCareerFile(file,{preserveExistingProgress:true});
+   bootstrapped=true;
    return {...result,horseCount:fullIndustryManifest.horseCount,
     personCount:fullIndustryManifest.personCount,playableHorseCount:activeWorldCareer.playableHorseCount};
   }catch(error){
    notice='SHARED 1999 CAREER LOAD FAILED · '+String(error?.message||error);
    await refresh();throw error;
-  }finally{busy=false;await refresh()}
+  }finally{busy=false;await refresh();if(bootstrapped)modal().hidden=true}
  })();
  return bundledCareerBootstrap;
 }
 async function resumeCanonicalRun(store,manifest){
- const saved=await loadPersistent1999CareerRun(store,manifest,canonicalRunId(manifest));
+ const editable=await loadPersistent1999CareerRun(store,manifest,playerRunId(manifest));
+ const saved=editable||await loadPersistent1999CareerRun(store,manifest,canonicalRunId(manifest));
  if(!saved?.changes?.canonicalRun)return null;
  const career=await openPersistent1999GameCareer(store,manifest,{
-  runId:canonicalRunId(manifest),operationId:saved.player.operation_id});
+  runId:saved.runId,operationId:saved.player.operation_id});
  validateGameRun(saved.changes.canonicalRun,career.world);
- return {...career,run:saved.changes.canonicalRun,manifest};
+ return hydrateCareerEdits({...career,run:saved.changes.canonicalRun,manifest},saved);
 }
 async function startCanonicalRun(){
  if(!fullIndustryManifest||fullIndustryManifest.status!=='COMPLETE')
@@ -468,18 +586,23 @@ async function startCanonicalRun(){
   activeWorldCareer=await openPersistent1999GameCareer(store,fullIndustryManifest,
    {runId:canonicalRunId(fullIndustryManifest)});
   activeWorldCareer.manifest=fullIndustryManifest;
+  activeWorldCareer.worldEdits=createCareerWorldEdits();
+  activeWorldCareer.editVersion=0;
   await persistCanonicalRun();
  }finally{store.close()}
+ publishCareerReadModel();
  notice='TEST CAREER READY · '+fmt(activeWorldCareer.playableHorseCount)+
   ' owned runners at '+activeWorldCareer.homeTrackId+'.';
 }
 async function advanceCanonicalRun(){
  if(!activeWorldCareer)throw Error('Start a test career first');
+ await ensurePlayerWorkingCareer();
  const state=dispatchGameCommand({state:activeWorldCareer.run,
   world:activeWorldCareer.world,command:{
    id:'player-day-'+(activeWorldCareer.run.clock.days_elapsed+1),
    type:'ADVANCE_DAY',actor:'player',payload:{}}}).state;
  activeWorldCareer.run=state;await persistCanonicalRun();
+ publishCareerReadModel();
  const official=Object.values(state.runtime.races).filter(r=>
   r.status==='OFFICIAL_SIM_RESULT').sort((a,b)=>b.date.localeCompare(a.date))[0];
  const winner=official?.results?.[0]?.horse_id?
@@ -489,6 +612,7 @@ async function advanceCanonicalRun(){
 }
 async function openNextTestRace(){
  if(!activeWorldCareer)throw Error('Start a test career first');
+ await ensurePlayerWorkingCareer();
  const {run,world,homeTrackId}=activeWorldCareer;
  let selected=null;
  for(let offset=2;offset<=28&&!selected;offset++){
@@ -556,10 +680,14 @@ async function refresh(){
    '<div class="wtw-cc-section"><h3>PLAYABLE GAMEPLAY TEST</h3>'+
    (activeWorldCareer?'<p>ACTIVE · '+esc(activeWorldCareer.run.clock.date)+
     ' · '+fmt(activeWorldCareer.playableHorseCount)+' player runners · '+
-    esc(activeWorldCareer.homeTrackId)+' · canonical race engine connected</p>'+
+    esc(activeWorldCareer.homeTrackId)+' · canonical race engine connected</p>'+ 
+    '<p>The player stable is a selected roster. WORLD > 1999 HORSES lists all '+
+    fmt(fullIndustryManifest.horseCount)+' saved world horses; full-industry daily racing remains under development.</p>'+ 
+    '<div class="wtw-cc-actions"><button class="primary" data-cc-action="enter-industry-game">ENTER GAME · VIEW ALL WORLD HORSES</button></div>'+
     '<div class="wtw-cc-actions"><button data-cc-action="open-next-test-race">OPEN NEXT TEST RACE / ENTER TWO</button>'+ 
    '<button data-cc-action="advance-test-day" class="primary">ADVANCE ONE GAME DAY</button>'+
-   '<button data-cc-action="export-shared-career">EXPORT SHARED CAREER</button></div>':
+   '<button data-cc-action="export-shared-career">EXPORT SHARED CAREER</button>'+ 
+   '<button data-cc-action="export-world-changes-review">EXPORT WORLD CHANGES FOR CHATGPT</button></div>':
     '<p>Start a local test career from this exact saved world. Race decisions and results use the existing game clock and settlement engine.</p>'+ 
     '<button data-cc-action="start-test-career" class="primary">START TEST CAREER</button>')+
    '</div>'+
@@ -587,7 +715,8 @@ async function refresh(){
   '<div class="wtw-cc-section"><h3>COMPACT SAVES · '+slots.length+' SLOTS</h3>'+
   '<p>Local device only. No account, monthly fee or cloud storage required. Portable .wtwsave files have checksums and gzip compression where supported. Total compact-save budget: 512 MB across slots.</p>'+
   '<div class="wtw-cc-actions"><input data-cc="save-name" maxlength="80" placeholder="Name current career" value="1999 Career"/>'+
-  '<button data-cc-action="save" class="primary">SAVE CURRENT CAREER</button>'+
+  '<button data-cc-action="save" class="primary">SAVE CURRENT CAREER</button>'+ 
+  '<button data-cc-action="export-world-changes-review" title="Export career-owned World edits by immutable ID for reviewed starting-world integration">EXPORT WORLD CHANGES FOR CHATGPT</button>'+
   '<button data-cc-action="import">IMPORT CAREER</button>'+
   '<input type="file" data-cc="import-file" accept=".wtwsave,.json,application/octet-stream,application/json" hidden>'+
   '<button data-cc-action="import-shared-career">IMPORT SHARED FULL-WORLD CAREER</button>'+
@@ -600,8 +729,28 @@ async function refresh(){
 }
 async function perform(action,element){
  if(action==='close'){modal().hidden=true;return}
+ if(action==='enter-industry-game'){
+  if(!activeWorldCareer)throw Error('Open a saved playable career first');
+  publishCareerReadModel();
+  modal().hidden=true;
+  const rail=document.querySelector('#wtwNextgen [data-ng="menu"][data-val="World"]');
+  rail?.click();
+  const selector=document.querySelector('#wtwNextgen select[data-ng-select="department-tab"],#wtwNextgen select[data-ng-select="manager-screen"]');
+  if(selector&&Array.from(selector.options).some(x=>x.value==='1999 Horses')){
+   selector.value='1999 Horses';
+   selector.dispatchEvent(new Event('change',{bubbles:true}));
+  }
+  return;
+ }
  if(action==='import'){modal().querySelector('[data-cc="import-file"]').click();return}
  if(action==='import-shared-career'){modal().querySelector('[data-cc="import-shared-file"]').click();return}
+ if(action==='export-world-changes-review'){
+  const result=exportCareerWorldChangesForReview();
+  notice='WORLD CHANGES FILE EXPORTED · '+fmt(result.count)+
+   ' edited records. Upload the JSON to the WIRE TO WIRE integration chat. '+
+   'No game source was changed automatically.';
+  return;
+ }
  if(action==='export-shared-career'){
   const result=await exportSharedCareer();
   notice='SHARED CAREER EXPORTED · '+kb(result.bytes)+' · '+result.gameDate+'.';return;
@@ -631,6 +780,7 @@ async function perform(action,element){
    industryDirectory=await readPersistent1999Directory(db,fullIndustryManifest);
    activeWorldCareer=await resumeCanonicalRun(db,fullIndustryManifest);
   }finally{db.close()}
+  publishCareerReadModel();
   await browseFullIndustry(0,'directory');
   notice='Saved 1999 world opened and verified. Existing career unchanged.';
   return;
@@ -654,6 +804,7 @@ async function perform(action,element){
   }
   finally{db.close()}
   activeWorldCareer=null;
+  publishCareerReadModel();
   await browseFullIndustry(0);
   notice='Full 1999 world reopened and census verified. Existing career unchanged.';
   return;
@@ -735,7 +886,8 @@ async function handleClick(event){
  event.preventDefault();event.stopPropagation();
  const action=button.dataset.ccAction;
  if(busy&&action!=='close')return;
- try{busy=true;await perform(action,button);if(action!=='close')await refresh()}
+ try{busy=true;await perform(action,button);
+  if(action!=='close'&&action!=='enter-industry-game')await refresh()}
  catch(error){notice='ERROR: '+String(error?.message||error);await refresh()}
  finally{busy=false}
 }
@@ -771,6 +923,7 @@ async function open(){
     fullIndustryManifest=selected.manifest;
     industryDirectory=await readPersistent1999Directory(store,fullIndustryManifest);
     activeWorldCareer=await resumeCanonicalRun(store,fullIndustryManifest);
+    publishCareerReadModel();
     await browseFullIndustry(0,'directory');
     notice=activeWorldCareer?'Saved gameplay test career resumed at '+
      activeWorldCareer.run.clock.date+'.':'Saved world verified and ready.';
@@ -841,7 +994,7 @@ window.WTWCompactCareerManager=Object.freeze({open,listSlots,storeGame,
  restoreGame,exportSlot,importFile,dbName:DB_NAME,
  prepareFictionalIndustry,saveFictionalIndustryCareer,
  readFictionalIndustryCareer,sharedCareerBytes,importSharedCareerFile,
- bootstrapBundledCareer});
+ bootstrapBundledCareer,editSavedWorldEntity});
 if(window.WTWDesktop?.runtime==='windows-desktop'&&!window.WTWDesktop.smokeMode){
  window.WTWDesktopCareerBootstrapPromise=bootstrapBundledCareer().catch(error=>{
   console.error('Bundled full-world career startup failed',error);

@@ -17,7 +17,9 @@ test('Stable and World Horse Directory share the identical 17-column roster rend
 });
 test('Directory uses world roster rather than personal stable and has separate search/sort state',()=>{
  assert.match(source,/function worldDirectoryHorseRows\(\)/);
- assert.match(source,/adapter\.worldHorseBrowse\(\{offset:0,limit:Math\.max\(160,total\),sort:'name'\}\)/);
+ assert.match(source,/const browse=canonical\?\.worldHorseBrowse\|\|adapter\?\.worldHorseBrowse/);
+ assert.match(roster,/canonicalBrowse\(\{/);
+ assert.match(roster,/offset:Math\.max\(0,APP\.directoryPage\|\|0\)\*160,limit:160/);
  assert.match(roster,/const horses=directory\?universe\.items:horseRows\(\)/);
  assert.match(source,/directorySearch:'',directoryHorseItems:\[\]/);
  assert.match(source,/if\(key==='directory-sort'\)/);
