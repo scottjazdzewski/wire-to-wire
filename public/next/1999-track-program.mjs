@@ -3963,6 +3963,10 @@ export const TRACK_PROGRAM_1999=Object.freeze({
 export const trackProgram1999=id=>TRACK_PROGRAM_1999[id]||null;
 export const trackMeetOpen1999=(id,date)=>{
  const p=trackProgram1999(id);if(!p||p.trackOperating!=='OPEN_1999'||!/^1999-\d{2}-\d{2}$/.test(date))return false;
+ // Date.parse normalizes nonexistent dates (e.g. Nov 31 => Dec 1).
+ // Never announce or open a card on a date that did not exist in 1999.
+ const timestamp=Date.parse(date+'T12:00:00Z');
+ if(!Number.isFinite(timestamp)||new Date(timestamp).toISOString().slice(0,10)!==date)return false;
  const md=date.slice(5);if(!p.meets.some(([a,b])=>a<=md&&md<=b))return false;
  if(p.darkDates?.includes(date))return false;
  if(p.specialDates?.includes(date)||p.stakesDates.includes(date))return true;
