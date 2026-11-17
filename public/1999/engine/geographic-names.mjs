@@ -161,7 +161,7 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
      if((baseCounts.get(base)||0)>=limit)continue;
      if(reserved.has(canonKey(candidate))||externallyReserved(candidate))continue;
      name=candidate;selectedFirst=first;
-     selectedSurname=secondFamily?last+' '+secondFamily:last;
+     selectedSurname=last;
      selectedBaseFirst=middleGiven?first+' '+middleGiven:first;
      exhaustiveCursorByPool.set(poolKey,(slot+1)%combinations);break;
     }
