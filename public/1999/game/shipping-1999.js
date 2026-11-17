@@ -165,12 +165,12 @@ export function shippingAssessment(state,world,horseId,destinationSiteId,{target
  const conflicting=Object.values(state.runtime.entries||{}).some(e=>
   e.horse_id===horseId&&['ENTERED','BOOKED'].includes(e.status)&&
   state.runtime.races[e.race_id]?.date>=state.clock.date&&
-  state.runtime.races[e.race_id]?.track_id!==destination?.host_track_id);
+  !same1999PhysicalVenue(state.runtime.races[e.race_id]?.track_id,destination?.host_track_id));
  if(conflicting)reasons.push('CONFLICTING_EXISTING_RACE_BOOKING');
  let race=null;
  if(targetRaceId){
   race=state.runtime.races?.[targetRaceId];
-  if(!race||race.track_id!==destination?.host_track_id||
+  if(!race||!same1999PhysicalVenue(race.track_id,destination?.host_track_id)||
    race.status!=='ENTRIES_OPEN')reasons.push('UNKNOWN_DESTINATION_RACE');
   if(race&&route.supported&&gap(plus(state.clock.date,route.days),race.date)<2)
    reasons.push('INADEQUATE_PRE_RACE_ACCLIMATION');

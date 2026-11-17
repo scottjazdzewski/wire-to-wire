@@ -71,14 +71,14 @@ function autonomousAwayTravel({state,world,emit}){
    const check=raceEligibility(state,h,race);
    if(check.reasons.some(x=>x!=='NOT_PHYSICALLY_AT_TRACK_OR_CONFIRMED_TO_ARRIVE'))continue;
    const sites=Object.values(state.runtime.facilities.sites).
-    filter(site=>site.host_track_id===race.track_id&&site.type==='RACING_STABLE').
+    filter(site=>same1999PhysicalVenue(site.host_track_id,race.track_id)&&site.type==='RACING_STABLE').
     sort((x,y)=>x.id.localeCompare(y.id));
    for(const site of sites){
     const quote=shippingAssessment(state,world,h.horse_id,site.id,{targetRaceId:race.id});
     if(!quote.allowed)continue;
     const match=raceFit(h,race),available=money(state,h.owner_organization_id);
     const jockey=Object.values(rt.jockeys).
-     filter(j=>j.home_track_id===race.track_id&&
+     filter(j=>same1999PhysicalVenue(j.home_track_id,race.track_id)&&
       jockeyBookingDecision(state,world,race,h,j).accept).
      sort((a,b)=>jockeyChoiceScore(state,h,b,jockeyBookingDecision(state,world,race,h,b),race)-
       jockeyChoiceScore(state,h,a,jockeyBookingDecision(state,world,race,h,a),race)||
@@ -299,7 +299,7 @@ export function run1999RacingAgents({state,world,emit}){
     // Protecting only local horses would let AI consume the host track's
     // entire rider colony even when the player can fund/complete shipping.
     const receivingSites=Object.values(state.runtime.facilities?.sites||{}).
-     filter(site=>site.type==='RACING_STABLE'&&site.host_track_id===trackId);
+     filter(site=>site.type==='RACING_STABLE'&&same1999PhysicalVenue(site.host_track_id,trackId));
     const playerCandidates=horses(state).filter(h=>{
      if(h.owner_organization_id!==state.player.operation_id||
       hasFutureEntry(state,h))return false;
@@ -332,7 +332,8 @@ export function run1999RacingAgents({state,world,emit}){
       return decision.accept&&money(state,playerHorse.owner_organization_id)>=
        decision.quote.feeMinor;
      }).sort((a,b)=>
-      (a.home_track_id===trackId?-1:1)-(b.home_track_id===trackId?-1:1)||
+      (same1999PhysicalVenue(a.home_track_id,trackId)?-1:1)-
+       (same1999PhysicalVenue(b.home_track_id,trackId)?-1:1)||
       jockeyChoiceScore(state,playerHorse,b,
        jockeyBookingDecision(state,world,confirmed,playerHorse,b),confirmed)-
       jockeyChoiceScore(state,playerHorse,a,
@@ -416,7 +417,7 @@ export function run1999RacingAgents({state,world,emit}){
   for(const id of [...race.field]){
    const e=state.runtime.entries[id],h=state.runtime.registered_horses.by_id[e.horse_id],
     care=state.runtime.horse[h.horse_id];
-   if(e.status!=='BOOKED'||effectiveHorseTrack(state,h)!==race.track_id||
+   if(e.status!=='BOOKED'||!same1999PhysicalVenue(effectiveHorseTrack(state,h),race.track_id)||
     !care||care.training.sorenessDays>0||
     care.training.currentRisk>=.78||care.training.readiness<.38||
     care.history.at(-1)?.unfunded===true){
