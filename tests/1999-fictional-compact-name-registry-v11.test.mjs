@@ -256,7 +256,7 @@ test('identity-valid checksum must not conceal orphaned principals or divergent 
 test('thousands of generated identities preserve names, owner links and stable IDs across future cohorts and snapshot reopens',()=>{
  const worldId='GENERATION-LINKS-V11',seed=19990101;
  const args={worldId,seed,
-  roles:{trainer:55,jockey:44,bloodstock_agent:12,farrier:8},owners:65,
+  roles:{trainer:65,jockey:54,bloodstock_agent:12,farrier:8},owners:65,
   facilities:{generalFarms:4,studFarms:2},
   maxPartnershipGroups:25,soleOwnerPercent:23};
  let registry=createIndexedFictionalNameRegistry({worldId,seed});
