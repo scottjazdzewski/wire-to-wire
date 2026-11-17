@@ -664,6 +664,14 @@ test('two seeds persist juvenile debuts and mature attrition; second seed runs 3
    assert.equal(final.lifecycle.population,10000+
     Object.values(final.lifecycle.birthsByYear).reduce((a,b)=>a+b,0)-
     final.lifecycle.horseDeaths);
+   if(year===2000){
+    const maturedStarter=await readPersistent1999LifecycleHorse(store,manifest,
+     runId,started.id);
+    assert.notEqual(maturedStarter.status,'TWO_YEAR_OLD_PROSPECT',
+     'an actual two-year-old starter must not revert to prospect at age three');
+    assert.equal(maturedStarter.racingDebutDate,'1999-04-01',
+     'subsequent status sidecars must preserve actual racing debut history');
+   }
    if(year===2001){
     await savePersistent1999CareerRun(store,manifest,{runId,
      gameDate:'2001-04-01',player});
