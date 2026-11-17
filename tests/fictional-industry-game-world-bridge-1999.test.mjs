@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createPersistent1999Industry,savePersistent1999CareerRun,
  loadPersistent1999CareerRun} from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
-import {digestPersistent1999GameSnapshot,openPersistent1999GameCareer}
+import {digestPersistent1999GameSnapshot,openPersistent1999GameCareer,
+ format1999OpeningBarnName,PERSISTED_1999_OPENING_BARN_NAMING_MODEL}
  from '../public/1999/engine/fictional-industry-game-world-bridge-1999.mjs';
 import {validateGameRun} from '../public/1999/game/state.js';
 import {dispatchGameCommand} from '../public/1999/game/kernel.js';
@@ -35,6 +36,21 @@ function memoryStore(){
   },
   commitManifest:async(id,manifest)=>data.manifests.set(id,structuredClone(manifest))};
 }
+
+test('owner-operated barn labels use approved owner and venue names, never generic double Racing',()=>{
+ assert.match(PERSISTED_1999_OPENING_BARN_NAMING_MODEL,/OWNER_TRACK_BARN/);
+ const owner={id:'O-OWNER-1',name:'North Star Racing'};
+ const a={id:'T-0001',name:'Aqueduct'};
+ const b={id:'T-0002',name:'Belmont Park'};
+ assert.equal(format1999OpeningBarnName(owner,a),'North Star Racing — Aqueduct Barn');
+ assert.equal(format1999OpeningBarnName(owner,b),'North Star Racing — Belmont Park Barn');
+ assert.notEqual(format1999OpeningBarnName(owner,a),format1999OpeningBarnName(owner,b));
+ assert.equal(owner.name,'North Star Racing','source organization is never renamed');
+ assert.throws(()=>format1999OpeningBarnName({id:'O-OWNER-1',name:''},a),
+  /real named owner and track/);
+ assert.throws(()=>format1999OpeningBarnName(owner,{id:'',name:'Aqueduct'}),
+  /real named owner and track/);
+});
 
 test('full-scale career snapshot hashes preserve census order in bounded chunks',async()=>{
  const manifest={worldId:'FullScaleDigestTest',seed:19990101,
@@ -69,6 +85,13 @@ test('10,000-horse persisted 1999 world opens and runs a canonical race career',
  assert.ok(career.world.entities.horses.every(h=>typeof h.name==='string'&&h.name));
  assert.equal(career.world.calendar.cards.length,manifest.scheduledCards);
  assert.equal(career.run.player.operation_id,'O-OWNER-1');
+ const openingSite=career.run.runtime.facilities.sites['F-1999-OPENING-T-0001'];
+ assert.ok(openingSite,'new barn should exist in canonical game run');
+ assert.equal(openingSite.id,'F-1999-OPENING-T-0001');
+ assert.equal(openingSite.name,'North Star Racing — Aqueduct Barn');
+ assert.equal(openingSite.owner_id,'O-OWNER-1');
+ assert.equal(openingSite.host_track_id,'T-0001');
+ assert.ok(openingSite.head_trainer_person_id,'trainer identity must remain linked');
  assert.ok(career.playableHorseCount>0);
  assert.ok(career.openingJockeyCount>=2);
  assert.equal(validateGameRun(career.run,career.world),career.run);
@@ -131,4 +154,10 @@ test('10,000-horse persisted 1999 world opens and runs a canonical race career',
   runId:state.run_id,operationId:state.player.operation_id});
  assert.equal(validateGameRun(saved.changes.canonicalRun,resumed.world),
   saved.changes.canonicalRun);
+ assert.equal(saved.changes.canonicalRun.runtime.facilities.sites[
+  'F-1999-OPENING-T-0001'].name,openingSite.name);
+ assert.equal(resumed.run.runtime.facilities.sites[
+  'F-1999-OPENING-T-0001'].name,openingSite.name);
+ assert.equal(saved.changes.canonicalRun.runtime.facilities.sites[
+  'F-1999-OPENING-T-0001'].owner_id,openingSite.owner_id);
 });

@@ -12,6 +12,25 @@ import {readPersistent1999Directory,readPersistent1999IndustryBatch,
  verifyPersistent1999WorldOpen} from './fictional-industry-persistence-1999.mjs';
 
 export const PERSISTED_1999_GAME_BRIDGE_SCHEMA='WTW_PERSISTED_1999_GAME_BRIDGE_V1';
+export const PERSISTED_1999_OPENING_BARN_NAMING_MODEL='WTW_1999_OWNER_TRACK_BARN_V1';
+
+/**
+ * Display identity for a NEW, owner-operated racing barn. The operation and
+ * venue are both canonical ID-addressed records. Do not invent a new owner,
+ * trainer or facility identity, and do not rename an existing saved site.
+ * The durable run owns the resulting name after opening.
+ */
+export function format1999OpeningBarnName(operation,track){
+ if(typeof operation?.id!=='string'||!operation.id||
+  typeof track?.id!=='string'||!track.id||
+  typeof operation.name!=='string'||!operation.name.trim()||
+  typeof track.name!=='string'||!track.name.trim())
+  throw Error('Opening barn requires a real named owner and track');
+ const owner=operation.name.trim().replace(/\s+/g,' ');
+ const venue=track.name.trim().replace(/\s+/g,' ');
+ return owner+' — '+venue+' Barn';
+}
+
 /**
  * Select a finite active booking board from the real persisted professionals.
  * A multi-track player stable must see local riders at EACH home circuit,
@@ -178,7 +197,7 @@ export async function openPersistent1999GameCareer(store,manifest,{
   const loc=track.location||{};
   run.runtime.facilities.sites[siteId]={id:siteId,offer_id:null,
    owner_id:operation.id,operator_organization_id:operation.id,
-   name:operation.name+' Racing Barn',type:'RACING_STABLE',
+   name:format1999OpeningBarnName(operation,track),type:'RACING_STABLE',
    residence_kind:'TRACK_TRAINER_BARN',host_track_id:trackId,
    head_trainer_person_id:trainer.id,
    location:{city:loc.city||loc.locality||track.name,
