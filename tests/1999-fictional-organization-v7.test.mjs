@@ -239,7 +239,7 @@ test('sole proprietor names cannot silently duplicate approved owner or person i
   principalNames:['Alex West','Alex West']}),
  /Duplicate or protected sole owner identity/);
  assert.throws(()=>createOrganizationNameRoster({...args,
-  sourceOwnerNames:['Alex West']}),
+  sourceOwnerNames:['Mina Brown']}),
  /Duplicate or protected sole owner identity/);
  assert.throws(()=>createOrganizationNameRoster({...args,
   protectedNames:['Mina Brown']}),
