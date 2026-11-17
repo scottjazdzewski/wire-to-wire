@@ -89,5 +89,7 @@ test('Naming Desk waits until real async career commit before showing success',a
  release();
  assert.equal(await pending,true);
  assert.equal(ledger.revision,1);
- assert.match(desk.snapshot().notice,/saved to the game/);
+ // The actual persisted KEEP confirmation is deliberately explicit: the name is
+ // banked for later, not officially registered to a horse.
+ assert.match(desk.snapshot().notice,/kept for later in the saved game/);
 });
