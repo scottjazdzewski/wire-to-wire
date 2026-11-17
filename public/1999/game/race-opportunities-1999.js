@@ -5,6 +5,7 @@
  * occurs here. Only source-derived condition-book proposals and already-open
  * actual game races may appear. It is safe to call on any UI render.
  */
+import {same1999PhysicalVenue} from './physical-venue-1999.js';
 import {ensure} from './contracts.js';
 import {gameRaceProgram,raceEligibility,jockeyBookingDecision,supported1999RaceClass}
  from './racing-1999.js';
@@ -119,7 +120,7 @@ function raceSelection(state,world,horse,race,bookOpen){
  const playerOwns=state.player.role==='owner'&&
   state.player.operation_id===horse.owner_organization_id;
  const current=effectiveHorseTrack(state,horse);
- const needsShip=current!==normalized.track_id;
+ const needsShip=!same1999PhysicalVenue(current,normalized.track_id);
  const shipping=needsShip?travelOptions(state,world,horse,normalized):[];
  const jockeys=sourceOpen?optionJockeys(state,world,horse,normalized):[];
  const fundedJockey=jockeys.find(j=>j.owner_can_pay);
