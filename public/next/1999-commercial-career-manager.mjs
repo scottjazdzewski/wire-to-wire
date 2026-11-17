@@ -208,6 +208,8 @@ async function editSavedWorldEntity({kind,id,patch}={}){
  }
  const db=await open1999IndustryDatabase();
  try{
+  if(isFrozen&&await loadPersistent1999CareerRun(db,career.manifest,playerRunId(career.manifest)))
+   throw Error('Editable player career already exists; reopen it before applying changes');
   const record=await savePersistent1999CareerRun(db,career.manifest,{
    runId:nextRun.run_id,gameDate:nextRun.clock.date,player:nextRun.player,
    changes:{canonicalRun:nextRun,worldEdits:edits},
