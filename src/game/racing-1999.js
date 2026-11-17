@@ -20,8 +20,10 @@ import {premierMarketRace,scorePremierJockeyOffer,premierBonusCap,premierOfferId
 
 export const GAME_RACING_SCHEMA='WTW_1999_CAREER_RACING_V1';
 export const RACING_COMMANDS=Object.freeze(['ACTIVATE_JOCKEY_COLONY','OPEN_1999_RACE','ENTER_1999_RACE',
- 'BOOK_1999_JOCKEY','OFFER_1999_PREMIER_JOCKEY','SET_1999_RACE_TACTICS','SETTLE_1999_RACE']);
+ 'BOOK_1999_JOCKEY','OFFER_1999_PREMIER_JOCKEY','SET_1999_RACE_TACTICS','SCRATCH_1999_RACE','SETTLE_1999_RACE']);
 export const RACE_TACTICS=Object.freeze(['AUTO','LEAD','PRESS','STALK','CLOSE']);
+export const RACE_SCRATCH_REASONS=Object.freeze(['OWNER_WITHDRAWAL','TRAINER_ADVICE',
+ 'VETERINARY','RACE_DAY_WELFARE_OR_BOOKING']);
 export const RACE_TACTICS_PREVIEW_SCHEMA='WTW_1999_RACE_TACTICS_PREVIEW_V1';
 const cents=x=>Number.isSafeInteger(x)&&x>=0;
 const dayGap=(a,b)=>(Date.parse(b+'T12:00:00Z')-Date.parse(a+'T12:00:00Z'))/86400000;
@@ -418,6 +420,47 @@ function charge(state,owner,amount,kind,race,h,jockeyId){
  state.runtime.finances.ledger.push({date:state.clock.date,kind,operation_id:owner,
   amount_minor:-amount,race_id:race.id,horse_id:h.horse_id,jockey_id:jockeyId});
 }
+/**
+ * Withdraw one entered runner from a real, still-open condition-book race.
+ * The paid rider contract remains in the signed finance ledger: cancellation
+ * never invents a refund, duplicate fee, purse credit or finished start.
+ * Preserve the entry itself for the jockey/horse audit and older save readers.
+ */
+export function scratch1999RaceEntry({state,race_id,horse_id,reason,actor='system',emit}){
+ const race=state.runtime.races?.[race_id],id=race_id+':'+horse_id,
+  entry=state.runtime.entries?.[id];
+ ensure(Boolean(race)&&race.status==='ENTRIES_OPEN'&&
+  state.clock.date<=race.date&&entry&&
+  ['ENTERED','BOOKED'].includes(entry.status)&&race.field.includes(id),
+  'RACE_SCRATCH','Only an entered, unsettled race runner can be scratched');
+ ensure(RACE_SCRATCH_REASONS.includes(reason)&&
+  (reason!=='RACE_DAY_WELFARE_OR_BOOKING'||actor==='system'),
+  'RACE_SCRATCH_REASON','Unknown or unauthorized race withdrawal reason');
+ const paidFee=entry.fee_minor??0;
+ entry.status='SCRATCHED';
+ entry.scratch_reason=reason;
+ entry.scratch_date=state.clock.date;
+ entry.scratch_actor=actor;
+ race.field=race.field.filter(key=>key!==id);
+ // An offer never becomes a signed paid mount after its horse withdraws.
+ // Signed rider fees already paid remain in the original ledger unchanged.
+ for(const offer of Object.values(state.runtime.racing?.premier_offers||{})){
+  if(offer.race_id!==race_id||offer.horse_id!==horse_id||
+   offer.status!=='PENDING')continue;
+  offer.status='DECLINED';offer.reason='HORSE_SCRATCHED';
+  offer.resolved_date=state.clock.date;
+  emit('JOCKEY_PREMIER_OFFER_DECLINED',{offer_id:offer.id,
+   race_id,horse_id,jockey_id:offer.jockey_id,
+   reason:'HORSE_SCRATCHED',winning_horse_id:null,charged_minor:0});
+ }
+ emit(reason==='RACE_DAY_WELFARE_OR_BOOKING'?'RACE_DAY_SCRATCH':'RACE_ENTRY_SCRATCHED',{
+  race_id,horse_id,trainer_id:entry.trainer_id,owner_id:entry.owner_id,
+  jockey_id:entry.jockey_id??null,date:state.clock.date,reason,
+  health_risk:state.runtime.horse?.[horse_id]?.training?.currentRisk??null,
+  booked_fee_retained_minor:paidFee,refund_minor:0,
+  prior_booking_status:paidFee?'BOOKED': 'ENTERED'});
+ return entry;
+}
 export function racingAction({state,world,command,emit}){
  const p=command.payload,rt=root(state),type=command.type;
  if(type==='ACTIVATE_JOCKEY_COLONY'){
@@ -475,6 +518,14 @@ export function racingAction({state,world,command,emit}){
   emit('RACE_ENTRY_CONFIRMED',{race_id:race.id,horse_id:horse.horse_id,
    trainer_id:horse.trainer_id,owner_id:horse.owner_organization_id,
    decision:entry.decision});
+ }else if(type==='SCRATCH_1999_RACE'){
+  const horse=state.runtime.registered_horses?.by_id?.[p.horse_id];
+  ensure(Boolean(horse)&&
+   (command.actor==='system'||command.actor==='player'&&
+    horse.owner_organization_id===state.player.operation_id),
+   'RACE_PERMISSION','Only the owning player or authorized game system may scratch a horse');
+  scratch1999RaceEntry({state,race_id:p.race_id,horse_id:p.horse_id,
+   reason:p.reason??'OWNER_WITHDRAWAL',actor:command.actor,emit});
  }else if(type==='OFFER_1999_PREMIER_JOCKEY'){
   const race=state.runtime.races?.[p.race_id],
    horse=state.runtime.registered_horses?.by_id?.[p.horse_id],
@@ -726,6 +777,21 @@ export function validateRacingRuntime(state,world){
  for(const [trainerId,earnedMinor] of Object.entries(rt.trainer_finances_minor))
   ensure(person(world,trainerId)&&cents(earnedMinor),
    'RACE_SAVE','Trainer earned fees and purses must resolve to an approved person and integer cents');
+ for(const [id,entry] of Object.entries(state.runtime.entries||{})){
+  if(entry?.status!=='SCRATCHED')continue;
+  const race=state.runtime.races?.[entry.race_id];
+  ensure(id===entry.id&&id===entry.race_id+':'+entry.horse_id&&
+   Boolean(race)&&!race.field.includes(id)&&
+   Boolean(state.runtime.registered_horses?.by_id?.[entry.horse_id])&&
+   typeof entry.scratch_reason==='string',
+   'RACE_SCRATCH_SAVE','Scratched entrants must retain their race and horse audit without starting');
+  if(entry.scratch_date!==undefined)
+   ensure(validDate(entry.scratch_date)&&entry.scratch_date<=state.clock.date&&
+    entry.scratch_date<=race.date&&
+    ['player','system'].includes(entry.scratch_actor)&&
+    RACE_SCRATCH_REASONS.includes(entry.scratch_reason),
+    'RACE_SCRATCH_SAVE','Invalid dated scratch or actor in stored career');
+ }
  for(const [id,r] of Object.entries(state.runtime.races||{})){
   if(!r.source||r.source!=='WTW_1999_TRACK_SPECIFIC_MEET_PROGRESSION')continue;
   ensure(r.id===id&&trackFor(world,r.track_id)&&validDate(r.date)&&
