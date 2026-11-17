@@ -289,8 +289,7 @@ test('actual registered 1999 horse sale changes saved owner, cash, trainer clien
   entities:{horses:source.horses,organizations:source.organizations,tracks:source.tracks,
    people:[...people.values()]}};
  let s=build1999PilotGameRun({world:cw,manifest}),originalWorld=JSON.stringify(cw);
- s=dispatchGameCommand({world:cw,state:s,command:{
-  id:'pilot:sale:advance',type:'ADVANCE_DAY',actor:'system',payload:{}}}).state;
+ // Before any race is booked: a transfer must not cancel an accepted entry.
  const h=Object.values(s.runtime.registered_horses.by_id).
   find(x=>x.owner_organization_id===s.player.operation_id);
  assert.ok(h);
@@ -334,4 +333,21 @@ test('actual registered 1999 horse sale changes saved owner, cash, trainer clien
  assert.ok(latest.length>=1,'Horse remains in a live care program after transfer');
  assert.equal(latest.at(-1).operation_id,buyer,'New owner pays the next daily care bill');
  assert.deepEqual(importGameSave(exportGameSave(s,cw),cw),s);
+});
+
+test('source-backed registered horse replaces its source identity in paged owner portfolios',()=>{
+ const world=w(),state=run(world);
+ const id='H-GAME-1999-REGISTERED-SOURCE-MIRROR';
+ // Read projection only: this compact fixture intentionally avoids inventing
+ // an entire registered career record to satisfy the full admission schema.
+ state.runtime.registered_horses.by_id[id]={
+  horse_id:id,id,name:'First Fictional Runner',registered_name:'First Fictional Runner',
+  world_source_horse_id:'H-1999-000001',owner_organization_id:'O-1999-001'
+ };
+ const page=getOwnerPortfolioView(state,world,'O-1999-001',{limit:20});
+ assert.equal(page.total,2);
+ assert.ok(page.items.some(h=>h.id===id));
+ assert.ok(!page.items.some(h=>h.id==='H-1999-000001'),
+  'One source-linked animal cannot appear twice as distinct owned horses');
+ assert.equal(world.entities.horses[0].ownerId,'O-1999-001');
 });
