@@ -14,13 +14,13 @@ const apply=(w,s,id,type,payload,actor)=>dispatchGameCommand({world:w,state:s,
  command:command(id,type,payload,actor)}).state;
 const funded=(w,s,id,amount)=>apply(w,s,'seed-'+id,'FACILITY_SEED_FUNDS',{
  operation_id:id,balance_minor:amount,source_kind:'SIMULATED_TEST',source_ref:'1999 test capitalization'},'system');
-const offer=(w,s,id,type='FARM',mode='PURCHASE',price=100000000)=>apply(w,s,'offer-'+id,
+const offer=(w,s,id,type='FARM',mode='PURCHASE',price=100000000,extra={})=>apply(w,s,'offer-'+id,
  'FACILITY_LIST_PROPERTY',{offer_id:'FAC-OFFER-'+id,name:'Test '+id,
  type,mode,location:{city:'Paris',state:'KY',country:'USA'},
  price_minor:price,stalls:20,max_stalls:80,
  daily_upkeep_minor:12000,daily_boarding_minor:5000,
  land_acres:80,opening_days:mode==='NEW_BUILD'?3:0,quality:80,
- source_kind:'SIMULATED_TEST',source_ref:'test market offer'},'system');
+ source_kind:'SIMULATED_TEST',source_ref:'test market offer',...extra},'system');
 test('an individual racing owner can finance and acquire a separate farm',()=>{
  const w=world();let s=game(w);s=funded(w,s,'O-PLAYER',500000000);
  s=offer(w,s,'GENERAL');const before=JSON.stringify(w);
@@ -192,4 +192,71 @@ test('two calendar years preserve every paid day and exact balances after save/r
  assert.deepEqual(importGameSave(exportGameSave(s,w),w),s);
  const dupe=apply(w,s,'multi:day:369','ADVANCE_DAY',{});
  assert.deepEqual(dupe,s);
+});
+
+test('facility payroll, utilities, repairs, property purchase and renovation post balanced external payee receipts',()=>{
+ const w=world();let s=game(w);
+ s=funded(w,s,'O-PLAYER',500000000);
+ s=offer(w,s,'LEDGER','FARM','PURCHASE',100000000,{
+  staff_required:2,staff_wage_daily_minor:7500,maintenance_daily_minor:3000});
+ s=apply(w,s,'ledger:buy','FACILITY_ACQUIRE',{
+  offer_id:'FAC-OFFER-LEDGER',operation_id:'O-PLAYER'});
+ const site='F-RUN-FAC-OFFER-LEDGER';
+ s=apply(w,s,'ledger:day','ADVANCE_DAY',{});
+ s=apply(w,s,'ledger:upgrade','FACILITY_UPGRADE',{
+  site_id:site,operation_id:'O-PLAYER',improvement:'CARE_SYSTEM'});
+ const transactions=new Map();
+ for(const entry of s.runtime.finances.ledger){
+  if(!entry.transaction_id?.startsWith('FACILITY_OUTFLOW:'))continue;
+  if(!transactions.has(entry.transaction_id))transactions.set(entry.transaction_id,[]);
+  transactions.get(entry.transaction_id).push(entry);
+ }
+ const expected=['FACILITY_PURCHASE','FACILITY_UPGRADE','FACILITY_DAILY_OPERATIONS',
+  'FACILITY_STAFF_PAYROLL','FACILITY_MAINTENANCE'];
+ assert.equal(transactions.size,expected.length);
+ for(const kind of expected){
+  const group=[...transactions.values()].find(rows=>rows.some(x=>x.kind===kind));
+  assert.ok(group,'missing '+kind);
+  assert.equal(group.length,2);
+  assert.equal(group.reduce((n,x)=>n+x.amount_minor,0),0);
+  const business=group.find(x=>x.kind===kind),outside=group.find(x=>x.kind==='FACILITY_EXTERNAL_RECEIPT');
+  assert.ok(business.amount_minor<0&&outside.amount_minor>0);
+  assert.equal(business.operation_id,'O-PLAYER');
+  assert.equal(outside.operation_id,null);
+  assert.equal(outside.person_id,null);
+  assert.equal(outside.receipt_for_kind,kind);
+  assert.equal(outside.counterparty_scope,'MODELED_OUTSIDE_ECONOMY_NO_IDENTITY_CLAIM');
+ }
+ const report=getFacilityFinancialReport(s,w,'O-PLAYER');
+ assert.equal(report.payroll_minor,15000);
+ assert.equal(report.maintenance_minor,3000);
+ assert.equal(report.overhead_minor,12000);
+ assert.equal(report.capital_investment_minor,108500000);
+ assert.equal(report.cash_minor,500000000-108500000-30000);
+ assert.deepEqual(importGameSave(exportGameSave(s,w),w),s);
+});
+test('multi-season facility payroll and upkeep preserve exact payee balances, operator cash and idempotency',()=>{
+ const w=world();let s=game(w);
+ s=funded(w,s,'O-PLAYER',500000000);
+ s=offer(w,s,'SEASONS','FARM','PURCHASE',100000000,{
+  staff_required:3,staff_wage_daily_minor:5000,maintenance_daily_minor:2500});
+ s=apply(w,s,'season:buy','FACILITY_ACQUIRE',{
+  offer_id:'FAC-OFFER-SEASONS',operation_id:'O-PLAYER'});
+ for(let d=0;d<370;d++)s=apply(w,s,'season:day:'+d,'ADVANCE_DAY',{});
+ assert.equal(s.clock.date,'2000-01-06');
+ const o=s.runtime.finances.ledger.filter(x=>x.kind==='FACILITY_EXTERNAL_RECEIPT');
+ const wages=o.filter(x=>x.receipt_for_kind==='FACILITY_STAFF_PAYROLL');
+ const upkeep=o.filter(x=>x.receipt_for_kind==='FACILITY_DAILY_OPERATIONS');
+ const upkeepTotal=370*12000,wageTotal=370*3*5000,repairTotal=370*2500;
+ assert.equal(wages.length,370);assert.equal(upkeep.length,370);
+ assert.equal(wages.reduce((n,x)=>n+x.amount_minor,0),wageTotal);
+ assert.equal(o.filter(x=>x.receipt_for_kind==='FACILITY_MAINTENANCE')
+  .reduce((n,x)=>n+x.amount_minor,0),repairTotal);
+ assert.equal(upkeep.reduce((n,x)=>n+x.amount_minor,0),upkeepTotal);
+ assert.equal(s.runtime.finances.operation_balances_minor['O-PLAYER'],
+  500000000-100000000-upkeepTotal-wageTotal-repairTotal);
+ assert.equal(s.runtime.finances.balance_minor,
+  s.runtime.finances.operation_balances_minor['O-PLAYER']);
+ assert.deepEqual(importGameSave(exportGameSave(s,w),w),s);
+ assert.deepEqual(apply(w,s,'season:day:369','ADVANCE_DAY',{}),s);
 });

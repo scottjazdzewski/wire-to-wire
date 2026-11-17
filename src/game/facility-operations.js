@@ -13,6 +13,17 @@ const IMPROVEMENTS=Object.freeze({
  FOALING_WING:{cost_minor:28000000,days:45,stalls:6,quality:6,type:'STUD_FARM'}
 });
 const MAINTENANCE_MULTIPLIER=Object.freeze({ECONOMY:50,STANDARD:100,PREMIUM:180});
+// Finance cannot identify individual workers or external companies from a
+// site's scalar headcount. Record the real business debit and a transparent
+// modeled outside counterparty; never manufacture a person or organization ID.
+const FACILITY_EXTERNAL_PAYEES=Object.freeze({
+ FACILITY_PURCHASE:'PROPERTY_MARKET_OR_SELLER_UNIDENTIFIED',
+ FACILITY_UPGRADE:'MODELED_CONSTRUCTION_PROVIDER',
+ FACILITY_DAILY_OPERATIONS:'MODELED_FACILITY_OPERATING_SUPPLIERS',
+ FACILITY_STAFF_PAYROLL:'MODELED_EMPLOYEE_WAGE_POOL',
+ FACILITY_MAINTENANCE:'MODELED_FACILITY_MAINTENANCE_SUPPLIERS',
+ FACILITY_TRACK_RENT:'MODELED_TRACK_LEASE_RECIPIENT_UNIDENTIFIED'
+});
 const integer=Number.isSafeInteger;
 const operationalStalls=s=>s.staff_required>0?Math.floor(s.stalls*Math.min(s.staff_count,s.staff_required)/s.staff_required):s.stalls;
 const number=(v,lo,hi,label)=>ensure(integer(v)&&v>=lo&&v<=hi,'FACILITY_INVALID','Invalid '+label);
@@ -31,11 +42,25 @@ function post(state,id,minor,kind,siteId,emit,transactionId=null){
  const accounts=state.runtime.finances.operation_balances_minor;
  ensure(integer(accounts[id]),'FACILITY_NO_FUNDS','Owner financial baseline not established');
  ensure(integer(minor)&&integer(accounts[id]+minor),'FACILITY_MONEY','Invalid facility accounting value');
+ const outside=minor<0?FACILITY_EXTERNAL_PAYEES[kind]:null;
+ const tx=transactionId||(outside?'FACILITY_OUTFLOW:'+state.clock.date+':'+siteId+':'+kind:null);
  accounts[id]+=minor;
  if(state.player.operation_id===id)state.runtime.finances.balance_minor=accounts[id];
  state.runtime.finances.ledger.push({date:state.clock.date,operation_id:id,
   site_id:siteId||null,amount_minor:minor,kind,
-  ...(transactionId?{transaction_id:transactionId}:{})});
+  ...(tx?{transaction_id:tx}:{})});
+ if(outside){
+  // This receipt balances an actual debit; it does not add operating cash
+  // to any invented owner, worker, or supplier in the approved world.
+  state.runtime.finances.ledger.push({
+   date:state.clock.date,transaction_id:tx,site_id:siteId||null,
+   operation_id:null,person_id:null,amount_minor:-minor,
+   kind:'FACILITY_EXTERNAL_RECEIPT',receipt_for_kind:kind,
+   recipient_role:outside,
+   counterparty_scope:'MODELED_OUTSIDE_ECONOMY_NO_IDENTITY_CLAIM',
+   provenance:'MODELED_GAME_CASH_SETTLEMENT_NOT_HISTORICAL_PAYMENT'
+  });
+ }
  if(emit)emit('FACILITY_CASH',{operation_id:id,site_id:siteId||null,
   kind,amount_minor:minor,balance_minor:accounts[id]});
 }
