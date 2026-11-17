@@ -151,7 +151,7 @@ test('approved source owner names reserve exact identities and roots before gene
   farmKindPlan:Array(7).fill('FARM'),
   ownerPartnershipLimit:3,soleOwnerPercent:0};
  const baseline=createOrganizationNameRoster(base);
- const approved=baseline.farms[0].name;
+ const approved=baseline.farms[0];
  // A source-owner name can legitimately also look like a breeding farm.
  // In a fresh alternate world the source wins; the new farm must change.
  const result=createOrganizationNameRoster({
