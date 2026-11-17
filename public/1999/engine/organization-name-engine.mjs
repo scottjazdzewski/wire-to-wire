@@ -156,6 +156,12 @@ function ownerName(seed,i,attempt,principal,alignPrincipalSurname=false,preferre
  const club=draw(CLUB_ROOTS,seed,k+':club');
  const suffix=draw(OWNER_SUFFIX,seed,k+':suffix');
  const roll=style(seed,'owner',i,attempt);
+ // At scale, the finite shared stem vocabulary can be saturated by protected
+ // names and root-conflict rules. Use the actual unique principal as a
+ // deterministic long-tail business identity before declaring the pool full.
+ if(attempt>=48&&principal)return principal+' '+
+  draw(['Racing','Thoroughbreds','Bloodstock','Racing Stable','Equine'],seed,
+   k+':principal-fallback');
  if(roll<15)return family+' '+suffix;
  if(roll<26)return family+' & '+second+' '+draw(['Racing','Partners','Bloodstock'],seed,k+':duo');
  if(roll<37)return land+' '+suffix;
