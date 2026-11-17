@@ -94,6 +94,10 @@ test('player books a real accepting jockey, then withdraws without phantom refun
  const rival=Object.values(state.runtime.entries).find(e=>
   e.owner_id!==state.player.operation_id&&e.status==='BOOKED');
  assert.ok(rival);
+ const trainerRole={...state,player:{...state.player,role:'trainer'}};
+ assert.throws(()=>command(trainerRole,'scratch:wrong-role','SCRATCH_1999_RACE',{
+  race_id:race.id,horse_id:entry.horse_id},'player'),
+  e=>e.code==='RACE_PERMISSION','A trainer-role player cannot act as the owner');
  assert.throws(()=>command(state,'scratch:steal','SCRATCH_1999_RACE',{
   race_id:rival.race_id,horse_id:rival.horse_id},'player'),
   e=>e.code==='RACE_PERMISSION');
