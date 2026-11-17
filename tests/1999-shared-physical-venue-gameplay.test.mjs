@@ -54,7 +54,9 @@ test('actual saved 300k career uses one Bay Meadows facility for its approved fa
  const state=checkpoint.careerRecord.changes.canonicalRun;
  assert.equal(state.clock.date,'1999-05-29');
  const original=Object.values(state.runtime.registered_horses.by_id)
-  .find(h=>h.starting_attributes&&h.current_residence_id);
+  .find(h=>h.starting_attributes&&h.current_residence_id&&
+   !['OUTBOUND','RETURNING','AT_DESTINATION'].includes(
+    state.runtime.racing?.horse_travel?.[h.horse_id]?.status));
  assert.ok(original,'actual bundled career must contain a registered source-identified horse');
  // Assess a hypothetical Bay Meadows assignment without mutating the
  // saved career, horse identities, confirmed dates, historical races or ledger.
