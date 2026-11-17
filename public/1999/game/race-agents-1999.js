@@ -235,6 +235,7 @@ export function book1999UnavailableJockeyReplacements({state,world,emit}){
   // No paid second rider without a real quote, acceptance, eligibility
   // and funds; premier elite stars must still use their genuine auction.
   const candidates=Object.values(rt.jockeys).filter(j=>
+   j.id!==entry.cancelled_jockey_id&&
    !premierMarketRace(race,j)).map(j=>({
     jockey:j,decision:jockeyBookingDecision(state,world,race,horse,j)
    })).filter(x=>x.decision.accept&&
