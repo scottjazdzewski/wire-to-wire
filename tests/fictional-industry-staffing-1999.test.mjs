@@ -60,6 +60,23 @@ test('large same-country personnel pools stay unique without numeric name suffix
  assert.ok(names.every(x=>x.birthCountry==='US'&&!/\d/.test(x.name)));
 });
 
+test('middle initials extend a constrained same-country pool without exceeding pair limits',()=>{
+ const names=createGeographicNameRoster(19990101,100,()=> 'owner',[],{
+  countryAt:()=> 'AU',maxBaseNameUses:2,avoidIdenticalGivenSurname:true,
+  givenPoolAt:()=>['Ava','Mia'],familyPoolAt:()=>['Smith','Brown']
+ });
+ assert.equal(names.length,100);
+ assert.equal(new Set(names.map(x=>x.name.toLowerCase())).size,100);
+ assert.ok(names.every(x=>x.birthCountry==='AU'&&!/\d/.test(x.name)));
+ const pairCounts=new Map();
+ for(const {name} of names){
+  const pair=name.replace(/\s+/g,' ').trim().toLowerCase();
+  pairCounts.set(pair,(pairCounts.get(pair)||0)+1);
+ }
+ assert.ok([...pairCounts.values()].every(count=>count<=2));
+ assert.ok(names.some(x=>/\b[A-Z]\. /.test(x.name)));
+});
+
 
 test('sized worlds guarantee one trainer and jockey for every approved circuit',()=>{
  const tracks=Array.from({length:107},(_,i)=>({

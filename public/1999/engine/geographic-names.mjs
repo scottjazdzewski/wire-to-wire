@@ -104,7 +104,7 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
    suppliedFamily.some(x=>typeof x!=='string'||!x.trim())))
    throw Error('Invalid country-specific surname pool');
   const family=suppliedFamily??countryFamily;
-  let name=null,selectedFirst=null,selectedSurname=null;
+  let name=null,selectedFirst=null,selectedSurname=null,selectedBaseFirst=null;
   for(let attempt=0;attempt<32;attempt++){
    const first=birthCohortPool?
     (options.givenNameAt?options.givenNameAt(i,role,country,feminine,attempt):pick(given,seed,'given:'+i+':'+attempt)):
@@ -121,7 +121,7 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
    if(options.avoidIdenticalGivenSurname&&first.toLocaleLowerCase('en-US')===surname.toLocaleLowerCase('en-US'))continue;
    if((baseCounts.get(base)||0)>=limit)continue;
    if(!reserved.has(canonKey(candidate))&&!externallyReserved(candidate)){
-    name=candidate;selectedFirst=first;selectedSurname=surname;break}
+    name=candidate;selectedFirst=first;selectedSurname=surname;selectedBaseFirst=first;break}
   }
   if(!name){
    // Weighted Census names can exhaust high-frequency combinations. Fall
@@ -143,12 +143,16 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
      const last=family[pair%family.length];
      if(options.avoidIdenticalGivenSurname&&
       first.toLocaleLowerCase('en-US')===last.toLocaleLowerCase('en-US'))continue;
-     const base=baseKey(first,last);
-     if((baseCounts.get(base)||0)>=limit)continue;
      const candidate=initial===0?first+' '+last:
       first+' '+String.fromCharCode(64+initial)+'. '+last;
+     // A middle initial creates a distinct visible given-name/surname
+     // pairing. Count it as such so a small national pool can scale without
+     // violating the per-pair repetition limit or resorting to numeric IDs.
+     const baseFirst=initial===0?first:first+' '+String.fromCharCode(64+initial)+'.';
+     const base=baseKey(baseFirst,last);
+     if((baseCounts.get(base)||0)>=limit)continue;
      if(reserved.has(canonKey(candidate))||externallyReserved(candidate))continue;
-     name=candidate;selectedFirst=first;selectedSurname=last;
+     name=candidate;selectedFirst=first;selectedSurname=last;selectedBaseFirst=baseFirst;
      exhaustiveCursorByPool.set(poolKey,(slot+1)%combinations);break;
     }
    }
@@ -156,7 +160,7 @@ export function createGeographicNameRoster(seed,count,roleAt,protectedNames=[],o
     ' at roster index '+i+' ('+role+'); expand the same-country name pools');
   }
   reserved.add(canonKey(name));
-  const key=baseKey(selectedFirst,selectedSurname);
+  const key=baseKey(selectedBaseFirst??selectedFirst,selectedSurname);
   baseCounts.set(key,(baseCounts.get(key)||0)+1);
   records.push({name,givenName:selectedFirst,primarySurname:selectedSurname,
    birthCountry:country,role,
