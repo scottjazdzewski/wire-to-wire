@@ -683,6 +683,7 @@ function statusUpdate(horse,patch){
  // committed development, debut and breeding history across later transitions.
  const keys=['development','racingDebutDate','racingReadiness',
   'lastReadinessReview','nextReadinessReview','developmentYear',
+  'progressionYear','lastProgressionStage',
   'retirementYear','retirementReason','graduatedYear','breedingStatus'];
  const carried=Object.fromEntries(keys.filter(key=>horse[key]!==undefined)
   .map(key=>[key,horse[key]]));
