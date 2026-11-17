@@ -17,7 +17,8 @@ const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const intersects=(a,b,c,d)=>a<=d&&c<=b;
 const pair=(j,o,s)=>j+':'+o+':'+s;
 const root=state=>state.runtime.racing.retainers??=({
- schema:JOCKEY_RETAINER_SCHEMA,offers:{},contracts:{},last_review_date:null});
+ schema:JOCKEY_RETAINER_SCHEMA,offers:{},contracts:{},
+ active_by_jockey:{},last_review_date:null});
 const ownerHorse=(s,o,t)=>Object.values(s.runtime.registered_horses?.by_id||{}).
  some(h=>h.owner_organization_id===o&&h.trainer_id===t&&h.starting_attributes);
 const ownerMayAct=(s,owner,actor)=>actor==='player'?
@@ -40,7 +41,14 @@ export function quote1999JockeyRetainer(state,{jockeyId,startDate,endDate}={}){
   daily_floor_minor:daily,kind:'NONEXCLUSIVE_PRIORITY_NOT_GUARANTEED_MOUNTS'};
 }
 function active(state,jockey,dateOfRace){
- return Object.values(state.runtime.racing?.retainers?.contracts||{}).find(c=>
+ const rt=state.runtime.racing?.retainers,
+  direct=rt?.contracts?.[rt?.active_by_jockey?.[jockey]];
+ // Most future-date lookups are constant time, even after decades of
+ // contract history. A previously signed, non-overlapping future agreement
+ // may coexist with the last day of an older term: fall back in that case.
+ if(direct?.status==='ACTIVE'&&direct.start_date<=dateOfRace&&
+  direct.end_date>=dateOfRace)return direct;
+ return Object.values(rt?.contracts||{}).find(c=>
   c.jockey_id===jockey&&c.status==='ACTIVE'&&
   c.start_date<=dateOfRace&&c.end_date>=dateOfRace)||null;
 }
@@ -155,6 +163,8 @@ function terminate(state,c,reason,emit,penaltyRate=0){
   penalty=Math.floor(unserved*penaltyRate),refund=unserved-penalty;
  if(refund)recordTransfer(state,c,refund,'REFUND');
  c.status='TERMINATED';c.terminated_date=day;
+ const index=state.runtime.racing.retainers.active_by_jockey;
+ if(index?.[c.jockey_id]===c.id)delete index[c.jockey_id];
  c.refunded_minor=refund;c.termination_reason=reason;
  c.cancellation_penalty_minor=penalty;
  emit('JOCKEY_RETAINER_TERMINATED',{contract_id:c.id,reason,
@@ -177,6 +187,8 @@ export function advance1999JockeyRetainers({state,world,emit}){
    terminate(state,c,reason,emit);terminated++;
   }else if(today>c.end_date){
    c.status='EXPIRED';c.expired_date=today;
+   if(rt.active_by_jockey?.[c.jockey_id]===c.id)
+    delete rt.active_by_jockey[c.jockey_id];
    emit('JOCKEY_RETAINER_EXPIRED',{contract_id:c.id,
     jockey_id:c.jockey_id,end_date:c.end_date});
   }
@@ -209,6 +221,8 @@ export function advance1999JockeyRetainers({state,world,emit}){
     refunded_minor:0,kind:'NONEXCLUSIVE_OWNER_TRAINER_PRIORITY'};
    recordTransfer(state,contract,contract.total_fee_minor,'SIGNED');
    rt.contracts[contract.id]=contract;
+   rt.active_by_jockey??={};
+   rt.active_by_jockey[contract.jockey_id]=contract.id;
    o.status='SIGNED';o.resolved_date=today;winner=o;signed++;
    emit('JOCKEY_RETAINER_SIGNED',{contract_id:contract.id,
     jockey_id:contract.jockey_id,owner_id:contract.owner_id,
@@ -244,6 +258,10 @@ export function validate1999JockeyRetainers(state,world){
   !rt.offers||Array.isArray(rt.offers)||
   !rt.contracts||Array.isArray(rt.contracts)||
   Object.keys(rt.offers).length>5000||
+  Object.keys(rt.contracts).length>10000||
+  rt.active_by_jockey!==undefined&&(!rt.active_by_jockey||
+   Array.isArray(rt.active_by_jockey)||
+   typeof rt.active_by_jockey!=='object')||
   rt.last_review_date!==null&&(!date(rt.last_review_date)||
    rt.last_review_date>state.clock.date))
   throw Error('Invalid saved jockey retainer market');
@@ -261,6 +279,11 @@ export function validate1999JockeyRetainers(state,world){
    throw Error('Invalid saved signed jockey retainer');
   if(c.status==='TERMINATED'&&(!date(c.terminated_date)||
    c.terminated_date>state.clock.date))throw Error('Invalid retainer termination');
+ }
+ for(const [jockey,id] of Object.entries(rt.active_by_jockey||{})){
+  const c=rt.contracts[id];
+  if(!c||c.jockey_id!==jockey||c.status!=='ACTIVE')
+   throw Error('Stale or mismatched saved jockey contract index');
  }
  for(const [id,o] of Object.entries(rt.offers)){
   if(id!==o.id||!jockeys[o.jockey_id]||

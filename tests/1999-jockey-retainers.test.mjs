@@ -96,6 +96,7 @@ test('two real rival owners compete, only winner pays and jockey receives exactl
  assert.equal(s.runtime.racing.retainers.offers[a.id].status,'DECLINED');
  assert.equal(s.runtime.racing.retainers.offers[b.id].status,'SIGNED');
  assert.equal(s.runtime.racing.retainers.contracts[b.id].total_fee_minor,big);
+ assert.equal(s.runtime.racing.retainers.active_by_jockey[j],b.id);
  assert.equal(s.runtime.finances.operation_balances_minor[ownerB],2000000-big);
  assert.equal(s.runtime.finances.operation_balances_minor[ownerA],2000000);
  assert.equal(s.runtime.finances.balance_minor,2000000);
@@ -146,6 +147,7 @@ test('pro-rated real injury reversal returns only unused contracted days and kee
  const refund=Math.floor(big*7/14),c=s.runtime.racing.retainers.contracts[b.id];
  assert.equal(out.terminated,1);
  assert.equal(c.status,'TERMINATED');
+ assert.equal(s.runtime.racing.retainers.active_by_jockey[j],undefined);
  assert.equal(c.refunded_minor,refund);
  assert.equal(s.runtime.finances.operation_balances_minor[ownerB],
   2000000-big+refund);
