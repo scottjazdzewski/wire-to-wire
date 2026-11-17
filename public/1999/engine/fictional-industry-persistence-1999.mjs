@@ -683,7 +683,8 @@ function statusUpdate(horse,patch){
  // committed development, debut and breeding history across later transitions.
  const keys=['development','racingDebutDate','racingReadiness',
   'lastReadinessReview','nextReadinessReview','developmentYear',
-  'progressionYear','lastProgressionStage',
+  'progressionYear','lastProgressionStage','homeTrackId',
+  'trainerId','relationships',
   'retirementYear','retirementReason','graduatedYear','breedingStatus'];
  const carried=Object.fromEntries(keys.filter(key=>horse[key]!==undefined)
   .map(key=>[key,horse[key]]));
@@ -1075,9 +1076,48 @@ async function bootstrapMaturePool(store,manifest,runKey,year,overrideMap,
  }
  return [...byId.values()];
 }
+async function existingTrackTrainers(store,manifest,rosterCache){
+ if(rosterCache.trainers)return rosterCache.trainers;
+ const grouped=new Map();
+ for(let index=0;index<manifest.personBatchesCommitted;index++){
+  const batch=await readPersistent1999IndustryBatch(store,manifest,
+   'personBatches',index);
+  for(const person of batch)if(person.role==='trainer'){
+   if(!grouped.has(person.workplaceId))grouped.set(person.workplaceId,[]);
+   grouped.get(person.workplaceId).push(person.id);
+  }
+ }
+ rosterCache.trainers=grouped;
+ return grouped;
+}
+/** Assign only existing, permanent personnel and owner-track IDs. */
+async function assignRacingHome(horse,patch,{store,manifest,directoryById,
+ rosterCache}={}){
+ if(patch.status!=='RACING')return patch;
+ const owner=directoryById.get(horse.ownerId);
+ const trackId=horse.homeTrackId||owner?.homeTrackId||
+  owner?.relationships?.find(edge=>edge.type==='REGIONAL_CIRCUIT')?.toId;
+ if(!trackId||!directoryById.get(trackId)?.id?.startsWith('T-'))
+  throw Error('Racing transition has no valid owner home circuit '+horse.id);
+ let trainerId=horse.trainerId;
+ if(!trainerId){
+  const trainers=(await existingTrackTrainers(store,manifest,rosterCache))
+   .get(trackId)||[];
+  if(!trainers.length)
+   throw Error('Racing transition lacks a real resident trainer at '+trackId);
+  trainerId=trainers[Math.floor(seeded1999Unit(manifest.seed,
+   'seasonal-trainer:'+horse.id)*trainers.length)];
+ }
+ const relationships=[...(horse.relationships||[])];
+ for(const [type,toId] of [['HOME_TRACK',trackId],['TRAINED_BY',trainerId]])
+  if(!relationships.some(edge=>edge.type===type&&edge.toId===toId))
+   relationships.push({type,fromId:horse.id,toId,
+    provenance:'MODELED_SEASONAL_TRAINING_ASSIGNMENT'});
+ return {...patch,homeTrackId:trackId,trainerId,relationships};
+}
 async function matureHorseRolloverForYear(store,manifest,runKey,year,horseUpdates,{
  overrideMap,addEvent,maturePoolCache,turnover,graduatedYears,
- graduatedStallionYears}={}){
+ graduatedStallionYears,directoryById,rosterCache}={}){
  let previous=maturePoolCache.get(year-1);
  if(!previous){
   previous=await store.get('industryLifecycle',lifecycleKey(runKey,
@@ -1141,7 +1181,9 @@ async function matureHorseRolloverForYear(store,manifest,runKey,year,horseUpdate
     patch.racingDebutDate=patch.racingDebutDate||year+'-01-01';
     patch.racingReadiness='CLEARED';
    }
-   const update=statusUpdate(horse,patch);
+   const assigned=await assignRacingHome(horse,patch,{store,manifest,
+    directoryById,rosterCache});
+   const update=statusUpdate(horse,assigned);
    horseUpdates.push(update);overrideMap.set(id,update);
   }
   if(plan.decision==='DECEASED'){deaths.push(id);active.delete(id);continue}
@@ -1167,7 +1209,7 @@ async function matureHorseRolloverForYear(store,manifest,runKey,year,horseUpdate
   started:started.length,racingDelta,members};
 }
 async function juvenileDebutsForDate(store,manifest,runKey,date,horseUpdates,{
- overrideMap,birthCohortCache,addEvent}={}){
+ overrideMap,birthCohortCache,addEvent,directoryById,rosterCache}={}){
  const year=Number(date.slice(0,4)),birthYear=year-2;
  const openingCohort=birthYearCohort(birthYear);
  const ids=openingCohort?
@@ -1182,7 +1224,9 @@ async function juvenileDebutsForDate(store,manifest,runKey,date,horseUpdates,{
   const plan=plan1999JuvenileDebut({seed:manifest.seed,year,date,
    horse:project1999HorseForYear(horse,year)});
   if(!plan.patch)continue;
-  const update=statusUpdate(horse,plan.patch);
+  const assigned=await assignRacingHome(horse,plan.patch,{store,manifest,
+   directoryById,rosterCache});
+  const update=statusUpdate(horse,assigned);
   horseUpdates.push(update);overrideMap.set(id,update);
   if(plan.decision==='RACING')started.push(id);else delayed.push(id);
  }
@@ -1295,6 +1339,7 @@ async function advancePersistent1999IndustryLifecycle(store,manifest,{
   stallionPoolCache=new Map();
  const birthCohortCache=new Map(),forecastCache=new Map(),farmCache=new Map(),
   maturePoolCache=new Map();
+ const rosterCache={};
  const graduatedYears=new Map(),graduatedStallionYears=new Map(),
   activeMaresById=new Map(),activeStallionsById=new Map();
  const directory=await readPersistent1999Directory(lifecycleStore,manifest);
@@ -1392,7 +1437,7 @@ async function advancePersistent1999IndustryLifecycle(store,manifest,{
    for(const update of horseUpdates)overrideMap.set(update.id,update);
    const mature=await matureHorseRolloverForYear(lifecycleStore,manifest,
     runKey,year,horseUpdates,{overrideMap,addEvent,maturePoolCache,turnover,
-     graduatedYears,graduatedStallionYears});
+     graduatedYears,graduatedStallionYears,directoryById,rosterCache});
    addData({key:lifecycleKey(runKey,'mature-pool:'+year),value:mature.members});
    const schedule=await prepareLifecycleSeason(lifecycleStore,manifest,runKey,{
     year,mareRecords:turnover.nextPool,stallionRecords:turnover.nextStallions,
@@ -1430,7 +1475,8 @@ async function advancePersistent1999IndustryLifecycle(store,manifest,{
   }
   if(date.endsWith('-04-01')||date.endsWith('-09-01')){
    const juveniles=await juvenileDebutsForDate(lifecycleStore,manifest,
-    runKey,date,horseUpdates,{overrideMap,birthCohortCache,addEvent});
+    runKey,date,horseUpdates,{overrideMap,birthCohortCache,addEvent,
+     directoryById,rosterCache});
    current={...current,
     juvenileDebuts:current.juvenileDebuts+juveniles.started,
     racingPopulation:current.racingPopulation+juveniles.started};
