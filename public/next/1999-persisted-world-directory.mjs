@@ -91,5 +91,74 @@ export function createPersistedIndustryHorseDirectory({world,manifest,year=1999}
    progress:horses.length,items:cachedRows.slice(start,start+size).map(row)};
  }
  return Object.freeze({schema:PERSISTED_INDUSTRY_DIRECTORY_SCHEMA,
-  size:horses.length,browse,byId:id=>ids.has(id)?row(ids.get(id)):null});
+  size:horses.length,browse,byId:id=>ids.has(id)?row(ids.get(id)):null,
+  invalidate:()=>{cachedKey='';cachedRows=null}});
+}
+
+/**
+ * Native World directories for all other saved entities. The old approved
+ * 73-source-horse catalogue is historical context, never the active census.
+ */
+export function createPersistedIndustryEntityDirectory({world,manifest,kind}={}){
+ const mapping={person:'people',organization:'organizations',track:'tracks'};
+ const bucket=mapping[kind];
+ if(!bucket||!manifest?.worldId||!Array.isArray(world?.entities?.[bucket]))
+  throw Error('Unknown or incomplete saved World directory');
+ const records=world.entities[bucket],ids=new Map();
+ for(const item of records){
+  if(!item?.id||!item.name||ids.has(item.id))
+   throw Error('Incomplete or duplicated '+kind+' identity');
+  ids.set(item.id,item);
+ }
+ const tracks=new Map((world.entities.tracks||[]).map(e=>[e.id,e.name]));
+ const organizations=new Map((world.entities.organizations||[]).map(e=>[e.id,e.name]));
+ const place=p=>typeof p==='string'?p:p&&typeof p==='object'?
+  [p.city||p.locality,p.region||p.state,p.country].filter(Boolean).join(', '):'';
+ const project=item=>{
+  const base={_savedWorldId:manifest.worldId,_savedKind:kind,
+   _kind:kind==='organization'?'farm':kind,_name:item.name,
+   _id:item.id,_canonId:item.id,sourceEntityId:item.id,name:item.name,
+   biography:item.biography||''};
+  if(kind==='person')return {...base,role:item.role||'',
+   base:item.base||tracks.get(item.workplaceId)||organizations.get(item.workplaceId)||
+    item.workplaceId||place(item.birthplace)||'',
+   operation:organizations.get(item.operatingOrganizationId)||
+    item.operatingOrganizationId||''};
+  if(kind==='organization')return {...base,type:item.type||item.category||'',
+   location:place(item.location),principal:item.principalOwner||'',
+   status:item.status||''};
+  return {...base,location:place(item.location),
+   surfaces:Array.isArray(item.surfaces)?item.surfaces.join(' / '):
+    item.surfaces||'',circuit:item.circuit||'',meetWindow:item.meetWindow||'',
+   status:item.status||'',raceDays:item.raceDays??'',stakesCount:item.stakesCount??''};
+ };
+ let cachedKey='',cache=null;
+ const browse=({offset=0,limit=160,search='',sort='name',desc=false,filters={}}={})=>{
+  const where=filters&&typeof filters==='object'?filters:{};
+  const key=JSON.stringify([String(search),String(sort),Boolean(desc),where]);
+  if(cachedKey!==key||cache===null){
+   const text=v=>String(v??'').toLowerCase();
+   const q=text(search).trim(),fq=text(where.query).trim();
+   cache=records.map(project).filter(e=>(!q||Object.values(e).some(v=>
+    (typeof v==='string'||typeof v==='number')&&text(v).includes(q)))&&
+    (!fq||!where.field||text(e[where.field]).includes(fq)));
+   const sortBy=['name','role','base','operation','type','location','status',
+    'surfaces','circuit','meetWindow','raceDays','stakesCount'].includes(sort)?sort:'name';
+   cache.sort((a,b)=>{
+    const aa=a[sortBy],bb=b[sortBy],am=aa==null||aa==='',bm=bb==null||bb==='';
+    if(am!==bm)return am?1:-1;
+    const cmp=typeof aa==='number'&&typeof bb==='number'?aa-bb:
+     String(aa??'').localeCompare(String(bb??''),undefined,
+      {numeric:true,sensitivity:'base'});
+    return (desc?-cmp:cmp)||a._id.localeCompare(b._id);
+   });
+   cachedKey=key;
+  }
+  const start=Math.max(0,Math.trunc(Number(offset)||0));
+  const size=Math.max(1,Math.min(3000,Math.trunc(Number(limit)||160)));
+  return {indexing:false,total:cache.length,loaded:records.length,
+   progress:records.length,items:cache.slice(start,start+size)};
+ };
+ return Object.freeze({size:records.length,browse,byId:id=>ids.has(id)?project(ids.get(id)):null,
+  invalidate:()=>{cache=null;cachedKey=''}});
 }
