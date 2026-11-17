@@ -35,7 +35,8 @@ const frac=(seed,key)=>{let n=(2166136261^(seed>>>0))>>>0;
  n^=n>>>16;n=Math.imul(n,2246822507);n^=n>>>13;
  return (n>>>0)/4294967296};
 export const createRacingRuntime=()=>({
- schema:GAME_RACING_SCHEMA,jockeys:{},jockey_finances_minor:{},trainer_finances_minor:{},
+ schema:GAME_RACING_SCHEMA,jockeys:{},generated_jockeys:{},
+ last_workforce_year:1999,jockey_finances_minor:{},trainer_finances_minor:{},
  premier_offers:{},horse_travel:{},
  last_selection_date:null,last_settlement_date:null,selection_count:0
 });
@@ -725,7 +726,8 @@ export function validateRacingRuntime(state,world){
   Number.isSafeInteger(rt.selection_count),
   'RACE_SAVE','Invalid race subsystem');
  for(const j of Object.values(rt.jockeys))
-  ensure(person(world,j.id)&&Boolean(trackFor(world,j.home_track_id))&&
+  ensure((person(world,j.id)||Boolean(rt.generated_jockeys?.[j.id]))&&
+   Boolean(trackFor(world,j.home_track_id))&&
    cents(rt.jockey_finances_minor[j.id])&&cents(j.starts)&&cents(j.wins)&&j.wins<=j.starts,
    'RACE_SAVE','Unknown or invalid jockey agent');
  for(const j of Object.values(rt.jockeys))if(j.availability!==undefined){
@@ -735,6 +737,33 @@ export function validateRacingRuntime(state,world){
    a.through_date>=a.start_date&&validDate(a.reported_date)&&
    a.reported_date<=state.clock.date&&typeof a.source_race_id==='string',
    'JOCKEY_SAVE','Invalid dated jockey absence');
+ }
+ if(rt.generated_jockeys!==undefined){
+  ensure(isObject(rt.generated_jockeys),'JOCKEY_SAVE',
+   'Invalid source-linked rookie personnel directory');
+  for(const [id,p] of Object.entries(rt.generated_jockeys)){
+   ensure(p?.id===id&&p.role==='jockey'&&p.provenance===
+    'MODELED_FUTURE_JOCKEY_NOT_1999_OPENING_PERSON'&&
+    /^P-GAME-JOCKEY-\\d{4}-\\d{5}$/.test(id)&&
+    typeof p.name==='string'&&p.name.length>3&&
+    validDate(p.dateOfBirth)&&
+    Boolean(trackFor(world,p.workplaceId))&&
+    rt.jockeys[id]?.home_track_id===p.workplaceId&&
+    Number.isSafeInteger(p.career_entry_year)&&p.career_entry_year>=2000&&
+    p.career_entry_year<=Number(state.clock.date.slice(0,4)),
+    'JOCKEY_SAVE','Broken permanent rookie person identity');
+  }
+ }
+ if(rt.last_workforce_year!==undefined)
+  ensure(Number.isSafeInteger(rt.last_workforce_year)&&
+   rt.last_workforce_year>=1999&&
+   rt.last_workforce_year<=Number(state.clock.date.slice(0,4)),
+   'JOCKEY_SAVE','Invalid last annual jockey career transition');
+ for(const j of Object.values(rt.jockeys))if(j.career_status!==undefined){
+  ensure(['ACTIVE','RETIRED'].includes(j.career_status)&&
+   (j.career_status!=='RETIRED'||validDate(j.retired_date)&&
+    j.retired_date<=state.clock.date),
+   'JOCKEY_SAVE','Invalid dated jockey retirement');
  }
  // Optional on older completed careers: do not mutate historical saves to
  // add an empty offer table. Validate the new contracts when present.

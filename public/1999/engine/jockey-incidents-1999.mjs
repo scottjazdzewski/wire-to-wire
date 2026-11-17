@@ -21,7 +21,7 @@ export function modeled1999JockeyIncident(seed,jockeyId,raceId){
  return null;
 }
 /** Reversals are journaled, never delete the original payment or booking event. */
-function refundFutureMounts(state,jockey,availability,emit){
+export function cancel1999PaidFutureJockeyMounts(state,jockey,availability,emit){
  const rt=state.runtime.racing,finances=state.runtime.finances;
  let count=0,total=0;
  for(const entry of Object.values(state.runtime.entries||{})){
@@ -102,7 +102,7 @@ export function apply1999JockeyPostRaceConsequences({state,race,results,emit}){
    source_race_id:race.id,reported_date:day
   };
   j.availability=availability;
-  const refunded=refundFutureMounts(state,j,availability,emit);
+  const refunded=cancel1999PaidFutureJockeyMounts(state,j,availability,emit);
   incidents++;refunds+=refunded.count;
   emit('JOCKEY_POST_RACE_UNAVAILABLE',{
    jockey_id:j.id,race_id:race.id,kind:incident.kind,
