@@ -14,6 +14,10 @@ export const LOCAL_HORSE_NAMING_SCHEMA='WTW_LOCAL_HORSE_NAMING_V485';
 // Freeze behavioral revision per named cohort when game foaling becomes save-backed.
 // This V486 marker changes selection and fail-closed audit, not the V485 wire schema.
 export const LOCAL_HORSE_NAMING_ALGORITHM_REVISION='WTW_LOCAL_NAMING_RULES_V489';
+// Frozen genesis revisions are part of the persisted 1999 world identity.
+// Future editor preference/ranker versions MUST NOT relabel existing horses.
+export const OPENING_PROVISIONAL_HORSE_NAMING_REVISION='WTW_LOCAL_NAMING_RULES_V488:OPENING_PROVISIONAL_V1';
+export const OPENING_INDUSTRY_HORSE_NAMING_REVISION='WTW_LOCAL_NAMING_RULES_V488:OPENING_INDUSTRY_V1';
 const norm=x=>String(x||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('en-US').replace(/[^a-z0-9]/g,'');
 const clean=x=>String(x||'').trim();
 const fnv=s=>{let h=2166136261;for(const x of String(s)){h^=x.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
@@ -329,8 +333,7 @@ export function generateProvisional1999HorseNames({
   reserved.add(key);names.push(candidate);
  }
  if(names.length!==horseCount)throw Error('Provisional name inventory insufficient');
- return {names,algorithmRevision:LOCAL_HORSE_NAMING_ALGORITHM_REVISION+
-  ':OPENING_PROVISIONAL_V1',provisional:true,editable:true,
+ return {names,algorithmRevision:OPENING_PROVISIONAL_HORSE_NAMING_REVISION,provisional:true,editable:true,
   approvedForRegistration:false,source:'CURATED_LOCAL_VOCABULARY_NO_FOALING_EVIDENCE'};
 }
 
@@ -353,7 +356,7 @@ export function generateProvisional1999IndustryNameRoster({
  const baseCount=Math.min(horseCount,70000);
  const base=generateProvisional1999HorseNames({seed,horseCount:baseCount,protectedNames});
  if(horseCount===baseCount)return {...base,
-  algorithmRevision:LOCAL_HORSE_NAMING_ALGORITHM_REVISION+':OPENING_INDUSTRY_V1'};
+  algorithmRevision:OPENING_INDUSTRY_HORSE_NAMING_REVISION};
  const names=[...base.names],reserved=new Set([...protectedNames,...names].map(norm));
  const words=[...new Set(VOICES.flatMap(v=>[...v.names,...(V488_WHOLE_NAMES[v.id]||[])]).flatMap(
   n=>n.split(/\s+/).filter(w=>w.length>=3&&w.length<=10)))]
@@ -373,8 +376,7 @@ export function generateProvisional1999IndustryNameRoster({
  }
  if(names.length!==horseCount)
   throw Error('Opening industry horse-name vocabulary exhausted');
- return {names,algorithmRevision:LOCAL_HORSE_NAMING_ALGORITHM_REVISION+
-  ':OPENING_INDUSTRY_V1',provisional:true,editable:true,
+ return {names,algorithmRevision:OPENING_INDUSTRY_HORSE_NAMING_REVISION,provisional:true,editable:true,
   approvedForRegistration:false,
   source:'V488_LOCAL_VOICES_PROVISIONAL_OPENING_WORLD'};
 }
