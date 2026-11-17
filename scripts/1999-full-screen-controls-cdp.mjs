@@ -842,8 +842,20 @@ try {
  }));
 }finally {
  try{ws?.close()}catch{}
+ const browserStopped=new Promise(resolve=>{
+  if(!proc||proc.exitCode!==null||proc.signalCode!==null)return resolve();
+  proc.once('exit',resolve);
+ });
  try{proc?.kill('SIGTERM')}catch{}
  try{server.kill('SIGTERM')}catch{}
- await delay(300);
- rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150});
+ await Promise.race([browserStopped,delay(2500)]);
+ if(proc&&proc.exitCode===null&&proc.signalCode===null){
+  try{proc.kill('SIGKILL')}catch{}
+  await delay(450);
+ }
+ await delay(250);
+ // Chrome background profile writes may outlive the renderer process briefly.
+ // Do not hide a failing screen assertion with an unrelated temp-file race.
+ try{rmSync(profile,{recursive:true,force:true,maxRetries:30,retryDelay:250})}
+ catch(error){console.error('Nonfatal temporary Chrome profile cleanup: '+error.message)}
 }

@@ -3154,8 +3154,8 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
 /* ===== BEGIN folded source: public/next/identity-themes.css ===== */
 #wtwNextgen .ng-route-profile .ng-profile-view.ng-profile-track > .ng-profile-intro{box-shadow:inset 0 1px 0 #ffffff19,0 9px 24px #0009!important;}
 /* Logo-first theme: colors come from approved artwork, not presets. */
-
-
+/* WTW PROFILE DEPTH — integrated, no patch stack. Neutral layering remains when a logo is missing. */
+/* WTW ENTITY ATMOSPHERE v2 — official logo ink only; no geometry or status changes. */
 #wtwNextgen[data-wtw-identity][data-wtw-logo-theme="ready"]{
   --wtw-id-highlight:#f2f5ef; /* neutral readable text, not a brand swatch */
   --wtw-id-deep:color-mix(in srgb,var(--wtw-id-base) 36%,#10181d);
