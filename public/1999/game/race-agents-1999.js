@@ -280,7 +280,9 @@ export function book1999UnavailableJockeyReplacements({state,world,emit}){
  */
 export function propose1999AIRiderRetainers({state,world,emit}){
  const day=state.clock.date,rt=state.runtime.racing;
- if(!rt||!day.startsWith('1999-'))return {offered:0,evaluated:0};
+ if(!rt||!day.startsWith('1999-')||state.clock.days_elapsed<28||
+  !Array.isArray(world.entities?.organizations)||
+  !Array.isArray(world.entities?.people))return {offered:0,evaluated:0};
  const start=plus(day,5),end=plus(day,18);
  const selected=new Map();
  for(const h of horses(state)){
@@ -293,10 +295,17 @@ export function propose1999AIRiderRetainers({state,world,emit}){
  for(const [owner,h] of [...selected].sort((a,b)=>a[0].localeCompare(b[0]))){
   if(offered>=4)break;
   evaluated++;
+  if(!world.entities.organizations.some(o=>o.id===owner)||
+   !world.entities.people.some(p=>p.id===h.trainer_id))continue;
   const riders=Object.values(rt.jockeys).filter(j=>
    j.career_status!=='RETIRED'&&j.home_track_id===h.host_track_id&&
    !(j.availability&&j.availability.start_date<=end&&
-    j.availability.through_date>=start)).
+    j.availability.through_date>=start)&&
+   // Actual completed paid rides prove a relationship; a new name alone
+   // cannot justify a long-term automatic AI commitment.
+   (()=>{const bond=get1999JockeyPartnership(state,{
+    trainerId:h.trainer_id,ownerId:owner,jockeyId:j.id});
+    return bond.ownerRiddenMounts>=1&&bond.trainerRiddenMounts>=1})()).
    sort((a,b)=>(b.skills?.judgment??0)-(a.skills?.judgment??0)||
     (b.game_reputation??0)-(a.game_reputation??0)||
     a.id.localeCompare(b.id));

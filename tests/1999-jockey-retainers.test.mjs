@@ -192,8 +192,16 @@ test('retirement interrupts a genuine signed contract with correct owner refund'
 
 test('actual AI agents submit a market bid against player owner without debiting player cash',()=>{
  const s=fixture();
- s.clock.days_elapsed=7;
+ s.clock.days_elapsed=35;
  s.runtime.finances.operation_balances_minor[ownerB]=5000000;
+ // This was actually ridden by the owner's existing trainer and jockey.
+ const past='R-1999-REAL-PAID-RETAINER';
+ s.runtime.races[past]={id:past,date:'1999-05-30',track_id:t,
+  status:'OFFICIAL_SIM_RESULT',results:[{
+   horse_id:'H-RETAINER-B',jockey_share_minor:14000}]};
+ s.runtime.entries[past+':H-RETAINER-B']={id:past+':H-RETAINER-B',
+  race_id:past,horse_id:'H-RETAINER-B',trainer_id:trainerB,
+  owner_id:ownerB,jockey_id:j,status:'RESULTED',finish:1};
  const start='1999-06-06',end='1999-06-19';
  const q=quote1999JockeyRetainer(s,{jockeyId:j,startDate:start,endDate:end});
  const player=propose(s,ownerA,trainerA,
