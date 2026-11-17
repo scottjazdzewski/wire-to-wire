@@ -148,8 +148,10 @@ export async function auditPersistent1999World(store,manifest,{expectedHorses=nu
      h.birthplace?.country===farm.location.country,
      'foaling location mismatch '+h.id);
    }
-   check(Number.isInteger(h.foalYear)&&h.foalYear<=1998&&h.dateOfBirth&&
-    h.dateOfBirth.startsWith(String(h.foalYear)+'-'),
+   check(Number.isInteger(h.foalYear)&&h.foalYear<=1998&&
+    (approvedFounder?!h.dateOfBirth||
+     h.dateOfBirth.startsWith(String(h.foalYear)+'-'):
+     !!h.dateOfBirth&&h.dateOfBirth.startsWith(String(h.foalYear)+'-')),
     'unborn or invalid dated opening horse '+h.id);
    check(h.status!=='PROJECTED_NOT_YET_BORN',
     'forecast foal incorrectly entered opening horse census');
