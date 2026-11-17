@@ -2911,7 +2911,13 @@ function liveStableRosterView(directory=false){
   horses:horseRows(),adapter:window.__WTW_1999_UI_DATA__,app:APP,
   ownerBadge:horseOwnerBadge,safe
  })||'<section class="ng-functional">Attribute table unavailable.</section>';
- const universe=directory?worldDirectoryHorseRows():null;
+ const canonicalBrowse=directory?window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.worldHorseBrowse:null;
+ const directoryCriteria=directory?window.WTW1999RosterFilters?.get(APP,'World|1999 Horses')||{}:{};
+ const universe=directory&&canonicalBrowse?canonicalBrowse({
+  offset:Math.max(0,APP.directoryPage||0)*160,limit:160,
+  search:APP.directorySearch,sort:APP.directorySort,
+  desc:APP.directorySortDesc,filters:directoryCriteria}):
+  directory?worldDirectoryHorseRows():null;
  const horses=directory?universe.items:horseRows(),races=racingRows(),game=state(),files=currentMessages();
  const search=(directory?APP.directorySearch:APP.stableSearch).trim().toLowerCase();
  const all=horses.map(h=>directory?liveDirectoryHorseData(h,game,files,races):
@@ -2998,7 +3004,13 @@ function liveStableRosterView(directory=false){
    '" placeholder="Horse, owner, trainer, status…" autocomplete="off"/><div class="ng-rs-filters">'+filters+'</div>'+
    rosterDensityControls(directory?'directory':'stable',mode)+'</div>'+
   (window.WTW1999RosterFilters?.render(columns,stableCriteria,safe,scope)||'')+
-  '<section class="ng-rs-roster"><header><strong>HORSE MANAGEMENT ROSTER</strong><span class="ng-stable-visible">'+filtered.length+' OF '+all.length+
+  (directory&&canonicalBrowse?'<div class="ng-rs-tools" role="group" aria-label="World horse directory pages">'+
+   '<button type="button" data-ng="directory-page" data-val="-1"'+
+    ((APP.directoryPage||0)<=0?' disabled':'')+'>PREVIOUS 160</button>'+ 
+   '<span>PAGE '+((APP.directoryPage||0)+1)+' OF '+Math.max(1,Math.ceil(universe.total/160))+'</span>'+ 
+   '<button type="button" data-ng="directory-page" data-val="1"'+
+    ((APP.directoryPage||0)+1>=Math.ceil(universe.total/160)?' disabled':'')+'>NEXT 160</button></div>':'')+
+  '<section class="ng-rs-roster"><header><strong>HORSE MANAGEMENT ROSTER</strong><span class="ng-stable-visible">'+filtered.length+' OF '+(directory?universe.total:all.length)+
    ' HORSES · CLICK HEADINGS TO SORT</span></header>'+
    '<div class="ng-rs-scroll" tabindex="0" role="region" aria-label="Sortable horse roster; horizontally scroll for every column"><table class="ng-rs-table '+(mode==='compact'?'compact':'all')+
    '"><thead><tr>'+th+'</tr></thead><tbody>'+ (rowHTML||'<tr><td colspan="17" class="ng-rs-no-results">'+safe(emptyRosterMessage)+'</td></tr>')+
@@ -4995,9 +5007,15 @@ window.addEventListener('click',e=>{
    capacity:farm.capacity||'',status:'1999 TEST WORLD FACILITY',_testGenerated:true});
  }
  if(key==='named-entity')return openEntityRecord(btn.dataset.name||'',btn.dataset.kind||'',btn.dataset.track?{_track:btn.dataset.track}:null);
- if(key==='directory-sort'){if(APP.directorySort===val)APP.directorySortDesc=!APP.directorySortDesc;else{APP.directorySort=val;APP.directorySortDesc=false}return paint()}
+ if(key==='directory-sort'){if(APP.directorySort===val)APP.directorySortDesc=!APP.directorySortDesc;else{APP.directorySort=val;APP.directorySortDesc=false}APP.directoryPage=0;return paint()}
  if(key==='directory-filter'){APP.directoryFilter=val;return paint()}
  if(key==='directory-mode'){APP.directoryMode=val;return paint()}
+ if(key==='directory-page'){
+  const total=Number(window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.worldHorseCount||0);
+  const max=Math.max(0,Math.ceil(total/160)-1);
+  APP.directoryPage=Math.min(max,Math.max(0,(APP.directoryPage||0)+Number(val)));
+  return paint();
+ }
  if(key==='directory-horse'){
   const record=APP.directoryHorseItems.find(x=>x._directoryId===val)?._directoryRecord;
   if(!record)return;
@@ -5203,7 +5221,7 @@ root.addEventListener('input',event=>{
   return;
  }
  if(input.matches('input[data-ng-input="directory-search"]')){
-  APP.directorySearch=input.value;const cursor=input.selectionStart;
+  APP.directorySearch=input.value;APP.directoryPage=0;const cursor=input.selectionStart;
   paint();const found=root.querySelector('input[data-ng-input="directory-search"]');
   if(found){found.focus();found.setSelectionRange(cursor,cursor)}return;
  }
