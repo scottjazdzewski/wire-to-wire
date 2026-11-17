@@ -2923,7 +2923,7 @@ function savedWorldAffiliationStableView(){
  const entityId=picked?.id||career.operationId;
  const linked=career.worldEntityById(kind,entityId);
  const name=linked?.name||career.operationName||'Unresolved organization';
- const field=kind==='person'?'trainerId':'ownerId';
+ const field=kind==='person'?'trainerId':kind==='track'?'homeTrackId':'ownerId';
  const criterion={};criterion[field]=entityId;
  const search=APP.stableSearch||'';
  const page=Math.max(0,APP.savedStablePage||0);
@@ -2944,6 +2944,7 @@ function savedWorldAffiliationStableView(){
   safe(e._affiliationKind+':'+e._id)+'">'+safe(e.name)+' <small>'+
   safe(e._affiliationKind==='person'?'TRAINER':'ORGANIZATION')+' · '+safe(e._id)+'</small></button>').join('');
  const caption=kind==='person'?'HORSES ASSIGNED TO THIS TRAINER':
+  kind==='track'?'HORSES BASED AT THIS RACECOURSE':
   'HORSES OWNED BY THIS ORGANIZATION';
  const rows=result.items.map(h=>'<tr><td><button type="button" data-ng="saved-stable-horse" data-val="'+
   safe(h._id)+'">'+safe(h.name)+'</button><small> '+safe(h._id)+'</small></td>'+
@@ -3710,7 +3711,9 @@ function savedIndustryProfile(kind,id){
   '</strong></header><h2>'+safe(record.name)+'</h2>'+
   '<p>Immutable ID: '+safe(id)+' · World: '+safe(career.worldId)+
   ' · Career date: '+safe(career.date)+'</p>'+
-  '<div class="ng-world-editor-actions">'+actions+'</div>'+
+  '<div class="ng-world-editor-actions">'+actions+
+  (kind!=='horse'?'<button type="button" data-ng="saved-world-related-horses" data-val="'+
+   safe(kind+':'+id)+'">VIEW LINKED HORSES IN STABLE</button>':'')+'</div>'+
   (APP.savedWorldEditError?'<p role="status">'+safe(APP.savedWorldEditError)+'</p>':'')+
   (editing?'<div class="ng-world-editor-fields">'+controls+'</div>'+
    '<p>Relationship ID changes are validated. Active race-barn transfers require the game operations screen.</p>':
@@ -5120,6 +5123,16 @@ window.addEventListener('click',e=>{
   const max=Math.max(0,Math.ceil(total/160)-1);
   APP.directoryPage=Math.min(max,Math.max(0,(APP.directoryPage||0)+Number(val)));
   return paint();
+ }
+ if(key==='saved-world-related-horses'){
+  const index=val.indexOf(':'),kind=val.slice(0,index),id=val.slice(index+1);
+  const api=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+  const related=api?.worldEntityById?.(kind,id);
+  if(!related||!['organization','person','track'].includes(kind))return;
+  if(kind==='person'&&String(related.role).toLowerCase()!=='trainer')return;
+  APP.savedStableAffiliation={kind,id};APP.savedStablePage=0;
+  APP.savedStableView='linked';APP.stableSearch='';APP.savedStableSearch='';
+  return openMenu('Stable');
  }
  if(key==='saved-stable-choose'){
   const separator=val.indexOf(':'),kind=val.slice(0,separator),
