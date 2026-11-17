@@ -664,6 +664,24 @@ test('two seeds persist juvenile debuts and mature attrition; second seed runs 3
    assert.equal(final.lifecycle.population,10000+
     Object.values(final.lifecycle.birthsByYear).reduce((a,b)=>a+b,0)-
     final.lifecycle.horseDeaths);
+   if(year===2001){
+    await savePersistent1999CareerRun(store,manifest,{runId,
+     gameDate:'2001-04-01',player});
+    const seasonalStarts=(await readPersistent1999LifecycleEvents(store,manifest,
+     runId,'2001-04-01')).find(x=>x.type==='JUVENILE_RACING_READINESS');
+    assert.ok(seasonalStarts?.started>0,
+     'living 1999 foals must enter their actual owner circuits at age two');
+    const child=await readPersistent1999LifecycleHorse(store,manifest,runId,
+     seasonalStarts.startedHorseIds[0]);
+    assert.equal(child.status,'RACING');
+    assert.equal(child.racingDebutDate,'2001-04-01');
+    assert.ok(child.homeTrackId?.startsWith('T-')&&child.trainerId?.startsWith('P-'));
+    assert.ok(child.relationships.some(edge=>
+     edge.type==='HOME_TRACK'&&edge.toId===child.homeTrackId));
+    assert.ok(child.relationships.some(edge=>
+     edge.type==='TRAINED_BY'&&edge.toId===child.trainerId));
+    assert.ok(child.damId&&child.sireId&&child.ownerId&&child.foalingFarmId);
+   }
   }
   assert.equal(final.lifecycle.seasonYear,finalYear);
   assert.ok(final.lifecycle.matureHorseDeaths>0);
