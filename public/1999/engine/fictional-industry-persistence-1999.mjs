@@ -543,6 +543,36 @@ export async function loadPersistent1999CareerRun(store,manifest,runId){
  return {...record,lifecycle:checkpoint??record.lifecycle??null};
 }
 
+/**
+ * Validate imported portable careers after compatible lifecycle schema
+ * evolution. The gameplay run, owner, date, version, world and every saved
+ * race result must be unchanged. A previously bundled 1999 career can have
+ * fewer lifecycle metadata fields, and its legacy 'racingPopulation' counted
+ * unstarted two-year-old prospects as potential runners. Ignore that ONE
+ * corrected derived counter, but reject changes to population, births,
+ * deaths, identities or any other field that existed in the old snapshot.
+ *
+ * Preserving existing local progress remains strict byte-for-byte comparison.
+ */
+export function samePersistent1999CareerImportReadback(expected,actual,
+ {preservedRun=false}={}){
+ if(!expected||!actual||typeof expected!=='object'||
+  typeof actual!=='object')return false;
+ if(preservedRun)return JSON.stringify(actual)===JSON.stringify(expected);
+ const identity=['schema','worldId','worldSeed','worldSchema','runId',
+  'gameDate','player','changes','version'];
+ if(!identity.every(key=>JSON.stringify(actual[key])===JSON.stringify(expected[key])))
+  return false;
+ if(!expected.lifecycle)return actual.lifecycle==null;
+ if(!actual.lifecycle||typeof actual.lifecycle!=='object')return false;
+ for(const [key,value] of Object.entries(expected.lifecycle)){
+  if(key==='racingPopulation')continue;
+  if(JSON.stringify(actual.lifecycle[key])!==JSON.stringify(value))
+   return false;
+ }
+ return true;
+}
+
 /** Effective per-career horse record; births and status changes survive reopen. */
 export async function readPersistent1999LifecycleHorse(store,manifest,runId,horseId){
  if(manifest?.status!=='COMPLETE'||typeof runId!=='string'||typeof horseId!=='string')
