@@ -2948,7 +2948,8 @@ function savedWorldAffiliationStableView(){
  const career=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
  const savedState=state();
  const approvedWorkplaceId=savedState?.organization?.id||
-  savedState?.stable?.organizationId||null;
+  savedState?.stable?.organizationId||
+  window.__WTW_1999_UI_DATA__?.sourceOwnerId||null;
  const foundingEmployer=!APP.savedStableAffiliation&&
   !APP.savedStableIgnoreDefaultEmployer&&approvedWorkplaceId?
   world1999Data?.organizations?.find(o=>o.id===approvedWorkplaceId):null;
@@ -3026,7 +3027,8 @@ function savedWorldAffiliationStableView(){
   '</section>';
 }
 function liveStableRosterView(directory=false){
- const savedOrgId=state()?.organization?.id||state()?.stable?.organizationId;
+ const savedOrgId=state()?.organization?.id||state()?.stable?.organizationId||
+  window.__WTW_1999_UI_DATA__?.sourceOwnerId;
  const approvedOrgSelected=APP.savedStableAffiliation?.kind==='founding'||
   Boolean(savedOrgId&&world1999Data?.organizations?.some(x=>x.id===savedOrgId));
  if(!directory&&APP.savedStableView!=='active'&&
