@@ -223,7 +223,8 @@ function breakingName(seed,i,attempt){
  */
 export function createOrganizationNameRoster({
  seed,ownerCount,barnCount,farmCount,breakingCount=0,
- protectedNames=[],principalNames=[],trainerNames=[],sourceOwnerNames=[],farmKindPlan=null,
+ protectedNames=[],principalNames=[],trainerNames=[],
+ sourceOwnerNames=[],sourceFarmNames=[],sourceBarnNames=[],farmKindPlan=null,
  alignPrincipalSurnames=false,principalPrimarySurnames=[],trainerPrimarySurnames=[],
  ownerContexts=[],farmContexts=[],trainerContexts=[],breakingContexts=[],
  ownerPartnershipLimit=null,soleOwnerPercent=null,externalNameIndex=null
@@ -249,20 +250,23 @@ export function createOrganizationNameRoster({
  }
  for(const n of [ownerCount,barnCount,farmCount,breakingCount])
   if(!Number.isInteger(n)||n<0)throw Error('Invalid naming count');
- // Source owners are approved, immutable inputs, not candidates. Reserve ALL
- // their names before generating farms or barns; otherwise a new business
- // can accidentally take an existing owner's exact or distinctive root.
- if(!Array.isArray(sourceOwnerNames)||sourceOwnerNames.length>ownerCount)
-  throw Error('Invalid source owner name list');
+ // Approved source names are immutable slot assignments, not candidate
+ // phrases. Reserve owner, breeding farm and racing barn names together BEFORE
+ // generating anything; never replace a recognized stud with a fake alias.
  const lockedSourceNames=[],sourceNameKeys=new Set();
- for(const name of sourceOwnerNames){
-  if(name===null||name===undefined||name==='')continue;
-  if(typeof name!=='string'||!name.trim()||name!==name.trim())
-   throw Error('Invalid approved source owner name');
-  const key=norm(name);
-  if(sourceNameKeys.has(key))
-   throw Error('Duplicate approved source owner name: '+name);
-  sourceNameKeys.add(key);lockedSourceNames.push(name);
+ for(const [kind,names,limit] of [['owner',sourceOwnerNames,ownerCount],
+  ['farm',sourceFarmNames,farmCount],['barn',sourceBarnNames,barnCount]]){
+  if(!Array.isArray(names)||names.length>limit)
+   throw Error('Invalid source '+kind+' name list');
+  for(const name of names){
+   if(name===null||name===undefined||name==='')continue;
+   if(typeof name!=='string'||!name.trim()||name!==name.trim())
+    throw Error('Invalid approved source '+kind+' name');
+   const key=norm(name);
+   if(sourceNameKeys.has(key))
+    throw Error('Duplicate approved source organization name: '+name);
+   sourceNameKeys.add(key);lockedSourceNames.push(name);
+  }
  }
  const protectedBusinessNames=[...protectedNames,...lockedSourceNames];
  const used=new Set(protectedBusinessNames.map(norm).filter(Boolean));
@@ -301,6 +305,7 @@ export function createOrganizationNameRoster({
   farmKindPlan.some(k=>!kindsAllowed.has(k))))throw Error('Invalid explicit farm-purpose plan');
  const farmKinds=farmKindPlan===null?Array.from({length:farmCount},(_,i)=>classifyFarm(seed,i)):[...farmKindPlan];
  const farms=Array.from({length:farmCount},(_,i)=>{
+  if(sourceFarmNames[i])return sourceFarmNames[i];
   const context={...farmContexts[i],
    // A proposed family surname for a farm name does not create a person link.
    familyName:farmContexts[i]?.familyName||draw(SURNAMES,seed,'v7-farm-family:'+i)};
@@ -365,6 +370,7 @@ export function createOrganizationNameRoster({
   familyFrequency.set(key,(familyFrequency.get(key)||0)+1);
  }
  const barns=Array.from({length:barnCount},(_,i)=>{
+  if(sourceBarnNames[i])return sourceBarnNames[i];
   const family=trainerPrimarySurnames[i]||surname(trainerNames[i]);
   return claim(a=>a<48?
    trainerContexts[i]?.namingYear>1999?
