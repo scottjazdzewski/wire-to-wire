@@ -631,6 +631,32 @@ try{
    if(saved.lifecycle.population!==300000+saved.lifecycle.birthsByYear[1999]+
     saved.lifecycle.birthsByYear[2000]-saved.lifecycle.horseDeaths)
     throw Error('Full-world population checkpoint does not equal opening horses plus births less deaths');
+   // The 300k industry runs in a separate career key, never the shared
+   // May 1999 checkpoint. Certify real mature transitions through 2005.
+   let final2005=saved;
+   const adultYearChecks=[];
+   for(let season=2002;season<=2005;season++){
+    final2005=await save(season+'-01-01',season-1995);
+    const events=await api.readPersistent1999LifecycleEvents(store,manifest,
+     runId,season+'-01-01');
+    const mature=events.find(event=>event.type==='MATURE_HORSE_LIFECYCLE');
+    const young=events.filter(event=>event.type==='YOUNGSTOCK_ATTRITION')
+     .reduce((sum,event)=>sum+event.deaths,0);
+    if(!mature||mature.deaths<=0||
+     final2005.lifecycle.deathsByYear[season]!==young+mature.deaths)
+     throw Error('Full 300k adult mortality did not reconcile in '+season);
+    const births=Object.values(final2005.lifecycle.birthsByYear)
+     .reduce((sum,count)=>sum+count,0);
+    if(final2005.lifecycle.population!==300000+births-
+     final2005.lifecycle.horseDeaths)
+     throw Error('Full 300k living population drift in '+season);
+    adultYearChecks.push({season,adultDeaths:mature.deaths,
+     racingRetirements:mature.retired,population:final2005.lifecycle.population});
+   }
+   const persisted2005=await api.loadPersistent1999CareerRun(store,manifest,runId);
+   if(persisted2005.gameDate!=='2005-01-01'||
+    persisted2005.lifecycle.population!==final2005.lifecycle.population)
+    throw Error('300k five-year lifecycle checkpoint did not save and reopen');
    return {runId,openingHorseCount:saved.lifecycle.openingHorseCount,
     population2000:year2000.lifecycle.population,population2001:saved.lifecycle.population,
     births1999:saved.lifecycle.birthsByYear[1999],births2000:saved.lifecycle.birthsByYear[2000],
@@ -657,7 +683,9 @@ try{
      manifest.seed+':'+runId+':season:1999')).marketConditions.marketIndex,
     marketIndex2000:season2000.marketConditions.marketIndex,
     foalId:sample.foalId,birthDate:sample.birthDate,agedFoalId:survivor.foalId,
-    deceasedHorseId:deadId,retiredId,graduateId};
+    deceasedHorseId:deadId,retiredId,graduateId,
+    adultYearChecks,population2005:final2005.lifecycle.population,
+    matureDeaths2005:final2005.lifecycle.matureHorseDeaths};
   }finally{store.close()}
  })()`;
  const lifecycle=await browser.evalJS(lifecycleProbe);
