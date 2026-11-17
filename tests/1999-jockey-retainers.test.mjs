@@ -11,6 +11,12 @@ import {assessJockeySchedule}
  from '../public/1999/engine/jockey-engagements-1999.mjs';
 import {propose1999AIRiderRetainers}
  from '../src/game/race-agents-1999.js';
+import {readFileSync,copyFileSync,mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {gunzipSync} from 'node:zlib';
+import {unpackShared1999Career}
+ from '../public/1999/engine/shared-1999-career-package.mjs';
 
 const j='P-1999-RETAINER-JOCKEY',
  ownerA='O-1999-RETAINER-PLAYER',ownerB='O-1999-RETAINER-AI',
@@ -234,4 +240,61 @@ test('owner may terminate live retainer once; explicit notice penalty and real r
  assert.throws(()=>act(s,'TERMINATE_1999_JOCKEY_RETAINER',
   {contract_id:b.id},'system'),/live signed retainer/i);
  validate1999JockeyRetainers(JSON.parse(JSON.stringify(s)),world);
+});
+
+test('actual 300k shared May29 career owner/jockey money and identity survive a COPIED contract decision',async()=>{
+ const source=new URL('../public/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER.wtwcareer.gz',
+  import.meta.url);
+ const bytes=readFileSync(source),dir=mkdtempSync(join(tmpdir(),'wtw-jockey-retainer-'));
+ const path=join(dir,'WTW-1999-SHARED-CAREER.COPY.wtwcareer.gz');
+ try{
+  copyFileSync(source,path);
+  assert.deepEqual(readFileSync(path),bytes);
+  const checkpoint=await unpackShared1999Career(gunzipSync(readFileSync(path)));
+  assert.equal(checkpoint.world.worldId,'WTW1999FullIndustry-COHORTS-V2-H300000');
+  assert.equal(checkpoint.world.horseCount,300000);
+  assert.equal(checkpoint.world.seed,19990101);
+  const original=checkpoint.careerRecord.changes.canonicalRun;
+  assert.equal(original.clock.date,'1999-05-29');
+  const game=structuredClone(original),owner=game.player.operation_id;
+  const horse=Object.values(game.runtime.registered_horses.by_id).
+   find(h=>h.owner_organization_id===owner&&h.trainer_id&&h.starting_attributes);
+  const jockey=Object.values(game.runtime.racing.jockeys).
+   sort((a,b)=>a.id.localeCompare(b.id))[0];
+  assert.ok(horse&&jockey&&owner&&game.runtime.finances.operation_balances_minor[owner]>0,
+   'Use the original actual saved owner, horse, trainer, rider and owner wallet');
+  const projectedWorld={entities:{organizations:[{id:owner}],
+   people:[{id:horse.trainer_id},{id:jockey.id}]}};
+  const quote=quote1999JockeyRetainer(game,{jockeyId:jockey.id,
+   startDate:'1999-06-05',endDate:'1999-06-18'});
+  const fee=quote.minimum_fee_minor+10000,
+   balanceBefore=game.runtime.finances.operation_balances_minor[owner],
+   riderBefore=game.runtime.racing.jockey_finances_minor[jockey.id],
+   ledgerBefore=game.runtime.finances.ledger.length;
+  assert.ok(balanceBefore>=fee);
+  jockeyRetainerAction({state:game,world:projectedWorld,
+   command:{actor:'player',type:'OFFER_1999_JOCKEY_RETAINER',
+    payload:{owner_id:owner,trainer_id:horse.trainer_id,
+     jockey_id:jockey.id,start_date:'1999-06-05',end_date:'1999-06-18',
+     total_fee_minor:fee}},emit:()=>{}});
+  assert.equal(game.runtime.finances.operation_balances_minor[owner],balanceBefore,
+   'Real shared career remains uncharged while rider offer is pending');
+  game.clock.date='1999-06-04';
+  const accepted=advance1999JockeyRetainers({state:game,world:projectedWorld,
+   emit:()=>{}});
+  assert.equal(accepted.signed,1);
+  assert.equal(game.runtime.finances.operation_balances_minor[owner],
+   balanceBefore-fee);
+  assert.equal(game.runtime.racing.jockey_finances_minor[jockey.id],
+   riderBefore+fee);
+  assert.equal(game.runtime.finances.ledger.length,ledgerBefore+2);
+  assert.equal(game.player.operation_id,owner);
+  assert.equal(game.run_id,original.run_id);
+  assert.equal(horse.trainer_id,game.runtime.registered_horses.by_id[horse.horse_id].trainer_id);
+  validate1999JockeyRetainers(JSON.parse(JSON.stringify(game)),projectedWorld);
+  assert.deepEqual(JSON.parse(JSON.stringify(game.runtime.racing.retainers)),
+   game.runtime.racing.retainers,'No retainer loss after JSON re-open');
+  assert.equal(original.clock.date,'1999-05-29');
+  assert.deepEqual(readFileSync(source),bytes,'Immutable canonical reference unchanged');
+ }finally{rmSync(dir,{recursive:true,force:true})}
 });
