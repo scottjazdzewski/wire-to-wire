@@ -914,7 +914,7 @@ async function prepareLifecycleSeason(store,manifest,runKey,{year,mareRecords,
 }
 async function turnoverForYear(store,manifest,runKey,year,horseUpdates,
  {overrideMap=new Map(),poolCache=new Map(),stallionPoolCache=new Map(),
-  birthCohortCache=new Map(),graduatedYears=new Map(),
+  maturePoolCache=new Map(),birthCohortCache=new Map(),graduatedYears=new Map(),
   graduatedStallionYears=new Map(),directory,racingPopulation,
   previousLiveFoals=0}={}){
  const openingMares=await readPoolRecords(store,manifest,runKey,year-1,
@@ -925,8 +925,8 @@ async function turnoverForYear(store,manifest,runKey,year,horseUpdates,
  // Opening census rows never mutate. A retired or deceased runner must
  // not be selected again merely because its immutable 1999 row says RACING.
  const priorMatureLedger=year===2000?null:
-  await store.get('industryLifecycle',lifecycleKey(runKey,
-   'mature-pool:'+(year-1)));
+  (maturePoolCache.get(year-1)||await store.get('industryLifecycle',
+   lifecycleKey(runKey,'mature-pool:'+(year-1))));
  const activeRacingIds=Array.isArray(priorMatureLedger)?
   new Set(priorMatureLedger.filter(h=>h.status==='RACING').map(h=>h.id)):null;
  const stillRacing=horse=>!activeRacingIds||activeRacingIds.has(horse.id);
@@ -1451,8 +1451,8 @@ async function advancePersistent1999IndustryLifecycle(store,manifest,{
    const attrition=await youngHorseAttritionForYear(lifecycleStore,manifest,
     runKey,year,horseUpdates,{overrideMap,birthCohortCache,addEvent});
    const turnover=await turnoverForYear(lifecycleStore,manifest,runKey,year,horseUpdates,
-    {overrideMap,poolCache,stallionPoolCache,birthCohortCache,graduatedYears,
-     graduatedStallionYears,directory,
+    {overrideMap,poolCache,stallionPoolCache,maturePoolCache,
+     birthCohortCache,graduatedYears,graduatedStallionYears,directory,
      racingPopulation:current.racingPopulation,
      previousLiveFoals:current.birthsByYear[year-1]||0});
    for(const update of horseUpdates)overrideMap.set(update.id,update);
