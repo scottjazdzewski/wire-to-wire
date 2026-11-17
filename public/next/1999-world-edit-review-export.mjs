@@ -19,7 +19,11 @@ export function buildWorldEditReviewExport({manifest,world,run,worldEdits,create
    if(split<1||!TYPES.has(kind)||!id||!fields||
      typeof fields!=='object'||Array.isArray(fields)||!Object.keys(fields).length)
     throw Error('Saved world edits contain a malformed entity reference');
-   return {kind,id,fields:structuredClone(fields)};
+   if(Object.entries(fields).some(([key,value])=>typeof key!=='string'||
+     typeof value!=='string'||key==='__proto__'||key==='constructor'))
+    throw Error('Saved world edits contain invalid field content');
+   return {kind,id,fields:Object.fromEntries(Object.entries(fields).map(
+    ([key,value])=>[key,value]))};
   });
  const counts=Object.fromEntries([...TYPES].map(kind=>[
   kind,records.filter(record=>record.kind===kind).length]));
