@@ -7,7 +7,7 @@ import {createPersistent1999Industry,readPersistent1999IndustryBatch,findPersist
  reopenPersistent1999Industry,encodePersistent1999StoredValue,
  decodePersistent1999StoredValue,PERSISTENT_INDUSTRY_COMPRESSION_SCHEMA,
  readPersistent1999LifecycleHorse,readPersistent1999FoalForecasts,
- readPersistent1999LifecycleEvents}
+ readPersistent1999LifecycleEvents,samePersistent1999CareerImportReadback}
  from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
 import {resolve1999FoalBirth} from '../public/1999/engine/fictional-industry-breeding-book-1999.mjs';
 function memoryStore(){
@@ -750,4 +750,42 @@ test('a single 1999-to-2005 save matches sequential annual lifecycle commits',as
  }
  assert.deepEqual((await loadPersistent1999CareerRun(store,manifest,singleId))
   .lifecycle,oneShot.lifecycle);
+});
+
+test('portable 1999 career import accepts only additive lifecycle metadata upgrades',()=>{
+ const original={schema:'WTW_INDUSTRY_CAREER_RUN_V1',
+  worldId:'WTW1999',worldSeed:19990101,worldSchema:'WTW_PERSISTENT_INDUSTRY_1999_V1',
+  runId:'WTW-RUN-1999-19990101-SIZE-300000',gameDate:'1999-05-29',
+  player:{role:'owner',organizationId:'O-FICTIONAL-OWNER-1'},
+  changes:{canonicalRun:{run_id:'R-1',raceResults:[{horseId:'H-1',finish:1}]}},
+  version:5,lifecycle:{schema:'WTW_INDUSTRY_LIFECYCLE_V1',
+   runId:'WTW-RUN-1999-19990101-SIZE-300000',openingHorseCount:300000,
+   population:340000,seasonYear:1999,lastDate:'1999-05-29',
+   foalsBorn:40000,horseDeaths:0,racingPopulation:180000,
+   birthsByYear:{1999:40000}}};
+ const upgraded=structuredClone(original);
+ upgraded.lifecycle={...upgraded.lifecycle,racingPopulation:157000,
+  matureHorseDeaths:0,retiredRacehorses:0,juvenileDebuts:12400};
+ assert.ok(samePersistent1999CareerImportReadback(original,upgraded),
+  'a newer lifecycle may correct its derived racing count and add counters');
+ assert.ok(samePersistent1999CareerImportReadback(original,original,
+  {preservedRun:true}));
+ assert.equal(samePersistent1999CareerImportReadback(original,upgraded,
+  {preservedRun:true}),false,'existing local progress is preserved exactly');
+ const modifiedCases=[
+  {changes:{canonicalRun:{run_id:'R-1',raceResults:[]}}},
+  {runId:'WRONG-RUN-ID'},
+  {worldId:'WRONG-WORLD-ID'},
+  {gameDate:'1999-05-30'},
+  {version:6},
+  {lifecycle:{...upgraded.lifecycle,population:339999}},
+  {lifecycle:{...upgraded.lifecycle,foalsBorn:39999}},
+  {lifecycle:{...upgraded.lifecycle,horseDeaths:1}},
+  {lifecycle:{...upgraded.lifecycle,seasonYear:2000}}
+ ];
+ for(const patch of modifiedCases)
+  assert.equal(samePersistent1999CareerImportReadback(original,
+   {...upgraded,...patch}),false,
+   'an imported run must reject altered identity, results or living census');
+ assert.equal(samePersistent1999CareerImportReadback(original,null),false);
 });
