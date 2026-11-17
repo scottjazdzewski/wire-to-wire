@@ -12,7 +12,7 @@ import {plan1999Ecosystem} from '/1999/engine/fictional-industry-ecosystem-1999.
 import {assessFictionalOwnerCapacity,planFictionalOwnerPortfolios}
  from '/1999/engine/fictional-owner-portfolio-planner.mjs';
 
-async function industryDirectories(seed){
+async function industryDirectories(seed,targetOpeningHorses=null){
  const [geoResponse,foundingResponse]=await Promise.all([
   fetch('/data/track-geography-v33.json'),
   fetch('/data/wtw-1999-founding-directory-v1.json')]);
@@ -35,7 +35,7 @@ async function industryDirectories(seed){
     geographyProvenance:g.geography_status};
   });
  if(!tracks.length)throw Error('No approved operating 1999 tracks');
- const requestedSize=request.targetOpeningHorses??
+ const requestedSize=targetOpeningHorses??
   plan1999Ecosystem({seed,targetOpeningHorses:null}).openingRegistryHorses;
  const canonicalOrganizations=founding.organizations||[];
  const canonicalOwners=canonicalOrganizations.filter(o=>
@@ -188,7 +188,8 @@ self.addEventListener('message',async event=>{
  let store;
  try{
   send('STAGE',{message:'Loading the bundled 1999 geography and racecourse directory…'});
-  const directories=await industryDirectories(request.seed);
+  const directories=await industryDirectories(request.seed,
+   request.targetOpeningHorses??null);
   send('STAGE',{message:'Preparing the opening population and personnel in the background…'});
   store=await open1999IndustryDatabase();
   const manifest=await createPersistent1999Industry({

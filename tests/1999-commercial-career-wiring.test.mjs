@@ -32,6 +32,12 @@ test('compact career saves remain local and the manager adds no hosted runtime d
   !manager.includes("fetch('/api/"));
  assert.ok(industryWorker.includes("fetch('/data/track-geography-v33.json')"),
   'Track geography must come from a bundled local file');
+ assert.match(industryWorker,/industryDirectories\(seed,targetOpeningHorses=null\)/);
+ assert.match(industryWorker,/industryDirectories\(request\.seed,\s*request\.targetOpeningHorses\?\?null\)/);
+ const directoryBuilder=industryWorker.slice(industryWorker.indexOf('async function industryDirectories'),
+  industryWorker.indexOf("self.addEventListener('message'"));
+ assert.doesNotMatch(directoryBuilder,/request\.targetOpeningHorses/,
+  'the worker message must pass requested size into the directory builder explicitly');
 });
 
 test('custom-size worlds connect to the canonical playable race career',()=>{
