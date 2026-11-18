@@ -261,13 +261,14 @@ async function editSavedWorldEntity({kind,id,patch}={}){
  */
 // V10 opening horses already consume many of the original 601 whole-name
 // suggestions. Avoid showing names that cannot pass the real saved-world gate.
-let cachedAvailableNames={world:null,editVersion:-1,registered:null};
+let cachedAvailableNames={world:null,editVersion:-1,runRevision:-1,registered:null};
 function isSavedCareerHorseNameInUse(name){
  const career=activeWorldCareer;
  if(!career?.run||!/^WTW1999FullIndustry-COHORTS-V6-OWNER-V10-/.test(
   career.manifest?.worldId||''))return false;
  if(cachedAvailableNames.world!==career.world||
-  cachedAvailableNames.editVersion!==career.editVersion){
+  cachedAvailableNames.editVersion!==career.editVersion||
+  cachedAvailableNames.runRevision!==career.run.revision){
   const registered=new Set();
   for(const h of career.world.entities.horses||[]){
    const key=nameFeedbackKey(h.name);if(key)registered.add(key);
@@ -276,7 +277,8 @@ function isSavedCareerHorseNameInUse(name){
    const key=nameFeedbackKey(h.registered_name||h.name);
    if(key)registered.add(key);
   }
-  cachedAvailableNames={world:career.world,editVersion:career.editVersion,registered};
+  cachedAvailableNames={world:career.world,editVersion:career.editVersion,
+   runRevision:career.run.revision,registered};
  }
  return cachedAvailableNames.registered.has(nameFeedbackKey(name));
 }
