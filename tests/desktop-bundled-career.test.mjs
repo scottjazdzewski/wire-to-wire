@@ -50,7 +50,7 @@ test('desktop startup auto-loads the bundle while smoke runs can invoke it deter
  assert.match(manager,/window\.WTWDesktop\?\.runtime==='windows-desktop'&&!window\.WTWDesktop\.smokeMode/);
  assert.match(manager,/importSharedCareerFile\(file,\{preserveExistingProgress:true\}\)/);
  assert.match(manager,/sameShared1999WorldIdentity\(fullIndustryManifest,expected\)/);
- assert.match(manager,/wtw-shared-career-world-identity-v2/);
+ assert.match(manager,/wtw-shared-career-operation-inventory-v3/);
  assert.match(manager,/Existing local progress kept/);
  assert.match(manager,/new Worker\('\/next\/1999-industry-bootstrap-worker\.mjs/);
  assert.doesNotMatch(manager,/createPersistent1999Industry/,
