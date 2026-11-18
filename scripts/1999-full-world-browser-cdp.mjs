@@ -203,6 +203,35 @@ try{
  const careerAtStart=await readCareerSave();
  assert.equal(careerAtStart.operationId,'O-000061','Full-world career must open Kingsmere');
  assert.ok(careerAtStart.stableHorses>=5,'Kingsmere career lacks its approved opening inventory');
+ // Real saved V10 edit on a permanent existing horse ID, NOT a demo registry.
+ const editorHorseId=snap.immutableHorseId;
+ const editorNewName='V10 Acceptance World Horse';
+ const editorBefore=await browser.evalJS(`window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.worldHorseById?.(${JSON.stringify(editorHorseId)})?.name||null`);
+ assert.ok(editorBefore,'Active playable 300k World profile not available to the editor');
+ const editSaved=await browser.evalJS(`window.WTWCompactCareerManager.editSavedWorldEntity({
+  kind:'horse',id:${JSON.stringify(editorHorseId)},
+  patch:{name:${JSON.stringify(editorNewName)},biography:'Approved saved-career test identity'}})`);
+ assert.equal(editSaved.kind,'horse');
+ assert.equal(editSaved.id,editorHorseId);
+ const readCareerWorldEdit=async()=>browser.evalJS(`(async()=>{
+  const api=await import('/1999/engine/fictional-industry-persistence-1999.mjs');
+  const db=await api.open1999IndustryDatabase();
+  try{
+   const world=await api.reopenPersistent1999Industry(db,{seed:19990101,
+    worldId:${JSON.stringify(snap.worldId)}});
+   const runId='WTW-RUN-1999-19990101-SIZE-300000-OP-O-000061';
+   const saved=await api.loadPersistent1999CareerRun(db,world.manifest,runId);
+   return {name:saved?.changes?.worldEdits?.byId?.[${JSON.stringify('horse:'+editorHorseId)}]?.name||null,
+    count:Object.keys(saved?.changes?.worldEdits?.byId||{}).length,
+    horseCount:world.manifest.horseCount,runId:saved?.runId};
+  }finally{db.close()}
+ })()`);
+ const editedAtStart=await readCareerWorldEdit();
+ assert.equal(editedAtStart.name,editorNewName);
+ assert.equal(editedAtStart.horseCount,300000);
+ assert.ok(editedAtStart.count>=1);
+ const editedView=await browser.evalJS(`window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.worldHorseById?.(${JSON.stringify(editorHorseId)})?.name||null`);
+ assert.equal(editedView,editorNewName,'World profile still showed old horse name after durable save');
  const storageAfterStart=await browser.evalJS('navigator.storage.estimate()');
  await waitFor('full-world game-day control',async()=>{
   const ready=await browser.evalJS(`!!document.querySelector('[data-cc-action="advance-test-day"]')`);
@@ -227,6 +256,9 @@ try{
   const saved=await readCareerSave();
   return {done:!!saved&&saved.gameDate!==careerAtStart.gameDate,value:saved};
  },60000);
+ const editedAfterDay=await readCareerWorldEdit();
+ assert.equal(editedAfterDay.name,editorNewName,
+  'Advancing the actual 1999 gameplay career erased the saved World override');
  assert.equal(careerAfterDay.gameDate,dayAction.advanced.match(/GAME DATE (\d{4}-\d{2}-\d{2})/)?.[1],
   'The one-day game advance notice and persisted career date disagree');
  const storageAfterDay=await browser.evalJS('navigator.storage.estimate()');
@@ -249,6 +281,18 @@ try{
  const careerAfterProcessRestart=await readCareerSave();
  assert.deepEqual(careerAfterProcessRestart,careerAfterDay,
   'Played full-world career record changed or failed to reopen after Chromium restart');
+ const editedAfterRestart=await readCareerWorldEdit();
+ assert.equal(editedAfterRestart.name,editorNewName,
+  'Restart lost the career-owned World edit from IndexedDB');
+ await browser.evalJS('window.WTWCompactCareerManager.open().then(()=>true)');
+ const reopenedEditor=await waitFor('reopened saved World editor and immutable horse identity',async()=>{
+  const name=await browser.evalJS(`window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.worldHorseById?.(${JSON.stringify(editorHorseId)})?.name||null`);
+  return {done:name===editorNewName,value:name};
+ },120000);
+ assert.equal(reopenedEditor,editorNewName);
+ console.log('WTW_V10_WORLD_EDITOR_DURABLE_REOPEN_PASS '+
+  JSON.stringify({horseId:editorHorseId,before:editorBefore,after:reopenedEditor,
+   careerDate:careerAfterDay.gameDate,worldHorseCount:300000}));
  console.log('WTW_FULL_WORLD_PLAYED_SAVE_REOPEN_PASS '+JSON.stringify(careerAfterProcessRestart));
  if(process.env.WTW_PLAYABLE_WORLD_ONLY==='1'){
   // The purpose of the playable-world gate is to prove a complete world can
