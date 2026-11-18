@@ -261,7 +261,8 @@ export function normalizeFictionalWorldNamingSpec(input={}){
    ownerNamingPolicy.soleOwnerPercent<0||ownerNamingPolicy.soleOwnerPercent>100)))
   throw Error('Invalid owner naming policy settings');
  const ownerNameSourceModel=input.ownerNameSourceModel??'CENSUS_2000';
- if(!['CENSUS_2000','ARCHIVAL_1999_RACING_OWNERS'].includes(ownerNameSourceModel))
+ if(!['CENSUS_2000','ARCHIVAL_1999_RACING_OWNERS',
+  'ARCHIVAL_1999_RACING_OWNERS_SCALABLE_V11'].includes(ownerNameSourceModel))
   throw Error('Unsupported owner naming source model');
  const markets=marketList(input.markets);
  const originWeights=validatedCountryWeights(input.originWeightsByRole);
@@ -443,8 +444,9 @@ export function createFictionalWorldNameEngine(input){
   alignPrincipalSurnames:true,
   ownerPartnershipLimit:spec.ownerNamingPolicy?.partnershipLimit??null,
   soleOwnerPercent:spec.ownerNamingPolicy?.soleOwnerPercent??null,
-  ownerSurnameReferences:spec.ownerNameSourceModel==='ARCHIVAL_1999_RACING_OWNERS'?
-   VERIFIED_RACING_OWNER_SURNAME_INPUTS_1999:[]
+  ownerSurnameReferences:spec.ownerNameSourceModel.startsWith('ARCHIVAL_1999_RACING_OWNERS')?
+   VERIFIED_RACING_OWNER_SURNAME_INPUTS_1999:[],
+  scalableOwnerNames:spec.ownerNameSourceModel==='ARCHIVAL_1999_RACING_OWNERS_SCALABLE_V11'
  });
  const owningOrganizations=Object.freeze(org.owners.map((name,i)=>{
   const id=makeId(worldId,'OWNER',i),principal=principalPeople[i];
@@ -563,7 +565,7 @@ export function createFictionalWorldNameEngine(input){
   markets:markets.map(m=>[m.id,m.city,m.region,m.country,m.code,m.weight,m.breeding,m.racing,m.jockeyColony]),
   originWeights:spec.originWeights,colonyWeights:spec.jockeyColonyWeights,
   reserved:spec.protectedNames,ownerNamingPolicy:spec.ownerNamingPolicy,
-  ...(spec.ownerNameSourceModel==='ARCHIVAL_1999_RACING_OWNERS'?
+  ...(spec.ownerNameSourceModel.startsWith('ARCHIVAL_1999_RACING_OWNERS')?
    {ownerNameSourceModel:spec.ownerNameSourceModel}:{}),
   indexRevision:spec.externalNameIndex?.revision??null,
   ...(year>SUPPORTED_NAME_ERA?{organizationNameGeneration:GENERATIONAL_ORGANIZATION_NAME_MODEL}:{})
@@ -584,7 +586,7 @@ export function createFictionalWorldNameEngine(input){
   ownershipPartnershipsMinted:org.summary.partnershipGroupsCreated,
   personNameModel:PERSONNEL_NAME_MODEL,
   countryNameModel:GEO_NAME_MODEL,organizationNameModel:org.model||
-   (spec.ownerNameSourceModel==='ARCHIVAL_1999_RACING_OWNERS'?
+   (spec.ownerNameSourceModel.startsWith('ARCHIVAL_1999_RACING_OWNERS')?
     ARCHIVAL_RACING_OWNER_NAME_MODEL:ORGANIZATION_NAME_MODEL),
   authoritative:false,sourceCanonIncluded:false,
   horseNamesIncluded:false,tracksIncluded:false,committedToGame:false,counts});

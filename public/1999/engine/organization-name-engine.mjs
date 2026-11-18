@@ -5,6 +5,9 @@
  * Entity IDs, locations, ownership, and horse links are outside this module.
  */
 import {CENSUS_2000_OWNER_SURNAMES} from './census-2000-owner-surnames.mjs';
+import {proposeScalable1999OwnerBusinessName,SCALABLE_OWNER_BUSINESS_NAME_MODEL,
+ SCALABLE_OWNER_NAME_ATTEMPT_START,SCALABLE_OWNER_NAME_ATTEMPT_LIMIT}
+ from './scalable-owner-business-names-v11.mjs';
 import {
  ORGANIZATION_STYLE_MODEL,organizationNamingRegion,organizationNamingEra,
  contextualFarmCandidate,contextualOwnerCandidate,contextualStableCandidate,
@@ -14,6 +17,9 @@ import {
 } from './organization-naming-styles.mjs';
 export const ORGANIZATION_NAME_MODEL='WTW_1999_ORGANIZATION_NAMING_V7_CENSUS_2000_OWNER_LEXICON_PARTNERSHIPS';
 export const ARCHIVAL_RACING_OWNER_NAME_MODEL='WTW_1999_ORGANIZATION_NAMING_V10_CENSUS_2000_PLUS_ARCHIVAL_RACING_OWNER_NAMES';
+// Explicit future world selection or successful exhaustion fallback only.
+// Historic V10 directories and manifest identifiers stay byte-identical.
+export const SCALABLE_ARCHIVAL_RACING_OWNER_NAME_MODEL='WTW_1999_ORGANIZATION_NAMING_V11_SCALABLE_ARCHIVAL_OWNER_BUSINESSES';
 export const OWNERSHIP_ARCHETYPES=Object.freeze([
  'INDIVIDUAL_OWNER','FAMILY_OPERATION','PARTNERSHIP_OR_SYNDICATE',
  'CO_OWNERS','FARM_OWNERSHIP','RACING_COMPANY','PRIVATE_RACING_OPERATION'
@@ -252,7 +258,7 @@ export function createOrganizationNameRoster({
  alignPrincipalSurnames=false,principalPrimarySurnames=[],trainerPrimarySurnames=[],
  ownerContexts=[],farmContexts=[],trainerContexts=[],breakingContexts=[],
  ownerPartnershipLimit=null,soleOwnerPercent=null,externalNameIndex=null,
- ownerSurnameReferences=[]
+ ownerSurnameReferences=[],scalableOwnerNames=false
 }){
  if(!Number.isSafeInteger(seed)||seed<1)throw Error('Invalid naming seed');
  if(externalNameIndex!==null&&(!externalNameIndex||
@@ -265,6 +271,8 @@ export function createOrganizationNameRoster({
   soleOwnerPercent<0||soleOwnerPercent>100))throw Error('Invalid sole owner percentage');
  if(!Array.isArray(ownerSurnameReferences)||ownerSurnameReferences.some(name=>
   typeof name!=='string'||!name.trim()))throw Error('Invalid sourced owner surname references');
+ if(typeof scalableOwnerNames!=='boolean'||scalableOwnerNames&&!ownerSurnameReferences.length)
+  throw Error('V11 owner naming requires explicitly sourced archival surnames');
  const ownerSurnamePool=ownerSurnameReferences.length?
   Object.freeze([...new Set([...OWNER_SURNAMES,...ownerSurnameReferences])]):OWNER_SURNAMES;
  for(const [items,count,label] of [[ownerContexts,ownerCount,'owner'],[farmContexts,farmCount,'farm'],
@@ -313,7 +321,7 @@ export function createOrganizationNameRoster({
  const hasProtectedPrefixConflict=createProtectedOrganizationRootGuard(roots);
  const stems=new Map(),distinctiveRootCounts=new Map();
  const perCategory={owner:0,barn:0,farm:0,breaking:0};
- let retries=0;
+ let retries=0,scalableCandidateUsed=false;
  const reserve=(candidate,kind)=>{
   const key=norm(candidate),root=rootOf(candidate),stem=stemKey(candidate);
   if(!key||key.length<5||used.has(key)||!root||hasArtificialOrganizationPhrase(candidate)||
@@ -333,9 +341,19 @@ export function createOrganizationNameRoster({
   perCategory[kind]++;return true;
  };
  const claim=(make,kind,allow=null)=>{
-  for(let attempt=0;attempt<512;attempt++){
+  // Preserve the exact 512-attempt V10 sequence; only a V10 owner whose
+  // previous world would have failed can access the extra reserve.
+  // Explicit V11 worlds may use the enlarged lexicon from the first try.
+  const budget=kind==='owner'&&ownerSurnameReferences.length?
+   SCALABLE_OWNER_NAME_ATTEMPT_LIMIT:512;
+  for(let attempt=0;attempt<budget;attempt++){
    const candidate=make(attempt).replace(/\s+/g,' ').trim();
-   if((!allow||allow(candidate))&&reserve(candidate,kind)){retries+=attempt;return candidate}
+   if((!allow||allow(candidate))&&reserve(candidate,kind)){
+    retries+=attempt;
+    if(kind==='owner'&&ownerSurnameReferences.length&&
+     (scalableOwnerNames||attempt>=512))scalableCandidateUsed=true;
+    return candidate;
+   }
   }
   throw Error('Organization name pool exhausted for '+kind+'; expand the name lexicon');
  };
@@ -392,6 +410,8 @@ export function createOrganizationNameRoster({
   const partnershipSlotAvailable=ownerPartnershipLimit===null||
    partnershipGroupsCreated<ownerPartnershipLimit;
   const usePartnershipForm=plannedPartnership&&partnershipSlotAvailable;
+  const useExpandedOwnerStyle=scalableOwnerNames&&
+   hash(seed,'v11-owner-expanded-style:'+i)%100<24;
   const name=claim(attempt=>{
    if(usePartnershipForm){
     const coOwner=draw(ownerSurnamePool,seed,'owner-partner-surname:'+i+':'+attempt);
@@ -402,6 +422,20 @@ export function createOrganizationNameRoster({
     // real surname from the Census lexicon to the ownership record.
     return coOwner+' & '+preferred+' '+suffix;
    }
+   // Deliberately never change the original V10 first 512 attempts.
+   // This reserve activates only if an old V10 world would have failed,
+   // or if a NEW versioned world explicitly opts into V11 variation.
+   if(ownerSurnameReferences.length&&
+    ((scalableOwnerNames&&
+      (useExpandedOwnerStyle||attempt>=SCALABLE_OWNER_NAME_ATTEMPT_START))||
+     attempt>=512))
+    return proposeScalable1999OwnerBusinessName({
+     seed,index:i,
+     attempt:attempt>=SCALABLE_OWNER_NAME_ATTEMPT_START?
+      attempt:attempt+SCALABLE_OWNER_NAME_ATTEMPT_START,
+     principalName:principal,primarySurname:preferred,
+     region:context.region||'GENERAL_NORTH_AMERICA',surnames:ownerSurnamePool
+    });
    const candidate=attempt<48?
     context.namingYear>1999?
      generationalOwnerCandidate(seed,i,attempt,principal,alignPrincipalSurnames?preferred:'',context):
@@ -444,7 +478,10 @@ export function createOrganizationNameRoster({
    contextualBreakingCandidate(seed,i,a,breakingContexts[i]||{}):
   breakingName(seed,i,a),'breaking'));
  return {
-  model:ownerSurnameReferences.length?ARCHIVAL_RACING_OWNER_NAME_MODEL:ORGANIZATION_NAME_MODEL,
+  model:ownerSurnameReferences.length?
+   scalableCandidateUsed||scalableOwnerNames?
+    SCALABLE_ARCHIVAL_RACING_OWNER_NAME_MODEL:ARCHIVAL_RACING_OWNER_NAME_MODEL:
+   ORGANIZATION_NAME_MODEL,
   styleModel:ORGANIZATION_STYLE_MODEL,
   owners:Object.freeze(owners),ownerArchetypes,barns:Object.freeze(barns),
   farms:Object.freeze(farms),farmKinds:Object.freeze(farmKinds),
@@ -453,7 +490,11 @@ export function createOrganizationNameRoster({
    breakingTrainingFacilities:breakingCount,generatedNames:{...perCategory},retries,
    partnershipGroupsCreated,soleOwners:ownerArchetypes.filter(x=>x==='INDIVIDUAL_OWNER').length,
    maxDistinctiveRootUses:MAX_DISTINCTIVE_ROOT_USES,
-   highestDistinctiveRootUse:Math.max(0,...distinctiveRootCounts.values())})
+   highestDistinctiveRootUse:Math.max(0,...distinctiveRootCounts.values()),
+   ...(scalableCandidateUsed||scalableOwnerNames?{
+    ownerCapacityModel:SCALABLE_OWNER_BUSINESS_NAME_MODEL,
+    ownerCandidateAttemptBudget:SCALABLE_OWNER_NAME_ATTEMPT_LIMIT
+   }:{})})
  };
 }
 export function createBreakingTrainingNames(seed,count,protectedNames=[]){
