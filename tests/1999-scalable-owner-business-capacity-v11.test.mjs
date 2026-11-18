@@ -72,6 +72,31 @@ test('the actual archival owner roster has deterministic headroom for 29,000 org
   'same new-world seed must always yield the same durable organization IDs/names');
 });
 
+test('three consecutive 5,000-owner generations protect all earlier identities',()=>{
+ const given='Avery Bailey Casey Dakota Ellis Frankie Harper Jamie Kendall Logan Morgan Parker Quinn Riley Sawyer Taylor Wren Zion Alex Carmen Derek Elena Felix Grace Imani Julian Kira Leah Mateo Nora'.split(' ');
+ const protectedNames=['Kingsmere Farm','Davenport Hall Farm','Split Rail Farm'];
+ const count=5000;
+ for(let generation=0;generation<3;generation++){
+  const seed=19990101+generation;
+  const principals=Array.from({length:count},(_,i)=>
+   given[(i+generation*3)%given.length]+' '+
+   CENSUS_2000_OWNER_SURNAMES[Math.floor(i/given.length)]);
+  const current=createOrganizationNameRoster({
+   seed,ownerCount:count,barnCount:0,farmCount:0,
+   principalNames:principals,ownerSurnameReferences:[
+    'Clifton','Pegram','Wertheimer','Stronach','Melnyk','Farish','Vance'
+   ],ownerPartnershipLimit:1000,soleOwnerPercent:8,
+   alignPrincipalSurnames:true,protectedNames
+  });
+  const previous=new Set(protectedNames.map(norm));
+  assert.equal(current.owners.length,count);
+  assert.ok(current.owners.every(name=>!previous.has(norm(name))),
+   'later cohorts cannot take any earlier owner or approved founding identity');
+  protectedNames.push(...current.owners);
+  assert.equal(new Set(protectedNames.map(norm)).size,3+(generation+1)*count);
+ }
+});
+
 test('no archival source keeps the previously frozen V7 candidate path and business roster',()=>{
  const args={seed:19990101,ownerCount:200,barnCount:14,farmCount:25,
   principalNames:Array.from({length:200},(_,i)=>'Owner '+i+' Mercer'),
