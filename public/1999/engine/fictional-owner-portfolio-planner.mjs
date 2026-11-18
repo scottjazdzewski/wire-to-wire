@@ -51,6 +51,16 @@ function tierFor(seed,id){
  }
  return PORTFOLIO_TIERS.at(-1);
 }
+/** Deterministically classify an owner without assigning horses.
+ * Directory builders use this when they need a stable tier label before the
+ * opening population is planned; an empty portfolio is not a valid allocation.
+ */
+export function fictionalOwnerPortfolioTier(seed,ownerId){
+ positiveInt(seed,'owner tier seed',4294967295);
+ if(!seed||typeof ownerId!=='string'||!keyOf(ownerId))
+  throw Error('Invalid owner tier identity');
+ return tierFor(seed,keyOf(ownerId)).id;
+}
 function suggestedCapacity(seed,id,tier){
  const u=(hash(seed,'portfolio-scale:'+id)+.5)/4294967296;
  // Skew toward the lower end within each tier, leaving credible outliers.
