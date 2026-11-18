@@ -6,13 +6,28 @@
  * manager must commit both the feedback and the career name override in ONE
  * savePersistent1999CareerRun transaction before reporting success.
  */
-import {createCareerWorldEdits,addCareerWorldEdit}
+import {createCareerWorldEdits,addCareerWorldEdit,applyCareerWorldEdits}
  from './1999-career-world-edits.mjs';
 import {createNamingFeedback,validateNamingFeedback,recordNamingFeedback,
  nameFeedbackKey}
  from '../1999/game/horse-naming-feedback-v489.js';
 import {OWNER_REVIEWED_NAME_KEYS_V478}
  from '../1999/game/horse-naming-owner-review-v478.js';
+
+/**
+ * Saved careers may contain an edited registered display name for an opening
+ * horse. Validate against a projection with those same approved career edits,
+ * NEVER against the unedited immutable base. Neither input is mutated.
+ */
+export function validateRunWithSavedWorldEdits(world,run,edits,validator){
+ if(typeof validator!=='function')throw Error('A game validation service is required');
+ const validationWorld=structuredClone(world);
+ const validationRun=structuredClone(run);
+ applyCareerWorldEdits(validationWorld,edits??createCareerWorldEdits(),
+  {run:validationRun});
+ validator(validationRun,validationWorld);
+ return true;
+}
 
 const blocked=new Set(OWNER_REVIEWED_NAME_KEYS_V478);
 const isObject=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
