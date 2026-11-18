@@ -338,7 +338,8 @@ try{
    worldId:snap.worldId,runId:afterRestart.runId,gameDate:afterRestart.gameDate,
    stableHorses:afterRestart.stableHorses,officialRaces:afterRestart.officialRaces,
    playableUi:resumedUi,durableReadBack:true}));
-  await stop(browser);browser=null;server.kill('SIGTERM');rmSync(profile,{recursive:true,force:true});
+  await stop(browser);browser=null;server.kill('SIGTERM');
+  rmSync(profile,{recursive:true,force:true,maxRetries:12,retryDelay:100});
   process.exit(0);
  }
  const raceSettlement=await browser.evalJS(`(async()=>{
