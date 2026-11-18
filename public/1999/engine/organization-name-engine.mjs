@@ -331,13 +331,15 @@ export function createOrganizationNameRoster({
   const sole=soleOwnerPercent===null?i%11===0:
    hash(seed,'owner-sole-status:'+i)%100<soleOwnerPercent;
   if(sole&&principal){
-   // A sole-proprietor label IS the immutable person's name, so we cannot
-   // evade an existing approved business by silently inventing a suffix.
-   // Fail closed rather than giving two owner IDs the same public identity.
+   // The person's approved full name is a candidate for a sole proprietor
+   // ONLY when it has not already been reserved by a distinct business or
+   // another owner. On collision, keep the existing person name and issue a
+   // separately named private racing business through the SAME normal claim
+   // path below; never abort a playable world or reuse someone else's ID.
    const key=norm(principal);
-   if(used.has(key)||externalNameIndex?.hasAnyName(principal))
-    throw Error('Duplicate or protected sole owner identity: '+principal);
-   used.add(key);return principal;
+   if(!used.has(key)&&!externalNameIndex?.hasAnyName(principal)){
+    used.add(key);return principal;
+   }
   }
   const preferred=principalPrimarySurnames[i]||surname(principal);
   const context=ownerContexts[i]||{};
