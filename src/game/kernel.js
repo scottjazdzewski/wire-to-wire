@@ -42,7 +42,7 @@ const CARE_LEDGER_ROLLUP_KINDS=new Set([
  'HORSE_CARE_TRAINER_REMITTANCE','HORSE_CARE_TRAINER_EARNINGS',
  'HORSE_CARE_SUPPLIER_RECEIPT'
 ]);
-const CARE_LEDGER_DETAIL_DAYS=7;
+const CARE_LEDGER_ROLLUP_BEFORE_CURRENT_MONTH=true;
 function appendLog(state, commandId, kind, details, persist=true) {
   const previous=Number.isSafeInteger(state.event_seq)?state.event_seq:
     state.event_log.at(-1)?.seq??0;
