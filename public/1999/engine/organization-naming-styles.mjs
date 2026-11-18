@@ -25,6 +25,16 @@ const ROOTS=Object.freeze({
  BRITAIN_IRELAND:words('Ballyford|Rathmore|Alder Park|Kilbracken|West Wicklow|Stonebridge|Lough Meadow|Highfield House|Ash Lodge|Oak Manor|Cedar Court|Old Abbey|Briar Hall|Holloway Park|White Lodge|Cloverdale|Foxmead|Bramble Hall|Hill House|Glenwood|West Meadow'),
  GENERAL_NORTH_AMERICA:words('Briar Ridge|River Plain|Old Mill|Chestnut Gate|Hayfield|White Post|Cedar Hollow|Hickory Bend|Dry Creek|North Pasture|Meadow Haven|Copper Brook|North Crossing|Three Pines|Long Meadows|Round Barn|Timber Trace|Old Wagon|Silver Oak|Ridge Spring|Green Pasture|Eastbrook|Westvale|Hawthorn Gate|Twin Meadows')
 });
+/**
+ * Read-only regional business-word pool for opt-in high-volume owner naming.
+ * This uses the SAME previously approved naming vocabulary, with no new
+ * historical identities and no change to the frozen 1999 candidate paths.
+ */
+export function regionalOrganizationNamingRoots(region){
+ const key=ORGANIZATION_NAMING_REGIONS.includes(region)?
+  region:'GENERAL_NORTH_AMERICA';
+ return ROOTS[key];
+}
 // Prefix guards in the shared organization registry include the new
 // regional vocabulary, preventing cloned roots with swapped suffixes.
 export const REGIONAL_NAMING_ANCHORS=Object.freeze(
