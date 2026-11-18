@@ -49,7 +49,10 @@ async function industryDirectories(seed,targetOpeningHorses=null){
  const canonicalTrainingBarns=canonicalOrganizations.filter(o=>
   ['RACING_STABLE','TRAINING_CENTER','RACING_STABLE_ORGANIZATION'].
    includes(o.facilityDisplayCategory));
- let ownerCount=Math.max(tracks.length*10,Math.ceil(requestedSize/18));
+ // Keep owner-directory size proportional to the horse census. A fixed
+ // ten-owner-per-track floor made small scale runs incapable of meeting the
+ // documented tier minimums, even when the full world was well balanced.
+ let ownerCount=Math.max(1,Math.ceil(requestedSize/18));
  const ownerIdAt=index=>'O-FICTIONAL-OWNER-'+String(index+1).padStart(6,'0');
  let capacity=assessFictionalOwnerCapacity({seed,horseCount:requestedSize,
   owners:Array.from({length:ownerCount},(_,i)=>({id:ownerIdAt(i)}))});
@@ -140,7 +143,7 @@ async function industryDirectories(seed,targetOpeningHorses=null){
   const named=generated.owners[globalIndex];
   return {id:ownerIdAt(globalIndex),name:named.name,location:t.location,
    homeTrackId:t.id,portfolioTier:tierPlan.ownerTier[globalIndex],
-   portfolioModel:'WTW_FICTIONAL_OWNER_PORTFOLIOS_V9',
+  portfolioModel:'WTW_FICTIONAL_OWNER_PORTFOLIOS_V10',
    operatingRoles:['LEGAL_OWNER',named.ownershipArchetype||'PRIVATE_OWNER'],
    ownershipArchetype:named.ownershipArchetype,
    namingStatus:'GENERATED_1999_ORGANIZATION_ENGINE',
@@ -152,7 +155,7 @@ async function industryDirectories(seed,targetOpeningHorses=null){
   return {id:org.id,name:org.name,location,homeTrackId:homeTrackFor(org),
    portfolioTier:profile.portfolioTier,
    maxHorses:profile.maxHorses,
-   portfolioModel:'WTW_FICTIONAL_OWNER_PORTFOLIOS_V9',
+   portfolioModel:'WTW_FICTIONAL_OWNER_PORTFOLIOS_V10',
    operationStyle:profile.operationStyle||null,
    ownershipArchetype:org.type,
    operatingRoles:[org.facilityDisplayCategory||'LEGAL_OWNER'],

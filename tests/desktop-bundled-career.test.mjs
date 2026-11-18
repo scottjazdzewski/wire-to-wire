@@ -4,7 +4,8 @@ import {gunzipSync} from 'node:zlib';
 import {readFileSync} from 'node:fs';
 import {unpackShared1999Career} from '../public/1999/engine/shared-1999-career-package.mjs';
 
-const asset=new URL('../public/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER_V9.wtwcareer.gz',import.meta.url);
+const asset=new URL('../public/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER_V10.wtwcareer.gz',import.meta.url);
+const v9Asset=new URL('../public/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER_V9.wtwcareer.gz',import.meta.url);
 const priorAsset=new URL('../public/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER_V8.wtwcareer.gz',import.meta.url);
 const frozenAsset=new URL('../public/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER.wtwcareer.gz',import.meta.url);
 const manager=readFileSync(new URL('../public/next/1999-commercial-career-manager.mjs',import.meta.url),'utf8');
@@ -13,11 +14,11 @@ const preload=readFileSync(new URL('../desktop/preload.cjs',import.meta.url),'ut
 const desktopSmoke=readFileSync(new URL('../scripts/windows-desktop-smoke.ps1',import.meta.url),'utf8');
 const fullWorldSmoke=readFileSync(new URL('../scripts/1999-full-world-browser-cdp.mjs',import.meta.url),'utf8');
 
-test('the desktop bundles V9 and preserves V8 plus the frozen May 29 reference career',async()=>{
+test('the desktop bundles V10 and preserves V9, V8 plus the frozen May 29 reference career',async()=>{
  const compressed=readFileSync(asset);
  assert.ok(compressed.byteLength<2_000_000,'V9 checkpoint should stay under 2 MB');
  const checkpoint=await unpackShared1999Career(gunzipSync(compressed));
- assert.equal(checkpoint.world.worldId,'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V9-H300000');
+ assert.equal(checkpoint.world.worldId,'WTW1999FullIndustry-COHORTS-V6-OWNER-V10-NAMES-V10-H300000');
  assert.equal(checkpoint.world.seed,19990101);
  assert.equal(checkpoint.world.horseCount,300000);
  assert.equal(checkpoint.world.personCount,75705);
@@ -28,6 +29,9 @@ test('the desktop bundles V9 and preserves V8 plus the frozen May 29 reference c
  const officialRaces=Object.values(checkpoint.careerRecord.changes.canonicalRun.runtime.races||{})
   .filter(r=>r.status==='OFFICIAL_SIM_RESULT');
  assert.equal(officialRaces.length,1,'Shared test career should include the 1999 race already settled in acceptance');
+ const v9=await unpackShared1999Career(gunzipSync(readFileSync(v9Asset)));
+ assert.equal(v9.world.worldId,'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V9-H300000');
+ assert.equal(v9.careerRecord.gameDate,'1999-01-22');
  const frozen=await unpackShared1999Career(gunzipSync(readFileSync(frozenAsset)));
  const prior=await unpackShared1999Career(gunzipSync(readFileSync(priorAsset)));
  assert.equal(prior.world.worldId,'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V8-H300000');

@@ -219,9 +219,11 @@ export async function auditPersistent1999World(store,manifest,{expectedHorses=nu
    'persisted owner-tier allocation differs from its saved plan '+tier.id);
   for(const [ownerId,portfolio] of ownerPortfolioByOwner){
    if(portfolio.tier!==tier.id)continue;
-   const cap=owners.get(ownerId).maxHorses??tier.max;
-   check(portfolio.horses>=tier.min&&portfolio.horses<=cap,
-    'actual owner portfolio is outside its tier capacity '+ownerId);
+   const owner=owners.get(ownerId),cap=owner.maxHorses??tier.max;
+   check(portfolio.horses>=tier.min&&portfolio.horses<=Math.min(tier.max,cap),
+    'actual owner portfolio is outside its tier capacity '+ownerId+
+    ' ('+portfolio.horses+'; '+tier.id+' '+tier.min+'-'+
+    Math.min(tier.max,cap)+')');
   }
  }
  check(foundFoundingHorseIds.size===foundingHorseIds.size&&
@@ -295,9 +297,22 @@ export async function auditPersistent1999World(store,manifest,{expectedHorses=nu
    'race calendar missed a meet day at '+id);
  check(cardCount===manifest.scheduledCards&&scheduled===manifest.scheduledRaces,
   'scheduled card/race census mismatch');
+ const facilityCounts={total:farms.size,breedingOrFoalingSites:0,
+  trainingBarns:0,boardingSites:0,dualPurposeBreedingAndTraining:0};
+ for(const farm of farms.values()){
+  const roles=new Set(farm.operatingRoles||[]);
+  const breeding=roles.has('BREEDER')||roles.has('FOALING_FARM')||
+   roles.has('STUD_FARM')||roles.has('BREEDING_OR_CARE_FACILITY');
+  const training=roles.has('TRAINING_BARN')||roles.has('TRAINING_CENTER');
+  if(breeding)facilityCounts.breedingOrFoalingSites++;
+  if(training)facilityCounts.trainingBarns++;
+  if(roles.has('BOARDING_FACILITY'))facilityCounts.boardingSites++;
+  if(breeding&&training)facilityCounts.dualPurposeBreedingAndTraining++;
+ }
  return {schema:INDUSTRY_FULL_INTEGRITY_AUDIT_SCHEMA,seed,
   worldId:manifest.worldId,openingHorses:horseCount,personnel:people,
   owners:owners.size,farms:farms.size,activeTracks:tracks.size,
+  staffingByRole:roleCounts,facilityCounts,
   ownerPortfolioByTier:ownerTierStats,
   connectedRunners,coverings,scheduledCards:cardCount,scheduledRaces:scheduled,
   horseCohorts:byCohort,horseStatuses,

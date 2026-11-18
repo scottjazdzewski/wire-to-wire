@@ -13,7 +13,8 @@
  * Owner-to-horse reverse lookup uses a compressed sparse row (CSR) index:
  * no per-owner scans over the entire 100,000+ horse population.
  */
-export const FICTIONAL_PORTFOLIO_MODEL='WTW_FICTIONAL_OWNER_PORTFOLIOS_V9';
+export const FICTIONAL_PORTFOLIO_MODEL='WTW_FICTIONAL_OWNER_PORTFOLIOS_V10';
+export const LEGACY_FICTIONAL_PORTFOLIO_MODEL='WTW_FICTIONAL_OWNER_PORTFOLIOS_V9';
 export const PORTFOLIO_TIERS=Object.freeze([
  Object.freeze({id:'HANDFUL',weight:57,min:1,max:5}),
  Object.freeze({id:'SMALL',weight:24,min:6,max:25}),
@@ -67,7 +68,7 @@ function snapshotChecksum(seed,ownerIds,ownerIndexes){
  * Checksum detects accidental corruption, not malicious modification.
  */
 export function exportFictionalOwnerPortfolioState(plan){
- if(!plan||plan.schema!==FICTIONAL_PORTFOLIO_MODEL||
+ if(!plan||![FICTIONAL_PORTFOLIO_MODEL,LEGACY_FICTIONAL_PORTFOLIO_MODEL].includes(plan.schema)||
   !Array.isArray(plan.ownerIds)||
   !(plan.ownerIndexForHorse instanceof Uint32Array)||
   plan.ownerIndexForHorse.length!==plan.horseCount)
@@ -75,12 +76,12 @@ export function exportFictionalOwnerPortfolioState(plan){
  const ownerIds=[...plan.ownerIds],
   ownerIndexes=Array.from(plan.ownerIndexForHorse);
  return Object.freeze({
-  schema:FICTIONAL_PORTFOLIO_MODEL,seed:plan.seed,horseCount:plan.horseCount,
+  schema:plan.schema,seed:plan.seed,horseCount:plan.horseCount,
   ownerIds,ownerIndexes,checksum:snapshotChecksum(plan.seed,ownerIds,ownerIndexes)
  });
 }
 export function importFictionalOwnerPortfolioState(snapshot){
- if(!snapshot||snapshot.schema!==FICTIONAL_PORTFOLIO_MODEL||
+ if(!snapshot||![FICTIONAL_PORTFOLIO_MODEL,LEGACY_FICTIONAL_PORTFOLIO_MODEL].includes(snapshot.schema)||
   !Number.isSafeInteger(snapshot.seed)||snapshot.seed<1||
   !Number.isSafeInteger(snapshot.horseCount)||
   snapshot.horseCount<0||snapshot.horseCount>MAX_HORSES||
@@ -95,14 +96,14 @@ export function importFictionalOwnerPortfolioState(snapshot){
   snapshot.checksum!==snapshotChecksum(snapshot.seed,snapshot.ownerIds,snapshot.ownerIndexes))
   throw Error('Invalid or corrupt owner portfolio checkpoint');
  return Object.freeze({
-  schema:FICTIONAL_PORTFOLIO_MODEL,seed:snapshot.seed,
+  schema:snapshot.schema,seed:snapshot.seed,
   horseCount:snapshot.horseCount,ownerIds:Object.freeze([...snapshot.ownerIds]),
   ownerIndexForHorse:Uint32Array.from(snapshot.ownerIndexes)
  });
 }
 function verifyPrior(existingPlan,seed,horseCount,ownerIds){
  if(!existingPlan)return;
- if(existingPlan.schema!==FICTIONAL_PORTFOLIO_MODEL||
+ if(![FICTIONAL_PORTFOLIO_MODEL,LEGACY_FICTIONAL_PORTFOLIO_MODEL].includes(existingPlan.schema)||
   existingPlan.seed!==seed||
   !Number.isInteger(existingPlan.horseCount)||
   existingPlan.horseCount>horseCount||
@@ -165,17 +166,24 @@ export function assessFictionalOwnerCapacity({seed=19990101,owners,horseCount}={
    Object.entries(byTier).map(([k,v])=>[k,Object.freeze(v)])))
  });
 }
-function allocateCounts(seed,owners,existingCounts,capacity,remaining,horseCount){
+function allocateCounts(seed,owners,tierLabels,existingCounts,capacity,remaining,horseCount){
  const count=Uint32Array.from(existingCounts);
- const needOne=[];
+ let tierMinimums=0;
  for(let i=0;i<owners.length;i++){
-  if(!count[i]&&capacity[i]>0)needOne.push(i);
+  const tier=PORTFOLIO_TIERS.find(item=>item.id===tierLabels[i]);
+  if(!tier)throw Error('Missing portfolio tier for '+owners[i].id);
+  tierMinimums+=Math.max(0,tier.min-count[i]);
  }
- // Preserve the long tail: when the population can support every owner,
- // each owner should be able to have one horse before elite owners absorb
- // additional capacity. This does NOT override historical assignments.
- if(horseCount>=owners.length&&remaining>=needOne.length){
-  for(const i of needOne){count[i]++;remaining--}
+ // The band describes the owner's legal portfolio count, so every new
+ // allocation must satisfy that band's lower bound before spare capacity is
+ // apportioned. Existing horse assignments are kept; only unassigned slots
+ // are used to bring an established owner up to the minimum.
+ if(tierMinimums>remaining)
+  throw Error('Portfolio tier minimums exceed the available horse population');
+ for(let i=0;i<owners.length;i++){
+  const tier=PORTFOLIO_TIERS.find(item=>item.id===tierLabels[i]);
+  const minimum=Math.max(0,tier.min-count[i]);
+  count[i]+=minimum;remaining-=minimum;
  }
  if(!remaining)return count;
  const available=new Uint32Array(owners.length);
@@ -270,7 +278,8 @@ export function planFictionalOwnerPortfolios({
  for(let i=0;i<counts.length;i++){occupied+=counts[i];limit+=capacity[i]}
  if(horseCount>limit)throw Error('Insufficient owner capacity for '+horseCount+
   ' horses: '+limit+' slots; provide more owners or explicit capacities');
- const finalCounts=allocateCounts(seed,book,counts,capacity,horseCount-occupied,horseCount);
+ const finalCounts=allocateCounts(seed,book,tierLabels,counts,capacity,
+  horseCount-occupied,horseCount);
  let slotsNeeded=horseCount-occupied;
  const slots=new Uint32Array(slotsNeeded);
  let pos=0;
