@@ -97,6 +97,41 @@ test('three consecutive 5,000-owner generations protect all earlier identities',
  }
 });
 
+test('new-world approved owners, studs and racing barns remain locked beside protected people',()=>{
+ const principalNames=['Alex West','Mina Brown','Nora Hale','Jasper North'];
+ const args={seed:19990101,ownerCount:4,barnCount:2,farmCount:2,
+  principalNames,trainerNames:['Daniel Holt','Tara Quinn'],
+  ownerSurnameReferences:['Clifton','Pegram','Vance'],
+  soleOwnerPercent:100,ownerPartnershipLimit:1,
+  protectedNames:['Historic Thoroughbreds'],
+  protectedPersonNames:principalNames,
+  sourceOwnerNames:['Established Racing Partners'],
+  sourceFarmNames:['Kingsmere Stud'],
+  sourceBarnNames:['Prescott Racing Barn'],
+  farmKindPlan:['STUD_FARM','FARM']};
+ const result=createOrganizationNameRoster(args);
+ assert.equal(result.owners[0],'Established Racing Partners');
+ assert.equal(result.farms[0],'Kingsmere Stud');
+ assert.equal(result.farmKinds[0],'STUD_FARM');
+ assert.equal(result.barns[0],'Prescott Racing Barn');
+ assert.equal(result.summary.partnershipGroupsCreated,1,
+  'approved group consumes the real partnership ceiling');
+ assert.deepEqual(result.owners.slice(1),principalNames.slice(1),
+  'person-name reservations must not suppress their rightful sole owner label');
+ const issued=[...result.owners,...result.farms,...result.barns];
+ assert.equal(new Set(issued.map(norm)).size,issued.length);
+ assert.deepEqual(result,createOrganizationNameRoster(args));
+ const contested=createOrganizationNameRoster({...args,
+  sourceOwnerNames:['Mina Brown']});
+ assert.equal(contested.owners[0],'Mina Brown',
+  'existing approved name always wins before a new sole-owner candidate');
+ assert.notEqual(norm(contested.owners[1]),norm('Mina Brown'));
+ assert.throws(()=>createOrganizationNameRoster({...args,
+  sourceOwnerNames:['Kingsmere Stud']}),/Duplicate approved source organization name/);
+ assert.throws(()=>createOrganizationNameRoster({...args,
+  ownerPartnershipLimit:0}),/Approved source partnerships exceed naming group ceiling/);
+});
+
 test('no archival source keeps the previously frozen V7 candidate path and business roster',()=>{
  const args={seed:19990101,ownerCount:200,barnCount:14,farmCount:25,
   principalNames:Array.from({length:200},(_,i)=>'Owner '+i+' Mercer'),
