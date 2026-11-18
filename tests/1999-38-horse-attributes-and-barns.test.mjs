@@ -92,3 +92,37 @@ test('cohort assignment cannot overfill a physical site or drift a recorded attr
  drift.assignments[0].starting_attributes.raw_speed=.999;
  assert.throws(()=>build1999PilotGameRun({world,manifest:drift}),e=>e.code==='PILOT_SCENARIO');
 });
+
+test('multi-week 1999 careers keep daily finance and journal state compact and saveable',()=>{
+ let state=build1999PilotGameRun({world,manifest}),dailyCareEvents=0;
+ for(let day=1;day<=45;day++){
+  const result=dispatchGameCommand({state,world,command:{
+   id:'compact-care-day:'+day,type:'ADVANCE_DAY',actor:'player',payload:{}}});
+  state=result.state;
+  dailyCareEvents+=result.events.filter(event=>event.kind==='HORSE_CARE_DAY').length;
+ }
+ assert.ok(dailyCareEvents>0,'daily gameplay should still return detailed care events');
+ const summaries=state.event_log.filter(event=>event.kind==='DAILY_SIMULATION_SUMMARY');
+ assert.ok(summaries.length>0,'the persistent journal should retain per-day event summaries');
+ assert.ok(summaries.some(event=>(event.details.counts.HORSE_CARE_DAY||0)>0),
+  'the durable journal should count care decisions without storing every repetitive row');
+ assert.ok(!state.event_log.some(event=>event.kind==='HORSE_CARE_DAY'),
+  'high-volume daily care details remain in runtime history and command output');
+ const ledger=state.runtime.finances.ledger;
+ assert.ok(ledger.some(row=>row.rollup_schema==='WTW_MONTHLY_FINANCE_ROLLUP_V1'&&
+  row.kind==='HORSE_CARE_OWNER_PAYMENT'),
+  'older care transactions should remain available as reconciled monthly rollups');
+ const carePaid=ledger.filter(row=>row.kind==='HORSE_CARE_OWNER_PAYMENT')
+  .reduce((total,row)=>total+row.amount_minor,0);
+ const lifetimeCare=Object.values(state.runtime.horse).reduce((total,record)=>
+  total+(record?.finance?.lifetime_minor||0),0);
+ assert.equal(carePaid,-lifetimeCare,'monthly rollups must preserve exact care cash totals');
+ assert.ok(ledger.length<2000,'the durable ledger should not grow by one row per horse per day');
+ assert.ok(state.event_log.every((event,index)=>index===0||
+  event.seq>state.event_log[index-1].seq),'event sequence numbers must remain monotonic');
+ assert.equal(state.event_seq,state.event_log.at(-1)?.seq);
+ assert.deepEqual(importGameSave(exportGameSave(state,world),world),state,
+  'compacted finance and event history should survive a career save round trip');
+ assert.ok(JSON.stringify(state).length<10_000_000,
+  'a 45-day playable career should stay bounded well below the 64 MiB save ceiling');
+});
