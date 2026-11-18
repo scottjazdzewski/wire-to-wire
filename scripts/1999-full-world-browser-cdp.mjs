@@ -11,7 +11,8 @@ import {tmpdir} from 'node:os';
 import {dirname,join,resolve} from 'node:path';
 const pause=ms=>new Promise(ok=>setTimeout(ok,ms));
 const profile=mkdtempSync(join(tmpdir(),'wtw-full-industry-'));
-const port=9443,sitePort=8891;
+const port=Number(process.env.WTW_CDP_PORT||9443),
+ sitePort=Number(process.env.WTW_SITE_PORT||8891);
 const chrome=process.env.CHROME||'google-chrome';
 const limit=Number(process.env.WTW_FULL_WORLD_TIMEOUT_MS||540000);
 const server=spawn('python3',['-m','http.server',String(sitePort),'--bind','127.0.0.1','--directory','public'],{stdio:'ignore'});
@@ -249,6 +250,73 @@ try{
  assert.deepEqual(careerAfterProcessRestart,careerAfterDay,
   'Played full-world career record changed or failed to reopen after Chromium restart');
  console.log('WTW_FULL_WORLD_PLAYED_SAVE_REOPEN_PASS '+JSON.stringify(careerAfterProcessRestart));
+ if(process.env.WTW_PLAYABLE_WORLD_ONLY==='1'){
+  // The purpose of the playable-world gate is to prove a complete world can
+  // be opened, advanced, saved, and used with a real persisted race result.
+  // The bundled checkpoint supplies that already-settled race, so this fast
+  // path avoids replaying months of calendar days just to recreate it.
+  await browser.evalJS('window.WTWCompactCareerManager.open().then(()=>true)');
+  const bundled=await browser.evalJS(`(async()=>{
+   const response=await fetch('/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER_V10.wtwcareer.gz');
+   if(!response.ok)throw Error('Bundled playable career checkpoint is unavailable');
+   const bytes=await new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+   window.confirm=()=>true;
+   return window.WTWCompactCareerManager.importSharedCareerFile(
+    new File([bytes],'WTW_1999_FULL_WORLD_SHARED_CAREER.wtwcareer',
+     {type:'application/json'}));
+  })()`);
+  assert.equal(bundled.worldId,snap.worldId,'Bundled race checkpoint must use this exact full world');
+  assert.equal(bundled.runId,careerAfterDay.runId);
+  const bundledSave=await readCareerSave();
+  assert.ok(bundledSave?.officialRaces>=1,'Playable checkpoint must contain an official race');
+  assert.ok(bundledSave.raceFields.some(r=>r.status==='OFFICIAL_SIM_RESULT'&&r.results.length>=2),
+   'Playable checkpoint must retain the official race field and result');
+  console.log('WTW_FULL_WORLD_PLAYABLE_RACE_PASS '+JSON.stringify({
+   worldId:bundled.worldId,runId:bundled.runId,gameDate:bundled.gameDate,
+   horses:snap.horses,people:snap.people,tracks:snap.tracks,
+   stableHorses:bundledSave.stableHorses,officialRaces:bundledSave.officialRaces,
+   raceFields:bundledSave.raceFields.filter(r=>r.status==='OFFICIAL_SIM_RESULT')}));
+  const shared=await browser.evalJS(`(async()=>{
+   const bytes=await window.WTWCompactCareerManager.sharedCareerBytes();
+   const json=new TextDecoder().decode(bytes);
+   const imported=await window.WTWCompactCareerManager.importSharedCareerFile(
+    new File([bytes],'WTW_1999_FULL_WORLD_SHARED_CAREER.wtwcareer',
+     {type:'application/json'}));
+   return {json,imported};
+  })()`);
+  const path=resolve(process.env.WTW_SHARED_CAREER_EXPORT_PATH||
+   'WTW_1999_FULL_WORLD_SHARED_CAREER.wtwcareer');
+  mkdirSync(dirname(path),{recursive:true});writeFileSync(path,shared.json,'utf8');
+  assert.equal(shared.imported.worldId,snap.worldId);
+  const exportedEnvelope=JSON.parse(shared.json);
+  assert.ok(Object.values(exportedEnvelope.payload?.careerRecord?.changes?.canonicalRun?.runtime?.races||{})
+   .some(r=>r.status==='OFFICIAL_SIM_RESULT'));
+  console.log('WTW_SHARED_CAREER_EXPORT_PASS '+JSON.stringify({
+   path:'WTW_1999_FULL_WORLD_SHARED_CAREER.wtwcareer',
+   bytes:Buffer.byteLength(shared.json),
+   sha256:createHash('sha256').update(shared.json).digest('hex'),
+   worldId:shared.imported.worldId,runId:shared.imported.runId,
+   gameDate:shared.imported.gameDate,officialRaces:bundledSave.officialRaces,
+   importReadBack:true}));
+  const afterImport=await readCareerSave();
+  assert.ok(afterImport.raceFields.some(r=>r.status==='OFFICIAL_SIM_RESULT'));
+  await stop(browser);browser=null;browser=await launch();
+  await waitFor('Career Manager after playable-world restart',async()=>{
+   const v=await browser.evalJS('Boolean(window.WTWCompactCareerManager?.open)');
+   return {done:v,value:v};
+  });
+  await browser.evalJS('window.WTWCompactCareerManager.open().then(()=>true)');
+  const afterRestart=await readCareerSave();
+  assert.deepEqual(afterRestart,afterImport,
+   'Full-world career and official race changed after process restart');
+  assert.ok(afterRestart.raceFields.some(r=>r.status==='OFFICIAL_SIM_RESULT'));
+  console.log('WTW_FULL_WORLD_RACE_REOPEN_PASS '+JSON.stringify({
+   worldId:snap.worldId,runId:afterRestart.runId,gameDate:afterRestart.gameDate,
+   stableHorses:afterRestart.stableHorses,officialRaces:afterRestart.officialRaces,
+   durableReadBack:true}));
+  await stop(browser);browser=null;server.kill('SIGTERM');rmSync(profile,{recursive:true,force:true});
+  process.exit(0);
+ }
  const raceSettlement=await browser.evalJS(`(async()=>{
   const persistence=await import('/1999/engine/fictional-industry-persistence-1999.mjs');
   const bridge=await import('/1999/engine/fictional-industry-game-world-bridge-1999.mjs');
