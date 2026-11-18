@@ -219,7 +219,8 @@ async function runSmoke(win){
      return {...loaded,mainUiCareer:view?{
       worldId:view.worldId,runId:view.runId,date:view.date,
       worldHorseCount:view.worldHorseCount,personCount:view.personCount,
-      playerHorseCount:view.horseRows?.length||0,operationName:view.operationName
+      playerHorseCount:view.horseRows?.length||0,
+      operationInventoryCount:view.operationInventoryCount,operationName:view.operationName
      }:null};
     }
     await new Promise(resolve=>setTimeout(resolve,250));
@@ -236,7 +237,11 @@ async function runSmoke(win){
      career.mainUiCareer?.date!==career.gameDate||
      career.mainUiCareer?.worldHorseCount!==300000||
      career.mainUiCareer?.personCount!==75705||
-     career.mainUiCareer?.playerHorseCount!==career.playableHorseCount)
+     career.mainUiCareer?.operationName!=='Kingsmere Farm'||
+     career.mainUiCareer?.playerHorseCount!==career.mainUiCareer?.operationInventoryCount||
+     career.mainUiCareer?.operationInventoryCount!==1736||
+     !Number.isInteger(career.playableHorseCount)||career.playableHorseCount<1||
+     career.playableHorseCount>career.mainUiCareer.operationInventoryCount)
    throw Error('Bundled career identity did not match the approved 300k checkpoint: '+JSON.stringify(career));
   reportSmoke({phase:smokePhase,bundledOrigin:last.origin,gameDate:last.date,
    foundingSchema:last.schema,gameInterface:'ONE_APPROVED_UI',
