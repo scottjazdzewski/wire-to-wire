@@ -790,7 +790,9 @@ async function refresh(){
     esc(activeWorldCareer.homeTrackId)+' · canonical race engine connected</p>'+
     '<div class="wtw-cc-actions"><button data-cc-action="open-next-test-race">OPEN NEXT TEST RACE / ENTER TWO</button>'+ 
    '<button data-cc-action="advance-test-day" class="primary">ADVANCE ONE GAME DAY</button>'+
-   '<button data-cc-action="export-shared-career">EXPORT SHARED CAREER</button></div>':
+   '<button data-cc-action="export-shared-career">EXPORT SHARED CAREER</button>'+
+   '<button data-cc-action="export-world-changes-review">EXPORT WORLD CHANGES FOR CHATGPT ('+
+    fmt(Object.keys(activeWorldCareer.worldEdits?.byId||{}).length)+')</button></div>':
     '<p>Start a local test career from this exact saved world. Race decisions and results use the existing game clock and settlement engine.</p>'+ 
     '<button data-cc-action="start-test-career" class="primary">START TEST CAREER</button>')+
    '</div>'+
