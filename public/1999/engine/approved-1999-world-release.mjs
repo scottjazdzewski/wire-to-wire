@@ -7,6 +7,13 @@ export const ORIGINAL_1999_WORLD_ID=
 const ALLOWED_KINDS=new Set(['horse','person','organization','track']);
 const NAME_LIMIT=Object.freeze({horse:36,person:90,organization:100,track:90});
 const indexCache=new WeakMap();
+const nameIndexCache=new WeakMap();
+function indexedReleaseNames(release){
+ if(!nameIndexCache.has(release))
+  nameIndexCache.set(release,new Map(release.records.filter(r=>r.fields.name).map(r=>
+   [r.kind+':'+r.fields.name.trim().toLocaleLowerCase('en-US'),r.id])));
+ return nameIndexCache.get(release);
+}
 
 export function validateApproved1999WorldRelease(release=bundledRelease){
  if(!release||release.schema!==APPROVED_1999_WORLD_RELEASE_SCHEMA||
@@ -67,8 +74,18 @@ function indexedRelease(release){
 export function applyApproved1999ReleaseRecord(record,kind,release=bundledRelease){
  if(!record?.id||!ALLOWED_KINDS.has(kind))throw Error('Invalid 1999 entity promotion input');
  if(!release)return record;
- const fields=indexedRelease(release).get(kind+':'+record.id);
- return fields?{...record,...fields}:record;
+ const idx=indexedRelease(release),fields=idx.get(kind+':'+record.id);
+ const candidate=fields?{...record,...fields}:record;
+ // Fail release creation if a promoted name clashes with ANY original entity,
+ // not only other entries in the small promotion file.
+ if(typeof candidate.name==='string'){
+  const name=candidate.name.trim().toLocaleLowerCase('en-US');
+  const names=indexedReleaseNames(release);
+  const owner=names.get(kind+':'+name);
+  if(owner&&owner!==record.id)
+   throw Error('1999 release renaming collides with existing '+kind+' '+record.id);
+ }
+ return candidate;
 }
 
 export function assertApproved1999ReleaseReferences({
