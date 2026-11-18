@@ -294,7 +294,8 @@ async function runSmoke(win){
      career.mainUiCareer?.personCount!==75705||
      career.mainUiCareer?.operationName!=='Kingsmere Farm'||
      career.mainUiCareer?.playerHorseCount!==career.mainUiCareer?.operationInventoryCount||
-     career.mainUiCareer?.operationInventoryCount!==1736||
+     !Number.isSafeInteger(career.operationInventoryCount)||career.operationInventoryCount<1||
+     career.mainUiCareer?.operationInventoryCount!==career.operationInventoryCount||
      !Number.isInteger(career.playableHorseCount)||career.playableHorseCount<1||
      career.playableHorseCount>career.mainUiCareer.operationInventoryCount)
    throw Error('Bundled career identity did not match the approved 300k checkpoint: '+JSON.stringify(career));

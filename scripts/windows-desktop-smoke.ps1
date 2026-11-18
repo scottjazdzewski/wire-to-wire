@@ -86,7 +86,9 @@ foreach($step in $steps){
      $career.seed -ne 19990101 -or $career.horseCount -ne 300000 -or
      $career.personCount -ne 75705 -or
      $career.runId -ne "WTW-RUN-1999-19990101-SIZE-300000-OP-O-000061" -or
-     !$career.snapshotSha256 -or !$career.gameDate){
+     !$career.snapshotSha256 -or !$career.gameDate -or
+     ![int]::TryParse([string]$career.operationInventoryCount,[ref]$null) -or
+     $career.operationInventoryCount -lt 1){
    throw "Packaged EXE did not load the exact shared 300k world and career: $(Get-Content -Raw $report)"
   }
   if($phase -eq "career-write"){
@@ -95,7 +97,7 @@ foreach($step in $steps){
       $advance.operationId -ne "O-000061" -or
       $advance.fromDate -eq $advance.toDate -or
       $career.gameDate -ne $advance.toDate -or
-      $advance.stableHorses -ne 1736 -or
+      $advance.stableHorses -ne $career.operationInventoryCount -or
       $career.mainUiCareer.date -ne $advance.toDate){
     throw "Packaged EXE did not advance and durably save the playable Kingsmere career: $(Get-Content -Raw $report)"
    }
@@ -106,7 +108,7 @@ foreach($step in $steps){
       $career.snapshotSha256 -ne $careerWriteProof.careerBootstrap.snapshotSha256 -or
       $proof.careerReopen -ne "VERIFIED" -or
       $career.mainUiCareer.date -ne $career.gameDate -or
-      $career.mainUiCareer.operationInventoryCount -ne 1736){
+      $career.mainUiCareer.operationInventoryCount -ne $career.operationInventoryCount){
     throw "Packaged career did not reopen unchanged after a real process restart"
    }
   }

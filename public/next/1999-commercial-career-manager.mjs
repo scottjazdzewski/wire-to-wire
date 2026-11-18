@@ -23,8 +23,8 @@ import {gameRaceProgram,supported1999RaceClass,raceEligibility}
  from '/1999/game/racing-1999.js';
 import {validateGameRun} from '/1999/game/state.js';
 import {packShared1999Career,unpackShared1999Career,sameShared1999WorldIdentity,
- migrateShared1999CareerRunWorldReference}
- from '/1999/engine/shared-1999-career-package.mjs?rev=wtw-shared-career-world-identity-v2';
+ migrateShared1999CareerRunWorldReference,migrateShared1999CareerOperationInventory}
+ from '/1999/engine/shared-1999-career-package.mjs?rev=wtw-shared-career-operation-inventory-v3';
 import {projectCanonical1999RaceRows,renderCanonical1999RaceFile}
  from '/next/1999-canonical-career-race-files.mjs';
 
@@ -381,6 +381,22 @@ async function exportSharedCareer(){
   snapshotSha256:activeWorldCareer.world.authority.sha256,
   runId:activeWorldCareer.run.run_id,gameDate:activeWorldCareer.run.clock.date};
 }
+
+function supportsV10FounderInventoryMigration(manifest){
+ return manifest?.foundingRelationshipRevision===1&&
+  /^WTW1999FullIndustry-COHORTS-V6-OWNER-V10-NAMES-V10-H\\d+$/.test(manifest.worldId||'');
+}
+function reconcileV10FounderOperationInventory(record,career,manifest){
+ if(!supportsV10FounderInventoryMigration(manifest))
+  return {careerRecord:record,addedHorseIds:[]};
+ return migrateShared1999CareerOperationInventory(record,career.run);
+}
+async function persistMigratedCareerRecord(store,manifest,record){
+ await savePersistent1999CareerRun(store,manifest,{
+  runId:record.runId,gameDate:record.gameDate,player:record.player,
+  changes:record.changes,version:record.version});
+}
+
 async function importSharedCareerFile(file,{preserveExistingProgress=false}={}){
  if(!file)throw Error('Choose a shared full-world career file');
  if(file.size>64*1024*1024)throw Error('Shared career file exceeds 64 MiB');
@@ -462,11 +478,22 @@ async function importSharedCareerFile(file,{preserveExistingProgress=false}={}){
     currentAuthority:career.world.authority});
    checkpointRun=importedCareerRecord.changes.canonicalRun;
   }
+  const operationInventoryMigration=reconcileV10FounderOperationInventory(
+   importedCareerRecord,career,fullIndustryManifest);
+  importedCareerRecord=operationInventoryMigration.careerRecord;
+  checkpointRun=importedCareerRecord.changes.canonicalRun;
   validateGameRun(checkpointRun,career.world);
   const prior=await loadPersistent1999CareerRun(db,fullIndustryManifest,
    importedCareerRecord.runId);
-  const preservedRun=preserveExistingProgress&&prior?.changes?.canonicalRun?
-   prior.changes.canonicalRun:null;
+  let preservedRecord=preserveExistingProgress&&prior?.changes?.canonicalRun?prior:null;
+  if(preservedRecord){
+   const preserveMigration=reconcileV10FounderOperationInventory(
+    preservedRecord,career,fullIndustryManifest);
+   preservedRecord=preserveMigration.careerRecord;
+   if(preserveMigration.addedHorseIds.length)
+    await persistMigratedCareerRecord(db,fullIndustryManifest,preservedRecord);
+  }
+  const preservedRun=preservedRecord?.changes?.canonicalRun||null;
   if(preservedRun)validateGameRun(preservedRun,career.world);
   if(prior&&JSON.stringify(prior)!==JSON.stringify(importedCareerRecord)&&
    !preservedRun&&
@@ -480,7 +507,7 @@ async function importSharedCareerFile(file,{preserveExistingProgress=false}={}){
     version:importedCareerRecord.version});
   const confirmed=await loadPersistent1999CareerRun(db,fullIndustryManifest,
    importedCareerRecord.runId);
-  const expectedStoredRecord=preservedRun?prior:importedCareerRecord;
+  const expectedStoredRecord=preservedRun?preservedRecord:importedCareerRecord;
   if(JSON.stringify(confirmed)!==JSON.stringify(expectedStoredRecord))
    throw Error('Imported career did not survive IndexedDB read-back');
   const run=preservedRun||checkpointRun;
@@ -514,7 +541,9 @@ function bootstrapBundledCareer(){
     {type:'application/json'});
    const result=await importSharedCareerFile(file,{preserveExistingProgress:true});
    return {...result,horseCount:fullIndustryManifest.horseCount,
-    personCount:fullIndustryManifest.personCount,playableHorseCount:activeWorldCareer.playableHorseCount};
+    personCount:fullIndustryManifest.personCount,
+   playableHorseCount:activeWorldCareer.playableHorseCount,
+   operationInventoryCount:activeWorldCareer.operationInventoryCount};
   }catch(error){
    notice='SHARED 1999 CAREER LOAD FAILED · '+String(error?.message||error);
    await refresh();throw error;
@@ -527,10 +556,14 @@ async function resumeCanonicalRun(store,manifest){
  const operationId=preferred&&industryDirectory.some(row=>row.id===preferred&&
   row.operatingRoles?.includes('LEGAL_OWNER'))?preferred:'';
  const runId=operationId?operationRunId(manifest,operationId):canonicalRunId(manifest);
- const saved=await loadPersistent1999CareerRun(store,manifest,runId);
+ let saved=await loadPersistent1999CareerRun(store,manifest,runId);
  if(!saved?.changes?.canonicalRun)return null;
  const career=await openPersistent1999GameCareer(store,manifest,{
   runId,operationId:saved.player.operation_id});
+ const migration=reconcileV10FounderOperationInventory(saved,career,manifest);
+ saved=migration.careerRecord;
+ if(migration.addedHorseIds.length)
+  await persistMigratedCareerRecord(store,manifest,saved);
  validateGameRun(saved.changes.canonicalRun,career.world);
  selectedPlayerOperationId=saved.player.operation_id;
  return {...career,run:saved.changes.canonicalRun,manifest};
@@ -544,10 +577,15 @@ async function startCanonicalRun(operationId=null){
   canonicalRunId(fullIndustryManifest);
  const store=await open1999IndustryDatabase();
  try{
-  const saved=await loadPersistent1999CareerRun(store,fullIndustryManifest,runId);
+  let saved=await loadPersistent1999CareerRun(store,fullIndustryManifest,runId);
   activeWorldCareer=await openPersistent1999GameCareer(store,fullIndustryManifest,
    {runId,operationId:chosenId});
   if(saved?.changes?.canonicalRun){
+   const migration=reconcileV10FounderOperationInventory(
+    saved,activeWorldCareer,fullIndustryManifest);
+   saved=migration.careerRecord;
+   if(migration.addedHorseIds.length)
+    await persistMigratedCareerRecord(store,fullIndustryManifest,saved);
    validateGameRun(saved.changes.canonicalRun,activeWorldCareer.world);
    activeWorldCareer.run=saved.changes.canonicalRun;
   }
