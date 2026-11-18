@@ -16,7 +16,7 @@ import {plan1999IndustryStaffing,generate1999StaffingBatches,
  from './fictional-industry-staffing-1999.mjs';
 import {createPersonnelNameRoster,PERSONNEL_NAME_MODEL}
  from './personnel-name-engine.mjs';
-import {LOCAL_HORSE_NAMING_ALGORITHM_REVISION} from '../game/horse-naming-local-v485.js';
+import {OPENING_INDUSTRY_HORSE_NAMING_REVISION} from '../game/horse-naming-local-v485.js';
 import {connect1999Horse,connect1999Person,connect1999DirectoryEntity,
  validate1999GraphBatch,validate1999IndustryReferences,INDUSTRY_GRAPH_SCHEMA}
  from './fictional-industry-graph-1999.mjs';
@@ -311,7 +311,8 @@ export async function createPersistent1999Industry({
   Object.entries(ownerCapacity.byTier).map(([tier,capacity])=>[tier,{
    ...capacity,horses:ownerPortfolioPlan.summary.byTier[tier].horses
   }]));
- const horseNamingRevision=LOCAL_HORSE_NAMING_ALGORITHM_REVISION+':OPENING_INDUSTRY_V1';
+ // Keep opening identities pinned while editorial naming rules advance.
+ const horseNamingRevision=OPENING_INDUSTRY_HORSE_NAMING_REVISION;
  const totalPeople=Object.values(staffing.counts).reduce((a,b)=>a+b,0);
  if(existing){
   if(existing.schema!==PERSISTENT_INDUSTRY_SCHEMA||

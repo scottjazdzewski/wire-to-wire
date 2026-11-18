@@ -68,6 +68,34 @@ function restoreCareer(payload){
  localStorage.setItem(SESSION,'active');
  localStorage.setItem(MAIN,serialized);
 }
+// Naming feedback is kept INSIDE the current career snapshot. It is not
+// a second localStorage key or a second save authority. Compact .wtwsave
+// differential exports automatically include the optional field.
+function readNamingFeedback(){
+ const game=parse(localStorage.getItem(MAIN));
+ if(!valid(game))throw Error('No valid active career for naming decisions');
+ return game.namingFeedback??null;
+}
+function commitNamingFeedback(next,expectedRevision){
+ const game=parse(localStorage.getItem(MAIN));
+ if(!valid(game))throw Error('No valid active career for naming decisions');
+ const old=game.namingFeedback;
+ const revision=old?.revision??0;
+ if(!Number.isSafeInteger(expectedRevision)||revision!==expectedRevision)
+  throw Error('Naming choices changed in another game session; reload first');
+ if(!next||next.schema!=='WTW_HORSE_NAMING_FEEDBACK_V1'||
+  next.revision!==revision+1||!Array.isArray(next.events)||
+  next.events.length!==next.revision||
+  !next.decisions||typeof next.decisions!=='object')
+  throw Error('Invalid next naming decision');
+ // The controller provides a fully validated pure ledger; only this
+ // existing career writer changes the saved in-progress game snapshot.
+ const update={...game,namingFeedback:JSON.parse(JSON.stringify(next))};
+ localStorage.setItem(MAIN,JSON.stringify(update)); // quota failure throws
+ if(parse(localStorage.getItem(MAIN))?.namingFeedback?.revision!==next.revision)
+  throw Error('Naming feedback write could not be verified');
+ return update.namingFeedback;
+}
 try{
  // Clear the retired generated-world browser saves ONCE per device. This does
  // not touch approved historical source records in Drive or D1.
@@ -91,6 +119,7 @@ try{
 }catch(error){window.__WTW_1999_BOOT_WARNING__=String(error?.message||error)}
 window.__WTW_1999_MANAGEMENT__={
  schema:SCHEMA,startDate:START,seed:selectedWorld.seed,mode:selectedWorld.mode,worldProfile:selectedWorld,
+ readNamingFeedback,commitNamingFeedback,
  gameSaveKey:MAIN,saveKey:MAIN,createFreshState:fresh,validateCareer:valid,restoreCareer,
  namedSaveKey:'wtw1999FoundingNamedSavesV1',
  historyArchive:'/archive/?page=seasons',
