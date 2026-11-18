@@ -9,11 +9,12 @@ import {verifyNamingBriefAgainstGame,screenStoryFirstIdeas} from './horse-naming
 import {foalingEventNamingBrief,auditPopulationNamingResults,POPULATION_NAMING_SCHEMA,POPULATION_NAMING_BATCH_SIZE} from './horse-naming-population-planner.js';
 import {validateNamingFeedback,excludedNamingFeedbackNames,rankNamingCandidates}
  from './horse-naming-feedback-v489.js';
+import {V491_WHOLE_NAMES} from './horse-naming-author-v491.js';
 
 export const LOCAL_HORSE_NAMING_SCHEMA='WTW_LOCAL_HORSE_NAMING_V485';
 // Freeze behavioral revision per named cohort when game foaling becomes save-backed.
 // This V486 marker changes selection and fail-closed audit, not the V485 wire schema.
-export const LOCAL_HORSE_NAMING_ALGORITHM_REVISION='WTW_LOCAL_NAMING_RULES_V489';
+export const LOCAL_HORSE_NAMING_ALGORITHM_REVISION='WTW_LOCAL_NAMING_RULES_V491';
 // Frozen genesis revisions are part of the persisted 1999 world identity.
 // Future editor preference/ranker versions MUST NOT relabel existing horses.
 export const OPENING_PROVISIONAL_HORSE_NAMING_REVISION='WTW_LOCAL_NAMING_RULES_V488:OPENING_PROVISIONAL_V1';
@@ -131,7 +132,8 @@ export function createLocalStoryIdeas(brief,{count=8,attempt=0,scanAll=false}={}
  // most eight suggestions through the established shared editor gate.
  // Actual foaling cohorts scan the complete eligible author-written pool.
  const limit=scanAll?Infinity:count*3;
- const pools=new Map(VOICES.map(v=>[v.id,[...v.names,...(V488_WHOLE_NAMES[v.id]||[])]]));
+ const pools=new Map(VOICES.map(v=>[v.id,[...v.names,...(V488_WHOLE_NAMES[v.id]||[]),
+  ...(V491_WHOLE_NAMES[v.id]||[])]]));
  const passes=Math.max(...hits.map(h=>pools.get(h.voice.id).length));
  const suggestions=[],seen=new Set();
  const gcd=(a,b)=>{while(b){const t=b;b=a%b;a=t}return a};
