@@ -349,6 +349,11 @@ export function createOrganizationNameRoster({
   const partnershipSlotAvailable=ownerPartnershipLimit===null||
    partnershipGroupsCreated<ownerPartnershipLimit;
   const usePartnershipForm=plannedPartnership&&partnershipSlotAvailable;
+  // In the opt-in V11 world, about a quarter of private owner businesses
+  // use the wider regional lexicon from the FIRST proposal, rather than
+  // only after the older root pool is nearly exhausted.
+  const useExpandedOwnerStyle=ownerSurnameReferences.length>0&&
+   hash(seed,'v11-owner-expanded-style:'+i)%100<24;
   const name=claim(attempt=>{
    if(usePartnershipForm){
     const coOwner=draw(ownerSurnamePool,seed,'owner-partner-surname:'+i+':'+attempt);
@@ -362,9 +367,13 @@ export function createOrganizationNameRoster({
    // Once normal V10 candidates run out, expand into principal-linked,
    // region-grounded private stables and bloodstock businesses. Do not
    // change earlier V10 choices or mint artificial numbered aliases.
-   if(ownerSurnameReferences.length&&attempt>=SCALABLE_OWNER_NAME_ATTEMPT_START)
+   if(ownerSurnameReferences.length&&
+    (useExpandedOwnerStyle||attempt>=SCALABLE_OWNER_NAME_ATTEMPT_START))
     return proposeScalable1999OwnerBusinessName({
-     seed,index:i,attempt,principalName:principal,primarySurname:preferred,
+     seed,index:i,
+     attempt:attempt>=SCALABLE_OWNER_NAME_ATTEMPT_START?
+      attempt:attempt+SCALABLE_OWNER_NAME_ATTEMPT_START,
+     principalName:principal,primarySurname:preferred,
      region:context.region||'GENERAL_NORTH_AMERICA',surnames:ownerSurnamePool
     });
    const candidate=attempt<48?
