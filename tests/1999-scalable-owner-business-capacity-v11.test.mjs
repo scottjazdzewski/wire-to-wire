@@ -7,6 +7,8 @@ import {regionalOrganizationNamingRoots}
  from '../public/1999/engine/organization-naming-styles.mjs';
 import {CENSUS_2000_OWNER_SURNAMES}
  from '../public/1999/engine/census-2000-owner-surnames.mjs';
+import {VERIFIED_RACING_OWNER_SURNAME_INPUTS_1999}
+ from '../public/1999/engine/verified-racing-owner-names-1999.mjs';
 import {proposeScalable1999OwnerBusinessName,scalableOwnerNamingRoots,
  SCALABLE_OWNER_BUSINESS_NAME_MODEL,SCALABLE_OWNER_NAME_ATTEMPT_START,
  SCALABLE_OWNER_NAME_ATTEMPT_LIMIT}
@@ -172,3 +174,31 @@ test('only explicitly versioned V11 can change established 1999 owner names',()=
   ownerSurnameReferences:[],scalableOwnerNames:true}),
   /V11 owner naming requires explicitly sourced archival surnames/);
 });
+
+test('active P0 V10 16,700-owner directory stays frozen at pre-V11 fingerprint',()=>{
+ // Baseline from merged main at b1bfc26b, before any V11 module existed.
+ // Actual 208 sourced 1999 racing surnames, not a mock seven-name sample.
+ const given='Avery Bailey Casey Dakota Ellis Frankie Harper Jamie Kendall Logan Morgan Parker Quinn Riley Sawyer Taylor Wren Zion Alex Carmen Derek Elena Felix Grace Imani Julian Kira Leah Mateo Nora'.split(' ');
+ const principals=Array.from({length:16700},(_,i)=>given[i%given.length]+' '+
+  CENSUS_2000_OWNER_SURNAMES[Math.floor(i/given.length)]);
+ const roster=createOrganizationNameRoster({
+  seed:19990101,ownerCount:16700,barnCount:0,farmCount:0,
+  principalNames:principals,ownerSurnameReferences:VERIFIED_RACING_OWNER_SURNAME_INPUTS_1999,
+  alignPrincipalSurnames:true,soleOwnerPercent:8,ownerPartnershipLimit:3800,
+  protectedNames:['Kingsmere Farm','Davenport Hall Farm','Split Rail Farm']
+ });
+ let h=2166136261;
+ const signature=roster.owners.join('\u0000');
+ for(let i=0;i<signature.length;i++){
+  h^=signature.charCodeAt(i);
+  h=Math.imul(h,16777619);
+ }
+ assert.equal((h>>>0).toString(16).padStart(8,'0'),'261461dc',
+  'P0 V10 owners must not be silently renamed by the fallback expansion');
+ assert.equal(roster.model,ARCHIVAL_RACING_OWNER_NAME_MODEL);
+ assert.equal(roster.summary.retries,60266);
+ assert.equal(roster.summary.partnershipGroupsCreated,1935);
+ assert.ok(!Object.hasOwn(roster.summary,'ownerCapacityModel'),
+  'successful V10 naming retains the original manifest and summary');
+});
+
