@@ -40,10 +40,5 @@ test('full 1999 industry enters the canonical game run with editable names',asyn
  assert.equal(validateGameRun(career.run,career.world),career.run);
  assert.equal(career.run.world_ref.sha256,career.world.authority.sha256);
  assert.ok(career.run.player.operation_id);
- assert.equal(career.run.runtime.finances.balance_minor,
-  calculate1999OpeningTreasury({portfolioTier:career.operation.portfolioTier,
-   resources:career.operation.ratings?.resources??55,
-   activeRunnerCount:career.playableHorseCount}));
- assert.equal(career.run.runtime.finances.operation_balances_minor[
-  career.operation.id],career.run.runtime.finances.balance_minor);
+
 });

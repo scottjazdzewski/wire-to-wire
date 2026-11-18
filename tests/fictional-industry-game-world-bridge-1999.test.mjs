@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {createPersistent1999Industry,savePersistent1999CareerRun,
  loadPersistent1999CareerRun} from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
 import {digestPersistent1999GameSnapshot,openPersistent1999GameCareer,
- format1999OpeningBarnName,PERSISTED_1999_OPENING_BARN_NAMING_MODEL}
+ format1999OpeningBarnName,PERSISTED_1999_OPENING_BARN_NAMING_MODEL,
+ calculate1999OpeningTreasury}
  from '../public/1999/engine/fictional-industry-game-world-bridge-1999.mjs';
 import {validateGameRun} from '../public/1999/game/state.js';
 import {dispatchGameCommand} from '../public/1999/game/kernel.js';
@@ -91,6 +92,13 @@ test('10,000-horse persisted 1999 world opens and runs a canonical race career',
  assert.ok(career.world.entities.horses.every(h=>typeof h.name==='string'&&h.name));
  assert.equal(career.world.calendar.cards.length,manifest.scheduledCards);
  assert.equal(career.run.player.operation_id,'O-OWNER-01');
+ const expectedOpeningCapital=calculate1999OpeningTreasury({
+  portfolioTier:career.operation.portfolioTier,
+  resources:career.operation.ratings?.resources??55,
+  activeRunnerCount:career.playableHorseCount});
+ assert.equal(career.run.runtime.finances.balance_minor,expectedOpeningCapital);
+ assert.equal(career.run.runtime.finances.operation_balances_minor[
+  career.operation.id],expectedOpeningCapital);
  const openingSite=career.run.runtime.facilities.sites['F-1999-OPENING-T-0001'];
  assert.ok(openingSite,'new barn should exist in canonical game run');
  assert.equal(openingSite.id,'F-1999-OPENING-T-0001');
