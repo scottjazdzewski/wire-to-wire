@@ -48,10 +48,14 @@ test('V10 World editor changes real saved horse, person, farm and track identiti
  assert.equal(run.runtime.registered_horses.by_id['REG-001'].registration_receipt_id,'KEEP');
  assert.equal(unmodified.entities.horses[0].name,'Barn Crossing');
  assert.equal(otherCareer.entities.organizations[0].name,'Kingsmere Farm');
- assert.equal(createPersistedIndustryHorseDirectory({world,manifest})
-  .browse({search:'Kingsmere Runner'}).total,1);
- assert.equal(createPersistedIndustryEntityDirectory({world,manifest,kind:'organization'})
-  .browse({search:'Kingsmere Racing Farm'}).total,1);
+ const horseDirectory=createPersistedIndustryHorseDirectory({world,manifest});
+ assert.equal(horseDirectory.browse({search:'Kingsmere Runner'}).total,1);
+ assert.match(horseDirectory.byId(HORSE).reviewNotes,/validated transfer/);
+ const orgDirectory=createPersistedIndustryEntityDirectory({
+  world,manifest,kind:'organization'});
+ assert.equal(orgDirectory.browse({search:'Kingsmere Racing Farm'}).total,1);
+ assert.equal(orgDirectory.byId('O-000061').biography,
+  'Established major breeding operation');
  const reopen=fixture();
  assert.equal(applyCareerWorldEdits(reopen,JSON.parse(JSON.stringify(disk))).applied,4);
  assert.equal(reopen.entities.horses[0].name,'Kingsmere Runner');
