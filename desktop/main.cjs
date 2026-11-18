@@ -259,9 +259,18 @@ async function runSmoke(win){
        await new Promise(resolve=>setTimeout(resolve,250));view=readView();
       }
       gameDate=saved.gameDate;
+      const savedRun=saved.changes.canonicalRun;
+      const savedStableHorseIds=Array.isArray(savedRun.stable_horse_ids)?savedRun.stable_horse_ids:[];
       if(view?.date!==expectedDate||saved.player?.operation_id!=='O-000061'||
-       saved.changes.canonicalRun.stable_horse_ids.length!==view.operationInventoryCount)
-       throw Error('Windows gameplay save did not retain the Kingsmere roster and next date');
+       savedStableHorseIds.length!==view.operationInventoryCount)
+       throw Error('Windows gameplay save did not retain the Kingsmere roster and next date: '+
+        JSON.stringify({expectedDate,viewDate:view?.date,savedGameDate:saved.gameDate,
+         savedRunDate:savedRun.clock?.date,playerOperationId:saved.player?.operation_id,
+         savedStableHorseCount:savedStableHorseIds.length,
+         viewRosterCount:view?.horseRows?.length,
+         viewOperationInventoryCount:view?.operationInventoryCount,
+         savedRosterSample:savedStableHorseIds.slice(0,5),
+         viewHorseSample:view?.horseRows?.slice?.(0,5)?.map(h=>h.horseId)}));
       gameplayAdvance={fromDate,toDate:expectedDate,operationId:saved.player.operation_id,
        stableHorses:saved.changes.canonicalRun.stable_horse_ids.length,
        registeredRunners:Object.keys(saved.changes.canonicalRun.runtime.registered_horses.by_id).length,
