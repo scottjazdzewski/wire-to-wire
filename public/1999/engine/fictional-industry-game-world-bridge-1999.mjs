@@ -14,6 +14,33 @@ import {readPersistent1999Directory,readPersistent1999IndustryBatch,
 export const PERSISTED_1999_GAME_BRIDGE_SCHEMA='WTW_PERSISTED_1999_GAME_BRIDGE_V1';
 export const PERSISTED_1999_OPENING_BARN_NAMING_MODEL='WTW_1999_OWNER_TRACK_BARN_V1';
 
+export const OPENING_OPERATION_RESERVE_MONTHS=18;
+export const OPENING_OPERATION_MONTHLY_PER_HORSE_BUDGET_MINOR=500000;
+
+/**
+ * Capitalize a new career operation for the size and resources of its actual
+ * racing string. This is opening working capital, not an ongoing subsidy.
+ * Amounts are in minor currency units, matching the game finance runtime.
+ */
+export function calculate1999OpeningTreasury({
+ portfolioTier='REGIONAL',resources=55,activeRunnerCount=0
+}={}){
+ if(!Number.isSafeInteger(activeRunnerCount)||activeRunnerCount<0)
+  throw Error('Opening treasury requires a nonnegative whole runner count');
+ const floors={HANDFUL:25000000,SMALL:100000000,REGIONAL:250000000,
+  MAJOR:750000000,ELITE:1500000000};
+ const tier=typeof portfolioTier==='string'?portfolioTier.trim().toUpperCase():'';
+ const tierFloor=floors[tier]??floors.REGIONAL;
+ const rating=Number.isFinite(resources)?Math.max(0,Math.min(100,resources)):55;
+ const resourceFactor=.75+rating/200;
+ const operatingReserve=Math.ceil(activeRunnerCount*
+  OPENING_OPERATION_MONTHLY_PER_HORSE_BUDGET_MINOR*
+  OPENING_OPERATION_RESERVE_MONTHS*resourceFactor);
+ if(!Number.isSafeInteger(operatingReserve))
+  throw Error('Opening operation reserve exceeds supported currency range');
+ return Math.max(tierFloor,operatingReserve);
+}
+
 /**
  * Display identity for a NEW, owner-operated racing barn. The operation and
  * venue are both canonical ID-addressed records. Do not invent a new owner,
@@ -241,8 +268,6 @@ export async function openPersistent1999GameCareer(store,manifest,{
    track_rent_daily_minor:0,maintenance_daily_minor:0,
    maintenance_policy:'STANDARD',contracts:[],upgrade:null,land_acres:0};
  }
- run.runtime.finances.operation_balances_minor[operation.id]=250000000;
- run.runtime.finances.balance_minor=250000000;
  const activeIds=[];
  for(const source of openingRoster){
   const id='H-GAME-1999-WORLD-'+source.id.replace(/^H-FICTIONAL-1999-/,'');
@@ -275,6 +300,12 @@ export async function openPersistent1999GameCareer(store,manifest,{
   run.stable_horse_ids.push(id);activeIds.push(id);
   initializeGameHorseCare(run,h);
  }
+ const openingCapitalMinor=calculate1999OpeningTreasury({
+  portfolioTier:operation.portfolioTier,
+  resources:operation.ratings?.resources??55,
+  activeRunnerCount:activeIds.length});
+ run.runtime.finances.operation_balances_minor[operation.id]=openingCapitalMinor;
+ run.runtime.finances.balance_minor=openingCapitalMinor;
  // Breeding stock and youngstock remain their original canonical world
  // records in the same career database. Put them on the operation roster so
  // the player sees every owned horse, while the racing engine continues to
