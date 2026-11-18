@@ -556,10 +556,14 @@ async function importSharedCareerFile(file,{preserveExistingProgress=false}={}){
   fullIndustryManifest=ready.manifest;
   if(!sameShared1999WorldIdentity(fullIndustryManifest,expected))
    throw Error('This build creates a different shared-world identity; checkpoint import stopped safely');
+  // Career-local World edits intentionally change the hydrated in-memory
+  // entities but NOT the immutable source SHA. Never use that edited object
+  // for imported checkpoint fingerprint verification or legacy migration.
   const sameOpenWorld=activeWorldCareer?.manifest?.worldId===wanted.worldId&&
    activeWorldCareer.manifest.seed===wanted.seed&&
    activeWorldCareer.manifest.foundingRelationshipRevision===
-    fullIndustryManifest.foundingRelationshipRevision;
+    fullIndustryManifest.foundingRelationshipRevision&&
+   Object.keys(activeWorldCareer.worldEdits?.byId||{}).length===0;
   const career=sameOpenWorld?activeWorldCareer:
    await openPersistent1999GameCareer(db,fullIndustryManifest,{
     runId:checkpoint.careerRecord.runId,
