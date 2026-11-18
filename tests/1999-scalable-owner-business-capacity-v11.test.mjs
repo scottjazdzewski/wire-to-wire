@@ -58,6 +58,13 @@ test('the actual archival owner roster has deterministic headroom for 29,000 org
  assert.equal(result.summary.ownerCandidateAttemptBudget,SCALABLE_OWNER_NAME_ATTEMPT_LIMIT);
  assert.equal(result.owners.length,29000);
  assert.equal(new Set(result.owners.map(norm)).size,29000);
+ // V11 must actually enrich normal new-world names rather than merely
+ // adding an unreachable emergency fallback after all owners are issued.
+ const newRoots=['Round Cedar','Long Hollow','Twin Pines','Three Willows',
+  'White Fence Ridge','Copper Field','Oak Branch','Old Mill Road','Meadow Fork'];
+ assert.ok(result.owners.filter(name=>
+  newRoots.some(root=>name.includes(root))).length>=500,
+ 'V11-only regional owner names must enter the playable opening roster');
  assert.ok(result.owners.every(s=>typeof s==='string'&&s.length>=5&&!/\d/.test(s)));
  assert.ok(result.summary.partnershipGroupsCreated<=3800);
  assert.ok(result.owners.every(n=>!args.protectedNames.some(p=>norm(n)===norm(p))));
