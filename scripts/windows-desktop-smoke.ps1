@@ -82,13 +82,16 @@ foreach($step in $steps){
  }
  if($phase.StartsWith("career-")){
   $career=$proof.careerBootstrap
+  $careerInventoryCount=0
+  $careerInventoryValid=$false
+  if($career){$careerInventoryValid=[int]::TryParse([string]$career.operationInventoryCount,[ref]$careerInventoryCount)}
   if(!$career -or $career.worldId -ne "WTW1999FullIndustry-COHORTS-V6-OWNER-V10-NAMES-V10-H300000" -or
      $career.seed -ne 19990101 -or $career.horseCount -ne 300000 -or
      $career.personCount -ne 75705 -or
      $career.runId -ne "WTW-RUN-1999-19990101-SIZE-300000-OP-O-000061" -or
      !$career.snapshotSha256 -or !$career.gameDate -or
-     ![int]::TryParse([string]$career.operationInventoryCount,[ref]$null) -or
-     $career.operationInventoryCount -lt 1){
+     !$careerInventoryValid -or
+     $careerInventoryCount -lt 1){
    throw "Packaged EXE did not load the exact shared 300k world and career: $(Get-Content -Raw $report)"
   }
   if($phase -eq "career-write"){

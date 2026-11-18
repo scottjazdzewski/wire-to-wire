@@ -384,7 +384,7 @@ async function exportSharedCareer(){
 
 function supportsV10FounderInventoryMigration(manifest){
  return manifest?.foundingRelationshipRevision===1&&
-  /^WTW1999FullIndustry-COHORTS-V6-OWNER-V10-NAMES-V10-H\\d+$/.test(manifest.worldId||'');
+  /^WTW1999FullIndustry-COHORTS-V6-OWNER-V10-NAMES-V10-H\d+$/.test(manifest.worldId||'');
 }
 function reconcileV10FounderOperationInventory(record,career,manifest){
  if(!supportsV10FounderInventoryMigration(manifest))
