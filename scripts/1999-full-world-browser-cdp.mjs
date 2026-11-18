@@ -306,6 +306,30 @@ try{
    return {done:v,value:v};
   });
   await browser.evalJS('window.WTWCompactCareerManager.open().then(()=>true)');
+  await waitFor('Kingsmere selector after playable-world restart',async()=>{
+   const v=await browser.evalJS(`!!document.querySelector('[data-cc="player-operation"]')&&
+    !!document.querySelector('[data-cc-action="open-selected-operation"]')`);
+   return {done:v,value:v};
+  });
+  const resumed=await browser.evalJS(`(()=>{
+   const select=document.querySelector('[data-cc="player-operation"]');
+   const button=document.querySelector('[data-cc-action="open-selected-operation"]');
+   if(!select||!button||![...select.options].some(o=>o.value==='O-000061'))return false;
+   select.value='O-000061';select.dispatchEvent(new Event('change',{bubbles:true}));
+   button.click();return true;
+  })()`);
+  assert.equal(resumed,true,'Kingsmere could not be selected after restart');
+  const resumedUi=await waitFor('Kingsmere playable roster after restart',async()=>{
+   const v=await browser.evalJS(`(()=>{const x=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+    return x?.operationId==='O-000061'?{worldId:x.worldId,runId:x.runId,date:x.date,
+     worldHorseCount:x.worldHorseCount,personCount:x.personCount,
+     operationInventoryCount:x.operationInventoryCount,rosterCount:x.horseRows?.length||0}:null})()`);
+   return {done:!!v,value:v};
+  });
+  assert.equal(resumedUi.worldHorseCount,300000);
+  assert.ok(resumedUi.rosterCount>0);
+  assert.equal(resumedUi.operationInventoryCount,resumedUi.rosterCount,
+   'Kingsmere UI must show its complete linked horse inventory');
   const afterRestart=await readCareerSave();
   assert.deepEqual(afterRestart,afterImport,
    'Full-world career and official race changed after process restart');
@@ -313,7 +337,7 @@ try{
   console.log('WTW_FULL_WORLD_RACE_REOPEN_PASS '+JSON.stringify({
    worldId:snap.worldId,runId:afterRestart.runId,gameDate:afterRestart.gameDate,
    stableHorses:afterRestart.stableHorses,officialRaces:afterRestart.officialRaces,
-   durableReadBack:true}));
+   playableUi:resumedUi,durableReadBack:true}));
   await stop(browser);browser=null;server.kill('SIGTERM');rmSync(profile,{recursive:true,force:true});
   process.exit(0);
  }
