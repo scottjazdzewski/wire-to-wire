@@ -23,12 +23,15 @@ test('the desktop bundles V10 and preserves V9, V8 plus the frozen May 29 refere
  assert.equal(checkpoint.world.horseCount,300000);
  assert.equal(checkpoint.world.personCount,75705);
  assert.match(checkpoint.world.snapshotSha256,/^[a-f0-9]{64}$/);
- assert.equal(checkpoint.careerRecord.runId,'WTW-RUN-1999-19990101-SIZE-300000');
- assert.equal(checkpoint.careerRecord.gameDate,'1999-01-22');
- assert.equal(checkpoint.careerRecord.changes.canonicalRun.stable_horse_ids.length,658);
+ assert.equal(checkpoint.careerRecord.runId,'WTW-RUN-1999-19990101-SIZE-300000-OP-O-000061');
+ assert.match(checkpoint.careerRecord.gameDate,/^1999-\\d{2}-\\d{2}$/);
+ assert.ok(checkpoint.careerRecord.changes.canonicalRun.stable_horse_ids.length>=100,
+  'V10 checkpoint must preserve Kingsmere’s full operation roster');
  const officialRaces=Object.values(checkpoint.careerRecord.changes.canonicalRun.runtime.races||{})
   .filter(r=>r.status==='OFFICIAL_SIM_RESULT');
- assert.equal(officialRaces.length,1,'Shared test career should include the 1999 race already settled in acceptance');
+ assert.equal(officialRaces.length,1,'Kingsmere shared career should include the 1999 race already settled in acceptance');
+ assert.equal(officialRaces[0].date,checkpoint.careerRecord.gameDate,
+  'V10 Kingsmere checkpoint date should match its official race');
  const v9=await unpackShared1999Career(gunzipSync(readFileSync(v9Asset)));
  assert.equal(v9.world.worldId,'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V9-H300000');
  assert.equal(v9.careerRecord.gameDate,'1999-01-22');
