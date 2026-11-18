@@ -10,6 +10,8 @@ import {plan1999Ecosystem} from './fictional-industry-ecosystem-1999.mjs';
 import {generateProvisional1999IndustryNameRoster} from '../game/horse-naming-local-v485.js';
 import {connect1999Horse} from './fictional-industry-graph-1999.mjs';
 import {planFictionalOwnerPortfolios} from './fictional-owner-portfolio-planner.mjs';
+import {completeApprovedFoundingHorseRelationships}
+ from './fictional-industry-founder-relations-1999.mjs';
 export const INDUSTRY_REGISTRY_1999_SCHEMA='WTW_INDUSTRY_REGISTRY_1999_V1';
 const cohorts=[
  ['broodmares','BROODMARE',1985],['stallions','STALLION',1984],
@@ -173,7 +175,7 @@ export function* generate1999IndustryRegistryBatches({
    !['BROODMARE','STALLION'].includes(source.status)||!source.careFacilityId)
    throw Error('Invalid approved founding horse '+String(source?.id||''));
   const sourceSire=source.sourcePedigree?.sireId,sourceDam=source.sourcePedigree?.damId;
-  const horse={...source,
+  const baseHorse={...source,
    cohort:source.cohort||source.status.toLowerCase(),
    ownerId:source.ownerId||owner.id,
    sourcePedigree:{sireId:sourceSire||null,damId:sourceDam||null},
@@ -186,6 +188,7 @@ export function* generate1999IndustryRegistryBatches({
    ownerPortfolioTier:ownership.ownerTier[ownerIndex],
    registryProvenance:'APPROVED_FOUNDING_1999_SOURCE',
    foundingSource:source.sourceRecord||null};
+  const horse=completeApprovedFoundingHorseRelationships(baseHorse,farms);
   batch.push(horse);
   if(batch.length===batchSize){
    yield {schema:INDUSTRY_REGISTRY_1999_SCHEMA,seed,offset,

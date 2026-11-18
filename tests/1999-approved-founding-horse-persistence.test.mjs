@@ -1,12 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {createPersistent1999Industry,findPersistent1999Horse,
+import {createPersistent1999Industry,findPersistent1999Horse,reopenPersistent1999Industry,
  savePersistent1999CareerRun,loadPersistent1999CareerRun,
  readPersistent1999LifecycleHorse}
  from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
 import {openPersistent1999GameCareer}
  from '../public/1999/engine/fictional-industry-game-world-bridge-1999.mjs';
+import {restoreLegacyApprovedFoundingHorseRelationships}
+ from '../public/1999/engine/fictional-industry-founder-relations-1999.mjs';
 
 function store(){
  const data=Object.fromEntries(['manifests','horseBatches','personBatches',
@@ -21,7 +23,7 @@ function store(){
    data.industryLifecycle.set(key+':checkpoint',structuredClone(checkpoint));
    for(const h of horseUpdates)data.industryLifecycle.set(key+':horse:'+h.id,structuredClone(h));
    for(const w of [...eventWrites,...dataWrites])data.industryLifecycle.set(w.key,structuredClone(w.value));
-  }};
+  },data};
 }
 
 test('all 73 approved founding breeding horses keep permanent IDs inside the playable 10k world',async()=>{
@@ -33,7 +35,7 @@ test('all 73 approved founding breeding horses keep permanent IDs inside the pla
   assert.ok(orgById.has(facilityId),h.id+' must retain its approved physical resident');
   return {id:h.id,name:h.name,status:h._role==='stallion'?'STALLION':'BROODMARE',
    cohort:h._role,sex:h.sex||(h._role==='broodmare'?'MARE':'HORSE'),
-   foalYear:h.foalYear,ownerId:null,breederId:facilityId,foalingFarmId:facilityId,
+   foalYear:h.foalYear,ownerId:null,breederId:null,foalingFarmId:null,
    careFacilityId:facilityId,managementOrganizationId:facilityId,
    sourcePedigree:{sireId:h.sireId||null,damId:h.damId||null},
    sourceRecord:h};
@@ -45,11 +47,33 @@ test('all 73 approved founding breeding horses keep permanent IDs inside the pla
  const owners=[...new Set([...facilityIds,'O-PRIVATE-1999-01'])].map(id=>({id,
   name:orgById.get(id)?.name||'Private Owner',maxHorses:10000,homeTrackId:'T-0001'}));
  const track={id:'T-0001',name:'Keeneland',location:{city:'Lexington',region:'Kentucky',country:'USA'}};
- const storage=store(),manifest=await createPersistent1999Industry({store:storage,
+ const storage=store();let manifest=await createPersistent1999Industry({store:storage,
   seed:19991117,worldId:'ApprovedFounding73InOneWorld',targetOpeningHorses:10000,
   farms,tracks:[track],owners,foundingHorses,batchSize:1000});
+ // Recreate a pre-migration saved world, then verify reopen upgrades only
+ // missing founding links while preserving permanent horse identity.
+ const worldKey='ApprovedFounding73InOneWorld:19991117';
+ const oldManifest={...manifest};delete oldManifest.foundingRelationshipRevision;
+ storage.data.manifests.set(worldKey,oldManifest);
+ const founderRowsByBatch=new Map();
+ for(let i=0;i<oldManifest.foundingHorseIds.length;i++){
+  const position=oldManifest.generatedHorseCount+i,index=Math.floor(position/oldManifest.batchSize);
+  const key=worldKey+':'+index;
+  const rows=founderRowsByBatch.get(index)||
+   structuredClone(storage.data.horseBatches.get(key));
+  rows[position-index*oldManifest.batchSize]=
+   restoreLegacyApprovedFoundingHorseRelationships(rows[position-index*oldManifest.batchSize]);
+  founderRowsByBatch.set(index,rows);
+ }
+ for(const [index,rows] of founderRowsByBatch)
+  storage.data.horseBatches.set(worldKey+':'+index,rows);
+ const reopenedWorld=await reopenPersistent1999Industry(storage,{
+  seed:19991117,worldId:'ApprovedFounding73InOneWorld'});
+ manifest=reopenedWorld.manifest;
+
  assert.equal(manifest.horseCount,10000);
  assert.equal(manifest.generatedHorseCount+manifest.foundingHorseCount,10000);
+ assert.equal(manifest.foundingRelationshipRevision,1);
  const career=await openPersistent1999GameCareer(storage,manifest,{
   runId:'WTW-RUN-KingsmereFoundingResidents',operationId:'O-000061'});
  const kingsmereSource=foundingHorses.filter(h=>h.managementOrganizationId==='O-000061');
@@ -59,6 +83,15 @@ test('all 73 approved founding breeding horses keep permanent IDs inside the pla
   const stored=await findPersistent1999Horse(storage,manifest,source.id);
   assert.equal(stored.id,source.id);assert.equal(stored.name,source.name);
   assert.equal(stored.foundingSource.id,source.id);
+  assert.ok(stored.foalingFarmId,'founding foaling farm is linked');
+  assert.ok(stored.breederId,'founding breeder is linked');
+  assert.equal(stored.birthplace.farmId,stored.foalingFarmId);
+  assert.ok(stored.relationships.some(edge=>edge.type==='FOALED_AT'&&
+   edge.toId===stored.foalingFarmId));
+  assert.ok(stored.relationships.some(edge=>edge.type==='BRED_BY'&&
+   edge.toId===stored.breederId));
+  assert.ok(stored.foundingRelationshipBaseline,
+   'missing source relationships receive a provenance-aware versioned mapping');
  }
  const saved=await savePersistent1999CareerRun(storage,manifest,{runId:career.run.run_id,
   gameDate:'1999-01-02',player:career.run.player,changes:{canonicalRun:career.run},version:3});

@@ -141,6 +141,8 @@ export function validate1999IndustryReferences(records,{
  if(!plan?.counts||!staffing?.counts||![tracks,farms,owners,foundingHorses].every(Array.isArray))
   throw Error('Missing world census for relationship validation');
  const allowed=new Set([...tracks,...farms,...owners].map(x=>x.id));
+ const farmById=new Map(farms.map(f=>[f.id,f]));
+ const ownerIds=new Set(owners.map(o=>o.id));
  const foundingHorseIds=new Set(foundingHorses.map(x=>x.id));
  const horseCohorts=['broodmares','stallions','yearlings','twoYearOldProspects',
   'threeYearOldRunners','fourYearOldRunners','fivePlusRunners'];
@@ -190,10 +192,26 @@ export function validate1999IndustryReferences(records,{
     problems.push({id:entity.id,reason:'INVALID_SIRE_ROLE'});
    if(entity.damId&&!entity.damId.startsWith('H-FICTIONAL-1999-BROODMARES-'))
     problems.push({id:entity.id,reason:'INVALID_DAM_ROLE'});
-   if(entity.foalingFarmId&&entity.birthplace?.farmId!==entity.foalingFarmId)
+   if(!ownerIds.has(entity.ownerId))
+    problems.push({id:entity.id,reason:'INVALID_LEGAL_OWNER'});
+   const foalingFarm=farmById.get(entity.foalingFarmId);
+   if(!foalingFarm)
+    problems.push({id:entity.id,reason:'MISSING_OR_INVALID_FOALING_FARM'});
+   else if(entity.birthplace?.farmId!==entity.foalingFarmId||
+    entity.birthplace?.city!==(foalingFarm.location?.city??null)||
+    entity.birthplace?.region!==(foalingFarm.location?.region??null)||
+    entity.birthplace?.country!==(foalingFarm.location?.country??null))
     problems.push({id:entity.id,reason:'BIRTHPLACE_FARM_MISMATCH'});
-   if(entity.breederId&&!farms.some(f=>f.id===entity.breederId))
-    problems.push({id:entity.id,reason:'INVALID_BREEDER'});
+   if(!farmById.has(entity.breederId))
+    problems.push({id:entity.id,reason:'MISSING_OR_INVALID_BREEDER'});
+   const requiredEdges=[['OWNED_BY',entity.ownerId],['BRED_BY',entity.breederId],
+    ['FOALED_AT',entity.foalingFarmId],['CARED_AT',entity.careFacilityId]];
+   for(const [type,target] of requiredEdges){
+    const matches=entity.relationships.filter(edge=>edge.type===type);
+    if(!target||matches.length!==1||matches[0].fromId!==entity.id||
+     matches[0].toId!==target)
+     problems.push({id:entity.id,reason:'MISSING_REQUIRED_RELATIONSHIP',type,target});
+   }
    if(entity.homeTrackId&&!tracks.some(t=>t.id===entity.homeTrackId))
     problems.push({id:entity.id,reason:'INVALID_HOME_TRACK'});
    if(!entity.careFacilityId||!farms.some(f=>f.id===entity.careFacilityId))

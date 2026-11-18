@@ -28,6 +28,9 @@ import {buildFictional1999RaceCalendar,FICTIONAL_1999_CALENDAR_SCHEMA}
  from './fictional-world-calendar-v1.mjs';
 import {planFictionalOwnerPortfolios,assessFictionalOwnerCapacity,
  FICTIONAL_PORTFOLIO_MODEL} from './fictional-owner-portfolio-planner.mjs';
+import {completeApprovedFoundingHorseRelationships,
+ APPROVED_FOUNDING_RELATIONSHIP_REVISION}
+ from './fictional-industry-founder-relations-1999.mjs';
 export const PERSISTENT_INDUSTRY_SCHEMA='WTW_PERSISTENT_INDUSTRY_1999_V3';
 export const PERSISTENT_INDUSTRY_DB='WireToWireFictionalIndustry1999V1';
 const SUPPORTED_PERSISTENT_INDUSTRY_SCHEMAS=new Set([
@@ -204,6 +207,47 @@ export async function open1999IndustryDatabase(indexedDB=globalThis.indexedDB){
  };
 }
 const keyOf=(seed,worldId)=>worldId+':'+seed;
+async function ensureApprovedFoundingRelationshipRevision(store,manifest){
+ if(manifest?.status!=='COMPLETE'||
+  manifest.foundingRelationshipRevision>=APPROVED_FOUNDING_RELATIONSHIP_REVISION)
+  return manifest;
+ const ids=manifest.foundingHorseIds||[];
+ const directory=await readPersistent1999Directory(store,manifest);
+ const farms=directory.filter(entity=>{
+  const roles=new Set(entity.operatingRoles||[]);
+  return entity.id.startsWith('O-FICTIONAL-FARM-')||
+   ['BREEDER','FOALING_FARM','STUD_FARM','BOARDING_FACILITY',
+    'TRAINING_BARN','TRAINING_CENTER','BREEDING_OR_CARE_FACILITY']
+    .some(role=>roles.has(role));
+ });
+ const batchSize=manifest.batchSize;
+ const generatedCount=manifest.generatedHorseCount??manifest.horseCount-ids.length;
+ const byBatch=new Map();
+ for(let i=0;i<ids.length;i++){
+  const position=generatedCount+i,index=Math.floor(position/batchSize);
+  if(!byBatch.has(index))byBatch.set(index,new Set());
+  byBatch.get(index).add(ids[i]);
+ }
+ for(const [index,batchIds] of byBatch){
+  const records=await readPersistent1999IndustryBatch(store,manifest,'horseBatches',index);
+  let changed=false;
+  const updated=records.map(h=>{
+   if(!batchIds.has(h.id))return h;
+   const next=completeApprovedFoundingHorseRelationships(h,farms);
+   if(JSON.stringify(next)!==JSON.stringify(h))changed=true;
+   return next;
+  });
+  if(updated.filter(h=>batchIds.has(h.id)).length!==batchIds.size)
+   throw Error('Founding relationship migration missed a horse batch');
+  if(changed)await store.commitBatch({worldId:keyOf(manifest.seed,manifest.worldId),
+   manifest,kind:'horseBatches',index,records:updated});
+ }
+ const upgraded={...manifest,
+  foundingRelationshipRevision:APPROVED_FOUNDING_RELATIONSHIP_REVISION};
+ await store.commitManifest(keyOf(manifest.seed,manifest.worldId),upgraded);
+ return upgraded;
+}
+
 function directorySignature(directories){
  let h=2166136261;
  for(const directory of directories){
@@ -334,7 +378,7 @@ export async function createPersistent1999Industry({
    existing.personNameRevision!==PERSONNEL_NAME_MODEL||
    Boolean(existing.ensureCircuitCoverage)!==ensureCircuitCoverage)
    throw Error('Existing industry identity or generation parameters conflict');
-  if(existing.status==='COMPLETE')return existing;
+  if(existing.status==='COMPLETE')return await ensureApprovedFoundingRelationshipRevision(store,existing);
  }
  // Generate one deterministic name roster matching the exact chosen staffing
  // plan (including an old saved plan in the middle of resumable genesis).
@@ -350,6 +394,7 @@ export async function createPersistent1999Industry({
  let manifest=existing??{
   schema:PERSISTENT_INDUSTRY_SCHEMA,worldId,seed,batchSize,directoryHash,
   targetOpeningHorses,ensureCircuitCoverage,status:'GENERATING',
+  foundingRelationshipRevision:0,
   horseCount:totalHorses,personCount:totalPeople,
   generatedHorseCount,foundingHorseCount:foundingHorses.length,
   foundingHorseIds:foundingHorses.map(h=>h.id),
@@ -532,6 +577,7 @@ export async function createPersistent1999Industry({
  }
  manifest={...manifest,status:'COMPLETE'};
  await store.commitManifest(id,manifest);
+ manifest=await ensureApprovedFoundingRelationshipRevision(store,manifest);
  return manifest;
 }
 export async function readPersistent1999IndustryBatch(store,manifest,kind,index){
@@ -1470,6 +1516,7 @@ export async function reopenPersistent1999Industry(store,{
  if(!supportsPersistentSchema(manifest))
   throw Error('Unsupported 1999 industry schema');
  if(manifest.status!=='COMPLETE')return {status:'GENERATING',manifest};
+ manifest=await ensureApprovedFoundingRelationshipRevision(store,manifest);
  const certificate=await verifyPersistent1999WorldOpen(store,manifest);
  return {status:'READY',manifest,certificate};
 }

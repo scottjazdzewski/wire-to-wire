@@ -52,6 +52,8 @@ const roleFromId=id=>/^P-FICTIONAL-1999-([A-Z-]+)-\d{7}$/.exec(id)?.[1]
 /** Streaming batch traversal bounds transient record allocations. */
 export async function auditPersistent1999World(store,manifest,{expectedHorses=null}={}){
  check(manifest?.status==='COMPLETE','incomplete or missing manifest');
+ check(manifest.foundingRelationshipRevision===1,
+  'founding horse relationship migration is incomplete');
  const seed=manifest.seed;
  if(expectedHorses!==null)check(manifest.horseCount===expectedHorses,
   'selected opening world size mismatch');
@@ -124,6 +126,9 @@ export async function auditPersistent1999World(store,manifest,{expectedHorses=nu
    owners:0,horses:0,minHorsesEach:tier.min,maxHorsesEach:tier.max
   }])),ownerPortfolioByOwner=new Map();
  let horseCount=0,connectedRunners=0;
+ const foundingRelationshipCoverage={approvedFounders:0,sourceFoalingFarms:0,
+  regionalFoalingFarmProxies:0,careFacilityFoalingFarmProxies:0,
+  sourceBreeders:0,modeledBreederProxies:0};
  for(let i=0;i<manifest.horseBatchesCommitted;i++){
   const batch=await readPersistent1999IndustryBatch(store,manifest,'horseBatches',i);
   for(const h of batch){
@@ -142,8 +147,22 @@ export async function auditPersistent1999World(store,manifest,{expectedHorses=nu
    check(h.registryProvenance===(approvedFounder?
     'APPROVED_FOUNDING_1999_SOURCE':'FICTIONAL_1999_DETERMINISTIC_V1'),
     'unprovenanced horse '+h.id);
-   check(owners.has(h.ownerId)&&(!h.foalingFarmId||farms.has(h.foalingFarmId)),
-    'broken ownership / foaling reference '+h.id);
+   check(owners.has(h.ownerId)&&farms.has(h.breederId)&&
+    farms.has(h.foalingFarmId)&&farms.has(h.careFacilityId),
+    'broken legal ownership / breeder / foaling / care reference '+h.id);
+   if(approvedFounder){
+    check(h.foundingRelationshipRevision===1,
+     'approved founding horse lacks versioned facility links '+h.id);
+    foundingRelationshipCoverage.approvedFounders++;
+    if(h.foalingRelationshipProvenance==='APPROVED_SOURCE_EXACT_FARM')
+     foundingRelationshipCoverage.sourceFoalingFarms++;
+    else if(h.foalingRelationshipProvenance==='MODELED_REGIONAL_FARM_PROXY')
+     foundingRelationshipCoverage.regionalFoalingFarmProxies++;
+    else foundingRelationshipCoverage.careFacilityFoalingFarmProxies++;
+    if(h.breederRelationshipProvenance==='APPROVED_SOURCE_BREEDER_ORGANIZATION')
+     foundingRelationshipCoverage.sourceBreeders++;
+    else foundingRelationshipCoverage.modeledBreederProxies++;
+   }
    const owner=owners.get(h.ownerId),tierStats=ownerTierStats[h.ownerPortfolioTier];
    check(!!tierStats,'missing or invalid owner portfolio tier '+h.id);
    const priorPortfolio=ownerPortfolioByOwner.get(h.ownerId);
@@ -158,14 +177,12 @@ export async function auditPersistent1999World(store,manifest,{expectedHorses=nu
    }
    if(owner.portfolioTier)check(owner.portfolioTier===h.ownerPortfolioTier,
     'approved operator portfolio tier disagrees with horse allocation '+h.id);
-   if(h.foalingFarmId){
-    const farm=farms.get(h.foalingFarmId);
-    check(farm&&h.birthplace?.farmId===h.foalingFarmId&&
-     h.birthplace?.city===farm.location.city&&
-     h.birthplace?.region===farm.location.region&&
-     h.birthplace?.country===farm.location.country,
-     'foaling location mismatch '+h.id);
-   }
+   const foalingFarm=farms.get(h.foalingFarmId);
+   check(h.birthplace?.farmId===h.foalingFarmId&&
+    h.birthplace?.city===(foalingFarm.location.city??null)&&
+    h.birthplace?.region===(foalingFarm.location.region??null)&&
+    h.birthplace?.country===(foalingFarm.location.country??null),
+    'foaling location mismatch '+h.id);
    check(Number.isInteger(h.foalYear)&&h.foalYear<=1998&&
     (approvedFounder?!h.dateOfBirth||
      h.dateOfBirth.startsWith(String(h.foalYear)+'-'):
@@ -313,7 +330,7 @@ export async function auditPersistent1999World(store,manifest,{expectedHorses=nu
   worldId:manifest.worldId,openingHorses:horseCount,personnel:people,
   owners:owners.size,farms:farms.size,activeTracks:tracks.size,
   staffingByRole:roleCounts,facilityCounts,
-  ownerPortfolioByTier:ownerTierStats,
+  ownerPortfolioByTier:ownerTierStats,foundingRelationshipCoverage,
   connectedRunners,coverings,scheduledCards:cardCount,scheduledRaces:scheduled,
   horseCohorts:byCohort,horseStatuses,
   check:'PASS',forecastFoalsExcluded:true,unopenedCards:true};

@@ -14,7 +14,10 @@ import {open1999IndustryDatabase,
 import {readPersistent1999HorseProfile,readPersistent1999IndustryBatch,
  readPersistent1999Directory,findPersistent1999Person}
  from '/1999/engine/fictional-industry-persistence-1999.mjs';
-import {openPersistent1999GameCareer} from '/1999/engine/fictional-industry-game-world-bridge-1999.mjs';
+import {openPersistent1999GameCareer,digestPersistent1999GameSnapshot}
+ from '/1999/engine/fictional-industry-game-world-bridge-1999.mjs';
+import {restoreLegacyApprovedFoundingHorseRelationships}
+ from '/1999/engine/fictional-industry-founder-relations-1999.mjs';
 import {dispatchGameCommand} from '/1999/game/kernel.js';
 import {gameRaceProgram,supported1999RaceClass,raceEligibility}
  from '/1999/game/racing-1999.js';
@@ -425,16 +428,33 @@ async function importSharedCareerFile(file,{preserveExistingProgress=false}={}){
   if(!sameShared1999WorldIdentity(fullIndustryManifest,expected))
    throw Error('This build creates a different shared-world identity; checkpoint import stopped safely');
   const sameOpenWorld=activeWorldCareer?.manifest?.worldId===wanted.worldId&&
-   activeWorldCareer.manifest.seed===wanted.seed;
+   activeWorldCareer.manifest.seed===wanted.seed&&
+   activeWorldCareer.manifest.foundingRelationshipRevision===
+    fullIndustryManifest.foundingRelationshipRevision;
   const career=sameOpenWorld?activeWorldCareer:
    await openPersistent1999GameCareer(db,fullIndustryManifest,{
     runId:checkpoint.careerRecord.runId,
     operationId:checkpoint.careerRecord.player.operation_id,
     playerRole:checkpoint.careerRecord.player.role,
     involvement:checkpoint.careerRecord.player.involvement});
-  if(career.world.authority.sha256!==wanted.snapshotSha256)
-   throw Error('Generated world records do not match the shared career fingerprint: expected '+
-    wanted.snapshotSha256+' but generated '+career.world.authority.sha256);
+  if(career.world.authority.sha256!==wanted.snapshotSha256){
+   const supportsFoundingRelationshipMigration=
+    fullIndustryManifest.foundingRelationshipRevision===1&&
+    !expected.foundingRelationshipRevision;
+   const legacyManifest={...fullIndustryManifest};
+   delete legacyManifest.foundingRelationshipRevision;
+   const legacyEntities={...career.world.entities,
+    horses:career.world.entities.horses.map(
+     restoreLegacyApprovedFoundingHorseRelationships)};
+   const legacySnapshotSha256=supportsFoundingRelationshipMigration?
+    await digestPersistent1999GameSnapshot({manifest:legacyManifest,
+     entities:legacyEntities,cards:career.world.calendar.cards}):null;
+   if(legacySnapshotSha256!==wanted.snapshotSha256)
+    throw Error('Generated world records do not match the shared career fingerprint: expected '+
+     wanted.snapshotSha256+' but generated '+career.world.authority.sha256+
+     (supportsFoundingRelationshipMigration?' (legacy migration projection '+
+      legacySnapshotSha256+')':''));
+  }
   const checkpointRun=checkpoint.careerRecord.changes.canonicalRun;
   validateGameRun(checkpointRun,career.world);
   const prior=await loadPersistent1999CareerRun(db,fullIndustryManifest,
@@ -466,7 +486,7 @@ async function importSharedCareerFile(file,{preserveExistingProgress=false}={}){
    ' horses · '+fmt(fullIndustryManifest.personCount)+' personnel · exact world verified.'+
    (preservedRun?' Existing local progress kept.':'');
   return {worldId:wanted.worldId,seed:wanted.seed,runId:run.run_id,
-   gameDate:run.clock.date,snapshotSha256:wanted.snapshotSha256};
+   gameDate:run.clock.date,snapshotSha256:career.world.authority.sha256};
  }finally{db.close()}
 }
 let bundledCareerBootstrap=null;
