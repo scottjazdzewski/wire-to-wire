@@ -53,10 +53,10 @@ test('worldwide census audit resolves cross-batch parents and staff and rejects 
   twoYearOldProspects:1,threeYearOldRunners:1,fourYearOldRunners:1,
   fivePlusRunners:1}},
   staffing:{counts:{trainer:2,jockey:2,groom:1}},
-  tracks:[{id:'T-1'}],farms:[{id:'O-F-1'}],owners:[{id:'O-O-1'}]};
+  tracks:[{id:'T-1'}],farms:[{id:'O-F-1',location:{city:'Lexington',region:'Kentucky',country:'USA'}}],owners:[{id:'O-O-1'}]};
  const h=connect1999Horse({id:'H-FICTIONAL-1999-THREEYEAROLDRUNNERS-0000001',
   status:'RACING',cohort:'threeYearOldRunners',foalYear:1996,
-  birthplace:{farmId:'O-F-1'},ownerId:'O-O-1',breederId:'O-F-1',foalingFarmId:'O-F-1',
+  birthplace:{farmId:'O-F-1',city:'Lexington',region:'Kentucky',country:'USA'},ownerId:'O-O-1',breederId:'O-F-1',foalingFarmId:'O-F-1',
   sireId:'H-FICTIONAL-1999-STALLIONS-0000002',
   damId:'H-FICTIONAL-1999-BROODMARES-0000002',
   homeTrackId:'T-1'},{seed:19990101,trainerCount:2,jockeyCount:2});
