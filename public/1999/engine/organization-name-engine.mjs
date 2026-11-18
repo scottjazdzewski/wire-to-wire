@@ -339,7 +339,16 @@ export function createOrganizationNameRoster({
   // the prior one-in-eleven selection for unchanged world-generation calls.
   const sole=soleOwnerPercent===null?i%11===0:
    hash(seed,'owner-sole-status:'+i)%100<soleOwnerPercent;
-  if(sole&&principal){used.add(norm(principal));return principal;}
+  if(sole&&principal){
+   // A sole proprietor can use their own exact name unless an established
+   // organization/person already reserves that display identity. A later
+   // generation must mint a distinct business name, never duplicate the
+   // frozen owner ID or abort the playable career on a name collision.
+   const personalKey=norm(principal);
+   if(!used.has(personalKey)&&!externalNameIndex?.hasAnyName(principal)){
+    used.add(personalKey);return principal;
+   }
+  }
   const preferred=principalPrimarySurnames[i]||surname(principal);
   const context=ownerContexts[i]||{};
   // Reserve a seeded share for recognizable multi-person ownership groups.
