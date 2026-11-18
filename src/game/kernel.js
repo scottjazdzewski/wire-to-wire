@@ -118,6 +118,14 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
   const emit = (kind, details) => {
     const summarize=c.type==='ADVANCE_DAY'&&DAILY_DETAIL_EVENT_KINDS.has(kind);
     const event=appendLog(next,c.id,kind,details,!summarize);
+    if(c.type==='ADVANCE_DAY'&&kind==='HORSE_CARE_UNFUNDED'){
+     // Keep the durable trigger and canonical IDs, while the complete detail
+     // remains in command output and the horse's saved care history.
+     next.event_log.push({...event,details:{
+      horse_id:details?.horse_id??null,owner_id:details?.owner_id??null,
+      needed_minor:details?.needed_minor??null,balance_minor:details?.balance_minor??null
+     }});
+    }
     output.push(event);
     if(summarize)dailyEventCounts[kind]=(dailyEventCounts[kind]||0)+1;
     return event;
