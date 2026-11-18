@@ -27,6 +27,8 @@ import {packShared1999Career,unpackShared1999Career,sameShared1999WorldIdentity,
  from '/1999/engine/shared-1999-career-package.mjs?rev=wtw-shared-career-operation-inventory-v3';
 import {projectCanonical1999RaceRows,renderCanonical1999RaceFile}
  from '/next/1999-canonical-career-race-files.mjs';
+import {createPersistedIndustryHorseDirectory,createPersistedIndustryEntityDirectory}
+ from '/next/1999-persisted-world-directory.mjs';
 
 const DB_NAME='WireToWireClean1999CareersV2';
 const MAX_SLOTS=60,MAX_TOTAL_BYTES=512*1024*1024;
@@ -189,6 +191,8 @@ let activeWorldCareer=null;
 window.WTW1999CanonicalCareerRaceFile=Object.freeze({render:renderCanonical1999RaceFile});
 // Read-only bridge to the existing committed game run: do not seed a second
 // balance, infer assets, or mutate the immutable 1999 world directory.
+let liveWorldHorseDirectory=null,liveWorldEntityDirectories=null,
+ liveWorldDirectorySource=null,liveWorldDirectoryYear=null;
 function publishCareerReadModel(){
  const career=activeWorldCareer,run=career?.run;
  if(!run){
@@ -201,6 +205,20 @@ function publishCareerReadModel(){
  const operation=career.world.entities.organizations.find(x=>x.id===run.player.operation_id);
  if(!operation)throw Error('Active game operation missing from the world');
  const rawBalance=run.runtime.finances?.operation_balances_minor?.[operation.id];
+ // Only V10 has the operational 300k census with fully linked founder identities.
+ // Never replace older saved-world data with this newer generator's records.
+ const isV10=/^WTW1999FullIndustry-COHORTS-V6-OWNER-V10-/.test(career.manifest.worldId);
+ const careerYear=Number(run.clock.date.slice(0,4));
+ if(isV10&&(liveWorldDirectorySource!==career.world||
+  liveWorldDirectoryYear!==careerYear)){
+  liveWorldHorseDirectory=createPersistedIndustryHorseDirectory({
+   world:career.world,manifest:career.manifest,year:careerYear});
+  liveWorldEntityDirectories=Object.fromEntries(['person','organization','track'].map(kind=>
+   [kind,createPersistedIndustryEntityDirectory({world:career.world,
+    manifest:career.manifest,kind})]));
+  liveWorldDirectorySource=career.world;
+  liveWorldDirectoryYear=careerYear;
+ }
  const sourceById=new Map((career.world.entities.horses||[]).map(h=>[h.id,h]));
  const horses=(run.stable_horse_ids||[]).map(id=>{
   const active=run.runtime.registered_horses?.by_id?.[id]||null;
@@ -229,6 +247,13 @@ function publishCareerReadModel(){
   operationInventoryByRelationship:career.operationInventoryByRelationship,
   operationInventoryByStatus:career.operationInventoryByStatus,
   date:run.clock.date,revision:run.revision,horseRows:horses,raceRows:races,
+  ...(isV10?{worldHorseBrowse:liveWorldHorseDirectory.browse,
+   worldHorseById:liveWorldHorseDirectory.byId,
+   worldHorseDirectoryCount:liveWorldHorseDirectory.size,
+   worldEntityBrowse:(kind,options)=>liveWorldEntityDirectories[kind]?.browse(options)||null,
+   worldEntityById:(kind,id)=>liveWorldEntityDirectories[kind]?.byId(id)||null,
+   worldEntityCounts:Object.fromEntries(Object.entries(liveWorldEntityDirectories).map(
+    ([kind,directory])=>[kind,directory.size]))}:{}),
   cashMinor:Number.isSafeInteger(rawBalance)?rawBalance:null};
  const prior=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
  if(prior?.worldId===snapshot.worldId&&prior?.runId===snapshot.runId&&
