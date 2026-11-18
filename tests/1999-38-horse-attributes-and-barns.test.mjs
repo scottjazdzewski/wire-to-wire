@@ -107,8 +107,8 @@ test('multi-week 1999 careers keep daily finance and journal state compact and s
  assert.ok(summaries.some(event=>(event.details.counts.HORSE_CARE_DAY||0)>0),
   'the durable journal should count care decisions without storing every repetitive row');
  const careJournal=state.event_log.filter(event=>event.kind==='HORSE_CARE_DAY');
- assert.ok(careJournal.length>0,
-  'the durable journal preserves per-horse care decisions');
+ assert.ok(careJournal.length>0&&careJournal.length<dailyCareEvents,
+  'the durable journal samples per-horse care decisions and summarizes every day');
  assert.ok(careJournal.every(event=>typeof event.details.horse_id==='string'&&
   !Object.hasOwn(event.details,'health_risk')),
   'care events keep horse IDs while relying on runtime history for detailed measurements');
