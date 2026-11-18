@@ -73,7 +73,7 @@ const CARE_LEDGER_ROLLUP_KINDS=new Set([
  'HORSE_CARE_TRAINER_REMITTANCE','HORSE_CARE_TRAINER_EARNINGS',
  'HORSE_CARE_SUPPLIER_RECEIPT'
 ]);
-const CARE_LEDGER_ROLLUP_BEFORE_CURRENT_MONTH=true;
+const CARE_LEDGER_DETAIL_DAYS=7;
 function appendLog(state, commandId, kind, details, persist=true) {
   const previous=Number.isSafeInteger(state.event_seq)?state.event_seq:
     state.event_log.at(-1)?.seq??0;
@@ -86,8 +86,8 @@ function appendLog(state, commandId, kind, details, persist=true) {
 function compactCareFinancialLedger(state){
  const finance=state.runtime.finances,ledger=finance?.ledger;
  if(!Array.isArray(ledger)||!ledger.length)return;
- const cutoff=CARE_LEDGER_ROLLUP_BEFORE_CURRENT_MONTH?
-  state.clock.date.slice(0,7)+'-01':state.clock.date;
+ const cutoff=new Date(Date.parse(state.clock.date+'T00:00:00Z')-
+  CARE_LEDGER_DETAIL_DAYS*86400000).toISOString().slice(0,10);
  const summaries=new Map(),recent=[];
  const dimensions=['operation_id','site_id','person_id','owner_id',
   'operator_id','trainer_id','feed','care','workout'];
@@ -96,12 +96,10 @@ function compactCareFinancialLedger(state){
   const key=JSON.stringify([period,row.kind,...values]);
   let entry=summaries.get(key);
   if(!entry){
-   const [year,month]=period.split('-').map(Number);
-   const end=new Date(Date.UTC(year,month,0)).toISOString().slice(0,10);
-   entry={rollup_schema:'WTW_MONTHLY_FINANCE_ROLLUP_V1',
-    rollup_period:period,period_start:period+'-01',period_end:end,date:row.date,
-    transaction_id:'MONTHLY_ROLLUP:'+key,kind:row.kind,
-    amount_minor:0,transaction_count:0,source:'MODELED_MONTHLY_LEDGER_ROLLUP'};
+   entry={rollup_schema:'WTW_DAILY_FINANCE_ROLLUP_V1',
+    rollup_period:period,period_start:period,period_end:period,date:period,
+    transaction_id:'DAILY_ROLLUP:'+key,kind:row.kind,
+    amount_minor:0,transaction_count:0,source:'MODELED_DAILY_LEDGER_ROLLUP'};
    for(let i=0;i<dimensions.length;i++)
     if(values[i]!==null)entry[dimensions[i]]=values[i];
    summaries.set(key,entry);
@@ -110,16 +108,19 @@ function compactCareFinancialLedger(state){
   const count=Number.isSafeInteger(row.transaction_count)?row.transaction_count:1;
   entry.amount_minor+=amount;
   entry.transaction_count+=count;
-  if(typeof row.date==='string'&&row.date>entry.date)entry.date=row.date;
  };
  for(const row of ledger){
-  if(row?.rollup_schema==='WTW_MONTHLY_FINANCE_ROLLUP_V1'&&row.rollup_period){
+  // Preserve pre-existing monthly summaries from older career saves.
+  if(row?.rollup_schema==='WTW_MONTHLY_FINANCE_ROLLUP_V1'){
+   recent.push(row);continue;
+  }
+  if(row?.rollup_schema==='WTW_DAILY_FINANCE_ROLLUP_V1'&&row.rollup_period){
    add(row,row.rollup_period);continue;
   }
   if(CARE_LEDGER_ROLLUP_KINDS.has(row?.kind)&&
    typeof row.date==='string'&&row.date<cutoff&&
    Number.isSafeInteger(row.amount_minor)){
-   add(row,row.date.slice(0,7));continue;
+   add(row,row.date);continue;
   }
   recent.push(row);
  }
