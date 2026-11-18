@@ -228,28 +228,37 @@ test('approved stud farm and racing-barn names remain exact while new names avoi
  /Invalid source barn name list/);
 });
 
-test('sole proprietor names cannot silently duplicate approved owner or person identities',()=>{
+test('sole proprietors fall back to unique businesses rather than aborting on protected person names',()=>{
  const args={seed:19990101,ownerCount:2,barnCount:0,farmCount:0,
   soleOwnerPercent:100,principalNames:['Alex West','Mina Brown']};
  const valid=createOrganizationNameRoster(args);
  assert.deepEqual(valid.owners,args.principalNames);
  assert.equal(valid.summary.soleOwners,2);
  assert.deepEqual(valid,createOrganizationNameRoster(args));
- assert.throws(()=>createOrganizationNameRoster({...args,
-  principalNames:['Alex West','Alex West']}),
- /Duplicate or protected sole owner identity/);
- assert.throws(()=>createOrganizationNameRoster({...args,
-  sourceOwnerNames:['Mina Brown']}),
- /Duplicate or protected sole owner identity/);
- assert.throws(()=>createOrganizationNameRoster({...args,
-  protectedNames:['Mina Brown']}),
- /Duplicate or protected sole owner identity/);
- const externalNameIndex={
-  hasAnyName:name=>name==='Mina Brown',
-  hasOrganizationRootConflict:()=>false
- };
- assert.throws(()=>createOrganizationNameRoster({...args,externalNameIndex}),
- /Duplicate or protected sole owner identity/);
+ const scenarios=[
+  {...args,principalNames:['Alex West','Alex West']},
+  {...args,sourceOwnerNames:['Mina Brown']},
+  {...args,protectedNames:['Mina Brown']},
+  {...args,externalNameIndex:{
+   hasAnyName:name=>name==='Mina Brown',
+   hasOrganizationRootConflict:()=>false
+  }}
+ ];
+ for(const [i,scenario] of scenarios.entries()){
+  const result=createOrganizationNameRoster(scenario);
+  assert.equal(result.owners.length,2);
+  assert.notEqual(normalize(result.owners[0]),normalize(result.owners[1]),
+   'two different owner IDs must never share the same business label');
+  assert.equal(new Set(result.owners.map(normalize)).size,2);
+  if(i===0)assert.equal(result.owners[0],'Alex West');
+  if(i===1)assert.equal(result.owners[0],'Mina Brown',
+   'source-approved business name remains locked and untouched');
+  if(i>=2)assert.equal(result.owners[0],'Alex West');
+  assert.notEqual(result.owners[1],'Mina Brown',
+   'a protected or registered principal cannot be appropriated as a new business label');
+  assert.deepEqual(result,createOrganizationNameRoster(scenario),
+   'collision resolution is deterministic and repeatable');
+ }
 });
 
 test('regional V7 naming generator stays independent of active-world and horse generators',()=>{
