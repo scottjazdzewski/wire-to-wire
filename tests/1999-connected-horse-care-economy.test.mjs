@@ -128,3 +128,33 @@ test('post-race response uses an actual recorded finish input and preserves star
  assert.throws(()=>modelHorsePostRaceResponse(r,h,{race_id:'RACE-X',finish:12,field_size:10,distance_furlongs:8}),
   e=>e.code==='HORSE_RACE_RESPONSE');
 });
+
+
+test('multi-month careers prune old weekly detail samples but keep exact daily summaries',()=>{
+ const dailyDetailKinds=new Set([
+  'OWNER_DAILY_STRATEGY','TRAINER_DAILY_DECISIONS',
+  'OWNER_TRAINER_RELATIONSHIP_PRESSURE','HORSE_NEEDS_ATTRIBUTES',
+  'HORSE_TRANSIT_CARE_DAY','HORSE_CARE_UNFUNDED','HORSE_CARE_DAY'
+ ]);
+ let state=fresh();
+ state=change(state,'test:journal:day-1','ADVANCE_DAY',{});
+ const firstDetail=state.event_log.find(event=>dailyDetailKinds.has(event.kind));
+ assert.ok(firstDetail,'First simulated day should emit a compact daily detail sample');
+ for(let day=2;day<=120;day++)
+  state=change(state,'test:journal:day-'+day,'ADVANCE_DAY',{});
+ const oldestRetained=new Date(Date.parse(state.clock.date+'T00:00:00Z')-
+  89*86400000).toISOString().slice(0,10);
+ const oldDailyDetails=state.event_log.filter(event=>
+  dailyDetailKinds.has(event.kind)&&event.date<oldestRetained);
+ assert.equal(oldDailyDetails.length,0,'Old sampled daily detail must be pruned');
+ assert.ok(!state.event_log.some(event=>event.seq===firstDetail.seq),
+  'The first day sample should not remain after the 90-day detail window');
+ const summaries=state.event_log.filter(event=>event.kind==='DAILY_SIMULATION_SUMMARY');
+ assert.equal(summaries.length,120,'Exact per-day summaries remain for the full career history');
+ assert.equal(new Set(summaries.map(event=>event.details.date)).size,120);
+ assert.ok(summaries.every(event=>event.details.date===event.date&&
+  Object.keys(event.details.counts).length>0));
+ assert.ok(JSON.stringify(state).length<16_000_000,
+  'A 120-day game run should stay bounded and saveable');
+ assert.deepEqual(importGameSave(exportGameSave(state,world),world),state);
+});
