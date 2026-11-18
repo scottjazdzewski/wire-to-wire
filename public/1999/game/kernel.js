@@ -73,6 +73,15 @@ const CARE_LEDGER_ROLLUP_KINDS=new Set([
  'HORSE_CARE_TRAINER_REMITTANCE','HORSE_CARE_TRAINER_EARNINGS',
  'HORSE_CARE_SUPPLIER_RECEIPT'
 ]);
+function appendLog(state,commandId,kind,details,persist=true){
+ const previous=Number.isSafeInteger(state.event_seq)?state.event_seq:
+  state.event_log.at(-1)?.seq??0;
+ const event={seq:previous+1,command_id:commandId,
+  date:state.clock.date,kind,details:strictJSON(details)};
+ state.event_seq=event.seq;
+ if(persist)state.event_log.push(event);
+ return event;
+}
 const CARE_LEDGER_DETAIL_DAYS=7;
 const CARE_LEDGER_DAILY_ROLLUP_DAYS=30;
 function financeMonthEnd(period){
@@ -150,7 +159,7 @@ function compactDailyEventJournal(state){
  const oldestRetained=new Date(Date.parse(state.clock.date+'T00:00:00Z')-
   (DAILY_EVENT_DETAIL_RETENTION_DAYS-1)*86400000).toISOString().slice(0,10);
  // Keep the sampled detail useful for recent review, while exact per-day event
- // event counts and monthly financial totals remain durable for the full career history.
+ // daily event counts and monthly finance totals remain durable for the full career history.
  state.event_log=state.event_log.filter(event=>
   !DAILY_COMPACT_EVENT_KINDS.has(event.kind)||event.date>=oldestRetained);
 }
