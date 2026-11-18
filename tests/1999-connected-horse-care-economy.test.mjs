@@ -144,6 +144,11 @@ test('multi-month careers retain recent daily detail and exact monthly care tota
  let state=fresh();
  const expected=Object.fromEntries([...careFinanceKinds].map(kind=>
   [kind,{count:0,amount:0}]));
+ for(const row of state.runtime.finances.ledger)
+  if(careFinanceKinds.has(row.kind)){
+   expected[row.kind].count+=row.transaction_count??1;
+   expected[row.kind].amount+=row.amount_minor;
+  }
  let firstDetail=null;
  for(let day=1;day<=120;day++){
   state=change(state,'test:journal:day-'+day,'ADVANCE_DAY',{});
