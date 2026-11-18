@@ -1,6 +1,6 @@
 /**
  * WTW simulation FOUNDATION: canonical game clock, validated decision choices,
- * scheduled event delivery and append-only event journal.
+ * scheduled event delivery and sequenced event journal.
  * Registered-horse care now uses the existing training simulator, funded by
  * the single operation ledger. Race entry and actual result settlement remain future.
  */
@@ -74,32 +74,37 @@ const CARE_LEDGER_ROLLUP_KINDS=new Set([
  'HORSE_CARE_SUPPLIER_RECEIPT'
 ]);
 const CARE_LEDGER_DETAIL_DAYS=7;
-function appendLog(state, commandId, kind, details, persist=true) {
-  const previous=Number.isSafeInteger(state.event_seq)?state.event_seq:
-    state.event_log.at(-1)?.seq??0;
-  const event = { seq: previous + 1, command_id: commandId,
-    date: state.clock.date, kind, details: strictJSON(details) };
-  state.event_seq=event.seq;
-  if(persist)state.event_log.push(event);
-  return event;
+const CARE_LEDGER_DAILY_ROLLUP_DAYS=30;
+function financeMonthEnd(period){
+ const [year,month]=period.split('-').map(Number);
+ return new Date(Date.UTC(year,month,0)).toISOString().slice(0,10);
 }
 function compactCareFinancialLedger(state){
  const finance=state.runtime.finances,ledger=finance?.ledger;
  if(!Array.isArray(ledger)||!ledger.length)return;
- const cutoff=new Date(Date.parse(state.clock.date+'T00:00:00Z')-
-  CARE_LEDGER_DETAIL_DAYS*86400000).toISOString().slice(0,10);
+ const today=Date.parse(state.clock.date+'T00:00:00Z');
+ const detailCutoff=new Date(today-CARE_LEDGER_DETAIL_DAYS*86400000)
+  .toISOString().slice(0,10);
+ const dailyCutoff=new Date(today-(CARE_LEDGER_DAILY_ROLLUP_DAYS-1)*86400000)
+  .toISOString().slice(0,10);
  const summaries=new Map(),recent=[];
  const dimensions=['operation_id','site_id','person_id','owner_id',
   'operator_id','trainer_id','feed','care','workout'];
- const add=(row,period)=>{
+ const add=(row,period,monthly=false)=>{
   const values=dimensions.map(key=>row[key]??null);
-  const key=JSON.stringify([period,row.kind,...values]);
+  const schema=monthly?'WTW_MONTHLY_FINANCE_ROLLUP_V1':
+   'WTW_DAILY_FINANCE_ROLLUP_V1';
+  const key=JSON.stringify([schema,period,row.kind,...values]);
   let entry=summaries.get(key);
   if(!entry){
-   entry={rollup_schema:'WTW_DAILY_FINANCE_ROLLUP_V1',
-    rollup_period:period,period_start:period,period_end:period,date:period,
-    transaction_id:'DAILY_ROLLUP:'+key,kind:row.kind,
-    amount_minor:0,transaction_count:0,source:'MODELED_DAILY_LEDGER_ROLLUP'};
+   const start=monthly?period+'-01':period;
+   const end=monthly?financeMonthEnd(period):period;
+   entry={rollup_schema:schema,rollup_period:period,
+    period_start:start,period_end:end,date:end,
+    transaction_id:(monthly?'MONTHLY_ROLLUP:':'DAILY_ROLLUP:')+key,
+    kind:row.kind,amount_minor:0,transaction_count:0,
+    source:monthly?'MODELED_MONTHLY_LEDGER_ROLLUP':
+     'MODELED_DAILY_LEDGER_ROLLUP'};
    for(let i=0;i<dimensions.length;i++)
     if(values[i]!==null)entry[dimensions[i]]=values[i];
    summaries.set(key,entry);
@@ -109,18 +114,31 @@ function compactCareFinancialLedger(state){
   entry.amount_minor+=amount;
   entry.transaction_count+=count;
  };
+ const addDailyOrMonthly=(row,date)=>{
+  if(date<dailyCutoff)add(row,date.slice(0,7),true);
+  else add(row,date,false);
+ };
  for(const row of ledger){
-  // Preserve pre-existing monthly summaries from older career saves.
+  // Merge earlier monthly rollups with this period's newly compacted rows.
   if(row?.rollup_schema==='WTW_MONTHLY_FINANCE_ROLLUP_V1'){
-   recent.push(row);continue;
+   const period=typeof row.rollup_period==='string'?row.rollup_period.slice(0,7):
+    typeof row.period_start==='string'?row.period_start.slice(0,7):
+     typeof row.date==='string'?row.date.slice(0,7):'';
+   if(/^\d{4}-\d{2}$/.test(period))add(row,period,true);
+   else recent.push(row);
+   continue;
   }
-  if(row?.rollup_schema==='WTW_DAILY_FINANCE_ROLLUP_V1'&&row.rollup_period){
-   add(row,row.rollup_period);continue;
+  if(row?.rollup_schema==='WTW_DAILY_FINANCE_ROLLUP_V1'&&
+   typeof row.rollup_period==='string'){
+   const date=row.rollup_period.slice(0,10);
+   if(/^\d{4}-\d{2}-\d{2}$/.test(date))addDailyOrMonthly(row,date);
+   else recent.push(row);
+   continue;
   }
   if(CARE_LEDGER_ROLLUP_KINDS.has(row?.kind)&&
-   typeof row.date==='string'&&row.date<cutoff&&
+   typeof row.date==='string'&&row.date<detailCutoff&&
    Number.isSafeInteger(row.amount_minor)){
-   add(row,row.date);continue;
+   addDailyOrMonthly(row,row.date);continue;
   }
   recent.push(row);
  }
@@ -132,7 +150,7 @@ function compactDailyEventJournal(state){
  const oldestRetained=new Date(Date.parse(state.clock.date+'T00:00:00Z')-
   (DAILY_EVENT_DETAIL_RETENTION_DAYS-1)*86400000).toISOString().slice(0,10);
  // Keep the sampled detail useful for recent review, while exact per-day event
- // counts and financial rollups remain durable for the full career history.
+ // event counts and monthly financial totals remain durable for the full career history.
  state.event_log=state.event_log.filter(event=>
   !DAILY_COMPACT_EVENT_KINDS.has(event.kind)||event.date>=oldestRetained);
 }
