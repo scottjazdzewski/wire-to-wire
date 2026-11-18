@@ -84,7 +84,10 @@ function offer(s,world,horse,info,event,emit){
   id:requestId(o,t,now,info.kind,horse.horse_id),
   owner_id:o,trainer_id:t,horse_id:horse.horse_id,kind:info.kind,
   reason:info.reason,source_event_seq:event.seq,
-  source_event_kind:event.kind,race_id:info.race_id,
+  source_event_kind:event.kind,
+  source_evidence:{seq:event.seq,kind:event.kind,date:event.date,
+   details:{...(event.details||{})}},
+  race_id:info.race_id,
   needed_minor:info.needed_minor,opened_on:now,deadline:plus(now,7),
   status:'OPEN',response:null,responder:null,resolved_on:null,
   outcome:null
@@ -308,19 +311,62 @@ export function validateTrainerManagementRequests(state,world){
  const eventsBySeq=new Map((state.event_log||[]).map(e=>[e.seq,e]));
  const sourceEventValid=(r,o,t)=>{
   const event=eventsBySeq.get(r.source_event_seq),details=event?.details;
+  const evidence=r.source_evidence;
+  const evidenceMatches=Boolean(isObject(evidence)&&
+   evidence.seq===r.source_event_seq&&evidence.kind===r.source_event_kind&&
+   evidence.date===r.opened_on&&isObject(evidence.details)&&
+   evidence.details.horse_id===r.horse_id&&evidence.details.owner_id===o&&
+   (r.source_event_kind==='HORSE_CARE_UNFUNDED'||
+    evidence.details.trainer_id===t));
   if(event)return event.kind===r.source_event_kind&&event.date===r.opened_on&&
    details?.horse_id===r.horse_id&&details?.owner_id===o&&
    (r.source_event_kind==='HORSE_CARE_UNFUNDED'||details?.trainer_id===t)&&
-   (r.race_id===null||details?.race_id===r.race_id);
-  if(r.source_event_kind!=='HORSE_CARE_UNFUNDED'||r.race_id!==null)return false;
-  const summary=(state.event_log||[]).find(e=>e.kind==='DAILY_SIMULATION_SUMMARY'&&
-   e.date===r.opened_on&&e.seq>r.source_event_seq&&
-   e.details?.counts?.HORSE_CARE_UNFUNDED>0);
+   (r.race_id===null||details?.race_id===r.race_id)&&
+   (!evidence||evidenceMatches&&evidence.seq===event.seq&&
+    JSON.stringify(evidence.details)===JSON.stringify(details));
+  if(r.source_event_kind==='HORSE_CARE_UNFUNDED'&&r.race_id===null){
+   const summary=(state.event_log||[]).find(e=>e.kind==='DAILY_SIMULATION_SUMMARY'&&
+    e.date===r.opened_on&&e.seq>r.source_event_seq&&
+    e.details?.counts?.HORSE_CARE_UNFUNDED>0);
+   const horse=state.runtime.registered_horses?.by_id?.[r.horse_id];
+   const rows=state.runtime.horse?.[r.horse_id]?.history||[];
+   const careRow=rows.find(row=>row.date===r.opened_on);
+   if(!evidenceMatches){
+    const legacyUnpaid=rows.some(row=>row.date===r.opened_on&&row.unfunded===true);
+    return Boolean(summary&&horse?.owner_organization_id===o&&
+     horse?.trainer_id===t&&legacyUnpaid);
+   }
+   const d=evidence.details;
+   return Boolean(summary&&horse?.owner_organization_id===o&&
+    horse?.trainer_id===t&&d.barn_operational===true&&
+    money(d.needed_minor)&&d.needed_minor>0&&
+    d.needed_minor===r.needed_minor&&r.kind==='CARE_FUNDING'&&
+    r.reason==='DOCUMENTED_UNFUNDED_BARN_CARE'&&
+    (!careRow||careRow.unfunded===true));
+  }
+  if(r.source_event_kind!=='POST_RACE_PROFESSIONAL_FEEDBACK'||
+   !evidenceMatches||!r.race_id)return false;
+  const d=evidence.details;
   const horse=state.runtime.registered_horses?.by_id?.[r.horse_id];
-  const unpaid=state.runtime.horse?.[r.horse_id]?.history?.some(row=>
-   row.date===r.opened_on&&row.unfunded===true);
-  return Boolean(summary&&horse?.owner_organization_id===o&&
-   horse?.trainer_id===t&&unpaid);
+  const race=state.runtime.races?.[r.race_id];
+  const result=race?.results?.find(row=>row.horse_id===r.horse_id);
+  if(!horse||!race||race.status!=='OFFICIAL_SIM_RESULT'||
+   race.settled_date!==r.opened_on||horse.owner_organization_id!==o||
+   horse.trainer_id!==t||d.race_id!==r.race_id||d.horse_id!==r.horse_id||
+   d.owner_id!==o||d.trainer_id!==t||!result||
+   d.finish!==result.finish||d.field_size!==race.results.length||
+   !Number.isSafeInteger(r.source_event_seq)||
+   r.source_event_seq>=(state.event_seq??0))return false;
+  const achievement=1-(result.finish-1)/Math.max(1,race.results.length-1);
+  const expectation=.2+.6*(horse.starting_attributes.current_ability/99);
+  const relative=achievement-expectation;
+  const expectedReason=relative>.2?'EXCEEDED_FORM_EXPECTATIONS':
+   relative<-.2?'BELOW_FORM_EXPECTATIONS':'CONSISTENT_WITH_KNOWN_FORM';
+  if(d.reason!==expectedReason)return false;
+  return d.reason==='BELOW_FORM_EXPECTATIONS'?
+   r.kind==='POST_RACE_RECOVERY'&&r.reason==='RESULT_BELOW_HORSE_EXPECTATIONS':
+   d.reason==='EXCEEDED_FORM_EXPECTATIONS'&&r.kind==='CONTRACT_TERMS'&&
+    r.reason==='TRAINER_RESULTS_AND_MARKET_FEE_LEVERAGE';
  };
  const validRequest=(r,o,t,closed=false)=>isObject(r)&&
   r.id===requestId(o,t,r.opened_on,r.kind,r.horse_id)&&
