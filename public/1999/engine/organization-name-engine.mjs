@@ -5,6 +5,9 @@
  * Entity IDs, locations, ownership, and horse links are outside this module.
  */
 import {CENSUS_2000_OWNER_SURNAMES} from './census-2000-owner-surnames.mjs';
+import {proposeScalable1999OwnerBusinessName,SCALABLE_OWNER_BUSINESS_NAME_MODEL,
+ SCALABLE_OWNER_NAME_ATTEMPT_START,SCALABLE_OWNER_NAME_ATTEMPT_LIMIT}
+ from './scalable-owner-business-names-v11.mjs';
 import {
  ORGANIZATION_STYLE_MODEL,organizationNamingRegion,organizationNamingEra,
  contextualFarmCandidate,contextualOwnerCandidate,contextualStableCandidate,
@@ -13,7 +16,8 @@ import {
  generationalStableCandidate,generationalBreakingCandidate
 } from './organization-naming-styles.mjs';
 export const ORGANIZATION_NAME_MODEL='WTW_1999_ORGANIZATION_NAMING_V7_CENSUS_2000_OWNER_LEXICON_PARTNERSHIPS';
-export const ARCHIVAL_RACING_OWNER_NAME_MODEL='WTW_1999_ORGANIZATION_NAMING_V10_CENSUS_2000_PLUS_ARCHIVAL_RACING_OWNER_NAMES';
+export const LEGACY_ARCHIVAL_RACING_OWNER_NAME_MODEL='WTW_1999_ORGANIZATION_NAMING_V10_CENSUS_2000_PLUS_ARCHIVAL_RACING_OWNER_NAMES';
+export const ARCHIVAL_RACING_OWNER_NAME_MODEL='WTW_1999_ORGANIZATION_NAMING_V11_SCALABLE_ARCHIVAL_OWNER_BUSINESSES';
 export const OWNERSHIP_ARCHETYPES=Object.freeze([
  'INDIVIDUAL_OWNER','FAMILY_OPERATION','PARTNERSHIP_OR_SYNDICATE',
  'CO_OWNERS','FARM_OWNERSHIP','RACING_COMPANY','PRIVATE_RACING_OPERATION'
@@ -303,7 +307,11 @@ export function createOrganizationNameRoster({
   perCategory[kind]++;return true;
  };
  const claim=(make,kind,allow=null)=>{
-  for(let attempt=0;attempt<512;attempt++){
+  // V11 is opt-in for new archival owner directories only. Legacy 1999
+  // worlds retain the same candidate search and retry ceiling.
+  const budget=kind==='owner'&&ownerSurnameReferences.length?
+   SCALABLE_OWNER_NAME_ATTEMPT_LIMIT:512;
+  for(let attempt=0;attempt<budget;attempt++){
    const candidate=make(attempt).replace(/\s+/g,' ').trim();
    if((!allow||allow(candidate))&&reserve(candidate,kind)){retries+=attempt;return candidate}
   }
@@ -351,6 +359,14 @@ export function createOrganizationNameRoster({
     // real surname from the Census lexicon to the ownership record.
     return coOwner+' & '+preferred+' '+suffix;
    }
+   // Once normal V10 candidates run out, expand into principal-linked,
+   // region-grounded private stables and bloodstock businesses. Do not
+   // change earlier V10 choices or mint artificial numbered aliases.
+   if(ownerSurnameReferences.length&&attempt>=SCALABLE_OWNER_NAME_ATTEMPT_START)
+    return proposeScalable1999OwnerBusinessName({
+     seed,index:i,attempt,principalName:principal,primarySurname:preferred,
+     region:context.region||'GENERAL_NORTH_AMERICA',surnames:ownerSurnamePool
+    });
    const candidate=attempt<48?
     context.namingYear>1999?
      generationalOwnerCandidate(seed,i,attempt,principal,alignPrincipalSurnames?preferred:'',context):
@@ -401,7 +417,11 @@ export function createOrganizationNameRoster({
    breakingTrainingFacilities:breakingCount,generatedNames:{...perCategory},retries,
    partnershipGroupsCreated,soleOwners:ownerArchetypes.filter(x=>x==='INDIVIDUAL_OWNER').length,
    maxDistinctiveRootUses:MAX_DISTINCTIVE_ROOT_USES,
-   highestDistinctiveRootUse:Math.max(0,...distinctiveRootCounts.values())})
+   highestDistinctiveRootUse:Math.max(0,...distinctiveRootCounts.values()),
+   ...(ownerSurnameReferences.length?{
+    ownerCapacityModel:SCALABLE_OWNER_BUSINESS_NAME_MODEL,
+    ownerCandidateAttemptBudget:SCALABLE_OWNER_NAME_ATTEMPT_LIMIT
+   }:{})})
  };
 }
 export function createBreakingTrainingNames(seed,count,protectedNames=[]){
