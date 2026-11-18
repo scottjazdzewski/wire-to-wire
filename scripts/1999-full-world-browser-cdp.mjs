@@ -385,10 +385,15 @@ try{
     }
     if(!plan)throw Error('No statically eligible maiden on player stable tracks in 1999; tracks '+
      JSON.stringify(occupiedTracks)+'; scheduled candidates '+JSON.stringify(scheduleEvidence.slice(0,12)));
-    // This isolated race probe starts at the legal four-day entry window.
-    // The separately persisted Kingsmere career already proves real day advancement.
-    // Avoid replaying months of unrelated game days just to reach the first eligible card.
-    const raceEntryState={...state,clock:{...state.clock,date:plan.entryDate}};
+    // Reach the legal four-day entry window through real game commands so every
+    // registered horse's care/training clock remains contiguous. A direct clock
+    // jump makes the next daily care pass reject the stale training records.
+    let raceEntryState=state;
+    while(raceEntryState.clock.date<plan.entryDate){
+     raceEntryState=dispatchGameCommand({state:raceEntryState,world,command:{
+      id:'full-world-entry-window-'+raceEntryState.clock.date,
+      type:'ADVANCE_DAY',actor:'player',payload:{}}}).state;
+    }
     const localHorses=registeredStableHorseIds.map(id=>
      raceEntryState.runtime.registered_horses.by_id[id]).filter(h=>h.host_track_id===plan.trackId);
     const ready=localHorses.filter(h=>raceEligibility(raceEntryState,h,raceView(plan.book)).eligible)
