@@ -106,8 +106,12 @@ test('multi-week 1999 careers keep daily finance and journal state compact and s
  assert.ok(summaries.length>0,'the persistent journal should retain per-day event summaries');
  assert.ok(summaries.some(event=>(event.details.counts.HORSE_CARE_DAY||0)>0),
   'the durable journal should count care decisions without storing every repetitive row');
- assert.ok(!state.event_log.some(event=>event.kind==='HORSE_CARE_DAY'),
-  'high-volume daily care details remain in runtime history and command output');
+ const careJournal=state.event_log.filter(event=>event.kind==='HORSE_CARE_DAY');
+ assert.ok(careJournal.length>0,
+  'the durable journal preserves per-horse care decisions');
+ assert.ok(careJournal.every(event=>typeof event.details.horse_id==='string'&&
+  !Object.hasOwn(event.details,'health_risk')),
+  'care events keep horse IDs while relying on runtime history for detailed measurements');
  const ledger=state.runtime.finances.ledger;
  assert.ok(ledger.some(row=>row.rollup_schema==='WTW_MONTHLY_FINANCE_ROLLUP_V1'&&
   row.kind==='HORSE_CARE_OWNER_PAYMENT'),
