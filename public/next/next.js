@@ -4058,6 +4058,33 @@ function sourceOpportunityBoard(){
 /* Full World Overview — reuse the shared dense manager roster and source IDs.
  * Never copy the hidden legacy Office test population or cap each category. */
 function worldCompleteDirectoryView(){
+ const active=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ if(active?.worldHorseBrowse){
+  const categories=[
+   ['HORSES','1999 Horses',active.worldHorseDirectoryCount||active.worldHorseCount],
+   ['PEOPLE','People',active.worldEntityCounts?.person],
+   ['OWNERS / FARMS / STUDS','Organizations',active.worldEntityCounts?.organization],
+   ['RACETRACKS','Tracks',active.worldEntityCounts?.track]];
+  const cards=categories.map(([label,page,count])=>
+   '<button type="button" data-ng="tab" data-val="'+safe(page)+
+   '" title="Open complete saved '+safe(label.toLowerCase())+' directory">'+
+   '<strong>'+safe(Number(count||0).toLocaleString('en-US'))+'</strong>'+
+   '<span>'+safe(label)+'</span><small>OPEN VERIFIED SAVED WORLD</small></button>').join('');
+  return '<section class="ng-manager-screen ng-world-complete">'+
+   '<header class="ng-manager-head"><div class="ng-manager-identity">'+
+   '<span>WORLD / CANONICAL 1999 FICTIONAL INDUSTRY</span>'+
+   '<h2>COMPLETE SAVED RACING WORLD</h2>'+
+   '<p>Permanent world '+safe(active.worldId)+' · '+safe(active.date)+
+   ' · Active operation: '+safe(active.operationName||active.operationId)+
+   ' · '+safe(active.operationId||'')+'</p></div></header>'+
+   '<div class="ng-manager-metrics">'+cards+'</div>'+
+   '<p>All records above are the operational saved career census, not the 73-horse archival source registry. Each directory supports global search, sorting and immutable-ID profiles.</p>'+
+   '<p>Stable shows your selected operation’s linked inventory. Horses in training, owned animals, breeding stock and care residents remain distinct from the full industry.</p>'+
+   '<div class="ng-manager-controls"><button type="button" data-ng="save-open">OPEN CAREER MANAGER · EXPORT COMPLETE SAVE</button></div>'+
+   '</section>';
+ }
+ if(window.WTWDesktop?.runtime==='windows-desktop')
+  return '<section class="ng-manager-screen" role="status"><header><h2>OPENING SAVED FICTIONAL WORLD</h2></header><p>Waiting for the official industry career to finish loading. The historical 73-horse source catalogue is not substituted.</p></section>';
  const scope='World:Directory';
  const historic=(world1999Data?.historicalHorses||[]).filter(h=>h.id&&h.name)
   .map(h=>({kind:'historical-horse',name:h.name,detail:'ARCHIVED BLOODLINE',
