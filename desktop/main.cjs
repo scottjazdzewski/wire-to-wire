@@ -229,7 +229,7 @@ async function runSmoke(win){
   })()`,true);
   if(career.worldId!=='WTW1999FullIndustry-COHORTS-V6-OWNER-V10-NAMES-V10-H300000'||
      career.seed!==19990101||career.horseCount!==300000||
-     career.personCount!==75705||career.runId!=='WTW-RUN-1999-19990101-SIZE-300000'||
+     career.personCount!==75705||career.runId!=='WTW-RUN-1999-19990101-SIZE-300000-OP-O-000061'||
      !/^\d{4}-\d{2}-\d{2}$/.test(career.gameDate)||
      !/^[a-f0-9]{64}$/.test(career.snapshotSha256||'')||
      career.mainUiCareer?.worldId!==career.worldId||
