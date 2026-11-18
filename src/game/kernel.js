@@ -152,8 +152,11 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     if(!summarize)next.event_log.push(event);
     else{
      dailyEventCounts[kind]=(dailyEventCounts[kind]||0)+1;
+     const recoveryDecision=kind==='TRAINER_DAILY_DECISIONS'&&
+      (details.decisions||[]).some(d=>
+       ['POST_RACE_MANDATORY_REST','POST_RACE_LIGHT_REBUILD'].includes(d.reason));
      const keepCompact=DAILY_COMPACT_EVENT_KINDS.has(kind)&&
-      (next.clock.days_elapsed===1||next.clock.days_elapsed%7===0);
+      (next.clock.days_elapsed===1||next.clock.days_elapsed%7===0||recoveryDecision);
      if(keepCompact)
       next.event_log.push({...event,details:compactDailyEventDetails(kind,details)});
     }
