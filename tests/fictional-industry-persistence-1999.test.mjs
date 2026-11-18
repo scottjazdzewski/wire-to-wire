@@ -9,7 +9,10 @@ import {createPersistent1999Industry,readPersistent1999IndustryBatch,findPersist
  readPersistent1999LifecycleHorse,readPersistent1999FoalForecasts,
  readPersistent1999LifecycleEvents}
  from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
-import {resolve1999FoalBirth} from '../public/1999/engine/fictional-industry-breeding-book-1999.mjs';
+import {generate1999SeasonFoalingForecasts,resolve1999FoalBirth}
+ from '../public/1999/engine/fictional-industry-breeding-book-1999.mjs';
+import {create1999SeasonalFoal}
+ from '../public/1999/engine/fictional-industry-registry-1999.mjs';
 function memoryStore(){
  const data={manifests:new Map(),horseBatches:new Map(),personBatches:new Map(),horseEdits:new Map(),careerRuns:new Map(),directory:new Map(),coveringBatches:new Map(),calendarBatches:new Map()};
  data.industryLifecycle=new Map();
@@ -43,6 +46,32 @@ function memoryStore(){
 }
 const dirs={farms:[{id:'O-FARM-1',location:{country:'USA'}}],
  tracks:[{id:'T-0001'}],owners:[{id:'O-OWNER-1',maxHorses:1000000}]};
+test('seasonal foals use the dam current care farm, not an unknown historical birthplace',()=>{
+ const seed=19990101,year=2000,stallion={id:'H-STALLION-1'};
+ const mare={id:'H-MARE-1',status:'BROODMARE',ownerId:'O-OWNER-1',
+  foalingFarmId:null,careFacilityId:'O-FARM-1'};
+ const coverings=Array.from({length:200},(_,i)=>({id:'COVER-'+year+'-'+
+  String(i+1).padStart(7,'0'),mareId:mare.id,stallionId:stallion.id,
+  breedingYear:year}));
+ const foalingFarmIdByMareId=new Map([[mare.id,mare.careFacilityId]]);
+ const forecasts=[...generate1999SeasonFoalingForecasts({seed,year,coverings,
+  mareById:new Map([[mare.id,mare]]),foalingFarmIdByMareId,batchSize:50})]
+  .flatMap(batch=>batch.records);
+ assert.ok(forecasts.length>0,'seeded conceptions should produce a forecast');
+ for(const forecast of forecasts){
+  assert.equal(forecast.ownerId,mare.ownerId);
+  assert.equal(forecast.foalingFarmId,mare.careFacilityId);
+ }
+ const forecast=forecasts[0];
+ const foal=create1999SeasonalFoal({seed,year,dateOfBirth:forecast.birthDate,
+  id:forecast.foalId,dam:mare,sire:stallion,
+  farm:{id:mare.careFacilityId,location:{city:'Lexington',region:'Kentucky',country:'USA'}}});
+ assert.equal(foal.ownerId,mare.ownerId);
+ assert.equal(foal.breederId,mare.ownerId);
+ assert.equal(foal.foalingFarmId,mare.careFacilityId);
+ assert.equal(foal.careFacilityId,mare.careFacilityId);
+ assert.equal(foal.birthplace.farmId,mare.careFacilityId);
+});
 test('large durable industry batches gzip compact and legacy raw records remain readable',async()=>{
  const batch=Array.from({length:2500},(_,i)=>({
   id:'H-FICTIONAL-1999-THREEYEAROLDRUNNERS-'+String(i+1).padStart(7,'0'),
