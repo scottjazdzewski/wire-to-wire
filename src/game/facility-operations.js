@@ -484,9 +484,20 @@ export function facilityFinancialReport(state,world,operationId,{from,to}={}){
   FACILITY_MAINTENANCE:0,FACILITY_PURCHASE:0,FACILITY_UPGRADE:0};
  // Horse care and facility business share a ledger. Report only relevant
  // categories, including actual owner-funded board and the trainer remittance.
- const rows=state.runtime.finances.ledger.filter(e=>e.operation_id===operationId&&
-  typeof e.site_id==='string'&&e.date>=start&&e.date<=end&&
+ const ledgerRows=state.runtime.finances.ledger.filter(e=>
+  e.operation_id===operationId&&typeof e.site_id==='string'&&
   Object.hasOwn(amounts,e.kind));
+ const rows=[];
+ for(const e of ledgerRows){
+  if(e.rollup_schema==='WTW_MONTHLY_FINANCE_ROLLUP_V1'&&e.rollup_period){
+   const periodStart=e.period_start||e.rollup_period+'-01',
+    periodEnd=e.period_end;
+   if(periodEnd<start||periodStart>end)continue;
+   ensure(start<=periodStart&&end>=periodEnd,'FACILITY_REPORT_ROLLUP_RANGE',
+    'A report that overlaps a monthly rollup must include the full calendar month');
+   rows.push(e);
+  }else if(e.date>=start&&e.date<=end)rows.push(e);
+ }
  const siteMap={};
  for(const e of rows){
   ensure(integer(e.amount_minor)&&Object.hasOwn(amounts,e.kind),
