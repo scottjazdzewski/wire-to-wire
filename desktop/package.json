@@ -1,0 +1,77 @@
+{
+  "name": "wire-to-wire-desktop",
+  "version": "0.1.1",
+  "productName": "Wire to Wire",
+  "description": "Wire to Wire Thoroughbred Racing Manager - desktop development build",
+  "private": true,
+  "main": "main.cjs",
+  "author": "Wire to Wire",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "build:windows": "electron-builder --win nsis portable --x64 --publish never",
+    "build:windows:unpacked": "electron-builder --win dir --x64 --publish never",
+    "build:windows:portable": "electron-builder --win portable --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "45.3.2",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "com.wiretowire.racingmanager",
+    "productName": "Wire to Wire",
+    "asar": true,
+    "directories": {
+      "output": "../dist/windows",
+      "buildResources": "assets"
+    },
+    "electronLanguages": [
+      "en-US"
+    ],
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "local-content.cjs",
+      "package.json",
+      "!**/node_modules/wtw-canon-desk/**",
+      "!**/.git/**"
+    ],
+    "extraResources": [
+      {
+        "from": "../public",
+        "to": "game-public",
+        "filter": [
+          "**/*",
+          "!**/*.map",
+          "!**/.DS_Store"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/wtw-app.ico",
+      "artifactName": "WireToWire-Setup-${version}-${arch}.${ext}",
+      "signAndEditExecutable": true
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Wire to Wire",
+      "deleteAppDataOnUninstall": false
+    },
+    "publish": null,
+    "portable": {
+      "artifactName": "WireToWire-Portable-${version}-${arch}.${ext}"
+    }
+  }
+}

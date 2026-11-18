@@ -1,0 +1,142 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {WORLD_SCHEMA,createGameRun,dispatchGameCommand,exportGameSave,importGameSave} from '../src/game/index.js';
+import {build1999PilotGameRun} from '../src/game/1999-pilot-fixture.js';
+import {model1999StartingHorseAttributes} from '../src/game/horse-starting-attributes.js';
+import {createHorseTrainingRecord} from '../public/1999/engine/horse-development.mjs';
+const load=path=>JSON.parse(readFileSync(new URL(path,import.meta.url),'utf8'));
+const source=load('../public/data/wtw-1999-founding-directory-v1.json');
+const trainerRoster=load('../public/data/wtw-1999-trainer-pilot-v1.json');
+const manifest=load('../data/1999-gameplay/first-38-horses-attributes-and-barns-v1.json');
+const people=[...source.people,...trainerRoster.trainers.filter(t=>!source.people.some(p=>p.id===t.id))];
+const authorityBytes=JSON.stringify({sourceVersion:source.schema,sourcePeople:source.people.map(p=>p.id),
+ trainers:trainerRoster.trainers.map(p=>p.id),sourceHorses:source.horses.map(h=>h.id)});
+const world={schema:WORLD_SCHEMA,
+ authority:{snapshot_id:'TEST-1999-ISOLATED-FOUNDING-PILOT',source:'ISOLATED_TEST_FIXTURE_FROM_FOUNDING_DIRECTORY_NOT_CANON',
+ sha256:createHash('sha256').update(authorityBytes).digest('hex')},
+ start_date:'1999-01-01',
+ entities:{horses:source.horses,people,organizations:source.organizations,tracks:source.tracks}};
+test('clean founding game world still begins with exactly zero racers and zero physical barns',()=>{
+ const fresh=createGameRun({world,runId:'WTW-RUN-CLEAN-ISOLATED',seed:19990101,
+  player:{role:'owner',involvement:'balanced',operation_id:'O-FOUNDING-1999-007'}});
+ assert.equal(Object.keys(fresh.runtime.registered_horses.by_id).length,0);
+ assert.equal(Object.keys(fresh.runtime.facilities.sites).length,0);
+ assert.equal(fresh.stable_horse_ids.length,0);
+ assert.equal(source.counts.openingHorses,0);
+});
+test('playable opening attributes use persisted ratings, pedigree development and tier resources',()=>{
+ const horse_id='H-GAME-1999-QUALITY-PROBE';
+ const weak=model1999StartingHorseAttributes({horse_id,seed:19990101,
+  foaling_year:1997,sex:'COLT',ownerPortfolioTier:'HANDFUL',
+  horseRatings:{speed:15,stamina:15,acceleration:15,class:15,
+   consistency:15,surfaceDirt:15,surfaceTurf:15},
+  development:{potential:25,readiness:10,soundness:10}});
+ const strong=model1999StartingHorseAttributes({horse_id,seed:19990101,
+  foaling_year:1997,sex:'COLT',ownerPortfolioTier:'ELITE',
+  horseRatings:{speed:95,stamina:95,acceleration:95,class:95,
+   consistency:95,surfaceDirt:95,surfaceTurf:95},
+  development:{potential:95,readiness:95,soundness:95}});
+ assert.ok(strong.current_ability>weak.current_ability);
+ assert.ok(strong.potential_ability>weak.potential_ability);
+ assert.ok(strong.raw_speed>weak.raw_speed);
+ assert.ok(strong.stamina>weak.stamina);
+ assert.ok(strong.training_focus>weak.training_focus,
+  'elite resources improve readiness without assigning racing outcomes');
+ assert.ok(strong.soundness_risk<weak.soundness_risk,
+  'observed modeled soundness informs race-day risk');
+});
+test('exact 38-horse test cohort has frozen abilities, 8 real registered residences, and zero overbooking',()=>{
+ const state=build1999PilotGameRun({world,manifest});
+ const horses=Object.values(state.runtime.registered_horses.by_id);
+ const sites=Object.values(state.runtime.facilities.sites);
+ assert.equal(horses.length,38);assert.equal(sites.length,8);
+ assert.equal(new Set(horses.map(h=>h.name)).size,38);
+ assert.equal(new Set(horses.map(h=>h.horse_id)).size,38);
+ assert.equal(new Set(horses.map(h=>h.current_residence_id)).size,8);
+ assert.equal(new Set(horses.map(h=>h.trainer_id)).size,6);
+ assert.equal(horses.filter(h=>h.host_track_id!==null).length,30);
+ assert.equal(horses.filter(h=>h.residence_kind==='ORGANIZATION_HOME_SITE').length,8);
+ for(const h of horses){
+  const site=state.runtime.facilities.sites[h.current_residence_id];
+  assert.ok(site);assert.equal(site.status,'ACTIVE');
+  assert.ok(h.starting_attributes);
+  assert.equal(h.starting_attributes.schema,'WTW_1999_GAME_HORSE_ATTRIBUTES_V1');
+  assert.deepEqual(h.starting_attributes,model1999StartingHorseAttributes({
+   horse_id:h.horse_id,seed:manifest.seed,foaling_year:h.foaling_year,sex:h.sex
+  }));
+  if(site.host_track_id)assert.equal(site.head_trainer_person_id,h.trainer_id);
+  const training=createHorseTrainingRecord({
+   id:h.id,name:h.name,trainerId:h.trainer_id,attributes:h.starting_attributes
+  },'1999-01-01');
+  assert.equal(training.horseId,h.id);
+  assert.equal(training.fitness,h.starting_attributes.fitness);
+ }
+ for(const site of sites)
+  assert.ok(horses.filter(h=>h.current_residence_id===site.id).length<=site.stalls);
+ const saved=exportGameSave(state,world);
+ assert.deepEqual(importGameSave(saved,world),state);
+ assert.deepEqual(build1999PilotGameRun({world,manifest}),state);
+ const tomorrow=dispatchGameCommand({state,world,
+  command:{id:'test:day:2',type:'ADVANCE_DAY',actor:'system',payload:{}}}).state;
+ assert.equal(tomorrow.clock.date,'1999-01-02');
+ assert.equal(tomorrow.runtime.finances.ledger.filter(x=>x.kind==='FACILITY_TRACK_RENT').length,6);
+ assert.deepEqual(importGameSave(exportGameSave(tomorrow,world),world),tomorrow);
+});
+test('cohort assignment cannot overfill a physical site or drift a recorded attribute',()=>{
+ const full=structuredClone(manifest);
+ full.sites[0].stalls_total=4;
+ assert.throws(()=>build1999PilotGameRun({world,manifest:full}),e=>e.code==='PILOT_SCENARIO');
+ const drift=structuredClone(manifest);
+ drift.assignments[0].starting_attributes.raw_speed=.999;
+ assert.throws(()=>build1999PilotGameRun({world,manifest:drift}),e=>e.code==='PILOT_SCENARIO');
+});
+
+test('multi-week 1999 careers keep daily finance and journal state compact and saveable',()=>{
+ let state=build1999PilotGameRun({world,manifest}),dailyCareEvents=0;
+ for(let day=1;day<=45;day++){
+  const result=dispatchGameCommand({state,world,command:{
+   id:'compact-care-day:'+day,type:'ADVANCE_DAY',actor:'player',payload:{}}});
+  state=result.state;
+  dailyCareEvents+=result.events.filter(event=>event.kind==='HORSE_CARE_DAY').length;
+ }
+ assert.ok(dailyCareEvents>0,'daily gameplay should still return detailed care events');
+ const summaries=state.event_log.filter(event=>event.kind==='DAILY_SIMULATION_SUMMARY');
+ assert.ok(summaries.length>0,'the persistent journal should retain per-day event summaries');
+ assert.ok(summaries.some(event=>(event.details.counts.HORSE_CARE_DAY||0)>0),
+  'the durable journal should count care decisions without storing every repetitive row');
+ const careJournal=state.event_log.filter(event=>event.kind==='HORSE_CARE_DAY');
+ assert.ok(careJournal.length>0&&careJournal.length<dailyCareEvents,
+  'the durable journal samples per-horse care decisions and summarizes every day');
+ assert.ok(careJournal.every(event=>typeof event.details.horse_id==='string'&&
+  !Object.hasOwn(event.details,'health_risk')),
+  'care events keep horse IDs while relying on runtime history for detailed measurements');
+ const ledger=state.runtime.finances.ledger;
+ assert.ok(ledger.some(row=>row.rollup_schema==='WTW_DAILY_FINANCE_ROLLUP_V1'&&
+  row.kind==='HORSE_CARE_OWNER_PAYMENT'),
+  'older care transactions should remain available as reconciled daily rollups');
+ const carePaid=ledger.filter(row=>row.kind==='HORSE_CARE_OWNER_PAYMENT')
+  .reduce((total,row)=>total+row.amount_minor,0);
+ const lifetimeCare=Object.values(state.runtime.horse).reduce((total,record)=>
+  total+(record?.finance?.lifetime_minor||0),0);
+ assert.equal(carePaid,-lifetimeCare,'daily rollups must preserve exact care cash totals');
+ const careKinds=new Set(['HORSE_CARE_OWNER_PAYMENT',
+  'HORSE_CARE_SITE_AND_TRAINER_INCOME','HORSE_CARE_TRAINER_REMITTANCE',
+  'HORSE_CARE_TRAINER_EARNINGS','HORSE_CARE_SUPPLIER_RECEIPT']);
+ const careRows=ledger.filter(row=>careKinds.has(row.kind));
+ const representedCareTransactions=careRows.reduce((total,row)=>
+  total+(Number.isSafeInteger(row.transaction_count)?row.transaction_count:1),0);
+ const rawCareRows=careRows.filter(row=>row.rollup_schema!=='WTW_DAILY_FINANCE_ROLLUP_V1').length;
+ assert.ok(representedCareTransactions>rawCareRows,
+  'daily rollups should represent more transactions than durable rows');
+ assert.ok(ledger.length<10_000,
+  'seven days of raw detail plus exact daily rollups should stay bounded');
+ assert.ok(state.event_log.every((event,index)=>index===0||
+  event.seq>state.event_log[index-1].seq),'event sequence numbers must remain monotonic');
+ assert.equal(state.event_seq,state.event_log.at(-1)?.seq);
+ assert.deepEqual(importGameSave(exportGameSave(state,world),world),state,
+  'compacted finance and event history should survive a career save round trip');
+ assert.ok(JSON.stringify(state).length<10_000_000,
+  'a 45-day playable career should stay bounded well below the 64 MiB save ceiling');
+});

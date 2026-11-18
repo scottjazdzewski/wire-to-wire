@@ -1,0 +1,24 @@
+{
+  "name": "wtw-canon-desk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Private, separate WIRE TO WIRE historical universe browser and canon-review desk",
+  "type": "module",
+  "scripts": {
+    "preview": "python3 -m http.server 8000 --directory public",
+    "dev": "wrangler dev",
+    "db:local": "wrangler d1 migrations apply wtw-canon-desk-db --local",
+    "db:seed:local": "node scripts/build-seed.mjs && wrangler d1 execute wtw-canon-desk-db --local --file=./data/seed.sql",
+    "test": "node scripts/run-current-tests.mjs",
+    "deploy": "wrangler deploy",
+    "db:build:full": "node scripts/build-full-history.mjs",
+    "db:build:geo": "node scripts/build-geography-import.mjs",
+    "bench:names": "node scripts/bench-fictional-naming-v10.mjs",
+    "bench:names:indexed": "node scripts/bench-indexed-naming-v11.mjs",
+    "bench:names:generations": "node scripts/bench-generational-naming-v14.mjs",
+    "certify:fictional-industry": "node scripts/certify-fictional-industry-v21.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

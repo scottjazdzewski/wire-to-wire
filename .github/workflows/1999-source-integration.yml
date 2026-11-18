@@ -1,0 +1,145 @@
+name: WTW 1999 source integration
+
+on:
+  pull_request:
+    paths:
+      - "src/1999/**"
+      - "public/1999/**"
+      - "public/index.html"
+      - "public/next/index.html"
+      - "public/next/1999-bootstrap.js"
+      - "public/next/1999-ui-source.mjs"
+      - "public/next/next.js"
+      - "scripts/1999-management-browser-smoke.sh"
+      - "src/worker.js"
+      - "tests/1999-*.test.mjs"
+      - "src/game/**"
+      - ".github/workflows/1999-source-integration.yml"
+  push:
+    branches:
+      - main
+      - "fix/1999-browser-population-20261111"
+
+jobs:
+  january-1999-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source world and protected entry syntax
+        run: |
+          node --check src/1999/opening-world.v1.mjs
+          node --check src/1999/entry-gate.mjs
+          node --check src/1999/test-clock.mjs
+          node --check public/1999/test-clock.mjs
+          node --check public/next/1999-bootstrap.js
+          node --check public/next/1999-ui-source.mjs
+          node --check public/next/next.js
+          node --check src/worker.js
+      - name: Source and browser JavaScript syntax
+        run: |
+          node --check public/1999/engine/canon-mini.mjs
+          node --check public/1999/engine/attribute-catalog.mjs
+          node --check public/1999/engine/local-api.mjs
+          node --check public/1999/engine/founding-world-1999.mjs
+          node --check public/next/1999-commercial-career-manager.mjs
+          node --check public/next/1999-commercial-config.js
+      - name: Gameplay registration and barn-residence regression
+        run: node --test tests/1999-game-horse-registration.test.mjs tests/1999-racing-site-residence.test.mjs tests/1999-38-horse-attributes-and-barns.test.mjs tests/1999-horse-identity-connections.test.mjs
+      - name: Shared Stable and Horse Directory presentation contract
+        run: node --test tests/1999-mirrored-horse-rosters.test.mjs
+      - name: One roster standard across all screens
+        run: node --test tests/1999-one-roster-standard-all-pages.test.mjs
+      - name: Permanently approved 1999 track stadium layout
+        run: node --test tests/1999-track-profile-layout-lock.test.mjs
+      - name: Forbidden pilot overlays cannot return to real profiles
+        run: node --test tests/1999-no-legacy-pilot-profile-overlay.test.mjs
+      - name: Non-operating tracks remain in source directory but not racing
+        run: node --test tests/1999-retired-track-source-guard.test.mjs
+      - name: Integrated horse care owner money trainer barn and postrace response
+        run: node --test tests/1999-connected-horse-care-economy.test.mjs
+      - name: Autonomous owner trainer and barn decisions with causal replay
+        run: node --test tests/1999-autonomous-owner-trainer-barn-agents.test.mjs
+      - name: Postrace trainer recovery, owner investment and next campaign consequences
+        run: node --test tests/1999-postrace-autonomous-campaign-feedback.test.mjs
+      - name: Independent owner and trainer patience with real working relationship and employment pressure
+        run: node --test tests/1999-owner-trainer-working-relationship-patience.test.mjs
+      - name: Long-term owner/trainer career reviews, funded investment, salary renewal and browser replay
+        run: node --test tests/1999-owner-trainer-career-reviews.test.mjs
+      - name: Owner and AI trainer service terms, earnings and multi-day replay
+        run: node --test tests/1999-trainer-service-contracts-and-agent-reviews.test.mjs
+      - name: Owner barn trainer and outside care payments reconcile in saved career
+        run: node --test tests/1999-trainer-care-fee-economy.test.mjs
+      - name: Travel-day horse welfare, real away-barn occupancy and balanced boarding
+        run: node --test tests/1999-real-away-barn-care-and-transit.test.mjs
+      - name: Physical shipping and 31-day autonomous trainer campaign replay
+        run: node --test tests/1999-physical-shipping-and-away-race.test.mjs
+      - name: Player atomic race confirmation, real shipment, funds, booked jockey and save replay
+        run: node --test tests/1999-player-race-plan-atomic-confirmation.test.mjs
+      - name: Owner race opportunity advice uses actual game entries, real jockeys, money, shipping and proposals
+        run: node --test tests/1999-owner-race-entry-opportunities.test.mjs
+      - name: Maiden graduation and source-conditioned NW2/NW3 allowance campaign replay
+        run: node --test tests/1999-maiden-allowance-campaign-ladder.test.mjs
+      - name: First autonomous 1999 race entry booking and result settlement
+        run: node --test tests/1999-first-autonomous-race-cycle.test.mjs
+      - name: Browser gameplay modules match authoritative single engine
+        run: node scripts/sync-1999-browser-gameplay.mjs --check
+      - name: Browser 1999 playtest career, agents, race results, saves and source isolation
+        run: node --test tests/1999-browser-playtest-career.test.mjs
+      - name: Jan 1 source and OFFLINE browser population verification
+        run: node --test tests/1999-opening-world.test.mjs tests/1999-entry-gate.test.mjs tests/1999-test-clock.test.mjs tests/1999-management-ui-restore.test.mjs tests/1999-management-screen-data.test.mjs tests/1999-founding-world.test.mjs tests/1999-approved-only-world.test.mjs
+
+  management-1999-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify approved management UI boots with 1999 data in Chromium
+        run: bash scripts/1999-management-browser-smoke.sh
+      - name: Verify actual opt-in 38-horse playable career in Chromium
+        run: bash scripts/1999-playtest-browser-smoke.sh
+      - name: Save browser probe output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-1999-management-browser-qa
+          path: visual-audit/1999/
+          retention-days: 7
+          if-no-files-found: warn
+
+
+  naming-v12-indexeddb-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify V12 fictional naming persistence in real Chromium IndexedDB
+        run: bash scripts/1999-naming-indexeddb-smoke.sh
+      - name: Preserve IndexedDB naming browser probe
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-naming-v12-indexeddb-qa
+          path: visual-audit/1999/naming-v12-indexeddb-dom.txt
+          retention-days: 7
+          if-no-files-found: warn
+
+
+  continuity-v17-indexeddb-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify V17 organizational continuity journal in Chromium IndexedDB
+        run: bash scripts/1999-organization-continuity-indexeddb-smoke.sh
+      - name: Preserve V17 continuity transaction QA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-continuity-v17-indexeddb-qa
+          path: visual-audit/1999/continuity-v17-indexeddb-dom.txt
+          retention-days: 7
+          if-no-files-found: warn

@@ -1,0 +1,106 @@
+name: Desktop Visual Audit
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'public/**'
+      - 'scripts/desktop-visual-audit.sh'
+      - 'scripts/1999-full-screen-controls-cdp.mjs'
+      - 'scripts/1999-naming-desk-focus-cdp.mjs'
+      - '.github/workflows/desktop-visual-audit.yml'
+  pull_request:
+    paths:
+      - 'public/next/**'
+      - 'public/archive/**'
+      - 'public/app.js'
+      - 'public/style.css'
+      - 'scripts/history-ledger-browser-cdp.mjs'
+      - 'tests/history-ledger-year-review.test.mjs'
+      - 'scripts/desktop-visual-audit.sh'
+      - 'scripts/1999-full-screen-controls-cdp.mjs'
+      - 'tests/ui-uniformity-lock.test.mjs'
+      - 'tests/ui-core-information-controls-contract.test.mjs'
+      - '.github/workflows/desktop-visual-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Chrome availability
+        run: |
+          command -v google-chrome || command -v chromium || command -v chromium-browser
+      - name: Capture and inspect WTW desktop routes
+        run: bash scripts/desktop-visual-audit.sh
+      - name: Upload screenshots and captured DOM
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-fm-ootp-desktop-screens
+          path: visual-audit/
+          retention-days: 14
+          if-no-files-found: warn
+
+  screen-interaction-matrix:
+    name: All Department Views and Table Controls in Chromium
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check actual game rail, VIEW selectors, sortable roster and preserved career on each screen
+        shell: bash
+        run: |
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME"
+          CHROME="$CHROME" node scripts/1999-full-screen-controls-cdp.mjs | tee full-screen-qa.log
+          grep -q 'WTW_SCREEN_MATRIX_PASS' full-screen-qa.log
+      - name: Verify Naming Desk single-click typing in real Chromium
+        shell: bash
+        run: |
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME"
+          CHROME="$CHROME" node scripts/1999-naming-desk-focus-cdp.mjs | tee naming-desk-focus-qa.log
+          grep -q 'WTW_NAMING_DESK_FOCUS_PASS' naming-desk-focus-qa.log
+      - name: Preserve screen interaction QA results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-full-screen-control-matrix
+          path: |
+            full-screen-qa.log
+            naming-desk-focus-qa.log
+          retention-days: 14
+          if-no-files-found: warn
+
+  history-ledger-interactions:
+    name: Historical Ledger and Year in Review in Chromium
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check real historical ledger sorting, filtering, season opening and Back navigation
+        shell: bash
+        run: |
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME"
+          CHROME="$CHROME" node scripts/history-ledger-browser-cdp.mjs | tee history-ledger-browser.log
+          grep -q 'WTW_HISTORY_LEDGER_BROWSER_PASS' history-ledger-browser.log
+      - name: Retain historical UI browser acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-history-ledger-browser
+          path: history-ledger-browser.log
+          retention-days: 14
+          if-no-files-found: warn

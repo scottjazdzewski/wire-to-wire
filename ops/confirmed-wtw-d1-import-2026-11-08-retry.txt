@@ -1,0 +1,7 @@
+WTW INITIAL HISTORY IMPORT — AUTHORIZED RETRY
+Original run: https://github.com/scottjazdzewski/wire-to-wire/actions/runs/42452509789
+Result: all validation successful; remote discovery stopped before any D1 migrations or inserts because Cloudflare Account ID secret was empty.
+Owner previously authorized assistant to execute the initial WTW history import.
+Exact target: wtw-canon-desk-db
+Authorized scope: private WTW D1 only, untouched original source, no changes to other repositories.
+Retry is enabled with the Cloudflare account ID from the owner's earlier Cloudflare dashboard screenshot and existing restricted D1 token.

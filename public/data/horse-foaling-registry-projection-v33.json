@@ -1,0 +1,259 @@
+{
+  "schema": "WTW_1999_HORSE_FOALING_REGISTRY_PROJECTION_V1",
+  "source": {
+    "spreadsheetId": "1Lhpe6DG1foQ2-zayQBg4bKpTtu4MP_itpM1zo2GRSEA",
+    "sheetName": "Horse_Registry",
+    "idField": "Horse_ID",
+    "countryField": "Foaling_Country",
+    "jurisdictionField": "Breeding_Jurisdiction",
+    "authority": "WTW_CANON_REGISTRIES_1999_START_V3_3",
+    "precision": "country verified; region reflects breeding jurisdiction, not a separately verified foaling municipality",
+    "scope": "27 exact-ID approved opening/bloodline records only; prior 280 unapproved entries excluded"
+  },
+  "authority": "EXACT_H_ID_MEMBERSHIP_IN_wtw-1999-founding-directory-v1",
+  "records": {
+    "H-1979-000001": {
+      "horseId": "H-1979-000001",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "New Mexico, United States",
+      "region": "New Mexico",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1985-000001": {
+      "horseId": "H-1985-000001",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Kentucky, United States",
+      "region": "Kentucky",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1986-000002": {
+      "horseId": "H-1986-000002",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Kentucky, United States",
+      "region": "Kentucky",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1987-000001": {
+      "horseId": "H-1987-000001",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Kentucky, United States",
+      "region": "Kentucky",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1987-000002": {
+      "horseId": "H-1987-000002",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Kentucky, United States",
+      "region": "Kentucky",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1987-000004": {
+      "horseId": "H-1987-000004",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Kentucky, United States",
+      "region": "Kentucky",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1987-000006": {
+      "horseId": "H-1987-000006",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Virginia, United States",
+      "region": "Virginia",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1988-000001": {
+      "horseId": "H-1988-000001",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Kentucky, United States",
+      "region": "Kentucky",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1988-000002": {
+      "horseId": "H-1988-000002",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Kentucky, United States",
+      "region": "Kentucky",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1988-000003": {
+      "horseId": "H-1988-000003",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "California, United States",
+      "region": "California",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1988-000005": {
+      "horseId": "H-1988-000005",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Kentucky, United States",
+      "region": "Kentucky",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1989-000002": {
+      "horseId": "H-1989-000002",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Virginia, United States",
+      "region": "Virginia",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1989-000005": {
+      "horseId": "H-1989-000005",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Kentucky, United States",
+      "region": "Kentucky",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1990-000001": {
+      "horseId": "H-1990-000001",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Maryland, United States",
+      "region": "Maryland",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1990-000002": {
+      "horseId": "H-1990-000002",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Kentucky, United States",
+      "region": "Kentucky",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1990-000005": {
+      "horseId": "H-1990-000005",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Virginia, United States",
+      "region": "Virginia",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1990-000007": {
+      "horseId": "H-1990-000007",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Virginia, United States",
+      "region": "Virginia",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1991-000004": {
+      "horseId": "H-1991-000004",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Kentucky, United States",
+      "region": "Kentucky",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1992-000001": {
+      "horseId": "H-1992-000001",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Washington, United States",
+      "region": "Washington",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1992-000002": {
+      "horseId": "H-1992-000002",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Virginia, United States",
+      "region": "Virginia",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1992-000005": {
+      "horseId": "H-1992-000005",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Georgia, United States",
+      "region": "Georgia",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1992-000006": {
+      "horseId": "H-1992-000006",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Kentucky, United States",
+      "region": "Kentucky",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1993-000001": {
+      "horseId": "H-1993-000001",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Kentucky, United States",
+      "region": "Kentucky",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1993-000002": {
+      "horseId": "H-1993-000002",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Washington, United States",
+      "region": "Washington",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1993-000003": {
+      "horseId": "H-1993-000003",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Kentucky, United States",
+      "region": "Kentucky",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1993-000005": {
+      "horseId": "H-1993-000005",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Florida, United States",
+      "region": "Florida",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    },
+    "H-1995-008026": {
+      "horseId": "H-1995-008026",
+      "foalingCountry": "United States",
+      "breedingJurisdiction": "Kentucky, United States",
+      "region": "Kentucky",
+      "foalingCountryCode": "US",
+      "locality": "",
+      "jurisdictionIsNotExactFoalingPlace": true
+    }
+  }
+}

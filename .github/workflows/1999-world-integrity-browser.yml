@@ -1,0 +1,113 @@
+name: WTW 1999 World Integrity and Scale
+
+on:
+  pull_request:
+    paths:
+      - 'public/1999/engine/fictional-industry-integrity-audit-1999.mjs'
+      - 'public/1999/engine/fictional-industry-graph-1999.mjs'
+      - 'public/1999/engine/fictional-industry-staffing-1999.mjs'
+      - 'public/1999/engine/fictional-world-calendar-v1.mjs'
+      - 'public/next/1999-track-program.mjs'
+      - 'public/next/1999-condition-book-engine.mjs'
+      - 'public/1999/game/shipping-1999.js'
+      - 'tests/1999-world-integrity-circuits.test.mjs'
+      - 'tests/1999-full-world-jockey-coverage.test.mjs'
+      - 'tests/1999-world-4yo-race-eligibility.test.mjs'
+      - 'tests/1999-national-jockey-engagements.test.mjs'
+      - 'tests/1999-jockey-partnerships.test.mjs'
+      - 'tests/1999-premier-jockey-market.test.mjs'
+      - 'tests/1999-premier-jockey-ui.test.mjs'
+      - 'public/next/1999-player-race-planning.mjs'
+      - 'src/game/player-race-plan-1999.js'
+      - 'public/1999/game/player-race-plan-1999.js'
+      - 'public/1999/engine/jockey-premier-market-1999.mjs'
+      - 'public/1999/engine/jockey-partnerships-1999.mjs'
+      - 'public/1999/engine/jockey-engagements-1999.mjs'
+      - 'src/game/race-agents-1999.js'
+      - 'public/1999/game/race-agents-1999.js'
+      - 'public/1999/engine/fictional-industry-game-world-bridge-1999.mjs'
+      - 'src/game/racing-1999.js'
+      - 'public/1999/game/racing-1999.js'
+      - 'public/1999/engine/fictional-industry-persistence-1999.mjs'
+      - 'public/1999/engine/fictional-industry-90-day-circuit-audit-1999.mjs'
+      - 'scripts/1999-world-integrity-browser-cdp.mjs'
+      - '.github/workflows/1999-world-integrity-browser.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  calendar-and-circuit-unit-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Full 107-track calendar and geographical shipping matrix
+        run: |
+          set -o pipefail
+          node --test tests/1999-world-integrity-circuits.test.mjs \
+            tests/1999-full-world-approved-geography.test.mjs \
+            tests/1999-track-condition-book-engine.test.mjs \
+            tests/1999-full-world-jockey-coverage.test.mjs \
+            tests/1999-world-4yo-race-eligibility.test.mjs \
+            tests/1999-national-jockey-engagements.test.mjs \
+            tests/1999-jockey-partnerships.test.mjs \
+            tests/1999-premier-jockey-market.test.mjs \
+            tests/1999-premier-jockey-ui.test.mjs \
+            2>&1 | tee world-circuit-audit.log
+      - name: Preserve unit audit log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-1999-world-circuit-audit
+          path: world-circuit-audit.log
+          retention-days: 14
+          if-no-files-found: warn
+
+  real-indexeddb-scale-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - horses: 10000
+            seed: 19990101
+          - horses: 300000
+            seed: 19990101
+          - horses: 325000
+            seed: 19990101
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify installed Chromium
+        run: command -v google-chrome || command -v chromium || command -v chromium-browser
+      - name: Create, deep-audit full-world 90-day circuit readiness, restart and reopen
+        shell: bash
+        env:
+          WTW_INTEGRITY_SIZE: ${{ matrix.horses }}
+          WTW_INTEGRITY_SEED: ${{ matrix.seed }}
+          WTW_INTEGRITY_TIMEOUT_MS: 2400000
+        run: |
+          set -o pipefail
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          CHROME="$CHROME" node scripts/1999-world-integrity-browser-cdp.mjs \
+            2>&1 | tee world-integrity-${{ matrix.horses }}.log
+          grep -q 'WTW_INTEGRITY_CREATE_PASS' world-integrity-${{ matrix.horses }}.log
+          grep -q 'WTW_INTEGRITY_REOPEN_PASS' world-integrity-${{ matrix.horses }}.log
+          grep -q 'WTW_FULL_WORLD_90_DAY_CIRCUIT_READINESS_PASS' world-integrity-${{ matrix.horses }}.log
+          grep -q 'WTW_FULL_WORLD_90_DAY_CIRCUIT_REOPEN_PASS' world-integrity-${{ matrix.horses }}.log
+      - name: Preserve generation, census, reopen and memory evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtw-1999-integrity-${{ matrix.horses }}-seed-${{ matrix.seed }}
+          path: world-integrity-${{ matrix.horses }}.log
+          retention-days: 14
+          if-no-files-found: warn

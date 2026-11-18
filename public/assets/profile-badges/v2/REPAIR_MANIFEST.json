@@ -1,0 +1,36 @@
+{
+  "edition": "v2-isolated-shield-repair-final",
+  "date": "2026-11-10",
+  "status": "USER-REQUESTED ASSET EXTRACTION",
+  "description": "Individual transparent 512x512 shield cutouts from the old corrupted sheet exports. Original source files recoverable from git commit 7f1cc35c19f593c351507710d932d7dd383c44ea",
+  "asset_style": "approved original gold and forest green shields; no newly invented artwork",
+  "original_sources": {
+    "achievements": "05f54934b5e56820626088a1ce0d1907a36f6721",
+    "career_record": "2277bbb842f72d0f69f5dabd48515e389d2a5a60",
+    "connections": "572474fa16762128ca32cd4bc1836dbb86c10ebb",
+    "farm_stable": "1ab3def4b83f3123c4f5f3e9b862ac0cea0ff287",
+    "history": "cccca69cc5364da823237e3a49e7d22b7dce9fa8",
+    "horse": "49475c936634e65fe03e67dfdcef730b10fb57bc",
+    "major_races": "099eef114bcba23f99961eb25ca40db4c2892645",
+    "meet_schedule": "9ffce0ef8f0a4900811efd2c7256578a7112ac53",
+    "pedigree": "934c7a5132f60b0f006675d5af217aed163ab0dd",
+    "people": "1149fa57a6a4e3530cee729b76c37802fb2fcf9c",
+    "reputation": "50c16e0fc8ef5d04e91623c2bde258cb8c257c9d",
+    "track": "27ee216a057647a4894edeb4517491985874c2d4"
+  },
+  "cleaned_git_blob_shas": {
+    "achievements": "51d18b8af5009744b8960ddf545a5e34812261b3",
+    "career_record": "c2209e29644bb6b148fc4d941464d68c9cddc34a",
+    "connections": "7d4dd44ee3ab13f369c8c8c05ac7bdfd3f121afc",
+    "farm_stable": "0e545f320ea980daea3e628bda7f66cfaea0ff39",
+    "history": "a61b7dfa8fe51ad98b8dbba9ebdb907d104b70fb",
+    "horse": "a10c90dd0fced7f16875717c082aff2dfdd3bc40",
+    "major_races": "c8f096dfa0435d756d21a2a36e0f4b3d7a1bf5b5",
+    "meet_schedule": "1ccb251fc2d46528eb51e6817e1e905dd099f590",
+    "pedigree": "8155287c8b8ae5afbde1ec7cf1fabe9de2a7aead",
+    "people": "3fcc16ee0fcbe351009eb70858d9ab612431e00d",
+    "reputation": "b372f7a27dcdd6dc75844497d294fa655d6aa6b0",
+    "track": "0ba8e434b091974fb8834cc66ef52ce310a5e2fa"
+  },
+  "final_validation": "One connected alpha silhouette and no detached pixels in each shield; all four image corners transparent"
+}

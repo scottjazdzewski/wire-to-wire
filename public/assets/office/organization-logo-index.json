@@ -1,0 +1,9 @@
+{
+  "version": 3,
+  "asset_family": "retired_generated_64px_1999_owner_logos",
+  "source": "WTW_CANON_REGISTRIES_v3.3_Organization_Registry",
+  "identity_rule": "No generated low-resolution placeholders may represent an approved organization.",
+  "approved_brand_preservation": true,
+  "retired_reason": "All 108 generated 64x64 legacy owner images retired and removed from site; approved founding identities use exact-ID index.",
+  "organizations": {}
+}
