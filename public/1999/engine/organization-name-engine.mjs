@@ -223,7 +223,7 @@ function breakingName(seed,i,attempt){
  */
 export function createOrganizationNameRoster({
  seed,ownerCount,barnCount,farmCount,breakingCount=0,
- protectedNames=[],principalNames=[],trainerNames=[],
+ protectedNames=[],protectedPersonNames=[],principalNames=[],trainerNames=[],
  sourceOwnerNames=[],sourceFarmNames=[],sourceBarnNames=[],farmKindPlan=null,
  alignPrincipalSurnames=false,principalPrimarySurnames=[],trainerPrimarySurnames=[],
  ownerContexts=[],farmContexts=[],trainerContexts=[],breakingContexts=[],
@@ -268,7 +268,17 @@ export function createOrganizationNameRoster({
    sourceNameKeys.add(key);lockedSourceNames.push(name);
   }
  }
- const protectedBusinessNames=[...protectedNames,...lockedSourceNames];
+ if(!Array.isArray(protectedPersonNames)||protectedPersonNames.some(name=>
+  typeof name!=='string'||!name.trim()||name!==name.trim()))
+  throw Error('Invalid protected person-name list');
+ // Historical businesses, protected people and locked new organizations are
+ // distinct provenance classes even when they share the same text. A new
+ // sole-owner label may legitimately equal its OWN protected principal's
+ // personal name, but not a protected business or a different owner.
+ const historicalBusinessNameKeys=new Set(protectedNames.map(norm).filter(Boolean));
+ const protectedPersonNameKeys=new Set(protectedPersonNames.map(norm).filter(Boolean));
+ const issuedSoleOwnerNameKeys=new Set();
+ const protectedBusinessNames=[...protectedNames,...protectedPersonNames,...lockedSourceNames];
  const used=new Set(protectedBusinessNames.map(norm).filter(Boolean));
  const roots=new Set(protectedBusinessNames.filter(s=>trailing.test(String(s))).map(rootOf).filter(Boolean));
  const hasProtectedPrefixConflict=createProtectedOrganizationRootGuard(roots);
@@ -331,14 +341,17 @@ export function createOrganizationNameRoster({
   const sole=soleOwnerPercent===null?i%11===0:
    hash(seed,'owner-sole-status:'+i)%100<soleOwnerPercent;
   if(sole&&principal){
-   // The person's approved full name is a candidate for a sole proprietor
-   // ONLY when it has not already been reserved by a distinct business or
-   // another owner. On collision, keep the existing person name and issue a
-   // separately named private racing business through the SAME normal claim
-   // path below; never abort a playable world or reuse someone else's ID.
+   // The person's OWN name remains an accurate label for sole ownership,
+   // even when world genesis has pre-reserved every human participant.
+   // Historical organizations and already issued sole owners always win;
+   // a different owner receives a separately claimed business name.
    const key=norm(principal);
-   if(!used.has(key)&&!externalNameIndex?.hasAnyName(principal)){
-    used.add(key);return principal;
+   const ownProtectedPerson=protectedPersonNameKeys.has(key)&&
+    !historicalBusinessNameKeys.has(key);
+   if((!used.has(key)||ownProtectedPerson)&&
+    !sourceNameKeys.has(key)&&!issuedSoleOwnerNameKeys.has(key)&&
+    !externalNameIndex?.hasAnyName(principal)){
+    used.add(key);issuedSoleOwnerNameKeys.add(key);return principal;
    }
   }
   const preferred=principalPrimarySurnames[i]||surname(principal);
