@@ -238,6 +238,10 @@ async function editSavedWorldEntity({kind,id,patch}={}){
   // The generated world is never written as a competing world database.
   applyCareerWorldEdits(career.world,edits,{run:career.run});
   career.worldEdits=edits;career.editVersion=++careerWorldViewEpoch;
+  // Entity directories hold owner/trainer/track name lookups captured at
+  // construction time. Rebuild from THIS edited career world rather than
+  // leaving other horse profiles showing the pre-edit organization name.
+  liveWorldDirectorySource=null;
   liveWorldHorseDirectory?.invalidate();
   Object.values(liveWorldEntityDirectories||{}).forEach(d=>d.invalidate());
   publishCareerReadModel();
