@@ -7,10 +7,10 @@ export const CAREER_WORLD_EDITS_SCHEMA='WTW_CAREER_WORLD_EDITS_V1';
 const KINDS=Object.freeze({horse:'horses',person:'people',
  organization:'organizations',track:'tracks'});
 const FIELD_LIMITS=Object.freeze({
- horse:{name:36,biography:800},
- person:{name:90,biography:800},
- organization:{name:100,biography:800},
- track:{name:90,biography:800}
+ horse:{name:36,biography:800,reviewNotes:1500},
+ person:{name:90,biography:800,reviewNotes:1500},
+ organization:{name:100,biography:800,reviewNotes:1500},
+ track:{name:90,biography:800,reviewNotes:1500}
 });
 export function careerWorldEntity(world,kind,id){
  const bucket=KINDS[kind];
@@ -34,7 +34,7 @@ function validateSingle(world,kind,id,patch,{run=null}={}){
        .some(other=>other.id!==id&&String(other.name||'').toLocaleLowerCase('en-US')===
         value.trim().toLocaleLowerCase('en-US')))
    throw Error('Another '+kind+' already has that name');
-  if(key==='biography'&&/[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(value))
+  if((key==='biography'||key==='reviewNotes')&&/[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(value))
    throw Error('Biography contains invalid characters');
   if(['ownerId','trainerId','homeTrackId'].includes(key)){
    const records=key==='ownerId'?world.entities.organizations:
