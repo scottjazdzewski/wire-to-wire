@@ -1,0 +1,37 @@
+name: Owner and barn naming capacity
+
+on:
+  pull_request:
+    paths:
+      - 'public/1999/engine/organization-name-engine.mjs'
+      - 'public/1999/engine/organization-naming-styles.mjs'
+      - 'public/1999/engine/scalable-owner-business-names-v11.mjs'
+      - 'public/1999/engine/census-2000-owner-surnames.mjs'
+      - 'tests/1999-scalable-owner-business-capacity-v11.test.mjs'
+      - 'tests/1999-fictional-name-quality-v10.test.mjs'
+      - 'tests/1999-fictional-organization-v7.test.mjs'
+      - '.github/workflows/owner-identity-capacity.yml'
+  push:
+    branches:
+      - 'naming/p0-ownership-capacity-v11'
+    paths:
+      - 'public/1999/engine/**'
+      - 'tests/1999-scalable-owner-business-capacity-v11.test.mjs'
+      - '.github/workflows/owner-identity-capacity.yml'
+  workflow_dispatch:
+
+jobs:
+  owner-name-regression:
+    name: 29k owners, three generations, legacy naming
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify archived owners and multi-generation capacity
+        run: |
+          node --test tests/1999-scalable-owner-business-capacity-v11.test.mjs tests/1999-fictional-name-quality-v10.test.mjs tests/1999-fictional-organization-v7.test.mjs
