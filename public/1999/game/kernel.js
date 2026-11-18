@@ -27,11 +27,71 @@ import {TRAINER_EMPLOYMENT_COMMANDS,trainerEmploymentAction,advanceTrainerEmploy
 
 const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_NAMING_COMMANDS,...HORSE_NAME_OWNER_COMMANDS,...HORSE_CARE_COMMANDS,...RACING_COMMANDS,...HORSE_SHIPPING_COMMANDS,...TRAINER_CONTRACT_COMMANDS,...OWNER_TRAINER_REVIEW_COMMANDS,...TRAINER_MANAGEMENT_COMMANDS,...TRAINER_EMPLOYMENT_COMMANDS,...PLAYER_RACE_PLAN_COMMANDS]);
 const MAX_PENDING = 5000;
-function appendLog(state, commandId, kind, details) {
-  const event = { seq: state.event_log.length + 1, command_id: commandId,
+// Per-day horse/facility decisions remain available in dispatch output and in
+// their canonical runtime records, but are summarized in the durable journal.
+const DAILY_DETAIL_EVENT_KINDS=new Set([
+ 'BARN_OPERATOR_WELFARE_ALERT','OWNER_DAILY_STRATEGY','TRAINER_DAILY_DECISIONS',
+ 'OWNER_TRAINER_RELATIONSHIP_PRESSURE','HORSE_NEEDS_ATTRIBUTES',
+ 'HORSE_TRANSIT_CARE_DAY','HORSE_CARE_UNFUNDED','HORSE_RACE_PREPARATION_WORKOUT',
+ 'HORSE_CARE_DAY','FACILITY_CASH','FACILITY_BOARDING_UNFUNDED',
+ 'FACILITY_OPERATING_DAY','TRAINER_MANAGEMENT_REQUEST_EXPIRED',
+ 'TRAINER_DEPARTURE_WARNING','TRAINER_DEPARTURE_WARNING_CLEARED'
+]);
+const CARE_LEDGER_ROLLUP_KINDS=new Set([
+ 'HORSE_CARE_OWNER_PAYMENT','HORSE_CARE_SITE_AND_TRAINER_INCOME',
+ 'HORSE_CARE_TRAINER_REMITTANCE','HORSE_CARE_TRAINER_EARNINGS',
+ 'HORSE_CARE_SUPPLIER_RECEIPT'
+]);
+const CARE_LEDGER_DETAIL_DAYS=7;
+function appendLog(state, commandId, kind, details, persist=true) {
+  const previous=Number.isSafeInteger(state.event_seq)?state.event_seq:
+    state.event_log.at(-1)?.seq??0;
+  const event = { seq: previous + 1, command_id: commandId,
     date: state.clock.date, kind, details: strictJSON(details) };
-  state.event_log.push(event);
+  state.event_seq=event.seq;
+  if(persist)state.event_log.push(event);
   return event;
+}
+function compactCareFinancialLedger(state){
+ const finance=state.runtime.finances,ledger=finance?.ledger;
+ if(!Array.isArray(ledger)||!ledger.length)return;
+ const cutoff=new Date(Date.parse(state.clock.date+'T00:00:00Z')-
+  CARE_LEDGER_DETAIL_DAYS*86400000).toISOString().slice(0,10);
+ const summaries=new Map(),recent=[];
+ const dimensions=['operation_id','site_id','person_id','owner_id',
+  'operator_id','trainer_id','feed','care','workout','source'];
+ const add=(row,period)=>{
+  const values=dimensions.map(key=>row[key]??null);
+  const key=JSON.stringify([period,row.kind,...values]);
+  let entry=summaries.get(key);
+  if(!entry){
+   const [year,month]=period.split('-').map(Number);
+   const end=new Date(Date.UTC(year,month,0)).toISOString().slice(0,10);
+   entry={rollup_schema:'WTW_MONTHLY_FINANCE_ROLLUP_V1',
+    rollup_period:period,period_start:period+'-01',period_end:end,date:end,
+    transaction_id:'MONTHLY_ROLLUP:'+key,kind:row.kind,
+    amount_minor:0,transaction_count:0,source:'MODELED_MONTHLY_LEDGER_ROLLUP'};
+   for(let i=0;i<dimensions.length;i++)
+    if(values[i]!==null)entry[dimensions[i]]=values[i];
+   summaries.set(key,entry);
+  }
+  const amount=Number(row.amount_minor)||0;
+  const count=Number.isSafeInteger(row.transaction_count)?row.transaction_count:1;
+  entry.amount_minor+=amount;
+  entry.transaction_count+=count;
+ };
+ for(const row of ledger){
+  if(row?.rollup_schema==='WTW_MONTHLY_FINANCE_ROLLUP_V1'&&row.rollup_period){
+   add(row,row.rollup_period);continue;
+  }
+  if(CARE_LEDGER_ROLLUP_KINDS.has(row?.kind)&&
+   typeof row.date==='string'&&row.date<cutoff&&
+   Number.isSafeInteger(row.amount_minor)){
+   add(row,row.date.slice(0,7));continue;
+  }
+  recent.push(row);
+ }
+ finance.ledger=[...summaries.values(),...recent];
 }
 function validateCommand(command) {
   ensure(isObject(command), 'INVALID_COMMAND', 'Command must be an object');
@@ -53,7 +113,14 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
   }
   const next = jsonClone(state);
   const output = [];
-  const emit = (kind, details) => output.push(appendLog(next, c.id, kind, details));
+  const dailyEventCounts=Object.create(null);
+  const emit = (kind, details) => {
+    const summarize=c.type==='ADVANCE_DAY'&&DAILY_DETAIL_EVENT_KINDS.has(kind);
+    const event=appendLog(next,c.id,kind,details,!summarize);
+    output.push(event);
+    if(summarize)dailyEventCounts[kind]=(dailyEventCounts[kind]||0)+1;
+    return event;
+  };
   if (c.type === 'SCHEDULE_EVENT') {
     ensure(c.actor === 'system', 'UNAUTHORIZED_COMMAND', 'Only a registered game system can schedule an event');
     const p = c.payload;
@@ -172,6 +239,12 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
       next.scheduler.delivered_ids.push(event.id);
       emit('SCHEDULED_EVENT_DUE', { event_id: event.id, kind: event.kind, data: event.payload });
     }
+    if(Object.keys(dailyEventCounts).length){
+      const event=appendLog(next,c.id,'DAILY_SIMULATION_SUMMARY',{
+       date:next.clock.date,counts:dailyEventCounts});
+      output.push(event);
+    }
+    compactCareFinancialLedger(next);
   }
   // Non-clock owner actions can also change the relationship immediately.
   // This is a live projection of the existing run, never an alternate clock.
