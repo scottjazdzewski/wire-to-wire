@@ -21,10 +21,27 @@ import {OWNER_REVIEWED_NAME_KEYS_V478}
  */
 export function validateRunWithSavedWorldEdits(world,run,edits,validator){
  if(typeof validator!=='function')throw Error('A game validation service is required');
- const validationWorld=structuredClone(world);
+ // Never deep-copy the 300,000-horse immutable world to validate a handful
+ // of player edits. Copy the directory arrays and ONLY the edited records.
+ const changes=edits??createCareerWorldEdits();
+ const ids=Object.entries(changes.byId||{}).reduce((acc,[ref])=>{
+  const point=ref.indexOf(':');
+  if(point>0){
+   const kind=ref.slice(0,point);
+   const bucket=kind==='horse'?'horses':kind==='person'?'people':
+    kind==='organization'?'organizations':kind==='track'?'tracks':null;
+   if(bucket){if(!acc[bucket])acc[bucket]=new Set();acc[bucket].add(ref.slice(point+1));}
+  }
+  return acc;
+ },{});
+ const validationWorld={...world,entities:Object.fromEntries(
+  Object.entries(world.entities||{}).map(([bucket,records])=>[
+   bucket,Array.isArray(records)?records.map(record=>
+    ids[bucket]?.has(record.id)?{...record}:record):records
+  ])
+ )};
  const validationRun=structuredClone(run);
- applyCareerWorldEdits(validationWorld,edits??createCareerWorldEdits(),
-  {run:validationRun});
+ applyCareerWorldEdits(validationWorld,changes,{run:validationRun});
  validator(validationRun,validationWorld);
  return true;
 }
