@@ -607,7 +607,8 @@ try{
   relationshipCounts:kingsmereView.relationships,approvedResidentHorses:
    kingsmereView.horseRows.filter(h=>/^H-\d{4}-/.test(h.sourceHorseId||'')).length,
   gameDate:kingsmereSaved.gameDate,registeredHorses:kingsmereSaved.registeredHorses,
-  savedStableHorseCount:kingsmereSaved.stableHorses,horseProfileOpened:true}));
+  savedStableHorseCount:kingsmereSaved.stableHorses,horseProfileOpened:true,
+  roster:kingsmereView.horseRows}));
  const majorOperationRosters=[];
  for(const operation of [
   {id:'O-000001',name:'Wetherby Plain'},
@@ -645,7 +646,7 @@ try{
   assert.equal(saved.stableHorses,view.inventoryCount);
   majorOperationRosters.push({id:operation.id,name:operation.name,
    inventory:view.inventoryCount,relationships:view.relationships,
-   gameDate:saved.gameDate,roster:view.horses.slice(0,8)});
+   gameDate:saved.gameDate,roster:view.horses});
  }
  console.log('WTW_APPROVED_MAJOR_OPERATION_SAVED_ROSTERS_PASS '+
   JSON.stringify(majorOperationRosters));
