@@ -433,13 +433,17 @@ function preferredOperation(manifest){
 }
 async function persistCanonicalRun(){
  if(!activeWorldCareer)return;
+ const career=activeWorldCareer,run=career.run;
  const store=await open1999IndustryDatabase();
- try{await savePersistent1999CareerRun(store,activeWorldCareer.manifest,{
-  runId:activeWorldCareer.run.run_id,gameDate:activeWorldCareer.run.clock.date,
-  player:activeWorldCareer.run.player,changes:{canonicalRun:activeWorldCareer.run,
-   worldEdits:activeWorldCareer.worldEdits||createCareerWorldEdits()},
-  version:Math.max(1,activeWorldCareer.run.revision+1)})}
- finally{store.close()}
+ try{
+  const prior=await loadPersistent1999CareerRun(store,career.manifest,run.run_id);
+  await savePersistent1999CareerRun(store,career.manifest,{
+   runId:run.run_id,gameDate:run.clock.date,player:run.player,
+   changes:{...(prior?.changes||{}),canonicalRun:run,
+    worldEdits:career.worldEdits||prior?.changes?.worldEdits||createCareerWorldEdits()},
+   version:Math.max((prior?.version||0)+1,run.revision+1)
+  });
+ }finally{store.close()}
 }
 async function sharedCareerBytes(){
  if(!activeWorldCareer?.manifest||!activeWorldCareer?.run)
