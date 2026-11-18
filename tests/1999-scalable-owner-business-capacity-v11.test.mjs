@@ -202,3 +202,31 @@ test('active P0 V10 16,700-owner directory stays frozen at pre-V11 fingerprint',
   'successful V10 naming retains the original manifest and summary');
 });
 
+
+test('legacy archival owner exhaustion activates V11 only after all 512 former attempts fail',()=>{
+ const legacyRoots=new Set(regionalOrganizationNamingRoots('KENTUCKY'));
+ const onlyNewRoots=scalableOwnerNamingRoots('KENTUCKY').filter(root=>
+  !legacyRoots.has(root));
+ assert.equal(onlyNewRoots.length,24);
+ let checked=0;
+ const args={seed:19990101,ownerCount:1,barnCount:0,farmCount:0,
+  principalNames:['Alex West'],ownerSurnameReferences:['Clifton'],
+  soleOwnerPercent:0,ownerContexts:[{region:'KENTUCKY'}],
+  externalNameIndex:{
+   // Model a saved world where every legacy candidate was already
+   // registered, but new V11 locality roots are still available.
+   hasAnyName:name=>{
+    checked++;
+    return !onlyNewRoots.some(root=>name.includes(root));
+   },
+   hasOrganizationRootConflict:()=>false
+  }};
+ const result=createOrganizationNameRoster(args);
+ assert.equal(result.summary.retries,512,
+  'no new candidate can be used before 512 legacy attempts have failed');
+ assert.equal(checked,513);
+ assert.equal(result.model,SCALABLE_ARCHIVAL_RACING_OWNER_NAME_MODEL,
+  'fallback output must be version-identified, never silently claim V10');
+ assert.deepEqual(result.owners,['Limestone Run Alex West Stable']);
+ assert.equal(result.summary.ownerCandidateAttemptBudget,SCALABLE_OWNER_NAME_ATTEMPT_LIMIT);
+});
