@@ -39,10 +39,11 @@ function build(app,world=base.concat([person,malicious])){
   return [...rows].sort((a,b)=>sign*String(a[app.managerSortKey]??'')
    .localeCompare(String(b[app.managerSortKey]??''),undefined,{numeric:true}));
  };
- return new Function('APP','world1999Entries','world1999Data',
+ return new Function('window','APP','world1999Entries','world1999Data',
   'managerSortRecords','managerSortableColumns','managerRecordViewControl',
   'safe','glyph','searchWords','world1999Loading','world1999LoadFailed',
   source+'\nreturn worldCompleteDirectoryView;')(
+   {__WTW_ACTIVE_WORLD_CAREER_VIEW__:null,WTWDesktop:null},
    app,()=>world,game,sort,
    (scope,cols)=>'<div class="ng-manager-columns">'+cols.map(x=>x[0]).join(' ')+'</div>',
    ()=>'VIEW <select data-ng-select="manager-screen"></select>',
