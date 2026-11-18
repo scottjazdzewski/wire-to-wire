@@ -2875,6 +2875,8 @@ function liveStableTrainingView(){
 function worldDirectoryHorseRows(){
  const adapter=window.__WTW_1999_UI_DATA__;
  const saved=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ if(window.WTWDesktop?.runtime==='windows-desktop'&&!saved?.worldHorseBrowse)
+  return {indexing:true,total:0,items:[]};
  const browse=saved?.worldHorseBrowse||adapter?.worldHorseBrowse;
  const total=Number(saved?.worldHorseDirectoryCount??adapter?.counts?.worldHorses??adapter?.counts?.horses??0);
  if(browse){
@@ -3697,6 +3699,9 @@ function departmentEmptyPanel(section,page,message){
    '</div>':'')+'</div>';
 }
 function departmentRoster(section,page='Overview'){
+ if(section==='World'&&window.WTWDesktop?.runtime==='windows-desktop'&&
+  !window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.worldHorseBrowse)
+  return '<section class="ng-manager-screen" role="status"><h2>OPEN THE FULL SAVED WORLD</h2><p>The operational 1999 career must finish loading before the World registry is shown. The 73-horse archival index is not a substitute for 300,000 playable records.</p></section>';
  const demo=false; // Registered 1999 content only; preview population retired.
  const auctions=section==='Sales'?depAuctionList(demo):[];
  const gameDay=depGameDay();
