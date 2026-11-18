@@ -1192,7 +1192,7 @@ try{
   try{
    const world=await api.reopenPersistent1999Industry(store,{seed:19990101,
     worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V10-NAMES-V10-H300000'});
-   const runId='WTW-FULL-WORLD-LIFECYCLE-300K';
+   const runId='WTW-FULL-WORLD-LIFECYCLE-300K-KINGSMERE';
    const saved=await api.loadPersistent1999CareerRun(store,world.manifest,runId);
    const foal=await api.readPersistent1999LifecycleHorse(store,world.manifest,runId,
     '${lifecycle.foalId}');
