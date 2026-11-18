@@ -17,7 +17,7 @@ import {foalingEventNamingBrief,planPopulationNamingCohorts}
  from '../src/game/horse-naming-population-planner.js';
 import {OWNER_REVIEWED_NAME_KEYS_V478} from '../src/game/horse-naming-owner-review-v478.js';
 
-const norm=x=>String(x).normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'')
+const norm=x=>String(x).normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
  .toLowerCase().replace(/[^a-z0-9]/g,'');
 const cues={
  storm:'A thunderstorm crossed the paddock at dusk.',
@@ -62,7 +62,7 @@ function brief(motif,index=1){
  });
 }
 function oldAuthoredNames(source){
- return [...source.matchAll(/(?:names:\\[|"[a-z]+": \\[)([^\\]]*)\\]/g)]
+ return [...source.matchAll(/(?:names:\[|"[a-z]+": \[)([^\]]*)\]/g)]
   .flatMap(m=>[...m[1].matchAll(/(?:'([^']+)'|"([^"]+)")/g)]
    .map(n=>n[1]||n[2]));
 }
@@ -86,7 +86,7 @@ test('V491 adds 360 original whole names, not old rated or already authored word
  assert.equal(older.size,601);
  assert.equal(newNames.length,360);
  assert.equal(fresh.size,360,'no duplicate name keys across motifs');
- assert.equal(newNames.filter(x=>!x||x.length>18||/\\d/.test(x)).length,0);
+ assert.equal(newNames.filter(x=>!x||x.length>18||/\d/.test(x)).length,0);
  assert.equal(newNames.filter(x=>older.has(norm(x))).length,0);
  assert.equal(newNames.filter(x=>excluded.has(norm(x))).length,0);
  assert.equal(older.size+fresh.size,961);
