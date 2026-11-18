@@ -1312,7 +1312,11 @@ function savedWorldRecordProfile(){
   '" value="'+safe(record.name)+'" aria-label="World display name"/></label>'+
   '<label>BIOGRAPHY / EDITORIAL NOTES'+
   '<textarea data-saved-world-field="biography" maxlength="800" rows="5">'+
-   safe(record.biography||'')+'</textarea></label></div>':'';
+   safe(record.biography||'')+'</textarea></label>'+
+  '<label>REQUESTED STRUCTURAL CHANGES · EXPORT FOR REVIEW ONLY'+
+  '<textarea data-saved-world-field="reviewNotes" maxlength="1500" rows="5"'+
+   ' placeholder="e.g., Move to Kingsmere, change breeding program or adjust quality; request only, not yet applied to finances/racing.">'+
+   safe(record.reviewNotes||'')+'</textarea></label></div>':'';
  const actions=editing?
   '<button type="button" data-ng="saved-world-cancel">CANCEL</button>'+
   '<button type="button" data-ng="saved-world-save">SAVE WORLD CHANGES</button>':
@@ -1326,7 +1330,7 @@ function savedWorldRecordProfile(){
     safe(career.worldEditsCount||0)+')</button></div>'+
   (APP.savedWorldEditError?'<p role="status">'+safe(APP.savedWorldEditError)+'</p>':'')+
   (editing?controls+
-   '<p>Name and biography edits are saved into the active career by immutable ID. Ownership, trainer, barn and finance changes require validated gameplay commands; these fields cannot be changed by repainting a dossier.</p>':
+   '<p>Name and biography are live edits. Structural requests are saved as review notes and exported; they do NOT alter owner, trainer, barn, rating, contracts, or finances until validated and integrated.</p>':
    '<div class="ng-world-editor-fields">'+facts+'</div>')+
   '<p>The generated 300,000-horse base world stays unchanged. Uploaded export files are reviewed for promotion into a future default starting world.</p>'+
   '<button type="button" data-ng="tab" data-val="'+safe(page)+
@@ -4958,7 +4962,7 @@ window.addEventListener('click',e=>{
   const patch={};
   root.querySelectorAll('[data-saved-world-field]').forEach(input=>{
    const field=input.dataset.savedWorldField;
-   if(['name','biography'].includes(field)&&input.value!==String(row[field]??''))
+   if(['name','biography','reviewNotes'].includes(field)&&input.value!==String(row[field]??''))
     patch[field]=input.value;
   });
   if(!Object.keys(patch).length){
