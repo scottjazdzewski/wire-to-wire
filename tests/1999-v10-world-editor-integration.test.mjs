@@ -28,7 +28,8 @@ test('V10 World editor changes real saved horse, person, farm and track identiti
  let edits=createCareerWorldEdits();
  assert.equal(edits.schema,CAREER_WORLD_EDITS_SCHEMA);
  edits=addCareerWorldEdit(edits,world,'horse',HORSE,
-  {name:'Kingsmere Runner',biography:'Approved starter edit'});
+  {name:'Kingsmere Runner',biography:'Approved starter edit',
+   reviewNotes:'Move into the Kingsmere high-end program; needs validated transfer and ratings review'});
  edits=addCareerWorldEdit(edits,world,'person','P-001',{name:'Alana Kingsmere'});
  edits=addCareerWorldEdit(edits,world,'organization','O-000061',
   {name:'Kingsmere Racing Farm',biography:'Established major breeding operation'});
@@ -41,6 +42,8 @@ test('V10 World editor changes real saved horse, person, farm and track identiti
  assert.equal(applyCareerWorldEdits(world,disk,{run}).applied,4);
  assert.equal(world.entities.horses[0].id,HORSE);
  assert.equal(world.entities.horses[0].name,'Kingsmere Runner');
+ assert.match(world.entities.horses[0].reviewNotes,/validated transfer/);
+ assert.equal(world.entities.horses[0].ownerId,'O-000061','review notes must never invent a transfer');
  assert.equal(run.runtime.registered_horses.by_id['REG-001'].registered_name,'Kingsmere Runner');
  assert.equal(run.runtime.registered_horses.by_id['REG-001'].registration_receipt_id,'KEEP');
  assert.equal(unmodified.entities.horses[0].name,'Barn Crossing');
@@ -69,7 +72,7 @@ test('review export contains immutable source ID, seed, fingerprint and only exp
  const run={run_id:'WTW-RUN-1999-19990101-SIZE-2-OP-O-000061',
   clock:{date:'1999-06-02'}};
  const edits=addCareerWorldEdit(createCareerWorldEdits(),world,'horse',HORSE,
-  {name:'Kingsmere Runner'});
+  {name:'Kingsmere Runner',reviewNotes:'Raise potential only after source review'});
  const data=buildWorldEditReviewExport({manifest,world,run,worldEdits:edits,
   createdAt:'2026-11-18T16:00:00.000Z'});
  assert.equal(data.schema,WORLD_EDIT_REVIEW_SCHEMA);
@@ -78,7 +81,7 @@ test('review export contains immutable source ID, seed, fingerprint and only exp
  assert.equal(data.source.snapshotSha256,world.authority.sha256);
  assert.equal(data.source.careerRunId,run.run_id);
  assert.deepEqual(data.records,[{kind:'horse',id:HORSE,
-  fields:{name:'Kingsmere Runner'}}]);
+  fields:{name:'Kingsmere Runner',reviewNotes:'Raise potential only after source review'}}]);
  assert.equal(data.mediaIncluded,false);
  assert.equal(data.careerProgressIncluded,false);
  assert.equal(world.entities.horses[0].name,'Barn Crossing');
@@ -95,9 +98,11 @@ test('V10 editor uses same persistent player career and exports from normal in-g
   assert.ok(manager.includes(token),'missing integration contract: '+token);
  for(const token of ['EDIT THIS RECORD','SAVE WORLD CHANGES',
   'EXPORT WORLD CHANGES FOR CHATGPT','data-saved-world-field="name"',
-  'data-saved-world-field="biography"','saved-world-save',
+  'data-saved-world-field="biography"','data-saved-world-field="reviewNotes"',
+  'saved-world-save',
   'saved-world-export','SAVED AND VERIFIED IN ACTIVE CAREER'])
   assert.ok(ui.includes(token),'missing live UI: '+token);
  assert.match(manager,/The frozen shared baseline cannot be edited/);
- assert.match(ui,/Ownership, trainer, barn and finance changes require validated gameplay commands/);
+ assert.match(ui,/Structural requests are saved as review notes and exported/);
+ assert.match(ui,/they do NOT alter owner|they do NOT alter/i);
 });
