@@ -85,7 +85,7 @@ foreach($step in $steps){
   if(!$career -or $career.worldId -ne "WTW1999FullIndustry-COHORTS-V6-OWNER-V10-NAMES-V10-H300000" -or
      $career.seed -ne 19990101 -or $career.horseCount -ne 300000 -or
      $career.personCount -ne 75705 -or
-     $career.runId -ne "WTW-RUN-1999-19990101-SIZE-300000" -or
+     $career.runId -ne "WTW-RUN-1999-19990101-SIZE-300000-OP-O-000061" -or
      !$career.snapshotSha256 -or !$career.gameDate){
    throw "Packaged EXE did not load the exact shared 300k world and career: $(Get-Content -Raw $report)"
   }
