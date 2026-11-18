@@ -339,7 +339,8 @@ try{
    stableHorses:afterRestart.stableHorses,officialRaces:afterRestart.officialRaces,
    playableUi:resumedUi,durableReadBack:true}));
   await stop(browser);browser=null;server.kill('SIGTERM');
-  rmSync(profile,{recursive:true,force:true,maxRetries:12,retryDelay:100});
+  try{rmSync(profile,{recursive:true,force:true,maxRetries:20,retryDelay:100})}
+  catch(error){if(!['ENOTEMPTY','EBUSY','EPERM'].includes(error?.code))throw error}
   process.exit(0);
  }
  const raceSettlement=await browser.evalJS(`(async()=>{
