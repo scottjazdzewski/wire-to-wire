@@ -47,7 +47,7 @@ export function buildNamingLabScenario({ownerName,breederName,story,foalingYear=
  */
 export function createNamingDeskController({
  notify=()=>{},loadFeedback=null,saveFeedback=null,getTargets=()=>[],
- gameplayActive=()=>false,commitGameplay=null
+ nameInUse=()=>false,gameplayActive=()=>false,commitGameplay=null
 }={}){
  let memory=createNamingFeedback();
  const load=typeof loadFeedback==='function'?loadFeedback:()=>memory;
@@ -117,7 +117,7 @@ export function createNamingDeskController({
     held+=verdict.held||0;
     for(const candidate of verdict.screened){
      const key=candidate.name.toLocaleLowerCase('en-US');
-     if(batchKeys.has(key))continue;
+     if(nameInUse(candidate.name)||batchKeys.has(key))continue;
      batchKeys.add(key);found.push(candidate);recent.push(candidate.name);
     }
    }
@@ -345,6 +345,8 @@ if(typeof window!=='undefined'){
   commitGameplay:payload=>savedWorldNaming()?
    window.WTWCompactCareerManager.commitSavedCareerHorseNamingPreference(payload):
    window.__WTW_1999_UI_DATA__.gameplayService.submit('OWNER_SET_HORSE_NAMING_PREFERENCE',payload),
+  nameInUse:name=>savedWorldNaming()?
+   window.WTWCompactCareerManager.isSavedCareerHorseNameInUse(name):false,
   saveFeedback:(next,revision)=>{
    if(!manager?.commitNamingFeedback)throw Error('Career naming save service unavailable');
    if(window.__WTW_1999_UI_DATA__?.gameplayService)
