@@ -45,7 +45,7 @@ export function createGameRun({ world, runId, seed, player, stableHorseIds = [],
     decisions: { pending: {}, resolved: {} },
     scheduler: { pending: [], delivered_ids: [] },
     command_receipts: {},
-    event_log: []
+    event_log: [],event_seq:0
   };
   return validateGameRun(state, world);
 }
@@ -91,11 +91,17 @@ export function validateGameRun(state, world) {
   ensure(new Set(state.scheduler.pending.map(x => x.id)).size === state.scheduler.pending.length, 'RUN_SCHEDULER', 'Duplicate scheduled event ID');
   ensure(new Set(state.scheduler.delivered_ids).size === state.scheduler.delivered_ids.length, 'RUN_SCHEDULER', 'Duplicate delivered event ID');
   for (const e of state.scheduler.pending) ensure(isObject(e) && typeof e.id === 'string' && validDate(e.due_date) && typeof e.kind === 'string', 'RUN_SCHEDULER', 'Invalid scheduled event');
-  for (let i = 0; i < state.event_log.length; i++) {
-    const event = state.event_log[i];
-    ensure(isObject(event) && event.seq === i + 1 && typeof event.kind === 'string' && typeof event.command_id === 'string' && validDate(event.date),
+  let previousEventSeq=0;
+  for (const event of state.event_log) {
+    ensure(isObject(event) && Number.isSafeInteger(event.seq) &&
+      event.seq>previousEventSeq && typeof event.kind==='string' &&
+      typeof event.command_id==='string' && validDate(event.date),
       'RUN_JOURNAL', 'Broken event journal sequence');
+    previousEventSeq=event.seq;
   }
+  const eventSeq=state.event_seq??previousEventSeq;
+  ensure(Number.isSafeInteger(eventSeq)&&eventSeq>=previousEventSeq,
+    'RUN_JOURNAL', 'Invalid event sequence counter');
   validateFacilityState(state,world);
   validateOwnershipRuntime(state,world);
   validateHorseRegistrationRuntime(state,world);
