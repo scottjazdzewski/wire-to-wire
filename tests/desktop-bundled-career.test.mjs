@@ -16,7 +16,7 @@ const fullWorldSmoke=readFileSync(new URL('../scripts/1999-full-world-browser-cd
 
 test('the desktop bundles V10 and preserves V9, V8 plus the frozen May 29 reference career',async()=>{
  const compressed=readFileSync(asset);
- assert.ok(compressed.byteLength<2_000_000,'V9 checkpoint should stay under 2 MB');
+ assert.ok(compressed.byteLength<2_000_000,'V10 Kingsmere checkpoint should stay under 2 MB');
  const checkpoint=await unpackShared1999Career(gunzipSync(compressed));
  assert.equal(checkpoint.world.worldId,'WTW1999FullIndustry-COHORTS-V6-OWNER-V10-NAMES-V10-H300000');
  assert.equal(checkpoint.world.seed,19990101);
