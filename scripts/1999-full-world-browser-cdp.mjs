@@ -284,10 +284,10 @@ try{
     maiden:book.maidenOnly,status:'ENTRIES_OPEN',field:[]});
    const occupiedTracks=[...new Set(registeredStableHorseIds.map(id=>
     state.runtime.registered_horses.by_id[id].host_track_id))].sort();
-   const excludedRaces=new Set();let chosen=null;const scheduleEvidence=[];
+   const excludedRaces=new Set();let chosen=null;const scheduleEvidence=[],raceEligibilityFailures=[];
    for(let attempt=0;attempt<24&&!chosen;attempt++){
     let plan=null;
-    for(let offset=2;offset<=365&&!plan;offset++){
+    for(let offset=30;offset<=365&&!plan;offset++){
      const date=new Date(Date.parse(state.clock.date+'T00:00:00Z')+
       offset*86400000).toISOString().slice(0,10);
      if(!date.startsWith('1999-'))break;
@@ -327,10 +327,19 @@ try{
       state.runtime.horse[a.horse_id].training.currentRisk-
       state.runtime.horse[b.horse_id].training.currentRisk||
       a.horse_id.localeCompare(b.horse_id));
-    if(ready.length<2){excludedRaces.add(plan.book.id);continue}
+    if(ready.length<2){
+       const reasonCounts={};
+       for(const horse of localHorses)
+        for(const reason of raceEligibility(state,horse,raceView(plan.book)).reasons)
+         reasonCounts[reason]=(reasonCounts[reason]||0)+1;
+       raceEligibilityFailures.push({date:plan.book.date,trackId:plan.trackId,
+        raceId:plan.book.id,localHorses:localHorses.length,clearedStarters:ready.length,
+        reasonCounts});
+       excludedRaces.add(plan.book.id);continue
+      }
     chosen={...plan,horses:ready.slice(0,Math.min(8,plan.book.fieldCapacity))};
    }
-   if(!chosen)throw Error('Could not find a race with two cleared starters after 24 scheduled candidates');
+   if(!chosen)throw Error('Could not find a race with two cleared starters after scheduled candidates; latest failures '+JSON.stringify(raceEligibilityFailures.slice(-12))+'; schedule '+JSON.stringify(scheduleEvidence.slice(-12))+'; date '+state.clock.date);
    const opened=dispatchGameCommand({state,world,command:{
     id:'full-world-open-'+chosen.book.id,type:'OPEN_1999_RACE',actor:'system',
     payload:{track_id:chosen.trackId,date:chosen.book.date,race_id:chosen.book.id}}}).state;
