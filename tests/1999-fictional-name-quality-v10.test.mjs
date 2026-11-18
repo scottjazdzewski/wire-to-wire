@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {createOrganizationNameRoster,createProtectedOrganizationRootGuard,
- hasArtificialOrganizationPhrase,ARCHIVAL_RACING_OWNER_NAME_MODEL}
+ hasArtificialOrganizationPhrase,ARCHIVAL_RACING_OWNER_NAME_MODEL,
+ LEGACY_ARCHIVAL_RACING_OWNER_NAME_MODEL}
  from '../public/1999/engine/organization-name-engine.mjs';
 import {CENSUS_2000_OWNER_SURNAMES}
  from '../public/1999/engine/census-2000-owner-surnames.mjs';
@@ -157,7 +158,9 @@ test('full 1999 naming engine versions archival sources without changing permane
  assert.equal(census.manifest.organizationNameModel,
   'WTW_1999_ORGANIZATION_NAMING_V7_CENSUS_2000_OWNER_LEXICON_PARTNERSHIPS');
  assert.equal(archival.manifest.organizationNameModel,ARCHIVAL_RACING_OWNER_NAME_MODEL);
- assert.match(ARCHIVAL_RACING_OWNER_NAME_MODEL,/NAMING_V10/);
+ assert.match(ARCHIVAL_RACING_OWNER_NAME_MODEL,/NAMING_V11/);
+ assert.match(LEGACY_ARCHIVAL_RACING_OWNER_NAME_MODEL,/NAMING_V10/,
+  'published archival V10 manifest labels remain explicit for reopening');
  assert.notEqual(census.manifest.fingerprint,archival.manifest.fingerprint);
  assert.deepEqual(census.people.map(x=>x.id),archival.people.map(x=>x.id));
  assert.deepEqual(census.owners.map(x=>x.id),archival.owners.map(x=>x.id));
