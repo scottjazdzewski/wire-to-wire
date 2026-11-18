@@ -126,6 +126,16 @@ function compactCareFinancialLedger(state){
  }
  finance.ledger=[...summaries.values(),...recent];
 }
+const DAILY_EVENT_DETAIL_RETENTION_DAYS=90;
+function compactDailyEventJournal(state){
+ if(!Array.isArray(state.event_log)||!state.event_log.length)return;
+ const oldestRetained=new Date(Date.parse(state.clock.date+'T00:00:00Z')-
+  (DAILY_EVENT_DETAIL_RETENTION_DAYS-1)*86400000).toISOString().slice(0,10);
+ // Keep the sampled detail useful for recent review, while exact per-day event
+ // counts and financial rollups remain durable for the full career history.
+ state.event_log=state.event_log.filter(event=>
+  !DAILY_COMPACT_EVENT_KINDS.has(event.kind)||event.date>=oldestRetained);
+}
 function validateCommand(command) {
   ensure(isObject(command), 'INVALID_COMMAND', 'Command must be an object');
   requireString(command.id, 'command.id', 128);
@@ -288,6 +298,7 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
       output.push(event);
     }
     compactCareFinancialLedger(next);
+    compactDailyEventJournal(next);
   }
   // Non-clock owner actions can also change the relationship immediately.
   // This is a live projection of the existing run, never an alternate clock.
