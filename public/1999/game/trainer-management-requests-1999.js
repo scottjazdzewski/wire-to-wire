@@ -306,6 +306,22 @@ export function validateTrainerManagementRequests(state,world){
  for(const n of Object.values(rt.totals))
   ensure(money(n),'MANAGEMENT_SAVE','Invalid management counter');
  const eventsBySeq=new Map((state.event_log||[]).map(e=>[e.seq,e]));
+ const sourceEventValid=(r,o,t)=>{
+  const event=eventsBySeq.get(r.source_event_seq),details=event?.details;
+  if(event)return event.kind===r.source_event_kind&&event.date===r.opened_on&&
+   details?.horse_id===r.horse_id&&details?.owner_id===o&&
+   (r.source_event_kind==='HORSE_CARE_UNFUNDED'||details?.trainer_id===t)&&
+   (r.race_id===null||details?.race_id===r.race_id);
+  if(r.source_event_kind!=='HORSE_CARE_UNFUNDED'||r.race_id!==null)return false;
+  const summary=(state.event_log||[]).find(e=>e.kind==='DAILY_SIMULATION_SUMMARY'&&
+   e.date===r.opened_on&&e.seq>r.source_event_seq&&
+   e.details?.counts?.HORSE_CARE_UNFUNDED>0);
+  const horse=state.runtime.registered_horses?.by_id?.[r.horse_id];
+  const unpaid=state.runtime.horse?.[r.horse_id]?.history?.some(row=>
+   row.date===r.opened_on&&row.unfunded===true);
+  return Boolean(summary&&horse?.owner_organization_id===o&&
+   horse?.trainer_id===t&&unpaid);
+ };
  const validRequest=(r,o,t,closed=false)=>isObject(r)&&
   r.id===requestId(o,t,r.opened_on,r.kind,r.horse_id)&&
   r.owner_id===o&&r.trainer_id===t&&
@@ -314,15 +330,8 @@ export function validateTrainerManagementRequests(state,world){
   typeof r.reason==='string'&&r.reason.length<150&&
   ['HORSE_CARE_UNFUNDED','POST_RACE_PROFESSIONAL_FEEDBACK'].includes(r.source_event_kind)&&
   Number.isSafeInteger(r.source_event_seq)&&r.source_event_seq>0&&
-  eventsBySeq.get(r.source_event_seq)?.kind===r.source_event_kind&&
-  eventsBySeq.get(r.source_event_seq)?.date===r.opened_on&&
-  eventsBySeq.get(r.source_event_seq)?.details?.horse_id===r.horse_id&&
-  eventsBySeq.get(r.source_event_seq)?.details?.owner_id===o&&
-  (r.source_event_kind==='HORSE_CARE_UNFUNDED'||
-   eventsBySeq.get(r.source_event_seq)?.details?.trainer_id===t)&&
+  sourceEventValid(r,o,t)&&
   (r.race_id===null||typeof r.race_id==='string')&&
-  (r.race_id===null||
-   eventsBySeq.get(r.source_event_seq)?.details?.race_id===r.race_id)&&
   (r.needed_minor===null||money(r.needed_minor))&&
   validDate(r.opened_on)&&r.opened_on<=state.clock.date&&
   validDate(r.deadline)&&r.deadline===plus(r.opened_on,7)&&
