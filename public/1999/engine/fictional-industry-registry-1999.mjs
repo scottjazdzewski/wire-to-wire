@@ -202,14 +202,15 @@ export function create1999SeasonalFoal({seed,year,dateOfBirth,id,dam,sire,farm}=
  if(!Number.isSafeInteger(seed)||seed<1||!Number.isInteger(year)||year<1900||
   year>9998||typeof id!=='string'||!/^H-FICTIONAL-1999-FOALS-\d{4}-\d{7}$/.test(id)||
   typeof dateOfBirth!=='string'||!new RegExp('^'+year+'-\\d{2}-\\d{2}$').test(dateOfBirth)||
-  !dam?.id||!sire?.id||!dam.ownerId||!dam.foalingFarmId||
-  farm?.id!==dam.foalingFarmId)
+  !dam?.id||!sire?.id||!dam.ownerId||
+  !(dam.careFacilityId||dam.foalingFarmId)||
+  farm?.id!==(dam.careFacilityId||dam.foalingFarmId))
   throw Error('Invalid seasonal foal identity or parent records');
  const sex=hash(seed,id+':sex')%2?'FILLY':'COLT';
  const horse={id,cohort:'foals',status:'FOAL',sex,foalYear:year,dateOfBirth,
   forecastBirthDate:null,name:null,namingStatus:'UNNAMED_PERMANENT_ID',
   namingRevision:null,sireId:sire.id,damId:dam.id,ownerId:dam.ownerId,
-  foalingFarmId:dam.foalingFarmId,
+  breederId:dam.ownerId,foalingFarmId:farm.id,careFacilityId:farm.id,
   birthplace:{city:farm.location?.city??null,region:farm.location?.region??null,
    country:farm.location?.country??null,farmId:farm.id,
    provenance:'MODELED_SEASONAL_FOALING_FARM'},
