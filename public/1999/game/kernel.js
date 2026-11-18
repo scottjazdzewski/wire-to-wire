@@ -68,7 +68,7 @@ function compactCareFinancialLedger(state){
    const [year,month]=period.split('-').map(Number);
    const end=new Date(Date.UTC(year,month,0)).toISOString().slice(0,10);
    entry={rollup_schema:'WTW_MONTHLY_FINANCE_ROLLUP_V1',
-    rollup_period:period,period_start:period+'-01',period_end:end,date:end,
+    rollup_period:period,period_start:period+'-01',period_end:end,date:row.date,
     transaction_id:'MONTHLY_ROLLUP:'+key,kind:row.kind,
     amount_minor:0,transaction_count:0,source:'MODELED_MONTHLY_LEDGER_ROLLUP'};
    for(let i=0;i<dimensions.length;i++)
@@ -79,6 +79,7 @@ function compactCareFinancialLedger(state){
   const count=Number.isSafeInteger(row.transaction_count)?row.transaction_count:1;
   entry.amount_minor+=amount;
   entry.transaction_count+=count;
+  if(typeof row.date==='string'&&row.date>entry.date)entry.date=row.date;
  };
  for(const row of ledger){
   if(row?.rollup_schema==='WTW_MONTHLY_FINANCE_ROLLUP_V1'&&row.rollup_period){
