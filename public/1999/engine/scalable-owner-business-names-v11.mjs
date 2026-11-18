@@ -18,6 +18,30 @@ export const SCALABLE_OWNER_BUSINESS_NAME_MODEL=
 export const SCALABLE_OWNER_NAME_ATTEMPT_START=128;
 export const SCALABLE_OWNER_NAME_ATTEMPT_LIMIT=3072;
 
+// V11-only editorial locality vocabulary. It deliberately does not modify
+// the historical ROOTS array used by the frozen V7/V10 opening generation.
+// These are plausible *fictional business naming cues*, not claimed real
+// farms, companies, archival ownership records, or founding dates.
+const ADDITIONAL_ROOTS=Object.freeze({
+ KENTUCKY:'Bluegrass Branch|Cane Run|Old Ferry|Clover Hollow|Millstone Creek|Bourbon Creek|Thoroughfare Hill|Spring Station|South Elkhorn|Cedar Run|Sinking Creek|Bridle Trace|White Ash|Horse Meadow|Limestone Run|Union Pasture|Hickory Fork|Clover Creek|Stone Lick|Rolling Meadow|Round Gate|Copper Hollow|Buckeye Spring|Shady Lick'.split('|'),
+ FLORIDA:'Silver Palm|Sabalo Trace|Pine Flat|Calusa Bend|Sandy Pine|Orange Grove|Cypress Reach|Hammock Run|Longleaf Creek|Palmetto Creek|Royal Sabal|Fox Palm|Gulf Meadow|Pine Hammock|Oak Preserve|Citrus Grove|Sable Pine|Silver Prairie|Sawgrass Trace|Live Oak Meadow|Sun Hammock|Cedar Palmetto|Magnolia Hammock|Salt Meadow'.split('|'),
+ CALIFORNIA:'Silver Arroyo|Rancho Vista|Sierra Gate|Canyon Mesa|Mission Valley|Coastal Oak|Los Robles|Granite Arroyo|Valley Sycamore|Adobe Creek|Sage Ridge|Rancho Prado|Canyon Vista|Rincon Ridge|Oak Arroyo|Loma Verde|Red Mesa|Sunset Oaks|Chaparro Creek|Silver Canyon|Coyote Mesa|Alta Canyon|West Arroyo|Golden Oak'.split('|'),
+ NEW_YORK:'Upper Hudson|Orchard Vale|Maple Crossing|Glen Creek|Stone Orchard|Saratoga Hollow|Northern Orchard|Hudson Meadows|Mill Brook|Apple Knoll|River Orchard|Mohawk Ridge|Adirondack Vale|Briar Vale|Old Orchard Lane|North Hollow|Pine Orchard|Chestnut Knoll|Albany Ridge|White Meadow|Hudson Crossing|Copper Orchard|Upstate Meadow|Saratoga Brook'.split('|'),
+ MID_ATLANTIC:'Potomac Meadow|Brandywine Creek|Old Chesapeake|Mason Hollow|Piedmont Creek|Wye Meadow|Catoctin Ridge|Laurel Brook|Hunting Vale|Sassafras Hill|Redstone Vale|Monocacy Hills|Chester Meadow|Blue Ridge Gate|Briar Chase|Stone Manor|Old Quaker|Susquehanna Meadow|Delaware Ridge|Potomac Gate|Chestnut Manor|Shenandoah Crossing|North Chesapeake|Three Mills'.split('|'),
+ ONTARIO:'Maple Hollow|Blue Maple|Grand River Gate|Laurentian Meadows|Northern Willow|Cedar Crossing|Black Birch|Pine Glen|Maple Brook|Coldwater Glen|Caledon Grove|Silver Birch|Humber Meadow|Thornbury Vale|Grey Maple|Orchard Birch|Glen River|East Caledon|Pine Orchard|Maple Landing|Oak Crossing|Northern Meadow|Laurentian Ridge|Willow Landing'.split('|'),
+ LOUISIANA:'Acadian Oaks|Old Cypress|Bayou Cedar|Pecan Hollow|Red Cypress|Mossy Levee|Sabine Oak|River Cane|Magnolia Bayou|Bayou River|Old Acadian|Cypress Grove|Pecan Trace|Southern Levee|Black Bayou|Live Oak Parish|Red Willow|Bayou Meadow|Spanish Oak|Cane Parish|Blue Magnolia|River Pecan|Tangle Bayou|Cypress Landing'.split('|'),
+ BRITAIN_IRELAND:'West Grange|Ashleigh Park|Bracken Lodge|Old Rectory|Meadow Court|Glenbrook House|Ballygreen|Kilmore Park|Ashford Lodge|Oakfield House|Glenmara|White Chapel|Moorland Vale|Rathfield|Clover Court|Stone Yard|Birch Hall|North Grange|Woodend Lodge|Bracken Hill|Lower Wicklow|Cedar Grange|Ashlawn|Old Paddock'.split('|'),
+ GENERAL_NORTH_AMERICA:'Round Cedar|North Brook|Long Hollow|Twin Pines|Old Gatehouse|White Fence Ridge|Cedar Crossing|Copper Field|Meadow Fork|River Crest|Pine Meadow|Three Willows|Old Mill Road|Sage Valley|Stone Hollow|Oak Branch|Red Cedar|South Ridge|Timber Creek|Shady Pasture|Willow Pasture|Blue Meadow|Round Mill|Spring Hollow'.split('|')
+});
+const OWNER_V11_ROOTS=Object.freeze(Object.fromEntries(
+ Object.entries(ADDITIONAL_ROOTS).map(([region,extra])=>[
+  region,Object.freeze([...new Set([...regionalOrganizationNamingRoots(region),...extra])])
+ ])
+));
+export function scalableOwnerNamingRoots(region){
+ return OWNER_V11_ROOTS[region]||OWNER_V11_ROOTS.GENERAL_NORTH_AMERICA;
+}
+
 function hash(seed,key){
  let h=(2166136261^(seed>>>0))>>>0;
  for(const ch of String(key)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}
@@ -43,7 +67,7 @@ export function proposeScalable1999OwnerBusinessName({
   !Number.isInteger(attempt)||attempt<SCALABLE_OWNER_NAME_ATTEMPT_START||
   !Array.isArray(surnames))
   throw Error('Invalid scalable ownership-name candidate request');
- const pool=regionalOrganizationNamingRoots(region);
+ const pool=scalableOwnerNamingRoots(region);
  if(!pool.length)throw Error('Missing ownership naming region');
  const full=String(principalName||'').replace(/^(?:Dr|Mr|Mrs|Ms)\.\s*/i,'')
   .replace(/\s+/g,' ').trim();
