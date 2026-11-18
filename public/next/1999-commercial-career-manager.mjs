@@ -325,10 +325,17 @@ let selectedIndustryHorses=300000,selectedIndustrySeed=19990101,
  selectedPlayerOperationId='O-000061';
 const FEATURED_OPERATION_IDS=['O-000061','O-000001','O-000003','O-000062',
  'O-000066','O-FOUNDING-1999-001','O-FOUNDING-1999-004'];
+function industryOperationDisplayName(row){
+ const verified=activeWorldCareer?.world?.entities?.organizations?.find(
+  x=>x.id===row?.id);
+ return verified?.name||row?.name||row?.id||'';
+}
 function featuredOperations(){
  const byId=new Map(industryDirectory.map(row=>[row.id,row]));
  return FEATURED_OPERATION_IDS.map(id=>byId.get(id)).filter(row=>
-  row?.operatingRoles?.includes('LEGAL_OWNER'));
+  row?.operatingRoles?.includes('LEGAL_OWNER')).map(row=>({
+   ...row,name:industryOperationDisplayName(row)
+  }));
 }
 function featuredOperationOptions(){
  return featuredOperations().map(row=>'<option value="'+esc(row.id)+'"'+
@@ -363,7 +370,7 @@ async function browseFullIndustry(page=0,kind=industryBrowseKind){
   const records=industryDirectory.slice(first,first+20);
   industryBrowseHtml='<p>TRACKS / FARMS / OWNERS '+fmt(first+1)+'–'+
    fmt(first+records.length)+' OF '+fmt(count)+'</p>'+records.map(e=>
-   '<div class="wtw-cc-slot"><strong>'+esc(e.name||e.id)+'</strong> · '+
+   '<div class="wtw-cc-slot"><strong>'+esc(industryOperationDisplayName(e))+'</strong> · '+
    esc(e.id)+' · '+esc(Object.entries(e.ratings).slice(0,3)
     .map(([k,v])=>k+': '+v).join(' / '))+
     ' <button data-cc-action="inspect-listed-entity" data-id="'+esc(e.id)+'">PROFILE</button></div>').join('');
