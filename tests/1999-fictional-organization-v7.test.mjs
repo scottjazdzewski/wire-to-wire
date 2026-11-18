@@ -261,6 +261,36 @@ test('sole proprietors fall back to unique businesses rather than aborting on pr
  }
 });
 
+test('protected people and protected businesses are distinct identity classes',()=>{
+ const args={seed:19990101,ownerCount:2,barnCount:0,farmCount:0,
+  soleOwnerPercent:100,principalNames:['Alex West','Mina Brown'],
+  protectedPersonNames:['Alex West','Mina Brown']};
+ const normal=createOrganizationNameRoster(args);
+ assert.deepEqual(normal.owners,['Alex West','Mina Brown'],
+  'the real world protects owner people before naming their own sole outfits');
+ assert.equal(normal.summary.soleOwners,2);
+ const orgProtected=createOrganizationNameRoster({...args,
+  protectedNames:['Mina Brown']});
+ assert.equal(orgProtected.owners[0],'Alex West');
+ assert.notEqual(normalize(orgProtected.owners[1]),normalize('Mina Brown'),
+  'historic company name outranks the coincident person name');
+ assert.equal(new Set(orgProtected.owners.map(normalize)).size,2);
+ const sourceProtected=createOrganizationNameRoster({...args,
+  sourceFarmNames:[],sourceOwnerNames:['Mina Brown']});
+ assert.equal(sourceProtected.owners[0],'Mina Brown');
+ assert.notEqual(normalize(sourceProtected.owners[1]),normalize('Mina Brown'),
+  'source owner business cannot be appropriated by a second sole owner');
+ const samePeople=createOrganizationNameRoster({...args,
+  principalNames:['Alex West','Alex West'],
+  protectedPersonNames:['Alex West']});
+ assert.equal(samePeople.owners[0],'Alex West');
+ assert.notEqual(normalize(samePeople.owners[1]),normalize('Alex West'),
+  'two owner IDs cannot issue the same protected personal name');
+ assert.deepEqual(normal,createOrganizationNameRoster(args));
+ assert.throws(()=>createOrganizationNameRoster({...args,
+  protectedPersonNames:['Bad Person '] }),/Invalid protected person-name list/);
+});
+
 test('regional V7 naming generator stays independent of active-world and horse generators',()=>{
  const src=readFileSync(new URL('../public/1999/engine/organization-naming-styles.mjs',import.meta.url),'utf8');
  const old=readFileSync(new URL('../public/1999/engine/founding-world-1999.mjs',import.meta.url),'utf8');
