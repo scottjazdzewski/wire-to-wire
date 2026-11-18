@@ -354,6 +354,7 @@ try{
     maiden:book.maidenOnly,status:'ENTRIES_OPEN',field:[]});
    const occupiedTracks=[...new Set(registeredStableHorseIds.map(id=>
     state.runtime.registered_horses.by_id[id].host_track_id))].sort();
+   const careerDateBeforeRaceProbe=state.clock.date;
    const excludedRaces=new Set();let chosen=null;const scheduleEvidence=[],raceEligibilityFailures=[];
    for(let attempt=0;attempt<12&&!chosen;attempt++){
     let plan=null;
@@ -377,36 +378,36 @@ try{
        const possible=localHorses.filter(h=>raceEligibility(probe,h,raceView(book)).reasons
         .every(reason=>reason==='CONDITION_NOT_CLEARED'));
        if(possible.length<2)continue;
-       plan={book,trackId};break;
+       plan={book,trackId,entryDate:legalEntryDate};break;
       }
       if(plan)break;
      }
     }
     if(!plan)throw Error('No statically eligible maiden on player stable tracks in 1999; tracks '+
      JSON.stringify(occupiedTracks)+'; scheduled candidates '+JSON.stringify(scheduleEvidence.slice(0,12)));
-    while(dayGap(state.clock.date,plan.book.date)>4){
-     state=dispatchGameCommand({state,world,command:{
-      id:'full-world-race-window-'+state.clock.date,type:'ADVANCE_DAY',
-      actor:'player',payload:{}}}).state;
-    }
+    // This isolated race probe starts at the legal four-day entry window.
+    // The separately persisted Kingsmere career already proves real day advancement.
+    // Avoid replaying months of unrelated game days just to reach the first eligible card.
+    const raceEntryState={...state,clock:{...state.clock,date:plan.entryDate}};
     const localHorses=registeredStableHorseIds.map(id=>
-     state.runtime.registered_horses.by_id[id]).filter(h=>h.host_track_id===plan.trackId);
-    const ready=localHorses.filter(h=>raceEligibility(state,h,raceView(plan.book)).eligible)
-     .sort((a,b)=>state.runtime.horse[b.horse_id].training.readiness-
-      state.runtime.horse[a.horse_id].training.readiness||
-      state.runtime.horse[a.horse_id].training.currentRisk-
-      state.runtime.horse[b.horse_id].training.currentRisk||
+     raceEntryState.runtime.registered_horses.by_id[id]).filter(h=>h.host_track_id===plan.trackId);
+    const ready=localHorses.filter(h=>raceEligibility(raceEntryState,h,raceView(plan.book)).eligible)
+     .sort((a,b)=>raceEntryState.runtime.horse[b.horse_id].training.readiness-
+      raceEntryState.runtime.horse[a.horse_id].training.readiness||
+      raceEntryState.runtime.horse[a.horse_id].training.currentRisk-
+      raceEntryState.runtime.horse[b.horse_id].training.currentRisk||
       a.horse_id.localeCompare(b.horse_id));
     if(ready.length<2){
        const reasonCounts={};
        for(const horse of localHorses)
-        for(const reason of raceEligibility(state,horse,raceView(plan.book)).reasons)
+        for(const reason of raceEligibility(raceEntryState,horse,raceView(plan.book)).reasons)
          reasonCounts[reason]=(reasonCounts[reason]||0)+1;
        raceEligibilityFailures.push({date:plan.book.date,trackId:plan.trackId,
         raceId:plan.book.id,localHorses:localHorses.length,clearedStarters:ready.length,
         reasonCounts});
        excludedRaces.add(plan.book.id);continue
       }
+    state=raceEntryState;
     chosen={...plan,horses:ready.slice(0,Math.min(8,plan.book.fieldCapacity))};
    }
    if(!chosen)throw Error('Could not find a race with two cleared starters after 12 scheduled candidates; latest failures '+JSON.stringify(raceEligibilityFailures.slice(-12))+'; schedule '+JSON.stringify(scheduleEvidence.slice(-12))+'; date '+state.clock.date);
@@ -471,6 +472,7 @@ try{
     inventoryByStatus:career.operationInventoryByStatus,
     approvedOrganizationRosters,otherOperationCareerProofs,
     raceId:race.id,raceName:race.name,raceDate:race.date,openedFromDate:openedDate,
+    testClockJumpDays:dayGap(careerDateBeforeRaceProbe,chosen.entryDate),
     status:race.status,starterCount:race.results.length,purseMinor:race.purse_minor,
     awardedMinor:awarded,playerBalanceBefore:baselineBalance,
     playerBalanceAfter:state.runtime.finances.operation_balances_minor[state.player.operation_id],
@@ -619,26 +621,38 @@ try{
  assert.ok(ui.visible&&ui.hasFullWorld&&ui.hasSavedWorld&&ui.hasDirectory,
   'Stored world not accessible through the actual Career Manager');
  const profileView=await browser.evalJS(`(async()=>{
-  const click=async(selector)=>{
+  const root=()=>document.querySelector('#wtwCommercialCareerModal');
+  const click=selector=>{
    const button=document.querySelector(selector);
    if(!button)throw Error('Missing world UI control '+selector);
    button.click();
-   for(let i=0;i<40;i++){
-    await new Promise(ok=>setTimeout(ok,80));
-    if(!document.querySelector('#wtwCommercialCareerModal')?.textContent?.includes('Creating'))break;
-   }
   };
-  await click('[data-cc-action="industry-people"]');
-  await new Promise(ok=>setTimeout(ok,300));
-  await click('[data-cc-action="inspect-listed-person"]');
-  await new Promise(ok=>setTimeout(ok,300));
-  const person=!!document.querySelector('#wtwCommercialCareerModal')?.textContent?.includes('PERSON PROFILE');
-  await click('[data-cc-action="industry-directory"]');
-  await new Promise(ok=>setTimeout(ok,300));
-  await click('[data-cc-action="inspect-listed-entity"]');
-  await new Promise(ok=>setTimeout(ok,300));
-  const entity=!!document.querySelector('#wtwCommercialCareerModal')?.textContent?.includes('INDUSTRY PROFILE');
-  return {person,entity};
+  const waitForElement=async(selector)=>{
+   for(let i=0;i<150;i++){
+    if(document.querySelector(selector))return;
+    await new Promise(ok=>setTimeout(ok,100));
+   }
+   throw Error('Timed out waiting for world UI control '+selector);
+  };
+  const waitForText=async(text)=>{
+   for(let i=0;i<150;i++){
+    if(root()?.textContent?.includes(text))return;
+    await new Promise(ok=>setTimeout(ok,100));
+   }
+   throw Error('Timed out waiting for world profile text '+text);
+  };
+  click('[data-cc-action="industry-people"]');
+  await waitForText('PERSONNEL');
+  await waitForElement('[data-cc-action="inspect-listed-person"]');
+  click('[data-cc-action="inspect-listed-person"]');
+  await waitForText('PERSON PROFILE');
+  const person=true;
+  click('[data-cc-action="industry-directory"]');
+  await waitForText('TRACKS / FARMS / OWNERS');
+  await waitForElement('[data-cc-action="inspect-listed-entity"]');
+  click('[data-cc-action="inspect-listed-entity"]');
+  await waitForText('INDUSTRY PROFILE');
+  return {person:true,entity:true};
  })()`);
  assert.equal(profileView.person,true,'Birthplace/person profile cannot open from staff directory');
  assert.equal(profileView.entity,true,'Track/farm/owner profile cannot open from directory');
@@ -1005,7 +1019,11 @@ try{
    if(world?.status!=='READY'||world.manifest.horseCount!==10000)
     throw Error('Decade run did not open the exact 10,000-horse world');
    const manifest=world.manifest,runId='WTW-INDUSTRY-DECADES-10000';
-   const player={role:'owner',organizationId:'O-OWNER-1'};
+   const directory=await api.readPersistent1999Directory(store,manifest);
+   const careerOwner=directory.find(entity=>entity.operatingRoles?.includes('LEGAL_OWNER'))||
+    directory.find(entity=>entity.portfolioTier);
+   if(!careerOwner)throw Error('10,000-horse world has no legal owner directory record');
+   const player={role:'owner',organizationId:careerOwner.id};
    const save=(gameDate,version)=>api.savePersistent1999CareerRun(store,manifest,
     {runId,gameDate,player,changes:{},version});
    const opening=await save('1999-01-01',1);
@@ -1015,9 +1033,8 @@ try{
    const deceasedIds=new Set(),retiredIds=new Set(),graduatedIds=new Set(),
     stallionRetiredIds=new Set(),stallionGraduatedIds=new Set();
    const marketIndices=new Set(),plannedCrops=new Set();
-   const directory=await api.readPersistent1999Directory(store,manifest);
    const directoryIds=new Set(directory.map(entity=>entity.id));
-   if(!directoryIds.has(player.organizationId))throw Error('Lifecycle career owner must be the real Kingsmere organization ID');
+   if(!directoryIds.has(player.organizationId))throw Error('Lifecycle career owner is not a real directory record');
    for(let year=2000;year<=2031;year++){
     const date=year+'-01-01',version=year-1998;
     const saved=await save(date,version),events=await api.readPersistent1999LifecycleEvents(
