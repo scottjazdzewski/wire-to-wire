@@ -4422,7 +4422,7 @@ function managerDashboard(){
  if(section==='World'&&page==='Overview')return worldCompleteDirectoryView();
  if(section==='Stable'&&(page==='Overview'||page==='Horses'))return liveStableRosterView();
  if(typeof DEP_NAMES!=='undefined'&&DEP_NAMES.has(section))return departmentRoster(section,page);
- if(section==='World'&&page==='1999 Horses')return liveStableRosterView(true);
+ if(section==='World'&&page==='1999 Horses')return departmentRoster('World','1999 Horses');
  if(section==='World'&&['People','Organizations','Tracks','Meets'].includes(page))return departmentRoster('World',page);
  const configs={
   Office:{kinds:['decision','horse','person'],label:'RACING OPERATIONS'},
