@@ -251,7 +251,8 @@ function breakingName(seed,i,attempt){
  */
 export function createOrganizationNameRoster({
  seed,ownerCount,barnCount,farmCount,breakingCount=0,
- protectedNames=[],principalNames=[],trainerNames=[],sourceOwnerNames=[],farmKindPlan=null,
+ protectedNames=[],protectedPersonNames=[],principalNames=[],trainerNames=[],
+ sourceOwnerNames=[],sourceFarmNames=[],sourceBarnNames=[],farmKindPlan=null,
  alignPrincipalSurnames=false,principalPrimarySurnames=[],trainerPrimarySurnames=[],
  ownerContexts=[],farmContexts=[],trainerContexts=[],breakingContexts=[],
  ownerPartnershipLimit=null,soleOwnerPercent=null,externalNameIndex=null,
@@ -282,8 +283,33 @@ export function createOrganizationNameRoster({
  }
  for(const n of [ownerCount,barnCount,farmCount,breakingCount])
   if(!Number.isInteger(n)||n<0)throw Error('Invalid naming count');
- const used=new Set(protectedNames.map(norm).filter(Boolean));
- const roots=new Set(protectedNames.filter(s=>trailing.test(String(s))).map(rootOf).filter(Boolean));
+ // Treat approved people, historical organizations and locked business
+ // slots separately. An owner may use their OWN personal name, but may
+ // never steal a different owner, farm or stable's approved identity.
+ const lockedSourceNames=[],sourceNameKeys=new Set();
+ for(const [kind,names,limit] of [['owner',sourceOwnerNames,ownerCount],
+  ['farm',sourceFarmNames,farmCount],['barn',sourceBarnNames,barnCount]]){
+  if(!Array.isArray(names)||names.length>limit)
+   throw Error('Invalid source '+kind+' name list');
+  for(const name of names){
+   if(name===null||name===undefined||name==='')continue;
+   if(typeof name!=='string'||!name.trim()||name!==name.trim())
+    throw Error('Invalid approved source '+kind+' name');
+   const key=norm(name);
+   if(sourceNameKeys.has(key))
+    throw Error('Duplicate approved source organization name: '+name);
+   sourceNameKeys.add(key);lockedSourceNames.push(name);
+  }
+ }
+ if(!Array.isArray(protectedPersonNames)||protectedPersonNames.some(name=>
+  typeof name!=='string'||!name.trim()||name!==name.trim()))
+  throw Error('Invalid protected person-name list');
+ const historicalBusinessNameKeys=new Set(protectedNames.map(norm).filter(Boolean));
+ const protectedPersonNameKeys=new Set(protectedPersonNames.map(norm).filter(Boolean));
+ const issuedSoleOwnerNameKeys=new Set();
+ const protectedBusinessNames=[...protectedNames,...protectedPersonNames,...lockedSourceNames];
+ const used=new Set(protectedBusinessNames.map(norm).filter(Boolean));
+ const roots=new Set(protectedBusinessNames.filter(s=>trailing.test(String(s))).map(rootOf).filter(Boolean));
  const hasProtectedPrefixConflict=createProtectedOrganizationRootGuard(roots);
  const stems=new Map(),distinctiveRootCounts=new Map();
  const perCategory={owner:0,barn:0,farm:0,breaking:0};
@@ -322,6 +348,7 @@ export function createOrganizationNameRoster({
   farmKindPlan.some(k=>!kindsAllowed.has(k))))throw Error('Invalid explicit farm-purpose plan');
  const farmKinds=farmKindPlan===null?Array.from({length:farmCount},(_,i)=>classifyFarm(seed,i)):[...farmKindPlan];
  const farms=Array.from({length:farmCount},(_,i)=>{
+  if(sourceFarmNames[i])return sourceFarmNames[i];
   const context={...farmContexts[i],
    // A proposed family surname for a farm name does not create a person link.
    familyName:farmContexts[i]?.familyName||draw(SURNAMES,seed,'v7-farm-family:'+i)};
@@ -331,7 +358,11 @@ export function createOrganizationNameRoster({
     contextualFarmCandidate(seed,i,a,farmKinds[i],context):
    farmName(seed,i,a,farmKinds[i]),'farm');
  });
- let partnershipGroupsCreated=0;
+ let partnershipGroupsCreated=sourceOwnerNames.reduce((n,name,i)=>
+  n+(name&&classifyFictionalOwnerName(name,principalNames[i]||'')===
+   'PARTNERSHIP_OR_SYNDICATE'?1:0),0);
+ if(ownerPartnershipLimit!==null&&partnershipGroupsCreated>ownerPartnershipLimit)
+  throw Error('Approved source partnerships exceed naming group ceiling');
  const owners=Array.from({length:ownerCount},(_,i)=>{
   if(sourceOwnerNames[i])return sourceOwnerNames[i];
   const principal=String(principalNames[i]||'').trim();
@@ -340,13 +371,16 @@ export function createOrganizationNameRoster({
   const sole=soleOwnerPercent===null?i%11===0:
    hash(seed,'owner-sole-status:'+i)%100<soleOwnerPercent;
   if(sole&&principal){
-   // A sole proprietor can use their own exact name unless an established
-   // organization/person already reserves that display identity. A later
-   // generation must mint a distinct business name, never duplicate the
-   // frozen owner ID or abort the playable career on a name collision.
-   const personalKey=norm(principal);
-   if(!used.has(personalKey)&&!externalNameIndex?.hasAnyName(principal)){
-    used.add(personalKey);return principal;
+   // A principal's own reserved human name remains a legitimate sole
+   // owner label, but historical businesses, other approved organizations
+   // and previously issued sole owners always take precedence.
+   const key=norm(principal);
+   const ownProtectedPerson=protectedPersonNameKeys.has(key)&&
+    !historicalBusinessNameKeys.has(key);
+   if((!used.has(key)||ownProtectedPerson)&&
+    !sourceNameKeys.has(key)&&!issuedSoleOwnerNameKeys.has(key)&&
+    !externalNameIndex?.hasAnyName(principal)){
+    used.add(key);issuedSoleOwnerNameKeys.add(key);return principal;
    }
   }
   const preferred=principalPrimarySurnames[i]||surname(principal);
@@ -413,6 +447,7 @@ export function createOrganizationNameRoster({
   familyFrequency.set(key,(familyFrequency.get(key)||0)+1);
  }
  const barns=Array.from({length:barnCount},(_,i)=>{
+  if(sourceBarnNames[i])return sourceBarnNames[i];
   const family=trainerPrimarySurnames[i]||surname(trainerNames[i]);
   return claim(a=>a<48?
    trainerContexts[i]?.namingYear>1999?
