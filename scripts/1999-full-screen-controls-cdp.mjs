@@ -485,20 +485,24 @@ try {
    oldOfficeHidden:!!document.querySelector('.app[data-wtw-layout="legacy-data-bridge"][hidden]')
   };
  })()`);
- async function profileReady(where,expectedRecord=null){
+ async function profileReady(where,expectedRecord=null,expectedIdentity=null){
   let found=null;
   for(let n=0;n<120;n++){
    try{
     found=await profileStatus();
-    if(found?.ready&&(!expectedRecord||found.record===expectedRecord))return found;
+    // Exact-ID identity is applied by a MutationObserver after route paint.
+    // Require the actual approved identity; only adjust when it is checked.
+    if(found?.ready&&(!expectedRecord||found.record===expectedRecord)&&
+       (!expectedIdentity||found.identity===expectedIdentity))return found;
    }catch{}
    await delay(100);
   }
-  throw Error('Profile did not open in '+where+': '+JSON.stringify(found));
+  throw Error('Profile did not open with approved identity in '+where+': '+JSON.stringify(found));
  }
  for(const item of profiles){
   await command('Page.navigate',{url:'http://127.0.0.1:8891/next/'+item.route});
-  const original=await profileReady(item.family+' overview','OVERVIEW');
+  const original=await profileReady(item.family+' overview','OVERVIEW',
+   item.family==='TRACK'?item.id:null);
   assert.equal(original.date,baseline.date,'Opening '+item.family+' changed career date');
   assert.equal(original.overview,'page',item.family+' overview is not selected');
   assert.equal(original.roots,1,'A second game UI opened in '+item.family);
