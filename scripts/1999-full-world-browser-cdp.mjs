@@ -338,6 +338,7 @@ try{
    worldId:snap.worldId,runId:afterRestart.runId,gameDate:afterRestart.gameDate,
    stableHorses:afterRestart.stableHorses,officialRaces:afterRestart.officialRaces,
    playableUi:resumedUi,durableReadBack:true}));
+  console.log('WTW_FULL_WORLD_BROWSER_REOPEN_PASS '+JSON.stringify({snap,ui:resumedUi}));
   await stop(browser);browser=null;server.kill('SIGTERM');
   try{rmSync(profile,{recursive:true,force:true,maxRetries:20,retryDelay:100})}
   catch(error){if(!['ENOTEMPTY','EBUSY','EPERM'].includes(error?.code))throw error}
