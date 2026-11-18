@@ -125,6 +125,25 @@ test('Naming Desk CHOOSE visibly confirms actual V10 saved horse identity, not o
   primary);
  assert.equal(edits.byId['horse:'+primary].name,chosen);
 });
+test('V10 Naming Desk excludes names already assigned in the real 300k world',()=>{
+ const story='On a calm night the mare gave birth in a thunderstorm. The groom remembered the rain, the sound of a bell, and a light above the paddock.';
+ const fields={ownerName:'Stable Owner',breederName:'Breeding Farm',
+  foalingYear:'1996',story};
+ const make=options=>{
+  const desk=createNamingDeskController(options);
+  for(const [key,value] of Object.entries(fields))desk.setField(key,value);
+  return desk;
+ };
+ const before=make();
+ assert.equal(before.generate(),true);
+ const alreadyNamed=before.snapshot().results[0].name;
+ const active=make({nameInUse:name=>name===alreadyNamed});
+ assert.equal(active.generate(),true);
+ assert.ok(active.snapshot().results.every(x=>x.name!==alreadyNamed),
+  'a name used by the 300k opening world must not appear as available');
+ assert.ok(active.snapshot().results.length>0);
+});
+
 test('V10 commercial manager writes naming feedback and horse edits in one committed save, with read-back',()=>{
  const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
  const manager=read('public/next/1999-commercial-career-manager.mjs');
@@ -132,6 +151,7 @@ test('V10 commercial manager writes naming feedback and horse edits in one commi
  for(const expected of ['planV10SavedHorseNamingDecision',
   'commitSavedCareerHorseNamingPreference',
   'getSavedCareerNamingFeedback',
+  'isSavedCareerHorseNameInUse',
   'namingFeedback:prepared.feedback',
   'worldEdits:prepared.edits',
   'Horse naming decision did not survive durable read-back',
