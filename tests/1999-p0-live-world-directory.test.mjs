@@ -71,6 +71,10 @@ test('normal Windows World screens bind only to saved V10 records, never fake 73
  assert.match(ui,/SavedWorld:/);
  assert.match(ui,/function savedWorldRecordProfile\(\)/);
  assert.match(ui,/The 73-horse archival index is not a substitute/);
+ assert.match(ui,/function worldCompleteDirectoryView\(\)/);
+ assert.match(ui,/COMPLETE SAVED RACING WORLD/);
+ assert.match(ui,/worldHorseDirectoryCount\|\|active\.worldHorseCount/);
+ assert.match(ui,/data-ng="save-open">OPEN CAREER MANAGER/);
 });
 test('incomplete census or missing identities are never silently substituted',()=>{
  const f=worldOf(3);
