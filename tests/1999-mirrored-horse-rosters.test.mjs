@@ -4,8 +4,8 @@ import {readFileSync} from 'node:fs';
 const source=readFileSync(new URL('../public/next/next.js',import.meta.url),'utf8');
 const roster=source.slice(source.indexOf('function liveStableRosterView(directory=false){'),
  source.indexOf('\nfunction functionalRoute(route){'));
-test('Stable and World Horse Directory share the identical 17-column roster renderer',()=>{
- assert.match(source,/if\(section==='World'&&page==='1999 Horses'\)return liveStableRosterView\(true\)/);
+test('Stable keeps its management roster while World uses the complete saved-industry table',()=>{
+ assert.match(source,/if\(section==='World'&&page==='1999 Horses'\)return departmentRoster\('World','1999 Horses'\)/);
  assert.match(source,/if\(section==='Stable'&&\(page==='Overview'\|\|page==='Horses'\)\)return liveStableRosterView\(\)/);
  assert.match(roster,/const columns=\[\['name','HORSE'\]/);
  assert.match(roster,/\['activity','CURRENT ACTIVITY'\]\]/);
