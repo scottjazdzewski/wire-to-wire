@@ -55,10 +55,11 @@ export function* generate1999CoveringLedger({
 
 /** Forecast only confirmed conceptions; no horse record exists before its due date. */
 export function* generate1999SeasonFoalingForecasts({seed,year,coverings,
- mareById,batchSize=1000}={}){
+ mareById,foalingFarmIdByMareId=null,batchSize=1000}={}){
  if(!Number.isSafeInteger(seed)||seed<1||seed>4294967295||
   !Number.isInteger(year)||year<1900||year>9998||
   !Array.isArray(coverings)||!(mareById instanceof Map)||
+  (foalingFarmIdByMareId!==null&&!(foalingFarmIdByMareId instanceof Map))||
   !Number.isInteger(batchSize)||batchSize<1||batchSize>5000)
   throw Error('Invalid seasonal foaling forecast');
  const conceptionRate=.73+seeded1999Unit(seed,'conception-rate:'+year)*.17;
@@ -74,7 +75,9 @@ export function* generate1999SeasonFoalingForecasts({seed,year,coverings,
    'H-FICTIONAL-1999-FOALS-'+year+'-'+pad(Number(/(\d{7})$/.exec(cover.id)?.[1]||0)),
    coveringId:cover.id,breedingYear:year,birthDate,damId:mare.id,
    sireId:cover.stallionId,ownerId:mare.ownerId,
-   foalingFarmId:mare.foalingFarmId,status:'PROJECTED_NOT_YET_BORN',
+   foalingFarmId:foalingFarmIdByMareId?.get(mare.id)??
+    mare.careFacilityId??mare.foalingFarmId,
+   status:'PROJECTED_NOT_YET_BORN',
    provenance:'MODELED_CONFIRMED_PREGNANCY_FORECAST'});
   if(forecasts.length===batchSize){
    yield {year,records:[...forecasts]};forecasts.length=0;

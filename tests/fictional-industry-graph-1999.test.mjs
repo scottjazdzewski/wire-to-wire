@@ -15,16 +15,29 @@ test('every supported world entity has bounded reproducible ratings',()=>{
   assert.ok(Object.values(a).every(v=>v>=15&&v<=95));
  }
 });
-test('horse graph connects pedigree, owner, farm, trainer and jockey by IDs',()=>{
+test('horse graph connects pedigree, owner, care facility, training circuit and staff by IDs',()=>{
  const horse=connect1999Horse({id:'H-1',status:'RACING',ownerId:'O-1',
   foalingFarmId:'O-2',sireId:'H-SIRE',damId:'H-DAM',homeTrackId:'T-1'},
  {seed:19990101,trainerCount:100,jockeyCount:50});
  const targets=new Set(['H-1','O-1','O-2','H-SIRE','H-DAM','T-1',
   horse.trainerId,horse.jockeyId]);
  assert.equal(validate1999GraphBatch([horse],targets).valid,true);
- assert.equal(horse.relationships.length,7);
+ assert.equal(horse.relationships.length,9);
+ assert.equal(horse.careFacilityId,'O-2');
+ assert.equal(horse.trainingBarnId,'T-1');
  assert.equal(horse.ratingsProvenance,'MODELED_1999_UNCALIBRATED');
  assert.equal(validate1999GraphBatch([horse],new Set(['H-1'])).valid,false);
+});
+test('physical care staff is selected deterministically from farm assignments',()=>{
+ const staffByFarm=new Map([['O-2',{breeding_attendant:['P-CARE-1']}],
+  ['*',{farm_manager:['P-MANAGER-1']}]]);
+ const horse=connect1999Horse({id:'H-2',status:'BROODMARE',ownerId:'O-1',
+  foalingFarmId:'O-2'},{seed:19990101,staffByFarm});
+ assert.equal(horse.careFacilityId,'O-2');
+ assert.ok(['P-CARE-1','P-MANAGER-1'].includes(horse.careStaffId));
+ assert.ok(horse.relationships.some(edge=>edge.type==='CARED_AT'&&edge.toId==='O-2'));
+ assert.ok(horse.relationships.some(edge=>edge.type==='CARED_BY'&&edge.toId===horse.careStaffId));
+ assert.equal(horse.trainerId,null);
 });
 test('person and directory entities have typed edges and modeled ratings',()=>{
  const person=connect1999Person({id:'P-1',role:'trainer',workplaceId:'T-1'},
@@ -40,10 +53,10 @@ test('worldwide census audit resolves cross-batch parents and staff and rejects 
   twoYearOldProspects:1,threeYearOldRunners:1,fourYearOldRunners:1,
   fivePlusRunners:1}},
   staffing:{counts:{trainer:2,jockey:2,groom:1}},
-  tracks:[{id:'T-1'}],farms:[{id:'O-F-1'}],owners:[{id:'O-O-1'}]};
+  tracks:[{id:'T-1'}],farms:[{id:'O-F-1',location:{city:'Lexington',region:'Kentucky',country:'USA'}}],owners:[{id:'O-O-1'}]};
  const h=connect1999Horse({id:'H-FICTIONAL-1999-THREEYEAROLDRUNNERS-0000001',
   status:'RACING',cohort:'threeYearOldRunners',foalYear:1996,
-  birthplace:{farmId:'O-F-1'},ownerId:'O-O-1',foalingFarmId:'O-F-1',
+  birthplace:{farmId:'O-F-1',city:'Lexington',region:'Kentucky',country:'USA'},ownerId:'O-O-1',breederId:'O-F-1',foalingFarmId:'O-F-1',
   sireId:'H-FICTIONAL-1999-STALLIONS-0000002',
   damId:'H-FICTIONAL-1999-BROODMARES-0000002',
   homeTrackId:'T-1'},{seed:19990101,trainerCount:2,jockeyCount:2});

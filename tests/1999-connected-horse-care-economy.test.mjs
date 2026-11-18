@@ -128,3 +128,67 @@ test('post-race response uses an actual recorded finish input and preserves star
  assert.throws(()=>modelHorsePostRaceResponse(r,h,{race_id:'RACE-X',finish:12,field_size:10,distance_furlongs:8}),
   e=>e.code==='HORSE_RACE_RESPONSE');
 });
+
+
+test('multi-month careers retain recent daily detail and exact monthly care totals',()=>{
+ const dailyDetailKinds=new Set([
+  'OWNER_DAILY_STRATEGY','TRAINER_DAILY_DECISIONS',
+  'OWNER_TRAINER_RELATIONSHIP_PRESSURE','HORSE_NEEDS_ATTRIBUTES',
+  'HORSE_TRANSIT_CARE_DAY','HORSE_CARE_UNFUNDED','HORSE_CARE_DAY'
+ ]);
+ const careFinanceKinds=new Set([
+  'HORSE_CARE_OWNER_PAYMENT','HORSE_CARE_SITE_AND_TRAINER_INCOME',
+  'HORSE_CARE_TRAINER_REMITTANCE','HORSE_CARE_TRAINER_EARNINGS',
+  'HORSE_CARE_SUPPLIER_RECEIPT'
+ ]);
+ let state=fresh();
+ const expected=Object.fromEntries([...careFinanceKinds].map(kind=>
+  [kind,{count:0,amount:0}]));
+ for(const row of state.runtime.finances.ledger)
+  if(careFinanceKinds.has(row.kind)){
+   expected[row.kind].count+=row.transaction_count??1;
+   expected[row.kind].amount+=row.amount_minor;
+  }
+ let firstDetail=null;
+ for(let day=1;day<=120;day++){
+  state=change(state,'test:journal:day-'+day,'ADVANCE_DAY',{});
+  if(day===1)firstDetail=state.event_log.find(event=>dailyDetailKinds.has(event.kind));
+  for(const row of state.runtime.finances.ledger)
+   if(!row.rollup_schema&&careFinanceKinds.has(row.kind)&&row.date===state.clock.date){
+    expected[row.kind].count+=row.transaction_count??1;
+    expected[row.kind].amount+=row.amount_minor;
+   }
+ }
+ assert.ok(firstDetail,'First simulated day should emit a compact daily detail sample');
+ const oldestRetained=new Date(Date.parse(state.clock.date+'T00:00:00Z')-
+  89*86400000).toISOString().slice(0,10);
+ const oldDailyDetails=state.event_log.filter(event=>
+  dailyDetailKinds.has(event.kind)&&event.date<oldestRetained);
+ assert.equal(oldDailyDetails.length,0,'Old sampled daily detail must be pruned');
+ assert.ok(!state.event_log.some(event=>event.seq===firstDetail.seq),
+  'The first day sample should not remain after the 90-day detail window');
+ const summaries=state.event_log.filter(event=>event.kind==='DAILY_SIMULATION_SUMMARY');
+ assert.equal(summaries.length,120,'Exact per-day summaries remain for the full career history');
+ assert.equal(new Set(summaries.map(event=>event.details.date)).size,120);
+ assert.ok(summaries.every(event=>event.details.date===event.date&&
+  Object.keys(event.details.counts).length>0));
+ const ledger=state.runtime.finances.ledger;
+ const monthly=ledger.filter(row=>row.rollup_schema==='WTW_MONTHLY_FINANCE_ROLLUP_V1');
+ assert.ok(monthly.length>0,'Older care transactions must compact into monthly totals');
+ assert.ok(monthly.every(row=>/^\d{4}-\d{2}$/.test(row.rollup_period)&&
+  row.period_start===row.rollup_period+'-01'&&row.date===row.period_end));
+ const dailyCutoff=new Date(Date.parse(state.clock.date+'T00:00:00Z')-
+  29*86400000).toISOString().slice(0,10);
+ assert.ok(ledger.filter(row=>row.rollup_schema==='WTW_DAILY_FINANCE_ROLLUP_V1')
+  .every(row=>row.date>=dailyCutoff),'Daily finance rollups must stay within 30 days');
+ for(const kind of careFinanceKinds){
+  const rows=ledger.filter(row=>row.kind===kind);
+  assert.equal(rows.reduce((n,row)=>n+(row.transaction_count??1),0),
+   expected[kind].count,kind+' transaction count must survive monthly compaction');
+  assert.equal(rows.reduce((n,row)=>n+row.amount_minor,0),
+   expected[kind].amount,kind+' amount must survive monthly compaction');
+ }
+ assert.ok(JSON.stringify(state).length<16_000_000,
+  'A 120-day game run should stay bounded and saveable');
+ assert.deepEqual(importGameSave(exportGameSave(state,world),world),state);
+});
