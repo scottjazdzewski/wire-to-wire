@@ -41,7 +41,9 @@ const DAILY_COMPACT_EVENT_KINDS=new Set([
 ]);
 function compactDailyEventDetails(kind,details){
  if(kind==='TRAINER_DAILY_DECISIONS')
-  return {trainer_id:details.trainer_id,count:details.count,reasons:details.reasons};
+  return {trainer_id:details.trainer_id,count:details.count,reasons:details.reasons,
+   decisions:(details.decisions||[]).map(d=>({
+    horse_id:d.horse_id,workout:d.workout,reason:d.reason}))};
  if(kind==='OWNER_DAILY_STRATEGY')
   return {owner_id:details.owner_id,style:details.style,
    causal_scope:details.causal_scope,decisions:(details.decisions||[]).map(d=>({
