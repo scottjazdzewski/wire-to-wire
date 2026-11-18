@@ -55,8 +55,8 @@ function appendLog(state, commandId, kind, details, persist=true) {
 function compactCareFinancialLedger(state){
  const finance=state.runtime.finances,ledger=finance?.ledger;
  if(!Array.isArray(ledger)||!ledger.length)return;
- const cutoff=new Date(Date.parse(state.clock.date+'T00:00:00Z')-
-  CARE_LEDGER_DETAIL_DAYS*86400000).toISOString().slice(0,10);
+ const cutoff=CARE_LEDGER_ROLLUP_BEFORE_CURRENT_MONTH?
+  state.clock.date.slice(0,7)+'-01':state.clock.date;
  const summaries=new Map(),recent=[];
  const dimensions=['operation_id','site_id','person_id','owner_id',
   'operator_id','trainer_id','feed','care','workout'];
