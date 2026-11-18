@@ -59,7 +59,7 @@ function compactCareFinancialLedger(state){
   CARE_LEDGER_DETAIL_DAYS*86400000).toISOString().slice(0,10);
  const summaries=new Map(),recent=[];
  const dimensions=['operation_id','site_id','person_id','owner_id',
-  'operator_id','trainer_id','feed','care','workout','source'];
+  'operator_id','trainer_id','feed','care','workout'];
  const add=(row,period)=>{
   const values=dimensions.map(key=>row[key]??null);
   const key=JSON.stringify([period,row.kind,...values]);
