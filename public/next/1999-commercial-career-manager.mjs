@@ -33,7 +33,7 @@ import {createCareerWorldEdits,addCareerWorldEdit,applyCareerWorldEdits}
  from '/next/1999-career-world-edits.mjs';
 import {buildWorldEditReviewExport}
  from '/next/1999-world-edit-review-export.mjs';
-import {createNamingFeedback,validateNamingFeedback}
+import {createNamingFeedback,validateNamingFeedback,nameFeedbackKey}
  from '/1999/game/horse-naming-feedback-v489.js';
 import {planV10SavedHorseNamingDecision,validateRunWithSavedWorldEdits}
  from '/next/1999-saved-career-horse-naming.mjs';
@@ -259,6 +259,27 @@ async function editSavedWorldEntity({kind,id,patch}={}){
  * permanent edits. KEEP/REJECT save feedback; CHOOSE saves that feedback and
  * applies the player's name to this horse in one durable career transaction.
  */
+// V10 opening horses already consume many of the original 601 whole-name
+// suggestions. Avoid showing names that cannot pass the real saved-world gate.
+let cachedAvailableNames={world:null,editVersion:-1,registered:null};
+function isSavedCareerHorseNameInUse(name){
+ const career=activeWorldCareer;
+ if(!career?.run||!/^WTW1999FullIndustry-COHORTS-V6-OWNER-V10-/.test(
+  career.manifest?.worldId||''))return false;
+ if(cachedAvailableNames.world!==career.world||
+  cachedAvailableNames.editVersion!==career.editVersion){
+  const registered=new Set();
+  for(const h of career.world.entities.horses||[]){
+   const key=nameFeedbackKey(h.name);if(key)registered.add(key);
+  }
+  for(const h of Object.values(career.run.runtime?.registered_horses?.by_id||{})){
+   const key=nameFeedbackKey(h.registered_name||h.name);
+   if(key)registered.add(key);
+  }
+  cachedAvailableNames={world:career.world,editVersion:career.editVersion,registered};
+ }
+ return cachedAvailableNames.registered.has(nameFeedbackKey(name));
+}
 function getSavedCareerNamingFeedback(){
  const career=activeWorldCareer;
  if(!career?.run||!/^WTW1999FullIndustry-COHORTS-V6-OWNER-V10-/.test(
@@ -1230,7 +1251,7 @@ async function readFictionalIndustryCareer(manifest,runId){
 }
 window.WTWCompactCareerManager=Object.freeze({open,listSlots,storeGame,
  editSavedWorldEntity,getSavedCareerNamingFeedback,
- commitSavedCareerHorseNamingPreference,exportCareerWorldChangesForReview,
+ isSavedCareerHorseNameInUse,commitSavedCareerHorseNamingPreference,exportCareerWorldChangesForReview,
  restoreGame,exportSlot,importFile,dbName:DB_NAME,
  prepareFictionalIndustry,saveFictionalIndustryCareer,
  readFictionalIndustryCareer,sharedCareerBytes,importSharedCareerFile,
