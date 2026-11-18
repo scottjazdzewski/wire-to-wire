@@ -198,7 +198,7 @@ export function createNamingDeskController({
    model.busy=true;refresh();
    // The actual game service resolves only AFTER its IndexedDB transaction
    // commits. Never display a false success on an interrupted write.
-   await commitGameplay({name:item.name,decision,motif_id:item.motifId,
+   const receipt=await commitGameplay({name:item.name,decision,motif_id:item.motifId,
     horse_id:target,prompt:model.fields.direction});
    model.feedback=validateNamingFeedback(load()||attempted);
    if(model.feedback.revision!==attempted.revision)
@@ -209,8 +209,10 @@ export function createNamingDeskController({
     .filter(x=>x.decision==='REJECT').map(x=>x.name);
    model.notice=decision==='KEEP'?item.name+' kept for later in the saved game.':
     decision==='REJECT'?item.name+' permanently rejected in the saved game.':
-    item.name+' selected for '+currentTargets().find(x=>x.id===target)?.name+
-    '. Player decision is saved; official registrar approval remains pending.';
+    receipt?.identityUpdated?
+     item.name+' is now this horse’s name in your saved career. No external registration claimed.':
+     item.name+' selected for '+currentTargets().find(x=>x.id===target)?.name+
+     '. Player decision is saved; official registrar approval remains pending.';
    return true;
   }catch(error){model.error=String(error?.message||error);return false}
   finally{model.busy=false;refresh()}
@@ -329,21 +331,37 @@ export function createNamingDeskController({
 
 if(typeof window!=='undefined'){
  const manager=window.__WTW_1999_MANAGEMENT__;
+ const savedCareer=()=>window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+ const savedWorldNaming=()=>Boolean(
+  /^WTW1999FullIndustry-COHORTS-V6-OWNER-V10-/.test(savedCareer()?.worldId||'')&&
+  window.WTWCompactCareerManager?.commitSavedCareerHorseNamingPreference);
  const desk=createNamingDeskController({
   notify:()=>window.__WTW_NEXT__?.paint?.(),
-  loadFeedback:()=>window.__WTW_1999_UI_DATA__?.gameplayService?.state?.runtime?.horse_naming?.feedback||manager?.readNamingFeedback?.()||null,
-  gameplayActive:()=>Boolean(window.__WTW_1999_UI_DATA__?.gameplayService),
-  commitGameplay:payload=>window.__WTW_1999_UI_DATA__.gameplayService.submit('OWNER_SET_HORSE_NAMING_PREFERENCE',payload),
+  loadFeedback:()=>savedWorldNaming()?
+   window.WTWCompactCareerManager.getSavedCareerNamingFeedback():
+   window.__WTW_1999_UI_DATA__?.gameplayService?.state?.runtime?.horse_naming?.feedback||
+   manager?.readNamingFeedback?.()||null,
+  gameplayActive:()=>savedWorldNaming()||Boolean(window.__WTW_1999_UI_DATA__?.gameplayService),
+  commitGameplay:payload=>savedWorldNaming()?
+   window.WTWCompactCareerManager.commitSavedCareerHorseNamingPreference(payload):
+   window.__WTW_1999_UI_DATA__.gameplayService.submit('OWNER_SET_HORSE_NAMING_PREFERENCE',payload),
   saveFeedback:(next,revision)=>{
    if(!manager?.commitNamingFeedback)throw Error('Career naming save service unavailable');
    if(window.__WTW_1999_UI_DATA__?.gameplayService)
     throw Error('Playtest naming needs a gameplay-owned save bridge; no detached writes allowed');
    return manager.commitNamingFeedback(next,revision);
   },
-  getTargets:()=>Array.isArray(window.__WTW_1999_UI_DATA__?.gameplayService?.view?.()?.stable||window.__WTW_1999_UI_DATA__?.stableHorses)?
-   (window.__WTW_1999_UI_DATA__?.gameplayService?.view?.()?.stable||window.__WTW_1999_UI_DATA__.stableHorses).map(h=>({
-    id:String(h.horse_id||h.id||''),name:String(h.name||'')
-   })).filter(h=>h.id&&h.name):[]
+  getTargets:()=>savedWorldNaming()?
+   (savedCareer().horseRows||[]).filter(h=>
+    Boolean(h.sourceHorseId)&&String(h.tag||'').split(' · ').includes('OWNED'))
+    .map(h=>({id:String(h.sourceHorseId),name:String(h.name||'')}))
+    .filter(h=>h.id&&h.name):
+   Array.isArray(window.__WTW_1999_UI_DATA__?.gameplayService?.view?.()?.stable||
+    window.__WTW_1999_UI_DATA__?.stableHorses)?
+   (window.__WTW_1999_UI_DATA__?.gameplayService?.view?.()?.stable||
+    window.__WTW_1999_UI_DATA__.stableHorses).map(h=>({
+     id:String(h.horse_id||h.id||''),name:String(h.name||'')
+    })).filter(h=>h.id&&h.name):[]
  });
  window.WTW1999NamingDesk=desk;
  window.__WTW_NEXT__?.paint?.();
