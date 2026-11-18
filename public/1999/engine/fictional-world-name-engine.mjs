@@ -422,7 +422,8 @@ export function createFictionalWorldNameEngine(input){
  const org=createOrganizationNameRoster({
   seed,ownerCount:owners,barnCount:trainers.length,farmCount,
   breakingCount:facilities.breakingTraining,
-  protectedNames:[...spec.protectedNames,...basePeople.map(p=>p.name)],
+  protectedNames:[...spec.protectedNames],
+  protectedPersonNames:basePeople.map(p=>p.name),
   externalNameIndex:spec.externalNameIndex,
   principalNames:principalPeople.map(p=>p.name),
   trainerNames:trainers.map(p=>p.name),
