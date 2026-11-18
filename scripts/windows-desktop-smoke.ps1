@@ -82,18 +82,36 @@ foreach($step in $steps){
  }
  if($phase.StartsWith("career-")){
   $career=$proof.careerBootstrap
-  if(!$career -or $career.worldId -ne "WTW1999FullIndustry-COHORTS-V2-H300000" -or
+  $careerInventoryCount=0
+  $careerInventoryValid=$false
+  if($career){$careerInventoryValid=[int]::TryParse([string]$career.operationInventoryCount,[ref]$careerInventoryCount)}
+  if(!$career -or $career.worldId -ne "WTW1999FullIndustry-COHORTS-V6-OWNER-V10-NAMES-V10-H300000" -or
      $career.seed -ne 19990101 -or $career.horseCount -ne 300000 -or
-     $career.personCount -ne 75724 -or
-     $career.runId -ne "WTW-RUN-1999-19990101-SIZE-300000" -or
-     !$career.snapshotSha256 -or !$career.gameDate){
+     $career.personCount -ne 75705 -or
+     $career.runId -ne "WTW-RUN-1999-19990101-SIZE-300000-OP-O-000061" -or
+     !$career.snapshotSha256 -or !$career.gameDate -or
+     !$careerInventoryValid -or
+     $careerInventoryCount -lt 1){
    throw "Packaged EXE did not load the exact shared 300k world and career: $(Get-Content -Raw $report)"
   }
-  if($phase -eq "career-write"){$careerWriteProof=$proof}
+  if($phase -eq "career-write"){
+   $advance=$career.gameplayAdvance
+   if(!$advance -or !$advance.durableSaveVerified -or
+      $advance.operationId -ne "O-000061" -or
+      $advance.fromDate -eq $advance.toDate -or
+      $career.gameDate -ne $advance.toDate -or
+      $advance.stableHorses -ne $career.operationInventoryCount -or
+      $career.mainUiCareer.date -ne $advance.toDate){
+    throw "Packaged EXE did not advance and durably save the playable Kingsmere career: $(Get-Content -Raw $report)"
+   }
+   $careerWriteProof=$proof
+  }
   if($phase -eq "career-read"){
    if(!$careerWriteProof -or $career.gameDate -ne $careerWriteProof.careerBootstrap.gameDate -or
       $career.snapshotSha256 -ne $careerWriteProof.careerBootstrap.snapshotSha256 -or
-      $proof.careerReopen -ne "VERIFIED"){
+      $proof.careerReopen -ne "VERIFIED" -or
+      $career.mainUiCareer.date -ne $career.gameDate -or
+      $career.mainUiCareer.operationInventoryCount -ne $career.operationInventoryCount){
     throw "Packaged career did not reopen unchanged after a real process restart"
    }
   }

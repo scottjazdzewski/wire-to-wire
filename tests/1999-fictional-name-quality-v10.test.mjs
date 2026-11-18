@@ -2,8 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {createOrganizationNameRoster,createProtectedOrganizationRootGuard,
- hasArtificialOrganizationPhrase}
+ hasArtificialOrganizationPhrase,ARCHIVAL_RACING_OWNER_NAME_MODEL}
  from '../public/1999/engine/organization-name-engine.mjs';
+import {CENSUS_2000_OWNER_SURNAMES}
+ from '../public/1999/engine/census-2000-owner-surnames.mjs';
+import {VERIFIED_RACING_OWNER_NAMES_1999,VERIFIED_RACING_OWNER_SURNAME_INPUTS_1999}
+ from '../public/1999/engine/verified-racing-owner-names-1999.mjs';
 import {createFictionalWorldNameEngine}
  from '../public/1999/engine/fictional-world-name-engine.mjs';
 import {generateOnDemandFictionalNames}
@@ -57,6 +61,109 @@ test('large protected historical roster does not produce a near-identical new bu
  assert.equal(new Set(all.map(normalize)).size,all.length);
  assert.ok(!all.some(x=>/^(Kingsmere|River Stone|Old Oak Estate)\b/i.test(x)));
  assert.equal(roster.summary.farms,90);
+});
+test('expanded Census-era owner lexicon supports the complete 16,700-owner operating base',()=>{
+ assert.equal(CENSUS_2000_OWNER_SURNAMES.length,1000);
+ const given=['Avery','Bailey','Casey','Dakota','Ellis','Frankie','Harper','Jamie',
+  'Kendall','Logan','Morgan','Parker','Quinn','Riley','Sawyer','Taylor','Wren','Zion'];
+ const principals=Array.from({length:16700},(_,i)=>
+  given[i%given.length]+' '+CENSUS_2000_OWNER_SURNAMES[Math.floor(i/given.length)]);
+ const roster=createOrganizationNameRoster({seed:19990101,ownerCount:principals.length,
+  barnCount:0,farmCount:0,principalNames:principals});
+ assert.equal(roster.owners.length,16700);
+ assert.equal(new Set(roster.owners.map(normalize)).size,16700);
+ assert.ok(roster.owners.every(name=>!/[0-9]/.test(name)));
+ const partnershipNames=roster.owners.filter(name=>
+  /\b(?:Partners?|Partnership|Syndicate|Club|Group)\b/i.test(name));
+ assert.ok(partnershipNames.length>=1600&&partnershipNames.length<=2100,
+  'expected a seeded partnership share of about 11% after sole owners');
+ assert.equal(roster.summary.partnershipGroupsCreated,partnershipNames.length);
+ assert.ok(roster.owners.filter(name=>/\b(?:Racing|Thoroughbreds|Stable|Stables|Bloodstock)\b/i.test(name)).length>10000);
+});
+test('documented 1999 racing owners feed the generated owner-name vocabulary',()=>{
+ assert.ok(VERIFIED_RACING_OWNER_NAMES_1999.length>=250);
+ assert.equal(new Set(VERIFIED_RACING_OWNER_NAMES_1999.map(x=>x.source+'\u0000'+x.name)).size,
+  VERIFIED_RACING_OWNER_NAMES_1999.length,
+  'the same owner may be independently documented by multiple 1999 sources');
+ assert.ok(VERIFIED_RACING_OWNER_NAMES_1999.every(x=>x.referenceYear===1999&&
+  (x.referenceDate===null||x.referenceDate.startsWith('1999-'))&&
+  /^https:\/\//.test(x.url)&&x.surnames.every(s=>typeof s==='string'&&s.length>1)));
+ assert.ok(VERIFIED_RACING_OWNER_NAMES_1999.filter(x=>
+  x.source==='LOS_ANGELES_TIMES_1999_BREEDERS_CUP_FIELD').length>=45);
+ assert.ok(VERIFIED_RACING_OWNER_NAMES_1999.filter(x=>
+  x.source==='LOS_ANGELES_TIMES_1999_KENTUCKY_DERBY_FIELD').length>=10);
+ assert.ok(VERIFIED_RACING_OWNER_NAMES_1999.filter(x=>
+  x.source==='FRANCE_GALOP_1999_OWNER_EARNINGS').length>=9);
+ assert.ok(VERIFIED_RACING_OWNER_NAMES_1999.filter(x=>
+  x.source==='JAPAN_RACING_ASSOCIATION_1999_JAPAN_CUP_RESULT').length>=15);
+ assert.ok(VERIFIED_RACING_OWNER_NAMES_1999.filter(x=>
+  x.source==='RACING_POST_1999_HONG_KONG_DERBY_RESULT').length>=3);
+ assert.ok(VERIFIED_RACING_OWNER_NAMES_1999.filter(x=>
+  x.source==='HONG_KONG_JOCKEY_CLUB_1999_INTERNATIONAL_RACE_WINNER').length>=2);
+ assert.ok(VERIFIED_RACING_OWNER_NAMES_1999.filter(x=>
+  x.source==='THOROUGHBRED_DAILY_NEWS_1999_OWNER_RESULTS').length>=80);
+ assert.ok(VERIFIED_RACING_OWNER_NAMES_1999.filter(x=>
+  x.source==='THOROUGHBRED_DAILY_NEWS_1999_JANUARY_18_OWNER_RESULTS').length>=13);
+ assert.ok(VERIFIED_RACING_OWNER_NAMES_1999.filter(x=>
+  x.source==='THOROUGHBRED_DAILY_NEWS_1999_NOVEMBER_29_OWNER_RESULTS').length>=30);
+ assert.ok(VERIFIED_RACING_OWNER_NAMES_1999.filter(x=>
+  x.source==='EQUIBASE_1999_BREEDERS_CUP_JUVENILE_CHART').length>=4);
+ assert.ok(VERIFIED_RACING_OWNER_SURNAME_INPUTS_1999.length>=200);
+ for(const surname of ['Clifton','Pegram','Vance','Tafel','Hancock','Stone',
+  'Scatuorchio','Oxley','Lanni','Schiappa','Poslosky','Garey','Chandler',
+  'Randall','Naify','Sanan','Heerensperger','Zolozzi','Melnyk','Farish','Stronach',
+  'Schwartz','Hilbert','Mabee','Gunther','Langford','Wertheimer','Khan',
+  'Lagardere','Abdullah','Maktoum','Moratalla','Dance','Monroe','Carpenito','Perez',
+  'Usuda','Pang','Nagai','Doyle','Ullmann','Umezaki','Yamaji','Yoshida','Rausing',
+  'Kwee','Chang','Hui','Lau','Woo','Wahlgren','Wachtel','Valente','Goldman',
+  'Campbell','Pawluk','Lui','Cheung','Macaron','Holland','Shipp','Levitch',
+  'Mancari','Reavis','Cables','Porter','Buse','Cochran','Mounts','Lyman',
+  'Holman','Barberino','Raymond','Schwankhart','Koch','Gottschall','Haugh',
+  'Barney','Dee','Karp','Goldsmith','Slaughter','Pabst','McKee','Hudon',
+  'Eubanks','Ersoff','Kleemann','Grum','Shimakawa','Watanabe','Hirai',
+  'Kaneko','Nuti','Hosokawa','Muraiki','Perry','Winn','Speckert','Schmidt',
+  'Dawe','Dickerson','Gonzalez','Ritvo','Currin','Eisman','Woodrum',
+  'Hollendorfer','OBrien','Reineman','Ayres','Merryman','Anacleria',
+  'Waldron','Killingworth','Shively','Yuen','Livitsanos','Recachina',
+  'Greenberg','Akman','Carroll','Hirsch','Salmen','Schickedanz','Cowan',
+  'McNeill','Weir','Riddle','Davidson','Brafman','Allen','Ball','Galbraith',
+  'Ransom','Yoshikawa','Sularski','Womac','Everard','Kengye','Secrest',
+  'Grisham','Jamail','Finkelstein','Hung','Leung','Hughes','Vanderbilt',
+  'Massengale','Alraihe','Roberts'])
+  assert.ok(VERIFIED_RACING_OWNER_SURNAME_INPUTS_1999.includes(surname),
+   'missing sourced 1999 owner surname '+surname);
+ for(const notAPersonalSurname of ['Padua','Paraneck','Godolphin','Overbrook',
+  'Golden Eagle','T N T'])
+  assert.ok(!VERIFIED_RACING_OWNER_SURNAME_INPUTS_1999.includes(notAPersonalSurname),
+   'stable and farm brands must not enter the personal surname pool');
+ const principals=Array.from({length:16700},(_,i)=>
+  'Avery '+CENSUS_2000_OWNER_SURNAMES[i%CENSUS_2000_OWNER_SURNAMES.length]);
+ const roster=createOrganizationNameRoster({seed:19990101,ownerCount:principals.length,
+  barnCount:0,farmCount:0,principalNames:principals,
+  ownerSurnameReferences:VERIFIED_RACING_OWNER_SURNAME_INPUTS_1999});
+ assert.equal(roster.model,ARCHIVAL_RACING_OWNER_NAME_MODEL);
+ const sourcedSurnameHits=VERIFIED_RACING_OWNER_SURNAME_INPUTS_1999.filter(surname=>
+  roster.owners.some(name=>new RegExp('\\b'+surname+'\\b','i').test(name)));
+ assert.ok(sourcedSurnameHits.length>=50,
+  'generated owner directory should draw a substantial subset of archival racing surnames');
+ assert.ok(!VERIFIED_RACING_OWNER_NAMES_1999.some(item=>roster.owners.includes(item.name)),
+  'archival owner identities stay out of generated fictional owner records');
+});
+test('full 1999 naming engine versions archival sources without changing permanent organization IDs',()=>{
+ const input={worldId:'OwnerNameSourceIntegration',seed:19990101,protectedNames:['Kingsmere Farm']};
+ const census=createFictionalWorldNameEngine(input);
+ const archival=createFictionalWorldNameEngine({...input,
+  ownerNameSourceModel:'ARCHIVAL_1999_RACING_OWNERS'});
+ assert.equal(census.manifest.organizationNameModel,
+  'WTW_1999_ORGANIZATION_NAMING_V7_CENSUS_2000_OWNER_LEXICON_PARTNERSHIPS');
+ assert.equal(archival.manifest.organizationNameModel,ARCHIVAL_RACING_OWNER_NAME_MODEL);
+ assert.match(ARCHIVAL_RACING_OWNER_NAME_MODEL,/NAMING_V10/);
+ assert.notEqual(census.manifest.fingerprint,archival.manifest.fingerprint);
+ assert.deepEqual(census.people.map(x=>x.id),archival.people.map(x=>x.id));
+ assert.deepEqual(census.owners.map(x=>x.id),archival.owners.map(x=>x.id));
+ assert.ok(VERIFIED_RACING_OWNER_SURNAME_INPUTS_1999.filter(surname=>
+  archival.owners.some(owner=>new RegExp('\\b'+surname+'\\b','i').test(owner.name))).length>=12,
+  'full-world owner generator must emit sourced racing surnames');
 });
 test('quality auditing validates 11,202 people and 8,408 organizations across different seeds',()=>{
  for(const seed of [19990101,19990102,23555331]){

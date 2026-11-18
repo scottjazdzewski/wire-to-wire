@@ -99,7 +99,11 @@ export function ownerTrainerEvidence(state,world,owner,trainer,{days=56}={}){
  const welfareDays=history.filter(x=>typeof x.risk==='number'&&x.risk>.68).length;
  const ledger=state.runtime.finances?.ledger||[];
  const relevant=ledger.filter(x=>x.date>=ago(date,days-1)&&x.date<=date&&
-  horseIds.has(x.horse_id));
+  (horseIds.has(x.horse_id)||
+   x.kind==='HORSE_CARE_OWNER_PAYMENT'&&x.operation_id===owner&&
+    x.trainer_id===trainer&&
+    ['WTW_DAILY_FINANCE_ROLLUP_V1','WTW_MONTHLY_FINANCE_ROLLUP_V1'].
+     includes(x.rollup_schema)));
  const spent= -relevant.filter(x=>x.kind==='HORSE_CARE_OWNER_PAYMENT'&&
   x.operation_id===owner).reduce((n,x)=>n+x.amount_minor,0);
  const jockeyCost=-relevant.filter(x=>x.kind==='JOCKEY_MOUNT_AND_TRAVEL_FEE'&&

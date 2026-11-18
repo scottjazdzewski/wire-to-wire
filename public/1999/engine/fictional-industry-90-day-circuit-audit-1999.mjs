@@ -36,11 +36,11 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
  const dates=Array.from({length:90},(_,i)=>at(i+1));
  const dateSet=new Set(dates),end=at(90);
  const directory=await readPersistent1999Directory(store,manifest);
- const tracks=new Map(directory.filter(x=>/^T-\d{4}$/.test(x.id)).
-  map(t=>[t.id,t]));
- const owners=new Set(directory.filter(x=>x.id.startsWith('O-FICTIONAL-OWNER-')).
+ const tracks=new Map(directory.filter(x=>/^T-\d{4}$/.test(x.id)||
+  x.operatingRoles?.includes('TRACK')).map(t=>[t.id,t]));
+ const owners=new Set(directory.filter(x=>x.operatingRoles?.includes('LEGAL_OWNER')).
   map(o=>o.id));
- const farms=new Set(directory.filter(x=>x.id.startsWith('O-FICTIONAL-FARM-')).
+ const farms=new Set(directory.filter(x=>x.operatingRoles?.includes('BREEDING_OR_CARE_FACILITY')).
   map(f=>f.id));
  requireValue(tracks.size===107,'missing an active 1999 racecourse');
  requireValue(owners.size>0&&farms.size>0,'missing operating organizations');
@@ -62,7 +62,8 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
  requireValue(people===manifest.personCount,'full personnel count changed');
  // Source-demographic eligibility is not race-day fitness or entry permission.
  const demographicByTrack=new Map();
- const horseIds=new Set(),byTrack=new Map(),racingByTrack=new Map(),
+ const horseIds=new Set(),foundingHorseIds=new Set(manifest.foundingHorseIds||[]),
+  byTrack=new Map(),racingByTrack=new Map(),
   prospectsByTrack=new Map(),cohorts=new Map(),status=new Map();
  let allHorses=0,racing=0,prospects=0;
  for(let i=0;i<manifest.horseBatchesCommitted;i++){
@@ -70,9 +71,12 @@ export async function auditFullWorld1999NinetyDayCircuit(store,manifest,{
   for(const h of batch){
    requireValue(h?.id&&!horseIds.has(h.id),'duplicate horse '+h?.id);
    horseIds.add(h.id);allHorses++;
-   requireValue(owners.has(h.ownerId)&&farms.has(h.foalingFarmId),
+   const approvedFounder=foundingHorseIds.has(h.id);
+   requireValue(owners.has(h.ownerId)&&(!h.foalingFarmId||farms.has(h.foalingFarmId)),
     'invalid owner or foaling site '+h.id);
-   requireValue(h.ratings&&h.name&&h.dateOfBirth&&h.foalYear<1999,
+   requireValue(h.ratings&&h.name&&h.foalYear<1999&&
+    (approvedFounder?!h.dateOfBirth||h.dateOfBirth.startsWith(String(h.foalYear)+'-'):
+     !!h.dateOfBirth&&h.dateOfBirth.startsWith(String(h.foalYear)+'-')),
     'missing dated registered horse/ratings '+h.id);
    requireValue(h.status!=='PROJECTED_NOT_YET_BORN',
     'unborn foal counted as a live opening horse '+h.id);

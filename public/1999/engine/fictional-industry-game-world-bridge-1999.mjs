@@ -14,6 +14,33 @@ import {readPersistent1999Directory,readPersistent1999IndustryBatch,
 export const PERSISTED_1999_GAME_BRIDGE_SCHEMA='WTW_PERSISTED_1999_GAME_BRIDGE_V1';
 export const PERSISTED_1999_OPENING_BARN_NAMING_MODEL='WTW_1999_OWNER_TRACK_BARN_V1';
 
+export const OPENING_OPERATION_RESERVE_MONTHS=18;
+export const OPENING_OPERATION_MONTHLY_PER_HORSE_BUDGET_MINOR=500000;
+
+/**
+ * Capitalize a new career operation for the size and resources of its actual
+ * racing string. This is opening working capital, not an ongoing subsidy.
+ * Amounts are in minor currency units, matching the game finance runtime.
+ */
+export function calculate1999OpeningTreasury({
+ portfolioTier='REGIONAL',resources=55,activeRunnerCount=0
+}={}){
+ if(!Number.isSafeInteger(activeRunnerCount)||activeRunnerCount<0)
+  throw Error('Opening treasury requires a nonnegative whole runner count');
+ const floors={HANDFUL:25000000,SMALL:100000000,REGIONAL:250000000,
+  MAJOR:750000000,ELITE:1500000000};
+ const tier=typeof portfolioTier==='string'?portfolioTier.trim().toUpperCase():'';
+ const tierFloor=floors[tier]??floors.REGIONAL;
+ const rating=Number.isFinite(resources)?Math.max(0,Math.min(100,resources)):55;
+ const resourceFactor=.75+rating/200;
+ const operatingReserve=Math.ceil(activeRunnerCount*
+  OPENING_OPERATION_MONTHLY_PER_HORSE_BUDGET_MINOR*
+  OPENING_OPERATION_RESERVE_MONTHS*resourceFactor);
+ if(!Number.isSafeInteger(operatingReserve))
+  throw Error('Opening operation reserve exceeds supported currency range');
+ return Math.max(tierFloor,operatingReserve);
+}
+
 /**
  * Display identity for a NEW, owner-operated racing barn. The operation and
  * venue are both canonical ID-addressed records. Do not invent a new owner,
@@ -167,7 +194,27 @@ export async function openPersistent1999GameCareer(store,manifest,{
    horseNamingRevision:manifest.horseNamingRevision}};
  validateWorld(world);
  const ownerGroups=new Map();
- for(const h of horses)if(h.status==='RACING'&&h.ownerId){
+ const operationHorses=new Map();
+ const operationHorseRoles=new Map();
+ for(const h of horses){
+  const links=[[h.ownerId,'OWNED'],[h.managementOrganizationId,'MANAGED'],
+   [h.careFacilityId,'BOARDED'],[h.trainingBarnId,'TRAINED'],
+   [h.breederId,'BRED'],[h.foalingFarmId,'FOALED_AT']];
+  const seenForHorse=new Set();
+  for(const [operationId,role] of links){
+   if(!operationId)continue;
+   if(!operationHorses.has(operationId))operationHorses.set(operationId,[]);
+   if(!operationHorseRoles.has(operationId))operationHorseRoles.set(operationId,new Map());
+   const roles=operationHorseRoles.get(operationId);
+   if(!roles.has(h.id))roles.set(h.id,new Set());
+   roles.get(h.id).add(role);
+   if(!seenForHorse.has(operationId)){
+    operationHorses.get(operationId).push(h);
+    seenForHorse.add(operationId);
+   }
+  }
+ }
+ for(const h of horses)if(['RACING','TWO_YEAR_OLD_PROSPECT'].includes(h.status)&&h.ownerId){
   if(!ownerGroups.has(h.ownerId))ownerGroups.set(h.ownerId,[]);
   ownerGroups.get(h.ownerId).push(h);
  }
@@ -176,8 +223,12 @@ export async function openPersistent1999GameCareer(store,manifest,{
    .sort((a,b)=>(ownerGroups.get(b.id)?.length||0)-(ownerGroups.get(a.id)?.length||0)||
     a.id.localeCompare(b.id))[0];
  if(!operation)throw Error('Selected player operation does not exist in this world');
- const openingRoster=(ownerGroups.get(operation.id)||[]).slice(0,30);
- if(openingRoster.length<2)throw Error('Selected operation needs at least two opening runners');
+ // The selected operator's stable is the full canonical racing string. The
+ // previous 30-horse slice made the saved 300k census appear complete while
+ // silently omitting most horses from playable career records.
+ const openingInventory=operationHorses.get(operation.id)||[];
+ const openingRoster=ownerGroups.get(operation.id)||[];
+ if(!openingRoster.length)throw Error('Selected operation needs an opening runner or training prospect');
  const run=createGameRun({world,runId,seed:manifest.seed,
   player:{role:playerRole,involvement,operation_id:operation.id},stableHorseIds:[]});
  const trackGroups=new Map();
@@ -195,6 +246,12 @@ export async function openPersistent1999GameCareer(store,manifest,{
   if(!trainer)throw Error('Opening track lacks a playable trainer identity: '+trackId);
   const siteId='F-1999-OPENING-'+trackId;
   const loc=track.location||{};
+  const tierBonus={HANDFUL:0,SMALL:3,REGIONAL:7,MAJOR:12,ELITE:18}[
+   operation.portfolioTier]??0;
+  const resources=operation.ratings?.resources??55;
+  const ambition=operation.ratings?.ambition??55;
+  const facilityQuality=Math.max(35,Math.min(95,
+   Math.round(.62*resources+.23*ambition+.15*55+tierBonus)));
   run.runtime.facilities.sites[siteId]={id:siteId,offer_id:null,
    owner_id:operation.id,operator_organization_id:operation.id,
    name:format1999OpeningBarnName(operation,track),type:'RACING_STABLE',
@@ -206,13 +263,11 @@ export async function openPersistent1999GameCareer(store,manifest,{
    source_ref:'PERSISTED_FICTIONAL_1999_OPENING_WORLD',status:'ACTIVE',
    acquired_date:run.clock.date,open_date:run.clock.date,
    stalls:Math.max(60,group.length),max_stalls:Math.max(60,group.length),
-   quality:60,daily_upkeep_minor:0,daily_boarding_minor:0,
+   quality:facilityQuality,daily_upkeep_minor:0,daily_boarding_minor:0,
    staff_required:1,staff_count:1,staff_wage_daily_minor:0,
    track_rent_daily_minor:0,maintenance_daily_minor:0,
    maintenance_policy:'STANDARD',contracts:[],upgrade:null,land_acres:0};
  }
- run.runtime.finances.operation_balances_minor[operation.id]=250000000;
- run.runtime.finances.balance_minor=250000000;
  const activeIds=[];
  for(const source of openingRoster){
   const id='H-GAME-1999-WORLD-'+source.id.replace(/^H-FICTIONAL-1999-/,'');
@@ -223,6 +278,8 @@ export async function openPersistent1999GameCareer(store,manifest,{
    racing_age_1999:1999-source.foalYear,
    sire_id:source.sireId,dam_id:source.damId,
    breeder_organization_id:source.foalingFarmId,
+   care_facility_organization_id:source.careFacilityId,
+   training_barn_organization_id:source.trainingBarnId,
    owner_organization_id:source.ownerId,
    foaling_location_id:source.foalingFarmId,
    current_residence_id:siteId,racing_barn_id:siteId,
@@ -234,13 +291,28 @@ export async function openPersistent1999GameCareer(store,manifest,{
     'OPENING_WORLD:'+manifest.worldId,candidate_id:source.id,
     source_horse_id:source.id},
    starting_attributes:model1999StartingHorseAttributes({horse_id:id,
-    seed:manifest.seed,foaling_year:source.foalYear,sex:source.sex}),
+   seed:manifest.seed,foaling_year:source.foalYear,sex:source.sex,
+   horseRatings:source.ratings,development:source.development,
+   ownerPortfolioTier:source.ownerPortfolioTier}),
    career:{starts:0,wins:0,earnings_minor:0}};
   run.runtime.registered_horses.by_id[id]=h;
   run.runtime.registered_horses.by_receipt[h.registration_receipt_id]=id;
   run.stable_horse_ids.push(id);activeIds.push(id);
   initializeGameHorseCare(run,h);
  }
+ const openingCapitalMinor=calculate1999OpeningTreasury({
+  portfolioTier:operation.portfolioTier,
+  resources:operation.ratings?.resources??55,
+  activeRunnerCount:activeIds.length});
+ run.runtime.finances.operation_balances_minor[operation.id]=openingCapitalMinor;
+ run.runtime.finances.balance_minor=openingCapitalMinor;
+ // Breeding stock and youngstock remain their original canonical world
+ // records in the same career database. Put them on the operation roster so
+ // the player sees every owned horse, while the racing engine continues to
+ // operate only on registered racehorses with game attributes.
+ const activeSourceIds=new Set(openingRoster.map(source=>source.id));
+ const nonRunners=openingInventory.filter(source=>!activeSourceIds.has(source.id));
+ for(const source of nonRunners)run.stable_horse_ids.push(source.id);
  const homeTrack=openingRoster[0].homeTrackId;
  // Selection covers ALL player's actual barn circuits, then adds national
  // available jockeys. Scheduling still controls every signed mount.
@@ -253,8 +325,15 @@ export async function openPersistent1999GameCareer(store,manifest,{
   Object.assign(run,result.state);
  }
  validateGameRun(run,world);
+ const relationshipCounts={OWNED:0,MANAGED:0,BOARDED:0,TRAINED:0,BRED:0,FOALED_AT:0};
+ for(const roles of (operationHorseRoles.get(operation.id)||new Map()).values())
+  for(const role of roles)relationshipCounts[role]++;
  return {schema:PERSISTED_1999_GAME_BRIDGE_SCHEMA,world,run,
   operation,certificate,playableHorseCount:activeIds.length,
+  operationInventoryCount:openingInventory.length,
+  operationInventoryByRelationship:relationshipCounts,
+  operationInventoryByStatus:Object.fromEntries([...openingInventory.reduce((counts,h)=>
+   counts.set(h.status,(counts.get(h.status)||0)+1),new Map())].sort(([a],[b])=>a.localeCompare(b))),
   openingJockeyCount:openingJockeys.length,
   homeTrackId:homeTrack};
 }
