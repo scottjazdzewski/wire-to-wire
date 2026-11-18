@@ -5,6 +5,8 @@ import {createOrganizationNameRoster,ARCHIVAL_RACING_OWNER_NAME_MODEL,
  from '../public/1999/engine/organization-name-engine.mjs';
 import {regionalOrganizationNamingRoots}
  from '../public/1999/engine/organization-naming-styles.mjs';
+import {createFictionalWorldNameEngine}
+ from '../public/1999/engine/fictional-world-name-engine.mjs';
 import {CENSUS_2000_OWNER_SURNAMES}
  from '../public/1999/engine/census-2000-owner-surnames.mjs';
 import {VERIFIED_RACING_OWNER_SURNAME_INPUTS_1999}
@@ -229,4 +231,25 @@ test('legacy archival owner exhaustion activates V11 only after all 512 former a
   'fallback output must be version-identified, never silently claim V10');
  assert.deepEqual(result.owners,['Limestone Run Alex West Stable']);
  assert.equal(result.summary.ownerCandidateAttemptBudget,SCALABLE_OWNER_NAME_ATTEMPT_LIMIT);
+});
+
+test('the real world naming factory versions V11 explicitly without moving stable IDs',()=>{
+ const original={worldId:'V11OwnerSaveVersionGate',seed:19990101,
+  protectedNames:['Kingsmere Farm','Davenport Hall Farm']};
+ const saved=createFictionalWorldNameEngine({...original,
+  ownerNameSourceModel:'ARCHIVAL_1999_RACING_OWNERS'});
+ const optIn=createFictionalWorldNameEngine({...original,
+  ownerNameSourceModel:'ARCHIVAL_1999_RACING_OWNERS_SCALABLE_V11'});
+ assert.equal(saved.manifest.organizationNameModel,ARCHIVAL_RACING_OWNER_NAME_MODEL);
+ assert.equal(optIn.manifest.organizationNameModel,SCALABLE_ARCHIVAL_RACING_OWNER_NAME_MODEL);
+ assert.notEqual(saved.manifest.fingerprint,optIn.manifest.fingerprint,
+  'V11 names may only enter a world with an explicit new naming fingerprint');
+ for(const kind of ['people','owners','stables','farms']){
+  assert.deepEqual(saved[kind].map(x=>x.id),optIn[kind].map(x=>x.id),
+   'owner naming source does not invent or reassign stable entity IDs');
+ }
+ assert.notDeepEqual(saved.owners.map(x=>x.name),optIn.owners.map(x=>x.name));
+ assert.deepEqual(saved,createFictionalWorldNameEngine({...original,
+  ownerNameSourceModel:'ARCHIVAL_1999_RACING_OWNERS'}),
+  'saved V10 business identities remain reproducible after V11 is added');
 });
