@@ -100,7 +100,7 @@ test('Naming Desk waits until real async career commit before showing success',a
 
 
 test('V490 owner feedback revisions never relabel frozen V488 opening industry horses',()=>{
- assert.equal(LOCAL_HORSE_NAMING_ALGORITHM_REVISION,'WTW_LOCAL_NAMING_RULES_V489');
+ assert.equal(LOCAL_HORSE_NAMING_ALGORITHM_REVISION,'WTW_LOCAL_NAMING_RULES_V491');
  assert.equal(OPENING_PROVISIONAL_HORSE_NAMING_REVISION,
   'WTW_LOCAL_NAMING_RULES_V488:OPENING_PROVISIONAL_V1');
  assert.equal(OPENING_INDUSTRY_HORSE_NAMING_REVISION,

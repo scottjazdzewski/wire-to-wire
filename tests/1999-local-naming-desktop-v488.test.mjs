@@ -54,7 +54,7 @@ test('V488 retains bounded Naming Desk previews but scans every authored name fo
  assert.ok(all.suggestions.every(s=>s.name.length<=18));
  assert.ok(all.suggestions.every(s=>s.explanation.length>=35));
  assert.ok(all.suggestions.every(s=>story.toLowerCase().includes(s.evidenceQuote.toLowerCase())));
- assert.equal(LOCAL_HORSE_NAMING_ALGORITHM_REVISION,'WTW_LOCAL_NAMING_RULES_V489');
+ assert.equal(LOCAL_HORSE_NAMING_ALGORITHM_REVISION,'WTW_LOCAL_NAMING_RULES_V491');
  assert.throws(()=>createLocalStoryIdeas(brief,{scanAll:'yes'}),/Invalid trusted/);
 });
 

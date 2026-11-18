@@ -17,7 +17,7 @@ const norm=x=>String(x).normalize('NFKD').toLowerCase().replace(/[^a-z0-9]/g,'')
 
 test('V485 wire schema retained but the V486 deterministic algorithm is clearly revision-pinned',()=>{
  assert.equal(LOCAL_HORSE_NAMING_SCHEMA,'WTW_LOCAL_HORSE_NAMING_V485');
- assert.equal(LOCAL_HORSE_NAMING_ALGORITHM_REVISION,'WTW_LOCAL_NAMING_RULES_V489');
+ assert.equal(LOCAL_HORSE_NAMING_ALGORITHM_REVISION,'WTW_LOCAL_NAMING_RULES_V491');
  assert.equal(BROWSER_REVISION,LOCAL_HORSE_NAMING_ALGORITHM_REVISION);
  const scenario=buildNamingLabScenario(fields);
  const original=JSON.stringify(scenario);
@@ -83,7 +83,21 @@ test('offline population naming requires a COMPLETE local uniqueness registry, n
  }
  assert.equal(total,128);
  assert.ok(allReserved.size>0);
- assert.ok(exhausted>0,'a finite authored catalogue must hold foals rather than invent filler');
+ // The larger V491 pool may correctly serve all 128 foals. Test actual
+ // exhaustion by reserving every story-matched authored candidate, rather
+ // than assuming a fixed catalog capacity from the smaller V488 release.
+ const fullyReservedFoal=makeFoal(128);
+ const available=createLocalStoryIdeas(fullyReservedFoal,
+  {count:8,attempt:0,scanAll:true}).suggestions.map(row=>row.name);
+ const [emptyBatch]=[...planPopulationNamingCohorts([fullyReservedFoal],
+  {runId:'NAMING-RUN-2042-EXHAUSTED',year})];
+ const hold=generateLocalPopulationNamingBatch({
+  batch:emptyBatch,existingNames:[...allReserved,...available],attempt:0
+ });
+ assert.equal(hold.exhaustedFoals,1,'no duplicate or invented filler is allowed');
+ assert.equal(hold.readyForIndependentEditor,0);
+ assert.deepEqual(hold.newCandidateNameKeys,[]);
+ assert.equal(hold.writesToGame,false);
  assert.ok(last60.length<=60);
 });
 
