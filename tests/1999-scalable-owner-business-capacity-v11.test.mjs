@@ -7,8 +7,9 @@ import {regionalOrganizationNamingRoots}
  from '../public/1999/engine/organization-naming-styles.mjs';
 import {CENSUS_2000_OWNER_SURNAMES}
  from '../public/1999/engine/census-2000-owner-surnames.mjs';
-import {proposeScalable1999OwnerBusinessName,SCALABLE_OWNER_BUSINESS_NAME_MODEL,
- SCALABLE_OWNER_NAME_ATTEMPT_START,SCALABLE_OWNER_NAME_ATTEMPT_LIMIT}
+import {proposeScalable1999OwnerBusinessName,scalableOwnerNamingRoots,
+ SCALABLE_OWNER_BUSINESS_NAME_MODEL,SCALABLE_OWNER_NAME_ATTEMPT_START,
+ SCALABLE_OWNER_NAME_ATTEMPT_LIMIT}
  from '../public/1999/engine/scalable-owner-business-names-v11.mjs';
 
 const norm=x=>String(x).normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
@@ -20,9 +21,11 @@ test('V11 regional ownership proposals are deterministic, principal-linked, and 
  assert.match(LEGACY_ARCHIVAL_RACING_OWNER_NAME_MODEL,/V10/);
  assert.equal(SCALABLE_OWNER_NAME_ATTEMPT_START,128);
  assert.ok(SCALABLE_OWNER_NAME_ATTEMPT_LIMIT>=2048);
- const kentucky=regionalOrganizationNamingRoots('KENTUCKY');
- const florida=regionalOrganizationNamingRoots('FLORIDA');
- assert.ok(kentucky.length>=20&&florida.length>=20);
+ const kentucky=scalableOwnerNamingRoots('KENTUCKY');
+ const florida=scalableOwnerNamingRoots('FLORIDA');
+ assert.ok(kentucky.length>=45&&florida.length>=45);
+ assert.ok(kentucky.length>regionalOrganizationNamingRoots('KENTUCKY').length);
+ assert.ok(florida.length>regionalOrganizationNamingRoots('FLORIDA').length);
  assert.notDeepEqual(kentucky,florida);
  const args={seed:19990101,index:8672,attempt:134,principalName:'María Calderón',
   primarySurname:'Calderón',region:'FLORIDA',surnames:CENSUS_2000_OWNER_SURNAMES};
