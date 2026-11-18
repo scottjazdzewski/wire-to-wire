@@ -935,13 +935,24 @@ async function readEligibleStallionCandidates(store,manifest,runKey,nextYear,
  }
  return candidates;
 }
-function makeBirthForecastPlan({seed,year,coverings,mareById,runKey,plannedFoals}){
- const byDate=new Map();
+function makeBirthForecastPlan({seed,year,coverings,mareById,runKey,plannedFoals,
+ farmById}){
+ const byDate=new Map(),foalingFarmIdByMareId=new Map();
  let total=0;
+ for(const [mareId,mare] of mareById){
+  const facilityId=mare.careFacilityId||mare.foalingFarmId||null;
+  if(!mare.ownerId||!facilityId||!farmById.has(facilityId))
+   throw Error('Broodmare lacks a valid owner or current foaling facility: '+mareId+
+    ' (owner='+String(mare.ownerId||'')+', care='+String(mare.careFacilityId||'')+
+    ', historicalFoalingFarm='+String(mare.foalingFarmId||'')+')');
+  foalingFarmIdByMareId.set(mareId,facilityId);
+ }
  for(const batch of generate1999SeasonFoalingForecasts({seed,year,coverings,
-  mareById,batchSize:4000}))for(const forecast of batch.records){
-  if(!forecast.ownerId||!forecast.foalingFarmId)
-   throw Error('Foaling forecast has no owner or foaling location');
+  mareById,foalingFarmIdByMareId,batchSize:4000}))for(const forecast of batch.records){
+  if(!forecast.ownerId||!forecast.foalingFarmId||!farmById.has(forecast.foalingFarmId))
+   throw Error('Foaling forecast has no valid owner or foaling facility for dam '+
+    forecast.damId+' (owner='+String(forecast.ownerId||'')+', facility='+
+    String(forecast.foalingFarmId||'')+')');
   if(!byDate.has(forecast.birthDate))byDate.set(forecast.birthDate,[]);
   byDate.get(forecast.birthDate).push(forecast);total++;
  }
@@ -1014,7 +1025,7 @@ async function prepareLifecycleSeason(store,manifest,runKey,{year,mareRecords,
  const farms=await readPersistent1999Directory(store,manifest);
  const farmById=new Map(farms.map(f=>[f.id,f]));
  const forecast=makeBirthForecastPlan({seed:manifest.seed,year,coverings,
-  mareById,runKey,plannedFoals});
+  mareById,runKey,plannedFoals,farmById});
  const dataWrites=[...coverWrites,...forecast.dataWrites,
   {key:lifecyclePoolKey(runKey,year),value:mareRecords.map(h=>h.id)},
   {key:lifecycleStallionPoolKey(runKey,year),
@@ -1371,8 +1382,8 @@ async function advancePersistent1999IndustryLifecycle(store,manifest,{
    const farm=farmCache.get(forecast.foalingFarmId)||
     directoryById.get(forecast.foalingFarmId);
    if(!dam||dam.status!=='BROODMARE'||dam.ownerId!==forecast.ownerId||
-    dam.foalingFarmId!==forecast.foalingFarmId||!farm)
-    throw Error('Seasonal foal has an orphaned parent, owner, or foaling farm');
+    (dam.careFacilityId||dam.foalingFarmId)!==forecast.foalingFarmId||!farm)
+    throw Error('Seasonal foal has an orphaned parent, owner, or foaling facility');
    farmCache.set(farm.id,farm);
    const sire=activeStallionsById.get(forecast.sireId)||
     await effectiveLifecycleHorse(lifecycleStore,manifest,runKey,
