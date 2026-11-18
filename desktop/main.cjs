@@ -215,13 +215,59 @@ async function runSmoke(win){
     const api=window.WTWCompactCareerManager;
     if(api?.bootstrapBundledCareer){
      const loaded=await api.bootstrapBundledCareer();
-     const view=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
-     return {...loaded,mainUiCareer:view?{
-      worldId:view.worldId,runId:view.runId,date:view.date,
-      worldHorseCount:view.worldHorseCount,personCount:view.personCount,
-      playerHorseCount:view.horseRows?.length||0,
-      operationInventoryCount:view.operationInventoryCount,operationName:view.operationName
-     }:null};
+     const readView=()=>{
+      const view=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+      return view?{
+       worldId:view.worldId,runId:view.runId,date:view.date,
+       worldHorseCount:view.worldHorseCount,personCount:view.personCount,
+       playerHorseCount:view.horseRows?.length||0,
+       operationInventoryCount:view.operationInventoryCount,
+       operationId:view.operationId,operationName:view.operationName
+      }:null;
+     };
+     let view=readView(),gameDate=loaded.gameDate,gameplayAdvance=null;
+     if(!view)throw Error('Bundled career opened without an active operation roster');
+     if(smokePhase==='career-write'){
+      const fromDate=view.date;
+      const advance=document.querySelector('[data-cc-action="advance-test-day"]');
+      if(!advance)throw Error('Kingsmere career day-advance control is unavailable');
+      advance.click();
+      const expectedDate=new Date(Date.parse(fromDate+'T00:00:00Z')+86400000)
+       .toISOString().slice(0,10);
+      const persistence=await import('/1999/engine/fictional-industry-persistence-1999.mjs');
+      const db=await persistence.open1999IndustryDatabase();
+      let saved=null;
+      try{
+       const world=await persistence.reopenPersistent1999Industry(db,{
+        seed:loaded.seed,worldId:loaded.worldId});
+       if(!world||world.status!=='READY')throw Error('The full world did not reopen during Windows gameplay');
+       const saveDeadline=Date.now()+180000;
+       while(Date.now()<saveDeadline){
+        const candidate=await persistence.loadPersistent1999CareerRun(
+         db,world.manifest,loaded.runId);
+        if(candidate?.gameDate===expectedDate&&candidate.changes?.canonicalRun){
+         saved=candidate;break;
+        }
+        await new Promise(resolve=>setTimeout(resolve,300));
+       }
+       if(!saved)throw Error('Kingsmere game-day advance did not reach its durable career save');
+      }finally{db.close()}
+      await api.open();
+      const reopenDeadline=Date.now()+60000;
+      view=readView();
+      while(view?.date!==expectedDate&&Date.now()<reopenDeadline){
+       await new Promise(resolve=>setTimeout(resolve,250));view=readView();
+      }
+      gameDate=saved.gameDate;
+      if(view?.date!==expectedDate||saved.player?.operation_id!=='O-000061'||
+       saved.changes.canonicalRun.stable_horse_ids.length!==view.operationInventoryCount)
+       throw Error('Windows gameplay save did not retain the Kingsmere roster and next date');
+      gameplayAdvance={fromDate,toDate:expectedDate,operationId:saved.player.operation_id,
+       stableHorses:saved.changes.canonicalRun.stable_horse_ids.length,
+       registeredRunners:Object.keys(saved.changes.canonicalRun.runtime.registered_horses.by_id).length,
+       durableSaveVerified:true};
+     }
+     return {...loaded,gameDate,gameplayAdvance,mainUiCareer:view};
     }
     await new Promise(resolve=>setTimeout(resolve,250));
    }
