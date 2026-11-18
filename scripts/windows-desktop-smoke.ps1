@@ -64,6 +64,9 @@ foreach($step in $steps){
  }
  $launcherTimer.Stop()
  $proof=Get-Content -Raw $report|ConvertFrom-Json
+ if($phase -eq "career-write" -and $proof.error -match 'Kingsmere roster and next date: ([^\r\n]+)'){
+  Write-Host "WTW_WINDOWS_CAREER_DIAGNOSTIC $($Matches[1])"
+ }
  if(!$proof.startup -or $proof.startup.totalMs -le 0 -or
     $proof.startup.gameUIReady -le 0 -or
     $proof.startup.gameUIReady -gt $proof.startup.totalMs){
