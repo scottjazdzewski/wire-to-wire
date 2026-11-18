@@ -7,11 +7,17 @@
  */
 import {verifyNamingBriefAgainstGame,screenStoryFirstIdeas} from './horse-naming-model-creator.js';
 import {foalingEventNamingBrief,auditPopulationNamingResults,POPULATION_NAMING_SCHEMA,POPULATION_NAMING_BATCH_SIZE} from './horse-naming-population-planner.js';
+import {validateNamingFeedback,excludedNamingFeedbackNames,rankNamingCandidates}
+ from './horse-naming-feedback-v489.js';
 
 export const LOCAL_HORSE_NAMING_SCHEMA='WTW_LOCAL_HORSE_NAMING_V485';
 // Freeze behavioral revision per named cohort when game foaling becomes save-backed.
 // This V486 marker changes selection and fail-closed audit, not the V485 wire schema.
-export const LOCAL_HORSE_NAMING_ALGORITHM_REVISION='WTW_LOCAL_NAMING_RULES_V488';
+export const LOCAL_HORSE_NAMING_ALGORITHM_REVISION='WTW_LOCAL_NAMING_RULES_V489';
+// Frozen genesis revisions are part of the persisted 1999 world identity.
+// Future editor preference/ranker versions MUST NOT relabel existing horses.
+export const OPENING_PROVISIONAL_HORSE_NAMING_REVISION='WTW_LOCAL_NAMING_RULES_V488:OPENING_PROVISIONAL_V1';
+export const OPENING_INDUSTRY_HORSE_NAMING_REVISION='WTW_LOCAL_NAMING_RULES_V488:OPENING_INDUSTRY_V1';
 const norm=x=>String(x||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('en-US').replace(/[^a-z0-9]/g,'');
 const clean=x=>String(x||'').trim();
 const fnv=s=>{let h=2166136261;for(const x of String(s)){h^=x.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
@@ -156,7 +162,7 @@ export function createLocalStoryIdeas(brief,{count=8,attempt=0,scanAll=false}={}
 }
 
 /** Entirely local generation. Repeated calls with same horse/seed are identical. */
-export function generateLocalStoryFirstHorseNames({world,state,horse,brief,count=8,attempt=0,recentNames=[],reservedNames=[],issuedNames=[],additionalReviewedNames=[]}={}){
+export function generateLocalStoryFirstHorseNames({world,state,horse,brief,count=8,attempt=0,recentNames=[],reservedNames=[],issuedNames=[],additionalReviewedNames=[],nameFeedback=null,direction=''}={}){
  if(!Number.isInteger(count)||count<1||count>8||!Number.isInteger(attempt)||attempt<0||attempt>1_000_000)
   throw Error('Invalid local naming generation controls');
  const verified=verifyNamingBriefAgainstGame({world,state,horse,brief});
@@ -170,7 +176,9 @@ export function generateLocalStoryFirstHorseNames({world,state,horse,brief,count
   status:'HOLD_NO_VERIFIED_NAMING_MOTIF',screened:[],readyForIndependentEditor:0,held:0,
   algorithmRevision:LOCAL_HORSE_NAMING_ALGORITHM_REVISION,
   requestCount:0,creditsUsed:0,gameWrites:0,registrationStatus:'NOT_RELEASED'};
- const reviewed=new Set([...recentNames,...reservedNames,...issuedNames,...additionalReviewedNames].map(norm));
+ const learned=nameFeedback===null?null:validateNamingFeedback(nameFeedback);
+ const learnedExclusions=learned?excludedNamingFeedbackNames(learned):[];
+ const reviewed=new Set([...recentNames,...reservedNames,...issuedNames,...additionalReviewedNames,...learnedExclusions].map(norm));
  // The shared quality gate correctly screens at most eight proposals per call.
  // V485 discarded all later authored alternatives whenever early ideas collided
  // with a prior name. Review bounded pages of eight, never bypass the gate.
@@ -180,12 +188,14 @@ export function generateLocalStoryFirstHorseNames({world,state,horse,brief,count
   const page=screenStoryFirstIdeas({world,state,brief:verified,
    rawIdeas:suggestions.slice(index,index+pageSize),
    recentNames:[...recentNames,...previouslyProposed].slice(-60),
-   reservedNames,issuedNames,additionalReviewedNames});
+   reservedNames,issuedNames,additionalReviewedNames:[...additionalReviewedNames,...learnedExclusions]});
   held+=page.held;
   screened.push(...page.screened);
   previouslyProposed.push(...page.screened.map(row=>row.name));
  }
- const rows=screened.filter(x=>!reviewed.has(norm(x.name)));
+ const eligible=screened.filter(x=>!reviewed.has(norm(x.name)));
+ const rows=learned?rankNamingCandidates(eligible.map(row=>({...row,
+  originMotif:suggestions.find(x=>x.name===row.name)?.motifId||''})),learned,{direction}):eligible;
  const selected=[],usedShapes={single:0,two:0,phrase:0},usedMotifs=new Set();
  for(const r of rows){
   if(r.status!=='AWAITING_INDEPENDENT_EDITOR')continue;
@@ -214,15 +224,17 @@ export function generateLocalStoryFirstHorseNames({world,state,horse,brief,count
  * Source must be an exact signed-in-world FOALING_EVENT brief made by the game
  * planner. This NEVER adds horses or names and uses no Worker/D1/API requests.
  */
-export function generateLocalPopulationNamingBatch({batch,existingNames=[],attempt=0}={}){
+export function generateLocalPopulationNamingBatch({batch,existingNames=[],attempt=0,nameFeedback=null,direction=''}={}){
  if(batch?.schema!==POPULATION_NAMING_SCHEMA||!Array.isArray(batch.items)||
   !batch.items.length||batch.items.length>POPULATION_NAMING_BATCH_SIZE||
   !Array.isArray(existingNames)||!Array.isArray(batch.recentNames||[]))
   throw Error('Invalid local population naming batch');
  // The full registry is an input from the single game-save authority. Recent
  // fatigue context is additional, never a substitute for all-time uniqueness.
+ const learned=nameFeedback===null?null:validateNamingFeedback(nameFeedback);
+ const learnedExclusions=learned?excludedNamingFeedbackNames(learned):[];
  const priorNames=[...existingNames,...(batch.recentNames||[])];
- const known=[...priorNames],knownKeys=new Set(known.map(norm));
+ const known=[...priorNames],knownKeys=new Set([...known,...learnedExclusions].map(norm));
  const results=[],briefs=[],seenHorses=new Set();
  for(const item of batch.items){
   const brief=item?.brief;
@@ -249,14 +261,16 @@ export function generateLocalPopulationNamingBatch({batch,existingNames=[],attem
   // rebuilding a large all-time name registry for every individual proposal.
   const {suggestions}=createLocalStoryIdeas(trusted,{count:8,attempt,scanAll:true});
   const viable=suggestions.filter(s=>!knownKeys.has(norm(s.name)));
+  const ranked=learned?rankNamingCandidates(viable.map(s=>({...s,
+   originMotif:s.motifId})),learned,{direction}):viable;
   const preview=auditPopulationNamingResults({
-   results:[{horseId:trusted.horseId,candidates:viable}],
+   results:[{horseId:trusted.horseId,candidates:ranked}],
    briefs:[trusted],existingNames:[]
   });
   const candidates=[];
-  for(let i=0;i<viable.length&&candidates.length<2;i++){
+  for(let i=0;i<ranked.length&&candidates.length<2;i++){
    if(preview.screened[0].proposals[i].status!=='READY_FOR_INDEPENDENT_EDITOR')continue;
-   const proposal=viable[i],key=norm(proposal.name);
+   const proposal=ranked[i],key=norm(proposal.name);
    if(!key||knownKeys.has(key))continue;
    candidates.push({...proposal,origin:'ON_DEVICE_FOALING_EVENT',
     status:'NEEDS_INDEPENDENT_EDITOR'});
@@ -319,8 +333,7 @@ export function generateProvisional1999HorseNames({
   reserved.add(key);names.push(candidate);
  }
  if(names.length!==horseCount)throw Error('Provisional name inventory insufficient');
- return {names,algorithmRevision:LOCAL_HORSE_NAMING_ALGORITHM_REVISION+
-  ':OPENING_PROVISIONAL_V1',provisional:true,editable:true,
+ return {names,algorithmRevision:OPENING_PROVISIONAL_HORSE_NAMING_REVISION,provisional:true,editable:true,
   approvedForRegistration:false,source:'CURATED_LOCAL_VOCABULARY_NO_FOALING_EVIDENCE'};
 }
 
@@ -343,7 +356,7 @@ export function generateProvisional1999IndustryNameRoster({
  const baseCount=Math.min(horseCount,70000);
  const base=generateProvisional1999HorseNames({seed,horseCount:baseCount,protectedNames});
  if(horseCount===baseCount)return {...base,
-  algorithmRevision:LOCAL_HORSE_NAMING_ALGORITHM_REVISION+':OPENING_INDUSTRY_V1'};
+  algorithmRevision:OPENING_INDUSTRY_HORSE_NAMING_REVISION};
  const names=[...base.names],reserved=new Set([...protectedNames,...names].map(norm));
  const words=[...new Set(VOICES.flatMap(v=>[...v.names,...(V488_WHOLE_NAMES[v.id]||[])]).flatMap(
   n=>n.split(/\s+/).filter(w=>w.length>=3&&w.length<=10)))]
@@ -363,8 +376,7 @@ export function generateProvisional1999IndustryNameRoster({
  }
  if(names.length!==horseCount)
   throw Error('Opening industry horse-name vocabulary exhausted');
- return {names,algorithmRevision:LOCAL_HORSE_NAMING_ALGORITHM_REVISION+
-  ':OPENING_INDUSTRY_V1',provisional:true,editable:true,
+ return {names,algorithmRevision:OPENING_INDUSTRY_HORSE_NAMING_REVISION,provisional:true,editable:true,
   approvedForRegistration:false,
   source:'V488_LOCAL_VOICES_PROVISIONAL_OPENING_WORLD'};
 }

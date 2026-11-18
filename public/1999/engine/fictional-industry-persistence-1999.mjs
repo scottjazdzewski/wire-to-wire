@@ -15,7 +15,7 @@ import {plan1999IndustryStaffing,generate1999StaffingBatches,
  INDUSTRY_PERSON_BIOGRAPHY_REVISION}
  from './fictional-industry-staffing-1999.mjs';
 import {createPersonnelNameRoster} from './personnel-name-engine.mjs';
-import {LOCAL_HORSE_NAMING_ALGORITHM_REVISION} from '../game/horse-naming-local-v485.js';
+import {OPENING_INDUSTRY_HORSE_NAMING_REVISION} from '../game/horse-naming-local-v485.js';
 import {connect1999Horse,connect1999Person,connect1999DirectoryEntity,
  validate1999GraphBatch,validate1999IndustryReferences,INDUSTRY_GRAPH_SCHEMA}
  from './fictional-industry-graph-1999.mjs';
@@ -277,7 +277,9 @@ export async function createPersistent1999Industry({
  const totalHorses=count1999Registry(plan);
  if(targetOpeningHorses!==null&&totalHorses!==targetOpeningHorses)
   throw Error('Persistent industry size differs from selected world size');
- const horseNamingRevision=LOCAL_HORSE_NAMING_ALGORITHM_REVISION+':OPENING_INDUSTRY_V1';
+ // Never compare an established 1999 world to a newer *editorial* naming
+ // revision. Opening provisional identities use their frozen genesis version.
+ const horseNamingRevision=OPENING_INDUSTRY_HORSE_NAMING_REVISION;
  const totalPeople=Object.values(staffing.counts).reduce((a,b)=>a+b,0);
  if(existing){
   if(existing.schema!==PERSISTENT_INDUSTRY_SCHEMA||

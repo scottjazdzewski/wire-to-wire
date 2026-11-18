@@ -104,6 +104,8 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
  assert.ok(first[0].ratings.speed>=15);
  assert.ok(first[0].name&&first[0].namingStatus==='PROVISIONAL_EDITABLE_1999_OPENING');
  assert.ok(a.horseNamingRevision.includes('OPENING_INDUSTRY_V1'));
+ assert.equal(a.horseNamingRevision,'WTW_LOCAL_NAMING_RULES_V488:OPENING_INDUSTRY_V1',
+  'an existing V488 career must remain reopenable after naming preferences upgrade');
  const namedAdult=await findPersistent1999Horse(store,a,
   'H-FICTIONAL-1999-THREEYEAROLDRUNNERS-0000001');
  assert.ok(namedAdult.name&&namedAdult.namingRevision===a.horseNamingRevision);
