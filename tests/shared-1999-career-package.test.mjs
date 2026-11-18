@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 import {packShared1999Career,unpackShared1999Career,sameShared1999WorldManifest,
- sameShared1999WorldIdentity}
+ sameShared1999WorldIdentity,migrateShared1999CareerRunWorldReference}
  from '../public/1999/engine/shared-1999-career-package.mjs';
 
 globalThis.crypto??=webcrypto;
@@ -51,4 +51,26 @@ test('world checkpoint identity survives generator metadata updates but rejects 
  assert.equal(sameShared1999WorldIdentity(manifest,{...manifest,seed:19990102}),false);
  assert.equal(sameShared1999WorldIdentity(manifest,{...manifest,personCount:75725}),false);
  assert.equal(sameShared1999WorldIdentity(manifest,{...manifest,targetOpeningHorses:325000}),false);
+});
+
+
+test('legacy shared career run reference advances only after exact snapshot verification',()=>{
+ const oldSha='a'.repeat(64),newSha='b'.repeat(64),snapshotId='WTW-PERSISTED-1999-19990101-test-300000';
+ const oldRun={...run,world_ref:{snapshot_id:snapshotId,sha256:oldSha}};
+ const oldRecord={...careerRecord,changes:{...careerRecord.changes,canonicalRun:oldRun}};
+ const migrated=migrateShared1999CareerRunWorldReference(oldRecord,{
+  expectedSnapshotSha256:oldSha,currentAuthority:{snapshot_id:snapshotId,sha256:newSha}});
+ assert.deepEqual(migrated.changes.canonicalRun.world_ref,
+  {snapshot_id:snapshotId,sha256:newSha});
+ assert.deepEqual({...migrated.changes.canonicalRun,world_ref:oldRun.world_ref},oldRun);
+ assert.equal(oldRecord.changes.canonicalRun.world_ref.sha256,oldSha,
+  'source checkpoint remains unchanged');
+ assert.throws(()=>migrateShared1999CareerRunWorldReference(oldRecord,{
+  expectedSnapshotSha256:'c'.repeat(64),
+  currentAuthority:{snapshot_id:snapshotId,sha256:newSha}}),
+  /verified legacy snapshot/);
+ assert.throws(()=>migrateShared1999CareerRunWorldReference(oldRecord,{
+  expectedSnapshotSha256:oldSha,
+  currentAuthority:{snapshot_id:'WTW-PERSISTED-1999-OTHER',sha256:newSha}}),
+  /snapshot identity changed/);
 });

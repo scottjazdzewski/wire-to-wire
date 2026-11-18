@@ -22,7 +22,8 @@ import {dispatchGameCommand} from '/1999/game/kernel.js';
 import {gameRaceProgram,supported1999RaceClass,raceEligibility}
  from '/1999/game/racing-1999.js';
 import {validateGameRun} from '/1999/game/state.js';
-import {packShared1999Career,unpackShared1999Career,sameShared1999WorldIdentity}
+import {packShared1999Career,unpackShared1999Career,sameShared1999WorldIdentity,
+ migrateShared1999CareerRunWorldReference}
  from '/1999/engine/shared-1999-career-package.mjs?rev=wtw-shared-career-world-identity-v2';
 import {projectCanonical1999RaceRows,renderCanonical1999RaceFile}
  from '/next/1999-canonical-career-race-files.mjs';
@@ -437,6 +438,8 @@ async function importSharedCareerFile(file,{preserveExistingProgress=false}={}){
     operationId:checkpoint.careerRecord.player.operation_id,
     playerRole:checkpoint.careerRecord.player.role,
     involvement:checkpoint.careerRecord.player.involvement});
+  let importedCareerRecord=checkpoint.careerRecord;
+  let checkpointRun=importedCareerRecord.changes.canonicalRun;
   if(career.world.authority.sha256!==wanted.snapshotSha256){
    const supportsFoundingRelationshipMigration=
     fullIndustryManifest.foundingRelationshipRevision===1&&
@@ -454,27 +457,30 @@ async function importSharedCareerFile(file,{preserveExistingProgress=false}={}){
      wanted.snapshotSha256+' but generated '+career.world.authority.sha256+
      (supportsFoundingRelationshipMigration?' (legacy migration projection '+
       legacySnapshotSha256+')':''));
+   importedCareerRecord=migrateShared1999CareerRunWorldReference(importedCareerRecord,{
+    expectedSnapshotSha256:wanted.snapshotSha256,
+    currentAuthority:career.world.authority});
+   checkpointRun=importedCareerRecord.changes.canonicalRun;
   }
-  const checkpointRun=checkpoint.careerRecord.changes.canonicalRun;
   validateGameRun(checkpointRun,career.world);
   const prior=await loadPersistent1999CareerRun(db,fullIndustryManifest,
-   checkpoint.careerRecord.runId);
+   importedCareerRecord.runId);
   const preservedRun=preserveExistingProgress&&prior?.changes?.canonicalRun?
    prior.changes.canonicalRun:null;
   if(preservedRun)validateGameRun(preservedRun,career.world);
-  if(prior&&JSON.stringify(prior)!==JSON.stringify(checkpoint.careerRecord)&&
+  if(prior&&JSON.stringify(prior)!==JSON.stringify(importedCareerRecord)&&
    !preservedRun&&
    !window.confirm('This test career already has different progress. Replace only that test career with the imported checkpoint?'))
    throw Error('Import cancelled; current career was not changed');
-  if((!prior||JSON.stringify(prior)!==JSON.stringify(checkpoint.careerRecord))&&
+  if((!prior||JSON.stringify(prior)!==JSON.stringify(importedCareerRecord))&&
    !preservedRun)
    await savePersistent1999CareerRun(db,fullIndustryManifest,{
-    runId:checkpoint.careerRecord.runId,gameDate:checkpoint.careerRecord.gameDate,
-    player:checkpoint.careerRecord.player,changes:checkpoint.careerRecord.changes,
-    version:checkpoint.careerRecord.version});
+    runId:importedCareerRecord.runId,gameDate:importedCareerRecord.gameDate,
+    player:importedCareerRecord.player,changes:importedCareerRecord.changes,
+    version:importedCareerRecord.version});
   const confirmed=await loadPersistent1999CareerRun(db,fullIndustryManifest,
-   checkpoint.careerRecord.runId);
-  const expectedStoredRecord=preservedRun?prior:checkpoint.careerRecord;
+   importedCareerRecord.runId);
+  const expectedStoredRecord=preservedRun?prior:importedCareerRecord;
   if(JSON.stringify(confirmed)!==JSON.stringify(expectedStoredRecord))
    throw Error('Imported career did not survive IndexedDB read-back');
   const run=preservedRun||checkpointRun;

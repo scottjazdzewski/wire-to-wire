@@ -25,6 +25,27 @@ export function sameShared1999WorldIdentity(a,b){
   a?.targetOpeningHorses===b?.targetOpeningHorses&&
   a?.horseCount===b?.horseCount&&a?.personCount===b?.personCount;
 }
+/**
+ * Rebind a portable career run only after the importer has independently
+ * verified its exact legacy world projection. The canonical snapshot ID must
+ * remain stable; only the verified record fingerprint may advance.
+ */
+export function migrateShared1999CareerRunWorldReference(careerRecord,{
+ expectedSnapshotSha256,currentAuthority
+}={}){
+ const run=careerRecord?.changes?.canonicalRun;
+ if(!run||! /^[a-f0-9]{64}$/.test(expectedSnapshotSha256||'')||
+  run.world_ref?.sha256!==expectedSnapshotSha256)
+  throw Error('Career run does not reference the verified legacy snapshot');
+ if(typeof currentAuthority?.snapshot_id!=='string'||
+  !/^[a-f0-9]{64}$/.test(currentAuthority?.sha256||'')||
+  run.world_ref.snapshot_id!==currentAuthority.snapshot_id)
+  throw Error('Shared career snapshot identity changed; explicit world migration is required');
+ const migratedRun={...run,world_ref:{snapshot_id:currentAuthority.snapshot_id,
+  sha256:currentAuthority.sha256}};
+ return {...careerRecord,changes:{...careerRecord.changes,
+  canonicalRun:migratedRun}};
+}
 async function sha256(bytes){
  if(!globalThis.crypto?.subtle)throw Error('Web Crypto is required for career checkpoint integrity');
  const hash=new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256',bytes));
