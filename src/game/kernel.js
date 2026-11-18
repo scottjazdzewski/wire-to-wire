@@ -37,6 +37,31 @@ const DAILY_DETAIL_EVENT_KINDS=new Set([
  'FACILITY_OPERATING_DAY','TRAINER_MANAGEMENT_REQUEST_EXPIRED',
  'TRAINER_DEPARTURE_WARNING','TRAINER_DEPARTURE_WARNING_CLEARED'
 ]);
+const DAILY_COMPACT_EVENT_KINDS=new Set([
+ 'OWNER_DAILY_STRATEGY','TRAINER_DAILY_DECISIONS',
+ 'OWNER_TRAINER_RELATIONSHIP_PRESSURE','HORSE_CARE_UNFUNDED','HORSE_CARE_DAY'
+]);
+function compactDailyEventDetails(kind,details){
+ if(kind==='TRAINER_DAILY_DECISIONS')
+  return {trainer_id:details.trainer_id,count:details.count,reasons:details.reasons};
+ if(kind==='OWNER_DAILY_STRATEGY')
+  return {owner_id:details.owner_id,style:details.style,
+   causal_scope:details.causal_scope,decisions:(details.decisions||[]).map(d=>({
+    horse_id:d.horse_id,reason:d.reason,feed:d.feed,care:d.care,
+    budget_minor:d.budget_minor}))};
+ if(kind==='OWNER_TRAINER_RELATIONSHIP_PRESSURE')
+  return {owner_id:details.owner_id,trainer_id:details.trainer_id,
+   unpaid_horse_days:details.unpaid_horse_days,
+   owner_trust:details.owner_trust,trainer_support:details.trainer_support};
+ if(kind==='HORSE_CARE_UNFUNDED')
+  return {horse_id:details.horse_id,owner_id:details.owner_id,
+   needed_minor:details.needed_minor,balance_minor:details.balance_minor};
+ if(kind==='HORSE_CARE_DAY')
+  return {horse_id:details.horse_id,owner_id:details.owner_id,
+   trainer_id:details.trainer_id,site_id:details.site_id,
+   workout:details.workout,paid_minor:details.paid_minor};
+ return details;
+}
 const CARE_LEDGER_ROLLUP_KINDS=new Set([
  'HORSE_CARE_OWNER_PAYMENT','HORSE_CARE_SITE_AND_TRAINER_INCOME',
  'HORSE_CARE_TRAINER_REMITTANCE','HORSE_CARE_TRAINER_EARNINGS',
@@ -117,17 +142,14 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
   const dailyEventCounts=Object.create(null);
   const emit = (kind, details) => {
     const summarize=c.type==='ADVANCE_DAY'&&DAILY_DETAIL_EVENT_KINDS.has(kind);
-    const event=appendLog(next,c.id,kind,details,!summarize);
-    if(c.type==='ADVANCE_DAY'&&kind==='HORSE_CARE_UNFUNDED'){
-     // Keep the durable trigger and canonical IDs, while the complete detail
-     // remains in command output and the horse's saved care history.
-     next.event_log.push({...event,details:{
-      horse_id:details?.horse_id??null,owner_id:details?.owner_id??null,
-      needed_minor:details?.needed_minor??null,balance_minor:details?.balance_minor??null
-     }});
+    const event=appendLog(next,c.id,kind,details,false);
+    if(!summarize)next.event_log.push(event);
+    else{
+     dailyEventCounts[kind]=(dailyEventCounts[kind]||0)+1;
+     if(DAILY_COMPACT_EVENT_KINDS.has(kind))
+      next.event_log.push({...event,details:compactDailyEventDetails(kind,details)});
     }
     output.push(event);
-    if(summarize)dailyEventCounts[kind]=(dailyEventCounts[kind]||0)+1;
     return event;
   };
   if (c.type === 'SCHEDULE_EVENT') {
