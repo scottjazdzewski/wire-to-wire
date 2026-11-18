@@ -209,7 +209,7 @@ async function runSmoke(win){
  if(last.origin!==ORIGIN)throw Error('Application loaded an unexpected origin: '+last.origin);
  markStartup('gameUIReady');
  if(smokePhase==='career-write'||smokePhase==='career-read'){
-  const career=await win.webContents.executeJavaScript(`(async()=>{
+  const career=await win.webContents.executeJavaScript(`(async()=>{\n   const smokePhase=${JSON.stringify(smokePhase)};
    const deadline=Date.now()+300000;
    while(Date.now()<deadline){
     const api=window.WTWCompactCareerManager;
