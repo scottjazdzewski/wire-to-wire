@@ -24,7 +24,7 @@ test('the desktop bundles V10 and preserves V9, V8 plus the frozen May 29 refere
  assert.equal(checkpoint.world.personCount,75705);
  assert.match(checkpoint.world.snapshotSha256,/^[a-f0-9]{64}$/);
  assert.equal(checkpoint.careerRecord.runId,'WTW-RUN-1999-19990101-SIZE-300000-OP-O-000061');
- assert.match(checkpoint.careerRecord.gameDate,/^1999-\\d{2}-\\d{2}$/);
+ assert.match(checkpoint.careerRecord.gameDate,/^1999-\d{2}-\d{2}$/);
  assert.ok(checkpoint.careerRecord.changes.canonicalRun.stable_horse_ids.length>=100,
   'V10 checkpoint must preserve Kingsmere’s full operation roster');
  const officialRaces=Object.values(checkpoint.careerRecord.changes.canonicalRun.runtime.races||{})
