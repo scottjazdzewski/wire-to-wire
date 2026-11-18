@@ -191,12 +191,13 @@ function modal(){
 }
 let fullIndustryManifest=null;
 let activeWorldCareer=null;
+let careerWorldViewEpoch=0;
 /** Working-career changes apply only after a durable IndexedDB read-back. */
 function hydrateCareerWorldEdits(career,record){
  const edits=record?.changes?.worldEdits??createCareerWorldEdits();
  applyCareerWorldEdits(career.world,edits,{run:career.run});
  career.worldEdits=edits;
- career.editVersion=0;
+ career.editVersion=++careerWorldViewEpoch;
  return career;
 }
 async function editSavedWorldEntity({kind,id,patch}={}){
@@ -236,7 +237,7 @@ async function editSavedWorldEntity({kind,id,patch}={}){
   career.run=nextRun;
   // The generated world is never written as a competing world database.
   applyCareerWorldEdits(career.world,edits,{run:career.run});
-  career.worldEdits=edits;career.editVersion=(career.editVersion||0)+1;
+  career.worldEdits=edits;career.editVersion=++careerWorldViewEpoch;
   liveWorldHorseDirectory?.invalidate();
   Object.values(liveWorldEntityDirectories||{}).forEach(d=>d.invalidate());
   publishCareerReadModel();
