@@ -89,11 +89,24 @@ foreach($step in $steps){
      !$career.snapshotSha256 -or !$career.gameDate){
    throw "Packaged EXE did not load the exact shared 300k world and career: $(Get-Content -Raw $report)"
   }
-  if($phase -eq "career-write"){$careerWriteProof=$proof}
+  if($phase -eq "career-write"){
+   $advance=$career.gameplayAdvance
+   if(!$advance -or !$advance.durableSaveVerified -or
+      $advance.operationId -ne "O-000061" -or
+      $advance.fromDate -eq $advance.toDate -or
+      $career.gameDate -ne $advance.toDate -or
+      $advance.stableHorses -ne 1736 -or
+      $career.mainUiCareer.date -ne $advance.toDate){
+    throw "Packaged EXE did not advance and durably save the playable Kingsmere career: $(Get-Content -Raw $report)"
+   }
+   $careerWriteProof=$proof
+  }
   if($phase -eq "career-read"){
    if(!$careerWriteProof -or $career.gameDate -ne $careerWriteProof.careerBootstrap.gameDate -or
       $career.snapshotSha256 -ne $careerWriteProof.careerBootstrap.snapshotSha256 -or
-      $proof.careerReopen -ne "VERIFIED"){
+      $proof.careerReopen -ne "VERIFIED" -or
+      $career.mainUiCareer.date -ne $career.gameDate -or
+      $career.mainUiCareer.operationInventoryCount -ne 1736){
     throw "Packaged career did not reopen unchanged after a real process restart"
    }
   }
