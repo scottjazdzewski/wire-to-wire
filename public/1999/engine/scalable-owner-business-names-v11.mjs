@@ -78,6 +78,37 @@ export function proposeScalable1999OwnerBusinessName({
  const salt='v11-owner:'+index+':'+attempt;
  const root=pool[hash(seed,salt+':regional-root')%pool.length];
  const pattern=hash(seed,salt+':business-style')%8;
+ // Later career generations protect every prior owner name. At a large
+ // roster size the original one-root templates can be genuinely exhausted,
+ // even with 3,072 attempts. Expand deterministically into geographic
+ // directional qualifiers and only then two distinct locality anchors.
+ // Neither form uses synthetic serial numbers, false partners or horse IDs.
+ if(attempt>=640){
+  const directions=['North','South','East','West','Upper','Lower','High',
+   'Little','New','Old','Far','Inner','Outer','Western','Eastern'];
+  const directional=directions[hash(seed,salt+':direction')%directions.length];
+  const place=directional+' '+root;
+  if(attempt<1792){
+   if(pattern===0&&full)return full+' '+place+' Racing';
+   if(pattern===1)return family+' '+place+' Thoroughbreds';
+   if(pattern===2)return place+' '+family+' Stable';
+   if(pattern===3)return family+' '+place+' Bloodstock';
+   if(pattern===4&&full)return full+' '+place+' Stable';
+   if(pattern===5)return place+' '+family+' Racing';
+   if(pattern===6)return family+' '+place+' Racing Stable';
+   return place+' '+family+' Stables';
+  }
+  const other=pool[hash(seed,salt+':second-locality')%pool.length];
+  const pair=other===root?place:root+' '+other;
+  if(pattern===0&&full)return full+' '+pair+' Racing';
+  if(pattern===1)return pair+' '+family+' Thoroughbreds';
+  if(pattern===2)return family+' '+pair+' Stables';
+  if(pattern===3)return pair+' '+family+' Bloodstock';
+  if(pattern===4&&full)return full+' '+pair+' Stables';
+  if(pattern===5)return family+' '+pair+' Racing';
+  if(pattern===6)return pair+' '+family+' Racing Stable';
+  return family+' '+pair+' Stable';
+ }
  if(pattern===0&&full)return full+' '+root+' Racing';
  if(pattern===1)return family+' '+root+' Thoroughbreds';
  if(pattern===2)return root+' '+family+' Stables';
