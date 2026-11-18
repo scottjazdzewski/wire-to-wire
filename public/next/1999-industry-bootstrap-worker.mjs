@@ -9,7 +9,7 @@ import {TRACK_PROGRAM_1999} from '/next/1999-track-program.mjs';
 import {createFictionalWorldNameEngine}
  from '/1999/engine/fictional-world-name-engine.mjs';
 import {plan1999Ecosystem} from '/1999/engine/fictional-industry-ecosystem-1999.mjs';
-import {assessFictionalOwnerCapacity,planFictionalOwnerPortfolios}
+import {assessFictionalOwnerCapacity,fictionalOwnerPortfolioTier}
  from '/1999/engine/fictional-owner-portfolio-planner.mjs';
 
 async function industryDirectories(seed,targetOpeningHorses=null){
@@ -133,16 +133,14 @@ async function industryDirectories(seed,targetOpeningHorses=null){
   principalOwnerId:org.principalOwnerId||null,
   leadershipPeopleIds:org.leadershipPeopleIds||[],sourceStatus:org.displayNameStatus||null
  })),...farms];
- const rawOwners=Array.from({length:ownerCount},(_,i)=>({id:ownerIdAt(i)}));
- const tierPlan=planFictionalOwnerPortfolios({seed,owners:rawOwners,horseCount:0});
- const ownerCircuitOffsets=ownerCountByCircuit.map((_,index)=>
+const ownerCircuitOffsets=ownerCountByCircuit.map((_,index)=>
   ownerCountByCircuit.slice(0,index).reduce((sum,count)=>sum+count,0));
  const generatedOwners=tracks.flatMap((t,trackIndex)=>Array.from(
   {length:ownerCountByCircuit[trackIndex]},(_,i)=>{
   const globalIndex=ownerCircuitOffsets[trackIndex]+i;
   const named=generated.owners[globalIndex];
   return {id:ownerIdAt(globalIndex),name:named.name,location:t.location,
-   homeTrackId:t.id,portfolioTier:tierPlan.ownerTier[globalIndex],
+   homeTrackId:t.id,portfolioTier:fictionalOwnerPortfolioTier(seed,ownerIdAt(globalIndex)),
   portfolioModel:'WTW_FICTIONAL_OWNER_PORTFOLIOS_V10',
    operatingRoles:['LEGAL_OWNER',named.ownershipArchetype||'PRIVATE_OWNER'],
    ownershipArchetype:named.ownershipArchetype,
