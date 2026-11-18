@@ -33,6 +33,10 @@ import {createCareerWorldEdits,addCareerWorldEdit,applyCareerWorldEdits}
  from '/next/1999-career-world-edits.mjs';
 import {buildWorldEditReviewExport}
  from '/next/1999-world-edit-review-export.mjs';
+import {createNamingFeedback,validateNamingFeedback}
+ from '/1999/game/horse-naming-feedback-v489.js';
+import {planV10SavedHorseNamingDecision,validateRunWithSavedWorldEdits}
+ from '/next/1999-saved-career-horse-naming.mjs';
 
 const DB_NAME='WireToWireClean1999CareersV2';
 const MAX_SLOTS=60,MAX_TOTAL_BYTES=512*1024*1024;
@@ -197,6 +201,8 @@ function hydrateCareerWorldEdits(career,record){
  const edits=record?.changes?.worldEdits??createCareerWorldEdits();
  applyCareerWorldEdits(career.world,edits,{run:career.run});
  career.worldEdits=edits;
+ career.namingFeedback=validateNamingFeedback(
+  record?.changes?.namingFeedback??createNamingFeedback());
  career.editVersion=++careerWorldViewEpoch;
  return career;
 }
@@ -246,6 +252,87 @@ async function editSavedWorldEntity({kind,id,patch}={}){
   Object.values(liveWorldEntityDirectories||{}).forEach(d=>d.invalidate());
   publishCareerReadModel();
   return {kind,id,recordVersion:saved.version,editVersion:career.editVersion};
+ }finally{db.close()}
+}
+/**
+ * The V10 Naming Desk uses the SAME full-world career commit as all other
+ * permanent edits. KEEP/REJECT save feedback; CHOOSE saves that feedback and
+ * applies the player's name to this horse in one durable career transaction.
+ */
+function getSavedCareerNamingFeedback(){
+ const career=activeWorldCareer;
+ if(!career?.run||!/^WTW1999FullIndustry-COHORTS-V6-OWNER-V10-/.test(
+  career.manifest?.worldId||''))return null;
+ return structuredClone(career.namingFeedback??createNamingFeedback());
+}
+async function commitSavedCareerHorseNamingPreference(payload){
+ const career=activeWorldCareer;
+ if(!career?.run||!career.manifest||
+  !/^WTW1999FullIndustry-COHORTS-V6-OWNER-V10-/.test(career.manifest.worldId))
+  throw Error('Open a saved V10 industry owner career before naming a horse');
+ if(career.run.run_id===canonicalRunId(career.manifest))
+  throw Error('The frozen shared baseline cannot be renamed; open an owner career');
+ const prepared=planV10SavedHorseNamingDecision({
+  world:career.world,run:career.run,
+  worldEdits:career.worldEdits,namingFeedback:career.namingFeedback,
+  payload
+ });
+ const nextRun=structuredClone(career.run);
+ if(prepared.identityUpdated){
+  for(const horse of Object.values(nextRun.runtime?.registered_horses?.by_id||{})){
+   if(horse.world_source_horse_id===prepared.horseId||
+    horse.horse_id===prepared.horseId){
+    horse.name=payload.name;
+    horse.registered_name=payload.name;
+   }
+  }
+ }
+ // Check entire game-run validity before acquiring a write lock. An edited
+ // source name must be checked against its actual career overlay, not the
+ // untouched canonical 1999 source horse.
+ validateRunWithSavedWorldEdits(career.world,nextRun,prepared.edits,validateGameRun);
+ const db=await open1999IndustryDatabase();
+ try{
+  const prior=await loadPersistent1999CareerRun(db,career.manifest,nextRun.run_id);
+  if(!prior?.changes?.canonicalRun)
+   throw Error('Saved career missing; start and save an owner career first');
+  if(prior.gameDate!==nextRun.clock.date||
+   prior.changes.canonicalRun.revision!==career.run.revision)
+   throw Error('The career changed while naming. Reopen it and retry');
+  if(JSON.stringify(prior.changes.namingFeedback??createNamingFeedback())!==
+     JSON.stringify(career.namingFeedback??createNamingFeedback()))
+   throw Error('Another naming decision was saved; reload before choosing');
+  const saved=await savePersistent1999CareerRun(db,career.manifest,{
+   runId:nextRun.run_id,gameDate:nextRun.clock.date,player:nextRun.player,
+   changes:{...prior.changes,canonicalRun:nextRun,
+    worldEdits:prepared.edits,namingFeedback:prepared.feedback},
+   version:Math.max(prior.version+1,nextRun.revision+1)
+  });
+  const verified=await loadPersistent1999CareerRun(db,career.manifest,nextRun.run_id);
+  if(verified?.version!==saved.version||
+   JSON.stringify(verified.changes.namingFeedback)!==
+    JSON.stringify(prepared.feedback)||
+   JSON.stringify(verified.changes.worldEdits)!==
+    JSON.stringify(prepared.edits))
+   throw Error('Horse naming decision did not survive durable read-back');
+  // No in-memory success until the single authoritative career commit
+  // succeeds. Existing player name changes take precedence over base records.
+  career.run=nextRun;
+  if(prepared.identityUpdated)
+   applyCareerWorldEdits(career.world,prepared.edits,{run:career.run});
+  career.worldEdits=prepared.edits;
+  career.namingFeedback=prepared.feedback;
+  career.editVersion=++careerWorldViewEpoch;
+  if(prepared.identityUpdated){
+   liveWorldDirectorySource=null;
+   liveWorldHorseDirectory?.invalidate();
+   Object.values(liveWorldEntityDirectories||{}).forEach(d=>d.invalidate());
+  }
+  publishCareerReadModel();
+  return {identityUpdated:prepared.identityUpdated,
+   feedbackRevision:prepared.feedbackRevision,
+   registrationStatus:prepared.identityUpdated?
+    'CAREER_NAME_APPLIED_NOT_EXTERNAL_REGISTRATION':'NOT_RELEASED'};
  }finally{db.close()}
 }
 // One renderer for exact ID-linked records from the current saved game only.
@@ -603,7 +690,8 @@ async function importSharedCareerFile(file,{preserveExistingProgress=false}={}){
    importedCareerRecord,career,fullIndustryManifest);
   importedCareerRecord=operationInventoryMigration.careerRecord;
   checkpointRun=importedCareerRecord.changes.canonicalRun;
-  validateGameRun(checkpointRun,career.world);
+  validateRunWithSavedWorldEdits(career.world,checkpointRun,
+  importedCareerRecord.changes?.worldEdits,validateGameRun);
   const prior=await loadPersistent1999CareerRun(db,fullIndustryManifest,
    importedCareerRecord.runId);
   let preservedRecord=preserveExistingProgress&&prior?.changes?.canonicalRun?prior:null;
@@ -615,7 +703,8 @@ async function importSharedCareerFile(file,{preserveExistingProgress=false}={}){
     await persistMigratedCareerRecord(db,fullIndustryManifest,preservedRecord);
   }
   const preservedRun=preservedRecord?.changes?.canonicalRun||null;
-  if(preservedRun)validateGameRun(preservedRun,career.world);
+  if(preservedRun)validateRunWithSavedWorldEdits(career.world,preservedRun,
+  preservedRecord.changes?.worldEdits,validateGameRun);
   if(prior&&JSON.stringify(prior)!==JSON.stringify(importedCareerRecord)&&
    !preservedRun&&
    !window.confirm('This test career already has different progress. Replace only that test career with the imported checkpoint?'))
@@ -686,7 +775,8 @@ async function resumeCanonicalRun(store,manifest){
  saved=migration.careerRecord;
  if(migration.addedHorseIds.length)
   await persistMigratedCareerRecord(store,manifest,saved);
- validateGameRun(saved.changes.canonicalRun,career.world);
+ validateRunWithSavedWorldEdits(career.world,saved.changes.canonicalRun,
+  saved.changes.worldEdits,validateGameRun);
  selectedPlayerOperationId=saved.player.operation_id;
  return hydrateCareerWorldEdits({...career,run:saved.changes.canonicalRun,manifest},saved);
 }
@@ -708,7 +798,8 @@ async function startCanonicalRun(operationId=null){
    saved=migration.careerRecord;
    if(migration.addedHorseIds.length)
     await persistMigratedCareerRecord(store,fullIndustryManifest,saved);
-   validateGameRun(saved.changes.canonicalRun,activeWorldCareer.world);
+   validateRunWithSavedWorldEdits(activeWorldCareer.world,saved.changes.canonicalRun,
+    saved.changes.worldEdits,validateGameRun);
    activeWorldCareer.run=saved.changes.canonicalRun;
   }
   activeWorldCareer.manifest=fullIndustryManifest;
@@ -1138,7 +1229,8 @@ async function readFictionalIndustryCareer(manifest,runId){
  finally{store.close()}
 }
 window.WTWCompactCareerManager=Object.freeze({open,listSlots,storeGame,
- editSavedWorldEntity,exportCareerWorldChangesForReview,
+ editSavedWorldEntity,getSavedCareerNamingFeedback,
+ commitSavedCareerHorseNamingPreference,exportCareerWorldChangesForReview,
  restoreGame,exportSlot,importFile,dbName:DB_NAME,
  prepareFictionalIndustry,saveFictionalIndustryCareer,
  readFictionalIndustryCareer,sharedCareerBytes,importSharedCareerFile,
