@@ -42,7 +42,8 @@ export function createPersistedIndustryHorseDirectory({world,manifest,year=1999}
  const row=h=>({
   _kind:'horse',_name:h.name,_id:h.id,_canonId:h.id,
   _savedWorldId:manifest.worldId,
-  name:h.name,biography:h.biography||'',age:age(h),sex:h.sex||'',status:h.status||'',
+  name:h.name,biography:h.biography||'',reviewNotes:h.reviewNotes||'',
+  age:age(h),sex:h.sex||'',status:h.status||'',
   registryGroup:h.cohort||'',sire:h.sireId||'',dam:h.damId||'',
   owner:label(org,h.ownerId),breeder:label(org,h.foalingFarmId),
   trainer:label(people,h.trainerId),track:label(tracks,h.homeTrackId),
@@ -125,7 +126,7 @@ export function createPersistedIndustryEntityDirectory({world,manifest,kind}={})
   const base={_savedWorldId:manifest.worldId,_savedKind:kind,
    _kind:kind==='organization'?'farm':kind,_name:item.name,
    _id:item.id,_canonId:item.id,sourceEntityId:item.id,name:item.name,
-   biography:item.biography||''};
+   biography:item.biography||'',reviewNotes:item.reviewNotes||''};
   if(kind==='person')return {...base,role:item.role||'',
    base:item.base||tracks.get(item.workplaceId)||organizations.get(item.workplaceId)||
     item.workplaceId||place(item.birthplace)||'',
