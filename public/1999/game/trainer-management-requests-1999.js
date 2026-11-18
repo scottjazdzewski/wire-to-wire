@@ -339,15 +339,55 @@ export function validateTrainerManagementRequests(state,world){
    r.resolved_on<=state.clock.date:
    r.status==='OPEN'&&r.response===null&&r.resolved_on===null)&&
   (r.response===null||TRAINER_MANAGEMENT_CHOICES.includes(r.response));
+ const requestProblems=(r,o,t,closed=false)=>{
+  if(!isObject(r))return ['request-object'];
+  const failed=[];
+  const horse=state.runtime.registered_horses?.by_id?.[r.horse_id];
+  const checks=[
+   ['identity',r.id===requestId(o,t,r.opened_on,r.kind,r.horse_id)],
+   ['owner',r.owner_id===o],['trainer',r.trainer_id===t],
+   ['kind',TRAINER_MANAGEMENT_KINDS.includes(r.kind)],
+   ['horse',Boolean(horse)],
+   ['reason',typeof r.reason==='string'&&r.reason.length<150],
+   ['source-kind',['HORSE_CARE_UNFUNDED','POST_RACE_PROFESSIONAL_FEEDBACK'].includes(r.source_event_kind)],
+   ['source-seq',Number.isSafeInteger(r.source_event_seq)&&r.source_event_seq>0],
+   ['source-event',sourceEventValid(r,o,t)],
+   ['race-id',r.race_id===null||typeof r.race_id==='string'],
+   ['needed',r.needed_minor===null||money(r.needed_minor)],
+   ['opened-on',validDate(r.opened_on)&&r.opened_on<=state.clock.date],
+   ['deadline',validDate(r.deadline)&&r.deadline===plus(r.opened_on,7)],
+   ['status',closed?
+    ['RESOLVED','EXPIRED'].includes(r.status)&&validDate(r.resolved_on)&&r.resolved_on<=state.clock.date:
+    r.status==='OPEN'&&r.response===null&&r.resolved_on===null],
+   ['response',r.response===null||TRAINER_MANAGEMENT_CHOICES.includes(r.response)]
+  ];
+  for(const [name,ok] of checks)if(!ok)failed.push(name);
+  return failed;
+ };
  for(const [id,row] of Object.entries(rt.by_pair)){
-  ensure(isObject(row)&&id===pair(row.owner_id,row.trainer_id)&&
-   Boolean(worldIdentity(world,'organizations',row.owner_id))&&
-   Boolean(worldIdentity(world,'people',row.trainer_id))&&
-   (row.last_opened===null||validDate(row.last_opened)&&row.last_opened<=state.clock.date)&&
-   Array.isArray(row.history)&&row.history.length<=12&&
-   (row.active===null||validRequest(row.active,row.owner_id,row.trainer_id))&&
-   row.history.every(r=>validRequest(r,row.owner_id,row.trainer_id,true)),
-   'MANAGEMENT_SAVE','Invalid request identity, action state or history');
+  const failed=[];
+  if(!isObject(row))failed.push('row-object');
+  else{
+   if(id!==pair(row.owner_id,row.trainer_id))failed.push('pair-key');
+   if(!worldIdentity(world,'organizations',row.owner_id))failed.push('owner-organization');
+   if(!worldIdentity(world,'people',row.trainer_id))failed.push('trainer-person');
+   if(!(row.last_opened===null||validDate(row.last_opened)&&row.last_opened<=state.clock.date))
+    failed.push('last-opened');
+   if(!Array.isArray(row.history))failed.push('history-array');
+   else{
+    if(row.history.length>12)failed.push('history-cap');
+    row.history.forEach((r,index)=>{
+     const problems=requestProblems(r,row.owner_id,row.trainer_id,true);
+     if(problems.length)failed.push(`history[${index}]:${problems.join(',')}`);
+    });
+   }
+   if(row.active!==null){
+    const problems=requestProblems(row.active,row.owner_id,row.trainer_id,false);
+    if(problems.length)failed.push(`active:${problems.join(',')}`);
+   }
+  }
+  ensure(failed.length===0,'MANAGEMENT_SAVE',
+   `Invalid request identity, action state or history; pair=${id}; failed=${failed.slice(0,8).join('|')}`);
  }
  for(const [id,o] of Object.entries(rt.training_orders)){
   const h=state.runtime.registered_horses?.by_id?.[id];
