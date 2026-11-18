@@ -7,7 +7,10 @@ import {createPersistent1999Industry,findPersistent1999Horse,reopenPersistent199
  from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
 import {openPersistent1999GameCareer}
  from '../public/1999/engine/fictional-industry-game-world-bridge-1999.mjs';
-import {restoreLegacyApprovedFoundingHorseRelationships}
+import {connect1999Horse}
+ from '../public/1999/engine/fictional-industry-graph-1999.mjs';
+import {completeApprovedFoundingHorseRelationships,
+ restoreLegacyApprovedFoundingHorseRelationships}
  from '../public/1999/engine/fictional-industry-founder-relations-1999.mjs';
 
 function store(){
@@ -110,4 +113,26 @@ test('all 73 approved founding breeding horses keep permanent IDs inside the pla
   assert.equal(live.id,source.id);
   assert.ok(['BROODMARE','STALLION','RETIRED_BROODMARE','RETIRED_STALLION'].includes(live.status));
  }
+});
+
+
+test('founder link migration preserves the frozen legacy snapshot row order',()=>{
+ const legacyHorse={id:'H-1987-000002',name:'Canonical Founder',status:'BROODMARE',
+  cohort:'broodmares',sex:'MARE',foalYear:1987,ownerId:'O-PRIVATE',
+  sourcePedigree:{sireId:null,damId:null},sireId:null,damId:null,
+  foalingFarmId:null,breederId:null,
+  birthplace:{city:null,region:null,country:null,farmId:null,
+   provenance:'SOURCE_NOT_RECORDED'},
+  homeTrackId:null,trainerId:null,jockeyId:null,ownerPortfolioTier:'SMALL',
+  registryProvenance:'APPROVED_FOUNDING_1999_SOURCE',foundingSource:null,
+  careFacilityId:'F-CARE',development:{readiness:50,potential:60}};
+ const farms=[{id:'F-CARE',location:{city:'Lexington',region:'Kentucky',country:'USA'}}];
+ const before=connect1999Horse(legacyHorse,{seed:19990101});
+ const linked=completeApprovedFoundingHorseRelationships(legacyHorse,farms);
+ assert.equal(Object.hasOwn(linked,'relationships'),false,
+  'the relationship graph owns the fresh row relationship field');
+ const after=connect1999Horse(linked,{seed:19990101});
+ const restored=restoreLegacyApprovedFoundingHorseRelationships(after);
+ assert.equal(JSON.stringify(restored),JSON.stringify(before),
+  'legacy projection must preserve every value and the exact serialized field order');
 });

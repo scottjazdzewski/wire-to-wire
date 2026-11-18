@@ -63,8 +63,12 @@ export function completeApprovedFoundingHorseRelationships(horse,farms){
   edge.type!=='BRED_BY'&&edge.type!=='FOALED_AT');
  relationships.push(facilityEdge('BRED_BY',horse.id,breederFarm.id),
   facilityEdge('FOALED_AT',horse.id,foalingFarm.id));
+ // On a fresh row, let connect1999Horse create relationships in its original
+ // field position. Existing persisted rows already have this field, so the
+ // migration replaces it in place and preserves legacy snapshot ordering.
+ const relationshipField=Array.isArray(horse.relationships)?{relationships}:{};
  return {...horse,breederId:breederFarm.id,foalingFarmId:foalingFarm.id,
-  birthplace,relationships,
+  birthplace,...relationshipField,
   foundingRelationshipBaseline:{
    breederId:horse.breederId??null,
    foalingFarmId:horse.foalingFarmId??null,
