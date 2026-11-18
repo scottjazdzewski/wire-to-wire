@@ -113,25 +113,25 @@ test('multi-week 1999 careers keep daily finance and journal state compact and s
   !Object.hasOwn(event.details,'health_risk')),
   'care events keep horse IDs while relying on runtime history for detailed measurements');
  const ledger=state.runtime.finances.ledger;
- assert.ok(ledger.some(row=>row.rollup_schema==='WTW_MONTHLY_FINANCE_ROLLUP_V1'&&
+ assert.ok(ledger.some(row=>row.rollup_schema==='WTW_DAILY_FINANCE_ROLLUP_V1'&&
   row.kind==='HORSE_CARE_OWNER_PAYMENT'),
-  'older care transactions should remain available as reconciled monthly rollups');
+  'older care transactions should remain available as reconciled daily rollups');
  const carePaid=ledger.filter(row=>row.kind==='HORSE_CARE_OWNER_PAYMENT')
   .reduce((total,row)=>total+row.amount_minor,0);
  const lifetimeCare=Object.values(state.runtime.horse).reduce((total,record)=>
   total+(record?.finance?.lifetime_minor||0),0);
- assert.equal(carePaid,-lifetimeCare,'monthly rollups must preserve exact care cash totals');
+ assert.equal(carePaid,-lifetimeCare,'daily rollups must preserve exact care cash totals');
  const careKinds=new Set(['HORSE_CARE_OWNER_PAYMENT',
   'HORSE_CARE_SITE_AND_TRAINER_INCOME','HORSE_CARE_TRAINER_REMITTANCE',
   'HORSE_CARE_TRAINER_EARNINGS','HORSE_CARE_SUPPLIER_RECEIPT']);
  const careRows=ledger.filter(row=>careKinds.has(row.kind));
  const representedCareTransactions=careRows.reduce((total,row)=>
   total+(Number.isSafeInteger(row.transaction_count)?row.transaction_count:1),0);
- const rawCareRows=careRows.filter(row=>row.rollup_schema!=='WTW_MONTHLY_FINANCE_ROLLUP_V1').length;
+ const rawCareRows=careRows.filter(row=>row.rollup_schema!=='WTW_DAILY_FINANCE_ROLLUP_V1').length;
  assert.ok(representedCareTransactions>rawCareRows,
-  'completed-month rollups should represent more transactions than durable rows');
+  'daily rollups should represent more transactions than durable rows');
  assert.ok(ledger.length<10_000,
-  'current-month detail plus completed-month rollups should stay bounded');
+  'seven days of raw detail plus exact daily rollups should stay bounded');
  assert.ok(state.event_log.every((event,index)=>index===0||
   event.seq>state.event_log[index-1].seq),'event sequence numbers must remain monotonic');
  assert.equal(state.event_seq,state.event_log.at(-1)?.seq);
