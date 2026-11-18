@@ -27,19 +27,17 @@ import {TRAINER_EMPLOYMENT_COMMANDS,trainerEmploymentAction,advanceTrainerEmploy
 
 const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_NAMING_COMMANDS,...HORSE_NAME_OWNER_COMMANDS,...HORSE_CARE_COMMANDS,...RACING_COMMANDS,...HORSE_SHIPPING_COMMANDS,...TRAINER_CONTRACT_COMMANDS,...OWNER_TRAINER_REVIEW_COMMANDS,...TRAINER_MANAGEMENT_COMMANDS,...TRAINER_EMPLOYMENT_COMMANDS,...PLAYER_RACE_PLAN_COMMANDS]);
 const MAX_PENDING = 5000;
-// Per-day horse/facility decisions remain available in dispatch output and in
-// their canonical runtime records, but are summarized in the durable journal.
+// Full per-day decision details remain in dispatch output/runtime records.
+// The durable journal keeps compact weekly samples plus daily count summaries.
 const DAILY_DETAIL_EVENT_KINDS=new Set([
- 'BARN_OPERATOR_WELFARE_ALERT','OWNER_DAILY_STRATEGY','TRAINER_DAILY_DECISIONS',
+ 'OWNER_DAILY_STRATEGY','TRAINER_DAILY_DECISIONS',
  'OWNER_TRAINER_RELATIONSHIP_PRESSURE','HORSE_NEEDS_ATTRIBUTES',
- 'HORSE_TRANSIT_CARE_DAY','HORSE_CARE_UNFUNDED','HORSE_RACE_PREPARATION_WORKOUT',
- 'HORSE_CARE_DAY','FACILITY_CASH','FACILITY_BOARDING_UNFUNDED',
- 'FACILITY_OPERATING_DAY','TRAINER_MANAGEMENT_REQUEST_EXPIRED',
- 'TRAINER_DEPARTURE_WARNING','TRAINER_DEPARTURE_WARNING_CLEARED'
+ 'HORSE_TRANSIT_CARE_DAY','HORSE_CARE_UNFUNDED','HORSE_CARE_DAY'
 ]);
 const DAILY_COMPACT_EVENT_KINDS=new Set([
  'OWNER_DAILY_STRATEGY','TRAINER_DAILY_DECISIONS',
- 'OWNER_TRAINER_RELATIONSHIP_PRESSURE','HORSE_CARE_UNFUNDED','HORSE_CARE_DAY'
+ 'OWNER_TRAINER_RELATIONSHIP_PRESSURE','HORSE_NEEDS_ATTRIBUTES',
+ 'HORSE_TRANSIT_CARE_DAY','HORSE_CARE_UNFUNDED','HORSE_CARE_DAY'
 ]);
 function compactDailyEventDetails(kind,details){
  if(kind==='TRAINER_DAILY_DECISIONS')
@@ -53,6 +51,12 @@ function compactDailyEventDetails(kind,details){
   return {owner_id:details.owner_id,trainer_id:details.trainer_id,
    unpaid_horse_days:details.unpaid_horse_days,
    owner_trust:details.owner_trust,trainer_support:details.trainer_support};
+ if(kind==='HORSE_NEEDS_ATTRIBUTES')
+  return {horse_id:details.horse_id};
+ if(kind==='HORSE_TRANSIT_CARE_DAY')
+  return {horse_id:details.horse_id,owner_id:details.owner_id,
+   trainer_id:details.trainer_id,status:details.status,site_id:details.site_id,
+   paid_minor:details.paid_minor,workout:details.workout};
  if(kind==='HORSE_CARE_UNFUNDED')
   return {horse_id:details.horse_id,owner_id:details.owner_id,
    needed_minor:details.needed_minor,balance_minor:details.balance_minor};
@@ -146,7 +150,9 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     if(!summarize)next.event_log.push(event);
     else{
      dailyEventCounts[kind]=(dailyEventCounts[kind]||0)+1;
-     if(DAILY_COMPACT_EVENT_KINDS.has(kind))
+     const keepCompact=DAILY_COMPACT_EVENT_KINDS.has(kind)&&
+      (next.clock.days_elapsed===1||next.clock.days_elapsed%7===0);
+     if(keepCompact)
       next.event_log.push({...event,details:compactDailyEventDetails(kind,details)});
     }
     output.push(event);
