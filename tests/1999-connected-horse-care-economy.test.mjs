@@ -154,7 +154,7 @@ test('multi-month careers retain recent daily detail and exact monthly care tota
   state=change(state,'test:journal:day-'+day,'ADVANCE_DAY',{});
   if(day===1)firstDetail=state.event_log.find(event=>dailyDetailKinds.has(event.kind));
   for(const row of state.runtime.finances.ledger)
-   if(careFinanceKinds.has(row.kind)&&row.date===state.clock.date){
+   if(!row.rollup_schema&&careFinanceKinds.has(row.kind)&&row.date===state.clock.date){
     expected[row.kind].count+=row.transaction_count??1;
     expected[row.kind].amount+=row.amount_minor;
    }
