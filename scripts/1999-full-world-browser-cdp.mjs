@@ -336,7 +336,7 @@ try{
    // save/reopen, and the 32-year cohort run are verified below through the
    // persistent lifecycle engine. Keep this playable race proof bounded to
    // actual career open, one-day advance, race settlement and restart.
-   const sourceHorseIds=new Set(world.entities.horses.map(h=>h.id));   const sourceHorseIds=new Set(world.entities.horses.map(h=>h.id));
+   const sourceHorseIds=new Set(world.entities.horses.map(h=>h.id));
    const registeredStableHorseIds=state.stable_horse_ids.filter(id=>
     Boolean(state.runtime.registered_horses.by_id[id]));
    const unresolvedStableHorseIds=state.stable_horse_ids.filter(id=>
