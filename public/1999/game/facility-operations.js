@@ -489,12 +489,15 @@ export function facilityFinancialReport(state,world,operationId,{from,to}={}){
   Object.hasOwn(amounts,e.kind));
  const rows=[];
  for(const e of ledgerRows){
-  if(e.rollup_schema==='WTW_MONTHLY_FINANCE_ROLLUP_V1'&&e.rollup_period){
+  if(e.rollup_schema==='WTW_DAILY_FINANCE_ROLLUP_V1'&&e.rollup_period){
+   if(e.rollup_period<start||e.rollup_period>end)continue;
+   rows.push(e);
+  }else if(e.rollup_schema==='WTW_MONTHLY_FINANCE_ROLLUP_V1'&&e.rollup_period){
    const periodStart=e.period_start||e.rollup_period+'-01',
     periodEnd=e.period_end;
    if(periodEnd<start||periodStart>end)continue;
    ensure(start<=periodStart&&end>=periodEnd,'FACILITY_REPORT_ROLLUP_RANGE',
-    'A report that overlaps a monthly rollup must include the full calendar month');
+    'A report that overlaps a legacy monthly rollup must include the full calendar month');
    rows.push(e);
   }else if(e.date>=start&&e.date<=end)rows.push(e);
  }
