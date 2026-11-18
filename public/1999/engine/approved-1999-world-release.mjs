@@ -34,7 +34,8 @@ export function validateApproved1999WorldRelease(release=bundledRelease){
   for(const [key,value] of Object.entries(fields)){
    if(!['name','biography'].includes(key)||typeof value!=='string'||
       value.length>(key==='name'?NAME_LIMIT[kind]:800)||
-      (key==='name'&&!value.trim())||/[\x00-\x1f\x7f]/.test(value))
+      (key==='name'&&(!value.trim()||/[\x00-\x1f\x7f]/.test(value)))||
+      (key==='biography'&&/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(value)))
     throw Error('Unsafe or unapproved starting-world field '+key+' on '+id);
    if(key==='name'){
     const normalized=value.trim().toLocaleLowerCase('en-US');
