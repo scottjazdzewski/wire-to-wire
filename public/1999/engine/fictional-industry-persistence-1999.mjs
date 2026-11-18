@@ -1511,7 +1511,7 @@ export async function reopenPersistent1999Industry(store,{
 }={}){
  if(!store?.get||!Number.isSafeInteger(seed)||seed<1||!worldId)
   throw Error('Invalid 1999 world reopen request');
- const manifest=await store.get('manifests',keyOf(seed,worldId));
+ let manifest=await store.get('manifests',keyOf(seed,worldId));
  if(!manifest)return null;
  if(!supportsPersistentSchema(manifest))
   throw Error('Unsupported 1999 industry schema');
