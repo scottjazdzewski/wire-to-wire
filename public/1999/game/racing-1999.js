@@ -327,7 +327,7 @@ export function raceEligibility(state,horse,race){
  const liveRoster=state.runtime.registered_horses?.schema==='WTW_CAREER_HORSES_V1';
  if(liveRoster&&(horse.status!=='IN_TRAINING'||!horse.starting_attributes))
   reasons.push('HORSE_NOT_ACTIVE_RACEHORSE');
- if(site&&(site.status!=='ACTIVE'||
+ if(liveRoster&&site&&(site.status!=='ACTIVE'||
    site.staff_required>0&&site.staff_count<site.staff_required))
   reasons.push('HOME_FACILITY_NOT_OPERATING');
  if(liveRoster&&race.source==='WTW_1999_TRACK_SPECIFIC_MEET_PROGRESSION'){
