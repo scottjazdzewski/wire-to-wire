@@ -1238,7 +1238,10 @@ function createIndustryInWorker(options,onProgress=()=>{},onStage=()=>{}){
   worker.postMessage({type:'CREATE_1999_INDUSTRY',id,
    seed:options.seed??19990101,worldId:options.worldId??'WTW1999FullIndustry',
    targetOpeningHorses:options.targetOpeningHorses??null,
-   batchSize:options.batchSize??1000});
+   batchSize:options.batchSize??1000,
+   // Only a caller explicitly creating a NEW NAMES-V11 world may select
+   // destination-aligned owner/farm labels. The normal V10 path is untouched.
+   directoryNamingModel:options.directoryNamingModel??null});
  });
 }
 async function saveFictionalIndustryCareer(manifest,run){

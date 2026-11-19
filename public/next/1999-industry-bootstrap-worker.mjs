@@ -8,11 +8,26 @@ import {open1999IndustryDatabase,createPersistent1999Industry}
 import {TRACK_PROGRAM_1999} from '/next/1999-track-program.mjs';
 import {createFictionalWorldNameEngine}
  from '/1999/engine/fictional-world-name-engine.mjs';
+import {create1999DestinationNamingMarkets}
+ from '/1999/engine/fictional-directory-destination-names-1999.mjs';
 import {plan1999Ecosystem} from '/1999/engine/fictional-industry-ecosystem-1999.mjs';
 import {assessFictionalOwnerCapacity,fictionalOwnerPortfolioTier}
  from '/1999/engine/fictional-owner-portfolio-planner.mjs';
 
 async function industryDirectories(seed,targetOpeningHorses=null){
+ return industryDirectoriesWithNaming(seed,targetOpeningHorses);
+}
+async function industryDirectoriesWithNaming(seed,targetOpeningHorses=null,{
+ worldId=null,directoryNamingModel=null
+}={}){
+ // Names of the existing 1999 world and its immutable directoryHash are
+ // untouched. The named destination plan is a deliberate new world version.
+ const destinationAligned=directoryNamingModel==='V12_DESTINATION_TRACK';
+ if(directoryNamingModel!==null&&!destinationAligned)
+  throw Error('Unsupported 1999 directory naming model');
+ if(destinationAligned&&(
+  typeof worldId!=='string'||!/-NAMES-V11-/.test(worldId)))
+  throw Error('Destination naming requires a NEW versioned V11 world ID');
  const [geoResponse,foundingResponse,foalingResponse]=await Promise.all([
   fetch('/data/track-geography-v33.json'),
   fetch('/data/wtw-1999-founding-directory-v1.json'),
@@ -66,13 +81,26 @@ async function industryDirectories(seed,targetOpeningHorses=null){
  const ownerCountByCircuit=Array.from({length:tracks.length},(_,i)=>
   Math.floor(ownerCount/tracks.length)+(i<ownerCount%tracks.length?1:0));
  const farmCount=tracks.length*4;
+ const destinationPlan=destinationAligned?
+  create1999DestinationNamingMarkets({
+   tracks,ownerCountByTrack:ownerCountByCircuit,farmsPerTrack:4
+  }):null;
  const generated=createFictionalWorldNameEngine({
-  worldId:'WTW1999IndustryDirectory',seed,year:1999,roles:{},owners:ownerCount,
+  worldId:destinationAligned?'WTW1999IndustryDirectoryV12':'WTW1999IndustryDirectory',
+  seed,year:1999,roles:{},owners:ownerCount,
   facilities:{generalFarms:farmCount,studFarms:0,nurseries:0,
    bloodstockFarms:0,breakingTraining:0},
   protectedNames:[...tracks.map(t=>t.name),
    ...canonicalOrganizations.map(o=>o.name).filter(Boolean)],
-  ownerNameSourceModel:'ARCHIVAL_1999_RACING_OWNERS'
+  ownerNameSourceModel:'ARCHIVAL_1999_RACING_OWNERS',
+  ...(destinationPlan?{
+   ownerNameSourceModel:'ARCHIVAL_1999_RACING_OWNERS_SCALABLE_V11',
+   markets:destinationPlan.markets,
+   destinationMarketIds:{
+    owners:destinationPlan.ownerMarketIds,
+    farms:destinationPlan.farmMarketIds
+   }
+  }:{})
  });
  if(generated.owners.length!==ownerCount||generated.farms.length!==farmCount)
   throw Error('1999 approved organization name generator returned an incomplete directory');
@@ -89,6 +117,10 @@ async function industryDirectories(seed,targetOpeningHorses=null){
     'COMMERCIAL_BREEDING_AND_CARE',
    namingStatus:'GENERATED_1999_ORGANIZATION_ENGINE',
    namingSourceId:named.id,
+   ...(destinationAligned?{
+    namingRegion:named.namingRegion,
+    destinationNamingModel:destinationPlan.schema
+   }:{}),
    geographyStatus:t.location?.region?'REGION_PROVIDED':'LOCATION_REVIEW_REQUIRED'};
  }));
  const locationFor=org=>{
@@ -146,6 +178,12 @@ const ownerCircuitOffsets=ownerCountByCircuit.map((_,index)=>
    ownershipArchetype:named.ownershipArchetype,
    namingStatus:'GENERATED_1999_ORGANIZATION_ENGINE',
    namingSourceId:named.id,
+   ...(destinationAligned?{
+    namingRegion:named.namingRegion,
+    destinationNamingModel:destinationPlan.schema,
+    namingPrincipalSourceId:named.principalId,
+    namingPrincipalSourceName:named.principalName
+   }:{}),
    geographyStatus:t.location?.region?'REGION_PROVIDED':'LOCATION_REVIEW_REQUIRED'};
  }));
  const owners=[...generatedOwners,...canonicalOwners.map(org=>{
@@ -202,8 +240,13 @@ self.addEventListener('message',async event=>{
  let store;
  try{
   send('STAGE',{message:'Loading the bundled 1999 geography and racecourse directory…'});
-  const directories=await industryDirectories(request.seed,
-   request.targetOpeningHorses??null);
+  const directories=request.directoryNamingModel==null?
+   await industryDirectories(request.seed,
+    request.targetOpeningHorses??null):
+   await industryDirectoriesWithNaming(request.seed,
+    request.targetOpeningHorses??null,{
+     worldId:request.worldId,directoryNamingModel:request.directoryNamingModel
+    });
   send('STAGE',{message:'Preparing the opening population and personnel in the background…'});
   store=await open1999IndustryDatabase();
   const manifest=await createPersistent1999Industry({
