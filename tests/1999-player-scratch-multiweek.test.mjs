@@ -81,6 +81,26 @@ test('actual 300,000-horse shared May 29 checkpoint is copied and integrity-veri
  }finally{rmSync(dir,{recursive:true,force:true})}
 });
 
+test('V10 300,000-horse saved career is verified read-only before racing acceptance work',async()=>{
+ globalThis.crypto??=webcrypto;
+ const source=new URL('../public/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER_V10.wtwcareer.gz',
+  import.meta.url);
+ const bytes=readFileSync(source),checksum=createHash('sha256').update(bytes).digest('hex');
+ const packageData=await unpackShared1999Career(gunzipSync(bytes));
+ assert.equal(packageData.world.seed,19990101);
+ assert.equal(packageData.world.horseCount,300000);
+ assert.match(packageData.world.worldId,/V10/);
+ assert.equal(packageData.careerRecord.worldId,packageData.world.worldId);
+ assert.equal(packageData.careerRecord.gameDate,
+  packageData.careerRecord.changes.canonicalRun.clock.date);
+ assert.equal(packageData.careerRecord.runId,
+  packageData.careerRecord.changes.canonicalRun.run_id);
+ assert.equal(createHash('sha256').update(readFileSync(source)).digest('hex'),checksum,
+  'V10 canonical checkpoint cannot be edited by this test');
+ // This is an immutable checkpoint assertion, NOT proof that all 300k runners
+ // have raced or that the full V10 season has been simulated.
+});
+
 test('player books a real accepting jockey, then withdraws without phantom refund or a race start',()=>{
  assert.ok(RACING_COMMANDS.includes('SCRATCH_1999_RACE'));
  const {state,choice}=bookPlayer();
