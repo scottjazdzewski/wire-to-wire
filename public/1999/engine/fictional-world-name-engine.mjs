@@ -265,13 +265,35 @@ export function normalizeFictionalWorldNamingSpec(input={}){
   'ARCHIVAL_1999_RACING_OWNERS_SCALABLE_V11'].includes(ownerNameSourceModel))
   throw Error('Unsupported owner naming source model');
  const markets=marketList(input.markets);
+ // Only new, explicitly versioned V11 worlds bind names to the real
+ // destination. Omission retains original 1999 V10 assignment.
+ const destinations=input.destinationMarketIds??null;
+ let destinationMarketIds=null;
+ if(destinations!==null){
+  if(ownerNameSourceModel!=='ARCHIVAL_1999_RACING_OWNERS_SCALABLE_V11'||
+   !destinations||typeof destinations!=='object'||Array.isArray(destinations)||
+   Object.keys(destinations).some(k=>!['owners','farms'].includes(k)))
+   throw Error('Destination-linked organization names require explicit V11');
+  const valid=new Set(markets.map(m=>m.id));
+  for(const [key,expected] of [['owners',owners],['farms',farmCount]]){
+   const ids=destinations[key];
+   if(!Array.isArray(ids)||ids.length!==expected||
+    ids.some(id=>typeof id!=='string'||!valid.has(id)))
+    throw Error('Destination-linked '+key+' must match real geographic markets');
+  }
+  destinationMarketIds=frozen({
+   owners:frozen([...destinations.owners]),
+   farms:frozen([...destinations.farms])
+  });
+ }
  const originWeights=validatedCountryWeights(input.originWeightsByRole);
  const jockeyColonyWeights=validatedJockeyColonyWeights(input.jockeyOriginWeightsByColony);
  if((roles.jockey??0)>0&&!markets.some(m=>m.racing))
   throw Error('A jockey population requires at least one racing market');
  return frozen({worldId,year,seed,owners,roles:frozen(roles),facilities:frozen(facilities),
   farmCount,staff,protectedNames:frozen([...reservedNames]),markets,originWeights,
-  jockeyColonyWeights,ownerNamingPolicy,ownerNameSourceModel,externalNameIndex});
+  jockeyColonyWeights,ownerNamingPolicy,ownerNameSourceModel,externalNameIndex,
+  destinationMarketIds});
 }
 /**
  * Pure deterministic naming factory. Returns an IN-MEMORY identity proposal,
@@ -302,8 +324,12 @@ export function createFictionalWorldNameEngine(input){
   return year-ageAtOpening(seed,cohortKey,role);
  }));
  const racingMarkets=markets.filter(m=>m.racing);
+ const destinationMarketLookup=spec.destinationMarketIds?
+  new Map(markets.map(m=>[m.id,m])):null;
  const assignedMarkets=Array.from({length:staff+owners},(_,i)=>{
   const role=roleAt(i),ordinal=i-indexes[role];
+  if(role==='owner'&&spec.destinationMarketIds)
+   return destinationMarketLookup.get(spec.destinationMarketIds.owners[ordinal]);
   return weightedPick(seed,'person-market:'+role+':'+ordinal,
    role==='jockey'?racingMarkets:markets);
  });
@@ -414,7 +440,9 @@ export function createFictionalWorldNameEngine(input){
  // Names use the SAME deterministic markets as the preceding V6 factory.
  const breeders=markets.filter(m=>m.breeding),farmMarkets=breeders.length?breeders:markets;
  const farmNameMarkets=Array.from({length:farmCount},(_,i)=>
-  weightedPick(seed,'farm-market:'+i,farmMarkets));
+  spec.destinationMarketIds?
+   destinationMarketLookup.get(spec.destinationMarketIds.farms[i]):
+   weightedPick(seed,'farm-market:'+i,farmMarkets));
  const breakingNameMarkets=Array.from({length:facilities.breakingTraining},(_,i)=>
   weightedPick(seed,'breaking-market:'+i,markets));
  const orgStyleAt=(i,category)=>year===SUPPORTED_NAME_ERA?
@@ -567,6 +595,10 @@ export function createFictionalWorldNameEngine(input){
   reserved:spec.protectedNames,ownerNamingPolicy:spec.ownerNamingPolicy,
   ...(spec.ownerNameSourceModel.startsWith('ARCHIVAL_1999_RACING_OWNERS')?
    {ownerNameSourceModel:spec.ownerNameSourceModel}:{}),
+  ...(spec.destinationMarketIds?{
+   destinationNamingModel:'WTW_1999_DESTINATION_TRACK_ORGANIZATION_NAMING_V12',
+   destinationMarketIds:spec.destinationMarketIds
+  }:{}),
   indexRevision:spec.externalNameIndex?.revision??null,
   ...(year>SUPPORTED_NAME_ERA?{organizationNameGeneration:GENERATIONAL_ORGANIZATION_NAME_MODEL}:{})
   })).toString(16).padStart(8,'0');
@@ -583,6 +615,9 @@ export function createFictionalWorldNameEngine(input){
   internationalProfessionalNameModel:INTERNATIONAL_PROFESSIONAL_NAME_MODEL,
   internationalNameCultureModel:INTERNATIONAL_NAME_CULTURE_MODEL,
   organizationStyleModel:ORGANIZATION_STYLE_MODEL,
+  ...(spec.destinationMarketIds?{
+   destinationNamingModel:'WTW_1999_DESTINATION_TRACK_ORGANIZATION_NAMING_V12'
+  }:{}),
   ownershipPartnershipsMinted:org.summary.partnershipGroupsCreated,
   personNameModel:PERSONNEL_NAME_MODEL,
   countryNameModel:GEO_NAME_MODEL,organizationNameModel:org.model||
