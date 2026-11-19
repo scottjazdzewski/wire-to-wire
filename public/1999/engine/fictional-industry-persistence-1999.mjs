@@ -777,6 +777,34 @@ export async function readPersistent1999LifecycleHorse(store,manifest,runId,hors
  return project1999HorseForYear(horse,checkpoint?.seasonYear??1999);
 }
 
+// The opening-world name registry is immutable after COMPLETE. Reuse one
+// canonical normalized index for each hydrated manifest across multiple player
+// foal-naming actions; never rebuild 300,000 names per manually named foal.
+// Weak keys release the index when this world leaves the active session.
+const openingHorseNameIndexCache=new WeakMap();
+async function openingHorseNameIndex(store,manifest){
+ if(openingHorseNameIndexCache.has(manifest))
+  return openingHorseNameIndexCache.get(manifest);
+ const load=(async()=>{
+  const count=manifest.horseBatchesCommitted;
+  if(!Number.isSafeInteger(count)||count<1)
+   throw Error('Opening-world name registry is incomplete');
+  const names=new Set();
+  for(let i=0;i<count;i++){
+   const rows=await readPersistent1999IndustryBatch(
+    store,manifest,'horseBatches',i);
+   for(const row of rows){
+    const key=nameFeedbackKey(row.name);
+    if(key)names.add(key);
+   }
+  }
+  return names;
+ })();
+ openingHorseNameIndexCache.set(manifest,load);
+ try{return await load}
+ catch(error){openingHorseNameIndexCache.delete(manifest);throw error}
+}
+
 /**
  * Name one ACTUALLY BORN seasonal foal in the SAME per-career lifecycle
  * sidecar. No second world, no separate writer and no speculative foal.
@@ -815,14 +843,8 @@ export async function commitPersistent1999CareerFoalName(store,manifest,runId,{
 
  // All-time collision protection. The opening world's immutable names stay
  // untouched; scan batches only for availability, never write them.
- const count=manifest.horseBatchesCommitted;
- if(!Number.isSafeInteger(count)||count<1)
-  throw Error('Opening-world name registry is incomplete');
- for(let i=0;i<count;i++){
-  const rows=await readPersistent1999IndustryBatch(store,manifest,'horseBatches',i);
-  if(rows.some(row=>nameFeedbackKey(row.name)===key))
-   throw Error('Name is already used by a 1999 opening horse');
- }
+ if((await openingHorseNameIndex(store,manifest)).has(key))
+  throw Error('Name is already used by a 1999 opening horse');
  for(const row of Object.values(prior.changes.worldEdits?.byId||{})){
   if(row&&nameFeedbackKey(row.name)===key)
    throw Error('Name already assigned in the player career');
