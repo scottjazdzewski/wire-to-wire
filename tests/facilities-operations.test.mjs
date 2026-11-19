@@ -460,3 +460,58 @@ test('unpaid identified employee wages become a named claim and later settle onc
  assert.deepEqual(apply(w,s,'claim:rescue-third-day','ADVANCE_DAY',{}),s,
   'Replaying the same day receipt cannot pay employee claims a second time');
 });
+
+test('distinct legal property owner and operating stable pay separate capital and labor bills without title confusion',()=>{
+ const w=world();let s=game(w);
+ s=funded(w,s,'O-PLAYER',100000000);
+ s=funded(w,s,'O-RIVAL',100000000);
+ s=apply(w,s,'tenant:register','FACILITY_REGISTER_RACING_SITE',{
+  site_id:'F-1999-TENANT-BARN',site_type:'RACING_STABLE',
+  operator_organization_id:'O-RIVAL',facility_owner_organization_id:'O-PLAYER',
+  residence_kind:'ORGANIZATION_HOME_SITE',name:'Tenant training barn',
+  location:{city:'Paris',state:'KY',country:'USA'},host_track_id:null,
+  stalls_total:10,staff_required:2,staff_present:1,quality:70,
+  daily_upkeep_minor:5000,daily_boarding_minor:1000,
+  staff_wage_daily_minor:1000,source_kind:'MODELED_1999_GAME_SITE',
+  source_ref:'SCOPED_TENANT_PROPERTY_TEST'},'system');
+ const site='F-1999-TENANT-BARN';
+ const owner=getFacilityPortfolio(s,w,'O-PLAYER');
+ const tenant=getFacilityPortfolio(s,w,'O-RIVAL');
+ assert.equal(owner.owned_sites,1);
+ assert.equal(owner.operated_sites,0);
+ assert.equal(owner.sites[0].legal_title_held,true);
+ assert.equal(owner.sites[0].operating_control_held,false);
+ assert.equal(tenant.owned_sites,0);
+ assert.equal(tenant.operated_sites,1);
+ assert.equal(tenant.sites[0].legal_title_held,false);
+ assert.equal(tenant.sites[0].operating_control_held,true);
+ assert.throws(()=>apply(w,s,'tenant:owner-overreach','FACILITY_SET_STAFFING',{
+  operation_id:'O-PLAYER',site_id:site,staff_count:2}),
+  e=>e.code==='FACILITY_PROPERTY','Legal landlord cannot staff another business');
+ assert.throws(()=>apply(w,s,'tenant:owner-maintenance','FACILITY_SET_MAINTENANCE',{
+  operation_id:'O-PLAYER',site_id:site,policy:'PREMIUM'}),
+  e=>e.code==='FACILITY_PROPERTY','Landlord cannot dictate tenant operating spending');
+ s=apply(w,s,'tenant:staff','FACILITY_SET_STAFFING',{
+  operation_id:'O-RIVAL',site_id:site,staff_count:2},'system');
+ s=apply(w,s,'tenant:maintain','FACILITY_SET_MAINTENANCE',{
+  operation_id:'O-RIVAL',site_id:site,policy:'PREMIUM'},'system');
+ s=apply(w,s,'tenant:operate-day','ADVANCE_DAY',{});
+ assert.equal(s.runtime.facilities.sites[site].status,'ACTIVE');
+ assert.equal(s.runtime.finances.operation_balances_minor['O-RIVAL'],100000000-7000);
+ assert.equal(s.runtime.finances.operation_balances_minor['O-PLAYER'],100000000);
+ assert.equal(getFacilityFinancialReport(s,w,'O-RIVAL').payroll_minor,2000);
+ assert.equal(getFacilityFinancialReport(s,w,'O-PLAYER').payroll_minor,0);
+ assert.throws(()=>apply(w,s,'tenant:operator-capital','FACILITY_UPGRADE',{
+  operation_id:'O-RIVAL',site_id:site,improvement:'CARE_SYSTEM'},'system'),
+  e=>e.code==='FACILITY_PROPERTY','Tenant cannot spend landlord capital as owner');
+ s=apply(w,s,'tenant:landlord-upgrade','FACILITY_UPGRADE',{
+  operation_id:'O-PLAYER',site_id:site,improvement:'CARE_SYSTEM'});
+ assert.equal(s.runtime.finances.operation_balances_minor['O-PLAYER'],
+  100000000-8500000);
+ assert.equal(s.runtime.finances.operation_balances_minor['O-RIVAL'],
+  100000000-7000);
+ assert.equal(getFacilityFinancialReport(s,w,'O-PLAYER',{
+  from:'1999-01-01'}).capital_investment_minor,8500000);
+ assert.equal(getFacilityFinancialReport(s,w,'O-RIVAL').capital_investment_minor,0);
+ assert.deepEqual(importGameSave(exportGameSave(s,w),w),s);
+});
