@@ -10,6 +10,8 @@ import {postRaceAIPlacement} from './post-race-campaign-1999.js';
 import {shippingAssessment,shippingAction,horseTravelStatus,effectiveHorseTrack} from './shipping-1999.js';
 import {get1999JockeyPartnership} from '../../public/1999/engine/jockey-partnerships-1999.mjs';
 import {premierMarketRace,premierBonusCap} from '../../public/1999/engine/jockey-premier-market-1999.mjs';
+import {quote1999JockeyRetainer,jockeyRetainerAction}
+ from '../../public/1999/engine/jockey-retainers-1999.mjs';
 const diff=(a,b)=>(Date.parse(b+'T12:00:00Z')-Date.parse(a+'T12:00:00Z'))/86400000;
 const plus=(date,n)=>new Date(Date.parse(date+'T12:00:00Z')+n*86400000).toISOString().slice(0,10);
 const horses=state=>Object.values(state.runtime.registered_horses?.by_id||{}).
@@ -202,10 +204,152 @@ export function book1999LostPremierFallbacks({state,world,emit}){
  }
  return {booked,unavailable,playerDecisions};
 }
+/**
+ * Rider health/stewards findings really void future paid mounts. Repair AI
+ * bookings in the existing race entry rather than leaving an unusable ghost
+ * jockey until the horse is scratched on race day. Player owners retain full
+ * authority: notify without signing an unwanted replacement contract.
+ */
+export function book1999UnavailableJockeyReplacements({state,world,emit}){
+ const rt=state.runtime.racing,day=state.clock.date;
+ if(!rt)return {booked:0,player_decisions:0,unavailable:0};
+ let booked=0,player_decisions=0,unavailable=0;
+ const refunded=Object.values(state.runtime.entries||{}).
+  filter(e=>e.status==='ENTERED'&&!e.jockey_id&&e.cancelled_jockey_id&&
+   e.cancellation_reason?.startsWith('JOCKEY_')).
+  sort((a,b)=>a.race_id.localeCompare(b.race_id)||
+   a.horse_id.localeCompare(b.horse_id));
+ for(const entry of refunded){
+  const race=state.runtime.races?.[entry.race_id];
+  const horse=state.runtime.registered_horses?.by_id?.[entry.horse_id];
+  if(!race||race.status!=='ENTRIES_OPEN'||!horse||
+   diff(day,race.date)<1)continue;
+  if(horse.owner_organization_id===state.player.operation_id){
+   player_decisions++;
+   if(!entry.replacement_notice_date){
+    entry.replacement_notice_date=day;
+    emit('PLAYER_JOCKEY_REPLACEMENT_REQUIRED',{
+     race_id:race.id,horse_id:horse.horse_id,
+     cancelled_jockey_id:entry.cancelled_jockey_id,
+     decision:'SELECT_AVAILABLE_REAL_REPLACEMENT_RIDER'});
+   }
+   continue;
+  }
+  // No paid second rider without a real quote, acceptance, eligibility
+  // and funds; premier elite stars must still use their genuine auction.
+  const candidates=Object.values(rt.jockeys).filter(j=>
+   j.id!==entry.cancelled_jockey_id&&
+   !premierMarketRace(race,j)).map(j=>({
+    jockey:j,decision:jockeyBookingDecision(state,world,race,horse,j)
+   })).filter(x=>x.decision.accept&&
+    money(state,horse.owner_organization_id)>=x.decision.quote.feeMinor).
+   sort((a,b)=>jockeyChoiceScore(state,horse,b.jockey,b.decision,race)-
+    jockeyChoiceScore(state,horse,a.jockey,a.decision,race)||
+    a.jockey.id.localeCompare(b.jockey.id));
+  if(!candidates.length){
+   unavailable++;
+   if(entry.replacement_review_date!==day){
+    entry.replacement_review_date=day;
+    emit('AI_JOCKEY_REPLACEMENT_UNAVAILABLE',{
+     race_id:race.id,horse_id:horse.horse_id,
+     owner_id:horse.owner_organization_id,
+     cancelled_jockey_id:entry.cancelled_jockey_id,
+     reason:'NO_FUNDED_AVAILABLE_ACCEPTING_RIDER'});
+   }
+   continue;
+  }
+  const chosen=candidates[0];
+  racingAction({state,world,command:{actor:'system',
+   type:'BOOK_1999_JOCKEY',payload:{
+    race_id:race.id,horse_id:horse.horse_id,
+    jockey_id:chosen.jockey.id}},emit});
+  booked++;
+  emit('AI_JOCKEY_REPLACEMENT_BOOKED',{
+   race_id:race.id,horse_id:horse.horse_id,
+   owner_id:horse.owner_organization_id,
+   cancelled_jockey_id:entry.cancelled_jockey_id,
+   new_jockey_id:chosen.jockey.id,
+   replacement_fee_minor:entry.fee_minor,
+   source:'PAID_ORIGINAL_RIDER_UNAVAILABLE'});
+ }
+ return {booked,player_decisions,unavailable};
+}
+/**
+ * Real AI owners may pursue paid rider continuity, never player funds.
+ * The auction itself remains the one retainer module: this merely submits
+ * genuine financed proposals from active horses/owners in the saved career.
+ */
+export function propose1999AIRiderRetainers({state,world,emit}){
+ const day=state.clock.date,rt=state.runtime.racing;
+ if(!rt||!day.startsWith('1999-')||state.clock.days_elapsed<28||
+  !Array.isArray(world.entities?.organizations)||
+  !Array.isArray(world.entities?.people))return {offered:0,evaluated:0};
+ const start=plus(day,5),end=plus(day,18);
+ const selected=new Map();
+ for(const h of horses(state)){
+  if(h.owner_organization_id===state.player.operation_id||
+   !h.trainer_id||!h.host_track_id)continue;
+  if(!selected.has(h.owner_organization_id))
+   selected.set(h.owner_organization_id,h);
+ }
+ let offered=0,evaluated=0;
+ for(const [owner,h] of [...selected].sort((a,b)=>a[0].localeCompare(b[0]))){
+  if(offered>=4)break;
+  evaluated++;
+  if(!world.entities.organizations.some(o=>o.id===owner)||
+   !world.entities.people.some(p=>p.id===h.trainer_id))continue;
+  const riders=Object.values(rt.jockeys).filter(j=>
+   j.career_status!=='RETIRED'&&j.home_track_id===h.host_track_id&&
+   !(j.availability&&j.availability.start_date<=end&&
+    j.availability.through_date>=start)&&
+   // Actual completed paid rides prove a relationship; a new name alone
+   // cannot justify a long-term automatic AI commitment.
+   (()=>{const bond=get1999JockeyPartnership(state,{
+    trainerId:h.trainer_id,ownerId:owner,jockeyId:j.id});
+    return bond.ownerRiddenMounts>=1&&bond.trainerRiddenMounts>=1})()).
+   sort((a,b)=>(b.skills?.judgment??0)-(a.skills?.judgment??0)||
+    (b.game_reputation??0)-(a.game_reputation??0)||
+    a.id.localeCompare(b.id));
+  const jockey=riders[0];
+  if(!jockey)continue;
+  const quote=quote1999JockeyRetainer(state,{
+   jockeyId:jockey.id,startDate:start,endDate:end});
+  const fee=Math.round(quote.minimum_fee_minor*
+   (1.08+Math.min(.16,(h.career?.starts??0)*.012)));
+  const account=money(state,owner);
+  // Conservative AI retainers are a strategic expense, not a payroll tax
+  // on every owner. Keep ample care and race-entry cash available.
+  if(account<fee*20)continue;
+  const already=Object.values(rt.retainers?.offers||{}).some(o=>
+   o.owner_id===owner&&o.jockey_id===jockey.id&&
+   o.start_date===start);
+  const reserved=Object.values(rt.retainers?.contracts||{}).some(c=>
+   c.jockey_id===jockey.id&&c.status==='ACTIVE'&&
+   c.start_date<=end&&c.end_date>=start);
+  if(already||reserved)continue;
+  jockeyRetainerAction({state,world,command:{actor:'system',
+   type:'OFFER_1999_JOCKEY_RETAINER',payload:{
+    owner_id:owner,trainer_id:h.trainer_id,jockey_id:jockey.id,
+    start_date:start,end_date:end,total_fee_minor:fee}},emit});
+  offered++;
+  emit('AI_OWNER_JOCKEY_RETAINER_PROPOSED',{
+   owner_id:owner,trainer_id:h.trainer_id,jockey_id:jockey.id,
+   start_date:start,end_date:end,total_fee_minor:fee,
+   actual_owner_balance_minor:account,
+   reason:'MODELED_FUNDED_LOCAL_JOCKEY_CONTINUITY_NOT_ASSUMED_HIRING'});
+ }
+ emit('AI_JOCKEY_RETAINER_MARKET_REVIEW',{date:day,
+  evaluated_owners:evaluated,submitted:offered,
+  player_funds_reserved:false,contracts_signed_immediately:false});
+ return {offered,evaluated};
+}
 export function run1999RacingAgents({state,world,emit}){
  const rt=state.runtime.racing;
  if(!rt||Object.keys(rt.jockeys).length<2)return;
  const day=state.clock.date;
+ // Funded AI owner proposals use the same real competitive rider market.
+ if(state.clock.days_elapsed%28===7)
+  propose1999AIRiderRetainers({state,world,emit});
  // Prune only resolved old bids before any new submissions this week.
  // Pending offers, signed entries and credited earnings remain untouched.
  compact1999PremierJockeyOffers({state,emit});
@@ -408,6 +552,7 @@ export function run1999RacingAgents({state,world,emit}){
  // may then hire an actual available rider; player decisions remain manual.
  resolve1999PremierJockeyOffers({state,world,emit});
  book1999LostPremierFallbacks({state,world,emit});
+ book1999UnavailableJockeyReplacements({state,world,emit});
  autonomousAwayTravel({state,world,emit});
  // Today's race is not automatically a real result unless at least two
  // medically cleared runners and confirmed jockeys are in the valid field.

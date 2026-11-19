@@ -124,6 +124,11 @@ export function quoteJockeyMount(j,race,{additionalTravel=false}={}){
 export function assessJockeySchedule(state,world,j,race){
  const trips=[];
  if(!j||!race||!world)return {allowed:false,reason:'UNKNOWN_JOCKEY_OR_RACE'};
+ if(j.career_status==='RETIRED')return {allowed:false,reason:'JOCKEY_RETIRED'};
+ if(j.availability&&race.date>=j.availability.start_date&&
+  race.date<=j.availability.through_date)
+  return {allowed:false,reason:j.availability.kind==='INJURY'?
+   'JOCKEY_INJURED':'JOCKEY_SUSPENDED',until:j.availability.through_date};
  const thisTrack=world.entities?.tracks?.find(t=>t.id===race.track_id);
  const home=world.entities?.tracks?.find(t=>t.id===j.home_track_id);
  if(!thisTrack||!home)return {allowed:false,reason:'UNKNOWN_RACECOURSE'};
