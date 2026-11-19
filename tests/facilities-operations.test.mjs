@@ -381,3 +381,74 @@ test('actual named groom and breeding attendant wages settle by permanent P-ID a
  assert.equal(s.runtime.people['P-EMPLOYEE-BREED'].wages_paid_minor,18000);
  assert.deepEqual(importGameSave(exportGameSave(s,w),w),s);
 });
+
+
+test('unpaid identified employee wages become a named claim and later settle once with the outside arrears',()=>{
+ const w=world();
+ w.entities.people.push({id:'P-GROOM-CLAIM',name:'Robin Ellis',
+  role:'groom',workplaceId:'O-PLAYER'});
+ let s=game(w);
+ s=funded(w,s,'O-PLAYER',110000000);
+ s=funded(w,s,'O-RIVAL',200000000);
+ s=offer(w,s,'CLAIMS','FARM','PURCHASE',100000000,{
+  staff_required:1,staff_wage_daily_minor:100000,
+  maintenance_daily_minor:10000000});
+ s=apply(w,s,'claim:acquire','FACILITY_ACQUIRE',{
+  offer_id:'FAC-OFFER-CLAIMS',operation_id:'O-PLAYER'});
+ const farm='F-RUN-FAC-OFFER-CLAIMS';
+ s=apply(w,s,'claim:worker','FACILITY_ASSIGN_NAMED_STAFF',{
+  site_id:farm,person_id:'P-GROOM-CLAIM',daily_wage_minor:250000});
+ s=apply(w,s,'claim:unfunded','ADVANCE_DAY',{});
+ assert.equal(s.runtime.facilities.sites[farm].status,'INSOLVENT');
+ assert.equal(s.runtime.facilities.sites[farm].unpaid_liability_minor,10262000);
+ assert.equal(s.runtime.facilities.sites[farm].
+  unpaid_named_wages_minor['P-GROOM-CLAIM'],250000);
+ assert.equal(s.runtime.finances.operation_balances_minor['O-PLAYER'],10000000);
+ assert.equal(s.runtime.people['P-GROOM-CLAIM'],undefined,
+  'Unpaid P-ID is not credited as if it received a salary');
+ s=apply(w,s,'claim:unfunded-day','ADVANCE_DAY',{});
+ assert.equal(s.runtime.facilities.sites[farm].unpaid_liability_minor,10262000,
+  'Closed site cannot silently book more payable day expenses');
+ s=apply(w,s,'claim:cash-site','FACILITY_REGISTER_RACING_SITE',{
+  site_id:'F-1999-CLAIMS-BARN',site_type:'RACING_STABLE',
+  operator_organization_id:'O-PLAYER',facility_owner_organization_id:'O-PLAYER',
+  residence_kind:'ORGANIZATION_HOME_SITE',name:'Claim rescue barn',
+  location:{city:'Paris',state:'KY',country:'USA'},host_track_id:null,
+  stalls_total:2,staff_required:1,staff_present:1,quality:70,
+  daily_upkeep_minor:0,daily_boarding_minor:15000000,
+  staff_wage_daily_minor:0,source_kind:'MODELED_1999_GAME_SITE',
+  source_ref:'NARROW_BUSINESS_CASH_RECOVERY_TEST'},'system');
+ s=apply(w,s,'claim:outside-booking','FACILITY_BOARDING_CONTRACT',{
+  site_id:'F-1999-CLAIMS-BARN',contract_id:'FAC-CONTRACT-CLAIM-RESCUE',
+  payer_organization_id:'O-RIVAL',stalls:1,
+  duration_days:3,daily_rate_minor:15000000},'system');
+ s=apply(w,s,'claim:rescue-first-day','ADVANCE_DAY',{});
+ assert.equal(s.runtime.facilities.sites[farm].status,'INSOLVENT');
+ assert.equal(s.runtime.finances.operation_balances_minor['O-PLAYER'],25000000);
+ s=apply(w,s,'claim:rescue-second-day','ADVANCE_DAY',{});
+ assert.equal(s.runtime.facilities.sites[farm].status,'ACTIVE');
+ const named=s.runtime.finances.ledger.filter(x=>
+  x.person_id==='P-GROOM-CLAIM'&&x.kind==='FACILITY_STAFF_WAGE_RECEIPT');
+ assert.equal(named.length,2,'One delayed wage receipt and one current payroll');
+ assert.equal(named.reduce((sum,x)=>sum+x.amount_minor,0),500000);
+ assert.equal(s.runtime.people['P-GROOM-CLAIM'].wages_paid_minor,500000);
+ const arrears=s.runtime.finances.ledger.filter(x=>
+  x.site_id===farm&&x.kind==='FACILITY_ARREARS_SETTLED');
+ assert.equal(arrears.length,1);
+ assert.equal(arrears[0].amount_minor,-10262000);
+ const legs=s.runtime.finances.ledger.filter(x=>
+  x.transaction_id===arrears[0].transaction_id);
+ assert.equal(legs.length,3);
+ assert.equal(legs.reduce((sum,x)=>sum+x.amount_minor,0),0);
+ assert.equal(legs.find(x=>x.kind==='FACILITY_STAFF_WAGE_RECEIPT').amount_minor,250000);
+ assert.equal(legs.find(x=>x.kind==='FACILITY_EXTERNAL_RECEIPT').amount_minor,10012000);
+ assert.equal(s.runtime.facilities.sites[farm].unpaid_liability_minor,0);
+ const view=getFacilityFinancialReport(s,w,'O-PLAYER',{from:'1999-01-01'});
+ assert.equal(view.currently_unpaid_liabilities_minor,0);
+ assert.equal(view.named_employee_wages_paid_minor,500000);
+ assert.equal(view.previously_unpaid_obligations_settled_minor,10262000);
+ assert.ok(view.cash_minor>0);
+ assert.deepEqual(importGameSave(exportGameSave(s,w),w),s);
+ assert.deepEqual(apply(w,s,'claim:rescue-second-day','ADVANCE_DAY',{}),s,
+  'Replaying the same day receipt cannot pay employee claims a second time');
+});
