@@ -19,6 +19,9 @@ import {get1999JockeyPartnership} from '../../public/1999/engine/jockey-partners
 import {premierMarketRace,scorePremierJockeyOffer,premierBonusCap,premierOfferId}
  from '../../public/1999/engine/jockey-premier-market-1999.mjs';
 
+import {apply1999JockeyPostRaceConsequences}
+ from '../../public/1999/engine/jockey-incidents-1999.mjs';
+
 export const GAME_RACING_SCHEMA='WTW_1999_CAREER_RACING_V1';
 export const RACING_COMMANDS=Object.freeze(['ACTIVATE_JOCKEY_COLONY','OPEN_1999_RACE','ENTER_1999_RACE',
  'BOOK_1999_JOCKEY','OFFER_1999_PREMIER_JOCKEY','SET_1999_RACE_TACTICS','SETTLE_1999_RACE']);
@@ -33,7 +36,8 @@ const frac=(seed,key)=>{let n=(2166136261^(seed>>>0))>>>0;
  n^=n>>>16;n=Math.imul(n,2246822507);n^=n>>>13;
  return (n>>>0)/4294967296};
 export const createRacingRuntime=()=>({
- schema:GAME_RACING_SCHEMA,jockeys:{},jockey_finances_minor:{},trainer_finances_minor:{},
+ schema:GAME_RACING_SCHEMA,jockeys:{},generated_jockeys:{},
+ last_workforce_year:1999,jockey_finances_minor:{},trainer_finances_minor:{},
  premier_offers:{},horse_travel:{},
  last_selection_date:null,last_settlement_date:null,selection_count:0
 });
@@ -709,6 +713,7 @@ function settle1999Race({state,world,race_id,emit}){
   kind:'RACE_MODELED_SPONSOR_ESCROW_RELEASE',operation_id:null,
   amount_minor:-race.purse_minor,race_id:race.id,
   provenance:'MODELED_GAME_PURSE_NOT_HISTORICAL'});
+ apply1999JockeyPostRaceConsequences({state,race,results,emit});
  emit('RACE_SETTLED',{race_id:race.id,track_id:race.track_id,
   date:race.date,starters:results.length,winner_horse_id:results[0].horse_id,
   purse_minor:race.purse_minor,modeled:true});
@@ -722,9 +727,45 @@ export function validateRacingRuntime(state,world){
   Number.isSafeInteger(rt.selection_count),
   'RACE_SAVE','Invalid race subsystem');
  for(const j of Object.values(rt.jockeys))
-  ensure(person(world,j.id)&&Boolean(trackFor(world,j.home_track_id))&&
+  ensure((person(world,j.id)||Boolean(rt.generated_jockeys?.[j.id]))&&
+   Boolean(trackFor(world,j.home_track_id))&&
    cents(rt.jockey_finances_minor[j.id])&&cents(j.starts)&&cents(j.wins)&&j.wins<=j.starts,
    'RACE_SAVE','Unknown or invalid jockey agent');
+ for(const j of Object.values(rt.jockeys))if(j.availability!==undefined){
+  const a=j.availability;
+  ensure(isObject(a)&&['INJURY','SUSPENSION'].includes(a.kind)&&
+   validDate(a.start_date)&&validDate(a.through_date)&&
+   a.through_date>=a.start_date&&validDate(a.reported_date)&&
+   a.reported_date<=state.clock.date&&typeof a.source_race_id==='string',
+   'JOCKEY_SAVE','Invalid dated jockey absence');
+ }
+ if(rt.generated_jockeys!==undefined){
+  ensure(isObject(rt.generated_jockeys),'JOCKEY_SAVE',
+   'Invalid source-linked rookie personnel directory');
+  for(const [id,p] of Object.entries(rt.generated_jockeys)){
+   ensure(p?.id===id&&p.role==='jockey'&&p.provenance===
+    'MODELED_FUTURE_JOCKEY_NOT_1999_OPENING_PERSON'&&
+    /^P-GAME-JOCKEY-\d{4}-\d{5}$/.test(id)&&
+    typeof p.name==='string'&&p.name.length>3&&
+    validDate(p.dateOfBirth)&&
+    Boolean(trackFor(world,p.workplaceId))&&
+    rt.jockeys[id]?.home_track_id===p.workplaceId&&
+    Number.isSafeInteger(p.career_entry_year)&&p.career_entry_year>=2000&&
+    p.career_entry_year<=Number(state.clock.date.slice(0,4)),
+    'JOCKEY_SAVE','Broken permanent rookie person identity');
+  }
+ }
+ if(rt.last_workforce_year!==undefined)
+  ensure(Number.isSafeInteger(rt.last_workforce_year)&&
+   rt.last_workforce_year>=1999&&
+   rt.last_workforce_year<=Number(state.clock.date.slice(0,4)),
+   'JOCKEY_SAVE','Invalid last annual jockey career transition');
+ for(const j of Object.values(rt.jockeys))if(j.career_status!==undefined){
+  ensure(['ACTIVE','RETIRED'].includes(j.career_status)&&
+   (j.career_status!=='RETIRED'||validDate(j.retired_date)&&
+    j.retired_date<=state.clock.date),
+   'JOCKEY_SAVE','Invalid dated jockey retirement');
+ }
  // Optional on older completed careers: do not mutate historical saves to
  // add an empty offer table. Validate the new contracts when present.
  if(rt.premier_offers!==undefined){
@@ -739,7 +780,7 @@ export function validateRacingRuntime(state,world){
     Boolean(race)&&Boolean(horse)&&Boolean(jockey)&&
     horse.owner_organization_id===o.owner_id&&
     horse.trainer_id===o.trainer_id&&premierMarketRace(race,jockey)&&
-    ['PENDING','SIGNED','DECLINED'].includes(o.status)&&
+    ['PENDING','SIGNED','DECLINED','CANCELLED'].includes(o.status)&&
     validDate(o.offered_date)&&o.offered_date<=state.clock.date&&
     cents(o.bonus_minor)&&o.bonus_minor<=250000&&
     cents(o.quoted_base_minor)&&cents(o.maximum_jockey_fee_minor)&&
@@ -752,6 +793,14 @@ export function validateRacingRuntime(state,world){
      entry.premier_signing_bonus_minor===o.bonus_minor&&
      entry.fee_minor===o.final_fee_minor,
      'PREMIER_SAVE','Signed premier mount must match the paid permanent race entry');
+   }
+   if(o.status==='CANCELLED'){
+    const entry=state.runtime.entries?.[o.race_id+':'+o.horse_id];
+    ensure(['ENTERED','BOOKED','RESULTED','SCRATCHED'].includes(entry?.status)&&
+     entry.cancelled_jockey_id===o.jockey_id&&
+     validDate(o.cancelled_date)&&o.reason==='SIGNED_RIDER_BECAME_UNAVAILABLE'&&
+     o.refunded_minor===o.final_fee_minor,
+     'PREMIER_SAVE','Cancelled signed premier mount must retain full refund');
    }
    if(o.status==='DECLINED')ensure(typeof o.reason==='string'&&
     validDate(o.resolved_date),'PREMIER_SAVE','Declined offer must retain resolution');

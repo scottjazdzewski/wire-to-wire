@@ -202,6 +202,76 @@ export function book1999LostPremierFallbacks({state,world,emit}){
  }
  return {booked,unavailable,playerDecisions};
 }
+/**
+ * Rider health/stewards findings really void future paid mounts. Repair AI
+ * bookings in the existing race entry rather than leaving an unusable ghost
+ * jockey until the horse is scratched on race day. Player owners retain full
+ * authority: notify without signing an unwanted replacement contract.
+ */
+export function book1999UnavailableJockeyReplacements({state,world,emit}){
+ const rt=state.runtime.racing,day=state.clock.date;
+ if(!rt)return {booked:0,player_decisions:0,unavailable:0};
+ let booked=0,player_decisions=0,unavailable=0;
+ const refunded=Object.values(state.runtime.entries||{}).
+  filter(e=>e.status==='ENTERED'&&!e.jockey_id&&e.cancelled_jockey_id&&
+   e.cancellation_reason?.startsWith('JOCKEY_')).
+  sort((a,b)=>a.race_id.localeCompare(b.race_id)||
+   a.horse_id.localeCompare(b.horse_id));
+ for(const entry of refunded){
+  const race=state.runtime.races?.[entry.race_id];
+  const horse=state.runtime.registered_horses?.by_id?.[entry.horse_id];
+  if(!race||race.status!=='ENTRIES_OPEN'||!horse||
+   diff(day,race.date)<1)continue;
+  if(horse.owner_organization_id===state.player.operation_id){
+   player_decisions++;
+   if(!entry.replacement_notice_date){
+    entry.replacement_notice_date=day;
+    emit('PLAYER_JOCKEY_REPLACEMENT_REQUIRED',{
+     race_id:race.id,horse_id:horse.horse_id,
+     cancelled_jockey_id:entry.cancelled_jockey_id,
+     decision:'SELECT_AVAILABLE_REAL_REPLACEMENT_RIDER'});
+   }
+   continue;
+  }
+  // No paid second rider without a real quote, acceptance, eligibility
+  // and funds; premier elite stars must still use their genuine auction.
+  const candidates=Object.values(rt.jockeys).filter(j=>
+   j.id!==entry.cancelled_jockey_id&&
+   !premierMarketRace(race,j)).map(j=>({
+    jockey:j,decision:jockeyBookingDecision(state,world,race,horse,j)
+   })).filter(x=>x.decision.accept&&
+    money(state,horse.owner_organization_id)>=x.decision.quote.feeMinor).
+   sort((a,b)=>jockeyChoiceScore(state,horse,b.jockey,b.decision,race)-
+    jockeyChoiceScore(state,horse,a.jockey,a.decision,race)||
+    a.jockey.id.localeCompare(b.jockey.id));
+  if(!candidates.length){
+   unavailable++;
+   if(entry.replacement_review_date!==day){
+    entry.replacement_review_date=day;
+    emit('AI_JOCKEY_REPLACEMENT_UNAVAILABLE',{
+     race_id:race.id,horse_id:horse.horse_id,
+     owner_id:horse.owner_organization_id,
+     cancelled_jockey_id:entry.cancelled_jockey_id,
+     reason:'NO_FUNDED_AVAILABLE_ACCEPTING_RIDER'});
+   }
+   continue;
+  }
+  const chosen=candidates[0];
+  racingAction({state,world,command:{actor:'system',
+   type:'BOOK_1999_JOCKEY',payload:{
+    race_id:race.id,horse_id:horse.horse_id,
+    jockey_id:chosen.jockey.id}},emit});
+  booked++;
+  emit('AI_JOCKEY_REPLACEMENT_BOOKED',{
+   race_id:race.id,horse_id:horse.horse_id,
+   owner_id:horse.owner_organization_id,
+   cancelled_jockey_id:entry.cancelled_jockey_id,
+   new_jockey_id:chosen.jockey.id,
+   replacement_fee_minor:entry.fee_minor,
+   source:'PAID_ORIGINAL_RIDER_UNAVAILABLE'});
+ }
+ return {booked,player_decisions,unavailable};
+}
 export function run1999RacingAgents({state,world,emit}){
  const rt=state.runtime.racing;
  if(!rt||Object.keys(rt.jockeys).length<2)return;
@@ -408,6 +478,7 @@ export function run1999RacingAgents({state,world,emit}){
  // may then hire an actual available rider; player decisions remain manual.
  resolve1999PremierJockeyOffers({state,world,emit});
  book1999LostPremierFallbacks({state,world,emit});
+ book1999UnavailableJockeyReplacements({state,world,emit});
  autonomousAwayTravel({state,world,emit});
  // Today's race is not automatically a real result unless at least two
  // medically cleared runners and confirmed jockeys are in the valid field.

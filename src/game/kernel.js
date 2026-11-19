@@ -18,6 +18,7 @@ import {HORSE_CARE_COMMANDS,setHorseCarePolicy,set1999RacePreparation,initialize
 import {runAutonomousDay,settleDailyAgentFeedback} from './daily-agents.js';
 import {RACING_COMMANDS,racingAction} from './racing-1999.js';
 import {run1999RacingAgents} from './race-agents-1999.js';
+import {advance1999JockeyWorkforce} from '../../public/1999/engine/jockey-lifecycle-1999.mjs';
 import {HORSE_SHIPPING_COMMANDS,shippingAction,advance1999HorseShipping} from './shipping-1999.js';
 import {TRAINER_CONTRACT_COMMANDS,offerTrainerServiceTerms,advanceTrainerContracts} from './trainer-contracts-1999.js';
 import {OWNER_TRAINER_REVIEW_COMMANDS,setOwnerTrainerMandate,respondToTrainerConcern,advanceOwnerTrainerReviews,updateOwnerTrainerLiveReviews} from './owner-trainer-career-1999.js';
@@ -308,6 +309,7 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     advanceFacilities({state:next,world,emit});
     advanceGameHorseCare({state:next,world,emit});
     settleDailyAgentFeedback({state:next,emit});
+    advance1999JockeyWorkforce({state:next,world,emit});
     run1999RacingAgents({state:next,world,emit});
     // The current review must see today's actual races, paid care and outcomes.
     updateOwnerTrainerLiveReviews({state:next,world,emit,events:output,trigger:'DAILY'});
