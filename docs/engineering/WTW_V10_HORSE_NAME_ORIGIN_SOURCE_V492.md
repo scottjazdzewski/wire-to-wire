@@ -120,3 +120,24 @@ optimized preview index is **not a substitute for authority**.
 Tests directly compare indexed and ordinary canonical screening
 results for occupied and available names, verify both source/browser
 code mirrors remain identical and reject an invalid index type.
+
+## Saved-name consistency across the existing Industry UI
+
+The Career World directory already respected a player CHOOSE naming edit,
+but the separate full-industry **HORSES** batch browser and **HORSE PROFILE**
+inspector still displayed the original source batch name. They now both
+run a **read-only career-name projection** that checks the active run's
+world identity (ID and seed), uses exactly its existing
+`worldEdits.byId['horse:'+horseId].name`, and does not modify the
+canonical batch on disk.
+
+The projection adds a transparent
+`nameDisplaySource:'SAVED_CAREER_HORSE_NAME_OVERRIDE'` annotation only
+when the player has actually saved a career override. The saved horse
+ID, sire/dam IDs, owner ID, source details, registration status and
+old baseline remain unchanged.
+
+The full 300,000-horse Chromium save/advance/exit/reopen test checks the
+real Industry inspector at both ends, and a pure test checks base
+immutability and unchanged pedigree/ownership. This fixes name
+inconsistency without adding another page or redesigning the existing UI.
