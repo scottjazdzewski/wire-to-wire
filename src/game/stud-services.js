@@ -7,12 +7,14 @@
 import {ensure,isObject,requireString,validDate,worldIdentity} from './contracts.js';
 import {currentHorseOwnerId} from './ownership.js';
 export const STUD_SERVICE_SCHEMA='WTW_1999_STUD_SERVICE_BUSINESS_V1';
-export const STUD_SERVICE_COMMANDS=Object.freeze(['BOOK_PAID_STUD_SERVICE']);
+export const STUD_SERVICE_COMMANDS=Object.freeze([
+ 'BOOK_PAID_STUD_SERVICE','PUBLISH_STUD_SERVICE_OFFER','WITHDRAW_STUD_SERVICE_OFFER'
+]);
 const int=Number.isSafeInteger;
 const safeId=id=>typeof id==='string'&&/^[A-Za-z0-9][A-Za-z0-9:_-]{1,110}$/.test(id)&&
  !['__proto__','constructor','prototype'].includes(id);
 const MAX_ANNUAL_SERVICE_BOOK=120; // Explicit modeled cap unless a lower real source cap exists.
-export const createStudServiceRuntime=()=>({schema:STUD_SERVICE_SCHEMA,by_id:{}});
+export const createStudServiceRuntime=()=>({schema:STUD_SERVICE_SCHEMA,by_id:{},offers:{}});
 const book=state=>state.runtime.stud_services??
  (state.runtime.stud_services=createStudServiceRuntime());
 const yearOf=date=>Number(date.slice(0,4));
@@ -39,7 +41,81 @@ function standingRecipient(world,stallion,legalOwnerId,recipientId){
  ensure(allowed.includes(recipientId),'STUD_RECIPIENT',
   'Fee must go to the verified legal stallion owner or standing service facility');
 }
+function studOfferSplit(world,stallion,stallionOwner,recipient,fee,share){
+ ensure(int(share)&&share>=0&&share<=(fee||0),'STUD_REVENUE_SPLIT',
+  'Stud owner royalty must fit within actual agreed service fee');
+ ensure(share===0||fee>0&&share<fee&&
+  recipient!==stallionOwner&&
+  [stallion.careFacilityId,stallion.standingFarmId].includes(recipient),
+  'STUD_REVENUE_SPLIT','A royalty can only split a real standing-farm service fee');
+}
+function validateOfferAuthority(command,state,stallionOwner){
+ ensure(command.actor==='player'&&state.player.operation_id===stallionOwner&&
+  ['owner','breeder','farm'].includes(state.player.role)||
+  command.actor==='system'&&stallionOwner!==state.player.operation_id,
+  'STUD_OFFER_AUTHORITY',
+  'Only legal stallion owners may approve service terms, or rival game AI');
+}
+function publishStudServiceOffer({state,world,command,emit}){
+ const p=command.payload;
+ ensure(safeId(p.offer_id),'STUD_OFFER_ID','Approved stable stud offer ID required');
+ const {horse:stallion,ownerId:stallionOwner}=resolve({
+  state,world,horseId:p.stallion_id,status:'STALLION'});
+ validateOfferAuthority(command,state,stallionOwner);
+ ensure(p.stallion_owner_organization_id===stallionOwner,
+  'STUD_OFFER_AUTHORITY','Current legal stallion owner must authorize the fee');
+ const recipient=p.fee_recipient_organization_id;
+ standingRecipient(world,stallion,stallionOwner,recipient);
+ ensure(int(p.fee_minor)&&p.fee_minor>0&&p.fee_minor<=1000000000,
+  'STUD_FEE','Advertised paid service needs a positive fee in cents');
+ const ownerShare=p.owner_share_minor??0;
+ studOfferSplit(world,stallion,stallionOwner,recipient,p.fee_minor,ownerShare);
+ ensure(validDate(p.expires_on)&&p.expires_on>=state.clock.date&&
+  yearOf(p.expires_on)===yearOf(state.clock.date),
+  'STUD_OFFER_DATE','Live breeding quotes must expire during their stated season');
+ const rt=book(state),offers=rt.offers||(rt.offers={});
+ ensure(!Object.hasOwn(offers,p.offer_id)&&
+  !Object.values(offers).some(x=>x.stallion_id===stallion.id&&
+   x.year===yearOf(state.clock.date)&&x.status==='OPEN'),
+  'STUD_OFFER_DUPLICATE','One signed seasonal price offer per stallion');
+ offers[p.offer_id]={offer_id:p.offer_id,stallion_id:stallion.id,
+  stallion_owner_organization_id:stallionOwner,
+  fee_recipient_organization_id:recipient,fee_minor:p.fee_minor,
+  owner_share_minor:ownerShare,
+  year:yearOf(state.clock.date),published_on:state.clock.date,
+  expires_on:p.expires_on,status:'OPEN',
+  provenance:'LEGAL_STALLION_OWNER_APPROVED_GAME_SERVICE_TERMS'};
+ emit('STUD_SERVICE_OFFER_PUBLISHED',{...offers[p.offer_id]});
+}
+function withdrawStudServiceOffer({state,command,emit}){
+ const p=command.payload,rt=book(state);
+ ensure(safeId(p.offer_id),'STUD_OFFER_ID','Valid stud offer ID required');
+ const offer=rt.offers?.[p.offer_id];
+ ensure(offer&&offer.status==='OPEN','STUD_OFFER','Only live stud offers can be withdrawn');
+ validateOfferAuthority(command,state,offer.stallion_owner_organization_id);
+ offer.status='WITHDRAWN';offer.withdrawn_on=state.clock.date;
+ emit('STUD_SERVICE_OFFER_WITHDRAWN',{offer_id:offer.offer_id,
+  stallion_id:offer.stallion_id});
+}
+export function getStudServiceOfferMarket(state,world,{offset=0,limit=50}={}){
+ ensure(int(offset)&&offset>=0&&int(limit)&&limit>=0&&limit<=100,
+  'STUD_OFFER_PAGE','Service market page must be 0 to 100');
+ const offers=Object.values(state.runtime.stud_services?.offers||{}).
+  filter(x=>x.status==='OPEN'&&x.year===yearOf(state.clock.date)&&
+   x.expires_on>=state.clock.date&&
+   currentHorseOwnerId(state,world,x.stallion_id)===
+    x.stallion_owner_organization_id).
+  sort((a,b)=>a.fee_minor-b.fee_minor||a.offer_id.localeCompare(b.offer_id));
+ return {as_of:state.clock.date,total:offers.length,offset,limit,
+  items:offers.slice(offset,offset+limit).map(x=>({...x}))};
+}
 export function bookStudService({state,world,command,emit}){
+ if(command.type==='PUBLISH_STUD_SERVICE_OFFER')
+  return publishStudServiceOffer({state,world,command,emit});
+ if(command.type==='WITHDRAW_STUD_SERVICE_OFFER')
+  return withdrawStudServiceOffer({state,command,emit});
+ ensure(command.type==='BOOK_PAID_STUD_SERVICE',
+  'STUD_AUTHORITY','Unsupported paid breeding service action');
  const p=command.payload;
  ensure(command.actor==='system'||command.actor==='player',
   'STUD_AUTHORITY','Only authorized game actors can book a breeding service');
@@ -54,10 +130,25 @@ export function bookStudService({state,world,command,emit}){
  standingRecipient(world,stallion,stallionOwner,recipient);
  ensure(int(p.fee_minor)&&p.fee_minor>=0&&p.fee_minor<=1000000000,
   'STUD_FEE','Stud fee must be a safe nonnegative amount in cents');
- ensure((payer===recipient&&p.fee_minor===0)||
+ ensure((payer===recipient&&p.fee_minor===0&&stallionOwner===payer)||
   (payer!==recipient&&p.fee_minor>0),
-  'STUD_SELF_SETTLEMENT','An own-stock covering has no self-paid stud fee');
+  'STUD_SELF_SETTLEMENT','Own-stock covering must have zero self-paid fee');
  const rt=book(state),date=state.clock.date,year=yearOf(date);
+ const ownerShare=p.owner_share_minor??0;
+ studOfferSplit(world,stallion,stallionOwner,recipient,p.fee_minor,ownerShare);
+ const internalNoFee=payer===recipient&&p.fee_minor===0;
+ if(command.actor==='player'&&!internalNoFee||p.offer_id!==undefined){
+  ensure(safeId(p.offer_id),'STUD_OFFER_REQUIRED',
+   'Player-paid stud services require a signed stallion owner offer');
+  const offer=rt.offers?.[p.offer_id];
+  ensure(offer&&offer.status==='OPEN'&&offer.year===year&&
+   offer.expires_on>=date&&offer.stallion_id===stallion.id&&
+   offer.stallion_owner_organization_id===stallionOwner&&
+   offer.fee_recipient_organization_id===recipient&&
+   offer.fee_minor===p.fee_minor&&
+   offer.owner_share_minor===ownerShare,
+   'STUD_OFFER_TERMS','Service fee, payees and season must match signed seller terms');
+ }
  ensure(!Object.hasOwn(rt.by_id,p.booking_id),'STUD_BOOKING_DUPLICATE',
   'Stud booking ID already exists');
  const prior=Object.values(rt.by_id);
@@ -73,31 +164,43 @@ export function bookStudService({state,world,command,emit}){
  ensure(!state.runtime.finances.ledger.some(x=>x.transaction_id===transaction),
   'STUD_BOOKING_DUPLICATE','Stud transaction ID already posted');
  if(charge){
-  ensure(int(amounts[payer])&&int(amounts[recipient])&&
-   amounts[payer]>=charge&&int(amounts[recipient]+charge),
-   'STUD_INSUFFICIENT_FUNDS',
-   'Owner needs an established funded account and stud operator needs an account');
-  amounts[payer]-=charge;amounts[recipient]+=charge;
-  if(state.player.operation_id===payer)state.runtime.finances.balance_minor=amounts[payer];
-  if(state.player.operation_id===recipient)state.runtime.finances.balance_minor=amounts[recipient];
+  const receipts=[
+   [recipient,'STUD_SERVICE_FEE_INCOME',charge-ownerShare],
+   ...(ownerShare?[[stallionOwner,'STUD_SERVICE_STALLION_OWNER_ROYALTY',ownerShare]]:[])
+  ];
+  const deltas=new Map([[payer,-charge]]);
+  for(const [org,,amount] of receipts)
+   deltas.set(org,(deltas.get(org)||0)+amount);
+  ensure(int(amounts[payer])&&amounts[payer]>=charge,
+   'STUD_INSUFFICIENT_FUNDS','Legal mare owner cannot afford the agreed fee');
+  for(const [org,delta] of deltas)
+   ensure(int(amounts[org])&&int(amounts[org]+delta),
+    'STUD_INSUFFICIENT_FUNDS','Every real stud owner and provider needs a funded account');
+  for(const [org,delta] of deltas)amounts[org]+=delta;
+  if(deltas.has(state.player.operation_id))
+   state.runtime.finances.balance_minor=amounts[state.player.operation_id];
   for(const [org,kind,amount] of [
-   [payer,'STUD_SERVICE_FEE_PAYMENT',-charge],
-   [recipient,'STUD_SERVICE_FEE_INCOME',charge]
+   [payer,'STUD_SERVICE_FEE_PAYMENT',-charge],...receipts
   ])state.runtime.finances.ledger.push({
    date,transaction_id:transaction,booking_id:p.booking_id,
    operation_id:org,horse_id:mare.id,mare_id:mare.id,stallion_id:stallion.id,
    payer_organization_id:payer,recipient_organization_id:recipient,
+   stallion_owner_organization_id:stallionOwner,
    amount_minor:amount,kind,provenance:'MODELED_LIVE_GAME_SERVICE_NOT_BIRTH'
   });
  }
  rt.by_id[p.booking_id]={booking_id:p.booking_id,mare_id:mare.id,
   stallion_id:stallion.id,year,booked_on:date,legal_mare_owner_id:payer,
   fee_recipient_organization_id:recipient,fee_minor:charge,
+  stallion_owner_organization_id:stallionOwner,owner_share_minor:ownerShare,
+  ...(p.offer_id?{offer_id:p.offer_id}:{}),
   transaction_id:charge?transaction:null,status:'COVERING_SERVICE_BOOKED',
   provenance:'MODELED_LIVE_GAME_SERVICE_NOT_PREGNANCY'};
  emit('STUD_SERVICE_BOOKED',{booking_id:p.booking_id,mare_id:mare.id,
   stallion_id:stallion.id,payer_organization_id:payer,
   fee_recipient_organization_id:recipient,fee_minor:charge,
+  owner_share_minor:ownerShare,
+  ...(p.offer_id?{offer_id:p.offer_id}:{}),
   transaction_id:charge?transaction:null,
   result:'SERVICE_ONLY_NO_PREGNANCY_OR_FOAL_CREATED'});
 }
