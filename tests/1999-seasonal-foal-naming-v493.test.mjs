@@ -39,9 +39,12 @@ function fixture(){
    name:'Opening Winner',ownerId:playerId}]]]),
   horseEdits:new Map()
  };
- let writes=0;
+ let writes=0,openingBatchReads=0;
  const store={
-  get:async(kind,key)=>structuredClone(maps[kind].get(key)),
+  get:async(kind,key)=>{
+   if(kind==='horseBatches')openingBatchReads++;
+   return structuredClone(maps[kind].get(key));
+  },
   commitLifecycleFoalNaming:async({worldKey:w,runId:r,horseId,ownerId,name,
    expectedVersion,record:updated})=>{
    const rk=w+':'+r;
@@ -62,7 +65,8 @@ function fixture(){
    return {horseId,name,version:updated.version};
   }
  };
- return {manifest,store,maps,runKey,foals,writes:()=>writes};
+ return {manifest,store,maps,runKey,foals,writes:()=>writes,
+  openingBatchReads:()=>openingBatchReads};
 }
 test('V493 commits an actual born horse ID and naming decision in one saved career',async()=>{
  const {store,manifest,foals,maps,runKey,writes}=fixture();
@@ -126,6 +130,21 @@ test('V493 existing MY FOALS screen submits real saved horse and story through s
  assert.match(engine,/db.transaction\(\['manifests','careerRuns','industryLifecycle'\],'readwrite'\)/);
  assert.match(engine,/tx.onabort=.*reject\(failure/);
 });
+test('V493 reuses one immutable 300k name registry across multiple real foal saves',async()=>{
+ const {store,manifest,foals,writes,openingBatchReads}=fixture();
+ const select=(id,name)=>commitPersistent1999CareerFoalName(
+  store,manifest,runId,{horseId:id,name,story,motifId:'storm'});
+ await select(foals[0].id,'First Lark');
+ assert.equal(openingBatchReads(),1,'initial request loads one source batch');
+ await select(foals[1].id,'Second Lark');
+ assert.equal(openingBatchReads(),1,'do not decompress 300k source names per new foal');
+ assert.equal(writes(),2);
+ assert.equal((await readPersistent1999LifecycleHorse(store,manifest,
+  runId,foals[0].id)).name,'First Lark');
+ assert.equal((await readPersistent1999LifecycleHorse(store,manifest,
+  runId,foals[1].id)).name,'Second Lark');
+});
+
 test('V493 optimistic version prevents atomic foal name overwrite',async()=>{
  const {store,manifest,foals,writes}=fixture();
  const prior=await loadPersistent1999CareerRun(store,manifest,runId);
