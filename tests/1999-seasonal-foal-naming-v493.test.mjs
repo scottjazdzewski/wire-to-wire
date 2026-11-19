@@ -133,6 +133,30 @@ test('V493 existing MY FOALS screen submits real saved horse and story through s
  assert.match(engine,/db.transaction\(\['manifests','careerRuns','industryLifecycle'\],'readwrite'\)/);
  assert.match(engine,/tx.onabort=.*reject\(failure/);
 });
+test('V493 foal name and lineage survive aging into a saved future season',async()=>{
+ const {store,manifest,foals,maps,runKey}=fixture();
+ await commitPersistent1999CareerFoalName(store,manifest,runId,{
+  horseId:foals[0].id,name:'Silver Morning',story,motifId:'storm'
+ });
+ const newCheckpoint={...maps.industryLifecycle.get(runKey+':checkpoint'),
+  lastDate:'2001-01-10',seasonYear:2001};
+ maps.industryLifecycle.set(runKey+':checkpoint',newCheckpoint);
+ const saved=maps.careerRuns.get(runKey);
+ maps.careerRuns.set(runKey,{...saved,gameDate:'2001-01-10',
+  lifecycle:structuredClone(newCheckpoint)});
+ const a=await readPersistent1999LifecycleHorse(store,manifest,runId,foals[0].id);
+ assert.equal(a.status,'YEARLING');
+ assert.equal(a.name,'Silver Morning');
+ assert.equal(a.namingRevision,'WTW_SAVED_CAREER_FOAL_NAME_V1');
+ assert.equal(a.sireId,foals[0].sireId);
+ assert.equal(a.damId,foals[0].damId);
+ assert.equal(a.ownerId,foals[0].ownerId);
+ const reopened=await loadPersistent1999CareerRun(store,manifest,runId);
+ assert.equal(reopened.changes.namedSeasonalFoals[foals[0].id].name,'Silver Morning');
+ assert.equal(await readPersistent1999LifecycleHorse(store,manifest,
+  'DIFFERENT-CAREER',foals[0].id),null);
+});
+
 test('V493 reuses one immutable 300k name registry across multiple real foal saves',async()=>{
  const {store,manifest,foals,writes,openingBatchReads}=fixture();
  const select=(id,name)=>commitPersistent1999CareerFoalName(
