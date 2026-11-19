@@ -399,7 +399,7 @@ test('real booked race cannot be sold out from under trainer, jockey and buyer; 
   transfer_type:'SALE',price_minor:125000},'player');
  const prior=structuredClone(s);
  assert.throws(()=>dispatchGameCommand({state:s,world:cw,command:{
-  id:'sale:gate:blocked','SETTLE_HORSE_SALE',actor:'system',
+  id:'sale:gate:blocked',type:'SETTLE_HORSE_SALE',actor:'system',
   payload:{request_id:'SALE-WITH-ENTRY',settlement_id:'SALE-WITH-ENTRY'}}}),
   e=>e.code==='HORSE_TRANSFER_RACE_ENTRY');
  assert.deepEqual(s,prior,'Rejected sale cannot debit or alter the prior saved run');
