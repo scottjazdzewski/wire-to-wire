@@ -326,3 +326,58 @@ test('struggling farm stops unpaid payroll without overdraft and reopens only af
  assert.equal(w.entities.horses.length,before,'Financial rescue cannot create fictitious horses');
  assert.deepEqual(importGameSave(exportGameSave(s,w),w),s);
 });
+
+test('actual named groom and breeding attendant wages settle by permanent P-ID and match operator payroll',()=>{
+ const w=world();
+ w.entities.people.push(
+  {id:'P-EMPLOYEE-GROOM',name:'Mae Harris',role:'groom',workplaceId:'O-PLAYER'},
+  {id:'P-EMPLOYEE-BREED',name:'Edith Green',role:'breeding_attendant',workplaceId:'O-PLAYER'},
+  {id:'P-UNRELATED',name:'Wrong Site Groom',role:'groom',workplaceId:'O-RIVAL'});
+ let s=game(w);
+ s=funded(w,s,'O-PLAYER',500000000);
+ s=offer(w,s,'NAMED','FARM','PURCHASE',100000000,{
+  staff_required:2,staff_wage_daily_minor:5000,maintenance_daily_minor:3000});
+ s=apply(w,s,'named:buy','FACILITY_ACQUIRE',{
+  offer_id:'FAC-OFFER-NAMED',operation_id:'O-PLAYER'});
+ const farm='F-RUN-FAC-OFFER-NAMED';
+ const assign=(id,wage)=>apply(w,s,'named:assign:'+id,'FACILITY_ASSIGN_NAMED_STAFF',{
+  site_id:farm,person_id:id,daily_wage_minor:wage});
+ assert.throws(()=>assign('P-UNRELATED',7000),e=>e.code==='FACILITY_NAMED_STAFF');
+ s=assign('P-EMPLOYEE-GROOM',8000);
+ s=assign('P-EMPLOYEE-BREED',9000);
+ assert.throws(()=>apply(w,s,'named:reduce','FACILITY_SET_STAFFING',{
+  operation_id:'O-PLAYER',site_id:farm,staff_count:1}),e=>e.code==='FACILITY_NAMED_STAFF');
+ const names=getFacilityPortfolio(s,w,'O-PLAYER').sites[0].named_employee_directory.
+  map(x=>x.name).sort();
+ assert.deepEqual(names,['Edith Green','Mae Harris']);
+ s=apply(w,s,'named:first-day','ADVANCE_DAY',{});
+ const day=s.clock.date,tx='FACILITY_OUTFLOW:'+day+':'+farm+':FACILITY_STAFF_PAYROLL';
+ const entries=s.runtime.finances.ledger.filter(x=>x.transaction_id===tx);
+ assert.equal(entries.length,3);
+ assert.equal(entries.reduce((n,x)=>n+x.amount_minor,0),0);
+ assert.equal(entries.find(x=>x.kind==='FACILITY_STAFF_PAYROLL').amount_minor,-17000);
+ assert.deepEqual(entries.filter(x=>x.kind==='FACILITY_STAFF_WAGE_RECEIPT').
+  map(x=>[x.person_id,x.amount_minor]).sort((a,b)=>a[0].localeCompare(b[0])),[
+  ['P-EMPLOYEE-BREED',9000],['P-EMPLOYEE-GROOM',8000]]);
+ assert.equal(s.runtime.people['P-EMPLOYEE-GROOM'].wages_paid_minor,8000);
+ assert.equal(s.runtime.people['P-EMPLOYEE-BREED'].wages_paid_minor,9000);
+ assert.equal(s.runtime.finances.operation_balances_minor['O-PLAYER'],
+  500000000-100000000-12000-17000-3000);
+ const report=getFacilityFinancialReport(s,w,'O-PLAYER');
+ assert.equal(report.payroll_minor,17000);
+ assert.equal(report.named_employee_wages_paid_minor,17000);
+ assert.deepEqual(importGameSave(exportGameSave(s,w),w),s);
+ s=apply(w,s,'named:release','FACILITY_RELEASE_NAMED_STAFF',{
+  site_id:farm,person_id:'P-EMPLOYEE-GROOM'});
+ s=apply(w,s,'named:second-day','ADVANCE_DAY',{});
+ const second='FACILITY_OUTFLOW:'+s.clock.date+':'+farm+':FACILITY_STAFF_PAYROLL';
+ const secondEntries=s.runtime.finances.ledger.filter(x=>x.transaction_id===second);
+ assert.equal(secondEntries.reduce((n,x)=>n+x.amount_minor,0),0);
+ assert.equal(secondEntries.find(x=>x.kind==='FACILITY_STAFF_PAYROLL').amount_minor,-14000);
+ assert.equal(secondEntries.find(x=>x.kind==='FACILITY_STAFF_WAGE_RECEIPT').amount_minor,9000);
+ assert.equal(secondEntries.find(x=>x.kind==='FACILITY_EXTERNAL_RECEIPT').amount_minor,5000,
+  'Unassigned position remains a namedly anonymous modeled wage pool');
+ assert.equal(s.runtime.people['P-EMPLOYEE-GROOM'].wages_paid_minor,8000);
+ assert.equal(s.runtime.people['P-EMPLOYEE-BREED'].wages_paid_minor,18000);
+ assert.deepEqual(importGameSave(exportGameSave(s,w),w),s);
+});
