@@ -286,9 +286,28 @@ export async function openPersistent1999GameCareer(store,manifest,{
  }
  const barnPlan=plan1999OpeningTrainerBarnAssignments({
   openingRoster,people,tracks:world.entities.tracks,operation});
+ // These P-IDs are the world generator's actual local groom workforce.
+ // A professional is contracted to at most one game barn in this operation.
+ const groomPools=new Map(),assignedStaff=new Set();
+ for(const staff of people)if(staff.role==='groom'&&
+  Number.isInteger(staff.ratings?.horseCare)&&
+  staff.ratings.horseCare>=0&&staff.ratings.horseCare<=100){
+  if(!groomPools.has(staff.workplaceId))groomPools.set(staff.workplaceId,[]);
+  groomPools.get(staff.workplaceId).push(staff);
+ }
+ for(const pool of groomPools.values())pool.sort((a,b)=>
+  (b.ratings.horseCare-a.ratings.horseCare)||a.id.localeCompare(b.id));
  for(const barn of barnPlan.sites){
   const {trackId,trainerId,siteId,siteName,horseCount}=barn;
   const track=world.entities.tracks.find(t=>t.id===trackId);
+  const hired=(groomPools.get(trackId)||[]).find(p=>!assignedStaff.has(p.id));
+  if(hired)assignedStaff.add(hired.id);
+  // Labor compensation is based on actual persistent role-specific ratings,
+  // not placeholder names, arbitrary global salaries or duplicate employers.
+  const payrollStaff=hired?[{person_id:hired.id,role:'groom',
+   daily_wage_minor:6000+hired.ratings.horseCare*40,
+   started_on:run.clock.date,status:'ACTIVE',
+   source:'MODELED_EMPLOYMENT_FROM_PERSISTED_LOCAL_PERSON'}]:[];
   const loc=track.location||{};
   const tierBonus={HANDFUL:0,SMALL:3,REGIONAL:7,MAJOR:12,ELITE:18}[
    operation.portfolioTier]??0;
@@ -308,7 +327,9 @@ export async function openPersistent1999GameCareer(store,manifest,{
    acquired_date:run.clock.date,open_date:run.clock.date,
    stalls:Math.max(60,horseCount),max_stalls:Math.max(60,horseCount),
    quality:facilityQuality,daily_upkeep_minor:0,daily_boarding_minor:0,
-   staff_required:1,staff_count:1,staff_wage_daily_minor:0,
+   staff_required:1,staff_count:1,
+   staff_wage_daily_minor:payrollStaff[0]?.daily_wage_minor??0,
+   ...(payrollStaff.length?{payroll_staff:payrollStaff}:{}),
    track_rent_daily_minor:0,maintenance_daily_minor:0,
    maintenance_policy:'STANDARD',contracts:[],upgrade:null,land_acres:0};
  }
