@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {createPersistent1999Industry,savePersistent1999CareerRun,
  loadPersistent1999CareerRun} from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
 import {digestPersistent1999GameSnapshot,openPersistent1999GameCareer,
- format1999OpeningBarnName,PERSISTED_1999_OPENING_BARN_NAMING_MODEL,
+ format1999OpeningBarnName,plan1999OpeningTrainerBarnAssignments,
+ PERSISTED_1999_OPENING_BARN_NAMING_MODEL,
  calculate1999OpeningTreasury}
  from '../public/1999/engine/fictional-industry-game-world-bridge-1999.mjs';
 import {validateGameRun} from '../public/1999/game/state.js';
@@ -55,6 +56,42 @@ test('owner-operated barn labels use approved owner and venue names, never gener
   /real named owner and track/);
 });
 
+test('opening trainer barn plan keeps original stable IDs for one head and never replaces a source trainer',()=>{
+ const owner={id:'O-000061',name:'Kingsmere Farm'},
+  tracks=[{id:'T-0001',name:'Keeneland'}],
+  people=[
+   {id:'P-TRAINER-A',name:'Alex Veteran',role:'trainer',workplaceId:'T-0001'},
+   {id:'P-TRAINER-B',name:'Bryn Apprentice',role:'trainer',workplaceId:'T-0001'},
+   {id:'P-OTHER',name:'Other Circuit',role:'trainer',workplaceId:'T-0002'}];
+ const a={id:'H-A',homeTrackId:'T-0001',trainerId:'P-TRAINER-A'},
+  b={id:'H-B',homeTrackId:'T-0001',trainerId:'P-TRAINER-B'},
+  c={id:'H-C',homeTrackId:'T-0001',trainerId:'P-TRAINER-A'};
+ const one=plan1999OpeningTrainerBarnAssignments({
+  openingRoster:[a,c],people,tracks,operation:owner});
+ assert.equal(one.sites.length,1);
+ assert.equal(one.sites[0].siteId,'F-1999-OPENING-T-0001');
+ assert.equal(one.sites[0].siteName,'Kingsmere Farm — Keeneland Barn');
+ const mixed=plan1999OpeningTrainerBarnAssignments({
+  openingRoster:[b,c,a],people,tracks,operation:owner});
+ const stable=plan1999OpeningTrainerBarnAssignments({
+  openingRoster:[a,b,c],people,tracks,operation:owner});
+ assert.deepEqual(mixed,stable,'open population insertion order cannot change the ID mapping');
+ assert.equal(stable.sites.length,2);
+ assert.equal(stable.sites.find(site=>site.trainerId==='P-TRAINER-A').horseCount,2);
+ assert.equal(stable.sites.find(site=>site.trainerId==='P-TRAINER-B').horseCount,1);
+ assert.notEqual(stable.bySourceHorseId['H-A'],stable.bySourceHorseId['H-B']);
+ assert.equal(stable.bySourceHorseId['H-A'],stable.bySourceHorseId['H-C']);
+ assert.ok(stable.sites.every(site=>site.siteName.startsWith('Kingsmere Farm — Keeneland Barn')));
+ assert.deepEqual(people[0],{id:'P-TRAINER-A',name:'Alex Veteran',
+  role:'trainer',workplaceId:'T-0001'},'never mutate source personnel identity');
+ assert.throws(()=>plan1999OpeningTrainerBarnAssignments({
+  openingRoster:[{...a,trainerId:'P-OTHER'}],people,tracks,operation:owner}),
+  /no locally employed assigned trainer/i);
+ assert.throws(()=>plan1999OpeningTrainerBarnAssignments({
+  openingRoster:[a,a],people,tracks,operation:owner}),
+  /Repeated or missing original racing horse ID/i);
+});
+
 test('full-scale career snapshot hashes preserve census order in bounded chunks',async()=>{
  const manifest={worldId:'FullScaleDigestTest',seed:19990101,
   targetOpeningHorses:300000,horseCount:300000,personCount:75000};
@@ -99,13 +136,30 @@ test('10,000-horse persisted 1999 world opens and runs a canonical race career',
  assert.equal(career.run.runtime.finances.balance_minor,expectedOpeningCapital);
  assert.equal(career.run.runtime.finances.operation_balances_minor[
   career.operation.id],expectedOpeningCapital);
- const openingSite=career.run.runtime.facilities.sites['F-1999-OPENING-T-0001'];
- assert.ok(openingSite,'new barn should exist in canonical game run');
- assert.equal(openingSite.id,'F-1999-OPENING-T-0001');
- assert.equal(openingSite.name,'North Star Racing — Aqueduct Barn');
+ const openingSites=career.run.runtime.facilities.sites;
+ const openingSite=Object.values(openingSites)[0];
+ assert.ok(openingSite,'real assigned-trainer barn should exist in canonical game run');
+ assert.match(openingSite.id,/^F-1999-OPENING-T-0001(?:-P-[A-Za-z0-9-]+)?$/);
+ assert.ok(openingSite.name.startsWith('North Star Racing — Aqueduct Barn'));
  assert.equal(openingSite.owner_id,'O-OWNER-01');
  assert.equal(openingSite.host_track_id,'T-0001');
- assert.ok(openingSite.head_trainer_person_id,'trainer identity must remain linked');
+ assert.ok(openingSite.head_trainer_person_id,'exact trainer identity must remain linked');
+ const ownerHorses=Object.values(career.run.runtime.registered_horses.by_id);
+ assert.equal(ownerHorses.length,career.playableHorseCount);
+ assert.equal(new Set(ownerHorses.map(h=>h.trainer_id)).size,
+  Object.values(openingSites).length,
+  'every distinct operating trainer has one real owner-controlled barn');
+ for(const h of ownerHorses){
+  const barn=openingSites[h.current_residence_id];
+  assert.equal(barn?.head_trainer_person_id,h.trainer_id,
+   'horse cannot be managed by the wrong trainer at its physical barn');
+  assert.equal(barn?.owner_id,h.owner_organization_id);
+  assert.equal(barn?.operator_organization_id,h.owner_organization_id);
+  assert.equal(barn?.host_track_id,h.host_track_id);
+  assert.equal(h.racing_barn_id,barn.id);
+  assert.equal(career.world.entities.people.find(p=>p.id===h.trainer_id)?.workplaceId,
+   h.host_track_id,'the actual professional must work on the same circuit');
+ }
  assert.ok(career.playableHorseCount>0);
  const ownedRunners=career.world.entities.horses.filter(h=>
   ['RACING','TWO_YEAR_OLD_PROSPECT'].includes(h.status)&&
@@ -181,11 +235,13 @@ test('10,000-horse persisted 1999 world opens and runs a canonical race career',
  assert.equal(validateGameRun(saved.changes.canonicalRun,resumed.world),
   saved.changes.canonicalRun);
  assert.equal(saved.changes.canonicalRun.runtime.facilities.sites[
-  'F-1999-OPENING-T-0001'].name,openingSite.name);
+  openingSite.id].name,openingSite.name);
  assert.equal(resumed.run.runtime.facilities.sites[
-  'F-1999-OPENING-T-0001'].name,openingSite.name);
+  openingSite.id].name,openingSite.name);
  assert.equal(saved.changes.canonicalRun.runtime.facilities.sites[
-  'F-1999-OPENING-T-0001'].owner_id,openingSite.owner_id);
+  openingSite.id].owner_id,openingSite.owner_id);
+ assert.deepEqual(resumed.run.runtime.facilities.sites,openingSites,
+  'reopening preserves all trainer-site IDs, names, organizations and responsibilities');
 });
 
 test('approved Kingsmere is an openable owner-farm operator with a persistent full racing string',async()=>{
@@ -228,6 +284,25 @@ test('approved Kingsmere is an openable owner-farm operator with a persistent fu
  assert.notEqual(firstActive.care_facility_organization_id,
   firstActive.training_barn_organization_id,
   'boarding and racing-stable relationships must remain distinct when the world has separate facilities');
+ const kingsmereStables=career.run.runtime.facilities.sites;
+ const kingsmereRunners=Object.values(career.run.runtime.registered_horses.by_id);
+ const employed=new Set(kingsmereRunners.map(h=>h.trainer_id));
+ assert.ok(employed.size>1,'Kingsmere has more than one real employed trainer');
+ assert.equal(Object.keys(kingsmereStables).length,employed.size,
+  'Kingsmere trainer employer/site relationships must be represented in the game');
+ for(const h of kingsmereRunners){
+  const site=kingsmereStables[h.current_residence_id];
+  const trainer=career.world.entities.people.find(p=>p.id===h.trainer_id);
+  assert.ok(site&&trainer,'Kingsmere horse must retain known trainer and real barn');
+  assert.equal(site.owner_id,'O-000061');
+  assert.equal(site.operator_organization_id,'O-000061');
+  assert.equal(site.head_trainer_person_id,h.trainer_id);
+  assert.equal(site.host_track_id,'T-0001');
+  assert.equal(trainer.workplaceId,'T-0001');
+  assert.ok(site.name.startsWith('Kingsmere Farm — Keeneland Barn'));
+  assert.equal(h.racing_barn_id,site.id);
+ }
+
  const twoYearProspects=ownedRunners.filter(h=>h.status==='TWO_YEAR_OLD_PROSPECT');
  assert.ok(twoYearProspects.length>0);
  assert.ok(twoYearProspects.every(source=>{
