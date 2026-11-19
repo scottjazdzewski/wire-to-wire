@@ -105,14 +105,20 @@ export function connect1999Person(person,{seed}={}){
  if(!person?.id||!person?.role)throw Error('Invalid person graph input');
  const type=person.role;
  return {...person,ratings:rate1999Entity(seed,type,person.id),
-  relationships:[relationship1999('WORKS_AT',person.id,person.workplaceId)],
+  relationships:[relationship1999('WORKS_AT',person.id,person.workplaceId),
+   ...(person.role==='owner_principal'?
+    [relationship1999('PRINCIPAL_OF',person.id,person.organizationId)]:[])],
   ratingsProvenance:'MODELED_1999_UNCALIBRATED'};
 }
 export function connect1999DirectoryEntity(entity,{seed,type,homeTrackId=null}={}){
  if(!entity?.id||!['farm','owner','track'].includes(type))
   throw Error('Invalid directory graph input');
- const edges=homeTrackId&&type!=='track'?
-  [relationship1999('REGIONAL_CIRCUIT',entity.id,homeTrackId)]:[];
+ const edges=[
+  ...(homeTrackId&&type!=='track'?
+   [relationship1999('REGIONAL_CIRCUIT',entity.id,homeTrackId)]:[]),
+  ...(type==='owner'&&entity.principalId?
+   [relationship1999('REPRESENTED_BY',entity.id,entity.principalId)]:[])
+ ];
  return {...entity,ratings:rate1999Entity(seed,type,entity.id),
   relationships:edges,ratingsProvenance:'MODELED_1999_UNCALIBRATED'};
 }
@@ -136,7 +142,7 @@ export function validate1999GraphBatch(records,ids){
  * Cohort/role identity is verified by permanent ID and ordinal bounds.
  */
 export function validate1999IndustryReferences(records,{
- plan,staffing,tracks,farms,owners,foundingHorses=[]
+ plan,staffing,tracks,farms,owners,foundingHorses=[],ownerPrincipalCount=0
 }={}){
  if(!plan?.counts||!staffing?.counts||![tracks,farms,owners,foundingHorses].every(Array.isArray))
   throw Error('Missing world census for relationship validation');
@@ -160,6 +166,8 @@ export function validate1999IndustryReferences(records,{
   }
   const person=/^P-FICTIONAL-1999-([A-Z-]+)-(\d{7})$/.exec(id);
   if(person){
+   if(person[1]==='OWNER-PRINCIPAL')
+    return Number(person[2])>=1&&Number(person[2])<=ownerPrincipalCount;
    const n=roleTokens.indexOf(person[1]);
    return n>=0&&Number(person[2])>=1&&
     Number(person[2])<=staffing.counts[roleNames[n]];
