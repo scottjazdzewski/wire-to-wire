@@ -806,6 +806,7 @@ function bootstrapBundledCareer(){
   // normal user's first launch, boot directly to the real game dashboard.
   const directToGame=!window.WTWDesktop.smokeMode;
   silentDesktopStartup=directToGame;
+  if(directToGame)window.__WTW_DESKTOP_FULL_WORLD_BOOTING__=true;
   try{
    await open();
    busy=true;
@@ -822,10 +823,12 @@ function bootstrapBundledCareer(){
    const result=await importSharedCareerFile(file,{preserveExistingProgress:true});
    // A new EXE opens a real Kingsmere owner career. A previously saved
    // Kingsmere run resumes at its saved date; never reset player progress.
-   if(activeWorldCareer?.run?.player?.operation_id!=='O-000061')
+   if(activeWorldCareer?.run?.player?.operation_id!=='O-000061'||
+      activeWorldCareer?.run?.run_id!==
+       operationRunId(fullIndustryManifest,'O-000061'))
     await startCanonicalRun('O-000061');
    if(!activeWorldCareer?.run||fullIndustryManifest?.horseCount!==300000||
-      fullIndustryManifest?.personCount!==75705)
+      !(fullIndustryManifest?.personCount>0))
     throw Error('Playable 1999 census or Kingsmere career is incomplete');
    publishCareerReadModel();
    return {...result,runId:activeWorldCareer.run.run_id,
@@ -848,6 +851,10 @@ function bootstrapBundledCareer(){
     silentDesktopStartup=false;
     modal().hidden=true;
    }else await refresh();
+   if(directToGame){
+    window.__WTW_DESKTOP_FULL_WORLD_BOOTING__=false;
+    window.__WTW_NEXT__?.paint?.();
+   }
   }
  })();
  return bundledCareerBootstrap;
