@@ -433,7 +433,10 @@ export async function createPersistent1999Industry({
   calendarSchema:FICTIONAL_1999_CALENDAR_SCHEMA,calendarBatchesCommitted:0,
   scheduledCards:0,scheduledRaces:0,
   plan,staffing,source:'DETERMINISTIC_OFFLINE_1999',
-  approvedStartingWorldRelease:approvedRelease?.revision||null,
+  // Important: even a NULL extra manifest property changes the full-world
+  // SHA256 and breaks importing the frozen original V10 shared career.
+  // Only versioned, explicitly approved NEW source worlds carry this key.
+  ...(approvedRelease?{approvedStartingWorldRelease:approvedRelease.revision}:{}),
  };
  if(!manifest.directoryCommitted){
   const byId=new Map();
