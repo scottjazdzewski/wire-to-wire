@@ -106,7 +106,14 @@ export function validateStudServices(state,world){
  if(rt===undefined)return; // Older saves do not have gameplay stud contracts.
  ensure(isObject(rt)&&rt.schema===STUD_SERVICE_SCHEMA&&isObject(rt.by_id),
   'STUD_SAVE','Invalid saved breeding service book');
- const unique=new Set(),counts=new Map();
+ const unique=new Set(),counts=new Map(),settlements=new Map();
+ // Index once: a 300k-horse universe cannot scan its entire finance ledger
+ // for every recorded annual breeding service during save validation.
+ for(const row of state.runtime.finances.ledger){
+  if(!row.transaction_id?.startsWith('STUD_SERVICE:'))continue;
+  if(!settlements.has(row.transaction_id))settlements.set(row.transaction_id,[]);
+  settlements.get(row.transaction_id).push(row);
+ }
  for(const [id,x] of Object.entries(rt.by_id)){
   ensure(safeId(id)&&isObject(x)&&x.booking_id===id&&
    validDate(x.booked_on)&&x.booked_on<=state.clock.date&&
@@ -130,8 +137,7 @@ export function validateStudServices(state,world){
   ensure(x.transaction_id===(x.fee_minor?'STUD_SERVICE:'+id:null),
    'STUD_SAVE','Fee receipt identity is inconsistent');
   if(x.fee_minor){
-   const legs=state.runtime.finances.ledger.filter(y=>
-    y.transaction_id===x.transaction_id);
+   const legs=settlements.get(x.transaction_id)||[];
    ensure(legs.length===2&&
     legs.some(y=>y.kind==='STUD_SERVICE_FEE_PAYMENT'&&
      y.operation_id===x.legal_mare_owner_id&&y.amount_minor===-x.fee_minor)&&
