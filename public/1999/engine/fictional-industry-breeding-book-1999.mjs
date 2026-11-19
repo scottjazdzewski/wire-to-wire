@@ -6,6 +6,71 @@
 import {assignStallionServiceBooks,seeded1999Unit}
  from './fictional-industry-ecosystem-1999.mjs';
 export const BREEDING_BOOK_1999_SCHEMA='WTW_BREEDING_BOOK_1999_V1';
+export const BREEDING_CASHFLOW_SCHEMA='WTW_1999_BREEDING_SETTLEMENT_V1';
+
+/** Deterministic, balanced cashflow receipts for a REAL booked covering.
+ * All amounts are integer cents; each transaction debits the mare owner and
+ * credits the actual stallion owner and physical foaling-care facility.
+ * The annual journal is an auditable operational cashflow, not an invented
+ * opening cash balance or a separate world economy.
+ */
+export function settle1999BookedCoverings({year,coverings,mareById,
+ stallionById,farmById}={}){
+ if(!Number.isInteger(year)||year<1999||year>9998||
+  !Array.isArray(coverings)||!(mareById instanceof Map)||
+  !(stallionById instanceof Map)||!(farmById instanceof Map))
+  throw Error('Invalid actual covering settlement request');
+ const accounts=new Map(),seen=new Set();
+ let totalStudFeesMinor=0,totalCareFeesMinor=0;
+ const account=id=>{
+  if(!accounts.has(id))accounts.set(id,{organizationId:id,debitsMinor:0,
+   creditsMinor:0,studFeesPaidMinor:0,studIncomeMinor:0,
+   mareCarePaidMinor:0,farmCareIncomeMinor:0,transactions:0});
+  return accounts.get(id);
+ };
+ for(const cover of coverings){
+  if(!cover?.id||seen.has(cover.id)||cover.breedingYear!==year)
+   throw Error('Duplicate or wrong-year booked covering');
+  seen.add(cover.id);
+  const mare=mareById.get(cover.mareId);
+  const stallion=stallionById.get(cover.stallionId);
+  const farmId=mare?.careFacilityId||mare?.foalingFarmId;
+  if(!mare||!stallion||mare.status!=='BROODMARE'||
+   stallion.status!=='STALLION'||!mare.ownerId||!stallion.ownerId||
+   !farmById.has(farmId))
+   throw Error('Unsettleable booked covering '+cover.id);
+  const sireValue=Math.max(1,Math.min(99,
+   Number(stallion.ratings?.breedingValue)||55));
+  const sireAge=year-Number(stallion.foalYear||year-8);
+  const feeMinor=Math.round((125000+sireValue*sireValue*95)*
+   (sireAge>=19?.7:1));
+  const careMinor=25000+Math.round(Math.max(0,
+   80-Number(mare.development?.soundness??80))*350);
+  if(!Number.isSafeInteger(feeMinor)||!Number.isSafeInteger(careMinor))
+   throw Error('Breeding charge outside safe integer currency range');
+  const payer=account(mare.ownerId),sireOwner=account(stallion.ownerId),
+   facility=account(farmId);
+  payer.debitsMinor+=feeMinor+careMinor;
+  payer.studFeesPaidMinor+=feeMinor;
+  payer.mareCarePaidMinor+=careMinor;
+  sireOwner.creditsMinor+=feeMinor;sireOwner.studIncomeMinor+=feeMinor;
+  facility.creditsMinor+=careMinor;facility.farmCareIncomeMinor+=careMinor;
+  payer.transactions++;sireOwner.transactions++;facility.transactions++;
+  totalStudFeesMinor+=feeMinor;totalCareFeesMinor+=careMinor;
+ }
+ const rows=[...accounts.values()].sort((a,b)=>a.organizationId.localeCompare(b.organizationId));
+ const sum=key=>rows.reduce((total,row)=>total+row[key],0);
+ if(sum('debitsMinor')!==sum('creditsMinor')||
+  sum('studFeesPaidMinor')!==sum('studIncomeMinor')||
+  sum('mareCarePaidMinor')!==sum('farmCareIncomeMinor'))
+  throw Error('Breeding cashflow failed double-entry conservation');
+ return {schema:BREEDING_CASHFLOW_SCHEMA,year,bookedCoverings:coverings.length,
+  totalStudFeesMinor,totalCareFeesMinor,
+  totalDebitsMinor:sum('debitsMinor'),totalCreditsMinor:sum('creditsMinor'),
+  organizations:rows,
+  provenance:'MODELED_ACTUAL_COVERING_DOUBLE_ENTRY_CASHFLOW'};
+}
+
 const hash=(seed,key)=>Math.floor(seeded1999Unit(seed,key)*4294967296)>>>0;
 const pad=n=>String(n).padStart(7,'0');
 export function* generate1999CoveringLedger({
@@ -55,11 +120,12 @@ export function* generate1999CoveringLedger({
 
 /** Forecast only confirmed conceptions; no horse record exists before its due date. */
 export function* generate1999SeasonFoalingForecasts({seed,year,coverings,
- mareById,foalingFarmIdByMareId=null,batchSize=1000}={}){
+ mareById,foalingFarmIdByMareId=null,stallionById=null,batchSize=1000}={}){
  if(!Number.isSafeInteger(seed)||seed<1||seed>4294967295||
   !Number.isInteger(year)||year<1900||year>9998||
   !Array.isArray(coverings)||!(mareById instanceof Map)||
   (foalingFarmIdByMareId!==null&&!(foalingFarmIdByMareId instanceof Map))||
+  (stallionById!==null&&!(stallionById instanceof Map))||
   !Number.isInteger(batchSize)||batchSize<1||batchSize>5000)
   throw Error('Invalid seasonal foaling forecast');
  const conceptionRate=.73+seeded1999Unit(seed,'conception-rate:'+year)*.17;
@@ -68,7 +134,24 @@ export function* generate1999SeasonFoalingForecasts({seed,year,coverings,
   const mare=mareById.get(cover.mareId);
   if(!mare||!cover?.id||!cover.stallionId||cover.breedingYear!==year&&year!==1999)
    throw Error('Foaling forecast has an orphan covering');
-  if(seeded1999Unit(seed,'conception:'+year+':'+cover.id)>=conceptionRate)continue;
+  const stallion=stallionById?.get(cover.stallionId)||null;
+  if(stallionById&&(!stallion||stallion.status!=='STALLION'))
+   throw Error('Booked covering sire is missing or ineligible');
+  if(mare.status&&mare.status!=='BROODMARE')
+   throw Error('Booked covering mare is not breeding eligible');
+  // Age, mare health and stallion fertility change conception odds. Older
+  // breeding stock can remain fertile; no covering promises a pregnancy.
+  const mareAge=year-Number(mare.foalYear||year-10);
+  const sireAge=stallion?year-Number(stallion.foalYear||year-10):10;
+  const mareAgeFactor=mareAge<3?0:mareAge<=14?1:
+   mareAge<=19?.88:mareAge<=25?.64:.30;
+  const sireAgeFactor=sireAge<3?0:sireAge<=18?1:
+   sireAge<=23?.88:.65;
+  const soundness=Math.max(0,Math.min(100,
+   Number(mare.development?.soundness??mare.ratings?.soundness??75)));
+  const conceptionChance=Math.max(0,Math.min(.95,
+   conceptionRate*mareAgeFactor*sireAgeFactor*(.82+soundness*.002)));
+  if(seeded1999Unit(seed,'conception:'+year+':'+cover.id)>=conceptionChance)continue;
   const day=1+hash(seed,'foaling-date:'+year+':'+cover.id)%181;
   const birthDate=new Date(Date.UTC(year,1,day)).toISOString().slice(0,10);
   forecasts.push({id:'FOAL-FORECAST-'+year+'-'+cover.id,foalId:
@@ -77,8 +160,8 @@ export function* generate1999SeasonFoalingForecasts({seed,year,coverings,
    sireId:cover.stallionId,ownerId:mare.ownerId,
    foalingFarmId:foalingFarmIdByMareId?.get(mare.id)??
     mare.careFacilityId??mare.foalingFarmId,
-   status:'PROJECTED_NOT_YET_BORN',
-   provenance:'MODELED_CONFIRMED_PREGNANCY_FORECAST'});
+   status:'PROJECTED_NOT_YET_BORN',conceptionChance,
+   provenance:'MODELED_INDIVIDUAL_FERTILITY_PREGNANCY_FORECAST'});
   if(forecasts.length===batchSize){
    yield {year,records:[...forecasts]};forecasts.length=0;
   }
