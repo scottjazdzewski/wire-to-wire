@@ -4,7 +4,8 @@ import {readFileSync} from 'node:fs';
 import {planV10SavedHorseNamingDecision,validateRunWithSavedWorldEdits,
  buildV10OwnerHorseNamingBrief,previewV10OwnerHorseNames}
  from '../public/next/1999-saved-career-horse-naming.mjs';
-import {createNamingFeedback} from '../src/game/horse-naming-feedback-v489.js';
+import {createNamingFeedback,nameFeedbackKey} from '../src/game/horse-naming-feedback-v489.js';
+import {screenGameHorseName} from '../src/game/horse-naming-bridge.js';
 import {createCareerWorldEdits,applyCareerWorldEdits}
  from '../public/next/1999-career-world-edits.mjs';
 import {createNamingDeskController}
@@ -179,6 +180,36 @@ test('V10 previews use real player horse, actual owner and breeder, and only aut
   /not owned by the current player/);
  assert.throws(()=>buildV10OwnerHorseNamingBrief({world,run,horseId:primary,story:'storm'}),
   /35/);
+});
+
+test('indexed 300k-world collision screening matches the legacy full-world scan',()=>{
+ const {world,run}=fixture();
+ const story='The owner watched the mare give birth during a heavy storm. Thunder echoed across the paddock while the calm horse stood in the barn.';
+ const brief=buildV10OwnerHorseNamingBrief({world,run,horseId:primary,story});
+ const registeredNameKeys=new Set(world.entities.horses.map(h=>
+  nameFeedbackKey(h.name)));
+ const inputs=['Golden Branch','New Bright Light'];
+ for(const name of inputs){
+  const args={world,state:run,brief,proposal:{
+   name,evidenceId:brief.evidence[0].id,
+   explanation:'This name refers to the thunder and the remembered birth in the source barn.',
+   writer_id:'V492_TEST_EDITOR'}};
+  const old=screenGameHorseName(args);
+  const indexed=screenGameHorseName({...args,registeredNameKeys});
+  assert.deepEqual(indexed,old,name+' indexed result must be identical');
+ }
+ assert.throws(()=>screenGameHorseName({
+  world,state:run,brief,proposal:{
+   name:'Independent Call',evidenceId:brief.evidence[0].id,
+   explanation:'The recorded storm anchors the horse-specific name here.',
+   writer_id:'V492_TEST_EDITOR'},
+  registeredNameKeys:[...registeredNameKeys]
+ }),/must be a Set/);
+ const plain=previewV10OwnerHorseNames({world,run,horseId:primary,story,count:8});
+ const optimized=previewV10OwnerHorseNames({
+  world,run,horseId:primary,story,count:8,registeredNameKeys
+ });
+ assert.deepEqual(optimized,plain,'preview cannot change when indexed');
 });
 
 test('V10 naming controller uses a real horse preview instead of the fictional test-horse scenario',()=>{
