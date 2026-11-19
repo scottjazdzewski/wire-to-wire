@@ -6,6 +6,7 @@ import { validateSeed } from './rng.js';
 import {generatePeopleRuntime} from './people-generator.js';
 import {createFacilityState,validateFacilityState} from './facility-operations.js';
 import {createOwnershipRuntime,validateOwnershipRuntime} from './ownership.js';
+import {createStudServiceRuntime,validateStudServices} from './stud-services.js';
 import {createHorseRegistrationRuntime,validateHorseRegistrationRuntime,careerHorse} from './horse-registration.js';
 import {createHorseNamingRuntime,validateHorseNamingRuntime} from './horse-naming-bridge.js';
 import {validateHorseNameCandidates} from './horse-name-owner-release.js';
@@ -41,7 +42,7 @@ export function createGameRun({ world, runId, seed, player, stableHorseIds = [],
     rng: { seed: seed >>> 0 },
     player: { role: player.role, involvement: player.involvement, operation_id: operationId },
     stable_horse_ids: [...stableHorseIds],
-    runtime: { horse: {}, races: {}, entries: {}, people: personGenerationCatalog?generatePeopleRuntime({world,catalog:personGenerationCatalog}):{}, finances: { balance_minor: null, ledger: [], operation_balances_minor: {} }, facilities:createFacilityState(), ownership:createOwnershipRuntime(), registered_horses:createHorseRegistrationRuntime(),horse_naming:createHorseNamingRuntime(), agents:createDailyAgentRuntime(),racing:createRacingRuntime(),trainer_contracts:createTrainerContractRuntime(),post_race_campaigns:createPostRaceCampaignRuntime(),owner_trainer_reviews:createOwnerTrainerReviewRuntime(),trainer_management_requests:createTrainerManagementRuntime(),trainer_employment:createTrainerEmploymentRuntime() },
+    runtime: { horse: {}, races: {}, entries: {}, people: personGenerationCatalog?generatePeopleRuntime({world,catalog:personGenerationCatalog}):{}, finances: { balance_minor: null, ledger: [], operation_balances_minor: {} }, facilities:createFacilityState(), ownership:createOwnershipRuntime(),stud_services:createStudServiceRuntime(), registered_horses:createHorseRegistrationRuntime(),horse_naming:createHorseNamingRuntime(), agents:createDailyAgentRuntime(),racing:createRacingRuntime(),trainer_contracts:createTrainerContractRuntime(),post_race_campaigns:createPostRaceCampaignRuntime(),owner_trainer_reviews:createOwnerTrainerReviewRuntime(),trainer_management_requests:createTrainerManagementRuntime(),trainer_employment:createTrainerEmploymentRuntime() },
     decisions: { pending: {}, resolved: {} },
     scheduler: { pending: [], delivered_ids: [] },
     command_receipts: {},
@@ -104,6 +105,7 @@ export function validateGameRun(state, world) {
     'RUN_JOURNAL', 'Invalid event sequence counter');
   validateFacilityState(state,world);
   validateOwnershipRuntime(state,world);
+  validateStudServices(state,world);
   validateHorseRegistrationRuntime(state,world);
   validateHorseNamingRuntime(state,world);
   validateHorseNameCandidates(state,world);

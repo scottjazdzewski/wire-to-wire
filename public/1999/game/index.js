@@ -82,3 +82,8 @@ export {LOCAL_HORSE_NAMING_SCHEMA,LOCAL_HORSE_NAMING_ALGORITHM_REVISION,createLo
 export {TRAINER_EMPLOYMENT_SCHEMA,TRAINER_EMPLOYMENT_COMMANDS,
  createTrainerEmploymentRuntime,getLocalTrainerHiringMarket}
  from './trainer-employment-1999.js';
+
+export {STUD_SERVICE_SCHEMA,STUD_SERVICE_COMMANDS,createStudServiceRuntime,
+ bookStudService,validateStudServices,studServiceBusinessView as getStudServiceBusinessView,
+ getStudServiceOfferMarket}
+ from './stud-services.js';
