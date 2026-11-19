@@ -98,7 +98,7 @@ export function getOperationFinanceView(state,world,operationId,{
  ensure(safe(limit)&&limit>=0&&limit<=100,
   'OPERATION_FINANCE_PAGE','Recent ledger page must contain at most 100 lines');
  const totals=fresh(),groups=Object.fromEntries(GROUPS.map(g=>[g,fresh()]));
- const kinds={},recent=[];
+ const kinds=Object.create(null),recent=[];
  let allTimeNet=0,totalRows=0;
  for(const row of state.runtime.finances.ledger){
   if(row.operation_id!==operationId)continue;
