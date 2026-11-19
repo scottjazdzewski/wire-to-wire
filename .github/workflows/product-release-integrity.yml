@@ -1,5 +1,12 @@
 name: WTW Product-Wide Release Integrity
 
+# Keep only the newest check for EACH PR and EACH workflow.
+# Preserve running main branch verification and serialized Windows releases.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+
 # Every engineering window, every pull request. No file/path-based exclusions.
 on:
   pull_request:
