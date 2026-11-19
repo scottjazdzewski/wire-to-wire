@@ -86,7 +86,8 @@ export function parseCreativeModelOutput(output){
  * cannot auto-accept a candidate into the game registration gate.
  */
 export function screenStoryFirstIdeas({world,state,brief,rawIdeas,
- reservedNames=[],issuedNames=[],recentNames=[],additionalReviewedNames=[]}={}){
+ reservedNames=[],issuedNames=[],recentNames=[],additionalReviewedNames=[],
+ registeredNameKeys=null}={}){
  const anchors=authoringEvidence(brief);
  ensure(Array.isArray(rawIdeas)&&Array.isArray(reservedNames)&&
   Array.isArray(issuedNames)&&Array.isArray(recentNames)&&
@@ -118,7 +119,7 @@ export function screenStoryFirstIdeas({world,state,brief,rawIdeas,
    reasons.push('RECENT_OPENING_FATIGUE');
   const screened=screenGameHorseName({world,state,brief,
    proposal:{name:idea.name,evidenceId,explanation,writer_id:GAME_NAME_WRITER_ID},
-   reviewedNames:priorReviewed,reservedNames,issuedNames});
+   reviewedNames:priorReviewed,reservedNames,issuedNames,registeredNameKeys});
   const all=[...new Set([...screened.reasons,...reasons])];
   result.push({...screened,creatorSchema:HORSE_NAME_CREATOR_SCHEMA,
    evidenceQuote,sourceRef:origin?.sourceRef||null,
