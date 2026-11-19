@@ -72,6 +72,25 @@ export function plan1999MatureHorseYear({seed,year,horse}={}){
   return {decision:'RETIRED',patch:{status:'RETIRED_RACEHORSE',
    cohort:'retiredRunners',retirementYear:year,
    retirementReason:age>=12?'AGE_LIMIT':soundness<16?'SOUNDNESS':'CAREER_TRANSITION'}};
+ // Injury has a persistent recovery date. A horse with a medical hold
+ // cannot be considered race-ready just because the calendar year changed.
+ const eligibleToRecover=dev.medicalHoldUntil&&
+  year+'-01-01'>=dev.medicalHoldUntil;
+ const injuryRoll=seeded1999Unit(seed,'adult-injury:'+year+':'+horse.id);
+ const injuryRisk=clamp(.018+Math.max(0,50-soundness)*.0008,.018,.068);
+ if(injuryRoll<injuryRisk){
+  const severity=5+Math.floor(seeded1999Unit(seed,
+   'adult-injury-severity:'+year+':'+horse.id)*14);
+  return {decision:'INJURED',patch:{
+   development:{...dev,readiness:clamp(readiness-Math.ceil(severity*.8),0,100),
+    soundness:clamp(soundness-severity,0,100),
+    injuryCount:(Number(dev.injuryCount)||0)+1,
+    medicalHoldUntil:year+1+'-01-01',
+    latestInjury:{date:year+'-01-01',
+     type:'MODELED_RACING_HEALTH_SETBACK',severity,recoveryYear:year+1},
+    lastProgressionYear:year},
+   racingReadiness:'MEDICAL_HOLD',developmentYear:year}};
+ }
  if(age<=6){
   const pace=seeded1999Unit(seed,'adult-development:'+year+':'+horse.id);
   const gain=Math.round((potential-readiness)*.08+(pace-.5)*8);
@@ -79,8 +98,13 @@ export function plan1999MatureHorseYear({seed,year,horse}={}){
   return {decision:'DEVELOPED',patch:{
    development:{...dev,readiness:clamp(readiness+gain,0,100),
     soundness:clamp(soundness+Math.round((wear-.5)*5),0,100),
+    medicalHoldUntil:eligibleToRecover?null:dev.medicalHoldUntil,
     lastProgressionYear:year},
+   ...(eligibleToRecover?{racingReadiness:'CLEARED'}:{}),
    developmentYear:year}};
  }
+ if(eligibleToRecover)return {decision:'RECOVERED',patch:{
+  development:{...dev,medicalHoldUntil:null,lastProgressionYear:year},
+  racingReadiness:'CLEARED',developmentYear:year}};
  return {decision:'UNCHANGED',patch:null};
 }
