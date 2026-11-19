@@ -36,7 +36,7 @@ import {buildWorldEditReviewExport}
 import {createNamingFeedback,validateNamingFeedback,nameFeedbackKey}
  from '/1999/game/horse-naming-feedback-v489.js';
 import {planV10SavedHorseNamingDecision,previewV10OwnerHorseNames,
- validateRunWithSavedWorldEdits}
+ projectCareerSavedHorseName,validateRunWithSavedWorldEdits}
  from '/next/1999-saved-career-horse-naming.mjs';
 
 const DB_NAME='WireToWireClean1999CareersV2';
@@ -533,7 +533,8 @@ async function browseFullIndustry(page=0,kind=industryBrowseKind){
   const a=await readPersistent1999IndustryBatch(store,fullIndustryManifest,kind,ids[0]);
   const b=ids[1]===ids[0]?a:await readPersistent1999IndustryBatch(store,fullIndustryManifest,kind,ids[1]);
   const records=Array.from({length:Math.min(20,count-first)},
-   (_,i)=>{const index=first+i;return (Math.floor(index/batchSize)===ids[0]?a:b)[index%batchSize]});
+   (_,i)=>{const index=first+i;const entry=(Math.floor(index/batchSize)===ids[0]?a:b)[index%batchSize];
+    return kind==='horseBatches'?projectActiveIndustryHorse(entry):entry});
   const title={horseBatches:'HORSES',personBatches:'PERSONNEL',
    calendarBatches:'RACE CARDS',coveringBatches:'BREEDING BOOKINGS'}[kind];
   industryBrowseHtml='<p>'+title+' '+fmt(first+1)+'–'+
@@ -555,10 +556,21 @@ async function browseFullIndustry(page=0,kind=industryBrowseKind){
    }).join('')+'</div>';
  }finally{store.close()}
 }
+/** The Industry browser and inspector must show this active career's name
+ * override, never silently fall back to the original shared 1999 string.
+ */
+function projectActiveIndustryHorse(horse){
+ if(!horse)return null;
+ const career=activeWorldCareer;
+ if(!career?.run||career.manifest?.worldId!==fullIndustryManifest?.worldId||
+  career.manifest?.seed!==fullIndustryManifest?.seed)return horse;
+ return projectCareerSavedHorseName(horse,career.worldEdits);
+}
 async function inspectFullIndustryHorse(horseId){
  if(!fullIndustryManifest)throw Error('Open the full industry first');
  const store=await open1999IndustryDatabase();
- try{return await readPersistent1999HorseProfile(store,fullIndustryManifest,horseId)}
+ try{return projectActiveIndustryHorse(await readPersistent1999HorseProfile(
+  store,fullIndustryManifest,horseId))}
  finally{store.close()}
 }
 async function inspectFullIndustryPerson(personId){
@@ -1279,6 +1291,7 @@ async function readFictionalIndustryCareer(manifest,runId){
  finally{store.close()}
 }
 window.WTWCompactCareerManager=Object.freeze({open,listSlots,storeGame,
+ inspectFullIndustryHorse,
  editSavedWorldEntity,getSavedCareerNamingFeedback,
  previewSavedCareerHorseNames,
  isSavedCareerHorseNameInUse,commitSavedCareerHorseNamingPreference,exportCareerWorldChangesForReview,
