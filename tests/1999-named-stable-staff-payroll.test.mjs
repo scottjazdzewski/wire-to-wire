@@ -300,3 +300,73 @@ test('unpaid staff debt must belong to a real same-course source employee and le
  mutate(s=>{s.runtime.facilities.sites[site].staff_wage_arrears[groom].person_id='P-OTHER'});
  mutate(s=>{s.runtime.facilities.sites[site].staff_wage_arrears[groom].employer_operation_id='O-NOT-REAL'});
 });
+
+test('unpaid wages remain charged to their original employer after a barn operator changes',()=>{
+ const state=fixture(),barn=state.runtime.facilities.sites[site],
+  buyer='O-TEST-BUYER',worldWithBuyer=structuredClone(world);
+ worldWithBuyer.entities.organizations.push({id:buyer,name:'New Barn Operator'});
+ state.runtime.finances.operation_balances_minor[owner]=0;
+ state.runtime.finances.balance_minor=0;
+ state.runtime.finances.operation_balances_minor[buyer]=50000;
+ advanceFacilities({state,world:worldWithBuyer,emit:()=>{}});
+ assert.equal(barn.staff_wage_arrears[groom].employer_operation_id,owner);
+ assert.equal(barn.staff_wage_arrears[groom].owed_minor,9000);
+ // Simulates the validated operator-site record changing hands, not a
+ // second world or a separate payroll engine.
+ state.clock.date='1999-01-03';
+ barn.owner_id=buyer;barn.operator_organization_id=buyer;
+ advanceFacilities({state,world:worldWithBuyer,emit:()=>{}});
+ assert.equal(state.runtime.finances.operation_balances_minor[owner],0);
+ assert.equal(state.runtime.finances.operation_balances_minor[buyer],41000);
+ assert.equal(barn.staff_wage_arrears[groom].owed_minor,9000,
+  'new operator must not pay the previous employer\'s liability');
+ assert.equal(state.runtime.people[groom].stable_employer_operation_id,buyer);
+ assert.equal(state.runtime.people[groom].stable_payroll_earned_minor,9000);
+ validateFacilityState(state,worldWithBuyer);
+ state.clock.date='1999-01-04';
+ state.runtime.finances.operation_balances_minor[owner]=9000;
+ state.runtime.finances.balance_minor=9000;
+ advanceFacilities({state,world:worldWithBuyer,emit:()=>{}});
+ assert.equal(state.runtime.finances.operation_balances_minor[owner],0);
+ assert.equal(state.runtime.finances.operation_balances_minor[buyer],32000);
+ assert.equal(state.runtime.people[groom].stable_payroll_earned_minor,27000);
+ assert.equal(state.runtime.people[groom].stable_employer_operation_id,buyer,
+  'old employer backpay cannot reinstate an expired employer relation');
+ assert.equal(barn.staff_wage_arrears,undefined);
+ const paidByCompany=state.runtime.finances.ledger.filter(x=>
+  x.kind==='FACILITY_STAFF_PAYROLL');
+ assert.deepEqual(paidByCompany.map(x=>x.operation_id),
+  [buyer,owner,buyer],'old liability must remain with old company');
+ validateFacilityState(state,worldWithBuyer);
+});
+test('simultaneously insolvent past and new operators retain SEPARATE claims for the same groom',()=>{
+ const state=fixture(),barn=state.runtime.facilities.sites[site],
+  buyer='O-TEST-BUYER',worldWithBuyer=structuredClone(world);
+ worldWithBuyer.entities.organizations.push({id:buyer,name:'New Barn Operator'});
+ state.runtime.finances.operation_balances_minor[owner]=0;
+ state.runtime.finances.balance_minor=0;
+ state.runtime.finances.operation_balances_minor[buyer]=0;
+ advanceFacilities({state,world:worldWithBuyer,emit:()=>{}});
+ state.clock.date='1999-01-03';
+ barn.owner_id=buyer;barn.operator_organization_id=buyer;
+ advanceFacilities({state,world:worldWithBuyer,emit:()=>{}});
+ assert.equal(state.runtime.finances.ledger.length,0);
+ assert.equal(barn.staff_wage_arrears[groom].employer_operation_id,owner);
+ assert.equal(barn.staff_wage_arrears[groom+'|'+buyer].employer_operation_id,buyer);
+ assert.equal(barn.staff_wage_arrears[groom].owed_minor,9000);
+ assert.equal(barn.staff_wage_arrears[groom+'|'+buyer].owed_minor,9000);
+ validateFacilityState(state,worldWithBuyer);
+ state.clock.date='1999-01-04';
+ state.runtime.finances.operation_balances_minor[owner]=9000;
+ state.runtime.finances.balance_minor=9000;
+ state.runtime.finances.operation_balances_minor[buyer]=18000;
+ advanceFacilities({state,world:worldWithBuyer,emit:()=>{}});
+ assert.equal(state.runtime.finances.balance_minor,0);
+ assert.equal(state.runtime.finances.operation_balances_minor[buyer],0);
+ assert.equal(state.runtime.people[groom].stable_payroll_earned_minor,27000);
+ assert.equal(barn.staff_wage_arrears,undefined);
+ assert.equal(state.runtime.finances.ledger.filter(x=>
+  x.kind==='FACILITY_NAMED_EMPLOYEE_RECEIPT').length,3);
+ validateFacilityState(state,worldWithBuyer);
+ assert.deepEqual(JSON.parse(JSON.stringify(state)),state);
+});
