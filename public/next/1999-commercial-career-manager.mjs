@@ -512,6 +512,7 @@ async function browseFullIndustry(page=0,kind=industryBrowseKind){
    // Player-owned, actually born, still unnamed foals can be named here.
    // The form uses the SAME persisted lifecycle records as this foal list.
    const nameable=born.items.filter(h=>
+    career.run.player.role==='owner'&&
     h.ownerId===career.run.player.operation_id&&!h.name&&
     h.namingStatus==='UNNAMED_PERMANENT_ID');
    const foalNameEditor=nameable.length?
