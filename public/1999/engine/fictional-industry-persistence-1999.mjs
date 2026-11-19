@@ -20,7 +20,8 @@ import {validate1999OwnerPrincipalLinks,OWNER_PRINCIPAL_PERSONNEL_1999_MODEL}
  from './fictional-owner-principal-personnel-v12.mjs';
 import {OPENING_INDUSTRY_HORSE_NAMING_REVISION} from '../game/horse-naming-local-v485.js';
 import {connect1999Horse,connect1999Person,connect1999DirectoryEntity,
- validate1999GraphBatch,validate1999IndustryReferences,INDUSTRY_GRAPH_SCHEMA}
+ validate1999GraphBatch,validate1999IndustryReferences,INDUSTRY_GRAPH_SCHEMA,
+ FARM_MANAGER_RELATIONSHIP_1999_MODEL}
  from './fictional-industry-graph-1999.mjs';
 import {generate1999CoveringLedger,BREEDING_BOOK_1999_SCHEMA}
  from './fictional-industry-breeding-book-1999.mjs';
@@ -512,7 +513,8 @@ export async function createPersistent1999Industry({
     location:operatingLocation(farm,homeTrackId),
     ...(persistedLeadership?{
      managerIds:managed.map(p=>p.id),
-     managerNames:managed.map(p=>p.name)
+     managerNames:managed.map(p=>p.name),
+     managerRelationshipModel:FARM_MANAGER_RELATIONSHIP_1999_MODEL
     }:{})},{seed,type:'farm',homeTrackId}),
     'BREEDING_OR_CARE_FACILITY','farm');
   }
@@ -1591,8 +1593,9 @@ export async function verifyPersistent1999WorldOpen(store,manifest){
  if(manifest.ownerPrincipalCount){
   // Farm managerial identities share existing role-based staff P-IDs and
   // must survive the same restart as the newly materialized owner principals.
-  const managedFarm=directory.find(row=>Array.isArray(row.managerIds)&&
-   row.managerIds.length>0);
+  const managedFarm=directory.find(row=>
+   row.managerRelationshipModel===FARM_MANAGER_RELATIONSHIP_1999_MODEL&&
+   Array.isArray(row.managerIds)&&row.managerIds.length>0);
   if(!managedFarm)throw Error('V13 facility leadership directory is missing');
   const manager=await findPersistent1999Person(
    store,manifest,managedFarm.managerIds[0]);
