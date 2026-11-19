@@ -63,7 +63,8 @@ export function validateHorseRegistrationRuntime(state,world){
   const source=h?.world_source_horse_id?worldIdentity(world,'horses',h.world_source_horse_id):null;
   const openingWorldHorse=h?.provenance===OPENING_WORLD_PROVENANCE&&source&&
    sourceHorseIds.has(h.world_source_horse_id)===false&&source.id!==id&&
-   source.status==='RACING'&&source.name===h.registered_name&&
+   ['RACING','TWO_YEAR_OLD_PROSPECT'].includes(source.status)&&
+   source.name===h.registered_name&&
    (source.ownerId===h.owner_organization_id||
     (state.runtime.ownership?.owner_overrides?.[id]?.kind==='GAMEPLAY_TRANSFER'&&
      state.runtime.ownership.owner_overrides[id].owner_id===h.owner_organization_id))&&
@@ -77,7 +78,7 @@ export function validateHorseRegistrationRuntime(state,world){
   ensure([PROVENANCE,OPENING_WORLD_PROVENANCE].includes(h.provenance)&&
    h.registration_date<=state.clock.date&&validDate(h.registration_date),
    'HORSE_REGISTRY','Invalid registration provenance/date');
-  ensure(h.foaling_year<=1996&&h.foaling_year>=1980&&Number.isInteger(h.foaling_year)&&
+  ensure(h.foaling_year<=1997&&h.foaling_year>=1980&&Number.isInteger(h.foaling_year)&&
    validDate(h.birth_date)&&Number(h.birth_date.slice(0,4))===h.foaling_year&&
    h.racing_age_1999===1999-h.foaling_year&&SEXES.has(h.sex),
    'HORSE_REGISTRY','Invalid horse age, sex or date');
@@ -155,7 +156,7 @@ export function registerHorseAction({state,world,command,emit}){
    .some(x=>norm(x)===norm(h.registered_name)),'DUPLICATE_HORSE_NAME','Name collides with accepted world or reservations');
  ensure(typeof h.registered_name==='string'&&h.registered_name.trim()===h.registered_name&&h.registered_name.length<=100,
    'HORSE_NAME','Invalid registered name');
- ensure(SEXES.has(h.sex)&&Number.isInteger(h.foaling_year)&&h.foaling_year>=1980&&h.foaling_year<=1996&&
+ ensure(SEXES.has(h.sex)&&Number.isInteger(h.foaling_year)&&h.foaling_year>=1980&&h.foaling_year<=1997&&
    validDate(h.birth_date)&&Number(h.birth_date.slice(0,4))===h.foaling_year,
    'HORSE_AGE','1999 January racing horse must be a properly aged animal');
  ensure(worldIdentity(world,'organizations',h.owner_organization_id)&&
