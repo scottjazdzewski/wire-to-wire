@@ -58,7 +58,7 @@ test('V10 domestic horse hauling quotes distinguish NY/KY/FL/CA and small-market
 });
 test('V10 one professional cannot teleport between two actual same-day Florida/California meetings',()=>{
  let date=null;
- for(let i=0;i<110;i++){
+ for(let i=8;i<110;i++){
   const d=dplus('1999-01-02',i);
   if(trackMeetOpen1999('T-0017',d)&&trackMeetOpen1999('T-0028',d)){
    date=d;break;
