@@ -407,3 +407,88 @@ test('real booked race cannot be sold out from under trainer, jockey and buyer; 
   prior.player.operation_id);
  assert.deepEqual(importGameSave(exportGameSave(s,cw),cw),s);
 });
+
+test('player buys a seller-listed rival horse for one agreed price; real balances, title and Stable agree',()=>{
+ const world=w();let s=run(world),source=JSON.stringify(world);
+ for(const [org,amount] of [['O-1999-001',100000],['O-1999-002',30000]])
+  s=send(world,s,cmd('market:fund:'+org,'FACILITY_SEED_FUNDS',{
+   operation_id:org,balance_minor:amount,source_kind:'SIMULATED_TEST',
+   source_ref:'V10 real business buyer/seller fixture'},'system')).state;
+ // Manager access to a rival's horse does not authorize legal selling.
+ world.entities.horses[3].managementOrganizationId='O-1999-001';
+ source=JSON.stringify(world);
+ assert.throws(()=>send(world,s,cmd('market:fake-owner','LIST_HORSE_FOR_SALE',{
+  listing_id:'INVALID-MANAGED',horse_id:'H-1999-000004',
+  seller_id:'O-1999-001',price_minor:20000,expires_on:'1999-01-04'
+ })),e=>e.code==='NOT_HORSE_OWNER');
+ assert.throws(()=>send(world,s,cmd('market:system-player-list','LIST_HORSE_FOR_SALE',{
+  listing_id:'UNAUTHORIZED-PLAYER',horse_id:'H-1999-000001',
+  seller_id:'O-1999-001',price_minor:20000,expires_on:'1999-01-04'
+ },'system')),e=>e.code==='HORSE_MARKET_PERMISSION');
+ s=send(world,s,cmd('market:ai-seller','LIST_HORSE_FOR_SALE',{
+  listing_id:'RIVAL-SALE',horse_id:'H-1999-000004',
+  seller_id:'O-1999-002',price_minor:20000,expires_on:'1999-01-04'
+ },'system')).state;
+ assert.throws(()=>send(world,s,cmd('market:insufficient-listing','LIST_HORSE_FOR_SALE',{
+  listing_id:'DUPLICATE-OPEN',horse_id:'H-1999-000004',
+  seller_id:'O-1999-002',price_minor:15000,expires_on:'1999-01-04'
+ },'system')),e=>e.code==='HORSE_MARKET_DUPLICATE');
+ const result=send(world,s,cmd('market:player-buys','BUY_LISTED_HORSE',{
+  listing_id:'RIVAL-SALE',settlement_id:'RIVAL-1999-CASH'}));
+ s=result.state;
+ assert.equal(s.runtime.ownership.market_listings['RIVAL-SALE'].status,'SOLD');
+ assert.equal(s.runtime.ownership.market_listings['RIVAL-SALE'].buyer_id,'O-1999-001');
+ assert.equal(s.runtime.finances.operation_balances_minor['O-1999-001'],80000);
+ assert.equal(s.runtime.finances.operation_balances_minor['O-1999-002'],50000);
+ assert.equal(s.runtime.finances.balance_minor,80000);
+ const tx=s.runtime.finances.ledger.filter(x=>
+  x.transaction_id==='HORSE_SALE:RIVAL-1999-CASH');
+ assert.equal(tx.length,2);
+ assert.equal(tx.reduce((n,x)=>n+x.amount_minor,0),0);
+ assert.ok(tx.some(x=>x.kind==='HORSE_SALE_BUYER_PAYMENT'&&x.amount_minor===-20000));
+ assert.ok(tx.some(x=>x.kind==='HORSE_SALE_SELLER_RECEIPT'&&x.amount_minor===20000));
+ assert.equal(currentHorseOwnerId(s,world,'H-1999-000004'),'O-1999-001');
+ assert.equal(getOwnerPortfolioView(s,world,'O-1999-001',{limit:0}).total,3);
+ assert.ok(getStableView(s,world).some(x=>
+  x.id==='H-1999-000004'&&x.current_owner_id==='O-1999-001'));
+ assert.equal(JSON.stringify(world),source,'Buyer acquisition never rewrites source ownership');
+ assert.ok(!result.events.some(e=>e.kind==='HORSE_SALE_LISTING_CANCELLED'),
+  'A successful listing is sold, not spuriously cancelled');
+ assert.deepEqual(importGameSave(exportGameSave(s,world),world),s);
+ const replay=send(world,s,cmd('market:player-buys','BUY_LISTED_HORSE',{
+  listing_id:'RIVAL-SALE',settlement_id:'RIVAL-1999-CASH'}));
+ assert.equal(replay.duplicate,true);
+ assert.throws(()=>send(world,s,cmd('market:repurchase','BUY_LISTED_HORSE',{
+  listing_id:'RIVAL-SALE',settlement_id:'REUSE-PRICE'})),
+  e=>e.code==='HORSE_MARKET');
+});
+test('low-funds buyer cannot take title, and legally sold but managed horse stays in the servicing inventory',()=>{
+ const world=w();world.entities.horses[0].managementOrganizationId='O-1999-001';
+ let s=run(world);
+ for(const [org,amount] of [['O-1999-001',1000],['O-1999-002',30000]])
+  s=send(world,s,cmd('managed:fund:'+org,'FACILITY_SEED_FUNDS',{
+   operation_id:org,balance_minor:amount,source_kind:'SIMULATED_TEST',
+   source_ref:'cash and management independence fixture'},'system')).state;
+ s=send(world,s,cmd('managed:listing','LIST_HORSE_FOR_SALE',{
+  listing_id:'EXPENSIVE-OTHER',horse_id:'H-1999-000004',
+  seller_id:'O-1999-002',price_minor:20000,expires_on:'1999-01-06'
+ },'system')).state;
+ const locked=structuredClone(s);
+ assert.throws(()=>send(world,s,cmd('managed:poor-buy','BUY_LISTED_HORSE',{
+  listing_id:'EXPENSIVE-OTHER',settlement_id:'POOR-BUYER'})),
+  e=>e.code==='HORSE_SALE_FUNDS');
+ assert.deepEqual(s,locked,'Unfunded purchase leaves source, ledgers and listing unchanged');
+ assert.equal(currentHorseOwnerId(s,world,'H-1999-000004'),'O-1999-002');
+ s=send(world,s,cmd('managed:gift','REQUEST_HORSE_TRANSFER',{
+  request_id:'MANAGED-STAYS',horse_id:'H-1999-000001',
+  to_owner_id:'O-1999-002',transfer_type:'GIFT'})).state;
+ s=send(world,s,cmd('managed:gift-commit','COMMIT_HORSE_TRANSFER',{
+  request_id:'MANAGED-STAYS'},'system')).state;
+ assert.equal(currentHorseOwnerId(s,world,'H-1999-000001'),'O-1999-002');
+ assert.ok(s.stable_horse_ids.includes('H-1999-000001'),
+  'Same company retains its MANAGED inventory even after selling legal title');
+ assert.equal(getOwnerPortfolioView(s,world,'O-1999-001',{limit:0}).total,1);
+ assert.ok(getStableView(s,world).some(h=>
+  h.id==='H-1999-000001'&&h.current_owner_id==='O-1999-002'));
+ assert.deepEqual(importGameSave(exportGameSave(s,world),world),s);
+});
