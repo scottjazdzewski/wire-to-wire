@@ -26,6 +26,27 @@ test('clean founding game world still begins with exactly zero racers and zero p
  assert.equal(fresh.stable_horse_ids.length,0);
  assert.equal(source.counts.openingHorses,0);
 });
+test('playable opening attributes use persisted ratings, pedigree development and tier resources',()=>{
+ const horse_id='H-GAME-1999-QUALITY-PROBE';
+ const weak=model1999StartingHorseAttributes({horse_id,seed:19990101,
+  foaling_year:1997,sex:'COLT',ownerPortfolioTier:'HANDFUL',
+  horseRatings:{speed:15,stamina:15,acceleration:15,class:15,
+   consistency:15,surfaceDirt:15,surfaceTurf:15},
+  development:{potential:25,readiness:10,soundness:10}});
+ const strong=model1999StartingHorseAttributes({horse_id,seed:19990101,
+  foaling_year:1997,sex:'COLT',ownerPortfolioTier:'ELITE',
+  horseRatings:{speed:95,stamina:95,acceleration:95,class:95,
+   consistency:95,surfaceDirt:95,surfaceTurf:95},
+  development:{potential:95,readiness:95,soundness:95}});
+ assert.ok(strong.current_ability>weak.current_ability);
+ assert.ok(strong.potential_ability>weak.potential_ability);
+ assert.ok(strong.raw_speed>weak.raw_speed);
+ assert.ok(strong.stamina>weak.stamina);
+ assert.ok(strong.training_focus>weak.training_focus,
+  'elite resources improve readiness without assigning racing outcomes');
+ assert.ok(strong.soundness_risk<weak.soundness_risk,
+  'observed modeled soundness informs race-day risk');
+});
 test('exact 38-horse test cohort has frozen abilities, 8 real registered residences, and zero overbooking',()=>{
  const state=build1999PilotGameRun({world,manifest});
  const horses=Object.values(state.runtime.registered_horses.by_id);
@@ -70,4 +91,52 @@ test('cohort assignment cannot overfill a physical site or drift a recorded attr
  const drift=structuredClone(manifest);
  drift.assignments[0].starting_attributes.raw_speed=.999;
  assert.throws(()=>build1999PilotGameRun({world,manifest:drift}),e=>e.code==='PILOT_SCENARIO');
+});
+
+test('multi-week 1999 careers keep daily finance and journal state compact and saveable',()=>{
+ let state=build1999PilotGameRun({world,manifest}),dailyCareEvents=0;
+ for(let day=1;day<=45;day++){
+  const result=dispatchGameCommand({state,world,command:{
+   id:'compact-care-day:'+day,type:'ADVANCE_DAY',actor:'player',payload:{}}});
+  state=result.state;
+  dailyCareEvents+=result.events.filter(event=>event.kind==='HORSE_CARE_DAY').length;
+ }
+ assert.ok(dailyCareEvents>0,'daily gameplay should still return detailed care events');
+ const summaries=state.event_log.filter(event=>event.kind==='DAILY_SIMULATION_SUMMARY');
+ assert.ok(summaries.length>0,'the persistent journal should retain per-day event summaries');
+ assert.ok(summaries.some(event=>(event.details.counts.HORSE_CARE_DAY||0)>0),
+  'the durable journal should count care decisions without storing every repetitive row');
+ const careJournal=state.event_log.filter(event=>event.kind==='HORSE_CARE_DAY');
+ assert.ok(careJournal.length>0&&careJournal.length<dailyCareEvents,
+  'the durable journal samples per-horse care decisions and summarizes every day');
+ assert.ok(careJournal.every(event=>typeof event.details.horse_id==='string'&&
+  !Object.hasOwn(event.details,'health_risk')),
+  'care events keep horse IDs while relying on runtime history for detailed measurements');
+ const ledger=state.runtime.finances.ledger;
+ assert.ok(ledger.some(row=>row.rollup_schema==='WTW_DAILY_FINANCE_ROLLUP_V1'&&
+  row.kind==='HORSE_CARE_OWNER_PAYMENT'),
+  'older care transactions should remain available as reconciled daily rollups');
+ const carePaid=ledger.filter(row=>row.kind==='HORSE_CARE_OWNER_PAYMENT')
+  .reduce((total,row)=>total+row.amount_minor,0);
+ const lifetimeCare=Object.values(state.runtime.horse).reduce((total,record)=>
+  total+(record?.finance?.lifetime_minor||0),0);
+ assert.equal(carePaid,-lifetimeCare,'daily rollups must preserve exact care cash totals');
+ const careKinds=new Set(['HORSE_CARE_OWNER_PAYMENT',
+  'HORSE_CARE_SITE_AND_TRAINER_INCOME','HORSE_CARE_TRAINER_REMITTANCE',
+  'HORSE_CARE_TRAINER_EARNINGS','HORSE_CARE_SUPPLIER_RECEIPT']);
+ const careRows=ledger.filter(row=>careKinds.has(row.kind));
+ const representedCareTransactions=careRows.reduce((total,row)=>
+  total+(Number.isSafeInteger(row.transaction_count)?row.transaction_count:1),0);
+ const rawCareRows=careRows.filter(row=>row.rollup_schema!=='WTW_DAILY_FINANCE_ROLLUP_V1').length;
+ assert.ok(representedCareTransactions>rawCareRows,
+  'daily rollups should represent more transactions than durable rows');
+ assert.ok(ledger.length<10_000,
+  'seven days of raw detail plus exact daily rollups should stay bounded');
+ assert.ok(state.event_log.every((event,index)=>index===0||
+  event.seq>state.event_log[index-1].seq),'event sequence numbers must remain monotonic');
+ assert.equal(state.event_seq,state.event_log.at(-1)?.seq);
+ assert.deepEqual(importGameSave(exportGameSave(state,world),world),state,
+  'compacted finance and event history should survive a career save round trip');
+ assert.ok(JSON.stringify(state).length<10_000_000,
+  'a 45-day playable career should stay bounded well below the 64 MiB save ceiling');
 });

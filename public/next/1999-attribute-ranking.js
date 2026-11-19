@@ -47,7 +47,7 @@ function render({horses,adapter,app,ownerBadge,safe}){
  const tbody=rows.map(h=>'<tr class="ng-wtw-roster-row" data-search="'+safe([h.name,h.info.connections?.owner,
   h.info.connections?.trainer,h.info.racing_status].join(' ').toLowerCase())+'"><td class="ng-rs-first">'+
   '<button data-ng="horse" data-val="'+safe(h.name)+'" class="ng-rs-horse">'+ownerBadge(h.name)+
-  '<span>'+safe(h.name)+'</span></button></td><td>'+safe(h.info.age||'—')+'</td><td>'+
+  '<span>'+safe(h.name)+'</span></button></td><td>'+safe(h.info.age==null||String(h.info.age).trim()===''?'—':h.info.age)+'</td><td>'+
   safe(h.info.sex||'—')+'</td><td>'+safe(String(h.info.racing_status||'Not recorded').replaceAll('_',' '))+
   '</td>'+keys.map(k=>'<td>'+meter(score(h.attrs,k))+'</td>').join('')+'</tr>').join('');
  const options=groups.map(g=>'<optgroup label="'+safe(g.name)+'">'+g.definitions.map(d=>

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {WORLD_SCHEMA,createGameRun,dispatchGameCommand,exportGameSave,
- importGameSave,getFacilityPortfolio,getFacilityMarket} from '../src/game/index.js';
+ importGameSave,getFacilityPortfolio,getFacilityMarket,getFacilityFinancialReport} from '../src/game/index.js';
 const world=()=>({schema:WORLD_SCHEMA,
  authority:{snapshot_id:'WTW-FACILITIES-TEST',source:'TEST_ONLY',sha256:'e'.repeat(64)},
  start_date:'1999-01-01',
@@ -57,10 +57,13 @@ test('new stud construction, upgrade limits and contracted boarding settle on ga
  for(let d=0;d<3;d++)s=apply(w,s,'day-'+d,'ADVANCE_DAY',{});
  assert.equal(s.clock.date,'1999-01-04');
  assert.equal(s.runtime.facilities.sites[site].status,'ACTIVE');
+ s=funded(w,s,'O-RIVAL',1000000);
  s=apply(w,s,'contract','FACILITY_BOARDING_CONTRACT',{
-  site_id:site,contract_id:'FAC-CONTRACT-FIRST',stalls:5,duration_days:10},'system');
+  site_id:site,contract_id:'FAC-CONTRACT-FIRST',stalls:5,duration_days:10,
+  payer_organization_id:'O-RIVAL'},'system');
  assert.throws(()=>apply(w,s,'over','FACILITY_BOARDING_CONTRACT',{
-  site_id:site,contract_id:'FAC-CONTRACT-OVER',stalls:16,duration_days:10},'system'),e=>e.code==='FACILITY_OVERBOOKED');
+  site_id:site,contract_id:'FAC-CONTRACT-OVER',stalls:16,duration_days:10,
+  payer_organization_id:'O-RIVAL'},'system'),e=>e.code==='FACILITY_OVERBOOKED');
  const before=s.runtime.finances.balance_minor;
  s=apply(w,s,'open-day','ADVANCE_DAY',{});
  assert.equal(s.runtime.finances.balance_minor,before+5*5000-12000);
@@ -104,4 +107,89 @@ test('AI expands or improves its own facilities without bypassing reserves',()=>
  assert.ok(s.runtime.finances.operation_balances_minor['O-RIVAL']<
   900000000-100000000-22000000+1);
  assert.equal(getFacilityPortfolio(s,w,'O-PLAYER').owned_sites,0);
+});
+
+test('funded boarding is a balanced payer debit and facility income, including the financial screen',()=>{
+ const w=world();let s=game(w);
+ s=funded(w,s,'O-PLAYER',500000000);s=funded(w,s,'O-RIVAL',500000);
+ s=offer(w,s,'PAID');s=apply(w,s,'paid:buy','FACILITY_ACQUIRE',{
+  offer_id:'FAC-OFFER-PAID',operation_id:'O-PLAYER'});
+ const site='F-RUN-FAC-OFFER-PAID',contract='FAC-CONTRACT-PAID';
+ for(const [id,payer] of [['no-payer',undefined],['self','O-PLAYER'],['unfunded','O-UNSEEN']]){
+  assert.throws(()=>apply(w,s,'paid:reject:'+id,'FACILITY_BOARDING_CONTRACT',{
+   site_id:site,contract_id:'FAC-CONTRACT-REJECT',stalls:5,
+   duration_days:10,payer_organization_id:payer}),e=>Boolean(e.code));
+ }
+ s=apply(w,s,'paid:book','FACILITY_BOARDING_CONTRACT',{
+  site_id:site,contract_id:contract,stalls:5,duration_days:10,
+  payer_organization_id:'O-RIVAL'},'system');
+ const beforeClient=s.runtime.finances.operation_balances_minor['O-RIVAL'];
+ const beforeOperator=s.runtime.finances.operation_balances_minor['O-PLAYER'];
+ s=apply(w,s,'paid:day','ADVANCE_DAY',{});
+ const tx='FACILITY_BOARD:1999-01-02:'+contract;
+ const rows=s.runtime.finances.ledger.filter(x=>x.transaction_id===tx);
+ assert.equal(rows.length,2);
+ assert.equal(rows.reduce((n,x)=>n+x.amount_minor,0),0);
+ assert.deepEqual(new Set(rows.map(x=>x.operation_id)),new Set(['O-PLAYER','O-RIVAL']));
+ assert.equal(rows.find(x=>x.kind==='FACILITY_BOARDING_CLIENT_PAYMENT').amount_minor,-25000);
+ assert.equal(rows.find(x=>x.kind==='FACILITY_BOARDING_REVENUE').amount_minor,25000);
+ assert.equal(s.runtime.finances.operation_balances_minor['O-RIVAL'],beforeClient-25000);
+ assert.equal(s.runtime.finances.operation_balances_minor['O-PLAYER'],beforeOperator+25000-12000);
+ const operatorReport=getFacilityFinancialReport(s,w,'O-PLAYER');
+ const clientReport=getFacilityFinancialReport(s,w,'O-RIVAL');
+ assert.equal(operatorReport.revenue_minor,25000);
+ assert.equal(operatorReport.operating_profit_minor,13000);
+ assert.equal(clientReport.boarding_purchased_minor,25000);
+ assert.equal(clientReport.operating_profit_minor,-25000);
+ assert.deepEqual(importGameSave(exportGameSave(s,w),w),s);
+});
+test('client insolvency and legacy anonymous reservations never mint boarding revenue',()=>{
+ const w=world();let s=game(w);
+ s=funded(w,s,'O-PLAYER',500000000);s=funded(w,s,'O-RIVAL',26000);
+ s=offer(w,s,'FAILED');s=apply(w,s,'fail:buy','FACILITY_ACQUIRE',{
+  offer_id:'FAC-OFFER-FAILED',operation_id:'O-PLAYER'});
+ const site='F-RUN-FAC-OFFER-FAILED';
+ assert.throws(()=>apply(w,s,'fail:too-large','FACILITY_BOARDING_CONTRACT',{
+  site_id:site,contract_id:'FAC-CONTRACT-TOO-LARGE',stalls:6,duration_days:5,
+  payer_organization_id:'O-RIVAL'},'system'),e=>e.code==='FACILITY_CLIENT_CASH');
+ s=apply(w,s,'fail:book','FACILITY_BOARDING_CONTRACT',{
+  site_id:site,contract_id:'FAC-CONTRACT-FAILED',stalls:5,duration_days:5,
+  payer_organization_id:'O-RIVAL'},'system');
+ for(let i=0;i<3;i++)s=apply(w,s,'fail:day:'+i,'ADVANCE_DAY',{});
+ assert.equal(s.runtime.finances.operation_balances_minor['O-RIVAL'],1000);
+ assert.equal(s.runtime.finances.ledger.filter(x=>
+  x.kind==='FACILITY_BOARDING_REVENUE'&&x.site_id===site).length,1);
+ assert.equal(s.event_log.filter(x=>x.kind==='FACILITY_BOARDING_UNFUNDED').length,2);
+ assert.equal(getFacilityFinancialReport(s,w,'O-PLAYER').revenue_minor,25000);
+ assert.deepEqual(importGameSave(exportGameSave(s,w),w),s);
+ // Older saves still reopen: the original contract remains, but unbacked
+ // aggregate demand cannot produce another posted boarding credit.
+ let legacy=structuredClone(s);
+ delete legacy.runtime.facilities.sites[site].contracts[0].payer_organization_id;
+ const prior=legacy.runtime.finances.ledger.filter(x=>x.kind==='FACILITY_BOARDING_REVENUE').length;
+ legacy=apply(w,legacy,'fail:legacy-day','ADVANCE_DAY',{});
+ assert.equal(legacy.runtime.finances.ledger.filter(x=>x.kind==='FACILITY_BOARDING_REVENUE').length,prior);
+ assert.ok(legacy.event_log.some(x=>x.kind==='FACILITY_BOARDING_UNFUNDED'&&
+  x.details.reason==='LEGACY_NO_PAYER'));
+});
+test('two calendar years preserve every paid day and exact balances after save/reopen',()=>{
+ const w=world();let s=game(w);
+ s=funded(w,s,'O-PLAYER',500000000);s=funded(w,s,'O-RIVAL',10000000);
+ s=offer(w,s,'MULTI');s=apply(w,s,'multi:buy','FACILITY_ACQUIRE',{
+  offer_id:'FAC-OFFER-MULTI',operation_id:'O-PLAYER'});
+ s=apply(w,s,'multi:book','FACILITY_BOARDING_CONTRACT',{
+  site_id:'F-RUN-FAC-OFFER-MULTI',contract_id:'FAC-CONTRACT-MULTI',stalls:5,
+  start_date:'1999-01-02',duration_days:365,payer_organization_id:'O-RIVAL'},'system');
+ for(let i=0;i<370;i++)s=apply(w,s,'multi:day:'+i,'ADVANCE_DAY',{});
+ assert.equal(s.clock.date,'2000-01-06');
+ const payments=s.runtime.finances.ledger.filter(x=>x.kind==='FACILITY_BOARDING_CLIENT_PAYMENT');
+ const receipts=s.runtime.finances.ledger.filter(x=>x.kind==='FACILITY_BOARDING_REVENUE');
+ assert.equal(payments.length,365);assert.equal(receipts.length,365);
+ assert.ok(payments.some(x=>x.date.startsWith('2000-')));
+ assert.equal(payments.reduce((n,x)=>n+x.amount_minor,0),-365*25000);
+ assert.equal(receipts.reduce((n,x)=>n+x.amount_minor,0),365*25000);
+ assert.equal(s.runtime.finances.operation_balances_minor['O-RIVAL'],10000000-365*25000);
+ assert.deepEqual(importGameSave(exportGameSave(s,w),w),s);
+ const dupe=apply(w,s,'multi:day:369','ADVANCE_DAY',{});
+ assert.deepEqual(dupe,s);
 });

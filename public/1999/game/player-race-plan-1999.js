@@ -4,6 +4,7 @@
  * authoritative existing engine action. The game kernel clones state before
  * calling this module; a failed final step cannot retain earlier debits.
  */
+import {same1999PhysicalVenue} from './physical-venue-1999.js';
 import {ensure,worldIdentity,jsonClone} from './contracts.js';
 import {racingAction,jockeyBookingDecision,raceEligibility} from './racing-1999.js';
 import {shippingAction,shippingAssessment,effectiveHorseTrack,horseTravelStatus,
@@ -74,8 +75,8 @@ export function quote1999PlayerRacePlan(state,world,{
    race.date+'T12:00:00Z')-4*86400000).toISOString().slice(0,10);
  }
  const transport=horseTravelStatus(state,horse.horse_id);
- const alreadyOutbound=transport?.status==='OUTBOUND'&&transport.destination_track_id===race.track_id;
- quote.needs_shipping=effectiveHorseTrack(state,horse)!==race.track_id&&!alreadyOutbound;
+ const alreadyOutbound=transport?.status==='OUTBOUND'&&same1999PhysicalVenue(transport.destination_track_id,race.track_id);
+ quote.needs_shipping=!same1999PhysicalVenue(effectiveHorseTrack(state,horse),race.track_id)&&!alreadyOutbound;
  if(quote.needs_shipping&&!destination_site_id)
   return fail('SELECT_RECEIVING_BARN','Choose a staffed receiving barn before authorizing transport');
  if(!quote.needs_shipping&&destination_site_id)

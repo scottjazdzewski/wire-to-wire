@@ -4,9 +4,11 @@
  * Pure ESM: no external dependencies, persistent writes, or secret credentials.
  */
 import {ensure, worldIdentity} from './contracts.js';
+import {createNamingFeedback,validateNamingFeedback,recordNamingFeedback,nameFeedbackKey} from './horse-naming-feedback-v489.js';
+import {OWNER_REVIEWED_NAME_KEYS_V478} from './horse-naming-owner-review-v478.js';
 
 export const GAME_NAMING_BRIDGE_SCHEMA='WTW_GAME_NAME_ORIGIN_BRIDGE_V1';
-export const HORSE_NAMING_COMMANDS=Object.freeze(['RECORD_HORSE_NAMING_STORY']);
+export const HORSE_NAMING_COMMANDS=Object.freeze(['RECORD_HORSE_NAMING_STORY','OWNER_SET_HORSE_NAMING_PREFERENCE']);
 const nameKey=v=>String(v??'').normalize('NFKC').toLocaleLowerCase('en-US')
  .replace(/[\u2018\u2019]/g,"'").replace(/[^a-z0-9]+/g,'');
 const safeId=/^H-GAME-1999-[A-Za-z0-9-]{1,64}$/;
@@ -17,7 +19,7 @@ const text=x=>typeof x==='string'?x.trim():'';
 function checkHorse(world,horse){
  ensure(plain(horse)&&safeId.test(horse.horse_id||''),
   'NAMING_ID','Requires a future 1999 career horse ID');
- ensure(Number.isInteger(horse.foaling_year)&&horse.foaling_year>=1980&&horse.foaling_year<=1996,
+ ensure(Number.isInteger(horse.foaling_year)&&horse.foaling_year>=1980&&horse.foaling_year<=1997,
   'NAMING_AGE','Expected a valid 1999 registered horse foaling year');
  const owner=worldIdentity(world,'organizations',horse.owner_organization_id);
  const breeder=worldIdentity(world,'organizations',horse.breeder_organization_id);
@@ -119,13 +121,14 @@ export function recordGameNameEditorialDecision(screened,{editorId,verdict,notes
 
 /** Actual save-backed player-authored stories. No generated name and no accepted release. */
 export function createHorseNamingRuntime(){
- return {schema:GAME_NAMING_BRIDGE_SCHEMA,stories_by_id:{},candidates_by_id:{}};
+ return {schema:GAME_NAMING_BRIDGE_SCHEMA,stories_by_id:{},candidates_by_id:{},feedback:createNamingFeedback()};
 }
 export function validateHorseNamingRuntime(state,world){
  const rt=state.runtime?.horse_naming;
  if(rt===undefined)return; // Old saved careers remain importable.
  ensure(plain(rt)&&rt.schema===GAME_NAMING_BRIDGE_SCHEMA&&plain(rt.stories_by_id),
   'NAMING_RUNTIME','Invalid persisted naming story directory');
+ if(rt.feedback!==undefined)validateNamingFeedback(rt.feedback);
  for(const [id,s] of Object.entries(rt.stories_by_id)){
   ensure(plain(s)&&s.story_id===id&&/^[A-Za-z0-9_-]{4,64}$/.test(id),
    'NAMING_STORY_ID','Invalid saved story identity');
@@ -157,4 +160,40 @@ export function recordHorseNamingStoryAction({state,world,command,emit}){
  rt.stories_by_id[id]=record;
  emit('HORSE_NAMING_STORY_RECORDED',{
   story_id:id,horse_id:record.horse_id,owner_id:record.owner_id});
+}
+/** Durable game-owner feedback only. The official horse name registry is
+ * unchanged until an independently screened and owner-approved release. */
+export function recordHorseNamingPreferenceAction({state,world,command,emit}){
+ ensure(command.actor==='player'&&state.player?.role==='owner'&&state.player.operation_id,
+  'NAMING_FEEDBACK_AUTH','Only the player owner may choose or review names');
+ const p=command.payload||{},horseId=p.horse_id||'';
+ ensure(command.type==='OWNER_SET_HORSE_NAMING_PREFERENCE'&&
+  ['KEEP','REJECT','CHOOSE'].includes(p.decision)&&
+  typeof p.name==='string'&&typeof p.prompt==='string'&&
+  typeof p.motif_id==='string'&&typeof horseId==='string',
+  'NAMING_FEEDBACK_INPUT','An exact owner naming decision is required');
+ if(p.decision==='CHOOSE'){
+  const horse=state.runtime.registered_horses?.by_id?.[horseId]||
+   world.entities.horses.find(h=>h.id===horseId);
+  ensure(horse&&state.stable_horse_ids.includes(horseId)&&
+   horse.owner_organization_id===state.player.operation_id,
+   'NAMING_FEEDBACK_HORSE','Choose requires a real player-owned horse');
+ }else ensure(!horseId,'NAMING_FEEDBACK_HORSE','Only Choose may identify a horse');
+ // A kept name promises future availability; never bank or choose names that
+ // are already registered or in the protected owner-review exclusion ledger.
+ if(p.decision!=='REJECT'){
+  const registered=[...world.entities.horses.map(h=>h.name),
+   ...Object.values(state.runtime.registered_horses?.by_id||{}).map(h=>h.registered_name),
+   ...OWNER_REVIEWED_NAME_KEYS_V478];
+  ensure(!registered.some(n=>nameFeedbackKey(n)===nameFeedbackKey(p.name)),
+   'NAMING_FEEDBACK_COLLISION','Name is already registered or previously reviewed');
+ }
+ const rt=state.runtime.horse_naming,prior=rt.feedback??createNamingFeedback();
+ const updated=recordNamingFeedback(prior,{name:p.name,decision:p.decision,
+  motifId:p.motif_id,horseId,prompt:p.prompt});
+ ensure(updated!==prior,'NAMING_FEEDBACK_NO_CHANGE','Identical review already recorded');
+ rt.feedback=updated;
+ emit('HORSE_NAMING_PREFERENCE_RECORDED',{name:p.name,decision:p.decision,
+  horse_id:horseId||null,feedback_revision:updated.revision,
+  registration_status:'NOT_RELEASED'});
 }

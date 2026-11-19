@@ -6,6 +6,8 @@
  * Travel is modeled for jockeys (air/ground), NOT horse shipping.
  * All prices are fictional 1999 game values, never factual quotes.
  */
+import {same1999PhysicalVenue} from '../game/physical-venue-1999.js';
+
 export const JOCKEY_ENGAGEMENT_MODEL='WTW_1999_JOCKEY_ENGAGEMENT_V1';
 const DAY=86400000;
 const gap=(a,b)=>Math.round((Date.parse(b+'T12:00:00Z')-
@@ -68,7 +70,7 @@ function seasonalRidingCircuit(a,b,date){
  */
 export function jockeyTransferDays(a,b){
  if(!a||!b)return null;
- if(a.id===b.id)return 0;
+ if(a.id===b.id||same1999PhysicalVenue(a.id,b.id))return 0;
  const ca=countryOf(a),cb=countryOf(b);
  if(ca!==cb)return 3;
  if(ca!=='USA'&&ca!=='US')return 2;
@@ -133,7 +135,7 @@ export function assessJockeySchedule(state,world,j,race){
  for(const reserved of previous){
   if(reserved.id===race.id)return {allowed:false,reason:'JOCKEY_DOUBLE_BOOK'};
   if(reserved.date===race.date){
-   if(reserved.track_id!==race.track_id)
+   if(!same1999PhysicalVenue(reserved.track_id,race.track_id)&&reserved.track_id!==race.track_id)
     return {allowed:false,reason:'JOCKEY_LOCATION'};
    sameCardCount++;continue;
   }
@@ -147,7 +149,8 @@ export function assessJockeySchedule(state,world,j,race){
    return {allowed:false,reason:'JOCKEY_INFEASIBLE_TRAVEL'};
   trips.push({from:earlier.track_id,to:later.track_id,days:needed});
  }
- const away=j.home_track_id!==race.track_id;
+ const away=j.home_track_id!==race.track_id&&
+  !same1999PhysicalVenue(j.home_track_id,race.track_id);
  const lead=gap(state.clock.date,race.date);
  if(lead<1)return {allowed:false,reason:'INSUFFICIENT_BOOKING_LEAD'};
  // Professional jockeys commonly ride several days of a visiting meet.
@@ -156,10 +159,12 @@ export function assessJockeySchedule(state,world,j,race){
  // This is not a separate invented journey record: settled/entered mounts
  // remain the source of truth across save and resume.
  const existingVisit=away&&previous.some(r=>{
-  if(r.track_id!==race.track_id||Math.abs(gap(r.date,race.date))>7)return false;
+  if(!same1999PhysicalVenue(r.track_id,race.track_id)&&r.track_id!==race.track_id||
+    Math.abs(gap(r.date,race.date))>7)return false;
   const lo=r.date<race.date?r.date:race.date;
   const hi=r.date>race.date?r.date:race.date;
   return !previous.some(other=>other.track_id!==race.track_id&&
+    !same1999PhysicalVenue(other.track_id,race.track_id)&&
    other.date>=lo&&other.date<=hi);
  });
  // A FIRST away engagement requires advance travel arrangements; subsequent

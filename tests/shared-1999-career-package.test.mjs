@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 import {packShared1999Career,unpackShared1999Career,sameShared1999WorldManifest,
- sameShared1999WorldIdentity}
+ sameShared1999WorldIdentity,migrateShared1999CareerRunWorldReference,
+ migrateShared1999CareerOperationInventory}
  from '../public/1999/engine/shared-1999-career-package.mjs';
 
 globalThis.crypto??=webcrypto;
@@ -51,4 +52,74 @@ test('world checkpoint identity survives generator metadata updates but rejects 
  assert.equal(sameShared1999WorldIdentity(manifest,{...manifest,seed:19990102}),false);
  assert.equal(sameShared1999WorldIdentity(manifest,{...manifest,personCount:75725}),false);
  assert.equal(sameShared1999WorldIdentity(manifest,{...manifest,targetOpeningHorses:325000}),false);
+});
+
+
+test('legacy shared career run reference advances only after exact snapshot verification',()=>{
+ const oldSha='a'.repeat(64),newSha='b'.repeat(64),snapshotId='WTW-PERSISTED-1999-19990101-test-300000';
+ const oldRun={...run,world_ref:{snapshot_id:snapshotId,sha256:oldSha}};
+ const oldRecord={...careerRecord,changes:{...careerRecord.changes,canonicalRun:oldRun}};
+ const migrated=migrateShared1999CareerRunWorldReference(oldRecord,{
+  expectedSnapshotSha256:oldSha,currentAuthority:{snapshot_id:snapshotId,sha256:newSha}});
+ assert.deepEqual(migrated.changes.canonicalRun.world_ref,
+  {snapshot_id:snapshotId,sha256:newSha});
+ assert.deepEqual({...migrated.changes.canonicalRun,world_ref:oldRun.world_ref},oldRun);
+ assert.equal(oldRecord.changes.canonicalRun.world_ref.sha256,oldSha,
+  'source checkpoint remains unchanged');
+ assert.throws(()=>migrateShared1999CareerRunWorldReference(oldRecord,{
+  expectedSnapshotSha256:'c'.repeat(64),
+  currentAuthority:{snapshot_id:snapshotId,sha256:newSha}}),
+  /verified legacy snapshot/);
+ assert.throws(()=>migrateShared1999CareerRunWorldReference(oldRecord,{
+  expectedSnapshotSha256:oldSha,
+  currentAuthority:{snapshot_id:'WTW-PERSISTED-1999-OTHER',sha256:newSha}}),
+  /snapshot identity changed/);
+});
+
+
+test('founder relationship migration appends only newly linked operation horses to saved careers',()=>{
+ const operationId='O-000061',runId='WTW-RUN-1999-19990101-SIZE-300000-OP-O-000061';
+ const oldRun={run_id:runId,clock:{date:'1999-04-24'},player:{role:'owner',
+  involvement:'balanced',operation_id:operationId},revision:88,event_seq:1,
+  event_log:[{seq:1,command_id:'start',date:'1999-01-01',kind:'CAREER_STARTED'}],
+  stable_horse_ids:['H-GAME-OLD','H-OLD-BREEDING'],
+  runtime:{registered_horses:{schema:'WTW_1999_HORSE_REGISTRY_V1',
+   by_id:{},by_receipt:{},name_release:null},horse:{},people:{},
+   facilities:{sites:{}}}};
+ const active={horse_id:'H-GAME-NEW',registration_receipt_id:'WORLD_OPENING:H-NEW',
+  trainer_id:'P-TRAINER-1',current_residence_id:'F-OPENING-T-0001'};
+ const openingRun={...oldRun,clock:{date:'1999-01-01'},
+  stable_horse_ids:['H-GAME-OLD','H-OLD-BREEDING','H-NEW-BREEDING','H-GAME-NEW'],
+  runtime:{registered_horses:{schema:'WTW_1999_HORSE_REGISTRY_V1',
+   by_id:{'H-GAME-NEW':active},by_receipt:{'WORLD_OPENING:H-NEW':'H-GAME-NEW'},
+   name_release:null},horse:{'H-GAME-NEW':{horse_id:'H-GAME-NEW',last_day:'1999-01-01'}},
+   people:{'P-TRAINER-1':{game_training_skills:{schema:'WTW_TEST_SKILLS'}}},
+   facilities:{sites:{'F-OPENING-T-0001':{id:'F-OPENING-T-0001',status:'ACTIVE'}}}}};
+ const saved={...careerRecord,runId,gameDate:oldRun.clock.date,player:oldRun.player,
+  version:4,changes:{canonicalRun:oldRun}};
+ const result=migrateShared1999CareerOperationInventory(saved,openingRun);
+ assert.deepEqual(result.addedHorseIds,['H-NEW-BREEDING','H-GAME-NEW']);
+ assert.deepEqual(result.careerRecord.changes.canonicalRun.stable_horse_ids,
+  ['H-GAME-OLD','H-OLD-BREEDING','H-NEW-BREEDING','H-GAME-NEW']);
+ assert.equal(result.careerRecord.changes.canonicalRun.runtime.registered_horses
+  .by_receipt['WORLD_OPENING:H-NEW'],'H-GAME-NEW');
+ assert.deepEqual(result.careerRecord.changes.canonicalRun.runtime.horse['H-GAME-NEW'],
+  openingRun.runtime.horse['H-GAME-NEW']);
+ assert.deepEqual(result.careerRecord.changes.canonicalRun.runtime.people['P-TRAINER-1'],
+  openingRun.runtime.people['P-TRAINER-1']);
+ assert.deepEqual(result.careerRecord.changes.canonicalRun.runtime.facilities.sites
+  ['F-OPENING-T-0001'],openingRun.runtime.facilities.sites['F-OPENING-T-0001']);
+ assert.equal(result.careerRecord.changes.canonicalRun.revision,89);
+ assert.equal(result.careerRecord.changes.canonicalRun.event_log.at(-1).kind,
+  'CAREER_OPERATION_INVENTORY_MIGRATED');
+ assert.equal(result.careerRecord.changes.canonicalRun.event_log.at(-1).details
+  .operation_id,operationId);
+ assert.equal(result.careerRecord.version,5);
+ assert.equal(oldRun.stable_horse_ids.length,2,'The imported source run remains unchanged');
+ const repeated=migrateShared1999CareerOperationInventory(result.careerRecord,openingRun);
+ assert.deepEqual(repeated.addedHorseIds,[]);
+ assert.deepEqual(repeated.careerRecord,result.careerRecord);
+ assert.throws(()=>migrateShared1999CareerOperationInventory(saved,
+  {...openingRun,player:{...openingRun.player,operation_id:'O-000001'}}),
+  /inputs do not match/);
 });

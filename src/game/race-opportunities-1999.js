@@ -5,6 +5,7 @@
  * occurs here. Only source-derived condition-book proposals and already-open
  * actual game races may appear. It is safe to call on any UI render.
  */
+import {same1999PhysicalVenue} from './physical-venue-1999.js';
 import {ensure} from './contracts.js';
 import {gameRaceProgram,raceEligibility,jockeyBookingDecision,supported1999RaceClass}
  from './racing-1999.js';
@@ -41,7 +42,7 @@ function optionJockeys(state,world,horse,race){
    e.jockey_id===j.id&&['ENTERED','BOOKED'].includes(e.status)&&
    state.runtime.races[e.race_id]?.date===race.date);
   if(sameDay.some(e=>e.race_id===race.id||
-   state.runtime.races[e.race_id]?.track_id!==race.track_id))continue;
+   !same1999PhysicalVenue(state.runtime.races[e.race_id]?.track_id,race.track_id)))continue;
   // A declined premier bidder can hire an ordinary rider, but can no
   // longer make a fresh elite bid inside the four-day decision window.
   if(premierMarketRace(race,j)&&lead(state.clock.date,race.date)<5)continue;
@@ -83,7 +84,7 @@ function optionJockeys(state,world,horse,race){
 }
 function travelOptions(state,world,horse,race){
  const sites=Object.values(state.runtime.facilities?.sites||{}).
-  filter(s=>s.type==='RACING_STABLE'&&s.host_track_id===race.track_id).
+  filter(s=>s.type==='RACING_STABLE'&&same1999PhysicalVenue(s.host_track_id,race.track_id)).
   sort((a,b)=>a.id.localeCompare(b.id));
  const result=[];
  for(const site of sites){
@@ -119,7 +120,7 @@ function raceSelection(state,world,horse,race,bookOpen){
  const playerOwns=state.player.role==='owner'&&
   state.player.operation_id===horse.owner_organization_id;
  const current=effectiveHorseTrack(state,horse);
- const needsShip=current!==normalized.track_id;
+ const needsShip=!same1999PhysicalVenue(current,normalized.track_id);
  const shipping=needsShip?travelOptions(state,world,horse,normalized):[];
  const jockeys=sourceOpen?optionJockeys(state,world,horse,normalized):[];
  const fundedJockey=jockeys.find(j=>j.owner_can_pay);
@@ -210,11 +211,19 @@ export function get1999HorseRaceOpportunities(state,world,horseId,{
   const trackId=effectiveHorseTrack(state,horse)||horse.host_track_id;
   const known=new Set(open.map(x=>x.id));
   if(trackId){
+   // Meeting identities may share a physical venue. Bay Meadows residents
+   // must see the actual San Mateo fair calendar, without fictitious haulage.
+   const sameVenueTracks=[...new Set([trackId,...(world.entities?.tracks||[]).
+    filter(t=>t.playableIn1999!==false&&same1999PhysicalVenue(trackId,t.id)).
+    map(t=>t.id)])].sort();
    for(let i=2;i<=horizonDays;i++){
     const date=nextDay(state.clock.date,i);
-    for(const book of gameRaceProgram(state,world,trackId,date)){
-     if(!supported1999RaceClass(book)||known.has(book.id))continue;
-     rows.push(raceSelection(state,world,horse,book,false));
+    for(const meetingId of sameVenueTracks){
+     for(const book of gameRaceProgram(state,world,meetingId,date)){
+      if(!supported1999RaceClass(book)||known.has(book.id))continue;
+      known.add(book.id);
+      rows.push(raceSelection(state,world,horse,book,false));
+     }
     }
    }
   }

@@ -43,8 +43,18 @@ function fundablePlayerRequest(){
  assert.ok(request,'A real unfunded-care event triggers a management request');
  assert.equal(request.kind,'CARE_FUNDING');
  const origin=s.event_log.find(e=>e.seq===request.source_event_seq);
- assert.equal(origin.kind,'HORSE_CARE_UNFUNDED');
- assert.equal(origin.details.horse_id,horse.horse_id);
+ if(origin){
+  assert.equal(origin.kind,'HORSE_CARE_UNFUNDED');
+  assert.equal(origin.details.horse_id,horse.horse_id);
+ }else{
+  assert.equal(request.source_evidence.kind,'HORSE_CARE_UNFUNDED');
+  assert.equal(request.source_evidence.date,request.opened_on);
+  assert.equal(request.source_evidence.details.horse_id,horse.horse_id);
+  const summary=s.event_log.find(e=>e.kind==='DAILY_SIMULATION_SUMMARY'&&
+   e.date===request.opened_on&&e.seq>request.source_event_seq&&
+   e.details?.counts?.HORSE_CARE_UNFUNDED>0);
+  assert.ok(summary,'Compacted source event must remain represented in the daily journal');
+ }
  return {s,horse,request};
 }
 test('actual race feedback creates only source-linked AI trainer management interactions',()=>{

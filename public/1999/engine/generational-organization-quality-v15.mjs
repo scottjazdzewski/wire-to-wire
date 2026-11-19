@@ -45,8 +45,9 @@ export function auditGenerationalOrganizationNames(
   throw Error('Invalid partnership ceiling');
  const errors={INVALID_IDENTITY:0,DUPLICATE_ORGANIZATION:0,
   WRONG_PERIOD:0,WRONG_MODEL:0,UNSUPPORTED_STYLE:0,
-  OWNER_PRINCIPAL_MISMATCH:0,OWNER_ARCHETYPE_MISMATCH:0,
-  FALSE_FAMILY_NAME:0,STABLE_TRAINER_MISMATCH:0,
+  OWNER_PRINCIPAL_MISMATCH:0,OWNER_PRINCIPAL_NAME_DRIFT:0,
+  OWNER_ARCHETYPE_MISMATCH:0,FALSE_FAMILY_NAME:0,
+  STABLE_TRAINER_MISMATCH:0,STABLE_TRAINER_NAME_DRIFT:0,
   PARTNERSHIP_CAP_EXCEEDED:0,PARTNERSHIP_SUMMARY_MISMATCH:0},
   issues=[],seen=new Set(),peopleById=new Map(world.people.map(p=>[p.id,p])),
   archetypes=new Map(),periods=new Map(),regions=new Map();
@@ -93,6 +94,9 @@ export function auditGenerationalOrganizationNames(
     const principal=peopleById.get(record.principalId);
     if(!principal||principal.organizationId!==record.id)
      fail('OWNER_PRINCIPAL_MISMATCH',record);
+    else if(record.principalName!==principal.name)
+     fail('OWNER_PRINCIPAL_NAME_DRIFT',record,
+      'Owner principal display name differs from ID-linked person');
     const expected=classifyFictionalOwnerName(record.name,principal?.name);
     if(record.ownershipArchetype!==expected)
      fail('OWNER_ARCHETYPE_MISMATCH',record,
@@ -106,6 +110,9 @@ export function auditGenerationalOrganizationNames(
     const trainer=peopleById.get(record.trainerId);
     if(!trainer||trainer.stableId!==record.id)
      fail('STABLE_TRAINER_MISMATCH',record);
+    else if(record.trainerName!==trainer.name)
+     fail('STABLE_TRAINER_NAME_DRIFT',record,
+      'Racing barn trainer display name differs from ID-linked person');
    }
   }
  }

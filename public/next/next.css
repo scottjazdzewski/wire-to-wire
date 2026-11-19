@@ -3841,36 +3841,7 @@ button.ng-person-horse-row:hover,button.ng-person-horse-row:focus-visible{backgr
  #wtwNextgen .ng-rp-tools label{flex-basis:100%}
 }
 
-/* V483 Naming Desk: inside the ONE manager renderer; research preview only. */
-.ng-naming-desk .ng-naming-status{color:#d4c18e;font-size:9px;font-weight:800;letter-spacing:.045em}
-.ng-naming-editor{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-bottom:1px solid #3c4a42;background:#1b2629}
-.ng-naming-editor label{display:flex;flex-direction:column;gap:5px;color:#bcd0bd;font-size:10px;font-weight:780;min-width:0}
-.ng-naming-fields{display:grid;grid-template-columns:1fr 1fr 110px;gap:9px;min-width:0}
-.ng-naming-editor input,.ng-naming-editor textarea{display:block;width:100%;box-sizing:border-box;border:1px solid #475d51;border-radius:2px;background:#111a1d;color:#e6ecdf;padding:7px 8px;font:inherit;font-size:11px;min-width:0}
-.ng-naming-editor input:focus-visible,.ng-naming-editor textarea:focus-visible{outline:2px solid #d7bf83;outline-offset:1px}
-.ng-naming-editor textarea{min-height:68px;resize:vertical}
-.ng-naming-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.ng-naming-actions button{background:#294738;border:1px solid #5e7d5e;color:#eadcae;padding:6px 10px;border-radius:2px;font-size:10px;font-weight:800;cursor:pointer}
-.ng-naming-actions button:disabled{cursor:default;opacity:.55}
-.ng-naming-actions small,.ng-naming-actions span{color:#a2b9ab;font-size:9px}
-.ng-naming-error{color:#f0ad9f;border-left:3px solid #b86458;padding:5px 8px;background:#332623;font-size:10px;margin:0}
-.ng-naming-notice{color:#d8dfba;padding:5px 8px;background:#28352a;font-size:10px;margin:0}
-.ng-naming-results{display:flex;flex:1;flex-direction:column;gap:5px;min-height:0;overflow:auto;padding:7px 9px}
-.ng-naming-candidate{padding:9px 10px;border:1px solid #3d5347;background:#1f2c2c}
-.ng-naming-candidate-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.ng-naming-candidate-head strong{color:#f1e1b5;font-size:14px}
-.ng-naming-candidate-head small,.ng-naming-provenance{color:#bad0b9;font-size:9px}
-.ng-naming-candidate p{margin:6px 0;color:#d4e1d5;font-size:11px;line-height:1.4}
-.ng-naming-provenance{display:block}
-.ng-naming-issues{display:block;color:#e4b29b;font-size:9px;margin-top:4px}
-.ng-naming-candidate .ng-naming-actions{margin-top:7px}
-.ng-naming-guidance{padding:8px 11px;gap:7px}
-.ng-naming-guidance p{margin:0;color:#bfcec0;font-size:10px;line-height:1.4;border-bottom:1px solid #303f38;padding-bottom:6px}
-.ng-naming-desk .ng-manager-sidebar{overflow:auto}
-@media(max-width:850px){.ng-naming-desk .ng-manager-workspace{grid-template-columns:minmax(0,1fr);overflow:auto}
-.ng-naming-desk .ng-manager-sidebar{overflow:visible}
-.ng-naming-desk .ng-naming-fields{grid-template-columns:1fr 1fr}
-.ng-naming-desk .ng-naming-fields label:last-child{grid-column:1/-1}}
+/* V489 */.ng-naming-desk .ng-naming-status{color:#d4c18e;font-size:9px;font-weight:800}.ng-naming-workspace{display:flex;flex-direction:column;min-height:0;overflow:hidden}.ng-naming-composer{display:flex;flex-direction:column;gap:4px;max-height:48%;overflow:auto;padding:7px 9px}.ng-naming-composer label{display:flex;flex-direction:column;gap:3px;font-size:10px;min-width:0}.ng-naming-fields{display:grid;grid-template-columns:1fr 1fr 85px 1.3fr;gap:7px}.ng-naming-composer input,.ng-naming-composer select,.ng-naming-composer textarea{width:100%;box-sizing:border-box;min-width:0;min-height:26px;padding:5px 7px;background:#111b1f;color:#e6eade;border:1px solid #4a6554;font:inherit;font-size:11px}.ng-naming-composer textarea{min-height:39px;max-height:95px;resize:vertical}.ng-naming-actions,.ng-naming-view-filters,.ng-naming-list-buttons{display:flex;gap:4px;align-items:center;flex-wrap:wrap}.ng-naming-actions button,.ng-naming-view-filters button,.ng-naming-list-buttons button{padding:5px 7px;background:#304737;border:1px solid #5b735a;color:#e3edcd;font-size:9px;font-weight:800;cursor:pointer}.ng-naming-list-buttons{flex-wrap:nowrap}.ng-naming-list-buttons button{white-space:nowrap;padding:4px}.ng-naming-list-buttons button:first-child,.ng-naming-actions button.primary{background:#69562f}.ng-naming-list-buttons button:last-child{background:#513735}.ng-naming-actions button:disabled,.ng-naming-list-buttons button:disabled{opacity:.4;cursor:default}.ng-naming-error,.ng-naming-notice{padding:5px 8px;font-size:10px}.ng-naming-error{color:#f0ad9f}.ng-naming-notice{color:#d8dfba}.ng-naming-table-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 10px}.ng-naming-view-filters button.on{background:#876f3c;color:#fff5d4}.ng-naming-table-scroll{flex:1;min-height:0;overflow:auto}.ng-naming-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:10px}.ng-naming-table th{position:sticky;top:0;background:#2b3938;text-align:left;padding:7px}.ng-naming-table td{padding:5px 7px;border-bottom:1px solid #35453e;overflow-wrap:anywhere}.ng-naming-table th:first-child{width:30px}.ng-naming-table th:nth-child(2){width:31%}.ng-naming-table th:nth-child(3){width:85px}.ng-naming-table th:nth-child(4){width:125px}.ng-naming-table th:nth-child(5){width:325px}.ng-naming-row-name strong{display:block;color:#f2e3b7}.ng-naming-row-name small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ng-naming-footer{padding:5px 10px;font-size:9px;border-top:1px solid #394b42}.ng-naming-sort{background:transparent;color:inherit;border:0;cursor:pointer;font:inherit}@media(max-width:990px){.ng-naming-fields{grid-template-columns:1fr 1fr}.ng-naming-table{min-width:890px}}
 
 
 

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {
- FICTIONAL_PORTFOLIO_MODEL,PORTFOLIO_TIERS,
+ FICTIONAL_PORTFOLIO_MODEL,LEGACY_FICTIONAL_PORTFOLIO_MODEL,PORTFOLIO_TIERS,
  assessFictionalOwnerCapacity,planFictionalOwnerPortfolios,
  exportFictionalOwnerPortfolioState,importFictionalOwnerPortfolioState
 } from '../public/1999/engine/fictional-owner-portfolio-planner.mjs';
@@ -13,7 +13,8 @@ const ownerIds=n=>Array.from({length:n},(_,i)=>({id:'FICTIONAL-OWNER-'+String(i+
 const smallOwners=ownerIds(8000);
 
 test('V9 portfolio tiers are explicit fictional modeling weights, not assumed ownership-company types',()=>{
- assert.equal(FICTIONAL_PORTFOLIO_MODEL,'WTW_FICTIONAL_OWNER_PORTFOLIOS_V9');
+ assert.equal(FICTIONAL_PORTFOLIO_MODEL,'WTW_FICTIONAL_OWNER_PORTFOLIOS_V10');
+ assert.equal(LEGACY_FICTIONAL_PORTFOLIO_MODEL,'WTW_FICTIONAL_OWNER_PORTFOLIOS_V9');
  assert.deepEqual(PORTFOLIO_TIERS.map(t=>t.id),
   ['HANDFUL','SMALL','REGIONAL','MAJOR','ELITE']);
  assert.equal(PORTFOLIO_TIERS.reduce((sum,t)=>sum+t.weight,0),100);
@@ -41,12 +42,17 @@ test('100k training horses use a long-tailed distribution with hundreds under a 
   'most names should be small ownership holdings');
  assert.ok(t.summary.ownersWithAtLeastTwoHundred>20,
   'select elite operations should control hundreds of horses');
- assert.ok(t.summary.largestPortfolio>=250);
+ assert.ok(t.summary.largestPortfolio>=200);
  assert.ok(t.summary.largestPortfolio<=900);
  assert.ok(t.summary.topOnePercentHorseShare>.13);
  assert.ok(t.summary.topOnePercentHorseShare<.35);
  assert.ok(t.summary.byTier.HANDFUL.owners>4000);
  assert.ok(t.summary.byTier.ELITE.owners>=40);
+ for(let i=0;i<t.ownerIds.length;i++){
+  const tier=PORTFOLIO_TIERS.find(x=>x.id===t.ownerTier[i]);
+  assert.ok(t.horseCounts[i]>=tier.min&&t.horseCounts[i]<=tier.max,
+   `${t.ownerIds[i]} has ${t.horseCounts[i]} horses outside ${tier.id}`);
+ }
  // All horses are assigned to a stable owner ID, and the reverse portfolio
  // index returns the exact same horse indexes without scanning the full world.
  for(let i=0;i<100000;i+=997){
@@ -92,17 +98,21 @@ test('real historical locked horse ownership is never relocated by the allocatio
    {horseIndex:0,ownerId:smallOwners[0].id}]
  }),/repeated locked/);
 });
-test('a 100k-horse world can grow to 130k while preserving every previously assigned horse',()=>{
+test('a 100k-horse world can grow with new owners while preserving every previously assigned horse',()=>{
  const initial=planFictionalOwnerPortfolios({
   seed:20700101,owners:smallOwners,horseCount:100000
  });
- const enlarged=ownerIds(11000);
+ const enlarged=ownerIds(8500);
  const serialized=exportFictionalOwnerPortfolioState(initial);
  assert.equal(serialized.ownerIndexes.length,100000);
  assert.equal(serialized.ownerIds.length,8000);
  const restored=importFictionalOwnerPortfolioState(
   JSON.parse(JSON.stringify(serialized)));
  assert.deepEqual(restored.ownerIndexForHorse,initial.ownerIndexForHorse);
+ const legacySnapshot={...serialized,schema:LEGACY_FICTIONAL_PORTFOLIO_MODEL};
+ const legacyRestored=importFictionalOwnerPortfolioState(legacySnapshot);
+ assert.equal(legacyRestored.schema,LEGACY_FICTIONAL_PORTFOLIO_MODEL);
+ assert.deepEqual(legacyRestored.ownerIndexForHorse,initial.ownerIndexForHorse);
  const broken=JSON.parse(JSON.stringify(serialized));
  broken.ownerIndexes[14]=(broken.ownerIndexes[14]+1)%8000;
  assert.throws(()=>importFictionalOwnerPortfolioState(broken),/corrupt/);
@@ -111,7 +121,7 @@ test('a 100k-horse world can grow to 130k while preserving every previously assi
   existingPlan:restored
  });
  assert.equal(expanded.horseCount,130000);
- assert.equal(expanded.ownerIds.length,11000);
+ assert.equal(expanded.ownerIds.length,8500);
  assert.equal(expanded.summary.priorHorseCount,100000);
  assert.equal(expanded.ownerHorseOffsets.at(-1),130000);
  assert.equal(expanded.horseCounts.reduce((sum,n)=>sum+n,0),130000);
@@ -137,8 +147,23 @@ test('325k-wide world can be allocated with O(horses+owners) typed indexes',()=>
  assert.equal(p.ownerIndexForHorse.byteLength,325000*4);
  assert.equal(p.ownerHorseOffsets.byteLength,(owners.length+1)*4);
  assert.ok(p.summary.ownersWithAtLeastTwoHundred>50);
+ for(let i=0;i<owners.length;i++){
+  const tier=PORTFOLIO_TIERS.find(x=>x.id===p.ownerTier[i]);
+  assert.ok(p.horseCounts[i]>=tier.min&&p.horseCounts[i]<=tier.max,
+   `${owners[i].id} has ${p.horseCounts[i]} horses outside ${tier.id}`);
+ }
  const last=p.ownerIdAtHorse(324999);
  assert.ok(owners.some(x=>x.id===last));
+});
+test('scaled 10k world reduces owner directory size to preserve real tier bands',()=>{
+ const owners=ownerIds(Math.ceil(10000/18));
+ const p=planFictionalOwnerPortfolios({seed:19990101,owners,horseCount:10000});
+ assert.equal(owners.length,556);
+ for(let i=0;i<owners.length;i++){
+  const tier=PORTFOLIO_TIERS.find(x=>x.id===p.ownerTier[i]);
+  assert.ok(p.horseCounts[i]>=tier.min&&p.horseCounts[i]<=tier.max,
+   `${owners[i].id} has ${p.horseCounts[i]} horses outside ${tier.id}`);
+ }
 });
 test('never silently exceed ownership capacity or generate extra owner identities',()=>{
  const tooFew=ownerIds(3500),forecast=assessFictionalOwnerCapacity({
@@ -170,7 +195,7 @@ test('never silently exceed ownership capacity or generate extra owner identitie
   seed:99,owners:[{id:12}],horseCount:10
  }),/Owner ID must be a string/);
 });
-test('V8 names may be reused in the V9 portfolio planner without creating any additional group',()=>{
+test('V8 names may be reused in the V10 portfolio planner without creating any additional group',()=>{
  const batch=generateOnDemandFictionalNames({
   worldId:'OwnerScale-Lab',seed:19990101,roles:{},owners:120,
   maxPartnershipGroups:8,soleOwnerPercent:24
@@ -178,10 +203,10 @@ test('V8 names may be reused in the V9 portfolio planner without creating any ad
  assert.equal(batch.owners.length,120);
  const owners=batch.owners.map(x=>({id:x.id}));
  const plan=planFictionalOwnerPortfolios({
-  seed:19990101,owners,horseCount:1200
+  seed:19990101,owners,horseCount:2000
  });
  assert.equal(plan.ownerIds.length,120);
- assert.equal(plan.horseCounts.reduce((sum,n)=>sum+n,0),1200);
+ assert.equal(plan.horseCounts.reduce((sum,n)=>sum+n,0),2000);
  assert.ok(batch.ownership.newPartnershipGroups.length<=8);
  assert.equal(batch.nextState.ownerEntities.length,120);
  for(const item of batch.ownership.newPartnershipGroups){

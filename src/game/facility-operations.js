@@ -27,14 +27,15 @@ function ensureRoot(state){
  return state.runtime.facilities;
 }
 function funds(state,id){return state.runtime.finances.operation_balances_minor[id];}
-function post(state,id,minor,kind,siteId,emit){
+function post(state,id,minor,kind,siteId,emit,transactionId=null){
  const accounts=state.runtime.finances.operation_balances_minor;
  ensure(integer(accounts[id]),'FACILITY_NO_FUNDS','Owner financial baseline not established');
  ensure(integer(minor)&&integer(accounts[id]+minor),'FACILITY_MONEY','Invalid facility accounting value');
  accounts[id]+=minor;
  if(state.player.operation_id===id)state.runtime.finances.balance_minor=accounts[id];
  state.runtime.finances.ledger.push({date:state.clock.date,operation_id:id,
-  site_id:siteId||null,amount_minor:minor,kind});
+  site_id:siteId||null,amount_minor:minor,kind,
+  ...(transactionId?{transaction_id:transactionId}:{})});
  if(emit)emit('FACILITY_CASH',{operation_id:id,site_id:siteId||null,
   kind,amount_minor:minor,balance_minor:accounts[id]});
 }
@@ -153,7 +154,7 @@ function improve(state,world,p,command,emit){
  emit('FACILITY_UPGRADE_STARTED',{site_id:site.id,kind:p.improvement,
   cost_minor:work.cost_minor,finishes:site.upgrade.finishes});
 }
-function boarding(state,p,actor,emit){
+function boarding(state,world,p,actor,emit){
  ensure(actor==='system','FACILITY_PERMISSION','Only verified simulated demand may book third-party stalls');
  const site=ensureRoot(state).sites[p.site_id];
  ensure(site&&site.status==='ACTIVE','FACILITY_PROPERTY','Site must be open to board horses');
@@ -172,11 +173,20 @@ function boarding(state,p,actor,emit){
  }
  const price=p.daily_rate_minor??site.daily_boarding_minor;
  number(price,0,10000000,'boarding price');
+ // An aggregate boarding contract may reserve stalls without inventing horses,
+ // but it cannot create money: its paying business must already exist and be funded.
+ const operator=site.operator_organization_id||site.owner_id;
+ const payer=organization(world,p.payer_organization_id);
+ ensure(payer!==operator,'FACILITY_SELF_BOARDING',
+  'A facility cannot pay itself for fictitious boarding income');
+ const firstBill=p.stalls*price;
+ ensure(integer(firstBill)&&integer(funds(state,payer))&&funds(state,payer)>=firstBill,
+  'FACILITY_CLIENT_CASH','Boarding payer must have an established, funded account');
  site.contracts.push({id:p.contract_id,stalls:p.stalls,start,end,rate_minor:price,
-  source_kind:'MODELED_AGGREGATED_BOARDING_DEMAND'});
+  payer_organization_id:payer,source_kind:'MODELED_FUNDED_BOARDING_CONTRACT'});
  emit('FACILITY_BOARDING_BOOKED',{site_id:site.id,contract_id:p.contract_id,
-  stalls:p.stalls,start,end,rate_minor:price,
-  note:'Aggregate business contract; no imaginary horse IDs or transfers'});
+  payer_organization_id:payer,stalls:p.stalls,start,end,rate_minor:price,
+  note:'Real organization pays daily; aggregate capacity does not invent horse IDs'});
 }
 function setStaffing(state,world,p,command,emit){
  const site=ensureRoot(state).sites[p.site_id],id=organization(world,p.operation_id);
@@ -300,7 +310,7 @@ export function facilityAction({state,world,command,emit}){
    source_kind:p.source_kind});
  }else if(command.type==='FACILITY_ACQUIRE')acquire(state,world,p,command,emit);
  else if(command.type==='FACILITY_UPGRADE')improve(state,world,p,command,emit);
- else if(command.type==='FACILITY_BOARDING_CONTRACT')boarding(state,p,command.actor,emit);
+ else if(command.type==='FACILITY_BOARDING_CONTRACT')boarding(state,world,p,command.actor,emit);
  else if(command.type==='FACILITY_AI_CYCLE'){
   ensure(command.actor==='system','FACILITY_PERMISSION','Only game AI executes rival cycle');
   aiCycle(state,world,emit);
@@ -341,8 +351,27 @@ export function advanceFacilities({state,world,emit}){
    const shortage=site.staff_required>site.staff_count?2:0;
    site.quality=Math.max(0,Math.min(100,site.quality+wear-shortage));
   }
-  const revenue=site.contracts.filter(c=>c.start<=day&&c.end>=day)
-   .reduce((sum,c)=>sum+c.stalls*c.rate_minor,0);
+  const account=site.operator_organization_id||site.owner_id;
+  let revenue=0;
+  for(const contract of site.contracts.filter(c=>c.start<=day&&c.end>=day)){
+   const due=contract.stalls*contract.rate_minor;
+   ensure(integer(due)&&due>=0,'FACILITY_MONEY','Invalid boarding invoice');
+   const payer=contract.payer_organization_id;
+   // Older saves can contain anonymous aggregate demand. Keep the reservation
+   // intact, but never turn it into unbacked cash or silently assign a payer.
+   if(!payer||!integer(funds(state,payer))||funds(state,payer)<due){
+    emit('FACILITY_BOARDING_UNFUNDED',{date:day,site_id:site.id,
+     contract_id:contract.id,payer_organization_id:payer||null,
+     due_minor:due,reason:payer?'CLIENT_INSUFFICIENT_CASH':'LEGACY_NO_PAYER'});
+    continue;
+   }
+   if(due){
+    const transaction='FACILITY_BOARD:'+day+':'+contract.id;
+    post(state,payer,-due,'FACILITY_BOARDING_CLIENT_PAYMENT',site.id,null,transaction);
+    post(state,account,due,'FACILITY_BOARDING_REVENUE',site.id,null,transaction);
+   }
+   revenue+=due;
+  }
   ensure(integer(revenue),'FACILITY_MONEY','Boarding revenue overflow');
   const cost=site.daily_upkeep_minor;
   const wages=(site.staff_count??0)*(site.staff_wage_daily_minor??0);
@@ -350,8 +379,6 @@ export function advanceFacilities({state,world,emit}){
    MAINTENANCE_MULTIPLIER[site.maintenance_policy||'STANDARD']/100);
   ensure(integer(wages)&&integer(maintenance),'FACILITY_MONEY','Operating expense overflow');
   gross+=revenue;expense+=cost+wages+maintenance;
-  const account=site.operator_organization_id||site.owner_id;
-  if(revenue)post(state,account,revenue,'FACILITY_BOARDING_REVENUE',site.id,null);
   if(cost)post(state,account,-cost,'FACILITY_DAILY_OPERATIONS',site.id,null);
   if(wages)post(state,account,-wages,'FACILITY_STAFF_PAYROLL',site.id,null);
   if(maintenance)post(state,account,-maintenance,'FACILITY_MAINTENANCE',site.id,null);
@@ -415,6 +442,14 @@ export function validateFacilityState(state,world){
    number(contract.stalls,1,site.stalls,'contracted stalls');
    ensure(validDate(contract.start)&&validDate(contract.end)&&
     contract.end>=contract.start,'FACILITY_CONTRACT','Invalid contract dates');
+   number(contract.rate_minor,0,10000000,'contract daily rate');
+   // Preserve anonymous bookings in older saves, but settle none until a
+   // canonical payer is present. New bookings require a funded payer.
+   if(contract.payer_organization_id!==undefined){
+    organization(world,contract.payer_organization_id);
+    ensure(contract.payer_organization_id!==(site.operator_organization_id||site.owner_id),
+     'FACILITY_CONTRACT','Boarding payer cannot be its own operator');
+   }
   }
  }
 }
@@ -443,10 +478,29 @@ export function facilityFinancialReport(state,world,operationId,{from,to}={}){
  ensure(validDate(start)&&validDate(end)&&start<=end&&end<=state.clock.date,
   'FACILITY_REPORT_DATES','Report period must be within completed game days');
  const sites=state.runtime.facilities?.sites||{};
- const rows=state.runtime.finances.ledger.filter(e=>e.operation_id===operationId&&
-  typeof e.site_id==='string'&&e.date>=start&&e.date<=end);
- const amounts={FACILITY_BOARDING_REVENUE:0,FACILITY_DAILY_OPERATIONS:0,
-  FACILITY_TRACK_RENT:0,FACILITY_STAFF_PAYROLL:0,FACILITY_MAINTENANCE:0,FACILITY_PURCHASE:0,FACILITY_UPGRADE:0};
+ const amounts={FACILITY_BOARDING_REVENUE:0,FACILITY_BOARDING_CLIENT_PAYMENT:0,
+  HORSE_CARE_SITE_AND_TRAINER_INCOME:0,HORSE_CARE_TRAINER_REMITTANCE:0,
+  FACILITY_DAILY_OPERATIONS:0,FACILITY_TRACK_RENT:0,FACILITY_STAFF_PAYROLL:0,
+  FACILITY_MAINTENANCE:0,FACILITY_PURCHASE:0,FACILITY_UPGRADE:0};
+ // Horse care and facility business share a ledger. Report only relevant
+ // categories, including actual owner-funded board and the trainer remittance.
+ const ledgerRows=state.runtime.finances.ledger.filter(e=>
+  e.operation_id===operationId&&typeof e.site_id==='string'&&
+  Object.hasOwn(amounts,e.kind));
+ const rows=[];
+ for(const e of ledgerRows){
+  if(e.rollup_schema==='WTW_DAILY_FINANCE_ROLLUP_V1'&&e.rollup_period){
+   if(e.rollup_period<start||e.rollup_period>end)continue;
+   rows.push(e);
+  }else if(e.rollup_schema==='WTW_MONTHLY_FINANCE_ROLLUP_V1'&&e.rollup_period){
+   const periodStart=e.period_start||e.rollup_period+'-01',
+    periodEnd=e.period_end;
+   if(periodEnd<start||periodStart>end)continue;
+   ensure(start<=periodStart&&end>=periodEnd,'FACILITY_REPORT_ROLLUP_RANGE',
+    'A report that overlaps a legacy monthly rollup must include the full calendar month');
+   rows.push(e);
+  }else if(e.date>=start&&e.date<=end)rows.push(e);
+ }
  const siteMap={};
  for(const e of rows){
   ensure(integer(e.amount_minor)&&Object.hasOwn(amounts,e.kind),
@@ -459,21 +513,25 @@ export function facilityFinancialReport(state,world,operationId,{from,to}={}){
     capital_minor:0,net_operating_minor:0};
   }
   const s=siteMap[e.site_id];
-  if(e.kind==='FACILITY_BOARDING_REVENUE')s.revenue_minor+=e.amount_minor;
+  if(e.kind==='FACILITY_BOARDING_REVENUE'||e.kind==='HORSE_CARE_SITE_AND_TRAINER_INCOME')s.revenue_minor+=e.amount_minor;
   else if(e.kind==='FACILITY_PURCHASE'||e.kind==='FACILITY_UPGRADE')
    s.capital_minor-=e.amount_minor;
   else s.operating_cost_minor-=e.amount_minor;
   s.net_operating_minor=s.revenue_minor-s.operating_cost_minor;
  }
- const revenue=amounts.FACILITY_BOARDING_REVENUE;
+ const revenue=amounts.FACILITY_BOARDING_REVENUE+amounts.HORSE_CARE_SITE_AND_TRAINER_INCOME;
  const costs=-(amounts.FACILITY_DAILY_OPERATIONS+amounts.FACILITY_STAFF_PAYROLL+
-  amounts.FACILITY_MAINTENANCE+amounts.FACILITY_TRACK_RENT);
+  amounts.FACILITY_MAINTENANCE+amounts.FACILITY_TRACK_RENT+
+  amounts.FACILITY_BOARDING_CLIENT_PAYMENT+amounts.HORSE_CARE_TRAINER_REMITTANCE);
  const capex=-(amounts.FACILITY_PURCHASE+amounts.FACILITY_UPGRADE);
  return {operation_id:operationId,from:start,to:end,
   revenue_minor:revenue,operating_cost_minor:costs,
   operating_profit_minor:revenue-costs,
   capital_investment_minor:capex,net_cash_flow_minor:revenue-costs-capex,
   payroll_minor:-amounts.FACILITY_STAFF_PAYROLL,
+  boarding_purchased_minor:-amounts.FACILITY_BOARDING_CLIENT_PAYMENT,
+  horse_board_and_training_income_minor:amounts.HORSE_CARE_SITE_AND_TRAINER_INCOME,
+  trainer_remitted_minor:-amounts.HORSE_CARE_TRAINER_REMITTANCE,
   maintenance_minor:-amounts.FACILITY_MAINTENANCE,
   overhead_minor:-amounts.FACILITY_DAILY_OPERATIONS,
   track_rent_minor:-(amounts.FACILITY_TRACK_RENT??0),

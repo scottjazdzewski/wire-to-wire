@@ -140,7 +140,7 @@ export function* generate1999StaffingBatches({
    // generated full worlds. Existing saved rosters without the field retain
    // their original one-per-course layout and permanent IDs.
    const base=['farm_manager','breeding_attendant'].includes(role)?
-    farms[hash(seed,id+':farm')%farms.length]:
+    farms[i%farms.length]:
     ensureCircuitCoverage&&role==='trainer'&&i<tracks.length?
      tracks[i]:
     ensureCircuitCoverage&&role==='jockey'&&i<guaranteedJockeyTracks.length?

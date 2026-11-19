@@ -25,13 +25,109 @@ export function sameShared1999WorldIdentity(a,b){
   a?.targetOpeningHorses===b?.targetOpeningHorses&&
   a?.horseCount===b?.horseCount&&a?.personCount===b?.personCount;
 }
+/**
+ * Rebind a portable career run only after the importer has independently
+ * verified its exact legacy world projection. The canonical snapshot ID must
+ * remain stable; only the verified record fingerprint may advance.
+ */
+export function migrateShared1999CareerRunWorldReference(careerRecord,{
+ expectedSnapshotSha256,currentAuthority
+}={}){
+ const run=careerRecord?.changes?.canonicalRun;
+ if(!run||! /^[a-f0-9]{64}$/.test(expectedSnapshotSha256||'')||
+  run.world_ref?.sha256!==expectedSnapshotSha256)
+  throw Error('Career run does not reference the verified legacy snapshot');
+ if(typeof currentAuthority?.snapshot_id!=='string'||
+  !/^[a-f0-9]{64}$/.test(currentAuthority?.sha256||'')||
+  run.world_ref.snapshot_id!==currentAuthority.snapshot_id)
+  throw Error('Shared career snapshot identity changed; explicit world migration is required');
+ const migratedRun={...run,world_ref:{snapshot_id:currentAuthority.snapshot_id,
+  sha256:currentAuthority.sha256}};
+ return {...careerRecord,changes:{...careerRecord.changes,
+  canonicalRun:migratedRun}};
+}
+
+/**
+ * Advance a saved operation roster to include canonical horses newly linked
+ * by a verified world migration. Existing career records stay authoritative;
+ * only missing IDs and runtime records for those new IDs are appended.
+ */
+export function migrateShared1999CareerOperationInventory(careerRecord,openingRun){
+ const saved=careerRecord?.changes?.canonicalRun;
+ if(!saved||!openingRun||saved.run_id!==openingRun.run_id||
+  saved.player?.operation_id!==openingRun.player?.operation_id||
+  careerRecord.player?.operation_id!==saved.player?.operation_id||
+  !Array.isArray(saved.stable_horse_ids)||
+  !Array.isArray(openingRun.stable_horse_ids)||
+  !saved.runtime||!openingRun.runtime)
+  throw Error('Career operation inventory migration inputs do not match');
+ const savedIds=new Set(saved.stable_horse_ids);
+ if(savedIds.size!==saved.stable_horse_ids.length||
+  new Set(openingRun.stable_horse_ids).size!==openingRun.stable_horse_ids.length)
+  throw Error('Career operation inventory migration requires unique horse IDs');
+ const addedHorseIds=openingRun.stable_horse_ids.filter(id=>!savedIds.has(id));
+ if(!addedHorseIds.length)return {careerRecord,addedHorseIds:[]};
+ const migrated=structuredClone(careerRecord);
+ const run=migrated.changes.canonicalRun;
+ const openingRegistry=openingRun.runtime.registered_horses;
+ const registry=run.runtime.registered_horses;
+ for(const id of addedHorseIds){
+  const openingHorse=openingRegistry?.by_id?.[id];
+  if(!openingHorse)continue;
+  if(openingHorse.horse_id!==id||!registry?.by_id||!registry?.by_receipt)
+   throw Error('New operation runner is missing its canonical registry records');
+  if(!registry.by_id[id])registry.by_id[id]=structuredClone(openingHorse);
+  const receiptId=openingHorse.registration_receipt_id;
+  if(receiptId){
+   const existing=registry.by_receipt[receiptId];
+   if(existing&&existing!==id)
+    throw Error('New operation runner receipt is already linked to another horse');
+   registry.by_receipt[receiptId]=id;
+  }
+  if(openingRun.runtime.horse?.[id]&&!run.runtime.horse?.[id])
+   run.runtime.horse[id]=structuredClone(openingRun.runtime.horse[id]);
+  const trainerId=openingHorse.trainer_id;
+  const openingTrainer=openingRun.runtime.people?.[trainerId];
+  if(openingTrainer?.game_training_skills){
+   const trainer=run.runtime.people?.[trainerId]||{};
+   if(!trainer.game_training_skills)
+    run.runtime.people[trainerId]={...trainer,
+     game_training_skills:structuredClone(openingTrainer.game_training_skills)};
+  }
+  const siteId=openingHorse.current_residence_id||openingHorse.racing_barn_id;
+  const openingSite=openingRun.runtime.facilities?.sites?.[siteId];
+  if(openingSite&&!run.runtime.facilities?.sites?.[siteId]){
+   if(!run.runtime.facilities)run.runtime.facilities={sites:{}};
+   if(!run.runtime.facilities.sites)run.runtime.facilities.sites={};
+   run.runtime.facilities.sites[siteId]=structuredClone(openingSite);
+  }
+ }
+ const previousCount=run.stable_horse_ids.length;
+ run.stable_horse_ids.push(...addedHorseIds);
+ run.revision++;
+ const eventSeq=Math.max(run.event_seq||0,
+  ...run.event_log.map(event=>event.seq||0))+1;
+ run.event_log.push({seq:eventSeq,
+  command_id:'CAREER_MIGRATION:OPERATION_INVENTORY:'+run.run_id+':'+eventSeq,
+  date:run.clock.date,kind:'CAREER_OPERATION_INVENTORY_MIGRATED',
+  details:{operation_id:run.player.operation_id,
+   added_horse_ids:[...addedHorseIds],previous_count:previousCount,
+   current_count:run.stable_horse_ids.length}});
+ run.event_seq=eventSeq;
+ migrated.gameDate=run.clock.date;
+ migrated.version=Math.max(1,Number.isSafeInteger(migrated.version)?migrated.version:1)+1;
+ return {careerRecord:migrated,addedHorseIds};
+}
+
 async function sha256(bytes){
  if(!globalThis.crypto?.subtle)throw Error('Web Crypto is required for career checkpoint integrity');
  const hash=new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256',bytes));
  return [...hash].map(x=>x.toString(16).padStart(2,'0')).join('');
 }
 function assertInputs(manifest,careerRecord){
- if(manifest?.schema!=='WTW_PERSISTENT_INDUSTRY_1999_V1'||manifest.status!=='COMPLETE'||
+ if(!['WTW_PERSISTENT_INDUSTRY_1999_V1','WTW_PERSISTENT_INDUSTRY_1999_V2',
+   'WTW_PERSISTENT_INDUSTRY_1999_V3']
+   .includes(manifest?.schema)||manifest.status!=='COMPLETE'||
   !Number.isSafeInteger(manifest.seed)||typeof manifest.worldId!=='string'||
   !Number.isSafeInteger(manifest.horseCount)||!Number.isSafeInteger(manifest.personCount)||
   !Number.isSafeInteger(manifest.targetOpeningHorses)||

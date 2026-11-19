@@ -3,6 +3,7 @@
  * Schedule comes from the EXISTING 1999 track condition-book generator. All
  * results and professional ratings here are GAME-MODELED, never historic facts.
  */
+import {same1999PhysicalVenue} from './physical-venue-1999.js';
 import {ensure,isObject,worldIdentity,nextDate,validDate} from './contracts.js';
 import {buildConditionBook1999} from '../../next/1999-condition-book-engine.mjs';
 import {getGameHorsePerformance,modelHorsePostRaceResponse} from './horse-care.js';
@@ -78,9 +79,11 @@ export function jockeyBookingDecision(state,world,race,horse,jockey){
 }
 /**
  * Resolve genuine rival proposals on the four-day major-meet booking date.
- * Offers are NOT a paid/signed mount until this step. Process larger feature
- * purses first, and compare rival horses to each rider using ONLY pre-race
- * available ratings, chemistry and a bounded commercial signing premium.
+ * Offers are NOT a paid/signed mount until this step. For same-day
+ * competing venues, weigh race grade/purse AND the strongest genuinely
+ * fundable offer (horse merit, real partnership, negotiated premium), rather
+ * than locking a national jockey to the highest purse before rival bids are
+ * compared. Use ONLY pre-race known inputs.
  * The canonical booking action signs and debits the winning offer exactly
  * once; a jockey remains free to ride different races on the same card.
  */
@@ -90,13 +93,16 @@ export function resolve1999PremierJockeyOffers({state,world,emit}){
   (!state.runtime.races?.[o.race_id]||
    dayGap(state.clock.date,state.runtime.races[o.race_id].date)<=4));
  if(!pending.length)return {signed:0,declined:0,pending:Object.values(offers).filter(o=>o.status==='PENDING').length};
- const done=(offer,reason,winner=null)=>{
+ const done=(offer,reason,winner=null,winnerRace=null)=>{
   offer.status='DECLINED';offer.resolved_date=state.clock.date;
-  offer.reason=reason;if(winner)offer.winning_horse_id=winner;
+  offer.reason=reason;
+  if(winner)offer.winning_horse_id=winner;
+  if(winnerRace)offer.winning_race_id=winnerRace;
   emit('JOCKEY_PREMIER_OFFER_DECLINED',{
    offer_id:offer.id,race_id:offer.race_id,
    horse_id:offer.horse_id,jockey_id:offer.jockey_id,
-   reason,winning_horse_id:winner,charged_minor:0});
+   reason,winning_horse_id:winner,winning_race_id:winnerRace,
+   charged_minor:0});
  };
  // The same jockey/race is a single contract market. Different races on
  // that same card may still be ridden by that professional.
@@ -106,22 +112,22 @@ export function resolve1999PremierJockeyOffers({state,world,emit}){
   if(!groups.has(key))groups.set(key,[]);
   groups.get(key).push(o);
  }
- const sorted=[...groups.values()].sort((a,b)=>{
-  const ra=state.runtime.races[a[0].race_id],
-   rb=state.runtime.races[b[0].race_id];
-  return (rb?.purse_minor??0)-(ra?.purse_minor??0)||
-   a[0].race_id.localeCompare(b[0].race_id)||
-   a[0].jockey_id.localeCompare(b[0].jockey_id);
- });
- let signed=0,declined=0;
- for(const group of sorted){
-  const race=state.runtime.races?.[group[0].race_id],
-   jockey=rt.jockeys?.[group[0].jockey_id];
-  if(!race||race.status!=='ENTRIES_OPEN'||!premierMarketRace(race,jockey)){
-   for(const o of group){done(o,'RACE_OR_PREMIER_RIDER_NO_LONGER_AVAILABLE');declined++}
-   continue;
-  }
-  const candidates=group.map(o=>{
+ // The professional's venue preference is a fair comparison of the
+ // strongest ACTUALLY AVAILABLE bid and the graded/purse importance of that
+ // race. No offer is debited merely to rank it. Sorting is deterministic
+ // across saves and independent of offer insertion order.
+ const gradedImportance=r=>{
+  const grade=String(r?.stakes_grade||'').toUpperCase();
+  const gradeWeight=/^(G1|GRADE ?1)$/.test(grade)?.11:
+   /^(G2|GRADE ?2)$/.test(grade)?.075:
+   /^(G3|GRADE ?3)$/.test(grade)?.045:.02;
+  const purse=Math.max(0,r?.purse_minor??0);
+  return gradeWeight+Math.min(.14,Math.log1p(purse/10000000)*.055);
+ };
+ const availableCandidates=(group,race,jockey)=>{
+  if(!race||race.status!=='ENTRIES_OPEN'||!premierMarketRace(race,jockey))
+   return [];
+  return group.map(o=>{
    const horse=state.runtime.registered_horses?.by_id?.[o.horse_id],
     entry=state.runtime.entries?.[o.race_id+':'+o.horse_id];
    if(!horse||!entry||entry.status!=='ENTERED')return null;
@@ -141,6 +147,27 @@ export function resolve1999PremierJockeyOffers({state,world,emit}){
   }).filter(Boolean).sort((a,b)=>b.score-a.score||
    b.offer.bonus_minor-a.offer.bonus_minor||
    a.offer.id.localeCompare(b.offer.id));
+ };
+ const sorted=[...groups.values()].map(group=>{
+  const race=state.runtime.races?.[group[0].race_id],
+   jockey=rt.jockeys?.[group[0].jockey_id],
+   best=availableCandidates(group,race,jockey)[0];
+  return {group,race,priority:best?
+   best.score+gradedImportance(race):-Infinity};
+ }).sort((a,b)=>b.priority-a.priority||
+  (b.race?.purse_minor??0)-(a.race?.purse_minor??0)||
+  a.group[0].race_id.localeCompare(b.group[0].race_id)||
+  a.group[0].jockey_id.localeCompare(b.group[0].jockey_id));
+ let signed=0,declined=0;
+ for(const {group,race} of sorted){
+  const jockey=rt.jockeys?.[group[0].jockey_id];
+  if(!race||race.status!=='ENTRIES_OPEN'||!premierMarketRace(race,jockey)){
+   for(const o of group){done(o,'RACE_OR_PREMIER_RIDER_NO_LONGER_AVAILABLE');declined++}
+   continue;
+  }
+  // Re-evaluate after earlier awards: a rider can work several races at
+  // one course that day, never switch venues after a signed commitment.
+  const candidates=availableCandidates(group,race,jockey);
   let winner=null;
   for(const c of candidates){
    const offer=c.offer,horse=state.runtime.registered_horses.by_id[offer.horse_id];
@@ -168,10 +195,17 @@ export function resolve1999PremierJockeyOffers({state,world,emit}){
     competitors:group.length,source:'MODELED_REAL_SIGNED_PREMIER_MOUNT'});
    signed++;break;
   }
+  const committedElsewhere=Object.values(state.runtime.entries||{}).
+   find(e=>e.jockey_id===jockey.id&&['BOOKED','RESULTED'].includes(e.status)&&
+    state.runtime.races?.[e.race_id]?.date===race.date&&
+    state.runtime.races[e.race_id].track_id!==race.track_id);
   for(const o of group){
    if(o===winner)continue;
    done(o,winner?'RIVAL_HORSE_WON_PREMIER_RIDE':
-    'NO_ELIGIBLE_AFFORDABLE_ACCEPTED_RIDE',winner?.horse_id??null);
+    committedElsewhere?'JOCKEY_SIGNED_ANOTHER_RACECOURSE':
+    'NO_ELIGIBLE_AFFORDABLE_ACCEPTED_RIDE',
+    winner?.horse_id??committedElsewhere?.horse_id??null,
+    winner?race.id:committedElsewhere?.race_id??null);
    declined++;
   }
  }
@@ -280,11 +314,11 @@ export function raceEligibility(state,horse,race){
  if(Number.isInteger(maxWins)&&horse.career.wins>maxWins)
   reasons.push('CAREER_WIN_LIMIT');
  const trip=horseTravelStatus(state,horse.horse_id);
- const arrivalConfirmed=trip?.status==='OUTBOUND'&&trip.destination_track_id===race.track_id&&
+ const arrivalConfirmed=trip?.status==='OUTBOUND'&&same1999PhysicalVenue(trip.destination_track_id,race.track_id)&&
   dayGap(trip.arrival_date,race.date)>=2;
- if(!site||effectiveHorseTrack(state,horse)!==race.track_id&&!arrivalConfirmed)
+ if(!site||!same1999PhysicalVenue(effectiveHorseTrack(state,horse),race.track_id)&&!arrivalConfirmed)
   reasons.push('NOT_PHYSICALLY_AT_TRACK_OR_CONFIRMED_TO_ARRIVE');
- if(trip?.status==='AT_DESTINATION'&&trip.destination_track_id===race.track_id&&
+ if(trip?.status==='AT_DESTINATION'&&same1999PhysicalVenue(trip.destination_track_id,race.track_id)&&
   dayGap(trip.arrival_date,race.date)<2)reasons.push('SHIPPING_ACCLIMATION_WINDOW');
  if(!care||care.training.sorenessDays>0||care.training.currentRisk>=.78||
   care.training.readiness<.43||care.history.at(-1)?.unfunded===true)
@@ -599,7 +633,7 @@ function settle1999Race({state,world,race_id,emit}){
  const entries=race.field.map(id=>state.runtime.entries[id]);
  ensure(entries.length>=2&&entries.length<=race.field_capacity&&entries.every(e=>
   e&&e.status==='BOOKED'&&rt.jockeys[e.jockey_id]&&
-   effectiveHorseTrack(state,state.runtime.registered_horses.by_id[e.horse_id])===race.track_id),
+   same1999PhysicalVenue(effectiveHorseTrack(state,state.runtime.registered_horses.by_id[e.horse_id]),race.track_id)),
   'RACE_FIELD','A valid field requires at least two fully booked runners');
  const horseSet=new Set(entries.map(e=>e.horse_id));
  ensure(horseSet.size===entries.length,'RACE_FIELD','Duplicate horse in race field');

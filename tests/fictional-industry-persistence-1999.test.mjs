@@ -9,7 +9,10 @@ import {createPersistent1999Industry,readPersistent1999IndustryBatch,findPersist
  readPersistent1999LifecycleHorse,readPersistent1999FoalForecasts,
  readPersistent1999LifecycleEvents}
  from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
-import {resolve1999FoalBirth} from '../public/1999/engine/fictional-industry-breeding-book-1999.mjs';
+import {generate1999SeasonFoalingForecasts,resolve1999FoalBirth}
+ from '../public/1999/engine/fictional-industry-breeding-book-1999.mjs';
+import {create1999SeasonalFoal}
+ from '../public/1999/engine/fictional-industry-registry-1999.mjs';
 function memoryStore(){
  const data={manifests:new Map(),horseBatches:new Map(),personBatches:new Map(),horseEdits:new Map(),careerRuns:new Map(),directory:new Map(),coveringBatches:new Map(),calendarBatches:new Map()};
  data.industryLifecycle=new Map();
@@ -23,7 +26,11 @@ function memoryStore(){
    data.manifests.set(worldId,structuredClone(manifest));
   },
   commitManifest:async(id,m)=>{data.manifests.set(id,structuredClone(m))},
-  putHorseEdit:async(id,horseId,edit)=>{data.horseEdits.set(id+':'+horseId,structuredClone(edit))},
+  putHorseEdit:async(id,horseId,edit)=>{
+   const key=id+':'+horseId;
+   const prior=data.horseEdits.get(key)||{};
+   data.horseEdits.set(key,structuredClone({...prior,...edit}));
+  },
   putCareerRun:async(id,runId,record)=>{
    if(data.manifests.get(id)?.status!=='COMPLETE')throw Error('World incomplete');
    data.careerRuns.set(id+':'+runId,structuredClone(record));
@@ -38,7 +45,33 @@ function memoryStore(){
   }};
 }
 const dirs={farms:[{id:'O-FARM-1',location:{country:'USA'}}],
- tracks:[{id:'T-0001'}],owners:[{id:'O-OWNER-1'}]};
+ tracks:[{id:'T-0001'}],owners:[{id:'O-OWNER-1',maxHorses:1000000}]};
+test('seasonal foals use the dam current care farm, not an unknown historical birthplace',()=>{
+ const seed=19990101,year=2000,stallion={id:'H-STALLION-1'};
+ const mare={id:'H-MARE-1',status:'BROODMARE',ownerId:'O-OWNER-1',
+  foalingFarmId:null,careFacilityId:'O-FARM-1'};
+ const coverings=Array.from({length:200},(_,i)=>({id:'COVER-'+year+'-'+
+  String(i+1).padStart(7,'0'),mareId:mare.id,stallionId:stallion.id,
+  breedingYear:year}));
+ const foalingFarmIdByMareId=new Map([[mare.id,mare.careFacilityId]]);
+ const forecasts=[...generate1999SeasonFoalingForecasts({seed,year,coverings,
+  mareById:new Map([[mare.id,mare]]),foalingFarmIdByMareId,batchSize:50})]
+  .flatMap(batch=>batch.records);
+ assert.ok(forecasts.length>0,'seeded conceptions should produce a forecast');
+ for(const forecast of forecasts){
+  assert.equal(forecast.ownerId,mare.ownerId);
+  assert.equal(forecast.foalingFarmId,mare.careFacilityId);
+ }
+ const forecast=forecasts[0];
+ const foal=create1999SeasonalFoal({seed,year,dateOfBirth:forecast.birthDate,
+  id:forecast.foalId,dam:mare,sire:stallion,
+  farm:{id:mare.careFacilityId,location:{city:'Lexington',region:'Kentucky',country:'USA'}}});
+ assert.equal(foal.ownerId,mare.ownerId);
+ assert.equal(foal.breederId,mare.ownerId);
+ assert.equal(foal.foalingFarmId,mare.careFacilityId);
+ assert.equal(foal.careFacilityId,mare.careFacilityId);
+ assert.equal(foal.birthplace.farmId,mare.careFacilityId);
+});
 test('large durable industry batches gzip compact and legacy raw records remain readable',async()=>{
  const batch=Array.from({length:2500},(_,i)=>({
   id:'H-FICTIONAL-1999-THREEYEAROLDRUNNERS-'+String(i+1).padStart(7,'0'),
@@ -81,6 +114,11 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
   a.scheduledCards-(a.calendarBatchesCommitted-1)*100);
 
  assert.equal(a.horseCount,12000);
+ assert.equal(a.ownerPortfolio.schema,'WTW_FICTIONAL_OWNER_PORTFOLIOS_V10');
+ assert.equal(a.personNameRevision,'WTW_1999_PROFESSIONAL_ROLE_NAMES_V5');
+ assert.equal(a.ownerPortfolio.capacityShortfall,0);
+ assert.equal(Object.values(a.ownerPortfolio.byTier).reduce(
+  (sum,tier)=>sum+tier.horses,0),12000);
  assert.equal(a.targetOpeningHorses,12000);
  assert.ok(a.personCount>0);
  assert.ok(a.coveringCount>0);
@@ -100,6 +138,8 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
  assert.ok(first[0].ratings.speed>=15);
  assert.ok(first[0].name&&first[0].namingStatus==='PROVISIONAL_EDITABLE_1999_OPENING');
  assert.ok(a.horseNamingRevision.includes('OPENING_INDUSTRY_V1'));
+ assert.equal(a.horseNamingRevision,'WTW_LOCAL_NAMING_RULES_V488:OPENING_INDUSTRY_V1',
+  'an existing V488 career must remain reopenable after naming preferences upgrade');
  const namedAdult=await findPersistent1999Horse(store,a,
   'H-FICTIONAL-1999-THREEYEAROLDRUNNERS-0000001');
  assert.ok(namedAdult.name&&namedAdult.namingRevision===a.horseNamingRevision);
@@ -110,6 +150,8 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
  assert.ok(first[0].relationships.some(e=>e.type==='OWNED_BY'));
  const runner=await findPersistent1999Horse(store,a,
   'H-FICTIONAL-1999-THREEYEAROLDRUNNERS-0000001');
+ assert.ok(['HANDFUL','SMALL','REGIONAL','MAJOR','ELITE'].includes(
+  runner.ownerPortfolioTier));
  assert.ok(runner.trainerId&&runner.jockeyId&&runner.homeTrackId);
  const staff=[];
  for(let i=0;i<a.personBatchesCommitted;i++)
@@ -136,12 +178,41 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
  await updatePersistent1999Horse(store,b,first[0].id,{name:'Copper Horizon'});
  const edited=await readPersistent1999HorseProfile(store,b,first[0].id);
  assert.equal(edited.name,'Copper Horizon');
+ assert.equal(edited.id,first[0].id,'the horse ID is immutable under rename');
+ // Each later transaction modifies only its selected fields; previous naming
+ // edits and subsequent owner/care edits must coexist in the SAME stored row.
+ const statusPatch=await updatePersistent1999Horse(store,b,first[0].id,{
+  status:'RETIRED_BROODMARE'
+ });
+ assert.equal(statusPatch.name,'Copper Horizon','status change must not erase name');
+ assert.equal(statusPatch.status,'RETIRED_BROODMARE');
+ const ownerPatch=await updatePersistent1999Horse(store,b,first[0].id,{
+  ownerId:first[0].ownerId
+ });
+ assert.equal(ownerPatch.name,'Copper Horizon','owner change must not erase name');
+ assert.equal(ownerPatch.status,'RETIRED_BROODMARE','owner change must retain status');
+ const renamedAgain=await updatePersistent1999Horse(store,b,first[0].id,{
+  name:'Copper Afterglow'
+ });
+ assert.equal(renamedAgain.name,'Copper Afterglow');
+ assert.equal(renamedAgain.status,'RETIRED_BROODMARE');
+ assert.equal(renamedAgain.sireId,first[0].sireId,'pedigree sire must not change');
+ assert.equal(renamedAgain.damId,first[0].damId,'pedigree dam must not change');
+ await assert.rejects(updatePersistent1999Horse(store,b,first[0].id,{
+  sireId:'H-BAD-PARENT'
+ }),/immutable or unsupported/);
  assert.equal((await findPersistent1999Horse(store,b,first[0].id)).name,first[0].name);
+ const revised=await readPersistent1999HorseProfile(store,b,first[0].id);
+ assert.equal(revised.name,'Copper Afterglow');
+ assert.equal(revised.status,'RETIRED_BROODMARE');
+ assert.equal(revised.ownerId,first[0].ownerId);
+ assert.equal(revised.id,first[0].id);
  const run=await savePersistent1999CareerRun(store,b,{runId:'career-1',
   player:{role:'owner',organizationId:'O-OWNER-1'},
   changes:{balanceMinor:123456},gameDate:'1999-02-01'});
  assert.deepEqual(await loadPersistent1999CareerRun(store,b,'career-1'),run);
- assert.equal((await readPersistent1999HorseProfile(store,b,first[0].id)).name,'Copper Horizon');
+ assert.equal((await readPersistent1999HorseProfile(store,b,first[0].id)).name,'Copper Afterglow');
+ assert.equal((await readPersistent1999HorseProfile(store,b,first[0].id)).status,'RETIRED_BROODMARE');
 });
 test('interrupted industry genesis resumes at committed checkpoint',async()=>{
  const store=memoryStore();let writes=0;
@@ -161,6 +232,59 @@ test('interrupted industry genesis resumes at committed checkpoint',async()=>{
  assert.equal(done.status,'COMPLETE');
  assert.ok(done.horseBatchesCommitted>2);
  assert.ok(done.coveringBatchesCommitted>0);
+});
+
+test('a canon organization used as owner and farm stays one permanent directory identity',async()=>{
+ const store=memoryStore(),shared={id:'O-000061',name:'Kingsmere Farm',
+  location:{city:'Versailles',region:'Kentucky',country:'USA'},
+  homeTrackId:'T-0001',operatingRoles:['BREEDER','LEGAL_OWNER'],
+  portfolioTier:'ELITE',maxHorses:900};
+ const regional={id:'O-TEST-REGIONAL',name:'Regional Partnership',
+  type:'RACING PARTNERSHIP',locationLabel:'Lexington, Kentucky, USA',
+  geographyRecords:[{locality:'Lexington',region:'Kentucky',country:'USA'}],
+  homeTrackId:'T-0001'};
+ const owners=[shared,regional,...Array.from({length:11},(_,i)=>({
+  id:'O-TEST-ELITE-'+String(i+1).padStart(2,'0'),portfolioTier:'ELITE',
+  maxHorses:900,homeTrackId:'T-0001'}))];
+ const manifest=await createPersistent1999Industry({store,seed:19990117,
+  worldId:'CanonDualRole',targetOpeningHorses:10000,batchSize:5000,
+  tracks:[{id:'T-0001',location:{region:'Kentucky',country:'USA'}}],
+  farms:[shared],owners});
+ const directory=await readPersistent1999Directory(store,manifest);
+ const canon=directory.filter(row=>row.id==='O-000061');
+ assert.equal(canon.length,1);
+ assert.ok(canon[0].operatingRoles.includes('BREEDING_OR_CARE_FACILITY'));
+ assert.ok(canon[0].operatingRoles.includes('LEGAL_OWNER'));
+ assert.ok(canon[0].roleRatings.owner&&canon[0].roleRatings.farm);
+ assert.equal(canon[0].relationships.filter(e=>e.type==='REGIONAL_CIRCUIT').length,1);
+ assert.deepEqual(directory.find(row=>row.id===regional.id).location,
+  {city:'Lexington',region:'Kentucky',country:'USA'});
+ const owned=await readPersistent1999IndustryBatch(store,manifest,'horseBatches',0);
+ assert.ok(owned.some(h=>h.ownerId==='O-000061'));
+});
+
+test('approved founding breeding residents keep IDs in the exact population and lifecycle',async()=>{
+ const store=memoryStore(),source={id:'H-1991-000006',name:'Heyday',
+  status:'STALLION',cohort:'stallion',sex:'HORSE',foalYear:1991,
+  ownerId:null,breederId:'O-FARM-1',foalingFarmId:'O-FARM-1',
+  careFacilityId:'O-FARM-1',managementOrganizationId:'O-OWNER-1',
+  sourcePedigree:{sireId:null,damId:null},sourceRecord:{id:'H-1991-000006',
+   name:'Heyday',firstBreedingSeason:1996,evidenceStatus:'ACTIVE_UNPROVEN_CLASSIC_SIRE'}};
+ const manifest=await createPersistent1999Industry({store,seed:19990131,
+  worldId:'ApprovedFoundingResident',targetOpeningHorses:10000,
+  foundingHorses:[source],...dirs,batchSize:1000});
+ assert.equal(manifest.horseCount,10000);
+ assert.equal(manifest.generatedHorseCount,9999);
+ assert.equal(manifest.foundingHorseCount,1);
+ const preserved=await findPersistent1999Horse(store,manifest,source.id);
+ assert.equal(preserved.id,source.id);
+ assert.equal(preserved.name,'Heyday');
+ assert.equal(preserved.sourceRecord.firstBreedingSeason,1996);
+ assert.equal(preserved.careFacilityId,'O-FARM-1');
+ const run=await savePersistent1999CareerRun(store,manifest,{runId:'founding-resident',
+  gameDate:'1999-01-02',player:{role:'owner',operation_id:'O-OWNER-1'}});
+ assert.equal(run.lifecycle.activeStallions,manifest.plan.counts.stallions+1,
+  'approved active breeding residents join the same saved-world breeding pool');
 });
 
 test('incomplete worlds cannot receive playable career runs',async()=>{

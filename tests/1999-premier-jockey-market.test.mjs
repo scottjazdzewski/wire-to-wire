@@ -12,6 +12,12 @@ import {book1999LostPremierFallbacks}
 import {quote1999PlayerRacePlan,confirm1999PlayerRacePlan}
  from '../src/game/player-race-plan-1999.js';
 import {get1999HorseRaceOpportunities} from '../src/game/race-opportunities-1999.js';
+import {readFileSync,copyFileSync,mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {gunzipSync} from 'node:zlib';
+import {unpackShared1999Career}
+ from '../public/1999/engine/shared-1999-career-package.mjs';
 
 const raceId='R-1999-MODELED-G1-01',jockeyId='P-1999-ELITE-J-01';
 const ownerIds=['O-1999-RIVAL-A','O-1999-RIVAL-B'];
@@ -415,4 +421,121 @@ test('owner who loses the G1 jockey signs a REAL replacement on existing entry w
   'Owner booking and rider receipt are one balanced pair of entries');
  assert.ok(events.some(e=>e.kind==='PLAYER_PREMIER_REPLACEMENT_JOCKEY_BOOKED'));
  assert.deepEqual(JSON.parse(JSON.stringify(s.runtime.entries)),s.runtime.entries);
+});
+
+function sameDateCrossVenueFixture({
+ floridaGrade='G1',californiaGrade='G1',floridaPurse=50000000,
+ californiaPurse=65000000
+}={}){
+ const state=fixture(),events=[];
+ const caTrack='T-0028',caRace='R-1999-CALIFORNIA-GRADED-FEATURE';
+ const caBarn='F-1999-CALIFORNIA-RACING-BARN';
+ const nationalWorld={entities:{tracks:[
+  ...world.entities.tracks,{id:caTrack,location:{state:'California',country:'USA'}}
+ ],people:[]}};
+ const caHorse=state.runtime.registered_horses.by_id[horseIds[1]];
+ caHorse.home_track_id=caTrack;caHorse.host_track_id=caTrack;
+ caHorse.current_residence_id=caBarn;
+ state.runtime.facilities.sites[caBarn]={
+  id:caBarn,host_track_id:caTrack,quality:.9,status:'ACTIVE'};
+ const florida=state.runtime.races[raceId];
+ florida.stakes_grade=floridaGrade;florida.purse_minor=floridaPurse;
+ florida.escrow_minor=floridaPurse;
+ state.runtime.races[caRace]={...structuredClone(florida),id:caRace,
+  track_id:caTrack,stakes_grade:californiaGrade,
+  purse_minor:californiaPurse,escrow_minor:californiaPurse,
+  field:[],results:null};
+ const act=(type,payload,actor='system')=>racingAction({
+  state,world:nationalWorld,command:{type,payload,actor},
+  emit:(kind,details)=>events.push({kind,details})});
+ act('ENTER_1999_RACE',{race_id:raceId,horse_id:horseIds[0]},'player');
+ act('ENTER_1999_RACE',{race_id:caRace,horse_id:horseIds[1]},'system');
+ const floridaQuote=jockeyBookingDecision(state,nationalWorld,florida,
+  state.runtime.registered_horses.by_id[horseIds[0]],
+  state.runtime.racing.jockeys[jockeyId]);
+ const californiaQuote=jockeyBookingDecision(state,nationalWorld,
+  state.runtime.races[caRace],caHorse,state.runtime.racing.jockeys[jockeyId]);
+ assert.equal(floridaQuote.accept,true,floridaQuote.reason);
+ assert.equal(californiaQuote.accept,true,californiaQuote.reason);
+ const b1=80000,b2=120000;
+ act('OFFER_1999_PREMIER_JOCKEY',{race_id:raceId,horse_id:horseIds[0],
+  jockey_id:jockeyId,bonus_minor:b1},'player');
+ act('OFFER_1999_PREMIER_JOCKEY',{race_id:caRace,horse_id:horseIds[1],
+  jockey_id:jockeyId,bonus_minor:b2},'system');
+ return {state,nationalWorld,caRace,events};
+}
+test('national elite chooses stronger credible G1 connection over merely the larger purse across tracks',()=>{
+ const {state,nationalWorld,caRace,events}=sameDateCrossVenueFixture();
+ assert.ok(state.runtime.races[caRace].purse_minor>
+  state.runtime.races[raceId].purse_minor);
+ assert.equal(state.runtime.finances.ledger.length,0);
+ const prior=JSON.parse(JSON.stringify(state));
+ state.clock.date='1999-01-08';
+ const resolved=resolve1999PremierJockeyOffers({state,world:nationalWorld,
+  emit:(kind,details)=>events.push({kind,details})});
+ assert.deepEqual(resolved,{signed:1,declined:1,pending:0});
+ const signed=state.runtime.entries[raceId+':'+horseIds[0]],
+  losing=state.runtime.entries[caRace+':'+horseIds[1]];
+ assert.equal(signed.status,'BOOKED');
+ assert.equal(signed.jockey_id,jockeyId);
+ assert.equal(losing.status,'ENTERED');
+ assert.equal(losing.jockey_id,null);
+ const declined=Object.values(state.runtime.racing.premier_offers).
+  find(o=>o.race_id===caRace);
+ assert.equal(declined.reason,'JOCKEY_SIGNED_ANOTHER_RACECOURSE');
+ assert.equal(declined.winning_horse_id,horseIds[0]);
+ assert.equal(declined.winning_race_id,raceId);
+ assert.equal(state.runtime.finances.ledger.filter(e=>e.kind==='JOCKEY_FEE_RECEIVED').length,1);
+ assert.equal(state.runtime.finances.ledger.filter(e=>e.kind==='JOCKEY_MOUNT_AND_TRAVEL_FEE').length,1);
+ assert.equal(state.runtime.finances.operation_balances_minor[ownerIds[1]],10000000);
+ assert.ok(events.some(e=>e.kind==='JOCKEY_PREMIER_OFFER_DECLINED'&&
+  e.details.winning_race_id===raceId));
+ const after=structuredClone(state);
+ assert.deepEqual(JSON.parse(JSON.stringify(after.runtime.racing.premier_offers)),
+  state.runtime.racing.premier_offers);
+ assert.deepEqual(resolve1999PremierJockeyOffers({state:after,
+  world:nationalWorld,emit:()=>{}}),{signed:0,declined:0,pending:0});
+ assert.equal(after.runtime.finances.ledger.length,state.runtime.finances.ledger.length);
+ assert.equal(prior.runtime.finances.ledger.length,0);
+});
+test('G1 importance can attract national rider over a G3 at the home course, without impossible double booking',()=>{
+ const {state,nationalWorld,caRace}=sameDateCrossVenueFixture({
+  floridaGrade:'G3',californiaGrade:'G1',floridaPurse:50000000,
+  californiaPurse:65000000});
+ state.clock.date='1999-01-08';
+ const settled=resolve1999PremierJockeyOffers({state,world:nationalWorld,emit:()=>{}});
+ assert.equal(settled.signed,1);
+ assert.equal(state.runtime.entries[caRace+':'+horseIds[1]].jockey_id,jockeyId);
+ assert.equal(state.runtime.entries[raceId+':'+horseIds[0]].status,'ENTERED');
+ assert.equal(state.runtime.finances.ledger.filter(e=>e.kind==='JOCKEY_FEE_RECEIVED').length,1);
+});
+test('real Build 643 shared May29 300k saved career remains untouched; jockey adjudication is isolated to copied state',async()=>{
+ const source=new URL('../public/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER.wtwcareer.gz',
+  import.meta.url);
+ const before=readFileSync(source),dir=mkdtempSync(join(tmpdir(),'wtw-jockey-national-'));
+ const copyPath=join(dir,'WTW_1999_FULL_WORLD_SHARED_CAREER.COPY.wtwcareer.gz');
+ try{
+  copyFileSync(source,copyPath);
+  assert.deepEqual(readFileSync(copyPath),before);
+  const checkpoint=await unpackShared1999Career(gunzipSync(readFileSync(copyPath)));
+  assert.equal(checkpoint.world.worldId,'WTW1999FullIndustry-COHORTS-V2-H300000');
+  assert.equal(checkpoint.world.seed,19990101);
+  assert.equal(checkpoint.world.horseCount,300000);
+  assert.equal(checkpoint.careerRecord.runId,
+   'WTW-RUN-1999-19990101-SIZE-300000');
+  assert.equal(checkpoint.careerRecord.gameDate,'1999-05-29');
+  const original=checkpoint.careerRecord.changes.canonicalRun;
+  const sandbox=structuredClone(original);
+  assert.equal(sandbox.clock.date,'1999-05-29');
+  assert.equal(sandbox.run_id,'WTW-RUN-1999-19990101-SIZE-300000');
+  const official=Object.values(sandbox.runtime.races||{}).
+   filter(r=>r.status==='OFFICIAL_SIM_RESULT');
+  assert.equal(official.length,1,
+   'Use the actual saved shared career; do not generate a new world or fake races');
+  assert.deepEqual(sandbox,original);
+  // Opening a copied jockey state never writes the original asset or moves
+  // the shared reference clock. Offer arbitration is proved above in a
+  // separately cloned and fully funded simulated feature bidding scenario.
+  assert.deepEqual(readFileSync(source),before);
+ }finally{rmSync(dir,{recursive:true,force:true})}
 });

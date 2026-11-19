@@ -6,6 +6,7 @@
  * identities are retained; the permanent racing barn remains the home site.
  * Visitors require a real active receiving barn and an unoccupied stall.
  */
+import {same1999PhysicalVenue} from './physical-venue-1999.js';
 import {ensure,isObject,validDate,worldIdentity} from './contracts.js';
 
 export const HORSE_SHIPPING_COMMANDS=Object.freeze(['SHIP_1999_HORSE','RETURN_1999_HORSE']);
@@ -146,7 +147,7 @@ export function shippingAssessment(state,world,horseId,destinationSiteId,{target
  if(destinationTrack?.playableIn1999===false)
   reasons.push('DESTINATION_TRACK_NOT_ACTIVE_IN_1999');
  if(destinationSiteId===horse.current_residence_id||
-  destination?.host_track_id===horse.host_track_id&&horse.host_track_id)
+  same1999PhysicalVenue(destination?.host_track_id,horse.host_track_id))
   reasons.push('ALREADY_AT_RACECOURSE');
  if(destination&&receivingBarnCapacity(state,destinationSiteId,horseId)<1)
   reasons.push('NO_RECEIVING_STALL');
@@ -164,12 +165,12 @@ export function shippingAssessment(state,world,horseId,destinationSiteId,{target
  const conflicting=Object.values(state.runtime.entries||{}).some(e=>
   e.horse_id===horseId&&['ENTERED','BOOKED'].includes(e.status)&&
   state.runtime.races[e.race_id]?.date>=state.clock.date&&
-  state.runtime.races[e.race_id]?.track_id!==destination?.host_track_id);
+  !same1999PhysicalVenue(state.runtime.races[e.race_id]?.track_id,destination?.host_track_id));
  if(conflicting)reasons.push('CONFLICTING_EXISTING_RACE_BOOKING');
  let race=null;
  if(targetRaceId){
   race=state.runtime.races?.[targetRaceId];
-  if(!race||race.track_id!==destination?.host_track_id||
+  if(!race||!same1999PhysicalVenue(race.track_id,destination?.host_track_id)||
    race.status!=='ENTRIES_OPEN')reasons.push('UNKNOWN_DESTINATION_RACE');
   if(race&&route.supported&&gap(plus(state.clock.date,route.days),race.date)<2)
    reasons.push('INADEQUATE_PRE_RACE_ACCLIMATION');

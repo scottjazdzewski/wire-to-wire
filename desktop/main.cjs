@@ -209,34 +209,95 @@ async function runSmoke(win){
  if(last.origin!==ORIGIN)throw Error('Application loaded an unexpected origin: '+last.origin);
  markStartup('gameUIReady');
  if(smokePhase==='career-write'||smokePhase==='career-read'){
-  const career=await win.webContents.executeJavaScript(`(async()=>{
+  const career=await win.webContents.executeJavaScript(`(async()=>{\n   const smokePhase=${JSON.stringify(smokePhase)};
    const deadline=Date.now()+300000;
    while(Date.now()<deadline){
     const api=window.WTWCompactCareerManager;
     if(api?.bootstrapBundledCareer){
      const loaded=await api.bootstrapBundledCareer();
-     const view=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
-     return {...loaded,mainUiCareer:view?{
-      worldId:view.worldId,runId:view.runId,date:view.date,
-      worldHorseCount:view.worldHorseCount,personCount:view.personCount,
-      playerHorseCount:view.horseRows?.length||0,operationName:view.operationName
-     }:null};
+     const readView=()=>{
+      const view=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+      return view?{
+       worldId:view.worldId,runId:view.runId,date:view.date,
+       worldHorseCount:view.worldHorseCount,personCount:view.personCount,
+       playerHorseCount:view.horseRows?.length||0,
+       operationInventoryCount:view.operationInventoryCount,
+       operationId:view.operationId,operationName:view.operationName
+      }:null;
+     };
+     let view=readView(),gameDate=loaded.gameDate,gameplayAdvance=null;
+     if(!view)throw Error('Bundled career opened without an active operation roster');
+     if(smokePhase==='career-write'){
+      const fromDate=view.date;
+      const advance=document.querySelector('[data-cc-action="advance-test-day"]');
+      if(!advance)throw Error('Kingsmere career day-advance control is unavailable');
+      advance.click();
+      const expectedDate=new Date(Date.parse(fromDate+'T00:00:00Z')+86400000)
+       .toISOString().slice(0,10);
+      const persistence=await import('/1999/engine/fictional-industry-persistence-1999.mjs');
+      const db=await persistence.open1999IndustryDatabase();
+      let saved=null;
+      try{
+       const world=await persistence.reopenPersistent1999Industry(db,{
+        seed:loaded.seed,worldId:loaded.worldId});
+       if(!world||world.status!=='READY')throw Error('The full world did not reopen during Windows gameplay');
+       const saveDeadline=Date.now()+180000;
+       while(Date.now()<saveDeadline){
+        const candidate=await persistence.loadPersistent1999CareerRun(
+         db,world.manifest,loaded.runId);
+        if(candidate?.gameDate===expectedDate&&candidate.changes?.canonicalRun){
+         saved=candidate;break;
+        }
+        await new Promise(resolve=>setTimeout(resolve,300));
+       }
+       if(!saved)throw Error('Kingsmere game-day advance did not reach its durable career save');
+      }finally{db.close()}
+      await api.open();
+      const reopenDeadline=Date.now()+60000;
+      view=readView();
+      while(view?.date!==expectedDate&&Date.now()<reopenDeadline){
+       await new Promise(resolve=>setTimeout(resolve,250));view=readView();
+      }
+      gameDate=saved.gameDate;
+      const savedRun=saved.changes.canonicalRun;
+      const savedStableHorseIds=Array.isArray(savedRun.stable_horse_ids)?savedRun.stable_horse_ids:[];
+      if(view?.date!==expectedDate||saved.player?.operation_id!=='O-000061'||
+       savedStableHorseIds.length!==view.operationInventoryCount)
+       throw Error('Windows gameplay save did not retain the Kingsmere roster and next date: '+
+        JSON.stringify({expectedDate,viewDate:view?.date,savedGameDate:saved.gameDate,
+         savedRunDate:savedRun.clock?.date,playerOperationId:saved.player?.operation_id,
+         savedStableHorseCount:savedStableHorseIds.length,
+         viewRosterCount:view?.horseRows?.length,
+         viewOperationInventoryCount:view?.operationInventoryCount,
+         savedRosterSample:savedStableHorseIds.slice(0,5),
+         viewHorseSample:view?.horseRows?.slice?.(0,5)?.map(h=>h.horseId)}));
+      gameplayAdvance={fromDate,toDate:expectedDate,operationId:saved.player.operation_id,
+       stableHorses:saved.changes.canonicalRun.stable_horse_ids.length,
+       registeredRunners:Object.keys(saved.changes.canonicalRun.runtime.registered_horses.by_id).length,
+       durableSaveVerified:true};
+     }
+     return {...loaded,gameDate,gameplayAdvance,mainUiCareer:view};
     }
     await new Promise(resolve=>setTimeout(resolve,250));
    }
    throw Error('Bundled career manager did not load');
   })()`,true);
-  if(career.worldId!=='WTW1999FullIndustry-COHORTS-V2-H300000'||
+  if(career.worldId!=='WTW1999FullIndustry-COHORTS-V6-OWNER-V10-NAMES-V10-H300000'||
      career.seed!==19990101||career.horseCount!==300000||
-     career.personCount!==75724||career.runId!=='WTW-RUN-1999-19990101-SIZE-300000'||
+     career.personCount!==75705||career.runId!=='WTW-RUN-1999-19990101-SIZE-300000-OP-O-000061'||
      !/^\d{4}-\d{2}-\d{2}$/.test(career.gameDate)||
      !/^[a-f0-9]{64}$/.test(career.snapshotSha256||'')||
      career.mainUiCareer?.worldId!==career.worldId||
      career.mainUiCareer?.runId!==career.runId||
      career.mainUiCareer?.date!==career.gameDate||
      career.mainUiCareer?.worldHorseCount!==300000||
-     career.mainUiCareer?.personCount!==75724||
-     career.mainUiCareer?.playerHorseCount!==career.playableHorseCount)
+     career.mainUiCareer?.personCount!==75705||
+     career.mainUiCareer?.operationName!=='Kingsmere Farm'||
+     career.mainUiCareer?.playerHorseCount!==career.mainUiCareer?.operationInventoryCount||
+     !Number.isSafeInteger(career.operationInventoryCount)||career.operationInventoryCount<1||
+     career.mainUiCareer?.operationInventoryCount!==career.operationInventoryCount||
+     !Number.isInteger(career.playableHorseCount)||career.playableHorseCount<1||
+     career.playableHorseCount>career.mainUiCareer.operationInventoryCount)
    throw Error('Bundled career identity did not match the approved 300k checkpoint: '+JSON.stringify(career));
   reportSmoke({phase:smokePhase,bundledOrigin:last.origin,gameDate:last.date,
    foundingSchema:last.schema,gameInterface:'ONE_APPROVED_UI',
