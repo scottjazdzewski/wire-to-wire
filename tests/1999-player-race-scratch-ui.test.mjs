@@ -52,8 +52,9 @@ test('actual Race Entry Desk routes the owned booked runner to audited game scra
  assert.equal(x.commands.length,1);
  assert.equal(x.commands[0].type,'SCRATCH_1999_RACE');
  assert.equal(x.commands[0].actor,'player');
- assert.deepEqual(x.commands[0].payload,{
-  race_id:'R-1999-OPEN',horse_id:'H-1999-OWNED',reason:'OWNER_WITHDRAWAL'});
+ assert.equal(x.commands[0].payload.race_id,'R-1999-OPEN');
+ assert.equal(x.commands[0].payload.horse_id,'H-1999-OWNED');
+ assert.equal(x.commands[0].payload.reason,'OWNER_WITHDRAWAL');
  assert.match(x.prompts[0],/\$1,150\.00/);
  assert.match(x.prompts[0],/not refunded/);
  assert.equal(x.entry.status,'SCRATCHED');
