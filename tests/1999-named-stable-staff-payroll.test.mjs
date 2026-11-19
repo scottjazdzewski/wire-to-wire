@@ -203,3 +203,96 @@ test('wrong employer, nonlocal employee, underfunded and legacy anonymous sites 
     daily_wage_minor:7500}},emit:()=>{}}),
   e=>e.code==='FACILITY_EMPLOYEE_LEGACY');
 });
+
+test('unfunded Kingsmere salary is a real dated obligation, NOT a fabricated staff cash receipt',()=>{
+ const s=fixture(),barn=s.runtime.facilities.sites[site];
+ s.runtime.finances.operation_balances_minor[owner]=0;
+ s.runtime.finances.balance_minor=0;
+ const events=[];
+ const day=()=>advanceFacilities({state:s,world,emit:(kind,details)=>
+  events.push({kind,details})});
+ day();
+ assert.equal(s.runtime.finances.balance_minor,0);
+ assert.deepEqual(s.runtime.finances.ledger,[],
+  'Employee cannot receive cash that does not exist');
+ assert.equal(s.runtime.people[groom],undefined);
+ assert.equal(barn.staff_wage_arrears[groom].owed_minor,9000);
+ assert.equal(barn.staff_wage_arrears[groom].due_days,1);
+ assert.equal(barn.staff_wage_arrears[groom].first_unpaid_on,'1999-01-02');
+ assert.equal(barn.staff_wage_arrears[groom].last_unpaid_on,'1999-01-02');
+ assert.ok(events.some(x=>x.kind==='FACILITY_EMPLOYEE_WAGE_UNFUNDED'&&
+  x.details.no_cash_receipt===true));
+ validateFacilityState(s,world);
+ const snapshot=JSON.parse(JSON.stringify(s));
+ day();
+ assert.deepEqual(JSON.parse(JSON.stringify(s)),snapshot,
+  'a repeated game day cannot double-count unpaid promises');
+ s.clock.date='1999-01-03';
+ s.runtime.finances.operation_balances_minor[owner]=18000;
+ s.runtime.finances.balance_minor=18000;
+ day();
+ assert.equal(s.runtime.finances.balance_minor,0);
+ assert.equal(barn.staff_wage_arrears,undefined);
+ assert.equal(s.runtime.people[groom].stable_payroll_earned_minor,18000);
+ const pairs=new Map();
+ for(const e of s.runtime.finances.ledger){
+  const rows=pairs.get(e.transaction_id)||[];rows.push(e);
+  pairs.set(e.transaction_id,rows);
+ }
+ assert.equal(pairs.size,2);
+ for(const rows of pairs.values()){
+  assert.equal(rows.length,2);
+  assert.equal(rows.reduce((x,e)=>x+e.amount_minor,0),0);
+ }
+ assert.ok(events.some(x=>x.kind==='FACILITY_EMPLOYEE_BACKPAY_SETTLED'&&
+  x.details.amount_minor===9000));
+ assert.equal(s.runtime.finances.ledger.filter(e=>
+  e.kind==='FACILITY_NAMED_EMPLOYEE_RECEIPT').length,2);
+ assert.deepEqual(JSON.parse(JSON.stringify(s)),s);
+ validateFacilityState(s,world);
+});
+test('termination retains unpaid employee wages and pays them without falsely re-hiring the former worker',()=>{
+ const s=fixture(),barn=s.runtime.facilities.sites[site];
+ s.runtime.finances.balance_minor=0;
+ s.runtime.finances.operation_balances_minor[owner]=0;
+ advanceFacilities({state:s,world,emit:()=>{}});
+ assert.equal(barn.staff_wage_arrears[groom].owed_minor,9000);
+ s.clock.date='1999-01-03';
+ facilityAction({state:s,world,command:{
+  actor:'player',type:'FACILITY_TERMINATE_NAMED_PERSON',
+  payload:{site_id:site,operation_id:owner,person_id:groom}},emit:()=>{}});
+ assert.equal(barn.payroll_staff,undefined);
+ assert.equal(barn.staff_count,0);
+ assert.equal(barn.staff_history[0].person_id,groom);
+ s.runtime.finances.balance_minor=10000;
+ s.runtime.finances.operation_balances_minor[owner]=10000;
+ advanceFacilities({state:s,world,emit:()=>{}});
+ assert.equal(barn.status,'UNDERSTAFFED');
+ assert.equal(s.runtime.finances.balance_minor,1000);
+ assert.equal(s.runtime.people[groom].stable_payroll_earned_minor,9000);
+ assert.equal(s.runtime.people[groom].stable_employer_site_id,undefined);
+ assert.equal(s.runtime.people[groom].stable_employer_operation_id,undefined);
+ assert.equal(barn.staff_wage_arrears,undefined);
+ assert.equal(s.runtime.finances.ledger.length,2);
+ assert.equal(s.runtime.finances.ledger[0].amount_minor,-9000);
+ assert.equal(s.runtime.finances.ledger[1].amount_minor,9000);
+ assert.equal(s.runtime.finances.ledger[1].source,
+  'PAID_PREVIOUSLY_UNFUNDED_LOCAL_STABLE_WAGE');
+ validateFacilityState(s,world);
+ const reopened=JSON.parse(JSON.stringify(s));
+ assert.deepEqual(reopened,s);
+});
+test('unpaid staff debt must belong to a real same-course source employee and legitimate saved game dates',()=>{
+ const mutate=modify=>{
+  const s=fixture();s.runtime.facilities.sites[site].staff_wage_arrears={
+   [groom]:{person_id:groom,owed_minor:9000,due_days:1,
+    first_unpaid_on:'1999-01-01',last_unpaid_on:'1999-01-01'}};
+  modify(s);
+  assert.throws(()=>validateFacilityState(s,world),
+   e=>e.code==='FACILITY_STAFF_ARREARS');
+ };
+ mutate(s=>{s.runtime.facilities.sites[site].staff_wage_arrears[groom].owed_minor=-9000});
+ mutate(s=>{s.runtime.facilities.sites[site].staff_wage_arrears[groom].due_days=0});
+ mutate(s=>{s.runtime.facilities.sites[site].staff_wage_arrears[groom].last_unpaid_on='2000-01-01'});
+ mutate(s=>{s.runtime.facilities.sites[site].staff_wage_arrears[groom].person_id='P-OTHER'});
+});
