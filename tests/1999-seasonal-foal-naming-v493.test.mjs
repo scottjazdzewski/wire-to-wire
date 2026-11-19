@@ -52,8 +52,10 @@ function fixture(){
    if(w!==worldKey||r!==runId||prior?.version!==expectedVersion||
     prior.gameDate!==updated.gameDate||prior.player.operation_id!==ownerId)
     throw Error('Stale owner career or invalid version');
-   if(entry?.kind!=='BORN'||entry.horse.ownerId!==ownerId||
-    entry.horse.name||entry.horse.dateOfBirth>prior.gameDate||
+   const effective=entry?.horse?{...entry.horse,...(entry.patch||{})}:null;
+   if(entry?.kind!=='BORN'||effective?.ownerId!==ownerId||
+    effective.name||effective.status==='DECEASED'||
+    effective.dateOfBirth>prior.gameDate||
     updated.version!==expectedVersion+1)
     throw Error('Invalid actual saved birth');
    // Apply both writes only after ALL guards pass, modeling one IDB tx.
@@ -170,6 +172,26 @@ test('V493 reuses one immutable 300k name registry across multiple real foal sav
   runId,foals[0].id)).name,'First Lark');
  assert.equal((await readPersistent1999LifecycleHorse(store,manifest,
   runId,foals[1].id)).name,'Second Lark');
+});
+
+test('V493 refuses stale patched ownership at the atomic commit boundary',async()=>{
+ const {store,foals,maps,runKey,writes}=fixture();
+ const prior=maps.careerRuns.get(runKey);
+ const key=runKey+':horse:'+foals[0].id;
+ maps.industryLifecycle.set(key,{
+  ...maps.industryLifecycle.get(key),patch:{ownerId:'O-NEW-OWNER'}
+ });
+ await assert.rejects(store.commitLifecycleFoalNaming({
+  worldKey:worldId+':'+seed,runId,horseId:foals[0].id,
+  ownerId:playerId,name:'Not My Foal',
+  expectedVersion:prior.version,record:{...prior,version:prior.version+1}
+ }),/Invalid actual saved birth/);
+ assert.equal(writes(),0);
+ assert.equal(maps.industryLifecycle.get(key).horse.name,null);
+ const engine=(await import('node:fs/promises')).readFile;
+ const source=await engine(new URL('../public/1999/engine/fictional-industry-persistence-1999.mjs',
+  import.meta.url),'utf8');
+ assert.match(source,/const effective=horse\?\{\.\.\.horse,\.\.\.\(state.patch\|\|\{\}\)\}/);
 });
 
 test('V493 optimistic version prevents atomic foal name overwrite',async()=>{
