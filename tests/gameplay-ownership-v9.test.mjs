@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
  WORLD_SCHEMA,createGameRun,dispatchGameCommand,
  exportGameSave,importGameSave,getStableView,getOfficeView,
- getOwnerPortfolioView,currentHorseOwnerId
+ getOwnerPortfolioView,currentHorseOwnerId,getHorseSaleMarketView
 } from '../src/game/index.js';
 import {planFictionalOwnerPortfolios} from '../public/1999/engine/fictional-owner-portfolio-planner.mjs';
 
@@ -429,6 +429,13 @@ test('player buys a seller-listed rival horse for one agreed price; real balance
   listing_id:'RIVAL-SALE',horse_id:'H-1999-000004',
   seller_id:'O-1999-002',price_minor:20000,expires_on:'1999-01-04'
  },'system')).state;
+ const saleBoard=getHorseSaleMarketView(s,world);
+ assert.equal(saleBoard.total,1);
+ assert.equal(saleBoard.items[0].horse_id,'H-1999-000004');
+ assert.equal(saleBoard.items[0].seller_id,'O-1999-002');
+ assert.equal(saleBoard.items[0].price_minor,20000);
+ assert.equal(saleBoard.items[0].buyer_cash_minor,100000);
+ assert.equal(saleBoard.items[0].buyer_can_afford,true);
  assert.throws(()=>send(world,s,cmd('market:insufficient-listing','LIST_HORSE_FOR_SALE',{
   listing_id:'DUPLICATE-OPEN',horse_id:'H-1999-000004',
   seller_id:'O-1999-002',price_minor:15000,expires_on:'1999-01-04'
@@ -438,6 +445,8 @@ test('player buys a seller-listed rival horse for one agreed price; real balance
  s=result.state;
  assert.equal(s.runtime.ownership.market_listings['RIVAL-SALE'].status,'SOLD');
  assert.equal(s.runtime.ownership.market_listings['RIVAL-SALE'].buyer_id,'O-1999-001');
+ assert.equal(getHorseSaleMarketView(s,world).total,0,
+  'Sold horse must disappear from the purchasable market');
  assert.equal(s.runtime.finances.operation_balances_minor['O-1999-001'],80000);
  assert.equal(s.runtime.finances.operation_balances_minor['O-1999-002'],50000);
  assert.equal(s.runtime.finances.balance_minor,80000);
@@ -452,6 +461,12 @@ test('player buys a seller-listed rival horse for one agreed price; real balance
  assert.ok(getStableView(s,world).some(x=>
   x.id==='H-1999-000004'&&x.current_owner_id==='O-1999-001'));
  assert.equal(JSON.stringify(world),source,'Buyer acquisition never rewrites source ownership');
+ const ledgerForgery=structuredClone(s);
+ ledgerForgery.runtime.finances.ledger=ledgerForgery.runtime.finances.ledger.filter(x=>
+  !(x.transaction_id==='HORSE_SALE:RIVAL-1999-CASH'&&
+   x.kind==='HORSE_SALE_SELLER_RECEIPT'));
+ assert.throws(()=>exportGameSave(ledgerForgery,world),
+  e=>e.code==='HORSE_MARKET','Missing seller receipt cannot be reopened as a legal purchase');
  assert.ok(!result.events.some(e=>e.kind==='HORSE_SALE_LISTING_CANCELLED'),
   'A successful listing is sold, not spuriously cancelled');
  assert.deepEqual(importGameSave(exportGameSave(s,world),world),s);
