@@ -180,7 +180,7 @@ export async function open1999IndustryDatabase(indexedDB=globalThis.indexedDB){
    */
   async commitLifecycleFoalNaming({worldKey,runId,horseId,ownerId,name,
    expectedVersion,record}={}){
-   if(!worldKey||!runId||!/^H-FICTIONAL-1999-FOALS-\\d{4}-\\d{7}$/.test(horseId)||
+   if(!worldKey||!runId||!/^H-FICTIONAL-1999-FOALS-\d{4}-\d{7}$/.test(horseId)||
     !ownerId||!name||!Number.isSafeInteger(expectedVersion)||expectedVersion<1||
     record?.version!==expectedVersion+1)
     throw Error('Invalid career foal-name transaction');
