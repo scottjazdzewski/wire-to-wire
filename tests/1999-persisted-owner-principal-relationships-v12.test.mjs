@@ -179,6 +179,14 @@ test('real 12k career saves, reopens and finds owner principals with official pe
  const reopened=await reopenPersistent1999Industry(store,{
   seed:params.seed,worldId:params.worldId});
  assert.equal(reopened.status,'READY');
+ const reopenedDirectory=await readPersistent1999Directory(store,reopened.manifest);
+ assert.deepEqual(reopenedDirectory.map(row=>({
+  id:row.id,name:row.name,principalId:row.principalId??null,
+  location:row.location
+ })),directory.map(row=>({
+  id:row.id,name:row.name,principalId:row.principalId??null,
+  location:row.location
+ })), 'all owner, partnership, stud, farm and circuit display names stay stable');
  const career=await loadPersistent1999CareerRun(store,manifest,runId);
  assert.equal(career.gameDate,'1999-01-02');
  assert.equal(career.player.ownerId,player.ownerId);
