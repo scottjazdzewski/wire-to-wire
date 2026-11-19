@@ -21,6 +21,7 @@ import {premierMarketRace,scorePremierJockeyOffer,premierBonusCap,premierOfferId
  from '../../public/1999/engine/jockey-premier-market-1999.mjs';
 
 export const GAME_RACING_SCHEMA='WTW_1999_CAREER_RACING_V1';
+const SOURCE_SLOT_LOCK_1999='WTW_1999_LOCKED_CONDITION_BOOK_SLOT_V1';
 export const RACING_COMMANDS=Object.freeze(['ACTIVATE_JOCKEY_COLONY','OPEN_1999_RACE','ENTER_1999_RACE',
  'BOOK_1999_JOCKEY','OFFER_1999_PREMIER_JOCKEY','SET_1999_RACE_TACTICS','SETTLE_1999_RACE']);
 export const RACE_TACTICS=Object.freeze(['AUTO','LEAD','PRESS','STALK','CLOSE']);
@@ -317,6 +318,7 @@ function raceShape(book){
   win_restriction:book.winRestriction,full_conditions:book.fullConditions,
   field_capacity:book.fieldCapacity,purse_minor:Math.round(book.purse*100),
   source:'WTW_1999_TRACK_SPECIFIC_MEET_PROGRESSION',
+  source_slot_lock:SOURCE_SLOT_LOCK_1999,
   status:'ENTRIES_OPEN',field:[],results:null,escrow_minor:Math.round(book.purse*100)};
 }
 export function raceEligibility(state,horse,race){
@@ -841,8 +843,10 @@ export function validateRacingRuntime(state,world){
   // Check active, still-enterable races against their exact original
   // condition-book slot. Previously OFFICIAL saved results are historical
   // game outcomes, not reinterpreted under a later program revision.
-  if(r.status==='ENTRIES_OPEN'&&
+  if(r.status==='ENTRIES_OPEN'&&r.source_slot_lock===SOURCE_SLOT_LOCK_1999&&
      state.runtime.registered_horses?.schema==='WTW_CAREER_HORSES_V1'){
+   // Older valid open careers lack this optional versioned lock. Preserve
+   // those pre-V10 saves instead of retroactively rewriting their programs.
    const dayKey=r.track_id+'|'+r.date;
    if(!openSourceBooks.has(dayKey))
     openSourceBooks.set(dayKey,new Map(
