@@ -103,7 +103,9 @@ export function connect1999Horse(horse,{seed,trainerCount=0,jockeyCount=0,
 }
 export function connect1999Person(person,{seed}={}){
  if(!person?.id||!person?.role)throw Error('Invalid person graph input');
- const type=person.role;
+ // A materialized owner principal uses the existing owner's business
+ // ratings catalog, not a second invented personnel ratings vocabulary.
+ const type=person.role==='owner_principal'?'owner':person.role;
  return {...person,ratings:rate1999Entity(seed,type,person.id),
   relationships:[relationship1999('WORKS_AT',person.id,person.workplaceId),
    ...(person.role==='owner_principal'?
