@@ -33,6 +33,8 @@ export const HANDICAP_WEIGHT_BASIS_1999='WTW_1999_MODELED_HANDICAP_FROM_GAME_FOR
 /** A declared, game-modeled riding impost. There are no verified official
  * 1999 handicap weights in the source condition book; do not invent any.
  * Form requires two real completed game starts before an initial rating. */
+const isOrdinary1999Handicap=race=>race?.conditions==='Handicap'&&
+ !race?.stake_id&&!race?.stakeId;
 export function modeled1999HandicapWeight(horse){
  if(!horse?.starting_attributes||horse.career?.starts<2)return null;
  const skill=bound(horse.starting_attributes.current_ability/99);
@@ -349,7 +351,7 @@ export function raceEligibility(state,horse,race){
   reasons.push('MAIDEN_RESTRICTION');
  if(race.conditions==='Allowance'&&horse.career.wins<1)
   reasons.push('ALLOWANCE_REQUIRES_MAIDEN_VICTORY');
- if(race.conditions==='Handicap'&&modeled1999HandicapWeight(horse)===null)
+ if(isOrdinary1999Handicap(race)&&modeled1999HandicapWeight(horse)===null)
   reasons.push('HANDICAP_REQUIRES_TWO_RECORDED_STARTS');
  const maxWins=race.max_wins??race.maxCareerWins;
  if(Number.isInteger(maxWins)&&horse.career.wins>maxWins)
@@ -546,7 +548,7 @@ export function racingAction({state,world,command,emit}){
    trainer_id:horse.trainer_id,owner_id:horse.owner_organization_id,
    jockey_id:null,status:'ENTERED',decision:command.actor==='player'?'PLAYER_ENTRY':'AI_TRAINER_NOMINATION',
    entered_date:state.clock.date};
-  if(race.conditions==='Handicap'){
+  if(isOrdinary1999Handicap(race)){
    entry.handicap_weight_lbs=modeled1999HandicapWeight(horse);
    entry.handicap_weight_basis=HANDICAP_WEIGHT_BASIS_1999;
   }
@@ -665,7 +667,7 @@ function performance(state,world,race,entry){
   (1.3-.6*a.consistency);
  const instruction=entry.race_tactic??'AUTO';
  const tactical=tacticalFit(state,race,entry,instruction);
- const handicapAdjustment=race.conditions==='Handicap'?
+ const handicapAdjustment=isOrdinary1999Handicap(race)?
   (116-entry.handicap_weight_lbs)*.003:0;
  const composite=now.race_performance_index*.49+surface*.14+distance*.14+
   pace*.09+rider*.10+j.composure*.04+variation+tactical.adjustment+
@@ -687,7 +689,7 @@ function settle1999Race({state,world,race_id,emit}){
  ensure(horseSet.size===entries.length,'RACE_FIELD','Duplicate horse in race field');
  ensure(new Set(entries.map(e=>e.jockey_id)).size===entries.length,
   'RACE_FIELD','One jockey may not ride multiple starters in one race');
- if(race.conditions==='Handicap')
+ if(isOrdinary1999Handicap(race))
   ensure(entries.every(e=>Number.isInteger(e.handicap_weight_lbs)&&
    e.handicap_weight_lbs>=110&&e.handicap_weight_lbs<=122&&
    e.handicap_weight_basis===HANDICAP_WEIGHT_BASIS_1999),
@@ -756,7 +758,7 @@ function settle1999Race({state,world,race_id,emit}){
    owner_share_minor:ownerShare,jockey_share_minor:jockeyShare,
    trainer_share_minor:trainerShare,
    performance_index:composite,rider_index:rider,
-   ...(race.conditions==='Handicap'?{handicap_weight_lbs:entry.handicap_weight_lbs,
+   ...(isOrdinary1999Handicap(race)?{handicap_weight_lbs:entry.handicap_weight_lbs,
     handicap_weight_basis:HANDICAP_WEIGHT_BASIS_1999}:{}),
    ...(tactical?{race_tactic:tactical.tactic,
     field_pressure_index:tactical.pressure,
@@ -838,7 +840,7 @@ export function validateRacingRuntime(state,world){
    ensure(e&&e.race_id===id&&state.runtime.registered_horses?.by_id?.[e.horse_id]&&
     e.id===entryId,'RACE_SAVE','Missing runner or horse reference');
    if(e.jockey_id)ensure(Boolean(rt.jockeys[e.jockey_id]),'RACE_SAVE','Missing booked jockey');
-   if(r.conditions==='Handicap')
+   if(isOrdinary1999Handicap(r))
     ensure(Number.isInteger(e.handicap_weight_lbs)&&
      e.handicap_weight_lbs>=110&&e.handicap_weight_lbs<=122&&
      e.handicap_weight_basis===HANDICAP_WEIGHT_BASIS_1999,
@@ -862,7 +864,7 @@ export function validateRacingRuntime(state,world){
      !resultHorseIds.has(result.horse_id)&&r.field.includes(entryId)&&
      entry?.status==='RESULTED'&&entry.finish===i+1&&result.finish===i+1,
      'RACE_SAVE','Official results must match each starter once in finish order');
-    if(r.conditions==='Handicap')ensure(
+    if(isOrdinary1999Handicap(r))ensure(
      result.handicap_weight_lbs===entry.handicap_weight_lbs&&
      result.handicap_weight_basis===HANDICAP_WEIGHT_BASIS_1999,
      'HANDICAP_RESULT_SAVE','Official modeled weight must match the declared starter impost');
