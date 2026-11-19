@@ -147,7 +147,8 @@ test('real worker invokes destination naming only behind explicit new version an
  assert.match(worker,/directoryNamingModel==='V12_DESTINATION_TRACK'/);
  assert.match(worker,/NAMES-V11/);
  assert.match(worker,/create1999DestinationNamingMarkets/);
- assert.match(worker,/request\.directoryNamingModel\?\?null/);
+ assert.match(worker,/request\\.directoryNamingModel==null\\?/);
+ assert.match(worker,/industryDirectoriesWithNaming\\(request\\.seed/);
  assert.match(worker,/ownerNameSourceModel:'ARCHIVAL_1999_RACING_OWNERS'/);
  assert.match(worker,/ownerNameSourceModel:'ARCHIVAL_1999_RACING_OWNERS_SCALABLE_V11'/);
  assert.match(worker,/destinationMarketIds:/);
