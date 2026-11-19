@@ -47,7 +47,8 @@ export function buildNamingLabScenario({ownerName,breederName,story,foalingYear=
  */
 export function createNamingDeskController({
  notify=()=>{},loadFeedback=null,saveFeedback=null,getTargets=()=>[],
- nameInUse=()=>false,gameplayActive=()=>false,commitGameplay=null
+ nameInUse=()=>false,gameplayActive=()=>false,commitGameplay=null,
+ savedCareerActive=()=>false,previewSavedCareer=null
 }={}){
  let memory=createNamingFeedback();
  const load=typeof loadFeedback==='function'?loadFeedback:()=>memory;
@@ -74,7 +75,12 @@ export function createNamingDeskController({
  }
  function setField(name,value){
   if(model.busy||!Object.hasOwn(model.fields,name))return false;
-  model.fields[name]=String(value??'').slice(0,name==='story'?1000:name==='direction'?300:128);
+  const next=String(value??'').slice(0,name==='story'?1000:name==='direction'?300:128);
+  if(next!==model.fields[name]&&['targetHorseId','story'].includes(name)){
+   model.results=[];model.allResults=[];model.recentNames=[];
+   model.attempt=0;model.hasGenerated=false;
+  }
+  model.fields[name]=next;
   return true;
  }
  function defaultOwner(name){
@@ -94,9 +100,16 @@ export function createNamingDeskController({
  function generate(){
   if(model.busy)return false;
   model.error='';model.notice='';
+  const realSavedCareer=savedCareerActive()&&typeof previewSavedCareer==='function';
   let scenario;
-  try{scenario=buildNamingLabScenario(model.fields)}
-  catch(error){model.error=error.message;refresh();return false}
+  try{
+   if(realSavedCareer){
+    if(!currentTargets().some(x=>x.id===model.fields.targetHorseId))
+     throw Error('Select a horse you own in the saved career first');
+    if(str(model.fields.story).length<35)
+     throw Error('Write a horse-specific owner story of at least 35 characters');
+   }else scenario=buildNamingLabScenario(model.fields);
+  }catch(error){model.error=error.message;refresh();return false}
   model.busy=true;refresh();
   try{
    // Career-wide rejected and already-chosen names always stay excluded.
@@ -108,12 +121,13 @@ export function createNamingDeskController({
    const found=[],batchKeys=new Set(),recent=[...model.recentNames],profile=feedback();
    let held=0;
    for(let page=0;page<3;page++){
-    const verdict=generateLocalStoryFirstHorseNames({
-     ...scenario,attempt:model.attempt++,count:8,
+    const args={attempt:model.attempt++,count:8,
      recentNames:recent.slice(-60),
      additionalReviewedNames:[...blocked,...found.map(x=>x.name)],
-     nameFeedback:profile,direction:model.fields.direction
-    });
+     nameFeedback:profile,direction:model.fields.direction};
+    const verdict=realSavedCareer?previewSavedCareer({
+     ...args,horseId:model.fields.targetHorseId,story:model.fields.story
+    }):generateLocalStoryFirstHorseNames({...scenario,...args});
     held+=verdict.held||0;
     for(const candidate of verdict.screened){
      const key=candidate.name.toLocaleLowerCase('en-US');
@@ -199,7 +213,8 @@ export function createNamingDeskController({
    // The actual game service resolves only AFTER its IndexedDB transaction
    // commits. Never display a false success on an interrupted write.
    const receipt=await commitGameplay({name:item.name,decision,motif_id:item.motifId,
-    horse_id:target,prompt:model.fields.direction});
+    horse_id:target,prompt:model.fields.direction,
+    ...(savedCareerActive()?{story:model.fields.story}: {})});
    model.feedback=validateNamingFeedback(load()||attempted);
    if(model.feedback.revision!==attempted.revision)
     throw Error('Game did not persist the expected name preference revision');
@@ -261,6 +276,7 @@ export function createNamingDeskController({
    });
   const counts={KEEP:0,CHOOSE:0,REJECT:0};
   bank.forEach(x=>counts[x.decision]++);
+  const realSavedCareer=savedCareerActive();
   const targetOptions=targets.map(t=>'<option value="'+esc(t.id)+'"'+
    (f.targetHorseId===t.id?' selected':'')+'>'+esc(t.name)+' · '+esc(t.id)+'</option>').join('');
   const options=['ALL','NEW','KEEP','CHOOSE','REJECT'].map(v=>
@@ -302,9 +318,11 @@ export function createNamingDeskController({
     metric('PERMANENT REJECTS',counts.REJECT)+'</div>'+
    '<div class="ng-naming-workspace">'+
    '<section class="ng-naming-composer"><div class="ng-naming-fields">'+
-    '<label>OWNER / STABLE<input data-naming-field="ownerName" maxlength="80" value="'+esc(f.ownerName)+'"/></label>'+
-    '<label>BREEDER<input data-naming-field="breederName" maxlength="80" value="'+esc(f.breederName)+'"/></label>'+
-    '<label>FOALING YEAR<input data-naming-field="foalingYear" type="number" min="1980" max="1996" value="'+esc(f.foalingYear)+'"/></label>'+
+    (realSavedCareer?
+     '<p>Names are written for your selected horse using its actual saved owner, breeder, foaling year and your story. The game keeps the horse ID, pedigree and ownership unchanged.</p>':
+     '<label>OWNER / STABLE<input data-naming-field="ownerName" maxlength="80" value="'+esc(f.ownerName)+'"/></label>'+
+     '<label>BREEDER<input data-naming-field="breederName" maxlength="80" value="'+esc(f.breederName)+'"/></label>'+
+     '<label>FOALING YEAR<input data-naming-field="foalingYear" type="number" min="1980" max="1996" value="'+esc(f.foalingYear)+'"/></label>')+
     '<label>HORSE FOR CHOSEN NAME<select data-naming-field="targetHorseId"><option value="">SELECT A HORSE</option>'+
      targetOptions+'</select></label></div>'+
     '<label>STORY / INSPIRATION<textarea data-naming-field="story" maxlength="1000" rows="2" placeholder="Tell the story or describe the moment behind the name.">'+esc(f.story)+'</textarea></label>'+
@@ -321,7 +339,9 @@ export function createNamingDeskController({
     '<th>'+head('originMotif','ORIGIN')+'</th><th>'+head('decision','STATUS')+'</th><th>YOUR DECISION</th></tr></thead><tbody>'+
      (tableRows||'<tr><td colspan="5" class="ng-naming-no-results">Tell a horse story and generate suggestions. Kept names remain in your bank; rejected names never return in this career.</td></tr>')+
     '</tbody></table></div>'+
-   '<footer class="ng-naming-footer">KEEP = future name bank · REJECT = career-wide exclusion · CHOOSE = saves your horse-specific selection, pending official game identity registration. '+
+   '<footer class="ng-naming-footer">KEEP = future name bank · REJECT = career-wide exclusion · CHOOSE = '+
+    (realSavedCareer?'saves this horse’s name and your owner-authored story in the current career. External racing registration is not claimed.':
+     'saves your horse-specific selection, pending official game identity registration.')+' '+
     (!targets.length?'No eligible horse is currently connected, so Choose is unavailable.':'')+
     ' 55,000-per-year target is NOT capacity-certified; names without safe unique candidates remain held.</footer></div></section>';
  }
@@ -345,6 +365,8 @@ if(typeof window!=='undefined'){
   commitGameplay:payload=>savedWorldNaming()?
    window.WTWCompactCareerManager.commitSavedCareerHorseNamingPreference(payload):
    window.__WTW_1999_UI_DATA__.gameplayService.submit('OWNER_SET_HORSE_NAMING_PREFERENCE',payload),
+  savedCareerActive:savedWorldNaming,
+  previewSavedCareer:options=>window.WTWCompactCareerManager.previewSavedCareerHorseNames(options),
   nameInUse:name=>savedWorldNaming()?
    window.WTWCompactCareerManager.isSavedCareerHorseNameInUse(name):false,
   saveFeedback:(next,revision)=>{
