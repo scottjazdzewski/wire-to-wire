@@ -644,6 +644,13 @@ test('small persistent industry keeps births, cohorts, and breeding records cohe
   const adult=events.find(x=>x.type==='MATURE_HORSE_LIFECYCLE');
   assert.ok(adult,'mature horses must have durable annual transitions');
   assert.equal(adult.deathHorseIds.length,adult.deaths);
+  assert.equal(adult.injuredHorseIds.length,adult.injured);
+  assert.equal(adult.recoveredHorseIds.length,adult.recovered);
+  for(const id of adult.injuredHorseIds.slice(0,4)){
+   const horse=await readPersistent1999LifecycleHorse(store,manifest,runId,id);
+   assert.equal(horse.development?.latestInjury?.date,date);
+   assert.equal(horse.racingReadiness,'MEDICAL_HOLD');
+  }
   for(const id of adult.deathHorseIds){
    assert.ok(!deathsSeen.has(id),'an individual horse cannot die twice');
    deathsSeen.add(id);
