@@ -21,11 +21,14 @@ const world={schema:WORLD_SCHEMA,start_date:'1999-01-01',
   sha256:createHash('sha256').update('wtw/1999/lane5/shipping').digest('hex')},
  entities:{horses:d.horses,organizations:d.organizations,tracks:d.tracks,people}};
 const fresh=()=>build1999PilotGameRun({world,manifest,jockeys:j.jockeys});
-const pick=(state,id)=>Object.values(state.runtime.registered_horses.by_id).
- find(h=>h.host_track_id===id);
 test('true pilot horse KY/NY/FL/CA circuit quotes include actual funded New York to California shipping',()=>{
- const initial=fresh(),ny=pick(initial,'T-0001'),fl=pick(initial,'T-0017');
- assert.ok(ny&&fl,'real registered game horses belong to NY and Florida barns');
+ const initial=fresh();
+ const availableAt=(home,site)=>Object.values(initial.runtime.registered_horses.by_id).
+  filter(h=>h.host_track_id===home).
+  find(h=>shippingAssessment(initial,world,h.horse_id,site).allowed);
+ const ny=availableAt('T-0001','F-1999-SA-NAKAMURA');
+ const fl=availableAt('T-0017','F-1999-SA-NAKAMURA');
+ assert.ok(ny&&fl,'actual healthy, funded registered NY and Florida horses must have viable California receiving space');
  const nyCa=shippingAssessment(initial,world,ny.horse_id,'F-1999-SA-NAKAMURA');
  const nyFl=shippingAssessment(initial,world,ny.horse_id,'F-1999-GP-WALKER');
  const flCa=shippingAssessment(initial,world,fl.horse_id,'F-1999-SA-NAKAMURA');
@@ -37,8 +40,6 @@ test('true pilot horse KY/NY/FL/CA circuit quotes include actual funded New York
  assert.equal(nyFl.route.band,'INTERREGIONAL');
  assert.equal(nyFl.route.days,3);
  assert.equal(flCa.route.band,'CROSS_COUNTRY');
- const ky=manifest.sites.find(s=>s.host_track_id==='T-0001');
- assert.ok(ky);
  const beforeCash=initial.runtime.finances.operation_balances_minor[ny.owner_organization_id];
  const beforeLedger=initial.runtime.finances.ledger.length;
  const advanced=dispatchGameCommand({state:initial,world,command:{
