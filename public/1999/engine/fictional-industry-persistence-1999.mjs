@@ -1455,7 +1455,8 @@ async function juvenileDebutsForDate(store,manifest,runKey,date,horseUpdates,{
 }
 
 async function youngHorseAttritionForYear(store,manifest,runKey,year,horseUpdates,
- {overrideMap=new Map(),birthCohortCache=new Map(),addEvent=()=>{}}={}){
+ {overrideMap=new Map(),birthCohortCache=new Map(),addEvent=()=>{},
+  directoryById=new Map()}={}){
  const stages=[
   {birthYear:year-1,stage:'FOAL_TO_YEARLING',deathAge:1},
   {birthYear:year-2,stage:'YEARLING_TO_TWO_YEAR_OLD',deathAge:2}
@@ -1497,6 +1498,53 @@ async function youngHorseAttritionForYear(store,manifest,runKey,year,horseUpdate
     provenance:'MODELED_SEEDED_YOUNGSTOCK_ATTRITION'});
    horseUpdates.push(update);overrideMap.set(id,update);survivors.delete(id);
   }
+  // Surviving foals develop as *saved individuals*: the same immutable ID,
+  // physical farm and caregiver carry into the following age cohort. Farm
+  // youngstock-care quality influences readiness without overriding inherited
+  // potential; injuries are modeled setbacks, never clinical assertions.
+  const progressedStatus=transition.stage==='FOAL_TO_YEARLING'?
+   'YEARLING':'TWO_YEAR_OLD_PROSPECT';
+  const progressedCohort=transition.stage==='FOAL_TO_YEARLING'?
+   'yearlings':'twoYearOldProspects';
+  const injuredHorseIds=[];
+  for(const id of survivors){
+   const horse=await effectiveLifecycleHorse(store,manifest,runKey,id,overrideMap);
+   if(!horse||horse.foalYear!==transition.birthYear||
+    horse.status==='DECEASED')
+    throw Error('Youngstock progression lost permanent living horse '+id);
+   const dev=horse.development||{};
+   const farmQuality=directoryById.get(horse.careFacilityId||
+    horse.foalingFarmId)?.ratings?.youngstockCare??50;
+   const readiness=Number(dev.readiness??40);
+   const soundness=Number(dev.soundness??50);
+   const potential=Number(dev.potential??50);
+   const draw=seeded1999Unit(manifest.seed,'young-growth:'+
+    year+':'+transition.stage+':'+id);
+   const growth=3+Math.round(draw*6)+
+    Math.round((farmQuality-50)/22)+Math.round((potential-50)/40);
+   const setback=seeded1999Unit(manifest.seed,'young-injury:'+
+    year+':'+transition.stage+':'+id);
+   const injured=setback<.015+Math.max(0,35-soundness)*.001;
+   const injuryLoss=injured?5+Math.floor(seeded1999Unit(manifest.seed,
+    'young-injury-severity:'+year+':'+id)*12):0;
+   const clamp=n=>Math.min(100,Math.max(0,n));
+   const development={...dev,readiness:clamp(readiness+growth-
+    (injured?Math.ceil(injuryLoss*.8):0)),
+    soundness:clamp(soundness+Math.round((draw-.5)*4)-injuryLoss),
+    lastProgressionYear:year,
+    ...(injured?{injuryCount:(Number(dev.injuryCount)||0)+1,
+     latestInjury:{date:year+'-01-01',type:'MODELED_YOUNGSTOCK_SETBACK',
+      severity:injuryLoss}}:{})};
+   const update=statusUpdate(horse,{status:progressedStatus,
+    cohort:progressedCohort,development,progressionYear:year,
+    lastProgressionStage:transition.stage});
+   horseUpdates.push(update);overrideMap.set(id,update);
+   if(injured)injuredHorseIds.push(id);
+  }
+  addEvent(year+'-01-01',{type:'YOUNGSTOCK_DEVELOPMENT',year,
+   birthYear:transition.birthYear,stage:transition.stage,
+   progressed:survivors.size,injured:injuredHorseIds.length,
+   injuredHorseIds,provenance:'SEEDED_REAL_FARM_QUALITY_AND_HEALTH'});
   birthCohortCache.set(transition.birthYear,survivors);
   deathsByStage[transition.stage]=deceased.length;deaths+=deceased.length;
   survivorsByStage[transition.stage]=survivors.size;
@@ -1630,7 +1678,8 @@ async function advancePersistent1999IndustryLifecycle(store,manifest,{
   const year=Number(date.slice(0,4));
   if(date.endsWith('-01-01')&&year>current.seasonYear){
    const attrition=await youngHorseAttritionForYear(lifecycleStore,manifest,
-    runKey,year,horseUpdates,{overrideMap,birthCohortCache,addEvent});
+    runKey,year,horseUpdates,{overrideMap,birthCohortCache,addEvent,
+     directoryById});
    const turnover=await turnoverForYear(lifecycleStore,manifest,runKey,year,horseUpdates,
     {overrideMap,poolCache,stallionPoolCache,maturePoolCache,birthCohortCache,graduatedYears,
      graduatedStallionYears,directory,
