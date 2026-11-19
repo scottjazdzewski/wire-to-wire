@@ -7,7 +7,7 @@ import {createPersistent1999Industry,readPersistent1999IndustryBatch,findPersist
  reopenPersistent1999Industry,encodePersistent1999StoredValue,
  decodePersistent1999StoredValue,PERSISTENT_INDUSTRY_COMPRESSION_SCHEMA,
  readPersistent1999LifecycleHorse,readPersistent1999FoalForecasts,
- readPersistent1999LifecycleEvents}
+ readPersistent1999LifecycleEvents,readPersistent1999CareerFoals}
  from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
 import {generate1999SeasonFoalingForecasts,resolve1999FoalBirth}
  from '../public/1999/engine/fictional-industry-breeding-book-1999.mjs';
@@ -725,4 +725,97 @@ test('small persistent industry keeps births, cohorts, and breeding records cohe
   deaths:final.lifecycle.horseDeaths,retirements:retirementsSeen.size,
   graduations:graduatesSeen.size,stallionRetirements:stallionsRetiredSeen.size,
   stallionGraduations:stallionsGraduatedSeen.size,longLivedHorseId:longLived.id}));
+});
+
+test('V10 small breeder and Kingsmere newborns use one persisted foal registry and searchable relationships',async()=>{
+ const seed=19990101,worldId='WTW1999FullIndustry-COHORTS-V6-OWNER-V10-TEST';
+ const runId='WTW-RUN-BREEDING-TEST',store=memoryStore();
+ const manifest={status:'COMPLETE',schema:'WTW_PERSISTENT_INDUSTRY_1999_V3',
+  worldId,seed,horseCount:300000};
+ await store.commitManifest(worldId+':'+seed,manifest);
+ const farmK={id:'O-000061',location:{city:'Versailles',region:'Kentucky',country:'USA'}};
+ const farmS={id:'O-LOCAL-BOARDING-1',
+  location:{city:'Lexington',region:'Kentucky',country:'USA'}};
+ const sire={id:'H-V10-APPROVED-SIRE',status:'STALLION',
+  ratings:{breedingValue:75}};
+ const mareK={id:'H-V10-KINGSMERE-MARE',status:'BROODMARE',
+  foalYear:1991,sex:'MARE',ownerId:'O-000061',careFacilityId:farmK.id,
+  ratings:{breedingValue:82}};
+ const mareS={id:'H-V10-SMALL-BREEDER-MARE',status:'BROODMARE',
+  foalYear:1990,sex:'MARE',ownerId:'O-SMALL-OWNER-1',careFacilityId:farmS.id,
+  ratings:{breedingValue:47}};
+ const make=(n,dam,farm,date)=>create1999SeasonalFoal({seed,year:2000,
+  dateOfBirth:date,id:'H-FICTIONAL-1999-FOALS-2000-'+String(n).padStart(7,'0'),
+  sire,dam,farm});
+ const major=make(1,mareK,farmK,'2000-03-01');
+ const small=make(2,mareS,farmS,'2000-03-02');
+ const key=worldId+':'+seed+':'+runId,rows=[major,small];
+ const ev=(h)=>({type:'FOAL_BORN',year:2000,horseId:h.id,
+  sireId:h.sireId,damId:h.damId,ownerId:h.ownerId,
+  breederId:h.breederId,foalingFarmId:h.foalingFarmId,
+  careFacilityId:h.careFacilityId});
+ await store.commitLifecycleRun({worldKey:worldId+':'+seed,runId,
+  record:{worldId,runId,gameDate:'2000-03-02'},
+  checkpoint:{schema:'WTW_INDUSTRY_LIFECYCLE_V1',runId,
+   seasonYear:2000,lastDate:'2000-03-02',population:300002,openingHorseCount:300000},
+  horseUpdates:rows.map(h=>({id:h.id,kind:'BORN',horse:h})),
+  eventWrites:[
+   {key:key+':events:2000-03-01',value:[ev(major)]},
+   {key:key+':events:2000-03-02',value:[ev(small)]},
+   {key:key+':events:2000-02-25',value:[{type:'PREGNANCY_LOSS',year:2000}]}
+  ]});
+ const all=await readPersistent1999CareerFoals(store,manifest,runId,{year:2000});
+ assert.equal(all.total,2);
+ assert.deepEqual(all.items.map(h=>h.id),[major.id,small.id]);
+ for(const [foal,owner,farm,dam] of [[major,mareK.ownerId,farmK.id,mareK.id],
+  [small,mareS.ownerId,farmS.id,mareS.id]]){
+  const profile=await readPersistent1999HorseProfile(store,manifest,foal.id,{runId});
+  assert.equal(profile.id,foal.id);
+  assert.equal(profile.ownerId,owner);
+  assert.equal(profile.breederId,owner);
+  assert.equal(profile.careFacilityId,farm);
+  assert.equal(profile.foalingFarmId,farm);
+  assert.equal(profile.damId,dam);
+  assert.equal(profile.sireId,sire.id);
+  for(const field of [{ownerId:owner},{breederId:owner},{foalingFarmId:farm},
+   {careFacilityId:farm},{sireId:sire.id},{damId:dam}]){
+   const result=await readPersistent1999CareerFoals(store,manifest,runId,
+    {year:2000,...field,limit:1});
+   assert.equal(result.total,field.sireId?2:1,
+    'each identity relationship must be searchable in the same saved world');
+   assert.ok(result.items.some(h=>h.id===foal.id)||field.sireId,
+    'saved foal must be reachable from its owner/farm/pedigree');
+  }
+ }
+ const page=await readPersistent1999CareerFoals(store,manifest,runId,
+  {year:2000,offset:1,limit:1});
+ assert.deepEqual(page.items.map(h=>h.id),[small.id]);
+ await assert.rejects(readPersistent1999CareerFoals(store,manifest,runId,
+  {year:2001}),/future newborns/);
+ const foreign=await readPersistent1999CareerFoals(store,manifest,'OTHER-RUN',
+  {year:2000});
+ assert.equal(foreign.total,0,'other career cannot inherit these births');
+});
+
+test('actual parental quality shifts foal potential but seeded inheritance retains variance',()=>{
+ const seed=19990101,year=2000;
+ const farm={id:'O-000061',location:{region:'Kentucky',country:'USA'}};
+ const mare={id:'H-V10-DAM',ownerId:'O-000061',careFacilityId:farm.id,
+  ratings:{breedingValue:75}};
+ const sire={id:'H-V10-SIRE',ratings:{breedingValue:77}};
+ const high=[],low=[],repeat=[];
+ for(let i=1;i<=300;i++){
+  const id='H-FICTIONAL-1999-FOALS-2000-'+String(i).padStart(7,'0');
+  const opts={seed,year,id,dateOfBirth:'2000-03-02',farm};
+  high.push(create1999SeasonalFoal({...opts,dam:mare,sire}).development.potential);
+  low.push(create1999SeasonalFoal({...opts,dam:{...mare,ratings:{breedingValue:55}},
+   sire:{...sire,ratings:{breedingValue:55}}}).development.potential);
+  repeat.push(create1999SeasonalFoal({...opts,dam:mare,sire}).development.potential);
+ }
+ assert.deepEqual(high,repeat,'generation must repeat from existing IDs and seed');
+ assert.ok(high.reduce((a,b)=>a+b,0)/high.length>
+  low.reduce((a,b)=>a+b,0)/low.length+12,
+  'higher-quality persisted parents must shift the potential distribution');
+ assert.ok(Math.min(...high)<Math.max(...low),
+  'independent foal variance prevents elite pedigrees from guaranteeing top potential');
 });
