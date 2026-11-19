@@ -9,7 +9,7 @@ import {createFictionalWorldNameEngine}
 import {materialize1999OwnerPrincipalPeople,ownerPrincipalPersonId,
  validate1999OwnerPrincipalLinks}
  from '../public/1999/engine/fictional-owner-principal-personnel-v12.mjs';
-import {fictionalOwnerPortfolioTier,assessFictionalOwnerCapacity}
+import {PORTFOLIO_TIERS,fictionalOwnerPortfolioTier,assessFictionalOwnerCapacity}
  from '../public/1999/engine/fictional-owner-portfolio-planner.mjs';
 import {createPersistent1999Industry,readPersistent1999Directory,
  readPersistent1999IndustryBatch,findPersistent1999Person,
@@ -18,7 +18,6 @@ import {createPersistent1999Industry,readPersistent1999Directory,
  from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
 
 const SEED=19990101;
-const WORLD_ID='WTW1999AllCircuits-NAMES-V13-H12000';
 const norm=s=>String(s).normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
  .toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'');
 const geo=JSON.parse(readFileSync(
@@ -35,6 +34,15 @@ const tracks=Object.values(TRACK_PROGRAM_1999)
     region:geographic.state_province_region,country:geographic.country}};
  });
 const ownerId=i=>'O-FICTIONAL-OWNER-'+String(i+1).padStart(6,'0');
+// A 107-circuit sample includes 1,070 genuinely tiered legal owners.
+// Never ask the real portfolio planner to break its owner-tier minimums
+// merely to fit an arbitrary 12k test-only cohort.
+const minimumByTier=new Map(PORTFOLIO_TIERS.map(t=>[t.id,t.min]));
+const minimumHorses=Array.from({length:1070},(_,i)=>
+ minimumByTier.get(fictionalOwnerPortfolioTier(SEED,ownerId(i))))
+ .reduce((a,b)=>a+b,0);
+const OPENING_HORSES=Math.max(12000,minimumHorses);
+const WORLD_ID='WTW1999AllCircuits-NAMES-V13-H'+OPENING_HORSES;
 const farmId=(track,index)=>'O-FICTIONAL-FARM-'+track.id+'-'+
  String(index+1).padStart(2,'0');
 const sum=array=>array.reduce((total,x)=>total+x,0);
@@ -104,7 +112,7 @@ function makeCircuitWorld(){
  }));
  const ownerPrincipalPeople=materialize1999OwnerPrincipalPeople({
   seed:SEED,owners,sourceOwners:source.owners,sourcePeople:source.people});
- return {seed:SEED,worldId:WORLD_ID,targetOpeningHorses:12000,
+ return {seed:SEED,worldId:WORLD_ID,targetOpeningHorses:OPENING_HORSES,
   tracks,owners,farms,ownerPrincipalPeople,batchSize:1000};
 }
 
@@ -144,17 +152,18 @@ test('107 exact 1999 circuits issue deterministic owner/farm/principal identitie
  assert.deepEqual([...farmsByTrack.values()],Array(107).fill(4));
  assert.deepEqual(makeCircuitWorld(),world,
   'new V13 identities must be reproducible with the same world seed');
- assert.equal(assessFictionalOwnerCapacity({seed:SEED,horseCount:12000,
+ assert.equal(assessFictionalOwnerCapacity({seed:SEED,horseCount:OPENING_HORSES,
   owners:world.owners}).capacityShortfall,0);
 });
 
-test('every circuit owner/principal and employed farm manager survives real 12k world save/reopen',async()=>{
+test('every circuit owner/principal and employed farm manager survives real tier-feasible world save/reopen',async()=>{
  const world=makeCircuitWorld(),store=memoryStore();
  const manifest=await createPersistent1999Industry({
   ...world,store,onProgress:()=>{},yieldControl:async()=>{}
  });
  assert.equal(manifest.status,'COMPLETE');
- assert.equal(manifest.horseCount,12000);
+ assert.equal(manifest.horseCount,OPENING_HORSES);
+ assert.ok(manifest.horseCount>=minimumHorses,'Owner tier minimums are a binding real-world requirement');
  assert.equal(manifest.ownerPrincipalCount,1070);
  assert.equal(manifest.personBatchesCommitted,Math.ceil(manifest.personCount/1000));
  const directory=await readPersistent1999Directory(store,manifest);
