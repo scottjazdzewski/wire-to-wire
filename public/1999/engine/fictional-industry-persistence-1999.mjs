@@ -822,7 +822,7 @@ export async function findPersistent1999Person(store,manifest,personId){
   throw Error('Completed world and person ID required');
  // V12 owner principals are appended after the legacy staff census in the
  // SAME personBatches store. A saved V10 world has no such principal count.
- const principal=/^P-FICTIONAL-1999-OWNER-PRINCIPAL-(\\d{7})$/.exec(personId);
+ const principal=/^P-FICTIONAL-1999-OWNER-PRINCIPAL-(\d{7})$/.exec(personId);
  if(principal){
   const ordinal=Number(principal[1]);
   if(ordinal<1||ordinal>(manifest.ownerPrincipalCount??0))return null;
