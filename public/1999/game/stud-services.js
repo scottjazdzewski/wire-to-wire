@@ -29,12 +29,12 @@ function resolve({state,world,horseId,status}){
   'STUD_LEGAL_OWNER','A covering needs a recorded legal owner');
  return {horse,ownerId};
 }
-function standingRecipient(world,stallion,recipientId){
+function standingRecipient(world,stallion,legalOwnerId,recipientId){
  ensure(Boolean(worldIdentity(world,'organizations',recipientId)),
   'STUD_RECIPIENT','Stud-fee recipient must be an existing operating organization');
  // The legal stallion owner and its actual physical standing organization may
  // be different. Do not silently assume the owner operates the stud farm.
- const allowed=[stallion.ownerId,stallion.careFacilityId,stallion.standingFarmId].
+ const allowed=[legalOwnerId,stallion.careFacilityId,stallion.standingFarmId].
   filter(id=>typeof id==='string'&&worldIdentity(world,'organizations',id));
  ensure(allowed.includes(recipientId),'STUD_RECIPIENT',
   'Fee must go to the verified legal stallion owner or standing service facility');
@@ -45,13 +45,13 @@ export function bookStudService({state,world,command,emit}){
   'STUD_AUTHORITY','Only authorized game actors can book a breeding service');
  ensure(safeId(p.booking_id),'STUD_BOOKING_ID','Stable breeding booking ID required');
  const {horse:mare,ownerId:payer}=resolve({state,world,horseId:p.mare_id,status:'BROODMARE'});
- const {horse:stallion}=resolve({state,world,horseId:p.stallion_id,status:'STALLION'});
+ const {horse:stallion,ownerId:stallionOwner}=resolve({state,world,horseId:p.stallion_id,status:'STALLION'});
  ensure(mare.id!==stallion.id,'STUD_PARENT','Sire and dam must be distinct horses');
  ensure(command.actor==='system'||state.player.operation_id===payer&&
   ['owner','breeder','farm'].includes(state.player.role),
   'STUD_LEGAL_OWNER','A manager cannot spend legal-owner funds without an owner contract');
  const recipient=p.fee_recipient_organization_id;
- standingRecipient(world,stallion,recipient);
+ standingRecipient(world,stallion,stallionOwner,recipient);
  ensure(int(p.fee_minor)&&p.fee_minor>=0&&p.fee_minor<=1000000000,
   'STUD_FEE','Stud fee must be a safe nonnegative amount in cents');
  ensure((payer===recipient&&p.fee_minor===0)||
