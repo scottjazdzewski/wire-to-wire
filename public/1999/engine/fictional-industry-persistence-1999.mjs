@@ -790,9 +790,9 @@ export async function commitPersistent1999CareerFoalName(store,manifest,runId,{
 }={}){
  if(!store?.commitLifecycleFoalNaming||!supportsPersistentSchema(manifest)||
   manifest?.status!=='COMPLETE'||typeof runId!=='string'||!runId||
-  typeof horseId!=='string'||!/^H-FICTIONAL-1999-FOALS-\\d{4}-\\d{7}$/.test(horseId)||
+  typeof horseId!=='string'||!/^H-FICTIONAL-1999-FOALS-\d{4}-\d{7}$/.test(horseId)||
   typeof name!=='string'||name.length<1||name.length>18||
-  name.trim()!==name||!/^[-\\p{L}\\p{N} '&\\u2019]+$/u.test(name)||
+  name.trim()!==name||!/^[-\p{L}\p{N} '&\u2019]+$/u.test(name)||
   typeof story!=='string'||story.trim().length<35||story.length>1000||
   typeof motifId!=='string'||motifId.length>60||
   typeof direction!=='string'||direction.length>300)
