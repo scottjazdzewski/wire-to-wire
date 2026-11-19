@@ -22,7 +22,8 @@ import {connect1999Horse,connect1999Person,connect1999DirectoryEntity,
  from './fictional-industry-graph-1999.mjs';
 import {generate1999CoveringLedger,BREEDING_BOOK_1999_SCHEMA}
  from './fictional-industry-breeding-book-1999.mjs';
-import {generate1999SeasonFoalingForecasts,resolve1999FoalBirth}
+import {generate1999SeasonFoalingForecasts,resolve1999FoalBirth,
+ settle1999BookedCoverings}
  from './fictional-industry-breeding-book-1999.mjs';
 import {buildFictional1999RaceCalendar,FICTIONAL_1999_CALENDAR_SCHEMA}
  from './fictional-world-calendar-v1.mjs';
@@ -768,6 +769,32 @@ export async function readPersistent1999LifecycleEvents(store,manifest,runId,dat
 
 
 /** Lookup a persistent person directly by role and permanent ordinal ID. */
+/** Per-career breeding expense and income entries, settled in the same
+ * IndexedDB transaction as the annual real covering book.
+ * A positive net is revenue and a negative net is a real booked expense;
+ * values are *cashflow*, never an unsupported opening bank balance.
+ */
+export async function readPersistent1999BreedingCashflow(store,manifest,runId,
+ year,organizationId=null){
+ if(!supportsPersistentSchema(manifest)||manifest?.status!=='COMPLETE'||
+  typeof runId!=='string'||!runId||!Number.isInteger(year)||year<1999||
+  year>9998||organizationId!==null&&typeof organizationId!=='string')
+  throw Error('Invalid breeding cashflow query');
+ const runKey=lifecycleRunKey(manifest,runId);
+ const entry=await store.get('industryLifecycle',
+  lifecycleKey(runKey,'breeding-finances:'+year));
+ if(!entry)return null;
+ if(entry.schema!=='WTW_1999_BREEDING_SETTLEMENT_V1'||
+  entry.year!==year||entry.totalDebitsMinor!==entry.totalCreditsMinor)
+  throw Error('Persisted breeding cashflow is unbalanced');
+ if(!organizationId)return entry;
+ const row=entry.organizations.find(x=>x.organizationId===organizationId);
+ return {schema:entry.schema,year,runId,organizationId,
+  ...(row||{debitsMinor:0,creditsMinor:0,studFeesPaidMinor:0,
+   studIncomeMinor:0,mareCarePaidMinor:0,farmCareIncomeMinor:0,
+   transactions:0}),netMinor:(row?.creditsMinor||0)-(row?.debitsMinor||0)};
+}
+
 export async function findPersistent1999Person(store,manifest,personId){
  if(manifest?.status!=='COMPLETE'||typeof personId!=='string')
   throw Error('Completed world and person ID required');
@@ -981,8 +1008,8 @@ async function readEligibleStallionCandidates(store,manifest,runKey,nextYear,
  }
  return candidates;
 }
-function makeBirthForecastPlan({seed,year,coverings,mareById,runKey,plannedFoals,
- farmById}){
+function makeBirthForecastPlan({seed,year,coverings,mareById,stallionById,
+ runKey,plannedFoals,farmById}){
  const byDate=new Map(),foalingFarmIdByMareId=new Map();
  let total=0;
  for(const [mareId,mare] of mareById){
@@ -994,7 +1021,7 @@ function makeBirthForecastPlan({seed,year,coverings,mareById,runKey,plannedFoals
   foalingFarmIdByMareId.set(mareId,facilityId);
  }
  for(const batch of generate1999SeasonFoalingForecasts({seed,year,coverings,
-  mareById,foalingFarmIdByMareId,batchSize:4000}))for(const forecast of batch.records){
+  mareById,stallionById,foalingFarmIdByMareId,batchSize:4000}))for(const forecast of batch.records){
   if(!forecast.ownerId||!forecast.foalingFarmId||!farmById.has(forecast.foalingFarmId))
    throw Error('Foaling forecast has no valid owner or foaling facility for dam '+
     forecast.damId+' (owner='+String(forecast.ownerId||'')+', facility='+
@@ -1070,9 +1097,12 @@ async function prepareLifecycleSeason(store,manifest,runKey,{year,mareRecords,
  }
  const farms=await readPersistent1999Directory(store,manifest);
  const farmById=new Map(farms.map(f=>[f.id,f]));
+ const cashflow=settle1999BookedCoverings({year,coverings,
+  mareById,stallionById,farmById});
  const forecast=makeBirthForecastPlan({seed:manifest.seed,year,coverings,
-  mareById,runKey,plannedFoals,farmById});
+  mareById,stallionById,runKey,plannedFoals,farmById});
  const dataWrites=[...coverWrites,...forecast.dataWrites,
+  {key:lifecycleKey(runKey,'breeding-finances:'+year),value:cashflow},
   {key:lifecyclePoolKey(runKey,year),value:mareRecords.map(h=>h.id)},
   {key:lifecycleStallionPoolKey(runKey,year),
    value:stallionRecords.map(h=>h.id)},
@@ -1080,6 +1110,9 @@ async function prepareLifecycleSeason(store,manifest,runKey,{year,mareRecords,
   {key:lifecycleKey(runKey,'season:'+year),value:{year,
    coveringCount:coverings.length,pregnancyForecastCount:forecast.pregnancyForecastCount,
    plannedFoals,marketIndex:market.marketIndex,marketConditions:market,
+   breedingCashflow:{totalStudFeesMinor:cashflow.totalStudFeesMinor,
+    totalCareFeesMinor:cashflow.totalCareFeesMinor,
+    balanced:cashflow.totalDebitsMinor===cashflow.totalCreditsMinor},
    provenance:'MARKET_ADJUSTED_SEASONAL_FOAL_FORECAST'}}];
  return {dataWrites,coveringCount:coverings.length,
   pregnancyForecastCount:forecast.pregnancyForecastCount,plannedFoals,farmById};
@@ -1168,6 +1201,15 @@ async function turnoverForYear(store,manifest,runKey,year,horseUpdates,
   nextStallionPool.length)
   throw Error('Stallion turnover produced an empty or duplicate active pool');
  stallionPoolCache.set(year,nextStallionPool);
+ // Market demand is estimated before individual breeding retirements. Only
+ // living, eligible post-turnover mare and stallion pools can book services.
+ const liveServiceCapacity=Math.min(nextPool.length,nextStallionPool.length*220);
+ const targetCovers=Math.min(market.targetCovers,liveServiceCapacity);
+ const executableMarket={...market,targetCovers,
+  plannedFoals:Math.min(market.plannedFoals,Math.floor(targetCovers*.90*.96)),
+  constrainedByBreedingCapacity:market.constrainedByBreedingCapacity||
+   targetCovers<market.targetCovers,
+  postTurnoverServiceCapacity:liveServiceCapacity};
  const result=planAnnualBroodmareTurnover({seed:manifest.seed,year,
   broodmares:openingMares.length,eligibleFemalePopulation:eligible.length,
   marketIndex:market.marketIndex});
@@ -1187,7 +1229,7 @@ async function turnoverForYear(store,manifest,runKey,year,horseUpdates,
   marketIndex:market.marketIndex,provenance:stallionPlan.provenance};
  return {turnover:entry,stallionTurnover:stallionEvent,nextPool,
   nextStallions:nextStallionPool,eligible,eligibleMales,retireIds,
-  mareGraduates,stallionGraduates,market};
+  mareGraduates,stallionGraduates,market:executableMarket};
 }
 
 async function youngHorseAttritionForYear(store,manifest,runKey,year,horseUpdates,
