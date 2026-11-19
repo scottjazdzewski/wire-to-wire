@@ -186,3 +186,20 @@ test('V10 visitors use the staffed receiving barn, not the dark home site, with 
   'outbound carrier cannot enter if race-day arrival violates acclimation');
  home.status=oldHomeStatus;
 });
+
+test('future-year racing age increments on January 1 without manufacturing a 2000 race card',()=>{
+ const {state,race}=sourceState();
+ const horse=Object.values(state.runtime.registered_horses.by_id).
+  find(h=>h.foaling_year===1996&&h.status==='IN_TRAINING');
+ assert.ok(horse,'game cohort includes a real 1996 foal that becomes a 4YO in 2000');
+ // Pure eligibility hypotheticals, deliberately NOT approved or opened
+ // racing opportunities. 2000 meets need separate seasonal authorization.
+ const sample={...race,id:'R-AGE-HYPOTHETICAL-NOT-A-PROGRAM',
+  source:'UNIT_HYPOTHETICAL_ONLY',conditions:'Maiden Special Weight',
+  maiden:true,max_wins:null,age:'4YO+',sex:'OPEN'};
+ state.clock.date='1999-12-20';
+ sample.date='1999-12-29';
+ assert.ok(raceEligibility(state,horse,sample).reasons.includes('AGE_RESTRICTION'));
+ sample.date='2000-01-10';
+ assert.equal(raceEligibility(state,horse,sample).reasons.includes('AGE_RESTRICTION'),false);
+});
