@@ -35,7 +35,8 @@ import {buildWorldEditReviewExport}
  from '/next/1999-world-edit-review-export.mjs';
 import {createNamingFeedback,validateNamingFeedback,nameFeedbackKey}
  from '/1999/game/horse-naming-feedback-v489.js';
-import {planV10SavedHorseNamingDecision,validateRunWithSavedWorldEdits}
+import {planV10SavedHorseNamingDecision,previewV10OwnerHorseNames,
+ validateRunWithSavedWorldEdits}
  from '/next/1999-saved-career-horse-naming.mjs';
 
 const DB_NAME='WireToWireClean1999CareersV2';
@@ -203,6 +204,7 @@ function hydrateCareerWorldEdits(career,record){
  career.worldEdits=edits;
  career.namingFeedback=validateNamingFeedback(
   record?.changes?.namingFeedback??createNamingFeedback());
+ career.namingOriginStories=record?.changes?.namingOriginStories??{};
  career.editVersion=++careerWorldViewEpoch;
  return career;
 }
@@ -288,6 +290,18 @@ function getSavedCareerNamingFeedback(){
   career.manifest?.worldId||''))return null;
  return structuredClone(career.namingFeedback??createNamingFeedback());
 }
+/** Story-grounded preview from the same actual V10 horse and career.
+ * Source facts come from the canonical saved world, not lab form fields.
+ */
+function previewSavedCareerHorseNames(options={}){
+ const career=activeWorldCareer;
+ if(!career?.run||!/^WTW1999FullIndustry-COHORTS-V6-OWNER-V10-/.test(
+  career.manifest?.worldId||''))throw Error('Open the saved V10 owner career first');
+ return previewV10OwnerHorseNames({
+  ...options,world:career.world,run:career.run,
+  nameFeedback:career.namingFeedback??createNamingFeedback()
+ });
+}
 async function commitSavedCareerHorseNamingPreference(payload){
  const career=activeWorldCareer;
  if(!career?.run||!career.manifest||
@@ -325,10 +339,15 @@ async function commitSavedCareerHorseNamingPreference(payload){
   if(JSON.stringify(prior.changes.namingFeedback??createNamingFeedback())!==
      JSON.stringify(career.namingFeedback??createNamingFeedback()))
    throw Error('Another naming decision was saved; reload before choosing');
+  const namingOriginStories=prepared.ownerStory?
+   {...(prior.changes.namingOriginStories||{}),
+    [prepared.horseId]:prepared.ownerStory}:
+   (prior.changes.namingOriginStories||{});
   const saved=await savePersistent1999CareerRun(db,career.manifest,{
    runId:nextRun.run_id,gameDate:nextRun.clock.date,player:nextRun.player,
    changes:{...prior.changes,canonicalRun:nextRun,
-    worldEdits:prepared.edits,namingFeedback:prepared.feedback},
+    worldEdits:prepared.edits,namingFeedback:prepared.feedback,
+    namingOriginStories},
    version:Math.max(prior.version+1,nextRun.revision+1)
   });
   const verified=await loadPersistent1999CareerRun(db,career.manifest,nextRun.run_id);
@@ -336,7 +355,9 @@ async function commitSavedCareerHorseNamingPreference(payload){
    JSON.stringify(verified.changes.namingFeedback)!==
     JSON.stringify(prepared.feedback)||
    JSON.stringify(verified.changes.worldEdits)!==
-    JSON.stringify(prepared.edits))
+    JSON.stringify(prepared.edits)||
+   JSON.stringify(verified.changes.namingOriginStories)!==
+    JSON.stringify(namingOriginStories))
    throw Error('Horse naming decision did not survive durable read-back');
   // No in-memory success until the single authoritative career commit
   // succeeds. Existing player name changes take precedence over base records.
@@ -345,6 +366,7 @@ async function commitSavedCareerHorseNamingPreference(payload){
    applyCareerWorldEdits(career.world,prepared.edits,{run:career.run});
   career.worldEdits=prepared.edits;
   career.namingFeedback=prepared.feedback;
+  career.namingOriginStories=namingOriginStories;
   career.editVersion=++careerWorldViewEpoch;
   if(prepared.identityUpdated){
    liveWorldDirectorySource=null;
@@ -1253,6 +1275,7 @@ async function readFictionalIndustryCareer(manifest,runId){
 }
 window.WTWCompactCareerManager=Object.freeze({open,listSlots,storeGame,
  editSavedWorldEntity,getSavedCareerNamingFeedback,
+ previewSavedCareerHorseNames,
  isSavedCareerHorseNameInUse,commitSavedCareerHorseNamingPreference,exportCareerWorldChangesForReview,
  restoreGame,exportSlot,importFile,dbName:DB_NAME,
  prepareFictionalIndustry,saveFictionalIndustryCareer,
