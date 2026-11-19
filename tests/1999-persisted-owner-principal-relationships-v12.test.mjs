@@ -137,6 +137,7 @@ test('real 12k career saves, reopens and finds owner principals with official pe
   x.managerIds.length);
  assert.ok(managedFarms.length>0,'V13 must show real working farm managers');
  for(const farm of managedFarms){
+  assert.equal(farm.managerRelationshipModel,'WTW_1999_FARM_MANAGER_LINKS_V13');
   assert.equal(farm.managerIds.length,farm.managerNames.length);
   assert.ok(farm.managerIds.length>0);
   for(let j=0;j<farm.managerIds.length;j++){
