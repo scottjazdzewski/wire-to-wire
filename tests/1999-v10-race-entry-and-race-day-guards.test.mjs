@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {WORLD_SCHEMA,dispatchGameCommand,getGameRacingRoster}
  from '../src/game/index.js';
 import {raceEligibility,racingAction} from '../src/game/racing-1999.js';
+import {run1999RacingAgents} from '../src/game/race-agents-1999.js';
 import {build1999PilotGameRun} from '../src/game/1999-pilot-fixture.js';
 import {trackMeetOpen1999} from '../public/next/1999-track-program.mjs';
 
@@ -127,4 +128,27 @@ test('V10 race-day settlement rechecks status after valid booking and cannot pub
  assert.equal(state.runtime.finances.ledger.length,beforeLedger);
  assert.equal(horse.career.starts,beforeStarts);
  horse.status=originalStatus;
+});
+
+test('V10 real race secretary scratches after-booking retired runner before paid settlement',()=>{
+ const {state,race}=sourceState();
+ const entryId=race.field.find(id=>state.runtime.entries[id].status==='BOOKED');
+ const horse=state.runtime.registered_horses.by_id[state.runtime.entries[entryId].horse_id];
+ const events=[];
+ // Isolated advancing-clock boundary: only the existing race secretary
+ // runs here, not a fabricated winner or independently settled fixture.
+ state.clock.date=race.date;
+ state.clock.days_elapsed=9;
+ horse.status='RETIRED';
+ const starts=horse.career.starts;
+ run1999RacingAgents({state,world,emit:(kind,details)=>events.push({kind,details})});
+ assert.equal(state.runtime.entries[entryId].status,'SCRATCHED');
+ assert.equal(race.field.includes(entryId),false);
+ assert.equal(horse.career.starts,starts);
+ assert.ok(events.some(e=>e.kind==='RACE_DAY_SCRATCH'&&
+  e.details.horse_id===horse.horse_id&&
+  e.details.ineligible_reasons.includes('HORSE_NOT_ACTIVE_RACEHORSE')));
+ assert.ok(!race.results?.some(row=>row.horse_id===horse.horse_id));
+ assert.ok(['OFFICIAL_SIM_RESULT','CANCELLED_INSUFFICIENT_FIELD'].includes(race.status),
+  'game clock must continue to a real result for remaining eligible horses or cancel');
 });
