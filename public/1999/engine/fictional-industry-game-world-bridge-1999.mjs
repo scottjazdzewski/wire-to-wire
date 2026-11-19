@@ -42,6 +42,47 @@ export function calculate1999OpeningTreasury({
 }
 
 /**
+ * Opening V10 budgets for the actual named legal owner and farm O-IDs.
+ * This is modeled initial game working capital, never a sourced assertion
+ * about any owner's historical bank account or a recurring bailout.
+ * Owned runners drive owner budgets. Merely MANAGED, BOARDED, TRAINED,
+ * FOALED_AT or BRED horses must not become an operation's legal property.
+ */
+export function model1999IndustryOpeningTreasuries({
+ organizations,ownerGroups,operationHorseRoles
+}={}){
+ if(!Array.isArray(organizations)||!(ownerGroups instanceof Map)||
+  !(operationHorseRoles instanceof Map))
+  throw Error('Opening operation treasuries require current canonical directories');
+ const accounts={},audit={};
+ for(const org of organizations){
+  const roles=operationHorseRoles.get(org.id)||new Map();
+  const legallyOwned=Array.from(roles.values()).
+   filter(set=>set.has('OWNED')).length;
+  const managed=Array.from(roles.values()).
+   filter(set=>set.has('MANAGED')).length;
+  const serviced=Array.from(roles.values()).
+   filter(set=>set.has('BOARDED')||set.has('TRAINED')||set.has('BRED')||
+    set.has('FOALED_AT')).length;
+  const ownedRunners=ownerGroups.get(org.id)?.length||0;
+  if(!roles.size&&!org.operatingRoles?.length)continue;
+  if(!Number.isSafeInteger(ownedRunners)||ownedRunners>legallyOwned)
+   throw Error('Opening owner treasury cannot count managed horses as owned');
+  const balance=calculate1999OpeningTreasury({
+   portfolioTier:org.portfolioTier,resources:org.ratings?.resources??55,
+   activeRunnerCount:ownedRunners});
+  accounts[org.id]=balance;
+  audit[org.id]={opening_cash_minor:balance,
+   legally_owned_horses:legallyOwned,managed_horses:managed,
+   serviced_horses:serviced,legally_owned_active_runners:ownedRunners,
+   basis:'MODELED_GAME_OPENING_WORKING_CAPITAL_NOT_RECORDED_HISTORICAL_CASH'};
+ }
+ return {schema:'WTW_1999_V10_MODELED_INDUSTRY_OPENING_TREASURIES_V1',
+  balances_minor:accounts,source_audit:audit,
+  provenance:'ONE_TIME_MODELED_OPENING_ACCOUNTS_NO_RECURRING_SUBSIDY'};
+}
+
+/**
  * Display identity for a NEW, owner-operated racing barn. The operation and
  * venue are both canonical ID-addressed records. Do not invent a new owner,
  * trainer or facility identity, and do not rename an existing saved site.
@@ -300,12 +341,21 @@ export async function openPersistent1999GameCareer(store,manifest,{
   run.stable_horse_ids.push(id);activeIds.push(id);
   initializeGameHorseCare(run,h);
  }
+ const openingTreasuries=model1999IndustryOpeningTreasuries({
+  organizations,ownerGroups,operationHorseRoles});
+ Object.assign(run.runtime.finances.operation_balances_minor,
+  openingTreasuries.balances_minor);
+ // Preserve the selected employer's already-established opening formula;
+ // count legally owned active runners, not its larger managed inventory.
  const openingCapitalMinor=calculate1999OpeningTreasury({
   portfolioTier:operation.portfolioTier,
   resources:operation.ratings?.resources??55,
   activeRunnerCount:activeIds.length});
- run.runtime.finances.operation_balances_minor[operation.id]=openingCapitalMinor;
+ if(openingCapitalMinor!==run.runtime.finances.operation_balances_minor[operation.id])
+  throw Error('Selected employer opening capital differs from legal horse census');
  run.runtime.finances.balance_minor=openingCapitalMinor;
+ run.runtime.finances.opening_capital_audit=openingTreasuries.source_audit;
+ run.runtime.finances.opening_capital_provenance=openingTreasuries.provenance;
  // Breeding stock and youngstock remain their original canonical world
  // records in the same career database. Put them on the operation roster so
  // the player sees every owned horse, while the racing engine continues to
