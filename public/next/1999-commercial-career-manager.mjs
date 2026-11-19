@@ -34,6 +34,8 @@ import {createCareerWorldEdits,addCareerWorldEdit,applyCareerWorldEdits}
  from '/next/1999-career-world-edits.mjs';
 import {buildWorldEditReviewExport}
  from '/next/1999-world-edit-review-export.mjs';
+import {new1999WorldIdForApprovedRelease}
+ from '/1999/engine/approved-1999-world-release.mjs';
 import {createNamingFeedback,validateNamingFeedback,nameFeedbackKey}
  from '/1999/game/horse-naming-feedback-v489.js';
 import {planV10SavedHorseNamingDecision,validateRunWithSavedWorldEdits}
@@ -471,7 +473,7 @@ function requestedIndustry(){
  // The new cohort model gets its own immutable records; keep legacy manifests
  // addressable through the open-saved fallback below.
  return {seed,targetOpeningHorses:horseCount,
-  worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V10-NAMES-V10-H'+horseCount};
+  worldId:new1999WorldIdForApprovedRelease({seed,horseCount})};
 }
 let industryBrowsePage=0,industryBrowseHtml='',industryBrowseKind='horseBatches';
 let industryDirectory=[];
@@ -651,7 +653,7 @@ async function exportSharedCareer(){
 
 function supportsV10FounderInventoryMigration(manifest){
  return manifest?.foundingRelationshipRevision===1&&
-  /^WTW1999FullIndustry-COHORTS-V6-OWNER-V10-NAMES-V10-H\d+$/.test(manifest.worldId||'');
+  /^WTW1999FullIndustry-COHORTS-V6-OWNER-V10-NAMES-V10-H\d+(?:-RELEASE-R[0-9a-f]{12})?$/.test(manifest.worldId||'');
 }
 function reconcileV10FounderOperationInventory(record,career,manifest){
  if(!supportsV10FounderInventoryMigration(manifest))
