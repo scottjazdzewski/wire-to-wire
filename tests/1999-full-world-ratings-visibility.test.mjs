@@ -48,7 +48,7 @@ test('real opening racehorse shows EXACT same CA and PA as the actual game engin
  assert.equal(row.ca,expected.current_ability);
  assert.equal(row.pa,expected.potential_ability);
  assert.equal(row.abilityMethod,'EXACT_GAMEPLAY_STARTING_ATTRIBUTES');
- assert.equal(row.ratingIntegrity,'COMPLETE');
+ assert.equal(row.ratingDataStatus,'COMPLETE');
  assert.equal(row.ratingSpeed,raceHorse.ratings.speed);
  assert.equal(row.ratingClass,raceHorse.ratings.class);
  assert.equal(row.ratingBreedingValue,raceHorse.ratings.breedingValue);
@@ -60,7 +60,7 @@ test('1999 retired and breeding animals still display all saved rating dimension
  const w=world();
  const source=createPersistedIndustryHorseDirectory({world:w,manifest}).byId(mare.id);
  assert.equal(source.abilityMethod,'MODELED_LATENT_NONRUNNER_NOT_RACE_READY');
- assert.equal(source.ratingIntegrity,'COMPLETE');
+ assert.equal(source.ratingDataStatus,'COMPLETE');
  assert.equal(source.pa,mare.development.potential);
  assert.equal(source.ratingStamina,mare.ratings.stamina);
  assert.ok(Number.isFinite(source.athleticIndex));
@@ -74,13 +74,14 @@ test('ratings exist and remain inspectable for all person roles and enterprise s
  const w=world();
  const row=createPersistedIndustryEntityDirectory({world:w,manifest,kind:'person'})
   .byId(w.entities.people[0].id);
- assert.equal(row.ratingIntegrity,'COMPLETE');
+ assert.equal(row.ratingDataStatus,'COMPLETE');
+ assert.ok(Number.isFinite(row.ratingIntegrity), 'Trainer Integrity skill must not overwrite status');
  assert.equal(row.ratingConditioning,w.entities.people[0].ratings.conditioning);
  assert.ok(row.ratingCoverage>=7);
  assert.ok(Number.isFinite(row.overallRating));
  const org=createPersistedIndustryEntityDirectory({world:w,manifest,kind:'organization'})
   .byId(owner.id);
- assert.equal(org.ratingIntegrity,'COMPLETE');
+ assert.equal(org.ratingDataStatus,'COMPLETE');
  assert.ok(Number.isFinite(org.overallRating));
  const horses=createPersistedIndustryHorseDirectory({world:w,manifest});
  assert.deepEqual(horses.ratingAudit(),{
@@ -95,10 +96,10 @@ test('missing ratings are reported, never silently fabricated or presented as co
  delete w.entities.horses[1].ratings.speed;
  delete w.entities.people[0].ratings;
  const rating=project1999SavedHorseRatings(w.entities.horses[1],{seed});
- assert.equal(rating.ratingIntegrity,'MISSING: speed');
+ assert.equal(rating.ratingDataStatus,'MISSING: speed');
  assert.equal(rating.ca,null);
  const personRating=project1999SavedEntityRatings(w.entities.people[0]);
- assert.equal(personRating.ratingIntegrity,'MISSING');
+ assert.equal(personRating.ratingDataStatus,'MISSING');
  const audit=audit1999SavedWorldRatings(w,manifest);
  assert.equal(audit.valid,false);
  assert.deepEqual(audit.missingHorseIds,[mare.id]);
