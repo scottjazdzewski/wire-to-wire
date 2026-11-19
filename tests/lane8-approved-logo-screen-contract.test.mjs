@@ -92,3 +92,27 @@ test('real player dossier logo stage preserves proportions, with no competing im
  assert.equal(heroCandidate('organization','O-FOUNDING-1999-004'),
   '/assets/places/organization-hero/O-FOUNDING-1999-004.webp');
 });
+
+test('every bundled horse/person portrait retains its own immutable H-/P-ID and exact locked bytes',()=>{
+ const collections=[
+  ['horse','public/assets/portraits/horses/',/^H-\d{4}-\d{6}\.webp$/],
+  ['person','public/assets/portraits/people/',/^P-\d{6}\.webp$/]
+ ];
+ for(const [kind,prefix,identityPattern] of collections){
+  const paths=Object.keys(lock.assets).filter(path=>path.startsWith(prefix));
+  assert.ok(paths.length>0,kind+' portrait collection unexpectedly missing');
+  const seen=new Set();
+  for(const path of paths){
+   const basename=path.slice(prefix.length);
+   assert.match(basename,identityPattern,kind+' portrait must be keyed only by ID');
+   assert.ok(!seen.has(basename),kind+' portrait ID duplicated');
+   seen.add(basename);
+   const file=new URL(path,root);
+   assert.ok(existsSync(file),kind+' approved portrait missing: '+path);
+   const bytes=readFileSync(file);
+   assert.equal(bytes.toString('ascii',0,4),'RIFF',kind+' portrait RIFF');
+   assert.equal(bytes.toString('ascii',8,12),'WEBP',kind+' portrait WebP');
+   assert.equal(blobHash(bytes),lock.assets[path],kind+' approved portrait lock drift: '+path);
+  }
+ }
+});
