@@ -741,3 +741,54 @@ test('small persistent industry keeps births, cohorts, and breeding records cohe
   graduations:graduatesSeen.size,stallionRetirements:stallionsRetiredSeen.size,
   stallionGraduations:stallionsGraduatedSeen.size,longLivedHorseId:longLived.id}));
 });
+
+test('two seeds persist dated two-year-old debuts and adult retirement through a decade',async()=>{
+ for(const seed of [19990111,19990113]){
+  const store=memoryStore(),manifest=await createPersistent1999Industry({
+   store,seed,worldId:'WTW-V10-MATURE-'+seed,
+   targetOpeningHorses:10000,...dirs,batchSize:1000});
+  const runId='WTW-RUN-V10-MATURE-'+seed,player={role:'owner',
+   organizationId:'O-OWNER-1'};
+  await savePersistent1999CareerRun(store,manifest,{runId,
+   gameDate:'1999-01-01',player,version:1});
+  await savePersistent1999CareerRun(store,manifest,{runId,
+   gameDate:'1999-04-01',player,version:2});
+  const april=await readPersistent1999LifecycleEvents(store,manifest,runId,
+   '1999-04-01');
+  const debut=april.find(x=>x.type==='JUVENILE_RACING_READINESS');
+  assert.ok(debut&&debut.started>0&&debut.delayed>0,
+   'April two-year-old readiness must vary by true horse ability and health');
+  const starter=await readPersistent1999LifecycleHorse(store,manifest,
+   runId,debut.startedHorseIds[0]);
+  assert.equal(starter.status,'RACING');
+  assert.equal(starter.racingDebutDate,'1999-04-01');
+  assert.ok(starter.trainerId&&starter.homeTrackId);
+  await savePersistent1999CareerRun(store,manifest,{runId,
+   gameDate:'1999-09-01',player,version:3});
+  const september=(await readPersistent1999LifecycleEvents(store,manifest,runId,
+   '1999-09-01')).find(x=>x.type==='JUVENILE_RACING_READINESS');
+  assert.ok(september&&september.started>0);
+  let previous=await loadPersistent1999CareerRun(store,manifest,runId);
+  for(let year=2000;year<=2009;year++){
+   const saved=await savePersistent1999CareerRun(store,manifest,{
+    runId,gameDate:year+'-01-01',player,version:year-1995});
+   const adult=(await readPersistent1999LifecycleEvents(store,manifest,runId,
+    year+'-01-01')).find(x=>x.type==='MATURE_HORSE_LIFECYCLE');
+   assert.ok(adult&&adult.deaths>=0&&adult.retired>=0);
+   assert.equal(saved.lifecycle.population,10000+
+    Object.values(saved.lifecycle.birthsByYear).reduce((a,b)=>a+b,0)-
+    saved.lifecycle.horseDeaths);
+   assert.ok(saved.lifecycle.population>0);
+   assert.ok(saved.lifecycle.horseDeaths>=previous.lifecycle.horseDeaths);
+   previous=saved;
+  }
+  assert.ok(previous.lifecycle.matureHorseDeaths>0);
+  assert.ok(previous.lifecycle.retiredRacehorses>0);
+  const afterTenYears=await readPersistent1999LifecycleHorse(store,manifest,
+   runId,starter.id);
+  assert.equal(afterTenYears.id,starter.id);
+  assert.equal(afterTenYears.racingDebutDate,'1999-04-01');
+  assert.deepEqual((await loadPersistent1999CareerRun(store,manifest,runId))
+   .lifecycle,previous.lifecycle);
+ }
+});
