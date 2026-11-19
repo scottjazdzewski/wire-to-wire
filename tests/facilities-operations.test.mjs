@@ -281,7 +281,7 @@ test('struggling farm stops unpaid payroll without overdraft and reopens only af
   stalls_total:2,staff_required:1,staff_present:1,quality:70,
   daily_upkeep_minor:0,daily_boarding_minor:16000000,
   staff_wage_daily_minor:0,source_kind:'MODELED_1999_GAME_SITE',
-  source_ref:'ISOLATED_SAVED_OPERATING_STABLE_TEST'});
+  source_ref:'ISOLATED_SAVED_OPERATING_STABLE_TEST'},'system');
  s=apply(w,s,'insolvent:external-board','FACILITY_BOARDING_CONTRACT',{
   site_id:'F-1999-SUPPORT-BARN',contract_id:'FAC-CONTRACT-SUPPORT-1',
   payer_organization_id:'O-RIVAL',stalls:1,duration_days:4,
