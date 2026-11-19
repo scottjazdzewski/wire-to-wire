@@ -227,14 +227,15 @@ export function run1999RacingAgents({state,world,emit}){
    if(local.length<2)continue;
    // One open race per modeled class per circuit. Allowance fields should
    // never replace maiden races, and maiden winners cannot enter both.
-   for(const racingClass of ['Maiden Special Weight','Allowance','FEATURE']){
+   for(const racingClass of ['Maiden Special Weight','Allowance','Handicap','FEATURE']){
     if(Object.values(state.runtime.races).some(r=>r.track_id===trackId&&
      r.status==='ENTRIES_OPEN'&&r.date>=day&&
      (racingClass==='FEATURE'?Boolean(r.stake_id):r.conditions===racingClass)))
      continue;
     const eligibleAtHome=local.filter(h=>
      racingClass==='FEATURE'?h.career.starts>=1:
-     racingClass==='Allowance'?h.career.wins>=1:h.career.wins===0);
+     racingClass==='Allowance'?h.career.wins>=1:
+     racingClass==='Handicap'?h.career.starts>=2:h.career.wins===0);
     if(eligibleAtHome.length<2){
      if(racingClass==='Allowance'&&eligibleAtHome.length){
       emit('TRAINER_ALLOWANCE_CAMPAIGN_REVIEW',{date:day,track_id:trackId,
@@ -252,7 +253,6 @@ export function run1999RacingAgents({state,world,emit}){
        Boolean(race.stakeId)&&race.canonical===false;
       if(!(gameModeledFeature||!race.stakeId&&
         racingClass!=='FEATURE'&&race.conditions===racingClass)||
-       race.sexRestriction!=='OPEN'||race.ageRequirement!=='3YO+'||
        !supported1999RaceClass(race))continue;
       const record={id:race.id,track_id:race.trackId,date:race.date,
        age:race.ageRequirement,sex:race.sexRestriction,
@@ -398,7 +398,9 @@ export function run1999RacingAgents({state,world,emit}){
       'FUNDED_GAME_MODELED_STAKES_WITH_REAL_AVAILABLE_RIDERS':
       racingClass==='Allowance'?
       'MAIDEN_GRADUATES_ENTER_SOURCE_CONDITIONED_NW_ALLOWANCE':
-      'MAIDEN_FIELD_SURFACE_DISTANCE_AND_JOCKEY_AVAILABILITY',
+      racingClass==='Handicap'?
+       'MODELED_HANDICAP_FORM_AND_WEIGHT_ELIGIBILITY':
+       'MAIDEN_FIELD_SURFACE_DISTANCE_AND_JOCKEY_AVAILABILITY',
      player_horses_entered_automatically:false});
    }
   }

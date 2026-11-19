@@ -220,7 +220,7 @@ export function get1999HorseRaceOpportunities(state,world,horseId,{
     const date=nextDay(state.clock.date,i);
     for(const meetingId of sameVenueTracks){
      for(const book of gameRaceProgram(state,world,meetingId,date)){
-      if(!supported1999RaceClass(book)||known.has(book.id))continue;
+      if(known.has(book.id))continue;
       known.add(book.id);
       rows.push(raceSelection(state,world,horse,book,false));
      }

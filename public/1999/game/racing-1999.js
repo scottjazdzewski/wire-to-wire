@@ -29,6 +29,16 @@ const cents=x=>Number.isSafeInteger(x)&&x>=0;
 const dayGap=(a,b)=>(Date.parse(b+'T12:00:00Z')-Date.parse(a+'T12:00:00Z'))/86400000;
 const bound=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
 const rating=v=>Math.round(bound(v)*1000)/1000;
+export const HANDICAP_WEIGHT_BASIS_1999='WTW_1999_MODELED_HANDICAP_FROM_GAME_FORM';
+/** A declared, game-modeled riding impost. There are no verified official
+ * 1999 handicap weights in the source condition book; do not invent any.
+ * Form requires two real completed game starts before an initial rating. */
+export function modeled1999HandicapWeight(horse){
+ if(!horse?.starting_attributes||horse.career?.starts<2)return null;
+ const skill=bound(horse.starting_attributes.current_ability/99);
+ const form=bound(horse.career.wins/horse.career.starts);
+ return 110+Math.round(12*(skill*.7+form*.3));
+}
 const frac=(seed,key)=>{let n=(2166136261^(seed>>>0))>>>0;
  for(const c of key){n^=c.charCodeAt(0);n=Math.imul(n,16777619)}
  n^=n>>>16;n=Math.imul(n,2246822507);n^=n>>>13;
@@ -282,6 +292,15 @@ export function supported1999RaceClass(race){
   return maiden===true&&maxWins==null;
  if(race?.conditions==='Allowance')
   return maiden===false&&[1,2].includes(maxWins);
+ // Handicap races are source-approved but weight assignments are a transparent
+ // local game model, not claims of documented official 1999 imposts.
+ if(race?.conditions==='Handicap')
+  return maiden===false&&maxWins==null&&
+   ['2YO','3YO','3YO+','4YO+'].includes(race.age??race.ageRequirement)&&
+   ['OPEN','FILLIES_AND_MARES'].includes(race.sex??race.sexRestriction)&&
+   ['DIRT','TURF'].includes(race.surface)&&
+   Number.isFinite(race.distance_furlongs??race.distanceFurlongs)&&
+   Number.isFinite(race.purse_minor??race.purse);
  return false;
 }
 function raceShape(book){
@@ -290,6 +309,7 @@ function raceShape(book){
   sex:book.sexRestriction,surface:book.surface,distance_furlongs:book.distanceFurlongs,
   stake_id:book.stakeId||null,stake_name:book.stakeName||null,
   stake_source_status:book.stakeSourceStatus||null,
+  ...(book.conditions==='Handicap'?{handicap_weight_basis:HANDICAP_WEIGHT_BASIS_1999}:{}),
   stakes_grade:book.stakesGrade||null,canonical:book.canonical===true,
   max_wins:book.maxCareerWins,maiden:book.maidenOnly,
   win_restriction:book.winRestriction,full_conditions:book.fullConditions,
@@ -326,6 +346,8 @@ export function raceEligibility(state,horse,race){
   reasons.push('MAIDEN_RESTRICTION');
  if(race.conditions==='Allowance'&&horse.career.wins<1)
   reasons.push('ALLOWANCE_REQUIRES_MAIDEN_VICTORY');
+ if(race.conditions==='Handicap'&&modeled1999HandicapWeight(horse)===null)
+  reasons.push('HANDICAP_REQUIRES_TWO_RECORDED_STARTS');
  const maxWins=race.max_wins??race.maxCareerWins;
  if(Number.isInteger(maxWins)&&horse.career.wins>maxWins)
   reasons.push('CAREER_WIN_LIMIT');
@@ -521,6 +543,10 @@ export function racingAction({state,world,command,emit}){
    trainer_id:horse.trainer_id,owner_id:horse.owner_organization_id,
    jockey_id:null,status:'ENTERED',decision:command.actor==='player'?'PLAYER_ENTRY':'AI_TRAINER_NOMINATION',
    entered_date:state.clock.date};
+  if(race.conditions==='Handicap'){
+   entry.handicap_weight_lbs=modeled1999HandicapWeight(horse);
+   entry.handicap_weight_basis=HANDICAP_WEIGHT_BASIS_1999;
+  }
   state.runtime.entries[id]=entry;race.field.push(id);
   emit('RACE_ENTRY_CONFIRMED',{race_id:race.id,horse_id:horse.horse_id,
    trainer_id:horse.trainer_id,owner_id:horse.owner_organization_id,
@@ -636,8 +662,11 @@ function performance(state,world,race,entry){
   (1.3-.6*a.consistency);
  const instruction=entry.race_tactic??'AUTO';
  const tactical=tacticalFit(state,race,entry,instruction);
+ const handicapAdjustment=race.conditions==='Handicap'?
+  (116-entry.handicap_weight_lbs)*.003:0;
  const composite=now.race_performance_index*.49+surface*.14+distance*.14+
-  pace*.09+rider*.10+j.composure*.04+variation+tactical.adjustment;
+  pace*.09+rider*.10+j.composure*.04+variation+tactical.adjustment+
+  handicapAdjustment;
  return {entry,horse,composite:rating(composite),rider,
   tactical:instruction==='AUTO'?null:tactical};
 }
@@ -655,6 +684,11 @@ function settle1999Race({state,world,race_id,emit}){
  ensure(horseSet.size===entries.length,'RACE_FIELD','Duplicate horse in race field');
  ensure(new Set(entries.map(e=>e.jockey_id)).size===entries.length,
   'RACE_FIELD','One jockey may not ride multiple starters in one race');
+ if(race.conditions==='Handicap')
+  ensure(entries.every(e=>Number.isInteger(e.handicap_weight_lbs)&&
+   e.handicap_weight_lbs>=110&&e.handicap_weight_lbs<=122&&
+   e.handicap_weight_basis===HANDICAP_WEIGHT_BASIS_1999),
+   'RACE_HANDICAP_WEIGHTS','Every handicap starter needs a declared modeled weight');
  // Entry approval can be days old: never settle an inactive, medically unfit,
  // wrong-age or wrong-location horse just because its jockey was booked.
  for(const entry of entries){
@@ -719,6 +753,8 @@ function settle1999Race({state,world,race_id,emit}){
    owner_share_minor:ownerShare,jockey_share_minor:jockeyShare,
    trainer_share_minor:trainerShare,
    performance_index:composite,rider_index:rider,
+   ...(race.conditions==='Handicap'?{handicap_weight_lbs:entry.handicap_weight_lbs,
+    handicap_weight_basis:HANDICAP_WEIGHT_BASIS_1999}:{}),
    ...(tactical?{race_tactic:tactical.tactic,
     field_pressure_index:tactical.pressure,
     tactical_adjustment_index:tactical.adjustment,
@@ -799,6 +835,11 @@ export function validateRacingRuntime(state,world){
    ensure(e&&e.race_id===id&&state.runtime.registered_horses?.by_id?.[e.horse_id]&&
     e.id===entryId,'RACE_SAVE','Missing runner or horse reference');
    if(e.jockey_id)ensure(Boolean(rt.jockeys[e.jockey_id]),'RACE_SAVE','Missing booked jockey');
+   if(r.conditions==='Handicap')
+    ensure(Number.isInteger(e.handicap_weight_lbs)&&
+     e.handicap_weight_lbs>=110&&e.handicap_weight_lbs<=122&&
+     e.handicap_weight_basis===HANDICAP_WEIGHT_BASIS_1999,
+     'HANDICAP_SAVE','Declared modeled handicap weight must survive save/reopen');
    if(e.race_tactic!==undefined)
     ensure(e.status==='BOOKED'||e.status==='RESULTED','RACE_TACTICS_SAVE',
      'Only a booked/resulted mount may retain a tactic');
