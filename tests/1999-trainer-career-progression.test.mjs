@@ -7,7 +7,7 @@ import {rate1999Entity}
 import {
  TRAINER_CAREER_PROGRESSION_SCHEMA,advance1999TrainerCareerProgression,
  validate1999TrainerCareerProgression
-} from '../public/1999/engine/trainer-career-progression-1999.mjs';
+} from '../src/game/trainer-career-progression-1999.js';
 const trainer='P-FICTIONAL-1999-TRAINER-0000201';
 const owner='O-000061';
 const source={id:trainer,name:'Kingsmere Trainer',role:'trainer',

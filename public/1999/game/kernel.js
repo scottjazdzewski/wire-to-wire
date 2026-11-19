@@ -24,7 +24,7 @@ import {OWNER_TRAINER_REVIEW_COMMANDS,setOwnerTrainerMandate,respondToTrainerCon
 import {PLAYER_RACE_PLAN_COMMANDS,confirm1999PlayerRacePlan} from './player-race-plan-1999.js';
 import {TRAINER_MANAGEMENT_COMMANDS,answerTrainerManagementRequest,prepareTrainerManagementDay,reactToTrainerEvents} from './trainer-management-requests-1999.js';
 import {TRAINER_EMPLOYMENT_COMMANDS,trainerEmploymentAction,advanceTrainerEmployment,considerTrainerEmployment} from './trainer-employment-1999.js';
-import {advance1999TrainerCareerProgression} from '../engine/trainer-career-progression-1999.mjs';
+import {advance1999TrainerCareerProgression} from './trainer-career-progression-1999.js';
 
 const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_NAMING_COMMANDS,...HORSE_NAME_OWNER_COMMANDS,...HORSE_CARE_COMMANDS,...RACING_COMMANDS,...HORSE_SHIPPING_COMMANDS,...TRAINER_CONTRACT_COMMANDS,...OWNER_TRAINER_REVIEW_COMMANDS,...TRAINER_MANAGEMENT_COMMANDS,...TRAINER_EMPLOYMENT_COMMANDS,...PLAYER_RACE_PLAN_COMMANDS]);
 const MAX_PENDING = 5000;

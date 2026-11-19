@@ -17,7 +17,7 @@ import {createOwnerTrainerReviewRuntime,validateOwnerTrainerReviews} from './own
 import {createTrainerManagementRuntime,validateTrainerManagementRequests} from './trainer-management-requests-1999.js';
 import {createTrainerEmploymentRuntime,validateTrainerEmployment} from './trainer-employment-1999.js';
 import {createPostRaceCampaignRuntime,validatePostRaceCampaigns} from './post-race-campaign-1999.js';
-import {validate1999TrainerCareerProgression} from '../engine/trainer-career-progression-1999.mjs';
+import {validate1999TrainerCareerProgression} from './trainer-career-progression-1999.js';
 
 export function createGameRun({ world, runId, seed, player, stableHorseIds = [], startDate, personGenerationCatalog = null } = {}) {
   validateWorld(world);
