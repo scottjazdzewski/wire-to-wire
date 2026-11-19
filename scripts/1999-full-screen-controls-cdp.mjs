@@ -810,6 +810,47 @@ try {
   date:baseline.date
  }));
 
+ // The canonical Horse dossier is full-height by design. A new source
+ // chronology warning may not push the Racing Office Summary off a laptop.
+ await command('Emulation.setDeviceMetricsOverride',{
+  width:1280,height:800,deviceScaleFactor:1,mobile:false
+ });
+ try{
+  await command('Page.navigate',{url:url+'?page=horse&name=The+Last+Match'});
+  let horse=null;
+  for(let attempt=0;attempt<120;attempt++){
+   horse=await evaluate(`(()=>{
+    const root=document.getElementById('wtwNextgen'),
+     dossier=root?.querySelector('.ng-horse-dossier'),
+     summary=dossier?.querySelector('.ng-horse-mgr-summary'),
+     warning=root?.querySelector('.ng-horse-chronology-alert'),
+     identity=root?.querySelector('.ng-profile-horse .ng-profile-intro');
+    return {ready:!!dossier&&!!summary&&!!warning&&!!identity,
+     viewport:[innerWidth,innerHeight],
+     summaryBottom:summary?.getBoundingClientRect().bottom||0,
+     warningBottom:warning?.getBoundingClientRect().bottom||0,
+     summaryText:summary?.textContent?.trim()||'',
+     age:root?.querySelector('.ng-horse-biography')?.textContent?.trim()||'',
+     warning:warning?.textContent?.trim()||'',
+     date:root?.querySelector('.ng-global-date strong')?.textContent?.trim()||'',
+     overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth};
+   })()`);
+   if(horse.ready)break;
+   await delay(100);
+  }
+  assert.ok(horse?.ready,'Horse profile or date-consistency warning missing at 1280');
+  assert.deepEqual(horse.viewport,[1280,800]);
+  assert.ok(horse.summaryBottom>horse.warningBottom&&horse.summaryBottom<=800,
+   'Horse Racing Office Summary is clipped below 1280x800 laptop viewport: '+JSON.stringify(horse));
+  assert.ok(horse.summaryText.includes('RACING OFFICE SUMMARY'));
+  assert.ok(horse.age.includes('NOT FOALED')&&horse.warning.includes('1999-01-01'));
+  assert.equal(horse.date,baseline.date,'Navigating horse profile changed career date');
+  assert.ok(horse.overflow<=3,'Horse dossier created horizontal document overflow');
+  console.log('WTW_HORSE_LAPTOP_VISUAL_GATE_PASS '+JSON.stringify(horse));
+ }finally{
+  await command('Emulation.clearDeviceMetricsOverride');
+ }
+
  // History is an independently routed Archive but remains part of the product.
  // Verify every canonical History category without moving it into /next/ or
  // reviving obsolete Office/Manager windows.

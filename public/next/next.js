@@ -177,6 +177,30 @@ function openCustomView(view,section='Office',page='Overview'){
  APP.custom=view;APP.section=section;APP.page=page;APP.moreOpen=false;
  pushUIHistory(view);paint();
 }
+// Presentation guard, not a world-model age or eligibility calculation.
+// A future DOB must never silently look like an ordinary active racehorse.
+function horseBirthChronology(dateOfBirth,gameDate){
+ const text=String(dateOfBirth||'').trim();
+ const clock=String(gameDate||'').slice(0,10);
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(clock))return {future:false,warning:''};
+ const iso=text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+ const words=text.match(/^([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})$/);
+ const months={january:1,february:2,march:3,april:4,may:5,june:6,
+  july:7,august:8,september:9,october:10,november:11,december:12};
+ const year=iso?Number(iso[1]):words?Number(words[3]):NaN;
+ const month=iso?Number(iso[2]):words?months[words[1].toLowerCase()]:NaN;
+ const day=iso?Number(iso[3]):words?Number(words[2]):NaN;
+ if(!Number.isInteger(year)||!Number.isInteger(month)||!Number.isInteger(day)||
+  year<1700||month<1||month>12||day<1||day>31)return {future:false,warning:''};
+ const born=new Date(Date.UTC(year,month-1,day));
+ if(born.getUTCFullYear()!==year||born.getUTCMonth()!==month-1||
+  born.getUTCDate()!==day)return {future:false,warning:''};
+ const today=new Date(clock+'T00:00:00Z');
+ if(Number.isNaN(today.getTime())||born<=today)return {future:false,warning:''};
+ return {future:true,
+  warning:'DATE CONFLICT: DOB '+text+' is after game day '+clock+
+   '. Age and racing eligibility need source review.'};
+}
 function titleCaseUIRole(value){
  // Display-only: never changes the canonical role stored in the world.
  return String(value||'').trim().replace(/\b([a-z])([a-z]*)/gi,
@@ -2175,7 +2199,7 @@ function profileDetail(route,sourceOverride=null){
     safe(x.distanceFurlongs||'')+'f '+safe(x.surface||'')+
     '</span><span>'+safe(x.finishPosition||'—')+'</span><span>1999 TEST MODEL</span></div>').join('')+'</div>';
   const recent=verifiedHistory.length?'<div class="ng-horse-form-table"><div class="ng-horse-form-head"><span>DATE</span><span>RACE / TRACK</span><span>FINISH</span><span>SOURCE</span></div>'+
-   verifiedHistory.slice(-5).reverse().map(x=>'<div class="ng-horse-form-row"><span>'+safe(x.date)+'</span><span>'+
+   verifiedHistory.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).slice(0,5).map(x=>'<div class="ng-horse-form-row"><span>'+safe(x.date)+'</span><span>'+
    entityReferenceButton(x.race,'race',known(x.track)?'data-track="'+safe(x.track)+'"':'')+
    (known(x.track)?' · '+entityReferenceButton(x.track,'track'):'')+
    '</span><span>'+safe(x.finish||'—')+'</span><span>Verified</span></div>').join('')+'</div>':
@@ -2371,11 +2395,16 @@ function profileDetail(route,sourceOverride=null){
  const horseFlagCode=horseFoalingAlias||((horseFlagCodes.has(horseCountryCode))?horseCountryCode:'');
  const horseFlagPath=horseFlagCodes.has(horseFlagCode)?'/assets/flags/v1/'+horseFlagCode+'.svg':'';
  const horseFoalingDisplay=[horseFoalingCity,horseFoalingState,horseCountryLabel].filter(v=>v&&v!=='—').join(', ')||'Not recorded';
+ const horseChronology=isHorse?horseBirthChronology(horseField('Date of birth'),depGameDay()):
+  {future:false,warning:''};
+ const horseChronologyWarning=horseChronology.future?
+  '<div class="ng-horse-chronology-alert" role="status" title="'+safe(horseChronology.warning)+'">'+
+  safe(horseChronology.warning)+'</div>':'';
  const horseIdentityRow=isHorse?`<div class="ng-horse-biography" aria-label="Horse foaling and identity facts">
   <span class="ng-horse-bio-foaling" title="${safe(horseFoalingEvidence)}"><small>FOALED${horseFoalingEvidence.startsWith('SIMULATED')?' · TEST':''}</small><strong>${horseFlagPath?`<img class="ng-horse-bio-flag" src="${safe(horseFlagPath)}" alt="" width="22" height="16" decoding="async"/>`:''}${safe(horseFoalingDisplay)}</strong></span>
   <span><small>DATE OF BIRTH</small><strong>${safe(horseField('Date of birth'))}</strong></span>
   <span><small>SEX</small><strong>${safe(horseField('Sex'))}</strong></span>
-  <span><small>AGE</small><strong>${safe(horseField('Age'))}</strong></span>
+  <span><small>AGE</small><strong>${safe(horseChronology.future?'NOT FOALED':horseField('Age'))}</strong></span>
  </div>`:'';
 
  const horseStarRating=(key,label)=>{
@@ -2484,7 +2513,7 @@ function profileDetail(route,sourceOverride=null){
   'FACILITY PROFILE':'OWNERSHIP PROFILE'):route.kicker;
  const identity=`<div class="ng-profile-intro">
   ${profileMark}
-  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(profileDisplayType)} <span> / </span> Current Office</div><h2>${isHorse?horseOwnerBadge(route.title):''}${safe(visualName)}</h2>${horseIdentityRow}${horseStarRow}${entityIdentityRow}${horseConnectionHeader}${isHorse||isPerson||isFarm||isTrack?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${photoSrc||imageSlotRequired?`<div class="ng-profile-source-photo ${isFarm?'ng-profile-facility-logo':portraitRequired?'ng-profile-portrait':''}" role="img" aria-label="${photoSrc?'Image of ':'Temporary identifier for '}${safe(visualName)}">${imageMarkup}</div>`:''}
+  <div class="ng-profile-identity"><div class="ng-profile-breadcrumb">${safe(profileDisplayType)} <span> / </span> Current Office</div><h2>${isHorse?horseOwnerBadge(route.title):''}${safe(visualName)}</h2>${horseIdentityRow}${horseStarRow}${horseChronologyWarning}${entityIdentityRow}${horseConnectionHeader}${isHorse||isPerson||isFarm||isTrack?'':`<p>${safe(text('.profileSubline')||'Active source-linked office record')}</p>${pills}`}</div>${photoSrc||imageSlotRequired?`<div class="ng-profile-source-photo ${isFarm?'ng-profile-facility-logo':portraitRequired?'ng-profile-portrait':''}" role="img" aria-label="${photoSrc?'Image of ':'Temporary identifier for '}${safe(visualName)}">${imageMarkup}</div>`:''}
   <div class="ng-profile-tools"><button data-ng="office" aria-label="Return to Racing Office">← OFFICE</button><button data-ng="menu" data-val="${isTrack?'Racing':isPerson?'Personnel':isFarm?'Personnel':'Stable'}">${isTrack?'RACE CALENDAR':isPerson?'PERSONNEL DIRECTORY':isFarm?'OWNERSHIP DIRECTORY':'STABLE DIRECTORY'} ↗</button>${sourceEditButton}</div>
  </div>`;
  let left='',right='',footer='';
