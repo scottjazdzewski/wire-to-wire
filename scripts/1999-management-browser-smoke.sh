@@ -222,32 +222,40 @@ frame.addEventListener('load',()=>setTimeout(async()=>{
    summary:d.querySelector('#wtwNextgen')?.textContent.slice(-450),
    errors:browserErrors.slice(-3)
   });
+  const mainRows=[...d.querySelectorAll('#wtwNextgen .ng-person-horse-dossier .ng-horse-rating-row')];
+  const definedLabels=mainRows.map(n=>n.querySelector('span')?.textContent.trim()||'');
   if(!(Boolean(d.querySelector('#wtwNextgen .ng-profile-person.ng-profile-horse'))&&
    Boolean(d.querySelector('#wtwNextgen .ng-person-horse-dossier.ng-horse-dossier[data-template="horse-overview"]'))&&
    d.querySelectorAll('#wtwNextgen .ng-person-horse-dossier .ng-horse-mgr-four>.ng-horse-mgr-panel').length===4&&
-   d.querySelectorAll('#wtwNextgen .ng-person-horse-dossier .ng-horse-rating-row').length===46&&
+   mainRows.length>=11&&mainRows.length<=40&&
+   new Set(definedLabels).size===definedLabels.length&&
+   definedLabels.every(x=>x.length>1&&!x.startsWith('Attribute slot'))&&
    d.querySelectorAll('#wtwNextgen .ng-person-horse-dossier .ng-horse-condition-cell').length===7&&
    d.querySelectorAll('#wtwNextgen .ng-person-horse-dossier .ng-horse-mgr-five>.ng-horse-mgr-panel').length===5&&
    d.querySelectorAll('#wtwNextgen .ng-person-horse-dossier .ng-horse-mgr-bottom>.ng-horse-mgr-panel').length===2))
-   throw Error('Full Horse-layout personnel mismatch '+personDiagnostic());
+   throw Error('Role-specific Horse-layout personnel mismatch '+personDiagnostic());
   const portrait=d.querySelector('#wtwNextgen .ng-profile-person .ng-profile-source-photo.ng-profile-portrait');
   check('Every person keeps a reserved portrait slot at 4:5 with no fake image',
    Boolean(portrait)&&
    Math.abs(portrait.getBoundingClientRect().width/portrait.getBoundingClientRect().height-.8)<.06&&
    (Boolean(portrait.querySelector('img'))||Boolean(portrait.querySelector('.ng-profile-photo-empty'))));
-  steps.push('Founding person uses full Horse structure: four attribute columns, 46 slots, status strip, 5+2 modules');
-  check('Unapproved person abilities remain unassigned, not manufactured',
-   !d.querySelector('#wtwNextgen .ng-profile-person .test-modeled')&&
-   d.querySelectorAll('#wtwNextgen .ng-person-horse-dossier .ng-horse-rating-row strong.unknown').length===46&&
-   d.querySelector('#wtwNextgen .ng-profile-person')?.textContent.includes('0 OF 46 ROLE-SPECIFIC SLOTS DEFINED'));
+  steps.push('Founding person uses Horse dossier geometry, four real professional skill groups, contextual status facts and 5+2 modules');
+  check('Unapproved person abilities remain honest, while actual evaluations display with provenance',
+   mainRows.every(row=>{
+    const score=row.querySelector('strong')?.textContent.trim()||'';
+    const evidence=row.getAttribute('title')||'';
+    return score==='—'||/MEASURED|SCOUT ESTIMATE|SIMULATED TEST/.test(evidence);
+   })&&d.querySelector('#wtwNextgen .ng-profile-person')?.textContent.includes('ASSESSMENTS:'));
   const moreRecords=d.querySelector('#wtwNextgen select[data-ng-select="profile-record"]');
   check('Horse-style personnel details selector remains available',Boolean(moreRecords));
   moreRecords.value='Attributes';
   moreRecords.dispatchEvent(new w.Event('change',{bubbles:true}));await pause(200);
-  check('Legacy personnel attribute sheet permanently replaced with same 46-slot Horse-style matrix',
-   Boolean(d.querySelector('#wtwNextgen .ng-person-horse-dossier[data-template="horse-attributes"]'))&&
+  const detailedRows=[...d.querySelectorAll('#wtwNextgen .ng-person-horse-dossier .ng-horse-rating-row')];
+  check('Personnel Attributes reuses same role-specific skills and game assessments as Overview',
+   Boolean(d.querySelector('#wtwNextgen .ng-person-horse-dossier[data-template="person-role-attributes"]'))&&
    d.querySelectorAll('#wtwNextgen .ng-person-horse-dossier .ng-horse-mgr-four>.ng-horse-mgr-panel').length===4&&
-   d.querySelectorAll('#wtwNextgen .ng-person-horse-dossier .ng-horse-rating-row strong.unknown').length===46&&
+   detailedRows.length===mainRows.length&&
+   detailedRows.every((row,i)=>row.textContent.trim()===mainRows[i].textContent.trim())&&
    !d.querySelector('#wtwNextgen .ng-person-attribute-block'));
   const overviewTab=d.querySelector('#wtwNextgen [data-ng="detailtab"][data-val="Overview"]');
   check('Personnel can return from detail matrix to the shared Horse overview',Boolean(overviewTab));
