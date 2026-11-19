@@ -65,7 +65,9 @@ export function validateHorseRegistrationRuntime(state,world){
    sourceHorseIds.has(h.world_source_horse_id)===false&&source.id!==id&&
    ['RACING','TWO_YEAR_OLD_PROSPECT'].includes(source.status)&&
    source.name===h.registered_name&&
-   source.ownerId===h.owner_organization_id&&
+   (source.ownerId===h.owner_organization_id||
+    (state.runtime.ownership?.owner_overrides?.[id]?.kind==='GAMEPLAY_TRANSFER'&&
+     state.runtime.ownership.owner_overrides[id].owner_id===h.owner_organization_id))&&
    source.foalYear===h.foaling_year&&source.dateOfBirth===h.birth_date&&
    source.sex===h.sex&&source.foalingFarmId===h.breeder_organization_id&&
    source.trainerId===h.trainer_id&&source.homeTrackId===h.host_track_id;

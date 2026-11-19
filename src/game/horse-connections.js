@@ -19,7 +19,11 @@ export function getCareerHorseConnections(state,world,{kind,id}={}){
   'HORSE_CONNECTIONS','Unknown track T-ID');
  if(kind==='site')ensure(Boolean(state.runtime.facilities?.sites?.[id]),
   'HORSE_CONNECTIONS','Unknown residence F-ID');
- const source=world.entities.horses.map(h=>({
+ const representedSourceIds=new Set(Object.values(state.runtime.registered_horses?.by_id||{}).
+  map(h=>h.world_source_horse_id).filter(Boolean));
+ // A registered H-GAME horse and its immutable H-FICTIONAL source represent
+ // one animal. Ownership, trainer, care and barn views must never double count.
+ const source=world.entities.horses.filter(h=>!representedSourceIds.has(h.id)).map(h=>({
   id:h.id,name:h.name,origin:'SOURCE_CANON',
   owner_organization_id:currentHorseOwnerId(state,world,h.id),
   trainer_id:h.trainerId||h.trainer_id||null,
