@@ -6,7 +6,9 @@
 import {ensure,isObject,requireString,validDate,nextDate,worldIdentity} from './contracts.js';
 export const FACILITY_SCHEMA='WTW_FACILITY_OPERATIONS_V1';
 export const FACILITY_TYPES=Object.freeze(['RACING_STABLE','FARM','STUD_FARM','BREAKING_FACILITY','TRAINING_CENTER']);
-export const FACILITY_COMMANDS=Object.freeze(['FACILITY_SEED_FUNDS','FACILITY_LIST_PROPERTY','FACILITY_ACQUIRE','FACILITY_UPGRADE','FACILITY_BOARDING_CONTRACT','FACILITY_AI_CYCLE','FACILITY_SET_STAFFING','FACILITY_SET_MAINTENANCE','FACILITY_REGISTER_RACING_SITE']);
+export const FACILITY_COMMANDS=Object.freeze(['FACILITY_SEED_FUNDS','FACILITY_LIST_PROPERTY','FACILITY_ACQUIRE','FACILITY_UPGRADE','FACILITY_BOARDING_CONTRACT','FACILITY_AI_CYCLE','FACILITY_SET_STAFFING','FACILITY_SET_MAINTENANCE','FACILITY_REGISTER_RACING_SITE',
+ 'FACILITY_EMPLOY_NAMED_PERSON','FACILITY_SET_PERSON_WAGE',
+ 'FACILITY_TERMINATE_NAMED_PERSON']);
 const IMPROVEMENTS=Object.freeze({
  STALL_BLOCK:{cost_minor:22000000,days:30,stalls:12,quality:0},
  CARE_SYSTEM:{cost_minor:8500000,days:14,stalls:0,quality:10},
@@ -212,6 +214,93 @@ function setStaffing(state,world,p,command,emit){
   staff_count:site.staff_count,required:site.staff_required,
   daily_payroll_minor:site.staff_count*site.staff_wage_daily_minor});
 }
+/**
+ * Active locally employed game personnel: one authorized commercial contract
+ * on the existing actual owner-operated racing site, never a new HR database.
+ * A retired employment contract remains in the site's in-save signed history.
+ */
+function manageNamedStableEmployee(state,world,p,command,emit){
+ const f=ensureRoot(state),site=f.sites[p.site_id],
+  account=p.operation_id,actor=command.actor,kind=command.type;
+ ensure(Boolean(site)&&site.residence_kind==='TRACK_TRAINER_BARN'&&
+  site.status!=='UNDER_CONSTRUCTION'&&
+  site.owner_id===account&&site.operator_organization_id===account&&
+  (actor==='player'?state.player.operation_id===account&&
+   ['owner','trainer','farm','breeder'].includes(state.player.role):
+   actor==='system'&&state.player.operation_id!==account),
+  'FACILITY_EMPLOYEE_PERMISSION',
+  'Only the actual site operator controls its own paid racing staff');
+ const individual=worldIdentity(world,'people',p.person_id);
+ ensure(Boolean(individual)&&individual.role==='groom'&&
+  individual.workplaceId===site.host_track_id,
+  'FACILITY_EMPLOYEE_LOCATION','Hire a real groom employed on this course');
+ const roster=site.payroll_staff??[];
+ const current=roster.find(c=>c.person_id===p.person_id);
+ const history=site.staff_history??[];
+ if(kind==='FACILITY_EMPLOY_NAMED_PERSON'){
+  ensure(!current&&
+   !Object.values(f.sites).some(s=>
+    (s.payroll_staff||[]).some(c=>c.person_id===p.person_id)),
+   'FACILITY_EMPLOYEE_EXCLUSIVE','Groom already works at another site');
+  ensure(!site.payroll_staff&&site.staff_count===0||
+   Array.isArray(site.payroll_staff),
+   'FACILITY_EMPLOYEE_LEGACY',
+   'Do not invent a named employee to replace existing anonymous legacy staff');
+  ensure(roster.length<500&&
+   Number.isSafeInteger(p.daily_wage_minor)&&p.daily_wage_minor>=6000&&
+   p.daily_wage_minor<=10000,
+   'FACILITY_EMPLOYEE_WAGE','Paid employee needs a valid real contract');
+  ensure(Number.isSafeInteger(state.runtime.finances.operation_balances_minor?.[account])&&
+   state.runtime.finances.operation_balances_minor[account]>=
+    7*(roster.reduce((sum,c)=>sum+c.daily_wage_minor,0)+p.daily_wage_minor),
+   'FACILITY_EMPLOYEE_FUNDS','Owner must finance seven days of employee payroll');
+  const c={person_id:p.person_id,role:'groom',
+   daily_wage_minor:p.daily_wage_minor,started_on:state.clock.date,
+   status:'ACTIVE',source:'ACTUAL_SIGNED_LOCAL_1999_PERSONNEL_CONTRACT'};
+  site.payroll_staff=[...roster,c];
+  site.staff_count=site.payroll_staff.length;
+  const person=state.runtime.people[p.person_id]??{};
+  state.runtime.people[p.person_id]={...person,
+   stable_employer_operation_id:account,stable_employer_site_id:site.id};
+  emit('FACILITY_EMPLOYEE_CONTRACT_SIGNED',{operation_id:account,
+   site_id:site.id,person_id:p.person_id,home_track_id:site.host_track_id,
+   daily_wage_minor:p.daily_wage_minor,staff_count:site.staff_count,
+   first_paid_shift:'NEXT_DAY',owner_charged_immediately:false});
+ }else if(kind==='FACILITY_SET_PERSON_WAGE'){
+  ensure(current&&Number.isSafeInteger(p.daily_wage_minor)&&
+   p.daily_wage_minor>=6000&&p.daily_wage_minor<=10000,
+   'FACILITY_EMPLOYEE_TERMS','Existing active local employee and paid wage required');
+  const prior=current.daily_wage_minor;
+  current.daily_wage_minor=p.daily_wage_minor;
+  emit('FACILITY_EMPLOYEE_TERMS_CHANGED',{operation_id:account,
+   site_id:site.id,person_id:p.person_id,
+   old_daily_wage_minor:prior,new_daily_wage_minor:p.daily_wage_minor,
+   effective_from:'NEXT_UNPAID_GAME_DAY'});
+ }else if(kind==='FACILITY_TERMINATE_NAMED_PERSON'){
+  ensure(current,'FACILITY_EMPLOYEE_TERMS','Existing signed employee required to terminate');
+  site.staff_history=[...history,{...current,status:'ENDED',
+   ended_on:state.clock.date,
+   reason:'EMPLOYER_AUTHORIZED_TERMINATION'}].slice(-120);
+  site.payroll_staff=roster.filter(c=>c.person_id!==p.person_id);
+  site.staff_count=Math.min(site.staff_count,site.payroll_staff.length);
+  if(!site.payroll_staff.length)delete site.payroll_staff;
+  const existing=state.runtime.people[p.person_id];
+  if(existing?.stable_employer_site_id===site.id){
+   delete existing.stable_employer_site_id;
+   delete existing.stable_employer_operation_id;
+   existing.last_employment_end=state.clock.date;
+  }
+  emit('FACILITY_EMPLOYEE_CONTRACT_ENDED',{operation_id:account,
+   site_id:site.id,person_id:p.person_id,
+   reason:'EMPLOYER_AUTHORIZED_TERMINATION',
+   last_employer_earned_minor:existing?.stable_payroll_earned_minor??0,
+   person_identity_preserved:true,payroll_stopped:true});
+ }else ensure(false,'FACILITY_EMPLOYEE_COMMAND','Unsupported employee action');
+ const active=site.payroll_staff||[];
+ site.staff_wage_daily_minor=active.length?
+  Math.round(active.reduce((sum,c)=>sum+c.daily_wage_minor,0)/active.length):0;
+}
+
 function setMaintenance(state,world,p,command,emit){
  const site=ensureRoot(state).sites[p.site_id],id=organization(world,p.operation_id);
  permit(state,command,id);
@@ -319,6 +408,9 @@ export function facilityAction({state,world,command,emit}){
   aiCycle(state,world,emit);
  }else if(command.type==='FACILITY_SET_STAFFING')setStaffing(state,world,p,command,emit);
  else if(command.type==='FACILITY_SET_MAINTENANCE')setMaintenance(state,world,p,command,emit);
+ else if(['FACILITY_EMPLOY_NAMED_PERSON','FACILITY_SET_PERSON_WAGE',
+  'FACILITY_TERMINATE_NAMED_PERSON'].includes(command.type))
+  manageNamedStableEmployee(state,world,p,command,emit);
  else ensure(false,'FACILITY_COMMAND','Unknown facility command');
 }
 export function advanceFacilities({state,world,emit}){
@@ -467,6 +559,19 @@ export function validateFacilityState(state,world){
   number(site.staff_required??0,0,250,'staff required');
   number(site.staff_count??0,0,500,'current staff');
   number(site.staff_wage_daily_minor??0,0,1000000,'staff wages');
+  if(site.staff_history!==undefined){
+   ensure(Array.isArray(site.staff_history)&&site.staff_history.length<=120,
+    'FACILITY_EMPLOYEE_HISTORY','Invalid ended employee agreements');
+   for(const contract of site.staff_history)
+    ensure(Boolean(worldIdentity(world,'people',contract.person_id))&&
+     contract.role==='groom'&&contract.status==='ENDED'&&
+     validDate(contract.started_on)&&validDate(contract.ended_on)&&
+     contract.started_on<=contract.ended_on&&
+     contract.ended_on<=state.clock.date&&
+     Number.isSafeInteger(contract.daily_wage_minor)&&
+     contract.daily_wage_minor>=6000&&contract.daily_wage_minor<=10000,
+     'FACILITY_EMPLOYEE_HISTORY','Invalid retained employee termination');
+  }
   if(site.payroll_staff!==undefined){
    ensure(Array.isArray(site.payroll_staff)&&
     site.payroll_staff.length>0&&site.payroll_staff.length<=500&&
@@ -488,6 +593,11 @@ export function validateFacilityState(state,world){
    if(site.payroll_staff.length===1)
     ensure(site.staff_wage_daily_minor===site.payroll_staff[0].daily_wage_minor,
      'FACILITY_STAFF_ASSIGNMENTS','Named contract wage differs from site payroll');
+   if(site.payroll_staff.length>1)
+    ensure(site.staff_wage_daily_minor===Math.round(
+     site.payroll_staff.reduce((sum,c)=>sum+c.daily_wage_minor,0)/
+      site.payroll_staff.length),
+     'FACILITY_STAFF_ASSIGNMENTS','Average site wages must match actual contract book');
   }
   number(site.maintenance_daily_minor??0,0,100000000,'maintenance cost');
   ensure(site.maintenance_policy===undefined||

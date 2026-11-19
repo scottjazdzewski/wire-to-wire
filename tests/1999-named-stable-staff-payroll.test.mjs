@@ -128,3 +128,78 @@ test('old aggregate-only stable payroll keeps existing debit and no fake named p
  assert.equal(state.runtime.people[groom],undefined);
  assert.equal(state.runtime.finances.balance_minor,1191000);
 });
+
+test('signed local Kingsmere groom contract, change of wages and employment termination post real money, not fake headcount',()=>{
+ const state=fixture(),existing=state.runtime.facilities.sites[site],
+  other='P-GROOM-002',staffWorld=structuredClone(world);
+ staffWorld.entities.people.push({id:other,role:'groom',workplaceId:track,
+  ratings:{horseCare:70}});
+ const fire=(type,payload,actor='player')=>facilityAction({
+  state,world:staffWorld,command:{type,actor,payload:{
+   operation_id:owner,site_id:site,person_id:other,...payload}},
+  emit:()=>{}});
+ const before=state.runtime.finances.balance_minor;
+ fire('FACILITY_EMPLOY_NAMED_PERSON',{daily_wage_minor:8800});
+ assert.equal(existing.payroll_staff.length,2);
+ assert.equal(existing.staff_count,2);
+ assert.equal(state.runtime.people[other].stable_employer_operation_id,owner);
+ assert.equal(state.runtime.people[other].stable_employer_site_id,site);
+ assert.equal(state.runtime.finances.balance_minor,before,
+  'No retroactive wage paid on signature');
+ validateFacilityState(state,staffWorld);
+ assert.throws(()=>fire('FACILITY_EMPLOY_NAMED_PERSON',{daily_wage_minor:8800}),
+  e=>e.code==='FACILITY_EMPLOYEE_EXCLUSIVE');
+ fire('FACILITY_SET_PERSON_WAGE',{daily_wage_minor:9700});
+ assert.equal(existing.payroll_staff[1].daily_wage_minor,9700);
+ assert.equal(existing.staff_wage_daily_minor,9350);
+ advanceFacilities({state,world:staffWorld,emit:()=>{}});
+ assert.equal(state.runtime.finances.balance_minor,before-18700);
+ assert.equal(state.runtime.people[other].stable_payroll_earned_minor,9700);
+ assert.equal(state.runtime.finances.ledger.length,4);
+ assert.equal(state.runtime.finances.ledger.reduce((sum,x)=>sum+x.amount_minor,0),0);
+ state.clock.date='1999-01-03';
+ fire('FACILITY_TERMINATE_NAMED_PERSON',{});
+ assert.equal(existing.payroll_staff.length,1);
+ assert.equal(existing.staff_count,1);
+ assert.equal(existing.staff_history.length,1);
+ assert.equal(existing.staff_history[0].person_id,other);
+ assert.equal(existing.staff_history[0].status,'ENDED');
+ assert.equal(state.runtime.people[other].stable_employer_site_id,undefined);
+ assert.equal(state.runtime.people[other].stable_payroll_earned_minor,9700,
+  'Employee keeps previously earned and actually paid wages after termination');
+ assert.throws(()=>fire('FACILITY_TERMINATE_NAMED_PERSON',{}),
+  e=>e.code==='FACILITY_EMPLOYEE_TERMS');
+ advanceFacilities({state,world:staffWorld,emit:()=>{}});
+ assert.equal(state.runtime.finances.balance_minor,before-18700-9000);
+ assert.equal(state.runtime.people[other].stable_payroll_earned_minor,9700,
+  'Terminated worker cannot receive a subsequent wage');
+ validateFacilityState(state,staffWorld);
+ assert.deepEqual(JSON.parse(JSON.stringify(state)),state);
+});
+test('wrong employer, nonlocal employee, underfunded and legacy anonymous sites cannot invent a paid hire',()=>{
+ const s=fixture(),another='P-GROOM-LOCAL-3',w=structuredClone(world);
+ w.entities.people.push({id:another,role:'groom',workplaceId:track});
+ const cmd=(actor,person,fee=7500)=>facilityAction({state:s,world:w,
+  command:{actor,type:'FACILITY_EMPLOY_NAMED_PERSON',payload:{
+   site_id:site,operation_id:owner,person_id:person,daily_wage_minor:fee}},
+  emit:()=>{}});
+ assert.throws(()=>cmd('system',another),
+  e=>e.code==='FACILITY_EMPLOYEE_PERMISSION');
+ assert.throws(()=>cmd('player',trainer),
+  e=>e.code==='FACILITY_EMPLOYEE_LOCATION');
+ assert.throws(()=>cmd('player','P-FAKE'),
+  e=>e.code==='FACILITY_EMPLOYEE_LOCATION');
+ assert.throws(()=>cmd('player',another,300000),
+  e=>e.code==='FACILITY_EMPLOYEE_WAGE');
+ s.runtime.finances.operation_balances_minor[owner]=0;
+ assert.throws(()=>cmd('player',another),
+  e=>e.code==='FACILITY_EMPLOYEE_FUNDS');
+ const legacy=fixture();
+ delete legacy.runtime.facilities.sites[site].payroll_staff;
+ w.entities.people[2].id=another;
+ assert.throws(()=>facilityAction({state:legacy,world:w,
+  command:{type:'FACILITY_EMPLOY_NAMED_PERSON',actor:'player',
+   payload:{site_id:site,operation_id:owner,person_id:another,
+    daily_wage_minor:7500}},emit:()=>{}}),
+  e=>e.code==='FACILITY_EMPLOYEE_LEGACY');
+});
