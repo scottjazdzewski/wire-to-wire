@@ -260,3 +260,69 @@ test('multi-season facility payroll and upkeep preserve exact payee balances, op
  assert.deepEqual(importGameSave(exportGameSave(s,w),w),s);
  assert.deepEqual(apply(w,s,'season:day:369','ADVANCE_DAY',{}),s);
 });
+
+test('struggling farm stops unpaid payroll without overdraft and reopens only after real paid boarding cash settles arrears',()=>{
+ const w=world();let s=game(w);
+ s=funded(w,s,'O-PLAYER',111000000);
+ s=funded(w,s,'O-RIVAL',100000000);
+ s=offer(w,s,'INSOLVENT','FARM','PURCHASE',100000000,{
+  staff_required:2,staff_wage_daily_minor:500000,maintenance_daily_minor:12000000});
+ s=apply(w,s,'insolvent:buy','FACILITY_ACQUIRE',{
+  offer_id:'FAC-OFFER-INSOLVENT',operation_id:'O-PLAYER'});
+ const farm='F-RUN-FAC-OFFER-INSOLVENT';
+ assert.equal(s.runtime.finances.operation_balances_minor['O-PLAYER'],11000000);
+ // A separate already-established stable operated by the same company earns
+ // a genuinely funded third-party boarding fee. No invented new payer cash.
+ s=apply(w,s,'insolvent:existing-site','FACILITY_REGISTER_RACING_SITE',{
+  site_id:'F-1999-SUPPORT-BARN',site_type:'RACING_STABLE',
+  operator_organization_id:'O-PLAYER',facility_owner_organization_id:'O-PLAYER',
+  residence_kind:'ORGANIZATION_HOME_SITE',name:'Existing supporting barn',
+  location:{city:'Paris',state:'KY',country:'USA'},host_track_id:null,
+  stalls_total:2,staff_required:1,staff_present:1,quality:70,
+  daily_upkeep_minor:0,daily_boarding_minor:16000000,
+  staff_wage_daily_minor:0,source_kind:'MODELED_1999_GAME_SITE',
+  source_ref:'ISOLATED_SAVED_OPERATING_STABLE_TEST'});
+ s=apply(w,s,'insolvent:external-board','FACILITY_BOARDING_CONTRACT',{
+  site_id:'F-1999-SUPPORT-BARN',contract_id:'FAC-CONTRACT-SUPPORT-1',
+  payer_organization_id:'O-RIVAL',stalls:1,duration_days:4,
+  daily_rate_minor:16000000},'system');
+ const before=w.entities.horses.length;
+ s=apply(w,s,'insolvent:day:1','ADVANCE_DAY',{});
+ assert.equal(s.runtime.facilities.sites[farm].status,'INSOLVENT');
+ assert.equal(s.runtime.facilities.sites[farm].unpaid_liability_minor,13012000);
+ assert.equal(s.runtime.finances.operation_balances_minor['O-PLAYER'],27000000);
+ assert.equal(s.runtime.finances.operation_balances_minor['O-RIVAL'],84000000);
+ const accrual=s.runtime.finances.ledger.filter(x=>x.kind==='FACILITY_UNPAID_OPERATING_OBLIGATION');
+ assert.equal(accrual.length,1);
+ assert.equal(accrual[0].amount_minor,0,'Accrual is not falsely recorded as paid cash');
+ assert.equal(accrual[0].obligation_minor,13012000);
+ assert.equal(accrual[0].wages_unpaid_minor,1000000);
+ assert.equal(s.runtime.finances.ledger.filter(x=>x.site_id===farm&&
+  x.kind==='FACILITY_STAFF_PAYROLL').length,0,'No false paid employee wages');
+ assert.throws(()=>apply(w,s,'insolvent:blocked-board','FACILITY_BOARDING_CONTRACT',{
+  site_id:farm,contract_id:'FAC-CONTRACT-UNFUNDED',
+  payer_organization_id:'O-RIVAL',stalls:1,duration_days:3},'system'),
+  e=>e.code==='FACILITY_PROPERTY','Closed farm cannot book new clients');
+ assert.deepEqual(importGameSave(exportGameSave(s,w),w),s);
+ s=apply(w,s,'insolvent:day:2','ADVANCE_DAY',{});
+ assert.equal(s.runtime.facilities.sites[farm].status,'ACTIVE');
+ assert.equal(s.runtime.facilities.sites[farm].unpaid_liability_minor,0);
+ assert.equal(s.runtime.facilities.sites[farm].insolvent_since,null);
+ const arrears=s.runtime.finances.ledger.filter(x=>x.site_id===farm&&
+  x.kind==='FACILITY_ARREARS_SETTLED');
+ assert.equal(arrears.length,1);
+ assert.equal(arrears[0].amount_minor,-13012000);
+ const payee=s.runtime.finances.ledger.find(x=>
+  x.transaction_id===arrears[0].transaction_id&&
+  x.kind==='FACILITY_EXTERNAL_RECEIPT');
+ assert.ok(payee);
+ assert.equal(payee.amount_minor,13012000);
+ assert.equal(payee.operation_id,null);
+ const report=getFacilityFinancialReport(s,w,'O-PLAYER');
+ assert.equal(report.currently_unpaid_liabilities_minor,0);
+ assert.equal(report.previously_unpaid_obligations_settled_minor,13012000);
+ assert.equal(report.cash_minor,s.runtime.finances.operation_balances_minor['O-PLAYER']);
+ assert.ok(report.cash_minor>=0,'Recovery cannot require an overdraft');
+ assert.equal(w.entities.horses.length,before,'Financial rescue cannot create fictitious horses');
+ assert.deepEqual(importGameSave(exportGameSave(s,w),w),s);
+});
