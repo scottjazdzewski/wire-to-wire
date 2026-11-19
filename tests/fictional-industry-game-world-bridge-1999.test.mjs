@@ -225,6 +225,24 @@ test('10,000-horse persisted 1999 world opens and runs a canonical race career',
    payload:{race_id:raceChoice.book.id}}}).state;
  assert.equal(state.runtime.races[raceChoice.book.id].status,'OFFICIAL_SIM_RESULT');
  assert.ok(state.runtime.races[raceChoice.book.id].results.length>=2);
+ // The exact locally assigned groom receives real modeled earnings while
+ // the owner-operated barn posts the corresponding paid cash expense.
+ const receipts=state.runtime.finances.ledger.filter(x=>
+  x.kind==='FACILITY_NAMED_EMPLOYEE_RECEIPT');
+ assert.ok(receipts.length>0,'a playable race career must pay actual persisted staff');
+ for(const receipt of receipts.slice(0,30)){
+  const employee=career.world.entities.people.find(p=>p.id===receipt.person_id);
+  assert.equal(employee?.role,'groom');
+  assert.equal(employee.workplaceId,'T-0001');
+  assert.equal(receipt.employer_operation_id,career.operation.id);
+  assert.ok(state.runtime.people[employee.id].stable_payroll_earned_minor>=
+   receipt.amount_minor);
+  const matching=state.runtime.finances.ledger.filter(x=>
+   x.transaction_id===receipt.transaction_id&&
+   x.kind==='FACILITY_STAFF_PAYROLL');
+  assert.equal(matching.length,1,'every paid salary has exactly one employer cash debit');
+  assert.equal(matching[0].amount_minor,-receipt.amount_minor);
+ }
  await savePersistent1999CareerRun(store,manifest,{runId:state.run_id,
   gameDate:state.clock.date,player:state.player,
   changes:{canonicalRun:state},version:state.revision+1});
@@ -299,6 +317,14 @@ test('approved Kingsmere is an openable owner-farm operator with a persistent fu
   assert.equal(site.head_trainer_person_id,h.trainer_id);
   assert.equal(site.host_track_id,'T-0001');
   assert.equal(trainer.workplaceId,'T-0001');
+  for(const hired of site.payroll_staff||[]){
+   const employee=career.world.entities.people.find(p=>p.id===hired.person_id);
+   assert.ok(employee,'only a real saved source employee can work for Kingsmere');
+   assert.equal(employee.role,'groom');
+   assert.equal(employee.workplaceId,'T-0001');
+   assert.equal(hired.daily_wage_minor,6000+employee.ratings.horseCare*40,
+    'actual persisted horse-care rating determines real paid terms');
+  }
   assert.ok(site.name.startsWith('Kingsmere Farm — Keeneland Barn'));
   assert.equal(h.racing_barn_id,site.id);
  }
@@ -324,6 +350,12 @@ test('approved Kingsmere is an openable owner-farm operator with a persistent fu
   'breeding stock and youngstock must appear on the same playable stable roster');
  assert.equal(career.operationInventoryCount,new Set(career.run.stable_horse_ids).size,
   'the playable roster includes every distinct horse with an operation relationship');
+ assert.ok(Object.values(kingsmereStables).some(site=>site.payroll_staff?.length),
+  'Kingsmere opening operation needs actual locally employed stable workers');
+ const employedPeople=Object.values(kingsmereStables).
+  flatMap(site=>site.payroll_staff?.map(x=>x.person_id)||[]);
+ assert.equal(new Set(employedPeople).size,employedPeople.length,
+  'no worker can draw two unrelated Kingsmere barn wages for one shift');
  const saved=await savePersistent1999CareerRun(store,manifest,{
   runId:career.run.run_id,player:career.run.player,gameDate:career.run.clock.date,
   changes:{canonicalRun:career.run},version:2});
