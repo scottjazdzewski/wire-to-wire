@@ -644,14 +644,21 @@ export function validateFacilityState(state,world){
 export function facilityPortfolio(state,world,operationId){
  organization(world,operationId);
  const f=state.runtime.facilities||createFacilityState();
- const sites=Object.values(f.sites).filter(s=>s.owner_id===operationId).map(s=>({
-  ...structuredClone(s),named_employee_directory:namedRoster(s).map(p=>({
-  ...p,name:worldIdentity(world,'people',p.person_id)?.name||null})),
+ const sites=Object.values(f.sites).filter(s=>
+  s.owner_id===operationId||
+  (s.operator_organization_id||s.owner_id)===operationId).map(s=>({
+  ...structuredClone(s),
+  legal_title_held:s.owner_id===operationId,
+  operating_control_held:(s.operator_organization_id||s.owner_id)===operationId,
+  named_employee_directory:namedRoster(s).map(p=>({
+   ...p,name:worldIdentity(world,'people',p.person_id)?.name||null})),
   reserved_today:s.contracts.filter(c=>c.start<=state.clock.date&&
    c.end>=state.clock.date).reduce((n,c)=>n+c.stalls,0)
  }));
  return {operation_id:operationId,date:state.clock.date,sites,
-  owned_sites:sites.length,business_types:[...new Set(sites.map(s=>s.type))],
+  owned_sites:sites.filter(s=>s.legal_title_held).length,
+  operated_sites:sites.filter(s=>s.operating_control_held).length,
+  business_types:[...new Set(sites.map(s=>s.type))],
   cash_minor:state.runtime.finances.operation_balances_minor?.[operationId]??null};
 }
 export const facilityMarket=state=>Object.values(
