@@ -13,7 +13,8 @@ export { FACILITY_SCHEMA,FACILITY_TYPES,FACILITY_COMMANDS,createFacilityState,
 
 export {make1999FacilityOffers,make1999FacilityMarketCommands,FACILITY_1999_MARKET_SCHEMA} from './facility-market-1999.js';
 export {OWNERSHIP_RUNTIME_SCHEMA,OWNERSHIP_COMMANDS,
- createOwnershipRuntime,currentHorseOwnerId,getOwnerPortfolioView} from './ownership.js';
+ createOwnershipRuntime,currentHorseOwnerId,getOwnerPortfolioView,
+ getHorseSaleMarketView} from './ownership.js';
 export {facilityFinancialReport as getFacilityFinancialReport} from './facility-operations.js';
 
 export {HORSE_REGISTRATION_SCHEMA,HORSE_REGISTRATION_COMMANDS,createHorseRegistrationRuntime,validateHorseRegistrationRuntime,careerHorse,getRegisteredHorseDirectory} from './horse-registration.js';
