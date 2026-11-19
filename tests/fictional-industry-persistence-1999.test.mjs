@@ -7,7 +7,7 @@ import {createPersistent1999Industry,readPersistent1999IndustryBatch,findPersist
  reopenPersistent1999Industry,encodePersistent1999StoredValue,
  decodePersistent1999StoredValue,PERSISTENT_INDUSTRY_COMPRESSION_SCHEMA,
  readPersistent1999LifecycleHorse,readPersistent1999FoalForecasts,
- readPersistent1999LifecycleEvents}
+ readPersistent1999LifecycleEvents,readPersistent1999BreedingCashflow}
  from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
 import {generate1999SeasonFoalingForecasts,resolve1999FoalBirth}
  from '../public/1999/engine/fictional-industry-breeding-book-1999.mjs';
@@ -725,4 +725,51 @@ test('small persistent industry keeps births, cohorts, and breeding records cohe
   deaths:final.lifecycle.horseDeaths,retirements:retirementsSeen.size,
   graduations:graduatesSeen.size,stallionRetirements:stallionsRetiredSeen.size,
   stallionGraduations:stallionsGraduatedSeen.size,longLivedHorseId:longLived.id}));
+});
+
+test('real 1999–2009 V10 covering books persist matched breeder fees and farm care income',async()=>{
+ const seed=19990121,store=memoryStore(),runId='WTW-RUN-BREEDING-FINANCE';
+ const worldId='WTW1999FullIndustry-COHORTS-V6-OWNER-V10-CASHFLOW-10000';
+ const manifest=await createPersistent1999Industry({store,seed,worldId,
+  targetOpeningHorses:10000,...dirs,batchSize:1000});
+ const player={role:'owner',operation_id:'O-OWNER-1'};
+ let prior=null;
+ for(let year=1999;year<=2009;year++){
+  const saved=await savePersistent1999CareerRun(store,manifest,{
+   runId,player,gameDate:year+'-01-01',version:year-1998});
+  const financials=await readPersistent1999BreedingCashflow(
+   store,manifest,runId,year);
+  assert.ok(financials&&financials.bookedCoverings>0,
+   'actual annual coverings must have persisted paired fee receipts');
+  assert.equal(financials.totalDebitsMinor,financials.totalCreditsMinor);
+  assert.ok(financials.totalStudFeesMinor>0&&financials.totalCareFeesMinor>0);
+  assert.equal(financials.totalStudFeesMinor+financials.totalCareFeesMinor,
+   financials.totalDebitsMinor);
+  const rows=financials.organizations;
+  assert.equal(new Set(rows.map(x=>x.organizationId)).size,rows.length);
+  const owner=await readPersistent1999BreedingCashflow(store,manifest,runId,
+   year,'O-OWNER-1');
+  const farm=await readPersistent1999BreedingCashflow(store,manifest,runId,
+   year,'O-FARM-1');
+  assert.ok(owner.studFeesPaidMinor>0);
+  assert.ok(farm.farmCareIncomeMinor>0);
+  assert.equal(owner.creditsMinor-owner.debitsMinor,owner.netMinor);
+  assert.equal(farm.creditsMinor-farm.debitsMinor,farm.netMinor);
+  const season=await store.get('industryLifecycle',worldId+':'+seed+':'+runId+
+   ':season:'+year);
+  assert.equal(season.coveringCount,financials.bookedCoverings);
+  assert.ok(season.marketConditions.targetCovers<=
+   saved.lifecycle.activeBroodmares);
+  if(year>1999)assert.ok(season.marketConditions.targetCovers<=
+   saved.lifecycle.activeStallions*220);
+  if(prior)assert.ok(saved.lifecycle.population>0);
+  prior=saved;
+ }
+ const reopened=await loadPersistent1999CareerRun(store,manifest,runId);
+ assert.equal(reopened.gameDate,'2009-01-01');
+ const savedCash=await readPersistent1999BreedingCashflow(store,manifest,runId,2000);
+ assert.ok(savedCash.totalStudFeesMinor>0,'reopen retains prior-year fee records');
+ const other=await readPersistent1999BreedingCashflow(store,manifest,
+  'WTW-RUN-OTHER',2000);
+ assert.equal(other,null,'another career cannot share annual payments');
 });
