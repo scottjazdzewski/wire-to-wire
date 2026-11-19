@@ -455,11 +455,17 @@ function payNamedEmployee(state,world,site,personId,amount,kind,emit,originalPay
 }
 function accrueNamedEmployeeWage(site,personId,amount,day,emit,employerId){
  const root=site.staff_wage_arrears??=(Object.create(null)),
-  old=root[personId];
+  current=root[personId];
+ // One employee can be owed separately by an old and a new employer if a
+ // physical site changes operation; never merge one company's liabilities
+ // into another company's wages.
+  key=current&&current.employer_operation_id!==employerId?
+   personId+'|'+employerId:personId,
+  old=root[key];
  const owed=(old?.owed_minor??0)+amount;
  ensure(integer(owed)&&owed>0,'FACILITY_STAFF_PAY',
   'Unpaid staff wage overflow or invalid amount');
- root[personId]={person_id:personId,owed_minor:owed,
+ root[key]={person_id:personId,owed_minor:owed,
   employer_operation_id:old?.employer_operation_id??employerId,
   due_days:(old?.due_days??0)+1,
   first_unpaid_on:old?.first_unpaid_on??day,last_unpaid_on:day};
@@ -471,12 +477,13 @@ function payPastNamedWages(state,world,site,emit){
  const debts=site.staff_wage_arrears;
  if(!debts)return 0;
  let paid=0;
- for(const [personId,entry] of Object.entries(debts).
+ for(const [debtKey,entry] of Object.entries(debts).
   sort(([a],[b])=>a.localeCompare(b))){
+  const personId=entry.person_id;
   if(!payNamedEmployee(state,world,site,personId,entry.owed_minor,
    'ARREARS',emit,entry.employer_operation_id))
    continue;
-  paid+=entry.owed_minor;delete debts[personId];
+  paid+=entry.owed_minor;delete debts[debtKey];
   emit('FACILITY_EMPLOYEE_BACKPAY_SETTLED',{
    date:state.clock.date,site_id:site.id,person_id:personId,
    amount_minor:entry.owed_minor,unpaid_days:entry.due_days,
@@ -561,8 +568,11 @@ export function advanceFacilities({state,world,emit}){
   expense+=payPastNamedWages(state,world,site,emit);
   if(staffRoster?.length){
    for(const staff of staffRoster.slice(0,site.staff_count??0)){
-    const prior=site.staff_wage_arrears?.[staff.person_id];
-    if(prior||!payNamedEmployee(state,world,site,staff.person_id,
+    const debts=site.staff_wage_arrears;
+    const prior=debts?.[staff.person_id];
+    const oldEmployerDebt=prior&&prior.employer_operation_id===account;
+    if(oldEmployerDebt||debts?.[staff.person_id+'|'+account]||
+     !payNamedEmployee(state,world,site,staff.person_id,
      staff.daily_wage_minor,'SHIFT',emit)){
      accrueNamedEmployeeWage(site,staff.person_id,
       staff.daily_wage_minor,day,emit,account);
@@ -630,11 +640,13 @@ export function validateFacilityState(state,world){
     Object.keys(site.staff_wage_arrears).length<=500&&
     site.residence_kind==='TRACK_TRAINER_BARN',
     'FACILITY_STAFF_ARREARS','Unpaid wage records require a real racing barn');
-   for(const [personId,debt] of Object.entries(site.staff_wage_arrears)){
-    const identity=worldIdentity(world,'people',personId);
+   for(const [debtKey,debt] of Object.entries(site.staff_wage_arrears)){
+    const personId=debt?.person_id,
+     identity=worldIdentity(world,'people',personId);
     ensure(identity?.role==='groom'&&
      identity.workplaceId===site.host_track_id&&
-     debt?.person_id===personId&&
+     (debtKey===personId||
+      debtKey===personId+'|'+debt.employer_operation_id)&&
      Boolean(worldIdentity(world,'organizations',debt.employer_operation_id))&&
      integer(debt.owed_minor)&&
      debt.owed_minor>0&&integer(debt.due_days)&&debt.due_days>0&&
