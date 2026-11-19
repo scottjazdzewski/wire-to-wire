@@ -203,6 +203,18 @@ try{
  const careerAtStart=await readCareerSave();
  assert.equal(careerAtStart.operationId,'O-000061','Full-world career must open Kingsmere');
  assert.ok(careerAtStart.stableHorses>=5,'Kingsmere career lacks its approved opening inventory');
+ // Prove the REAL saved 300,000-horse industry has complete ratings across
+ // every horse and every real worker. Unit fixtures alone cannot certify it.
+ const allRatings=await browser.evalJS(
+  'window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.worldRatingAudit?.()||null');
+ assert.ok(allRatings?.valid,
+  '1999 full-world saved rating census missing values: '+JSON.stringify(allRatings));
+ assert.equal(allRatings.horses,300000);
+ assert.equal(allRatings.ratedHorses,300000);
+ assert.equal(allRatings.people,allRatings.expectedPeople);
+ assert.equal(allRatings.ratedPeople,allRatings.people);
+ assert.ok(allRatings.people>=75000,'Saved 1999 personnel census unexpectedly incomplete');
+ console.log('WTW_1999_ALL_HORSES_AND_PEOPLE_RATED_PASS '+JSON.stringify(allRatings));
  // Real saved V10 edit on a permanent existing horse ID, NOT a demo registry.
  const editorHorseId=snap.immutableHorseId;
  const editorNewName='V10 Acceptance World Horse';
