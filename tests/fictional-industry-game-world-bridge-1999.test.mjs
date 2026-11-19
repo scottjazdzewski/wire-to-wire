@@ -317,6 +317,16 @@ test('approved Kingsmere is an openable owner-farm operator with a persistent fu
   assert.equal(site.head_trainer_person_id,h.trainer_id);
   assert.equal(site.host_track_id,'T-0001');
   assert.equal(trainer.workplaceId,'T-0001');
+  const activeSkills=career.run.runtime.people[h.trainer_id]?.game_training_skills;
+  assert.equal(activeSkills?.source,
+   'MODELED_FROM_PERSISTED_1999_TRAINER_ROLE_RATINGS',
+   'Kingsmere trainer must have real persisted conditioning, placement and development');
+  assert.equal(activeSkills.biography.date_of_birth,trainer.dateOfBirth);
+  assert.equal(activeSkills.biography.age_at_opening,trainer.ageAtOpening);
+  assert.equal(activeSkills.biography.home_track_id,'T-0001');
+  assert.deepEqual(activeSkills.source_role_ratings,trainer.ratings);
+  for(const trait of Object.values(activeSkills.roleAttributes))
+   assert.ok(Number.isFinite(trait)&&trait>=0&&trait<=1);
   for(const hired of site.payroll_staff||[]){
    const employee=career.world.entities.people.find(p=>p.id===hired.person_id);
    assert.ok(employee,'only a real saved source employee can work for Kingsmere');
