@@ -17,6 +17,10 @@ import {plan1999IndustryStaffing,generate1999StaffingBatches,
 import {createPersonnelNameRoster,PERSONNEL_NAME_MODEL}
  from './personnel-name-engine.mjs';
 import {OPENING_INDUSTRY_HORSE_NAMING_REVISION} from '../game/horse-naming-local-v485.js';
+import {createNamingFeedback,recordNamingFeedback,nameFeedbackKey}
+ from '../game/horse-naming-feedback-v489.js';
+import {OWNER_REVIEWED_NAME_KEYS_V478}
+ from '../game/horse-naming-owner-review-v478.js';
 import {connect1999Horse,connect1999Person,connect1999DirectoryEntity,
  validate1999GraphBatch,validate1999IndustryReferences,INDUSTRY_GRAPH_SCHEMA}
  from './fictional-industry-graph-1999.mjs';
@@ -771,6 +775,101 @@ export async function readPersistent1999LifecycleHorse(store,manifest,runId,hors
  const horse=statusPatch(base,state);
  if(!horse)return null;
  return project1999HorseForYear(horse,checkpoint?.seasonYear??1999);
+}
+
+/**
+ * Name one ACTUALLY BORN seasonal foal in the SAME per-career lifecycle
+ * sidecar. No second world, no separate writer and no speculative foal.
+ *
+ * The IndexedDB store atomically replaces both the BORN horse's actual name
+ * and the existing saved career's naming feedback, with optimistic version
+ * checks. These are player display names, NOT external registration clearance.
+ */
+export async function commitPersistent1999CareerFoalName(store,manifest,runId,{
+ horseId,name,story,motifId='foaling',direction=''
+}={}){
+ if(!store?.commitLifecycleFoalNaming||!supportsPersistentSchema(manifest)||
+  manifest?.status!=='COMPLETE'||typeof runId!=='string'||!runId||
+  typeof horseId!=='string'||!/^H-FICTIONAL-1999-FOALS-\\d{4}-\\d{7}$/.test(horseId)||
+  typeof name!=='string'||name.length<1||name.length>18||
+  name.trim()!==name||!/^[-\\p{L}\\p{N} '&\\u2019]+$/u.test(name)||
+  typeof story!=='string'||story.trim().length<35||story.length>1000||
+  typeof motifId!=='string'||motifId.length>60||
+  typeof direction!=='string'||direction.length>300)
+  throw Error('Valid saved foal, authored story, and racehorse name required');
+ const prior=await loadPersistent1999CareerRun(store,manifest,runId);
+ if(!prior?.changes?.canonicalRun||prior.player?.role!=='owner'||
+  !prior.player.operation_id)
+  throw Error('A real saved owner career is required for seasonal foal naming');
+ const horse=await readPersistent1999LifecycleHorse(store,manifest,runId,horseId);
+ if(!horse||horse.registryProvenance!=='MODELED_SEASONAL_BIRTH'||
+  horse.ownerId!==prior.player.operation_id||
+  horse.dateOfBirth>prior.gameDate||horse.status==='DECEASED'||
+  horse.name||horse.namingStatus!=='UNNAMED_PERMANENT_ID')
+  throw Error('Foal is not born, unnamed, alive, and owned by this saved player');
+ if(!horse.sireId||!horse.damId||!horse.foalingFarmId)
+  throw Error('An actual saved sire, dam, and foaling farm are required');
+ const key=nameFeedbackKey(name);
+ if(!key||OWNER_REVIEWED_NAME_KEYS_V478.includes(key))
+  throw Error('Previously rejected or invalid name cannot be chosen');
+
+ // All-time collision protection. The opening world's immutable names stay
+ // untouched; scan batches only for availability, never write them.
+ const count=manifest.horseBatchesCommitted;
+ if(!Number.isSafeInteger(count)||count<1)
+  throw Error('Opening-world name registry is incomplete');
+ for(let i=0;i<count;i++){
+  const rows=await readPersistent1999IndustryBatch(store,manifest,'horseBatches',i);
+  if(rows.some(row=>nameFeedbackKey(row.name)===key))
+   throw Error('Name is already used by a 1999 opening horse');
+ }
+ for(const row of Object.values(prior.changes.worldEdits?.byId||{})){
+  if(row&&nameFeedbackKey(row.name)===key)
+   throw Error('Name already assigned in the player career');
+ }
+ for(const row of Object.values(prior.changes.canonicalRun.runtime
+  ?.registered_horses?.by_id||{})){
+  if(nameFeedbackKey(row.registered_name||row.name)===key)
+   throw Error('Name already used by a registered career horse');
+ }
+ for(const row of Object.values(prior.changes.namedSeasonalFoals||{})){
+  if(nameFeedbackKey(row.name)===key)
+   throw Error('Name already used by an earlier born foal');
+ }
+ const current=prior.changes.namingFeedback??createNamingFeedback();
+ const feedback=recordNamingFeedback(current,{
+  name,decision:'CHOOSE',horseId,motifId,prompt:direction
+ });
+ const origin={horseId,ownerId:horse.ownerId,
+  breederId:horse.breederId,foalingYear:horse.foalYear,
+  foalingFarmId:horse.foalingFarmId,
+  dateOfBirth:horse.dateOfBirth,story:story.trim(),
+  basis:'OWNER_AUTHORED_ACTUAL_SAVED_FOAL_STORY'};
+ const next={...prior,version:prior.version+1,
+  changes:{...prior.changes,namingFeedback:feedback,
+   namingOriginStories:{...(prior.changes.namingOriginStories||{}),
+    [horseId]:origin},
+   namedSeasonalFoals:{...(prior.changes.namedSeasonalFoals||{}),
+    [horseId]:{name,ownerId:horse.ownerId,dateOfBirth:horse.dateOfBirth,
+     namingStatus:'PLAYER_NAMED_PENDING_REGISTRAR'}}}};
+ const worldKey=keyOf(manifest.seed,manifest.worldId);
+ await store.commitLifecycleFoalNaming({
+  worldKey,runId,horseId,ownerId:horse.ownerId,name,
+  expectedVersion:prior.version,record:next
+ });
+ const [reopened,reopenedHorse]=await Promise.all([
+  loadPersistent1999CareerRun(store,manifest,runId),
+  readPersistent1999LifecycleHorse(store,manifest,runId,horseId)
+ ]);
+ if(reopened?.version!==next.version||reopenedHorse?.name!==name||
+  reopenedHorse?.namingStatus!=='PLAYER_NAMED_PENDING_REGISTRAR'||
+  reopened.changes.namingFeedback.decisions[key]?.horseId!==horseId||
+  reopened.changes.namingOriginStories[horseId]?.story!==story.trim())
+  throw Error('Saved born foal name and source failed durable read-back');
+ return {horseId,name,runId,version:next.version,
+  namingStatus:'PLAYER_NAMED_PENDING_REGISTRAR',
+  externalRegistrationApproved:false,
+  ownerStoryPersisted:true};
 }
 
 /** Read unborn foal forecasts separately from the living horse registry. */
