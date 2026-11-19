@@ -651,6 +651,19 @@ test('small persistent industry keeps births, cohorts, and breeding records cohe
    assert.equal(horse.status,'DECEASED');
   }
   assert.equal(saved.lifecycle.deathsByYear[year],annualDeaths+adult.deaths);
+  const developmental=events.filter(x=>x.type==='YOUNGSTOCK_DEVELOPMENT');
+  assert.equal(developmental.length,2,
+   'foal and yearling progressions must save actual development events');
+  for(const progression of developmental){
+   assert.equal(progression.injured,progression.injuredHorseIds.length);
+   for(const id of progression.injuredHorseIds.slice(0,5)){
+    const horse=await readPersistent1999LifecycleHorse(store,manifest,runId,id);
+    assert.ok(horse?.development?.latestInjury?.date===date);
+    assert.ok(['YEARLING','TWO_YEAR_OLD_PROSPECT','BROODMARE',
+     'STALLION','RACING','RETIRED_RACEHORSE'].includes(horse.status),
+     'modeled injury preserves permanent horse identity and active lifecycle');
+   }
+  }
   const breedingPool=await store.get('industryLifecycle',manifest.worldId+':'+
    manifest.seed+':'+runId+':breeding-pool:'+year);
   assert.equal(breedingPool.length,turnover.closingBroodmares);
