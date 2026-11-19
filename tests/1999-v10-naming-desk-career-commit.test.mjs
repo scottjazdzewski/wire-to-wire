@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {planV10SavedHorseNamingDecision,validateRunWithSavedWorldEdits,
- buildV10OwnerHorseNamingBrief,previewV10OwnerHorseNames}
+ buildV10OwnerHorseNamingBrief,previewV10OwnerHorseNames,
+ projectCareerSavedHorseName}
  from '../public/next/1999-saved-career-horse-naming.mjs';
 import {createNamingFeedback,nameFeedbackKey} from '../src/game/horse-naming-feedback-v489.js';
 import {screenGameHorseName} from '../src/game/horse-naming-bridge.js';
@@ -149,6 +150,31 @@ test('V10 Naming Desk excludes names already assigned in the real 300k world',()
  assert.ok(active.snapshot().results.every(x=>x.name!==alreadyNamed),
   'a name used by the 300k opening world must not appear as available');
  assert.ok(active.snapshot().results.length>0);
+});
+
+test('Industry inspection and browse show saved name without changing shared source',()=>{
+ const source={id:primary,name:'Old Runner',ownerId:'O-PLAYER',
+  sireId:'S-01',damId:'D-01',foalYear:1996};
+ const saved={schema:'WTW_CAREER_WORLD_EDITS_V1',byId:{
+  ['horse:'+primary]:{name:'A Better Story'}
+ }};
+ const out=projectCareerSavedHorseName(source,saved);
+ assert.equal(out.name,'A Better Story');
+ assert.equal(out.nameDisplaySource,'SAVED_CAREER_HORSE_NAME_OVERRIDE');
+ assert.equal(out.id,primary);
+ assert.equal(out.sireId,'S-01');
+ assert.equal(out.damId,'D-01');
+ assert.equal(out.ownerId,'O-PLAYER');
+ assert.equal(source.name,'Old Runner');
+ assert.notEqual(source,out,'the base 1999 record may not be edited in place');
+ assert.strictEqual(projectCareerSavedHorseName(source,createCareerWorldEdits()),
+  source,'without an active career override, return the identical source record');
+ assert.equal(projectCareerSavedHorseName(null,saved),null);
+ const manager=readFileSync(new URL('../public/next/1999-commercial-career-manager.mjs',
+  import.meta.url),'utf8');
+ assert.match(manager,/function projectActiveIndustryHorse\(/);
+ assert.match(manager,/kind==='horseBatches'\?projectActiveIndustryHorse\(entry\):entry/);
+ assert.match(manager,/return projectActiveIndustryHorse\(await readPersistent1999HorseProfile/);
 });
 
 test('V10 previews use real player horse, actual owner and breeder, and only authored owner evidence',()=>{
