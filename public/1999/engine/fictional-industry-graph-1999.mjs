@@ -101,7 +101,7 @@ export function connect1999Horse(horse,{seed,trainerCount=0,jockeyCount=0,
   ratings,
   relationships:edges,ratingsProvenance:'MODELED_1999_UNCALIBRATED'};
 }
-export function connect1999Person(person,{seed}={}){
+export function connect1999Person(person,{seed,linkFarmManagement=false}={}){
  if(!person?.id||!person?.role)throw Error('Invalid person graph input');
  // A materialized owner principal uses the existing owner's business
  // ratings catalog, not a second invented personnel ratings vocabulary.
@@ -109,7 +109,9 @@ export function connect1999Person(person,{seed}={}){
  return {...person,ratings:rate1999Entity(seed,type,person.id),
   relationships:[relationship1999('WORKS_AT',person.id,person.workplaceId),
    ...(person.role==='owner_principal'?
-    [relationship1999('PRINCIPAL_OF',person.id,person.organizationId)]:[])],
+    [relationship1999('PRINCIPAL_OF',person.id,person.organizationId)]:[]),
+   ...(linkFarmManagement&&person.role==='farm_manager'?
+    [relationship1999('MANAGES',person.id,person.workplaceId)]:[])],
   ratingsProvenance:'MODELED_1999_UNCALIBRATED'};
 }
 export function connect1999DirectoryEntity(entity,{seed,type,homeTrackId=null}={}){
@@ -119,7 +121,9 @@ export function connect1999DirectoryEntity(entity,{seed,type,homeTrackId=null}={
   ...(homeTrackId&&type!=='track'?
    [relationship1999('REGIONAL_CIRCUIT',entity.id,homeTrackId)]:[]),
   ...(type==='owner'&&entity.principalId?
-   [relationship1999('REPRESENTED_BY',entity.id,entity.principalId)]:[])
+   [relationship1999('REPRESENTED_BY',entity.id,entity.principalId)]:[]),
+  ...(type==='farm'&&Array.isArray(entity.managerIds)?
+   entity.managerIds.map(id=>relationship1999('MANAGED_BY',entity.id,id)):[])
  ];
  return {...entity,ratings:rate1999Entity(seed,type,entity.id),
   relationships:edges,ratingsProvenance:'MODELED_1999_UNCALIBRATED'};
