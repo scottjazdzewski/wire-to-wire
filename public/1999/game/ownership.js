@@ -12,7 +12,8 @@ import {ensure,isObject,requireString,validDate} from './contracts.js';
 export const OWNERSHIP_RUNTIME_SCHEMA='WTW_RUN_HORSE_OWNERSHIP_V1';
 export const OWNERSHIP_COMMANDS=Object.freeze([
  'ASSIGN_HORSE_OWNER','REQUEST_HORSE_TRANSFER',
- 'CANCEL_HORSE_TRANSFER','COMMIT_HORSE_TRANSFER','SETTLE_HORSE_SALE'
+ 'CANCEL_HORSE_TRANSFER','COMMIT_HORSE_TRANSFER','SETTLE_HORSE_SALE',
+ 'LIST_HORSE_FOR_SALE','BUY_LISTED_HORSE','CANCEL_HORSE_LISTING'
 ]);
 const WORLD_INDEX=new WeakMap();
 const REQUEST_TYPES=new Set(['GIFT','SALE']);
@@ -33,7 +34,8 @@ function sourceOwnerId(horse){
  return typeof value==='string'&&value?value:null;
 }
 export function createOwnershipRuntime(){
- return {schema:OWNERSHIP_RUNTIME_SCHEMA,owner_overrides:{},pending_transfers:{}};
+ return {schema:OWNERSHIP_RUNTIME_SCHEMA,owner_overrides:{},pending_transfers:{},
+  market_listings:{}};
 }
 export function currentHorseOwnerId(state,world,horseId){
  const gameHorse=state.runtime.registered_horses?.by_id?.[horseId];
@@ -81,6 +83,26 @@ export function validateOwnershipRuntime(state,world){
    'OWNERSHIP_RUNTIME','Invalid pending ownership transfer');
   ensure(currentHorseOwnerId(state,world,request.horse_id)===request.from_owner_id,
    'STALE_HORSE_OWNER','Pending transfer no longer belongs to original owner');
+ }
+ const listings=runtime.market_listings||{};
+ ensure(isObject(listings),'HORSE_MARKET','Invalid horse-market listing store');
+ for(const [id,l] of Object.entries(listings)){
+  ensure(isObject(l)&&l.listing_id===id&&
+   typeof l.horse_id==='string'&&knownHorse(l.horse_id)&&
+   typeof l.seller_id==='string'&&ownerById.has(l.seller_id)&&
+   Number.isSafeInteger(l.price_minor)&&l.price_minor>0&&
+   l.price_minor<=1000000000000&&
+   validDate(l.listed_on)&&l.listed_on<=state.clock.date&&
+   validDate(l.expires_on)&&l.expires_on>=l.listed_on&&
+   ['OPEN','SOLD','CANCELLED'].includes(l.status),
+   'HORSE_MARKET','Invalid listing identity, price or dates');
+  if(l.status==='OPEN')ensure(currentHorseOwnerId(state,world,l.horse_id)===l.seller_id,
+   'HORSE_MARKET','Open horse listing no longer belongs to seller');
+  if(l.status==='SOLD')ensure(
+   typeof l.buyer_id==='string'&&ownerById.has(l.buyer_id)&&
+   validDate(l.sold_on)&&l.sold_on<=state.clock.date&&
+   typeof l.settlement_transaction_id==='string',
+   'HORSE_MARKET','Invalid sale closure and financial receipt');
  }
 }
 function verifyOrg(world,id){
@@ -134,7 +156,75 @@ function validRequestId(id){
 export function ownershipAction({state,world,command,emit}){
  const {type,actor,payload:p}=command;
  const rt=ownership(state);
- if(type==='ASSIGN_HORSE_OWNER'){
+ if(type==='LIST_HORSE_FOR_SALE'){
+  verifyTransferHorse(state,world,p.horse_id);
+  validRequestId(p.listing_id);verifyOrg(world,p.seller_id);
+  ensure(p.listing_id.length<=110,'HORSE_MARKET','Listing ID must support a stable request receipt');
+  ensure(actor==='player'&&
+   ['owner','breeder','farm'].includes(state.player.role)&&
+   state.player.operation_id===p.seller_id||
+   actor==='system'&&p.seller_id!==state.player.operation_id,
+   'HORSE_MARKET_PERMISSION','Only the legal seller or rival AI can authorize a listing');
+  ensure(currentHorseOwnerId(state,world,p.horse_id)===p.seller_id,
+   'NOT_HORSE_OWNER','Management and boarding are not legal title');
+  ensureCareerHorseTransferReady(state,p.horse_id);
+  ensure(Number.isSafeInteger(p.price_minor)&&p.price_minor>0&&
+   p.price_minor<=1000000000000,
+   'HORSE_SALE_PRICE','A listing must state a funded sale price in cents');
+  ensure(validDate(p.expires_on)&&p.expires_on>=state.clock.date,
+   'HORSE_MARKET_DATE','Sale listing must expire on or after today');
+  const listings=rt.market_listings||(rt.market_listings={});
+  ensure(!Object.hasOwn(listings,p.listing_id)&&
+   !Object.values(listings).some(l=>l.horse_id===p.horse_id&&l.status==='OPEN')&&
+   !Object.values(rt.pending_transfers).some(x=>x.horse_id===p.horse_id),
+   'HORSE_MARKET_DUPLICATE','A horse can have only one open sale commitment');
+  listings[p.listing_id]={listing_id:p.listing_id,
+   horse_id:p.horse_id,seller_id:p.seller_id,price_minor:p.price_minor,
+   listed_on:state.clock.date,expires_on:p.expires_on,status:'OPEN'};
+  emit('HORSE_SALE_LISTED',{...listings[p.listing_id]});
+ }else if(type==='CANCEL_HORSE_LISTING'){
+  validRequestId(p.listing_id);
+  const l=rt.market_listings?.[p.listing_id];
+  ensure(l&&l.status==='OPEN','HORSE_MARKET','Only open listings can be cancelled');
+  ensure(actor==='system'||actor==='player'&&
+   ['owner','breeder','farm'].includes(state.player.role)&&
+   state.player.operation_id===l.seller_id,
+   'HORSE_MARKET_PERMISSION','Only the legal selling operation may withdraw');
+  l.status='CANCELLED';l.cancelled_on=state.clock.date;
+  emit('HORSE_SALE_LISTING_CANCELLED',{listing_id:l.listing_id,
+   horse_id:l.horse_id,seller_id:l.seller_id});
+ }else if(type==='BUY_LISTED_HORSE'){
+  ensure(actor==='player'&&Boolean(state.player.operation_id)&&
+   ['owner','farm','breeder'].includes(state.player.role),
+   'HORSE_MARKET_PERMISSION','A buyer must control an actual operating business');
+  validRequestId(p.listing_id);validRequestId(p.settlement_id);
+  const l=rt.market_listings?.[p.listing_id];
+  ensure(l&&l.status==='OPEN'&&l.expires_on>=state.clock.date,
+   'HORSE_MARKET','An active seller-approved listing is required');
+  ensure(state.player.operation_id!==l.seller_id,
+   'HORSE_MARKET','A seller cannot buy its own horse');
+  verifyTransferHorse(state,world,l.horse_id);
+  ensure(currentHorseOwnerId(state,world,l.horse_id)===l.seller_id,
+   'STALE_HORSE_OWNER','Seller no longer owns the listed horse');
+  ensureCareerHorseTransferReady(state,l.horse_id);
+  const requestId='MARKET:'+l.listing_id;
+  ensure(!Object.hasOwn(rt.pending_transfers,requestId)&&
+   !Object.values(rt.pending_transfers).some(x=>x.horse_id===l.horse_id),
+   'HORSE_MARKET','A live transfer already uses this horse');
+  rt.pending_transfers[requestId]={request_id:requestId,
+   horse_id:l.horse_id,from_owner_id:l.seller_id,
+   to_owner_id:state.player.operation_id,transfer_type:'SALE',
+   requested_on:state.clock.date,price_minor:l.price_minor};
+  ownershipAction({state,world,command:{...command,
+   type:'SETTLE_HORSE_SALE',actor:'system',payload:{
+    request_id:requestId,settlement_id:p.settlement_id}},emit});
+  l.status='SOLD';l.sold_on=state.clock.date;
+  l.buyer_id=state.player.operation_id;
+  l.settlement_transaction_id='HORSE_SALE:'+p.settlement_id;
+  emit('HORSE_LISTING_SOLD',{listing_id:l.listing_id,
+   horse_id:l.horse_id,seller_id:l.seller_id,buyer_id:l.buyer_id,
+   price_minor:l.price_minor,transaction_id:l.settlement_transaction_id});
+ }else if(type==='ASSIGN_HORSE_OWNER'){
   ensure(actor==='system','UNAUTHORIZED_COMMAND','Only game authoring can assign a previously unowned accepted horse');
   verifyHorse(world,p.horse_id);verifyOrg(world,p.owner_id);
   ensure(currentHorseOwnerId(state,world,p.horse_id)===null,
@@ -281,10 +371,27 @@ export function ownershipAction({state,world,command,emit}){
    }
   }
   delete rt.pending_transfers[p.request_id];
-  if(state.player.role==='owner'&&state.player.operation_id){
-   if(state.player.operation_id===request.from_owner_id)
+  for(const listing of Object.values(rt.market_listings||{})){
+   if(listing.horse_id===request.horse_id&&listing.status==='OPEN'&&
+    'MARKET:'+listing.listing_id!==p.request_id){
+    listing.status='CANCELLED';listing.cancelled_on=state.clock.date;
+    emit('HORSE_SALE_LISTING_CANCELLED',{listing_id:listing.listing_id,
+     horse_id:listing.horse_id,reason:'LEGAL_OWNER_CHANGED'});
+   }
+  }
+  if(['owner','breeder','farm'].includes(state.player.role)&&state.player.operation_id){
+   const playerId=state.player.operation_id;
+   const registered=state.runtime.registered_horses?.by_id?.[request.horse_id];
+   const source=indexWorld(world).horseById.get(
+    registered?.world_source_horse_id||request.horse_id);
+   // A horse sold by its legal owner may remain in the same business's
+   // MANAGED, BOARDED, TRAINED, BRED or FOALED_AT inventory.
+   const stillManaged=Boolean(source&&[
+    source.managementOrganizationId,source.careFacilityId,source.trainingBarnId,
+    source.breederId,source.foalingFarmId].includes(playerId));
+   if(playerId===request.from_owner_id&&!stillManaged)
     state.stable_horse_ids=state.stable_horse_ids.filter(id=>id!==request.horse_id);
-   else if(state.player.operation_id===request.to_owner_id&&
+   else if(playerId===request.to_owner_id&&
     !state.stable_horse_ids.includes(request.horse_id))
     state.stable_horse_ids.push(request.horse_id);
   }
