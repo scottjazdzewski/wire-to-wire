@@ -6,6 +6,7 @@
 import {same1999PhysicalVenue} from './physical-venue-1999.js';
 import {ensure,isObject,worldIdentity,nextDate,validDate} from './contracts.js';
 import {buildConditionBook1999} from '../../public/next/1999-condition-book-engine.mjs';
+import {trackMeetOpen1999,trackProgram1999} from '../../public/next/1999-track-program.mjs';
 import {getGameHorsePerformance,modelHorsePostRaceResponse} from './horse-care.js';
 import {applyRaceAgentFeedback} from './daily-agents.js';
 import {registerPostRaceCampaigns} from './post-race-campaign-1999.js';
@@ -299,6 +300,21 @@ function raceShape(book){
 export function raceEligibility(state,horse,race){
  const reasons=[],care=state.runtime.horse?.[horse.horse_id],site=state.runtime.facilities?.sites?.[horse.current_residence_id];
  const age=1999-horse.foaling_year;
+ if(horse.status!=='IN_TRAINING'||!horse.starting_attributes)
+  reasons.push('HORSE_NOT_ACTIVE_RACEHORSE');
+ if(site&&(site.status!=='ACTIVE'||
+   site.staff_required>0&&site.staff_count<site.staff_required))
+  reasons.push('HOME_FACILITY_NOT_OPERATING');
+ if(race.source==='WTW_1999_TRACK_SPECIFIC_MEET_PROGRESSION'){
+  const meeting=trackProgram1999(race.track_id);
+  if(!trackMeetOpen1999(race.track_id,race.date))
+   reasons.push('RACECOURSE_NOT_RUNNING_ON_DATE');
+  if(!['DIRT','TURF'].includes(race.surface)||!meeting||
+    !meeting.surfaces.includes(race.surface==='TURF'?'Turf':'Dirt')||
+    !Number.isFinite(race.distance_furlongs)||
+    race.distance_furlongs<4||race.distance_furlongs>12)
+   reasons.push('RACE_SURFACE_OR_DISTANCE_NOT_OFFERED');
+ }
  if(race.age==='3YO'&&age!==3||race.age==='2YO'&&age!==2||
    race.age==='3YO+'&&age<3||race.age==='4YO+'&&age<4)
   reasons.push('AGE_RESTRICTION');
@@ -639,6 +655,15 @@ function settle1999Race({state,world,race_id,emit}){
  ensure(horseSet.size===entries.length,'RACE_FIELD','Duplicate horse in race field');
  ensure(new Set(entries.map(e=>e.jockey_id)).size===entries.length,
   'RACE_FIELD','One jockey may not ride multiple starters in one race');
+ // Entry approval can be days old: never settle an inactive, medically unfit,
+ // wrong-age or wrong-location horse just because its jockey was booked.
+ for(const entry of entries){
+  const horse=state.runtime.registered_horses.by_id[entry.horse_id];
+  const blockers=raceEligibility(state,horse,race).reasons.filter(reason=>
+   reason!=='ENTRY_DEADLINE'&&reason!=='ENTRY_TOO_EARLY');
+  ensure(blockers.length===0,'RACE_DAY_INELIGIBLE',
+   entry.horse_id+': '+blockers.join(','));
+ }
  const scored=entries.map(e=>performance(state,world,race,e)).
   sort((a,b)=>b.composite-a.composite||a.horse.horse_id.localeCompare(b.horse.horse_id));
  for(const row of scored)if(row.tactical)emit('RACE_TACTICAL_EXECUTION',{
