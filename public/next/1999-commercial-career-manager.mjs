@@ -802,9 +802,15 @@ function bootstrapBundledCareer(){
  bundledCareerBootstrap=(async()=>{
   if(window.WTWDesktop?.runtime!=='windows-desktop')
    throw Error('Bundled career auto-load is available only in the Windows desktop app');
-  await open();
-  busy=true;notice='LOADING THE SHARED 1999 TEST CAREER…';await refresh();
+  // Keep the legacy modal controls in explicit desktop smoke tests. On a
+  // normal user's first launch, boot directly to the real game dashboard.
+  const directToGame=!window.WTWDesktop.smokeMode;
+  silentDesktopStartup=directToGame;
   try{
+   await open();
+   busy=true;
+   notice='LOADING THE PLAYABLE JANUARY 1999 WORLD…';
+   await refresh();
    const response=await fetch('/assets/careers/WTW_1999_FULL_WORLD_SHARED_CAREER_V10.wtwcareer.gz?rev=wtw-shared-career-v10-20261117');
    if(!response.ok)throw Error('Bundled shared career file is missing ('+response.status+')');
    if(typeof DecompressionStream!=='function')
@@ -814,14 +820,35 @@ function bootstrapBundledCareer(){
    const file=new File([bytes],'WTW_1999_FULL_WORLD_SHARED_CAREER.wtwcareer',
     {type:'application/json'});
    const result=await importSharedCareerFile(file,{preserveExistingProgress:true});
-   return {...result,horseCount:fullIndustryManifest.horseCount,
+   // A new EXE opens a real Kingsmere owner career. A previously saved
+   // Kingsmere run resumes at its saved date; never reset player progress.
+   if(activeWorldCareer?.run?.player?.operation_id!=='O-000061')
+    await startCanonicalRun('O-000061');
+   if(!activeWorldCareer?.run||fullIndustryManifest?.horseCount!==300000||
+      fullIndustryManifest?.personCount!==75705)
+    throw Error('Playable 1999 census or Kingsmere career is incomplete');
+   publishCareerReadModel();
+   return {...result,runId:activeWorldCareer.run.run_id,
+    gameDate:activeWorldCareer.run.clock.date,
+    operationId:activeWorldCareer.run.player.operation_id,
+    horseCount:fullIndustryManifest.horseCount,
     personCount:fullIndustryManifest.personCount,
-   playableHorseCount:activeWorldCareer.playableHorseCount,
-   operationInventoryCount:activeWorldCareer.operationInventoryCount};
+    playableHorseCount:activeWorldCareer.playableHorseCount,
+    operationInventoryCount:activeWorldCareer.operationInventoryCount};
   }catch(error){
-   notice='SHARED 1999 CAREER LOAD FAILED · '+String(error?.message||error);
-   await refresh();throw error;
-  }finally{busy=false;await refresh()}
+   silentDesktopStartup=false;
+   notice='JANUARY 1999 AUTO-LOAD FAILED · '+String(error?.message||error)+
+    ' · Your existing careers are unchanged. Use Open Saved 1999 World to recover.';
+   await refresh();
+   throw error;
+  }finally{
+   busy=false;
+   if(silentDesktopStartup){
+    await refresh();
+    silentDesktopStartup=false;
+    modal().hidden=true;
+   }else await refresh();
+  }
  })();
  return bundledCareerBootstrap;
 }
@@ -921,9 +948,14 @@ async function openNextTestRace(){
   ' player horses entered. Advance days to race day.';
 }
 let busy=false,notice='';
+let silentDesktopStartup=false;
 async function refresh(){
  publishCareerReadModel();
  const root=modal();
+ // Desktop first launch is a real game startup, not a world-builder wizard.
+ // Preserve the interactive manager when the player opens it deliberately
+ // and in smoke tests where its controls are used to advance the game.
+ if(silentDesktopStartup&&root.hidden)return;
  const current=config().current(),slots=await listSlots();
  const mareTurnover=fullIndustryManifest?.plan?.nextSeasonMareTurnover||null;
  const saved=slots.map(x=>'<div class="wtw-cc-slot"><div><strong>'+esc(x.name)+'</strong>'+
