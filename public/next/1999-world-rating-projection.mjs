@@ -26,7 +26,7 @@ export function project1999SavedHorseRatings(h,{seed=19990101}={}){
  const base={ratingCoverage:coverage+'/'+OPENING_HORSE_RATING_KEYS.length,
   ratingSource:h?.ratingsProvenance||'SOURCE_UNVERIFIED',
   ...shown(ratings)};
- if(missing.length)return {...base,ratingIntegrity:'MISSING: '+missing.join(', '),
+ if(missing.length)return {...base,ratingDataStatus:'MISSING: '+missing.join(', '),
   ca:null,pa:null,abilityMethod:'UNRATED_SOURCE'};
  const age=Number.isSafeInteger(h.foalYear)?1999-h.foalYear:null;
  const racing=(h.status==='RACING'||h.status==='TWO_YEAR_OLD_PROSPECT')&&
@@ -50,7 +50,7 @@ export function project1999SavedHorseRatings(h,{seed=19990101}={}){
  const ca=gameplay?gameplay.current_ability:
   potential===null?latent:Math.min(latent,potential);
  const pa=gameplay?gameplay.potential_ability:potential;
- return {...base,ratingIntegrity:'COMPLETE',ca,pa,
+ return {...base,ratingDataStatus:'COMPLETE',ca,pa,
   athleticIndex:latent,modeledPotential:potential,
   abilityMethod:gameplay?'EXACT_GAMEPLAY_STARTING_ATTRIBUTES':
    'MODELED_LATENT_NONRUNNER_NOT_RACE_READY',
@@ -62,7 +62,7 @@ export function project1999SavedEntityRatings(entity){
  const values=Object.values(raw).filter(numeric);
  const overall=values.length?Math.round(values.reduce((a,b)=>a+b,0)/values.length):null;
  return {ratingCoverage:values.length,
-  ratingIntegrity:values.length?'COMPLETE':'MISSING',
+  ratingDataStatus:values.length?'COMPLETE':'MISSING',
   ratingSource:entity?.ratingsProvenance||'SOURCE_UNVERIFIED',
   overallRating:overall,...shown(raw)};
 }
