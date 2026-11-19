@@ -99,3 +99,24 @@ names. Creative believability has not been independently certified at 90%.
 Future foals are still a separate lifecycle registry and are not yet
 automatically exposed as selectable owned runners by this V10 opening-
 horse Naming Desk. That integration is outstanding.
+
+## 300,000-horse preview efficiency and parity
+
+The canonical `screenGameHorseName` and `screenStoryFirstIdeas` now
+accept an **optional, already-built, normalized** `registeredNameKeys`
+Set. The full V10 saved-career manager builds it from its live
+300,000-horse source and active registered horses once per world/run
+revision, then shares it with every subsequent preview. The default
+screening API still scans the actual source world when no index was
+supplied, so older naming callers behave exactly as before.
+
+The independent gate still checks each actual horse, editor evidence
+quote, name format, existing owner-reviewed exclusions, previously
+chosen/rejected names, repeated word openings and the external
+registration-not-approved status. The final durable CHOOSE commit still
+runs its own exhaustive source/registered-name collision check; the
+optimized preview index is **not a substitute for authority**.
+
+Tests directly compare indexed and ordinary canonical screening
+results for occupied and available names, verify both source/browser
+code mirrors remain identical and reject an invalid index type.
