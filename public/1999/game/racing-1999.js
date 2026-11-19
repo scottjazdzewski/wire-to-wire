@@ -327,9 +327,16 @@ export function raceEligibility(state,horse,race){
  const liveRoster=state.runtime.registered_horses?.schema==='WTW_CAREER_HORSES_V1';
  if(liveRoster&&(horse.status!=='IN_TRAINING'||!horse.starting_attributes))
   reasons.push('HORSE_NOT_ACTIVE_RACEHORSE');
- if(liveRoster&&site&&(site.status!=='ACTIVE'||
-   site.staff_required>0&&site.staff_count<site.staff_required))
-  reasons.push('HOME_FACILITY_NOT_OPERATING');
+ // A visitor is housed at the actual paid receiving barn, while a horse
+ // legitimately on its outbound carrier still has a reserved destination.
+ // Do not disqualify an arrived visitor because its permanent home is dark.
+ const locationTrip=horseTravelStatus(state,horse.horse_id);
+ const careSiteId=['OUTBOUND','AT_DESTINATION'].includes(locationTrip?.status)?
+  locationTrip.destination_site_id:horse.current_residence_id;
+ const careSite=state.runtime.facilities?.sites?.[careSiteId];
+ if(liveRoster&&(!careSite||careSite.status!=='ACTIVE'||
+    careSite.staff_required>0&&careSite.staff_count<careSite.staff_required))
+  reasons.push('RACE_CARE_FACILITY_NOT_OPERATING');
  if(liveRoster&&race.source==='WTW_1999_TRACK_SPECIFIC_MEET_PROGRESSION'){
   const meeting=trackProgram1999(race.track_id);
   if(!trackMeetOpen1999(race.track_id,race.date))
