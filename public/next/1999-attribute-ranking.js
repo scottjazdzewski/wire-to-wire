@@ -27,7 +27,7 @@ function render({horses,adapter,app,ownerBadge,safe}){
    ...Object.fromEntries(Object.keys(h.attrs).map(k=>[k,score(h.attrs,k)]))},criteria));
  const sort=app.stableAttributeSort||selected.key;
  rows.sort((a,b)=>{
-  const value=h=>sort==='name'?h.name:sort==='age'?Number(h.info.age):sort==='sex'?h.info.sex:
+  const value=h=>sort==='name'?h.name:sort==='age'?(h.info.age==null||String(h.info.age).trim()===''?null:Number(h.info.age)):sort==='sex'?h.info.sex:
    sort==='status'?h.info.racing_status:score(h.attrs,sort);
   const x=value(a),y=value(b);
   if(x==null)return y==null?a.name.localeCompare(b.name):1;
