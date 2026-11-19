@@ -1101,17 +1101,26 @@ async function prepareLifecycleSeason(store,manifest,runKey,{year,mareRecords,
 }
 async function turnoverForYear(store,manifest,runKey,year,horseUpdates,
  {overrideMap=new Map(),poolCache=new Map(),stallionPoolCache=new Map(),
-  birthCohortCache=new Map(),graduatedYears=new Map(),
+  maturePoolCache=new Map(),birthCohortCache=new Map(),graduatedYears=new Map(),
   graduatedStallionYears=new Map(),directory,racingPopulation,
   previousLiveFoals=0}={}){
  const openingMares=await readPoolRecords(store,manifest,runKey,year-1,
   overrideMap,poolCache.get(year-1)||null,graduatedYears);
- const openingStallions=await readStallionPoolRecords(store,manifest,runKey,
-  year-1,overrideMap,stallionPoolCache.get(year-1)||null);
- const eligible=await readEligibleFemaleCandidates(store,manifest,runKey,year,
-  overrideMap,birthCohortCache,graduatedYears);
- const eligibleMales=await readEligibleStallionCandidates(store,manifest,runKey,
-  year,overrideMap,birthCohortCache,graduatedStallionYears);
+ const openingStallions=(await readStallionPoolRecords(store,manifest,runKey,
+  year-1,overrideMap,stallionPoolCache.get(year-1)||null))
+  .map(h=>project1999HorseForYear(h,year));
+ // Eligible breeders must still be alive and racing in their real saved run.
+ const priorAdults=year===2000?null:(maturePoolCache.get(year-1)||
+  await store.get('industryLifecycle',lifecycleKey(runKey,
+   'mature-pool:'+(year-1))));
+ const activeIds=Array.isArray(priorAdults)?new Set(priorAdults.filter(h=>
+  h.status==='RACING').map(h=>h.id)):null;
+ const eligible=(await readEligibleFemaleCandidates(store,manifest,runKey,year,
+  overrideMap,birthCohortCache,graduatedYears))
+  .filter(h=>!activeIds||activeIds.has(h.id));
+ const eligibleMales=(await readEligibleStallionCandidates(store,manifest,runKey,
+  year,overrideMap,birthCohortCache,graduatedStallionYears))
+  .filter(h=>!activeIds||activeIds.has(h.id));
  const market=marketPlanForSeason(manifest,directory,{year,
   broodmares:openingMares.length,stallions:openingStallions.length,
   racingPopulation,previousLiveFoals});
@@ -1119,8 +1128,15 @@ async function turnoverForYear(store,manifest,runKey,year,horseUpdates,
   broodmares:openingMares.length,eligibleFemalePopulation:eligible.length,
   marketIndex:market.marketIndex});
  const rank=(type,h)=>seeded1999Unit(manifest.seed,type+':'+year+':'+h.id);
- const retireIds=new Set([...openingMares].sort((a,b)=>rank('retire',a)-rank('retire',b)||
-  a.id.localeCompare(b.id)).slice(0,turnover.retired).map(h=>h.id));
+ const forcedAgeRetire=openingMares.filter(h=>year-Number(h.foalYear)>=26)
+  .map(h=>h.id);
+ const forcedIds=new Set(forcedAgeRetire);
+ const retireIds=new Set([...forcedAgeRetire,
+  ...[...openingMares].filter(h=>!forcedIds.has(h.id))
+   .sort((a,b)=>rank('retire',a)-rank('retire',b)||
+   a.id.localeCompare(b.id))
+   .slice(0,Math.max(0,turnover.retired-forcedAgeRetire.length))
+   .map(h=>h.id)]);
  const mareGraduates=[...eligible].sort((a,b)=>rank('graduate',a)-rank('graduate',b)||
   a.id.localeCompare(b.id)).slice(0,turnover.graduatedIntoBreeding);
  for(const mare of openingMares)if(retireIds.has(mare.id)){
@@ -1178,11 +1194,18 @@ async function turnoverForYear(store,manifest,runKey,year,horseUpdates,
  const nextStallionPool=openingStallions
   .filter(h=>!retiredStallionIds.has(h.id))
   .concat(stallionGraduates.map(h=>({...h,status:'STALLION',cohort:'stallions',
-   breedingStatus:'ACTIVE',graduatedYear:year,age:undefined})));
+   breedingStatus:'ACTIVE',graduatedYear:year,age:year-Number(h.foalYear)})));
  if(!nextStallionPool.length||new Set(nextStallionPool.map(h=>h.id)).size!==
   nextStallionPool.length)
   throw Error('Stallion turnover produced an empty or duplicate active pool');
  stallionPoolCache.set(year,nextStallionPool);
+ const postTurnoverCovers=Math.min(market.targetCovers,nextPool.length,
+  nextStallionPool.length*220);
+ const executableMarket={...market,targetCovers:postTurnoverCovers,
+  plannedFoals:Math.min(market.plannedFoals,
+   Math.floor(postTurnoverCovers*.90*.96)),
+  constrainedByBreedingCapacity:market.constrainedByBreedingCapacity||
+   postTurnoverCovers<market.targetCovers};
  const result=planAnnualBroodmareTurnover({seed:manifest.seed,year,
   broodmares:openingMares.length,eligibleFemalePopulation:eligible.length,
   marketIndex:market.marketIndex});
@@ -1202,7 +1225,7 @@ async function turnoverForYear(store,manifest,runKey,year,horseUpdates,
   marketIndex:market.marketIndex,provenance:stallionPlan.provenance};
  return {turnover:entry,stallionTurnover:stallionEvent,nextPool,
   nextStallions:nextStallionPool,eligible,eligibleMales,retireIds,
-  mareGraduates,stallionGraduates,market};
+  mareGraduates,stallionGraduates,market:executableMarket};
 }
 
 /**
