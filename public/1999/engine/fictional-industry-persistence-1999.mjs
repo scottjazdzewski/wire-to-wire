@@ -433,6 +433,25 @@ export async function createPersistent1999Industry({
   }
   throw Error('Personnel name index outside opening workforce');
  },[],{normalizeNamesForAccent:true});
+ // Existing staffing ordinal i already works at farms[i % farms.length].
+ // V13 records its reciprocal farm leadership without changing V10 staff.
+ const persistedLeadership=ownerPrincipalPeople.length>0;
+ const managerAssignments=new Map();
+ if(persistedLeadership){
+  let managerOffset=0;
+  for(const [role,n] of roleCounts){
+   if(role==='farm_manager')break;
+   managerOffset+=n;
+  }
+  for(let i=0;i<(staffing.counts.farm_manager||0);i++){
+   const farm=farms[i%farms.length];
+   const id='P-FICTIONAL-1999-FARM-MANAGER-'+String(i+1).padStart(7,'0');
+   const name=personnelNames[managerOffset+i]?.name;
+   if(!name)throw Error('Named farm manager is missing from existing staff census');
+   const rows=managerAssignments.get(farm.id)||[];
+   rows.push({id,name});managerAssignments.set(farm.id,rows);
+  }
+ }
  let manifest=existing??{
   schema:PERSISTENT_INDUSTRY_SCHEMA,worldId,seed,batchSize,directoryHash,
   targetOpeningHorses,ensureCircuitCoverage,status:'GENERATING',
@@ -488,8 +507,13 @@ export async function createPersistent1999Industry({
    mergeDirectoryRecord(connect1999DirectoryEntity(track,{seed,type:'track'}),'TRACK');
   for(const farm of farms){
    const homeTrackId=farm.homeTrackId??tracks.find(t=>farm.id.includes(t.id))?.id??null;
+   const managed=managerAssignments.get(farm.id)||[];
    mergeDirectoryRecord(connect1999DirectoryEntity({...farm,
-    location:operatingLocation(farm,homeTrackId)},{seed,type:'farm',homeTrackId}),
+    location:operatingLocation(farm,homeTrackId),
+    ...(persistedLeadership?{
+     managerIds:managed.map(p=>p.id),
+     managerNames:managed.map(p=>p.name)
+    }:{})},{seed,type:'farm',homeTrackId}),
     'BREEDING_OR_CARE_FACILITY','farm');
   }
   for(const owner of owners){
@@ -501,6 +525,8 @@ export async function createPersistent1999Industry({
   const records=[...byId.values()];
   const ids=new Set([...tracks,...farms,...owners,...ownerPrincipalPeople]
    .map(e=>e.id));
+  for(const rows of managerAssignments.values())
+   for(const manager of rows)ids.add(manager.id);
   const audit=validate1999GraphBatch(records,ids);
   if(!audit.valid)throw Error('Industry directory has broken graph references');
   const next={...manifest,directoryCommitted:true};
@@ -556,7 +582,9 @@ export async function createPersistent1999Industry({
     batch.records.map(h=>connect1999Horse(h,{seed,
      trainerCount:staffing.counts.trainer,jockeyCount:staffing.counts.jockey,
      staffByTrack,staffByFarm})):
-    batch.records.map(p=>connect1999Person(p,{seed}));
+    batch.records.map(p=>connect1999Person(p,{
+     seed,linkFarmManagement:persistedLeadership
+    }));
    const audit=validate1999IndustryReferences(records,{
    plan,staffing,tracks,farms,owners,foundingHorses,
    ownerPrincipalCount:ownerPrincipalPeople.length});
