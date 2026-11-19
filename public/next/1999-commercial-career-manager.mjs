@@ -297,8 +297,13 @@ function previewSavedCareerHorseNames(options={}){
  const career=activeWorldCareer;
  if(!career?.run||!/^WTW1999FullIndustry-COHORTS-V6-OWNER-V10-/.test(
   career.manifest?.worldId||''))throw Error('Open the saved V10 owner career first');
+ // Force the already-authoritative V10 in-use index to match the current
+ // source world and saved run revision. The shared game editorial screen then
+ // uses this same normalized Set, not 300,000 repeated linear name scans.
+ isSavedCareerHorseNameInUse('');
  return previewV10OwnerHorseNames({
   ...options,world:career.world,run:career.run,
+  registeredNameKeys:cachedAvailableNames.registered,
   nameFeedback:career.namingFeedback??createNamingFeedback()
  });
 }
