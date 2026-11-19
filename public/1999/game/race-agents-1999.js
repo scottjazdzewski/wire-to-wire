@@ -419,14 +419,21 @@ export function run1999RacingAgents({state,world,emit}){
   for(const id of [...race.field]){
    const e=state.runtime.entries[id],h=state.runtime.registered_horses.by_id[e.horse_id],
     care=state.runtime.horse[h.horse_id];
+   // Evaluate the same current race-day contract as actual settlement:
+   // an after-booking retirement, class change, closed facility or welfare
+   // failure must scratch the entrant rather than deadlock ADVANCE_DAY.
+   const raceDayBlockers=raceEligibility(state,h,race).reasons.filter(reason=>
+    reason!=='ENTRY_DEADLINE'&&reason!=='ENTRY_TOO_EARLY');
    if(e.status!=='BOOKED'||!same1999PhysicalVenue(effectiveHorseTrack(state,h),race.track_id)||
+    raceDayBlockers.length>0||
     !care||care.training.sorenessDays>0||
     care.training.currentRisk>=.78||care.training.readiness<.38||
     care.history.at(-1)?.unfunded===true){
     e.status='SCRATCHED';e.scratch_reason='RACE_DAY_WELFARE_OR_BOOKING';
     race.field=race.field.filter(x=>x!==id);
     emit('RACE_DAY_SCRATCH',{race_id:race.id,horse_id:e.horse_id,
-     reason:e.scratch_reason,health_risk:care?.training.currentRisk??null});
+     reason:e.scratch_reason,health_risk:care?.training.currentRisk??null,
+     ineligible_reasons:raceDayBlockers});
    }
   }
   if(race.field.length>=2){
