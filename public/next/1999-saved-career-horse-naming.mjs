@@ -20,6 +20,18 @@ import {screenStoryFirstIdeas}
 import {rankNamingCandidates,excludedNamingFeedbackNames}
  from '../1999/game/horse-naming-feedback-v489.js';
 
+/** Project the same source-backed horse with this career's saved display name.
+ * The source record and the immutable world remain untouched.
+ * No ownership, pedigree, lifecycle, financial, or physical relationship edits.
+ */
+export function projectCareerSavedHorseName(horse,worldEdits=null){
+ if(horse==null)return null;
+ const edit=worldEdits?.byId?.['horse:'+horse.id];
+ if(typeof edit?.name!=='string'||!edit.name.trim())return horse;
+ return {...horse,name:edit.name,
+  nameDisplaySource:'SAVED_CAREER_HORSE_NAME_OVERRIDE'};
+}
+
 /**
  * Saved careers may contain an edited registered display name for an opening
  * horse. Validate against a projection with those same approved career edits,
