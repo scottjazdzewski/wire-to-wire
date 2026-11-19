@@ -7,7 +7,7 @@ import {createPersistent1999Industry,readPersistent1999IndustryBatch,findPersist
  reopenPersistent1999Industry,encodePersistent1999StoredValue,
  decodePersistent1999StoredValue,PERSISTENT_INDUSTRY_COMPRESSION_SCHEMA,
  readPersistent1999LifecycleHorse,readPersistent1999FoalForecasts,
- readPersistent1999LifecycleEvents}
+ readPersistent1999LifecycleEvents,samePersistent1999CareerImportReadback}
  from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
 import {generate1999SeasonFoalingForecasts,resolve1999FoalBirth}
  from '../public/1999/engine/fictional-industry-breeding-book-1999.mjs';
@@ -841,4 +841,39 @@ test('V10 multiyear career outcome is independent of yearly versus single-save c
  for(const runId of [annual,direct])
   assert.deepEqual((await loadPersistent1999CareerRun(store,manifest,runId))
    .lifecycle,(runId===annual?byYear:once).lifecycle);
+});
+
+test('mature lifecycle migration preserves old shared May 1999 race result and permanent census',()=>{
+ const old={schema:'WTW_INDUSTRY_CAREER_RUN_V1',worldId:'WTW1999V10',
+  worldSeed:19990101,worldSchema:'WTW_PERSISTENT_INDUSTRY_1999_V3',
+  runId:'WTW-RUN-1999-19990101-SIZE-300000',
+  gameDate:'1999-05-29',version:2,
+  player:{role:'owner',operation_id:'O-000061'},
+  changes:{canonicalRun:{run_id:'R-V10',journal:[],races:[{finish:1,horse_id:'H-1'}]}},
+  lifecycle:{schema:'WTW_INDUSTRY_LIFECYCLE_V1',
+   runId:'WTW-RUN-1999-19990101-SIZE-300000',seasonYear:1999,
+   lastDate:'1999-05-29',openingHorseCount:300000,population:340000,
+   foalsBorn:40000,horseDeaths:0,racingPopulation:180000}};
+ const migrated=structuredClone(old);
+ migrated.lifecycle={...migrated.lifecycle,racingPopulation:160000,
+  juvenileDebuts:7500,matureHorseDeaths:0,retiredRacehorses:0};
+ assert.ok(samePersistent1999CareerImportReadback(old,migrated));
+ assert.ok(samePersistent1999CareerImportReadback(old,old,
+  {preservedRun:true}));
+ assert.equal(samePersistent1999CareerImportReadback(old,migrated,
+  {preservedRun:true}),false,
+  'existing local career progress must remain byte-for-byte preserved');
+ for(const updated of [
+  {...migrated,worldId:'WRONG'},
+  {...migrated,gameDate:'1999-05-30'},
+  {...migrated,changes:{canonicalRun:{run_id:'R-V10',races:[]}}},
+  {...migrated,lifecycle:{...migrated.lifecycle,population:339999}},
+  {...migrated,lifecycle:{...migrated.lifecycle,foalsBorn:39999}},
+  {...migrated,lifecycle:{...migrated.lifecycle,horseDeaths:1}}
+ ])assert.equal(samePersistent1999CareerImportReadback(old,updated),false,
+  'race results, date, world and living horse census are immutable');
+ const preLifecycle=structuredClone(old);delete preLifecycle.lifecycle;
+ assert.equal(samePersistent1999CareerImportReadback(preLifecycle,migrated),true);
+ assert.equal(samePersistent1999CareerImportReadback(preLifecycle,{
+  ...migrated,lifecycle:{...migrated.lifecycle,runId:'WRONG'}}),false);
 });
