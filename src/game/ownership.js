@@ -160,9 +160,11 @@ export function ownershipAction({state,world,command,emit}){
   verifyTransferHorse(state,world,p.horse_id);
   validRequestId(p.listing_id);verifyOrg(world,p.seller_id);
   ensure(p.listing_id.length<=110,'HORSE_MARKET','Listing ID must support a stable request receipt');
-  ensure(actor==='system'||actor==='player'&&
-   state.player.role==='owner'&&state.player.operation_id===p.seller_id,
-   'HORSE_MARKET_PERMISSION','Only the legal owner can list this horse');
+  ensure(actor==='player'&&
+   ['owner','breeder','farm'].includes(state.player.role)&&
+   state.player.operation_id===p.seller_id||
+   actor==='system'&&p.seller_id!==state.player.operation_id,
+   'HORSE_MARKET_PERMISSION','Only the legal seller or rival AI can authorize a listing');
   ensure(currentHorseOwnerId(state,world,p.horse_id)===p.seller_id,
    'NOT_HORSE_OWNER','Management and boarding are not legal title');
   ensureCareerHorseTransferReady(state,p.horse_id);
@@ -185,7 +187,8 @@ export function ownershipAction({state,world,command,emit}){
   const l=rt.market_listings?.[p.listing_id];
   ensure(l&&l.status==='OPEN','HORSE_MARKET','Only open listings can be cancelled');
   ensure(actor==='system'||actor==='player'&&
-   state.player.role==='owner'&&state.player.operation_id===l.seller_id,
+   ['owner','breeder','farm'].includes(state.player.role)&&
+   state.player.operation_id===l.seller_id,
    'HORSE_MARKET_PERMISSION','Only the legal selling operation may withdraw');
   l.status='CANCELLED';l.cancelled_on=state.clock.date;
   emit('HORSE_SALE_LISTING_CANCELLED',{listing_id:l.listing_id,
@@ -379,8 +382,8 @@ export function ownershipAction({state,world,command,emit}){
   if(['owner','breeder','farm'].includes(state.player.role)&&state.player.operation_id){
    const playerId=state.player.operation_id;
    const registered=state.runtime.registered_horses?.by_id?.[request.horse_id];
-   const source=world.entities.horses.find(h=>
-    h.id===(registered?.world_source_horse_id||request.horse_id));
+   const source=indexWorld(world).horseById.get(
+    registered?.world_source_horse_id||request.horse_id);
    // A horse sold by its legal owner may remain in the same business's
    // MANAGED, BOARDED, TRAINED, BRED or FOALED_AT inventory.
    const stillManaged=Boolean(source&&[
