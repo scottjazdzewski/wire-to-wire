@@ -121,10 +121,27 @@ export function validateStudServices(state,world){
   const mareKey=x.mare_id+':'+x.year,stallionKey=x.stallion_id+':'+x.year;
   ensure(!unique.has(mareKey),'STUD_SAVE','Duplicate mare covering in saved year');
   unique.add(mareKey);counts.set(stallionKey,(counts.get(stallionKey)||0)+1);
-  ensure(counts.get(stallionKey)<=MAX_ANNUAL_SERVICE_BOOK,
+  const horse=worldIdentity(world,'horses',x.stallion_id);
+  const capacity=int(horse?.serviceBookLimit)&&horse.serviceBookLimit>=1&&
+   horse.serviceBookLimit<=300?
+   Math.min(MAX_ANNUAL_SERVICE_BOOK,horse.serviceBookLimit):MAX_ANNUAL_SERVICE_BOOK;
+  ensure(counts.get(stallionKey)<=capacity,
    'STUD_SAVE','Saved stallion service book overbooked');
   ensure(x.transaction_id===(x.fee_minor?'STUD_SERVICE:'+id:null),
    'STUD_SAVE','Fee receipt identity is inconsistent');
+  if(x.fee_minor){
+   const legs=state.runtime.finances.ledger.filter(y=>
+    y.transaction_id===x.transaction_id);
+   ensure(legs.length===2&&
+    legs.some(y=>y.kind==='STUD_SERVICE_FEE_PAYMENT'&&
+     y.operation_id===x.legal_mare_owner_id&&y.amount_minor===-x.fee_minor)&&
+    legs.some(y=>y.kind==='STUD_SERVICE_FEE_INCOME'&&
+     y.operation_id===x.fee_recipient_organization_id&&y.amount_minor===x.fee_minor)&&
+    legs.every(y=>y.booking_id===id&&y.mare_id===x.mare_id&&
+     y.stallion_id===x.stallion_id&&y.date===x.booked_on)&&
+    legs.reduce((n,y)=>n+y.amount_minor,0)===0,
+    'STUD_SAVE','Paid stud booking requires exact matching cash settlement');
+  }
  }
 }
 export function studServiceBusinessView(state,world,operationId){
