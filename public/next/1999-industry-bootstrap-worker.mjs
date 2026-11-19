@@ -10,6 +10,8 @@ import {createFictionalWorldNameEngine}
  from '/1999/engine/fictional-world-name-engine.mjs';
 import {create1999DestinationNamingMarkets}
  from '/1999/engine/fictional-directory-destination-names-1999.mjs';
+import {materialize1999OwnerPrincipalPeople,ownerPrincipalPersonId}
+ from '/1999/engine/fictional-owner-principal-personnel-v12.mjs';
 import {plan1999Ecosystem} from '/1999/engine/fictional-industry-ecosystem-1999.mjs';
 import {assessFictionalOwnerCapacity,fictionalOwnerPortfolioTier}
  from '/1999/engine/fictional-owner-portfolio-planner.mjs';
@@ -180,10 +182,17 @@ const ownerCircuitOffsets=ownerCountByCircuit.map((_,index)=>
     namingRegion:named.namingRegion,
     destinationNamingModel:destinationPlan.schema,
     namingPrincipalSourceId:named.principalId,
-    namingPrincipalSourceName:named.principalName
+    namingPrincipalSourceName:named.principalName,
+    principalId:ownerPrincipalPersonId(globalIndex),
+    principalName:named.principalName
    }:{}),
    geographyStatus:t.location?.region?'REGION_PROVIDED':'LOCATION_REVIEW_REQUIRED'};
  }));
+ const ownerPrincipalPeople=destinationAligned?
+  materialize1999OwnerPrincipalPeople({
+   seed,owners:generatedOwners,sourceOwners:generated.owners,
+   sourcePeople:generated.people
+  }):[];
  const owners=[...generatedOwners,...canonicalOwners.map(org=>{
   const location=locationFor(org),profile=majorPortfolio[org.id]||{};
   return {id:org.id,name:org.name,location,homeTrackId:homeTrackFor(org),
@@ -227,7 +236,8 @@ const ownerCircuitOffsets=ownerCountByCircuit.map((_,index)=>
    sourceEvidence:h.evidenceStatus||h.population||'APPROVED_FOUNDING_DIRECTORY',
    sourceRevision:founding.schema,sourceRecord:h};
  });
- return {tracks,farms:farmsWithCanon,owners,foundingHorses,requestedSize};
+ return {tracks,farms:farmsWithCanon,owners,foundingHorses,requestedSize,
+  ...(destinationAligned?{ownerPrincipalPeople}:{})};
 }
 
 self.addEventListener('message',async event=>{
