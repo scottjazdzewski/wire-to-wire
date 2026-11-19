@@ -6,7 +6,9 @@
 import {ensure,isObject,requireString,validDate,nextDate,worldIdentity} from './contracts.js';
 export const FACILITY_SCHEMA='WTW_FACILITY_OPERATIONS_V1';
 export const FACILITY_TYPES=Object.freeze(['RACING_STABLE','FARM','STUD_FARM','BREAKING_FACILITY','TRAINING_CENTER']);
-export const FACILITY_COMMANDS=Object.freeze(['FACILITY_SEED_FUNDS','FACILITY_LIST_PROPERTY','FACILITY_ACQUIRE','FACILITY_UPGRADE','FACILITY_BOARDING_CONTRACT','FACILITY_AI_CYCLE','FACILITY_SET_STAFFING','FACILITY_SET_MAINTENANCE','FACILITY_REGISTER_RACING_SITE']);
+export const FACILITY_COMMANDS=Object.freeze(['FACILITY_SEED_FUNDS','FACILITY_LIST_PROPERTY','FACILITY_ACQUIRE','FACILITY_UPGRADE','FACILITY_BOARDING_CONTRACT','FACILITY_AI_CYCLE','FACILITY_SET_STAFFING','FACILITY_SET_MAINTENANCE','FACILITY_REGISTER_RACING_SITE',
+ 'FACILITY_EMPLOY_NAMED_PERSON','FACILITY_SET_PERSON_WAGE',
+ 'FACILITY_TERMINATE_NAMED_PERSON']);
 const IMPROVEMENTS=Object.freeze({
  STALL_BLOCK:{cost_minor:22000000,days:30,stalls:12,quality:0},
  CARE_SYSTEM:{cost_minor:8500000,days:14,stalls:0,quality:10},
@@ -193,6 +195,9 @@ function setStaffing(state,world,p,command,emit){
  permit(state,command,id);
  ensure(site&&site.owner_id===id,'FACILITY_PROPERTY','Not the owner of this property');
  number(p.staff_count,0,500,'staffing headcount');
+ if(site.payroll_staff?.length)
+  ensure(p.staff_count<=site.payroll_staff.length,
+   'FACILITY_STAFFING_PERSONNEL','Named employment cannot create unregistered people');
  const capacity=site.staff_required>0?
   Math.floor(site.stalls*Math.min(p.staff_count,site.staff_required)/site.staff_required):
   site.stalls;
@@ -209,6 +214,93 @@ function setStaffing(state,world,p,command,emit){
   staff_count:site.staff_count,required:site.staff_required,
   daily_payroll_minor:site.staff_count*site.staff_wage_daily_minor});
 }
+/**
+ * Active locally employed game personnel: one authorized commercial contract
+ * on the existing actual owner-operated racing site, never a new HR database.
+ * A retired employment contract remains in the site's in-save signed history.
+ */
+function manageNamedStableEmployee(state,world,p,command,emit){
+ const f=ensureRoot(state),site=f.sites[p.site_id],
+  account=p.operation_id,actor=command.actor,kind=command.type;
+ ensure(Boolean(site)&&site.residence_kind==='TRACK_TRAINER_BARN'&&
+  site.status!=='UNDER_CONSTRUCTION'&&
+  site.owner_id===account&&site.operator_organization_id===account&&
+  (actor==='player'?state.player.operation_id===account&&
+   ['owner','trainer','farm','breeder'].includes(state.player.role):
+   actor==='system'&&state.player.operation_id!==account),
+  'FACILITY_EMPLOYEE_PERMISSION',
+  'Only the actual site operator controls its own paid racing staff');
+ const individual=worldIdentity(world,'people',p.person_id);
+ ensure(Boolean(individual)&&individual.role==='groom'&&
+  individual.workplaceId===site.host_track_id,
+  'FACILITY_EMPLOYEE_LOCATION','Hire a real groom employed on this course');
+ const roster=site.payroll_staff??[];
+ const current=roster.find(c=>c.person_id===p.person_id);
+ const history=site.staff_history??[];
+ if(kind==='FACILITY_EMPLOY_NAMED_PERSON'){
+  ensure(!current&&
+   !Object.values(f.sites).some(s=>
+    (s.payroll_staff||[]).some(c=>c.person_id===p.person_id)),
+   'FACILITY_EMPLOYEE_EXCLUSIVE','Groom already works at another site');
+  ensure(!site.payroll_staff&&site.staff_count===0||
+   Array.isArray(site.payroll_staff),
+   'FACILITY_EMPLOYEE_LEGACY',
+   'Do not invent a named employee to replace existing anonymous legacy staff');
+  ensure(roster.length<500&&
+   Number.isSafeInteger(p.daily_wage_minor)&&p.daily_wage_minor>=6000&&
+   p.daily_wage_minor<=10000,
+   'FACILITY_EMPLOYEE_WAGE','Paid employee needs a valid real contract');
+  ensure(Number.isSafeInteger(state.runtime.finances.operation_balances_minor?.[account])&&
+   state.runtime.finances.operation_balances_minor[account]>=
+    7*(roster.reduce((sum,c)=>sum+c.daily_wage_minor,0)+p.daily_wage_minor),
+   'FACILITY_EMPLOYEE_FUNDS','Owner must finance seven days of employee payroll');
+  const c={person_id:p.person_id,role:'groom',
+   daily_wage_minor:p.daily_wage_minor,started_on:state.clock.date,
+   status:'ACTIVE',source:'ACTUAL_SIGNED_LOCAL_1999_PERSONNEL_CONTRACT'};
+  site.payroll_staff=[...roster,c];
+  site.staff_count=site.payroll_staff.length;
+  const person=state.runtime.people[p.person_id]??{};
+  state.runtime.people[p.person_id]={...person,
+   stable_employer_operation_id:account,stable_employer_site_id:site.id};
+  emit('FACILITY_EMPLOYEE_CONTRACT_SIGNED',{operation_id:account,
+   site_id:site.id,person_id:p.person_id,home_track_id:site.host_track_id,
+   daily_wage_minor:p.daily_wage_minor,staff_count:site.staff_count,
+   first_paid_shift:'NEXT_DAY',owner_charged_immediately:false});
+ }else if(kind==='FACILITY_SET_PERSON_WAGE'){
+  ensure(current&&Number.isSafeInteger(p.daily_wage_minor)&&
+   p.daily_wage_minor>=6000&&p.daily_wage_minor<=10000,
+   'FACILITY_EMPLOYEE_TERMS','Existing active local employee and paid wage required');
+  const prior=current.daily_wage_minor;
+  current.daily_wage_minor=p.daily_wage_minor;
+  emit('FACILITY_EMPLOYEE_TERMS_CHANGED',{operation_id:account,
+   site_id:site.id,person_id:p.person_id,
+   old_daily_wage_minor:prior,new_daily_wage_minor:p.daily_wage_minor,
+   effective_from:'NEXT_UNPAID_GAME_DAY'});
+ }else if(kind==='FACILITY_TERMINATE_NAMED_PERSON'){
+  ensure(current,'FACILITY_EMPLOYEE_TERMS','Existing signed employee required to terminate');
+  site.staff_history=[...history,{...current,status:'ENDED',
+   ended_on:state.clock.date,
+   reason:'EMPLOYER_AUTHORIZED_TERMINATION'}].slice(-120);
+  site.payroll_staff=roster.filter(c=>c.person_id!==p.person_id);
+  site.staff_count=Math.min(site.staff_count,site.payroll_staff.length);
+  if(!site.payroll_staff.length)delete site.payroll_staff;
+  const existing=state.runtime.people[p.person_id];
+  if(existing?.stable_employer_site_id===site.id){
+   delete existing.stable_employer_site_id;
+   delete existing.stable_employer_operation_id;
+   existing.last_employment_end=state.clock.date;
+  }
+  emit('FACILITY_EMPLOYEE_CONTRACT_ENDED',{operation_id:account,
+   site_id:site.id,person_id:p.person_id,
+   reason:'EMPLOYER_AUTHORIZED_TERMINATION',
+   last_employer_earned_minor:existing?.stable_payroll_earned_minor??0,
+   person_identity_preserved:true,payroll_stopped:true});
+ }else ensure(false,'FACILITY_EMPLOYEE_COMMAND','Unsupported employee action');
+ const active=site.payroll_staff||[];
+ site.staff_wage_daily_minor=active.length?
+  Math.round(active.reduce((sum,c)=>sum+c.daily_wage_minor,0)/active.length):0;
+}
+
 function setMaintenance(state,world,p,command,emit){
  const site=ensureRoot(state).sites[p.site_id],id=organization(world,p.operation_id);
  permit(state,command,id);
@@ -316,8 +408,91 @@ export function facilityAction({state,world,command,emit}){
   aiCycle(state,world,emit);
  }else if(command.type==='FACILITY_SET_STAFFING')setStaffing(state,world,p,command,emit);
  else if(command.type==='FACILITY_SET_MAINTENANCE')setMaintenance(state,world,p,command,emit);
+ else if(['FACILITY_EMPLOY_NAMED_PERSON','FACILITY_SET_PERSON_WAGE',
+  'FACILITY_TERMINATE_NAMED_PERSON'].includes(command.type))
+  manageNamedStableEmployee(state,world,p,command,emit);
  else ensure(false,'FACILITY_COMMAND','Unknown facility command');
 }
+
+/** Book named wages only when paid by an actual funded operating account.
+ * Full unpaid shifts are retained as an obligation to the permanent P-ID.
+ * A former employee may receive old wages without becoming employed again. */
+function payNamedEmployee(state,world,site,personId,amount,kind,emit,originalPayer=null){
+ const identity=worldIdentity(world,'people',personId);
+ ensure(identity?.role==='groom'&&identity.workplaceId===site.host_track_id&&
+  integer(amount)&&amount>0,'FACILITY_STAFF_IDENTITY',
+  'Paid worker must be a real same-track groom with a positive wage');
+ const account=originalPayer??site.operator_organization_id??site.owner_id,
+  cash=state.runtime.finances.operation_balances_minor?.[account];
+ ensure(Boolean(worldIdentity(world,'organizations',account)),
+  'FACILITY_STAFF_PAY','Unpaid wage must belong to its original employer');
+ // A former employer may have no active account. Retain its liability rather
+ // than charge a successor operating the same site or invent a receipt.
+ if(!integer(cash)||cash<amount)return false;
+ const day=state.clock.date,
+  transaction='FACILITY_NAMED_PAY:'+day+':'+site.id+':'+personId+':'+kind;
+ post(state,account,-amount,'FACILITY_STAFF_PAYROLL',site.id,null,transaction);
+ const prior=state.runtime.people[personId]??{},
+  earned=prior.stable_payroll_earned_minor??0;
+ ensure(integer(earned)&&earned>=0&&integer(earned+amount),
+  'FACILITY_STAFF_PAY','Employee earnings must reconcile in integer cents');
+ const employed=account===(site.operator_organization_id||site.owner_id)&&
+  (site.payroll_staff||[]).some(e=>e.person_id===personId);
+ state.runtime.people[personId]={...prior,
+  stable_payroll_earned_minor:earned+amount,last_pay_date:day,
+  ...(employed?{stable_employer_operation_id:account,
+   stable_employer_site_id:site.id}:{})};
+ state.runtime.finances.ledger.push({date:day,operation_id:null,
+  employer_operation_id:account,site_id:site.id,
+  person_id:personId,amount_minor:amount,transaction_id:transaction,
+  kind:'FACILITY_NAMED_EMPLOYEE_RECEIPT',
+  source:kind==='ARREARS'?'PAID_PREVIOUSLY_UNFUNDED_LOCAL_STABLE_WAGE':
+   'PAID_LOCAL_1999_STABLE_EMPLOYMENT'});
+ emit('FACILITY_EMPLOYEE_PAID',{date:day,site_id:site.id,
+  owner_id:account,person_id:personId,
+  daily_wage_minor:amount,role:'groom',period:kind});
+ return true;
+}
+function accrueNamedEmployeeWage(site,personId,amount,day,emit,employerId){
+ const root=site.staff_wage_arrears??=(Object.create(null)),
+  current=root[personId];
+ // One employee can be owed separately by an old and a new employer if a
+ // physical site changes operation; never merge one company's liabilities
+ // into another company's wages.
+  key=current&&current.employer_operation_id!==employerId?
+   personId+'|'+employerId:personId,
+  old=root[key];
+ const owed=(old?.owed_minor??0)+amount;
+ ensure(integer(owed)&&owed>0,'FACILITY_STAFF_PAY',
+  'Unpaid staff wage overflow or invalid amount');
+ root[key]={person_id:personId,owed_minor:owed,
+  employer_operation_id:old?.employer_operation_id??employerId,
+  due_days:(old?.due_days??0)+1,
+  first_unpaid_on:old?.first_unpaid_on??day,last_unpaid_on:day};
+ emit('FACILITY_EMPLOYEE_WAGE_UNFUNDED',{date:day,site_id:site.id,
+  person_id:personId,unpaid_today_minor:amount,total_owed_minor:owed,
+  no_cash_receipt:true});
+}
+function payPastNamedWages(state,world,site,emit){
+ const debts=site.staff_wage_arrears;
+ if(!debts)return 0;
+ let paid=0;
+ for(const [debtKey,entry] of Object.entries(debts).
+  sort(([a],[b])=>a.localeCompare(b))){
+  const personId=entry.person_id;
+  if(!payNamedEmployee(state,world,site,personId,entry.owed_minor,
+   'ARREARS',emit,entry.employer_operation_id))
+   continue;
+  paid+=entry.owed_minor;delete debts[debtKey];
+  emit('FACILITY_EMPLOYEE_BACKPAY_SETTLED',{
+   date:state.clock.date,site_id:site.id,person_id:personId,
+   amount_minor:entry.owed_minor,unpaid_days:entry.due_days,
+   first_unpaid_on:entry.first_unpaid_on,last_unpaid_on:entry.last_unpaid_on});
+ }
+ if(!Object.keys(debts).length)delete site.staff_wage_arrears;
+ return paid;
+}
+
 export function advanceFacilities({state,world,emit}){
  const f=ensureRoot(state),day=state.clock.date;
  if(f.last_day===day)return;
@@ -343,7 +518,12 @@ export function advanceFacilities({state,world,emit}){
   }
   if(site.status==='UNDERSTAFFED'&&site.staff_count>=site.staff_required){site.status='ACTIVE';emit('FACILITY_RESTAFFED',{site_id:site.id});}
   if(site.status==='ACTIVE'&&site.staff_required>site.staff_count)site.status='UNDERSTAFFED';
-  if(site.status!=='ACTIVE')continue;
+  if(site.status!=='ACTIVE'){
+   // A terminated employee is still owed wages even when the barn is closed
+   // or understaffed. Pay only with actual cash; never restore employment.
+   expense+=payPastNamedWages(state,world,site,emit);
+   continue;
+  }
   // Worn buildings, thin staffing and maintenance policy change care quality.
   if(day.slice(8)==='01'){
    const wear=site.maintenance_policy==='ECONOMY'?-3:
@@ -374,13 +554,35 @@ export function advanceFacilities({state,world,emit}){
   }
   ensure(integer(revenue),'FACILITY_MONEY','Boarding revenue overflow');
   const cost=site.daily_upkeep_minor;
-  const wages=(site.staff_count??0)*(site.staff_wage_daily_minor??0);
+  const staffRoster=site.payroll_staff;
+ const wages=staffRoster?.length?
+  staffRoster.slice(0,site.staff_count??0).
+   reduce((n,item)=>n+item.daily_wage_minor,0):
+  (site.staff_count??0)*(site.staff_wage_daily_minor??0);
   const maintenance=Math.round((site.maintenance_daily_minor??0)*
    MAINTENANCE_MULTIPLIER[site.maintenance_policy||'STANDARD']/100);
   ensure(integer(wages)&&integer(maintenance),'FACILITY_MONEY','Operating expense overflow');
-  gross+=revenue;expense+=cost+wages+maintenance;
+  // Operating-day totals reflect cash actually settled, not unpaid promises.
+  gross+=revenue;expense+=cost+maintenance;
   if(cost)post(state,account,-cost,'FACILITY_DAILY_OPERATIONS',site.id,null);
-  if(wages)post(state,account,-wages,'FACILITY_STAFF_PAYROLL',site.id,null);
+  expense+=payPastNamedWages(state,world,site,emit);
+  if(staffRoster?.length){
+   for(const staff of staffRoster.slice(0,site.staff_count??0)){
+    const debts=site.staff_wage_arrears;
+    const prior=debts?.[staff.person_id];
+    const oldEmployerDebt=prior&&prior.employer_operation_id===account;
+    if(oldEmployerDebt||debts?.[staff.person_id+'|'+account]||
+     !payNamedEmployee(state,world,site,staff.person_id,
+     staff.daily_wage_minor,'SHIFT',emit)){
+     accrueNamedEmployeeWage(site,staff.person_id,
+      staff.daily_wage_minor,day,emit,account);
+    }else expense+=staff.daily_wage_minor;
+   }
+  }else if(wages){
+   // Unnamed aggregate-payroll legacy records retain their original behavior.
+   post(state,account,-wages,'FACILITY_STAFF_PAYROLL',site.id,null);
+   expense+=wages;
+  }
   if(maintenance)post(state,account,-maintenance,'FACILITY_MAINTENANCE',site.id,null);
   const rent=site.residence_kind==='TRACK_TRAINER_BARN'?(site.track_rent_daily_minor??0):0;
   if(rent)post(state,account,-rent,'FACILITY_TRACK_RENT',site.id,null);
@@ -399,6 +601,7 @@ export function validateFacilityState(state,world){
   'FACILITY_DATE','Invalid property clock');
  const balances=state.runtime.finances.operation_balances_minor||{};
  ensure(isObject(balances),'FACILITY_FINANCES','Invalid operation accounts');
+ const assignedEmployees=new Set();
  for(const [id,amount] of Object.entries(balances)){
   organization(world,id);ensure(integer(amount),'FACILITY_FINANCES','Invalid cash balance');
  }
@@ -432,6 +635,67 @@ export function validateFacilityState(state,world){
   number(site.staff_required??0,0,250,'staff required');
   number(site.staff_count??0,0,500,'current staff');
   number(site.staff_wage_daily_minor??0,0,1000000,'staff wages');
+  if(site.staff_wage_arrears!==undefined){
+   ensure(isObject(site.staff_wage_arrears)&&
+    Object.keys(site.staff_wage_arrears).length<=500&&
+    site.residence_kind==='TRACK_TRAINER_BARN',
+    'FACILITY_STAFF_ARREARS','Unpaid wage records require a real racing barn');
+   for(const [debtKey,debt] of Object.entries(site.staff_wage_arrears)){
+    const personId=debt?.person_id,
+     identity=worldIdentity(world,'people',personId);
+    ensure(identity?.role==='groom'&&
+     identity.workplaceId===site.host_track_id&&
+     (debtKey===personId||
+      debtKey===personId+'|'+debt.employer_operation_id)&&
+     Boolean(worldIdentity(world,'organizations',debt.employer_operation_id))&&
+     integer(debt.owed_minor)&&
+     debt.owed_minor>0&&integer(debt.due_days)&&debt.due_days>0&&
+     validDate(debt.first_unpaid_on)&&validDate(debt.last_unpaid_on)&&
+     debt.first_unpaid_on<=debt.last_unpaid_on&&
+     debt.last_unpaid_on<=state.clock.date,
+     'FACILITY_STAFF_ARREARS','Invalid/unfunded wage, date or source worker');
+   }
+  }
+  if(site.staff_history!==undefined){
+   ensure(Array.isArray(site.staff_history)&&site.staff_history.length<=120,
+    'FACILITY_EMPLOYEE_HISTORY','Invalid ended employee agreements');
+   for(const contract of site.staff_history)
+    ensure(Boolean(worldIdentity(world,'people',contract.person_id))&&
+     contract.role==='groom'&&contract.status==='ENDED'&&
+     validDate(contract.started_on)&&validDate(contract.ended_on)&&
+     contract.started_on<=contract.ended_on&&
+     contract.ended_on<=state.clock.date&&
+     Number.isSafeInteger(contract.daily_wage_minor)&&
+     contract.daily_wage_minor>=6000&&contract.daily_wage_minor<=10000,
+     'FACILITY_EMPLOYEE_HISTORY','Invalid retained employee termination');
+  }
+  if(site.payroll_staff!==undefined){
+   ensure(Array.isArray(site.payroll_staff)&&
+    site.payroll_staff.length>0&&site.payroll_staff.length<=500&&
+    site.staff_count<=site.payroll_staff.length&&
+    site.residence_kind==='TRACK_TRAINER_BARN',
+    'FACILITY_STAFF_ASSIGNMENTS','Named payroll requires a real staffed race barn');
+   for(const employee of site.payroll_staff){
+    const identity=worldIdentity(world,'people',employee.person_id);
+    ensure(identity?.role==='groom'&&employee.role==='groom'&&
+     identity.workplaceId===site.host_track_id&&
+     employee.status==='ACTIVE'&&validDate(employee.started_on)&&
+     employee.started_on<=state.clock.date&&
+     Number.isSafeInteger(employee.daily_wage_minor)&&
+     employee.daily_wage_minor>=6000&&employee.daily_wage_minor<=10000&&
+     !assignedEmployees.has(employee.person_id),
+     'FACILITY_STAFF_ASSIGNMENTS','Invalid/duplicated employee, wage or home circuit');
+    assignedEmployees.add(employee.person_id);
+   }
+   if(site.payroll_staff.length===1)
+    ensure(site.staff_wage_daily_minor===site.payroll_staff[0].daily_wage_minor,
+     'FACILITY_STAFF_ASSIGNMENTS','Named contract wage differs from site payroll');
+   if(site.payroll_staff.length>1)
+    ensure(site.staff_wage_daily_minor===Math.round(
+     site.payroll_staff.reduce((sum,c)=>sum+c.daily_wage_minor,0)/
+      site.payroll_staff.length),
+     'FACILITY_STAFF_ASSIGNMENTS','Average site wages must match actual contract book');
+  }
   number(site.maintenance_daily_minor??0,0,100000000,'maintenance cost');
   ensure(site.maintenance_policy===undefined||
    Object.hasOwn(MAINTENANCE_MULTIPLIER,site.maintenance_policy),
