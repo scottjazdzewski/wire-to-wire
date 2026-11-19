@@ -57,6 +57,61 @@ capture founder-facility '?ui=FoundingProfile%3Afacility%3AO-000068' 'ng-track-w
 capture aqueduct-track '?ui=WorldRecord%3Atrack%3AT-0001' 'ng-profile-track'
 capture belmont-track '?ui=WorldRecord%3Atrack%3AT-0002' 'ng-profile-track'
 capture gulfstream-track '?ui=WorldRecord%3Atrack%3AT-0017' 'ng-profile-track'
+
+# LANE 8 — exact-ID approved artwork in ACTUAL management profiles, not loose files.
+# Existing Belmont/Gulfstream captures above remain the baseline for their logos.
+capture davenport-hall-facility '?ui=FoundingProfile%3Afacility%3AO-FOUNDING-1999-001' 'ng-profile-farm'
+capture split-rail-facility '?ui=FoundingProfile%3Afacility%3AO-FOUNDING-1999-004' 'ng-profile-farm'
+capture comanche-track '?ui=WorldRecord%3Atrack%3AT-0061' 'ng-profile-track'
+capture bluff-city-track '?ui=WorldRecord%3Atrack%3AT-0119' 'ng-profile-track'
+capture lowcountry-track '?ui=WorldRecord%3Atrack%3AT-0120' 'ng-profile-track'
+capture live-oak-track '?ui=WorldRecord%3Atrack%3AT-0121' 'ng-profile-track'
+capture sioux-plains-track '?ui=WorldRecord%3Atrack%3AT-0122' 'ng-profile-track'
+capture bitterroot-track '?ui=WorldRecord%3Atrack%3AT-0123' 'ng-profile-track'
+capture playfair-track '?ui=WorldRecord%3Atrack%3AT-0124' 'ng-profile-track'
+
+# The browser's rendered logo is required to resolve to that *same* immutable
+# track/organization ID even when its temporary optical crop uses a blob URL.
+for pair in 'belmont-track T-0002' 'gulfstream-track T-0017' \
+ 'comanche-track T-0061' 'bluff-city-track T-0119' \
+ 'lowcountry-track T-0120' 'live-oak-track T-0121' \
+ 'sioux-plains-track T-0122' 'bitterroot-track T-0123' \
+ 'playfair-track T-0124'; do
+ read -r screen track_id <<<"$pair"
+ if ! grep -Fq "data-wtw-hero-probe-path=\"/assets/places/track-hero/${track_id}.webp\"" "visual-audit/dom/${screen}.html"; then
+  echo "LANE 8 ASSET ERROR: ${screen} did not render approved exact-ID hero ${track_id}" >&2
+  exit 1
+ fi
+done
+for pair in 'davenport-hall-facility O-FOUNDING-1999-001' \
+ 'split-rail-facility O-FOUNDING-1999-004'; do
+ read -r screen org_id <<<"$pair"
+ if ! grep -Fq "/assets/office/founding-organization-logos/${org_id}.png" "visual-audit/dom/${screen}.html"; then
+  echo "LANE 8 ASSET ERROR: ${screen} did not render approved exact-ID founder logo ${org_id}" >&2
+  exit 1
+ fi
+done
+
+# Responsive *actual page* screenshots of all four owner-priority identities,
+# without changing the protected FM/OOTP layout or generating substitute art.
+for size in 1280,720 1024,768; do
+ width="${size%,*}"; height="${size#*,}"
+ for item in 'belmont-track T-0002 track' 'gulfstream-track T-0017 track' \
+  'davenport-hall-facility O-FOUNDING-1999-001 facility' \
+  'split-rail-facility O-FOUNDING-1999-004 facility'; do
+  read -r label id kind <<<"$item"
+  if [[ "$kind" == track ]]; then route="WorldRecord%3Atrack%3A${id}"
+  else route="FoundingProfile%3Afacility%3A${id}"; fi
+  "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+   --force-device-scale-factor=1 --window-size="${width},${height}" \
+   --virtual-time-budget=4000 \
+   --screenshot="visual-audit/screenshots/${label}-${width}x${height}.png" \
+   "http://127.0.0.1:8765/next/?ui=${route}" \
+   >/tmp/wtw-logo-${label}-${width}.log 2>&1
+  test -s "visual-audit/screenshots/${label}-${width}x${height}.png"
+ done
+done
+
 capture santa-anita-track '?ui=WorldRecord%3Atrack%3AT-0028' 'ng-profile-track'
 capture kingsmere-farm '?ui=FoundingProfile%3Afacility%3AO-000061' 'ng-profile-farm'
 capture northbank-stable '?ui=FoundingProfile%3Aownership%3AO-000045' 'ng-profile-farm'
@@ -620,16 +675,31 @@ rm -f public/__wtw_nav_probe.html
 
 rm -f public/__wtw_visual_probe.html
 
+# The earlier fast screenshots exercise route existence, but can catch a
+# temporary LO/SP/BI monogram before an approved 1600x1200 logo decodes.
+# Replace those preview frames with real Chromium CDP captures only AFTER
+# the matching permanent-ID image has actually loaded and is displayed.
+# This also asserts the logo remains on-screen at both laptop sizes.
+CHROME="$CHROME" node scripts/lane8-live-logo-screen-cdp.mjs
+
 python3 - <<'PY'
-import os,struct
+import os,struct,re
 folder='visual-audit/screenshots'
+# Existing desktop QA keeps its width/height floor. The four extra laptop
+# profiles are deliberately captured at exact 1024x768 and 1280x720.
+priority=('belmont-track','gulfstream-track','davenport-hall-facility','split-rail-facility')
 for file in sorted(os.listdir(folder)):
   path=os.path.join(folder,file)
   with open(path,'rb') as f:
     sig=f.read(24)
   assert sig[:8]==b'\x89PNG\r\n\x1a\n',(file,'bad PNG')
   w,h=struct.unpack('>II',sig[16:24])
-  assert w>=1200 and h>=700,(file,w,h)
+  sized=re.fullmatch(r'(.+)-(1024x768|1280x720)\.png',file)
+  if sized and sized.group(1) in priority:
+    expected=tuple(map(int,sized.group(2).split('x')))
+    assert (w,h)==expected,(file,'incorrect laptop viewport',(w,h),expected)
+  else:
+    assert w>=1200 and h>=700,(file,w,h)
   print(f'{file}: {w}x{h} ({os.path.getsize(path)} bytes)')
 PY
 echo "All desktop render routes captured. Screenshots require human comparison to visual references."
