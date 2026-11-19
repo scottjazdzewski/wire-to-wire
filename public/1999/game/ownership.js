@@ -489,7 +489,7 @@ export function getHorseSaleMarketView(state,world,{offset=0,limit=50}={}){
      state.player.operation_id])&&
     state.runtime.finances.operation_balances_minor[state.player.operation_id]>=x.price_minor,
    legal_owner_id:currentHorseOwnerId(state,world,x.horse_id),
-   source:'APPROVED_GAME_MARKET_LISTING_WITH_VERIFIED_OWNER'});
+   source:'APPROVED_GAME_MARKET_LISTING_WITH_VERIFIED_OWNER'};
  });
  return {as_of:state.clock.date,offset,limit,total:listings.length,items:selected};
 }
