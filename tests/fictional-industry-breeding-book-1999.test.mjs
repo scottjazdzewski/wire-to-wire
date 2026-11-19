@@ -140,3 +140,29 @@ test('real breeding-stock age and soundness change conception probability withou
  assert.ok(young.length<covers.length,'a premium mating is not a guaranteed pregnancy');
  assert.ok(young.every(record=>record.conceptionChance>aged[0].conceptionChance));
 });
+
+test('frozen 1999 covering outcomes survive V10 fertility upgrades without changing shared May save',()=>{
+ const year=1999,seed=19990101;
+ const mare={id:'H-V10-BROODMARE',status:'BROODMARE',
+  ownerId:'O-000061',foalYear:1977,foalingFarmId:'O-000061',
+  development:{soundness:22}};
+ const sire={id:'H-V10-SIRE',status:'STALLION',
+  ownerId:'O-000061',foalYear:1970};
+ const covers=Array.from({length:100},(_,i)=>({
+  id:'COVER-1999-'+String(i+1).padStart(7,'0'),mareId:mare.id,
+  stallionId:sire.id,breedingYear:year}));
+ const mareById=new Map([[mare.id,mare]]);
+ const forecast=(stallionById)=>[...generate1999SeasonFoalingForecasts({
+  seed,year,coverings:covers,mareById,stallionById,batchSize:50})]
+  .flatMap(x=>x.records);
+ const legacy=forecast(null),updated=forecast(new Map([[sire.id,sire]]));
+ assert.deepEqual(updated,legacy,
+  'opening 1999 conception and due-date identities are immutable across upgrades');
+ const nextYear=covers.map(c=>({...c,breedingYear:2000,
+  id:c.id.replace('1999','2000')}));
+ const updated2000=[...generate1999SeasonFoalingForecasts({seed,year:2000,
+  coverings:nextYear,mareById,stallionById:new Map([[sire.id,sire]])})]
+  .flatMap(x=>x.records);
+ assert.ok(updated2000.length<legacy.length,
+  'individual fertility must affect subsequent generations, not locked 1999');
+});
