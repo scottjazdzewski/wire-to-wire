@@ -16,7 +16,8 @@
     "bench:names": "node scripts/bench-fictional-naming-v10.mjs",
     "bench:names:indexed": "node scripts/bench-indexed-naming-v11.mjs",
     "bench:names:generations": "node scripts/bench-generational-naming-v14.mjs",
-    "certify:fictional-industry": "node scripts/certify-fictional-industry-v21.mjs"
+    "certify:fictional-industry": "node scripts/certify-fictional-industry-v21.mjs",
+    "world:promote:1999": "node scripts/promote-1999-world-changes.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"
