@@ -232,6 +232,47 @@ try{
  assert.ok(editedAtStart.count>=1);
  const editedView=await browser.evalJS(`window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.worldHorseById?.(${JSON.stringify(editorHorseId)})?.name||null`);
  assert.equal(editedView,editorNewName,'World profile still showed old horse name after durable save');
+
+ // Naming Desk must ACTUALLY rename a distinct player-owned source horse,
+ // not merely record a preference or change the frozen industry snapshot.
+ const ownedNamingTarget=await browser.evalJS(`(()=>{
+  const view=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
+  const row=(view?.horseRows||[]).find(h=>h.sourceHorseId&&
+   h.sourceHorseId!==${JSON.stringify(editorHorseId)}&&
+   String(h.tag||'').split(' · ').includes('OWNED'));
+  return row?{id:row.sourceHorseId,name:row.name}:null;
+ })()`);
+ assert.ok(ownedNamingTarget?.id,
+  'Real 300k owner career did not expose another owned horse for naming');
+ const chosenCareerName='Kingsmere Sunday';
+ assert.equal(await browser.evalJS(`window.WTWCompactCareerManager.isSavedCareerHorseNameInUse(
+  ${JSON.stringify(chosenCareerName)})`),false);
+ const nameReceipt=await browser.evalJS(`window.WTWCompactCareerManager.commitSavedCareerHorseNamingPreference({
+  name:${JSON.stringify(chosenCareerName)},decision:'CHOOSE',
+  motif_id:'owner-story',horse_id:${JSON.stringify(ownedNamingTarget.id)},
+  prompt:'one memorable natural racehorse name'})`);
+ assert.equal(nameReceipt.identityUpdated,true,
+  'Naming Desk choice did not apply to the saved V10 horse identity');
+ const savedHorseNaming=async()=>browser.evalJS(`(async()=>{
+  const api=await import('/1999/engine/fictional-industry-persistence-1999.mjs');
+  const db=await api.open1999IndustryDatabase();
+  try{
+   const world=await api.reopenPersistent1999Industry(db,{seed:19990101,
+    worldId:${JSON.stringify(snap.worldId)}});
+   const saved=await api.loadPersistent1999CareerRun(db,world.manifest,
+    'WTW-RUN-1999-19990101-SIZE-300000-OP-O-000061');
+   return {name:saved?.changes?.worldEdits?.byId?.[
+    ${JSON.stringify('horse:'+ownedNamingTarget.id)}]?.name||null,
+    feedback:saved?.changes?.namingFeedback?.decisions?.kingsmeresunday||null};
+  }finally{db.close()}
+ })()`);
+ const firstNamingSave=await savedHorseNaming();
+ assert.equal(firstNamingSave.name,chosenCareerName);
+ assert.equal(firstNamingSave.feedback?.decision,'CHOOSE');
+ assert.equal(firstNamingSave.feedback?.horseId,ownedNamingTarget.id);
+ assert.equal(await browser.evalJS(`window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.worldHorseById?.(
+  ${JSON.stringify(ownedNamingTarget.id)})?.name||null`),chosenCareerName);
+
  const storageAfterStart=await browser.evalJS('navigator.storage.estimate()');
  await waitFor('full-world game-day control',async()=>{
   const ready=await browser.evalJS(`!!document.querySelector('[data-cc-action="advance-test-day"]')`);
@@ -259,6 +300,11 @@ try{
  const editedAfterDay=await readCareerWorldEdit();
  assert.equal(editedAfterDay.name,editorNewName,
   'Advancing the actual 1999 gameplay career erased the saved World override');
+ const namingAfterDay=await savedHorseNaming();
+ assert.equal(namingAfterDay.name,chosenCareerName,
+  'Advancing the 1999 game erased a chosen horse name');
+ assert.equal(namingAfterDay.feedback?.horseId,ownedNamingTarget.id,
+  'Advancing the game lost its owner naming decision');
  assert.equal(careerAfterDay.gameDate,dayAction.advanced.match(/GAME DATE (\d{4}-\d{2}-\d{2})/)?.[1],
   'The one-day game advance notice and persisted career date disagree');
  const storageAfterDay=await browser.evalJS('navigator.storage.estimate()');
@@ -290,6 +336,19 @@ try{
   return {done:name===editorNewName,value:name};
  },120000);
  assert.equal(reopenedEditor,editorNewName);
+ const renamedAfterProcessRestart=await waitFor(
+  'saved player-owned horse name after full Chromium restart',async()=>{
+   const name=await browser.evalJS(`window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.worldHorseById?.(
+    ${JSON.stringify(ownedNamingTarget.id)})?.name||null`);
+   return {done:name===chosenCareerName,value:name};
+  },120000);
+ assert.equal(renamedAfterProcessRestart,chosenCareerName);
+ const verifiedNameReopen=await savedHorseNaming();
+ assert.equal(verifiedNameReopen.name,chosenCareerName);
+ assert.equal(verifiedNameReopen.feedback?.horseId,ownedNamingTarget.id);
+ console.log('WTW_V10_NAMING_DESK_ACTUAL_HORSE_REOPEN_PASS '+
+  JSON.stringify({horseId:ownedNamingTarget.id,name:chosenCareerName,
+   decisionRevision:nameReceipt.feedbackRevision,worldHorseCount:300000}));
  console.log('WTW_V10_WORLD_EDITOR_DURABLE_REOPEN_PASS '+
   JSON.stringify({horseId:editorHorseId,before:editorBefore,after:reopenedEditor,
    careerDate:careerAfterDay.gameDate,worldHorseCount:300000}));
