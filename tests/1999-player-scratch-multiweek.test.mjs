@@ -110,6 +110,10 @@ test('player books a real accepting jockey, then withdraws without phantom refun
  assert.equal(withdrawn.scratch_reason,'OWNER_WITHDRAWAL');
  assert.equal(withdrawn.scratch_date,next.clock.date);
  assert.equal(next.runtime.races[race.id].field.includes(id),false);
+ const projected=get1999HorseRaceOpportunities(next,world,entry.horse_id,
+  {includeProposals:false}).rows.find(row=>row.race_id===race.id);
+ assert.equal(projected?.status,'SCRATCHED');
+ assert.equal(projected?.next_required_action,'NONE_WITHDRAWN');
  assert.equal(JSON.stringify(next.runtime.finances),money);
  assert.equal(JSON.stringify(next.runtime.racing.jockey_finances_minor),jockeyMoney);
  assert.equal(next.runtime.registered_horses.by_id[entry.horse_id].career.starts,0);
