@@ -862,6 +862,10 @@ export function validateRacingRuntime(state,world){
      !resultHorseIds.has(result.horse_id)&&r.field.includes(entryId)&&
      entry?.status==='RESULTED'&&entry.finish===i+1&&result.finish===i+1,
      'RACE_SAVE','Official results must match each starter once in finish order');
+    if(r.conditions==='Handicap')ensure(
+     result.handicap_weight_lbs===entry.handicap_weight_lbs&&
+     result.handicap_weight_basis===HANDICAP_WEIGHT_BASIS_1999,
+     'HANDICAP_RESULT_SAVE','Official modeled weight must match the declared starter impost');
     resultHorseIds.add(result.horse_id);
    }
    for(const result of r.results){
