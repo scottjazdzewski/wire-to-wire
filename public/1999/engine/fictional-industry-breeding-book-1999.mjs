@@ -149,8 +149,12 @@ export function* generate1999SeasonFoalingForecasts({seed,year,coverings,
    sireAge<=23?.88:.65;
   const soundness=Math.max(0,Math.min(100,
    Number(mare.development?.soundness??mare.ratings?.soundness??75)));
-  const conceptionChance=Math.max(0,Math.min(.95,
-   conceptionRate*mareAgeFactor*sireAgeFactor*(.82+soundness*.002)));
+  // The canonical 1999 V10 reference career is already distributed. Its
+  // booked pregnancies and May 1999 save fingerprint are locked. Apply richer
+  // individual fertility only from the first *new* generation in 2000.
+  const conceptionChance=year===1999?conceptionRate:
+   Math.max(0,Math.min(.95,
+    conceptionRate*mareAgeFactor*sireAgeFactor*(.82+soundness*.002)));
   if(seeded1999Unit(seed,'conception:'+year+':'+cover.id)>=conceptionChance)continue;
   const day=1+hash(seed,'foaling-date:'+year+':'+cover.id)%181;
   const birthDate=new Date(Date.UTC(year,1,day)).toISOString().slice(0,10);
