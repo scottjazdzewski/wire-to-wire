@@ -133,6 +133,22 @@ test('real 12k career saves, reopens and finds owner principals with official pe
   Math.ceil(manifest.personCount/manifest.batchSize));
  const directory=await readPersistent1999Directory(store,manifest);
  const byOwner=new Map(directory.map(x=>[x.id,x]));
+ const managedFarms=directory.filter(x=>Array.isArray(x.managerIds)&&
+  x.managerIds.length);
+ assert.ok(managedFarms.length>0,'V13 must show real working farm managers');
+ for(const farm of managedFarms){
+  assert.equal(farm.managerIds.length,farm.managerNames.length);
+  assert.ok(farm.managerIds.length>0);
+  for(let j=0;j<farm.managerIds.length;j++){
+   const person=await findPersistent1999Person(store,manifest,farm.managerIds[j]);
+   assert.ok(person,'farm manager ID must resolve from persisted staff');
+   assert.equal(person.role,'farm_manager');
+   assert.equal(person.name,farm.managerNames[j]);
+   assert.equal(person.workplaceId,farm.id);
+   assert.ok(person.relationships.some(e=>e.type==='MANAGES'&&e.toId===farm.id));
+   assert.ok(farm.relationships.some(e=>e.type==='MANAGED_BY'&&e.toId===person.id));
+  }
+ }
  for(const ordinal of [0,Math.floor(params.ownerPrincipalPeople.length/2),
   params.ownerPrincipalPeople.length-1]){
   const id=ownerPrincipalPersonId(ordinal);
@@ -182,9 +198,11 @@ test('real 12k career saves, reopens and finds owner principals with official pe
  const reopenedDirectory=await readPersistent1999Directory(store,reopened.manifest);
  assert.deepEqual(reopenedDirectory.map(row=>({
   id:row.id,name:row.name,principalId:row.principalId??null,
+  managerIds:row.managerIds??null,managerNames:row.managerNames??null,
   location:row.location
  })),directory.map(row=>({
   id:row.id,name:row.name,principalId:row.principalId??null,
+  managerIds:row.managerIds??null,managerNames:row.managerNames??null,
   location:row.location
  })), 'all owner, partnership, stud, farm and circuit display names stay stable');
  const career=await loadPersistent1999CareerRun(store,manifest,runId);
