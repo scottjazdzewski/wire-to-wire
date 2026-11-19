@@ -1589,6 +1589,21 @@ export async function verifyPersistent1999WorldOpen(store,manifest){
   !Array.isArray(x.relationships)))
   throw Error('1999 world directory is incomplete');
  if(manifest.ownerPrincipalCount){
+  // Farm managerial identities share existing role-based staff P-IDs and
+  // must survive the same restart as the newly materialized owner principals.
+  const managedFarm=directory.find(row=>Array.isArray(row.managerIds)&&
+   row.managerIds.length>0);
+  if(!managedFarm)throw Error('V13 facility leadership directory is missing');
+  const manager=await findPersistent1999Person(
+   store,manifest,managedFarm.managerIds[0]);
+  if(!manager||manager.role!=='farm_manager'||
+   manager.workplaceId!==managedFarm.id||
+   manager.name!==managedFarm.managerNames?.[0]||
+   !manager.relationships?.some(edge=>edge.type==='MANAGES'&&
+    edge.toId===managedFarm.id)||
+   !managedFarm.relationships.some(edge=>edge.type==='MANAGED_BY'&&
+    edge.toId===manager.id))
+   throw Error('Saved V13 farm manager relationship failed to reopen');
   const byOwnerId=new Map(directory.map(o=>[o.id,o]));
   const candidates=[1,manifest.ownerPrincipalCount];
   for(const ordinal of [...new Set(candidates)]){
