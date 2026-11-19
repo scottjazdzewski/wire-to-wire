@@ -151,6 +151,26 @@ test('real 12k career saves, reopens and finds owner principals with official pe
   'the existing workforce remains ordered before the added principals');
  const verification=await verifyPersistent1999WorldOpen(store,manifest);
  assert.equal(verification.status,'OPEN_VERIFIED');
+ // The existing trainer/jockey/groom/farm-manager name records remain in
+ // their original workforce ordinal slots, even with appended owners.
+ const originalStaffRoles=new Map();
+ const ordinaryStaffCount=Object.values(manifest.staffing.counts).
+  reduce((sum,n)=>sum+n,0);
+ for(let batchIndex=0,seen=0;seen<ordinaryStaffCount;batchIndex++){
+  const batch=await readPersistent1999IndustryBatch(
+   store,manifest,'personBatches',batchIndex);
+  for(const person of batch.slice(0,ordinaryStaffCount-seen)){
+   if(['trainer','jockey','groom','farm_manager','exercise_rider'].
+    includes(person.role)&&!originalStaffRoles.has(person.role))
+    originalStaffRoles.set(person.role,{
+     id:person.id,name:person.name,workplaceId:person.workplaceId,
+     dateOfBirth:person.dateOfBirth
+    });
+  }
+  seen+=Math.min(batch.length,ordinaryStaffCount-seen);
+ }
+ for(const role of ['trainer','jockey','groom','farm_manager','exercise_rider'])
+  assert.ok(originalStaffRoles.has(role),'missing named operating worker: '+role);
  const runId='V12OwnerPrincipalReplay';
  const player={ownerId:params.owners[0].id};
  const saved=await savePersistent1999CareerRun(store,manifest,{
@@ -166,6 +186,13 @@ test('real 12k career saves, reopens and finds owner principals with official pe
  const last=await findPersistent1999Person(store,reopened.manifest,
   ownerPrincipalPersonId(params.ownerPrincipalPeople.length-1));
  assert.equal(last.name,sourceName,'career progression and reopen cannot rename owner principal');
+ for(const [role,before] of originalStaffRoles){
+  const person=await findPersistent1999Person(store,reopened.manifest,before.id);
+  assert.ok(person,'previously named '+role+' must survive save and reopen');
+  assert.equal(person.name,before.name);
+  assert.equal(person.workplaceId,before.workplaceId);
+  assert.equal(person.dateOfBirth,before.dateOfBirth);
+ }
 });
 
 test('V13 principal cohort is strictly opt-in and V12 destination-only remains unchanged',()=>{
