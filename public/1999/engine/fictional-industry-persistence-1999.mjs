@@ -16,9 +16,12 @@ import {plan1999IndustryStaffing,generate1999StaffingBatches,
  from './fictional-industry-staffing-1999.mjs';
 import {createPersonnelNameRoster,PERSONNEL_NAME_MODEL}
  from './personnel-name-engine.mjs';
+import {validate1999OwnerPrincipalLinks,OWNER_PRINCIPAL_PERSONNEL_1999_MODEL}
+ from './fictional-owner-principal-personnel-v12.mjs';
 import {OPENING_INDUSTRY_HORSE_NAMING_REVISION} from '../game/horse-naming-local-v485.js';
 import {connect1999Horse,connect1999Person,connect1999DirectoryEntity,
- validate1999GraphBatch,validate1999IndustryReferences,INDUSTRY_GRAPH_SCHEMA}
+ validate1999GraphBatch,validate1999IndustryReferences,INDUSTRY_GRAPH_SCHEMA,
+ FARM_MANAGER_RELATIONSHIP_1999_MODEL}
  from './fictional-industry-graph-1999.mjs';
 import {generate1999CoveringLedger,BREEDING_BOOK_1999_SCHEMA}
  from './fictional-industry-breeding-book-1999.mjs';
@@ -261,15 +264,44 @@ function directorySignature(directories){
  }
  return (h>>>0).toString(16).padStart(8,'0');
 }
+/**
+ * One physical personBatches stream, not an owner side-database.
+ * Staff IDs retain their original order and indices. For new versioned
+ * industries, appended owner principals fill the last staff batch before
+ * advancing to the next batch, preserving O(1) person-index lookup.
+ */
+function* generate1999CompletePersonBatches({
+ seed,staffing,tracks,farms,batchSize,nameRoster,
+ ensureCircuitCoverage,ownerPrincipalPeople=[]
+}={}){
+ let chunk=[],offset=0;
+ const rows=function*(){
+  for(const batch of generate1999StaffingBatches({
+   seed,staffing,tracks,farms,batchSize,nameRoster,ensureCircuitCoverage
+  }))yield* batch.records;
+  yield* ownerPrincipalPeople;
+ };
+ for(const person of rows()){
+  chunk.push(person);
+  if(chunk.length===batchSize){
+   yield {offset,records:chunk};
+   offset+=chunk.length;chunk=[];
+  }
+ }
+ if(chunk.length)yield {offset,records:chunk};
+}
+
 export async function createPersistent1999Industry({
  store,seed=19990101,worldId='WTW1999FullIndustry',targetOpeningHorses=null,
- farms,tracks,owners,foundingHorses=[],batchSize=1000,onProgress=()=>{},yieldControl=async()=>{}
+ farms,tracks,owners,foundingHorses=[],ownerPrincipalPeople=[],
+ batchSize=1000,onProgress=()=>{},yieldControl=async()=>{}
 }={}){
  if(!store?.get||!store?.commitBatch||!store?.commitManifest||
   !Number.isSafeInteger(seed)||seed<1||!worldId||
   !Array.isArray(farms)||!farms.length||
   !Array.isArray(tracks)||!tracks.length||
-  !Array.isArray(owners)||!owners.length||!Array.isArray(foundingHorses))
+  !Array.isArray(owners)||!owners.length||!Array.isArray(foundingHorses)||
+  !Array.isArray(ownerPrincipalPeople))
   throw Error('Invalid persistent industry genesis request');
  if(new Set(foundingHorses.map(h=>h?.id)).size!==foundingHorses.length||
   foundingHorses.some(h=>!h?.id||!h?.name||!['BROODMARE','STALLION'].includes(h.status)||
@@ -277,7 +309,14 @@ export async function createPersistent1999Industry({
    ![...farms,...owners].some(f=>f.id===h.managementOrganizationId)||
    !farms.some(f=>f.id===h.careFacilityId)))
   throw Error('Approved founding horse identities need unique IDs and real resident facilities');
+ if(owners.some(o=>Boolean(o.destinationNamingModel&&o.principalId))!==
+  Boolean(ownerPrincipalPeople.length)||
+  ownerPrincipalPeople.length&&!validate1999OwnerPrincipalLinks(
+   owners,ownerPrincipalPeople))
+  throw Error('Versioned owner principals must be real reciprocally linked people');
  const id=keyOf(seed,worldId);
+ const principalHash=ownerPrincipalPeople.length?
+  directorySignature([ownerPrincipalPeople]):null;
  const directoryHash=directorySignature(foundingHorses.length?
   [farms,tracks,owners,foundingHorses]:[farms,tracks,owners]);
  const existing=await store.get('manifests',id);
@@ -287,7 +326,8 @@ export async function createPersistent1999Industry({
  if(existing&&(existing.schema!==PERSISTENT_INDUSTRY_SCHEMA||
   existing.seed!==seed||existing.worldId!==worldId||existing.batchSize!==batchSize||
   (existing.targetOpeningHorses??null)!==targetOpeningHorses||
-  existing.directoryHash!==directoryHash))
+  existing.directoryHash!==directoryHash||
+  (existing.ownerPrincipalHash??null)!==principalHash))
   throw Error('Persistent industry generation parameters conflict');
  const generatedTarget=targetOpeningHorses===null?null:
   targetOpeningHorses-foundingHorses.length;
@@ -357,7 +397,8 @@ export async function createPersistent1999Industry({
   }]));
  // Keep opening identities pinned while editorial naming rules advance.
  const horseNamingRevision=OPENING_INDUSTRY_HORSE_NAMING_REVISION;
- const totalPeople=Object.values(staffing.counts).reduce((a,b)=>a+b,0);
+ const staffPersonCount=Object.values(staffing.counts).reduce((a,b)=>a+b,0);
+ const totalPeople=staffPersonCount+ownerPrincipalPeople.length;
  if(existing){
   if(existing.schema!==PERSISTENT_INDUSTRY_SCHEMA||
    existing.seed!==seed||existing.worldId!==worldId||
@@ -366,6 +407,8 @@ export async function createPersistent1999Industry({
    existing.directoryHash!==directoryHash||
    existing.horseCount!==totalHorses||
    existing.personCount!==totalPeople||
+   (existing.ownerPrincipalCount??0)!==ownerPrincipalPeople.length||
+   (existing.ownerPrincipalHash??null)!==principalHash||
    existing.graphSchema!==INDUSTRY_GRAPH_SCHEMA||
    existing.breedingSchema!==BREEDING_BOOK_1999_SCHEMA||
    existing.coveringCount!==plan.minimumCoversForTargetFoals||
@@ -383,7 +426,7 @@ export async function createPersistent1999Industry({
  // Generate one deterministic name roster matching the exact chosen staffing
  // plan (including an old saved plan in the middle of resumable genesis).
  const roleCounts=Object.entries(staffing.counts);
- const personnelNames=createPersonnelNameRoster(seed,totalPeople,index=>{
+ const personnelNames=createPersonnelNameRoster(seed,staffPersonCount,index=>{
   let offset=index;
   for(const [role,count] of roleCounts){
    if(offset<count)return role;
@@ -391,11 +434,35 @@ export async function createPersistent1999Industry({
   }
   throw Error('Personnel name index outside opening workforce');
  },[],{normalizeNamesForAccent:true});
+ // Existing staffing ordinal i already works at farms[i % farms.length].
+ // V13 records its reciprocal farm leadership without changing V10 staff.
+ const persistedLeadership=ownerPrincipalPeople.length>0;
+ const managerAssignments=new Map();
+ if(persistedLeadership){
+  let managerOffset=0;
+  for(const [role,n] of roleCounts){
+   if(role==='farm_manager')break;
+   managerOffset+=n;
+  }
+  for(let i=0;i<(staffing.counts.farm_manager||0);i++){
+   const farm=farms[i%farms.length];
+   const id='P-FICTIONAL-1999-FARM-MANAGER-'+String(i+1).padStart(7,'0');
+   const name=personnelNames[managerOffset+i]?.name;
+   if(!name)throw Error('Named farm manager is missing from existing staff census');
+   const rows=managerAssignments.get(farm.id)||[];
+   rows.push({id,name});managerAssignments.set(farm.id,rows);
+  }
+ }
  let manifest=existing??{
   schema:PERSISTENT_INDUSTRY_SCHEMA,worldId,seed,batchSize,directoryHash,
   targetOpeningHorses,ensureCircuitCoverage,status:'GENERATING',
   foundingRelationshipRevision:0,
   horseCount:totalHorses,personCount:totalPeople,
+  ...(ownerPrincipalPeople.length?{
+   ownerPrincipalCount:ownerPrincipalPeople.length,
+   ownerPrincipalModel:OWNER_PRINCIPAL_PERSONNEL_1999_MODEL,
+   ownerPrincipalHash:principalHash
+  }:{}),
   generatedHorseCount,foundingHorseCount:foundingHorses.length,
   foundingHorseIds:foundingHorses.map(h=>h.id),
   horseBatchesCommitted:0,personBatchesCommitted:0,
@@ -441,8 +508,14 @@ export async function createPersistent1999Industry({
    mergeDirectoryRecord(connect1999DirectoryEntity(track,{seed,type:'track'}),'TRACK');
   for(const farm of farms){
    const homeTrackId=farm.homeTrackId??tracks.find(t=>farm.id.includes(t.id))?.id??null;
+   const managed=managerAssignments.get(farm.id)||[];
    mergeDirectoryRecord(connect1999DirectoryEntity({...farm,
-    location:operatingLocation(farm,homeTrackId)},{seed,type:'farm',homeTrackId}),
+    location:operatingLocation(farm,homeTrackId),
+    ...(persistedLeadership?{
+     managerIds:managed.map(p=>p.id),
+     managerNames:managed.map(p=>p.name),
+     managerRelationshipModel:FARM_MANAGER_RELATIONSHIP_1999_MODEL
+    }:{})},{seed,type:'farm',homeTrackId}),
     'BREEDING_OR_CARE_FACILITY','farm');
   }
   for(const owner of owners){
@@ -452,7 +525,10 @@ export async function createPersistent1999Industry({
     'LEGAL_OWNER','owner');
   }
   const records=[...byId.values()];
-  const ids=new Set([...tracks,...farms,...owners].map(e=>e.id));
+  const ids=new Set([...tracks,...farms,...owners,...ownerPrincipalPeople]
+   .map(e=>e.id));
+  for(const rows of managerAssignments.values())
+   for(const manager of rows)ids.add(manager.id);
   const audit=validate1999GraphBatch(records,ids);
   if(!audit.valid)throw Error('Industry directory has broken graph references');
   const next={...manifest,directoryCommitted:true};
@@ -495,9 +571,9 @@ export async function createPersistent1999Industry({
    protectedHorseNames:foundingHorses.map(h=>h.name),
    foundingHorses,ownerPortfolioPlan,
    careFacilityIds:[...staffByFarm.keys()].filter(id=>id!=='*')})],
-  ['personBatches',generate1999StaffingBatches({
+  ['personBatches',generate1999CompletePersonBatches({
    seed,staffing,tracks,farms,batchSize,nameRoster:personnelNames,
-   ensureCircuitCoverage})]
+   ensureCircuitCoverage,ownerPrincipalPeople})]
  ]){
   const progressKey=kind==='horseBatches'?'horseBatchesCommitted':'personBatchesCommitted';
   let index=0;
@@ -508,9 +584,12 @@ export async function createPersistent1999Industry({
     batch.records.map(h=>connect1999Horse(h,{seed,
      trainerCount:staffing.counts.trainer,jockeyCount:staffing.counts.jockey,
      staffByTrack,staffByFarm})):
-    batch.records.map(p=>connect1999Person(p,{seed}));
+    batch.records.map(p=>connect1999Person(p,{
+     seed,linkFarmManagement:persistedLeadership
+    }));
    const audit=validate1999IndustryReferences(records,{
-   plan,staffing,tracks,farms,owners,foundingHorses});
+   plan,staffing,tracks,farms,owners,foundingHorses,
+   ownerPrincipalCount:ownerPrincipalPeople.length});
    if(!audit.valid)throw Error('Broken 1999 industry entity relationships: '+
     JSON.stringify(audit.problems.slice(0,5)));
    await store.commitBatch({worldId:id,manifest:next,kind,index,records});
@@ -771,6 +850,21 @@ export async function readPersistent1999LifecycleEvents(store,manifest,runId,dat
 export async function findPersistent1999Person(store,manifest,personId){
  if(manifest?.status!=='COMPLETE'||typeof personId!=='string')
   throw Error('Completed world and person ID required');
+ // V12 owner principals are appended after the legacy staff census in the
+ // SAME personBatches store. A saved V10 world has no such principal count.
+ const principal=/^P-FICTIONAL-1999-OWNER-PRINCIPAL-(\d{7})$/.exec(personId);
+ if(principal){
+  const ordinal=Number(principal[1]);
+  if(ordinal<1||ordinal>(manifest.ownerPrincipalCount??0))return null;
+  const staffCount=Object.values(manifest.staffing?.counts||{}).
+   reduce((sum,n)=>sum+n,0);
+  const global=staffCount+ordinal-1;
+  const batchIndex=Math.floor(global/manifest.batchSize);
+  const batch=await readPersistent1999IndustryBatch(
+   store,manifest,'personBatches',batchIndex);
+  const person=batch[global%manifest.batchSize];
+  return person?.id===personId?person:null;
+ }
  const match=/^P-FICTIONAL-1999-([A-Z-]+)-(\d{7})$/.exec(personId);
  if(!match)return null;
  const roles=Object.keys(manifest.staffing?.counts||{});
@@ -1496,6 +1590,36 @@ export async function verifyPersistent1999WorldOpen(store,manifest){
  if(!directory.length||directory.some(x=>!x.id||!x.ratings||
   !Array.isArray(x.relationships)))
   throw Error('1999 world directory is incomplete');
+ if(manifest.ownerPrincipalCount){
+  // Farm managerial identities share existing role-based staff P-IDs and
+  // must survive the same restart as the newly materialized owner principals.
+  const managedFarm=directory.find(row=>
+   row.managerRelationshipModel===FARM_MANAGER_RELATIONSHIP_1999_MODEL&&
+   Array.isArray(row.managerIds)&&row.managerIds.length>0);
+  if(!managedFarm)throw Error('V13 facility leadership directory is missing');
+  const manager=await findPersistent1999Person(
+   store,manifest,managedFarm.managerIds[0]);
+  if(!manager||manager.role!=='farm_manager'||
+   manager.workplaceId!==managedFarm.id||
+   manager.name!==managedFarm.managerNames?.[0]||
+   !manager.relationships?.some(edge=>edge.type==='MANAGES'&&
+    edge.toId===managedFarm.id)||
+   !managedFarm.relationships.some(edge=>edge.type==='MANAGED_BY'&&
+    edge.toId===manager.id))
+   throw Error('Saved V13 farm manager relationship failed to reopen');
+  const byOwnerId=new Map(directory.map(o=>[o.id,o]));
+  const candidates=[1,manifest.ownerPrincipalCount];
+  for(const ordinal of [...new Set(candidates)]){
+   const id='P-FICTIONAL-1999-OWNER-PRINCIPAL-'+String(ordinal).padStart(7,'0');
+   const person=await findPersistent1999Person(store,manifest,id);
+   const owner=byOwnerId.get(person?.organizationId);
+   if(!person||!owner||owner.principalId!==person.id||
+    owner.principalName!==person.name||
+    person.relationships?.filter(edge=>edge.type==='PRINCIPAL_OF'&&
+     edge.toId===owner.id).length!==1)
+    throw Error('Saved owner principal relationship failed to reopen: '+id);
+  }
+ }
  return {status:'OPEN_VERIFIED',worldId:manifest.worldId,
   seed:manifest.seed,horses:manifest.horseCount,people:manifest.personCount,
   coverings:manifest.coveringCount,raceDays:manifest.scheduledCards,

@@ -10,6 +10,8 @@ import {createFictionalWorldNameEngine}
  from '/1999/engine/fictional-world-name-engine.mjs';
 import {create1999DestinationNamingMarkets}
  from '/1999/engine/fictional-directory-destination-names-1999.mjs';
+import {materialize1999OwnerPrincipalPeople,ownerPrincipalPersonId}
+ from '/1999/engine/fictional-owner-principal-personnel-v12.mjs';
 import {plan1999Ecosystem} from '/1999/engine/fictional-industry-ecosystem-1999.mjs';
 import {assessFictionalOwnerCapacity,fictionalOwnerPortfolioTier}
  from '/1999/engine/fictional-owner-portfolio-planner.mjs';
@@ -22,12 +24,14 @@ async function industryDirectoriesWithNaming(seed,targetOpeningHorses=null,{
 }={}){
  // Names of the existing 1999 world and its immutable directoryHash are
  // untouched. The named destination plan is a deliberate new world version.
- const destinationAligned=directoryNamingModel==='V12_DESTINATION_TRACK';
+ const persistedPrincipals=directoryNamingModel==='V13_DESTINATION_WITH_PRINCIPALS';
+ const destinationAligned=directoryNamingModel==='V12_DESTINATION_TRACK'||
+  persistedPrincipals;
  if(directoryNamingModel!==null&&!destinationAligned)
   throw Error('Unsupported 1999 directory naming model');
- if(destinationAligned&&(
-  typeof worldId!=='string'||!/-NAMES-V11-/.test(worldId)))
-  throw Error('Destination naming requires a NEW versioned V11 world ID');
+ if(destinationAligned&&(typeof worldId!=='string'||
+  !(persistedPrincipals?/-NAMES-V13-/:/-NAMES-V11-/).test(worldId)))
+  throw Error('Destination naming requires its own NEW versioned world ID');
  const [geoResponse,foundingResponse,foalingResponse]=await Promise.all([
   fetch('/data/track-geography-v33.json'),
   fetch('/data/wtw-1999-founding-directory-v1.json'),
@@ -86,7 +90,8 @@ async function industryDirectoriesWithNaming(seed,targetOpeningHorses=null,{
    tracks,ownerCountByTrack:ownerCountByCircuit,farmsPerTrack:4
   }):null;
  const generated=createFictionalWorldNameEngine({
-  worldId:destinationAligned?'WTW1999IndustryDirectoryV12':'WTW1999IndustryDirectory',
+  worldId:persistedPrincipals?'WTW1999IndustryDirectoryV13':
+   destinationAligned?'WTW1999IndustryDirectoryV12':'WTW1999IndustryDirectory',
   seed,year:1999,roles:{},owners:ownerCount,
   facilities:{generalFarms:farmCount,studFarms:0,nurseries:0,
    bloodstockFarms:0,breakingTraining:0},
@@ -182,10 +187,19 @@ const ownerCircuitOffsets=ownerCountByCircuit.map((_,index)=>
     namingRegion:named.namingRegion,
     destinationNamingModel:destinationPlan.schema,
     namingPrincipalSourceId:named.principalId,
-    namingPrincipalSourceName:named.principalName
+    namingPrincipalSourceName:named.principalName,
+    ...(persistedPrincipals?{
+     principalId:ownerPrincipalPersonId(globalIndex),
+     principalName:named.principalName
+    }:{})
    }:{}),
    geographyStatus:t.location?.region?'REGION_PROVIDED':'LOCATION_REVIEW_REQUIRED'};
  }));
+ const ownerPrincipalPeople=persistedPrincipals?
+  materialize1999OwnerPrincipalPeople({
+   seed,owners:generatedOwners,sourceOwners:generated.owners,
+   sourcePeople:generated.people
+  }):[];
  const owners=[...generatedOwners,...canonicalOwners.map(org=>{
   const location=locationFor(org),profile=majorPortfolio[org.id]||{};
   return {id:org.id,name:org.name,location,homeTrackId:homeTrackFor(org),
@@ -229,7 +243,8 @@ const ownerCircuitOffsets=ownerCountByCircuit.map((_,index)=>
    sourceEvidence:h.evidenceStatus||h.population||'APPROVED_FOUNDING_DIRECTORY',
    sourceRevision:founding.schema,sourceRecord:h};
  });
- return {tracks,farms:farmsWithCanon,owners,foundingHorses,requestedSize};
+ return {tracks,farms:farmsWithCanon,owners,foundingHorses,requestedSize,
+  ...(persistedPrincipals?{ownerPrincipalPeople}:{})};
 }
 
 self.addEventListener('message',async event=>{

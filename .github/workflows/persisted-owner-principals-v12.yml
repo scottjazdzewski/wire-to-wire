@@ -1,0 +1,32 @@
+name: Saved owner principal identities (V12)
+
+on:
+  pull_request:
+    paths:
+      - 'public/1999/engine/fictional-owner-principal-personnel-v12.mjs'
+      - 'public/1999/engine/fictional-industry-persistence-1999.mjs'
+      - 'public/1999/engine/fictional-industry-graph-1999.mjs'
+      - 'public/1999/engine/fictional-industry-staffing-1999.mjs'
+      - 'public/next/1999-industry-bootstrap-worker.mjs'
+      - 'tests/1999-persisted-owner-principal-relationships-v12.test.mjs'
+      - '.github/workflows/persisted-owner-principals-v12.yml'
+  push:
+    branches:
+      - 'naming/v12-persist-real-owner-principals-20261119'
+  workflow_dispatch:
+
+jobs:
+  owner-principal-save-reopen:
+    name: Real owner people, 12k horses, one-day save/reopen
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify materialized owner principal relationships
+        run: |
+          node --test tests/1999-persisted-owner-principal-relationships-v12.test.mjs tests/1999-destination-organization-naming-v12.test.mjs

@@ -20,7 +20,7 @@ const roles=Object.freeze({
 export const INDUSTRY_PERSON_BIOGRAPHY_REVISION='WTW_1999_PERSONNEL_BIO_V1';
 // Geographical birth places are authored fictional starting assumptions;
 // they do not imply that birthplace, nationality, and workplace are identical.
-const FICTIONAL_BIRTHPLACES=Object.freeze({
+export const FICTIONAL_BIRTHPLACES=Object.freeze({
  US:[['Lexington','Kentucky'],['Ocala','Florida'],['New York','New York'],['Baltimore','Maryland'],['Louisville','Kentucky'],['Chicago','Illinois'],['Memphis','Tennessee'],['Los Angeles','California'],['New Orleans','Louisiana']],
  CA:[['Toronto','Ontario'],['Vancouver','British Columbia'],['Montreal','Quebec'],['Calgary','Alberta']],
  GB:[['Newmarket','Suffolk'],['London','England'],['Manchester','Greater Manchester']],
