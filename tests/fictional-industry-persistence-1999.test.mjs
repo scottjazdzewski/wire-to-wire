@@ -735,6 +735,15 @@ test('a single 1999-to-2005 save matches sequential annual lifecycle commits',as
  for(let year=2000;year<=2005;year++)
   yearly=await run(sequentialId,year+'-01-01');
  const oneShot=await run(singleId,'2005-01-01');
+ const tracked=['population','foalsBorn','horseDeaths','matureHorseDeaths',
+  'juvenileDebuts','retiredRacehorses','activeBroodmares','activeStallions',
+  'racingPopulation','birthsByYear','deathsByYear'];
+ const discrepancies=tracked.filter(k=>
+  JSON.stringify(oneShot.lifecycle[k])!==JSON.stringify(yearly.lifecycle[k]));
+ if(discrepancies.length)
+  console.log('WTW_LANE2_SAVE_CADENCE_DIFF '+JSON.stringify(Object.fromEntries(
+   discrepancies.map(k=>[k,{oneshot:oneShot.lifecycle[k],
+    annual:yearly.lifecycle[k]}]))));
  for(const key of ['population','foalsBorn','horseDeaths','matureHorseDeaths',
   'juvenileDebuts','retiredRacehorses','activeBroodmares','activeStallions',
   'racingPopulation','birthsByYear','deathsByYear'])
