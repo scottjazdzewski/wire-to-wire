@@ -308,7 +308,7 @@ export async function createPersistent1999Industry({
    ![...farms,...owners].some(f=>f.id===h.managementOrganizationId)||
    !farms.some(f=>f.id===h.careFacilityId)))
   throw Error('Approved founding horse identities need unique IDs and real resident facilities');
- if(owners.some(o=>Boolean(o.destinationNamingModel))!==
+ if(owners.some(o=>Boolean(o.destinationNamingModel&&o.principalId))!==
   Boolean(ownerPrincipalPeople.length)||
   ownerPrincipalPeople.length&&!validate1999OwnerPrincipalLinks(
    owners,ownerPrincipalPeople))
