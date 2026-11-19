@@ -112,6 +112,20 @@ test('V493 rejects rival, unborn, foreign, duplicate and owner-reviewed names',a
   /Name already used by an earlier born foal/);
  assert.equal(writes(),1);
 });
+test('V493 existing MY FOALS screen submits real saved horse and story through single career store',async()=>{
+ const {readFile}=await import('node:fs/promises');
+ const manager=await readFile(new URL('../public/next/1999-commercial-career-manager.mjs',
+  import.meta.url),'utf8');
+ const engine=await readFile(new URL('../public/1999/engine/fictional-industry-persistence-1999.mjs',
+  import.meta.url),'utf8');
+ assert.match(manager,/const nameable=born.items.filter/);
+ assert.match(manager,/h.ownerId===career.run.player.operation_id&&!h.name/);
+ assert.match(manager,/data-cc-action="name-born-foal"/);
+ assert.match(manager,/commitPersistent1999CareerFoalName\(db,/);
+ assert.match(manager,/await browseFullIndustry\(industryBrowsePage,industryBrowseKind\)/);
+ assert.match(engine,/db.transaction\(\['manifests','careerRuns','industryLifecycle'\],'readwrite'\)/);
+ assert.match(engine,/tx.onabort=.*reject\(failure/);
+});
 test('V493 optimistic version prevents atomic foal name overwrite',async()=>{
  const {store,manifest,foals,writes}=fixture();
  const prior=await loadPersistent1999CareerRun(store,manifest,runId);
