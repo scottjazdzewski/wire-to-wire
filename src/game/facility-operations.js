@@ -6,14 +6,38 @@
 import {ensure,isObject,requireString,validDate,nextDate,worldIdentity} from './contracts.js';
 export const FACILITY_SCHEMA='WTW_FACILITY_OPERATIONS_V1';
 export const FACILITY_TYPES=Object.freeze(['RACING_STABLE','FARM','STUD_FARM','BREAKING_FACILITY','TRAINING_CENTER']);
-export const FACILITY_COMMANDS=Object.freeze(['FACILITY_SEED_FUNDS','FACILITY_LIST_PROPERTY','FACILITY_ACQUIRE','FACILITY_UPGRADE','FACILITY_BOARDING_CONTRACT','FACILITY_AI_CYCLE','FACILITY_SET_STAFFING','FACILITY_SET_MAINTENANCE','FACILITY_REGISTER_RACING_SITE']);
+export const FACILITY_COMMANDS=Object.freeze(['FACILITY_SEED_FUNDS','FACILITY_LIST_PROPERTY','FACILITY_ACQUIRE','FACILITY_UPGRADE','FACILITY_BOARDING_CONTRACT','FACILITY_AI_CYCLE','FACILITY_SET_STAFFING','FACILITY_SET_MAINTENANCE','FACILITY_REGISTER_RACING_SITE',
+ 'FACILITY_ASSIGN_NAMED_STAFF','FACILITY_RELEASE_NAMED_STAFF']);
 const IMPROVEMENTS=Object.freeze({
  STALL_BLOCK:{cost_minor:22000000,days:30,stalls:12,quality:0},
  CARE_SYSTEM:{cost_minor:8500000,days:14,stalls:0,quality:10},
  FOALING_WING:{cost_minor:28000000,days:45,stalls:6,quality:6,type:'STUD_FARM'}
 });
 const MAINTENANCE_MULTIPLIER=Object.freeze({ECONOMY:50,STANDARD:100,PREMIUM:180});
+// Finance cannot identify individual workers or external companies from a
+// site's scalar headcount. Record the real business debit and a transparent
+// modeled outside counterparty; never manufacture a person or organization ID.
+const FACILITY_EXTERNAL_PAYEES=Object.freeze({
+ FACILITY_PURCHASE:'PROPERTY_MARKET_OR_SELLER_UNIDENTIFIED',
+ FACILITY_UPGRADE:'MODELED_CONSTRUCTION_PROVIDER',
+ FACILITY_DAILY_OPERATIONS:'MODELED_FACILITY_OPERATING_SUPPLIERS',
+ FACILITY_STAFF_PAYROLL:'MODELED_EMPLOYEE_WAGE_POOL',
+ FACILITY_MAINTENANCE:'MODELED_FACILITY_MAINTENANCE_SUPPLIERS',
+ FACILITY_TRACK_RENT:'MODELED_TRACK_LEASE_RECIPIENT_UNIDENTIFIED',
+ FACILITY_ARREARS_SETTLED:'MODELED_UNPAID_STAFF_AND_SUPPLIER_CLAIMS'
+});
 const integer=Number.isSafeInteger;
+const staffRoles=new Set(['groom','exercise_rider','veterinarian','farrier',
+ 'farm_manager','breeding_attendant']);
+const namedRoster=s=>Object.values(s.named_employees||{});
+const siteWages=s=>{
+ const roster=namedRoster(s);
+ return roster.reduce((n,r)=>n+r.daily_wage_minor,0)+
+  Math.max(0,(s.staff_count||0)-roster.length)*(s.staff_wage_daily_minor||0);
+};
+const namedDailyPayees=s=>namedRoster(s).
+ map(p=>({person_id:p.person_id,amount_minor:p.daily_wage_minor})).
+ filter(p=>p.amount_minor>0);
 const operationalStalls=s=>s.staff_required>0?Math.floor(s.stalls*Math.min(s.staff_count,s.staff_required)/s.staff_required):s.stalls;
 const number=(v,lo,hi,label)=>ensure(integer(v)&&v>=lo&&v<=hi,'FACILITY_INVALID','Invalid '+label);
 const addDays=(d,n)=>{for(let i=0;i<n;i++)d=nextDate(d);return d;};
@@ -27,15 +51,53 @@ function ensureRoot(state){
  return state.runtime.facilities;
 }
 function funds(state,id){return state.runtime.finances.operation_balances_minor[id];}
-function post(state,id,minor,kind,siteId,emit,transactionId=null){
+function post(state,id,minor,kind,siteId,emit,transactionId=null,namedPayees=[]){
  const accounts=state.runtime.finances.operation_balances_minor;
  ensure(integer(accounts[id]),'FACILITY_NO_FUNDS','Owner financial baseline not established');
  ensure(integer(minor)&&integer(accounts[id]+minor),'FACILITY_MONEY','Invalid facility accounting value');
+ const outside=minor<0?FACILITY_EXTERNAL_PAYEES[kind]:null;
+ ensure(!outside||accounts[id]>=-minor,'FACILITY_INSUFFICIENT_FUNDS',
+  'Facility cannot pay staff or suppliers with cash it does not have');
+ const tx=transactionId||(outside?'FACILITY_OUTFLOW:'+state.clock.date+':'+siteId+':'+kind:null);
  accounts[id]+=minor;
  if(state.player.operation_id===id)state.runtime.finances.balance_minor=accounts[id];
  state.runtime.finances.ledger.push({date:state.clock.date,operation_id:id,
   site_id:siteId||null,amount_minor:minor,kind,
-  ...(transactionId?{transaction_id:transactionId}:{})});
+  ...(tx?{transaction_id:tx}:{})});
+ if(outside){
+  // Named wage recipients are real current P-IDs. Unassigned staffing
+  // positions and unnamed vendors remain transparent outside-economy payees.
+  const assigned=namedPayees.reduce((n,p)=>n+p.amount_minor,0);
+  ensure((kind==='FACILITY_STAFF_PAYROLL'||kind==='FACILITY_ARREARS_SETTLED'||
+   namedPayees.length===0)&&integer(assigned)&&assigned>=0&&assigned<=-minor,
+   'FACILITY_NAMED_PAYROLL','Named payees must reconcile to the paid debit');
+  const seen=new Set();
+  for(const payee of namedPayees){
+   ensure(typeof payee.person_id==='string'&&!seen.has(payee.person_id)&&
+    integer(payee.amount_minor)&&payee.amount_minor>0,
+    'FACILITY_NAMED_PAYROLL','Duplicate or invalid employee payment');
+   seen.add(payee.person_id);
+   const person=state.runtime.people[payee.person_id]||{};
+   person.wages_paid_minor=(person.wages_paid_minor||0)+payee.amount_minor;
+   ensure(integer(person.wages_paid_minor),'FACILITY_NAMED_PAYROLL','Invalid total wages');
+   state.runtime.people[payee.person_id]=person;
+   state.runtime.finances.ledger.push({date:state.clock.date,
+    transaction_id:tx,site_id:siteId||null,employer_id:id,
+    operation_id:null,person_id:payee.person_id,
+    amount_minor:payee.amount_minor,kind:'FACILITY_STAFF_WAGE_RECEIPT',
+    receipt_for_kind:kind,provenance:'ACTUAL_NAMED_GAME_EMPLOYEE_PAYMENT'});
+  }
+  if(-minor-assigned){
+   state.runtime.finances.ledger.push({
+    date:state.clock.date,transaction_id:tx,site_id:siteId||null,
+    operation_id:null,person_id:null,amount_minor:-minor-assigned,
+    kind:'FACILITY_EXTERNAL_RECEIPT',receipt_for_kind:kind,
+    recipient_role:outside,
+    counterparty_scope:'MODELED_OUTSIDE_ECONOMY_NO_IDENTITY_CLAIM',
+    provenance:'MODELED_GAME_CASH_SETTLEMENT_NOT_HISTORICAL_PAYMENT'
+   });
+  }
+ }
  if(emit)emit('FACILITY_CASH',{operation_id:id,site_id:siteId||null,
   kind,amount_minor:minor,balance_minor:accounts[id]});
 }
@@ -188,10 +250,48 @@ function boarding(state,world,p,actor,emit){
   payer_organization_id:payer,stalls:p.stalls,start,end,rate_minor:price,
   note:'Real organization pays daily; aggregate capacity does not invent horse IDs'});
 }
+function changeNamedStaff(state,world,p,command,emit,release=false){
+ const site=ensureRoot(state).sites[p.site_id];
+ ensure(site&&site.status!=='UNDER_CONSTRUCTION'&&site.status!=='INSOLVENT',
+  'FACILITY_NAMED_STAFF','An operating site is required for personnel action');
+ const operator=site.operator_organization_id||site.owner_id;
+ permit(state,command,operator);
+ requireString(p.person_id,'person_id',128);
+ const person=worldIdentity(world,'people',p.person_id);
+ ensure(person&&staffRoles.has(person.role)&&
+  [operator,site.source_facility_id,site.host_track_id].
+   filter(Boolean).includes(person.workplaceId),
+  'FACILITY_NAMED_STAFF','Worker P-ID and existing workplace must match this operation');
+ const roster=site.named_employees||(site.named_employees={});
+ if(release){
+  ensure(Object.hasOwn(roster,p.person_id),'FACILITY_NAMED_STAFF',
+   'This worker is not in the saved site payroll');
+  delete roster[p.person_id];
+  emit('FACILITY_NAMED_STAFF_RELEASED',{site_id:site.id,person_id:p.person_id,
+   operator_id:operator});
+  return;
+ }
+ number(p.daily_wage_minor,1,1000000,'named employee daily wage');
+ ensure(!Object.hasOwn(roster,p.person_id)&&
+  Object.keys(roster).length<site.staff_count,
+  'FACILITY_NAMED_STAFF','Employee needs an available existing staffed position');
+ ensure(!Object.values(state.runtime.facilities.sites).some(other=>
+  other.id!==site.id&&Object.hasOwn(other.named_employees||{},p.person_id)),
+  'FACILITY_NAMED_STAFF','Worker cannot be paid at two active site rosters');
+ ensure(integer(funds(state,operator))&&funds(state,operator)>=p.daily_wage_minor,
+  'FACILITY_NAMED_STAFF_CASH','Employer must have funded first-day wages');
+ roster[p.person_id]={person_id:p.person_id,
+  daily_wage_minor:p.daily_wage_minor,assigned_on:state.clock.date,
+  source_workplace_id:person.workplaceId};
+ emit('FACILITY_NAMED_STAFF_ASSIGNED',{site_id:site.id,
+  person_id:p.person_id,operator_id:operator,workplace_id:person.workplaceId,
+  daily_wage_minor:p.daily_wage_minor});
+}
 function setStaffing(state,world,p,command,emit){
  const site=ensureRoot(state).sites[p.site_id],id=organization(world,p.operation_id);
  permit(state,command,id);
- ensure(site&&site.owner_id===id,'FACILITY_PROPERTY','Not the owner of this property');
+ ensure(site&&(site.operator_organization_id||site.owner_id)===id,
+  'FACILITY_PROPERTY','Only the paying site operator can set employee staffing');
  number(p.staff_count,0,500,'staffing headcount');
  const capacity=site.staff_required>0?
   Math.floor(site.stalls*Math.min(p.staff_count,site.staff_required)/site.staff_required):
@@ -204,15 +304,19 @@ function setStaffing(state,world,p,command,emit){
    ensure(reserved<=capacity,'FACILITY_STAFFING_CONTRACT','Staff reduction would break booked stall contracts');
   }
  }
+ ensure(p.staff_count>=namedRoster(site).length,'FACILITY_NAMED_STAFF',
+  'Release named employees before reducing positions below assigned staff');
  site.staff_count=p.staff_count;
- emit('FACILITY_STAFFING_UPDATED',{site_id:site.id,owner_id:id,
+ emit('FACILITY_STAFFING_UPDATED',{site_id:site.id,owner_id:site.owner_id,
+  operator_organization_id:id,
   staff_count:site.staff_count,required:site.staff_required,
-  daily_payroll_minor:site.staff_count*site.staff_wage_daily_minor});
+  daily_payroll_minor:siteWages(site)});
 }
 function setMaintenance(state,world,p,command,emit){
  const site=ensureRoot(state).sites[p.site_id],id=organization(world,p.operation_id);
  permit(state,command,id);
- ensure(site&&site.owner_id===id,'FACILITY_PROPERTY','Not the owner of this property');
+ ensure(site&&(site.operator_organization_id||site.owner_id)===id,
+  'FACILITY_PROPERTY','Only the paying operator can set daily maintenance policy');
  ensure(Object.hasOwn(MAINTENANCE_MULTIPLIER,p.policy),
   'FACILITY_MAINTENANCE_POLICY','Invalid maintenance program');
  site.maintenance_policy=p.policy;
@@ -315,6 +419,10 @@ export function facilityAction({state,world,command,emit}){
   ensure(command.actor==='system','FACILITY_PERMISSION','Only game AI executes rival cycle');
   aiCycle(state,world,emit);
  }else if(command.type==='FACILITY_SET_STAFFING')setStaffing(state,world,p,command,emit);
+ else if(command.type==='FACILITY_ASSIGN_NAMED_STAFF')
+  changeNamedStaff(state,world,p,command,emit);
+ else if(command.type==='FACILITY_RELEASE_NAMED_STAFF')
+  changeNamedStaff(state,world,p,command,emit,true);
  else if(command.type==='FACILITY_SET_MAINTENANCE')setMaintenance(state,world,p,command,emit);
  else ensure(false,'FACILITY_COMMAND','Unknown facility command');
 }
@@ -343,6 +451,31 @@ export function advanceFacilities({state,world,emit}){
   }
   if(site.status==='UNDERSTAFFED'&&site.staff_count>=site.staff_required){site.status='ACTIVE';emit('FACILITY_RESTAFFED',{site_id:site.id});}
   if(site.status==='ACTIVE'&&site.staff_required>site.staff_count)site.status='UNDERSTAFFED';
+  if(site.status==='INSOLVENT'){
+   const account=site.operator_organization_id||site.owner_id;
+   const accrued=site.unpaid_liability_minor||0;
+   const wages=siteWages(site);
+   const maintenance=Math.round((site.maintenance_daily_minor||0)*
+    MAINTENANCE_MULTIPLIER[site.maintenance_policy||'STANDARD']/100);
+   const rent=site.residence_kind==='TRACK_TRAINER_BARN'?(site.track_rent_daily_minor||0):0;
+   const needed=accrued+site.daily_upkeep_minor+wages+maintenance+rent;
+   ensure(integer(needed)&&needed>=0,'FACILITY_MONEY','Invalid insolvency restoration cost');
+   if(!integer(funds(state,account))||funds(state,account)<needed){
+    emit('FACILITY_INSOLVENCY_CONTINUES',{site_id:site.id,date:day,
+     operator_id:account,unpaid_liability_minor:accrued,
+     cash_minor:funds(state,account)??null,needed_minor:needed});
+    continue;
+   }
+   if(accrued)post(state,account,-accrued,'FACILITY_ARREARS_SETTLED',
+    site.id,null,null,Object.entries(site.unpaid_named_wages_minor||{}).
+     map(([person_id,amount_minor])=>({person_id,amount_minor})));
+   site.unpaid_named_wages_minor={};
+   site.unpaid_liability_minor=0;
+   site.insolvent_since=null;
+   site.status=site.staff_required>site.staff_count?'UNDERSTAFFED':'ACTIVE';
+   emit('FACILITY_SOLVENCY_RESTORED',{site_id:site.id,date:day,
+    operator_id:account,arrears_paid_minor:accrued,status:site.status});
+  }
   if(site.status!=='ACTIVE')continue;
   // Worn buildings, thin staffing and maintenance policy change care quality.
   if(day.slice(8)==='01'){
@@ -374,17 +507,39 @@ export function advanceFacilities({state,world,emit}){
   }
   ensure(integer(revenue),'FACILITY_MONEY','Boarding revenue overflow');
   const cost=site.daily_upkeep_minor;
-  const wages=(site.staff_count??0)*(site.staff_wage_daily_minor??0);
+  const wages=siteWages(site);
   const maintenance=Math.round((site.maintenance_daily_minor??0)*
    MAINTENANCE_MULTIPLIER[site.maintenance_policy||'STANDARD']/100);
-  ensure(integer(wages)&&integer(maintenance),'FACILITY_MONEY','Operating expense overflow');
-  gross+=revenue;expense+=cost+wages+maintenance;
-  if(cost)post(state,account,-cost,'FACILITY_DAILY_OPERATIONS',site.id,null);
-  if(wages)post(state,account,-wages,'FACILITY_STAFF_PAYROLL',site.id,null);
-  if(maintenance)post(state,account,-maintenance,'FACILITY_MAINTENANCE',site.id,null);
   const rent=site.residence_kind==='TRACK_TRAINER_BARN'?(site.track_rent_daily_minor??0):0;
+  const due=cost+wages+maintenance+rent;
+  ensure(integer(wages)&&integer(maintenance)&&integer(rent)&&integer(due)&&due>=0,
+   'FACILITY_MONEY','Operating expense overflow');
+  gross+=revenue;
+  // Completed board was genuinely charged today, but staff and supplier
+  // obligations cannot be passed off as paid without sufficient cash.
+  if(!integer(funds(state,account))||funds(state,account)<due){
+   site.unpaid_liability_minor=(site.unpaid_liability_minor||0)+due;
+   const outstanding=site.unpaid_named_wages_minor||{};
+   for(const worker of namedDailyPayees(site))
+    outstanding[worker.person_id]=(outstanding[worker.person_id]||0)+worker.amount_minor;
+   site.unpaid_named_wages_minor=outstanding;
+   ensure(integer(site.unpaid_liability_minor),'FACILITY_MONEY','Unpaid liabilities overflow');
+   site.insolvent_since=site.insolvent_since||day;
+   site.status='INSOLVENT';
+   state.runtime.finances.ledger.push({date:day,site_id:site.id,operation_id:account,
+    amount_minor:0,kind:'FACILITY_UNPAID_OPERATING_OBLIGATION',obligation_minor:due,
+    wages_unpaid_minor:wages,provenance:'GAME_LIABILITY_NOT_CASH_SETTLEMENT'});
+   emit('FACILITY_OPERATIONS_INSOLVENT',{site_id:site.id,date:day,
+    operator_id:account,unpaid_liability_minor:site.unpaid_liability_minor,
+    wages_unpaid_minor:wages,cash_minor:funds(state,account)??null});
+   continue;
+  }
+  expense+=due;
+  if(cost)post(state,account,-cost,'FACILITY_DAILY_OPERATIONS',site.id,null);
+  if(wages)post(state,account,-wages,'FACILITY_STAFF_PAYROLL',
+   site.id,null,null,namedDailyPayees(site));
+  if(maintenance)post(state,account,-maintenance,'FACILITY_MAINTENANCE',site.id,null);
   if(rent)post(state,account,-rent,'FACILITY_TRACK_RENT',site.id,null);
-  expense+=rent;
  }
  if(gross||expense)emit('FACILITY_OPERATING_DAY',{date:day,
   gross_minor:gross,cost_minor:expense,net_minor:gross-expense});
@@ -427,11 +582,44 @@ export function validateFacilityState(state,world){
   number(site.max_stalls,site.stalls,3000,'property maximum stalls');
   number(site.quality,0,100,'quality');
   ensure(validDate(site.open_date)&&
-   ['ACTIVE','UNDER_CONSTRUCTION','UNDERSTAFFED'].includes(site.status)&&
+   ['ACTIVE','UNDER_CONSTRUCTION','UNDERSTAFFED','INSOLVENT'].includes(site.status)&&
    Array.isArray(site.contracts),'FACILITY_SITE','Invalid property record');
   number(site.staff_required??0,0,250,'staff required');
   number(site.staff_count??0,0,500,'current staff');
   number(site.staff_wage_daily_minor??0,0,1000000,'staff wages');
+  ensure(site.named_employees===undefined||isObject(site.named_employees),
+   'FACILITY_NAMED_STAFF','Invalid saved named roster');
+  ensure(namedRoster(site).length<=site.staff_count,
+   'FACILITY_NAMED_STAFF','Named roster exceeds actual staffed positions');
+  const operator=site.operator_organization_id||site.owner_id;
+  for(const [personId,item] of Object.entries(site.named_employees||{})){
+   const person=worldIdentity(world,'people',personId);
+   ensure(person&&staffRoles.has(person.role)&&item.person_id===personId&&
+    [operator,site.source_facility_id,site.host_track_id].filter(Boolean).
+     includes(person.workplaceId)&&item.source_workplace_id===person.workplaceId&&
+    integer(item.daily_wage_minor)&&item.daily_wage_minor>0&&
+    item.daily_wage_minor<=1000000&&validDate(item.assigned_on)&&
+    item.assigned_on<=state.clock.date,
+    'FACILITY_NAMED_STAFF','Invalid named worker assignment and workplace link');
+  }
+  ensure(site.unpaid_named_wages_minor===undefined||
+   isObject(site.unpaid_named_wages_minor)&&
+   Object.entries(site.unpaid_named_wages_minor).every(([personId,amount])=>
+    Boolean(worldIdentity(world,'people',personId))&&
+    integer(amount)&&amount>=0),
+   'FACILITY_NAMED_STAFF','Invalid unpaid named employee claims');
+  ensure(Object.values(site.unpaid_named_wages_minor||{}).
+   reduce((a,b)=>a+b,0)<=(site.unpaid_liability_minor||0),
+   'FACILITY_NAMED_STAFF','Named worker claims exceed unpaid obligations');
+  ensure(site.unpaid_liability_minor===undefined||
+   integer(site.unpaid_liability_minor)&&site.unpaid_liability_minor>=0,
+   'FACILITY_INSOLVENCY','Invalid unpaid operating obligations');
+  ensure(site.insolvent_since===undefined||site.insolvent_since===null||
+   validDate(site.insolvent_since)&&site.insolvent_since<=state.clock.date,
+   'FACILITY_INSOLVENCY','Invalid insolvency start date');
+  ensure(site.status!=='INSOLVENT'||validDate(site.insolvent_since)&&
+   (site.unpaid_liability_minor||0)>0,
+   'FACILITY_INSOLVENCY','Closed operation must have an unpaid liability');
   number(site.maintenance_daily_minor??0,0,100000000,'maintenance cost');
   ensure(site.maintenance_policy===undefined||
    Object.hasOwn(MAINTENANCE_MULTIPLIER,site.maintenance_policy),
@@ -456,12 +644,21 @@ export function validateFacilityState(state,world){
 export function facilityPortfolio(state,world,operationId){
  organization(world,operationId);
  const f=state.runtime.facilities||createFacilityState();
- const sites=Object.values(f.sites).filter(s=>s.owner_id===operationId).map(s=>({
-  ...structuredClone(s),reserved_today:s.contracts.filter(c=>c.start<=state.clock.date&&
+ const sites=Object.values(f.sites).filter(s=>
+  s.owner_id===operationId||
+  (s.operator_organization_id||s.owner_id)===operationId).map(s=>({
+  ...structuredClone(s),
+  legal_title_held:s.owner_id===operationId,
+  operating_control_held:(s.operator_organization_id||s.owner_id)===operationId,
+  named_employee_directory:namedRoster(s).map(p=>({
+   ...p,name:worldIdentity(world,'people',p.person_id)?.name||null})),
+  reserved_today:s.contracts.filter(c=>c.start<=state.clock.date&&
    c.end>=state.clock.date).reduce((n,c)=>n+c.stalls,0)
  }));
  return {operation_id:operationId,date:state.clock.date,sites,
-  owned_sites:sites.length,business_types:[...new Set(sites.map(s=>s.type))],
+  owned_sites:sites.filter(s=>s.legal_title_held).length,
+  operated_sites:sites.filter(s=>s.operating_control_held).length,
+  business_types:[...new Set(sites.map(s=>s.type))],
   cash_minor:state.runtime.finances.operation_balances_minor?.[operationId]??null};
 }
 export const facilityMarket=state=>Object.values(
@@ -481,7 +678,8 @@ export function facilityFinancialReport(state,world,operationId,{from,to}={}){
  const amounts={FACILITY_BOARDING_REVENUE:0,FACILITY_BOARDING_CLIENT_PAYMENT:0,
   HORSE_CARE_SITE_AND_TRAINER_INCOME:0,HORSE_CARE_TRAINER_REMITTANCE:0,
   FACILITY_DAILY_OPERATIONS:0,FACILITY_TRACK_RENT:0,FACILITY_STAFF_PAYROLL:0,
-  FACILITY_MAINTENANCE:0,FACILITY_PURCHASE:0,FACILITY_UPGRADE:0};
+  FACILITY_MAINTENANCE:0,FACILITY_ARREARS_SETTLED:0,
+  FACILITY_PURCHASE:0,FACILITY_UPGRADE:0};
  // Horse care and facility business share a ledger. Report only relevant
  // categories, including actual owner-funded board and the trainer remittance.
  const ledgerRows=state.runtime.finances.ledger.filter(e=>
@@ -522,13 +720,17 @@ export function facilityFinancialReport(state,world,operationId,{from,to}={}){
  const revenue=amounts.FACILITY_BOARDING_REVENUE+amounts.HORSE_CARE_SITE_AND_TRAINER_INCOME;
  const costs=-(amounts.FACILITY_DAILY_OPERATIONS+amounts.FACILITY_STAFF_PAYROLL+
   amounts.FACILITY_MAINTENANCE+amounts.FACILITY_TRACK_RENT+
-  amounts.FACILITY_BOARDING_CLIENT_PAYMENT+amounts.HORSE_CARE_TRAINER_REMITTANCE);
+  amounts.FACILITY_ARREARS_SETTLED+amounts.FACILITY_BOARDING_CLIENT_PAYMENT+amounts.HORSE_CARE_TRAINER_REMITTANCE);
  const capex=-(amounts.FACILITY_PURCHASE+amounts.FACILITY_UPGRADE);
  return {operation_id:operationId,from:start,to:end,
   revenue_minor:revenue,operating_cost_minor:costs,
   operating_profit_minor:revenue-costs,
   capital_investment_minor:capex,net_cash_flow_minor:revenue-costs-capex,
   payroll_minor:-amounts.FACILITY_STAFF_PAYROLL,
+  previously_unpaid_obligations_settled_minor:-amounts.FACILITY_ARREARS_SETTLED,
+  currently_unpaid_liabilities_minor:Object.values(sites).filter(s=>
+   (s.operator_organization_id||s.owner_id)===operationId).
+   reduce((n,s)=>n+(s.unpaid_liability_minor||0),0),
   boarding_purchased_minor:-amounts.FACILITY_BOARDING_CLIENT_PAYMENT,
   horse_board_and_training_income_minor:amounts.HORSE_CARE_SITE_AND_TRAINER_INCOME,
   trainer_remitted_minor:-amounts.HORSE_CARE_TRAINER_REMITTANCE,
@@ -536,5 +738,8 @@ export function facilityFinancialReport(state,world,operationId,{from,to}={}){
   overhead_minor:-amounts.FACILITY_DAILY_OPERATIONS,
   track_rent_minor:-(amounts.FACILITY_TRACK_RENT??0),
   cash_minor:state.runtime.finances.operation_balances_minor?.[operationId]??null,
+  named_employee_wages_paid_minor:state.runtime.finances.ledger.filter(x=>
+   x.kind==='FACILITY_STAFF_WAGE_RECEIPT'&&x.employer_id===operationId&&
+   x.date>=start&&x.date<=end).reduce((n,x)=>n+x.amount_minor,0),
   sites:Object.values(siteMap).sort((a,b)=>a.site_name.localeCompare(b.site_name))};
 }
