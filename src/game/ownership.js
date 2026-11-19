@@ -159,6 +159,7 @@ export function ownershipAction({state,world,command,emit}){
  if(type==='LIST_HORSE_FOR_SALE'){
   verifyTransferHorse(state,world,p.horse_id);
   validRequestId(p.listing_id);verifyOrg(world,p.seller_id);
+  ensure(p.listing_id.length<=110,'HORSE_MARKET','Listing ID must support a stable request receipt');
   ensure(actor==='system'||actor==='player'&&
    state.player.role==='owner'&&state.player.operation_id===p.seller_id,
    'HORSE_MARKET_PERMISSION','Only the legal owner can list this horse');
@@ -368,16 +369,26 @@ export function ownershipAction({state,world,command,emit}){
   }
   delete rt.pending_transfers[p.request_id];
   for(const listing of Object.values(rt.market_listings||{})){
-   if(listing.horse_id===request.horse_id&&listing.status==='OPEN'){
+   if(listing.horse_id===request.horse_id&&listing.status==='OPEN'&&
+    'MARKET:'+listing.listing_id!==p.request_id){
     listing.status='CANCELLED';listing.cancelled_on=state.clock.date;
     emit('HORSE_SALE_LISTING_CANCELLED',{listing_id:listing.listing_id,
      horse_id:listing.horse_id,reason:'LEGAL_OWNER_CHANGED'});
    }
   }
-  if(state.player.role==='owner'&&state.player.operation_id){
-   if(state.player.operation_id===request.from_owner_id)
+  if(['owner','breeder','farm'].includes(state.player.role)&&state.player.operation_id){
+   const playerId=state.player.operation_id;
+   const registered=state.runtime.registered_horses?.by_id?.[request.horse_id];
+   const source=world.entities.horses.find(h=>
+    h.id===(registered?.world_source_horse_id||request.horse_id));
+   // A horse sold by its legal owner may remain in the same business's
+   // MANAGED, BOARDED, TRAINED, BRED or FOALED_AT inventory.
+   const stillManaged=Boolean(source&&[
+    source.managementOrganizationId,source.careFacilityId,source.trainingBarnId,
+    source.breederId,source.foalingFarmId].includes(playerId));
+   if(playerId===request.from_owner_id&&!stillManaged)
     state.stable_horse_ids=state.stable_horse_ids.filter(id=>id!==request.horse_id);
-   else if(state.player.operation_id===request.to_owner_id&&
+   else if(playerId===request.to_owner_id&&
     !state.stable_horse_ids.includes(request.horse_id))
     state.stable_horse_ids.push(request.horse_id);
   }
