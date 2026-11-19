@@ -125,6 +125,9 @@ test('V493 existing MY FOALS screen submits real saved horse and story through s
  assert.match(manager,/const nameable=born.items.filter/);
  assert.match(manager,/h.ownerId===career.run.player.operation_id&&!h.name/);
  assert.match(manager,/data-cc-action="name-born-foal"/);
+ assert.match(manager,/data-cc="industry-foal-year"/);
+ assert.match(manager,/industryFoalYear=Number\(event.target.value\)/);
+ assert.match(manager,/Math.max\(1999,Math.min\(currentYear,industryFoalYear\)\)/);
  assert.match(manager,/commitPersistent1999CareerFoalName\(db,/);
  assert.match(manager,/await browseFullIndustry\(industryBrowsePage,industryBrowseKind\)/);
  assert.match(engine,/db.transaction\(\['manifests','careerRuns','industryLifecycle'\],'readwrite'\)/);
