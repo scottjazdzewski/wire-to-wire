@@ -417,15 +417,18 @@ export function facilityAction({state,world,command,emit}){
 /** Book named wages only when paid by an actual funded operating account.
  * Full unpaid shifts are retained as an obligation to the permanent P-ID.
  * A former employee may receive old wages without becoming employed again. */
-function payNamedEmployee(state,world,site,personId,amount,kind,emit){
+function payNamedEmployee(state,world,site,personId,amount,kind,emit,originalPayer=null){
  const identity=worldIdentity(world,'people',personId);
  ensure(identity?.role==='groom'&&identity.workplaceId===site.host_track_id&&
   integer(amount)&&amount>0,'FACILITY_STAFF_IDENTITY',
   'Paid worker must be a real same-track groom with a positive wage');
- const account=site.operator_organization_id||site.owner_id,
+ const account=originalPayer??site.operator_organization_id??site.owner_id,
   cash=state.runtime.finances.operation_balances_minor?.[account];
- ensure(integer(cash),'FACILITY_STAFF_PAY','Employer must have a real account');
- if(cash<amount)return false;
+ ensure(Boolean(worldIdentity(world,'organizations',account)),
+  'FACILITY_STAFF_PAY','Unpaid wage must belong to its original employer');
+ // A former employer may have no active account. Retain its liability rather
+ // than charge a successor operating the same site or invent a receipt.
+ if(!integer(cash)||cash<amount)return false;
  const day=state.clock.date,
   transaction='FACILITY_NAMED_PAY:'+day+':'+site.id+':'+personId+':'+kind;
  post(state,account,-amount,'FACILITY_STAFF_PAYROLL',site.id,null,transaction);
@@ -433,7 +436,8 @@ function payNamedEmployee(state,world,site,personId,amount,kind,emit){
   earned=prior.stable_payroll_earned_minor??0;
  ensure(integer(earned)&&earned>=0&&integer(earned+amount),
   'FACILITY_STAFF_PAY','Employee earnings must reconcile in integer cents');
- const employed=(site.payroll_staff||[]).some(e=>e.person_id===personId);
+ const employed=account===(site.operator_organization_id||site.owner_id)&&
+  (site.payroll_staff||[]).some(e=>e.person_id===personId);
  state.runtime.people[personId]={...prior,
   stable_payroll_earned_minor:earned+amount,last_pay_date:day,
   ...(employed?{stable_employer_operation_id:account,
@@ -449,13 +453,14 @@ function payNamedEmployee(state,world,site,personId,amount,kind,emit){
   daily_wage_minor:amount,role:'groom',period:kind});
  return true;
 }
-function accrueNamedEmployeeWage(site,personId,amount,day,emit){
+function accrueNamedEmployeeWage(site,personId,amount,day,emit,employerId){
  const root=site.staff_wage_arrears??=(Object.create(null)),
   old=root[personId];
  const owed=(old?.owed_minor??0)+amount;
  ensure(integer(owed)&&owed>0,'FACILITY_STAFF_PAY',
   'Unpaid staff wage overflow or invalid amount');
  root[personId]={person_id:personId,owed_minor:owed,
+  employer_operation_id:old?.employer_operation_id??employerId,
   due_days:(old?.due_days??0)+1,
   first_unpaid_on:old?.first_unpaid_on??day,last_unpaid_on:day};
  emit('FACILITY_EMPLOYEE_WAGE_UNFUNDED',{date:day,site_id:site.id,
@@ -468,7 +473,8 @@ function payPastNamedWages(state,world,site,emit){
  let paid=0;
  for(const [personId,entry] of Object.entries(debts).
   sort(([a],[b])=>a.localeCompare(b))){
-  if(!payNamedEmployee(state,world,site,personId,entry.owed_minor,'ARREARS',emit))
+  if(!payNamedEmployee(state,world,site,personId,entry.owed_minor,
+   'ARREARS',emit,entry.employer_operation_id))
    continue;
   paid+=entry.owed_minor;delete debts[personId];
   emit('FACILITY_EMPLOYEE_BACKPAY_SETTLED',{
@@ -559,7 +565,7 @@ export function advanceFacilities({state,world,emit}){
     if(prior||!payNamedEmployee(state,world,site,staff.person_id,
      staff.daily_wage_minor,'SHIFT',emit)){
      accrueNamedEmployeeWage(site,staff.person_id,
-      staff.daily_wage_minor,day,emit);
+      staff.daily_wage_minor,day,emit,account);
     }else expense+=staff.daily_wage_minor;
    }
   }else if(wages){
@@ -628,7 +634,9 @@ export function validateFacilityState(state,world){
     const identity=worldIdentity(world,'people',personId);
     ensure(identity?.role==='groom'&&
      identity.workplaceId===site.host_track_id&&
-     debt?.person_id===personId&&integer(debt.owed_minor)&&
+     debt?.person_id===personId&&
+     Boolean(worldIdentity(world,'organizations',debt.employer_operation_id))&&
+     integer(debt.owed_minor)&&
      debt.owed_minor>0&&integer(debt.due_days)&&debt.due_days>0&&
      validDate(debt.first_unpaid_on)&&validDate(debt.last_unpaid_on)&&
      debt.first_unpaid_on<=debt.last_unpaid_on&&

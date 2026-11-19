@@ -217,6 +217,7 @@ test('unfunded Kingsmere salary is a real dated obligation, NOT a fabricated sta
   'Employee cannot receive cash that does not exist');
  assert.equal(s.runtime.people[groom],undefined);
  assert.equal(barn.staff_wage_arrears[groom].owed_minor,9000);
+ assert.equal(barn.staff_wage_arrears[groom].employer_operation_id,owner);
  assert.equal(barn.staff_wage_arrears[groom].due_days,1);
  assert.equal(barn.staff_wage_arrears[groom].first_unpaid_on,'1999-01-02');
  assert.equal(barn.staff_wage_arrears[groom].last_unpaid_on,'1999-01-02');
@@ -257,6 +258,7 @@ test('termination retains unpaid employee wages and pays them without falsely re
  s.runtime.finances.operation_balances_minor[owner]=0;
  advanceFacilities({state:s,world,emit:()=>{}});
  assert.equal(barn.staff_wage_arrears[groom].owed_minor,9000);
+ assert.equal(barn.staff_wage_arrears[groom].employer_operation_id,owner);
  s.clock.date='1999-01-03';
  facilityAction({state:s,world,command:{
   actor:'player',type:'FACILITY_TERMINATE_NAMED_PERSON',
@@ -285,7 +287,8 @@ test('termination retains unpaid employee wages and pays them without falsely re
 test('unpaid staff debt must belong to a real same-course source employee and legitimate saved game dates',()=>{
  const mutate=modify=>{
   const s=fixture();s.runtime.facilities.sites[site].staff_wage_arrears={
-   [groom]:{person_id:groom,owed_minor:9000,due_days:1,
+   [groom]:{person_id:groom,employer_operation_id:owner,
+    owed_minor:9000,due_days:1,
     first_unpaid_on:'1999-01-01',last_unpaid_on:'1999-01-01'}};
   modify(s);
   assert.throws(()=>validateFacilityState(s,world),
@@ -295,4 +298,5 @@ test('unpaid staff debt must belong to a real same-course source employee and le
  mutate(s=>{s.runtime.facilities.sites[site].staff_wage_arrears[groom].due_days=0});
  mutate(s=>{s.runtime.facilities.sites[site].staff_wage_arrears[groom].last_unpaid_on='2000-01-01'});
  mutate(s=>{s.runtime.facilities.sites[site].staff_wage_arrears[groom].person_id='P-OTHER'});
+ mutate(s=>{s.runtime.facilities.sites[site].staff_wage_arrears[groom].employer_operation_id='O-NOT-REAL'});
 });
