@@ -1,5 +1,12 @@
 name: Wire to Wire Windows Desktop EXE
 
+# Keep only the newest check for EACH PR and EACH workflow.
+# Preserve running main branch verification and serialized Windows releases.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+
 on:
   pull_request:
     paths:
