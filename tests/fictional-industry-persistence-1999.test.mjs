@@ -99,6 +99,11 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
   worldId:params.worldId}),null);
  const a=await createPersistent1999Industry(params);
  assert.equal(a.status,'COMPLETE');
+ // An EMPTY approved-release pack must not add even a null property:
+ // the full-world SHA hashes the manifest, and old frozen career imports
+ // require the original manifest bytes to remain identical.
+ assert.equal(Object.hasOwn(a,'approvedStartingWorldRelease'),false,
+  'No-op release pack silently changed the historical world fingerprint');
  const reopened=await reopenPersistent1999Industry(store,{seed:params.seed,
   worldId:params.worldId});
  assert.equal(reopened.status,'READY');
