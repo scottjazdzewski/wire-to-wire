@@ -1560,6 +1560,20 @@ export async function verifyPersistent1999WorldOpen(store,manifest){
  if(!directory.length||directory.some(x=>!x.id||!x.ratings||
   !Array.isArray(x.relationships)))
   throw Error('1999 world directory is incomplete');
+ if(manifest.ownerPrincipalCount){
+  const byOwnerId=new Map(directory.map(o=>[o.id,o]));
+  const candidates=[1,manifest.ownerPrincipalCount];
+  for(const ordinal of [...new Set(candidates)]){
+   const id='P-FICTIONAL-1999-OWNER-PRINCIPAL-'+String(ordinal).padStart(7,'0');
+   const person=await findPersistent1999Person(store,manifest,id);
+   const owner=byOwnerId.get(person?.organizationId);
+   if(!person||!owner||owner.principalId!==person.id||
+    owner.principalName!==person.name||
+    person.relationships?.filter(edge=>edge.type==='PRINCIPAL_OF'&&
+     edge.toId===owner.id).length!==1)
+    throw Error('Saved owner principal relationship failed to reopen: '+id);
+  }
+ }
  return {status:'OPEN_VERIFIED',worldId:manifest.worldId,
   seed:manifest.seed,horses:manifest.horseCount,people:manifest.personCount,
   coverings:manifest.coveringCount,raceDays:manifest.scheduledCards,
