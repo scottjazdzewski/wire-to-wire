@@ -835,8 +835,29 @@ export function validateRacingRuntime(state,world){
  for(const [trainerId,earnedMinor] of Object.entries(rt.trainer_finances_minor))
   ensure(person(world,trainerId)&&cents(earnedMinor),
    'RACE_SAVE','Trainer earned fees and purses must resolve to an approved person and integer cents');
+ const openSourceBooks=new Map();
  for(const [id,r] of Object.entries(state.runtime.races||{})){
   if(!r.source||r.source!=='WTW_1999_TRACK_SPECIFIC_MEET_PROGRESSION')continue;
+  // Check active, still-enterable races against their exact original
+  // condition-book slot. Previously OFFICIAL saved results are historical
+  // game outcomes, not reinterpreted under a later program revision.
+  if(r.status==='ENTRIES_OPEN'&&
+     state.runtime.registered_horses?.schema==='WTW_CAREER_HORSES_V1'){
+   const dayKey=r.track_id+'|'+r.date;
+   if(!openSourceBooks.has(dayKey))
+    openSourceBooks.set(dayKey,new Map(
+     gameRaceProgram(state,world,r.track_id,r.date).map(book=>[book.id,book])));
+   const book=openSourceBooks.get(dayKey).get(r.id);
+   ensure(Boolean(book)&&r.number===book.number&&
+    r.age===book.ageRequirement&&r.sex===book.sexRestriction&&
+    r.conditions===book.conditions&&r.maiden===book.maidenOnly&&
+    r.max_wins===book.maxCareerWins&&
+    r.surface===book.surface&&r.distance_furlongs===book.distanceFurlongs&&
+    r.purse_minor===Math.round(book.purse*100)&&
+    r.field_capacity===book.fieldCapacity&&
+    r.stake_id===(book.stakeId||null),
+    'RACE_SOURCE_MISMATCH','Playable race must match its exact approved 1999 source condition book');
+  }
   ensure(r.id===id&&trackFor(world,r.track_id)&&validDate(r.date)&&
    supported1999RaceClass(r)&&
    ['ENTRIES_OPEN','OFFICIAL_SIM_RESULT','CANCELLED_INSUFFICIENT_FIELD'].includes(r.status)&&
