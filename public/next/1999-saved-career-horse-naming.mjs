@@ -13,6 +13,24 @@ import {createNamingFeedback,validateNamingFeedback,recordNamingFeedback,
  from '../1999/game/horse-naming-feedback-v489.js';
 import {OWNER_REVIEWED_NAME_KEYS_V478}
  from '../1999/game/horse-naming-owner-review-v478.js';
+import {createLocalStoryIdeas,LOCAL_HORSE_NAMING_ALGORITHM_REVISION}
+ from '../1999/game/horse-naming-local-v485.js';
+import {screenStoryFirstIdeas}
+ from '../1999/game/horse-naming-model-creator.js';
+import {rankNamingCandidates,excludedNamingFeedbackNames}
+ from '../1999/game/horse-naming-feedback-v489.js';
+
+/** Project the same source-backed horse with this career's saved display name.
+ * The source record and the immutable world remain untouched.
+ * No ownership, pedigree, lifecycle, financial, or physical relationship edits.
+ */
+export function projectCareerSavedHorseName(horse,worldEdits=null){
+ if(horse==null)return null;
+ const edit=worldEdits?.byId?.['horse:'+horse.id];
+ if(typeof edit?.name!=='string'||!edit.name.trim())return horse;
+ return {...horse,name:edit.name,
+  nameDisplaySource:'SAVED_CAREER_HORSE_NAME_OVERRIDE'};
+}
 
 /**
  * Saved careers may contain an edited registered display name for an opening
@@ -48,6 +66,79 @@ export function validateRunWithSavedWorldEdits(world,run,edits,validator){
 
 const blocked=new Set(OWNER_REVIEWED_NAME_KEYS_V478);
 const isObject=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
+
+/**
+ * Source-backed story for a specific 300k-world horse, NOT the fictional
+ * Naming Lab dummy horse. The story is supplied by the CURRENT player owner.
+ * A preview is a draft; CHOOSE persists the owner text with the horse ID.
+ */
+export function buildV10OwnerHorseNamingBrief({world,run,horseId,story}={}){
+ if(run?.player?.role!=='owner'||!run.player.operation_id||
+  typeof horseId!=='string')throw Error('A real saved owner horse is required');
+ const horse=world?.entities?.horses?.find(h=>h.id===horseId);
+ if(!horse||(horse.ownerId??horse.owner_organization_id)!==
+   run.player.operation_id)throw Error('That horse is not owned by the current player');
+ if(typeof story!=='string'||story.trim().length<35||story.length>1000)
+  throw Error('Write a horse-specific owner story of 35–1,000 characters');
+ const owner=world.entities.organizations.find(o=>o.id===run.player.operation_id);
+ const breederId=horse.breederId||horse.foalingFarmId;
+ const breeder=world.entities.organizations.find(o=>o.id===breederId);
+ if(!owner?.name||!breeder?.name||!Number.isInteger(horse.foalYear))
+  throw Error('Selected horse lacks its real owner, breeder or foaling record');
+ return {schema:'WTW_GAME_NAME_ORIGIN_BRIDGE_V1',horseId,
+  foalingYear:horse.foalYear,
+  owner:{id:owner.id,name:owner.name},
+  breeder:{id:breeder.id,name:breeder.name},
+  foalingLocationId:horse.foalingFarmId||null,
+  evidence:[{id:'V10_OWNER_DRAFT:'+horseId,kind:'OWNER_ATTESTED',
+   sourceRef:'v10_owner_story_draft:'+horseId,detail:story.trim()}],
+  status:'READY_FOR_ORIGINAL_NAME_WRITING',
+  namingAuthority:'OWNER_SUBMITTED_STORY_NOT_REGISTERED'};
+}
+
+/** Game's exact same local whole-name writer and independent screen, but
+ * grounded in the actual saved 300k horse, owner and source-world ledger.
+ * This is an editorial preview; no source or career writes are possible.
+ */
+export function previewV10OwnerHorseNames({world,run,horseId,story,count=8,
+ attempt=0,recentNames=[],additionalReviewedNames=[],
+ nameFeedback=null,direction='',registeredNameKeys=null}={}){
+ if(!Number.isSafeInteger(count)||count<1||count>8||
+  !Number.isSafeInteger(attempt)||attempt<0||attempt>1000000||
+  !Array.isArray(recentNames)||!Array.isArray(additionalReviewedNames))
+  throw Error('Invalid V10 horse naming preview controls');
+ const brief=buildV10OwnerHorseNamingBrief({world,run,horseId,story});
+ const feedback=validateNamingFeedback(nameFeedback??createNamingFeedback());
+ const excluded=excludedNamingFeedbackNames(feedback);
+ const {suggestions,hits}=createLocalStoryIdeas(brief,{count,attempt});
+ const screened=[],already=new Set([...recentNames,...additionalReviewedNames,
+  ...excluded].map(nameFeedbackKey));
+ let held=0;
+ for(let i=0;i<suggestions.length;i+=8){
+  const result=screenStoryFirstIdeas({
+   world,state:run,brief,rawIdeas:suggestions.slice(i,i+8),
+   recentNames:recentNames.slice(-60),
+   additionalReviewedNames:[...additionalReviewedNames,...excluded],
+   registeredNameKeys
+  });
+  held+=result.held;
+  for(const row of result.screened){
+   if(row.status!=='AWAITING_INDEPENDENT_EDITOR')continue;
+   const key=nameFeedbackKey(row.name);
+   if(already.has(key))continue;
+   const source=suggestions.find(s=>s.name===row.name);
+   screened.push({...row,originMotif:source?.motifId||'other',
+    origin:'SAVED_OWNER_HORSE_STORY',horseId});
+   already.add(key);
+  }
+ }
+ const ranked=rankNamingCandidates(screened,feedback,{direction});
+ return {screened:ranked.slice(0,count),held,
+  horseId,ownerId:brief.owner.id,breederId:brief.breeder.id,
+  namingRevision:LOCAL_HORSE_NAMING_ALGORITHM_REVISION,
+  status:ranked.length?'AWAITING_INDEPENDENT_EDITOR':'HOLD_NO_AVAILABLE_SOURCE_NAME',
+  approvedForRegistration:false,gameWrites:0,requestCount:0};
+}
 
 /**
  * Fully pure. Candidate names are owner-provided via the existing screened
@@ -88,6 +179,12 @@ export function planV10SavedHorseNamingDecision({
     throw Error('Horse name conflicts with an existing registered horse');
   }
  }
+ // A live V10 name preview is based on this particular player's story.
+ // Only a CHOOSE decision anchors that player-written text durably to its
+ // immutable horse ID. Legacy manual direct-rename calls without a story
+ // remain compatible, but cannot claim a saved naming origin.
+ const ownerStory=decision==='CHOOSE'&&payload.story!==undefined?
+  buildV10OwnerHorseNamingBrief({world,run,horseId,story:payload.story}):null;
  const feedback=recordNamingFeedback(current,{
   name,decision,motifId:motif_id,horseId,prompt
  });
@@ -96,6 +193,10 @@ export function planV10SavedHorseNamingDecision({
    'horse',horseId,{name},{run}):
   (worldEdits??createCareerWorldEdits());
  return {feedback,edits,horseId,
+  ownerStory:ownerStory?{horseId,ownerId:ownerStory.owner.id,
+   breederId:ownerStory.breeder.id,foalingYear:ownerStory.foalingYear,
+   story:ownerStory.evidence[0].detail,
+   basis:'OWNER_AUTHORED_STORY_SUBMITTED_IN_SAVED_CAREER'}:null,
   identityUpdated:decision==='CHOOSE',decision,
   feedbackRevision:feedback.revision,
   // Legal racing registration remains separate from this game display rename.

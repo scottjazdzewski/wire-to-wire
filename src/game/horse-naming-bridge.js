@@ -85,7 +85,8 @@ export function buildGameHorseNamingBrief({world,state,horse,ownerStories=null}=
 }
 
 /** A literal candidate + explanation is NOT accepted merely because it passed QA. */
-export function screenGameHorseName({world,state,brief,proposal,reviewedNames=[],reservedNames=[],issuedNames=[]}={}){
+export function screenGameHorseName({world,state,brief,proposal,reviewedNames=[],reservedNames=[],issuedNames=[],
+ registeredNameKeys=null}={}){
  ensure(brief?.schema===GAME_NAMING_BRIDGE_SCHEMA,'NAMING_BRIEF','Valid game naming brief required');
  ensure(plain(proposal),'NAMING_PROPOSAL','Proposal required');
  const reasons=[];
@@ -96,10 +97,21 @@ export function screenGameHorseName({world,state,brief,proposal,reviewedNames=[]
  if(!anchor)reasons.push('UNVERIFIED_STORY_ANCHOR');
  if(text(proposal.explanation).length<30)reasons.push('UNEXPLAINED_NAME');
  if(!text(proposal.writer_id))reasons.push('MISSING_WRITER_ID');
- const prior=[...(world?.entities?.horses||[]).map(x=>x.name),
-  ...Object.values(state?.runtime?.registered_horses?.by_id||{}).map(x=>x.registered_name),
-  ...reviewedNames,...reservedNames,...issuedNames];
- if(normalized&&prior.some(n=>nameKey(typeof n==='string'?n:n?.name)===normalized))reasons.push('NAME_ALREADY_USED_OR_REVIEWED');
+ // The full 300k-world Naming Desk passes its existing normalized
+ // name index, eliminating hundreds of thousands of repeated scans per
+ // displayed idea. Without that trusted preview index, preserve the old
+ // exhaustive source-world + active-registry collision behavior.
+ if(registeredNameKeys!==null&&!(registeredNameKeys instanceof Set))
+  throw Error('Name availability index must be a Set');
+ const perRequest=[...reviewedNames,...reservedNames,...issuedNames];
+ const occupied=registeredNameKeys?
+  registeredNameKeys.has(normalized):
+  [...(world?.entities?.horses||[]).map(x=>x.name),
+   ...Object.values(state?.runtime?.registered_horses?.by_id||{})
+    .map(x=>x.registered_name)].some(n=>nameKey(n)===normalized);
+ if(normalized&&(occupied||perRequest.some(n=>
+  nameKey(typeof n==='string'?n:n?.name)===normalized)))
+  reasons.push('NAME_ALREADY_USED_OR_REVIEWED');
  return {schema:GAME_NAMING_BRIDGE_SCHEMA,horseId:brief.horseId,
   name,evidenceId:proposal.evidenceId,origin:anchor?.detail||null,
   explanation:text(proposal.explanation),writerId:text(proposal.writer_id),
