@@ -11,6 +11,7 @@ import { validateGameRun } from './state.js';
 import {makeReputationBaseline,applyReputationSignal} from './reputation.js';
 import {FACILITY_COMMANDS,facilityAction,advanceFacilities} from './facility-operations.js';
 import {OWNERSHIP_COMMANDS,ownershipAction} from './ownership.js';
+import {STUD_SERVICE_COMMANDS,bookStudService} from './stud-services.js';
 import {HORSE_REGISTRATION_COMMANDS,registerHorseAction} from './horse-registration.js';
 import {HORSE_NAMING_COMMANDS,recordHorseNamingStoryAction,recordHorseNamingPreferenceAction} from './horse-naming-bridge.js';
 import {HORSE_NAME_OWNER_COMMANDS,stageStoryHorseNameAction,ownerDecidesHorseNameAction} from './horse-name-owner-release.js';
@@ -25,7 +26,7 @@ import {PLAYER_RACE_PLAN_COMMANDS,confirm1999PlayerRacePlan} from './player-race
 import {TRAINER_MANAGEMENT_COMMANDS,answerTrainerManagementRequest,prepareTrainerManagementDay,reactToTrainerEvents} from './trainer-management-requests-1999.js';
 import {TRAINER_EMPLOYMENT_COMMANDS,trainerEmploymentAction,advanceTrainerEmployment,considerTrainerEmployment} from './trainer-employment-1999.js';
 
-const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_NAMING_COMMANDS,...HORSE_NAME_OWNER_COMMANDS,...HORSE_CARE_COMMANDS,...RACING_COMMANDS,...HORSE_SHIPPING_COMMANDS,...TRAINER_CONTRACT_COMMANDS,...OWNER_TRAINER_REVIEW_COMMANDS,...TRAINER_MANAGEMENT_COMMANDS,...TRAINER_EMPLOYMENT_COMMANDS,...PLAYER_RACE_PLAN_COMMANDS]);
+const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...STUD_SERVICE_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_NAMING_COMMANDS,...HORSE_NAME_OWNER_COMMANDS,...HORSE_CARE_COMMANDS,...RACING_COMMANDS,...HORSE_SHIPPING_COMMANDS,...TRAINER_CONTRACT_COMMANDS,...OWNER_TRAINER_REVIEW_COMMANDS,...TRAINER_MANAGEMENT_COMMANDS,...TRAINER_EMPLOYMENT_COMMANDS,...PLAYER_RACE_PLAN_COMMANDS]);
 const MAX_PENDING = 5000;
 // Full per-day decision details remain in dispatch output/runtime records.
 // The durable journal keeps compact weekly samples plus daily count summaries.
@@ -288,6 +289,8 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     if(c.type==='SET_1999_RACE_PREPARATION')
      set1999RacePreparation({state:next,world,command:c,emit});
     else setHorseCarePolicy({state:next,world,command:c,emit});
+  } else if (STUD_SERVICE_COMMANDS.includes(c.type)) {
+    bookStudService({state:next,world,command:c,emit});
   } else if (OWNERSHIP_COMMANDS.includes(c.type)) {
     ownershipAction({state:next,world,command:c,emit});
   } else if (FACILITY_COMMANDS.includes(c.type)) {
