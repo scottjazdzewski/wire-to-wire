@@ -413,6 +413,73 @@ export function facilityAction({state,world,command,emit}){
   manageNamedStableEmployee(state,world,p,command,emit);
  else ensure(false,'FACILITY_COMMAND','Unknown facility command');
 }
+
+/** Book named wages only when paid by an actual funded operating account.
+ * Full unpaid shifts are retained as an obligation to the permanent P-ID.
+ * A former employee may receive old wages without becoming employed again. */
+function payNamedEmployee(state,world,site,personId,amount,kind,emit){
+ const identity=worldIdentity(world,'people',personId);
+ ensure(identity?.role==='groom'&&identity.workplaceId===site.host_track_id&&
+  integer(amount)&&amount>0,'FACILITY_STAFF_IDENTITY',
+  'Paid worker must be a real same-track groom with a positive wage');
+ const account=site.operator_organization_id||site.owner_id,
+  cash=state.runtime.finances.operation_balances_minor?.[account];
+ ensure(integer(cash),'FACILITY_STAFF_PAY','Employer must have a real account');
+ if(cash<amount)return false;
+ const day=state.clock.date,
+  transaction='FACILITY_NAMED_PAY:'+day+':'+site.id+':'+personId+':'+kind;
+ post(state,account,-amount,'FACILITY_STAFF_PAYROLL',site.id,null,transaction);
+ const prior=state.runtime.people[personId]??{},
+  earned=prior.stable_payroll_earned_minor??0;
+ ensure(integer(earned)&&earned>=0&&integer(earned+amount),
+  'FACILITY_STAFF_PAY','Employee earnings must reconcile in integer cents');
+ const employed=(site.payroll_staff||[]).some(e=>e.person_id===personId);
+ state.runtime.people[personId]={...prior,
+  stable_payroll_earned_minor:earned+amount,last_pay_date:day,
+  ...(employed?{stable_employer_operation_id:account,
+   stable_employer_site_id:site.id}:{})};
+ state.runtime.finances.ledger.push({date:day,operation_id:null,
+  employer_operation_id:account,site_id:site.id,
+  person_id:personId,amount_minor:amount,transaction_id:transaction,
+  kind:'FACILITY_NAMED_EMPLOYEE_RECEIPT',
+  source:kind==='ARREARS'?'PAID_PREVIOUSLY_UNFUNDED_LOCAL_STABLE_WAGE':
+   'PAID_LOCAL_1999_STABLE_EMPLOYMENT'});
+ emit('FACILITY_EMPLOYEE_PAID',{date:day,site_id:site.id,
+  owner_id:account,person_id:personId,
+  daily_wage_minor:amount,role:'groom',period:kind});
+ return true;
+}
+function accrueNamedEmployeeWage(site,personId,amount,day,emit){
+ const root=site.staff_wage_arrears??=(Object.create(null)),
+  old=root[personId];
+ const owed=(old?.owed_minor??0)+amount;
+ ensure(integer(owed)&&owed>0,'FACILITY_STAFF_PAY',
+  'Unpaid staff wage overflow or invalid amount');
+ root[personId]={person_id:personId,owed_minor:owed,
+  due_days:(old?.due_days??0)+1,
+  first_unpaid_on:old?.first_unpaid_on??day,last_unpaid_on:day};
+ emit('FACILITY_EMPLOYEE_WAGE_UNFUNDED',{date:day,site_id:site.id,
+  person_id:personId,unpaid_today_minor:amount,total_owed_minor:owed,
+  no_cash_receipt:true});
+}
+function payPastNamedWages(state,world,site,emit){
+ const debts=site.staff_wage_arrears;
+ if(!debts)return 0;
+ let paid=0;
+ for(const [personId,entry] of Object.entries(debts).
+  sort(([a],[b])=>a.localeCompare(b))){
+  if(!payNamedEmployee(state,world,site,personId,entry.owed_minor,'ARREARS',emit))
+   continue;
+  paid+=entry.owed_minor;delete debts[personId];
+  emit('FACILITY_EMPLOYEE_BACKPAY_SETTLED',{
+   date:state.clock.date,site_id:site.id,person_id:personId,
+   amount_minor:entry.owed_minor,unpaid_days:entry.due_days,
+   first_unpaid_on:entry.first_unpaid_on,last_unpaid_on:entry.last_unpaid_on});
+ }
+ if(!Object.keys(debts).length)delete site.staff_wage_arrears;
+ return paid;
+}
+
 export function advanceFacilities({state,world,emit}){
  const f=ensureRoot(state),day=state.clock.date;
  if(f.last_day===day)return;
@@ -438,7 +505,12 @@ export function advanceFacilities({state,world,emit}){
   }
   if(site.status==='UNDERSTAFFED'&&site.staff_count>=site.staff_required){site.status='ACTIVE';emit('FACILITY_RESTAFFED',{site_id:site.id});}
   if(site.status==='ACTIVE'&&site.staff_required>site.staff_count)site.status='UNDERSTAFFED';
-  if(site.status!=='ACTIVE')continue;
+  if(site.status!=='ACTIVE'){
+   // A terminated employee is still owed wages even when the barn is closed
+   // or understaffed. Pay only with actual cash; never restore employment.
+   expense+=payPastNamedWages(state,world,site,emit);
+   continue;
+  }
   // Worn buildings, thin staffing and maintenance policy change care quality.
   if(day.slice(8)==='01'){
    const wear=site.maintenance_policy==='ECONOMY'?-3:
@@ -477,36 +549,24 @@ export function advanceFacilities({state,world,emit}){
   const maintenance=Math.round((site.maintenance_daily_minor??0)*
    MAINTENANCE_MULTIPLIER[site.maintenance_policy||'STANDARD']/100);
   ensure(integer(wages)&&integer(maintenance),'FACILITY_MONEY','Operating expense overflow');
-  gross+=revenue;expense+=cost+wages+maintenance;
+  // Operating-day totals reflect cash actually settled, not unpaid promises.
+  gross+=revenue;expense+=cost+maintenance;
   if(cost)post(state,account,-cost,'FACILITY_DAILY_OPERATIONS',site.id,null);
+  expense+=payPastNamedWages(state,world,site,emit);
   if(staffRoster?.length){
    for(const staff of staffRoster.slice(0,site.staff_count??0)){
-    const identity=worldIdentity(world,'people',staff.person_id);
-    ensure(identity?.role===staff.role&&identity.workplaceId===site.host_track_id,
-     'FACILITY_STAFF_IDENTITY','Named staff must be the real locally employed person');
-    const transaction='FACILITY_NAMED_PAY:'+day+':'+site.id+':'+staff.person_id;
-    post(state,account,-staff.daily_wage_minor,'FACILITY_STAFF_PAYROLL',
-     site.id,null,transaction);
-    const prior=state.runtime.people[staff.person_id]??{};
-    const earned=prior.stable_payroll_earned_minor??0;
-    ensure(Number.isSafeInteger(earned)&&earned>=0&&
-     Number.isSafeInteger(earned+staff.daily_wage_minor),
-     'FACILITY_STAFF_PAY','Saved employee receipts must reconcile in cents');
-    state.runtime.people[staff.person_id]={...prior,
-     stable_payroll_earned_minor:earned+staff.daily_wage_minor,
-     stable_employer_operation_id:account,
-     stable_employer_site_id:site.id,
-     last_pay_date:day};
-    state.runtime.finances.ledger.push({date:day,operation_id:null,
-     employer_operation_id:account,site_id:site.id,
-     person_id:staff.person_id,amount_minor:staff.daily_wage_minor,
-     transaction_id:transaction,kind:'FACILITY_NAMED_EMPLOYEE_RECEIPT',
-     source:'PAID_LOCAL_1999_STABLE_EMPLOYMENT'});
-    emit('FACILITY_EMPLOYEE_PAID',{date:day,site_id:site.id,
-     owner_id:account,person_id:staff.person_id,
-     daily_wage_minor:staff.daily_wage_minor,role:staff.role});
+    const prior=site.staff_wage_arrears?.[staff.person_id];
+    if(prior||!payNamedEmployee(state,world,site,staff.person_id,
+     staff.daily_wage_minor,'SHIFT',emit)){
+     accrueNamedEmployeeWage(site,staff.person_id,
+      staff.daily_wage_minor,day,emit);
+    }else expense+=staff.daily_wage_minor;
    }
-  }else if(wages)post(state,account,-wages,'FACILITY_STAFF_PAYROLL',site.id,null);
+  }else if(wages){
+   // Unnamed aggregate-payroll legacy records retain their original behavior.
+   post(state,account,-wages,'FACILITY_STAFF_PAYROLL',site.id,null);
+   expense+=wages;
+  }
   if(maintenance)post(state,account,-maintenance,'FACILITY_MAINTENANCE',site.id,null);
   const rent=site.residence_kind==='TRACK_TRAINER_BARN'?(site.track_rent_daily_minor??0):0;
   if(rent)post(state,account,-rent,'FACILITY_TRACK_RENT',site.id,null);
@@ -559,6 +619,23 @@ export function validateFacilityState(state,world){
   number(site.staff_required??0,0,250,'staff required');
   number(site.staff_count??0,0,500,'current staff');
   number(site.staff_wage_daily_minor??0,0,1000000,'staff wages');
+  if(site.staff_wage_arrears!==undefined){
+   ensure(isObject(site.staff_wage_arrears)&&
+    Object.keys(site.staff_wage_arrears).length<=500&&
+    site.residence_kind==='TRACK_TRAINER_BARN',
+    'FACILITY_STAFF_ARREARS','Unpaid wage records require a real racing barn');
+   for(const [personId,debt] of Object.entries(site.staff_wage_arrears)){
+    const identity=worldIdentity(world,'people',personId);
+    ensure(identity?.role==='groom'&&
+     identity.workplaceId===site.host_track_id&&
+     debt?.person_id===personId&&integer(debt.owed_minor)&&
+     debt.owed_minor>0&&integer(debt.due_days)&&debt.due_days>0&&
+     validDate(debt.first_unpaid_on)&&validDate(debt.last_unpaid_on)&&
+     debt.first_unpaid_on<=debt.last_unpaid_on&&
+     debt.last_unpaid_on<=state.clock.date,
+     'FACILITY_STAFF_ARREARS','Invalid/unfunded wage, date or source worker');
+   }
+  }
   if(site.staff_history!==undefined){
    ensure(Array.isArray(site.staff_history)&&site.staff_history.length<=120,
     'FACILITY_EMPLOYEE_HISTORY','Invalid ended employee agreements');
