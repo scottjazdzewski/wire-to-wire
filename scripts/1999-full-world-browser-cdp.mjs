@@ -297,6 +297,14 @@ try{
  assert.equal(firstNamingSave.feedback?.horseId,ownedNamingTarget.id);
  assert.equal(firstNamingSave.origin?.horseId,ownedNamingTarget.id);
  assert.equal(firstNamingSave.origin?.ownerId,'O-000061');
+ const namedInspector=await browser.evalJS(`window.WTWCompactCareerManager.inspectFullIndustryHorse(
+  ${JSON.stringify(ownedNamingTarget.id)})`);
+ assert.equal(namedInspector.name,chosenCareerName,
+  'Full Industry horse inspector must display the saved owner name');
+ assert.equal(namedInspector.nameDisplaySource,'SAVED_CAREER_HORSE_NAME_OVERRIDE');
+ assert.equal(namedInspector.id,ownedNamingTarget.id,
+  'Inspector override changed the immutable horse identity');
+
  assert.match(firstNamingSave.origin?.story||'',/spring storm/);
  assert.equal(await browser.evalJS(`window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.worldHorseById?.(
   ${JSON.stringify(ownedNamingTarget.id)})?.name||null`),chosenCareerName);
@@ -376,6 +384,11 @@ try{
  assert.equal(verifiedNameReopen.name,chosenCareerName);
  assert.equal(verifiedNameReopen.feedback?.horseId,ownedNamingTarget.id);
  assert.equal(verifiedNameReopen.origin?.horseId,ownedNamingTarget.id);
+ const reopenedInspector=await browser.evalJS(`window.WTWCompactCareerManager.inspectFullIndustryHorse(
+  ${JSON.stringify(ownedNamingTarget.id)})`);
+ assert.equal(reopenedInspector.name,chosenCareerName,
+  'Reopened Industry inspector fell back to the original generated name');
+
  assert.match(verifiedNameReopen.origin?.story||'',/spring storm/);
  console.log('WTW_V10_NAMING_DESK_ACTUAL_HORSE_REOPEN_PASS '+
   JSON.stringify({horseId:ownedNamingTarget.id,name:chosenCareerName,
