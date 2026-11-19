@@ -156,3 +156,15 @@ test('real worker invokes destination naming only behind explicit new version an
  assert.match(manager,/directoryNamingModel:options\.directoryNamingModel\?\?null/);
  assert.match(manager,/worldId:options\.worldId\?\?'WTW1999FullIndustry'/);
 });
+
+test('destination names fail closed instead of overflowing the approved owner census',()=>{
+ assert.throws(()=>create1999DestinationNamingMarkets({
+  tracks:tracks.slice(0,2),ownerCountByTrack:[29000,1],farmsPerTrack:0
+ }),/exceeds naming engine capacity/);
+ assert.throws(()=>create1999DestinationNamingMarkets({
+  tracks:tracks.slice(0,2),ownerCountByTrack:[1,-1]
+ }),/Invalid destination owner counts/);
+ assert.throws(()=>create1999DestinationNamingMarkets({
+  tracks:tracks.slice(0,2),ownerCountByTrack:[1,1],farmsPerTrack:31
+ }),/Invalid destination naming track\/owner\/farm plan/);
+});
