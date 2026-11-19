@@ -250,7 +250,8 @@ try{
  const nameReceipt=await browser.evalJS(`window.WTWCompactCareerManager.commitSavedCareerHorseNamingPreference({
   name:${JSON.stringify(chosenCareerName)},decision:'CHOOSE',
   motif_id:'owner-story',horse_id:${JSON.stringify(ownedNamingTarget.id)},
-  prompt:'one memorable natural racehorse name'})`);
+  prompt:'one memorable natural racehorse name',
+  story:'During a spring storm the mare delivered in the barn while a bell rang outside. The owner watched the foal take its first steps.'})`);
  assert.equal(nameReceipt.identityUpdated,true,
   'Naming Desk choice did not apply to the saved V10 horse identity');
  const savedHorseNaming=async()=>browser.evalJS(`(async()=>{
@@ -263,13 +264,17 @@ try{
     'WTW-RUN-1999-19990101-SIZE-300000-OP-O-000061');
    return {name:saved?.changes?.worldEdits?.byId?.[
     ${JSON.stringify('horse:'+ownedNamingTarget.id)}]?.name||null,
-    feedback:saved?.changes?.namingFeedback?.decisions?.kingsmeresunday||null};
+    feedback:saved?.changes?.namingFeedback?.decisions?.kingsmeresunday||null,
+    origin:saved?.changes?.namingOriginStories?.[${JSON.stringify(ownedNamingTarget.id)}]||null};
   }finally{db.close()}
  })()`);
  const firstNamingSave=await savedHorseNaming();
  assert.equal(firstNamingSave.name,chosenCareerName);
  assert.equal(firstNamingSave.feedback?.decision,'CHOOSE');
  assert.equal(firstNamingSave.feedback?.horseId,ownedNamingTarget.id);
+ assert.equal(firstNamingSave.origin?.horseId,ownedNamingTarget.id);
+ assert.equal(firstNamingSave.origin?.ownerId,'O-000061');
+ assert.match(firstNamingSave.origin?.story||'',/spring storm/);
  assert.equal(await browser.evalJS(`window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.worldHorseById?.(
   ${JSON.stringify(ownedNamingTarget.id)})?.name||null`),chosenCareerName);
 
@@ -303,6 +308,7 @@ try{
  const namingAfterDay=await savedHorseNaming();
  assert.equal(namingAfterDay.name,chosenCareerName,
   'Advancing the 1999 game erased a chosen horse name');
+ assert.equal(namingAfterDay.origin?.horseId,ownedNamingTarget.id);
  assert.equal(namingAfterDay.feedback?.horseId,ownedNamingTarget.id,
   'Advancing the game lost its owner naming decision');
  assert.equal(careerAfterDay.gameDate,dayAction.advanced.match(/GAME DATE (\d{4}-\d{2}-\d{2})/)?.[1],
@@ -346,6 +352,8 @@ try{
  const verifiedNameReopen=await savedHorseNaming();
  assert.equal(verifiedNameReopen.name,chosenCareerName);
  assert.equal(verifiedNameReopen.feedback?.horseId,ownedNamingTarget.id);
+ assert.equal(verifiedNameReopen.origin?.horseId,ownedNamingTarget.id);
+ assert.match(verifiedNameReopen.origin?.story||'',/spring storm/);
  console.log('WTW_V10_NAMING_DESK_ACTUAL_HORSE_REOPEN_PASS '+
   JSON.stringify({horseId:ownedNamingTarget.id,name:chosenCareerName,
    decisionRevision:nameReceipt.feedbackRevision,worldHorseCount:300000}));
