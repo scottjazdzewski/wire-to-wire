@@ -4629,6 +4629,20 @@ root.addEventListener('focusout',event=>{
 },true);
 function paint(){
  if(!APP.ready)return;
+ // The Windows EXE must show its actual playable 1999 career, not the
+ // research-only Office rows while the bundled 300,000-horse save imports.
+ // This is a loading view, NOT a second world editor or startup wizard.
+ if(window.WTWDesktop?.runtime==='windows-desktop'&&
+    !window.WTWDesktop.smokeMode&&
+    (window.__WTW_DESKTOP_FULL_WORLD_BOOTING__||
+     !window.__WTW_ACTIVE_WORLD_CAREER_VIEW__)){
+  root.innerHTML='<div class="ng-manager-shell" role="status" aria-live="polite" '+
+   'aria-label="Loading playable January 1999 world">'+
+   '<div class="ng-manager-stage"><p style="padding:24px">'+
+   'Loading your January 1, 1999 Kingsmere career and the full 300,000-horse industry…'+
+   '</p></div></div>';
+  return;
+ }
  if(namingEditorHasFocus()){
   namingEditorPaintPending=true;
   return; // preserve the focused input and selection while editing
