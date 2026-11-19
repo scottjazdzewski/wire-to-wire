@@ -170,6 +170,21 @@ test('three consecutive racing weeks settle genuine races and reopen with the sa
   assert.equal(state.runtime.finances.balance_minor,ownerCash);
  }
  assert.ok(officialAt.size>=2);
+ const actualSettlements=state.event_log.filter(e=>e.kind==='RACE_SETTLED');
+ assert.equal(actualSettlements.length,officialAt.size,
+  'One canonical settlement event per permanently official race');
+ const totalStarters=[...officialAt.keys()].reduce((sum,id)=>
+  sum+state.runtime.races[id].results.length,0);
+ assert.ok(totalStarters>=officialAt.size*2);
+ console.log('WTW_LANE1_PILOT_ACTUAL_RACING_COUNTS '+JSON.stringify({
+  world:'EXISTING_38_HORSE_PILOT_NOT_FULL_V10',
+  days_advanced:state.clock.days_elapsed,
+  official_races:officialAt.size,
+  settlement_events:actualSettlements.length,
+  starters:totalStarters,
+  manual_scratches:state.event_log.filter(e=>e.kind==='RACE_ENTRY_SCRATCHED').length,
+  automatic_scratches:state.event_log.filter(e=>e.kind==='RACE_DAY_SCRATCH').length
+ }));
  assert.ok(state.event_log.some(e=>e.kind==='HORSE_MAIDEN_GRADUATED'));
  assert.ok(state.event_log.some(e=>e.kind==='RACE_SETTLED'));
  assert.equal(JSON.stringify(world),originalSource);
