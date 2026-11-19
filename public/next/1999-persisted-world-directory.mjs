@@ -103,10 +103,14 @@ export function createPersistedIndustryHorseDirectory({world,manifest,year=1999}
   return {indexing:false,total:cachedRows.length,loaded:horses.length,
    progress:horses.length,items:cachedRows.slice(start,start+size).map(row)};
  }
+ let ratingAuditReport=null;
  return Object.freeze({schema:PERSISTED_INDUSTRY_DIRECTORY_SCHEMA,
   size:horses.length,browse,byId:id=>ids.has(id)?row(ids.get(id)):null,
-  ratingAudit:()=>audit1999SavedWorldRatings(world,{
-   horseCount:manifest.horseCount,personCount:manifest.personCount}),
+  // Full 300k+75k scan only when explicitly requested; cache until this
+  // world-directory instance changes, never slow each profile repaint.
+  ratingAudit:()=>ratingAuditReport??(ratingAuditReport=
+   audit1999SavedWorldRatings(world,{
+    horseCount:manifest.horseCount,personCount:manifest.personCount})),
   invalidate:()=>{cachedKey='';cachedRows=null}});
 }
 
