@@ -142,7 +142,8 @@ function raceSelection(state,world,horse,race,bookOpen){
    r!=='INSUFFICIENT_RECOVERY_SPACING'&&
    r!=='NO_ACCEPTING_AVAILABLE_JOCKEY');
  let status='BLOCKED';
- if(entry&&pendingPremierOffers.length&&!entry.jockey_id)
+ if(entry?.status==='SCRATCHED')status='SCRATCHED';
+ else if(entry&&pendingPremierOffers.length&&!entry.jockey_id)
   status='PREMIER_OFFER_PENDING';
  else if(entry&&!entry.jockey_id&&currentPremierOffers.some(o=>o.status==='DECLINED'))
   status=fundedJockey?'PREMIER_REPLACEMENT_REQUIRED':'PREMIER_REPLACEMENT_UNAVAILABLE';
@@ -175,6 +176,7 @@ function raceSelection(state,world,horse,race,bookOpen){
    status==='PREMIER_REPLACEMENT_REQUIRED'?'BOOK_1999_JOCKEY':
    status==='PREMIER_REPLACEMENT_UNAVAILABLE'?'FIND_AVAILABLE_REPLACEMENT':
    status==='ALREADY_ENTERED'?entry.jockey_id?'NONE_BOOKED':'BOOK_1999_JOCKEY':
+   status==='SCRATCHED'?'NONE_WITHDRAWN':
    status==='CONDITION_BOOK_PROPOSAL_NOT_ENTERABLE'?'WAIT_FOR_RACE_SECRETARY_OPENING':
    'RESOLVE_ELIGIBILITY_OR_FINANCING',
   class_fit:fit(horse,normalized),owner_cash_minor:money(ownerCash)?ownerCash:null,
@@ -230,7 +232,7 @@ export function get1999HorseRaceOpportunities(state,world,horseId,{
  }
  rows.sort((a,b)=>{
   const rank=s=>s==='PLAYER_CAN_ENTER'?0:s==='SHIPPING_REQUIRED'?1:
-   s==='ALREADY_ENTERED'?2:s==='BLOCKED'?3:4;
+   s==='ALREADY_ENTERED'?2:s==='SCRATCHED'?3:s==='BLOCKED'?4:5;
   return rank(a.status)-rank(b.status)||
    a.date.localeCompare(b.date)||
    b.class_fit-a.class_fit||a.race_id.localeCompare(b.race_id);

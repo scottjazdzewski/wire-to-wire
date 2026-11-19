@@ -37,6 +37,12 @@ function render(){
   reset(1);
  }
  const current=choices.find(r=>r.race_id===local.raceId)||null;
+ const currentEntry=current?.booked_entry_id?
+  game.state?.runtime?.entries?.[current.booked_entry_id]:null;
+ const canScratch=current?.source_status==='ACTUAL_GAME_RACE_ENTRIES_OPEN'&&
+  current.player_controls_horse===true&&
+  ['ENTERED','BOOKED'].includes(currentEntry?.status)&&
+  current.date>=game.state?.clock?.date;
  const jockeys=current?.available_jockeys||[];
  if(!jockeys.some(j=>j.jockey_id===local.jockeyId)){
   local.jockeyId=(jockeys.find(j=>j.owner_can_pay)||jockeys[0])?.jockey_id||'';
@@ -57,6 +63,7 @@ function render(){
  let quote=null;
  if(current&&current.source_status==='ACTUAL_GAME_RACE_ENTRIES_OPEN'&&
   current.status!=='ALREADY_ENTERED'&&
+  current.status!=='SCRATCHED'&&
   current.status!=='PREMIER_OFFER_PENDING'&&local.jockeyId){
   quote=game.getRacePlanQuote({horse_id:selected.horse_id,race_id:current.race_id,
    jockey_id:local.jockeyId,bonus_minor:local.bonusMinor,
@@ -80,6 +87,7 @@ function render(){
   current.status==='PREMIER_REPLACEMENT_REQUIRED'?'Premier bid lost — choose a replacement jockey for this existing entry':
   current.status==='PREMIER_REPLACEMENT_UNAVAILABLE'?'Premier bid lost — no affordable replacement currently available':
   current.status==='ALREADY_ENTERED'?'Already entered in this race':
+  current.status==='SCRATCHED'?'Withdrawn from this race — signed fees remain paid':
   current.status==='PLAYER_CAN_ENTER'?'At racecourse; entry currently permitted':
   current.status==='SHIPPING_REQUIRED'?'Travel and receiving barn must be authorized':
   'Not currently eligible for this race':'No race selected';
@@ -130,7 +138,7 @@ function render(){
   details+'<p class="ng-dpt-disclosure" role="status"><strong>'+safe(status)+'</strong>'+
   (raceReasons.length?' · '+safe([...new Set(raceReasons.map(label))].join(' · ')):'')+'</p>'+
   (current&&current.source_status==='ACTUAL_GAME_RACE_ENTRIES_OPEN'&&
-   !['ALREADY_ENTERED','PREMIER_OFFER_PENDING','PREMIER_REPLACEMENT_UNAVAILABLE'].includes(current.status)?'<div class="ng-rs-tools ng-rp-tools">'+
+   !['ALREADY_ENTERED','SCRATCHED','PREMIER_OFFER_PENDING','PREMIER_REPLACEMENT_UNAVAILABLE'].includes(current.status)?'<div class="ng-rs-tools ng-rp-tools">'+
    '<label>ACCEPTING JOCKEY <select data-ng-select="race-plan-jockey" '+(!jockeys.length?'disabled':'')+'>'+
    (jockeyOptions||'<option>No accepting available jockey</option>')+'</select></label>'+
    (chosenJockey?.premier_offer_required?
@@ -161,6 +169,10 @@ function render(){
     'SUBMIT PREMIER OFFER · PAY '+currency(quote.immediate_total_minor)+' NOW':
     'CONFIRM ENTRY & PAY '+currency(quote.immediate_total_minor):
     'ENTRY NOT AUTHORIZED')+'</button>'+
+  (canScratch?'<button type="button" data-ng="race-plan-scratch" '+
+   (local.busy?'disabled':'')+
+   ' aria-label="Withdraw '+safe(selected.name)+' from this race">WITHDRAW ENTRY</button>'+
+   '<small>Withdrawal does not refund signed jockey fees or prior horse shipping. The race entry remains in saved history.</small>':'')+
   '<small>Quote is read-only. Confirming is one atomic game command. Return shipping is a later decision.</small></div>'+
   '</section>';
 }
@@ -228,8 +240,36 @@ async function confirm(){
  }catch(error){local.error='NO BOOKING OR PAYMENT COMMITTED · '+String(error?.message||error)}
  finally{local.busy=false;paint()}
 }
+/** Withdraw through the authoritative saved-game command, never by changing UI rows. */
+async function scratch(){
+ if(local.busy)return;
+ const game=service();
+ if(!game){local.error='The career is not loaded.';return paint()}
+ const row=game.getRaceOpportunities(local.horseId,{horizonDays:21,limit:150}).
+  rows.find(x=>x.race_id===local.raceId);
+ const entry=row?.booked_entry_id?
+  game.state?.runtime?.entries?.[row.booked_entry_id]:null;
+ if(!row||row.source_status!=='ACTUAL_GAME_RACE_ENTRIES_OPEN'||
+  row.player_controls_horse!==true||!['ENTERED','BOOKED'].includes(entry?.status)||
+  row.date<game.state?.clock?.date){
+  local.error='Only your own current, unsettled race entry can be withdrawn.';
+  return paint();
+ }
+ const name=game.view().stable.find(h=>h.horse_id===local.horseId)?.name||local.horseId;
+ const paid=Number.isSafeInteger(entry.fee_minor)?entry.fee_minor:0;
+ if(!window.confirm('Withdraw '+name+' from '+row.race_id+' on '+row.date+
+  '? Signed jockey fees already paid ('+currency(paid)+
+  ') and prior shipping charges are not refunded. The saved entry and receipts remain.'))return;
+ local.busy=true;local.error='';local.notice='';paint();
+ try{
+  await game.submit('SCRATCH_1999_RACE',{race_id:row.race_id,
+   horse_id:local.horseId,reason:'OWNER_WITHDRAWAL'},'player');
+  local.notice='ENTRY WITHDRAWN · '+name+' · existing paid fees retained · saved race audit preserved.';
+ }catch(error){local.error='NO WITHDRAWAL COMMITTED · '+String(error?.message||error)}
+ finally{local.busy=false;paint()}
+}
 window.WTW1999PlayerRacePlans=Object.freeze({
- render,select,confirm,
+ render,select,confirm,scratch,
  pickHorse(id){local.horseId=id;reset();paint()},
  current:()=>({...local})
 });
