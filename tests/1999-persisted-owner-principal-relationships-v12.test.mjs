@@ -96,7 +96,7 @@ function fixture(horseCount=12000){
  })));
  const ownerPrincipalPeople=materialize1999OwnerPrincipalPeople({
   seed,owners,sourceOwners:source.owners,sourcePeople:source.people});
- return {seed,worldId:'WTW1999OwnerPerson-NAMES-V11-TEST',
+ return {seed,worldId:'WTW1999OwnerPerson-NAMES-V13-TEST',
   targetOpeningHorses:horseCount,tracks,owners,farms,ownerPrincipalPeople,
   batchSize:1000};
 }
