@@ -320,12 +320,15 @@ function raceShape(book){
 export function raceEligibility(state,horse,race){
  const reasons=[],care=state.runtime.horse?.[horse.horse_id],site=state.runtime.facilities?.sites?.[horse.current_residence_id];
  const age=1999-horse.foaling_year;
- if(horse.status!=='IN_TRAINING'||!horse.starting_attributes)
+ // Verified playable runs carry a registered-horse schema. Legacy isolated
+ // unit fixtures omit it; never misidentify those mock records as a save.
+ const liveRoster=state.runtime.registered_horses?.schema==='WTW_CAREER_HORSES_V1';
+ if(liveRoster&&(horse.status!=='IN_TRAINING'||!horse.starting_attributes))
   reasons.push('HORSE_NOT_ACTIVE_RACEHORSE');
  if(site&&(site.status!=='ACTIVE'||
    site.staff_required>0&&site.staff_count<site.staff_required))
   reasons.push('HOME_FACILITY_NOT_OPERATING');
- if(race.source==='WTW_1999_TRACK_SPECIFIC_MEET_PROGRESSION'){
+ if(liveRoster&&race.source==='WTW_1999_TRACK_SPECIFIC_MEET_PROGRESSION'){
   const meeting=trackProgram1999(race.track_id);
   if(!trackMeetOpen1999(race.track_id,race.date))
    reasons.push('RACECOURSE_NOT_RUNNING_ON_DATE');
