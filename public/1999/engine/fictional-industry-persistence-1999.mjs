@@ -208,11 +208,14 @@ export async function open1999IndustryDatabase(indexedDB=globalThis.indexedDB){
       }
       lifecycle.get(runKey+':horse:'+horseId).onsuccess=entry=>{
        const state=entry.target.result,horse=state?.horse;
-       if(state?.kind!=='BORN'||!horse||
-        horse.id!==horseId||horse.ownerId!==ownerId||
-        horse.registryProvenance!=='MODELED_SEASONAL_BIRTH'||
-        horse.name||state.patch?.name||horse.status==='DECEASED'||
-        horse.dateOfBirth>existing.gameDate){
+       // Recheck *effective* owner and death state inside the transaction,
+       // including patches applied after the earlier read-only preview.
+       const effective=horse?{...horse,...(state.patch||{})}:null;
+       if(state?.kind!=='BORN'||!effective||
+        effective.id!==horseId||effective.ownerId!==ownerId||
+        effective.registryProvenance!=='MODELED_SEASONAL_BIRTH'||
+        effective.name||effective.status==='DECEASED'||
+        effective.dateOfBirth>existing.gameDate){
         abort('Foal is unborn, already named, unavailable, or owned by another stable');
         return;
        }
