@@ -21,12 +21,14 @@ async function industryDirectories(seed,targetOpeningHorses=null,{
 }={}){
  // Names of the existing 1999 world and its immutable directoryHash are
  // untouched. The named destination plan is a deliberate new world version.
- const destinationAligned=directoryNamingModel==='V12_DESTINATION_TRACK';
+ const persistedPrincipals=directoryNamingModel==='V13_DESTINATION_WITH_PRINCIPALS';
+ const destinationAligned=directoryNamingModel==='V12_DESTINATION_TRACK'||
+  persistedPrincipals;
  if(directoryNamingModel!==null&&!destinationAligned)
   throw Error('Unsupported 1999 directory naming model');
- if(destinationAligned&&(
-  typeof worldId!=='string'||!/-NAMES-V11-/.test(worldId)))
-  throw Error('Destination naming requires a NEW versioned V11 world ID');
+ if(destinationAligned&&(typeof worldId!=='string'||
+  !(persistedPrincipals?/-NAMES-V13-/:/-NAMES-V11-/).test(worldId)))
+  throw Error('Destination naming requires its own NEW versioned world ID');
  const [geoResponse,foundingResponse,foalingResponse]=await Promise.all([
   fetch('/data/track-geography-v33.json'),
   fetch('/data/wtw-1999-founding-directory-v1.json'),
@@ -85,7 +87,8 @@ async function industryDirectories(seed,targetOpeningHorses=null,{
    tracks,ownerCountByTrack:ownerCountByCircuit,farmsPerTrack:4
   }):null;
  const generated=createFictionalWorldNameEngine({
-  worldId:destinationAligned?'WTW1999IndustryDirectoryV12':'WTW1999IndustryDirectory',
+  worldId:persistedPrincipals?'WTW1999IndustryDirectoryV13':
+   destinationAligned?'WTW1999IndustryDirectoryV12':'WTW1999IndustryDirectory',
   seed,year:1999,roles:{},owners:ownerCount,
   facilities:{generalFarms:farmCount,studFarms:0,nurseries:0,
    bloodstockFarms:0,breakingTraining:0},
@@ -183,12 +186,14 @@ const ownerCircuitOffsets=ownerCountByCircuit.map((_,index)=>
     destinationNamingModel:destinationPlan.schema,
     namingPrincipalSourceId:named.principalId,
     namingPrincipalSourceName:named.principalName,
-    principalId:ownerPrincipalPersonId(globalIndex),
-    principalName:named.principalName
+    ...(persistedPrincipals?{
+     principalId:ownerPrincipalPersonId(globalIndex),
+     principalName:named.principalName
+    }:{})
    }:{}),
    geographyStatus:t.location?.region?'REGION_PROVIDED':'LOCATION_REVIEW_REQUIRED'};
  }));
- const ownerPrincipalPeople=destinationAligned?
+ const ownerPrincipalPeople=persistedPrincipals?
   materialize1999OwnerPrincipalPeople({
    seed,owners:generatedOwners,sourceOwners:generated.owners,
    sourcePeople:generated.people
@@ -237,7 +242,7 @@ const ownerCircuitOffsets=ownerCountByCircuit.map((_,index)=>
    sourceRevision:founding.schema,sourceRecord:h};
  });
  return {tracks,farms:farmsWithCanon,owners,foundingHorses,requestedSize,
-  ...(destinationAligned?{ownerPrincipalPeople}:{})};
+  ...(persistedPrincipals?{ownerPrincipalPeople}:{})};
 }
 
 self.addEventListener('message',async event=>{
