@@ -16,6 +16,8 @@ import {plan1999IndustryStaffing,generate1999StaffingBatches,
  from './fictional-industry-staffing-1999.mjs';
 import {createPersonnelNameRoster,PERSONNEL_NAME_MODEL}
  from './personnel-name-engine.mjs';
+import {validate1999OwnerPrincipalLinks,OWNER_PRINCIPAL_PERSONNEL_1999_MODEL}
+ from './fictional-owner-principal-personnel-v12.mjs';
 import {OPENING_INDUSTRY_HORSE_NAMING_REVISION} from '../game/horse-naming-local-v485.js';
 import {connect1999Horse,connect1999Person,connect1999DirectoryEntity,
  validate1999GraphBatch,validate1999IndustryReferences,INDUSTRY_GRAPH_SCHEMA}
@@ -263,13 +265,15 @@ function directorySignature(directories){
 }
 export async function createPersistent1999Industry({
  store,seed=19990101,worldId='WTW1999FullIndustry',targetOpeningHorses=null,
- farms,tracks,owners,foundingHorses=[],batchSize=1000,onProgress=()=>{},yieldControl=async()=>{}
+ farms,tracks,owners,foundingHorses=[],ownerPrincipalPeople=[],
+ batchSize=1000,onProgress=()=>{},yieldControl=async()=>{}
 }={}){
  if(!store?.get||!store?.commitBatch||!store?.commitManifest||
   !Number.isSafeInteger(seed)||seed<1||!worldId||
   !Array.isArray(farms)||!farms.length||
   !Array.isArray(tracks)||!tracks.length||
-  !Array.isArray(owners)||!owners.length||!Array.isArray(foundingHorses))
+  !Array.isArray(owners)||!owners.length||!Array.isArray(foundingHorses)||
+  !Array.isArray(ownerPrincipalPeople))
   throw Error('Invalid persistent industry genesis request');
  if(new Set(foundingHorses.map(h=>h?.id)).size!==foundingHorses.length||
   foundingHorses.some(h=>!h?.id||!h?.name||!['BROODMARE','STALLION'].includes(h.status)||
@@ -277,7 +281,14 @@ export async function createPersistent1999Industry({
    ![...farms,...owners].some(f=>f.id===h.managementOrganizationId)||
    !farms.some(f=>f.id===h.careFacilityId)))
   throw Error('Approved founding horse identities need unique IDs and real resident facilities');
+ if(owners.some(o=>Boolean(o.destinationNamingModel))!==
+  Boolean(ownerPrincipalPeople.length)||
+  ownerPrincipalPeople.length&&!validate1999OwnerPrincipalLinks(
+   owners,ownerPrincipalPeople))
+  throw Error('Versioned owner principals must be real reciprocally linked people');
  const id=keyOf(seed,worldId);
+ const principalHash=ownerPrincipalPeople.length?
+  directorySignature([ownerPrincipalPeople]):null;
  const directoryHash=directorySignature(foundingHorses.length?
   [farms,tracks,owners,foundingHorses]:[farms,tracks,owners]);
  const existing=await store.get('manifests',id);
@@ -287,7 +298,8 @@ export async function createPersistent1999Industry({
  if(existing&&(existing.schema!==PERSISTENT_INDUSTRY_SCHEMA||
   existing.seed!==seed||existing.worldId!==worldId||existing.batchSize!==batchSize||
   (existing.targetOpeningHorses??null)!==targetOpeningHorses||
-  existing.directoryHash!==directoryHash))
+  existing.directoryHash!==directoryHash||
+  (existing.ownerPrincipalHash??null)!==principalHash))
   throw Error('Persistent industry generation parameters conflict');
  const generatedTarget=targetOpeningHorses===null?null:
   targetOpeningHorses-foundingHorses.length;
@@ -357,7 +369,8 @@ export async function createPersistent1999Industry({
   }]));
  // Keep opening identities pinned while editorial naming rules advance.
  const horseNamingRevision=OPENING_INDUSTRY_HORSE_NAMING_REVISION;
- const totalPeople=Object.values(staffing.counts).reduce((a,b)=>a+b,0);
+ const staffPersonCount=Object.values(staffing.counts).reduce((a,b)=>a+b,0);
+ const totalPeople=staffPersonCount+ownerPrincipalPeople.length;
  if(existing){
   if(existing.schema!==PERSISTENT_INDUSTRY_SCHEMA||
    existing.seed!==seed||existing.worldId!==worldId||
@@ -366,6 +379,8 @@ export async function createPersistent1999Industry({
    existing.directoryHash!==directoryHash||
    existing.horseCount!==totalHorses||
    existing.personCount!==totalPeople||
+   (existing.ownerPrincipalCount??0)!==ownerPrincipalPeople.length||
+   (existing.ownerPrincipalHash??null)!==principalHash||
    existing.graphSchema!==INDUSTRY_GRAPH_SCHEMA||
    existing.breedingSchema!==BREEDING_BOOK_1999_SCHEMA||
    existing.coveringCount!==plan.minimumCoversForTargetFoals||
@@ -396,6 +411,11 @@ export async function createPersistent1999Industry({
   targetOpeningHorses,ensureCircuitCoverage,status:'GENERATING',
   foundingRelationshipRevision:0,
   horseCount:totalHorses,personCount:totalPeople,
+  ...(ownerPrincipalPeople.length?{
+   ownerPrincipalCount:ownerPrincipalPeople.length,
+   ownerPrincipalModel:OWNER_PRINCIPAL_PERSONNEL_1999_MODEL,
+   ownerPrincipalHash:principalHash
+  }:{}),
   generatedHorseCount,foundingHorseCount:foundingHorses.length,
   foundingHorseIds:foundingHorses.map(h=>h.id),
   horseBatchesCommitted:0,personBatchesCommitted:0,
@@ -452,7 +472,8 @@ export async function createPersistent1999Industry({
     'LEGAL_OWNER','owner');
   }
   const records=[...byId.values()];
-  const ids=new Set([...tracks,...farms,...owners].map(e=>e.id));
+  const ids=new Set([...tracks,...farms,...owners,...ownerPrincipalPeople]
+   .map(e=>e.id));
   const audit=validate1999GraphBatch(records,ids);
   if(!audit.valid)throw Error('Industry directory has broken graph references');
   const next={...manifest,directoryCommitted:true};
@@ -510,7 +531,8 @@ export async function createPersistent1999Industry({
      staffByTrack,staffByFarm})):
     batch.records.map(p=>connect1999Person(p,{seed}));
    const audit=validate1999IndustryReferences(records,{
-   plan,staffing,tracks,farms,owners,foundingHorses});
+   plan,staffing,tracks,farms,owners,foundingHorses,
+   ownerPrincipalCount:ownerPrincipalPeople.length});
    if(!audit.valid)throw Error('Broken 1999 industry entity relationships: '+
     JSON.stringify(audit.problems.slice(0,5)));
    await store.commitBatch({worldId:id,manifest:next,kind,index,records});
