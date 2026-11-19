@@ -1377,7 +1377,7 @@ async function matureHorseRolloverForYear(store,manifest,runKey,year,horseUpdate
   if(horse&&horse.status!=='DECEASED')
    active.set(id,{...compactMatureHorse(horse,year),newlyRetired:true});
  }
- const deaths=[],retired=[],developed=[],started=[];
+ const deaths=[],retired=[],developed=[],started=[],injured=[],recovered=[];
  let racingDelta=0;
  for(const [id,entry] of active){
   const before=entry.status;
@@ -1407,6 +1407,8 @@ async function matureHorseRolloverForYear(store,manifest,runKey,year,horseUpdate
   if(plan.decision==='DECEASED'){deaths.push(id);active.delete(id);continue}
   if(plan.decision==='RETIRED')retired.push(id);
   if(plan.decision==='DEVELOPED')developed.push(id);
+  if(plan.decision==='INJURED')injured.push(id);
+  if(plan.decision==='RECOVERED')recovered.push(id);
   if(entry.newEntrant&&nextStatus==='RACING')started.push(id);
   active.set(id,{...entry,status:nextStatus,
    development:plan.patch?.development||entry.development,
@@ -1420,8 +1422,10 @@ async function matureHorseRolloverForYear(store,manifest,runKey,year,horseUpdate
   openingPopulation:previous.length,entrants:entrants.length,
   activeAfterRollover:members.length,deaths:deaths.length,
   retired:retired.length,developed:developed.length,started:started.length,
+  injured:injured.length,recovered:recovered.length,
   racingPopulationDelta:racingDelta,deathHorseIds:deaths,
   retiredHorseIds:retired,startedHorseIds:started,
+  injuredHorseIds:injured,recoveredHorseIds:recovered,
   provenance:'SEEDED_PERSISTED_INDIVIDUAL_MATURE_TRANSITIONS'});
  return {deaths:deaths.length,retired:retired.length,developed:developed.length,
   started:started.length,racingDelta,members};
