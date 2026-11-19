@@ -12,7 +12,8 @@ import {open1999IndustryDatabase,
  verifyPersistent1999WorldOpen,reopenPersistent1999Industry}
  from '/1999/engine/fictional-industry-persistence-1999.mjs';
 import {readPersistent1999HorseProfile,readPersistent1999IndustryBatch,
- readPersistent1999Directory,findPersistent1999Person}
+ readPersistent1999Directory,findPersistent1999Person,
+ readPersistent1999CareerFoals}
  from '/1999/engine/fictional-industry-persistence-1999.mjs';
 import {openPersistent1999GameCareer,digestPersistent1999GameSnapshot}
  from '/1999/engine/fictional-industry-game-world-bridge-1999.mjs';
@@ -476,7 +477,45 @@ let industryBrowsePage=0,industryBrowseHtml='',industryBrowseKind='horseBatches'
 let industryDirectory=[];
 async function browseFullIndustry(page=0,kind=industryBrowseKind){
  if(!fullIndustryManifest)throw Error('Open the full industry first');
- if(!['horseBatches','personBatches','directory','calendarBatches','coveringBatches'].includes(kind))throw Error('Invalid industry view');
+ if(!['horseBatches','personBatches','directory','calendarBatches',
+  'coveringBatches','careerFoals','myCareerFoals'].includes(kind))throw Error('Invalid industry view');
+ if(kind==='careerFoals'||kind==='myCareerFoals'){
+  industryBrowseKind=kind;
+  const career=activeWorldCareer;
+  if(!career?.run||career.manifest?.worldId!==fullIndustryManifest.worldId){
+   industryBrowsePage=0;
+   industryBrowseHtml='<p>Start or reopen a playable operation career to view actual foals. '+
+    'The immutable 1999 census and unborn forecasts are not newborns.</p>';
+   return;
+  }
+  const year=Number(career.run.clock.date.slice(0,4));
+  const ownerId=kind==='myCareerFoals'?career.run.player.operation_id:null;
+  const store=await open1999IndustryDatabase();
+  try{
+   // Each page resolves actual live career sidecars by immutable foal ID.
+   // No synthetic horse, parent or parallel world is fabricated for the UI.
+   const start=Math.max(0,Math.trunc(page)*20);
+   let born=await readPersistent1999CareerFoals(store,fullIndustryManifest,
+    career.run.run_id,{year,offset:start,limit:20,ownerId});
+   industryBrowsePage=Math.max(0,Math.min(Math.ceil(born.total/20)-1,page));
+   if(industryBrowsePage*20!==start)
+    born=await readPersistent1999CareerFoals(store,fullIndustryManifest,
+     career.run.run_id,{year,offset:industryBrowsePage*20,limit:20,ownerId});
+   industryBrowseHtml='<p>'+(ownerId?'MY HOME-BRED FOALS':'CAREER FOALS')+
+    ' · '+year+' · '+fmt(born.total)+' BORN · showing '+
+    fmt(born.items.length?industryBrowsePage*20+1:0)+'–'+
+    fmt(industryBrowsePage*20+born.items.length)+
+    '. Only foals actually born by '+esc(career.run.clock.date)+'.</p>'+
+    '<div style="max-height:260px;overflow:auto">'+born.items.map(h=>
+     '<div class="wtw-cc-slot"><strong>'+esc(h.name||h.id)+'</strong> · '+
+     esc(h.sex)+' · '+esc(h.status)+' · SIRE '+esc(h.sireId)+
+     ' · DAM '+esc(h.damId)+' · OWNER '+esc(h.ownerId)+
+     ' · BREEDER '+esc(h.breederId)+' · CARE '+esc(h.careFacilityId)+
+     ' <button data-cc-action="inspect-listed-horse" data-id="'+esc(h.id)+
+     '">PROFILE / PEDIGREE</button></div>').join('')+'</div>';
+  }finally{store.close()}
+  return;
+ }
  if(kind==='directory'){
   industryBrowseKind=kind;
   const count=industryDirectory.length;
@@ -531,7 +570,8 @@ async function browseFullIndustry(page=0,kind=industryBrowseKind){
 async function inspectFullIndustryHorse(horseId){
  if(!fullIndustryManifest)throw Error('Open the full industry first');
  const store=await open1999IndustryDatabase();
- try{return await readPersistent1999HorseProfile(store,fullIndustryManifest,horseId)}
+ try{return await readPersistent1999HorseProfile(store,fullIndustryManifest,
+  horseId,{runId:activeWorldCareer?.run?.run_id||null})}
  finally{store.close()}
 }
 async function inspectFullIndustryPerson(personId){
@@ -936,7 +976,9 @@ async function refresh(){
    '<button data-cc-action="industry-people">PERSONNEL</button>'+ 
    '<button data-cc-action="industry-directory">TRACKS / FARMS / OWNERS</button>'+ 
    '<button data-cc-action="industry-calendar">RACE CALENDAR</button>'+ 
-   '<button data-cc-action="industry-coverings">BREEDING BOOK</button></div>'+ 
+   '<button data-cc-action="industry-coverings">BREEDING BOOK</button>'+
+   '<button data-cc-action="industry-foals">BORN THIS YEAR</button>'+
+   '<button data-cc-action="industry-my-foals">MY FOALS</button></div>'+ 
    '<p>BREEDING STOCK '+fmt(fullIndustryManifest.plan.counts.broodmares+fullIndustryManifest.plan.counts.stallions)+
    ' · YEARLINGS '+fmt(fullIndustryManifest.plan.counts.yearlings)+
    ' · 2YO PROSPECTS '+fmt(fullIndustryManifest.plan.counts.twoYearOldProspects)+
@@ -1052,11 +1094,14 @@ async function perform(action,element){
   return;
  }
  if(['industry-horses','industry-people','industry-directory',
-  'industry-calendar','industry-coverings'].includes(action)){
+  'industry-calendar','industry-coverings','industry-foals',
+  'industry-my-foals'].includes(action)){
   await browseFullIndustry(0,action==='industry-horses'?'horseBatches':
    action==='industry-people'?'personBatches':
    action==='industry-calendar'?'calendarBatches':
-   action==='industry-coverings'?'coveringBatches':'directory');
+   action==='industry-coverings'?'coveringBatches':
+   action==='industry-foals'?'careerFoals':
+   action==='industry-my-foals'?'myCareerFoals':'directory');
   return;
  }
  if(action==='industry-prev'||action==='industry-next'){

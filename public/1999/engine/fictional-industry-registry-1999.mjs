@@ -210,6 +210,15 @@ export function create1999SeasonalFoal({seed,year,dateOfBirth,id,dam,sire,farm}=
   farm?.id!==(dam.careFacilityId||dam.foalingFarmId))
   throw Error('Invalid seasonal foal identity or parent records');
  const sex=hash(seed,id+':sex')%2?'FILLY':'COLT';
+ // Parent quality changes a crop's potential, but a large independent
+ // foal-specific draw prevents elite sires from guaranteeing elite runners.
+ // Use the ACTUAL persisted parents, not a re-hash of their names or IDs.
+ const parentValue=parent=>Number.isFinite(parent?.ratings?.breedingValue)?
+  Math.max(1,Math.min(99,parent.ratings.breedingValue)):55;
+ const sireValue=parentValue(sire),damValue=parentValue(dam);
+ const geneticMean=Math.round(sireValue*.48+damValue*.52);
+ const geneticLottery=hash(seed,id+':genetic-lottery')%51-25;
+ const geneticPotential=Math.max(1,Math.min(99,geneticMean+geneticLottery));
  const horse={id,cohort:'foals',status:'FOAL',sex,foalYear:year,dateOfBirth,
   forecastBirthDate:null,name:null,namingStatus:'UNNAMED_PERMANENT_ID',
   namingRevision:null,sireId:sire.id,damId:dam.id,ownerId:dam.ownerId,
@@ -219,7 +228,10 @@ export function create1999SeasonalFoal({seed,year,dateOfBirth,id,dam,sire,farm}=
    provenance:'MODELED_SEASONAL_FOALING_FARM'},
   homeTrackId:null,development:{readiness:hash(seed,id+':readiness')%101,
    soundness:hash(seed,id+':soundness')%101,
-   potential:1+hash(seed,id+':potential')%99},
+   potential:geneticPotential},
+  inheritance:{schema:'WTW_FOAL_PEDIGREE_POTENTIAL_V1',
+   sireBreedingValue:sireValue,damBreedingValue:damValue,
+   geneticMean,geneticLottery,provenance:'ACTUAL_PARENTS_AND_SEEDED_LOTTERY'},
   registryProvenance:'MODELED_SEASONAL_BIRTH'};
  return connect1999Horse(horse,{seed});
 }

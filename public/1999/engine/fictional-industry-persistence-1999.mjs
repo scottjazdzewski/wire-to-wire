@@ -768,6 +768,61 @@ export async function readPersistent1999LifecycleEvents(store,manifest,runId,dat
 
 
 /** Lookup a persistent person directly by role and permanent ordinal ID. */
+/**
+ * Read actual BORN events from THIS saved career, not an invented 1999 census
+ * batch. The same foal ID resolves through readPersistent1999LifecycleHorse
+ * and therefore retains its saved pedigree, ownership and care facility.
+ * A bounded read supports horse / owner / farm / sire / dam screens without
+ * loading or duplicating the 300,000 immutable opening records.
+ */
+export async function readPersistent1999CareerFoals(store,manifest,runId,{
+ year,offset=0,limit=20,ownerId=null,breederId=null,foalingFarmId=null,
+ careFacilityId=null,sireId=null,damId=null
+}={}){
+ if(manifest?.status!=='COMPLETE'||!supportsPersistentSchema(manifest)||
+  typeof runId!=='string'||!runId||!Number.isInteger(year)||year<1999||
+  year>9998||!Number.isSafeInteger(offset)||offset<0||
+  !Number.isSafeInteger(limit)||limit<1||limit>100||
+  ![ownerId,breederId,foalingFarmId,careFacilityId,sireId,damId]
+   .every(x=>x===null||typeof x==='string'&&x.length>0))
+  throw Error('Invalid career-foal directory query');
+ const runKey=lifecycleRunKey(manifest,runId);
+ const checkpoint=await store.get('industryLifecycle',
+  lifecycleKey(runKey,'checkpoint'));
+ if(!checkpoint)return {year,total:0,offset,limit,items:[],
+  runId,worldId:manifest.worldId};
+ if(year>Number(checkpoint.lastDate.slice(0,4)))
+  throw Error('Cannot inspect future newborns in an earlier career');
+ const filters={ownerId,breederId,foalingFarmId,careFacilityId,sireId,damId};
+ const matches=event=>Object.entries(filters).every(([field,wanted])=>
+  wanted===null||String(event[field]??(
+   field==='breederId'?event.ownerId:
+   field==='careFacilityId'?event.foalingFarmId:null))===wanted);
+ const born=[];
+ const start=Date.UTC(year,1,1),dayMs=86400000;
+ // The actual canonical foaling engine schedules days 1–181 from Feb 1.
+ // Read persisted FOAL_BORN events, never pending forecasts or empty IDs.
+ for(let day=0;day<=180;day++){
+  const date=new Date(start+day*dayMs).toISOString().slice(0,10);
+  if(date>checkpoint.lastDate)break;
+  const events=await store.get('industryLifecycle',lifecycleKey(runKey,
+   'events:'+date))||[];
+  for(const e of events)if(e.type==='FOAL_BORN'&&e.year===year&&matches(e))
+   born.push(e.horseId);
+ }
+ if(new Set(born).size!==born.length)
+  throw Error('Career foaling event index contains duplicate permanent IDs');
+ const ids=born.slice(offset,offset+limit),items=[];
+ for(const id of ids){
+  const horse=await readPersistent1999LifecycleHorse(store,manifest,runId,id);
+  if(!horse||horse.foalYear!==year||horse.registryProvenance!=='MODELED_SEASONAL_BIRTH')
+   throw Error('Career newborn no longer resolves to its durable horse '+id);
+  items.push(horse);
+ }
+ return {year,total:born.length,offset,limit,items,
+  runId,worldId:manifest.worldId};
+}
+
 export async function findPersistent1999Person(store,manifest,personId){
  if(manifest?.status!=='COMPLETE'||typeof personId!=='string')
   throw Error('Completed world and person ID required');
@@ -1450,7 +1505,8 @@ async function advancePersistent1999IndustryLifecycle(store,manifest,{
      (current.birthsByYear[year]||0)+1}};
    addEvent(date,{type:'FOAL_BORN',year,horseId:foal.id,
     coveringId:forecast.coveringId,damId:foal.damId,sireId:foal.sireId,
-    ownerId:foal.ownerId,foalingFarmId:foal.foalingFarmId,
+    ownerId:foal.ownerId,breederId:foal.breederId,
+    foalingFarmId:foal.foalingFarmId,careFacilityId:foal.careFacilityId,
     provenance:'MODELED_LIVE_BIRTH'});
   }
   current={...current,lastDate:date};
