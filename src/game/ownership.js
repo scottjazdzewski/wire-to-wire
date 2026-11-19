@@ -86,6 +86,12 @@ export function validateOwnershipRuntime(state,world){
  }
  const listings=runtime.market_listings||{};
  ensure(isObject(listings),'HORSE_MARKET','Invalid horse-market listing store');
+ const soldSettlements=new Map(),marketHorses=new Set();
+ for(const row of state.runtime.finances.ledger){
+  if(!row.transaction_id?.startsWith('HORSE_SALE:'))continue;
+  if(!soldSettlements.has(row.transaction_id))soldSettlements.set(row.transaction_id,[]);
+  soldSettlements.get(row.transaction_id).push(row);
+ }
  for(const [id,l] of Object.entries(listings)){
   ensure(isObject(l)&&l.listing_id===id&&
    typeof l.horse_id==='string'&&knownHorse(l.horse_id)&&
@@ -96,13 +102,29 @@ export function validateOwnershipRuntime(state,world){
    validDate(l.expires_on)&&l.expires_on>=l.listed_on&&
    ['OPEN','SOLD','CANCELLED'].includes(l.status),
    'HORSE_MARKET','Invalid listing identity, price or dates');
-  if(l.status==='OPEN')ensure(currentHorseOwnerId(state,world,l.horse_id)===l.seller_id,
-   'HORSE_MARKET','Open horse listing no longer belongs to seller');
-  if(l.status==='SOLD')ensure(
-   typeof l.buyer_id==='string'&&ownerById.has(l.buyer_id)&&
-   validDate(l.sold_on)&&l.sold_on<=state.clock.date&&
-   typeof l.settlement_transaction_id==='string',
-   'HORSE_MARKET','Invalid sale closure and financial receipt');
+  if(l.status==='OPEN'){
+   ensure(!marketHorses.has(l.horse_id)&&
+    currentHorseOwnerId(state,world,l.horse_id)===l.seller_id,
+    'HORSE_MARKET','Only one live seller-authorized listing per actual horse');
+   marketHorses.add(l.horse_id);
+  }
+  if(l.status==='SOLD'){
+   ensure(typeof l.buyer_id==='string'&&ownerById.has(l.buyer_id)&&
+    validDate(l.sold_on)&&l.sold_on<=state.clock.date&&
+    typeof l.settlement_transaction_id==='string'&&
+    currentHorseOwnerId(state,world,l.horse_id)===l.buyer_id,
+    'HORSE_MARKET','Invalid sold horse title and financial receipt');
+   const legs=soldSettlements.get(l.settlement_transaction_id)||[];
+   ensure(legs.length===2&&legs.some(x=>
+    x.kind==='HORSE_SALE_BUYER_PAYMENT'&&
+    x.operation_id===l.buyer_id&&x.amount_minor===-l.price_minor)&&
+    legs.some(x=>x.kind==='HORSE_SALE_SELLER_RECEIPT'&&
+     x.operation_id===l.seller_id&&x.amount_minor===l.price_minor)&&
+    legs.every(x=>x.horse_id===l.horse_id&&
+     x.request_id==='MARKET:'+l.listing_id&&
+     x.from_owner_id===l.seller_id&&x.to_owner_id===l.buyer_id),
+    'HORSE_MARKET','A completed horse purchase must reconcile both saved cash accounts');
+  }
  }
 }
 function verifyOrg(world,id){
@@ -441,4 +463,33 @@ export function getOwnerPortfolioView(state,world,ownerId,{offset=0,limit=30}={}
  });
  return {owner_id:ownerId,total:ids.length,offset,limit,items,
   source:'APPROVED_WORLD_PLUS_GAME_RUN_OWNERSHIP_DELTAS'};
+}
+
+/** Read-only, exact-H-ID seller-approved horse market on the live game run. */
+export function getHorseSaleMarketView(state,world,{offset=0,limit=50}={}){
+ ensure(Number.isSafeInteger(offset)&&offset>=0&&
+  Number.isSafeInteger(limit)&&limit>=0&&limit<=100,
+  'HORSE_MARKET_PAGING','Market pages must contain at most 100 horses');
+ const listings=Object.values(state.runtime.ownership?.market_listings||{}).
+  filter(x=>x.status==='OPEN'&&x.expires_on>=state.clock.date&&
+   currentHorseOwnerId(state,world,x.horse_id)===x.seller_id).
+  sort((a,b)=>a.price_minor-b.price_minor||a.listing_id.localeCompare(b.listing_id));
+ const selected=listings.slice(offset,offset+limit).map(x=>{
+  const registered=state.runtime.registered_horses?.by_id?.[x.horse_id];
+  const worldHorse=indexWorld(world).horseById.get(x.horse_id);
+  const horse=registered||worldHorse;
+  return {listing_id:x.listing_id,horse_id:x.horse_id,
+   horse_name:horse?.registered_name||horse?.name||x.horse_id,
+   seller_id:x.seller_id,seller_name:indexWorld(world).ownerById.get(x.seller_id)?.name||x.seller_id,
+   price_minor:x.price_minor,listed_on:x.listed_on,expires_on:x.expires_on,
+   buyer_cash_minor:state.player.operation_id?
+    state.runtime.finances.operation_balances_minor?.[state.player.operation_id]??null:null,
+   buyer_can_afford:state.player.operation_id!==x.seller_id&&
+    Number.isSafeInteger(state.runtime.finances.operation_balances_minor?.[
+     state.player.operation_id])&&
+    state.runtime.finances.operation_balances_minor[state.player.operation_id]>=x.price_minor,
+   legal_owner_id:currentHorseOwnerId(state,world,x.horse_id),
+   source:'APPROVED_GAME_MARKET_LISTING_WITH_VERIFIED_OWNER'});
+ });
+ return {as_of:state.clock.date,offset,limit,total:listings.length,items:selected};
 }
