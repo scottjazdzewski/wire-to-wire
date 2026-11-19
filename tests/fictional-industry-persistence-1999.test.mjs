@@ -641,7 +641,16 @@ test('small persistent industry keeps births, cohorts, and breeding records cohe
     assert.ok(directoryIds.has(horse.foalingFarmId));
    }
   }
-  assert.equal(saved.lifecycle.deathsByYear[year],annualDeaths);
+  const adult=events.find(x=>x.type==='MATURE_HORSE_LIFECYCLE');
+  assert.ok(adult,'mature horses must have durable annual transitions');
+  assert.equal(adult.deathHorseIds.length,adult.deaths);
+  for(const id of adult.deathHorseIds){
+   assert.ok(!deathsSeen.has(id),'an individual horse cannot die twice');
+   deathsSeen.add(id);
+   const horse=await readPersistent1999LifecycleHorse(store,manifest,runId,id);
+   assert.equal(horse.status,'DECEASED');
+  }
+  assert.equal(saved.lifecycle.deathsByYear[year],annualDeaths+adult.deaths);
   const breedingPool=await store.get('industryLifecycle',manifest.worldId+':'+
    manifest.seed+':'+runId+':breeding-pool:'+year);
   assert.equal(breedingPool.length,turnover.closingBroodmares);
@@ -711,14 +720,20 @@ test('small persistent industry keeps births, cohorts, and breeding records cohe
   manifest.seed+':'+runId+':foal-cohort:2000');
  const longLivedId=oldCohort.find(id=>id.includes('-'));
  const longLived=await readPersistent1999LifecycleHorse(store,manifest,runId,longLivedId);
- assert.equal(longLived.age,31);
- assert.ok(['RACING','BROODMARE'].includes(longLived.status));
+ assert.ok(longLived.age<=31);
+ assert.equal(longLived.status,'DECEASED',
+  'a 31-year-old cannot inflate the sustainable living population');
  assert.ok(longLived.sireId&&longLived.damId&&longLived.ownerId&&longLived.foalingFarmId,
   'a 31-year-old seasonal horse retains its permanent record and pedigree');
  assert.equal((await loadPersistent1999CareerRun(store,manifest,runId)).gameDate,
   '2031-01-01','the latest multi-decade career checkpoint reopens cleanly');
  const totalLiveBirths=Object.values(final.lifecycle.birthsByYear)
   .reduce((sum,count)=>sum+count,0);
+ const newGenerationBirths=Object.entries(final.lifecycle.birthsByYear)
+  .filter(([birthYear])=>Number(birthYear)>=2001)
+  .reduce((sum,[,count])=>sum+count,0);
+ assert.ok(final.lifecycle.population<=newGenerationBirths,
+  'no expired opening/1999/2000 birth remains living in 2031');
  console.log('WTW_INDUSTRY_THREE_DECADES_MEMORY_PASS '+JSON.stringify({
   seed:manifest.seed,openingHorseCount:manifest.horseCount,annual:populations,
   finalPopulation:final.lifecycle.population,liveBirths:totalLiveBirths,
