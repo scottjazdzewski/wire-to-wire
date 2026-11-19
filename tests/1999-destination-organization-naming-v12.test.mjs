@@ -150,4 +150,8 @@ test('real worker invokes destination naming only behind explicit new version an
  assert.match(worker,/request\.directoryNamingModel\?\?null/);
  assert.match(worker,/ownerNameSourceModel:destinationAligned\?/);
  assert.match(worker,/destinationMarketIds:/);
+ const manager=readFileSync(new URL(
+  '../public/next/1999-commercial-career-manager.mjs',import.meta.url),'utf8');
+ assert.match(manager,/directoryNamingModel:options\.directoryNamingModel\?\?null/);
+ assert.match(manager,/worldId:options\.worldId\?\?'WTW1999FullIndustry'/);
 });
