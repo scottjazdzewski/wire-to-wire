@@ -8,6 +8,8 @@ import {plan1999Ecosystem,planAnnualBroodmareTurnover,
  planAnnualStallionTurnover,planAnnual1999BreedingMarket,
  planAnnualYoungHorseAttrition,seeded1999Unit}
  from './fictional-industry-ecosystem-1999.mjs';
+import {plan1999JuvenileDebut,plan1999MatureHorseYear}
+ from './fictional-industry-mature-lifecycle-1999.mjs';
 import {generate1999IndustryRegistryBatches,count1999Registry,
  create1999SeasonalFoal,project1999HorseForYear}
  from './fictional-industry-registry-1999.mjs';
@@ -851,9 +853,22 @@ function statusPatch(base,state){
  return state?.patch?{...(base||{}),...state.patch}:base;
 }
 function statusUpdate(horse,patch){
- return horse.registryProvenance==='MODELED_SEASONAL_BIRTH'?
-  {id:horse.id,kind:'BORN',horse:{...horse,...patch}}:
-  {id:horse.id,kind:'STATUS',patch};
+ if(horse.registryProvenance==='MODELED_SEASONAL_BIRTH')
+  return {id:horse.id,kind:'BORN',horse:{...horse,...patch}};
+ // Each sidecar replaces the previous sidecar, not merges with it. Carry
+ // committed development, debut and breeding history across later transitions.
+ // STATUS sidecars replace prior STATUS sidecars. Carry the effective status
+ // itself as well as supporting attributes or a later development update can
+ // silently undo a saved juvenile debut or retirement.
+ const keys=['status','cohort','sex','development','racingDebutDate',
+  'racingReadiness',
+  'lastReadinessReview','nextReadinessReview','developmentYear',
+  'progressionYear','lastProgressionStage','homeTrackId',
+  'trainerId','relationships',
+  'retirementYear','retirementReason','graduatedYear','breedingStatus'];
+ const carried=Object.fromEntries(keys.filter(key=>horse[key]!==undefined)
+  .map(key=>[key,horse[key]]));
+ return {id:horse.id,kind:'STATUS',patch:{...carried,...patch}};
 }
 async function readPoolRecords(store,manifest,runKey,year,overrideMap=new Map(),
  poolOverride=null,graduatedYears=new Map()){
@@ -1188,6 +1203,232 @@ async function turnoverForYear(store,manifest,runKey,year,horseUpdates,
  return {turnover:entry,stallionTurnover:stallionEvent,nextPool,
   nextStallions:nextStallionPool,eligible,eligibleMales,retireIds,
   mareGraduates,stallionGraduates,market};
+}
+
+/**
+ * An adult ledger is a compact saved index of living non-breeding horses.
+ * It avoids scanning every career horse and doing an IndexedDB get per living
+ * adult on each future January 1. Breeders are managed in their active pools;
+ * their retired members join this ledger and eventually die.
+ *
+ * Legacy careers without an adult ledger are bootstrapped from immutable
+ * opening records and their already committed sidecars, without renumbering,
+ * regenerating, or changing any historical race result.
+ */
+function compactMatureHorse(horse,year){
+ const projected=project1999HorseForYear(horse,year);
+ return {id:horse.id,foalYear:horse.foalYear,sex:projected.sex,
+  status:projected.status,development:projected.development||{},
+  registryProvenance:horse.registryProvenance};
+}
+async function bootstrapMaturePool(store,manifest,runKey,year,overrideMap,
+ graduatedYears,graduatedStallionYears){
+ const byId=new Map();
+ const add=horse=>{
+  if(!horse||year-Number(horse.foalYear)<3||horse.status==='DECEASED'||
+   horse.status==='BROODMARE'||horse.status==='STALLION')return;
+  byId.set(horse.id,compactMatureHorse(horse,year-1));
+ };
+ for(const cohort of ['threeYearOldRunners','fourYearOldRunners','fivePlusRunners',
+  'twoYearOldProspects','yearlings']){
+  for(const base of await readBaseCohort(store,manifest,cohort)){
+   if(year-Number(base.foalYear)<4&&cohort!=='threeYearOldRunners'&&
+    cohort!=='fourYearOldRunners'&&cohort!=='fivePlusRunners')continue;
+   // A brand-new 2000 rollover has no mature-horse sidecars yet.
+   // Avoid one IndexedDB transaction per opening adult at 300k scale.
+   const horse=year===2000?base:
+    await effectiveLifecycleHorse(store,manifest,runKey,base.id,overrideMap);
+   add(horse);
+  }
+ }
+ for(let birthYear=1999;birthYear<=year-4;birthYear++){
+  const ids=await store.get('industryLifecycle',lifecycleKey(runKey,
+   'foal-cohort:'+birthYear))||[];
+  for(const id of ids)add(await effectiveLifecycleHorse(store,manifest,runKey,id,
+   overrideMap));
+ }
+ // The active breeder pools live outside this ledger. Restore their retired
+ // members from committed turnover events when migrating a pre-ledger save.
+ for(let season=2000;season<year;season++){
+  const events=await store.get('industryLifecycle',lifecycleKey(runKey,
+   'events:'+season+'-01-01'))||[];
+  for(const event of events.filter(x=>['BROODMARE_TURNOVER',
+   'STALLION_TURNOVER'].includes(x.type)))
+   for(const id of event.retiredHorseIds||[])
+    add(await effectiveLifecycleHorse(store,manifest,runKey,id,overrideMap));
+ }
+ return [...byId.values()];
+}
+async function existingTrackTrainers(store,manifest,rosterCache){
+ if(rosterCache.trainers)return rosterCache.trainers;
+ const grouped=new Map();
+ for(let index=0;index<manifest.personBatchesCommitted;index++){
+  const batch=await readPersistent1999IndustryBatch(store,manifest,
+   'personBatches',index);
+  for(const person of batch)if(person.role==='trainer'){
+   if(!grouped.has(person.workplaceId))grouped.set(person.workplaceId,[]);
+   grouped.get(person.workplaceId).push(person.id);
+  }
+ }
+ rosterCache.trainers=grouped;
+ return grouped;
+}
+/** Assign only existing, permanent personnel and owner-track IDs. */
+async function assignRacingHome(horse,patch,{store,manifest,directoryById,
+ rosterCache}={}){
+ if(patch.status!=='RACING')return patch;
+ const owner=directoryById.get(horse.ownerId);
+ // Some legacy/save-compatible owners have no explicit homeTrackId.
+ // Use the existing local track directory deterministically in that case;
+ // never fabricate a track or change the immutable owner's source record.
+ const existingTracks=rosterCache.existingTracks||(
+  rosterCache.existingTracks=[...directoryById.values()].filter(entity=>
+   entity.id?.startsWith('T-')).sort((a,b)=>a.id.localeCompare(b.id)));
+ const fallbackIndex=Math.floor(seeded1999Unit(manifest.seed,
+  'owner-circuit:'+horse.ownerId)*existingTracks.length);
+ const trackId=horse.homeTrackId||owner?.homeTrackId||
+  owner?.relationships?.find(edge=>edge.type==='REGIONAL_CIRCUIT')?.toId||
+  existingTracks[fallbackIndex]?.id;
+ if(!trackId||!directoryById.get(trackId)?.id?.startsWith('T-'))
+  throw Error('Racing transition has no valid owner home circuit '+horse.id);
+ let trainerId=horse.trainerId;
+ if(!trainerId){
+  const trainers=(await existingTrackTrainers(store,manifest,rosterCache))
+   .get(trackId)||[];
+  if(!trainers.length)
+   throw Error('Racing transition lacks a real resident trainer at '+trackId);
+  trainerId=trainers[Math.floor(seeded1999Unit(manifest.seed,
+   'seasonal-trainer:'+horse.id)*trainers.length)];
+ }
+ const relationships=[...(horse.relationships||[])];
+ for(const [type,toId] of [['HOME_TRACK',trackId],['TRAINED_BY',trainerId]])
+  if(!relationships.some(edge=>edge.type===type&&edge.toId===toId))
+   relationships.push({type,fromId:horse.id,toId,
+    provenance:'MODELED_SEASONAL_TRAINING_ASSIGNMENT'});
+ return {...patch,homeTrackId:trackId,trainerId,relationships};
+}
+async function matureHorseRolloverForYear(store,manifest,runKey,year,horseUpdates,{
+ overrideMap,addEvent,maturePoolCache,birthCohortCache,turnover,graduatedYears,
+ graduatedStallionYears,directoryById,rosterCache}={}){
+ let previous=maturePoolCache.get(year-1);
+ if(!previous){
+  previous=await store.get('industryLifecycle',lifecycleKey(runKey,
+   'mature-pool:'+(year-1)));
+  if(!Array.isArray(previous))
+   previous=await bootstrapMaturePool(store,manifest,runKey,year,overrideMap,
+    graduatedYears,graduatedStallionYears);
+ }
+ const graduated=new Set([...turnover.turnover.graduatedHorseIds,
+  ...turnover.stallionTurnover.graduatedHorseIds]);
+ const active=new Map(previous.filter(entry=>!graduated.has(entry.id))
+  .map(entry=>[entry.id,entry]));
+ const entrants=[];
+ const origin=birthYearCohort(year-3);
+ if(origin){
+  for(const horse of await readBaseCohort(store,manifest,origin))
+   if(horse.foalYear===year-3)entrants.push(horse.id);
+ }else{
+  // A multi-year date advance may already have formed this cohort in the
+  // current transaction. Read the in-flight cache before durable prior saves.
+  const cached=birthCohortCache.get(year-3);
+  const ids=cached??(await store.get('industryLifecycle',lifecycleKey(runKey,
+   'foal-cohort:'+(year-3)))||[]);
+  entrants.push(...ids);
+ }
+ const entrantSet=new Set(entrants);
+ if(entrantSet.size!==entrants.length)
+  throw Error('Mature entrant cohort contains duplicate permanent IDs');
+ for(const id of entrants){
+  if(active.has(id)||graduated.has(id))continue;
+  const base=await effectiveLifecycleHorse(store,manifest,runKey,id,overrideMap);
+  if(!base||base.status==='DECEASED'||base.status==='BROODMARE'||
+   base.status==='STALLION')continue;
+  const previousSeason=project1999HorseForYear(base,year-1);
+  active.set(id,{...compactMatureHorse(base,year),
+   priorRacing:previousSeason.status==='RACING',newEntrant:true});
+ }
+ for(const id of [...turnover.turnover.retiredHorseIds,
+  ...turnover.stallionTurnover.retiredHorseIds]){
+  if(active.has(id))continue;
+  const horse=await effectiveLifecycleHorse(store,manifest,runKey,id,overrideMap);
+  if(horse&&horse.status!=='DECEASED')
+   active.set(id,{...compactMatureHorse(horse,year),newlyRetired:true});
+ }
+ const deaths=[],retired=[],developed=[],started=[];
+ let racingDelta=0;
+ for(const [id,entry] of active){
+  const before=entry.status;
+  // Retirement happens at the start of the year; do not immediately kill
+  // the same horse on that retirement date.
+  const plan=entry.newlyRetired?{decision:'UNCHANGED',patch:null}:
+   plan1999MatureHorseYear({seed:manifest.seed,year,horse:entry});
+  const nextStatus=plan.patch?.status||before;
+  if(entry.newEntrant&&!entry.priorRacing&&nextStatus==='RACING')racingDelta++;
+  if((!entry.newEntrant||entry.priorRacing)&&before==='RACING'&&
+   nextStatus!=='RACING')racingDelta--;
+  if(plan.patch||entry.newEntrant&&nextStatus==='RACING'&&
+   !entry.priorRacing){
+   const horse=await effectiveLifecycleHorse(store,manifest,runKey,id,overrideMap);
+   if(!horse)throw Error('Mature lifecycle lost permanent horse identity '+id);
+   const patch=plan.patch?{...plan.patch}:{};
+   if(entry.newEntrant&&!entry.priorRacing&&nextStatus==='RACING'){
+    patch.status='RACING';
+    patch.racingDebutDate=patch.racingDebutDate||year+'-01-01';
+    patch.racingReadiness='CLEARED';
+   }
+   const assigned=await assignRacingHome(horse,patch,{store,manifest,
+    directoryById,rosterCache});
+   const update=statusUpdate(horse,assigned);
+   horseUpdates.push(update);overrideMap.set(id,update);
+  }
+  if(plan.decision==='DECEASED'){deaths.push(id);active.delete(id);continue}
+  if(plan.decision==='RETIRED')retired.push(id);
+  if(plan.decision==='DEVELOPED')developed.push(id);
+  if(entry.newEntrant&&nextStatus==='RACING')started.push(id);
+  active.set(id,{...entry,status:nextStatus,
+   development:plan.patch?.development||entry.development,
+   newEntrant:undefined,priorRacing:undefined,newlyRetired:undefined});
+ }
+ const members=[...active.values()];
+ if(new Set(members.map(x=>x.id)).size!==members.length)
+  throw Error('Mature lifecycle ledger contains duplicate horse IDs');
+ maturePoolCache.set(year,members);
+ addEvent(year+'-01-01',{type:'MATURE_HORSE_LIFECYCLE',year,
+  openingPopulation:previous.length,entrants:entrants.length,
+  activeAfterRollover:members.length,deaths:deaths.length,
+  retired:retired.length,developed:developed.length,started:started.length,
+  racingPopulationDelta:racingDelta,deathHorseIds:deaths,
+  retiredHorseIds:retired,startedHorseIds:started,
+  provenance:'SEEDED_PERSISTED_INDIVIDUAL_MATURE_TRANSITIONS'});
+ return {deaths:deaths.length,retired:retired.length,developed:developed.length,
+  started:started.length,racingDelta,members};
+}
+async function juvenileDebutsForDate(store,manifest,runKey,date,horseUpdates,{
+ overrideMap,birthCohortCache,addEvent,directoryById,rosterCache}={}){
+ const year=Number(date.slice(0,4)),birthYear=year-2;
+ const openingCohort=birthYearCohort(birthYear);
+ const ids=openingCohort?
+  (await readBaseCohort(store,manifest,openingCohort))
+   .filter(h=>h.foalYear===birthYear).map(h=>h.id):
+  (birthCohortCache.get(birthYear)||await store.get('industryLifecycle',
+   lifecycleKey(runKey,'foal-cohort:'+birthYear))||[]);
+ const unique=[...new Set(ids)],started=[],delayed=[];
+ for(const id of unique){
+  const horse=await effectiveLifecycleHorse(store,manifest,runKey,id,overrideMap);
+  if(!horse||horse.status==='DECEASED'||horse.status==='RACING')continue;
+  const plan=plan1999JuvenileDebut({seed:manifest.seed,year,date,
+   horse:project1999HorseForYear(horse,year)});
+  if(!plan.patch)continue;
+  const assigned=await assignRacingHome(horse,plan.patch,{store,manifest,
+   directoryById,rosterCache});
+  const update=statusUpdate(horse,assigned);
+  horseUpdates.push(update);overrideMap.set(id,update);
+  if(plan.decision==='RACING')started.push(id);else delayed.push(id);
+ }
+ addEvent(date,{type:'JUVENILE_RACING_READINESS',year,
+  started:started.length,delayed:delayed.length,
+  startedHorseIds:started,provenance:'SEEDED_DATED_INDIVIDUAL_DEBUTS'});
+ return {started:started.length,delayed:delayed.length};
 }
 
 async function youngHorseAttritionForYear(store,manifest,runKey,year,horseUpdates,
