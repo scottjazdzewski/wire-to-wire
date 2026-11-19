@@ -4,6 +4,7 @@
  * A relationship is a typed ID reference, never a display-name join.
  */
 export const INDUSTRY_GRAPH_SCHEMA='WTW_INDUSTRY_ENTITY_GRAPH_1999_V1';
+export const FARM_MANAGER_RELATIONSHIP_1999_MODEL='WTW_1999_FARM_MANAGER_LINKS_V13';
 function hash(seed,key){let h=(2166136261^(seed>>>0))>>>0;
  for(const c of String(key)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}
  return h>>>0}
@@ -122,8 +123,10 @@ export function connect1999DirectoryEntity(entity,{seed,type,homeTrackId=null}={
    [relationship1999('REGIONAL_CIRCUIT',entity.id,homeTrackId)]:[]),
   ...(type==='owner'&&entity.principalId?
    [relationship1999('REPRESENTED_BY',entity.id,entity.principalId)]:[]),
-  ...(type==='farm'&&Array.isArray(entity.managerIds)?
-   entity.managerIds.map(id=>relationship1999('MANAGED_BY',entity.id,id)):[])
+  ...(type==='farm'&&
+   entity.managerRelationshipModel===FARM_MANAGER_RELATIONSHIP_1999_MODEL&&
+   Array.isArray(entity.managerIds)?
+    entity.managerIds.map(id=>relationship1999('MANAGED_BY',entity.id,id)):[])
  ];
  return {...entity,ratings:rate1999Entity(seed,type,entity.id),
   relationships:edges,ratingsProvenance:'MODELED_1999_UNCALIBRATED'};
