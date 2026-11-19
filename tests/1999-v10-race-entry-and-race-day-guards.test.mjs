@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
-import {WORLD_SCHEMA,dispatchGameCommand,raceEligibility,racingAction,
- getGameRacingRoster} from '../src/game/index.js';
+import {WORLD_SCHEMA,dispatchGameCommand,getGameRacingRoster}
+ from '../src/game/index.js';
+import {raceEligibility,racingAction} from '../src/game/racing-1999.js';
 import {build1999PilotGameRun} from '../src/game/1999-pilot-fixture.js';
 import {trackMeetOpen1999} from '../public/next/1999-track-program.mjs';
 
