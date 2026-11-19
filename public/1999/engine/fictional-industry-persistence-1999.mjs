@@ -1540,7 +1540,7 @@ async function advancePersistent1999IndustryLifecycle(store,manifest,{
   return readCache.get(cacheKey);
  };
  const eventByDate=new Map(),overrideMap=new Map(),poolCache=new Map(),
-  stallionPoolCache=new Map();
+  stallionPoolCache=new Map(),maturePoolCache=new Map(),rosterCache={};
  const birthCohortCache=new Map(),forecastCache=new Map(),farmCache=new Map();
  const graduatedYears=new Map(),graduatedStallionYears=new Map(),
   activeMaresById=new Map(),activeStallionsById=new Map();
@@ -1579,7 +1579,8 @@ async function advancePersistent1999IndustryLifecycle(store,manifest,{
    seasonYear:1999,lastDate:'1999-01-01',activeBroodmares:pool.length,
    activeStallions:stallionPool.length,retiredBroodmares:0,graduatedFillies:0,
    retiredStallions:0,graduatedStallions:0,
-   racingPopulation:manifest.plan.potentialRacingPopulation,
+   racingPopulation:manifest.plan.activeRunnersExcludingTwoYearOlds,
+   matureHorseDeaths:0,retiredRacehorses:0,juvenileDebuts:0,
    foalsBorn:0,foalLosses:0,
    horseDeaths:0,birthsByYear:{},lossesByYear:{},deathsByYear:{},
    deathsByStage:{FOAL_TO_YEARLING:{},YEARLING_TO_TWO_YEAR_OLD:{}},
@@ -1592,6 +1593,9 @@ async function advancePersistent1999IndustryLifecycle(store,manifest,{
   throw Error('Persistent lifecycle checkpoint is invalid');
  const savedStageDeaths=checkpoint.deathsByStage||{};
  checkpoint={...checkpoint,horseDeaths:checkpoint.horseDeaths||0,
+  matureHorseDeaths:checkpoint.matureHorseDeaths||0,
+  retiredRacehorses:checkpoint.retiredRacehorses||0,
+  juvenileDebuts:checkpoint.juvenileDebuts||0,
   activeStallions:checkpoint.activeStallions??manifest.plan.counts.stallions,
   retiredStallions:checkpoint.retiredStallions||0,
   graduatedStallions:checkpoint.graduatedStallions||0,
@@ -1628,11 +1632,16 @@ async function advancePersistent1999IndustryLifecycle(store,manifest,{
    const attrition=await youngHorseAttritionForYear(lifecycleStore,manifest,
     runKey,year,horseUpdates,{overrideMap,birthCohortCache,addEvent});
    const turnover=await turnoverForYear(lifecycleStore,manifest,runKey,year,horseUpdates,
-    {overrideMap,poolCache,stallionPoolCache,birthCohortCache,graduatedYears,
+    {overrideMap,poolCache,stallionPoolCache,maturePoolCache,birthCohortCache,graduatedYears,
      graduatedStallionYears,directory,
      racingPopulation:current.racingPopulation,
      previousLiveFoals:current.birthsByYear[year-1]||0});
    for(const update of horseUpdates)overrideMap.set(update.id,update);
+   const mature=await matureHorseRolloverForYear(lifecycleStore,manifest,
+    runKey,year,horseUpdates,{overrideMap,addEvent,maturePoolCache,
+     birthCohortCache,turnover,graduatedYears,graduatedStallionYears,
+     directoryById,rosterCache});
+   addData({key:lifecycleKey(runKey,'mature-pool:'+year),value:mature.members});
    const schedule=await prepareLifecycleSeason(lifecycleStore,manifest,runKey,{
     year,mareRecords:turnover.nextPool,stallionRecords:turnover.nextStallions,
     market:turnover.market});
@@ -1657,12 +1666,20 @@ async function advancePersistent1999IndustryLifecycle(store,manifest,{
     graduatedStallions:current.graduatedStallions+
      turnover.stallionTurnover.graduated,
     racingPopulation:Math.max(0,current.racingPopulation+
-     (attrition.survivorsByStage.YEARLING_TO_TWO_YEAR_OLD||0)-
-     event.graduated-turnover.stallionTurnover.graduated),
-    population:current.population-attrition.deaths,
-    horseDeaths:current.horseDeaths+attrition.deaths,
-    deathsByYear:{...current.deathsByYear,[year]:attrition.deaths},
+     mature.racingDelta-event.graduated-turnover.stallionTurnover.graduated),
+    population:current.population-attrition.deaths-mature.deaths,
+    horseDeaths:current.horseDeaths+attrition.deaths+mature.deaths,
+    matureHorseDeaths:current.matureHorseDeaths+mature.deaths,
+    retiredRacehorses:current.retiredRacehorses+mature.retired,
+    deathsByYear:{...current.deathsByYear,[year]:attrition.deaths+mature.deaths},
     deathsByStage};
+  }
+  if(date.endsWith('-04-01')||date.endsWith('-09-01')){
+   const debut=await juvenileDebutsForDate(lifecycleStore,manifest,
+    runKey,date,horseUpdates,{overrideMap,birthCohortCache,addEvent,
+     directoryById,rosterCache});
+   current={...current,juvenileDebuts:current.juvenileDebuts+debut.started,
+    racingPopulation:current.racingPopulation+debut.started};
   }
   const forecastKey=lifecycleForecastKey(runKey,year,date);
   const forecasts=forecastCache.has(forecastKey)?forecastCache.get(forecastKey):
