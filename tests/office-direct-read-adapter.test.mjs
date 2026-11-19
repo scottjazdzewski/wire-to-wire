@@ -70,9 +70,9 @@ test('Inbox preserves valid IDs while tolerating incomplete saved decision recor
   noId:{option_ids:['REST']}
  },resolved:{closed:{id:'D-CLOSED',resolved_date:'1999-01-05'}}}};
  const rows=api.decisions(state);
- assert.deepEqual(rows.map(r=>r.message.case),['D-NO-OPTIONS','D-FILTER','D-CLOSED']);
+ assert.deepEqual(Array.from(rows,r=>r.message.case),['D-NO-OPTIONS','D-FILTER','D-CLOSED']);
  assert.equal(rows[0].desk.moves.length,0);
- assert.deepEqual(rows[1].desk.moves.map(m=>m.optionId),['REST']);
+ assert.deepEqual(Array.from(rows[1].desk.moves,m=>m.optionId),['REST']);
  assert.equal(rows[2].desk.moves.length,0);
  assert.equal(rows[2].desk.receipt.date,'1999-01-05');
  assert.equal(state.decisions.pending.invalidOptions.option_ids.length,4);
