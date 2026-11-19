@@ -206,6 +206,7 @@ test('future-year racing age increments on January 1 without manufacturing a 200
 
 test('V10 playable source race cannot mutate its approved date, purse, class, surface or distance in saved state',()=>{
  const {state,race}=sourceState();
+ assert.equal(race.source_slot_lock,'WTW_1999_LOCKED_CONDITION_BOOK_SLOT_V1');
  assert.doesNotThrow(()=>validateRacingRuntime(state,world),
   'untouched actual opened 1999 source book must validate');
  const originals={date:race.date,purse_minor:race.purse_minor,
@@ -227,4 +228,8 @@ test('V10 playable source race cannot mutate its approved date, purse, class, su
  }
  assert.doesNotThrow(()=>validateRacingRuntime(state,world),
   'source class, site and purse remain unchanged after rejected edits');
+ const legacy=structuredClone(state);
+ delete legacy.runtime.races[race.id].source_slot_lock;
+ assert.doesNotThrow(()=>validateRacingRuntime(legacy,world),
+  'existing unversioned saved race cards must remain loadable');
 });
