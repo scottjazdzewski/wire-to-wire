@@ -100,7 +100,7 @@ test('V10 race entry refuses inactive horse, wrong age/venue/class/date, in actu
   const site=state.runtime.facilities.sites[horse.current_residence_id];
   const saved=site.status;
   site.status='CLOSED';
-  expectEntryRejection(state,race,horse,'HOME_FACILITY_NOT_OPERATING');
+  expectEntryRejection(state,race,horse,'RACE_CARE_FACILITY_NOT_OPERATING');
   site.status=saved;
  }
  assert.equal(raceEligibility(state,horse,race).eligible,true,
@@ -151,4 +151,38 @@ test('V10 real race secretary scratches after-booking retired runner before paid
  assert.ok(!race.results?.some(row=>row.horse_id===horse.horse_id));
  assert.ok(['OFFICIAL_SIM_RESULT','CANCELLED_INSUFFICIENT_FIELD'].includes(race.status),
   'game clock must continue to a real result for remaining eligible horses or cancel');
+});
+
+test('V10 visitors use the staffed receiving barn, not the dark home site, with a real arrival buffer',()=>{
+ const {state,race}=sourceState();
+ const horse=unenterBookedHorse(state,race);
+ const home=state.runtime.facilities.sites[horse.current_residence_id];
+ const receivingId='F-LANE5-RECEIVING-1999';
+ state.runtime.facilities.sites[receivingId]={
+  ...structuredClone(home),id:receivingId,host_track_id:race.track_id,
+  status:'ACTIVE',staff_count:Math.max(2,home.staff_required??2),
+  staff_required:Math.max(1,home.staff_required??1)};
+ const trip={
+  status:'AT_DESTINATION',horse_id:horse.horse_id,
+  destination_site_id:receivingId,destination_track_id:race.track_id,
+  arrival_date:'1999-01-02'};
+ state.runtime.racing.horse_travel[horse.horse_id]=trip;
+ const oldHomeStatus=home.status;
+ home.status='CLOSED';
+ assert.equal(raceEligibility(state,horse,race).eligible,true,
+  'horse at the paid local receiving barn is eligible despite dark permanent barn');
+ const receiving=state.runtime.facilities.sites[receivingId];
+ receiving.staff_count=0;
+ assert.ok(raceEligibility(state,horse,race).reasons.
+  includes('RACE_CARE_FACILITY_NOT_OPERATING'));
+ receiving.staff_count=2;
+ trip.status='OUTBOUND';
+ trip.arrival_date='1999-01-03';
+ assert.equal(raceEligibility(state,horse,race).eligible,true,
+  'real booked carrier can enter when arriving two full days before race');
+ trip.arrival_date=race.date;
+ assert.ok(raceEligibility(state,horse,race).reasons.
+  includes('NOT_PHYSICALLY_AT_TRACK_OR_CONFIRMED_TO_ARRIVE'),
+  'outbound carrier cannot enter if race-day arrival violates acclimation');
+ home.status=oldHomeStatus;
 });
