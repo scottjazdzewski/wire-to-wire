@@ -710,6 +710,37 @@ export async function loadPersistent1999CareerRun(store,manifest,runId){
 }
 
 /** Effective per-career horse record; births and status changes survive reopen. */
+/** Shared V10 career import identity and additive lifecycle migration guard. */
+export function samePersistent1999CareerImportReadback(expected,actual,
+ {preservedRun=false}={}){
+ if(!expected||!actual||typeof expected!=='object'||
+  typeof actual!=='object')return false;
+ if(preservedRun)return JSON.stringify(actual)===JSON.stringify(expected);
+ const identity=['schema','worldId','worldSeed','worldSchema','runId',
+  'gameDate','player','changes','version'];
+ if(!identity.every(key=>JSON.stringify(actual[key])===JSON.stringify(expected[key])))
+  return false;
+ // Some early shared 1999 files were exported before lifecycle metadata
+ // existed at all. Their engine results remain authoritative; require the
+ // newly materialized lifecycle to match the same run/date and valid census.
+ if(!expected.lifecycle){
+  if(!actual.lifecycle)return true;
+  const next=actual.lifecycle;
+  return next.schema==='WTW_INDUSTRY_LIFECYCLE_V1'&&
+   next.runId===expected.runId&&next.lastDate===expected.gameDate&&
+   next.seasonYear===Number(expected.gameDate.slice(0,4))&&
+   Number.isSafeInteger(next.openingHorseCount)&&next.openingHorseCount>0&&
+   Number.isSafeInteger(next.population)&&next.population>=0;
+ }
+ if(!actual.lifecycle||typeof actual.lifecycle!=='object')return false;
+ for(const [key,value] of Object.entries(expected.lifecycle)){
+  if(key==='racingPopulation')continue;
+  if(JSON.stringify(actual.lifecycle[key])!==JSON.stringify(value))
+   return false;
+ }
+ return true;
+}
+
 export async function readPersistent1999LifecycleHorse(store,manifest,runId,horseId){
  if(manifest?.status!=='COMPLETE'||typeof runId!=='string'||typeof horseId!=='string')
   throw Error('Completed world, career and horse identity required');
