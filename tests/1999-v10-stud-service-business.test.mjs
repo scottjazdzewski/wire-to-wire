@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createGameRun,dispatchGameCommand,exportGameSave,importGameSave,
- getStudServiceBusinessView} from '../src/game/index.js';
+ getStudServiceBusinessView,validateGameRun} from '../src/game/index.js';
 import {WORLD_SCHEMA} from '../src/game/contracts.js';
 
 const orgs=[
@@ -135,5 +135,20 @@ test('1999 and 2000 services survive daily simulation and reopening with indepen
  assert.equal(getStudServiceBusinessView(s,w,'O-KINGSMERE').stud_fees_paid_minor,100000);
  assert.equal(s.runtime.finances.operation_balances_minor['O-KINGSMERE'],9900000);
  assert.equal(s.runtime.finances.operation_balances_minor['O-STUD'],600000);
+ assert.deepEqual(importGameSave(exportGameSave(s,w),w),s);
+});
+
+test('reopening cannot accept forged fee receipts or changed stud service capacity',()=>{
+ const w=world();let s=initial(w);
+ s=book(w,s,'PAID-WITH-RECEIPT','H-MARE-ELITE','H-STALLION-ELITE',
+  'O-STUD',75000).state;
+ const forged=structuredClone(s);
+ forged.runtime.finances.ledger=forged.runtime.finances.ledger.filter(x=>
+  !(x.transaction_id==='STUD_SERVICE:PAID-WITH-RECEIPT'&&
+   x.kind==='STUD_SERVICE_FEE_INCOME'));
+ assert.throws(()=>validateGameRun(forged,w),e=>e.code==='STUD_SAVE');
+ const changed=structuredClone(s);
+ changed.runtime.stud_services.by_id['PAID-WITH-RECEIPT'].fee_minor=90000;
+ assert.throws(()=>validateGameRun(changed,w),e=>e.code==='STUD_SAVE');
  assert.deepEqual(importGameSave(exportGameSave(s,w),w),s);
 });
