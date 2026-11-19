@@ -263,6 +263,33 @@ function directorySignature(directories){
  }
  return (h>>>0).toString(16).padStart(8,'0');
 }
+/**
+ * One physical personBatches stream, not an owner side-database.
+ * Staff IDs retain their original order and indices. For new versioned
+ * industries, appended owner principals fill the last staff batch before
+ * advancing to the next batch, preserving O(1) person-index lookup.
+ */
+function* generate1999CompletePersonBatches({
+ seed,staffing,tracks,farms,batchSize,nameRoster,
+ ensureCircuitCoverage,ownerPrincipalPeople=[]
+}={}){
+ let chunk=[],offset=0;
+ const rows=function*(){
+  for(const batch of generate1999StaffingBatches({
+   seed,staffing,tracks,farms,batchSize,nameRoster,ensureCircuitCoverage
+  }))yield* batch.records;
+  yield* ownerPrincipalPeople;
+ };
+ for(const person of rows()){
+  chunk.push(person);
+  if(chunk.length===batchSize){
+   yield {offset,records:chunk};
+   offset+=chunk.length;chunk=[];
+  }
+ }
+ if(chunk.length)yield {offset,records:chunk};
+}
+
 export async function createPersistent1999Industry({
  store,seed=19990101,worldId='WTW1999FullIndustry',targetOpeningHorses=null,
  farms,tracks,owners,foundingHorses=[],ownerPrincipalPeople=[],
@@ -398,7 +425,7 @@ export async function createPersistent1999Industry({
  // Generate one deterministic name roster matching the exact chosen staffing
  // plan (including an old saved plan in the middle of resumable genesis).
  const roleCounts=Object.entries(staffing.counts);
- const personnelNames=createPersonnelNameRoster(seed,totalPeople,index=>{
+ const personnelNames=createPersonnelNameRoster(seed,staffPersonCount,index=>{
   let offset=index;
   for(const [role,count] of roleCounts){
    if(offset<count)return role;
@@ -516,9 +543,9 @@ export async function createPersistent1999Industry({
    protectedHorseNames:foundingHorses.map(h=>h.name),
    foundingHorses,ownerPortfolioPlan,
    careFacilityIds:[...staffByFarm.keys()].filter(id=>id!=='*')})],
-  ['personBatches',generate1999StaffingBatches({
+  ['personBatches',generate1999CompletePersonBatches({
    seed,staffing,tracks,farms,batchSize,nameRoster:personnelNames,
-   ensureCircuitCoverage})]
+   ensureCircuitCoverage,ownerPrincipalPeople})]
  ]){
   const progressKey=kind==='horseBatches'?'horseBatchesCommitted':'personBatchesCommitted';
   let index=0;
@@ -793,6 +820,21 @@ export async function readPersistent1999LifecycleEvents(store,manifest,runId,dat
 export async function findPersistent1999Person(store,manifest,personId){
  if(manifest?.status!=='COMPLETE'||typeof personId!=='string')
   throw Error('Completed world and person ID required');
+ // V12 owner principals are appended after the legacy staff census in the
+ // SAME personBatches store. A saved V10 world has no such principal count.
+ const principal=/^P-FICTIONAL-1999-OWNER-PRINCIPAL-(\\d{7})$/.exec(personId);
+ if(principal){
+  const ordinal=Number(principal[1]);
+  if(ordinal<1||ordinal>(manifest.ownerPrincipalCount??0))return null;
+  const staffCount=Object.values(manifest.staffing?.counts||{}).
+   reduce((sum,n)=>sum+n,0);
+  const global=staffCount+ordinal-1;
+  const batchIndex=Math.floor(global/manifest.batchSize);
+  const batch=await readPersistent1999IndustryBatch(
+   store,manifest,'personBatches',batchIndex);
+  const person=batch[global%manifest.batchSize];
+  return person?.id===personId?person:null;
+ }
  const match=/^P-FICTIONAL-1999-([A-Z-]+)-(\d{7})$/.exec(personId);
  if(!match)return null;
  const roles=Object.keys(manifest.staffing?.counts||{});
