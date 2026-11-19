@@ -792,3 +792,33 @@ test('two seeds persist dated two-year-old debuts and adult retirement through a
    .lifecycle,previous.lifecycle);
  }
 });
+
+test('V10 multiyear career outcome is independent of yearly versus single-save cadence',async()=>{
+ const store=memoryStore(),seed=19990117,runPrefix='WTW-RUN-CADENCE';
+ const manifest=await createPersistent1999Industry({store,seed,
+  worldId:'WTW-V10-CADENCE',targetOpeningHorses:10000,
+  ...dirs,batchSize:1000});
+ const player={role:'owner',organizationId:'O-OWNER-1'};
+ const annual=runPrefix+'-ANNUAL',direct=runPrefix+'-SINGLE';
+ const save=(runId,date,version)=>savePersistent1999CareerRun(store,manifest,
+  {runId,player,gameDate:date,version});
+ await save(annual,'1999-01-01',1);
+ await save(direct,'1999-01-01',1);
+ let byYear;
+ for(let year=2000;year<=2005;year++)
+  byYear=await save(annual,year+'-01-01',year-1997);
+ const once=await save(direct,'2005-01-01',8);
+ const fields=['population','horseDeaths','matureHorseDeaths','foalsBorn',
+  'foalLosses','birthsByYear','deathsByYear','activeBroodmares',
+  'activeStallions','racingPopulation','retiredRacehorses','juvenileDebuts'];
+ const changed=Object.fromEntries(fields.filter(key=>
+  JSON.stringify(once.lifecycle[key])!==JSON.stringify(byYear.lifecycle[key]))
+  .map(key=>[key,{one:once.lifecycle[key],annual:byYear.lifecycle[key]}]));
+ if(Object.keys(changed).length)console.log('WTW_V10_LIFECYCLE_CADENCE_DIFF',
+  JSON.stringify(changed));
+ assert.deepEqual(changed,{},
+  'changing save cadence must never change actual horses, deaths or breeding');
+ for(const runId of [annual,direct])
+  assert.deepEqual((await loadPersistent1999CareerRun(store,manifest,runId))
+   .lifecycle,(runId===annual?byYear:once).lifecycle);
+});
