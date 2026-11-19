@@ -36,17 +36,24 @@ try {
   '--window-size=1536,864','--remote-debugging-port='+port,
   '--user-data-dir='+profile,url
  ],{stdio:'ignore'});
- let tab=null;
- for(let i=0;i<110;i++){
+ let tab=null,lastTargets=[],lastDiscoveryError='';
+ // Cold GitHub runners may need longer than 16 seconds to expose the initial
+ // page target. Report what Chromium actually opened before diagnosing UI.
+ for(let i=0;i<200;i++){
   try {
-   const pages=await fetch('http://127.0.0.1:'+port+'/json/list').then(r=>r.json());
+   const response=await fetch('http://127.0.0.1:'+port+'/json/list');
+   if(!response.ok)throw Error('CDP target discovery HTTP '+response.status);
+   const pages=await response.json();
+   lastTargets=pages.map(t=>({type:t.type,url:t.url}));
    tab=pages.find(t=>t.type==='page'&&t.url.startsWith(url));
    if(tab)break;
-  }catch{}
-  if(proc.exitCode!==null)throw Error('Chromium stopped during screen audit startup');
+  }catch(error){lastDiscoveryError=String(error?.message||error)}
+  if(proc.exitCode!==null)throw Error('Chromium stopped during screen audit startup; exit='+proc.exitCode+
+   '; targets='+JSON.stringify(lastTargets)+'; discovery='+lastDiscoveryError);
   await delay(150);
  }
- assert.ok(tab,'Could not find game browser tab');
+ assert.ok(tab,'Could not find game browser tab after 30s; Chromium targets='+
+  JSON.stringify(lastTargets)+'; CDP discovery='+lastDiscoveryError);
  ws=new WebSocket(tab.webSocketDebuggerUrl);
  await new Promise((ok,fail)=>{
   ws.addEventListener('open',ok,{once:true});
