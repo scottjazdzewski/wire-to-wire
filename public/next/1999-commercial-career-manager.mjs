@@ -13,7 +13,7 @@ import {open1999IndustryDatabase,
  from '/1999/engine/fictional-industry-persistence-1999.mjs';
 import {readPersistent1999HorseProfile,readPersistent1999IndustryBatch,
  readPersistent1999Directory,findPersistent1999Person,
- readPersistent1999CareerFoals}
+ readPersistent1999CareerFoals,commitPersistent1999CareerFoalName}
  from '/1999/engine/fictional-industry-persistence-1999.mjs';
 import {openPersistent1999GameCareer,digestPersistent1999GameSnapshot}
  from '/1999/engine/fictional-industry-game-world-bridge-1999.mjs';
@@ -501,6 +501,20 @@ async function browseFullIndustry(page=0,kind=industryBrowseKind){
    if(industryBrowsePage*20!==start)
     born=await readPersistent1999CareerFoals(store,fullIndustryManifest,
      career.run.run_id,{year,offset:industryBrowsePage*20,limit:20,ownerId});
+   // Player-owned, actually born, still unnamed foals can be named here.
+   // The form uses the SAME persisted lifecycle records as this foal list.
+   const nameable=born.items.filter(h=>
+    h.ownerId===career.run.player.operation_id&&!h.name&&
+    h.namingStatus==='UNNAMED_PERMANENT_ID');
+   const foalNameEditor=nameable.length?
+    '<div class="wtw-cc-slot" aria-label="Name a saved career foal"><strong>NAME YOUR BORN FOAL</strong> '+
+    '<label>OWNED FOAL<select data-cc="name-born-foal-id">'+
+     nameable.map(h=>'<option value="'+esc(h.id)+'">'+
+      esc(h.id)+' · '+esc(h.dateOfBirth)+'</option>').join('')+'</select></label>'+
+    '<label>HORSE NAME (18 CHARACTERS)<input data-cc="name-born-foal-name" maxlength="18" placeholder="Owner-chosen racehorse name"/></label>'+
+    '<label>OWNER STORY / INSPIRATION<textarea data-cc="name-born-foal-story" maxlength="1000" rows="2" placeholder="A specific memory of this foal and why you chose this name"></textarea></label>'+
+    '<button data-cc-action="name-born-foal" class="primary">SAVE THIS FOAL NAME</button>'+
+    '<small>This will name the actual born foal in your saved career; no external racing registration is claimed.</small></div>':'';
    industryBrowseHtml='<p>'+(ownerId?'MY HOME-BRED FOALS':'CAREER FOALS')+
     ' · '+year+' · '+fmt(born.total)+' BORN · showing '+
     fmt(born.items.length?industryBrowsePage*20+1:0)+'–'+
@@ -512,7 +526,8 @@ async function browseFullIndustry(page=0,kind=industryBrowseKind){
      ' · DAM '+esc(h.damId)+' · OWNER '+esc(h.ownerId)+
      ' · BREEDER '+esc(h.breederId)+' · CARE '+esc(h.careFacilityId)+
      ' <button data-cc-action="inspect-listed-horse" data-id="'+esc(h.id)+
-     '">PROFILE / PEDIGREE</button></div>').join('')+'</div>';
+     '">PROFILE / PEDIGREE</button></div>').join('')+'</div>'+
+    foalNameEditor;
   }finally{store.close()}
   return;
  }
@@ -1125,6 +1140,34 @@ async function perform(action,element){
    ' · location '+(e.location?.city||e.location?.region||'To be modeled')+
    ' · RATINGS '+Object.entries(e.ratings||{}).map(([k,v])=>k+':'+v).join(', ')+
    ' · LINKS '+(e.relationships||[]).map(r=>r.type+':'+r.toId).join(', ');
+  return;
+ }
+ if(action==='name-born-foal'){
+  const career=activeWorldCareer;
+  if(!career?.run||!fullIndustryManifest||
+   career.manifest?.worldId!==fullIndustryManifest.worldId||
+   career.run.player?.role!=='owner')
+   throw Error('Open the real saved owner career to name a born foal');
+  const root=modal(),horseId=root.querySelector('[data-cc="name-born-foal-id"]')
+   ?.value?.trim(),name=root.querySelector('[data-cc="name-born-foal-name"]')
+   ?.value?.trim(),story=root.querySelector('[data-cc="name-born-foal-story"]')
+   ?.value?.trim();
+  if(!horseId||!name||!story)throw Error('Choose your foal, name, and owner story');
+  const db=await open1999IndustryDatabase();
+  try{
+   const result=await commitPersistent1999CareerFoalName(db,
+    fullIndustryManifest,career.run.run_id,{horseId,name,story});
+   const confirmed=await loadPersistent1999CareerRun(db,
+    fullIndustryManifest,career.run.run_id);
+   // Re-sync the live Naming Desk taste ledger with the same one career
+   // record, without replacing the racing state or source horse directory.
+   career.namingFeedback=validateNamingFeedback(
+    confirmed.changes.namingFeedback);
+   career.namingOriginStories=confirmed.changes.namingOriginStories||{};
+   await browseFullIndustry(industryBrowsePage,industryBrowseKind);
+   notice='FOAL NAMED · '+result.name+' · '+result.horseId+
+    ' · saved to this career and readable after reopen. External registration NOT CLAIMED.';
+  }finally{db.close()}
   return;
  }
  if(action==='inspect-listed-horse'){
