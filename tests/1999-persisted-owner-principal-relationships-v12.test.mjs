@@ -220,3 +220,21 @@ test('V13 principal cohort is strictly opt-in and V12 destination-only remains u
   'geography-only V12 owner directory rows are not persisted-person contracts');
 });
 
+
+test('V13 fails before world materialization if a real owner principal is omitted',async()=>{
+ const params=fixture();
+ await assert.rejects(
+  createPersistent1999Industry({
+   ...params,ownerPrincipalPeople:[],store:memoryStore()
+  }),
+  /Versioned owner principals must be real reciprocally linked people/,
+  'new V13 owners cannot be committed with only a source naming-person ID');
+ const mismatch=params.ownerPrincipalPeople.map((person,i)=>
+  i===0?{...person,name:'Wrong Public Name'}:person);
+ await assert.rejects(
+  createPersistent1999Industry({
+   ...params,ownerPrincipalPeople:mismatch,store:memoryStore()
+  }),
+  /Versioned owner principals must be real reciprocally linked people/,
+  'a changed persisted person display name cannot silently overwrite its owner');
+});
