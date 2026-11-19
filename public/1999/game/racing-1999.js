@@ -321,7 +321,9 @@ function raceShape(book){
 }
 export function raceEligibility(state,horse,race){
  const reasons=[],care=state.runtime.horse?.[horse.horse_id],site=state.runtime.facilities?.sites?.[horse.current_residence_id];
- const age=1999-horse.foaling_year;
+ // Racing age advances on January 1 in each game year, never on a horse's
+ // individual birthday. No future-year cards are invented by this rule.
+ const age=Number(race.date?.slice(0,4))-horse.foaling_year;
  // Verified playable runs carry a registered-horse schema. Legacy isolated
  // unit fixtures omit it; never misidentify those mock records as a save.
  const liveRoster=state.runtime.registered_horses?.schema==='WTW_CAREER_HORSES_V1';
