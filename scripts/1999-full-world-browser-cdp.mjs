@@ -244,6 +244,29 @@ try{
  })()`);
  assert.ok(ownedNamingTarget?.id,
   'Real 300k owner career did not expose another owned horse for naming');
+ // Exercise the *visible Naming Desk*, not just the manager's exported API.
+ // No lab placeholder, forged owner/breeder or detached name list is allowed.
+ const namingSourceStory='A thunderstorm crossed the paddock on the night the mare gave birth. The owner remembered a bell ringing over the rain while the foal took its first steps.';
+ const actualNamingPreview=await browser.evalJS(`(()=>{
+  const desk=window.WTW1999NamingDesk;
+  if(!desk)return {ok:false,error:'Naming Desk module missing'};
+  desk.setField('targetHorseId',${JSON.stringify(ownedNamingTarget.id)});
+  desk.setField('story',${JSON.stringify(namingSourceStory)});
+  const ok=desk.action('naming-generate');
+  const state=desk.snapshot();
+  return {ok,error:state.error,horseIds:state.results.map(x=>x.horseId),
+   origins:state.results.map(x=>x.origin),count:state.results.length};
+ })()`);
+ assert.equal(actualNamingPreview.ok,true,
+  'The live V10 Naming Desk did not generate for its ACTUAL owned horse: '+
+   actualNamingPreview.error);
+ assert.ok(actualNamingPreview.count>0);
+ assert.ok(actualNamingPreview.horseIds.every(x=>x===ownedNamingTarget.id),
+  'Live Naming Desk fell back to its fake Naming Lab horse');
+ assert.ok(actualNamingPreview.origins.every(x=>x==='SAVED_OWNER_HORSE_STORY'));
+ console.log('WTW_V10_OWNER_SOURCE_BOUND_NAMING_PREVIEW_PASS '+
+  JSON.stringify({horseId:ownedNamingTarget.id,count:actualNamingPreview.count}));
+
  const chosenCareerName='Kingsmere Sunday';
  assert.equal(await browser.evalJS(`window.WTWCompactCareerManager.isSavedCareerHorseNameInUse(
   ${JSON.stringify(chosenCareerName)})`),false);
