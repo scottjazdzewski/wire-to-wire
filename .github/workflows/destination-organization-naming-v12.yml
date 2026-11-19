@@ -1,0 +1,31 @@
+name: Destination-aligned owner and farm names (V12)
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/destination-organization-naming-v12.yml'
+      - 'public/1999/engine/fictional-directory-destination-names-1999.mjs'
+      - 'public/1999/engine/fictional-world-name-engine.mjs'
+      - 'public/next/1999-industry-bootstrap-worker.mjs'
+      - 'tests/1999-destination-organization-naming-v12.test.mjs'
+      - 'public/data/track-geography-v33.json'
+  push:
+    branches:
+      - 'naming/region-linked-new-world-directory-v12-20261119'
+  workflow_dispatch:
+
+jobs:
+  naming-v12-destination-replay:
+    name: 107 circuits, reciprocal principals, frozen V10
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run real destination naming and frozen V10 regression
+        run: |
+          node --test tests/1999-destination-organization-naming-v12.test.mjs tests/1999-fictional-generational-organizations-v15.test.mjs tests/1999-scalable-owner-business-capacity-v11.test.mjs
