@@ -676,15 +676,22 @@ rm -f public/__wtw_nav_probe.html
 rm -f public/__wtw_visual_probe.html
 
 python3 - <<'PY'
-import os,struct
+import os,struct,re
 folder='visual-audit/screenshots'
+# Existing desktop QA keeps its width/height floor. The four extra laptop
+# profiles are deliberately captured at exact 1024x768 and 1280x720.
+priority=('belmont-track','gulfstream-track','davenport-hall-facility','split-rail-facility')
 for file in sorted(os.listdir(folder)):
   path=os.path.join(folder,file)
   with open(path,'rb') as f:
     sig=f.read(24)
   assert sig[:8]==b'\x89PNG\r\n\x1a\n',(file,'bad PNG')
   w,h=struct.unpack('>II',sig[16:24])
-  assert w>=1200 and h>=700,(file,w,h)
+  sized=re.fullmatch(r'(.+)-(1024x768|1280x720)\.png',file)
+  if sized and sized.group(1) in priority:
+    expected=tuple(map(int,sized.group(2).split('x')))
+    assert (w,h)==expected,(file,'incorrect laptop viewport',(w,h),expected)
+  else:
+    assert w>=1200 and h>=700,(file,w,h)
   print(f'{file}: {w}x{h} ({os.path.getsize(path)} bytes)')
-PY
-echo "All desktop render routes captured. Screenshots require human comparison to visual references."
+PYecho "All desktop render routes captured. Screenshots require human comparison to visual references."
