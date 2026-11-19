@@ -4693,6 +4693,7 @@ window.addEventListener('click',e=>{
  if(key&&key.startsWith('naming-'))return window.WTW1999NamingDesk?.action?.(key,val);
  if(!key && btn.dataset.act){syntheticAction(btn);return}
  if(key==='race-plan-confirm')return window.WTW1999PlayerRacePlans?.confirm?.();
+ if(key==='race-plan-scratch')return window.WTW1999PlayerRacePlans?.scratch?.();
  if(key==='race-plan-open-horse'){
   window.WTW1999PlayerRacePlans?.pickHorse?.(val);
   return pageTab('Race Planning');
