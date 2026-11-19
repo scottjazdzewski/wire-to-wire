@@ -166,6 +166,12 @@ export function planV10SavedHorseNamingDecision({
     throw Error('Horse name conflicts with an existing registered horse');
   }
  }
+ // A live V10 name preview is based on this particular player's story.
+ // Only a CHOOSE decision anchors that player-written text durably to its
+ // immutable horse ID. Legacy manual direct-rename calls without a story
+ // remain compatible, but cannot claim a saved naming origin.
+ const ownerStory=decision==='CHOOSE'&&payload.story!==undefined?
+  buildV10OwnerHorseNamingBrief({world,run,horseId,story:payload.story}):null;
  const feedback=recordNamingFeedback(current,{
   name,decision,motifId:motif_id,horseId,prompt
  });
@@ -174,6 +180,10 @@ export function planV10SavedHorseNamingDecision({
    'horse',horseId,{name},{run}):
   (worldEdits??createCareerWorldEdits());
  return {feedback,edits,horseId,
+  ownerStory:ownerStory?{horseId,ownerId:ownerStory.owner.id,
+   breederId:ownerStory.breeder.id,foalingYear:ownerStory.foalingYear,
+   story:ownerStory.evidence[0].detail,
+   basis:'OWNER_AUTHORED_STORY_SUBMITTED_IN_SAVED_CAREER'}:null,
   identityUpdated:decision==='CHOOSE',decision,
   feedbackRevision:feedback.revision,
   // Legal racing registration remains separate from this game display rename.
