@@ -22,7 +22,8 @@ const FACILITY_EXTERNAL_PAYEES=Object.freeze({
  FACILITY_DAILY_OPERATIONS:'MODELED_FACILITY_OPERATING_SUPPLIERS',
  FACILITY_STAFF_PAYROLL:'MODELED_EMPLOYEE_WAGE_POOL',
  FACILITY_MAINTENANCE:'MODELED_FACILITY_MAINTENANCE_SUPPLIERS',
- FACILITY_TRACK_RENT:'MODELED_TRACK_LEASE_RECIPIENT_UNIDENTIFIED'
+ FACILITY_TRACK_RENT:'MODELED_TRACK_LEASE_RECIPIENT_UNIDENTIFIED',
+ FACILITY_ARREARS_SETTLED:'MODELED_UNPAID_STAFF_AND_SUPPLIER_CLAIMS'
 });
 const integer=Number.isSafeInteger;
 const operationalStalls=s=>s.staff_required>0?Math.floor(s.stalls*Math.min(s.staff_count,s.staff_required)/s.staff_required):s.stalls;
@@ -43,6 +44,8 @@ function post(state,id,minor,kind,siteId,emit,transactionId=null){
  ensure(integer(accounts[id]),'FACILITY_NO_FUNDS','Owner financial baseline not established');
  ensure(integer(minor)&&integer(accounts[id]+minor),'FACILITY_MONEY','Invalid facility accounting value');
  const outside=minor<0?FACILITY_EXTERNAL_PAYEES[kind]:null;
+ ensure(!outside||accounts[id]>=-minor,'FACILITY_INSUFFICIENT_FUNDS',
+  'Facility cannot pay staff or suppliers with cash it does not have');
  const tx=transactionId||(outside?'FACILITY_OUTFLOW:'+state.clock.date+':'+siteId+':'+kind:null);
  accounts[id]+=minor;
  if(state.player.operation_id===id)state.runtime.finances.balance_minor=accounts[id];
@@ -368,6 +371,28 @@ export function advanceFacilities({state,world,emit}){
   }
   if(site.status==='UNDERSTAFFED'&&site.staff_count>=site.staff_required){site.status='ACTIVE';emit('FACILITY_RESTAFFED',{site_id:site.id});}
   if(site.status==='ACTIVE'&&site.staff_required>site.staff_count)site.status='UNDERSTAFFED';
+  if(site.status==='INSOLVENT'){
+   const account=site.operator_organization_id||site.owner_id;
+   const accrued=site.unpaid_liability_minor||0;
+   const wages=(site.staff_count||0)*(site.staff_wage_daily_minor||0);
+   const maintenance=Math.round((site.maintenance_daily_minor||0)*
+    MAINTENANCE_MULTIPLIER[site.maintenance_policy||'STANDARD']/100);
+   const rent=site.residence_kind==='TRACK_TRAINER_BARN'?(site.track_rent_daily_minor||0):0;
+   const needed=accrued+site.daily_upkeep_minor+wages+maintenance+rent;
+   ensure(integer(needed)&&needed>=0,'FACILITY_MONEY','Invalid insolvency restoration cost');
+   if(!integer(funds(state,account))||funds(state,account)<needed){
+    emit('FACILITY_INSOLVENCY_CONTINUES',{site_id:site.id,date:day,
+     operator_id:account,unpaid_liability_minor:accrued,
+     cash_minor:funds(state,account)??null,needed_minor:needed});
+    continue;
+   }
+   if(accrued)post(state,account,-accrued,'FACILITY_ARREARS_SETTLED',site.id,null);
+   site.unpaid_liability_minor=0;
+   site.insolvent_since=null;
+   site.status=site.staff_required>site.staff_count?'UNDERSTAFFED':'ACTIVE';
+   emit('FACILITY_SOLVENCY_RESTORED',{site_id:site.id,date:day,
+    operator_id:account,arrears_paid_minor:accrued,status:site.status});
+  }
   if(site.status!=='ACTIVE')continue;
   // Worn buildings, thin staffing and maintenance policy change care quality.
   if(day.slice(8)==='01'){
@@ -402,14 +427,31 @@ export function advanceFacilities({state,world,emit}){
   const wages=(site.staff_count??0)*(site.staff_wage_daily_minor??0);
   const maintenance=Math.round((site.maintenance_daily_minor??0)*
    MAINTENANCE_MULTIPLIER[site.maintenance_policy||'STANDARD']/100);
-  ensure(integer(wages)&&integer(maintenance),'FACILITY_MONEY','Operating expense overflow');
-  gross+=revenue;expense+=cost+wages+maintenance;
+  const rent=site.residence_kind==='TRACK_TRAINER_BARN'?(site.track_rent_daily_minor??0):0;
+  const due=cost+wages+maintenance+rent;
+  ensure(integer(wages)&&integer(maintenance)&&integer(rent)&&integer(due)&&due>=0,
+   'FACILITY_MONEY','Operating expense overflow');
+  gross+=revenue;
+  // Completed board was genuinely charged today, but staff and supplier
+  // obligations cannot be passed off as paid without sufficient cash.
+  if(!integer(funds(state,account))||funds(state,account)<due){
+   site.unpaid_liability_minor=(site.unpaid_liability_minor||0)+due;
+   ensure(integer(site.unpaid_liability_minor),'FACILITY_MONEY','Unpaid liabilities overflow');
+   site.insolvent_since=site.insolvent_since||day;
+   site.status='INSOLVENT';
+   state.runtime.finances.ledger.push({date:day,site_id:site.id,operation_id:account,
+    amount_minor:0,kind:'FACILITY_UNPAID_OPERATING_OBLIGATION',obligation_minor:due,
+    wages_unpaid_minor:wages,provenance:'GAME_LIABILITY_NOT_CASH_SETTLEMENT'});
+   emit('FACILITY_OPERATIONS_INSOLVENT',{site_id:site.id,date:day,
+    operator_id:account,unpaid_liability_minor:site.unpaid_liability_minor,
+    wages_unpaid_minor:wages,cash_minor:funds(state,account)??null});
+   continue;
+  }
+  expense+=due;
   if(cost)post(state,account,-cost,'FACILITY_DAILY_OPERATIONS',site.id,null);
   if(wages)post(state,account,-wages,'FACILITY_STAFF_PAYROLL',site.id,null);
   if(maintenance)post(state,account,-maintenance,'FACILITY_MAINTENANCE',site.id,null);
-  const rent=site.residence_kind==='TRACK_TRAINER_BARN'?(site.track_rent_daily_minor??0):0;
   if(rent)post(state,account,-rent,'FACILITY_TRACK_RENT',site.id,null);
-  expense+=rent;
  }
  if(gross||expense)emit('FACILITY_OPERATING_DAY',{date:day,
   gross_minor:gross,cost_minor:expense,net_minor:gross-expense});
@@ -452,11 +494,20 @@ export function validateFacilityState(state,world){
   number(site.max_stalls,site.stalls,3000,'property maximum stalls');
   number(site.quality,0,100,'quality');
   ensure(validDate(site.open_date)&&
-   ['ACTIVE','UNDER_CONSTRUCTION','UNDERSTAFFED'].includes(site.status)&&
+   ['ACTIVE','UNDER_CONSTRUCTION','UNDERSTAFFED','INSOLVENT'].includes(site.status)&&
    Array.isArray(site.contracts),'FACILITY_SITE','Invalid property record');
   number(site.staff_required??0,0,250,'staff required');
   number(site.staff_count??0,0,500,'current staff');
   number(site.staff_wage_daily_minor??0,0,1000000,'staff wages');
+  ensure(site.unpaid_liability_minor===undefined||
+   integer(site.unpaid_liability_minor)&&site.unpaid_liability_minor>=0,
+   'FACILITY_INSOLVENCY','Invalid unpaid operating obligations');
+  ensure(site.insolvent_since===undefined||site.insolvent_since===null||
+   validDate(site.insolvent_since)&&site.insolvent_since<=state.clock.date,
+   'FACILITY_INSOLVENCY','Invalid insolvency start date');
+  ensure(site.status!=='INSOLVENT'||validDate(site.insolvent_since)&&
+   (site.unpaid_liability_minor||0)>0,
+   'FACILITY_INSOLVENCY','Closed operation must have an unpaid liability');
   number(site.maintenance_daily_minor??0,0,100000000,'maintenance cost');
   ensure(site.maintenance_policy===undefined||
    Object.hasOwn(MAINTENANCE_MULTIPLIER,site.maintenance_policy),
@@ -506,7 +557,8 @@ export function facilityFinancialReport(state,world,operationId,{from,to}={}){
  const amounts={FACILITY_BOARDING_REVENUE:0,FACILITY_BOARDING_CLIENT_PAYMENT:0,
   HORSE_CARE_SITE_AND_TRAINER_INCOME:0,HORSE_CARE_TRAINER_REMITTANCE:0,
   FACILITY_DAILY_OPERATIONS:0,FACILITY_TRACK_RENT:0,FACILITY_STAFF_PAYROLL:0,
-  FACILITY_MAINTENANCE:0,FACILITY_PURCHASE:0,FACILITY_UPGRADE:0};
+  FACILITY_MAINTENANCE:0,FACILITY_ARREARS_SETTLED:0,
+  FACILITY_PURCHASE:0,FACILITY_UPGRADE:0};
  // Horse care and facility business share a ledger. Report only relevant
  // categories, including actual owner-funded board and the trainer remittance.
  const rows=state.runtime.finances.ledger.filter(e=>e.operation_id===operationId&&
@@ -533,13 +585,17 @@ export function facilityFinancialReport(state,world,operationId,{from,to}={}){
  const revenue=amounts.FACILITY_BOARDING_REVENUE+amounts.HORSE_CARE_SITE_AND_TRAINER_INCOME;
  const costs=-(amounts.FACILITY_DAILY_OPERATIONS+amounts.FACILITY_STAFF_PAYROLL+
   amounts.FACILITY_MAINTENANCE+amounts.FACILITY_TRACK_RENT+
-  amounts.FACILITY_BOARDING_CLIENT_PAYMENT+amounts.HORSE_CARE_TRAINER_REMITTANCE);
+  amounts.FACILITY_ARREARS_SETTLED+amounts.FACILITY_BOARDING_CLIENT_PAYMENT+amounts.HORSE_CARE_TRAINER_REMITTANCE);
  const capex=-(amounts.FACILITY_PURCHASE+amounts.FACILITY_UPGRADE);
  return {operation_id:operationId,from:start,to:end,
   revenue_minor:revenue,operating_cost_minor:costs,
   operating_profit_minor:revenue-costs,
   capital_investment_minor:capex,net_cash_flow_minor:revenue-costs-capex,
   payroll_minor:-amounts.FACILITY_STAFF_PAYROLL,
+  previously_unpaid_obligations_settled_minor:-amounts.FACILITY_ARREARS_SETTLED,
+  currently_unpaid_liabilities_minor:Object.values(sites).filter(s=>
+   (s.operator_organization_id||s.owner_id)===operationId).
+   reduce((n,s)=>n+(s.unpaid_liability_minor||0),0),
   boarding_purchased_minor:-amounts.FACILITY_BOARDING_CLIENT_PAYMENT,
   horse_board_and_training_income_minor:amounts.HORSE_CARE_SITE_AND_TRAINER_INCOME,
   trainer_remitted_minor:-amounts.HORSE_CARE_TRAINER_REMITTANCE,
