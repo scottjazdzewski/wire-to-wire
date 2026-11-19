@@ -173,6 +173,59 @@ export async function open1999IndustryDatabase(indexedDB=globalThis.indexedDB){
     tx.onabort=()=>reject(tx.error||Error('Lifecycle save transaction aborted'));
    });
   },
+  /**
+   * V493: atomic career-owned foal naming. One transaction changes BOTH the
+   * true born lifecycle horse and the same saved game run's naming ledger.
+   * A cancelled/failed request cannot leave one side without the other.
+   */
+  async commitLifecycleFoalNaming({worldKey,runId,horseId,ownerId,name,
+   expectedVersion,record}={}){
+   if(!worldKey||!runId||!/^H-FICTIONAL-1999-FOALS-\\d{4}-\\d{7}$/.test(horseId)||
+    !ownerId||!name||!Number.isSafeInteger(expectedVersion)||expectedVersion<1||
+    record?.version!==expectedVersion+1)
+    throw Error('Invalid career foal-name transaction');
+   const runKey=worldKey+':'+runId;
+   return new Promise((resolve,reject)=>{
+    const tx=db.transaction(['manifests','careerRuns','industryLifecycle'],'readwrite');
+    const careerStore=tx.objectStore('careerRuns');
+    const lifecycle=tx.objectStore('industryLifecycle');
+    let failure=null;
+    const abort=reason=>{failure=Error(reason);tx.abort()};
+    tx.objectStore('manifests').get(worldKey).onsuccess=e=>{
+     if(e.target.result?.status!=='COMPLETE'){
+      abort('The named foal world is not complete');return;
+     }
+     careerStore.get(runKey).onsuccess=ev=>{
+      const existing=ev.target.result;
+      if(!existing||existing.version!==expectedVersion||
+       existing.player?.operation_id!==ownerId||
+       existing.gameDate!==record.gameDate){
+       abort('Saved foal career changed; reopen before naming');return;
+      }
+      lifecycle.get(runKey+':horse:'+horseId).onsuccess=entry=>{
+       const state=entry.target.result,horse=state?.horse;
+       if(state?.kind!=='BORN'||!horse||
+        horse.id!==horseId||horse.ownerId!==ownerId||
+        horse.registryProvenance!=='MODELED_SEASONAL_BIRTH'||
+        horse.name||state.patch?.name||horse.status==='DECEASED'||
+        horse.dateOfBirth>existing.gameDate){
+        abort('Foal is unborn, already named, unavailable, or owned by another stable');
+        return;
+       }
+       lifecycle.put({...state,horse:{...horse,name,
+        namingStatus:'PLAYER_NAMED_PENDING_REGISTRAR',
+        namingRevision:'WTW_SAVED_CAREER_FOAL_NAME_V1'}},
+        runKey+':horse:'+horseId);
+       careerStore.put(record,runKey);
+      };
+     };
+    };
+    tx.oncomplete=()=>resolve({horseId,name,version:record.version});
+    tx.onerror=()=>reject(tx.error||Error('Saved foal naming write failed'));
+    tx.onabort=()=>reject(failure||tx.error||
+     Error('Saved foal naming transaction aborted'));
+   });
+  },
   async putHorseEdit(worldId,horseId,edit){
    // Apply only changed fields, atomically, so changing a status/owner never
    // erases a previously approved horse name (including cross-tab writes).
