@@ -473,7 +473,8 @@ function requestedIndustry(){
  return {seed,targetOpeningHorses:horseCount,
   worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V10-NAMES-V10-H'+horseCount};
 }
-let industryBrowsePage=0,industryBrowseHtml='',industryBrowseKind='horseBatches';
+let industryBrowsePage=0,industryBrowseHtml='',industryBrowseKind='horseBatches',
+ industryFoalYear=null;
 let industryDirectory=[];
 async function browseFullIndustry(page=0,kind=industryBrowseKind){
  if(!fullIndustryManifest)throw Error('Open the full industry first');
@@ -488,7 +489,14 @@ async function browseFullIndustry(page=0,kind=industryBrowseKind){
     'The immutable 1999 census and unborn forecasts are not newborns.</p>';
    return;
   }
-  const year=Number(career.run.clock.date.slice(0,4));
+  const currentYear=Number(career.run.clock.date.slice(0,4));
+  const year=industryFoalYear===null?currentYear:
+   Math.max(1999,Math.min(currentYear,industryFoalYear));
+  industryFoalYear=year;
+  const yearSelector='<label>FOALING YEAR<select data-cc="industry-foal-year">'+
+   Array.from({length:currentYear-1999+1},(_,i)=>1999+i).reverse()
+    .map(y=>'<option value="'+y+'"'+(y===year?' selected':'')+'>'+y+'</option>')
+    .join('')+'</select></label>';
   const ownerId=kind==='myCareerFoals'?career.run.player.operation_id:null;
   const store=await open1999IndustryDatabase();
   try{
@@ -515,7 +523,8 @@ async function browseFullIndustry(page=0,kind=industryBrowseKind){
     '<label>OWNER STORY / INSPIRATION<textarea data-cc="name-born-foal-story" maxlength="1000" rows="2" placeholder="A specific memory of this foal and why you chose this name"></textarea></label>'+
     '<button data-cc-action="name-born-foal" class="primary">SAVE THIS FOAL NAME</button>'+
     '<small>This will name the actual born foal in your saved career; no external racing registration is claimed.</small></div>':'';
-   industryBrowseHtml='<p>'+(ownerId?'MY HOME-BRED FOALS':'CAREER FOALS')+
+   industryBrowseHtml=yearSelector+
+    '<p>'+(ownerId?'MY HOME-BRED FOALS':'CAREER FOALS')+
     ' · '+year+' · '+fmt(born.total)+' BORN · showing '+
     fmt(born.items.length?industryBrowsePage*20+1:0)+'–'+
     fmt(industryBrowsePage*20+born.items.length)+
@@ -1111,6 +1120,8 @@ async function perform(action,element){
  if(['industry-horses','industry-people','industry-directory',
   'industry-calendar','industry-coverings','industry-foals',
   'industry-my-foals'].includes(action)){
+  if(action==='industry-foals'||action==='industry-my-foals')
+   industryFoalYear=null;
   await browseFullIndustry(0,action==='industry-horses'?'horseBatches':
    action==='industry-people'?'personBatches':
    action==='industry-calendar'?'calendarBatches':
@@ -1221,6 +1232,14 @@ async function handleClick(event){
  finally{busy=false}
 }
 async function handleChange(event){
+ if(event.target.matches('[data-cc="industry-foal-year"]')){
+  try{
+   busy=true;industryFoalYear=Number(event.target.value);
+   await browseFullIndustry(0,industryBrowseKind);
+  }catch(error){notice='FOALING YEAR ERROR: '+String(error?.message||error)}
+  finally{busy=false;await refresh()}
+  return;
+ }
  if(event.target.matches('[data-cc="player-operation"]')){
   selectedPlayerOperationId=event.target.value;return;
  }
