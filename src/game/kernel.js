@@ -267,7 +267,7 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
   } else if (HORSE_REGISTRATION_COMMANDS.includes(c.type)) {
     registerHorseAction({state:next,world,command:c,emit});
     const horse=next.runtime.registered_horses?.by_id?.[c.payload?.horse?.horse_id];
-    if(horse)initializeGameHorseCare(next,horse);
+    if(horse)initializeGameHorseCare(next,horse,world);
   } else if (PLAYER_RACE_PLAN_COMMANDS.includes(c.type)) {
     confirm1999PlayerRacePlan({state:next,world,command:c,emit});
   } else if (HORSE_SHIPPING_COMMANDS.includes(c.type)) {
