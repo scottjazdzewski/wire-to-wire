@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {WORLD_SCHEMA,dispatchGameCommand,getGameRacingRoster}
  from '../src/game/index.js';
-import {raceEligibility,racingAction} from '../src/game/racing-1999.js';
+import {raceEligibility,racingAction,validateRacingRuntime} from '../src/game/racing-1999.js';
 import {run1999RacingAgents} from '../src/game/race-agents-1999.js';
 import {build1999PilotGameRun} from '../src/game/1999-pilot-fixture.js';
 import {trackMeetOpen1999} from '../public/next/1999-track-program.mjs';
@@ -202,4 +202,29 @@ test('future-year racing age increments on January 1 without manufacturing a 200
  assert.ok(raceEligibility(state,horse,sample).reasons.includes('AGE_RESTRICTION'));
  sample.date='2000-01-10';
  assert.equal(raceEligibility(state,horse,sample).reasons.includes('AGE_RESTRICTION'),false);
+});
+
+test('V10 playable source race cannot mutate its approved date, purse, class, surface or distance in saved state',()=>{
+ const {state,race}=sourceState();
+ assert.doesNotThrow(()=>validateRacingRuntime(state,world),
+  'untouched actual opened 1999 source book must validate');
+ const originals={date:race.date,purse_minor:race.purse_minor,
+  conditions:race.conditions,surface:race.surface,
+  distance_furlongs:race.distance_furlongs};
+ const altered=[
+  ['date','1999-02-29'],
+  ['purse_minor',race.purse_minor+10000],
+  ['conditions','Allowance Optional Claiming'],
+  ['surface','SYNTHETIC'],
+  ['distance_furlongs',race.distance_furlongs+1]
+ ];
+ for(const [key,incorrect] of altered){
+  race[key]=incorrect;
+  assert.throws(()=>validateRacingRuntime(state,world),err=>
+   ['RACE_SOURCE_MISMATCH','RACE_SAVE'].includes(err?.code),
+   'altered source slot must never validate: '+key);
+  race[key]=originals[key];
+ }
+ assert.doesNotThrow(()=>validateRacingRuntime(state,world),
+  'source class, site and purse remain unchanged after rejected edits');
 });
