@@ -2,10 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
-import {WORLD_SCHEMA,dispatchGameCommand,racingAction,raceEligibility,
- gameRaceProgram,supported1999RaceClass,modeled1999HandicapWeight,
- HANDICAP_WEIGHT_BASIS_1999,validateRacingRuntime,
- exportGameSave,importGameSave} from '../src/game/index.js';
+import {WORLD_SCHEMA,dispatchGameCommand,exportGameSave,importGameSave}
+ from '../src/game/index.js';
+import {racingAction,raceEligibility,gameRaceProgram,supported1999RaceClass,
+ modeled1999HandicapWeight,HANDICAP_WEIGHT_BASIS_1999,validateRacingRuntime}
+ from '../src/game/racing-1999.js';
 import {build1999PilotGameRun} from '../src/game/1999-pilot-fixture.js';
 import {TRACK_PROGRAM_1999,trackMeetOpen1999}
  from '../public/next/1999-track-program.mjs';
@@ -29,7 +30,7 @@ const world={schema:WORLD_SCHEMA,start_date:'1999-01-01',
 function game(){
  const initial=build1999PilotGameRun({world,manifest,jockeys:jockeys.jockeys});
  return dispatchGameCommand({state:initial,world,command:{
-  id:'handicap:opening:day',type:'ADVANCE_DAY',actor:'system'}}).state;
+  id:'handicap:opening:day',type:'ADVANCE_DAY',actor:'system',payload:{}}}).state;
 }
 const addDays=(date,offset)=>
  new Date(Date.parse(date+'T12:00:00Z')+offset*86400000).toISOString().slice(0,10);
