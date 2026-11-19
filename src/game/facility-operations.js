@@ -290,7 +290,8 @@ function changeNamedStaff(state,world,p,command,emit,release=false){
 function setStaffing(state,world,p,command,emit){
  const site=ensureRoot(state).sites[p.site_id],id=organization(world,p.operation_id);
  permit(state,command,id);
- ensure(site&&site.owner_id===id,'FACILITY_PROPERTY','Not the owner of this property');
+ ensure(site&&(site.operator_organization_id||site.owner_id)===id,
+  'FACILITY_PROPERTY','Only the paying site operator can set employee staffing');
  number(p.staff_count,0,500,'staffing headcount');
  const capacity=site.staff_required>0?
   Math.floor(site.stalls*Math.min(p.staff_count,site.staff_required)/site.staff_required):
@@ -306,14 +307,16 @@ function setStaffing(state,world,p,command,emit){
  ensure(p.staff_count>=namedRoster(site).length,'FACILITY_NAMED_STAFF',
   'Release named employees before reducing positions below assigned staff');
  site.staff_count=p.staff_count;
- emit('FACILITY_STAFFING_UPDATED',{site_id:site.id,owner_id:id,
+ emit('FACILITY_STAFFING_UPDATED',{site_id:site.id,owner_id:site.owner_id,
+  operator_organization_id:id,
   staff_count:site.staff_count,required:site.staff_required,
   daily_payroll_minor:siteWages(site)});
 }
 function setMaintenance(state,world,p,command,emit){
  const site=ensureRoot(state).sites[p.site_id],id=organization(world,p.operation_id);
  permit(state,command,id);
- ensure(site&&site.owner_id===id,'FACILITY_PROPERTY','Not the owner of this property');
+ ensure(site&&(site.operator_organization_id||site.owner_id)===id,
+  'FACILITY_PROPERTY','Only the paying operator can set daily maintenance policy');
  ensure(Object.hasOwn(MAINTENANCE_MULTIPLIER,p.policy),
   'FACILITY_MAINTENANCE_POLICY','Invalid maintenance program');
  site.maintenance_policy=p.policy;
