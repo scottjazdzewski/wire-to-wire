@@ -16,7 +16,10 @@ import {plan1999Ecosystem} from '/1999/engine/fictional-industry-ecosystem-1999.
 import {assessFictionalOwnerCapacity,fictionalOwnerPortfolioTier}
  from '/1999/engine/fictional-owner-portfolio-planner.mjs';
 
-async function industryDirectories(seed,targetOpeningHorses=null,{
+async function industryDirectories(seed,targetOpeningHorses=null){
+ return industryDirectoriesWithNaming(seed,targetOpeningHorses);
+}
+async function industryDirectoriesWithNaming(seed,targetOpeningHorses=null,{
  worldId=null,directoryNamingModel=null
 }={}){
  // Names of the existing 1999 world and its immutable directoryHash are
@@ -94,10 +97,9 @@ async function industryDirectories(seed,targetOpeningHorses=null,{
    bloodstockFarms:0,breakingTraining:0},
   protectedNames:[...tracks.map(t=>t.name),
    ...canonicalOrganizations.map(o=>o.name).filter(Boolean)],
-  ownerNameSourceModel:destinationAligned?
-   'ARCHIVAL_1999_RACING_OWNERS_SCALABLE_V11':
-   'ARCHIVAL_1999_RACING_OWNERS',
+  ownerNameSourceModel:'ARCHIVAL_1999_RACING_OWNERS',
   ...(destinationPlan?{
+   ownerNameSourceModel:'ARCHIVAL_1999_RACING_OWNERS_SCALABLE_V11',
    markets:destinationPlan.markets,
    destinationMarketIds:{
     owners:destinationPlan.ownerMarketIds,
@@ -253,10 +255,13 @@ self.addEventListener('message',async event=>{
  let store;
  try{
   send('STAGE',{message:'Loading the bundled 1999 geography and racecourse directory…'});
-  const directories=await industryDirectories(request.seed,
-   request.targetOpeningHorses??null,{
-    worldId:request.worldId,directoryNamingModel:request.directoryNamingModel??null
-   });
+  const directories=request.directoryNamingModel==null?
+   await industryDirectories(request.seed,
+    request.targetOpeningHorses??null):
+   await industryDirectoriesWithNaming(request.seed,
+    request.targetOpeningHorses??null,{
+     worldId:request.worldId,directoryNamingModel:request.directoryNamingModel
+    });
   send('STAGE',{message:'Preparing the opening population and personnel in the background…'});
   store=await open1999IndustryDatabase();
   const manifest=await createPersistent1999Industry({
