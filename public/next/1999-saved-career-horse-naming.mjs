@@ -90,7 +90,7 @@ export function buildV10OwnerHorseNamingBrief({world,run,horseId,story}={}){
  */
 export function previewV10OwnerHorseNames({world,run,horseId,story,count=8,
  attempt=0,recentNames=[],additionalReviewedNames=[],
- nameFeedback=null,direction=''}={}){
+ nameFeedback=null,direction='',registeredNameKeys=null}={}){
  if(!Number.isSafeInteger(count)||count<1||count>8||
   !Number.isSafeInteger(attempt)||attempt<0||attempt>1000000||
   !Array.isArray(recentNames)||!Array.isArray(additionalReviewedNames))
@@ -106,7 +106,8 @@ export function previewV10OwnerHorseNames({world,run,horseId,story,count=8,
   const result=screenStoryFirstIdeas({
    world,state:run,brief,rawIdeas:suggestions.slice(i,i+8),
    recentNames:recentNames.slice(-60),
-   additionalReviewedNames:[...additionalReviewedNames,...excluded]
+   additionalReviewedNames:[...additionalReviewedNames,...excluded],
+   registeredNameKeys
   });
   held+=result.held;
   for(const row of result.screened){
