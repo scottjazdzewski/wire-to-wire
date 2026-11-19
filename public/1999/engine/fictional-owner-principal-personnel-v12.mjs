@@ -85,7 +85,7 @@ export function validate1999OwnerPrincipalLinks(owners,principals){
  if(!Array.isArray(owners)||!Array.isArray(principals))return false;
  const personById=new Map(principals.map(p=>[p.id,p]));
  if(personById.size!==principals.length)return false;
- const relevant=owners.filter(o=>o.destinationNamingModel);
+ const relevant=owners.filter(o=>o.destinationNamingModel&&o.principalId);
  if(relevant.length!==principals.length)return false;
  return relevant.every(o=>{
   const p=personById.get(o.principalId);
