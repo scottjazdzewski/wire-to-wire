@@ -1,4 +1,4 @@
-name: Saved owner principal identities (V12)
+name: Saved owner principal identities (V13, 107 circuits)
 
 on:
   pull_request:
@@ -9,15 +9,17 @@ on:
       - 'public/1999/engine/fictional-industry-staffing-1999.mjs'
       - 'public/next/1999-industry-bootstrap-worker.mjs'
       - 'tests/1999-persisted-owner-principal-relationships-v12.test.mjs'
+      - 'tests/1999-v13-all-circuit-identity-persistence.test.mjs'
       - '.github/workflows/persisted-owner-principals-v12.yml'
   push:
     branches:
       - 'naming/v12-persist-real-owner-principals-20261119'
+      - 'naming/v13-107-track-persisted-identity-gate-20261119'
   workflow_dispatch:
 
 jobs:
   owner-principal-save-reopen:
-    name: Real owner people, 12k horses, one-day save/reopen
+    name: 107 circuits, all saved owner principals, real managers, one-day reopen
     runs-on: ubuntu-latest
     timeout-minutes: 12
     permissions:
@@ -29,4 +31,4 @@ jobs:
           node-version: '22'
       - name: Verify materialized owner principal relationships
         run: |
-          node --test tests/1999-persisted-owner-principal-relationships-v12.test.mjs tests/1999-destination-organization-naming-v12.test.mjs
+          node --test tests/1999-persisted-owner-principal-relationships-v12.test.mjs tests/1999-destination-organization-naming-v12.test.mjs tests/1999-v13-all-circuit-identity-persistence.test.mjs
