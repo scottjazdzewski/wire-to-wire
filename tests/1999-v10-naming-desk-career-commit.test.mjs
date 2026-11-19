@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {planV10SavedHorseNamingDecision,validateRunWithSavedWorldEdits}
+import {planV10SavedHorseNamingDecision,validateRunWithSavedWorldEdits,
+ buildV10OwnerHorseNamingBrief,previewV10OwnerHorseNames}
  from '../public/next/1999-saved-career-horse-naming.mjs';
 import {createNamingFeedback} from '../src/game/horse-naming-feedback-v489.js';
 import {createCareerWorldEdits,applyCareerWorldEdits}
@@ -13,9 +14,14 @@ const primary='H-FICTIONAL-1999-THREEYEAROLDRUNNERS-0000001';
 const secondary='H-FICTIONAL-1999-THREEYEAROLDRUNNERS-0000002';
 function fixture(){
  return {world:{entities:{horses:[
-  {id:primary,name:'Old Runner',ownerId:'O-PLAYER',status:'RACING',sireId:'S-01',damId:'D-01'},
-  {id:secondary,name:'Golden Branch',ownerId:'O-OTHER',status:'RACING',sireId:'S-02',damId:'D-02'}
- ],people:[],organizations:[],tracks:[]}},run:{
+  {id:primary,name:'Old Runner',ownerId:'O-PLAYER',breederId:'O-BREEDER',
+   status:'RACING',foalYear:1996,sireId:'S-01',damId:'D-01'},
+  {id:secondary,name:'Golden Branch',ownerId:'O-OTHER',breederId:'O-BREEDER',
+    status:'RACING',foalYear:1996,sireId:'S-02',damId:'D-02'}
+ ],people:[],organizations:[
+  {id:'O-PLAYER',name:'Actual Stable'},
+  {id:'O-OTHER',name:'Rival Stable'},
+  {id:'O-BREEDER',name:'Actual Stud'}],tracks:[]}},run:{
   player:{role:'owner',operation_id:'O-PLAYER'},stable_horse_ids:['REG-01'],
   runtime:{registered_horses:{by_id:{'REG-01':{
    horse_id:'REG-01',world_source_horse_id:primary,name:'Old Runner',
@@ -144,6 +150,81 @@ test('V10 Naming Desk excludes names already assigned in the real 300k world',()
  assert.ok(active.snapshot().results.length>0);
 });
 
+test('V10 previews use real player horse, actual owner and breeder, and only authored owner evidence',()=>{
+ const {world,run}=fixture();
+ const story='On the evening this colt was born a heavy thunderstorm hit the farm. The mare stood calm in the barn while the rain sounded on the roof.';
+ const brief=buildV10OwnerHorseNamingBrief({world,run,horseId:primary,story});
+ assert.equal(brief.horseId,primary);
+ assert.equal(brief.owner.name,'Actual Stable');
+ assert.equal(brief.breeder.name,'Actual Stud');
+ assert.equal(brief.foalingYear,1996);
+ assert.equal(brief.evidence[0].detail,story);
+ assert.equal(brief.evidence[0].kind,'OWNER_ATTESTED');
+ assert.match(brief.evidence[0].sourceRef,/owner_story_draft/);
+ assert.doesNotMatch(JSON.stringify(brief),/NAMINGLAB|FAKE_PARENT|MADE_UP_SIRE/);
+ const a=previewV10OwnerHorseNames({world,run,horseId:primary,story,count:8});
+ const b=previewV10OwnerHorseNames({world,run,horseId:primary,story,count:8});
+ assert.deepEqual(a,b,'the same saved horse and owner story replay deterministically');
+ assert.equal(a.horseId,primary);
+ assert.equal(a.ownerId,'O-PLAYER');
+ assert.equal(a.breederId,'O-BREEDER');
+ assert.ok(a.screened.length>0);
+ assert.ok(a.screened.every(x=>x.horseId===primary));
+ assert.ok(a.screened.every(x=>x.status==='AWAITING_INDEPENDENT_EDITOR'));
+ assert.ok(a.screened.every(x=>x.evidenceQuote.length>=12));
+ assert.equal(a.approvedForRegistration,false);
+ assert.equal(a.gameWrites,0);
+ assert.equal(a.requestCount,0);
+ assert.throws(()=>buildV10OwnerHorseNamingBrief({world,run,horseId:secondary,story}),
+  /not owned by the current player/);
+ assert.throws(()=>buildV10OwnerHorseNamingBrief({world,run,horseId:primary,story:'storm'}),
+  /35/);
+});
+
+test('V10 naming controller uses a real horse preview instead of the fictional test-horse scenario',()=>{
+ const {world,run}=fixture();
+ let calls=0;
+ const desk=createNamingDeskController({
+  savedCareerActive:()=>true,
+  getTargets:()=>[{id:primary,name:'Old Runner'}],
+  previewSavedCareer:params=>{
+   calls++;
+   assert.equal(params.horseId,primary);
+   return previewV10OwnerHorseNames({...params,world,run});
+  }
+ });
+ desk.setField('targetHorseId',primary);
+ desk.setField('story','A violent thunderstorm brought heavy rain as the calm mare delivered the foal in the stable. The owner listened to the rain strike the gate.');
+ assert.equal(desk.generate(),true);
+ assert.equal(calls,3);
+ assert.ok(desk.snapshot().results.every(x=>x.horseId===primary));
+ assert.ok(desk.snapshot().allResults.every(x=>x.origin==='SAVED_OWNER_HORSE_STORY'));
+ desk.setField('targetHorseId','');
+ assert.equal(desk.snapshot().allResults.length,0,
+  'switching target must never reuse another horse’s named story');
+ assert.equal(desk.generate(),false);
+ assert.match(desk.snapshot().error,/Select a horse you own/);
+});
+
+test('V10 chosen name carries real owner story alongside persistent horse edit and feedback',()=>{
+ const {world,run}=fixture();
+ const story='The mare delivered in a thunderstorm as rain swept the quiet barn. The owner stood beside her all evening and remembered the first movement of her foal.';
+ const plan=planV10SavedHorseNamingDecision({world,run,payload:{
+  ...payload('One More Rain','CHOOSE',primary),story
+ }});
+ assert.equal(plan.ownerStory.horseId,primary);
+ assert.equal(plan.ownerStory.ownerId,'O-PLAYER');
+ assert.equal(plan.ownerStory.breederId,'O-BREEDER');
+ assert.equal(plan.ownerStory.foalingYear,1996);
+ assert.equal(plan.ownerStory.story,story);
+ assert.equal(plan.ownerStory.basis,
+  'OWNER_AUTHORED_STORY_SUBMITTED_IN_SAVED_CAREER');
+ assert.equal(plan.externalRegistrationApproved,false);
+ assert.throws(()=>planV10SavedHorseNamingDecision({world,run,payload:{
+  ...payload('One More Rain','CHOOSE',primary),story:'not enough'
+ }}),/35/);
+});
+
 test('V10 commercial manager writes naming feedback and horse edits in one committed save, with read-back',()=>{
  const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
  const manager=read('public/next/1999-commercial-career-manager.mjs');
@@ -151,6 +232,8 @@ test('V10 commercial manager writes naming feedback and horse edits in one commi
  for(const expected of ['planV10SavedHorseNamingDecision',
   'commitSavedCareerHorseNamingPreference',
   'getSavedCareerNamingFeedback',
+  'previewSavedCareerHorseNames',
+  'namingOriginStories',
   'isSavedCareerHorseNameInUse',
   'namingFeedback:prepared.feedback',
   'worldEdits:prepared.edits',
