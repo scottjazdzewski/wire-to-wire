@@ -28,7 +28,7 @@ const sample=(s,track,dateStart='1999-01-07',count=15)=>
 const activeRace=(s,track,conditions,limit=null)=>sample(s,track).find(r=>
  r.conditions===conditions&&r.ageRequirement==='3YO+'&&r.sexRestriction==='OPEN'&&
  (limit===null||r.maxCareerWins===limit));
-test('1999 source condition book exposes supported maiden and restricted allowance classes only',()=>{
+test('1999 source condition book preserves MSW/NW allowances, enables modeled handicap and still forbids unmodeled selling classes',()=>{
  const s=fresh(),races=sample(s,'T-0017');
  const msw=races.find(r=>r.conditions==='Maiden Special Weight'&&r.ageRequirement==='3YO+');
  const nw2=activeRace(s,'T-0017','Allowance',1);
@@ -37,14 +37,17 @@ test('1999 source condition book exposes supported maiden and restricted allowan
  assert.equal(supported1999RaceClass(msw),true);
  assert.equal(supported1999RaceClass(nw2),true);
  assert.equal(supported1999RaceClass(nw3),true);
+ const modeledHandicap=races.find(r=>r.conditions==='Handicap');
+ assert.ok(modeledHandicap,'Expected source handicap');
+ assert.equal(supported1999RaceClass(modeledHandicap),true);
  for(const className of ['Claiming','Maiden Claiming','Starter Allowance',
-  'Allowance Optional Claiming','Handicap']){
+  'Allowance Optional Claiming']){
   const x=races.find(r=>r.conditions===className);
   assert.ok(x,'Expected source race class '+className);
   assert.equal(supported1999RaceClass(x),false);
   assert.throws(()=>run(s,'unmodeled:'+x.id,'OPEN_1999_RACE',
    {race_id:x.id,track_id:x.trackId,date:x.date}),
-   e=>e.code==='RACE_CLASS_UNMODELED','No fake ownership claims, starter flags or handicapping');
+   e=>e.code==='RACE_CLASS_UNMODELED','No fake ownership claims or starter qualification');
  }
  assert.equal(supported1999RaceClass({...nw2,maxCareerWins:null}),false);
 });

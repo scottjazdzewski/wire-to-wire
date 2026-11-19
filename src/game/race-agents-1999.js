@@ -227,14 +227,15 @@ export function run1999RacingAgents({state,world,emit}){
    if(local.length<2)continue;
    // One open race per modeled class per circuit. Allowance fields should
    // never replace maiden races, and maiden winners cannot enter both.
-   for(const racingClass of ['Maiden Special Weight','Allowance','FEATURE']){
+   for(const racingClass of ['Maiden Special Weight','Allowance','Handicap','FEATURE']){
     if(Object.values(state.runtime.races).some(r=>r.track_id===trackId&&
      r.status==='ENTRIES_OPEN'&&r.date>=day&&
      (racingClass==='FEATURE'?Boolean(r.stake_id):r.conditions===racingClass)))
      continue;
     const eligibleAtHome=local.filter(h=>
      racingClass==='FEATURE'?h.career.starts>=1:
-     racingClass==='Allowance'?h.career.wins>=1:h.career.wins===0);
+     racingClass==='Allowance'?h.career.wins>=1:
+     racingClass==='Handicap'?h.career.starts>=2:h.career.wins===0);
     if(eligibleAtHome.length<2){
      if(racingClass==='Allowance'&&eligibleAtHome.length){
       emit('TRAINER_ALLOWANCE_CAMPAIGN_REVIEW',{date:day,track_id:trackId,
@@ -252,7 +253,6 @@ export function run1999RacingAgents({state,world,emit}){
        Boolean(race.stakeId)&&race.canonical===false;
       if(!(gameModeledFeature||!race.stakeId&&
         racingClass!=='FEATURE'&&race.conditions===racingClass)||
-       race.sexRestriction!=='OPEN'||race.ageRequirement!=='3YO+'||
        !supported1999RaceClass(race))continue;
       const record={id:race.id,track_id:race.trackId,date:race.date,
        age:race.ageRequirement,sex:race.sexRestriction,
@@ -398,7 +398,9 @@ export function run1999RacingAgents({state,world,emit}){
       'FUNDED_GAME_MODELED_STAKES_WITH_REAL_AVAILABLE_RIDERS':
       racingClass==='Allowance'?
       'MAIDEN_GRADUATES_ENTER_SOURCE_CONDITIONED_NW_ALLOWANCE':
-      'MAIDEN_FIELD_SURFACE_DISTANCE_AND_JOCKEY_AVAILABILITY',
+      racingClass==='Handicap'?
+       'MODELED_HANDICAP_FORM_AND_WEIGHT_ELIGIBILITY':
+       'MAIDEN_FIELD_SURFACE_DISTANCE_AND_JOCKEY_AVAILABILITY',
      player_horses_entered_automatically:false});
    }
   }
@@ -417,14 +419,21 @@ export function run1999RacingAgents({state,world,emit}){
   for(const id of [...race.field]){
    const e=state.runtime.entries[id],h=state.runtime.registered_horses.by_id[e.horse_id],
     care=state.runtime.horse[h.horse_id];
+   // Evaluate the same current race-day contract as actual settlement:
+   // an after-booking retirement, class change, closed facility or welfare
+   // failure must scratch the entrant rather than deadlock ADVANCE_DAY.
+   const raceDayBlockers=raceEligibility(state,h,race).reasons.filter(reason=>
+    reason!=='ENTRY_DEADLINE'&&reason!=='ENTRY_TOO_EARLY');
    if(e.status!=='BOOKED'||!same1999PhysicalVenue(effectiveHorseTrack(state,h),race.track_id)||
+    raceDayBlockers.length>0||
     !care||care.training.sorenessDays>0||
     care.training.currentRisk>=.78||care.training.readiness<.38||
     care.history.at(-1)?.unfunded===true){
     e.status='SCRATCHED';e.scratch_reason='RACE_DAY_WELFARE_OR_BOOKING';
     race.field=race.field.filter(x=>x!==id);
     emit('RACE_DAY_SCRATCH',{race_id:race.id,horse_id:e.horse_id,
-     reason:e.scratch_reason,health_risk:care?.training.currentRisk??null});
+     reason:e.scratch_reason,health_risk:care?.training.currentRisk??null,
+     ineligible_reasons:raceDayBlockers});
    }
   }
   if(race.field.length>=2){
