@@ -167,3 +167,21 @@ test('real 12k career saves, reopens and finds owner principals with official pe
   ownerPrincipalPersonId(params.ownerPrincipalPeople.length-1));
  assert.equal(last.name,sourceName,'career progression and reopen cannot rename owner principal');
 });
+
+test('V13 principal cohort is strictly opt-in and V12 destination-only remains unchanged',()=>{
+ const worker=readFileSync(new URL(
+  '../public/next/1999-industry-bootstrap-worker.mjs',import.meta.url),'utf8');
+ assert.match(worker,/persistedPrincipals=directoryNamingModel==='V13_DESTINATION_WITH_PRINCIPALS'/);
+ assert.match(worker,/directoryNamingModel==='V12_DESTINATION_TRACK'/);
+ assert.match(worker,/persistedPrincipals\?\/-NAMES-V13-\//,
+  'persisted people require a distinct V13 world name');
+ assert.match(worker,/persistedPrincipals\?\{ownerPrincipalPeople\}:\{\}/);
+ assert.match(worker,/ownerPrincipalPeople=persistedPrincipals\?/);
+ assert.match(worker,/principalId:ownerPrincipalPersonId\(globalIndex\)/);
+ const nameSource=readFileSync(new URL(
+  '../public/1999/engine/fictional-owner-principal-personnel-v12.mjs',
+  import.meta.url),'utf8');
+ assert.match(nameSource,/destinationNamingModel&&o\.principalId/,
+  'geography-only V12 owner directory rows are not persisted-person contracts');
+});
+
