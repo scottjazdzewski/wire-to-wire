@@ -675,6 +675,13 @@ rm -f public/__wtw_nav_probe.html
 
 rm -f public/__wtw_visual_probe.html
 
+# The earlier fast screenshots exercise route existence, but can catch a
+# temporary LO/SP/BI monogram before an approved 1600x1200 logo decodes.
+# Replace those preview frames with real Chromium CDP captures only AFTER
+# the matching permanent-ID image has actually loaded and is displayed.
+# This also asserts the logo remains on-screen at both laptop sizes.
+CHROME="$CHROME" node scripts/lane8-live-logo-screen-cdp.mjs
+
 python3 - <<'PY'
 import os,struct,re
 folder='visual-audit/screenshots'
