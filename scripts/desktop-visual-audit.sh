@@ -694,4 +694,5 @@ for file in sorted(os.listdir(folder)):
   else:
     assert w>=1200 and h>=700,(file,w,h)
   print(f'{file}: {w}x{h} ({os.path.getsize(path)} bytes)')
-PYecho "All desktop render routes captured. Screenshots require human comparison to visual references."
+PY
+echo "All desktop render routes captured. Screenshots require human comparison to visual references."
