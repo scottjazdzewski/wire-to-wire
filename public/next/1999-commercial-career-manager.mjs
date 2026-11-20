@@ -783,7 +783,7 @@ async function importSharedCareerFile(file,{preserveExistingProgress=false}={}){
    throw Error('Import cancelled; current career was not changed');
   if((!prior||JSON.stringify(prior)!==JSON.stringify(importedCareerRecord))&&
    !preservedRun)
-   await savePersistent1999CareerRun(db,fullIndustryManifest,{
+   importedCareerRecord=await savePersistent1999CareerRun(db,fullIndustryManifest,{
     runId:importedCareerRecord.runId,gameDate:importedCareerRecord.gameDate,
     player:importedCareerRecord.player,changes:importedCareerRecord.changes,
     version:importedCareerRecord.version});
