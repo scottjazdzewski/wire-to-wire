@@ -4,6 +4,7 @@
  * results and professional ratings here are GAME-MODELED, never historic facts.
  */
 import {same1999PhysicalVenue} from './physical-venue-1999.js';
+import {project1999JockeySourceSkills} from '../../public/1999/engine/source-personnel-gameplay-1999.mjs';
 import {ensure,isObject,worldIdentity,nextDate,validDate} from './contracts.js';
 import {buildConditionBook1999} from '../../public/next/1999-condition-book-engine.mjs';
 import {trackMeetOpen1999,trackProgram1999} from '../../public/next/1999-track-program.mjs';
@@ -251,6 +252,14 @@ export function compact1999PremierJockeyOffers({state,emit}){
 }
 export function modeledJockeySkills(id,seed,identity=null){
  ensure(/^P-[A-Za-z0-9-]+$/.test(id),'JOCKEY_ID','Permanent selected jockey ID required');
+ // The real V10 P-ID's seven saved role ratings now drive bookings,
+ // pace decisions and simulated performance. Legacy named rider identities
+ // without a canonical score vector retain the old deterministic model.
+ if(identity){
+  ensure(identity.id===id,'JOCKEY_ID','Jockey source identity mismatch');
+  const source=project1999JockeySourceSkills(identity);
+  if(source)return source;
+ }
  const baseline={rating_source:'1999_MODELED_GAME_SCORING_NOT_CANONICAL',
   judgment:rating(.38+.56*frac(seed,id+':judgment')),
   pace:rating(.36+.58*frac(seed,id+':pace')),
@@ -521,8 +530,9 @@ export function racingAction({state,world,command,emit}){
    // standing but NO sourced performance rating. Their game tier must
    // follow that identity flag, never erase it with a REGIONAL fallback.
    const contractedTier=jockeyTierFromPerson(identity);
-   const baseReputation=identity?.ratings?.ability?
-    rating(.34+.28*identity.ratings.ability/100+
+   const standing=identity?.ratings?.reputation??identity?.ratings?.ability;
+   const baseReputation=Number.isFinite(standing)?
+    rating(.34+.28*standing/100+
      (identity.tier==='ELITE'?.12:identity.tier==='ESTABLISHED'?.06:0)):.5;
    rt.jockeys[j.id]={id:j.id,home_track_id:j.home_track_id,
     tier:contractedTier,
