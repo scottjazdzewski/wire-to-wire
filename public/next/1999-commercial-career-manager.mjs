@@ -26,9 +26,9 @@ import {gameRaceProgram,supported1999RaceClass,raceEligibility}
  from '/1999/game/racing-1999.js';
 import {validateGameRun} from '/1999/game/state.js';
 import {packShared1999Career,unpackShared1999Career,sameShared1999WorldIdentity,
- sameShared1999CareerRecord,
+ sameShared1999CareerRecord,shared1999CareerRecordDifferencePaths,
  migrateShared1999CareerRunWorldReference,migrateShared1999CareerOperationInventory}
- from '/1999/engine/shared-1999-career-package.mjs?rev=wtw-shared-career-key-order-v4';
+ from '/1999/engine/shared-1999-career-package.mjs?rev=wtw-shared-career-readback-v5';
 import {projectCanonical1999RaceRows,renderCanonical1999RaceFile}
  from '/next/1999-canonical-career-race-files.mjs';
 import {createPersistedIndustryHorseDirectory,createPersistedIndustryEntityDirectory}
@@ -791,7 +791,8 @@ async function importSharedCareerFile(file,{preserveExistingProgress=false}={}){
    importedCareerRecord.runId);
   const expectedStoredRecord=preservedRun?preservedRecord:importedCareerRecord;
   if(!sameShared1999CareerRecord(confirmed,expectedStoredRecord))
-   throw Error('Imported career did not survive IndexedDB read-back');
+   throw Error('Imported career did not survive IndexedDB read-back; differences: '+
+    shared1999CareerRecordDifferencePaths(confirmed,expectedStoredRecord).join(', '));
   const run=preservedRun||checkpointRun;
   activeWorldCareer=hydrateCareerWorldEdits(
    {...career,run,manifest:fullIndustryManifest},expectedStoredRecord);
