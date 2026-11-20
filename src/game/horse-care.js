@@ -9,6 +9,7 @@ import {TRAINING_PLANS,createHorseTrainingRecord,advanceHorseTrainingDay,recomme
  from '../../public/1999/engine/horse-development.mjs';
 import {horseTravelStatus,effectiveHorseCareSite} from './shipping-1999.js';
 import {trainerDailyFee} from './trainer-contracts-1999.js';
+import {project1999TrainerSourceSkills} from '../../public/1999/engine/source-personnel-gameplay-1999.mjs';
 
 export const HORSE_CARE_SCHEMA='WTW_1999_CONNECTED_HORSE_CARE_V1';
 export const TRAINER_SKILLS_SCHEMA='WTW_1999_TRAINER_SKILLS_GAME_V1';
@@ -31,9 +32,17 @@ const seedPart=(seed,key)=>{let h=(2166136261^(seed>>>0))>>>0;
  h^=h>>>16;h=Math.imul(h,2246822507);h^=h>>>13;
  return (h>>>0)/4294967296;};
 const round4=x=>Math.round(cap(x)*10000)/10000;
-export function modeledTrainerSkills(personId,seed=19990101){
+export function modeledTrainerSkills(personId,seed=19990101,identity=null){
  ensure(/^P-[A-Za-z0-9-]+$/.test(personId)&&Number.isSafeInteger(seed)&&seed>0,
   'TRAINER_SKILLS','Approved trainer identity and seed required');
+ // Real V10 trainer P-ID source skills take precedence over the old
+ // standalone trainer-ID hash. Preserve legacy pilot behavior only for
+ // people who do not have a canonical source rating record.
+ if(identity){
+  ensure(identity.id===personId,'TRAINER_SKILLS','Trainer rating source ID mismatch');
+  const direct=project1999TrainerSourceSkills(identity);
+  if(direct)return {schema:TRAINER_SKILLS_SCHEMA,person_id:personId,...direct};
+ }
  const pick=k=>round4(.34+.55*seedPart(seed,personId+':'+k));
  const attributes={
   conditioning:pick('conditioning'),workout_design:pick('planning'),
@@ -213,14 +222,15 @@ export function createHorseCareRecord(horse,asOf='1999-01-01'){
    unfunded_days:0},last_day:asOf,history:[],
   provenance:'1999_MODELED_CARE_GAMEPLAY_ONLY'};
 }
-export function initializeGameHorseCare(state,horse){
+export function initializeGameHorseCare(state,horse,world=null){
  if(!horse.starting_attributes)return;
  if(!state.runtime.horse[horse.horse_id])
   state.runtime.horse[horse.horse_id]=createHorseCareRecord(horse,state.clock.date);
  const person=state.runtime.people[horse.trainer_id]||{};
  if(!person.game_training_skills)
   state.runtime.people[horse.trainer_id]={...person,
-   game_training_skills:modeledTrainerSkills(horse.trainer_id,state.rng.seed)};
+   game_training_skills:modeledTrainerSkills(horse.trainer_id,state.rng.seed,
+    world?worldIdentity(world,'people',horse.trainer_id):null)};
 }
 export function setHorseCarePolicy({state,world,command,emit}){
  const p=command.payload,horse=state.runtime.registered_horses?.by_id?.[p.horse_id];
@@ -306,7 +316,7 @@ export function advanceGameHorseCare({state,world,emit}){
  }
  for(const h of horses){
   if(!h.starting_attributes){emit('HORSE_NEEDS_ATTRIBUTES',{horse_id:h.horse_id});continue}
-  initializeGameHorseCare(state,h);
+  initializeGameHorseCare(state,h,world);
   const r=state.runtime.horse[h.horse_id];
   if(r.last_day===day)continue;
   const prep=r.race_preparation;
@@ -332,7 +342,8 @@ export function advanceGameHorseCare({state,world,emit}){
    r.finance.month=day.slice(0,7);r.finance.spent_minor=0;
   }
   const skills=state.runtime.people[h.trainer_id]?.game_training_skills||
-   modeledTrainerSkills(h.trainer_id,state.rng.seed);
+   modeledTrainerSkills(h.trainer_id,state.rng.seed,
+    world?worldIdentity(world,'people',h.trainer_id):null);
   state.runtime.people[h.trainer_id]={
    ...(state.runtime.people[h.trainer_id]||{}),game_training_skills:skills};
   const p=r.policy;
@@ -480,7 +491,8 @@ export function getGameHorsePerformance(state,world,id){
  ensure(Boolean(care)&&Boolean(a),'HORSE_CARE_ATTRIBUTES','Horse care record and starting abilities required');
  const t=care.training,site=effectiveHorseCareSite(state,horse);
  const skills=state.runtime.people[horse.trainer_id]?.game_training_skills||
-  modeledTrainerSkills(horse.trainer_id,state.rng.seed);
+  modeledTrainerSkills(horse.trainer_id,state.rng.seed,
+   world?worldIdentity(world,'people',horse.trainer_id):null);
  const score=cap(a.current_ability/99*.61+t.readiness*.21+
   (t.speedCondition+t.staminaCondition)/2*.09+skills.roleAttributes.race_placement*.09-
   t.currentRisk*.07);
