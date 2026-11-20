@@ -74,6 +74,15 @@ export function project1999JockeySourceSkills(person){
   composure:blend(r,[['gateSkill',.35],['fitness',.35],['tactics',.3]]),
   horse_handling:blend(r,[['versatility',.65],['gateSkill',.35]])};
 }
+/** Pre-booking rider selection uses genuine saved P-ID source ability. */
+export function source1999JockeySelectionMerit(person){
+ const skills=project1999JockeySourceSkills(person);
+ if(!skills)return Number.isFinite(person?.ratings?.ability)?
+  person.ratings.ability:0;
+ return Math.round(100*(skills.judgment*.25+skills.pace*.22+
+  skills.finish*.26+skills.horse_handling*.17+
+  (person.ratings.reputation/100)*.10));
+}
 export function source1999RoleCoverage(people=[]){
  const counts={trainer:0,jockey:0},missing={trainer:[],jockey:[]};
  for(const person of people)if(Object.hasOwn(counts,person?.role)){
