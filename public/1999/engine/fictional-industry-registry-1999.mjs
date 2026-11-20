@@ -201,12 +201,14 @@ export function* generate1999IndustryRegistryBatches({
 }
 
 /** Materialize one seasonal foal only after its modeled birth date. */
-export function create1999SeasonalFoal({seed,year,dateOfBirth,id,dam,sire,farm}={}){
+export function create1999SeasonalFoal({seed,year,dateOfBirth,id,dam,sire,farm,
+ youngstockQuality=.55,farmCareSource=null}={}){
  if(!Number.isSafeInteger(seed)||seed<1||!Number.isInteger(year)||year<1900||
   year>9998||typeof id!=='string'||!/^H-FICTIONAL-1999-FOALS-\d{4}-\d{7}$/.test(id)||
   typeof dateOfBirth!=='string'||!new RegExp('^'+year+'-\\d{2}-\\d{2}$').test(dateOfBirth)||
   !dam?.id||!sire?.id||!dam.ownerId||
   !(dam.careFacilityId||dam.foalingFarmId)||
+  !Number.isFinite(youngstockQuality)||youngstockQuality<.01||youngstockQuality>.99||
   farm?.id!==(dam.careFacilityId||dam.foalingFarmId))
   throw Error('Invalid seasonal foal identity or parent records');
  const sex=hash(seed,id+':sex')%2?'FILLY':'COLT';
@@ -226,9 +228,14 @@ export function create1999SeasonalFoal({seed,year,dateOfBirth,id,dam,sire,farm}=
   birthplace:{city:farm.location?.city??null,region:farm.location?.region??null,
    country:farm.location?.country??null,farmId:farm.id,
    provenance:'MODELED_SEASONAL_FOALING_FARM'},
-  homeTrackId:null,development:{readiness:hash(seed,id+':readiness')%101,
-   soundness:hash(seed,id+':soundness')%101,
+  homeTrackId:null,development:{readiness:Math.max(0,Math.min(100,
+   Math.round(hash(seed,id+':readiness')%101+(youngstockQuality-.55)*12))),
+   soundness:Math.max(0,Math.min(100,
+   Math.round(hash(seed,id+':soundness')%101+(youngstockQuality-.55)*8))),
    potential:geneticPotential},
+  rearing:{schema:'WTW_1999_FOAL_REARING_QUALITY_V1',quality:youngstockQuality,
+   sourceFarmId:farm.id,sourceManagerId:farmCareSource?.source_manager_id??null,
+   sourceAttendantId:farmCareSource?.source_attendant_id??null},
   inheritance:{schema:'WTW_FOAL_PEDIGREE_POTENTIAL_V1',
    sireBreedingValue:sireValue,damBreedingValue:damValue,
    geneticMean,geneticLottery,provenance:'ACTUAL_PARENTS_AND_SEEDED_LOTTERY'},

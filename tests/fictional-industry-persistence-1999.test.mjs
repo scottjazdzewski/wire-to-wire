@@ -13,6 +13,8 @@ import {generate1999SeasonFoalingForecasts,resolve1999FoalBirth}
  from '../public/1999/engine/fictional-industry-breeding-book-1999.mjs';
 import {create1999SeasonalFoal}
  from '../public/1999/engine/fictional-industry-registry-1999.mjs';
+import {source1999FarmYoungstockQuality}
+ from '../public/1999/engine/source-personnel-gameplay-1999.mjs';
 function memoryStore(){
  const data={manifests:new Map(),horseBatches:new Map(),personBatches:new Map(),horseEdits:new Map(),careerRuns:new Map(),directory:new Map(),coveringBatches:new Map(),calendarBatches:new Map()};
  data.industryLifecycle=new Map();
@@ -360,6 +362,19 @@ test('career date commits foals only on due dates and persists aging and mare tu
  assert.equal(born.damId,liveForecast.damId);
  assert.equal(born.ownerId,liveForecast.ownerId);
  assert.equal(born.foalingFarmId,liveForecast.foalingFarmId);
+ assert.equal(born.rearing.sourceFarmId,born.foalingFarmId,
+  'the persisted foal must retain the exact rearing farm identity');
+ assert.ok(Number.isFinite(born.rearing.quality));
+ for(const [field,role] of [['sourceManagerId','farm_manager'],
+  ['sourceAttendantId','breeding_attendant']]){
+  const id=born.rearing[field];
+  if(id){
+   const resident=await findPersistent1999Person(store,manifest,id);
+   assert.equal(resident?.role,role);
+   assert.equal(resident?.workplaceId,born.foalingFarmId,
+    'foal rearing must use an exact persistent farm resident');
+  }
+ }
  assert.equal((await readPersistent1999HorseProfile(store,manifest,
   liveForecast.foalId,{runId})).dateOfBirth,liveForecast.birthDate);
  assert.equal(await findPersistent1999Horse(store,manifest,liveForecast.foalId),null,
@@ -818,4 +833,45 @@ test('actual parental quality shifts foal potential but seeded inheritance retai
   'higher-quality persisted parents must shift the potential distribution');
  assert.ok(Math.min(...high)<Math.max(...low),
   'independent foal variance prevents elite pedigrees from guaranteeing top potential');
+});
+
+test('actual rearing farm quality affects live-birth odds and foal readiness without changing genetics',()=>{
+ const seed=19990101,year=2000;
+ const farm={id:'O-000061',location:{region:'Kentucky',country:'USA'}};
+ const dam={id:'H-V10-DAM',ownerId:'O-000061',careFacilityId:farm.id,
+  ratings:{breedingValue:75}};
+ const sire={id:'H-V10-SIRE',ratings:{breedingValue:77}};
+ const lowFarm={id:'O-000061',location:farm.location,ratings:{breeding:15,
+  youngstockCare:15,facilities:15,management:15,reputation:15},
+  ratingsProvenance:'MODELED_1999_UNCALIBRATED'};
+ const highFarm={...lowFarm,ratings:Object.fromEntries(
+  Object.keys(lowFarm.ratings).map(key=>[key,95]))};
+ const lowCare=source1999FarmYoungstockQuality(lowFarm,null,null);
+ const highCare=source1999FarmYoungstockQuality(highFarm,null,null);
+ const lowLive=[],highLive=[],lowFoals=[],highFoals=[];
+ for(let i=1;i<=500;i++){
+  const id='H-FICTIONAL-1999-FOALS-2000-'+String(i).padStart(7,'0');
+  const forecast={coveringId:'COVER-2000-'+String(i).padStart(7,'0'),
+   breedingYear:year,birthDate:'2000-03-02'};
+  lowLive.push(resolve1999FoalBirth({seed,forecast,
+   youngstockQuality:lowCare.quality}));
+  highLive.push(resolve1999FoalBirth({seed,forecast,
+   youngstockQuality:highCare.quality}));
+  const options={seed,year,id,dateOfBirth:'2000-03-02',dam,sire,farm};
+  lowFoals.push(create1999SeasonalFoal({...options,
+   youngstockQuality:lowCare.quality,farmCareSource:lowCare}));
+  highFoals.push(create1999SeasonalFoal({...options,
+   youngstockQuality:highCare.quality,farmCareSource:highCare}));
+ }
+ assert.ok(highLive.every((live,index)=>live||!lowLive[index]),
+  'higher exact-farm care quality cannot reduce the same-seed live-birth result');
+ assert.ok(highFoals.reduce((n,h)=>n+h.development.readiness,0)>
+  lowFoals.reduce((n,h)=>n+h.development.readiness,0));
+ assert.ok(highFoals.reduce((n,h)=>n+h.development.soundness,0)>
+  lowFoals.reduce((n,h)=>n+h.development.soundness,0));
+ assert.deepEqual(highFoals.map(h=>h.development.potential),
+  lowFoals.map(h=>h.development.potential),
+  'farm care influences rearing and survival, not inherited genetic potential');
+ assert.ok(highFoals.every(h=>h.rearing.sourceFarmId===farm.id&&
+  h.rearing.quality===highCare.quality));
 });

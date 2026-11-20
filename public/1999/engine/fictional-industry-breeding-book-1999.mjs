@@ -87,12 +87,17 @@ export function* generate1999SeasonFoalingForecasts({seed,year,coverings,
 }
 
 /** Resolve only when the forecast date is reached. */
-export function resolve1999FoalBirth({seed,forecast}={}){
+export function resolve1999FoalBirth({seed,forecast,youngstockQuality=.55}={}){
  if(!Number.isSafeInteger(seed)||seed<1||seed>4294967295||
+  !Number.isFinite(youngstockQuality)||youngstockQuality<.01||youngstockQuality>.99||
   !forecast?.coveringId||!Number.isInteger(forecast.breedingYear)||
   !/^\d{4}-\d{2}-\d{2}$/.test(forecast.birthDate))
   throw Error('Invalid due foaling forecast');
- const rate=.88+seeded1999Unit(seed,'live-foal-rate:'+forecast.breedingYear)*.08;
+ // A sound foaling farm and its resident breeding staff improve care odds,
+ // while the shared year draw and per-covering lottery preserve crop variance.
+ const rate=Math.max(.01,Math.min(.995,.88+
+  seeded1999Unit(seed,'live-foal-rate:'+forecast.breedingYear)*.08+
+  (youngstockQuality-.55)*.04));
  return seeded1999Unit(seed,'live-foal:'+forecast.breedingYear+':'+
   forecast.coveringId)<rate;
 }
