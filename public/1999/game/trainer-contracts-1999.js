@@ -33,7 +33,12 @@ export function baselineTrainerDailyFee(skills){
  const ability=skills?.roleAttributes?.conditioning;
  ensure(typeof ability==='number'&&Number.isFinite(ability)&&ability>=0&&ability<=1,
   'TRAINER_CONTRACT','Modeled trainer conditioning ability is required for baseline compensation');
- return Math.round(4000+4500*ability);
+ // Only newly sourced canonical trainers carry this explicit reputation
+ // index. Existing negotiated contracts and older careers are unchanged.
+ const standing=skills?.source_reputation_index;
+ const premium=Number.isFinite(standing)?
+  Math.round(900*(standing-.5)):0;
+ return Math.round(4000+4500*ability)+premium;
 }
 function trainerLoad(state,trainerId){
  const current=activeHorses(state).filter(h=>h.trainer_id===trainerId).length;
