@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {connect1999Person,connect1999Horse}
  from '../public/1999/engine/fictional-industry-graph-1999.mjs';
 import {project1999TrainerSourceSkills,project1999JockeySourceSkills,
- source1999RoleCoverage,SOURCE_PERSONNEL_GAMEPLAY_MODEL}
+ source1999RoleCoverage,source1999JockeySelectionMerit,
+ SOURCE_PERSONNEL_GAMEPLAY_MODEL}
  from '../public/1999/engine/source-personnel-gameplay-1999.mjs';
 import {modeledTrainerSkills,initializeGameHorseCare}
  from '../public/1999/game/horse-care.js';
@@ -110,6 +111,8 @@ test('jockey source FINISHING changes the exact index used by official race engi
  const b=modeledJockeySkills(jockeyId,SEED,high);
  assert.ok(b.finish>a.finish);
  assert.ok(jockeyRaceExecutionIndex(b)>jockeyRaceExecutionIndex(a));
+ assert.ok(source1999JockeySelectionMerit(high)>source1999JockeySelectionMerit(low),
+  'Original 1999 jockey draft must select on actual P-ID source skill merit');
  assert.equal(a.pace,b.pace,
   'Changing finishing alone must not secretly change a separate pace rating');
  const repeat=modeledJockeySkills(jockeyId,SEED,high);
