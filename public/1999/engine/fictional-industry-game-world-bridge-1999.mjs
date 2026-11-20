@@ -298,7 +298,7 @@ export async function openPersistent1999GameCareer(store,manifest,{
   run.runtime.registered_horses.by_id[id]=h;
   run.runtime.registered_horses.by_receipt[h.registration_receipt_id]=id;
   run.stable_horse_ids.push(id);activeIds.push(id);
-  initializeGameHorseCare(run,h);
+  initializeGameHorseCare(run,h,world);
  }
  const openingCapitalMinor=calculate1999OpeningTreasury({
   portfolioTier:operation.portfolioTier,
