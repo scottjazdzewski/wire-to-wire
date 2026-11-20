@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 import {packShared1999Career,unpackShared1999Career,sameShared1999WorldManifest,
  sameShared1999WorldIdentity,sameShared1999CareerRecord,
+ shared1999CareerRecordDifferencePaths,
  migrateShared1999CareerRunWorldReference,
  migrateShared1999CareerOperationInventory}
  from '../public/1999/engine/shared-1999-career-package.mjs';
@@ -58,6 +59,8 @@ test('shared career read-back ignores object key order but preserves all values 
    clock:run.clock}},version:first.version};
  assert.equal(sameShared1999CareerRecord(first,reordered),true);
  assert.equal(sameShared1999CareerRecord(first,{...reordered,version:999}),false);
+ assert.deepEqual(shared1999CareerRecordDifferencePaths(first,
+  {...reordered,version:999}),['$.version']);
  assert.equal(sameShared1999CareerRecord(first,{...reordered,changes:{canonicalRun:{
   ...reordered.changes.canonicalRun,stable_horse_ids:['H-2','H-1']}}}),false);
 });
