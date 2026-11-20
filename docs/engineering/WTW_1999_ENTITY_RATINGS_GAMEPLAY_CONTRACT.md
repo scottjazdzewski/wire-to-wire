@@ -12,14 +12,14 @@ These slots are defined by `rate1999Entity` in `public/1999/engine/fictional-ind
 | Trainer | conditioning, placement, development, raceStrategy, horseCare, reputation, integrity | **This PR:** map saved exact P-ID to six existing `game_training_skills.roleAttributes`; care, wages/fees, condition, performance, race placement are current consumers. Test one-rating counterfactual |
 | Jockey | tactics, paceJudgment, finishing, gateSkill, versatility, fitness, reputation | **This PR:** map exact P-ID to ride judgments, pace, finish, composure, handling; selected-colony bookings and official race performance consume them. Test same-seed counterfactual |
 | Owner | resources, ambition, patience, riskTolerance, reputation | **Integration PR #330:** resources/ambition drive opening barn and working capital; all five O-ID values now seed the actual AI owner care/investment policy, source-backed patience in trainer reviews/negotiations, and owner-standing effects on trainer contract thresholds. Still needs broad portfolio and #317 budget calibration |
-| Farm | breeding, youngstockCare, facilities, management, reputation | **This integration:** exact care-farm ratings and workplace-linked farm manager/breeding attendant IDs set opening young-horse readiness. All five farm ratings enter the documented youngstock composite. Reproductive lifecycle and farm operating economics remain a later gate |
+| Farm | breeding, youngstockCare, facilities, management, reputation | **This integration:** exact farm ratings and its workplace-linked manager/attendant affect opening readiness, seasonal live-foal odds, and born-foal readiness/soundness. Farm operating economics remain open |
 | Track | surfaceQuality, safety, purseStrength, prestige, facilities | **Integration PR #330:** exact saved T-ID ratings drive opening barn facilities (15% track facilities weight), jockey mount acceptance (prestige coefficient 0.08), horse/track surface-performance interaction (coefficient 0.35, bounded ±0.07), and post-race recovery risk (safety multiplier 0.6–1.4). `purseStrength` already feeds the annual breeding-market index. Still needs distribution calibration, full condition-book/fiscal validation, and Windows acceptance |
 | Groom | horseCare, observation, reliability, experience | **This integration:** deterministic exact P-ID selection at the horse's saved track workplace. Care and observation ratings affect the existing daily supervision and modeled risk inputs. Explicit employment contracts/payroll remain open |
 | Exercise rider | horsemanship, feedback, fitness, reliability | **This integration:** exact workplace P-ID ratings affect the existing daily training response. Explicit employment contracts/payroll remain open |
 | Veterinarian | diagnostics, treatment, prevention, reliability | **This integration:** exact workplace P-ID ratings affect daily modeled prevention risk and recovery. This is not a medical diagnosis or a claim of treatment; explicit consult fees/payroll remain open |
 | Farrier | hoofCare, correctiveSkill, reliability | **This integration:** exact workplace P-ID ratings affect daily modeled soundness risk. Explicit work orders/payroll remain open |
-| Farm manager | operations, breeding, staffManagement, reliability | **This integration:** exact care-farm workplace P-ID rating affects opening young-horse readiness through the farm care composite. Farm decision authority, staffing capacity and payroll remain open |
-| Breeding attendant | horseHandling, reproduction, reliability | **This integration:** exact care-farm workplace P-ID rating affects opening young-horse readiness through the farm care composite. Live covering/foaling work and payroll remain open |
+| Farm manager | operations, breeding, staffManagement, reliability | **This integration:** exact farm-workplace P-ID rating affects opening and seasonal young-horse readiness and live-foal care. Farm decision authority, staffing capacity and payroll remain open |
+| Breeding attendant | horseHandling, reproduction, reliability | **This integration:** exact farm-workplace P-ID rating affects opening readiness, seasonal foaling care, and foal rearing quality. Explicit labor contracts remain open |
 
 ## Non-negotiable implementation contract
 
@@ -43,6 +43,8 @@ These slots are defined by `rate1999Entity` in `public/1999/engine/fictional-ind
 - Farm manager operations: `operations .40 + staffManagement .30 + reliability .20 + breeding .10`; manager breeding operations: `breeding .55 + operations .20 + staffManagement .15 + reliability .10`.
 - Breeding attendant handling: `horseHandling .55 + reliability .25 + reproduction .20`; attendant reproduction: `reproduction .60 + horseHandling .20 + reliability .20`.
 - Opening care quality combines farm environment `.70`, manager composite `.18`, and attendant composite `.12`; it shifts source-derived readiness by `.06 × (quality − .55)` before normal game training begins.
+- Seasonal rearing uses the same exact-worksite `.70/.18/.12` composite. For due foaling forecasts, `liveFoalRate = clamp(.88 + seededYearRate(.00–.08) + .04 × (quality − .55), .01, .995)`. The same seeded covering lottery remains, so quality moves outcomes monotonically without changing the crop seed or guaranteeing births.
+- Born foals record the rearing farm and selected resident manager/attendant IDs. Rearing quality shifts readiness by `12 × (quality − .55)` and soundness by `8 × (quality − .55)` on the 0–100 developmental scale; it never changes inherited genetic potential.
 
 ### Added professional weights in `WTW_1999_SOURCE_SUPPORT_STAFF_GAMEPLAY_V1`
 
@@ -58,7 +60,7 @@ These slots are defined by `rate1999Entity` in `public/1999/engine/fictional-ind
 - Trainers: fitness change per 30 days, injury/downtime, race-placement suitability, care costs vs skill and workload.
 - Jockeys: finishing residual controlling for horse ability and race field, tactical suitability, trip/distance, realistic booking and fee distribution.
 - Owners: actual cash runway, sale/buy behavior, risk decisions, elite/resource variation and financially failing farms.
-- Farms, vets, staff: foal survival/rearing, youngstock development, welfare, expense distributions, staffing load.
+- Farms, vets, staff: seasonal foal survival/rearing and youngstock development now consume farm/resident-staff quality; welfare, expense distributions, staffing load and broader calibration remain to measure.
 - Tracks: surface effects, purse economics, safety and running-style effects without predetermining winners.
 
 ## Ownership between windows
