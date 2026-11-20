@@ -423,6 +423,7 @@ function publishCareerReadModel(){
   horseRows:horses,raceRows:races,
   ...(isV10?{worldHorseBrowse:liveWorldHorseDirectory.browse,
    worldHorseById:liveWorldHorseDirectory.byId,
+   worldRatingAudit:liveWorldHorseDirectory.ratingAudit,
    worldHorseDirectoryCount:liveWorldHorseDirectory.size,
    worldEntityBrowse:(kind,options)=>liveWorldEntityDirectories[kind]?.browse(options)||null,
    worldEntityById:(kind,id)=>liveWorldEntityDirectories[kind]?.byId(id)||null,

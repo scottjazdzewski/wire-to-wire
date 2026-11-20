@@ -4086,6 +4086,14 @@ function sourceOpportunityBoard(){
 function worldCompleteDirectoryView(){
  const active=window.__WTW_ACTIVE_WORLD_CAREER_VIEW__;
  if(active?.worldHorseBrowse){
+  const verifiedRatings=active.worldRatingAudit?.()||null;
+  const ratingMessage=verifiedRatings?
+   'OPENING MODELED RATINGS · HORSES '+safe(verifiedRatings.ratedHorses.toLocaleString('en-US'))+
+    '/'+safe(verifiedRatings.horses.toLocaleString('en-US'))+
+    ' · PEOPLE '+safe(verifiedRatings.ratedPeople.toLocaleString('en-US'))+
+    '/'+safe(verifiedRatings.people.toLocaleString('en-US'))+
+    (verifiedRatings.valid?' · COMPLETE':' · MISSING SOURCE RATINGS — DO NOT CERTIFY'):
+   'OPENING MODEL RATING COVERAGE NOT VERIFIED';
   const categories=[
    ['HORSES','1999 Horses',active.worldHorseDirectoryCount||active.worldHorseCount],
    ['PEOPLE','People',active.worldEntityCounts?.person],
@@ -4104,6 +4112,8 @@ function worldCompleteDirectoryView(){
    ' · Active operation: '+safe(active.operationName||active.operationId)+
    ' · '+safe(active.operationId||'')+'</p></div></header>'+
    '<div class="ng-manager-metrics">'+cards+'</div>'+
+   '<p role="status">'+ratingMessage+
+   ' · Modeled fictional attributes; not historical observations.</p>'+
    '<p>All records above are the operational saved career census, not the 73-horse archival source registry. Each directory supports global search, sorting and immutable-ID profiles.</p>'+
    '<p>Stable shows your selected operation’s linked inventory. Horses in training, owned animals, breeding stock and care residents remain distinct from the full industry.</p>'+
    '<div class="ng-manager-controls"><button type="button" data-ng="save-open">OPEN CAREER MANAGER · EXPORT COMPLETE SAVE</button>'+ 

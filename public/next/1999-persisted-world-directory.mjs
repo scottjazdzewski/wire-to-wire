@@ -3,6 +3,8 @@
  * This consumes the exact saved world hydrated by the canonical game bridge.
  * It never generates extra horses, invents finances, or changes immutable IDs.
  */
+import {project1999SavedHorseRatings,project1999SavedEntityRatings,
+ audit1999SavedWorldRatings} from './1999-world-rating-projection.mjs';
 export const PERSISTED_INDUSTRY_DIRECTORY_SCHEMA='WTW_PERSISTED_INDUSTRY_DIRECTORY_V1';
 
 export function createPersistedIndustryHorseDirectory({world,manifest,year=1999}={}){
@@ -47,7 +49,10 @@ export function createPersistedIndustryHorseDirectory({world,manifest,year=1999}
   registryGroup:h.cohort||'',sire:h.sireId||'',dam:h.damId||'',
   owner:label(org,h.ownerId),breeder:label(org,h.foalingFarmId),
   trainer:label(people,h.trainerId),track:label(tracks,h.homeTrackId),
-  homebred:field(h,'homebred'),ca:null,pa:null,
+  homebred:field(h,'homebred'),
+  // Use the actual saved V10 attributes; never replace them with blank
+  // legacy CA/PA fields or a second random rating generator.
+  ...project1999SavedHorseRatings(h,{seed:manifest.seed}),
   ownerId:h.ownerId||'',foalingFarmId:h.foalingFarmId||'',
   trainerId:h.trainerId||'',homeTrackId:h.homeTrackId||'',
   careFacilityId:h.careFacilityId||'',trainingBarnId:h.trainingBarnId||'',
@@ -98,8 +103,14 @@ export function createPersistedIndustryHorseDirectory({world,manifest,year=1999}
   return {indexing:false,total:cachedRows.length,loaded:horses.length,
    progress:horses.length,items:cachedRows.slice(start,start+size).map(row)};
  }
+ let ratingAuditReport=null;
  return Object.freeze({schema:PERSISTED_INDUSTRY_DIRECTORY_SCHEMA,
   size:horses.length,browse,byId:id=>ids.has(id)?row(ids.get(id)):null,
+  // Full 300k+75k scan only when explicitly requested; cache until this
+  // world-directory instance changes, never slow each profile repaint.
+  ratingAudit:()=>ratingAuditReport??(ratingAuditReport=
+   audit1999SavedWorldRatings(world,{
+    horseCount:manifest.horseCount,personCount:manifest.personCount})),
   invalidate:()=>{cachedKey='';cachedRows=null}});
 }
 
@@ -126,7 +137,8 @@ export function createPersistedIndustryEntityDirectory({world,manifest,kind}={})
   const base={_savedWorldId:manifest.worldId,_savedKind:kind,
    _kind:kind==='organization'?'farm':kind,_name:item.name,
    _id:item.id,_canonId:item.id,sourceEntityId:item.id,name:item.name,
-   biography:item.biography||'',reviewNotes:item.reviewNotes||''};
+   biography:item.biography||'',reviewNotes:item.reviewNotes||'',
+   ...project1999SavedEntityRatings(item)};
   if(kind==='person')return {...base,role:item.role||'',
    base:item.base||tracks.get(item.workplaceId)||organizations.get(item.workplaceId)||
     item.workplaceId||place(item.birthplace)||'',
