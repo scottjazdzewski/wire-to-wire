@@ -8,7 +8,9 @@ import {createGameRun,validateGameRun} from '../game/state.js';
 import {initializeGameHorseCare} from '../game/horse-care.js';
 import {model1999StartingHorseAttributes} from '../game/horse-starting-attributes.js';
 import {dispatchGameCommand} from '../game/kernel.js';
-import {source1999JockeySelectionMerit} from './source-personnel-gameplay-1999.mjs';
+import {source1999JockeySelectionMerit,project1999TrackSourceGameplay,
+ source1999TrackFacilitiesContribution}
+ from './source-personnel-gameplay-1999.mjs';
 import {readPersistent1999Directory,readPersistent1999IndustryBatch,
  verifyPersistent1999WorldOpen} from './fictional-industry-persistence-1999.mjs';
 
@@ -251,8 +253,10 @@ export async function openPersistent1999GameCareer(store,manifest,{
    operation.portfolioTier]??0;
   const resources=operation.ratings?.resources??55;
   const ambition=operation.ratings?.ambition??55;
+  const trackGameplay=project1999TrackSourceGameplay(track);
+  const trackFacilities=source1999TrackFacilitiesContribution(trackGameplay);
   const facilityQuality=Math.max(35,Math.min(95,
-   Math.round(.62*resources+.23*ambition+.15*55+tierBonus)));
+   Math.round(.62*resources+.23*ambition+trackFacilities+tierBonus)));
   run.runtime.facilities.sites[siteId]={id:siteId,offer_id:null,
    owner_id:operation.id,operator_organization_id:operation.id,
    name:format1999OpeningBarnName(operation,track),type:'RACING_STABLE',
@@ -264,7 +268,9 @@ export async function openPersistent1999GameCareer(store,manifest,{
    source_ref:'PERSISTED_FICTIONAL_1999_OPENING_WORLD',status:'ACTIVE',
    acquired_date:run.clock.date,open_date:run.clock.date,
    stalls:Math.max(60,group.length),max_stalls:Math.max(60,group.length),
-   quality:facilityQuality,daily_upkeep_minor:0,daily_boarding_minor:0,
+   quality:facilityQuality,
+   source_track_ratings:trackGameplay?.source_ratings??null,
+   daily_upkeep_minor:0,daily_boarding_minor:0,
    staff_required:1,staff_count:1,staff_wage_daily_minor:0,
    track_rent_daily_minor:0,maintenance_daily_minor:0,
    maintenance_policy:'STANDARD',contracts:[],upgrade:null,land_acres:0};

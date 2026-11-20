@@ -10,6 +10,7 @@
  * game rule, without rewriting an existing person's source record.
  */
 export const SOURCE_PERSONNEL_GAMEPLAY_MODEL='WTW_1999_SOURCE_PERSONNEL_GAMEPLAY_V1';
+export const SOURCE_TRACK_GAMEPLAY_MODEL='WTW_1999_SOURCE_TRACK_GAMEPLAY_V1';
 export const SOURCE_PERSONNEL_RATING_KEYS=Object.freeze({
  trainer:Object.freeze(['conditioning','placement','development','raceStrategy',
   'horseCare','reputation','integrity']),
@@ -95,4 +96,51 @@ export function source1999RoleCoverage(people=[]){
  }
  return {counts,missing,
   complete:!missing.trainer.length&&!missing.jockey.length};
+}
+
+/**
+ * Project the exact saved track ratings into bounded game inputs. The track
+ * record remains the only source; these values are consumed by opening-barn
+ * quality, rider acceptance, race performance, purse-market conditions and
+ * race recovery. No track rating claims to be an observed historical score.
+ */
+export function project1999TrackSourceGameplay(track){
+ if(!track?.id)return null;
+ const keys=['surfaceQuality','safety','purseStrength','prestige','facilities'];
+ const ratings=track.ratings||{};
+ const complete=keys.every(key=>Number.isFinite(ratings[key])&&
+  ratings[key]>=1&&ratings[key]<=99);
+ if(!complete){
+  if(track.ratingsProvenance==='MODELED_1999_UNCALIBRATED')
+   throw Error('Canonical track '+track.id+' has incomplete source rating values');
+  return null;
+ }
+ return {schema:SOURCE_TRACK_GAMEPLAY_MODEL,source_track_id:track.id,
+  source_ratings:Object.fromEntries(keys.map(key=>[key,ratings[key]])),
+  surfaceQuality:ratings.surfaceQuality/100,safety:ratings.safety/100,
+  purseStrength:ratings.purseStrength/100,prestige:ratings.prestige/100,
+  facilities:ratings.facilities/100};
+}
+
+/** Small, matchup-specific surface effect in official race performance. */
+export function source1999TrackSurfaceAdjustment(track,horseSurfaceAptitude){
+ if(!track||!Number.isFinite(horseSurfaceAptitude))return 0;
+ return Math.max(-.07,Math.min(.07,
+  (track.surfaceQuality-.55)*(horseSurfaceAptitude-.5)*.35));
+}
+
+/** Track prestige makes the same eligible mount more attractive to riders. */
+export function source1999TrackPrestigeOfferOffset(track){
+ return track?(track.prestige-.55)*.08:0;
+}
+
+/** Exact 15% contribution used when creating the career's opening barn. */
+export function source1999TrackFacilitiesContribution(track){
+ return track?track.source_ratings.facilities*.15:55*.15;
+}
+
+/** Relative safety changes recovery risk after a completed simulated race. */
+export function source1999TrackRecoveryMultiplier(track){
+ return track?Math.round(Math.max(.6,Math.min(1.4,
+  1+(.55-track.safety)))*1000)/1000:1;
 }

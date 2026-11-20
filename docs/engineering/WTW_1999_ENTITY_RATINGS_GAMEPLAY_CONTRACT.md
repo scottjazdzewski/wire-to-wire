@@ -13,7 +13,7 @@ These slots are defined by `rate1999Entity` in `public/1999/engine/fictional-ind
 | Jockey | tactics, paceJudgment, finishing, gateSkill, versatility, fitness, reputation | **This PR:** map exact P-ID to ride judgments, pace, finish, composure, handling; selected-colony bookings and official race performance consume them. Test same-seed counterfactual |
 | Owner | resources, ambition, patience, riskTolerance, reputation | Resources/ambition already influence a player's opening barn quality and working capital; other decisions, market and long-run risk behavior require integration tests and #317 operating budgets |
 | Farm | breeding, youngstockCare, facilities, management, reputation | Persisted in source; must connect to fertility, foal/youngstock development, daily care and operating expenses for actual farm staff and horses—not just owner-runner bonuses |
-| Track | surfaceQuality, safety, purseStrength, prestige, facilities | Persisted; must connect to real condition book, track maintenance/safety, surface-specific performance impact and fiscal race economics without changing historical meet dates |
+| Track | surfaceQuality, safety, purseStrength, prestige, facilities | **Integration PR #330:** exact saved T-ID ratings drive opening barn facilities (15% track facilities weight), jockey mount acceptance (prestige coefficient 0.08), horse/track surface-performance interaction (coefficient 0.35, bounded ±0.07), and post-race recovery risk (safety multiplier 0.6–1.4). `purseStrength` already feeds the annual breeding-market index. Still needs distribution calibration, full condition-book/fiscal validation, and Windows acceptance |
 | Groom | horseCare, observation, reliability, experience | Persisted; must connect real care-staff P-ID to condition/injury detection and actual wage/scheduling ledger |
 | Exercise rider | horsemanship, feedback, fitness, reliability | Persisted; must connect assigned rider P-ID to training accuracy, pace works and payroll |
 | Veterinarian | diagnostics, treatment, prevention, reliability | Persisted; must connect vet P-ID to actual injury prevention/treatment and fees without creating fictitious recoveries |
@@ -31,6 +31,10 @@ These slots are defined by `rate1999Entity` in `public/1999/engine/fictional-ind
 6. **Credible balance:** owner tiers explain a *tendency* toward higher resources, facility quality, and training opportunity, not guaranteed elite genetic talent. Document histograms/percentiles and exceptions, not ad hoc boosts to particular winners.
 7. **Money/safety:** owner resources are not free recurring cash; staff/vet/transport/farm expense effects must be backed by valid ledgers and labor relationships. Injury, mortality and breeding events must respect existing game rules and actual life status.
 8. **Official 1999 release:** source rebalance or user's exported edits go only through a versioned starting-world release, no mutation of frozen May 29 reference or existing careers. New world cannot replace the 73-record historical research index.
+
+## Current cross-system bridge in PR #330
+
+`WTW_1999_SOURCE_PERSONNEL_GAMEPLAY_V1` connects exact saved trainer and jockey P-IDs to the current care, fee, booking, tactic and race-result model. `WTW_1999_SOURCE_TRACK_GAMEPLAY_V1` connects exact saved track T-IDs to opening care-site quality, jockey acceptance, surface match and post-race recovery. The values and consumers are locally computed from the saved world; no name joins or separate ratings database are used. Existing played skills remain unchanged. The new track effects are modeled starting rules and still require wider calibration before release certification.
 
 ## Suggested calibration evidence per category
 

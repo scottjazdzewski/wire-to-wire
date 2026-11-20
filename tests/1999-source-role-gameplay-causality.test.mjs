@@ -1,12 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {connect1999Person,connect1999Horse}
+import {connect1999Person,connect1999Horse,connect1999DirectoryEntity}
  from '../public/1999/engine/fictional-industry-graph-1999.mjs';
 import {project1999TrainerSourceSkills,project1999JockeySourceSkills,
  source1999RoleCoverage,source1999JockeySelectionMerit,
- SOURCE_PERSONNEL_GAMEPLAY_MODEL}
+ project1999TrackSourceGameplay,source1999TrackSurfaceAdjustment,
+ source1999TrackRecoveryMultiplier,source1999TrackPrestigeOfferOffset,
+ source1999TrackFacilitiesContribution,SOURCE_PERSONNEL_GAMEPLAY_MODEL}
  from '../public/1999/engine/source-personnel-gameplay-1999.mjs';
-import {modeledTrainerSkills,initializeGameHorseCare}
+import {modeledTrainerSkills,initializeGameHorseCare,createHorseCareRecord}
  from '../public/1999/game/horse-care.js';
 import {baselineTrainerDailyFee}
  from '../public/1999/game/trainer-contracts-1999.js';
@@ -16,6 +18,8 @@ import {model1999StartingHorseAttributes}
  from '../public/1999/game/horse-starting-attributes.js';
 import {createHorseTrainingRecord,advanceHorseTrainingDay}
  from '../public/1999/engine/horse-development.mjs';
+import {modelHorsePostRaceResponse}
+ from '../public/1999/game/horse-care.js';
 
 const SEED=19990101;
 const trainerId='P-FICTIONAL-1999-TRAINER-0000001';
@@ -117,6 +121,54 @@ test('jockey source FINISHING changes the exact index used by official race engi
   'Changing finishing alone must not secretly change a separate pace rating');
  const repeat=modeledJockeySkills(jockeyId,SEED,high);
  assert.deepEqual(repeat,b,'Source-to-gameplay rating mapping must be deterministic');
+});
+
+test('canonical track facilities, prestige, surface and safety project from their saved T-ID ratings',()=>{
+ const track=connect1999DirectoryEntity({id:'T-0001',name:'Saved Track'},
+  {seed:SEED,type:'track'});
+ const model=project1999TrackSourceGameplay(track);
+ assert.equal(model.source_track_id,'T-0001');
+ assert.deepEqual(model.source_ratings,track.ratings);
+ assert.equal(model.facilities,track.ratings.facilities/100);
+ assert.equal(model.purseStrength,track.ratings.purseStrength/100);
+ const low=structuredClone(track),high=structuredClone(track);
+ low.ratings.prestige=15;high.ratings.prestige=95;
+ assert.ok(source1999TrackPrestigeOfferOffset(project1999TrackSourceGameplay(high))>
+  source1999TrackPrestigeOfferOffset(project1999TrackSourceGameplay(low)),
+  'Saved prestige must change the real rider mount-acceptance threshold');
+ low.ratings.facilities=15;high.ratings.facilities=95;
+ assert.ok(source1999TrackFacilitiesContribution(project1999TrackSourceGameplay(high))>
+  source1999TrackFacilitiesContribution(project1999TrackSourceGameplay(low)),
+  'Saved facilities must change the actual opening-site quality calculation');
+ low.ratings.surfaceQuality=15;high.ratings.surfaceQuality=95;
+ assert.ok(source1999TrackSurfaceAdjustment(
+  project1999TrackSourceGameplay(high),.9)>
+  source1999TrackSurfaceAdjustment(project1999TrackSourceGameplay(low),.9),
+  'Saved surface quality must change the real horse/track matchup input');
+ low.ratings.safety=15;high.ratings.safety=95;
+ assert.ok(source1999TrackRecoveryMultiplier(project1999TrackSourceGameplay(high))<
+  source1999TrackRecoveryMultiplier(project1999TrackSourceGameplay(low)));
+ const incomplete=structuredClone(track);delete incomplete.ratings.safety;
+ assert.throws(()=>project1999TrackSourceGameplay(incomplete),/incomplete source rating/);
+});
+
+test('track safety changes actual post-race condition in the existing horse care engine',()=>{
+ const low=connect1999DirectoryEntity({id:'T-0001',name:'Unsafe'},
+  {seed:SEED,type:'track'}),high=structuredClone(low);
+ low.ratings.safety=15;high.ratings.safety=95;
+ const base=createHorseCareRecord(careHorse,'1999-01-01');
+ const event={race_id:'R-1999-0001',finish:2,field_size:8,
+  distance_furlongs:8};
+ const lowResult=modelHorsePostRaceResponse(structuredClone(base),careHorse,
+  {...event,track_recovery_multiplier:source1999TrackRecoveryMultiplier(
+   project1999TrackSourceGameplay(low))},SEED);
+ const highResult=modelHorsePostRaceResponse(structuredClone(base),careHorse,
+  {...event,track_recovery_multiplier:source1999TrackRecoveryMultiplier(
+   project1999TrackSourceGameplay(high))},SEED);
+ assert.ok(highResult.training.currentRisk<lowResult.training.currentRisk,
+  'Only the canonical track safety rating changed; real post-race risk must improve');
+ assert.equal(highResult.history.at(-1).track_recovery_multiplier,.6);
+ assert.equal(lowResult.history.at(-1).track_recovery_multiplier,1.4);
 });
 
 test('actual 1999 career initializes the trainer from canonical source and preserves saved progression',()=>{

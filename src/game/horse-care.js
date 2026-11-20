@@ -517,12 +517,14 @@ export function getGameHorsePerformance(state,world,id){
  * It does NOT fabricate a race result, payout, or medical diagnosis.
  */
 export function modelHorsePostRaceResponse(record,horse,{race_id,finish,field_size,
- distance_furlongs,travel_miles=0}={},seed=19990101){
+ distance_furlongs,travel_miles=0,track_recovery_multiplier=1}={},seed=19990101){
  ensure(record?.schema===HORSE_CARE_SCHEMA&&horse?.horse_id===record.horse_id&&
   typeof race_id==='string'&&race_id.length>0&&money(finish)&&finish>=1&&
   money(field_size)&&field_size>=finish&&field_size>=2&&field_size<=24&&
   Number.isFinite(distance_furlongs)&&distance_furlongs>=4&&distance_furlongs<=18&&
-  Number.isFinite(travel_miles)&&travel_miles>=0,
+  Number.isFinite(travel_miles)&&travel_miles>=0&&
+  Number.isFinite(track_recovery_multiplier)&&
+  track_recovery_multiplier>=.6&&track_recovery_multiplier<=1.4,
   'HORSE_RACE_RESPONSE','Actual race result parameters needed');
  const next=structuredClone(record);
  const training=next.training,effort=cap(.55+distance_furlongs*.045);
@@ -531,16 +533,17 @@ export function modelHorsePostRaceResponse(record,horse,{race_id,finish,field_si
  training.fitness=round4(training.fitness-.005-.003*effort);
  training.stress=round4(training.stress+.014+Math.min(.028,travel_miles/15000));
  training.confidence=round4(training.confidence+.04*(1-(finish-1)/(field_size-1))-.019);
- training.currentRisk=round4(training.currentRisk+impact*.19);
+ training.currentRisk=round4(training.currentRisk+impact*.19*track_recovery_multiplier);
  training.readiness=round4(training.readiness-.08-.03*effort);
  if(seedPart(seed,horse.horse_id+':'+race_id+':soreness')<
-  .001+.023*training.currentRisk*training.currentRisk){
+  (.001+.023*training.currentRisk*training.currentRisk)*track_recovery_multiplier){
   training.sorenessDays=Math.max(training.sorenessDays,3);
   training.alerts.push({date:training.asOf,kind:'MODELED_POSTRACE_SORENESS',
    note:'Simulated monitoring condition, not a clinical finding'});
  }
  next.history.push({date:training.asOf,kind:'RACE_RECOVERY_PROJECTION',
-  race_id,finish,field_size,travel_miles,readiness:training.readiness,
+  race_id,finish,field_size,travel_miles,track_recovery_multiplier,
+  readiness:training.readiness,
   fatigue:training.fatigue,health_risk:training.currentRisk});
  if(next.history.length>45)next.history.splice(0,next.history.length-45);
  return next;
