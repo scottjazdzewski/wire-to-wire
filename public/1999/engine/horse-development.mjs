@@ -184,6 +184,11 @@ export function advanceHorseTrainingDay(record,horse,trainer,date,seed=19990101,
  const supervision=attr(careContext,'supervision',.55);
  const barn=attr(careContext,'barnQuality',.7);
  const crowding=attr(careContext,'crowding',.65);
+ const trainingSupport=attr(careContext,'trainingSupport',.55);
+ const prevention=attr(careContext,'prevention',.55);
+ const treatment=attr(careContext,'treatment',.55);
+ const hoofCare=attr(careContext,'hoofCare',.55);
+ const observation=attr(careContext,'observation',.55);
  const welfare=(nutrition-.62)*.17+(supervision-.55)*.16+(barn-.7)*.12-
   Math.max(0,crowding-.8)*.13;
  let work=next.status==='INACTIVE'?'REST':next.plan==='AUTO'?recommendHorseWorkout(next,horse,trainer,date):workFor(next.plan,dayOrdinal);
@@ -194,8 +199,10 @@ export function advanceHorseTrainingDay(record,horse,trainer,date,seed=19990101,
  if(next.sorenessDays>0)work='REST';
  const intensity=TRAINING_PLANS[work].load;
  const geneticallyTough=1-attr(horse.attributes,'soundness_risk',.48);
- const recovery=cap(.36+geneticallyTough*.34+t.health*.2+welfare);
- const response=cap(.74+attr(horse.attributes,'training_focus',.5)*.27+t.conditioning*.32+welfare,0,1.7);
+ const recovery=cap(.36+geneticallyTough*.34+t.health*.2+welfare+
+  (treatment-.55)*.035);
+ const response=cap((.74+attr(horse.attributes,'training_focus',.5)*.27+
+  t.conditioning*.32+welfare)*(1+.02*(trainingSupport-.55)),0,1.7);
  const young=Number(horse.ageAtDate??horse.ageAtOpening)<4;
  const maturity=young?(.80+t.young*.25):1;
  const variability=.91+random01(seed,horse.id+':'+date+':response')*.18;
@@ -225,8 +232,10 @@ export function advanceHorseTrainingDay(record,horse,trainer,date,seed=19990101,
   if(next.sorenessDays===0)next.alerts.push({date,kind:'SIMULATED_REST_COMPLETED',
    note:'Soreness watch period completed; use a graded return to normal work'});
  }
+ const staffSafety=(prevention-.55)*.035+(hoofCare-.55)*.03+
+  (observation-.55)*.015;
  next.currentRisk=cap(next.innateRisk*.43+next.fatigue*.41+next.stress*.16+
-  (next.consecutiveHard>=3?.13:0)-Math.max(-.07,welfare*.16));
+  (next.consecutiveHard>=3?.13:0)-Math.max(-.07,welfare*.16)-staffSafety);
  // A modeled soreness interruption—not a diagnosis. A horse can become a
  // welfare caution while the historical identity remains untouched.
  const stressRisk=work==='SPEED'||work==='STAMINA'?1:.6;

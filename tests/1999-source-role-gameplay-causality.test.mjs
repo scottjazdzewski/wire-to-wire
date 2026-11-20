@@ -5,11 +5,15 @@ import {connect1999Person,connect1999Horse,connect1999DirectoryEntity}
 import {project1999TrainerSourceSkills,project1999JockeySourceSkills,
  source1999RoleCoverage,source1999JockeySelectionMerit,
  project1999OwnerSourceGameplay,
+ project1999SupportStaffSourceSkills,project1999FarmSourceGameplay,
+ source1999FarmYoungstockQuality,index1999WorkplacePersonnel,
+ select1999WorkplacePerson,
  project1999TrackSourceGameplay,source1999TrackSurfaceAdjustment,
  source1999TrackRecoveryMultiplier,source1999TrackPrestigeOfferOffset,
  source1999TrackFacilitiesContribution,SOURCE_PERSONNEL_GAMEPLAY_MODEL}
  from '../public/1999/engine/source-personnel-gameplay-1999.mjs';
-import {modeledTrainerSkills,initializeGameHorseCare,createHorseCareRecord}
+import {modeledTrainerSkills,initializeGameHorseCare,createHorseCareRecord,
+ apply1999SourceCareStaff}
  from '../public/1999/game/horse-care.js';
 import {baselineTrainerDailyFee}
  from '../public/1999/game/trainer-contracts-1999.js';
@@ -204,6 +208,92 @@ test('all five canonical owner ratings are stored and drive the existing care, p
   {entities:{organizations:[organization],people:[trainer]}},owner.id,trainerId);
  assert.ok(quote(highRep).minimum_acceptable_minor<quote(lowRep).minimum_acceptable_minor,
   'Better saved owner standing must affect the existing signed-service offer threshold');
+});
+
+test('saved farm, farm manager and breeding attendant ratings change actual opening readiness',()=>{
+ const farm=connect1999DirectoryEntity({id:'O-FICTIONAL-FARM-0001',name:'Care Farm'},
+  {seed:SEED,type:'farm'});
+ const manager=connect1999Person({id:'P-FICTIONAL-1999-FARM-MANAGER-0000001',
+  role:'farm_manager',workplaceId:farm.id},{seed:SEED});
+ const attendant=connect1999Person({id:'P-FICTIONAL-1999-BREEDING-ATTENDANT-0000001',
+  role:'breeding_attendant',workplaceId:farm.id},{seed:SEED});
+ const index=index1999WorkplacePersonnel([manager,attendant]);
+ assert.equal(select1999WorkplacePerson(index,'farm_manager',farm.id,SEED,
+  sourceHorse.id).id,manager.id);
+ const care=source1999FarmYoungstockQuality(farm,manager,attendant);
+ assert.equal(care.source_farm_id,farm.id);
+ assert.equal(care.source_manager_id,manager.id);
+ assert.equal(care.source_attendant_id,attendant.id);
+ assert.deepEqual(care.source_ratings,farm.ratings);
+ const input={horse_id:gameHorseId,seed:SEED,foaling_year:1996,sex:'GELDING',
+  horseRatings:sourceHorse.ratings,development:sourceHorse.development,
+  ownerPortfolioTier:sourceHorse.ownerPortfolioTier};
+ const low=model1999StartingHorseAttributes({...input,sourceYoungstockQuality:.15});
+ const high=model1999StartingHorseAttributes({...input,sourceYoungstockQuality:.95});
+ assert.ok(high.training_focus>low.training_focus);
+ assert.ok(high.fitness>low.fitness);
+ for(const key of Object.keys(farm.ratings)){
+  const changed=structuredClone(farm);changed.ratings[key]=1;
+  assert.notEqual(source1999FarmYoungstockQuality(changed,manager,attendant).quality,
+   care.quality,'Farm '+key+' rating must affect the actual opening care quality');
+ }
+ for(const person of [manager,attendant])for(const key of Object.keys(person.ratings)){
+  const changed=structuredClone(person);changed.ratings[key]=1;
+  const next=person.role==='farm_manager'?
+   source1999FarmYoungstockQuality(farm,changed,attendant):
+   source1999FarmYoungstockQuality(farm,manager,changed);
+  assert.notEqual(next.quality,care.quality,
+   person.role+' '+key+' must affect the horse opening condition model');
+ }
+});
+
+test('groom, exercise rider, veterinarian and farrier ratings alter daily training and welfare inputs',()=>{
+ const roles=[
+  ['groom',['horseCare','observation','reliability','experience']],
+  ['exercise_rider',['horsemanship','feedback','fitness','reliability']],
+  ['veterinarian',['diagnostics','treatment','prevention','reliability']],
+  ['farrier',['hoofCare','correctiveSkill','reliability']]
+ ];
+ for(const [role,keys] of roles){
+  const person=connect1999Person({id:'P-FICTIONAL-1999-'+
+   role.toUpperCase().replaceAll('_','-')+'-0000001',role,
+   workplaceId:'T-0001'},{seed:SEED});
+  const skill=project1999SupportStaffSourceSkills(person);
+  assert.equal(skill.source_person_id,person.id);
+  assert.deepEqual(skill.source_role_ratings,person.ratings);
+  for(const key of keys){
+   const changed=structuredClone(person);changed.ratings[key]=1;
+   assert.notDeepEqual(project1999SupportStaffSourceSkills(changed),skill,
+    role+' '+key+' must change its mapped gameplay profile');
+  }
+ }
+ const rated=(role,values)=>({source_person_id:'P-'+role,
+  ...values});
+ const base={nutrition:.72,supervision:.77,barnQuality:.82,crowding:.5,
+  workout:'BALANCED'};
+ const record=createHorseTrainingRecord(careHorse,'1999-01-01');
+ const trainerSkills=modeledTrainerSkills(trainerId,SEED,trainer);
+ const apply=(staff,plan='BALANCED')=>advanceHorseTrainingDay(
+  structuredClone(record),careHorse,trainerSkills,'1999-01-02',SEED,
+  {...apply1999SourceCareStaff({...base,workout:plan},staff),workout:plan}).horse;
+ const lowGroom=apply({groom:rated('groom',{care:.15,observation:.15})});
+ const highGroom=apply({groom:rated('groom',{care:.95,observation:.95})});
+ assert.ok(highGroom.fitness>lowGroom.fitness);
+ assert.ok(highGroom.currentRisk<lowGroom.currentRisk);
+ const lowRider=apply({exercise_rider:rated('exercise_rider',
+  {trainingResponse:.15,paceWork:.15})});
+ const highRider=apply({exercise_rider:rated('exercise_rider',
+  {trainingResponse:.95,paceWork:.95})});
+ assert.ok(highRider.fitness>lowRider.fitness);
+ const lowVet=apply({veterinarian:rated('veterinarian',
+  {prevention:.15,treatment:.15})},'REST');
+ const highVet=apply({veterinarian:rated('veterinarian',
+  {prevention:.95,treatment:.95})},'REST');
+ assert.ok(highVet.currentRisk<lowVet.currentRisk);
+ assert.ok(highVet.stress<lowVet.stress);
+ const lowFarrier=apply({farrier:rated('farrier',{hoofCare:.15})});
+ const highFarrier=apply({farrier:rated('farrier',{hoofCare:.95})});
+ assert.ok(highFarrier.currentRisk<lowFarrier.currentRisk);
 });
 
 test('actual 1999 career initializes the trainer from canonical source and preserves saved progression',()=>{

@@ -12,15 +12,25 @@
 export const SOURCE_PERSONNEL_GAMEPLAY_MODEL='WTW_1999_SOURCE_PERSONNEL_GAMEPLAY_V1';
 export const SOURCE_OWNER_GAMEPLAY_MODEL='WTW_1999_SOURCE_OWNER_GAMEPLAY_V1';
 export const SOURCE_TRACK_GAMEPLAY_MODEL='WTW_1999_SOURCE_TRACK_GAMEPLAY_V1';
+export const SOURCE_FARM_GAMEPLAY_MODEL='WTW_1999_SOURCE_FARM_GAMEPLAY_V1';
+export const SOURCE_SUPPORT_STAFF_GAMEPLAY_MODEL='WTW_1999_SOURCE_SUPPORT_STAFF_GAMEPLAY_V1';
 export const SOURCE_PERSONNEL_RATING_KEYS=Object.freeze({
  trainer:Object.freeze(['conditioning','placement','development','raceStrategy',
   'horseCare','reputation','integrity']),
  jockey:Object.freeze(['tactics','paceJudgment','finishing','gateSkill',
-  'versatility','fitness','reputation'])
+  'versatility','fitness','reputation']),
+ groom:Object.freeze(['horseCare','observation','reliability','experience']),
+ exercise_rider:Object.freeze(['horsemanship','feedback','fitness','reliability']),
+ veterinarian:Object.freeze(['diagnostics','treatment','prevention','reliability']),
+ farrier:Object.freeze(['hoofCare','correctiveSkill','reliability']),
+ farm_manager:Object.freeze(['operations','breeding','staffManagement','reliability']),
+ breeding_attendant:Object.freeze(['horseHandling','reproduction','reliability'])
 });
 const clamp=x=>Math.max(.01,Math.min(.99,Math.round(x*10000)/10000));
 const blend=(ratings,weights)=>clamp(weights.reduce((sum,[key,weight])=>
  sum+ratings[key]*weight/100,0));
+const mix=(values,weights)=>clamp(weights.reduce((sum,[key,weight])=>
+ sum+values[key]*weight,0));
 const strictSource=person=>person?.ratingsProvenance==='MODELED_1999_UNCALIBRATED';
 function verifiedRole(person,role){
  if(!person||person.role!==role||!person.id)return null;
@@ -77,6 +87,119 @@ export function project1999JockeySourceSkills(person){
   horse_handling:blend(r,[['versatility',.65],['gateSkill',.35]])};
 }
 
+/** Source-backed support staff traits used by daily care at their workplace. */
+export function project1999SupportStaffSourceSkills(person){
+ const role=person?.role;
+ if(!['groom','exercise_rider','veterinarian','farrier','farm_manager',
+  'breeding_attendant'].includes(role))return null;
+ const r=verifiedRole(person,role);
+ if(!r)return null;
+ const common={source:SOURCE_SUPPORT_STAFF_GAMEPLAY_MODEL,
+  source_person_id:person.id,source_role:role,source_role_ratings:r,
+  source_workplace_id:person.workplaceId??null};
+ if(role==='groom')return {...common,
+  care:blend(r,[['horseCare',.45],['observation',.25],
+   ['reliability',.20],['experience',.10]]),
+  observation:blend(r,[['observation',.55],['experience',.25],
+   ['reliability',.20]])};
+ if(role==='exercise_rider')return {...common,
+  trainingResponse:blend(r,[['horsemanship',.45],['feedback',.30],
+   ['fitness',.15],['reliability',.10]]),
+  paceWork:blend(r,[['horsemanship',.35],['feedback',.35],
+   ['fitness',.20],['reliability',.10]])};
+ if(role==='veterinarian')return {...common,
+  prevention:blend(r,[['prevention',.45],['diagnostics',.25],
+   ['reliability',.20],['treatment',.10]]),
+  treatment:blend(r,[['treatment',.55],['diagnostics',.25],
+   ['reliability',.20]])};
+ if(role==='farrier')return {...common,
+  hoofCare:blend(r,[['hoofCare',.60],['correctiveSkill',.25],
+   ['reliability',.15]])};
+ if(role==='farm_manager')return {...common,
+  operations:blend(r,[['operations',.40],['staffManagement',.30],
+   ['reliability',.20],['breeding',.10]]),
+  breedingOperations:blend(r,[['breeding',.55],['operations',.20],
+   ['staffManagement',.15],['reliability',.10]])};
+ return {...common,
+  handling:blend(r,[['horseHandling',.55],['reliability',.25],
+   ['reproduction',.20]]),
+  reproduction:blend(r,[['reproduction',.60],['horseHandling',.20],
+   ['reliability',.20]])};
+}
+
+/** Index role assignments once; generation/career opening may process millions of links. */
+export function index1999WorkplacePersonnel(people=[]){
+ const index=new Map();
+ for(const person of people){
+  if(!person?.role||!person.workplaceId)continue;
+  const key=person.role+'|'+person.workplaceId;
+  if(!index.has(key))index.set(key,[]);
+  index.get(key).push(person);
+ }
+ for(const staff of index.values())staff.sort((a,b)=>a.id.localeCompare(b.id));
+ return index;
+}
+/** Stable workforce assignment from existing WORKS_AT workplace links. */
+export function select1999WorkplacePerson(people,role,workplaceId,seed,subjectId){
+ if((!Array.isArray(people)&&!(people instanceof Map))||!workplaceId||!Number.isSafeInteger(seed)||
+  typeof subjectId!=='string')return null;
+ const available=people instanceof Map?
+  (people.get(role+'|'+workplaceId)||[]):people.filter(p=>
+   p.role===role&&p.workplaceId===workplaceId).sort((a,b)=>a.id.localeCompare(b.id));
+ if(!available.length)return null;
+ let hash=(2166136261^(seed>>>0))>>>0;
+ for(const c of role+'|'+workplaceId+'|'+subjectId){
+  hash^=c.charCodeAt(0);hash=Math.imul(hash,16777619);
+ }
+ const person=available[(hash>>>0)%available.length];
+ return project1999SupportStaffSourceSkills(person)?person:null;
+}
+
+/** Farm environment and resident carers affect initial young-horse readiness. */
+export function project1999FarmSourceGameplay(farm){
+ if(!farm?.id)return null;
+ const keys=['breeding','youngstockCare','facilities','management','reputation'];
+ const ratings=farm.ratings||{};
+ const complete=keys.every(key=>Number.isFinite(ratings[key])&&
+  ratings[key]>=1&&ratings[key]<=99);
+ if(!complete){
+  if(farm.ratingsProvenance==='MODELED_1999_UNCALIBRATED')
+   throw Error('Canonical farm '+farm.id+' has incomplete source rating values');
+  return null;
+ }
+ const source_ratings=Object.fromEntries(keys.map(key=>[key,ratings[key]]));
+ return {schema:SOURCE_FARM_GAMEPLAY_MODEL,source_farm_id:farm.id,
+  source_ratings,youngstockEnvironment:blend(ratings,[
+   ['youngstockCare',.35],['facilities',.20],['management',.20],
+   ['breeding',.15],['reputation',.10]]),
+  breedingOperations:blend(ratings,[['breeding',.50],['management',.20],
+   ['facilities',.15],['reputation',.15]])};
+}
+
+/** Farm ratings plus the horse's exact resident carer form one opening input. */
+export function source1999FarmYoungstockQuality(farm,manager,attendant){
+ const profile=project1999FarmSourceGameplay(farm);
+ if(!profile)return null;
+ const managerSkills=manager?project1999SupportStaffSourceSkills(manager):null;
+ const attendantSkills=attendant?project1999SupportStaffSourceSkills(attendant):null;
+ if(manager&&manager.role!=='farm_manager')
+  throw Error('Youngstock manager must be a farm_manager');
+ if(attendant&&attendant.role!=='breeding_attendant')
+  throw Error('Youngstock carer must be a breeding_attendant');
+ const residentManager=managerSkills?mix({operations:managerSkills.operations,
+  breeding:managerSkills.breedingOperations},[['operations',.75],['breeding',.25]]):
+  profile.breedingOperations;
+ const residentAttendant=attendantSkills?mix({handling:attendantSkills.handling,
+  reproduction:attendantSkills.reproduction},[['handling',.70],['reproduction',.30]]):
+  profile.youngstockEnvironment;
+ return {schema:SOURCE_FARM_GAMEPLAY_MODEL,source_farm_id:farm.id,
+  source_manager_id:managerSkills?.source_person_id??null,
+  source_attendant_id:attendantSkills?.source_person_id??null,
+  source_ratings:profile.source_ratings,
+  quality:mix({farm:profile.youngstockEnvironment,manager:residentManager,
+   attendant:residentAttendant},[['farm',.70],['manager',.18],['attendant',.12]])};
+}
+
 /** Exact saved owner O-ID ratings for existing business and management decisions. */
 export function project1999OwnerSourceGameplay(owner){
  if(!owner?.id)return null;
@@ -112,17 +235,20 @@ export function source1999JockeySelectionMerit(person){
   (person.ratings.reputation/100)*.10));
 }
 export function source1999RoleCoverage(people=[]){
- const counts={trainer:0,jockey:0},missing={trainer:[],jockey:[]};
- for(const person of people)if(Object.hasOwn(counts,person?.role)){
-  counts[person.role]++;
+ const counts={},missing={};
+ for(const person of people)if(Object.hasOwn(SOURCE_PERSONNEL_RATING_KEYS,person?.role)){
+  const role=person.role;
+  counts[role]??=0;missing[role]??=[];
+  counts[role]++;
   try{
-   const result=person.role==='trainer'?
-    project1999TrainerSourceSkills(person):project1999JockeySourceSkills(person);
-   if(!result)missing[person.role].push(person.id);
-  }catch{missing[person.role].push(person.id)}
+   const result=role==='trainer'?project1999TrainerSourceSkills(person):
+    role==='jockey'?project1999JockeySourceSkills(person):
+    project1999SupportStaffSourceSkills(person);
+   if(!result)missing[role].push(person.id);
+  }catch{missing[role].push(person.id)}
  }
  return {counts,missing,
-  complete:!missing.trainer.length&&!missing.jockey.length};
+  complete:Object.values(missing).every(ids=>ids.length===0)};
 }
 
 /**

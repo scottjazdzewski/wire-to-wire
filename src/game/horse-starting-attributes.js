@@ -14,7 +14,8 @@ function draw(seed,horseId,channel){
  return (h>>>0)/4294967296;
 }
 export function model1999StartingHorseAttributes({horse_id,seed=19990101,foaling_year,sex,
- horseRatings=null,development=null,ownerPortfolioTier=null}={}){
+ horseRatings=null,development=null,ownerPortfolioTier=null,
+ sourceYoungstockQuality=.55}={}){
  ensure(typeof horse_id==='string'&&/^H-GAME-1999-[A-Za-z0-9-]+$/.test(horse_id),
   'HORSE_ATTRIBUTES','Permanent test horse ID required');
  ensure(Number.isSafeInteger(seed)&&seed>0&&seed<=4294967295,
@@ -23,6 +24,8 @@ export function model1999StartingHorseAttributes({horse_id,seed=19990101,foaling
   'HORSE_ATTRIBUTES','1999 racing-age birth year required');
  ensure(['COLT','FILLY','HORSE','MARE','GELDING'].includes(sex),
   'HORSE_ATTRIBUTES','Invalid racing sex');
+ ensure(Number.isFinite(sourceYoungstockQuality)&&sourceYoungstockQuality>=.01&&
+  sourceYoungstockQuality<=.99,'HORSE_ATTRIBUTES','Invalid source farm care quality');
  const r=key=>draw(seed,horse_id,key);
  const base=.31+.56*r('talent');
  const hasRatings=horseRatings&&typeof horseRatings==='object';
@@ -53,7 +56,8 @@ export function model1999StartingHorseAttributes({horse_id,seed=19990101,foaling
   Math.min(age===2?potential-1:potential,Math.max(25,Math.round(
    Math.min(98,30+68*abilityBase)*sourceAgeReadiness))):
   Math.min(potential,Math.max(25,Math.round(potential*ageReadiness)));
- const readiness=sourceDevelopment('readiness',r('focus'));
+ const readiness=round(sourceDevelopment('readiness',r('focus'))+
+  (sourceYoungstockQuality-.55)*.06);
  const soundness=sourceDevelopment('soundness',1-r('injury'));
  const earlyPace=hasRatings?speed*.65+.35*acceleration:
   base*.45+.55*r('early');
