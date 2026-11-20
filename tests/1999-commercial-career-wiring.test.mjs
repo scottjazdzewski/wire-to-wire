@@ -49,7 +49,7 @@ test('compact career saves remain local and the manager adds no hosted runtime d
 test('custom-size worlds connect to the canonical playable race career',()=>{
  assert.match(manager,/data-cc="industry-size" type="number" min="10000" max="325000"/);
  assert.match(manager,/targetOpeningHorses:horseCount/);
- assert.match(manager,/worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V10-NAMES-V10-H'\+horseCount/);
+ assert.match(manager,/worldId:new1999WorldIdForApprovedRelease\(\{seed,horseCount\}\)/);
  assert.match(manager,/worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V10-NAMES-V10-H'\+selectedIndustryHorses/);
  assert.match(manager,/worldId:'WTW1999FullIndustry-COHORTS-V6-OWNER-V9-NAMES-V8-H'\+selectedIndustryHorses/,
   'expanded owner names preserve the original V8 careers');

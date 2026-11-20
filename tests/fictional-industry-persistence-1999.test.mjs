@@ -99,6 +99,9 @@ test('full 1999 industry persists and reopens exactly without regeneration',asyn
   worldId:params.worldId}),null);
  const a=await createPersistent1999Industry(params);
  assert.equal(a.status,'COMPLETE');
+ // A no-op approval pack must not alter the shared legacy world manifest SHA.
+ assert.equal(Object.hasOwn(a,'approvedStartingWorldRelease'),false,
+  'Frozen world fingerprint changed without any approved starting-world edits');
  const reopened=await reopenPersistent1999Industry(store,{seed:params.seed,
   worldId:params.worldId});
  assert.equal(reopened.status,'READY');

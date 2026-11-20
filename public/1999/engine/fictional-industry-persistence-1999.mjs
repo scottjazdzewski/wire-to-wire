@@ -31,6 +31,9 @@ import {planFictionalOwnerPortfolios,assessFictionalOwnerCapacity,
 import {completeApprovedFoundingHorseRelationships,
  APPROVED_FOUNDING_RELATIONSHIP_REVISION}
  from './fictional-industry-founder-relations-1999.mjs';
+import {releaseFor1999World,applyApproved1999ReleaseRecord,
+ assertApproved1999ReleaseReferences}
+ from './approved-1999-world-release.mjs';
 export const PERSISTENT_INDUSTRY_SCHEMA='WTW_PERSISTENT_INDUSTRY_1999_V3';
 export const PERSISTENT_INDUSTRY_DB='WireToWireFictionalIndustry1999V1';
 const SUPPORTED_PERSISTENT_INDUSTRY_SCHEMAS=new Set([
@@ -271,6 +274,23 @@ export async function createPersistent1999Industry({
   !Array.isArray(tracks)||!tracks.length||
   !Array.isArray(owners)||!owners.length||!Array.isArray(foundingHorses))
   throw Error('Invalid persistent industry genesis request');
+ // An approved 1999 release is applied INSIDE actual persisted genesis,
+ // without rewriting the frozen original or the player's saved careers.
+ const approvedRelease=releaseFor1999World({
+  seed,horseCount:targetOpeningHorses,worldId
+ });
+ const promotedIds=new Set();
+ const promote=(record,kind)=>{
+  const result=applyApproved1999ReleaseRecord(record,kind,approvedRelease);
+  if(result!==record)promotedIds.add(kind+':'+record.id);
+  return result;
+ };
+ if(approvedRelease){
+  farms=farms.map(row=>promote(row,'organization'));
+  owners=owners.map(row=>promote(row,'organization'));
+  tracks=tracks.map(row=>promote(row,'track'));
+  foundingHorses=foundingHorses.map(row=>promote(row,'horse'));
+ }
  if(new Set(foundingHorses.map(h=>h?.id)).size!==foundingHorses.length||
   foundingHorses.some(h=>!h?.id||!h?.name||!['BROODMARE','STALLION'].includes(h.status)||
    !h.managementOrganizationId||!h.careFacilityId||
@@ -278,8 +298,10 @@ export async function createPersistent1999Industry({
    !farms.some(f=>f.id===h.careFacilityId)))
   throw Error('Approved founding horse identities need unique IDs and real resident facilities');
  const id=keyOf(seed,worldId);
- const directoryHash=directorySignature(foundingHorses.length?
-  [farms,tracks,owners,foundingHorses]:[farms,tracks,owners]);
+ const directoryHash=directorySignature([
+  farms,tracks,owners,...(foundingHorses.length?[foundingHorses]:[]),
+  ...(approvedRelease?[approvedRelease.records]:[])
+ ]);
  const existing=await store.get('manifests',id);
  // Reject a changed opening specification before deriving workforce from it.
  // Otherwise an invalid replacement track can hide the more important fact
@@ -409,7 +431,10 @@ export async function createPersistent1999Industry({
    ownershipSummary:ownerPortfolioPlan.summary},
   calendarSchema:FICTIONAL_1999_CALENDAR_SCHEMA,calendarBatchesCommitted:0,
   scheduledCards:0,scheduledRaces:0,
-  plan,staffing,source:'DETERMINISTIC_OFFLINE_1999'
+  plan,staffing,source:'DETERMINISTIC_OFFLINE_1999',
+  // Never insert a null field in the original manifest; that alone
+  // changes its SHA-256 and breaks the frozen 1999 career fingerprint.
+  ...(approvedRelease?{approvedStartingWorldRelease:approvedRelease.revision}:{})
  };
  if(!manifest.directoryCommitted){
   const byId=new Map();
@@ -502,13 +527,17 @@ export async function createPersistent1999Industry({
   const progressKey=kind==='horseBatches'?'horseBatchesCommitted':'personBatchesCommitted';
   let index=0;
   for(const batch of generator){
-   if(index<manifest[progressKey]){index++;continue}
+   if(index<manifest[progressKey]){
+    if(approvedRelease)for(const row of batch.records)
+     promote(row,kind==='horseBatches'?'horse':'person');
+    index++;continue
+   }
    const next={...manifest,[progressKey]:index+1};
    const records=kind==='horseBatches'?
-    batch.records.map(h=>connect1999Horse(h,{seed,
+    batch.records.map(h=>promote(connect1999Horse(h,{seed,
      trainerCount:staffing.counts.trainer,jockeyCount:staffing.counts.jockey,
-     staffByTrack,staffByFarm})):
-    batch.records.map(p=>connect1999Person(p,{seed}));
+     staffByTrack,staffByFarm}),'horse')):
+    batch.records.map(p=>promote(connect1999Person(p,{seed}),'person'));
    const audit=validate1999IndustryReferences(records,{
    plan,staffing,tracks,farms,owners,foundingHorses});
    if(!audit.valid)throw Error('Broken 1999 industry entity relationships: '+
@@ -575,6 +604,9 @@ export async function createPersistent1999Industry({
    totalRecords:calendar.summary.raceDays});
   if((index+1)%8===0)await yieldControl();
  }
+ if(approvedRelease)assertApproved1999ReleaseReferences({
+  release:approvedRelease,foundIds:promotedIds
+ });
  manifest={...manifest,status:'COMPLETE'};
  await store.commitManifest(id,manifest);
  manifest=await ensureApprovedFoundingRelationshipRevision(store,manifest);
