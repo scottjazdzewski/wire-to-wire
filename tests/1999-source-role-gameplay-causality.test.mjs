@@ -80,7 +80,7 @@ test('trainer source CONDITIONING has a causal one-day training effect in real h
  const resultHigh=advanceHorseTrainingDay(
   structuredClone(record),careHorse,{...b,compensation:{dayRate:65}},
   '1999-01-02',SEED,context);
- assert.ok(resultHigh.fitness>resultLow.fitness,
+ assert.ok(resultHigh.horse.fitness>resultLow.horse.fitness,
   'Changing only canonical trainer conditioning must change actual horse fitness');
  assert.equal(record.asOf,'1999-01-01','Test must not rewrite starting horse');
 });
