@@ -17,6 +17,8 @@ import {readPersistent1999HorseProfile,readPersistent1999IndustryBatch,
  from '/1999/engine/fictional-industry-persistence-1999.mjs';
 import {openPersistent1999GameCareer,digestPersistent1999GameSnapshot}
  from '/1999/engine/fictional-industry-game-world-bridge-1999.mjs';
+import {source1999RoleCoverage}
+ from '/1999/engine/source-personnel-gameplay-1999.mjs';
 import {restoreLegacyApprovedFoundingHorseRelationships}
  from '/1999/engine/fictional-industry-founder-relations-1999.mjs';
 import {dispatchGameCommand} from '/1999/game/kernel.js';
@@ -365,6 +367,7 @@ window.WTW1999CanonicalCareerRaceFile=Object.freeze({render:renderCanonical1999R
 // balance, infer assets, or mutate the immutable 1999 world directory.
 let liveWorldHorseDirectory=null,liveWorldEntityDirectories=null,
  liveWorldDirectorySource=null,liveWorldDirectoryYear=null;
+let personnelSourceCoverage=null;
 function publishCareerReadModel(){
  const career=activeWorldCareer,run=career?.run;
  if(!run){
@@ -383,6 +386,7 @@ function publishCareerReadModel(){
  const careerYear=Number(run.clock.date.slice(0,4));
  if(isV10&&(liveWorldDirectorySource!==career.world||
   liveWorldDirectoryYear!==careerYear)){
+  personnelSourceCoverage=null;
   liveWorldHorseDirectory=createPersistedIndustryHorseDirectory({
    world:career.world,manifest:career.manifest,year:careerYear});
   liveWorldEntityDirectories=Object.fromEntries(['person','organization','track'].map(kind=>
@@ -424,6 +428,9 @@ function publishCareerReadModel(){
   ...(isV10?{worldHorseBrowse:liveWorldHorseDirectory.browse,
    worldHorseById:liveWorldHorseDirectory.byId,
    worldRatingAudit:liveWorldHorseDirectory.ratingAudit,
+   // Full source audit only on explicit request, never on each game repaint.
+   worldPersonnelRoleAudit:()=>personnelSourceCoverage??(
+    personnelSourceCoverage=source1999RoleCoverage(career.world.entities.people)),
    worldHorseDirectoryCount:liveWorldHorseDirectory.size,
    worldEntityBrowse:(kind,options)=>liveWorldEntityDirectories[kind]?.browse(options)||null,
    worldEntityById:(kind,id)=>liveWorldEntityDirectories[kind]?.byId(id)||null,
