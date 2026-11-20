@@ -24,6 +24,7 @@ import {OWNER_TRAINER_REVIEW_COMMANDS,setOwnerTrainerMandate,respondToTrainerCon
 import {PLAYER_RACE_PLAN_COMMANDS,confirm1999PlayerRacePlan} from './player-race-plan-1999.js';
 import {TRAINER_MANAGEMENT_COMMANDS,answerTrainerManagementRequest,prepareTrainerManagementDay,reactToTrainerEvents} from './trainer-management-requests-1999.js';
 import {TRAINER_EMPLOYMENT_COMMANDS,trainerEmploymentAction,advanceTrainerEmployment,considerTrainerEmployment} from './trainer-employment-1999.js';
+import {advance1999TrainerCareerProgression} from './trainer-career-progression-1999.js';
 
 const COMMANDS = new Set(['SCHEDULE_EVENT', 'ADVANCE_DAY', 'QUEUE_DECISION', 'ANSWER_DECISION', 'SET_PERSON_REPUTATION', 'RECORD_REPUTATION_SIGNAL',...FACILITY_COMMANDS,...OWNERSHIP_COMMANDS,...HORSE_REGISTRATION_COMMANDS,...HORSE_NAMING_COMMANDS,...HORSE_NAME_OWNER_COMMANDS,...HORSE_CARE_COMMANDS,...RACING_COMMANDS,...HORSE_SHIPPING_COMMANDS,...TRAINER_CONTRACT_COMMANDS,...OWNER_TRAINER_REVIEW_COMMANDS,...TRAINER_MANAGEMENT_COMMANDS,...TRAINER_EMPLOYMENT_COMMANDS,...PLAYER_RACE_PLAN_COMMANDS]);
 const MAX_PENDING = 5000;
@@ -267,7 +268,7 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
   } else if (HORSE_REGISTRATION_COMMANDS.includes(c.type)) {
     registerHorseAction({state:next,world,command:c,emit});
     const horse=next.runtime.registered_horses?.by_id?.[c.payload?.horse?.horse_id];
-    if(horse)initializeGameHorseCare(next,horse);
+    if(horse)initializeGameHorseCare(next,horse,world);
   } else if (PLAYER_RACE_PLAN_COMMANDS.includes(c.type)) {
     confirm1999PlayerRacePlan({state:next,world,command:c,emit});
   } else if (HORSE_SHIPPING_COMMANDS.includes(c.type)) {
@@ -301,6 +302,7 @@ export function dispatchGameCommand({ state, world, command, catalog } = {}) {
     // owners price care, and barn operators assess actual stall occupancy.
     advance1999HorseShipping({state:next,world,emit});
     advanceTrainerEmployment({state:next,world,emit});
+    advance1999TrainerCareerProgression({state:next,world,emit});
     prepareTrainerManagementDay({state:next,emit});
     advanceOwnerTrainerReviews({state:next,world,emit});
     advanceTrainerContracts({state:next,world,emit});
