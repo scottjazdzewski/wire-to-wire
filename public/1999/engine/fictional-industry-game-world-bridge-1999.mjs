@@ -8,6 +8,7 @@ import {createGameRun,validateGameRun} from '../game/state.js';
 import {initializeGameHorseCare} from '../game/horse-care.js';
 import {model1999StartingHorseAttributes} from '../game/horse-starting-attributes.js';
 import {dispatchGameCommand} from '../game/kernel.js';
+import {source1999JockeySelectionMerit} from './source-personnel-gameplay-1999.mjs';
 import {readPersistent1999Directory,readPersistent1999IndustryBatch,
  verifyPersistent1999WorldOpen} from './fictional-industry-persistence-1999.mjs';
 
@@ -72,7 +73,7 @@ export function select1999CareerJockeyColony(people,trackIds,{limit=120}={}){
  for(const trackId of [...new Set(trackIds)].sort()){
   localsByTrack.set(trackId,people.filter(p=>
    p.role==='jockey'&&p.workplaceId===trackId).
-   sort((a,b)=>(b.ratings?.ability??0)-(a.ratings?.ability??0)||
+   sort((a,b)=>source1999JockeySelectionMerit(b)-source1999JockeySelectionMerit(a)||
     a.id.localeCompare(b.id)));
  }
  const selected=[],ids=new Set(),push=p=>{
@@ -96,7 +97,7 @@ export function select1999CareerJockeyColony(people,trackIds,{limit=120}={}){
  const elsewhere=people.filter(p=>p.role==='jockey'&&!ids.has(p.id));
  for(const tier of ['ELITE','ESTABLISHED']){
   for(const p of elsewhere.filter(x=>x.tier===tier).sort((a,b)=>
-   (b.ratings?.ability??0)-(a.ratings?.ability??0)||a.id.localeCompare(b.id))){
+   source1999JockeySelectionMerit(b)-source1999JockeySelectionMerit(a)||a.id.localeCompare(b.id))){
    if(selected.length>=limit)break;
    push(p);
   }
@@ -104,7 +105,7 @@ export function select1999CareerJockeyColony(people,trackIds,{limit=120}={}){
  // When a saved older world has no high-tier visitors available, use other
  // real professionals rather than inventing a roster or forfeiting slots.
  for(const p of elsewhere.filter(x=>!ids.has(x.id)).sort((a,b)=>
-  (b.ratings?.ability??0)-(a.ratings?.ability??0)||a.id.localeCompare(b.id))){
+  source1999JockeySelectionMerit(b)-source1999JockeySelectionMerit(a)||a.id.localeCompare(b.id))){
   if(selected.length>=limit)break;
   push(p);
  }
