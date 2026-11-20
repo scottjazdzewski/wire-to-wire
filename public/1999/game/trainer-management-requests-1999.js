@@ -100,7 +100,8 @@ function offer(s,world,horse,info,event,emit){
   requested_care_minor:request.needed_minor,
   player_response_required:s.player.role==='owner'&&s.player.operation_id===o});
  if(s.player.role==='owner'&&s.player.operation_id===o)return;
- const strength=workingRelationshipProfile(s,o,t);
+ const strength=workingRelationshipProfile(s,o,t,
+  worldIdentity(world,'organizations',o));
  let choice='DECLINE';
  if(request.kind==='CARE_FUNDING'){
   if(cash(s,o)>=request.needed_minor*7&&strength.owner_patience>=.35)choice='ACCEPT';

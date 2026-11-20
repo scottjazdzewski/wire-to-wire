@@ -4,6 +4,10 @@
  * results and professional ratings here are GAME-MODELED, never historic facts.
  */
 import {same1999PhysicalVenue} from './physical-venue-1999.js';
+import {project1999JockeySourceSkills,project1999TrackSourceGameplay,
+ source1999TrackSurfaceAdjustment,source1999TrackRecoveryMultiplier,
+ source1999TrackPrestigeOfferOffset}
+ from '../engine/source-personnel-gameplay-1999.mjs';
 import {ensure,isObject,worldIdentity,nextDate,validDate} from './contracts.js';
 import {buildConditionBook1999} from '../../next/1999-condition-book-engine.mjs';
 import {trackMeetOpen1999,trackProgram1999} from '../../next/1999-track-program.mjs';
@@ -73,6 +77,7 @@ export function jockeyBookingDecision(state,world,race,horse,jockey){
  const relationship=get1999JockeyPartnership(state,{
   trainerId:horse.trainer_id,ownerId:horse.owner_organization_id,jockeyId:j.id});
  const personal=j.skills,horseState=getGameHorsePerformance(state,world,horse.horse_id);
+ const trackModel=project1999TrackSourceGameplay(trackFor(world,race.track_id));
  const h=horse.starting_attributes,standing=j.game_reputation??.5;
  const suited=rating(personal.horse_handling*.38+personal.composure*.17+
   h.temperament*.18+horseState.race_performance_index*.27);
@@ -82,7 +87,8 @@ export function jockeyBookingDecision(state,world,race,horse,jockey){
  const prestige=importance.nationalFeature?.095:importance.significance===2?.035:0;
  const required=(away?.37+standing*.13:.26+standing*.08)+
   (elite&&!importance.stakes?.055:0)-(elite||established?prestige:prestige*.35)-
-  relationship.trainerBond*.075-relationship.ownerBond*.035;
+  relationship.trainerBond*.075-relationship.ownerBond*.035-
+  source1999TrackPrestigeOfferOffset(trackModel);
  const favor=(frac(state.rng.seed,j.id+':'+race.id+':'+horse.horse_id+':mount')-.5)*.09;
  const accept=suited+favor>=required;
  return {accept,reason:accept?(away?'JOCKEY_ACCEPTS_PAID_TRAVEL':'JOCKEY_ACCEPTS_LOCAL_MOUNT'):
@@ -249,8 +255,23 @@ export function compact1999PremierJockeyOffers({state,emit}){
   result:'DETAILED_SOURCE_EVENT_LOG_AND_SIGNED_ENTRIES_RETAINED'});
  return {removed,retained:Object.keys(offers).length};
 }
+/** The exact rider contribution consumed by OFFICIAL race performance. */
+export function jockeyRaceExecutionIndex(skills){
+ if(!skills||['judgment','pace','finish','horse_handling'].some(key=>
+    !Number.isFinite(skills[key])))throw Error('Real rider gameplay skills required');
+ return rating(skills.judgment*.24+skills.pace*.28+
+  skills.finish*.26+skills.horse_handling*.22);
+}
 export function modeledJockeySkills(id,seed,identity=null){
  ensure(/^P-[A-Za-z0-9-]+$/.test(id),'JOCKEY_ID','Permanent selected jockey ID required');
+ // The real V10 P-ID's seven saved role ratings now drive bookings,
+ // pace decisions and simulated performance. Legacy named rider identities
+ // without a canonical score vector retain the old deterministic model.
+ if(identity){
+  ensure(identity.id===id,'JOCKEY_ID','Jockey source identity mismatch');
+  const source=project1999JockeySourceSkills(identity);
+  if(source)return source;
+ }
  const baseline={rating_source:'1999_MODELED_GAME_SCORING_NOT_CANONICAL',
   judgment:rating(.38+.56*frac(seed,id+':judgment')),
   pace:rating(.36+.58*frac(seed,id+':pace')),
@@ -521,8 +542,9 @@ export function racingAction({state,world,command,emit}){
    // standing but NO sourced performance rating. Their game tier must
    // follow that identity flag, never erase it with a REGIONAL fallback.
    const contractedTier=jockeyTierFromPerson(identity);
-   const baseReputation=identity?.ratings?.ability?
-    rating(.34+.28*identity.ratings.ability/100+
+   const standing=identity?.ratings?.reputation??identity?.ratings?.ability;
+   const baseReputation=Number.isFinite(standing)?
+    rating(.34+.28*standing/100+
      (identity.tier==='ELITE'?.12:identity.tier==='ESTABLISHED'?.06:0)):.5;
    rt.jockeys[j.id]={id:j.id,home_track_id:j.home_track_id,
     tier:contractedTier,
@@ -670,10 +692,13 @@ function performance(state,world,race,entry){
   a=horse.starting_attributes,j=root(state).jockeys[entry.jockey_id].skills,
   now=getGameHorsePerformance(state,world,entry.horse_id);
  const sprint=race.distance_furlongs<8;
- const surface=race.surface==='TURF'?a.turf_aptitude:a.dirt_aptitude;
+ const surfaceAptitude=race.surface==='TURF'?a.turf_aptitude:a.dirt_aptitude;
+ const trackModel=project1999TrackSourceGameplay(trackFor(world,race.track_id));
+ const surface=surfaceAptitude+source1999TrackSurfaceAdjustment(
+  trackModel,surfaceAptitude);
  const distance=sprint?a.sprint_aptitude:a.route_aptitude;
  const pace=rating((a.early_pace+a.finishing_kick+a.acceleration)/3);
- const rider=rating(j.judgment*.24+j.pace*.28+j.finish*.26+j.horse_handling*.22);
+ const rider=jockeyRaceExecutionIndex(j);
  const variation=(frac(state.rng.seed,entry.horse_id+':'+race.id+':race')-.5)*.11*
   (1.3-.6*a.consistency);
  const instruction=entry.race_tactic??'AUTO';
@@ -684,6 +709,7 @@ function performance(state,world,race,entry){
   pace*.09+rider*.10+j.composure*.04+variation+tactical.adjustment+
   handicapAdjustment;
  return {entry,horse,composite:rating(composite),rider,
+  track_surface_adjustment:source1999TrackSurfaceAdjustment(trackModel,surfaceAptitude),
   tactical:instruction==='AUTO'?null:tactical};
 }
 const SHARES=[.6,.2,.11,.06,.03];
@@ -728,7 +754,8 @@ function settle1999Race({state,world,race_id,emit}){
   awards[i]=Math.floor(race.purse_minor*shares[i]/weight);remainder-=awards[i];
  }
  awards[paidPlaces-1]=remainder;
- const results=scored.map(({horse,entry,composite,rider,tactical},i)=>{
+ const results=scored.map(({horse,entry,composite,rider,tactical,
+  track_surface_adjustment},i)=>{
   const awarded=awards[i];
   const jockeyShare=Math.round(awarded*.1),trainerShare=Math.round(awarded*.1),
    ownerShare=awarded-jockeyShare-trainerShare;
@@ -759,16 +786,20 @@ function settle1999Race({state,world,race_id,emit}){
   const j=rt.jockeys[jockey];j.starts++;if(i===0)j.wins++;
   const outcome=1-i/Math.max(1,scored.length-1);
   j.game_reputation=rating((j.game_reputation??.5)+(outcome-.5)*.014);
+  const trackModel=project1999TrackSourceGameplay(trackFor(world,race.track_id));
   state.runtime.horse[horse.horse_id]=modelHorsePostRaceResponse(
    state.runtime.horse[horse.horse_id],horse,{
     race_id:race.id,finish:i+1,field_size:scored.length,
-    distance_furlongs:race.distance_furlongs},state.rng.seed);
+    distance_furlongs:race.distance_furlongs,
+    track_recovery_multiplier:source1999TrackRecoveryMultiplier(trackModel)},state.rng.seed);
   entry.status='RESULTED';entry.finish=i+1;
   return {horse_id:horse.horse_id,owner_id:owner,trainer_id:horse.trainer_id,
    jockey_id:jockey,finish:i+1,earnings_minor:awarded,
    owner_share_minor:ownerShare,jockey_share_minor:jockeyShare,
    trainer_share_minor:trainerShare,
    performance_index:composite,rider_index:rider,
+   track_surface_adjustment,
+   track_ratings_source:trackModel?.schema??'LEGACY_TRACK_RATINGS_UNAVAILABLE',
    ...(isOrdinary1999Handicap(race)?{handicap_weight_lbs:entry.handicap_weight_lbs,
     handicap_weight_basis:HANDICAP_WEIGHT_BASIS_1999}:{}),
    ...(tactical?{race_tactic:tactical.tactic,

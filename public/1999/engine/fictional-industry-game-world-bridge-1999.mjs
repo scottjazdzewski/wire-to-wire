@@ -8,6 +8,9 @@ import {createGameRun,validateGameRun} from '../game/state.js';
 import {initializeGameHorseCare} from '../game/horse-care.js';
 import {model1999StartingHorseAttributes} from '../game/horse-starting-attributes.js';
 import {dispatchGameCommand} from '../game/kernel.js';
+import {source1999JockeySelectionMerit,project1999TrackSourceGameplay,
+ source1999TrackFacilitiesContribution}
+ from './source-personnel-gameplay-1999.mjs';
 import {readPersistent1999Directory,readPersistent1999IndustryBatch,
  verifyPersistent1999WorldOpen} from './fictional-industry-persistence-1999.mjs';
 
@@ -72,7 +75,7 @@ export function select1999CareerJockeyColony(people,trackIds,{limit=120}={}){
  for(const trackId of [...new Set(trackIds)].sort()){
   localsByTrack.set(trackId,people.filter(p=>
    p.role==='jockey'&&p.workplaceId===trackId).
-   sort((a,b)=>(b.ratings?.ability??0)-(a.ratings?.ability??0)||
+   sort((a,b)=>source1999JockeySelectionMerit(b)-source1999JockeySelectionMerit(a)||
     a.id.localeCompare(b.id)));
  }
  const selected=[],ids=new Set(),push=p=>{
@@ -96,7 +99,7 @@ export function select1999CareerJockeyColony(people,trackIds,{limit=120}={}){
  const elsewhere=people.filter(p=>p.role==='jockey'&&!ids.has(p.id));
  for(const tier of ['ELITE','ESTABLISHED']){
   for(const p of elsewhere.filter(x=>x.tier===tier).sort((a,b)=>
-   (b.ratings?.ability??0)-(a.ratings?.ability??0)||a.id.localeCompare(b.id))){
+   source1999JockeySelectionMerit(b)-source1999JockeySelectionMerit(a)||a.id.localeCompare(b.id))){
    if(selected.length>=limit)break;
    push(p);
   }
@@ -104,7 +107,7 @@ export function select1999CareerJockeyColony(people,trackIds,{limit=120}={}){
  // When a saved older world has no high-tier visitors available, use other
  // real professionals rather than inventing a roster or forfeiting slots.
  for(const p of elsewhere.filter(x=>!ids.has(x.id)).sort((a,b)=>
-  (b.ratings?.ability??0)-(a.ratings?.ability??0)||a.id.localeCompare(b.id))){
+  source1999JockeySelectionMerit(b)-source1999JockeySelectionMerit(a)||a.id.localeCompare(b.id))){
   if(selected.length>=limit)break;
   push(p);
  }
@@ -250,8 +253,10 @@ export async function openPersistent1999GameCareer(store,manifest,{
    operation.portfolioTier]??0;
   const resources=operation.ratings?.resources??55;
   const ambition=operation.ratings?.ambition??55;
+  const trackGameplay=project1999TrackSourceGameplay(track);
+  const trackFacilities=source1999TrackFacilitiesContribution(trackGameplay);
   const facilityQuality=Math.max(35,Math.min(95,
-   Math.round(.62*resources+.23*ambition+.15*55+tierBonus)));
+   Math.round(.62*resources+.23*ambition+trackFacilities+tierBonus)));
   run.runtime.facilities.sites[siteId]={id:siteId,offer_id:null,
    owner_id:operation.id,operator_organization_id:operation.id,
    name:format1999OpeningBarnName(operation,track),type:'RACING_STABLE',
@@ -263,7 +268,9 @@ export async function openPersistent1999GameCareer(store,manifest,{
    source_ref:'PERSISTED_FICTIONAL_1999_OPENING_WORLD',status:'ACTIVE',
    acquired_date:run.clock.date,open_date:run.clock.date,
    stalls:Math.max(60,group.length),max_stalls:Math.max(60,group.length),
-   quality:facilityQuality,daily_upkeep_minor:0,daily_boarding_minor:0,
+   quality:facilityQuality,
+   source_track_ratings:trackGameplay?.source_ratings??null,
+   daily_upkeep_minor:0,daily_boarding_minor:0,
    staff_required:1,staff_count:1,staff_wage_daily_minor:0,
    track_rent_daily_minor:0,maintenance_daily_minor:0,
    maintenance_policy:'STANDARD',contracts:[],upgrade:null,land_acres:0};
@@ -298,7 +305,7 @@ export async function openPersistent1999GameCareer(store,manifest,{
   run.runtime.registered_horses.by_id[id]=h;
   run.runtime.registered_horses.by_receipt[h.registration_receipt_id]=id;
   run.stable_horse_ids.push(id);activeIds.push(id);
-  initializeGameHorseCare(run,h);
+  initializeGameHorseCare(run,h,world);
  }
  const openingCapitalMinor=calculate1999OpeningTreasury({
   portfolioTier:operation.portfolioTier,

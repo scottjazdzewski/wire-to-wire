@@ -68,7 +68,8 @@ export function ownerTrainerEvidence(state,world,owner,trainer,{days=56}={}){
  const horses=registered(state).filter(h=>h.owner_organization_id===owner&&
   h.trainer_id===trainer),horseIds=new Set(horses.map(h=>h.horse_id));
  const relation=state.runtime.agents?.relationships?.[pair(owner,trainer)]||null;
- const working=workingRelationshipProfile(state,owner,trainer);
+ const working=workingRelationshipProfile(state,owner,trainer,
+  worldIdentity(world,'organizations',owner));
  const relative=results.map(x=>{
   const horse=state.runtime.registered_horses.by_id[x.horse_id];
   const expected=.2+.6*(horse?.starting_attributes?.current_ability??55)/99;

@@ -10,6 +10,8 @@
 import {ensure,isObject,validDate,worldIdentity,nextDate} from './contracts.js';
 import {workingRelationshipProfile} from './working-relationship-1999.js';
 import {getOwnerTrainerMandate} from './owner-trainer-career-1999.js';
+import {project1999OwnerSourceGameplay,source1999OwnerReputationContractOffset}
+ from '../../public/1999/engine/source-personnel-gameplay-1999.mjs';
 
 export const TRAINER_CONTRACT_SCHEMA='WTW_1999_TRAINER_SERVICE_AGREEMENTS_V1';
 export const TRAINER_CONTRACT_COMMANDS=Object.freeze(['OFFER_TRAINER_SERVICE_TERMS']);
@@ -33,7 +35,12 @@ export function baselineTrainerDailyFee(skills){
  const ability=skills?.roleAttributes?.conditioning;
  ensure(typeof ability==='number'&&Number.isFinite(ability)&&ability>=0&&ability<=1,
   'TRAINER_CONTRACT','Modeled trainer conditioning ability is required for baseline compensation');
- return Math.round(4000+4500*ability);
+ // Only newly sourced canonical trainers carry this explicit reputation
+ // index. Existing negotiated contracts and older careers are unchanged.
+ const standing=skills?.source_reputation_index;
+ const premium=Number.isFinite(standing)?
+  Math.round(900*(standing-.5)):0;
+ return Math.round(4000+4500*ability)+premium;
 }
 function trainerLoad(state,trainerId){
  const current=activeHorses(state).filter(h=>h.trainer_id===trainerId).length;
@@ -53,14 +60,18 @@ export function trainerContractQuote(state,world,ownerId,trainerId){
  const load=trainerLoad(state,trainerId);
  const relation=state.runtime.agents?.relationships?.[pair(ownerId,trainerId)];
  const trust=relation?.trainer_support??.5;
- const working=workingRelationshipProfile(state,ownerId,trainerId);
+ const ownerSource=project1999OwnerSourceGameplay(
+  worldIdentity(world,'organizations',ownerId));
+ const working=workingRelationshipProfile(state,ownerId,trainerId,
+  worldIdentity(world,'organizations',ownerId));
  const gameStanding=state.runtime.people[trainerId]?.game_race_record?.professional_standing??.5;
  // An impatient trainer in a strained partnership demands more for scarce
  // oversight; patient trainers with strong relationships can tolerate less.
  // Avoid changing source salary facts: these are modeled contract quotes.
  const threshold=.74+load.pressure*.16+(1-trust)*.16+gameStanding*.10+
   (.5-working.trainer_patience)*.10+
-  (.5-working.working_relationship_strength)*.07;
+  (.5-working.working_relationship_strength)*.07-
+  source1999OwnerReputationContractOffset(ownerSource);
  const min= Math.round(base*threshold);
  const contract=state.runtime.trainer_contracts?.by_pair?.[pair(ownerId,trainerId)]??null;
  const balance=state.runtime.finances?.operation_balances_minor?.[ownerId];
@@ -69,6 +80,8 @@ export function trainerContractQuote(state,world,ownerId,trainerId){
   modeled_base_fee_minor:base,minimum_acceptable_minor:min,
   trainer_horses:load.horses,trainer_capacity:load.capacity,
   trainer_load_ratio:load.pressure,owner_trust:trust,professional_standing:gameStanding,
+  owner_source_rating_model:ownerSource?.schema??null,
+  owner_source_reputation:ownerSource?.reputation??null,
   trainer_patience:working.trainer_patience,
   working_relationship_strength:working.working_relationship_strength,
   owner_cash_minor:integer(balance)&&balance>=0?balance:null,

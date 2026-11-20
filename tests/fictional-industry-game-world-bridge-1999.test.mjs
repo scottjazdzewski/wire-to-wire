@@ -86,6 +86,21 @@ test('10,000-horse persisted 1999 world opens and runs a canonical race career',
    homeTrackId:'T-0001',location:{city:'New York',region:'NY',country:'USA'}}))});
  const career=await openPersistent1999GameCareer(store,manifest,{
   runId:'WTW-RUN-CUSTOM-SIZE-10',operationId:'O-OWNER-01'});
+ // Ratings must be actual working game skills in the 10k persisted-world
+ // bridge, not just numeric values exposed by the World Directory.
+ const firstRunner=Object.values(career.run.runtime.registered_horses.by_id)[0];
+ assert.ok(firstRunner,'The active career must have a real named runner');
+ const realTrainer=career.world.entities.people.find(p=>p.id===firstRunner.trainer_id);
+ const realSkills=career.run.runtime.people[firstRunner.trainer_id]?.game_training_skills;
+ assert.ok(realTrainer?.ratings&&realSkills?.source_role_ratings);
+ assert.equal(realSkills.source_person_id,realTrainer.id);
+ assert.deepEqual(realSkills.source_role_ratings,realTrainer.ratings);
+ assert.equal(realSkills.source,'WTW_1999_SOURCE_PERSONNEL_GAMEPLAY_V1');
+ const firstJockey=Object.values(career.run.runtime.racing.jockeys)[0];
+ assert.ok(firstJockey,'The live selected-jockey colony cannot be empty');
+ const jockeySource=career.world.entities.people.find(p=>p.id===firstJockey.id);
+ assert.deepEqual(firstJockey.skills.source_role_ratings,jockeySource.ratings);
+ assert.equal(firstJockey.skills.rating_source,'WTW_1999_SOURCE_PERSONNEL_GAMEPLAY_V1');
  assert.equal(career.world.manifest.targetOpeningHorses,10000);
  assert.equal(manifest.horseCount,10000);
  assert.equal(career.world.entities.horses.length,manifest.horseCount);
