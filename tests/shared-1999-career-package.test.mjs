@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 import {packShared1999Career,unpackShared1999Career,sameShared1999WorldManifest,
- sameShared1999WorldIdentity,migrateShared1999CareerRunWorldReference,
+ sameShared1999WorldIdentity,sameShared1999CareerRecord,
+ migrateShared1999CareerRunWorldReference,
  migrateShared1999CareerOperationInventory}
  from '../public/1999/engine/shared-1999-career-package.mjs';
 
@@ -44,6 +45,21 @@ test('shared 1999 world manifests ignore key order but reject any changed values
  assert.equal(sameShared1999WorldManifest(first,reordered),true);
  assert.equal(sameShared1999WorldManifest(first,{...reordered,tracks:['T-0002','T-0001']}),false);
  assert.equal(sameShared1999WorldManifest(first,{...reordered,plan:{...reordered.plan,seed:19990102}}),false);
+});
+
+test('shared career read-back ignores object key order but preserves all values and array order',()=>{
+ const first={...careerRecord,changes:{canonicalRun:{...run,
+  runtime:{people:{'P-1':{skills:{fitness:70,care:80}}}},stable_horse_ids:['H-1','H-2']}}};
+ const reordered={schema:first.schema,worldId:first.worldId,worldSeed:first.worldSeed,
+  worldSchema:first.worldSchema,runId:first.runId,gameDate:first.gameDate,
+  player:first.player,changes:{canonicalRun:{stable_horse_ids:['H-1','H-2'],
+   runtime:{people:{'P-1':{skills:{care:80,fitness:70}}}},
+   journal:[],revision:120,player:run.player,run_id:run.run_id,
+   clock:run.clock}},version:first.version};
+ assert.equal(sameShared1999CareerRecord(first,reordered),true);
+ assert.equal(sameShared1999CareerRecord(first,{...reordered,version:999}),false);
+ assert.equal(sameShared1999CareerRecord(first,{...reordered,changes:{canonicalRun:{
+  ...reordered.changes.canonicalRun,stable_horse_ids:['H-2','H-1']}}}),false);
 });
 
 test('world checkpoint identity survives generator metadata updates but rejects census changes',()=>{
