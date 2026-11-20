@@ -55,6 +55,9 @@ export function project1999TrainerSourceSkills(person){
   attr.race_placement*.16));
  return {source:SOURCE_PERSONNEL_GAMEPLAY_MODEL,source_person_id:person.id,
   source_role_ratings:r,
+  // Public standing is a contract/fee input, NOT a fabricated conditioning
+  // advantage. Actual paid agreements still override modeled quotations.
+  source_reputation_index:blend(r,[['reputation',1]]),
   source_birth_date:person.dateOfBirth??null,
   source_workplace_id:person.workplaceId??null,
   roleAttributes:attr,ability:{current,potential:Math.min(99,
