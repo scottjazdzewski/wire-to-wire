@@ -21,6 +21,36 @@ export function sameShared1999WorldManifest(a,b){
 export function sameShared1999CareerRecord(a,b){
  return JSON.stringify(canonicalJsonValue(a))===JSON.stringify(canonicalJsonValue(b));
 }
+/** Return a bounded set of value paths when a durable career read-back differs. */
+export function shared1999CareerRecordDifferencePaths(a,b,limit=12){
+ if(!Number.isInteger(limit)||limit<1||limit>100)throw Error('Invalid career diff limit');
+ const paths=[];
+ const visit=(left,right,path)=>{
+  if(paths.length>=limit||Object.is(left,right))return;
+  const leftArray=Array.isArray(left),rightArray=Array.isArray(right);
+  if(leftArray||rightArray){
+   if(!leftArray||!rightArray){paths.push(path||'$');return;}
+   if(left.length!==right.length)paths.push((path||'$')+'.length');
+   for(let i=0;i<Math.min(left.length,right.length)&&paths.length<limit;i++)
+    visit(left[i],right[i],(path||'$')+'['+i+']');
+   return;
+  }
+  const leftObject=left&&typeof left==='object'&&Object.getPrototypeOf(left)===Object.prototype;
+  const rightObject=right&&typeof right==='object'&&Object.getPrototypeOf(right)===Object.prototype;
+  if(leftObject||rightObject){
+   if(!leftObject||!rightObject){paths.push(path||'$');return;}
+   const keys=[...new Set([...Object.keys(left),...Object.keys(right)])].sort();
+   for(const key of keys){
+    if(paths.length>=limit)break;
+    if(!Object.hasOwn(left,key)||!Object.hasOwn(right,key))paths.push((path||'$')+'.'+key);
+    else visit(left[key],right[key],(path||'$')+'.'+key);
+   }
+   return;
+  }
+  paths.push(path||'$');
+ };
+ visit(a,b,'');return paths;
+}
 /** Compare immutable census identity before the full-record SHA-256 check.
  * Generator metadata may evolve while a career checkpoint still names the
  * same seed, size and world. Record equality is verified after reopening. */
