@@ -132,6 +132,17 @@ test('10,000-horse persisted 1999 world opens and runs a canonical race career',
  const registered=Object.values(career.run.runtime.registered_horses.by_id)[0];
  assert.ok(registered.care_facility_organization_id);
  assert.ok(registered.training_barn_organization_id);
+ const sourceCareFarm=career.world.entities.organizations.find(x=>
+  x.id===registered.source_care_farm_id);
+ assert.ok(sourceCareFarm?.ratings,
+  'the playable source horse must use its exact rated care farm');
+ for(const [field,role] of [['source_care_manager_id','farm_manager'],
+  ['source_breeding_attendant_id','breeding_attendant']]){
+  const resident=career.world.entities.people.find(p=>p.id===registered[field]);
+  assert.equal(resident?.role,role);
+  assert.equal(resident?.workplaceId,sourceCareFarm.id,
+   'opening readiness must use the exact farm resident source person');
+ }
  const careRoster=getCareerHorseConnections(career.run,career.world,{
   kind:'care_facility',id:registered.care_facility_organization_id});
  assert.ok(careRoster.horses.some(h=>
@@ -178,6 +189,16 @@ test('10,000-horse persisted 1999 world opens and runs a canonical race career',
  while(state.clock.date<raceChoice.book.date)
   state=dispatchGameCommand({state,world:career.world,command:{
    id:'test-day-'+state.clock.date,type:'ADVANCE_DAY',actor:'player',payload:{}}}).state;
+ const caredHorse=raceChoice.horseIds.map(id=>state.runtime.horse[id]).
+  find(record=>record.history.some(day=>day.source_staff_ids));
+ assert.ok(caredHorse,'daily care must save the source workforce used');
+ const staffDay=caredHorse.history.find(day=>day.source_staff_ids);
+ for(const [role,id] of Object.entries(staffDay.source_staff_ids)){
+  const staff=career.world.entities.people.find(person=>person.id===id);
+  assert.equal(staff?.role,role);
+  assert.equal(staff?.workplaceId,career.homeTrackId,
+   'daily care can use only the saved ID linked to the horse worksite');
+ }
  assert.equal(state.runtime.races[raceChoice.book.id].date,state.clock.date,
   'opened race must settle on its exact game date');
  if(state.runtime.races[raceChoice.book.id].status==='ENTRIES_OPEN')

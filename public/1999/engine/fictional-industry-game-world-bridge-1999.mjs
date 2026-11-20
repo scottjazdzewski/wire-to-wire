@@ -9,7 +9,8 @@ import {initializeGameHorseCare} from '../game/horse-care.js';
 import {model1999StartingHorseAttributes} from '../game/horse-starting-attributes.js';
 import {dispatchGameCommand} from '../game/kernel.js';
 import {source1999JockeySelectionMerit,project1999TrackSourceGameplay,
- source1999TrackFacilitiesContribution}
+ source1999TrackFacilitiesContribution,source1999FarmYoungstockQuality,
+ select1999WorkplacePerson,index1999WorkplacePersonnel}
  from './source-personnel-gameplay-1999.mjs';
 import {readPersistent1999Directory,readPersistent1999IndustryBatch,
  verifyPersistent1999WorldOpen} from './fictional-industry-persistence-1999.mjs';
@@ -276,6 +277,7 @@ export async function openPersistent1999GameCareer(store,manifest,{
    maintenance_policy:'STANDARD',contracts:[],upgrade:null,land_acres:0};
  }
  const activeIds=[];
+ const workplaceStaff=index1999WorkplacePersonnel(people);
  for(const source of openingRoster){
   const id='H-GAME-1999-WORLD-'+source.id.replace(/^H-FICTIONAL-1999-/,'');
   const siteId='F-1999-OPENING-'+source.homeTrackId;
@@ -300,7 +302,28 @@ export async function openPersistent1999GameCareer(store,manifest,{
    starting_attributes:model1999StartingHorseAttributes({horse_id:id,
    seed:manifest.seed,foaling_year:source.foalYear,sex:source.sex,
    horseRatings:source.ratings,development:source.development,
-   ownerPortfolioTier:source.ownerPortfolioTier}),
+   ownerPortfolioTier:source.ownerPortfolioTier,
+   sourceYoungstockQuality:(()=>{
+    const farm=organizations.find(x=>x.id===source.careFacilityId);
+    if(!farm){
+     if(source.ratingsProvenance==='MODELED_1999_UNCALIBRATED')
+      throw Error('Canonical runner is missing its rated care farm: '+source.id);
+     return .55;
+    }
+    const manager=select1999WorkplacePerson(workplaceStaff,'farm_manager',farm.id,
+     manifest.seed,source.id);
+    const attendant=select1999WorkplacePerson(workplaceStaff,'breeding_attendant',farm.id,
+     manifest.seed,source.id);
+    const care=source1999FarmYoungstockQuality(farm,manager,attendant);
+    return care?.quality??.55;
+   })()}),
+   ...(source.ratingsProvenance==='MODELED_1999_UNCALIBRATED'?{
+    source_care_farm_id:source.careFacilityId,
+    source_care_manager_id:select1999WorkplacePerson(workplaceStaff,'farm_manager',
+     source.careFacilityId,manifest.seed,source.id)?.id??null,
+    source_breeding_attendant_id:select1999WorkplacePerson(workplaceStaff,
+     'breeding_attendant',source.careFacilityId,manifest.seed,source.id)?.id??null
+   }:{}),
    career:{starts:0,wins:0,earnings_minor:0}};
   run.runtime.registered_horses.by_id[id]=h;
   run.runtime.registered_horses.by_receipt[h.registration_receipt_id]=id;

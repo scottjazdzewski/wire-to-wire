@@ -10,6 +10,8 @@ import {TRAINING_PLANS,createHorseTrainingRecord,advanceHorseTrainingDay,recomme
 import {horseTravelStatus,effectiveHorseCareSite} from './shipping-1999.js';
 import {trainerDailyFee} from './trainer-contracts-1999.js';
 import {project1999TrainerSourceSkills} from '../../public/1999/engine/source-personnel-gameplay-1999.mjs';
+import {index1999WorkplacePersonnel,select1999WorkplacePerson,
+ project1999SupportStaffSourceSkills} from '../../public/1999/engine/source-personnel-gameplay-1999.mjs';
 
 export const HORSE_CARE_SCHEMA='WTW_1999_CONNECTED_HORSE_CARE_V1';
 export const TRAINER_SKILLS_SCHEMA='WTW_1999_TRAINER_SKILLS_GAME_V1';
@@ -232,6 +234,26 @@ export function initializeGameHorseCare(state,horse,world=null){
    game_training_skills:modeledTrainerSkills(horse.trainer_id,state.rng.seed,
     world?worldIdentity(world,'people',horse.trainer_id):null)};
 }
+function localHorseCareWorkforce(index,trackId,seed,horseId){
+ if(!index||!trackId)return null;
+ const roles=['groom','exercise_rider','veterinarian','farrier'];
+ return Object.fromEntries(roles.map(role=>{
+  const person=select1999WorkplacePerson(index,role,trackId,seed,horseId);
+  return [role,person?project1999SupportStaffSourceSkills(person):null];
+ }));
+}
+export function apply1999SourceCareStaff(context,workforce){
+ const groom=workforce?.groom,exerciseRider=workforce?.exercise_rider,
+  veterinarian=workforce?.veterinarian,farrier=workforce?.farrier;
+ return {...context,
+  supervision:cap(context.supervision+((groom?.care??.55)-.55)*.20),
+  observation:groom?.observation??.55,
+  trainingSupport:exerciseRider?.trainingResponse!==undefined?
+   .60*exerciseRider.trainingResponse+.40*exerciseRider.paceWork:.55,
+  prevention:veterinarian?.prevention??.55,
+  treatment:veterinarian?.treatment??.55,
+  hoofCare:farrier?.hoofCare??.55};
+}
 export function setHorseCarePolicy({state,world,command,emit}){
  const p=command.payload,horse=state.runtime.registered_horses?.by_id?.[p.horse_id];
  ensure(Boolean(horse),'UNKNOWN_HORSE','Only game-registered racehorses can receive care policy');
@@ -277,6 +299,21 @@ export function validateHorseCareRuntime(state,world){
    Array.isArray(record.history)&&typeof record.last_day==='string'&&
    record.last_day<=state.clock.date&&record.training.asOf===record.last_day,
    'HORSE_CARE_SAVE','Invalid money, days, or training progress');
+  for(const day of record.history)if(day.source_staff_ids){
+   ensure(isObject(day.source_staff_ids)&&
+    typeof day.source_staff_workplace_id==='string',
+    'HORSE_CARE_SAVE','Invalid saved care-staff source links');
+   for(const [role,personId] of Object.entries(day.source_staff_ids)){
+    ensure(['groom','exercise_rider','veterinarian','farrier'].includes(role),
+     'HORSE_CARE_SAVE','Unknown source care-staff role');
+    if(personId===null)continue;
+    const person=worldIdentity(world,'people',personId);
+    ensure(Boolean(person)&&person.role===role&&
+     person.workplaceId===day.source_staff_workplace_id&&
+     Boolean(project1999SupportStaffSourceSkills(person)),
+     'HORSE_CARE_SAVE','Daily care-staff link must resolve to the saved role and workplace');
+   }
+  }
   ensure(Boolean(worldIdentity(world,'people',h.trainer_id)),'HORSE_CARE_SAVE','Unknown trainer');
   const prep=record.race_preparation;
   if(prep!==undefined){
@@ -309,6 +346,7 @@ export function advanceGameHorseCare({state,world,emit}){
  const horses=Object.values(state.runtime.registered_horses?.by_id||{}).sort((a,b)=>
   a.horse_id.localeCompare(b.horse_id));
  const accounts=state.runtime.finances.operation_balances_minor,day=state.clock.date;
+ const sourceStaffIndex=world?index1999WorkplacePersonnel(world.entities.people||[]):null;
  const occupancy={};
  for(const h of horses){
   const liveSite=effectiveHorseCareSite(state,h);
@@ -377,6 +415,9 @@ export function advanceGameHorseCare({state,world,emit}){
   }
   const info=descriptor(state,h,site,skills,p);
   const context=estimateContext(p,site,occupancy[site.id]??0);
+  const workforce=localHorseCareWorkforce(sourceStaffIndex,site.host_track_id,
+   state.rng.seed,h.horse_id);
+  const careContext=apply1999SourceCareStaff(context,workforce);
   const train={...r.training,plan:p.training_plan};
   const allowed=site.status==='ACTIVE'&&site.staff_count>=site.staff_required;
   const arrivalToday=trip?.history?.at(-1)?.date===day&&
@@ -393,7 +434,7 @@ export function advanceGameHorseCare({state,world,emit}){
   const prepPhase=prepStep?(forcedRest?'ARRIVAL_REST':
    workout!==prepStep.workout?'TRAINER_SAFETY_ADJUSTMENT':prepStep.phase):null;
   const work=advanceHorseTrainingDay(train,info.horse,info.trainer,day,
-   state.rng.seed,{...context,workout});
+   state.rng.seed,{...careContext,workout});
   const charge_minor=Math.round(work.charge*100);
   const canPay=allowed&&money(accounts[h.owner_organization_id])&&
    accounts[h.owner_organization_id]>=charge_minor&&
@@ -474,6 +515,9 @@ export function advanceGameHorseCare({state,world,emit}){
    agent_reason:livePrep?'OWNER_APPROVED_RACE_PREPARATION':
     r.agent?.date===day?r.agent.reason:null,paid_minor:used,
    nutrition:p.feed,care:p.care,facility_id:site.id,
+   ...(workforce?{source_staff_ids:Object.fromEntries(Object.entries(workforce).
+    map(([role,profile])=>[role,profile?.source_person_id??null])),
+    source_staff_workplace_id:site.host_track_id??null}:{}),
    crowding:round4(context.crowding),barn_quality:site.quality,
    fitness:r.training.fitness,readiness:r.training.readiness,
    risk:r.training.currentRisk,unfunded:!canPay});

@@ -12,14 +12,14 @@ These slots are defined by `rate1999Entity` in `public/1999/engine/fictional-ind
 | Trainer | conditioning, placement, development, raceStrategy, horseCare, reputation, integrity | **This PR:** map saved exact P-ID to six existing `game_training_skills.roleAttributes`; care, wages/fees, condition, performance, race placement are current consumers. Test one-rating counterfactual |
 | Jockey | tactics, paceJudgment, finishing, gateSkill, versatility, fitness, reputation | **This PR:** map exact P-ID to ride judgments, pace, finish, composure, handling; selected-colony bookings and official race performance consume them. Test same-seed counterfactual |
 | Owner | resources, ambition, patience, riskTolerance, reputation | **Integration PR #330:** resources/ambition drive opening barn and working capital; all five O-ID values now seed the actual AI owner care/investment policy, source-backed patience in trainer reviews/negotiations, and owner-standing effects on trainer contract thresholds. Still needs broad portfolio and #317 budget calibration |
-| Farm | breeding, youngstockCare, facilities, management, reputation | Persisted in source; must connect to fertility, foal/youngstock development, daily care and operating expenses for actual farm staff and horses—not just owner-runner bonuses |
+| Farm | breeding, youngstockCare, facilities, management, reputation | **This integration:** exact care-farm ratings and workplace-linked farm manager/breeding attendant IDs set opening young-horse readiness. All five farm ratings enter the documented youngstock composite. Reproductive lifecycle and farm operating economics remain a later gate |
 | Track | surfaceQuality, safety, purseStrength, prestige, facilities | **Integration PR #330:** exact saved T-ID ratings drive opening barn facilities (15% track facilities weight), jockey mount acceptance (prestige coefficient 0.08), horse/track surface-performance interaction (coefficient 0.35, bounded ±0.07), and post-race recovery risk (safety multiplier 0.6–1.4). `purseStrength` already feeds the annual breeding-market index. Still needs distribution calibration, full condition-book/fiscal validation, and Windows acceptance |
-| Groom | horseCare, observation, reliability, experience | Persisted; must connect real care-staff P-ID to condition/injury detection and actual wage/scheduling ledger |
-| Exercise rider | horsemanship, feedback, fitness, reliability | Persisted; must connect assigned rider P-ID to training accuracy, pace works and payroll |
-| Veterinarian | diagnostics, treatment, prevention, reliability | Persisted; must connect vet P-ID to actual injury prevention/treatment and fees without creating fictitious recoveries |
-| Farrier | hoofCare, correctiveSkill, reliability | Persisted; must connect farrier P-ID to soundness care, downtime and paid work |
-| Farm manager | operations, breeding, staffManagement, reliability | Persisted; must connect farm decision authority, staff capacity, breeding efficiency and payroll |
-| Breeding attendant | horseHandling, reproduction, reliability | Persisted; must connect valid live covering/foaling care and staff payroll without double-counting foals |
+| Groom | horseCare, observation, reliability, experience | **This integration:** deterministic exact P-ID selection at the horse's saved track workplace. Care and observation ratings affect the existing daily supervision and modeled risk inputs. Explicit employment contracts/payroll remain open |
+| Exercise rider | horsemanship, feedback, fitness, reliability | **This integration:** exact workplace P-ID ratings affect the existing daily training response. Explicit employment contracts/payroll remain open |
+| Veterinarian | diagnostics, treatment, prevention, reliability | **This integration:** exact workplace P-ID ratings affect daily modeled prevention risk and recovery. This is not a medical diagnosis or a claim of treatment; explicit consult fees/payroll remain open |
+| Farrier | hoofCare, correctiveSkill, reliability | **This integration:** exact workplace P-ID ratings affect daily modeled soundness risk. Explicit work orders/payroll remain open |
+| Farm manager | operations, breeding, staffManagement, reliability | **This integration:** exact care-farm workplace P-ID rating affects opening young-horse readiness through the farm care composite. Farm decision authority, staffing capacity and payroll remain open |
+| Breeding attendant | horseHandling, reproduction, reliability | **This integration:** exact care-farm workplace P-ID rating affects opening young-horse readiness through the farm care composite. Live covering/foaling work and payroll remain open |
 
 ## Non-negotiable implementation contract
 
@@ -34,7 +34,23 @@ These slots are defined by `rate1999Entity` in `public/1999/engine/fictional-ind
 
 ## Current cross-system bridge in PR #330
 
-`WTW_1999_SOURCE_PERSONNEL_GAMEPLAY_V1` connects exact saved trainer and jockey P-IDs to the current care, fee, booking, tactic and race-result model. `WTW_1999_SOURCE_OWNER_GAMEPLAY_V1` maps all five saved owner O-ID values into existing AI care/investment choices and owner/trainer contract decisions. `WTW_1999_SOURCE_TRACK_GAMEPLAY_V1` connects exact saved track T-IDs to opening care-site quality, jockey acceptance, surface match and post-race recovery. The values and consumers are locally computed from the saved world; no name joins or separate ratings database are used. Existing played skills remain unchanged. New owner and track effects are modeled starting rules and still require wider calibration before release certification.
+`WTW_1999_SOURCE_PERSONNEL_GAMEPLAY_V1` connects trainer and jockey P-IDs to the current care, fee, booking, tactic and race-result model. `WTW_1999_SOURCE_SUPPORT_STAFF_GAMEPLAY_V1` connects groom, exercise rider, veterinarian and farrier P-IDs through their existing `WORKS_AT` track assignments to daily care/training inputs. `WTW_1999_SOURCE_FARM_GAMEPLAY_V1` combines the exact care farm and its workplace-linked farm manager/breeding attendant into opening readiness. `WTW_1999_SOURCE_OWNER_GAMEPLAY_V1` maps all five saved owner O-ID values into existing AI care/investment choices and owner/trainer contract decisions. `WTW_1999_SOURCE_TRACK_GAMEPLAY_V1` connects exact saved track T-IDs to opening care-site quality, jockey acceptance, surface match and post-race recovery. Values and consumers are computed from saved source records; no name joins or separate ratings database are used. Existing played skills remain unchanged. New owner, track, farm and support-staff effects are modeled starting rules and still require wider calibration before release certification.
+
+### Added farm weights in `WTW_1999_SOURCE_FARM_GAMEPLAY_V1`
+
+- Farm youngstock environment: `youngstockCare .35 + facilities .20 + management .20 + breeding .15 + reputation .10`.
+- Farm breeding operations: `breeding .50 + management .20 + facilities .15 + reputation .15`.
+- Farm manager operations: `operations .40 + staffManagement .30 + reliability .20 + breeding .10`; manager breeding operations: `breeding .55 + operations .20 + staffManagement .15 + reliability .10`.
+- Breeding attendant handling: `horseHandling .55 + reliability .25 + reproduction .20`; attendant reproduction: `reproduction .60 + horseHandling .20 + reliability .20`.
+- Opening care quality combines farm environment `.70`, manager composite `.18`, and attendant composite `.12`; it shifts source-derived readiness by `.06 × (quality − .55)` before normal game training begins.
+
+### Added professional weights in `WTW_1999_SOURCE_SUPPORT_STAFF_GAMEPLAY_V1`
+
+- Groom care: `horseCare .45 + observation .25 + reliability .20 + experience .10`; groom observation: `observation .55 + experience .25 + reliability .20`.
+- Exercise-rider training response: `horsemanship .45 + feedback .30 + fitness .15 + reliability .10`; pace work: `horsemanship .35 + feedback .35 + fitness .20 + reliability .10`. The two outputs combine `.60/.40` in the training-response factor.
+- Veterinary prevention: `prevention .45 + diagnostics .25 + reliability .20 + treatment .10`; treatment/recovery: `treatment .55 + diagnostics .25 + reliability .20`.
+- Farrier hoof care: `hoofCare .60 + correctiveSkill .25 + reliability .15`.
+- Support staff are selected deterministically by exact role/workplace and horse ID; source staff IDs are recorded and validated in daily care history. No new salary or work-order transaction is inferred by these quality effects.
 
 ## Suggested calibration evidence per category
 
