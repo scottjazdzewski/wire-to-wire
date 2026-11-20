@@ -10,6 +10,7 @@
  * game rule, without rewriting an existing person's source record.
  */
 export const SOURCE_PERSONNEL_GAMEPLAY_MODEL='WTW_1999_SOURCE_PERSONNEL_GAMEPLAY_V1';
+export const SOURCE_OWNER_GAMEPLAY_MODEL='WTW_1999_SOURCE_OWNER_GAMEPLAY_V1';
 export const SOURCE_TRACK_GAMEPLAY_MODEL='WTW_1999_SOURCE_TRACK_GAMEPLAY_V1';
 export const SOURCE_PERSONNEL_RATING_KEYS=Object.freeze({
  trainer:Object.freeze(['conditioning','placement','development','raceStrategy',
@@ -74,6 +75,32 @@ export function project1999JockeySourceSkills(person){
   finish:blend(r,[['finishing',.85],['fitness',.15]]),
   composure:blend(r,[['gateSkill',.35],['fitness',.35],['tactics',.3]]),
   horse_handling:blend(r,[['versatility',.65],['gateSkill',.35]])};
+}
+
+/** Exact saved owner O-ID ratings for existing business and management decisions. */
+export function project1999OwnerSourceGameplay(owner){
+ if(!owner?.id)return null;
+ const keys=['resources','ambition','patience','riskTolerance','reputation'];
+ const ratings=owner.ratings||{};
+ const complete=keys.every(key=>Number.isFinite(ratings[key])&&
+  ratings[key]>=1&&ratings[key]<=99);
+ if(!complete){
+  if(owner.ratingsProvenance==='MODELED_1999_UNCALIBRATED')
+   throw Error('Canonical owner '+owner.id+' has incomplete source rating values');
+  return null;
+ }
+ const sourceRatings=Object.fromEntries(keys.map(key=>[key,ratings[key]]));
+ const resources=ratings.resources/100,ambition=ratings.ambition/100,
+  riskTolerance=ratings.riskTolerance/100,patience=ratings.patience/100,
+  reputation=ratings.reputation/100;
+ return {schema:SOURCE_OWNER_GAMEPLAY_MODEL,source_owner_id:owner.id,
+  source_role_ratings:sourceRatings,resources,ambition,patience,riskTolerance,reputation,
+  investmentAppetite:Math.max(.01,Math.min(.99,
+   .45*ambition+.45*riskTolerance+.10*resources)),
+  welfarePriority:Math.max(.01,Math.min(.99,.75*patience+.25*resources))};
+}
+export function source1999OwnerReputationContractOffset(owner){
+ return owner?(owner.reputation-.55)*.08:0;
 }
 /** Pre-booking rider selection uses genuine saved P-ID source ability. */
 export function source1999JockeySelectionMerit(person){

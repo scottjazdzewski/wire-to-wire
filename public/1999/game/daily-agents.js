@@ -14,6 +14,8 @@ import {horseTravelStatus,physicalHorseSiteId,effectiveHorseCareSite} from './sh
 import {trainerDailyFee} from './trainer-contracts-1999.js';
 import {getOwnerTrainerMandate} from './owner-trainer-career-1999.js';
 import {advancePostRaceCampaigns,postRaceWorkoutGuidance,postRaceCarePriority} from './post-race-campaign-1999.js';
+import {project1999OwnerSourceGameplay}
+ from '../engine/source-personnel-gameplay-1999.mjs';
 
 export const DAILY_AGENT_SCHEMA='WTW_DAILY_AGENT_DECISIONS_V1';
 const cap=(x,min=0,max=1)=>Math.max(min,Math.min(max,x));
@@ -65,15 +67,26 @@ export function validateDailyAgentRuntime(state,world){
   typeof row.agent_id==='string'&&typeof row.reason==='string',
   'AGENT_SAVE','Invalid causal decision record');
 }
-function ownerOutlook(state,id){
+function ownerOutlook(state,id,world){
  const a=root(state);
  if(!a.owners[id]){
-  const seed=state.rng.seed,appetite=factor(seed,id,'appetite'),
-   welfare=factor(seed,id,'welfare');
-  a.owners[id]={id,
-   style:appetite>.71?'AMBITIOUS':appetite<.31?'CAUTIOUS':'BALANCED',
-   investment_appetite:round4(.2+.7*appetite),
-   welfare_priority:round4(.28+.68*welfare)};
+  const source=project1999OwnerSourceGameplay(
+   worldIdentity(world,'organizations',id));
+  if(source){
+   a.owners[id]={id,style:source.ambition>.71?'AMBITIOUS':
+    source.ambition<.31?'CAUTIOUS':'BALANCED',
+    investment_appetite:round4(source.investmentAppetite),
+    welfare_priority:round4(source.welfarePriority),
+    source_model:source.schema,source_owner_id:source.source_owner_id,
+    source_role_ratings:source.source_role_ratings};
+  }else{
+   const seed=state.rng.seed,appetite=factor(seed,id,'appetite'),
+    welfare=factor(seed,id,'welfare');
+   a.owners[id]={id,
+    style:appetite>.71?'AMBITIOUS':appetite<.31?'CAUTIOUS':'BALANCED',
+    investment_appetite:round4(.2+.7*appetite),
+    welfare_priority:round4(.28+.68*welfare)};
+  }
  }
  return a.owners[id];
 }
@@ -243,7 +256,7 @@ export function runAutonomousDay({state,world,emit}){
  // Autonomous owners choose funding priorities from their *actual* portfolio,
  // available cash, horse condition and confidence in the assigned trainer.
  for(const [owner,herd] of [...byOwner].sort((x,y)=>x[0].localeCompare(y[0]))){
-  const personality=ownerOutlook(state,owner);a.totals.owner_reviews++;
+  const personality=ownerOutlook(state,owner,world);a.totals.owner_reviews++;
   if(owner===state.player.operation_id&&state.player.role==='owner')continue;
   const changes=[];
   for(const h of herd){

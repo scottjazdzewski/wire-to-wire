@@ -4,6 +4,7 @@ import {connect1999Person,connect1999Horse,connect1999DirectoryEntity}
  from '../public/1999/engine/fictional-industry-graph-1999.mjs';
 import {project1999TrainerSourceSkills,project1999JockeySourceSkills,
  source1999RoleCoverage,source1999JockeySelectionMerit,
+ project1999OwnerSourceGameplay,
  project1999TrackSourceGameplay,source1999TrackSurfaceAdjustment,
  source1999TrackRecoveryMultiplier,source1999TrackPrestigeOfferOffset,
  source1999TrackFacilitiesContribution,SOURCE_PERSONNEL_GAMEPLAY_MODEL}
@@ -20,6 +21,10 @@ import {createHorseTrainingRecord,advanceHorseTrainingDay}
  from '../public/1999/engine/horse-development.mjs';
 import {modelHorsePostRaceResponse}
  from '../public/1999/game/horse-care.js';
+import {workingRelationshipProfile}
+ from '../public/1999/game/working-relationship-1999.js';
+import {trainerContractQuote}
+ from '../public/1999/game/trainer-contracts-1999.js';
 
 const SEED=19990101;
 const trainerId='P-FICTIONAL-1999-TRAINER-0000001';
@@ -169,6 +174,36 @@ test('track safety changes actual post-race condition in the existing horse care
   'Only the canonical track safety rating changed; real post-race risk must improve');
  assert.equal(highResult.history.at(-1).track_recovery_multiplier,.6);
  assert.equal(lowResult.history.at(-1).track_recovery_multiplier,1.4);
+});
+
+test('all five canonical owner ratings are stored and drive the existing care, patience and contract decisions',()=>{
+ const owner=connect1999DirectoryEntity({id:'O-FICTIONAL-OWNER-SOURCE-0001',
+  name:'Saved Owner'},{seed:SEED,type:'owner'});
+ const projected=project1999OwnerSourceGameplay(owner);
+ assert.deepEqual(projected.source_role_ratings,owner.ratings);
+ assert.equal(projected.resources,owner.ratings.resources/100);
+ assert.equal(projected.ambition,owner.ratings.ambition/100);
+ assert.equal(projected.patience,owner.ratings.patience/100);
+ assert.equal(projected.riskTolerance,owner.ratings.riskTolerance/100);
+ assert.equal(projected.reputation,owner.ratings.reputation/100);
+ const impatient=structuredClone(owner),patient=structuredClone(owner);
+ impatient.ratings.patience=15;patient.ratings.patience=95;
+ const state={rng:{seed:SEED},runtime:{}};
+ const a=workingRelationshipProfile(state,owner.id,trainerId,impatient);
+ const b=workingRelationshipProfile(state,owner.id,trainerId,patient);
+ assert.equal(a.owner_patience,.15);
+ assert.equal(b.owner_patience,.95);
+ const lowRep=structuredClone(owner),highRep=structuredClone(owner);
+ lowRep.ratings.reputation=15;highRep.ratings.reputation=95;
+ const gameState={rng:{seed:SEED},clock:{date:'1999-01-01'},runtime:{
+  registered_horses:{by_id:{[gameHorseId]:{...careHorse,owner_organization_id:owner.id,
+   starting_attributes:attributes}}},
+  people:{[trainerId]:{game_training_skills:modeledTrainerSkills(trainerId,SEED,trainer)}},
+  finances:{operation_balances_minor:{[owner.id]:100000000}}}};
+ const quote=(organization)=>trainerContractQuote(gameState,
+  {entities:{organizations:[organization],people:[trainer]}},owner.id,trainerId);
+ assert.ok(quote(highRep).minimum_acceptable_minor<quote(lowRep).minimum_acceptable_minor,
+  'Better saved owner standing must affect the existing signed-service offer threshold');
 });
 
 test('actual 1999 career initializes the trainer from canonical source and preserves saved progression',()=>{
