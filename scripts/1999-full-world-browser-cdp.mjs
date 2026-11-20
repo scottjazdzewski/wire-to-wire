@@ -215,6 +215,15 @@ try{
  assert.equal(allRatings.ratedPeople,allRatings.people);
  assert.ok(allRatings.people>=75000,'Saved 1999 personnel census unexpectedly incomplete');
  console.log('WTW_1999_ALL_HORSES_AND_PEOPLE_RATED_PASS '+JSON.stringify(allRatings));
+ const auditedProfessionals=await browser.evalJS(
+  'window.__WTW_ACTIVE_WORLD_CAREER_VIEW__?.worldPersonnelRoleAudit?.()||null');
+ assert.ok(auditedProfessionals?.complete,
+  '1999 canonical trainer/jockey vectors are missing source ratings: '+
+   JSON.stringify(auditedProfessionals));
+ assert.ok(auditedProfessionals.counts.trainer>0);
+ assert.ok(auditedProfessionals.counts.jockey>0);
+ console.log('WTW_1999_SOURCE_TRAINER_JOCKEY_RATING_VECTORS_PASS '+
+  JSON.stringify(auditedProfessionals));
  // Real saved V10 edit on a permanent existing horse ID, NOT a demo registry.
  const editorHorseId=snap.immutableHorseId;
  const editorNewName='V10 Acceptance World Horse';
