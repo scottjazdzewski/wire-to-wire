@@ -7,6 +7,8 @@ import {project1999TrainerSourceSkills,project1999JockeySourceSkills,
  from '../public/1999/engine/source-personnel-gameplay-1999.mjs';
 import {modeledTrainerSkills,initializeGameHorseCare}
  from '../public/1999/game/horse-care.js';
+import {baselineTrainerDailyFee}
+ from '../public/1999/game/trainer-contracts-1999.js';
 import {modeledJockeySkills,jockeyRaceExecutionIndex}
  from '../public/1999/game/racing-1999.js';
 import {model1999StartingHorseAttributes}
@@ -83,6 +85,22 @@ test('trainer source CONDITIONING has a causal one-day training effect in real h
  assert.ok(resultHigh.horse.fitness>resultLow.horse.fitness,
   'Changing only canonical trainer conditioning must change actual horse fitness');
  assert.equal(record.asOf,'1999-01-01','Test must not rewrite starting horse');
+});
+
+test('trainer public REPUTATION affects actual fee without changing conditioning or negotiated terms',()=>{
+ const low=structuredClone(trainer),high=structuredClone(trainer);
+ low.ratings.reputation=15;high.ratings.reputation=95;
+ const a=modeledTrainerSkills(trainerId,SEED,low);
+ const b=modeledTrainerSkills(trainerId,SEED,high);
+ assert.deepEqual(a.roleAttributes,b.roleAttributes,
+  'Public reputation alone must not fabricate improved training talent');
+ assert.ok(b.source_reputation_index>a.source_reputation_index);
+ assert.ok(baselineTrainerDailyFee(b)>baselineTrainerDailyFee(a),
+  'Source reputation must alter the actual game contract fee');
+ const legacy=modeledTrainerSkills(trainerId,SEED);
+ assert.equal(baselineTrainerDailyFee(legacy),
+  Math.round(4000+4500*legacy.roleAttributes.conditioning),
+  'Older careers keep original fee model');
 });
 
 test('jockey source FINISHING changes the exact index used by official race engine',()=>{
