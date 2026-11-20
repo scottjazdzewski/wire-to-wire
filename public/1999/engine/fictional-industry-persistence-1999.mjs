@@ -31,11 +31,15 @@ import {planFictionalOwnerPortfolios,assessFictionalOwnerCapacity,
 import {completeApprovedFoundingHorseRelationships,
  APPROVED_FOUNDING_RELATIONSHIP_REVISION}
  from './fictional-industry-founder-relations-1999.mjs';
+import {index1999WorkplacePersonnel,select1999WorkplacePerson,
+ source1999FarmYoungstockQuality}
+ from './source-personnel-gameplay-1999.mjs';
 export const PERSISTENT_INDUSTRY_SCHEMA='WTW_PERSISTENT_INDUSTRY_1999_V3';
 export const PERSISTENT_INDUSTRY_DB='WireToWireFictionalIndustry1999V1';
 const SUPPORTED_PERSISTENT_INDUSTRY_SCHEMAS=new Set([
  'WTW_PERSISTENT_INDUSTRY_1999_V1','WTW_PERSISTENT_INDUSTRY_1999_V2',
  PERSISTENT_INDUSTRY_SCHEMA]);
+const lifecycleFarmStaffCache=new WeakMap();
 const supportsPersistentSchema=manifest=>
  SUPPORTED_PERSISTENT_INDUSTRY_SCHEMAS.has(manifest?.schema);
 export const PERSISTENT_INDUSTRY_COMPRESSION_SCHEMA='WTW_INDUSTRY_GZIP_JSON_V1';
@@ -849,6 +853,24 @@ export async function readPersistent1999Directory(store,manifest){
  return directory;
 }
 
+/** Cache only exact farm managers and breeding attendants for seasonal rearing. */
+async function lifecycleFarmStaffIndex(store,manifest){
+ let pending=lifecycleFarmStaffCache.get(store);
+ if(!pending){
+  pending=(async()=>{
+   const people=[];
+   for(let i=0;i<manifest.personBatchesCommitted;i++){
+    const batch=await readPersistent1999IndustryBatch(store,manifest,'personBatches',i);
+    for(const person of batch)if(['farm_manager','breeding_attendant'].includes(person.role))
+     people.push(person);
+   }
+   return index1999WorkplacePersonnel(people);
+  })();
+  lifecycleFarmStaffCache.set(store,pending);
+ }
+ return pending;
+}
+
 const lifecycleRunKey=(manifest,runId)=>keyOf(manifest.seed,manifest.worldId)+':'+runId;
 const lifecycleKey=(runKey,suffix)=>runKey+':'+suffix;
 const lifecycleHorseKey=(runKey,id)=>lifecycleKey(runKey,'horse:'+id);
@@ -1335,6 +1357,7 @@ async function advancePersistent1999IndustryLifecycle(store,manifest,{
  const birthCohortCache=new Map(),forecastCache=new Map(),farmCache=new Map();
  const graduatedYears=new Map(),graduatedStallionYears=new Map(),
   activeMaresById=new Map(),activeStallionsById=new Map();
+ let farmStaffIndexPromise=null;
  const directory=await readPersistent1999Directory(lifecycleStore,manifest);
  const directoryById=new Map(directory.map(entity=>[entity.id,entity]));
  const addEvent=(date,event)=>{
@@ -1462,7 +1485,23 @@ async function advancePersistent1999IndustryLifecycle(store,manifest,{
   for(const forecast of forecasts){
    if(forecast.status!=='PROJECTED_NOT_YET_BORN'||forecast.birthDate!==date)
     throw Error('Invalid unborn foal forecast');
-   const live=resolve1999FoalBirth({seed:manifest.seed,forecast});
+   const dam=activeMaresById.get(forecast.damId)||await effectiveLifecycleHorse(
+    lifecycleStore,manifest,runKey,forecast.damId,overrideMap);
+   const farm=farmCache.get(forecast.foalingFarmId)||
+    directoryById.get(forecast.foalingFarmId);
+   if(!dam||dam.status!=='BROODMARE'||dam.ownerId!==forecast.ownerId||
+    (dam.careFacilityId||dam.foalingFarmId)!==forecast.foalingFarmId||!farm)
+    throw Error('Seasonal foal has an orphaned parent, owner, or foaling facility');
+   farmCache.set(farm.id,farm);
+   if(!farmStaffIndexPromise)farmStaffIndexPromise=lifecycleFarmStaffIndex(store,manifest);
+   const farmStaff=await farmStaffIndexPromise;
+   const manager=select1999WorkplacePerson(farmStaff,'farm_manager',farm.id,
+    manifest.seed,forecast.foalId);
+   const attendant=select1999WorkplacePerson(farmStaff,'breeding_attendant',farm.id,
+    manifest.seed,forecast.foalId);
+   const farmCare=source1999FarmYoungstockQuality(farm,manager,attendant);
+   const youngstockQuality=farmCare?.quality??.55;
+   const live=resolve1999FoalBirth({seed:manifest.seed,forecast,youngstockQuality});
    if(!live){
     current={...current,foalLosses:current.foalLosses+1,
      lossesByYear:{...current.lossesByYear,[year]:
@@ -1478,21 +1517,14 @@ async function advancePersistent1999IndustryLifecycle(store,manifest,{
    }
    if(overrideMap.has(forecast.foalId)||birthCohortCache.get(year).has(forecast.foalId))
     throw Error('Duplicate seasonal foal identity '+forecast.foalId);
-   const dam=activeMaresById.get(forecast.damId)||await effectiveLifecycleHorse(
-    lifecycleStore,manifest,runKey,forecast.damId,overrideMap);
-   const farm=farmCache.get(forecast.foalingFarmId)||
-    directoryById.get(forecast.foalingFarmId);
-   if(!dam||dam.status!=='BROODMARE'||dam.ownerId!==forecast.ownerId||
-    (dam.careFacilityId||dam.foalingFarmId)!==forecast.foalingFarmId||!farm)
-    throw Error('Seasonal foal has an orphaned parent, owner, or foaling facility');
-   farmCache.set(farm.id,farm);
    const sire=activeStallionsById.get(forecast.sireId)||
     await effectiveLifecycleHorse(lifecycleStore,manifest,runKey,
      forecast.sireId,overrideMap);
    if(!sire||sire.status!=='STALLION')
     throw Error('Seasonal foal has a missing or inactive sire');
    const foal=create1999SeasonalFoal({seed:manifest.seed,year,
-    dateOfBirth:date,id:forecast.foalId,dam,sire,farm});
+    dateOfBirth:date,id:forecast.foalId,dam,sire,farm,youngstockQuality,
+    farmCareSource:farmCare});
    if(foal.sireId===foal.damId||foal.ownerId!==forecast.ownerId||
     foal.birthplace.farmId!==foal.foalingFarmId)
     throw Error('Seasonal foal pedigree or ownership failed validation');
