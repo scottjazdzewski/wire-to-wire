@@ -111,6 +111,54 @@ export function select1999CareerJockeyColony(people,trackIds,{limit=120}={}){
  return selected;
 }
 
+/**
+ * Model a real owner-operated opening barn for every distinct locally
+ * employed trainer in the selected owner's permanent racing string.
+ *
+ * A track-level "first trainer" shortcut previously put other trainers'
+ * horses under somebody else's head-trainer site. This pure grouping never
+ * rewrites the approved source horse/trainer/person IDs or a saved career.
+ * A one-trainer circuit retains its existing legacy barn ID and display name.
+ */
+export function plan1999OpeningTrainerBarnAssignments({
+ openingRoster,people,tracks,operation
+}={}){
+ if(!Array.isArray(openingRoster)||!Array.isArray(people)||
+  !Array.isArray(tracks)||!operation?.id||!operation?.name)
+  throw Error('Opening trainer assignments need a real owner, horses and personnel');
+ const knownTrainers=new Map(people.filter(p=>p.role==='trainer').map(p=>[p.id,p]));
+ const knownTracks=new Map(tracks.map(t=>[t.id,t]));
+ const byTrack=new Map(),seen=new Set();
+ for(const h of openingRoster){
+  if(!h?.id||seen.has(h.id))throw Error('Repeated or missing original racing horse ID');
+  seen.add(h.id);
+  const track=knownTracks.get(h.homeTrackId),
+   trainer=knownTrainers.get(h.trainerId);
+  if(!track||!trainer||trainer.workplaceId!==track.id)
+   throw Error('Source horse has no locally employed assigned trainer: '+h.id);
+  if(!byTrack.has(track.id))byTrack.set(track.id,new Map());
+  const groups=byTrack.get(track.id);
+  if(!groups.has(trainer.id))groups.set(trainer.id,[]);
+  groups.get(trainer.id).push(h);
+ }
+ const sites=[],bySourceHorseId={};
+ for(const [trackId,trainers] of [...byTrack].sort(([a],[b])=>a.localeCompare(b))){
+  const track=knownTracks.get(trackId),split=trainers.size>1;
+  for(const [trainerId,horses] of [...trainers].sort(([a],[b])=>a.localeCompare(b))){
+   const trainer=knownTrainers.get(trainerId);
+   const siteId='F-1999-OPENING-'+trackId+(split?'-'+trainerId:'');
+   const siteName=format1999OpeningBarnName(operation,track)+
+    (split?' — '+trainer.name:'');
+   for(const h of horses)bySourceHorseId[h.id]=siteId;
+   sites.push({siteId,siteName,trackId,trainerId,
+    horseCount:horses.length,ownerId:operation.id});
+  }
+ }
+ if(Object.keys(bySourceHorseId).length!==openingRoster.length)
+  throw Error('Opening horse and trainer assignment census does not reconcile');
+ return {sites,bySourceHorseId};
+}
+
 const TRACK_ID=/^(?:T|IT)-[A-Za-z0-9-]+$/;
 async function digest(value){
  const bytes=new TextEncoder().encode(JSON.stringify(value));
@@ -233,18 +281,33 @@ export async function openPersistent1999GameCareer(store,manifest,{
   player:{role:playerRole,involvement,operation_id:operation.id},stableHorseIds:[]});
  const trackGroups=new Map();
  for(const source of openingRoster){
-  const trackId=source.homeTrackId;
-  if(!trackId||!world.entities.tracks.some(t=>t.id===trackId))
-   throw Error('Opening runner lacks an active home track: '+source.id);
-  if(!trackGroups.has(trackId))trackGroups.set(trackId,[]);
-  trackGroups.get(trackId).push(source);
+  if(!trackGroups.has(source.homeTrackId))trackGroups.set(source.homeTrackId,[]);
+  trackGroups.get(source.homeTrackId).push(source);
  }
- const trainerForTrack=trackId=>people.find(p=>p.role==='trainer'&&p.workplaceId===trackId);
- for(const [trackId,group] of trackGroups){
+ const barnPlan=plan1999OpeningTrainerBarnAssignments({
+  openingRoster,people,tracks:world.entities.tracks,operation});
+ // These P-IDs are the world generator's actual local groom workforce.
+ // A professional is contracted to at most one game barn in this operation.
+ const groomPools=new Map(),assignedStaff=new Set();
+ for(const staff of people)if(staff.role==='groom'&&
+  Number.isInteger(staff.ratings?.horseCare)&&
+  staff.ratings.horseCare>=0&&staff.ratings.horseCare<=100){
+  if(!groomPools.has(staff.workplaceId))groomPools.set(staff.workplaceId,[]);
+  groomPools.get(staff.workplaceId).push(staff);
+ }
+ for(const pool of groomPools.values())pool.sort((a,b)=>
+  (b.ratings.horseCare-a.ratings.horseCare)||a.id.localeCompare(b.id));
+ for(const barn of barnPlan.sites){
+  const {trackId,trainerId,siteId,siteName,horseCount}=barn;
   const track=world.entities.tracks.find(t=>t.id===trackId);
-  const trainer=trainerForTrack(trackId)||people.find(p=>p.role==='trainer');
-  if(!trainer)throw Error('Opening track lacks a playable trainer identity: '+trackId);
-  const siteId='F-1999-OPENING-'+trackId;
+  const hired=(groomPools.get(trackId)||[]).find(p=>!assignedStaff.has(p.id));
+  if(hired)assignedStaff.add(hired.id);
+  // Labor compensation is based on actual persistent role-specific ratings,
+  // not placeholder names, arbitrary global salaries or duplicate employers.
+  const payrollStaff=hired?[{person_id:hired.id,role:'groom',
+   daily_wage_minor:6000+hired.ratings.horseCare*40,
+   started_on:run.clock.date,status:'ACTIVE',
+   source:'MODELED_EMPLOYMENT_FROM_PERSISTED_LOCAL_PERSON'}]:[];
   const loc=track.location||{};
   const tierBonus={HANDFUL:0,SMALL:3,REGIONAL:7,MAJOR:12,ELITE:18}[
    operation.portfolioTier]??0;
@@ -254,24 +317,26 @@ export async function openPersistent1999GameCareer(store,manifest,{
    Math.round(.62*resources+.23*ambition+.15*55+tierBonus)));
   run.runtime.facilities.sites[siteId]={id:siteId,offer_id:null,
    owner_id:operation.id,operator_organization_id:operation.id,
-   name:format1999OpeningBarnName(operation,track),type:'RACING_STABLE',
+   name:siteName,type:'RACING_STABLE',
    residence_kind:'TRACK_TRAINER_BARN',host_track_id:trackId,
-   head_trainer_person_id:trainer.id,
+   head_trainer_person_id:trainerId,
    location:{city:loc.city||loc.locality||track.name,
     state:loc.region||loc.state||'Unknown',country:loc.country||'USA'},
    source_kind:'MODELED_1999_GAME_SITE',
    source_ref:'PERSISTED_FICTIONAL_1999_OPENING_WORLD',status:'ACTIVE',
    acquired_date:run.clock.date,open_date:run.clock.date,
-   stalls:Math.max(60,group.length),max_stalls:Math.max(60,group.length),
+   stalls:Math.max(60,horseCount),max_stalls:Math.max(60,horseCount),
    quality:facilityQuality,daily_upkeep_minor:0,daily_boarding_minor:0,
-   staff_required:1,staff_count:1,staff_wage_daily_minor:0,
+   staff_required:1,staff_count:1,
+   staff_wage_daily_minor:payrollStaff[0]?.daily_wage_minor??0,
+   ...(payrollStaff.length?{payroll_staff:payrollStaff}:{}),
    track_rent_daily_minor:0,maintenance_daily_minor:0,
    maintenance_policy:'STANDARD',contracts:[],upgrade:null,land_acres:0};
  }
  const activeIds=[];
  for(const source of openingRoster){
   const id='H-GAME-1999-WORLD-'+source.id.replace(/^H-FICTIONAL-1999-/,'');
-  const siteId='F-1999-OPENING-'+source.homeTrackId;
+  const siteId=barnPlan.bySourceHorseId[source.id];
   const h={horse_id:id,id,world_source_horse_id:source.id,
    name:source.name,registered_name:source.name,sex:source.sex,
    foaling_year:source.foalYear,birth_date:source.dateOfBirth,
@@ -298,7 +363,7 @@ export async function openPersistent1999GameCareer(store,manifest,{
   run.runtime.registered_horses.by_id[id]=h;
   run.runtime.registered_horses.by_receipt[h.registration_receipt_id]=id;
   run.stable_horse_ids.push(id);activeIds.push(id);
-  initializeGameHorseCare(run,h);
+  initializeGameHorseCare(run,h,world);
  }
  const openingCapitalMinor=calculate1999OpeningTreasury({
   portfolioTier:operation.portfolioTier,

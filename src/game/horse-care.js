@@ -31,10 +31,50 @@ const seedPart=(seed,key)=>{let h=(2166136261^(seed>>>0))>>>0;
  h^=h>>>16;h=Math.imul(h,2246822507);h^=h>>>13;
  return (h>>>0)/4294967296;};
 const round4=x=>Math.round(cap(x)*10000)/10000;
-export function modeledTrainerSkills(personId,seed=19990101){
+export function modeledTrainerSkills(personId,seed=19990101,identity=null){
  ensure(/^P-[A-Za-z0-9-]+$/.test(personId)&&Number.isSafeInteger(seed)&&seed>0,
   'TRAINER_SKILLS','Approved trainer identity and seed required');
  const pick=k=>round4(.34+.55*seedPart(seed,personId+':'+k));
+ const ratings=identity?.ratings;
+ const exact=identity?.id===personId&&identity.role==='trainer'&&
+  ratings&&['conditioning','placement','development','raceStrategy',
+   'horseCare','reputation','integrity'].every(k=>
+   Number.isInteger(ratings[k])&&ratings[k]>=0&&ratings[k]<=100);
+ if(exact){
+  // The generated WORLD personnel is authoritative for starting abilities.
+  // The gameplay traits, day rates and training outcomes consume these
+  // numerics directly. Never mutate source ratings or replace older saves.
+  const a={
+   conditioning:round4((ratings.conditioning*.45+ratings.horseCare*.2+
+    ratings.integrity*.2+ratings.development*.15)/100),
+   workout_design:round4((ratings.raceStrategy*.55+
+    ratings.placement*.25+ratings.conditioning*.2)/100),
+   young_horse_development:round4((ratings.development*.65+
+    ratings.horseCare*.2+ratings.conditioning*.15)/100),
+   veterinary_coordination:round4((ratings.horseCare*.7+
+    ratings.integrity*.3)/100),
+   layoff_management:round4((ratings.horseCare*.5+
+    ratings.integrity*.25+ratings.development*.25)/100),
+   race_placement:round4((ratings.placement*.6+
+    ratings.raceStrategy*.25+ratings.conditioning*.15)/100)
+  };
+  const current=Math.round((a.conditioning+a.workout_design+
+   a.veterinary_coordination)/3*99);
+  const potential=Math.max(current,Math.round(
+   (ratings.development*.6+ratings.conditioning*.4)*.99));
+  const birth=identity.dateOfBirth;
+  const age=typeof birth==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(birth)?
+   Number(identity.ageAtOpening??(1999-Number(birth.slice(0,4)))):null;
+  return {schema:TRAINER_SKILLS_SCHEMA,
+   source:'MODELED_FROM_PERSISTED_1999_TRAINER_ROLE_RATINGS',
+   person_id:personId,roleAttributes:a,
+   source_role_ratings:Object.fromEntries(
+    ['conditioning','placement','development','raceStrategy','horseCare',
+     'reputation','integrity'].map(k=>[k,ratings[k]])),
+   biography:{date_of_birth:birth??null,age_at_opening:age,
+    home_track_id:identity.workplaceId??null},
+   ability:{current,potential}};
+ }
  const attributes={
   conditioning:pick('conditioning'),workout_design:pick('planning'),
   young_horse_development:pick('young'),veterinary_coordination:pick('health'),
@@ -213,14 +253,15 @@ export function createHorseCareRecord(horse,asOf='1999-01-01'){
    unfunded_days:0},last_day:asOf,history:[],
   provenance:'1999_MODELED_CARE_GAMEPLAY_ONLY'};
 }
-export function initializeGameHorseCare(state,horse){
+export function initializeGameHorseCare(state,horse,world=null){
  if(!horse.starting_attributes)return;
  if(!state.runtime.horse[horse.horse_id])
   state.runtime.horse[horse.horse_id]=createHorseCareRecord(horse,state.clock.date);
  const person=state.runtime.people[horse.trainer_id]||{};
  if(!person.game_training_skills)
   state.runtime.people[horse.trainer_id]={...person,
-   game_training_skills:modeledTrainerSkills(horse.trainer_id,state.rng.seed)};
+   game_training_skills:modeledTrainerSkills(horse.trainer_id,state.rng.seed,
+    world?worldIdentity(world,'people',horse.trainer_id):null)};
 }
 export function setHorseCarePolicy({state,world,command,emit}){
  const p=command.payload,horse=state.runtime.registered_horses?.by_id?.[p.horse_id];
@@ -306,7 +347,7 @@ export function advanceGameHorseCare({state,world,emit}){
  }
  for(const h of horses){
   if(!h.starting_attributes){emit('HORSE_NEEDS_ATTRIBUTES',{horse_id:h.horse_id});continue}
-  initializeGameHorseCare(state,h);
+  initializeGameHorseCare(state,h,world);
   const r=state.runtime.horse[h.horse_id];
   if(r.last_day===day)continue;
   const prep=r.race_preparation;
