@@ -250,6 +250,13 @@ export function compact1999PremierJockeyOffers({state,emit}){
   result:'DETAILED_SOURCE_EVENT_LOG_AND_SIGNED_ENTRIES_RETAINED'});
  return {removed,retained:Object.keys(offers).length};
 }
+/** The exact rider contribution consumed by OFFICIAL race performance. */
+export function jockeyRaceExecutionIndex(skills){
+ if(!skills||['judgment','pace','finish','horse_handling'].some(key=>
+    !Number.isFinite(skills[key])))throw Error('Real rider gameplay skills required');
+ return rating(skills.judgment*.24+skills.pace*.28+
+  skills.finish*.26+skills.horse_handling*.22);
+}
 export function modeledJockeySkills(id,seed,identity=null){
  ensure(/^P-[A-Za-z0-9-]+$/.test(id),'JOCKEY_ID','Permanent selected jockey ID required');
  // The real V10 P-ID's seven saved role ratings now drive bookings,
@@ -683,7 +690,7 @@ function performance(state,world,race,entry){
  const surface=race.surface==='TURF'?a.turf_aptitude:a.dirt_aptitude;
  const distance=sprint?a.sprint_aptitude:a.route_aptitude;
  const pace=rating((a.early_pace+a.finishing_kick+a.acceleration)/3);
- const rider=rating(j.judgment*.24+j.pace*.28+j.finish*.26+j.horse_handling*.22);
+ const rider=jockeyRaceExecutionIndex(j);
  const variation=(frac(state.rng.seed,entry.horse_id+':'+race.id+':race')-.5)*.11*
   (1.3-.6*a.consistency);
  const instruction=entry.race_tactic??'AUTO';
