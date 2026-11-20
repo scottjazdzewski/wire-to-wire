@@ -4,7 +4,7 @@ import {createPersistent1999Industry,savePersistent1999CareerRun,
  loadPersistent1999CareerRun} from '../public/1999/engine/fictional-industry-persistence-1999.mjs';
 import {digestPersistent1999GameSnapshot,openPersistent1999GameCareer,
  format1999OpeningBarnName,PERSISTED_1999_OPENING_BARN_NAMING_MODEL,
- calculate1999OpeningTreasury}
+ calculate1999OpeningTreasury,model1999IndustryOpeningTreasuries}
  from '../public/1999/engine/fictional-industry-game-world-bridge-1999.mjs';
 import {validateGameRun} from '../public/1999/game/state.js';
 import {dispatchGameCommand} from '../public/1999/game/kernel.js';
@@ -99,6 +99,21 @@ test('10,000-horse persisted 1999 world opens and runs a canonical race career',
  assert.equal(career.run.runtime.finances.balance_minor,expectedOpeningCapital);
  assert.equal(career.run.runtime.finances.operation_balances_minor[
   career.operation.id],expectedOpeningCapital);
+ assert.equal(career.run.runtime.finances.opening_capital_provenance,
+  'ONE_TIME_MODELED_OPENING_ACCOUNTS_NO_RECURRING_SUBSIDY');
+ const rival=career.world.entities.organizations.find(x=>
+  x.id!==career.operation.id&&career.world.entities.horses.some(h=>h.ownerId===x.id));
+ assert.ok(rival,'A real second owner must exist in the full industry');
+ assert.ok(career.run.runtime.finances.operation_balances_minor[rival.id]>0,
+  'Other canonical named racing owners need real game-business cash accounts');
+ const rivalAudit=career.run.runtime.finances.opening_capital_audit[rival.id];
+ assert.equal(rivalAudit.legally_owned_horses,
+  career.world.entities.horses.filter(h=>h.ownerId===rival.id).length);
+ assert.equal(rivalAudit.legally_owned_active_runners,
+  career.world.entities.horses.filter(h=>h.ownerId===rival.id&&
+   ['RACING','TWO_YEAR_OLD_PROSPECT'].includes(h.status)).length);
+ assert.equal(rivalAudit.opening_cash_minor,
+  career.run.runtime.finances.operation_balances_minor[rival.id]);
  const openingSite=career.run.runtime.facilities.sites['F-1999-OPENING-T-0001'];
  assert.ok(openingSite,'new barn should exist in canonical game run');
  assert.equal(openingSite.id,'F-1999-OPENING-T-0001');
@@ -256,4 +271,57 @@ test('approved Kingsmere is an openable owner-farm operator with a persistent fu
  assert.deepEqual(reopened,saved);
  assert.equal(reopened.changes.canonicalRun.stable_horse_ids.length,
   career.operationInventoryCount,'the full operation inventory must survive save and reopen intact');
+});
+
+test('major, small, commercial farm and managed mixed stable use genuine separate ownership and service counts for opening finances',()=>{
+ const entries=[
+  {id:'O-KINGSMERE',portfolioTier:'ELITE',ratings:{resources:90}},
+  {id:'O-SMALL',portfolioTier:'HANDFUL',ratings:{resources:18}},
+  {id:'O-STUD',portfolioTier:'REGIONAL',operatingRoles:['STUD_FARM']},
+  {id:'O-MIXED',portfolioTier:'SMALL',ratings:{resources:45}}];
+ const holdings=new Map([
+  ['O-KINGSMERE',new Map([
+   ['H-K-1',new Set(['OWNED','TRAINED'])],
+   ['H-K-2',new Set(['OWNED','BOARDED'])],
+   ['H-SMALL',new Set(['MANAGED','BOARDED'])]])],
+  ['O-SMALL',new Map([['H-SMALL',new Set(['OWNED'])]])],
+  ['O-STUD',new Map([
+   ['H-K-2',new Set(['FOALED_AT','BRED'])],
+   ['H-SMALL',new Set(['BOARDED'])]])],
+  ['O-MIXED',new Map([
+   ['H-MIX-1',new Set(['OWNED','TRAINED'])],
+   ['H-K-1',new Set(['MANAGED'])]])]
+ ]);
+ const racers=new Map([
+  ['O-KINGSMERE',[{id:'H-K-1'}]],
+  ['O-SMALL',[{id:'H-SMALL'}]],
+  ['O-MIXED',[{id:'H-MIX-1'}]]
+ ]);
+ const first=model1999IndustryOpeningTreasuries({
+  organizations:entries,operationHorseRoles:holdings,ownerGroups:racers});
+ const second=model1999IndustryOpeningTreasuries({
+  organizations:entries,operationHorseRoles:holdings,ownerGroups:racers});
+ assert.deepEqual(first,second,'Same approved business records must generate the same starting cash');
+ assert.equal(first.schema,'WTW_1999_V10_MODELED_INDUSTRY_OPENING_TREASURIES_V1');
+ assert.equal(Object.keys(first.balances_minor).length,4);
+ assert.equal(first.source_audit['O-KINGSMERE'].legally_owned_horses,2);
+ assert.equal(first.source_audit['O-KINGSMERE'].managed_horses,1);
+ assert.equal(first.source_audit['O-SMALL'].legally_owned_horses,1);
+ assert.equal(first.source_audit['O-STUD'].legally_owned_horses,0);
+ assert.equal(first.source_audit['O-STUD'].serviced_horses,2);
+ assert.equal(first.source_audit['O-MIXED'].legally_owned_horses,1);
+ assert.equal(first.source_audit['O-MIXED'].managed_horses,1);
+ assert.equal(first.balances_minor['O-KINGSMERE'],calculate1999OpeningTreasury({
+  portfolioTier:'ELITE',resources:90,activeRunnerCount:1}));
+ assert.equal(first.balances_minor['O-SMALL'],calculate1999OpeningTreasury({
+  portfolioTier:'HANDFUL',resources:18,activeRunnerCount:1}));
+ assert.equal(first.balances_minor['O-STUD'],calculate1999OpeningTreasury({
+  portfolioTier:'REGIONAL',activeRunnerCount:0}));
+ assert.equal(first.balances_minor['O-MIXED'],calculate1999OpeningTreasury({
+  portfolioTier:'SMALL',resources:45,activeRunnerCount:1}));
+ const badRacers=new Map(racers);
+ badRacers.set('O-KINGSMERE',[{id:'H-K-1'},{id:'H-K-2'},{id:'H-SMALL'}]);
+ assert.throws(()=>model1999IndustryOpeningTreasuries({
+  organizations:entries,operationHorseRoles:holdings,ownerGroups:badRacers}),
+  /cannot count managed horses as owned/);
 });

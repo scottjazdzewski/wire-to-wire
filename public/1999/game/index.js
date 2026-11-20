@@ -82,3 +82,6 @@ export {LOCAL_HORSE_NAMING_SCHEMA,LOCAL_HORSE_NAMING_ALGORITHM_REVISION,createLo
 export {TRAINER_EMPLOYMENT_SCHEMA,TRAINER_EMPLOYMENT_COMMANDS,
  createTrainerEmploymentRuntime,getLocalTrainerHiringMarket}
  from './trainer-employment-1999.js';
+
+export {OPERATION_FINANCE_VIEW_SCHEMA,getOperationFinanceView,operationRelationshipCounts}
+ from './operation-finance.js';
